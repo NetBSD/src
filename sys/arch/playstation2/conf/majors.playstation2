@@ -1,4 +1,4 @@
-#	$NetBSD: majors.playstation2,v 1.18 2006/11/24 22:04:24 wiz Exp $
+#	$NetBSD: majors.playstation2,v 1.18.28.1 2008/01/09 01:47:39 matt Exp $
 #
 # Device majors for playstation2
 #
@@ -42,7 +42,6 @@ device-major	ucom		char 35			ucom
 device-major	urio		char 36			urio
 device-major	uscanner	char 37			uscanner
 device-major	clockctl	char 38			clockctl
-device-major	systrace	char 39			systrace
 device-major	cgd		char 40  block 10	cgd
 device-major	ksyms		char 41			ksyms
 device-major	wsfont		char 42			wsfont

@@ -1,10 +1,8 @@
-#	$NetBSD: files.armadillo9,v 1.2 2006/02/06 14:03:22 hamajima Exp $
+#	$NetBSD: files.armadillo9,v 1.2.46.1 2008/01/09 01:45:43 matt Exp $
 #
 # First try for arm-specific configuration info
 #
 
-# Use the generic ARM soft interrupt code.
-file	arch/arm/arm/softintr.c
 file	arch/evbarm/armadillo/armadillo9_machdep.c
 
 # EP93xx Processor CPU support

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.15 2007/02/10 02:03:51 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.15.24.1 2008/01/09 01:47:29 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15 2007/02/10 02:03:51 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.15.24.1 2008/01/09 01:47:29 matt Exp $");
 
 #include "scsibus.h"
 
@@ -128,8 +128,6 @@ cpu_configure(void)
 	 * Kick off autoconfiguration
 	 */
 	(void) splhigh();
-
-	softintr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
@@ -176,7 +174,7 @@ findroot(void)
 	/*
 	 * XXX assumes only one controller exists.
 	 */
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(dv->dv_xname, "scsibus0") == 0) {
 			struct scsibus_softc *sdv = (void *)dv;
 			struct scsipi_periph *periph;

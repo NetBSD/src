@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.53 2007/02/03 17:00:37 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.53.24.1 2008/01/09 01:49:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.53 2007/02/03 17:00:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.53.24.1 2008/01/09 01:49:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,15 +169,15 @@ obio_print(void *args, const char *name)
 
 	/* Be quiet about empty OBIO locations. */
 	if (name)
-		return(QUIET);
+		return QUIET;
 
 	/* Otherwise do the usual. */
-	return(bus_print(args, name));
+	return bus_print(args, name);
 }
 
 int 
-obio_submatch(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+obio_submatch(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -190,8 +190,8 @@ obio_submatch(struct device *parent, struct cfdata *cf,
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_paddr == -1)
-		panic("obio_submatch: invalid address for: %s%d",
-			cf->cf_name, cf->cf_unit);
+		panic("%s: invalid address for: %s%d",
+		    __func__, cf->cf_name, cf->cf_unit);
 #endif
 
 	/*
@@ -210,8 +210,8 @@ obio_submatch(struct device *parent, struct cfdata *cf,
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_intvec != -1)
-		panic("obio_submatch: %s%d can not have a vector",
-		    cf->cf_name, cf->cf_unit);
+		panic("%s: %s%d can not have a vector",
+		    __func__, cf->cf_name, cf->cf_unit);
 #endif
 
 	/*
@@ -223,7 +223,7 @@ obio_submatch(struct device *parent, struct cfdata *cf,
 	ca->ca_intvec = -1;
 
 	/* Now call the match function of the potential child. */
-	return (config_match(parent, cf, aux));
+	return config_match(parent, cf, aux);
 }
 
 
@@ -236,11 +236,11 @@ obio_submatch(struct device *parent, struct cfdata *cf,
  * The saved mappings are just one page each, which
  * is good enough for all the devices that use this.
  */
-#define SAVE_SHIFT 17
-#define SAVE_INCR (1<<SAVE_SHIFT)
-#define SAVE_MASK (SAVE_INCR-1)
-#define SAVE_SLOTS  16
-#define SAVE_LAST (SAVE_SLOTS * SAVE_INCR)
+#define SAVE_SHIFT	17
+#define SAVE_INCR	(1 << SAVE_SHIFT)
+#define SAVE_MASK	(SAVE_INCR - 1)
+#define SAVE_SLOTS	16
+#define SAVE_LAST	(SAVE_SLOTS * SAVE_INCR)
 
 /*
  * This is our record of "interesting" OBIO mappings that
@@ -316,14 +316,12 @@ save_prom_mappings(void)
 		while (pgva < segva) {
 			pte = get_pte(pgva);
 			if ((pte & (PG_VALID | PG_TYPE)) ==
-				(PG_VALID | PGT_OBIO))
-			{
+			    (PG_VALID | PGT_OBIO)) {
 				/* Have a valid OBIO mapping. */
 				pa = PG_PA(pte);
 				/* Is it one we want to record? */
 				if ((pa < SAVE_LAST) &&
-					((pa & SAVE_MASK) == 0))
-				{
+				    ((pa & SAVE_MASK) == 0)) {
 					i = pa >> SAVE_SHIFT;
 					if (prom_mappings[i] == 0) {
 						prom_mappings[i] = pgva;
@@ -388,6 +386,7 @@ make_required_mappings(void)
 void 
 obio_init(void)
 {
+
 	save_prom_mappings();
 	make_required_mappings();
 

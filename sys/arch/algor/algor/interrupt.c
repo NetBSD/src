@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.11 2006/12/21 15:55:21 yamt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.11.24.1 2008/01/09 01:44:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2006/12/21 15:55:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11.24.1 2008/01/09 01:44:29 matt Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -45,11 +45,12 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.11 2006/12/21 15:55:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 #include <machine/locore.h>
 #include <mips/mips3_clock.h>
 
@@ -79,36 +80,17 @@ u_long	cycles_per_hz;
 const u_int32_t ipl_sr_bits[_IPL_N] = {
 	0,					/* IPL_NONE */
 
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-
 	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTNET */
 
 	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/* IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
 		MIPS_INT_MASK_0|
 		MIPS_INT_MASK_1|
 		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3,		/* IPL_{TTY,SERIAL} */
+		MIPS_INT_MASK_3,		/* IPL_VM */
 
 	MIPS_SOFT_INT_MASK_0|
 		MIPS_SOFT_INT_MASK_1|
@@ -117,7 +99,7 @@ const u_int32_t ipl_sr_bits[_IPL_N] = {
 		MIPS_INT_MASK_2|
 		MIPS_INT_MASK_3|
 		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/* IPL_{CLOCK,HIGH} */
+		MIPS_INT_MASK_5,		/* IPL_SCHED */
 };
 
 void
@@ -131,15 +113,16 @@ intr_init(void)
 #elif defined(ALGOR_P6032)
 	algor_p6032_intr_init(&p6032_configuration);
 #endif
-
-	softintr_init();
 }
 
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
 	struct clockframe cf;
+	struct cpu_info *ci;
 
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 	if (ipending & MIPS_INT_MASK_5) {
@@ -160,11 +143,13 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		(*algor_iointr)(status, cause, pc, ipending);
 	}
 
+	ci->ci_idepth--;
+
+#ifdef __HAVE_FAST_SOFTINTS
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
-
 	_clrsoftintr(ipending);
-
 	softintr_dispatch(ipending);
+#endif
 }

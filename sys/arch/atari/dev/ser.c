@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.34.10.1 2007/11/06 23:15:25 matt Exp $	*/
+/*	$NetBSD: ser.c,v 1.34.10.2 2008/01/09 01:45:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.34.10.1 2007/11/06 23:15:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.34.10.2 2008/01/09 01:45:31 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -155,8 +155,6 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.34.10.1 2007/11/06 23:15:25 matt Exp $");
 #define	CONSBAUD	9600
 #define	CONSCFLAG	TTYDEF_CFLAG
 /* end XXX */
-
-#define	splserial()	spl6()
 
 /* Buffer size for character buffer */
 #define RXBUFSIZE 2048		/* More than enough..			*/
@@ -443,7 +441,7 @@ seropen(dev, flag, mode, l)
 	    (void) serparam(tp, &t);
 	    ttsetwater(tp);
 
-	    s2 = splserial();
+	    s2 = splhigh();
 
 	    /*
 	     * Turn on DTR.  We must always do this, even if carrier is not
@@ -638,7 +636,7 @@ ser_break(sc, onoff)
 {
 	int s;
 
-	s = splserial();
+	s = splhigh();
 	if (onoff)
 		SET(sc->sc_tsr, TSR_SBREAK);
 	else
@@ -662,7 +660,7 @@ ser_modem(sc, onoff)
 {
 	int s;
 
-	s = splserial();
+	s = splhigh();
 	if (onoff)
 		SET(sc->sc_mcr, sc->sc_mcr_dtr);
 	else
@@ -724,7 +722,7 @@ serparam(tp, t)
 	else
 		SET(ucr, UCR_STOPB1);
 
-	s = splserial();
+	s = splhigh();
 
 	sc->sc_ucr = ucr;
 
@@ -904,7 +902,7 @@ serhwiflow(tp, block)
 	if (sc->sc_mcr_rts == 0)
 		return (0);
 
-	s = splserial();
+	s = splhigh();
 	if (block) {
 		/*
 		 * The tty layer is asking us to block input.
@@ -968,16 +966,8 @@ serstart(tp)
 
 	if (sc->sc_tx_stopped)
 		goto stopped;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto stopped;
-	}
+	if (!ttypull(tp))
+		goto stopped;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -987,7 +977,7 @@ serstart(tp)
 		tba = tp->t_outq.c_cf;
 		tbc = ndqb(&tp->t_outq, 0);
 
-		(void)splserial();
+		(void)splhigh();
 
 		sc->sc_tba = tba;
 		sc->sc_tbc = tbc;
@@ -1032,7 +1022,7 @@ serstop(tp, flag)
 	struct ser_softc *sc = ser_cd.cd_devs[SERUNIT(tp->t_dev)];
 	int s;
 
-	s = splserial();
+	s = splhigh();
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
 		sc->sc_tbc = 0;
@@ -1051,7 +1041,7 @@ serdiag(arg)
 	int overflows, floods;
 	int s;
 
-	s = splserial();
+	s = splhigh();
 	overflows = sc->sc_overflows;
 	sc->sc_overflows = 0;
 	floods = sc->sc_floods;
@@ -1074,7 +1064,7 @@ void ser_shutdown(sc)
 	struct tty *tp = sc->sc_tty;
 
 
-	s = splserial();
+	s = splhigh();
 	
 	/* If we were asserting flow control, then deassert it. */
 	sc->sc_rx_blocked = 1;
@@ -1146,7 +1136,7 @@ serrxint(sc, tp)
 	}
 
 	sc->sc_rbget = get;
-	s = splserial();
+	s = splhigh();
 	sc->sc_rbavail += scc;
 	/*
 	 * Buffers should be ok again, release possible block, but only if the
@@ -1181,7 +1171,7 @@ sermsrint(sc, tp)
 	u_char msr, delta;
 	int s;
 
-	s = splserial();
+	s = splhigh();
 	msr = sc->sc_msr;
 	delta = sc->sc_msr_delta;
 	sc->sc_msr_delta = 0;
@@ -1485,7 +1475,7 @@ sercngetc(dev)
 	u_char	stat, c;
 	int	s;
 
-	s = splserial();
+	s = splhigh();
 	while (!ISSET(stat = MFP->mf_rsr, RSR_BFULL)) {
 		if (!ISSET(stat, RSR_ENAB)) /* XXX */
 			MFP->mf_rsr |= RSR_ENAB;

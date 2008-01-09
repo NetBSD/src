@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc,v 1.28 2006/11/24 22:04:24 wiz Exp $
+#	$NetBSD: majors.sparc,v 1.28.28.1 2008/01/09 01:48:52 matt Exp $
 #
 # Device majors for sparc
 #
@@ -106,7 +106,6 @@ device-major	pnozz		char 122		pnozz
 device-major	pci		char 123		pci
 device-major	clcd		char 124		clcd
 device-major	clockctl	char 125		clockctl
-device-major	systrace	char 126		systrace
 device-major	cgd		char 127 block 26	cgd
 device-major	kttcp		char 128		kttcp
 device-major	dmoverio	char 129		dmoverio

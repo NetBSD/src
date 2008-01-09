@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.3 2006/06/26 18:21:39 drochner Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.3.34.1 2008/01/09 01:45:41 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,13 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.3 2006/06/26 18:21:39 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.3.34.1 2008/01/09 01:45:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
 #include <arm/ep93xx/epsocvar.h> 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.3 2006/06/26 18:21:39 drochner 
 struct armadillo9iic_softc {
 	struct device		sc_dev;
 	struct i2c_controller	sc_i2c;
-	struct lock		sc_buslock;
+	kmutex_t		sc_buslock;
 	int			sc_port;
 	int			sc_sda;
 	int			sc_scl;
@@ -95,7 +95,7 @@ armadillo9iic_attach(struct device *parent, struct device *self, void *aux)
 #if NSEEPROM > 0
 	struct epgpio_attach_args *ga = aux;
 #endif
-	lockinit(&sc->sc_buslock, PRIBIO|PCATCH, "armadillo9iiclk", 0, 0);
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_port = ga->ga_port;
 	sc->sc_sda = ga->ga_bit1;
@@ -146,7 +146,8 @@ armadillo9iic_acquire_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return 0;
 
-	return lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL);
+	mutex_enter(&sc->sc_buslock);
+	return 0;
 }
 
 void
@@ -158,7 +159,7 @@ armadillo9iic_release_bus(void *cookie, int flags)
 	if (flags & I2C_F_POLL)
 		return;
 
-	lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_buslock);
 }
 
 int

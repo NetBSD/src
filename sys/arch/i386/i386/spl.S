@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.17.2.1 2007/11/06 23:17:34 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.17.2.2 2008/01/09 01:46:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -36,10 +36,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.17.2.2 2008/01/09 01:46:39 matt Exp $");
+
 #include "opt_vm86.h"
 #include "opt_ddb.h"
 
-#include <machine/asm.h>
 #include <machine/trap.h>
 #include <machine/segments.h>
 #include <machine/frameasm.h>
@@ -58,18 +60,6 @@ ENTRY(splraise)
 	ja	1f
 	movl	%edx,CPUVAR(ILEVEL)
 1:
-	ret
-
-/*
- * void softintr(int sir);
- *
- * Software interrupt registration.
- */
-ENTRY(softintr)
-	movl	4(%esp),%ecx
-	movl	$1,%eax
-	shll	%cl,%eax
-	orl	%eax,CPUVAR(IPENDING)
 	ret
 
 /*
@@ -99,7 +89,7 @@ ENTRY(spllower)
 LABEL(spllower_end)
 
 /*
- * void	i686_spllower(int s);
+ * void	cx8_spllower(int s);
  *
  * spllower() optimized for Pentium Pro and later, which have long
  * pipelines that will be stalled by pushf/cli/popf.  Must be the
@@ -111,7 +101,7 @@ LABEL(spllower_end)
  * edx : eax = old level / old ipending 
  * ecx : ebx = new level / old ipending
  */
-ENTRY(i686_spllower)
+ENTRY(cx8_spllower)
 	movl	4(%esp),%ecx
 	movl	CPUVAR(ILEVEL),%edx
 	cmpl	%edx,%ecx			/* new level is lower? */
@@ -121,10 +111,6 @@ ENTRY(i686_spllower)
 	movl	CPUVAR(IPENDING),%eax
 	testl	%eax,CPUVAR(IUNMASK)(,%ecx,4)	/* deferred interrupts? */
 	movl	%eax,%ebx
-	/*
-	 * On the P4 this jump is cheaper than patching in junk
-	 * using cmovnz.  Is cmpxchg expensive if it fails?
-	 */
 	jnz,pn	2f
 	cmpxchg8b CPUVAR(ISTATE)		/* swap in new ilevel */
 	jnz,pn	0b
@@ -133,10 +119,10 @@ ENTRY(i686_spllower)
 	ret
 2:
 	popl	%ebx
-LABEL(i686_spllower_patch)
+LABEL(cx8_spllower_patch)
 	jmp	_C_LABEL(Xspllower)
 	.align	32
-LABEL(i686_spllower_end)
+LABEL(cx8_spllower_end)
 
 /*
  * void Xspllower(int s);
@@ -156,7 +142,7 @@ LABEL(i686_spllower_end)
  * the sending CPU will never see the that CPU accept the IPI
  * (see pmap_tlb_shootnow).
  */
-	nop	/* Don't get confused with i686_spllower_end */
+	nop	/* Don't get confused with cx8_spllower_end */
 
 IDTVEC(spllower)
 #if defined(DDB) || defined(GPROF)
@@ -274,3 +260,66 @@ IDTVEC(doreti)
 	call	_C_LABEL(panic)
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
+
+/*
+ * softintr()
+ *
+ * Switch to the LWP assigned to handle interrupts from the given
+ * source.  We borrow the VM context from the interrupted LWP.
+ *
+ * On entry:
+ *
+ *	%eax		intrsource
+ *	%esi		address to return to
+ */
+IDTVEC(softintr)
+	pushl	$_C_LABEL(softintr_ret)	/* set up struct switchframe */
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+	movl	$IPL_HIGH,CPUVAR(ILEVEL)
+	movl	CPUVAR(CURLWP),%esi
+	movl	IS_LWP(%eax),%edi	/* switch to handler LWP */
+	movl	%edi,CPUVAR(CURLWP)
+	movl	L_ADDR(%edi),%edx
+	movl	L_ADDR(%esi),%ecx
+	movl	%esp,PCB_ESP(%ecx)
+	movl	%ebp,PCB_EBP(%ecx)
+	movl	PCB_ESP0(%edx),%esp	/* onto new stack */
+	sti
+	pushl	IS_MAXLEVEL(%eax)	/* ipl to run at */
+	pushl	%esi
+	call	_C_LABEL(softint_dispatch)/* run handlers */
+	addl	$8,%esp
+	movl	L_ADDR(%esi),%ecx
+	movl	PCB_ESP(%ecx),%esp
+	movl	%esi,CPUVAR(CURLWP)
+	popl	%edi			/* unwind switchframe */
+	popl	%esi
+	addl	$8,%esp
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * softintr_ret()
+ *
+ * Trampoline function that gets returned to by cpu_switchto() when
+ * an interrupt handler blocks.  On entry:
+ *
+ *	%eax		prevlwp from cpu_switchto()
+ */
+NENTRY(softintr_ret)
+	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
+	movl	$0, L_CTXSWTCH(%eax)	/* %eax from cpu_switchto */
+	cli
+	jmp	*%esi			/* back to splx/doreti */
+
+/*
+ * void softint_trigger(uintptr_t machdep);
+ *
+ * Software interrupt registration.
+ */
+NENTRY(softint_trigger)
+	movl	4(%esp),%eax
+	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
+	ret

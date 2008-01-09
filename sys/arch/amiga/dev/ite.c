@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.78.10.1 2007/11/06 23:14:38 matt Exp $ */
+/*	$NetBSD: ite.c,v 1.78.10.2 2008/01/09 01:45:00 matt Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.78.10.1 2007/11/06 23:14:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.78.10.2 2008/01/09 01:45:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -425,8 +425,6 @@ iteinit(dev_t dev)
 	struct ite_softc *ip;
 	static int kbdmap_loaded = 0;
 
-	callout_init(&repeat_ch, 0);
-
 	ip = getitesp(dev);
 	if (ip->flags & ITE_INITED)
 		return;
@@ -434,6 +432,8 @@ iteinit(dev_t dev)
 		bcopy(&ascii_kbdmap, &kbdmap, sizeof(struct kbdmap));
 		kbdmap_loaded = 1;
 	}
+
+	callout_init(&repeat_ch, 0);
 
 	ip->cursorx = 0;
 	ip->cursory = 0;
@@ -660,17 +660,9 @@ itestart(struct tty *tp)
 	s = spltty(); {
 		tp->t_state &= ~TS_BUSY;
 		/* we have characters remaining. */
-		if (rbp->c_cc) {
+		if (ttypull(tp)) {
 			tp->t_state |= TS_TIMEOUT;
 			callout_schedule(&tp->t_rstrt_ch, 1);
-		}
-		/* wakeup we are below */
-		if (rbp->c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup((void *) rbp);
-			}
-			selwakeup(&tp->t_wsel);
 		}
 	}
  out:

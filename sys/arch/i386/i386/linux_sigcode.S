@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sigcode.S,v 1.6 2005/12/11 12:17:41 christos Exp $	*/
+/*	$NetBSD: linux_sigcode.S,v 1.6.50.1 2008/01/09 01:46:37 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,13 +70,14 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_sigcode.S,v 1.6.50.1 2008/01/09 01:46:37 matt Exp $");
+
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
 #endif
 
 #include "assym.h"
-
-#include <machine/asm.h>
 
 #include <compat/linux/linux_syscall.h>
 

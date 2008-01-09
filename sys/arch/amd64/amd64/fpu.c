@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.17.24.1 2007/11/06 23:14:03 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.17.24.2 2008/01/09 01:44:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.24.1 2007/11/06 23:14:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.24.2 2008/01/09 01:44:43 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -96,8 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.17.24.1 2007/11/06 23:14:03 matt Exp $");
 #include <machine/specialreg.h>
 #include <machine/fpu.h>
 
+#ifndef XEN
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#endif
 
 /*
  * We do lazy initialization and switching using the TS bit in cr0 and the
@@ -177,9 +179,7 @@ fputrap(frame)
 	ksi.ksi_addr = (void *)frame->tf_rip;
 	ksi.ksi_code = x86fpflags_to_ksiginfo(statbits);
 	ksi.ksi_trap = statbits;
-	KERNEL_LOCK(1, l);
 	(*l->l_proc->p_emul->e_trapsignal)(l, &ksi);
-	KERNEL_UNLOCK_LAST(l);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_kn300.c,v 1.28.50.1 2008/01/09 01:44:40 matt Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.28 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_kn300.c,v 1.28.50.1 2008/01/09 01:44:40 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,7 +220,7 @@ dec_kn300_intr_establish(ccv, ih, level, func, arg)
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(kn300_pci_intr, irq)) {
 		scb_set(MCPCIA_VEC_PCI + SCB_IDXTOVEC(irq),
-		    kn300_iointr, NULL);
+		    kn300_iointr, NULL, level);
 		alpha_shared_intr_set_private(kn300_pci_intr, irq, ccp);
 		savirqs[irq] = (ih >> 11) & 0x1f;
 		kn300_enable_intr(ccp, savirqs[irq]);

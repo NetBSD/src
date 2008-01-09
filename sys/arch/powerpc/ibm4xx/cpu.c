@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.25 2006/08/31 21:32:27 freza Exp $	*/
+/*	$NetBSD: cpu.c,v 1.25.32.1 2008/01/09 01:47:47 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25 2006/08/31 21:32:27 freza Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.25.32.1 2008/01/09 01:47:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ struct cpu_info cpu_info[1] = {
 		    NULL, "cpu0", "soft net"),
 		.ci_ev_softserial = EVCNT_INITIALIZER(EVCNT_TYPE_INTR,
 		    NULL, "cpu0", "soft serial"),
+		.ci_curlwp = &lwp0,
 	}
 };
 

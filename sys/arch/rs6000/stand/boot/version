@@ -1,0 +1,7 @@
+$NetBSD: version,v 1.1.6.2 2008/01/09 01:48:33 matt Exp $
+
+NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
+file is important - make sure the entries are appended on end, last item
+is taken as the current.
+
+1.1:		Boot program for IBM RS/6000; Initial revision.

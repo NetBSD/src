@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95.10.1 2007/11/06 23:19:47 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95.10.2 2008/01/09 01:47:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.10.1 2007/11/06 23:19:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95.10.2 2008/01/09 01:47:32 matt Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
@@ -191,37 +191,19 @@ int safepri = MIPS3_PSL_LOWIPL;		/* XXX */
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
 	[IPL_NONE] = 0,
-	[IPL_SOFT] =
-	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTCLOCK] =
 	    MIPS_SOFT_INT_MASK_0,
 	[IPL_SOFTNET] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_SOFTSERIAL] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
-	[IPL_BIO] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0,
-	[IPL_NET] =
+	[IPL_VM] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1,
-	[IPL_TTY] =
-	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
-	    MIPS_INT_MASK_0 |
-	    MIPS_INT_MASK_1,
-	[IPL_CLOCK] =
+	[IPL_SCHED] =
 	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
 	    MIPS_INT_MASK_0 |
 	    MIPS_INT_MASK_1 |
 	    MIPS_INT_MASK_2,
-};
-
-const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
-	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
 };
 
 extern struct user *proc0paddr;
@@ -629,18 +611,22 @@ delay(int n)
 void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
+	struct cpu_info *ci;
 
+	ci = curcpu();
 	uvmexp.intrs++;
 
 	/* device interrupts */
+	ci->ci_idepth++;
 	(*hardware_intr)(status, cause, pc, ipending);
+	ci->ci_idepth--;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* software interrupts */
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
-
 	_clrsoftintr(ipending);
-
 	softintr_dispatch(ipending);
+#endif
 }

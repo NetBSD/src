@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.844.2.1 2007/11/06 23:17:10 matt Exp $
+# $NetBSD: GENERIC,v 1.844.2.2 2008/01/09 01:46:27 matt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,17 +22,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.844.2.1 $"
+#ident 		"GENERIC-$Revision: 1.844.2.2 $"
 
 maxusers	32		# estimated number of users
 
-# CPU support.  At least one is REQUIRED.
-#options 	I386_CPU
-options 	I486_CPU
-options 	I586_CPU
-options 	I686_CPU
-
-makeoptions	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
+makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
 
 # CPU-related options.
@@ -53,7 +47,7 @@ options 	POWERNOW_K7
 options 	POWERNOW_K8
 
 # VIA PadLock
-#options	VIA_PADLOCK
+#options 	VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 #options 	INTEL_ONDEMAND_CLOCKMOD
@@ -82,6 +76,13 @@ options 	MULTIBOOT	# Multiboot support (see multiboot(8))
 #options 	REALBASEMEM=639		# size of base memory (in KB)
 #options 	REALEXTMEM=15360	# size of extended memory (in KB)
 
+# The following options limit the overall size of physical memory
+# and/or the maximum address used by the system.
+# Contrary to REALBASEMEM and REALEXTMEM, they still use the BIOS memory map
+# and can deal with holes in the memory layout.
+#options 	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
+#options 	PHYSMEM_MAX_ADDR=2048	# don't use memory above this (in MB)
+
 # Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
@@ -92,7 +93,6 @@ options 	NTP		# NTP phase/frequency locked loop
 				# Improves time behavior under VMware.
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -100,6 +100,9 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
+options 	MULTIPROCESSOR	# SMP
+options 	APM_NO_IDLE	# needed for SMP
+options 	MPBIOS		# configure CPUs and APICs using MPBIOS
 
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
@@ -127,7 +130,7 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	DDB_VERBOSE_HELP
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -160,6 +163,13 @@ options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
 #options 	COMPAT_NDIS	# NDIS network driver
 #options 	COMPAT_PECOFF	# kernel support to run Win32 apps
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -346,22 +356,27 @@ apm*		at acpi?		# ACPI apm emulation
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
 aiboost*	at acpi?		# ASUS AI Booster Hardware Monitor
 attimer*	at acpi?		# AT Timer
-com* 		at acpi?		# Serial communications interface
+#com* 		at acpi?		# Serial communications interface
 #fdc* 		at acpi?		# Floppy disk controller
 hpet* 		at acpi?		# High Precision Event Timer
 joy*		at acpi?		# Joystick/Game port
-lpt* 		at acpi?		# Parallel port
+#lpt* 		at acpi?		# Parallel port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 npx*		at acpi?		# Math coprocessor
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*		at acpi?                # AT-style speaker sound
+thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 ym* 		at acpi?		# Yamaha OPL3-SA[23] audio
@@ -504,15 +519,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console
-#pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
-
-
 # wscons
 pckbc0		at isa?			# pc keyboard controller
 pckbd*		at pckbc?		# PC keyboard
@@ -632,8 +638,8 @@ iic*	at piixpm?			# SMBus on PIIX4
 # IBM Thinkpad Active Protection System
 #aps0 	at isa? port 0x1600
 
-# iTE IT87xxF and compatible hardware monitors
-#it0	at isa? port 0x290		# other ports: 0xc00, 0xd00
+# iTE IT87xxF Super I/O with watchdog and sensors support
+#itesio0 	at isa? port 0x2e
 
 # LM7[89] and compatible hardware monitors
 #lm0	at isa?	port 0x290		# other common: 0x280, 0x310
@@ -752,6 +758,7 @@ uk*	at scsibus? target ? lun ?	# SCSI unknown
 # RAID controllers and devices
 aac*	at pci? dev ? function ?	# Adaptec AAC family
 amr*	at pci? dev ? function ?	# AMI/LSI Logic MegaRAID
+arcmsr* at pci? dev ? function ?	# Areca SATA RAID controllers
 cac*	at eisa? slot ?			# Compaq EISA array controllers
 cac*	at pci? dev ? function ?	# Compaq PCI array controllers
 ciss*	at pci? dev ? function ?	# HP Smart Array controllers
@@ -1055,7 +1062,7 @@ uhci*	at cardbus? function ?		# Universal Host Controller (Intel)
 # ISA USB controllers
 #slhci0	at isa? port 0x300 irq 5	# ScanLogic SL811HS
 
-# PCMCIA USB controllers   
+# PCMCIA USB controllers
 slhci*	at pcmcia? function ?		# ScanLogic SL811HS
 
 # USB bus support
@@ -1333,6 +1340,7 @@ btbc* at pcmcia? function ?		# AnyCom BlueCard LSE041/039/139
 ubt* at uhub? port ?
 
 # Bluetooth Device Hub
+bthub* at bcsp?
 bthub* at bt3c?
 bthub* at btbc?
 bthub* at btuart?
@@ -1463,6 +1471,7 @@ pseudo-device	rnd			# /dev/random and in-kernel generator
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	lockstat		# lock profiling
+pseudo-device	bcsp			# BlueCore Serial Protocol
 pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 # a pseudo device needed for Coda	# also needs CODA (above)
@@ -1474,6 +1483,12 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# pseudo audio device driver
+pseudo-device	pad
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
 
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
@@ -1491,4 +1506,5 @@ options VERIFIED_EXEC_FP_SHA512
 options VERIFIED_EXEC_FP_SHA1
 options VERIFIED_EXEC_FP_MD5
 
-options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

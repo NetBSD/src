@@ -1,4 +1,4 @@
-/* $NetBSD: promcons.c,v 1.32.10.1 2007/11/06 23:13:47 matt Exp $ */
+/* $NetBSD: promcons.c,v 1.32.10.2 2008/01/09 01:44:34 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.32.10.1 2007/11/06 23:13:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: promcons.c,v 1.32.10.2 2008/01/09 01:44:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,13 +202,7 @@ promstart(struct tty *tp)
 	s = spltty();
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttypull(tp);
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0)
 		promcnputc(tp->t_dev, getc(&tp->t_outq));

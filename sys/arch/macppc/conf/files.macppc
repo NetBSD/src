@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.84.12.2 2007/11/08 10:59:35 matt Exp $
+#	$NetBSD: files.macppc,v 1.84.12.3 2008/01/09 01:47:07 matt Exp $
 #
 # macppc-specific configuration info
 
@@ -18,7 +18,7 @@ file arch/macppc/macppc/interrupts.c
 file arch/powerpc/oea/ofwoea_machdep.c
 file arch/powerpc/oea/ofw_consinit.c
 file arch/macppc/macppc/machdep.c
-file arch/macppc/dev/ofb_cons.c
+file arch/powerpc/oea/ofw_rascons.c
 file arch/macppc/dev/dbdma.c
 
 # interrupt controllers
@@ -40,7 +40,6 @@ file arch/macppc/macppc/ipi_hammerhead.c	ipi_hammerhead	needs-flag
 file arch/powerpc/powerpc/bus_dma.c
 file arch/powerpc/powerpc/bus_space.c
 file arch/powerpc/powerpc/procfs_machdep.c	procfs
-file arch/powerpc/powerpc/softintr.c
 file dev/cons.c
 
 #Early serial console for G5 (uses RMCI mode of 970 */
@@ -97,7 +96,7 @@ file arch/macppc/pci/agp_machdep.c		agp
 file arch/powerpc/pci/pciconf_indirect.c	pci
 file arch/powerpc/pci/pci_machdep_common.c	pci
 
-device bandit: pcibus, pic_ohare
+device bandit: pcibus, pic_ohare, ipi_hammerhead
 attach bandit at mainbus
 file arch/macppc/pci/bandit.c			bandit
 
@@ -105,7 +104,7 @@ device grackle: pcibus, pic_heathrow
 attach grackle at mainbus
 file arch/macppc/pci/grackle.c			grackle
 
-device uninorth: pcibus, pic_openpic
+device uninorth: pcibus, pic_openpic, ipi_openpic
 attach uninorth at mainbus
 file arch/macppc/pci/uninorth.c			uninorth
 
@@ -285,7 +284,7 @@ device snapper: audiobus, auconv, mulaw, aurateconv
 attach snapper at obio
 file arch/macppc/dev/snapper.c			snapper
 
-include "arch/macppc/conf/majors.macppc"
+include "arch/powerpc/conf/majors.powerpc"
 
 attach adt7467c at ki2c with adt7467_ki2c
 file arch/macppc/dev/adt7467_ki2c.c		adt7467c

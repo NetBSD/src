@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.7.2.2 2007/11/09 05:37:40 matt Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.7.2.3 2008/01/09 01:45:19 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -85,7 +85,7 @@ Lirq_ffs_table:
  */
 
 Lcurrent_spl_level:
-	.word	_C_LABEL(current_spl_level) + CI_CPL
+	.word	_C_LABEL(cpu_info_store) + CI_CPL
 
 Ldisabled_mask:
 	.word	_C_LABEL(disabled_mask)
@@ -321,7 +321,9 @@ exitirq:
 
 	bl	_C_LABEL(irq_setmasks)
 
+#if __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+#endif
 
 	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr_all

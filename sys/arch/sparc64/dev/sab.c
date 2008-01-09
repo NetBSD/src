@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.37.20.1 2007/11/08 10:59:41 matt Exp $	*/
+/*	$NetBSD: sab.c,v 1.37.20.2 2008/01/09 01:49:03 matt Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.20.1 2007/11/08 10:59:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.20.2 2008/01/09 01:49:03 matt Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.37.20.1 2007/11/08 10:59:41 matt Exp $");
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/kgdb.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -264,7 +265,7 @@ sab_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_softintr = softintr_establish(IPL_TTY, sab_softintr, sc);
+	sc->sc_softintr = softint_establish(SOFTINT_SERIAL, sab_softintr, sc);
 	if (sc->sc_softintr == NULL) {
 		printf(": can't get soft intr\n");
 		return;
@@ -344,7 +345,7 @@ sab_intr(void *vsc)
 		r |= sabtty_intr(sc->sc_child[1], &needsoft);
 
 	if (needsoft)
-		softintr_schedule(sc->sc_softintr);
+		softint_schedule(sc->sc_softintr);
 
 	return (r);
 }
@@ -1075,14 +1076,7 @@ sabtty_start(struct tty *tp)
 
 	s = spltty();
 	if ((tp->t_state & (TS_TTSTOP | TS_TIMEOUT | TS_BUSY)) == 0) {
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-			if (tp->t_state & TS_ASLEEP) {
-				tp->t_state &= ~TS_ASLEEP;
-				wakeup(&tp->t_outq);
-			}
-			selwakeup(&tp->t_wsel);
-		}
-		if (tp->t_outq.c_cc) {
+		if (ttypull(tp)) {
 			sc->sc_txc = ndqb(&tp->t_outq, 0);
 			sc->sc_txp = tp->t_outq.c_cf;
 			tp->t_state |= TS_BUSY;

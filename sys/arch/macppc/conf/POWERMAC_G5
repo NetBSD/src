@@ -15,7 +15,6 @@ options 	INSECURE	# disable kernel security levels
 options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores

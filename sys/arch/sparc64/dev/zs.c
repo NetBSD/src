@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.62 2006/10/16 20:31:45 martin Exp $	*/
+/*	$NetBSD: zs.c,v 1.62.28.1 2008/01/09 01:49:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.62 2006/10/16 20:31:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.62.28.1 2008/01/09 01:49:04 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.62 2006/10/16 20:31:45 martin Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
 #include <machine/openfirm.h>
@@ -260,14 +261,12 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 {
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
-	int s, channel, softpri = PIL_TTY;
+	int s, channel;
 
 	if (zsd == NULL) {
 		printf("configuration incomplete\n");
 		return;
 	}
-
-	printf(" softpri %d\n", softpri);
 
 	/*
 	 * Initialize software state for each channel.
@@ -280,7 +279,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
@@ -384,7 +383,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	 * once since both SCCs interrupt at the same level and vector.
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, zshard, zsc);
-	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
+	if (!(zsc->zsc_softintr = softint_establish(SOFTINT_SERIAL, zssoft, zsc)))
 		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -438,7 +437,7 @@ zshard(void *arg)
 	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&
 	    zsc->zsc_softintr) {
 		zssoftpending = PIL_TTY;
-		softintr_schedule(zsc->zsc_softintr);
+		softint_schedule(zsc->zsc_softintr);
 	}
 	return (rval);
 }

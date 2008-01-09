@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.40.2.1 2007/11/06 23:17:27 matt Exp $	*/
+/*	$NetBSD: gdt.c,v 1.40.2.2 2008/01/09 01:46:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.40.2.1 2007/11/06 23:17:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.40.2.2 2008/01/09 01:46:35 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -62,8 +62,6 @@ static inline void gdt_lock(void);
 static inline void gdt_unlock(void);
 void gdt_init(void);
 void gdt_grow(void);
-int gdt_get_slot(void);
-void gdt_put_slot(int);
 
 /*
  * Lock and unlock the GDT, to avoid races in case gdt_{ge,pu}t_slot() sleep
@@ -89,7 +87,7 @@ gdt_unlock()
 }
 
 void
-setgdt(int sel, void *base, size_t limit,
+setgdt(int sel, const void *base, size_t limit,
     int type, int dpl, int def32, int gran)
 {
 	struct segment_descriptor *sd = &gdt[sel].sd;
@@ -139,7 +137,7 @@ gdt_init()
 	pmap_update(pmap_kernel());
 	memcpy(gdt, old_gdt, NGDT * sizeof(gdt[0]));
 	ci->ci_gdt = gdt;
-	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
+	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, 0xfffff,
 	    SDT_MEMRWA, SEL_KPL, 1, 1);
 
 	gdt_init_cpu(ci);
@@ -170,7 +168,7 @@ gdt_alloc_cpu(struct cpu_info *ci)
 	pmap_update(pmap_kernel());
 	memset(ci->ci_gdt, 0, min_len);
 	memcpy(ci->ci_gdt, gdt, gdt_count * sizeof(gdt[0]));
-	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, sizeof(struct cpu_info)-1,
+	setsegment(&ci->ci_gdt[GCPU_SEL].sd, ci, 0xfffff,
 	    SDT_MEMRWA, SEL_KPL, 1, 1);
 }
 
@@ -289,12 +287,12 @@ gdt_put_slot(int slot)
 }
 
 int
-tss_alloc(struct pcb *pcb)
+tss_alloc(const struct i386tss *tss)
 {
 	int slot;
 
 	slot = gdt_get_slot();
-	setgdt(slot, &pcb->pcb_tss, sizeof(struct pcb) - 1,
+	setgdt(slot, tss, sizeof(struct i386tss) + IOMAPSIZE - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
 	return GSEL(slot, SEL_KPL);
 }

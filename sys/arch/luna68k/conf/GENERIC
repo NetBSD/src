@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78.10.1 2007/11/06 23:18:03 matt Exp $
+# $NetBSD: GENERIC,v 1.78.10.2 2008/01/09 01:46:57 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/luna68k/conf/std.luna68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.78.10.1 $"
+#ident 		"GENERIC-$Revision: 1.78.10.2 $"
 
 maxusers	8
 
@@ -35,7 +35,6 @@ options 	M68030
 # Standard system options
 options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE
-#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	SYSVMSG			# System V message queues
 #options 	SYSVSEM			# System V semaphores
 #options 	SYSVSHM			# System V shared memory

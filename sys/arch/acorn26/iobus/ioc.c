@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.15 2006/10/04 23:40:00 bjh21 Exp $ */
+/* $NetBSD: ioc.c,v 1.15.28.1 2008/01/09 01:44:27 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000 Ben Harris
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.15 2006/10/04 23:40:00 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.15.28.1 2008/01/09 01:44:27 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -362,7 +362,7 @@ cpu_initclocks(void)
 
 		evcnt_attach_dynamic(&sc->sc_sclkev, EVCNT_TYPE_INTR, NULL,
 		    sc->sc_dev.dv_xname, "statclock");
-		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_STATCLOCK,
+		sc->sc_sclkirq = irq_establish(IOC_IRQ_TM1, IPL_HIGH,
 		    ioc_irq_statclock, NULL, &sc->sc_sclkev);
 		if (bootverbose)
 			printf("%s: %d Hz statclock interrupting at %s\n",

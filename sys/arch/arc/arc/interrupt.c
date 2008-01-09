@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.2 2007/02/16 13:27:00 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.2.24.1 2008/01/09 01:45:05 matt Exp $	*/
 /*	$OpenBSD: trap.c,v 1.22 1999/05/24 23:08:59 jason Exp $	*/
 
 /*
@@ -78,18 +78,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.2 2007/02/16 13:27:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.2.24.1 2008/01/09 01:45:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <mips/locore.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 #include <machine/pio.h>
 
 #include <arc/arc/timervar.h>
@@ -141,9 +142,12 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
 	struct clockframe cf;
 	struct cpu_inttab *inttab;
+	struct cpu_info *ci;
 	u_int i;
 
+	ci = curcpu();
 	uvmexp.intrs++;
+	ci->ci_idepth++;
 
 	cf.pc = pc;
 	cf.sr = status;
@@ -188,13 +192,14 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 		inttab++;
 	}
 	_splset((status & ~cause & MIPS_HARD_INT_MASK) | MIPS_SR_INT_IE);
+	ci->ci_idepth--;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* software interrupts */
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
-
 	_clrsoftintr(ipending);
-
 	softintr_dispatch(ipending);
+#endif
 }

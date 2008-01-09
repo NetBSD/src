@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.196.4.1 2007/11/06 23:13:20 matt Exp $
+#	$NetBSD: bsd.README,v 1.196.4.2 2008/01/09 01:39:25 matt Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -237,6 +237,10 @@ MKPICLIB	If "no", don't build *_pic.a libraries, and build the
 		A symlink is installed in ${DESTDIR}/usr/lib for the
 		_pic.a library pointing to the .a library.
 		Default: yes
+
+MKPIE		If "no", create regular executables. Otherwise create
+		PIE (Position Independent Executables).
+		Default: no
 
 MKPOSTFIX	If "no", don't build or install postfix(1).
 		Default: yes

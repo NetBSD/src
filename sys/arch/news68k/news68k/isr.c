@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.15 2007/03/03 07:36:11 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.15.20.1 2008/01/09 01:47:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,21 +46,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.15 2007/03/03 07:36:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.15.20.1 2008/01/09 01:47:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
 
 #include <news68k/news68k/isr.h>
 
 isr_autovec_list_t isr_autovec[NISRAUTOVEC];
 struct	isr_vectored isr_vectored[NISRVECTORED];
+int idepth;
 
 void set_vector_entry(int, void *);
 void *get_vector_entry(int);
@@ -205,6 +205,8 @@ isrdispatch_autovec(int evec)
 	int handled = 0, ipl, vec;
 	static int straycount, unexpected;
 
+	idepth++;
+
 	vec = (evec & 0xfff) >> 2;
 	if ((vec < ISRAUTOVEC) || (vec >= (ISRAUTOVEC + NISRAUTOVEC)))
 		panic("isrdispatch_autovec: bad vec 0x%x", vec);
@@ -218,6 +220,7 @@ isrdispatch_autovec(int evec)
 		printf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
+		idepth--;
 		return;
 	}
 
@@ -232,6 +235,8 @@ isrdispatch_autovec(int evec)
 		panic("isr_dispatch_autovec: too many stray interrupts");
 	else
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
+
+	idepth--;
 }
 
 /*
@@ -243,6 +248,8 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 {
 	struct isr_vectored *isr;
 	int ipl, vec;
+
+	idepth++;
 
 	vec = (evec & 0xfff) >> 2;
 	ipl = (getsr() >> 8) & 7;
@@ -257,6 +264,7 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 	if (isr->isr_func == NULL) {
 		printf("isrdispatch_vectored: no handler for vec 0x%x\n", vec);
 		vectab[vec] = badtrap;
+		idepth--;
 		return;
 	}
 
@@ -265,6 +273,14 @@ isrdispatch_vectored(int pc, int evec, void *frame)
 	 */
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
+	idepth--;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }
 
 void
@@ -297,18 +313,12 @@ get_vector_entry(int entry)
 
 static const int ipl2psl_table[] = {
 	[IPL_NONE] = PSL_IPL0,
-	[IPL_SOFT] = PSL_IPL2,
+	[IPL_SOFTBIO] = PSL_IPL2,
 	[IPL_SOFTCLOCK] = PSL_IPL2,
 	[IPL_SOFTNET] = PSL_IPL2,
 	[IPL_SOFTSERIAL] = PSL_IPL2,
-	[IPL_BIO] = PSL_IPL4,
-	[IPL_NET] = PSL_IPL4,
-	[IPL_TTY] = PSL_IPL5,
-	/* IPL_LPT == IPL_TTY */
 	[IPL_VM] = PSL_IPL5,
-	[IPL_SERIAL] = PSL_IPL5,
-	[IPL_CLOCK] = PSL_IPL6,
-	[IPL_HIGH] = PSL_IPL7,
+	[IPL_SCHED] = PSL_IPL7,
 };
 
 ipl_cookie_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.25.10.1 2007/11/06 23:19:38 matt Exp $	*/
+/*	$NetBSD: zs.c,v 1.25.10.2 2008/01/09 01:47:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25.10.1 2007/11/06 23:19:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25.10.2 2008/01/09 01:47:28 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -57,8 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25.10.1 2007/11/06 23:19:38 matt Exp $");
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/tty.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -229,7 +230,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 			zsc_args.hwflags = 0;
 		}
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_defcflag = zs_def_cflag;
 
 		cs->cs_channel = channel;
@@ -272,7 +273,7 @@ zs_attach(struct device *parent, struct device *self, void *aux)
 	 * Now safe to install interrupt handlers.
 	 */
 	hb_intr_establish(zs_init_reg[2], zshard, ZSHARD_PRI, zsc);
-	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 
 	/*
@@ -317,7 +318,7 @@ zshard(void *arg)
 
 	/* We are at splzs here, so no need to lock. */
 	if (zsc->zsc_cs[0]->cs_softreq || zsc->zsc_cs[1]->cs_softreq) {
-		softintr_schedule(zsc->zsc_softintr_cookie);
+		softint_schedule(zsc->zsc_softintr_cookie);
 	}
 
 	return rval;

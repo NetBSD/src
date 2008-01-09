@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.84.20.1 2007/11/06 23:16:38 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.84.20.2 2008/01/09 01:46:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -143,7 +143,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84.20.1 2007/11/06 23:16:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.84.20.2 2008/01/09 01:46:03 matt Exp $");
 
 #include "hil.h"
 #include "dvbox.h"
@@ -343,8 +343,6 @@ cpu_configure(void)
 	/* Kick off autoconfiguration. */
 	(void)splhigh();
 
-	softintr_init();
-
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("no mainbus found");
 
@@ -395,8 +393,8 @@ cpu_rootconf(void)
 	if (rootspec == NULL) {
 		vops = vfs_getopsbyname("nfs");
 		if (vops != NULL && vops->vfs_mountroot == mountroot) {
-			for (dd = dev_data_list.lh_first;
-			    dd != NULL; dd = dd->dd_list.le_next) {
+			for (dd = LIST_FIRST(&dev_data_list);
+			    dd != NULL; dd = LIST_NEXT(dd, dd_list)) {
 				if (device_class(dd->dd_dev) == DV_IFNET) {
 					/* Got it! */
 					dv = dd->dd_dev;
@@ -549,8 +547,8 @@ findbootdev(void)
 	 * always starts at scode 0 and works its way up.
 	 */
 	if (netboot) {
-		for (dd = dev_data_list.lh_first; dd != NULL;
-		    dd = dd->dd_list.le_next) {
+		for (dd = LIST_FIRST(&dev_data_list); dd != NULL;
+		    dd = LIST_NEXT(dd, dd_list)) {
 			if (device_class(dd->dd_dev) == DV_IFNET) {
 				/*
 				 * Found it!
@@ -621,8 +619,8 @@ findbootdev_slave(ddlist_t *ddlist, int ctlr, int slave, int punit)
 	/*
 	 * Find the booted controller.
 	 */
-	for (cdd = ddlist->lh_first; ctlr != 0 && cdd != NULL;
-	    cdd = cdd->dd_clist.le_next)
+	for (cdd = LIST_FIRST(ddlist); ctlr != 0 && cdd != NULL;
+	    cdd = LIST_NEXT(cdd, dd_clist))
 		ctlr--;
 	if (cdd == NULL) {
 		/*
@@ -635,8 +633,8 @@ findbootdev_slave(ddlist_t *ddlist, int ctlr, int slave, int punit)
 	 * Now find the device with the right slave/punit
 	 * that's a child of the controller.
 	 */
-	for (dd = dev_data_list.lh_first; dd != NULL;
-	    dd = dd->dd_list.le_next) {
+	for (dd = LIST_FIRST(&dev_data_list); dd != NULL;
+	    dd = LIST_NEXT(dd, dd_list)) {
 		/*
 		 * "sd" -> "scsibus" -> "spc"
 		 * "rd" -> "hpibbus" -> "fhpib"
@@ -715,8 +713,8 @@ setbootdev(void)
 		 * "rd" -> "hpibbus" -> "fhpib"
 		 * "sd" -> "scsibus" -> "spc"
 		 */
-		for (cdd = dev_data_list_hpib.lh_first, ctlr = 0;
-		    cdd != NULL; cdd = cdd->dd_clist.le_next, ctlr++) {
+		for (cdd = LIST_FIRST(&dev_data_list_hpib), ctlr = 0;
+		    cdd != NULL; cdd = LIST_NEXT(cdd, dd_clist), ctlr++) {
 			if (cdd->dd_dev ==
 			    device_parent(device_parent(root_device))) {
 				/*
@@ -733,9 +731,9 @@ setbootdev(void)
 
  out:
 	/* Don't need this anymore. */
-	for (dd = dev_data_list.lh_first; dd != NULL; ) {
+	for (dd = LIST_FIRST(&dev_data_list); dd != NULL; ) {
 		cdd = dd;
-		dd = dd->dd_list.le_next;
+		dd = LIST_NEXT(dd, dd_list);
 		free(cdd, M_DEVBUF);
 	}
 }
@@ -748,7 +746,8 @@ dev_data_lookup(struct device *dev)
 {
 	struct dev_data *dd;
 
-	for (dd = dev_data_list.lh_first; dd != NULL; dd = dd->dd_list.le_next)
+	for (dd = LIST_FIRST(&dev_data_list); dd != NULL;
+	    dd = LIST_NEXT(dd, dd_list))
 		if (dd->dd_dev == dev)
 			return dd;
 
@@ -770,7 +769,7 @@ dev_data_insert(struct dev_data *dd, ddlist_t *ddlist)
 	}
 #endif
 
-	de = ddlist->lh_first;
+	de = LIST_FIRST(ddlist);
 
 	/*
 	 * Just insert at head if list is empty.
@@ -785,7 +784,7 @@ dev_data_insert(struct dev_data *dd, ddlist_t *ddlist)
 	 * is greater than ours.  When we find it, insert ourselves
 	 * into the list before it.
 	 */
-	for (; de->dd_clist.le_next != NULL; de = de->dd_clist.le_next) {
+	for (; LIST_NEXT(de, dd_clist) != NULL; de = LIST_NEXT(de, dd_clist)) {
 		if (de->dd_scode > dd->dd_scode) {
 			LIST_INSERT_BEFORE(de, dd, dd_clist);
 			return;

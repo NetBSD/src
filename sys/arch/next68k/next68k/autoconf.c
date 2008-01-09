@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2007/03/08 16:37:43 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.19.20.1 2008/01/09 01:47:34 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2007/03/08 16:37:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19.20.1 2008/01/09 01:47:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,8 +159,6 @@ cpu_configure(void)
 
 	INTR_SETMASK(0);
 
-	softintr_init();
-
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("autoconfig failed, no root");
 
@@ -190,7 +188,7 @@ cpu_rootconf(void)
 static struct device *
 getdevunit(const char *name, int unit)
 {
-	struct device *dev = alldevs.tqh_first;
+	struct device *dev = TAILQ_FIRST(&alldevs);
 	char num[10], fullname[16];
 	int lunit;
 	int i;
@@ -209,7 +207,7 @@ getdevunit(const char *name, int unit)
 	strcat(fullname, num);
 
 	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = dev->dv_list.tqe_next) == NULL)
+		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
 			return NULL;
 	}
 	return dev;

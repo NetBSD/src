@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2007/03/11 05:22:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.18.1 2008/01/09 01:45:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -95,18 +95,13 @@
 #define spl7()  _spl(PSL_S|PSL_IPL7)
 
 /* These spl calls are used by machine-independent code. */
-#define	splsoft()	splraise1()
-#define splsoftclock()	splsoft()
-#define splsoftnet()	splsoft()
-#define splbio()	_splraise(ipl2spl_table[IPL_BIO])
-#define splnet()	_splraise(ipl2spl_table[IPL_NET])
-#define spltty()	_splraise(ipl2spl_table[IPL_TTY])
+#define splsoftclock()	splraise1()
+#define splsoftbio()	splraise1()
+#define splsoftnet()	splraise1()
+#define splsoftserial()	splraise1()
 #define splvm()		_splraise(ipl2spl_table[IPL_VM])
-#define splclock()	spl6()
-#define splstatclock()	spl6()
+#define splsched()	spl6()
 #define splhigh()	spl7()
-#define splsched()	spl7()
-#define spllock()	spl7()
 
 /* watch out for side effects */
 #define splx(s)         (s & PSL_IPL ? _spl(s) : spl0())
@@ -115,19 +110,13 @@ int	spl0 __P((void));
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define	IPL_SOFTSERIAL	3
-#define	IPL_SOFT	4
-#define	IPL_BIO		5
-#define	IPL_NET		6
-#define	IPL_TTY		7
-#define	IPL_VM		8
-#define	IPL_CLOCK	9
-#define	IPL_STATCLOCK	10
-#define	IPL_SCHED	11
-#define	IPL_HIGH	12
-#define	IPL_LOCK	13
-#define	NIPL		14
+#define	IPL_SOFTBIO	1
+#define	IPL_SOFTNET	3
+#define	IPL_SOFTSERIAL	4
+#define	IPL_VM		5
+#define	IPL_SCHED	6
+#define	IPL_HIGH	7
+#define	NIPL		8
 
 extern int ipl2spl_table[NIPL];
 

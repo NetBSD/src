@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.8 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: devopen.c,v 1.8.50.1 2008/01/09 01:47:30 matt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -46,13 +46,13 @@ int dkstrategy(void *, int, daddr_t, size_t, void *, size_t *);
 struct devsw devsw[] = {
 	{ "dk", dkstrategy, dkopen, dkclose, noioctl }
 };
-int ndevs = sizeof(devsw) / sizeof(devsw[0]);
+int ndevs = __arraycount(devsw);
 
 struct fs_ops file_system[] = {
 	FS_OPS(ufs),
 	FS_OPS(ustarfs),
 };
-int nfsys = sizeof(file_system) / sizeof(file_system[0]);
+int nfsys = __arraycount(file_system);
 
 struct romdev {
 	int fd;

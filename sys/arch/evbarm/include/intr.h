@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17.20.1 2007/08/30 07:03:55 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.17.20.2 2008/01/09 01:45:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,24 +41,29 @@
 #ifdef _KERNEL
 
 /* Interrupt priority "levels". */
-#define	IPL_NONE	0	/* nothing */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* software clock interrupt */
-#define	IPL_SOFTNET	3	/* software network interrupt */
-#define	IPL_BIO		4	/* block I/O */
-#define	IPL_NET		5	/* network */
-#define	IPL_SOFTSERIAL	6	/* software serial interrupt */
-#define	IPL_TTY		7	/* terminals */
-#define	IPL_VM		8	/* memory allocation */
-#define	IPL_AUDIO	9	/* audio device */
-#define	IPL_CLOCK	10	/* clock interrupt */
-#define	IPL_STATCLOCK	11	/* statistics clock interrupt */
-#define	IPL_HIGH	12	/* everything */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	IPL_SERIAL	13	/* serial device */
+#ifdef __HAVE_FAST_SOFTINTS
+#define	IPL_NONE	0		/* nothing */
+#define	IPL_SOFTCLOCK	1		/* clock */
+#define	IPL_SOFTBIO	2		/* block I/O */
+#define	IPL_SOFTNET	3		/* software network interrupt */
+#define	IPL_SOFTSERIAL	4		/* software serial interrupt */
+#define	IPL_VM		5		/* memory allocation */
+#define	IPL_SCHED	6		/* clock interrupt */
+#define	IPL_HIGH	7		/* everything */
 
-#define	NIPL		14
+#define	NIPL		8
+#else
+#define	IPL_NONE	0		/* nothing */
+#define	IPL_SOFTCLOCK	IPL_NONE	/* clock */
+#define	IPL_SOFTBIO	IPL_NONE	/* block I/O */
+#define	IPL_SOFTNET	IPL_NONE	/* software network interrupt */
+#define	IPL_SOFTSERIAL	IPL_NONE	/* software serial interrupt */
+#define	IPL_VM		1		/* memory allocation */
+#define	IPL_SCHED	2		/* clock interrupt */
+#define	IPL_HIGH	3		/* everything */
+
+#define	NIPL		4
+#endif
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -77,11 +82,14 @@
 
 /* Software interrupt priority levels */
 
+#ifdef __HAVE_FAST_SOFTINTS
 #define SOFTIRQ_CLOCK   0
-#define SOFTIRQ_NET     1
-#define SOFTIRQ_SERIAL  2
+#define SOFTIRQ_BIO     1
+#define SOFTIRQ_NET     2
+#define SOFTIRQ_SERIAL  3
 
 #define SOFTIRQ_BIT(x)  (1 << x)
+#endif
 
 #include <arm/arm32/psl.h>
 
@@ -99,7 +107,9 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #else	/* _LKM */
 
@@ -113,7 +123,6 @@ void	_setsoftintr(int);
  * int	_splraise(int);
  * int	_spllower(int);
  * void	splx(int);
- * void	_setsoftintr(int);
  *
  * These may be defined as functions, static inline functions, or macros,
  * but there must be a _spllower() and splx() defined as functions callable
@@ -149,8 +158,6 @@ void	_setsoftintr(int);
 
 #endif /* _LKM */
 
-#define	splsoft()	_splraise(IPL_SOFT)
-
 typedef uint8_t ipl_t;
 typedef struct {
 	ipl_t _ipl;
@@ -173,11 +180,6 @@ splraiseipl(ipl_cookie_t icookie)
 #define	spl0()		_spllower(IPL_NONE)
 
 #include <sys/spl.h>
-
-#ifndef schednetisr
-/* Use generic software interrupt support. */
-#include <arm/softintr.h>
-#endif
 
 #endif /* ! _LOCORE */
 

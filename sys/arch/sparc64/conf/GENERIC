@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90.2.1 2007/11/06 23:22:39 matt Exp $
+# $NetBSD: GENERIC,v 1.90.2.2 2008/01/09 01:49:01 matt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90.2.1 $"
+#ident 		"GENERIC-$Revision: 1.90.2.2 $"
 
 maxusers	64
 
@@ -50,7 +50,6 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-#options 	SYSTRACE		# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for
@@ -515,6 +514,7 @@ wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
+bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
@@ -797,6 +797,7 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 ubt* at uhub? port ?
 
 ## Bluetooth Device Hub
+#bthub* at bcsp?
 #bthub* at bt3c?
 #bthub* at btbc?
 #bthub* at btuart?
@@ -850,6 +851,9 @@ ffb*		at mainbus0
 # On board vga on U5/U10 etc.
 machfb*		at pci?
 
+# generic PCI framebuffers
+genfb*		at pci?
+
 # make sure the console display is always wsdisplay0
 wsdisplay0	at wsemuldisplaydev? console 1
 wsdisplay*	at wsemuldisplaydev?
@@ -896,6 +900,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 pseudo-device	fss		4	# file system snapshot device
+#pseudo-device	bcsp			# BlueCore Serial Protocol
 #pseudo-device	btuart			# Bluetooth HCI UART (H4)
 
 options		FILEASSOC		# fileassoc(9) - required for Veriexec 

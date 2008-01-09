@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.49.2.1 2007/11/06 23:17:30 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.49.2.2 2008/01/09 01:46:37 matt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -110,8 +110,10 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.49.2.2 2008/01/09 01:46:37 matt Exp $");
+
 #include "opt_compat_oldboot.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_realmem.h"
 #include "opt_vm86.h"
@@ -131,7 +133,6 @@
 #include <machine/trap.h>
 #include <machine/i82489reg.h>
 #include <machine/multiboot.h>
-#include <machine/asm.h>
 #include <machine/frameasm.h>
 #include <machine/i82489reg.h>
 
@@ -723,7 +724,8 @@ ENTRY(longjmp)
 	ret
 
 /*
- * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp)
+ * struct lwp *cpu_switchto(struct lwp *oldlwp, struct newlwp,
+ *			    bool returning)
  *
  *	1. if (oldlwp != NULL), save its context.
  *	2. then, restore context of newlwp.
@@ -739,6 +741,7 @@ ENTRY(cpu_switchto)
 
 	movl	16(%esp),%esi		# oldlwp
 	movl	20(%esp),%edi		# newlwp
+	movl	24(%esp),%edx		# returning
 	testl	%esi,%esi
 	jz	1f
 
@@ -752,20 +755,38 @@ ENTRY(cpu_switchto)
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
-	/* Switch TSS.  Reset "task busy" flag before loading. */
-	movl	%cr3,%eax
-	movl	%eax,PCB_CR3(%ebx)	# for TSS gates
-	movl	CPUVAR(GDT),%eax
-	movl	L_MD_TSS_SEL(%edi),%edx
-	andl	$~0x0200,4(%eax,%edx, 1)
-	ltr	%dx
-
 	/* Set curlwp. */
 	movl	%edi,CPUVAR(CURLWP)
+
+	/* Skip the rest if returning to a pinned LWP. */
+	testl	%edx,%edx
+	jnz	4f
+
+	/* Switch ring0 esp */
+	movl	PCB_ESP0(%ebx),%eax
+	movl	%eax,CPUVAR(ESP0)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%edi)
 	jnz	4f
+
+	/* Restore thread-private %fs/%gs descriptors. */
+	movl	CPUVAR(GDT),%ecx
+	movl	PCB_FSD(%ebx), %eax
+	movl	PCB_FSD+4(%ebx), %edx
+	movl	%eax, (GUFS_SEL*8)(%ecx)
+	movl	%edx, (GUFS_SEL*8+4)(%ecx)
+	movl	PCB_GSD(%ebx), %eax
+	movl	PCB_GSD+4(%ebx), %edx
+	movl	%eax, (GUGS_SEL*8)(%ecx)
+	movl	%edx, (GUGS_SEL*8+4)(%ecx)
+
+	/* Switch I/O bitmap */
+	movl	PCB_IOMAP(%ebx),%eax
+	orl	%eax,%eax
+	jnz,pn	.Lcopy_iobitmap
+	movl	$(IOMAP_INVALOFF << 16),CPUVAR(IOBASE)
+.Liobitmap_done:
 
 	/* Is this process using RAS (restartable atomic sequences)? */
 	movl	L_PROC(%edi),%eax
@@ -813,6 +834,21 @@ ENTRY(cpu_switchto)
 	movl	L_MD_REGS(%edi),%ecx
 	movl	%eax,TF_EIP(%ecx)
 	jmp	2b
+
+.Lcopy_iobitmap:
+	/* Copy I/O bitmap. */
+	movl	$(IOMAPSIZE/4),%ecx
+	pushl	%esi
+	pushl	%edi
+	movl	%eax,%esi		/* pcb_iomap */
+	movl	CPUVAR(SELF),%edi
+	leal	CPU_INFO_IOMAP(%edi),%edi
+	rep
+	movsl
+	popl	%edi
+	popl	%esi
+	movl	$((CPU_INFO_IOMAP - CPU_INFO_TSS) << 16),CPUVAR(IOBASE)
+	jmp	.Liobitmap_done
 
 /*
  * void savectx(struct pcb *pcb);
@@ -896,10 +932,9 @@ syscall1:
 	pushl	$4f
 	call	_C_LABEL(printf)
 	addl	$4,%esp
-#ifdef DDB
-	int	$3
-#endif /* DDB */
-	movl	$IPL_NONE,CPUVAR(ILEVEL)
+	pushl	$IPL_NONE
+	call	_C_LABEL(spllower)
+	addl	$4,%esp
 	jmp	.Lsyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"WARNING: SPL NOT ZERO ON SYSCALL ENTRY\n"

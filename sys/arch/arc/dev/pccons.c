@@ -1,4 +1,4 @@
-/*	$NetBSD: pccons.c,v 1.50.10.1 2007/11/06 23:14:51 matt Exp $	*/
+/*	$NetBSD: pccons.c,v 1.50.10.2 2008/01/09 01:45:07 matt Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.50.10.1 2007/11/06 23:14:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccons.c,v 1.50.10.2 2008/01/09 01:45:07 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -795,7 +795,6 @@ pcioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 void
 pcstart(struct tty *tp)
 {
-	struct clist *cl;
 	int s, len;
 	u_char buf[PCBURST];
 
@@ -808,21 +807,13 @@ pcstart(struct tty *tp)
 	 * We need to do this outside spl since it could be fairly
 	 * expensive and we don't want our serial ports to overflow.
 	 */
-	cl = &tp->t_outq;
 	len = q_to_b(cl, buf, PCBURST);
 	sput(buf, len);
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
 		callout_schedule(&tp->t_rstrt_ch, 1);
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s);

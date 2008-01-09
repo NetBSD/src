@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29.10.1 2007/11/06 23:20:14 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.29.10.2 2008/01/09 01:47:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,48 +33,25 @@
 #ifndef _PMAX_INTR_H_
 #define _PMAX_INTR_H_
 
-#include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFT	1	/* generic software interrupts (SI 0) */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts (SI 0) */
-#define	IPL_SOFTNET	3	/* network software interrupts (SI 1) */
-#define	IPL_SOFTSERIAL	4	/* serial software interrupts (SI 1) */
-#define	IPL_BIO		5	/* disable block I/O interrupts */
-#define	IPL_NET		6	/* disable network interrupts */
-#define	IPL_TTY		7	/* disable terminal interrupts */
-#define	IPL_VM		8
-#define	IPL_SERIAL	IPL_TTY	/* disable serial interrupts */
-#define	IPL_CLOCK	9	/* disable clock interrupts */
-#define	IPL_STATCLOCK	10
-#define	IPL_HIGH	IPL_STATCLOCK /* disable all interrupts */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
+#define	IPL_SOFTCLOCK	1	/* clock software interrupts (SI 0) */
+#define	IPL_SOFTBIO	1	/* generic software interrupts (SI 0) */
+#define	IPL_SOFTNET	2	/* network software interrupts (SI 1) */
+#define	IPL_SOFTSERIAL	2	/* serial software interrupts (SI 1) */
+#define	IPL_VM		3
+#define	IPL_SCHED	4
+#define	IPL_HIGH	5
 
-#define	_IPL_N		11
+#define	_IPL_N		6
 
-#define	_IPL_SI0_FIRST	IPL_SOFT
-#define	_IPL_SI0_LAST	IPL_SOFTCLOCK
+#define	_IPL_SI0_FIRST	IPL_SOFTCLOCK
+#define	_IPL_SI0_LAST	IPL_SOFTBIO
 
 #define	_IPL_SI1_FIRST	IPL_SOFTNET
 #define	_IPL_SI1_LAST	IPL_SOFTSERIAL
-
-/* Soft interrupt numbers. */
-#define	SI_SOFT		0	/* generic software interrupts */
-#define	SI_SOFTSERIAL	1	/* serial software interrupts */
-#define	SI_SOFTNET	2	/* network software interrupts */
-#define	SI_SOFTCLOCK	3	/* clock software interrupts */
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"misc",								\
-	"serial",							\
-	"net",								\
-	"clock",							\
-}
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -82,27 +59,19 @@
 #include <mips/cpuregs.h>
 #include <mips/locore.h>
 
-#define splhigh()	_splraise(MIPS_INT_MASK)
 #define spl0()		(void)_spllower(0)
 #define splx(s)		(void)_splset(s)
-#define splbio()	splraiseipl(makeiplcookie(IPL_BIO))
-#define splnet()	splraiseipl(makeiplcookie(IPL_NET))
-#define spltty()	splraiseipl(makeiplcookie(IPL_TTY))
-#define	splserial()	spltty()
 #define splvm()		splraiseipl(makeiplcookie(IPL_VM))
-#define splclock()	splraiseipl(makeiplcookie(IPL_CLOCK))
-#define splstatclock()	splraiseipl(makeiplcookie(IPL_STATCLOCK))
-
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
+#define splsched()	splraiseipl(makeiplcookie(IPL_SCHED))
+#define splhigh()	_splraise(MIPS_INT_MASK)
 
 #define	_SPL_SOFT	MIPS_SOFT_INT_MASK_0
 #define	_SPL_SOFTCLOCK	MIPS_SOFT_INT_MASK_0
 #define	_SPL_SOFTNET	(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 #define	_SPL_SOFTSERIAL	(MIPS_SOFT_INT_MASK_0|MIPS_SOFT_INT_MASK_1)
 
-#define splsoft()	_splraise(_SPL_SOFT)
 #define splsoftclock()	_splraise(_SPL_SOFTCLOCK)
+#define splsoftbio()	_splraise(_SPL_SOFTBIO)
 #define splsoftnet()	_splraise(_SPL_SOFTNET)
 #define splsoftserial()	_splraise(_SPL_SOFTSERIAL)
 
@@ -152,7 +121,6 @@ extern struct intrhand intrtab[];
 #define SYS_DEV_FDC	9
 #define SYS_DEV_BOGUS	-1
 #define MAX_DEV_NCOOKIES 10
-
 
 struct pmax_intrhand {
 	LIST_ENTRY(pmax_intrhand) ih_q;

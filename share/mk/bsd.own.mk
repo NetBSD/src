@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.496.4.1 2007/11/06 23:13:21 matt Exp $
+#	$NetBSD: bsd.own.mk,v 1.496.4.2 2008/01/09 01:39:26 matt Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -212,6 +212,7 @@ TOOL_AMIGAAOUT2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-aout2bb
 TOOL_AMIGAELF2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-elf2bb
 TOOL_AMIGATXLT=		${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-txlt
 TOOL_ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
+TOOL_ATF_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}atf-compile
 TOOL_BEBOXELF2PEF=	${TOOLDIR}/bin/${_TOOL_PREFIX}bebox-elf2pef
 TOOL_BEBOXMKBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}bebox-mkbootimage
 TOOL_CAP_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb

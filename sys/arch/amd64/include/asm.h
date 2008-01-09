@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7.24.1 2007/11/06 23:14:15 matt Exp $	*/
+/*	$NetBSD: asm.h,v 1.7.24.2 2008/01/09 01:44:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,7 @@
 # ifdef _STANDALONE
 #  define _ALIGN_TEXT .align 4
 # else
-#  define _ALIGN_TEXT .align 32
+#  define _ALIGN_TEXT .align 16
 # endif
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: xboxfb.c,v 1.10 2007/03/04 06:00:02 christos Exp $ */
+/*	$NetBSD: xboxfb.c,v 1.10.20.1 2008/01/09 01:46:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xboxfb.c,v 1.10.20.1 2008/01/09 01:46:52 matt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

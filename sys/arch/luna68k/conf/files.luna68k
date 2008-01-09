@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.18 2007/03/04 02:23:16 tsutsui Exp $
+#	$NetBSD: files.luna68k,v 1.18.20.1 2008/01/09 01:46:58 matt Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -19,7 +19,6 @@ file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file arch/m68k/m68k/pmap_motorola.c
 file arch/m68k/m68k/procfs_machdep.c	procfs
-file arch/m68k/m68k/softintr.c
 file arch/m68k/m68k/sys_machdep.c
 file arch/m68k/m68k/vm_machdep.c
 file dev/cons.c

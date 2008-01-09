@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.obj.mk,v 1.47 2006/11/26 20:09:57 dsl Exp $
+#	$NetBSD: bsd.obj.mk,v 1.47.8.1 2008/01/09 01:39:25 matt Exp $
 
 .if !defined(_BSD_OBJ_MK_)
 _BSD_OBJ_MK_=1
@@ -61,7 +61,7 @@ __need_objdir_target=yes
 .endif
 
 .if defined(__need_objdir_target)
-# Get make to change it's internal definition of .OBJDIR
+# Get make to change its internal definition of .OBJDIR
 .OBJDIR:	${__objdir}
 .endif
 

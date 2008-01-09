@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.files.mk,v 1.37 2004/05/17 12:58:17 lukem Exp $
+#	$NetBSD: bsd.files.mk,v 1.37.16.1 2008/01/09 01:39:25 matt Exp $
 
 .if !defined(_BSD_FILES_MK_)
 _BSD_FILES_MK_=1
@@ -113,7 +113,7 @@ cleanbuildsymlinks: .PHONY
 # UUDECODE_FILES -	List of files which are stored in the source tree
 #			as <file>.uue and should be uudecoded.
 #
-# UUDECODE_FILES_RENAME_fn - For this file, rename it's output to the provided
+# UUDECODE_FILES_RENAME_fn - For this file, rename its output to the provided
 #			     name (handled via -p and redirecting stdout)
 
 .if defined(UUDECODE_FILES)					# {

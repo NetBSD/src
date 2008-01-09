@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.23.10.1 2007/11/06 23:21:52 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.23.10.2 2008/01/09 01:48:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -36,43 +36,21 @@
 #define	_SGIMIPS_INTR_H_
 
 #define	IPL_NONE	0	/* Disable only this interrupt. */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTSERIAL	2	/* serial software interrupts */
-#define	IPL_SOFTNET	3	/* network software interrupts */
-#define	IPL_SOFTCLOCK	4	/* clock software interrupts */
-#define	IPL_BIO		5	/* Disable block I/O interrupts. */
-#define	IPL_NET		6	/* Disable network interrupts. */
-#define	IPL_TTY		7	/* Disable terminal interrupts. */
-#define	IPL_SERIAL	IPL_TTY
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		IPL_TTY
-#define	IPL_CLOCK	8	/* Disable clock interrupts. */
-#define	IPL_STATCLOCK	IPL_CLOCK /* Disable profiling interrupts. */
-#define	IPL_HIGH	9	/* Disable all interrupts. */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define NIPL		10
+#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
+#define	IPL_SOFTBIO	1	/* serial software interrupts */
+#define	IPL_SOFTNET	1	/* network software interrupts */
+#define	IPL_SOFTSERIAL	1	/* clock software interrupts */
+#define	IPL_VM		2
+#define	IPL_SCHED	3
+#define	IPL_HIGH	4
+
+#define NIPL		5
 
 /* Interrupt sharing types. */
 #define IST_NONE	0	/* none */
 #define IST_PULSE	1	/* pulsed */
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
-
-/* Soft interrupt numbers */
-#define	SI_SOFT		0
-#define	SI_SOFTCLOCK	1
-#define	SI_SOFTNET	2
-#define	SI_SOFTSERIAL	3
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"misc",								\
-	"clock",							\
-	"net",								\
-	"serial",							\
-}
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -106,25 +84,16 @@ extern struct sgimips_intrhand intrtab[];
 
 extern const int *ipl2spl_table;
 
-#define splhigh()	_splraise(MIPS_INT_MASK)
 #define spl0()		(void)_spllower(0)
 #define splx(s)		(void)_splset(s)
-#define splbio()	_splraise(ipl2spl_table[IPL_BIO])
-#define splnet()	_splraise(ipl2spl_table[IPL_NET])
-#define spltty()	_splraise(ipl2spl_table[IPL_TTY])
-#define splvm()		spltty()
-#define splclock()	_splraise(ipl2spl_table[IPL_CLOCK])
-#define splstatclock()	splclock()
+#define splvm()		_splraise(ipl2spl_table[IPL_VM])
+#define splsched()	_splraise(ipl2spl_table[IPL_SCHED])
+#define splhigh()	_splraise(MIPS_INT_MASK)
 
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
-#define splserial()	spltty()
-#define spllpt()	spltty()
-
-#define splsoft()	_splraise(MIPS_SOFT_INT_MASK_1)
-#define splsoftclock()	splsoft()
-#define splsoftnet()	splsoft()
-#define splsoftserial()	splsoft()
+#define splsoftclock()	_splraise(MIPS_SOFT_INT_MASK_1)
+#define splsoftbio()	splsoftclock()
+#define splsoftnet()	splsoftclock()
+#define splsoftserial()	splsoftclock()
 
 extern void *		cpu_intr_establish(int, int, int (*)(void *), void *);
 

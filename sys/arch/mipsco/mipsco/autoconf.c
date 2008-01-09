@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2006/03/28 17:38:25 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.38.1 2008/01/09 01:47:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2006/03/28 17:38:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.38.1 2008/01/09 01:47:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ cpu_configure()
 {
   	int s;
 
-	softintr_init();
 	/*
 	 * Kick off autoconfiguration
 	 */

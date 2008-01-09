@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.12.10.2 2007/11/08 10:59:37 matt Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.12.10.3 2008/01/09 01:47:10 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -61,9 +61,11 @@ void identifycpu(char *);
 
 /* these are in machdep.c */
 void initppc(u_int, u_int, char *);
+void model_init(void);
 void *mapiodev(paddr_t, psize_t);
 paddr_t kvtop(void *);
 void dumpsys(void);
+void copy_disp_props(struct device *, int, prop_dictionary_t);
 
 /* these are in extintr.c */
 void init_interrupt(void);
@@ -75,9 +77,10 @@ int adbkbd_cnattach(void);
 
 /* these are in dev/ofb.c */
 int ofb_is_console(void);
-int ofb_cnattach(void);
+int rascons_cnattach(void);
 
 extern int console_node;
 extern int console_instance;
+extern char model_name[64];
 
 #endif /* _MACHINE_AUTOCONF_H_ */

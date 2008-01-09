@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.1 2007/07/26 02:25:14 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.1.12.1 2008/01/09 01:48:43 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -49,10 +49,10 @@
 #define		CRMFB_VT_INTR23_EN		0xffffffff
 #define CRMFB_VT_VPIX_EN	0x00010038
 #define		CRMFB_VT_VPIX_EN_OFF_SHIFT	0
-#define CRMFB_VT_VCMAP		0x0001003c
-#define		CRMFB_VT_VCMAP_ON_SHIFT		12
-#define CRMFB_VT_HCMAP		0x00010040
+#define CRMFB_VT_HCMAP		0x0001003c
 #define		CRMFB_VT_HCMAP_ON_SHIFT		12
+#define CRMFB_VT_VCMAP		0x00010040
+#define		CRMFB_VT_VCMAP_ON_SHIFT		12
 #define CRMFB_OVR_WIDTH_TILE	0x00020000
 #define CRMFB_OVR_CONTROL	0x00020008
 #define		CRMFB_OVR_CONTROL_DMAEN_SHIFT	0

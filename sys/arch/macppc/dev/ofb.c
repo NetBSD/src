@@ -1,4 +1,4 @@
-/*	$NetBSD: ofb.c,v 1.61.2.1 2007/11/06 23:18:38 matt Exp $	*/
+/*	$NetBSD: ofb.c,v 1.61.2.2 2008/01/09 01:47:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.61.2.1 2007/11/06 23:18:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.61.2.2 2008/01/09 01:47:09 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofb.c,v 1.61.2.1 2007/11/06 23:18:38 matt Exp $");
 
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
-#include <macppc/dev/ofbvar.h>
+#include <powerpc/oea/ofw_rasconsvar.h>
 
 struct ofb_softc {
 	struct	device sc_dev;
@@ -91,7 +91,7 @@ CFATTACH_DECL(ofb, sizeof(struct ofb_softc),
     ofbmatch, ofbattach, NULL, NULL);
 
 const struct wsscreen_descr *_ofb_scrlist[] = {
-	&ofb_stdscreen,
+	&rascons_stdscreen,
 	/* XXX other formats, graphics screen? */
 };
 
@@ -147,7 +147,7 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	struct ofb_softc *sc = (struct ofb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args a;
-	struct rasops_info *ri = &ofb_console_screen.scr_ri;
+	struct rasops_info *ri = &rascons_console_screen.scr_ri;
 	long defattr;
 	int console, node, sub;
 	char devinfo[256];
@@ -180,14 +180,14 @@ ofbattach(struct device *parent, struct device *self, void *aux)
 	if (!console)
 		return;
 	
-	vcons_init(&sc->vd, sc, &ofb_stdscreen, &ofb_accessops);
+	vcons_init(&sc->vd, sc, &rascons_stdscreen, &ofb_accessops);
 	sc->vd.init_screen = ofb_init_screen;
 
 	sc->sc_node = console_node;
 
 	sc->sc_ih = console_instance;
-	vcons_init_screen(&sc->vd, &ofb_console_screen, 1, &defattr);
-	ofb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+	vcons_init_screen(&sc->vd, &rascons_console_screen, 1, &defattr);
+	rascons_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	
 	printf("%s: %d x %d, %dbpp\n", self->dv_xname,
 	       ri->ri_width, ri->ri_height, ri->ri_depth);
@@ -237,8 +237,8 @@ ofb_init_screen(void *cookie, struct vcons_screen *scr,
 	struct ofb_softc *sc = cookie;
 	struct rasops_info *ri = &scr->scr_ri;
 	
-	if (scr != &ofb_console_screen) {
-		ofb_init_rasops(sc->sc_node, ri); 
+	if (scr != &rascons_console_screen) {
+		rascons_init_rasops(sc->sc_node, ri); 
 	}
 }
 
@@ -450,7 +450,7 @@ ofb_init_cmap(struct ofb_softc *sc)
 {
 	int idx, i;
 	/* mess with the palette only when we're running in 8 bit */
-	if (ofb_console_screen.scr_ri.ri_depth == 8) {
+	if (rascons_console_screen.scr_ri.ri_depth == 8) {
 		idx = 0;
 		for (i = 0; i < 256; i++) {
 			ofb_putpalreg(sc, i, rasops_cmap[(i * 3) + 0],

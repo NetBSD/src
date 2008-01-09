@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.16.10.1 2007/11/06 23:17:04 matt Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.16.10.2 2008/01/09 01:46:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -111,11 +111,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.10.1 2007/11/06 23:17:04 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.16.10.2 2008/01/09 01:46:22 matt Exp $");
 
 #include "opt_compat_netbsd.h"
-
-#define __HPPA_SIGNAL_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +149,9 @@ getframe(struct lwp *l, int sig, int *onstack)
 	*onstack = (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
 	    && (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 	if (*onstack)
-		return (void *)l->l_sigstk.ss_sp;
+		return (void *)HPPA_FRAME_ROUND(l->l_sigstk.ss_sp);
 	else
-		return (void *)tf->tf_sp;
+		return (void *)HPPA_FRAME_ROUND(tf->tf_sp);
 }
 
 struct sigframe_siginfo {
@@ -217,13 +215,13 @@ sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
 	tf->tf_arg2 = (__greg_t)&fp->sf_uc;
 	tf->tf_r3 = (__greg_t)&fp->sf_uc;
 
+	fp++;
 	tf->tf_iisq_head = tf->tf_iisq_tail = l->l_addr->u_pcb.pcb_space;
 	tf->tf_iioq_head =
 		(__greg_t)ps->sa_sigdesc[sig].sd_tramp | HPPA_PC_PRIV_USER;
 	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
 	tf->tf_arg3 = (__greg_t)catcher;
-	tf->tf_sp = HPPA_FRAME_ROUND((uintptr_t)fp + sizeof(*fp) +
-				     HPPA_FRAME_SIZE);
+	tf->tf_sp = HPPA_FRAME_ROUND(fp);
 
 	/* Remember that we're now on the signal stack. */
 	if (onstack)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiic_opb.c,v 1.4 2006/06/26 18:21:38 drochner Exp $	*/
+/*	$NetBSD: gpiic_opb.c,v 1.4.34.1 2008/01/09 01:47:48 matt Exp $	*/
 
 /*
  * Copyright 2002, 2003 Wasabi Systems, Inc.
@@ -41,9 +41,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/errno.h>
-#include <sys/lock.h>
-
-#include <machine/cpu.h>
+#include <sys/mutex.h>
+#include <sys/cpu.h>
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
@@ -58,7 +57,7 @@ struct gpiic_softc {
 	uint8_t sc_txen;
 	struct i2c_controller sc_i2c;
 	struct i2c_bitbang_ops sc_bops;
-	struct lock sc_buslock;
+	kmutex_t sc_buslock;
 };
 
 static int	gpiic_match(struct device *, struct cfdata *, void *);
@@ -103,7 +102,7 @@ gpiic_attach(struct device *parent, struct device *self, void *args)
 
 	bus_space_map(sc->sc_bust, oaa->opb_addr, IIC_NREG, 0, &sc->sc_bush);
 
-	lockinit(&sc->sc_buslock, PRIBIO|PCATCH, "gpiiclk", 0, 0);
+	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_txen = 0;
 	sc->sc_i2c.ic_cookie = sc;
@@ -146,7 +145,8 @@ gpiic_acquire_bus(void *arg, int flags)
 	if (flags & I2C_F_POLL)
 		return (0);
 
-	return (lockmgr(&sc->sc_buslock, LK_EXCLUSIVE, NULL));
+	mutex_enter(&sc->sc_buslock);
+	return (0);
 }
 
 static void
@@ -157,7 +157,7 @@ gpiic_release_bus(void *arg, int flags)
 	if (flags & I2C_F_POLL)
 		return;
 
-	(void) lockmgr(&sc->sc_buslock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_buslock);
 }
 
 static int

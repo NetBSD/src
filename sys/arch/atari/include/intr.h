@@ -1,7 +1,7 @@
-/*	$NetBSD: intr.h,v 1.15 2007/03/21 10:56:27 tsutsui Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.14.1 2008/01/09 01:45:32 matt Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,21 +38,13 @@
 
 #define	IPL_NONE	0		    /* disable no interrupts	    */
 #define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define	IPL_SOFTSERIAL	3
-#define	IPL_SOFT	4
-#define	IPL_BIO		5		    /* disable block I/O interrupts */
-#define	IPL_NET		6		    /* disable network interrupts   */
-#define	IPL_TTY		7		    /* disable terminal interrupts  */
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		8
-#define	IPL_SERIAL	9
-#define	IPL_CLOCK	10		    /* disable clock interrupts	    */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_HIGH	11		    /* disable all interrupts	    */
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
-#define	NIPL		12
+#define	IPL_SOFTBIO	2
+#define	IPL_SOFTNET	3
+#define	IPL_SOFTSERIAL	4
+#define	IPL_VM		5
+#define	IPL_SCHED	6
+#define	IPL_HIGH	7
+#define	NIPL		8
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used	*/
 #define	IST_NONE	0	/* none (dummy)			*/
@@ -67,26 +59,13 @@
 
 /* spl0 requires checking for software interrupts */
 
-#define splnone()		spl0()
-
-#define splsoft()		splraise1()
-#define splsoftclock()		splsoft()
-#define splsoftnet()		splsoft()
-#define splsoftserial()		splsoft()
-
-#define splbio()		splraise3()
-#define splnet()		splraise3()
-#define spltty()		splraise4()
+#define splsoftclock()		splraise1()
+#define splsoftbio()		splraise1()
+#define splsoftnet()		splraise1()
+#define splsoftserial()		splraise1()
 #define splvm()			splraise4()
-
-#define spllpt()		spltty()
-
-#define splclock()		splraise6()
-#define splstatclock()		splraise6()
+#define splsched()		splraise6()
 #define splhigh()		spl7()
-#define splsched()		spl7()
-#define spllock()		spl7()
-
 #define splx(s)			((s) & PSL_IPL ? _spl(s) : spl0())
 
 #ifdef _KERNEL
@@ -105,8 +84,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 	return _splraise(icookie._psl);
 }
-
-#include <m68k/softintr.h>
 
 #endif /* _KERNEL */
 

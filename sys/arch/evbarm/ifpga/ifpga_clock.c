@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.10 2005/12/24 20:06:59 perry Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.10.50.1 2008/01/09 01:45:46 matt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,7 +39,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.10 2005/12/24 20:06:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.10.50.1 2008/01/09 01:45:46 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -283,7 +283,7 @@ cpu_initclocks()
 
 	/* Set up timer 2 as statclk/profclk. */
 	ifpga_sc->sc_statclockintr = ifpga_intr_establish(IFPGA_TIMER2_IRQ,
-	    IPL_STATCLOCK, statclockhandler, 0);
+	    IPL_HIGH, statclockhandler, 0);
 	if (ifpga_sc->sc_statclockintr == NULL)
 		panic("%s: Cannot install timer 2 interrupt handler",
 		    ifpga_sc->sc_dev.dv_xname);

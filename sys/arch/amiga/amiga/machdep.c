@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.205.10.1 2007/11/06 23:14:24 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205.10.2 2008/01/09 01:44:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -85,7 +85,7 @@
 #include "opt_panicbutton.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205.10.1 2007/11/06 23:14:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205.10.2 2008/01/09 01:44:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205.10.1 2007/11/06 23:14:24 matt Exp 
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
-
+#include <sys/cpu.h>
 #include <sys/exec.h>
 
 #if defined(DDB) && defined(__ELF__)
@@ -117,7 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205.10.1 2007/11/06 23:14:24 matt Exp 
 
 #include <sys/exec_aout.h>
 
-#include <net/netisr.h>
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
@@ -129,7 +128,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205.10.1 2007/11/06 23:14:24 matt Exp 
 #include <ddb/db_sym.h>
 #include <ddb/db_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
@@ -155,9 +153,7 @@ vm_offset_t reserve_dumppages(vm_offset_t);
 void dumpsys(void);
 void initcpu(void);
 void straytrap(int, u_short);
-static void netintr(void);
 static void call_sicallbacks(void);
-static void _softintr_callit(void *, void *);
 void intrhand(int);
 #if NSER > 0
 void ser_outintr(void);
@@ -769,39 +765,6 @@ dumpsys()
 	delay(5000000);		/* 5 seconds */
 }
 
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time since the last clock interrupt (clock.c:clkread).
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for fun,
- * we guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-void
-microtime(tvp)
-	register struct timeval *tvp;
-{
-	int s = spl7();
-	static struct timeval lasttime;
-
-	*tvp = time;
-	tvp->tv_usec += clkread();
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-
 void
 initcpu()
 {
@@ -982,23 +945,6 @@ badbaddr(addr)
 	return(0);
 }
 
-static void
-netintr()
-{
-
-#define DONETISR(bit, fn) do {		\
-	if (netisr & (1 << bit)) {	\
-		netisr &= ~(1 << bit);	\
-		fn();			\
-	}				\
-} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-
-
 /*
  * this is a handy package to have asynchronously executed
  * function calls executed at very low interrupt priority.
@@ -1028,59 +974,6 @@ static int ncb;		/* number of callback blocks allocated */
 static int ncbd;	/* number of callback blocks dynamically allocated */
 #endif
 
-/*
- * these are generic soft interrupt wrappers; will be replaced
- * once by the real thing once all drivers are converted.
- *
- * to help performance for converted drivers, the YYY_sicallback() function
- * family can be implemented in terms of softintr_XXX() as an intermediate
- * measure.
- */
-
-static void
-_softintr_callit(rock1, rock2)
-	void *rock1, *rock2;
-{
-	struct softintr *si = rock1;
-
-	si->pending = 0;
-	si->function(si->arg);
-}
-
-void *
-softintr_establish(ipl, func, arg)
-	int ipl;
-	void func(void *);
-	void *arg;
-{
-	struct softintr *si;
-
-	si = malloc(sizeof *si, M_TEMP, M_NOWAIT);
-	if (si == NULL)
-		return si;
-
-	si->pending = 0;
-	si->function = func;
-	si->arg = arg;
-
-	alloc_sicallback();
-	return ((void *)si);
-}
-
-void
-softintr_disestablish(hook)
-	void *hook;
-{
-	/*
-	 * XXX currently, there is a memory leak here; we can't free the
-	 * sicallback structure.
-	 * this will be automatically repaired once we rewrite the soft
-	 * interrupt functions.
-	 */
-
-	free(hook, M_TEMP);
-}
-
 void
 alloc_sicallback()
 {
@@ -1097,18 +990,6 @@ alloc_sicallback()
 #ifdef DIAGNOSTIC
 	++ncb;
 #endif
-}
-
-void
-softintr_schedule(vsi)
-	void *vsi;
-{
-	struct softintr *si = vsi;
-
-	if (si->pending == 0) {
-		si->pending = 1;
-		add_sicallback(_softintr_callit, si, NULL);
-	}
 }
 
 void
@@ -1349,6 +1230,8 @@ remove_isr(isr)
 	}
 }
 
+static int idepth;
+
 void
 intrhand(sr)
 	int sr;
@@ -1357,6 +1240,7 @@ intrhand(sr)
 	register unsigned short ireq;
 	register struct isr **p, *q;
 
+	idepth++;
 	ipl = (sr >> 8) & 7;
 #ifdef REALLYDEBUG
 	printf("intrhand: got int. %d\n", ipl);
@@ -1407,13 +1291,6 @@ intrhand(sr)
 			ssir_active = ssir;
 			siroff(SIR_NET | SIR_CBACK);
 			splx(s);
-			if (ssir_active & SIR_NET) {
-#ifdef REALLYDEBUG
-				printf("calling netintr\n");
-#endif
-				uvmexp.softs++;
-				netintr();
-			}
 			if (ssir_active & SIR_CBACK) {
 #ifdef REALLYDEBUG
 				printf("calling softcallbacks\n");
@@ -1505,6 +1382,14 @@ intrhand(sr)
 #ifdef REALLYDEBUG
 	printf("intrhand: leaving.\n");
 #endif
+	idepth--;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)

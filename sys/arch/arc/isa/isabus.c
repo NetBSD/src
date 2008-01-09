@@ -1,4 +1,4 @@
-/*	$NetBSD: isabus.c,v 1.39.10.1 2007/11/06 23:14:53 matt Exp $	*/
+/*	$NetBSD: isabus.c,v 1.39.10.2 2008/01/09 01:45:08 matt Exp $	*/
 /*	$OpenBSD: isabus.c,v 1.15 1998/03/16 09:38:46 pefo Exp $	*/
 /*	NetBSD: isa.c,v 1.33 1995/06/28 04:30:51 cgd Exp 	*/
 
@@ -120,7 +120,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.39.10.1 2007/11/06 23:14:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isabus.c,v 1.39.10.2 2008/01/09 01:45:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -269,30 +269,20 @@ intr_calculatemasks(void)
 
 	imask[IPL_NONE] = 0;
 
-	imask[IPL_SOFT] |= imask[IPL_NONE];
-	imask[IPL_SOFTCLOCK] |= imask[IPL_SOFT];
+	imask[IPL_SOFTCLOCK] |= imask[IPL_NONE];
 	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_SOFTNET];
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-	imask[IPL_BIO] |= imask[IPL_SOFTSERIAL];
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_TTY] |= imask[IPL_NET];
+	imask[IPL_VM] |= imask[IPL_SOFTNET];
 
 	/*
 	 * Since run queues may be manipulated by both the statclock and tty,
 	 * network, and diskdrivers, clock > tty.
 	 */
-	imask[IPL_CLOCK] |= imask[IPL_TTY];
-	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
-
-	/*
-	 * IPL_HIGH must block everything that can manipulate a run queue.
-	 */
-	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
+	imask[IPL_SCHED] |= imask[IPL_VM];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {

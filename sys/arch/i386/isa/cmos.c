@@ -1,4 +1,4 @@
-/* $Id: cmos.c,v 1.1 2007/02/06 07:29:00 dyoung Exp $ */
+/*	$NetBSD: cmos.c,v 1.1.28.1 2008/01/09 01:46:44 matt Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -63,6 +63,10 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.1.28.1 2008/01/09 01:46:44 matt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

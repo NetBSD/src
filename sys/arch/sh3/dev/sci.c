@@ -1,4 +1,4 @@
-/* $NetBSD: sci.c,v 1.47.10.1 2007/11/06 23:21:57 matt Exp $ */
+/* $NetBSD: sci.c,v 1.47.10.2 2008/01/09 01:48:45 matt Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.47.10.1 2007/11/06 23:21:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.47.10.2 2008/01/09 01:48:45 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_sci.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.47.10.1 2007/11/06 23:21:57 matt Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 
@@ -124,7 +125,6 @@ __KERNEL_RCSID(0, "$NetBSD: sci.c,v 1.47.10.1 2007/11/06 23:21:57 matt Exp $");
 #include <sh3/pfcreg.h>
 #include <sh3/tmureg.h>
 #include <sh3/exception.h>
-#include <machine/intr.h>
 
 static void	scistart(struct tty *);
 static int	sciparam(struct tty *, struct termios *);
@@ -406,7 +406,7 @@ sci_attach(struct device *parent, struct device *self, void *aux)
 	intc_intr_establish(SH_INTEVT_SCI_TEI, IST_LEVEL, IPL_SERIAL, sciintr,
 	    sc);
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, scisoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, scisoft, sc);
 	SET(sc->sc_hwflags, SCI_HW_DEV_OK);
 
 	tp = ttymalloc();
@@ -440,16 +440,8 @@ scistart(struct tty *tp)
 		goto out;
 	if (sc->sc_tx_stopped)
 		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -849,7 +841,7 @@ sci_schedrx(struct sci_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 }
 
 void
@@ -1281,7 +1273,7 @@ sciintr(void *arg)
 	}
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_SCI)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);

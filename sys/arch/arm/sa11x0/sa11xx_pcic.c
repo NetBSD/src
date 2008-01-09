@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11xx_pcic.c,v 1.9.12.1 2007/11/06 23:15:09 matt Exp $	*/
+/*	$NetBSD: sa11xx_pcic.c,v 1.9.12.2 2008/01/09 01:45:25 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 IWAMOTO Toshihiro.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.9.12.1 2007/11/06 23:15:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.9.12.2 2008/01/09 01:45:25 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,10 +45,10 @@ __KERNEL_RCSID(0, "$NetBSD: sa11xx_pcic.c,v 1.9.12.1 2007/11/06 23:15:09 matt Ex
 #include <sys/kernel.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
-#include <uvm/uvm.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
+#include <uvm/uvm.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciavar.h>
@@ -122,6 +122,8 @@ sapcic_kthread_create(void *arg)
 
 	/* XXX attach card if already present */
 
+	mutex_init(&so->sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	so->laststatus = (so->pcictag->read)(so, SAPCIC_STATUS_CARD);
 	if (so->laststatus == SAPCIC_CARD_VALID) {
 		printf("%s: card present\n",
@@ -149,7 +151,7 @@ sapcic_event_thread(void *arg)
 		 * Serialize event processing on the PCIC.  We may
 		 * sleep while we hold this lock.
 		 */
-		(void) lockmgr(&so->sc->sc_lock, LK_EXCLUSIVE, NULL);
+		mutex_enter(&so->sc->sc_lock);
 
 		/* sleep .25s to be enqueued chatterling interrupts */
 		(void) tsleep(sapcic_event_thread, PWAIT, "pcicss", hz / 4);
@@ -165,7 +167,7 @@ sapcic_event_thread(void *arg)
 			/*
 			 * No events to process; release the PCIC lock.
 			 */
-			(void) lockmgr(&so->sc->sc_lock, LK_RELEASE, NULL);
+			mutex_exit(&so->sc->sc_lock);
 			(void) tsleep(&so->event, PWAIT, "pcicev", hz);
 			continue;
 		}
@@ -191,7 +193,7 @@ sapcic_event_thread(void *arg)
 			    newstatus);
 		}
 
-		(void) lockmgr(&so->sc->sc_lock, LK_RELEASE, NULL);
+		mutex_exit(&so->sc->sc_lock);
 	}
 
 	so->event_thread = NULL;

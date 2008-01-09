@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32.28.1 2007/11/06 23:15:15 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32.28.2 2008/01/09 01:45:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32.28.1 2007/11/06 23:15:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32.28.2 2008/01/09 01:45:28 matt Exp $");
 
 #ifndef DISKLABEL_NBDA
 #define	DISKLABEL_NBDA	/* required */
@@ -234,7 +234,8 @@ writedisklabel(dev, strat, lp, clp)
 		bb->bb_magic = (blk == 0) ? NBDAMAGIC : AHDIMAGIC;
 		BBSETLABEL(bb, lp);
 
-		bp->b_flags    &= ~(B_READ|B_DONE);
+		bp->b_oflags   &= ~(BO_DONE);
+		bp->b_flags    &= ~(B_READ);
 		bp->b_flags    |= B_WRITE;
 		bp->b_bcount   = BBMINSIZE;
 		bp->b_blkno    = blk;

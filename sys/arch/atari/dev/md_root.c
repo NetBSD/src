@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.23.6.1 2007/11/06 23:15:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.23.6.2 2008/01/09 01:45:31 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -157,7 +157,7 @@ struct md_conf		*md;
 dev_t			ld_dev;
 struct lwp		*lwp;
 {
-	struct buf		buf;
+	struct buf		*buf;
 	int			error;
 	const struct bdevsw	*bdp;
 	struct disklabel	dl;
@@ -170,17 +170,16 @@ struct lwp		*lwp;
 	/*
 	 * Initialize our buffer header:
 	 */
-	memset(&buf, 0, sizeof(buf));
-	buf.b_vnbufs.le_next = NOLIST;
-	buf.b_flags = B_BUSY;
-	buf.b_dev   = ld_dev;
-	buf.b_error = 0;
-	buf.b_proc  = lwp->l_proc;
+	buf = getiobuf(NULL, false);
+	buf->b_cflags = BC_BUSY;
+	buf->b_dev   = ld_dev;
+	buf->b_error = 0;
+	buf->b_proc  = lwp->l_proc;
 
 	/*
 	 * Setup read_info:
 	 */
-	rs.bp       = &buf;
+	rs.bp       = buf;
 	rs.nbytes   = md->md_size;
 	rs.offset   = 0;
 	rs.bufp     = md->md_addr;
@@ -192,8 +191,10 @@ struct lwp		*lwp;
 	/*
 	 * Open device and try to get some statistics.
 	 */
-	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, lwp)) != 0)
+	if((error = bdp->d_open(ld_dev, FREAD | FNONBLOCK, 0, lwp)) != 0) {
+		putiobuf(buf);
 		return(error);
+	}
 	if(bdp->d_ioctl(ld_dev, DIOCGDINFO, (void *)&dl, FREAD, lwp) == 0) {
 		/* Read on a cylinder basis */
 		rs.chunk    = dl.d_secsize * dl.d_secpercyl;
@@ -208,6 +209,7 @@ struct lwp		*lwp;
 		error = ramd_norm_read(&rs);
 
 	bdp->d_close(ld_dev,FREAD | FNONBLOCK, 0, lwp);
+	putiobuf(buf);
 	return(error);
 }
 
@@ -218,7 +220,6 @@ struct read_info	*rsp;
 	long		bytes_left;
 	int		done, error;
 	struct buf	*bp;
-	int		s;
 	int		dotc = 0;
 
 	bytes_left = rsp->nbytes;
@@ -226,9 +227,8 @@ struct read_info	*rsp;
 	error      = 0;
 
 	while(bytes_left > 0) {
-		s = splbio();
-		bp->b_flags = B_BUSY | B_PHYS | B_READ;
-		splx(s);
+		bp->b_cflags = BC_BUSY;
+		bp->b_flags  = B_PHYS | B_READ;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = rsp->chunk;
 		bp->b_data   = rsp->bufp;
@@ -238,10 +238,7 @@ struct read_info	*rsp;
 		(*rsp->strat)(bp);
 
 		/* Wait for results	*/
-		s = splbio();
-		while ((bp->b_flags & B_DONE) == 0)
-			tsleep((void *) bp, PRIBIO + 1, "ramd_norm_read", 0);
-		splx(s);
+		biowait(bp);
 		error = bp->b_error;
 
 		/* Dot counter */
@@ -300,7 +297,6 @@ int			nbyte;
 	static int	dotc = 0;
 	struct buf	*bp;
 	       int	nread = 0;
-	       int	s;
 	       int	done, error;
 
 
@@ -309,9 +305,8 @@ int			nbyte;
 	nbyte &= ~(DEV_BSIZE - 1);
 
 	while(nbyte > 0) {
-		s = splbio();
-		bp->b_flags = B_BUSY | B_PHYS | B_READ;
-		splx(s);
+		bp->b_cflags = BC_BUSY;
+		bp->b_flags  = B_PHYS | B_READ;
 		bp->b_blkno  = btodb(rsp->offset);
 		bp->b_bcount = min(rsp->chunk, nbyte);
 		bp->b_data   = buf;
@@ -321,11 +316,7 @@ int			nbyte;
 		(*rsp->strat)(bp);
 
 		/* Wait for results	*/
-		s = splbio();
-		while ((bp->b_flags & B_DONE) == 0)
-			tsleep((void *) bp, PRIBIO + 1, "ramd_norm_read", 0);
-		error = bp->b_error;
-		splx(s);
+		biowait(bp);
 
 		/* Dot counter */
 		printf(".");
@@ -348,8 +339,6 @@ int			nbyte;
 			rsp->offset = 0;
 		}
 	}
-	s = splbio();
-	splx(s);
 	return(nread);
 }
 #endif /* support_compression */

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4.6.2 2007/11/06 23:20:37 matt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4.6.3 2008/01/09 01:47:49 matt Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 typedef struct genppc_pci_chipset *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
+
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Forward declarations.
@@ -165,11 +167,6 @@ pcitag_t genppc_pci_ofmethod_make_tag(void *, int, int, int);
 pcireg_t genppc_pci_ofmethod_conf_read(void *, pcitag_t, int);
 void genppc_pci_ofmethod_conf_write(void *, pcitag_t, int, pcireg_t);
 void genppc_pci_ofmethod_decompose_tag(void *, pcitag_t, int *, int *, int *);
-
-/* XXX for now macppc needs its own pci_bus_dma_tag */
-#ifndef macppc
-extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
-#endif
 
 /* Generic OFW PCI functions */
 

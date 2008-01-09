@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.118.10.1 2007/11/06 23:18:16 matt Exp $
+#	$NetBSD: files.mac68k,v 1.118.10.2 2008/01/09 01:47:03 matt Exp $
 
 # mac68k-specific configuration info
 
@@ -175,7 +175,6 @@ file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/pmap_motorola.c
 file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/softintr.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 

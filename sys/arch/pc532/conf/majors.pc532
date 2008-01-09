@@ -1,4 +1,4 @@
-#	$NetBSD: majors.pc532,v 1.18 2006/11/24 22:04:24 wiz Exp $
+#	$NetBSD: majors.pc532,v 1.18.28.1 2008/01/09 01:47:39 matt Exp $
 #
 # Device majors for pc532
 #
@@ -33,7 +33,6 @@ device-major	rnd		char 29			rnd
 device-major	scsibus		char 30			scsibus
 device-major	raid		char 31  block 13	raid
 device-major	clockctl	char 32			clockctl
-device-major	systrace	char 33			systrace
 device-major	cgd		char 34  block 14	cgd
 device-major	ksyms		char 35			ksyms
 

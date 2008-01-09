@@ -1,4 +1,4 @@
-/* $NetBSD: pci_eb66.c,v 1.14 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_eb66.c,v 1.14.50.1 2008/01/09 01:44:40 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.14 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_eb66.c,v 1.14.50.1 2008/01/09 01:44:40 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -237,7 +237,8 @@ dec_eb66_intr_establish(lcv, ih, level, func, arg)
 
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(eb66_pci_intr, ih)) {
-		scb_set(0x900 + SCB_IDXTOVEC(ih), eb66_iointr, NULL);
+		scb_set(0x900 + SCB_IDXTOVEC(ih), eb66_iointr, NULL,
+		    level);
 		eb66_intr_enable(ih);
 	}
 	return (cookie);

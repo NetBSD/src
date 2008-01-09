@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2006/05/04 12:21:18 yamt Exp $ */
+/*	$NetBSD: intr.h,v 1.9.38.1 2008/01/09 01:48:55 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,27 +45,20 @@
 #define IPL_NONE	0	/* nothing */
 #define IPL_SOFTCLOCK	1	/* timeouts */
 #define IPL_SOFTNET	1	/* protocol stack */
+#define IPL_SOFTBIO	1	/* block I/O */
 #define IPL_SOFTAUDIO	4	/* second-level audio */
 #define IPL_SOFTFDC	4	/* second-level floppy */
-#define IPL_BIO		5	/* block I/O */
-#define IPL_TTY		6	/* terminal */
 #define IPL_SOFTSERIAL	6	/* serial */
 #define IPL_VM		7	/* memory allocation */
-#define IPL_NET		7	/* network */
-#define IPL_CLOCK	10	/* clock */
 #define IPL_SCHED	11	/* scheduler */
-#define IPL_AUDIO	13	/* audio */
-#define IPL_SERIAL	13	/* serial */
-#define IPL_STATCLOCK	14	/* statclock */
 #define IPL_HIGH	15	/* everything */
-#define	IPL_LOCK	IPL_HIGH
 
 /*
  * fd hardware, ts102, and tadpole microcontoller interrupts are at level 11
  */
 
-#define	IPL_FD		11
-#define	IPL_TS102	11
+#define	IPL_FD		IPL_SCHED
+#define	IPL_TS102	IPL_SCHED
 
 /*
  * zs hardware interrupts are at level 12
@@ -73,26 +66,26 @@
  * IPL_SERIAL must protect them all.
  */
 
-#define	IPL_ZS		12
+#define	IPL_ZS		IPL_HIGH
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 void *
-softintr_establish(int level, void (*fun)(void *), void *arg);
+sparc_softintr_establish(int level, void (*fun)(void *), void *arg);
 
 void
-softintr_disestablish(void *cookie);
+sparc_softintr_disestablish(void *cookie);
 
 /*
- * NB that softintr_schedule() casts the cookie to an int *.
+ * NB that sparc_softintr_schedule() casts the cookie to an int *.
  * This is to get the sic_pilreq member of the softintr_cookie
  * structure, which is otherwise internal to intr.c.
  */
 #if defined(SUN4M) || defined(SUN4D)
 extern void	raise(int, int);
 #if !(defined(SUN4) || defined(SUN4C))
-#define softintr_schedule(cookie)	raise(0, *((int *) (cookie)))
+#define sparc_softintr_schedule(cookie)	raise(0, *((int *) (cookie)))
 #else /* both defined */
-#define softintr_schedule(cookie) do {		\
+#define sparc_softintr_schedule(cookie) do {		\
 	if (CPU_ISSUN4M || CPU_ISSUN4D)		\
 		raise(0, *((int *)(cookie)));	\
 	else					\
@@ -100,10 +93,10 @@ extern void	raise(int, int);
 } while (0)
 #endif	/* SUN4  || SUN4C */
 #else	/* SUN4M || SUN4D */
-#define softintr_schedule(cookie)	ienab_bis(*((int *) (cookie)))
+#define sparc_softintr_schedule(cookie)	ienab_bis(*((int *) (cookie)))
 #endif	/* SUN4M || SUN4D */
 
 #if 0
-void softintr_schedule(void *cookie);
+void sparc_softintr_schedule(void *cookie);
 #endif
 #endif /* KERNEL && !_LOCORE */

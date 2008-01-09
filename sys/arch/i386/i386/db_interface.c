@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.51.20.1 2007/11/06 23:17:26 matt Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.51.20.2 2008/01/09 01:46:34 matt Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.20.1 2007/11/06 23:17:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.20.2 2008/01/09 01:46:34 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.20.1 2007/11/06 23:17:26 matt 
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -53,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.51.20.1 2007/11/06 23:17:26 matt 
 #include <machine/i82093var.h>
 #include <machine/i82489reg.h>
 #include <machine/i82489var.h>
-#include <machine/atomic.h>
 
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
@@ -84,6 +85,7 @@ extern void ddb_ipi(int, struct trapframe);
 extern void ddb_ipi_tss(struct i386tss *);
 static void ddb_suspend(struct trapframe *);
 int ddb_vec;
+static bool ddb_mp_online;
 #endif
 
 db_regs_t *ddb_regp = 0;
@@ -127,6 +129,8 @@ db_suspend_others(void)
 	if (win) {
 		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
 	}
+	ddb_mp_online = x86_mp_online;
+	x86_mp_online = false;
 	return win;
 }
 
@@ -135,6 +139,7 @@ db_resume_others(void)
 {
 	int i;
 
+	x86_mp_online = ddb_mp_online;
 	__cpu_simple_lock(&db_lock);
 	ddb_cpu = NOCPU;
 	__cpu_simple_unlock(&db_lock);
@@ -144,7 +149,7 @@ db_resume_others(void)
 		if (ci == NULL)
 			continue;
 		if (ci->ci_flags & CPUF_PAUSE)
-			x86_atomic_clearbits_l(&ci->ci_flags, CPUF_PAUSE);
+			atomic_and_32(&ci->ci_flags, ~CPUF_PAUSE);
 	}
 
 }
@@ -330,11 +335,11 @@ ddb_suspend(struct trapframe *frame)
 
 	ci->ci_ddb_regs = &regs;
 
-	x86_atomic_setbits_l(&ci->ci_flags, CPUF_PAUSE);
-
+	atomic_or_32(&ci->ci_flags, CPUF_PAUSE);
 	while (ci->ci_flags & CPUF_PAUSE)
 		;
 	ci->ci_ddb_regs = 0;
+	tlbflushg();
 }
 
 

@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.29 2005/12/11 12:16:16 christos Exp $ */
+/* $NetBSD: vmparam.h,v 1.29.50.1 2008/01/09 01:44:38 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -166,14 +166,14 @@
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
-	struct simplelock pvh_slock;		/* lock on this head */
+	kmutex_t pvh_lock;			/* lock on this head */
 	int pvh_attrs;				/* page attributes */
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
-	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
+	mutex_init(&(pg)->mdpage.pvh_lock, MUTEX_DEFAULT, IPL_NONE);	\
 } while (/*CONSTCOND*/0)
 
 #endif	/* ! _ALPHA_VMPARAM_H_ */

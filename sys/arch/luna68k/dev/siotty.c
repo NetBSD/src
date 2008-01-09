@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.20 2007/03/04 06:00:03 christos Exp $ */
+/* $NetBSD: siotty.c,v 1.20.20.1 2008/01/09 01:46:58 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.20 2007/03/04 06:00:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.20.20.1 2008/01/09 01:46:58 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -217,16 +217,8 @@ siostart(tp)
 	s = spltty();
 	if (tp->t_state & (TS_BUSY|TS_TIMEOUT|TS_TTSTOP))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
-	if (tp->t_outq.c_cc == 0)
+	if (!ttypull(tp))
 		goto out;
-
 	tp->t_state |= TS_BUSY;
 	while (getsiocsr(sc->sc_ctl) & RR_TXRDY) {
 		if ((c = getc(&tp->t_outq)) == -1)

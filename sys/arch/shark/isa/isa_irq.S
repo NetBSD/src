@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.8.2.1 2007/08/28 21:53:06 matt Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.8.2.2 2008/01/09 01:48:51 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -267,7 +267,9 @@ nextirq:
 	str	r2, [r1]
 	bl	_C_LABEL(irq_setmasks)
 
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+#endif
 
 	/* Kill IRQ's in preparation for exit */
 	mrs     r0, cpsr_all

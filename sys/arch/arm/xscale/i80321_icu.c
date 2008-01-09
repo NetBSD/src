@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.14.30.1 2007/11/09 05:37:44 matt Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.14.30.2 2008/01/09 01:45:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.30.1 2007/11/09 05:37:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.30.2 2008/01/09 01:45:26 matt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -80,9 +80,10 @@ uint32_t intr_steer;
  * ICU registers -- XXX will need to revisit this if those bits are
  * ever used in future steppings).
  */
-static const uint32_t si_to_irqbit[SI_NQUEUES] = {
-	ICU_INT_bit26,		/* SI_SOFT */
-	ICU_INT_bit22,		/* SI_SOFTCLOCK */
+#ifdef __HAVE_FAST_SOFTINTS
+static const uint32_t si_to_irqbit[4] = {
+	ICU_INT_bit26,		/* SI_SOFTCLOCK */
+	ICU_INT_bit22,		/* SI_SOFTBIO */
 	ICU_INT_bit5,		/* SI_SOFTNET */
 	ICU_INT_bit4,		/* SI_SOFTSERIAL */
 };
@@ -92,12 +93,13 @@ static const uint32_t si_to_irqbit[SI_NQUEUES] = {
 /*
  * Map a software interrupt queue to an interrupt priority level.
  */
-static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
+static const int si_to_ipl[4] = {
 	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
+	IPL_SOFTBIO,		/* SI_SOFTBIO */
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
+#endif
 
 /*
  * Interrupt bit names.
@@ -214,70 +216,22 @@ i80321_intr_calculate_masks(void)
 	i80321_imask[IPL_NONE] = 0;
 
 	/*
-	 * Initialize the soft interrupt masks to block themselves.
-	 */
-	i80321_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
-	i80321_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
-	i80321_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
-	i80321_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	i80321_imask[IPL_SOFTCLOCK] |= i80321_imask[IPL_SOFT];
-
-	/*
-	 * splsoftnet() must also block splsoftclock(), since we don't
-	 * want timer-driven network events to occur while we're
-	 * processing incoming packets.
-	 */
-	i80321_imask[IPL_SOFTNET] |= i80321_imask[IPL_SOFTCLOCK];
-
-	/*
 	 * Enforce a hierarchy that gives "slow" device (or devices with
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-	i80321_imask[IPL_BIO] |= i80321_imask[IPL_SOFTNET];
-	i80321_imask[IPL_NET] |= i80321_imask[IPL_BIO];
-	i80321_imask[IPL_SOFTSERIAL] |= i80321_imask[IPL_NET];
-	i80321_imask[IPL_TTY] |= i80321_imask[IPL_SOFTSERIAL];
+#ifdef __HAVE_FAST_SOFTINTS
+	i80321_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
+	i80321_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
+	i80321_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
+	i80321_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+#endif
 
-	/*
-	 * splvm() blocks all interrupts that use the kernel memory
-	 * allocation facilities.
-	 */
-	i80321_imask[IPL_VM] |= i80321_imask[IPL_TTY];
-
-	/*
-	 * Audio devices are not allowed to perform memory allocation
-	 * in their interrupt routines, and they have fairly "real-time"
-	 * requirements, so give them a high interrupt priority.
-	 */
-	i80321_imask[IPL_AUDIO] |= i80321_imask[IPL_VM];
-
-	/*
-	 * splclock() must block anything that uses the scheduler.
-	 */
-	i80321_imask[IPL_CLOCK] |= i80321_imask[IPL_AUDIO];
-
-	/*
-	 * No separate statclock on the IQ80310.
-	 */
-	i80321_imask[IPL_STATCLOCK] |= i80321_imask[IPL_CLOCK];
-
-	/*
-	 * splhigh() must block "everything".
-	 */
-	i80321_imask[IPL_HIGH] |= i80321_imask[IPL_STATCLOCK];
-
-	/*
-	 * XXX We need serial drivers to run at the absolute highest priority
-	 * in order to avoid overruns, so serial > high.
-	 */
-	i80321_imask[IPL_SERIAL] |= i80321_imask[IPL_HIGH];
+	i80321_imask[IPL_SOFTBIO] |= i80321_imask[IPL_SOFTCLOCK];
+	i80321_imask[IPL_SOFTNET] |= i80321_imask[IPL_SOFTBIO];
+	i80321_imask[IPL_SOFTSERIAL] |= i80321_imask[IPL_SOFTNET];
+	i80321_imask[IPL_VM] |= i80321_imask[IPL_SOFTSERIAL];
+	i80321_imask[IPL_HIGH] |= i80321_imask[IPL_SCHED];
 
 	/*
 	 * Now compute which IRQs must be blocked when servicing any
@@ -298,6 +252,7 @@ i80321_intr_calculate_masks(void)
 void
 i80321_do_pending(void)
 {
+#ifdef __HAVE_FAST_SOFTINTS
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	int new, oldirqstate;
 
@@ -326,6 +281,7 @@ i80321_do_pending(void)
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
+#endif	/* __HAVE_FAST_SOFTINTRS */
 }
 
 void
@@ -349,6 +305,7 @@ _splraise(int ipl)
 	return (i80321_splraise(ipl));
 }
 
+#if __HAVE_FAST_SOFTINTRS
 void
 _setsoftintr(int si)
 {
@@ -362,6 +319,7 @@ _setsoftintr(int si)
 	if ((i80321_ipending & INT_SWMASK) & ~curcpl())
 		i80321_do_pending();
 }
+#endif /* __HAVE_FAST_SOFTINTRS */
 
 /*
  * i80321_icu_init:
@@ -501,7 +459,6 @@ i80321_intr_dispatch(struct clockframe *frame)
 #endif
 
 	pcpl = curcpl();
-
 	hwpend = i80321_iintsrc_read();
 
 	/*

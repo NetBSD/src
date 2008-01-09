@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.27.10.1 2007/11/06 23:19:46 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27.10.2 2008/01/09 01:47:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.10.1 2007/11/06 23:19:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27.10.2 2008/01/09 01:47:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,7 +129,6 @@ cpu_configure(void)
 	/*
 	 * Kick off autoconfiguration
 	 */
-	softintr_init();
 	_splnone();	/* enable all interrupts */
 	splhigh();	/* ...then disable device interrupts */
 
@@ -184,7 +183,7 @@ findroot(void)
 	/*
 	 * XXX assumes only one controller exists.
 	 */
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
 #if NSCSIBUS > 0
 		if (strcmp(dv->dv_xname, "scsibus0") == 0) {
 			struct scsibus_softc *sdv = (void *)dv;

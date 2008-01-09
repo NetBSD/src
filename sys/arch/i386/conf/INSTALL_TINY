@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.111.10.1 2007/11/06 23:17:15 matt Exp $
+#	$NetBSD: INSTALL_TINY,v 1.111.10.2 2008/01/09 01:46:29 matt Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -12,7 +12,7 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
+makeoptions 	COPTS="-Os"		# Optimise for space. Implies -O2
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -21,12 +21,6 @@ options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3100	# size of memory disk, in blocks
 
 maxusers	2		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-options 	I386_CPU
-#options 	I486_CPU
-#options 	I586_CPU
-#options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
@@ -66,7 +60,7 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 #options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-no options	EXEC_AOUT	# we don't a.out support
+no options 	EXEC_AOUT	# we don't a.out support
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -77,7 +71,7 @@ no options	EXEC_AOUT	# we don't a.out support
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -100,7 +94,7 @@ no options	EXEC_AOUT	# we don't a.out support
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -162,6 +156,38 @@ config		netbsd	root on ? type ?
 #config		netbsd	root on ? type nfs
 
 #
+# wscons options
+#
+# builtin terminal emulations
+#options 	WSEMUL_SUN		# sun terminal emulation
+options 	WSEMUL_VT100		# VT100 / VT220 emulation
+# customization of console and kernel output - see dev/wscons/wsdisplayvar.h
+#options 	WSDISPLAY_CUSTOM_OUTPUT	# color customization from wsconsctl(8)
+#options 	WS_DEFAULT_FG=WSCOL_WHITE
+#options 	WS_DEFAULT_BG=WSCOL_BLACK
+#options 	WS_DEFAULT_COLATTR="(0)"
+#options 	WS_DEFAULT_MONOATTR="(0)"
+options 	WS_KERNEL_FG=WSCOL_GREEN
+#options 	WS_KERNEL_BG=WSCOL_BLACK
+#options 	WS_KERNEL_COLATTR=""
+#options 	WS_KERNEL_MONOATTR=""
+# customization of console border color
+#options 	WSDISPLAY_CUSTOM_BORDER	# border customization from wsconsctl(8)
+#options 	WSDISPLAY_BORDER_COLOR=WSCOL_BLUE	# default color
+# compatibility to other console drivers
+options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some ioctls
+options 	WSDISPLAY_COMPAT_USL		# VT handling
+options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
+# see dev/pckbport/wskbdmap_mfii.c for implemented layouts
+#options 	PCKBD_LAYOUT="(KB_DE | KB_NODEAD)" # for pckbd driver
+#options 	UKBD_LAYOUT="(KB_DE | KB_NODEAD)"  # for ukbd driver
+# allocate a number of virtual screens at autoconfiguration time
+#options 	WSDISPLAY_DEFAULTSCREENS=4
+# use a large software cursor that doesn't blink
+options 	PCDISPLAY_SOFTCURSOR
+
+#
 # Device configuration
 #
 
@@ -216,13 +242,13 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 # Console Devices
 
-# ISA console
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-
-#attimer0	at isa?
-#pcppi0	at isa?
-#sysbeep0	at pcppi?
-
+# wscons
+pckbc0 		at isa?			# pc keyboard controller
+pckbd* 		at pckbc?		# PC keyboard
+pcdisplay0 	at isa?			# CGA, MDA, EGA, HGA
+wsdisplay* 	at pcdisplay? console ?
+wskbd* 		at pckbd? console ?
+#wsmouse*	at pms? mux 0
 
 # Serial Devices
 
@@ -499,6 +525,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-options	NO_DEV_PTM
+options 	NO_DEV_PTM
 #pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

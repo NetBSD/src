@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2 2007/02/09 21:55:12 ad Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2.26.1 2008/01/09 01:49:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@ struct kmutex {
 		} s;
 #endif
 	} u;
-	volatile uint32_t	mtx_id;
 };
 
 #ifdef __MUTEX_PRIVATE

@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.2 2007/03/23 20:05:47 dogcow Exp $ */
+/* $NetBSD: uart.c,v 1.2.18.1 2008/01/09 01:47:13 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.2 2007/03/23 20:05:47 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.2.18.1 2008/01/09 01:47:13 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -304,13 +304,7 @@ uart_start(struct tty *tp)
 	s = spltty();
 	if (tp->t_state & (TS_TTSTOP | TS_BUSY))
 		goto out;
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((char *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-	}
+	ttypull(tp);
 	tp->t_state |= TS_BUSY;
 	while (tp->t_outq.c_cc != 0) {
 		cnt = ndqb(&tp->t_outq, 0);

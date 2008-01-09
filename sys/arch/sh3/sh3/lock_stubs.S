@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.8.16.1 2007/11/06 23:22:05 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.8.16.2 2008/01/09 01:48:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Valeriy E. Ushakov
@@ -40,7 +40,7 @@
 
 
 /*
- * LINTSTUB: Func: int _lock_cas(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new);
+ * LINTSTUB: Func: uintptr_t _lock_cas(volatile uintptr_t *ptr, uintptr_t old, uintptr_t new);
  *
  *	Atomic compare-and-swap for kernel use.  SuperH machines are
  *	uniprocessor, so we need to be atomic only w.r.t. interrupts.
@@ -54,15 +54,23 @@
  */
 NENTRY(_lock_cas)
 ALTENTRY(_lock_cas_ras_start)
-	mov.l	@r4, r1
-	cmp/eq	r1, r5		! T = (*ptr == old)
+	mov.l	@r4, r0
+	cmp/eq	r0, r5		! T = (*ptr == old)
 	bf	1f
 	mov.l	r6, @r4		! *ptr = new
 ALTENTRY(_lock_cas_ras_end)
 1:	rts
-	 movt	r0		! retval = T
+	 nop			! retval = *ptr at time of compare
 	SET_ENTRY_SIZE(_lock_cas)
 
+STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
+STRONG_ALIAS(_atomic_cas_32,_lock_cas)
+STRONG_ALIAS(atomic_cas_32,_lock_cas)
+STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(atomic_cas_uint,_lock_cas)
+STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
+STRONG_ALIAS(atomic_cas_ptr,_lock_cas)
 
 #if !defined(LOCKDEBUG)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14.10.1 2007/11/06 23:19:18 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.10.2 2008/01/09 01:47:21 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -34,43 +34,21 @@
 #define _MACHINE_INTR_H_
 
 #define	IPL_NONE	0	/* disable only this interrupt */
-#define	IPL_SOFT	1	/* generic software interrupts */
-#define	IPL_SOFTCLOCK	2	/* clock software interrupts */
-#define	IPL_SOFTNET	3	/* network software interrupts */
-#define	IPL_SOFTSERIAL	4	/* serial software interrupts */
-#define	IPL_BIO		5	/* disable block I/O interrupts */
-#define	IPL_NET		6	/* disable network interrupts */
-#define	IPL_TTY		7	/* disable terminal interrupts */
-#define	IPL_SERIAL	IPL_TTY
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		IPL_TTY
-#define	IPL_CLOCK	8	/* disable clock interrupts */
-#define	IPL_STATCLOCK	9	/* disable profiling interrupts */
-#define	IPL_SCHED	IPL_CLOCK
-#define	IPL_HIGH	10	/* disable all interrupts */
-#define	IPL_LOCK	IPL_HIGH
+#define	IPL_SOFTCLOCK	1	/* generic software interrupts */
+#define	IPL_SOFTBIO	1	/* clock software interrupts */
+#define	IPL_SOFTNET	2	/* network software interrupts */
+#define	IPL_SOFTSERIAL	2	/* serial software interrupts */
+#define	IPL_VM		3
+#define	IPL_SCHED	4
+#define	IPL_HIGH	4	/* disable all interrupts */
 
-#define	IPL_N		11
+#define	IPL_N		5
 
 /* Interrupt sharing types. */
 #define IST_NONE	0	/* none */
 #define IST_PULSE	1	/* pulsed */
 #define IST_EDGE	2	/* edge-triggered */
 #define IST_LEVEL	3	/* level-triggered */
-
-#define	SI_SOFT		0
-#define	SI_SOFTCLOCK	1
-#define	SI_SOFTNET	2
-#define	SI_SOFTSERIAL	3
-
-#define	SI_NQUEUES	4
-
-#define	SI_QUEUENAMES {							\
-	"misc",								\
-	"clock",							\
-	"net",								\
-	"serial",							\
-}
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -92,17 +70,6 @@
 	splx(_s);				\
 } while (0)
 
-#define softintr_schedule(arg)						\
-do {									\
-	struct mipsco_intrhand *__ih = (arg);				\
-	__ih->ih_pending = 1;						\
-	setsoft(__ih->ih_intrhead->intr_siq);				\
-} while (0)
-
-extern struct mipsco_intrhand *softnet_intrhand;
-
-#define	setsoftnet()	softintr_schedule(softnet_intrhand)
-
 /*
  * nesting interrupt masks.
  */
@@ -117,22 +84,14 @@ extern struct mipsco_intrhand *softnet_intrhand;
 
 #define spl0()		(void)_spllower(0)
 #define splx(s)		(void)_splset(s)
-#define splbio()	_splraise(MIPS_INT_MASK_SPL1)
-#define splnet()	_splraise(MIPS_INT_MASK_SPL0)
-#define spltty()	_splraise(MIPS_INT_MASK_SPL0)
 #define splvm()		_splraise(MIPS_INT_MASK_SPL2)
-#define splclock()	_splraise(MIPS_INT_MASK_SPL2)
-#define splstatclock()	_splraise(MIPS_INT_MASK_SPL2)
+#define splsched()	_splraise(MIPS_INT_MASK_SPL2)
 #define splhigh()	_splraise(MIPS_INT_MASK_SPL2)
-#define	splsched()	splhigh()
-#define	spllock()	splhigh()
-#define splserial()	spltty()
-#define spllpt()	spltty()
 
-#define splsoft()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
 #define splsoftclock()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
-#define	splsoftnet()	splsoft()
-#define	splsoftserial()	splsoft()
+#define splsoftbio()	_splraise(MIPS_INT_MASK_SPL_SOFT0)
+#define	splsoftnet()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
+#define	splsoftserial()	_splraise(MIPS_INT_MASK_SPL_SOFT1)
 
 typedef int ipl_t;
 typedef struct {
@@ -183,11 +142,6 @@ extern struct mipsco_intrhand intrtab[];
 #define MAX_INTR_COOKIES 16
 
 #define	CALL_INTR(lev)	((*intrtab[lev].ih_fun)(intrtab[lev].ih_arg))
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(void);
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

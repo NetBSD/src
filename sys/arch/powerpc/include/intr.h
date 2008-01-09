@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.2.8.2 2007/11/06 23:20:34 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.2.8.3 2008/01/09 01:47:48 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.2.8.2 2007/11/06 23:20:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.2.8.3 2008/01/09 01:47:48 matt Exp $");
 
 #ifndef POWERPC_INTR_MACHDEP_H
 #define POWERPC_INTR_MACHDEP_H
@@ -43,21 +43,13 @@ void genppc_cpu_configure(void);
 /* Interrupt priority `levels'. */
 #define	IPL_NONE	0	/* nothing */
 #define	IPL_SOFTCLOCK	1	/* timeouts */
-#define	IPL_SOFTNET	2	/* protocol stacks */
-#define	IPL_BIO		3	/* block I/O */
-#define	IPL_NET		4	/* network */
-#define	IPL_SOFTSERIAL	5	/* serial */
-#define	IPL_AUDIO	6	/* audio */
-#define	IPL_TTY		7	/* terminal */
-#define	IPL_LPT		IPL_TTY
-#define	IPL_VM		8	/* memory allocation */
-#define	IPL_CLOCK	9
-#define	IPL_STATCLOCK	10	/* clock */
-#define	IPL_SCHED	11
-#define	IPL_SERIAL	12	/* serial */
-#define	IPL_LOCK	13
-#define	IPL_HIGH	14	/* everything */
-#define	NIPL		15
+#define	IPL_SOFTBIO	2	/* block I/O */
+#define	IPL_SOFTNET	3	/* protocol stacks */
+#define	IPL_SOFTSERIAL	4	/* serial */
+#define	IPL_VM		5	/* memory allocation */
+#define	IPL_SCHED	6
+#define	IPL_HIGH	7	/* everything */
+#define	NIPL		8
 
 /* Interrupt sharing types. */
 #define	IST_NONE	0	/* none */
@@ -66,8 +58,6 @@ void genppc_cpu_configure(void);
 #define	IST_LEVEL	3	/* level-triggered */
 
 #ifndef _LOCORE
-#include <powerpc/softintr.h>
-
 /*
  * Interrupt handler chains.  intr_establish() inserts a handler into
  * the list.  The handler is called with its (single) argument.
@@ -88,12 +78,14 @@ void softintr(int);
 extern int imask[];
 
 /* Soft interrupt masks. */
-#define SIR_CLOCK	28
+#define SIR_CLOCK	27
+#define SIR_BIO		28
 #define SIR_NET		29
 #define SIR_SERIAL	30
 #define SPL_CLOCK	31
 
 #define setsoftclock()	softintr(SIR_CLOCK)
+#define setsoftbio()	softintr(SIR_BIO)
 #define setsoftnet()	softintr(SIR_NET)
 #define setsoftserial()	softintr(SIR_SERIAL)
 

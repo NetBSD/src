@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.10.4.2 2007/11/06 23:21:41 matt Exp $ */
+/* $NetBSD: tlp.c,v 1.10.4.3 2008/01/09 01:48:39 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ int tlp_recv(void *, char *, unsigned, unsigned);
 #define R0_LS		(1U<<8)		/* last desc of frame */
 #define R0_ES		(1U<<15)	/* Rx error summary */
 #define R1_RER		(1U<<25)	/* end of ring mark */
-#define R0_FL_MASK	0x3fff0000	/* frame length 29:16 */
+#define R0_FLMASK	0x3fff0000	/* frame length 29:16 */
 #define R1_RBS_MASK	0x7ff		/* segment size 10:0 */
 
 struct desc {
@@ -95,7 +95,7 @@ struct desc {
 #define TLP_OMR		0x030		/* 6: operation mode */
 #define  OMR_SDP	(1U<<25)	/* always ON */
 #define  OMR_PS		(1U<<18)	/* port select */
-#define  OMR_PM		(1U<< 6)	/* promicuous */
+#define  OMR_PM		(1U<< 6)	/* promiscuous */
 #define  OMR_TEN	(1U<<13)	/* instruct start/stop Tx */
 #define  OMR_REN	(1U<< 1)	/* instruct start/stop Rx */
 #define  OMR_FD		(1U<< 9)	/* FDX */
@@ -104,13 +104,13 @@ struct desc {
 #define  SROM_RD	(1U <<14)	/* read operation */
 #define  SROM_WR	(1U <<13)	/* write openration */
 #define  SROM_SR	(1U <<11)	/* SEEPROM select */
-#define TLP_CSR12	0x60		/* SIA status */
+#define TLP_CSR12	0x60		/* 12: SIA status */
 
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc TxD;
-	struct desc RxD[2];
+	struct desc txd;
+	struct desc rxd[2];
 	uint8_t txstore[192];
 	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, omr, rx;
@@ -131,7 +131,7 @@ tlp_init(unsigned tag, void *data)
 {
 	unsigned val, i;
 	struct local *l;
-	struct desc *TxD, *RxD;
+	struct desc *txd, *rxd;
 	uint8_t *en;
 	uint32_t *p;
 
@@ -166,25 +166,24 @@ tlp_init(unsigned tag, void *data)
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 #endif
 
-	TxD = &l->TxD;
-	RxD = &l->RxD[0];
-	RxD[0].xd0 = htole32(R0_OWN);
-	RxD[0].xd1 = htole32(FRAMESIZE);
-	RxD[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
-	RxD[0].xd3 = htole32(VTOPHYS(&RxD[1]));
-	RxD[1].xd0 = htole32(R0_OWN);
-	RxD[1].xd1 = htole32(R1_RER | FRAMESIZE);
-	RxD[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
-	RxD[1].xd3 = htole32(VTOPHYS(&RxD[0]));
-	CSR_WRITE(l, TLP_TRBA, VTOPHYS(TxD));
-	CSR_WRITE(l, TLP_RRBA, VTOPHYS(RxD));
+	txd = &l->txd;
+	rxd = &l->rxd[0];
+	rxd[0].xd0 = htole32(R0_OWN);
+	rxd[0].xd1 = htole32(FRAMESIZE);
+	rxd[0].xd2 = htole32(VTOPHYS(l->rxstore[0]));
+	rxd[0].xd3 = htole32(VTOPHYS(&rxd[1]));
+	rxd[1].xd0 = htole32(R0_OWN);
+	rxd[1].xd1 = htole32(R1_RER | FRAMESIZE);
+	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
+	rxd[1].xd3 = htole32(VTOPHYS(&rxd[0]));
+	l->rx = 0;
 
 	/* "setup frame" to have own station address */
-	TxD = &l->TxD;
-	TxD->xd3 = htole32(VTOPHYS(TxD));
-	TxD->xd2 = htole32(VTOPHYS(l->txstore));
-	TxD->xd1 = htole32(T1_SET | T1_TER | sizeof(l->txstore));
-	TxD->xd0 = htole32(T0_OWN);
+	txd = &l->txd;
+	txd->xd3 = htole32(VTOPHYS(txd));
+	txd->xd2 = htole32(VTOPHYS(l->txstore));
+	txd->xd1 = htole32(T1_SET | T1_TER | sizeof(l->txstore));
+	txd->xd0 = htole32(T0_OWN);
 	p = (uint32_t *)l->txstore;
 	p[0] = en[1] << 8 | en[0];
 	p[1] = en[3] << 8 | en[2];
@@ -195,10 +194,11 @@ tlp_init(unsigned tag, void *data)
 	/* make sure the entire descriptors transfered to memory */
 	wbinv(l, sizeof(struct local));
 
-	l->rx = 0;
-	l->omr |= OMR_FD | OMR_TEN | OMR_REN;
+	CSR_WRITE(l, TLP_TRBA, VTOPHYS(txd));
+	CSR_WRITE(l, TLP_RRBA, VTOPHYS(rxd));
 
 	/* start Tx/Rx */
+	l->omr |= OMR_FD | OMR_TEN | OMR_REN;
 	CSR_WRITE(l, TLP_OMR, l->omr);
 	CSR_WRITE(l, TLP_TPD, 01);
 	CSR_WRITE(l, TLP_RPD, 01);
@@ -210,24 +210,24 @@ int
 tlp_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *TxD;
+	struct desc *txd;
 	unsigned loop;
 
 	wbinv(buf, len);
-	TxD = &l->TxD;
-	TxD->xd3 = htole32(VTOPHYS(TxD));
-	TxD->xd2 = htole32(VTOPHYS(buf));
-	TxD->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
-	TxD->xd0 = htole32(T0_OWN);
-	wbinv(TxD, sizeof(struct desc));
+	txd = &l->txd;
+	txd->xd3 = htole32(VTOPHYS(txd));
+	txd->xd2 = htole32(VTOPHYS(buf));
+	txd->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
+	txd->xd0 = htole32(T0_OWN);
+	wbinv(txd, sizeof(struct desc));
 	CSR_WRITE(l, TLP_TPD, 01);
 	loop = 100;
 	do {
-		if ((le32toh(TxD->xd0) & T0_OWN) == 0)
+		if ((le32toh(txd->xd0) & T0_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(struct desc));
-	} while (--loop > 0);
+		inv(txd, sizeof(struct desc));
+	} while (--loop != 0);
 	printf("xmit failed\n");
 	return -1;
   done:
@@ -238,17 +238,17 @@ int
 tlp_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *RxD;
+	struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 
 	bound = 1000 * timo;
 printf("recving with %u sec. timeout\n", timo);
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		inv(RxD, sizeof(struct desc));
-		rxstat = le32toh(RxD->xd0);
+		inv(rxd, sizeof(struct desc));
+		rxstat = le32toh(rxd->xd0);
 		if ((rxstat & R0_OWN) == 0)
 			goto gotone;
 		DELAY(1000); /* 1 milli second */
@@ -257,21 +257,21 @@ printf("recving with %u sec. timeout\n", timo);
 	return -1;
   gotone:
 	if (rxstat & R0_ES) {
-		RxD->xd0 = htole32(R0_OWN);
-		wbinv(RxD, sizeof(struct desc));
+		rxd->xd0 = htole32(R0_OWN);
+		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		CSR_WRITE(l, TLP_RPD, 01);
 		goto again;
 	}
 	/* good frame */
-	len = ((rxstat & R0_FL_MASK) >> 16) - 4; /* HASFCS */
+	len = ((rxstat & R0_FLMASK) >> 16) - 4 /* HASFCS */; 
         if (len > maxlen)
                 len = maxlen;
 	ptr = l->rxstore[l->rx];
         inv(ptr, len);
         memcpy(buf, ptr, len);
-	RxD->xd0 = htole32(R0_OWN);
-	wbinv(RxD, sizeof(struct desc));
+	rxd->xd0 = htole32(R0_OWN);
+	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
 	CSR_WRITE(l, TLP_OMR, l->omr); /* necessary? */
 	return len;

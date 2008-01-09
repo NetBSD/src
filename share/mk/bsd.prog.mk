@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.221.4.1 2007/11/06 23:13:22 matt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.221.4.2 2008/01/09 01:39:26 matt Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -7,26 +7,49 @@
 .include <bsd.shlib.mk>
 .include <bsd.gcc.mk>
 
-.if defined(PROG_CXX)
-PROG=	${PROG_CXX}
-.endif
-
-.if defined(PAXCTL_FLAGS)
-PAXCTL_FLAGS.${PROG}?= ${PAXCTL_FLAGS}
-.endif
+#
+# Definitions and targets shared among all programs built by a single
+# Makefile.
+#
 
 ##### Basic targets
 realinstall:	proginstall scriptsinstall
 clean:		cleanprog
 
-##### PROG specific flags.
-COPTS+=     ${COPTS.${PROG}}
-CPPFLAGS+=  ${CPPFLAGS.${PROG}}
-CXXFLAGS+=  ${CXXFLAGS.${PROG}}
-OBJCOPTS+=  ${OBJCOPTS.${PROG}}
-LDADD+=     ${LDADD.${PROG}}
-LDFLAGS+=   ${LDFLAGS.${PROG}}
-LDSTATIC+=  ${LDSTATIC.${PROG}}
+.gdbinit:
+	rm -f .gdbinit
+.if defined(DESTDIR) && !empty(DESTDIR)
+	echo "set solib-absolute-prefix ${DESTDIR}" > .gdbinit
+.else
+	touch .gdbinit
+.endif
+.for __gdbinit in ${GDBINIT}
+	echo "source ${__gdbinit}" >> .gdbinit
+.endfor
+
+cleanextra: .PHONY
+.if defined(CLEANFILES) && !empty(CLEANFILES)
+	rm -f ${CLEANFILES}
+.endif
+
+cleanobjs: .PHONY
+
+cleanprog: .PHONY cleanobjs cleanextra
+	rm -f a.out [Ee]rrs mklog core *.core .gdbinit
+
+.if defined(SHAREDSTRINGS)
+CLEANFILES+=strings
+.c.o:
+	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
+	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c -o ${.TARGET}
+	@rm -f x.c
+
+.cc.o .cpp.o .cxx.o .C.o:
+	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
+	@mv -f x.c x.cc
+	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
+	@rm -f x.cc
+.endif
 
 ##### Default values
 CPPFLAGS+=	${DESTDIR:D-nostdinc ${CPPFLAG_ISYSTEM} ${DESTDIR}/usr/include}
@@ -123,47 +146,9 @@ LIB${_lib:tu}=	${DESTDIR}/usr/X11R6/lib/lib${_lib}.a
 .endif
 .endfor
 
-
-##### Build and install rules
-.if defined(SHAREDSTRINGS)
-CLEANFILES+=strings
-.c.o:
-	${CC} -E ${CPPFLAGS} ${CFLAGS} ${.IMPSRC} | xstr -c -
-	@${CC} ${CPPFLAGS} ${CFLAGS} -c x.c -o ${.TARGET}
-	@rm -f x.c
-
-.cc.o .cpp.o .cxx.o .C.o:
-	${CXX} -E ${CPPFLAGS} ${CXXFLAGS} ${.IMPSRC} | xstr -c -
-	@mv -f x.c x.cc
-	@${CXX} ${CPPFLAGS} ${CXXFLAGS} -c x.cc -o ${.TARGET}
-	@rm -f x.cc
-.endif
-
-.if defined(PROG)							# {
-.if defined(PROG_CXX)
-SRCS?=		${PROG}.cc
-.else
-SRCS?=		${PROG}.c
-.endif
-
-PROGNAME?=	${PROG}
-
 .if defined(RESCUEDIR)
 CPPFLAGS+=	-DRESCUEDIR=\"${RESCUEDIR}\"
 .endif
-
-_YPSRCS=	${SRCS:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS:M*.y:.y=.h}}
-
-DPSRCS+=	${_YPSRCS}
-CLEANFILES+=	${_YPSRCS}
-
-.if !empty(SRCS:N*.h:N*.sh:N*.fth)
-OBJS+=		${SRCS:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
-LOBJS+=		${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
-.endif
-
-.if defined(OBJS) && !empty(OBJS)					# {
-.NOPATH: ${OBJS} ${PROG} ${_YPSRCS}
 
 _PROGLDOPTS=
 .if ${SHLINKDIR} != "/usr/libexec"	# XXX: change or remove if ld.so moves
@@ -180,85 +165,6 @@ _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR}:${DESTDIR}/usr/lib \
 		-L${DESTDIR}${SHLIBINSTALLDIR}
 .endif
 
-.if defined(PROG_CXX)
-_CCLINK=	${CXX}
-.else
-_CCLINK=	${CC}
-.endif
-
-.if ${MKDEBUG} != "no" && ${OBJECT_FMT} == "ELF" && !commands(${PROG})
-_PROGDEBUG=	${PROGNAME}.debug
-.endif
-
-.gdbinit:
-	rm -f .gdbinit
-.if defined(DESTDIR) && !empty(DESTDIR)
-	echo "set solib-absolute-prefix ${DESTDIR}" > .gdbinit
-.else
-	touch .gdbinit
-.endif
-.for __gdbinit in ${GDBINIT}
-	echo "source ${__gdbinit}" >> .gdbinit
-.endfor
-
-${OBJS} ${LOBJS}: ${DPSRCS}
-
-${PROG}: .gdbinit ${LIBCRT0} ${OBJS} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
-.if !commands(${PROG})
-	${_MKTARGET_LINK}
-.if defined(DESTDIR)
-	${_CCLINK} -Wl,-nostdlib \
-	    ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} \
-	    -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/  \
-	    ${OBJS} ${LDADD} \
-	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib
-.else
-	${_CCLINK} ${LDFLAGS} ${LDSTATIC} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS} ${LDADD}
-.endif	# defined(DESTDIR)
-.if defined(PAXCTL_FLAGS.${PROG})
-	${PAXCTL} ${PAXCTL_FLAGS.${PROG}} ${.TARGET}
-.endif
-.endif	# !commands(${PROG})
-
-${PROG}.ro: ${OBJS} ${DPADD}
-	${_MKTARGET_LINK}
-	${LD} -r -dc -o ${.TARGET} ${OBJS}
-
-.if defined(_PROGDEBUG)
-${_PROGDEBUG}: ${PROG}
-	${_MKTARGET_CREATE}
-	${OBJCOPY} --only-keep-debug ${PROG} ${_PROGDEBUG}
-	${OBJCOPY} -R .gnu_debuglink --add-gnu-debuglink=${_PROGDEBUG} ${PROG} \
-	    || rm -f ${_PROGDEBUG}
-.endif
-
-.endif	# defined(OBJS) && !empty(OBJS)					# }
-
-.if !defined(MAN)
-MAN=	${PROG}.1
-.endif	# !defined(MAN)
-.endif	# defined(PROG)							# }
-
-realall: ${PROG} ${_PROGDEBUG} ${SCRIPTS}
-
-cleanprog: .PHONY cleanobjs cleanextra
-	rm -f a.out [Ee]rrs mklog core *.core .gdbinit ${PROG} ${_PROGDEBUG}
-
-cleanobjs: .PHONY
-.if defined(OBJS) && !empty(OBJS)
-	rm -f ${OBJS} ${LOBJS}
-.endif
-
-cleanextra: .PHONY
-.if defined(CLEANFILES) && !empty(CLEANFILES)
-	rm -f ${CLEANFILES}
-.endif
-
-.if defined(PROG) && !target(proginstall)				# {
-
-proginstall::	${DESTDIR}${BINDIR}/${PROGNAME} ${_PROGDEBUG:D${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}}
-.PRECIOUS:	${DESTDIR}${BINDIR}/${PROGNAME} ${_PROGDEBUG:D${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}}
-
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
 	${INSTALL_FILE} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
@@ -269,37 +175,223 @@ __progdebuginstall: .USE
 	${INSTALL_FILE} -o ${DEBUGOWN} -g ${DEBUGGRP} -m ${DEBUGMODE} \
 		${.ALLSRC} ${.TARGET}
 
+
+
+#
+# Backwards compatibility with Makefiles that assume that bsd.prog.mk
+# can only build a single binary.
+#
+
+_APPEND_MANS=yes
+_APPEND_SRCS=yes
+
+.if defined(PROG_CXX)
+PROG=		${PROG_CXX}
+_CCLINK=	${CXX} # XXX Some Makefiles rely on this being public.
+.endif
+
+.if defined(PROG)
+_CCLINK?=	${CC} # XXX Some Makefiles rely on this being public.
+.  if defined(MAN)
+MAN.${PROG}=	${MAN}
+_APPEND_MANS=	no
+.  endif
+.  if !defined(OBJS)
+OBJS=		${OBJS.${PROG}}
+.  endif
+.  if defined(PROGNAME)
+PROGNAME.${PROG}=	${PROGNAME}
+.  endif
+.  if defined(SRCS)
+SRCS.${PROG}=	${SRCS}
+_APPEND_SRCS=	no
+.  endif
+.endif
+
+# Turn the single-program PROG and PROG_CXX variables into their multi-word
+# counterparts, PROGS and PROGS_CXX.
+.if defined(PROG_CXX) && !defined(PROGS_CXX)
+PROGS_CXX=	${PROG_CXX}
+.elif defined(PROG) && !defined(PROGS)
+PROGS=		${PROG}
+.endif
+
+
+
+#
+# Per-program definitions and targets.
+#
+
+# Definitions specific to C programs.
+.for _P in ${PROGS}
+SRCS.${_P}?=	${_P}.c
+_CCLINK.${_P}=	${CC}
+.endfor
+
+# Definitions specific to C++ programs.
+.for _P in ${PROGS_CXX}
+SRCS.${_P}?=	${_P}.cc
+_CCLINK.${_P}=	${CXX}
+.endfor
+
+# Language-independent definitions.
+.for _P in ${PROGS} ${PROGS_CXX}					# {
+
+BINDIR.${_P}?=		${BINDIR}
+PROGNAME.${_P}?=	${_P}
+
+.if ${MKDEBUG} != "no" && ${OBJECT_FMT} == "ELF" && !commands(${_P})
+_PROGDEBUG.${_P}:=	${PROGNAME.${_P}}.debug
+.endif
+
+.if defined(PAXCTL_FLAGS)
+PAXCTL_FLAGS.${_P}?= ${PAXCTL_FLAGS}
+.endif
+
+##### PROG specific flags.
+COPTS+=     ${COPTS.${_P}}
+CPPFLAGS+=  ${CPPFLAGS.${_P}}
+CXXFLAGS+=  ${CXXFLAGS.${_P}}
+OBJCOPTS+=  ${OBJCOPTS.${_P}}
+LDADD+=     ${LDADD.${_P}}
+LDFLAGS+=   ${LDFLAGS.${_P}}
+LDSTATIC+=  ${LDSTATIC.${_P}}
+
+_COPTS.${_P}=		${COPTS}    ${COPTS.${_P}}
+_CPPFLAGS.${_P}=	${CPPFLAGS} ${CPPFLAGS.${_P}}
+_CXXFLAGS.${_P}=	${CXXFLAGS} ${CXXFLAGS.${_P}}
+_OBJCOPTS.${_P}=	${OBJCOPTS} ${OBJCOPTS.${_P}}
+_LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
+_LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
+_LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}
+
+##### Build and install rules
+.if !empty(_APPEND_SRCS:M[Yy][Ee][Ss])
+SRCS+=		${SRCS.${_P}} # For bsd.dep.mk
+.endif
+
+_YPSRCS.${_P}=	${SRCS.${_P}:M*.[ly]:C/\..$/.c/} ${YHEADER:D${SRCS.${_P}:M*.y:.y=.h}}
+
+DPSRCS+=		${_YPSRCS.${_P}}
+CLEANFILES+=		${_YPSRCS.${_P}}
+
+.if !empty(SRCS.${_P}:N*.h:N*.sh:N*.fth)
+OBJS.${_P}+=	${SRCS.${_P}:N*.h:N*.sh:N*.fth:R:S/$/.o/g}
+LOBJS.${_P}+=	${LSRCS:.c=.ln} ${SRCS.${_P}:M*.c:.c=.ln}
+.endif
+
+.if defined(OBJS.${_P}) && !empty(OBJS.${_P})			# {
+.NOPATH: ${OBJS.${_P}} ${_P} ${_YPSRCS.${_P}}
+
+${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
+
+${_P}: .gdbinit ${LIBCRT0} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} ${LIBCRTEND} ${DPADD}
+.if !commands(${_P})
+	${_MKTARGET_LINK}
+.if defined(DESTDIR)
+	${_CCLINK.${_P}} -Wl,-nostdlib \
+	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} ${_PROGLDOPTS} \
+	    -B${_GCC_CRTDIR}/ -B${DESTDIR}/usr/lib/  \
+	    ${OBJS.${_P}} ${_LDADD.${_P}} \
+	    -L${_GCC_LIBGCCDIR} -L${DESTDIR}/usr/lib
+.else
+	${_CCLINK.${_P}} ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} ${_PROGLDOPTS} ${OBJS.${_P}} ${_LDADD.${_P}}
+.endif	# defined(DESTDIR)
+.if defined(PAXCTL_FLAGS.${_P})
+	${PAXCTL} ${PAXCTL_FLAGS.${_P}} ${.TARGET}
+.endif
+.endif	# !commands(${_P})
+
+${_P}.ro: ${OBJS.${_P}} ${DPADD}
+	${_MKTARGET_LINK}
+	${LD} -r -dc -o ${.TARGET} ${OBJS.${_P}}
+
+.if defined(_PROGDEBUG.${_P})
+${_PROGDEBUG.${_P}}: ${_P}
+	${_MKTARGET_CREATE}
+	${OBJCOPY} --only-keep-debug ${_P} ${_PROGDEBUG.${_P}}
+	${OBJCOPY} -R .gnu_debuglink --add-gnu-debuglink=${_PROGDEBUG.${_P}} ${_P} \
+	    || rm -f ${_PROGDEBUG.${_P}}
+.endif
+
+.endif	# defined(OBJS.${_P}) && !empty(OBJS.${_P})			# }
+
+.if !defined(MAN.${_P})
+MAN.${_P}=	${_P}.1
+.endif	# !defined(MAN.${_P})
+.if !empty(_APPEND_MANS:M[Yy][Ee][Ss])
+MAN+=		${MAN.${_P}}
+.endif
+
+realall: ${_P} ${_PROGDEBUG.${_P}}
+
+cleanprog: cleanprog-${_P}
+cleanprog-${_P}:
+	rm -f ${_P} ${_PROGDEBUG.${_P}}
+
+.if defined(OBJS.${_P}) && !empty(OBJS.${_P})
+cleanobjs: cleanobjs-${_P}
+cleanobjs-${_P}:
+	rm -f ${OBJS.${_P}} ${LOBJS.${_P}}
+.endif
+
+_PROG_INSTALL+=	proginstall-${_P}
+
+.if !target(proginstall-${_P})						# {
+proginstall-${_P}::	${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}} \
+		${_PROGDEBUG.${_P}:D${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}}
+.PRECIOUS:	${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}} \
+		${_PROGDEBUG.${_P}:D${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}}
+
 .if ${MKUPDATE} == "no"
-${DESTDIR}${BINDIR}/${PROGNAME}! ${PROG} __proginstall
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${DESTDIR}${BINDIR}/${PROGNAME}! .MADE
+${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}! ${_P} __proginstall
+.if !defined(BUILD) && !make(all) && !make(${_P})
+${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}! .MADE
 .endif
-.if defined(_PROGDEBUG)
-${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}! ${_PROGDEBUG} __progdebuginstall
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}! .MADE
+.if defined(_PROGDEBUG.${_P})
+${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}! ${_PROGDEBUG.${_P}} __progdebuginstall
+.if !defined(BUILD) && !make(all) && !make(${_P})
+${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}! .MADE
 .endif
-.endif	#  define(_PROGDEBUG)
+.endif	#  define(_PROGDEBUG.${_P})
 .else	# MKUPDATE != no
-${DESTDIR}${BINDIR}/${PROGNAME}: ${PROG} __proginstall
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${DESTDIR}${BINDIR}/${PROGNAME}: .MADE
+${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}: ${_P} __proginstall
+.if !defined(BUILD) && !make(all) && !make(${_P})
+${DESTDIR}${BINDIR.${_P}}/${PROGNAME.${_P}}: .MADE
 .endif
-.if defined(_PROGDEBUG)
-${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}: ${_PROGDEBUG} __progdebuginstall
-.if !defined(BUILD) && !make(all) && !make(${PROG})
-${DESTDIR}${DEBUGDIR}${BINDIR}/${_PROGDEBUG}: .MADE
+.if defined(_PROGDEBUG.${_P})
+${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}: ${_PROGDEBUG.${_P}} __progdebuginstall
+.if !defined(BUILD) && !make(all) && !make(${_P})
+${DESTDIR}${DEBUGDIR}${BINDIR.${_P}}/${_PROGDEBUG.${_P}}: .MADE
 .endif
-.endif	#  defined(_PROGDEBUG)
+.endif	#  defined(_PROGDEBUG.${_P})
 .endif	# MKUPDATE != no
 
-.endif	# defined(PROG) && !target(proginstall)				# }
+.endif	# !target(proginstall-${_P})					# }
+
+lint: lint-${_P}
+lint-${_P}: ${LOBJS.${_P}}
+.if defined(LOBJS.${_P}) && !empty(LOBJS.${_P})
+	${LINT} ${LINTFLAGS} ${_LDFLAGS.${_P}:C/-L[  ]*/-L/Wg:M-L*} ${LOBJS.${_P}} ${_LDADD.${_P}}
+.endif
+
+.endfor # _P in ${PROGS} ${PROGS_CXX}					# }
+
+.if defined(OBJS) && !empty(OBJS) && \
+    (empty(PROGS) && empty(PROGS_CXX))
+cleanobjs: cleanobjs-plain
+cleanobjs-plain:
+	rm -f ${OBJS} ${LOBJS}
+.endif
 
 .if !target(proginstall)
-proginstall::
+proginstall:: ${_PROG_INSTALL}
 .endif
 .PHONY:		proginstall
 
+
+
+realall: ${SCRIPTS}
 .if defined(SCRIPTS) && !target(scriptsinstall)				# {
 SCRIPTSDIR?=${BINDIR}
 SCRIPTSOWN?=${BINOWN}
@@ -336,11 +428,6 @@ ${DESTDIR}${SCRIPTSDIR_${S}:U${SCRIPTSDIR}}/${SCRIPTSNAME_${S}:U${SCRIPTSNAME:U$
 scriptsinstall::
 .endif
 .PHONY:		scriptsinstall
-
-lint: ${LOBJS}
-.if defined(LOBJS) && !empty(LOBJS)
-	${LINT} ${LINTFLAGS} ${LDFLAGS:C/-L[  ]*/-L/Wg:M-L*} ${LOBJS} ${LDADD}
-.endif
 
 ##### Pull in related .mk logic
 .include <bsd.man.mk>

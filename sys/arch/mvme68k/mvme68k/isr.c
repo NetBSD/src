@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.29 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: isr.c,v 1.29.50.1 2008/01/09 01:47:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,19 +41,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.29 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.29.50.1 2008/01/09 01:47:25 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
-
-#include <machine/cpu.h>
 
 #include <mvme68k/mvme68k/isr.h>
 
@@ -71,6 +68,7 @@ struct	evcnt mvme68k_irq_evcnt[] = {
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "lev6"),
 	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, irqgroupname, "nmi")
 };
+static int idepth;
 
 extern	int intrcnt[];		/* from locore.s. XXXSCW: will go away soon */
 extern	void (*vectab[]) __P((void));
@@ -266,6 +264,7 @@ isrdispatch_autovec(frame)
 	void *arg;
 	static int straycount, unexpected;
 
+	idepth++;
 	ipl = (frame->vec >> 2) - ISRAUTOVEC;
 
 #ifdef DIAGNOSTIC
@@ -282,6 +281,7 @@ isrdispatch_autovec(frame)
 		printf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
+		idepth--;
 		return;
 	}
 
@@ -302,6 +302,8 @@ isrdispatch_autovec(frame)
 		panic("isr_dispatch_autovec: too many stray interrupts");
 	else
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
+
+	idepth--;
 }
 
 /*
@@ -316,6 +318,7 @@ isrdispatch_vectored(ipl, frame)
 	struct isr_vectored *isr;
 	int vec;
 
+	idepth++;
 	vec = (frame->vec >> 2) - ISRVECTORED;
 
 #ifdef DIAGNOSTIC
@@ -333,6 +336,7 @@ isrdispatch_vectored(ipl, frame)
 		printf("isrdispatch_vectored: no handler for vec 0x%x\n",
 		    frame->vec);
 		vectab[vec + ISRVECTORED] = badtrap;
+		idepth--;
 		return;
 	}
 
@@ -345,36 +349,14 @@ isrdispatch_vectored(ipl, frame)
 	else
 	if (isr->isr_evcnt)
 		isr->isr_evcnt->ev_count++;
+	idepth--;
 }
 
-/*
- * netisr junk...
- * should use an array of chars instead of
- * a bitmask to avoid atomicity locking issues.
- */
-
-void
-netintr()
+bool
+cpu_intr_p(void)
 {
-	int n, s;
 
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-
-#define DONETISR(bit, fn) do {		\
-		if (n & (1 << bit)) 	\
-			fn();		\
-		} while (0)
-
-	s = splsoftnet();
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-	splx(s);
+	return idepth != 0;
 }
 
 /* ARGSUSED */

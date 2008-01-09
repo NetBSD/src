@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_elb.c,v 1.3 2005/12/11 12:17:12 christos Exp $	*/
+/*	$NetBSD: pckbc_elb.c,v 1.3.50.1 2008/01/09 01:45:54 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.3 2005/12/11 12:17:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.3.50.1 2008/01/09 01:45:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -98,8 +98,10 @@ pckbc_elb_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	t->t_iot = eaa->elb_bt;
-	bus_space_map(eaa->elb_bt, eaa->elb_base, 1, 0, &t->t_ioh_d);
-	bus_space_map(eaa->elb_bt, eaa->elb_base2, 1, 0, &t->t_ioh_c);
+	bus_space_map(eaa->elb_bt,
+	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base), 1, 0, &t->t_ioh_d);
+	bus_space_map(eaa->elb_bt,
+	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base2), 1, 0, &t->t_ioh_c);
 	t->t_addr = eaa->elb_base;
 	t->t_sc = sc;
 	sc->id = t;

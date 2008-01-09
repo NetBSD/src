@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17.10.1 2007/11/06 23:14:07 matt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17.10.2 2008/01/09 01:44:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.10.1 2007/11/06 23:14:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.10.2 2008/01/09 01:44:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,7 +155,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	int numioapics = 0;
 #endif
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #ifdef MPBIOS
 	mpbios_present = mpbios_probe(self);
@@ -261,6 +262,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 		config_found_ia(self, "isabus", &mba_iba, isabusprint);
 #endif
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int

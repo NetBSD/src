@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.2.14.2 2007/11/06 23:17:28 matt Exp $	*/
+/*	$NetBSD: i386func.S,v 1.2.14.3 2008/01/09 01:46:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
  */
 
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.2.14.3 2008/01/09 01:46:35 matt Exp $");
+
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 

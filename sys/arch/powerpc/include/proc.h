@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.6 2005/12/11 12:18:43 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.6.50.1 2008/01/09 01:47:49 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #define _POWERPC_PROC_H_
 
 /*
- * Machine-dependent part of the proc structure
+ * Machine-dependent part of the lwp structure
  */
 struct mdlwp {
 	int md_flags;

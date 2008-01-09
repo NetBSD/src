@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.57.10.1 2007/11/06 23:19:37 matt Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.57.10.2 2008/01/09 01:47:28 matt Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include		"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.57.10.1 $"
+#ident 		"GENERIC_TINY-$Revision: 1.57.10.2 $"
 
 maxusers	4
 
@@ -18,7 +18,6 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 # Standard system options
 #options 	NTP			# NTP phase/frequency locked loop
 options 	KTRACE			# system call tracing support
-#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores
 options 	SYSVSHM			# System V shared memory

@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.29 2007/02/03 05:14:38 tsutsui Exp $	*/
+/*	$NetBSD: obio.c,v 1.29.24.1 2008/01/09 01:49:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.29 2007/02/03 05:14:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.29.24.1 2008/01/09 01:49:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,7 @@ static paddr_t obio_alist[] = {
 	OBIO_FDC,	/* floppy disk (3/80) */
 	OBIO_PRINTER_PORT, /* printer port (3/80) */
 };
-#define OBIO_ALIST_LEN (sizeof(obio_alist) / \
-                        sizeof(obio_alist[0]))
+#define OBIO_ALIST_LEN	__arraycount(obio_alist)
 
 static void 
 obio_attach(struct device *parent, struct device *self, void *aux)
@@ -213,15 +212,15 @@ obio_print(void *args, const char *name)
 
 	/* Be quiet about empty OBIO locations. */
 	if (name)
-		return(QUIET);
+		return QUIET;
 
 	/* Otherwise do the usual. */
-	return(bus_print(args, name));
+	return bus_print(args, name);
 }
 
 int 
-obio_submatch(struct device *parent, struct cfdata *cf,
-	      const int *ldesc, void *aux)
+obio_submatch(struct device *parent, struct cfdata *cf, const int *ldesc,
+    void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -234,8 +233,8 @@ obio_submatch(struct device *parent, struct cfdata *cf,
 	 */
 #ifdef	DIAGNOSTIC
 	if (cf->cf_paddr == -1)
-		panic("obio_submatch: invalid address for: %s%d",
-			cf->cf_name, cf->cf_unit);
+		panic("%s: invalid address for: %s%d",
+		    __func__, cf->cf_name, cf->cf_unit);
 #endif
 
 	/*
@@ -256,7 +255,7 @@ obio_submatch(struct device *parent, struct cfdata *cf,
 	ca->ca_intvec = cf->cf_intvec;
 
 	/* Now call the match function of the potential child. */
-	return (config_match(parent, cf, aux));
+	return config_match(parent, cf, aux);
 }
 
 
@@ -277,8 +276,7 @@ static struct prom_map {
 	{ OBIO_ZS_TTY_AB, 0 },	/* Serial Ports */
 	{ OBIO_EEPROM,    0 },	/* EEPROM/IDPROM/clock */
 };
-#define PROM_MAP_CNT (sizeof(prom_mappings) / \
-		      sizeof(prom_mappings[0]))
+#define PROM_MAP_CNT	__arraycount(prom_mappings)
 
 /*
  * Find a virtual address for a device at physical address 'pa'.
@@ -326,8 +324,7 @@ save_prom_mappings(void)
 	mon_pte = *romVectorPtr->monptaddr;
 
 	for (va = SUN3X_MON_KDB_BASE; va < SUN3X_MONEND;
-		 va += PAGE_SIZE, mon_pte++)
-	{
+	    va += PAGE_SIZE, mon_pte++) {
 		/* Is this a valid mapping to OBIO? */
 		/* XXX - Some macros would be nice... */
 		if ((*mon_pte & 0xF0000003) != 0x60000001)
@@ -344,7 +341,6 @@ save_prom_mappings(void)
 			}
 		}
 	}
-
 }
 
 /*
@@ -383,6 +379,7 @@ make_required_mappings(void)
 void 
 obio_init(void)
 {
+
 	save_prom_mappings();
 	make_required_mappings();
 

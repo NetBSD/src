@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35.24.1 2007/11/06 23:21:30 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35.24.2 2008/01/09 01:48:36 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.24.1 2007/11/06 23:21:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35.24.2 2008/01/09 01:48:36 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -182,15 +182,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	    0xfc000000, BAT_BL_64M,	/* _EUMB|_IO */
 	    0);
 
-#if 0 /* found harmful in mystery. assume bootloader has done well. */
-	/*
-	 * Set EUMB base address.
-	 */
-	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0x80000078);
-	out32rb(SANDPOINT_PCI_CONFIG_DATA, SANDPOINT_BUS_SPACE_EUMB);
-	out32rb(SANDPOINT_PCI_CONFIG_ADDR, 0);
-#endif
-
 	/* Install vectors and interrupt handler */
 	oea_init(NULL);
 
@@ -201,9 +192,6 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 	ksyms_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 	if (boothowto & RB_KDB)
 		Debugger();
-
-	out32rb(0xfec00000, (1U<<31) | 0x78);
-	printf("00:00:00 0x78 = %08x\n", in32rb(0xfee00000));
 #endif
 
 	/* Initialize bus_space */

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.97 2007/02/09 21:55:12 ad Exp $ */
+/*	$NetBSD: intr.c,v 1.97.24.1 2008/01/09 01:48:57 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.97 2007/02/09 21:55:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.97.24.1 2008/01/09 01:48:57 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.97 2007/02/09 21:55:12 ad Exp $");
 #include <machine/db_machdep.h>
 #endif
 
-void *softnet_cookie;
 #if defined(MULTIPROCESSOR)
 void *xcall_cookie;
 
@@ -87,7 +86,6 @@ void	strayintr(struct clockframe *);
 #ifdef DIAGNOSTIC
 void	bogusintr(struct clockframe *);
 #endif
-void	softnet(void *);
 
 /*
  * Stray interrupt handler.  Clear it if possible.
@@ -171,32 +169,6 @@ setitr(u_int mid)
 #else
 	return (0);
 #endif
-}
-
-/*
- * Process software network interrupts.
- */
-void
-softnet(void *fp)
-{
-	int n, s;
-
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-
-	if (n == 0)
-		return;
-
-#define DONETISR(bit, fn) do {		\
-	if (n & (1 << bit))		\
-		fn();			\
-	} while (0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
 }
 
 #if (defined(SUN4M) && !defined(MSIIEP)) || defined(SUN4D)
@@ -697,13 +669,12 @@ struct softintr_cookie {
  * softintr_init(): initialise the MI softintr system.
  */
 void
-softintr_init(void)
+sparc_softintr_init(void)
 {
 
-	softnet_cookie = softintr_establish(IPL_SOFTNET, softnet, NULL);
 #if defined(MULTIPROCESSOR) && (defined(SUN4M) || defined(SUN4D))
 	/* Establish a standard soft interrupt handler for cross calls */
-	xcall_cookie = softintr_establish(13, xcallintr, NULL);
+	xcall_cookie = sparc_softintr_establish(13, xcallintr, NULL);
 #endif
 }
 
@@ -712,7 +683,7 @@ softintr_init(void)
  * software interrupt.
  */
 void *
-softintr_establish(int level, void (*fun)(void *), void *arg)
+sparc_softintr_establish(int level, void (*fun)(void *), void *arg)
 {
 	struct softintr_cookie *sic;
 	struct intrhand *ih;
@@ -772,7 +743,7 @@ softintr_establish(int level, void (*fun)(void *), void *arg)
  * software interrupt.
  */
 void
-softintr_disestablish(void *cookie)
+sparc_softintr_disestablish(void *cookie)
 {
 	struct softintr_cookie *sic = cookie;
 
@@ -782,7 +753,7 @@ softintr_disestablish(void *cookie)
 
 #if 0
 void
-softintr_schedule(void *cookie)
+sparc_softintr_schedule(void *cookie)
 {
 	struct softintr_cookie *sic = cookie;
 	if (CPU_ISSUN4M || CPU_ISSUN4D) {

@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.29 2007/02/10 02:03:51 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.29.24.1 2008/01/09 01:47:28 matt Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -20,7 +20,6 @@ file	arch/news68k/news68k/machdep.c
 file	arch/news68k/news68k/mainbus.c
 file	arch/news68k/news68k/mem.c
 file	arch/news68k/news68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
-file	arch/news68k/news68k/softintr.c
 file	arch/news68k/news68k/trap.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb

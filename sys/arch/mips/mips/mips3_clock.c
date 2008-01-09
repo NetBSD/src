@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.5.10.1 2007/11/06 23:19:09 matt Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.5.10.2 2008/01/09 01:47:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.5.10.1 2007/11/06 23:19:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.5.10.2 2008/01/09 01:47:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,6 @@ mips3_delay(int n)
  * Support for using the MIPS 3 clock as a timecounter.
  */
 
-#ifdef	__HAVE_TIMECOUNTER
 void
 mips3_init_tc(void)
 {
@@ -145,6 +144,5 @@ mips3_init_tc(void)
 	tc_init(&tc);
 #endif
 }
-#endif	/* __HAVE_TIMECOUNTER */
 
 __weak_alias(delay, mips3_delay);

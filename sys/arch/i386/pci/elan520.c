@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.16 2006/11/16 01:32:38 christos Exp $	*/
+/*	$NetBSD: elan520.c,v 1.16.28.1 2008/01/09 01:46:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,13 +47,14 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.16 2006/11/16 01:32:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.16.28.1 2008/01/09 01:46:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/wdog.h>
 #include <sys/gpio.h>
+#include <sys/mutex.h>
+#include <sys/wdog.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,6 +79,8 @@ struct elansc_softc {
 	bus_space_handle_t sc_memh;
 	int sc_echobug;
 
+	kmutex_t sc_mtx;
+
 	struct sysmon_wdog sc_smw;
 #if NGPIO > 0
 	/* GPIO interface */
@@ -93,12 +96,19 @@ static void	elansc_gpio_pin_ctl(void *, int, int);
 #endif
 
 static void
+elansc_childdetached(device_t self, device_t child)
+{
+	/* elansc does not presently keep a pointer to children such
+	 * as the gpio, so there is nothing to do.
+	 */
+}
+
+static void
 elansc_wdogctl_write(struct elansc_softc *sc, uint16_t val)
 {
-	int s;
 	uint8_t echo_mode = 0; /* XXX: gcc */
 
-	s = splhigh();
+	KASSERT(mutex_owned(&sc->sc_mtx));
 
 	/* Switch off GP bus echo mode if we need to. */
 	if (sc->sc_echobug) {
@@ -121,17 +131,14 @@ elansc_wdogctl_write(struct elansc_softc *sc, uint16_t val)
 	if (sc->sc_echobug)
 		bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_GPECHO,
 		    echo_mode);
-
-	splx(s);
 }
 
 static void
 elansc_wdogctl_reset(struct elansc_softc *sc)
 {
-	int s;
 	uint8_t echo_mode = 0/* XXX: gcc */;
 
-	s = splhigh();
+	KASSERT(mutex_owned(&sc->sc_mtx));
 
 	/* Switch off GP bus echo mode if we need to. */
 	if (sc->sc_echobug) {
@@ -151,8 +158,6 @@ elansc_wdogctl_reset(struct elansc_softc *sc)
 	if (sc->sc_echobug)
 		bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_GPECHO,
 		    echo_mode);
-
-	splx(s);
 }
 
 static const struct {
@@ -169,35 +174,52 @@ static const struct {
 };
 
 static int
-elansc_wdog_setmode(struct sysmon_wdog *smw)
+elansc_wdog_arm(struct elansc_softc *sc)
 {
-	struct elansc_softc *sc = smw->smw_cookie;
+	struct sysmon_wdog *smw = &sc->sc_smw;
 	int i;
 	uint16_t exp_sel = 0; /* XXX: gcc */
 
-	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+	KASSERT(mutex_owned(&sc->sc_mtx));
+
+	if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
+		smw->smw_period = 32;
+		exp_sel = WDTMRCTL_EXP_SEL30;
+	} else {
+		for (i = 0; elansc_wdog_periods[i].period != 0; i++) {
+			if (elansc_wdog_periods[i].period ==
+			    smw->smw_period) {
+				exp_sel = elansc_wdog_periods[i].exp;
+				break;
+			}
+		}
+		if (elansc_wdog_periods[i].period == 0)
+			return EINVAL;
+	}
+	elansc_wdogctl_write(sc, WDTMRCTL_ENB |
+	    WDTMRCTL_WRST_ENB | exp_sel);
+	elansc_wdogctl_reset(sc);
+	return 0;
+}
+
+static int
+elansc_wdog_setmode(struct sysmon_wdog *smw)
+{
+	struct elansc_softc *sc = smw->smw_cookie;
+	int rc = 0;
+
+	mutex_enter(&sc->sc_mtx);
+
+	if (!device_is_active(&sc->sc_dev))
+		rc = EBUSY;
+	else if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		elansc_wdogctl_write(sc,
 		    WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
-	} else {
-		if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
-			smw->smw_period = 32;
-			exp_sel = WDTMRCTL_EXP_SEL30;
-		} else {
-			for (i = 0; elansc_wdog_periods[i].period != 0; i++) {
-				if (elansc_wdog_periods[i].period ==
-				    smw->smw_period) {
-					exp_sel = elansc_wdog_periods[i].exp;
-					break;
-				}
-			}
-			if (elansc_wdog_periods[i].period == 0)
-				return (EINVAL);
-		}
-		elansc_wdogctl_write(sc, WDTMRCTL_ENB |
-		    WDTMRCTL_WRST_ENB | exp_sel);
-		elansc_wdogctl_reset(sc);
-	}
-	return (0);
+	} else
+		rc = elansc_wdog_arm(sc);
+
+	mutex_exit(&sc->sc_mtx);
+	return rc;
 }
 
 static int
@@ -205,13 +227,14 @@ elansc_wdog_tickle(struct sysmon_wdog *smw)
 {
 	struct elansc_softc *sc = smw->smw_cookie;
 
+	mutex_enter(&sc->sc_mtx);
 	elansc_wdogctl_reset(sc);
-	return (0);
+	mutex_exit(&sc->sc_mtx);
+	return 0;
 }
 
 static int
-elansc_match(struct device *parent, struct cfdata *match,
-    void *aux)
+elansc_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -229,10 +252,72 @@ static const char *elansc_speeds[] = {
 	"(reserved 11)",
 };
 
-static void
-elansc_attach(struct device *parent, struct device *self, void *aux)
+static bool
+elansc_suspend(device_t dev)
 {
-	struct elansc_softc *sc = (void *) self;
+	bool rc;
+	struct elansc_softc *sc = device_private(dev);
+
+	mutex_enter(&sc->sc_mtx);
+	rc = ((sc->sc_smw.smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED);
+	mutex_exit(&sc->sc_mtx);
+	if (!rc)
+		aprint_debug_dev(dev, "watchdog enabled, suspend forbidden");
+	return rc;
+}
+
+static bool
+elansc_resume(device_t dev)
+{
+	struct elansc_softc *sc = device_private(dev);
+
+	mutex_enter(&sc->sc_mtx);
+	/* Set up the watchdog registers with some defaults. */
+	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
+
+	/* ...and clear it. */
+	elansc_wdogctl_reset(sc);
+	mutex_exit(&sc->sc_mtx);
+
+	return true;
+}
+
+static int
+elansc_detach(device_t self, int flags)
+{
+	int rc;
+	struct elansc_softc *sc = device_private(self);
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+
+	if ((rc = sysmon_wdog_unregister(&sc->sc_smw)) != 0) {
+		if (rc == ERESTART)
+			rc = EINTR;
+		return rc;
+	}
+
+	mutex_enter(&sc->sc_mtx);
+
+	/* Set up the watchdog registers with some defaults. */
+	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
+
+	/* ...and clear it. */
+	elansc_wdogctl_reset(sc);
+
+	bus_space_unmap(sc->sc_memt, sc->sc_memh, PAGE_SIZE);
+
+	mutex_exit(&sc->sc_mtx);
+	mutex_destroy(&sc->sc_mtx);
+	return 0;
+}
+
+static void
+elansc_attach(device_t parent, device_t self, void *aux)
+{
+	struct elansc_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	uint16_t rev;
 	uint8_t ressta, cpuctl;
@@ -249,16 +334,17 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_memt = pa->pa_memt;
 	if (bus_space_map(sc->sc_memt, MMCR_BASE_ADDR, PAGE_SIZE, 0,
 	    &sc->sc_memh) != 0) {
-		aprint_error("%s: unable to map registers\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "unable to map registers\n");
 		return;
 	}
+
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_HIGH);
 
 	rev = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_REVID);
 	cpuctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_CPUCTL);
 
-	aprint_normal("%s: product %d stepping %d.%d, CPU clock %s\n",
-	    sc->sc_dev.dv_xname,
+	aprint_normal_dev(&sc->sc_dev,
+	    "product %d stepping %d.%d, CPU clock %s\n",
 	    (rev & REVID_PRODID) >> REVID_PRODID_SHIFT,
 	    (rev & REVID_MAJSTEP) >> REVID_MAJSTEP_SHIFT,
 	    (rev & REVID_MINSTEP),
@@ -287,28 +373,17 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	ressta = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA);
 	if (ressta & RESSTA_WDT_RST_DET)
-		aprint_error(
-		    "%s: WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n");
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA, ressta);
-
-	/*
-	 * Hook up the watchdog timer.
-	 */
-	sc->sc_smw.smw_name = sc->sc_dev.dv_xname;
-	sc->sc_smw.smw_cookie = sc;
-	sc->sc_smw.smw_setmode = elansc_wdog_setmode;
-	sc->sc_smw.smw_tickle = elansc_wdog_tickle;
-	sc->sc_smw.smw_period = 32;	/* actually 32.54 */
-	if (sysmon_wdog_register(&sc->sc_smw) != 0)
-		aprint_error("%s: unable to register watchdog with sysmon\n",
-		    sc->sc_dev.dv_xname);
 
 	/* Set up the watchdog registers with some defaults. */
 	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
 
 	/* ...and clear it. */
 	elansc_wdogctl_reset(sc);
+
+	pmf_device_register(self, elansc_suspend, elansc_resume);
 
 #if NGPIO > 0
 	/* Initialize GPIO pins array */
@@ -344,10 +419,24 @@ elansc_attach(struct device *parent, struct device *self, void *aux)
 	/* Attach GPIO framework */
 	config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
 #endif /* NGPIO */
+
+	/*
+	 * Hook up the watchdog timer.
+	 */
+	sc->sc_smw.smw_name = device_xname(&sc->sc_dev);
+	sc->sc_smw.smw_cookie = sc;
+	sc->sc_smw.smw_setmode = elansc_wdog_setmode;
+	sc->sc_smw.smw_tickle = elansc_wdog_tickle;
+	sc->sc_smw.smw_period = 32;	/* actually 32.54 */
+	if (sysmon_wdog_register(&sc->sc_smw) != 0) {
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to register watchdog with sysmon\n");
+	}
 }
 
-CFATTACH_DECL(elansc, sizeof(struct elansc_softc),
-    elansc_match, elansc_attach, NULL, NULL);
+CFATTACH_DECL2(elansc, sizeof(struct elansc_softc),
+    elansc_match, elansc_attach, elansc_detach, NULL, NULL,
+    elansc_childdetached);
 
 #if NGPIO > 0
 static int
@@ -359,7 +448,10 @@ elansc_gpio_pin_read(void *arg, int pin)
 
 	reg = (pin < 16 ? MMCR_PIODATA15_0 : MMCR_PIODATA31_16);
 	shift = pin % 16;
+
+	mutex_enter(&sc->sc_mtx);
 	data = bus_space_read_2(sc->sc_memt, sc->sc_memh, reg);
+	mutex_exit(&sc->sc_mtx);
 
 	return ((data >> shift) & 0x1);
 }
@@ -373,6 +465,8 @@ elansc_gpio_pin_write(void *arg, int pin, int value)
 
 	reg = (pin < 16 ? MMCR_PIODATA15_0 : MMCR_PIODATA31_16);
 	shift = pin % 16;
+
+	mutex_enter(&sc->sc_mtx);
 	data = bus_space_read_2(sc->sc_memt, sc->sc_memh, reg);
 	if (value == 0)
 		data &= ~(1 << shift);
@@ -380,6 +474,7 @@ elansc_gpio_pin_write(void *arg, int pin, int value)
 		data |= (1 << shift);
 
 	bus_space_write_2(sc->sc_memt, sc->sc_memh, reg, data);
+	mutex_exit(&sc->sc_mtx);
 }
 
 static void
@@ -391,6 +486,7 @@ elansc_gpio_pin_ctl(void *arg, int pin, int flags)
 
 	reg = (pin < 16 ? MMCR_PIODIR15_0 : MMCR_PIODIR31_16);
 	shift = pin % 16;
+	mutex_enter(&sc->sc_mtx);
 	data = bus_space_read_2(sc->sc_memt, sc->sc_memh, reg);
 	if (flags & GPIO_PIN_INPUT)
 		data &= ~(1 << shift);
@@ -398,5 +494,6 @@ elansc_gpio_pin_ctl(void *arg, int pin, int flags)
 		data |= (1 << shift);
 
 	bus_space_write_2(sc->sc_memt, sc->sc_memh, reg, data);
+	mutex_exit(&sc->sc_mtx);
 }
 #endif /* NGPIO */

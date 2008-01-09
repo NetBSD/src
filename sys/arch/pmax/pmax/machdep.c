@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220.6.1 2007/11/06 23:20:15 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.220.6.2 2008/01/09 01:47:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.6.1 2007/11/06 23:20:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220.6.2 2008/01/09 01:47:45 matt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -702,38 +702,6 @@ nullwork()
 {
 
 	return (0);
-}
-
-/*
- * Return the best possible estimate of the time in the timeval to
- * which tvp points.  We guarantee that the time will be greater than
- * the value obtained by a previous call.  Some models of DECstations
- * provide a high resolution timer circuit.
- */
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s = splclock();
-	static struct timeval lasttime;
-
-	*tvp = time;
-#if defined(DEC_3MIN) || defined(DEC_MAXINE) || defined(DEC_3MAXPLUS)
-	tvp->tv_usec += (*platform.clkread)();
-#endif
-	if (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
 }
 
 /*

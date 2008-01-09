@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.10.22.1 2007/11/06 23:14:19 matt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10.22.2 2008/01/09 01:44:54 matt Exp $	*/
 
 /*
  *
@@ -70,14 +70,23 @@
 #ifndef	_AMD64_PMAP_H_
 #define	_AMD64_PMAP_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_xen.h"
+#endif
+
+#include <sys/atomic.h>
+
 #include <machine/pte.h>
 #include <machine/segments.h>
-#include <machine/atomic.h>
 #ifdef _KERNEL
 #include <machine/cpufunc.h>
 #endif
 
 #include <uvm/uvm_object.h>
+#ifdef XEN
+#include <xen/xenfunc.h>
+#include <xen/xenpmap.h>
+#endif /* XEN */
 
 /*
  * The x86_64 pmap module closely resembles the i386 one. It uses
@@ -150,7 +159,12 @@
 #define VA_SIGN_POS(va)		((va) & ~VA_SIGN_MASK)
 
 #define L4_SLOT_PTE		255
+#ifndef XEN
 #define L4_SLOT_KERN		256
+#else
+/* Xen use slots 256-272, let's move farther */
+#define L4_SLOT_KERN		320
+#endif
 #define L4_SLOT_KERNBASE	511
 #define L4_SLOT_APTE		510
 
@@ -194,7 +208,7 @@
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	8
+#define NKL2_KIMG_ENTRIES	10
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
@@ -237,13 +251,79 @@
  */
 #define NPTECL		8
 
-#define pmap_pte_set(p, n)		x86_atomic_testset_u64(p, n)
-#define pmap_pte_setbits(p, b)		x86_atomic_setbits_u64(p, b)
-#define pmap_pte_clearbits(p, b)	x86_atomic_clearbits_u64(p, b)
-#define pmap_cpu_has_pg_n()		(1)
-#define pmap_cpu_has_invlpg		(1)
-
 #include <x86/pmap.h>
+
+#ifndef XEN
+#define pmap_pa2pte(a)			(a)
+#define pmap_pte2pa(a)			((a) & PG_FRAME)
+#define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
+#define pmap_pte_testset(p, n)		\
+    atomic_swap_ulong((volatile unsigned long *)p, n)
+#define pmap_pte_setbits(p, b)		\
+    atomic_or_ulong((volatile unsigned long *)p, b)
+#define pmap_pte_clearbits(p, b)	\
+    atomic_and_ulong((volatile unsigned long *)p, ~(b))
+#define pmap_pte_flush()		/* nothing */
+#else
+static __inline pt_entry_t
+pmap_pa2pte(paddr_t pa)
+{
+	return (pt_entry_t)xpmap_ptom_masked(pa);
+}
+
+static __inline paddr_t
+pmap_pte2pa(pt_entry_t pte)
+{
+	return xpmap_mtop_masked(pte & PG_FRAME);
+}
+static __inline void
+pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
+{
+	int s = splvm();
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), npte);
+	splx(s);
+}
+
+static __inline pt_entry_t
+pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
+{
+	int s = splvm();
+	pt_entry_t opte = *pte;
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	    npte);
+	xpq_flush_queue();
+	splx(s);
+	return opte;
+}
+
+static __inline void
+pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
+{
+	int s = splvm();
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	    (*pte) | bits);
+	xpq_flush_queue();
+	splx(s);
+}
+
+static __inline void
+pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
+{	
+	int s = splvm();
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	    (*pte) & ~bits);
+	xpq_flush_queue();
+	splx(s);
+}
+
+static __inline void
+pmap_pte_flush(void)
+{
+	int s = splvm();
+	xpq_flush_queue();
+	splx(s);
+}
+#endif
 
 void pmap_prealloc_lowmem_ptps(void);
 void pmap_changeprot_local(vaddr_t, vm_prot_t);

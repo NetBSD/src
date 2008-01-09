@@ -1,4 +1,4 @@
-/* $NetBSD: pci_2100_a500.c,v 1.7 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_2100_a500.c,v 1.7.50.1 2008/01/09 01:44:39 matt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.7 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_2100_a500.c,v 1.7.50.1 2008/01/09 01:44:39 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -459,7 +459,7 @@ dec_2100_a500_intr_establish(void *v, pci_intr_handle_t ih, int level,
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(tcp->tc_intrtab, ih)) {
 		scb_set(tcp->tc_vecbase + SCB_IDXTOVEC(ih),
-		    dec_2100_a500_iointr, tcp);
+		    dec_2100_a500_iointr, tcp, level);
 		(*tcp->tc_enable_intr)(tcp, ih, 1);
 	}
 
@@ -583,7 +583,7 @@ dec_2100_a500_eisa_intr_establish(void *v, int eirq, int type, int level,
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(tcp->tc_intrtab, irq)) {
 		scb_set(tcp->tc_vecbase + SCB_IDXTOVEC(irq),
-		    dec_2100_a500_iointr, tcp);
+		    dec_2100_a500_iointr, tcp, level);
 		(*tcp->tc_setlevel)(tcp, eirq,
 		    alpha_shared_intr_get_sharetype(tcp->tc_intrtab,
 						    irq) == IST_LEVEL);

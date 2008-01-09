@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clockintr.c,v 1.4.10.1 2007/11/06 23:19:09 matt Exp $	*/
+/*	$NetBSD: mips3_clockintr.c,v 1.4.10.2 2008/01/09 01:47:17 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,15 +78,16 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.4.10.1 2007/11/06 23:19:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clockintr.c,v 1.4.10.2 2008/01/09 01:47:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/evcnt.h>
+#include <sys/intr.h>
 
 #include <mips/mips3_clock.h>
 
-#include <machine/intr.h>
 #include <machine/locore.h>
 
 struct evcnt mips_int5_evcnt =
@@ -144,9 +145,7 @@ mips3_initclocks(void)
 	next_cp0_clk_intr = mips3_cp0_count_read() + curcpu()->ci_cycles_per_hz;
 	mips3_cp0_compare_write(next_cp0_clk_intr);
 
-#ifdef	__HAVE_TIMECOUNTER
 	mips3_init_tc();
-#endif
 
 	/*
 	 * Now we can enable all interrupts including hardclock(9)

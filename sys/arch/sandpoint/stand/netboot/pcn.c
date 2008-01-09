@@ -1,4 +1,4 @@
-/* $NetBSD: pcn.c,v 1.8.4.2 2007/11/06 23:21:39 matt Exp $ */
+/* $NetBSD: pcn.c,v 1.8.4.3 2008/01/09 01:48:38 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -87,8 +87,13 @@ struct desc {
 #define PCN_32RESET	0x18
 #define PCN_BDP		0x1c
 #define PCN_CSR0	0x00
-#define  C0_IDON	(1U << 8)
-#define  C0_INIT	(1U << 0)
+#define  C0_IDON	(1U << 8)	/* initblk done indication */
+#define  C0_TXON	(1U << 5)
+#define  C0_RXON	(1U << 4)
+#define  C0_TDMD	(1U << 3)	/* immediate Tx descriptor poll */
+#define  C0_STOP	(1U << 2)	/* reset with abrupt abort */
+#define  C0_STRT	(1U << 1)	/* activate whole Tx/Rx DMA */
+#define  C0_INIT	(1U << 0)	/* instruct to process initblk */
 #define PCN_CSR1	0x01
 #define PCN_CSR2	0x02
 #define PCN_CSR3	0x03
@@ -97,6 +102,7 @@ struct desc {
 #define  C3_DXSUFLO	(1U << 6)
 #define PCN_CSR4	0x04
 #define  C4_DMAPLUS	(1U << 14)
+#define  C4_TXDPOLL	(1U << 12)	/* _disable_ Tx descriptor polling */
 #define  C4_APAD_XMT	(1U << 11)
 #define  C4_MFCOM	(1U << 8)
 #define  C4_RCVCCOM	(1U << 4)
@@ -105,6 +111,8 @@ struct desc {
 #define PCN_CSR12	0x0c
 #define PCN_CSR13	0x0d
 #define PCN_CSR14	0x0e
+#define PCN_CSR58	0x4a		/* mapped to BCR20 */
+#define PCN_BCR20	0x14		/* "software style" */
 #define PCN_BCR33	0x21
 #define PCN_BCR34	0x22
 
@@ -120,8 +128,8 @@ struct pcninit {
 #define FRAMESIZE	1536
 
 struct local {
-	struct desc TxD;
-	struct desc RxD[2];
+	struct desc txd;
+	struct desc rxd[2];
 	uint8_t rxstore[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
@@ -138,9 +146,9 @@ static void mii_initphy(struct local *l);
 void *
 pcn_init(unsigned tag, void *data)
 {
-	unsigned val, loop;
+	unsigned val, fdx, loop;
 	struct local *l;
-	struct desc *TxD, *RxD;
+	struct desc *txd, *rxd;
 	uint8_t *en;
 	struct pcninit initblock, *ib;
 
@@ -153,11 +161,15 @@ pcn_init(unsigned tag, void *data)
 	l->csr = DEVTOV(pcicfgread(tag, 0x14)); /* use mem space */
 
 	(void)CSR_READ_2(l, PCN_16RESET);
-	(void)CSR_READ_2(l, PCN_32RESET);
+	(void)CSR_READ_4(l, PCN_32RESET);
 	DELAY(1000); /* 1 milli second */
+	/* go 32bit RW mode */
 	CSR_WRITE_4(l, PCN_RDP, 0);
+	/* use 32bit software structure design "2" */
+	pcn_bcr_write(l, PCN_BCR20, 2);
 
 	mii_initphy(l);
+
 	en = data;
 	val = pcn_csr_read(l, PCN_CSR12); en[0] = val; en[1] = (val >> 8);
 	val = pcn_csr_read(l, PCN_CSR13); en[2] = val; en[3] = (val >> 8);
@@ -166,23 +178,30 @@ pcn_init(unsigned tag, void *data)
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x\n",
 		en[0], en[1], en[2], en[3], en[4], en[5]);
 #endif
+	/* speed and duplexity are found in MII ANR24 */
+	val = pcn_mii_read(l, l->phy, 24);
+	fdx = !!(val & (1U << 2));
+	printf("%s", (val & (1U << 0)) ? "100Mbps" : "10Mbps");
+	if (fdx)
+		printf("-FDX");
+	printf("\n");
 
-	TxD = &l->TxD;
-	RxD = &l->RxD[0];
-	RxD[0].xd0 = htole32(VTOPHYS(l->rxstore[0]));
-	RxD[0].xd1 = htole32(R1_OWN | R1_ONES | FRAMESIZE);
-	RxD[1].xd0 = htole32(VTOPHYS(l->rxstore[1]));
-	RxD[1].xd1 = htole32(R1_OWN | R1_ONES | FRAMESIZE);
+	txd = &l->txd;
+	rxd = &l->rxd[0];
+	rxd[0].xd0 = htole32(VTOPHYS(l->rxstore[0]));
+	rxd[0].xd1 = htole32(R1_OWN | R1_ONES | FRAMESIZE);
+	rxd[1].xd0 = htole32(VTOPHYS(l->rxstore[1]));
+	rxd[1].xd1 = htole32(R1_OWN | R1_ONES | FRAMESIZE);
 	l->rx = 0;
 
 	ib = &initblock;
-	ib->init_rdra = htole32(VTOPHYS(RxD));
-	ib->init_tdra = htole32(VTOPHYS(TxD));
-	ib->init_mode = htole32(0 | ((2 - 1) << 28) | ((2 - 1) << 20));
+	ib->init_mode = htole32((0 << 28) | (1 << 20) | 0);
 	ib->init_padr[0] =
 	    htole32(en[0] | (en[1] << 8) | (en[2] << 16) | (en[3] << 24));
 	ib->init_padr[1] =
 	    htole32(en[4] | (en[5] << 8));
+	ib->init_rdra = htole32(VTOPHYS(rxd));
+	ib->init_tdra = htole32(VTOPHYS(txd));
 
 	pcn_csr_write(l, PCN_CSR3, C3_MISSM|C3_IDONM|C3_DXSUFLO);
 	pcn_csr_write(l, PCN_CSR4, C4_DMAPLUS|C4_APAD_XMT|
@@ -199,7 +218,8 @@ pcn_init(unsigned tag, void *data)
 	} while (--loop > 0 && !(pcn_csr_read(l, PCN_CSR0) & C0_IDON));
 	if (loop == 0)
 		printf("pcn: timeout processing init block\n");
-	pcn_csr_write(l, PCN_CSR0, 0);
+
+	pcn_csr_write(l, PCN_CSR0, C0_STRT);
 
 	return l;
 }
@@ -208,20 +228,23 @@ int
 pcn_send(void *dev, char *buf, unsigned len)
 {
 	struct local *l = dev;
-	struct desc *TxD;
+	struct desc *txd;
 	unsigned loop;
+	int tlen;
 
 	wbinv(buf, len);
-	TxD = &l->TxD;
-	TxD->xd0 = htole32(VTOPHYS(buf));
-	TxD->xd1 = htole32(T1_OWN | T1_STP | T1_ENP | (len & T1_FLMASK));
-	wbinv(TxD, sizeof(struct desc));
+	tlen = (-len) & T1_FLMASK; /* two's complement */
+	txd = &l->txd;
+	txd->xd0 = htole32(VTOPHYS(buf));
+	txd->xd1 = htole32(T1_OWN | T1_STP | T1_ENP | T1_ONES | tlen);
+	wbinv(txd, sizeof(struct desc));
+	/* pcn_csr_write(l, PCN_CSR0, C0_TDMD); */
 	loop = 100;
 	do {
-		if ((le32toh(TxD->xd1) & T1_OWN) == 0)
+		if ((le32toh(txd->xd1) & T1_OWN) == 0)
 			goto done;
 		DELAY(10);
-		inv(TxD, sizeof(struct desc));
+		inv(txd, sizeof(struct desc));
 	} while (--loop > 0);
 	printf("xmit failed\n");
 	return -1;
@@ -233,28 +256,28 @@ int
 pcn_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
-	struct desc *RxD;
+	struct desc *rxd;
 	unsigned bound, rxstat, len;
 	uint8_t *ptr;
 
 	bound = 1000 * timo;
 printf("recving with %u sec. timeout\n", timo);
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		inv(RxD, sizeof(struct desc));
-		rxstat = le32toh(RxD->xd1);
+		inv(rxd, sizeof(struct desc));
+		rxstat = le32toh(rxd->xd1);
 		if ((rxstat & R1_OWN) == 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
-	} while (bound-- > 0);
+	} while (--bound > 0);
 	errno = 0;
 	return -1;
   gotone:
 	if (rxstat & R1_ERR) {
-		RxD->xd1 |= htole32(R1_OWN);
-		RxD->xd2 = 0;
-		wbinv(RxD, sizeof(struct desc));
+		rxd->xd1 |= htole32(R1_OWN);
+		rxd->xd2 = 0;
+		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
@@ -265,9 +288,9 @@ printf("recving with %u sec. timeout\n", timo);
 	ptr = l->rxstore[l->rx];
 	inv(ptr, len);
 	memcpy(buf, ptr, len);
-	RxD->xd1 |= htole32(R1_OWN);
-	RxD->xd2 = 0;
-	wbinv(RxD, sizeof(struct desc));
+	rxd->xd1 |= htole32(R1_OWN);
+	rxd->xd2 = 0;
+	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
 	return len;
 }

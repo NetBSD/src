@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.16.10.1 2007/11/06 23:23:09 matt Exp $	*/
+/*	$NetBSD: isr.c,v 1.16.10.2 2008/01/09 01:49:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,26 +37,25 @@
  */
 
 /*
- * This handles multiple attach of autovectored interrupts,
- * and the handy software interrupt request register.
+ * This handles multiple attach of autovectored interrupts.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16.10.1 2007/11/06 23:23:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.16.10.2 2008/01/09 01:49:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <net/netisr.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/mon.h>
 
 #include <sun68k/sun68k/vector.h>
@@ -72,15 +71,11 @@ struct isr {
 	int isr_ipl;
 };
 
-/*
- * Generic soft interrupt support.
- */
+#if 0
 #define _IPL_NSOFT	(_IPL_SOFT_LEVEL_MAX - _IPL_SOFT_LEVEL_MIN + 1)
+#endif
 
-struct softintr_head soft_level_heads[_IPL_NSOFT];
-void *softnet_cookie;
-static int softintr_handler(void *);
-static void netintr(void);
+int idepth;
 
 void set_vector_entry(int, void *);
 void *get_vector_entry(int);
@@ -101,33 +96,6 @@ isr_add_custom(int level, void *handler)
 }
 
 
-/*
- * netisr junk...
- * should use an array of chars instead of
- * a bitmask to avoid atomicity locking issues.
- */
-
-void 
-netintr(void)
-{
-	int n, s;
-
-	s = splhigh();
-	n = netisr;
-	netisr = 0;
-	splx(s);
-
-#define DONETISR(bit, fn) do {		\
-	if (n & (1 << bit))		\
-		fn();			\
-} while (/* CONSTCOND */0)
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-}
-
-
 static struct isr *isr_autovec_list[NUM_LEVELS];
 
 /*
@@ -139,6 +107,10 @@ isr_autovec(struct clockframe cf)
 {
 	struct isr *isr;
 	int n, ipl, vec;
+
+#ifdef DIAGNOSTIC
+	idepth++;
+#endif
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
 #ifdef DIAGNOSTIC
@@ -168,6 +140,10 @@ isr_autovec(struct clockframe cf)
 		printf("isr_autovec: ipl %d not claimed\n", ipl);
 
  out:
+#ifdef DIAGNOSTIC
+	idepth--;
+#endif
+
 	LOCK_CAS_CHECK(&cf);
 }
 
@@ -209,6 +185,10 @@ isr_vectored(struct clockframe cf)
 	struct vector_handler *vh;
 	int ipl, vec;
 
+#ifdef DIAGNOSTIC
+	idepth++;
+#endif
+
 	vec = (cf.cf_vo & 0xFFF) >> 2;
 	ipl = _getsr();
 	ipl = (ipl >> 8) & 7;
@@ -234,6 +214,9 @@ isr_vectored(struct clockframe cf)
 		printf("isr_vectored: vector=0x%x (not claimed)\n", vec);
 
  out:
+#ifdef DIAGNOSTIC
+	idepth--;
+#endif
 	LOCK_CAS_CHECK(&cf);
 }
 
@@ -262,116 +245,12 @@ isr_add_vectored(isr_func_t func, void *arg, int level, int vec)
 	set_vector_entry(vec, (void *)_isr_vectored);
 }
 
-/*
- * Generic soft interrupt support.
- */
-
-/*
- * The soft interrupt handler.
- */
-static int
-softintr_handler(void *arg)
+bool
+cpu_intr_p(void)
 {
-	struct softintr_head *shd = arg;
-	struct softintr_handler *sh;
 
-	/* Clear the interrupt. */
-	isr_soft_clear(shd->shd_ipl);
-	uvmexp.softs++;
-
-	/* Dispatch any pending handlers. */
-	for (sh = LIST_FIRST(&shd->shd_intrs);
-	    sh != NULL;
-	    sh = LIST_NEXT(sh, sh_link)) {
-		if (sh->sh_pending) {
-			sh->sh_pending = 0;
-			(*sh->sh_func)(sh->sh_arg);
-		}
-	}
-
-	return 1;
+	return idepth != 0;
 }
-
-/*
- * This initializes soft interrupts.
- */
-void
-softintr_init(void)
-{
-	int ipl;
-	struct softintr_head *shd;
-
-	for (ipl = _IPL_SOFT_LEVEL_MIN; ipl <= _IPL_SOFT_LEVEL_MAX; ipl++) {
-		shd = &soft_level_heads[ipl - _IPL_SOFT_LEVEL_MIN];
-		shd->shd_ipl = ipl;
-		LIST_INIT(&shd->shd_intrs);
-		isr_add_autovect(softintr_handler, shd, ipl);
-	}
-
-	softnet_cookie = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-}
-
-static int
-ipl2si(ipl_t ipl)
-{
-	int si;
-
-	switch (ipl) {
-	case IPL_SOFTNET:
-	case IPL_SOFTCLOCK:
-		si = _IPL_SOFT_LEVEL1;
-		break;
-	case IPL_BIO:	/* used by fd(4), which uses ipl 6 for hwintr */
-		si = _IPL_SOFT_LEVEL2;
-		break;
-	case IPL_SOFTSERIAL:
-		si = _IPL_SOFT_LEVEL3;
-		break;
-	default:
-		panic("ipl2si: %d\n", ipl);
-	}
-
-	return si;
-}
-
-/*
- * This establishes a soft interrupt handler.
- */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct softintr_handler *sh;
-	struct softintr_head *shd;
-	int si;
-
-	si = ipl2si(ipl);
-	shd = &soft_level_heads[si - _IPL_SOFT_LEVEL_MIN];
-
-	sh = malloc(sizeof(*sh), M_SOFTINTR, M_NOWAIT);
-	if (sh == NULL)
-		return NULL;
-
-	LIST_INSERT_HEAD(&shd->shd_intrs, sh, sh_link);
-	sh->sh_head = shd;
-	sh->sh_pending = 0;
-	sh->sh_func = func;
-	sh->sh_arg = arg;
-
-	return sh;
-}
-
-/*
- * This disestablishes a soft interrupt handler.
- */
-void
-softintr_disestablish(void *arg)
-{
-	struct softintr_handler *sh = arg;
-	LIST_REMOVE(sh, sh_link);
-	free(sh, M_SOFTINTR);
-}
-
 
 /*
  * XXX - could just kill these...
@@ -396,26 +275,13 @@ get_vector_entry(int entry)
 
 static const int ipl2psl_table[] = {
 	[IPL_NONE] = PSL_IPL0,
+	[IPL_SOFTBIO] = PSL_IPL1,
 	[IPL_SOFTCLOCK] = PSL_IPL1,
 	[IPL_SOFTNET] = PSL_IPL1,
-	[IPL_BIO] = PSL_IPL2,
-	[IPL_NET] = PSL_IPL3,
 	[IPL_SOFTSERIAL] = PSL_IPL3,
-	[IPL_TTY] = PSL_IPL4,
-	[IPL_LPT] = PSL_IPL4,
 	[IPL_VM] = PSL_IPL4,
-#if 0
-	[IPL_AUDIO] =
-#endif
-	[IPL_CLOCK] = PSL_IPL5,
-	[IPL_STATCLOCK] = PSL_IPL5,
-	[IPL_SERIAL] = PSL_IPL6,
-	[IPL_SCHED] = PSL_IPL7,
+	[IPL_SCHED] = PSL_IPL6,
 	[IPL_HIGH] = PSL_IPL7,
-	[IPL_LOCK] = PSL_IPL7,
-#if 0
-	[IPL_IPI] =
-#endif
 };
 
 ipl_cookie_t

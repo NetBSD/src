@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.131.2.1 2007/11/06 23:17:36 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.131.2.2 2008/01/09 01:46:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.131.2.1 2007/11/06 23:17:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.131.2.2 2008/01/09 01:46:40 matt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -165,27 +165,25 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		panic("cpu_lwp_fork: curlwp");
 #endif
 	*pcb = l1->l_addr->u_pcb;
+#if defined(XEN)
+	pcb->pcb_iopl = SEL_KPL;
+#endif /* defined(XEN) */
 
 	/*
-	 * Preset these so that gdt_compact() doesn't get confused if called
-	 * during the allocations below.
-	 *
-	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
-	 * we run the new process.
+	 * Fix up the ring0 esp.
 	 */
-	l2->l_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
+	pcb->pcb_esp0 = USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16;
 
-	/* Fix up the TSS. */
-	pcb->pcb_tss.tss_ss0 = GSEL(GDATA_SEL, SEL_KPL);
-	pcb->pcb_tss.tss_esp0 = USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16;
+	pcb->pcb_iomap = NULL;
 
-	l2->l_md.md_tss_sel = tss_alloc(pcb);
 	l2->l_md.md_astpending = 0;
+	memcpy(&pcb->pcb_fsd, curpcb->pcb_fsd, sizeof(pcb->pcb_fsd));
+	memcpy(&pcb->pcb_gsd, curpcb->pcb_gsd, sizeof(pcb->pcb_gsd));
 
 	/*
 	 * Copy the trapframe.
 	 */
-	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_esp0 - 1;
+	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_esp0 - 1;
 	*tf = *l1->l_md.md_regs;
 
 #ifndef NOREDZONE
@@ -263,11 +261,7 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 
-	/* Nuke the TSS. */
-	tss_free(l->l_md.md_tss_sel);
-#ifdef DEBUG
-	l->l_md.md_tss_sel = 0xfeedbeed;
-#endif
+	/* nothing */
 }
 
 #if (defined(EXEC_AOUT) || defined(EXEC_COFF) || defined(EXEC_ECOFF) || \

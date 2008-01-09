@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.11 2007/03/04 06:00:28 christos Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.11.20.1 2008/01/09 01:47:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1987, 1990 The Regents of the University of California.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11 2007/03/04 06:00:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11.20.1 2008/01/09 01:47:39 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,11 +88,11 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.11 2007/03/04 06:00:28 chris
 #include <compat/sys/signalvar.h>
 
 int
-compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sigcontext13 *scp, context;
 	struct reg *regs;

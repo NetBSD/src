@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.17.10.1 2007/11/06 23:22:45 matt Exp $ */
+/*	$NetBSD: intr.h,v 1.17.10.2 2008/01/09 01:49:04 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,25 +43,15 @@
 
 /* XXX - arbitrary numbers; no interpretation is defined yet */
 #define	IPL_NONE	0		/* nothing */
-#define	IPL_SOFTINT	1		/* softint */
 #define	IPL_SOFTCLOCK	1		/* timeouts */
+#define	IPL_SOFTBIO	1		/* block I/O */
 #define	IPL_SOFTNET	1		/* protocol stack */
-#define	IPL_BIO		PIL_BIO		/* block I/O */
-#define	IPL_NET		PIL_NET		/* network */
 #define	IPL_SOFTSERIAL	4		/* serial */
-#define	IPL_TTY		PIL_TTY		/* terminal */
 #define	IPL_VM		PIL_VM		/* memory allocation */
-#define	IPL_AUDIO	PIL_AUD		/* audio */
-#define	IPL_CLOCK	PIL_CLOCK	/* clock */
-#define	IPL_STATCLOCK	PIL_STATCLOCK	/* statclock */
-#define	IPL_SERIAL	PIL_SER		/* serial */
 #define	IPL_SCHED	PIL_SCHED	/* scheduler */
-#define	IPL_LOCK	PIL_LOCK	/* locks */
 #define	IPL_HIGH	PIL_HIGH	/* everything */
 #define	IPL_HALT	5		/* cpu stop-self */
 #define	IPL_PAUSE	13		/* pause cpu */
-#define	IPL_LPT		PIL_LPT
-#define	IPL_IPI		PIL_HIGH
 #define	IPL_FDSOFT	PIL_FDSOFT	/* floppy */
 
 void save_and_clear_fpstate(struct lwp *);
@@ -78,9 +68,5 @@ void	mp_pause_cpus (void);
 void	mp_resume_cpus (void);
 int	mp_cpu_is_paused (cpuset_t);
 #endif
-
-void *softintr_establish (int level, void (*fun)(void *), void *arg);
-void  softintr_disestablish (void *cookie);
-void  softintr_schedule (void *cookie);
 
 #endif /* _SPARC64_INTR_H_ */

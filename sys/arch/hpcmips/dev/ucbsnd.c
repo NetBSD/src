@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.16 2005/12/11 12:17:33 christos Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.16.50.1 2008/01/09 01:46:12 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.16 2005/12/11 12:17:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.16.50.1 2008/01/09 01:46:12 matt Exp $");
 
 #include "opt_use_poll.h"
 
@@ -72,7 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.16 2005/12/11 12:17:33 christos Exp $")
 
 #define AUDIOUNIT(x)		(minor(x)&0x0f)
 #define AUDIODEV(x)		(minor(x)&0xf0)
-#define	splaudio	splbio	/* XXX */
 
 #ifdef UCBSNDDEBUG
 int	ucbsnd_debug = 1;

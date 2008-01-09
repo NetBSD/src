@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.14 2007/03/11 06:34:53 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.14.18.1 2008/01/09 01:49:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.14 2007/03/11 06:34:53 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.14.18.1 2008/01/09 01:49:11 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.14 2007/03/11 06:34:53 tsutsui Exp $");
 #include <sys/tty.h>
 #include <sys/time.h>
 #include <sys/syslog.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
 #include <machine/promlib.h>
@@ -157,15 +158,19 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 {
 	struct zsc_attach_args zsc_args;
 	struct zs_chanstate *cs;
-	int s, channel, softpri = IPL_SOFTSERIAL;
+	int s, channel;
 
 	if (zsd == NULL) {
 		printf("configuration incomplete\n");
 		return;
 	}
 
+#if 0
 	/* we should use ipl2si(softpri) but it isn't exported */
 	printf(" softpri %d\n", _IPL_SOFT_LEVEL3);
+#else
+	printf("\n");
+#endif
 
 	/*
 	 * Initialize software state for each channel.
@@ -178,7 +183,7 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
@@ -292,7 +297,8 @@ zs_attach(struct zsc_softc *zsc, struct zsdevice *zsd, int pri)
 	 * Now safe to install interrupt handlers.
 	 */
 	bus_intr_establish(zsc->zsc_bustag, pri, IPL_SERIAL, 0, zshard, zsc);
-	if (!(zsc->zsc_softintr = softintr_establish(softpri, zssoft, zsc)))
+	if (!(zsc->zsc_softintr = softint_establish(SOFTINT_SERIAL,
+	    zssoft, zsc)))
 		panic("zsattach: could not establish soft interrupt");
 
 	evcnt_attach_dynamic(&zsc->zsc_intrcnt, EVCNT_TYPE_INTR, NULL,
@@ -342,7 +348,7 @@ zshard(void *arg)
 	if (((zsc->zsc_cs[0] && zsc->zsc_cs[0]->cs_softreq) ||
 	     (zsc->zsc_cs[1] && zsc->zsc_cs[1]->cs_softreq)) &&
 	    zsc->zsc_softintr) {
-		softintr_schedule(zsc->zsc_softintr);
+		softint_schedule(zsc->zsc_softintr);
 	}
 	return (rval);
 }

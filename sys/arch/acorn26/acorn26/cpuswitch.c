@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.c,v 1.12.10.1 2007/11/06 23:13:29 matt Exp $	*/
+/*	$NetBSD: cpuswitch.c,v 1.12.10.2 2008/01/09 01:44:25 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ben Harris.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.12.10.1 2007/11/06 23:13:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpuswitch.c,v 1.12.10.2 2008/01/09 01:44:25 matt Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -61,7 +61,7 @@ struct pcb *curpcb;
  * Switch to the indicated lwp.
  */
 lwp_t *
-cpu_switchto(lwp_t *old, lwp_t *new)
+cpu_switchto(lwp_t *old, lwp_t *new, bool returning)
 {
 	struct proc *p2;
 

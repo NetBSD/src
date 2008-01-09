@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.27 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: pcc.c,v 1.27.50.1 2008/01/09 01:47:24 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.27 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.27.50.1 2008/01/09 01:47:24 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -100,7 +100,9 @@ CFATTACH_DECL(pcc, sizeof(struct pcc_softc),
 extern struct cfdriver pcc_cd;
 static int pccintr __P((void *));
 static int pccsoftintr __P((void *));
+#ifdef notyet
 static void pccsoftintrassert __P((void));
+#endif
 
 /*
  * Structure used to describe a device for autoconfiguration purposes.
@@ -204,7 +206,9 @@ pccattach(parent, self, args)
 	 * and arrange to schedule soft interrupts on demand.
 	 */
 	pccintr_establish(PCCV_SOFT1, pccsoftintr, 1, sc, &sc->sc_evcnt);
+#ifdef notyet
 	_softintr_chipset_assert = pccsoftintrassert;
+#endif
 
 	/* Make sure the global interrupt line is hot. */
 	reg = pcc_reg_read(sc, PCCREG_GENERAL_CONTROL) | PCC_GENCR_IEN;
@@ -313,6 +317,7 @@ pccintr(frame)
 	return (nmihand(frame));
 }
 
+#ifdef notyet
 static void
 pccsoftintrassert(void)
 {
@@ -320,6 +325,7 @@ pccsoftintrassert(void)
 	/* Request a software interrupt at ipl 1 */
 	pcc_reg_write(sys_pcc, PCCREG_SOFT1_INTR_CTRL, 1 | PCC_IENABLE);
 }
+#endif
 
 /*
  * Handle PCC soft interrupt #1
@@ -333,8 +339,10 @@ pccsoftintr(arg)
 	/* Clear the interrupt */
 	pcc_reg_write(sc, PCCREG_SOFT1_INTR_CTRL, 0);
 
+#ifdef notyet
 	/* Call the soft interrupt dispatcher */
 	softintr_dispatch();
+#endif
 
 	return (1);
 }

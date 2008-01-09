@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.50 2007/03/08 02:24:39 tsutsui Exp $	*/
+/*	$NetBSD: adb.c,v 1.50.20.1 2008/01/09 01:47:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.50 2007/03/08 02:24:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.50.20.1 2008/01/09 01:47:04 matt Exp $");
 
 #include "opt_adb.h"
 
@@ -43,9 +43,10 @@ __KERNEL_RCSID(0, "$NetBSD: adb.c,v 1.50 2007/03/08 02:24:39 tsutsui Exp $");
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/autoconf.h>
-#include <machine/cpu.h>
 
 #include <mac68k/mac68k/macrom.h>
 #include <mac68k/dev/adbvar.h>
@@ -98,7 +99,7 @@ static void
 adbattach(struct device *parent, struct device *self, void *aux)
 {
 
-	adb_softintr_cookie = softintr_establish(IPL_SOFT,
+	adb_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))adb_soft_intr, NULL);
 	printf("\n");
 

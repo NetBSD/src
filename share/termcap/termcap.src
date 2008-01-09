@@ -1,4 +1,4 @@
-#	$NetBSD: termcap.src,v 1.99 2007/02/16 21:33:12 wiz Exp $
+#	$NetBSD: termcap.src,v 1.99.4.1 2008/01/09 01:39:27 matt Exp $
 #
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
@@ -930,7 +930,7 @@ x68k|x68k-ite|NetBSD/x68k ITE:\
 
 # NetBSD "wscons" emulator in vt220 mode
 wsvt25|NetBSD wscons in 25 line DEC VT220 mode:\
-	:Co#8:pa#64:it#8:ut:co#80:li#25:vb@:xn@:if@:NC#2:\
+	:Co#8:pa#64:it#8:ut:co#80:li#25:vb@:if@:NC#2:\
 	:k1=\E[11~:k2=\E[12~:k3=\E[13~:k4=\E[14~:k5=\E[15~:k;=\E[21~:\
 	:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:is=\E[!p:ti=\E)0:te=\E)B:\
 	:ac=``aaffggjjkkllmmnnqqttuuvvwwxxyyzz{{}}~~:\

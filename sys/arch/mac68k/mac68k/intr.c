@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.24 2007/03/08 02:24:40 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.24.20.1 2008/01/09 01:47:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -41,19 +41,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2007/03/08 02:24:40 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24.20.1 2008/01/09 01:47:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
 
 #include <machine/psc.h>
 #include <machine/viareg.h>
@@ -62,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.24 2007/03/08 02:24:40 tsutsui Exp $");
 #define	ISRLOC	0x18
 
 static int intr_noint(void *);
-void netintr(void);
 
 static int ((*intr_func[NISR])(void *)) = {
 	intr_noint,
@@ -95,6 +91,8 @@ int	intr_debug = 0;
  * to interrupt on different levels as listed in locore.s
  */
 u_short mac68k_ipls[NIPL];
+int idepth;
+volatile int ssir;
 
 extern	int intrcnt[];		/* from locore.s */
 
@@ -119,8 +117,7 @@ intr_init(void)
 	mac68k_ipls[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
 	mac68k_ipls[IPL_SOFTNET]    = PSL_S|PSL_IPL1;
 	mac68k_ipls[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1;
-	mac68k_ipls[IPL_SOFT]       = PSL_S|PSL_IPL1;
-	mac68k_ipls[IPL_SERIAL]     = PSL_S|PSL_IPL4;
+	mac68k_ipls[IPL_SOFTBIO]    = PSL_S|PSL_IPL1;
 	mac68k_ipls[IPL_HIGH]       = PSL_S|PSL_IPL7;
 
 	g_inames = (char *) &intrnames;
@@ -128,38 +125,19 @@ intr_init(void)
 		inames = AUX_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[IPL_BIO]       = (PSL_S | PSL_IPL2);
-		mac68k_ipls[IPL_NET]       = (PSL_S | PSL_IPL3);
-		mac68k_ipls[IPL_TTY]       = (PSL_S | PSL_IPL1);
 		mac68k_ipls[IPL_VM]        = (PSL_S | PSL_IPL6);
-		mac68k_ipls[IPL_STATCLOCK] = (PSL_S | PSL_IPL6);
-		mac68k_ipls[IPL_CLOCK]     = (PSL_S | PSL_IPL6);
 		mac68k_ipls[IPL_SCHED]     = (PSL_S | PSL_IPL6);
-
-		/* Non-standard interrupt priorities */
-		mac68k_ipls[IPL_ADB]       = (PSL_S | PSL_IPL6);
-		mac68k_ipls[IPL_AUDIO]     = (PSL_S | PSL_IPL5);
-
 	} else {
 		inames = STD_INAMES;
 
 		/* Standard spl(9) interrupt priorities */
-		mac68k_ipls[IPL_BIO]       = (PSL_S | PSL_IPL2);
-		mac68k_ipls[IPL_NET]       = (PSL_S | PSL_IPL2);
-		mac68k_ipls[IPL_TTY]       = (PSL_S | PSL_IPL1);
 		mac68k_ipls[IPL_VM]        = (PSL_S | PSL_IPL2);
-		mac68k_ipls[IPL_STATCLOCK] = (PSL_S | PSL_IPL2);
-		mac68k_ipls[IPL_CLOCK]     = (PSL_S | PSL_IPL2);
 		mac68k_ipls[IPL_SCHED]     = (PSL_S | PSL_IPL3);
-
-		/* Non-standard interrupt priorities */
-		mac68k_ipls[IPL_ADB]       = (PSL_S | PSL_IPL1);
-		mac68k_ipls[IPL_AUDIO]     = (PSL_S | PSL_IPL2);
 
 		if (current_mac_model->class == MACH_CLASSAV) {
 			inames = AV_INAMES;
-			mac68k_ipls[IPL_BIO] = (PSL_S | PSL_IPL4);
-			mac68k_ipls[IPL_NET] = (PSL_S | PSL_IPL4);
+			mac68k_ipls[IPL_VM]    = (PSL_S | PSL_IPL4);
+			mac68k_ipls[IPL_SCHED] = (PSL_S | PSL_IPL4);
 		}
 	}
 
@@ -186,26 +164,11 @@ intr_computeipl(void)
 	 * Enforce the following relationship, as defined in spl(9):
 	 * `bio <= net <= tty <= vm <= statclock <= clock <= sched <= serial'
 	 */
-	if (mac68k_ipls[IPL_BIO] > mac68k_ipls[IPL_NET])
-		mac68k_ipls[IPL_NET] = mac68k_ipls[IPL_BIO];
+	if (mac68k_ipls[IPL_VM] > mac68k_ipls[IPL_SCHED])
+		mac68k_ipls[IPL_SCHED] = mac68k_ipls[IPL_VM];
 
-	if (mac68k_ipls[IPL_NET] > mac68k_ipls[IPL_TTY])
-		mac68k_ipls[IPL_TTY] = mac68k_ipls[IPL_NET];
-
-	if (mac68k_ipls[IPL_TTY] > mac68k_ipls[IPL_VM])
-		mac68k_ipls[IPL_VM] = mac68k_ipls[IPL_TTY];
-
-	if (mac68k_ipls[IPL_VM] > mac68k_ipls[IPL_STATCLOCK])
-		mac68k_ipls[IPL_STATCLOCK] = mac68k_ipls[IPL_VM];
-
-	if (mac68k_ipls[IPL_STATCLOCK] > mac68k_ipls[IPL_CLOCK])
-		mac68k_ipls[IPL_CLOCK] = mac68k_ipls[IPL_STATCLOCK];
-
-	if (mac68k_ipls[IPL_CLOCK] > mac68k_ipls[IPL_SCHED])
-		mac68k_ipls[IPL_SCHED] = mac68k_ipls[IPL_CLOCK];
-
-	if (mac68k_ipls[IPL_SCHED] > mac68k_ipls[IPL_SERIAL])
-		mac68k_ipls[IPL_SERIAL] = mac68k_ipls[IPL_SCHED];
+	if (mac68k_ipls[IPL_SCHED] > mac68k_ipls[IPL_HIGH])
+		mac68k_ipls[IPL_HIGH] = mac68k_ipls[IPL_SCHED];
 }
 
 /*
@@ -256,6 +219,7 @@ intr_dispatch(int evec)		/* format | vector offset */
 {
 	int ipl, vec;
 
+	idepth++;
 	vec = (evec & 0xfff) >> 2;
 #ifdef DIAGNOSTIC
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
@@ -267,6 +231,7 @@ intr_dispatch(int evec)		/* format | vector offset */
 	uvmexp.intrs++;
 
 	(void)(*intr_func[ipl])(intr_arg[ipl]);
+	idepth--;
 }
 
 /*
@@ -276,8 +241,17 @@ static int
 intr_noint(void *arg)
 {
 #ifdef DEBUG
+	idepth++;
 	if (intr_debug)
 		printf("intr_noint: ipl %d\n", (int)arg);
+	idepth--;
 #endif
 	return 0;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }

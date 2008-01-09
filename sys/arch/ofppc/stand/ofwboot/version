@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5.98.1 2007/11/06 23:20:07 matt Exp $
+$NetBSD: version,v 1.5.98.2 2008/01/09 01:47:38 matt Exp $
 
 1.1:		Boot program for OpenFirmware; initial revision
 1.2:		Boot program rearrangement
@@ -6,3 +6,4 @@ $NetBSD: version,v 1.5.98.1 2007/11/06 23:20:07 matt Exp $
 1.4:		Support verbose/quiet boot.
 1.5:		Support for proper DDB symbol loading and MS-DOS file systems
 1.6:		Change how symbol table is conveyed to kernel
+1.7:		Support RAID partitions

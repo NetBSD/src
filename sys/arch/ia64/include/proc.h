@@ -3,7 +3,7 @@
 
 #include <machine/frame.h>
 /*
- * Machine-dependent part of the proc structure for ia64
+ * Machine-dependent part of the lwp structure for ia64
  */
 struct mdlwp {
 	u_long	md_flags;

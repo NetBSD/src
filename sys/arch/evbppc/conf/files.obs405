@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs405,v 1.17 2006/06/30 17:54:50 freza Exp $
+#	$NetBSD: files.obs405,v 1.17.34.1 2008/01/09 01:45:52 matt Exp $
 #
 # obs405-specific configuration info
 
@@ -6,7 +6,6 @@ file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
 file	arch/powerpc/ibm4xx/ibm40x_machdep.c
 file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
 file	arch/powerpc/ibm4xx/intr.c
-file 	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/ibm4xx/openbios/openbios.c
 file	arch/evbppc/obs405/consinit.c
 file	arch/evbppc/obs405/obs266_autoconf.c

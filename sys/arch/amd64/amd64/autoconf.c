@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16.10.1 2007/11/06 23:13:59 matt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.10.2 2008/01/09 01:44:42 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.10.1 2007/11/06 23:13:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.10.2 2008/01/09 01:44:42 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -71,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.10.1 2007/11/06 23:13:59 matt Exp 
 #include "bios32.h"
 #if NBIOS32 > 0
 #include <machine/bios32.h>
+/* XXX */
+extern void platform_init(void);
 #endif
 
 #include <x86/x86/tsc.h>
@@ -86,6 +88,7 @@ cpu_configure()
 
 #if NBIOS32 > 0
 	bios32_init();
+	platform_init();
 #endif
 
 	x86_64_proc0_tss_ldt_init();

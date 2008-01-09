@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.14.10.1 2007/11/06 23:18:10 matt Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.14.10.2 2008/01/09 01:47:01 matt Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -76,6 +76,7 @@
 #ifndef	_M68K_PMAP_MOTOROLA_H_
 #define	_M68K_PMAP_MOTOROLA_H_
 
+#include <sys/simplelock.h>
 #include <machine/cpu.h>
 #include <machine/pte.h>
 

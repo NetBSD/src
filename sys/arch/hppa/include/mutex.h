@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5.10.1 2007/11/06 23:17:07 matt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5.10.2 2008/01/09 01:46:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct kmutex {
 			volatile uint8_t	mtxs_waiters;	/* 24 */
 
 			/* For LOCKDEBUG */
-			uint8_t			mtxs_id[3];	/* 25-27 */
+			uint8_t			mtxs_dodebug;	/* 25 */
 		} s;
 #endif
 		uint8_t			mtxu_pad[32];	/* 0 - 32 */
@@ -82,7 +82,7 @@ struct kmutex {
 #define	mtx_owner	u.s.mtxs_owner
 #define	mtx_ipl		u.s.mtxs_ipl
 #define	mtx_waiters	u.s.mtxs_waiters
-#define	mtx_id		u.s.mtxs_id
+#define	mtx_dodebug	u.s.mtxs_dodebug
 
 /* Magic constants for mtx_owner */
 #define	MUTEX_ADAPTIVE_UNOWNED		0xffffff00
@@ -119,22 +119,18 @@ MUTEX_HAS_WAITERS(volatile kmutex_t *mtx)
 }
 
 static inline void
-MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, u_int id, int ipl)
+MUTEX_INITIALIZE_SPIN(kmutex_t *mtx, bool dodebug, int ipl)
 {
 	mtx->mtx_ipl = makeiplcookie(ipl);
-	mtx->mtx_id[0] = (uint8_t)id;
-	mtx->mtx_id[1] = (uint8_t)(id >> 8);
-	mtx->mtx_id[2] = (uint8_t)(id >> 16);
+	mtx->mtx_dodebug = dodebug;
 	mtx->mtx_owner = MUTEX_SPIN_FLAG;
 	__cpu_simple_lock_init(&mtx->mtx_lock);
 }
 
 static inline void
-MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, u_int id)
+MUTEX_INITIALIZE_ADAPTIVE(kmutex_t *mtx, bool dodebug)
 {
-	mtx->mtx_id[0] = (uint8_t)id;
-	mtx->mtx_id[1] = (uint8_t)(id >> 8);
-	mtx->mtx_id[2] = (uint8_t)(id >> 16);
+	mtx->mtx_dodebug = dodebug;
 	mtx->mtx_owner = MUTEX_ADAPTIVE_UNOWNED;
 	__cpu_simple_lock_init(&mtx->mtx_lock);
 }
@@ -143,17 +139,12 @@ static inline void
 MUTEX_DESTROY(kmutex_t *mtx)
 {
 	mtx->mtx_owner = 0xffffffff;
-	mtx->mtx_id[0] = 0xff;
-	mtx->mtx_id[1] = 0xff;
-	mtx->mtx_id[2] = 0xff;
 }
 
-static inline u_int
-MUTEX_GETID(kmutex_t *mtx)
+static inline bool
+MUTEX_DEBUG_P(kmutex_t *mtx)
 {
-	return (u_int)mtx->mtx_id[0] |
-	    ((u_int)mtx->mtx_id[1] << 8) |
-	    ((u_int)mtx->mtx_id[2] << 16);
+	return mtx->mtx_dodebug != 0;
 }
 
 static inline int

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_1000a.c,v 1.18 2005/12/11 12:16:17 christos Exp $ */
+/* $NetBSD: pci_1000a.c,v 1.18.50.1 2008/01/09 01:44:39 matt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.18 2005/12/11 12:16:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_1000a.c,v 1.18.50.1 2008/01/09 01:44:39 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -254,7 +254,8 @@ dec_1000a_intr_establish(ccv, ih, level, func, arg)
 
 	if (cookie != NULL &&
 	    alpha_shared_intr_firstactive(dec_1000a_pci_intr, ih)) {
-		scb_set(0x900 + SCB_IDXTOVEC(ih), dec_1000a_iointr, NULL);
+		scb_set(0x900 + SCB_IDXTOVEC(ih), dec_1000a_iointr, NULL,
+		    level);
 		dec_1000a_enable_intr(ih);
 	}
 	return (cookie);

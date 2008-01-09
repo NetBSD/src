@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.7 2007/03/05 13:06:44 tsutsui Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.7.20.1 2008/01/09 01:45:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.7 2007/03/05 13:06:44 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.7.20.1 2008/01/09 01:45:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,7 @@ zsc_pcc_attach(parent, self, aux)
 		(void) isrlink(zshard, zsc, 4, ISRPRI_TTY);
 		sic_enable_int(19, 0, 4, 4, 0);
 	}
-	zsc->zsc_softintr_cookie = softintr_establish(IPL_SOFTSERIAL,
+	zsc->zsc_softintr_cookie = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))zsc_intr_soft, zsc);
 
 	zs_write_reg(zsc->zsc_cs[0], 2, 0x18 + ZSHARD_PRI);

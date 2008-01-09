@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2007/02/16 02:53:48 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.8.24.1 2008/01/09 01:47:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,16 +46,9 @@
 #define _INTR_N		9
 
 /* Interrupt priority levels */
-#define	IPL_BIO		9	/* block I/O */
-#define	IPL_NET		11	/* network */
-#define	IPL_TTY		12	/* terminal */
-#define	IPL_VM		IPL_TTY
-#define	IPL_SERIAL	12	/* serial */
-#define	IPL_CLOCK	14	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_SCHED	IPL_CLOCK
+#define	IPL_VM		12
+#define	IPL_SCHED	14	/* clock */
 #define	IPL_HIGH	15	/* everything */
-#define	IPL_LOCK	IPL_HIGH
 
 typedef uint8_t ipl_t;
 typedef struct {

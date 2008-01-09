@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_openpic.c,v 1.2.8.2 2007/11/06 23:20:57 matt Exp $ */
+/*	$NetBSD: pic_openpic.c,v 1.2.8.3 2008/01/09 01:47:54 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.2.8.2 2007/11/06 23:20:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.2.8.3 2008/01/09 01:47:54 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_openpic.c,v 1.2.8.2 2007/11/06 23:20:57 matt Exp
 void openpic_set_priority(int cpu, int pri);
 static void opic_enable_irq(struct pic_ops *, int, int);
 static void opic_disable_irq(struct pic_ops *, int);
-static int  opic_get_irq(struct pic_ops *);
+static int  opic_get_irq(struct pic_ops *, int);
 static void opic_ack_irq(struct pic_ops *, int);
 static void opic_establish_irq(struct pic_ops*, int, int, int);
 static void opic_finish_setup(struct pic_ops *);
@@ -203,7 +203,7 @@ opic_disable_irq(struct pic_ops *pic, int irq)
 }
 
 static int
-opic_get_irq(struct pic_ops *pic)
+opic_get_irq(struct pic_ops *pic, int mode)
 {
 
 	return openpic_read_irq(cpu_number());

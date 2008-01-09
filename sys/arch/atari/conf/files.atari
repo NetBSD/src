@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.110 2007/04/10 02:26:12 macallan Exp $
+#	$NetBSD: files.atari,v 1.110.14.1 2008/01/09 01:45:30 matt Exp $
 
 maxpartitions 16
 
@@ -214,7 +214,6 @@ file	arch/atari/atari/intr.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb
 file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/softintr.c
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 

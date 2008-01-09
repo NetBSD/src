@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7 2007/04/07 08:34:17 skrll Exp $	*/
+/*	$NetBSD: asm.h,v 1.7.14.1 2008/01/09 01:46:23 matt Exp $	*/
 
 /*	$OpenBSD: asm.h,v 1.12 2001/03/29 02:15:57 mickey Exp $	*/
 
@@ -27,6 +27,7 @@
 #ifndef _HPPA_ASM_H_
 #define _HPPA_ASM_H_
 
+#include <machine/frame.h>
 /*
  *	hppa assembler definitions
  */
@@ -37,31 +38,59 @@
 #define	__CONCAT(a,b)	a/**/b
 #endif
 
-#ifdef PROF
-#define	_PROF_PROLOGUE !\
-	stw %rp, HPPA_FRAME_CRP(%sr0,%sp)	!\
-	ldil L%_mcount,%r1		!\
-	ble R%_mcount(%sr0,%r1)		!\
-	ldo HPPA_FRAME_SIZE(%sp),%sp	!\
-	ldw HPPA_FRAME_CRP(%sr0,%sp),%rp
-#else
-#define	_PROF_PROLOGUE
-#endif
+#define _C_LABEL(x)	x
 
-#define	LEAF_ENTRY(x) ! .text ! .align	4	!\
-	.export	x, entry ! .label x ! .proc	!\
-	.callinfo frame=0,no_calls,save_rp	!\
-	.entry ! _PROF_PROLOGUE
-
-#define	ENTRY(x,n) ! .text ! .align 4			!\
+#define	LEAF_ENTRY_NOPROFILE(x)				!\
+	 ! .text ! .align 4				!\
 	.export	x, entry ! .label x ! .proc		!\
-	.callinfo frame=n,calls, save_rp, save_sp	!\
-	.entry ! _PROF_PROLOGUE
-
-#define	ENTRY_NOPROFILE(x,n) ! .text ! .align 4		!\
-	.export x, entry ! .label x ! .proc		!\
-	.callinfo frame=n,calls, save_rp, save_sp	!\
+	.callinfo frame=0, no_calls, save_rp		!\
 	.entry
+
+#define	ENTRY_NOPROFILE(x,n)				!\
+	 ! .text ! .align 4				!\
+	.export x, entry ! .label x ! .proc		!\
+	.callinfo frame=n, calls, save_rp, save_sp	!\
+	.entry
+
+#ifdef GPROF
+
+#define	_PROF_PROLOGUE				!\
+1:						!\
+	stw	%rp, HPPA_FRAME_CRP(%sp)	!\
+	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)	!\
+	stw	%arg1, HPPA_FRAME_ARG(1)(%sp)	!\
+	stw	%arg2, HPPA_FRAME_ARG(2)(%sp)	!\
+	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)	!\
+	ldo	HPPA_FRAME_SIZE(%sp), %sp	!\
+	copy	%rp, %arg0			!\
+	bl	2f, %arg1			!\
+	depi	0, 31, 2, %arg1			!\
+2:						!\
+	bl	_mcount, %rp			!\
+	 ldo	1b - 2b(%arg1), %arg1		!\
+	ldo	-HPPA_FRAME_SIZE(%sp), %sp	!\
+	ldw	HPPA_FRAME_ARG(3)(%sp), %arg3	!\
+	ldw	HPPA_FRAME_ARG(2)(%sp), %arg2	!\
+	ldw	HPPA_FRAME_ARG(1)(%sp), %arg1	!\
+	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0	!\
+	ldw	HPPA_FRAME_CRP(%sp), %rp	!\
+
+#define LEAF_ENTRY(x) 				!\
+	ENTRY_NOPROFILE(x,HPPA_FRAME_SIZE)	!\
+	_PROF_PROLOGUE
+
+#else /* GPROF */
+
+#define _PROF_PROLOGUE
+
+#define LEAF_ENTRY(x) 				!\
+	LEAF_ENTRY_NOPROFILE(x)
+
+#endif /* GPROF */
+
+#define ENTRY(x,n) 				!\
+	ENTRY_NOPROFILE(x,n)			!\
+	_PROF_PROLOGUE
 
 #define ALTENTRY(x) ! .export x, entry ! .label x
 #define EXIT(x) ! .exit ! .procend ! .size x, .-x

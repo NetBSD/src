@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.17.6.1 2007/11/06 23:20:29 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.17.6.2 2008/01/09 01:47:47 matt Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.6.1 2007/11/06 23:20:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.6.2 2008/01/09 01:47:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -50,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.17.6.1 2007/11/06 23:20:29 matt Exp $");
 
 #include <powerpc/cpu.h>
 #include <powerpc/spr.h>
-#include <powerpc/softintr.h>
 
 
 /*
@@ -215,8 +214,6 @@ intr_init(void)
 	evcnt_attach_static(&curcpu()->ci_ev_softnet);
 	evcnt_attach_static(&curcpu()->ci_ev_softserial);
 
-	softintr__init();
-
 	mtdcr(INTR_ENABLE, 0x00000000); 	/* mask all */
 	mtdcr(INTR_ACK, 0xffffffff); 		/* acknowledge all */
 #ifdef INTR_MASTER
@@ -259,13 +256,15 @@ ext_intr(void)
 				disable_irq(i);
 			wrteei(1);
 
-			KERNEL_LOCK(1, NULL);
 			ih = intrs[i].is_head;
 			while (ih) {
+				if (ih->ih_level == IPL_VM)
+					KERNEL_LOCK(1, NULL);
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
+				if (ih->ih_level == IPL_VM)
+					KERNEL_UNLOCK_ONE(NULL);
 			}
-			KERNEL_UNLOCK_ONE(NULL);
 
 			mtmsr(msr);
 			if (intrs[i].is_type == IST_LEVEL)
@@ -459,68 +458,20 @@ intr_calculatemasks(void)
 	}
 
 	/*
-	 * Not external interrupts, make them block themselves manually.
+	 * Enforce a hierarchy that gives slow devices a better chance at not
+	 * dropping data.
 	 */
-	imask[IPL_CLOCK] = MASK_CLOCK;
-	imask[IPL_STATCLOCK] = MASK_STATCLOCK;
 
 	/*
 	 * Initialize the soft interrupt masks to block themselves.
 	 */
-	imask[IPL_SOFTCLOCK] = MASK_SOFTCLOCK;
-	imask[IPL_SOFTNET] = MASK_SOFTNET;
-	imask[IPL_SOFTSERIAL] = MASK_SOFTSERIAL;
-
-	/*
-	 * Enforce hierarchy required by spl(9).
-	 */
-	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_SOFTCLOCK];
-
-	/*
-	 * IPL_NONE is used for hardware interrupts that are never blocked,
-	 * and do not block anything else.
-	 */
 	imask[IPL_NONE] = 0;
-
-	/*
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	imask[IPL_BIO] |= imask[IPL_SOFTNET];
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
-	imask[IPL_TTY] |= imask[IPL_SOFTSERIAL];
-
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 */
-	imask[IPL_VM] |= imask[IPL_TTY];
-
-	imask[IPL_AUDIO] |= imask[IPL_VM];
-
-	/*
-	 * Since run queues may be manipulated by both the statclock and tty,
-	 * network, and disk drivers, clock > imp.
-	 */
-	imask[IPL_CLOCK] |= imask[IPL_AUDIO];
-
-	/*
-	 * We have separate statclock.
-	 */
-	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
-
-	/*
-	 * IPL_HIGH must block everything that can manipulate a run queue.
-	 */
-	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
-
-	/*
-	 * We need serial drivers to run at the absolute highest priority to
-	 * avoid overruns, so serial > high.
-	 */
-	imask[IPL_SERIAL] |= imask[IPL_HIGH];
+	imask[IPL_SOFTCLOCK] |= MASK_SOFTCLOCK;
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK] | MASK_SOFTNET;
+	imask[IPL_SOFTSERIAL] = imask[IPL_SOFTNET] | MASK_SOFTSERIAL;
+	imask[IPL_VM] |= imask[IPL_SOFTSERIAL];
+	imask[IPL_SCHED] = imask[IPL_VM] | MASK_CLOCK | MASK_STATCLOCK;
+	imask[IPL_HIGH] |= imask[IPL_SCHED];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
@@ -547,15 +498,20 @@ do_pending_int(void)
 	int hwpend;
 	int emsr;
 
-	if (ci->ci_iactive)
+	if (ci->ci_idepth)
 		return;
-
-	ci->ci_iactive = 1;
+#ifdef __HAVE_FAST_SOFTINTS
+#error don't count soft interrupts
+#else
+	ci->ci_idepth++;
+#endif
 	emsr = mfmsr();
 	wrteei(0);
 
 	pcpl = ci->ci_cpl;	/* Turn off all */
+#ifdef __HAVE_FAST_SOFTINTS
   again:
+#endif
 	while ((hwpend = ci->ci_ipending & ~pcpl & MASK_HARDINTR) != 0) {
 		irq = IRQ_OF_MASK(hwpend);
 		if (intrs[irq].is_type != IST_LEVEL)
@@ -566,13 +522,15 @@ do_pending_int(void)
 		splraise(intrs[irq].is_mask);
 		mtmsr(emsr);
 
-		KERNEL_LOCK(1, NULL);
 		ih = intrs[irq].is_head;
 		while(ih) {
+			if (ih->ih_level == IPL_VM)
+				KERNEL_LOCK(1, NULL);
 			(*ih->ih_fun)(ih->ih_arg);
+			if (ih->ih_level == IPL_VM)
+				KERNEL_UNLOCK_ONE(NULL);
 			ih = ih->ih_next;
 		}
-		KERNEL_UNLOCK_ONE(NULL);
 
 		wrteei(0);
 		if (intrs[irq].is_type == IST_LEVEL)
@@ -580,16 +538,12 @@ do_pending_int(void)
 		ci->ci_cpl = pcpl;
 		intrs[irq].is_evcnt.ev_count++;
 	}
-
+#ifdef __HAVE_FAST_SOFTINTS
 	if ((ci->ci_ipending & ~pcpl) & MASK_SOFTSERIAL) {
 		ci->ci_ipending &= ~MASK_SOFTSERIAL;
 		splsoftserial();
 		mtmsr(emsr);
-
-		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTSERIAL);
-		KERNEL_UNLOCK_ONE(NULL);
-
 		wrteei(0);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softserial.ev_count++;
@@ -599,11 +553,7 @@ do_pending_int(void)
 		ci->ci_ipending &= ~MASK_SOFTNET;
 		splsoftnet();
 		mtmsr(emsr);
-
-		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTNET);
-		KERNEL_UNLOCK_ONE(NULL);
-
 		wrteei(0);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softnet.ev_count++;
@@ -613,21 +563,19 @@ do_pending_int(void)
 		ci->ci_ipending &= ~MASK_SOFTCLOCK;
 		splsoftclock();
 		mtmsr(emsr);
-
-		KERNEL_LOCK(1, NULL);
 		softintr__run(IPL_SOFTCLOCK);
-		KERNEL_UNLOCK_ONE(NULL);
-
 		wrteei(0);
 		ci->ci_cpl = pcpl;
 		ci->ci_ev_softclock.ev_count++;
 		goto again;
 	}
+#endif
 	ci->ci_cpl = pcpl; /* Don't use splx... we are here already! */
 	mtmsr(emsr);
-	ci->ci_iactive = 0;
+	ci->ci_idepth--;
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 void
 softintr(int idx)
 {
@@ -650,6 +598,7 @@ softintr(int idx)
 
 	mtmsr(oldmsr);
 }
+#endif
 
 int
 splraise(int newcpl)

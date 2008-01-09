@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.32.10.1 2007/11/06 23:18:36 matt Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.32.10.2 2008/01/09 01:47:08 matt Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.32.10.1 2007/11/06 23:18:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.32.10.2 2008/01/09 01:47:08 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -100,31 +100,31 @@ struct bmac_softc {
 
 extern volatile uint32_t *heathrow_FCR;
 
-int bmac_match __P((struct device *, struct cfdata *, void *));
-void bmac_attach __P((struct device *, struct device *, void *));
-void bmac_reset_chip __P((struct bmac_softc *));
-void bmac_init __P((struct bmac_softc *));
-void bmac_init_dma __P((struct bmac_softc *));
-int bmac_intr __P((void *));
-int bmac_rint __P((void *));
-void bmac_reset __P((struct bmac_softc *));
-void bmac_stop __P((struct bmac_softc *));
-void bmac_start __P((struct ifnet *));
-void bmac_transmit_packet __P((struct bmac_softc *, void *, int));
-int bmac_put __P((struct bmac_softc *, void *, struct mbuf *));
-struct mbuf *bmac_get __P((struct bmac_softc *, void *, int));
-void bmac_watchdog __P((struct ifnet *));
-int bmac_ioctl __P((struct ifnet *, u_long, void *));
-int bmac_mediachange __P((struct ifnet *));
-void bmac_mediastatus __P((struct ifnet *, struct ifmediareq *));
-void bmac_setladrf __P((struct bmac_softc *));
+int bmac_match(struct device *, struct cfdata *, void *);
+void bmac_attach(struct device *, struct device *, void *);
+void bmac_reset_chip(struct bmac_softc *);
+void bmac_init(struct bmac_softc *);
+void bmac_init_dma(struct bmac_softc *);
+int bmac_intr(void *);
+int bmac_rint(void *);
+void bmac_reset(struct bmac_softc *);
+void bmac_stop(struct bmac_softc *);
+void bmac_start(struct ifnet *);
+void bmac_transmit_packet(struct bmac_softc *, void *, int);
+int bmac_put(struct bmac_softc *, void *, struct mbuf *);
+struct mbuf *bmac_get(struct bmac_softc *, void *, int);
+void bmac_watchdog(struct ifnet *);
+int bmac_ioctl(struct ifnet *, u_long, void *);
+int bmac_mediachange(struct ifnet *);
+void bmac_mediastatus(struct ifnet *, struct ifmediareq *);
+void bmac_setladrf(struct bmac_softc *);
 
-int bmac_mii_readreg __P((struct device *, int, int));
-void bmac_mii_writereg __P((struct device *, int, int, int));
-void bmac_mii_statchg __P((struct device *));
-void bmac_mii_tick __P((void *));
-u_int32_t bmac_mbo_read __P((struct device *));
-void bmac_mbo_write __P((struct device *, u_int32_t));
+int bmac_mii_readreg(struct device *, int, int);
+void bmac_mii_writereg(struct device *, int, int, int);
+void bmac_mii_statchg(struct device *);
+void bmac_mii_tick(void *);
+u_int32_t bmac_mbo_read(struct device *);
+void bmac_mbo_write(struct device *, u_int32_t);
 
 CFATTACH_DECL(bm, sizeof(struct bmac_softc),
     bmac_match, bmac_attach, NULL, NULL);

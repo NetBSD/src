@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_consinit.c,v 1.4.4.2 2007/11/06 23:20:45 matt Exp $ */
+/* $NetBSD: ofw_consinit.c,v 1.4.4.3 2008/01/09 01:47:52 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.4.4.2 2007/11/06 23:20:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.4.4.3 2008/01/09 01:47:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_consinit.c,v 1.4.4.2 2007/11/06 23:20:45 matt Ex
 
 #include "akbd.h"
 #include "adbkbd.h"
+#include "wsdisplay.h"
 #include "ofb.h"
 #include "isa.h"
 
@@ -136,7 +137,7 @@ void ofprint(const char *blah, ...)
 void
 cninit(void)
 {
-	char type[16];
+	char name[32];
 
 	ofwoea_bootstrap_console();
 
@@ -145,19 +146,14 @@ cninit(void)
 	if (console_node == -1)
 		goto nocons;
 
-	memset(type, 0, sizeof(type));
-	if (OF_getprop(console_node, "device_type", type, sizeof(type)) == -1)
+	memset(name, 0, sizeof(name));
+	if (OF_getprop(console_node, "device_type", name, sizeof(name)) == -1)
 		goto nocons;
 
-	OFPRINTF("console type: %s\n", type);
-	if (strcmp(type, "display") == 0) {
-		cninit_kd();
-		return;
-	}
+	OFPRINTF("console type: %s\n", name);
 
-	if (strcmp(type, "serial") == 0) {
+	if (strcmp(name, "serial") == 0) {
 		struct consdev *cp;
-		char name[32];
 
 #ifdef PMAC_G5
 		/* The MMU hasn't been initialized yet, use failsafe for now */
@@ -180,14 +176,13 @@ cninit(void)
 		return;
 #endif /* NZTTY */
 
-		OF_getprop(console_node, "name", name, sizeof(name));
-		/* fallback to ofwbootcons */
-		if (strcmp(name, "serial") == 0) {
-			cp = &consdev_ofwbootcons;
-			cn_tab = cp;
-		}
+		/* fallback to OFW boot console */
+		cp = &consdev_ofwbootcons;
+		cn_tab = cp;
 		return;
 	}
+	else
+		cninit_kd();
 nocons:
 	return;
 }
@@ -210,8 +205,8 @@ cninit_kd(void)
 	 * Attach the console output now (so we can see debugging messages,
 	 * if any).
 	 */
-#if NOFB > 0
-	ofb_cnattach();
+#if NWSDISPLAY > 0
+	rascons_cnattach();
 #endif
 
 	/*

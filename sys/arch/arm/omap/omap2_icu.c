@@ -27,7 +27,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.1.2.1 2008/01/08 17:34:32 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.1.2.2 2008/01/09 01:45:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -135,7 +135,6 @@ static struct intrgroup {
 	},
 };
 
-int current_spl_level;
 volatile uint32_t pending_ipls;
 volatile uint32_t pending_igroupsbyipl[NIPL];
 void omap2430_intr_init(bus_space_tag_t);
@@ -495,6 +494,8 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 static inline void
 do_pending_ints(register_t psw, int newipl)
 {
+	struct cpu_info * const ci = curcpu();
+
 	while ((pending_ipls & ~BIT(newipl)) > BIT(newipl)) {
 		KASSERT(pending_ipls < BIT(NIPL));
 		for (;;) {
@@ -503,28 +504,30 @@ do_pending_ints(register_t psw, int newipl)
 			if (ipl <= newipl)
 				break;
 		
-			current_spl_level = ipl;
+			ci->ci_cpl = ipl;
 			deliver_irqs(psw, ipl, NULL);
 		}
 	}
-	current_spl_level = newipl;
+	ci->ci_ipl = newipl;
 }
 
 int
 _splraise(int newipl)
 {
-	const int oldipl = current_spl_level;
+	struct cpu_info * const ci = curcpu();
+	const int oldipl = ci->ci_cpl;
 	KASSERT(newipl < NIPL);
-	if (newipl > current_spl_level)
-		current_spl_level = newipl;
+	if (newipl > ci->ci_cpl)
+		ci->ci_cpl = newipl;
 	return oldipl;
 }
 int
 _spllower(int newipl)
 {
-	const int oldipl = current_spl_level;
-	KASSERT(panicstr || newipl <= current_spl_level);
-	if (newipl < current_spl_level) {
+	struct cpu_info * const ci = curcpu();
+	const int oldipl = ci->ci_cpl;
+	KASSERT(panicstr || newipl <= ci->ci_cpl);
+	if (newipl < ci->ci_cpl) {
 		register_t psw = disable_interrupts(I32_bit);
 		do_pending_ints(psw, newipl);
 		restore_interrupts(psw);
@@ -535,13 +538,14 @@ _spllower(int newipl)
 void
 splx(int savedipl)
 {
+	struct cpu_info * const ci = curcpu();
 	KASSERT(savedipl < NIPL);
-	if (savedipl < current_spl_level) {
+	if (savedipl < ci->ci_cpl) {
 		register_t psw = disable_interrupts(I32_bit);
 		do_pending_ints(psw, savedipl);
 		restore_interrupts(psw);
 	}
-	current_spl_level = savedipl;
+	ci->ci_cpl = savedipl;
 }
 
 static struct intrsource * const si_to_is[4] = {
@@ -561,7 +565,7 @@ _setsoftintr(int si)
 	struct intrsource * const is = si_to_is[si];
 	struct intrgroup * const ig = &intrgroups[is->is_group];
 
-	if (__predict_false(current_spl_level < is->is_ipl)) {
+	if (__predict_false(ci->ci_cpl < is->is_ipl)) {
 		/*
 		 * If we are less than the desired IPL, raise IPL and dispatch
 		 * it immediately.  This is improbable.
@@ -585,7 +589,7 @@ _setsoftintr(int si)
 void
 omap_irq_handler(void *frame)
 {
-	const int oldipl = current_spl_level;
+	const int oldipl = curcpl();
 	const uint32_t oldipl_mask = BIT(oldipl);
 
 	/*

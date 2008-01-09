@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_SMALL,v 1.134.10.1 2007/11/06 23:17:14 matt Exp $
+#	$NetBSD: INSTALL_SMALL,v 1.134.10.2 2008/01/09 01:46:29 matt Exp $
 #
 #	INSTALL_SMALL - Small Installation kernel.
 #
@@ -22,15 +22,9 @@ options 	MEMORY_DISK_IS_ROOT	# force root on memory disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
 options 	MEMORY_DISK_ROOT_SIZE=3900	# size of memory disk, in blocks
 
-makeoptions	COPTS="-Os"		# generates smaller code than -O2, -O1
+makeoptions 	COPTS="-Os"		# generates smaller code than -O2, -O1
 
 maxusers	32		# estimated number of users
-
-# CPU support.  At least one is REQUIRED.
-options 	I386_CPU
-options 	I486_CPU
-options 	I586_CPU
-options 	I686_CPU
 
 # CPU-related options.
 options 	MATH_EMULATE	# floating point emulation
@@ -78,7 +72,7 @@ options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -101,7 +95,7 @@ options 	COMPAT_40	# NetBSD 4.0
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -208,15 +202,6 @@ npx0	at isa? port 0xf0 irq 13	# x86 math coprocessor
 
 
 # Console Devices
-
-# ISA console
-pc0	at isa? port 0x60 irq 1		# pccons generic PC console driver
-
-# Keyboard layout configuration for pccons
-#options 	FRENCH_KBD
-#options 	FINNISH_KBD
-#options 	GERMAN_KBD
-#options 	NORWEGIAN_KBD
 
 #attimer0	at isa?
 #pcppi0	at isa?
@@ -493,6 +478,6 @@ pseudo-device	loop			# network loopback
 
 # miscellaneous pseudo-devices
 pseudo-device	pty		2	# pseudo-terminals (Sysinst needs two)
-options	NO_DEV_PTM
+options 	NO_DEV_PTM
 pseudo-device	rnd			# /dev/random and in-kernel generator
 #options 	RND_COM			# use "com" randomness as well (BROKEN)

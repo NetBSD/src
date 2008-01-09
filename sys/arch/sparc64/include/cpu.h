@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64.2.1 2007/11/06 23:22:44 matt Exp $ */
+/*	$NetBSD: cpu.h,v 1.64.2.2 2008/01/09 01:49:04 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -134,6 +134,7 @@ struct cpu_info {
 	int			ci_flags;
 	int			ci_want_ast;
 	int			ci_want_resched;
+	int			ci_idepth;
 
 	struct cpu_data		ci_data;	/* MI per-cpu data */
 

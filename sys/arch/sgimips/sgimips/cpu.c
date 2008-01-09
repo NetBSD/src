@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.20 2006/12/28 16:15:11 rumble Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20.24.1 2008/01/09 01:48:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,14 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2006/12/28 16:15:11 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20.24.1 2008/01/09 01:48:44 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/locore.h>
 #include <machine/psl.h>
 #include <machine/autoconf.h>
@@ -104,6 +105,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
+	struct cpu_info *ci;
+
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 	(void)(*platform.watchdog_reset)();
@@ -148,15 +153,16 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		if (cause & status & MIPS_HARD_INT_MASK)
 			mips_spurint_evcnt.ev_count++;
 	}
+	ci->ci_idepth--;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* software interrupt */
 	ipending &= (MIPS_SOFT_INT_MASK_1|MIPS_SOFT_INT_MASK_0);
 	if (ipending == 0)
 		return;
-
 	_clrsoftintr(ipending);
-
 	softintr_dispatch(ipending);
+#endif
 }
 
 void *

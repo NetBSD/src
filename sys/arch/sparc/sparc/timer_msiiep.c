@@ -1,4 +1,4 @@
-/*	$NetBSD: timer_msiiep.c,v 1.22 2007/03/04 03:04:41 uwe Exp $	*/
+/*	$NetBSD: timer_msiiep.c,v 1.22.20.1 2008/01/09 01:49:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,15 +58,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.22 2007/03/04 03:04:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer_msiiep.c,v 1.22.20.1 2008/01/09 01:49:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <sparc/sparc/msiiepreg.h>
 #include <sparc/sparc/msiiepvar.h>
@@ -179,7 +179,7 @@ timerattach_msiiep(struct device *parent, struct device *self, void *aux)
 	intr_establish(14, 0, &level14, NULL);
 
 	/* Establish a soft interrupt at a lower level for schedclock */
-	sched_cookie = softintr_establish(IPL_SCHED, schedintr, NULL);
+	sched_cookie = sparc_softintr_establish(IPL_SCHED, schedintr, NULL);
 	if (sched_cookie == NULL)
 		panic("timerattach: cannot establish schedintr");
 }
@@ -299,7 +299,7 @@ statintr_msiiep(void *cap)
 			 * We're interrupting a thread that may have the
 			 * scheduler lock; run schedintr() later.
 			 */
-			softintr_schedule(sched_cookie);
+			sparc_softintr_schedule(sched_cookie);
 		}
 	}
 

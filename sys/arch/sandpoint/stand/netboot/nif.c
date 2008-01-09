@@ -1,4 +1,4 @@
-/* $NetBSD: nif.c,v 1.3.4.2 2007/11/06 23:21:37 matt Exp $ */
+/* $NetBSD: nif.c,v 1.3.4.3 2008/01/09 01:48:37 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 struct nifdv {
 	char *name;
-	unsigned (*init)(unsigned, void *);
+	void *(*init)(unsigned, void *);
 	int (*send)(void *, char *, unsigned);
 	int (*recv)(void *, char *, unsigned, unsigned);
 	int (*halt)(void *, int);
@@ -57,14 +57,11 @@ struct nifdv {
 int netif_init(unsigned);
 int netif_open(void *);
 int netif_close(int);
-ssize_t netif_put(struct iodesc *, void *, size_t);
-ssize_t netif_get(struct iodesc *, void *, size_t, time_t);
-struct iodesc *socktodesc(int);
 
 static struct iodesc netdesc;
 
 #define NIF_DECL(xxx) \
-    unsigned xxx ## _init(unsigned, void *); \
+    void * xxx ## _init(unsigned, void *); \
     int xxx ## _send(void *, char *, unsigned); \
     int xxx ## _recv(void *, char *, unsigned, unsigned);
 
@@ -75,6 +72,7 @@ NIF_DECL(sip);
 NIF_DECL(pcn);
 NIF_DECL(vge);
 NIF_DECL(rge);
+NIF_DECL(wm);
 
 static struct nifdv vnifdv[] = {
 	{ "fxp", fxp_init, fxp_send, fxp_recv },
@@ -83,7 +81,8 @@ static struct nifdv vnifdv[] = {
 	{ "sip", sip_init, sip_send, sip_recv },
 	{ "pcn", pcn_init, pcn_send, pcn_recv },
 	{ "vge", vge_init, vge_send, vge_recv },
-	{ "rge", rge_init, rge_send, rge_recv }
+	{ "rge", rge_init, rge_send, rge_recv },
+	{ "wm",  wm_init,  wm_send,  wm_recv  }
 };
 static int nnifdv = sizeof(vnifdv)/sizeof(vnifdv[0]);
 int nmatchednif = 0;
@@ -101,7 +100,7 @@ netif_init(tag)
 	extern char rootdev[4];
 
 	for (n = 0; n < nnifdv; n++) {
-		l = (void *)(*vnifdv[n].init)(tag, enaddr);
+		l = (*vnifdv[n].init)(tag, enaddr);
 		if (l != NULL)
 			goto found;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: txcom.c,v 1.37 2007/03/04 05:59:54 christos Exp $ */
+/*	$NetBSD: txcom.c,v 1.37.20.1 2008/01/09 01:46:15 matt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.37 2007/03/04 05:59:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: txcom.c,v 1.37.20.1 2008/01/09 01:46:15 matt Exp $");
 
 #include "opt_tx39uart_debug.h"
 
@@ -1033,15 +1033,8 @@ txcomstart(struct tty *tp)
 	    ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	sc->sc_tba = tp->t_outq.c_cf;
 	sc->sc_tbc = ndqb(&tp->t_outq, 0);

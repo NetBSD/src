@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.13 2007/04/10 02:35:06 macallan Exp $
+#	$NetBSD: files.walnut,v 1.13.14.1 2008/01/09 01:45:52 matt Exp $
 #
 # walnut-specific configuration info
 
@@ -6,7 +6,6 @@ file	arch/evbppc/walnut/autoconf.c
 file	arch/evbppc/walnut/consinit.c
 file	arch/evbppc/walnut/machdep.c
 file	arch/powerpc/ibm4xx/intr.c
-file 	arch/powerpc/powerpc/softintr.c
 file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
 
 # Memory Disk for install kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6 2005/12/11 12:16:46 christos Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6.52.1 2008/01/09 01:45:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6 2005/12/11 12:16:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.52.1 2008/01/09 01:45:16 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -211,48 +211,14 @@ intr_calculatemasks()
 		imask[level] = irqs;
 	}
 
-	/*
-	 * IPL_NONE is used for hardware interrupts that are never blocked,
-	 * and do not block anything else.
-	 */
 	imask[IPL_NONE] = 0;
-
-	imask[IPL_SOFT] |= imask[IPL_NONE];
-	imask[IPL_SOFTCLOCK] |= imask[IPL_SOFT];
-	imask[IPL_SOFTNET] |= imask[IPL_SOFTCLOCK];
-
-	/*
-	 * Enforce a hierarchy that gives slow devices a better chance at not
-	 * dropping data.
-	 */
-	imask[IPL_BIO] |= imask[IPL_SOFTCLOCK];
-	imask[IPL_NET] |= imask[IPL_BIO];
-	imask[IPL_SOFTSERIAL] |= imask[IPL_NET];
-	imask[IPL_TTY] |= imask[IPL_NET];
-	/*
-	 * There are tty, network and disk drivers that use free() at interrupt
-	 * time, so imp > (tty | net | bio).
-	 */
-	imask[IPL_VM] |= imask[IPL_TTY];
-	imask[IPL_AUDIO] |= imask[IPL_VM];
-
-	/*
-	 * Since run queues may be manipulated by both the statclock and tty,
-	 * network, and disk drivers, clock > imp.
-	 */
-	imask[IPL_CLOCK] |= imask[IPL_VM];
-	imask[IPL_STATCLOCK] |= imask[IPL_CLOCK];
-
-	/*
-	 * IPL_HIGH must block everything that can manipulate a run queue.
-	 */
-	imask[IPL_HIGH] |= imask[IPL_STATCLOCK];
-
-	/*
-	 * We need serial drivers to run at the absolute highest priority to
-	 * avoid overruns, so serial > high.
-	 */
-	imask[IPL_SERIAL] |= imask[IPL_HIGH];
+	imask[IPL_SOFTCLOCK] |= imask[IPL_NONE];
+	imask[IPL_SOFTBIO] |= imask[IPL_SOFTCLOCK];
+	imask[IPL_SOFTNET] |= imask[IPL_SOFTBIO];
+	imask[IPL_SOFTSERIAL] |= imask[IPL_SOFTNET];
+	imask[IPL_VM] |= imask[IPL_SOFTSERIAL];
+	imask[IPL_SCHED] |= imask[IPL_VM];
+	imask[IPL_HIGH] |= imask[IPL_SCHED];
 
 	/* And eventually calculate the complete masks. */
 	for (irq = 0; irq < ICU_LEN; irq++) {

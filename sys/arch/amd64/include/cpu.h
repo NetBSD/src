@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24.10.1 2007/11/06 23:14:16 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24.10.2 2008/01/09 01:44:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,6 +41,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_xen.h"
 #endif
 
 /*
@@ -74,6 +75,10 @@ struct cpu_info {
 	u_int ci_cpuid;
 	int ci_cpumask;			/* (1 << CPU ID) */
 	u_int ci_apicid;
+	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint8_t ci_packageid;
+	uint8_t ci_coreid;
+	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
@@ -89,7 +94,11 @@ struct cpu_info {
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 	u_int64_t ci_scratch;
+#ifdef XEN
+	struct iplsource *ci_isources[NIPL];
+#else
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+#endif
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 
@@ -102,10 +111,10 @@ struct cpu_info {
 #define	ci_ilevel	ci_istate.ilevel
 
 	int		ci_idepth;
+	void *		ci_intrstack;
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];
 
-	paddr_t 	ci_idle_pcb_paddr;
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
@@ -115,6 +124,7 @@ struct cpu_info {
 	uint32_t	ci_feature2_flags;
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	u_int64_t	ci_tsc_freq;
+	volatile uint32_t	ci_lapic_counter;
 
 	const struct cpu_functions *ci_func;
 	void (*cpu_setup)(struct cpu_info *);
@@ -127,13 +137,42 @@ struct cpu_info {
 
 	char		*ci_gdt;
 
-	struct x86_64_tss	ci_doubleflt_tss;
-	struct x86_64_tss	ci_ddbipi_tss;
-
-	char *ci_doubleflt_stack;
-	char *ci_ddbipi_stack;
-
 	struct evcnt ci_ipi_events[X86_NIPI];
+
+	struct x86_64_tss ci_tss;	/* Per-cpu TSS; shared among LWPs */
+	int		ci_tss_sel;	/* TSS selector of this cpu */
+
+	/*
+	 * The following two are actually region_descriptors,
+	 * but that would pollute the namespace.
+	 */
+	uint64_t	ci_suspend_gdt;
+	uint16_t	ci_suspend_gdt_padding;
+	uint64_t	ci_suspend_idt;
+	uint16_t	ci_suspend_idt_padding;
+
+	uint16_t	ci_suspend_tr;
+	uint16_t	ci_suspend_ldt;
+	uint32_t	ci_suspend_fs_base_l;
+	uint32_t	ci_suspend_fs_base_h;
+	uint32_t	ci_suspend_gs_base_l;
+	uint32_t	ci_suspend_gs_base_h;
+	uint32_t	ci_suspend_gs_kernelbase_l;
+	uint32_t	ci_suspend_gs_kernelbase_h;
+	uint32_t	ci_suspend_msr_efer;
+	uint64_t	ci_suspend_rbx;
+	uint64_t	ci_suspend_rbp;
+	uint64_t	ci_suspend_rsp;
+	uint64_t	ci_suspend_r12;
+	uint64_t	ci_suspend_r13;
+	uint64_t	ci_suspend_r14;
+	uint64_t	ci_suspend_r15;
+	uint64_t	ci_suspend_rfl;
+	uint64_t	ci_suspend_cr0;
+	uint64_t	ci_suspend_cr2;
+	uint64_t	ci_suspend_cr3;
+	uint64_t	ci_suspend_cr4;
+	uint64_t	ci_suspend_cr8;
 };
 
 #define CPUF_BSP	0x0001		/* CPU is the original BSP */
@@ -156,15 +195,15 @@ extern struct cpu_info *cpu_info_list;
 
 #define X86_MAXPROCS		32	/* bitmask; can be bumped to 64 */
 
-#define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
-#define CPU_STOP(_ci)		((_ci)->ci_func->stop(_ci))
-#define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
+#define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
+#define CPU_STOP(_ci)			((_ci)->ci_func->stop(_ci))
+#define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
 
 #if defined(__GNUC__) && defined(_KERNEL)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 x86_curcpu(void)
 {
 	struct cpu_info *ci;
@@ -176,7 +215,7 @@ x86_curcpu(void)
 	return ci;
 }
 
-__inline static lwp_t * __attribute__((__unused__))
+__inline static lwp_t * __unused
 x86_curlwp(void)
 {
 	lwp_t *l;
@@ -219,8 +258,9 @@ struct clockframe {
 	struct intrframe cf_if;
 };
 
-#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_cs, (frame)->cf_if.if_rflags)
-#define CLKF_PC(frame)		((frame)->cf_if.if_rip)
+#define	CLKF_USERMODE(frame)	USERMODE((frame)->cf_if.if_tf.tf_cs, \
+				    (frame)->cf_if.if_tf.tf_rflags)
+#define CLKF_PC(frame)		((frame)->cf_if.if_tf.tf_rip)
 #define CLKF_INTR(frame)	(curcpu()->ci_idepth > 0)
 
 /*
@@ -260,8 +300,8 @@ extern int cpu;
 extern int cpu_feature;
 extern int cpu_feature2;
 extern int cpu_id;
-extern char cpu_vendor[];
 extern int cpuid_level;
+extern char cpu_vendorname[];
 
 /* identcpu.c */
 
@@ -270,7 +310,6 @@ void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
@@ -278,6 +317,9 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
+#ifdef XEN
+void	lgdt_finish(void);
+#endif
 void	fillw(short, void *, size_t);
 
 struct pcb;
@@ -285,14 +327,20 @@ void	savectx(struct pcb *);
 void	lwp_trampoline(void);
 void	child_trampoline(void);
 
+#ifdef XEN
+void	startrtclock(void);
+void	xen_delay(unsigned int);
+void	xen_initclocks(void);
+#else
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+#endif
 
-void cpu_init_msrs(struct cpu_info *);
+void cpu_init_msrs(struct cpu_info *, bool);
 
 
 /* vm_machdep.c */

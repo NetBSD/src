@@ -1,4 +1,4 @@
-/*	$NetBSD: apmbios.c,v 1.7 2006/12/10 04:38:55 uwe Exp $ */
+/*	$NetBSD: apmbios.c,v 1.7.26.1 2008/01/09 01:46:32 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.7 2006/12/10 04:38:55 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.7.26.1 2008/01/09 01:46:32 matt Exp $");
 
 #include "opt_apm.h"
 #include "opt_compat_mach.h"	/* Needed to get the right segment def */
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.7 2006/12/10 04:38:55 uwe Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -65,12 +64,12 @@ __KERNEL_RCSID(0, "$NetBSD: apmbios.c,v 1.7 2006/12/10 04:38:55 uwe Exp $");
 #include <sys/select.h>
 #include <sys/poll.h>
 #include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/stdarg.h>
-#include <machine/cpu.h>
 #include <machine/cpufunc.h>
 #include <machine/gdt.h>
 #include <machine/psl.h>

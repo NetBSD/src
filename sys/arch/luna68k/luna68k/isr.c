@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.10 2007/03/04 02:23:16 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.10.20.1 2008/01/09 01:47:00 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.10 2007/03/04 02:23:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.10.20.1 2008/01/09 01:47:00 matt Exp $");
 
 /*
  * Link and dispatch interrupts.
@@ -48,17 +48,16 @@ __KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.10 2007/03/04 02:23:16 tsutsui Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
-
-#include <machine/cpu.h>
 
 #include <luna68k/luna68k/isr.h>
 
 isr_autovec_list_t isr_autovec[NISRAUTOVEC];
 struct	isr_vectored isr_vectored[NISRVECTORED];
+int	idepth;
+volatile int	ssir;
 
 extern	int intrcnt[];		/* from locore.s */
 extern	void (*vectab[]) __P((void));
@@ -215,6 +214,7 @@ isrdispatch_autovec(evec)
 	int handled = 0, ipl, vec;
 	static int straycount, unexpected;
 
+	idepth++;
 	vec = (evec & 0xfff) >> 2;
 	if ((vec < ISRAUTOVEC) || (vec >= (ISRAUTOVEC + NISRAUTOVEC)))
 		panic("isrdispatch_autovec: bad vec 0x%x", vec);
@@ -228,6 +228,7 @@ isrdispatch_autovec(evec)
 		printf("isrdispatch_autovec: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("too many unexpected interrupts");
+		idepth--;
 		return;
 	}
 
@@ -241,6 +242,7 @@ isrdispatch_autovec(evec)
 		panic("isr_dispatch_autovec: too many stray interrupts");
 	else
 		printf("isrdispatch_autovec: stray level %d interrupt\n", ipl);
+	idepth--;
 }
 
 /*
@@ -255,6 +257,7 @@ isrdispatch_vectored(pc, evec, frame)
 	struct isr_vectored *isr;
 	int ipl, vec;
 
+	idepth++;
 	vec = (evec & 0xfff) >> 2;
 	ipl = (getsr() >> 8) & 7;
 
@@ -268,6 +271,7 @@ isrdispatch_vectored(pc, evec, frame)
 	if (isr->isr_func == NULL) {
 		printf("isrdispatch_vectored: no handler for vec 0x%x\n", vec);
 		vectab[vec] = badtrap;
+		idepth--;
 		return;
 	}
 
@@ -276,24 +280,14 @@ isrdispatch_vectored(pc, evec, frame)
 	 */
 	if ((*isr->isr_func)(isr->isr_arg ? isr->isr_arg : frame) == 0)
 		printf("isrdispatch_vectored: vec 0x%x not claimed\n", vec);
+	idepth--;
 }
 
-void netintr __P((void));
-
-void
-netintr()
+bool
+cpu_intr_p(void)
 {
-#define DONETISR(bit, fn) do {		\
-	if (netisr & (1 << bit)) {	\
-		netisr &= ~(1 << bit);	\
-		fn();			\
-	}				\
-} while (0)
 
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
+	return idepth != 0;
 }
 
 const int ipl2spl_table[NIPL] = {
@@ -301,14 +295,8 @@ const int ipl2spl_table[NIPL] = {
 	[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1,
 	[IPL_SOFTNET]    = PSL_S|PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1,
-	[IPL_SOFT]       = PSL_S|PSL_IPL1,
-	[IPL_BIO]        = PSL_S|PSL_IPL2,
-	[IPL_NET]        = PSL_S|PSL_IPL3,
-	[IPL_CLOCK]      = PSL_S|PSL_IPL5,
-	[IPL_STATCLOCK]  = PSL_S|PSL_IPL5,
-	[IPL_TTY]        = PSL_S|PSL_IPL6,
+	[IPL_SOFTBIO]    = PSL_S|PSL_IPL1,
 	[IPL_VM]         = PSL_S|PSL_IPL7,
 	[IPL_SCHED]      = PSL_S|PSL_IPL7,
 	[IPL_HIGH]       = PSL_S|PSL_IPL7,
-	[IPL_LOCK]       = PSL_S|PSL_IPL7,
 };

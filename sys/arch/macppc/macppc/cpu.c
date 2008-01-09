@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.45.6.1 2007/11/06 23:18:45 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.45.6.2 2008/01/09 01:47:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,10 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45.6.1 2007/11/06 23:18:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45.6.2 2008/01/09 01:47:10 matt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
+#include "opt_interrupt.h"
 #include "opt_altivec.h"
 
 #include <sys/param.h>
@@ -68,6 +69,14 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.45.6.1 2007/11/06 23:18:45 matt Exp $");
 #include <machine/pio.h>
 #include <machine/trap.h>
 
+#include "pic_openpic.h"
+
+#ifndef OPENPIC
+#if NPIC_OPENPIC > 0
+#define OPENPIC
+#endif /* NOPENPIC > 0 */
+#endif /* OPENPIC */
+
 int cpumatch(struct device *, struct cfdata *, void *);
 void cpuattach(struct device *, struct device *, void *);
 
@@ -84,7 +93,9 @@ extern struct cfdriver cpu_cd;
 
 extern uint32_t ticks_per_intr;
 
+#ifdef OPENPIC
 extern void openpic_set_priority(int, int);
+#endif
 
 int
 cpumatch(parent, cf, aux)
@@ -203,6 +214,7 @@ ohare_init()
 int
 md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 {
+#ifdef OPENPIC
 	if (openpic_base) {
 		uint32_t kl_base = 0x80000000;	/* XXX */
 		uint32_t gpio = kl_base + 0x5c;	/* XXX */
@@ -234,16 +246,20 @@ md_setup_trampoline(volatile struct cpu_hatch_data *h, struct cpu_info *ci)
 		openpic_write(OPENPIC_PROC_INIT, (1 << 1));
 #endif
 	} else {
+#endif /* OPENPIC */
 		/* Start secondary CPU and stop timebase. */
 		out32(0xf2800000, (int)cpu_spinup_trampoline);
 		ppc_send_ipi(1, PPC_IPI_NOMESG);
+#ifdef OPENPIC
 	}
+#endif
 	return 1;
 }
 
 void
 md_presync_timebase(volatile struct cpu_hatch_data *h)
 {
+#ifdef OPENPIC
 	if (openpic_base) {
 		uint64_t tb;
 
@@ -261,7 +277,9 @@ md_presync_timebase(volatile struct cpu_hatch_data *h)
 		h->running = 0;
 
 		delay(500000);
-	} else {
+	} else
+#endif /* OPENPIC */
+	{
 		/* sync timebase (XXX shouldn't be zero'ed) */
 		__asm volatile ("mttbl %0; mttbu %0; mttbl %0" :: "r"(0));
 	}
@@ -271,8 +289,9 @@ void
 md_start_timebase(volatile struct cpu_hatch_data *h)
 {
 	int i;
-
+#ifdef OPENPIC
 	if (!openpic_base) {
+#endif
 		/*
 		 * wait for secondary spin up (1.5ms @ 604/200MHz)
 		 * XXX we cannot use delay() here because timebase is not
@@ -285,12 +304,15 @@ md_start_timebase(volatile struct cpu_hatch_data *h)
 		/* Start timebase. */
 		out32(0xf2800000, 0x100);
 		ppc_send_ipi(1, PPC_IPI_NOMESG);
+#ifdef OPENPIC
 	}
+#endif
 }
 
 void
 md_sync_timebase(volatile struct cpu_hatch_data *h)
 {
+#ifdef OPENPIC
 	if (openpic_base) {
 		/* Sync timebase. */
 		u_int tbu = h->tbu;
@@ -302,14 +324,17 @@ md_sync_timebase(volatile struct cpu_hatch_data *h)
 		__asm volatile ("mttbu %0" :: "r"(tbu));
 		__asm volatile ("mttbl %0" :: "r"(tbl));
 	}
+#endif
 }
 
 void
 md_setup_interrupts(void)
 {
+#ifdef OPENPIC
 	if (openpic_base)
 		openpic_set_priority(cpu_number(), 0);
 	else
+#endif /* OPENPIC */
 		out32(HH_INTR_SECONDARY, ~0);	/* Reset interrupt. */
 }
 #endif /* MULTIPROCESSOR */

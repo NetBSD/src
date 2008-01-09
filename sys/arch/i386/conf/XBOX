@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.8.10.1 2007/11/06 23:17:19 matt Exp $
+# $NetBSD: XBOX,v 1.8.10.2 2008/01/09 01:46:30 matt Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -7,9 +7,6 @@ include 	"arch/i386/conf/std.i386"
 
 maxusers	32		# estimated number of users
 
-# CPU support.  At least one is REQUIRED.
-options 	I686_CPU
-
 options 	REALBASEMEM=639		# size of base memory (in KB)
 options 	REALEXTMEM=60416	# size of extended memory (in KB)
 
@@ -17,7 +14,7 @@ options 	MSGBUFSIZE=65536	# for PCI_CONFIG_DUMP space
 
 #options 	NFS_BOOT_RWSIZE=1024	# kue0 USB ethernet has issues here
 
-makeoptions	CPUFLAGS="-march=i686 -mtune=pentiumpro"
+makeoptions 	CPUFLAGS="-march=i686 -mtune=pentiumpro"
 
 options 	TIMER_FREQ=1125000
 options 	XBOX		# kernel support for xbox
@@ -39,7 +36,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_30	# NetBSD 3.0
@@ -75,8 +72,8 @@ options 	NFS_BOOT_DHCP
 #
 # builtin terminal emulations
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options		WSDISPLAY_COMPAT_RAWKBD
-options		WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_COMPAT_USL
 # customization of console and kernel output - see dev/wscons/wsdisplayvar.h
 options 	PCDISPLAY_SOFTCURSOR
 

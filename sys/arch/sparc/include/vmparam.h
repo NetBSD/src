@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38 2006/02/07 16:55:31 chs Exp $ */
+/*	$NetBSD: vmparam.h,v 1.38.44.1 2008/01/09 01:48:56 matt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -142,7 +142,6 @@ struct vm_page_md {
 		vaddr_t	pv_va;			/* virtual address */
 		int	pv_flags;		/* flags (below) */
 	} pvlisthead;
-	struct		simplelock pv_slock;
 };
 #define VM_MDPAGE_PVHEAD(pg)	(&(pg)->mdpage.pvlisthead)
 
@@ -151,7 +150,6 @@ struct vm_page_md {
 	(pg)->mdpage.pvlisthead.pv_pmap = NULL;		\
 	(pg)->mdpage.pvlisthead.pv_va = 0;		\
 	(pg)->mdpage.pvlisthead.pv_flags = 0;		\
-	simple_lock_init(&(pg)->mdpage.pv_slock);	\
 } while(/*CONSTCOND*/0)
 
 #endif /* _SPARC_VMPARAM_H_ */

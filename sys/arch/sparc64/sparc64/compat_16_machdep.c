@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.10 2007/03/04 06:00:50 christos Exp $ */
+/*	$NetBSD: compat_16_machdep.c,v 1.10.20.1 2008/01/09 01:49:06 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.10.20.1 2008/01/09 01:49:06 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -258,20 +258,17 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
  * modified the state to gain improper privileges or to cause
  * a machine fault.
  */
-int compat_16_sys___sigreturn14(struct lwp *, void *, register_t *);
+int compat_16_sys___sigreturn14(struct lwp *, const struct compat_16_sys___sigreturn14_args *, register_t *);
 
 /* ARGSUSED */
 int
-compat_16_sys___sigreturn14(l, v, retval)
-	register struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct sigcontext sc, *scp;
-	register struct trapframe64 *tf;
+	struct trapframe64 *tf;
 	int error = EINVAL;
 	struct proc *p = l->l_proc;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.5.10.1 2007/11/06 23:17:41 matt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.5.10.2 2008/01/09 01:46:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,8 +47,6 @@
 #include <machine/cpufunc.h>
 #include <machine/specialreg.h>
 
-#include "opt_cputype.h"
-
 #ifdef _KERNEL
 
 #include <x86/cpu_counter.h>
@@ -57,7 +55,6 @@ static __inline int
 cpu_hascounter(void)
 {
 
-#if defined(I586_CPU) || defined(I686_CPU)
 	/*
 	 * Note that:
 	 * 1) Intel documentation is very specific that code *must* test
@@ -68,9 +65,6 @@ cpu_hascounter(void)
 	 * even though the CPU clock crystal is still ticking (it always has to).
 	 */
 	return (cpu_feature & CPUID_TSC) != 0;
-#else
-	return 0;
-#endif
 }
 
 #endif /* _KERNEL */

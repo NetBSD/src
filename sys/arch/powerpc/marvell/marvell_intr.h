@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_intr.h,v 1.11.24.1 2007/11/06 23:20:41 matt Exp $	*/
+/*	$NetBSD: marvell_intr.h,v 1.11.24.2 2008/01/09 01:47:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,24 +44,11 @@
  */
 #define	IPL_NONE	0	/* nothing */
 #define	IPL_SOFTCLOCK	1	/* timeouts */
-#define	IPL_SOFTNET	2	/* protocol stacks */
-#define	IPL_BIO		3	/* block I/O */
-#define	IPL_NET		4	/* network */
-#define IPL_NCP		5	/* network processors */
-#define IPL_SOFTI2C	6	/* i2c */
-#define	IPL_SOFTSERIAL	7	/* serial */
-#define	IPL_TTY		8	/* terminal */
-#define	IPL_LPT		IPL_TTY
-#define IPL_AUDIO       9       /* boom box */
-#define IPL_EJECT	10	/* card eject */
-#define IPL_GTERR	10	/* GT-64260 errors */
-#define	IPL_I2C		11	/* i2c */
+#define	IPL_SOFTBIO	2	/* block I/O */
+#define	IPL_SOFTNET	3	/* protocol stacks */
+#define	IPL_SOFTSERIAL	4	/* serial */
 #define	IPL_VM		12	/* memory allocation */
-#define	IPL_SERIAL	13	/* serial */
-#define	IPL_CLOCK	14	/* clock */
-#define	IPL_STATCLOCK	IPL_CLOCK
-#define	IPL_SCHED	14	/* schedular */
-#define	IPL_LOCK	14	/* same as high for now */
+#define	IPL_SCHED	14	/* clock */
 #define	IPL_HIGH	15	/* everything */
 #define	NIPL		16
 #define IPL_PRIMASK	0xf
@@ -310,11 +297,6 @@ extern unsigned int spl_stats_enb;
 #endif	/* SPL_STATS */
 
 
-void setsoftclock __P((void));
-void clearsoftclock __P((void));
-void setsoftnet   __P((void));
-void clearsoftnet __P((void));
-
 void intr_dispatch __P((void));
 #ifdef SPL_INLINE
 static inline int splraise __P((int));
@@ -444,32 +426,17 @@ spllower(int ncpl)
 #define SIR_SOFTCLOCK	(NIRQ-5)
 #define SIR_CLOCK	SIXBIT(SIR_SOFTCLOCK) /* XXX rennovate later */
 #define SIR_SOFTNET	(NIRQ-4)
-#define SIR_SOFTI2C	(NIRQ-3)
+#define SIR_SOFTBIO	(NIRQ-3)
 #define SIR_SOFTSERIAL	(NIRQ-2)
 #define SIR_HWCLOCK	(NIRQ-1)
 #define SPL_CLOCK	SIXBIT(SIR_HWCLOCK) /* XXX rennovate later */
 #define SIR_RES		~(SIBIT(SIR_SOFTCLOCK)|\
 			  SIBIT(SIR_SOFTNET)|\
-			  SIBIT(SIR_SOFTI2C)|\
+			  SIBIT(SIR_SOFTBIO)|\
 			  SIBIT(SIR_SOFTSERIAL)|\
 			  SIBIT(SIR_HWCLOCK))
 
-/*
- * Software interrupt spl's
- *
- * NOTE: splsoftclock() is used by hardclock() to lower the priority from
- * clock to softclock before it calls softclock().
- */
-#define	spllowersoftclock()	spllower(IPL_SOFTCLOCK)
-
 struct intrhand;
-extern struct intrhand *softnet_handlers[];
-#define	schednetisr(an_isr)	softintr_schedule(softnet_handlers[(an_isr)])
-
-void *softintr_establish(int level, void (*fun)(void *), void *arg);
-void softintr_disestablish(void *cookie);
-void softintr_schedule(void *cookie);
-
 
 /*
  * Miscellaneous
@@ -498,14 +465,7 @@ splraiseipl(ipl_cookie_t icookie)
 #include <sys/spl.h>
 
 #define SIBIT(ipl)	(1 << ((ipl) - SIR_BASE))
-#if 0
-#define	setsoftclock()	softintr(SIBIT(SIR_SOFTCLOCK))
-#define	setsoftnet()	softintr(SIBIT(SIR_SOFTNET))
-#define	setsoftserial()	softintr(SIBIT(SIR_SOFTSERIAL))
-#define	setsofti2c()	softintr(SIBIT(SIR_SOFTI2C))
-#endif
 
-extern void *softnet_si;
 void	*intr_establish(int, int, int, int (*)(void *), void *);
 void	intr_disestablish(void *);
 void	init_interrupt(void);
@@ -519,9 +479,6 @@ void	ext_intr(struct intrframe *);
  */
 void genppc_cpu_configure(void);
 
-#if 0
-void	softserial(void);
-#endif
 void	strayintr(int);
 
 /*
@@ -532,7 +489,7 @@ void	strayintr(int);
 #define CNT_SOFTCLOCK	SIR_SOFTCLOCK
 #define CNT_SOFTNET	SIR_NET
 #define CNT_SOFTSERIAL	SIR_SOFTSERIAL
-#define CNT_SOFTI2C	SIR_I2C
+#define CNT_SOFTBIO	SIR_BIO
 
 #endif /* !_LOCORE */
 

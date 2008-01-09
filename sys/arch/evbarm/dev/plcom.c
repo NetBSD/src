@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.22.10.1 2007/11/06 23:15:57 matt Exp $	*/
+/*	$NetBSD: plcom.c,v 1.22.10.2 2008/01/09 01:45:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.22.10.1 2007/11/06 23:15:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.22.10.2 2008/01/09 01:45:45 matt Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -144,9 +144,8 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.22.10.1 2007/11/06 23:15:57 matt Exp $")
 #include <sys/timepps.h>
 #include <sys/vnode.h>
 #include <sys/kauth.h>
-
-#include <machine/intr.h>
-#include <machine/bus.h>
+#include <sys/intr.h>
+#include <sys/bus.h>
 
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>
@@ -443,7 +442,7 @@ plcom_attach_subr(struct plcom_softc *sc)
 	}
 #endif
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, plcomsoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, plcomsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -500,7 +499,7 @@ plcom_detach(self, flags)
 	ttyfree(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
-	softintr_disestablish(sc->sc_si);
+	softint_disestablish(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	/* Unhook the entropy source. */
@@ -1001,7 +1000,7 @@ plcom_schedrx(struct plcom_softc *sc)
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 }
 
 void
@@ -1425,15 +1424,8 @@ plcomstart(struct tty *tp)
 	if (sc->sc_tx_stopped)
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -1934,7 +1926,7 @@ plcomintr(void *arg)
 	PLCOM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | rsr);

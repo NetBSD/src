@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.45.20.1 2007/11/06 23:20:15 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.45.20.2 2008/01/09 01:47:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45.20.1 2007/11/06 23:20:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.45.20.2 2008/01/09 01:47:45 matt Exp $");
 
 #include "opt_compat_ultrix.h"
 
@@ -281,7 +281,8 @@ writedisklabel(dev, strat, lp, osdep)
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
+			bp->b_flags &= ~(B_READ);
 			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);

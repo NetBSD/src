@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2006/01/13 22:18:59 uwe Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.48.1 2008/01/09 01:46:20 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2006/01/13 22:18:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.48.1 2008/01/09 01:46:20 matt Exp $");
 
 #include "opt_md.h"
 
@@ -107,7 +107,6 @@ cpu_configure()
 {
 
 	config_hook_init();
-	softintr_init();
 	hd6446x_intr_init();
 #ifdef SH3
 	if (CPU_IS_SH3)	/* HD64461 (Jornada 690, HP620LX, HPW-50PA) */
@@ -177,7 +176,8 @@ get_device(char *name)
 	else if (*cp != '\0' && *cp != ' ')
 		return;
 	sprintf(buf, "%s%d", devname, unit);
-	for (dv = alldevs.tqh_first; dv != NULL; dv = dv->dv_list.tqe_next) {
+	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
+	    dv = TAILQ_NEXT(dv, dv_list)) {
 		if (strcmp(buf, dv->dv_xname) == 0) {
 			booted_device = dv;
 			booted_partition = part;

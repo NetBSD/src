@@ -1,4 +1,4 @@
-/*	$NetBSD: busfunc.S,v 1.2.14.2 2007/11/06 23:17:23 matt Exp $	*/
+/*	$NetBSD: busfunc.S,v 1.2.14.3 2008/01/09 01:46:33 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
  */
 
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: busfunc.S,v 1.2.14.3 2008/01/09 01:46:33 matt Exp $");
 
 #include "assym.h"
 
@@ -159,7 +160,6 @@ ENTRY(bus_space_read_multi_1)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
-	cld
 	rep
 	insb	(%dx), %es:(%edi)
 	popl	%edi
@@ -186,7 +186,6 @@ ENTRY(bus_space_read_multi_2)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
-	cld
 	rep
 	insw	(%dx), %es:(%edi)
 	popl	%edi
@@ -213,7 +212,6 @@ ENTRY(bus_space_read_multi_4)
 	movl	20(%esp), %edi
 	movl	24(%esp), %ecx
 	jne	1f
-	cld
 	rep
 	insl	(%dx), %es:(%edi)
 	popl	%edi
@@ -244,7 +242,6 @@ ENTRY(bus_space_write_multi_1)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
-	cld
 	rep
 	outsb	%ds:(%esi), (%dx)
 	popl	%esi
@@ -271,7 +268,6 @@ ENTRY(bus_space_write_multi_2)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
-	cld
 	rep
 	outsw	%ds:(%esi),(%dx)
 	popl	%esi
@@ -298,7 +294,6 @@ ENTRY(bus_space_write_multi_4)
 	movl	20(%esp), %esi
 	movl	24(%esp), %ecx
 	jne	1f
-	cld
 	rep
 	outsl	%ds:(%esi),(%dx)
 	popl	%esi
@@ -331,7 +326,6 @@ ENTRY(bus_space_read_region_1)
 	je	2f
 1:
 	xchgl	%edx, %esi
-	cld	
 	rep
 	movsb	%ds:(%esi), %es:(%edi)
 	movl	%edx, %esi
@@ -361,7 +355,6 @@ ENTRY(bus_space_read_region_2)
 	je	2f
 1:
 	xchgl	%edx, %esi
-	cld	
 	rep
 	movsw	%ds:(%esi), %es:(%edi)
 	movl	%edx, %esi
@@ -391,7 +384,6 @@ ENTRY(bus_space_read_region_4)
 	je	2f
 1:
 	xchgl	%edx, %esi
-	cld	
 	rep
 	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edx, %esi
@@ -425,7 +417,6 @@ ENTRY(bus_space_write_region_1)
 	je	2f
 1:
 	xchgl	%edx, %edi
-	cld
 	rep
 	movsb	%ds:(%esi), %es:(%edi)
 	movl	%edx, %edi
@@ -455,7 +446,6 @@ ENTRY(bus_space_write_region_2)
 	je	2f
 1:
 	xchgl	%edx, %edi
-	cld
 	rep
 	movsw	%ds:(%esi), %es:(%edi)
 	movl	%edx, %edi
@@ -485,7 +475,6 @@ ENTRY(bus_space_write_region_4)
 	je	2f
 1:
 	xchgl	%edx, %edi
-	cld
 	rep
 	movsl	%ds:(%esi), %es:(%edi)
 	movl	%edx, %edi

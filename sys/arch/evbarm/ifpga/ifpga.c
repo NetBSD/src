@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga.c,v 1.21 2005/12/11 12:17:09 christos Exp $ */
+/*	$NetBSD: ifpga.c,v 1.21.50.1 2008/01/09 01:45:46 matt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -38,8 +38,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.21 2005/12/11 12:17:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.21.50.1 2008/01/09 01:45:46 matt Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/systm.h>
@@ -49,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: ifpga.c,v 1.21 2005/12/11 12:17:09 christos Exp $");
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pciconf.h>
-
-#include <machine/intr.h>
 
 #include <arm/cpufunc.h>
 

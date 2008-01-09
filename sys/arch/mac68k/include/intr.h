@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27 2007/03/11 05:22:25 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.18.1 2008/01/09 01:47:05 matt Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -44,22 +44,13 @@ extern unsigned short mac68k_ipls[];
 
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
-#define	IPL_SOFTNET	2
-#define	IPL_SOFTSERIAL	3
-#define	IPL_SOFT	4
-#define	IPL_BIO		5
-#define	IPL_NET		6
-#define	IPL_TTY		7
-#define	IPL_VM		8
-#define	IPL_AUDIO	9
-#define	IPL_ADB		10
-#define	IPL_STATCLOCK	11
-#define	IPL_CLOCK	12
-#define	IPL_SCHED	13
-#define	IPL_SERIAL	14
-#define	IPL_HIGH	15
-#define	IPL_LOCK	IPL_HIGH
-#define	NIPL		16
+#define	IPL_SOFTBIO	2
+#define	IPL_SOFTNET	3
+#define	IPL_SOFTSERIAL	4
+#define	IPL_VM		5
+#define	IPL_SCHED	6
+#define	IPL_HIGH	7
+#define	NIPL		8
 
 /* These spl calls are _not_ to be used by machine-independent code. */
 #define	splsoft()	splraise1()
@@ -96,8 +87,6 @@ splraiseipl(ipl_cookie_t icookie)
 }
 
 #include <sys/spl.h>
-
-#include <m68k/softintr.h>
 
 /* intr.c */
 void	intr_init(void);

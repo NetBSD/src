@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.12 2007/03/21 10:56:26 tsutsui Exp $	*/
+/*	$NetBSD: intr.c,v 1.12.14.1 2008/01/09 01:45:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2007/03/21 10:56:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12.14.1 2008/01/09 01:45:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,9 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2007/03/21 10:56:26 tsutsui Exp $");
 #include <sys/vmmeter.h>
 #include <sys/queue.h>
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/cpu.h>
 
 #include <atari/atari/intr.h>
 
@@ -63,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.12 2007/03/21 10:56:26 tsutsui Exp $");
 typedef LIST_HEAD(, intrhand) ih_list_t;
 ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
 ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
+static int idepth;
+volatile int ssir;
 
 void
 intr_init()
@@ -293,6 +294,7 @@ struct clockframe	frame;
 	ih_list_t	*vec_list;
 	struct intrhand	*ih;
 
+	idepth++;
 	uvmexp.intrs++;
 	vector = (frame.cf_vo & 0xfff) >> 2;
 	if (vector < (AVEC_LOC+AVEC_MAX) && vector >= AVEC_LOC)
@@ -305,6 +307,7 @@ struct clockframe	frame;
 		printf("intr_dispatch: vector %d unexpected\n", vector);
 		if (++unexpected > 10)
 		  panic("intr_dispatch: too many unexpected interrupts");
+		idepth--;
 		return;
 	}
 	ih->ih_intrcnt[0]++;
@@ -320,21 +323,24 @@ struct clockframe	frame;
 	    panic("intr_dispatch: too many stray interrupts");
 	else
 	    printf("intr_dispatch: stray level %d interrupt\n", vector);
+	idepth--;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }
 
 static const int ipl2psl_table[] = {
 	[IPL_NONE]       = PSL_IPL0,
-	[IPL_SOFT]       = PSL_IPL1,
 	[IPL_SOFTCLOCK]  = PSL_IPL1,
+	[IPL_SOFTBIO]    = PSL_IPL1,
 	[IPL_SOFTNET]    = PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_IPL1,
-	[IPL_BIO]        = PSL_IPL3,
-	[IPL_NET]        = PSL_IPL3,
-	[IPL_TTY]        = PSL_IPL4,
-	/* IPL_LPT == IPL_TTY */
 	[IPL_VM]         = PSL_IPL4,
-	[IPL_SERIAL]     = PSL_IPL5,
-	[IPL_CLOCK]      = PSL_IPL6,
+	[IPL_SCHED]      = PSL_IPL6,
 	[IPL_HIGH]       = PSL_IPL7,
 };
 

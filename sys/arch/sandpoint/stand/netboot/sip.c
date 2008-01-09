@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.8.4.2 2007/11/06 23:21:40 matt Exp $ */
+/* $NetBSD: sip.c,v 1.8.4.3 2008/01/09 01:48:39 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ int sip_send(void *, char *, unsigned);
 int sip_recv(void *, char *, unsigned, unsigned);
 
 #define XD1_OWN		(1U << 31)
+#define XD1_OK		(1U << 27)
 
 struct desc {
 	uint32_t xd0, xd1, xd2;
@@ -103,6 +104,8 @@ struct desc {
 #define SIP_RFDR	0x4c
 #define SIP_MIBC	0x5c
 #define SIP_BMCR	0x80
+#define SIP_PHYSTS	0xc0
+#define SIP_PHYCR	0xe4
 
 #define FRAMESIZE	1536
 
@@ -112,11 +115,12 @@ struct local {
 	uint8_t store[2][FRAMESIZE];
 	unsigned csr, rx;
 	unsigned phy, bmsr, anlpar;
+	unsigned cr;
 };
 
 static int read_eeprom(struct local *, int);
-static unsigned sip_mii_read(struct local *, int, int);
-static void sip_mii_write(struct local *, int, int, int);
+static unsigned mii_read(struct local *, int, int);
+static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
 
@@ -127,7 +131,7 @@ static const uint8_t bbr4[] = {0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
 void *
 sip_init(unsigned tag, void *data)
 {
-	unsigned val, i, txc, rxc;
+	unsigned val, i, fdx, txc, rxc;
 	struct local *l;
 	struct desc *txd, *rxd;
 	uint16_t eedata[4], *ee;
@@ -170,22 +174,21 @@ sip_init(unsigned tag, void *data)
 	en[5] = ((*ee & 0x1FE) >> 1);
 	for (i = 0; i < 6; i++)
 		en[i] = bbr(en[i]);
-#if 1
+
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x, ",
-		en[0], en[1], en[2], en[3], en[4], en[5]);
+	    en[0], en[1], en[2], en[3], en[4], en[5]);
 	printf("PHY %d (%04x.%04x)\n", l->phy,
-	   sip_mii_read(l, l->phy, 2), sip_mii_read(l, l->phy, 3));
+	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
 
 	mii_dealan(l, 5);
-	/*
-	 * speed and duplexity are found in CFG
-	 */
-	i = CSR_READ(l, SIP_CFG);
-	printf("%s", (i & (1U << 30)) ? "100Mbps" : "10Mbps");
-	if (i & (1U << 29))
+
+	/* speed and duplexity are found in CFG */
+	val = CSR_READ(l, SIP_CFG);
+	fdx = !!(val & (1U << 29));
+	printf("%s", (val & (1U << 30)) ? "100Mbps" : "10Mbps");
+	if (fdx)
 		printf("-FDX");
 	printf("\n");
-#endif
 
 	txd = &l->txd;
 	txd->xd0 = htole32(VTOPHYS(txd));
@@ -196,11 +199,8 @@ sip_init(unsigned tag, void *data)
 	rxd[1].xd0 = htole32(VTOPHYS(&rxd[0]));
 	rxd[1].xd1 = htole32(XD1_OWN | FRAMESIZE);
 	rxd[1].xd2 = htole32(VTOPHYS(l->store[1]));
-	l->rx = 0;
-
 	wbinv(l, sizeof(struct local));
-	CSR_WRITE(l, SIP_TXDP, VTOPHYS(txd));
-	CSR_WRITE(l, SIP_RXDP, VTOPHYS(rxd));
+	l->rx = 0;
 
 	CSR_WRITE(l, SIP_RFCR, 0);
 	CSR_WRITE(l, SIP_RFDR, (en[1] << 8) | en[0]);
@@ -212,11 +212,16 @@ sip_init(unsigned tag, void *data)
 
 	txc = TXCFG_ATP | TXCFG_DMA256 | 0x1002;
 	rxc = RXCFG_DMA256 | 0x20;
-	txc |= TXCFG_CSI | TXCFG_HBI;
-	rxc |= RXCFG_ATX;
+	if (fdx) {
+		txc |= TXCFG_CSI | TXCFG_HBI;
+		rxc |= RXCFG_ATX;
+	}
+	l->cr = CR_RXE;
+	CSR_WRITE(l, SIP_TXDP, VTOPHYS(txd));
+	CSR_WRITE(l, SIP_RXDP, VTOPHYS(rxd));
 	CSR_WRITE(l, SIP_TXCFG, txc);
 	CSR_WRITE(l, SIP_RXCFG, rxc);
-	CSR_WRITE(l, SIP_CR, 0);
+	CSR_WRITE(l, SIP_CR, l->cr);
 
 	return l;
 }
@@ -231,16 +236,16 @@ sip_send(void *dev, char *buf, unsigned len)
 	wbinv(buf, len);
 	txd = &l->txd;
 	txd->xd2 = htole32(VTOPHYS(buf));
-	txd->xd1 = htole32(XD1_OWN | (len & 0x7ff));
+	txd->xd1 = htole32(XD1_OWN | (len & 0xfff));
 	wbinv(txd, sizeof(struct desc));
-	CSR_WRITE(l, SIP_CR, CR_TXE);
+	CSR_WRITE(l, SIP_CR, l->cr | CR_TXE);
 	loop = 100;
 	do {
 		if ((le32toh(txd->xd1) & XD1_OWN) == 0)
 			goto done;
 		DELAY(10);
 		inv(txd, sizeof(struct desc));
-	} while (--loop > 0);
+	} while (--loop != 0);
 	printf("xmit failed\n");
 	return -1;
   done:
@@ -252,13 +257,10 @@ sip_recv(void *dev, char *buf, unsigned maxlen, unsigned timo)
 {
 	struct local *l = dev;
 	struct desc *rxd;
-	time_t bound;
-	unsigned rxstat;
+	unsigned bound, rxstat, len;
 	uint8_t *ptr;
-	int len;
 
 	bound = 1000 * timo;
-	CSR_WRITE(l, SIP_CR, CR_RXE);
 printf("recving with %u sec. timeout\n", timo);
   again:
 	rxd = &l->rxd[l->rx];
@@ -268,18 +270,18 @@ printf("recving with %u sec. timeout\n", timo);
 		if ((rxstat & XD1_OWN) == 0)
 			goto gotone;
 		DELAY(1000);	/* 1 milli second */
-	} while (bound-- > 0);
+	} while (--bound > 0);
 	errno = 0;
 	return -1;
   gotone:
-	if (rxstat & 0x07ff0000) {
+	if ((rxstat & XD1_OK) == 0) {
 		rxd->xd1 = htole32(XD1_OWN | FRAMESIZE);
 		wbinv(rxd, sizeof(struct desc));
 		l->rx ^= 1;
 		goto again;
 	}
 	/* good frame */
-	len = (rxstat & 0x7ff) - 4 /* HASFCS */;
+	len = (rxstat & 0xfff) - 4 /* HASFCS */;
 	if (len > maxlen)
 		len = maxlen;
 	ptr = l->store[l->rx];
@@ -288,14 +290,12 @@ printf("recving with %u sec. timeout\n", timo);
 	rxd->xd1 = htole32(XD1_OWN | FRAMESIZE);
 	wbinv(rxd, sizeof(struct desc));
 	l->rx ^= 1;
-	CSR_WRITE(l, SIP_CR, CR_RXD);
+	CSR_WRITE(l, SIP_CR, l->cr);
 	return len;
 }
 
 static int
-read_eeprom(l, loc)
-	struct local *l;
-	int loc;
+read_eeprom(struct local *l, int loc)
 {
 #define R110 06 /* SEEPROM READ op. */
 	unsigned data, v, i;
@@ -342,6 +342,7 @@ read_eeprom(l, loc)
 #define  BMSR_ACOMP	0x0020	/* Autonegotiation complete */
 #define  BMSR_LINK	0x0004	/* Link status */
 #define MII_ANAR	0x04	/* Autonegotiation advertisement (rw) */
+#define  ANAR_FC	0x0400	/* local device supports PAUSE */
 #define  ANAR_TX_FD	0x0100	/* local device supports 100bTx FD */
 #define  ANAR_TX	0x0080	/* local device supports 100bTx */
 #define  ANAR_10_FD	0x0040	/* local device supports 10bT FD */
@@ -350,7 +351,7 @@ read_eeprom(l, loc)
 #define MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 
 unsigned
-sip_mii_read(struct local *l, int phy, int reg)
+mii_read(struct local *l, int phy, int reg)
 {
 	unsigned val;
 
@@ -361,33 +362,32 @@ sip_mii_read(struct local *l, int phy, int reg)
 }
 
 void
-sip_mii_write(struct local *l, int phy, int reg, int val)
+mii_write(struct local *l, int phy, int reg, int val)
 {
 
 	CSR_WRITE(l, SIP_BMCR + (reg << 2), val);
 }
 
 void
-mii_initphy(l)
-	struct local *l;
+mii_initphy(struct local *l)
 {
 	int phy, ctl, sts, bound;
 
 	for (phy = 0; phy < 32; phy++) {
-		ctl = sip_mii_read(l, phy, MII_BMCR);
-		sts = sip_mii_read(l, phy, MII_BMSR);
+		ctl = mii_read(l, phy, MII_BMCR);
+		sts = mii_read(l, phy, MII_BMSR);
 		if (ctl != 0xffff && sts != 0xffff)
 			goto found;
 	}
 	printf("MII: no PHY found\n");
 	return;
   found:
-	ctl = sip_mii_read(l, phy, MII_BMCR);
-	sip_mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
+	ctl = mii_read(l, phy, MII_BMCR);
+	mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
 	bound = 100;
 	do {
 		DELAY(10);
-		ctl = sip_mii_read(l, phy, MII_BMCR);
+		ctl = mii_read(l, phy, MII_BMCR);
 		if (ctl == 0xffff) {
 			printf("MII: PHY %d has died after reset\n", phy);
 			return;
@@ -397,30 +397,28 @@ mii_initphy(l)
 		printf("PHY %d reset failed\n", phy);
 	}
 	ctl &= ~BMCR_ISO;
-	sip_mii_write(l, phy, MII_BMCR, ctl);
-	sts = sip_mii_read(l, phy, MII_BMSR) |
-	    sip_mii_read(l, phy, MII_BMSR); /* read twice */
+	mii_write(l, phy, MII_BMCR, ctl);
+	sts = mii_read(l, phy, MII_BMSR) |
+	    mii_read(l, phy, MII_BMSR); /* read twice */
 	l->phy = phy; /* should be 0 */
 	l->bmsr = sts;
 }
 
 void
-mii_dealan(l, timo)
-	struct local *l;
-	unsigned timo;
+mii_dealan(struct local *l, unsigned timo)
 {
 	unsigned anar, bound;
 
 	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
-	sip_mii_write(l, l->phy, MII_ANAR, anar);
-	sip_mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	mii_write(l, l->phy, MII_ANAR, anar);
+	mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	l->anlpar = 0;
 	bound = getsecs() + timo;
 	do {
-		l->bmsr = sip_mii_read(l, l->phy, MII_BMSR) |
-		   sip_mii_read(l, l->phy, MII_BMSR); /* read twice */
+		l->bmsr = mii_read(l, l->phy, MII_BMSR) |
+		   mii_read(l, l->phy, MII_BMSR); /* read twice */
 		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
-			l->anlpar = sip_mii_read(l, l->phy, MII_ANLPAR);
+			l->anlpar = mii_read(l, l->phy, MII_ANLPAR);
 			break;
 		}
 		DELAY(10 * 1000);

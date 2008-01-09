@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.14.2.1 2007/11/06 23:17:22 matt Exp $	*/
+/*	$NetBSD: bios32.c,v 1.14.2.2 2008/01/09 01:46:32 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.14.2.1 2007/11/06 23:17:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.14.2.2 2008/01/09 01:46:32 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,6 @@ bios32_init()
 		bios32_entry.offset = (void *)ISA_HOLE_VADDR(entry);
 		bios32_entry.segment = GSEL(GCODE_SEL, SEL_KPL);
 	}
-#if NIPMI > 0
 	/* see if we have SMBIOS extentions */
 	for (p = ISA_HOLE_VADDR(SMBIOS_START);
 	    p < (char *)ISA_HOLE_VADDR(SMBIOS_END); p+= 16) {
@@ -203,15 +202,13 @@ bios32_init()
     		for (; pa < end; pa+= NBPG, eva+= NBPG)
 			pmap_kenter_pa(eva, pa, VM_PROT_READ);
 
-		printf("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
 			    sh->majrev, sh->minrev, (u_long)sh->addr,
 			    sh->count);
 
 		break;
 	}
 	pmap_update(pmap_kernel());
-#endif
-
 }
 
 /*
@@ -259,7 +256,6 @@ bios32_service(service, e, ei)
 	return (1);
 }
 
-#if NIPMI > 0
 /*
  * smbios_find_table() takes a caller supplied smbios struct type and
  * a pointer to a handle (struct smbtable) returning one if the structure
@@ -343,4 +339,3 @@ smbios_get_string(struct smbtable *st, u_int8_t indx, char *dest, size_t len)
 
 	return ret;
 }
-#endif

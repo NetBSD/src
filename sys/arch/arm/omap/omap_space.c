@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_space.c,v 1.1 2007/01/06 00:29:52 christos Exp $ */
+/*	$NetBSD: omap_space.c,v 1.1.32.1 2008/01/09 01:45:21 matt Exp $ */
 
 /*
  * bus_space functions for Texas Instruments OMAP processor.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_space.c,v 1.1 2007/01/06 00:29:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_space.c,v 1.1.32.1 2008/01/09 01:45:21 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,13 +259,13 @@ omap_bs_alloc(void *t, bus_addr_t rstart, bus_addr_t rend,
     bus_addr_t *bpap, bus_space_handle_t *bshp)
 {
 
-	panic("%s(): not implemented\n", __FUNCTION__);
+	panic("%s(): not implemented\n", __func__);
 }
 
 void
 omap_bs_free(void *t, bus_space_handle_t bsh, bus_size_t size)
 {
 
-	panic("%s(): not implemented\n", __FUNCTION__);
+	panic("%s(): not implemented\n", __func__);
 }
 

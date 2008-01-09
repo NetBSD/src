@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.24.10.1 2007/11/06 23:18:17 matt Exp $	*/
+/*	$NetBSD: aed.c,v 1.24.10.2 2008/01/09 01:47:04 matt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.24.10.1 2007/11/06 23:18:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.24.10.2 2008/01/09 01:47:04 matt Exp $");
 
 #include "opt_adb.h"
 
@@ -383,7 +383,7 @@ aed_enqevent(adb_event_t *event)
 {
 	int s;
 
-	s = spladb();
+	s = splvm();
 
 #ifdef DIAGNOSTIC
 	if (aed_sc->sc_evq_tail < 0 || aed_sc->sc_evq_tail >= AED_MAX_EVENTS)
@@ -418,7 +418,7 @@ aedopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (sc == NULL)
 		return (ENXIO);
 
-	s = spladb();
+	s = splvm();
 	if (sc->sc_open) {
 		splx(s);
 		return (EBUSY);
@@ -438,7 +438,7 @@ aedclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int s;
 
-	s = spladb();
+	s = splvm();
 	aed_sc->sc_open = 0;
 	aed_sc->sc_ioproc = NULL;
 	splx(s);
@@ -459,7 +459,7 @@ aedread(dev_t dev, struct uio *uio, int flag)
 	if (uio->uio_resid < sizeof(adb_event_t))
 		return (EMSGSIZE);	/* close enough. */
 
-	s = spladb();
+	s = splvm();
 	if (aed_sc->sc_evq_len == 0) {
 		splx(s);
 		return (0);
@@ -566,7 +566,7 @@ aedpoll(dev_t dev, int events, struct lwp *l)
 	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (revents);
 
-	s = spladb();
+	s = splvm();
 	if (aed_sc->sc_evq_len > 0)
 		revents |= events & (POLLIN | POLLRDNORM);
 	else
@@ -581,7 +581,7 @@ filt_aedrdetach(struct knote *kn)
 {
 	int s;
 
-	s = spladb();
+	s = splvm();
 	SLIST_REMOVE(&aed_sc->sc_selinfo.sel_klist, kn, knote, kn_selnext);
 	splx(s);
 }
@@ -623,7 +623,7 @@ aedkqfilter(dev_t dev, struct knote *kn)
 
 	kn->kn_hook = NULL;
 
-	s = spladb();
+	s = splvm();
 	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
 	splx(s);
 

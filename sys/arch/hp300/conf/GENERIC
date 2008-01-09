@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.141.2.1 2007/11/06 23:16:33 matt Exp $
+# $NetBSD: GENERIC,v 1.141.2.2 2008/01/09 01:45:58 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.141.2.1 $"
+#ident 		"GENERIC-$Revision: 1.141.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -46,7 +46,6 @@ options 	FPSP		# floating point interface for 68040
 
 # Standard system options
 options 	KTRACE		# system call tracing support
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	LKM		# Loadable kernel modules
 #options 	INSECURE	# disable kernel security level
 options 	USERCONF	# userconf(4) support
@@ -90,7 +89,6 @@ options 	COMPAT_40	# compatibility with NetBSD 4.0
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
 # Binary compatibility.
-options 	COMPAT_HPUX	# HP-UX binary compatibility
 options 	COMPAT_AOUT_M68K	# NetBSD/m68k a.out binary compatibility
 options 	COMPAT_M68K4K	# NetBSD/m68k4k binary compatibility
 options 	COMPAT_SUNOS	# SunOS4 m68k binary compatibility

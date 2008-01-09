@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.7.6.1 2007/11/06 23:21:48 matt Exp $ */
+/* $NetBSD: crmfb.c,v 1.7.6.2 2008/01/09 01:48:42 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.7.6.1 2007/11/06 23:21:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.7.6.2 2008/01/09 01:48:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,10 +199,10 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 		panic("crmfb_attach: can't map I/O space");
 
 	/* determine mode configured by firmware */
-	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_VCMAP);
-	sc->sc_width = (d >> CRMFB_VT_VCMAP_ON_SHIFT) & 0xfff;
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_HCMAP);
-	sc->sc_height = (d >> CRMFB_VT_HCMAP_ON_SHIFT) & 0xfff;
+	sc->sc_width = (d >> CRMFB_VT_HCMAP_ON_SHIFT) & 0xfff;
+	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_VCMAP);
+	sc->sc_height = (d >> CRMFB_VT_VCMAP_ON_SHIFT) & 0xfff;
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_TILESIZE);
 	h = (d >> CRMFB_FRM_TILESIZE_DEPTH_SHIFT) & 0x3;
 	if (h == 0)

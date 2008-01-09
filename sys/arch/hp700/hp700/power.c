@@ -1,4 +1,4 @@
-/* $NetBSD: power.c,v 1.6.10.1 2007/11/06 23:16:48 matt Exp $ */
+/* $NetBSD: power.c,v 1.6.10.2 2008/01/09 01:46:09 matt Exp $ */
 /*
  * Copyright (c) 2004 Jochen Kunz.
  * All rights reserved.
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.6.10.1 2007/11/06 23:16:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: power.c,v 1.6.10.2 2008/01/09 01:46:09 matt Exp $");
 
 
 /*
@@ -113,7 +113,7 @@ void
 pwr_sw_init(bus_space_tag_t bst)
 {
 	struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
-	struct sysctllog *sysctl_log;
+	struct sysctllog *sysctl_log = NULL;
 	const struct sysctlnode *pwr_sw_node;
 	int error, stage;
 

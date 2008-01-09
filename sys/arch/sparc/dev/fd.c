@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.135.6.1 2007/11/06 23:22:20 matt Exp $	*/
+/*	$NetBSD: fd.c,v 1.135.6.2 2008/01/09 01:48:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.135.6.1 2007/11/06 23:22:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.135.6.2 2008/01/09 01:48:53 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -132,13 +132,13 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.135.6.1 2007/11/06 23:22:20 matt Exp $");
 #include <sys/syslog.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/intr.h>
 
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
-#include <machine/intr.h>
 
 #include <sparc/sparc/auxreg.h>
 #include <sparc/dev/fdreg.h>
@@ -652,7 +652,7 @@ fdcattach(struct fdc_softc *fdc, int pri)
 		return (-1);
 	}
 
-	fdc->sc_sicookie = softintr_establish(IPL_BIO, fdcswintr, fdc);
+	fdc->sc_sicookie = softint_establish(SOFTINT_BIO, fdcswintr, fdc);
 	if (fdc->sc_sicookie == NULL) {
 		printf("\n%s: cannot register soft interrupt handler\n",
 			fdc->sc_dev.dv_xname);
@@ -1298,14 +1298,14 @@ fdc_c_hwintr(void *arg)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_RESULT:
 		if (fdcresult(fdc) == -1)
 			fdc->sc_istatus = FDC_ISTATUS_ERROR;
 		else
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return (1);
 	case FDC_ITASK_DMA:
 		/* Proceed with pseudo-DMA below */
@@ -1313,7 +1313,7 @@ fdc_c_hwintr(void *arg)
 	default:
 		printf("fdc: stray hard interrupt: itask=%d\n", fdc->sc_itask);
 		fdc->sc_istatus = FDC_ISTATUS_SPURIOUS;
-		softintr_schedule(fdc->sc_sicookie);
+		softint_schedule(fdc->sc_sicookie);
 		return (1);
 	}
 
@@ -1333,7 +1333,7 @@ fdc_c_hwintr(void *arg)
 			/* Execution phase finished, get result. */
 			fdcresult(fdc);
 			fdc->sc_istatus = FDC_ISTATUS_DONE;
-			softintr_schedule(fdc->sc_sicookie);
+			softint_schedule(fdc->sc_sicookie);
 			break;
 		}
 
@@ -2139,12 +2139,13 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = getiobuf_nowait();
+	bp = getiobuf(NULL, false);
 	if (bp == NULL)
 		return (ENOBUFS);
 
 	bp->b_vp = NULL;
-	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
 
@@ -2322,14 +2323,13 @@ fd_read_md_image(size_t	*sizep, void *	*addrp)
 		bp->b_error = 0;
 		bp->b_resid = 0;
 		bp->b_proc = NULL;
-		bp->b_flags = B_BUSY | B_PHYS | B_RAW | B_READ;
+		bp->b_cflags |= BC_BUSY;
+		bp->b_flags = B_PHYS | B_RAW | B_READ;
 		bp->b_blkno = btodb(offset);
 		bp->b_bcount = DEV_BSIZE;
 		bp->b_data = addr;
 		fdstrategy(bp);
-		while ((bp->b_flags & B_DONE) == 0) {
-			tsleep((void *)bp, PRIBIO + 1, "physio", 0);
-		}
+		biowait(bp);
 		if (bp->b_error)
 			panic("fd: mountroot: fdread error %d", bp->b_error);
 

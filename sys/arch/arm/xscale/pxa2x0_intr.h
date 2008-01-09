@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.10.22.2 2007/11/09 05:37:49 matt Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.10.22.3 2008/01/09 01:45:28 matt Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -59,9 +59,7 @@ vaddr_t pxaic_base;		/* Shared with pxa2x0_irq.S */
  (*(volatile uint32_t *)(pxaic_base + (offset)) = (value))
 
 extern volatile int intr_mask;
-extern volatile int softint_pending;
 extern int pxa2x0_imask[];
-void pxa2x0_do_pending(void);
 
 #ifdef __PROG32
 
@@ -70,6 +68,8 @@ void pxa2x0_do_pending(void);
  * we map software interrupts to bit 0..3
  */
 #define SI_TO_IRQBIT(si)  (1U<<(si))
+extern volatile int softint_pending;
+void pxa2x0_do_pending(void);
 
 static inline void
 pxa2x0_setipl(int new)
@@ -89,9 +89,11 @@ pxa2x0_splx(int new)
 	pxa2x0_setipl(new);
 	restore_interrupts(psw);
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* If there are software interrupts to process, do it. */
 	if (softint_pending & intr_mask)
 		pxa2x0_do_pending();
+#endif
 }
 
 
@@ -121,6 +123,7 @@ pxa2x0_spllower(int ipl)
 	return old;
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 static inline void
 pxa2x0_setsoftintr(int si)
 {
@@ -132,6 +135,7 @@ pxa2x0_setsoftintr(int si)
 	if (softint_pending & intr_mask)
 		pxa2x0_do_pending();
 }
+#endif
 
 
 /*
@@ -141,14 +145,11 @@ pxa2x0_setsoftintr(int si)
 static inline int
 find_first_bit(uint32_t bits)
 {
-	int count;
-
 	/*
 	 * Since CLZ is available only on ARMv5, this isn't portable
 	 * to all ARM CPUs.  This file is for PXA2[15]0 processor. 
 	 */
-	__asm( "clz %0, %1" : "=r" (count) : "r" (bits) );
-	return 31 - count;
+	return 31 - __builtin_clz(bits);
 }
 
 #endif /* __PROG32 */

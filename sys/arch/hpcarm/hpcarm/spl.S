@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5 2001/11/26 20:51:57 thorpej Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.94.1 2008/01/09 01:46:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -46,82 +46,70 @@
 	.text
 	.align	0
 
-Lcurrent_spl_level:
-	.word	_C_LABEL(current_spl_level)
+.Lcpu_info_store:
+	.word	_C_LABEL(cpu_info_store)
 
 ENTRY(raisespl)
-	stmfd	sp!, {r4}
+	mov	r3, r0			/* Save the new value */
+	ldr	r1, .Lcpu_info_store	/* Get the current spl level */
+	ldr	r0, [r1, #CI_CPL]
+	cmp	r3, r0
+	RETc(le)
+
+	stmfd	sp!, {r0, r1, r4, lr}	/* Preserve registers */
+
 	/* Disable interrupts */
 	mrs	r4, cpsr_all
-	orr	r1, r4,  #(I32_bit)
-	msr	cpsr_all, r1
+	orr	r2, r4, #(I32_bit)
+	msr	cpsr_all, r2
 
-	mov	r3, r0			/* Save the new value */
-	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
-	ldr	r0, [r1]
-	cmp	r3, r0
-	ble	raisespl_exit
-
-	str	r3, [r1]		/* Store the new spl level */
-
-	stmfd	sp!, {r0, lr}		/* Preserve registers */
+	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
-	ldmfd	sp!, {r0, lr}
-raisespl_exit:
-	msr	cpsr_all, r4
-	ldmfd	sp!, {r4}
-	mov	pc, lr
+	msr	cpsr_all, r4		/* Restore interrupts */
+
+	ldmfd	sp!, {r0, r1, r4, pc}	/* Restore registers */
 
 ENTRY(lowerspl)
-	stmfd	sp!, {r4}
+	mov	r3, r0			/* Save the new value */
+	ldr	r1, .Lcpu_info_store	/* Get the current spl level */
+	ldr	r0, [r1, #CI_CPL]
+	cmp	r3, r0
+	RETc(ge)
+
+	stmfd	sp!, {r0, r1, r4, lr}	/* Preserve registers */
+
 	/* Disable interrupts */
 	mrs	r4, cpsr_all
-	orr	r1, r4,  #(I32_bit)
-	msr	cpsr_all, r1
+	orr	r2, r4,  #(I32_bit)
+	msr	cpsr_all, r2
 
-	mov	r3, r0			/* Save the new value */
-	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
-	ldr	r0, [r1]
-	cmp	r3, r0
-	bge	lowerspl_exit
+	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
-	str	r3, [r1]		/* Store the new spl level */
-
-	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	msr	cpsr_all, r4
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
-	ldmfd	sp!, {r0, lr}
-	ldmfd	sp!, {r4}
-	mov	pc, lr
-lowerspl_exit:
-	msr	cpsr_all, r4
-	ldmfd	sp!, {r4}
-	mov	pc, lr
+#endif
+	ldmfd	sp!, {r0, r1, r4, pc}	/* restore registers */
 
 ENTRY(splx)
-	stmfd	sp!, {r4}
+	mov	r3, r0			/* Save the new value */
+	ldr	r1, .Lcpu_info_store	/* Get the current spl level */
+	ldr	r0, [r1, #CI_CPL]
+	cmp	r3, r0
+	RETc(eq)
+
+	stmfd	sp!, {r0, r1, r4, lr}
 	/* Disable interrupts */
 	mrs	r4, cpsr_all
-	orr	r1, r4,  #(I32_bit)
-	msr	cpsr_all, r1
+	orr	r2, r4,  #(I32_bit)
+	msr	cpsr_all, r2
 
-	mov	r3, r0			/* Save the new value */
-	ldr	r1, Lcurrent_spl_level	/* Get the current spl level */
-	ldr	r0, [r1]
-	cmp	r3, r0
-	beq	splx_exit
+	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
-	str	r3, [r1]		/* Store the new spl level */
-
-	stmfd	sp!, {r0, lr}		/* Preserve registers */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
 	msr	cpsr_all, r4
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
-	ldmfd	sp!, {r0, lr}
-	ldmfd	sp!, {r4}
-	mov	pc, lr
-splx_exit:
-	msr	cpsr_all, r4
-	ldmfd	sp!, {r4}
-	mov	pc, lr
+#endif
+	ldmfd	sp!, {r0, r1, r4, pc}

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.21 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: zs.c,v 1.21.50.1 2008/01/09 01:47:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21.50.1 2008/01/09 01:47:31 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -53,9 +53,10 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.21 2005/12/11 12:18:24 christos Exp $");
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/adrsmap.h>
-#include <machine/cpu.h>
 #include <machine/z8530var.h>
 
 #include <dev/ic/z8530reg.h>
@@ -104,7 +105,7 @@ zshard(void *arg)
 		softreq =  zsc->zsc_cs[0]->cs_softreq;
 		softreq |= zsc->zsc_cs[1]->cs_softreq;
 		if (softreq)
-			softintr_schedule(zsc->zsc_si);
+			softint_schedule(zsc->zsc_si);
 	}
 
 	return rval;

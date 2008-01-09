@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.14 2007/03/07 11:29:46 skrll Exp $	*/
+/*	$NetBSD: mem.c,v 1.14.20.1 2008/01/09 01:46:08 matt Exp $	*/
 
 /*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
 
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14 2007/03/07 11:29:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14.20.1 2008/01/09 01:46:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,11 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.14 2007/03/07 11:29:46 skrll Exp $");
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/file.h>
+#include <sys/bus.h>
+#include <sys/mutex.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/bus.h>
 #include <machine/iomod.h>
 #include <machine/autoconf.h>
 #include <machine/pmap.h>
@@ -170,7 +171,7 @@ const struct cdevsw mem_cdevsw = {
 static void *zeropage;
 
 /* A lock for the vmmap. */
-static struct lock vmmap_lock;
+kmutex_t vmmap_lock;
 
 int
 memmatch(struct device *parent, struct cfdata *cf, void *aux)
@@ -323,7 +324,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 				goto use_kmem;
 			}
 
-			lockmgr(&vmmap_lock, LK_EXCLUSIVE, NULL);
+			mutex_enter(&vmmap_lock);
 
 			/* Temporarily map the memory at vmmap. */
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
@@ -338,7 +339,7 @@ mmrw(dev_t dev, struct uio *uio, int flags)
 			    (vaddr_t)vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 
-			lockmgr(&vmmap_lock, LK_RELEASE, NULL);
+			mutex_exit(&vmmap_lock);
 			break;
 
 		case DEV_KMEM:				/*  /dev/kmem  */

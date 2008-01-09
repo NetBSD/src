@@ -1,11 +1,11 @@
-#	$NetBSD: genassym.cf,v 1.9.10.1 2007/11/06 23:14:04 matt Exp $
+#	$NetBSD: genassym.cf,v 1.9.10.2 2008/01/09 01:44:44 matt Exp $
 
 #
-# Copyright (c) 1998 The NetBSD Foundation, Inc.
+# Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
-# by Charles M. Hannum.
+# by Charles M. Hannum, and by Andrew Doran.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -78,6 +78,7 @@ if defined(_KERNEL_OPT)
 include "opt_compat_netbsd32.h"
 include "opt_compat_linux32.h"
 include "opt_multiprocessor.h"
+include "opt_xen.h"
 endif
 
 quote #define __MUTEX_PRIVATE
@@ -133,6 +134,10 @@ include <machine/i82093reg.h>
 include <machine/i82093var.h>
 endif
 
+ifdef XEN
+include <xen/xen3-public/xen.h>
+endif  
+
 include <x86/busdefs.h>
 
 define	LSRUN			LSRUN
@@ -163,10 +168,9 @@ define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
+define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
-define	L_MUTEX			offsetof(struct lwp, l_mutex)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 
 define	PAGE_SIZE		PAGE_SIZE
@@ -193,9 +197,8 @@ define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_RBP			offsetof(struct pcb, pcb_rbp)
 define	PCB_RSP			offsetof(struct pcb, pcb_rsp)
 define	PCB_USERSP		offsetof(struct pcb, pcb_usersp)
-define	PCB_RSP0		offsetof(struct pcb, pcb_tss.tss_rsp0)
+define	PCB_RSP0		offsetof(struct pcb, pcb_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
-define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 
@@ -226,6 +229,9 @@ define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
 define	TF_RSP			offsetof(struct trapframe, tf_rsp)
 define	TF_SS			offsetof(struct trapframe, tf_ss)
 
+# Size of stack area needed for saving registers
+define	TF_REGSIZE		offsetof(struct trapframe, tf_trapno)
+# Total size includes regsisters pushed by hardware
 define	FRAMESIZE		sizeof(struct trapframe)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
@@ -242,6 +248,7 @@ define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
+define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
@@ -252,7 +259,33 @@ define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
+
+define	ACPI_SUSPEND_GDT		offsetof(struct cpu_info, ci_suspend_gdt)
+define	ACPI_SUSPEND_IDT		offsetof(struct cpu_info, ci_suspend_idt)
+define	ACPI_SUSPEND_TR			offsetof(struct cpu_info, ci_suspend_tr)
+define	ACPI_SUSPEND_LDT		offsetof(struct cpu_info, ci_suspend_ldt)
+define	ACPI_SUSPEND_FS_BASE_L		offsetof(struct cpu_info, ci_suspend_fs_base_l)
+define	ACPI_SUSPEND_FS_BASE_H		offsetof(struct cpu_info, ci_suspend_fs_base_h)
+define	ACPI_SUSPEND_GS_BASE_L		offsetof(struct cpu_info, ci_suspend_gs_base_l)
+define	ACPI_SUSPEND_GS_BASE_H		offsetof(struct cpu_info, ci_suspend_gs_base_h)
+define	ACPI_SUSPEND_GS_KERNELBASE_L	offsetof(struct cpu_info, ci_suspend_gs_kernelbase_l)
+define	ACPI_SUSPEND_GS_KERNELBASE_H	offsetof(struct cpu_info, ci_suspend_gs_kernelbase_h)
+define	ACPI_SUSPEND_MSR_EFER		offsetof(struct cpu_info, ci_suspend_msr_efer)
+define	ACPI_SUSPEND_RBX		offsetof(struct cpu_info, ci_suspend_rbx)
+define	ACPI_SUSPEND_RBP		offsetof(struct cpu_info, ci_suspend_rbp)
+define	ACPI_SUSPEND_RSP		offsetof(struct cpu_info, ci_suspend_rsp)
+define	ACPI_SUSPEND_R12		offsetof(struct cpu_info, ci_suspend_r12)
+define	ACPI_SUSPEND_R13		offsetof(struct cpu_info, ci_suspend_r13)
+define	ACPI_SUSPEND_R14		offsetof(struct cpu_info, ci_suspend_r14)
+define	ACPI_SUSPEND_R15		offsetof(struct cpu_info, ci_suspend_r15)
+define	ACPI_SUSPEND_RFL		offsetof(struct cpu_info, ci_suspend_rfl)
+define	ACPI_SUSPEND_CR0		offsetof(struct cpu_info, ci_suspend_cr0)
+define	ACPI_SUSPEND_CR2		offsetof(struct cpu_info, ci_suspend_cr2)
+define	ACPI_SUSPEND_CR3		offsetof(struct cpu_info, ci_suspend_cr3)
+define	ACPI_SUSPEND_CR4		offsetof(struct cpu_info, ci_suspend_cr4)
+define	ACPI_SUSPEND_CR8		offsetof(struct cpu_info, ci_suspend_cr8)
 
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
@@ -262,8 +295,12 @@ endif
 
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
-define	IH_NEXT			offsetof(struct intrhand, ih_next)
 define  IH_LEVEL		offsetof(struct intrhand, ih_level)
+ifdef XEN
+define IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
+else
+define	IH_NEXT			offsetof(struct intrhand, ih_next)
+endif
 
 ifdef COMPAT_NETBSD32
 define	SC_FS32			offsetof(struct netbsd32_sigcontext, sc_fs)
@@ -280,23 +317,29 @@ define  LINUX32_SYS_sigreturn		LINUX32_SYS_sigreturn
 define  LINUX32_SYS_exit		LINUX32_SYS_netbsd32_exit
 endif
 
-define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
-define	IS_RESUME		offsetof(struct intrsource, is_resume)
-define	IS_EVCNT		offsetof(struct intrsource, is_evcnt.ev_count)
-define	IS_HANDLERS		offsetof(struct intrsource, is_handlers)
-define	IS_PIC			offsetof(struct intrsource, is_pic)
-define	IS_FLAGS		offsetof(struct intrsource, is_flags)
-define	IS_PIN			offsetof(struct intrsource, is_pin)
-define	IS_TYPE			offsetof(struct intrsource, is_type)
-define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
+ifdef XEN
+define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
+define	IS_RECURSE      offsetof(struct iplsource, ipl_recurse)
+define	IS_RESUME       offsetof(struct iplsource, ipl_resume)
+define	IS_HANDLERS     offsetof(struct iplsource, ipl_handlers)
+define	EV_EVCNTL	offsetof(struct evcnt, ev_count)
+else
+define	IS_RECURSE	offsetof(struct intrsource, is_recurse)
+define	IS_RESUME	offsetof(struct intrsource, is_resume)
+define	IS_EVCNT	offsetof(struct intrsource, is_evcnt.ev_count)
+define	IS_HANDLERS	offsetof(struct intrsource, is_handlers)
+define	IS_PIC		offsetof(struct intrsource, is_pic)
+define	IS_FLAGS	offsetof(struct intrsource, is_flags)
+define	IS_PIN		offsetof(struct intrsource, is_pin)
+define	IS_TYPE		offsetof(struct intrsource, is_type)
+define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
+define	IS_LWP			offsetof(struct intrsource, is_lwp)
+endif
 
 define	IPL_NONE		IPL_NONE
 define	IPL_CLOCK		IPL_CLOCK
+define	IPL_HIGH		IPL_HIGH
 define	IPL_IPI			IPL_IPI
-
-define	IPL_SOFTNET		IPL_SOFTNET
-define	IPL_SOFTCLOCK		IPL_SOFTCLOCK
-define	IPL_SOFTSERIAL		IPL_SOFTSERIAL
 
 define	LIR_IPI			LIR_IPI
 define	LIR_TIMER		LIR_TIMER
@@ -306,10 +349,6 @@ define	SIR_CLOCK		SIR_CLOCK
 define	SIR_SERIAL		SIR_SERIAL	
 
 define	IREENT_MAGIC		IREENT_MAGIC
-
-define	X86_SOFTINTR_SOFTSERIAL	X86_SOFTINTR_SOFTSERIAL
-define	X86_SOFTINTR_SOFTNET	X86_SOFTINTR_SOFTNET
-define	X86_SOFTINTR_SOFTCLOCK	X86_SOFTINTR_SOFTCLOCK
 
 define	PSL_MBO			PSL_MBO
 
@@ -341,9 +380,18 @@ define	OPTERON_MSR_PASSCODE	OPTERON_MSR_PASSCODE
 
 define	X86_BUS_SPACE_IO	X86_BUS_SPACE_IO
 
+ifdef XEN
+define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
+define XEN_PT_BASE		offsetof(struct start_info, pt_base)    
+define XEN_NR_PT_FRAMES		offsetof(struct start_info, nr_pt_frames)
+define __HYPERVISOR_iret	__HYPERVISOR_iret
+endif
+
 define	NKL4_KIMG_ENTRIES	NKL4_KIMG_ENTRIES
 define	NKL3_KIMG_ENTRIES	NKL3_KIMG_ENTRIES
 define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
+
+define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)

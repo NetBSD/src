@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.33.6.1 2007/11/06 23:18:13 matt Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.33.6.2 2008/01/09 01:47:02 matt Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -124,9 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.33.6.1 2007/11/06 23:18:13 matt Exp $");
-
-#include "opt_compat_hpux.h"
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.33.6.2 2008/01/09 01:47:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,9 +275,6 @@ struct pool	pmap_pmap_pool;	/* memory pool for pmap structures */
 struct pv_entry *pmap_alloc_pv(void);
 void	pmap_free_pv(struct pv_entry *);
 void	pmap_collect_pv(void);
-#ifdef COMPAT_HPUX
-int	pmap_mapmulti(pmap_t, vaddr_t);
-#endif /* COMPAT_HPUX */
 
 #define	PAGE_IS_MANAGED(pa)	(pmap_initialized &&			\
 				 vm_physseg_find(atop((pa)), NULL) != -1)
@@ -2048,42 +2043,6 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap)
 	}
 }
 #endif /* M68K_MMU_HP */
-
-#ifdef COMPAT_HPUX
-/*
- * pmap_mapmulti:
- *
- *	'PUX hack for dealing with the so called multi-mapped address space.
- *	The first 256mb is mapped in at every 256mb region from 0x10000000
- *	up to 0xF0000000.  This allows for 15 bits of tag information.
- *
- *	We implement this at the segment table level, the machine independent
- *	VM knows nothing about it.
- */
-int
-pmap_mapmulti(pmap_t pmap, vaddr_t va)
-{
-	st_entry_t *ste, *bste;
-
-#ifdef DEBUG
-	if (pmapdebug & PDB_MULTIMAP) {
-		ste = pmap_ste(pmap, HPMMBASEADDR(va));
-		printf("pmap_mapmulti(%p, %lx): bste %p(%x)",
-		    pmap, va, ste, *ste);
-		ste = pmap_ste(pmap, va);
-		printf(" ste %p(%x)\n", ste, *ste);
-	}
-#endif
-	bste = pmap_ste(pmap, HPMMBASEADDR(va));
-	ste = pmap_ste(pmap, va);
-	if (*ste == SG_NV && (*bste & SG_V)) {
-		*ste = *bste;
-		TBIAU();
-		return 0;
-	}
-	return EFAULT;
-}
-#endif /* COMPAT_HPUX */
 
 /*
  * Miscellaneous support routines follow

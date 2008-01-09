@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2007/03/16 12:12:14 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.49.14.1 2008/01/09 01:49:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -160,7 +160,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2007/03/16 12:12:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49.14.1 2008/01/09 01:49:11 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -832,6 +832,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 	return ENOEXEC;
 }
 
+#if 0
 /*
  * Soft interrupt support.
  */
@@ -858,6 +859,7 @@ isr_soft_clear(int level)
 	bit = 1 << level;
 	enable_reg_and(~bit);
 }
+#endif
 
 /*
  * Like _bus_dmamap_load(), but for raw memory allocated with

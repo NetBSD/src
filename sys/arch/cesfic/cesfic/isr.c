@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.7 2007/03/05 13:06:43 tsutsui Exp $	*/
+/*	$NetBSD: isr.c,v 1.7.20.1 2008/01/09 01:45:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,19 +41,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.7 2007/03/05 13:06:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.7.20.1 2008/01/09 01:45:35 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/queue.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
-
-#include <machine/cpu.h>
 
 #include <cesfic/cesfic/isr.h>
 
@@ -133,9 +130,6 @@ isrcomputeipl()
 	if (vmspl < ttyspl)
 		vmspl = ttyspl;
 
-	ipl2spl_table[IPL_BIO] = biospl;
-	ipl2spl_table[IPL_NET] = netspl;
-	ipl2spl_table[IPL_TTY] = ttyspl;
 	ipl2spl_table[IPL_VM] = vmspl;
 }
 
@@ -144,17 +138,10 @@ isrprintlevels()
 {
 
 #ifdef DEBUG
-	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, vm = 0x%x\n",
-	    ipl2spl_table[IPL_BIO],
-	    ipl2spl_table[IPL_NET],
-	    ipl2spl_table[IPL_TTY],
-	    ipl2spl_table[IPL_VM]);
+	printf("psl: vm = 0x%x\n", ipl2spl_table[IPL_VM]);
 #endif
 
-	printf("interrupt levels: bio = %d, net = %d, tty = %d\n",
-	    PSLTOIPL(ipl2spl_table[IPL_BIO]),
-	    PSLTOIPL(ipl2spl_table[IPL_NET]),
-	    PSLTOIPL(ipl2spl_table[IPL_TTY]));
+	printf("interrupt levels: vm = %d\n", PSLTOIPL(ipl2spl_table[IPL_VM]));
 }
 
 /*
@@ -258,6 +245,8 @@ isrunlink(arg)
  * This is the dispatcher called by the low-level
  * assembly language interrupt routine.
  */
+static unsigned int idepth;
+ 
 void
 isrdispatch(evec)
 	int evec;		/* format | vector offset */
@@ -275,12 +264,15 @@ isrdispatch(evec)
 	intrcnt[ipl]++;
 	uvmexp.intrs++;
 
+	if (ipl >= IPL_VM)
+		idepth++;
+
 	list = &isr_list[ipl];
 	if (list->lh_first == NULL) {
 		printf("intrhand: ipl %d unexpected\n", ipl);
 		if (++unexpected > 10)
 			panic("isrdispatch: too many unexpected interrupts");
-		return;
+		goto out;
 	}
 
 	handled = 0;
@@ -294,21 +286,26 @@ isrdispatch(evec)
 		panic("isrdispatch: too many stray interrupts");
 	else
 		printf("isrdispatch: stray level %d interrupt\n", ipl);
+
+ out:
+	if (ipl >= IPL_VM)
+		idepth--;
+}
+
+bool
+cpu_intr_p(void)
+{
+
+	return idepth != 0;
 }
 
 int ipl2spl_table[NIPL] = {
 	[IPL_NONE] = PSL_S|PSL_IPL0,
 	[IPL_SOFTCLOCK] = PSL_S|PSL_IPL1,
+	[IPL_SOFTBIO] = PSL_S|PSL_IPL1,
 	[IPL_SOFTNET] = PSL_S|PSL_IPL1,
 	[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1,
-	[IPL_SOFT] = PSL_S|PSL_IPL1,
-	[IPL_BIO] = PSL_S|PSL_IPL3,
-	[IPL_NET] = PSL_S|PSL_IPL3,
-	[IPL_TTY] = PSL_S|PSL_IPL3,
 	[IPL_VM] = PSL_S|PSL_IPL3,
-	[IPL_CLOCK] = PSL_S|PSL_IPL6,
-	[IPL_STATCLOCK] = PSL_S|PSL_IPL6,
-	[IPL_HIGH] = PSL_S|PSL_IPL6,
 	[IPL_SCHED] = PSL_S|PSL_IPL6,
-	[IPL_LOCK] = PSL_S|PSL_IPL6,
+	[IPL_HIGH] = PSL_S|PSL_IPL6,
 };

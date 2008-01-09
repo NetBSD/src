@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.9.82.1 2007/11/09 05:37:44 matt Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.9.82.2 2008/01/09 01:45:26 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,19 +40,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.9.82.1 2007/11/09 05:37:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.9.82.2 2008/01/09 01:45:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/uio.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>
@@ -213,6 +211,11 @@ aau321_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmb.dmb_process = iopaau_process;
 
 	iopaau_attach(sc);
+
+	aau321_func_zero.af_desc_cache = iopaau_desc_4_cache;
+	aau321_func_fill8.af_desc_cache = iopaau_desc_4_cache;
+	aau321_func_xor_1_4.af_desc_cache = iopaau_desc_4_cache;
+	aau321_func_xor_5_8.af_desc_cache = iopaau_desc_8_cache;
 }
 
 CFATTACH_DECL(iopaau, sizeof(struct aau321_softc),

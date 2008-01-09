@@ -1,4 +1,4 @@
-/* 	$NetBSD: lock.h,v 1.11.24.1 2007/11/06 23:17:07 matt Exp $	*/
+/* 	$NetBSD: lock.h,v 1.11.24.2 2008/01/09 01:46:23 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -92,9 +92,9 @@ __sync(void)
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *alp)
 {
-	__cpu_simple_lock_t ul = __SIMPLELOCK_UNLOCKED;
-
-	*alp = ul;
+	alp->csl_lock[0] = alp->csl_lock[1] = 
+	alp->csl_lock[2] = alp->csl_lock[3] =
+	    __SIMPLELOCK_RAW_UNLOCKED;
 	__sync();
 }
 

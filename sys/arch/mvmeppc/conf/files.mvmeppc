@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvmeppc,v 1.11.14.1 2007/11/06 23:19:30 matt Exp $
+#	$NetBSD: files.mvmeppc,v 1.11.14.2 2008/01/09 01:47:26 matt Exp $
 #
 # Motorola's MVMEPPC boards specific configuration info
 #
@@ -24,7 +24,6 @@ file	arch/mvmeppc/mvmeppc/platform_160x.c	support_mvme160x
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
-file	arch/powerpc/powerpc/softintr.c
 
 # General files
 file	dev/cons.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.11.10.1 2007/11/06 23:14:09 matt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.11.10.2 2008/01/09 01:44:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11.10.1 2007/11/06 23:14:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.11.10.2 2008/01/09 01:44:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,9 @@ process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
-	memcpy(regs, tf, sizeof (*regs));
+#define copy_to_reg(reg, REG, idx) regs->regs[_REG_##REG] = tf->tf_##reg;
+	_FRAME_GREG(copy_to_reg)
+#undef copy_to_reg
 
 	return (0);
 }
@@ -157,7 +159,9 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	if (error != 0)
 		return error;
 
-	memcpy(tf, regs, sizeof (*tf));
+#define copy_to_frame(reg, REG, idx) tf->tf_##reg = regs[_REG_##REG];
+	_FRAME_GREG(copy_to_frame)
+#undef copy_to_frame
 
 	return (0);
 }

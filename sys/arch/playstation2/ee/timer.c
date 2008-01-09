@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.3 2005/12/11 12:18:36 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.3.50.1 2008/01/09 01:47:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.3 2005/12/11 12:18:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timer.c,v 1.3.50.1 2008/01/09 01:47:41 matt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -122,7 +122,9 @@ timer1_intr(void *arg)
 
 	_reg_write_4(T1_MODE_REG, T_MODE_EQUF | T_MODE_OVFF);
 
+#ifdef __HAVE_FAST_SOFTINTS
 	softintr_dispatch(0); /* IPL_SOFT */
+#endif
 
 	return (1);
 }
@@ -133,8 +135,9 @@ timer2_intr(void *arg)
 
 	_reg_write_4(T2_MODE_REG, T_MODE_EQUF | T_MODE_OVFF);
 
+#ifdef __HAVE_FAST_SOFTINTS
 	softintr_dispatch(1); /* IPL_SOFTCLOCK */
-
+#endif
 	return (1);
 }
 
@@ -144,8 +147,10 @@ timer3_intr(void *arg)
 
 	_reg_write_4(T3_MODE_REG, T_MODE_EQUF | T_MODE_OVFF);
 
+#ifdef __HAVE_FAST_SOFTINTS
 	softintr_dispatch(3); /* IPL_SOFTSERIAL */
 	softintr_dispatch(2); /* IPL_SOFTNET */
+#endif
 
 	return (1);
 }

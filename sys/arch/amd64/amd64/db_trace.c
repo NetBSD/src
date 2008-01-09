@@ -1,4 +1,4 @@
-/*	$NetBSD: db_trace.c,v 1.11 2007/02/22 04:54:36 thorpej Exp $	*/
+/*	$NetBSD: db_trace.c,v 1.11.22.1 2008/01/09 01:44:43 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11 2007/02/22 04:54:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_trace.c,v 1.11.22.1 2008/01/09 01:44:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,8 +226,8 @@ db_nextframe(long **nextframe, long **retaddr, long **arg0, db_addr_t *ip,
 	    && traptype == INTERRUPT) {
 		for (i = 0; i < 4; i++) {
 			ifp = (struct intrframe *)(argp + i);
-			err = db_get_value((long)&ifp->__if_err, 8, false);
-			trapno = db_get_value((long)&ifp->__if_trapno,
+			err = db_get_value((long)&ifp->if_tf.tf_err, 8, false);
+			trapno = db_get_value((long)&ifp->if_tf.tf_trapno,
 			    8, false);
 			if ((err == 0 || err == IREENT_MAGIC) && trapno == T_ASTFLT) {
 				*nextframe = (long *)ifp - 1;

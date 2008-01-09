@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.4.10.1 2007/11/06 23:20:11 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.4.10.2 2008/01/09 01:47:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4.10.1 2007/11/06 23:20:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.4.10.2 2008/01/09 01:47:41 matt Exp $");
 
 #include "debug_playstation2.h"
 #if defined INTR_DEBUG && !defined GSFB_DEBUG_MONITOR
@@ -109,28 +109,12 @@ interrupt_init_bootstrap()
 void
 interrupt_init(void)
 {
-	static const char *softintr_names[] = IPL_SOFTNAMES;
 	struct playstation2_soft_intr *asi;
 	int i;
 
 	evcnt_attach_static(&_playstation2_evcnt.clock);
 	evcnt_attach_static(&_playstation2_evcnt.sbus);
 	evcnt_attach_static(&_playstation2_evcnt.dmac);
-
-	for (i = 0; i < _IPL_NSOFT; i++) {
-		asi = &playstation2_soft_intrs[i];
-		TAILQ_INIT(&asi->softintr_q);
-
-		asi->softintr_ipl = IPL_SOFT + i;
-		simple_lock_init(&asi->softintr_slock);
-		evcnt_attach_dynamic(&asi->softintr_evcnt, EVCNT_TYPE_INTR,
-		    NULL, "soft", softintr_names[i]);
-	}
-
-	/* XXX Establish legacy soft interrupt handlers. */
-	softnet_intrhand = softintr_establish(IPL_SOFTNET,
-	    (void (*)(void *))netintr, NULL);
-	KDASSERT(softnet_intrhand != NULL);
 
 	/* install software interrupt handler */
 	intc_intr_establish(I_CH10_TIMER1, IPL_SOFT, timer1_intr, 0);
@@ -150,9 +134,14 @@ interrupt_init(void)
 void
 cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 {
+	struct cpu_info *ci;
+
 #if 0
-	_debug_print_intr(__FUNCTION__);
+	_debug_print_intr(__func__);
 #endif
+
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 	playstation2_clockframe.ppl = md_imask;
@@ -167,98 +156,22 @@ cpu_intr(u_int32_t status, u_int32_t cause, u_int32_t pc, u_int32_t ipending)
 		_playstation2_evcnt.dmac.ev_count++;
 		dmac_intr(md_imask);
 	}
+	ci->ci_idepth--;
 }
-
-/*
- * Software interrupt support
- */
-void
-softintr_dispatch(int soft)
-{
-	struct playstation2_soft_intr *asi;
-	struct playstation2_soft_intrhand *sih;
-	int s;
-
-	s = _intr_suspend();
-
-	asi = &playstation2_soft_intrs[soft];
-
-	if (TAILQ_FIRST(&asi->softintr_q) != NULL)
-		asi->softintr_evcnt.ev_count++;
-
-	while ((sih = TAILQ_FIRST(&asi->softintr_q)) != NULL) {
-		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-
-		uvmexp.softs++;
-
-		_intr_resume(s);
-		(*sih->sih_fn)(sih->sih_arg);
-		s = _intr_suspend();
-	}
-
-	_intr_resume(s);
-}
-
 void
 setsoft(int ipl)
 {
 	const static int timer_map[] = {
-		[IPL_SOFT]	= 1,
-		[IPL_SOFTCLOCK]	= 2,
+		[IPL_SOFTCLOCK]	= 1,
+		[IPL_SOFTBIO]	= 2,
 		[IPL_SOFTNET]	= 3,
 		[IPL_SOFTSERIAL]= 3,
 	};
 
-	KDASSERT(ipl >= IPL_SOFT && ipl <= IPL_SOFTSERIAL);
+	KDASSERT(ipl >= IPL_SOFTCLOCK && ipl <= IPL_SOFTSERIAL);
 
 	/* kick one shot timer */
 	timer_one_shot(timer_map[ipl]);
-}
-
-/* Register a software interrupt handler. */
-void *
-softintr_establish(int ipl, void (*func)(void *), void *arg)
-{
-	struct playstation2_soft_intr *asi;
-	struct playstation2_soft_intrhand *sih;
-	int s;
-
-	if (__predict_false(ipl >= (IPL_SOFT + _IPL_NSOFT) ||
-			    ipl < IPL_SOFT))
-		panic("softintr_establish");
-
-	sih = malloc(sizeof(*sih), M_DEVBUF, M_NOWAIT);
-
-	s = _intr_suspend();
-	asi = &playstation2_soft_intrs[ipl - IPL_SOFT];
-	if (__predict_true(sih != NULL)) {
-		sih->sih_intrhead = asi;
-		sih->sih_fn = func;
-		sih->sih_arg = arg;
-		sih->sih_pending = 0;
-	}
-	_intr_resume(s);
-
-	return (sih);
-}
-
-/* Unregister a software interrupt handler. */
-void
-softintr_disestablish(void *arg)
-{
-	struct playstation2_soft_intrhand *sih = arg;
-	struct playstation2_soft_intr *asi = sih->sih_intrhead;
-	int s;
-
-	s = _intr_suspend();
-	if (sih->sih_pending) {
-		TAILQ_REMOVE(&asi->softintr_q, sih, sih_q);
-		sih->sih_pending = 0;
-	}
-	_intr_resume(s);
-
-	free(sih, M_DEVBUF);
 }
 
 /*
@@ -366,15 +279,10 @@ _debug_print_intr(const char *ident)
 
 	__gsfb_print(0,
 	    "CLOCK %-5lld SBUS %-5lld DMAC %-5lld "
-	    "misc %-5lld clock %-5lld net %-5lld serial %-5lld\n"
-	    "SR=%08x PC=%08x cpl=%08x intc=%08x dmac=%08x sched=%08x\n",
+
 	    _playstation2_evcnt.clock.ev_count,
 	    _playstation2_evcnt.sbus.ev_count,
 	    _playstation2_evcnt.dmac.ev_count,
-	    playstation2_soft_intrs[0].softintr_evcnt.ev_count,
-	    playstation2_soft_intrs[1].softintr_evcnt.ev_count,
-	    playstation2_soft_intrs[2].softintr_evcnt.ev_count,
-	    playstation2_soft_intrs[3].softintr_evcnt.ev_count,
 	    playstation2_clockframe.sr, playstation2_clockframe.pc,
 	    md_imask,
 	    (_reg_read_4(I_MASK_REG) << 16) |

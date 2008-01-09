@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.76.20.1 2007/11/06 23:16:35 matt Exp $	*/
+/*	$NetBSD: hil.c,v 1.76.20.2 2008/01/09 01:46:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,9 +77,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.76.20.1 2007/11/06 23:16:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.76.20.2 2008/01/09 01:46:02 matt Exp $");
 
-#include "opt_compat_hpux.h"
 #include "ite.h"
 #include "rnd.h"
 
@@ -133,10 +132,6 @@ int	hildebug = 0;
 #define HDB_KEYBOARD	0x10
 #define HDB_IDMODULE	0x20
 #define HDB_EVENTS	0x80
-#endif
-
-#ifdef COMPAT_HPUX
-extern struct emul emul_hpux;
 #endif
 
 extern struct kbdmap kbd_map[];
@@ -307,18 +302,9 @@ hilopen(dev_t dev, int flags, int mode, struct lwp *l)
 	 * 3.	BSD processes default to shared queue interface.
 	 *	Multiple processes can open the device.
 	 */
-#ifdef COMPAT_HPUX
-	if (l->l_proc->p_emul == &emul_hpux) {
-		if (dptr->hd_flags & (HIL_READIN|HIL_QUEUEIN))
-			return EBUSY;
-		dptr->hd_flags |= HIL_READIN;
-	} else
-#endif
-	{
-		if (dptr->hd_flags & HIL_READIN)
-			return EBUSY;
-		dptr->hd_flags |= HIL_QUEUEIN;
-	}
+	if (dptr->hd_flags & HIL_READIN)
+		return EBUSY;
+	dptr->hd_flags |= HIL_QUEUEIN;
 	if (flags & FNONBLOCK)
 		dptr->hd_flags |= HIL_NOBLOCK;
 	/*
@@ -540,11 +526,6 @@ hilioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 	}
 
-#ifdef COMPAT_HPUX
-	if (l->l_proc->p_emul == &emul_hpux)
-		return hpuxhilioctl(dev, cmd, data, flag);
-#endif
-
 	hilp->hl_cmdbp = hilp->hl_cmdbuf;
 	memset((void *)hilp->hl_cmdbuf, 0, HILBUFSIZE);
 	hilp->hl_cmddev = HILUNIT(dev);
@@ -663,137 +644,6 @@ hilioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	hilp->hl_cmddev = 0;
 	return error;
 }
-
-#ifdef COMPAT_HPUX
-/* ARGSUSED */
-int
-hpuxhilioctl(dev_t dev, int cmd, void *data, int flag)
-{
-	struct hil_softc *hilp;
-	struct hilloopdev *dptr;
-	uint8_t *buf;
-	int i;
-	u_char hold;
-
-	hilp = device_lookup(&hil_cd, HILLOOP(dev));
-
-	hilp->hl_cmdbp = hilp->hl_cmdbuf;
-	memset((void *)hilp->hl_cmdbuf, 0, HILBUFSIZE);
-	hilp->hl_cmddev = HILUNIT(dev);
-	switch (cmd) {
-
-	case HILSC:
-	case HILID:
-	case HILRN:
-	case HILRS:
-	case HILED:
-	case HILP1:
-	case HILP2:
-	case HILP3:
-	case HILP4:
-	case HILP5:
-	case HILP6:
-	case HILP7:
-	case HILP:
-	case HILA1:
-	case HILA2:
-	case HILA3:
-	case HILA4:
-	case HILA5:
-	case HILA6:
-	case HILA7:
-	case HILA:
-		send_hildev_cmd(hilp, HILUNIT(dev), (cmd & 0xFF));
-		memcpy(data, hilp->hl_cmdbuf, hilp->hl_cmdbp-hilp->hl_cmdbuf);
-		break;
-
-	case HILDKR:
-	case HILER1:
-	case HILER2:
-		if (hilp->hl_kbddev) {
-			hilp->hl_cmddev = hilp->hl_kbddev;
-			send_hildev_cmd(hilp, hilp->hl_kbddev, (cmd & 0xFF));
-			hilp->hl_kbdflags &= ~(KBD_AR1|KBD_AR2);
-			if (cmd == HILIOCAR1)
-				hilp->hl_kbdflags |= KBD_AR1;
-			else if (cmd == HILIOCAR2)
-				hilp->hl_kbdflags |= KBD_AR2;
-		}
-		break;
-
-	case EFTSBP:
-		/* Send four data bytes to the tone gererator. */
-		send_hil_cmd(hilp->hl_addr, HIL_STARTCMD, data, 4, NULL);
-		/* Send the trigger beeper command to the 8042. */
-		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), NULL, 0, NULL);
-		break;
-
-	case EFTRRT:
-		/* Transfer the real time to the 8042 data buffer */
-		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), NULL, 0, NULL);
-		/* Read each byte of the real time */
-		buf = data;
-		for (i = 0; i < 5; i++) {
-			send_hil_cmd(hilp->hl_addr, HIL_READTIME + i, NULL,
-					0, &hold);
-			buf[4 - i] = hold;
-		}
-		break;
-
-	case EFTRT:
-		buf = data;
-		for (i = 0; i < 4; i++) {
-			send_hil_cmd(hilp->hl_addr, (cmd & 0xFF) + i,
-					NULL, 0, &hold);
-			buf[i] = hold;
-		}
-		break;
-
-	case EFTRLC:
-	case EFTRCC:
-		buf = data;
-		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), NULL, 0, &hold);
-		*buf = hold;
-		break;
-
-	case EFTSRPG:
-	case EFTSRD:
-	case EFTSRR:
-		send_hil_cmd(hilp->hl_addr, (cmd & 0xFF), data, 1, NULL);
-		break;
-
-	case EFTSBI:
-#ifdef hp800
-		/* XXX big magic */
-		hold = 7 - (*(u_char *)data >> 5);
-		*(int *)data = 0x84069008 | (hold << 8);
-		send_hil_cmd(hilp->hl_addr, HIL_STARTCMD, data, 4, NULL);
-		send_hil_cmd(hilp->hl_addr, 0xC4, NULL, 0, NULL);
-		break;
-#else
-		hilbeep(hilp, (struct _hilbell *)data);
-#endif
-		break;
-
-	case FIONBIO:
-		dptr = &hilp->hl_device[HILUNIT(dev)];
-		if (*(int *)data)
-			dptr->hd_flags |= HIL_NOBLOCK;
-		else
-			dptr->hd_flags &= ~HIL_NOBLOCK;
-		break;
-
-	case FIOASYNC:
-		break;
-
-	default:
-		hilp->hl_cmddev = 0;
-		return EINVAL;
-	}
-	hilp->hl_cmddev = 0;
-	return 0;
-}
-#endif
 
 /*ARGSUSED*/
 static int
@@ -1716,30 +1566,6 @@ hiliddev(struct hil_softc *hilp)
 #endif
 	return i <= hilp->hl_maxdev ? i : 0;
 }
-
-#ifdef COMPAT_HPUX
-/*
- * XXX map devno as expected by HP-UX
- */
-int
-hildevno(dev_t dev)
-{
-	int newdev;
-
-	newdev = 24 << 24;
-#ifdef HILCOMPAT
-	/*
-	 * XXX compat check
-	 * Don't convert old style specfiles already in correct format
-	 */
-	if (minor(dev) && (dev & 0xF) == 0)
-		newdev |= minor(dev);
-	else
-#endif
-	newdev |= (HILLOOP(dev) << 8) | (HILUNIT(dev) << 4);
-	return newdev;
-}
-#endif
 
 /*
  * Low level routines which actually talk to the 8042 chip.

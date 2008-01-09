@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.14.6.1 2007/11/06 23:21:27 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.14.6.2 2008/01/09 01:48:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14.6.1 2007/11/06 23:21:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.14.6.2 2008/01/09 01:48:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,8 @@ readdisklabel(dev, strat, lp, osdep)
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_READ;
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -246,7 +247,8 @@ nombrpart:
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -282,7 +284,8 @@ nombrpart:
 		i = 0;
 		do {
 			/* read a bad sector table */
-			bp->b_flags = B_BUSY | B_READ;
+			bp->b_cflags = BC_BUSY;
+			bp->b_flags = B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
 				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
@@ -401,7 +404,8 @@ writedisklabel(dev, strat, lp, osdep)
 	/* read master boot record */
 	bp->b_blkno = MBR_BBSECTOR;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_READ;
 	bp->b_cylinder = MBR_BBSECTOR / lp->d_secpercyl;
 	(*strat)(bp);
 
@@ -434,7 +438,8 @@ nombrpart:
 	bp->b_blkno = dospartoff + LABELSECTOR;
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags = B_BUSY | B_READ;
+	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_READ;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
@@ -447,7 +452,8 @@ nombrpart:
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags = B_BUSY | B_WRITE;
+			bp->b_cflags = BC_BUSY;
+			bp->b_flags = B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);
 			goto done;

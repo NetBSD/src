@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.9 2006/10/15 02:11:21 uwe Exp $	*/
+/*	$NetBSD: psl.h,v 1.9.28.1 2008/01/09 01:48:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,8 +69,6 @@ int _cpu_intr_resume(int);
 /* SR.BL */
 int _cpu_exception_suspend(void);
 void _cpu_exception_resume(int);
-
-#include <machine/intr.h>
 
 #endif /* !_LOCORE */
 #endif /* _KERNEL */

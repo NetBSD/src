@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.8 2007/03/04 06:00:41 christos Exp $	*/
+/*	$NetBSD: syscall.c,v 1.8.20.1 2008/01/09 01:48:50 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -338,7 +338,7 @@ syscall_fancy(struct lwp *l, struct trapframe *tf)
 	if (error)
 		goto bad;
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -371,7 +371,7 @@ out:
 	}
 
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 
 	userret(l);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.27.10.2 2007/11/08 10:59:38 matt Exp $
+#	$NetBSD: files.ofppc,v 1.27.10.3 2008/01/09 01:47:36 matt Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -27,13 +27,12 @@ file	arch/powerpc/powerpc/clock.c
 file	kern/subr_disk_mbr.c			disk
 file	arch/powerpc/oea/ofwoea_machdep.c
 file	arch/powerpc/oea/ofw_consinit.c
+file	arch/powerpc/oea/ofw_rascons.c
 file	arch/ofppc/ofppc/machdep.c
-#file	arch/ofppc/ofppc/platform.c
 
 file	arch/powerpc/powerpc/bus_dma.c
 file	arch/powerpc/powerpc/bus_space.c
 file	arch/powerpc/powerpc/procfs_machdep.c	procfs
-file	arch/powerpc/powerpc/softintr.c
 file	dev/cons.c
 
 #
@@ -88,6 +87,9 @@ device	rtas
 attach	rtas at mainbus
 file	arch/powerpc/powerpc/rtas.c		rtas needs-flag
 
+include "dev/usb/files.usb"
+include "dev/ieee1394/files.ieee1394"
+
 #
 # PCI bus support
 #
@@ -136,4 +138,4 @@ file	arch/ofppc/ofppc/cpu.c			cpu
 #file	arch/ofppc/ofwgen/ofwgen.c
 #file	arch/ofppc/ofwgen/ofwgen_intr.c
 
-include "arch/ofppc/conf/majors.ofppc"
+include "arch/powerpc/conf/majors.powerpc"

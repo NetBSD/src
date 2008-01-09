@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.30 2007/03/04 05:59:38 christos Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.30.22.1 2008/01/09 01:45:19 matt Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.30 2007/03/04 05:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.30.22.1 2008/01/09 01:45:19 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -241,7 +241,7 @@ ixpcom_attach_subr(sc)
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, ixpcomsoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, ixpcomsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -390,15 +390,8 @@ ixpcomstart(tp)
 	if (sc->sc_tx_stopped)
 		goto out;
 
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup(&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+	if (!ttypull(tp))
+		goto out;
 
 	/* Grab the first contiguous region of buffer space. */
 	{
@@ -1225,7 +1218,7 @@ ixpcomintr(void* arg)
 	COM_UNLOCK(sc);
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.143.10.1 2007/11/06 23:17:40 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.143.10.2 2008/01/09 01:46:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,6 +64,9 @@
 struct intrsource;
 struct pmap;
 
+#define	NIOPORTS	1024		/* # of ports we allow to be mapped */
+#define	IOMAPSIZE	(NIOPORTS / 8)	/* I/O bitmap size in bytes */
+
 /*
  * a bunch of this belongs in cpuvar.h; move it later..
  */
@@ -85,6 +88,10 @@ struct cpu_info {
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	int	ci_cpumask;		/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
+	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint8_t ci_packageid;
+	uint8_t ci_coreid;
+	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
@@ -117,7 +124,6 @@ struct cpu_info {
 	uint32_t	ci_imask[NIPL];
 	uint32_t	ci_iunmask[NIPL];
 
-	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	uint32_t ci_flags;		/* flags; see below */
 	uint32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
@@ -133,6 +139,7 @@ struct cpu_info {
 	uint32_t	ci_vendor[4];	 /* vendor string */
 	uint32_t	ci_cpu_serial[3]; /* PIII serial number */
 	uint64_t	ci_tsc_freq;	 /* cpu cycles/second */
+	volatile uint32_t	ci_lapic_counter;
 
 	const struct cpu_functions *ci_func;  /* start/stop functions */
 	void (*cpu_setup)(struct cpu_info *);
@@ -156,6 +163,34 @@ struct cpu_info {
 	struct evcnt ci_ipi_events[X86_NIPI];
 
 	struct via_padlock	ci_vp;	/* VIA PadLock private storage */
+
+	struct i386tss	ci_tss;		/* Per-cpu TSS; shared among LWPs */
+	char		ci_iomap[IOMAPSIZE]; /* I/O Bitmap */
+	int ci_tss_sel;			/* TSS selector of this cpu */
+
+	/*
+	 * The following two are actually region_descriptors,
+	 * but that would pollute the namespace.
+	 */
+	uint32_t	ci_suspend_gdt;
+	uint16_t	ci_suspend_gdt_padding;
+	uint32_t	ci_suspend_idt;
+	uint16_t	ci_suspend_idt_padding;
+
+	uint16_t	ci_suspend_tr;
+	uint16_t	ci_suspend_ldt;
+	uint16_t	ci_suspend_fs;
+	uint16_t	ci_suspend_gs;
+	uint32_t	ci_suspend_ebx;
+	uint32_t	ci_suspend_esi;
+	uint32_t	ci_suspend_edi;
+	uint32_t	ci_suspend_ebp;
+	uint32_t	ci_suspend_esp;
+	uint32_t	ci_suspend_efl;
+	uint32_t	ci_suspend_cr0;
+	uint32_t	ci_suspend_cr2;
+	uint32_t	ci_suspend_cr3;
+	uint32_t	ci_suspend_cr4;
 };
 
 /*
@@ -192,15 +227,15 @@ extern struct cpu_info *cpu_info_list;
 
 #define X86_MAXPROCS		32	/* because we use a bitmask */
 
-#define CPU_STARTUP(_ci)	((_ci)->ci_func->start(_ci))
-#define CPU_STOP(_ci)	        ((_ci)->ci_func->stop(_ci))
-#define CPU_START_CLEANUP(_ci)	((_ci)->ci_func->cleanup(_ci))
+#define CPU_STARTUP(_ci, _target)	((_ci)->ci_func->start(_ci, _target))
+#define CPU_STOP(_ci)	        	((_ci)->ci_func->stop(_ci))
+#define CPU_START_CLEANUP(_ci)		((_ci)->ci_func->cleanup(_ci))
 
 #if defined(__GNUC__) && defined(_KERNEL)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 x86_curcpu(void)
 {
 	struct cpu_info *ci;
@@ -212,7 +247,7 @@ x86_curcpu(void)
 	return ci;
 }
 
-__inline static lwp_t * __attribute__((__unused__))
+__inline static lwp_t * __unused
 x86_curlwp(void)
 {
 	lwp_t *l;
@@ -333,7 +368,6 @@ extern int i386_has_sse2;
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
 

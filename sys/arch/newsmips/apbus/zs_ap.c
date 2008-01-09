@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_ap.c,v 1.21 2007/03/08 22:28:41 he Exp $	*/
+/*	$NetBSD: zs_ap.c,v 1.21.20.1 2008/01/09 01:47:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,16 +45,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.21 2007/03/08 22:28:41 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ap.c,v 1.21.20.1 2008/01/09 01:47:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <machine/adrsmap.h>
-#include <machine/cpu.h>
 #include <machine/z8530var.h>
 
 #include <dev/cons.h>
@@ -249,7 +250,7 @@ zs_ap_attach(struct device *parent, struct device *self, void *aux)
 		cs = &zsc->zsc_cs_store[channel];
 		zsc->zsc_cs[channel] = cs;
 
-		simple_lock_init(&cs->cs_lock);
+		zs_lock_init(cs);
 		cs->cs_channel = channel;
 		cs->cs_private = NULL;
 		cs->cs_ops = &zsops_null;
@@ -307,7 +308,7 @@ zs_ap_attach(struct device *parent, struct device *self, void *aux)
 	if (!didintr) {
 		didintr = 1;
 
-		zsc->zsc_si = softintr_establish(IPL_SOFTSERIAL, zssoft, zsc);
+		zsc->zsc_si = softint_establish(SOFTINT_SERIAL, zssoft, zsc);
 		apbus_intr_establish(1, /* interrupt level ( 0 or 1 ) */
 				     NEWS5000_INT1_SCC,
 				     0, /* priority */

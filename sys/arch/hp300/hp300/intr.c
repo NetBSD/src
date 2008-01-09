@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.30.10.1 2007/11/06 23:16:39 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.30.10.2 2008/01/09 01:46:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30.10.1 2007/11/06 23:16:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30.10.2 2008/01/09 01:46:04 matt Exp $");
 
 #define _HP300_INTR_H_PRIVATE
 
@@ -49,13 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.30.10.1 2007/11/06 23:16:39 matt Exp $");
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/vmmeter.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <net/netisr.h>
-
-#include <machine/cpu.h>
-#include <machine/intr.h>
 
 /*
  * The location and size of the autovectored interrupt portion
@@ -77,6 +74,8 @@ static const char *hp300_intr_names[NISR] = {
 };
 
 u_short hp300_ipl2psl[NIPL];
+volatile uint8_t ssir;
+int idepth;
 
 void	intr_computeipl(void);
 void	netintr(void);
@@ -100,13 +99,9 @@ intr_init(void)
 	hp300_ipl2psl[IPL_SOFTCLOCK]  = PSL_S|PSL_IPL1;
 	hp300_ipl2psl[IPL_SOFTNET]    = PSL_S|PSL_IPL1;
 	hp300_ipl2psl[IPL_SOFTSERIAL] = PSL_S|PSL_IPL1;
-	hp300_ipl2psl[IPL_SOFT]       = PSL_S|PSL_IPL1;
-	hp300_ipl2psl[IPL_BIO]        = PSL_S|PSL_IPL3;
-	hp300_ipl2psl[IPL_NET]        = PSL_S|PSL_IPL3;
-	hp300_ipl2psl[IPL_TTY]        = PSL_S|PSL_IPL3;
-	hp300_ipl2psl[IPL_TTYNOBUF]   = PSL_S|PSL_IPL3;
+	hp300_ipl2psl[IPL_SOFTBIO]    = PSL_S|PSL_IPL1;
 	hp300_ipl2psl[IPL_VM]         = PSL_S|PSL_IPL3;
-	hp300_ipl2psl[IPL_CLOCK]      = PSL_S|PSL_IPL6;
+	hp300_ipl2psl[IPL_SCHED]      = PSL_S|PSL_IPL6;
 	hp300_ipl2psl[IPL_HIGH]       = PSL_S|PSL_IPL7;
 }
 
@@ -121,10 +116,6 @@ intr_computeipl(void)
 	int ipl;
 
 	/* Start with low values. */
-	hp300_ipl2psl[IPL_BIO] =
-	hp300_ipl2psl[IPL_NET] =
-	hp300_ipl2psl[IPL_TTY] =
-	hp300_ipl2psl[IPL_TTYNOBUF] =
 	hp300_ipl2psl[IPL_VM] = PSL_S|PSL_IPL3;
 
 	for (ipl = 0; ipl < NISR; ipl++) {
@@ -135,59 +126,24 @@ intr_computeipl(void)
 			 * if necessary.
 			 */
 			switch (ih->ih_priority) {
-			case IPL_BIO:
-				if (ipl > PSLTOIPL(hp300_ipl2psl[IPL_BIO]))
-					hp300_ipl2psl[IPL_BIO] = IPLTOPSL(ipl);
+			case IPL_VM:
+				if (ipl > PSLTOIPL(hp300_ipl2psl[IPL_VM]))
+					hp300_ipl2psl[IPL_VM] = IPLTOPSL(ipl);
 				break;
-
-			case IPL_NET:
-				if (ipl > PSLTOIPL(hp300_ipl2psl[IPL_NET]))
-					hp300_ipl2psl[IPL_NET] = IPLTOPSL(ipl);
-				break;
-
-			case IPL_TTY:
-			case IPL_TTYNOBUF:
-				if (ipl > PSLTOIPL(hp300_ipl2psl[IPL_TTY]))
-					hp300_ipl2psl[IPL_TTY] =
-					    hp300_ipl2psl[IPL_TTYNOBUF] =
-					    IPLTOPSL(ipl);
-				break;
-
 			default:
 				printf("priority = %d\n", ih->ih_priority);
 				panic("intr_computeipl: bad priority");
 			}
 		}
 	}
-
-	/*
-	 * Enforce `bio <= net <= tty <= imp'
-	 */
-
-	if (hp300_ipl2psl[IPL_NET] < hp300_ipl2psl[IPL_BIO])
-		hp300_ipl2psl[IPL_NET] = hp300_ipl2psl[IPL_BIO];
-
-	if (hp300_ipl2psl[IPL_TTY] < hp300_ipl2psl[IPL_NET])
-		hp300_ipl2psl[IPL_TTY] = hp300_ipl2psl[IPL_NET];
-
-	if (hp300_ipl2psl[IPL_VM] < hp300_ipl2psl[IPL_TTY])
-		hp300_ipl2psl[IPL_VM] = hp300_ipl2psl[IPL_TTY];
 }
 
 void
 intr_printlevels(void)
 {
 
-#ifdef DEBUG
-	printf("psl: bio = 0x%x, net = 0x%x, tty = 0x%x, imp = 0x%x\n",
-	    hp300_ipl2psl[IPL_BIO], hp300_ipl2psl[IPL_NET],
-	    hp300_ipl2psl[IPL_TTY], hp300_ipl2psl[IPL_VM]);
-#endif
-
-	printf("interrupt levels: bio = %d, net = %d, tty = %d\n",
-	    PSLTOIPL(hp300_ipl2psl[IPL_BIO]),
-	    PSLTOIPL(hp300_ipl2psl[IPL_NET]),
-	    PSLTOIPL(hp300_ipl2psl[IPL_TTY]));
+	printf("interrupt levels: vm = %d\n",
+	    PSLTOIPL(hp300_ipl2psl[IPL_VM]));
 }
 
 /*
@@ -284,6 +240,8 @@ intr_dispatch(int evec /* format | vector offset */)
 	int handled, ipl, vec;
 	static int straycount, unexpected;
 
+	idepth++;
+
 	vec = (evec & 0xfff) >> 2;
 #ifdef DIAGNOSTIC
 	if ((vec < ISRLOC) || (vec >= (ISRLOC + NISR)))
@@ -314,33 +272,13 @@ intr_dispatch(int evec /* format | vector offset */)
 		panic("intr_dispatch: too many stray interrupts");
 	else
 		printf("intr_dispatch: stray level %d interrupt\n", ipl);
+
+	idepth--;
 }
 
-void
-netintr(void)
+bool
+cpu_intr_p(void)
 {
-	int s, isr;
 
-	for (;;) {
-		s = splhigh();
-		isr = netisr;
-		netisr = 0;
-		splx(s);
-
-		if (isr == 0)
-			return;
-
-#define DONETISR(bit, fn) do {			\
-		if (isr & (1 << bit))		\
-			fn();			\
-		} while(0)
-
-		s = splsoftnet();
-
-#include <net/netisr_dispatch.h>
-
-#undef DONETISR
-
-		splx(s);
-	}
+	return idepth != 0;
 }
