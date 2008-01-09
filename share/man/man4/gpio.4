@@ -1,4 +1,4 @@
-.\" $NetBSD: gpio.4,v 1.3 2006/01/05 10:46:21 bouyer Exp $
+.\" $NetBSD: gpio.4,v 1.4 2008/01/09 15:51:47 xtraeme Exp $
 .\"	$OpenBSD: gpio.4,v 1.5 2004/11/23 09:39:29 reyk Exp $
 .\"
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -22,9 +22,10 @@
 .Nm gpio
 .Nd General Purpose Input/Output
 .Sh SYNOPSIS
-.Cd "gpio* at nsclpcsio?"
-.Cd "gpio* at gscpcib?"
 .Cd "gpio* at elansc?"
+.Cd "gpio* at gcscpcib?"
+.Cd "gpio* at gscpcib?"
+.Cd "gpio* at nsclpcsio?"
 .Pp
 .In sys/types.h
 .In sys/gpio.h
@@ -149,9 +150,6 @@ file.
 .El
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr elansc 4 ,
-.Xr gscpcib 4 ,
-.Xr nsclpcsio 4 ,
 .Xr gpioctl 8
 .Sh HISTORY
 The
