@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.12 2007/05/12 10:15:31 dsl Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.12.4.1 2008/01/09 02:00:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -257,6 +257,8 @@ defopts_print(const char *name, void *value, void *arg)
 		fprintf(fp, "#define\t%s", nv->nv_name);
 		if (opt_value != NULL)
 			fprintstr(fp, opt_value);
+		else if (!isfsoption)
+			fprintstr(fp, "1");
 		fputc('\n', fp);
 		fprint_global(fp, nv->nv_name,
 		    opt_value == NULL ? 1 : global_hash(opt_value));

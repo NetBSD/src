@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.153.8.1 2007/11/08 11:46:05 matt Exp $ */
+/* $NetBSD: vmstat.c,v 1.153.8.2 2008/01/09 02:01:26 matt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\n\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.153.8.1 2007/11/08 11:46:05 matt Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.153.8.2 2008/01/09 02:01:26 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1177,17 +1177,17 @@ dopool(int verbose, int wide)
 	int first, ovflw;
 	void *addr;
 	long total, inuse, this_total, this_inuse;
-	LIST_HEAD(,pool) pool_head;
+	TAILQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
 	struct pool_allocator pa;
 	char name[32], maxp[32];
 
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
-	addr = LIST_FIRST(&pool_head);
+	addr = TAILQ_FIRST(&pool_head);
 
 	total = inuse = 0;
 
-	for (first = 1; addr != NULL; addr = LIST_NEXT(pp, pr_poollist) ) {
+	for (first = 1; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist) ) {
 		deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
 		deref_kptr(pp->pr_alloc, &pa, sizeof(pa),
 		    "pool allocator trashed");
@@ -1283,7 +1283,7 @@ dopoolcache(void)
 {
 	struct pool_cache pool_cache, *pc = &pool_cache;
 	pool_cache_cpu_t cache_cpu, *cc = &cache_cpu;
-	LIST_HEAD(,pool) pool_head;
+	TAILQ_HEAD(,pool) pool_head;
 	struct pool pool, *pp = &pool;
 	char name[32];
 	uint64_t cpuhit, cpumiss, tot;
@@ -1292,9 +1292,9 @@ dopoolcache(void)
 	double p;
 
 	kread(namelist, X_POOLHEAD, &pool_head, sizeof(pool_head));
-	addr = LIST_FIRST(&pool_head);
+	addr = TAILQ_FIRST(&pool_head);
 
-	for (first = 1; addr != NULL; addr = LIST_NEXT(pp, pr_poollist) ) {
+	for (first = 1; addr != NULL; addr = TAILQ_NEXT(pp, pr_poollist) ) {
 		deref_kptr(addr, pp, sizeof(*pp), "pool chain trashed");
 		if (pp->pr_cache == NULL)
 			continue;
@@ -1317,13 +1317,14 @@ dopoolcache(void)
 
 		if (first) {
 			(void)printf("Pool cache statistics.\n");
-			(void)printf("%-*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
+			(void)printf("%-*s%*s%*s%*s%*s%*s%*s%*s%*s%*s\n",
 			    12, "Name",
 			    6, "Spin",
-			    6, "Full",
-			    6, "Empty",
-			    12, "PoolLayer",
-			    12, "CacheLayer",
+			    6, "GrpSz",
+			    5, "Full",
+			    5, "Emty",
+			    10, "PoolLayer",
+			    11, "CacheLayer",
 			    6, "Hit%",
 			    12, "CpuLayer",
 			    6, "Hit%"
@@ -1334,14 +1335,14 @@ dopoolcache(void)
 		ovflw = 0;
 		PRWORD(ovflw, "%-*s", 13, 1, name);
 		PRWORD(ovflw, " %*llu", 6, 1, (long long)pc->pc_contended);
-		PRWORD(ovflw, " %*u", 6, 1, pc->pc_nfull);
-		PRWORD(ovflw, " %*u", 6, 1, pc->pc_nempty);
-
-		PRWORD(ovflw, " %*llu", 12, 1, (long long)pc->pc_misses);
+		PRWORD(ovflw, " %*u", 6, 1, pc->pc_pcgsize);
+		PRWORD(ovflw, " %*u", 5, 1, pc->pc_nfull);
+		PRWORD(ovflw, " %*u", 5, 1, pc->pc_nempty);
+		PRWORD(ovflw, " %*llu", 10, 1, (long long)pc->pc_misses);
 
 		tot = pc->pc_hits + pc->pc_misses;
 		p = pc->pc_hits * 100.0 / (tot);
-		PRWORD(ovflw, " %*llu", 12, 1, (long long)tot);
+		PRWORD(ovflw, " %*llu", 11, 1, (long long)tot);
 		PRWORD(ovflw, " %*.1f", 6, 1, p);
 
 		tot = cpuhit + cpumiss;
@@ -1706,7 +1707,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: %s [-efHiLlmstUvW] [-c count] [-h hashname] [-M core] [-N system]\n"
+	    "usage: %s [-CefHiLlmstUvW] [-c count] [-h hashname] [-M core] [-N system]\n"
 	    "\t\t[-u histname] [-w wait] [disks]\n", getprogname());
 	exit(1);
 }

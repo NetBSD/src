@@ -1,4 +1,4 @@
-/*	$NetBSD: powerd.c,v 1.8.4.1 2007/11/06 23:36:29 matt Exp $	*/
+/*	$NetBSD: powerd.c,v 1.8.4.2 2008/01/09 02:02:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@ static int kq;
 #define	_PATH_DEV_POWER		"/dev/power"
 #define	_PATH_POWERD_SCRIPTS	"/etc/powerd/scripts"
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static void run_script(const char *[]);
 static struct kevent *allocchange(void);
 static int wait_for_events(struct kevent *, size_t);

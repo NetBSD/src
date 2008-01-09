@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.35 2007/05/15 12:59:27 martti Exp $
+# $NetBSD: etcupdate,v 1.35.4.1 2008/01/09 02:01:59 matt Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -370,6 +370,7 @@ set_makeenv() {
 	# BUILD=1 allows building of files that are wanted.
 	#
 	MAKE_ENV=" 			\
+		NETBSDSRCDIR=${SRCDIR}	\
 		DESTDIR=${TEMPROOT}	\
 		MAKE=make		\
 		MTREE=mtree		\

@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.15 2006/12/20 16:33:35 christos Exp $	*/
+/*	$NetBSD: supscan.c,v 1.15.4.1 2008/01/09 02:02:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -111,8 +111,6 @@
  **********************************************************************
  */
 
-#include "libc.h"
-#include "c.h"
 #include <netdb.h>
 #include <setjmp.h>
 #include <stdarg.h>
@@ -121,6 +119,8 @@
 #include <sys/param.h>
 #include "supcdefs.h"
 #include "supextern.h"
+#include "libc.h"
+#include "c.h"
 
 #define PGMVERSION 6
 

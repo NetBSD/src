@@ -1,4 +1,4 @@
-/*	$NetBSD: spellprog.c,v 1.6 2006/10/22 16:36:44 christos Exp $	*/
+/*	$NetBSD: spellprog.c,v 1.6.8.1 2008/01/09 02:01:03 matt Exp $	*/
 
 /* derived from OpenBSD: spellprog.c,v 1.4 2003/06/03 02:56:16 millert Exp */
 
@@ -66,6 +66,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+
 #ifndef lint
 static const char copyright[] =
 "@(#) Copyright (c) 1991, 1993\n\
@@ -111,7 +113,7 @@ static void	 ise(void);
 static void	 print_word(FILE *);
 static void	 ztos(char *);
 static int	 monosyl(char *, char *);
-static void 	 usage(void) __attribute__((__noreturn__));
+static void 	 usage(void) __dead;
 static void	 getderiv(size_t);
 
 static int	 an(char *, const char *, const char *, size_t);

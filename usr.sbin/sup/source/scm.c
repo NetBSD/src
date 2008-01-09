@@ -1,4 +1,4 @@
-/*	$NetBSD: scm.c,v 1.24 2007/07/20 16:39:05 christos Exp $	*/
+/*	$NetBSD: scm.c,v 1.24.4.1 2008/01/09 02:02:31 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -313,6 +313,7 @@ service(void)
 		swapmode = 1;
 	else
 		return (scmerr(-1, "Unexpected byteswap mode %x", x));
+	setproctitle("Serving %s", remotehost());
 	return (SCMOK);
 }
 

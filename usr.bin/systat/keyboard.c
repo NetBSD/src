@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.23 2006/05/10 21:53:48 mrg Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.23.12.1 2008/01/09 02:01:05 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.23 2006/05/10 21:53:48 mrg Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.23.12.1 2008/01/09 02:01:05 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -44,9 +44,12 @@ __RCSID("$NetBSD: keyboard.c,v 1.23 2006/05/10 21:53:48 mrg Exp $");
 #include <termios.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #include "systat.h"
 #include "extern.h"
+
+extern sig_atomic_t needsredraw;
 
 void
 keyboard(void)
@@ -70,13 +73,18 @@ keyboard(void)
 
 		while (col == 0 || (ch != '\r' && ch != '\n')) {
 			refresh();
-			ch = getch();
+			for (;;) {
+				ch = getch();
+				if (!needsredraw)
+					break;
+				redraw();
+			}
 			if (ch == ERR) {
 				display(SIGALRM);
 				continue;
 			}
 			if (ch == KEY_RESIZE) {
-				redraw(0);
+				redraw();
 				continue;
 			}
 			ch &= 0177;

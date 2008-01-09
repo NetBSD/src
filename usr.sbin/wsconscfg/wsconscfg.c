@@ -1,4 +1,4 @@
-/* $NetBSD: wsconscfg.c,v 1.14 2006/06/24 21:04:48 wiz Exp $ */
+/* $NetBSD: wsconscfg.c,v 1.14.10.1 2008/01/09 02:02:37 matt Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,6 +32,7 @@
  *
  */
 
+#include <sys/cdefs.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -46,7 +47,7 @@
 
 #define DEFDEV "/dev/ttyEcfg"
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 int main(int, char **);
 
 static void

@@ -1,17 +1,17 @@
-/*      $NetBSD: subr.c,v 1.28.2.1 2007/11/06 23:36:33 matt Exp $        */
-        
-/*      
+/*      $NetBSD: subr.c,v 1.28.2.2 2008/01/09 02:02:21 matt Exp $        */
+
+/*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
- * are met:     
- * 1. Redistributions of source code must retain the above copyright  
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -23,11 +23,11 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- */     
-        
+ */
+
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.28.2.1 2007/11/06 23:36:33 matt Exp $");
+__RCSID("$NetBSD: subr.c,v 1.28.2.2 2008/01/09 02:02:21 matt Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -63,8 +63,26 @@ allocdirs(struct psshfs_node *psn)
 	psn->dir = erealloc(psn->dir,
 	    psn->denttot * sizeof(struct psshfs_dir));
 	memset(psn->dir + oldtot, 0, ENTRYCHUNK * sizeof(struct psshfs_dir));
+}
 
-	psn->da = erealloc(psn->da, psn->denttot * sizeof(struct delayattr));
+static void
+setpnva(struct puffs_usermount *pu, struct puffs_node *pn,
+	const struct vattr *vap)
+{
+	struct psshfs_node *psn = pn->pn_data;
+
+	/*
+	 * Check if the file was modified from below us.
+	 * If so, invalidate page cache.  This is the only
+	 * sensible place we can do this in.
+	 */
+	if (pn->pn_va.va_mtime.tv_sec != PUFFS_VNOVAL)
+		if (pn->pn_va.va_mtime.tv_sec != vap->va_mtime.tv_sec
+		    && pn->pn_va.va_type == VREG)
+			puffs_inval_pagecache_node(pu, pn);
+
+	puffs_setvattr(&pn->pn_va, vap);
+	psn->attrread = time(NULL);
 }
 
 struct psshfs_dir *
@@ -101,115 +119,105 @@ lookup_by_entry(struct psshfs_dir *bdir, size_t ndir, struct puffs_node *entry)
 	return NULL;
 }
 
+
+void
+closehandles(struct puffs_usermount *pu, struct psshfs_node *psn, int which)
+{
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	struct puffs_framebuf *pb1, *pb2;
+	uint32_t reqid;
+
+	if (psn->fhand_r && (which & HANDLE_READ)) {
+		assert(psn->lazyopen_r == NULL);
+
+		pb1 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
+		    psn->fhand_r, psn->fhand_r_len);
+		puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb1, 1, 0);
+		free(psn->fhand_r);
+		psn->fhand_r = NULL;
+	}
+
+	if (psn->fhand_w && (which & HANDLE_WRITE)) {
+		assert(psn->lazyopen_w == NULL);
+
+		pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
+		    psn->fhand_w, psn->fhand_w_len);
+		puffs_framev_enqueue_justsend(pu, pctx->sshfd, pb2, 1, 0);
+		free(psn->fhand_w);
+		psn->fhand_w = NULL;
+	}
+
+	psn->stat |= PSN_HANDLECLOSE;
+}
+
+void
+lazyopen_rresp(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	void *arg, int error)
+{
+	struct psshfs_node *psn = arg;
+
+	/* XXX: this is not enough */
+	if (psn->stat & PSN_RECLAIMED) {
+		error = ENOENT;
+		goto moreout;
+	}
+	if (error)
+		goto out;
+
+	error = psbuf_expect_handle(pb, &psn->fhand_r, &psn->fhand_r_len);
+
+ out:
+	psn->lazyopen_err_r = error;
+	psn->lazyopen_r = NULL;
+	if (error)
+		psn->stat &= ~PSN_DOLAZY_R;
+	if (psn->stat & PSN_HANDLECLOSE && (psn->stat & PSN_LAZYWAIT_R) == 0)
+		closehandles(pu, psn, HANDLE_READ);
+ moreout:
+	puffs_framebuf_destroy(pb);
+}
+
+void
+lazyopen_wresp(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	void *arg, int error)
+{
+	struct psshfs_node *psn = arg;
+
+	/* XXX: this is not enough */
+	if (psn->stat & PSN_RECLAIMED) {
+		error = ENOENT;
+		goto moreout;
+	}
+	if (error)
+		goto out;
+
+	error = psbuf_expect_handle(pb, &psn->fhand_w, &psn->fhand_w_len);
+
+ out:
+	psn->lazyopen_err_w = error;
+	psn->lazyopen_w = NULL;
+	if (error)
+		psn->stat &= ~PSN_DOLAZY_W;
+	if (psn->stat & PSN_HANDLECLOSE && (psn->stat & PSN_LAZYWAIT_W) == 0)
+		closehandles(pu, psn, HANDLE_WRITE);
+ moreout:
+	puffs_framebuf_destroy(pb);
+}
+
 struct readdirattr {
 	struct psshfs_node *psn;
 	int idx;
 	char entryname[MAXPATHLEN+1];
 };
 
-static void
-readdir_getattr_resp(struct puffs_usermount *pu,
-	struct puffs_framebuf *pb, void *arg, int error)
-{
-	struct readdirattr *rda = arg;
-	struct psshfs_node *psn = rda->psn;
-	struct psshfs_node *psn_targ = NULL;
-	struct psshfs_dir *pdir = NULL;
-	struct vattr va;
-
-	/* XXX: this is not enough */
-	if (psn->stat & PSN_RECLAIMED)
-		goto out;
-
-	if (error)
-		goto out;
-
-	pdir = lookup(psn->dir, psn->denttot, rda->entryname);
-	if (!pdir)
-		goto out;
-
-	if (psbuf_expect_attrs(pb, &va))
-		goto out;
-
-	if (pdir->entry) {
-		psn_targ = pdir->entry->pn_data;
-
-		puffs_setvattr(&pdir->entry->pn_va, &va);
-		psn_targ->attrread = time(NULL);
-	} else {
-		puffs_setvattr(&pdir->va, &va);
-		pdir->attrread = time(NULL);
-	}
-
- out:
-	if (psn_targ) {
-		psn_targ->getattr_pb = NULL;
-		assert(pdir->getattr_pb == NULL);
-	} else if (pdir) {
-		pdir->getattr_pb = NULL;
-	}
-		
-	free(rda);
-	puffs_framebuf_destroy(pb);
-}
-
-static void
-readdir_getattr(struct puffs_usermount *pu, struct psshfs_node *psn,
-	const char *basepath, int idx)
-{
-	char path[MAXPATHLEN+1];
-	struct psshfs_ctx *pctx = puffs_getspecific(pu);
-	struct psshfs_dir *pdir = psn->dir;
-	struct puffs_framebuf *pb;
-	struct readdirattr *rda;
-	const char *entryname = pdir[idx].entryname;
-	uint32_t reqid = NEXTREQ(pctx);
-
-	rda = emalloc(sizeof(struct readdirattr));
-	rda->psn = psn;
-	rda->idx = idx;
-	strlcpy(rda->entryname, entryname, sizeof(rda->entryname));
-
-	strcpy(path, basepath);
-	strcat(path, "/");
-	strlcat(path, entryname, sizeof(path));
-
-	pb = psbuf_makeout();
-	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
-	psn->da[psn->nextda].pufbuf = pb;
-	psn->da[psn->nextda].rda = rda;
-	psn->nextda++;
-}
-
-static void
-readdir_getattr_send(struct puffs_usermount *pu, struct psshfs_node *psn)
-{
-	struct psshfs_ctx *pctx = puffs_getspecific(pu);
-	struct psshfs_dir *pdir = psn->dir;
-	struct psshfs_node *psn_targ;
-	struct readdirattr *rda;
-	size_t i;
-	int rv = 0;
-
-	for (i = 0; i < psn->nextda; i++) {
-		rda = psn->da[i].rda;
-		if (pdir[rda->idx].entry) {
-			psn_targ = pdir[rda->idx].entry->pn_data;
-			psn_targ->getattr_pb = psn->da[i].pufbuf;
-		} else {
-			pdir[rda->idx].getattr_pb = psn->da[i].pufbuf;
-		}
-		SENDCB(psn->da[i].pufbuf, readdir_getattr_resp, rda);
-	}
-
- out:
-	return;
-}
-
 int
-getpathattr(struct puffs_cc *pcc, const char *path, struct vattr *vap)
+getpathattr(struct puffs_usermount *pu, const char *path, struct vattr *vap)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 
 	psbuf_req_str(pb, SSH_FXP_LSTAT, reqid, path);
 	GETRESPONSE(pb);
@@ -221,53 +229,29 @@ getpathattr(struct puffs_cc *pcc, const char *path, struct vattr *vap)
 }
 
 int
-getnodeattr(struct puffs_cc *pcc, struct puffs_node *pn)
+getnodeattr(struct puffs_usermount *pu, struct puffs_node *pn)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct psshfs_node *psn = pn->pn_data;
 	struct vattr va;
-	int rv, dohardway;
+	int rv;
 
-	if ((time(NULL) - psn->attrread) >= PSSHFS_REFRESHIVAL) {
-		dohardway = 1;
-		if (psn->getattr_pb) {
-			rv=puffs_framev_framebuf_ccpromote(psn->getattr_pb,pcc);
-			if (rv == 0) {
-				rv = psbuf_expect_attrs(psn->getattr_pb, &va);
-				puffs_framebuf_destroy(psn->getattr_pb);
-				psn->getattr_pb = NULL;
-				if (rv == 0)
-					dohardway = 0;
-			}
-		}
+	if (!psn->attrread || REFRESHTIMEOUT(pctx, time(NULL)-psn->attrread)) {
+		rv = getpathattr(pu, PNPATH(pn), &va);
+		if (rv)
+			return rv;
 
-		if (dohardway) {
-			rv = getpathattr(pcc, PNPATH(pn), &va);
-			if (rv)
-				return rv;
-		}
-
-		/*
-		 * Check if the file was modified from below us.
-		 * If so, invalidate page cache.  This is the only
-		 * sensible place we can do this in.
-		 */
-		if (psn->attrread)
-			if (pn->pn_va.va_mtime.tv_sec != va.va_mtime.tv_sec)
-				puffs_inval_pagecache_node(pu, pn);
-
-		puffs_setvattr(&pn->pn_va, &va);
-		psn->attrread = time(NULL);
+		setpnva(pu, pn, &va);
 	}
 
 	return 0;
 }
 
 int
-sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
+sftp_readdir(struct puffs_usermount *pu, struct psshfs_ctx *pctx,
 	struct puffs_node *pn)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *olddir, *testd;
 	struct puffs_framebuf *pb;
@@ -283,11 +267,14 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	olddir = psn->dir;
 	nent = psn->dentnext;
 
-	if (psn->dir && (time(NULL) - psn->dentread) < PSSHFS_REFRESHIVAL)
+	if (psn->dir && psn->dentread
+	    && !REFRESHTIMEOUT(pctx, time(NULL) - psn->dentread))
 		return 0;
 
-	if ((rv = puffs_inval_namecache_dir(pu, pn)))
-		warn("readdir: dcache inval fail %p", pn);
+	if (psn->dentread) {
+		if ((rv = puffs_inval_namecache_dir(pu, pn)))
+			warn("readdir: dcache inval fail %p", pn);
+	}
 
 	pb = psbuf_makeout();
 	psbuf_req_str(pb, SSH_FXP_OPENDIR, reqid, PNPATH(pn));
@@ -315,7 +302,6 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 	psn->dentnext = 0;
 	psn->denttot = 0;
 	psn->dir = NULL;
-	psn->nextda = 0;
 
 	for (;;) {
 		reqid = NEXTREQ(pctx);
@@ -350,30 +336,53 @@ sftp_readdir(struct puffs_cc *pcc, struct psshfs_ctx *pctx,
 			free(longname);
 			longname = NULL;
 
+			/*
+			 * Check if we already have a psshfs_dir for the
+			 * name we are processing.  If so, use the old one.
+			 * If not, create a new one
+			 */
 			testd = lookup(olddir, nent, psn->dir[idx].entryname);
 			if (testd) {
 				psn->dir[idx].entry = testd->entry;
-				psn->dir[idx].va = testd->va;
+				/*
+				 * Has entry.  Update attributes to what
+				 * we just got from the server.
+				 */
+				if (testd->entry) {
+					setpnva(pu, testd->entry,
+					    &psn->dir[idx].va);
+					psn->dir[idx].va.va_fileid
+					    = testd->entry->pn_va.va_fileid;
+
+				/*
+				 * No entry.  This can happen in two cases:
+				 * 1) the file was created "behind our back"
+				 *    on the server
+				 * 2) we do two readdirs before we instantiate
+				 *    the node (or run with -t 0).
+				 *
+				 * Cache attributes from the server in
+				 * case we want to instantiate this node
+				 * soon.  Also preserve the old inode number
+				 * which was given when the dirent was created.
+				 */
+				} else {
+					psn->dir[idx].va.va_fileid
+					    = testd->va.va_fileid;
+					testd->va = psn->dir[idx].va;
+				}
+
+			/* No previous entry?  Initialize this one. */
 			} else {
 				psn->dir[idx].entry = NULL;
 				psn->dir[idx].va.va_fileid = pctx->nextino++;
 			}
-			/*
-			 * XXX: there's a dangling pointer race here if
-			 * the server responds to our queries out-of-order.
-			 * fixxxme some day
-			 */
-			readdir_getattr(puffs_cc_getusermount(pcc),
-			    psn, PNPATH(pn), idx);
-
+			psn->dir[idx].attrread = psn->dentread;
 			psn->dir[idx].valid = 1;
 		}
 	}
 
  out:
-	/* fire off getattr requests */
-	readdir_getattr_send(pu, psn);
-
 	/* XXX: rv */
 	psn->dentnext = idx;
 	freedircache(olddir, nent);
@@ -408,20 +417,15 @@ makenode(struct puffs_usermount *pu, struct puffs_node *parent,
 		free(psn);
 		return NULL;
 	}
-	puffs_setvattr(&pn->pn_va, &pd->va);
+	setpnva(pu, pn, &pd->va);
+	setpnva(pu, pn, vap);
 	psn->attrread = pd->attrread;
-	puffs_setvattr(&pn->pn_va, vap);
 
 	pd->entry = pn;
 	psn->parent = parent;
 	psn_parent->childcount++;
 
 	TAILQ_INIT(&psn->pw);
-
-	if (pd->getattr_pb) {
-		psn->getattr_pb = pd->getattr_pb;
-		pd->getattr_pb = NULL;
-	}
 
 	return pn;
 }
@@ -496,8 +500,9 @@ doreclaim(struct puffs_node *pn)
 	if (pn->pn_va.va_type == VDIR) {
 		freedircache(psn->dir, psn->dentnext);
 		psn->denttot = psn->dentnext = 0;
-		free(psn->da);
 	}
+	if (psn->symlink)
+		free(psn->symlink);
 
 	puffs_pn_put(pn);
 }

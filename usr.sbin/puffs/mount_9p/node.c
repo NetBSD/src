@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.16.4.1 2007/11/06 23:36:31 matt Exp $	*/
+/*	$NetBSD: node.c,v 1.16.4.2 2008/01/09 02:02:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.16.4.1 2007/11/06 23:36:31 matt Exp $");
+__RCSID("$NetBSD: node.c,v 1.16.4.2 2008/01/09 02:02:18 matt Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -52,9 +52,9 @@ nodecmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 }
 
 static int
-do_getattr(struct puffs_cc *pcc, struct puffs_node *pn, struct vattr *vap)
+do_getattr(struct puffs_usermount *pu, struct puffs_node *pn, struct vattr *vap)
 {
-	AUTOVAR(pcc);
+	AUTOVAR(pu);
 	struct p9pnode *p9n = pn->pn_data;
 
 	p9pbuf_put_1(pb, P9PROTO_T_STAT);
@@ -69,24 +69,23 @@ do_getattr(struct puffs_cc *pcc, struct puffs_node *pn, struct vattr *vap)
 }
 
 int
-puffs9p_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+puffs9p_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *vap,
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	int rv;
 
-	rv = do_getattr(pcc, pn, &pn->pn_va);
+	rv = do_getattr(pu, pn, &pn->pn_va);
 	if (rv == 0)
 		memcpy(vap, &pn->pn_va, sizeof(struct vattr));
 	return rv;
 }
 
 int
-puffs9p_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+puffs9p_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn)
 {
-	AUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	AUTOVAR(pu);
 	struct puffs_node *pn, *pn_dir = opc;
 	struct p9pnode *p9n_dir = pn_dir->pn_data;
 	p9ptag_t tfid = NEXTFID(p9p);
@@ -117,9 +116,9 @@ puffs9p_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	if (pn == NULL)
 		pn = newp9pnode_qid(pu, &newqid, tfid);
 	else
-		proto_cc_clunkfid(pcc, tfid, 0);
+		proto_cc_clunkfid(pu, tfid, 0);
 
-	rv = do_getattr(pcc, pn, &pn->pn_va);
+	rv = do_getattr(pu, pn, &pn->pn_va);
 	if (rv) {
 		/* XXX */
 		free(pn->pn_data);
@@ -143,11 +142,11 @@ puffs9p_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
  * is closed or until they reach the end.
  */
 int
-puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+puffs9p_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
-	AUTOVAR(pcc);
+	AUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 	struct vattr va;
@@ -156,7 +155,7 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	uint32_t count;
 	uint16_t statsize;
 
-	rv = getdfwithoffset(pcc, p9n, *readoff, &dfp);
+	rv = getdfwithoffset(pu, p9n, *readoff, &dfp);
 	if (rv)
 		goto out;
 
@@ -176,7 +175,7 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	 */
 	if (count == 0) {
 		*eofflag = 1;
-		releasedf(pcc, dfp);
+		releasedf(pu, dfp);
 		goto out;
 	}
 
@@ -188,7 +187,7 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 			 * come back for some strange reason, we'll just
 			 * regen it.
 			 */
-			releasedf(pcc, dfp);
+			releasedf(pu, dfp);
 			goto out;
 		}
 
@@ -208,11 +207,10 @@ puffs9p_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 }
 
 int
-puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+puffs9p_node_setattr(struct puffs_usermount *pu, void *opc,
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
-	AUTOVAR(pcc);
+	AUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 
@@ -242,10 +240,11 @@ puffs9p_node_setattr(struct puffs_cc *pcc, void *opc,
  * about permission control.
  */
 int
-puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+puffs9p_node_open(struct puffs_usermount *pu, void *opc, int mode,
+	const struct puffs_cred *pcr)
 {
-	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 	p9pfid_t nfid;
@@ -255,7 +254,7 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 	if (pn->pn_va.va_type != VDIR) {
 		if (mode & FREAD && p9n->fid_read == P9P_INVALFID) {
 			nfid = NEXTFID(p9p);
-			error = proto_cc_open(pcc, p9n->fid_base, nfid,
+			error = proto_cc_open(pu, p9n->fid_base, nfid,
 			    P9PROTO_OMODE_READ);
 			if (error)
 				return error;
@@ -263,7 +262,7 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 		}
 		if (mode & FWRITE && p9n->fid_write == P9P_INVALFID) {
 			nfid = NEXTFID(p9p);
-			error = proto_cc_open(pcc, p9n->fid_base, nfid,
+			error = proto_cc_open(pu, p9n->fid_base, nfid,
 			    P9PROTO_OMODE_WRITE);
 			if (error)
 				return error;
@@ -275,21 +274,20 @@ puffs9p_node_open(struct puffs_cc *pcc, void *opc, int mode,
 }
 
 int
-puffs9p_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+puffs9p_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 
 	if (pn->pn_va.va_type == VDIR) {
-		nukealldf(pcc, p9n);
+		nukealldf(pu, p9n);
 	} else  {
 		if (p9n->fid_read != P9P_INVALFID) {
-			proto_cc_clunkfid(pcc, p9n->fid_read, 0);
+			proto_cc_clunkfid(pu, p9n->fid_read, 0);
 			p9n->fid_read = P9P_INVALFID;
 		}
 		if (p9n->fid_write != P9P_INVALFID) {
-			proto_cc_clunkfid(pcc, p9n->fid_write, 0);
+			proto_cc_clunkfid(pu, p9n->fid_write, 0);
 			p9n->fid_write = P9P_INVALFID;
 		}
 	}
@@ -298,11 +296,11 @@ puffs9p_node_inactive(struct puffs_cc *pcc, void *opc,
 }
 
 int
-puffs9p_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+puffs9p_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
-	AUTOVAR(pcc);
+	AUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 	uint32_t count;
@@ -337,11 +335,11 @@ puffs9p_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 }
 
 int
-puffs9p_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+puffs9p_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *cred,
 	int ioflag)
 {
-	AUTOVAR(pcc);
+	AUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
 	uint32_t chunk, count;
@@ -384,12 +382,11 @@ puffs9p_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 }
 
 static int
-nodecreate(struct puffs_cc *pcc, struct puffs_node *pn,
+nodecreate(struct puffs_usermount *pu, struct puffs_node *pn,
 	struct puffs_newinfo *pni, const char *name,
 	const struct vattr *vap, uint32_t dirbit)
 {
-	AUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	AUTOVAR(pu);
 	struct puffs_node *pn_new;
 	struct p9pnode *p9n = pn->pn_data;
 	p9pfid_t nfid = NEXTFID(p9p);
@@ -402,7 +399,7 @@ nodecreate(struct puffs_cc *pcc, struct puffs_node *pn,
 		goto out;
 	}
 
-	rv = proto_cc_dupfid(pcc, p9n->fid_base, nfid);
+	rv = proto_cc_dupfid(pu, p9n->fid_base, nfid);
 	if (rv)
 		goto out;
 
@@ -423,7 +420,7 @@ nodecreate(struct puffs_cc *pcc, struct puffs_node *pn,
 	 * So, clunk it and walk the parent directory to get a fid
 	 * which is not open for I/O yet.
 	 */
-	proto_cc_clunkfid(pcc, nfid, 0);
+	proto_cc_clunkfid(pu, nfid, 0);
 	nfid = NEXTFID(p9p);
 
 	p9pbuf_recycleout(pb);
@@ -451,19 +448,19 @@ nodecreate(struct puffs_cc *pcc, struct puffs_node *pn,
 }
 
 int
-puffs9p_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+puffs9p_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 
-	return nodecreate(pcc, opc, pni, pcn->pcn_name, va, 0);
+	return nodecreate(pu, opc, pni, pcn->pcn_name, va, 0);
 }
 
 int
-puffs9p_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+puffs9p_node_mkdir(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn, const struct vattr *va)
 {
 
-	return nodecreate(pcc, opc, pni, pcn->pcn_name,
+	return nodecreate(pu, opc, pni, pcn->pcn_name,
 	    va, P9PROTO_CPERM_DIR);
 }
 
@@ -475,13 +472,13 @@ puffs9p_node_mkdir(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
  * ice with.
  */
 static int
-noderemove(struct puffs_cc *pcc, struct puffs_node *pn)
+noderemove(struct puffs_usermount *pu, struct puffs_node *pn)
 {
-	AUTOVAR(pcc);
+	AUTOVAR(pu);
 	struct p9pnode *p9n = pn->pn_data;
 	p9pfid_t testfid = NEXTFID(p9p);
 
-	rv = proto_cc_dupfid(pcc, p9n->fid_base, testfid);
+	rv = proto_cc_dupfid(pu, p9n->fid_base, testfid);
 	if (rv)
 		goto out;
 
@@ -498,7 +495,7 @@ noderemove(struct puffs_cc *pcc, struct puffs_node *pn)
 	if (p9pbuf_get_type(pb) != P9PROTO_R_REMOVE) {
 		rv = EPROTO;
 	} else {
-		proto_cc_clunkfid(pcc, p9n->fid_base, 0);
+		proto_cc_clunkfid(pu, p9n->fid_base, 0);
 		p9n->fid_base = P9P_INVALFID;
 		puffs_pn_remove(pn);
 	}
@@ -511,7 +508,7 @@ noderemove(struct puffs_cc *pcc, struct puffs_node *pn)
 }
 
 int
-puffs9p_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
+puffs9p_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn = targ;
@@ -519,11 +516,11 @@ puffs9p_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 	if (pn->pn_va.va_type == VDIR)
 		return EISDIR;
 
-	return noderemove(pcc, pn);
+	return noderemove(pu, pn);
 }
 
 int
-puffs9p_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
+puffs9p_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn = targ;
@@ -531,7 +528,7 @@ puffs9p_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 	if (pn->pn_va.va_type != VDIR)
 		return ENOTDIR;
 
-	return noderemove(pcc, pn);
+	return noderemove(pu, pn);
 }
 
 /*
@@ -540,11 +537,11 @@ puffs9p_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
  * for now.
  */ 
 int
-puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
+puffs9p_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
 	const struct puffs_cn *pcn_targ)
 {
-	AUTOVAR(pcc);
+	AUTOVAR(pu);
 	struct puffs_node *pn_src = src;
 	struct p9pnode *p9n_src = pn_src->pn_data;
 
@@ -557,7 +554,7 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	if (targ) {
 		struct puffs_node *pn_targ = targ;
 
-		rv = noderemove(pcc, pn_targ->pn_data);
+		rv = noderemove(pu, pn_targ->pn_data);
 		if (rv)
 			goto out;
 	}
@@ -586,8 +583,7 @@ puffs9p_node_rename(struct puffs_cc *pcc, void *opc, void *src,
  * - "thanks"
  */
 int
-puffs9p_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+puffs9p_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
 	struct puffs_node *pn = opc;
 	struct p9pnode *p9n = pn->pn_data;
@@ -595,7 +591,7 @@ puffs9p_node_reclaim(struct puffs_cc *pcc, void *opc,
 	assert(LIST_EMPTY(&p9n->dir_openlist));
 	assert(p9n->fid_read == P9P_INVALFID && p9n->fid_write == P9P_INVALFID);
 
-	proto_cc_clunkfid(pcc, p9n->fid_base, 0);
+	proto_cc_clunkfid(pu, p9n->fid_base, 0);
 	free(p9n);
 	puffs_pn_put(pn);
 

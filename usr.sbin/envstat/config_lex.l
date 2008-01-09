@@ -1,4 +1,4 @@
-/* 	$NetBSD: config_lex.l,v 1.2.2.2 2007/11/06 23:36:24 matt Exp $	*/
+/* 	$NetBSD: config_lex.l,v 1.2.2.3 2008/01/09 02:01:58 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config_lex.l,v 1.2.2.2 2007/11/06 23:36:24 matt Exp $");
+__RCSID("$NetBSD: config_lex.l,v 1.2.2.3 2008/01/09 02:01:58 matt Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -46,7 +46,7 @@ int yylex(void);
 
 %option noyywrap
 
-
+DEVICEPROP	refresh-timeout
 SENSOR		sensor[0-9]+
 SENSORPROP	critical-max|critical-min|critical-capacity|rfact|description
 SP_STRING	[(+|\-)\$A-Za-z\.\/_\-0-9 ]*
@@ -61,6 +61,7 @@ STRING		[\$A-Za-z\.\/_\-0-9]*
 ;               { return EOL; }
 "{"             { return LBRACE; }
 "}"             { return RBRACE; }
+{DEVICEPROP}	{ yylval.string = strdup(yytext); return DEVICE_PROP; }
 {SENSOR}	{ yylval.string = strdup(yytext); return SENSOR; }
 {SENSORPROP}	{ yylval.string = strdup(yytext); return SENSOR_PROP; }
 \"{SP_STRING}\" { yylval.string = strdup(yytext + 1);

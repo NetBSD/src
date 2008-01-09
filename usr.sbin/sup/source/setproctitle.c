@@ -1,11 +1,9 @@
-/*	$NetBSD: pmap_ld.c,v 1.1 2003/01/08 20:25:13 atatat Exp $ */
-
-/*
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Brown.
+ * by Christos Zoulas.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +15,8 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by the NetBSD
- *      Foundation, Inc. and its contributors.
+ *        This product includes software developed by the NetBSD
+ *        Foundation, Inc. and its contributors.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,5 +34,61 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define LOCKDEBUG
-#include "pmap.c"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+
+#ifdef NEED_SETPROCTITLE
+
+extern char **__environ;
+
+void
+setproctitle(const char *fmt, ...)
+{
+	va_list ap;
+	char buf[1024];
+	int len;
+	char *pname, *p;
+	char **args = __environ - 2;
+
+	/*
+	 * Keep going while it looks like a pointer. We'll stop at argc,
+	 * Assume that we have < 10K args.
+	 */
+	while (*args > (char *)10240)
+		args--;
+
+	pname = *++args;
+	*(int *)((int *)pname - 1) = 1; /* *argc = 1; */
+ 
+	/* Just the last component of the name */
+	if ((p = strrchr(pname, '/')) != NULL)
+		pname = p + 1;
+
+	/* In case we get called again */
+	if ((p = strrchr(pname, ':')) != NULL)
+		*p = '\0';
+
+	va_start(ap, fmt);
+	if (fmt != NULL) {
+		len = snprintf(buf, sizeof(buf), "%s: ", pname);
+		if (len >= 0)
+			(void)vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+	} else
+		(void)snprintf(buf, sizeof(buf), "%s", pname);
+	va_end(ap);
+ 
+	(void)strcpy(pname, buf);
+}
+#endif
+
+#ifdef TEST
+int
+main(int argc, char **argv)
+{
+	setproctitle("foo");
+	sleep(1000);
+	return 0;
+}
+#endif

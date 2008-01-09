@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv.c,v 1.20 2006/05/20 20:03:28 christos Exp $	*/
+/*	$NetBSD: ypserv.c,v 1.20.10.1 2008/01/09 02:02:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv.c,v 1.20 2006/05/20 20:03:28 christos Exp $");
+__RCSID("$NetBSD: ypserv.c,v 1.20.10.1 2008/01/09 02:02:37 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ static struct bindsock {
 	{ AF_INET6, SOCK_STREAM, IPPROTO_TCP, "tcp6" },
 };
 
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 static int	bind_resv_port(int, sa_family_t, in_port_t);
 
 static void

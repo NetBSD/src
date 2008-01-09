@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.7 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.7.4.1 2008/01/09 02:00:36 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -59,7 +59,35 @@ int	yyline;
 const char *yyfile;
 const char *lastfile;
 char curinclpath[PATH_MAX];
+int ifdefstate = -1;
+int st;
+#define IDS_PARENT_DISABLED \
+    ((ifdefstate > 6) && ((((ifdefstate/6)-1) & 1) == 1))
+#define IDS_MAX_DEPTH		362797056 /* 6^11 */
+/* States for ifdefstate:
 
+  0  -> matched ifdef
+  1  -> unmatched ifdef
+  2  -> matched elifdef
+  3  -> unmatched elifdef
+  4  -> matched else
+  5  -> unmatched else
+
+  Upon "ifdef", add one and multiply by 6.
+  Upon "endif", divide by 6, remove 1.
+
+  ifdef -> MATCH => continue
+           MISMATCH => set to 1
+  elifdef -> if (!1) -> MISMATCH
+             MATCH => set to 2
+             MISMATCH => if (2 || 3) set to 3, else set to 1
+  else -> if (1) -> MATCH
+          MATCH => set to 4
+          MISMATCH => set to 5
+
+  in each case, if parent & 1 == 1, MISMATCH
+*/
+ 
 /*
  * Data for returning to previous files from include files.
  */
@@ -70,10 +98,12 @@ struct incl {
 	int	in_lineno;	/* previous line number */
 	int	in_ateof;	/* token to insert at EOF */
 	int	in_interesting;	/* previous value for "interesting" */
+	int	in_ifdefstate;	/* conditional level */
 };
 static struct incl *incl;
 static int endinclude(void);
 static int getincludepath(void);
+static int getcurifdef(void);
 
 #define	yywrap() 1
 
@@ -83,6 +113,9 @@ PATH	[A-Za-z_0-9]*[./][-A-Za-z_0-9./]*
 QCHARS	([^"\n]|\\\")+
 WORD	[A-Za-z_][-A-Za-z_0-9]*
 FILENAME	({PATH}|\"{QCHARS}\")
+RESTOFLINE	[ \t]*(#[^\n]*)?\n
+
+%x	IGNORED
 
 %%
 		/* Local variables for yylex() */
@@ -134,7 +167,109 @@ with		return WITH;
 \+=		return PLUSEQ;
 :=		return COLONEQ;
 
-include[ \t]+{FILENAME}	{
+<*>ifdef[ \t]+{WORD}{RESTOFLINE} {
+		ifdefstate = (ifdefstate + 1) * 6;
+		if (ifdefstate >= IDS_MAX_DEPTH) {
+			yyerror("too many levels of conditional");
+		}
+		if (!IDS_PARENT_DISABLED && getcurifdef()) {
+			BEGIN(INITIAL);
+		} else {
+			ifdefstate++;
+			BEGIN(IGNORED);
+		}
+		yyline++;
+	}
+
+<*>ifndef[ \t]+{WORD}{RESTOFLINE} {
+		ifdefstate = (ifdefstate + 1) * 6;
+		if (ifdefstate >= IDS_MAX_DEPTH) {
+			yyerror("too many levels of conditional");
+		}
+		if (!IDS_PARENT_DISABLED && !getcurifdef()) {
+			BEGIN(INITIAL);
+		} else {
+			ifdefstate++;
+			BEGIN(IGNORED);
+		}
+		yyline++;
+	}
+
+
+<*>elifdef[ \t]+{WORD}{RESTOFLINE} {
+		st = ifdefstate % 6;
+		if (ifdefstate < 0 || st > 3) {
+			yyerror("mismatched elifdef");
+		}
+		if (IDS_PARENT_DISABLED ||
+		    st != 1 || !getcurifdef()) {
+			if (st == 2 || st == 3) {
+				ifdefstate += 3 - st;
+			} else {
+				ifdefstate += 1 - st;
+			}
+			BEGIN(IGNORED);
+		} else {
+			ifdefstate++;
+			BEGIN(INITIAL);
+		}
+		yyline++;
+	}
+
+<*>elifndef[ \t]+{WORD}{RESTOFLINE} {
+		st = ifdefstate % 6;
+		if (ifdefstate < 0 || st > 3) {
+			yyerror("mismatched elifndef");
+		}
+		if (IDS_PARENT_DISABLED ||
+		    st != 1 || getcurifdef()) {
+			if (st == 2 || st == 3) {
+				ifdefstate += 3 - st;
+			} else {
+				ifdefstate += 1 - st;
+			}
+			BEGIN(IGNORED);
+		} else {
+			ifdefstate++;
+			BEGIN(INITIAL);
+		}
+		yyline++;
+	}
+
+<*>else{RESTOFLINE} {
+		st = ifdefstate % 6;
+		if (ifdefstate < 0 || st > 3) {
+			yyerror("mismatched else");
+		}
+		if (!IDS_PARENT_DISABLED && (st == 1)) {
+			ifdefstate += 3;
+			BEGIN(INITIAL);
+		} else {
+			ifdefstate += 5 - st;
+			BEGIN(IGNORED);
+		}
+		yyline++;
+	}
+
+<*>endif{RESTOFLINE} {
+		if (ifdefstate < 0) {
+			yyerror("mismatched endif");
+		}
+		if (!IDS_PARENT_DISABLED) {
+			BEGIN(INITIAL);
+		}
+		ifdefstate = (ifdefstate/6) - 1;
+		yyline++;
+	}
+
+<IGNORED>\n		{
+		yyline++;
+	}
+
+<IGNORED>.	/* ignore */
+
+include[ \t]+{FILENAME}{RESTOFLINE}	{
+		yyline++;
 		if (getincludepath()) {
 			include(curinclpath, 0, 0, 1);
 		} else {
@@ -142,7 +277,8 @@ include[ \t]+{FILENAME}	{
 		}
 	}
 
-cinclude[ \t]+{FILENAME}	{
+cinclude[ \t]+{FILENAME}{RESTOFLINE}	{
+		yyline++;
 		if (getincludepath()) {
 			include(curinclpath, 0, 1, 1);
 		} else {
@@ -150,7 +286,8 @@ cinclude[ \t]+{FILENAME}	{
 		}
 	}
 
-package[ \t]+{FILENAME}	{
+package[ \t]+{FILENAME}{RESTOFLINE}	{
+		yyline++;
 		if (!oktopackage) {
 			yyerror("package not allowed here");
 		} else if (getincludepath()) {
@@ -220,7 +357,10 @@ package[ \t]+{FILENAME}	{
 #.*	{ /* ignored (comment) */; }
 [ \t]+	{ /* ignored (white space) */; }
 .	{ return yytext[0]; }
-<<EOF>> {
+<*><<EOF>> {
+		if (ifdefstate > (incl == NULL ? -1 : incl->in_ifdefstate)) {
+			yyerror("reached EOF while looking for endif");
+		}
 		if (incl == NULL)
 			return YY_NULL;
 		tok = endinclude();
@@ -376,6 +516,7 @@ include(const char *fname, int ateof, int conditional, int direct)
 	in->in_lineno = yyline;
 	in->in_ateof = ateof;
 	in->in_interesting = interesting;
+	in->in_ifdefstate = ifdefstate;
 	interesting = direct & interesting;
 	if (interesting)
 		logconfig_include(fp, fname);
@@ -394,27 +535,31 @@ static int
 getincludepath()
 {
 	const char *p = yytext;
+	ptrdiff_t len;
+	const char *e;
 
-	while (*p && isascii((signed char)*p) && !isspace((signed char)*p))
+	while (*p && isascii((unsigned int)*p) && !isspace((unsigned int)*p))
 		p++;
-	while (*p && isascii((signed char)*p) && isspace((signed char)*p))
+	while (*p && isascii((unsigned int)*p) && isspace((unsigned int)*p))
 		p++;
 	if (!*p)
 		return 0;
 	if (*p == '"') {
-		ptrdiff_t len;
-		const char *e = strchr(p+1, '"');
-
+		p++;
+		e = strchr(p, '"');
 		if (!e) return 0;
-		len = e-p-1;
-		if (len > sizeof(curinclpath)-1)
-			len = sizeof(curinclpath)-1;
-		strncpy(curinclpath, p+1, sizeof(curinclpath));
-		curinclpath[len] = '\0';
 	} else {
-		strncpy(curinclpath, p, sizeof(curinclpath));
-		curinclpath[sizeof(curinclpath)-1] = '\0';
+		e = p;
+		while (*e && isascii((unsigned int)*e)
+		    && !isspace((unsigned int)*e))
+			e++;
 	}
+
+	len = e-p;
+	if (len > sizeof(curinclpath)-1)
+		len = sizeof(curinclpath)-1;
+	strncpy(curinclpath, p, sizeof(curinclpath));
+	curinclpath[len] = '\0';
 
 	return 1;
 }
@@ -456,4 +601,21 @@ currentline(void)
 	extern int yychar;
 
 	return (yyline - (yychar == '\n'));
+}
+
+static int
+getcurifdef(void)
+{
+	char *p = yytext, *q;
+
+	while (*p && isascii((unsigned int)*p) && !isspace((unsigned int)*p))
+		p++;
+	while (*p && isascii((unsigned int)*p) && isspace((unsigned int)*p))
+		p++;
+	q = p;
+	while (*q && isascii((unsigned int)*q) && !isspace((unsigned int)*q))
+		q++;
+	*q = '\0';
+
+	return ht_lookup(attrtab, intern(p)) != NULL;
 }

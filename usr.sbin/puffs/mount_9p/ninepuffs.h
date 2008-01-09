@@ -1,4 +1,4 @@
-/*	$NetBSD: ninepuffs.h,v 1.10.4.1 2007/11/06 23:36:31 matt Exp $	*/
+/*	$NetBSD: ninepuffs.h,v 1.10.4.2 2008/01/09 02:02:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -61,8 +61,9 @@ typedef uint32_t p9pfid_t;
 #define NEXTFID(p9p)	\
     ((++(p9p->nextfid)) == P9P_INVALFID ? p9p->nextfid = 2 : p9p->nextfid)
 
-#define AUTOVAR(pcc)							\
-	struct puffs9p *p9p = puffs_cc_getspecific(pcc);		\
+#define AUTOVAR(pu)							\
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);			\
+	struct puffs9p *p9p = puffs_getspecific(pu);			\
 	uint16_t tag = NEXTTAG(p9p);					\
 	struct puffs_framebuf *pb = p9pbuf_makeout();			\
 	int rv = 0
@@ -152,9 +153,9 @@ int	proto_expect_walk_nqids(struct puffs_framebuf *, uint16_t *);
 int	proto_expect_stat(struct puffs_framebuf *, struct vattr *);
 int	proto_expect_qid(struct puffs_framebuf *, uint8_t, struct qid9p *);
 
-int	proto_cc_dupfid(struct puffs_cc *, p9pfid_t, p9pfid_t);
-int	proto_cc_clunkfid(struct puffs_cc *, p9pfid_t, int);
-int	proto_cc_open(struct puffs_cc *, p9pfid_t, p9pfid_t, int);
+int	proto_cc_dupfid(struct puffs_usermount *, p9pfid_t, p9pfid_t);
+int	proto_cc_clunkfid(struct puffs_usermount *, p9pfid_t, int);
+int	proto_cc_open(struct puffs_usermount *, p9pfid_t, p9pfid_t, int);
 
 void	proto_make_stat(struct puffs_framebuf *, const struct vattr *,
 			const char *, enum vtype);
@@ -168,10 +169,10 @@ struct puffs_node	*newp9pnode_va(struct puffs_usermount *,
 struct puffs_node	*newp9pnode_qid(struct puffs_usermount *,
 					const struct qid9p *, p9pfid_t);
 
-int	getdfwithoffset(struct puffs_cc *, struct p9pnode *, off_t,
+int	getdfwithoffset(struct puffs_usermount *, struct p9pnode *, off_t,
 			 struct dirfid **);
 void	storedf(struct p9pnode *, struct dirfid *);
-void	releasedf(struct puffs_cc *, struct dirfid *);
-void	nukealldf(struct puffs_cc *, struct p9pnode *);
+void	releasedf(struct puffs_usermount *, struct dirfid *);
+void	nukealldf(struct puffs_usermount *, struct p9pnode *);
 
 #endif /* PUFFS9P_H_ */

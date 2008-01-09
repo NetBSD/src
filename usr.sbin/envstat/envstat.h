@@ -1,4 +1,4 @@
-/* 	$NetBSD: envstat.h,v 1.1.2.2 2007/11/06 23:36:25 matt Exp $	*/
+/* 	$NetBSD: envstat.h,v 1.1.2.3 2008/01/09 02:01:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -44,10 +44,11 @@ struct device_block {
 };
 
 void config_dict_add_prop(const char *, char *);
+void config_dict_adddev_prop(const char *, const char *, int);
 void config_dict_destroy(prop_dictionary_t);
 void config_dict_dump(prop_dictionary_t);
 void config_dict_fulldump(void);
-void config_dict_mark(const char *);
+void config_dict_mark(void);
 prop_dictionary_t config_dict_parsed(void);
 
 prop_number_t convert_val_to_pnumber(prop_dictionary_t, const char *,
@@ -60,7 +61,8 @@ void config_devblock_check_sensorprops(prop_dictionary_t,
 prop_dictionary_t config_devblock_getdict(const char *, const char *);
 
 /* 
- * The yacc function that parses the configuration file.
+ * The yacc function that parses the configuration file and builds
+ * the dictionary for the ENVSYS_SETDICTIONARY ioctl.
  */
 void config_parse(FILE *, prop_dictionary_t);
 

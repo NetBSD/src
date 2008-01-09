@@ -1,4 +1,4 @@
-.\" $NetBSD: btuartd.8,v 1.4.4.1 2007/11/06 23:36:22 matt Exp $
+.\" $NetBSD: btuartd.8,v 1.4.4.2 2008/01/09 02:01:56 matt Exp $
 .\"
 .\" Copyright (c) 2007 KIYOHARA Takashi
 .\" All rights reserved.
@@ -24,9 +24,9 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $Id: btuartd.8,v 1.4.4.1 2007/11/06 23:36:22 matt Exp $
+.\" $Id: btuartd.8,v 1.4.4.2 2008/01/09 02:01:56 matt Exp $
 .\"
-.Dd September 22, 2007
+.Dd November 2, 2007
 .Dt BTUARTD 8
 .Os
 .Sh NAME
@@ -55,7 +55,7 @@ and compatible devices, also configures
 and flow, parity.
 The
 .Nm
-daemon supports HCI UART.
+daemon supports HCI UART and BCSP.
 With
 .Fl c
 it reads the configuration file and with
@@ -81,27 +81,29 @@ Supported
 .Ar types
 are:
 .Bl -tag -width XXXXXX
+.It Cm bcm2035
+Broadcom BCM2035
+.It Cm bcsp
+BCSP (BlueCore Serial Protocol)
+.It Cm bgb2xx
+Philips BGB2xx Module
+.It Cm csr
+Cambridge Silicon Radio Casira serial adapter or BrainBoxes serial dongle
+(BL642)
+.Pp
+AmbiCom BT2000C Bluetooth PC/CF Card
 .It Cm ericsson
 Ericsson based modules
 .It Cm digi
 Digianswer based cards
-.It Cm texas
-Texas Instruments
-.It Cm bcsp
-BCSP (BlueCore Serial Protocol)
-.It Cm csr
-Cambridge Silicon Radio Casira serial adapter or BrainBoxes serial dongle
-(BL642)
-.It Cm swave
-Silicon Wave kits
 .It Cm st
 ST Microelectronics minikits based on STLC2410/STLC2415
 .It Cm stlc2500
 ST Microelectronics minikits based on STLC2500
-.It Cm bt2000c
-AmbiCom BT2000C Bluetooth PC/CF Card
-.It Cm bcm2035
-Broadcom BCM2035
+.It Cm swave
+Silicon Wave kits
+.It Cm texas
+Texas Instruments
 .El
 .Pp
 The command line options are as follows:
@@ -118,12 +120,53 @@ Enable flow control as
 .It Fl i Ar init_speed
 Specify the initial speed for the Bluetooth module. It first sets to this
 value, and it initializes it if specified. Afterwards, the speed is set to
-.Ar speed. 
+.Ar speed .
 .It Fl o
 Enable odd parity, if enabled parity.
 .It Fl p
 Enable parity (even parity).
 .El
+.Sh EXAMPLES
+ericsson based modules with
+.Pa /dev/dty00 :
+.Dl btuartd -f ericsson /dev/dty00 57600
+Also sets no flow, working speed 115200.
+.Dl btuartd -i 57600 ericsson /dev/dty01 115200
+.Pp
+If you know unknown LSI works speed 115200 with
+.Pa /dev/dty01 :
+.Dl btuartd -f /dev/dty01 115200
+.Pp
+Broadcom BCM2035:
+.Dl btuartd -f bcm2035 /dev/dty00 115200
+.Pp
+BCSP (BlueCore Serial Protocol):
+.Dl btuartd -p bcsp /dev/dty00 57600
+.Dl btuartd -p bcsp /dev/dty00 115200
+.Pp
+Philips BGB2xx Module:
+.Dl btuartd -f bgb2xx /dev/dty00 115200
+.Pp
+CSR Casira serial adapter or BrainBoxes serial dongle (BL642) or BrainBoxes
+PCMCIA card (BL620) or 3Com Bluetooth Card (Version 3.0):
+.Dl btuartd -f csr /dev/dty00 115200
+AmbiCom BT2000C Bluetooth PC/CF Card:
+.Dl btuartd -f csr /dev/dty00 57600
+.Pp
+Digianswer based cards:
+.Dl btuartd -f digi /dev/dty00 9600
+.Pp
+ST Microelectronics minikits based on STLC2410/STLC2415:
+.Dl btuartd -f st /dev/dty00 57600
+.Pp
+ST Microelectronics minikits based on STLC2500:
+.Dl btuartd -f stlc2500 /dev/dty00 115200
+.Pp
+Silicon Wave kits:
+.Dl btuartd -f swave /dev/dty00 115200
+.Pp
+Texas Instruments:
+.Dl btuartd -f texas /dev/dty00 115200
 .Sh FILES
 .Bl -tag -compact
 .It Pa /etc/bluetooth/btuartd.conf
@@ -137,7 +180,7 @@ Enable parity (even parity).
 .Sh HISTORY
 The
 .Nm
-daemon was writen for
+daemon was written for
 .Nx 4.0 .
 .Sh AUTHORS
 .An KIYOHARA Takashi Aq kiyohara@kk.iij4u.or.jp

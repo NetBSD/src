@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: sd.c,v 1.1.10.1 2008/01/09 02:02:27 matt Exp $	*/
 
 /*
  * sd.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: sd.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: sd.c,v 1.1.10.1 2008/01/09 02:02:27 matt Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/sd.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sd.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: sd.c,v 1.1.10.1 2008/01/09 02:02:27 matt Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
@@ -208,8 +208,14 @@ static attr_t	sd_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	sd_profile_descriptor = {
+static uint16_t sd_profile_uuids[] = {
 	SDP_SERVICE_CLASS_SERVICE_DISCOVERY_SERVER,
+	SDP_UUID_PROTOCOL_L2CAP,
+};
+
+profile_t	sd_profile_descriptor = {
+	sd_profile_uuids,
+	sizeof(sd_profile_uuids),
 	0,
 	(profile_data_valid_p) NULL,
 	(attr_t const * const) &sd_profile_attrs

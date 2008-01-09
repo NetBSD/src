@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.c,v 1.33.4.1 2007/11/06 23:35:53 matt Exp $	*/
+/*	$NetBSD: lex.c,v 1.33.4.2 2008/01/09 02:00:46 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: lex.c,v 1.33.4.1 2007/11/06 23:35:53 matt Exp $");
+__RCSID("$NetBSD: lex.c,v 1.33.4.2 2008/01/09 02:00:46 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -192,6 +192,7 @@ incfile(void)
 	off_t newsize;
 	int omsgCount;
 	FILE *ibuf;
+	int rval;
 
 	omsgCount = get_abs_msgCount();
 
@@ -200,18 +201,23 @@ incfile(void)
 		return -1;
 	holdsigs();
 	newsize = fsize(ibuf);
-	if (newsize == 0)
-		return -1;		/* mail box is now empty??? */
-	if (newsize < mailsize)
-		return -1;              /* mail box has shrunk??? */
-	if (newsize == mailsize)
-		return 0;               /* no new mail */
+	if (newsize == 0 ||		/* mail box is now empty??? */
+	    newsize < mailsize) {	/* mail box has shrunk??? */
+		rval = -1;
+		goto done;
+	}
+	if (newsize == mailsize) {
+		rval = 0;               /* no new mail */
+		goto done;
+	}
 	setptr(ibuf, mailsize);		/* read in new mail */
 	setmsize(get_abs_msgCount());	/* get the new message count */
 	mailsize = ftell(ibuf);
+	rval = get_abs_msgCount() - omsgCount;
+ done:
 	(void)Fclose(ibuf);
 	relsesigs();
-	return get_abs_msgCount() - omsgCount;
+	return rval;
 }
 
 /*

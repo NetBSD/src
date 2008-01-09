@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.38.4.1 2007/11/06 23:36:38 matt Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.38.4.2 2008/01/09 02:02:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -208,13 +208,11 @@
  **********************************************************************
  */
 
-#include "libc.h"
 #ifdef AFS
 #include <afs/param.h>
 #undef MAXNAMLEN
 #endif
 #include <sys/param.h>
-#include "c.h"
 #include <signal.h>
 #include <errno.h>
 #include <setjmp.h>
@@ -259,6 +257,8 @@
 #include "supextern.h"
 #define MSGFILE
 #include "supmsg.h"
+#include "libc.h"
+#include "c.h"
 
 extern char *crypt(const char *, const char *);
 
@@ -1913,7 +1913,7 @@ local_file(int handle, struct stat * sinfo)
 	 * determined this empirically -- DLC).  Without a fstatvfs()
 	 * system call, this will have to do for now.
 	 */
-#if defined(__SVR4) || __NetBSD_Version__ > 200030000
+#if defined(__SVR4) || __NetBSD_Version__ > 299000900
 	{
 		struct statvfs sf;
 

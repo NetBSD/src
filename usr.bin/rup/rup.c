@@ -1,4 +1,4 @@
-/*	$NetBSD: rup.c,v 1.26 2005/08/07 16:01:45 christos Exp $	*/
+/*	$NetBSD: rup.c,v 1.26.12.1 2008/01/09 02:00:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rup.c,v 1.26 2005/08/07 16:01:45 christos Exp $");
+__RCSID("$NetBSD: rup.c,v 1.26.12.1 2008/01/09 02:00:53 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -155,7 +155,7 @@ static int rstat_reply(char *, struct netbuf *, struct netconfig *);
 static void print_rup_data(const char *, statstime *);
 static int onehost(char *);
 static void allhosts(void);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 int main(int, char *[]);
 
 int

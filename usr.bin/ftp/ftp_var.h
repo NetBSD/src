@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.75 2007/07/22 05:02:50 lukem Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.75.4.1 2008/01/09 02:00:40 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
@@ -328,7 +328,7 @@ extern	struct option	optiontab[];
 #define	FREEPTR(x)	if ((x) != NULL) { free(x); (x) = NULL; }
 
 #ifdef BSD4_4
-# define HAVE_STRUCT_SOCKADDR_SA_LEN	1
+# define HAVE_STRUCT_SOCKADDR_IN_SIN_LEN	1
 #endif
 
 #ifdef NO_LONG_LONG
@@ -342,8 +342,10 @@ extern	struct option	optiontab[];
 #define DWARN(...)
 #else
 #define DPRINTF(...)	if (ftp_debug) (void)fprintf(ttyout, __VA_ARGS__)
-#define DWARN(...) if (ftp_debug) warn(__VA_ARGS__)
+#define DWARN(...)	if (ftp_debug) warn(__VA_ARGS__)
 #endif
+
+#define STRorNULL(s)	((s) ? (s) : "<null>")
 
 #ifdef NO_USAGE
 void xusage(void);

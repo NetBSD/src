@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.20 2004/10/30 15:40:57 dsl Exp $ */
+/* $NetBSD: main.c,v 1.20.16.1 2008/01/09 02:02:23 matt Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -39,7 +39,7 @@
 __COPYRIGHT("@(#) Copyright (c) 1994 Christopher G. Demetriou\n\
  All rights reserved.\n");
 
-__RCSID("$NetBSD: main.c,v 1.20 2004/10/30 15:40:57 dsl Exp $");
+__RCSID("$NetBSD: main.c,v 1.20.16.1 2008/01/09 02:02:23 matt Exp $");
 #endif
 
 /*
@@ -70,7 +70,7 @@ static int	cmp_avgdkio	__P((const DBT *, const DBT *));
 static int	cmp_cpumem	__P((const DBT *, const DBT *));
 static int	cmp_avgcpumem	__P((const DBT *, const DBT *));
 static int	cmp_calls	__P((const DBT *, const DBT *));
-static void	usage		__P((void)) __attribute__((__noreturn__));
+static void	usage		__P((void)) __dead;
 
 int aflag, bflag, cflag, dflag, Dflag, fflag, iflag, jflag, kflag;
 int Kflag, lflag, mflag, qflag, rflag, sflag, tflag, uflag, vflag;

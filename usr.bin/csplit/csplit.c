@@ -1,4 +1,4 @@
-/*	$NetBSD: csplit.c,v 1.2.4.1 2007/11/06 23:35:44 matt Exp $	*/
+/*	$NetBSD: csplit.c,v 1.2.4.2 2008/01/09 02:00:36 matt Exp $	*/
 /*	$FreeBSD: src/usr.bin/csplit/csplit.c,v 1.9 2004/03/22 11:15:03 tjr Exp$	*/
 
 /*-
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: csplit.c,v 1.2.4.1 2007/11/06 23:35:44 matt Exp $");
+__RCSID("$NetBSD: csplit.c,v 1.2.4.2 2008/01/09 02:00:36 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ static char	*getline(void);
 static void	 handlesig(int);
 static FILE	*newfile(void);
 static void	 toomuch(FILE *, long);
-static void	 usage(void) __attribute__((__noreturn__));
+static void	 usage(void) __dead;
 
 /*
  * Command line options

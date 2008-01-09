@@ -1,4 +1,4 @@
-/*	$NetBSD: faithd.c,v 1.31 2003/10/16 05:25:51 itojun Exp $	*/
+/*	$NetBSD: faithd.c,v 1.31.22.1 2008/01/09 02:02:00 matt Exp $	*/
 /*	$KAME: faithd.c,v 1.62 2003/08/19 21:20:33 itojun Exp $	*/
 
 /*
@@ -37,6 +37,7 @@
  *   e.g. faithd telnet /usr/local/v6/sbin/telnetd telnetd
  */
 
+#include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/sysctl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netgroup_mkdb.c,v 1.15 2006/08/26 18:15:37 christos Exp $	*/
+/*	$NetBSD: netgroup_mkdb.c,v 1.15.8.1 2008/01/09 02:02:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
@@ -32,7 +32,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netgroup_mkdb.c,v 1.15 2006/08/26 18:15:37 christos Exp $");
+__RCSID("$NetBSD: netgroup_mkdb.c,v 1.15.8.1 2008/01/09 02:02:12 matt Exp $");
 #endif
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ static	DB	*ng_reverse(DB *, size_t);
 static	DB	*ng_load(const char *);
 static	void	 ng_write(DB *, DB *, int);
 static	void	 ng_rwrite(DB *, DB *, int);
-static	void	 usage(void) __attribute__((__noreturn__));
+static	void	 usage(void) __dead;
 
 #ifdef DEBUG_NG
 static	int 	 debug = 0;

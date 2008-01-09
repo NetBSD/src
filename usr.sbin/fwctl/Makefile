@@ -1,7 +1,7 @@
-# $NetBSD: Makefile,v 1.1 2005/07/11 15:35:25 kiyohara Exp $
+# $NetBSD: Makefile,v 1.1.10.1 2008/01/09 02:02:01 matt Exp $
 
 PROG=	fwctl
-SRCS=	eui64.c fwcontrol.c fwcrom.c fwdv.c
+SRCS=	eui64.c fwcontrol.c fwcrom.c fwdv.c fwmpegts.c
 MAN=	fwctl.8
 
 .PATH:	${.CURDIR}/../../sys/dev/ieee1394

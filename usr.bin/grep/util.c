@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.4 2006/05/15 21:12:21 rillig Exp $	*/
+/*	$NetBSD: util.c,v 1.4.12.1 2008/01/09 02:00:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -29,13 +29,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.4 2006/05/15 21:12:21 rillig Exp $");
+__RCSID("$NetBSD: util.c,v 1.4.12.1 2008/01/09 02:00:43 matt Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
 
 #include <ctype.h>
+#include <zlib.h>
 #include <err.h>
 #include <errno.h>
 #include <fts.h>
@@ -44,7 +45,6 @@ __RCSID("$NetBSD: util.c,v 1.4 2006/05/15 21:12:21 rillig Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <zlib.h>
 
 #include "grep.h"
 
@@ -228,8 +228,8 @@ procline(str_t *l, int nottext)
 				continue;
 			if (r == 0) {
 				if (wflag) {
-					if ((pmatch.rm_so != 0 && isword(l->dat[pmatch.rm_so - 1]))
-					    || (pmatch.rm_eo != l->len && isword(l->dat[pmatch.rm_eo])))
+					if ((pmatch.rm_so != 0 && isword((unsigned char)l->dat[pmatch.rm_so - 1]))
+					    || (pmatch.rm_eo != l->len && isword((unsigned char)l->dat[pmatch.rm_eo])))
 						r = REG_NOMATCH;
 				}
 				if (xflag) {

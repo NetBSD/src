@@ -1,4 +1,4 @@
-/*	$NetBSD: cap_mkdb.c,v 1.22 2005/04/13 04:50:22 christos Exp $	*/
+/*	$NetBSD: cap_mkdb.c,v 1.22.12.1 2008/01/09 02:00:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-__RCSID("$NetBSD: cap_mkdb.c,v 1.22 2005/04/13 04:50:22 christos Exp $");
+__RCSID("$NetBSD: cap_mkdb.c,v 1.22.12.1 2008/01/09 02:00:34 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: cap_mkdb.c,v 1.22 2005/04/13 04:50:22 christos Exp $");
 
 static void	db_build(const char **);
 static void	dounlink(void);
-static void	usage(void) __attribute__((__unused__));
+static void	usage(void) __unused;
 static int	count_records(char **);
 
 static DB *capdbp;

@@ -1,4 +1,4 @@
-/*	$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $	*/
+/*	$NetBSD: setemul.c,v 1.23.4.1 2008/01/09 02:00:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $");
+__RCSID("$NetBSD: setemul.c,v 1.23.4.1 2008/01/09 02:00:45 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -90,7 +90,6 @@ __RCSID("$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $");
 
 #include "../../sys/compat/netbsd32/netbsd32_syscall.h"
 #include "../../sys/compat/freebsd/freebsd_syscall.h"
-#include "../../sys/compat/hpux/hpux_syscall.h"
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
 #include "../../sys/compat/irix/irix_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
@@ -114,7 +113,6 @@ __RCSID("$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $");
 
 #include "../../sys/compat/netbsd32/netbsd32_syscalls.c"
 #include "../../sys/compat/freebsd/freebsd_syscalls.c"
-#include "../../sys/compat/hpux/hpux_syscalls.c"
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
 #include "../../sys/compat/irix/irix_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
@@ -133,7 +131,6 @@ __RCSID("$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $");
 #include "../../sys/compat/aoutm68k/aoutm68k_syscalls.c"
 #endif
 
-#include "../../sys/compat/hpux/hpux_errno.c"
 #include "../../sys/compat/svr4/svr4_errno.c"
 #include "../../sys/compat/ibcs2/ibcs2_errno.c"
 #include "../../sys/compat/irix/irix_errno.c"
@@ -142,7 +139,6 @@ __RCSID("$NetBSD: setemul.c,v 1.23 2007/02/07 13:58:12 njoly Exp $");
 #undef KTRACE
 
 #define SIGRTMIN	33	/* XXX */
-#include "../../sys/compat/hpux/hpux_signo.c"
 #include "../../sys/compat/svr4/svr4_signo.c"
 #include "../../sys/compat/ibcs2/ibcs2_signo.c"
 /* irix uses svr4 */
@@ -169,10 +165,6 @@ const struct emulation emulations[] = {
 	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL,
 	  NULL,				0,
 	  NULL,				0,	0 },
-
-	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL,
-	  native_to_hpux_errno,		NELEM(native_to_hpux_errno),
-	  hpux_to_native_signo,		NSIG,	0 },
 
 	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL,
 	  native_to_ibcs2_errno,	NELEM(native_to_ibcs2_errno),
@@ -416,7 +408,7 @@ mach_traps_dispatch(int *code, const struct emulation **emul)
 		return 1;
 
 	default:
-		if (*code < 0) {
+		if (*code < 0 && *code > -MACH_SYS_MAXSYSCALL) {
 			*emul = mach;
 			*code = -*code;
 			return 1;

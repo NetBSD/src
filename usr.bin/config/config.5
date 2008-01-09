@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.10.4.1 2007/11/06 23:35:42 matt Exp $
+.\" $NetBSD: config.5,v 1.10.4.2 2008/01/09 02:00:34 matt Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -27,7 +27,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 9, 2007
+.Dd November 9, 2007
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -268,6 +268,19 @@ The
 .Ar path
 argument is either absolute or relative to the current defined prefix, which
 defaults to the top of ther kernel source tree.
+.It Ic ifdef Ar attribute
+.It Ic ifndef Ar attribute
+.It Ic elifdef Ar attribute
+.It Ic elifndef Ar attribute
+.It Ic else
+.It Ic endif
+Conditionally interprets portions of the current file.
+Those statements depend on whether or not the given
+.Ar attribute
+has been previously defined, through
+.Ic define
+or any other statement that implicitely defines attributes such as
+.Ic device .
 .El
 .Ss PREAMBLE
 In addition to
@@ -550,6 +563,12 @@ for each defined sub-architecture
 .It
 .Pa arch/${MACHINE}/conf/files.${MACHINE}
 .El
+It also defines an attribute for the
+.Ar machine ,
+the
+.Ar arch
+and each of the
+.Ar subarch .
 .It Ic package Ar path
 Simpler version of:
 .Bd -literal -offset indent

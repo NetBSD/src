@@ -1,4 +1,4 @@
-/*	$NetBSD: rwhod.c,v 1.34 2006/05/11 08:40:28 mrg Exp $	*/
+/*	$NetBSD: rwhod.c,v 1.34.10.1 2008/01/09 02:02:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rwhod.c,v 1.34 2006/05/11 08:40:28 mrg Exp $");
+__RCSID("$NetBSD: rwhod.c,v 1.34.10.1 2008/01/09 02:02:23 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -109,7 +109,7 @@ static void	 handleread(int);
 static void	 quit(const char *);
 static void	 rt_xaddrs(void *, void *, struct rt_addrinfo *);
 static int	 drop_privs(char *);
-static void	 usage(void) __attribute__((__noreturn__));
+static void	 usage(void) __dead;
 static int	 verify(const char *);
 #ifdef DEBUG
 static char	*interval(int, const char *);

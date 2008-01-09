@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.51.4.1 2007/11/06 23:36:28 matt Exp $	*/
+/*	$NetBSD: create.c,v 1.51.4.2 2008/01/09 02:02:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)create.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: create.c,v 1.51.4.1 2007/11/06 23:36:28 matt Exp $");
+__RCSID("$NetBSD: create.c,v 1.51.4.2 2008/01/09 02:02:10 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,7 @@ static uid_t uid;
 static mode_t mode;
 static u_long flags;
 
-static int	dsort(const FTSENT **, const FTSENT **);
+static int	dcmp(const FTSENT **, const FTSENT **);
 static void	output(int *, const char *, ...)
 	__attribute__((__format__(__printf__, 2, 3)));
 static int	statd(FTS *, FTSENT *, uid_t *, gid_t *, mode_t *, u_long *);
@@ -96,19 +96,27 @@ cwalk(void)
 	FTSENT *p;
 	time_t clocktime;
 	char host[MAXHOSTNAMELEN + 1];
+	const char *user;
 	char *argv[2];
 	char  dot[] = ".";
+
 	argv[0] = dot;
 	argv[1] = NULL;
 
 	time(&clocktime);
 	gethostname(host, sizeof(host));
 	host[sizeof(host) - 1] = '\0';
+	if ((user = getlogin()) == NULL) {
+		struct passwd *pw;
+		user = (pw = getpwuid(getuid())) == NULL ? pw->pw_name :
+		    "<unknown>";
+	}
+
 	printf(
 	    "#\t   user: %s\n#\tmachine: %s\n#\t   tree: %s\n#\t   date: %s",
-	    getlogin(), host, fullpath, ctime(&clocktime));
+	    user, host, fullpath, ctime(&clocktime));
 
-	if ((t = fts_open(argv, ftsoptions, dsort)) == NULL)
+	if ((t = fts_open(argv, ftsoptions, dcmp)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
 	while ((p = fts_read(t)) != NULL) {
 		if (check_excludes(p->fts_name, p->fts_path)) {
@@ -186,8 +194,8 @@ statf(FTSENT *p)
 		output(&indent, "nlink=%u", p->fts_statp->st_nlink);
 	if (keys & F_SIZE && S_ISREG(p->fts_statp->st_mode))
 		output(&indent, "size=%lld", (long long)p->fts_statp->st_size);
-#if defined(BSD4_4) && !defined(HAVE_NBTOOL_CONFIG_H)
 	if (keys & F_TIME)
+#if defined(BSD4_4) && !defined(HAVE_NBTOOL_CONFIG_H)
 		output(&indent, "time=%ld.%ld",
 		    (long)p->fts_statp->st_mtimespec.tv_sec,
 		    p->fts_statp->st_mtimespec.tv_nsec);
@@ -376,7 +384,7 @@ statd(FTS *t, FTSENT *parent, uid_t *puid, gid_t *pgid, mode_t *pmode,
 }
 
 static int
-dsort(const FTSENT **a, const FTSENT **b)
+dcmp(const FTSENT **a, const FTSENT **b)
 {
 
 	if (S_ISDIR((*a)->fts_statp->st_mode)) {
