@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.31 2007/03/06 12:35:39 yamt Exp $ */
+/* $NetBSD: hypervisor.c,v 1.31.20.1 2008/01/09 01:50:19 matt Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31 2007/03/06 12:35:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31.20.1 2008/01/09 01:50:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31 2007/03/06 12:35:39 yamt Exp $")
 #include "xencons.h"
 #include "xennet_hypervisor.h"
 #include "xbd_hypervisor.h"
+#ifndef __x86_64__
 #include "npx.h"
+#else
+#define NNPX 0
+#endif /* __x86_64__ */
 #include "isa.h"
 #include "pci.h"
 #include "acpi.h"
@@ -86,11 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31 2007/03/06 12:35:39 yamt Exp $")
 #include "opt_xen.h"
 #include "opt_mpbios.h"
 
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #ifndef XEN3
-#include <machine/ctrl_if.h>
+#include <xen/ctrl_if.h>
 #endif
 
 #if defined(DOM0OPS) || defined(XEN3)
@@ -100,12 +104,12 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31 2007/03/06 12:35:39 yamt Exp $")
 #include <sys/vnode.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/kernfs/kernfs.h>
-#include <machine/kernfs_machdep.h>
+#include <xen/kernfs_machdep.h>
 #include <dev/isa/isavar.h>
 #endif /* DOM0OPS || XEN3 */
 #ifdef XEN3
-#include <machine/granttables.h>
-#include <machine/vcpuvar.h>
+#include <xen/granttables.h>
+#include <xen/vcpuvar.h>
 #endif
 #if NPCI > 0
 #include <dev/pci/pcivar.h>
@@ -127,14 +131,14 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31 2007/03/06 12:35:39 yamt Exp $")
 #endif /* NPCI */
 
 #if NXENBUS > 0
-#include <machine/xenbus.h>
+#include <xen/xenbus.h>
 #endif
 
 #if NXENNET_HYPERVISOR > 0
 #include <net/if.h>
 #include <net/if_ether.h>
 #include <net/if_media.h>
-#include <machine/if_xennetvar.h>
+#include <xen/if_xennetvar.h>
 #endif
 
 #if NXBD_HYPERVISOR > 0
@@ -142,7 +146,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31 2007/03/06 12:35:39 yamt Exp $")
 #include <sys/disk.h>
 #include <sys/bufq.h>
 #include <dev/dkvar.h>
-#include <machine/xbdvar.h>
+#include <xen/xbdvar.h>
 #endif
 
 int	hypervisor_match(struct device *, struct cfdata *, void *);

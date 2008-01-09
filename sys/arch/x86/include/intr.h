@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27.10.1 2007/11/06 23:23:35 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.10.2 2008/01/09 01:49:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -39,6 +39,8 @@
 #ifndef _X86_INTR_H_
 #define _X86_INTR_H_
 
+#define	__HAVE_FAST_SOFTINTS
+
 #include <machine/intrdefs.h>
 
 #ifndef _LOCORE
@@ -75,12 +77,13 @@ struct intrsource {
 	struct pic *is_pic;		/* originating PIC */
 	void *is_recurse;		/* entry for spllower */
 	void *is_resume;		/* entry for doreti */
+	lwp_t *is_lwp;			/* for soft interrupts */
 	struct evcnt is_evcnt;		/* interrupt counter */
-	char is_evname[32];		/* event counter name */
 	int is_flags;			/* see below */
 	int is_type;			/* level, edge */
 	int is_idtvec;
 	int is_minlevel;
+	char is_evname[32];		/* event counter name */
 };
 
 #define IS_LEGACY	0x0001		/* legacy ISA irq source */
@@ -148,26 +151,16 @@ splraiseipl(ipl_cookie_t icookie)
 #include <sys/spl.h>
 
 /*
- * XXX
- */
-
-#define	setsoftnet()	softintr(SIR_NET)
-
-/*
  * Stub declarations.
  */
 
-void Xsoftclock(void);
-void Xsoftnet(void);
-void Xsoftserial(void);
+void Xsoftintr(void);
 
 extern struct intrstub i8259_stubs[];
 extern struct intrstub ioapic_edge_stubs[];
 extern struct intrstub ioapic_level_stubs[];
 
 struct cpu_info;
-
-extern char idt_allocmap[];
 
 struct pcibus_attach_args;
 
@@ -192,59 +185,9 @@ int x86_send_ipi(struct cpu_info *, int);
 void x86_broadcast_ipi(int);
 void x86_multicast_ipi(int, int);
 void x86_ipi_handler(void);
-void x86_softintlock(void);
-void x86_softintunlock(void);
 
 extern void (*ipifunc[X86_NIPI])(struct cpu_info *);
 
 #endif /* !_LOCORE */
-
-/*
- * Generic software interrupt support.
- */
-
-#define	X86_SOFTINTR_SOFTCLOCK		0
-#define	X86_SOFTINTR_SOFTNET		1
-#define	X86_SOFTINTR_SOFTSERIAL	2
-#define	X86_NSOFTINTR			3
-
-#ifndef _LOCORE
-#include <sys/queue.h>
-
-struct x86_soft_intrhand {
-	TAILQ_ENTRY(x86_soft_intrhand)
-		sih_q;
-	struct x86_soft_intr *sih_intrhead;
-	void	(*sih_fn)(void *);
-	void	*sih_arg;
-	int	sih_pending;
-};
-
-struct x86_soft_intr {
-	TAILQ_HEAD(, x86_soft_intrhand)
-		softintr_q;
-	int softintr_ssir;
-	struct simplelock softintr_slock;
-};
-
-#define	x86_softintr_lock(si, s)					\
-do {									\
-	(s) = splhigh();						\
-	simple_lock(&si->softintr_slock);				\
-} while (/*CONSTCOND*/ 0)
-
-#define	x86_softintr_unlock(si, s)					\
-do {									\
-	simple_unlock(&si->softintr_slock);				\
-	splx((s));							\
-} while (/*CONSTCOND*/ 0)
-
-void	*softintr_establish(int, void (*)(void *), void *);
-void	softintr_disestablish(void *);
-void	softintr_init(void);
-void	softintr_dispatch(int);
-void	softintr_schedule(void *arg);
-
-#endif /* _LOCORE */
 
 #endif /* !_X86_INTR_H_ */

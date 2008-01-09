@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uselib.c,v 1.22.8.1 2007/11/06 23:25:03 matt Exp $	*/
+/*	$NetBSD: linux_uselib.c,v 1.22.8.2 2008/01/09 01:51:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.22.8.1 2007/11/06 23:25:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.22.8.2 2008/01/09 01:51:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,11 +90,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_uselib.c,v 1.22.8.1 2007/11/06 23:25:03 matt E
  */
 
 int
-linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
+linux_sys_uselib(struct lwp *l, const struct linux_sys_uselib_args *uap, register_t *retval)
 {
-	struct linux_sys_uselib_args /* {
+	/* {
 		syscallarg(const char *) path;
-	} */ *uap = v;
+	} */
 	long bsize, dsize, tsize, taddr, baddr, daddr;
 	struct nameidata ni;
 	struct vnode *vp;
@@ -103,7 +103,8 @@ linux_sys_uselib(struct lwp *l, void *v, register_t *retval)
 	int i, magic, error;
 	size_t rem;
 
-	NDINIT(&ni, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&ni, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 
 	if ((error = namei(&ni)))
 		return error;

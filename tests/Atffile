@@ -1,0 +1,7 @@
+Content-Type: application/X-atf-atffile; version="1"
+X-NetBSD-Id: "$NetBSD: Atffile,v 1.4.2.2 2008/01/09 01:59:02 matt Exp $"
+
+# XXX: This top-level file shouldn't have to define a test-suite.
+prop: test-suite = "NetBSD"
+
+tp-glob: *

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.91 2007/08/19 03:38:52 matt Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.91.2.1 2008/01/09 01:58:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -583,6 +583,7 @@ typedef struct {
 
 #define	DT_LOOS		0x60000000	/* Operating system specific range */
 #define DT_VERSYM	0x6ffffff0	/* Symbol versions */
+#define	DT_FLAGS_1	0x6ffffffb	/* ELF dynamic flags */
 #define DT_VERDEF	0x6ffffffc	/* Versions defined by file */
 #define DT_VERDEFNUM	0x6ffffffd	/* Number of versions defined by file */
 #define DT_VERNEED	0x6ffffffe	/* Versions needed by file */
@@ -590,6 +591,9 @@ typedef struct {
 #define	DT_HIOS		0x6fffffff
 #define	DT_LOPROC	0x70000000	/* Processor-specific range */
 #define	DT_HIPROC	0x7fffffff
+
+/* Flag values for DT_FLAGS_1 (incomplete) */
+#define	DF_1_INITFIRST	0x00000020	/* Object's init/fini take priority */
 
 /*
  * Auxiliary Vectors
@@ -691,10 +695,12 @@ typedef struct {
 /* NetBSD-specific note type: PaX.  There should be 1 NOTE per executable.
    section.  desc is a 32 bit bitmask */
 #define ELF_NOTE_TYPE_PAX_TAG		3
-#define	ELF_NOTE_PAX_MPROTECT		0x1	/* Force enable Mprotect */
-#define	ELF_NOTE_PAX_NOMPROTECT		0x2	/* Force disable Mprotect */
-#define	ELF_NOTE_PAX_GUARD		0x4	/* Force enable Segvguard */
-#define	ELF_NOTE_PAX_NOGUARD		0x8	/* Force disable Servguard */
+#define	ELF_NOTE_PAX_MPROTECT		0x01	/* Force enable Mprotect */
+#define	ELF_NOTE_PAX_NOMPROTECT		0x02	/* Force disable Mprotect */
+#define	ELF_NOTE_PAX_GUARD		0x04	/* Force enable Segvguard */
+#define	ELF_NOTE_PAX_NOGUARD		0x08	/* Force disable Servguard */
+#define	ELF_NOTE_PAX_ASLR		0x10	/* Force enable ASLR */
+#define	ELF_NOTE_PAX_NOASLR		0x20	/* Force disable ASLR */
 #define ELF_NOTE_PAX_NAMESZ		4
 #define ELF_NOTE_PAX_NAME		"PaX\0"
 #define ELF_NOTE_PAX_DESCSZ		4
@@ -806,7 +812,7 @@ struct netbsd_elfcore_procinfo {
 
 #ifdef _KERNEL
 
-#define ELF_AUX_ENTRIES	12		/* Size of aux array passed to loader */
+#define ELF_AUX_ENTRIES	14	/* Max size of aux array passed to loader */
 #define ELF32_NO_ADDR	(~(Elf32_Addr)0) /* Indicates addr. not yet filled in */
 #define ELF32_LINK_ADDR	((Elf32_Addr)-2) /* advises to use link address */
 #define ELF64_NO_ADDR	(~(Elf64_Addr)0) /* Indicates addr. not yet filled in */

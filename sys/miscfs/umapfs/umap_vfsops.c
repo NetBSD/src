@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.69.4.1 2007/11/06 23:33:24 matt Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.69.4.2 2008/01/09 01:57:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.69.4.1 2007/11/06 23:33:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.69.4.2 2008/01/09 01:57:07 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,13 +63,13 @@ VFS_PROTOS(umapfs);
  * Mount umap layer
  */
 int
-umapfs_mount(mp, path, data, data_len, l)
+umapfs_mount(mp, path, data, data_len)
 	struct mount *mp;
 	const char *path;
 	void *data;
 	size_t *data_len;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct nameidata nd;
 	struct umap_args *args = data;
 	struct vnode *lowerrootvp, *vp;
@@ -112,7 +112,7 @@ umapfs_mount(mp, path, data, data_len, l)
 	 * Find lower node
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args->umap_target, l);
+		UIO_USERSPACE, args->umap_target);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -233,7 +233,7 @@ umapfs_mount(mp, path, data, data_len, l)
  * Free reference to umap layer
  */
 int
-umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+umapfs_unmount(struct mount *mp, int mntflags)
 {
 	struct umap_mount *amp = MOUNTTOUMAPMOUNT(mp);
 	struct vnode *rtvp = amp->umapm_rootvp;
@@ -256,18 +256,14 @@ umapfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
 	vprint("alias root of lower", rtvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
 	mutex_destroy(&amp->umapm_hashlock);
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(amp, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return (0);
 }

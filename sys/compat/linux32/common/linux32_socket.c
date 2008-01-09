@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.3 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.3.20.1 2008/01/09 01:51:22 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.3 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.3.20.1 2008/01/09 01:51:22 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,17 +70,14 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.3 2007/02/09 21:55:21 ad Exp $"
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_socketpair(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_socketpair(struct lwp *l, const struct linux32_sys_socketpair_args *uap, register_t *retval)
 {
-	struct linux32_sys_socketpair_args /* {
+	/* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
 		syscallarg(netbsd32_intp) rsv;
-	} */ *uap = v;
+	} */
 	struct linux_sys_socketpair_args ua;
 
 	NETBSD32TO64_UAP(domain);
@@ -92,19 +89,16 @@ linux32_sys_socketpair(l, v, retval)
 }
 
 int
-linux32_sys_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sendto(struct lwp *l, const struct linux32_sys_sendto_args *uap, register_t *retval)
 {
-	struct linux32_sys_sendto_args /* {
+	/* {
 		syscallarg(int) s;
-		syscallarg(netbsd32_voidp) msg; 
+		syscallarg(netbsd32_voidp) msg;
 		syscallarg(int) len;
 		syscallarg(int) flags;
 		syscallarg(netbsd32_osockaddrp_t) to;
 		syscallarg(int) tolen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_sendto_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -119,19 +113,16 @@ linux32_sys_sendto(l, v, retval)
 
 
 int
-linux32_sys_recvfrom(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_recvfrom(struct lwp *l, const struct linux32_sys_recvfrom_args *uap, register_t *retval)
 {
-	struct linux32_sys_recvfrom_args /* {
+	/* {
 		syscallarg(int) s;
-		syscallarg(netbsd32_voidp) buf; 
+		syscallarg(netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) flags;
 		syscallarg(netbsd32_osockaddrp_t) from;
 		syscallarg(netbsd32_intp) fromlenaddr;
-	} */ *uap = v;
+	} */
 	struct linux_sys_recvfrom_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -145,18 +136,15 @@ linux32_sys_recvfrom(l, v, retval)
 }
 
 int
-linux32_sys_setsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_setsockopt(struct lwp *l, const struct linux32_sys_setsockopt_args *uap, register_t *retval)
 {
-	struct linux32_sys_setsockopt_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) optname;
 		syscallarg(netbsd32_voidp) optval;
 		syscallarg(int) optlen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_setsockopt_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -170,18 +158,15 @@ linux32_sys_setsockopt(l, v, retval)
 
 
 int
-linux32_sys_getsockopt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getsockopt(struct lwp *l, const struct linux32_sys_getsockopt_args *uap, register_t *retval)
 {
-	struct linux32_sys_getsockopt_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(int) level;
 		syscallarg(int) optname;
 		syscallarg(netbsd32_voidp) optval;
 		syscallarg(netbsd32_intp) optlen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_getsockopt_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -194,16 +179,13 @@ linux32_sys_getsockopt(l, v, retval)
 }
 
 int
-linux32_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_socket(struct lwp *l, const struct linux32_sys_socket_args *uap, register_t *retval)
 {
-	struct linux32_sys_socket_args /* {
+	/* {
 		syscallarg(int) domain;
 		syscallarg(int) type;
 		syscallarg(int) protocol;
-	} */ *uap = v;
+	} */
 	struct linux_sys_socket_args ua;
 
 	NETBSD32TO64_UAP(domain);
@@ -214,16 +196,13 @@ linux32_sys_socket(l, v, retval)
 }
 
 int
-linux32_sys_bind(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_bind(struct lwp *l, const struct linux32_sys_bind_args *uap, register_t *retval)
 {
-	struct linux32_sys_bind_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_osockaddrp_t) name;
 		syscallarg(int) namelen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_bind_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -234,16 +213,13 @@ linux32_sys_bind(l, v, retval)
 }
 
 int
-linux32_sys_connect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_connect(struct lwp *l, const struct linux32_sys_connect_args *uap, register_t *retval)
 {
-	struct linux32_sys_connect_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_osockaddrp_t) name;
 		syscallarg(int) namelen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_connect_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -259,16 +235,13 @@ linux32_sys_connect(l, v, retval)
 }
 
 int
-linux32_sys_accept(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_accept(struct lwp *l, const struct linux32_sys_accept_args *uap, register_t *retval)
 {
-	struct linux32_sys_accept_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_osockaddrp_t) name;
 		syscallarg(netbsd32_intp) anamelen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_accept_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -279,16 +252,13 @@ linux32_sys_accept(l, v, retval)
 }
 
 int
-linux32_sys_getpeername(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getpeername(struct lwp *l, const struct linux32_sys_getpeername_args *uap, register_t *retval)
 {
-	struct linux32_sys_getpeername_args /* {
+	/* {
 		syscallarg(int) fdes;
 		syscallarg(netbsd32_sockaddrp_t) asa;
 		syscallarg(netbsd32_intp) alen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_getpeername_args ua;
 
 	NETBSD32TO64_UAP(fdes);
@@ -299,16 +269,13 @@ linux32_sys_getpeername(l, v, retval)
 }
 
 int
-linux32_sys_getsockname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getsockname(struct lwp *l, const struct linux32_sys_getsockname_args *uap, register_t *retval)
 {
-	struct linux32_sys_getsockname_args /* {
+	/* {
 		syscallarg(int) fdec;
 		syscallarg(netbsd32_charp) asa;
 		syscallarg(netbsd32_intp) alen;
-	} */ *uap = v;
+	} */
 	struct linux_sys_getsockname_args ua;
 
 	NETBSD32TO64_UAP(fdec);
@@ -319,16 +286,13 @@ linux32_sys_getsockname(l, v, retval)
 }
 
 int
-linux32_sys_sendmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_sendmsg(struct lwp *l, const struct linux32_sys_sendmsg_args *uap, register_t *retval)
 {
-	struct linux32_sys_sendmsg_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_msghdrp_t) msg;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct linux_sys_sendmsg_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -339,16 +303,13 @@ linux32_sys_sendmsg(l, v, retval)
 }
 
 int
-linux32_sys_recvmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_recvmsg(struct lwp *l, const struct linux32_sys_recvmsg_args *uap, register_t *retval)
 {
-	struct linux32_sys_recvmsg_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_msghdrp_t) msg;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct linux_sys_recvmsg_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -359,17 +320,14 @@ linux32_sys_recvmsg(l, v, retval)
 }
 
 int
-linux32_sys_send(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_send(struct lwp *l, const struct linux32_sys_send_args *uap, register_t *retval)
 {
-	struct linux32_sys_send_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct sys_sendto_args ua;
 
 	NETBSD32TO64_UAP(s);
@@ -383,17 +341,14 @@ linux32_sys_send(l, v, retval)
 }
 
 int
-linux32_sys_recv(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_recv(struct lwp *l, const struct linux32_sys_recv_args *uap, register_t *retval)
 {
-	struct linux32_sys_recv_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(int) len;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct sys_recvfrom_args ua;
 
 	NETBSD32TO64_UAP(s);

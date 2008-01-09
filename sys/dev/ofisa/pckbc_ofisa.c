@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_ofisa.c,v 1.12.8.1 2007/11/06 23:28:30 matt Exp $ */
+/* $NetBSD: pckbc_ofisa.c,v 1.12.8.2 2008/01/09 01:53:26 matt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.12.8.1 2007/11/06 23:28:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.12.8.2 2008/01/09 01:53:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_ofisa.c,v 1.12.8.1 2007/11/06 23:28:30 matt Ex
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
-
 #include <sys/bus.h>
 
 #include <dev/isa/isareg.h>

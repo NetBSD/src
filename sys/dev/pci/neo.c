@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.35.24.1 2007/11/06 23:29:20 matt Exp $	*/
+/*	$NetBSD: neo.c,v 1.35.24.2 2008/01/09 01:53:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.24.1 2007/11/06 23:29:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.35.24.2 2008/01/09 01:53:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,8 +162,6 @@ struct neo_softc {
 
 	struct ac97_codec_if *codec_if;
 	struct ac97_host_if host_if;
-
-	void		*powerhook;
 };
 
 /* -------------------------------------------------------------------- */
@@ -207,7 +205,6 @@ static void	neo_free(void *, void *, struct malloc_type *);
 static size_t	neo_round_buffersize(void *, int, size_t);
 static paddr_t	neo_mappage(void *, void *, off_t, int);
 static int	neo_get_props(void *);
-static void	neo_power(int, void *);
 
 CFATTACH_DECL(neo, sizeof(struct neo_softc),
     neo_match, neo_attach, NULL, NULL);
@@ -552,16 +549,15 @@ neo_match(struct device *parent, struct cfdata *match,
 	return 0;
 }
 
-static void
-neo_power(int why, void *addr)
+static bool
+neo_resume(device_t dv)
 {
-	struct neo_softc *sc;
+	struct neo_softc *sc = device_private(dv);
 
-	sc = (struct neo_softc *)addr;
-	if (why == PWR_RESUME) {
-		nm_init(sc);
-		sc->codec_if->vtbl->restore_ports(sc->codec_if);
-	}
+	nm_init(sc);
+	sc->codec_if->vtbl->restore_ports(sc->codec_if);	
+
+	return true;
 }
 
 static void
@@ -634,7 +630,8 @@ neo_attach(struct device *parent, struct device *self, void *aux)
 	if (ac97_attach(&sc->host_if, self) != 0)
 		return;
 
-	sc->powerhook = powerhook_establish(sc->dev.dv_xname, neo_power, sc);
+	if (!pmf_device_register(self, NULL, neo_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	audio_attach_mi(&neo_hw_if, sc, &sc->dev);
 }

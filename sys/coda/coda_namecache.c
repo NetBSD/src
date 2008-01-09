@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_namecache.c,v 1.20.24.1 2007/11/06 23:24:43 matt Exp $	*/
+/*	$NetBSD: coda_namecache.c,v 1.20.24.2 2008/01/09 01:50:26 matt Exp $	*/
 
 /*
  *
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.20.24.1 2007/11/06 23:24:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.20.24.2 2008/01/09 01:50:26 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -92,10 +92,6 @@ __KERNEL_RCSID(0, "$NetBSD: coda_namecache.c,v 1.20.24.1 2007/11/06 23:24:43 mat
 #ifdef	DEBUG
 #include <coda/coda_vnops.h>
 #endif
-
-#ifndef insque
-#include <sys/systm.h>
-#endif /* insque */
 
 /*
  * Declaration of the name cache data structure.
@@ -150,18 +146,17 @@ coda_nc_init(void)
     CODA_ALLOC(coda_nc_heap, struct coda_cache *, TOTAL_CACHE_SIZE);
     CODA_ALLOC(coda_nc_hash, struct coda_hash *, TOTAL_HASH_SIZE);
 
-    coda_nc_lru.lru_next =
-	coda_nc_lru.lru_prev = (struct coda_cache *)LRU_PART(&coda_nc_lru);
+    memset(coda_nc_heap, 0, TOTAL_CACHE_SIZE);
+    memset(coda_nc_hash, 0, TOTAL_HASH_SIZE);
 
+    TAILQ_INIT(&coda_nc_lru.head);
 
     for (i=0; i < coda_nc_size; i++) {	/* initialize the heap */
-	CODA_NC_LRUINS(&coda_nc_heap[i], &coda_nc_lru);
-	CODA_NC_HSHNUL(&coda_nc_heap[i]);
-	coda_nc_heap[i].cp = coda_nc_heap[i].dcp = (struct cnode *)0;
+	TAILQ_INSERT_HEAD(&coda_nc_lru.head, &coda_nc_heap[i], lru);
     }
 
     for (i=0; i < coda_nc_hashsize; i++) {	/* initialize the hashtable */
-	CODA_NC_HSHNUL((struct coda_cache *)&coda_nc_hash[i]);
+	LIST_INIT(&coda_nc_hash[i].head);
     }
 
     coda_nc_initialized++;
@@ -186,9 +181,7 @@ coda_nc_find(struct cnode *dcp, const char *name, int namelen,
 		myprintf(("coda_nc_find(dcp %p, name %s, len %d, cred %p, hash %d\n",
 			dcp, name, namelen, cred, hash));)
 
-	for (cncp = coda_nc_hash[hash].hash_next;
-	     cncp != (struct coda_cache *)&coda_nc_hash[hash];
-	     cncp = cncp->hash_next, count++)
+	LIST_FOREACH(cncp, &coda_nc_hash[hash].head, hash)
 	{
 
 	    if ((CODA_NAMEMATCH(cncp, name, namelen, dcp)) &&
@@ -213,6 +206,7 @@ coda_nc_find(struct cnode *dcp, const char *name, int namelen,
 		print_cred(cncp->cred);
 	    }
 #endif
+	    count++;
 	}
 
 	return((struct coda_cache *)0);
@@ -253,9 +247,8 @@ coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
     coda_nc_stat.enters++;		/* record the enters statistic */
 
     /* Grab the next element in the lru chain */
-    cncp = CODA_NC_LRUGET(coda_nc_lru);
-
-    CODA_NC_LRUREM(cncp);	/* remove it from the lists */
+    cncp = TAILQ_FIRST(&coda_nc_lru.head);
+    TAILQ_REMOVE(&coda_nc_lru.head, cncp, lru);
 
     if (CODA_NC_VALID(cncp)) {
 	/* Seems really ugly, but we have to decrement the appropriate
@@ -264,7 +257,7 @@ coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
 	coda_nc_hash[CODA_NC_HASH(cncp->name, cncp->namelen, cncp->dcp)].length--;
 
 	coda_nc_stat.lru_rm++;	/* zapped a valid entry */
-	CODA_NC_HSHREM(cncp);
+	LIST_REMOVE(cncp, hash);
 	vrele(CTOV(cncp->dcp));
 	vrele(CTOV(cncp->cp));
 	kauth_cred_free(cncp->cred);
@@ -284,9 +277,8 @@ coda_nc_enter(struct cnode *dcp, const char *name, int namelen,
     bcopy(name, cncp->name, (unsigned)namelen);
 
     /* Insert into the lru and hash chains. */
-
-    CODA_NC_LRUINS(cncp, &coda_nc_lru);
-    CODA_NC_HSHINS(cncp, &coda_nc_hash[hash]);
+    TAILQ_INSERT_TAIL(&coda_nc_lru.head, cncp, lru);
+    LIST_INSERT_HEAD(&coda_nc_hash[hash].head, cncp, hash);
     coda_nc_hash[hash].length++;                      /* Used for tuning */
 
     CODA_NC_DEBUG(CODA_NC_PRINTCODA_NC, print_coda_nc(); )
@@ -328,13 +320,13 @@ coda_nc_lookup(struct cnode *dcp, const char *name, int namelen,
 	coda_nc_stat.hits++;
 
 	/* put this entry at the end of the LRU */
-	CODA_NC_LRUREM(cncp);
-	CODA_NC_LRUINS(cncp, &coda_nc_lru);
+	TAILQ_REMOVE(&coda_nc_lru.head, cncp, lru);
+	TAILQ_INSERT_TAIL(&coda_nc_lru.head, cncp, lru);
 
 	/* move it to the front of the hash chain */
 	/* don't need to change the hash bucket length */
-	CODA_NC_HSHREM(cncp);
-	CODA_NC_HSHINS(cncp, &coda_nc_hash[hash]);
+	LIST_REMOVE(cncp, hash);
+	LIST_INSERT_HEAD(&coda_nc_hash[hash].head, cncp, hash);
 
 	CODA_NC_DEBUG(CODA_NC_LOOKUP,
 		printf("lookup: dcp %p, name %s, cred %p = cp %p\n",
@@ -356,9 +348,9 @@ coda_nc_remove(struct coda_cache *cncp, enum dc_status dcstat)
 			      cncp->name, coda_f2s(&cncp->dcp->c_fid))); )
 
 
-  	CODA_NC_HSHREM(cncp);
+	LIST_REMOVE(cncp, hash);
+	memset(&cncp->hash, 0, sizeof(cncp->hash));
 
-	CODA_NC_HSHNUL(cncp);		/* have it be a null chain */
 	if ((dcstat == IS_DOWNCALL) && (CTOV(cncp->dcp)->v_usecount == 1)) {
 		cncp->dcp->c_flags |= C_PURGING;
 	}
@@ -372,10 +364,9 @@ coda_nc_remove(struct coda_cache *cncp, enum dc_status dcstat)
 	kauth_cred_free(cncp->cred);
 	memset(DATA_PART(cncp), 0, DATA_SIZE);
 
-	/* Put the null entry just after the least-recently-used entry */
-	/* LRU_TOP adjusts the pointer to point to the top of the structure. */
-	CODA_NC_LRUREM(cncp);
-	CODA_NC_LRUINS(cncp, LRU_TOP(coda_nc_lru.lru_prev));
+	/* move the null entry to the front for reuse */
+	TAILQ_REMOVE(&coda_nc_lru.head, cncp, lru);
+	TAILQ_INSERT_HEAD(&coda_nc_lru.head, cncp, lru);
 }
 
 /*
@@ -407,10 +398,10 @@ coda_nc_zapParentfid(CodaFid *fid, enum dc_status dcstat)
 		 * entry. remove causes hash_next to point to itself.
 		 */
 
-		for (cncp = coda_nc_hash[i].hash_next;
-		     cncp != (struct coda_cache *)&coda_nc_hash[i];
-		     cncp = ncncp) {
-			ncncp = cncp->hash_next;
+		ncncp = LIST_FIRST(&coda_nc_hash[i].head);
+		while ((cncp = ncncp) != NULL) {
+			ncncp = LIST_NEXT(cncp, hash);
+
 			if (coda_fid_eq(&(cncp->dcp->c_fid), fid)) {
 			        coda_nc_hash[i].length--;      /* Used for tuning */
 				coda_nc_remove(cncp, dcstat);
@@ -440,10 +431,11 @@ coda_nc_zapfid(CodaFid *fid, enum dc_status dcstat)
 	coda_nc_stat.zapFids++;
 
 	for (i = 0; i < coda_nc_hashsize; i++) {
-		for (cncp = coda_nc_hash[i].hash_next;
-		     cncp != (struct coda_cache *)&coda_nc_hash[i];
-		     cncp = ncncp) {
-			ncncp = cncp->hash_next;
+
+		ncncp = LIST_FIRST(&coda_nc_hash[i].head);
+		while ((cncp = ncncp) != NULL) {
+			ncncp = LIST_NEXT(cncp, hash);
+
 			if (coda_fid_eq(&cncp->cp->c_fid, fid)) {
 			        coda_nc_hash[i].length--;     /* Used for tuning */
 				coda_nc_remove(cncp, dcstat);
@@ -533,10 +525,9 @@ coda_nc_purge_user(uid_t uid, enum dc_status dcstat)
 		myprintf(("ZapDude: uid %x\n", uid)); )
 	coda_nc_stat.zapUsers++;
 
-	for (cncp = CODA_NC_LRUGET(coda_nc_lru);
-	     cncp != (struct coda_cache *)(&coda_nc_lru);
-	     cncp = ncncp) {
-		ncncp = CODA_NC_LRUGET(*cncp);
+	ncncp = TAILQ_FIRST(&coda_nc_lru.head);
+	while ((cncp = ncncp) != NULL) {
+		ncncp = TAILQ_NEXT(cncp, lru);
 
 		if ((CODA_NC_VALID(cncp)) &&
 		   (kauth_cred_geteuid(cncp->cred) == uid)) {
@@ -576,13 +567,11 @@ coda_nc_flush(enum dc_status dcstat)
 
 	coda_nc_stat.Flushes++;
 
-	for (cncp = CODA_NC_LRUGET(coda_nc_lru);
-	     cncp != (struct coda_cache *)&coda_nc_lru;
-	     cncp = CODA_NC_LRUGET(*cncp)) {
-		if (CODA_NC_VALID(cncp)) {
+	TAILQ_FOREACH(cncp, &coda_nc_lru.head, lru) {
+		if (CODA_NC_VALID(cncp)) {	/* only zero valid nodes */
+			LIST_REMOVE(cncp, hash);
+			memset(&cncp->hash, 0, sizeof(cncp->hash));
 
-			CODA_NC_HSHREM(cncp);	/* only zero valid nodes */
-			CODA_NC_HSHNUL(cncp);
 			if ((dcstat == IS_DOWNCALL)
 			    && (CTOV(cncp->dcp)->v_usecount == 1))
 			{
@@ -629,9 +618,7 @@ print_coda_nc(void)
 	for (hash = 0; hash < coda_nc_hashsize; hash++) {
 		myprintf(("\nhash %d\n",hash));
 
-		for (cncp = coda_nc_hash[hash].hash_next;
-		     cncp != (struct coda_cache *)&coda_nc_hash[hash];
-		     cncp = cncp->hash_next) {
+		LIST_FOREACH(cncp, &coda_nc_hash[hash].head, hash) {
 			myprintf(("cp %p dcp %p cred %p name %s\n",
 				  cncp->cp, cncp->dcp,
 				  cncp->cred, cncp->name));
@@ -713,17 +700,15 @@ char coda_nc_name_buf[CODA_MAXNAMLEN+1];
 void
 coda_nc_name(struct cnode *cp)
 {
-	struct coda_cache *cncp, *ncncp;
+	struct coda_cache *cncp;
 	int i;
 
 	if (coda_nc_use == 0)			/* Cache is off */
 		return;
 
 	for (i = 0; i < coda_nc_hashsize; i++) {
-		for (cncp = coda_nc_hash[i].hash_next;
-		     cncp != (struct coda_cache *)&coda_nc_hash[i];
-		     cncp = ncncp) {
-			ncncp = cncp->hash_next;
+
+		LIST_FOREACH(cncp, &coda_nc_hash[i].head, hash) {
 			if (cncp->cp == cp) {
 				bcopy(cncp->name, coda_nc_name_buf, cncp->namelen);
 				coda_nc_name_buf[cncp->namelen] = 0;

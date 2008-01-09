@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_lid.c,v 1.21 2006/11/16 01:32:47 christos Exp $	*/
+/*	$NetBSD: acpi_lid.c,v 1.21.24.1 2008/01/09 01:52:19 matt Exp $	*/
 
 /*
  * Copyright 2001, 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.21 2006/11/16 01:32:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_lid.c,v 1.21.24.1 2008/01/09 01:52:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,8 @@ CFATTACH_DECL(acpilid, sizeof(struct acpilid_softc),
 
 static void	acpilid_status_changed(void *);
 static void	acpilid_notify_handler(ACPI_HANDLE, UINT32, void *);
+
+static bool	acpilid_suspend(device_t);
 
 /*
  * acpilid_match:
@@ -123,6 +125,30 @@ acpilid_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	acpi_set_wake_gpe(sc->sc_node->ad_handle);
+
+	if (!pmf_device_register(self, acpilid_suspend, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+static void
+acpilid_wake_event(struct acpilid_softc *sc, bool enable)
+{
+	ACPI_STATUS rv;
+        ACPI_OBJECT_LIST ArgList;
+        ACPI_OBJECT Arg;
+
+        ArgList.Count = 1;
+	ArgList.Pointer = &Arg;
+
+	Arg.Type = ACPI_TYPE_INTEGER;
+	Arg.Integer.Value = enable ? 1 : 0;
+
+	rv = AcpiEvaluateObject (sc->sc_node->ad_handle, "_PSW",
+	    &ArgList, NULL);
+	if (ACPI_FAILURE(rv) && rv != AE_NOT_FOUND)
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to evaluate _PSW handler: %s\n",
+		    AcpiFormatException(rv));
 }
 
 /*
@@ -163,7 +189,7 @@ acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 		printf("%s: received LidStatusChanged message\n",
 		    sc->sc_dev.dv_xname);
 #endif
-		rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+		rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 		    acpilid_status_changed, sc);
 		if (ACPI_FAILURE(rv))
 			printf("%s: WARNING: unable to queue lid change "
@@ -175,4 +201,19 @@ acpilid_notify_handler(ACPI_HANDLE handle, UINT32 notify,
 		printf("%s: received unknown notify message: 0x%x\n",
 		    sc->sc_dev.dv_xname, notify);
 	}
+}
+
+static bool
+acpilid_suspend(device_t dv)
+{
+	struct acpilid_softc *sc = device_private(dv);
+	ACPI_INTEGER status;
+	ACPI_STATUS rv;
+
+	rv = acpi_eval_integer(sc->sc_node->ad_handle, "_LID", &status);
+	if (ACPI_FAILURE(rv))
+		return true;
+
+	acpilid_wake_event(sc, status == 0);
+	return true;
 }

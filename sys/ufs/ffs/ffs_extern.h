@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_extern.h,v 1.60 2007/08/09 09:22:34 hannken Exp $	*/
+/*	$NetBSD: ffs_extern.h,v 1.60.2.1 2008/01/09 01:58:25 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -64,13 +64,15 @@ struct cg;
 
 #if defined(_KERNEL)
 
+#include <sys/pool.h>
+
 #define	FFS_ITIMES(ip, acc, mod, cre) \
 	while ((ip)->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE | IN_MODIFY)) \
 		ffs_itimes(ip, acc, mod, cre)
 
-extern struct pool ffs_inode_pool;	/* memory pool for inodes */
-extern struct pool ffs_dinode1_pool;	/* memory pool for UFS1 dinodes */
-extern struct pool ffs_dinode2_pool;	/* memory pool for UFS2 dinodes */
+extern pool_cache_t ffs_inode_cache;	/* memory pool for inodes */
+extern pool_cache_t ffs_dinode1_cache;	/* memory pool for UFS1 dinodes */
+extern pool_cache_t ffs_dinode2_cache;	/* memory pool for UFS2 dinodes */
 
 #endif /* defined(_KERNEL) */
 
@@ -104,7 +106,7 @@ int	ffs_balloc(struct vnode *, off_t, int, kauth_cred_t, int,
 /* ffs_inode.c */
 int	ffs_update(struct vnode *, const struct timespec *,
     const struct timespec *, int);
-int	ffs_truncate(struct vnode *, off_t, int, kauth_cred_t, struct lwp *);
+int	ffs_truncate(struct vnode *, off_t, int, kauth_cred_t);
 
 /* ffs_vfsops.c */
 VFS_PROTOS(ffs);
@@ -131,6 +133,7 @@ int	ffs_deleteextattr(void *);
 int	ffs_lock(void *);
 int	ffs_unlock(void *);
 int	ffs_islocked(void *);
+int	ffs_full_fsync(struct vnode *, int);
 
 #ifdef SYSCTL_SETUP_PROTO
 SYSCTL_SETUP_PROTO(sysctl_vfs_ffs_setup);
@@ -155,6 +158,7 @@ void	softdep_initialize(void);
 void	softdep_reinitialize(void);
 int	softdep_mount(struct vnode *, struct mount *, struct fs *,
 		      kauth_cred_t);
+void	softdep_unmount(struct mount *);
 int	softdep_flushworklist(struct mount *, int *, struct lwp *);
 int	softdep_flushfiles(struct mount *, int, struct lwp *);
 void	softdep_update_inodeblock(struct inode *, struct buf *, int);
@@ -171,7 +175,7 @@ void	softdep_setup_allocindir_page(struct inode *, daddr_t,
 				      struct buf *, int, daddr_t, daddr_t,
 				      struct buf *);
 void	softdep_fsync_mountdev(struct vnode *);
-int	softdep_sync_metadata(void *);
+int	softdep_sync_metadata(struct vnode *);
 
 extern int (**ffs_vnodeop_p)(void *);
 extern int (**ffs_specop_p)(void *);

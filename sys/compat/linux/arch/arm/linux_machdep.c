@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.22 2007/03/26 22:44:40 hubertf Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.22.10.1 2008/01/09 01:50:57 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2007/03/26 22:44:40 hubertf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22.10.1 2008/01/09 01:50:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.22 2007/03/26 22:44:40 hubertf E
 #include <compat/linux/linux_syscallargs.h>
 
 void
-linux_setregs(l, epp, stack)
-	struct lwp *l;
-	struct exec_package *epp;
-	u_long stack;
+linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 
 	setregs(l, epp, stack);
@@ -195,10 +192,7 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * a machine fault.
  */
 int
-linux_sys_rt_sigreturn(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct proc *p, void *v, register_t *retval)
 {
 	/* XXX XAX write me */
 	return(ENOSYS);
@@ -206,10 +200,8 @@ linux_sys_rt_sigreturn(p, v, retval)
 #endif
 
 int
-linux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *v,
+	register_t *retval)
 {
 	struct linux_sigframe *sfp, frame;
 	struct proc *p = l->l_proc;
@@ -273,9 +265,7 @@ linux_sys_sigreturn(l, v, retval)
  * major device numbers remapping
  */
 dev_t
-linux_fakedev(dev, raw)
-	dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 	/* XXX write me */
 	return dev;
@@ -285,16 +275,13 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 

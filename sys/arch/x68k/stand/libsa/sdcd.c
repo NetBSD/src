@@ -1,4 +1,4 @@
-/*	$NetBSD: sdcd.c,v 1.6 2006/01/25 18:28:28 christos Exp $	*/
+/*	$NetBSD: sdcd.c,v 1.6.48.1 2008/01/09 01:49:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 MINOURA Makoto.
@@ -27,9 +27,11 @@
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
+#include <machine/stdarg.h>
 #include <lib/libkern/libkern.h>
 #include <lib/libsa/stand.h>
 
+#include "libx68k.h"
 #include "sdcdvar.h"
 #include "iocs.h"
 
@@ -37,14 +39,6 @@
 static int current_id = -1;
 static int current_blklen, current_devsize, current_npart;
 static struct boot_partinfo partitions[MAXPARTITIONS];
-
-int sdopen(struct open_file *, int, int);
-int sdclose(struct open_file*);
-int sdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
-int sd_getbsdpartition(int, int);
-int cdopen(struct open_file *, int, int);
-int cdclose(struct open_file*);
-int cdstrategy(void *devdata, int rw, daddr_t blk, size_t, void*, size_t*);
 
 static int readdisklabel(int);
 static int check_unit(int);
@@ -106,7 +100,7 @@ check_unit(int id)
 			error =  EIO;
 			goto out;
 		}
-		if (strncmp((char*) buffer, "X68SCSI1", 8) != 0) {
+		if (strncmp((char *)buffer, "X68SCSI1", 8) != 0) {
 			error = EUNLAB;
 			goto out;
 		}
@@ -117,7 +111,7 @@ check_unit(int id)
 }
 
 static int
-readdisklabel (int id)
+readdisklabel(int id)
 {
 	int error, i;
 	char *buffer;
@@ -142,7 +136,7 @@ readdisklabel (int id)
 	error = IOCS_S_READ(LABELSECTOR, 1, id, current_blklen, buffer);
 	if (error < 0)
 		return EIO;
-	label = (void*) (buffer + LABELOFFSET);
+	label = (void *)(buffer + LABELOFFSET);
 	if (label->d_magic == DISKMAGIC &&
 	    label->d_magic2 == DISKMAGIC) {
 		for (i = 0; i < label->d_npartitions; i++) {
@@ -164,8 +158,8 @@ readdisklabel (int id)
 #endif
 	if (error < 0)
 		return EIO;
-	parttbl = (void*) (buffer + DOSBBSECTOR);
-	if (strncmp (buffer, "X68K", 4) != 0)
+	parttbl = (void *)(buffer + DOSBBSECTOR);
+	if (strncmp(buffer, "X68K", 4) != 0)
 		return EUNLAB;
 	parttbl++;
 	for (current_npart = 0, i = 0;
@@ -195,7 +189,7 @@ done:
 }
 
 int
-sd_getbsdpartition (int id, int humanpart)
+sd_getbsdpartition(int id, int humanpart)
 {
 	int error, i;
 	char *buffer;
@@ -207,28 +201,28 @@ sd_getbsdpartition (int id, int humanpart)
 
 	error = readdisklabel(id);
 	if (error) {
-		printf ("Reading disklabel: %s\n", strerror(error));
+		printf("Reading disklabel: %s\n", strerror(error));
 		return -1;
 	}
 	buffer = alloca(2048);
 	error = IOCS_S_READ(8 >> current_blklen, 8 >> current_blklen,
 			    id, current_blklen, buffer);
 	if (error < 0) {
-		printf ("Reading partition table: %s\n", strerror(error));
+		printf("Reading partition table: %s\n", strerror(error));
 		return -1;
 	}
-	parttbl = (void*) (buffer + DOSBBSECTOR);
-	if (strncmp (buffer, "X68K", 4) != 0)
+	parttbl = (void *)(buffer + DOSBBSECTOR);
+	if (strncmp(buffer, "X68K", 4) != 0)
 		return 0;
 	parttop = parttbl[humanpart].dp_start;
-	parttop = parttop<<(2-current_blklen);
+	parttop = parttop << (2 - current_blklen);
 
 	for (i = 0; i < current_npart; i++) {
 		if (partitions[i].start == parttop)
 			return i;
 	}
 
-	printf ("Could not determine the boot partition.\n");
+	printf("Could not determine the boot partition.\n");
 
 	return -1;
 }
@@ -239,11 +233,19 @@ struct sdcd_softc {
 	int			sc_blocksize;
 };
 
+/* sdopen(struct open_file *f, int id, int part) */
 int
-sdopen (struct open_file *f, int id, int part)
+sdopen(struct open_file *f, ...)
 {
 	int error;
 	struct sdcd_softc *sc;
+	int id, part;
+	va_list ap;
+
+	va_start(ap, f);
+	id   = va_arg(ap, int);
+	part = va_arg(ap, int);
+	va_end(ap);
 
 	if (id < 0 || id > 7)
 		return ENXIO;
@@ -255,7 +257,7 @@ sdopen (struct open_file *f, int id, int part)
 	if (part >= current_npart)
 		return ENXIO;
 
-	sc = alloc (sizeof (struct sdcd_softc));
+	sc = alloc(sizeof(struct sdcd_softc));
 	sc->sc_part = part;
 	sc->sc_partinfo = partitions[part];
 	sc->sc_blocksize = current_blklen << 9;
@@ -264,15 +266,15 @@ sdopen (struct open_file *f, int id, int part)
 }
 
 int
-sdclose (struct open_file *f)
+sdclose(struct open_file *f)
 {
-	dealloc (f->f_devdata, sizeof (struct sdcd_softc));
+	dealloc(f->f_devdata, sizeof(struct sdcd_softc));
 	return 0;
 }
 
 int
-sdstrategy (void *arg, int rw, daddr_t dblk, size_t size,
-	    void *buf, size_t *rsize)
+sdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
+           void *buf, size_t *rsize)
 {
 	struct sdcd_softc *sc = arg;
 	u_int32_t	start = sc->sc_partinfo.start + dblk;
@@ -284,22 +286,22 @@ sdstrategy (void *arg, int rw, daddr_t dblk, size_t size,
 			*rsize = 0;
 		return 0;
 	}
-	nblks = howmany (size, 256 << current_blklen);
+	nblks = howmany(size, 256 << current_blklen);
 
 	if ((dblk & 0x1fffff) == 0x1fffff && (nblks & 0xff) == nblks) {
 		if (rw & F_WRITE)
-			error = IOCS_S_WRITE (start, nblks, current_id,
-					      current_blklen, buf);
+			error = IOCS_S_WRITE(start, nblks, current_id,
+			                     current_blklen, buf);
 		else
-			error = IOCS_S_READ (start, nblks, current_id,
-					     current_blklen, buf);
+			error = IOCS_S_READ(start, nblks, current_id,
+			                    current_blklen, buf);
 	} else {
 		if (rw & F_WRITE)
-			error = IOCS_S_WRITEEXT (start, nblks, current_id,
-						 current_blklen, buf);
+			error = IOCS_S_WRITEEXT(start, nblks, current_id,
+			                        current_blklen, buf);
 		else
-			error = IOCS_S_READEXT (start, nblks, current_id,
-						 current_blklen, buf);
+			error = IOCS_S_READEXT(start, nblks, current_id,
+			                       current_blklen, buf);
 	}
 	if (error < 0)
 		return EIO;
@@ -309,11 +311,19 @@ sdstrategy (void *arg, int rw, daddr_t dblk, size_t size,
 	return 0;
 }
 
+/* cdopen(struct open_file *f, int id, int part) */
 int
-cdopen (struct open_file *f, int id, int part)
+cdopen(struct open_file *f, ...)
 {
 	int error;
 	struct sdcd_softc *sc;
+	int id, part;
+	va_list ap;
+
+	va_start(ap, f);
+	id   = va_arg(ap, int);
+	part = va_arg(ap, int);
+	va_end(ap);
 
 	if (id < 0 || id > 7)
 		return ENXIO;
@@ -325,7 +335,7 @@ cdopen (struct open_file *f, int id, int part)
 			return error;
 	}
 
-	sc = alloc (sizeof (struct sdcd_softc));
+	sc = alloc(sizeof(struct sdcd_softc));
 	current_npart = 3;
 	sc->sc_part = 0;
 	sc->sc_partinfo.size = sc->sc_partinfo.size = current_devsize;
@@ -335,18 +345,18 @@ cdopen (struct open_file *f, int id, int part)
 }
 
 int
-cdclose (struct open_file *f)
+cdclose(struct open_file *f)
 {
-	dealloc (f->f_devdata, sizeof (struct sdcd_softc));
+	dealloc(f->f_devdata, sizeof(struct sdcd_softc));
 	return 0;
 }
 
 int
-cdstrategy (void *arg, int rw, daddr_t dblk, size_t size,
-	    void *buf, size_t *rsize)
+cdstrategy(void *arg, int rw, daddr_t dblk, size_t size,
+           void *buf, size_t *rsize)
 {
 	struct sdcd_softc *sc = arg;
 
-	return sdstrategy (arg, rw, dblk * DEV_BSIZE / sc->sc_blocksize,
-			   size, buf, rsize);
+	return sdstrategy(arg, rw, dblk * DEV_BSIZE / sc->sc_blocksize,
+	                  size, buf, rsize);
 }

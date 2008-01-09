@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.33.10.1 2007/11/06 23:23:14 matt Exp $
+#	$NetBSD: genassym.cf,v 1.33.10.2 2008/01/09 01:49:36 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -137,19 +137,13 @@ define	IPL_HIGH	IPL_HIGH
 define	IPL_CLOCK	IPL_CLOCK
 define	IPL_NONE	IPL_NONE
 
-define	SHD_INTRS	offsetof(struct softintr_head, shd_intrs.lh_first)
-define	SH_ARG		offsetof(struct softintr_handler, sh_arg)
-define	SH_FUNC		offsetof(struct softintr_handler, sh_func)
-define	SH_NEXT		offsetof(struct softintr_handler, sh_link.le_next)
-define	SH_PENDING	offsetof(struct softintr_handler, sh_pending)
-
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
 
 define	PSL_IS		PSL_IS
 
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
 define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
-define	MTX_ID		offsetof(struct kmutex, mtx_id)
+define	MTX_FLAGS	offsetof(struct kmutex, mtx_flags)
 ifdef	MUTEX_COUNT_BIAS
 define	MTX_COUNT_BIAS	MUTEX_COUNT_BIAS
 endif

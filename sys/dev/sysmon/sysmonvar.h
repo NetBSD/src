@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmonvar.h,v 1.15.8.1 2007/11/06 23:30:22 matt Exp $	*/
+/*	$NetBSD: sysmonvar.h,v 1.15.8.2 2008/01/09 01:54:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -40,6 +40,8 @@
 #include <sys/wdog.h>
 #include <sys/power.h>
 #include <sys/queue.h>
+#include <sys/callout.h>
+#include <sys/workqueue.h>
 
 struct lwp;
 struct proc;
@@ -54,51 +56,61 @@ struct uio;
  * Environmental sensor support
  *****************************************************************************/
 
-struct sme_sensor_names {
-	SLIST_ENTRY(sme_sensor_names) sme_names;
-	int 	assigned;
-	char 	desc[ENVSYS_DESCLEN];
-};
+struct sme_event;
+struct sme_sensor_names;
 
 struct sysmon_envsys {
-	const char *sme_name;			/* envsys device name */
-	uint32_t sme_nsensors;			/* sensor count, from driver */
-	uint32_t sme_uniqsensors;
-
-	int sme_class;				/* class of device */
+	const char *sme_name;		/* envsys device name */
+	u_int sme_nsensors;		/* sensors count, from driver */
+	u_int sme_fsensor;		/* sensor index base, from sysmon */
+#define SME_SENSOR_IDX(sme, idx) 	((idx) - (sme)->sme_fsensor)
+	int sme_class;			/* class of device */
 #define SME_CLASS_BATTERY	1		/* device is a battery */
 #define SME_CLASS_ACADAPTER	2		/* device is an AC adapter */
+	int sme_flags;			/* additional flags */
+#define SME_FLAG_BUSY 		0x00000001 	/* device busy */
+#define SME_DISABLE_REFRESH	0x00000002	/* disable sme_refresh */
+#define SME_CALLOUT_INITIALIZED	0x00000004	/* callout was initialized */
 
-	int sme_flags;				/* additional flags */
-#define SME_FLAG_BUSY 		0x00000001 	/* sme is busy */
-#define SME_FLAG_WANTED 	0x00000002 	/* someone waiting for this */
-#define SME_DISABLE_GTREDATA	0x00000004	/* disable sme_gtredata */
+	void *sme_cookie;		/* for ENVSYS back-end */
 
-	envsys_data_t *sme_sensor_data;		/* pointer to device data */
+	/* 
+	 * Function callback to receive data from device.
+	 */
+	void (*sme_refresh)(struct sysmon_envsys *, envsys_data_t *);
 
-	/* linked list for the sysmon envsys devices */
+	struct workqueue *sme_wq;	/* the workqueue for the events */
+	struct callout sme_callout;	/* for the events */
+	uint64_t sme_events_timeout;	/* the timeout used in the callout */
+
+	/* 
+	 * linked list for the sysmon envsys devices.
+	 */
 	LIST_ENTRY(sysmon_envsys) sme_list;
 
 	/* 
-	 * Singly linked list for the sysmon envsys sensor descriptions.
+	 * linked list for the events that a device maintains.
 	 */
-	SLIST_HEAD(, sme_sensor_names) sme_names_list;
+	LIST_HEAD(, sme_event) sme_events_list;
 
-	void *sme_cookie;			/* for ENVSYS back-end */
-
-	/* Function callback to recieve data from device */
-	int (*sme_gtredata)(struct sysmon_envsys *, envsys_data_t *);
-
-	uint32_t sme_fsensor;		/* sensor index base, from sysmon */
-#define SME_SENSOR_IDX(sme, idx)	((idx) - (sme)->sme_fsensor)
+	/*
+	 * tailq for the sensors that a device maintains.
+	 */
+	TAILQ_HEAD(, envsys_data) sme_sensors_list;
 };
 
 int	sysmonopen_envsys(dev_t, int, int, struct lwp *);
 int	sysmonclose_envsys(dev_t, int, int, struct lwp *);
 int	sysmonioctl_envsys(dev_t, u_long, void *, int, struct lwp *);
 
+struct sysmon_envsys 	*sysmon_envsys_create(void);
+void 			sysmon_envsys_destroy(struct sysmon_envsys *);
+
 int	sysmon_envsys_register(struct sysmon_envsys *);
 void	sysmon_envsys_unregister(struct sysmon_envsys *);
+
+int	sysmon_envsys_sensor_attach(struct sysmon_envsys *, envsys_data_t *);
+int	sysmon_envsys_sensor_detach(struct sysmon_envsys *, envsys_data_t *);
 
 void	sysmon_envsys_init(void);
 
@@ -125,7 +137,7 @@ int	sysmonclose_wdog(dev_t, int, int, struct lwp *);
 int	sysmonioctl_wdog(dev_t, u_long, void *, int, struct lwp *);
 
 int     sysmon_wdog_register(struct sysmon_wdog *);
-void    sysmon_wdog_unregister(struct sysmon_wdog *);
+int     sysmon_wdog_unregister(struct sysmon_wdog *);
 
 void	sysmon_wdog_init(void);
 

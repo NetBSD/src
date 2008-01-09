@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.c,v 1.12 2005/12/11 12:20:30 christos Exp $	*/
+/*	$NetBSD: vax1k_exec.c,v 1.12.46.1 2008/01/09 01:52:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.12 2005/12/11 12:20:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.12.46.1 2008/01/09 01:52:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,8 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: vax1k_exec.c,v 1.12 2005/12/11 12:20:30 christos Exp
 #define COMPAT_43	/* enable 4.3BSD binaries for lkm */
 #endif
 
-int	exec_vax1k_prep_anymagic __P((struct lwp *l, struct exec_package *epp,
-				      int, int));
+int	exec_vax1k_prep_anymagic(struct lwp *l, struct exec_package *epp,
+				      int, int);
 
 /*
  * exec_vax1k_makecmds(): Check if it's an a.out-format executable
@@ -75,9 +75,7 @@ int	exec_vax1k_prep_anymagic __P((struct lwp *l, struct exec_package *epp,
  */
 
 int
-exec_vax1k_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_vax1k_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	u_long midmag, magic;
 	u_short mid;

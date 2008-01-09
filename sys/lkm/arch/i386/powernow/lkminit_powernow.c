@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_powernow.c,v 1.10.10.1 2007/11/06 23:32:57 matt Exp $	*/
+/*	$NetBSD: lkminit_powernow.c,v 1.10.10.2 2008/01/09 01:56:47 matt Exp $	*/
 
 /*
  * Derived from:
@@ -37,14 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.10.10.1 2007/11/06 23:32:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_powernow.c,v 1.10.10.2 2008/01/09 01:56:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lkm.h>
 #include <sys/errno.h>
 #include <sys/cpu.h>
-#include <x86/include/powernow.h>
+#include <machine/specialreg.h>
+#include <x86/powernow.h>
 
 int powernow_lkmentry(struct lkm_table *, int, int);
 static int powernow_mod_handle(struct lkm_table *, int);

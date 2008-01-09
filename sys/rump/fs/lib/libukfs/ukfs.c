@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.7.2.2 2007/11/08 11:00:17 matt Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.7.2.3 2008/01/09 01:57:58 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -87,7 +87,7 @@ struct ukfs *
 ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen)
 {
-	struct ukfs *fs;
+	struct ukfs *fs = NULL;
 	struct vfsops *vfsops;
 	struct mount *mp;
 	int rv = 0;
@@ -108,7 +108,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	memset(fs, 0, sizeof(struct ukfs));
 
 	rump_fakeblk_register(devpath);
-	rv = rump_mnt_mount(mp, mountpath, arg, &alen, curlwp);
+	rv = rump_mnt_mount(mp, mountpath, arg, &alen);
 	if (rv) {
 		warnx("VFS_MOUNT %d", rv);
 		goto out;
@@ -118,7 +118,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 
  out:
 	if (rv) {
-		if (fs->ukfs_mp)
+		if (fs && fs->ukfs_mp)
 			rump_mnt_destroy(fs->ukfs_mp);
 		if (fs)
 			free(fs);
@@ -135,8 +135,8 @@ ukfs_release(struct ukfs *fs, int dounmount)
 	int rv;
 
 	if (dounmount) {
-		rv |= rump_vfs_sync(fs->ukfs_mp, 1, NULL, curlwp);
-		rv |= rump_vfs_unmount(fs->ukfs_mp, 0, curlwp);
+		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL);
+		rv |= rump_vfs_unmount(fs->ukfs_mp, 0);
 		assert(rv == 0);
 	}
 
@@ -155,14 +155,15 @@ ukfs_release(struct ukfs *fs, int dounmount)
 void
 ukfs_ll_recycle(struct vnode *vp)
 {
+	bool recycle;
 
 	/* XXXXX */
 	if (vp == NULL || rump_vp_getref(vp))
 		return;
 
 	VLE(vp);
-	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0, curlwp);
-	RUMP_VOP_INACTIVE(vp, curlwp);
+	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0);
+	RUMP_VOP_INACTIVE(vp, &recycle);
 	rump_recyclenode(vp);
 	rump_putnode(vp);
 }

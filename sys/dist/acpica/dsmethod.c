@@ -1,7 +1,9 @@
+/*	$NetBSD: dsmethod.c,v 1.3.42.1 2008/01/09 01:55:05 matt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dsmethod - Parser/Interpreter interface - control method parsing
- *              xRevision: 1.116 $
+ *              $Revision: 1.3.42.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,21 +117,27 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.3 2006/04/13 07:31:29 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsmethod.c,v 1.3.42.1 2008/01/09 01:55:05 matt Exp $");
 
 #define __DSMETHOD_C__
 
-#include "acpi.h"
-#include "acparser.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#include "acdisasm.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acdispat.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acdisasm.h>
 
 
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsmethod")
+
+/* Local prototypes */
+
+static ACPI_STATUS
+AcpiDsCreateMethodMutex (
+    ACPI_OPERAND_OBJECT     *MethodDesc);
 
 
 /*******************************************************************************
@@ -198,11 +206,57 @@ AcpiDsMethodError (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AcpiDsCreateMethodMutex
+ *
+ * PARAMETERS:  ObjDesc             - The method object
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Create a mutex object for a serialized control method
+ *
+ ******************************************************************************/
+
+static ACPI_STATUS
+AcpiDsCreateMethodMutex (
+    ACPI_OPERAND_OBJECT     *MethodDesc)
+{
+    ACPI_OPERAND_OBJECT     *MutexDesc;
+    ACPI_STATUS             Status;
+
+
+    ACPI_FUNCTION_TRACE (DsCreateMethodMutex);
+
+
+    /* Create the new mutex object */
+
+    MutexDesc = AcpiUtCreateInternalObject (ACPI_TYPE_MUTEX);
+    if (!MutexDesc)
+    {
+        return_ACPI_STATUS (AE_NO_MEMORY);
+    }
+
+    /* Create the actual OS Mutex */
+
+    Status = AcpiOsCreateMutex (&MutexDesc->Mutex.OsMutex);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
+    MutexDesc->Mutex.SyncLevel = MethodDesc->Method.SyncLevel;
+    MethodDesc->Method.Mutex = MutexDesc;
+    return_ACPI_STATUS (AE_OK);
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AcpiDsBeginMethodExecution
  *
  * PARAMETERS:  MethodNode          - Node of the method
  *              ObjDesc             - The method object
- *              CallingMethodNode   - Caller of this method (if non-null)
+ *              WalkState           - current state, NULL if not yet executing
+ *                                    a method.
  *
  * RETURN:      Status
  *
@@ -216,12 +270,12 @@ ACPI_STATUS
 AcpiDsBeginMethodExecution (
     ACPI_NAMESPACE_NODE     *MethodNode,
     ACPI_OPERAND_OBJECT     *ObjDesc,
-    ACPI_NAMESPACE_NODE     *CallingMethodNode)
+    ACPI_WALK_STATE         *WalkState)
 {
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsBeginMethodExecution", MethodNode);
+    ACPI_FUNCTION_TRACE_PTR (DsBeginMethodExecution, MethodNode);
 
 
     if (!MethodNode)
@@ -239,33 +293,81 @@ AcpiDsBeginMethodExecution (
     }
 
     /*
-     * If there is a concurrency limit on this method, we need to
-     * obtain a unit from the method semaphore.
+     * If this method is serialized, we need to acquire the method mutex.
      */
-    if (ObjDesc->Method.Semaphore)
+    if (ObjDesc->Method.MethodFlags & AML_METHOD_SERIALIZED)
     {
         /*
-         * Allow recursive method calls, up to the reentrancy/concurrency
-         * limit imposed by the SERIALIZED rule and the SyncLevel method
-         * parameter.
-         *
-         * The point of this code is to avoid permanently blocking a
-         * thread that is making recursive method calls.
+         * Create a mutex for the method if it is defined to be Serialized
+         * and a mutex has not already been created. We defer the mutex creation
+         * until a method is actually executed, to minimize the object count
          */
-        if (MethodNode == CallingMethodNode)
+        if (!ObjDesc->Method.Mutex)
         {
-            if (ObjDesc->Method.ThreadCount >= ObjDesc->Method.Concurrency)
+            Status = AcpiDsCreateMethodMutex (ObjDesc);
+            if (ACPI_FAILURE (Status))
             {
-                return_ACPI_STATUS (AE_AML_METHOD_LIMIT);
+                return_ACPI_STATUS (Status);
             }
         }
 
         /*
-         * Get a unit from the method semaphore. This releases the
-         * interpreter if we block
+         * The CurrentSyncLevel (per-thread) must be less than or equal to
+         * the sync level of the method. This mechanism provides some
+         * deadlock prevention
+         *
+         * Top-level method invocation has no walk state at this point
          */
-        Status = AcpiExSystemWaitSemaphore (ObjDesc->Method.Semaphore,
-                                            ACPI_WAIT_FOREVER);
+        if (WalkState &&
+            (WalkState->Thread->CurrentSyncLevel > ObjDesc->Method.Mutex->Mutex.SyncLevel))
+        {
+            ACPI_ERROR ((AE_INFO,
+                "Cannot acquire Mutex for method [%4.4s], current SyncLevel is too large (%d)",
+                AcpiUtGetNodeName (MethodNode),
+                WalkState->Thread->CurrentSyncLevel));
+
+            return_ACPI_STATUS (AE_AML_MUTEX_ORDER);
+        }
+
+        /*
+         * Obtain the method mutex if necessary. Do not acquire mutex for a
+         * recursive call.
+         */
+        if (!WalkState ||
+            !ObjDesc->Method.Mutex->Mutex.ThreadId ||
+            (WalkState->Thread->ThreadId != ObjDesc->Method.Mutex->Mutex.ThreadId))
+        {
+            /*
+             * Acquire the method mutex. This releases the interpreter if we
+             * block (and reacquires it before it returns)
+             */
+            Status = AcpiExSystemWaitMutex (ObjDesc->Method.Mutex->Mutex.OsMutex,
+                        ACPI_WAIT_FOREVER);
+            if (ACPI_FAILURE (Status))
+            {
+                return_ACPI_STATUS (Status);
+            }
+
+            /* Update the mutex and walk info and save the original SyncLevel */
+
+            if (WalkState)
+            {
+                ObjDesc->Method.Mutex->Mutex.OriginalSyncLevel =
+                    WalkState->Thread->CurrentSyncLevel;
+
+                ObjDesc->Method.Mutex->Mutex.ThreadId = WalkState->Thread->ThreadId;
+                WalkState->Thread->CurrentSyncLevel = ObjDesc->Method.SyncLevel;
+            }
+            else
+            {
+                ObjDesc->Method.Mutex->Mutex.OriginalSyncLevel =
+                    ObjDesc->Method.Mutex->Mutex.SyncLevel;
+            }
+        }
+
+        /* Always increase acquisition depth */
+
+        ObjDesc->Method.Mutex->Mutex.AcquisitionDepth++;
     }
 
     /*
@@ -278,7 +380,7 @@ AcpiDsBeginMethodExecution (
         Status = AcpiUtAllocateOwnerId (&ObjDesc->Method.OwnerId);
         if (ACPI_FAILURE (Status))
         {
-            return_ACPI_STATUS (Status);
+            goto Cleanup;
         }
     }
 
@@ -287,6 +389,16 @@ AcpiDsBeginMethodExecution (
      * reentered one more time (even if it is the same thread)
      */
     ObjDesc->Method.ThreadCount++;
+    return_ACPI_STATUS (Status);
+
+
+Cleanup:
+    /* On error, must release the method mutex (if present) */
+
+    if (ObjDesc->Method.Mutex)
+    {
+        AcpiOsReleaseMutex (ObjDesc->Method.Mutex->Mutex.OsMutex);
+    }
     return_ACPI_STATUS (Status);
 }
 
@@ -315,13 +427,13 @@ AcpiDsCallControlMethod (
     ACPI_NAMESPACE_NODE     *MethodNode;
     ACPI_WALK_STATE         *NextWalkState = NULL;
     ACPI_OPERAND_OBJECT     *ObjDesc;
-    ACPI_PARAMETER_INFO     Info;
+    ACPI_EVALUATE_INFO      *Info;
     UINT32                  i;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsCallControlMethod", ThisWalkState);
+    ACPI_FUNCTION_TRACE_PTR (DsCallControlMethod, ThisWalkState);
 
-    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "Execute method %p, currentstate=%p\n",
+    ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "Calling method %p, currentstate=%p\n",
         ThisWalkState->PrevOp, ThisWalkState));
 
     /*
@@ -339,57 +451,25 @@ AcpiDsCallControlMethod (
         return_ACPI_STATUS (AE_NULL_OBJECT);
     }
 
-    /* Init for new method, wait on concurrency semaphore */
+    /* Init for new method, possibly wait on method mutex */
 
     Status = AcpiDsBeginMethodExecution (MethodNode, ObjDesc,
-                    ThisWalkState->MethodNode);
+                ThisWalkState);
     if (ACPI_FAILURE (Status))
     {
+        return_ACPI_STATUS (Status);
+    }
+
+    /* Begin method parse/execution. Create a new walk state */
+
+    NextWalkState = AcpiDsCreateWalkState (ObjDesc->Method.OwnerId,
+                        NULL, ObjDesc, Thread);
+    if (!NextWalkState)
+    {
+        Status = AE_NO_MEMORY;
         goto Cleanup;
     }
 
-    if (!(ObjDesc->Method.MethodFlags & AML_METHOD_INTERNAL_ONLY))
-    {
-        /* 1) Parse: Create a new walk state for the preempting walk */
-
-        NextWalkState = AcpiDsCreateWalkState (ObjDesc->Method.OwnerId,
-                                                Op, ObjDesc, NULL);
-        if (!NextWalkState)
-        {
-            return_ACPI_STATUS (AE_NO_MEMORY);
-        }
-
-        /* Create and init a Root Node */
-
-        Op = AcpiPsCreateScopeOp ();
-        if (!Op)
-        {
-            Status = AE_NO_MEMORY;
-            goto Cleanup;
-        }
-
-        Status = AcpiDsInitAmlWalk (NextWalkState, Op, MethodNode,
-                        ObjDesc->Method.AmlStart,  ObjDesc->Method.AmlLength,
-                        NULL, 1);
-        if (ACPI_FAILURE (Status))
-        {
-            goto Cleanup;
-        }
-
-        /* Begin AML parse */
-
-        Status = AcpiPsParseAml (NextWalkState);
-        AcpiPsDeleteParseTree (Op);
-    }
-
-    /* 2) Execute: Create a new state for the preempting walk */
-
-    NextWalkState = AcpiDsCreateWalkState (ObjDesc->Method.OwnerId,
-                                            NULL, ObjDesc, Thread);
-    if (!NextWalkState)
-    {
-        return_ACPI_STATUS (AE_NO_MEMORY);
-    }
     /*
      * The resolved arguments were put on the previous walk state's operand
      * stack. Operands on the previous walk state stack always
@@ -397,12 +477,25 @@ AcpiDsCallControlMethod (
      */
     ThisWalkState->Operands [ThisWalkState->NumOperands] = NULL;
 
-    Info.Parameters = &ThisWalkState->Operands[0];
-    Info.ParameterType = ACPI_PARAM_ARGS;
+    /*
+     * Allocate and initialize the evaluation information block
+     * TBD: this is somewhat inefficient, should change interface to
+     * DsInitAmlWalk. For now, keeps this struct off the CPU stack
+     */
+    Info = ACPI_ALLOCATE_ZEROED (sizeof (ACPI_EVALUATE_INFO));
+    if (!Info)
+    {
+        return_ACPI_STATUS (AE_NO_MEMORY);
+    }
+
+    Info->Parameters = &ThisWalkState->Operands[0];
+    Info->ParameterType = ACPI_PARAM_ARGS;
 
     Status = AcpiDsInitAmlWalk (NextWalkState, NULL, MethodNode,
-                    ObjDesc->Method.AmlStart, ObjDesc->Method.AmlLength,
-                    &Info, 3);
+                ObjDesc->Method.AmlStart, ObjDesc->Method.AmlLength,
+                Info, ACPI_IMODE_EXECUTE);
+
+    ACPI_FREE (Info);
     if (ACPI_FAILURE (Status))
     {
         goto Cleanup;
@@ -423,7 +516,10 @@ AcpiDsCallControlMethod (
     ThisWalkState->NumOperands = 0;
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
-        "Starting nested execution, newstate=%p\n", NextWalkState));
+        "**** Begin nested execution of [%4.4s] **** WalkState=%p\n",
+        MethodNode->Name.Ascii, NextWalkState));
+
+    /* Invoke an internal method if necessary */
 
     if (ObjDesc->Method.MethodFlags & AML_METHOD_INTERNAL_ONLY)
     {
@@ -434,17 +530,15 @@ AcpiDsCallControlMethod (
 
 
 Cleanup:
-    /* Decrement the thread count on the method parse tree */
 
-    if (NextWalkState && (NextWalkState->MethodDesc))
+    /* On error, we must terminate the method properly */
+
+    AcpiDsTerminateControlMethod (ObjDesc, NextWalkState);
+    if (NextWalkState)
     {
-        NextWalkState->MethodDesc->Method.ThreadCount--;
+        AcpiDsDeleteWalkState (NextWalkState);
     }
 
-    /* On error, we must delete the new walk state */
-
-    AcpiDsTerminateControlMethod (NextWalkState);
-    AcpiDsDeleteWalkState (NextWalkState);
     return_ACPI_STATUS (Status);
 }
 
@@ -469,15 +563,16 @@ AcpiDsRestartControlMethod (
     ACPI_OPERAND_OBJECT     *ReturnDesc)
 {
     ACPI_STATUS             Status;
+    int                     SameAsImplicitReturn;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsRestartControlMethod", WalkState);
+    ACPI_FUNCTION_TRACE_PTR (DsRestartControlMethod, WalkState);
 
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
         "****Restart [%4.4s] Op %p ReturnValueFromCallee %p\n",
-        (char *) &WalkState->MethodNode->Name, WalkState->MethodCallOp,
-        ReturnDesc));
+        AcpiUtGetNodeName (WalkState->MethodNode),
+        WalkState->MethodCallOp, ReturnDesc));
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
         "    ReturnFromThisMethodUsed?=%X ResStack %p Walk %p\n",
@@ -488,6 +583,10 @@ AcpiDsRestartControlMethod (
 
     if (ReturnDesc)
     {
+        /* Is the implicit return object the same as the return desc? */
+
+        SameAsImplicitReturn = (WalkState->ImplicitReturnObj == ReturnDesc);
+
         /* Are we actually going to use the return value? */
 
         if (WalkState->ReturnUsed)
@@ -509,18 +608,23 @@ AcpiDsRestartControlMethod (
         }
 
         /*
-         * The following code is the
-         * optional support for a so-called "implicit return". Some AML code
-         * assumes that the last value of the method is "implicitly" returned
-         * to the caller. Just save the last result as the return value.
+         * The following code is the optional support for the so-called
+         * "implicit return". Some AML code assumes that the last value of the
+         * method is "implicitly" returned to the caller, in the absence of an
+         * explicit return value.
+         *
+         * Just save the last result of the method as the return value.
+         *
          * NOTE: this is optional because the ASL language does not actually
          * support this behavior.
          */
-        else if (!AcpiDsDoImplicitReturn (ReturnDesc, WalkState, FALSE))
+        else if (!AcpiDsDoImplicitReturn (ReturnDesc, WalkState, FALSE) ||
+                 SameAsImplicitReturn)
         {
             /*
              * Delete the return value if it will not be used by the
-             * calling method
+             * calling method or remove one reference if the explicit return
+             * is the same as the implicit return value.
              */
             AcpiUtRemoveReference (ReturnDesc);
         }
@@ -534,7 +638,8 @@ AcpiDsRestartControlMethod (
  *
  * FUNCTION:    AcpiDsTerminateControlMethod
  *
- * PARAMETERS:  WalkState           - State of the method
+ * PARAMETERS:  MethodDesc          - Method object
+ *              WalkState           - State associated with the method
  *
  * RETURN:      None
  *
@@ -542,97 +647,78 @@ AcpiDsRestartControlMethod (
  *              created, delete all locals and arguments, and delete the parse
  *              tree if requested.
  *
+ * MUTEX:       Interpreter is locked
+ *
  ******************************************************************************/
 
 void
 AcpiDsTerminateControlMethod (
+    ACPI_OPERAND_OBJECT     *MethodDesc,
     ACPI_WALK_STATE         *WalkState)
 {
-    ACPI_OPERAND_OBJECT     *ObjDesc;
-    ACPI_NAMESPACE_NODE     *MethodNode;
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsTerminateControlMethod", WalkState);
+    ACPI_FUNCTION_TRACE_PTR (DsTerminateControlMethod, WalkState);
 
 
-    if (!WalkState)
+    /* MethodDesc is required, WalkState is optional */
+
+    if (!MethodDesc)
     {
         return_VOID;
     }
 
-    /* The current method object was saved in the walk state */
-
-    ObjDesc = WalkState->MethodDesc;
-    if (!ObjDesc)
+    if (WalkState)
     {
-        return_VOID;
+        /* Delete all arguments and locals */
+
+        AcpiDsMethodDataDeleteAll (WalkState);
     }
-
-    /* Delete all arguments and locals */
-
-    AcpiDsMethodDataDeleteAll (WalkState);
 
     /*
-     * Lock the parser while we terminate this method.
-     * If this is the last thread executing the method,
-     * we have additional cleanup to perform
+     * If method is serialized, release the mutex and restore the
+     * current sync level for this thread
      */
-    Status = AcpiUtAcquireMutex (ACPI_MTX_PARSER);
-    if (ACPI_FAILURE (Status))
+    if (MethodDesc->Method.Mutex)
     {
-        return_VOID;
-    }
+        /* Acquisition Depth handles recursive calls */
 
-    /* Signal completion of the execution of this method if necessary */
-
-    if (WalkState->MethodDesc->Method.Semaphore)
-    {
-        Status = AcpiOsSignalSemaphore (
-                        WalkState->MethodDesc->Method.Semaphore, 1);
-        if (ACPI_FAILURE (Status))
+        MethodDesc->Method.Mutex->Mutex.AcquisitionDepth--;
+        if (!MethodDesc->Method.Mutex->Mutex.AcquisitionDepth)
         {
-            ACPI_ERROR ((AE_INFO, "Could not signal method semaphore"));
+            WalkState->Thread->CurrentSyncLevel =
+                MethodDesc->Method.Mutex->Mutex.OriginalSyncLevel;
 
-            /* Ignore error and continue cleanup */
+            AcpiOsReleaseMutex (MethodDesc->Method.Mutex->Mutex.OsMutex);
+            MethodDesc->Method.Mutex->Mutex.ThreadId = 0;
         }
     }
 
-    /*
-     * There are no more threads executing this method.  Perform
-     * additional cleanup.
-     *
-     * The method Node is stored in the walk state
-     */
-    MethodNode = WalkState->MethodNode;
-
-    /* Lock namespace for possible update */
-
-    Status = AcpiUtAcquireMutex (ACPI_MTX_NAMESPACE);
-    if (ACPI_FAILURE (Status))
+    if (WalkState)
     {
-        goto Exit;
+        /*
+         * Delete any namespace objects created anywhere within
+         * the namespace by the execution of this method
+         */
+        AcpiNsDeleteNamespaceByOwner (MethodDesc->Method.OwnerId);
     }
 
-    /*
-     * Delete any namespace entries created immediately underneath
-     * the method
-     */
-    if (MethodNode->Child)
-    {
-        AcpiNsDeleteNamespaceSubtree (MethodNode);
-    }
+    /* Decrement the thread count on the method */
 
-    /*
-     * Delete any namespace entries created anywhere else within
-     * the namespace by the execution of this method
-     */
-    AcpiNsDeleteNamespaceByOwner (WalkState->MethodDesc->Method.OwnerId);
-    Status = AcpiUtReleaseMutex (ACPI_MTX_NAMESPACE);
+    if (MethodDesc->Method.ThreadCount)
+    {
+        MethodDesc->Method.ThreadCount--;
+    }
+    else
+    {
+        ACPI_ERROR ((AE_INFO,
+            "Invalid zero thread count in method"));
+    }
 
     /* Are there any other threads currently executing this method? */
 
-    if (WalkState->MethodDesc->Method.ThreadCount)
+    if (MethodDesc->Method.ThreadCount)
     {
         /*
          * Additional threads. Do not release the OwnerId in this case,
@@ -640,7 +726,7 @@ AcpiDsTerminateControlMethod (
          */
         ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH,
             "*** Completed execution of one thread, %d threads remaining\n",
-            WalkState->MethodDesc->Method.ThreadCount));
+            MethodDesc->Method.ThreadCount));
     }
     else
     {
@@ -649,177 +735,25 @@ AcpiDsTerminateControlMethod (
         /*
          * Support to dynamically change a method from NotSerialized to
          * Serialized if it appears that the method is incorrectly written and
-         * does not support multiple thread execution.  The best example of this
-         * is if such a method creates namespace objects and blocks.  A second
+         * does not support multiple thread execution. The best example of this
+         * is if such a method creates namespace objects and blocks. A second
          * thread will fail with an AE_ALREADY_EXISTS exception
          *
          * This code is here because we must wait until the last thread exits
          * before creating the synchronization semaphore.
          */
-        if ((WalkState->MethodDesc->Method.Concurrency == 1) &&
-            (!WalkState->MethodDesc->Method.Semaphore))
+        if ((MethodDesc->Method.MethodFlags & AML_METHOD_SERIALIZED) &&
+            (!MethodDesc->Method.Mutex))
         {
-            Status = AcpiOsCreateSemaphore (1, 1,
-                        &WalkState->MethodDesc->Method.Semaphore);
+            Status = AcpiDsCreateMethodMutex (MethodDesc);
         }
 
         /* No more threads, we can free the OwnerId */
 
-        AcpiUtReleaseOwnerId (&WalkState->MethodDesc->Method.OwnerId);
+        AcpiUtReleaseOwnerId (&MethodDesc->Method.OwnerId);
     }
 
-Exit:
-    (void) AcpiUtReleaseMutex (ACPI_MTX_PARSER);
     return_VOID;
 }
-
-
-#ifdef ACPI_INIT_PARSE_METHODS
-    /*
-     * Note 11/2005: Removed this code to parse all methods during table
-     * load because it causes problems if there are any errors during the
-     * parse. Also, it seems like overkill and we probably don't want to
-     * abort a table load because of an issue with a single method.
-     */
-
-/*******************************************************************************
- *
- * FUNCTION:    AcpiDsParseMethod
- *
- * PARAMETERS:  Node        - Method node
- *
- * RETURN:      Status
- *
- * DESCRIPTION: Parse the AML that is associated with the method.
- *
- * MUTEX:       Assumes parser is locked
- *
- ******************************************************************************/
-
-ACPI_STATUS
-AcpiDsParseMethod (
-    ACPI_NAMESPACE_NODE     *Node)
-{
-    ACPI_STATUS             Status;
-    ACPI_OPERAND_OBJECT     *ObjDesc;
-    ACPI_PARSE_OBJECT       *Op;
-    ACPI_WALK_STATE         *WalkState;
-
-
-    ACPI_FUNCTION_TRACE_PTR ("DsParseMethod", Node);
-
-
-    /* Parameter Validation */
-
-    if (!Node)
-    {
-        return_ACPI_STATUS (AE_NULL_ENTRY);
-    }
-
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE, "**** Parsing [%4.4s] **** NamedObj=%p\n",
-        AcpiUtGetNodeName (Node), Node));
-
-    /* Extract the method object from the method Node */
-
-    ObjDesc = AcpiNsGetAttachedObject (Node);
-    if (!ObjDesc)
-    {
-        return_ACPI_STATUS (AE_NULL_OBJECT);
-    }
-
-    /* Create a mutex for the method if there is a concurrency limit */
-
-    if ((ObjDesc->Method.Concurrency != ACPI_INFINITE_CONCURRENCY) &&
-        (!ObjDesc->Method.Semaphore))
-    {
-        Status = AcpiOsCreateSemaphore (ObjDesc->Method.Concurrency,
-                                        ObjDesc->Method.Concurrency,
-                                        &ObjDesc->Method.Semaphore);
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-    }
-
-    /*
-     * Allocate a new parser op to be the root of the parsed
-     * method tree
-     */
-    Op = AcpiPsAllocOp (AML_METHOD_OP);
-    if (!Op)
-    {
-        return_ACPI_STATUS (AE_NO_MEMORY);
-    }
-
-    /* Init new op with the method name and pointer back to the Node */
-
-    AcpiPsSetName (Op, Node->Name.Integer);
-    Op->Common.Node = Node;
-
-    /*
-     * Get a new OwnerId for objects created by this method.  Namespace
-     * objects (such as Operation Regions) can be created during the
-     * first pass parse.
-     */
-    Status = AcpiUtAllocateOwnerId (&ObjDesc->Method.OwnerId);
-    if (ACPI_FAILURE (Status))
-    {
-        goto Cleanup;
-    }
-
-    /* Create and initialize a new walk state */
-
-    WalkState = AcpiDsCreateWalkState (
-                    ObjDesc->Method.OwnerId, NULL, NULL, NULL);
-    if (!WalkState)
-    {
-        Status = AE_NO_MEMORY;
-        goto Cleanup2;
-    }
-
-    Status = AcpiDsInitAmlWalk (WalkState, Op, Node,
-                    ObjDesc->Method.AmlStart,
-                    ObjDesc->Method.AmlLength, NULL, 1);
-    if (ACPI_FAILURE (Status))
-    {
-        AcpiDsDeleteWalkState (WalkState);
-        goto Cleanup2;
-    }
-
-    /*
-     * Parse the method, first pass
-     *
-     * The first pass load is where newly declared named objects are added into
-     * the namespace.  Actual evaluation of the named objects (what would be
-     * called a "second pass") happens during the actual execution of the
-     * method so that operands to the named objects can take on dynamic
-     * run-time values.
-     */
-    Status = AcpiPsParseAml (WalkState);
-    if (ACPI_FAILURE (Status))
-    {
-        goto Cleanup2;
-    }
-
-    ACPI_DEBUG_PRINT ((ACPI_DB_PARSE,
-        "**** [%4.4s] Parsed **** NamedObj=%p Op=%p\n",
-        AcpiUtGetNodeName (Node), Node, Op));
-
-    /*
-     * Delete the parse tree. We simply re-parse the method for every
-     * execution since there isn't much overhead (compared to keeping lots
-     * of parse trees around)
-     */
-    AcpiNsDeleteNamespaceSubtree (Node);
-    AcpiNsDeleteNamespaceByOwner (ObjDesc->Method.OwnerId);
-
-Cleanup2:
-    AcpiUtReleaseOwnerId (&ObjDesc->Method.OwnerId);
-
-Cleanup:
-    AcpiPsDeleteParseTree (Op);
-    return_ACPI_STATUS (Status);
-}
-#endif
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.23.2.1 2007/11/06 23:33:31 matt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.23.2.2 2008/01/09 01:57:11 matt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,6 @@ struct gre_soparm {
 enum gre_state {
 	  GRE_S_IDLE = 0
 	, GRE_S_IOCTL
-	, GRE_S_DOCONF
 	, GRE_S_DIE
 };
 
@@ -125,7 +124,7 @@ struct gre_h {
 	struct gre_sre[] routing Routing fileds (see below)
 				Present if (rt_pres == 1)
  */
-} __attribute__((__packed__));
+} __packed;
 
 #define GRE_CP		0x8000  /* Checksum Present */
 #define GRE_RP		0x4000  /* Routing Present */

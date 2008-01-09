@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20.10.1 2007/11/06 23:24:03 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20.10.2 2008/01/09 01:50:05 matt Exp $	*/
 /*	NetBSD: cpu.h,v 1.113 2004/02/20 17:35:01 yamt Exp 	*/
 
 /*-
@@ -82,7 +82,12 @@ struct cpu_info {
 	struct lwp *ci_curlwp;		/* current owner of the processor */
 	struct simplelock ci_slock;	/* lock on this data structure */
 	cpuid_t ci_cpuid;		/* our CPU ID */
+	int ci_cpumask;			/* (1 << CPU ID) */
 	u_int ci_apicid;		/* our APIC ID */
+	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint8_t ci_packageid;
+	uint8_t ci_coreid;
+	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 
 	/*
@@ -96,7 +101,7 @@ struct cpu_info {
 
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_want_pmapload;		/* pmap_load() is needed */
-	int ci_tlbstate;		/* one of TLBSTATE_ states. see below */
+	volatile int ci_tlbstate;	/* one of TLBSTATE_ states. see below */
 #define	TLBSTATE_VALID	0	/* all user tlbs are valid */
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
@@ -113,7 +118,6 @@ struct cpu_info {
 	u_int32_t	ci_iunmask[NIPL];
 	void *		ci_intrstack;
 
-	paddr_t ci_idle_pcb_paddr;	/* PA of idle PCB */
 	u_int32_t ci_flags;		/* flags; see below */
 	u_int32_t ci_ipis;		/* interprocessor interrupts pending */
 	int sc_apic_version;		/* local APIC version */
@@ -121,6 +125,9 @@ struct cpu_info {
 	int32_t		ci_cpuid_level;
 	u_int32_t	ci_signature;	 /* X86 cpuid type */
 	u_int32_t	ci_feature_flags;/* X86 CPUID feature bits */
+	u_int32_t	ci_feature2_flags;/* X86 %ecx CPUID feature bits */
+	u_int32_t	ci_feature3_flags;/* X86 extended feature bits */
+	u_int32_t	ci_padlock_flags;/* VIA PadLock feature bits */
 	u_int32_t	ci_cpu_class;	 /* CPU class */
 	u_int32_t	ci_brand_id;	 /* Intel brand id */
 	u_int32_t	ci_vendor[4];	 /* vendor string */
@@ -190,7 +197,7 @@ extern struct cpu_info *cpu_info_list;
 
 static struct cpu_info *curcpu(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 curcpu()
 {
 	struct cpu_info *ci;
@@ -306,6 +313,8 @@ struct cpu_cpuid_nameclass {
 extern int biosbasemem;
 extern int biosextmem;
 extern unsigned int cpu_feature;
+extern unsigned int cpu_feature2;
+extern unsigned int cpu_feature_padlock;
 extern int cpu;
 extern int cpu_class;
 extern const struct cpu_nocpuid_nameclass i386_nocpuid_cpus[];
@@ -317,11 +326,9 @@ extern int i386_has_sse2;
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
-struct pcb;
-void	i386_switch_context(struct pcb *);
+void	i386_switch_context(lwp_t *);
 
 /* identcpu.c */
 extern int tmx86_has_longrun;

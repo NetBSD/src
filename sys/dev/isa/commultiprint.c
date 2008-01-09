@@ -1,4 +1,7 @@
-/* $NetBSD: commultiprint.c,v 1.2.46.1 2007/11/06 23:27:32 matt Exp $ */
+/* $NetBSD: commultiprint.c,v 1.2.46.2 2008/01/09 01:53:11 matt Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: commultiprint.c,v 1.2.46.2 2008/01/09 01:53:11 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

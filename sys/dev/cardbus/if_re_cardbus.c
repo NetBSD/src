@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_cardbus.c,v 1.13.10.1 2007/11/06 23:25:52 matt Exp $	*/
+/*	$NetBSD: if_re_cardbus.c,v 1.13.10.2 2008/01/09 01:52:30 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Jonathan Stone
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.13.10.1 2007/11/06 23:25:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_cardbus.c,v 1.13.10.2 2008/01/09 01:52:30 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -133,7 +133,6 @@ void re_cardbus_setup(struct re_cardbus_softc *);
 
 int re_cardbus_enable(struct rtk_softc *);
 void re_cardbus_disable(struct rtk_softc *);
-void re_cardbus_power(struct rtk_softc *, int);
 
 const struct rtk_type *
 re_cardbus_lookup(const struct cardbus_attach_args *ca)
@@ -188,7 +187,6 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_enable = re_cardbus_enable;
 	sc->sc_disable = re_cardbus_disable;
-	sc->sc_power = re_cardbus_power;
 
 	/*
 	 * Map control/status registers.
@@ -233,6 +231,11 @@ re_cardbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = ca->ca_dmat;
 	re_attach(sc);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->ethercom.ec_if);
+
 	/*
 	 * Power down the socket.
 	 */
@@ -252,9 +255,13 @@ re_cardbus_detach(struct device *self, int flags)
 		panic("%s: cardbus softc, cardbus_devfunc NULL",
 		      sc->sc_dev.dv_xname);
 #endif
+
 	rv = re_detach(sc);
 	if (rv)
 		return rv;
+
+	pmf_device_deregister(self);
+
 	/*
 	 * Unhook the interrupt handler.
 	 */
@@ -393,22 +400,4 @@ re_cardbus_disable(struct rtk_softc *sc)
 
 	/* Power down the socket. */
 	Cardbus_function_disable(ct);
-}
-
-void
-re_cardbus_power(struct rtk_softc *sc, int why)
-{
-	struct re_cardbus_softc *csc = (void *) sc;
-
-	if (why == PWR_RESUME) {
-		/*
-		 * Give the PCI configuration registers a kick
-		 * in the head.
-		 */
-#ifdef DIAGNOSTIC
-		if (RTK_IS_ENABLED(sc) == 0)
-			panic("re_cardbus_power");
-#endif
-		re_cardbus_setup(csc);
-	}
 }

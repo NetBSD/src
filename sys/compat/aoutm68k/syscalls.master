@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.24 2007/07/14 15:45:48 dsl Exp $
+	$NetBSD: syscalls.master,v 1.24.8.1 2008/01/09 01:50:29 matt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -61,7 +61,8 @@
 ; redistributions should be placed in the reserved range at the end
 ; of the current calls.
 
-0	INDIR		{ int sys_syscall(int number, ...); }
+0	NOARGS INDIR	{ int sys_syscall(int code, \
+			    ... register32_t args[AOUTM68K_SYS_MAXSYSARGS]); }
 1	NOARGS		{ void sys_exit(int rval); }
 2	NOARGS		{ int sys_fork(void); }
 3	NOARGS		{ ssize_t sys_read(int fd, void *buf, size_t nbyte); }
@@ -544,7 +545,8 @@
 #endif
 197	NOARGS		{ void *sys_mmap(void *addr, size_t len, int prot, \
 			    int flags, int fd, long pad, off_t pos); }
-198	INDIR		{ quad_t sys___syscall(quad_t num, ...); }
+198	NOARGS INDIR	{ quad_t sys___syscall(quad_t code, \
+			    ... register32_t args[AOUTM68K_SYS_MAXSYSARGS]); }
 199	NOARGS		{ off_t sys_lseek(int fd, int pad, off_t offset, \
 			    int whence); }
 200	NOARGS		{ int sys_truncate(const char *path, int pad, \

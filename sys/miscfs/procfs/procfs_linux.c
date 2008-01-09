@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.39.8.2 2007/11/08 11:00:12 matt Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.39.8.3 2008/01/09 01:57:05 matt Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.39.8.2 2007/11/08 11:00:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.39.8.3 2008/01/09 01:57:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,24 @@ get_proc_size_info(struct lwp *l, unsigned long *stext, unsigned long *etext, un
 			break;
 		}
 	}
+#ifdef LINUX_USRSTACK32
+	if (strcmp(p->p_emul->e_name, "linux32") == 0 &&
+	    LINUX_USRSTACK32 < USRSTACK32)
+		*sstack = (unsigned long)LINUX_USRSTACK32;
+	else
+#endif
 #ifdef LINUX_USRSTACK
 	if (strcmp(p->p_emul->e_name, "linux") == 0 &&
 	    LINUX_USRSTACK < USRSTACK)
-		*sstack = (unsigned long) LINUX_USRSTACK;
+		*sstack = (unsigned long)LINUX_USRSTACK;
 	else
 #endif
-		*sstack = (unsigned long) USRSTACK;
+#ifdef	USRSTACK32
+	if (strstr(p->p_emul->e_name, "32") != NULL)
+		*sstack = (unsigned long)USRSTACK32;
+	else
+#endif
+		*sstack = (unsigned long)USRSTACK;
 
 	/*
 	 * jdk 1.6 compares low <= addr && addr < high
@@ -234,7 +245,6 @@ int
 procfs_docpustat(struct lwp *curl, struct proc *p,
     struct pfsnode *pfs, struct uio *uio)
 {
-	struct timeval	 runtime;
 	char		*bf;
 	int	 	 error;
 	int	 	 len;
@@ -278,7 +288,6 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		i += 1;
 	}
 
-	timersub(&curlwp->l_stime, &boottime, &runtime);
 	len += snprintf(&bf[len], LBFSZ - len,
 			"disk 0 0 0 0\n"
 			"page %u %u\n"
@@ -521,7 +530,7 @@ procfs_douptime(struct lwp *curl, struct proc *p,
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
-	timersub(&curlwp->l_stime, &boottime, &runtime);
+	microuptime(&runtime);
 	idle = curcpu()->ci_schedstate.spc_cp_time[CP_IDLE];
 	len = snprintf(bf, LBFSZ,
 	    "%lu.%02lu %" PRIu64 ".%02" PRIu64 "\n",
@@ -547,8 +556,6 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 	struct mount *mp, *nmp;
 	struct statvfs *sfs;
 	int error = 0;
-
-	/* XXX elad - may need filtering. */
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 	mutex_enter(&mountlist_lock);
@@ -584,7 +591,7 @@ procfs_domounts(struct lwp *curl, struct proc *p,
 		memcpy(mtab + mtabsz, bf, len);
 		mtabsz += len;
 
-		mutex_exit(&mountlist_lock);
+		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
 		vfs_unbusy(mp);
 	}

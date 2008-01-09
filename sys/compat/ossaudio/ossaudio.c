@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.56.8.1 2007/11/06 23:25:12 matt Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.56.8.2 2008/01/09 01:51:45 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.56.8.1 2007/11/06 23:25:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.56.8.2 2008/01/09 01:51:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,24 +63,22 @@ int ossdebug = 0;
 #define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
 #define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
 
-static struct audiodevinfo *getdevinfo __P((struct file *, struct lwp *));
+static struct audiodevinfo *getdevinfo(struct file *, struct lwp *);
 static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
 static int enum_to_ord(struct audiodevinfo *di, int enm);
 static int enum_to_mask(struct audiodevinfo *di, int enm);
 
-static void setblocksize __P((struct file *, struct audio_info *, struct lwp *));
+static void setblocksize(struct file *, struct audio_info *, struct lwp *);
 
 
 int
-oss_ioctl_audio(l, uap, retval)
-	struct lwp *l;
-	struct oss_sys_ioctl_args /* {
+oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;
@@ -607,9 +605,7 @@ enum_to_mask(struct audiodevinfo *di, int enm)
  * to collect the information.
  */
 static struct audiodevinfo *
-getdevinfo(fp, l)
-	struct file *fp;
-	struct lwp *l;
+getdevinfo(struct file *fp, struct lwp *l)
 {
 	mixer_devinfo_t mi;
 	int i, j, e;
@@ -654,7 +650,7 @@ getdevinfo(fp, l)
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_type != VCHR)
 		return 0;
-	if (VOP_GETATTR(vp, &va, l->l_cred, l))
+	if (VOP_GETATTR(vp, &va, l->l_cred))
 		return 0;
 	if (di->done && di->dev == va.va_rdev)
 		return di;
@@ -734,15 +730,13 @@ getdevinfo(fp, l)
 }
 
 int
-oss_ioctl_mixer(lwp, uap, retval)
-	struct lwp *lwp;
-	struct oss_sys_ioctl_args /* {
+oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	struct proc *p = lwp->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;
@@ -942,15 +936,13 @@ oss_ioctl_mixer(lwp, uap, retval)
 
 /* Sequencer emulation */
 int
-oss_ioctl_sequencer(l, uap, retval)
-	struct lwp *l;
-	struct oss_sys_ioctl_args /* {
+oss_ioctl_sequencer(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;
@@ -1163,10 +1155,7 @@ oss_ioctl_sequencer(l, uap, retval)
  * If not, set it to be.
  */
 static void
-setblocksize(fp, info, l)
-	struct file *fp;
-	struct audio_info *info;
-	struct lwp *l;
+setblocksize(struct file *fp, struct audio_info *info, struct lwp *l)
 {
 	struct audio_info set;
 	int s;

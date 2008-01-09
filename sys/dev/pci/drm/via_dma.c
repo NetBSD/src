@@ -1,3 +1,5 @@
+/*	$NetBSD: via_dma.c,v 1.1.14.1 2008/01/09 01:54:11 matt Exp $	*/
+
 /* via_dma.c -- DMA support for the VIA Unichrome/Pro
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -33,6 +35,9 @@
  *    Erdi Chen, 
  *    Thomas Hellstrom.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.1.14.1 2008/01/09 01:54:11 matt Exp $");
 
 #include <dev/drm/drmP.h>
 #include <dev/drm/drm.h>
@@ -168,13 +173,13 @@ static int via_initialize(drm_device_t * dev,
 
 	if (dev_priv->ring.virtual_start != NULL) {
 		DRM_ERROR("%s called again without calling cleanup\n",
-			  __FUNCTION__);
+			  __func__);
 		return DRM_ERR(EFAULT);
 	}
 
 	if (!dev->agp || !dev->agp->base) {
 		DRM_ERROR("%s called with no agp memory available\n", 
-			  __FUNCTION__);
+			  __func__);
 		return DRM_ERR(EFAULT);
 	}
 
@@ -262,7 +267,7 @@ static int via_dispatch_cmdbuffer(drm_device_t * dev, drm_via_cmdbuffer_t * cmd)
 
 	if (dev_priv->ring.virtual_start == NULL) {
 		DRM_ERROR("%s called without initializing AGP ring buffer.\n",
-			  __FUNCTION__);
+			  __func__);
 		return DRM_ERR(EFAULT);
 	}
 
@@ -665,7 +670,7 @@ static int via_cmdbuf_size(DRM_IOCTL_ARGS)
 
 	if (dev_priv->ring.virtual_start == NULL) {
 		DRM_ERROR("%s called without initializing AGP ring buffer.\n",
-			  __FUNCTION__);
+			  __func__);
 		return DRM_ERR(EFAULT);
 	}
 

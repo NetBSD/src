@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc_debug.c,v 1.17 2007/03/12 18:18:33 ad Exp $	*/
+/*	$NetBSD: kern_malloc_debug.c,v 1.17.14.1 2008/01/09 01:56:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Artur Grabowski <art@openbsd.org>
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.17 2007/03/12 18:18:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc_debug.c,v 1.17.14.1 2008/01/09 01:56:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,8 +101,10 @@ struct debug_malloc_entry {
 	struct malloc_type *md_type;
 };
 
-TAILQ_HEAD(,debug_malloc_entry) debug_malloc_freelist;
-TAILQ_HEAD(,debug_malloc_entry) debug_malloc_usedlist;
+TAILQ_HEAD(,debug_malloc_entry) debug_malloc_freelist =
+	TAILQ_HEAD_INITIALIZER(debug_malloc_freelist);
+TAILQ_HEAD(,debug_malloc_entry) debug_malloc_usedlist =
+	TAILQ_HEAD_INITIALIZER(debug_malloc_usedlist);
 
 int debug_malloc_allocs;
 int debug_malloc_frees;
@@ -208,19 +210,6 @@ debug_free(void *addr, struct malloc_type *type)
 	splx(s);
 
 	return (1);
-}
-
-void
-debug_malloc_init(void)
-{
-
-	TAILQ_INIT(&debug_malloc_freelist);
-	TAILQ_INIT(&debug_malloc_usedlist);
-
-	debug_malloc_allocs = 0;
-	debug_malloc_frees = 0;
-	debug_malloc_pages = 0;
-	debug_malloc_chunks_on_freelist = 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvcache.c,v 1.40 2007/06/01 11:56:03 yamt Exp $	*/
+/*	$NetBSD: nfs_srvcache.c,v 1.40.8.1 2008/01/09 01:57:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.40 2007/06/01 11:56:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvcache.c,v 1.40.8.1 2008/01/09 01:57:53 matt Exp $");
 
 #include "opt_iso.h"
 
@@ -88,7 +88,7 @@ static struct mowner nfsd_cache_mowner = MOWNER_INIT("nfsd", "cache");
 #endif /* defined(MBUFTRACE) */
 
 #define	NETFAMILY(rp) \
-		(((rp)->rc_flag & RC_INETADDR) ? AF_INET : AF_ISO)
+		(((rp)->rc_flags & RC_INETADDR) ? AF_INET : AF_ISO)
 
 static struct nfsrvcache *nfsrv_lookupcache(struct nfsrv_descript *nd);
 static void nfsrv_unlockcache(struct nfsrvcache *rp);
@@ -148,13 +148,13 @@ static void
 cleanentry(struct nfsrvcache *rp)
 {
 
-	if ((rp->rc_flag & RC_REPMBUF) != 0) {
+	if ((rp->rc_flags & RC_REPMBUF) != 0) {
 		m_freem(rp->rc_reply);
 	}
-	if ((rp->rc_flag & RC_NAM) != 0) {
+	if ((rp->rc_flags & RC_NAM) != 0) {
 		m_free(rp->rc_nam);
 	}
-	rp->rc_flag &= ~(RC_REPSTATUS|RC_REPMBUF);
+	rp->rc_flags &= ~(RC_REPSTATUS|RC_REPMBUF);
 }
 
 /*
@@ -164,7 +164,7 @@ void
 nfsrv_initcache()
 {
 
-	mutex_init(&nfsrv_reqcache_lock, MUTEX_DRIVER, IPL_NONE);
+	mutex_init(&nfsrv_reqcache_lock, MUTEX_DEFAULT, IPL_NONE);
 	nfsrvhashtbl = hashinit(desirednfsrvcache, HASH_LIST, M_NFSD,
 	    M_WAITOK, &nfsrvhash);
 	TAILQ_INIT(&nfsrvlruhead);
@@ -189,11 +189,11 @@ loop:
 		if (nd->nd_retxid == rp->rc_xid &&
 		    nd->nd_procnum == rp->rc_proc &&
 		    netaddr_match(NETFAMILY(rp), &rp->rc_haddr, nd->nd_nam)) {
-			if ((rp->rc_flag & RC_LOCKED) != 0) {
+			if ((rp->rc_gflags & RC_G_LOCKED) != 0) {
 				cv_wait(&rp->rc_cv, &nfsrv_reqcache_lock);
 				goto loop;
 			}
-			rp->rc_flag |= RC_LOCKED;
+			rp->rc_gflags |= RC_G_LOCKED;
 			break;
 		}
 	}
@@ -211,7 +211,8 @@ nfsrv_unlockcache(rp)
 
 	KASSERT(mutex_owned(&nfsrv_reqcache_lock));
 
-	rp->rc_flag &= ~RC_LOCKED;
+	KASSERT((rp->rc_gflags & RC_G_LOCKED) != 0);
+	rp->rc_gflags &= ~RC_G_LOCKED;
 	cv_broadcast(&rp->rc_cv);
 }
 
@@ -258,12 +259,12 @@ found:
 		if (rp->rc_state == RC_INPROG) {
 			nfsstats.srvcache_inproghits++;
 			ret = RC_DROPIT;
-		} else if (rp->rc_flag & RC_REPSTATUS) {
+		} else if (rp->rc_flags & RC_REPSTATUS) {
 			nfsstats.srvcache_nonidemdonehits++;
 			nfs_rephead(0, nd, slp, rp->rc_status,
 			   0, (u_quad_t *)0, repp, &mb, &bpos);
 			ret = RC_REPLY;
-		} else if (rp->rc_flag & RC_REPMBUF) {
+		} else if (rp->rc_flags & RC_REPMBUF) {
 			nfsstats.srvcache_nonidemdonehits++;
 			*repp = m_copym(rp->rc_reply, 0, M_COPYALL,
 					M_WAIT);
@@ -285,32 +286,31 @@ found:
 		rp = pool_get(&nfs_reqcache_pool, PR_WAITOK);
 		memset(rp, 0, sizeof *rp);
 		cv_init(&rp->rc_cv, "nfsdrc");
-		rp->rc_flag = RC_LOCKED;
+		rp->rc_gflags = RC_G_LOCKED;
 	} else {
 		rp = TAILQ_FIRST(&nfsrvlruhead);
-		while ((rp->rc_flag & RC_LOCKED) != 0) {
-			rp->rc_flag |= RC_WANTED;
+		while ((rp->rc_gflags & RC_G_LOCKED) != 0) {
 			cv_wait(&rp->rc_cv, &nfsrv_reqcache_lock);
 			rp = TAILQ_FIRST(&nfsrvlruhead);
 		}
-		rp->rc_flag |= RC_LOCKED;
+		rp->rc_gflags |= RC_G_LOCKED;
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
 		mutex_exit(&nfsrv_reqcache_lock);
 		cleanentry(rp);
-		rp->rc_flag &= (RC_LOCKED | RC_WANTED);
+		rp->rc_flags = 0;
 	}
 	rp->rc_state = RC_INPROG;
 	rp->rc_xid = nd->nd_retxid;
 	saddr = mtod(nd->nd_nam, struct sockaddr_in *);
 	switch (saddr->sin_family) {
 	case AF_INET:
-		rp->rc_flag |= RC_INETADDR;
+		rp->rc_flags |= RC_INETADDR;
 		rp->rc_inetaddr = saddr->sin_addr.s_addr;
 		break;
 	case AF_ISO:
 	default:
-		rp->rc_flag |= RC_NAM;
+		rp->rc_flags |= RC_NAM;
 		rp->rc_nam = m_copym(nd->nd_nam, 0, M_COPYALL, M_WAIT);
 		m_claimm(rp->rc_nam, &nfsd_cache_mowner);
 		break;
@@ -322,7 +322,10 @@ found:
 		/*
 		 * other thread made duplicate cache entry.
 		 */
+		KASSERT(numnfsrvcache > 0);
+		numnfsrvcache--;
 		mutex_exit(&nfsrv_reqcache_lock);
+		cleanentry(rp);
 		cv_destroy(&rp->rc_cv);
 		pool_put(&nfs_reqcache_pool, rp);
 		rp = rpdup;
@@ -360,12 +363,12 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 			if ((nd->nd_flag & ND_NFSV3) == 0 &&
 			  nfsv2_repstat[nfsv2_procid[nd->nd_procnum]]) {
 				rp->rc_status = nd->nd_repstat;
-				rp->rc_flag |= RC_REPSTATUS;
+				rp->rc_flags |= RC_REPSTATUS;
 			} else {
 				rp->rc_reply = m_copym(repmbuf,
 					0, M_COPYALL, M_WAIT);
 				m_claimm(rp->rc_reply, &nfsd_cache_mowner);
-				rp->rc_flag |= RC_REPMBUF;
+				rp->rc_flags |= RC_REPMBUF;
 			}
 		}
 		mutex_enter(&nfsrv_reqcache_lock);
@@ -380,18 +383,21 @@ nfsrv_updatecache(nd, repvalid, repmbuf)
 void
 nfsrv_cleancache()
 {
-	struct nfsrvcache *rp, *nextrp;
+	struct nfsrvcache *rp;
 
 	mutex_enter(&nfsrv_reqcache_lock);
-	for (rp = TAILQ_FIRST(&nfsrvlruhead); rp != 0; rp = nextrp) {
-		nextrp = TAILQ_NEXT(rp, rc_lru);
+	while ((rp = TAILQ_FIRST(&nfsrvlruhead)) != NULL) {
+		KASSERT((rp->rc_gflags & RC_G_LOCKED) == 0);
 		LIST_REMOVE(rp, rc_hash);
 		TAILQ_REMOVE(&nfsrvlruhead, rp, rc_lru);
-		KASSERT((rp->rc_flag & (RC_LOCKED|RC_WANTED)) == 0);
+		KASSERT(numnfsrvcache > 0);
+		numnfsrvcache--;
+		mutex_exit(&nfsrv_reqcache_lock);
 		cleanentry(rp);
 		cv_destroy(&rp->rc_cv);
 		pool_put(&nfs_reqcache_pool, rp);
+		mutex_enter(&nfsrv_reqcache_lock);
 	}
-	numnfsrvcache = 0;
+	KASSERT(numnfsrvcache == 0);
 	mutex_exit(&nfsrv_reqcache_lock);
 }

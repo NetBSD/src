@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.45.16.1 2007/11/06 23:33:27 matt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.45.16.2 2008/01/09 01:57:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -63,7 +63,7 @@
  */
 struct ether_addr {
 	u_int8_t ether_addr_octet[ETHER_ADDR_LEN];
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Structure of a 10Mb/s Ethernet header.
@@ -72,7 +72,7 @@ struct	ether_header {
 	u_int8_t  ether_dhost[ETHER_ADDR_LEN];
 	u_int8_t  ether_shost[ETHER_ADDR_LEN];
 	u_int16_t ether_type;
-} __attribute__((__packed__));
+} __packed;
 
 #include <net/ethertypes.h>
 
@@ -140,6 +140,8 @@ do {									\
 }
 #endif
 
+struct mii_data;
+
 /*
  * Structure shared between the ethernet driver modules and
  * the multicast list code.  For example, each ec_softc or il_softc
@@ -157,6 +159,8 @@ struct	ethercom {
 						   capabilities to enable */
 
 	int	ec_nvlans;			/* # VLANs on this interface */
+	/* The device handle for the MII bus child device. */
+	struct mii_data				*ec_mii;
 #ifdef MBUFTRACE
 	struct	mowner ec_rx_mowner;		/* mbufs received */
 	struct	mowner ec_tx_mowner;		/* mbufs transmitted */
@@ -277,6 +281,8 @@ struct ether_multistep {
 
 void	ether_ifattach(struct ifnet *, const u_int8_t *);
 void	ether_ifdetach(struct ifnet *);
+int	ether_mediachange(struct ifnet *);
+void	ether_mediastatus(struct ifnet *, struct ifmediareq *);
 
 char	*ether_sprintf(const u_int8_t *);
 char	*ether_snprintf(char *, size_t, const u_int8_t *);

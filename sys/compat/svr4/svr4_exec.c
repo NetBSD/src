@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_exec.c,v 1.60 2007/02/19 15:10:03 cube Exp $	 */
+/*	$NetBSD: svr4_exec.c,v 1.60.18.1 2008/01/09 01:51:51 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.60 2007/02/19 15:10:03 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_exec.c,v 1.60.18.1 2008/01/09 01:51:51 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -61,7 +61,7 @@ extern char svr4_sigcode[], svr4_esigcode[];
 extern struct sysent svr4_sysent[];
 extern const char * const svr4_syscallnames[];
 #ifndef __HAVE_SYSCALL_INTERN
-void syscall __P((void));
+void syscall(void);
 #endif
 
 struct uvm_object *emul_svr4_object;

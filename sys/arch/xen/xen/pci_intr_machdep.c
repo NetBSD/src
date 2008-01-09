@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_intr_machdep.c,v 1.2 2006/09/28 18:53:16 bouyer Exp $      */
+/*      $NetBSD: pci_intr_machdep.c,v 1.2.28.1 2008/01/09 01:50:20 matt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -40,7 +40,7 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <machine/evtchn.h>
+#include <xen/evtchn.h>
 
 #include "locators.h"
 #include "opt_ddb.h"

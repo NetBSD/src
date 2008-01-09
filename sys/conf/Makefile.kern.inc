@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.101.8.1 2007/11/06 23:25:19 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.101.8.2 2008/01/09 01:52:05 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -454,7 +454,8 @@ EXTRA_CLEAN+= .gdbinit
 # Their full name is noted as documentation.
 VARSTACK=dev/cgd.c kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
     nfs/nfs_bio.c uvm/uvm_bio.c \
-    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c
+    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
+    dev/ofw/ofw_subr.c
 
 . if ${HAVE_GCC} > 3
 .for __varstack in ${VARSTACK}

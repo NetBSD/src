@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.61 2006/01/25 22:44:37 uwe Exp $	*/
+/*	$NetBSD: stand.h,v 1.61.44.1 2008/01/09 01:56:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -241,9 +241,9 @@ void	twiddle(void);
 void	gets(char *);
 int	getfile(char *prompt, int mode);
 char	*strerror(int);
-__dead void	exit(int) __attribute__((__noreturn__));
-__dead void	panic(const char *, ...) __attribute__((__noreturn__));
-__dead void	_rtt(void) __attribute__((__noreturn__));
+__dead void	exit(int);
+__dead void	panic(const char *, ...);
+__dead void	_rtt(void);
 void	(bcopy)(const void *, void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);
@@ -261,7 +261,7 @@ int	stat(const char *, struct stat *);
 int	fstat(int, struct stat *);
 
 typedef int cmp_t __P((const void *, const void *));
-void	qsort(void *, size_t, size_t, cmp_t * cmp);
+void	qsort(void *, size_t, size_t, cmp_t *);
 
 extern int opterr, optind, optopt, optreset;
 extern char *optarg;

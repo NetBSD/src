@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.15 2007/07/09 21:10:50 ad Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.15.8.1 2008/01/09 01:55:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.15 2007/07/09 21:10:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.15.8.1 2008/01/09 01:55:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.15 2007/07/09 21:10:50 ad Exp $");
 #include <sys/kthread.h>
 #include <sys/file.h>
 #include <sys/dirent.h>
+#include <sys/simplelock.h>
 
 #include <machine/limits.h>
 
@@ -156,7 +157,7 @@ smbfs_kqpoll(void *arg)
 			/* save v_size, smbfs_getattr() updates it */
 			osize = ke->vp->v_size;
 
-			error = VOP_GETATTR(ke->vp, &attr, l->l_cred, l);
+			error = VOP_GETATTR(ke->vp, &attr, l->l_cred);
 			if (error) {
 				/* relock and proceed with next */
 				simple_lock(&smbkq_lock);
@@ -415,7 +416,7 @@ smbfs_kqfilter(void *v)
 		kn->kn_fop = &smbfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	/* Find out if we can use directory change notify for this file */
@@ -434,7 +435,7 @@ smbfs_kqfilter(void *v)
 	 * held. This is likely cheap due to attrcache, so do it now.
 	 */
 	memset(&attr, 0, sizeof(attr));
-	(void) VOP_GETATTR(vp, &attr, l->l_cred, l);
+	(void) VOP_GETATTR(vp, &attr, l->l_cred);
 
 	/* ensure the handler is running */
 	if (!smbkql) {

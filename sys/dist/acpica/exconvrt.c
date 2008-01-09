@@ -1,7 +1,9 @@
+/*	$NetBSD: exconvrt.c,v 1.1.46.1 2008/01/09 01:55:09 matt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: exconvrt - Object conversion routines
- *              xRevision: 1.71 $
+ *              $Revision: 1.1.46.1 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,15 +116,14 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exconvrt.c,v 1.1.46.1 2008/01/09 01:55:09 matt Exp $");
 
 #define __EXCONVRT_C__
 
-#include "acpi.h"
-#include "acinterp.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/amlcode.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -167,7 +168,7 @@ AcpiExConvertToInteger (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExConvertToInteger", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (ExConvertToInteger, ObjDesc);
 
 
     switch (ACPI_GET_OBJECT_TYPE (ObjDesc))
@@ -268,6 +269,9 @@ AcpiExConvertToInteger (
         return_ACPI_STATUS (AE_NO_MEMORY);
     }
 
+    ACPI_DEBUG_PRINT ((ACPI_DB_EXEC, "Converted value: %8.8X%8.8X\n",
+        ACPI_FORMAT_UINT64 (Result)));
+
     /* Save the Result */
 
     ReturnDesc->Integer.Value = Result;
@@ -300,7 +304,7 @@ AcpiExConvertToBuffer (
     UINT8                   *NewBuf;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExConvertToBuffer", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (ExConvertToBuffer, ObjDesc);
 
 
     switch (ACPI_GET_OBJECT_TYPE (ObjDesc))
@@ -521,7 +525,7 @@ AcpiExConvertToString (
     UINT8                   Separator = ',';
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExConvertToString", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (ExConvertToString, ObjDesc);
 
 
     switch (ACPI_GET_OBJECT_TYPE (ObjDesc))
@@ -700,7 +704,7 @@ AcpiExConvertToTargetType (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE ("ExConvertToTargetType");
+    ACPI_FUNCTION_TRACE (ExConvertToTargetType);
 
 
     /* Default behavior */

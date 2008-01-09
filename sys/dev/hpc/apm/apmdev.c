@@ -1,4 +1,4 @@
-/*	$NetBSD: apmdev.c,v 1.12 2007/07/10 13:55:20 nonaka Exp $ */
+/*	$NetBSD: apmdev.c,v 1.12.8.1 2008/01/09 01:52:39 matt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.12 2007/07/10 13:55:20 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.12.8.1 2008/01/09 01:52:39 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_apmdev.h"
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: apmdev.c,v 1.12 2007/07/10 13:55:20 nonaka Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -104,8 +104,8 @@ struct apm_softc {
 	int	event_count;
 	int	event_ptr;
 	int	sc_power_state;
-	struct lwp *sc_thread;
-	struct lock sc_lock;
+	lwp_t	*sc_thread;
+	kmutex_t sc_mutex;
 	struct apm_event_info event_list[APM_NEVENTS];
 	struct apm_accessops *ops;
 	void *cookie;
@@ -125,10 +125,8 @@ struct apm_softc {
  * APM module.  This is both the APM thread itself, as well as
  * user context.
  */
-#define	APM_LOCK(apmsc)							\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_EXCLUSIVE, NULL)
-#define	APM_UNLOCK(apmsc)						\
-	(void) lockmgr(&(apmsc)->sc_lock, LK_RELEASE, NULL)
+#define	APM_LOCK(apmsc)		mutex_enter(&(apmsc)->sc_mutex)
+#define	APM_UNLOCK(apmsc)	mutex_exit(&(apmsc)->sc_mutex)
 
 static void	apmattach(struct device *, struct device *, void *);
 static int	apmmatch(struct device *, struct cfdata *, void *);
@@ -701,7 +699,7 @@ apmattach(struct device *parent, struct device *self, void *aux)
 		apm_perror("get power status", error);
 	sc->ops->cpu_busy(sc->cookie);
 
-	lockinit(&sc->sc_lock, PWAIT, "apmlk", 0, 0);
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Initial state is `resumed'. */
 	sc->sc_power_state = PWR_RESUME;
@@ -966,7 +964,7 @@ apmdevkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

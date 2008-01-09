@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.h,v 1.22 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: ext2fs.h,v 1.22.40.1 2008/01/09 01:58:22 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -103,7 +103,7 @@
  * Note that super blocks are always of size SBSIZE,
  * and that both SBSIZE and MAXBSIZE must be >= MINBSIZE.
  */
-#define LOG_MINBSIZE 10
+#define LOG_MINBSIZE	10
 #define MINBSIZE	(1 << LOG_MINBSIZE)
 
 /*
@@ -169,7 +169,7 @@ struct ext2fs {
 	u_int32_t  e2fs_algo;		/* For compression */
 	u_int8_t   e2fs_prealloc;	/* # of blocks to preallocate */
 	u_int8_t   e2fs_dir_prealloc;	/* # of blocks to preallocate for dir */
-	u_int16_t  pad1;
+	u_int16_t  e2fs_reserved_ngdb; /* # of reserved gd blocks for resize */
 	u_int32_t  reserved2[204];
 };
 
@@ -198,11 +198,12 @@ struct m_ext2fs {
  * Filesystem identification
  */
 #define	E2FS_MAGIC	0xef53	/* the ext2fs magic number */
-#define E2FS_REV0	0	/* revision levels */
-#define E2FS_REV1	1	/* revision levels */
+#define E2FS_REV0	0	/* GOOD_OLD revision */
+#define E2FS_REV1	1	/* Support compat/incompat features */
 
-/* compatible/imcompatible features */
+/* compatible/incompatible features */
 #define EXT2F_COMPAT_PREALLOC		0x0001
+#define EXT2F_COMPAT_RESIZE		0x0010
 
 #define EXT2F_ROCOMPAT_SPARSESUPER	0x0001
 #define EXT2F_ROCOMPAT_LARGEFILE	0x0002
@@ -211,18 +212,40 @@ struct m_ext2fs {
 #define EXT2F_INCOMPAT_COMP		0x0001
 #define EXT2F_INCOMPAT_FTYPE		0x0002
 
-/* features supported in this implementation */
+/*
+ * Features supported in this implementation
+ *
+ * We support the following REV1 features:
+ * - EXT2F_ROCOMPAT_SPARSESUPER
+ *    superblock backups stored only in cg_has_sb(bno) groups
+ * - EXT2F_ROCOMPAT_LARGEFILE
+ *    use e2di_dacl in struct ext2fs_dinode to store 
+ *    upper 32bit of size for >2GB files
+ * - EXT2F_INCOMPAT_FTYPE
+ *    store file type to e2d_type in struct ext2fs_direct
+ *    (on REV0 e2d_namlen is uint16_t and no e2d_type, like ffs)
+ */
 #define EXT2F_COMPAT_SUPP		0x0000
 #define EXT2F_ROCOMPAT_SUPP		(EXT2F_ROCOMPAT_SPARSESUPER \
 					 | EXT2F_ROCOMPAT_LARGEFILE)
 #define EXT2F_INCOMPAT_SUPP		EXT2F_INCOMPAT_FTYPE
 
 /*
+ * Definitions of behavior on errors
+ */
+#define E2FS_BEH_CONTINUE	1	/* continue operation */
+#define E2FS_BEH_READONLY	2	/* remount fs read only */
+#define E2FS_BEH_PANIC		3	/* cause panic */
+#define E2FS_BEH_DEFAULT	E2FS_BEH_CONTINUE
+
+/*
  * OS identification
  */
-#define E2FS_OS_LINUX 0
-#define E2FS_OS_HURD  1
-#define E2FS_OS_MASIX 2
+#define E2FS_OS_LINUX	0
+#define E2FS_OS_HURD	1
+#define E2FS_OS_MASIX	2
+#define E2FS_OS_FREEBSD	3
+#define E2FS_OS_LITES	4
 
 /*
  * Filesystem clean flags
@@ -241,22 +264,20 @@ struct ext2_gd {
 	u_int16_t ext2bgd_ndirs;	/* number of directories */
 	u_int16_t reserved;
 	u_int32_t reserved2[3];
-
 };
 
 
 /*
  * If the EXT2F_ROCOMPAT_SPARSESUPER flag is set, the cylinder group has a
  * copy of the super and cylinder group descriptors blocks only if it's
- * a power of 3, 5 or 7
+ * 1, a power of 3, 5 or 7
  */
 
-static __inline int cg_has_sb(int) __attribute__((__unused__));
+static __inline int cg_has_sb(int) __unused;
 static __inline int
-cg_has_sb(i)
-	int i;
+cg_has_sb(int i)
 {
-	int a3 ,a5 , a7;
+	int a3, a5, a7;
 
 	if (i == 0 || i == 1)
 		return 1;
@@ -313,9 +334,9 @@ void e2fs_cg_bswap(struct ext2_gd *, struct ext2_gd *, int);
  */
 #define	ino_to_cg(fs, x)	(((x) - 1) / (fs)->e2fs.e2fs_ipg)
 #define	ino_to_fsba(fs, x)						\
-	((fs)->e2fs_gd[ino_to_cg(fs, x)].ext2bgd_i_tables + \
-	(((x)-1) % (fs)->e2fs.e2fs_ipg)/(fs)->e2fs_ipb)
-#define	ino_to_fsbo(fs, x)	(((x)-1) % (fs)->e2fs_ipb)
+	((fs)->e2fs_gd[ino_to_cg((fs), (x))].ext2bgd_i_tables +		\
+	(((x) - 1) % (fs)->e2fs.e2fs_ipg) / (fs)->e2fs_ipb)
+#define	ino_to_fsbo(fs, x)	(((x) - 1) % (fs)->e2fs_ipb)
 
 /*
  * Give cylinder group number for a file system block.

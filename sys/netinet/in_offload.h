@@ -1,4 +1,4 @@
-/*	$NetBSD: in_offload.h,v 1.5 2007/04/24 23:43:50 dyoung Exp $	*/
+/*	$NetBSD: in_offload.h,v 1.5.8.1 2008/01/09 01:57:25 matt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -46,5 +46,11 @@ int ip_tso_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
 
 extern int tcp_do_loopback_cksum; /* do TCP checksum on loopback? */
 extern int udp_do_loopback_cksum; /* do UDP checksum on loopback? */
+
+#define	IN_NEED_CHECKSUM(ifp, csum_flags) \
+	(__predict_true(((ifp)->if_flags & IFF_LOOPBACK) == 0 || \
+	(((csum_flags) & M_CSUM_UDPv4) != 0 && udp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_TCPv4) != 0 && tcp_do_loopback_cksum) || \
+	(((csum_flags) & M_CSUM_IPv4) != 0 && ip_do_loopback_cksum)))
 
 #endif /* !_NETINET_IN_OFFLOAD_H_ */

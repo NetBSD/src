@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_input.c,v 1.15 2007/05/02 20:40:23 dyoung Exp $	 */
+/*	$NetBSD: ddp_input.c,v 1.15.8.1 2008/01/09 01:57:20 matt Exp $	 */
 
 /*
  * Copyright (c) 1990,1994 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.15 2007/05/02 20:40:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_input.c,v 1.15.8.1 2008/01/09 01:57:20 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ ddp_input(m, ifp, elh, phase)
 	struct elaphdr *elh;
 	int             phase;
 {
+	struct rtentry *rt;
 	struct sockaddr_at from, to;
 	struct ddpshdr *dsh, ddps;
 	struct at_ifaddr *aa;
@@ -272,7 +273,7 @@ ddp_input(m, ifp, elh, phase)
 			return;
 		}
 		sockaddr_at_init(&u.dsta, &to.sat_addr, 0);
-		(void)rtcache_lookup(&forwro, &u.dst);
+		rt = rtcache_lookup(&forwro, &u.dst);
 #if 0		/* XXX The if-condition is always false.  What was this
 		 * actually trying to test?
 		 */
@@ -283,8 +284,7 @@ ddp_input(m, ifp, elh, phase)
 			return;
 		}
 #endif
-		if (ddp_firewall &&
-		    (forwro.ro_rt == NULL || forwro.ro_rt->rt_ifp != ifp)) {
+		if (ddp_firewall && (rt == NULL || rt->rt_ifp != ifp)) {
 			m_freem(m);
 			return;
 		}

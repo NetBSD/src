@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.63.2.1 2007/11/06 23:34:50 matt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.63.2.2 2008/01/09 01:58:11 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -77,17 +77,19 @@ struct lwp {
 	void		*l_sched_info;	/* s: Scheduler-specific structure */
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
+	int		l_ctxswtch;	/* l: performing a context switch */
 	struct user	*l_addr;	/* l: KVA of u-area (PROC ONLY) */
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
-	struct timeval 	l_rtime;	/* l: real time */
-	struct timeval	l_stime;	/* l: start time (while ONPROC) */
+	struct bintime 	l_rtime;	/* l: real time */
+	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
-	int		l_holdcnt;	/* l: if non-zero, don't swap */
+	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
+	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
@@ -97,6 +99,8 @@ struct lwp {
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
+	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
+	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -203,6 +207,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
+#define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
@@ -259,7 +264,7 @@ void	lwp_continue(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
-void	lwp_exit(lwp_t *) __attribute__((__noreturn__));
+void	lwp_exit(lwp_t *) __dead;
 void	lwp_exit_switchaway(lwp_t *);
 lwp_t *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(lwp_t *, lwp_t *);
@@ -284,6 +289,9 @@ void	lwp_setspecific(specificdata_key_t, void *);
 /* Syscalls */
 int	lwp_park(struct timespec *, const void *);
 int	lwp_unpark(lwpid_t, const void *);
+
+/* ddb */
+void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 
 
 /*
@@ -351,7 +359,7 @@ lwp_eprio(lwp_t *l)
 
 	pri = l->l_priority;
 	if (l->l_kpriority && pri < PRI_KERNEL)
-		pri = (pri >> 1) + PRI_KERNEL;
+		pri = (pri >> 1) + l->l_kpribase;
 	return MAX(l->l_inheritedprio, pri);
 }
 

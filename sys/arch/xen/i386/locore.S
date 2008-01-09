@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.26.10.1 2007/11/06 23:23:59 matt Exp $	*/
+/*	$NetBSD: locore.S,v 1.26.10.2 2008/01/09 01:50:03 matt Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -103,7 +103,6 @@
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_oldboot.h"
-#include "opt_cputype.h"
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
 #include "opt_lockdebug.h"
@@ -208,9 +207,7 @@
 	.globl	_C_LABEL(proc0uarea),_C_LABEL(PDPpaddr)
 	.globl	_C_LABEL(biosbasemem),_C_LABEL(biosextmem)
 	.globl	_C_LABEL(gdt)
-#ifdef I586_CPU
 	.globl	_C_LABEL(idt)
-#endif
 	.globl	_C_LABEL(lapic_tpr)
 
 #if NLAPIC > 0
@@ -679,7 +676,7 @@ switch_skipsave:
 	 *   %edi - new lwp
 	 */
 
-	pushl	%ebx
+	pushl	%edi
 	call	_C_LABEL(i386_switch_context)
 	addl	$4,%esp
 

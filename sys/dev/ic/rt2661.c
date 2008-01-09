@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661.c,v 1.16.2.1 2007/11/06 23:27:03 matt Exp $	*/
+/*	$NetBSD: rt2661.c,v 1.16.2.2 2008/01/09 01:52:59 matt Exp $	*/
 /*	$OpenBSD: rt2661.c,v 1.17 2006/05/01 08:41:11 damien Exp $	*/
 /*	$FreeBSD: rt2560.c,v 1.5 2006/06/02 19:59:31 csjp Exp $	*/
 
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.16.2.1 2007/11/06 23:27:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2661.c,v 1.16.2.2 2008/01/09 01:52:59 matt Exp $");
 
 #include "bpfilter.h"
 
@@ -427,6 +427,7 @@ rt2661_attach(void *xsc, int id)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = rt2661_init;
+	ifp->if_stop = rt2661_stop;
 	ifp->if_ioctl = rt2661_ioctl;
 	ifp->if_start = rt2661_start;
 	ifp->if_watchdog = rt2661_watchdog;
@@ -509,6 +510,11 @@ rt2661_attach(void *xsc, int id)
 
 	ieee80211_announce(ic);
 
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(&sc->sc_dev, ifp);
+
 	return 0;
 
 fail6:	rt2661_free_tx_ring(sc, &sc->mgtq);
@@ -527,6 +533,8 @@ rt2661_detach(void *xsc)
 
 	callout_stop(&sc->scan_ch);
 	callout_stop(&sc->rssadapt_ch);
+
+	pmf_device_deregister(&sc->sc_dev);
 
 	ieee80211_ifdetach(&sc->sc_ic);
 	if_detach(ifp);

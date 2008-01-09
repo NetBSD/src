@@ -1,4 +1,4 @@
-/* $NetBSD: netisr.h,v 1.36 2007/07/14 21:02:42 ad Exp $ */
+/* $NetBSD: netisr.h,v 1.36.8.1 2008/01/09 01:57:15 matt Exp $ */
 
 /*
  * Copyright (c) 1980, 1986, 1989, 1993
@@ -113,14 +113,9 @@
 #define	NETISR_NATM	27		/* same as AF_NATM */
 #define	NETISR_ARP	28		/* same as AF_ARP */
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-
-#ifndef schednetisr
-#define	schednetisr(anisr)	{ netisr |= 1<<(anisr); setsoftnet(); }
+#if !defined(_LOCORE) && defined(_KERNEL)
+/* XXX Legacy netisr support. */
+void	schednetisr(int);
 #endif
-
-extern	int netisr;			/* scheduling bits for network */
-
-#endif /* defined(_KERNEL) && !defined(_LOCORE) */
 
 #endif /* !_NET_NETISR_H_ */

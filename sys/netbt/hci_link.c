@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.12.8.1 2007/11/06 23:33:42 matt Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.12.8.2 2008/01/09 01:57:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.12.8.1 2007/11/06 23:33:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.12.8.2 2008/01/09 01:57:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -425,13 +425,14 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 
 #ifdef DIAGNOSTIC
 	if (hdr.type != HCI_ACL_DATA_PKT) {
-		printf("%s: bad ACL packet type\n", unit->hci_devname);
+		aprint_error_dev(unit->hci_dev, "bad ACL packet type\n");
 		goto bad;
 	}
 
 	if (m->m_pkthdr.len != le16toh(hdr.length)) {
-		printf("%s: bad ACL packet length (%d != %d)\n",
-			unit->hci_devname, m->m_pkthdr.len, le16toh(hdr.length));
+		aprint_error_dev(unit->hci_dev,
+		    "bad ACL packet length (%d != %d)\n",
+		    m->m_pkthdr.len, le16toh(hdr.length));
 		goto bad;
 	}
 #endif
@@ -446,7 +447,7 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 		hci_discon_cp cp;
 
 		DPRINTF("%s: dumping packet for unknown handle #%d\n",
-			unit->hci_devname, handle);
+			device_xname(unit->hci_dev), handle);
 
 		/*
 		 * There is no way to find out what this connection handle is
@@ -463,13 +464,11 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 	switch (pb) {
 	case HCI_PACKET_START:
 		if (link->hl_rxp != NULL)
-			printf("%s: dropped incomplete ACL packet\n",
-				unit->hci_devname);
+			aprint_error_dev(unit->hci_dev,
+			    "dropped incomplete ACL packet\n");
 
 		if (m->m_pkthdr.len < sizeof(l2cap_hdr_t)) {
-			printf("%s: short ACL packet\n",
-				unit->hci_devname);
-
+			aprint_error_dev(unit->hci_dev, "short ACL packet\n");
 			goto bad;
 		}
 
@@ -479,8 +478,8 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 
 	case HCI_PACKET_FRAGMENT:
 		if (link->hl_rxp == NULL) {
-			printf("%s: unexpected packet fragment\n",
-				unit->hci_devname);
+			aprint_error_dev(unit->hci_dev,
+			    "unexpected packet fragment\n");
 
 			goto bad;
 		}
@@ -492,9 +491,7 @@ hci_acl_recv(struct mbuf *m, struct hci_unit *unit)
 		break;
 
 	default:
-		printf("%s: unknown packet type\n",
-			unit->hci_devname);
-
+		aprint_error_dev(unit->hci_dev, "unknown packet type\n");
 		goto bad;
 	}
 
@@ -553,7 +550,7 @@ hci_acl_send(struct mbuf *m, struct hci_link *link,
 	mlen = link->hl_unit->hci_max_acl_size;
 
 	DPRINTFN(5, "%s: handle #%d, plen = %d, max = %d\n",
-		link->hl_unit->hci_devname, link->hl_handle, plen, mlen);
+		device_xname(link->hl_unit->hci_dev), link->hl_handle, plen, mlen);
 
 	while (plen > 0) {
 		if (plen > mlen) {
@@ -706,10 +703,10 @@ hci_acl_complete(struct hci_link *link, int num)
 	while (num > 0) {
 		pdu = TAILQ_FIRST(&link->hl_txq);
 		if (pdu == NULL) {
-			printf("%s: %d packets completed on handle #%x "
-				"but none pending!\n",
-				link->hl_unit->hci_devname, num,
-				link->hl_handle);
+			aprint_error_dev(link->hl_unit->hci_dev,
+			    "%d packets completed on handle #%x but none pending!\n",
+			    num, link->hl_handle);
+
 			return;
 		}
 
@@ -830,12 +827,15 @@ hci_sco_recv(struct mbuf *m, struct hci_unit *unit)
 
 #ifdef DIAGNOSTIC
 	if (hdr.type != HCI_SCO_DATA_PKT) {
-		printf("%s: bad SCO packet type\n", unit->hci_devname);
+		aprint_error_dev(unit->hci_dev, "bad SCO packet type\n");
 		goto bad;
 	}
 
 	if (m->m_pkthdr.len != hdr.length) {
-		printf("%s: bad SCO packet length (%d != %d)\n", unit->hci_devname, m->m_pkthdr.len, hdr.length);
+		aprint_error_dev(unit->hci_dev,
+		    "bad SCO packet length (%d != %d)\n",
+		    m->m_pkthdr.len, hdr.length);
+
 		goto bad;
 	}
 #endif
@@ -846,7 +846,7 @@ hci_sco_recv(struct mbuf *m, struct hci_unit *unit)
 	link = hci_link_lookup_handle(unit, handle);
 	if (link == NULL || link->hl_type == HCI_LINK_ACL) {
 		DPRINTF("%s: dumping packet for unknown handle #%d\n",
-			unit->hci_devname, handle);
+			device_xname(unit->hci_dev), handle);
 
 		goto bad;
 	}

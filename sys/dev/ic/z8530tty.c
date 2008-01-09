@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.114.8.1 2007/11/08 10:59:50 matt Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.114.8.2 2008/01/09 01:53:07 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.114.8.1 2007/11/08 10:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.114.8.2 2008/01/09 01:53:07 matt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -289,6 +289,7 @@ static void zstty_rxint  (struct zs_chanstate *);
 static void zstty_stint  (struct zs_chanstate *, int);
 static void zstty_txint  (struct zs_chanstate *);
 static void zstty_softint(struct zs_chanstate *);
+static void zstty_softint1(struct zs_chanstate *);
 
 #define	ZSUNIT(x)	(minor(x) & 0x7ffff)
 #define	ZSDIALOUT(x)	(minor(x) & 0x80000)
@@ -1048,21 +1049,12 @@ zsstart(tp)
 	u_char *tba;
 	int tbc;
 
-	mutex_spin_enter(&tty_lock);
 	if (ISSET(tp->t_state, TS_BUSY | TS_TIMEOUT | TS_TTSTOP))
-		goto out;
+		return;
 	if (zst->zst_tx_stopped)
-		goto out;
-
-	if (tp->t_outq.c_cc <= tp->t_lowat) {
-		if (ISSET(tp->t_state, TS_ASLEEP)) {
-			CLR(tp->t_state, TS_ASLEEP);
-			wakeup((void *)&tp->t_outq);
-		}
-		selwakeup(&tp->t_wsel);
-		if (tp->t_outq.c_cc == 0)
-			goto out;
-	}
+		return;
+	if (!ttypull(tp))
+		return;
 
 	/* Grab the first contiguous region of buffer space. */
 	tba = tp->t_outq.c_cf;
@@ -1079,7 +1071,7 @@ zsstart(tp)
 	if (zst->zst_tbc > 1) {
 		zs_dma_setup(cs, zst->zst_tba, zst->zst_tbc);
 		mutex_spin_exit(&cs->cs_lock);
-		goto out;
+		return;
 	}
 #endif
 
@@ -1096,9 +1088,6 @@ zsstart(tp)
 	zst->zst_tba++;
 
 	mutex_spin_exit(&cs->cs_lock);
-out:
-	mutex_spin_exit(&tty_lock);
-	return;
 }
 
 /*
@@ -1298,7 +1287,7 @@ zsparam(tp, t)
 		}
 	}
 
-	zstty_softint(cs);
+	zstty_softint1(cs);
 
 	return (0);
 }
@@ -1870,7 +1859,6 @@ zstty_txsoft(zst, tp)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 
-	mutex_spin_enter(&tty_lock);
 	mutex_spin_enter(&cs->cs_lock);
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
@@ -1878,7 +1866,6 @@ zstty_txsoft(zst, tp)
 	else
 		ndflush(&tp->t_outq, (int)(zst->zst_tba - tp->t_outq.c_cf));
 	mutex_spin_exit(&cs->cs_lock);
-	mutex_spin_exit(&tty_lock);
 	(*tp->t_linesw->l_start)(tp);
 }
 
@@ -1900,7 +1887,9 @@ zstty_stsoft(zst, tp)
 		/*
 		 * Inform the tty layer that carrier detect changed.
 		 */
+		mutex_spin_exit(&tty_lock);
 		(void) (*tp->t_linesw->l_modem)(tp, ISSET(rr0, ZSRR0_DCD));
+		mutex_spin_enter(&tty_lock);
 	}
 
 	if (ISSET(delta, cs->cs_rr0_cts)) {
@@ -1930,10 +1919,19 @@ static void
 zstty_softint(cs)
 	struct zs_chanstate *cs;
 {
+
+	mutex_spin_enter(&tty_lock);
+	zstty_softint1(cs);
+	mutex_spin_exit(&tty_lock);
+}
+
+static void
+zstty_softint1(cs)
+	struct zs_chanstate *cs;
+{
 	struct zstty_softc *zst = cs->cs_private;
 	struct tty *tp = zst->zst_tty;
 
-	mutex_spin_enter(&tty_lock);
 
 	if (zst->zst_rx_ready) {
 		zst->zst_rx_ready = 0;
@@ -1949,8 +1947,6 @@ zstty_softint(cs)
 		zst->zst_tx_done = 0;
 		zstty_txsoft(zst, tp);
 	}
-
-	mutex_spin_exit(&tty_lock);
 }
 
 struct zsops zsops_tty = {

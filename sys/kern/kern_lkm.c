@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lkm.c,v 1.97 2007/03/04 06:03:05 christos Exp $	*/
+/*	$NetBSD: kern_lkm.c,v 1.97.16.1 2008/01/09 01:56:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.97 2007/03/04 06:03:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lkm.c,v 1.97.16.1 2008/01/09 01:56:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_malloclog.h"
@@ -656,7 +656,7 @@ lkmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
  * Place holder for system call slots reserved for loadable modules.
  */
 int
-sys_lkmnosys(struct lwp *l, void *v, register_t *retval)
+sys_lkmnosys(struct lwp *l, const void *v, register_t *retval)
 {
 
 	return (sys_nosys(l, v, retval));

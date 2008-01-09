@@ -1,3 +1,5 @@
+/* $NetBSD: drm_lock.c,v 1.1.14.2 2008/01/09 01:52:35 matt Exp $ */
+
 /* lock.c -- IOCTLs for locking -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
  */
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_lock.c,v 1.1.14.2 2008/01/09 01:52:35 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_lock.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -130,13 +133,8 @@ int drm_lock(DRM_IOCTL_ARGS)
 		}
 
 		/* Contention */
-#if defined(__FreeBSD__) && __FreeBSD_version > 500000
-		ret = msleep((void *)&dev->lock.lock_queue, &dev->dev_lock,
-		    PZERO | PCATCH, "drmlk2", 0);
-#else
 		ret = mtsleep((void *)&dev->lock.lock_queue, PZERO | PCATCH,
 		    "drmlk2", 0, &dev->dev_lock);
-#endif
 		if (ret != 0)
 			break;
 	}
@@ -167,6 +165,10 @@ int drm_unlock(DRM_IOCTL_ARGS)
 		    DRM_CURRENTPID, lock.context);
 		return EINVAL;
 	}
+
+	if (!_DRM_LOCK_IS_HELD(dev->lock.hw_lock->lock) ||
+	    _DRM_LOCKING_CONTEXT(dev->lock.hw_lock->lock) != lock.context)
+		return EINVAL;
 
 	atomic_inc(&dev->counts[_DRM_STAT_UNLOCKS]);
 

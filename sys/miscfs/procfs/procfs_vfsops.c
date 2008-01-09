@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.74 2007/07/31 21:14:16 pooka Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.74.4.1 2008/01/09 01:57:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.74 2007/07/31 21:14:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.74.4.1 2008/01/09 01:57:05 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -114,10 +114,9 @@ procfs_mount(
     struct mount *mp,
     const char *path,
     void *data,
-    size_t *data_len,
-    struct lwp *l
-)
+    size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct procfsmount *pmnt;
 	struct procfs_args *args = data;
 	int error;
@@ -162,6 +161,7 @@ procfs_mount(
 	else
 		pmnt->pmnt_flags = 0;
 
+	mp->mnt_iflag |= IMNT_MPSAFE;
 	return error;
 }
 
@@ -169,7 +169,7 @@ procfs_mount(
  * unmount system call
  */
 int
-procfs_unmount(struct mount *mp, int mntflags, struct lwp *l)
+procfs_unmount(struct mount *mp, int mntflags)
 {
 	int error;
 	int flags = 0;
@@ -199,8 +199,7 @@ procfs_root(mp, vpp)
 
 /* ARGSUSED */
 int
-procfs_start(struct mount *mp, int flags,
-    struct lwp *l)
+procfs_start(struct mount *mp, int flags)
 {
 
 	return (0);
@@ -210,7 +209,7 @@ procfs_start(struct mount *mp, int flags,
  * Get file system statistics.
  */
 int
-procfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+procfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 
 	sbp->f_bsize = PAGE_SIZE;
@@ -230,26 +229,10 @@ procfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
 
 /*ARGSUSED*/
 int
-procfs_quotactl(
-    struct mount *mp,
-    int cmds,
-    uid_t uid,
-    void *arg,
-    struct lwp *l
-)
-{
-
-	return (EOPNOTSUPP);
-}
-
-/*ARGSUSED*/
-int
 procfs_sync(
     struct mount *mp,
     int waitfor,
-    kauth_cred_t uc,
-    struct lwp *l
-)
+    kauth_cred_t uc)
 {
 
 	return (0);
@@ -316,7 +299,7 @@ struct vfsops procfs_vfsops = {
 	procfs_start,
 	procfs_unmount,
 	procfs_root,
-	procfs_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	procfs_statvfs,
 	procfs_sync,
 	procfs_vget,

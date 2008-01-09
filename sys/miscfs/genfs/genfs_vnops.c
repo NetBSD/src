@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.156.6.1 2007/11/06 23:33:17 matt Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.156.6.2 2008/01/09 01:57:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.156.6.1 2007/11/06 23:33:17 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.156.6.2 2008/01/09 01:57:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,56 +219,46 @@ genfs_revoke(void *v)
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp, *vq;
-	struct lwp *l = curlwp;		/* XXX */
+	struct vnode *vp, *vq, **vpp;
+	enum vtype type;
+	dev_t dev;
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
 		panic("genfs_revoke: not revokeall");
 #endif
-
 	vp = ap->a_vp;
-	simple_lock(&vp->v_interlock);
 
-	if (vp->v_iflag & VI_ALIASED) {
-		/*
-		 * If a vgone (or vclean) is already in progress,
-		 * wait until it is done and return.
-		 */
-		if (vp->v_iflag & VI_XLOCK) {
-			vp->v_iflag |= VI_XWANT;
-			ltsleep(vp, PINOD|PNORELOCK, "vop_revokeall", 0,
-				&vp->v_interlock);
-			return (0);
-		}
-		/*
-		 * Ensure that vp will not be vgone'd while we
-		 * are eliminating its aliases.
-		 */
-		vp->v_iflag |= VI_XLOCK;
-		simple_unlock(&vp->v_interlock);
-		while (vp->v_iflag & VI_ALIASED) {
-			simple_lock(&spechash_slock);
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
-				if (vq->v_rdev != vp->v_rdev ||
-				    vq->v_type != vp->v_type || vp == vq)
-					continue;
-				simple_unlock(&spechash_slock);
-				vgone(vq);
-				break;
-			}
-			if (vq == NULLVP)
-				simple_unlock(&spechash_slock);
-		}
-		/*
-		 * Remove the lock so that vgone below will
-		 * really eliminate the vnode after which time
-		 * vgone will awaken any sleepers.
-		 */
-		simple_lock(&vp->v_interlock);
-		vp->v_iflag &= ~VI_XLOCK;
+	mutex_enter(&vp->v_interlock);
+	if ((vp->v_iflag & VI_CLEAN) != 0) {
+		mutex_exit(&vp->v_interlock);
+		return (0);
+	} else {
+		dev = vp->v_rdev;
+		type = vp->v_type;
+		mutex_exit(&vp->v_interlock);
 	}
-	vgonel(vp, l);
+
+	if (type != VBLK && type != VCHR)
+		return (0);
+
+	vpp = &speclisth[SPECHASH(dev)];
+	mutex_enter(&spechash_lock);
+	for (vq = *vpp; vq != NULL;) {
+		if (vq->v_rdev != dev || vq->v_type != type) {
+			vq = vq->v_specnext;
+			continue;
+		}
+		mutex_enter(&vq->v_interlock);
+		mutex_exit(&spechash_lock);
+		vq->v_usecount++;
+		vclean(vq, DOCLOSE);
+		vrelel(vq, 1, 0);
+		mutex_enter(&spechash_lock);
+		vq = *vpp;
+	}
+	mutex_exit(&spechash_lock);
+
 	return (0);
 }
 
@@ -334,7 +324,7 @@ genfs_nolock(void *v)
 	 * the interlock here.
 	 */
 	if (ap->a_flags & LK_INTERLOCK)
-		simple_unlock(&ap->a_vp->v_interlock);
+		mutex_exit(&ap->a_vp->v_interlock);
 	return (0);
 }
 
@@ -461,7 +451,7 @@ genfs_kqfilter(void *v)
 		kn->kn_fop = &genfsvnode_filtops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = vp;

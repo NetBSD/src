@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.h,v 1.22 2005/12/11 12:20:12 christos Exp $ */
+/*	$NetBSD: irix_exec.h,v 1.22.46.1 2008/01/09 01:50:48 matt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/exec.h>
 #include <sys/signal.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/exec_elf.h>
 
 #include <machine/vmparam.h>
@@ -83,28 +83,28 @@ struct irix_emuldata {
 #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux32Info), sizeof (Elf32_Addr))
 
-int irix_elf32_copyargs __P((struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *));
+int irix_elf32_copyargs(struct lwp *, struct exec_package *,
+    struct ps_strings *, char **, void *);
 
-int irix_elf32_probe_o32 __P((struct lwp *, struct exec_package *, void *,
-    char *, vaddr_t *));
+int irix_elf32_probe_o32(struct lwp *, struct exec_package *, void *,
+    char *, vaddr_t *);
 
-int irix_elf32_probe_n32 __P((struct lwp *, struct exec_package *, void *,
-    char *, vaddr_t *));
+int irix_elf32_probe_n32(struct lwp *, struct exec_package *, void *,
+    char *, vaddr_t *);
 #endif
 
 #ifdef EXEC_ELF64
 /* #define IRIX_AUX_ARGSIZ howmany(IRIX_ELF_AUX_ENTRIES * \
     sizeof(Aux64Info), sizeof (Elf64_Addr))  */
 
-int irix_elf64_copyargs __P((struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *));
+int irix_elf64_copyargs(struct lwp *, struct exec_package *,
+    struct ps_strings *, char **, void *);
 
-int irix_elf64_probe __P((struct lwp *, struct exec_package *, void *,
-    char *, vaddr_t *));
+int irix_elf64_probe(struct lwp *, struct exec_package *, void *,
+    char *, vaddr_t *);
 #endif
 
-void irix_n32_setregs __P((struct lwp *, struct exec_package *, u_long));
+void irix_n32_setregs(struct lwp *, struct exec_package *, u_long);
 
 extern const struct emul emul_irix;
 

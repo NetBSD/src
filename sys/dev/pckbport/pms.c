@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.19.6.1 2007/11/06 23:29:39 matt Exp $ */
+/* $NetBSD: pms.c,v 1.19.6.2 2008/01/09 01:54:13 matt Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.6.1 2007/11/06 23:29:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.19.6.2 2008/01/09 01:54:13 matt Exp $");
 
 #include "opt_pms.h"
 
@@ -85,9 +85,9 @@ static void	pms_reset_thread(void*);
 int	pms_enable(void *);
 int	pms_ioctl(void *, u_long, void *, int, struct lwp *);
 void	pms_disable(void *);
-#ifndef PMS_DISABLE_POWERHOOK
-void	pms_power(int, void *);
-#endif /* !PMS_DISABLE_POWERHOOK */
+
+static bool	pms_suspend(device_t);
+static bool	pms_resume(device_t);
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -179,7 +179,8 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	sc->sc_kbctag = pa->pa_tag;
 	sc->sc_kbcslot = pa->pa_slot;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	/* Flush any garbage. */
 	pckbport_flush(pa->pa_tag, pa->pa_slot);
@@ -189,7 +190,7 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 2, resp, 1);
 #ifdef DEBUG
 	if (res || resp[0] != PMS_RSTDONE || resp[1] != 0) {
-		printf("pmsattach: reset error\n");
+		aprint_error("pmsattach: reset error\n");
 		return;
 	}
 #endif
@@ -222,16 +223,17 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	cmd[0] = PMS_DEV_DISABLE;
 	res = pckbport_poll_cmd(pa->pa_tag, pa->pa_slot, cmd, 1, 0, 0, 0);
 	if (res)
-		printf("pmsattach: disable error\n");
+		aprint_error("pmsattach: disable error\n");
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 
 	kthread_create(PRI_NONE, 0, NULL, pms_reset_thread, sc,
 	    &sc->sc_event_thread, sc->sc_dev.dv_xname);
 
 #ifndef PMS_DISABLE_POWERHOOK
-	sc->sc_powerhook = powerhook_establish(self->dv_xname, pms_power, sc);
 	sc->sc_suspended = 0;
-#endif /* !PMS_DISABLE_POWERHOOK */
+#endif
+	if (!pmf_device_register(self, pms_suspend, pms_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static void
@@ -254,7 +256,7 @@ do_enable(struct pms_softc *sc)
 	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 	    1, 0, 1, 0);
 	if (res)
-		printf("pms_enable: command error %d\n", res);
+		aprint_error("pms_enable: command error %d\n", res);
 
 	if (sc->protocol == PMS_UNKNOWN)
 		sc->protocol = pms_protocol(sc->sc_kbctag, sc->sc_kbcslot);
@@ -297,7 +299,7 @@ do_disable(struct pms_softc *sc)
 	res = pckbport_enqueue_cmd(sc->sc_kbctag, sc->sc_kbcslot, cmd,
 	    1, 0, 1, 0);
 	if (res)
-		printf("pms_disable: command error\n");
+		aprint_error("pms_disable: command error\n");
 
 	pckbport_slot_enable(sc->sc_kbctag, sc->sc_kbcslot, 0);
 }
@@ -333,43 +335,36 @@ pms_disable(void *v)
 	splx(s);
 }
 
-#ifndef PMS_DISABLE_POWERHOOK
-void
-pms_power(int why, void *v)
+static bool
+pms_suspend(device_t dv)
 {
-	struct pms_softc *sc = v;
+	struct pms_softc *sc = device_private(dv);
 
-	switch (why) {
-	case PWR_STANDBY:
-		break;
-	case PWR_SUSPEND:
-		if (sc->sc_enabled) {
-			do_disable(sc);
-			sc->sc_suspended = 1;
-		}
-		break;
-	case PWR_RESUME:
-#ifdef PMS_SYNAPTICS_TOUCHPAD
-		if (sc->protocol == PMS_SYNAPTICS) {
-			pms_synaptics_resume(sc);
-			sc->sc_suspended = 0;
-			do_enable(sc);
-		}
-#endif
-		if (sc->sc_enabled && sc->sc_suspended) {
-			/* recheck protocol & init mouse */
-			sc->protocol = PMS_UNKNOWN;
-			sc->sc_suspended = 0;
-			do_enable(sc); /* only if we were suspended */
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	if (sc->sc_enabled)
+		do_disable(sc);
+
+	return true;
 }
-#endif /* !PMS_DISABLE_POWERHOOK */
+
+static bool
+pms_resume(device_t dv)
+{
+	struct pms_softc *sc = device_private(dv);
+
+#ifdef PMS_SYNAPTICS_TOUCHPAD
+	if (sc->protocol == PMS_SYNAPTICS) {
+		pms_synaptics_resume(sc);
+		do_enable(sc);
+	} else
+#endif
+	if (sc->sc_enabled) {
+		/* recheck protocol & init mouse */
+		sc->protocol = PMS_UNKNOWN;
+		do_enable(sc); /* only if we were suspended */
+	}
+
+	return true;
+}
 
 int
 pms_ioctl(void *v, u_long cmd, void *data, int flag,

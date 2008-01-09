@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.83.4.1 2007/11/06 23:35:22 matt Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.83.4.2 2008/01/09 01:58:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.83.4.1 2007/11/06 23:35:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.83.4.2 2008/01/09 01:58:33 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -208,7 +208,7 @@ mfs_mountroot(void)
 	ump = VFSTOUFS(mp);
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
-	(void)ffs_statvfs(mp, &mp->mnt_stat, l);
+	(void)ffs_statvfs(mp, &mp->mnt_stat);
 	vfs_unbusy(mp);
 	return (0);
 }
@@ -241,9 +241,9 @@ mfs_initminiroot(void *base)
  */
 /* ARGSUSED */
 int
-mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	struct vnode *devvp;
 	struct mfs_args *args = data;
 	struct ufsmount *ump;
@@ -354,8 +354,9 @@ int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
  */
 /* ARGSUSED */
 int
-mfs_start(struct mount *mp, int flags, struct lwp *l)
+mfs_start(struct mount *mp, int flags)
 {
+	struct lwp *l = curlwp;
 	struct vnode *vp = VFSTOUFS(mp)->um_devvp;
 	struct mfsnode *mfsp = VTOMFS(vp);
 	struct proc *p;
@@ -408,11 +409,11 @@ mfs_start(struct mount *mp, int flags, struct lwp *l)
  * Get file system statistics.
  */
 int
-mfs_statvfs(struct mount *mp, struct statvfs *sbp, struct lwp *l)
+mfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	int error;
 
-	error = ffs_statvfs(mp, sbp, l);
+	error = ffs_statvfs(mp, sbp);
 	if (error)
 		return error;
 	(void)strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name,

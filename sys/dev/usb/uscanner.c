@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.56.12.1 2007/11/06 23:30:46 matt Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.56.12.2 2008/01/09 01:54:48 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.56.12.1 2007/11/06 23:30:46 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.56.12.2 2008/01/09 01:54:48 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,6 +335,7 @@ USB_ATTACH(uscanner)
 	if (err) {
 		printf("%s: setting config no failed\n",
 		    USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -345,6 +346,7 @@ USB_ATTACH(uscanner)
 	if (err || id == 0) {
 		printf("%s: could not get interface descriptor, err=%d,id=%p\n",
 		       USBDEVNAME(sc->sc_dev), err, id);
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -354,6 +356,7 @@ USB_ATTACH(uscanner)
 		if (ed == 0) {
 			printf("%s: could not read endpoint descriptor\n",
 			       USBDEVNAME(sc->sc_dev));
+			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
 
@@ -373,6 +376,7 @@ USB_ATTACH(uscanner)
 	if (ed_bulkin == NULL || ed_bulkout == NULL) {
 		printf("%s: bulk-in and/or bulk-out endpoint not found\n",
 			USBDEVNAME(sc->sc_dev));
+		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
 
@@ -740,7 +744,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 	USB_GET_SC(uscanner, USCANNERUNIT(dev), sc);
 
 	if (sc->sc_dying)
-		return (1);
+		return (ENXIO);
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -755,7 +759,7 @@ uscannerkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;

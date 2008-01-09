@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_stropts.h,v 1.3 2007/03/04 07:54:10 christos Exp $	 */
+/*	$NetBSD: svr4_32_stropts.h,v 1.3.16.1 2008/01/09 01:52:01 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -106,6 +106,6 @@ struct svr4_32_netaddr_un {
 };
 typedef netbsd32_caddr_t svr4_32_netaddr_unp;
 
-struct svr4_strm *svr4_32_stream_get __P((struct file *fp));
+struct svr4_strm *svr4_32_stream_get(struct file *fp);
 
 #endif /* !_SVR4_32_STROPTS */

@@ -1,4 +1,37 @@
-/*	$NetBSD: iso.c,v 1.42 2007/05/02 20:40:28 dyoung Exp $	*/
+/*	$NetBSD: iso.c,v 1.42.8.1 2008/01/09 01:57:46 matt Exp $	*/
+
+/*-
+ * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +95,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.42 2007/05/02 20:40:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iso.c,v 1.42.8.1 2008/01/09 01:57:46 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -490,10 +523,8 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 			if (ia == 0)
 				return (ENOBUFS);
 			TAILQ_INSERT_TAIL(&iso_ifaddr, ia, ia_list);
-			IFAREF((struct ifaddr *)ia);
-			TAILQ_INSERT_TAIL(&ifp->if_addrlist, (struct ifaddr *)ia,
-			    ifa_list);
-			IFAREF((struct ifaddr *)ia);
+			IFAREF(&ia->ia_ifa);
+			ifa_insert(ifp, &ia->ia_ifa);
 			ia->ia_ifa.ifa_addr = sisotosa(&ia->ia_addr);
 			ia->ia_ifa.ifa_dstaddr = sisotosa(&ia->ia_dstaddr);
 			ia->ia_ifa.ifa_netmask = sisotosa(&ia->ia_sockmask);
@@ -556,7 +587,7 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		return (error);
 
 	case SIOCDIFADDR_ISO:
-		iso_purgeaddr(&ia->ia_ifa, ifp);
+		iso_purgeaddr(&ia->ia_ifa);
 		break;
 
 #define cmdbyte(x)	(((x) >> 8) & 0xff)
@@ -571,28 +602,21 @@ iso_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 }
 
 void
-iso_purgeaddr(struct ifaddr *ifa, struct ifnet *ifp)
+iso_purgeaddr(struct ifaddr *ifa)
 {
+	struct ifnet *ifp = ifa->ifa_ifp;
 	struct iso_ifaddr *ia = (void *) ifa;
 
 	iso_ifscrub(ifp, ia);
-	TAILQ_REMOVE(&ifp->if_addrlist, (struct ifaddr *)ia, ifa_list);
-	IFAFREE(&ia->ia_ifa);
+	ifa_remove(ifp, &ia->ia_ifa);
 	TAILQ_REMOVE(&iso_ifaddr, ia, ia_list);
-	IFAFREE((&ia->ia_ifa));
+	IFAFREE(&ia->ia_ifa);
 }
 
 void
 iso_purgeif(struct ifnet *ifp)
 {
-	struct ifaddr *ifa, *nifa;
-
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa != NULL; ifa = nifa) {
-		nifa = TAILQ_NEXT(ifa, ifa_list);
-		if (ifa->ifa_addr->sa_family != AF_ISO)
-			continue;
-		iso_purgeaddr(ifa, ifp);
-	}
+	if_purgeaddrs(ifp, AF_ISO, iso_purgeaddr);
 }
 
 /*
@@ -700,7 +724,7 @@ iso_ifwithidi(struct sockaddr *addr)
 			printf("iso_ifwithidi ifnet %s\n", ifp->if_name);
 		}
 #endif
-		TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, ifp) {
 #ifdef ARGO_DEBUG
 			if (argo_debug[D_ROUTE]) {
 				printf("iso_ifwithidi address ");
@@ -952,3 +976,47 @@ dump_isoaddr(const struct sockaddr_iso *s)
 }
 
 #endif /* ARGO_DEBUG */
+
+struct queue {
+	struct queue *q_next, *q_prev;
+};
+
+/*
+ * FUNCTION:		iso_insque
+ *
+ * PURPOSE:		insert an element into a queue
+ *
+ * RETURNS:
+ */
+void
+iso_insque(void *v1, void *v2)
+{
+	struct queue *elem = v1, *head = v2;
+	struct queue *next;
+
+	next = head->q_next;
+	elem->q_next = next;
+	head->q_next = elem;
+	elem->q_prev = head;
+	next->q_prev = elem;
+}
+
+/*
+ * FUNCTION:		iso_remque
+ *
+ * PURPOSE:		remove an element from a queue
+ *
+ * RETURNS:
+ */
+void
+iso_remque(void *v)
+{
+	struct queue *elem = v;
+	struct queue *next, *prev;
+
+	next = elem->q_next;
+	prev = elem->q_prev;
+	next->q_prev = prev;
+	prev->q_next = next;
+	elem->q_prev = NULL;
+}

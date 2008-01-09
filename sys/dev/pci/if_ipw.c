@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.32.16.1 2007/11/06 23:28:59 matt Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.32.16.2 2008/01/09 01:53:45 matt Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32.16.1 2007/11/06 23:28:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.32.16.2 2008/01/09 01:53:45 matt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -94,10 +94,7 @@ static int	ipw_match(struct device *, struct cfdata *, void *);
 static void	ipw_attach(struct device *, struct device *, void *);
 static int	ipw_detach(struct device *, int);
 
-static void	ipw_shutdown(void *);
-static int	ipw_suspend(struct ipw_softc *);
-static int	ipw_resume(struct ipw_softc *);
-static void	ipw_powerhook(int, void *);
+static bool	ipw_resume(device_t);
 
 static int	ipw_media_change(struct ifnet *);
 static void	ipw_media_status(struct ifnet *, struct ifmediareq *);
@@ -204,10 +201,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	data |= PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(sc->sc_pct, pa->pa_tag, PCI_COMMAND_STATUS_REG, data);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 
 	/* map the register window */
 	error = pci_mapreg_map(pa, IPW_PCI_BAR0, PCI_MAPREG_TYPE_MEM |
@@ -340,18 +334,10 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->dwelltime = 100;
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(ipw_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    ipw_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, NULL, ipw_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 	ieee80211_announce(ic);
 
@@ -756,67 +742,14 @@ ipw_release(struct ipw_softc *sc)
 
 }
 
-static void
-ipw_shutdown(void *arg)
+static bool
+ipw_resume(device_t dv)
 {
-	struct ipw_softc *sc = (struct ipw_softc *)arg;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
+	struct ipw_softc *sc = device_private(dv);
 
-	ipw_stop(ifp, 1);
-}
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 
-
-static int
-ipw_suspend(struct ipw_softc *sc)
-{
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-
-	ipw_stop(ifp, 1);
-
-	return 0;
-}
-
-static int
-ipw_resume(struct ipw_softc *sc)
-{
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-	pcireg_t data;
-
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
-
-	if (ifp->if_flags & IFF_UP) {
-		ipw_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ipw_start(ifp);
-	}
-
-	return 0;
-}
-
-static void
-ipw_powerhook(int why, void *arg)
-{
-        struct ipw_softc *sc = arg;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		ipw_suspend(sc);
-		break;
-	case PWR_RESUME:
-		ipw_resume(sc);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
+	return true;
 }
 
 static int
@@ -2096,7 +2029,7 @@ ipw_config(struct ipw_softc *sc)
 	}
 
 	DPRINTF(("Setting MAC to %s\n", ether_sprintf(ic->ic_myaddr)));
-	IEEE80211_ADDR_COPY(LLADDR(ifp->if_sadl), ic->ic_myaddr);
+	if_set_sadl(ifp, ic->ic_myaddr, IEEE80211_ADDR_LEN);
 	error = ipw_cmd(sc, IPW_CMD_SET_MAC_ADDRESS, ic->ic_myaddr,
 	    IEEE80211_ADDR_LEN);
 	if (error != 0)

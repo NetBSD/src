@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.29.6.1 2007/11/06 23:32:14 matt Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.29.6.2 2008/01/09 01:56:15 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.29.6.1 2007/11/06 23:32:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.29.6.2 2008/01/09 01:56:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,7 +463,8 @@ validate_label(mbr_args_t *a, uint label_sector)
 	case UPDATE_LABEL:
 	case WRITE_LABEL:
 		*dlp = *a->lp;
-		a->bp->b_flags &= ~(B_READ|B_DONE);
+		a->bp->b_oflags &= ~BO_DONE;
+		a->bp->b_flags &= ~B_READ;
 		a->bp->b_flags |= B_WRITE;
 		(*a->strat)(a->bp);
 		error = biowait(a->bp);

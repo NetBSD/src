@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.111.8.2 2007/11/08 11:00:02 matt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.111.8.3 2008/01/09 01:56:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.111.8.2 2007/11/08 11:00:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.111.8.3 2008/01/09 01:56:04 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -429,7 +429,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			freep->next = cp;
 		}
 		freep->next = savedlist;
-		if (kbp->kb_last == NULL)
+		if (savedlist == NULL)
 			kbp->kb_last = (void *)freep;
 	}
 	va = kbp->kb_next;
@@ -559,7 +559,8 @@ free(void *addr, struct malloc_type *ksp)
 	size = 1 << kup->ku_indx;
 	kbp = &kmembuckets[kup->ku_indx];
 
-	LOCKDEBUG_MEM_CHECK(addr, size);
+	LOCKDEBUG_MEM_CHECK(addr,
+	    size <= MAXALLOCSAVE ? size : ctob(kup->ku_pagecnt));
 
 	mutex_spin_enter(&malloc_lock);
 #ifdef MALLOCLOG
@@ -890,7 +891,7 @@ kmeminit(void)
 	if (sizeof(struct freelist) > (1 << MINBUCKET))
 		panic("minbucket too small/struct freelist too big");
 
-	mutex_init(&malloc_lock, MUTEX_DRIVER, IPL_VM);
+	mutex_init(&malloc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	/*
 	 * Compute the number of kmem_map pages, if we have not
@@ -922,10 +923,6 @@ kmeminit(void)
 	/* Attach all of the statically-linked malloc types. */
 	__link_set_foreach(ksp, malloc_types)
 		malloc_type_attach(*ksp);
-
-#ifdef MALLOC_DEBUG
-	debug_malloc_init();
-#endif
 }
 
 #ifdef DDB

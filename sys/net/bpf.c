@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.130 2007/07/11 21:26:53 xtraeme Exp $	*/
+/*	$NetBSD: bpf.c,v 1.130.8.1 2008/01/09 01:57:07 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.130 2007/07/11 21:26:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.130.8.1 2008/01/09 01:57:07 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1145,7 +1145,7 @@ bpf_kqfilter(struct file *fp, struct knote *kn)
 		break;
 
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = d;
@@ -1577,7 +1577,7 @@ bpfdetach(struct ifnet *ifp)
 	int s;
 
 	/* Nuke the vnodes for any open instances */
-	for (d = LIST_FIRST(&bpf_list); d != NULL; d = LIST_NEXT(d, bd_list)) {
+	LIST_FOREACH(d, &bpf_list, bd_list) {
 		if (d->bd_bif != NULL && d->bd_bif->bif_ifp == ifp) {
 			/*
 			 * Detach the descriptor from an interface now.

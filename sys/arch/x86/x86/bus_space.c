@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.8.20.1 2007/11/06 23:23:45 matt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.8.20.2 2008/01/09 01:49:53 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.20.1 2007/11/06 23:23:45 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.20.2 2008/01/09 01:49:53 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,11 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.8.20.1 2007/11/06 23:23:45 matt Exp 
 #include <machine/bus.h>
 #include <machine/pio.h>
 #include <machine/isa_machdep.h>
-#include <machine/atomic.h>
 
 #ifdef XEN
-#include <machine/hypervisor.h>
-#include <machine/xenpmap.h>
+#include <xen/hypervisor.h>
+#include <xen/xenpmap.h>
 
 #define	pmap_extract(a, b, c)	pmap_extract_ma(a, b, c)
 #endif
@@ -328,7 +327,7 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 	u_long pa, endpa;
 	vaddr_t va, sva;
 	pt_entry_t *pte, xpte;
-#ifdef XEN
+#if defined(XEN) && defined(i386)
 	int32_t cpumask = 0;
 #endif
 
@@ -365,35 +364,35 @@ x86_mem_add_mapping(bpa, size, cacheable, bshp)
 		 * XXX should hand this bit to pmap_kenter_pa to
 		 * save the extra invalidate!
 		 */
-#ifdef XEN
+#if defined(XEN) && defined(i386)
 		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
-		if (pmap_cpu_has_pg_n()) {
-			pte = kvtopte(va);
-			pt_entry_t *maptp;
-			maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
-			if (cacheable)
-				PTE_CLEARBITS(pte, maptp, PG_N);
-			else
-				PTE_SETBITS(pte, maptp, PG_N);
-			pmap_tlb_shootdown(pmap_kernel(), va, *pte,
-			    &cpumask);
-		}
+		pte = kvtopte(va);
+		pt_entry_t *maptp;
+		maptp = (pt_entry_t *)vtomach((vaddr_t)pte);
+		if (cacheable)
+			PTE_CLEARBITS(pte, maptp, PG_N);
+		else
+			PTE_SETBITS(pte, maptp, PG_N);
+		pmap_tlb_shootdown(pmap_kernel(), va, *pte,
+		    &cpumask);
 	}
 	pmap_tlb_shootnow(cpumask);
-#else	/* XEN */
+#else	/* XEN && i386 */
+#ifdef XEN
+		pmap_kenter_ma(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+#else
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE);
+#endif /* XEN */
 
-		if (pmap_cpu_has_pg_n()) {
-			pte = kvtopte(va);
-			if (cacheable)
-				pmap_pte_clearbits(pte, PG_N);
-			else
-				pmap_pte_setbits(pte, PG_N);
-			xpte |= *pte;
-		}
+		pte = kvtopte(va);
+		if (cacheable)
+			pmap_pte_clearbits(pte, PG_N);
+		else
+			pmap_pte_setbits(pte, PG_N);
+		xpte |= *pte;
 	}
 	pmap_tlb_shootdown(pmap_kernel(), sva, sva + (endpa - pa), xpte);
-#endif	/* XEN */
+#endif	/* XEN && i386 */
 	pmap_update(pmap_kernel());
 
 	return 0;

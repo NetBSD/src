@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_exec_ecoff.c,v 1.17 2007/04/22 08:29:58 dsl Exp $ */
+/* $NetBSD: osf1_exec_ecoff.c,v 1.17.8.1 2008/01/09 01:51:42 matt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.17 2007/04/22 08:29:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_exec_ecoff.c,v 1.17.8.1 2008/01/09 01:51:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +118,7 @@ osf1_exec_ecoff_probe(struct lwp *l, struct exec_package *epp)
  * any ELF-like AUX entries used by the dynamic loading scheme.
  */
 int
-osf1_copyargs(l, pack, arginfo, stackp, argp)
-	struct lwp *l;
-	struct exec_package *pack;
-	struct ps_strings *arginfo;
-	char **stackp;
-	void *argp;
+osf1_copyargs(struct lwp *l, struct exec_package *pack, struct ps_strings *arginfo, char **stackp, void *argp)
 {
 	struct osf1_exec_emul_arg *emul_arg = pack->ep_emul_arg;
 	struct osf1_auxv ai[OSF1_MAX_AUX_ENTRIES], *a;
@@ -218,7 +213,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 	 * load it up.
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_SYSSPACE,
-	    emul_arg->loader_name, l);
+	    emul_arg->loader_name);
 	if ((error = namei(&nd)) != 0)
 		goto bad_no_vp;
 	ldr_vp = nd.ni_vp;
@@ -234,7 +229,7 @@ osf1_exec_ecoff_dynamic(struct lwp *l, struct exec_package *epp)
 		goto badunlock;
 	}
 
-	if ((error = VOP_ACCESS(ldr_vp, VEXEC, l->l_cred, l)) != 0)
+	if ((error = VOP_ACCESS(ldr_vp, VEXEC, l->l_cred)) != 0)
 		goto badunlock;
 
         if (ldr_vp->v_mount->mnt_flag & MNT_NOEXEC) {

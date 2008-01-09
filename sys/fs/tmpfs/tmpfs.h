@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs.h,v 1.26.18.1 2007/11/08 10:59:57 matt Exp $	*/
+/*	$NetBSD: tmpfs.h,v 1.26.18.2 2008/01/09 01:55:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -221,16 +221,8 @@ struct tmpfs_node {
 	 *
 	 * May be NULL when the node is unused (that is, no vnode has been
 	 * allocated for it or it has been reclaimed). */
-	struct vnode *		tn_vnode;
-
-	/* Lock on tn_vnode. */
 	kmutex_t		tn_vlock;
-
-	/* Pointer to the node returned by tmpfs_lookup() after doing a
-	 * delete or a rename lookup; its value is only valid in these two
-	 * situations.  In case we were looking up . or .., it holds a null
-	 * pointer. */
-	struct tmpfs_dirent *	tn_lookup_dirent;
+	struct vnode *		tn_vnode;
 
 	union {
 		/* Valid when tn_type == VBLK || tn_type == VCHR. */
@@ -296,19 +288,16 @@ LIST_HEAD(tmpfs_node_list, tmpfs_node);
  * Internal representation of a tmpfs mount point.
  */
 struct tmpfs_mount {
-	/* Lock on global data */
-	kmutex_t		tm_lock;
-
 	/* Maximum number of memory pages available for use by the file
 	 * system, set during mount time.  This variable must never be
 	 * used directly as it may be bigger than the current amount of
 	 * free memory; in the extreme case, it will hold the SIZE_MAX
 	 * value.  Instead, use the TMPFS_PAGES_MAX macro. */
-	size_t			tm_pages_max;
+	u_int			tm_pages_max;
 
 	/* Number of pages in use by the file system.  Cannot be bigger
 	 * than the value returned by TMPFS_PAGES_MAX in any case. */
-	size_t			tm_pages_used;
+	u_int			tm_pages_used;
 
 	/* Pointer to the node representing the root directory of this
 	 * file system. */
@@ -320,14 +309,15 @@ struct tmpfs_mount {
 	 * cannot be released until the file system is unmounted.
 	 * Otherwise, we could easily run out of memory by creating lots
 	 * of empty files and then simply removing them. */
-	ino_t			tm_nodes_max;
+	u_int			tm_nodes_max;
 
 	/* Number of nodes currently allocated.  This number only grows.
 	 * When it reaches tm_nodes_max, no more new nodes can be allocated.
 	 * Of course, the old, unused ones can be reused. */
-	ino_t			tm_nodes_cnt;
+	u_int			tm_nodes_cnt;
 
 	/* Node list. */
+	kmutex_t		tm_lock;
 	struct tmpfs_node_list	tm_nodes;
 
 	/* Pools used to store file system meta data.  These are not shared
@@ -359,7 +349,7 @@ struct tmpfs_fid {
 
 int	tmpfs_alloc_node(struct tmpfs_mount *, enum vtype,
 	    uid_t uid, gid_t gid, mode_t mode, struct tmpfs_node *,
-	    char *, dev_t, struct proc *, struct tmpfs_node **);
+	    char *, dev_t, struct tmpfs_node **);
 void	tmpfs_free_node(struct tmpfs_mount *, struct tmpfs_node *);
 int	tmpfs_alloc_dirent(struct tmpfs_mount *, struct tmpfs_node *,
 	    const char *, uint16_t, struct tmpfs_dirent **);
@@ -459,7 +449,8 @@ TMPFS_PAGES_MAX(struct tmpfs_mount *tmp)
 }
 
 /* Returns the available space for the given file system. */
-#define TMPFS_PAGES_AVAIL(tmp) (TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used)
+#define TMPFS_PAGES_AVAIL(tmp)		\
+    ((ssize_t)(TMPFS_PAGES_MAX(tmp) - (tmp)->tm_pages_used))
 
 /* --------------------------------------------------------------------- */
 

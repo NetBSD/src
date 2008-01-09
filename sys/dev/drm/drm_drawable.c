@@ -1,3 +1,5 @@
+/* $NetBSD: drm_drawable.c,v 1.1.14.1 2008/01/09 01:52:34 matt Exp $ */
+
 /* drm_drawable.h -- IOCTLs for drawables -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
  */
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_drawable.c,v 1.1.14.1 2008/01/09 01:52:34 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drawable.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

@@ -1,4 +1,4 @@
-/* $NetBSD: pic16lc.c,v 1.9 2007/07/04 18:56:16 xtraeme Exp $ */
+/* $NetBSD: pic16lc.c,v 1.9.8.1 2008/01/09 01:52:42 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.9 2007/07/04 18:56:16 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic16lc.c,v 1.9.8.1 2008/01/09 01:52:42 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ struct pic16lc_softc {
 	i2c_addr_t	sc_addr;
 	void *		sc_ih;
 
-	envsys_data_t sc_data[2];
-	struct sysmon_envsys sc_sysmon;
+	envsys_data_t sc_sensor[1];
+	struct sysmon_envsys *sc_sme;
 };
 
 static struct pic16lc_softc *pic16lc = NULL;
@@ -80,7 +80,7 @@ static struct pic16lc_softc *pic16lc = NULL;
 #define XBOX_NSENSORS		2
 
 static void	pic16lc_update(struct pic16lc_softc *, envsys_data_t *);
-static int	pic16lc_gtredata(struct sysmon_envsys *, envsys_data_t *);
+static void	pic16lc_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void	pic16lc_write_1(struct pic16lc_softc *, uint8_t, uint8_t);
 static void	pic16lc_read_1(struct pic16lc_softc *, uint8_t, uint8_t *);
@@ -109,6 +109,7 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 	struct pic16lc_softc *sc;
 	struct i2c_attach_args *ia;
 	u_char ver[4];
+	int i;
 
 	sc = (struct pic16lc_softc *)self;
 	ia = (struct i2c_attach_args *)opaque;
@@ -118,27 +119,36 @@ pic16lc_attach(struct device *parent, struct device *self, void *opaque)
 
 	pic16lc = sc;
 
+	sc->sc_sme = sysmon_envsys_create();
+
 	/* initialize CPU sensor */
-	sc->sc_data[XBOX_SENSOR_CPU].sensor = XBOX_SENSOR_CPU;
-	sc->sc_data[XBOX_SENSOR_CPU].units = ENVSYS_STEMP;
-	(void)strlcpy(sc->sc_data[XBOX_SENSOR_CPU].desc, "Xbox CPU Temp",
-	    sizeof(sc->sc_data[XBOX_SENSOR_CPU]));
+	sc->sc_sensor[XBOX_SENSOR_CPU].units = ENVSYS_STEMP;
+	(void)strlcpy(sc->sc_sensor[XBOX_SENSOR_CPU].desc, "Xbox CPU Temp",
+	    sizeof(sc->sc_sensor[XBOX_SENSOR_CPU]));
 	/* initialize board sensor */
-	sc->sc_data[XBOX_SENSOR_BOARD].sensor = XBOX_SENSOR_BOARD;
-	sc->sc_data[XBOX_SENSOR_BOARD].units = ENVSYS_STEMP;
-	(void)strlcpy(sc->sc_data[XBOX_SENSOR_BOARD].desc, "Xbox Board Temp",
-	    sizeof(sc->sc_data[XBOX_SENSOR_BOARD]));
+	sc->sc_sensor[XBOX_SENSOR_BOARD].units = ENVSYS_STEMP;
+	(void)strlcpy(sc->sc_sensor[XBOX_SENSOR_BOARD].desc, "Xbox Board Temp",
+	    sizeof(sc->sc_sensor[XBOX_SENSOR_BOARD]));
+
+	for (i = 0; i < XBOX_NSENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+						&sc->sc_sensor[i])) {
+			sysmon_envsys_destroy(sc->sc_sme);
+			return;
+		}
+	}
 
 	/* hook into sysmon */
-	sc->sc_sysmon.sme_name = sc->sc_dev.dv_xname;
-	sc->sc_sysmon.sme_sensor_data = sc->sc_data;
-	sc->sc_sysmon.sme_cookie = sc;
-	sc->sc_sysmon.sme_gtredata = pic16lc_gtredata;
-	sc->sc_sysmon.sme_nsensors = XBOX_NSENSORS;
+	sc->sc_sme->sme_name = sc->sc_dev.dv_xname;
+	sc->sc_sme->sme_cookie = sc;
+	sc->sc_sme->sme_refresh = pic16lc_refresh;
 
-	if (sysmon_envsys_register(&sc->sc_sysmon))
+	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dev.dv_xname);
+		sysmon_envsys_destroy(sc->sc_sme);
+		return;
+	}
 
 	if (iic_acquire_bus(sc->sc_tag, 0) != 0) {
 		aprint_error(": unable to acquire i2c bus\n");
@@ -210,13 +220,12 @@ pic16lc_update(struct pic16lc_softc *sc, envsys_data_t *edata)
 	return;
 }
 
-static int
-pic16lc_gtredata(struct sysmon_envsys *sme, envsys_data_t *edata)
+static void
+pic16lc_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct pic16lc_softc *sc = (struct pic16lc_softc *)sme->sme_cookie;
 
 	pic16lc_update(sc, edata);
-	return 0;
 }
 
 static int

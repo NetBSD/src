@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.84.8.1 2007/11/06 23:26:23 matt Exp $	*/
+/*	$NetBSD: ath.c,v 1.84.8.2 2008/01/09 01:52:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84.8.1 2007/11/06 23:26:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84.8.2 2008/01/09 01:52:46 matt Exp $");
 #endif
 
 /*
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.84.8.1 2007/11/06 23:26:23 matt Exp $");
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -195,6 +194,7 @@ static int	ath_getchannels(struct ath_softc *, u_int cc,
 static void	ath_led_event(struct ath_softc *, int);
 static void	ath_update_txpow(struct ath_softc *);
 static void	ath_freetx(struct mbuf *);
+static void	ath_restore_diversity(struct ath_softc *);
 
 static int	ath_rate_setup(struct ath_softc *, u_int mode);
 static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
@@ -202,7 +202,6 @@ static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 #ifdef __NetBSD__
 int	ath_enable(struct ath_softc *);
 void	ath_disable(struct ath_softc *);
-void	ath_power(int, void *);
 #endif
 
 #if NBPFILTER > 0
@@ -291,7 +290,7 @@ ath_enable(struct ath_softc *sc)
 	if (ATH_IS_ENABLED(sc) == 0) {
 		if (sc->sc_enable != NULL && (*sc->sc_enable)(sc) != 0) {
 			printf("%s: device enable failed\n",
-				sc->sc_dev.dv_xname);
+				device_xname(&sc->sc_dev));
 			return (EIO);
 		}
 		sc->sc_flags |= ATH_ENABLED;
@@ -323,7 +322,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: devid 0x%x\n", __func__, devid);
 
-	memcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
+	memcpy(ifp->if_xname, device_xname(&sc->sc_dev), IFNAMSIZ);
 
 	ah = ath_hal_attach(devid, sc, sc->sc_st, sc->sc_sh, &status);
 	if (ah == NULL) {
@@ -525,6 +524,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_start = ath_start;
+	ifp->if_stop = ath_stop;
 	ifp->if_watchdog = ath_watchdog;
 	ifp->if_ioctl = ath_ioctl;
 	ifp->if_init = ath_ifinit;
@@ -638,14 +638,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ath_bpfattach(sc);
 #endif
 
-#ifdef __NetBSD__
 	sc->sc_flags |= ATH_ATTACHED;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    ath_power, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
-#endif
 
 	/*
 	 * Setup dynamic sysctl's now that country code and
@@ -707,81 +700,17 @@ ath_detach(struct ath_softc *sc)
 	ath_hal_detach(sc->sc_ah);
 	if_detach(ifp);
 	splx(s);
-	powerhook_disestablish(sc->sc_powerhook);
 
 	return 0;
 }
 
-#ifdef __NetBSD__
 void
-ath_power(int why, void *arg)
+ath_resume(struct ath_softc *sc)
 {
-	struct ath_softc *sc = arg;
-	int s;
-
-	DPRINTF(sc, ATH_DEBUG_ANY, "ath_power(%d)\n", why);
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		ath_suspend(sc, why);
-		break;
-	case PWR_RESUME:
-		ath_resume(sc, why);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-#endif
-
-void
-ath_suspend(struct ath_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_if;
-
-	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags %x\n",
-		__func__, ifp->if_flags);
-
-	ath_stop(ifp, 1);
-	if (sc->sc_power != NULL)
-		(*sc->sc_power)(sc, why);
-}
-
-void
-ath_resume(struct ath_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_if;
-
-	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags %x\n",
-		__func__, ifp->if_flags);
-
-	if (ifp->if_flags & IFF_UP) {
-		ath_init(sc);
-#if 0
-		(void)ath_intr(sc);
-#endif
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		if (ifp->if_flags & IFF_RUNNING)
-			ath_start(ifp);
-	}
 	if (sc->sc_softled) {
 		ath_hal_gpioCfgOutput(sc->sc_ah, sc->sc_ledpin);
 		ath_hal_gpioset(sc->sc_ah, sc->sc_ledpin, !sc->sc_ledon);
 	}
-}
-
-void
-ath_shutdown(void *arg)
-{
-	struct ath_softc *sc = arg;
-
-	ath_stop(&sc->sc_if, 1);
 }
 
 /*
@@ -1017,10 +946,15 @@ ath_init(struct ath_softc *sc)
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 		__func__, ifp->if_flags);
 
+	if (!device_has_power(&sc->sc_dev))
+		return EBUSY;
+
 	ATH_LOCK(sc);
 
-	if ((error = ath_enable(sc)) != 0)
+	if ((error = ath_enable(sc)) != 0) {
+		ATH_UNLOCK(sc);
 		return error;
+	}
 
 	/*
 	 * Stop anything previously setup.  This is safe
@@ -1053,7 +987,7 @@ ath_init(struct ath_softc *sc)
 	 * Likewise this is set during reset so update
 	 * state cached in the driver.
 	 */
-	sc->sc_diversity = ath_hal_getdiversity(ah);
+	ath_restore_diversity(sc);
 	sc->sc_calinterval = 1;
 	sc->sc_caltries = 0;
 
@@ -1185,6 +1119,20 @@ ath_stop(struct ifnet *ifp, int disable)
 	ATH_UNLOCK(sc);
 }
 
+static void
+ath_restore_diversity(struct ath_softc *sc)
+{
+	struct ifnet *ifp = &sc->sc_if;
+	struct ath_hal *ah = sc->sc_ah;
+
+	if (!ath_hal_setdiversity(sc->sc_ah, sc->sc_diversity) ||
+	    sc->sc_diversity != ath_hal_getdiversity(ah)) {
+		if_printf(ifp, "could not restore diversity setting %d\n",
+		    sc->sc_diversity);
+		sc->sc_diversity = ath_hal_getdiversity(ah);
+	}
+}
+
 /*
  * Reset the hardware w/o losing operational state.  This is
  * basically a more efficient way of doing ath_stop, ath_init,
@@ -1217,7 +1165,7 @@ ath_reset(struct ifnet *ifp)
 		if_printf(ifp, "%s: unable to reset hardware; hal status %u\n",
 			__func__, status);
 	ath_update_txpow(sc);		/* update tx power state */
-	sc->sc_diversity = ath_hal_getdiversity(ah);
+	ath_restore_diversity(sc);
 	sc->sc_calinterval = 1;
 	sc->sc_caltries = 0;
 	if (ath_startrecv(sc) != 0)	/* restart recv */
@@ -2077,7 +2025,7 @@ ath_beaconq_config(struct ath_softc *sc)
 	}
 
 	if (!ath_hal_settxqueueprops(ah, sc->sc_bhalq, &qi)) {
-		device_printf(sc->sc_dev, "unable to update parameters for "
+		device_printf(&sc->sc_dev, "unable to update parameters for "
 			"beacon hardware queue!\n");
 		return 0;
 	} else {
@@ -3269,7 +3217,7 @@ ath_txq_setup(struct ath_softc *sc, int qtype, int subtype)
 		return NULL;
 	}
 	if (qnum >= N(sc->sc_txq)) {
-		device_printf(sc->sc_dev,
+		device_printf(&sc->sc_dev,
 			"hal qnum %u out of range, max %zu!\n",
 			qnum, N(sc->sc_txq));
 		ath_hal_releasetxqueue(ah, qnum);
@@ -3306,7 +3254,7 @@ ath_tx_setup(struct ath_softc *sc, int ac, int haltype)
 	struct ath_txq *txq;
 
 	if (ac >= N(sc->sc_ac2q)) {
-		device_printf(sc->sc_dev, "AC %u out of range, max %zu!\n",
+		device_printf(&sc->sc_dev, "AC %u out of range, max %zu!\n",
 			ac, N(sc->sc_ac2q));
 		return 0;
 	}
@@ -3340,7 +3288,7 @@ ath_txq_update(struct ath_softc *sc, int ac)
 	qi.tqi_burstTime = ATH_TXOP_TO_US(wmep->wmep_txopLimit);
 
 	if (!ath_hal_settxqueueprops(ah, txq->axq_qnum, &qi)) {
-		device_printf(sc->sc_dev, "unable to update hardware queue "
+		device_printf(&sc->sc_dev, "unable to update hardware queue "
 			"parameters for %s traffic!\n",
 			ieee80211_wme_acnames[ac]);
 		return 0;
@@ -3423,9 +3371,8 @@ again:
 		n = m->m_next;
 		if (n == NULL)
 			break;
-		if ((m->m_flags & M_RDONLY) == 0 &&
-		    n->m_len < M_TRAILINGSPACE(m)) {
-			bcopy(mtod(n, void *), mtod(m, char *) + m->m_len,
+		if (n->m_len < M_TRAILINGSPACE(m)) {
+			memcpy(mtod(m, char *) + m->m_len, mtod(n, void *),
 				n->m_len);
 			m->m_len += n->m_len;
 			m->m_next = n->m_next;
@@ -4169,7 +4116,6 @@ ath_tx_proc_q0123(void *arg, int npending)
 	if (nacked) {
 		sc->sc_lastrx = ath_hal_gettsf64(sc->sc_ah);
 	}
-	ath_tx_processq(sc, sc->sc_cabq);
 
 	if (sc->sc_softled)
 		ath_led_event(sc, ATH_LED_TX);
@@ -4468,7 +4414,7 @@ ath_chan_set(struct ath_softc *sc, struct ieee80211_channel *chan)
 		}
 		sc->sc_curchan = hchan;
 		ath_update_txpow(sc);		/* update tx power state */
-		sc->sc_diversity = ath_hal_getdiversity(ah);
+		ath_restore_diversity(sc);
 		sc->sc_calinterval = 1;
 		sc->sc_caltries = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.97.10.1 2007/11/06 23:23:16 matt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.97.10.2 2008/01/09 01:49:38 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.10.1 2007/11/06 23:23:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.97.10.2 2008/01/09 01:49:38 matt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -175,7 +175,7 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 }
 
 int
-sys_sysarch(struct lwp *l, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
 	return (ENOSYS);
 }

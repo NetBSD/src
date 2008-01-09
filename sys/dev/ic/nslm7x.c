@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.39.2.1 2007/11/06 23:26:58 matt Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.39.2.2 2008/01/09 01:52:57 matt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39.2.1 2007/11/06 23:26:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.39.2.2 2008/01/09 01:52:57 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -523,7 +523,7 @@ static struct lm_sensor w83627dhg_sensors[] = {
 		.rfact = RFACT(34, 34) / 2
 	},
 	{
-		.desc = "VIN1",
+		.desc = "-12V",
 		.type = ENVSYS_SVOLTS_DC,
 		.bank = 0,
 		.reg = 0x24,
@@ -544,7 +544,7 @@ static struct lm_sensor w83627dhg_sensors[] = {
 		.bank = 0,
 		.reg = 0x26,
 		.refresh = lm_refresh_volt,
-		.rfact = RFACT_NONE / 2
+		.rfact = RFACT_NONE
 	},
 	{
 		.desc = "+3.3VSB",
@@ -560,7 +560,7 @@ static struct lm_sensor w83627dhg_sensors[] = {
 		.bank = 5,
 		.reg = 0x51,
 		.refresh = lm_refresh_volt,
-		.rfact = RFACT_NONE / 2
+		.rfact = RFACT(34, 34) / 2
 	},
 
 	/* Temperature */
@@ -1676,10 +1676,14 @@ lm_attach(struct lm_softc *lmsc)
 	/* Start the monitoring loop */
 	(*lmsc->lm_writereg)(lmsc, LMD_CONFIG, 0x01);
 
+	lmsc->sc_sme = sysmon_envsys_create();
 	/* Initialize sensors */
 	for (i = 0; i < lmsc->numsensors; i++) {
-		lmsc->sensors[i].sensor = i;
-		lmsc->sensors[i].state = ENVSYS_SVALID;
+		if (sysmon_envsys_sensor_attach(lmsc->sc_sme,
+						&lmsc->sensors[i])) {
+			sysmon_envsys_destroy(lmsc->sc_sme);
+			return;
+		}
 	}
 
 	/*
@@ -1692,14 +1696,14 @@ lm_attach(struct lm_softc *lmsc)
 	/*
 	 * Hook into the System Monitor.
 	 */
-	lmsc->sc_sysmon.sme_sensor_data = lmsc->sensors;
-	lmsc->sc_sysmon.sme_name = lmsc->sc_dev.dv_xname;
-	lmsc->sc_sysmon.sme_nsensors = lmsc->numsensors;
-	lmsc->sc_sysmon.sme_flags |= SME_DISABLE_GTREDATA;
+	lmsc->sc_sme->sme_name = lmsc->sc_dev.dv_xname;
+	lmsc->sc_sme->sme_flags = SME_DISABLE_REFRESH;
 
-	if (sysmon_envsys_register(&lmsc->sc_sysmon))
+	if (sysmon_envsys_register(lmsc->sc_sme)) {
 		aprint_error("%s: unable to register with sysmon\n",
 		    lmsc->sc_dev.dv_xname);
+		sysmon_envsys_destroy(lmsc->sc_sme);
+	}
 }
 
 /*
@@ -1711,16 +1715,13 @@ lm_detach(struct lm_softc *lmsc)
 {
 	callout_stop(&lmsc->sc_callout);
 	callout_destroy(&lmsc->sc_callout);
-	sysmon_envsys_unregister(&lmsc->sc_sysmon);
+	sysmon_envsys_unregister(lmsc->sc_sme);
 }
 
 static void
 lm_refresh(void *arg)
 {
 	struct lm_softc *lmsc = arg;
-
-	if (lmsc->numsensors != lmsc->sc_sysmon.sme_nsensors)
-		lmsc->numsensors = lmsc->sc_sysmon.sme_nsensors;
 
 	lmsc->refresh_sensor_data(lmsc);
 	callout_schedule(&lmsc->sc_callout, LM_REFRESH_TIMO);

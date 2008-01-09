@@ -1,4 +1,7 @@
-/* $NetBSD: joy_eap.c,v 1.6.24.1 2007/11/06 23:29:16 matt Exp $ */
+/* $NetBSD: joy_eap.c,v 1.6.24.2 2008/01/09 01:53:52 matt Exp $ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joy_eap.c,v 1.6.24.2 2008/01/09 01:53:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

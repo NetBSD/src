@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.158.6.2 2007/11/08 11:00:12 matt Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.158.6.3 2008/01/09 01:57:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158.6.2 2007/11/08 11:00:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158.6.3 2008/01/09 01:57:06 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,8 +145,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.158.6.2 2007/11/08 11:00:12 matt 
 
 static int procfs_validfile_linux(struct lwp *, struct mount *);
 static int procfs_root_readdir_callback(struct proc *, void *);
-static void procfs_dir(pfstype, struct lwp *, struct proc *,
-				char **, char *, int);
+static void procfs_dir(pfstype, struct lwp *, struct proc *, char **, char *,
+    size_t);
 
 /*
  * This is a list of the valid names in the
@@ -313,7 +313,6 @@ procfs_open(v)
 		struct vnode *a_vp;
 		int  a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct lwp *l1;
@@ -323,7 +322,7 @@ procfs_open(v)
 	if ((error = procfs_proc_lock(pfs->pfs_pid, &p2, ENOENT)) != 0)
 		return error;
 
-	l1 = ap->a_l;				/* tracer */
+	l1 = curlwp;				/* tracer */
 
 #define	M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? \
 		 KAUTH_REQ_PROCESS_CANPROCFS_RW : \
@@ -390,7 +389,6 @@ procfs_close(v)
 		struct vnode *a_vp;
 		int  a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 
@@ -426,16 +424,12 @@ procfs_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct pfsnode *pfs = VTOPFS(vp);
-	bool recycle;
 
 	mutex_enter(&proclist_lock);
-	recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
+	*ap->a_recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
 	mutex_exit(&proclist_lock);
 
 	VOP_UNLOCK(vp, 0);
-
-	if (recycle)
-		vgone(vp);
 
 	return (0);
 }
@@ -558,8 +552,8 @@ procfs_symlink(v)
  * returned for the vnode.
  */
 static void
-procfs_dir(pfstype t, struct lwp *caller, struct proc *target,
-	   char **bpp, char *path, int len)
+procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
+    char *path, size_t len)
 {
 	struct cwdinfo *cwdi;
 	struct vnode *vp, *rvp;
@@ -639,7 +633,6 @@ procfs_getattr(v)
 		struct vnode *a_vp;
 		struct vattr *a_vap;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct pfsnode *pfs = VTOPFS(ap->a_vp);
 	struct vattr *vap = ap->a_vap;
@@ -950,12 +943,11 @@ procfs_access(v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return (error);
 
 	return (vaccess(va.va_type, va.va_mode,

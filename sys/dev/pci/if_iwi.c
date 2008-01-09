@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.63.2.1 2007/11/06 23:28:59 matt Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.63.2.2 2008/01/09 01:53:46 matt Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.63.2.1 2007/11/06 23:28:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.63.2.2 2008/01/09 01:53:46 matt Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -93,11 +93,6 @@ int iwi_debug = 4;
 static int	iwi_match(device_t, struct cfdata *, void *);
 static void	iwi_attach(device_t, device_t, void *);
 static int	iwi_detach(device_t, int);
-
-static void	iwi_shutdown(void *);
-static int	iwi_suspend(struct iwi_softc *);
-static int	iwi_resume(struct iwi_softc *);
-static void	iwi_powerhook(int, void *);
 
 static int	iwi_alloc_cmd_ring(struct iwi_softc *, struct iwi_cmd_ring *,
     int);
@@ -206,6 +201,16 @@ iwi_match(device_t parent, struct cfdata *match, void *aux)
 	return 0;
 }
 
+static bool
+iwi_pci_resume(device_t dv)
+{
+	struct iwi_softc *sc = device_private(dv);
+
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
+
+	return true;
+}
+
 /* Base Address Register */
 #define IWI_PCI_BAR0	0x10
 
@@ -233,10 +238,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;
@@ -435,18 +437,10 @@ iwi_attach(device_t parent, device_t self, void *aux)
 
 	iwi_sysctlattach(sc);	
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(iwi_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error_dev(self,
-		    "WARNING: unable to establish shutdown hook\n");
-	sc->sc_powerhook = powerhook_establish(device_xname(self),
-	    iwi_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error_dev(self,
-		    "WARNING: unable to establish power hook\n");
+	if (!pmf_device_register(self, NULL, iwi_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 	ieee80211_announce(ic);
 
@@ -460,6 +454,8 @@ iwi_detach(device_t self, int flags)
 {
 	struct iwi_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_if;
+
+	pmf_device_deregister(self);
 
 	if (ifp != NULL)
 		iwi_stop(ifp, 1);
@@ -483,9 +479,6 @@ iwi_detach(device_t self, int flags)
 	}
 
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
-
-	powerhook_disestablish(sc->sc_powerhook);
-	shutdownhook_disestablish(sc->sc_sdhook);
 
 	return 0;
 }
@@ -782,73 +775,6 @@ iwi_free_rx_ring(struct iwi_softc *sc, struct iwi_rx_ring *ring)
 		}
 		bus_dmamap_destroy(sc->sc_dmat, ring->data[i].map);
 	}
-}
-
-static void
-iwi_shutdown(void *arg)
-{
-	struct iwi_softc *sc = (struct iwi_softc *)arg;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-
-	iwi_stop(ifp, 1);
-}
-
-static int
-iwi_suspend(struct iwi_softc *sc)
-{
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-
-	iwi_stop(ifp, 1);
-
-	return 0;
-}
-
-static int
-iwi_resume(struct iwi_softc *sc)
-{
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-	pcireg_t data;
-
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
-
-	if (ifp->if_flags & IFF_UP) {
-		iwi_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			iwi_start(ifp);
-	}
-
-	return 0;
-}
-
-static void
-iwi_powerhook(int why, void *arg)
-{
-        struct iwi_softc *sc = arg;
-	pci_chipset_tag_t pc = sc->sc_pct;
-	pcitag_t tag = sc->sc_pcitag;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-		iwi_suspend(sc);
-		break;
-	case PWR_SOFTRESUME:
-		iwi_resume(sc);
-		break;
-	}
-	splx(s);
 }
 
 static struct ieee80211_node *

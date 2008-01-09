@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcia.c,v 1.82 2006/11/16 01:33:20 christos Exp $	*/
+/*	$NetBSD: pcmcia.c,v 1.82.24.1 2008/01/09 01:54:15 matt Exp $	*/
 
 /*
  * Copyright (c) 2004 Charles M. Hannum.  All rights reserved.
@@ -48,13 +48,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.82 2006/11/16 01:33:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcia.c,v 1.82.24.1 2008/01/09 01:54:15 matt Exp $");
 
 #include "opt_pcmciaverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <net/if.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
@@ -80,12 +82,13 @@ int	pcmcia_verbose = 0;
 
 int	pcmcia_match(struct device *, struct cfdata *, void *);
 void	pcmcia_attach(struct device *, struct device *, void *);
+int	pcmcia_detach(device_t, int);
 int	pcmcia_rescan(struct device *, const char *, const int *);
 void	pcmcia_childdetached(struct device *, struct device *);
 int	pcmcia_print(void *, const char *);
 
 CFATTACH_DECL2(pcmcia, sizeof(struct pcmcia_softc),
-    pcmcia_match, pcmcia_attach, NULL, NULL,
+    pcmcia_match, pcmcia_attach, pcmcia_detach, NULL,
     pcmcia_rescan, pcmcia_childdetached);
 
 int
@@ -129,7 +132,8 @@ pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	struct pcmciabus_attach_args *paa = aux;
 	struct pcmcia_softc *sc = (struct pcmcia_softc *) self;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	sc->pct = paa->pct;
 	sc->pch = paa->pch;
@@ -137,6 +141,21 @@ pcmcia_attach(struct device *parent, struct device *self, void *aux)
 	sc->iosize = paa->iosize;
 
 	sc->ih = NULL;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+int
+pcmcia_detach(device_t self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+	return 0;
 }
 
 int

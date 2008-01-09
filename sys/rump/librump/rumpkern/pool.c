@@ -1,4 +1,4 @@
-/*	$NetBSD: pool.c,v 1.2.6.1 2007/11/08 11:00:18 matt Exp $	*/
+/*	$NetBSD: pool.c,v 1.2.6.2 2008/01/09 01:58:00 matt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@ pool_cache_init(size_t size, u_int align, u_int align_offset, u_int flags,
 	pool_cache_t pc;
 	char *ptr;
 
-	ptr = rumpuser_malloc(sizeof(*pc) + CACHE_LINE_SIZE, 0);
+	ptr = kmem_zalloc(sizeof(*pc) + CACHE_LINE_SIZE, KM_SLEEP);
 	pc = (pool_cache_t)(((uintptr_t)ptr + CACHE_LINE_SIZE - 1) &
 	    ~(CACHE_LINE_SIZE - 1));
 
@@ -72,6 +72,14 @@ pool_cache_init(size_t size, u_int align, u_int align_offset, u_int flags,
 	pc->pc_arg = arg;
 
 	return pc;
+}
+
+void
+pool_cache_destroy(pool_cache_t pc)
+{
+
+	pool_destroy(&pc->pc_pool);
+	kmem_free(pc, sizeof(*pc) + CACHE_LINE_SIZE);
 }
 
 void *
@@ -105,7 +113,7 @@ pool_get(struct pool *pp, int flags)
 	if (pp->pr_size == 0)
 		panic("%s: pool unit size 0.  not initialized?", __func__);
 
-	rv = rumpuser_malloc(pp->pr_size, 1);
+	rv = kmem_alloc(pp->pr_size, KM_NOSLEEP);
 	if (rv == NULL && (flags & PR_WAITOK && (flags & PR_LIMITFAIL) == 0))
 		panic("%s: out of memory and PR_WAITOK", __func__);
 
@@ -116,7 +124,7 @@ void
 pool_put(struct pool *pp, void *item)
 {
 
-	rumpuser_free(item);
+	kmem_free(item, pp->pr_size);
 }
 
 void

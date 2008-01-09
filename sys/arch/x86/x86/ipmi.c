@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.12.2.1 2007/11/06 23:23:50 matt Exp $ */
+/*	$NetBSD: ipmi.c,v 1.12.2.2 2008/01/09 01:49:56 matt Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.12.2.1 2007/11/06 23:23:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.12.2.2 2008/01/09 01:49:56 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,13 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.12.2.1 2007/11/06 23:23:50 matt Exp $");
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/callout.h>
-#include <sys/lock.h>
 #include <sys/envsys.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <x86/smbiosvar.h>
 
 #include <dev/isa/isareg.h>
@@ -1405,7 +1404,7 @@ read_sensor(struct ipmi_softc *sc, struct ipmi_sensor *psensor)
 	struct sdrtype1	*s1 = (struct sdrtype1 *) psensor->i_sdr;
 	u_int8_t	data[8];
 	int		rxlen, rv = -1;
-	envsys_data_t *edata = &sc->sc_sensor_data[psensor->i_envnum];
+	envsys_data_t *edata = &sc->sc_sensor[psensor->i_envnum];
 
 	if (!cold)
 		mutex_enter(&sc->sc_lock);
@@ -1755,41 +1754,45 @@ ipmi_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* allocate and fill sensor arrays */
-	sc->sc_sensor_data =
+	sc->sc_sensor =
 	    malloc(sizeof(envsys_data_t) * sc->sc_nsensors,
 	        M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_sensor_data == NULL) {
+	if (sc->sc_sensor == NULL) {
 		aprint_error("%s: can't allocate envsys_data_t\n",
 		    DEVNAME(sc));
 		return;
 	}
 
+	sc->sc_envsys = sysmon_envsys_create();
+
 	SLIST_FOREACH(ipmi_s, &ipmi_sensor_list, i_list) {
 		i = current_index_typ[ipmi_s->i_envtype];
 		current_index_typ[ipmi_s->i_envtype]++;
 		ipmi_s->i_envnum = i;
-		sc->sc_sensor_data[i].sensor = i;
-		sc->sc_sensor_data[i].units = ipmi_s->i_envtype;
-		sc->sc_sensor_data[i].state = ENVSYS_SINVALID;
-		sc->sc_sensor_data[i].monitor = true;
+		sc->sc_sensor[i].units = ipmi_s->i_envtype;
+		sc->sc_sensor[i].state = ENVSYS_SINVALID;
+		sc->sc_sensor[i].monitor = true;
 		/*
 		 * Monitor critical/critical-over/warning-over states
 		 * in the sensors.
 		 */
-		sc->sc_sensor_data[i].flags |= ENVSYS_FMONCRITICAL;
-		sc->sc_sensor_data[i].flags |= ENVSYS_FMONCRITOVER;
-		sc->sc_sensor_data[i].flags |= ENVSYS_FMONWARNOVER;
-		(void)strlcpy(sc->sc_sensor_data[i].desc, ipmi_s->i_envdesc,
-		    sizeof(sc->sc_sensor_data[i].desc));
+		sc->sc_sensor[i].flags |= ENVSYS_FMONCRITICAL;
+		sc->sc_sensor[i].flags |= ENVSYS_FMONCRITOVER;
+		sc->sc_sensor[i].flags |= ENVSYS_FMONWARNOVER;
+		(void)strlcpy(sc->sc_sensor[i].desc, ipmi_s->i_envdesc,
+		    sizeof(sc->sc_sensor[i].desc));
+		if (sysmon_envsys_sensor_attach(sc->sc_envsys,
+						&sc->sc_sensor[i]))
+			continue;
 	}
 
-	sc->sc_envsys.sme_name = DEVNAME(sc);
-	sc->sc_envsys.sme_cookie = sc;
-	sc->sc_envsys.sme_flags = SME_DISABLE_GTREDATA;
-	sc->sc_envsys.sme_nsensors = sc->sc_nsensors;
+	sc->sc_envsys->sme_name = DEVNAME(sc);
+	sc->sc_envsys->sme_flags = SME_DISABLE_REFRESH;
 
-	if (sysmon_envsys_register(&sc->sc_envsys))
-	    printf("%s: unable to register with sysmon\n", DEVNAME(sc));
+	if (sysmon_envsys_register(sc->sc_envsys)) {
+		printf("%s: unable to register with sysmon\n", DEVNAME(sc));
+		sysmon_envsys_destroy(sc->sc_envsys);
+	}
 
 	/* initialize sensor list for thread */
 	if (!SLIST_EMPTY(&ipmi_sensor_list))

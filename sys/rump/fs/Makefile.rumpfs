@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile.rumpfs,v 1.7 2007/08/14 15:56:15 pooka Exp $
+#	$NetBSD: Makefile.rumpfs,v 1.7.6.1 2008/01/09 01:57:56 matt Exp $
 #
 
 .include <bsd.own.mk>
 
-RUMPFSLIST=	cd9660fs efs ext2fs ffs hfs lfs msdosfs ntfs tmpfs udf
+RUMPFSLIST=	cd9660fs efs ext2fs ffs hfs lfs msdosfs ntfs syspuffs tmpfs udf
 RUMPFSALL=	${RUMPFSLIST} p2k ukfs ufs
 
 RUMPFSLIBDIR?=	${NETBSDSRCDIR}/sys/rump/fs/lib

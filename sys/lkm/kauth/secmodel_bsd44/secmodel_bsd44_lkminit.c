@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_lkminit.c,v 1.1 2007/01/17 11:28:09 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_lkminit.c,v 1.1.22.1 2008/01/09 01:56:55 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_lkminit.c,v 1.1 2007/01/17 11:28:09 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_lkminit.c,v 1.1.22.1 2008/01/09 01:56:55 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/lkm.h>
@@ -36,8 +36,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_lkminit.c,v 1.1 2007/01/17 11:28:09 e
 #include <sys/kauth.h>
 
 #include <secmodel/bsd44/bsd44.h>
-#include <secmodel/bsd44/securelevel.h>
 #include <secmodel/bsd44/suser.h>
+#include <secmodel/securelevel/securelevel.h>
 
 int secmodel_bsd44_lkm_lkmentry(struct lkm_table *lkmtp, int, int);
 static int secmodel_bsd44_lkm_load(struct lkm_table *, int);
@@ -55,7 +55,7 @@ secmodel_bsd44_lkm_load(struct lkm_table *lkmtp, int cmd)
 
 	secmodel_bsd44_start();
 	sysctl_security_bsd44_setup(&_secmodel_bsd44_lkm_log);
-	sysctl_security_bsd44_securelevel_setup(&_secmodel_bsd44_lkm_log);
+	sysctl_security_securelevel_setup(&_secmodel_bsd44_lkm_log);
 
 	return (0);
 }

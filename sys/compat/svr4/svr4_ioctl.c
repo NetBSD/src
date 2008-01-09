@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_ioctl.c,v 1.30 2007/03/04 06:01:33 christos Exp $	 */
+/*	$NetBSD: svr4_ioctl.c,v 1.30.16.1 2008/01/09 01:51:52 matt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.30 2007/03/04 06:01:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.30.16.1 2008/01/09 01:51:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_ioctl.c,v 1.30 2007/03/04 06:01:33 christos Exp
 #include <compat/svr4/svr4_sockio.h>
 
 #ifdef DEBUG_SVR4
-static void svr4_decode_cmd __P((u_long, char *, char *, int *, int *));
+static void svr4_decode_cmd(u_long, char *, char *, int *, int *);
 /*
  * Decode an ioctl command symbolically
  */
@@ -98,19 +98,15 @@ svr4_decode_cmd(cmd, dir, c, num, argsiz)
 #endif
 
 int
-svr4_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_sys_ioctl(struct lwp *l, const struct svr4_sys_ioctl_args *uap, register_t *retval)
 {
-	struct svr4_sys_ioctl_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct file	*fp;
 	struct filedesc	*fdp;
 	u_long		 cmd;
 	int		 error;
-	int (*fun) __P((struct file *, struct lwp *, register_t *,
-			int, u_long, void *));
+	int (*fun)(struct file *, struct lwp *, register_t *,
+			int, u_long, void *);
 #ifdef DEBUG_SVR4
 	char		 dir[4];
 	char		 c;

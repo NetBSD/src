@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_sockio.h,v 1.7 2007/03/04 06:01:33 christos Exp $	 */
+/*	$NetBSD: svr4_sockio.h,v 1.7.16.1 2008/01/09 01:51:54 matt Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -194,5 +194,9 @@ struct svr4_ifconf {
 #define	SVR4_SIOCGIFNUM		SVR4_IOR('i', 87, int)
 #define	SVR4_SIOCGLIFFLAGS	SVR4_IOWR('i', 117, struct svr4_lifreq)
 #define	SVR4_SIOCGLIFNUM	SVR4_IOWR('i', 130, struct svr4_lifnum)
+
+#ifdef _KERNEL
+int svr4_count_ifnum(struct ifnet *);
+#endif /* _KERNEL */
 
 #endif /* !_SVR4_SOCKIO_H_ */

@@ -1,8 +1,9 @@
+/*	$NetBSD: hwsleep.c,v 1.1.46.1 2008/01/09 01:55:14 matt Exp $	*/
 
 /******************************************************************************
  *
  * Name: hwsleep.c - ACPI Hardware Sleep/Wake Interface
- *              xRevision: 1.80 $
+ *              $Revision: 1.1.46.1 $
  *
  *****************************************************************************/
 
@@ -10,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,9 +117,10 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.1.46.1 2008/01/09 01:55:14 matt Exp $");
 
-#include "acpi.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/actables.h>
 
 #define _COMPONENT          ACPI_HARDWARE
         ACPI_MODULE_NAME    ("hwsleep")
@@ -139,27 +141,45 @@ __KERNEL_RCSID(0, "$NetBSD: hwsleep.c,v 1.1 2006/03/23 13:36:31 kochi Exp $");
 
 ACPI_STATUS
 AcpiSetFirmwareWakingVector (
-    ACPI_PHYSICAL_ADDRESS PhysicalAddress)
+    ACPI_PHYSICAL_ADDRESS   PhysicalAddress)
 {
+    ACPI_TABLE_FACS         *Facs;
+    ACPI_STATUS             Status;
 
-    ACPI_FUNCTION_TRACE ("AcpiSetFirmwareWakingVector");
 
+    ACPI_FUNCTION_TRACE (AcpiSetFirmwareWakingVector);
+
+    /* Get the FACS */
+
+    Status = AcpiGetTableByIndex (ACPI_TABLE_INDEX_FACS,
+        ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
 
     /* Set the vector */
 
-    if (AcpiGbl_CommonFACS.VectorWidth == 32)
+    if ((Facs->Length < 32) ||
+        (!(Facs->XFirmwareWakingVector)))
     {
-        *(ACPI_CAST_PTR (UINT32, AcpiGbl_CommonFACS.FirmwareWakingVector))
-                = (UINT32) PhysicalAddress;
+        /*
+         * ACPI 1.0 FACS or short table or optional X_ field is zero
+         */
+        Facs->FirmwareWakingVector = (UINT32) PhysicalAddress;
     }
     else
     {
-        *AcpiGbl_CommonFACS.FirmwareWakingVector
-                = PhysicalAddress;
+        /*
+         * ACPI 2.0 FACS with valid X_ field
+         */
+        Facs->XFirmwareWakingVector = PhysicalAddress;
     }
 
     return_ACPI_STATUS (AE_OK);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiSetFirmwareWakingVector)
 
 
 /*******************************************************************************
@@ -178,10 +198,13 @@ AcpiSetFirmwareWakingVector (
 
 ACPI_STATUS
 AcpiGetFirmwareWakingVector (
-    ACPI_PHYSICAL_ADDRESS *PhysicalAddress)
+    ACPI_PHYSICAL_ADDRESS   *PhysicalAddress)
 {
+    ACPI_TABLE_FACS         *Facs;
+    ACPI_STATUS             Status;
 
-    ACPI_FUNCTION_TRACE ("AcpiGetFirmwareWakingVector");
+
+    ACPI_FUNCTION_TRACE (AcpiGetFirmwareWakingVector);
 
 
     if (!PhysicalAddress)
@@ -189,21 +212,38 @@ AcpiGetFirmwareWakingVector (
         return_ACPI_STATUS (AE_BAD_PARAMETER);
     }
 
+    /* Get the FACS */
+
+    Status = AcpiGetTableByIndex (ACPI_TABLE_INDEX_FACS,
+        ACPI_CAST_INDIRECT_PTR (ACPI_TABLE_HEADER, &Facs));
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
     /* Get the vector */
 
-    if (AcpiGbl_CommonFACS.VectorWidth == 32)
+    if ((Facs->Length < 32) ||
+        (!(Facs->XFirmwareWakingVector)))
     {
-        *PhysicalAddress = (ACPI_PHYSICAL_ADDRESS)
-            *(ACPI_CAST_PTR (UINT32, AcpiGbl_CommonFACS.FirmwareWakingVector));
+        /*
+         * ACPI 1.0 FACS or short table or optional X_ field is zero
+         */
+        *PhysicalAddress =
+            (ACPI_PHYSICAL_ADDRESS) Facs->FirmwareWakingVector;
     }
     else
     {
-        *PhysicalAddress =
-            *AcpiGbl_CommonFACS.FirmwareWakingVector;
+        /*
+         * ACPI 2.0 FACS with valid X_ field
+         */
+        *PhysicalAddress = (ACPI_PHYSICAL_ADDRESS) Facs->XFirmwareWakingVector;
     }
 
     return_ACPI_STATUS (AE_OK);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiGetFirmwareWakingVector)
 
 
 /*******************************************************************************
@@ -230,7 +270,7 @@ AcpiEnterSleepStatePrep (
     ACPI_OBJECT         Arg;
 
 
-    ACPI_FUNCTION_TRACE ("AcpiEnterSleepStatePrep");
+    ACPI_FUNCTION_TRACE (AcpiEnterSleepStatePrep);
 
 
     /*
@@ -299,6 +339,8 @@ AcpiEnterSleepStatePrep (
     return_ACPI_STATUS (AE_OK);
 }
 
+ACPI_EXPORT_SYMBOL (AcpiEnterSleepStatePrep)
+
 
 /*******************************************************************************
  *
@@ -326,7 +368,7 @@ AcpiEnterSleepState (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("AcpiEnterSleepState");
+    ACPI_FUNCTION_TRACE (AcpiEnterSleepState);
 
 
     if ((AcpiGbl_SleepTypeA > ACPI_SLEEP_TYPE_MAX) ||
@@ -342,7 +384,7 @@ AcpiEnterSleepState (
 
     /* Clear wake status */
 
-    Status = AcpiSetRegister (ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_DO_NOT_LOCK);
+    Status = AcpiSetRegister (ACPI_BITREG_WAKE_STATUS, 1);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -350,7 +392,7 @@ AcpiEnterSleepState (
 
     /* Clear all fixed and general purpose status bits */
 
-    Status = AcpiHwClearAcpiStatus (ACPI_MTX_DO_NOT_LOCK);
+    Status = AcpiHwClearAcpiStatus ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -360,8 +402,7 @@ AcpiEnterSleepState (
     {
         /* Disable BM arbitration */
 
-        Status = AcpiSetRegister (ACPI_BITREG_ARB_DISABLE,
-                    1, ACPI_MTX_DO_NOT_LOCK);
+        Status = AcpiSetRegister (ACPI_BITREG_ARB_DISABLE, 1);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -480,25 +521,29 @@ AcpiEnterSleepState (
     Retry = 1000;
     do
     {
-        Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue,
-            ACPI_MTX_DO_NOT_LOCK);
+        Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
         }
 
         /*
-         * Some BIOSs don't set WAK_STS at all. Give up waiting after
+         * Some BIOSs don't set WAK_STS at all.  Give up waiting after
          * 1000 retries if it still isn't set.
          */
         if (Retry-- == 0)
+        {
             break;
+        }
+
         /* Spin until we wake */
 
     } while (!InValue);
 
     return_ACPI_STATUS (AE_OK);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiEnterSleepState)
 
 
 /*******************************************************************************
@@ -522,16 +567,16 @@ AcpiEnterSleepStateS4bios (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE ("AcpiEnterSleepStateS4bios");
+    ACPI_FUNCTION_TRACE (AcpiEnterSleepStateS4bios);
 
 
-    Status = AcpiSetRegister (ACPI_BITREG_WAKE_STATUS, 1, ACPI_MTX_DO_NOT_LOCK);
+    Status = AcpiSetRegister (ACPI_BITREG_WAKE_STATUS, 1);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
     }
 
-    Status = AcpiHwClearAcpiStatus (ACPI_MTX_DO_NOT_LOCK);
+    Status = AcpiHwClearAcpiStatus ();
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -556,13 +601,12 @@ AcpiEnterSleepStateS4bios (
 
     ACPI_FLUSH_CPU_CACHE ();
 
-    Status = AcpiOsWritePort (AcpiGbl_FADT->SmiCmd,
-                (UINT32) AcpiGbl_FADT->S4BiosReq, 8);
+    Status = AcpiOsWritePort (AcpiGbl_FADT.SmiCommand,
+                (UINT32) AcpiGbl_FADT.S4BiosRequest, 8);
 
     do {
         AcpiOsStall(1000);
-        Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue,
-            ACPI_MTX_DO_NOT_LOCK);
+        Status = AcpiGetRegister (ACPI_BITREG_WAKE_STATUS, &InValue);
         if (ACPI_FAILURE (Status))
         {
             return_ACPI_STATUS (Status);
@@ -571,6 +615,8 @@ AcpiEnterSleepStateS4bios (
 
     return_ACPI_STATUS (AE_OK);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiEnterSleepStateS4bios)
 
 
 /*******************************************************************************
@@ -599,7 +645,7 @@ AcpiLeaveSleepState (
     UINT32                  PM1BControl;
 
 
-    ACPI_FUNCTION_TRACE ("AcpiLeaveSleepState");
+    ACPI_FUNCTION_TRACE (AcpiLeaveSleepState);
 
 
     /*
@@ -694,16 +740,14 @@ AcpiLeaveSleepState (
     /* Enable power button */
 
     (void) AcpiSetRegister(
-            AcpiGbl_FixedEventInfo[ACPI_EVENT_POWER_BUTTON].EnableRegisterId,
-            1, ACPI_MTX_DO_NOT_LOCK);
+            AcpiGbl_FixedEventInfo[ACPI_EVENT_POWER_BUTTON].EnableRegisterId, 1);
 
     (void) AcpiSetRegister(
-            AcpiGbl_FixedEventInfo[ACPI_EVENT_POWER_BUTTON].StatusRegisterId,
-            1, ACPI_MTX_DO_NOT_LOCK);
+            AcpiGbl_FixedEventInfo[ACPI_EVENT_POWER_BUTTON].StatusRegisterId, 1);
 
     /* Enable BM arbitration */
 
-    Status = AcpiSetRegister (ACPI_BITREG_ARB_DISABLE, 0, ACPI_MTX_LOCK);
+    Status = AcpiSetRegister (ACPI_BITREG_ARB_DISABLE, 0);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);
@@ -718,3 +762,6 @@ AcpiLeaveSleepState (
 
     return_ACPI_STATUS (Status);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiLeaveSleepState)
+

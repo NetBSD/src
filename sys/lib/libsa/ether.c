@@ -1,4 +1,4 @@
-/*	$NetBSD: ether.c,v 1.20 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: ether.c,v 1.20.46.1 2008/01/09 01:56:38 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -58,12 +58,7 @@
 
 /* Caller must leave room for ethernet header in front!! */
 ssize_t
-sendether(d, pkt, len, dea, etype)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
-	u_char *dea;
-	int etype;
+sendether(struct iodesc *d, void *pkt, size_t len, u_char *dea, int etype)
 {
 	ssize_t n;
 	struct ether_header *eh;
@@ -82,10 +77,10 @@ sendether(d, pkt, len, dea, etype)
 
 	n = netif_put(d, eh, len);
 	if (n == -1 || (size_t)n < sizeof(*eh))
-		return (-1);
+		return -1;
 
 	n -= sizeof(*eh);
-	return (n);
+	return n;
 }
 
 /*
@@ -94,12 +89,8 @@ sendether(d, pkt, len, dea, etype)
  * NOTE: Caller must leave room for the Ether header.
  */
 ssize_t
-readether(d, pkt, len, tleft, etype)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
-	time_t tleft;
-	u_int16_t *etype;
+readether(struct iodesc *d, void *pkt, size_t len, time_t tleft,
+	u_int16_t *etype)
 {
 	ssize_t n;
 	struct ether_header *eh;
@@ -114,7 +105,7 @@ readether(d, pkt, len, tleft, etype)
 
 	n = netif_get(d, eh, len, tleft);
 	if (n == -1 || (size_t)n < sizeof(*eh))
-		return (-1);
+		return -1;
 
 	/* Validate Ethernet address. */
 	if (memcmp(d->myea, eh->ether_dhost, 6) != 0 &&
@@ -124,10 +115,10 @@ readether(d, pkt, len, tleft, etype)
 			printf("readether: not ours (ea=%s)\n",
 			    ether_sprintf(eh->ether_dhost));
 #endif
-		return (-1);
+		return -1;
 	}
 	*etype = ntohs(eh->ether_type);
 
 	n -= sizeof(*eh);
-	return (n);
+	return n;
 }

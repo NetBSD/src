@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_callback.c,v 1.5 2007/07/09 21:10:55 ad Exp $	*/
+/*	$NetBSD: subr_callback.c,v 1.5.8.1 2008/01/09 01:56:14 matt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_callback.c,v 1.5 2007/07/09 21:10:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_callback.c,v 1.5.8.1 2008/01/09 01:56:14 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ callback_head_init(struct callback_head *ch, int ipl)
 {
 
 	memset(ch, 0, sizeof(struct callback_head));
-	mutex_init(&ch->ch_lock, MUTEX_DRIVER, ipl);
+	mutex_init(&ch->ch_lock, MUTEX_DEFAULT, ipl);
 	cv_init(&ch->ch_cv, "callback");
 	TAILQ_INIT(&ch->ch_q);
 #if 0 /* already zero-initialized */

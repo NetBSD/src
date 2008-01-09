@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.13 2007/07/09 21:00:58 ad Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.13.8.1 2008/01/09 01:54:02 matt Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -33,6 +33,9 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.13.8.1 2008/01/09 01:54:02 matt Exp $");
 
 #undef UBSEC_DEBUG
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc_14.c,v 1.3 2005/11/11 17:10:42 christos Exp $	*/
+/*	$NetBSD: sysv_ipc_14.c,v 1.3.48.1 2008/01/09 01:50:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,16 +38,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_14.c,v 1.3 2005/11/11 17:10:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_14.c,v 1.3.48.1 2008/01/09 01:50:31 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <compat/sys/ipc.h>
 
 void
-ipc_perm14_to_native(operm, perm)
-	struct ipc_perm14 *operm;
-	struct ipc_perm *perm;
+ipc_perm14_to_native(struct ipc_perm14 *operm, struct ipc_perm *perm)
 {
 
 #define	CVT(x)	perm->x = operm->x
@@ -60,9 +58,7 @@ ipc_perm14_to_native(operm, perm)
 }
 
 void
-native_to_ipc_perm14(perm, operm)
-	struct ipc_perm *perm;
-	struct ipc_perm14 *operm;
+native_to_ipc_perm14(struct ipc_perm *perm, struct ipc_perm14 *operm)
 {
 
 #define	CVT(x)	operm->x = perm->x

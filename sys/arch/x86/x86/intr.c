@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.29.10.1 2007/11/06 23:23:49 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.29.10.2 2008/01/09 01:49:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.10.1 2007/11/06 23:23:49 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.10.2 2008/01/09 01:49:55 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -153,13 +153,13 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.29.10.1 2007/11/06 23:23:49 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/intr.h>
+#include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/intr.h>
-#include <machine/atomic.h>
 #include <machine/i8259.h>
-#include <machine/cpu.h>
 #include <machine/pio.h>
 
 #include "ioapic.h"
@@ -214,7 +214,7 @@ intr_default_setup(void)
 
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
-		idt_allocmap[ICU_OFFSET + i] = 1;
+		idt_vec_reserve(ICU_OFFSET + i);
 		setgate(&idt[ICU_OFFSET + i],
 		    i8259_stubs[i].ist_entry, 0, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
@@ -618,7 +618,7 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 	struct intrsource *source;
 	struct intrstub *stubp;
 #ifdef MULTIPROCESSOR
-	bool mpsafe = level >= IPL_SCHED;
+	bool mpsafe = (level != IPL_VM);
 #endif /* MULTIPROCESSOR */
 
 #ifdef DIAGNOSTIC
@@ -760,7 +760,7 @@ intr_disestablish(struct intrhand *ih)
 
 	mutex_enter(&x86_intr_lock);
 	pic->pic_hwmask(pic, ih->ih_pin);	
-	x86_atomic_clearbits_l(&ci->ci_ipending, (1 << ih->ih_slot));
+	atomic_and_32(&ci->ci_ipending, ~(1 << ih->ih_slot));
 
 	/*
 	 * Remove the handler from the chain.
@@ -841,6 +841,7 @@ intr_string(int ih)
 struct intrhand fake_softclock_intrhand;
 struct intrhand fake_softnet_intrhand;
 struct intrhand fake_softserial_intrhand;
+struct intrhand fake_softbio_intrhand;
 struct intrhand fake_timer_intrhand;
 struct intrhand fake_ipi_intrhand;
 
@@ -865,52 +866,15 @@ redzone_const_or_zero(int x)
 void
 cpu_intr_init(struct cpu_info *ci)
 {
+#if NLAPIC > 0
 	struct intrsource *isp;
+#endif
 #if NLAPIC > 0 && defined(MULTIPROCESSOR)
 	int i;
 #endif
-#if defined(INTRSTACKSIZE)
-	vaddr_t istack;
-#endif /* defined(INTRSTACKSIZE) */
-
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
-		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftclock;
-	isp->is_resume = Xsoftclock;
-	fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
-	isp->is_handlers = &fake_softclock_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_CLOCK] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softclock");
-
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
-		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftnet;
-	isp->is_resume = Xsoftnet;
-	fake_softnet_intrhand.ih_level = IPL_SOFTNET;
-	isp->is_handlers = &fake_softnet_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_NET] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softnet");
-
-	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
-	    M_WAITOK|M_ZERO);
-	if (isp == NULL)
-		panic("can't allocate fixed interrupt source");
-	isp->is_recurse = Xsoftserial;
-	isp->is_resume = Xsoftserial;
-	fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
-	isp->is_handlers = &fake_softserial_intrhand;
-	isp->is_pic = &softintr_pic;
-	ci->ci_isources[SIR_SERIAL] = isp;
-	evcnt_attach_dynamic(&isp->is_evcnt, EVCNT_TYPE_INTR, NULL,
-	    ci->ci_dev->dv_xname, "softserial");
+#ifdef INTRSTACKSIZE
+	char *cp;
+#endif
 
 #if NLAPIC > 0
 	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
@@ -947,39 +911,14 @@ cpu_intr_init(struct cpu_info *ci)
 	intr_calculatemasks(ci);
 
 #if defined(INTRSTACKSIZE)
-	/*
-	 * If the red zone is activated, protect both the top and
-	 * the bottom of the stack with an unmapped page.
-	 */
-	istack = uvm_km_alloc(kernel_map,
-	    INTRSTACKSIZE + redzone_const_or_zero(2 * PAGE_SIZE), 0,
-	    UVM_KMF_WIRED);
-	if (redzone_const_or_zero(1)) {
-		pmap_kremove(istack, PAGE_SIZE);
-		pmap_kremove(istack + INTRSTACKSIZE + PAGE_SIZE, PAGE_SIZE);
-		pmap_update(pmap_kernel());
-	}
-	ci->ci_intrstack =
-	    (char *)istack + redzone_const_or_zero(PAGE_SIZE) + INTRSTACKSIZE -
-	    sizeof(register_t);
+	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
+	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+#if defined(__x86_64__)
+	ci->ci_tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
+#endif /* defined(__x86_64__) */
 #endif /* defined(INTRSTACKSIZE) */
-
 	ci->ci_idepth = -1;
 }
-
-#ifdef MULTIPROCESSOR
-void
-x86_softintlock(void)
-{
-	KERNEL_LOCK(1, NULL);
-}
-
-void
-x86_softintunlock(void)
-{
-	KERNEL_UNLOCK_ONE(NULL);
-}
-#endif
 
 #ifdef INTRDEBUG
 void
@@ -996,7 +935,6 @@ intr_printconfig(void)
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
-		simple_lock(&ci->ci_slock);
 		for (i = 0; i < MAX_INTR_SOURCES; i++) {
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
@@ -1010,7 +948,57 @@ intr_printconfig(void)
 				    ih->ih_fun, ih->ih_level);
 
 		}
-		simple_unlock(&ci->ci_slock);
 	}
 }
 #endif
+
+void
+softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
+{
+	struct intrsource *isp;
+	struct cpu_info *ci;
+	u_int sir;
+
+	ci = l->l_cpu;
+
+	MALLOC(isp, struct intrsource *, sizeof (struct intrsource), M_DEVBUF,
+	    M_WAITOK|M_ZERO);
+	if (isp == NULL)
+		panic("can't allocate fixed interrupt source");
+	isp->is_recurse = Xsoftintr;
+	isp->is_resume = Xsoftintr;
+	isp->is_pic = &softintr_pic;
+
+	switch (level) {
+	case SOFTINT_BIO:
+		sir = SIR_BIO;
+		fake_softbio_intrhand.ih_level = IPL_SOFTBIO;
+		isp->is_handlers = &fake_softbio_intrhand;
+		break;
+	case SOFTINT_NET:
+		sir = SIR_NET;
+		fake_softnet_intrhand.ih_level = IPL_SOFTNET;
+		isp->is_handlers = &fake_softnet_intrhand;
+		break;
+	case SOFTINT_SERIAL:
+		sir = SIR_SERIAL;
+		fake_softserial_intrhand.ih_level = IPL_SOFTSERIAL;
+		isp->is_handlers = &fake_softserial_intrhand;
+		break;
+	case SOFTINT_CLOCK:
+		sir = SIR_CLOCK;
+		fake_softclock_intrhand.ih_level = IPL_SOFTCLOCK;
+		isp->is_handlers = &fake_softclock_intrhand;
+		break;
+	default:
+		panic("softint_init_md");
+	}
+
+	KASSERT(ci->ci_isources[sir] == NULL);
+
+	*machdep = (1 << sir);
+	ci->ci_isources[sir] = isp;
+	ci->ci_isources[sir]->is_lwp = l;
+
+	intr_calculatemasks(ci);
+}

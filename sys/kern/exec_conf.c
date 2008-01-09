@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_conf.c,v 1.93 2006/08/30 14:41:06 cube Exp $	*/
+/*	$NetBSD: exec_conf.c,v 1.93.28.1 2008/01/09 01:55:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.93 2006/08/30 14:41:06 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.93.28.1 2008/01/09 01:55:56 matt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_freebsd.h"
@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: exec_conf.c,v 1.93 2006/08/30 14:41:06 cube Exp $");
 #include "opt_compat_ibcs2.h"
 #include "opt_compat_irix.h"
 #include "opt_compat_sunos.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_m68k4k.h"
 #include "opt_compat_mach.h"
 #include "opt_compat_darwin.h"
@@ -90,6 +89,11 @@ int ELF64NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
     void *, char *, vaddr_t *);
 #endif
 
+#define ELF32_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), \
+    sizeof(Elf32_Addr)) + MAXPATHLEN + ALIGN(1))
+#define ELF64_AUXSIZE (howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), \
+    sizeof(Elf64_Addr)) + MAXPATHLEN + ALIGN(1))
+
 /*
  * Compatibility with old ELF binaries without NetBSD note.
  * Generic ELF executable kernel support was added in NetBSD 1.1.
@@ -136,10 +140,6 @@ int ELF64NAME2(netbsd,probe)(struct lwp *, struct exec_package *,
 
 #ifdef COMPAT_FREEBSD
 #include <compat/freebsd/freebsd_exec.h>
-#endif
-
-#ifdef COMPAT_HPUX
-#include <compat/hpux/hpux_exec.h>
 #endif
 
 #ifdef COMPAT_M68K4K
@@ -324,7 +324,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(netbsd32,probe) },
 	  &emul_netbsd32,
 	  EXECSW_PRIO_FIRST,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  ELF32_AUXSIZE,
 	  netbsd32_elf32_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -381,7 +381,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(netbsd32,probe_noteless) },
 	  &emul_netbsd32,
 	  EXECSW_PRIO_FIRST,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  ELF32_AUXSIZE,
 	  netbsd32_elf32_copyargs,
 	  NULL,
 	  coredump_elf32,
@@ -396,7 +396,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(netbsd,probe) },
 	  &emul_netbsd,
 	  EXECSW_PRIO_ANY,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  ELF32_AUXSIZE,
 	  elf32_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -413,7 +413,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(freebsd,probe) },
 	  &emul_freebsd,
 	  EXECSW_PRIO_ANY,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof(Elf32_Addr)),
+	  ELF32_AUXSIZE,
 	  elf32_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -483,7 +483,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(svr4,probe) },
 	  &emul_svr4,
 	  EXECSW_PRIO_ANY,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  ELF32_AUXSIZE,
 	  elf32_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -501,7 +501,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF32NAME2(ibcs2,probe) },
 	  &emul_ibcs2,
 	  EXECSW_PRIO_ANY,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  ELF32_AUXSIZE,
 	  elf32_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -519,7 +519,7 @@ const struct execsw execsw_builtin[] = {
 	  { NULL },
 	  &emul_netbsd,
 	  EXECSW_PRIO_LAST,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux32Info), sizeof (Elf32_Addr)),
+	  ELF32_AUXSIZE,
 	  elf32_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -539,7 +539,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF64NAME2(netbsd,probe) },
 	  &emul_netbsd,
 	  EXECSW_PRIO_ANY,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
+	  ELF64_AUXSIZE,
 	  elf64_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -574,7 +574,7 @@ const struct execsw execsw_builtin[] = {
 	  { ELF64NAME2(svr4,probe) },
 	  &emul_svr4,
 	  EXECSW_PRIO_ANY,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
+	  ELF64_AUXSIZE,
 	  elf64_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -592,7 +592,7 @@ const struct execsw execsw_builtin[] = {
 	  { NULL },
 	  &emul_netbsd,
 	  EXECSW_PRIO_ANY,
-	  howmany(ELF_AUX_ENTRIES * sizeof(Aux64Info), sizeof (Elf64_Addr)),
+	  ELF64_AUXSIZE,
 	  elf64_copyargs,
 	  NULL,
 #ifdef COREDUMP
@@ -736,24 +736,6 @@ const struct execsw execsw_builtin[] = {
 	  exec_freebsd_aout_makecmds,
 	  { NULL },
 	  &emul_freebsd,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-#ifdef COREDUMP
-	  coredump_netbsd,
-#else
-	  NULL,
-#endif
-	  exec_setup_stack },
-#endif
-
-#ifdef COMPAT_HPUX
-	/* HP-UX a.out for m68k (native word size) */
-	{ HPUX_EXEC_HDR_SIZE,
-	  exec_hpux_makecmds,
-	  { NULL },
-	  &emul_hpux,
 	  EXECSW_PRIO_ANY,
 	  0,
 	  copyargs,

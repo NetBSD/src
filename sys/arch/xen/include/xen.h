@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.21.42.1 2007/11/06 23:24:05 matt Exp $	*/
+/*	$NetBSD: xen.h,v 1.21.42.2 2008/01/09 01:50:07 matt Exp $	*/
 
 /*
  *
@@ -192,8 +192,12 @@ xen_atomic_xchg(volatile XATOMIC_T *ptr, unsigned long val)
 {
 	unsigned long result;
 
-        __asm volatile(__LOCK_PREFIX
+	__asm volatile(__LOCK_PREFIX
+#ifdef __x86_64__
+	    "xchgq %0,%1"
+#else
 	    "xchgl %0,%1"
+#endif
 	    :"=r" (result)
 	    :"m" (*ptr), "0" (val)
 	    :"memory");
@@ -217,55 +221,78 @@ xen_atomic_cmpxchg16(volatile uint16_t *ptr, uint16_t  val, uint16_t newval)
 
 static __inline void
 xen_atomic_setbits_l (volatile XATOMIC_T *ptr, unsigned long bits) {  
+#ifdef __x86_64__
+	__asm volatile("lock ; orq %1,%0" :  "=m" (*ptr) : "ir" (bits)); 
+#else
 	__asm volatile("lock ; orl %1,%0" :  "=m" (*ptr) : "ir" (bits)); 
+#endif
 }
      
 static __inline void
 xen_atomic_clearbits_l (volatile XATOMIC_T *ptr, unsigned long bits) {  
+#ifdef __x86_64__
+	__asm volatile("lock ; andq %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+#else
 	__asm volatile("lock ; andl %1,%0" :  "=m" (*ptr) : "ir" (~bits));
+#endif
 }
 
-static __inline int
-xen_atomic_test_and_clear_bit(volatile void *ptr, int bitno)
+static __inline XATOMIC_T
+xen_atomic_test_and_clear_bit(volatile void *ptr, unsigned long bitno)
 {
-        int result;
+	int result;
 
-        __asm volatile(__LOCK_PREFIX
+	__asm volatile(__LOCK_PREFIX
+#ifdef __x86_64__
+	    "btrq %2,%1 ;"
+	    "sbbq %0,%0"
+#else
 	    "btrl %2,%1 ;"
 	    "sbbl %0,%0"
+#endif
 	    :"=r" (result), "=m" (*(volatile XATOMIC_T *)(ptr))
 	    :"Ir" (bitno) : "memory");
-        return result;
+	return result;
 }
 
-static __inline int
-xen_atomic_test_and_set_bit(volatile void *ptr, int bitno)
+static __inline XATOMIC_T
+xen_atomic_test_and_set_bit(volatile void *ptr, unsigned long bitno)
 {
-        int result;
+	long result;
 
-        __asm volatile(__LOCK_PREFIX
+	__asm volatile(__LOCK_PREFIX
+#ifdef __x86_64__
+	    "btsq %2,%1 ;"
+	    "sbbq %0,%0"
+#else
 	    "btsl %2,%1 ;"
 	    "sbbl %0,%0"
+#endif
 	    :"=r" (result), "=m" (*(volatile XATOMIC_T *)(ptr))
 	    :"Ir" (bitno) : "memory");
-        return result;
+	return result;
 }
 
 static __inline int
-xen_constant_test_bit(const volatile void *ptr, int bitno)
+xen_constant_test_bit(const volatile void *ptr, unsigned long bitno)
 {
 	return ((1UL << (bitno & 31)) &
 	    (((const volatile XATOMIC_T *) ptr)[bitno >> 5])) != 0;
 }
 
-static __inline int
-xen_variable_test_bit(const volatile void *ptr, int bitno)
+static __inline XATOMIC_T
+xen_variable_test_bit(const volatile void *ptr, unsigned long bitno)
 {
-	int result;
+	long result;
     
 	__asm volatile(
+#ifdef __x86_64__
+		"btq %2,%1 ;"
+		"sbbq %0,%0"
+#else
 		"btl %2,%1 ;"
 		"sbbl %0,%0"
+#endif
 		:"=r" (result)
 		:"m" (*(const volatile XATOMIC_T *)(ptr)), "Ir" (bitno));
 	return result;
@@ -277,19 +304,27 @@ xen_variable_test_bit(const volatile void *ptr, int bitno)
 	 xen_variable_test_bit((ptr),(bitno)))
 
 static __inline void
-xen_atomic_set_bit(volatile void *ptr, int bitno)
+xen_atomic_set_bit(volatile void *ptr, unsigned long bitno)
 {
-        __asm volatile(__LOCK_PREFIX
+	__asm volatile(__LOCK_PREFIX
+#ifdef __x86_64__
+	    "btsq %1,%0"
+#else
 	    "btsl %1,%0"
+#endif
 	    :"=m" (*(volatile XATOMIC_T *)(ptr))
 	    :"Ir" (bitno));
 }
 
 static __inline void
-xen_atomic_clear_bit(volatile void *ptr, int bitno)
+xen_atomic_clear_bit(volatile void *ptr, unsigned long bitno)
 {
-        __asm volatile(__LOCK_PREFIX
+	__asm volatile(__LOCK_PREFIX
+#ifdef __x86_64__
+	    "btrq %1,%0"
+#else
 	    "btrl %1,%0"
+#endif
 	    :"=m" (*(volatile XATOMIC_T *)(ptr))
 	    :"Ir" (bitno));
 }

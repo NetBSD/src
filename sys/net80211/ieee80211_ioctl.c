@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.46 2007/05/29 21:32:30 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.46.8.1 2008/01/09 01:57:18 matt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.46 2007/05/29 21:32:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.46.8.1 2008/01/09 01:57:18 matt Exp $");
 #endif
 
 /*
@@ -1323,10 +1323,9 @@ ieee80211_ioctl_get80211_fbsd(struct ieee80211com *ic, u_long cmd,
 	u_int kid, len;
 	u_int8_t tmpkey[IEEE80211_KEYBUF_SIZE];
 	char tmpssid[IEEE80211_NWID_LEN];
+	struct ifnet *ifp = ic->ic_ifp;
 
-	const struct ieee80211_rsnparms *rsn = &ic->ic_bss->ni_rsn;
 	int error = 0;
-	u_int m;
 
 	switch (ireq->i_type) {
 	case IEEE80211_IOC_SSID:

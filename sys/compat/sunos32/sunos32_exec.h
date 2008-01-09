@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_exec.h,v 1.7 2005/12/11 12:20:23 christos Exp $	*/
+/*	$NetBSD: sunos32_exec.h,v 1.7.46.1 2008/01/09 01:51:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matthew R. Green
@@ -35,8 +35,8 @@
 
 extern const struct emul emul_sunos;
 
-int exec_sunos32_aout_makecmds __P((struct lwp *, struct exec_package *));
-void sunos32_setregs __P((struct lwp *l, struct exec_package *pack,
-	u_long stack));
+int exec_sunos32_aout_makecmds(struct lwp *, struct exec_package *);
+void sunos32_setregs(struct lwp *l, struct exec_package *pack,
+	u_long stack);
 
 #endif /* _SUNOS32_EXEC_H_ */

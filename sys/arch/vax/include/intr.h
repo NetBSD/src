@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.24 2007/03/12 02:22:43 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.24.18.1 2008/01/09 01:49:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -42,30 +42,25 @@
 /* Hardware interrupt levels are 16 (0x10) thru 31 (0x1f)
  */
 #define IPL_HIGH	0x1f	/* high -- blocks all interrupts */
-#define IPL_CLOCK	0x18	/* clock */
-#define IPL_STATCLOCK	IPL_CLOCK
-#define IPL_UBA		0x17	/* unibus adapters */
+#define IPL_SCHED	0x18	/* clock */
 #define IPL_VM		0x17	/* memory allocation */
-#define IPL_NET		0x16	/* network */
-#define IPL_BIO		0x15	/* block I/O */
-#define IPL_TTY		0x15	/* terminal */
-#define IPL_AUDIO	0x15	/* audio */
-#define IPL_IPI		0x14	/* interprocessor interrupt */
-#define IPL_CONSMEDIA	0x14	/* console media */
 
-/* Software interrupt level s are 0 (0x00) thru 15 (0x0f)
+/* Software interrupt levels are 0 (0x00) thru 15 (0x0f)
  */
 #define IPL_SOFTDDB	0x0f	/* used by DDB on VAX */
 #define IPL_SOFTSERIAL	0x0d	/* soft serial */
 #define IPL_SOFTNET	0x0c	/* soft network */
+#define IPL_SOFTBIO	0x08
 #define IPL_SOFTCLOCK	0x08
 #define IPL_NONE	0x00
 
+/* vax weirdness
+ */
+#define IPL_UBA		IPL_VM	/* unibus adapters */
+#define IPL_CONSMEDIA	IPL_VM	/* console media */
+
 /* Misc
  */
-
-#define	IPL_SCHED	IPL_HIGH
-#define	IPL_LOCK	IPL_HIGH
 
 #define IPL_LEVELS	32
 

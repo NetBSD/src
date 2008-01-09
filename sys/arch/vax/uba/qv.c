@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.17 2007/03/04 06:00:57 christos Exp $	*/
+/*	$NetBSD: qv.c,v 1.17.20.1 2008/01/09 01:49:34 matt Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.17 2007/03/04 06:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.17.20.1 2008/01/09 01:49:34 matt Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -981,12 +981,7 @@ qvstart(tp)
 	 * If there are sleepers, and output has drained below low
 	 * water mark, wake up the sleepers.
 	 */
-	if ( tp->t_outq.c_cc<= tp->t_lowat ) {
-		if (tp->t_state&TS_ASLEEP){
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup((void *)&tp->t_outq);
-		}
-	}
+	ttypull(tp);
 	tp->t_state &= ~TS_BUSY;
 out:
 	splx(s);

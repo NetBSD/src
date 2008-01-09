@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.4 2007/08/17 17:44:43 pooka Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.4.2.1 2008/01/09 01:55:43 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4 2007/08/17 17:44:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4.2.1 2008/01/09 01:55:43 matt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -360,7 +360,7 @@ hfs_vop_lookup(void *v)
 	/*
 	 * Check accessiblity of directory.
 	 */
-	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_lwp)) != 0)
+	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
 		return error;
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
@@ -401,12 +401,9 @@ hfs_vop_lookup(void *v)
 		*vpp = vdp;
 	} else {
 		hfs_callback_args cbargs;
-		hfs_libcb_argsread argsread;
 		uint8_t len;
 
 		hfslib_init_cbargs(&cbargs);
-		argsread.l = cnp->cn_lwp;
-		argsread.cred = cnp->cn_cred;
 
 		/* XXX: when decomposing, string could grow
 		   and we have to handle overflow */
@@ -487,7 +484,6 @@ hfs_vop_open(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -512,7 +508,6 @@ hfs_vop_close(void *v)
 		struct vnode *a_vp;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -532,7 +527,6 @@ hfs_vop_access(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
@@ -557,7 +551,7 @@ hfs_vop_access(void *v)
 		}
 	}
 
-	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred, ap->a_l)) != 0)
+	if ((error = VOP_GETATTR(ap->a_vp, &va, ap->a_cred)) != 0)
 		return error;
 
 	return vaccess(va.va_type, va.va_mode, va.va_uid, va.va_gid,
@@ -571,7 +565,6 @@ hfs_vop_getattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct hfsnode	*hp;
@@ -663,7 +656,6 @@ hfs_vop_setattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
@@ -1003,7 +995,6 @@ hfs_vop_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct hfsnode *hp;

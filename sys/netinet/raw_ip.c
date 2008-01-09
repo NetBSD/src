@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.97.8.1 2007/11/06 23:33:51 matt Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.97.8.2 2008/01/09 01:57:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.97.8.1 2007/11/06 23:33:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip.c,v 1.97.8.2 2008/01/09 01:57:29 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -358,7 +358,7 @@ rip_output(struct mbuf *m, ...)
 		}
 		HTONS(ip->ip_len);
 		HTONS(ip->ip_off);
-		if (ip->ip_id == 0)
+		if (ip->ip_id == 0 && m->m_pkthdr.len >= IP_MINFRAGSIZE)
 			ip->ip_id = ip_newid();
 		opts = NULL;
 		/* XXX prevent ip_output from overwriting header fields */
@@ -384,7 +384,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 			*m = m_intopt(so,
 			    (inp->inp_flags & INP_NOHEADER) ? 1 : 0);
 			return 0;
-		} else if (*m == NULL || (*m)->m_len < sizeof(int))
+		} else if (*m == NULL || (*m)->m_len != sizeof(int))
 			error = EINVAL;
 		else if (*mtod(*m, int *)) {
 			inp->inp_flags &= ~INP_HDRINCL;
@@ -400,7 +400,7 @@ rip_ctloutput(int op, struct socket *so, int level, int optname,
 	case PRCO_SETOPT:
 		switch (optname) {
 		case IP_HDRINCL:
-			if (*m == NULL || (*m)->m_len < sizeof(int))
+			if (*m == NULL || (*m)->m_len != sizeof(int))
 				error = EINVAL;
 			else if (*mtod(*m, int *))
 				inp->inp_flags |= INP_HDRINCL;

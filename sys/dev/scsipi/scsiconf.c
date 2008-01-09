@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.243 2007/03/04 06:02:42 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.243.16.1 2008/01/09 01:54:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.243 2007/03/04 06:02:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.243.16.1 2008/01/09 01:54:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.243 2007/03/04 06:02:42 christos Exp 
 #include <sys/fcntl.h>
 #include <sys/scsiio.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -165,6 +165,9 @@ scsibusattach(struct device *parent, struct device *self, void *aux)
 	struct scsibus_softc *sc = device_private(self);
 	struct scsipi_channel *chan = aux;
 	struct scsi_initq *scsi_initq;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_channel = chan;
 	chan->chan_name = sc->sc_dev.dv_xname;
@@ -285,6 +288,7 @@ scsibusdetach(struct device *self, int flags)
 	struct scsipi_xfer *xs;
 	int error;
 
+	pmf_device_deregister(self);
 
 	/*
 	 * Process outstanding commands (which will never complete as the

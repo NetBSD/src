@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_machdep.h,v 1.1 2006/02/09 19:18:57 manu Exp $ */
+/*	$NetBSD: linux32_machdep.h,v 1.1.48.1 2008/01/09 01:51:21 matt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -42,12 +42,12 @@
 
 #ifdef _KERNEL
 __BEGIN_DECLS
-void linux32_sendsig __P((const ksiginfo_t *, const sigset_t *));
+void linux32_sendsig(const ksiginfo_t *, const sigset_t *);
 __END_DECLS
 #ifdef LINUX32_NPTL
 __BEGIN_DECLS
-unsigned long linux32_get_newtls __P((struct lwp *));
-int linux32_set_newtls __P((struct lwp *, unsigned long));
+unsigned long linux32_get_newtls(struct lwp *);
+int linux32_set_newtls(struct lwp *, unsigned long);
 __END_DECLS
 #endif /* !LINUX32_NPTL */
 #endif /* !_KERNEL */

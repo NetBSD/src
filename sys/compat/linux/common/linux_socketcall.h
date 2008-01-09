@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.h,v 1.12 2007/03/04 06:01:24 christos Exp $	*/
+/*	$NetBSD: linux_socketcall.h,v 1.12.16.1 2008/01/09 01:51:17 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -230,21 +230,23 @@ struct linux_sys_shutdown_args {
 
 # ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_socket __P((struct lwp *, void *, register_t *));
-int linux_sys_socketpair __P((struct lwp *, void *, register_t *));
-int linux_sys_sendto __P((struct lwp *, void *, register_t *));
-int linux_sys_recvfrom __P((struct lwp *, void *, register_t *));
-int linux_sys_setsockopt __P((struct lwp *, void *, register_t *));
-int linux_sys_getsockopt __P((struct lwp *, void *, register_t *));
-int linux_sys_connect __P((struct lwp *, void *, register_t *));
-int linux_sys_bind __P((struct lwp *, void *, register_t *));
-int linux_sys_getsockname __P((struct lwp *, void *, register_t *));
-int linux_sys_getpeername __P((struct lwp *, void *, register_t *));
-int linux_sys_sendmsg __P((struct lwp *, void *, register_t *));
-int linux_sys_recvmsg __P((struct lwp *, void *, register_t *));
-int linux_sys_recv __P((struct lwp *, void *, register_t *));
-int linux_sys_send __P((struct lwp *, void *, register_t *));
-int linux_sys_accept __P((struct lwp *, void *, register_t *));
+#define SYS_DEF(foo) int foo(struct lwp *, const struct foo##_args *, register_t *);
+SYS_DEF(linux_sys_socket)
+SYS_DEF(linux_sys_socketpair)
+SYS_DEF(linux_sys_sendto)
+SYS_DEF(linux_sys_recvfrom)
+SYS_DEF(linux_sys_setsockopt)
+SYS_DEF(linux_sys_getsockopt)
+SYS_DEF(linux_sys_connect)
+SYS_DEF(linux_sys_bind)
+SYS_DEF(linux_sys_getsockname)
+SYS_DEF(linux_sys_getpeername)
+SYS_DEF(linux_sys_sendmsg)
+SYS_DEF(linux_sys_recvmsg)
+SYS_DEF(linux_sys_recv)
+SYS_DEF(linux_sys_send)
+SYS_DEF(linux_sys_accept)
+#undef SYS_DEF
 __END_DECLS
 # endif /* !_KERNEL */
 

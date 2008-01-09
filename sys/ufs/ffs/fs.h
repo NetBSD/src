@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.46.46.1 2007/11/06 23:35:14 matt Exp $	*/
+/*	$NetBSD: fs.h,v 1.46.46.2 2008/01/09 01:58:28 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -310,7 +310,7 @@ struct fs {
 	struct	csum fs_old_cstotal;	/* cylinder summary information */
 /* these fields are cleared at mount time */
 	int8_t	 fs_fmod;		/* super block modified flag */
-	int8_t	 fs_clean;		/* file system is clean flag */
+	uint8_t	 fs_clean;		/* file system is clean flag */
 	int8_t	 fs_ronly;		/* mounted read-only flag */
 	uint8_t	 fs_old_flags;		/* see FS_ flags below */
 	u_char	 fs_fsmnt[MAXMNTLEN];	/* name mounted on */
@@ -722,7 +722,7 @@ struct appleufslabel {
 	u_int64_t	ul_uuid;	/* Note this is only 4 byte aligned */
 	u_char	ul_reserved[24];
 	u_char	ul_unused[460];
-} __attribute__((__packed__));
+} __packed;
 
 
 #endif /* !_UFS_FFS_FS_H_ */

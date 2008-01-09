@@ -1,4 +1,4 @@
-/*	$NetBSD: bf_enc_586.S,v 1.4 2005/12/11 12:20:52 christos Exp $	*/
+/*	$NetBSD: bf_enc_586.S,v 1.4.46.1 2008/01/09 01:52:07 matt Exp $	*/
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -64,6 +64,7 @@
  */
 
 #include <i386/include/asm.h>
+__KERNEL_RCSID(1, "$NetBSD: bf_enc_586.S,v 1.4.46.1 2008/01/09 01:52:07 matt Exp $");
 
 ENTRY(BF_encrypt)
 	pushl	%ebp

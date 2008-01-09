@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_debug.c,v 1.3.8.1 2007/11/06 23:32:12 matt Exp $	*/
+/*	$NetBSD: subr_debug.c,v 1.3.8.2 2008/01/09 01:56:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.3.8.1 2007/11/06 23:32:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_debug.c,v 1.3.8.2 2008/01/09 01:56:15 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -123,7 +123,7 @@ freecheck_out(void **head, void *addr)
 	splx(s);
 
 	if (i == NULL) {
-		printf("freecheck_out: no more slots");
+		printf("freecheck_out: no more slots\n");
 		debug_freecheck = 0;
 	}
 }
@@ -155,7 +155,7 @@ freecheck_in(void **head, void *addr)
 		return;
 
 #ifdef DDB
-	printf("freecheck_in: %p not out", addr);
+	printf("freecheck_in: %p not out\n", addr);
 	Debugger();
 #else
 	panic("freecheck_in: %p not out", addr);

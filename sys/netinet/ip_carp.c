@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.15.2.1 2007/11/06 23:33:48 matt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.15.2.2 2008/01/09 01:57:26 matt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -26,6 +26,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.15.2.2 2008/01/09 01:57:26 matt Exp $");
 
 /*
  * TODO:
@@ -262,7 +265,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 		found = 0;
 		last = cur;
 		cur.s_addr = 0xffffffff;
-		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, &sc->sc_if) {
 			in.s_addr = ifatoia(ifa)->ia_addr.sin_addr.s_addr;
 			if (ifa->ifa_addr->sa_family == AF_INET &&
 			    ntohl(in.s_addr) > ntohl(last.s_addr) &&
@@ -282,7 +285,7 @@ carp_hmac_prepare(struct carp_softc *sc)
 		found = 0;
 		last6 = cur6;
 		memset(&cur6, 0xff, sizeof(cur6));
-		TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, &sc->sc_if) {
 			in6 = ifatoia6(ifa)->ia_addr.sin6_addr;
 			if (IN6_IS_ADDR_LINKLOCAL(&in6))
 				in6.s6_addr16[1] = 0;
@@ -340,7 +343,7 @@ carp_setroute(struct carp_softc *sc, int cmd)
 	int s;
 
 	s = splsoftnet();
-	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, &sc->sc_if) {
 		switch (ifa->ifa_addr->sa_family) {
 		case AF_INET: {
 			int count = 0;
@@ -970,7 +973,7 @@ carp_send_ad(void *v)
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_tos = IPTOS_LOWDELAY;
 		ip->ip_len = htons(len);
-		ip->ip_id = htons(ip_randomid());
+		ip->ip_id = 0;	/* no need for id, we don't support fragments */
 		ip->ip_off = htons(IP_DF);
 		ip->ip_ttl = CARP_DFLTTL;
 		ip->ip_p = IPPROTO_CARP;
@@ -1126,7 +1129,7 @@ carp_send_arp(struct carp_softc *sc)
 	struct in_addr *in;
 	int s = splsoftnet();
 
-	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, &sc->sc_if) {
 
 		if (ifa->ifa_addr->sa_family != AF_INET)
 			continue;
@@ -1147,7 +1150,7 @@ carp_send_na(struct carp_softc *sc)
 	static struct in6_addr mcast = IN6ADDR_LINKLOCAL_ALLNODES_INIT;
 	int s = splsoftnet();
 
-	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, &sc->sc_if) {
 
 		if (ifa->ifa_addr->sa_family != AF_INET6)
 			continue;
@@ -1209,7 +1212,7 @@ carp_addrcount(struct carp_if *cif, struct in_ifaddr *ia, int type)
 		    (vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
 		    (IFF_UP|IFF_RUNNING)) ||
 		    (type == CARP_COUNT_MASTER && vh->sc_state == MASTER)) {
-			TAILQ_FOREACH(ifa, &vh->sc_if.if_addrlist, ifa_list) {
+			IFADDR_FOREACH(ifa, &vh->sc_if) {
 				if (ifa->ifa_addr->sa_family == AF_INET &&
 				    ia->ia_addr.sin_addr.s_addr ==
 				    ifatoia(ifa)->ia_addr.sin_addr.s_addr)
@@ -1265,7 +1268,7 @@ carp_iamatch6(void *v, struct in6_addr *taddr)
 	struct ifaddr *ifa;
 
 	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
-		TAILQ_FOREACH(ifa, &vh->sc_if.if_addrlist, ifa_list) {
+		IFADDR_FOREACH(ifa, &vh->sc_if) {
 			if (IN6_ARE_ADDR_EQUAL(taddr,
 			    &ifatoia6(ifa)->ia_addr.sin6_addr) &&
 			    ((vh->sc_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
@@ -1595,8 +1598,7 @@ carp_set_enaddr(struct carp_softc *sc)
 		enaddr[4] = 1;
 		enaddr[5] = sc->sc_vhid;
 	}
-	(void)sockaddr_dl_setaddr(sc->sc_if.if_sadl, sc->sc_if.if_sadl->sdl_len,
-	    enaddr, sizeof(enaddr));
+	if_set_sadl(&sc->sc_if, enaddr, sizeof(enaddr));
 }
 
 void
@@ -1606,7 +1608,7 @@ carp_addr_updated(void *v)
 	struct ifaddr *ifa;
 	int new_naddrs = 0, new_naddrs6 = 0;
 
-	TAILQ_FOREACH(ifa, &sc->sc_if.if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, &sc->sc_if) {
 		if (ifa->ifa_addr->sa_family == AF_INET)
 			new_naddrs++;
 		else if (ifa->ifa_addr->sa_family == AF_INET6)

@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile.c,v 1.25 2006/12/09 22:11:36 chs Exp $ */
+/* $NetBSD: loadfile.c,v 1.25.20.1 2008/01/09 01:56:41 matt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -95,27 +95,24 @@
  * Fill in marks
  */
 int
-loadfile(fname, marks, flags)
-	const char *fname;
-	u_long *marks;
-	int flags;
+loadfile(const char *fname, u_long *marks, int flags)
 {
 	int fd, error;
 
 	/* Open the file. */
 	if ((fd = open(fname, 0)) < 0) {
 		WARN(("open %s", fname ? fname : "<default>"));
-		return (-1);
+		return -1;
 	}
 
 	/* Load it; save the value of errno across the close() call */
 	if ((error = fdloadfile(fd, marks, flags)) != 0) {
 		(void)close(fd);
 		errno = error;
-		return (-1);
+		return -1;
 	}
 
-	return (fd);
+	return fd;
 }
 
 /*
@@ -124,10 +121,7 @@ loadfile(fname, marks, flags)
  * Fill in marks.
  */
 int
-fdloadfile(fd, marks, flags)
-	int fd;
-	u_long *marks;
-	int flags;
+fdloadfile(int fd, u_long *marks, int flags)
 {
 	union {
 #ifdef BOOT_ECOFF
@@ -195,8 +189,8 @@ fdloadfile(fd, marks, flags)
 		if ((flags & LOAD_ALL) != 0)
 			PROGRESS(("=0x%lx\n",
 				  marks[MARK_END] - marks[MARK_START]));
-		return (0);
+		return 0;
 	}
 err:
-	return (errno);
+	return errno;
 }

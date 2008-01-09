@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.57 2006/11/16 01:33:38 christos Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.57.24.1 2008/01/09 01:57:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.57 2006/11/16 01:33:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.57.24.1 2008/01/09 01:57:01 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,17 +142,16 @@ fifo_open(void *v)
 		struct vnode	*a_vp;
 		int		a_mode;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
+	struct lwp	*l = curlwp;
 	struct vnode	*vp;
 	struct fifoinfo	*fip;
-	struct lwp	*l = ap->a_l;
 	struct proc	*p;
 	struct socket	*rso, *wso;
 	int		error;
 
 	vp = ap->a_vp;
-	p = ap->a_l->l_proc;
+	p = l->l_proc;
 
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
@@ -229,7 +228,7 @@ fifo_open(void *v)
 	}
 	return (0);
  bad:
-	VOP_CLOSE(vp, ap->a_mode, ap->a_cred, ap->a_l);
+	VOP_CLOSE(vp, ap->a_mode, ap->a_cred);
 	return (error);
 }
 
@@ -334,13 +333,13 @@ fifo_ioctl(void *v)
 		return (0);
 	if (ap->a_fflag & FREAD) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_l);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, curlwp);
 		if (error)
 			return (error);
 	}
 	if (ap->a_fflag & FWRITE) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
-		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, ap->a_l);
+		error = soo_ioctl(&filetmp, ap->a_command, ap->a_data, curlwp);
 		if (error)
 			return (error);
 	}
@@ -363,12 +362,12 @@ fifo_poll(void *v)
 	if (ap->a_events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_readsock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_l);
+			revents |= soo_poll(&filetmp, ap->a_events, curlwp);
 	}
 	if (ap->a_events & (POLLOUT | POLLWRNORM | POLLWRBAND)) {
 		filetmp.f_data = ap->a_vp->v_fifoinfo->fi_writesock;
 		if (filetmp.f_data)
-			revents |= soo_poll(&filetmp, ap->a_events, ap->a_l);
+			revents |= soo_poll(&filetmp, ap->a_events, curlwp);
 	}
 
 	return (revents);
@@ -593,7 +592,7 @@ fifo_kqfilter(void *v)
 		sb = &so->so_snd;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	ap->a_kn->kn_hook = so;

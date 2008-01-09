@@ -1,4 +1,4 @@
-/*	$NetBSD: udp.c,v 1.5 2006/01/24 17:07:19 christos Exp $	*/
+/*	$NetBSD: udp.c,v 1.5.44.1 2008/01/09 01:56:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -64,10 +64,7 @@
 
 /* Caller must leave room for ethernet, ip and udp headers in front!! */
 ssize_t
-sendudp(d, pkt, len)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
+sendudp(struct iodesc *d, void *pkt, size_t len)
 {
 	ssize_t cc;
 	struct ip *ip;
@@ -128,7 +125,7 @@ sendudp(d, pkt, len)
 
 	cc = sendether(d, ip, len, ea, ETHERTYPE_IP);
 	if (cc == -1)
-		return (-1);
+		return -1;
 	if ((size_t)cc != len)
 		panic("sendudp: bad write (%d != %d)", cc, len);
 	return (cc - (sizeof(*ip) + sizeof(*uh)));
@@ -139,11 +136,7 @@ sendudp(d, pkt, len)
  * Caller leaves room for the headers (Ether, IP, UDP)
  */
 ssize_t
-readudp(d, pkt, len, tleft)
-	struct iodesc *d;
-	void *pkt;
-	size_t len;
-	time_t tleft;
+readudp(struct iodesc *d, void *pkt, size_t len, time_t tleft)
 {
 	ssize_t n;
 	size_t hlen;
@@ -187,15 +180,16 @@ readudp(d, pkt, len, tleft)
 	if (ip->ip_v != IPVERSION ||
 	    ip->ip_p != IPPROTO_UDP) {	/* half char */
 #ifdef NET_DEBUG
-		if (debug)
-			printf("readudp: IP version or not UDP. ip_v=%d ip_p=%d\n", ip->ip_v, ip->ip_p);
+		if (debug) {
+			printf("readudp: IP version or not UDP. "
+			       "ip_v=%d ip_p=%d\n", ip->ip_v, ip->ip_p);
+		}
 #endif
 		return -1;
 	}
 
 	hlen = ip->ip_hl << 2;
-	if (hlen < sizeof(*ip) ||
-	    ip_cksum(ip, hlen) != 0) {
+	if (hlen < sizeof(*ip) || ip_cksum(ip, hlen) != 0) {
 #ifdef NET_DEBUG
 		if (debug)
 			printf("readudp: short hdr or bad cksum.\n");
@@ -272,5 +266,5 @@ readudp(d, pkt, len, tleft)
 	}
 
 	n -= sizeof(*ip) + sizeof(*uh);
-	return (n);
+	return n;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec.h,v 1.41 2007/02/15 15:13:34 ad Exp $	*/
+/*	$NetBSD: linux_exec.h,v 1.41.20.1 2008/01/09 01:51:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -129,58 +129,58 @@
 __BEGIN_DECLS
 extern const struct emul emul_linux;
 
-int linux_sysctl __P((int *, u_int, void *, size_t *, void *, size_t,
-    struct lwp *));
-void linux_setregs __P((struct lwp *, struct exec_package *, u_long));
-int exec_linux_aout_makecmds __P((struct lwp *, struct exec_package *));
-int linux_aout_copyargs __P((struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *));
-void linux_trapsignal __P((struct lwp *, ksiginfo_t *));
-int linux_usertrap __P((struct lwp *, vaddr_t, void *));
+int linux_sysctl(int *, u_int, void *, size_t *, void *, size_t,
+    struct lwp *);
+void linux_setregs(struct lwp *, struct exec_package *, u_long);
+int exec_linux_aout_makecmds(struct lwp *, struct exec_package *);
+int linux_aout_copyargs(struct lwp *, struct exec_package *,
+    struct ps_strings *, char **, void *);
+void linux_trapsignal(struct lwp *, ksiginfo_t *);
+int linux_usertrap(struct lwp *, vaddr_t, void *);
 #ifdef LINUX_NPTL
 void linux_nptl_proc_fork(struct proc *, struct proc *, void (luserret)(void));
-void linux_nptl_proc_exit __P((struct proc *));      
-void linux_nptl_proc_init __P((struct proc *, struct proc *));
+void linux_nptl_proc_exit(struct proc *);      
+void linux_nptl_proc_init(struct proc *, struct proc *);
 #endif
 
 #ifdef EXEC_ELF32
-int linux_elf32_probe __P((struct lwp *, struct exec_package *, void *,
-    char *, vaddr_t *));
-int linux_elf32_copyargs __P((struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *));
-int linux_elf32_signature __P((struct lwp *, struct exec_package *,
-        Elf32_Ehdr *, char *));
+int linux_elf32_probe(struct lwp *, struct exec_package *, void *,
+    char *, vaddr_t *);
+int linux_elf32_copyargs(struct lwp *, struct exec_package *,
+    struct ps_strings *, char **, void *);
+int linux_elf32_signature(struct lwp *, struct exec_package *,
+        Elf32_Ehdr *, char *);
 #ifdef LINUX_GCC_SIGNATURE
-int linux_elf32_gcc_signature __P((struct lwp *l,
-        struct exec_package *, Elf32_Ehdr *));
+int linux_elf32_gcc_signature(struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *);
 #endif
 #ifdef LINUX_DEBUGLINK_SIGNATURE
-int linux_elf32_debuglink_signature __P((struct lwp *l,
-        struct exec_package *, Elf32_Ehdr *));
+int linux_elf32_debuglink_signature(struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *);
 #endif
 #ifdef LINUX_ATEXIT_SIGNATURE
-int linux_elf32_atexit_signature __P((struct lwp *l,
-        struct exec_package *, Elf32_Ehdr *));
+int linux_elf32_atexit_signature(struct lwp *l,
+        struct exec_package *, Elf32_Ehdr *);
 #endif
 #endif
 #ifdef EXEC_ELF64
-int linux_elf64_probe __P((struct lwp *, struct exec_package *, void *,
-    char *, vaddr_t *));
-int linux_elf64_copyargs __P((struct lwp *, struct exec_package *,
-    struct ps_strings *, char **, void *));
-int linux_elf64_signature __P((struct lwp *, struct exec_package *,
-        Elf64_Ehdr *, char *));
+int linux_elf64_probe(struct lwp *, struct exec_package *, void *,
+    char *, vaddr_t *);
+int linux_elf64_copyargs(struct lwp *, struct exec_package *,
+    struct ps_strings *, char **, void *);
+int linux_elf64_signature(struct lwp *, struct exec_package *,
+        Elf64_Ehdr *, char *);
 #ifdef LINUX_GCC_SIGNATURE
-int linux_elf64_gcc_signature __P((struct lwp *l,
-        struct exec_package *, Elf64_Ehdr *));
+int linux_elf64_gcc_signature(struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *);
 #endif
 #ifdef LINUX_DEBUGLINK_SIGNATURE
-int linux_elf64_debuglink_signature __P((struct lwp *l,
-        struct exec_package *, Elf64_Ehdr *));
+int linux_elf64_debuglink_signature(struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *);
 #endif
 #ifdef LINUX_ATEXIT_SIGNATURE
-int linux_elf64_atexit_signature __P((struct lwp *l,
-        struct exec_package *, Elf64_Ehdr *));
+int linux_elf64_atexit_signature(struct lwp *l,
+        struct exec_package *, Elf64_Ehdr *);
 #endif
 #endif
 __END_DECLS

@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.15.16.1 2007/11/06 23:29:39 matt Exp $ */
+/* $NetBSD: pckbd.c,v 1.15.16.2 2008/01/09 01:54:13 matt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.16.1 2007/11/06 23:29:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.15.16.2 2008/01/09 01:54:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,12 +126,9 @@ struct pckbd_softc {
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int rawkbd;
 #endif
-
-	void *sc_powerhook;
 };
 
 static int pckbd_is_console(pckbport_tag_t, pckbport_slot_t);
-static void pckbd_powerhook(int, void *);
 
 int pckbdprobe(struct device *, struct cfdata *, void *);
 void pckbdattach(struct device *, struct device *, void *);
@@ -249,55 +246,55 @@ pckbd_is_console(pckbport_tag_t tag, pckbport_slot_t slot)
 	    tag == pckbd_consdata.t_kbctag && slot == pckbd_consdata.t_kbcslot;
 }
 
-static void
-pckbd_powerhook(int why, void *opaque)
+static bool
+pckbd_suspend(device_t dv)
 {
-	struct pckbd_softc *sc;
+	struct pckbd_softc *sc = device_private(dv);
+	u_char cmd[1];
 	int res;
+
+	/* XXX duped from pckbd_enable, but we want to disable
+	 *     it even if it's the console kbd
+	 */
+	cmd[0] = KBC_DISABLE;
+	res = pckbport_enqueue_cmd(sc->id->t_kbctag,
+	    sc->id->t_kbcslot, cmd, 1, 0, 1, 0);
+	if (res)
+		return false;
+
+	pckbport_slot_enable(sc->id->t_kbctag,
+	    sc->id->t_kbcslot, 0);
+
+	sc->sc_enabled = 0;
+	return true;
+}
+
+static bool
+pckbd_resume(device_t dv)
+{
+	struct pckbd_softc *sc = device_private(dv);
 	u_char cmd[1], resp[1];
+	int res;
 
-	sc = (struct pckbd_softc *)opaque;
+	/* XXX jmcneill reset the keyboard */
+	pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
 
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		printf("%s: suspending...\n", sc->sc_dev.dv_xname);
-		/* XXX duped from pckbd_enable, but we want to disable it
-		 *     even if it's the console kbd
-		 */
-		cmd[0] = KBC_DISABLE;
-		res = pckbport_enqueue_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-					cmd, 1, 0, 1, 0);
-		if (res)
-			printf("pckbd_disable: command error\n");
-
-		pckbport_slot_enable(sc->id->t_kbctag, sc->id->t_kbcslot, 0);
-
-		sc->sc_enabled = 0;
-		break;
-	case PWR_RESUME:
-		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
-
-		/* XXX jmcneill reset the keyboard */
-		cmd[0] = KBC_RESET;
-		res = pckbport_poll_cmd(sc->id->t_kbctag, sc->id->t_kbcslot,
-		    cmd, 1, 1, resp, 1);
+	cmd[0] = KBC_RESET;
+	res = pckbport_poll_cmd(sc->id->t_kbctag,
+	    sc->id->t_kbcslot, cmd, 1, 1, resp, 1);
 #ifdef DEBUG
-		if (res)
-			printf("pckbdprobe: reset error %d\n", res);
+	if (res)
+		printf("pckbdprobe: reset error %d\n", res);
 #endif
-		if (resp[0] != KBR_RSTDONE)
-			printf("pckbdprobe: reset response 0x%x\n", resp[0]);
+	if (resp[0] != KBR_RSTDONE)
+		printf("pckbdprobe: reset response 0x%x\n",
+		    resp[0]);
 
-		pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
+	pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
 
-		pckbd_set_xtscancode(sc->id->t_kbctag, sc->id->t_kbcslot);
+	pckbd_enable(sc, 1);
 
-		pckbd_enable(sc, 1);
-		break;
-	}
-
-	return;
+	return true;
 }
 
 /*
@@ -364,7 +361,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	int isconsole;
 	u_char cmd[1];
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 	isconsole = pckbd_is_console(pa->pa_tag, pa->pa_slot);
 
@@ -403,11 +401,8 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	a.accessops = &pckbd_accessops;
 	a.accesscookie = sc;
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    pckbd_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: unable to install powerhook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, pckbd_suspend, pckbd_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * Attach the wskbd, saving a handle to it.

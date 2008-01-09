@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.35.10.1 2007/11/06 23:30:38 matt Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.35.10.2 2008/01/09 01:54:43 matt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.35.10.1 2007/11/06 23:30:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.35.10.2 2008/01/09 01:54:43 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,9 +119,12 @@ USB_ATTACH(uhidev)
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
-	printf("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
+	aprint_normal("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	(void)usbd_set_idle(iface, 0, 0);
 #if 0
@@ -136,7 +139,7 @@ USB_ATTACH(uhidev)
 	for (i = 0; i < id->bNumEndpoints; i++) {
 		ed = usbd_interface2endpoint_descriptor(iface, i);
 		if (ed == NULL) {
-			printf("%s: could not read endpoint descriptor\n",
+			aprint_error("%s: could not read endpoint descriptor\n",
 			    USBDEVNAME(sc->sc_dev));
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
@@ -158,7 +161,8 @@ USB_ATTACH(uhidev)
 		    (ed->bmAttributes & UE_XFERTYPE) == UE_INTERRUPT) {
 			sc->sc_oep_addr = ed->bEndpointAddress;
 		} else {
-			printf("%s: endpoint %d: ignored\n", USBDEVNAME(sc->sc_dev), i);
+			aprint_verbose("%s: endpoint %d: ignored\n",
+			    USBDEVNAME(sc->sc_dev), i);
 		}
 	}
 
@@ -167,7 +171,8 @@ USB_ATTACH(uhidev)
 	 * endpoint is optional
 	 */
 	if (sc->sc_iep_addr == -1) {
-		printf("%s: no input interrupt endpoint\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: no input interrupt endpoint\n",
+		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -218,7 +223,8 @@ USB_ATTACH(uhidev)
 		    M_USBDEV);
 	}
 	if (err) {
-		printf("%s: no report descriptor\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: no report descriptor\n",
+		    USBDEVNAME(sc->sc_dev));
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -244,7 +250,8 @@ USB_ATTACH(uhidev)
 	if (nrepid < 0)
 		USB_ATTACH_SUCCESS_RETURN;
 	if (nrepid > 0)
-		printf("%s: %d report ids\n", USBDEVNAME(sc->sc_dev), nrepid);
+		aprint_normal("%s: %d report ids\n",
+		    USBDEVNAME(sc->sc_dev), nrepid);
 	nrepid++;
 	repsizes = malloc(nrepid * sizeof(*repsizes), M_TEMP, M_NOWAIT);
 	if (repsizes == NULL)
@@ -254,7 +261,7 @@ USB_ATTACH(uhidev)
 	if (sc->sc_subdevs == NULL) {
 		free(repsizes, M_TEMP);
 nomem:
-		printf("%s: no memory\n", USBDEVNAME(sc->sc_dev));
+		aprint_error("%s: no memory\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
 	sc->sc_nrepid = nrepid;
@@ -395,6 +402,8 @@ USB_DETACH(uhidev)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	pmf_device_deregister(self);
 
 	return (rv);
 }

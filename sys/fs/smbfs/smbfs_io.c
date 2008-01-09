@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_io.c,v 1.26.6.1 2007/11/06 23:31:18 matt Exp $	*/
+/*	$NetBSD: smbfs_io.c,v 1.26.6.2 2008/01/09 01:55:49 matt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.26.6.1 2007/11/06 23:31:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_io.c,v 1.26.6.2 2008/01/09 01:55:49 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,12 +219,12 @@ smbfs_readvnode(struct vnode *vp, struct uio *uiop, kauth_cred_t cred)
 
 	if (np->n_flag & NMODIFIED) {
 		smbfs_attr_cacheremove(vp);
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error)
 			return error;
 		np->n_mtime.tv_sec = vattr.va_mtime.tv_sec;
 	} else {
-		error = VOP_GETATTR(vp, &vattr, cred, l);
+		error = VOP_GETATTR(vp, &vattr, cred);
 		if (error)
 			return error;
 		if (np->n_mtime.tv_sec != vattr.va_mtime.tv_sec) {
@@ -354,9 +354,9 @@ smbfs_doio(struct buf *bp, kauth_cred_t cr, struct lwp *l)
 		uiop->uio_offset = ((off_t)bp->b_blkno) << DEV_BSHIFT;
 		io.iov_base = bp->b_data;
 		uiop->uio_rw = UIO_WRITE;
-		bp->b_flags |= B_BUSY;
+		bp->b_cflags |= BC_BUSY;
 		error = smb_write(smp->sm_share, np->n_fid, uiop, &scred);
-		bp->b_flags &= ~B_BUSY;
+		bp->b_cflags &= ~BC_BUSY;
 
 
 #ifndef __NetBSD__ /* XXX */

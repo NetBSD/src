@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.256.2.1 2007/11/06 23:31:55 matt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.256.2.2 2008/01/09 01:56:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.256.2.1 2007/11/06 23:31:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.256.2.2 2008/01/09 01:56:08 matt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -99,7 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.256.2.1 2007/11/06 23:31:55 matt Exp 
 #include <sys/kauth.h>
 #include <sys/acct.h>
 #include <sys/callout.h>
-
+#include <sys/atomic.h>
 #include <sys/cpu.h>
 
 #ifdef PAX_SEGVGUARD
@@ -204,32 +204,27 @@ sigacts_poolpage_free(struct pool *pp, void *v)
 struct sigacts *
 sigactsinit(struct proc *pp, int share)
 {
-	struct sigacts *ps;
+	struct sigacts *ps, *ps2;
 
-	if (pp != NULL) {
-		KASSERT(mutex_owned(&pp->p_smutex));
-	}
+	ps = pp->p_sigacts;
 
 	if (share) {
-		ps = pp->p_sigacts;
 		mutex_enter(&ps->sa_mutex);
 		ps->sa_refcnt++;
 		mutex_exit(&ps->sa_mutex);
+		ps2 = ps;
 	} else {
-		if (pp)
-			mutex_exit(&pp->p_smutex);
-		ps = pool_get(&sigacts_pool, PR_WAITOK);
-		mutex_init(&ps->sa_mutex, MUTEX_SPIN, IPL_NONE);
-		if (pp) {
-			mutex_enter(&pp->p_smutex);
-			memcpy(&ps->sa_sigdesc, pp->p_sigacts->sa_sigdesc,
-			    sizeof(ps->sa_sigdesc));
-		} else
-			memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
-		ps->sa_refcnt = 1;
+		ps2 = pool_get(&sigacts_pool, PR_WAITOK);
+		/* XXX IPL_SCHED to match p_smutex */
+		mutex_init(&ps2->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
+		mutex_enter(&ps->sa_mutex);
+		memcpy(&ps2->sa_sigdesc, ps->sa_sigdesc,
+		    sizeof(ps2->sa_sigdesc));
+		mutex_exit(&ps->sa_mutex);
+		ps2->sa_refcnt = 1;
 	}
 
-	return ps;
+	return ps2;
 }
 
 /*
@@ -242,23 +237,15 @@ void
 sigactsunshare(struct proc *p)
 {
 	struct sigacts *ps, *oldps;
-	int refcnt;
-
-	KASSERT(mutex_owned(&p->p_smutex));
 
 	oldps = p->p_sigacts;
-
-	mutex_enter(&oldps->sa_mutex);
-	refcnt = oldps->sa_refcnt;
-	mutex_exit(&oldps->sa_mutex);
-	if (refcnt == 1)
+	if (oldps->sa_refcnt == 1)
 		return;
-
-	mutex_exit(&p->p_smutex);
-	ps = sigactsinit(NULL, 0);
-	mutex_enter(&p->p_smutex);
+	ps = pool_get(&sigacts_pool, PR_WAITOK);
+	/* XXX IPL_SCHED to match p_smutex */
+	mutex_init(&ps->sa_mutex, MUTEX_DEFAULT, IPL_SCHED);
+	memset(&ps->sa_sigdesc, 0, sizeof(ps->sa_sigdesc));
 	p->p_sigacts = ps;
-
 	sigactsfree(oldps);
 }
 
@@ -350,16 +337,16 @@ execsigs(struct proc *p)
 
 	KASSERT(p->p_nlwps == 1);
 
-	mutex_enter(&p->p_smutex);
-
 	sigactsunshare(p);
-
 	ps = p->p_sigacts;
 
 	/*
 	 * Reset caught signals.  Held signals remain held through
 	 * l->l_sigmask (unless they were caught, and are now ignored
 	 * by default).
+	 *
+	 * No need to lock yet, the process has only one LWP and
+	 * at this point the sigacts are private to the process.
 	 */
 	sigemptyset(&tset);
 	for (signo = 1; signo < NSIG; signo++) {
@@ -377,6 +364,8 @@ execsigs(struct proc *p)
 		SIGACTION_PS(ps, signo).sa_flags = SA_RESTART;
 	}
 	ksiginfo_queue_init(&kq);
+
+	mutex_enter(&p->p_smutex);
 	sigclearall(p, &tset, &kq);
 	sigemptyset(&p->p_sigctx.ps_sigcatch);
 
@@ -397,8 +386,8 @@ execsigs(struct proc *p)
 	l->l_sigstk.ss_sp = 0;
 	ksiginfo_queue_init(&l->l_sigpend.sp_info);
 	sigemptyset(&l->l_sigpend.sp_set);
-
 	mutex_exit(&p->p_smutex);
+
 	ksiginfo_queue_drain(&kq);
 }
 
@@ -682,7 +671,7 @@ sigispending(struct lwp *l, int signo)
 	struct proc *p = l->l_proc;
 	sigset_t tset;
 
-	mb_read();
+	membar_consumer();
 
 	tset = l->l_sigpend.sp_set;
 	sigplusset(&p->p_sigpend.sp_set, &tset);
@@ -741,7 +730,7 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	 * the main context stack.
 	 */
 	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
-		ucp->uc_stack.ss_sp = (void *)USRSTACK;
+		ucp->uc_stack.ss_sp = (void *)l->l_proc->p_stackbase;
 		ucp->uc_stack.ss_size = ctob(l->l_proc->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
@@ -1208,6 +1197,7 @@ void
 kpsignal2(struct proc *p, ksiginfo_t *ksi)
 {
 	int prop, lid, toall, signo = ksi->ksi_signo;
+	struct sigacts *sa;
 	struct lwp *l;
 	ksiginfo_t *kp;
 	ksiginfoq_t kq;
@@ -1264,10 +1254,13 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * process dumps core immediately.
 		 */
 		if (KSI_TRAP_P(ksi)) {
+			sa = p->p_sigacts;
+			mutex_enter(&sa->sa_mutex);
 			if (!sigismember(&p->p_sigctx.ps_sigcatch, signo)) {
 				sigdelset(&p->p_sigctx.ps_sigignore, signo);
 				SIGACTION(p, signo).sa_handler = SIG_DFL;
 			}
+			mutex_exit(&sa->sa_mutex);
 		}
 
 		/*
@@ -1336,7 +1329,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		l = lwp_find(p, lid);
 		if (l != NULL) {
 			sigput(&l->l_sigpend, p, kp);
-			mb_write();
+			membar_producer();
 			(void)sigpost(l, action, prop, kp->ksi_signo);
 		}
 		goto out;
@@ -1421,7 +1414,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	 * visible on the per process list (for sigispending()).  This
 	 * is unlikely to be needed in practice, but...
 	 */
-	mb_write();
+	membar_producer();
 
 	/*
 	 * Try to find an LWP that can take the signal.
@@ -1475,7 +1468,7 @@ sigswitch(bool ppsig, int ppmask, int signo)
 		 * to a halt so they are included in p->p_nrlwps
 		 */
 		p->p_sflag |= (PS_STOPPING | PS_NOTIFYSTOP);
-		mb_write();
+		membar_producer();
 
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			lwp_lock(l2);
@@ -1857,6 +1850,7 @@ sendsig_reset(struct lwp *l, int signo)
 	p->p_sigctx.ps_code = 0;
 	p->p_sigctx.ps_signo = 0;
 
+	mutex_enter(&ps->sa_mutex);
 	sigplusset(&SIGACTION_PS(ps, signo).sa_mask, &l->l_sigmask);
 	if (SIGACTION_PS(ps, signo).sa_flags & SA_RESETHAND) {
 		sigdelset(&p->p_sigctx.ps_sigcatch, signo);
@@ -1864,6 +1858,7 @@ sendsig_reset(struct lwp *l, int signo)
 			sigaddset(&p->p_sigctx.ps_sigignore, signo);
 		SIGACTION_PS(ps, signo).sa_handler = SIG_DFL;
 	}
+	mutex_exit(&ps->sa_mutex);
 }
 
 /*
@@ -2004,7 +1999,7 @@ proc_stop(struct proc *p, int notify, int signo)
 	 * unlock between here and the p->p_nrlwps check below.
 	 */
 	p->p_sflag |= PS_STOPPING;
-	mb_write();
+	membar_producer();
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
@@ -2080,6 +2075,7 @@ proc_stop_callout(void *cookie)
 		restart = false;
 		more = false;
 
+		mutex_enter(&proclist_lock);
 		mutex_enter(&proclist_mutex);
 		PROCLIST_FOREACH(p, &allproc) {
 			mutex_enter(&p->p_smutex);
@@ -2129,6 +2125,7 @@ proc_stop_callout(void *cookie)
 				break;
 		}
 		mutex_exit(&proclist_mutex);
+		mutex_exit(&proclist_lock);
 	} while (restart);
 
 	/*

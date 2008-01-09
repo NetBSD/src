@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.7.2.1 2007/11/06 23:30:54 matt Exp $ */
+/*	$NetBSD: genfb.c,v 1.7.2.2 2008/01/09 01:54:51 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.7.2.1 2007/11/06 23:30:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.7.2.2 2008/01/09 01:54:51 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,21 +96,21 @@ genfb_init(struct genfb_softc *sc)
 	printf(prop_dictionary_externalize(dict));
 #endif
 	if (!prop_dictionary_get_uint32(dict, "width", &sc->sc_width)) {
-		GPRINTF("no width property");
+		GPRINTF("no width property\n");
 		return;
 	}
 	if (!prop_dictionary_get_uint32(dict, "height", &sc->sc_height)) {
-		GPRINTF("no height property");
+		GPRINTF("no height property\n");
 		return;
 	}
 	if (!prop_dictionary_get_uint32(dict, "depth", &sc->sc_depth)) {
-		GPRINTF("no depth property");
+		GPRINTF("no depth property\n");
 		return;
 	}
 
 	/* XXX should be a 64bit value */
 	if (!prop_dictionary_get_uint32(dict, "address", &fboffset)) {
-		GPRINTF("no address property");
+		GPRINTF("no address property\n");
 		return;
 	}
 
@@ -118,6 +118,14 @@ genfb_init(struct genfb_softc *sc)
 
 	if (!prop_dictionary_get_uint32(dict, "linebytes", &sc->sc_stride))
 		sc->sc_stride = (sc->sc_width * sc->sc_depth) >> 3;
+
+	/*
+	 * deal with a bug in the Raptor firmware which always sets
+	 * stride = width even when depth != 8
+	 */
+	if (sc->sc_stride < sc->sc_width * (sc->sc_depth >> 3))
+		sc->sc_stride = sc->sc_width * (sc->sc_depth >> 3);
+
 	sc->sc_fbsize = sc->sc_height * sc->sc_stride;
 
 	/* optional colour map callback */

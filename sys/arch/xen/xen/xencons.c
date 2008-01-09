@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.22.20.1 2007/11/06 23:24:35 matt Exp $	*/
+/*	$NetBSD: xencons.c,v 1.22.20.2 2008/01/09 01:50:23 matt Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22.20.1 2007/11/06 23:24:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22.20.2 2008/01/09 01:50:23 matt Exp $");
 
 #include "opt_xen.h"
 
@@ -77,15 +77,15 @@ __KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.22.20.1 2007/11/06 23:24:35 matt Exp $
 #include <sys/kauth.h>
 
 #include <machine/stdarg.h>
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
-#include <machine/evtchn.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
+#include <xen/evtchn.h>
 #ifdef XEN3
 #include <uvm/uvm.h>
 #include <machine/pmap.h>
-#include <machine/xen3-public/io/console.h>
+#include <xen/xen3-public/io/console.h>
 #else
-#include <machine/ctrl_if.h>
+#include <xen/ctrl_if.h>
 #endif
 
 #include <dev/cons.h>
@@ -425,16 +425,9 @@ xencons_start(struct tty *tp)
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-	if (cl->c_cc) {
+	if (ttypull(tp)) {
 		tp->t_state |= TS_TIMEOUT;
 		callout_schedule(&tp->t_rstrt_ch, 1);
-	}
-	if (cl->c_cc <= tp->t_lowat) {
-		if (tp->t_state & TS_ASLEEP) {
-			tp->t_state &= ~TS_ASLEEP;
-			wakeup(cl);
-		}
-		selwakeup(&tp->t_wsel);
 	}
 out:
 	splx(s);

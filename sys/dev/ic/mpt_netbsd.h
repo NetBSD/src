@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.h,v 1.6.6.1 2007/11/06 23:26:55 matt Exp $	*/
+/*	$NetBSD: mpt_netbsd.h,v 1.6.6.2 2008/01/09 01:52:56 matt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -85,6 +85,7 @@
 #include <sys/errno.h>
 #include <sys/buf.h>
 #include <sys/queue.h>
+#include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: exphy.c,v 1.44 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: exphy.c,v 1.44.24.1 2008/01/09 01:53:19 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.44 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exphy.c,v 1.44.24.1 2008/01/09 01:53:19 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,15 +158,15 @@ exphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
 exphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	/*
 	 * We can't isolate the 3Com PHY, so it has to be the only one!

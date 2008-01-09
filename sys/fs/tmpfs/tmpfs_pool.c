@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.7.14.2 2007/11/08 10:59:58 matt Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.7.14.3 2008/01/09 01:55:52 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,10 +42,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.7.14.2 2007/11/08 10:59:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.7.14.3 2008/01/09 01:55:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -153,20 +154,19 @@ tmpfs_pool_destroy(struct tmpfs_pool *tpp)
 void *
 tmpfs_pool_page_alloc(struct pool *pp, int flags)
 {
-	void *page;
 	struct tmpfs_pool *tpp;
 	struct tmpfs_mount *tmp;
+	u_int pages;
+	void *page;
 
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
-	mutex_enter(&tmp->tm_lock);
-	if (TMPFS_PAGES_MAX(tmp) - tmp->tm_pages_used == 0) {
-		mutex_exit(&tmp->tm_lock);
+	pages = atomic_inc_uint_nv(&tmp->tm_pages_used);
+	if (pages >= TMPFS_PAGES_MAX(tmp)) {
+		atomic_dec_uint(&tmp->tm_pages_used);
 		return NULL;
 	}
-	tmp->tm_pages_used += 1;
-	mutex_exit(&tmp->tm_lock);
 	/*
 	 * tmpfs never specifies PR_WAITOK as we enforce local limits
 	 * on memory allocation.  However, we should wait for memory
@@ -175,9 +175,7 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 	 */
 	page = pool_page_alloc_nointr(pp, flags | PR_WAITOK);
 	if (page == NULL) {
-		mutex_enter(&tmp->tm_lock);
-		tmp->tm_pages_used -= 1;
-		mutex_exit(&tmp->tm_lock);
+		atomic_dec_uint(&tmp->tm_pages_used);
 	}
 
 	return page;
@@ -194,10 +192,7 @@ tmpfs_pool_page_free(struct pool *pp, void *v)
 	tpp = (struct tmpfs_pool *)pp;
 	tmp = tpp->tp_mount;
 
-	mutex_enter(&tmp->tm_lock);
-	tmp->tm_pages_used -= 1;
-	mutex_exit(&tmp->tm_lock);
-
+	atomic_dec_uint(&tmp->tm_pages_used);
 	pool_page_free_nointr(pp, v);
 }
 
@@ -250,6 +245,8 @@ tmpfs_str_pool_get(struct tmpfs_str_pool *tsp, size_t len, int flags)
 {
 	struct tmpfs_pool *p;
 
+	KASSERT(len <= 1024);
+
 	if      (len <= 16)   p = &tsp->tsp_pool_16;
 	else if (len <= 32)   p = &tsp->tsp_pool_32;
 	else if (len <= 64)   p = &tsp->tsp_pool_64;
@@ -258,7 +255,8 @@ tmpfs_str_pool_get(struct tmpfs_str_pool *tsp, size_t len, int flags)
 	else if (len <= 512)  p = &tsp->tsp_pool_512;
 	else if (len <= 1024) p = &tsp->tsp_pool_1024;
 	else {
-		return NULL;
+		KASSERT(0);
+		p = NULL; /* Silence compiler warnings */
 	}
 
 	return (char *)TMPFS_POOL_GET(p, flags);

@@ -1,3 +1,5 @@
+/* $NetBSD: drm_fops.c,v 1.2.14.1 2008/01/09 01:52:35 matt Exp $ */
+
 /* drm_fops.h -- File operations for DRM -*- linux-c -*-
  * Created: Mon Jan  4 08:58:31 1999 by faith@valinux.com
  */
@@ -33,6 +35,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.2.14.1 2008/01/09 01:52:35 matt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_fops.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -42,16 +45,8 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/drm_fops.c,v 1.2 2005/11/28 23:13:52 anholt 
 drm_file_t *drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 {
 	int restart = 1;
-#if __FreeBSD_version >= 500021
-	uid_t uid = p->td_ucred->cr_svuid;
-	pid_t pid = p->td_proc->p_pid;
-#elif defined(__NetBSD__)
 	uid_t uid = kauth_cred_getsvuid(p->p_cred);
 	pid_t pid = p->p_pid;
-#else
-	uid_t uid = p->p_cred->p_svuid;
-	pid_t pid = p->p_pid;
-#endif
 	drm_file_t *priv;
 
 	DRM_SPINLOCK_ASSERT(&dev->dev_lock);
@@ -59,7 +54,7 @@ drm_file_t *drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 	while (restart) {
 		restart = 0;
 		TAILQ_FOREACH(priv, &dev->files, link) {
-#ifdef __NetBSD__
+
 	/* if the process disappeared, free the resources 
 	 * NetBSD only calls drm_close once, so this frees
 	 * resources earlier.
@@ -70,7 +65,6 @@ drm_file_t *drm_find_file_by_proc(drm_device_t *dev, DRM_STRUCTPROC *p)
 				break;
 			}
 			else
-#endif
 			if (priv->pid == pid && priv->uid == uid)
 				return priv;
 		}
@@ -102,17 +96,8 @@ int drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 			DRM_UNLOCK();
 			return DRM_ERR(ENOMEM);
 		}
-#if __FreeBSD_version >= 500000
-		priv->uid		= p->td_ucred->cr_svuid;
-		priv->pid		= p->td_proc->p_pid;
-#elif defined(__NetBSD__)
 		priv->uid		= kauth_cred_getsvuid(p->p_cred);
 		priv->pid		= p->p_pid;
-#else
-		priv->uid		= p->p_cred->p_svuid;
-		priv->pid		= p->p_pid;
-#endif
-
 		priv->refs		= 1;
 		priv->minor		= m;
 		priv->ioctl_count 	= 0;
@@ -135,9 +120,6 @@ int drm_open_helper(DRM_CDEV kdev, int flags, int fmt, DRM_STRUCTPROC *p,
 		TAILQ_INSERT_TAIL(&dev->files, priv, link);
 	}
 	DRM_UNLOCK();
-#ifdef __FreeBSD__
-	kdev->si_drv1 = dev;
-#endif
 	return 0;
 }
 

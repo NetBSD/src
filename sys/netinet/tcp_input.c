@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.270.4.1 2007/11/06 23:33:52 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.270.4.2 2008/01/09 01:57:29 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.270.4.1 2007/11/06 23:33:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.270.4.2 2008/01/09 01:57:29 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -174,6 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.270.4.1 2007/11/06 23:33:52 matt Exp
 #ifdef TCP_SIGNATURE
 #include <sys/md5.h>
 #endif
+#include <sys/lwp.h> /* for lwp0 */
 
 #include <net/if.h>
 #include <net/route.h>
@@ -261,15 +262,20 @@ static struct timeval tcp_ackdrop_ppslim_last;
  * Neighbor Discovery, Neighbor Unreachability Detection Upper layer hint.
  */
 #ifdef INET6
-#define ND6_HINT(tp) \
-do { \
-	if (tp && tp->t_in6pcb && tp->t_family == AF_INET6 && \
-	    tp->t_in6pcb->in6p_route.ro_rt) { \
-		nd6_nud_hint(tp->t_in6pcb->in6p_route.ro_rt, NULL, 0); \
-	} \
-} while (/*CONSTCOND*/ 0)
+static inline void
+nd6_hint(struct tcpcb *tp)
+{
+	struct rtentry *rt;
+
+	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
+	    (rt = rtcache_getrt(&tp->t_in6pcb->in6p_route)) != NULL)
+		nd6_nud_hint(rt, NULL, 0);
+}
 #else
-#define ND6_HINT(tp)
+static inline void
+nd6_hint(struct tcpcb *tp)
+{
+}
 #endif
 
 /*
@@ -771,7 +777,7 @@ present:
 
 	tp->rcv_nxt += q->ipqe_len;
 	pkt_flags = q->ipqe_flags & TH_FIN;
-	ND6_HINT(tp);
+	nd6_hint(tp);
 
 	TAILQ_REMOVE(&tp->segq, q, ipqe_q);
 	TAILQ_REMOVE(&tp->timeq, q, ipqe_timeq);
@@ -1734,7 +1740,7 @@ after_listen:
 				acked = th->th_ack - tp->snd_una;
 				tcpstat.tcps_rcvackpack++;
 				tcpstat.tcps_rcvackbyte += acked;
-				ND6_HINT(tp);
+				nd6_hint(tp);
 
 				if (acked > (tp->t_lastoff - tp->t_inoff))
 					tp->t_lastm = NULL;
@@ -1786,7 +1792,7 @@ after_listen:
 			tp->rcv_nxt += tlen;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
-			ND6_HINT(tp);
+			nd6_hint(tp);
 
 		/*
 		 * Automatic sizing enables the performance of large buffers
@@ -2394,7 +2400,7 @@ after_listen:
 		 */
 		tp->t_congctl->newack(tp, th);
 
-		ND6_HINT(tp);
+		nd6_hint(tp);
 		if (acked > so->so_snd.sb_cc) {
 			tp->snd_wnd -= so->so_snd.sb_cc;
 			sbdrop(&so->so_snd, (int)so->so_snd.sb_cc);
@@ -2597,7 +2603,7 @@ dodata:							/* XXX */
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;
 			tcpstat.tcps_rcvbyte += tlen;
-			ND6_HINT(tp);
+			nd6_hint(tp);
 			if (so->so_state & SS_CANTRCVMORE)
 				m_freem(m);
 			else {
@@ -3269,30 +3275,6 @@ do {									\
 } while (/*CONSTCOND*/0)
 #endif /* INET6 */
 
-#define	SYN_CACHE_RM(sc)						\
-do {									\
-	TAILQ_REMOVE(&tcp_syn_cache[(sc)->sc_bucketidx].sch_bucket,	\
-	    (sc), sc_bucketq);						\
-	(sc)->sc_tp = NULL;						\
-	LIST_REMOVE((sc), sc_tpq);					\
-	tcp_syn_cache[(sc)->sc_bucketidx].sch_length--;			\
-	callout_stop(&(sc)->sc_timer);					\
-	syn_cache_count--;						\
-} while (/*CONSTCOND*/0)
-
-#define	SYN_CACHE_PUT(sc)						\
-do {									\
-	if ((sc)->sc_ipopts)						\
-		(void) m_free((sc)->sc_ipopts);				\
-	rtcache_free(&(sc)->sc_route);					\
-	if (callout_invoking(&(sc)->sc_timer))				\
-		(sc)->sc_flags |= SCF_DEAD;				\
-	else {								\
-		callout_destroy(&sc->sc_timer);				\
-		pool_put(&syn_cache_pool, (sc));			\
-	}								\
-} while (/*CONSTCOND*/0)
-
 POOL_INIT(syn_cache_pool, sizeof(struct syn_cache), 0, 0, 0, "synpl", NULL,
     IPL_SOFTNET);
 
@@ -3310,6 +3292,32 @@ do {									\
 } while (/*CONSTCOND*/0)
 
 #define	SYN_CACHE_TIMESTAMP(sc)	(tcp_now - (sc)->sc_timebase)
+
+static inline void
+syn_cache_rm(struct syn_cache *sc)
+{
+	TAILQ_REMOVE(&tcp_syn_cache[sc->sc_bucketidx].sch_bucket,
+	    sc, sc_bucketq);
+	sc->sc_tp = NULL;
+	LIST_REMOVE(sc, sc_tpq);
+	tcp_syn_cache[sc->sc_bucketidx].sch_length--;
+	callout_stop(&sc->sc_timer);
+	syn_cache_count--;
+}
+
+static inline void
+syn_cache_put(struct syn_cache *sc)
+{
+	if (sc->sc_ipopts)
+		(void) m_free(sc->sc_ipopts);
+	rtcache_free(&sc->sc_route);
+	if (callout_invoking(&sc->sc_timer))
+		sc->sc_flags |= SCF_DEAD;
+	else {
+		callout_destroy(&sc->sc_timer);
+		pool_put(&syn_cache_pool, sc);
+	}
+}
 
 void
 syn_cache_init(void)
@@ -3361,8 +3369,8 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 		if (sc2 == NULL)
 			panic("syn_cache_insert: bucketoverflow: impossible");
 #endif
-		SYN_CACHE_RM(sc2);
-		SYN_CACHE_PUT(sc2);	/* calls pool_put but see spl above */
+		syn_cache_rm(sc2);
+		syn_cache_put(sc2);	/* calls pool_put but see spl above */
 	} else if (syn_cache_count >= tcp_syn_cache_limit) {
 		struct syn_cache_head *scp2, *sce;
 
@@ -3395,8 +3403,8 @@ syn_cache_insert(struct syn_cache *sc, struct tcpcb *tp)
 #endif
 		}
 		sc2 = TAILQ_FIRST(&scp2->sch_bucket);
-		SYN_CACHE_RM(sc2);
-		SYN_CACHE_PUT(sc2);	/* calls pool_put but see spl above */
+		syn_cache_rm(sc2);
+		syn_cache_put(sc2);	/* calls pool_put but see spl above */
 	}
 
 	/*
@@ -3466,8 +3474,8 @@ syn_cache_timer(void *arg)
 
  dropit:
 	tcpstat.tcps_sc_timed_out++;
-	SYN_CACHE_RM(sc);
-	SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+	syn_cache_rm(sc);
+	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
 
@@ -3491,8 +3499,8 @@ syn_cache_cleanup(struct tcpcb *tp)
 		if (sc->sc_tp != tp)
 			panic("invalid sc_tp in syn_cache_cleanup");
 #endif
-		SYN_CACHE_RM(sc);
-		SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+		syn_cache_rm(sc);
+		syn_cache_put(sc);	/* calls pool_put but see spl above */
 	}
 	/* just for safety */
 	LIST_INIT(&tp->t_sc);
@@ -3589,7 +3597,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	}
 
 	/* Remove this cache entry */
-	SYN_CACHE_RM(sc);
+	syn_cache_rm(sc);
 	splx(s);
 
 	/*
@@ -3721,7 +3729,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 	am->m_len = src->sa_len;
 	bcopy(src, mtod(am, void *), src->sa_len);
 	if (inp) {
-		if (in_pcbconnect(inp, am, NULL)) {
+		if (in_pcbconnect(inp, am, &lwp0)) {
 			(void) m_free(am);
 			goto resetandabort;
 		}
@@ -3844,7 +3852,7 @@ syn_cache_get(struct sockaddr *src, struct sockaddr *dst,
 
 	tcpstat.tcps_sc_completed++;
 	s = splsoftnet();
-	SYN_CACHE_PUT(sc);
+	syn_cache_put(sc);
 	splx(s);
 	return (so);
 
@@ -3854,7 +3862,7 @@ abort:
 	if (so != NULL)
 		(void) soabort(so);
 	s = splsoftnet();
-	SYN_CACHE_PUT(sc);
+	syn_cache_put(sc);
 	splx(s);
 	tcpstat.tcps_sc_aborted++;
 	return ((struct socket *)(-1));
@@ -3882,9 +3890,9 @@ syn_cache_reset(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th)
 		splx(s);
 		return;
 	}
-	SYN_CACHE_RM(sc);
+	syn_cache_rm(sc);
 	tcpstat.tcps_sc_reset++;
-	SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
 
@@ -3921,9 +3929,9 @@ syn_cache_unreach(const struct sockaddr *src, const struct sockaddr *dst,
 		return;
 	}
 
-	SYN_CACHE_RM(sc);
+	syn_cache_rm(sc);
 	tcpstat.tcps_sc_unreach++;
-	SYN_CACHE_PUT(sc);	/* calls pool_put but see spl above */
+	syn_cache_put(sc);	/* calls pool_put but see spl above */
 	splx(s);
 }
 
@@ -4132,7 +4140,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 		tcpstat.tcps_sndtotal++;
 	} else {
 		s = splsoftnet();
-		SYN_CACHE_PUT(sc);
+		syn_cache_put(sc);
 		splx(s);
 		tcpstat.tcps_sc_dropped++;
 	}
@@ -4142,6 +4150,9 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 int
 syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 {
+#ifdef INET6
+	struct rtentry *rt;
+#endif
 	struct route *ro;
 	u_int8_t *optp;
 	int optlen, error;
@@ -4424,7 +4435,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,
-				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
+				(rt = rtcache_getrt(ro)) != NULL ? rt->rt_ifp
+				                                 : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;

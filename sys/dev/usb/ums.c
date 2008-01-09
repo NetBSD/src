@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.68 2007/03/04 06:02:49 christos Exp $	*/
+/*	$NetBSD: ums.c,v 1.68.16.1 2008/01/09 01:54:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.68 2007/03/04 06:02:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.68.16.1 2008/01/09 01:54:45 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,6 +156,8 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 	int i, wheel;
 	struct hid_location loc_btn;
 
+	aprint_naive("\n");
+
 	sc->sc_hdev.sc_intr = ums_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
@@ -168,26 +170,29 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_X),
 	       uha->reportid, hid_input, &sc->sc_loc_x, &flags)) {
-		printf("\n%s: mouse has no X report\n",
+		aprint_error("\n%s: mouse has no X report\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-		printf("\n%s: X report 0x%04x not supported\n",
+		aprint_error("\n%s: X report 0x%04x not supported\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
 		USB_ATTACH_ERROR_RETURN;
 	}
 
 	if (!hid_locate(desc, size, HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_Y),
 	       uha->reportid, hid_input, &sc->sc_loc_y, &flags)) {
-		printf("\n%s: mouse has no Y report\n",
+		aprint_error("\n%s: mouse has no Y report\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
 	if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-		printf("\n%s: Y report 0x%04x not supported\n",
+		aprint_error("\n%s: Y report 0x%04x not supported\n",
 		       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -198,8 +203,9 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 			   uha->reportid, hid_input, &sc->sc_loc_z, &flags);
 	if (wheel) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-			printf("\n%s: Wheel report 0x%04x not supported\n",
-			       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
+			aprint_verbose("\n%s: Wheel report 0x%04x not "
+			    "supported\n", USBDEVNAME(sc->sc_hdev.sc_dev),
+			    flags);
 			sc->sc_loc_z.size = 0;	/* Bad Z coord, ignore it */
 		} else {
 			sc->flags |= UMS_Z;
@@ -214,7 +220,8 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 						      HUG_Z),
 			uha->reportid, hid_input, &sc->sc_loc_w, &flags)) {
 			if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-				printf("\n%s: Z report 0x%04x not supported\n",
+				aprint_verbose("\n%s: Z report 0x%04x not "
+				    "supported\n",
 				       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
 				sc->sc_loc_w.size = 0;	/* Bad Z, ignore */
 			}
@@ -223,7 +230,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 						      HUG_Z),
 		      uha->reportid, hid_input, &sc->sc_loc_z, &flags)) {
 		if ((flags & MOUSE_FLAGS_MASK) != MOUSE_FLAGS) {
-			printf("\n%s: Z report 0x%04x not supported\n",
+			aprint_verbose("\n%s: Z report 0x%04x not supported\n",
 			       USBDEVNAME(sc->sc_hdev.sc_dev), flags);
 			sc->sc_loc_z.size = 0;	/* Bad Z coord, ignore it */
 		} else {
@@ -239,7 +246,7 @@ ums_attach(struct device *parent, struct device *self, void *aux)
 			break;
 	sc->nbuttons = i - 1;
 
-	printf(": %d button%s%s\n",
+	aprint_normal(": %d button%s%s\n",
 	    sc->nbuttons, sc->nbuttons == 1 ? "" : "s",
 	    sc->flags & UMS_Z ? " and Z dir." : "");
 
@@ -301,6 +308,8 @@ ums_detach(struct device *self, int flags)
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
+
+	pmf_device_deregister(self);
 
 	return (rv);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.136.2.1 2007/11/06 23:33:57 matt Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.136.2.2 2008/01/09 01:57:33 matt Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.136.2.1 2007/11/06 23:33:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.136.2.2 2008/01/09 01:57:33 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1618,12 +1618,9 @@ ni6_addrs(struct icmp6_nodeinfo *ni6, struct mbuf *m,
 		}
 	}
 
-	for (ifp = TAILQ_FIRST(&ifnet); ifp; ifp = TAILQ_NEXT(ifp, if_list))
-	{
+	IFNET_FOREACH(ifp) {
 		addrsofif = 0;
-		for (ifa = ifp->if_addrlist.tqh_first; ifa;
-		     ifa = ifa->ifa_list.tqe_next)
-		{
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 			ifa6 = (struct in6_ifaddr *)ifa;
@@ -1703,9 +1700,7 @@ ni6_store_addrs(struct icmp6_nodeinfo *ni6,
 
 	for (; ifp; ifp = TAILQ_NEXT(ifp, if_list))
 	{
-		for (ifa = ifp->if_addrlist.tqh_first; ifa;
-		     ifa = ifa->ifa_list.tqe_next)
-		{
+		IFADDR_FOREACH(ifa, ifp) {
 			if (ifa->ifa_addr->sa_family != AF_INET6)
 				continue;
 			ifa6 = (struct in6_ifaddr *)ifa;

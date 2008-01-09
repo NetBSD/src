@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bootparam.c,v 1.30 2007/03/04 06:03:36 christos Exp $	*/
+/*	$NetBSD: nfs_bootparam.c,v 1.30.16.1 2008/01/09 01:57:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.30 2007/03/04 06:03:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bootparam.c,v 1.30.16.1 2008/01/09 01:57:51 matt Exp $");
 
 #include "opt_nfs_boot.h"
 #include "opt_inet.h"
@@ -199,7 +199,7 @@ nfs_bootparam(nd, lwp)
 	}
 
 #ifndef NFS_BOOTPARAM_NOGATEWAY
-	gw_ndm = malloc(sizeof(*gw_ndm), M_NFSMNT, M_WAITOK);
+	gw_ndm = kmem_alloc(sizeof(*gw_ndm), KM_SLEEP);
 	memset((void *)gw_ndm, 0, sizeof(*gw_ndm));
 	error = bp_getfile(sin, "gateway", gw_ndm, lwp);
 	if (error) {
@@ -269,7 +269,7 @@ out:
 #ifndef NFS_BOOTPARAM_NOGATEWAY
 gwok:
 	if (gw_ndm)
-		free(gw_ndm, M_NFSMNT);
+		kmem_free(gw_ndm, sizeof(*gw_ndm));
 #endif
 	return (error);
 }

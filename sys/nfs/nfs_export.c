@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.30 2007/07/12 19:35:35 dsl Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.30.8.1 2008/01/09 01:57:52 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.30 2007/07/12 19:35:35 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.30.8.1 2008/01/09 01:57:52 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_inet.h"
@@ -228,7 +228,7 @@ mountd_set_exports_list(const struct mountd_exports_list *mel, struct lwp *l)
 		return EPERM;
 
 	/* Lookup the file system path. */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, mel->mel_path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_USERSPACE, mel->mel_path);
 	error = namei(&nd);
 	if (error != 0)
 		return error;

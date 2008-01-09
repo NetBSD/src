@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.11 2007/07/29 12:15:43 ad Exp $ */
+/*	$NetBSD: mt.c,v 1.11.6.1 2008/01/09 01:52:37 matt Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.11 2007/07/29 12:15:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.11.6.1 2008/01/09 01:52:37 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -515,13 +515,16 @@ mtcommand(dev, cmd, cnt)
 	sc = device_lookup(&mt_cd, MTUNIT(dev));
 	bp = &sc->sc_bufstore;
 
-	if (bp->b_flags & B_BUSY)
+	if (bp->b_cflags & BC_BUSY)
 		return (EBUSY);
 
 	bp->b_cmd = cmd;
 	bp->b_dev = dev;
+	bp->b_objlock = &buffer_lock;
 	do {
-		bp->b_flags = B_BUSY | B_CMD;
+		bp->b_cflags = BC_BUSY;
+		bp->b_flags = B_CMD;
+		bp->b_oflags = 0;
 		mtstrategy(bp);
 		biowait(bp);
 		if (bp->b_error != 0) {
@@ -530,9 +533,9 @@ mtcommand(dev, cmd, cnt)
 		}
 	} while (--cnt > 0);
 #if 0
-	bp->b_flags = 0 /*&= ~B_BUSY*/;
+	bp->b_cflags = 0 /*&= ~BC_BUSY*/;
 #else
-	bp->b_flags &= ~B_BUSY;
+	bp->b_cflags &= ~BC_BUSY;
 #endif
 	return (error);
 }

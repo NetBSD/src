@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.19.86.1 2007/11/06 23:32:56 matt Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.19.86.2 2008/01/09 01:56:38 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ extern int nfs_root_node[];	/* XXX - get from nfs_mount() */
 static int netdev_sock = -1;
 static int netdev_opens;
 
-static int net_getparams __P((int sock));
+static int net_getparams __P((int));
 
 /*
  * Called by devopen after it sets f->f_dev to our devsw entry.
@@ -93,7 +93,7 @@ net_open(struct open_file *f, ...)
 	int error = 0;
 
 	va_start(ap, f);
-	devname = va_arg(ap, char*);
+	devname = va_arg(ap, char *);
 	va_end(ap);
 
 #ifdef	NETIF_DEBUG
@@ -108,7 +108,7 @@ net_open(struct open_file *f, ...)
 			netdev_sock = netif_open(devname);
 			if (netdev_sock < 0) {
 				printf("netif_open() failed\n");
-				return (ENXIO);
+				return ENXIO;
 			}
 #ifdef NETIF_DEBUG
 			if (debug)
@@ -130,7 +130,7 @@ net_open(struct open_file *f, ...)
 			fail:
 				netif_close(netdev_sock);
 				netdev_sock = -1;
-				return (error);
+				return error;
 			}
 #ifdef NETIF_DEBUG
 			if (debug)
@@ -140,12 +140,11 @@ net_open(struct open_file *f, ...)
 	}
 	netdev_opens++;
 	f->f_devdata = nfs_root_node;
-	return (error);
+	return error;
 }
 
 int
-net_close(f)
-	struct open_file *f;
+net_close(struct open_file *f)
 {
 
 #ifdef	NETIF_DEBUG
@@ -157,11 +156,11 @@ net_close(f)
 	f->f_devdata = NULL;
 	/* Extra close call? */
 	if (netdev_opens <= 0)
-		return (0);
+		return 0;
 	netdev_opens--;
 	/* Not last close? */
 	if (netdev_opens > 0)
-		return(0);
+		return 0;
 	rootip.s_addr = 0;
 	if (netdev_sock >= 0) {
 #ifdef NETIF_DEBUG
@@ -171,27 +170,21 @@ net_close(f)
 		netif_close(netdev_sock);
 		netdev_sock = -1;
 	}
-	return (0);
+	return 0;
 }
 
 int
-net_ioctl(f, cmd, data)
-	struct open_file *f;
-	u_long cmd;
-	void *data;
+net_ioctl(struct open_file *f, u_long cmd, void *data)
 {
+
 	return EIO;
 }
 
 int
-net_strategy(devdata, rw, blk, size, buf, rsize)
-	void *devdata;
-	int rw;
-	daddr_t blk;
-	size_t size;
-	void *buf;
-	size_t *rsize;
+net_strategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
+	size_t *rsize)
 {
+
 	return EIO;
 }
 
@@ -212,8 +205,7 @@ int try_bootp;
 #endif
 
 static int
-net_getparams(sock)
-	int sock;
+net_getparams(int sock)
 {
 	char buf[MAXHOSTNAMELEN];
 	n_long smask;
@@ -228,7 +220,7 @@ net_getparams(sock)
 	if (try_bootp)
 		bootp(sock);
 	if (myip.s_addr != 0)
-		return (0);
+		return 0;
 #ifdef NETIF_DEBUG
 	if (debug)
 		printf("BOOTP failed, trying RARP/RPC...\n");
@@ -241,7 +233,7 @@ net_getparams(sock)
 	 */
 	if (rarp_getipaddress(sock)) {
 		printf("RARP failed\n");
-		return (EIO);
+		return EIO;
 	}
 #ifdef NETIF_DEBUG
 	if (debug)
@@ -251,7 +243,7 @@ net_getparams(sock)
 	/* Get our hostname, server IP address, gateway. */
 	if (bp_whoami(sock)) {
 		printf("bootparam/whoami RPC failed\n");
-		return (EIO);
+		return EIO;
 	}
 #ifdef NETIF_DEBUG
 	if (debug)
@@ -264,9 +256,9 @@ net_getparams(sock)
 	 */
 	smask = 0;
 	gateip.s_addr = 0;
-	if (bp_getfile(sock, "gateway", &gateip, buf))
+	if (bp_getfile(sock, "gateway", &gateip, buf)) {
 		printf("nfs_open: gateway bootparam missing\n");
-	else {
+	} else {
 		/* Got it!  Parse the netmask. */
 		smask = inet_addr(buf);
 	}
@@ -286,7 +278,7 @@ net_getparams(sock)
 	/* Get the root server and pathname. */
 	if (bp_getfile(sock, "root", &rootip, rootpath)) {
 		printf("bootparam/getfile RPC failed\n");
-		return (EIO);
+		return EIO;
 	}
 
 #ifdef NETIF_DEBUG
@@ -296,5 +288,5 @@ net_getparams(sock)
 	}
 #endif
 
-	return (0);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exec.h,v 1.30 2005/12/11 12:20:20 christos Exp $	 */
+/*	$NetBSD: mach_exec.h,v 1.30.46.1 2008/01/09 01:51:26 matt Exp $	 */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ struct mach_emuldata {
 	int med_inited;			/* Is this structure initialized? */
 	int med_thpri;			/* Saved priority */
 	LIST_HEAD(med_right, mach_right) med_right;
-	struct lock med_rightlock;	/* process right list and lock */
+	krwlock_t med_rightlock;	/* process right list and lock */
 	mach_port_t med_nextright;	/* next unused right */
 
 	struct mach_port *med_bootstrap;/* task bootstrap port */
@@ -61,7 +61,7 @@ struct mach_emuldata {
 
 	int med_dirty_thid;		/* Thread id not yet initialized */
 	int med_suspend;		/* Suspend semaphore */
-	struct lock med_exclock;	/* Process exception handler lock */
+	krwlock_t med_exclock;		/* Process exception handler lock */
 };
 
 struct mach_lwp_emuldata {

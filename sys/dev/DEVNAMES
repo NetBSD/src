@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.229.8.1 2007/11/06 23:25:24 matt Exp $
+#	$NetBSD: DEVNAMES,v 1.229.8.2 2008/01/09 01:52:09 matt Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -83,9 +83,11 @@ an			MI
 ap			newsmips
 apecs			alpha
 apm			i386
+aps			MI
 arbus			evbmips
 arc			MI		Attribute
 arckbd			acorn26
+arcmsr			MI
 arcpp			acorn26
 arcvideo		acorn26
 arcwskbd		acorn26
@@ -157,6 +159,7 @@ bah			MI
 bandit			macppc
 bba			MI
 bce			MI
+bcsp			MI
 be			MI
 bge			MI
 bha			MI
@@ -174,6 +177,7 @@ bonito			algor
 bpp			MI
 brgphy			MI
 bt3c			MI
+btbc			MI
 bt_dac			sparc		Attribute
 bt_dac			sparc64		Attribute
 bthidev			MI
@@ -183,6 +187,7 @@ btl			arc
 btms			MI
 btnmgr			hpcmips
 btsco			MI
+btuart			MI
 btvmei			MI
 btvmeii			MI
 button			hpcmips
@@ -653,7 +658,7 @@ isdntel			MI
 isdntrc			MI
 isic			MI
 isp			MI
-it			MI
+itesio			MI
 it8368e			hpcmips
 ite			amiga
 ite			amigappc
@@ -963,6 +968,7 @@ osiop			MI
 otgsc			amiga
 otgsc			amigappc
 panel			cobalt
+pad			MI
 par			amiga
 par			amigappc
 par			x68k

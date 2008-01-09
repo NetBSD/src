@@ -1,4 +1,4 @@
-/*	$NetBSD: i82365var.h,v 1.27 2007/07/09 21:00:36 ad Exp $	*/
+/*	$NetBSD: i82365var.h,v 1.27.8.1 2008/01/09 01:52:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/device.h>
 #include <sys/callout.h>
-#include <sys/lock.h>
+#include <sys/mutex.h>
 
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciachip.h>
@@ -129,7 +129,7 @@ struct pcic_softc {
 
 	pcmcia_chipset_tag_t pct;
 
-	struct lock sc_pcic_lock;
+	kmutex_t sc_pcic_lock;
 
 	/* this needs to be large enough to hold PCIC_MEM_PAGES bits */
 	int	subregionmask;

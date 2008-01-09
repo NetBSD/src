@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dinode.h,v 1.14 2005/12/11 12:25:25 christos Exp $	*/
+/*	$NetBSD: ext2fs_dinode.h,v 1.14.46.1 2008/01/09 01:58:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -80,8 +80,9 @@
  * the root inode is 2.
  * Inode 3 to 10 are reserved in ext2fs.
  */
-#define	EXT2_ROOTINO ((ino_t)2)
-#define EXT2_FIRSTINO ((ino_t)11)
+#define	EXT2_ROOTINO	((ino_t)2)
+#define	EXT2_RESIZEINO	((ino_t)7)
+#define	EXT2_FIRSTINO	((ino_t)11)
 
 /*
  * A dinode contains all the meta-data associated with a UFS file.
@@ -146,8 +147,8 @@ struct ext2fs_dinode {
 #define EXT2_UNRM		0x00000002	/* Undelete */
 #define EXT2_COMPR		0x00000004	/* Compress file */
 #define EXT2_SYNC		0x00000008	/* Synchronous updates */
-#define EXT2_IMMUTABLE	0x00000010	/* Immutable file */
-#define EXT2_APPEND		0x00000020	/* writes to file may only append */
+#define EXT2_IMMUTABLE		0x00000010	/* Immutable file */
+#define EXT2_APPEND		0x00000020 /* writes to file may only append */
 #define EXT2_NODUMP		0x00000040	/* do not dump file */
 
 /* Size of on-disk inode. */
@@ -162,12 +163,14 @@ struct ext2fs_dinode {
  */
 
 #define e2di_rdev		e2di_blocks[0]
-#define e2di_shortlink	e2di_blocks
+#define e2di_shortlink		e2di_blocks
 
 /* e2fs needs byte swapping on big-endian systems */
 #if BYTE_ORDER == LITTLE_ENDIAN
-#	define e2fs_iload(old, new) memcpy((new),(old),sizeof(struct ext2fs_dinode))
-#	define e2fs_isave(old, new) memcpy((new),(old),sizeof(struct ext2fs_dinode))
+#	define e2fs_iload(old, new)	\
+		memcpy((new),(old),sizeof(struct ext2fs_dinode))
+#	define e2fs_isave(old, new)	\
+		memcpy((new),(old),sizeof(struct ext2fs_dinode))
 #else
 void e2fs_i_bswap(struct ext2fs_dinode *, struct ext2fs_dinode *);
 #	define e2fs_iload(old, new) e2fs_i_bswap((old), (new))

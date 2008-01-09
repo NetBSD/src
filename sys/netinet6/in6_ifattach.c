@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.73.2.1 2007/11/06 23:33:59 matt Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.73.2.2 2008/01/09 01:57:34 matt Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.73.2.1 2007/11/06 23:33:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.73.2.2 2008/01/09 01:57:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,7 +331,7 @@ in6_get_hw_ifid(struct ifnet *ifp, struct in6_addr *in6)
 	static u_int8_t allone[8] =
 		{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
-	TAILQ_FOREACH(ifa, &ifp->if_addrlist, ifa_list) {
+	IFADDR_FOREACH(ifa, ifp) {
 		if (ifa->ifa_addr->sa_family != AF_LINK)
 			continue;
 		sdl = satocsdl(ifa->ifa_addr);
@@ -563,9 +563,7 @@ in6_ifattach_linklocal(struct ifnet *ifp, struct ifnet *altifp)
 	if (in6_setscope(&ifra.ifra_addr.sin6_addr, ifp, NULL))
 		return -1;
 
-	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_prefixmask.sin6_family = AF_INET6;
-	ifra.ifra_prefixmask.sin6_addr = in6mask64;
+	sockaddr_in6_init(&ifra.ifra_prefixmask, &in6mask64, 0, 0, 0);
 	/* link-local addresses should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
 	ifra.ifra_lifetime.ia6t_pltime = ND6_INFINITE_LIFETIME;
@@ -658,21 +656,15 @@ in6_ifattach_loopback(struct ifnet *ifp)
 	 */
 	strncpy(ifra.ifra_name, if_name(ifp), sizeof(ifra.ifra_name));
 
-	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_prefixmask.sin6_family = AF_INET6;
-	ifra.ifra_prefixmask.sin6_addr = in6mask128;
+	sockaddr_in6_init(&ifra.ifra_prefixmask, &in6mask128, 0, 0, 0);
 
 	/*
 	 * Always initialize ia_dstaddr (= broadcast address) to loopback
 	 * address.  Follows IPv4 practice - see in_ifinit().
 	 */
-	ifra.ifra_dstaddr.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_dstaddr.sin6_family = AF_INET6;
-	ifra.ifra_dstaddr.sin6_addr = in6addr_loopback;
+	sockaddr_in6_init(&ifra.ifra_dstaddr, &in6addr_loopback, 0, 0, 0);
 
-	ifra.ifra_addr.sin6_len = sizeof(struct sockaddr_in6);
-	ifra.ifra_addr.sin6_family = AF_INET6;
-	ifra.ifra_addr.sin6_addr = in6addr_loopback;
+	sockaddr_in6_init(&ifra.ifra_addr, &in6addr_loopback, 0, 0, 0);
 
 	/* the loopback  address should NEVER expire. */
 	ifra.ifra_lifetime.ia6t_vltime = ND6_INFINITE_LIFETIME;
@@ -862,17 +854,15 @@ in6_ifdetach(struct ifnet *ifp)
 	/* remove neighbor management table */
 	nd6_purge(ifp);
 
+	/* XXX this code is duplicated in in6_purgeif() --dyoung */
 	/* nuke any of IPv6 addresses we have */
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
-		next = TAILQ_NEXT(ifa, ifa_list);
-		if (ifa->ifa_addr->sa_family != AF_INET6)
-			continue;
-		in6_purgeaddr(ifa);
-	}
+	if_purgeaddrs(ifp, AF_INET6, in6_purgeaddr);
 
+	/* XXX isn't this code is redundant, given the above? --dyoung */
+	/* XXX doesn't this code replicate code in in6_purgeaddr() ? --dyoung */
 	/* undo everything done by in6_ifattach(), just in case */
-	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa; ifa = next) {
-		next = TAILQ_NEXT(ifa, ifa_list);
+	for (ifa = IFADDR_FIRST(ifp); ifa != NULL; ifa = next) {
+		next = IFADDR_NEXT(ifa);
 
 		if (ifa->ifa_addr->sa_family != AF_INET6
 		 || !IN6_IS_ADDR_LINKLOCAL(&satosin6(&ifa->ifa_addr)->sin6_addr)) {
@@ -901,8 +891,7 @@ in6_ifdetach(struct ifnet *ifp)
 		}
 
 		/* remove from the linked list */
-		TAILQ_REMOVE(&ifp->if_addrlist, &ia->ia_ifa, ifa_list);
-		IFAFREE(&ia->ia_ifa);
+		ifa_remove(ifp, &ia->ia_ifa);
 
 		/* also remove from the IPv6 address chain(itojun&jinmei) */
 		oia = ia;

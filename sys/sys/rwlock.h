@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.20.1 2008/01/09 01:58:16 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -99,13 +99,13 @@
  *		condition becomes false, abort the operation.  Must
  *		be MP/interrupt atomic.
  *
- *	RW_SETID(rw, id)
- *		Set the debugging ID for the lock, an integer.  Only
- *		used in the LOCKDEBUG case.
+ *	RW_SETDEBUG(rw, dodebug)
+ *		Set the debugging boolean flag.  The flag is only used in
+ *		the LOCKDEBUG case.  Used by rw_init to initialize a lock.
  *
- *	RW_GETID(rw)
- *		Get the debugging ID for the lock, an integer.  Only
- *		used in the LOCKDEBUG case.
+ *	RW_DEBUG_P(rw)
+ *		Evaluate to true if the lock is initialized by RW_SETDEBUG
+ *		with dodebug==true.  Only used in the LOCKDEBUG case.
  *
  * Architectures may optionally provide stubs for the following functions to
  * implement the easy (unlocked, no waiters) cases.  If these stubs are
@@ -140,7 +140,7 @@ typedef struct krwlock krwlock_t;
 #define	RW_HAS_WAITERS		0x01UL	/* lock has waiters */
 #define	RW_WRITE_WANTED		0x02UL	/* >= 1 waiter is a writer */
 #define	RW_WRITE_LOCKED		0x04UL	/* lock is currently write locked */
-#define	RW_UNUSED		0x08UL	/* currently unused */
+#define	RW_DEBUG		0x08UL	/* LOCKDEBUG enabled */
 
 #define	RW_READ_COUNT_SHIFT	4
 #define	RW_READ_INCR		(1UL << RW_READ_COUNT_SHIFT)

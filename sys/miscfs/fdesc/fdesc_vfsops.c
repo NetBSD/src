@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.69.4.1 2007/11/06 23:33:14 matt Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.69.4.2 2008/01/09 01:57:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.69.4.1 2007/11/06 23:33:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.69.4.2 2008/01/09 01:57:00 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -69,9 +69,9 @@ VFS_PROTOS(fdesc);
  * Mount the per-process file descriptors (/dev/fd)
  */
 int
-fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
-    struct lwp *l)
+fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
+	struct lwp *l = curlwp;
 	int error = 0;
 	struct fdescmount *fmp;
 	struct vnode *rvp;
@@ -107,14 +107,13 @@ fdesc_mount(struct mount *mp, const char *path, void *data, size_t *data_len,
 }
 
 int
-fdesc_start(struct mount *mp, int flags, 
-    struct lwp *l)
+fdesc_start(struct mount *mp, int flags)
 {
 	return (0);
 }
 
 int
-fdesc_unmount(struct mount *mp, int mntflags, struct lwp *l)
+fdesc_unmount(struct mount *mp, int mntflags)
 {
 	int error;
 	int flags = 0;
@@ -129,11 +128,7 @@ fdesc_unmount(struct mount *mp, int mntflags, struct lwp *l)
 		return (error);
 
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
@@ -163,19 +158,11 @@ fdesc_root(mp, vpp)
 }
 
 int
-fdesc_quotactl(struct mount *mp, int cmd, uid_t uid,
-    void *arg, struct lwp *l)
-{
-
-	return (EOPNOTSUPP);
-}
-
-int
-fdesc_statvfs(mp, sbp, l)
+fdesc_statvfs(mp, sbp)
 	struct mount *mp;
 	struct statvfs *sbp;
-	struct lwp *l;
 {
+	struct lwp *l = curlwp;
 	struct filedesc *fdp;
 	struct proc *p;
 	int lim;
@@ -223,7 +210,7 @@ fdesc_statvfs(mp, sbp, l)
 /*ARGSUSED*/
 int
 fdesc_sync(struct mount *mp, int waitfor,
-    kauth_cred_t uc, struct lwp *l)
+    kauth_cred_t uc)
 {
 
 	return (0);
@@ -277,7 +264,7 @@ struct vfsops fdesc_vfsops = {
 	fdesc_start,
 	fdesc_unmount,
 	fdesc_root,
-	fdesc_quotactl,
+	(void *)eopnotsupp,		/* vfs_quotactl */
 	fdesc_statvfs,
 	fdesc_sync,
 	fdesc_vget,

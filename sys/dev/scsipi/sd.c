@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.265.4.1 2007/11/06 23:30:16 matt Exp $	*/
+/*	$NetBSD: sd.c,v 1.265.4.2 2008/01/09 01:54:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265.4.1 2007/11/06 23:30:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.265.4.2 2008/01/09 01:54:31 matt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -107,7 +107,7 @@ static int	sdgetdisklabel(struct sd_softc *);
 static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *, int);
-static void	sd_shutdown(void *);
+static bool	sd_suspend(device_t);
 static int	sd_interpret_sense(struct scsipi_xfer *);
 
 static int	sd_mode_sense(struct sd_softc *, u_int8_t, void *, size_t, int,
@@ -306,18 +306,8 @@ sdattach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("\n");
 
-	/*
-	 * Establish a shutdown hook so that we can ensure that
-	 * our data has actually made it onto the platter at
-	 * shutdown time.  Note that this relies on the fact
-	 * that the shutdown hook code puts us at the head of
-	 * the list (thus guaranteeing that our hook runs before
-	 * our ancestors').
-	 */
-	if ((sd->sc_sdhook =
-	    shutdownhook_establish(sd_shutdown, sd)) == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sd->sc_dev.dv_xname);
+	if (!pmf_device_register(self, sd_suspend, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 #if NRND > 0
 	/*
@@ -391,8 +381,7 @@ sddetach(struct device *self, int flags)
 	disk_detach(&sd->sc_dk);
 	disk_destroy(&sd->sc_dk);
 
-	/* Get rid of the shutdown hook. */
-	shutdownhook_disestablish(sd->sc_sdhook);
+	pmf_device_deregister(self);
 
 #if NRND > 0
 	/* Unhook the entropy source. */
@@ -1324,10 +1313,10 @@ sdgetdisklabel(struct sd_softc *sd)
 	return 0;
 }
 
-static void
-sd_shutdown(void *arg)
+static bool
+sd_suspend(device_t dv)
 {
-	struct sd_softc *sd = arg;
+	struct sd_softc *sd = device_private(dv);
 
 	/*
 	 * If the disk cache needs to be flushed, and the disk supports
@@ -1342,6 +1331,8 @@ sd_shutdown(void *arg)
 		} else
 			sd->flags &= ~(SDF_FLUSHING|SDF_DIRTY);
 	}
+
+	return true;
 }
 
 /*
@@ -1816,7 +1807,7 @@ sd_get_capacity(struct sd_softc *sd, struct disk_parms *dp, int flags)
 		struct {
 			struct scsipi_capacity_list_header header;
 			struct scsipi_capacity_descriptor desc;
-		} __attribute__((packed)) data;
+		} __packed data;
 
 		memset(&cmd, 0, sizeof(cmd));
 		memset(&data, 0, sizeof(data));

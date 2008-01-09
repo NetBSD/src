@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.3.4.2 2007/11/06 23:30:20 matt Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.3.4.3 2008/01/09 01:54:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.3.4.2 2007/11/06 23:30:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.3.4.3 2008/01/09 01:54:34 matt Exp $");
 
 #include <sys/types.h>
 
@@ -72,16 +72,17 @@ static const struct sme_description_table sme_state_description[] = {
  * Available drive state descriptions.
  */
 static const struct sme_description_table sme_drivestate_description[] = {
-	{ ENVSYS_DRIVE_EMPTY,		-1, 	"drive state is unknown" },
-	{ ENVSYS_DRIVE_READY,		-1, 	"drive is ready" },
-	{ ENVSYS_DRIVE_POWERUP,		-1, 	"drive is powering up" },
-	{ ENVSYS_DRIVE_ONLINE,		-1, 	"drive is online" },
-	{ ENVSYS_DRIVE_IDLE,		-1, 	"drive is idle" },
-	{ ENVSYS_DRIVE_ACTIVE,		-1, 	"drive is active" },
-	{ ENVSYS_DRIVE_REBUILD,		-1, 	"drive is rebuilding" },
-	{ ENVSYS_DRIVE_POWERDOWN,	-1, 	"drive is powering down" },
-	{ ENVSYS_DRIVE_FAIL,		-1, 	"drive failed" },
-	{ ENVSYS_DRIVE_PFAIL,		-1, 	"drive degraded" },
+	{ ENVSYS_DRIVE_EMPTY,		-1, 	"unknown" },
+	{ ENVSYS_DRIVE_READY,		-1, 	"ready" },
+	{ ENVSYS_DRIVE_POWERUP,		-1, 	"powering up" },
+	{ ENVSYS_DRIVE_ONLINE,		-1, 	"online" },
+	{ ENVSYS_DRIVE_IDLE,		-1, 	"idle" },
+	{ ENVSYS_DRIVE_ACTIVE,		-1, 	"active" },
+	{ ENVSYS_DRIVE_REBUILD,		-1, 	"rebuilding" },
+	{ ENVSYS_DRIVE_POWERDOWN,	-1, 	"powering down" },
+	{ ENVSYS_DRIVE_FAIL,		-1, 	"failed" },
+	{ ENVSYS_DRIVE_PFAIL,		-1, 	"degraded" },
+	{ ENVSYS_DRIVE_MIGRATING,	-1,	"migrating" },
 	{ -1,				-1, 	"unknown" }
 };
 
@@ -106,6 +107,7 @@ sme_get_description_table(int type)
 	const struct sme_description_table *sd = sme_state_description;
 	const struct sme_description_table *dd = sme_drivestate_description;
 	const struct sme_description_table *bd = sme_batterycap_description;
+
 	switch (type) {
 	case SME_DESC_UNITS:
 		return ud;

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/libkern/qsort.c,v 1.12 2002/11/09 12:55:06 alfred Exp $
- * $NetBSD: qsort.c,v 1.3 2005/12/24 20:45:09 perry Exp $
+ * $NetBSD: qsort.c,v 1.3.46.1 2008/01/09 01:56:43 matt Exp $
  */
 
 #include <sys/cdefs.h>
@@ -50,22 +50,20 @@ void qsort(void *a, size_t n, size_t es, cmp_t *cmp);
  */
 #define swapcode(TYPE, parmi, parmj, n) { 		\
 	long i = (n) / sizeof (TYPE); 			\
-	register TYPE *pi = (TYPE *) (parmi); 		\
-	register TYPE *pj = (TYPE *) (parmj); 		\
+	register TYPE *pi = (TYPE *)(parmi); 		\
+	register TYPE *pj = (TYPE *)(parmj); 		\
 	do { 						\
 		register TYPE	t = *pi;		\
 		*pi++ = *pj;				\
 		*pj++ = t;				\
-        } while (--i > 0);				\
+	} while (--i > 0);				\
 }
 
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
 	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
 static inline void
-swapfunc(a, b, n, swaptype)
-	char *a, *b;
-	int n, swaptype;
+swapfunc(char *a, char *b, int n, int swaptype)
 {
 	if(swaptype <= 1)
 		swapcode(long, a, b, n)
@@ -84,13 +82,11 @@ swapfunc(a, b, n, swaptype)
 #define vecswap(a, b, n) 	if ((n) > 0) swapfunc(a, b, n, swaptype)
 
 static inline char *
-med3(a, b, c, cmp)
-	char *a, *b, *c;
-	cmp_t *cmp;
+med3(char *a, char *b, char *c, cmp_t *cmp)
 {
 	return cmp(a, b) < 0 ?
 	       (cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a ))
-              :(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
+	      :(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
 }
 
 void
@@ -99,7 +95,8 @@ qsort(void *a, size_t n, size_t es, cmp_t *cmp)
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
 	int d, r, swaptype, swap_cnt;
 
-loop:	SWAPINIT(a, es);
+loop:
+	SWAPINIT(a, es);
 	swap_cnt = 0;
 	if (n < 7) {
 		for (pm = (char *)a + es; pm < (char *)a + n * es; pm += es)

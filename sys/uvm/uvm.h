@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.52 2007/07/21 19:21:53 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.52.6.1 2008/01/09 01:58:37 matt Exp $	*/
 
 /*
  *
@@ -84,7 +84,6 @@ struct uvm {
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
 	int page_free_nextcolor;	/* next color to allocate from */
-	struct simplelock pageqlock;	/* lock for active/inactive page q */
 	bool page_init_done;		/* TRUE if uvm_page_init() finished */
 	bool page_idle_zero;		/* TRUE if we should try to zero
 					   pages in the idle loop */
@@ -120,8 +119,8 @@ extern struct uvm_object *uvm_kernel_object;
  * locks (made globals for lockstat).
  */
 
+extern kmutex_t uvm_pageqlock;		/* lock for active/inactive page q */
 extern kmutex_t uvm_fpageqlock;		/* lock for free page q */
-extern kmutex_t uvm_pagedaemon_lock;
 extern kmutex_t uvm_kentry_lock;
 extern kmutex_t uvm_swap_data_lock;
 extern kmutex_t uvm_scheduler_mutex;
@@ -171,7 +170,7 @@ extern struct evcnt uvm_ra_miss;
 
 #define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
 do {									\
-	(void) ltsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
+	(void) mtsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
 	    msg, timo, slock);						\
 } while (/*CONSTCOND*/ 0)
 

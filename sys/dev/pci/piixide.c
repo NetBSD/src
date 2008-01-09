@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.37.16.1 2007/11/06 23:29:29 matt Exp $	*/
+/*	$NetBSD: piixide.c,v 1.37.16.2 2008/01/09 01:54:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.16.1 2007/11/06 23:29:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.37.16.2 2008/01/09 01:54:00 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,8 @@ static u_int32_t piix_setup_sidetim_timings(u_int8_t, u_int8_t, u_int8_t);
 static void piixsata_chip_map(struct pciide_softc*, struct pci_attach_args *);
 static int piix_dma_init(void *, int, int, void *, size_t, int);
 
-static void piixide_powerhook(int, void *);
+static bool piixide_resume(device_t);
+static bool piixide_suspend(device_t);
 static int  piixide_match(struct device *, struct cfdata *, void *);
 static void piixide_attach(struct device *, struct device *, void *);
 
@@ -277,42 +278,34 @@ piixide_attach(struct device *parent, struct device *self, void *aux)
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
 
-	/* Setup our powerhook */
-	sc->sc_powerhook = powerhook_establish(
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, piixide_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish PCI power hook\n",
-		    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	if (!pmf_device_register(self, piixide_suspend, piixide_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static void
-piixide_powerhook(int why, void *hdl)
+static bool
+piixide_resume(device_t dv)
 {
-	struct pciide_softc *sc = (struct pciide_softc *)hdl;
+	struct pciide_softc *sc = device_private(dv);
 
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
-		sc->sc_idetim = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    PIIX_IDETIM);
-		sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    PIIX_UDMATIM);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
-		    sc->sc_idetim);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
-		    sc->sc_udmatim);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
+	    sc->sc_pm_reg[0]);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
+	    sc->sc_pm_reg[1]);
 
-	return;
+	return true;
+}
+
+static bool
+piixide_suspend(device_t dv)
+{
+	struct pciide_softc *sc = device_private(dv);
+
+	sc->sc_pm_reg[0] = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PIIX_IDETIM);
+	sc->sc_pm_reg[1] = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PIIX_UDMATIM);
+
+	return true;
 }
 
 static void

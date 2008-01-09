@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.46 2007/08/23 10:04:07 tnn Exp $
+#	$NetBSD: files.acpi,v 1.46.2.1 2008/01/09 01:52:21 matt Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -8,8 +8,9 @@ defparam opt_acpi.h	ACPI_DSDT_FILE := "\"/dev/null\""
 
 define	acpiapmbus { }
 define	acpinodebus { }
+define	acpiecdtbus { }
 
-device	acpi: acpiapmbus, acpinodebus, sysmon_power, sysmon_taskq
+device	acpi: acpiapmbus, acpinodebus, acpiecdtbus, sysmon_power, sysmon_taskq
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi		needs-flag
 file	dev/acpi/acpi_resource.c	acpi
@@ -26,7 +27,9 @@ file	dev/acpi/acpi_apm.c		acpiapm
 # ACPI Embedded Controller
 device	acpiec
 attach	acpiec at acpinodebus
-file	dev/acpi/acpi_ec.c		acpiec		needs-flag
+device	acpiecdt
+attach	acpiecdt at acpiecdtbus
+file	dev/acpi/acpi_ec.c		acpiec|acpiecdt
 
 # ACPI Lid Switch
 device	acpilid: sysmon_power
@@ -47,6 +50,11 @@ file	dev/acpi/acpi_acad.c		acpiacad
 device	acpibat: sysmon_envsys
 attach	acpibat at acpinodebus
 file	dev/acpi/acpi_bat.c		acpibat
+
+# ACPI Display Device
+device	acpidisplay
+attach	acpidisplay at acpinodebus
+file	dev/acpi/acpi_display.c		acpidisplay
 
 # ACPI Thermal Zone
 device	acpitz: sysmon_envsys
@@ -108,3 +116,13 @@ file	dev/acpi/aiboost.c		aiboost
 # Abit uGuru 2005
 attach	ug at acpinodebus with ug_acpi
 file	dev/acpi/ug_acpi.c		ug_acpi
+
+# Sony Notebook Controller (brightness, hotkeys, etc.)
+device	sony: displaydev
+attach	sony at acpinodebus with sony_acpi
+file	dev/acpi/sony_acpi.c		sony_acpi
+
+# IBM/Lenovo Thinkpad hotkey device
+device	thinkpad
+attach	thinkpad at acpinodebus
+file	dev/acpi/thinkpad_acpi.c	thinkpad

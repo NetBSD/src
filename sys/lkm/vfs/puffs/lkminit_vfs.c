@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vfs.c,v 1.1 2006/11/06 11:44:55 pooka Exp $ */
+/*	$NetBSD: lkminit_vfs.c,v 1.1.30.1 2008/01/09 01:56:59 matt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,14 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1 2006/11/06 11:44:55 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1.30.1 2008/01/09 01:56:59 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/lkm.h>
 
-static int puffs_dispatch_vfs __P((struct lkm_table *, int, int));
-static int puffs_dispatch_dev __P((struct lkm_table *, int, int));
-int puffs_lkmentry __P((struct lkm_table *, int, int));
+static int puffs_dispatch_vfs(struct lkm_table *, int, int);
+int puffs_lkmentry(struct lkm_table *, int, int);
 
 /*
  * The VFS part of module.
@@ -67,23 +66,6 @@ puffs_dispatch_vfs(struct lkm_table *lkmtp, int cmd, int ver)
 }
 
 /*
- * The device part.
- */
-static int
-puffs_dispatch_dev(struct lkm_table *lkmtp, int cmd, int ver)
-{
-	/*
-	 * declare up/down call device
-	 */
-	extern const struct cdevsw puffs_cdevsw;
-
-	MOD_DEV("puffs", "puffs", NULL, -1, &puffs_cdevsw, -1);
-	lkmtp->private.lkm_any = (void *) &_module;	/* XXX */
-
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
-}
-
-/*
  * entry point
  */
 int
@@ -94,9 +76,6 @@ puffs_lkmentry(struct lkm_table *lkmtp, int cmd, int ver)
 	switch (cmd) {
 	case LKM_E_UNLOAD:
 	case LKM_E_LOAD:
-		error = puffs_dispatch_dev(lkmtp, cmd, ver);
-		if (error)
-			break;
 		error = puffs_dispatch_vfs(lkmtp, cmd, ver);
 		break;
 	case LKM_E_STAT:

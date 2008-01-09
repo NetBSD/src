@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.c,v 1.6 2003/03/11 23:11:22 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.c,v 1.43.8.1 2007/11/06 23:29:36 matt Exp $	*/
+/*	$NetBSD: bktr_core.c,v 1.43.8.2 2008/01/09 01:54:04 matt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp$ */
 
 /*
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.43.8.1 2007/11/06 23:29:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.43.8.2 2008/01/09 01:54:04 matt Exp $");
 
 #include "opt_bktr.h"		/* Include any kernel config options */
 
@@ -111,7 +111,6 @@ __KERNEL_RCSID(0, "$NetBSD: bktr_core.c,v 1.43.8.1 2007/11/06 23:29:36 matt Exp 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>

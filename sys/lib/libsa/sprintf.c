@@ -1,4 +1,4 @@
-/*	$NetBSD: sprintf.c,v 1.3 2005/12/11 12:24:46 christos Exp $	*/
+/*	$NetBSD: sprintf.c,v 1.3.46.1 2008/01/09 01:56:44 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -59,5 +59,5 @@ sprintf(buf, fmt, va_alist)
 #endif
 	len = vsnprintf(buf, -(size_t)buf, fmt, ap);
 	va_end(ap);
-	return (len);
+	return len;
 }

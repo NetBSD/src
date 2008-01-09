@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.31.2.1 2007/11/06 23:33:35 matt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.31.2.2 2008/01/09 01:57:14 matt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.31.2.1 2007/11/06 23:33:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.31.2.2 2008/01/09 01:57:14 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.31.2.1 2007/11/06 23:33:35 matt Exp $")
 #include <sys/sockio.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
+#include <sys/mutex.h>
+#include <sys/simplelock.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -105,7 +107,7 @@ struct tap_softc {
 #define TAP_GOING	0x00000008	/* interface is being destroyed */
 	struct selinfo	sc_rsel;
 	pid_t		sc_pgid; /* For async. IO */
-	struct lock	sc_rdlock;
+	kmutex_t	sc_rdlock;
 	struct simplelock	sc_kqlock;
 };
 
@@ -344,7 +346,7 @@ tap_attach(struct device *parent, struct device *self,
 	 * to be protected, too, but we don't need the same level of
 	 * complexity for that lock, so a simple spinning lock is fine.
 	 */
-	lockinit(&sc->sc_rdlock, PSOCK|PCATCH, "tapl", 0, LK_SLEEPFAIL);
+	mutex_init(&sc->sc_rdlock, MUTEX_DEFAULT, IPL_NONE);
 	simple_lock_init(&sc->sc_kqlock);
 }
 
@@ -359,19 +361,11 @@ tap_detach(struct device* self, int flags)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int error, s;
 
-	/*
-	 * Some processes might be sleeping on "tap", so we have to make
-	 * them release their hold on the device.
-	 *
-	 * The LK_DRAIN operation will wait for every locked process to
-	 * release their hold.
-	 */
 	sc->sc_flags |= TAP_GOING;
 	s = splnet();
 	tap_stop(ifp, 1);
 	if_down(ifp);
 	splx(s);
-	lockmgr(&sc->sc_rdlock, LK_DRAIN, NULL);
 
 	/*
 	 * Destroying a single leaf is a very straightforward operation using
@@ -385,6 +379,7 @@ tap_detach(struct device* self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+	mutex_destroy(&sc->sc_rdlock);
 
 	return (0);
 }
@@ -516,13 +511,12 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static int
 tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 {
-	struct sockaddr *sa = (struct sockaddr *)&ifra->ifra_addr;
+	const struct sockaddr_dl *sdl = satosdl(&ifra->ifra_addr);
 
-	if (sa->sa_family != AF_LINK)
+	if (sdl->sdl_family != AF_LINK)
 		return (EINVAL);
 
-	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
-	    sa->sa_data, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN);
 
 	return (0);
 }
@@ -837,12 +831,12 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	/*
 	 * In the TAP_NBIO case, we have to make sure we won't be sleeping
 	 */
-	if ((sc->sc_flags & TAP_NBIO) &&
-	    lockstatus(&sc->sc_rdlock) == LK_EXCLUSIVE)
-		return (EWOULDBLOCK);
-	error = lockmgr(&sc->sc_rdlock, LK_EXCLUSIVE, NULL);
-	if (error != 0)
-		return (error);
+	if ((sc->sc_flags & TAP_NBIO) != 0) {
+		if (!mutex_tryenter(&sc->sc_rdlock))
+			return (EWOULDBLOCK);
+	} else {
+		mutex_enter(&sc->sc_rdlock);
+	}
 
 	s = splnet();
 	if (IFQ_IS_EMPTY(&ifp->if_snd)) {
@@ -852,23 +846,22 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		 * We must release the lock before sleeping, and re-acquire it
 		 * after.
 		 */
-		(void)lockmgr(&sc->sc_rdlock, LK_RELEASE, NULL);
+		mutex_exit(&sc->sc_rdlock);
 		if (sc->sc_flags & TAP_NBIO)
 			error = EWOULDBLOCK;
 		else
 			error = tsleep(sc, PSOCK|PCATCH, "tap", 0);
-
 		if (error != 0)
 			return (error);
 		/* The device might have been downed */
 		if ((ifp->if_flags & IFF_UP) == 0)
 			return (EHOSTDOWN);
-		if ((sc->sc_flags & TAP_NBIO) &&
-		    lockstatus(&sc->sc_rdlock) == LK_EXCLUSIVE)
-			return (EWOULDBLOCK);
-		error = lockmgr(&sc->sc_rdlock, LK_EXCLUSIVE, NULL);
-		if (error != 0)
-			return (error);
+		if ((sc->sc_flags & TAP_NBIO)) {
+			if (!mutex_tryenter(&sc->sc_rdlock))
+				return (EWOULDBLOCK);
+		} else {
+			mutex_enter(&sc->sc_rdlock);
+		}
 		s = splnet();
 	}
 
@@ -900,7 +893,7 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		m_freem(m);
 
 out:
-	(void)lockmgr(&sc->sc_rdlock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_rdlock);
 	return (error);
 }
 
@@ -1128,7 +1121,7 @@ tap_dev_kqfilter(int unit, struct knote *kn)
 		kn->kn_fop = &tap_seltrue_filterops;
 		break;
 	default:
-		return (1);
+		return (EINVAL);
 	}
 
 	kn->kn_hook = sc;
@@ -1292,9 +1285,8 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Commit change */
-	if (ether_nonstatic_aton(enaddr, addr) != 0 ||
-	    sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, enaddr,
-	                        ETHER_ADDR_LEN) == NULL)
+	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return (EINVAL);
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
 	return (error);
 }

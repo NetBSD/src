@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_dir.h,v 1.13 2006/02/16 20:17:20 perry Exp $	*/
+/*	$NetBSD: ext2fs_dir.h,v 1.13.40.1 2008/01/09 01:58:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -77,7 +77,7 @@
  * practice this seems unlikely. So, we define the type doff_t as a 32-bit
  * quantity to keep down the cost of doing lookup on a 32-bit machine.
  */
-#define	doff_t		int32_t
+#define	doff_t			int32_t
 #define	EXT2FS_MAXDIRSIZE	(0x7fffffff)
 
 /*
@@ -114,7 +114,7 @@ struct	ext2fs_direct {
 	u_int16_t e2d_reclen;		/* length of this record */
 	u_int8_t e2d_namlen;		/* length of string in d_name */
 	u_int8_t e2d_type;		/* file type */
-	char	  e2d_name[EXT2FS_MAXNAMLEN];/* name with length <= EXT2FS_MAXNAMLEN */
+	char e2d_name[EXT2FS_MAXNAMLEN];/* name with length<=EXT2FS_MAXNAMLEN */
 };
 
 /* Ext2 directory file types (not the same as FFS. Sigh. */
@@ -131,11 +131,9 @@ struct	ext2fs_direct {
 
 #define E2IFTODT(mode)    (((mode) & 0170000) >> 12)
 
-static __inline u_int8_t inot2ext2dt(u_int16_t)
-    __attribute__((__unused__));
+static __inline u_int8_t inot2ext2dt(u_int16_t) __unused;
 static __inline u_int8_t
-inot2ext2dt(type)
-	u_int16_t type;
+inot2ext2dt(u_int16_t type)
 {
 	switch(type) {
 	case E2IFTODT(EXT2_IFIFO):
@@ -164,8 +162,7 @@ inot2ext2dt(type)
  * without the d_name field, plus enough space for the name without a
  * terminating null byte, rounded up to a 4 byte boundary.
  */
-#define EXT2FS_DIRSIZ(len) \
-   (( 8 + len + 3) &~ 3)
+#define EXT2FS_DIRSIZ(len)	(( 8 + len + 3) & ~3)
 
 /*
  * Template for manipulating directories.  Should use struct direct's,

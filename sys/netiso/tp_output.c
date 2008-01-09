@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_output.c,v 1.33 2007/04/29 20:23:36 msaitoh Exp $	*/
+/*	$NetBSD: tp_output.c,v 1.33.8.1 2008/01/09 01:57:48 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -62,7 +62,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.33 2007/04/29 20:23:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_output.c,v 1.33.8.1 2008/01/09 01:57:48 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -534,7 +534,7 @@ tp_ctloutput(int cmd, struct socket  *so, int level, int optname,
 			tpcb->tp_lsuffixlen = 0;
 			tpcb->tp_state = TP_LISTENING;
 			error = 0;
-			remque(tpcb);
+			iso_remque(tpcb);
 			tpcb->tp_next = tpcb->tp_prev = tpcb;
 			tpcb->tp_nextlisten = tp_listeners;
 			tp_listeners = tpcb;

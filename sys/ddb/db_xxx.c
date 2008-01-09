@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.46.6.1 2007/11/06 23:25:24 matt Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.46.6.2 2008/01/09 01:52:08 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.46.6.1 2007/11/06 23:25:24 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.46.6.2 2008/01/09 01:52:08 matt Exp $");
 
 #include "opt_kgdb.h"
 
@@ -133,12 +133,9 @@ void
 db_show_all_procs(db_expr_t addr, bool haddr,
     db_expr_t count, const char *modif)
 {
-	int i;
-
 	const char *mode;
 	struct proc *p, *pp, *cp;
 	struct lwp *l, *cl;
-	struct timeval tv[2];
 	const struct proclist_desc *pd;
 	char nbuf[MAXCOMLEN + 1];
 
@@ -170,9 +167,9 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 		    "PPID", "PGRP", "UID", "FLAGS", "LWPS", "COMMAND", "WAIT");
 		break;
 	case 'w':
-		db_printf(" PID       %10s %8s %4s %5s %5s %-12s%s\n",
-		    "COMMAND", "EMUL", "PRI", "UTIME", "STIME",
-		    "WAIT-MSG", "WAIT-CHANNEL");
+		db_printf(" PID       %4s %16s %8s %4s %-12s%s\n",
+		    "LID", "COMMAND", "EMUL", "PRI", "WAIT-MSG",
+		    "WAIT-CHANNEL");
 		break;
 	}
 
@@ -227,27 +224,20 @@ db_show_all_procs(db_expr_t addr, bool haddr,
 				break;
 
 			case 'w':
-				db_printf("%10s %8s %4d", p->p_comm,
-				    p->p_emul->e_name,
-				    (l != NULL) ? l->l_priority : -1);
-				calcru(p, &tv[0], &tv[1], NULL, NULL);
-				for (i = 0; i < 2; ++i) {
-					db_printf("%4ld.%1ld",
-					    (long)tv[i].tv_sec,
-					    (long)tv[i].tv_usec/100000);
+				 while (l != NULL) {
+					db_printf(
+					    "%4d %16s %8s %4d %-12s %-18lx\n",
+					    l->l_lid, p->p_comm,
+					    p->p_emul->e_name, l->l_priority,
+					    (l->l_wchan && l->l_wmesg) ?
+					    l->l_wmesg : "", (long)l->l_wchan);
+					l = LIST_NEXT(l, l_sibling);
+					if (l != NULL) {
+						db_printf("%c%-10d", (cp == p ?
+						    '>' : ' '), p->p_pid);
+					}
 				}
-				if (p->p_nlwps == 1) {
-				if (l->l_wchan && l->l_wmesg) {
-					db_printf(" %-12s", l->l_wmesg);
-					db_printsym(
-					    (db_expr_t)(intptr_t)l->l_wchan,
-					    DB_STGY_XTRN, db_printf);
-				} } else {
-					db_printf(" * ");
-				}
-				db_printf("\n");
 				break;
-
 			}
 		}
 	}

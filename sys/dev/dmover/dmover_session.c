@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_session.c,v 1.4 2007/03/12 19:56:19 ad Exp $	*/
+/*	$NetBSD: dmover_session.c,v 1.4.12.1 2008/01/09 01:52:33 matt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,10 +40,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_session.c,v 1.4 2007/03/12 19:56:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_session.c,v 1.4.12.1 2008/01/09 01:52:33 matt Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/pool.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>

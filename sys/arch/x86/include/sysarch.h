@@ -1,4 +1,4 @@
-/*	$NetBSD: sysarch.h,v 1.3.12.1 2007/11/06 23:23:39 matt Exp $	*/
+/*	$NetBSD: sysarch.h,v 1.3.12.2 2008/01/09 01:49:49 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,10 @@
 #define X86_GET_MTRR		11
 #define X86_SET_MTRR		12
 #define	X86_VM86		13
+#define	X86_GET_GSBASE		14
+#define	X86_GET_FSBASE		15
+#define	X86_SET_GSBASE		16
+#define	X86_SET_FSBASE		17
 
 #ifdef _KERNEL
 #define	_X86_SYSARCH_L(x)	x86_##x
@@ -70,6 +74,10 @@
 #define I386_GET_MTRR		X86_GET_MTRR
 #define I386_SET_MTRR		X86_SET_MTRR
 #define	I386_VM86		X86_VM86
+#define	I386_GET_GSBASE		X86_GET_GSBASE
+#define	I386_GET_FSBASE		X86_GET_FSBASE
+#define	I386_SET_GSBASE		X86_SET_GSBASE
+#define	I386_SET_FSBASE		X86_SET_FSBASE
 #else
 #define	_X86_SYSARCH_L(x)	x86_64_##x
 #define	_X86_SYSARCH_U(x)	X86_64_##x
@@ -85,6 +93,10 @@
 #define X86_64_GET_MTRR		X86_GET_MTRR
 #define X86_64_SET_MTRR		X86_SET_MTRR
 #define	X86_64_VM86		X86_VM86
+#define X86_64_GET_GSBASE	X86_GET_GSBASE
+#define	X86_64_GET_FSBASE	X86_GET_FSBASE
+#define X86_64_SET_GSBASE	X86_SET_GSBASE
+#define	X86_64_SET_FSBASE	X86_SET_FSBASE
 #endif
 
 /*

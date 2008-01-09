@@ -1,4 +1,4 @@
-/*	$NetBSD: adt7467var.h,v 1.2.48.1 2007/11/06 23:26:09 matt Exp $	*/
+/*	$NetBSD: adt7467var.h,v 1.2.48.2 2008/01/09 01:52:40 matt Exp $	*/
 
 /*-
  * Copyright (C) 2005 Michael Lorenz
@@ -35,20 +35,22 @@
 #define ADT7456VAR_H
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.2.48.1 2007/11/06 23:26:09 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adt7467var.h,v 1.2.48.2 2008/01/09 01:52:40 matt Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
 #include "sysmon_envsys.h"
 
+#define ADT7467_MAXSENSORS	5
+
 struct adt7467c_softc {
 	struct device sc_dev;
 	struct device *parent;
 	int sc_node, address;
-	struct sysmon_envsys *sc_sysmon_cookie;
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor[ADT7467_MAXSENSORS];
 	struct i2c_controller *sc_i2c;
-	int num_sensors;
 	uint8_t regs[32];
 };
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.105.2.1 2007/11/06 23:30:52 matt Exp $ */
+/* $NetBSD: wskbd.c,v 1.105.2.2 2008/01/09 01:54:50 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.105.2.1 2007/11/06 23:30:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.105.2.2 2008/01/09 01:54:50 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -318,6 +318,7 @@ struct wssrcops wskbd_srcops = {
 };
 #endif
 
+static bool wskbd_suspend(device_t dv);
 static void wskbd_repeat(void *v);
 
 static int wskbd_console_initted;
@@ -397,10 +398,10 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 		mux = -1;
 	}
 	if (mux >= 0)
-		printf(" mux %d", mux);
+		aprint_normal(" mux %d", mux);
 #else
 	if (device_cfdata(&sc->sc_base.me_dv)->wskbddevcf_mux >= 0)
-		printf(" (mux ignored)");
+		aprint_normal(" (mux ignored)");
 #endif
 
 	if (ap->console) {
@@ -443,15 +444,18 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 
 		wskbd_console_device = sc;
 
-		printf(": console keyboard");
+		aprint_naive(": console keyboard");
+		aprint_normal(": console keyboard");
 
 #if NWSDISPLAY > 0
 		wsdisplay_set_console_kbd(&sc->sc_base); /* sets me_dispv */
 		if (sc->sc_base.me_dispdv != NULL)
-			printf(", using %s", sc->sc_base.me_dispdv->dv_xname);
+			aprint_normal(", using %s",
+			    sc->sc_base.me_dispdv->dv_xname);
 #endif
 	}
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #if NWSMUX > 0
 	if (mux >= 0) {
@@ -461,6 +465,22 @@ wskbd_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_base.me_dv.dv_xname, error);
 	}
 #endif
+
+	if (!pmf_device_register(self, wskbd_suspend, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else if (!pmf_class_input_register(self))
+		aprint_error_dev(self, "couldn't register as input device\n");
+}
+
+static bool
+wskbd_suspend(device_t dv)
+{
+	struct wskbd_softc *sc = device_private(dv);
+
+	sc->sc_repeating = 0;
+	callout_stop(&sc->sc_repeat_ch);
+
+	return true;
 }
 
 void
@@ -574,6 +594,8 @@ wskbd_detach(struct device  *self, int flags)
 		wskbd_console_device = NULL;
 	}
 
+	pmf_device_deregister(self);
+
 	evar = sc->sc_base.me_evp;
 	if (evar != NULL && evar->io != NULL) {
 		s = spltty();
@@ -616,6 +638,8 @@ wskbd_input(struct device *dev, u_int type, int value)
 		sc->sc_repeating = 0;
 		callout_stop(&sc->sc_repeat_ch);
 	}
+
+	device_active(dev, DVA_HARDWARE);
 
 #if NWSDISPLAY > 0
 	/*
@@ -686,7 +710,7 @@ wskbd_deliver_event(struct wskbd_softc *sc, u_int type, int value)
 		return;
 	}
 #endif
-	
+
 	event.type = type;
 	event.value = value;
 	if (wsevent_inject(evar, &event, 1) != 0)
@@ -1450,6 +1474,18 @@ internal_command(struct wskbd_softc *sc, u_int *type, keysym_t ksym,
 	u_int state = 0;
 #endif
 	switch (ksym) {
+	case KS_Cmd_VolumeToggle:
+		if (*type == WSCONS_EVENT_KEY_DOWN)
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_TOGGLE);
+		break;
+	case KS_Cmd_VolumeUp:
+		if (*type == WSCONS_EVENT_KEY_DOWN)
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
+		break;
+	case KS_Cmd_VolumeDown:
+		if (*type == WSCONS_EVENT_KEY_DOWN)
+			pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
+		break;
 #ifdef WSDISPLAY_SCROLLSUPPORT
 	case KS_Cmd_ScrollFastUp:
 	case KS_Cmd_ScrollFastDown:

@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.23 2005/12/11 12:25:21 christos Exp $	*/
+/*	$NetBSD: reboot.h,v 1.23.46.1 2008/01/09 01:58:16 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -40,29 +40,39 @@
  */
 #define	RB_AUTOBOOT	0	/* flags for system auto-booting itself */
 
-#define	RB_ASKNAME	0x001	/* ask for file name to reboot from */
-#define	RB_SINGLE	0x002	/* reboot to single user only */
-#define	RB_NOSYNC	0x004	/* dont sync before reboot */
-#define	RB_HALT		0x008	/* don't reboot, just halt */
-#define	RB_INITNAME	0x010	/* name given for /etc/init (unused) */
-#define	__RB_UNUSED1	0x020	/* was RB_DFLTROOT, obsolete */
-#define	RB_KDB		0x040	/* give control to kernel debugger */
-#define	RB_RDONLY	0x080	/* mount root fs read-only */
-#define	RB_DUMP		0x100	/* dump kernel memory before reboot */
-#define	RB_MINIROOT	0x200	/* mini-root present in memory at boot time */
-#define	RB_STRING	0x400	/* use provided bootstr */
+#define	RB_ASKNAME	0x00000001	/* ask for file name to reboot from */
+#define	RB_SINGLE	0x00000002	/* reboot to single user only */
+#define	RB_NOSYNC	0x00000004	/* dont sync before reboot */
+#define	RB_HALT		0x00000008	/* don't reboot, just halt */
+#define	RB_INITNAME	0x00000010	/* name given for /etc/init (unused) */
+#define	__RB_UNUSED1	0x00000020	/* was RB_DFLTROOT, obsolete */
+#define	RB_KDB		0x00000040	/* give control to kernel debugger */
+#define	RB_RDONLY	0x00000080	/* mount root fs read-only */
+#define	RB_DUMP		0x00000100	/* dump kernel memory before reboot */
+#define	RB_MINIROOT	0x00000200	/* mini-root present in memory */
+#define	RB_STRING	0x00000400	/* use provided bootstr */
 #define	RB_POWERDOWN	(RB_HALT|0x800) /* turn power off (or at least halt) */
-#define RB_USERCONF	0x1000	/* change configured devices */
+#define RB_USERCONF	0x00001000	/* change configured devices */
 
 /*
  * Extra autoboot flags (passed by boot prog to kernel). See also
  * macros bootverbose, bootquiet in <sys/systm.h>.
  */
-#define	AB_NORMAL	0x00000	/* boot normally (default) */
-#define	AB_QUIET	0x10000 /* boot quietly */
-#define	AB_VERBOSE	0x20000	/* boot verbosely */
-#define	AB_SILENT	0x40000	/* boot silently */
-#define	AB_DEBUG	0x80000	/* boot with debug messages */
+#define	AB_NORMAL	0x00000000	/* boot normally (default) */
+#define	AB_QUIET	0x00010000 	/* boot quietly */
+#define	AB_VERBOSE	0x00020000	/* boot verbosely */
+#define	AB_SILENT	0x00040000	/* boot silently */
+#define	AB_DEBUG	0x00080000	/* boot with debug messages */
+
+/*
+ * The top 4 bits are architecture specific and are used to
+ * pass information between the bootblocks and the machine
+ * initialization code.
+ */
+#define	RB_MD1		0x10000000
+#define	RB_MD2		0x20000000
+#define	RB_MD3		0x40000000
+#define	RB_MD4		0x80000000
 
 /*
  * Constants for converting boot-style device number to type,
@@ -105,7 +115,7 @@
 __BEGIN_DECLS
 
 void	cpu_reboot(int, char *)
-    __attribute__((__noreturn__));
+    __dead;
 
 __END_DECLS
 

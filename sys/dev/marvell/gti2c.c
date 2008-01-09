@@ -1,4 +1,4 @@
-/*	$NetBSD: gti2c.c,v 1.5.30.1 2007/11/06 23:28:15 matt Exp $	*/
+/*	$NetBSD: gti2c.c,v 1.5.30.2 2008/01/09 01:53:16 matt Exp $	*/
 
 /*
  * Copyright (c) 2005 Brocade Communcations, inc.
@@ -32,13 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.5.30.1 2007/11/06 23:28:15 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gti2c.c,v 1.5.30.2 2008/01/09 01:53:16 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/conf.h>
 #include <sys/proc.h>
-
+#include <sys/mutex.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
 
@@ -54,7 +54,7 @@ struct gti2c_softc {
 	struct evcnt sc_ev_intr;
 	struct i2c_controller sc_i2c;
 	struct gt_softc *sc_gt;
-	struct lock sc_lock;
+	kmutex_t sc_lock;
 };
 
 static int gt_i2c_match(struct device *, struct cfdata *, void *);
@@ -106,15 +106,11 @@ gt_i2c_acquire_bus(void *cookie, int flags)
 {
 	struct gti2c_softc * const sc = cookie;
 	uint32_t status;
-	int error;
 
 	if (flags & I2C_F_POLL)
 		return 0;
 
-	error = lockmgr(&sc->sc_lock, LK_EXCLUSIVE, NULL);
-	if (error)
-		return error;
-
+	mutex_enter(&sc->sc_lock);
 	status = gt_read(sc->sc_gt, I2C_REG_Status);
 	if (status != I2C_Status_Idle) {
 		gt_write(sc->sc_gt, I2C_REG_SoftReset, 1);
@@ -128,7 +124,7 @@ gt_i2c_release_bus(void *cookie, int flags)
 {
 	struct gti2c_softc * const sc = cookie;
 
-	lockmgr(&sc->sc_lock, LK_RELEASE, NULL);
+	mutex_exit(&sc->sc_lock);
 }
 
 static int
@@ -255,7 +251,7 @@ gt_i2c_attach(struct device *parent, struct device *self, void *aux)
 
 	GT_I2CFOUND(gt, ga);
 
-	lockinit(&sc->sc_lock, PZERO, sc->sc_dev.dv_xname, 0, 0);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = gt_i2c_acquire_bus;
@@ -267,7 +263,7 @@ gt_i2c_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_i2c.ic_read_byte = gt_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = gt_i2c_write_byte;
 
-	intr_establish(IRQ_I2C, IST_LEVEL, IPL_I2C, gt_i2c_intr, sc);
+	intr_establish(IRQ_I2C, IST_LEVEL, IPL_VM, gt_i2c_intr, sc);
 
 	evcnt_attach_dynamic(&sc->sc_ev_intr, EVCNT_TYPE_INTR, NULL,
 		sc->sc_dev.dv_xname, "intr");

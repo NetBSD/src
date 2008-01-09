@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_util.c,v 1.2.10.1 2007/11/06 23:30:20 matt Exp $ */
+/* $NetBSD: sysmon_envsys_util.c,v 1.2.10.2 2008/01/09 01:54:34 matt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2.10.1 2007/11/06 23:30:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2.10.2 2008/01/09 01:54:34 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -39,8 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_util.c,v 1.2.10.1 2007/11/06 23:30:20 
 
 /*
  * Functions to create objects in a dictionary if they do not exist, or
- * for updating its value if value provided doesn't match with the value
- * in dictionary.
+ * for updating its value if it doesn't match with the value in dictionary.
  */
 
 int
@@ -58,7 +57,6 @@ sme_sensor_upbool(prop_dictionary_t dict, const char *key, bool val)
 				    __func__, key, val));
 				return EINVAL;
 			}
-			SENSOR_OBJUPDATED(key, val);
 		}
 	} else {
 		if (!prop_dictionary_set_bool(dict, key, val)) {
@@ -86,7 +84,6 @@ sme_sensor_upint32(prop_dictionary_t dict, const char *key, int32_t val)
 				    __func__, key, val));
 				return EINVAL;
 			}
-			SENSOR_OBJUPDATED(key, val);
 		}
 	} else {
 		if (!prop_dictionary_set_int32(dict, key, val)) {
@@ -114,7 +111,6 @@ sme_sensor_upuint32(prop_dictionary_t dict, const char *key, uint32_t val)
 				    __func__, key, val));
 				return EINVAL;
 			}
-			SENSOR_OBJUPDATED(key, val);
 		}
 	} else {
 		if (!prop_dictionary_set_uint32(dict, key, val)) {

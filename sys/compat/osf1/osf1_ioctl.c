@@ -1,4 +1,4 @@
-/*	$NetBSD: osf1_ioctl.c,v 1.19 2007/02/09 21:55:23 ad Exp $	*/
+/*	$NetBSD: osf1_ioctl.c,v 1.19.20.1 2008/01/09 01:51:42 matt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.19 2007/02/09 21:55:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.19.20.1 2008/01/09 01:51:42 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -79,20 +79,16 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_ioctl.c,v 1.19 2007/02/09 21:55:23 ad Exp $");
 extern int scdebug;
 #endif
 
-static int osf1_ioctl_f	__P((struct lwp *l, struct sys_ioctl_args *nuap,
-			    register_t *retval, int cmd, int dir, int len));
-static int osf1_ioctl_i	__P((struct lwp *l, struct sys_ioctl_args *nuap,
-			    register_t *retval, int cmd, int dir, int len));
-static int osf1_ioctl_t	__P((struct lwp *l, struct sys_ioctl_args *nuap,
-			    register_t *retval, int cmd, int dir, int len));
+static int osf1_ioctl_f(struct lwp *l, const struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len);
+static int osf1_ioctl_i(struct lwp *l, const struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len);
+static int osf1_ioctl_t(struct lwp *l, const struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len);
 
 int
-osf1_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_ioctl(struct lwp *l, const struct osf1_sys_ioctl_args *uap, register_t *retval)
 {
-	struct osf1_sys_ioctl_args *uap = v;
 	struct sys_ioctl_args a;
 	int op, dir, group, cmd, len;
 #ifdef SYSCALL_DEBUG
@@ -157,13 +153,7 @@ osf1_sys_ioctl(l, v, retval)
 }
 
 static int
-osf1_ioctl_f(l, uap, retval, cmd, dir, len)
-	struct lwp *l;
-	struct sys_ioctl_args *uap;
-	register_t *retval;
-	int cmd;
-	int dir;
-	int len;
+osf1_ioctl_f(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval, int cmd, int dir, int len)
 {
 
 	switch (cmd) {
@@ -185,13 +175,7 @@ osf1_ioctl_f(l, uap, retval, cmd, dir, len)
 }
 
 static int
-osf1_ioctl_i(l, uap, retval, cmd, dir, len)
-	struct lwp *l;
-	struct sys_ioctl_args *uap;
-	register_t *retval;
-	int cmd;
-	int dir;
-	int len;
+osf1_ioctl_i(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval, int cmd, int dir, int len)
 {
 
 	switch (cmd) {
@@ -219,13 +203,7 @@ osf1_ioctl_i(l, uap, retval, cmd, dir, len)
 }
 
 static int
-osf1_ioctl_t(l, uap, retval, cmd, dir, len)
-	struct lwp *l;
-	struct sys_ioctl_args *uap;
-	register_t *retval;
-	int cmd;
-	int dir;
-	int len;
+osf1_ioctl_t(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval, int cmd, int dir, int len)
 {
 
 	switch (cmd) {

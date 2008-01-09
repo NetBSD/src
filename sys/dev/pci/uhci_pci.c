@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.36.4.1 2007/11/06 23:29:33 matt Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.36.4.2 2008/01/09 01:54:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.4.1 2007/11/06 23:29:33 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.4.2 2008/01/09 01:54:03 matt Exp $");
 
 #include "ehci.h"
 
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.36.4.1 2007/11/06 23:29:33 matt Exp $
 #include <dev/usb/uhcireg.h>
 #include <dev/usb/uhcivar.h>
 
-static void	uhci_pci_powerhook(int, void *);
+static bool	uhci_pci_resume(device_t);
 
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
@@ -72,9 +72,6 @@ struct uhci_pci_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
 	void 			*sc_ih;		/* interrupt vectoring */
-
-	void			*sc_powerhook;
-	struct pci_conf_state	sc_pciconf;
 };
 
 static int
@@ -105,6 +102,7 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char *devname = sc->sc.sc_bus.bdev.dv_xname;
 	char devinfo[256];
 	usbd_status r;
+	int s;
 
 	aprint_naive("\n");
 
@@ -119,8 +117,13 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* Disable interrupts, so we don't get any spurious ones. */
+	/*
+	 * Disable interrupts, so we don't get any spurious ones.
+	 * Acknowledge all pending interrupts.
+	 */
 	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
+	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
 
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
@@ -147,8 +150,17 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 	}
 	aprint_normal("%s: interrupting at %s\n", devname, intrstr);
 
-	/* Set LEGSUP register to its default value. */
+	/*
+	 * Set LEGSUP register to its default value.
+	 * This can re-enable or trigger interrupts, so protect against
+	 * them and explicitly disable and ACK them afterwards.
+	 */
+	s = splhardusb();
 	pci_conf_write(pc, tag, PCI_LEGSUP, PCI_LEGSUP_USBPIRQDEN);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_INTR, 0);
+	bus_space_write_2(sc->sc.iot, sc->sc.ioh, UHCI_STS,
+	    bus_space_read_2(sc->sc.iot, sc->sc.ioh, UHCI_STS));
+	splx(s);
 
 	switch(pci_conf_read(pc, tag, PCI_USBREV) & PCI_USBREV_MASK) {
 	case PCI_USBREV_PRE_1_0:
@@ -174,15 +186,6 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 		snprintf(sc->sc.sc_vendor, sizeof(sc->sc.sc_vendor),
 		    "vendor 0x%04x", PCI_VENDOR(pa->pa_id));
 
-	/*
-	 * Establish our powerhook before uhci_init() does its powerhook.
-	 */
-	sc->sc_powerhook = powerhook_establish(USBDEVNAME(sc->sc.sc_bus.bdev),
-	    uhci_pci_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: couldn't establish powerhook\n",
-		    devname);
-
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
 		aprint_error("%s: init failed, error=%d\n", devname, r);
@@ -192,6 +195,9 @@ uhci_pci_attach(struct device *parent, struct device *self, void *aux)
 #if NEHCI > 0
 	usb_pci_add(&sc->sc_pci, pa, &sc->sc.sc_bus);
 #endif
+
+	if (!pmf_device_register(self, uhci_suspend, uhci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
@@ -204,8 +210,7 @@ uhci_pci_detach(device_ptr_t self, int flags)
 	struct uhci_pci_softc *sc = (struct uhci_pci_softc *)self;
 	int rv;
 
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
+	pmf_device_deregister(self);
 
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
@@ -224,34 +229,16 @@ uhci_pci_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-static void
-uhci_pci_powerhook(int why, void *opaque)
+static bool
+uhci_pci_resume(device_t dv)
 {
-	struct uhci_pci_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pcireg_t reg;
+	struct uhci_pci_softc *sc = device_private(dv);
 
-	sc = (struct uhci_pci_softc *)opaque;
-	pc = sc->sc_pc;
-	tag = sc->sc_tag;
+	/* Set LEGSUP register to its default value. */
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_LEGSUP,
+	    PCI_LEGSUP_USBPIRQDEN);
 
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		/* the BIOS might change this on us */
-		reg = pci_conf_read(pc, tag, PCI_LEGSUP);
-		reg |= PCI_LEGSUP_USBPIRQDEN;
-		reg &= ~PCI_LEGSUP_USBSMIEN;
-		pci_conf_write(pc, tag, PCI_LEGSUP, reg);
-		break;
-	}
-
-	return;
+	return uhci_resume(dv);
 }
 
 CFATTACH_DECL(uhci_pci, sizeof(struct uhci_pci_softc),
