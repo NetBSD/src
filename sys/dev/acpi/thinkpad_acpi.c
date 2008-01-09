@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.9 2007/12/22 18:38:13 jmcneill Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.10 2008/01/09 14:52:52 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.9 2007/12/22 18:38:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.10 2008/01/09 14:52:52 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -268,8 +268,6 @@ fail:
 	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_DOWN,
 	    thinkpad_brightness_down, true))
 		aprint_error_dev(self, "couldn't register event handler\n");
-
-	return;
 }
 
 static void
@@ -396,8 +394,6 @@ thinkpad_get_hotkeys(void *opaque)
 			break;
 		}
 	}
-
-	return;
 }
 
 static ACPI_STATUS
