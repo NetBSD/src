@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.113.4.1 2007/11/06 23:12:10 matt Exp $	 */
+/*	$NetBSD: rtld.c,v 1.113.4.2 2008/01/09 01:37:12 matt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.113.4.1 2007/11/06 23:12:10 matt Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.113.4.2 2008/01/09 01:37:12 matt Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -109,35 +109,100 @@ register Elf_Addr *_GLOBAL_OFFSET_TABLE_ asm("r12");
 #endif /* RTLD_DEBUG */
 extern Elf_Dyn  _DYNAMIC;
 
-static void _rtld_call_fini_functions(Obj_Entry *);
-static void _rtld_call_init_functions(Obj_Entry *);
+static void _rtld_call_fini_functions(int);
+static void _rtld_call_init_functions(void);
+static void _rtld_initlist_visit(Objlist *, Obj_Entry *, int);
+static void _rtld_initlist_tsort(Objlist *, int);
 static Obj_Entry *_rtld_dlcheck(void *);
 static void _rtld_init_dag(Obj_Entry *);
 static void _rtld_init_dag1(Obj_Entry *, Obj_Entry *);
 static void _rtld_objlist_remove(Objlist *, Obj_Entry *);
+static void _rtld_objlist_clear(Objlist *);
 static void _rtld_unload_object(Obj_Entry *, bool);
 static void _rtld_unref_dag(Obj_Entry *);
 static Obj_Entry *_rtld_obj_from_addr(const void *);
 
 static void
-_rtld_call_fini_functions(Obj_Entry *first)
+_rtld_call_fini_functions(int force)
 {
+	Objlist_Entry *elm;
+	Objlist finilist;
 	Obj_Entry *obj;
 
-	for (obj = first; obj != NULL; obj = obj->next)
-		if (obj->fini != NULL)
-			(*obj->fini)();
+	dbg(("_rtld_call_fini_functions(%d)", force));
+
+	SIMPLEQ_INIT(&finilist);
+	_rtld_initlist_tsort(&finilist, 1);
+
+	/* First pass: objects _not_ marked with DF_1_INITFIRST. */
+	SIMPLEQ_FOREACH(elm, &finilist, link) {
+		obj = elm->obj;
+		if (obj->refcount > 0 && !force) {
+			continue;
+		}
+		if (obj->fini == NULL || obj->fini_called || obj->initfirst) {
+		    	continue;
+		}
+		dbg (("calling fini function %s at %p",  obj->path,
+		    (void *)obj->fini));
+		obj->fini_called = 1;
+		(*obj->fini)();
+	}
+
+	/* Second pass: objects marked with DF_1_INITFIRST. */
+	SIMPLEQ_FOREACH(elm, &finilist, link) {
+		obj = elm->obj;
+		if (obj->refcount > 0 && !force) {
+			continue;
+		}
+		if (obj->fini == NULL || obj->fini_called) {
+		    	continue;
+		}
+		dbg (("calling fini function %s at %p (DF_1_INITFIRST)",
+		    obj->path, (void *)obj->fini));
+		obj->fini_called = 1;
+		(*obj->fini)();
+	}
+
+        _rtld_objlist_clear(&finilist);
 }
 
 static void
-_rtld_call_init_functions(Obj_Entry *first)
+_rtld_call_init_functions()
 {
+	Objlist_Entry *elm;
+	Objlist initlist;
+	Obj_Entry *obj;
 
-	if (first != NULL) {
-		_rtld_call_init_functions(first->next);
-		if (first->init != NULL)
-			(*first->init)();
+	dbg(("_rtld_call_init_functions()"));
+	SIMPLEQ_INIT(&initlist);
+	_rtld_initlist_tsort(&initlist, 0);
+
+	/* First pass: objects marked with DF_1_INITFIRST. */
+	SIMPLEQ_FOREACH(elm, &initlist, link) {
+		obj = elm->obj;
+		if (obj->init == NULL || obj->init_called || !obj->initfirst) {
+			continue;
+		}
+		dbg (("calling init function %s at %p (DF_1_INITFIRST)",
+		    obj->path, (void *)obj->init));
+		obj->init_called = 1;
+		(*obj->init)();
 	}
+
+	/* Second pass: all other objects. */
+	SIMPLEQ_FOREACH(elm, &initlist, link) {
+		obj = elm->obj;
+		if (obj->init == NULL || obj->init_called) {
+			continue;
+		}
+		dbg (("calling init function %s at %p",  obj->path,
+		    (void *)obj->init));
+		obj->init_called = 1;
+		(*obj->init)();
+	}
+
+        _rtld_objlist_clear(&initlist);
 }
 
 /*
@@ -197,10 +262,9 @@ _rtld_init(caddr_t mapbase, caddr_t relocbase, const char *execname)
 static void
 _rtld_exit(void)
 {
-
 	dbg(("rtld_exit()"));
 
-	_rtld_call_fini_functions(_rtld_objlist->next);
+	_rtld_call_fini_functions(1);
 }
 
 /*
@@ -237,7 +301,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	const Obj_Entry **real___mainprog_obj;
 	char ***real_environ;
 #if defined(RTLD_DEBUG)
-	int             i = 0;
+	int i = 0;
 #endif
 
 	/*
@@ -420,7 +484,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 
 	++_rtld_objmain->refcount;
 	_rtld_objmain->mainref = 1;
-	_rtld_objlist_add(&_rtld_list_main, _rtld_objmain);
+	_rtld_objlist_push_tail(&_rtld_list_main, _rtld_objmain);
 
 	/* Initialize a fake symbol for resolving undefined weak references. */
 	_rtld_sym_zero.st_info = ELF_ST_INFO(STB_GLOBAL, STT_NOTYPE);
@@ -475,7 +539,7 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 		*real___mainprog_obj = _rtld_objmain;
 
 	dbg(("calling _init functions"));
-	_rtld_call_init_functions(_rtld_objmain->next);
+	_rtld_call_init_functions();
 
 	dbg(("control at program entry point = %p, obj = %p, exit = %p",
 	     _rtld_objmain->entry, _rtld_objmain, _rtld_exit));
@@ -519,6 +583,46 @@ _rtld_dlcheck(void *handle)
 }
 
 static void
+_rtld_initlist_visit(Objlist* list, Obj_Entry *obj, int rev)
+{
+	Needed_Entry* elm;
+
+	/* dbg(("_rtld_initlist_visit(%s)", obj->path)); */
+
+	if (obj->init_done)
+		return;
+	obj->init_done = 1;
+
+	for (elm = obj->needed; elm != NULL; elm = elm->next) {
+		if (elm->obj != NULL) {
+			_rtld_initlist_visit(list, elm->obj, rev);
+		}
+	}
+
+	if (rev) {
+		_rtld_objlist_push_head(list, obj);
+	} else {
+		_rtld_objlist_push_tail(list, obj);
+	}
+}
+
+static void
+_rtld_initlist_tsort(Objlist* list, int rev)
+{
+	dbg(("_rtld_initlist_tsort"));
+
+	Obj_Entry* obj;
+
+	for (obj = _rtld_objlist->next; obj; obj = obj->next) {
+		obj->init_done = 0;
+	}
+
+	for (obj = _rtld_objlist->next; obj; obj = obj->next) {
+		_rtld_initlist_visit(list, obj, rev);
+	}
+}
+
+static void
 _rtld_init_dag(Obj_Entry *root)
 {
 
@@ -535,8 +639,8 @@ _rtld_init_dag1(Obj_Entry *root, Obj_Entry *obj)
 			return;
 		rdbg(("add %p (%s) to %p (%s) DAG", obj, obj->path, root,
 		    root->path));
-		_rtld_objlist_add(&obj->dldags, root);
-		_rtld_objlist_add(&root->dagmembers, obj);
+		_rtld_objlist_push_tail(&obj->dldags, root);
+		_rtld_objlist_push_tail(&root->dagmembers, obj);
 	}
 	for (needed = obj->needed; needed != NULL; needed = needed->next)
 		if (needed->obj != NULL)
@@ -558,9 +662,7 @@ _rtld_unload_object(Obj_Entry *root, bool do_fini_funcs)
 
 		/* Finalize objects that are about to be unmapped. */
 		if (do_fini_funcs)
-			for (obj = _rtld_objlist->next;  obj != NULL;  obj = obj->next)
-				if (obj->refcount == 0 && obj->fini != NULL)
-					(*obj->fini)();
+			_rtld_call_fini_functions(0);
 
 		/* Remove the DAG from all objects' DAG lists. */
 		SIMPLEQ_FOREACH(elm, &root->dagmembers, link)
@@ -668,8 +770,9 @@ dlopen(const char *name, int mode)
 				_rtld_unload_object(obj, false);
 				obj->dl_refcount--;
 				obj = NULL;
-			} else
-				_rtld_call_init_functions(obj);
+			} else {
+				_rtld_call_init_functions();
+			}
 		}
 	}
 	_rtld_debug.r_state = RT_CONSISTENT;
@@ -935,6 +1038,16 @@ _rtld_obj_from_addr(const void *addr)
 			return obj;
 	}
 	return NULL;
+}
+
+static void
+_rtld_objlist_clear(Objlist *list)
+{
+	while (!SIMPLEQ_EMPTY(list)) {
+		Objlist_Entry* elm = SIMPLEQ_FIRST(list);
+		SIMPLEQ_REMOVE_HEAD(list, link);
+		xfree(elm);
+	}
 }
 
 static void

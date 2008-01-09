@@ -1,4 +1,4 @@
-/*	$NetBSD: abandon.c,v 1.6 2003/08/07 09:37:49 agc Exp $	*/
+/*	$NetBSD: abandon.c,v 1.6.22.1 2008/01/09 01:31:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)abandon.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: abandon.c,v 1.6 2003/08/07 09:37:49 agc Exp $");
+__RCSID("$NetBSD: abandon.c,v 1.6.22.1 2008/01/09 01:31:02 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: abandon.c,v 1.6 2003/08/07 09:37:49 agc Exp $");
 /*ARGSUSED*/
 void
 abandon(v)
-	int v __attribute__((__unused__));
+	int v __unused;
 {
 	struct quad	*q;
 	int		i;

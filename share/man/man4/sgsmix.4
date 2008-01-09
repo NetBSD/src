@@ -1,4 +1,4 @@
-.\" $NetBSD: sgsmix.4,v 1.1 2007/05/15 14:12:10 macallan Exp $
+.\" $NetBSD: sgsmix.4,v 1.1.4.1 2008/01/09 01:39:11 matt Exp $
 .\"
 .\" Copyright (c) 2007
 .\" 	Michael Lorenz.  All rights reserved.
@@ -36,14 +36,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the external mixer chip on Apple's 'personality cards' found in beige Power Macintosh G3. All mixer controls are accessed
-through the
+driver provides support for the external mixer chip on Apple's
+.Dq personality cards
+found in beige Power Macintosh G3.
+All mixer controls are accessed through the
 .Xr awacs 4
 driver,
 .Nm
 additionally provides bass and treble controls.
-.Pp
 .Sh SEE ALSO
 .Xr awacs 4 ,
 .Xr cuda 4 ,
-.Xr iic 4 
+.Xr iic 9

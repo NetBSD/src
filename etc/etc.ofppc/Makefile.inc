@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2007/07/24 10:49:27 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.5.4.1 2008/01/09 01:29:53 matt Exp $
 #
 #	etc.ofppc/Makefile.inc -- ofppc-specific etc Makefile targets
 #
@@ -8,4 +8,4 @@
 
 KERNEL_SETS=		GENERIC
 
-#BUILD_KERNELS+=		INSTALL
+BUILD_KERNELS+=		INSTALL

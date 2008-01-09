@@ -1,4 +1,4 @@
-/*	$NetBSD: zap.c,v 1.6 2003/08/07 09:37:40 agc Exp $	*/
+/*	$NetBSD: zap.c,v 1.6.22.1 2008/01/09 01:31:00 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: zap.c,v 1.6 2003/08/07 09:37:40 agc Exp $");
+__RCSID("$NetBSD: zap.c,v 1.6.22.1 2008/01/09 01:31:00 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ zapp()
 	while (!is_direction(dir = rgetchar(), &d)) {
 		sound_bell();
 		if (first_miss) {
-			message("direction? ", 0);
+			messagef(0, "direction? ");
 			first_miss = 0;
 		}
 	}
@@ -83,15 +83,15 @@ zapp()
 	check_message();
 
 	if (!(wand = get_letter_object(wch))) {
-		message("no such item.", 0);
+		messagef(0, "no such item.");
 		return;
 	}
 	if (wand->what_is != WAND) {
-		message("you can't zap with that", 0);
+		messagef(0, "you can't zap with that");
 		return;
 	}
 	if (wand->class <= 0) {
-		message("nothing happens", 0);
+		messagef(0, "nothing happens");
 	} else {
 		wand->class--;
 		row = rogue.row; col = rogue.col;
@@ -198,7 +198,7 @@ zap_monster(monster, kind)
 			FLAMES | IMITATES | CONFUSES | SEEKS_GOLD | HOLDS));
 		break;
 	case DO_NOTHING:
-		message("nothing happens", 0);
+		messagef(0, "nothing happens");
 		break;
 	}
 }
@@ -230,17 +230,18 @@ wizardize()
 
 	if (wizard) {
 		wizard = 0;
-		message("not wizard anymore", 0);
+		messagef(0, "not wizard anymore");
 	} else {
-		if (get_input_line("wizard's password:", "", buf, "", 0, 0)) {
+		if (get_input_line("wizard's password:", "", buf, sizeof(buf),
+				"", 0, 0)) {
 			(void) xxx(1);
 			xxxx(buf, strlen(buf));
 			if (!strncmp(buf, "\247\104\126\272\115\243\027", 7)) {
 				wizard = 1;
 				score_only = 1;
-				message("Welcome, mighty wizard!", 0);
+				messagef(0, "Welcome, mighty wizard!");
 			} else {
-				message("sorry", 0);
+				messagef(0, "sorry");
 			}
 		}
 	}
@@ -281,7 +282,6 @@ bounce(ball, dir, row, col, r)
 	short ball, dir, row, col, r;
 {
 	short orow, ocol;
-	char buf[DCOLS];
 	const char *s;
 	short i, ch, new_dir = -1, damage;
 	static short btime;
@@ -298,8 +298,7 @@ bounce(ball, dir, row, col, r)
 		s = "ice";
 	}
 	if (r > 1) {
-		sprintf(buf, "the %s bounces", s);
-		message(buf, 0);
+		messagef(0, "the %s bounces", s);
 	}
 	orow = row;
 	ocol = col;
@@ -336,8 +335,8 @@ bounce(ball, dir, row, col, r)
 
 		wake_up(monster);
 		if (rand_percent(33)) {
-			sprintf(buf, "the %s misses the %s", s, mon_name(monster));
-			message(buf, 0);
+			messagef(0, "the %s misses the %s", s, 
+				mon_name(monster));
 			goto ND;
 		}
 		if (ball == FIRE) {
@@ -352,14 +351,14 @@ bounce(ball, dir, row, col, r)
 			} else {
 				damage = (monster->hp_to_kill / 2) + 1;
 			}
-			sprintf(buf, "the %s hits the %s", s, mon_name(monster));
-			message(buf, 0);
+			messagef(0, "the %s hits the %s", s,
+				mon_name(monster));
 			(void) mon_damage(monster, damage);
 		} else {
 			damage = -1;
 			if (!(monster->m_flags & FREEZES)) {
 				if (rand_percent(33)) {
-					message("the monster is frozen", 0);
+					messagef(0, "the monster is frozen");
 					monster->m_flags |= (ASLEEP | NAPPING);
 					monster->nap_length = get_rand(3, 6);
 				} else {
@@ -369,15 +368,14 @@ bounce(ball, dir, row, col, r)
 				damage = -2;
 			}
 			if (damage != -1) {
-				sprintf(buf, "the %s hits the %s", s, mon_name(monster));
-				message(buf, 0);
+				messagef(0, "the %s hits the %s", s, 
+					mon_name(monster));
 				(void) mon_damage(monster, damage);
 			}
 		}
 	} else if ((row == rogue.row) && (col == rogue.col)) {
 		if (rand_percent(10 + (3 * get_armor_class(rogue.armor)))) {
-			sprintf(buf, "the %s misses", s);
-			message(buf, 0);
+			messagef(0, "the %s misses", s);
 			goto ND;
 		} else {
 			damage = get_rand(3, (3 * rogue.exp));
@@ -385,10 +383,9 @@ bounce(ball, dir, row, col, r)
 				damage = (damage * 3) / 2;
 				damage -= get_armor_class(rogue.armor);
 			}
-			sprintf(buf, "the %s hits", s);
 			rogue_damage(damage, (object *) 0,
 					((ball == FIRE) ? KFIRE : HYPOTHERMIA));
-			message(buf, 0);
+			messagef(0, "the %s hits", s);
 		}
 	} else {
 		short nrow, ncol;

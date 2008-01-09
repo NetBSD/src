@@ -1,4 +1,4 @@
-/*	$NetBSD: getifaddrs.c,v 1.10 2002/08/09 04:29:29 itojun Exp $	*/
+/*	$NetBSD: getifaddrs.c,v 1.10.22.1 2008/01/09 01:34:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1999
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getifaddrs.c,v 1.10 2002/08/09 04:29:29 itojun Exp $");
+__RCSID("$NetBSD: getifaddrs.c,v 1.10.22.1 2008/01/09 01:34:12 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -86,11 +86,11 @@ getifaddrs(struct ifaddrs **pif)
 	mib[3] = 0;             /* wildcard address family */
 	mib[4] = NET_RT_IFLIST;
 	mib[5] = 0;             /* no flags */
-	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
+	if (sysctl(mib, __arraycount(mib), NULL, &needed, NULL, 0) < 0)
 		return (-1);
 	if ((buf = malloc(needed)) == NULL)
 		return (-1);
-	if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
+	if (sysctl(mib, __arraycount(mib), buf, &needed, NULL, 0) < 0) {
 		free(buf);
 		return (-1);
 	}

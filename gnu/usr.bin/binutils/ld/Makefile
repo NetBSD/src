@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2006/11/09 21:27:58 christos Exp $
+#	$NetBSD: Makefile,v 1.24.8.1 2008/01/09 01:31:59 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -36,7 +36,9 @@ DPADD+=		${IBERTYOBJ}/libiberty.a
 
 TEXINFO=	${G_TEXINFOS}
 INFOFLAGS=	-I${DIST}/ld -I${DIST}/bfd/doc
-#FILESDIR=	/usr/share/ldscripts
+.if ${MACHINE_ARCH} == "x86_64"
+FILESDIR=	/usr/share/ldscripts
+.endif
 
 .PATH: ${DIST}/ld ${DIST}/ld/emulparams \
 	${DIST}/ld/emultempl ${DIST}/ld/scripttempl ldscripts
@@ -78,13 +80,15 @@ e${f}.c: ${DIST}/ld/genscripts.sh ${.CURDIR}/Makefile stringify.sed
 		${G_target_alias} ${G_target_alias} ${G_target_alias} \
 		${G_EMUL} ${LIBDIR} no ${f} "${G_target_alias}"
 
-#FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
+.if ${MACHINE_ARCH} == "x86_64"
+FILES+=		${f}.x ${f}.xbn ${f}.xn ${f}.xr ${f}.xu
 
 # XXX hack to find out if .xs exists - slow!
-#HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
-#.if !empty(HAS_XS)
-#FILES+=		${f}.xs
-#.endif
+HAS_XS!=	grep '^GENERATE_SHLIB_SCRIPT' ${DIST}/ld/emulparams/${f}.sh || echo
+.if !empty(HAS_XS)
+FILES+= ${f}.xc ${f}.xd ${f}.xdc ${f}.xdw ${f}.xs ${f}.xsc ${f}.xsw ${f}.xw
+.endif
+.endif
 .endfor
 
 .include <bsd.prog.mk>

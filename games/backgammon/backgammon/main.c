@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2005/07/01 01:12:39 jmc Exp $	*/
+/*	$NetBSD: main.c,v 1.22.10.1 2008/01/09 01:30:44 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.22 2005/07/01 01:12:39 jmc Exp $");
+__RCSID("$NetBSD: main.c,v 1.22.10.1 2008/01/09 01:30:44 matt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -88,7 +88,7 @@ static const char password[] = "losfurng";
 static char pbuf[10];
 
 int
-main(int argc __attribute__((__unused__)), char **argv)
+main(int argc __unused, char **argv)
 {
 	int     i;		/* non-descript index */
 	int     l;		/* non-descript index */

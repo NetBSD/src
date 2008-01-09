@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.21 2005/03/21 17:55:07 kleink Exp $	*/
+/*	$NetBSD: pthread.h,v 1.21.12.1 2008/01/09 01:36:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -137,6 +137,8 @@ int 	pthread_attr_setcreatesuspend_np(pthread_attr_t *);
 int	pthread_suspend_np(pthread_t);
 int	pthread_resume_np(pthread_t);
 
+unsigned int	pthread_curcpu_np(void);
+
 struct pthread_cleanup_store {
 	void	*pad[4];
 };
@@ -186,6 +188,16 @@ int	pthread_getschedparam(pthread_t, int * __restrict,
 int	pthread_setschedparam(pthread_t, int, const struct sched_param *);
 
 int 	*pthread__errno(void);
+
+#if defined(_NETBSD_SOURCE)
+int	pthread_mutex_held_np(pthread_mutex_t *);
+pthread_t pthread_mutex_owner_np(pthread_mutex_t *);
+
+int	pthread_rwlock_held_np(pthread_rwlock_t *);
+int	pthread_rwlock_wrheld_np(pthread_rwlock_t *);
+int	pthread_rwlock_rdheld_np(pthread_rwlock_t *);
+#endif	/* _NETBSD_SOURCE */
+
 __END_DECLS
 
 #define	PTHREAD_CREATE_JOINABLE	0
@@ -346,12 +358,16 @@ int	__libc_thr_once(pthread_once_t *, void (*)(void));
 pthread_t	__libc_thr_self(void);
 void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	__libc_thr_setcancelstate(int, int *);
+int	__libc_thr_equal(pthread_t, pthread_t);
+unsigned int	__libc_thr_curcpu(void);
 __END_DECLS
 
 #define	pthread_once			__libc_thr_once
 #define	pthread_self			__libc_thr_self
 #define	pthread_exit			__libc_thr_exit
 #define	pthread_setcancelstate		__libc_thr_setcancelstate
+#define pthread_equal			__libc_thr_equal
+#define pthread_curcpu_np		__libc_thr_curcpu
 
 #endif /* __LIBPTHREAD_SOURCE__ */
 

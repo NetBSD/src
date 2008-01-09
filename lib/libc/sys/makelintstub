@@ -1,5 +1,5 @@
 #!/bin/sh -
-# $NetBSD: makelintstub,v 1.18.4.1 2007/11/06 23:11:21 matt Exp $
+# $NetBSD: makelintstub,v 1.18.4.2 2008/01/09 01:34:22 matt Exp $
 #
 # Copyright (c) 1996, 1997 Christopher G. Demetriou
 # All rights reserved.
@@ -63,6 +63,7 @@ header()
 	#include <sys/poll.h>
 	#include <sys/uio.h>
 	#include <sys/ipc.h>
+	#include <sys/lwpctl.h>
 	#include <sys/mqueue.h>
 	#include <sys/msg.h>
 	#include <sys/sem.h>

@@ -1,4 +1,4 @@
-.\" $NetBSD: cuda.4,v 1.2 2007/05/15 14:32:16 xtraeme Exp $
+.\" $NetBSD: cuda.4,v 1.2.4.1 2008/01/09 01:39:06 matt Exp $
 .\"
 .\" Copyright (c) 2007
 .\" 	Michael Lorenz.  All rights reserved.
@@ -29,7 +29,7 @@
 .Dt CUDA 4
 .Sh NAME
 .Nm cuda
-.Nd support for CUDA microcontrollers found in many Power Macintosh and 
+.Nd support for CUDA microcontrollers found in many Power Macintosh and
 compatible computers
 .Sh SYNOPSIS
 .Cd "cuda* at obio?"
@@ -38,14 +38,14 @@ compatible computers
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the CUDA microcontroller found in many Power 
-Macintosh and compatible computers, mostly Old World desktop machines. CUDA 
-controls the real time clock, ADB, power and on some machines an
-.Xr iic 4 bus.
-.Pp
+driver provides support for the CUDA microcontroller found in many Power
+Macintosh and compatible computers, mostly Old World desktop machines.
+CUDA controls the real time clock, ADB, power and on some machines an
+.Xr iic 9
+bus.
 .Sh SEE ALSO
-.Xr iic 4 ,
 .Xr nadb 4 ,
 .Xr obio 4 ,
 .Xr pmu 4 ,
-.Xr sgsmix 4
+.Xr sgsmix 4 ,
+.Xr iic 9

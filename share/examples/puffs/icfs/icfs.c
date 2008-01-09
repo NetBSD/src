@@ -1,4 +1,4 @@
-/*	$NetBSD: icfs.c,v 1.5.4.1 2007/11/06 23:12:41 matt Exp $	*/
+/*	$NetBSD: icfs.c,v 1.5.4.2 2008/01/09 01:38:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -213,8 +213,8 @@ main(int argc, char *argv[])
 	puffs_set_pathtransform(pu, icpathxform);
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, pn_root) == -1)
 		err(1, "puffs_mount");
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 }
 
 int
-ic_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+ic_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
@@ -236,7 +236,7 @@ ic_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 	dp = dent;
 	rl = *reslen;
 
-	rv = puffs_null_node_readdir(pcc, opc, dent, readoff, reslen, pcr,
+	rv = puffs_null_node_readdir(pu, opc, dent, readoff, reslen, pcr,
 	    eofflag, cookies, ncookies);
 	if (rv)
 		return rv;

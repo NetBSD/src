@@ -1,4 +1,4 @@
-#	$NetBSD: opttest,v 1.2 2007/07/05 16:05:40 ginsbach Exp $
+#	$NetBSD: opttest,v 1.2.4.1 2008/01/09 01:37:30 matt Exp $
 #
 # GNU libc tests with these
 #
@@ -21,7 +21,7 @@ args:	foo --col
 # GNU libc 2.1.3 this fails with ambiguous
 #result:	!?|0
 # GNU libc 2.2 >= this works
-result:	color|0
+result:	-color|0
 #
 args:	foo --colour
 result:	-colour|0

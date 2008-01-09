@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.32 2007/07/31 21:39:56 pooka Exp $
+.\"     $NetBSD: vfsops.9,v 1.32.2.1 2008/01/09 01:39:23 matt Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 31, 2007
+.Dd November 26, 2007
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -59,22 +59,19 @@
 .Ft int
 .Fo VFS_MOUNT
 .Fa "struct mount *mp" "const char *path" "void *data" "size_t *dlen"
-.Fa "struct lwp *l"
 .Fc
 .Ft int
-.Fn VFS_START "struct mount *mp" "int flags" "struct lwp *l"
+.Fn VFS_START "struct mount *mp" "int flags"
 .Ft int
-.Fn VFS_UNMOUNT "struct mount *mp" "int mntflags" "struct lwp *l"
+.Fn VFS_UNMOUNT "struct mount *mp" "int mntflags"
 .Ft int
 .Fn VFS_ROOT "struct mount *mp" "struct vnode **vpp"
 .Ft int
-.Fn VFS_QUOTACTL "struct mount *mp" "int cmds" "uid_t uid" \
-"void *arg" "struct lwp *l"
+.Fn VFS_QUOTACTL "struct mount *mp" "int cmds" "uid_t uid" "void *arg"
 .Ft int
-.Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp" "struct lwp *l"
+.Fn VFS_STATVFS "struct mount *mp" "struct statvfs *sbp"
 .Ft int
-.Fn VFS_SYNC "struct mount *mp" "int waitfor" "kauth_cred_t cred" \
-"struct lwp *l"
+.Fn VFS_SYNC "struct mount *mp" "int waitfor" "kauth_cred_t cred"
 .Ft int
 .Fn VFS_VGET "struct mount *mp" "ino_t ino" "struct vnode **vpp"
 .Ft int
@@ -122,8 +119,8 @@ int  (*vfs_sync)()	VFS_SYNC	Flush file system buffers
 int  (*vfs_vget)()	VFS_VGET	Get vnode from file id
 int  (*vfs_fhtovp)()	VFS_FHTOVP	NFS file handle to vnode lookup
 int  (*vfs_vptofh)()	VFS_VPTOFH	Vnode to NFS file handle lookup
-void (*vfs_init)()	-	Initialise file system
-void (*vfs_reinit)()	-	Reinitialise file system
+void (*vfs_init)()	-	Initialize file system
+void (*vfs_reinit)()	-	Reinitialize file system
 void (*vfs_done)()	-	Cleanup unmounted file system
 int  (*vfs_mountroot)()	-	Mount the root file system
 int  (*vfs_snapshot)()	VFS_SNAPSHOT	Take a snapshot
@@ -151,10 +148,10 @@ be
 .Pp
 At system boot, each file system with an entry in
 .Va vfs_list_initial
-is established and initialised.
-Each initialised file system is recorded by the kernel in the list
+is established and initialized.
+Each initialized file system is recorded by the kernel in the list
 .Va vfs_list
-and the file system specific initialisation function
+and the file system specific initialization function
 .Em vfs_init
 in its vfsops vector is invoked.
 When the file system is no longer needed
@@ -162,13 +159,13 @@ When the file system is no longer needed
 is invoked to run file system specific cleanups and the file system is
 removed from the kernel list.
 .Pp
-At system boot, the root filesystem is mounted by invoking the file
+At system boot, the root file system is mounted by invoking the file
 system type specific
 .Em vfs_mountroot
 function in the vfsops vector.
-All filesystems that can be mounted as a root file system must define
+All file systems that can be mounted as a root file system must define
 this function.
-It is responsible for initialising to list of mount structures for
+It is responsible for initializing to list of mount structures for
 all future mounted file systems.
 .Pp
 Kernel state which affects a specific file system type can be
@@ -177,7 +174,7 @@ queried and modified using the
 interface.
 .Sh FUNCTIONS
 .Bl -tag -width compact
-.It Fn VFS_MOUNT "mp" "path" "data" "dlen" "l"
+.It Fn VFS_MOUNT "mp" "path" "data" "dlen"
 Mount a file system specified by the mount structure
 .Fa mp
 on the mount point described by
@@ -187,20 +184,17 @@ The argument
 contains file system type specific data, while the argument
 .Fa dlen
 points to a location specifying the length of the data.
-The argument
-.Fa l
-is the calling lwp.
 .Pp
 .Fn VFS_MOUNT
-initialises the mount structure for the mounted file system.
+initializes the mount structure for the mounted file system.
 This structure records mount-specific information for the file system and
 records the list of vnodes associated with the file system.
 This function is invoked both to mount new file systems and to change the
 attributes of an existing file system.
 If the flag MNT_UPDATE is set in
 .Em mp-\*[Gt]mnt_flag ,
-the filesystem should update its state.
-This can be used, for instance, to convert a read-only filesystem to
+the file system should update its state.
+This can be used, for instance, to convert a read-only file system to
 read-write.
 The current attributes for a mounted file system can be fetched by
 specifying
@@ -210,13 +204,10 @@ If neither
 or
 .Dv MNT_GETARGS
 are specified, a new file system will attempted to be mounted.
-.It Fn VFS_START "mp" "flags" "l"
+.It Fn VFS_START "mp" "flags"
 Make the file system specified by the mount structure
 .Fa mp
 operational.
-The argument
-.Fa l
-is the calling lwp.
 The argument
 .Fa flags
 is a set of flags for controlling the operation of
@@ -224,12 +215,9 @@ is a set of flags for controlling the operation of
 This function is invoked after
 .Fn VFS_MOUNT
 and before the first access to the file system.
-.It Fn VFS_UNMOUNT "mp" "mntflags" "l"
+.It Fn VFS_UNMOUNT "mp" "mntflags"
 Unmount a file system specified by the mount structure
 .Fa mp .
-The argument
-.Fa l
-is the calling lwp.
 .Fn VFS_UNMOUNT
 performs any file system type specific operations required before the
 file system is unmounted, such are flushing buffers.
@@ -250,15 +238,13 @@ While resolving the pathname, the pathname translation algorithm will
 have to go through the directory tree in the file system associated
 with that mount point and therefore requires the root vnode of the
 file system.
-.It Fn VFS_QUOTACTL "mp" "cmds" "uid" "arg" "l"
+.It Fn VFS_QUOTACTL "mp" "cmds" "uid" "arg"
 Query/modify user space quotas for the file system specified by the
 mount structure
 .Fa mp .
 The argument specifies the control command to perform.
 The userid is specified in
-.Fa id ,
-the calling lwp is
-.Fa l
+.Fa id
 and
 .Fa arg
 allows command-specific data to be returned to the system call
@@ -267,13 +253,10 @@ interface.
 is the file system type specific implementation of the
 .Xr quotactl 2
 system call.
-.It Fn VFS_STATVFS "mp" "sbp" "l"
+.It Fn VFS_STATVFS "mp" "sbp"
 Get file system statistics for the file system specified by the mount
 structure
 .Fa mp .
-The argument
-.Fa l
-is the calling lwp.
 A statvfs structure filled with the statistics is returned in
 .Fa sbp .
 .Fn VFS_STATVFS
@@ -282,7 +265,7 @@ is the file system type specific implementation of the
 and
 .Xr fstatvfs 2
 system calls.
-.It Fn VFS_SYNC "mp" "waitfor" "cred" "l"
+.It Fn VFS_SYNC "mp" "waitfor" "cred"
 Flush file system I/O buffers for the file system specified by the mount
 structure
 .Fa mp .
@@ -290,11 +273,9 @@ The
 .Fa waitfor
 argument indicates whether a partial flush or complete flush should be
 performed.
-The arguments
-.Fa l
-and
+The argument
 .Fa cred
-specific the calling lwp and its credentials, respectively.
+specifies the calling credentials.
 .Fn VFS_SYNC
 does not provide any return value since the operation can never fail.
 .It Fn VFS_VGET "mp" "ino" "vpp"
@@ -307,7 +288,7 @@ The vnode is returned in the address specified
 The function is optional for file systems which have a unique id
 number for every file in the file system.
 It is used internally by the UFS file system and also by the NFSv3
-server to implement the READDIRPLUS nfs call.
+server to implement the READDIRPLUS NFS call.
 If the file system does not support this function, it should return
 .Er EOPNOTSUPP .
 .It Fn VFS_FHTOVP "mp" "fhp" "vpp"
@@ -322,7 +303,7 @@ When exporting, the call to
 .Fn VFS_FHTOVP
 should follow a call to
 .Fn netexport_check ,
-which checks if the file is accessable to the client.
+which checks if the file is accessible to the client.
 .Pp
 If file handles are not supported by the file system, this function
 must return

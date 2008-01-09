@@ -1,4 +1,4 @@
-/*	$NetBSD: factor.c,v 1.16 2005/06/27 20:49:31 rillig Exp $	*/
+/*	$NetBSD: factor.c,v 1.16.10.1 2008/01/09 01:30:47 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)factor.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: factor.c,v 1.16 2005/06/27 20:49:31 rillig Exp $");
+__RCSID("$NetBSD: factor.c,v 1.16.10.1 2008/01/09 01:30:47 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ BN_CTX *ctx;				/* just use a global context */
 int	main(int, char *[]);
 void	pr_fact(BIGNUM *);		/* print factors of a value */
 void	BN_print_dec_fp(FILE *, const BIGNUM *);
-void	usage(void) __attribute__((__noreturn__));
+void	usage(void) __dead;
 #ifdef HAVE_OPENSSL
 void	pollard_pminus1(BIGNUM *);	/* print factors for big numbers */
 #else

@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.2 2006/12/23 08:04:32 wiz Exp $
+.\"	$NetBSD: boot.8,v 1.2.4.1 2008/01/09 01:39:15 matt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,9 +32,9 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd November 25, 2006
-.Dt BOOT 8
+.Dd December 14, 2007
 .Os
+.Dt BOOT 8
 .Sh NAME
 .Nm boot
 .Nd
@@ -43,16 +43,21 @@ system bootstrapping procedures
 This document provides information on using common features in the
 .Nx
 boot loader.
+Additional information may be found in
+architecture-specific
+.Xr boot 8
+manual pages.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
-.\" NOTE: much of this text is duplicated in dosboot.8; please try to
-.\" keep both files synchronized.
+.\" NOTE: much of this text is duplicated in architecture-specific
+.\" man pages (man8/man8.*/*boot*.8);
+.\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl acdqsv
+.Op Fl acdqsvxz
 .Xc
 The default
 .Va device
@@ -118,6 +123,10 @@ Boot the system in quiet mode.
 Bring the system up in single-user mode.
 .It Fl v
 Boot the system in verbose mode.
+.It Fl x
+Boot the system with debug messages enabled.
+.It Fl z
+Boot the system in silent mode.
 .El
 .It Ic consdev Va dev
 Immediately switch the console to the specified device
@@ -162,6 +171,9 @@ can be used.
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot
 boot program code loaded by the primary bootstrap
+.\" .It Pa /boot.cfg
+.\" optional configuration file
+.\" (used only on i386 and amd64 architectures)
 .It Pa /netbsd
 system code
 .It Pa /netbsd.gz
@@ -176,14 +188,18 @@ partition by
 .Xr installboot 8 .
 .El
 .Sh SEE ALSO
+Architecture-specific
+.Xr boot 8
+manual pages,
 .Xr ddb 4 ,
 .Xr userconf 4 ,
+.\" .Xr boot.cfg 5 ,
 .Xr boot_console 8 ,
 .Xr halt 8 ,
 .Xr installboot 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8
-.Pp
+.Sh BUGS
 Any
 .Ar filename
 specified after the boot options, e.g.:

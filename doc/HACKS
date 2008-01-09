@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.93 2007/04/08 09:57:17 scw Exp $
+# $NetBSD: HACKS,v 1.93.4.1 2008/01/09 01:29:27 matt Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -128,7 +128,6 @@ who	mrg
 file	bin/ksh/eval.c			: 1.6
 file	bin/sh/histedit.c		: 1.39
 file	bin/sh/parser.c			: 1.60
-file	bin/systrace/systrace.c		: 1.33
 file	crypto/dist/heimdal/kdc/524.c	: 1.10
 file	crypto/dist/ssh/sftp.c		: 1.20
 file	crypto/dist/ssh/ssh-keysign.c	: 1.11
@@ -217,7 +216,6 @@ hack	gcc4 pointer sign and strict aliasing problems
 mdate	10 May 2006
 who	mrg
 file	bin/ed/Makefile			: 1.33
-file	bin/systrace/Makefile		: 1.12
 file	distrib/utils/sysinst/Makefile.inc : 1.44
 file	distrib/utils/x_dhclient/Makefile : 1.15
 file	games/bcd/Makefile		: 1.5

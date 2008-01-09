@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.9 2006/04/02 00:13:29 christos Exp $	*/
+/*	$NetBSD: room.c,v 1.9.10.1 2008/01/09 01:30:58 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: room.c,v 1.9 2006/04/02 00:13:29 christos Exp $");
+__RCSID("$NetBSD: room.c,v 1.9.10.1 2008/01/09 01:30:58 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ boolean rooms_visited[MAXROOMS];
 
 #define NOPTS 7
 
-struct option {
+const struct option {
 	const char *prompt;
 	boolean is_bool;
 	char **strval;
@@ -84,15 +84,15 @@ struct option {
 	},
 	{
 		"Name (\"name\"): ",
-		0, &nick_name
+		0, &nick_name, (boolean *) 0
 	},
 	{
 		"Fruit (\"fruit\"): ",
-		0, &fruit
+		0, &fruit, (boolean *) 0
 	},
 	{
 		"Save file (\"file\"): ",
-		0, &save_file
+		0, &save_file, (boolean *) 0
 	}
 };
 
@@ -602,6 +602,11 @@ CH:
 					ch = rgetchar();
 				} while ((ch != '\012') && (ch != '\015') && (ch != '\033'));
 				if (j != 0) {
+					/*
+					 * We rely on the option string being
+					 * allocated to hold MAX_OPT_LEN+2 
+					 * bytes. This is arranged in init.c.
+					 */
 					(void) strcpy(*(options[i].strval), buf);
 				}
 				opt_show(i);
@@ -626,7 +631,7 @@ opt_show(i)
 	int i;
 {
 	const char *s;
-	struct option *opt = &options[i];
+	const struct option *opt = &options[i];
 
 	opt_erase(i);
 
@@ -642,7 +647,7 @@ void
 opt_erase(i)
 	int i;
 {
-	struct option *opt = &options[i];
+	const struct option *opt = &options[i];
 
 	mvaddstr(i, 0, opt->prompt);
 	clrtoeol();

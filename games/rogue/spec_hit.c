@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_hit.c,v 1.5 2003/08/07 09:37:40 agc Exp $	*/
+/*	$NetBSD: spec_hit.c,v 1.5.22.1 2008/01/09 01:30:59 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)spec_hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: spec_hit.c,v 1.5 2003/08/07 09:37:40 agc Exp $");
+__RCSID("$NetBSD: spec_hit.c,v 1.5.22.1 2008/01/09 01:30:59 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,12 +100,12 @@ rust(monster)
 	}
 	if ((rogue.armor->is_protected) || maintain_armor) {
 		if (monster && (!(monster->m_flags & RUST_VANISHED))) {
-			message("the rust vanishes instantly", 0);
+			messagef(0, "the rust vanishes instantly");
 			monster->m_flags |= RUST_VANISHED;
 		}
 	} else {
 		rogue.armor->d_enchant--;
-		message("your armor weakens", 0);
+		messagef(0, "your armor weakens");
 		print_stats(STAT_ARMOR);
 	}
 }
@@ -127,7 +127,7 @@ freeze(monster)
 
 	if (freeze_percent > 10) {
 		monster->m_flags |= FREEZING_ROGUE;
-		message("you are frozen", 1);
+		messagef(1, "you are frozen");
 
 		n = get_rand(4, 8);
 		for (i = 0; i < n; i++) {
@@ -139,7 +139,7 @@ freeze(monster)
 			}
 			killed_by((object *)0, HYPOTHERMIA);
 		}
-		message(you_can_move_again, 1);
+		messagef(1, you_can_move_again);
 		monster->m_flags &= (~FREEZING_ROGUE);
 	}
 }
@@ -160,7 +160,7 @@ steal_gold(monster)
 		amount = rogue.gold;
 	}
 	rogue.gold -= amount;
-	message("your purse feels lighter", 0);
+	messagef(0, "your purse feels lighter");
 	print_stats(STAT_GOLD);
 	disappear(monster);
 }
@@ -205,13 +205,12 @@ steal_item(monster)
 			}
 		}
 	}
-	(void) strcpy(desc, "she stole ");
 	if (obj->what_is != WEAPON) {
 		t = obj->quantity;
 		obj->quantity = 1;
 	}
-	get_desc(obj, desc+10);
-	message(desc, 0);
+	get_desc(obj, desc, sizeof(desc));
+	messagef(0, "she stole %s", desc);
 
 	obj->quantity = ((obj->what_is != WEAPON) ? t : 1);
 
@@ -363,16 +362,13 @@ boolean
 check_imitator(monster)
 	object *monster;
 {
-	char msg[80];
-
 	if (monster->m_flags & IMITATES) {
 		wake_up(monster);
 		if (!blind) {
 			mvaddch(monster->row, monster->col,
 					get_dungeon_char(monster->row, monster->col));
 			check_message();
-			sprintf(msg, "wait, that's a %s!", mon_name(monster));
-			message(msg, 1);
+			messagef(1, "wait, that's a %s!", mon_name(monster));
 		}
 		return(1);
 	}
@@ -400,7 +396,6 @@ sting(monster)
 	object *monster;
 {
 	short sting_chance = 35;
-	char msg[80];
 
 	if ((rogue.str_current <= 3) || sustain_strength) {
 		return;
@@ -411,9 +406,8 @@ sting(monster)
 		sting_chance -= (6 * ((rogue.exp + ring_exp) - 8));
 	}
 	if (rand_percent(sting_chance)) {
-		sprintf(msg, "the %s's bite has weakened you",
-		mon_name(monster));
-		message(msg, 0);
+		messagef(0, "the %s's bite has weakened you",
+			mon_name(monster));
 		rogue.str_current--;
 		print_stats(STAT_STRENGTH);
 	}
@@ -450,7 +444,7 @@ drain_life()
 	n = get_rand(1, 3);		/* 1 Hp, 2 Str, 3 both */
 
 	if ((n != 2) || (!sustain_strength)) {
-		message("you feel weaker", 0);
+		messagef(0, "you feel weaker");
 	}
 	if (n != 2) {
 		rogue.hp_max--;
@@ -472,8 +466,6 @@ boolean
 m_confuse(monster)
 	object *monster;
 {
-	char msg[80];
-
 	if (!rogue_can_see(monster->row, monster->col)) {
 		return(0);
 	}
@@ -483,8 +475,8 @@ m_confuse(monster)
 	}
 	if (rand_percent(55)) {
 		monster->m_flags &= (~CONFUSES);
-		sprintf(msg, "the gaze of the %s has confused you", mon_name(monster));
-		message(msg, 1);
+		messagef(1, "the gaze of the %s has confused you", 
+			mon_name(monster));
 		cnfs();
 		return(1);
 	}

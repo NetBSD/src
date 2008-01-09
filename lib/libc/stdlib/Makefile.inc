@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.65.10.1 2007/11/06 23:11:18 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.65.10.2 2008/01/09 01:34:13 matt Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
@@ -20,7 +20,7 @@ SRCS+=	_rand48.c _strtoimax.c _strtoumax.c _strtoll.c _strtoull.c \
 .if (${USE_JEMALLOC} != "no")
 SRCS+=	jemalloc.c
 .else
-SRCS+=	malloc.c calloc.c
+SRCS+=	malloc.c
 .endif
 
 # machine-dependent stdlib sources
@@ -33,7 +33,7 @@ MAN+=	a64l.3 abort.3 abs.3 alloca.3 atexit.3 atof.3 atoi.3 atol.3 atoll.3 \
 	bsearch.3 div.3 exit.3 getenv.3 getopt.3 getopt_long.3 getsubopt.3 \
 	grantpt.3 hcreate.3 insque.3 labs.3 ldiv.3 llabs.3 lldiv.3 lsearch.3 \
 	malloc.3 memory.3 \
-	posix_openpt.3 ptsname.3 qabs.3 \
+	posix_memalign.3 posix_openpt.3 ptsname.3 qabs.3 \
 	qdiv.3 qsort.3 radixsort.3 rand48.3 rand.3 random.3 \
 	strsuftoll.3 strtod.3 strtol.3 strtoul.3 system.3 tsearch.3 unlockpt.3 \
 	strfmon.3

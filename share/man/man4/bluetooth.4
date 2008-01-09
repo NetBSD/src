@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.4,v 1.6.2.1 2007/11/06 23:12:57 matt Exp $
+.\"	$NetBSD: bluetooth.4,v 1.6.2.2 2008/01/09 01:39:05 matt Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd September 20, 2007
+.Dd December 28, 2007
 .Dt BLUETOOTH 4
 .Os
 .Sh NAME
@@ -189,7 +189,15 @@ and
 fields in the
 .Ar sockaddr_bt
 structure.
-The channel number must be between 1 and 30 inclusive.
+The channel number must be between 1 and 30 inclusive except that if the
+special value
+.Dv RFCOMM_CHANNEL_ANY
+is bound, when the
+.Xr listen 2
+call is made, the first unused channel for the relevant bdaddr will be
+allocated and may be discovered using the
+.Xr getsockname 2
+call.
 If no PSM is specified, a default value of
 .Dv L2CAP_PSM_RFCOMM
 (0x0003) will be used.
@@ -320,6 +328,8 @@ struct btreq {
 #define BTF_INIT_BDADDR		(1\*[Lt]\*[Lt]5)	/* waiting for bdaddr */
 #define BTF_INIT_BUFFER_SIZE	(1\*[Lt]\*[Lt]6)	/* waiting for buffer size */
 #define BTF_INIT_FEATURES	(1\*[Lt]\*[Lt]7)	/* waiting for features */
+#define BTF_NOOP_ON_RESET	(1\*[Lt]\*[Lt]8)	/* wait for No-op on reset */
+#define BTF_INIT_COMMANDS	(1\*[Lt]\*[Lt]9)	/* waiting for supported commands */
 
 struct bt_stats {
 	uint32_t	err_tx;

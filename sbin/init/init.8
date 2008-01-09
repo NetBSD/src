@@ -1,4 +1,4 @@
-.\"	$NetBSD: init.8,v 1.48 2007/03/24 00:17:34 hubertf Exp $
+.\"	$NetBSD: init.8,v 1.48.4.1 2008/01/09 01:38:08 matt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"     @(#)init.8	8.6 (Berkeley) 5/26/95
 .\"
-.Dd March 3, 2007
+.Dd December 15, 2007
 .Dt INIT 8
 .Os
 .Sh NAME
@@ -287,11 +287,15 @@ does not exist,
 will cd to
 .Pa /dev
 and run
-.Dq Li "MAKEDEV -M init" .
+.Dq Li "MAKEDEV -MM init" .
 .Xr MAKEDEV 8
-will create an mfs filesystem mounted over
+will use
+.Xr mount_tmpfs 8
+or
+.Xr mount_mfs 8
+to create a memory file system mounted over
 .Pa /dev
-that contins the standard devices considered necessary to boot the system.
+that contains the standard devices considered necessary to boot the system.
 .Sh FILES
 .Bl -tag -width /var/log/wtmp -compact
 .It Pa /dev/console
@@ -334,7 +338,8 @@ device driver because of a persistent device error condition.
 .Xr MAKEDEV.local 8 ,
 .Xr getty 8 ,
 .Xr halt 8 ,
-.Xr mfs 8 ,
+.Xr mount_mfs 8 ,
+.Xr mount_tmpfs 8 ,
 .Xr rc 8 ,
 .Xr reboot 8 ,
 .Xr shutdown 8 ,

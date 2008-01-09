@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.46.2.1 2007/11/06 23:12:28 matt Exp $	*/
+/*	$NetBSD: atactl.c,v 1.46.2.2 2008/01/09 01:38:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.46.2.1 2007/11/06 23:12:28 matt Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.46.2.2 2008/01/09 01:38:01 matt Exp $");
 #endif
 
 
@@ -85,7 +85,7 @@ struct ata_smart_error {
 		u_int8_t state;
 		u_int8_t lifetime[2];
 	} error_data;
-} __attribute__((packed));
+} __packed;
 
 struct ata_smart_errorlog {
 	u_int8_t		data_structure_revision;
@@ -94,7 +94,7 @@ struct ata_smart_errorlog {
 	u_int16_t		device_error_count;
 	u_int8_t		reserved[57];
 	u_int8_t		checksum;
-} __attribute__((packed));
+} __packed;
 
 struct command {
 	const char *cmd_name;
@@ -131,6 +131,7 @@ const	char *argnames;			/* helpstring: expected arguments */
 void	device_identify(int, char *[]);
 void	device_setidle(int, char *[]);
 void	device_idle(int, char *[]);
+void	device_apm(int, char *[]);
 void	device_checkpower(int, char *[]);
 void	device_smart(int, char *[]);
 void	device_security(int, char *[]);
@@ -140,6 +141,7 @@ void	device_smart_temp(struct ata_smart_attr *, uint64_t);
 struct command device_commands[] = {
 	{ "identify",	"",			device_identify },
 	{ "setidle",	"idle-timer",		device_setidle },
+	{ "apm",	"disable|set #",	device_apm },
 	{ "setstandby",	"standby-timer",	device_setidle },
 	{ "idle",	"",			device_idle },
 	{ "standby",	"",			device_idle },
@@ -956,7 +958,6 @@ device_identify(int argc, char *argv[])
  *
  * issue the IDLE IMMEDIATE command to the drive
  */
-
 void
 device_idle(int argc, char *argv[])
 {
@@ -981,6 +982,38 @@ device_idle(int argc, char *argv[])
 
 	return;
 }
+
+/*
+ * device apm:
+ *
+ * enable/disable/control the APM feature of the drive
+ */
+void
+device_apm(int argc, char *argv[])
+{
+	struct atareq req;
+	long l;
+
+	memset(&req, 0, sizeof(req));
+	if (argc >= 1) {
+		req.command = SET_FEATURES;
+		req.timeout = 1000;
+		
+		if (strcmp(argv[0], "disable") == 0)
+			req.features = WDSF_APM_DS;
+		else if (strcmp(argv[0], "set") == 0 && argc >= 2 &&
+		         (l = strtol(argv[1], NULL, 0)) >= 0 && l <= 253) {
+			
+			req.features = WDSF_APM_EN;
+			req.sec_count = l + 1;
+		} else
+			usage();
+	} else
+		usage();
+	
+	ata_command(&req);
+}
+	
 
 /*
  * Set the idle timer on the disk.  Set it for either idle mode or

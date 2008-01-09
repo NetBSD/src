@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.73.4.1 2007/11/06 23:11:34 matt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.73.4.2 2008/01/09 01:36:26 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.73.4.1 2007/11/06 23:11:34 matt Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.73.4.2 2008/01/09 01:36:26 matt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -562,6 +562,8 @@ again:
 		kp2c = (char *)(void *)kd->procbase2;
 		kp2p = &kp2;
 		for (i = 0; i < nprocs; i++, kp++) {
+			struct timeval tv;
+
 			kl = kvm_getlwps(kd, kp->kp_proc.p_pid,
 			    (u_long)PTRTOUINT64(kp->kp_eproc.e_paddr),
 			    sizeof(struct kinfo_lwp), &nlwps);
@@ -617,10 +619,9 @@ again:
 			kp2p->p_tsess = PTRTOUINT64(kp->kp_eproc.e_tsess);
 
 			kp2p->p_estcpu = 0;
-			kp2p->p_rtime_sec =
-			    (uint32_t)kp->kp_proc.p_rtime.tv_sec;
-			kp2p->p_rtime_usec =
-			    (uint32_t)kp->kp_proc.p_rtime.tv_usec;
+			bintime2timeval(&kp->kp_proc.p_rtime, &tv);
+			kp2p->p_rtime_sec = (uint32_t)tv.tv_sec;
+			kp2p->p_rtime_usec = (uint32_t)tv.tv_usec;
 			kp2p->p_cpticks = kl[0].l_cpticks;
 			kp2p->p_pctcpu = kp->kp_proc.p_pctcpu;
 			kp2p->p_swtime = kl[0].l_swtime;

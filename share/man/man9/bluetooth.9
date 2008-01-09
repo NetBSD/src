@@ -1,4 +1,4 @@
-.\"	$NetBSD: bluetooth.9,v 1.2 2007/04/21 06:15:22 plunky Exp $
+.\"	$NetBSD: bluetooth.9,v 1.2.4.1 2008/01/09 01:39:18 matt Exp $
 .\"
 .\" Copyright (c) 2006 Itronix Inc.
 .\" All rights reserved.
@@ -30,7 +30,7 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 10, 2007
+.Dd November 20, 2007
 .Dt BLUETOOTH 9
 .Os
 .Sh NAME
@@ -41,8 +41,8 @@
 .In netbt/hci.h
 .In netbt/l2cap.h
 .In netbt/rfcomm.h
-.Ft void
-.Fn hci_attach "struct hci_unit *unit"
+.Ft struct hci_unit *
+.Fn hci_attach "const struct hci_if *hci_if" "device_t dev" "uint16_t flags"
 .Ft void
 .Fn hci_detach "struct hci_unit *unit"
 .Ft void
@@ -77,38 +77,27 @@
 .Fn btproto_getopt "btproto_handle" "int optarg" "void *arg"
 .Sh DESCRIPTION
 The Bluetooth Protocol Stack provides socket based access to Bluetooth
-Devices. This document describes device driver access to the stack from
+Devices.
+This document describes device driver access to the stack from
 below, and also the general Bluetooth Protocol/Service API for layering
 above existing Bluetooth Protocols.
 .Sh DATA TYPES
-Device drivers attached to the Bluetooth Protocol Stack will make use of the
-.Fa struct hci_unit
-data type defined in
+Device drivers attaching to the Bluetooth Protocol Stack should pass a
+pointer to a
+.Fa struct hci_if
+defined in
 .In netbt/hci.h
-.Pp
-This contains the following data items and function callbacks which
-should be initialised by the device before
-.Fn hci_attach
-is called:
+containing the driver information as follows:
 .Bd -literal
-	void	 *hci_softc;		/* self reference */
-	char	 *hci_devname;		/* ->dv_xname */
-	int	  hci_ipl;		/* to block interrupts */
-	int	(*hci_enable)(struct hci_unit *);
-	void	(*hci_disable)(struct hci_unit *);
-	void	(*hci_start_cmd)(struct hci_unit *);
-	void	(*hci_start_acl)(struct hci_unit *);
-	void	(*hci_start_sco)(struct hci_unit *);
-.Ed
-.Pp
-and other items of interest that will be initialised by the protocol
-stack:
-.Bd -literal
-	uint16_t	hci_flags;
-	MBUFQ_HEAD()	hci_cmdq;
-	MBUFQ_HEAD()	hci_acltxq;
-	MBUFQ_HEAD()	hci_scotxq;
-	struct bt_stats hci_stats;
+struct hci_if {
+	int	(*enable)(device_t);
+	void	(*disable)(device_t);
+	void	(*output_cmd)(device_t, struct mbuf *);
+	void	(*output_acl)(device_t, struct mbuf *);
+	void	(*output_sco)(device_t, struct mbuf *);
+	void	(*get_stats)(device_t, struct bt_stats *, int);
+	int	ipl;
+};
 .Ed
 .Pp
 Statistics counters should be updated by the device after packets have
@@ -134,8 +123,8 @@ will make use of the
 data type, which is defined in
 .In netbt/bluetooth.h
 and contains the following function callbacks which
-should be initialised by the protocol layer before attaching to the
-protocol which it utilises:
+should be initialized by the protocol layer before attaching to the
+protocol which it uses:
 .Bd -literal
 struct btproto {
 	void (*connecting)(void *);
@@ -150,102 +139,97 @@ struct btproto {
 .Sh FUNCTIONS
 The following functions are related to the Bluetooth Device API.
 .Bl -tag -width XXXX
-.It Fn hci_attach "unit"
+.It Fn hci_attach "hci_if" "dev"
 Attach Bluetooth HCI device
-.Ar unit
-to the protocol stack.
+.Ar dev
+to the protocol stack in the manner described by
+.Ar hci_if .
+Driver quirks may be registered by passing the corresponding
+.Dv BTF_xxxx
+flag in the
+.Ar flags
+argument.
+.Pp
+.Fn hci_attach
+will return a
+.Fa struct hci_unit
+handle to be passed to the protocol stack in other calls.
 .It Fn hci_detach "unit"
-Detach Bluetooth HCI device
+Detach Bluetooth HCI
 .Ar unit
-from the protocol stack.
+from the device.
 .It Fn hci_input_event "unit" "mbuf"
 This function should be called by the device when it has an event
-packet to present to the protocol stack. It may be called from an
-interrupt routine at the
-.Fa hci_ipl
-value given above.
+packet to present to the protocol stack.
+It may be called from an interrupt routine at the
+.Fa ipl
+value given in the
+.Ar hci_if
+descriptor.
 .It Fn hci_input_acl "unit" "mbuf"
 This function should be called by the device when it has an ACL data
-packet to present to the protocol stack. It may be called from an
-interrupt routine at the
-.Fa hci_ipl
-value given above.
+packet to present to the protocol stack.
+It may be called from an interrupt routine at the
+.Fa ipl
+value given in the
+.Ar hci_if
+descriptor.
 .It Fn hci_input_sco "unit" "mbuf"
 This function should be called by the device when it has an SCO data
-packet to present to the protocol stack. It may be called from an
-interrupt routine at the
-.Fa hci_ipl
-value given above.
-.It Fn "(*hci_enable)" "unit"
-This will be called at the given
-.Fa hci_ipl
-level when the protocl stack wishes to enable the device. The driver should
-set the
-.Dv BTF_RUNNING
-flag in the unit structure.
-.It Fn "(*hci_disable)" "unit"
-This will be called at the given
-.Fa hci_ipl
-level when the protocol stack wishes to disable the device. The driver
-should clear the
-.Dv BTF_RUNNING
-flag in the unit structure.
-.It Fn "(*hci_start_cmd)" "unit"
-Will be called at the given
-.Fa hci_ipl
-level when command packets are available to be transmitted on the
-.Fa hci_cmdq
-queue in the
-.Fa hci_unit
-structure and the
-.Dv BTF_XMID_CMD
-flag is not set. The device should set
-.Dv BTF_XMIT_CMD
-and start sending command packets asyncrhonously until the queue
-is empty, then clear the
-.Dv BTF_XMIT_CMD
-flag and exit.
-.It Fn "(*hci_start_acl)" "unit"
-Will be called at the given
-.Fa hci_ipl
-level when ACL packets are available to be transmitted on the
-.Fa hci_acltxq
-queue in the
-.Fa hci_unit
-structure and the
-.Dv BTF_XMIT_ACL
-unit flag is not set. The device should set
-.Dv BTF_XMIT_ACL
-and start sending ACL packets asynchronously until the queue is empty,
-then clear the
-.Dv BTF_XMIT_ACL
-flag and exit.
-.It Fn "(*hci_start_sco)" "unit"
-Will be called at the given
-.Fa hci_ipl
-level when SCO packets are available to be transmitted on the
-.Fa hci_scotxq
-queue in the
-.Fa hci_unit
-structure and the
-.Dv BTF_XMIT_SCO
-flag is not set. The device should set the unit flag
-.Dv BTF_XMIT_SCO
-and start sending SCO packets asynchronously until the queue is empty,
-then clear the
-.Dv BTF_XMIT_SCO
-flag and exit.
+packet to present to the protocol stack.
+It may be called from an interrupt routine at the
+.Fa ipl
+value given in the
+.Ar hci_if
+descriptor.
+.It Fn "(*enable)" "dev"
+This will be called when the protocol stack wishes to enable the device.
+.It Fn "(*disable)" "dev"
+This will be called when the protocol stack wishes to disable the device.
+.It Fn "(*output_cmd)" "dev" "mbuf"
+Will be called to output command packets on the device.
+The device is responsible for arbitrating access to the output queue, and
+output commands should be sent asynchronously.
+The device owns the
+.Ar mbuf
+and should release it when sent.
+.It Fn "(*output_acl)" "dev" "mbuf"
+Will be called to output ACL data packets on the device.
+The device is responsible for arbitrating access to the output queue, and
+ACL data packets should be sent asynchronously.
+The device owns the
+.Ar mbuf
+and should release it when sent.
+.It Fn "(*output_sco)" "dev" "mbuf"
+Will be called to output SCO data packets on the device.
+The device is responsible for arbitrating access to the output queue, and
+SCO data packets should be sent asynchronously.
+When the SCO data packet has been placed on the device and the
+.Ar mbuf
+is no longer required, it should be returned to the Bluetooth protocol
+stack via the
+.Fn hci_complete_sco
+call.
+.It Fn "(*get_stats)" "dev" "dest" "flush"
+Will be called when IO statistics are requested.
+The
+.Fa bt_stats
+structure
+.Ar dest
+should be filled in, and if the
+.Ar flush
+argument is true, statistics should be reset.
 .El
 .Pp
 The following function definitions are related to the Bluetooth Protocol API.
 Note that the "btproto" prefix is representative only, the protocol being
-utilised will have a more specific prefix with prototypes being declared in
+used will have a more specific prefix with prototypes being declared in
 the appropriate
 .In netbt/btproto.h
 file.
 .Bl -tag -width XXXX
 .It Fn btproto_attach "handle_ptr" "proto" "ref"
-Allocate and initialise a new protocol object at the
+Allocate and initialize a new protocol object at the
 .Ar handle_ptr
 address that should subsequently be passed into the other functions.
 .Ar proto
@@ -270,11 +254,11 @@ Initiate a connection by the protocol object described by
 to the remote device described by
 .Ar addr .
 This will result in a call to either
-.Fn proto->connected
+.Fn proto-\*[Gt]connected
 or
-.Fn proto->disconnected ,
+.Fn proto-\*[Gt]disconnected ,
 and optionally
-.Fn proto->connecting
+.Fn proto-\*[Gt]connecting
 with the appropriate reference as given to
 .Fn btproto_attach .
 .It Fn btproto_peeraddr "handle" "addr"
@@ -286,19 +270,22 @@ into
 Schedule a disconnection by the protocol object described by
 .Ar handle .
 This will result in a call to
-.Fn proto->disconnected
+.Fn proto-\*[Gt]disconnected
 with the appropriate reference when the connection is torn
-down. If linger is zero, the disconnection will be initiated
+down.
+If linger is zero, the disconnection will be initiated
 immediately and any outstanding data may be lost.
 .It Fn btproto_detach "handle_ptr"
 Detach the protocol object described by the value in the location of
 .Ar handle_ptr ,
-and free any related memory. The pointer in the location is cleared.
+and free any related memory.
+The pointer in the location is cleared.
 .It Fn btproto_listen "handle"
-Utilise the protocol object described by
+Use the protocol object described by
 .Ar handle
-as a listening post. This will result in calls to the
-.Fn proto->newconn
+as a listening post.
+This will result in calls to the
+.Fn proto-\*[Gt]newconn
 function when incoming connections are detected.
 .It Fn btproto_send "handle" "mbuf"
 Send data on the connection described by the protocol object.
@@ -306,8 +293,9 @@ Send data on the connection described by the protocol object.
 Indicate to the protocol that
 .Ar space
 is now available in the input buffers so that flow control may be
-deasserted. This should also be called to indicate initial buffer
-space. Note that
+deasserted.
+This should also be called to indicate initial buffer space.
+Note that
 .Ar space
 is an absolute value.
 .It Fn btproto_setopt "handle" "optarg" "arg"
@@ -340,13 +328,15 @@ should attach and return a new instance of the relevant protocol handle
 or NULL.
 .It Fn "(*complete)" "ref" "count"
 This function will be called when the protocol has completed sending
-data.  Complete will usually mean that the data has successfully left
+data.
+Complete will usually mean that the data has successfully left
 the device though for guaranteed protocols it can mean that the data
 has arrived at the other end and been acknowledged, and that
 .Ar count
-amount of data can be removed from the socket buffer. The units of the
+amount of data can be removed from the socket buffer.
+The units of the
 .Ar count
-value will be dependent on the protocol being used (eg RFCOMM is bytes,
+value will be dependent on the protocol being used (e.g. RFCOMM is bytes,
 but L2CAP is packets)
 .It Fn "(*linkmode)" "ref" "mode"
 This function will be called for established connections, when the link mode
@@ -361,8 +351,8 @@ This function is called to supply new data on the connection described by
 This section describes places in the
 .Nx
 source tree where actual code implementing or using the
-Bluetooth Protocol Stack can be found. All pathnames are
-relative to
+Bluetooth Protocol Stack can be found.
+All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The Bluetooth Protocol Stack is contained in the

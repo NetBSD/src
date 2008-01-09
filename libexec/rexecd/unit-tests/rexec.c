@@ -1,4 +1,4 @@
-/*	$NetBSD: rexec.c,v 1.2 2005/02/27 01:34:07 christos Exp $	*/
+/*	$NetBSD: rexec.c,v 1.2.16.1 2008/01/09 01:37:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: rexec.c,v 1.2 2005/02/27 01:34:07 christos Exp $");
+__RCSID("$NetBSD: rexec.c,v 1.2.16.1 2008/01/09 01:37:15 matt Exp $");
 
 #include <stdio.h>
 #include <netdb.h>
@@ -44,7 +44,7 @@ __RCSID("$NetBSD: rexec.c,v 1.2 2005/02/27 01:34:07 christos Exp $");
 #include <unistd.h>
 #include <err.h>
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 /*XXX*/
 int rexec(char **, int, char *, char *, char *, int *);
 

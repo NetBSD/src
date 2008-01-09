@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.206.2.1 2007/11/06 23:10:19 matt Exp $
+#	$NetBSD: BRANCHES,v 1.206.2.2 2008/01/09 01:29:24 matt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -211,7 +211,7 @@ Notes:
 Branch:		ad-audiomp
 Description:	Add MP locking to the audio drivers
 Status:		Active
-Start Date:	28 Febuary 2007
+Start Date:	28 February 2007
 End Date:
 Base Tag:	ad-audiomp-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
@@ -232,7 +232,7 @@ Notes:		Making the audio drivers MP safe is necessary before efforts
 		methods which were called at splaudio() before (e.g.
 		trigger_output). The character device lock is held across
 		calls to nearly all of the methods, excluding some only
-		used for initializtion, e.g. get_locks. This needs to be
+		used for initialization, e.g. get_locks. This needs to be
 		documented at merge time.
 
 		To test on a multi way x86 system, search for "mpsafe" in
@@ -254,12 +254,13 @@ Notes:		This code was on a branch because it involves changes to
 		cpuswitch.S which would otherwise make merging the
 		nathanw_sa branch difficult.
 
-Branch:		bouyer-xenamd64
-Description:	add amd64 support to Xen and rework some parts to share more code between Xen and others
+Branch:		bouyer-xeni386
+Description:	switch xen on i386 to the x86 pmap and the xen/x86/x86_xpmap.c bootstrap, and add i386 PAE support
 Status:		Active
-Start Date:	18 Oct 2007
-End Date:	
-Base Tag:	bouyer-xenamd64-base
+Start Date:	10 Dec 2007
+End Date:
+Base Tag:	bouyer-xeni386-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		kernel
 Notes:		
 
@@ -269,11 +270,21 @@ Status:		Active
 Start Date:	11 Aug 2007
 End Date:
 Base Tag:	chris-arm-intr-rework-base
-Maintainer:	Chris Gilbert <chrisNetBSD.org>
+Maintainer:	Chris Gilbert <chris@NetBSD.org>
 Scope:		sys/arch/arm sys/arch/cats (other arm archs to follow)
 Notes:		Rework arm interrupt code to provide a shared set of interrupt
 		routines, and allow improvements to be shared across all arm
 		based hardware.
+
+Branch:		cube-autoconf
+Description:	Renovate autoconf(9) API
+Status:		Active
+Start Date:	11 Dec 2007
+End Date:
+Base Tag:	cube-autoconf-base
+Maintainer:	Quentin Garnier <cube@NetBSD.org>
+Scope:		kernel usr.bin/config (and some other userland bits)
+Notes:		Address a number of issues the current autoconf(9) API has.
 
 Branch:		gmcgarry_ctxsw
 Description:	Separate scheduler from context-switch code
@@ -283,7 +294,7 @@ End Date:
 Base Tag:	gmcgarry_ctxsw_base
 Maintainer:	Gregory McGarry <gmcgarry@NetBSD.org>
 Scope:		kernel
-Notes:		Removing knowledge of the schedular and its run queues
+Notes:		Removing knowledge of the scheduler and its run queues
 		from the machine-dependent context switch code is the
 		first step in cleaning up the scheduler.  It is necessary
 		for the newlock branch, making the scheduler SMP friendly,
@@ -323,15 +334,6 @@ Notes:		To check out the kernel source tree,
 			cvs checkout -ritohy-usb1 src/sys/dev/usb/filelist
 		2. update files in the branch
 			sh -e src/sys/dev/usb/filelist
-
-Branch:		jmcneill-pm
-Description:	Power management framework overhaul, ACPI improvements
-Status:		Active
-Start Date:	3 Aug 2007
-End Date:	
-Base Tag:	jmcneill-pm-base
-Scope:		kernel
-Notes:		
 
 Branch:		kame
 Description:	KAME Project
@@ -382,7 +384,7 @@ Notes:
 
 Branch:		matt-armv6
 Description:	Rototill the arm code to support features present in the
-		v6 of the ARM Architecure.  Additionally, clean up things
+		v6 of the ARM Architecture.  Additionally, clean up things
 		along the way to use common practices.
 Status:		Active
 Start Date:	2007-08-27
@@ -392,43 +394,28 @@ Maintainer:	Matt Thomas <matt@NetBSD.org>
 Scope:		kernel & userland
 Notes:	
 
-Branch:		newlock
-Description:	New locking primitives, based on Solaris's
-Status:		Terminated
-Start Date:	March 9, 2002
-End Date:	Febuary 12, 2007
-Base Tag:	newlock-base
-Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
-Scope:		Kernel
-Notes:		The goal is to replace the existing lockmgr() and
-		simple_lock() based locking mechanisms with the
-		primitives found in Solaris: mutexes and rwlocks.
-		Superseeded by the newlock2 branch.
-
-Branch:		newlock2
-Description:	New locking primitives, based on Solaris's
-Status:		Terminated
-Start Date:	September 9, 2006
-End Date:	Febuary 12, 2007
-Base Tag:	newlock2-base
-Maintainer:	Andrew Doran <ad@NetBSD.org>
-Scope:		Kernel
-Notes:		As per the newlock branch, however given the amount of time
-		the original branch has lain dormant, a new one has been
-		created.  Goals:
-		- Implement new locking primitives on most-used ports.
-		- Minor locking improvements.
-		- Remove spinlockmgr().
-
-Branch:		nick-csl-alignment
-Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
-Status:		Terminated
-Start Date:	2007-07-18
+Branch:		mjf-devfs
+Description:	device file system supporting dynamic device nodes
+Status:		Active
+Start Date:	12 November 2007
 End Date:
-Base Tag:	nick-csl-alignment-base5
-Maintainer:	Nick Hudson <skrll@NetBSD.org>
-Scope:		sys, lib/libpthread, lib/libpthread_dbg
-Notes:	
+Base Tag:	mjf-devfs-base
+Maintainer:	Matt Fleming <mjf@NetBSD.org>
+Scope:		kernel and userland
+Notes:		This branch will move away from the static device nodes that
+		are created with MAKEDEV scripts and allow nodes to be created
+		and removed dynamically as devices are attached and detached
+		from the machine.
+
+Branch:		mjf-ufs-trans
+Description:	file system transactions for ufs
+Status:		Active
+Start Date:	12 March 2007
+End Date:
+Base Tag:	mjf-ufs-trans-base
+Maintainer:	Matt Fleming <mjf@NetBSD.org>
+Scope:		kernel
+Notes:
 
 Branch:	  	pkgviews
 Description:  	package views, enabling multiple conflicting packages to co-exist
@@ -441,21 +428,6 @@ Scope:		pkgsrc, basesrc/usr.sbin/pkg_install
 Notes:		A more flexible infrastructure for third-party packages by
 		allowing multiple conflicting packages and versions to co-exist
 		within the same tree
-
-Branch:		ppcoea-renovation
-Description:	General renovation and cleanup of all OEA PowerPC ports.
-Status:		Terminated; merged to -current
-Start Date:	30 April 2007
-End Date:	15 October 2007
-Base Tag:	ppcoea-renovation-base
-Maintainer:	Tim Rightnour <garbled@netbsd.org>
-Scope:		src/sys/arch
-Notes:		This branch is for a general cleanup of all OEA-based PowerPC
-		ports. OEA (Operating Environment Architecture) PowerPC refers
-		to the 601, 603, 604, and similar chips.  Specifically, not the
-		403/401 and other embedded chips. The general concept is to get
-		them all compiling, and sharing as much code as possible.  All
-		developers are welcome to commit to this branch.
 
 Branch:		rpaulo-netinet-merge-pcb
 Description:	merge in6pcb with inpcb
@@ -475,7 +447,7 @@ Notes:		No longer active due to the lack of time. If you plan to
 		kernel fine-grained locking).
 		To continue this branch, one needs to read all the relevant
 		inpcb/in6pcb source files and change the function names,
-		structure names, structure fileds according to the new
+		structure names, structure fields according to the new
 		layout (in6pcb is gone).
 		Don't try to build a kernel from this branch because it won't
 		work. The missing pieces required to do a complete build
@@ -522,10 +494,20 @@ Notes:		This branch is based off of the netbsd-4 branch!
 
 Branch:		vmlocking
 Description:	Make VM and file system framework MP safe
-Status:		Active
+Status:		Terminated
 Start Date:	13 March 2007
-End Date:
+End Date:	4 December 2007
 Base Tag:	vmlocking-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		kernel
+Notes:		Superseded by vmlocking2 branch.
+
+Branch:		vmlocking2
+Description:	Make VM and file system framework MP safe
+Status:		Active
+Start Date:	4 December 2007
+End Date:
+Base Tag:	vmlocking2-base3
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
 Notes:		Goals:
@@ -536,59 +518,43 @@ Notes:		Goals:
 
 		Status by architecture:
 
-		  alpha			partial: pmap.c/trap.c need work
-		  i386			done
-		  amd64			done
-		  mips			partial: !pmax needs work
-		  sparc			
-		  sparc64		
-		  arm			
-		  macppc/powerpc	
-		  hppa			
-		  sh3			
-		  vax			
-		  m68k			
-
-		Remaining MD work to do:
-
-		- Defer x86 npxsave interrupts to an process context (do
-		  aston() and handle from trap.c).
-
-		- Port other architectures.
+		  alpha		done
+		  i386		done
+		  amd64		done
+		  mips		done
+		  sparc		need pmap/trap locking changes	
+		  sparc64	done
+		  arm		done
+		  powerpc	done
+		  hppa		done
+		  sh3		done
+		  m68k		done
+		  xen		need pmap/trap locking changes
 
 		Remaining MI work to do:
-
-		- Clean up vfs_busy/vfs_unbusy and mount/dounmount semantics
-		  so that lockmgr is not being used any more. Reference
-		  counting on struct mount is probably the best solution.
-
-		- Check + document locking around fields in struct mount.
-
-		- Check file systems that traverse mountpoint vnode lists.
-		  They need to use marker vnodes. Most already done.
-
-		- Re-write the itimer code to be MP safe and work in the
-		  presence of threaded soft interrupts.
 
 		- Check aliased vnode handling. There may be problems.
 
 		Remaining problems:
 
-		- tmpfs_rmdir occasionally leaks tmpfs_nodes. This could be
-		  an old problem but either way it needs to be fixed.
+		- LFS stalls due to v_numoutput leak.
 
-		- UVM_FLAG_TRYLOCK is not sufficient in uvm_km.c because
-		  allocations will fail too often. It's needed for !kmem_map
-		  because sometimes allocations are made by threads that
-		  hold the map locked, which could cause other threads to
-		  wait long term even if they are trying to make a NOWAIT
-		  allocation.
-
-		- ffs+snapshots needs testing.
-
-		- LFS port has been fudged and it's probably borked.
-
-		- ext2fs panic on unmount.
+Branch:		yamt-kmem
+Description:	
+		- separate kernel va allocation from kernel fault handling.
+		- make kmem_alloc interrupt-safe.
+Status:		Active
+Start Date:	Sun Dec  9 2007
+End Date:	
+Base Tag:	yamt-kmem-base3
+Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
+Scope:		src/sys  (src/common is tagged but not branched)
+Notes:		
+		todo:
+		- investigate if PMAP_PREFER equivalent can be done
+		  with vmem_xalloc.  find a tester with hardware for it.
+		- g/c replaced code, including kmapent and malloc.
+		- consider to remove other submaps.  eg. mb_map
 
 Branch:		yamt-lazymbuf
 Description:	implement and evaluate lazy mapping of mbuf external data pages
@@ -603,7 +569,7 @@ Description:	implement and evaluate lazy mapping of mbuf external data pages
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
-Base Tag:	yamt-lazymbuf-base5
+Base Tag:	yamt-lazymbuf-base8
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
@@ -619,7 +585,7 @@ Description:	implement and evaluate struct buf usage cleanup strategies.
 			1. use of bio_ops per buffer.
 			2. allow chaining/overloading of functions in bio_ops
 			   and provide some private context.
-			3. extend the bio_ops with commenly used functionality
+			3. extend the bio_ops with commonly used functionality
 			   like pending action counting, custom context passing,
 			   last minute processing of buffer data, buffer cache
 			   etc.
@@ -630,7 +596,7 @@ Description:	implement and evaluate struct buf usage cleanup strategies.
 		b)
 			1. all sequencing use of B_CALL replaced by
 			   device-threads, if possible generic code around BUFQ
-			2. possibly use kcont() for async IO finished signalling
+			2. possibly use kcont() for async IO finished signaling
 			3. counter of pending and queued actions requestable
 			   by IOCTL interface?
 			4. implement `last minute buffer fixup' calls and maybe
@@ -642,8 +608,8 @@ End Date:
 Base Tag:	reinoud-bufcleanup-base
 Maintainer:	Reinoud Zandijk <reinoud@NetBSD.org>
 Scope:		src/sys and src/common
-Notes:		Used as expiriment sandbox and if successful hopefully one day
-		to be intergrated.
+Notes:		Used as experiment sandbox and if successful hopefully one day
+		to be integrated.
 
 Branch:		thorpej-atomic
 Description:	Implementation of an atomic memory operations API modeled
@@ -743,6 +709,16 @@ Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
 Scope:		src/sys/arch/xen
 Notes:
 
+Branch:		bouyer-xenamd64
+Description:	add amd64 support to Xen and rework some parts to share more code between Xen and others
+Status:		Terminated
+Start Date:	18 Oct 2007
+End Date:	22 Nov 2007
+Base Tag:	bouyer-xenamd64-base
+Maintainer:	Manuel Bouyer <bouyer@NetBSD.org>
+Scope:		kernel
+Notes:		
+
 Branch: 	chap-midi
 Description:	Renovation of MIDI support
 Status: 	Terminated; merged to -current
@@ -838,6 +814,16 @@ Maintainer:	Ignatios Souvatzis <is@NetBSD.org>
 Scope:		kernel
 Notes:
 
+Branch:		jmcneill-pm
+Description:	Power management framework overhaul, ACPI improvements
+Status:		Terminated; merged before NetBSD 5.0
+Start Date:	3 Aug 2007
+End Date:	9 Dec 2007
+Base Tag:	jmcneill-pm-base
+Maintainer:	Jared D. McNeill <jmcneill@NetBSD.org>
+Scope:		kernel
+Notes:		
+
 Branch:		kenh-if-detach
 Description:	Interface detach support.
 Status:		?
@@ -917,19 +903,9 @@ Notes:		Citrus Project is developing dynamically-loadable, codeset-
 		independent locale subsystem.  Part of the implementation
 		(LC_CTYPE) called XPG4DL is now integrated to -current.
 
-Branch:		mjf-ufs-trans
-Description:	filesystem transactions for ufs
-Status:		Active
-Start Date:	12 March 2007
-End Date:
-Base Tag:	mjf-ufs-trans-base
-Maintainer:	Matt Fleming <mjf@NetBSD.org>
-Scope:		kernel
-Notes:
-
 Branch:		mrg-vm-swap
 Description:	dynamic swap allocation, swap-to-files support
-Status:		Terminated; abondoned for mrg-vm-swap2
+Status:		Terminated; abandoned for mrg-vm-swap2
 Start Date:	12 February 1997
 End Date:	15 March 1997
 Base Tag:	[none]
@@ -982,6 +958,44 @@ Notes:		The idea of scheduler activations is described in the
 		"nathanw_sa_end" to indicate the ending revision of
 		the branch.
 
+Branch:		newlock
+Description:	New locking primitives, based on Solaris's
+Status:		Terminated
+Start Date:	March 9, 2002
+End Date:	February 12, 2007
+Base Tag:	newlock-base
+Maintainer:	Jason R. Thorpe <thorpej@NetBSD.org>
+Scope:		Kernel
+Notes:		The goal is to replace the existing lockmgr() and
+		simple_lock() based locking mechanisms with the
+		primitives found in Solaris: mutexes and rwlocks.
+		Superseded by the newlock2 branch.
+
+Branch:		newlock2
+Description:	New locking primitives, based on Solaris's
+Status:		Terminated
+Start Date:	September 9, 2006
+End Date:	February 12, 2007
+Base Tag:	newlock2-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		Kernel
+Notes:		As per the newlock branch, however given the amount of time
+		the original branch has lain dormant, a new one has been
+		created.  Goals:
+		- Implement new locking primitives on most-used ports.
+		- Minor locking improvements.
+		- Remove spinlockmgr().
+
+Branch:		nick-csl-alignment
+Description:	Provide correctly aligned __cpu_simple_lock_t for hppa
+Status:		Terminated
+Start Date:	2007-07-18
+End Date:
+Base Tag:	nick-csl-alignment-base5
+Maintainer:	Nick Hudson <skrll@NetBSD.org>
+Scope:		sys, lib/libpthread, lib/libpthread_dbg
+Notes:	
+
 Branch:		perseant-lfsv2
 Description:	LFS incompatible on-disk data structure changes
 Status:		Terminated
@@ -992,6 +1006,21 @@ Maintainer:	Konrad Schroder <perseant@NetBSD.org>
 Scope:		basesrc/{sbin/*lfs,libexec/lfs_cleanerd,usr.sbin/dumplfs}, syssrc/sys/ufs
 Notes:		This branch should be short-lived, I expect to merge as soon
 		as the data structures required for unremove are in and tested.
+
+Branch:		ppcoea-renovation
+Description:	General renovation and cleanup of all OEA PowerPC ports.
+Status:		Terminated; merged to -current
+Start Date:	30 April 2007
+End Date:	15 October 2007
+Base Tag:	ppcoea-renovation-base
+Maintainer:	Tim Rightnour <garbled@netbsd.org>
+Scope:		src/sys/arch
+Notes:		This branch is for a general cleanup of all OEA-based PowerPC
+		ports. OEA (Operating Environment Architecture) PowerPC refers
+		to the 601, 603, 604, and similar chips.  Specifically, not the
+		403/401 and other embedded chips. The general concept is to get
+		them all compiling, and sharing as much code as possible.  All
+		developers are welcome to commit to this branch.
 
 Branch:		thorpej-devvp
 Description:	replace dev_t with struct vnode * in devsw entry points
@@ -1047,8 +1076,8 @@ Notes:
 		Only the maintainer should move tags.
 
 		Note that this branch uses a DIFFERENT scheme for 
-		synching with the mainline.  the maintainer uses some private
-		scripts for keeping them in synch; if you make commits 
+		syncing with the mainline.  the maintainer uses some private
+		scripts for keeping them in sync; if you make commits 
 		to the branch to "resynchronize" things, you'll
 		probably do it wrong; instead, ask the maintainer to
 		resynchronize things.

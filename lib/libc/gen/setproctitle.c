@@ -1,4 +1,4 @@
-/* $NetBSD: setproctitle.c,v 1.21 2003/07/26 19:24:44 salo Exp $ */
+/* $NetBSD: setproctitle.c,v 1.21.22.1 2008/01/09 01:34:07 matt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: setproctitle.c,v 1.21 2003/07/26 19:24:44 salo Exp $");
+__RCSID("$NetBSD: setproctitle.c,v 1.21.22.1 2008/01/09 01:34:07 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -63,19 +63,20 @@ struct ps_strings *__ps_strings;
 void
 setproctitle(const char *fmt, ...)
 {
-	va_list ap;
 	static char buf[MAX_PROCTITLE], *bufp;
-	int used;
+	const char *pname = getprogname();
 
-	va_start(ap, fmt);
 	if (fmt != NULL) {
-		used = snprintf(buf, (size_t)MAX_PROCTITLE, "%s: ",
-		    getprogname());
-		(void)vsnprintf(buf + used, (size_t)(MAX_PROCTITLE - used),
-		    fmt, ap);
+		int len = snprintf(buf, sizeof(buf), "%s: ", pname);
+		if (len >= 0) {
+			va_list ap;
+
+			va_start(ap, fmt);
+			(void)vsnprintf(buf + len, sizeof(buf) - len, fmt, ap);
+			va_end(ap);
+		}
 	} else
-		(void)snprintf(buf, MAX_PROCTITLE, "%s", getprogname());
-	va_end(ap);
+		(void)snprintf(buf, sizeof(buf), "%s", pname);
 
 	bufp = buf;
 

@@ -1,4 +1,4 @@
-.\"	$NetBSD: boot.8,v 1.38 2006/06/29 20:24:13 christos Exp $
+.\"	$NetBSD: boot.8,v 1.38.10.1 2008/01/09 01:39:16 matt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,9 +32,9 @@
 .\"
 .\"     @(#)boot_i386.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd June 29, 2006
-.Dt BOOT 8 i386
+.Dd December 14, 2007
 .Os
+.Dt BOOT 8 i386
 .Sh NAME
 .Nm boot
 .Nd
@@ -135,6 +135,12 @@ enter interactive mode.
 When using a short or 0 timeout, it is often useful to interrupt the boot
 by holding down a shift key, as some BIOSes and BIOS extensions will drain the
 keystroke buffer at various points during POST.
+.Pp
+If present, the file /boot.cfg will be used to configure the behaviour of the
+boot loader including setting the timeout, choosing a console device, altering
+the banner text and displaying a menu allowing boot commands to be easily
+chosen. See
+.Xr boot.cfg 5 .
 .Ss Diagnostic Output
 If the first stage boot fails to load the boot, it will print a terse
 message indicating the reason for the failure.
@@ -146,13 +152,14 @@ error messages should be self-explanatory.
 .Ss Interactive mode
 In interactive mode, the boot loader will present a prompt, allowing
 input of these commands:
-.\" NOTE: much of this text is duplicated in dosboot.8; please try to
-.\" keep both files synchronized.
+.\" NOTE: much of this text is duplicated in the MI boot.8.  Some of it is
+.\" also duplicated in the i386-specific dosboot.8 and pxeboot.8;
+.\" please try to keep all relevant files synchronized.
 .Bl -tag -width 04n -offset 04n
 .It Xo Ic boot
 .Op Va device : Ns
 .Op Va filename
-.Op Fl acdqsv
+.Op Fl acdqsvxz
 .Xc
 The default
 .Va device
@@ -208,12 +215,12 @@ Prompt for the root file system device, the system crash dump
 device, and the path to
 .Xr init 8 .
 .It Fl c
-Bring the system up into the device configuration manager.  From here
-the device locators can be tuned to the hardware; see
+Bring the system up into the device configuration manager.
+From here the device locators can be tuned to the hardware; see
 .Xr userconf 4 .
 .It Fl d
-Bring the system up in debug mode.  Here it waits for a kernel
-debugger connect; see
+Bring the system up in debug mode.
+Here it waits for a kernel debugger connect; see
 .Xr ddb 4 .
 .It Fl q
 Boot the system in quiet mode.
@@ -221,6 +228,10 @@ Boot the system in quiet mode.
 Bring the system up in single-user mode.
 .It Fl v
 Boot the system in verbose mode.
+.It Fl x
+Boot the system with debug messages enabled.
+.It Fl z
+Boot the system in silent mode.
 .El
 .It Ic consdev Va dev
 Immediately switch the console to the specified device
@@ -240,7 +251,8 @@ in
 .Xr boot_console 8 .
 .It Ic dev Op Va device
 Set the default drive and partition for subsequent filesystem
-operations. Without an argument, print the current setting.
+operations.
+Without an argument, print the current setting.
 .Va device
 is of the form specified in
 .Cm boot .
@@ -249,7 +261,7 @@ Print an overview about commands and arguments.
 .It Ic ls Op Pa path
 Print a directory listing of
 .Pa path ,
-containing inode number, filename and file type.
+containing inode number, filename, and file type.
 .Pa path
 can contain a device specification.
 .It Ic quit
@@ -259,11 +271,14 @@ Reboot the system.
 In an emergency, the bootstrap methods described in the
 .Nx
 installation notes for the i386 architecture
-can be used to boot from floppy.
+can be used to boot from floppy or other media,
+or over the network.
 .Sh FILES
 .Bl -tag -width /usr/mdec/bootxx_fstype -compact
 .It Pa /boot
 boot program code loaded by the primary bootstrap
+.It Pa /boot.cfg
+optional configuration file
 .It Pa /netbsd
 system code
 .It Pa /netbsd.gz
@@ -272,12 +287,15 @@ gzip-compressed system code
 master copy of the boot program (copy to /boot)
 .It Pa /usr/mdec/bootxx_fstype
 primary bootstrap for filesystem type fstype, copied to the start of
-the netbsd partition by
+the
+.Nx
+partition by
 .Xr installboot 8 .
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
 .Xr userconf 4 ,
+.Xr boot.cfg 5 ,
 .Xr boot_console 8 ,
 .Xr dosboot 8 ,
 .Xr halt 8 ,
@@ -288,11 +306,6 @@ the netbsd partition by
 .Xr shutdown 8 ,
 .Xr w95boot 8
 .Sh BUGS
-This manual page documents the
-.Pa boot
-interface, which is used by ports other than
-.Nx Ns /i386 .
-.Pp
 Any
 .Ar filename
 specified after the boot options, e.g.:

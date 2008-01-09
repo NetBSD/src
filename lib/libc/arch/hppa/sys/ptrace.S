@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.S,v 1.4 2004/07/01 06:50:04 skrll Exp $	*/
+/*	$NetBSD: ptrace.S,v 1.4.16.1 2008/01/09 01:33:55 matt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,8 +41,26 @@
 
 	.import __cerror, code
 
-/* XXX - this is unimplemented at this time. */
-ENTRY(ptrace, 0)
-	ldi	EINVAL, %t1
-	b,n	__cerror
+/*
+ * int ptrace(int request, pid_t pid, void * addr, int data);
+ */
+
+ENTRY(ptrace, HPPA_FRAME_SIZE)
+	stw	%rp, HPPA_FRAME_CRP(%sp)
+	stw	%arg0, HPPA_FRAME_ARG(0)(%sp)
+	stw	%arg1, HPPA_FRAME_ARG(1)(%sp)
+	stw	%arg2, HPPA_FRAME_ARG(2)(%sp)
+	stw	%arg3, HPPA_FRAME_ARG(3)(%sp)
+	ldo	HPPA_FRAME_SIZE(%sp),%sp
+	bl	__cerror, %rp
+	 copy	%r0, %t1
+	ldo	-HPPA_FRAME_SIZE(%sp), %sp
+	ldw	HPPA_FRAME_ARG(0)(%sp), %arg0
+	ldw	HPPA_FRAME_ARG(1)(%sp), %arg1
+	ldw	HPPA_FRAME_ARG(2)(%sp), %arg2
+	ldw	HPPA_FRAME_ARG(3)(%sp), %arg3
+	ldw	HPPA_FRAME_CRP(%sp), %rp
+
+	SYSCALL(ptrace)
+	bv,n	%r0(%rp)
 EXIT(ptrace)

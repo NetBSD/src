@@ -1,4 +1,4 @@
-/*	$NetBSD: pread.c,v 1.8 2006/11/10 17:37:39 christos Exp $	*/
+/*	$NetBSD: pread.c,v 1.8.8.1 2008/01/09 01:34:23 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pread.c,v 1.8 2006/11/10 17:37:39 christos Exp $");
+__RCSID("$NetBSD: pread.c,v 1.8.8.1 2008/01/09 01:34:23 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -48,6 +48,7 @@ __weak_alias(_pread,_sys_pread)
 #endif
 
 ssize_t	 _sys_pread(int, void *, size_t, off_t);
+ssize_t	 __pread(int, void *, size_t, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that
@@ -56,14 +57,6 @@ ssize_t	 _sys_pread(int, void *, size_t, off_t);
 ssize_t
 _sys_pread(int fd, void *buf, size_t nbyte, off_t offset)
 {
-	quad_t q;
-	int rv;
 
-	q = __syscall((quad_t)SYS_pread, fd, buf, nbyte, 0, offset);
-	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
-	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-		rv = (int)q;
-	else
-		rv = (int)((u_quad_t)q >> 32);
-	return rv;
+	return __pread(fd, buf, nbyte, 0, offset);
 }

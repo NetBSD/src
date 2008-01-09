@@ -1,4 +1,4 @@
-.\" $NetBSD: adbkbd.4,v 1.1 2007/05/15 14:12:08 macallan Exp $
+.\" $NetBSD: adbkbd.4,v 1.1.4.1 2008/01/09 01:39:03 matt Exp $
 .\"
 .\" Copyright (c) 2007
 .\" 	Michael Lorenz.  All rights reserved.
@@ -39,23 +39,24 @@ The
 .Nm
 driver handles most ADB keyboards within the
 .Xr wscons 4
-framework. It also provides an interface to translate key strokes to mouse
+framework.
+It also provides an interface to translate key strokes to mouse
 button events.
 .Pp
-Which keys are translated to mouse button events can be configured for each
-individual keyboard via
+Which keys are translated to mouse button events can be configured
+for each individual keyboard via
 .Xr sysctl 8 :
 .Bl -tag
 .It Dv machdep.adbkbd0.middle
-Controls which scancode is used for middle mouse button events, default is 103
-which corresponds to F11.
-.It Dv "machdep.adbkbd0.right"
-Controls which scancode is used for right mouse button events, default is 111
-which corresponds to F12.
+Controls which scan code is used for middle mouse button events.
+Default is 103, which corresponds to F11.
+.It Dv machdep.adbkbd0.right
+Controls which scan code is used for right mouse button events.
+Default is 111, which corresponds to F12.
 .El
 .Sh SEE ALSO
+.Xr nadb 4 ,
 .Xr wskbd 4 ,
 .Xr wsmouse 4 ,
-.Xr nadb 4 ,
 .Xr wsconsctl 8 ,
 .Xr wskbd 9

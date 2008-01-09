@@ -1,4 +1,4 @@
-/*	$NetBSD: opdump.c,v 1.13.2.1 2007/11/06 23:11:52 matt Exp $	*/
+/*	$NetBSD: opdump.c,v 1.13.2.2 2008/01/09 01:36:47 matt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: opdump.c,v 1.13.2.1 2007/11/06 23:11:52 matt Exp $");
+__RCSID("$NetBSD: opdump.c,v 1.13.2.2 2008/01/09 01:36:47 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -128,6 +128,14 @@ const char *errnot_revmap[] = {
 	"PUFFS_ERR_WRITE",
 	"PUFFS_ERR_VPTOFH"
 };
+/* XXX! */
+const char *flush_revmap[] = {
+	"PUFFS_INVAL_NAMECACHE_NODE",
+	"PUFFS_INVAL_NAMECACHE_DIR",
+	"PUFFS_INVAL_NAMECACHE_ALL",
+	"PUFFS_INVAL_PAGECACHE_NODE_RANGE",
+	"PUFFS_FLUSH_PAGECACHE_NODE_RANGE",
+};
 
 void
 puffsdump_req(struct puffs_req *preq)
@@ -152,6 +160,9 @@ puffsdump_req(struct puffs_req *preq)
 	case PUFFSOP_ERROR:
 		map = errnot_revmap;
 		break;
+	case PUFFSOP_FLUSH:
+		map = flush_revmap;
+		break;
 	}
 
 	printf("\treqid: %" PRIu64 ", opclass %d%s, optype: %s, "
@@ -170,6 +181,9 @@ puffsdump_req(struct puffs_req *preq)
 		case PUFFS_VN_READ:
 		case PUFFS_VN_WRITE:
 			puffsdump_readwrite(preq);
+			break;
+		case PUFFS_VN_OPEN:
+			puffsdump_open(preq);
 			break;
 		default:
 			break;
@@ -192,17 +206,25 @@ puffsdump_rv(struct puffs_req *preq)
 	    preq->preq_id, preq->preq_rv,
 	    preq->preq_rv ? strerror(preq->preq_rv) : "");
 
-#ifdef notyet
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN) {
 		switch (preq->preq_optype) {
 		case PUFFS_VN_LOOKUP:
 			puffsdump_lookup_rv(preq);
 			break;
+		case PUFFS_VN_CREATE:
+		case PUFFS_VN_MKDIR:
+		case PUFFS_VN_MKNOD:
+		case PUFFS_VN_SYMLINK:
+			puffsdump_create_rv(preq);
+			break;
+		case PUFFS_VN_READ:
+		case PUFFS_VN_WRITE:
+			puffsdump_readwrite_rv(preq);
+			break;
 		default:
 			break;
 		}
 	}
-#endif
 }
 
 void
@@ -248,12 +270,37 @@ puffsdump_lookup_rv(struct puffs_req *preq)
 }
 
 void
+puffsdump_create_rv(struct puffs_req *preq)
+{
+	/* XXX: wrong type, but we know it fits the slot */
+	struct puffs_vnmsg_create *create_msg = (void *)preq;
+
+	printf("\t\tnew node %p\n", create_msg->pvnr_newnode);
+}
+
+void
 puffsdump_readwrite(struct puffs_req *preq)
 {
 	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
 
 	printf("\t\toffset: %" PRId64 ", resid %zu, ioflag 0x%x\n",
 	    rw_msg->pvnr_offset, rw_msg->pvnr_resid, rw_msg->pvnr_ioflag);
+}
+
+void
+puffsdump_readwrite_rv(struct puffs_req *preq)
+{
+	struct puffs_vnmsg_rw *rw_msg = (void *)preq;
+
+	printf("\t\tresid after op: %zu\n", rw_msg->pvnr_resid);
+}
+
+void
+puffsdump_open(struct puffs_req *preq)
+{
+	struct puffs_vnmsg_open *open_msg = (void *)preq;
+
+	printf("\t\tmode: 0x%x\n", open_msg->pvnr_mode);
 }
 
 void

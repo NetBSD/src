@@ -1,4 +1,4 @@
-/*	$NetBSD: mach.c,v 1.16 2006/08/09 14:29:40 christos Exp $	*/
+/*	$NetBSD: mach.c,v 1.16.8.1 2008/01/09 01:30:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)mach.c	8.1 (Berkeley) 6/11/93";
 #else
-__RCSID("$NetBSD: mach.c,v 1.16 2006/08/09 14:29:40 christos Exp $");
+__RCSID("$NetBSD: mach.c,v 1.16.8.1 2008/01/09 01:30:46 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,7 +577,7 @@ tty_setup(void)
 }
 
 static void
-stop_catcher(int signo __attribute__((__unused__)))
+stop_catcher(int signo __unused)
 {
 	sigset_t isigset, osigset;
 
@@ -597,7 +597,7 @@ stop_catcher(int signo __attribute__((__unused__)))
 }
  
 static void
-cont_catcher(int signo __attribute__((__unused__)))
+cont_catcher(int signo __unused)
 {
 	noecho();
 	raw();
@@ -612,7 +612,7 @@ cont_catcher(int signo __attribute__((__unused__)))
  * It would mean reformatting the entire display
  */
 static void
-winch_catcher(int signo __attribute__((__unused__)))
+winch_catcher(int signo __unused)
 {
 	struct winsize win;
 

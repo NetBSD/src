@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.10.2.2 2007/11/06 23:11:19 matt Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.10.2.3 2008/01/09 01:34:14 matt Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.10.2.2 2007/11/06 23:11:19 matt Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.10.2.3 2008/01/09 01:34:14 matt Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -161,13 +161,33 @@ __RCSID("$NetBSD: jemalloc.c,v 1.10.2.2 2007/11/06 23:11:19 matt Exp $");
 
 #ifdef __NetBSD__
 #  include <reentrant.h>
-void	_malloc_prefork(void);
-void	_malloc_postfork(void);
-ssize_t	_write(int, const void *, size_t);
-const char	*_getprogname(void);
+#  include "extern.h"
+
+#define STRERROR_R(a, b, c)	__strerror_r(a, b, c);
+/*
+ * A non localized version of strerror, that avoids bringing in
+ * stdio and the locale code. All the malloc messages are in English
+ * so why bother?
+ */
+static int
+__strerror_r(int e, char *s, size_t l)
+{
+	int rval;
+	size_t slen;
+
+	if (e >= 0 && e < sys_nerr) {
+		slen = strlcpy(s, sys_errlist[e], l);
+		rval = 0;
+	} else {
+		slen = snprintf_ss(s, l, "Unknown error %u", e);
+		rval = EINVAL;
+	}
+	return slen >= l ? ERANGE : rval;
+}
 #endif
 
 #ifdef __FreeBSD__
+#define STRERROR_R(a, b, c)	strerror_r(a, b, c);
 #include "un-namespace.h"
 #endif
 
@@ -926,10 +946,10 @@ static void
 wrtmessage(const char *p1, const char *p2, const char *p3, const char *p4)
 {
 
-	_write(STDERR_FILENO, p1, strlen(p1));
-	_write(STDERR_FILENO, p2, strlen(p2));
-	_write(STDERR_FILENO, p3, strlen(p3));
-	_write(STDERR_FILENO, p4, strlen(p4));
+	write(STDERR_FILENO, p1, strlen(p1));
+	write(STDERR_FILENO, p2, strlen(p2));
+	write(STDERR_FILENO, p3, strlen(p3));
+	write(STDERR_FILENO, p4, strlen(p4));
 }
 
 void	(*_malloc_message)(const char *p1, const char *p2, const char *p3,
@@ -1227,8 +1247,8 @@ pages_map_align(void *addr, size_t size, int align)
 		if (munmap(ret, size) == -1) {
 			char buf[STRERROR_BUF];
 
-			strerror_r(errno, buf, sizeof(buf));
-			_malloc_message(_getprogname(),
+			STRERROR_R(errno, buf, sizeof(buf));
+			_malloc_message(getprogname(),
 			    ": (malloc) Error in munmap(): ", buf, "\n");
 			if (opt_abort)
 				abort();
@@ -1255,8 +1275,8 @@ pages_unmap(void *addr, size_t size)
 	if (munmap(addr, size) == -1) {
 		char buf[STRERROR_BUF];
 
-		strerror_r(errno, buf, sizeof(buf));
-		_malloc_message(_getprogname(),
+		STRERROR_R(errno, buf, sizeof(buf));
+		_malloc_message(getprogname(),
 		    ": (malloc) Error in munmap(): ", buf, "\n");
 		if (opt_abort)
 			abort();
@@ -2670,7 +2690,7 @@ arenas_extend(unsigned ind)
 	 * by using arenas[0].  In practice, this is an extremely unlikely
 	 * failure.
 	 */
-	_malloc_message(_getprogname(),
+	_malloc_message(getprogname(),
 	    ": (malloc) Error initializing arena\n", "", "");
 	if (opt_abort)
 		abort();
@@ -3490,7 +3510,7 @@ malloc_init_hard(void)
 				
 				cbuf[0] = opts[j];
 				cbuf[1] = '\0';
-				_malloc_message(_getprogname(),
+				_malloc_message(getprogname(),
 				    ": (malloc) Unsupported character in "
 				    "malloc options: '", cbuf, "'\n");
 			}
@@ -3682,7 +3702,7 @@ malloc(size_t size)
 RETURN:
 	if (ret == NULL) {
 		if (opt_xmalloc) {
-			_malloc_message(_getprogname(),
+			_malloc_message(getprogname(),
 			    ": (malloc) Error in malloc(): out of memory\n", "",
 			    "");
 			abort();
@@ -3693,9 +3713,6 @@ RETURN:
 	UTRACE(0, size, ret);
 	return (ret);
 }
-
-/* XXXAD */
-int	posix_memalign(void **memptr, size_t alignment, size_t size);
 
 int
 posix_memalign(void **memptr, size_t alignment, size_t size)
@@ -3710,7 +3727,7 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 		if (((alignment - 1) & alignment) != 0
 		    || alignment < sizeof(void *)) {
 			if (opt_xmalloc) {
-				_malloc_message(_getprogname(),
+				_malloc_message(getprogname(),
 				    ": (malloc) Error in posix_memalign(): "
 				    "invalid alignment\n", "", "");
 				abort();
@@ -3725,7 +3742,7 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
 
 	if (result == NULL) {
 		if (opt_xmalloc) {
-			_malloc_message(_getprogname(),
+			_malloc_message(getprogname(),
 			": (malloc) Error in posix_memalign(): out of memory\n",
 			"", "");
 			abort();
@@ -3780,7 +3797,7 @@ calloc(size_t num, size_t size)
 RETURN:
 	if (ret == NULL) {
 		if (opt_xmalloc) {
-			_malloc_message(_getprogname(),
+			_malloc_message(getprogname(),
 			    ": (malloc) Error in calloc(): out of memory\n", "",
 			    "");
 			abort();
@@ -3815,7 +3832,7 @@ realloc(void *ptr, size_t size)
 
 		if (ret == NULL) {
 			if (opt_xmalloc) {
-				_malloc_message(_getprogname(),
+				_malloc_message(getprogname(),
 				    ": (malloc) Error in realloc(): out of "
 				    "memory\n", "", "");
 				abort();
@@ -3830,7 +3847,7 @@ realloc(void *ptr, size_t size)
 
 		if (ret == NULL) {
 			if (opt_xmalloc) {
-				_malloc_message(_getprogname(),
+				_malloc_message(getprogname(),
 				    ": (malloc) Error in realloc(): out of "
 				    "memory\n", "", "");
 				abort();

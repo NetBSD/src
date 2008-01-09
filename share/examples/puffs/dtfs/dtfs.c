@@ -1,4 +1,4 @@
-/*	$NetBSD: dtfs.c,v 1.33.2.1 2007/11/06 23:12:39 matt Exp $	*/
+/*	$NetBSD: dtfs.c,v 1.33.2.2 2008/01/09 01:38:59 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -202,7 +202,7 @@ main(int argc, char *argv[])
 
 	PUFFSOP_SET(pops, dtfs, node, lookup);
 	PUFFSOP_SET(pops, dtfs, node, access);
-	PUFFSOP_SET(pops, dtfs, node, getattr);
+	PUFFSOP_SET(pops, puffs_genfs, node, getattr);
 	PUFFSOP_SET(pops, dtfs, node, setattr);
 	PUFFSOP_SET(pops, dtfs, node, create);
 	PUFFSOP_SET(pops, dtfs, node, remove);
@@ -255,8 +255,8 @@ main(int argc, char *argv[])
 		puffs_setmaxreqlen(pu, maxreqsize);
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu,  argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "mount");

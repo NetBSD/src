@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_flush.3,v 1.4 2007/05/17 13:31:30 pooka Exp $
+.\"	$NetBSD: puffs_flush.3,v 1.4.4.1 2008/01/09 01:36:50 matt Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -54,7 +54,7 @@
 This document describes interfaces which are not yet guaranteed to be
 stable.
 In case you update your system sources, please recompile everything
-and fix complation errors.
+and fix compilation errors.
 If your sources are out-of-sync, incorrect operation may result.
 The interfaces in this document will most likely be hugely simplified
 in later versions or made transparent to the implementation.
@@ -108,7 +108,7 @@ which force unwritten data from the kernel page cache to be written.
 For the flush range version, the same range rules as with the
 invalidation routine apply.
 The data is flushed asynchronously, i.e. if the routine returns
-succesfully, all the caller knows is that the data has been queued
+successfully, all the caller knows is that the data has been queued
 for writing.
 .Sh SEE ALSO
 .Xr puffs 3

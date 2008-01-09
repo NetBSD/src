@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_7.c,v 1.27 2003/08/07 09:37:44 agc Exp $	*/
+/*	$NetBSD: pl_7.c,v 1.27.22.1 2008/01/09 01:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_7.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_7.c,v 1.27 2003/08/07 09:37:44 agc Exp $");
+__RCSID("$NetBSD: pl_7.c,v 1.27.22.1 2008/01/09 01:31:01 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -114,7 +114,7 @@ cleanupscreen(void)
 
 /*ARGSUSED*/
 void
-newturn(int n __attribute__((__unused__)))
+newturn(int n __unused)
 {
 	repaired = loaded = fired = changed = 0;
 	movebuf[0] = '\0';

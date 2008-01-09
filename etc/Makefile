@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.345 2007/07/14 19:53:52 adrianp Exp $
+#	$NetBSD: Makefile,v 1.345.4.1 2008/01/09 01:29:49 matt Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -187,7 +187,7 @@ RELEASEVARS=	BSDOBJDIR BSDSRCDIR BUILDID \
 		MKMAN MKMANZ MKNLS MKOBJ MKOBJDIRS \
 		MKPAM MKPF MKPIC MKPICINSTALL MKPICLIB MKPOSTFIX MKPROFILE \
 		MKSHARE MKSKEY MKSOFTFLOAT MKSTATICLIB \
-		MKUNPRIVED MKUPDATE MKUUCP MKX11 MKYP \
+		MKUNPRIVED MKUPDATE MKX11 MKYP \
 		NBUILDJOBS NETBSDSRCDIR \
 		NOCLEANDIR NODISTRIBDIRS NOINCLUDES \
 		OBJMACHINE \
@@ -326,7 +326,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 	${ETC_INSTALL_FILE} -o ${owner} -g ${group} -m ${mode} \
 	    	/dev/null ${DESTDIR}${file}
 .endfor
-.for subdir in . defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
+.for subdir in . atf defaults bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/usr.bin/mail configinstall
@@ -345,7 +345,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 #	Install var/db/obsolete set lists; this is performed by "make build"
 #
 OBSOLETE.dir=		${.OBJDIR}/obsolete.dir
-OBSOLETE.files=		base comp etc games man misc text
+OBSOLETE.files=		base comp etc games man misc tests text
 .if ${MKX11} != "no"
 OBSOLETE.files+=	xbase xcomp xetc xfont xserver
 .endif

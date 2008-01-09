@@ -1,4 +1,4 @@
-/* $NetBSD: mbtowc_test.c,v 1.1.2.2 2007/11/06 23:12:18 matt Exp $ */
+/* $NetBSD: mbtowc_test.c,v 1.1.2.3 2008/01/09 01:37:30 matt Exp $ */
 
 /*-
  * Copyright (c)2007 Citrus Project,
@@ -29,6 +29,7 @@
 #include <assert.h>
 #include <errno.h>
 #include <locale.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,6 +39,7 @@ main(int argc, char *argv[])
 {
 	int i;
 	const char *testcase;
+	char path[PATH_MAX + 1];
 	char *s;
 	size_t stateful, n, ret;
 	FILE *fp;
@@ -53,7 +55,8 @@ main(int argc, char *argv[])
 		ret = mbtowc(NULL, NULL, 0);
 		assert(stateful ? ret : !ret);
 
-		fp = fopen(testcase, "r");
+		snprintf(path, sizeof(path), FILEDIR"/%s", testcase);
+		fp = fopen(path, "r");
 		assert(fp != NULL);
 
 		/* illegal multibyte sequence case */
@@ -62,9 +65,12 @@ main(int argc, char *argv[])
 		ret = mbtowc(NULL, s, n - 1);
 		assert(ret == (size_t)-1 && errno == EILSEQ);
 
-		/* re-initialize internal state */
-		ret = mbtowc(NULL, NULL, 0);
-		assert(stateful ? ret : !ret);
+		/* if this is stateless encoding, this re-initialization is not required. */
+		if (stateful) {
+			/* re-initialize internal state */
+			ret = mbtowc(NULL, NULL, 0);
+			assert(stateful ? ret : !ret);
+		}
 
 		/* valid multibyte sequence case */
 		s = fgetln(fp, &n);

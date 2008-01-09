@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.13 2003/08/07 09:37:38 agc Exp $	*/
+/*	$NetBSD: init.c,v 1.13.22.1 2008/01/09 01:30:56 matt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.13 2003/08/07 09:37:38 agc Exp $");
+__RCSID("$NetBSD: init.c,v 1.13.22.1 2008/01/09 01:30:56 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,8 @@ init(argc, argv)
 	if ((!pn) || (strlen(pn) >= MAX_OPT_LEN)) {
 		clean_up("Hey!  Who are you?");
 	}
-	(void) strcpy(login_name, pn);
+	/* LOGIN_NAME_SIZE == MAX_OPT_LEN now, but just in case... */
+	(void) strlcpy(login_name, pn, sizeof(login_name));
 
 	do_args(argc, argv);
 	do_opts();
@@ -218,7 +219,7 @@ stop_window()
 
 void
 byebye(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	md_ignore_signals();
 	if (ask_quit) {
@@ -231,21 +232,21 @@ byebye(dummy)
 
 void
 onintr(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	md_ignore_signals();
 	if (cant_int) {
 		did_int = 1;
 	} else {
 		check_message();
-		message("interrupt", 1);
+		messagef(1, "interrupt");
 	}
 	md_heed_signals();
 }
 
 void
 error_save(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	save_is_interactive = 0;
 	save_into_file(error_file);
@@ -341,6 +342,7 @@ env_get_value(s, e, add_blank)
 			break;
 		}
 	}
+	/* note: edit_opts() in room.c depends on this being the right size */
 	*s = md_malloc(MAX_OPT_LEN + 2);
 	if (*s == NULL)
 		clean_up("out of memory");
@@ -357,9 +359,10 @@ init_str(str, dflt)
 	const char *dflt;
 {
 	if (!(*str)) {
+		/* note: edit_opts() in room.c depends on this size */
 		*str = md_malloc(MAX_OPT_LEN + 2);
 		if (*str == NULL)
 			clean_up("out of memory");
-		(void) strcpy(*str, dflt);
+		(void) strlcpy(*str, dflt, MAX_OPT_LEN + 2);
 	}
 }

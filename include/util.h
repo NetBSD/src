@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.46.4.1 2007/11/06 23:11:06 matt Exp $	*/
+/*	$NetBSD: util.h,v 1.46.4.2 2008/01/09 01:33:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -50,14 +50,6 @@ typedef _BSD_TIME_T_    time_t;
 #define	PIDLOCK_NONBLOCK	1
 #define	PIDLOCK_USEHOSTNAME	2
 
-#define	HN_DECIMAL		0x01
-#define	HN_NOSPACE		0x02
-#define	HN_B			0x04
-#define	HN_DIVISOR_1000		0x08
-
-#define	HN_GETSCALE		0x10
-#define	HN_AUTOSCALE		0x20
-
 #define	PW_POLICY_BYSTRING	0
 #define	PW_POLICY_BYPASSWD	1
 #define	PW_POLICY_BYGROUP	2
@@ -80,8 +72,6 @@ off_t		getlabeloffset(void);
 int		getlabelsector(void);
 int		getmaxpartitions(void);
 int		getrawpartition(void);
-int		humanize_number(char *, size_t, int64_t, const char *, int,
-		    int);
 void		login(const struct utmp *);
 void		loginx(const struct utmpx *);
 int		login_tty(int);

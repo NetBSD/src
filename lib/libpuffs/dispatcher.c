@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.11.4.1 2007/11/06 23:11:50 matt Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.11.4.2 2008/01/09 01:36:44 matt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.11.4.1 2007/11/06 23:11:50 matt Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.11.4.2 2008/01/09 01:36:44 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: dispatcher.c,v 1.11.4.1 2007/11/06 23:11:50 matt Exp $");
 
 #include "puffs_priv.h"
 
-static void processresult(struct puffs_cc *, struct puffs_putreq *, int);
+static void processresult(struct puffs_usermount *, int);
 
 /*
  * Set the following to 1 to not handle each request on a separate
@@ -66,29 +66,10 @@ int puffs_fakecc;
  */
 int puffs_usethreads;
 
-#ifdef PUFFS_WITH_THREADS
-struct puffs_workerargs {
-	struct puffs_cc *pwa_pcc;
-	struct puffs_putreq *pwa_ppr;
-};
-
-static void *
-threadlauncher(void *v)
-{
-	struct puffs_workerargs *ap = v;
-	struct puffs_cc *pcc = ap->pwa_pcc;
-	struct puffs_putreq *ppr = ap->pwa_ppr;
-
-	free(ap);
-	puffs_docc(pcc, ppr);
-	return NULL;
-}
-#endif
-
 static int
-dopreq2(struct puffs_usermount *pu, struct puffs_req *preq,
-	struct puffs_putreq *ppr)
+dopufbuf2(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pb);
 	struct puffs_cc *pcc;
 	int type;
 
@@ -103,41 +84,41 @@ dopreq2(struct puffs_usermount *pu, struct puffs_req *preq,
 		type = PCC_REALCC;
 	}
 
-	if (puffs_cc_create(pu, preq, type, &pcc) == -1)
+	if (puffs_cc_create(pu, pb, type, &pcc) == -1)
 		return errno;
 
 	puffs_cc_setcaller(pcc, preq->preq_pid, preq->preq_lid);
 
 #ifdef PUFFS_WITH_THREADS
 	if (puffs_usethreads) {
-		struct puffs_workerargs *ap;
 		pthread_attr_t pattr;
 		pthread_t ptid;
 		int rv;
-
-		ap = malloc(sizeof(struct puffs_workerargs));
 
 		pthread_attr_init(&pattr);
 		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
 		pthread_attr_destroy(&pattr);
 
 		ap->pwa_pcc = pcc;
-		ap->pwa_ppr = ppr;
 
-		rv = pthread_create(&ptid, &pattr, threadlauncher, ap);
+		rv = pthread_create(&ptid, &pattr, puffs_docc, pcc);
 
 		return rv;
 	}
 #endif
-	puffs_docc(pcc, ppr);
+	puffs_docc(pcc);
 	return 0;
 }
 
-/* user-visible point to handle a request from */
+/*
+ * User-visible point to handle a request from.
+ *
+ * <insert text here>
+ */
 int
-puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
-	struct puffs_putreq *ppr)
+puffs_dopufbuf(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pb);
 	struct puffs_executor *pex;
 
 	/*
@@ -179,13 +160,16 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	 * and dispatching.
 	 */
 	pex = malloc(sizeof(struct puffs_executor));
-	pex->pex_preq = preq;
+	pex->pex_pufbuf = pb;
 	PU_LOCK();
 	TAILQ_INSERT_TAIL(&pu->pu_exq, pex, pex_entries);
 	TAILQ_FOREACH(pex, &pu->pu_exq, pex_entries) {
-		if (pex->pex_preq->preq_pid == preq->preq_pid
-		    && pex->pex_preq->preq_lid == preq->preq_lid) {
-			if (pex->pex_preq != preq) {
+		struct puffs_req *pb_preq;
+
+		pb_preq = puffs__framebuf_getdataptr(pex->pex_pufbuf);
+		if (pb_preq->preq_pid == preq->preq_pid
+		    && pb_preq->preq_lid == preq->preq_lid) {
+			if (pb_preq != preq) {
 				PU_UNLOCK();
 				return 0;
 			}
@@ -193,15 +177,15 @@ puffs_dopreq(struct puffs_usermount *pu, struct puffs_req *preq,
 	}
 	PU_UNLOCK();
 
-	return dopreq2(pu, preq, ppr);
+	return dopufbuf2(pu, pb);
 }
 
 enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
 
-/* user-visible continuation point */
-void
-puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
+void *
+puffs_docc(void *arg)
 {
+	struct puffs_cc *pcc = arg;
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_req *preq;
 	struct puffs_cc *pcc_iter;
@@ -209,36 +193,46 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 	int found;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
-	pcc->pcc_ppr = ppr;
 
 	if (pcc->pcc_flags & PCC_REALCC)
 		puffs_cc_continue(pcc);
 	else
 		puffs_calldispatcher(pcc);
 
+	if ((pcc->pcc_flags & PCC_DONE) == 0) {
+		assert(pcc->pcc_flags & PCC_REALCC);
+		return NULL;
+	}
+
 	/* check if we need to schedule FAFs which were stalled */
 	found = 0;
-	preq = pcc->pcc_preq;
+	preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	PU_LOCK();
 	for (pex = TAILQ_FIRST(&pu->pu_exq); pex; pex = pex_n) {
+		struct puffs_req *pb_preq;
+
+		pb_preq = puffs__framebuf_getdataptr(pex->pex_pufbuf);
 		pex_n = TAILQ_NEXT(pex, pex_entries);
-		if (pex->pex_preq->preq_pid == preq->preq_pid
-		    && pex->pex_preq->preq_lid == preq->preq_lid) {
+		if (pb_preq->preq_pid == preq->preq_pid
+		    && pb_preq->preq_lid == preq->preq_lid) {
 			if (found == 0) {
 				/* this is us */
-				assert(pex->pex_preq == preq);
+				assert(pb_preq == preq);
 				TAILQ_REMOVE(&pu->pu_exq, pex, pex_entries);
 				free(pex);
 				found = 1;
 			} else {
 				/* down at the mardi gras */
 				PU_UNLOCK();
-				dopreq2(pu, pex->pex_preq, ppr);
+				dopufbuf2(pu, pex->pex_pufbuf);
 				PU_LOCK();
 				break;
 			}
 		}
 	}
+
+	if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
+		puffs_framebuf_destroy(pcc->pcc_pb);
 
 	/* can't do this above due to PCC_BORROWED */
 	while ((pcc_iter = LIST_FIRST(&pu->pu_ccnukelst)) != NULL) {
@@ -246,6 +240,8 @@ puffs_docc(struct puffs_cc *pcc, struct puffs_putreq *ppr)
 		puffs_cc_destroy(pcc_iter);
 	}
 	PU_UNLOCK();
+
+	return NULL;
 }
 
 /* library private, but linked from callcontext.c */
@@ -255,12 +251,13 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_ops *pops = &pu->pu_ops;
-	struct puffs_req *preq = pcc->pcc_preq;
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	void *auxbuf = preq; /* help with typecasting */
 	void *opcookie = preq->preq_cookie;
 	int error, rv, buildpath;
 
 	assert(pcc->pcc_flags & (PCC_FAKECC | PCC_REALCC | PCC_THREADED));
+	assert(pcc == puffs_cc_getcc(pu)); /* remove me soon */
 
 	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
 		rv = PUFFCALL_ANSWER;
@@ -271,18 +268,16 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	preq->preq_setbacks = 0;
 
 	if (pu->pu_oppre)
-		pu->pu_oppre(pcc);
+		pu->pu_oppre(pu);
 
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
 		switch (preq->preq_optype) {
 		case PUFFS_VFS_UNMOUNT:
 		{
 			struct puffs_vfsmsg_unmount *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
 			PU_SETSTATE(pu, PUFFS_STATE_UNMOUNTING);
-			error = pops->puffs_fs_unmount(pcc,
-			    auxt->pvfsr_flags, pcid);
+			error = pops->puffs_fs_unmount(pu, auxt->pvfsr_flags);
 			if (!error)
 				PU_SETSTATE(pu, PUFFS_STATE_UNMOUNTED);
 			else
@@ -293,10 +288,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VFS_STATVFS:
 		{
 			struct puffs_vfsmsg_statvfs *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
-			error = pops->puffs_fs_statvfs(pcc,
-			    &auxt->pvfsr_sb, pcid);
+			error = pops->puffs_fs_statvfs(pu, &auxt->pvfsr_sb);
 			break;
 		}
 
@@ -304,10 +297,9 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vfsmsg_sync *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvfsr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvfsr_cid);
 
-			error = pops->puffs_fs_sync(pcc,
-			    auxt->pvfsr_waitfor, pcr, pcid);
+			error = pops->puffs_fs_sync(pu,
+			    auxt->pvfsr_waitfor, pcr);
 			break;
 		}
 
@@ -321,7 +313,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			pni.pni_size = &auxt->pvfsr_size;
 			pni.pni_rdev = &auxt->pvfsr_rdev;
 
-			error = pops->puffs_fs_fhtonode(pcc, auxt->pvfsr_data,
+			error = pops->puffs_fs_fhtonode(pu, auxt->pvfsr_data,
 			    auxt->pvfsr_dsize, &pni);
 
 			break;
@@ -331,7 +323,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vfsmsg_nodetofh *auxt = auxbuf;
 
-			error = pops->puffs_fs_nodetofh(pcc,
+			error = pops->puffs_fs_nodetofh(pu,
 			    auxt->pvfsr_fhcookie, auxt->pvfsr_data,
 			    &auxt->pvfsr_dsize);
 
@@ -346,7 +338,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			if (pops->puffs_fs_suspend == NULL)
 				break;
 
-			pops->puffs_fs_suspend(pcc, auxt->pvfsr_status);
+			pops->puffs_fs_suspend(pu, auxt->pvfsr_status);
 			break;
 		}
 
@@ -370,7 +362,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 			pni.pni_cookie = &auxt->pvnr_newnode;
 			pni.pni_vtype = &auxt->pvnr_vtype;
 			pni.pni_size = &auxt->pvnr_size;
@@ -383,7 +374,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			/* lookup *must* be present */
-			error = pops->puffs_node_lookup(pcc, opcookie,
+			error = pops->puffs_node_lookup(pu, opcookie,
 			    &pni, &pcn);
 
 			if (buildpath) {
@@ -421,7 +412,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
@@ -432,7 +422,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					break;
 			}
 
-			error = pops->puffs_node_create(pcc,
+			error = pops->puffs_node_create(pu,
 			    opcookie, &pni, &pcn, &auxt->pvnr_va);
 
 			if (buildpath) {
@@ -462,7 +452,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
@@ -473,7 +462,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					break;
 			}
 
-			error = pops->puffs_node_mknod(pcc,
+			error = pops->puffs_node_mknod(pu,
 			    opcookie, &pni, &pcn, &auxt->pvnr_va);
 
 			if (buildpath) {
@@ -494,15 +483,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_open *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_open == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_node_open(pcc,
-			    opcookie, auxt->pvnr_mode, pcr, pcid);
+			error = pops->puffs_node_open(pu,
+			    opcookie, auxt->pvnr_mode, pcr);
 			break;
 		}
 
@@ -510,16 +498,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_close *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_close == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_node_close(pcc,
-			    opcookie, auxt->pvnr_fflag, pcr, pcid);
+			error = pops->puffs_node_close(pu,
+			    opcookie, auxt->pvnr_fflag, pcr);
 			break;
 		}
 
@@ -527,16 +513,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_access *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_access == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_node_access(pcc,
-			    opcookie, auxt->pvnr_mode, pcr, pcid);
+			error = pops->puffs_node_access(pu,
+			    opcookie, auxt->pvnr_mode, pcr);
 			break;
 		}
 
@@ -544,16 +528,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_getattr *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_getattr == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pops->puffs_node_getattr(pcc,
-			    opcookie, &auxt->pvnr_va, pcr, pcid);
+			error = pops->puffs_node_getattr(pu,
+			    opcookie, &auxt->pvnr_va, pcr);
 			break;
 		}
 
@@ -561,16 +543,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_setattr *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_setattr == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pops->puffs_node_setattr(pcc,
-			    opcookie, &auxt->pvnr_va, pcr, pcid);
+			error = pops->puffs_node_setattr(pu,
+			    opcookie, &auxt->pvnr_va, pcr);
 			break;
 		}
 
@@ -578,16 +558,14 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_mmap *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_mmap == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_node_mmap(pcc,
-			    opcookie, auxt->pvnr_prot, pcr, pcid);
+			error = pops->puffs_node_mmap(pu,
+			    opcookie, auxt->pvnr_prot, pcr);
 			break;
 		}
 
@@ -595,17 +573,15 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		{
 			struct puffs_vnmsg_fsync *auxt = auxbuf;
 			PUFFS_MAKECRED(pcr, &auxt->pvnr_cred);
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
-
 
 			if (pops->puffs_node_fsync == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_node_fsync(pcc, opcookie, pcr,
+			error = pops->puffs_node_fsync(pu, opcookie, pcr,
 			    auxt->pvnr_flags, auxt->pvnr_offlo,
-			    auxt->pvnr_offhi, pcid);
+			    auxt->pvnr_offhi);
 			break;
 		}
 
@@ -619,7 +595,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
-			error = pops->puffs_node_seek(pcc,
+			error = pops->puffs_node_seek(pu,
 			    opcookie, auxt->pvnr_oldoff,
 			    auxt->pvnr_newoff, pcr);
 			break;
@@ -636,9 +612,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
-			error = pops->puffs_node_remove(pcc,
+			error = pops->puffs_node_remove(pu,
 			    opcookie, auxt->pvnr_cookie_targ, &pcn);
 			break;
 		}
@@ -654,7 +629,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			if (buildpath) {
 				error = puffs_path_pcnbuild(pu, &pcn, opcookie);
@@ -662,7 +636,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					break;
 			}
 
-			error = pops->puffs_node_link(pcc,
+			error = pops->puffs_node_link(pu,
 			    opcookie, auxt->pvnr_cookie_targ, &pcn);
 			if (buildpath)
 				pu->pu_pathfree(pu, &pcn.pcn_po_full);
@@ -684,14 +658,10 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			pcn_src.pcn_pkcnp = &auxt->pvnr_cn_src;
 			PUFFS_KCREDTOCRED(pcn_src.pcn_cred,
 			    &auxt->pvnr_cn_src_cred);
-			PUFFS_KCIDTOCID(pcn_src.pcn_cid,
-			    &auxt->pvnr_cn_src_cid);
 
 			pcn_targ.pcn_pkcnp = &auxt->pvnr_cn_targ;
 			PUFFS_KCREDTOCRED(pcn_targ.pcn_cred,
 			    &auxt->pvnr_cn_targ_cred);
-			PUFFS_KCIDTOCID(pcn_targ.pcn_cid,
-			    &auxt->pvnr_cn_targ_cid);
 
 			if (buildpath) {
 				pn_src = auxt->pvnr_cookie_src;
@@ -703,7 +673,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					break;
 			}
 
-			error = pops->puffs_node_rename(pcc,
+			error = pops->puffs_node_rename(pu,
 			    opcookie, auxt->pvnr_cookie_src,
 			    &pcn_src, auxt->pvnr_cookie_targdir,
 			    auxt->pvnr_cookie_targ, &pcn_targ);
@@ -753,7 +723,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
@@ -764,7 +733,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					break;
 			}
 
-			error = pops->puffs_node_mkdir(pcc,
+			error = pops->puffs_node_mkdir(pu,
 			    opcookie, &pni, &pcn, &auxt->pvnr_va);
 
 			if (buildpath) {
@@ -792,9 +761,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
-			error = pops->puffs_node_rmdir(pcc,
+			error = pops->puffs_node_rmdir(pu,
 			    opcookie, auxt->pvnr_cookie_targ, &pcn);
 			break;
 		}
@@ -812,7 +780,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 
 			pcn.pcn_pkcnp = &auxt->pvnr_cn;
 			PUFFS_KCREDTOCRED(pcn.pcn_cred, &auxt->pvnr_cn_cred);
-			PUFFS_KCIDTOCID(pcn.pcn_cid, &auxt->pvnr_cn_cid);
 
 			memset(&pni, 0, sizeof(pni));
 			pni.pni_cookie = &auxt->pvnr_newnode;
@@ -823,7 +790,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 					break;
 			}
 
-			error = pops->puffs_node_symlink(pcc,
+			error = pops->puffs_node_symlink(pu,
 			    opcookie, &pni, &pcn,
 			    &auxt->pvnr_va, auxt->pvnr_link);
 
@@ -867,7 +834,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			    (auxt->pvnr_data + auxt->pvnr_dentoff);
 
 			res = auxt->pvnr_resid;
-			error = pops->puffs_node_readdir(pcc,
+			error = pops->puffs_node_readdir(pu,
 			    opcookie, dent, &auxt->pvnr_offset,
 			    &auxt->pvnr_resid, pcr, &auxt->pvnr_eofflag,
 			    cookies, &auxt->pvnr_ncookies);
@@ -892,36 +859,32 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			/*LINTED*/
-			error = pops->puffs_node_readlink(pcc, opcookie, pcr,
+			error = pops->puffs_node_readlink(pu, opcookie, pcr,
 			    auxt->pvnr_link, &auxt->pvnr_linklen);
 			break;
 		}
 
 		case PUFFS_VN_RECLAIM:
 		{
-			struct puffs_vnmsg_reclaim *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_reclaim == NULL) {
 				error = 0;
 				break;
 			}
 
-			error = pops->puffs_node_reclaim(pcc, opcookie, pcid);
+			error = pops->puffs_node_reclaim(pu, opcookie);
 			break;
 		}
 
 		case PUFFS_VN_INACTIVE:
 		{
-			struct puffs_vnmsg_inactive *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_inactive == NULL) {
 				error = EOPNOTSUPP;
 				break;
 			}
 
-			error = pops->puffs_node_inactive(pcc, opcookie, pcid);
+			error = pops->puffs_node_inactive(pu, opcookie);
 			break;
 		}
 
@@ -933,7 +896,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
-			error = pops->puffs_node_pathconf(pcc,
+			error = pops->puffs_node_pathconf(pu,
 			    opcookie, auxt->pvnr_name,
 			    &auxt->pvnr_retval);
 			break;
@@ -947,7 +910,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
-			error = pops->puffs_node_advlock(pcc,
+			error = pops->puffs_node_advlock(pu,
 			    opcookie, auxt->pvnr_id, auxt->pvnr_op,
 			    &auxt->pvnr_fl, auxt->pvnr_flags);
 			break;
@@ -960,7 +923,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
-			error = pops->puffs_node_print(pcc,
+			error = pops->puffs_node_print(pu,
 			    opcookie);
 			break;
 		}
@@ -977,7 +940,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			}
 
 			res = auxt->pvnr_resid;
-			error = pops->puffs_node_read(pcc,
+			error = pops->puffs_node_read(pu,
 			    opcookie, auxt->pvnr_data,
 			    auxt->pvnr_offset, &auxt->pvnr_resid,
 			    pcr, auxt->pvnr_ioflag);
@@ -998,7 +961,7 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
-			error = pops->puffs_node_write(pcc,
+			error = pops->puffs_node_write(pu,
 			    opcookie, auxt->pvnr_data,
 			    auxt->pvnr_offset, &auxt->pvnr_resid,
 			    pcr, auxt->pvnr_ioflag);
@@ -1011,7 +974,6 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 		case PUFFS_VN_POLL:
 		{
 			struct puffs_vnmsg_poll *auxt = auxbuf;
-			PUFFS_MAKECID(pcid, &auxt->pvnr_cid);
 
 			if (pops->puffs_node_poll == NULL) {
 				error = 0;
@@ -1023,8 +985,8 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 				break;
 			}
 
-			error = pops->puffs_node_poll(pcc,
-			    opcookie, &auxt->pvnr_events, pcid);
+			error = pops->puffs_node_poll(pu,
+			    opcookie, &auxt->pvnr_events);
 			break;
 		}
 
@@ -1044,21 +1006,21 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 	pcc->pcc_flags |= PCC_DONE;
 
 	if (pu->pu_oppost)
-		pu->pu_oppost(pcc);
+		pu->pu_oppost(pu);
 
 	/*
 	 * Note, we are calling this from here so that we can run it
 	 * off of the continuation stack.  Otherwise puffs_goto() would
 	 * not work.
 	 */
-	processresult(pcc, pcc->pcc_ppr, rv);
+	processresult(pu, rv);
 }
 
 static void
-processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
+processresult(struct puffs_usermount *pu, int how)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct puffs_req *preq = pcc->pcc_preq;
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	int pccflags = pcc->pcc_flags;
 
 	/* check if we need to store this reply */
@@ -1067,17 +1029,21 @@ processresult(struct puffs_cc *pcc, struct puffs_putreq *ppr, int how)
 		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 			puffsdump_rv(preq);
 
-		puffs_req_putcc(ppr, pcc);
-		break;
+		puffs_framev_enqueue_justsend(pu, pu->pu_fd,
+		    pcc->pcc_pb, 0, 0);
+		/*FALLTHROUGH*/
+
 	case PUFFCALL_IGNORE:
 		PU_LOCK();
 		LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, nlst_entries);
 		PU_UNLOCK();
 		break;
+
 	case PUFFCALL_AGAIN:
 		if ((pcc->pcc_flags & PCC_REALCC) == 0)
 			assert(pcc->pcc_flags & PCC_DONE);
 		break;
+
 	default:
 		assert(/*CONSTCOND*/0);
 	}

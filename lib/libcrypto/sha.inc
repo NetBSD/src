@@ -1,8 +1,8 @@
-#	$NetBSD: sha.inc,v 1.8 2006/03/17 20:47:45 dsl Exp $
+#	$NetBSD: sha.inc,v 1.8.10.1 2008/01/09 01:34:40 matt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/sha/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/sha/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/sha

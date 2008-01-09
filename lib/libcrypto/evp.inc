@@ -1,8 +1,8 @@
-#	$NetBSD: evp.inc,v 1.7 2006/03/17 20:47:45 dsl Exp $
+#	$NetBSD: evp.inc,v 1.7.10.1 2008/01/09 01:34:34 matt Exp $
 #
 #	@(#) Copyright (c) 1995 Simon J. Gerraty
 #
-#	SRCS extracted from /home/current/src/lib/libcrypto/../../crypto/dist/openssl/crypto/evp/Makefile.ssl
+#	SRCS extracted from src/crypto/dist/openssl/crypto/evp/Makefile
 #
 
 .PATH:	${OPENSSLSRC}/crypto/evp

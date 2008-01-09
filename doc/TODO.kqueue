@@ -1,4 +1,4 @@
-#	$NetBSD: TODO.kqueue,v 1.6 2003/12/08 06:43:55 jdolecek Exp $
+#	$NetBSD: TODO.kqueue,v 1.6.22.1 2008/01/09 01:29:28 matt Exp $
 
 items todo:
 	- dir watched - what happens if something is mounted over it?
@@ -12,7 +12,6 @@ items todo:
 	- kqfilter entry points for:
 		- smb_trantcp
 		- dev/pci/bktr/bktr_os.c		??? doesn't poll?
-	- kqfilter for systrace (would it be useful?)
 	- kfilter_(un)register: not used by kernel code ATM, make conditional
 		on option LKM?
 

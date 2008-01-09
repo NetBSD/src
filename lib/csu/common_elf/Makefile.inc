@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2006/06/02 22:16:18 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.27.10.1 2008/01/09 01:33:48 matt Exp $
 
 .include <bsd.own.mk>
 
@@ -57,5 +57,6 @@ crtn.o: crtn.c
 
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
+CLEANFILES=${OBJS}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-.\" $NetBSD: nadb.4,v 1.1 2007/05/15 14:12:09 macallan Exp $
+.\" $NetBSD: nadb.4,v 1.1.4.1 2008/01/09 01:39:08 matt Exp $
 .\"
 .\" Copyright (c) 2007
 .\" 	Michael Lorenz.  All rights reserved.
@@ -39,13 +39,12 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver provides an abstract interface for talking to ADB devices. It also scans 
-the bus during startup, resolves address conflicts and attaches drivers for
-known ADB hardware.
-.Pp
+driver provides an abstract interface for talking to ADB devices.
+It also scans the bus during startup, resolves address conflicts
+and attaches drivers for known ADB hardware.
 .Sh SEE ALSO
+.Xr adbbt 4 ,
 .Xr adbkbd 4 ,
 .Xr adbms 4 ,
-.Xr adbbt 4 ,
 .Xr cuda 4 ,
 .Xr pmu 4

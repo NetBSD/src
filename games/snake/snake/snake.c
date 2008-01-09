@@ -1,4 +1,4 @@
-/*	$NetBSD: snake.c,v 1.22 2007/01/17 00:30:23 hubertf Exp $	*/
+/*	$NetBSD: snake.c,v 1.22.4.1 2008/01/09 01:31:01 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)snake.c	8.2 (Berkeley) 1/7/94";
 #else
-__RCSID("$NetBSD: snake.c,v 1.22 2007/01/17 00:30:23 hubertf Exp $");
+__RCSID("$NetBSD: snake.c,v 1.22.4.1 2008/01/09 01:31:01 matt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -122,7 +122,7 @@ void		home(void);
 void		length(int);
 void		logit(const char *);
 int		main(int, char **);
-void		mainloop(void) __attribute__((__noreturn__));
+void		mainloop(void) __dead;
 struct point   *point(struct point *, int, int);
 int		post(int, int);
 int		pushsnake(void);
@@ -131,7 +131,7 @@ void		setup(void);
 void		snap(void);
 void		snrand(struct point *);
 void		spacewarp(int);
-void		stop(int) __attribute__((__noreturn__));
+void		stop(int) __dead;
 int		stretch(const struct point *);
 void		surround(struct point *);
 void		suspend(void);
@@ -974,7 +974,7 @@ winnings(won)
 
 void
 stop(dummy)
-	int dummy __attribute__((__unused__));
+	int dummy __unused;
 {
 	signal(SIGINT, SIG_IGN);
 	endwin();

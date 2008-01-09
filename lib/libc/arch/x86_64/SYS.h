@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)SYS.h	5.5 (Berkeley) 5/7/91
- *	$NetBSD: SYS.h,v 1.9 2007/03/08 13:46:31 ad Exp $
+ *	$NetBSD: SYS.h,v 1.9.4.1 2008/01/09 01:34:01 matt Exp $
  */
 
 #include <machine/asm.h>
@@ -50,19 +50,19 @@
 	SYSTRAP(y)
 
 #ifdef PIC
-#define _SYSCALL(x,y)							\
-	.text; _ALIGN_TEXT;						\
-	2: mov PIC_GOT(CERROR), %rcx;					\
-	jmp *%rcx;							\
-	_SYSCALL_NOERROR(x,y);						\
-	jc 2b
+#define _SYSCALL_ERR	 						\
+	mov PIC_GOT(CERROR), %rcx;					\
+	jmp *%rcx
 #else
+#define _SYSCALL_ERR							\
+	jmp CERROR
+#endif
+
 #define _SYSCALL(x,y)							\
 	.text; _ALIGN_TEXT;						\
-	2: jmp CERROR;							\
+	2: _SYSCALL_ERR;						\
 	_SYSCALL_NOERROR(x,y);						\
 	jc 2b
-#endif
 
 #define SYSCALL_NOERROR(x)						\
 	_SYSCALL_NOERROR(x,x)
@@ -75,8 +75,10 @@
 	ret
 
 #define PSEUDO(x,y)							\
-	_SYSCALL(x,y);							\
-	ret
+	_SYSCALL_NOERROR(x,y);						\
+	jc 2f;								\
+	ret;								\
+	2: _SYSCALL_ERR
 
 #define RSYSCALL_NOERROR(x)						\
 	PSEUDO_NOERROR(x,x)

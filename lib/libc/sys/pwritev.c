@@ -1,4 +1,4 @@
-/*	$NetBSD: pwritev.c,v 1.4 2003/08/07 16:44:04 agc Exp $	*/
+/*	$NetBSD: pwritev.c,v 1.4.22.1 2008/01/09 01:34:24 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -31,13 +31,15 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pwritev.c,v 1.4 2003/08/07 16:44:04 agc Exp $");
+__RCSID("$NetBSD: pwritev.c,v 1.4.22.1 2008/01/09 01:34:24 matt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
 #include <unistd.h>
+
+ssize_t __pwritev(int, const struct iovec *, int, int, off_t);
 
 /*
  * This function provides 64-bit offset padding that
@@ -50,14 +52,6 @@ pwritev(fd, iovp, iovcnt, offset)
 	int iovcnt;
 	off_t offset;
 {
-	quad_t q;
-	int rv;
 
-	q = __syscall((quad_t)SYS_pwritev, fd, iovp, iovcnt, 0, offset);
-	if (/* LINTED constant */ sizeof (quad_t) == sizeof (register_t) ||
-	    /* LINTED constant */ BYTE_ORDER == LITTLE_ENDIAN)
-		rv = (int)q;
-	else
-		rv = (int)((u_quad_t)q >> 32);
-	return rv;
+	return __pwritev(fd, iovp, iovcnt, 0, offset);
 }

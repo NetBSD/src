@@ -1,4 +1,4 @@
-.\"	$NetBSD: splraiseipl.9,v 1.5 2007/02/17 08:44:08 wiz Exp $
+.\"	$NetBSD: splraiseipl.9,v 1.5.4.1 2008/01/09 01:39:23 matt Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -55,6 +55,10 @@ To ensure correct synchronization, device drivers should use the
 and
 .Xr rwlock 9
 interfaces.
+.Pp
+See the
+.Xr spl 9
+manual page for a description of interrupt priority levels.
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
 .Fn splraiseipl
@@ -64,10 +68,10 @@ returns saved priority level which can be used for
 .Sh EXAMPLES
 The following two lines are functional equivalents.
 .Bd -literal
-	s = splraiseipl(makeiplcookie(IPL_BIO));
+	s = splraiseipl(makeiplcookie(IPL_VM));
 .Ed
 .Bd -literal
-	s = splbio();
+	s = splvm();
 .Ed
 .Pp
 Because

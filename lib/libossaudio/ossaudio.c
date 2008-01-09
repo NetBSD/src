@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.21.4.1 2007/11/06 23:11:37 matt Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.21.4.2 2008/01/09 01:36:28 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.21.4.1 2007/11/06 23:11:37 matt Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.21.4.2 2008/01/09 01:36:28 matt Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -240,7 +240,9 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		break;
 	case SNDCTL_DSP_CHANNELS:
 		AUDIO_INITINFO(&tmpinfo);
-		tmpinfo.play.channels =
+		tmpinfo.play.channels = INTARG;
+		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
+		AUDIO_INITINFO(&tmpinfo);
 		tmpinfo.record.channels = INTARG;
 		(void) ioctl(fd, AUDIO_SETINFO, &tmpinfo);
 		/* FALLTHRU */

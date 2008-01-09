@@ -1,4 +1,4 @@
-/*	$NetBSD: pom.c,v 1.15 2007/01/12 22:43:05 hubertf Exp $	*/
+/*	$NetBSD: pom.c,v 1.15.4.1 2008/01/09 01:30:54 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)pom.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pom.c,v 1.15 2007/01/12 22:43:05 hubertf Exp $");
+__RCSID("$NetBSD: pom.c,v 1.15.4.1 2008/01/09 01:30:54 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ double	dtor(double);
 int	main(int, char *[]);
 double	potm(double);
 time_t	parsetime(char *);
-void	badformat(void) __attribute__((__noreturn__));
+void	badformat(void) __dead;
 
 int
 main(int argc, char *argv[])

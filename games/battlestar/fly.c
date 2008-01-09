@@ -1,4 +1,4 @@
-/*	$NetBSD: fly.c,v 1.13 2005/07/01 06:04:54 jmc Exp $	*/
+/*	$NetBSD: fly.c,v 1.13.10.1 2008/01/09 01:30:45 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fly.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: fly.c,v 1.13 2005/07/01 06:04:54 jmc Exp $");
+__RCSID("$NetBSD: fly.c,v 1.13.10.1 2008/01/09 01:30:45 matt Exp $");
 #endif
 #endif				/* not lint */
 
@@ -61,7 +61,7 @@ static void succumb(int);
 static void target(void);
 
 static void
-succumb(int dummy __attribute__((__unused__)))
+succumb(int dummy __unused)
 {
 	if (oldsig == SIG_DFL) {
 		endfly();
@@ -247,7 +247,7 @@ blast(void)
 }
 
 static void
-moveenemy(int dummy __attribute__((__unused__)))
+moveenemy(int dummy __unused)
 {
 	double  d;
 	int     oldr, oldc;

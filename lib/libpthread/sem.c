@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.16.2.1 2007/11/06 23:11:45 matt Exp $	*/
+/*	$NetBSD: sem.c,v 1.16.2.2 2008/01/09 01:36:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.16.2.1 2007/11/06 23:11:45 matt Exp $");
+__RCSID("$NetBSD: sem.c,v 1.16.2.2 2008/01/09 01:36:41 matt Exp $");
 
 #include <sys/types.h>
 #include <sys/ksem.h>
@@ -323,7 +323,7 @@ sem_wait(sem_t *sem)
 	for (;;) {
 		if (self->pt_cancel) {
 			pthread_mutex_unlock(&(*sem)->usem_interlock);
-			pthread_exit(PTHREAD_CANCELED);
+			pthread__cancelled();
 		}
 		if ((*sem)->usem_count > 0)
 			break;

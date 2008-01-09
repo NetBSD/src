@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.10 2004/12/14 00:23:19 nathanw Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.10.16.1 2008/01/09 01:34:08 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -211,6 +211,7 @@ void	__libc_thr_create(thr_t *, const thrattr_t *,
 void	__libc_thr_exit(void *) __attribute__((__noreturn__));
 int	*__libc_thr_errno(void);
 int	__libc_thr_setcancelstate(int, int *);
+unsigned int	__libc_thr_curcpu(void);
 
 extern int __isthreaded;
 __END_DECLS
@@ -224,6 +225,7 @@ __END_DECLS
 #define	thr_errno()		__libc_thr_errno()
 #define	thr_enabled()		(__isthreaded)
 #define thr_setcancelstate(n, o) __libc_thr_setcancelstate((n),(o))
+#define thr_curcpu()		__libc_thr_curcpu()
 #endif /* __LIBC_THREAD_STUBS */
 
 #define	FLOCKFILE(fp)		__flockfile_internal(fp, 1)
@@ -261,6 +263,7 @@ __END_DECLS
 #define	thr_sigsetmask(f, n, o)
 #define	thr_self()
 #define	thr_errno()
+#define	thr_curcpu()		((unsigned int)0)
 
 #define	FLOCKFILE(fp)		
 #define	FUNLOCKFILE(fp)		
