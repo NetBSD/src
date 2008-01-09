@@ -1,4 +1,4 @@
-/*	$NetBSD: modstat.c,v 1.22 2006/05/15 14:30:38 christos Exp $	*/
+/*	$NetBSD: modstat.c,v 1.22.12.1 2008/01/09 02:00:49 matt Exp $	*/
 
 /*
  * Copyright (c) 1993 Terrence R. Lambert.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: modstat.c,v 1.22 2006/05/15 14:30:38 christos Exp $");
+__RCSID("$NetBSD: modstat.c,v 1.22.12.1 2008/01/09 02:00:49 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: modstat.c,v 1.22 2006/05/15 14:30:38 christos Exp $");
 
 static void	cleanup(void);
 static int	dostat(int, const char *);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 
 static const char *type_names[] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lprm.c,v 1.17 2005/11/28 03:26:07 christos Exp $	*/
+/*	$NetBSD: lprm.c,v 1.17.10.1 2008/01/09 02:02:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)lprm.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lprm.c,v 1.17 2005/11/28 03:26:07 christos Exp $");
+__RCSID("$NetBSD: lprm.c,v 1.17.10.1 2008/01/09 02:02:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ uid_t	 uid, euid;		/* real and effective user id's */
 
 static char	luser[16];	/* buffer for person */
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 int
 main(int argc, char *argv[])

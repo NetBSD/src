@@ -1,4 +1,4 @@
-/*	$NetBSD: format.c,v 1.7.4.1 2007/11/06 23:35:52 matt Exp $	*/
+/*	$NetBSD: format.c,v 1.7.4.2 2008/01/09 02:00:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: format.c,v 1.7.4.1 2007/11/06 23:35:52 matt Exp $");
+__RCSID("$NetBSD: format.c,v 1.7.4.2 2008/01/09 02:00:46 matt Exp $");
 #endif /* not __lint__ */
 
 #include <time.h>
@@ -65,7 +65,7 @@ check_bufsize(char **buf, size_t *bufsize, char **p, size_t cnt)
 	if (*p + cnt < *buf + *bufsize)
 		return;
 	*bufsize *= 2;
-	q = realloc(*buf, *bufsize);
+	q = erealloc(*buf, *bufsize);
 	*p = q + (*p - *buf);
 	*buf = q;
 }
@@ -79,7 +79,7 @@ sfmtoff(const char **fmtbeg, const char *fmtch, off_t off)
 
 	len = fmtch - *fmtbeg + sizeof(PRId64);
 	newfmt = salloc(len);
-	(void)strlcpy(newfmt, *fmtbeg, len - sizeof(sizeof(PRId64)) + 1);
+	(void)strlcpy(newfmt, *fmtbeg, len - sizeof(PRId64) + 1);
 	(void)strlcat(newfmt, PRId64, len);
 	*fmtbeg = fmtch + 1;
 	(void)sasprintf(&p, newfmt, off);
@@ -1010,7 +1010,7 @@ preformat(struct tm *tm, const char *oldfmt, struct message *mp, int use_hl_date
 	user = protect(userof(mp));
 	dateof(tm, mp, use_hl_date);
 	fmtsize = LINESIZE;
-	newfmt = malloc(fmtsize); /* so we can realloc() in check_bufsize() */
+	newfmt = ecalloc(1, fmtsize); /* so we can realloc() in check_bufsize() */
 	q = newfmt;
 	p = oldfmt;
 	while (*p) {

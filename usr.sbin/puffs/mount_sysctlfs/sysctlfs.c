@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.3.2.1 2007/11/06 23:36:33 matt Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.3.2.2 2008/01/09 02:02:21 matt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.3.2.1 2007/11/06 23:36:33 matt Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.3.2.2 2008/01/09 02:02:21 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -285,8 +285,8 @@ main(int argc, char *argv[])
 		errx(1, "domount");
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
 		err(1, "puffs_mount");
@@ -329,7 +329,7 @@ sysctlfs_domount(struct puffs_usermount *pu)
 }
 
 int
-sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
+sysctlfs_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 	struct puffs_newinfo *pni)
 {
 	struct puffs_pathobj po;
@@ -342,7 +342,7 @@ sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 	po.po_len = sfid->len;
 	po.po_path = &sfid->path;
 
-	pn = getnode(puffs_cc_getusermount(pcc), &po, 0);
+	pn = getnode(pu, &po, 0);
 	if (pn == NULL)
 		return EINVAL;
 	sfs = pn->pn_data;
@@ -357,7 +357,7 @@ sysctlfs_fs_fhtonode(struct puffs_cc *pcc, void *fid, size_t fidsize,
 }
 
 int
-sysctlfs_fs_nodetofh(struct puffs_cc *pcc, void *cookie,
+sysctlfs_fs_nodetofh(struct puffs_usermount *pu, void *cookie,
 	void *fid, size_t *fidsize)
 {
 	struct puffs_node *pn = cookie;
@@ -449,10 +449,9 @@ getsize(struct sfsnode *sfs, struct puffs_pathobj *po)
 }
 
 int
-sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn)
+sysctlfs_node_lookup(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_cn *p2cn = __UNCONST(pcn); /* XXX: fix the interface */
 	struct sysctlnode sn[SFS_NODEPERDIR];
 	struct sysctlnode qnode;
@@ -504,8 +503,8 @@ sysctlfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+sysctlfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	struct sfsnode *sfs = pn->pn_data;
@@ -535,9 +534,8 @@ sysctlfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 }
 
 int
-sysctlfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+sysctlfs_node_setattr(struct puffs_usermount *pu, void *opc,
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
 
 	/* dummy, but required for write */
@@ -546,11 +544,11 @@ sysctlfs_node_setattr(struct puffs_cc *pcc, void *opc,
 }
 
 int
-sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
-	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
-	int *eofflag, off_t *cookies, size_t *ncookies)
+sysctlfs_node_readdir(struct puffs_usermount *pu, void *opc,
+	struct dirent *dent, off_t *readoff, size_t *reslen,
+	const struct puffs_cred *pcr, int *eofflag,
+	off_t *cookies, size_t *ncookies)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct sysctlnode sn[SFS_NODEPERDIR];
 	struct sysctlnode qnode;
 	struct puffs_node *pn_dir = opc;
@@ -618,7 +616,7 @@ sysctlfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 }
 
 int
-sysctlfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+sysctlfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
@@ -648,7 +646,7 @@ sysctlfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 }
 
 int
-sysctlfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+sysctlfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *cred,
 	int ioflag)
 {

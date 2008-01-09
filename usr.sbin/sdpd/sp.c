@@ -1,4 +1,4 @@
-/*	$NetBSD: sp.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: sp.c,v 1.1.10.1 2008/01/09 02:02:28 matt Exp $	*/
 
 /*
  * sp.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: sp.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: sp.c,v 1.1.10.1 2008/01/09 02:02:28 matt Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/sp.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sp.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: sp.c,v 1.1.10.1 2008/01/09 02:02:28 matt Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
@@ -113,8 +113,15 @@ static attr_t	sp_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	sp_profile_descriptor = {
+static uint16_t sp_profile_uuids[] = {
 	SDP_SERVICE_CLASS_SERIAL_PORT,
+	SDP_UUID_PROTOCOL_L2CAP,
+	SDP_UUID_PROTOCOL_RFCOMM,
+};
+
+profile_t	sp_profile_descriptor = {
+	sp_profile_uuids,
+	sizeof(sp_profile_uuids),
 	sizeof(sdp_sp_profile_t),
 	common_profile_server_channel_valid,
 	(attr_t const * const) &sp_profile_attrs

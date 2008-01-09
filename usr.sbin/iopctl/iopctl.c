@@ -1,4 +1,4 @@
-/*	$NetBSD: iopctl.c,v 1.14 2007/03/26 23:08:29 hubertf Exp $	*/
+/*	$NetBSD: iopctl.c,v 1.14.4.1 2008/01/09 02:02:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: iopctl.c,v 1.14 2007/03/26 23:08:29 hubertf Exp $");
+__RCSID("$NetBSD: iopctl.c,v 1.14.4.1 2008/01/09 02:02:04 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -205,7 +205,7 @@ getparam(int tid, int group, void *pbuf, int pbufsize)
 	struct {
 		struct	i2o_param_op_list_header olh;
 		struct	i2o_param_op_all_template oat;
-	} __attribute__ ((__packed__)) req;
+	} __packed req;
 
 	mb.msgflags = I2O_MSGFLAGS(i2o_util_params_op);
 	mb.msgfunc = I2O_MSGFUNC(tid, I2O_UTIL_PARAMS_GET);
@@ -347,7 +347,7 @@ showddmid(char **argv)
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_ddm_identity di;
 		char padding[128];
-	} __attribute__ ((__packed__)) p;
+	} __packed p;
 	char ident[128];
 
 	getparam(gettid(argv), I2O_PARAM_DDM_IDENTITY, &p, sizeof(p));
@@ -371,7 +371,7 @@ showdevid(char **argv)
 		struct	i2o_param_read_results prr;
 		struct	i2o_param_device_identity di;
 		char padding[128];
-	} __attribute__ ((__packed__)) p;
+	} __packed p;
 	char ident[128];
 
 	getparam(gettid(argv), I2O_PARAM_DEVICE_IDENTITY, &p, sizeof(p));

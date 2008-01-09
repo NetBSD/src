@@ -1,4 +1,4 @@
-/*	$NetBSD: irmc_command.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $	*/
+/*	$NetBSD: irmc_command.c,v 1.1.10.1 2008/01/09 02:02:25 matt Exp $	*/
 
 /*
  * irmc_command_command_command.c
@@ -27,12 +27,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: irmc_command.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $
+ * $Id: irmc_command.c,v 1.1.10.1 2008/01/09 02:02:25 matt Exp $
  * $FreeBSD: src/usr.sbin/bluetooth/sdpd/irmc_command.c,v 1.1 2004/01/20 20:48:26 emax Exp $
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: irmc_command.c,v 1.1 2006/06/19 15:44:56 gdamore Exp $");
+__RCSID("$NetBSD: irmc_command.c,v 1.1.10.1 2008/01/09 02:02:25 matt Exp $");
 
 #include <sys/queue.h>
 #include <bluetooth.h>
@@ -113,8 +113,16 @@ static attr_t	irmc_command_profile_attrs[] = {
 	{ 0, NULL } /* end entry */
 };
 
-profile_t	irmc_command_profile_descriptor = {
+static uint16_t	irmc_command_profile_uuids[] = {
 	SDP_SERVICE_CLASS_IR_MC_SYNC_COMMAND,
+	SDP_UUID_PROTOCOL_L2CAP,
+	SDP_UUID_PROTOCOL_RFCOMM,
+	SDP_UUID_PROTOCOL_OBEX,
+};
+
+profile_t	irmc_command_profile_descriptor = {
+	irmc_command_profile_uuids,
+	sizeof(irmc_command_profile_uuids),
 	sizeof(sdp_irmc_command_profile_t),
 	common_profile_server_channel_valid,
 	(attr_t const * const) &irmc_command_profile_attrs

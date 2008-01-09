@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_attach.c,v 1.4.4.1 2007/11/06 23:35:54 matt Exp $	*/
+/*	$NetBSD: mime_attach.c,v 1.4.4.2 2008/01/09 02:00:46 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: mime_attach.c,v 1.4.4.1 2007/11/06 23:35:54 matt Exp $");
+__RCSID("$NetBSD: mime_attach.c,v 1.4.4.2 2008/01/09 02:00:46 matt Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -278,13 +278,13 @@ content_encoding_by_name(const char *filename, const char *ctype)
 {
 	FILE *fp;
 	const char *enc;
-	fp = fopen(filename, "r");
+	fp = Fopen(filename, "r");
 	if (fp == NULL) {
 		warn("content_encoding_by_name: %s", filename);
 		return MIME_TRANSFER_BASE64;	/* safe */
 	}
 	enc = content_encoding_core(fp, ctype);
-	(void)fclose(fp);
+	(void)Fclose(fp);
 	return enc;
 }
 
@@ -292,16 +292,20 @@ static const char *
 content_encoding_by_fileno(int fd, const char *ctype)
 {
 	FILE *fp;
+	int fd2;
 	const char *encoding;
 	off_t cur_pos;
 
 	cur_pos = lseek(fd, (off_t)0, SEEK_CUR);
-	fp = fdopen(fd, "r");
-	if (fp == NULL) {
+	if ((fd2 = dup(fd)) == -1 ||
+	    (fp = Fdopen(fd2, "r")) == NULL) {
 		warn("content_encoding_by_fileno");
+		if (fd2 != -1)
+			(void)close(fd2);
 		return MIME_TRANSFER_BASE64;
 	}
 	encoding = content_encoding_core(fp, ctype);
+	Fclose(fp);
 	(void)lseek(fd, cur_pos, SEEK_SET);
 	return encoding;
 }
@@ -355,11 +359,11 @@ content_type_by_name(char *filename)
 			FILE *fp;
 			int ch;
 			if (sb.st_size == 0 || filename == NULL ||
-			    (fp = fopen(filename, "r")) == NULL)
+			    (fp = Fopen(filename, "r")) == NULL)
 				return "text/plain";
 
 			ch = fgetc(fp);
-			(void)fclose(fp);
+			(void)Fclose(fp);
 
 			return isprint(ch) || isspace(ch) ?
 			    "text/plain" : "application/octet-stream";
@@ -543,15 +547,20 @@ fput_attachment(FILE *fo, struct attachment *ap)
 
 	switch (ap->a_type) {
 	case ATTACH_FNAME:
-		fi = fopen(ap->a_name, "r");
+		fi = Fopen(ap->a_name, "r");
 		if (fi == NULL)
-			err(EXIT_FAILURE, "fopen: %s", ap->a_name);
+			err(EXIT_FAILURE, "Fopen: %s", ap->a_name);
 		break;
 
 	case ATTACH_FILENO:
-		fi = fdopen(ap->a_fileno, "r");
+		/*
+		 * XXX - we should really dup(2) here, however we are
+		 * finished with the attachment, so the Fclose() below
+		 * is OK for now.  This will be changed in the future.
+		 */
+		fi = Fdopen(ap->a_fileno, "r");
 		if (fi == NULL)
-			err(EXIT_FAILURE, "fdopen: %d", ap->a_fileno);
+			err(EXIT_FAILURE, "Fdopen: %d", ap->a_fileno);
 		break;
 
 	case ATTACH_MSG: {
@@ -592,15 +601,7 @@ fput_attachment(FILE *fo, struct attachment *ap)
 	}
 
 	fput_body(fi, fo, Cp);
-
-	switch (ap->a_type) {
-	case ATTACH_FNAME:
-	case ATTACH_MSG:
-		(void)fclose(fi);
-		break;
-	default:
-		break;
-	}
+	(void)Fclose(fi);
 }
 
 /***********************************

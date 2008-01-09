@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.c,v 1.5 2007/05/16 09:57:21 pooka Exp $	*/
+/*	$NetBSD: subr.c,v 1.5.4.1 2008/01/09 02:02:18 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: subr.c,v 1.5 2007/05/16 09:57:21 pooka Exp $");
+__RCSID("$NetBSD: subr.c,v 1.5.4.1 2008/01/09 02:02:18 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -99,10 +99,11 @@ newp9pnode_qid(struct puffs_usermount *pu, const struct qid9p *qid,
  * and issue dummy readdirs until we get the result we want
  */
 int
-getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
+getdfwithoffset(struct puffs_usermount *pu, struct p9pnode *p9n, off_t wantoff,
 	struct dirfid **rfid)
 {
-	struct puffs9p *p9p = puffs_cc_getspecific(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct puffs9p *p9p = puffs_getspecific(pu);
 	struct puffs_framebuf *pb;
 	struct dirfid *dfp = NULL;
 	p9ptag_t tag = NEXTTAG(p9p);
@@ -122,7 +123,7 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 	pb = p9pbuf_makeout();
 	dfp = ecalloc(1, sizeof(struct dirfid));
 	dfp->fid = NEXTFID(p9p);
-	rv = proto_cc_open(pcc, p9n->fid_base, dfp->fid, P9PROTO_OMODE_READ);
+	rv = proto_cc_open(pu, p9n->fid_base, dfp->fid, P9PROTO_OMODE_READ);
 	if (rv)
 		goto out;
 
@@ -170,10 +171,10 @@ getdfwithoffset(struct puffs_cc *pcc, struct p9pnode *p9n, off_t wantoff,
 }
 
 void
-releasedf(struct puffs_cc *pcc, struct dirfid *dfp)
+releasedf(struct puffs_usermount *pu, struct dirfid *dfp)
 {
 
-	proto_cc_clunkfid(pcc, dfp->fid, 0);
+	proto_cc_clunkfid(pu, dfp->fid, 0);
 	free(dfp);
 }
 
@@ -185,12 +186,12 @@ storedf(struct p9pnode *p9n, struct dirfid *dfp)
 }
 
 void
-nukealldf(struct puffs_cc *pcc, struct p9pnode *p9n)
+nukealldf(struct puffs_usermount *pu, struct p9pnode *p9n)
 {
 	struct dirfid *dfp;
 
 	while ((dfp = LIST_FIRST(&p9n->dir_openlist)) != NULL) {
 		LIST_REMOVE(dfp, entries);
-		releasedf(pcc, dfp);
+		releasedf(pu, dfp);
 	}
 }

@@ -1,4 +1,4 @@
-/*      $NetBSD: usbhidaction.c,v 1.21 2006/05/19 14:43:58 christos Exp $ */
+/*      $NetBSD: usbhidaction.c,v 1.21.12.1 2008/01/09 02:01:17 matt Exp $ */
 
 /*
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: usbhidaction.c,v 1.21 2006/05/19 14:43:58 christos Exp $");
+__RCSID("$NetBSD: usbhidaction.c,v 1.21.12.1 2008/01/09 02:01:17 matt Exp $");
 #endif
 
 #include <stdio.h>
@@ -76,7 +76,7 @@ static struct command *commands;
 
 #define SIZE 4000
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static struct command *parse_conf(const char *, report_desc_t, int, int);
 static void docmd(struct command *, int, const char *, int, char **);
 static void freecommands(struct command *);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: envstat.8,v 1.22.2.1 2007/11/06 23:36:25 matt Exp $
+.\"	$NetBSD: envstat.8,v 1.22.2.2 2008/01/09 02:01:58 matt Exp $
 .\"
 .\" Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 29, 2007
+.Dd December 12, 2007
 .Dt ENVSTAT 8
 .Os
 .Sh NAME
@@ -74,7 +74,8 @@ manual page for more information.
 Display the names of the drivers that were registered with
 the
 .Xr envsys 4
-framework, one per line.
+framework, one per line and some properties for the driver: refresh timeout
+value, for example.
 .It Fl d Ar device
 Display only the sensors for the given
 .Ar device .
@@ -162,18 +163,19 @@ file:
 .Xr adt7467c 4 ,
 .Xr aiboost 4 ,
 .Xr aps 4 ,
+.Xr battery_pmu 4 ,
 .Xr coretemp 4 ,
+.Xr sparc64/envctrl 4 ,
 .Xr envsys 4 ,
 .Xr ipmi 4 ,
-.Xr it 4 ,
+.Xr itesio 4 ,
 .Xr lm 4 ,
 .Xr lmtemp 4 ,
 .Xr mfi 4 ,
 .Xr nsclpcsio 4 ,
 .Xr owtemp 4 ,
-.Xr sparc/tctrl 4 ,
-.Xr sparc64/envctrl 4 ,
 .Xr smsc 4 ,
+.Xr sparc/tctrl 4 ,
 .Xr tm121temp 4 ,
 .Xr ug 4 ,
 .Xr viaenv 4 ,

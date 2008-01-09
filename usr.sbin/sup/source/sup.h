@@ -1,4 +1,4 @@
-/*	$NetBSD: sup.h,v 1.10 2002/07/10 18:53:59 wiz Exp $	*/
+/*	$NetBSD: sup.h,v 1.10.22.1 2008/01/09 02:02:32 matt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -105,17 +105,35 @@ extern char scmversion[];		/* string version of scm */
 #define DEBUGFPORT	"supfiledbg"
 #define DEBUGFPORTNUM	1127
 
+/* Default directory for system sup information */
+#ifndef	DEFDIR
+#ifdef EE_XXX
+#define DEFDIR		"/etc"
+#else  /* EE_XXX */
+#define DEFDIR		"/usr"
+#endif /* EE_XXX */
+#endif	/* DEFDIR */
+#ifndef DEFSCAN
+#define DEFSCAN	""
+#endif
+
 /* Data files used in scan.c */
-#define FILELIST	"sup/%s/%s"
-#define FILESCAN	"sup/%s/%s"
-#define FILEHOST	"sup/%s/%s"
+#ifdef EE_XXX
+#define FILELIST	DEFSCAN "supscan/%s/%s"
+#define FILESCAN	DEFSCAN "supscan/%s/%s"
+#define FILEHOST	DEFSCAN "supscan/%s/%s"
+#else
+#define FILELIST	DEFSCAN "sup/%s/%s"
+#define FILESCAN	DEFSCAN "sup/%s/%s"
+#define FILEHOST	DEFSCAN "sup/%s/%s"
+#endif
 #define FILELISTDEF	"list"
 #define FILESCANDEF	"scan"
 #define FILEHOSTDEF	"host"
 #define DEFRELEASE	"default"
 
 /* Data files used in sup.c */
-#define FILEBASEDEFAULT	"/usr/%s" /* also supfilesrv and supscan */
+#define FILEBASEDEFAULT	DEFDIR "/%s" /* also supfilesrv and supscan */
 #ifdef EE_XXX
 #define FILESUPDEFAULT	"%s/supfiles/coll.list"
 #define FILESUPTDEFAULT	"%s/supfiles/coll.what"
@@ -127,11 +145,11 @@ extern char scmversion[];		/* string version of scm */
 #endif /* EE_XXX */
 #define FILEBKDIR	"%s/BACKUP"
 #define FILEBACKUP	"%s/BACKUP/%s"
-#define FILELAST	"sup/%s/last%s"
-#define FILELASTTEMP	"sup/%s/last%s.temp"
-#define FILELOCK	"sup/%s/lock"	/* also supfilesrv */
-#define FILEREFUSE	"sup/%s/refuse"
-#define FILEWHEN	"sup/%s/when%s"
+#define FILELAST	DEFSCAN "sup/%s/last%s"
+#define FILELASTTEMP	DEFSCAN "sup/%s/last%s.temp"
+#define FILELOCK	DEFSCAN "sup/%s/lock"	/* also supfilesrv */
+#define FILEREFUSE	DEFSCAN "sup/%s/refuse"
+#define FILEWHEN	DEFSCAN "sup/%s/when%s"
 
 /* Data files used in supfilesrv.c */
 #define FILEXPATCH	"%s/sup/xpatch.host"
@@ -140,10 +158,15 @@ extern char scmversion[];		/* string version of scm */
 #else  /* EE_XXX */
 #define FILEDIRS	"%s/lib/supfiles/coll.dir" /* also supscan */
 #endif /* EE_XXX */
-#define FILECRYPT	"sup/%s/crypt"
-#define FILELOGFILE	"sup/%s/logfile"
-#define FILEPREFIX	"sup/%s/prefix"	/* also supscan */
-#define FILERELEASES	"sup/%s/releases" /* also supscan */
+#define FILECRYPT	DEFSCAN "sup/%s/crypt"
+#define FILELOGFILE	DEFSCAN "sup/%s/logfile"
+#ifdef EE_XXX
+#define FILEPREFIX	DEFSCAN "supscan/%s/prefix"	/* also supscan */
+#define FILERELEASES	DEFSCAN "supscan/%s/releases" /* also supscan */
+#else
+#define FILEPREFIX	DEFSCAN "sup/%s/prefix"	/* also supscan */
+#define FILERELEASES	DEFSCAN "sup/%s/releases" /* also supscan */
+#endif
 
 /* String length */
 #define STRINGLENGTH	2000
@@ -152,15 +175,6 @@ extern char scmversion[];		/* string version of scm */
 #define PSWDCRYPT	"SuperMan"
 /* Test string for encryption */
 #define CRYPTTEST	"Hello there, Sailor Boy!"
-
-/* Default directory for system sup information */
-#ifndef	DEFDIR
-#ifdef EE_XXX
-#define DEFDIR		"/etc"
-#else  /* EE_XXX */
-#define DEFDIR		"/usr"
-#endif /* EE_XXX */
-#endif	/* DEFDIR */
 
 /* Default login account for file server */
 #ifndef	DEFUSER

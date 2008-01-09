@@ -1,4 +1,4 @@
-/*	$NetBSD: services_mkdb.c,v 1.11 2007/06/23 17:02:03 christos Exp $	*/
+/*	$NetBSD: services_mkdb.c,v 1.11.4.1 2008/01/09 02:02:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: services_mkdb.c,v 1.11 2007/06/23 17:02:03 christos Exp $");
+__RCSID("$NetBSD: services_mkdb.c,v 1.11.4.1 2008/01/09 02:02:29 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -73,7 +73,7 @@ static char    *getstring(const char *, size_t, char **, const char *);
 static size_t	getprotoindex(StringList *, const char *);
 static const char *getprotostr(StringList *, size_t);
 static const char *mkaliases(StringList *, char *, size_t);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 const HASHINFO hinfo = {
 	.bsize = 256,

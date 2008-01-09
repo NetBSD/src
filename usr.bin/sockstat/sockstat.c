@@ -1,4 +1,4 @@
-/*	$NetBSD: sockstat.c,v 1.10 2005/08/24 21:33:57 rpaulo Exp $ */
+/*	$NetBSD: sockstat.c,v 1.10.12.1 2008/01/09 02:00:57 matt Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sockstat.c,v 1.10 2005/08/24 21:33:57 rpaulo Exp $");
+__RCSID("$NetBSD: sockstat.c,v 1.10.12.1 2008/01/09 02:00:57 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -99,7 +99,7 @@ struct sockitem {
 };
 
 struct kinfo_file *flist;
-int nfiles;
+u_int nfiles;
 
 int pf_list, only, nonames;
 bitstr_t *portmap;

@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.6 2007/01/13 23:47:36 christos Exp $	*/
+/*	$NetBSD: files.c,v 1.6.4.1 2008/01/09 02:00:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -354,24 +354,24 @@ fixdevsw(void)
 			if (res->dm_cmajor != dm->dm_cmajor ||
 			    res->dm_bmajor != dm->dm_bmajor) {
 				cfgxerror(res->dm_srcfile, res->dm_srcline,
-				       "device-major '%s' is inconsistent: "
-				       "block %d, char %d", res->dm_name,
-				       res->dm_bmajor, res->dm_cmajor);
-				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
-				       "device-major '%s' is inconsistent: "
-				       "block %d, char %d", dm->dm_name,
-				       dm->dm_bmajor, dm->dm_cmajor);
-				error = 1;
-				goto out;
+					"device-major '%s' "
+					"block %d, char %d redefined"
+					" at %s:%d as block %d, char %d",
+					res->dm_name,
+					res->dm_bmajor, res->dm_cmajor,
+					dm->dm_srcfile, dm->dm_srcline,
+					dm->dm_bmajor, dm->dm_cmajor);
 			} else {
-				cfgxerror(dm->dm_srcfile, dm->dm_srcline,
-				       "device-major '%s' is duplicated: "
-				       "block %d, char %d",
-				       dm->dm_name, dm->dm_bmajor,
-				       dm->dm_cmajor);
-				error = 1;
-				goto out;
+				cfgxerror(res->dm_srcfile, res->dm_srcline,
+					"device-major '%s' "
+					"(block %d, char %d) duplicated"
+					" at %s:%d",
+					dm->dm_name, dm->dm_bmajor,
+					dm->dm_cmajor,
+					dm->dm_srcfile, dm->dm_srcline);
 			}
+			error = 1;
+			goto out;
 		}
 		if (ht_insert(fixdevmtab, intern(dm->dm_name), dm)) {
 			panic("fixdevsw: %s char %d block %d",

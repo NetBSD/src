@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.23 2007/07/02 18:41:03 christos Exp $	*/
+/*	$NetBSD: cut.c,v 1.23.4.1 2008/01/09 02:00:37 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.23 2007/07/02 18:41:03 christos Exp $");
+__RCSID("$NetBSD: cut.c,v 1.23.4.1 2008/01/09 02:00:37 matt Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -69,7 +69,7 @@ static void	b_cut(FILE *, const char *);
 static void	c_cut(FILE *, const char *);
 static void	f_cut(FILE *, const char *);
 static void	get_list(char *);
-static void	usage(void) __attribute__((__noreturn__));
+static void	usage(void) __dead;
 
 int
 main(int argc, char *argv[])

@@ -1,4 +1,4 @@
-/* $NetBSD: sunlabel.c,v 1.17 2005/12/24 21:35:57 perry Exp $ */
+/* $NetBSD: sunlabel.c,v 1.17.10.1 2008/01/09 02:02:29 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: sunlabel.c,v 1.17 2005/12/24 21:35:57 perry Exp $");
+__RCSID("$NetBSD: sunlabel.c,v 1.17.10.1 2008/01/09 02:02:29 matt Exp $");
 #endif
 
 #include <stdio.h>
@@ -236,7 +240,7 @@ trydisk(const char *s, int mustsucceed)
 
 	diskname = s;
 	if ((diskfd = open(s, O_RDWR)) == -1 ||
-	    (diskfd = open(s, O_RDWR | O_NDELAY)) == -1) {
+	    (diskfd = open(s, O_RDWR | O_NONBLOCK)) == -1) {
 		if ((diskfd = open(s, O_RDONLY)) == -1) {
 			if (mustsucceed)
 				err(1, "Cannot open `%s'", s);
@@ -288,7 +292,7 @@ setdisk(const char *s)
 	errx(1, "Can't find device for disk `%s'", s);
 }
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static void
 usage(void)
 {
@@ -926,10 +930,10 @@ update_spc(void)
  *  label, but we don't depend on that.
  */
 static int
-/*ARGSUSED*/
-print_ascii(struct field *f, int sofar __attribute__((__unused__)))
+print_ascii(struct field *f, int sofar)
 {
 	printf("%s: %.128s\n", f->tag, (char *)f->loc);
+	sofar = 0;
 	return 0;
 }
 

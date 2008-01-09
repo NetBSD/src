@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.3 2007/07/17 10:06:03 pooka Exp $
+.\"	$NetBSD: mount_9p.8,v 1.3.4.1 2008/01/09 02:02:17 matt Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -31,21 +31,21 @@
 .Nd mount a file server using the 9P resource sharing protocol
 .Sh SYNOPSIS
 .Nm
+.Op Fl s
 .Op Fl o Ar mntopts
 .Op Fl p Ar port
-.Op Fl s
 .Ar [user@]host[:path]
 .Ar mount_point
 .Sh DESCRIPTION
 The
 .Nm
-program is used to mount a file hierarchy served with the Plan9
+program is used to mount a file hierarchy served with the Plan 9
 file sharing protocol: 9P.
 After the file system is mounted, the files on the remote
 .Ar host
 will be accessed using the credentials of the user named
 .Ar user
-and whatever uid the user happens to have on the remote server.
+and whatever UID the user happens to have on the remote server.
 If
 .Ar path
 is supplied, it is used as the mount rootpath on the remote host.

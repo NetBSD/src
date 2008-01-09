@@ -1,4 +1,4 @@
-/*	$NetBSD: node.c,v 1.39.2.1 2007/11/06 23:36:32 matt Exp $	*/
+/*	$NetBSD: node.c,v 1.39.2.2 2008/01/09 02:02:20 matt Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: node.c,v 1.39.2.1 2007/11/06 23:36:32 matt Exp $");
+__RCSID("$NetBSD: node.c,v 1.39.2.2 2008/01/09 02:02:20 matt Exp $");
 #endif /* !lint */
 
 #include <assert.h>
@@ -39,10 +39,9 @@ __RCSID("$NetBSD: node.c,v 1.39.2.1 2007/11/06 23:36:32 matt Exp $");
 #include "sftp_proto.h"
 
 int
-psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn)
+psshfs_node_lookup(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
-        struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn_dir = opc;
 	struct psshfs_node *psn, *psn_dir = pn_dir->pn_data;
@@ -60,7 +59,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		return 0;
 	}
 
-	rv = sftp_readdir(pcc, pctx, pn_dir);
+	rv = sftp_readdir(pu, pctx, pn_dir);
 	if (rv) {
 		if (rv != EPERM)
 			return rv;
@@ -69,7 +68,7 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 		 * Can't read the directory.  We still might be
 		 * able to find the node with getattr in -r+x dirs
 		 */
-		rv = getpathattr(pcc, PCNPATH(pcn), &va);
+		rv = getpathattr(pu, PCNPATH(pcn), &va);
 		if (rv)
 			return rv;
 
@@ -105,13 +104,13 @@ psshfs_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 }
 
 int
-psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+psshfs_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *vap,
+	const struct puffs_cred *pcr)
 {
 	struct puffs_node *pn = opc;
 	int rv;
 
-	rv = getnodeattr(pcc, pn);
+	rv = getnodeattr(pu, pn);
 	if (rv)
 		return rv;
 
@@ -121,11 +120,10 @@ psshfs_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *vap,
 }
 
 int
-psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
-	const struct vattr *va, const struct puffs_cred *pcr,
-	const struct puffs_cid *pcid)
+psshfs_node_setattr(struct puffs_usermount *pu, void *opc,
+	const struct vattr *va, const struct puffs_cred *pcr)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct vattr kludgeva;
 	struct puffs_node *pn = opc;
 
@@ -161,187 +159,197 @@ psshfs_node_setattr(struct puffs_cc *pcc, void *opc,
 }
 
 int
-psshfs_node_create(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va)
+psshfs_node_create(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 	char *fhand = NULL;
 	uint32_t fhandlen;
 
-	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
-	if (!pn_new) {
-		rv = ENOMEM;
-		goto out;
-	}
-
+	/* Create node on server first */
 	psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PCNPATH(pcn));
 	psbuf_put_4(pb, SSH_FXF_WRITE | SSH_FXF_CREAT | SSH_FXF_TRUNC);
 	psbuf_put_vattr(pb, va);
 	GETRESPONSE(pb);
-
 	rv = psbuf_expect_handle(pb, &fhand, &fhandlen);
-	if (rv == 0)
-		puffs_newinfo_setcookie(pni, pn_new);
-	else
+	if (rv)
 		goto out;
+
+	/*
+	 * Do *not* create the local node before getting a response
+	 * from the server.  Otherwise we might screw up consistency,
+	 * namely that the node can be looked up before create has
+	 * returned (mind you, the kernel will unlock the directory
+	 * before the create call from userspace returns).
+	 */
+	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
+	if (!pn_new) {
+		struct puffs_framebuf *pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_req_str(pb2, SSH_FXP_REMOVE, reqid, PCNPATH(pcn));
+		JUSTSEND(pb2);
+		rv = ENOMEM;
+	}
+
+	if (pn_new)
+		puffs_newinfo_setcookie(pni, pn_new);
 
 	reqid = NEXTREQ(pctx);
 	psbuf_recycleout(pb);
 	psbuf_req_data(pb, SSH_FXP_CLOSE, reqid, fhand, fhandlen);
 	JUSTSEND(pb);
 	free(fhand);
-	return 0;
+	return rv;
 
  out:
 	free(fhand);
 	PSSHFSRETURN(rv);
 }
 
+/*
+ * Open a file handle.  This is used for read and write.  We do not
+ * wait here for the success or failure of this operation.  This is
+ * because otherwise opening and closing file handles would block
+ * reading potentially cached information.  Rather, we defer the wait
+ * to read/write and therefore allow cached access without a wait.
+ *
+ * If we have not yet succesfully opened a type of handle, we do wait
+ * here.  Also, if a lazy open fails, we revert back to the same
+ * state of waiting.
+ */
 int
-psshfs_node_mmap(struct puffs_cc* pcc, void *opc, vm_prot_t prot,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+psshfs_node_open(struct puffs_usermount *pu, void *opc, int mode,
+	const struct puffs_cred *pcr)
 {
-	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
-
-	if (prot & (VM_PROT_READ | VM_PROT_EXECUTE))
-		psn->stat |= PSN_READMAP;
-	if (prot & VM_PROT_WRITE)
-		psn->stat |= PSN_WRITEMAP;
-
-	return 0;
-}
-
-int
-psshfs_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
-{
-	PSSHFSAUTOVAR(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
+	struct puffs_framebuf *pb, *pb2;
 	struct vattr va;
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
+	uint32_t reqid;
+	int didread, didwrite;
+	int rv = 0;
 
 	if (pn->pn_va.va_type == VDIR)
-		goto out;
+		return 0;
 
 	puffs_setback(pcc, PUFFS_SETBACK_INACT_N1);
 	puffs_vattr_null(&va);
-	if (mode & FREAD && psn->fhand_r == NULL) {
+	didread = didwrite = 0;
+	if (mode & FREAD && psn->fhand_r == NULL && psn->lazyopen_r == NULL) {
+		pb = psbuf_makeout();
+
+		reqid = NEXTREQ(pctx);
 		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
 		psbuf_put_4(pb, SSH_FXF_READ);
 		psbuf_put_vattr(pb, &va);
-		GETRESPONSE(pb);
 
-		rv = psbuf_expect_handle(pb, &psn->fhand_r, &psn->fhand_r_len);
-		if (rv)
+		if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb,
+		    lazyopen_rresp, psn, 0) == -1) {
+			puffs_framebuf_destroy(pb);
+			rv = errno;
 			goto out;
-		psbuf_recycleout(pb);
+		}
+
+		psn->lazyopen_r = pb;
+		didread = 1;
 	}
-	if (mode & FWRITE && psn->fhand_w == NULL) {
-		psbuf_req_str(pb, SSH_FXP_OPEN, reqid, PNPATH(pn));
-		psbuf_put_4(pb, SSH_FXF_WRITE);
-		psbuf_put_vattr(pb, &va);
-		GETRESPONSE(pb);
-
-		rv = psbuf_expect_handle(pb, &psn->fhand_w, &psn->fhand_w_len);
-		if (rv)
-			goto out;
-	}
-
- out:
-	if (rv == 0)
-		psn->opencount++;
-
-	PSSHFSRETURN(rv);
-}
-
-static void
-closehandles(struct puffs_cc *pcc, struct psshfs_node *psn)
-{
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
-	struct puffs_framebuf *pb1, *pb2;
-	uint32_t reqid = NEXTREQ(pctx);
-	int rv; /* macro magic */
-
-	if ((psn->stat & PSN_READMAP) == 0 && psn->fhand_r) {
-		pb1 = psbuf_makeout();
-		psbuf_req_data(pb1, SSH_FXP_CLOSE, reqid,
-		    psn->fhand_r, psn->fhand_r_len);
-		JUSTSEND(pb1);
-		free(psn->fhand_r);
-		psn->fhand_r = NULL;
-	}
-	if ((psn->stat & PSN_WRITEMAP) == 0 && psn->fhand_w) {
+	if (mode & FWRITE && psn->fhand_w == NULL && psn->lazyopen_w == NULL) {
 		pb2 = psbuf_makeout();
-		psbuf_req_data(pb2, SSH_FXP_CLOSE, reqid,
-		    psn->fhand_w, psn->fhand_w_len);
-		JUSTSEND(pb2);
-		free(psn->fhand_w);
-		psn->fhand_w = NULL;
+
+		reqid = NEXTREQ(pctx);
+		psbuf_req_str(pb2, SSH_FXP_OPEN, reqid, PNPATH(pn));
+		psbuf_put_4(pb2, SSH_FXF_WRITE);
+		psbuf_put_vattr(pb2, &va);
+
+		if (puffs_framev_enqueue_cb(pu, pctx->sshfd, pb2,
+		    lazyopen_wresp, psn, 0) == -1) {
+			puffs_framebuf_destroy(pb2);
+			rv = errno;
+			goto out;
+		}
+
+		psn->lazyopen_w = pb2;
+		didwrite = 1;
 	}
+	psn->stat &= ~PSN_HANDLECLOSE;
 
  out:
-	return;
+	/* wait? */
+	if (didread && (psn->stat & PSN_DOLAZY_R) == 0) {
+		assert(psn->lazyopen_r);
+
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_r, pcc);
+		lazyopen_rresp(pu, psn->lazyopen_r, psn, rv);
+		if (psn->fhand_r) {
+			psn->stat |= PSN_DOLAZY_R;
+		} else {
+			if (psn->lazyopen_err_r)
+				return psn->lazyopen_err_r;
+			return EINVAL;
+		}
+	}
+
+	/* wait? */
+	if (didwrite && (psn->stat & PSN_DOLAZY_W) == 0) {
+		assert(psn->lazyopen_w);
+
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_w, pcc);
+		lazyopen_wresp(pu, psn->lazyopen_w, psn, rv);
+		if (psn->fhand_w) {
+			psn->stat |= PSN_DOLAZY_W;
+		} else {
+			if (psn->lazyopen_err_w)
+				return psn->lazyopen_err_w;
+			return EINVAL;
+		}
+	}
+
+	return rv;
 }
 
 int
-psshfs_node_close(struct puffs_cc *pcc, void *opc, int flags,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+psshfs_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
 
-	if (psn->opencount > 0)
-		if (--psn->opencount == 0)
-			closehandles(pcc, psn);
-
+	closehandles(pu, pn->pn_data, HANDLE_READ | HANDLE_WRITE);
 	return 0;
 }
 
 int
-psshfs_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
-{
-	struct puffs_node *pn = opc;
-	struct psshfs_node *psn = pn->pn_data;
-
-	assert(psn->opencount == 0);
-	psn->stat &= ~(PSN_READMAP | PSN_WRITEMAP);
-	closehandles(pcc, psn);
-
-	return 0;
-}
-
-int
-psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
+psshfs_node_readdir(struct puffs_usermount *pu, void *opc, struct dirent *dent,
 	off_t *readoff, size_t *reslen, const struct puffs_cred *pcr,
 	int *eofflag, off_t *cookies, size_t *ncookies)
 {
-	struct psshfs_ctx *pctx = puffs_cc_getspecific(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct psshfs_ctx *pctx = puffs_getspecific(pu);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	struct psshfs_dir *pd;
 	int i, rv, set_readdir;
 
+ restart:
 	if (psn->stat & PSN_READDIR) {
 		struct psshfs_wait pw;
 
 		set_readdir = 0;
 		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_READDIR;
 		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
-		TAILQ_REMOVE(&psn->pw, &pw, pw_entries);
+		goto restart;
 	} else {
 		psn->stat |= PSN_READDIR;
 		set_readdir = 1;
 	}
 
 	*ncookies = 0;
-	rv = sftp_readdir(pcc, pctx, pn);
+	rv = sftp_readdir(pu, pctx, pn);
 	if (rv)
 		goto out;
 
@@ -383,8 +391,11 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 		struct psshfs_wait *pw;
 
 		/* all will likely run to completion because of cache */
-		TAILQ_FOREACH(pw, &psn->pw, pw_entries)
+		TAILQ_FOREACH(pw, &psn->pw, pw_entries) {
+			assert(pw->pw_type == PWTYPE_READDIR);
 			puffs_cc_schedule(pw->pw_cc);
+			TAILQ_REMOVE(&psn->pw, pw, pw_entries);
+		}
 
 		psn->stat &= ~PSN_READDIR;
 	}
@@ -393,17 +404,60 @@ psshfs_node_readdir(struct puffs_cc *pcc, void *opc, struct dirent *dent,
 }
 
 int
-psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+psshfs_node_read(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *pcr,
 	int ioflag)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
+	struct psshfs_wait *pwp;
 	uint32_t readlen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
+		goto farout;
+	}
+
+	/* check that a lazyopen didn't fail */
+	if (!psn->fhand_r && !psn->lazyopen_r) {
+		rv = psn->lazyopen_err_r;
+		goto farout;
+	}
+
+	/* if someone is already waiting for the lazyopen, "just" wait */
+	if (psn->stat & PSN_LAZYWAIT_R) {
+		struct psshfs_wait pw;
+
+		assert(psn->lazyopen_r);
+
+		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_READ1;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
+		puffs_cc_yield(pcc);
+	}
+
+	/* if lazyopening, wait for the result */
+	if (psn->lazyopen_r) {
+		psn->stat |= PSN_LAZYWAIT_R;
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_r, pcc);
+		lazyopen_rresp(pu, psn->lazyopen_r, psn, rv);
+
+		/* schedule extra waiters */
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_READ1) {
+				puffs_cc_schedule(pwp->pw_cc);
+				TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
+			}
+		psn->stat &= ~PSN_LAZYWAIT_R;
+
+		if ((rv = psn->lazyopen_err_r) != 0)
+			goto farout;
+	}
+
+	/* if there is still no handle, just refuse to live with this */
+	if (!psn->fhand_r) {
+		rv = EINVAL;
 		goto farout;
 	}
 
@@ -420,6 +474,7 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		struct psshfs_wait pw;
 
 		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_READ2;
 		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
 		puffs_cc_yield(pcc);
 	}
@@ -432,31 +487,85 @@ psshfs_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 
  out:
 	if (max_reads && --psn->readcount >= max_reads) {
-		struct psshfs_wait *pw;
-
-		pw = TAILQ_FIRST(&psn->pw);
-		assert(pw != NULL);
-		TAILQ_REMOVE(&psn->pw, pw, pw_entries);
-		puffs_cc_schedule(pw->pw_cc);
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_READ2)
+				break;
+		assert(pwp != NULL);
+		puffs_cc_schedule(pwp->pw_cc);
+		TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
 	}
 
  farout:
+	/* check if we need a lazyclose */
+	if (psn->stat & PSN_HANDLECLOSE && psn->fhand_r) {
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_READ1)
+				break;
+		if (pwp == NULL)
+			closehandles(pu, psn, HANDLE_READ);
+	}
 	PSSHFSRETURN(rv);
 }
 
 /* XXX: we should getattr for size */
 int
-psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
+psshfs_node_write(struct puffs_usermount *pu, void *opc, uint8_t *buf,
 	off_t offset, size_t *resid, const struct puffs_cred *cred,
 	int ioflag)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
+	struct psshfs_wait *pwp;
 	struct puffs_node *pn = opc;
 	struct psshfs_node *psn = pn->pn_data;
 	uint32_t writelen;
 
 	if (pn->pn_va.va_type == VDIR) {
 		rv = EISDIR;
+		goto out;
+	}
+
+	/* check that a lazyopen didn't fail */
+	if (!psn->fhand_w && !psn->lazyopen_w) {
+		rv = psn->lazyopen_err_w;
+		goto out;
+	}
+
+	if (psn->stat & PSN_LAZYWAIT_W) {
+		struct psshfs_wait pw;
+
+		assert(psn->lazyopen_w);
+
+		pw.pw_cc = pcc;
+		pw.pw_type = PWTYPE_WRITE;
+		TAILQ_INSERT_TAIL(&psn->pw, &pw, pw_entries);
+		puffs_cc_yield(pcc);
+	}
+
+	/*
+	 * If lazyopening, wait for the result.
+	 * There can still be more than oen writer at a time in case
+	 * the kernel issues write FAFs.
+	 */
+	if (psn->lazyopen_w) {
+		psn->stat |= PSN_LAZYWAIT_W;
+		rv = puffs_framev_framebuf_ccpromote(psn->lazyopen_w, pcc);
+		lazyopen_wresp(pu, psn->lazyopen_w, psn, rv);
+
+		/* schedule extra waiters */
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_WRITE) {
+				puffs_cc_schedule(pwp->pw_cc);
+				TAILQ_REMOVE(&psn->pw, pwp, pw_entries);
+			}
+		psn->stat &= ~PSN_LAZYWAIT_W;
+
+		if ((rv = psn->lazyopen_err_w) != 0)
+			goto out;
+	}
+
+	if (!psn->fhand_w) {
+		abort();
+		rv = EINVAL;
 		goto out;
 	}
 
@@ -474,21 +583,45 @@ psshfs_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf,
 		pn->pn_va.va_size = offset + writelen;
 
  out:
+	/* check if we need a lazyclose */
+	if (psn->stat & PSN_HANDLECLOSE && psn->fhand_w) {
+		TAILQ_FOREACH(pwp, &psn->pw, pw_entries)
+			if (pwp->pw_type == PWTYPE_WRITE)
+				break;
+		if (pwp == NULL)
+			closehandles(pu, psn, HANDLE_WRITE);
+	}
 	PSSHFSRETURN(rv);
 }
 
 int
-psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
+psshfs_node_readlink(struct puffs_usermount *pu, void *opc,
 	const struct puffs_cred *cred, char *linkvalue, size_t *linklen)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
-	char *linktmp = NULL;
+	struct psshfs_node *psn = pn->pn_data;
 	uint32_t count;
 
 	if (pctx->protover < 3) {
 		rv = EOPNOTSUPP;
 		goto out;
+	}
+
+	/*
+	 * check if we can use a cached version
+	 *
+	 * XXX: we might end up reading the same link multiple times
+	 * from the server if we get many requests at once, but that's
+	 * quite harmless as this routine is reentrant.
+	 */
+	if (psn->symlink && !REFRESHTIMEOUT(pctx, time(NULL) - psn->slread))
+		goto copy;
+
+	if (psn->symlink) {
+		free(psn->symlink);
+		psn->symlink = NULL;
+		psn->slread = 0;
 	}
 
 	psbuf_req_str(pb, SSH_FXP_READLINK, reqid, PNPATH(pn));
@@ -502,21 +635,24 @@ psshfs_node_readlink(struct puffs_cc *pcc, void *opc,
 		goto out;
 	}
 
-	rv = psbuf_get_str(pb, &linktmp, (uint32_t *)linklen);
+	rv = psbuf_get_str(pb, &psn->symlink, NULL);
 	if (rv)
 		goto out;
-	(void) memcpy(linkvalue, linktmp, *linklen);
+	psn->slread = time(NULL);
+
+ copy:
+	*linklen = strlen(psn->symlink);
+	(void) memcpy(linkvalue, psn->symlink, *linklen);
 
  out:
-	free(linktmp);
 	PSSHFSRETURN(rv);
 }
 
 static int
-doremove(struct puffs_cc *pcc, struct puffs_node *pn_dir,
+doremove(struct puffs_usermount *pu, struct puffs_node *pn_dir,
 	struct puffs_node *pn, const char *name)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	int op;
 
 	if (pn->pn_va.va_type == VDIR)
@@ -536,7 +672,7 @@ doremove(struct puffs_cc *pcc, struct puffs_node *pn_dir,
 }
 
 int
-psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
+psshfs_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_targ = targ;
@@ -544,15 +680,15 @@ psshfs_node_remove(struct puffs_cc *pcc, void *opc, void *targ,
 
 	assert(pn_targ->pn_va.va_type != VDIR);
 
-	rv = doremove(pcc, opc, targ, pcn->pcn_name);
+	rv = doremove(pu, opc, targ, pcn->pcn_name);
 	if (rv == 0)
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	return rv;
 }
 
 int
-psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
+psshfs_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 	const struct puffs_cn *pcn)
 {
 	struct puffs_node *pn_targ = targ;
@@ -560,61 +696,57 @@ psshfs_node_rmdir(struct puffs_cc *pcc, void *opc, void *targ,
 
 	assert(pn_targ->pn_va.va_type == VDIR);
 
-	rv = doremove(pcc, opc, targ, pcn->pcn_name);
+	rv = doremove(pu, opc, targ, pcn->pcn_name);
 	if (rv == 0)
-		puffs_setback(pcc, PUFFS_SETBACK_NOREF_N2);
+		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N2);
 
 	return rv;
 }
 
 int
-psshfs_node_mkdir(struct puffs_cc *pcc, void *opc,  struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va)
+psshfs_node_mkdir(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
-
-	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
-	if (!pn_new) {
-		rv = ENOMEM;
-		goto out;
-	}
 
 	psbuf_req_str(pb, SSH_FXP_MKDIR, reqid, PCNPATH(pcn));
 	psbuf_put_vattr(pb, va);
 	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
+	if (rv)
+		goto out;
 
-	if (rv == 0)
+	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
+	if (pn_new) {
 		puffs_newinfo_setcookie(pni, pn_new);
-	else
-		nukenode(pn_new, pcn->pcn_name, 1);
+	} else {
+		struct puffs_framebuf *pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_recycleout(pb2);
+		psbuf_req_str(pb2, SSH_FXP_RMDIR, reqid, PCNPATH(pcn));
+		JUSTSEND(pb2);
+		rv = ENOMEM;
+	}
 
  out:
 	PSSHFSRETURN(rv);
 }
 
 int
-psshfs_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *va,
-	const char *link_target)
+psshfs_node_symlink(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *va, const char *link_target)
 {
-	PSSHFSAUTOVAR(pcc);
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn = opc;
 	struct puffs_node *pn_new;
 
 	if (pctx->protover < 3) {
 		rv = EOPNOTSUPP;
-		goto out;
-	}
-
-	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
-	if (!pn_new) {
-		rv = ENOMEM;
 		goto out;
 	}
 
@@ -627,21 +759,31 @@ psshfs_node_symlink(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
 	GETRESPONSE(pb);
 
 	rv = psbuf_expect_status(pb);
-	if (rv == 0)
+	if (rv)
+		goto out;
+
+	pn_new = allocnode(pu, pn, pcn->pcn_name, va);
+	if (pn_new) {
 		puffs_newinfo_setcookie(pni, pn_new);
-	else
-		nukenode(pn_new, pcn->pcn_name, 1);
+	} else {
+		struct puffs_framebuf *pb2 = psbuf_makeout();
+		reqid = NEXTREQ(pctx);
+		psbuf_recycleout(pb2);
+		psbuf_req_str(pb2, SSH_FXP_REMOVE, reqid, PCNPATH(pcn));
+		JUSTSEND(pb2);
+		rv = ENOMEM;
+	}
 
  out:
 	PSSHFSRETURN(rv);
 }
 
 int
-psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
+psshfs_node_rename(struct puffs_usermount *pu, void *opc, void *src,
 	const struct puffs_cn *pcn_src, void *targ_dir, void *targ,
 	const struct puffs_cn *pcn_targ)
 {
-	PSSHFSAUTOVAR(pcc);
+	PSSHFSAUTOVAR(pu);
 	struct puffs_node *pn_sf = src;
 	struct puffs_node *pn_td = targ_dir, *pn_tf = targ;
 	struct psshfs_node *psn_targdir = pn_td->pn_data;
@@ -652,7 +794,7 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
 	}
 
 	if (pn_tf) {
-		rv = doremove(pcc, targ_dir, pn_tf, pcn_targ->pcn_name);
+		rv = doremove(pu, targ_dir, pn_tf, pcn_targ->pcn_name);
 		if (rv)
 			goto out;
 	}
@@ -703,10 +845,8 @@ psshfs_node_rename(struct puffs_cc *pcc, void *opc, void *src,
  * bit.
  */
 int
-psshfs_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+psshfs_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
 	struct puffs_node *pn = opc, *pn_next, *pn_root;
 	struct psshfs_node *psn = pn->pn_data;
 

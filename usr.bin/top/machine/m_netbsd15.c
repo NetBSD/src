@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd15.c,v 1.30.4.1 2007/11/06 23:36:18 matt Exp $	*/
+/*	$NetBSD: m_netbsd15.c,v 1.30.4.2 2008/01/09 02:01:06 matt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -37,12 +37,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd15.c,v 1.30.4.1 2007/11/06 23:36:18 matt Exp $
+ * $Id: m_netbsd15.c,v 1.30.4.2 2008/01/09 02:01:06 matt Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd15.c,v 1.30.4.1 2007/11/06 23:36:18 matt Exp $");
+__RCSID("$NetBSD: m_netbsd15.c,v 1.30.4.2 2008/01/09 02:01:06 matt Exp $");
 #endif
 
 #include <sys/param.h>
@@ -137,7 +137,7 @@ static u_int64_t *cp_diff;
 int process_states[8];
 char *procstatenames[] = {
 	"", " idle, ", " runnable, ", " sleeping, ", " stopped, ",
-	" zombie, ", " dead, ", " on processor, ",
+	" zombie, ", " dead, ", " on CPU, ",
 	NULL
 };
 
@@ -784,7 +784,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 
 #ifdef KI_NOCPU
 	/* Post-1.5 change: add CPU number if appropriate */
-	if (pp->p_cpuid != KI_NOCPU) {
+	if (pp->p_cpuid != KI_NOCPU && ncpu > 1) {
 		switch (pp->p_stat) {
 		case LSONPROC:
 		case LSRUN:
@@ -885,7 +885,7 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 
 #ifdef KI_NOCPU
 	/* Post-1.5 change: add CPU number if appropriate */
-	if (pl->l_cpuid != KI_NOCPU) {
+	if (pp->p_cpuid != KI_NOCPU && ncpu > 1) {
 		switch (pl->l_stat) {
 		case LSONPROC:
 		case LSRUN:

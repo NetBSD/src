@@ -1,4 +1,4 @@
-.\" 	$NetBSD: ftp.1,v 1.121 2007/08/20 16:07:05 perry Exp $
+.\" 	$NetBSD: ftp.1,v 1.121.2.1 2008/01/09 02:00:39 matt Exp $
 .\"
 .\" Copyright (c) 1996-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -73,7 +73,7 @@
 Internet file transfer program
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46AadefginpRtvV
+.Op Fl 46AadefginpRtVv
 .Bk -words
 .Op Fl N Ar netrc
 .Ek
@@ -220,6 +220,14 @@ Disables file name globbing.
 .It Fl i
 Turns off interactive prompting during
 multiple file transfers.
+.It Fl N Ar netrc
+Use
+.Ar netrc
+instead of
+.Pa ~/.netrc .
+Refer to
+.Sx THE .netrc FILE
+for more information.
 .It Fl n
 Restrains
 .Nm
@@ -239,14 +247,6 @@ identity on the local machine), and, if necessary, prompt for a password
 and an account with which to login.
 To override the auto-login for auto-fetch transfers, specify the
 username (and optionally, password) as appropriate.
-.It Fl N Ar netrc
-Use
-.Ar netrc
-instead of
-.Pa ~/.netrc .
-Refer to
-.Sx THE .netrc FILE
-for more information.
 .It Fl o Ar output
 When auto-fetching files, save the contents in
 .Ar output .
@@ -264,25 +264,25 @@ then only the first file specified will be retrieved into
 .Ar output ;
 all other files will be retrieved into the basename of their
 remote name.
+.It Fl P Ar port
+Sets the port number to
+.Ar port .
 .It Fl p
 Enable passive mode operation for use behind connection filtering firewalls.
 This option has been deprecated as
 .Nm
 now tries to use passive mode by default, falling back to active mode
 if the server does not support passive connections.
-.It Fl P Ar port
-Sets the port number to
-.Ar port .
 .It Fl q Ar quittime
 Quit if the connection has stalled for
 .Ar quittime
 seconds.
+.It Fl R
+Restart all non-proxied auto-fetches.
 .It Fl r Ar wait
 Retry the connection attempt if it failed, pausing for
 .Ar wait
 seconds.
-.It Fl R
-Restart all non-proxied auto-fetches.
 .It Fl s Ar srcaddr
 Uses
 .Ar srcaddr
@@ -317,6 +317,12 @@ is one of the ftp URL types as supported by auto-fetch
 (with an optional target filename for single file uploads), and
 .Ar file
 is one or more local files to be uploaded.
+.It Fl V
+Disable
+.Ic verbose
+and
+.Ic progress ,
+overriding the default of enabled when output is to a terminal.
 .It Fl v
 Enable
 .Ic verbose
@@ -330,12 +336,6 @@ Forces
 .Nm
 to show all responses from the remote server, as well
 as report on data transfer statistics.
-.It Fl V
-Disable
-.Ic verbose
-and
-.Ic progress ,
-overriding the default of enabled when output is to a terminal.
 .El
 .Pp
 The client host with which
@@ -460,16 +460,6 @@ when an ascii type transfer is made, these linefeeds may be
 distinguished from a record delimiter only when
 .Ic \&cr
 is off.
-.It Ic ftp_debug Op Ar ftp_debug-value
-Toggle debugging mode.
-If an optional
-.Ar ftp_debug-value
-is specified it is used to set the debugging level.
-When debugging is on,
-.Nm
-prints each command sent to the remote machine, preceded
-by the string
-.Ql \-\-\*[Gt]
 .It Ic delete Ar remote-file
 Delete the file
 .Ar remote-file
@@ -543,6 +533,16 @@ format is
 .It Ic ftp Ar host Op Ar port
 A synonym for
 .Ic open .
+.It Ic ftp_debug Op Ar ftp_debug-value
+Toggle debugging mode.
+If an optional
+.Ar ftp_debug-value
+is specified it is used to set the debugging level.
+When debugging is on,
+.Nm
+prints each command sent to the remote machine, preceded
+by the string
+.Ql \-\-\*[Gt] .
 .It Ic gate Op Ar host Op Ar port
 Toggle gate-ftp mode, which used to connect through the
 TIS FWTK and Gauntlet ftp proxies.

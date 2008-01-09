@@ -1,4 +1,4 @@
-/*	$NetBSD: split.c,v 1.22 2007/05/31 01:35:35 jschauma Exp $	*/
+/*	$NetBSD: split.c,v 1.22.4.1 2008/01/09 02:01:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)split.c	8.3 (Berkeley) 4/25/94";
 #endif
-__RCSID("$NetBSD: split.c,v 1.22 2007/05/31 01:35:35 jschauma Exp $");
+__RCSID("$NetBSD: split.c,v 1.22.4.1 2008/01/09 02:01:04 matt Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ static void newfile(void);
 static void split1(off_t, int);
 static void split2(off_t);
 static void split3(off_t);
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 static size_t bigwrite(int, void const *, size_t);
 
 int

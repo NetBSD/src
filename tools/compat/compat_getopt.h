@@ -1,4 +1,4 @@
-/*      $NetBSD: compat_getopt.h,v 1.1 2004/06/20 22:20:15 jmc Exp $ */
+/*      $NetBSD: compat_getopt.h,v 1.1.18.1 2008/01/09 01:59:59 matt Exp $ */
 
 /* We unconditionally use the NetBSD getopt.h in libnbcompat. */
 
@@ -7,7 +7,11 @@
 #endif
 
 #define option __nbcompat_option
-#ifdef _GETOPT_H_
+#define getopt_long __nbcompat_getopt_long
+
+#undef no_argument
+#undef required_argument
+#undef optional_argument
 #undef _GETOPT_H_
-#endif
+
 #include "../../include/getopt.h"

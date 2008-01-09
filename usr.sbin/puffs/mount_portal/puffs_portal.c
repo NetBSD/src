@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_portal.c,v 1.9.2.1 2007/11/06 23:36:31 matt Exp $	*/
+/*	$NetBSD: puffs_portal.c,v 1.9.2.2 2008/01/09 02:02:19 matt Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: puffs_portal.c,v 1.9.2.1 2007/11/06 23:36:31 matt Exp $");
+__RCSID("$NetBSD: puffs_portal.c,v 1.9.2.2 2008/01/09 02:02:19 matt Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -305,10 +305,10 @@ sendfd(int s, int fd, int error)
  * parent: yield until child produces fd.  receive it and store it.
  */
 static int
-provide(struct puffs_cc *pcc, struct portal_node *portn,
+provide(struct puffs_usermount *pu, struct portal_node *portn,
 	struct portal_cred *portc, char **v)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct puffs_framebuf *pufbuf;
 	int s[2];
 	int fd, error;
@@ -448,8 +448,8 @@ main(int argc, char *argv[])
 	puffs_framev_init(pu, portal_frame_rf, portal_frame_wf, NULL,NULL,NULL);
 
 	if (detach)
-		if (daemon(1, 1) == -1)
-			err(1, "daemon");
+		if (puffs_daemon(pu, 1, 1) == -1)
+			err(1, "puffs_daemon");
 
 	if (puffs_mount(pu,  argv[1], mntflags, PORTAL_ROOT) == -1)
 		err(1, "mount");
@@ -490,7 +490,7 @@ credtr(struct portal_cred *portc, const struct puffs_cred *puffc, int mode)
  * incompatibilities.
  */
 int
-portal_node_lookup(struct puffs_cc *pcc, void *opc, struct puffs_newinfo *pni,
+portal_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 	const struct puffs_cn *pcn)
 {
 	struct portal_node *portn;
@@ -515,8 +515,8 @@ int fakeid = 3;
 
 /* XXX: libpuffs'ize */
 int
-portal_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+portal_node_getattr(struct puffs_usermount *pu, void *opc, struct vattr *va,
+	const struct puffs_cred *pcr)
 {
 	struct timeval tv;
 	struct timespec ts;
@@ -547,16 +547,16 @@ portal_node_getattr(struct puffs_cc *pcc, void *opc, struct vattr *va,
 
 /* for writing, just pretend we care */
 int
-portal_node_setattr(struct puffs_cc *pcc, void *opc, const struct vattr *va,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+portal_node_setattr(struct puffs_usermount *pu, void *opc, const struct vattr *va,
+	const struct puffs_cred *pcr)
 {
 
 	return 0;
 }
 
 int
-portal_node_open(struct puffs_cc *pcc, void *opc, int mode,
-	const struct puffs_cred *pcr, const struct puffs_cid *pcid)
+portal_node_open(struct puffs_usermount *pu, void *opc, int mode,
+	const struct puffs_cred *pcr)
 {
 	struct portal_node *portn = opc;
 	struct portal_cred portc;
@@ -573,14 +573,15 @@ portal_node_open(struct puffs_cc *pcc, void *opc, int mode,
 		return ENOENT;
 
 	credtr(&portc, pcr, mode);
-	return provide(pcc, portn, &portc, v);
+	return provide(pu, portn, &portc, v);
 }
 
 int
-portal_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+portal_node_read(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
-	struct puffs_usermount *pu = puffs_cc_getusermount(pcc);
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct portal_node *portn = opc;
 	struct puffs_framebuf *pufbuf;
 	size_t xfersize, winsize, boff;
@@ -650,9 +651,11 @@ portal_node_read(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-portal_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
-	size_t *resid, const struct puffs_cred *pcr, int ioflag)
+portal_node_write(struct puffs_usermount *pu, void *opc,
+	uint8_t *buf, off_t offset, size_t *resid,
+	const struct puffs_cred *pcr, int ioflag)
 {
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct portal_node *portn = opc;
 	struct puffs_framebuf *pufbuf;
 	size_t written;
@@ -665,8 +668,7 @@ portal_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 
 	error = 0;
 	if (ioflag & PUFFS_IO_NDELAY) {
-		rv = portal_frame_wf(puffs_cc_getusermount(pcc),
-		    pufbuf, portn->fd, &dummy);
+		rv = portal_frame_wf(pu, pufbuf, portn->fd, &dummy);
 		if (rv) {
 			error = rv;
 			goto out;
@@ -692,7 +694,7 @@ portal_node_write(struct puffs_cc *pcc, void *opc, uint8_t *buf, off_t offset,
 }
 
 int
-portal_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
+portal_node_seek(struct puffs_usermount *pu, void *opc, off_t oldoff, off_t newoff,
 	const struct puffs_cred *pcr)
 {
 	struct portal_node *portn = opc;
@@ -706,9 +708,9 @@ portal_node_seek(struct puffs_cc *pcc, void *opc, off_t oldoff, off_t newoff,
 }
 
 int
-portal_node_poll(struct puffs_cc *pcc, void *opc, int *events,
-	const struct puffs_cid *pcid)
+portal_node_poll(struct puffs_usermount *pu, void *opc, int *events)
 {
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
 	struct portal_node *portn = opc;
 	int what;
 	int rv;
@@ -739,25 +741,23 @@ portal_node_poll(struct puffs_cc *pcc, void *opc, int *events,
 }
 
 int
-portal_node_inactive(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+portal_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 
 	if (opc == PORTAL_ROOT)
 		return 0;
 
-	puffs_setback(pcc, PUFFS_SETBACK_NOREF_N1);
+	puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 	return 0;
 }
 
 int
-portal_node_reclaim(struct puffs_cc *pcc, void *opc,
-	const struct puffs_cid *pcid)
+portal_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
 	struct portal_node *portn = opc;
 
 	if (portn->fd != -1) {
-		puffs_framev_removefd(puffs_cc_getusermount(pcc), portn->fd, 0);
+		puffs_framev_removefd(pu, portn->fd, 0);
 		close(portn->fd);
 	}
 	free(portn->path);

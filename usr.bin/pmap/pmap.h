@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.5 2004/04/23 02:58:29 simonb Exp $ */
+/*	$NetBSD: pmap.h,v 1.5.18.1 2008/01/09 02:00:52 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -69,13 +69,6 @@
 
 #define PMAP_HEADERS
 #endif /* PMAP_HEADERS */
-
-#ifndef CONCAT
-#define	CONCAT(x,y)     __CONCAT(x,y)
-#endif
-#ifndef PMAPFUNC
-#define PMAPFUNC(x,y)	CONCAT(x,CONCAT(_,y))
-#endif
 
 /*
  * if the definition of the kbit structure (and the accessor macros)
@@ -154,34 +147,13 @@ struct kbit {
 #endif /* struct_kbit */
 
 /*
- * VERSION, if not defined, defaults to "regular" or "lockdebug" (if
- * LOCKDEBUG is defined)
- */
-#ifndef VERSION
-#ifndef LOCKDEBUG
-#define VERSION regular
-#else /* LOCKDEBUG */
-#define VERSION lockdebug
-#endif /* LOCKDEBUG */
-#define undef_VERSION
-#endif /* VERSION */
-
-/*
  * this is the *actual* module interface
  */
 
-void PMAPFUNC(process_map,VERSION)(kvm_t *, struct kinfo_proc2 *,
+void process_map(kvm_t *, struct kinfo_proc2 *,
 				   struct kbit *, const char *);
-void PMAPFUNC(dump_vm_map,VERSION)(kvm_t *, struct kinfo_proc2 *,
+void dump_vm_map(kvm_t *, struct kinfo_proc2 *,
 				   struct kbit *, struct kbit *, const char *);
-size_t PMAPFUNC(dump_vm_map_entry,VERSION)(kvm_t *, struct kinfo_proc2 *,
+size_t dump_vm_map_entry(kvm_t *, struct kinfo_proc2 *,
 					   struct kbit *, struct kbit *, int);
-void PMAPFUNC(dump_amap,VERSION)(kvm_t *, struct kbit *);
-
-/*
- * if we defined VERSION here, we should undef it now that we're done.
- */
-#ifdef undef_VERSION
-#undef VERSION
-#undef undef_VERSION
-#endif /* undef_VERSION */
+void dump_amap(kvm_t *, struct kbit *);

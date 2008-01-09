@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2007/05/28 12:06:29 tls Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2008/01/09 02:00:51 matt Exp $
 
 USE_FORT?=	yes	# setgid
 PROG=		pmap
-SRCS=		main.c pmap.c pmap_ld.c
+SRCS=		main.c pmap.c
 BINGRP=		kmem
 BINMODE=	2555
 LDADD=		-lkvm
