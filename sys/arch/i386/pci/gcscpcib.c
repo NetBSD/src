@@ -1,4 +1,4 @@
-/* $NetBSD: gcscpcib.c,v 1.1 2008/01/09 14:23:47 xtraeme Exp $ */
+/* $NetBSD: gcscpcib.c,v 1.2 2008/01/09 14:32:36 xtraeme Exp $ */
 /* $OpenBSD: gcscpcib.c,v 1.6 2007/11/17 17:02:47 mbalmer Exp $	*/
 
 /*
@@ -24,7 +24,7 @@
  * AMD CS5535/CS5536 series LPC bridge also containing timer, watchdog and GPIO.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.1 2008/01/09 14:23:47 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.2 2008/01/09 14:32:36 xtraeme Exp $");
 
 #include "gpio.h"
 
@@ -52,8 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: gcscpcib.c,v 1.1 2008/01/09 14:23:47 xtraeme Exp $")
 
 /* define if you need to select MFGPT for watchdog manually (0-5). */
 /* #define AMD553X_WDT_FORCEUSEMFGPT 	0 */
-/* select precision of watchdog timer (default value = 0.25Hz tick) */
-#define	AMD553X_MFGPT_PRESCALE	AMD553X_MFGPT_DIV_8K /* 32K/8K = 0.25Hz */
+/* select precision of watchdog timer (default value = 0.25sec (4Hz tick) */
+#define	AMD553X_MFGPT_PRESCALE	AMD553X_MFGPT_DIV_8K /* 32K/8K = 4Hz */
 
 /* #define GCSCPCIB_DEBUG */
 #ifdef GCSCPCIB_DEBUG
