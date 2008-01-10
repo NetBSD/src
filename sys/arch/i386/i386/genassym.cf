@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.58.6.3 2008/01/08 22:09:59 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.58.6.4 2008/01/10 13:05:51 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,9 +112,9 @@ include <machine/segments.h>
 
 ifdef XEN
 ifdef XEN3
-include <machine/xen3-public/sched.h>
+include <xen/xen3-public/sched.h>
 else
-include <machine/xen-public/xen.h>
+include <xen/xen-public/xen.h>
 endif
 endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.64.8.2 2008/01/08 22:10:05 bouyer Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.64.8.3 2008/01/10 13:05:53 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -114,6 +114,7 @@
  */
 #ifdef _KERNEL_OPT
 #include "opt_uvm.h"
+#include "opt_xen.h"
 #endif
 #define __USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \

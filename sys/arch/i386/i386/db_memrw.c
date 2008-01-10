@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.22.8.1 2008/01/09 19:25:04 bouyer Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.22.8.2 2008/01/10 13:05:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -56,7 +56,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.22.8.1 2008/01/09 19:25:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.22.8.2 2008/01/10 13:05:51 bouyer Exp $");
+
+#include "opt_xen.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.22.8.1 2008/01/09 19:25:04 bouyer Exp
 
 #include <machine/db_machdep.h>
 #if defined(XEN)
-#include <machine/xenpmap.h>
+#include <xen/xenpmap.h>
 #endif
 
 #include <ddb/db_access.h>

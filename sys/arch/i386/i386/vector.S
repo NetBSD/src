@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.32.6.2 2008/01/09 21:29:40 bouyer Exp $	*/
+/*	$NetBSD: vector.S,v 1.32.6.3 2008/01/10 13:05:52 bouyer Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.32.6.2 2008/01/09 21:29:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.32.6.3 2008/01/10 13:05:52 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -88,7 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: vector.S,v 1.32.6.2 2008/01/09 21:29:40 bouyer Exp $
 #include <machine/specialreg.h>
 #include <machine/trap.h>
 #ifdef XEN
-#include <machine/xen.h>
+#include <xen/xen.h>
 #endif
 
 #include "ioapic.h"
