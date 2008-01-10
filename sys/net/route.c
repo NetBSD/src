@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.101 2008/01/08 03:37:45 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.102 2008/01/10 08:03:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.101 2008/01/08 03:37:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.102 2008/01/10 08:03:22 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -1154,36 +1154,37 @@ rt_timer_timer(void *arg)
 	callout_reset(&rt_timer_ch, hz, rt_timer_timer, NULL);
 }
 
-static void
+static struct rtentry *
 _rtcache_init(struct route *ro, int flag)
 {
 	KASSERT(ro->_ro_rt == NULL);
 
 	if (rtcache_getdst(ro) == NULL)
-		return;
+		return NULL;
 	ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag);
 	if (ro->_ro_rt != NULL) {
 		rtcache(ro);
 	}
+	return ro->_ro_rt;
 }
 
-void
+struct rtentry *
 rtcache_init(struct route *ro)
 {
-	_rtcache_init(ro, 1);
+	return _rtcache_init(ro, 1);
 }
 
-void
+struct rtentry *
 rtcache_init_noclone(struct route *ro)
 {
-	_rtcache_init(ro, 0);
+	return _rtcache_init(ro, 0);
 }
 
-void
+struct rtentry *
 rtcache_update(struct route *ro, int clone)
 {
 	rtcache_clear(ro);
-	_rtcache_init(ro, clone);
+	return _rtcache_init(ro, clone);
 }
 
 void
