@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.990 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.991 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -285,7 +285,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
 	openssh: Import 4.7. [christos 20071217]
-	x86: Add support for ACPI S3 (suspend-to-RAM) on MP systems.
+	i386, amd64: Add support for ACPI S3 (suspend-to-RAM) on MP systems.
 		[joerg 20071218]
 	sparc64: Add support for Sun PGX32 / TechSource Raptor GFX 8P to
 		genfb ( mostly workarounds for firmware bugs ), also build
@@ -324,8 +324,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Device with support for Timecounter, Watchdog Timer and
 		GPIO. Adapted from OpenBSD by Yojiro UO. [xtraeme 20080109]
 	i386: Add sparse kernel core dumps (minidumps) for this platform
-	      using a backwards-compatible on-disk core format. Not
-	      turned on by default yet. Similar to FreeBSD minidumps but
-	      simpler in implementation. Implementation by Jed Davis and
-	      Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
-	      [tls 20080110]
+		using a backwards-compatible on-disk core format. Not
+		turned on by default yet. Similar to FreeBSD minidumps but
+		simpler in implementation. Implementation by Jed Davis and
+		Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
+		[tls 20080110]
