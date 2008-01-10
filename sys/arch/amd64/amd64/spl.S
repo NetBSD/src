@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.14.4.1 2008/01/02 21:47:02 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.14.4.2 2008/01/10 23:43:08 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -118,7 +118,7 @@ IDTVEC(softintr)
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	movq	L_ADDR(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
-	movq	%r15,CPUVAR(CURLWP)
+	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
 	cli

@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_jazzio.c,v 1.8 2005/12/11 12:16:39 christos Exp $	*/
+/*	$NetBSD: mcclock_jazzio.c,v 1.8.64.1 2008/01/10 23:43:10 bouyer Exp $	*/
 /*	$OpenBSD: clock_mc.c,v 1.9 1998/03/16 09:38:26 pefo Exp $	*/
 /*	NetBSD: clock_mc.c,v 1.2 1995/06/28 04:30:30 cgd Exp 	*/
 
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.8 2005/12/11 12:16:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_jazzio.c,v 1.8.64.1 2008/01/10 23:43:10 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,4 @@ mcclock_jazzio_attach(struct device *parent, struct device *self, void *aux)
 	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
 	mcclock_jazzio_found = 1;
-
-	todr_attach(&sc->sc_handle);
 }

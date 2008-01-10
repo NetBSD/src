@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48.30.1 2008/01/02 21:49:09 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48.30.2 2008/01/10 23:43:57 bouyer Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.30.1 2008/01/02 21:49:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48.30.2 2008/01/10 23:43:57 bouyer Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -571,7 +571,7 @@ tlbia(void)
 #elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 	printf("Invalidating ALL TLB entries......\n");
 	/* This is specifically for the 970, 970UM v1.6 pp. 140. */
-	for (i = 0; i <= (void *)0xFF000; i += 0x00001000) {
+	for (i = 0; i <= (char *)0xFF000; i += 0x00001000) {
 		TLBIEL(i);
 		EIEIO();
 		SYNC();

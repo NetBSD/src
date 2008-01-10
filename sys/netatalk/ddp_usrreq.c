@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.25.20.1 2008/01/02 21:57:15 bouyer Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.25.20.2 2008/01/10 23:44:36 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.25.20.1 2008/01/02 21:57:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.25.20.2 2008/01/10 23:44:36 bouyer Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -403,12 +403,12 @@ at_pcbconnect(ddp, addr, l)
 			u.dsta.sat_addr.s_net = hintnet;
 		rtcache_setdst(ro, &u.dst);
 
-		rtcache_init(ro);
+		rt = rtcache_init(ro);
 	}
 	/*
          * Make sure any route that we have has a valid interface.
          */
-	if ((rt = rtcache_getrt(ro)) != NULL && (ifp = rt->rt_ifp) != NULL) {
+	if (rt != NULL && (ifp = rt->rt_ifp) != NULL) {
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (aa->aa_ifp == ifp)
 				break;

@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.6 2007/11/26 19:58:31 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.6.6.1 2008/01/10 23:43:55 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.6 2007/11/26 19:58:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.6.6.1 2008/01/10 23:43:55 bouyer Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -356,19 +356,14 @@ noranges:
 void
 ofwoea_batinit(void)
 {
-#if 0
-	/* this is what macppc used to do */
-        oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
-                    0x90000000, BAT_BL_256M, 0xa0000000, BAT_BL_256M,
-                                0xb0000000, BAT_BL_256M, 0);
-#else
+#ifdef PPC_OEA
         u_int16_t bitmap;
 	int node, i;
 
 	node = OF_finddevice("/");
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
-
+	
 #ifdef macppc
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6.2.3 2008/01/02 21:51:20 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.4 2008/01/10 23:44:07 bouyer Exp $	*/
 
 /*
  *
@@ -159,8 +159,6 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-#define	PMF_USER_RELOAD	0x04	/* reload user pmap on PTE unmap (Xen) */
-
 
 /*
  * for each managed physical page we maintain a list of <PMAP,VA>'s

@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.2 2005/12/11 12:25:20 christos Exp $ */
+/* $NetBSD: gpio.h,v 1.2.62.1 2008/01/10 23:44:40 bouyer Exp $ */
 /*	$OpenBSD: gpio.h,v 1.1 2004/06/03 18:08:00 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -31,6 +31,9 @@
 #define GPIO_PIN_PUSHPULL	0x0010	/* push-pull output */
 #define GPIO_PIN_TRISTATE	0x0020	/* output disabled */
 #define GPIO_PIN_PULLUP		0x0040	/* internal pull-up enabled */
+#define GPIO_PIN_PULLDOWN	0x0080	/* internal pull-down enabled */
+#define GPIO_PIN_INVIN 		0x0100	/* invert input */
+#define GPIO_PIN_INVOUT 	0x0200	/* invert output */
 
 /* GPIO controller description */
 struct gpio_info {

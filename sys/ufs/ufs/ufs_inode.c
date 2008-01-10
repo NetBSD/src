@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.71.4.2 2008/01/08 22:12:05 bouyer Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.71.4.3 2008/01/10 23:44:44 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.71.4.2 2008/01/08 22:12:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.71.4.3 2008/01/10 23:44:44 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -117,15 +117,17 @@ ufs_inactive(void *v)
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
 		ip->i_mode = 0;
-		ip->i_omode = mode;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+		mutex_enter(&vp->v_interlock);
+		vp->v_iflag |= VI_FREEING;
+		mutex_exit(&vp->v_interlock);
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
-		/*
-		 * Defer final inode free and update to ufs_reclaim().
-		 */
-	} else if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
+		UFS_VFREE(vp, ip->i_number, mode);
+	}
+
+	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
 		UFS_UPDATE(vp, NULL, NULL, 0);
 	}
 out:
@@ -151,8 +153,11 @@ ufs_reclaim(struct vnode *vp)
 		vprint("ufs_reclaim: pushing active", vp);
 
 	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
-	ufs_ihashrem(ip);
 
+	/*
+	 * Remove the inode from its hash chain.
+	 */
+	ufs_ihashrem(ip);
 	/*
 	 * Purge old data structures associated with the inode.
 	 */
