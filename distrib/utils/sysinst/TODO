@@ -1,4 +1,4 @@
-#	$NetBSD: TODO,v 1.23 2005/10/05 16:44:39 rpaulo Exp $
+#	$NetBSD: TODO,v 1.24 2008/01/10 13:40:39 simonb Exp $
 
 Things to do ....  in no specific order.
 
@@ -109,8 +109,6 @@ Things to do ....  in no specific order.
 	   label?
 
 	-- symlinks for /tmp (/tmp -> /var/tmp or some such)
-
-	-- Add support for SLIP (for pc532) and/or PPP.
 
 	-- Do non-standard installs from arbitrary tar files (?)
 
