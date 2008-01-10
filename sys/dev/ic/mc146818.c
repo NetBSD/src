@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.14 2008/01/10 14:52:32 tsutsui Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.15 2008/01/10 15:17:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.14 2008/01/10 14:52:32 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.15 2008/01/10 15:17:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,8 @@ mc146818_attach(struct mc146818_softc *sc)
 	handle->todr_gettime_ymdhms = mc146818_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mc146818_settime_ymdhms;
 	handle->todr_setwen  = NULL;
+
+	todr_attach(handle);
 }
 
 /*
