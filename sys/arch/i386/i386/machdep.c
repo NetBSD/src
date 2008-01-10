@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.617.2.5 2008/01/09 19:25:05 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.617.2.6 2008/01/10 13:05:51 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.5 2008/01/09 19:25:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.6 2008/01/10 13:05:51 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -151,8 +151,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.5 2008/01/09 19:25:05 bouyer Exp
 #include <machine/multiboot.h>
 #ifdef XEN
 #include <xen/evtchn.h>
-#include <machine/xen.h>
-#include <machine/hypervisor.h>
+#include <xen/xen.h>
+#include <xen/hypervisor.h>
 
 #define	XENDEBUG
 /* #define	XENDEBUG_LOW */

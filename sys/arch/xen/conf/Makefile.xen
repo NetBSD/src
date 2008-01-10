@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.20.6.5 2008/01/09 23:54:17 bouyer Exp $
+#	$NetBSD: Makefile.xen,v 1.20.6.6 2008/01/10 13:05:53 bouyer Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -31,11 +31,7 @@ I386=		$S/arch/i386
 AMD64=          $S/arch/amd64
 GENASSYM_CONF=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/genassym.cf
 
-.if ${XEN_BUILD} == "amd64"
-ARCH_INC=	$S/arch/xen/include/amd64
-.elif ${XEN_BUILD} == "i386"
-ARCH_INC=	$S/arch/xen/include
-.endif
+ARCH_INC=	$S/arch/xen/include/${XEN_BUILD}
 
 ##
 ## (2) compile settings
@@ -63,42 +59,22 @@ KERN_AS=	obj
 MD_OBJS=	locore.o spl.o copy.o vector.o
 MD_CFILES=
 
-.if ${XEN_BUILD} == i386
-MD_SFILES=	${I386}/i386/locore.S \
-		${I386}/i386/spl.S \
-		${I386}/i386/vector.S \
-		${I386}/i386/copy.S
+MD_SFILES=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/locore.S \
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S \
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S \
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S
 
-copy.o: ${I386}/i386/copy.S assym.h
+copy.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S assym.h
 	${NORMAL_S}
 
-locore.o: ${I386}/i386/locore.S assym.h
+locore.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/locore.S assym.h
 	${NORMAL_S}
 
-spl.o: ${I386}/i386/spl.S assym.h
+spl.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S assym.h
 	${NORMAL_S}
 
-vector.o: ${I386}/i386/vector.S assym.h
+vector.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S assym.h
 	${NORMAL_S}
-.elif ${XEN_BUILD} == amd64
-MD_SFILES=	${AMD64}/amd64/locore.S \
-		${AMD64}/amd64/spl.S \
-		${AMD64}/amd64/copy.S \
-		${AMD64}/amd64/vector.S
-
-locore.o: ${AMD64}/amd64/locore.S assym.h
-	${NORMAL_S}
-
-spl.o: ${AMD64}/amd64/spl.S assym.h
-	${NORMAL_S}
-
-copy.o: ${AMD64}/amd64/copy.S assym.h
-	${NORMAL_S}
-
-vector.o: ${AMD64}/amd64/vector.S assym.h
-	${NORMAL_S}
-.endif
-
 .ifndef noBEGIN
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
