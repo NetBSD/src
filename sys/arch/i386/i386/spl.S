@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.24 2007/12/20 23:46:11 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.25 2008/01/10 20:14:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.24 2007/12/20 23:46:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.25 2008/01/10 20:14:11 ad Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -293,7 +293,7 @@ IDTVEC(softintr)
 	addl	$8,%esp
 	movl	L_ADDR(%esi),%ecx
 	movl	PCB_ESP(%ecx),%esp
-	movl	%esi,CPUVAR(CURLWP)
+	xchgl	%esi,CPUVAR(CURLWP)	/* must be globally visible */
 	popl	%edi			/* unwind switchframe */
 	popl	%esi
 	addl	$8,%esp

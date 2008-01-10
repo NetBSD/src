@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.80 2008/01/09 22:06:00 xtraeme Exp $	*/
+/*	$NetBSD: lock.h,v 1.81 2008/01/10 20:14:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -243,9 +243,14 @@ do {								\
 } while (/* CONSTCOND */ 0);
 
 #define	SPINLOCK_RUN_HOOK(count)	((count) >= SPINLOCK_BACKOFF_MAX)
-#define	SPINLOCK_SPINOUT(spins)		((spins)++ > 0x0fffffff)
 
-extern __cpu_simple_lock_t	kernel_lock;
+#ifdef LOCKDEBUG
+#define	SPINLOCK_SPINOUT(spins)		((spins)++ > 0x0fffffff)
+#else
+#define	SPINLOCK_SPINOUT(spins)		((void)(spins), 0)
+#endif
+
+extern __cpu_simple_lock_t kernel_lock[];
 
 #endif /* _KERNEL */
 
