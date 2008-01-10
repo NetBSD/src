@@ -1413,6 +1413,8 @@ ALLDEPFILES = \
 	hppa-tdep.c hppa-hpux-tdep.c hppa-hpux-nat.c \
 	hppa-linux-tdep.c hppa-linux-nat.c \
 	hppabsd-nat.c hppabsd-tdep.c \
+	hppanbsd-nat.c hppanbsd-tdep.c \
+	hppaobsd-tdep.c \
 	hpread.c \
 	i386-tdep.c i386v-nat.c i386-linux-nat.c \
 	i386v4-nat.c i386-cygwin-tdep.c \
@@ -2024,7 +2026,17 @@ hpacc-abi.o: hpacc-abi.c $(defs_h) $(value_h) $(gdb_regex_h) $(gdb_string_h) \
 	$(gdbtypes_h) $(gdbcore_h) $(cp_abi_h) $(gnu_v2_abi_h)
 hppabsd-nat.o: hppabsd-nat.c $(defs_h) $(inferior_h) $(regcache_h) \
 	$(target_h) $(hppa_tdep_h) $(inf_ptrace_h)
+hppanbsd-nat.o: hppanbsd-nat.c $(defs_h) $(inferior_h) $(regcache_h) \
+	$(target_h) $(hppa_tdep_h) $(inf_ptrace_h) $(nbsd-nat.h)
 hppabsd-tdep.o: hppabsd-tdep.c $(defs_h) $(arch_utils_h) $(symtab_h) \
+	$(objfiles_h) $(osabi_h) $(regcache_h) $(regset_h) $(target_h) \
+	$(value_h) $(gdb_assert_h) $(gdb_string_h) $(elf_common_h) \
+	$(hppa_tdep_h) $(solib_svr4_h)
+hppanbsd-tdep.o: hppabsd-tdep.c $(defs_h) $(arch_utils_h) $(symtab_h) \
+	$(objfiles_h) $(osabi_h) $(regcache_h) $(regset_h) $(target_h) \
+	$(value_h) $(gdb_assert_h) $(gdb_string_h) $(elf_common_h) \
+	$(hppa_tdep_h) $(solib_svr4_h)
+hppaobsd-tdep.o: hppabsd-tdep.c $(defs_h) $(arch_utils_h) $(symtab_h) \
 	$(objfiles_h) $(osabi_h) $(regcache_h) $(regset_h) $(target_h) \
 	$(value_h) $(gdb_assert_h) $(gdb_string_h) $(elf_common_h) \
 	$(hppa_tdep_h) $(solib_svr4_h)
