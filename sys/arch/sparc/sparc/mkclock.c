@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.14 2006/09/03 22:27:45 gdamore Exp $ */
+/*	$NetBSD: mkclock.c,v 1.15 2008/01/10 15:31:27 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.14 2006/09/03 22:27:45 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.15 2008/01/10 15:31:27 tsutsui Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -259,8 +259,6 @@ clockattach(struct mk48txx_softc *sc, int node)
 
 	/* Establish clock write-enable method */
 	sc->sc_handle.todr_setwen = mk_clk_wenable;
-
-	todr_attach(&sc->sc_handle);
 
 #if defined(SUN4)
 	if (CPU_ISSUN4) {

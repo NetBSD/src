@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 2006/10/04 15:14:49 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.33 2008/01/10 15:31:27 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/10/04 15:14:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2008/01/10 15:31:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,8 +299,6 @@ clock_attach(struct device *parent, struct device *self, void *aux)
 	mk48txx_attach(sc);
 
 	printf("\n");
-
-	todr_attach(&sc->sc_handle);
 }
 
 /*

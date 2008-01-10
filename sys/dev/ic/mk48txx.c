@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.23 2008/01/10 14:51:17 tsutsui Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.24 2008/01/10 15:31:27 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.23 2008/01/10 14:51:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.24 2008/01/10 15:31:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,12 +95,13 @@ mk48txx_attach(struct mk48txx_softc *sc)
 	handle->todr_settime = NULL;
 	handle->todr_gettime_ymdhms = mk48txx_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mk48txx_settime_ymdhms;
-	handle->todr_setwen = NULL;
 
 	if (sc->sc_nvrd == NULL)
 		sc->sc_nvrd = mk48txx_def_nvrd;
 	if (sc->sc_nvwr == NULL)
 		sc->sc_nvwr = mk48txx_def_nvwr;
+
+	todr_attach(handle);
 }
 
 /*
