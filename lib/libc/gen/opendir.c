@@ -1,4 +1,4 @@
-/*	$NetBSD: opendir.c,v 1.32 2007/07/17 20:05:17 christos Exp $	*/
+/*	$NetBSD: opendir.c,v 1.33 2008/01/10 09:49:04 elad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)opendir.c	8.7 (Berkeley) 12/10/94";
 #else
-__RCSID("$NetBSD: opendir.c,v 1.32 2007/07/17 20:05:17 christos Exp $");
+__RCSID("$NetBSD: opendir.c,v 1.33 2008/01/10 09:49:04 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -54,6 +54,8 @@ __RCSID("$NetBSD: opendir.c,v 1.32 2007/07/17 20:05:17 christos Exp $");
 #include <unistd.h>
 
 #include "dirent_private.h"
+
+#define	MAXITERATIONS	100
 
 /*
  * Open a directory.
@@ -126,6 +128,7 @@ __opendir2(const char *name, int flags)
 		char *ddeptr;
 		int n;
 		struct dirent **dpv;
+		int i;
 
 		/*
 		 * The strategy here for directories on top of a union stack
@@ -140,6 +143,7 @@ __opendir2(const char *name, int flags)
 		 * the directory was modified). These errors should not
 		 * happen often, but need to be dealt with.
 		 */
+		i = 0;
 retry:
 		len = 0;
 		space = 0;
@@ -174,6 +178,8 @@ retry:
 			if (n == -1 && errno == EINVAL && nfsdir) {
 				free(buf);
 				lseek(fd, (off_t)0, SEEK_SET);
+				if (++i > MAXITERATIONS)
+					goto error;
 				goto retry;
 			}
 			if (n > 0) {
