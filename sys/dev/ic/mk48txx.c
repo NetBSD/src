@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.22 2007/10/19 11:59:56 ad Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.23 2008/01/10 14:51:17 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.22 2007/10/19 11:59:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.23 2008/01/10 14:51:17 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,15 +76,15 @@ mk48txx_attach(struct mk48txx_softc *sc)
 	todr_chip_handle_t handle;
 	int i;
 
-	printf(": %s", sc->sc_model);
+	aprint_normal(": %s", sc->sc_model);
 
-	i = sizeof(mk48txx_models) / sizeof(mk48txx_models[0]);
+	i = __arraycount(mk48txx_models);
 	while (--i >= 0) {
 		if (strcmp(sc->sc_model, mk48txx_models[i].name) == 0)
 			break;
 	}
 	if (i < 0)
-		panic("mk48txx_attach: unsupported model");
+		panic("%s: unsupported model", __func__);
 
 	sc->sc_nvramsz = mk48txx_models[i].nvramsz;
 	sc->sc_clkoffset = mk48txx_models[i].clkoff;
