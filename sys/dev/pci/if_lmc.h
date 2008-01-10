@@ -1,5 +1,5 @@
 /*-
- * $NetBSD: if_lmc.h,v 1.9 2007/03/04 06:02:21 christos Exp $
+ * $NetBSD: if_lmc.h,v 1.9.28.1 2008/01/10 23:44:24 bouyer Exp $
  *
  * Copyright (c) 2002-2006 David Boggs. (boggs@boggs.palo-alto.ca.us)
  * All rights reserved.
@@ -1573,7 +1573,7 @@ static int ifnet_attach(softc_t *);
 static void ifnet_detach(softc_t *);
 
 static void ifmedia_setup(softc_t *);
-static int ifmedia_change(struct ifnet *);
+static int lmc_ifmedia_change(struct ifnet *);
 static void ifmedia_status(struct ifnet *, struct ifmediareq *);
 #endif /* IFNET */
 

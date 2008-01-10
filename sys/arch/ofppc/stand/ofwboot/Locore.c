@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.17 2007/11/24 15:49:32 jmmv Exp $	*/
+/*	$NetBSD: Locore.c,v 1.17.6.1 2008/01/10 23:43:31 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include "openfirm.h"
-
+#include <sys/param.h>
 #include <lib/libsa/stand.h>
 
 #include <machine/cpu.h>
@@ -40,48 +40,13 @@
 static int (*openfirmware_entry)(void *);
 static int openfirmware(void *);
 
-static void startup(void *, int, int (*)(void *), char *, int)
-		__attribute__((__used__));
+void startup(void *, int, int (*)(void *), char *, int)
+	__attribute__((__used__));
 static void setup(void);
 
-static int stack[8192/4 + 4] __attribute__((__used__));
-
-__asm(
-"	.text					\n"
-"	.globl	_start				\n"
-"_start:					\n"
-"	li	%r8,0				\n"
-"	li	%r9,0x100			\n"
-"	mtctr	%r9				\n"
-"1:						\n"
-"	dcbf	0,%r8				\n"
-"	icbi	0,%r8				\n"
-"	addi	%r8,%r8,0x20			\n"
-"	bdnz	1b				\n"
-"	sync					\n"
-"	isync					\n"
-"	lis	%r1,stack@ha			\n"
-"	addi	%r1,%r1,stack@l			\n"
-"	addi	%r1,%r1,8192			\n"
-"						\n"
-	/*
-	 * Make sure that .bss is zeroed
-	 */
-"						\n"
-"	li	%r0,0				\n"
-"	lis	%r8,_edata@ha			\n"
-"	addi	%r8,%r8,_edata@l		\n"
-"	lis	%r9,_end@ha			\n"
-"	addi	%r9,%r9,_end@l			\n"
-"						\n"
-"2:	cmpw	0,%r8,%r9			\n"
-"	bge	3f				\n"
-"	stw	%r0,0(%r8)			\n"
-"	addi	%r8,%r8,4			\n"
-"	b	2b				\n"
-"						\n"
-"3:	b	startup				\n"
-);
+int stack[8192/4 + 4] __attribute__((__used__));
+char *heapspace;
+char altheap[0x20000];
 
 static int
 openfirmware(void *arg)
@@ -95,7 +60,7 @@ openfirmware(void *arg)
 	return r;
 }
 
-static void
+void
 startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 
@@ -402,6 +367,35 @@ OF_seek(int handle, u_quad_t pos)
 }
 
 void *
+OF_alloc_mem(u_int size)
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		u_int size;
+		void *baseaddr;
+	} args = {
+		"alloc-mem",
+		1,
+		1,
+	};
+#ifdef OFW_DEBUG
+	printf("alloc-mem %x -> ", size);
+#endif
+	if (openfirmware(&args) == -1) {
+#ifdef OFW_DEBUG
+		printf("lose\n");
+#endif
+		return (void *)-1;
+	}
+#ifdef OFW_DEBUG
+	printf("%p\n", args.baseaddr);
+#endif
+	return args.baseaddr;
+}
+
+void *
 OF_claim(void *virt, u_int size, u_int align)
 {
 	static struct {
@@ -510,7 +504,7 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 	/*
 	 * This is a REALLY dirty hack till the firmware gets this going
 	 */
-#if 1
+#if 0
 	OF_release(virt, size);
 #endif
 	entry(0, 0, openfirmware_entry, arg, len);
@@ -519,6 +513,7 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 
 static int stdin;
 static int stdout;
+static int memory;
 
 static void
 setup(void)
@@ -532,6 +527,14 @@ setup(void)
 	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		OF_exit();
+
+	printf("Allocating 0x20000 bytes of ram for boot\n");
+	heapspace = OF_claim(0, 0x20000, NBPG);
+	if (heapspace == (char *)-1) {
+		printf("WARNING: Failed to alloc ram, using bss\n");
+		setheap(&altheap, &altheap[0x20000]);
+	} else
+		setheap(heapspace, heapspace+0x20000);
 }
 
 void

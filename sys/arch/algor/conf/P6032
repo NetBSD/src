@@ -1,4 +1,4 @@
-#	$NetBSD: P6032,v 1.44 2007/03/14 12:27:21 drochner Exp $
+#	$NetBSD: P6032,v 1.44.28.1 2008/01/10 23:43:06 bouyer Exp $
 #
 # Algorithmics P-6032 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P6032-$Revision: 1.44 $"
+#ident 		"P6032-$Revision: 1.44.28.1 $"
 
 maxusers 32
 
@@ -25,6 +25,7 @@ options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
 makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
+options 	SYMTAB_SPACE=350000
 
 # File systems
 file-system	FFS		# Fast file system

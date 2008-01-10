@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.167.2.2 2008/01/08 22:11:36 bouyer Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.167.2.3 2008/01/10 23:44:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167.2.2 2008/01/08 22:11:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167.2.3 2008/01/10 23:44:27 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -156,15 +156,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	struct iovec *iov;
 	u_int cnt;
 	int error = 0;
-	size_t on;
 	char *cp = buf;
-#ifdef MULTIPROCESSOR
-	int hold_count;
-#endif
-
-	if ((on = n) >= 1024) {
-		KERNEL_UNLOCK_ALL(NULL, &hold_count);
-	}
 
 	ASSERT_SLEEPABLE(NULL, "uiomove");
 
@@ -208,9 +200,6 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		n -= cnt;
 	}
 
-	if (on >= 1024) {
-		KERNEL_LOCK(hold_count, NULL);
-	}
 	return (error);
 }
 

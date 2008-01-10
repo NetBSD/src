@@ -1,4 +1,4 @@
-/*	$NetBSD: int.c,v 1.16 2006/12/29 07:06:19 rumble Exp $	*/
+/*	$NetBSD: int.c,v 1.16.36.1 2008/01/10 23:44:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher SEKIYA
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.16 2006/12/29 07:06:19 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: int.c,v 1.16.36.1 2008/01/10 23:44:00 bouyer Exp $");
 
 #include "opt_cputype.h"
 
@@ -187,7 +187,7 @@ int_attach(struct device *parent, struct device *self, void *aux)
 
 	curcpu()->ci_cycles_per_hz = curcpu()->ci_cpu_freq / (2 * hz);
 	curcpu()->ci_divisor_delay = curcpu()->ci_cpu_freq / (2 * 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	if (mach_type == MACH_SGI_IP22) {
 		/* Wire interrupts 7, 11 to mappable interrupt 0,1 handlers */

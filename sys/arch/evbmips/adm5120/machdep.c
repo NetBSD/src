@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.3 2007/10/17 19:54:14 garbled Exp $ */
+/* $NetBSD: machdep.c,v 1.3.8.1 2008/01/10 23:43:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2007/10/17 19:54:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3.8.1 2008/01/10 23:43:13 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -199,7 +199,7 @@ adm5120_setcpufreq(void)
 	curcpu()->ci_cpu_freq = freq;
 	curcpu()->ci_cycles_per_hz = (freq + hz / 2) / hz / 2;
 	curcpu()->ci_divisor_delay = ((freq + 500000) / 1000000) / 2;
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 }
 
 void	mach_init(int, char **, void *, void *); /* XXX */

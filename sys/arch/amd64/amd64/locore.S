@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.35.4.2 2008/01/08 22:09:13 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.35.4.3 2008/01/10 23:43:07 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -904,8 +904,12 @@ ENTRY(cpu_switchto)
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
-	/* Set curlwp. */
-	movq	%r12,CPUVAR(CURLWP)
+	/*
+	 * Set curlwp.  This must be globally visible in order to permit
+	 * non-interlocked mutex release.
+	 */
+	movq	%r12,%rcx
+	xchgq	%rcx,CPUVAR(CURLWP)
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl

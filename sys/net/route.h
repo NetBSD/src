@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.58.14.2 2008/01/08 22:11:50 bouyer Exp $	*/
+/*	$NetBSD: route.h,v 1.58.14.3 2008/01/10 23:44:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -365,14 +365,14 @@ out:
 
 struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 
-void	rtcache_init(struct route *);
-void	rtcache_init_noclone(struct route *);
+struct rtentry *rtcache_init(struct route *);
+struct rtentry *rtcache_init_noclone(struct route *);
 void	rtcache_copy(struct route *, const struct route *);
 
 struct rtentry *rtcache_lookup2(struct route *, const struct sockaddr *, int,
     int *);
 void	rtcache_clear(struct route *);
-void	rtcache_update(struct route *, int);
+struct rtentry *rtcache_update(struct route *, int);
 void	rtcache_free(struct route *);
 int	rtcache_setdst(struct route *, const struct sockaddr *);
 

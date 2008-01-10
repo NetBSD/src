@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.308.6.2 2008/01/08 22:11:46 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.308.6.3 2008/01/10 23:44:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.6.2 2008/01/08 22:11:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.308.6.3 2008/01/10 23:44:28 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -377,7 +377,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name,
 	    sizeof(mp->mnt_stat.f_fstypename));
 	mp->mnt_stat.f_mntonname[0] = '/';
-	mp->mnt_stat.f_mntonname[0] = '\0';
+	mp->mnt_stat.f_mntonname[1] = '\0';
 	mp->mnt_stat.f_mntfromname[sizeof(mp->mnt_stat.f_mntfromname) - 1] =
 	    '\0';
 	(void)copystr(devname, mp->mnt_stat.f_mntfromname,
@@ -825,26 +825,28 @@ vget(vnode_t *vp, int flags)
 	/*
 	 * If the vnode is in the process of being cleaned out for
 	 * another use, we wait for the cleaning to finish and then
-	 * return failure. Cleaning is determined by checking that
-	 * the VI_XLOCK flag is set.
+	 * return failure.  Cleaning is determined by checking if
+	 * the VI_XLOCK or VI_FREEING flags are set.
 	 */
-	if ((vp->v_iflag & VI_XLOCK) != 0) {
-		if (flags & LK_NOWAIT) {
+	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
+		if ((flags & LK_NOWAIT) != 0) {
+			vp->v_usecount--;
 			mutex_exit(&vp->v_interlock);
 			return EBUSY;
 		}
-		vwait(vp, VI_XLOCK);
+		vwait(vp, VI_XLOCK | VI_FREEING);
 		vrelel(vp, 1, 0);
-		return (ENOENT);
+		return ENOENT;
 	}
 	if (flags & LK_TYPE_MASK) {
-		if ((error = vn_lock(vp, flags | LK_INTERLOCK))) {
+		error = vn_lock(vp, flags | LK_INTERLOCK);
+		if (error != 0) {
 			vrele(vp);
 		}
-		return (error);
+		return error;
 	}
 	mutex_exit(&vp->v_interlock);
-	return (0);
+	return 0;
 }
 
 /*
@@ -954,24 +956,31 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 		}
 
 		/*
-		 * The vnode may gain another reference while being
-		 * deactivated.  Note that VOP_INACTIVE() will drop
-		 * the vnode lock.
+		 * The vnode can gain another reference while being
+		 * deactivated.  If VOP_INACTIVE() indicates that
+		 * the described file has been deleted, then recycle
+		 * the vnode irrespective of additional references.
+		 * Another thread may be waiting to re-use the on-disk
+		 * inode.
+		 *
+		 * Note that VOP_INACTIVE() will drop the vnode lock.
 		 */
 		VOP_INACTIVE(vp, &recycle);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_usecount > 1) {
-			vp->v_usecount--;
-			mutex_exit(&vp->v_interlock);
-			return;
-		}
+		if (!recycle) {
+			if (vp->v_usecount > 1) {
+				vp->v_usecount--;
+				mutex_exit(&vp->v_interlock);
+				return;
+			}
 
-		/*
-		 * If we grew another reference while VOP_INACTIVE()
-		 * was underway, then retry.
-		 */
-		if ((vp->v_iflag & VI_INACTREDO) != 0) {
-			goto retry;
+			/*
+			 * If we grew another reference while
+			 * VOP_INACTIVE() was underway, retry.
+			 */
+			if ((vp->v_iflag & VI_INACTREDO) != 0) {
+				goto retry;
+			}
 		}
 
 		/* Take care of space accounting. */
@@ -1377,7 +1386,7 @@ vclean(vnode_t *vp, int flags)
 	mutex_enter(&vp->v_interlock);
 	vp->v_vnlock = &vp->v_lock;
 	VN_KNOTE(vp, NOTE_REVOKE);
-	vp->v_iflag &= ~VI_XLOCK;
+	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
 	vp->v_iflag |= VI_CLEAN;
 	vp->v_vflag &= ~VV_LOCKSWORK;
 	cv_broadcast(&vp->v_cv);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.129.4.2 2008/01/08 22:11:33 bouyer Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.129.4.3 2008/01/10 23:44:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.129.4.2 2008/01/08 22:11:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.129.4.3 2008/01/10 23:44:26 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -107,7 +107,9 @@ static int acquire(struct lock **, int *, int, int, int, uintptr_t);
 
 int	lock_debug_syslog = 0;	/* defaults to printf, but can be patched */
 bool	kernel_lock_dodebug;
-__cpu_simple_lock_t kernel_lock;
+
+__cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
+    __aligned(CACHE_LINE_SIZE);
 
 #ifdef LOCKDEBUG
 static lockops_t lockmgr_lockops = {
@@ -615,7 +617,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
 
 	if (panicstr != NULL)
 		return;
-	LOCKDEBUG_BARRIER(&kernel_lock, 1);
+	LOCKDEBUG_BARRIER(kernel_lock, 1);
 	if (CURCPU_IDLE_P() && !cold) {
 		panic("assert_sleepable: idle");
 	}
@@ -636,7 +638,7 @@ assert_sleepable(struct simplelock *interlock, const char *msg)
  */
 
 #define	_KERNEL_LOCK_ABORT(msg)						\
-    LOCKDEBUG_ABORT(&kernel_lock, &_kernel_lock_ops, __func__, msg)
+    LOCKDEBUG_ABORT(kernel_lock, &_kernel_lock_ops, __func__, msg)
 
 #ifdef LOCKDEBUG
 #define	_KERNEL_LOCK_ASSERT(cond)					\
@@ -663,8 +665,9 @@ void
 kernel_lock_init(void)
 {
 
-	__cpu_simple_lock_init(&kernel_lock);
-	kernel_lock_dodebug = LOCKDEBUG_ALLOC(&kernel_lock, &_kernel_lock_ops,
+	KASSERT(CACHE_LINE_SIZE >= sizeof(__cpu_simple_lock_t));
+	__cpu_simple_lock_init(kernel_lock);
+	kernel_lock_dodebug = LOCKDEBUG_ALLOC(kernel_lock, &_kernel_lock_ops,
 	    RETURN_ADDRESS);
 }
 
@@ -693,9 +696,7 @@ _kernel_lock(int nlocks, struct lwp *l)
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_FLAG(lsflag);
 	struct lwp *owant;
-#ifdef LOCKDEBUG
 	u_int spins;
-#endif
 	int s;
 
 	if (nlocks == 0)
@@ -705,70 +706,88 @@ _kernel_lock(int nlocks, struct lwp *l)
 	l = curlwp;
 
 	if (ci->ci_biglock_count != 0) {
-		_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(&kernel_lock));
+		_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(kernel_lock));
 		ci->ci_biglock_count += nlocks;
 		l->l_blcnt += nlocks;
 		return;
 	}
 
 	_KERNEL_LOCK_ASSERT(l->l_blcnt == 0);
-	LOCKDEBUG_WANTLOCK(kernel_lock_dodebug, &kernel_lock, RETURN_ADDRESS,
+	LOCKDEBUG_WANTLOCK(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS,
 	    0);
 
 	s = splvm();
-	if (__cpu_simple_lock_try(&kernel_lock)) {
+	if (__cpu_simple_lock_try(kernel_lock)) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
-		LOCKDEBUG_LOCKED(kernel_lock_dodebug, &kernel_lock,
+		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock,
 		    RETURN_ADDRESS, 0);
 		splx(s);
 		return;
 	}
 
+	/*
+	 * To remove the ordering constraint between adaptive mutexes
+	 * and kernel_lock we must make it appear as if this thread is
+	 * blocking.  For non-interlocked mutex release, a store fence
+	 * is required to ensure that the result of any mutex_exit()
+	 * by the current LWP becomes visible on the bus before the set
+	 * of ci->ci_biglock_wanted becomes visible.
+	 */
+	membar_producer();
+	owant = ci->ci_biglock_wanted;
+	ci->ci_biglock_wanted = l;
+
+	/*
+	 * Spin until we acquire the lock.  Once we have it, record the
+	 * time spent with lockstat.
+	 */
 	LOCKSTAT_ENTER(lsflag);
 	LOCKSTAT_START_TIMER(lsflag, spintime);
 
-	/*
-	 * Before setting ci_biglock_wanted we must post a store
-	 * fence (see kern_mutex.c).  This is accomplished by the
-	 * __cpu_simple_lock_try() above.
-	 */
-	owant = ci->ci_biglock_wanted;
-	ci->ci_biglock_wanted = curlwp;	/* XXXAD */
-
-#ifdef LOCKDEBUG
 	spins = 0;
-#endif
-
 	do {
 		splx(s);
-		while (__SIMPLELOCK_LOCKED_P(&kernel_lock)) {
-#ifdef LOCKDEBUG
-			if (SPINLOCK_SPINOUT(spins))
+		while (__SIMPLELOCK_LOCKED_P(kernel_lock)) {
+			if (SPINLOCK_SPINOUT(spins)) {
 				_KERNEL_LOCK_ABORT("spinout");
-#endif
+			}
 			SPINLOCK_BACKOFF_HOOK;
 			SPINLOCK_SPIN_HOOK;
 		}
-		(void)splvm();
-	} while (!__cpu_simple_lock_try(&kernel_lock));
+		s = splvm();
+	} while (!__cpu_simple_lock_try(kernel_lock));
 
-	ci->ci_biglock_wanted = owant;
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
-	LOCKDEBUG_LOCKED(kernel_lock_dodebug, &kernel_lock, RETURN_ADDRESS, 0);
+	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS, 0);
+	if (owant == NULL) {
+		LOCKSTAT_EVENT_RA(lsflag, kernel_lock,
+		    LB_KERNEL_LOCK | LB_SPIN, 1, spintime, RETURN_ADDRESS);
+	}
+	LOCKSTAT_EXIT(lsflag);
 	splx(s);
 
 	/*
-	 * Again, another store fence is required (see kern_mutex.c).
+	 * Now that we have kernel_lock, reset ci_biglock_wanted.  This
+	 * store must be unbuffered (immediately visible on the bus) in
+	 * order for non-interlocked mutex release to work correctly. 
+	 * It must be visible before a mutex_exit() can execute on this
+	 * processor.
+	 *
+	 * Note: only where CAS is available in hardware will this be
+	 * an unbuffered write, but non-interlocked release cannot be
+	 * done on CPUs without CAS in hardware.
 	 */
-	membar_producer();
-	if (owant == NULL) {
-		LOCKSTAT_EVENT(lsflag, &kernel_lock, LB_KERNEL_LOCK | LB_SPIN,
-		    1, spintime);
-	}
-	LOCKSTAT_EXIT(lsflag);
+	(void)atomic_swap_ptr(&ci->ci_biglock_wanted, owant);
+
+	/*
+	 * Issue a memory barrier as we have acquired a lock.  This also
+	 * prevents stores from a following mutex_exit() being reordered
+	 * to occur before our store to ci_biglock_wanted above.
+	 */
+	membar_enter();
 }
 
 /*
@@ -795,7 +814,7 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 		return;
 	}
 
-	_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(&kernel_lock));
+	_KERNEL_LOCK_ASSERT(__SIMPLELOCK_LOCKED_P(kernel_lock));
 
 	if (nlocks == 0)
 		nlocks = olocks;
@@ -809,10 +828,10 @@ _kernel_unlock(int nlocks, struct lwp *l, int *countp)
 	l->l_blcnt -= nlocks;
 	if (ci->ci_biglock_count == nlocks) {
 		s = splvm();
-		LOCKDEBUG_UNLOCKED(kernel_lock_dodebug, &kernel_lock,
+		LOCKDEBUG_UNLOCKED(kernel_lock_dodebug, kernel_lock,
 		    RETURN_ADDRESS, 0);
 		ci->ci_biglock_count = 0;
-		__cpu_simple_unlock(&kernel_lock);
+		__cpu_simple_unlock(kernel_lock);
 		splx(s);
 	} else
 		ci->ci_biglock_count -= nlocks;

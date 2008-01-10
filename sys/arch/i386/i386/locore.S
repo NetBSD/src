@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.58.6.3 2008/01/08 22:10:00 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.58.6.4 2008/01/10 23:43:22 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -141,7 +141,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.3 2008/01/08 22:10:00 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.4 2008/01/10 23:43:22 bouyer Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -912,8 +912,12 @@ ENTRY(cpu_switchto)
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
-	/* Set curlwp. */
-	movl	%edi,CPUVAR(CURLWP)
+	/*
+	 * Set curlwp.  This must be globally visible in order to permit
+	 * non-interlocked mutex release.
+	 */
+	movl	%edi,%ecx
+	xchgl	%ecx,CPUVAR(CURLWP)
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testl	%edx,%edx

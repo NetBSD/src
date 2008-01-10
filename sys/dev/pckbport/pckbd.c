@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.18 2007/12/09 20:28:13 jmcneill Exp $ */
+/* $NetBSD: pckbd.c,v 1.18.2.1 2008/01/10 23:44:25 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.18 2007/12/09 20:28:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.18.2.1 2008/01/10 23:44:25 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -640,6 +640,15 @@ pckbd_bell(u_int pitch, u_int period, u_int volume, int poll)
 	if (pckbd_bell_fn != NULL)
 		(*pckbd_bell_fn)(pckbd_bell_fn_arg, pitch, period,
 		    volume, poll);
+}
+
+void
+pckbd_unhook_bell(void (*fn)(void *, u_int, u_int, u_int, int), void *arg)
+{
+	if (pckbd_bell_fn != fn && pckbd_bell_fn_arg != arg)
+		return;
+	pckbd_bell_fn = NULL;
+	pckbd_bell_fn_arg = NULL;
 }
 
 void

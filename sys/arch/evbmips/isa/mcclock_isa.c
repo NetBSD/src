@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_isa.c,v 1.9 2006/09/07 04:59:30 simonb Exp $	*/
+/*	$NetBSD: mcclock_isa.c,v 1.9.46.1 2008/01/10 23:43:15 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.9 2006/09/07 04:59:30 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_isa.c,v 1.9.46.1 2008/01/10 23:43:15 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -125,8 +125,6 @@ mcclock_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	mc146818_attach(sc);
 	aprint_normal("\n");
-
-	todr_attach(&sc->sc_handle);
 }
 
 void

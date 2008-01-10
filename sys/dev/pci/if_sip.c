@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.115.8.1 2008/01/02 21:54:46 bouyer Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.115.8.2 2008/01/10 23:44:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.115.8.1 2008/01/02 21:54:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.115.8.2 2008/01/10 23:44:24 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -221,7 +221,6 @@ struct sip_softc {
 	pci_chipset_tag_t sc_pc;
 	bus_dma_segment_t sc_seg;
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
 
 	const struct sip_product *sc_model; /* which model are we? */
 	int sc_gigabit;			/* 1: 83820, 0: other */
@@ -573,8 +572,6 @@ static int	sipcom_ioctl(struct ifnet *, u_long, void *);
 static int	sipcom_init(struct ifnet *);
 static void	sipcom_stop(struct ifnet *, int);
 
-static void	sipcom_shutdown(void *);
-
 static bool	sipcom_reset(struct sip_softc *);
 static void	sipcom_rxdrain(struct sip_softc *);
 static int	sipcom_add_rxbuf(struct sip_softc *, int);
@@ -610,7 +607,6 @@ static int	sipcom_dp83815_mii_readreg(struct device *, int, int);
 static void	sipcom_dp83815_mii_writereg(struct device *, int, int, int);
 static void	sipcom_dp83815_mii_statchg(struct device *);
 
-static int	sipcom_mediachange(struct ifnet *);
 static void	sipcom_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static int	sipcom_match(struct device *, struct cfdata *, void *);
@@ -928,9 +924,6 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 		if_detach(ifp);
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-		if (sc->sc_sdhook != NULL)
-			shutdownhook_disestablish(sc->sc_sdhook);
-
 		/*FALLTHROUGH*/
 	case SIP_ATTACH_CREATE_RXMAP:
 		for (i = 0; i < sc->sc_parm->p_nrxdesc; i++) {
@@ -1230,7 +1223,8 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_mii.mii_readreg = sip->sip_variant->sipv_mii_readreg;
 	sc->sc_mii.mii_writereg = sip->sip_variant->sipv_mii_writereg;
 	sc->sc_mii.mii_statchg = sip->sip_variant->sipv_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, sipcom_mediachange,
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
 	    sipcom_mediastatus);
 
 	/*
@@ -1373,27 +1367,6 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
-
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(sipcom_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		printf("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-}
-
-/*
- * sip_shutdown:
- *
- *	Make sure the interface is stopped at reboot time.
- */
-static void
-sipcom_shutdown(void *arg)
-{
-	struct sip_softc *sc = arg;
-
-	sipcom_stop(&sc->sc_ethercom.ec_if, 1);
 }
 
 static inline void
@@ -2781,7 +2754,8 @@ sipcom_init(struct ifnet *ifp)
 	 * IMR, since sip_mii_statchg() modifies the IMR for 802.3x flow
 	 * control.
 	 */
-	mii_mediachg(&sc->sc_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/*
 	 * Set the interrupt hold-off timer to 100us.
@@ -3954,23 +3928,7 @@ sipcom_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct sip_softc *sc = ifp->if_softc;
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
+	ether_mediastatus(ifp, ifmr);
+	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK) |
 			   sc->sc_flowflags;
-}
-
-/*
- * sip_mediachange:	[ifmedia interface function]
- *
- *	Set hardware to newly-selected media.
- */
-static int
-sipcom_mediachange(struct ifnet *ifp)
-{
-	struct sip_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
 }

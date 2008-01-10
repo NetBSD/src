@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.3.22.1 2008/01/08 22:11:53 bouyer Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.3.22.2 2008/01/10 23:44:40 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,14 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+
+#ifdef __sparc__
+ /* 
+  * XXX Least common denominator - smallest sparc pagesize.
+  * Could just be declared, pooka says rump doesn't use ioctl.
+  */
+int nbpg = 4096;
+#endif
 
 void
 preempt()

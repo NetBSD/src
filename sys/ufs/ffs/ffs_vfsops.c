@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.212.4.2 2008/01/08 22:12:02 bouyer Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.212.4.3 2008/01/10 23:44:43 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.212.4.2 2008/01/08 22:12:02 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.212.4.3 2008/01/10 23:44:43 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -189,7 +189,7 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
-	struct vnode *devvp = NULL;
+	struct vnode *vp, *devvp = NULL;
 	struct ufs_args *args = data;
 	struct ufsmount *ump = NULL;
 	struct fs *fs;
@@ -259,8 +259,21 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			vref(devvp);
 		}
 	}
-	if ((mp->mnt_flag & MNT_SOFTDEP) != 0)
+
+	/*
+	 * Mark the device and any existing vnodes as involved in
+	 * softdep processing.
+	 */
+	if ((mp->mnt_flag & MNT_SOFTDEP) != 0) {
 		devvp->v_uflag |= VU_SOFTDEP;
+		mutex_enter(&mntvnode_lock);
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+			if (vp->v_mount != mp || vismarker(vp))
+				continue;
+			vp->v_uflag |= VU_SOFTDEP;
+		}
+		mutex_exit(&mntvnode_lock);
+	}
 
 	/*
 	 * If mount by non-root, then verify that user has necessary

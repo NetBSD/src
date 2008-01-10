@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.29.28.2 2008/01/08 22:10:43 bouyer Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.29.28.3 2008/01/10 23:44:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.29.28.2 2008/01/08 22:10:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.29.28.3 2008/01/10 23:44:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,16 +284,14 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 int
 compat_43_sys_sethostid(struct lwp *l, const struct compat_43_sys_sethostid_args *uap, register_t *retval)
 {
-	/* {
-		syscallarg(int32_t) hostid;
-	} */
-	int error;
+	long uhostid;
+	int name[2];
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		return (error);
-	hostid = SCARG(uap, hostid);
-	return (0);
+	uhostid = SCARG(uap, hostid);
+	name[0] = CTL_KERN;
+	name[1] = KERN_HOSTID;
+
+	return (old_sysctl(&name[0], 2, 0, 0, &uhostid, sizeof(long), l));
 }
 
 

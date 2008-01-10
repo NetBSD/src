@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.76.4.2 2008/01/08 22:11:56 bouyer Exp $	*/
+/*	$NetBSD: lock.h,v 1.76.4.3 2008/01/10 23:44:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -213,7 +213,6 @@ struct proc;
 void	lockinit(struct lock *, pri_t, const char *, int, int);
 void	lockdestroy(struct lock *);
 int	lockmgr(struct lock *, u_int flags, kmutex_t *);
-void	transferlockers(struct lock *, struct lock *);
 int	lockstatus(struct lock *);
 void	lockmgr_printinfo(struct lock *);
 
@@ -244,9 +243,14 @@ do {								\
 } while (/* CONSTCOND */ 0);
 
 #define	SPINLOCK_RUN_HOOK(count)	((count) >= SPINLOCK_BACKOFF_MAX)
-#define	SPINLOCK_SPINOUT(spins)		((spins)++ > 0x0fffffff)
 
-extern __cpu_simple_lock_t	kernel_lock;
+#ifdef LOCKDEBUG
+#define	SPINLOCK_SPINOUT(spins)		((spins)++ > 0x0fffffff)
+#else
+#define	SPINLOCK_SPINOUT(spins)		((void)(spins), 0)
+#endif
+
+extern __cpu_simple_lock_t kernel_lock[];
 
 #endif /* _KERNEL */
 

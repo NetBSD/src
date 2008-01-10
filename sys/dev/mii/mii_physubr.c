@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.54.2.1 2008/01/02 21:54:32 bouyer Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.54.2.2 2008/01/10 23:44:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.54.2.1 2008/01/02 21:54:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.54.2.2 2008/01/10 23:44:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -572,6 +572,7 @@ mii_phy_detach(struct device *self, int flags)
 		callout_stop(&sc->mii_nway_ch);
 
 	mii_phy_delete_media(sc);
+	LIST_REMOVE(sc, mii_list);
 
 	return (0);
 }

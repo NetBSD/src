@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_fcntl.c,v 1.27.4.2 2008/01/08 22:10:50 bouyer Exp $	 */
+/*	$NetBSD: svr4_32_fcntl.c,v 1.27.4.3 2008/01/10 23:44:12 bouyer Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.27.4.2 2008/01/08 22:10:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_fcntl.c,v 1.27.4.3 2008/01/10 23:44:12 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,6 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
 	struct vnode *vp;
-	struct vattr vattr;
 	int error;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
@@ -245,16 +244,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
-		goto out;
-
-	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		goto out;
-
-	if (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED))
-		VOP_REVOKE(vp, REVOKEALL);
+	error = dorevoke(vp, l->l_cred);
 out:
 	vrele(vp);
 	FILE_UNUSE(fp, l);

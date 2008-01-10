@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.18.42.1 2008/01/08 22:10:18 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.18.42.2 2008/01/10 23:43:53 bouyer Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,12 +33,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18.42.1 2008/01/08 22:10:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.18.42.2 2008/01/10 23:43:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
 
@@ -87,7 +89,9 @@ void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 void
 stat_intr(struct clockframe *frame)
 {
+
 	mtspr(SPR_TSR, TSR_FIS);	/* Clear TSR[FIS] */
+	uvmexp.intrs++;
 	curcpu()->ci_ev_statclock.ev_count++;
 
 	/* Nobody can interrupt us, but see if we're allowed to run. */
@@ -116,6 +120,7 @@ decr_intr(struct clockframe *frame)
 		xticks -= ticks_per_intr;
 	lasttb2 = tbtick - xticks;
 
+	uvmexp.intrs++;
 	curcpu()->ci_ev_clock.ev_count++;
 	pri = splclock();
 	if (pri & mask_clock) {

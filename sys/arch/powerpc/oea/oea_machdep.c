@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.37 2007/12/03 15:34:14 ad Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.37.6.1 2008/01/10 23:43:54 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.37 2007/12/03 15:34:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.37.6.1 2008/01/10 23:43:54 bouyer Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -127,7 +127,9 @@ oea_init(void (*handler)(void))
 	register_t msr;
 #endif
 	uintptr_t exc;
+#if defined(ALTIVEC) || defined(PPC_OEA)
 	register_t scratch;
+#endif
 	unsigned int cpuvers;
 	size_t size;
 	struct cpu_info * const ci = &cpu_info[0];

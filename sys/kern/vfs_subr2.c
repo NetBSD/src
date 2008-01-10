@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.8.6.2 2008/01/08 22:11:46 bouyer Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.8.6.3 2008/01/10 23:44:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.6.2 2008/01/08 22:11:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.8.6.3 2008/01/10 23:44:31 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -687,7 +687,7 @@ vprint(const char *label, struct vnode *vp)
 	if (label != NULL)
 		printf("%s: ", label);
 	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
-	    "usecount %d, writecount %ld, holdcount %ld\n"
+	    "usecount %d, writecount %d, holdcount %d\n"
 	    "\tfreelisthd %p, mount %p, data %p\n", vp, bf,
 	    ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
