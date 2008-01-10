@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.499 2008/01/09 11:26:14 simonb Exp $
+#	$NetBSD: bsd.own.mk,v 1.500 2008/01/10 22:21:43 skrll Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -410,13 +410,6 @@ MKISCSI=	no
 .if ${HAVE_GCC} == 4
 NOPROFILE=	# defined
 .endif
-.endif
-
-#
-# The hppa port is incomplete.
-#
-.if ${MACHINE_ARCH} == "hppa"
-MKGDB=		no
 .endif
 
 #
