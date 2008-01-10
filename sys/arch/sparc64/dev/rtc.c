@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2 2006/11/09 15:08:04 tsutsui Exp $	*/
+/*	$NetBSD: rtc.c,v 1.3 2008/01/10 15:17:40 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2 2006/11/09 15:08:04 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.3 2008/01/10 15:17:40 tsutsui Exp $");
 
 /*
  * Clock driver for 'rtc' - mc146818 driver.
@@ -178,8 +178,6 @@ rtc_ebus_attach(struct device *parent, struct device *self, void *aux)
 	 * physical page as the COM registers.  So we won't protect them.
 	 */
 	/*sc->sc_handle.todr_setwen = NULL;*/
-
-	todr_attach(&sc->sc_handle);
 }
 
 /*
