@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.26 2007/05/29 21:32:30 christos Exp $	*/
+/*	$NetBSD: if_media.c,v 1.27 2008/01/10 08:00:22 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.26 2007/05/29 21:32:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.27 2008/01/10 08:00:22 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,12 @@ ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
 	ifm->ifm_change = change_callback;
 	ifm->ifm_status = status_callback;
+}
+
+int
+ifmedia_change(struct ifmedia *ifm, struct ifnet *ifp)
+{
+	return (*ifm->ifm_change)(ifp);
 }
 
 /*
@@ -296,7 +302,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		oldmedia = ifm->ifm_media;
 		ifm->ifm_cur = match;
 		ifm->ifm_media = newmedia;
-		error = (*ifm->ifm_change)(ifp);
+		error = ifmedia_change(ifm, ifp);
 		if (error) {
 			ifm->ifm_cur = oldentry;
 			ifm->ifm_media = oldmedia;
@@ -319,6 +325,7 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		    ifm->ifm_cur->ifm_media : IFM_NONE;
 		ifmr->ifm_mask = ifm->ifm_mask;
 		ifmr->ifm_status = 0;
+		/* ifmedia_status */
 		(*ifm->ifm_status)(ifp, ifmr);
 
 		/*
