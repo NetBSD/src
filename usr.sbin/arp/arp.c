@@ -1,4 +1,4 @@
-/*	$NetBSD: arp.c,v 1.45 2007/12/15 19:44:54 perry Exp $ */
+/*	$NetBSD: arp.c,v 1.46 2008/01/10 14:16:27 seanb Exp $ */
 
 /*
  * Copyright (c) 1984, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1984, 1993\n\
 #if 0
 static char sccsid[] = "@(#)arp.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: arp.c,v 1.45 2007/12/15 19:44:54 perry Exp $");
+__RCSID("$NetBSD: arp.c,v 1.46 2008/01/10 14:16:27 seanb Exp $");
 #endif
 #endif /* not lint */
 
@@ -269,6 +269,10 @@ set(int argc, char **argv)
 		else if (strncmp(argv[0], "pub", 3) == 0) {
 			flags |= RTF_ANNOUNCE;
 			doing_proxy = SIN_PROXY;
+			if (argc && strncmp(argv[1], "pro", 3) == 0) {
+			        export_only = 1;
+			        argc--; argv++;
+			}
 		} else if (strncmp(argv[0], "trail", 5) == 0) {
 			warnx("%s: Sending trailers is no longer supported",
 			    host);
@@ -363,10 +367,10 @@ delete(const char *host, const char *info)
 	sina = &sin_m;
 	rtm = &m_rtmsg.m_rtm;
 
-	if (info && strncmp(info, "pub", 3) == 0)
-		export_only = 1;
 	getsocket();
 	sin_m = blank_sin;		/* struct copy */
+	if (info && strncmp(info, "pro", 3) == 0)
+		 sina->sin_other = SIN_PROXY;
 	if (getinetaddr(host, &sina->sin_addr) == -1)
 		return (1);
 tryagain:
@@ -569,9 +573,9 @@ usage(void)
 	progname = getprogname();
 	(void)fprintf(stderr, "Usage: %s [-n] hostname\n", progname);
 	(void)fprintf(stderr, "	      %s [-nv] -a\n", progname);
-	(void)fprintf(stderr, "	      %s [-v] -d [-a|hostname [pub]]\n",
+	(void)fprintf(stderr, "	      %s [-v] -d [-a|hostname [pub [proxy]]]\n",
 	    progname);
-	(void)fprintf(stderr, "       %s -s hostname ether_addr [temp] [pub]\n",
+	(void)fprintf(stderr, "       %s -s hostname ether_addr [temp] [pub [proxy]]\n",
 	    progname);
 	(void)fprintf(stderr, "       %s -f filename\n", progname);
 	exit(1);
