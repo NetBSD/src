@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.35 2007/04/29 20:23:34 msaitoh Exp $	*/
+/*	$NetBSD: ftree.c,v 1.36 2008/01/10 04:24:51 tls Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.35 2007/04/29 20:23:34 msaitoh Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.36 2008/01/10 04:24:51 tls Exp $");
 #endif
 #endif /* not lint */
 
@@ -549,7 +549,7 @@ next_file(ARCHD *arcn)
 				    (get_atdir(MFTENT_DUMMY_DEV, ftnode->lineno,
 				    &mtime, &atime) == 0)) {
 					set_ftime(ftent->fts_path,
-					    mtime, atime, 1);
+					    mtime, atime, 1, 0);
 				}
 				ftnode = ftnode->parent;
 				if (ftnode->parent == ftnode)
@@ -627,7 +627,7 @@ next_file(ARCHD *arcn)
 #endif
 			    &mtime, &atime) < 0))
 				continue;
-			set_ftime(ftent->fts_path, mtime, atime, 1);
+			set_ftime(ftent->fts_path, mtime, atime, 1, 0);
 			continue;
 		case FTS_DC:
 			/*
