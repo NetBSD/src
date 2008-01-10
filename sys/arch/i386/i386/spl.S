@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.22.4.3 2008/01/09 23:54:17 bouyer Exp $	*/
+/*	$NetBSD: spl.S,v 1.22.4.4 2008/01/10 13:01:56 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.22.4.3 2008/01/09 23:54:17 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.22.4.4 2008/01/10 13:01:56 bouyer Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
@@ -241,6 +241,7 @@ IDTVEC(doreti)
 	IDEPTH_DECR
 	popl	%ebx			# get previous priority
 #endif
+.Ldoreti_resume_stic:
 	movl	$.Ldoreti_resume,%esi	# address to resume loop at
 .Ldoreti_resume:
 #if defined(DEBUG)
@@ -299,7 +300,7 @@ doreti_checkast:
 	testl   %eax,%eax
 	jz 4f
 	CLI(%eax)
-	jmp	.Ldoreti_resume
+	jmp	.Ldoreti_resume_stic
 4:
 #endif /* XEN */
 	INTRFASTEXIT
