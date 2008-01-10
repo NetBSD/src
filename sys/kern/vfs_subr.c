@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.313 2008/01/09 21:29:38 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.314 2008/01/10 13:05:01 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.313 2008/01/09 21:29:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.314 2008/01/10 13:05:01 pooka Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -377,7 +377,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsp->vfs_name,
 	    sizeof(mp->mnt_stat.f_fstypename));
 	mp->mnt_stat.f_mntonname[0] = '/';
-	mp->mnt_stat.f_mntonname[0] = '\0';
+	mp->mnt_stat.f_mntonname[1] = '\0';
 	mp->mnt_stat.f_mntfromname[sizeof(mp->mnt_stat.f_mntfromname) - 1] =
 	    '\0';
 	(void)copystr(devname, mp->mnt_stat.f_mntfromname,
