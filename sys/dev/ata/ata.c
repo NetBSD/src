@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.95 2008/01/10 07:41:20 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.96 2008/01/10 07:48:22 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.95 2008/01/10 07:41:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.96 2008/01/10 07:48:22 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -494,22 +494,17 @@ atabus_detach(device_t self, int flags)
 	device_t dev = NULL;
 	int s, i, error = 0;
 
-	aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
-
 	/* Shutdown the channel. */
 	s = splbio();		/* XXX ALSO NEED AN INTERLOCK HERE. */
 	chp->ch_flags |= ATACH_SHUTDOWN;
 	splx(s);
 
-	aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 	wakeup(&chp->ch_thread);
 
-	aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 	while (chp->ch_thread != NULL)
 		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
 
 
-	aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 	/*
 	 * Detach atapibus and its children.
 	 */
@@ -517,26 +512,21 @@ atabus_detach(device_t self, int flags)
 		ATADEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
 		    device_xname(self), device_xname(dev)), DEBUG_DETACH);
 
-		aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 		error = config_detach(dev, flags);
 		if (error)
 			goto out;
 	}
 
-	aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 	/*
 	 * Detach our other children.
 	 */
 	for (i = 0; i < chp->ch_ndrive; i++) {
-		aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
 			continue;
-		aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
 			ATADEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
 			    device_xname(self), device_xname(dev)),
 			    DEBUG_DETACH);
-			aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 			error = config_detach(dev, flags);
 			if (error)
 				goto out;
@@ -544,7 +534,6 @@ atabus_detach(device_t self, int flags)
 	}
 
  out:
-	aprint_error_dev(self, "%s.%d\n", __func__, __LINE__);
 #ifdef ATADEBUG
 	if (dev != NULL && error != 0)
 		ATADEBUG_PRINT(("atabus_detach: %s: error %d detaching %s\n",
