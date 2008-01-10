@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_isa.c,v 1.9 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: mkclock_isa.c,v 1.10 2008/01/10 15:31:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.9 2005/12/11 12:18:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_isa.c,v 1.10 2008/01/10 15:31:27 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -183,8 +183,6 @@ mkclock_isa_attach(struct device *parent, struct device *self, void *aux)
 	mk48txx_attach(sc);
 
 	printf(" Timekeeper NVRAM/RTC\n");
-
-	todr_attach(&sc->sc_handle);
 }
 
 /*
