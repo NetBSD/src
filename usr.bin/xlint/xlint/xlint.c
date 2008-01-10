@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.37 2005/06/02 04:38:46 lukem Exp $ */
+/* $NetBSD: xlint.c,v 1.38 2008/01/10 05:15:07 lukem Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.37 2005/06/02 04:38:46 lukem Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.38 2008/01/10 05:15:07 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: xlint.c,v 1.37 2005/06/02 04:38:46 lukem Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "lint.h"
 #include "pathnames.h"
@@ -254,6 +255,8 @@ terminate(int signo)
 	if (currfn != NULL)
 		(void)remove(currfn);
 
+	if (signo != 0)
+		(void)raise_default_signal(signo);
 	exit(signo != 0 ? 1 : 0);
 }
 
