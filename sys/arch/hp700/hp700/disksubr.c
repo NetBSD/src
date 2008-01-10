@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.24 2008/01/02 11:48:25 ad Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25 2008/01/10 12:44:50 skrll Exp $	*/
 
 /*	$OpenBSD: disksubr.c,v 1.6 2000/10/18 21:00:34 mickey Exp $	*/
 
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.24 2008/01/02 11:48:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2008/01/10 12:44:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,6 +103,7 @@ readbsdlabel(struct buf *bp, void (*strat)(struct buf *), int cyl, int sec,
 	bp->b_bcount = lp->d_secsize;
 	bp->b_cflags = BC_BUSY;
 	bp->b_flags = B_READ;
+	bp->b_oflags = 0;
 	(*strat)(bp);
 
 	/* if successful, locate disk label within block and validate */
