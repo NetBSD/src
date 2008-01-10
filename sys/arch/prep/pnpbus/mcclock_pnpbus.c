@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock_pnpbus.c,v 1.3 2006/07/12 21:28:33 garbled Exp $ */
+/* $NetBSD: mcclock_pnpbus.c,v 1.4 2008/01/10 15:17:40 tsutsui Exp $ */
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.3 2006/07/12 21:28:33 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_pnpbus.c,v 1.4 2008/01/10 15:17:40 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,6 @@ mcclock_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 
 	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_24HR);
-	todr_attach(&sc->sc_handle);
 }
 
 void
