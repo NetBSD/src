@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.987 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.988 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -8,34 +8,34 @@ containing just the word `help' to `majordomo@NetBSD.org'.]
 
 
 Changes from NetBSD 4.0 to NetBSD 5.0:
-	evbppc: add support for Xilinx Virtex II-Pro/4-FX. [freza 20061202]
-	mac68k: add support for four more Nubus video cards, including the
+	evbppc: Add support for Xilinx Virtex II-Pro/4-FX. [freza 20061202]
+	mac68k: Add support for four more Nubus video cards, including the
 		VillageTronic MacPicasso 340. [hauke 20061206]
-	ixp425: add support for NPE Ethernet. [scw 20061210]
+	ixp425: Add support for NPE Ethernet. [scw 20061210]
 	nfs: Remove NQNFS support from kernel. [yamt 20061227]
-	mount_psshfs(8): add puffs sshfs [pooka 20061229]
-	zaurus: add support for Sharp C3x00 PDA. [ober 20070105]
-	i386: add support for Microsoft Xbox. [jmcneill 20070105]
+	mount_psshfs(8): Add puffs sshfs. [pooka 20061229]
+	zaurus: Add support for Sharp C3x00 PDA. [ober 20070105]
+	i386: Add support for Microsoft Xbox. [jmcneill 20070105]
 	ntp: Import ntp 4.2.4 (20061228). Tracking of network interface
 		address changes is now supported - no more ntpd
 		restarts when interface addresses are re-configured
 		(WLAN/DSL/ppp/...). [kardel 20070106]
-	kernel: global 'securelevel' variable removed; it is now internal to
+	kernel: Global 'securelevel' variable removed; it is now internal to
 		the secmodel. [elad 20070110]
 	GCC: Updated to version 4.1.2-20070110.  [mrg 20070111]
-	acpitools: added from FreeBSD via fvdl [christos 20070114]
-	scsictl(8): added setspeed command, to set the highest speed that the
+	acpitools: Added from FreeBSD via fvdl. [christos 20070114]
+	scsictl(8): Added setspeed command, to set the highest speed that the
 		optical drive should use for reading data,
 		contributed by Kimura Fuyuki. [bouyer 20070122]
-	i386, amd64: add cmos(4), driver for x86 CMOS RAM. [dyoung 20070206]
+	i386, amd64: Add cmos(4), driver for x86 CMOS RAM. [dyoung 20070206]
 	newlock2: Merge the newlock2 branch. Introduces a number of new
 		kernel synchronization primitives, improves scalability
 		on MP systems, and replaces the existing SA threads model
 		with a 1:1 threading model. [ad 20070209]
 	news68k: Implement generic softintr(9) support. [tsutsui 20070210]
-	refuse: added FUSE (file system in userspace) compatibility
-		functionality, layered on top of libpuffs [agc 20070211]
-	i386: added an opencrypto provider for VIA ACE (AES encryption
+	refuse: Added FUSE (file system in userspace) compatibility
+		functionality, layered on top of libpuffs. [agc 20070211]
+	i386: Added an opencrypto provider for VIA ACE (AES encryption
 		instructions), ported from OpenBSD. [daniel 20070217]
 	sdiff(1): Replaced by OpenBSD sdiff(1) (public domain). [rmind 20070219]
 	btuart(4): Add support for Bluetooth HCI UART (H4) driver.
@@ -44,35 +44,35 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[kiyohara 20070221]
 	mutex(9), rwlock(9): Support priority inheritance. [yamt 20070226]
 	eeprom(8): Add the missing kernel bits on arm and powerpc that kept
-		eeprom from actually changing firmware settings
+		eeprom from actually changing firmware settings.
 		[macallan 20070228]
 	MAKEDEV(8), MAKEDEV.local(8): Let MAKEDEV.local use functions
 		defined in MAKEDEV. [apb 20070303]
 	x68k: Add generic softintr(9) support. [tsutsui 20070304]
 	luna68k: Add generic softintr(9) support. [tsutsui 20070304]
-	file(1): update to 4.20.  [pooka 20070304]
+	file(1): Update to 4.20.  [pooka 20070304]
 	hfs: Add read-only Apple HFS+ file system support. [dillo 20070305]
-	ipv6: add ipv6 fast forward. [liamjfoy 20070307]
-	openssh: import 4.6 [christos 20070310]
+	ipv6: Add ipv6 fast forward. [liamjfoy 20070307]
+	openssh: Import 4.6 [christos 20070310]
 	aiboost(4): ASUS AI Booster ACPI Hardware monitor driver,
 		adapted from FreeBSD for envsys(4). [xtraeme 20070313]
-	evbmips: add Infineon ADM5120 port. [dyoung 20070320]
+	evbmips: Add Infineon ADM5120 port. [dyoung 20070320]
 	i386, amd64: Intel(R) On Demand Clock Modulation driver, to save
 		power and overheating in CPUs supporting the Thermal
 		Monitor feature (TM). Adapted from OpenBSD/FreeBSD.
 		See options(4) for more information. [xtraeme 20070320]
 	kernel: Import of DRM (Direct Rendering Manager).  Not yet enabled
 		by default. [drochner 20070320]
-	libc: add support for LC_TIME [manu 20070328]
-	genfb: generic framebuffer console driver with PCI and SBus
-		frontends [macallan 20070411]
-	sgimips: add support for SGI O2 PS/2 controller macekbc(4) and
-		onboard display adapter crmfb(4) [jmcneill 20070412]
-	sgimips: import mavb(4) audio device driver for SGI O2 from
-		OpenBSD [jmcneill 20070412]
-	sparc64: add support for hardware monitoring on
-		Ultra Enterprise 450. See envctrl(4) [tnn 20070414]
-	puffs(4): Support NFS exporting puffs file servers [pooka 20070416]
+	libc: Add support for LC_TIME. [manu 20070328]
+	genfb: Generic framebuffer console driver with PCI and SBus
+		frontends. [macallan 20070411]
+	sgimips: Add support for SGI O2 PS/2 controller macekbc(4) and
+		onboard display adapter crmfb(4). [jmcneill 20070412]
+	sgimips: Import mavb(4) audio device driver for SGI O2 from
+		OpenBSD. [jmcneill 20070412]
+	sparc64: Add support for hardware monitoring on
+		Ultra Enterprise 450. See envctrl(4). [tnn 20070414]
+	puffs(4): Support NFS exporting puffs file servers. [pooka 20070416]
 	xargs(1): Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
 		GNU compatible exit values. [christos 20070418]
 	mount_9p(8): Add support to mount a 9P file service with puffs.
@@ -81,12 +81,12 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		to locate files within an emulation's root directory.
 		Instead get namei() to check the emulation root first.
 		[dsl 20070422]
-	prep: add support for the MTX604 RAVEN based machine.  Other RAVEN
+	prep: Add support for the MTX604 RAVEN based machine.  Other RAVEN
 		based machines are also likely to work now. [garbled 20070426]
 	kernel: Added support for POSIX Asynchronous I/O. [rmind 20070430]
 	puffs(3): Add puffs_framebuf(3), which abstracts the buffer
 		management and event loop for networked file systems
-		using puffs_cc(3).  Convert mount_psshfs(8) and
+		using puffs_cc(3). Convert mount_psshfs(8) and
 		mount_9p(8) to use it.  [pooka 20070505]
 	kernel: Add the TFTPROOT kernel option for TFTP'ing root RAMdisk
 		at root mount time. [manu 20070508]
@@ -102,31 +102,31 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[yamt 20070518]
 	ld.elf_so: Support Solaris $ORIGIN etc. expansions in paths.
 		[christos 20070518]
-	uslsa(4): added CP210x USB-RS232 ucom driver, as submitted by
-		Jonathan A. Kollasch in PR kern/33496 [dogcow 20070520]
+	uslsa(4): Added CP210x USB-RS232 ucom driver, as submitted by
+		Jonathan A. Kollasch in PR kern/33496. [dogcow 20070520]
 	top(1): Allow a single process to be selected by pid.
 		Add a 'thread mode' that displays LWPs.
 		[ad 20070524]
 	libcurses: Merge in wide curses work done by Ruibiao Qui as a
-		Google Summer of Code project [blymn 20070529]
-	powerpc: Add booted_kernel and booted_device sysctl [nisimura 20070601]
+		Google Summer of Code project. [blymn 20070529]
+	powerpc: Add booted_kernel and booted_device sysctl. [nisimura 20070601]
 	smsc(4): Added a driver for the hardware monitoring portion of
-		the SMSC LPC47B397 [blymn 20070601]
-	file(1): update to 4.21.  [pooka 20070607]
+		the SMSC LPC47B397. [blymn 20070601]
+	file(1): Update to 4.21.  [pooka 20070607]
 	zyd(4): Added OpenBSD's driver. Supports ZyDAS ZD1211/ZD1211B
 		USB IEEE 802.11b/g wireless network device. [kiyohara 20070609]
 	mac68k: Switch sn(4) Ethernet on mac68k to using MI SONIC driver.
 		[tsutsui 20070610]
 	tcp(4): Per socket keepalive timer settings. Ability to change
-		connection timeout [christos 20070620].
+		connection timeout. [christos 20070620].
 	newgrp(1): Add POSIX (IEEE Std 1003.1, 2004 / Open Group Base
 		Specifications Issue 6) User Portability Utility to change
 		effective group ID. [ginsbach 20060621]
 	GCC: Updated to version 4.1.3-20070620.  [mrg 20070621]
 	ntp: Updated to version 4.2.4p2. [kardel 20070624]
-	tcpdrop(8): Ported by anon ymous (from FreeBSD/OpenBSD)
+	tcpdrop(8): Ported by anon ymous (from FreeBSD/OpenBSD).
 		[christos 20070625]
-	fast_ipsec(4): Add support for IPsec NAT-T [degroote 20070627]
+	fast_ipsec(4): Add support for IPsec NAT-T. [degroote 20070627]
 	efs: Added read-only Silicon Graphics EFS file system. [rumble 20070629]
 	envsys(4), sysmon_envsys(9): Imported envsys2. New API with the
 		following features:
@@ -140,7 +140,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		And more, please see envsys(4) and sysmon_envsys(9) for more
 		information.
 		[xtraeme 20070701]
-	mount_puffsportal: add experimental version of portalfs
+	mount_puffsportal: Add experimental version of portalfs
 		based on puffs(3).  [pooka 20070708]
 	i386: Add gcscehci(4) driver for the EHCI controller found in the AMD
 		Geode CS5536 companion controllers. [jmcneill 20070708]
@@ -178,7 +178,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	libpthread: Another performance improvement, and a fix for an issue
 		that could cause threaded applications to hang under rare
 		circumstances. [ad 20070807]
-	mount_sysctlfs(8): sysctl(3) to file system translator [pooka 20070809]
+	mount_sysctlfs(8): sysctl(3) to file system translator. [pooka 20070809]
 	slhci(4): Replace to Matthew Orgass's slhci(4). [kiyohara 20070815]
 	spdmem(4): Add Serial Presence Detect driver/support. This decodes
 		technical specifications stored in the eeprom on common types
@@ -194,7 +194,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		acceleration. [macallan 20070830]
 	uchcom(4): Add support for WinChipHead CH341/340 USB-Serial adapter.
 		[tshiozak 20070903]
-	amd64, i386: cgd(4) is part of GENERIC [joerg 20070906]
+	amd64, i386: cgd(4) is part of GENERIC. [joerg 20070906]
 	libpthread: scalability and performance enhancements. The MySQL
 		sysbench benchmark in read-only mode now scales to 900
 		simultaneous client threads on a 4xCPU i386 system before
@@ -208,7 +208,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		a number of changes have been made for LKM and
 		preemption safety. [ad 20070927]
 	i386: i386 bootblocks are now able to boot amd64 kernels.
-		support for a.out kernels has been removed [ad 20070927]
+		support for a.out kernels has been removed. [ad 20070927]
 	kernel: Added support for kernel core dumps to RAID 1 sets.
 		[oster 20071004]
 	kernel: The new socket option SO_NOHEADER tells the network
@@ -225,11 +225,11 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: A new SCHED_M2 scheduler, improves the performance on
 		MP systems, supports real-time and time-sharing classes,
 		ready for the CPU affinity. [rmind 20071009]
-	shark: Removed pccons(4), obsoleted by wscons(4).  [jmmv 20071028]
+	shark: Removed pccons(4), obsoleted by wscons(4). [jmmv 20071028]
 	coretemp(4): Driver for Intel Core's on-die thermal sensor,
 		available on Core or newer CPUs. Ported from FreeBSD.
 		[xtraeme 20071029]
-	x86: Added support for Intel 82G965 chipset.  [jnemeth 20071030]
+	x86: Added support for Intel 82G965 chipset. [jnemeth 20071030]
 	nsclpcsio(4): Added support for the VLM logical device. This provides
 		14 voltage sensors in addition to the previous 3 temperature
 		sensors provided in the TMS logical device. From OpenBSD.
@@ -251,17 +251,17 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	sysinst: Add support to install the new tests.tgz set.
 		[jmmv 20071112]
 	tests: Converted the regress/bin tree to use ATF and migrated it
-		to tests/util.  [jmmv 20071112]
+		to tests/util. [jmmv 20071112]
 	tests: Converted the regress/sys/fs/tmpfs tree to use ATF and
-		migrated it to tests/fs/tmpfs.  [jmmv 20071112]
+		migrated it to tests/fs/tmpfs. [jmmv 20071112]
 	tests: Converted the regress/games tree to use ATF and migrated it
-		to tests/games.  [jmmv 20071112]
+		to tests/games. [jmmv 20071112]
 	ahcisata(4): Add support for ATAPI devices. [bouyer 20071112]
 	newfs_ext2fs(8): Add a native newfs_ext2fs(8) command.
 		Closes PR bin/16175. [tsutsui 20071117]
-	x86: Add support for /boot.cfg to configure the bootloader. This
-		includes optionally displaying menus, altering banner text
-		and changing options such as timeouts and console device
+	i386, amd64: Add support for /boot.cfg to configure the bootloader.
+		This includes optionally displaying menus, altering banner
+		text and changing options such as timeouts and console device
 		which previously required use of installboot.
 		[sborrill 20071120]
 	pud(4): Add a driver via which it is possible to implement
@@ -284,16 +284,16 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
-	openssh: import 4.7 [christos 20071217]
+	openssh: Import 4.7. [christos 20071217]
 	x86: Add support for ACPI S3 (suspend-to-RAM) on MP systems.
 		[joerg 20071218]
-	sparc64: add support for Sun PGX32 / TechSource Raptor GFX 8P to
+	sparc64: Add support for Sun PGX32 / TechSource Raptor GFX 8P to
 		genfb ( mostly workarounds for firmware bugs ), also build
-		XFree86's glint driver for accelerated X [macallan 20071219]
+		XFree86's glint driver for accelerated X. [macallan 20071219]
 	newsyslog: newsyslog.conf flag 'J' will bzip2 logfiles.
 		[dogcow 20071221]
 	thinkpad(4): Add driver for IBM/Lenovo Thinkpad hotkeys and
-		brightness controls [jmcneill 20071221]
+		brightness controls. [jmcneill 20071221]
 	kernel: Address Space Layout Randomization support in the kernel and
 		dynamic linker, see security(8). [elad, christos 20071226]
 	msdosfs: Significantly speed up write speed (up to 16x faster).
@@ -302,9 +302,9 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	usermode: Add port of the NetBSD kernel to userspace.
 		[jmcneill 20071229]
 	hp700: kernels are now compiled with -O2. [skrll 20071230]
-	compat_hpux: removed. [ad 20071231]
-	systrace(1): removed. [ad 20071231]
-	tprof: add tprof, a simple performance monitor based profiler,
+	compat_hpux: Removed. [ad 20071231]
+	systrace(1): Removed. [ad 20071231]
+	tprof: Add tprof, a simple performance monitor based profiler,
 		inspired from linux oprofile.  it's still very experimental.
 		[yamt 20080102]
 	bioctl(8): Rewritten to handle new features like creating/removing
@@ -315,16 +315,16 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		in volumes as well as showing information about physical
 		disks (even if they are marked as hot-spare, pass-through
 		or unused). [xtraeme 20080102]
-	ofppc: Support intallation and RAID bootable root.  [mrg 20080102]
+	ofppc: Support intallation and RAID bootable root. [mrg 20080102]
 	gem(4): Add support for Sun SX fibre cards.  [jdc 20080105]
 	kernel: All platforms have been converted to use generic TODR.
 		[joerg 20080108]
 	gcscpcib(4): Added driver for the AMD CS5535 and CS5536 Companion
 		Device with support for Timecounter, Watchdog Timer and
 		GPIO. Adapted from OpenBSD by Yojiro UO. [xtraeme 20080109]
-	i386: add sparse kernel core dumps (minidumps) for this platform,
-	      using a backwards-compatible on-disk core format.  Not
-	      turned on by default yet.  Similar to FreeBSD minidumps but
-	      simpler in implementation.  Implementation by Jed Davis and
+	i386: add sparse kernel core dumps (minidumps) for this platform
+	      using a backwards-compatible on-disk core format. Not
+	      turned on by default yet. Similar to FreeBSD minidumps but
+	      simpler in implementation. Implementation by Jed Davis and
 	      Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
 	      [tls 20080110]
