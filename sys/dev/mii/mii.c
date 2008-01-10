@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.43 2007/12/29 19:34:55 dyoung Exp $	*/
+/*	$NetBSD: mii.c,v 1.44 2008/01/10 07:29:41 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.43 2007/12/29 19:34:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.44 2008/01/10 07:29:41 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -212,7 +212,6 @@ mii_detach(struct mii_data *mii, int phyloc, int offloc)
 			    offloc != child->mii_offset)
 				continue;
 		}
-		LIST_REMOVE(child, mii_list);
 		(void) config_detach(&child->mii_dev, DETACH_FORCE);
 	}
 }
@@ -237,6 +236,12 @@ phy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	if (!device_is_active(&sc->mii_dev))
 		return ENXIO;
 	return PHY_SERVICE(sc, mii, cmd);
+}
+
+int
+mii_ifmedia_change(struct mii_data *mii)
+{
+	return ifmedia_change(&mii->mii_media, mii->mii_ifp);
 }
 
 /*
