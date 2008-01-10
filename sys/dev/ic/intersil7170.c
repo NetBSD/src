@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.10 2008/01/10 14:51:49 tsutsui Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.11 2008/01/10 16:04:58 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.10 2008/01/10 14:51:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.11 2008/01/10 16:04:58 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -71,6 +71,8 @@ intersil7170_attach(struct intersil7170_softc *sc)
 	handle->todr_gettime_ymdhms = intersil7170_gettime_ymdhms;
 	handle->todr_settime_ymdhms = intersil7170_settime_ymdhms;
 	handle->todr_setwen = NULL;
+
+	todr_attach(handle);
 }
 
 /*
