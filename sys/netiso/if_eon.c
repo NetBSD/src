@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.62.6.1 2008/01/02 21:57:37 bouyer Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.62.6.2 2008/01/10 23:44:40 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.62.6.1 2008/01/02 21:57:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.62.6.2 2008/01/10 23:44:40 bouyer Exp $");
 
 #include "opt_eon.h"
 
@@ -220,9 +220,8 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
 	(void)memcpy(&addr, loc, sizeof(addr));
 	sockaddr_in_init(&u.dst4, &addr, 0);
 	rtcache_setdst(ro, &u.dst);
-	rtcache_init(ro);
 
-	if ((rt = rtcache_getrt(ro)) != NULL)
+	if ((rt = rtcache_init(ro)) != NULL)
 		rt->rt_use++;
 	hdr->ei_ip.ip_dst = u.dst4.sin_addr;
 	hdr->ei_ip.ip_p = IPPROTO_EON;

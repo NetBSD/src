@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.87 2006/10/25 17:33:02 bouyer Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.87.38.1 2008/01/10 23:44:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -146,8 +146,9 @@ void	wdc_init_shadow_regs(struct ata_channel *);
 
 int	wdcprobe(struct ata_channel *);
 void	wdcattach(struct ata_channel *);
-int	wdcdetach(struct device *, int);
-int	wdcactivate(struct device *, enum devact);
+int	wdcdetach(device_t, int);
+void	wdc_childdetached(device_t, device_t);
+int	wdcactivate(device_t, enum devact);
 int	wdcintr(void *);
 
 void	wdc_sataprobe(struct ata_channel *);

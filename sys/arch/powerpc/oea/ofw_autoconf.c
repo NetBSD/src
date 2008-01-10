@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.4.8.1 2008/01/02 21:49:09 bouyer Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.4.8.2 2008/01/10 23:43:54 bouyer Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4.8.1 2008/01/02 21:49:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4.8.2 2008/01/10 23:43:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4.8.1 2008/01/02 21:49:09 bouyer 
 #include <machine/stdarg.h>
 
 #include <dev/ofw/openfirm.h>
+#include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>
@@ -234,12 +235,20 @@ device_register(dev, aux)
 		}
 
 		if (node != 0) {
+			int pci_class = 0;
+
 			prop_dictionary_set_uint32(dict, "device_node", node);
 
 			/* see if this is going to be console */
 			memset(name, 0, sizeof(name));
 			OF_getprop(node, "device_type", name, sizeof(name));
-			if (strcmp(name, "display") == 0) {
+
+			OF_getprop(node, "class-code", &pci_class,
+				sizeof pci_class);
+			pci_class = (pci_class >> 16) & 0xff;
+
+			if (strcmp(name, "display") == 0 ||
+					pci_class == PCI_CLASS_DISPLAY) {
 				/* setup display properties for fb driver */
 				prop_dictionary_set_bool(dict, "is_console", 0);
 				copy_disp_props(dev, node, dict);

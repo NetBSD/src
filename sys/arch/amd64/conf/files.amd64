@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.50.2.2 2008/01/08 22:09:18 bouyer Exp $
+#	$NetBSD: files.amd64,v 1.50.2.3 2008/01/10 23:43:08 bouyer Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -41,10 +41,10 @@ file	arch/amd64/amd64/kobj_machdep.c		modular
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
+file	arch/amd64/amd64/in_cksum.S		inet
 #
 # XXXfvdl write the optimized versions for these.
 #
-file	netinet/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet
 
 file	arch/amd64/amd64/machdep.c
