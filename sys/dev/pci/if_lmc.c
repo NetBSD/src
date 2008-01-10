@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.38 2008/01/04 21:18:01 ad Exp $ */
+/* $NetBSD: if_lmc.c,v 1.39 2008/01/10 08:50:52 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.38 2008/01/04 21:18:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.39 2008/01/10 08:50:52 dyoung Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -3833,7 +3833,7 @@ ifnet_ioctl(struct ifnet *ifp, u_long cmd, void *data)
       break;
 # endif /* FreeBSD || NetBSD */
 
-    case SIOCSIFMEDIA: /* calls ifmedia_change() */
+    case SIOCSIFMEDIA: /* calls lmc_ifmedia_change() */
     case SIOCGIFMEDIA: /* calls ifmedia_status() */
       error = ifmedia_ioctl(ifp, ifr, &sc->ifm, cmd);
       break;
@@ -4031,7 +4031,7 @@ ifmedia_setup(softc_t *sc)
   {
   /* Initialize ifmedia mechanism. */
   ifmedia_init(&sc->ifm, IFM_OMASK | IFM_GMASK | IFM_IMASK,
-   ifmedia_change, ifmedia_status);
+   lmc_ifmedia_change, ifmedia_status);
 
 # if defined(__OpenBSD__)
   if (sc->status.card_type == CSID_LMC_T3)
@@ -4062,7 +4062,7 @@ ifmedia_setup(softc_t *sc)
 
 /* SIOCSIFMEDIA: context: process. */
 static int
-ifmedia_change(struct ifnet *ifp)
+lmc_ifmedia_change(struct ifnet *ifp)
   {
   softc_t *sc = IFP2SC(ifp);
   struct config config = sc->config;
