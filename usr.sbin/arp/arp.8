@@ -1,4 +1,4 @@
-.\"	$NetBSD: arp.8,v 1.19 2006/01/31 17:47:04 christos Exp $
+.\"	$NetBSD: arp.8,v 1.20 2008/01/10 14:16:26 seanb Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,11 +45,15 @@
 .Nm
 .Op Fl v
 .Fl d
-.Op Fl a | Ar hostname
+.Fl a
+.Nm
+.Op Fl v
+.Fl d Ar hostname
+.Op Ar proxy
 .Nm
 .Fl s Ar hostname ether_addr
 .Op Ar temp
-.Op Ar pub
+.Op Ar pub Op Ar proxy
 .Nm
 .Fl f Ar filename
 .Sh DESCRIPTION
@@ -78,9 +82,9 @@ with the
 .Fl d
 flag. 
 If the
-.Cm pub
-keyword is specified, only the
-.Dq published
+.Cm proxy
+keyword is specified, only the published
+.Dq proxy only
 .Tn ARP
 entry
 for this host will be deleted.
@@ -127,7 +131,11 @@ act as an
 server,
 responding to requests for
 .Ar hostname
-even though the host address is not its own.
+even though the host address is not its own.  If the word
+.Ar proxy
+is also given, the published entry will be a
+.Dq proxy only
+entry.
 .It Fl v
 Display verbose information when adding or deleting
 .Tn ARP
