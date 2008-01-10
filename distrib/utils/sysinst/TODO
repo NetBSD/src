@@ -1,0 +1,129 @@
+#	$NetBSD: TODO,v 1.24.2.2 2008/01/10 13:40:40 simonb Exp $
+
+Things to do ....  in no specific order.
+
+	-- On error messages, do something to allow the user to
+	   see any errors from anything run by run_prog().
+	   Ideas suggested  maximum entropy <entropy@zippy.bernstein.com>.
+	   are:
+
+	   #1:
+		if (run_prog("foo") != 0)
+			sleep(5);
+
+	   #2:	   
+		endwin();
+		run_prog("foo");
+		printf("press return to continue");
+		getchar();
+		initscr();
+
+	   #3: (modification of #2):
+
+		endwin();
+		if (run_prog("foo") != 0) {
+			printf("press return to continue");
+			getchar();
+		}
+		initscr();
+
+	   #4:
+
+		Manually fork and exec everything, dup2 fd's 1 and 2
+		onto sockets in the child, and paginate the output in
+		your curses app :-)
+
+	   We currently implement a special-case variant of #1 for untarring
+	   release sets, since the GNU tar in 1.3 fails to report many
+	   errors in its exit status.
+
+        -- "browse" for a local directory to get the
+           distribution set from.  Maybe just allowing the user to shell
+           out and look around is good enough (this needs more thought).
+
+	-- check for already-mounted filesystems before install newfs.
+	   Abort with message.
+
+	-- check for already-mounted filesystems before upgrade fsck.
+	   (ignore?)
+
+	-- check for already-mounted filesystems before upgrade mount.
+	   Continue, if device mount is where we wanted it?
+
+	    (Jonathan ran into the above 3 by upgrading from a live
+	    system to a scratch disk.  sysinst copied the live /etc/fstab
+	    to the target. The upgrade failed because sysinst wanted
+	    to mount the active system's /usr. Could happen when a
+	    real upgrade aborts, even running from ramdisk root.)
+
+	-- Handle ccd's and raid's during an upgrade.
+
+        -- Use bootp or dhcp to get network info (hostname, domain name,
+           name servers, ...)
+
+	-- Things like having config_network()
+           possibly use the information on the fixed disk instead of having
+           to ask everything.
+
+        -- Build the disktab as a profile, not a true /etc/disktab so it
+           doesn't overwrite the real disktab.
+
+        -- Have both ftp and floppy gets get the file, extract the file,
+           and then remove the file before going on to the next set to
+           save disk space.
+
+        -- Set current time and date.
+
+	-- Configure NTP servers, set NTP in rc.conf
+
+	-- On i386 (and others) allow for storing localtime in the RTC.
+	   Need to patch kernel variable with offset from UTC.  Any
+	   other kernel variables we might want to patch as well???
+
+        -- A little more clean-up of the run_prog suite so things work
+           nicely for all ports.
+
+	-- fix "disklabel -r -w" vs. "disklabel -w": I still don't grok why
+           the  -r, and the manpage says it will lose totally on sparcs.
+           Phil, was there some reason to bypass the incore label on i386?
+           Can we just do "disklabel -w" everywhere?
+
+	-- Michael bumped the in-memory disklabel struct up to 16 entries.
+ 	   Also add a runtime check in case that grows in future 
+	   (e.g., slices).  Maybe bump to 32 entries just in case.
+
+	-- Fix sanity-check message code. It currently gets over-written
+	   immediately by the following message.
+
+	-- check for disklabel edits changing active root partition.
+	   reject.
+
+	-- remove any possibly-stale ld.so.cache files from the target
+           /etc after unpacking sets. Maybe just don't copy ld.so.cache
+           from /etc.old?
+
+	-- Full configuration of rc.conf?
+
+	-- If we're doing a fresh install and there's already a label
+	   on the disk, maybe use that instead of the compiled-in default
+	   label?
+
+	-- symlinks for /tmp (/tmp -> /var/tmp or some such)
+
+	-- Do non-standard installs from arbitrary tar files (?)
+
+	-- Install binary packages.  (possibly a second program
+	   run after installation.)
+
+	-- Provide the user a menu to select each installation step on
+	   its own. Currently there's no way to repeat steps or leave
+	   them out. (See the Debian installer for a good example.)
+
+	-- Allow the user to install binary snapshots available from releng.
+	   This could be done in the following way:
+		* list the available snapshots in ftp.NetBSD.org
+		  (eg.: ls /pub/NetBSD-daily/*/*/${ARCH} using ftp(1)).
+		* present the user with the possible selections (handle the
+		  case of zero options).
+		* set the variables and install via FTP showing first the
+		  FTP installation screen.
