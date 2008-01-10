@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.36 2008/01/04 15:55:34 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.37 2008/01/10 20:14:11 ad Exp $	*/
 /*	NetBSD: locore.S,v 1.31 2004/08/26 10:12:33 junyoung Exp	*/
 
 /*
@@ -665,8 +665,12 @@ switch_skipsave:
 	movl	PCB_EBP(%ebx),%ebp
 	movl	PCB_ESP(%ebx),%esp
 
-	/* Set curlwp. */
-	movl	%edi,CPUVAR(CURLWP)
+	/*
+	 * Set curlwp.  This must be globally visible in order to permit
+	 * non-interlocked mutex release.
+	 */
+	movl	%edi,%ecx
+	xchgl	%ecx,CPUVAR(CURLWP)
 
 	/*
 	 * Restore the rest of newlwp's context.
