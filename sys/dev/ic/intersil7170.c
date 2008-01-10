@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.9 2007/10/19 11:59:54 ad Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.10 2008/01/10 14:51:49 tsutsui Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.9 2007/10/19 11:59:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.10 2008/01/10 14:51:49 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -61,7 +61,7 @@ intersil7170_attach(struct intersil7170_softc *sc)
 {
 	todr_chip_handle_t handle;
 
-	printf(": intersil7170");
+	aprint_normal(": intersil7170");
 
 	handle = &sc->sc_handle;
 
