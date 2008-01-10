@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.26 2008/01/10 07:58:39 dyoung Exp $ */
+/* $NetBSD: pcppi.c,v 1.27 2008/01/10 08:55:31 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.26 2008/01/10 07:58:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.27 2008/01/10 08:55:31 dyoung Exp $");
 
 #include "attimer.h"
 
@@ -182,8 +182,7 @@ pcppi_detach(device_t self, int flags)
 	if ((rc = config_detach_children(&sc->sc_dv, flags)) != 0)
 		return rc;
 
-	if (!pmf_device_register(self, NULL, NULL))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	pmf_device_deregister(self);
 
 #if NPCKBD > 0
 	pckbd_unhook_bell(pcppi_pckbd_bell, sc);
