@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_inf.c,v 1.23 2008/01/11 14:08:29 vanhu Exp $	*/
+/*	$NetBSD: isakmp_inf.c,v 1.24 2008/01/11 14:27:34 vanhu Exp $	*/
 
 /* Id: isakmp_inf.c,v 1.44 2006/05/06 20:45:52 manubsd Exp */
 
@@ -1612,6 +1612,8 @@ isakmp_info_send_r_u(arg)
 	int error = 0;
 
 	plog(LLV_DEBUG, LOCATION, iph1->remote, "DPD monitoring....\n");
+
+	iph1->dpd_r_u=NULL;
 
 	if (iph1->dpd_fails >= iph1->rmconf->dpd_maxfails) {
 
