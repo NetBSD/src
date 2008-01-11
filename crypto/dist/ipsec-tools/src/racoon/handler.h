@@ -1,4 +1,4 @@
-/*	$NetBSD: handler.h,v 1.9 2006/09/09 16:22:09 manu Exp $	*/
+/*	$NetBSD: handler.h,v 1.9.6.1 2008/01/11 14:12:01 vanhu Exp $	*/
 
 /* Id: handler.h,v 1.19 2006/02/25 08:25:12 manubsd Exp */
 
@@ -426,7 +426,7 @@ struct policyindex;
 extern struct ph1handle *getph1byindex __P((isakmp_index *));
 extern struct ph1handle *getph1byindex0 __P((isakmp_index *));
 extern struct ph1handle *getph1byaddr __P((struct sockaddr *,
-	struct sockaddr *));
+										   struct sockaddr *, int));
 extern struct ph1handle *getph1byaddrwop __P((struct sockaddr *,
 	struct sockaddr *));
 extern struct ph1handle *getph1bydstaddrwop __P((struct sockaddr *));
