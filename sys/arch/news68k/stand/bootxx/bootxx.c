@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.8 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.9 2008/01/11 09:26:27 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Izumi Tsutsui.  All rights reserved.
@@ -32,6 +32,8 @@
 #include <machine/romcall.h>
 
 #include <sys/bootblock.h>
+
+void bootxx(uint32_t, uint32_t, uint32_t, uint32_t);
 
 struct shared_bbinfo bbinfo = {
 	{ NEWS68K_BBINFO_MAGIC },	/* bbi_magic[] */

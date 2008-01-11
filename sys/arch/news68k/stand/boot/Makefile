@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2006/06/29 00:30:33 lukem Exp $
+#	$NetBSD: Makefile,v 1.25 2008/01/11 09:26:26 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -18,7 +18,9 @@ BINMODE= 444
 S= ${.CURDIR}/../../../..
 
 LINKFLAGS= -x -N -Ttext 3e0000 -e start
-CFLAGS= -Os -Wall
+CFLAGS= -Os -Wall -Werror
+CFLAGS+= -Wmissing-prototypes -Wstrict-prototypes -Wpointer-arith
+#CFLAGS+= -Wno-format-zero-length -Wno-sign-compare
 
 CPPFLAGS+= -D_STANDALONE # -DBOOT_DEBUG
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
