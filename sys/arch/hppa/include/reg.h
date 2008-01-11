@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.5 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.5.64.1 2008/01/11 19:19:09 bouyer Exp $	*/
 
 /*	$OpenBSD: reg.h,v 1.7 2000/06/15 17:00:37 mickey Exp $	*/
 
@@ -185,8 +185,26 @@
 #ifndef __ASSEMBLER__
 
 struct reg {
-	u_int32_t r_regs[HPPA_NREGS];
-	/* p'bably some cr* ? */
+	u_int32_t r_regs[HPPA_NREGS];	/* r0 is psw */
+
+	u_int32_t r_sar;
+
+	u_int32_t r_pcsqh;
+	u_int32_t r_pcsqt;
+	u_int32_t r_pcoqh;
+	u_int32_t r_pcoqt;
+	
+	u_int32_t r_sr0;
+	u_int32_t r_sr1;
+	u_int32_t r_sr2;
+	u_int32_t r_sr3;
+	u_int32_t r_sr4;
+	u_int32_t r_sr5;	/* !mcontext */
+	u_int32_t r_sr6;	/* !mcontext */
+	u_int32_t r_sr7;	/* !mcontext */
+
+	u_int32_t r_cr26;
+	u_int32_t r_cr27;
 };
 
 struct fpreg {

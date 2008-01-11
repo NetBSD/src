@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.29 2007/10/17 19:54:32 garbled Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.29.8.1 2008/01/11 19:19:09 bouyer Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29 2007/10/17 19:54:32 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.29.8.1 2008/01/11 19:19:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *core)
 	int error;
 
 	if (iocookie == NULL) {
-		CORE_SETMAGIC(*core, COREMAGIC, MID_ZERO, 0);
+		CORE_SETMAGIC(*core, COREMAGIC, MID_MACHINE, 0);
 		core->c_hdrsize = ALIGN(sizeof(*core));
 		core->c_seghdrsize = ALIGN(sizeof(cseg));
 		core->c_cpusize = sizeof(md_core);
@@ -75,9 +75,16 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *core)
 		return 0;
 	}
 
-	process_read_regs(l, &md_core.md_reg);
+	error = process_read_regs(l, &md_core.md_reg);
+	if (error)
+		return error;
 
-	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ZERO, CORE_CPU);
+	/* Save floating point registers. */
+	error = process_read_fpregs(l, &md_core.md_fpreg);
+	if (error)
+		return error;
+
+	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_MACHINE, CORE_CPU);
 	cseg.c_addr = 0;
 	cseg.c_size = core->c_cpusize;
 
