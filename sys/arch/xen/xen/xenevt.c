@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.18 2008/01/08 19:26:10 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.19 2008/01/11 20:00:54 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -44,6 +44,7 @@
 #include <sys/conf.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 

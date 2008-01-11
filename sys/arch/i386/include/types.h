@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.54 2008/01/04 15:55:34 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.55 2008/01/11 20:00:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,6 +34,9 @@
 #ifndef	_MACHTYPES_H_
 #define	_MACHTYPES_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_xen.h"
+#endif
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
@@ -73,8 +76,8 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
 #define	__HAVE_TIMECOUNTER
-#define	__HAVE_GENERIC_TODR
 #define	__HAVE_ATOMIC64_OPS
+#define	__HAVE_GENERIC_TODR
 
 #if defined(_KERNEL)
 #define __HAVE_RAS
