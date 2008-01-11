@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.925 2008/01/11 12:01:20 ragge Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.926 2008/01/11 20:49:14 tnn Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.925 2008/01/11 11:31:25 ragge Exp
+ *	NetBSD: pcidevs,v 1.926 2008/01/11 20:47:21 tnn Exp
  */
 
 /*
@@ -3038,6 +3038,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_HP_M110_G2,
 	    "HP M110 G2 / ASR-2610SA",
+	},
+	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_SERVERAID,
+	    "ServeRAID 6/7 (marco)",
 	},
 	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
@@ -6869,7 +6873,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
-	    "ServeRAID",
+	    "ServeRAID (copperhead)",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P,
@@ -6961,7 +6965,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID4,
-	    "ServeRAID 4/5",
+	    "ServeRAID 4/5 (morpheus)",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_440GP,
@@ -13972,4 +13976,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2894;
+const int pci_nproducts = 2895;
