@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.6 2008/01/04 15:55:35 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7 2008/01/11 20:00:50 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.6 2008/01/04 15:55:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7 2008/01/11 20:00:50 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -157,10 +157,8 @@ CFATTACH_DECL(vcpu, sizeof(struct cpu_softc),
 struct tlog tlog_primary;
 #endif
 struct cpu_info cpu_info_primary = {
+	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
-#ifndef __x86_64__
-	.ci_self150 = (uint8_t *)&cpu_info_primary + 0x150,
-#endif
 	.ci_idepth = -1,
 	.ci_curlwp = &lwp0,
 #ifdef TRAPLOG
@@ -169,10 +167,8 @@ struct cpu_info cpu_info_primary = {
 
 };
 struct cpu_info phycpu_info_primary = {
+	.ci_dev = 0,
 	.ci_self = &phycpu_info_primary,
-#ifndef __x86_64__
-	.ci_self150 = (uint8_t *)&phycpu_info_primary + 0x150,
-#endif
 };
 
 struct cpu_info *cpu_info_list = &cpu_info_primary;
@@ -403,10 +399,6 @@ cpu_attach_common(parent, self, aux)
 #endif
 	ci->ci_cpumask = (1 << ci->ci_cpuid);
 	ci->ci_func = caa->cpu_func;
-
-#ifndef __x86_64__
-	simple_lock_init(&ci->ci_slock);
-#endif
 
 	if (caa->cpu_role == CPU_ROLE_AP) {
 #if defined(MULTIPROCESSOR)

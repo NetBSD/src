@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.2 2007/11/22 16:17:06 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.3 2008/01/11 20:00:53 bouyer Exp $	*/
 
 /*
  *
@@ -51,7 +51,6 @@
 #endif
 
 void xen_set_ldt(vaddr_t, uint32_t);
-void xen_update_descriptor(union descriptor *, union descriptor *);
 
 void 
 invlpg(vaddr_t addr)

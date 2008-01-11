@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.2 2007/11/22 16:16:56 bouyer Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.2 2008/01/11 20:00:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,6 +61,16 @@
 /*
  * Assembler stubs for hyper-calls.
  */
+
+#ifndef XEN3
+#ifndef PAGE_SHIFT
+#define PAGE_SHIFT 12 /* XXX from i386/vmparam.h */
+#else
+#if PAGE_SHIFT != 12
+#error "PAGE_SHIFT is wrong"
+#endif
+#endif
+#endif /* !XEN3 */
 
 #if defined(XEN3) && !defined(XEN_COMPAT_030001)
 /* hypercall via the hypercall call page */
@@ -564,11 +574,12 @@ HYPERVISOR_dom_mem_op(unsigned int op, unsigned long *extent_list,
 }
 
 static __inline int
-HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
+HYPERVISOR_update_va_mapping(unsigned long va, unsigned long new_val,
     unsigned long flags)
 {
     int ret;
     unsigned long ign1, ign2, ign3;
+    unsigned long page_nr = va >> PAGE_SHIFT;
 
     __asm volatile (
         TRAP_INSTR
@@ -617,11 +628,12 @@ HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
 }
 
 static __inline int
-HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
+HYPERVISOR_update_va_mapping_otherdomain(unsigned long va,
     unsigned long new_val, unsigned long flags, domid_t domid)
 {
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
+    unsigned long page_nr = va >> PAGE_SHIFT;
 
     __asm volatile (
         TRAP_INSTR
