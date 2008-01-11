@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.61 2008/01/10 08:03:22 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.62 2008/01/11 01:38:45 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -408,9 +408,9 @@ rtcache_getrt(const struct route *ro)
 	return ro->_ro_rt;
 }
 
-/* If the cache is not not empty, and the cached route is still
- * present in the routing table, return the cached route.  Otherwise,
- * return NULL.
+/* If the cache is not empty, and the cached route is still present
+ * in the routing table, return the cached route.  Otherwise, return
+ * NULL.
  */
 static inline struct rtentry *
 rtcache_validate(const struct route *ro)
