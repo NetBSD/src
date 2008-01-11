@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.926 2008/01/11 12:01:20 ragge Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.927 2008/01/11 20:49:14 tnn Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.925 2008/01/11 11:31:25 ragge Exp
+ *	NetBSD: pcidevs,v 1.926 2008/01/11 20:47:21 tnn Exp
  */
 
 /*
@@ -834,6 +834,7 @@
 /* XXX guess */
 #define	PCI_PRODUCT_ADP2_PERC_3QC	0x1365		/* Dell PERC 3/QC */
 #define	PCI_PRODUCT_ADP2_HP_M110_G2	0x3227		/* HP M110 G2 / ASR-2610SA */
+#define	PCI_PRODUCT_ADP2_SERVERAID	0x0250		/* ServeRAID 6/7 (marco) */
 
 /* Addtron Products */
 #define	PCI_PRODUCT_ADDTRON_8139	0x1360		/* 8139 Ethernet */
@@ -1990,7 +1991,7 @@
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI Bridge */
 #define	PCI_PRODUCT_IBM_MONNAV	0x002c		/* Montana/Nevada PCI Bridge and Memory Controller */
 #define	PCI_PRODUCT_IBM_PYTHON	0x002d		/* Python PCI-PCI Bridge */
-#define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID */
+#define	PCI_PRODUCT_IBM_SERVERAID	0x002e		/* ServeRAID (copperhead) */
 #define	PCI_PRODUCT_IBM_GXT250P	0x003c		/* GXT-250P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* 16/4 Token Ring */
 #define	PCI_PRODUCT_IBM_MIAMI	0x0036		/* Miami/PCI */
@@ -2013,7 +2014,7 @@
 #define	PCI_PRODUCT_IBM_GXT6000P	0x0170		/* GXT-6000P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_GXT300P	0x017d		/* GXT-300P Graphics Adapter */
 #define	PCI_PRODUCT_IBM_133PCIX	0x01a7		/* 133 PCI-X Bridge */
-#define	PCI_PRODUCT_IBM_SERVERAID4	0x01bd		/* ServeRAID 4/5 */
+#define	PCI_PRODUCT_IBM_SERVERAID4	0x01bd		/* ServeRAID 4/5 (morpheus) */
 #define	PCI_PRODUCT_IBM_440GP	0x01ef		/* PPC 440GP PCI Bridge */
 #define	PCI_PRODUCT_IBM_IBMETHER	0x01ff		/* 10/100 Ethernet */
 #define	PCI_PRODUCT_IBM_GXT6500P	0x021b		/* GXT-6500P Graphics Adapter */
