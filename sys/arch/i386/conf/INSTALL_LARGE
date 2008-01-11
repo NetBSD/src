@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_LARGE,v 1.1.2.6 2007/08/31 20:09:27 pavel Exp $
+#	$NetBSD: INSTALL_LARGE,v 1.1.2.7 2008/01/11 17:03:18 xtraeme Exp $
 #
 #	INSTALL_LARGE -- INSTALL suitable for modern machines
 #
@@ -20,6 +20,7 @@ vge*	at pci? dev ? function ?	# VIATech VT612X Gigabit Ethernet
 jmide* 	at pci? dev ? function ? 	# JMicron PCI-e PATA/SATA controllers
 ahcisata* at jmide?
 gcscide*	at pci? dev ? function ? 	# AMD CS5535 Companion IDE controllers
+arcmsr* 	at pci? dev ? function ? 	# Areca SATA RAID controllers
 
 # CardBus bridge support
 cbb* 		at pci? dev ? function ?
