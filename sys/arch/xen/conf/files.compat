@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.15 2007/11/22 16:16:47 bouyer Exp $
+#	$NetBSD: files.compat,v 1.16 2008/01/11 20:00:18 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -14,6 +14,7 @@ defflag opt_xen.h		XEN XEN3
 # XXX define fake options to make config create the .h files
 defflag	lapic.h			XXXLAPIC
 defflag	apm.h			XXXAPM
+defflag	apmbios.h		XXXAPMBIOS
 defflag	eisa.h			XXXEISA
 defflag	isadma.h		XXXISADMA
 defflag	mca.h			XXXMCA
@@ -68,3 +69,9 @@ defflag	opt_enhanced_speedstep.h XXXENHANCED_SPEEDSTEP
 defflag opt_est.h		XXXEST_FREQ_USERWRITE
 
 defflag opt_powernow_k7.h XXXPOWERNOW_K7
+
+# Multiboot support
+defflag 	opt_multiboot.h		XXXMULTIBOOT
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	XXXPHYSMEM_MAX_ADDR XXXPHYSMEM_MAX_SIZE

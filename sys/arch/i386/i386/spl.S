@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.25 2008/01/10 20:14:11 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.26 2008/01/11 20:00:14 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -37,10 +37,11 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.25 2008/01/10 20:14:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.26 2008/01/11 20:00:14 bouyer Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ddb.h"
+#include "opt_xen.h"
 
 #include <machine/trap.h>
 #include <machine/segments.h>
@@ -50,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.25 2008/01/10 20:14:11 ad Exp $");
 
 	.text
 
+#ifndef XEN
 /*
  * int splraise(int s);
  */
@@ -124,6 +126,8 @@ LABEL(cx8_spllower_patch)
 	.align	32
 LABEL(cx8_spllower_end)
 
+#endif /* XEN */
+
 /*
  * void Xspllower(int s);
  * 
@@ -159,13 +163,29 @@ IDTVEC(spllower)
 	movl	16(%esp),%ebx
 #endif /* defined(DDB) || defined(GPROF) */
 	movl	$.Lspllower_resume,%esi		# address to resume loop at
-	cli
+1:
+# because of the way Xen interrupts works *%esi will in fact be called
+# from Xdoreti via iret. So we have to always disable interrupts here
+# for Xen
+#ifndef XEN
+	CLI(%eax)
+#endif
 .Lspllower_resume:
+#ifdef XEN
+	CLI(%eax)
+#endif
 #if defined(DEBUG)
+#ifndef XEN
 	pushf
 	popl	%eax
 	testl	$PSL_I,%eax
 	jnz	.Lspllower_panic
+#else
+	movl    _C_LABEL(HYPERVISOR_shared_info),%eax
+	movb	EVTCHN_UPCALL_MASK(%eax), %al
+	andb	%al, %al
+	jz	.Lspllower_panic
+#endif /* XEN */
 #endif /* defined(DEBUG) */
 	movl	%ebx,%eax		# get cpl
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
@@ -177,7 +197,16 @@ IDTVEC(spllower)
 	jmp	*IS_RECURSE(%eax)
 2:
 	movl	%ebx,CPUVAR(ILEVEL)
-	sti
+#ifdef XEN
+	STIC(%eax)
+	jz 4f
+	call	_C_LABEL(stipending)
+	testl	%eax,%eax
+	jnz	1b
+4:
+#else
+	STI(%eax)
+#endif /* XEN */
 	popl	%edi
 	popl	%esi
 	popl	%ebx
@@ -187,6 +216,7 @@ IDTVEC(spllower)
 	ret
 #if defined(DEBUG)
 .Lspllower_panic:
+	addl $8, %esp
 	pushl	$1f
 	call	_C_LABEL(panic)
 1:	.asciz	"SPLLOWER: INTERRUPT ENABLED"
@@ -203,15 +233,25 @@ IDTVEC(spllower)
  * called with interrupt disabled.
  */
 IDTVEC(doreti)
+#ifndef XEN
 	IDEPTH_DECR
 	popl	%ebx			# get previous priority
+#endif
+.Ldoreti_resume_stic:
 	movl	$.Ldoreti_resume,%esi	# address to resume loop at
 .Ldoreti_resume:
 #if defined(DEBUG)
+#ifndef XEN
 	pushf
 	popl	%eax
 	testl	$PSL_I,%eax
 	jnz	.Ldoreti_panic
+#else
+	movl    _C_LABEL(HYPERVISOR_shared_info),%eax
+	movb	EVTCHN_UPCALL_MASK(%eax), %al
+	andb	%al, %al
+	jz	.Ldoreti_panic
+#endif /* XEN */
 #endif /* defined(DEBUG) */
 	movl	%ebx,%eax
 	movl	CPUVAR(IUNMASK)(,%eax,4),%eax
@@ -224,36 +264,47 @@ IDTVEC(doreti)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
-	testb   $SEL_RPL,TF_CS(%esp)
-	jnz	.Ldoreti_checkast
+	testb   $CHK_UPL,TF_CS(%esp)
+	jnz	doreti_checkast
 #ifdef VM86
 	testl	$PSL_VM,TF_EFLAGS(%esp)
 	jz	6f
 #else
 	jmp	6f
 #endif
-.Ldoreti_checkast:
+	.globl doreti_checkast
+doreti_checkast:
 	CHECK_ASTPENDING(%eax)
 	jz	3f
 	CLEAR_ASTPENDING(%eax)
-	sti
+	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)	/* XXX undo later.. */
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-	cli
+	CLI(%eax)
 	jmp	5b
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
 6:
+#ifdef XEN
+	STIC(%eax)
+	jz	4f
+	call	_C_LABEL(stipending)
+	testl   %eax,%eax
+	jz 4f
+	CLI(%eax)
+	jmp	.Ldoreti_resume_stic
+4:
+#endif /* XEN */
 	INTRFASTEXIT
 9:
-	sti
+	STI(%eax)
 	call	_C_LABEL(pmap_load)
-	cli
-	jmp	.Ldoreti_checkast	/* recheck ASTs */
+	CLI(%eax)
+	jmp	doreti_checkast	/* recheck ASTs */
 #if defined(DEBUG)
 .Ldoreti_panic:
 	pushl	$1f
@@ -261,6 +312,25 @@ IDTVEC(doreti)
 1:	.asciz	"DORETI: INTERRUPT ENABLED"
 #endif /* defined(DEBUG) */
 
+#ifdef XEN
+/*
+ * void evtchn_do_event(int evtch, struct intrframe *regs)
+ */
+
+NENTRY(call_evtchn_do_event)
+	IDEPTH_INCR
+	/*
+	 * IDEPTH_INCR leaves old %esp in %eax.
+	 */
+	pushl	8(%eax)	/* regs */
+	pushl	4(%eax)	/* evtch */
+	call	_C_LABEL(evtchn_do_event)
+	addl	$8, %esp
+	IDEPTH_DECR
+	ret
+#endif /* XEN */
+
+#ifndef XEN
 /*
  * softintr()
  *
@@ -323,3 +393,4 @@ NENTRY(softint_trigger)
 	movl	4(%esp),%eax
 	orl	%eax,CPUVAR(IPENDING)	/* atomic on local cpu */
 	ret
+#endif /* !XEN */

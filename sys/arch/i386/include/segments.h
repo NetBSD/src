@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.47 2008/01/04 15:55:33 yamt Exp $	*/
+/*	$NetBSD: segments.h,v 1.48 2008/01/11 20:00:16 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,18 +80,32 @@
 
 #ifndef _I386_SEGMENTS_H_
 #define _I386_SEGMENTS_H_
+#ifdef _KERNEL_OPT
+#include "opt_xen.h"
+#endif
 
 /*
  * Selectors
  */
 
 #define	ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
+#ifndef XEN
 #define	SEL_KPL		0		/* kernel privilege level */
+#else
+#define	SEL_XEN		0		/* Xen privilege level */
+#define	SEL_KPL		1		/* kernel privilege level */
+#endif /* XEN */
 #define	SEL_UPL		3		/* user privilege level */
 #define	SEL_RPL		3		/* requester's privilege level mask */
+#ifdef XEN
+#define	CHK_UPL		2		/* user privilege level mask */
+#else
+#define CHK_UPL		SEL_RPL
+#endif /* XEN */
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define	SEL_LDT		4		/* local descriptor table */
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
+#define	IDXSELN(s)	(((s) >> 3))			/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
 #define	GSYSSEL(s,r)	GSEL(s,r)	/* compat with amd64 */
@@ -144,12 +158,20 @@ struct gate_descriptor {
 	unsigned gd_hioffset:16;	/* gate offset (msb) */
 } __packed;
 
+struct ldt_descriptor {
+	vaddr_t ld_base;
+	uint32_t ld_entries;
+} __packed;
+
 /*
  * Generic descriptor
  */
 union descriptor {
 	struct segment_descriptor sd;
 	struct gate_descriptor gd;
+	struct ldt_descriptor ld;
+	uint32_t raw[2];
+	uint64_t raw64;
 } __packed;
 
 /*

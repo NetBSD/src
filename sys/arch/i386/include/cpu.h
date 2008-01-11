@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.157 2008/01/05 21:45:00 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.158 2008/01/11 20:00:15 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,6 +43,7 @@
 #include "opt_math_emulate.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
+#include "opt_xen.h"
 #endif
 
 /*
@@ -107,7 +108,11 @@ struct cpu_info {
 #define	TLBSTATE_LAZY	1	/* tlbs are valid but won't be kept uptodate */
 #define	TLBSTATE_STALE	2	/* we might have stale user tlbs */
 
+#ifdef XEN
+	struct iplsource  *ci_isources[NIPL];
+#else
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
+#endif
 	volatile int	ci_mtx_count;	/* Negative count of spin mutexes */
 	volatile int	ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
 
@@ -191,6 +196,9 @@ struct cpu_info {
 	uint32_t	ci_suspend_cr2;
 	uint32_t	ci_suspend_cr3;
 	uint32_t	ci_suspend_cr4;
+#ifdef XEN
+	int		ci_fpused;	/* FPU was used by curlwp */
+#endif
 };
 
 /*
@@ -276,9 +284,14 @@ void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);
 
 extern uint32_t cpus_attached;
-
+#ifndef XEN
 #define	curcpu()		x86_curcpu()
 #define	curlwp			x86_curlwp()
+#else
+/* XXX initgdt() calls pmap_kenter_pa() which calls splvm() before %fs is set */
+#define curcpu()		(&cpu_info_primary)
+#define curlwp			curcpu()->ci_curlwp
+#endif
 #define	curpcb			(&curlwp->l_addr->u_pcb)
 
 /*
@@ -387,18 +400,27 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 /* locore.s */
 struct region_descriptor;
 void	lgdt(struct region_descriptor *);
+#ifdef XEN
+void	lgdt_finish(void);
+void	i386_switch_context(lwp_t *);
+#endif
 void	fillw(short, void *, size_t);
 
 struct pcb;
 void	savectx(struct pcb *);
 void	lwp_trampoline(void);
-
+#ifdef XEN
+void	startrtclock(void);
+void	xen_delay(unsigned int);
+void	xen_initclocks(void);
+#else
 /* clock.c */
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(unsigned int);
 void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
+#endif
 
 /* cpu.c */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.9 2008/01/08 22:24:09 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.10 2008/01/11 20:00:17 bouyer Exp $	*/
 
 /*
  *
@@ -159,8 +159,6 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-#define	PMF_USER_XPIN	0x02	/* pmap pdirpa is pinned (Xen) */
-
 
 /*
  * for each managed physical page we maintain a list of <PMAP,VA>'s
@@ -353,7 +351,12 @@ void	sse2_copy_page(void *, void *);
 #ifdef XEN
 
 #define XPTE_MASK	L1_FRAME
+/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
+#ifdef __x86_64__
 #define XPTE_SHIFT	9
+#else
+#define XPTE_SHIFT	10
+#endif
 
 /* PTE access inline fuctions */
 
