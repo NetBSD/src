@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.150 2007/12/14 00:23:49 tls Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.151 2008/01/11 13:04:39 ragge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.150 2007/12/14 00:23:49 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.151 2008/01/11 13:04:39 ragge Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -761,6 +761,10 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
 	  "Intel i82572EI 1000baseT Ethernet",
 	  WM_T_82572,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
+	  "Intel® PRO/1000 PT Quad Port Server Adapter",
+	  WM_T_82571,		WMP_F_1000T, },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
