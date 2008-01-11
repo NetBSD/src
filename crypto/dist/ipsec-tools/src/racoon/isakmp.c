@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.20.6.7 2007/08/01 11:52:20 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.20.6.8 2008/01/11 14:12:13 vanhu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2219,10 +2219,10 @@ isakmp_post_acquire(iph2)
 			set_port(iph2->dst, extract_port(iph1->remote));
 		}
 	} else {
-		iph1 = getph1byaddr(iph2->src, iph2->dst);
+		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 	}
 #else
-	iph1 = getph1byaddr(iph2->src, iph2->dst);
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 #endif
 
 	/* no ISAKMP-SA found. */
@@ -2354,12 +2354,12 @@ isakmp_chkph1there(iph2)
 		}
 	} else {
 		plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: searching byaddr.\n");
-		iph1 = getph1byaddr(iph2->src, iph2->dst);
+		iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 		if(iph1 != NULL)
 			plog(LLV_DEBUG2, LOCATION, NULL, "CHKPH1THERE: found byaddr.\n");
 	}
 #else
-	iph1 = getph1byaddr(iph2->src, iph2->dst);
+	iph1 = getph1byaddr(iph2->src, iph2->dst, 0);
 #endif
 
 	/* XXX Even if ph1 as responder is there, should we not start
@@ -3286,7 +3286,7 @@ purge_remote(iph1)
 	iph1->status = PHASE1ST_EXPIRED;
 
 	/* Check if we have another, still valid, phase1 SA. */
-	new_iph1 = getph1byaddr(iph1->local, iph1->remote);
+	new_iph1 = getph1byaddr(iph1->local, iph1->remote, 1);
 
 	/*
 	 * Delete all orphaned or binded to the deleting ph1handle phase2 SAs.
