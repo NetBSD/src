@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49.8.1 2008/01/08 22:09:50 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.49.8.2 2008/01/11 19:19:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,13 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.8.1 2008/01/08 22:09:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.8.2 2008/01/11 19:19:08 bouyer Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
+#include "opt_ptrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +112,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.8.1 2008/01/08 22:09:50 bouyer Exp $")
 
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
+
+#ifdef PTRACE
+void ss_clear_breakpoints(struct lwp *l);
+int ss_put_value(struct lwp *, vaddr_t, u_int);
+int ss_get_value(struct lwp *, vaddr_t, u_int *);
+#endif
+
+/* single-step breakpoint */
+#define SSBREAKPOINT   (HPPA_BREAK_KERNEL | (HPPA_BREAK_SS << 13))
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 /*
@@ -497,7 +507,8 @@ trap(int type, struct trapframe *frame)
 
 	type_raw = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (type_raw == T_ITLBMISS || type_raw == T_ITLBMISSNA) {
+	if (type_raw == T_ITLBMISS || type_raw == T_ITLBMISSNA ||
+	    type_raw == T_IBREAK || type_raw == T_TAKENBR) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
@@ -683,8 +694,35 @@ do_onfault:
 
 	case T_IBREAK | T_USER:
 	case T_DBREAK | T_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_trap = type_raw;
+		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+#ifdef PTRACE
+		ss_clear_breakpoints(l);
+		if (opcode == SSBREAKPOINT)
+			ksi.ksi_code = TRAP_BRKPT;
+#endif
 		/* pass to user debugger */
+		trapsignal(l, &ksi);
+ 
 		break;
+
+#ifdef PTRACE
+	case T_TAKENBR | T_USER:
+		ss_clear_breakpoints(l);
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_trap = type_raw;
+		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+
+                /* pass to user debugger */
+		trapsignal(l, &ksi);
+		break;
+#endif
 
 	case T_EXCEPTION | T_USER: {	/* co-proc assist trap */
 		uint64_t *fpp;
@@ -927,6 +965,104 @@ child_return(void *arg)
 	frame_sanity_check(0xdead04, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
 }
+
+#ifdef PTRACE
+
+#include <sys/ptrace.h>
+
+int
+ss_get_value(struct lwp *l, vaddr_t addr, u_int *value)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = (void *)value;
+	iov.iov_len = sizeof(u_int);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)addr;
+	uio.uio_resid = sizeof(u_int);
+	uio.uio_rw = UIO_READ;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	return (process_domem(curlwp, l, &uio));
+}
+
+int
+ss_put_value(struct lwp *l, vaddr_t addr, u_int value)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = (void *)&value;
+	iov.iov_len = sizeof(u_int);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)addr;
+	uio.uio_resid = sizeof(u_int);
+	uio.uio_rw = UIO_WRITE;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	return (process_domem(curlwp, l, &uio));
+}
+
+void
+ss_clear_breakpoints(struct lwp *l)
+{
+	/* Restore origional instructions. */
+	if (l->l_md.md_bpva != 0) {
+		ss_put_value(l, l->l_md.md_bpva, l->l_md.md_bpsave[0]);
+		ss_put_value(l, l->l_md.md_bpva + 4, l->l_md.md_bpsave[1]);
+		l->l_md.md_bpva = 0;
+	}
+}
+
+
+int
+process_sstep(struct lwp *l, int sstep)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	int error;
+
+	ss_clear_breakpoints(l);
+
+	/* We're continuing... */
+	/* Don't touch the syscall gateway page. */
+	/* XXX head */
+	if (sstep == 0 ||
+	    (tf->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE) {
+		tf->tf_ipsw &= ~PSW_T;
+		return 0;
+	}
+
+	l->l_md.md_bpva = tf->tf_iioq_tail & ~HPPA_PC_PRIV_MASK;
+
+	/*
+	 * Insert two breakpoint instructions; the first one might be
+	 * nullified.  Of course we need to save two instruction
+	 * first.
+	 */
+
+	error = ss_get_value(l, l->l_md.md_bpva, &l->l_md.md_bpsave[0]);
+	if (error)
+		return (error);
+	error = ss_get_value(l, l->l_md.md_bpva + 4, &l->l_md.md_bpsave[1]);
+	if (error)
+		return (error);
+
+	error = ss_put_value(l, l->l_md.md_bpva, SSBREAKPOINT);
+	if (error)
+		return error;
+	error = ss_put_value(l, l->l_md.md_bpva + 4, SSBREAKPOINT);
+	if (error)
+		return error;
+
+	tf->tf_ipsw |= PSW_T;
+
+	return 0;
+}
+#endif
+
 
 /*
  * call actual syscall routine
