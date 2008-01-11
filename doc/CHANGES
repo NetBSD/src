@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.993 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.994 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -329,3 +329,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		simpler in implementation. Implementation by Jed Davis and
 		Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
 		[tls 20080110]
+	hppa: Added gdb support. [skrll 20080110]
