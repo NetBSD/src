@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.995 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.996 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -229,7 +229,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	coretemp(4): Driver for Intel Core's on-die thermal sensor,
 		available on Core or newer CPUs. Ported from FreeBSD.
 		[xtraeme 20071029]
-	x86: Added support for Intel 82G965 chipset. [jnemeth 20071030]
+	i386, amd64: Added support for Intel 82G965 chipset. [jnemeth 20071030]
 	nsclpcsio(4): Added support for the VLM logical device. This provides
 		14 voltage sensors in addition to the previous 3 temperature
 		sensors provided in the TMS logical device. From OpenBSD.
@@ -323,7 +323,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	gcscpcib(4): Added driver for the AMD CS5535 and CS5536 Companion
 		Device with support for Timecounter, Watchdog Timer and
 		GPIO. Adapted from OpenBSD by Yojiro UO. [xtraeme 20080109]
-	pc532: Port deleted [simonb 20080109]
+	pc532: Port deleted. [simonb 20080109]
 	i386: Add sparse kernel core dumps (minidumps) for this platform
 		using a backwards-compatible on-disk core format. Not
 		turned on by default yet. Similar to FreeBSD minidumps but
