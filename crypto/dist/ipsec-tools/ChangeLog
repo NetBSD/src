@@ -7,12 +7,17 @@
 	  reported new getph1byaddr() arg) 
 	* src/racoon/crypto_openssl.c: fixed compilation with idea and
 	  recent gcc
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/isakmp_inf.c: reset iph1->dpd_r_u in the scheduler's
+	  callback, to avoid some access to freed memory
 
 2007-12-30  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/racoonctl.8
 	  src/racoon/racoonctl.c: add GRE protocol number to racoonctl
 	* src/racoon/policy.c: correct id wildcard matching for transport mode
+	* src/racoon/isakmp_inf.c: reset iph1->dpd_r_u in the scheduler's
+	  callback, to avoid some access to freed memory
 
 2007-12-11  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
