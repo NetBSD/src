@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.12.6 2008/01/11 16:40:51 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.7 2008/01/11 17:06:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.6 2008/01/11 16:40:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.7 2008/01/11 17:06:41 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -547,7 +547,7 @@ xen_pmap_bootstrap()
 #endif /* __x86_64__ */
 	
 	/* now compute how many L2 pages we need exactly */
-	XENPRINTK("bootstrap_final mapsize 0x%lx count %d\n", mapsize, count);
+	XENPRINTK(("bootstrap_final mapsize 0x%lx count %d\n", mapsize, count));
 	while (mapsize + (count + l2_4_count) * PAGE_SIZE + KERNTEXTOFF >
 	    ((long)count << L2_SHIFT) + KERNBASE) {
 		count++;
@@ -563,7 +563,7 @@ xen_pmap_bootstrap()
 	oldcount = count;
 
 bootstrap_again:
-	XENPRINTK("bootstrap_again oldcount %d\n", oldcount);
+	XENPRINTK(("bootstrap_again oldcount %d\n", oldcount));
 	/* 
 	 * Xen space we'll reclaim may not be enough for our new page tables,
 	 * move bootstrap tables if necessary
@@ -819,8 +819,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	    pde[pl2_pi(page)], addr, pte));
 	while (page < old_pgd + (old_count * PAGE_SIZE) && page < map_end) {
 		addr = xpmap_ptom(((paddr_t) pte) - KERNBASE);
-		XENPRINTK("addr 0x%lx pte 0x%lx *pte 0x%lx\n",
-		   addr, pte, *pte);
+		XENPRINTK(("addr 0x%lx pte 0x%lx *pte 0x%lx\n",
+		   addr, pte, *pte));
 		xpq_queue_pte_update((pt_entry_t *) addr, *pte | PG_RW);
 		page += PAGE_SIZE;
 		/* 
