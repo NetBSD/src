@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.3 2007/12/19 20:08:46 ghen Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.4 2008/01/11 17:06:42 xtraeme Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -36,3 +36,19 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.231 via patch
 	   4) a used_spare of the slave
 	[oster, ticket #1014]
 
+sys/dev/pci/arcmsr.c				patch
+sys/dev/pci/arcmsrvar.h				patch
+sys/dev/pci/pcidevs				patch
+sys/dev/pci/files.pci				patch
+sys/arch/i386/conf/GENERIC			patch
+sys/arch/i386/conf/XEN2_DOM0			patch
+sys/arch/i386/conf/INSTALL_LARGE		patch
+sys/arch/amd64/conf/GENERIC			patch
+sys/arch/amd64/conf/INSTALL			patch
+share/man/man4/Makefile				patch
+share/man/man4/arcmsr.4				patch
+distrib/sets/lists/man/mi			patch
+
+	Add the Areca Technology Corporation SATA RAID controller driver,
+	ported from OpenBSD.
+	[christos, ticket #1037]
