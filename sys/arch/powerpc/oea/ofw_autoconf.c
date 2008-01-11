@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.4.8.2 2008/01/10 23:43:54 bouyer Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.4.8.3 2008/01/11 19:19:11 bouyer Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4.8.2 2008/01/10 23:43:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.4.8.3 2008/01/11 19:19:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -133,6 +133,7 @@ canonicalize_bootpath(void)
 		*p = '\0';
 	}
 
+	printf("bootpath: %s\n", bootpath);
 	if (node == -1) {
 		/* Cannot canonicalize... use bootpath anyway. */
 		strcpy(cbootpath, bootpath);
@@ -184,10 +185,6 @@ canonicalize_bootpath(void)
 		*p++ = '\0';
 		/* booted_partition = *p - '0';		XXX correct? */
 	}
-
-	/* XXX Does this belong here, or device_register()? */
-	if ((p = strrchr(lastp, ',')) != NULL)
-		*p = '\0';
 }
 
 /*
@@ -202,7 +199,7 @@ device_register(dev, aux)
 {
 	static struct device *parent;
 	static char *bp = bootpath + 1, *cp = cbootpath;
-	unsigned long addr;
+	unsigned long addr, addr2;
 	char *p;
 
 	/* Skip over devices not represented in the OF tree. */
@@ -259,6 +256,11 @@ device_register(dev, aux)
 	if (booted_device)
 		return;
 
+	/*
+	 * Skip over devices that are really just layers of NetBSD
+	 * autoconf(9) we should just skip as they do not have any
+	 * OFW devices.
+	 */
 	if (device_is_a(device_parent(dev), "atapibus") ||
 	    device_is_a(device_parent(dev), "atabus") ||
 	    device_is_a(device_parent(dev), "pci") ||
@@ -270,7 +272,8 @@ device_register(dev, aux)
 			return;
 	}
 
-	/* Get the address part of the current path component. The
+	/*
+	 * Get the address part of the current path component. The
 	 * last component of the canonical bootpath may have no
 	 * address (eg, "disk"), in which case we need to get the
 	 * address from the original bootpath instead.
@@ -281,12 +284,16 @@ device_register(dev, aux)
 			p = strchr(bp, '@');
 		if (!p)
 			addr = 0;
-		else {
-			addr = strtoul(p + 1, NULL, 16);
-			p = NULL;
-		}
+		else
+			addr = strtoul(p + 1, &p, 16);
 	} else
 		addr = strtoul(p + 1, &p, 16);
+
+	/* if the current path has more address, grab that too */
+	if (p && *p == ',')
+		addr2 = strtoul(p + 1, &p, 16);
+	else
+		addr2 = 0;
 
 	if (device_is_a(device_parent(dev), "mainbus")) {
 		struct confargs *ca = aux;
@@ -298,7 +305,8 @@ device_register(dev, aux)
 	} else if (device_is_a(device_parent(dev), "pci")) {
 		struct pci_attach_args *pa = aux;
 
-		if (addr != pa->pa_device)
+		if (addr != pa->pa_device ||
+		    addr2 != pa->pa_function)
 			return;
 	} else if (device_is_a(device_parent(dev), "obio")) {
 		struct confargs *ca = aux;
@@ -312,22 +320,13 @@ device_register(dev, aux)
 		/* periph_target is target for scsi, drive # for atapi */
 		if (addr != sa->sa_periph->periph_target)
 			return;
-	} else if (device_is_a(device_parent(device_parent(dev)), "pciide")) {
+	} else if (device_is_a(device_parent(device_parent(dev)), "pciide") ||
+		   device_is_a(device_parent(device_parent(dev)), "viaide") ||
+		   device_is_a(device_parent(device_parent(dev)), "slide")) {
 		struct ata_device *adev = aux;
 
-		if (addr != adev->adev_drv_data->drive)
-			return;
-
-		/*
-		 * OF splits channel and drive into separate path
-		 * components, so check the addr part of the next
-		 * component. (Ignore bp, because the canonical path
-		 * will be complete in the pciide case.)
-		 */
-		p = strchr(p, '@');
-		if (!p++)
-			return;
-		if (strtoul(p, &p, 16) != adev->adev_drv_data->drive)
+		if (addr != adev->adev_channel ||
+		    addr2 != adev->adev_drv_data->drive)
 			return;
 	} else if (device_is_a(device_parent(device_parent(dev)), "wdc")) {
 		struct ata_device *adev = aux;

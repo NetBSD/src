@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 2007/04/07 08:35:52 skrll Exp $	*/
+/*	$NetBSD: pcb.h,v 1.4.26.1 2008/01/11 19:19:09 bouyer Exp $	*/
 
 /*	$OpenBSD: pcb.h,v 1.6 2000/01/12 07:24:35 mickey Exp $	*/
 
@@ -50,6 +50,7 @@ struct pcb {
 
 struct md_coredump {
 	struct reg md_reg;
+	struct fpreg md_fpreg;
 }; 
 
 

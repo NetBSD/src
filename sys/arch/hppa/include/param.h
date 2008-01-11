@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.9.32.2 2008/01/08 22:09:51 bouyer Exp $	*/
+/*	$NetBSD: param.h,v 1.9.32.3 2008/01/11 19:19:09 bouyer Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -37,7 +37,7 @@
 
 #define	_MACHINE_ARCH	hppa
 #define	MACHINE_ARCH	"hppa"
-#define	MID_MACHINE	MID_HPUX800
+#define	MID_MACHINE	MID_HPPA
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
