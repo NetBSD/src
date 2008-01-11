@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.6 2007/11/05 15:49:03 garbled Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.7 2008/01/11 05:18:58 mrg Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.6 2007/11/05 15:49:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.7 2008/01/11 05:18:58 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -458,6 +458,22 @@ genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	if (PCI_VENDOR(id) == PCI_VENDOR_MOT &&
 	    PCI_PRODUCT(id) == PCI_PRODUCT_MOT_RAVEN)
 		return (PCI_CONF_ALL & ~PCI_CONF_MAP_MEM);
+
+	/*
+	 * Pegasos2 specific stuff.
+	 */
+	if (strncmp(model_name, "Pegasos2", 8) == 0) {
+
+		/* we want to leave viaide(4) alone */
+		if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH &&
+		    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT82C586A_IDE)
+			return 0;
+
+		/* we want to leave fwochi(4) without mem space */
+		if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH &&
+		    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT6306)
+			return (PCI_CONF_ALL & ~PCI_CONF_MAP_MEM);
+	}
 
 	/* NOTE, all device specific stuff must be above this line */
 	/* don't do this on the primary host bridge */
