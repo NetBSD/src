@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.994 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.995 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -323,6 +323,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	gcscpcib(4): Added driver for the AMD CS5535 and CS5536 Companion
 		Device with support for Timecounter, Watchdog Timer and
 		GPIO. Adapted from OpenBSD by Yojiro UO. [xtraeme 20080109]
+	pc532: Port deleted [simonb 20080109]
 	i386: Add sparse kernel core dumps (minidumps) for this platform
 		using a backwards-compatible on-disk core format. Not
 		turned on by default yet. Similar to FreeBSD minidumps but
