@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.60 2008/01/04 15:55:31 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.61 2008/01/11 20:00:13 bouyer Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_compat_netbsd.h"
 include "opt_multiprocessor.h"
+include	"opt_xen.h"
 endif
 
 quote #define __MUTEX_PRIVATE
@@ -109,9 +110,19 @@ include <machine/intr.h>
 include <machine/types.h>
 include <machine/segments.h>
 
+ifdef XEN
+ifdef XEN3
+include <xen/xen3-public/sched.h>
+else
+include <xen/xen-public/xen.h>
+endif
+endif
+
 if defined(_KERNEL) && !defined(_LKM)
 include "ioapic.h"
+ifndef XEN
 include "apmbios.h"
+endif
 endif
 if NAPMBIOS > 0
 include <machine/bioscall.h>
@@ -150,6 +161,7 @@ include <machine/isa_machdep.h>
 endif
 
 include <machine/tlog.h>
+
 
 include <x86/busdefs.h>
 
@@ -216,7 +228,6 @@ define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
 define	PCB_ESP0		offsetof(struct pcb, pcb_esp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
-define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
@@ -265,7 +276,11 @@ endif
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
+ifdef XEN
+define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
+else
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
+endif
 
 if NAPMBIOS > 0
 define	APM_CODE32		offsetof(struct apm_connect_info, apm_code32_seg_base)
@@ -351,10 +366,16 @@ define		PIC_LOCK		offsetof(struct pic, pic_lock)
 endif
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
-
-define	SIZEOF_ISOURCE		sizeof(struct intrsource)
 define	SIZEOF_ISTUB		sizeof(struct intrstub)
 
+ifdef XEN
+define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
+define	IS_RECURSE		offsetof(struct iplsource, ipl_recurse)
+define	IS_RESUME		offsetof(struct iplsource, ipl_resume)
+define	IS_HANDLERS		offsetof(struct iplsource, ipl_handlers)
+define	EV_EVCNTL		offsetof(struct evcnt, ev_count)
+else
+define	SIZEOF_ISOURCE		sizeof(struct intrsource)
 define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
 define	IS_RESUME		offsetof(struct intrsource, is_resume)
 define	IS_EVCNTLO		offsetof(struct intrsource, is_evcnt.ev_count)
@@ -366,6 +387,7 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
+endif
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)
@@ -437,3 +459,26 @@ define	L2_SHIFT		L2_SHIFT
 define	L2_FRAME		L2_FRAME
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
+
+ifdef XEN
+ifdef XEN3
+define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
+define START_INFO_FLAGS		offsetof(struct start_info, flags)
+define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console_mfn)
+define START_INFO_STORE_MFN	offsetof(struct start_info, store_mfn)
+else
+define START_INFO_SHARED_INFO	offsetof(start_info_t, shared_info)
+endif
+define SIF_INITDOMAIN		SIF_INITDOMAIN
+ifdef XEN3
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_mask)
+else
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_mask)
+endif
+
+define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
+define SCHEDOP_yield		SCHEDOP_yield
+endif
+
