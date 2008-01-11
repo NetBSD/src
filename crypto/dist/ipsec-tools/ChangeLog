@@ -1,3 +1,13 @@
+2008-01-11  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/handler.[ch]: added an 'established' arg to getph1byaddr()
+	From Krzysztof Oledzki <olel@ans.pl>:
+	* src/racoon/isakmp.c: Only search for established ph1 handles in
+	  DPD (also reported new getph1byaddr() arg)
+	* src/racoon/isakmp_inf.c: added some details to some logs  (also
+	  reported new getph1byaddr() arg) 
+	* src/racoon/crypto_openssl.c: fixed compilation with idea and
+	  recent gcc
+
 2007-11-29  Yvan Vanhullebus  <vanhu@netasq.com>
 	From Natanael Copa <natanael.copa@gmail.com>:
 	* src/racoon/Makefile.am: fixed a race condition when building
