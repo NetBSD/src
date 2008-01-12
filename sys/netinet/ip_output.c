@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.189 2007/12/29 15:13:55 degroote Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.190 2008/01/12 02:58:58 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.189 2007/12/29 15:13:55 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.190 2008/01/12 02:58:58 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -307,9 +307,9 @@ ip_output(struct mbuf *m0, ...)
 	else if (dst->sin_family != AF_INET ||
 		 !in_hosteq(dst->sin_addr, ip->ip_dst))
 		rtcache_free(ro);
-	else
-		rtcache_check(ro);
-	if ((rt = rtcache_getrt(ro)) == NULL) {
+
+	if ((rt = rtcache_validate(ro)) == NULL &&
+	    (rt = rtcache_update(ro, 1)) == NULL) {
 		dst = &u.dst4;
 		rtcache_setdst(ro, &u.dst);
 	}
@@ -334,8 +334,8 @@ ip_output(struct mbuf *m0, ...)
 		IFP_TO_IA(ifp, ia);
 	} else {
 		if (rt == NULL)
-			rtcache_init(ro);
-		if ((rt = rtcache_getrt(ro)) == NULL) {
+			rt = rtcache_init(ro);
+		if (rt == NULL) {
 			ipstat.ips_noroute++;
 			error = EHOSTUNREACH;
 			goto bad;
@@ -1723,8 +1723,7 @@ ip_setmoptions(int optname, struct ip_moptions **imop, struct mbuf *m)
 
 			sockaddr_in_init(&u.dst4, &mreq->imr_multiaddr, 0);
 			rtcache_setdst(&ro, &u.dst);
-			rtcache_init(&ro);
-			ifp = (rt = rtcache_getrt(&ro)) != NULL ? rt->rt_ifp
+			ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp
 			                                        : NULL;
 			rtcache_free(&ro);
 		} else {
