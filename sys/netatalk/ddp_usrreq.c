@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.27 2008/01/10 08:04:18 dyoung Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.28 2008/01/12 02:58:58 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.27 2008/01/10 08:04:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.28 2008/01/12 02:58:58 dyoung Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -366,8 +366,8 @@ at_pcbconnect(ddp, addr, l)
          * If we've changed our address, we may have an old "good looking"
          * route here.  Attempt to detect it.
          */
-	rtcache_check(ro);
-	if ((rt = rtcache_getrt(ro)) != NULL) {
+	if ((rt = rtcache_validate(ro)) != NULL ||
+	    (rt = rtcache_update(ro, 1)) != NULL) {
 		if (hintnet) {
 			net = hintnet;
 		} else {
