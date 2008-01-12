@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.102 2008/01/10 08:03:22 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.103 2008/01/12 02:56:30 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.102 2008/01/10 08:03:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.103 2008/01/12 02:56:30 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -1161,10 +1161,10 @@ _rtcache_init(struct route *ro, int flag)
 
 	if (rtcache_getdst(ro) == NULL)
 		return NULL;
-	ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag);
-	if (ro->_ro_rt != NULL) {
-		rtcache(ro);
-	}
+	if ((ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag)) == NULL)
+		return NULL;
+
+	rtcache(ro);
 	return ro->_ro_rt;
 }
 
@@ -1190,14 +1190,19 @@ rtcache_update(struct route *ro, int clone)
 void
 rtcache_copy(struct route *new_ro, const struct route *old_ro)
 {
+	struct rtentry *rt;
+
+	KASSERT(new_ro != old_ro);
+
+	if ((rt = rtcache_getrt(old_ro)) != NULL)
+		rt->rt_refcnt++;
+
 	if (rtcache_getdst(old_ro) == NULL ||
 	    rtcache_setdst(new_ro, rtcache_getdst(old_ro)) != 0)
 		return;
-	new_ro->_ro_rt = old_ro->_ro_rt;
-	if (new_ro->_ro_rt != NULL) {
+
+	if ((new_ro->_ro_rt = rt) != NULL)
 		rtcache(new_ro);
-		++new_ro->_ro_rt->rt_refcnt;
-	}
 }
 
 void
