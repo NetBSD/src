@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.336 2008/01/02 11:48:48 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.337 2008/01/12 23:31:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.336 2008/01/02 11:48:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.337 2008/01/12 23:31:40 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -259,18 +259,6 @@ main(void)
 	l = &lwp0;
 #ifndef LWP0_CPU_INFO
 	l->l_cpu = curcpu();
-#endif
-
-	/*
-	 * XXX This is a temporary check to be removed before
-	 * NetBSD 5.0 is released.
-	 */
-#if !defined(__i386__ ) && !defined(__x86_64__)
-	if (curlwp != l) {
-		printf("NOTICE: curlwp should be set before main()\n");
-		DELAY(250000);
-		curlwp = l;
-	}
 #endif
 
 	/*
