@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.62 2008/01/11 01:38:45 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.63 2008/01/12 02:58:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -421,21 +421,6 @@ rtcache_validate(const struct route *ro)
 		return rt;
 	return NULL;
 
-}
-
-static inline void
-rtcache_check1(struct route *ro, int clone)
-{
-	/* XXX The rt_ifp check should be asserted. */
-	if (rtcache_validate(ro) == NULL)
-		rtcache_update(ro, clone);
-	KASSERT(ro->_ro_rt == NULL || ro->_ro_rt->rt_ifp != NULL);
-}
-
-static inline void
-rtcache_check(struct route *ro)
-{
-	return rtcache_check1(ro, 1);
 }
 
 static inline void
