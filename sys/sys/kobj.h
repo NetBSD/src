@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj.h,v 1.4 2008/01/07 18:25:56 ad Exp $	*/
+/*	$NetBSD: kobj.h,v 1.5 2008/01/12 23:34:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,8 +44,9 @@ int		kobj_open_mem(kobj_t *, void *, ssize_t);
 void		kobj_close(kobj_t);
 int		kobj_load(kobj_t);
 void		kobj_unload(kobj_t);
-void		kobj_stat(kobj_t, vaddr_t *, size_t *, uintptr_t *);
+void		kobj_stat(kobj_t, vaddr_t *, size_t *);
 int		kobj_set_name(kobj_t, const char *);
+int		kobj_find_section(kobj_t, const char *, void **, size_t *);
 
 /* MI-MD interface. */
 uintptr_t	kobj_sym_lookup(kobj_t, uintptr_t);

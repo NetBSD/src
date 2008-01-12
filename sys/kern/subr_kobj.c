@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.7 2008/01/07 20:42:48 ad Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.8 2008/01/12 23:35:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.7 2008/01/07 20:42:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.8 2008/01/12 23:35:58 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -133,10 +133,11 @@ struct kobj {
 	relent_t	*ko_reltab;
 	Elf_Sym		*ko_symtab;	/* Symbol table */
 	char		*ko_strtab;	/* String table */
-	uintptr_t	ko_entry;	/* Entry point */
+	char		*ko_shstrtab;	/* Section name string table */
 	size_t		ko_size;	/* Size of text/data/bss */
 	size_t		ko_symcnt;	/* Number of symbols */
 	size_t		ko_strtabsz;	/* Number of bytes in string table */
+	size_t		ko_shstrtabsz;	/* Number of bytes in scn str table */
 	size_t		ko_shdrsz;
 	int		ko_nrel;
 	int		ko_nrela;
@@ -254,6 +255,17 @@ kobj_close(kobj_t ko)
 
 	ko->ko_source = NULL;
 	ko->ko_type = KT_UNSET;
+
+	/* Program table and section strings are no longer needed. */
+	if (ko->ko_progtab != NULL) {
+		kmem_free(ko->ko_progtab, ko->ko_nprogtab *
+		    sizeof(*ko->ko_progtab));
+		ko->ko_progtab = NULL;
+	}
+	if (ko->ko_shstrtab) {
+		kmem_free(ko->ko_shstrtab, ko->ko_shstrtabsz);
+		ko->ko_shstrtab = NULL;
+	}
 
 	/* If the object hasn't been loaded, then destroy it. */
 	if (!ko->ko_loaded) {
@@ -472,6 +484,26 @@ kobj_load(kobj_t ko)
 	}
 
 	/*
+	 * Do we have a string table for the section names?
+	 */
+	if (hdr->e_shstrndx != 0 && shdr[hdr->e_shstrndx].sh_size != 0 &&
+	    shdr[hdr->e_shstrndx].sh_type == SHT_STRTAB) {
+		ko->ko_shstrtabsz = shdr[hdr->e_shstrndx].sh_size;
+		ko->ko_shstrtab = kmem_alloc(shdr[hdr->e_shstrndx].sh_size,
+		    KM_SLEEP);
+		if (ko->ko_shstrtab == NULL) {
+			error = ENOMEM;
+			goto out;
+		}
+		error = kobj_read(ko, ko->ko_shstrtab,
+		    shdr[hdr->e_shstrndx].sh_size,
+		    shdr[hdr->e_shstrndx].sh_offset);
+		if (error != 0) {
+			goto out;
+		}
+	}
+
+	/*
 	 * Size up code/data(progbits) and bss(nobits).
 	 */
 	alignmask = 0;
@@ -504,7 +536,6 @@ kobj_load(kobj_t ko)
 	}
 	ko->ko_address = mapbase;
 	ko->ko_size = mapsize;
-	ko->ko_entry = mapbase + hdr->e_entry;
 
 	/*
 	 * Now load code/data(progbits), zero bss(nobits), allocate space
@@ -537,6 +568,10 @@ kobj_load(kobj_t ko)
 			}
 			ko->ko_progtab[pb].size = shdr[i].sh_size;
 			ko->ko_progtab[pb].sec = i;
+			if (ko->ko_shstrtab != NULL && shdr[i].sh_name != 0) {
+				ko->ko_progtab[pb].name =
+				    ko->ko_shstrtab + shdr[i].sh_name;
+			}
 
 			/* Update all symbol values with the offset. */
 			for (j = 0; j < ko->ko_symcnt; j++) {
@@ -646,6 +681,9 @@ kobj_unload(kobj_t ko)
 {
 	int error;
 
+	KASSERT(ko->ko_progtab == NULL);
+	KASSERT(ko->ko_shstrtab == NULL);
+
 	if (ko->ko_address != 0) {
 		uvm_km_free(lkm_map, ko->ko_address, round_page(ko->ko_size),
 		    UVM_KMF_WIRED);
@@ -680,7 +718,7 @@ kobj_unload(kobj_t ko)
  *	Return size and load address of an object.
  */
 void
-kobj_stat(kobj_t ko, vaddr_t *address, size_t *size, uintptr_t *entry)
+kobj_stat(kobj_t ko, vaddr_t *address, size_t *size)
 {
 
 	if (address != NULL) {
@@ -688,9 +726,6 @@ kobj_stat(kobj_t ko, vaddr_t *address, size_t *size, uintptr_t *entry)
 	}
 	if (size != NULL) {
 		*size = ko->ko_size;
-	}
-	if (entry != NULL) {
-		*entry = ko->ko_entry;
 	}
 }
 
@@ -721,6 +756,34 @@ kobj_set_name(kobj_t ko, const char *name)
 	}
 
 	return error;
+}
+
+/*
+ * kobj_find_section:
+ *
+ *	Given a section name, search the loaded object and return
+ *	virtual address if present and loaded.
+ */
+int
+kobj_find_section(kobj_t ko, const char *name, void **addr, size_t *size)
+{
+	int i;
+
+	KASSERT(ko->ko_progtab != NULL);
+
+	for (i = 0; i < ko->ko_nprogtab; i++) {
+		if (strcmp(ko->ko_progtab[i].name, name) == 0) { 
+			if (addr != NULL) {
+				*addr = ko->ko_progtab[i].addr;
+			}
+			if (size != NULL) {
+				*size = ko->ko_progtab[i].size;
+			}
+			return 0;
+		}
+	}
+
+	return ENOENT;
 }
 
 /*
@@ -756,11 +819,6 @@ kobj_release_mem(kobj_t ko)
 		    sizeof(*ko->ko_relatab));
 		ko->ko_relatab = NULL;
 		ko->ko_nrela = 0;
-	}
-	if (ko->ko_progtab != NULL) {
-		kmem_free(ko->ko_progtab, ko->ko_nprogtab *
-		    sizeof(*ko->ko_progtab));
-		ko->ko_progtab = NULL;
 	}
 	if (ko->ko_shdr != NULL) {
 		kmem_free(ko->ko_shdr, ko->ko_shdrsz);
@@ -858,7 +916,7 @@ kobj_relocate(kobj_t ko)
 	const Elf_Rela *rela;
 	const Elf_Sym *sym;
 	uintptr_t base;
-	int i;
+	int i, error;
 	uintptr_t symidx;
 
 	/*
@@ -880,11 +938,9 @@ kobj_relocate(kobj_t ko)
 				continue;
 			}
 			sym = ko->ko_symtab + symidx;
-			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
-				kobj_reloc(ko, base, rel, false, true);
-				continue;
-			}
-			if (kobj_reloc(ko, base, rel, false, false)) {
+			error = kobj_reloc(ko, base, rel, false,
+			    ELF_ST_BIND(sym->st_info) == STB_LOCAL);
+			if (error != 0) {
 				return ENOENT;
 			}
 		}
@@ -909,11 +965,9 @@ kobj_relocate(kobj_t ko)
 				continue;
 			}
 			sym = ko->ko_symtab + symidx;
-			if (ELF_ST_BIND(sym->st_info) == STB_LOCAL) {
-				kobj_reloc(ko, base, rela, true, true);
-				continue;
-			}
-			if (kobj_reloc(ko, base, rela, true, false)) {
+			error = kobj_reloc(ko, base, rela, true,
+			    ELF_ST_BIND(sym->st_info) == STB_LOCAL);
+			if (error != 0) {
 				return ENOENT;
 			}
 		}
@@ -1015,7 +1069,7 @@ kobj_unload(kobj_t ko)
 }
 
 void
-kobj_stat(kobj_t ko, vaddr_t *base, size_t *size, uintptr_t *entry)
+kobj_stat(kobj_t ko, vaddr_t *base, size_t *size)
 {
 
 	panic("not modular");
@@ -1023,6 +1077,13 @@ kobj_stat(kobj_t ko, vaddr_t *base, size_t *size, uintptr_t *entry)
 
 int
 kobj_set_name(kobj_t ko, const char *name)
+{
+
+	panic("not modular");
+}
+
+int
+kobj_find_section(kobj_t ko, const char *name, void **addr, size_t *size)
 {
 
 	panic("not modular");
