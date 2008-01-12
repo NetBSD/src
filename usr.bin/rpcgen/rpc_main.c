@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.28 2006/03/20 16:58:13 elad Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.29 2008/01/12 05:49:46 dholland Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.28 2006/03/20 16:58:13 elad Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.29 2008/01/12 05:49:46 dholland Exp $");
 #endif
 #endif
 
@@ -908,7 +908,7 @@ parseargs(argc, argv, cmd)
 	int     i;
 	int     j;
 	int     c;
-	char    flag[(1 << 8 * sizeof(char))];
+	char    flag[1 << CHAR_BIT];
 	int     nflags;
 
 	cmdname = argv[0];
