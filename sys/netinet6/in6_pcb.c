@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.92 2008/01/10 08:06:11 dyoung Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.93 2008/01/12 02:58:58 dyoung Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.92 2008/01/10 08:06:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.93 2008/01/12 02:58:58 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -928,18 +928,15 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		KASSERT(IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr));
 		if (cdst.sa4->sin_addr.s_addr != in6p->in6p_faddr.s6_addr32[3])
 			rtcache_free(ro);
-		else
-			rtcache_check(ro);
 	}
 #endif
 	else {
 		if (!IN6_ARE_ADDR_EQUAL(&cdst.sa6->sin6_addr,
 					&in6p->in6p_faddr))
 			rtcache_free(ro);
-		else
-			rtcache_check(ro);
 	}
-	rt = rtcache_getrt(ro);
+	if ((rt = rtcache_validate(ro)) == NULL)
+		rt = rtcache_update(ro, 1);
 #ifdef INET
 	if (rt == NULL && IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
 		union {
