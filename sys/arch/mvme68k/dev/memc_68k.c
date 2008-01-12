@@ -1,4 +1,4 @@
-/*	$NetBSD: memc_68k.c,v 1.5 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: memc_68k.c,v 1.6 2008/01/12 09:54:22 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.5 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.6 2008/01/12 09:54:22 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: memc_68k.c,v 1.5 2005/12/11 12:18:17 christos Exp $"
 #include <dev/mvme/pcctwovar.h>
 #include <dev/mvme/pcctworeg.h>
 
+#include "ioconf.h"
 
 int memc_match(struct device *, struct cfdata *, void *);
 void memc_attach(struct device *, struct device *, void *);
@@ -66,55 +67,47 @@ void memc_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(memc, sizeof(struct memc_softc),
     memc_match, memc_attach, NULL, NULL);
 
-extern struct cfdriver memc_cd;
-
 
 /* ARGSUSED */
 int
-memc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+memc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t bh;
-	u_int8_t chipid;
+	uint8_t chipid;
 	int rv;
 
 #ifdef MVME68K
 	if (machineid != MVME_167 && machineid != MVME_177 &&
 	    machineid != MVME_162 && machineid != MVME_172)
-		return (0);
+		return 0;
 #endif
 
 	if (strcmp(ma->ma_name, memc_cd.cd_name))
-		return (0);
+		return 0;
 
 	if (bus_space_map(ma->ma_bust, ma->ma_offset, MEMC_REGSIZE, 0, &bh))
-		return (0);
+		return 0;
 
 	rv = bus_space_peek_1(ma->ma_bust, bh, MEMC_REG_CHIP_ID, &chipid);
 	bus_space_unmap(ma->ma_bust, bh, MEMC_REGSIZE);
 
 	if (rv)
-		return (0);
+		return 0;
 
 	/* Verify the Chip Id register is sane */
 	if (chipid != MEMC_CHIP_ID_MEMC040 && chipid != MEMC_CHIP_ID_MEMECC)
-		return (0);
+		return 0;
 
-	return (1);
+	return 1;
 }
 
 /* ARGSUSED */
 void
-memc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+memc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
-	struct memc_softc *sc = (struct memc_softc *) self;
+	struct memc_softc *sc = (struct memc_softc *)self;
 
 	sc->sc_bust = ma->ma_bust;
 

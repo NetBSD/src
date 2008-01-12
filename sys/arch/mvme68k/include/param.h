@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.29 2008/01/12 09:54:28 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -120,7 +120,7 @@
 #define	NKMEMPAGES_MAX_DEFAULT	((6 * 1024 * 1024) >> PAGE_SHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
-extern void _delay __P((unsigned));
+extern void _delay(unsigned int);
 #define delay(us)	_delay((us)<<10)
 #define DELAY(n)	delay(n)
 #endif	/* _KERNEL && !_LOCORE */
