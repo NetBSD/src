@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.213 2008/01/07 16:12:54 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.214 2008/01/12 19:27:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.213 2008/01/07 16:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.214 2008/01/12 19:27:27 ad Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -2227,13 +2227,14 @@ sysctl_free(struct sysctlnode *rnode)
 {
 	struct sysctlnode *node, *pnode;
 
-	KASSERT(rw_write_held(&sysctl_treelock));
+	rw_enter(&sysctl_treelock, RW_WRITER);
 
 	if (rnode == NULL)
 		rnode = &sysctl_root;
 
 	if (SYSCTL_VERS(rnode->sysctl_flags) != SYSCTL_VERSION) {
 		printf("sysctl_free: rnode %p wrong version\n", rnode);
+		rw_exit(&sysctl_treelock);
 		return;
 	}
 
@@ -2280,6 +2281,8 @@ sysctl_free(struct sysctlnode *rnode)
 		node = pnode;
 		pnode = node->sysctl_parent;
 	} while (pnode != NULL && node != rnode);
+
+	rw_exit(&sysctl_treelock);
 }
 
 int
