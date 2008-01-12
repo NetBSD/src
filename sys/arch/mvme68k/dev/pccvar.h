@@ -1,4 +1,4 @@
-/*	$NetBSD: pccvar.h,v 1.8 2001/05/31 18:46:08 scw Exp $	*/
+/*	$NetBSD: pccvar.h,v 1.9 2008/01/12 09:54:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1999 The NetBSD Foundation, Inc.
@@ -71,8 +71,7 @@ extern struct pcc_softc *sys_pcc;
 extern bus_addr_t pcc_slave_base_addr;
 
 #define	pccintr_evcnt(ipl)	isrlink_evcnt(ipl)
-void	pccintr_establish __P((int, int (*)(void *), int, void *,
-	    struct evcnt *));
-void	pccintr_disestablish __P((int));
+void	pccintr_establish(int, int (*)(void *), int, void *, struct evcnt *);
+void	pccintr_disestablish(int);
 
 #endif /* _MVME68K_PCCVAR_H */

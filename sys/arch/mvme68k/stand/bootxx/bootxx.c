@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.13 2006/05/20 20:38:39 mrg Exp $ */
+/*	$NetBSD: bootxx.c,v 1.14 2008/01/12 09:54:30 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,15 +76,15 @@ int main(void);
 int
 main(void)
 {
-	struct open_file	f;
-	u_long	addr;
+	struct open_file f;
+	u_long addr;
 	char *foo;
 	int error;
 
 	printf("Boot: bug device: ctrl=%d, dev=%d\n",
-		bugargs.ctrl_lun, bugargs.dev_lun);
+	    bugargs.ctrl_lun, bugargs.dev_lun);
 	printf("\nbootxx: %s first level bootstrap program [%s]\n\n",
-		bootprog_name, bootprog_rev);
+	    bootprog_name, bootprog_rev);
 
 	f.f_flags = F_RAW;
 	if (devopen(&f, 0, &foo)) {
@@ -95,7 +95,7 @@ main(void)
 	addr = LOADADDR;
 	error = copyboot(&f, &addr);
 	f.f_dev->dv_close(&f);
-	if (!error)
+	if (error == 0)
 		bugexec((void *)addr);
 
 	/* copyboot had a problem... */
@@ -127,8 +127,7 @@ copyboot(struct open_file *fp, u_long *addr)
 		printf("bootxx: read block # %d = %d\n", i, blknum);
 #endif
 		if ((fp->f_dev->dv_strategy)(fp->f_devdata, F_READ,
-					   blknum, block_size, laddr, &n))
-		{
+		    blknum, block_size, laddr, &n)) {
 			printf("bootxx: read failed\n");
 			return -1;
 		}
