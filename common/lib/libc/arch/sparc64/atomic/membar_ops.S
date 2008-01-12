@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.2 2007/11/29 02:16:00 ad Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.3 2008/01/12 17:27:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,8 +47,9 @@ ENTRY_NOPROFILE(_membar_producer)
 	 nop
 
 ENTRY_NOPROFILE(_membar_consumer)
+	membar	#LoadLoad
 	retl
-	 membar	#LoadLoad
+	 nop
 
 ATOMIC_OP_ALIAS(membar_producer,_membar_producer)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_consumer)
