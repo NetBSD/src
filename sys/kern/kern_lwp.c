@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.89 2008/01/07 11:41:29 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.90 2008/01/12 18:06:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.89 2008/01/07 11:41:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.90 2008/01/12 18:06:40 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -781,6 +781,8 @@ lwp_exit(struct lwp *l)
 
 	lwp_lock(l);
 	l->l_stat = LSZOMB;
+	if (l->l_name != NULL)
+		strcpy(l->l_name, "(zombie)");
 	lwp_unlock(l);
 	p->p_nrlwps--;
 	cv_broadcast(&p->p_lwpcv);
@@ -921,6 +923,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(turnstile_cache, l->l_ts);
+	if (l->l_name != NULL)
+		kmem_free(l->l_name, MAXCOMLEN);
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif
