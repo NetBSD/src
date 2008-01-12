@@ -1,18 +1,18 @@
-/*	$NetBSD: libbug.h,v 1.3 2000/12/05 21:54:33 scw Exp $	*/
+/*	$NetBSD: libbug.h,v 1.4 2008/01/12 09:54:31 tsutsui Exp $	*/
 
 /*
  * prototypes and such.   note that get/put char are in stand.h
  */
 
 
-void	mvmeprom_delay __P((int));
-int	mvmeprom_diskrd __P((struct mvmeprom_dskio *));
-int	mvmeprom_diskwr __P((struct mvmeprom_dskio *));
-struct	mvmeprom_brdid *mvmeprom_getbrdid __P((void));
-int	peekchar __P((void));
-void	mvmeprom_outln __P((char *, char *));
-void	mvmeprom_outstr __P((char *, char *));
-void	mvmeprom_rtc_rd __P((struct mvmeprom_time *));
+void	mvmeprom_delay(int);
+int	mvmeprom_diskrd(struct mvmeprom_dskio *);
+int	mvmeprom_diskwr(struct mvmeprom_dskio *);
+struct	mvmeprom_brdid *mvmeprom_getbrdid(void);
+int	peekchar(void);
+void	mvmeprom_outln(char *, char *);
+void	mvmeprom_outstr(char *, char *);
+void	mvmeprom_rtc_rd(struct mvmeprom_time *);
 
 /*
  * bugcrt stuff 
@@ -20,6 +20,5 @@ void	mvmeprom_rtc_rd __P((struct mvmeprom_time *));
 
 extern struct mvmeprom_args bugargs;
 
-extern void	_bugstart __P((void));
-extern void	bugexec __P((void (*)(void)));
-extern void _rtt(void);
+void	_bugstart(void);
+void	bugexec(void (*)(void));

@@ -1,4 +1,4 @@
-/*	$NetBSD: instat.c,v 1.2 1996/05/17 19:50:52 chuck Exp $	*/
+/*	$NetBSD: instat.c,v 1.3 2008/01/12 09:54:31 tsutsui Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -11,7 +11,7 @@
 
 /* returns 0 if no characters ready to read */
 int
-peekchar()
+peekchar(void)
 {
 	int ret;
 
