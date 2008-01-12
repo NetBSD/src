@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.3 2007/11/29 17:12:22 ad Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.4 2008/01/12 17:29:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,6 @@ ENTRY_NOPROFILE(_atomic_or_32_nv)
 	orl	%sp@(8), %d0
 	casl	%d1, %d0, %a0@
 	bne	1b
-	movl	%d0, %a0	/* pointers return also in %a0 */
 	rts
 ATOMIC_OP_ALIAS(atomic_or_32_nv,_atomic_or_32_nv)
 ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32_nv)
