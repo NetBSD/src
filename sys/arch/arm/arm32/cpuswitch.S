@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.50 2007/10/17 19:53:30 garbled Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.51 2008/01/12 20:50:23 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -171,7 +171,8 @@ _C_LABEL(curpcb):
  *	r1	'struct lwp *' of the LWP to switch to
  */
 ENTRY(cpu_switchto)
-	stmfd	sp!, {r4-r7, lr}
+	mov	ip, sp
+	stmfd	sp!, {r4-r7, ip, lr}
 
 	mov	r6, r1		/* save new lwp */
 	mov	r4, r0		/* save old lwp, it's the return value */
@@ -347,10 +348,10 @@ ENTRY(cpu_switchto)
 	mov	r1, r6
 
 	/*
-	 * Pull the registers that got pushed when either savectx() or
-	 * cpu_switchto() was called and return.
+	 * Pull the registers that got pushed when cpu_switchto() was called,
+	 * and return.
 	 */
-	ldmfd	sp!, {r4-r7, pc}
+	ldmfd	sp, {r4-r7, sp, pc}
 
 .Lswitch_do_ras:
 	ldr	r1, [r1, #(TF_PC)]	/* second ras_lookup() arg */
@@ -360,29 +361,6 @@ ENTRY(cpu_switchto)
 	ldrne	r1, [r7, #(PCB_TF)]
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
-
-
-/* LINTSTUB: Func: void savectx(struct pcb *pcb) */
-ENTRY(savectx)
-	/*
-	 * r0 = pcb
-	 */
-
-	/* Push registers.*/
-	stmfd	sp!, {r4-r7, lr}
-
-	/* Store all the registers in the process's pcb */
-#ifndef __XSCALE__
-	add	r2, r0, #(PCB_R8)
-	stmia	r2, {r8-r13}
-#else
-	strd	r8, [r0, #(PCB_R8)]
-	strd	r10, [r0, #(PCB_R10)]
-	strd	r12, [r0, #(PCB_R12)]
-#endif
-
-	/* Pull the regs of the stack */
-	ldmfd	sp!, {r4-r7, pc}
 
 ENTRY(lwp_trampoline)
 	bl	_C_LABEL(lwp_startup)
