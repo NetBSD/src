@@ -1,4 +1,4 @@
-/*	$NetBSD: putchar.c,v 1.1 1996/05/17 19:50:59 chuck Exp $	*/
+/*	$NetBSD: putchar.c,v 1.2 2008/01/12 09:54:31 tsutsui Exp $	*/
 
 /*
  * putchar: easier to do this with outstr than to add more macros to
@@ -12,14 +12,12 @@
 #include "libbug.h"
 
 void
-putchar(c)
-
-int c;
-
+putchar(int c)
 {
-  char ca[2];
-  if (c == '\n')
-    putchar('\r');
-  ca[0] = c;
-  mvmeprom_outstr(&ca[0], &ca[1]);
+	char ca[2];
+
+	if (c == '\n')
+		putchar('\r');
+	ca[0] = c;
+	mvmeprom_outstr(&ca[0], &ca[1]);
 }

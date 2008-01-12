@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.h,v 1.10 2007/03/03 02:49:56 tsutsui Exp $	*/
+/*	$NetBSD: isr.h,v 1.11 2008/01/12 09:54:29 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 struct isr_autovec {
 	LIST_ENTRY(isr_autovec) isr_link;
-	int		(*isr_func) __P((void *));
+	int		(*isr_func)(void *);
 	void		*isr_arg;
 	int		isr_ipl;
 	int		isr_priority;
@@ -73,7 +73,7 @@ typedef LIST_HEAD(, isr_autovec) isr_autovec_list_t;
  * when establishing the interrupt.
  */
 struct isr_vectored {
-	int		(*isr_func) __P((void *));
+	int		(*isr_func)(void *);
 	void		*isr_arg;
 	int		isr_ipl;
 	struct evcnt	*isr_evcnt;
@@ -81,13 +81,11 @@ struct isr_vectored {
 
 extern	struct evcnt mvme68k_irq_evcnt[];
 
-void	isrinit __P((void));
-struct evcnt *isrlink_evcnt __P((int));
-void	isrlink_autovec __P((int (*)(void *), void *, int, int,
-	    struct evcnt *));
-void	isrlink_vectored __P((int (*)(void *), void *, int, int,
-	    struct evcnt *));
-void	isrunlink_vectored __P((int));
-void	isrdispatch_autovec __P((struct clockframe *));
-void	isrdispatch_vectored __P((int, struct clockframe *));
-void	netintr __P((void));
+void	isrinit(void);
+struct evcnt *isrlink_evcnt(int);
+void	isrlink_autovec(int (*)(void *), void *, int, int, struct evcnt *);
+void	isrlink_vectored(int (*)(void *), void *, int, int, struct evcnt *);
+void	isrunlink_vectored(int);
+void	isrdispatch_autovec(struct clockframe *);
+void	isrdispatch_vectored(int, struct clockframe *);
+void	netintr(void);
