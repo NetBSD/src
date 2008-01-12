@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.98 2008/01/11 20:00:15 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.99 2008/01/12 18:16:20 bouyer Exp $	*/
 
 /*
  *
@@ -349,11 +349,5 @@ struct trapframe;
 
 int	pmap_exec_fixup(struct vm_map *, struct trapframe *, struct pcb *);
 void	pmap_ldt_cleanup(struct lwp *);
-
-#ifdef XEN
-#define NKPTP_MIN       4       /* smallest value we allow */
-#define NKPTP_MAX       4
-#endif /* XXX has to die ! */
-
 
 #endif	/* _I386_PMAP_H_ */
