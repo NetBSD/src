@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.51 2008/01/12 20:50:23 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.52 2008/01/12 20:57:26 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -277,7 +277,6 @@ ENTRY(cpu_switchto)
 	mov	r1, r6
 	bl	_C_LABEL(pmap_switch)
 
-
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r9 = new PCB */
@@ -295,7 +294,7 @@ ENTRY(cpu_switchto)
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	/* Restore all the save registers */
+	/* Restore all the saved registers */
 #ifndef __XSCALE__
 	add	r7, r9, #PCB_R8
 	ldmia	r7, {r8-r13}
@@ -363,6 +362,12 @@ ENTRY(cpu_switchto)
 	b	.Lswitch_return
 
 ENTRY(lwp_trampoline)
+	/*
+	 * cpu_switchto gives us:
+	 *
+	 * arg0(r0) = old lwp
+	 * arg1(r1) = new lwp
+	 */
 	bl	_C_LABEL(lwp_startup)
 
 	mov	r0, r5
