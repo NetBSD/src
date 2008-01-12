@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.19 2008/01/01 14:06:42 chris Exp $	*/
+/*	$NetBSD: locore.S,v 1.20 2008/01/12 20:50:24 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -218,11 +218,8 @@ ENTRY_NP(abort)
  */
 ENTRY(dumpsys)
 	/* push registers onto stack */
-	stmfd	sp!, {r0-r7, lr}
-	
-	/* push the status bits onto the stack */
-	mrs	r0, cpsr_all
-	stmfd	sp!, {r0}
+	mov	ip, sp
+	stmfd	sp!, {r4-r7, ip, lr}
 
 	/* fill in dumppcb */
 	ldr	r0, .Ldumppcb
@@ -239,9 +236,7 @@ ENTRY(dumpsys)
 	bl	_C_LABEL(dodumpsys)
 
 	/* unwind the stack */
-	ldmfd	sp!, {r0}
-	nop
-	ldmfd	sp!, {r0-r7, pc}
+	ldmfd	sp, {r4-r7, sp, pc}
 
 .Ldumppcb:
 	.word	_C_LABEL(dumppcb)
