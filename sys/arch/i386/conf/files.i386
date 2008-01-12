@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.328 2008/01/09 14:23:47 xtraeme Exp $
+#	$NetBSD: files.i386,v 1.329 2008/01/12 20:03:41 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -75,6 +75,7 @@ file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
