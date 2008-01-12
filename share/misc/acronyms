@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.177 2008/01/09 20:41:10 wiz Exp $
+$NetBSD: acronyms,v 1.178 2008/01/12 11:47:13 wiz Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -157,6 +157,7 @@ NBD	no big deal
 NFC	no fucking clue
 NFI	no fucking idea
 NFW	no fucking way
+NIFOC	naked in front of computer
 NIH	not invented here
 NMF	not my fault
 NMP	not my problem
