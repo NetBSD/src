@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.106 2007/12/05 07:15:54 ad Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.107 2008/01/12 22:32:51 cube Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.106 2007/12/05 07:15:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.107 2008/01/12 22:32:51 cube Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -788,6 +788,9 @@ USB_ATTACH(aue)
 		    USBDEVNAME(sc->aue_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
+	sc->wksem = 0;
+	mutex_init(&sc->wkmtx, MUTEX_DRIVER, IPL_NET);
+	cv_init(&sc->wkdone, "auewk");
 #endif
 	sc->aue_flags = aue_lookup(uaa->vendor, uaa->product)->aue_flags;
 
@@ -903,6 +906,15 @@ USB_DETACH(aue)
 		return (0);
 	}
 
+	mutex_enter(&sc->wkmtx);
+	while (sc->wksem != 0)
+		cv_wait(&sc->wkdone, &sc->wkmtx);
+	sc->wksem = 1;
+	mutex_exit(&sc->wkmtx);
+
+	/* It is now safe to terminate the worker */
+	workqueue_destroy(sc->wqp);
+
 	usb_uncallout(sc->aue_stat_ch, aue_tick, sc);
 	/*
 	 * Remove any pending tasks.  They cannot be executing because they run
@@ -947,6 +959,7 @@ USB_DETACH(aue)
 			   USBDEV(sc->aue_dev));
 
 	mutex_destroy(&sc->aue_mii_lock);
+	mutex_destroy(&sc->wkmtx);
 
 	return (0);
 }
@@ -1637,8 +1650,10 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 #if defined(__NetBSD__)
-				workqueue_enqueue(sc->wqp,&sc->wk, NULL);
-				/* XXX */
+				mutex_enter(&sc->wkmtx);
+				if (sc->wksem == 0)
+					workqueue_enqueue(sc->wqp,&sc->wk, NULL);
+				mutex_exit(&sc->wkmtx);
 #else
 				aue_init(sc);
 				aue_setmulti(sc);
@@ -1784,10 +1799,14 @@ aue_multiwork(struct work *wkp, void *arg) {
 	struct aue_softc *sc;
 
 	sc = (struct aue_softc *)arg;
-	(void)wkp;
 
 	aue_init(sc);
 	/* XXX called by aue_init, but rc ifconfig hangs without it: */
 	aue_setmulti(sc);
+
+	mutex_enter(&sc->wkmtx);
+	sc->wksem = 0;
+	cv_signal(&sc->wkdone);
+	mutex_exit(&sc->wkmtx);
 }
 #endif
