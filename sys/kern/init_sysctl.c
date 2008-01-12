@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.118 2008/01/07 16:12:53 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.119 2008/01/12 19:25:25 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.118 2008/01/07 16:12:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.119 2008/01/12 19:25:25 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -2486,8 +2486,8 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 #endif
 		len = sizeof(char *) * nargv;
 
-	argv = kmem_alloc(len, KM_SLEEP);
-	argvlen = len;
+	if ((argvlen = len) != 0)
+		argv = kmem_alloc(len, KM_SLEEP);
 
 	aiov.iov_base = argv;
 	aiov.iov_len = len;
@@ -2516,7 +2516,6 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 			netbsd32_charp *argv32;
 
 			argv32 = (netbsd32_charp *)argv;
-
 			base = (vaddr_t)NETBSD32PTR64(argv32[i]);
 		} else
 #endif
@@ -2576,7 +2575,7 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 	*oldlenp = len;
 
 done:
-	if (argv != NULL)
+	if (argvlen != 0)
 		kmem_free(argv, argvlen);
 	uvmspace_free(vmspace);
 	kmem_free(arg, PAGE_SIZE);
