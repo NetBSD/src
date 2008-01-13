@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.8 2008/01/10 23:44:07 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.9 2008/01/13 11:26:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.8 2008/01/10 23:44:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.9 2008/01/13 11:26:58 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -701,10 +701,9 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 	if (!pmap_valid_entry(opde) || pmap_pte2pa(opde) != pmap->pm_pdirpa) {
 		s = splvm();
 		/* Make recursive entry usable in user PGD */
-		xpq_queue_pte_update((void *)xpmap_ptom(pmap->pm_pdirpa +
+		xpq_queue_pte_update(xpmap_ptom(pmap->pm_pdirpa +
 		    PDIR_SLOT_PTE * sizeof(pd_entry_t)), npde);
-		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(APDP_PDE),
-		    npde);
+		xpq_queue_pte_update(xpmap_ptetomach(APDP_PDE), npde);
 		xpq_queue_invlpg((vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE]);
 		xpq_flush_queue();
 		if (pmap_valid_entry(opde))
@@ -871,8 +870,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 #ifdef DOM0OPS
 	if (pa < pmap_pa_start || pa >= pmap_pa_end) {
 #ifdef DEBUG
-		printk("pmap_kenter_pa: pa 0x%lx for va 0x%lx outside range\n",
-		    pa, va);
+		printk("pmap_kenter_pa: pa 0x%" PRIx64 " for va 0x%" PRIx64
+		    " outside range\n", (int64_t)pa, (int64_t)va);
 #endif /* DEBUG */
 		npte = pa;
 	} else
@@ -1361,8 +1360,8 @@ pmap_prealloc_lowmem_ptps(void)
 			HYPERVISOR_update_va_mapping (newp + KERNBASE,
 			    xpmap_ptom_masked(newp) | PG_u | PG_V, UVMF_INVLPG);
 		xpq_queue_pte_update (
-			(pt_entry_t *) (xpmap_ptom_masked(pdes_pa)
-			+ (pl_i(0, level) * sizeof (pd_entry_t))),
+			xpmap_ptom_masked(pdes_pa)
+			+ (pl_i(0, level) * sizeof (pd_entry_t)),
 			xpmap_ptom_masked(newp) | PG_RW | PG_u | PG_V);
 		level--;
 		if (level <= 1)
@@ -1837,7 +1836,7 @@ pmap_pdp_dtor(void *arg, void *object)
 	/* unpin page table */
 	xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
 	/* Set page RW again */
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), *pte | PG_RW);
+	xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
 	xpq_queue_invlpg((vaddr_t)object);
 	xpq_flush_queue();
 	splx(s);
@@ -2298,11 +2297,11 @@ pmap_load(void)
 		 * user cr3
 		 */
 		int i, s;
-		pd_entry_t *pgd, *addr;
+		pd_entry_t *pgd;
+		paddr_t addr;
 		s = splvm();
 		pgd  = (pd_entry_t *) pmap->pm_pdir;
-		addr = (pd_entry_t *)
-		    xpmap_ptom(pmap_kernel()->pm_pdirpa);
+		addr = xpmap_ptom(pmap_kernel()->pm_pdirpa);
 		for (i = 0; i < PDIR_SLOT_PTE; i++, addr++)
 			xpq_queue_pte_update(addr, pgd[i]);
 		xpq_flush_queue(); /* XXXtlb */
@@ -3527,7 +3526,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			int s = splvm();
 			opte = *ptep;
 			error = xpq_update_foreign(
-			    (pt_entry_t *)vtomach((vaddr_t)ptep), npte, domid);
+			    vtomach((vaddr_t)ptep), npte, domid);
 			splx(s);
 			if (error)
 			    goto out;
@@ -3555,8 +3554,8 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			if (pg == NULL)
 				panic("pmap_enter: same pa PG_PVLIST "
 				      "mapping with unmanaged page "
-				      "pa = 0x%lx (0x%lx)", pa,
-				      atop(pa));
+				      "pa = 0x%" PRIx64 " (0x%" PRIx64 ")",
+				      (int64_t)pa, (int64_t)atop(pa));
 #endif
 			mdpg = &pg->mdpage;
 			old_pvh = &mdpg->mp_pvhead;
@@ -3617,7 +3616,8 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			if (pg == NULL)
 				panic("pmap_enter: PG_PVLIST mapping with "
 				      "unmanaged page "
-				      "pa = 0x%lx (0x%lx)", pa, atop(pa));
+				      "pa = 0x%" PRIx64 " (0x%" PRIx64 ")",
+				      (int64_t)pa, (int64_t)atop(pa));
 #endif
 			mdpg = &pg->mdpage;
 			old_pvh = &mdpg->mp_pvhead;
@@ -3630,8 +3630,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 				int s = splvm();
 				opte = *ptep;
 				error = xpq_update_foreign(
-				    (pt_entry_t *)vtomach((vaddr_t)ptep),
-				    npte, domid);
+				    vtomach((vaddr_t)ptep), npte, domid);
 				if (error) {
 					pmap->pm_stats.wired_count -=
 					    ((npte & PG_W) ? 1 : 0 -
@@ -3671,8 +3670,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (domid != DOMID_SELF) {
 		int s = splvm();
 		opte = *ptep;
-		error = xpq_update_foreign((pt_entry_t *)vtomach((vaddr_t)ptep),
-		    npte, domid);
+		error = xpq_update_foreign(vtomach((vaddr_t)ptep), npte, domid);
 		splx(s);
 		if (error) {
 			if (pmap_valid_entry(opte)) {
@@ -3815,8 +3813,8 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 			pmap_get_physpage(va, level - 1, &pa);
 #ifdef XEN
 			xpq_queue_pte_update((level == PTP_LEVELS) ?
-			    (pt_entry_t *)xpmap_ptom(pmap_kernel()->pm_pdirpa + sizeof(pt_entry_t) * i) :
-			    (pt_entry_t *)xpmap_ptetomach(&pdep[i]),
+			    xpmap_ptom(pmap_kernel()->pm_pdirpa + sizeof(pt_entry_t) * i) :
+			    xpmap_ptetomach(&pdep[i]),
 			    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
 #else
 			pdep[i] = pa | PG_RW | PG_V;
@@ -3896,7 +3894,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 			    pdkidx < PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1];
 			    pdkidx++) {
 				xpq_queue_pte_update(
-				    (void *)xpmap_ptom(pm->pm_pdirpa +
+				    xpmap_ptom(pm->pm_pdirpa +
 				    pdkidx * sizeof(pd_entry_t)),
 				    kpm->pm_pdir[pdkidx]);
 			}
