@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.26 2008/01/13 07:26:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.27 2008/01/13 11:34:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2008/01/13 07:26:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.27 2008/01/13 11:34:18 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2529,6 +2529,7 @@ pmap_extract_ma(pmap, va, pap)
  
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (!pmap_pdes_valid(va, pdes, &pde)) {
+		pmap_unmap_ptes(pmap, pmap2);
 		return false;
 	}
  
