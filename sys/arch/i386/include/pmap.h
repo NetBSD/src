@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97.6.2 2008/01/13 11:26:57 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.6.3 2008/01/13 19:02:05 bouyer Exp $	*/
 
 /*
  *
@@ -93,9 +93,10 @@
  * see pte.h for a description of i386 MMU terminology and hardware
  * interface.
  *
- * a pmap describes a processes' 4GB virtual address space.  this
- * virtual address space can be broken up into 1024 4MB regions which
- * are described by PDEs in the PDP.  the PDEs are defined as follows:
+ * a pmap describes a processes' 4GB virtual address space.  when PAE
+ * is not in use, this virtual address space can be broken up into 1024 4MB
+ * regions which are described by PDEs in the PDP.  the PDEs are defined as
+ * follows:
  *
  * (ranges are inclusive -> exclusive, just like vm_map_entry start/end)
  * (the following assumes that KERNBASE is 0xc0000000)
@@ -179,6 +180,22 @@
  *
  * note that in the APTE_BASE space, the APDP appears at VA
  * "APDP_BASE" (0xfffff000).
+ *
+ * When PAE is in use, the L3 page directory breaks up the address space in
+ * 4 1GB * regions, each of them broken in 512 2MB regions by the L2 PD
+ * (the size of the pages at the L1 level is still 4K).
+ * The kernel virtual space is mapped by the last entry in the L3 page,
+ * the first 3 entries mapping the user VA space.
+ * Because the L3 has only 4 entries of 1GB each, we can't use recursive
+ * mappings at this level for PDP_PDE and APDP_PDE (this would eat 2 of the
+ * 4GB virtual space). There's also restrictions imposed by Xen on the
+ * last entry of the L3 PD, which makes it hard to use one L3 page per pmap
+ * switch %cr3 to switch pmaps. So we use one static L3 page which is
+ * always loaded in %cr3, and we use it as 2 virtual PD pointers: one for
+ * kenrel space (L3[3], always loaded), and one for user space (in fact the
+ * first 3 entries of the L3 PD), and we claim the VM has only a 2-level
+ * PTP (with the L2 index extended by 2 bytes).
+ * PTE_BASE and APTE_BASE will need 4 entries in the L2 page table.
  */
 /* XXX MP should we allocate one APDP_PDE per processor?? */
 
@@ -195,15 +212,21 @@
 /*
  * the following defines identify the slots used as described above.
  */
-
-#define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1)	/* 767: for recursive PDP map */
-#define L2_SLOT_KERN	(KERNBASE/NBPD_L2)	/* 768: start of kernel space */
+#ifdef PAE
+#define L2_SLOT_PTE	(KERNBASE/NBPD_L2-4) /* 1532: for recursive PDP map */
+#define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 1536: start of kernel space */
+#define	L2_SLOT_KERNBASE L2_SLOT_KERN
+#define L2_SLOT_APTE	3752                 /* 3756-3839 reserved by Xen */
+#else /* PAE */
+#define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1) /* 767: for recursive PDP map */
+#define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 768: start of kernel space */
 #define	L2_SLOT_KERNBASE L2_SLOT_KERN
 #ifndef XEN
-#define L2_SLOT_APTE	1023		/* 1023: alternative recursive slot */
+#define L2_SLOT_APTE	1023		 /* 1023: alternative recursive slot */
 #else
 #define L2_SLOT_APTE	1007		/* 1008-1023 reserved by Xen */
 #endif
+#endif /* PAE */
 
 
 #define PDIR_SLOT_KERN	L2_SLOT_KERN
@@ -243,7 +266,11 @@
 #define NKL2_START_ENTRIES	0	/* XXX computed on runtime */
 #define NKL1_START_ENTRIES	0	/* XXX unused */
 
+#ifdef PAE
+#define NTOPLEVEL_PDES		(PAGE_SIZE * 4 / (sizeof (pd_entry_t)))
+#else
 #define NTOPLEVEL_PDES		(PAGE_SIZE / (sizeof (pd_entry_t)))
+#endif
 
 #define NPDPG			(PAGE_SIZE / sizeof (pd_entry_t))
 
@@ -352,11 +379,5 @@ struct trapframe;
 
 int	pmap_exec_fixup(struct vm_map *, struct trapframe *, struct pcb *);
 void	pmap_ldt_cleanup(struct lwp *);
-
-#ifdef XEN
-#define NKPTP_MIN       4       /* smallest value we allow */
-#define NKPTP_MAX       4
-#endif /* XXX has to die ! */
-
 
 #endif	/* _I386_PMAP_H_ */
