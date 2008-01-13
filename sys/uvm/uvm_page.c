@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.127 2008/01/02 11:49:19 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.128 2008/01/13 16:46:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.127 2008/01/02 11:49:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.128 2008/01/13 16:46:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1332,10 +1332,8 @@ uvm_pagefree(struct vm_page *pg)
 #endif /* DEBUG */
 
 	KASSERT((pg->flags & PG_PAGEOUT) == 0);
-	KASSERT(mutex_owned(&uvm_pageqlock) ||
-		!uvmpdpol_pageisqueued_p(pg));
-	KASSERT(pg->uobject == NULL ||
-		mutex_owned(&pg->uobject->vmobjlock));
+	KASSERT(mutex_owned(&uvm_pageqlock) || !uvmpdpol_pageisqueued_p(pg));
+	KASSERT(pg->uobject == NULL || mutex_owned(&pg->uobject->vmobjlock));
 	KASSERT(pg->uobject != NULL || pg->uanon == NULL ||
 		mutex_owned(&pg->uanon->an_lock));
 
@@ -1472,8 +1470,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 		KASSERT(pg->uobject == NULL ||
 		    mutex_owned(&pg->uobject->vmobjlock));
 		KASSERT(pg->uobject != NULL ||
-		    (pg->uanon != NULL &&
-		    mutex_owned(&pg->uanon->an_lock)));
+		    (pg->uanon != NULL && mutex_owned(&pg->uanon->an_lock)));
 
 		KASSERT(pg->flags & PG_BUSY);
 		KASSERT((pg->flags & PG_PAGEOUT) == 0);
