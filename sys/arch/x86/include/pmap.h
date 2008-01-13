@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6.2.4 2008/01/10 23:44:07 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.5 2008/01/13 11:26:58 bouyer Exp $	*/
 
 /*
  *
@@ -352,7 +352,7 @@ void	sse2_copy_page(void *, void *);
 
 #define XPTE_MASK	L1_FRAME
 /* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(PAE)
 #define XPTE_SHIFT	9
 #else
 #define XPTE_SHIFT	10
@@ -388,7 +388,7 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 {
         int s = splvm();
 
-        xpq_queue_pte_update((pt_entry_t *) xpmap_ptetomach(pte), npte);
+        xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
         xpq_flush_queue();
         splx(s);
 }

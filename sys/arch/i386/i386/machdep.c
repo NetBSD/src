@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.617.2.8 2008/01/11 18:04:04 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.617.2.9 2008/01/13 11:26:56 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.8 2008/01/11 18:04:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.9 2008/01/13 11:26:56 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1895,7 +1895,7 @@ void
 initgdt(union descriptor *tgdt)
 {
 #ifdef XEN
-	paddr_t	frames[16];
+	u_long	frames[16];
 #else
 	struct region_descriptor region;
 	gdt = tgdt;
@@ -2154,7 +2154,7 @@ init386(paddr_t first_avail)
 	avail_start = 6 * PAGE_SIZE;
 #else /* !XEN */
 	/* steal one page for gdt */
-	gdt = (void *)(first_avail + KERNBASE);
+	gdt = (void *)((u_long)first_avail + KERNBASE);
 	first_avail += PAGE_SIZE;
 	/* Make sure the end of the space used by the kernel is rounded. */
 	first_avail = round_page(first_avail);
