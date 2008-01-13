@@ -42,6 +42,12 @@ enum amd64_regnum
   AMD64_RBP_REGNUM,		/* %rbp */
   AMD64_RSP_REGNUM,		/* %rsp */
   AMD64_R8_REGNUM = 8,		/* %r8 */
+  AMD64_R9_REGNUM,		/* %r9 */
+  AMD64_R10_REGNUM,		/* %r10 */
+  AMD64_R11_REGNUM,		/* %r11 */
+  AMD64_R12_REGNUM,		/* %r12 */
+  AMD64_R13_REGNUM,		/* %r13 */
+  AMD64_R14_REGNUM,		/* %r14 */
   AMD64_R15_REGNUM = 15,	/* %r15 */
   AMD64_RIP_REGNUM,		/* %rip */
   AMD64_EFLAGS_REGNUM,		/* %eflags */
