@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.17.6.2 2008/01/13 11:26:59 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.17.6.3 2008/01/13 18:57:25 bouyer Exp $	*/
 
 /*
  *
@@ -34,6 +34,7 @@
 
 #ifndef _XEN_XENPMAP_H_
 #define _XEN_XENPMAP_H_
+#include "opt_xen.h"
 
 #define	INVALID_P2M_ENTRY	(~0UL)
 
@@ -106,7 +107,11 @@ MULTI_update_va_mapping(
 	mcl->args[2] = flags;
 #else
 	mcl->args[1] = (new_val & 0xffffffff);
+#ifdef PAE
 	mcl->args[2] = (new_val >> 32);
+#else
+	mcl->args[2] = 0;
+#endif
 	mcl->args[3] = flags;
 #endif
 }
@@ -124,7 +129,11 @@ MULTI_update_va_mapping_otherdomain(
 	mcl->args[3] = domid;
 #else
 	mcl->args[1] = (new_val & 0xffffffff);
+#ifdef PAE
 	mcl->args[2] = (new_val >> 32);
+#else
+	mcl->args[2] = 0;
+#endif
 	mcl->args[3] = flags;
 	mcl->args[4] = domid;
 #endif
