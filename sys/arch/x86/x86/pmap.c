@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.25 2008/01/12 09:10:24 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.26 2008/01/13 07:26:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.25 2008/01/12 09:10:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.26 2008/01/13 07:26:32 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -556,6 +556,32 @@ static bool		 pmap_reactivate(struct pmap *);
 /*
  * p m a p   h e l p e r   f u n c t i o n s
  */
+
+static inline void
+pmap_stats_update(struct pmap *pmap, int resid_diff, int wired_diff)
+{
+
+	if (pmap == pmap_kernel()) {
+		atomic_add_long(&pmap->pm_stats.resident_count, resid_diff);
+		atomic_add_long(&pmap->pm_stats.wired_count, wired_diff);
+	} else {
+		KASSERT(mutex_owned(&pmap->pm_lock));
+		pmap->pm_stats.resident_count += resid_diff;
+		pmap->pm_stats.wired_count += wired_diff;
+	}
+}
+
+static inline void
+pmap_stats_update_bypte(struct pmap *pmap, pt_entry_t npte, pt_entry_t opte)
+{
+	int resid_diff = ((npte & PG_V) ? 1 : 0) - ((opte & PG_V) ? 1 : 0);
+	int wired_diff = ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
+
+	KASSERT((npte & (PG_V | PG_W)) != PG_W);
+	KASSERT((opte & (PG_V | PG_W)) != PG_W);
+
+	pmap_stats_update(pmap, resid_diff, wired_diff);
+}
 
 /*
  * pmap_is_curpmap: is this pmap the one currently loaded [in %cr3]?
@@ -1570,7 +1596,7 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level,
 	lidx = level - 1;
 
 	obj = &pmap->pm_obj[lidx];
-	pmap->pm_stats.resident_count--;
+	pmap_stats_update(pmap, -1, 0);
 	if (lidx != 0)
 		mutex_enter(&obj->vmobjlock);
 	if (pmap->pm_ptphint[lidx] == ptp)
@@ -1700,7 +1726,7 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
 		}
 #endif /* XEN && __x86_64__ */
 		pmap_pte_flush();
-		pmap->pm_stats.resident_count++;
+		pmap_stats_update(pmap, 1, 0);
 		/*
 		 * If we're not in the top level, increase the
 		 * wire count of the parent page.
@@ -2702,9 +2728,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		pmap_exec_account(pmap, startva, opte, 0);
 		KASSERT(pmap_valid_entry(opte));
 
-		if (opte & PG_W)
-			pmap->pm_stats.wired_count--;
-		pmap->pm_stats.resident_count--;
+		pmap_stats_update_bypte(pmap, 0, opte);
 		xpte |= opte;
 
 		if (ptp) {
@@ -2785,9 +2809,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	pmap_exec_account(pmap, va, opte, 0);
 	KASSERT(pmap_valid_entry(opte));
 
-	if (opte & PG_W)
-		pmap->pm_stats.wired_count--;
-	pmap->pm_stats.resident_count--;
+	pmap_stats_update_bypte(pmap, 0, opte);
 
 	if (opte & PG_U)
 		pmap_tlb_shootdown(pmap, va, 0, opte);
@@ -3541,8 +3563,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		 * change since we are replacing/changing a valid mapping.
 		 * wired count might change...
 		 */
-		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
+		pmap_stats_update_bypte(pmap, npte, opte);
 
 		/*
 		 * if this is on the PVLIST, sync R/M bit
@@ -3594,6 +3615,8 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		new_pvh = NULL;
 	}
 
+	pmap_stats_update_bypte(pmap, npte, opte);
+
 	/*
 	 * is there currently a valid mapping at our VA?
 	 */
@@ -3603,14 +3626,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		/*
 		 * changing PAs: we must remove the old one first
 		 */
-
-		/*
-		 * first, calculate pm_stats updates.  resident count will not
-		 * change since we are replacing/changing a valid mapping.
-		 * wired count might change...
-		 */
-		pmap->pm_stats.wired_count +=
-		    ((npte & PG_W) ? 1 : 0 - (opte & PG_W) ? 1 : 0);
 
 		if (opte & PG_PVLIST) {
 			pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte));
@@ -3633,15 +3648,13 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 				error = xpq_update_foreign(
 				    (pt_entry_t *)vtomach((vaddr_t)ptep),
 				    npte, domid);
+				splx(s);
 				if (error) {
-					pmap->pm_stats.wired_count -=
-					    ((npte & PG_W) ? 1 : 0 -
-					    (opte & PG_W) ? 1 : 0);
-					splx(s);
 					mutex_spin_exit(&old_pvh->pvh_lock);
+					pmap_stats_update_bypte(pmap, opte,
+					    npte);
 					goto out;
 				}
-				splx(s);
 			} else
 #endif /* XEN */
 				opte = pmap_pte_testset(ptep, npte); /* zap !*/
@@ -3660,9 +3673,6 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			goto shootdown_test;
 		}
 	} else {	/* opte not valid */
-		pmap->pm_stats.resident_count++;
-		if (wired) 
-			pmap->pm_stats.wired_count++;
 		if (ptp)
 			ptp->wire_count++;
 	}
@@ -3676,14 +3686,8 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		    npte, domid);
 		splx(s);
 		if (error) {
-			if (pmap_valid_entry(opte)) {
-				pmap->pm_stats.wired_count -=
-				    ((npte & PG_W) ? 1 : 0 -
-				    (opte & PG_W) ? 1 : 0);
-			} else {	/* opte not valid */
-				pmap->pm_stats.resident_count--;
-				if (wired) 
-					pmap->pm_stats.wired_count--;
+			pmap_stats_update_bypte(pmap, opte, npte);
+			if (!pmap_valid_entry(opte)) {
 				if (ptp)
 					ptp->wire_count--;
 			}
@@ -3778,7 +3782,7 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
 		ptp->wire_count = 1;
 		*paddrp = VM_PAGE_TO_PHYS(ptp);
 	}
-	kpm->pm_stats.resident_count++;
+	pmap_stats_update(kpm, 1, 0);
 	return true;
 }
 
