@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.52 2008/01/12 20:57:26 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.53 2008/01/13 02:43:53 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -109,23 +109,6 @@
 	bic	r14, r14, #(I32_bit) ; \
 	msr	cpsr_c, r14 ; \
 
-/*
- * These are used for switching the translation table/DACR.
- * Since the vector page can be invalid for a short time, we must
- * disable both regular IRQs *and* FIQs.
- *
- * XXX: This is not necessary if the vector table is relocated.
- */
-#define IRQdisableALL \
-	mrs	r14, cpsr ; \
-	orr	r14, r14, #(I32_bit | F32_bit) ; \
-	msr	cpsr_c, r14
-
-#define IRQenableALL \
-	mrs	r14, cpsr ; \
-	bic	r14, r14, #(I32_bit | F32_bit) ; \
-	msr	cpsr_c, r14
-
 	.text
 
 #ifdef MULTIPROCESSOR
@@ -145,9 +128,6 @@
 	.word	_C_LABEL(curpcb)
 #endif
 
-.Lcpufuncs:	
-	.word	_C_LABEL(cpufuncs)
-	
 #ifndef MULTIPROCESSOR
 	.data
 	.global	_C_LABEL(curpcb)
@@ -250,13 +230,9 @@ ENTRY(cpu_switchto)
 	/* Get the user structure for the new process in r9 */
 	ldr	r9, [r6, #(L_ADDR)]
 
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
+	/* fetch sp for the undefined instruction trap. */
         mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
+        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
 
 	str	sp, [r8, #(PCB_UND_SP)]
@@ -280,14 +256,11 @@ ENTRY(cpu_switchto)
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r9 = new PCB */
+	/* rem: interrupts are enabled */
 
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
+	/* set sp for the undefined instruction trap. */
         mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE)
+        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
 
 	ldr	sp, [r9, #(PCB_UND_SP)]
@@ -322,9 +295,6 @@ ENTRY(cpu_switchto)
 	add	r0, r0, #(USER_SIZE) & 0xff00 
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
-
-	/* We can enable interrupts again */
-	IRQenableALL
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
