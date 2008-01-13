@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.112 2007/01/16 17:32:04 hubertf Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.113 2008/01/13 16:39:07 dholland Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.112 2007/01/16 17:32:04 hubertf Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.113 2008/01/13 16:39:07 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -229,6 +229,7 @@ static int countones __P((struct sockaddr *));
 static int get_isoaddr __P((const char *, size_t, char *, struct grouplist *));
 #endif
 static void bind_resv_port __P((int, sa_family_t, in_port_t));
+static void no_nfs(int);
 static struct exportlist *exphead;
 static struct mountlist *mlhead;
 static struct grouplist *grphead;
@@ -336,6 +337,7 @@ main(argc, argv)
 	else
 		exname = _PATH_EXPORTS;
 	openlog("mountd", LOG_PID | (debug ? LOG_PERROR : 0), LOG_DAEMON);
+	(void)signal(SIGSYS, no_nfs);
 
 	s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
 	if (s < 0)
@@ -2617,4 +2619,12 @@ bind_resv_port(int sock, sa_family_t family, in_port_t port)
 	}
 	if (bindresvport_sa(sock, sa) == -1)
 		syslog(LOG_ERR, "Cannot bind to reserved port %d (%m)", port);
+}
+
+/* ARGSUSED */
+static void
+no_nfs(int sig)
+{
+	syslog(LOG_ERR, "kernel NFS support not present; exiting");
+	exit(1);
 }
