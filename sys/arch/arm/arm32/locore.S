@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.20 2008/01/12 20:50:24 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.21 2008/01/13 13:42:58 skrll Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -213,8 +213,8 @@ ENTRY_NP(abort)
 	b	_C_LABEL(abort)
 
 /*
- * part of doing a system dump, we need to save registers and cpsr onto the
- * stack, then save the rest of the registers into the dumppcb
+ * Part of doing a system dump, we need to save a switchframe onto the
+ * stack, then save the rest of the registers into the dumppcb.
  */
 ENTRY(dumpsys)
 	/* push registers onto stack */
