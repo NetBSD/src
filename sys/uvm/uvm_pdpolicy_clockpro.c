@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.10 2008/01/02 11:49:20 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.11 2008/01/13 16:28:41 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.10 2008/01/02 11:49:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.11 2008/01/13 16:28:41 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -440,16 +440,25 @@ nonresident_getbucket(objid_t obj, off_t idx)
 static void
 nonresident_rotate(struct bucket *b)
 {
+	int cycle;
+	int cur;
 
-	while (b->cycle - cycle_target < 0) {
-		if (b->pages[b->cur] != NONRES_COOKIE_INVAL) {
+	cycle = b->cycle;
+	cur = b->cur;
+	while (cycle - cycle_target < 0) {
+		if (b->pages[cur] != NONRES_COOKIE_INVAL) {
 			PDPOL_EVCNT_INCR(nreshandhot);
 			COLDTARGET_ADJ(-1);
 		}
-		b->pages[b->cur] = NONRES_COOKIE_INVAL;
-		b->cur = (b->cur + 1) % BUCKETSIZE;
-		b->cycle++;
+		b->pages[cur] = NONRES_COOKIE_INVAL;
+		cur++;
+		if (cur == BUCKETSIZE) {
+			cur = 0;
+		}
+		cycle++;
 	}
+	b->cycle = cycle;
+	b->cur = cur;
 }
 
 static bool
