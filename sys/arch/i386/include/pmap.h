@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97.6.1 2007/12/11 23:02:56 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.6.2 2008/01/13 11:26:57 bouyer Exp $	*/
 
 /*
  *
@@ -269,7 +269,11 @@
  * Number of PTE's per cache line.  4 byte pte, 32-byte cache line
  * Used to avoid false sharing of cache lines.
  */
+#ifdef PAE
+#define NPTECL		4
+#else
 #define NPTECL		8
+#endif
 
 #include <x86/pmap.h>
 
@@ -300,7 +304,7 @@ static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), npte);
+	xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
 	splx(s);
 }
 
@@ -309,7 +313,7 @@ pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
 	pt_entry_t opte = *pte;
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    npte);
 	xpq_flush_queue();
 	splx(s);
@@ -320,8 +324,7 @@ static __inline void
 pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
-	    (*pte) | bits);
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), (*pte) | bits);
 	xpq_flush_queue();
 	splx(s);
 }
@@ -330,7 +333,7 @@ static __inline void
 pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {	
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    (*pte) & ~bits);
 	xpq_flush_queue();
 	splx(s);

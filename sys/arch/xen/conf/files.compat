@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.15.6.1 2008/01/07 00:34:53 bouyer Exp $
+#	$NetBSD: files.compat,v 1.15.6.2 2008/01/13 11:26:59 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -8,7 +8,7 @@
 # MTRR support
 defflag                 MTRR
 
-defflag opt_xen.h		XEN XEN3
+defflag opt_xen.h		XEN XEN3 PAE
 
 
 # XXX define fake options to make config create the .h files

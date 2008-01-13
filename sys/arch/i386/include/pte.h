@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.16 2007/10/18 15:28:37 yamt Exp $	*/
+/*	$NetBSD: pte.h,v 1.16.8.1 2008/01/13 11:26:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -77,9 +77,12 @@
 
 #ifndef _I386_PTE_H_
 #define _I386_PTE_H_
+#ifdef _KERNEL_OPT
+#include "opt_xen.h"
+#endif
 
 /*
- * i386 MMU hardware structure:
+ * i386 MMU hardware structure (without PAE extention):
  *
  * the i386 MMU is a two-level MMU which maps 4GB of virtual memory.
  * the pagesize is 4K (4096 [0x1000] bytes), although newer pentium
@@ -160,6 +163,9 @@
  *    is mapped into all processes at the same place it does not make 
  *    sense to flush these entries when switching from one process'
  *    pmap to another.
+ *
+ * when using the PAE extention, the hardware structure is the amd64 one,
+ * but with only 3 levels.
  */
 
 #if !defined(_LOCORE)
@@ -167,9 +173,13 @@
 /*
  * here we define the data types for PDEs and PTEs
  */
-
+#ifdef PAE
+typedef uint64_t pd_entry_t;		/* PDE */
+typedef uint64_t pt_entry_t;		/* PTE */
+#else
 typedef uint32_t pd_entry_t;		/* PDE */
 typedef uint32_t pt_entry_t;		/* PTE */
+#endif
 
 #endif
 
@@ -207,9 +217,15 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define PG_AVAIL1	0x00000200	/* ignored by hardware */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
-#define	PG_FRAME	0xfffff000	/* page frame mask */
 
+#ifdef PAE
+#define	PG_FRAME	0x000ffffffffff000ULL /* page frame mask */
+#define	PG_LGFRAME	0x000fffffffe00000ULL /* large (2MB) page frame mask */
+#else
+#define	PG_FRAME	0xfffff000	/* page frame mask */
 #define	PG_LGFRAME	0xffc00000	/* large (4MB) page frame mask */
+#endif
+
 
 /*
  * various short-hand protection codes

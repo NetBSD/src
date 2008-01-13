@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.1.2.1 2008/01/10 13:05:56 bouyer Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.1.2.2 2008/01/13 11:27:00 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,6 +61,8 @@
 /*
  * Assembler stubs for hyper-calls.
  */
+
+#include <machine/pte.h> /* pt_entry_t */
 
 #ifndef XEN3
 #ifndef PAGE_SHIFT
@@ -267,14 +269,20 @@ HYPERVISOR_memory_op(unsigned int cmd, void *arg)
 }
 
 static __inline int
-HYPERVISOR_update_va_mapping(unsigned long page_nr, unsigned long new_val,
+HYPERVISOR_update_va_mapping(unsigned long page_nr, pt_entry_t new_val,
     unsigned long flags)
 {
     int ret;
     unsigned long ign1, ign2, ign3, ign4;
+    unsigned long pte_low, pte_hi;
+
+    pte_low = new_val & 0xffffffff;
+    pte_hi = new_val >> 32;
+    printk("HYPERVISOR_update_va_mapping low 0x%lx hi 0x%lx\n", pte_low,
+	pte_hi);
 
     _hypercall(__HYPERVISOR_update_va_mapping,
-	_harg("1" (page_nr), "2" (new_val), "3" (0), "4" (flags)),
+	_harg("1" (page_nr), "2" (pte_low), "3" (pte_hi), "4" (flags)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4)));
 
 #ifdef notdef
@@ -313,13 +321,17 @@ HYPERVISOR_grant_table_op(unsigned int cmd, void *uop, unsigned int count)
 
 static __inline int
 HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
-    unsigned long new_val, unsigned long flags, domid_t domid)
+    pt_entry_t new_val, unsigned long flags, domid_t domid)
 {
     int ret;
     unsigned long ign1, ign2, ign3, ign4, ign5;
+    unsigned long pte_low, pte_hi;
+
+    pte_low = new_val & 0xffffffff;
+    pte_hi = new_val >> 32;
 
     _hypercall(__HYPERVISOR_update_va_mapping_otherdomain,
-	_harg("1" (page_nr), "2" (new_val), "3" (0), "4" (flags), "5" (domid)),
+	_harg("1" (page_nr), "2" (pte_low), "3" (pte_hi), "4" (flags), "5" (domid)),
 	_harg("=a" (ret), "=b" (ign1), "=c" (ign2), "=d" (ign3), "=S" (ign4),
 	    "=D" (ign5)));
 
@@ -416,7 +428,7 @@ HYPERVISOR_set_timer_op(uint64_t timeout)
 
     return ret;
 }
-#else /* !XEN3 */
+#else /* XEN3 */
 static __inline int
 HYPERVISOR_mmu_update(mmu_update_t *req, int count, int *success_count)
 {
