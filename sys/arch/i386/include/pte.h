@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.16.8.1 2008/01/13 11:26:57 bouyer Exp $	*/
+/*	$NetBSD: pte.h,v 1.16.8.2 2008/01/13 19:02:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -164,8 +164,18 @@
  *    sense to flush these entries when switching from one process'
  *    pmap to another.
  *
- * when using the PAE extention, the hardware structure is the amd64 one,
- * but with only 3 levels.
+ * The PAE extention extends the size of the PTE to 64 bits (52bits physical
+ * address) and is compatible with the amd64 PTE format. The first level
+ * maps 2M, the second 1G, so a third level page table is intruduced to
+ * map the 4GB virtual address space. This PD has only 4 entries.
+ * We can't use recursive mapping at level 3 to map the PD pages, as
+ * this would eat one GB of address space. In addition, Xen impose restrictions
+ * on the entries we put in the L3 page (for example, the page pointed to by
+ * the last slot can't be shared among different L3 pages), which makes 
+ * handling this L3 page in the same way we do for L2 on i386 (or L4 on amd64)
+ * difficult. For most things we'll just pretend to have only 2 levels,
+ * with the 2 high bits of the L2 index being in fact the index in the
+ * L3.
  */
 
 #if !defined(_LOCORE)
@@ -187,7 +197,28 @@ typedef uint32_t pt_entry_t;		/* PTE */
  * now we define various for playing with virtual addresses
  */
 
-#define L1_SHIFT	12
+#ifdef PAE
+#define	L1_SHIFT	12
+#define	L2_SHIFT	21
+#define	L3_SHIFT	30
+#define	NBPD_L1		(1ULL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
+#define	NBPD_L2		(1ULL << L2_SHIFT) /* # bytes mapped by L2 ent (2MB) */
+#define	NBPD_L3		(1ULL << L3_SHIFT) /* # bytes mapped by L3 ent (1GB) */
+
+#define	L3_MASK		0xc0000000
+#define	L2_REALMASK	0x3fe00000
+#define	L2_MASK		(L2_REALMASK | L3_MASK)
+#define	L1_MASK		0x001ff000
+
+#define	L3_FRAME	(L3_MASK)
+#define	L2_FRAME	(L3_FRAME | L2_MASK)
+#define	L1_FRAME	(L2_FRAME|L1_MASK)
+
+#define	PG_FRAME	0x000ffffffffff000ULL /* page frame mask */
+#define	PG_LGFRAME	0x000fffffffe00000ULL /* large (2MB) page frame mask */
+
+#else /* PAE */
+#define	L1_SHIFT	12
 #define	L2_SHIFT	22
 #define	NBPD_L1		(1ULL << L1_SHIFT) /* # bytes mapped by L1 ent (4K) */
 #define	NBPD_L2		(1ULL << L2_SHIFT) /* # bytes mapped by L2 ent (4MB) */
@@ -198,6 +229,10 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define L2_FRAME	(L2_MASK)
 #define L1_FRAME	(L2_FRAME|L1_MASK)
 
+#define	PG_FRAME	0xfffff000	/* page frame mask */
+#define	PG_LGFRAME	0xffc00000	/* large (4MB) page frame mask */
+
+#endif /* PAE */
 /*
  * here we define the bits of the PDE/PTE, as described above:
  *
@@ -217,15 +252,6 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define PG_AVAIL1	0x00000200	/* ignored by hardware */
 #define PG_AVAIL2	0x00000400	/* ignored by hardware */
 #define PG_AVAIL3	0x00000800	/* ignored by hardware */
-
-#ifdef PAE
-#define	PG_FRAME	0x000ffffffffff000ULL /* page frame mask */
-#define	PG_LGFRAME	0x000fffffffe00000ULL /* large (2MB) page frame mask */
-#else
-#define	PG_FRAME	0xfffff000	/* page frame mask */
-#define	PG_LGFRAME	0xffc00000	/* large (4MB) page frame mask */
-#endif
-
 
 /*
  * various short-hand protection codes
