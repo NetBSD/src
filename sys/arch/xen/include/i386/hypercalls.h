@@ -1,4 +1,4 @@
-/*	$NetBSD: hypercalls.h,v 1.1.2.2 2008/01/13 11:27:00 bouyer Exp $	*/
+/*	$NetBSD: hypercalls.h,v 1.1.2.3 2008/01/13 18:57:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -277,7 +277,11 @@ HYPERVISOR_update_va_mapping(unsigned long page_nr, pt_entry_t new_val,
     unsigned long pte_low, pte_hi;
 
     pte_low = new_val & 0xffffffff;
+#ifdef PAE
     pte_hi = new_val >> 32;
+#else
+    pte_hi = 0;
+#endif
     printk("HYPERVISOR_update_va_mapping low 0x%lx hi 0x%lx\n", pte_low,
 	pte_hi);
 
@@ -328,7 +332,11 @@ HYPERVISOR_update_va_mapping_otherdomain(unsigned long page_nr,
     unsigned long pte_low, pte_hi;
 
     pte_low = new_val & 0xffffffff;
+#ifdef PAE
     pte_hi = new_val >> 32;
+#else
+    pte_hi = 0;
+#endif
 
     _hypercall(__HYPERVISOR_update_va_mapping_otherdomain,
 	_harg("1" (page_nr), "2" (pte_low), "3" (pte_hi), "4" (flags), "5" (domid)),
