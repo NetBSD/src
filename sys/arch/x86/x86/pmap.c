@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.9 2008/01/13 11:26:58 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.10 2008/01/13 12:12:59 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.9 2008/01/13 11:26:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.10 2008/01/13 12:12:59 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2300,9 +2300,9 @@ pmap_load(void)
 		pd_entry_t *pgd;
 		paddr_t addr;
 		s = splvm();
-		pgd  = (pd_entry_t *) pmap->pm_pdir;
+		pgd  = pmap->pm_pdir;
 		addr = xpmap_ptom(pmap_kernel()->pm_pdirpa);
-		for (i = 0; i < PDIR_SLOT_PTE; i++, addr++)
+		for (i = 0; i < PDIR_SLOT_PTE; i++, addr += sizeof(pd_entry_t))
 			xpq_queue_pte_update(addr, pgd[i]);
 		xpq_flush_queue(); /* XXXtlb */
 		tlbflush();
