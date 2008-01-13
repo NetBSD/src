@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2008/01/03 19:30:10 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2008/01/13 07:05:42 yamt Exp $	*/
 
 /*
  *
@@ -257,6 +257,7 @@
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PG_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
+#define pmap_pte_cas(p, o, n)		atomic_cas_64((p), (o), (n))
 #define pmap_pte_testset(p, n)		\
     atomic_swap_ulong((volatile unsigned long *)p, n)
 #define pmap_pte_setbits(p, b)		\
@@ -282,6 +283,20 @@ pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 	int s = splvm();
 	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), npte);
 	splx(s);
+}
+
+static __inline pt_entry_t
+pmap_pte_cas(pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
+{
+	int s = splvm();
+	pt_entry_t opte = *ptep;
+
+	if (opte == o) {
+		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(ptep), n);
+		xpq_flush_queue();
+	}
+	splx(s);
+	return opte;
 }
 
 static __inline pt_entry_t
