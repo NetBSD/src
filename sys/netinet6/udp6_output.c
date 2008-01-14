@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.31 2007/12/20 19:53:34 dyoung Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.32 2008/01/14 04:16:46 dyoung Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.31 2007/12/20 19:53:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.32 2008/01/14 04:16:46 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -350,7 +350,7 @@ udp6_output(struct in6pcb *in6p, struct mbuf *m, struct mbuf *addr6,
 #endif
 		ip6->ip6_nxt	= IPPROTO_UDP;
 		ip6->ip6_hlim	= in6_selecthlim(in6p,
-		    (rt = rtcache_getrt(&in6p->in6p_route)) != NULL
+		    (rt = rtcache_validate(&in6p->in6p_route)) != NULL
 		        ? rt->rt_ifp : NULL);
 		ip6->ip6_src	= *laddr;
 		ip6->ip6_dst	= *faddr;
