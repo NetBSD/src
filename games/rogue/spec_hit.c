@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_hit.c,v 1.6 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: spec_hit.c,v 1.7 2008/01/14 00:23:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)spec_hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: spec_hit.c,v 1.6 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: spec_hit.c,v 1.7 2008/01/14 00:23:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -253,7 +253,7 @@ cough_up(monster)
 		obj->what_is = GOLD;
 		obj->quantity = get_rand((cur_level * 15), (cur_level * 30));
 	} else {
-		if (!rand_percent((int) monster->drop_percent)) {
+		if (!rand_percent((int)monster->drop_percent)) {
 			return;
 		}
 		obj = gr_object();
@@ -475,7 +475,7 @@ m_confuse(monster)
 	}
 	if (rand_percent(55)) {
 		monster->m_flags &= (~CONFUSES);
-		messagef(1, "the gaze of the %s has confused you", 
+		messagef(1, "the gaze of the %s has confused you",
 			mon_name(monster));
 		cnfs();
 		return(1);

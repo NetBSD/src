@@ -1,4 +1,4 @@
-/*	$NetBSD: object.c,v 1.11 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.12 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)object.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: object.c,v 1.11 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.12 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,8 +58,8 @@ __RCSID("$NetBSD: object.c,v 1.11 2007/12/27 23:53:00 dholland Exp $");
 object level_objects;
 unsigned short dungeon[DROWS][DCOLS];
 short foods = 0;
-object *free_list = (object *) 0;
-char *fruit = (char *) 0;
+object *free_list = (object *)0;
+char *fruit = (char *)0;
 
 fighter rogue = {
 	INIT_AW,	/* armor */
@@ -229,7 +229,7 @@ plant_gold(row, col, is_maze)
 		obj->quantity += obj->quantity / 2;
 	}
 	dungeon[row][col] |= OBJECT;
-	(void) add_to_pack(obj, &level_objects, 0);
+	(void)add_to_pack(obj, &level_objects, 0);
 }
 
 void
@@ -240,7 +240,7 @@ place_at(obj, row, col)
 	obj->row = row;
 	obj->col = col;
 	dungeon[row][col] |= OBJECT;
-	(void) add_to_pack(obj, &level_objects, 0);
+	(void)add_to_pack(obj, &level_objects, 0);
 }
 
 object *
@@ -248,7 +248,7 @@ object_at(pack, row, col)
 	object *pack;
 	short row, col;
 {
-	object *obj = (object *) 0;
+	object *obj = (object *)0;
 
 	if (dungeon[row][col] & (MONSTER | OBJECT)) {
 		obj = pack->next_object;
@@ -636,7 +636,7 @@ alloc_object()
 	if (free_list) {
 		obj = free_list;
 		free_list = free_list->next_object;
-	} else if (!(obj = (object *) md_malloc(sizeof(object)))) {
+	} else if (!(obj = (object *)md_malloc(sizeof(object)))) {
 			messagef(0, "cannot allocate object, saving game");
 			save_into_file(error_file);
 			clean_up("alloc_object:  save failed");
@@ -704,7 +704,7 @@ show_objects()
 
 	while (monster) {
 		if (monster->m_flags & IMITATES) {
-			mvaddch(monster->row, monster->col, (int) monster->disguise);
+			mvaddch(monster->row, monster->col, (int)monster->disguise);
 		}
 		monster = monster->next_monster;
 	}
@@ -738,7 +738,7 @@ c_object_for_wizard()
 	char buf[80];
 
 	max = 0;
-	if (pack_count((object *) 0) >= MAX_PACK_COUNT) {
+	if (pack_count((object *)0) >= MAX_PACK_COUNT) {
 		messagef(0, "pack full");
 		return;
 	}
@@ -791,7 +791,7 @@ GIL:
 		if (get_input_line("which kind?", "", buf, sizeof(buf), "", 0, 1)) {
 			wk = get_number(buf);
 			if ((wk >= 0) && (wk <= max)) {
-				obj->which_kind = (unsigned short) wk;
+				obj->which_kind = (unsigned short)wk;
 				if (obj->what_is == RING) {
 					gr_ring(obj, 0);
 				}
@@ -806,5 +806,5 @@ GIL:
 	}
 	get_desc(obj, buf, sizeof(buf));
 	messagef(0, "%s", buf);
-	(void) add_to_pack(obj, &rogue.pack, 1);
+	(void)add_to_pack(obj, &rogue.pack, 1);
 }
