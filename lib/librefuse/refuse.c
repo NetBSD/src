@@ -1,4 +1,4 @@
-/*	$NetBSD: refuse.c,v 1.87 2007/12/27 11:39:06 pooka Exp $	*/
+/*	$NetBSD: refuse.c,v 1.88 2008/01/14 16:07:00 pooka Exp $	*/
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: refuse.c,v 1.87 2007/12/27 11:39:06 pooka Exp $");
+__RCSID("$NetBSD: refuse.c,v 1.88 2008/01/14 16:07:00 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -1185,7 +1185,7 @@ puffs_fuse_fs_statvfs(struct puffs_usermount *pu, struct statvfs *svfsb)
 		ret = fuse->op.statfs(PNPATH(puffs_getroot(pu)), svfsb);
 	}
 
-        return ret;
+        return -ret;
 }
 
 
