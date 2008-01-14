@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.63 2008/01/12 02:58:58 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.64 2008/01/14 05:00:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -400,12 +400,6 @@ static inline const struct sockaddr *
 rtcache_getdst(const struct route *ro)
 {
 	return ro->ro_sa;
-}
-
-static inline struct rtentry *
-rtcache_getrt(const struct route *ro)
-{
-	return ro->_ro_rt;
 }
 
 /* If the cache is not empty, and the cached route is still present
