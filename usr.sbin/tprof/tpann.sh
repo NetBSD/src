@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: tpann.sh,v 1.1 2008/01/14 12:47:59 yamt Exp $
+#	$NetBSD: tpann.sh,v 1.2 2008/01/14 12:49:54 yamt Exp $
 
 # /*-
 #  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
 #  * SUCH DAMAGE.
 #  */
 
-# usage: tprof -c sleep 1 | sh fmt.sh
+# usage: tprof -c sleep 1 | sh tpann.sh
 
 OBJ=/netbsd
 
