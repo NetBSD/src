@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.275 2007/12/20 20:24:49 martin Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.276 2008/01/14 04:19:10 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.275 2007/12/20 20:24:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.276 2008/01/14 04:19:10 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -268,7 +268,7 @@ nd6_hint(struct tcpcb *tp)
 	struct rtentry *rt;
 
 	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
-	    (rt = rtcache_getrt(&tp->t_in6pcb->in6p_route)) != NULL)
+	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL)
 		nd6_nud_hint(rt, NULL, 0);
 }
 #else
@@ -4435,8 +4435,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,
-				(rt = rtcache_getrt(ro)) != NULL ? rt->rt_ifp
-				                                 : NULL);
+				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
+				                                    : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;
