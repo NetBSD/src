@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.16 2008/01/05 21:47:18 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.17 2008/01/14 15:23:56 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.16 2008/01/05 21:47:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2008/01/14 15:23:56 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -905,7 +905,7 @@ cpu_suspend(device_t dv)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
-	int err;
+	int err, s;
 
 	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
@@ -917,7 +917,19 @@ cpu_suspend(device_t dv)
 	mutex_enter(&cpu_lock);
 	err = cpu_setonline(ci, false);
 	mutex_exit(&cpu_lock);
-	return err == 0;
+
+	if (err)
+		return false;
+
+	s = splhigh();
+#ifdef __i386__
+	npxsave_cpu(ci, 1);
+#else
+	fpusave_cpu(ci, 1);
+#endif
+	splx(s);
+
+	return true;
 }
 
 static bool
