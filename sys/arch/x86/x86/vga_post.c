@@ -27,6 +27,9 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.3 2008/01/14 20:20:31 xtraeme Exp $");
+
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
