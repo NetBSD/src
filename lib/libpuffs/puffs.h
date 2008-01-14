@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.103 2007/12/25 20:38:01 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.104 2008/01/14 13:57:27 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -262,6 +262,9 @@ enum {
 /* blocking mode argument */
 #define PUFFSDEV_BLOCK 0
 #define PUFFSDEV_NONBLOCK 1
+
+#define PUFFS_STACKSIZE_DEFAULT (1<<PUFFS_CC_STACKSHIFT_DEFAULT)
+#define PUFFS_STACKSIZE_MIN ((size_t)-1)
 
 #define		DENT_DOT	0
 #define		DENT_DOTDOT	1
