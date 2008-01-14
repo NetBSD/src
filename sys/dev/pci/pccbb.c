@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.160 2008/01/02 23:11:34 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.161 2008/01/14 03:01:41 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.160 2008/01/02 23:11:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.161 2008/01/14 03:01:41 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -529,6 +529,12 @@ pccbbdetach(device_t self, int flags)
 
 	if ((rc = config_detach_children(self, flags)) != 0)
 		return rc;
+
+	if (!LIST_EMPTY(&sc->sc_pil)) {
+		panic("%s: interrupt handlers still registered",
+		    device_xname(&sc->sc_dev));
+		return EBUSY;
+	}
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(pc, sc->sc_ih);
@@ -1650,8 +1656,8 @@ pccbb_io_open(cardbus_chipset_tag_t ct, int win, uint32_t start, uint32_t end)
 		return 0;
 	}
 
-	basereg = win * 8 + 0x2c;
-	limitreg = win * 8 + 0x30;
+	basereg = win * 8 + PCI_CB_IOBASE0;
+	limitreg = win * 8 + PCI_CB_IOLIMIT0;
 
 	DPRINTF(("pccbb_io_open: 0x%x[0x%x] - 0x%x[0x%x]\n",
 	    start, basereg, end, limitreg));
@@ -1678,8 +1684,8 @@ pccbb_io_close(cardbus_chipset_tag_t ct, int win)
 		return 0;
 	}
 
-	basereg = win * 8 + 0x2c;
-	limitreg = win * 8 + 0x30;
+	basereg = win * 8 + PCI_CB_IOBASE0;
+	limitreg = win * 8 + PCI_CB_IOLIMIT0;
 
 	pci_conf_write(sc->sc_pc, sc->sc_tag, basereg, 0);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, limitreg, 0);
@@ -1700,8 +1706,8 @@ pccbb_mem_open(cardbus_chipset_tag_t ct, int win, uint32_t start, uint32_t end)
 		return 0;
 	}
 
-	basereg = win * 8 + 0x1c;
-	limitreg = win * 8 + 0x20;
+	basereg = win * 8 + PCI_CB_MEMBASE0;
+	limitreg = win * 8 + PCI_CB_MEMLIMIT0;
 
 	pci_conf_write(sc->sc_pc, sc->sc_tag, basereg, start);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, limitreg, end);
@@ -1722,8 +1728,8 @@ pccbb_mem_close(cardbus_chipset_tag_t ct, int win)
 		return 0;
 	}
 
-	basereg = win * 8 + 0x1c;
-	limitreg = win * 8 + 0x20;
+	basereg = win * 8 + PCI_CB_MEMBASE0;
+	limitreg = win * 8 + PCI_CB_MEMLIMIT0;
 
 	pci_conf_write(sc->sc_pc, sc->sc_tag, basereg, 0);
 	pci_conf_write(sc->sc_pc, sc->sc_tag, limitreg, 0);
@@ -3180,10 +3186,10 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 	win[0].win_flags = win[1].win_flags = 0;
 
 	chainp = TAILQ_FIRST(&sc->sc_iowindow);
-	offs = 0x2c;
+	offs = PCI_CB_IOBASE0;
 	if (sc->sc_memt == bst) {
 		chainp = TAILQ_FIRST(&sc->sc_memwindow);
-		offs = 0x1c;
+		offs = PCI_CB_MEMBASE0;
 	}
 
 	if (chainp != NULL) {
