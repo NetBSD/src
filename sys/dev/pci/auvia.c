@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.61 2007/12/09 20:28:06 jmcneill Exp $	*/
+/*	$NetBSD: auvia.c,v 1.62 2008/01/14 06:32:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.61 2007/12/09 20:28:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.62 2008/01/14 06:32:10 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -975,13 +975,13 @@ auvia_build_dma_ops(struct auvia_softc *sc, struct auvia_softc_chan *ch,
 	op = ch->sc_dma_ops;
 
 	while (l) {
-		op->ptr = s;
+		op->ptr = htole32(s);
 		l = l - blksize;
 		if (!l) {
 			/* if last block */
-			op->flags = AUVIA_DMAOP_EOL | blksize;
+			op->flags = htole32(AUVIA_DMAOP_EOL | blksize);
 		} else {
-			op->flags = AUVIA_DMAOP_FLAG | blksize;
+			op->flags = htole32(AUVIA_DMAOP_FLAG | blksize);
 		}
 		s += blksize;
 		op++;
