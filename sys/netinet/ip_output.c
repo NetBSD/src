@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.190 2008/01/12 02:58:58 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.191 2008/01/14 04:19:09 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.190 2008/01/12 02:58:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.191 2008/01/14 04:19:09 dyoung Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -609,13 +609,13 @@ sendit:
 		 * if we have tunnel mode SA, we may need to ignore
 		 * IP_ROUTETOIF.
 		 */
-		if (state.ro != &iproute || rtcache_getrt(state.ro) != NULL) {
+		if (state.ro != &iproute ||
+		    rtcache_validate(state.ro) != NULL) {
 			flags &= ~IP_ROUTETOIF;
 			ro = state.ro;
 		}
 	} else
 		ro = state.ro;
-	rt = rtcache_getrt(ro);
 	dst = satocsin(state.dst);
 	if (error) {
 		/* mbuf is already reclaimed in ipsec4_output. */
@@ -643,7 +643,7 @@ sendit:
 	hlen = ip->ip_hl << 2;
 	ip_len = ntohs(ip->ip_len);
 
-	if (rt == NULL) {
+	if ((rt = rtcache_validate(ro)) == NULL) {
 		if ((flags & IP_ROUTETOIF) == 0) {
 			printf("ip_output: "
 				"can't update route after IPsec processing\n");
