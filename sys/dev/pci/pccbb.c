@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.161 2008/01/14 03:01:41 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.162 2008/01/14 06:12:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.161 2008/01/14 03:01:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.162 2008/01/14 06:12:13 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -108,8 +108,8 @@ delay_ms(int millis, void *param)
 		tsleep(param, PWAIT, "pccbb", MAX(2, hz * millis / 1000));
 }
 
-int pcicbbmatch(struct device *, struct cfdata *, void *);
-void pccbbattach(struct device *, struct device *, void *);
+int pcicbbmatch(device_t, struct cfdata *, void *);
+void pccbbattach(device_t, device_t, void *);
 int pccbbdetach(device_t, int);
 int pccbbintr(void *);
 static void pci113x_insert(void *);
@@ -216,7 +216,7 @@ void pccbb_winlist_show(struct pccbb_win_chain *);
 #endif /* rbus */
 
 /* for config_defer */
-static void pccbb_pci_callback(struct device *);
+static void pccbb_pci_callback(device_t);
 
 static bool pccbb_suspend(device_t);
 static bool pccbb_resume(device_t);
@@ -276,7 +276,7 @@ static struct cardbus_functions pccbb_funcs = {
 #endif
 
 int
-pcicbbmatch(struct device *parent, struct cfdata *match, void *aux)
+pcicbbmatch(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -383,9 +383,9 @@ cb_chipset(u_int32_t pci_id, int *flagp)
 }
 
 void
-pccbbattach(struct device *parent, struct device *self, void *aux)
+pccbbattach(device_t parent, device_t self, void *aux)
 {
-	struct pccbb_softc *sc = (void *)self;
+	struct pccbb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pcireg_t busreg, reg, sock_base;
@@ -579,7 +579,7 @@ pccbbdetach(device_t self, int flags)
 }
 
 /*
- * static void pccbb_pci_callback(struct device *self)
+ * static void pccbb_pci_callback(device_t self)
  *
  *   The actual attach routine: get memory space for YENTA register
  *   space, setup YENTA register and route interrupt.
@@ -589,9 +589,9 @@ pccbbdetach(device_t self, int flags)
  *   memory area which has already kept for another device.
  */
 static void
-pccbb_pci_callback(struct device *self)
+pccbb_pci_callback(device_t self)
 {
-	struct pccbb_softc *sc = (void *)self;
+	struct pccbb_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = sc->sc_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
@@ -961,7 +961,7 @@ pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
 #endif
 
 	/* initialize pcmcia part in pccbb_softc */
-	ph->ph_parent = (struct device *)sc;
+	ph->ph_parent = &sc->sc_dev;
 	ph->sock = sc->sc_function;
 	ph->flags = 0;
 	ph->shutdown = 0;
