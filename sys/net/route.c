@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.103 2008/01/12 02:56:30 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.104 2008/01/14 05:00:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.103 2008/01/12 02:56:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.104 2008/01/14 05:00:18 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -1194,7 +1194,7 @@ rtcache_copy(struct route *new_ro, const struct route *old_ro)
 
 	KASSERT(new_ro != old_ro);
 
-	if ((rt = rtcache_getrt(old_ro)) != NULL)
+	if ((rt = rtcache_validate(old_ro)) != NULL)
 		rt->rt_refcnt++;
 
 	if (rtcache_getdst(old_ro) == NULL ||
@@ -1225,6 +1225,7 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
     int *hitp)
 {
 	const struct sockaddr *odst;
+	struct rtentry *rt = NULL;
 
 	odst = rtcache_getdst(ro);
 
@@ -1232,17 +1233,17 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
 		;
 	else if (sockaddr_cmp(odst, dst) != 0)
 		rtcache_free(ro);
-	else if (rtcache_validate(ro) == NULL)
+	else if ((rt = rtcache_validate(ro)) == NULL)
 		rtcache_clear(ro);
 
-	if (ro->_ro_rt == NULL) {
+	if (rt == NULL) {
 		*hitp = 0;
-		rtcache_setdst(ro, dst);
-		_rtcache_init(ro, clone);
+		if (rtcache_setdst(ro, dst) == 0)
+			rt = _rtcache_init(ro, clone);
 	} else
 		*hitp = 1;
 
-	return ro->_ro_rt;
+	return rt;
 }
 
 void
