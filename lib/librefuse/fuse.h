@@ -1,4 +1,4 @@
-/* $NetBSD: fuse.h,v 1.19 2007/05/17 01:55:43 christos Exp $ */
+/* $NetBSD: fuse.h,v 1.20 2008/01/14 20:46:11 pooka Exp $ */
 
 /*
  * Copyright © 2007 Alistair Crooks.  All rights reserved.
@@ -147,7 +147,6 @@ struct fuse_operations {
 	int	(*lock)(const char *, struct fuse_file_info *, int, struct flock *);
 	int	(*utimens)(const char *, const struct timespec *);
 	int	(*bmap)(const char *, size_t , uint64_t *);
-	struct puffs_ops	puffs_ops;	/* pointer to puffs operations */
 };
 
 
