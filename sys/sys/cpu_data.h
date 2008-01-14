@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.14 2007/11/06 00:42:44 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.15 2008/01/14 12:40:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ struct lwp;
 
 #include <sys/sched.h>	/* for schedstate_percpu */
 #include <sys/condvar.h>
+#include <sys/percpu_types.h>
 
 /*
  * MI per-cpu data
@@ -90,6 +91,7 @@ struct cpu_data {
 	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
 	u_int		cpu_uarea_cnt;		/* count of free uareas */
 	vaddr_t		cpu_uarea_list;		/* free uareas */
+	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 };
 
 /* compat definitions */

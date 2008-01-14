@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.16 2007/12/22 03:26:34 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.17 2008/01/14 12:40:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.16 2007/12/22 03:26:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.17 2008/01/14 12:40:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.16 2007/12/22 03:26:34 yamt Exp $");
 #include <sys/cpu.h>
 #include <sys/cpuio.h>
 #include <sys/proc.h>
+#include <sys/percpu.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/xcall.h>
@@ -98,6 +99,7 @@ const struct cdevsw cpuctl_cdevsw = {
 kmutex_t cpu_lock;
 int	ncpu;
 int	ncpuonline;
+bool	mp_online;
 
 static struct cpu_info *cpu_infos[MAXCPUS];
 
@@ -124,6 +126,7 @@ mi_cpu_attach(struct cpu_info *ci)
 	else
 		ci->ci_data.cpu_onproc = ci->ci_data.cpu_idlelwp;
 
+	percpu_init_cpu(ci);
 	softint_init(ci);
 	xc_init_cpu(ci);
 	pool_cache_cpu_init(ci);

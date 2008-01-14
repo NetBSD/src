@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.337 2008/01/12 23:31:40 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.338 2008/01/14 12:40:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.337 2008/01/12 23:31:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.338 2008/01/14 12:40:03 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -115,6 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.337 2008/01/12 23:31:40 ad Exp $");
 #include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/percpu.h>
+#include <sys/sysctl.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
 #include <sys/sysctl.h>
@@ -273,6 +275,8 @@ main(void)
 
 	kmem_init();
 
+	percpu_init();
+
 	/* Initialize the extent manager. */
 	extent_init();
 
@@ -295,12 +299,6 @@ main(void)
 
 	/* Initialize the buffer cache */
 	bufinit();
-
-	/*
-	 * Initialize mbuf's.  Do this now because we might attempt to
-	 * allocate mbufs or mbuf clusters during autoconfiguration.
-	 */
-	mbinit();
 
 	/* Initialize sockets. */
 	soinit();
@@ -344,6 +342,12 @@ main(void)
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
+
+	/*
+	 * Initialize mbuf's.  Do this now because we might attempt to
+	 * allocate mbufs or mbuf clusters during autoconfiguration.
+	 */
+	mbinit();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
