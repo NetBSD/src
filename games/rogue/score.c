@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.13 2008/01/14 00:23:53 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.14 2008/01/14 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.13 2008/01/14 00:23:53 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.14 2008/01/14 03:50:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,9 +58,7 @@ __RCSID("$NetBSD: score.c,v 1.13 2008/01/14 00:23:53 dholland Exp $");
 #include "pathnames.h"
 
 void
-killed_by(monster, other)
-	const object *monster;
-	short other;
+killed_by(const object *monster, short other)
 {
 	const char *mechanism = "killed by something unknown (?)";
 	char mechanism_buf[128];
@@ -133,7 +131,7 @@ killed_by(monster, other)
 }
 
 void
-win()
+win(void)
 {
 	unwield(rogue.weapon);		/* disarm and relax */
 	unwear(rogue.armor);
@@ -153,12 +151,11 @@ win()
 	messagef(0, "%s", "");		/* gcc objects to just "" */
 	id_all();
 	sell_pack();
-	put_scores((object *)0, WIN);
+	put_scores(NULL, WIN);
 }
 
 void
-quit(from_intrpt)
-	boolean from_intrpt;
+quit(boolean from_intrpt)
 {
 	char buf[DCOLS];
 	short i, orow, ocol;
@@ -197,7 +194,7 @@ quit(from_intrpt)
 		clean_up(byebye_string);
 	}
 	check_message();
-	killed_by((object *)0, QUIT);
+	killed_by(NULL, QUIT);
 }
 
 /*
@@ -225,18 +222,11 @@ struct score_entry {
 
 #define NUM_SCORE_ENTRIES 10
 
-static void pad_spaces __P((char *, size_t));
-static void unpad_spaces(char *);
-static int read_score_entry __P((struct score_entry *, FILE *));
-static void write_score_entry __P((const struct score_entry *, int, FILE *));
-static void make_score __P((struct score_entry *, const object *, int));
-
+static void make_score(struct score_entry *, const object *, int);
 
 static
 void
-pad_spaces(str, len)
-	char *str;
-	size_t len;
+pad_spaces(char *str, size_t len)
 {
 	size_t x;
 	for (x=strlen(str); x<len-1; x++) {
@@ -247,8 +237,7 @@ pad_spaces(str, len)
 
 static
 void
-unpad_spaces(str)
-	char *str;
+unpad_spaces(char *str)
 {
 	size_t x;
 	for (x=strlen(str); x>0 && str[x-1]==' '; x--);
@@ -257,9 +246,7 @@ unpad_spaces(str)
 
 static
 int
-read_score_entry(se, fp)
-	struct score_entry *se;
-	FILE *fp;
+read_score_entry(struct score_entry *se, FILE *fp)
 {
 	char score_block[80];
 	char nickname_block[30];
@@ -314,10 +301,7 @@ read_score_entry(se, fp)
 
 static
 void
-write_score_entry(se, rank, fp)
-	const struct score_entry *se;
-	int rank;
-	FILE *fp;
+write_score_entry(const struct score_entry *se, int rank, FILE *fp)
 {
 	char score_block[80];
 	char nickname_block[30];
@@ -343,9 +327,7 @@ write_score_entry(se, rank, fp)
 }
 
 void
-put_scores(monster, other)
-	const object *monster;
-	short other;
+put_scores(const object *monster, short other)
 {
 	short i, rank=-1, found_player = -1, numscores = 0;
 	struct score_entry scores[NUM_SCORE_ENTRIES];
@@ -467,10 +449,7 @@ put_scores(monster, other)
 
 static
 void
-make_score(se, monster, other)
-	struct score_entry *se;
-	const object *monster;
-	int other;
+make_score(struct score_entry *se, const object *monster, int other)
 {
 	const char *death = "bolts from the blue (?)";
 	const char *hasamulet;
@@ -528,8 +507,7 @@ make_score(se, monster, other)
 }
 
 boolean
-is_vowel(ch)
-	short ch;
+is_vowel(short ch)
 {
 	return( (ch == 'a') ||
 		(ch == 'e') ||
@@ -539,7 +517,7 @@ is_vowel(ch)
 }
 
 void
-sell_pack()
+sell_pack(void)
 {
 	object *obj;
 	short row = 2, val;
@@ -571,8 +549,7 @@ sell_pack()
 }
 
 int
-get_value(obj)
-	const object *obj;
+get_value(const object *obj)
 {
 	short wc;
 	int val;
@@ -620,7 +597,7 @@ get_value(obj)
 }
 
 void
-id_all()
+id_all(void)
 {
 	short i;
 
@@ -642,9 +619,7 @@ id_all()
 }
 
 void
-xxxx(buf, n)
-	char *buf;
-	short n;
+xxxx(char *buf, short n)
 {
 	short i;
 	unsigned char c;
@@ -659,8 +634,7 @@ xxxx(buf, n)
 }
 
 long
-xxx(st)
-	boolean st;
+xxx(boolean st)
 {
 	static long f, s;
 	long r;
@@ -677,9 +651,7 @@ xxx(st)
 }
 
 void
-center(row, buf)
-	short row;
-	const char *buf;
+center(short row, const char *buf)
 {
 	short margin;
 
@@ -688,7 +660,7 @@ center(row, buf)
 }
 
 void
-sf_error()
+sf_error(void)
 {
 	md_lock(0);
 	messagef(1, "%s", "");		/* gcc objects to just "" */

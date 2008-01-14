@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.16 2008/01/14 00:23:51 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.17 2008/01/14 03:50:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.16 2008/01/14 00:23:51 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.17 2008/01/14 03:50:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -58,13 +58,20 @@ __RCSID("$NetBSD: init.c,v 1.16 2008/01/14 00:23:51 dholland Exp $");
 
 #include "rogue.h"
 
+static void do_args(int, char **);
+static void do_opts(void);
+static void env_get_value(char **, char *, boolean);
+static void init_str(char **, const char *);
+static void player_init(void);
+
+static char *rest_file = NULL;
+static boolean init_curses = 0;
+
 char login_name[MAX_OPT_LEN];
-char *nick_name = (char *)0;
-char *rest_file = 0;
+char *nick_name = NULL;
 boolean cant_int = 0;
 boolean did_int = 0;
 boolean score_only;
-boolean init_curses = 0;
 boolean save_is_interactive = 1;
 boolean ask_quit = 1;
 boolean no_skull = 0;
@@ -74,9 +81,7 @@ const char *byebye_string = "Okay, bye bye!";
 gid_t gid, egid;
 
 int
-init(argc, argv)
-	int argc;
-	char *argv[];
+init(int argc, char *argv[])
 {
 	const char *pn;
 	int seed;
@@ -110,7 +115,7 @@ init(argc, argv)
 
 	initscr();
 	if ((LINES < DROWS) || (COLS < DCOLS)) {
-		clean_up("must be played on 24 x 80 screen");
+		clean_up("must be played on at least 80 x 24 screen");
 	}
 	start_window();
 	init_curses = 1;
@@ -118,7 +123,7 @@ init(argc, argv)
 	md_heed_signals();
 
 	if (score_only) {
-		put_scores((object *)0, 0);
+		put_scores(NULL, 0);
 	}
 	seed = md_gseed();
 	(void)srrandom(seed);
@@ -130,19 +135,19 @@ init(argc, argv)
 	get_wand_and_ring_materials();
 	make_scroll_titles();
 
-	level_objects.next_object = (object *)0;
-	level_monsters.next_monster = (object *)0;
+	level_objects.next_object = NULL;
+	level_monsters.next_monster = NULL;
 	player_init();
 	ring_stats(0);
 	return(0);
 }
 
-void
-player_init()
+static void
+player_init(void)
 {
 	object *obj;
 
-	rogue.pack.next_object = (object *)0;
+	rogue.pack.next_object = NULL;
 
 	obj = alloc_object();
 	get_food(obj, 1);
@@ -187,8 +192,7 @@ player_init()
 }
 
 void
-clean_up(estr)
-	const char *estr;
+clean_up(const char *estr)
 {
 	if (save_is_interactive) {
 		if (init_curses) {
@@ -202,7 +206,7 @@ clean_up(estr)
 }
 
 void
-start_window()
+start_window(void)
 {
 	cbreak();
 	noecho();
@@ -212,14 +216,13 @@ start_window()
 }
 
 void
-stop_window()
+stop_window(void)
 {
 	endwin();
 }
 
 void
-byebye(dummy)
-	int dummy __unused;
+byebye(int dummy __unused)
 {
 	md_ignore_signals();
 	if (ask_quit) {
@@ -231,8 +234,7 @@ byebye(dummy)
 }
 
 void
-onintr(dummy)
-	int dummy __unused;
+onintr(int dummy __unused)
 {
 	md_ignore_signals();
 	if (cant_int) {
@@ -245,20 +247,17 @@ onintr(dummy)
 }
 
 void
-error_save(dummy)
-	int dummy __unused;
+error_save(int dummy __unused)
 {
 	save_is_interactive = 0;
 	save_into_file(error_file);
 	clean_up("");
 }
 
-void
-do_args(argc, argv)
-	int argc;
-	char *argv[];
+static void
+do_args(int argc, char *argv[])
 {
-	short i, j;
+	int i, j;
 
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] == '-') {
@@ -275,8 +274,8 @@ do_args(argc, argv)
 	}
 }
 
-void
-do_opts()
+static void
+do_opts(void)
 {
 	char *eptr;
 
@@ -323,10 +322,8 @@ do_opts()
 	init_str(&fruit, "slime-mold");
 }
 
-void
-env_get_value(s, e, add_blank)
-	char **s, *e;
-	boolean add_blank;
+static void
+env_get_value(char **s, char *e, boolean add_blank)
 {
 	short i = 0;
 	const char *t;
@@ -353,10 +350,8 @@ env_get_value(s, e, add_blank)
 	(*s)[i] = '\0';
 }
 
-void
-init_str(str, dflt)
-	char **str;
-	const char *dflt;
+static void
+init_str(char **str, const char *dflt)
 {
 	if (!(*str)) {
 		/* note: edit_opts() in room.c depends on this size */

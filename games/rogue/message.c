@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.12 2008/01/14 00:23:52 dholland Exp $	*/
+/*	$NetBSD: message.c,v 1.13 2008/01/14 03:50:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: message.c,v 1.12 2008/01/14 00:23:52 dholland Exp $");
+__RCSID("$NetBSD: message.c,v 1.13 2008/01/14 03:50:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,20 +57,19 @@ __RCSID("$NetBSD: message.c,v 1.12 2008/01/14 00:23:52 dholland Exp $");
 #include <termios.h>
 #include <stdarg.h>
 #include "rogue.h"
+#include "pathnames.h"
 
-char msgs[NMESSAGES][DCOLS] = {"", "", "", "", ""};
-short msg_col = 0, imsg = -1;
-boolean msg_cleared = 1, rmsg = 0;
+static char msgs[NMESSAGES][DCOLS] = {"", "", "", "", ""};
+static short msg_col = 0, imsg = -1;
+static boolean rmsg = 0;
+
+boolean msg_cleared = 1;
 char hunger_str[HUNGER_STR_LEN] = "";
 const char *more = "-more-";
 
-static void message __P((const char *, boolean));
-
 static
 void
-message(msg, intrpt)
-	const char *msg;
-	boolean intrpt;
+message(const char *msg, boolean intrpt)
 {
 	cant_int = 1;
 
@@ -120,8 +119,7 @@ messagef(boolean intrpt, const char *fmt, ...)
 }
 
 void
-remessage(c)
-	short c;
+remessage(short c)
 {
 	if (imsg != -1) {
 		check_message();
@@ -137,7 +135,7 @@ remessage(c)
 }
 
 void
-check_message()
+check_message(void)
 {
 	if (msg_cleared) {
 		return;
@@ -149,16 +147,13 @@ check_message()
 }
 
 int
-get_input_line(prompt, insert, buf, buflen, if_cancelled, add_blank, do_echo)
-	const char *prompt, *insert;
-	char *buf;
-	size_t buflen;
-	const char *if_cancelled;
-	boolean add_blank;
-	boolean do_echo;
+get_input_line(const char *prompt, const char *insert, 
+	       char *buf, size_t buflen, 
+	       const char *if_cancelled, 
+	       boolean add_blank, boolean do_echo)
 {
 	short ch;
-	short i = 0, n;
+	size_t i = 0, n;
 
 	message(prompt, 0);
 	n = strlen(prompt);
@@ -210,7 +205,7 @@ get_input_line(prompt, insert, buf, buflen, if_cancelled, add_blank, do_echo)
 }
 
 int
-rgetchar()
+rgetchar(void)
 {
 	int ch;
 
@@ -218,11 +213,11 @@ rgetchar()
 		ch = getchar();
 
 		switch(ch) {
-		case '\022':
+		case '\022': /* ^R */
 			wrefresh(curscr);
 			break;
 #ifdef UNIX_BSD4_2
-		case '\032':
+		case '\032': /* ^Z */
 			printf("%s", CL);
 			fflush(stdout);
 			tstp();
@@ -243,8 +238,7 @@ Level: 99 Gold: 999999 Hp: 999(999) Str: 99(99) Arm: 99 Exp: 21/10000000 Hungry
 */
 
 void
-print_stats(stat_mask)
-	int stat_mask;
+print_stats(int stat_mask)
 {
 	char buf[16];
 	boolean label;
@@ -323,13 +317,13 @@ print_stats(stat_mask)
 }
 
 void
-save_screen()
+save_screen(void)
 {
 	FILE *fp;
 	short i, j;
 	char buf[DCOLS+2];
 
-	if ((fp = fopen("rogue.screen", "w")) != NULL) {
+	if ((fp = fopen(_PATH_SCREENDUMP, "w")) != NULL) {
 		for (i = 0; i < DROWS; i++) {
 			for (j=0; j<DCOLS; j++) {
 				buf[j] = mvinch(i, j);
@@ -348,24 +342,20 @@ save_screen()
 }
 
 void
-sound_bell()
+sound_bell(void)
 {
 	putchar(7);
 	fflush(stdout);
 }
 
 boolean
-is_digit(ch)
-	short ch;
+is_digit(int ch)
 {
 	return((ch >= '0') && (ch <= '9'));
 }
 
 int
-r_index(str, ch, last)
-	const char *str;
-	int ch;
-	boolean last;
+r_index(const char *str, int ch, boolean last)
 {
 	int i = 0;
 

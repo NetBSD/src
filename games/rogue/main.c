@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.7 2008/01/14 00:23:52 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.8 2008/01/14 03:50:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.7 2008/01/14 00:23:52 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.8 2008/01/14 03:50:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,12 +60,8 @@ __RCSID("$NetBSD: main.c,v 1.7 2008/01/14 00:23:52 dholland Exp $");
 
 #include "rogue.h"
 
-int	main(int, char **);
-
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	if (init(argc, argv)) {		/* restored game */
 		goto PL;
