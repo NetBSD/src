@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.76 2007/12/07 20:34:05 ad Exp $	 */
+/*	$NetBSD: rtld.h,v 1.77 2008/01/14 08:52:16 yamt Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -183,8 +183,8 @@ typedef struct Struct_Obj_Entry {
 					 * called */
 			fini_called:1,	/* True if .fini function has been 
 					 * called */
-                        initfirst:1;	/* True if object's .init/.fini take
-                        		 * priority over others */
+			initfirst:1;	/* True if object's .init/.fini take
+					* priority over others */
 
 	struct link_map linkmap;	/* for GDB */
 
