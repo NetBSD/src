@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.15 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.16 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: machdep.c,v 1.15 2007/12/27 23:53:00 dholland Exp $");
  *
  * All UNIX code should be included between the single "#ifdef UNIX" at the
  * top of this file, and the "#endif" at the bottom.
- * 
+ *
  * To change a routine to include a new UNIX system, simply #ifdef the
  * existing routine, as in the following example:
  *
@@ -195,7 +195,7 @@ md_get_file_id(fname)
 	if (stat(fname, &sbuf)) {
 		return(-1);
 	}
-	return((int) sbuf.st_ino);
+	return((int)sbuf.st_ino);
 }
 
 /* md_link_count():
@@ -213,7 +213,7 @@ md_link_count(fname)
 	struct stat sbuf;
 
 	stat(fname, &sbuf);
-	return((int) sbuf.st_nlink);
+	return((int)sbuf.st_nlink);
 }
 
 /* md_gct(): (Get Current Time)
@@ -227,7 +227,7 @@ md_link_count(fname)
  * system doesn't provide all of the time units requested here, then you
  * can provide only those that it does, and return zeros for the others.
  * If you cannot provide good time values, then users may be able to copy
- * saved-game files and play them.  
+ * saved-game files and play them.
  */
 
 void
@@ -259,7 +259,7 @@ md_gct(rt_buf)
  * exactly the same here.
  * Or if md_gct() is implemented correctly, but your system does not provide
  * file modification dates, you may return some date far in the past so
- * that the program will never know that a saved-game file being modified.  
+ * that the program will never know that a saved-game file being modified.
  * You may also do this if you wish to be able to restore games from
  * saved-games that have been modified.
  */
@@ -274,7 +274,7 @@ md_gfmt(fname, rt_buf)
 	struct tm *t;
 
 	stat(fname, &sbuf);
-	seconds = (long) sbuf.st_mtime;
+	seconds = (long)sbuf.st_mtime;
 	t = localtime(&seconds);
 
 	rt_buf->year = t->tm_year;
@@ -338,7 +338,7 @@ void
 md_sleep(nsecs)
 	int nsecs;
 {
-	(void) sleep(nsecs);
+	(void)sleep(nsecs);
 }
 
 /* md_getenv()
@@ -404,7 +404,7 @@ md_malloc(n)
  * You need to find some single random integer, such as:
  *   process id.
  *   current time (minutes + seconds) returned from md_gct(), if implemented.
- *   
+ *
  * It will not help to return "get_rand()" or "rand()" or the return value of
  * any pseudo-RNG.  If you don't have a random number, you can just return 1,
  * but this means your games will ALWAYS start the same way, and will play
@@ -417,7 +417,7 @@ md_gseed()
 	time_t seconds;
 
 	time(&seconds);
-	return((int) seconds);
+	return((int)seconds);
 }
 
 /* md_exit():
@@ -493,7 +493,7 @@ md_shell(shell)
 	case -1:
 		break;
 	case 0:
-		execl(shell, shell, (char *) 0);
+		execl(shell, shell, (char *)0);
 		_exit(255);
 	default:
 		waitpid(pid, &w, 0);

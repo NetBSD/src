@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.11 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: save.c,v 1.12 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.11 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: save.c,v 1.12 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ __RCSID("$NetBSD: save.c,v 1.11 2007/12/27 23:53:01 dholland Exp $");
 #include "rogue.h"
 
 short write_failed = 0;
-char *save_file = (char *) 0;
+char *save_file = (char *)0;
 
 void
 save_game()
@@ -93,11 +93,11 @@ save_into_file(sfile)
 					"out of memory for save file name");
 				sfile = error_file;
 			} else {
-				(void) strcpy(name_buffer, hptr);
-				(void) strcat(name_buffer, sfile+1);
+				(void)strcpy(name_buffer, hptr);
+				(void)strcat(name_buffer, sfile+1);
 				sfile = name_buffer;
 			}
-			/* 
+			/*
 			 * Note: name_buffer gets leaked. But it's small,
 			 * and in the common case we're about to exit.
 			 */
@@ -112,7 +112,7 @@ save_into_file(sfile)
 	}
 	md_ignore_signals();
 	write_failed = 0;
-	(void) xxx(1);
+	(void)xxx(1);
 	r_write(fp, (char *) &detect_monster, sizeof(detect_monster));
 	r_write(fp, (char *) &cur_level, sizeof(cur_level));
 	r_write(fp, (char *) &max_level, sizeof(max_level));
@@ -152,7 +152,7 @@ save_into_file(sfile)
 	fclose(fp);
 
 	if (write_failed) {
-		(void) md_df(sfile);	/* delete file */
+		(void)md_df(sfile);	/* delete file */
 	} else {
 		clean_up("");
 	}
@@ -176,13 +176,13 @@ restore(fname)
 	if (md_link_count(fname) > 1) {
 		clean_up("file has link");
 	}
-	(void) xxx(1);
+	(void)xxx(1);
 	r_read(fp, (char *) &detect_monster, sizeof(detect_monster));
 	r_read(fp, (char *) &cur_level, sizeof(cur_level));
 	r_read(fp, (char *) &max_level, sizeof(max_level));
 	read_string(hunger_str, fp, sizeof hunger_str);
 
-	(void) strlcpy(tbuf, login_name, sizeof tbuf);
+	(void)strlcpy(tbuf, login_name, sizeof tbuf);
 	read_string(login_name, fp, sizeof login_name);
 	if (strcmp(tbuf, login_name)) {
 		clean_up("you're not the original player");
@@ -265,7 +265,7 @@ read_pack(pack, fp, is_rogue)
 	for (;;) {
 		r_read(fp, (char *) &read_obj, sizeof(object));
 		if (read_obj.ichar == 0) {
-			pack->next_object = (object *) 0;
+			pack->next_object = (object *)0;
 			break;
 		}
 		new_obj = alloc_object();

@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.15 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: init.c,v 1.16 2008/01/14 00:23:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: init.c,v 1.15 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: init.c,v 1.16 2008/01/14 00:23:51 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ __RCSID("$NetBSD: init.c,v 1.15 2007/12/27 23:53:00 dholland Exp $");
 #include "rogue.h"
 
 char login_name[MAX_OPT_LEN];
-char *nick_name = (char *) 0;
+char *nick_name = (char *)0;
 char *rest_file = 0;
 boolean cant_int = 0;
 boolean did_int = 0;
@@ -97,7 +97,7 @@ init(argc, argv)
 		clean_up("Hey!  Who are you?");
 	}
 	/* LOGIN_NAME_SIZE == MAX_OPT_LEN now, but just in case... */
-	(void) strlcpy(login_name, pn, sizeof(login_name));
+	(void)strlcpy(login_name, pn, sizeof(login_name));
 
 	do_args(argc, argv);
 	do_opts();
@@ -118,10 +118,10 @@ init(argc, argv)
 	md_heed_signals();
 
 	if (score_only) {
-		put_scores((object *) 0, 0);
+		put_scores((object *)0, 0);
 	}
 	seed = md_gseed();
-	(void) srrandom(seed);
+	(void)srrandom(seed);
 	if (rest_file) {
 		restore(rest_file);
 		return(1);
@@ -130,8 +130,8 @@ init(argc, argv)
 	get_wand_and_ring_materials();
 	make_scroll_titles();
 
-	level_objects.next_object = (object *) 0;
-	level_monsters.next_monster = (object *) 0;
+	level_objects.next_object = (object *)0;
+	level_monsters.next_monster = (object *)0;
 	player_init();
 	ring_stats(0);
 	return(0);
@@ -142,11 +142,11 @@ player_init()
 {
 	object *obj;
 
-	rogue.pack.next_object = (object *) 0;
+	rogue.pack.next_object = (object *)0;
 
 	obj = alloc_object();
 	get_food(obj, 1);
-	(void) add_to_pack(obj, &rogue.pack, 1);
+	(void)add_to_pack(obj, &rogue.pack, 1);
 
 	obj = alloc_object();		/* initial armor */
 	obj->what_is = ARMOR;
@@ -154,7 +154,7 @@ player_init()
 	obj->class = RINGMAIL+2;
 	obj->is_protected = 0;
 	obj->d_enchant = 1;
-	(void) add_to_pack(obj, &rogue.pack, 1);
+	(void)add_to_pack(obj, &rogue.pack, 1);
 	do_wear(obj);
 
 	obj = alloc_object();		/* initial weapons */
@@ -163,7 +163,7 @@ player_init()
 	obj->damage = "2d3";
 	obj->hit_enchant = obj->d_enchant = 1;
 	obj->identified = 1;
-	(void) add_to_pack(obj, &rogue.pack, 1);
+	(void)add_to_pack(obj, &rogue.pack, 1);
 	do_wield(obj);
 
 	obj = alloc_object();
@@ -173,7 +173,7 @@ player_init()
 	obj->hit_enchant = 1;
 	obj->d_enchant = 0;
 	obj->identified = 1;
-	(void) add_to_pack(obj, &rogue.pack, 1);
+	(void)add_to_pack(obj, &rogue.pack, 1);
 
 	obj = alloc_object();
 	obj->what_is = WEAPON;
@@ -183,7 +183,7 @@ player_init()
 	obj->hit_enchant = 0;
 	obj->d_enchant = 0;
 	obj->identified = 1;
-	(void) add_to_pack(obj, &rogue.pack, 1);
+	(void)add_to_pack(obj, &rogue.pack, 1);
 }
 
 void
@@ -346,7 +346,7 @@ env_get_value(s, e, add_blank)
 	*s = md_malloc(MAX_OPT_LEN + 2);
 	if (*s == NULL)
 		clean_up("out of memory");
-	(void) strncpy(*s, t, i);
+	(void)strncpy(*s, t, i);
 	if (add_blank) {
 		(*s)[i++] = ' ';
 	}
@@ -363,6 +363,6 @@ init_str(str, dflt)
 		*str = md_malloc(MAX_OPT_LEN + 2);
 		if (*str == NULL)
 			clean_up("out of memory");
-		(void) strlcpy(*str, dflt, MAX_OPT_LEN + 2);
+		(void)strlcpy(*str, dflt, MAX_OPT_LEN + 2);
 	}
 }
