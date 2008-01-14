@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.31 2007/12/16 21:28:32 dyoung Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.32 2008/01/14 06:12:13 dyoung Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -58,7 +58,7 @@ struct pccbb_intrhand_list;
 
 
 struct cbb_pcic_handle {
-	struct device *ph_parent;
+	device_t ph_parent;
 	bus_space_tag_t ph_base_t;
 	bus_space_handle_t ph_base_h;
 	u_int8_t (*ph_read)(struct cbb_pcic_handle *, int);
@@ -81,7 +81,7 @@ struct cbb_pcic_handle {
 		int width;
 	} io[PCIC_IO_WINS];
 	int ih_irq;
-	struct device *pcmcia;
+	device_t pcmcia;
 
 	int shutdown;
 };
