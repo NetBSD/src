@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.26 2007/11/10 12:05:08 yamt Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.27 2008/01/14 12:56:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.26 2007/11/10 12:05:08 yamt Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.27 2008/01/14 12:56:05 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -209,7 +209,7 @@ dump_drain:
 		warn("mowners: sysctl test");
 		return;
 	}
-	len += 10 * sizeof(mo);		/* add some slop */
+	len += 10 * sizeof(*mo);		/* add some slop */
 	data = malloc(len);
 	if (data == NULL) {
 		warn("malloc(%lu)", (u_long)len);
