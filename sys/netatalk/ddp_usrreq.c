@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.28 2008/01/12 02:58:58 dyoung Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.29 2008/01/14 04:12:40 dyoung Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.28 2008/01/12 02:58:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.29 2008/01/14 04:12:40 dyoung Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -386,13 +386,15 @@ at_pcbconnect(ddp, addr, l)
 		cdst = satocsat(rtcache_getdst(ro));
 		if (aa == NULL || (cdst->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
-		    cdst->sat_addr.s_node != sat->sat_addr.s_node))
+		    cdst->sat_addr.s_node != sat->sat_addr.s_node)) {
 			rtcache_free(ro);
+			rt = NULL;
+		}
 	}
 	/*
          * If we've got no route for this interface, try to find one.
          */
-	if ((rt = rtcache_getrt(ro)) == NULL) {
+	if (rt == NULL) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_at	dsta;
