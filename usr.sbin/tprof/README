@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.7 2008/01/14 12:47:59 yamt Exp $
+$NetBSD: README,v 1.8 2008/01/14 12:48:52 yamt Exp $
 
 NOTE:
 	- tprof driver currently only supports pentium4 (netburst) processors.
@@ -12,12 +12,15 @@ usage:
    if not set, SIZEOF_PTR=4 is assumed.
 
 1. add a line to your kernel config.
+
 	pseudo-device	tprof
 
 2. create a device special file.
+
 	# mknod /dev/tprof c 191 0
 
 3. run the tprof command.
+
 	# tprof -o /tmp/foo sleep 1
 
 	tprof statistics:
@@ -31,6 +34,7 @@ usage:
 4. format the result.
    the first line in the following example means that 11 samples have been
    taken at 0xc0396c36, whose symbolic name is lapic_gettick+0x6.
+
 	# sh ./tpfmt.sh < /tmp/foo
 	11      c0396c36        lapic_gettick+0x6
 	5       c039b98a        x86_pause+0x2
@@ -73,6 +77,7 @@ usage:
 
 5. tpann.sh is another formatter.  it outputs "objdump -d" with numbers of
    samples for each addresses.
+
 	# tprof -o /tmp/bar sleep 100
 	# sh ./tpann.sh < /tmp/bar
 
