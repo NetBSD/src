@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.213 2008/01/06 18:35:24 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.214 2008/01/14 00:43:54 mrg Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.213 2008/01/06 18:35:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2008/01/14 00:43:54 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1469,8 +1469,28 @@ paddr_t
 _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 	int prot, int flags)
 {
+	int i;
 
-	panic("_bus_dmamem_mmap: not implemented");
+	for (i = 0; i < nsegs; i++) {
+#ifdef DIAGNOSTIC
+		if (off & PGOFSET)
+			panic("_bus_dmamem_mmap: offset unaligned");
+		if (segs[i].ds_addr & PGOFSET)
+			panic("_bus_dmamem_mmap: segment unaligned");
+		if (segs[i].ds_len & PGOFSET)
+			panic("_bus_dmamem_mmap: segment size not multiple"
+			    " of page size");
+#endif
+		if (off >= segs[i].ds_len) {
+			off -= segs[i].ds_len;
+			continue;
+		}
+
+		return (atop(segs[i].ds_addr + off));
+	}
+
+	/* Page not found. */
+	return (-1);
 }
 
 
