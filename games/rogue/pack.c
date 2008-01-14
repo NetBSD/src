@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.8 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: pack.c,v 1.9 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pack.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pack.c,v 1.8 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: pack.c,v 1.9 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ pick_up(row, col, status)
 
 	if (levitate) {
 		messagef(0, "you're floating in the air!");
-		return((object *) 0);
+		return((object *)0);
 	}
 	obj = object_at(&level_objects, row, col);
 	if (!obj) {
@@ -128,7 +128,7 @@ pick_up(row, col, status)
 		if (id_scrolls[SCARE_MONSTER].id_status == UNIDENTIFIED) {
 			id_scrolls[SCARE_MONSTER].id_status = IDENTIFIED;
 		}
-		return((object *) 0);
+		return((object *)0);
 	}
 	if (obj->what_is == GOLD) {
 		rogue.gold += obj->quantity;
@@ -139,7 +139,7 @@ pick_up(row, col, status)
 	}
 	if (pack_count(obj) >= MAX_PACK_COUNT) {
 		messagef(1, "pack too full");
-		return((object *) 0);
+		return((object *)0);
 	}
 	dungeon[row][col] &= ~(OBJECT);
 	take_from_pack(obj, &level_objects);
@@ -207,7 +207,7 @@ drop()
 	place_at(obj, rogue.row, rogue.col);
 	get_desc(obj, desc, sizeof(desc));
 	messagef(0, "dropped %s", desc);
-	(void) reg_move();
+	(void)reg_move();
 }
 
 object *
@@ -225,7 +225,7 @@ check_duplicate(obj, pack)
 	op = pack->next_object;
 
 	while (op) {
-		if ((op->what_is == obj->what_is) && 
+		if ((op->what_is == obj->what_is) &&
 			(op->which_kind == obj->which_kind)) {
 
 			if ((obj->what_is != WEAPON) ||
@@ -272,7 +272,8 @@ next_avail_ichar()
 void
 wait_for_ack()
 {
-	while (rgetchar() != ' ') ;
+	while (rgetchar() != ' ')
+		;
 }
 
 short
@@ -329,7 +330,7 @@ take_off()
 			get_desc(obj, desc, sizeof(desc));
 			messagef(0, "was wearing %s", desc);
 			print_stats(STAT_ARMOR);
-			(void) reg_move();
+			(void)reg_move();
 		}
 	} else {
 		messagef(0, "not wearing any");
@@ -365,7 +366,7 @@ wear()
 	messagef(0, "wearing %s", desc);
 	do_wear(obj);
 	print_stats(STAT_ARMOR);
-	(void) reg_move();
+	(void)reg_move();
 }
 
 void
@@ -375,7 +376,7 @@ unwear(obj)
 	if (obj) {
 		obj->in_use_flags &= (~BEING_WORN);
 	}
-	rogue.armor = (object *) 0;
+	rogue.armor = (object *)0;
 }
 
 void
@@ -419,7 +420,7 @@ wield()
 		get_desc(obj, desc, sizeof(desc));
 		messagef(0, "wielding %s", desc);
 		do_wield(obj);
-		(void) reg_move();
+		(void)reg_move();
 	}
 }
 
@@ -438,7 +439,7 @@ unwield(obj)
 	if (obj) {
 		obj->in_use_flags &= (~BEING_WIELDED);
 	}
-	rogue.weapon = (object *) 0;
+	rogue.weapon = (object *)0;
 }
 
 void
@@ -467,7 +468,7 @@ call_it()
 	if (get_input_line("call it:", "", buf, sizeof(buf),
 			id_table[obj->which_kind].title, 1, 1)) {
 		id_table[obj->which_kind].id_status = CALLED;
-		(void) strlcpy(id_table[obj->which_kind].title, buf,
+		(void)strlcpy(id_table[obj->which_kind].title, buf,
 				sizeof(id_table[obj->which_kind].title));
 	}
 }
@@ -579,7 +580,7 @@ kick_into_pack()
 			}
 		}
 		if (obj || (!stat)) {
-			(void) reg_move();
+			(void)reg_move();
 		}
 	}
 }

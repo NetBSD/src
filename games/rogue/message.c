@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.11 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: message.c,v 1.12 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)message.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: message.c,v 1.11 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: message.c,v 1.12 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ message(msg, intrpt)
 	}
 	if (!rmsg) {
 		imsg = (imsg + 1) % NMESSAGES;
-		(void) strlcpy(msgs[imsg], msg, sizeof(msgs[imsg]));
+		(void)strlcpy(msgs[imsg], msg, sizeof(msgs[imsg]));
 	}
 	mvaddstr(MIN_ROW-1, 0, msg);
 	addch(' ');
@@ -165,7 +165,7 @@ get_input_line(prompt, insert, buf, buflen, if_cancelled, add_blank, do_echo)
 
 	if (insert[0]) {
 		mvaddstr(0, n + 1, insert);
-		(void) strlcpy(buf, insert, buflen);
+		(void)strlcpy(buf, insert, buflen);
 		i = strlen(buf);
 		move(0, (n + i + 1));
 		refresh();

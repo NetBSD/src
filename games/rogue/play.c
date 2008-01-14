@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.7 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: play.c,v 1.8 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)play.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: play.c,v 1.7 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: play.c,v 1.8 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,7 +106,7 @@ CH:
 		case 'u':
 		case 'n':
 		case 'b':
-			(void) one_move_rogue(ch, 1);
+			(void)one_move_rogue(ch, 1);
 			break;
 		case 'H':
 		case 'J':

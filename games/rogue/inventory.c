@@ -1,4 +1,4 @@
-/*	$NetBSD: inventory.c,v 1.11 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: inventory.c,v 1.12 2008/01/14 00:23:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)inventory.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: inventory.c,v 1.11 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: inventory.c,v 1.12 2008/01/14 00:23:51 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -225,7 +225,7 @@ inventory(pack, mask)
 		short letter;
 		short sepchar;
 		char desc[DCOLS];
-		char savebuf[DCOLS+8];   
+		char savebuf[DCOLS+8];
 	} descs[MAX_PACK_COUNT+1];
 
 
@@ -260,8 +260,8 @@ inventory(pack, mask)
 		}
 		descs[row].savebuf[j-col] = 0;
 		if (row < i) {
-			mvprintw(row, col, " %c%c %s", 
-				descs[row].letter, descs[row].sepchar, 
+			mvprintw(row, col, " %c%c %s",
+				descs[row].letter, descs[row].sepchar,
 				descs[row].desc);
 		}
 		else {
@@ -416,7 +416,7 @@ pr_motion_char(ch)
 			ch += 32;
 			until = "";
 		}
-		(void) get_com_id(&n, ch);
+		(void)get_com_id(&n, ch);
 		check_message();
 		messagef(0, "run %s%s", com_id_tab[n].com_desc + 8, until);
 		return(1);
@@ -450,18 +450,18 @@ make_scroll_titles()
 
 	for (i = 0; i < SCROLS; i++) {
 		sylls = get_rand(2, 5);
-		(void) strlcpy(id_scrolls[i].title, "'", maxlen);
+		(void)strlcpy(id_scrolls[i].title, "'", maxlen);
 
 		for (j = 0; j < sylls; j++) {
 			s = get_rand(1, (MAXSYLLABLES-1));
-			(void) strlcat(id_scrolls[i].title, syllables[s],
+			(void)strlcat(id_scrolls[i].title, syllables[s],
 					maxlen);
 		}
 		/* trim trailing space */
 		n = strlen(id_scrolls[i].title);
 		id_scrolls[i].title[n-1] = 0;
 
-		(void) strlcat(id_scrolls[i].title, "' ", maxlen);
+		(void)strlcat(id_scrolls[i].title, "' ", maxlen);
 	}
 }
 
@@ -553,7 +553,7 @@ get_desc(obj, desc, desclen)
 	unsigned short objtype_id_status;
 
 	if (obj->what_is == AMULET) {
-		(void) strlcpy(desc, "the amulet of Yendor ", desclen);
+		(void)strlcpy(desc, "the amulet of Yendor ", desclen);
 		return;
 	}
 
@@ -703,7 +703,7 @@ get_wand_and_ring_materials()
 			j = get_rand(0, WAND_MATERIALS-1);
 		} while (used[j]);
 		used[j] = 1;
-		(void) strlcpy(id_wands[i].title, wand_materials[j],
+		(void)strlcpy(id_wands[i].title, wand_materials[j],
 			       sizeof(id_wands[i].title));
 		is_wood[i] = (j > MAX_METAL);
 	}
@@ -715,7 +715,7 @@ get_wand_and_ring_materials()
 			j = get_rand(0, GEMS-1);
 		} while (used[j]);
 		used[j] = 1;
-		(void) strlcpy(id_rings[i].title, gems[j],
+		(void)strlcpy(id_rings[i].title, gems[j],
 			       sizeof(id_rings[i].title));
 	}
 }
@@ -760,7 +760,7 @@ get_id_table(obj)
 	case ARMOR:
 		return(id_armors);
 	}
-	return((struct id *) 0);
+	return((struct id *)0);
 }
 
 void

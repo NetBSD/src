@@ -1,4 +1,4 @@
-/*	$NetBSD: hit.c,v 1.8 2007/12/27 23:52:59 dholland Exp $	*/
+/*	$NetBSD: hit.c,v 1.9 2008/01/14 00:23:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: hit.c,v 1.8 2007/12/27 23:52:59 dholland Exp $");
+__RCSID("$NetBSD: hit.c,v 1.9 2008/01/14 00:23:51 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -98,12 +98,12 @@ mon_hit(monster)
 	if (!(monster->m_flags & STATIONARY)) {
 		damage = get_damage(monster->m_damage, 1);
 		if (cur_level >= (AMULET_LEVEL * 2)) {
-			minus = (float) ((AMULET_LEVEL * 2) - cur_level);
+			minus = (float)((AMULET_LEVEL * 2) - cur_level);
 		} else {
-			minus = (float) get_armor_class(rogue.armor) * 3.00;
-			minus = minus/100.00 * (float) damage;
+			minus = (float)get_armor_class(rogue.armor) * 3.00;
+			minus = minus/100.00 * (float)damage;
 		}
-		damage -= (short) minus;
+		damage -= (short)minus;
 	} else {
 		damage = monster->stationary_damage++;
 	}
@@ -136,7 +136,7 @@ rogue_hit(monster, force_hit)
 		}
 		if (!rand_percent(hit_chance)) {
 			if (!fight_monster) {
-				(void) strlcpy(hit_message, "you miss  ",
+				(void)strlcpy(hit_message, "you miss  ",
 					       sizeof(hit_message));
 			}
 			goto RET;
@@ -150,7 +150,7 @@ rogue_hit(monster, force_hit)
 		}
 		if (mon_damage(monster, damage)) {	/* still alive? */
 			if (!fight_monster) {
-				(void) strlcpy(hit_message, "you hit  ",
+				(void)strlcpy(hit_message, "you hit  ",
 					       sizeof(hit_message));
 			}
 		}
@@ -231,7 +231,7 @@ get_w_damage(obj)
 	}
 	tmp_damage = get_number(obj->damage + i) + obj->d_enchant;
 
-	snprintf(new_damage, sizeof(new_damage), "%dd%d", 
+	snprintf(new_damage, sizeof(new_damage), "%dd%d",
 		tmp_to_hit, tmp_damage);
 
 	return(get_damage(new_damage, 1));
@@ -320,7 +320,7 @@ mon_damage(monster, damage)
 		row = monster->row;
 		col = monster->col;
 		dungeon[row][col] &= ~MONSTER;
-		mvaddch(row, col, (int) get_dungeon_char(row, col));
+		mvaddch(row, col, (int)get_dungeon_char(row, col));
 
 		fight_monster = 0;
 		cough_up(monster);
@@ -379,7 +379,7 @@ fight(to_the_death)
 		possible_damage = fight_monster->stationary_damage - 1;
 	}
 	while (fight_monster) {
-		(void) one_move_rogue(ch, 0);
+		(void)one_move_rogue(ch, 0);
 		if (((!to_the_death) && (rogue.hp_current <= possible_damage)) ||
 			interrupted || (!(dungeon[row][col] & MONSTER))) {
 			fight_monster = 0;

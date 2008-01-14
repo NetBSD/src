@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.12 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.13 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.12 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.13 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -131,7 +131,7 @@ put_mons()
 	n = get_rand(4, 6);
 
 	for (i = 0; i < n; i++) {
-		monster = gr_monster((object *) 0, 0);
+		monster = gr_monster((object *)0, 0);
 		if ((monster->m_flags & WANDERS) && coin_toss()) {
 			wake_up(monster);
 		}
@@ -253,7 +253,7 @@ party_monsters(rn, n)
 			}
 		}
 		if (found) {
-			monster = gr_monster((object *) 0, 0);
+			monster = gr_monster((object *)0, 0);
 			if (!(monster->m_flags & IMITATES)) {
 				monster->m_flags |= WAKENS;
 			}
@@ -632,7 +632,7 @@ wanderer()
 	monster = NULL;		/* XXXGCC -Wuninitialized [powerpc] */
 
 	for (i = 0; ((i < 15) && (!found)); i++) {
-		monster = gr_monster((object *) 0, 0);
+		monster = gr_monster((object *)0, 0);
 		if (!(monster->m_flags & (WAKENS | WANDERS))) {
 			free_object(monster);
 		} else {
@@ -702,7 +702,7 @@ create_monster()
 		}
 	}
 	if (found) {
-		monster = gr_monster((object *) 0, 0);
+		monster = gr_monster((object *)0, 0);
 		put_m_at(row, col, monster);
 		mvaddch(row, col, gmc(monster));
 		if (monster->m_flags & (WANDERS | WAKENS)) {
@@ -722,7 +722,7 @@ put_m_at(row, col, monster)
 	monster->col = col;
 	dungeon[row][col] |= MONSTER;
 	monster->trail_char = mvinch(row, col);
-	(void) add_to_pack(monster, &level_monsters, 0);
+	(void)add_to_pack(monster, &level_monsters, 0);
 	aim_monster(monster);
 }
 

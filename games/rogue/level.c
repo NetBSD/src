@@ -1,4 +1,4 @@
-/*	$NetBSD: level.c,v 1.8 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: level.c,v 1.9 2008/01/14 00:23:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)level.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: level.c,v 1.8 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: level.c,v 1.9 2008/01/14 00:23:51 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,10 +159,10 @@ make_level()
 			i = random_rooms[j];
 
 			if (i < (MAXROOMS-1)) {
-				(void) connect_rooms(i, i+1);
+				(void)connect_rooms(i, i+1);
 			}
 			if (i < (MAXROOMS-3)) {
-				(void) connect_rooms(i, i+3);
+				(void)connect_rooms(i, i+3);
 			}
 			if (i < (MAXROOMS-2)) {
 				if (rooms[i+1].is_room & R_NOTHING) {
@@ -879,7 +879,7 @@ show_average_hp()
 	} else {
 		real_average = (float)
 			((rogue.hp_max - extra_hp - INIT_HP) + less_hp) / (rogue.exp - 1);
-		effective_average = (float) (rogue.hp_max - INIT_HP) / (rogue.exp - 1);
+		effective_average = (float)(rogue.hp_max - INIT_HP) / (rogue.exp - 1);
 
 	}
 	messagef(0, "R-Hp: %.2f, E-Hp: %.2f (!: %d, V: %d)", real_average,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.7 2007/12/27 23:53:00 dholland Exp $	*/
+/*	$NetBSD: ring.c,v 1.8 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ring.c,v 1.7 2007/12/27 23:53:00 dholland Exp $");
+__RCSID("$NetBSD: ring.c,v 1.8 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ put_on_ring()
 	check_message();
 	get_desc(ring, desc, sizeof(desc));
 	messagef(0, "%s", desc);
-	(void) reg_move();
+	(void)reg_move();
 }
 
 /*
@@ -189,7 +189,7 @@ remove_ring()
 			un_put_on(ring);
 			get_desc(ring, buf, sizeof(buf));
 			messagef(0, "removed %s", buf);
-			(void) reg_move();
+			(void)reg_move();
 		}
 	}
 }
@@ -241,7 +241,8 @@ gr_ring(ring, assign_wk)
 		break;
 	case ADD_STRENGTH:
 	case DEXTERITY:
-		while ((ring->class = (get_rand(0, 4) - 2)) == 0) ;
+		while ((ring->class = (get_rand(0, 4) - 2)) == 0)
+			;
 		ring->is_cursed = (ring->class < 0);
 		break;
 	case ADORNMENT:

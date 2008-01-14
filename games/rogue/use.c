@@ -1,4 +1,4 @@
-/*	$NetBSD: use.c,v 1.7 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: use.c,v 1.8 2008/01/14 00:23:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)use.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: use.c,v 1.7 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: use.c,v 1.8 2008/01/14 00:23:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -162,7 +162,7 @@ quaff()
 			}
 			break;
 		case SEE_INVISIBLE:
-			messagef(0, "hmm, this potion tastes like %sjuice", 
+			messagef(0, "hmm, this potion tastes like %sjuice",
 				 fruit);
 			if (blind) {
 				unblind();
@@ -273,7 +273,7 @@ read_scroll()
 			break;
 		case CON_MON:
 			con_mon = 1;
-			messagef(0, "your hands glow %sfor a moment", 
+			messagef(0, "your hands glow %sfor a moment",
 				 get_ench_color());
 			break;
 	}
@@ -307,7 +307,7 @@ vanish(obj, rm, pack)
 		free_object(obj);
 	}
 	if (rm) {
-		(void) reg_move();
+		(void)reg_move();
 	}
 }
 
@@ -589,7 +589,7 @@ get_ench_color()
 		return(id_potions[get_rand(0, POTIONS-1)].title);
 	} else if (con_mon) {
 		return("red ");
-	} 
+	}
 	return("blue ");
 }
 

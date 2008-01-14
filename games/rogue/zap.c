@@ -1,4 +1,4 @@
-/*	$NetBSD: zap.c,v 1.7 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: zap.c,v 1.8 2008/01/14 00:23:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: zap.c,v 1.7 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: zap.c,v 1.8 2008/01/14 00:23:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,7 @@ zapp()
 		wand->class--;
 		row = rogue.row; col = rogue.col;
 		if ((wand->which_kind == COLD) || (wand->which_kind == FIRE)) {
-			bounce((short) wand->which_kind, d, row, col, 0);
+			bounce((short)wand->which_kind, d, row, col, 0);
 		} else {
 			monster = get_zapped_monster(d, &row, &col);
 			if (wand->which_kind == DRAIN_LIFE) {
@@ -109,7 +109,7 @@ zapp()
 			}
 		}
 	}
-	(void) reg_move();
+	(void)reg_move();
 }
 
 object *
@@ -175,7 +175,7 @@ zap_monster(monster, kind)
 		}
 		nm = monster->next_monster;
 		tc = monster->trail_char;
-		(void) gr_monster(monster, get_rand(0, MONSTERS-1));
+		(void)gr_monster(monster, get_rand(0, MONSTERS-1));
 		monster->row = row;
 		monster->col = col;
 		monster->next_monster = nm;
@@ -234,7 +234,7 @@ wizardize()
 	} else {
 		if (get_input_line("wizard's password:", "", buf, sizeof(buf),
 				"", 0, 0)) {
-			(void) xxx(1);
+			(void)xxx(1);
 			xxxx(buf, strlen(buf));
 			if (!strncmp(buf, "\247\104\126\272\115\243\027", 7)) {
 				wizard = 1;
@@ -263,14 +263,14 @@ wdrain_life(monster)
 			nm = lmon->next_monster;
 			if (get_room_number(lmon->row, lmon->col) == cur_room) {
 				wake_up(lmon);
-				(void) mon_damage(lmon, hp);
+				(void)mon_damage(lmon, hp);
 			}
 			lmon = nm;
 		}
 	} else {
 		if (monster) {
 			wake_up(monster);
-			(void) mon_damage(monster, hp);
+			(void)mon_damage(monster, hp);
 		}
 	}
 	print_stats(STAT_HP);
@@ -335,7 +335,7 @@ bounce(ball, dir, row, col, r)
 
 		wake_up(monster);
 		if (rand_percent(33)) {
-			messagef(0, "the %s misses the %s", s, 
+			messagef(0, "the %s misses the %s", s,
 				mon_name(monster));
 			goto ND;
 		}
@@ -353,7 +353,7 @@ bounce(ball, dir, row, col, r)
 			}
 			messagef(0, "the %s hits the %s", s,
 				mon_name(monster));
-			(void) mon_damage(monster, damage);
+			(void)mon_damage(monster, damage);
 		} else {
 			damage = -1;
 			if (!(monster->m_flags & FREEZES)) {
@@ -368,9 +368,9 @@ bounce(ball, dir, row, col, r)
 				damage = -2;
 			}
 			if (damage != -1) {
-				messagef(0, "the %s hits the %s", s, 
+				messagef(0, "the %s hits the %s", s,
 					mon_name(monster));
-				(void) mon_damage(monster, damage);
+				(void)mon_damage(monster, damage);
 			}
 		}
 	} else if ((row == rogue.row) && (col == rogue.col)) {
@@ -383,7 +383,7 @@ bounce(ball, dir, row, col, r)
 				damage = (damage * 3) / 2;
 				damage -= get_armor_class(rogue.armor);
 			}
-			rogue_damage(damage, (object *) 0,
+			rogue_damage(damage, (object *)0,
 					((ball == FIRE) ? KFIRE : HYPOTHERMIA));
 			messagef(0, "the %s hits", s);
 		}

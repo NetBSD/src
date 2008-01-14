@@ -1,4 +1,4 @@
-/*	$NetBSD: score.c,v 1.12 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: score.c,v 1.13 2008/01/14 00:23:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: score.c,v 1.12 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: score.c,v 1.13 2008/01/14 00:23:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -153,7 +153,7 @@ win()
 	messagef(0, "%s", "");		/* gcc objects to just "" */
 	id_all();
 	sell_pack();
-	put_scores((object *) 0, WIN);
+	put_scores((object *)0, WIN);
 }
 
 void
@@ -197,7 +197,7 @@ quit(from_intrpt)
 		clean_up(byebye_string);
 	}
 	check_message();
-	killed_by((object *) 0, QUIT);
+	killed_by((object *)0, QUIT);
 }
 
 /*
@@ -364,7 +364,7 @@ put_scores(monster, other)
 	}
 	setegid(gid);
 	rewind(fp);
-	(void) xxx(1);
+	(void)xxx(1);
 
 	for (numscores = 0; numscores < NUM_SCORE_ENTRIES; numscores++) {
 		if (read_score_entry(&scores[numscores], fp) == 0) {
@@ -424,7 +424,7 @@ put_scores(monster, other)
 
 		md_ignore_signals();
 		rewind(fp);
-		(void) xxx(1);
+		(void)xxx(1);
 
 		for (i = 0; i < numscores; i++) {
 			write_score_entry(&scores[i], i, fp);
@@ -509,7 +509,7 @@ make_score(se, monster, other)
 		} else {
 			article = "a";
 		}
-		
+
 		snprintf(deathbuf, sizeof(deathbuf),
 			 "killed by %s %s", article, mn);
 		death = deathbuf;
@@ -652,7 +652,7 @@ xxxx(buf, n)
 	for (i = 0; i < n; i++) {
 
 		/* It does not matter if accuracy is lost during this assignment */
-		c = (unsigned char) xxx(0);
+		c = (unsigned char)xxx(0);
 
 		buf[i] ^= c;
 	}

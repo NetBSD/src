@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.7 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: trap.c,v 1.8 2008/01/14 00:23:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trap.c,v 1.7 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: trap.c,v 1.8 2008/01/14 00:23:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ trap_player(row, col)
 		}
 		print_stats(STAT_HP | STAT_STRENGTH);
 		if (rogue.hp_current <= 0) {
-			killed_by((object *) 0, POISON_DART);
+			killed_by((object *)0, POISON_DART);
 		}
 		break;
 	case SLEEPING_GAS_TRAP:
@@ -136,7 +136,7 @@ trap_player(row, col)
 		break;
 	case RUST_TRAP:
 		messagef(1, "%s", trap_strings[(t*2)+1]);
-		rust((object *) 0);
+		rust((object *)0);
 		break;
 	}
 }
@@ -280,7 +280,7 @@ search(n, is_auto)
 			}
 		}
 		if ((!is_auto) && (reg_search = !reg_search)) {
-			(void) reg_move();
+			(void)reg_move();
 		}
 	}
 }

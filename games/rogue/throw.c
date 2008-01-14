@@ -1,4 +1,4 @@
-/*	$NetBSD: throw.c,v 1.8 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: throw.c,v 1.9 2008/01/14 00:23:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)throw.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: throw.c,v 1.8 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: throw.c,v 1.9 2008/01/14 00:23:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -146,12 +146,12 @@ throw_at_monster(monster, weapon)
 	weapon->quantity = t;
 
 	if (!rand_percent(hit_chance)) {
-		(void) strlcat(hit_message, "misses  ", HIT_MESSAGE_SIZE);
+		(void)strlcat(hit_message, "misses  ", HIT_MESSAGE_SIZE);
 		return(0);
 	}
 	s_con_mon(monster);
-	(void) strlcat(hit_message, "hit  ", HIT_MESSAGE_SIZE);
-	(void) mon_damage(monster, damage);
+	(void)strlcat(hit_message, "hit  ", HIT_MESSAGE_SIZE);
+	(void)mon_damage(monster, damage);
 	return(1);
 }
 
