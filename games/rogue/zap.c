@@ -1,4 +1,4 @@
-/*	$NetBSD: zap.c,v 1.8 2008/01/14 00:23:53 dholland Exp $	*/
+/*	$NetBSD: zap.c,v 1.9 2008/01/14 03:50:03 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zap.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: zap.c,v 1.8 2008/01/14 00:23:53 dholland Exp $");
+__RCSID("$NetBSD: zap.c,v 1.9 2008/01/14 03:50:03 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,10 +55,15 @@ __RCSID("$NetBSD: zap.c,v 1.8 2008/01/14 00:23:53 dholland Exp $");
 
 #include "rogue.h"
 
+static object *get_zapped_monster(short, short *, short *);
+static void tele_away(object *);
+static void wdrain_life(object *);
+static void zap_monster(object *, unsigned short);
+
 boolean wizard = 0;
 
 void
-zapp()
+zapp(void)
 {
 	short wch;
 	boolean first_miss = 1;
@@ -112,10 +117,8 @@ zapp()
 	(void)reg_move();
 }
 
-object *
-get_zapped_monster(dir, row, col)
-	short dir;
-	short *row, *col;
+static object *
+get_zapped_monster(short dir, short *row, short *col)
 {
 	short orow, ocol;
 
@@ -135,10 +138,8 @@ get_zapped_monster(dir, row, col)
 	}
 }
 
-void
-zap_monster(monster, kind)
-	object *monster;
-	unsigned short kind;
+static void
+zap_monster(object *monster, unsigned short kind)
 {
 	short row, col;
 	object *nm;
@@ -203,9 +204,8 @@ zap_monster(monster, kind)
 	}
 }
 
-void
-tele_away(monster)
-	object *monster;
+static void
+tele_away(object *monster)
 {
 	short row, col;
 
@@ -224,7 +224,7 @@ tele_away(monster)
 }
 
 void
-wizardize()
+wizardize(void)
 {
 	char buf[100];
 
@@ -247,9 +247,8 @@ wizardize()
 	}
 }
 
-void
-wdrain_life(monster)
-	object *monster;
+static void
+wdrain_life(object *monster)
 {
 	short hp;
 	object *lmon, *nm;
@@ -278,8 +277,7 @@ wdrain_life(monster)
 }
 
 void
-bounce(ball, dir, row, col, r)
-	short ball, dir, row, col, r;
+bounce(short ball, short dir, short row, short col, short r)
 {
 	short orow, ocol;
 	const char *s;
@@ -383,7 +381,7 @@ bounce(ball, dir, row, col, r)
 				damage = (damage * 3) / 2;
 				damage -= get_armor_class(rogue.armor);
 			}
-			rogue_damage(damage, (object *)0,
+			rogue_damage(damage, NULL,
 					((ball == FIRE) ? KFIRE : HYPOTHERMIA));
 			messagef(0, "the %s hits", s);
 		}

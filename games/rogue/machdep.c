@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.16 2008/01/14 00:23:52 dholland Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17 2008/01/14 03:50:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)machdep.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: machdep.c,v 1.16 2008/01/14 00:23:52 dholland Exp $");
+__RCSID("$NetBSD: machdep.c,v 1.17 2008/01/14 03:50:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -128,7 +128,7 @@ __RCSID("$NetBSD: machdep.c,v 1.16 2008/01/14 00:23:52 dholland Exp $");
  */
 
 void
-md_slurp()
+md_slurp(void)
 {
 	(void)fpurge(stdin);
 }
@@ -150,7 +150,7 @@ md_slurp()
  */
 
 void
-md_heed_signals()
+md_heed_signals(void)
 {
 	signal(SIGINT, onintr);
 	signal(SIGQUIT, byebye);
@@ -170,7 +170,7 @@ md_heed_signals()
  */
 
 void
-md_ignore_signals()
+md_ignore_signals(void)
 {
 	signal(SIGQUIT, SIG_IGN);
 	signal(SIGINT, SIG_IGN);
@@ -187,8 +187,7 @@ md_ignore_signals()
  */
 
 int
-md_get_file_id(fname)
-	const char *fname;
+md_get_file_id(const char *fname)
 {
 	struct stat sbuf;
 
@@ -207,8 +206,7 @@ md_get_file_id(fname)
  */
 
 int
-md_link_count(fname)
-	const char *fname;
+md_link_count(const char *fname)
 {
 	struct stat sbuf;
 
@@ -231,8 +229,7 @@ md_link_count(fname)
  */
 
 void
-md_gct(rt_buf)
-	struct rogue_time *rt_buf;
+md_gct(struct rogue_time *rt_buf)
 {
 	struct tm *t;
 	time_t seconds;
@@ -265,16 +262,14 @@ md_gct(rt_buf)
  */
 
 void
-md_gfmt(fname, rt_buf)
-	const char *fname;
-	struct rogue_time *rt_buf;
+md_gfmt(const char *fname, struct rogue_time *rt_buf)
 {
 	struct stat sbuf;
 	time_t seconds;
 	struct tm *t;
 
 	stat(fname, &sbuf);
-	seconds = (long)sbuf.st_mtime;
+	seconds = sbuf.st_mtime;
 	t = localtime(&seconds);
 
 	rt_buf->year = t->tm_year;
@@ -297,8 +292,7 @@ md_gfmt(fname, rt_buf)
  */
 
 boolean
-md_df(fname)
-	const char *fname;
+md_df(const char *fname)
 {
 	if (unlink(fname)) {
 		return(0);
@@ -316,13 +310,13 @@ md_df(fname)
  */
 
 const char *
-md_gln()
+md_gln(void)
 {
 	struct passwd *p;
 
 	if (!(p = getpwuid(getuid())))
-		return((char *)NULL);
-	return(p->pw_name);
+		return NULL;
+	return p->pw_name;
 }
 
 /* md_sleep:
@@ -335,8 +329,7 @@ md_gln()
  */
 
 void
-md_sleep(nsecs)
-	int nsecs;
+md_sleep(int nsecs)
 {
 	(void)sleep(nsecs);
 }
@@ -365,8 +358,7 @@ md_sleep(nsecs)
  */
 
 char *
-md_getenv(name)
-	const char *name;
+md_getenv(const char *name)
 {
 	char *value;
 
@@ -383,9 +375,8 @@ md_getenv(name)
  * when no more memory can be allocated.
  */
 
-char *
-md_malloc(n)
-	int n;
+void *
+md_malloc(size_t n)
 {
 	char *t;
 
@@ -412,7 +403,7 @@ md_malloc(n)
  */
 
 int
-md_gseed()
+md_gseed(void)
 {
 	time_t seconds;
 
@@ -428,8 +419,7 @@ md_gseed()
  */
 
 void
-md_exit(status)
-	int status;
+md_exit(int status)
 {
 	exit(status);
 }
@@ -446,10 +436,9 @@ md_exit(status)
  */
 
 void
-md_lock(l)
-	boolean l;
+md_lock(boolean l)
 {
-	static int fd;
+	static int fd = -1;
 	short tries;
 
 	if (l) {
@@ -464,7 +453,7 @@ md_lock(l)
 			if (!flock(fd, LOCK_EX|LOCK_NB))
 				return;
 	} else {
-		(void)flock(fd, LOCK_NB);
+		(void)flock(fd, LOCK_UN|LOCK_NB);
 		(void)close(fd);
 	}
 }
@@ -482,8 +471,7 @@ md_lock(l)
  */
 
 void
-md_shell(shell)
-	const char *shell;
+md_shell(const char *shell)
 {
 	int w;
 	pid_t pid;
@@ -493,7 +481,7 @@ md_shell(shell)
 	case -1:
 		break;
 	case 0:
-		execl(shell, shell, (char *)0);
+		execl(shell, shell, (char *)NULL);
 		_exit(255);
 	default:
 		waitpid(pid, &w, 0);
@@ -501,4 +489,4 @@ md_shell(shell)
 	}
 }
 
-#endif
+#endif /* UNIX */

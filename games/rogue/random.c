@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.6 2008/01/14 00:23:52 dholland Exp $	*/
+/*	$NetBSD: random.c,v 1.7 2008/01/14 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: random.c,v 1.6 2008/01/14 00:23:52 dholland Exp $");
+__RCSID("$NetBSD: random.c,v 1.7 2008/01/14 03:50:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,12 +74,11 @@ static int rand_sep = 3;
 static long *end_ptr = &rntb[32];
 
 void
-srrandom(x)
-	int x;
+srrandom(int x)
 {
 	int i;
 
-	state[0] = (long)x;
+	state[0] = x;
 	if (rand_type != 0) {
 		for (i = 1; i < rand_deg; i++) {
 			state[i] = 1103515245 * state[i - 1] + 12345;
@@ -93,7 +92,7 @@ srrandom(x)
 }
 
 long
-rrandom()
+rrandom(void)
 {
 	long i;
 
@@ -115,8 +114,7 @@ rrandom()
 }
 
 int
-get_rand(x, y)
-	int x, y;
+get_rand(int x, int y)
 {
 	int r, t;
 	long lr;
@@ -127,21 +125,20 @@ get_rand(x, y)
 		x = t;
 	}
 	lr = rrandom();
-	lr &= (long)0x00003fff;
+	lr &= 0x00003fffL;
 	r = (int)lr;
 	r = (r % ((y - x) + 1)) + x;
 	return(r);
 }
 
 int
-rand_percent(percentage)
-	int percentage;
+rand_percent(int percentage)
 {
 	return(get_rand(1, 100) <= percentage);
 }
 
 int
-coin_toss()
+coin_toss(void)
 {
 	return(((rrandom() & 01) ? 1 : 0));
 }

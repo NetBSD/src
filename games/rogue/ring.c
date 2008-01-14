@@ -1,4 +1,4 @@
-/*	$NetBSD: ring.c,v 1.8 2008/01/14 00:23:52 dholland Exp $	*/
+/*	$NetBSD: ring.c,v 1.9 2008/01/14 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ring.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: ring.c,v 1.8 2008/01/14 00:23:52 dholland Exp $");
+__RCSID("$NetBSD: ring.c,v 1.9 2008/01/14 03:50:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,8 +55,9 @@ __RCSID("$NetBSD: ring.c,v 1.8 2008/01/14 00:23:52 dholland Exp $");
 
 #include "rogue.h"
 
-const char *left_or_right = "left or right hand?";
-const char *no_ring = "there's no ring on that hand";
+static const char left_or_right[] = "left or right hand?";
+static const char no_ring[] = "there's no ring on that hand";
+
 short stealthy;
 short r_rings;
 short add_strength;
@@ -70,7 +71,7 @@ boolean sustain_strength;
 boolean maintain_armor;
 
 void
-put_on_ring()
+put_on_ring(void)
 {
 	short ch;
 	char desc[DCOLS];
@@ -131,9 +132,7 @@ put_on_ring()
  */
 
 void
-do_put_on(ring, on_left)
-	object *ring;
-	boolean on_left;
+do_put_on(object *ring, boolean on_left)
 {
 	if (on_left) {
 		ring->in_use_flags |= ON_LEFT_HAND;
@@ -145,7 +144,7 @@ do_put_on(ring, on_left)
 }
 
 void
-remove_ring()
+remove_ring(void)
 {
 	boolean left = 0, right = 0;
 	short ch;
@@ -195,23 +194,20 @@ remove_ring()
 }
 
 void
-un_put_on(ring)
-	object *ring;
+un_put_on(object *ring)
 {
 	if (ring && (ring->in_use_flags & ON_LEFT_HAND)) {
 		ring->in_use_flags &= (~ON_LEFT_HAND);
-		rogue.left_ring = 0;
+		rogue.left_ring = NULL;
 	} else if (ring && (ring->in_use_flags & ON_RIGHT_HAND)) {
 		ring->in_use_flags &= (~ON_RIGHT_HAND);
-		rogue.right_ring = 0;
+		rogue.right_ring = NULL;
 	}
 	ring_stats(1);
 }
 
 void
-gr_ring(ring, assign_wk)
-	object *ring;
-	boolean assign_wk;
+gr_ring(object *ring, boolean assign_wk)
 {
 	ring->what_is = RING;
 	if (assign_wk) {
@@ -252,7 +248,7 @@ gr_ring(ring, assign_wk)
 }
 
 void
-inv_rings()
+inv_rings(void)
 {
 	char buf[DCOLS];
 
@@ -277,8 +273,7 @@ inv_rings()
 }
 
 void
-ring_stats(pr)
-	boolean pr;
+ring_stats(boolean pr)
 {
 	short i;
 	object *ring;

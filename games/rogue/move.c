@@ -1,4 +1,4 @@
-/*	$NetBSD: move.c,v 1.10 2008/01/14 00:23:52 dholland Exp $	*/
+/*	$NetBSD: move.c,v 1.11 2008/01/14 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: move.c,v 1.10 2008/01/14 00:23:52 dholland Exp $");
+__RCSID("$NetBSD: move.c,v 1.11 2008/01/14 03:50:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,8 +60,7 @@ boolean jump = 0;
 const char *you_can_move_again = "you can move again";
 
 int
-one_move_rogue(dirch, pickup)
-	short dirch, pickup;
+one_move_rogue(short dirch, short pickup)
 {
 	short row, col;
 	object *obj;
@@ -172,8 +171,7 @@ MVED:	if (reg_move()) {			/* fainted from hunger */
 }
 
 void
-multiple_move_rogue(dirch)
-	short dirch;
+multiple_move_rogue(short dirch)
 {
 	short row, col;
 	short m;
@@ -221,8 +219,7 @@ multiple_move_rogue(dirch)
 }
 
 boolean
-is_passable(row, col)
-	int row, col;
+is_passable(int row, int col)
 {
 	if ((row < MIN_ROW) || (row > (DROWS - 2)) || (col < 0) ||
 		(col > (DCOLS-1))) {
@@ -235,8 +232,7 @@ is_passable(row, col)
 }
 
 boolean
-next_to_something(drow, dcol)
-	int drow, dcol;
+next_to_something(int drow, int dcol)
 {
 	short i, j, i_end, j_end, row, col;
 	short pass_count = 0;
@@ -297,8 +293,7 @@ next_to_something(drow, dcol)
 }
 
 boolean
-can_move(row1, col1, row2, col2)
-	int row1, col1, row2, col2;
+can_move(int row1, int col1, int row2, int col2)
 {
 	if (!is_passable(row2, col2)) {
 		return(0);
@@ -315,7 +310,7 @@ can_move(row1, col1, row2, col2)
 }
 
 void
-move_onto()
+move_onto(void)
 {
 	short ch, d;
 	boolean first_miss = 1;
@@ -334,9 +329,7 @@ move_onto()
 }
 
 boolean
-is_direction(c, d)
-	short c;
-	short *d;
+is_direction(short c, short *d)
 {
 	switch(c) {
 	case 'h':
@@ -372,8 +365,7 @@ is_direction(c, d)
 }
 
 boolean
-check_hunger(msg_only)
-	boolean msg_only;
+check_hunger(boolean msg_only)
 {
 	short i, n;
 	boolean fainted = 0;
@@ -413,7 +405,7 @@ check_hunger(msg_only)
 		return(fainted);
 	}
 	if (rogue.moves_left <= STARVE) {
-		killed_by((object *)0, STARVATION);
+		killed_by(NULL, STARVATION);
 	}
 
 	switch(e_rings) {
@@ -441,7 +433,7 @@ check_hunger(msg_only)
 }
 
 boolean
-reg_move()
+reg_move(void)
 {
 	boolean fainted;
 
@@ -498,8 +490,7 @@ reg_move()
 }
 
 void
-rest(count)
-	int count;
+rest(int count)
 {
 	int i;
 
@@ -514,7 +505,7 @@ rest(count)
 }
 
 char
-gr_dir()
+gr_dir(void)
 {
 	short d;
 
@@ -550,7 +541,7 @@ gr_dir()
 }
 
 void
-heal()
+heal(void)
 {
 	static short heal_exp = -1, n, c = 0;
 	static boolean alt;
@@ -615,8 +606,7 @@ heal()
 }
 
 boolean
-can_turn(nrow, ncol)
-	short nrow, ncol;
+can_turn(short nrow, short ncol)
 {
 	if ((dungeon[nrow][ncol] & TUNNEL) && is_passable(nrow, ncol)) {
 		return(1);
@@ -625,9 +615,7 @@ can_turn(nrow, ncol)
 }
 
 void
-turn_passage(dir, fast)
-	short dir;
-	boolean fast;
+turn_passage(short dir, boolean fast)
 {
 	short crow = rogue.row, ccol = rogue.col, turns = 0;
 	short ndir = 0;

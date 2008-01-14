@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_hit.c,v 1.7 2008/01/14 00:23:53 dholland Exp $	*/
+/*	$NetBSD: spec_hit.c,v 1.8 2008/01/14 03:50:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)spec_hit.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: spec_hit.c,v 1.7 2008/01/14 00:23:53 dholland Exp $");
+__RCSID("$NetBSD: spec_hit.c,v 1.8 2008/01/14 03:50:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,12 +55,22 @@ __RCSID("$NetBSD: spec_hit.c,v 1.7 2008/01/14 00:23:53 dholland Exp $");
 
 #include "rogue.h"
 
+static void	disappear(object *);
+static void	drain_life(void);
+static void	drop_level(void);
+static void	freeze(object *);
+static int	get_dir(short, short, short, short);
+static boolean	gold_at(short, short);
+static void	steal_gold(object *);
+static void	steal_item(object *);
+static void	sting(object *);
+static boolean	try_to_cough(short, short, object *);
+
 short less_hp = 0;
 boolean being_held;
 
 void
-special_hit(monster)
-	object *monster;
+special_hit(object *monster)
 {
 	if ((monster->m_flags & CONFUSED) && rand_percent(66)) {
 		return;
@@ -91,8 +101,7 @@ special_hit(monster)
 }
 
 void
-rust(monster)
-	object *monster;
+rust(object *monster)
 {
 	if ((!rogue.armor) || (get_armor_class(rogue.armor) <= 1) ||
 		(rogue.armor->which_kind == LEATHER)) {
@@ -111,8 +120,7 @@ rust(monster)
 }
 
 void
-freeze(monster)
-	object *monster;
+freeze(object *monster)
 {
 	short freeze_percent = 99;
 	short i, n;
@@ -137,7 +145,7 @@ freeze(monster)
 			for (i = 0; i < 50; i++) {
 				mv_mons();
 			}
-			killed_by((object *)0, HYPOTHERMIA);
+			killed_by(NULL, HYPOTHERMIA);
 		}
 		messagef(1, you_can_move_again);
 		monster->m_flags &= (~FREEZING_ROGUE);
@@ -145,8 +153,7 @@ freeze(monster)
 }
 
 void
-steal_gold(monster)
-	object *monster;
+steal_gold(object *monster)
 {
 	int amount;
 
@@ -166,8 +173,7 @@ steal_gold(monster)
 }
 
 void
-steal_item(monster)
-	object *monster;
+steal_item(object *monster)
 {
 	object *obj;
 	short i, n, t = 0;
@@ -219,9 +225,8 @@ DSPR:
 	disappear(monster);
 }
 
-void
-disappear(monster)
-	object *monster;
+static void
+disappear(object *monster)
 {
 	short row, col;
 
@@ -238,8 +243,7 @@ disappear(monster)
 }
 
 void
-cough_up(monster)
-	object *monster;
+cough_up(object *monster)
 {
 	object *obj;
 	short row, col, i, n;
@@ -282,10 +286,8 @@ cough_up(monster)
 	free_object(obj);
 }
 
-boolean
-try_to_cough(row, col, obj)
-	short row, col;
-	object *obj;
+static boolean
+try_to_cough(short row, short col, object *obj)
 {
 	if ((row < MIN_ROW) ||
 	    (row > (DROWS-2)) || (col < 0) || (col>(DCOLS-1))) {
@@ -304,8 +306,7 @@ try_to_cough(row, col, obj)
 }
 
 boolean
-seek_gold(monster)
-	object *monster;
+seek_gold(object *monster)
 {
 	short i, j, rn, s;
 
@@ -336,9 +337,8 @@ seek_gold(monster)
 	return(0);
 }
 
-boolean
-gold_at(row, col)
-	short row, col;
+static boolean
+gold_at(short row, short col)
 {
 	if (dungeon[row][col] & OBJECT) {
 		object *obj;
@@ -352,15 +352,13 @@ gold_at(row, col)
 }
 
 void
-check_gold_seeker(monster)
-	object *monster;
+check_gold_seeker(object *monster)
 {
 	monster->m_flags &= (~SEEKS_GOLD);
 }
 
 boolean
-check_imitator(monster)
-	object *monster;
+check_imitator(object *monster)
 {
 	if (monster->m_flags & IMITATES) {
 		wake_up(monster);
@@ -376,8 +374,7 @@ check_imitator(monster)
 }
 
 boolean
-imitating(row, col)
-	short row, col;
+imitating(short row, short col)
 {
 	if (dungeon[row][col] & MONSTER) {
 		object *monster;
@@ -391,9 +388,8 @@ imitating(row, col)
 	return(0);
 }
 
-void
-sting(monster)
-	object *monster;
+static void
+sting(object *monster)
 {
 	short sting_chance = 35;
 
@@ -413,8 +409,8 @@ sting(monster)
 	}
 }
 
-void
-drop_level()
+static void
+drop_level(void)
 {
 	int hp;
 
@@ -434,7 +430,7 @@ drop_level()
 }
 
 void
-drain_life()
+drain_life(void)
 {
 	short n;
 
@@ -463,8 +459,7 @@ drain_life()
 }
 
 boolean
-m_confuse(monster)
-	object *monster;
+m_confuse(object *monster)
 {
 	if (!rogue_can_see(monster->row, monster->col)) {
 		return(0);
@@ -484,8 +479,7 @@ m_confuse(monster)
 }
 
 boolean
-flame_broil(monster)
-	object *monster;
+flame_broil(object *monster)
 {
 	short row, col, dir;
 
@@ -510,9 +504,8 @@ flame_broil(monster)
 	return(1);
 }
 
-int
-get_dir(srow, scol, drow, dcol)
-	short srow, scol, drow, dcol;
+static int
+get_dir(short srow, short scol, short drow, short dcol)
 {
 	if (srow == drow) {
 		if (scol < dcol) {
