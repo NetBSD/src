@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.13 2008/01/14 00:23:52 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.14 2008/01/14 03:50:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)monster.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monster.c,v 1.13 2008/01/14 00:23:52 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.14 2008/01/14 03:50:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ const char *const m_names[] = {
 	"zombie"
 };
 
-object mon_tab[MONSTERS] = {
+static object mon_tab[MONSTERS] = {
 	{(ASLEEP|WAKENS|WANDERS|RUSTS),"0d0",25,'A',20,9,18,100,0,0,0,0,0},
 	{(ASLEEP|WANDERS|FLITS|FLIES),"1d3",10,'B',2,1,8,60,0,0,0,0,0},
 	{(ASLEEP|WANDERS),"3d3/2d5",32,'C',15,7,16,85,0,10,0,0,0},
@@ -121,7 +121,7 @@ object mon_tab[MONSTERS] = {
 };
 
 void
-put_mons()
+put_mons(void)
 {
 	short i;
 	short n;
@@ -131,7 +131,7 @@ put_mons()
 	n = get_rand(4, 6);
 
 	for (i = 0; i < n; i++) {
-		monster = gr_monster((object *)0, 0);
+		monster = gr_monster(NULL, 0);
 		if ((monster->m_flags & WANDERS) && coin_toss()) {
 			wake_up(monster);
 		}
@@ -141,9 +141,7 @@ put_mons()
 }
 
 object *
-gr_monster(monster, mn)
-	object *monster;
-	int mn;
+gr_monster(object *monster, int mn)
 {
 	if (!monster) {
 		monster = alloc_object();
@@ -168,7 +166,7 @@ gr_monster(monster, mn)
 }
 
 void
-mv_mons()
+mv_mons(void)
 {
 	object *monster, *next_monster, *test_mons;
 	boolean flew;
@@ -224,8 +222,7 @@ NM:		test_mons = level_monsters.next_monster;
 }
 
 void
-party_monsters(rn, n)
-	int rn, n;
+party_monsters(int rn, int n)
 {
 	short i, j;
 	short row, col;
@@ -266,8 +263,7 @@ party_monsters(rn, n)
 }
 
 char
-gmc_row_col(row, col)
-	int row, col;
+gmc_row_col(int row, int col)
 {
 	object *monster;
 
@@ -286,8 +282,7 @@ gmc_row_col(row, col)
 }
 
 char
-gmc(monster)
-	object *monster;
+gmc(object *monster)
 {
 	if ((!(detect_monster || see_invisible || r_see_invisible) &&
 		(monster->m_flags & INVISIBLE))
@@ -301,9 +296,7 @@ gmc(monster)
 }
 
 void
-mv_1_monster(monster, row, col)
-	object *monster;
-	short row, col;
+mv_1_monster(object *monster, short row, short col)
 {
 	short i, n;
 	boolean tried[6];
@@ -441,9 +434,7 @@ O:
 }
 
 int
-mtry(monster, row, col)
-	object *monster;
-	short row, col;
+mtry(object *monster, short row, short col)
 {
 	if (mon_can_go(monster, row, col)) {
 		move_mon_to(monster, row, col);
@@ -453,9 +444,7 @@ mtry(monster, row, col)
 }
 
 void
-move_mon_to(monster, row, col)
-	object *monster;
-	short row, col;
+move_mon_to(object *monster, short row, short col)
 {
 	short c;
 	int mrow, mcol;
@@ -504,9 +493,7 @@ move_mon_to(monster, row, col)
 }
 
 int
-mon_can_go(monster, row, col)
-	const object *monster;
-	short row, col;
+mon_can_go(const object *monster, short row, short col)
 {
 	object *obj;
 	short dr, dc;
@@ -546,8 +533,7 @@ mon_can_go(monster, row, col)
 }
 
 void
-wake_up(monster)
-	object *monster;
+wake_up(object *monster)
 {
 	if (!(monster->m_flags & NAPPING)) {
 		monster->m_flags &= (~(ASLEEP | IMITATES | WAKENS));
@@ -555,10 +541,7 @@ wake_up(monster)
 }
 
 void
-wake_room(rn, entering, row, col)
-	short rn;
-	boolean entering;
-	short row, col;
+wake_room(short rn, boolean entering, short row, short col)
 {
 	object *monster;
 	short wake_percent;
@@ -592,8 +575,7 @@ wake_room(rn, entering, row, col)
 }
 
 const char *
-mon_name(monster)
-	const object *monster;
+mon_name(const object *monster)
 {
 	short ch;
 
@@ -610,8 +592,7 @@ mon_name(monster)
 }
 
 int
-rogue_is_around(row, col)
-	int row, col;
+rogue_is_around(int row, int col)
 {
 	short rdif, cdif, retval;
 
@@ -623,7 +604,7 @@ rogue_is_around(row, col)
 }
 
 void
-wanderer()
+wanderer(void)
 {
 	object *monster;
 	short row, col, i;
@@ -632,7 +613,7 @@ wanderer()
 	monster = NULL;		/* XXXGCC -Wuninitialized [powerpc] */
 
 	for (i = 0; ((i < 15) && (!found)); i++) {
-		monster = gr_monster((object *)0, 0);
+		monster = gr_monster(NULL, 0);
 		if (!(monster->m_flags & (WAKENS | WANDERS))) {
 			free_object(monster);
 		} else {
@@ -656,7 +637,7 @@ wanderer()
 }
 
 void
-show_monsters()
+show_monsters(void)
 {
 	object *monster;
 
@@ -678,7 +659,7 @@ show_monsters()
 }
 
 void
-create_monster()
+create_monster(void)
 {
 	short row, col;
 	short i;
@@ -714,9 +695,7 @@ create_monster()
 }
 
 void
-put_m_at(row, col, monster)
-	short row, col;
-	object *monster;
+put_m_at(short row, short col, object *monster)
 {
 	monster->row = row;
 	monster->col = col;
@@ -727,8 +706,7 @@ put_m_at(row, col, monster)
 }
 
 void
-aim_monster(monster)
-	object *monster;
+aim_monster(object *monster)
 {
 	short i, rn, d, r;
 
@@ -748,8 +726,7 @@ aim_monster(monster)
 }
 
 int
-rogue_can_see(row, col)
-	int row, col;
+rogue_can_see(int row, int col)
 {
 	int retval;
 
@@ -762,8 +739,7 @@ rogue_can_see(row, col)
 }
 
 int
-move_confused(monster)
-	object *monster;
+move_confused(object *monster)
 {
 	short i, row, col;
 
@@ -793,8 +769,7 @@ move_confused(monster)
 }
 
 int
-flit(monster)
-	object *monster;
+flit(object *monster)
 {
 	short i, row, col;
 
@@ -820,7 +795,7 @@ flit(monster)
 }
 
 char
-gr_obj_char()
+gr_obj_char(void)
 {
 	short r;
 	const char *rs = "%!?]=/):*";
@@ -831,8 +806,7 @@ gr_obj_char()
 }
 
 int
-no_room_for_monster(rn)
-	int rn;
+no_room_for_monster(int rn)
 {
 	short i, j;
 
@@ -847,7 +821,7 @@ no_room_for_monster(rn)
 }
 
 void
-aggravate()
+aggravate(void)
 {
 	object *monster;
 
@@ -866,9 +840,7 @@ aggravate()
 }
 
 boolean
-mon_sees(monster, row, col)
-	const object *monster;
-	int row, col;
+mon_sees(const object *monster, int row, int col)
 {
 	short rn, rdif, cdif, retval;
 
@@ -887,7 +859,7 @@ mon_sees(monster, row, col)
 }
 
 void
-mv_aquatars()
+mv_aquatars(void)
 {
 	object *monster;
 
