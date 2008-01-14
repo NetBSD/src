@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: fmt.sh,v 1.3 2008/01/03 14:21:53 yamt Exp $
+#	$NetBSD: tpfmt.sh,v 1.1 2008/01/14 12:42:02 yamt Exp $
 
 # /*-
 #  * Copyright (c)2008 YAMAMOTO Takashi,
