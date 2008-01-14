@@ -1,4 +1,4 @@
-/*	$NetBSD: room.c,v 1.10 2007/12/27 23:53:01 dholland Exp $	*/
+/*	$NetBSD: room.c,v 1.11 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)room.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: room.c,v 1.10 2007/12/27 23:53:01 dholland Exp $");
+__RCSID("$NetBSD: room.c,v 1.11 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,31 +68,31 @@ const struct option {
 } options[NOPTS] = {
 	{
 		"Show position only at end of run (\"jump\"): ",
-		1, (char **) 0, &jump
+		1, (char **)0, &jump
 	},
 	{
 		"Follow turnings in passageways (\"passgo\"): ",
-		1, (char **) 0, &passgo
+		1, (char **)0, &passgo
 	},
 	{
 		"Don't print skull when killed (\"noskull\" or \"notombstone\"): ",
-		1, (char **) 0, &no_skull
+		1, (char **)0, &no_skull
 	},
 	{
 		"Ask player before saying 'Okay, bye-bye!' (\"askquit\"): ",
-		1, (char **) 0, &ask_quit
+		1, (char **)0, &ask_quit
 	},
 	{
 		"Name (\"name\"): ",
-		0, &nick_name, (boolean *) 0
+		0, &nick_name, (boolean *)0
 	},
 	{
 		"Fruit (\"fruit\"): ",
-		0, &fruit, (boolean *) 0
+		0, &fruit, (boolean *)0
 	},
 	{
 		"Save file (\"file\"): ",
-		0, &save_file, (boolean *) 0
+		0, &save_file, (boolean *)0
 	}
 };
 
@@ -604,10 +604,10 @@ CH:
 				if (j != 0) {
 					/*
 					 * We rely on the option string being
-					 * allocated to hold MAX_OPT_LEN+2 
+					 * allocated to hold MAX_OPT_LEN+2
 					 * bytes. This is arranged in init.c.
 					 */
-					(void) strcpy(*(options[i].strval), buf);
+					(void)strcpy(*(options[i].strval), buf);
 				}
 				opt_show(i);
 				goto CH;

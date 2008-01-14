@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2008/01/14 00:23:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.6 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2008/01/14 00:23:52 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 		put_mons();
 		put_player(party_room);
 		print_stats(STAT_ALL);
-PL:		
+PL:
 		play_level();
 		free_stuff(&level_objects);
 		free_stuff(&level_monsters);
