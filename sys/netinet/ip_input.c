@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.260 2007/12/22 15:41:11 matt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.261 2008/01/14 04:19:09 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.260 2007/12/22 15:41:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.261 2008/01/14 04:19:09 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -1954,7 +1954,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		type = ICMP_UNREACH;
 		code = ICMP_UNREACH_NEEDFRAG;
 #if !defined(IPSEC) && !defined(FAST_IPSEC)
-		if ((rt = rtcache_getrt(&ipforward_rt)) != NULL)
+		if ((rt = rtcache_validate(&ipforward_rt)) != NULL)
 			destmtu = rt->rt_ifp->if_mtu;
 #else
 		/*
@@ -1963,7 +1963,7 @@ ip_forward(struct mbuf *m, int srcrt)
 		 *	tunnel MTU = if MTU - sizeof(IP) - ESP/AH hdrsiz
 		 * XXX quickhack!!!
 		 */
-		if ((rt = rtcache_getrt(&ipforward_rt)) != NULL) {
+		if ((rt = rtcache_validate(&ipforward_rt)) != NULL) {
 			struct secpolicy *sp;
 			int ipsecerror;
 			size_t ipsechdr;
