@@ -1,6 +1,6 @@
-.\"	$NetBSD: puffs.3,v 1.37 2007/12/15 20:11:38 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.38 2008/01/14 13:57:26 pooka Exp $
 .\"
-.\" Copyright (c) 2006, 2007 Antti Kantee.  All rights reserved.
+.\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 15, 2007
+.Dd January 14, 2008
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -272,11 +272,14 @@ Possible values are
 .Dv PUFFS_STATE_UNMOUNTING
 and
 .Dv PUFFS_STATE_UNMOUNTED .
-.It Fn puffs_setstacksize "stacksize"
+.It Fn puffs_setstacksize "pu" "stacksize"
 Sets the stack size used when running callbacks.
-The default is one megabyte of stack space per request.
-See
-.Xr puffs_cc 3 .
+The default is
+.Dv PUFFS_STACKSIZE_DEFAULT
+bytes of stack space per request.
+The minimum stacksize is architecture-dependent and can be specified
+by using the opaque constant
+.Dv PUFFS_STACKSIZE_MIN .
 .It Fn puffs_setroot "pu" "node"
 Sets the root node of mount
 .Fa pu
