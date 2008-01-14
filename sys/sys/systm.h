@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.210 2008/01/14 12:40:03 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.211 2008/01/14 22:47:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -92,7 +92,9 @@ extern const char *rootspec;	/* how root device was specified */
 
 extern int ncpu;		/* number of CPUs configured */
 extern int ncpuonline;		/* number of CPUs online */
+#if defined(_KERNEL)
 extern bool mp_online;		/* secondary processors are started */
+#endif /* defined(_KERNEL) */
 
 extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
 extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
