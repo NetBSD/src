@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.40 2008/01/14 21:38:55 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.41 2008/01/15 09:25:26 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.40 2008/01/14 21:38:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.41 2008/01/15 09:25:26 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -421,8 +421,10 @@ compat_cvtcmd(u_long cmd)
 	case GRESADDRS:
 	case GRESPROTO:
 	case GRESSOCK:
+#ifdef COMPAT_20
 	case OSIOCG80211STATS:
 	case OSIOCG80211ZSTATS:
+#endif /* COMPAT_20 */
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCDIFADDR:
