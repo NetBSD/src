@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.232.4.2 2008/01/06 05:00:59 wrstuden Exp $	*/
+/*	$NetBSD: locore.s,v 1.232.4.3 2008/01/15 10:06:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -7345,6 +7345,7 @@ ENTRY(cpu_switchto)
  */
 ENTRY(snapshot)
 	rdpr	%pstate, %o1		! save psr
+	stx	%o7, [%o0 + PCB_PC]	! save pc
 	stx	%o6, [%o0 + PCB_SP]	! save sp
 	rdpr	%pil, %o2
 	sth	%o1, [%o0 + PCB_PSTATE]
