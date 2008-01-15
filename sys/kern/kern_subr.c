@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.174 2008/01/10 16:29:17 ad Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.175 2008/01/15 14:26:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.174 2008/01/10 16:29:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.175 2008/01/15 14:26:42 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -141,6 +141,8 @@ MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 #ifdef TFTPROOT
 int tftproot_dhcpboot(struct device *);
 #endif
+
+dev_t	dumpcdev;	/* for savecore */
 
 void
 uio_setup_sysspace(struct uio *uio)
@@ -1099,6 +1101,7 @@ setroot(struct device *bootdv, int bootpartition)
 		}
 	}
 
+	dumpcdev = devsw_blk2chr(dumpdev);
 	aprint_normal(" dumps on %s", dumpdv->dv_xname);
 	if (DEV_USES_PARTITIONS(dumpdv))
 		aprint_normal("%c", DISKPART(dumpdev) + 'a');
@@ -1107,6 +1110,7 @@ setroot(struct device *bootdv, int bootpartition)
 
  nodumpdev:
 	dumpdev = NODEV;
+	dumpcdev = NODEV;
 	aprint_normal("\n");
 }
 

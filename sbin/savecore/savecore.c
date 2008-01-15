@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.71 2007/11/12 16:04:55 pooka Exp $	*/
+/*	$NetBSD: savecore.c,v 1.72 2008/01/15 14:26:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.71 2007/11/12 16:04:55 pooka Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.72 2008/01/15 14:26:42 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -93,11 +93,13 @@ struct nlist current_nl[] = {	/* Namelist for currently running system. */
 	{ .n_name = "_panicend" },
 #define	X_MSGBUF	10
 	{ .n_name = "_msgbufp" },
+#define	X_DUMPCDEV	11
+	{ .n_name = "_dumpcdev" },
 	{ .n_name = NULL },
 };
-int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, -1 };
-int dumpsyms[] = { X_TIME_SECOND, X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR, X_DUMPMAG,
-    -1 };
+int cursyms[] = { X_DUMPDEV, X_DUMPLO, X_VERSION, X_DUMPMAG, X_DUMPCDEV, -1 };
+int dumpsyms[] = { X_TIME_SECOND, X_TIME, X_DUMPSIZE, X_VERSION, X_PANICSTR,
+    X_DUMPMAG, -1 };
 
 struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ .n_name = "_dumpdev" },	/* Entries MUST be the same as */
@@ -111,6 +113,7 @@ struct nlist dump_nl[] = {	/* Name list for dumped system. */
 	{ .n_name = "_panicstart" },
 	{ .n_name = "_panicend" },
 	{ .n_name = "_msgbufp" },
+	{ .n_name = "_dumpcdev" },
 	{ .n_name = NULL },
 };
 
@@ -124,8 +127,9 @@ const char	*kernel;		/* name of used kernel */
 char	*dirname;			/* directory to save dumps in */
 char	*ddname;			/* name of dump device */
 dev_t	dumpdev;			/* dump device */
-int	dumpfd;				/* read/write descriptor on block dev */
-kvm_t	*kd_dump;			/* kvm descriptor on block dev	*/
+dev_t	dumpcdev = NODEV;		/* dump device (char equivalent) */
+int	dumpfd;				/* read/write descriptor on dev */
+kvm_t	*kd_dump;			/* kvm descriptor on dev	*/
 time_t	now;				/* current date */
 char	panic_mesg[1024];
 long	panicstr;
@@ -266,14 +270,20 @@ kmem_setup(void)
 		syslog(LOG_ERR, "%s: kvm_nlist: %s", kernel,
 		    kvm_geterr(kd_kern));
 	
-	for (i = 0; cursyms[i] != -1; i++)
-		if (current_nl[cursyms[i]].n_value == 0 &&
-			cursyms[i] != X_TIME_SECOND &&
-		        cursyms[i] != X_TIME) {
+	for (i = 0; cursyms[i] != -1; i++) {
+		if (current_nl[cursyms[i]].n_value != 0)
+			continue;
+		switch (cursyms[i]) {
+		case X_TIME_SECOND:
+		case X_TIME:
+		case X_DUMPCDEV:
+			break;
+		default:
 			syslog(LOG_ERR, "%s: %s not in namelist",
 			    kernel, current_nl[cursyms[i]].n_name);
 			exit(1);
 		}
+	}
 
 	if (KREAD(kd_kern, current_nl[X_DUMPDEV].n_value, &dumpdev) != 0) {
 		if (verbose)
@@ -312,7 +322,17 @@ kmem_setup(void)
 	    sizeof(vers));
 	vers[sizeof(vers) - 1] = '\0';
 
-	ddname = find_dev(dumpdev, S_IFBLK);
+	if (current_nl[X_DUMPCDEV].n_value != 0) {
+		if (KREAD(kd_kern, current_nl[X_DUMPCDEV].n_value,
+		    &dumpcdev) != 0) {
+			if (verbose)
+				syslog(LOG_WARNING, "kvm_read: %s",
+			            kvm_geterr(kd_kern));
+			exit(1);
+		}
+		ddname = find_dev(dumpcdev, S_IFCHR);
+	} else
+		ddname = find_dev(dumpdev, S_IFBLK);
 	dumpfd = Open(ddname, O_RDWR);
 
 	kd_dump = kvm_openfiles(kernel, ddname, NULL, O_RDWR, errbuf);
@@ -489,7 +509,7 @@ void
 clear_dump(void)
 {
 	if (kvm_dump_inval(kd_dump) == -1)
-		syslog(LOG_ERR, "%s: kvm_clear_dump: %s", ddname,
+		syslog(LOG_ERR, "%s: kvm_dump_inval: %s", ddname,
 		    kvm_geterr(kd_dump));
 
 }
@@ -544,10 +564,16 @@ err1:			syslog(LOG_WARNING, "%s: %m", path);
 		}
 	}
 
-	/* Open the raw device. */
-	rawp = rawname(ddname);
-	if ((ifd = open(rawp, O_RDONLY)) == -1) {
-		syslog(LOG_WARNING, "%s: %m; using block device", rawp);
+	if (dumpcdev == NODEV) {
+		/* Open the raw device. */
+		rawp = rawname(ddname);
+		if ((ifd = open(rawp, O_RDONLY)) == -1) {
+			syslog(LOG_WARNING, "%s: %m; using block device",
+			    rawp);
+			ifd = dumpfd;
+		}
+	} else {
+		rawp = ddname;
 		ifd = dumpfd;
 	}
 
@@ -587,7 +613,8 @@ err2:			syslog(LOG_WARNING,
 			exit(1);
 		}
 	}
-	(void)close(ifd);
+	if (dumpcdev == NODEV)
+		(void)close(ifd);
 	(void)fclose(fp);
 
 	/* Copy the kernel. */
