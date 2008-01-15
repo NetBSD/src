@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.123 2008/01/15 14:50:09 joerg Exp $	*/
+/*	$NetBSD: npx.c,v 1.124 2008/01/15 18:46:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.123 2008/01/15 14:50:09 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.124 2008/01/15 18:46:23 ad Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -163,9 +163,6 @@ npxdna_empty(struct cpu_info *ci)
 
 #ifndef XEN
 	panic("npxdna vector not initialized");
-#else
-	/* raise a DNA TRAP, math_emulate would take over eventually */
-	IPRINTF(("Emul"));
 #endif
 	return 0;
 }
@@ -783,7 +780,6 @@ npxsave_lwp(struct lwp *l, bool save)
 		}
 	}
 #else /* MULTIPROCESSOR */
-	KASSERT(ci->ci_fpcurlwp == l);
 	npxsave_cpu(save);
 #endif /* MULTIPROCESSOR */
 #ifdef XEN
