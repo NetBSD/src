@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.75 2007/12/22 01:22:03 yamt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.76 2008/01/15 13:57:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.75 2007/12/22 01:22:03 yamt Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.76 2008/01/15 13:57:42 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -272,12 +272,12 @@ _kvm_ureadm(kd, p, va, cnt)
 		if (KREAD(kd, addr, &pg))
 			return (NULL);
 
-		if (pread(kd->pmfd, kd->swapspc, (size_t)kd->nbpg,
+		if (_kvm_pread(kd, kd->pmfd, kd->swapspc, (size_t)kd->nbpg,
 		    (off_t)pg.phys_addr) != kd->nbpg)
 			return (NULL);
 	} else {
 		if (kd->swfd < 0 ||
-		    pread(kd->swfd, kd->swapspc, (size_t)kd->nbpg,
+		    _kvm_pread(kd, kd->swfd, kd->swapspc, (size_t)kd->nbpg,
 		    (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg)
 			return (NULL);
 	}

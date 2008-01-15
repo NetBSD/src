@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.90 2007/11/08 21:58:26 joerg Exp $	*/
+/*	$NetBSD: kvm.c,v 1.91 2008/01/15 13:57:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.90 2007/11/08 21:58:26 joerg Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.91 2008/01/15 13:57:41 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -183,6 +183,44 @@ Lseek(kvm_t *kd, int fd, off_t offset, int whence)
 	return (off);
 }
 
+ssize_t
+_kvm_pread(kvm_t *kd, int fd, void *buf, size_t size, off_t off)
+{
+	ptrdiff_t moff;
+	void *newbuf;
+	size_t dsize;
+	ssize_t rv;
+	off_t doff;
+
+	/* If aligned nothing to do. */
+ 	if (((off % kd->fdalign) | (size % kd->fdalign)) == 0) {
+		return pread(fd, buf, size, off);
+ 	}
+
+	/*
+	 * Otherwise must buffer.  We can't tolerate short reads in this
+	 * case (lazy bum).
+	 */
+	moff = (ptrdiff_t)off % kd->fdalign;
+	doff = off - moff;
+	dsize = moff + size + kd->fdalign - 1;
+	dsize -= dsize % kd->fdalign;
+	if (kd->iobufsz < dsize) {
+		newbuf = realloc(kd->iobuf, dsize);
+		if (newbuf == NULL) {
+			_kvm_syserr(kd, 0, "cannot allocate I/O buffer");
+			return (-1);
+		}
+		kd->iobuf = newbuf;
+		kd->iobufsz = dsize;
+	}
+	rv = pread(fd, kd->iobuf, dsize, doff);
+	if (rv < dsize)
+		return -1;
+	memcpy(buf, kd->iobuf + moff, size);
+	return size;
+}
+
 /*
  * Wrapper around the pread(2) system call; calls _kvm_syserr() for us
  * in the event of emergency.
@@ -194,7 +232,7 @@ Pread(kvm_t *kd, int fd, void *buf, size_t nbytes, off_t offset)
 
 	errno = 0;
 
-	if ((rv = pread(fd, buf, nbytes, offset)) != nbytes &&
+	if ((rv = _kvm_pread(kd, fd, buf, nbytes, offset)) != nbytes &&
 	    errno != 0)
 		_kvm_syserr(kd, kd->program, "Pread");
 	return (rv);
@@ -230,6 +268,9 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 	kd->cpu_dsize = 0;
 	kd->cpu_data = NULL;
 	kd->dump_off = 0;
+	kd->fdalign = 1;
+	kd->iobuf = NULL;
+	kd->iobufsz = 0;
 
 	if (flag & KVM_NO_FILES) {
 		kd->alive = KVM_ALIVE_SYSCTL;
@@ -291,18 +332,12 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 		_kvm_syserr(kd, kd->program, "%s", mf);
 		goto failed;
 	}
-	if (S_ISCHR(st.st_mode)) {
+	if (S_ISCHR(st.st_mode) && strcmp(mf, _PATH_MEM) == 0) {
 		/*
-		 * If this is a character special device, then check that
-		 * it's /dev/mem.  If so, open kmem too.  (Maybe we should
+		 * If this is /dev/mem, open kmem too.  (Maybe we should
 		 * make it work for either /dev/mem or /dev/kmem -- in either
 		 * case you're working with a live kernel.)
 		 */
-		if (strcmp(mf, _PATH_MEM) != 0) {	/* XXX */
-			_kvm_err(kd, kd->program,
-				 "%s: not physical memory device", mf);
-			goto failed;
-		}
 		if ((kd->vmfd = open_cloexec(_PATH_KMEM, flag, 0)) < 0) {
 			_kvm_syserr(kd, kd->program, "%s", _PATH_KMEM);
 			goto failed;
@@ -338,6 +373,7 @@ _kvm_open(kvm_t *kd, const char *uf, const char *mf, const char *sf, int flag,
 			kd->nlfd = -1;
 		}
 	} else {
+		kd->fdalign = DEV_BSIZE;	/* XXX */
 		/*
 		 * This is a crash dump.
 		 * Initialize the virtual address translation machinery,
@@ -707,24 +743,26 @@ kvm_close(kvm_t *kd)
 		_kvm_freevtop(kd);
 	kd->cpu_dsize = 0;
 	if (kd->cpu_data != NULL)
-		free((void *)kd->cpu_data);
+		free(kd->cpu_data);
 	if (kd->kcore_hdr != NULL)
-		free((void *)kd->kcore_hdr);
+		free(kd->kcore_hdr);
 	if (kd->procbase != 0)
-		free((void *)kd->procbase);
+		free(kd->procbase);
 	if (kd->procbase2 != 0)
-		free((void *)kd->procbase2);
+		free(kd->procbase2);
 	if (kd->lwpbase != 0)
-		free((void *)kd->lwpbase);
+		free(kd->lwpbase);
 	if (kd->swapspc != 0)
-		free((void *)kd->swapspc);
+		free(kd->swapspc);
 	if (kd->argspc != 0)
-		free((void *)kd->argspc);
+		free(kd->argspc);
 	if (kd->argbuf != 0)
-		free((void *)kd->argbuf);
+		free(kd->argbuf);
 	if (kd->argv != 0)
-		free((void *)kd->argv);
-	free((void *)kd);
+		free(kd->argv);
+	if (kd->iobuf != 0)
+		free(kd->iobuf);
+	free(kd);
 
 	return (0);
 }
@@ -804,7 +842,7 @@ kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 		 * device and let the active kernel do the address translation.
 		 */
 		errno = 0;
-		cc = pread(kd->vmfd, buf, len, (off_t)kva);
+		cc = _kvm_pread(kd, kd->vmfd, buf, len, (off_t)kva);
 		if (cc < 0) {
 			_kvm_syserr(kd, 0, "kvm_read");
 			return (-1);
@@ -832,7 +870,7 @@ kvm_read(kvm_t *kd, u_long kva, void *buf, size_t len)
 				cc = len;
 			foff = _kvm_pa2off(kd, pa);
 			errno = 0;
-			cc = pread(kd->pmfd, cp, (size_t)cc, foff);
+			cc = _kvm_pread(kd, kd->pmfd, cp, (size_t)cc, foff);
 			if (cc < 0) {
 				_kvm_syserr(kd, kd->program, "kvm_read");
 				break;
