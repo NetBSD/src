@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.1 2008/01/15 03:41:49 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.2 2008/01/15 09:11:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.1 2008/01/15 03:41:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.2 2008/01/15 09:11:29 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -394,7 +394,8 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 		pid = (id2 == P_MYID) ? p->p_pid : id2;
 		break;
 	default:
-		return EINVAL;
+		error = EINVAL;
+		goto error;
 	}
 
 	/* Find the process */
