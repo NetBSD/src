@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1109 2008/01/15 03:37:13 rmind Exp $
+#	$NetBSD: mi,v 1.1110 2008/01/15 16:33:48 njoly Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3043,6 +3043,7 @@
 ./usr/libdata/debug/usr/sbin/rtsold.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/rwhod.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sa.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/schedctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/screenblank.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sdpd.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/services_mkdb.debug	comp-sysutil-debug	debug
