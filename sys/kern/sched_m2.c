@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.15 2008/01/15 03:37:11 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.16 2008/01/15 04:16:27 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.15 2008/01/15 03:37:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.16 2008/01/15 04:16:27 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.15 2008/01/15 03:37:11 rmind Exp $");
 #define	PRI_HTS_RANGE	(PRI_TS_COUNT / 10)
 
 #define	PRI_HIGHEST_TS	(MAXPRI_USER)
-#define	PRI_DEFAULT	(NPRI_USER >> 1)
 
 const int schedppq = 1;
 
@@ -96,9 +95,6 @@ static u_int		balance_period;	/* Balance period */
 static struct callout	balance_ch;	/* Callout of balancer */
 
 static struct cpu_info * volatile worker_ci;
-
-#define CACHE_HOT(sil)		(sil->sl_lrtime && \
-    (hardclock_ticks - sil->sl_lrtime < cacheht_time))
 
 #endif
 
@@ -290,8 +286,6 @@ sched_lwp_fork(struct lwp *l1, struct lwp *l2)
 	KASSERT(l2->l_sched_info == NULL);
 	l2->l_sched_info = pool_get(&sil_pool, PR_WAITOK);
 	memset(l2->l_sched_info, 0, sizeof(sched_info_lwp_t));
-	if (l2->l_priority <= PRI_HIGHEST_TS) /* XXX: For now only.. */
-		l2->l_priority = PRI_DEFAULT;
 }
 
 void
@@ -476,7 +470,8 @@ sched_slept(struct lwp *l)
 	 * If thread is in time-sharing queue and batch flag is not marked,
 	 * increase the the priority, and run with the lower time-quantum.
 	 */
-	if (l->l_priority < PRI_HIGHEST_TS && (sil->sl_flags & SL_BATCH) == 0) {
+	if (l->l_priority <= PRI_HIGHEST_TS &&
+	    (sil->sl_flags & SL_BATCH) == 0) {
 		KASSERT(l->l_class == SCHED_OTHER);
 		l->l_priority++;
 	}
@@ -530,6 +525,7 @@ sched_pstats_hook(struct lwp *l)
 	/* Estimate threads on time-sharing queue only */
 	if (l->l_priority >= PRI_HIGHEST_TS)
 		return;
+	KASSERT(l->l_class == SCHED_OTHER);
 
 	/* If it is CPU-bound not a first time - decrease the priority */
 	prio = l->l_priority;
@@ -554,6 +550,18 @@ sched_pstats_hook(struct lwp *l)
  */
 
 #ifdef MULTIPROCESSOR
+
+/* Estimate if LWP is cache-hot */
+static inline bool
+lwp_cache_hot(const struct lwp *l)
+{
+	const sched_info_lwp_t *sil = l->l_sched_info;
+
+	if (l->l_slptime || sil->sl_lrtime == 0)
+		return false;
+
+	return (hardclock_ticks - sil->sl_lrtime < cacheht_time);
+}
 
 /* Check if LWP can migrate to the chosen CPU */
 static inline bool
@@ -583,7 +591,6 @@ sched_takecpu(struct lwp *l)
 	struct cpu_info *ci, *tci;
 	struct schedstate_percpu *spc;
 	runqueue_t *ci_rq;
-	sched_info_lwp_t *sil;
 	CPU_INFO_ITERATOR cii;
 	pri_t eprio, lpri;
 
@@ -602,11 +609,10 @@ sched_takecpu(struct lwp *l)
 		return ci;
 
 	eprio = lwp_eprio(l);
-	sil = l->l_sched_info;
 
 	/* Stay if thread is cache-hot */
-	if (l->l_stat == LSSLEEP && l->l_slptime <= 1 &&
-	    CACHE_HOT(sil) && eprio >= spc->spc_curpriority)
+	if (__predict_true(l->l_stat != LSIDL) &&
+	    lwp_cache_hot(l) && eprio >= spc->spc_curpriority)
 		return ci;
 
 	/* Run on current CPU if priority of thread is higher */
@@ -691,15 +697,12 @@ sched_catchlwp(void)
 	l = TAILQ_FIRST(q_head);
 
 	for (;;) {
-		sched_info_lwp_t *sil;
-
 		/* Check the first and next result from the queue */
 		if (l == NULL)
 			break;
 
 		/* Look for threads, whose are allowed to migrate */
-		sil = l->l_sched_info;
-		if ((l->l_flag & LW_SYSTEM) || CACHE_HOT(sil) ||
+		if ((l->l_flag & LW_SYSTEM) || lwp_cache_hot(l) ||
 		    !sched_migratable(l, curci)) {
 			l = TAILQ_NEXT(l, l_runq);
 			continue;
@@ -846,7 +849,7 @@ sched_tick(struct cpu_info *ci)
 	const runqueue_t *ci_rq = ci->ci_schedstate.spc_sched_info;
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
 	struct lwp *l = curlwp;
-	sched_info_lwp_t *sil = l->l_sched_info;
+	const sched_info_lwp_t *sil = l->l_sched_info;
 
 	if (CURCPU_IDLE_P())
 		return;
@@ -857,6 +860,7 @@ sched_tick(struct cpu_info *ci)
 		 * Update the time-quantum, and continue running,
 		 * if thread runs on FIFO real-time policy.
 		 */
+		KASSERT(l->l_priority > PRI_HIGHEST_TS);
 		spc->spc_ticks = sil->sl_timeslice;
 		return;
 	case SCHED_OTHER:
@@ -864,8 +868,7 @@ sched_tick(struct cpu_info *ci)
 		 * If thread is in time-sharing queue, decrease the priority,
 		 * and run with a higher time-quantum.
 		 */
-		if (l->l_priority > PRI_HIGHEST_TS)
-			break;
+		KASSERT(l->l_priority <= PRI_HIGHEST_TS);
 		if (l->l_priority != 0)
 			l->l_priority--;
 		break;
@@ -1082,4 +1085,4 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 	}
 }
 
-#endif /* defined(DDB) */
+#endif
