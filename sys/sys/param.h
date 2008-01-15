@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.299 2008/01/09 16:16:27 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.300 2008/01/15 03:37:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -243,6 +243,10 @@
 #define	PRI_USER		0
 #define	NPRI_USER		64
 #define	MAXPRI_USER		(PRI_USER + NPRI_USER - 1)
+
+/* Priority range used by POSIX real-time features */
+#define	SCHED_PRI_MIN		0
+#define	SCHED_PRI_MAX		63
 
 /*
  * Kernel thread priorities.

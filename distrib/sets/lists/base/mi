@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.737 2008/01/09 11:25:59 simonb Exp $
+# $NetBSD: mi,v 1.738 2008/01/15 03:37:12 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1270,6 +1270,7 @@
 ./usr/sbin/setencstat				base-sysutil-bin
 ./usr/sbin/setkey				base-obsolete		obsolete
 ./usr/sbin/setobjstat				base-sysutil-bin
+./usr/sbin/schedctl				base-sysutil-bin
 ./usr/sbin/sliplogin				base-slip-bin
 ./usr/sbin/slstats				base-slip-bin
 ./usr/sbin/smrsh				base-obsolete		obsolete

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.44 2007/12/22 01:14:53 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.45 2008/01/15 03:37:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #define	_SYS_SCHED_H_
 
 #include <sys/featuretest.h>
+#include <sys/types.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -84,19 +85,26 @@
 #endif
 
 struct sched_param {
+	int	sched_class;
 	int	sched_priority;
+	int	_reserved1;
+	int	_reserved2;
 };
 
 /*
  * Scheduling policies required by IEEE Std 1003.1-2001
  */
-#define	SCHED_OTHER	0	/* Behavior can be FIFO or RR, or not */
+#define	SCHED_NONE	-1
+#define	SCHED_OTHER	0
 #define	SCHED_FIFO	1
 #define	SCHED_RR	2
 
-/* Other nonstandard policies: */
-
 #if defined(_NETBSD_SOURCE)
+
+int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
+int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);
+int	_sched_getparam(pid_t, lwpid_t, struct sched_param *);
+int	_sched_setparam(pid_t, lwpid_t, const struct sched_param *);
 
 /*
  * CPU states.
@@ -128,6 +136,7 @@ struct schedstate_percpu {
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	spc_lwplock;	/* (: general purpose lock for LWPs */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
+	psetid_t	spc_psid;	/* (: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 
 	/* For the most part, this set of data is CPU-private. */
@@ -163,7 +172,7 @@ struct schedstate_percpu {
 #define	CLONE_VFORK		0x00004000	/* parent blocks until child
 						   exits */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
 

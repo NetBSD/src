@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.229 2007/08/04 11:03:03 ad Exp $
+#	$NetBSD: Makefile,v 1.230 2008/01/15 03:37:15 rmind Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -19,7 +19,7 @@ SUBDIR=	ac accton acpitools altq amd apm apmd arp bad144 bind bootp \
 	rarpd rbootd rdate \
 	repquota rmt rpc.bootparamd rpc.lockd rpc.pcnfsd \
  	rpc.statd rpcbind rwhod sa screenblank sdpd services_mkdb sesd \
-	sliplogin sntp \
+	schedctl sliplogin sntp \
 	spray srtconfig sti sunlabel sup syslogd tadpolectl tcpdchk \
 	tcpdmatch tcpdump tcpdrop timed tpctl traceroute trpt unlink \
 	usbdevs user videomode vipw veriexecgen vnconfig wiconfig wlanctl wpa \

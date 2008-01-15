@@ -1,12 +1,9 @@
-/*	$NetBSD: sched.c,v 1.4 2005/10/09 11:17:28 kleink Exp $	*/
+/*	$NetBSD: sched.c,v 1.1 2008/01/15 03:37:15 rmind Exp $	*/
 
-/*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+/*
+ * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Nathan J. Williams.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -15,15 +12,8 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
@@ -37,73 +27,91 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.4 2005/10/09 11:17:28 kleink Exp $");
+__RCSID("$NetBSD: sched.c,v 1.1 2008/01/15 03:37:15 rmind Exp $");
 
+#include <string.h>
+#include <unistd.h>
 #include <errno.h>
 #include <sched.h>
+#include <sys/param.h>
+#include <sys/pset.h>
+#include <sys/types.h>
 
-int	pthread__sched_binder;
+/*
+ * Scheduling parameters.
+ */
 
-/* ARGSUSED */
 int
 sched_setparam(pid_t pid, const struct sched_param *param)
 {
 
-	errno = ENOSYS;
-	return -1;
+	return _sched_setparam(pid, 0, param);
 }
 
-/* ARGSUSED */
 int
 sched_getparam(pid_t pid, struct sched_param *param)
 {
 
-	errno = ENOSYS;
-	return -1;
+	return _sched_getparam(pid, 0, param);
 }
 
-/* ARGSUSED */
 int
-sched_setscheduler(pid_t pid, int policy,
-    const struct sched_param *param)
+sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)
 {
+	struct sched_param sp;
 
-	errno = ENOSYS;
-	return -1;
+	memcpy(&sp, param, sizeof(struct sched_param));
+	sp.sched_class = policy;
+	return _sched_setparam(pid, 0, &sp);
 }
 
-/* ARGSUSED */
 int
 sched_getscheduler(pid_t pid)
 {
+	struct sched_param sp;
+	int error;
 
-	errno = ENOSYS;
-	return -1;
+	error = _sched_getparam(pid, 0, &sp);
+	if (error)
+		return error;
+
+	return sp.sched_class;
 }
 
-/* ARGSUSED */
+/*
+ * Scheduling priorities.
+ */
+
 int
 sched_get_priority_max(int policy)
 {
 
-	errno = ENOSYS;
-	return -1;
+	return sysconf(_SC_SCHED_PRI_MAX);
 }
 
-/* ARGSUSED */
 int
 sched_get_priority_min(int policy)
 {
 
-	errno = ENOSYS;
-	return -1;
+	return sysconf(_SC_SCHED_PRI_MIN);
 }
 
-/* ARGSUSED */
 int
 sched_rr_get_interval(pid_t pid, struct timespec *interval)
 {
 
-	errno = ENOSYS;
-	return -1;
+	interval->tv_sec = 0;
+	interval->tv_nsec = sysconf(_SC_SCHED_RT_TS) * 1000;
+	return 0;
+}
+
+/*
+ * Processor-sets.
+ */
+
+int
+pset_bind(psetid_t psid, idtype_t idtype, id_t id, psetid_t *opsid)
+{
+
+	return _pset_bind(idtype, id, 0, psid, opsid);
 }

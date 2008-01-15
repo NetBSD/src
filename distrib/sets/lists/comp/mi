@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1108 2008/01/03 20:47:58 jdc Exp $
+#	$NetBSD: mi,v 1.1109 2008/01/15 03:37:13 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1893,6 +1893,7 @@
 ./usr/include/sys/proc.h			comp-c-include
 ./usr/include/sys/properties.h			comp-obsolete		obsolete
 ./usr/include/sys/protosw.h			comp-c-include
+./usr/include/sys/pset.h			comp-c-include
 ./usr/include/sys/ptrace.h			comp-c-include
 ./usr/include/sys/queue.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include

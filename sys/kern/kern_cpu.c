@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.17 2008/01/14 12:40:03 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.18 2008/01/15 03:37:10 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.17 2008/01/14 12:40:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.18 2008/01/15 03:37:10 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -284,19 +284,8 @@ cpu_xc_offline(struct cpu_info *ci)
 		lwp_unlock(l);
 	}
 
-	/*
-	 * Runqueues are locked with the global lock if pointers match,
-	 * thus hold only one.  Otherwise, double-lock the runqueues.
-	 */
-	if (spc->spc_mutex == mspc->spc_mutex) {
-		spc_lock(ci);
-	} else if (ci < mci) {
-		spc_lock(ci);
-		spc_lock(mci);
-	} else {
-		spc_lock(mci);
-		spc_lock(ci);
-	}
+	/* Double-lock the run-queues */
+	spc_dlock(ci, mci);
 
 	/* Handle LSRUN and LSIDL cases */
 	LIST_FOREACH(l, &alllwp, l_list) {
@@ -312,13 +301,7 @@ cpu_xc_offline(struct cpu_info *ci)
 			lwp_setlock(l, mspc->spc_mutex);
 		}
 	}
-	if (spc->spc_mutex == mspc->spc_mutex) {
-		spc_unlock(ci);
-	} else {
-		spc_unlock(ci);
-		spc_unlock(mci);
-	}
-
+	spc_dunlock(ci, mci);
 	mutex_exit(&proclist_lock);
 }
 
