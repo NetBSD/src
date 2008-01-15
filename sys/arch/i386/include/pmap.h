@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97.6.3 2008/01/13 19:02:05 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.6.4 2008/01/15 22:15:57 bouyer Exp $	*/
 
 /*
  *
@@ -196,6 +196,9 @@
  * first 3 entries of the L3 PD), and we claim the VM has only a 2-level
  * PTP (with the L2 index extended by 2 bytes).
  * PTE_BASE and APTE_BASE will need 4 entries in the L2 page table.
+ * In addition, we can't recursively map L3[3] (Xen wants the ref count on
+ * this page to be exactly once), so we use a shadow PD page for the last
+ * L2 PD.
  */
 /* XXX MP should we allocate one APDP_PDE per processor?? */
 
@@ -241,14 +244,13 @@
  * PDP_PDE and APDP_PDE: the VA of the PDE that points back to the PDP/APDP
  */
 
-#define PTE_BASE  ((pt_entry_t *) (L2_SLOT_PTE * NBPD_L2))
-#define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((L2_SLOT_APTE * NBPD_L2))))
+#define PTE_BASE  ((pt_entry_t *) (PDIR_SLOT_PTE * NBPD_L2))
+#define APTE_BASE ((pt_entry_t *) (VA_SIGN_NEG((PDIR_SLOT_APTE * NBPD_L2))))
 
 #define L1_BASE		PTE_BASE
 #define AL1_BASE	APTE_BASE
 
 #define L2_BASE ((pd_entry_t *)((char *)L1_BASE + L2_SLOT_PTE * NBPD_L1))
-
 #define AL2_BASE ((pd_entry_t *)((char *)AL1_BASE + L2_SLOT_PTE * NBPD_L1))
 
 #define PDP_PDE		(L2_BASE + PDIR_SLOT_PTE)

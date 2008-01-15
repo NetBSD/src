@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.10 2008/01/13 12:12:59 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.11 2008/01/15 22:15:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.10 2008/01/13 12:12:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.11 2008/01/15 22:15:57 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -197,6 +197,13 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.10 2008/01/13 12:12:59 bouyer Exp $"
 #define PG_k PG_u
 #else
 #define PG_k 0
+#endif
+
+/* size of a PDP: usually one page, exept for PAE */
+#ifdef PAE
+#define PDP_SIZE 3
+#else
+#define PDP_SIZE 1
 #endif
 
 /*
@@ -493,10 +500,13 @@ static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
  * pool and cache that PDPs are allocated from
  */
 
+#ifndef PAE
 static struct pool_cache pmap_pdp_cache;
-
 int	pmap_pdp_ctor(void *, void *, int);
 void	pmap_pdp_dtor(void *, void *);
+#endif
+pd_entry_t * pmap_pdp_alloc(void);
+void pmap_pdp_free(pd_entry_t *);
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
@@ -1309,8 +1319,10 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
 	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
-	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
+#ifndef PAE
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, 0,
 	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+#endif
 	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
 	    PR_LARGECACHE, "pvpl", &pool_allocator_meta, IPL_NONE, NULL,
 	    NULL, NULL);
@@ -1327,7 +1339,10 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	kva = VM_MIN_KERNEL_ADDRESS;
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
+		printk("level %d nkptp[i] %d nbpd[i] %d kva 0x%lx\n",
+		    i, nkptp[i], nbpd[i], kva);
 		kva += nkptp[i] * nbpd[i];
+		printk(" -> 0x%lx\n", kva);
 	}
 	pmap_maxkvaddr = kva;
 }
@@ -1737,17 +1752,21 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
  * p m a p  l i f e c y c l e   f u n c t i o n s
  */
 
+#ifndef PAE
 /*
  * pmap_pdp_ctor: constructor for the PDP cache.
  */
 
 int
-pmap_pdp_ctor(void *arg, void *object, int flags)
+pmap_pdp_ctor(void *arg, void *v, int flags)
 {
-	pd_entry_t *pdir = object;
+	pd_entry_t *pdir = v;
 	paddr_t pdirpa = 0;	/* XXX: GCC */
+	vaddr_t object;
+
 #if !defined(XEN) || !defined(__x86_64__)
 	int npde;
+	int i;
 #endif
 #ifdef XEN
 	int s;
@@ -1757,11 +1776,11 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
 	 */
 
+#if defined(XEN) && defined(__x86_64__)
 	/* fetch the physical address of the page directory. */
 	(void) pmap_extract(pmap_kernel(), (vaddr_t) pdir, &pdirpa);
 
 	/* zero init area */
-#if defined(XEN) && defined(__x86_64__)
 	memset (pdir, 0, PAGE_SIZE); /* Xen wants a clean page */
 	/*
 	 * this pdir will NEVER be active in kernel mode
@@ -1777,21 +1796,19 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] =
 	     (unsigned long)-1 & PG_FRAME;
 #else /* XEN  && __x86_64__*/
+	/* zero init area */
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
+
+	object = (vaddr_t)v;
+	/* fetch the physical address of the page directory. */
+	(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 	/* put in recursive PDE to map the PTEs */
 	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_V;
 #ifndef XEN
 	pdir[PDIR_SLOT_PTE] |= PG_KW;
 #endif
-
 	npde = nkptp[PTP_LEVELS - 1];
 
-
-	/*
-	 * put in kernel VM PDEs
-	 * PDP constructed this way won't be for kernel,
-	 * hence we don't put kernel mappings on Xen
-	 */
 	memcpy(&pdir[PDIR_SLOT_KERN], &PDP_BASE[PDIR_SLOT_KERN],
 	    npde * sizeof(pd_entry_t));
 
@@ -1806,13 +1823,17 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
 	}
 #endif /* XEN  && __x86_64__*/
 #ifdef XEN
-	/* remap this page RO */
-	pmap_kenter_pa((vaddr_t)pdir, pdirpa, VM_PROT_READ);
-	pmap_update(pmap_kernel());
-	/* pin as L2/L4 page */
 	s = splvm();
-	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
-	xpq_flush_queue();
+	object = (vaddr_t)v;
+	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
+		/* remap this page RO */
+		pmap_kenter_pa(object, pdirpa, VM_PROT_READ);
+		pmap_update(pmap_kernel());
+		/* pin as L2/L4 page */
+		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+		xpq_flush_queue();
+	}
 	splx(s);
 #endif
 
@@ -1824,24 +1845,30 @@ pmap_pdp_ctor(void *arg, void *object, int flags)
  */
 
 void
-pmap_pdp_dtor(void *arg, void *object)
+pmap_pdp_dtor(void *arg, void *v)
 {
 #ifdef XEN
 	paddr_t pdirpa = 0;	/* XXX: GCC */
+	vaddr_t object = (vaddr_t)v;
+	int i;
 	int s = splvm();
-	pt_entry_t *pte = kvtopte((vaddr_t)object);
+	pt_entry_t *pte;
 
 	/* fetch the physical address of the page directory. */
-	(void) pmap_extract(pmap_kernel(), (vaddr_t)object, &pdirpa);
-	/* unpin page table */
-	xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
-	/* Set page RW again */
-	xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
-	xpq_queue_invlpg((vaddr_t)object);
+	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
+		/* unpin page table */
+		xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
+		/* Set page RW again */
+		pte = kvtopte(object);
+		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
+		xpq_queue_invlpg((vaddr_t)object);
+	}
 	xpq_flush_queue();
 	splx(s);
 #endif  /* XEN */
 }
+#endif /* PAE */
 
 /*
  * pmap_create: create a pmap
@@ -1878,16 +1905,20 @@ pmap_create(void)
 	pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 
 	/* allocate PDP */
+#ifndef PAE
  try_again:
-	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
+#endif
+	pmap->pm_pdir = pmap_pdp_alloc();
 
 	mutex_enter(&pmaps_lock);
 
+#ifndef PAE
 	if (pmap->pm_pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] == 0) {
 		mutex_exit(&pmaps_lock);
-		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
+		pmap_pdp_free(pmap->pm_pdir);
 		goto try_again;
 	}
+#endif
 
 	pmap->pm_pdirpa = pmap_pte2pa(pmap->pm_pdir[PDIR_SLOT_PTE]);
 
@@ -1961,7 +1992,7 @@ pmap_destroy(struct pmap *pmap)
 	 * MULTIPROCESSOR -- no need to flush out of other processors'
 	 * APTE space because we do that in pmap_unmap_ptes().
 	 */
-	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
+	pmap_pdp_free(pmap->pm_pdir);
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
@@ -2163,7 +2194,7 @@ pmap_reactivate(struct pmap *pmap)
 
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) || (defined(XEN) && defined(XEN3) && !defined(PAE))
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 
@@ -2265,7 +2296,7 @@ pmap_load(void)
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(oldpmap->pm_pdirpa == xen_current_user_pgd ||
 	    oldpmap == pmap_kernel());
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) || (defined(XEN) && defined(XEN3) && !defined(PAE))
 	KASSERT(oldpmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT((pmap->pm_cpus & cpumask) == 0);
@@ -2311,7 +2342,7 @@ pmap_load(void)
 		splx(s);
 	}
 #else /* XEN && x86_64 */
-#ifdef XEN
+#if defined(XEN) && !defined(PAE)
 	/*
 	 * clear APDP slot, in case it points to a page table that has 
 	 * been freed
@@ -2326,7 +2357,28 @@ pmap_load(void)
 #endif
 #endif /* XEN */
 	lldt(pcb->pcb_ldt_sel);
+#ifdef PAE
+	{
+	paddr_t l3_pd = (rcr3() & PG_FRAME);
+	int i;
+	int s = splvm();
+	for (i = 0 ; i < PDP_SIZE  ; i++, l3_pd += sizeof(pd_entry_t)) {
+		xpq_queue_pte_update(l3_pd, 0);
+	}
+	xpq_flush_queue();
+	l3_pd = (rcr3() & PG_FRAME);
+	for (i = 0 ; i < PDP_SIZE  ; i++, l3_pd += sizeof(pd_entry_t)) {
+		printf("xpq_queue_pte_update(0x%" PRIx64 ", 0x%" PRIx64 ")\n",
+		    l3_pd, xpmap_ptom(pmap->pm_pdirpa + PAGE_SIZE * i) | PG_V);
+		xpq_queue_pte_update(l3_pd,
+		    xpmap_ptom(pmap->pm_pdirpa + PAGE_SIZE * i) | PG_V);
+	}
+	xpq_flush_queue();
+	splx(s);
+	}
+#else /* PAE */
 	lcr3(pcb->pcb_cr3);
+#endif /* PAE */
 #endif /* XEN && x86_64 */
 
 	ci->ci_want_pmapload = 0;
@@ -2394,7 +2446,7 @@ pmap_deactivate(struct lwp *l)
 
 #if defined(XEN) && defined(__x86_64__)
 	KASSERT(pmap->pm_pdirpa == xen_current_user_pgd);
-#elif !defined(XEN) || (defined(XEN) && defined(XEN3))
+#elif !defined(XEN) || (defined(XEN) && defined(XEN3) && !defined(PAE))
 	KASSERT(pmap->pm_pdirpa == pmap_pte2pa(rcr3()));
 #endif
 	KASSERT(ci->ci_pmap == pmap);
@@ -3458,10 +3510,12 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
 		panic("pmap_enter: trying to map over PDP/APDP!");
 
+#ifndef PAE
 	/* sanity check: kernel PTPs should already have been pre-allocated */
 	if (va >= VM_MIN_KERNEL_ADDRESS &&
 	    !pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]))
 		panic("pmap_enter: missing kernel PTP for va %lx!", va);
+#endif
 #endif /* DIAGNOSTIC */
 #ifdef XEN
 	KASSERT(domid == DOMID_SELF || pa == 0);
@@ -3808,6 +3862,9 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 		index = pl_i_roundup(kva, level);
 		endindex = index + needed_ptps[level - 1] - 1;
 
+		printk("pmap_alloc_level %d kva 0x%lx index %ld endindex %ld\n",
+		    level, kva, index, endindex);
+
 		for (i = index; i <= endindex; i++) {
 			KASSERT(!pmap_valid_entry(pdep[i]));
 			pmap_get_physpage(va, level - 1, &pa);
@@ -3816,9 +3873,17 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 			    xpmap_ptom(pmap_kernel()->pm_pdirpa + sizeof(pt_entry_t) * i) :
 			    xpmap_ptetomach(&pdep[i]),
 			    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
-#else
-			pdep[i] = pa | PG_RW | PG_V;
+#ifdef PAE
+			if (i > L2_SLOT_KERN) {
+				/* update shadow page too */
+				xpq_queue_pte_update(
+				    xpmap_ptetomach(&pdep[i + NPDPG]),
+				    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
+			}
 #endif
+#else /* XEN */
+			pdep[i] = pa | PG_RW | PG_V;
+#endif /* XEN */
 			KASSERT(level != PTP_LEVELS || nkptp[level - 1] +
 			    pl_i(VM_MIN_KERNEL_ADDRESS, level) == i);
 			nkptp[level - 1]++;
@@ -3858,13 +3923,20 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		return pmap_maxkvaddr;
 	}
 
+	printf("maxkvaddr 0x%lx ", maxkvaddr);
 	maxkvaddr = x86_round_pdr(maxkvaddr);
+	printf("now 0x%lx\n", maxkvaddr);
 	old = nkptp[PTP_LEVELS - 1];
 	/*
 	 * This loop could be optimized more, but pmap_growkernel()
 	 * is called infrequently.
 	 */
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
+
+		printk("lvl %d maxkvaddr 0x%lx VM_MIN_KERNEL_A 0x%lx ptp_masks[lvl] 0x%lx ptp_shifts[i] %d\n",
+		    i, maxkvaddr, VM_MIN_KERNEL_ADDRESS, ptp_masks[i], ptp_shifts[i]);
+		printk("pl_i_roundup 0x%lx 0x%lx\n", 
+		    pl_i_roundup(maxkvaddr, i + 1), pl_i_roundup(VM_MIN_KERNEL_ADDRESS, i + 1));
 		target_nptp = pl_i_roundup(maxkvaddr, i + 1) -
 		    pl_i_roundup(VM_MIN_KERNEL_ADDRESS, i + 1);
 		/*
@@ -3872,6 +3944,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 */
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
+		printk("target_nptp %ld nkptp[%d] %ld\n", target_nptp, i, nkptp[i]);
 		KASSERT(target_nptp >= nkptp[i]);
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
@@ -3919,11 +3992,14 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	mutex_exit(&kpm->pm_lock);
 	splx(s);
 
+#ifndef PAE
 	if (invalidate) {
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
 	}
+#endif
 
+	printk("pmap_growkernel return 0x%lx\n", maxkvaddr);
 	return maxkvaddr;
 }
 
@@ -4253,4 +4329,98 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 	tmp_pml[pl_i(pg, 1)] = (pg & PG_FRAME) | PG_RW | PG_V;
 
 	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
+}
+
+/*
+ * pmap_pdp_alloc: get a new PDP
+ */
+
+pd_entry_t *
+pmap_pdp_alloc()
+{
+	pd_entry_t *pdir;
+	paddr_t pdirpa = 0;	/* XXX: GCC */
+	vaddr_t object;
+
+	int i;
+	int s;
+
+	/*
+	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
+	 */
+
+	/* allocate memory */
+	pdir = (pd_entry_t *)uvm_km_alloc(kernel_map, PAGE_SIZE * PDP_SIZE, 0,
+	    UVM_KMF_WAITVA | UVM_KMF_WIRED | UVM_KMF_ZERO);
+	if (pdir == NULL)
+		return NULL;
+
+	object = (vaddr_t)pdir;
+	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
+		/* fetch the physical address of the page directory. */
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
+		/* put in recursive PDE to map the PTEs */
+		pdir[PDIR_SLOT_PTE + i] = pmap_pa2pte(pdirpa) | PG_V;
+#ifndef XEN
+		pdir[PDIR_SLOT_PTE + i] |= PG_KW;
+#endif
+	}
+#if 1
+	/*
+	 * we have to manually enter the kernel's recursive entry, and we
+	 * don't have to copy the kernel's PD entries
+	 */
+	pdir[PDIR_SLOT_PTE + PDP_SIZE] =
+	    (pmap_kernel()->pm_pdir[PDIR_SLOT_PTE + PDP_SIZE] & PG_FRAME) | PG_V;
+#endif
+#ifdef XEN
+	printf("pmap_pdp_alloc 0x%lx", (long)pdir);
+	s = splvm();
+	object = (vaddr_t)pdir;
+	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
+		printf(", paddr 0x%" PRIx64, (int64_t)pdirpa);
+		/* remap this page RO */
+		pmap_kenter_pa(object, pdirpa, VM_PROT_READ);
+		pmap_update(pmap_kernel());
+		/* pin as L2/L4 page */
+		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+		xpq_flush_queue();
+	}
+	printf("\n");
+	splx(s);
+#endif
+
+	return (pdir);
+}
+
+/*
+ * pmap_pdp_free: free a PDP
+ */
+
+void
+pmap_pdp_free(pd_entry_t *pdp)
+{
+#ifdef XEN
+	paddr_t pdirpa = 0;	/* XXX: GCC */
+	vaddr_t object = (vaddr_t)pdp;
+	int i;
+	int s = splvm();
+	pt_entry_t *pte;
+
+	/* fetch the physical address of the page directory. */
+	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
+		/* unpin page table */
+		xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
+		/* Set page RW again */
+		pte = kvtopte(object);
+		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
+		xpq_queue_invlpg((vaddr_t)object);
+	}
+	xpq_flush_queue();
+	splx(s);
+#endif  /* XEN */
+	uvm_km_free(kernel_map, (vaddr_t)pdp, PAGE_SIZE * PDP_SIZE,
+	    UVM_KMF_WIRED);
 }

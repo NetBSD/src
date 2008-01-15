@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.12.9 2008/01/13 19:02:50 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.10 2008/01/15 22:15:58 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.9 2008/01/13 19:02:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.10 2008/01/15 22:15:58 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -511,9 +511,10 @@ vaddr_t xen_pmap_bootstrap (void);
 #ifdef PAE
 /*
  * For PAE, we consider a single contigous L2 "superpage" of 4 pages,
- * all of them mapped by the L3 page.
+ * all of them mapped by the L3 page. We also need a shadow page
+ * for L3[3].
  */
-static const int l2_4_count = 5;
+static const int l2_4_count = 6;
 #else
 static const int l2_4_count = PTP_LEVELS - 1;
 #endif
@@ -712,10 +713,10 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	    pde, (int64_t)addr, (int64_t)pdtpe[pl3_pi(KERNTEXTOFF)],
 	    pl3_pi(KERNTEXTOFF)));
 #elif defined(PAE)
-	/* our PAE-style level 2: 4 contigous pages */
+	/* our PAE-style level 2: 5 contigous pages (4 L2 + 1 shadow) */
 	pde = (pd_entry_t *) avail;
-	memset(pde, 0, PAGE_SIZE * 4);
-	avail += PAGE_SIZE * 4;
+	memset(pde, 0, PAGE_SIZE * 5);
+	avail += PAGE_SIZE * 5;
 	addr = ((u_long) pde) - KERNBASE;
 
 	for (i = 0; i < 4; i++, addr += PAGE_SIZE) {
@@ -820,32 +821,50 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 
 	/* Install recursive page tables mapping */
 #ifdef PAE
+	if (final) {
+		/* we need a shadow page for the kernel's L2 page */
+		printk("memcpy(0x%lx, 0x%lx)\n", &pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN]);
+		memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
+	}
+
 	/*
 	 * We don't enter a recursive entry from the L3 PD. Instead,
-	 * we enter the 4 entries of the "super" L2 page in the L2 page
+	 * we enter the first 3 L2 pages, and then the kernel's L2
+	 * shadow.
+	 * 
 	 */
 	addr = (u_long)pde - KERNBASE;
-	for (i = 0; i < 4; i++, addr += PAGE_SIZE) {
-		if (i >= 3)
-			continue;
+	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
 		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
 		__PRINTK(("pde[%d] va 0x%lx pa 0x%lx entry 0x%" PRIx64 "\n",
 		    (int)(PDIR_SLOT_PTE + i), pde + PAGE_SIZE * i, (long)addr,
 		    (int64_t)pde[PDIR_SLOT_PTE + i]));
 	}
+#if 0
+	addr += PAGE_SIZE; /* point to shadow L2 */
+	pde[PDIR_SLOT_PTE + 3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+	__PRINTK(("pde[%d] va 0x%lx pa 0x%lx entry 0x%" PRIx64 "\n",
+	    (int)(PDIR_SLOT_PTE + 3), pde + PAGE_SIZE * 4, (long)addr,
+	    (int64_t)pde[PDIR_SLOT_PTE + 3]));
+#endif
 	/* Mark tables RO, and pin them as L2. We have to do L3[2] last */
 	addr = (u_long)pde - KERNBASE;
-	for (i = 0; i < 4; i++, addr += PAGE_SIZE) {
-		if (i == 2) continue;
+	for (i = 0; i < 5; i++, addr += PAGE_SIZE) {
 		xen_bt_set_readonly(((vaddr_t)pde) + PAGE_SIZE * i);
+		if (i == 2 || i == 3)
+			continue;
 #if 0
 		__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", i, (int64_t)addr));
 		xpq_queue_pin_table(xpmap_ptom_masked(addr));
 #endif
 	}
-	addr = (u_long)pde - KERNBASE + 2 * PAGE_SIZE;
-	xen_bt_set_readonly(((vaddr_t)pde) + PAGE_SIZE * 2);
+	if (final) {
+		addr = (u_long)pde - KERNBASE + 4 * PAGE_SIZE;
+		__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", 2, (int64_t)addr));
+		xpq_queue_pin_table(xpmap_ptom_masked(addr));
+	}
 #if 0
+	addr = (u_long)pde - KERNBASE + 2 * PAGE_SIZE;
 	__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", 2, (int64_t)addr));
 	xpq_queue_pin_table(xpmap_ptom_masked(addr));
 #endif
@@ -874,24 +893,25 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif
 #ifdef __i386__
 	/* Save phys. addr of PDP, for libkvm. */
-	PDPpaddr = new_pgd;
+	PDPpaddr = (long)pde;
 #endif
 	/* Switch to new tables */
 	__PRINTK(("switch to PDG\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
 	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry 0x%" PRIx64 "\n",
 	    (int64_t)bt_pgd[PDIR_SLOT_PTE]));
-
 #ifdef PAE
-	/* now enter KVM recursive entry */
-	__PRINTK(("xpq_queue_pte_update(0x%lx, 0x%lx)\n",
-	    (long)xpmap_ptom(((long)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE),
-	    (long)xpmap_ptom((long)pde - KERNBASE + PAGE_SIZE * 3) | PG_k | PG_V));
-	xpq_queue_pte_update(
-	    xpmap_ptom(((long)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE),
-	    xpmap_ptom((long)pde - KERNBASE + PAGE_SIZE * 3) | PG_k | PG_V);
-	xpq_flush_queue();
+	if (final) {
+		/* now enter kernel's PTE mappings */
+		addr =  (u_long)pde - KERNBASE + PAGE_SIZE * 4;
+		xpq_queue_pte_update(
+		    xpmap_ptom(((vaddr_t)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE), 
+		    xpmap_ptom_masked(addr) | PG_k | PG_V);
+		xpq_flush_queue();
+	}
 #endif
+
+
 
 	/* Now we can safely reclaim space taken by old tables */
 	
