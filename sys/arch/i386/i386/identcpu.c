@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.86 2008/01/01 20:32:10 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.87 2008/01/15 16:11:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.86 2008/01/01 20:32:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.87 2008/01/15 16:11:29 ad Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -1504,8 +1504,6 @@ identifycpu(struct cpu_info *ci)
 		    ci->ci_cpu_serial[2] / 65536, ci->ci_cpu_serial[2] % 65536);
 	}
 
-	identifycpu_cpuids(ci);
-
 	if (cpu_class == CPUCLASS_386) {
 		panic("NetBSD requires an 80486 or later processor");
 	}
@@ -1521,6 +1519,14 @@ identifycpu(struct cpu_info *ci)
 #endif
 #endif
 	}
+
+	/*
+	 * Everything past this point requires a Pentium or later.
+	 */
+	if (ci->ci_cpuid_level < 0)
+		return;
+
+	identifycpu_cpuids(ci);
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.
