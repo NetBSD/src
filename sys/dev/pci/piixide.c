@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.43 2008/01/04 00:27:27 joerg Exp $	*/
+/*	$NetBSD: piixide.c,v 1.44 2008/01/15 00:24:47 drochner Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.43 2008/01/04 00:27:27 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.44 2008/01/15 00:24:47 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -289,7 +289,7 @@ piixide_resume(device_t dv)
 
 	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
 	    sc->sc_pm_reg[0]);
-	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG,
 	    sc->sc_pm_reg[1]);
 
 	return true;
@@ -303,7 +303,7 @@ piixide_suspend(device_t dv)
 	sc->sc_pm_reg[0] = pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PIIX_IDETIM);
 	sc->sc_pm_reg[1] = pci_conf_read(sc->sc_pc, sc->sc_tag,
-	    PIIX_UDMATIM);
+	    PIIX_UDMAREG);
 
 	return true;
 }
