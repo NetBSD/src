@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.162 2008/01/14 06:12:13 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.163 2008/01/15 21:55:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.162 2008/01/14 06:12:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.163 2008/01/15 21:55:24 christos Exp $");
 
 /*
 #define CBB_DEBUG
@@ -3308,13 +3308,6 @@ pccbb_suspend(device_t dv)
 	bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
 	/* XXX joerg Disable power to the socket? */
 
-#ifdef __NO_STRICT_ALIGNMENT
-	/* XXX - the register is at 0x82, so this access is not valid */
-	if (sc->sc_chipset == CB_RX5C47X)
-		sc->sc_ricoh_misc_ctrl = pci_conf_read(sc->sc_pc,
-		     sc->sc_tag, RICOH_PCI_MISC_CTRL);
-#endif
-
 	return true;
 }
 
@@ -3330,12 +3323,6 @@ pccbb_resume(device_t dv)
 	/* setup memory and io space window for CB */
 	pccbb_winset(0x1000, sc, sc->sc_memt);
 	pccbb_winset(0x04, sc, sc->sc_iot);
-#ifdef __NO_STRICT_ALIGNMENT
-	/* XXX - the register is at 0x82, so this access is not valid */
-	if (sc->sc_chipset == CB_RX5C47X)
-		pci_conf_write(sc->sc_pc, sc->sc_tag,
-		    RICOH_PCI_MISC_CTRL, sc->sc_ricoh_misc_ctrl);
-#endif
 
 	/* CSC Interrupt: Card detect interrupt on */
 	reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
