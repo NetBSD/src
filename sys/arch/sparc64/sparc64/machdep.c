@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193.4.2 2007/10/29 00:45:10 wrstuden Exp $ */
+/*	$NetBSD: machdep.c,v 1.193.4.3 2008/01/15 18:11:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.4.2 2007/10/29 00:45:10 wrstuden Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193.4.3 2008/01/15 18:11:44 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -596,6 +596,7 @@ cpu_upcall(struct lwp *l, int type, int nevents, int ninterrupted,
 }
 
 int	waittime = -1;
+struct pcb dumppcb;
 
 void
 cpu_reboot(register int howto, char *user_boot_string)
@@ -751,8 +752,9 @@ dumpsys()
 	uint64_t todo;
 	register struct mem_region *mp;
 
-	/* copy registers to memory */
-	snapshot(curpcb);
+	/* copy registers to dumppcb and flush windows */
+	memset(&dumppcb, 0, sizeof(struct pcb));
+	snapshot(&dumppcb);
 	stackdump();
 
 	if (dumpdev == NODEV)
