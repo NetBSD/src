@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.17 2008/01/15 16:14:19 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.18 2008/01/15 18:41:37 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.17 2008/01/15 16:14:19 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.18 2008/01/15 18:41:37 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -459,7 +459,7 @@ sched_slept(struct lwp *l)
 	 * If thread is in time-sharing queue and batch flag is not marked,
 	 * increase the the priority, and run with the lower time-quantum.
 	 */
-	if (l->l_priority <= PRI_HIGHEST_TS &&
+	if (l->l_priority < PRI_HIGHEST_TS &&
 	    (sil->sl_flags & SL_BATCH) == 0) {
 		KASSERT(l->l_class == SCHED_OTHER);
 		l->l_priority++;
