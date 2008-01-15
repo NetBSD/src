@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.230 2008/01/12 16:45:29 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.231 2008/01/15 18:48:51 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.230 2008/01/12 16:45:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.231 2008/01/15 18:48:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3740,12 +3740,13 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 	u_long cpu_id = ci->ci_cpuid;
 	u_long cpu_mask = (1UL << cpu_id);
 	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
-	struct pmap_tlb_shootdown_job *pj;
-	TAILQ_HEAD(, pmap_tlb_shootdown_job) dead;
+	struct pmap_tlb_shootdown_job *pj, *next;
+	TAILQ_HEAD(, pmap_tlb_shootdown_job) jobs;
 
-	TAILQ_INIT(&dead);
+	TAILQ_INIT(&jobs);
 
 	mutex_spin_enter(&pq->pq_lock);
+	TAILQ_CONCAT(&jobs, &pq->pq_head, pj_list);
 	if (pq->pq_tbia) {
 		if (pq->pq_pte & PG_ASM)
 			ALPHA_TBIA();
@@ -3753,14 +3754,8 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 			ALPHA_TBIAP();
 		pq->pq_tbia = 0;
 		pq->pq_pte = 0;
-		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-			TAILQ_INSERT_TAIL(&dead, pj, pj_list);
-		}
 	} else {
-		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-			TAILQ_INSERT_TAIL(&dead, pj, pj_list);
+		TAILQ_FOREACH(pj, &jobs, pj_list) {
 			PMAP_INVALIDATE_TLB(pj->pj_pmap, pj->pj_va,
 			    pj->pj_pte & PG_ASM,
 			    pj->pj_pmap->pm_cpus & cpu_mask, cpu_id);
@@ -3771,8 +3766,8 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 	mutex_spin_exit(&pq->pq_lock);
 
 	/* Free jobs back to the cache. */
-	while ((pj = TAILQ_FIRST(&dead)) != NULL) {
-		TAILQ_REMOVE(&dead, pj, pj_list);
+	for (pj = TAILQ_FIRST(&jobs); pj != NULL; pj = next) {
+		next = TAILQ_NEXT(pj, pj_list);
 		pool_cache_put(&pmap_tlb_shootdown_job_cache, pj);
 	}
 }
