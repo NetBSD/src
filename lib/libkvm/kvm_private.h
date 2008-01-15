@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_private.h,v 1.15 2006/02/16 20:48:42 christos Exp $	*/
+/*	$NetBSD: kvm_private.h,v 1.16 2008/01/15 13:57:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -86,6 +86,10 @@ struct __kvm {
 	 */
 	struct pglist *vm_page_buckets;
 	int vm_page_hash_mask;
+	/* Buffer for raw disk I/O. */
+	size_t fdalign;
+	uint8_t *iobuf;
+	size_t iobufsz;
 };
 
 /* Levels of aliveness */
@@ -114,6 +118,7 @@ void	*_kvm_realloc __P((kvm_t *kd, void *, size_t));
 void	 _kvm_syserr
 	    __P((kvm_t *kd, const char *program, const char *fmt, ...))
 	    __attribute__((__format__(__printf__, 3, 4)));
+ssize_t	_kvm_pread(kvm_t *, int, void *, size_t, off_t);
 
 #define KVM_ALLOC(kd, member, size) \
     do { \

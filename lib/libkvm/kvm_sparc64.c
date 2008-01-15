@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc64.c,v 1.11 2007/11/05 00:46:23 martin Exp $	*/
+/*	$NetBSD: kvm_sparc64.c,v 1.12 2008/01/15 13:57:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc64.c,v 1.11 2007/11/05 00:46:23 martin Exp $");
+__RCSID("$NetBSD: kvm_sparc64.c,v 1.12 2008/01/15 13:57:42 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -161,7 +161,7 @@ _kvm_kvatop(kd, va, pa)
 	 * Parse kernel page table.
 	 */
 	pseg = (uint64_t *)(u_long)cpup->segmapoffset;
-	if (pread(kd->pmfd, &pdir, sizeof(pdir),
+	if (_kvm_pread(kd, kd->pmfd, &pdir, sizeof(pdir),
 		_kvm_pa2off(kd, (u_long)&pseg[va_to_seg(va)])) 
 		!= sizeof(pdir)) {
 		_kvm_syserr(kd, 0, "could not read L1 PTE");
@@ -173,7 +173,7 @@ _kvm_kvatop(kd, va, pa)
 		goto lose;
 	}
 
-	if (pread(kd->pmfd, &ptbl, sizeof(ptbl),
+	if (_kvm_pread(kd, kd->pmfd, &ptbl, sizeof(ptbl),
 		_kvm_pa2off(kd, (u_long)&pdir[va_to_dir(va)])) 
 		!= sizeof(ptbl)) {
 		_kvm_syserr(kd, 0, "could not read L2 PTE");
@@ -185,7 +185,7 @@ _kvm_kvatop(kd, va, pa)
 		goto lose;
 	}
 
-	if (pread(kd->pmfd, &data, sizeof(data),
+	if (_kvm_pread(kd, kd->pmfd, &data, sizeof(data),
 		_kvm_pa2off(kd, (u_long)&ptbl[va_to_pte(va)])) 
 		!= sizeof(data)) {
 		_kvm_syserr(kd, 0, "could not read TTE");
