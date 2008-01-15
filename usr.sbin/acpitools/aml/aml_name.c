@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_name.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
+/*	$NetBSD: aml_name.c,v 1.3 2008/01/15 19:08:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1999 Takanori Watanabe
@@ -31,7 +31,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/amldb/aml/aml_name.c,v 1.3 2000/11/09 06:24:45 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aml_name.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
+__RCSID("$NetBSD: aml_name.c,v 1.3 2008/01/15 19:08:00 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -400,7 +400,7 @@ aml_nameman(struct aml_environ *env, const u_int8_t *dp, int flag)
 			newname = aml_find_name(curname, dp);
 			if (newname != NULL)
 				break;
-			if (curname == &rootname)
+			if (curname == &rootname || curname == NULL)
 				break;
 			curname = curname->parent;
 		}
