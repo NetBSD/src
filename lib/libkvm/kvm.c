@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm.c,v 1.91 2008/01/15 13:57:41 ad Exp $	*/
+/*	$NetBSD: kvm.c,v 1.92 2008/01/15 14:16:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-__RCSID("$NetBSD: kvm.c,v 1.91 2008/01/15 13:57:41 ad Exp $");
+__RCSID("$NetBSD: kvm.c,v 1.92 2008/01/15 14:16:30 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -804,7 +804,10 @@ int
 kvm_dump_inval(kvm_t *kd)
 {
 	struct nlist	nl[2];
-	u_long		pa, val;
+	u_long		pa;
+	size_t		dsize;
+	off_t		doff;
+	void		*newbuf;
 
 	if (ISALIVE(kd)) {
 		_kvm_err(kd, kd->program, "clearing dump on live kernel");
@@ -821,9 +824,20 @@ kvm_dump_inval(kvm_t *kd)
 		return (-1);
 
 	errno = 0;
-	val = 0;
-	if (pwrite(kd->pmfd, (void *)&val, sizeof(val),
-	    _kvm_pa2off(kd, pa)) == -1) {
+	dsize = MAX(kd->fdalign, sizeof(u_long));
+	if (kd->iobufsz < dsize) {
+		newbuf = realloc(kd->iobuf, dsize);
+		if (newbuf == NULL) {
+			_kvm_syserr(kd, 0, "cannot allocate I/O buffer");
+			return (-1);
+		}
+		kd->iobuf = newbuf;
+		kd->iobufsz = dsize;
+	}
+	memset(kd->iobuf, 0, dsize);
+	doff = _kvm_pa2off(kd, pa);
+	doff -= doff % kd->fdalign;
+	if (pwrite(kd->pmfd, kd->iobuf, dsize, doff) == -1) {
 		_kvm_syserr(kd, 0, "cannot invalidate dump - pwrite");
 		return (-1);
 	}
