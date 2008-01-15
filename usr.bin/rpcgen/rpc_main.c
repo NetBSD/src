@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.29 2008/01/12 05:49:46 dholland Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.30 2008/01/15 20:04:48 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.29 2008/01/12 05:49:46 dholland Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.30 2008/01/15 20:04:48 christos Exp $");
 #endif
 #endif
 
@@ -164,7 +164,7 @@ main(argc, argv)
 	struct commandline cmd;
 
 	setprogname(argv[0]);
-	if (!(CPP = getenv("CPP")))
+	if (!(CPP = getenv("RPCGEN_CPP")))
 		CPP = "/usr/bin/cpp";
 
 	(void) memset((char *) &cmd, 0, sizeof(struct commandline));
@@ -334,8 +334,8 @@ open_input(infile, define)
 		char    cppfile[MAXPATH];
 		char   *cpp;
 
-		if ((cpp = searchpath("cpp.exe")) == NULL
-		    && (cpp = getenv("RPCGENCPP")) == NULL)
+		if ((cpp = getenv("RPCGEN_CPP")) == NULL &&
+		    (cpp = searchpath("cpp.exe")) == NULL)
 			cpp = DOSCPP;
 
 		putarg(0, cpp);
@@ -378,10 +378,9 @@ open_input(infile, define)
 		(void) dup2(pd[1], 1);
 		(void) close(pd[0]);
 		execvp(arglist[0], arglist);
-		err(1, "$CPP: %s", CPP);
+		err(1, "$RPCGEN_CPP: %s", CPP);
 	case -1:
-		perror("fork");
-		exit(1);
+		err(1, "fork");
 	}
 	(void) close(pd[1]);
 	fin = fdopen(pd[0], "r");

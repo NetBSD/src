@@ -1,7 +1,7 @@
-.\"	$NetBSD: rpcgen.1,v 1.19 2004/05/12 18:49:30 wiz Exp $
+.\"	$NetBSD: rpcgen.1,v 1.20 2008/01/15 20:04:49 christos Exp $
 .\" from: @(#)rpcgen.new.1	1.1 90/11/09 TIRPC 1.0; from 40.10 of 10/10/89
 .\" Copyright (c) 1988,1990 Sun Microsystems, Inc. - All Rights Reserved.
-.Dd May 12, 2004
+.Dd January 15, 2008
 .Dt RPCGEN 1
 .Sh NAME
 .Nm rpcgen
@@ -444,6 +444,11 @@ while the options
 and
 .Fl T
 are global and can be used with the other options.
+.Sh ENVIRONMENT
+If the
+.Ev RPCGEN_RSH
+environment variable is set, its value is used as the pathname of the
+C preprocessor to be run on the input file.
 .Sh NOTES
 The
 .Tn RPC
