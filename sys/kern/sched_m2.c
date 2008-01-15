@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.16 2008/01/15 04:16:27 rmind Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.17 2008/01/15 16:14:19 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.16 2008/01/15 04:16:27 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.17 2008/01/15 16:14:19 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -324,19 +324,8 @@ sched_schedclock(struct lwp *l)
 void
 sched_nice(struct proc *p, int prio)
 {
-	int nprio;
-	struct lwp *l;
 
-	KASSERT(mutex_owned(&p->p_smutex));
-
-	p->p_nice = prio;
-	nprio = max(min(PRI_DEFAULT + p->p_nice, PRI_HIGHEST_TS), 0);
-
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		lwp_lock(l);
-		lwp_changepri(l, nprio);
-		lwp_unlock(l);
-	}
+	/* TODO: implement as SCHED_IA */
 }
 
 /* Recalculate the time-slice */
