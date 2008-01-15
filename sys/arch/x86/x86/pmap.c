@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.28 2008/01/15 11:12:03 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.29 2008/01/15 12:00:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.28 2008/01/15 11:12:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2008/01/15 12:00:01 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2692,8 +2692,10 @@ pmap_unmap_ptp(void)
 	pt_entry_t *pte;
 
 	pte = PTESLEW(ptp_pte, cpu_number());
-	pmap_pte_set(pte, 0);
-	pmap_pte_flush();
+	if (*pte != 0) {
+		pmap_pte_set(pte, 0);
+		pmap_pte_flush();
+	}
 #endif
 }
 
