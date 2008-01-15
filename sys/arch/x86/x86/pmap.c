@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.29 2008/01/15 12:00:01 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.30 2008/01/15 22:08:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.29 2008/01/15 12:00:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2008/01/15 22:08:33 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3040,7 +3040,6 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 /*
  * pmap_page_remove: remove a managed vm_page from all pmaps that map it
  *
- * => we set pv_head => pmap locking
  * => R/M bits are sync'd back to attrs
  */
 
@@ -3170,8 +3169,6 @@ startover:
 
 /*
  * pmap_test_attrs: test a page's attributes
- *
- * => we set pv_head => pmap locking
  */
 
 bool
@@ -3239,7 +3236,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 /*
  * pmap_clear_attrs: clear the specified attribute for a page.
  *
- * => we set pv_head => pmap locking
  * => we return true if we cleared one of the bits we were asked to
  */
 
