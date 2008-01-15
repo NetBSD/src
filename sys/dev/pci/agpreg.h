@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.16 2007/11/24 02:19:37 markd Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.17 2008/01/15 00:27:58 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -201,7 +201,7 @@
 /*
  * Config registers for 852GM/855GM/865G device 0
  */
-#define AGP_I855_GCC1			0x52
+#define AGP_I855_GCC1			0x50 /* upper word */
 #define AGP_I855_GCC1_DEV2		0x08
 #define AGP_I855_GCC1_DEV2_ENABLED	0x00
 #define AGP_I855_GCC1_DEV2_DISABLED	0x08
@@ -228,7 +228,7 @@
 #define 	AGP_I915_GCC1_GMS_STOLEN_32M	0x50
 #define 	AGP_I915_GCC1_GMS_STOLEN_48M	0x60
 #define 	AGP_I915_GCC1_GMS_STOLEN_64M	0x70
-#define AGP_I915_MSAC			0x62
+#define AGP_I915_MSAC			0x60 /* upper word */
 #define 	AGP_I915_MSAC_APER_128M		0x02
 
 /*
