@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.c,v 1.3 2007/07/19 22:17:23 dsl Exp $ */
+/*	$NetBSD: linux32_missing.c,v 1.4 2008/01/15 22:38:35 njoly Exp $ */
 
 #include <sys/cdefs.h>
 
@@ -25,3 +25,4 @@
 #include <compat/linux/common/linux_llseek.c>
 #include <compat/linux/common/linux_misc_notalpha.c>
 #include <compat/linux/common/linux_misc.c>
+#include <compat/linux/common/linux_uid16.c>

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_types.h,v 1.26 2007/03/23 04:16:14 mrg Exp $	*/
+/*	$NetBSD: linux_types.h,v 1.27 2008/01/15 22:38:35 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -57,6 +57,9 @@
 typedef unsigned long linux_clock_t;
 typedef unsigned long linux_time_t;
 #endif
+
+typedef unsigned short linux_gid16_t;
+typedef unsigned short linux_uid16_t;
 
 /*
  * From Linux include/asm-.../posix_types.h
