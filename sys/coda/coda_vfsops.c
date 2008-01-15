@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.62 2007/12/08 19:29:37 pooka Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.63 2008/01/15 18:11:25 ad Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.62 2007/12/08 19:29:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.63 2008/01/15 18:11:25 ad Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -203,7 +203,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 	vrele(dvp);
 	return(ENXIO);
     }
-    dev = dvp->v_specinfo->si_rdev;
+    dev = dvp->v_rdev;
     vrele(dvp);
     cdev = cdevsw_lookup(dev);
     if (cdev == NULL) {
