@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_m68k_cmn.c,v 1.12 2003/08/07 16:44:37 agc Exp $	*/
+/*	$NetBSD: kvm_m68k_cmn.c,v 1.13 2008/01/15 13:57:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.12 2003/08/07 16:44:37 agc Exp $");
+__RCSID("$NetBSD: kvm_m68k_cmn.c,v 1.13 2008/01/15 13:57:42 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -226,7 +226,7 @@ vatop_030(kd, stpa, va, pa)
 	 * Fortunately it is 1-to-1 mapped so we don't have to.
 	 */
 	if (stpa == m->sysseg_pa) {
-		if (pread(kd->pmfd, &ste, sizeof(ste),
+		if (_kvm_pread(kd, kd->pmfd, &ste, sizeof(ste),
 		    _kvm_cmn_pa2off(kd, addr)) != sizeof(ste))
 			goto invalid;
 	} else if (KREAD(kd, addr, &ste))
@@ -241,8 +241,8 @@ vatop_030(kd, stpa, va, pa)
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
 	 */
-	if (pread(kd->pmfd, &pte, sizeof(pte), _kvm_cmn_pa2off(kd, addr)) !=
-	    sizeof(pte))
+	if (_kvm_pread(kd, kd->pmfd, &pte, sizeof(pte),
+	    _kvm_cmn_pa2off(kd, addr)) != sizeof(pte))
 		goto invalid;
 	addr = pte & m->pg_frame;
 	if ((pte & m->pg_v) == 0) {
@@ -292,7 +292,7 @@ vatop_040(kd, stpa, va, pa)
 	 * Fortunately it is 1-to-1 mapped so we don't have to.
 	 */
 	if (stpa == m->sysseg_pa) {
-		if (pread(kd->pmfd, &ste, sizeof(ste),
+		if (_kvm_pread(kd, kd->pmfd, &ste, sizeof(ste),
 		    _kvm_cmn_pa2off(kd, addr)) != sizeof(ste))
 			goto invalid;
 	} else if (KREAD(kd, addr, &ste))
@@ -310,8 +310,8 @@ vatop_040(kd, stpa, va, pa)
 	 * Address from level 1 STE is a physical address,
 	 * so don't use kvm_read.
 	 */
-	if (pread(kd->pmfd, &ste, sizeof(ste), _kvm_cmn_pa2off(kd, addr)) !=
-	    sizeof(ste))
+	if (_kvm_pread(kd, kd->pmfd, &ste, sizeof(ste),
+	    _kvm_cmn_pa2off(kd, addr)) != sizeof(ste))
 		goto invalid;
 	if ((ste & m->sg_v) == 0) {
 		_kvm_err(kd, 0, "invalid level 2 descriptor (%x)",
@@ -325,8 +325,8 @@ vatop_040(kd, stpa, va, pa)
 	/*
 	 * Address from STE is a physical address so don't use kvm_read.
 	 */
-	if (pread(kd->pmfd, &pte, sizeof(pte), _kvm_cmn_pa2off(kd, addr)) !=
-	    sizeof(pte))
+	if (_kvm_pread(kd, kd->pmfd, &pte, sizeof(pte),
+	    _kvm_cmn_pa2off(kd, addr)) != sizeof(pte))
 		goto invalid;
 	addr = pte & m->pg_frame;
 	if ((pte & m->pg_v) == 0) {

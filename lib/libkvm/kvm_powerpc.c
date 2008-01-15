@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.7 2005/02/17 02:31:27 briggs Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.8 2008/01/15 13:57:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -245,7 +245,7 @@ _kvm_match_sr(kd, va, pa, off)
 	pteg_vaddr = ( htaborg & 0xfe000000) | ((hash & 0x3ff) << 6)
 		   | ((htaborg & 0x01ff0000) | (mhash << 16));
 
-	if (pread(kd->pmfd, (void *) &pteg, sizeof(pteg),
+	if (_kvm_pread(kd, kd->pmfd, (void *) &pteg, sizeof(pteg),
 		  _kvm_pa2off(kd, pteg_vaddr)) != sizeof(pteg)) {
 		_kvm_syserr(kd, 0, "could not read primary PTEG");
 		return 0;
@@ -263,7 +263,7 @@ _kvm_match_sr(kd, va, pa, off)
 	pteg_vaddr = ( htaborg & 0xfe000000) | ((hash & 0x3ff) << 6)
 		   | ((htaborg & 0x01ff0000) | (mhash << 16));
 
-	if (pread(kd->pmfd, (void *) &pteg, sizeof(pteg),
+	if (_kvm_pread(kd, kd->pmfd, (void *) &pteg, sizeof(pteg),
 		  _kvm_pa2off(kd, pteg_vaddr)) != sizeof(pteg)) {
 		_kvm_syserr(kd, 0, "could not read secondary PTEG");
 		return 0;
