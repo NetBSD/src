@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.28 2003/08/07 16:44:39 agc Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.29 2008/01/15 13:57:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.28 2003/08/07 16:44:39 agc Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.29 2008/01/15 13:57:42 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -270,7 +270,7 @@ _kvm_kvatop4m(kd, va, pa)
 	if (foff == (off_t)-1)
 		return (0);
 
-	if (pread(kd->pmfd, &pte, sizeof(pte), foff) != sizeof(pte)) {
+	if (_kvm_pread(kd, kd->pmfd, &pte, sizeof(pte), foff) != sizeof(pte)) {
 		_kvm_syserr(kd, kd->program, "cannot read pte for %lx", va);
 		return (0);
 	}
