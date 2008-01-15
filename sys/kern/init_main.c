@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.338 2008/01/14 12:40:03 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.339 2008/01/15 03:37:10 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.338 2008/01/14 12:40:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.339 2008/01/15 03:37:10 rmind Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -338,6 +338,9 @@ main(void)
 	sched_rqinit();
 	turnstile_init();
 	sleeptab_init(&sleeptab);
+
+	/* Initialize processor-sets */
+	psets_init();
 
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
