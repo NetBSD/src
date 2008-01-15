@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2008/01/10 07:35:09 dyoung Exp $
+#	$NetBSD: Makefile,v 1.32 2008/01/15 22:26:02 dyoung Exp $
 
 # Makefile for i386 tags file and boot blocks
 
@@ -8,6 +8,7 @@ SI386=	${SYSDIR}/arch/i386/acpi/*.[ch] \
 	${SYSDIR}/arch/i386/i386/*.[ch] \
 	${SYSDIR}/arch/i386/include/*.h \
 	${SYSDIR}/arch/i386/isa/*.[ch] \
+	${SYSDIR}/arch/i386/mca/*.[ch] \
 	${SYSDIR}/arch/i386/pci/*.[ch] \
 	${SYSDIR}/arch/i386/pnpbios/*.[ch] \
 	${SYSDIR}/contrib/dev/ath/*.[ch] \
