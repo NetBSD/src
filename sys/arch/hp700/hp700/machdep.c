@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2007/12/31 13:38:50 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2008/01/15 14:25:21 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2007/12/31 13:38:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2008/01/15 14:25:21 chs Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -510,9 +510,7 @@ hppa_init(paddr_t start)
 	resvmem = resvmem / PAGE_SIZE;
 
 	/* calculate HPT size */
-	/* for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2); */
-	hptsize = 256;	/* XXX one page for now */
-	hptsize *= 16;	/* sizeof(hpt_entry) */
+	for (hptsize = 256; hptsize < totalphysmem; hptsize *= 2);
 
 	error = pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb);
 	if (error) {
