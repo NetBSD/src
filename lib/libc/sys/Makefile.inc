@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.182 2007/12/14 21:52:17 yamt Exp $
+#	$NetBSD: Makefile.inc,v 1.183 2008/01/15 03:37:14 rmind Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -113,7 +113,9 @@ WEAKASM= accept.S aio_suspend.S close.S connect.S execve.S \
 	kill.S mq_receive.S mq_send.S mq_timedreceive.S mq_timedsend.S \
 	msgrcv.S msgsnd.S __msync13.S \
 	nanosleep.S open.S poll.S pollts.S pselect.S read.S readlink.S readv.S \
-	sched_yield.S select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
+	_sched_setparam.S _sched_getparam.S _sched_setaffinity.S \
+	_sched_getaffinity.S sched_yield.S \
+	select.S __sigprocmask14.S __sigsuspend14.S sysarch.S \
 	wait4.S write.S writev.S
 
 NOERR=	getegid.S geteuid.S getgid.S getpid.S getppid.S getuid.S \

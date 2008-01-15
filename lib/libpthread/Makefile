@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.48 2007/12/14 21:51:21 yamt Exp $
+#	$NetBSD: Makefile,v 1.49 2008/01/15 03:37:14 rmind Exp $
 #
 
 WARNS=	4
@@ -61,7 +61,6 @@ SRCS+=	pthread_specific.c
 SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
 SRCS+=	res_state.c
-SRCS+=	sched.c
 SRCS+=	sem.c
 # Architecture-dependent files
 SRCS+=	_context_u.S

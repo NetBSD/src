@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_misc.c,v 1.3 2007/11/13 17:20:09 ad Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.4 2008/01/15 03:37:14 rmind Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,14 +37,19 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.3 2007/11/13 17:20:09 ad Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.4 2008/01/15 03:37:14 rmind Exp $");
+
+#include <errno.h>
+#include <string.h>
+#include <unistd.h>
 
 #include <sys/types.h>
+#include <sys/pset.h>
 #include <sys/signal.h>
 #include <sys/time.h>
 
-#include <errno.h>
 #include <lwp.h>
+#include <sched.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
@@ -60,27 +65,65 @@ __strong_alias(__libc_thr_sigsetmask,pthread_sigmask)
 __strong_alias(__sigprocmask14,pthread_sigmask)
 __strong_alias(__libc_thr_yield,pthread__sched_yield)
 
-/*ARGSUSED*/
 int
 pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
 {
-	if (param == NULL || policy == NULL)
-		return EINVAL;
-	param->sched_priority = 0;
-	*policy = SCHED_RR;
-	return 0;
+	int error;
+
+	if (pthread__find(thread) != 0)
+		return ESRCH;
+
+	error = _sched_getparam(getpid(), thread->pt_lid, param);
+	if (error == 0)
+		*policy = param->sched_class;
+	return error;
 }
 
-/*ARGSUSED*/
 int
 pthread_setschedparam(pthread_t thread, int policy, 
     const struct sched_param *param)
 {
-	if (param == NULL || policy < SCHED_FIFO || policy > SCHED_RR)
-		return EINVAL;
-	if (param->sched_priority > 0 || policy != SCHED_RR)
-		return ENOTSUP;
-	return 0;
+	struct sched_param sp;
+
+	if (pthread__find(thread) != 0)
+		return ESRCH;
+
+	memcpy(&sp, param, sizeof(struct sched_param));
+	sp.sched_class = policy;
+	return _sched_setparam(getpid(), thread->pt_lid, &sp);
+}
+
+int
+pthread_getaffinity_np(pthread_t thread, size_t size, cpuset_t *cpuset)
+{
+
+	if (pthread__find(thread) != 0)
+		return ESRCH;
+
+	return _sched_getaffinity(getpid(), thread->pt_lid, size, cpuset);
+}
+
+int
+pthread_setaffinity_np(pthread_t thread, size_t size, cpuset_t *cpuset)
+{
+
+	if (pthread__find(thread) != 0)
+		return ESRCH;
+
+	return _sched_setaffinity(getpid(), thread->pt_lid, size, cpuset);
+}
+
+int
+pthread_setschedprio(pthread_t thread, int prio)
+{
+	struct sched_param sp;
+
+	if (pthread__find(thread) != 0)
+		return ESRCH;
+
+	sp.sched_class = SCHED_NONE;
+	sp.sched_priority = prio;
+	return _sched_setparam(getpid(), thread->pt_lid, &sp);
 }
 
 int

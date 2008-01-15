@@ -1,7 +1,7 @@
-/*	$NetBSD: sched_m2.c,v 1.14 2007/12/21 12:05:39 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.15 2008/01/15 03:37:11 rmind Exp $	*/
 
 /*
- * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
+ * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.14 2007/12/21 12:05:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.15 2008/01/15 03:37:11 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.14 2007/12/21 12:05:39 ad Exp $");
 #include <sys/mutex.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/pset.h>
 #include <sys/resource.h>
 #include <sys/resourcevar.h>
 #include <sys/sched.h>
@@ -87,6 +88,7 @@ static pri_t	high_pri[PRI_COUNT];	/* Map for priority increase */
  * Migration and balancing.
  */
 #ifdef MULTIPROCESSOR
+
 static u_int	cacheht_time;		/* Cache hotness time */
 static u_int	min_catch;		/* Minimal LWP count for catching */
 
@@ -420,6 +422,7 @@ sched_dequeue(struct lwp *l)
 
 	ci_rq = l->l_cpu->ci_schedstate.spc_sched_info;
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+
 	KASSERT(eprio <= ci_rq->r_highest_pri); 
 	KASSERT(ci_rq->r_bitmap[eprio >> BITMAP_SHIFT] != 0);
 	KASSERT(ci_rq->r_count > 0);
@@ -554,19 +557,20 @@ sched_pstats_hook(struct lwp *l)
 
 /* Check if LWP can migrate to the chosen CPU */
 static inline bool
-sched_migratable(const struct lwp *l, const struct cpu_info *ci)
+sched_migratable(const struct lwp *l, struct cpu_info *ci)
 {
+	const struct schedstate_percpu *spc = &ci->ci_schedstate;
 
-	if (ci->ci_schedstate.spc_flags & SPCF_OFFLINE)
+	/* CPU is offline */
+	if (__predict_false(spc->spc_flags & SPCF_OFFLINE))
 		return false;
 
-	if ((l->l_flag & LW_BOUND) == 0)
-		return true;
-#if 0
-	return cpu_in_pset(ci, l->l_psid);
-#else
-	return false;
-#endif
+	/* Affinity bind */
+	if (__predict_false(l->l_flag & LW_AFFINITY))
+		return CPU_ISSET(cpu_index(ci), &l->l_affinity);
+
+	/* Processor-set */
+	return (spc->spc_psid == l->l_psid);
 }
 
 /*
@@ -576,16 +580,22 @@ sched_migratable(const struct lwp *l, const struct cpu_info *ci)
 struct cpu_info *
 sched_takecpu(struct lwp *l)
 {
-	struct cpu_info *ci, *tci = NULL;
+	struct cpu_info *ci, *tci;
 	struct schedstate_percpu *spc;
 	runqueue_t *ci_rq;
 	sched_info_lwp_t *sil;
 	CPU_INFO_ITERATOR cii;
 	pri_t eprio, lpri;
 
+	KASSERT(lwp_locked(l, NULL));
+
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
 	ci_rq = spc->spc_sched_info;
+
+	/* If thread is strictly bound, do not estimate other CPUs */
+	if (l->l_flag & LW_BOUND)
+		return ci;
 
 	/* CPU of this thread is idling - run there */
 	if (ci_rq->r_count == 0)
@@ -609,6 +619,7 @@ sched_takecpu(struct lwp *l)
 	 * Look for the CPU with the lowest priority thread.  In case of
 	 * equal the priority - check the lower count of the threads.
 	 */
+	tci = l->l_cpu;
 	lpri = PRI_COUNT;
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		runqueue_t *ici_rq;
@@ -620,18 +631,16 @@ sched_takecpu(struct lwp *l)
 		if (pri > lpri)
 			continue;
 
-		if (pri == lpri && tci && ci_rq->r_count < ici_rq->r_count)
+		if (pri == lpri && ci_rq->r_count < ici_rq->r_count)
 			continue;
 
-		if (sched_migratable(l, ci) == false)
+		if (!sched_migratable(l, ci))
 			continue;
 
 		lpri = pri;
 		tci = ci;
 		ci_rq = ici_rq;
 	}
-
-	KASSERT(tci != NULL);
 	return tci;
 }
 
@@ -691,7 +700,7 @@ sched_catchlwp(void)
 		/* Look for threads, whose are allowed to migrate */
 		sil = l->l_sched_info;
 		if ((l->l_flag & LW_SYSTEM) || CACHE_HOT(sil) ||
-		    sched_migratable(l, curci) == false) {
+		    !sched_migratable(l, curci)) {
 			l = TAILQ_NEXT(l, l_runq);
 			continue;
 		}
@@ -866,7 +875,7 @@ sched_tick(struct cpu_info *ci)
 	 * If there are higher priority threads or threads in the same queue,
 	 * mark that thread should yield, otherwise, continue running.
 	 */
-	if (lwp_eprio(l) <= ci_rq->r_highest_pri) {
+	if (lwp_eprio(l) <= ci_rq->r_highest_pri || l->l_target_cpu) {
 		spc->spc_flags |= SPCF_SHOULDYIELD;
 		cpu_need_resched(ci, 0);
 	} else
@@ -876,6 +885,17 @@ sched_tick(struct cpu_info *ci)
 /*
  * Sysctl nodes and initialization.
  */
+
+static int
+sysctl_sched_rtts(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int rttsms = hztoms(rt_ts);
+
+	node = *rnode;
+	node.sysctl_data = &rttsms;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
 
 static int
 sysctl_sched_mints(SYSCTLFN_ARGS)
@@ -966,6 +986,12 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		CTLFLAG_PERMANENT,
 		CTLTYPE_STRING, "name", NULL,
 		NULL, 0, __UNCONST("M2"), 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_INT, "rtts",
+		SYSCTL_DESCR("Round-robin time quantum (in miliseconds)"),
+		sysctl_sched_rtts, 0, NULL, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,

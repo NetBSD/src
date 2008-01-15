@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.77 2007/09/07 18:56:13 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.78 2008/01/15 03:37:12 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -164,6 +164,7 @@ typedef	__gid_t		gid_t;		/* group id */
 #define	gid_t		__gid_t
 #endif
 
+typedef	int		idtype_t;	/* type of the id */
 typedef	uint32_t	id_t;		/* group id, process id or user id */
 typedef	uint64_t	ino_t;		/* inode number */
 typedef	long		key_t;		/* IPC key (for Sys V IPC) */
@@ -197,6 +198,8 @@ typedef	__uid_t		uid_t;		/* user id */
 typedef	int32_t		dtime_t;	/* on-disk time_t */
 
 typedef int		mqd_t;
+
+typedef	int		psetid_t;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 /*
