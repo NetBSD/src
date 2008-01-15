@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.158 2008/01/11 20:00:15 bouyer Exp $	*/
+/*	$NetBSD: cpu.h,v 1.159 2008/01/15 14:50:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -427,8 +427,8 @@ void	i8254_initclocks(void);
 void	cpu_probe_features(struct cpu_info *);
 
 /* npx.c */
-void	npxsave_lwp(struct lwp *, int);
-void	npxsave_cpu(struct cpu_info *, int);
+void	npxsave_lwp(struct lwp *, bool);
+void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
 int kvtop(void *);

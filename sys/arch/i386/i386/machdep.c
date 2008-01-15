@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.623 2008/01/12 20:03:42 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.624 2008/01/15 14:50:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.623 2008/01/12 20:03:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.624 2008/01/15 14:50:08 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1041,7 +1041,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l, 0);
+		npxsave_lwp(l, false);
 #endif
 
 #ifdef USER_LDT
@@ -2220,7 +2220,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		 * XXX application this might be a penalty.
 		 */
 		if (l->l_addr->u_pcb.pcb_fpcpu) {
-			npxsave_lwp(l, 1);
+			npxsave_lwp(l, true);
 		}
 #endif
 		if (i386_use_fxsave) {
@@ -2306,7 +2306,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		 * If we were using the FPU, forget that we were.
 		 */
 		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			npxsave_lwp(l, 0);
+			npxsave_lwp(l, false);
 #endif
 		if (flags & _UC_FXSAVE) {
 			if (i386_use_fxsave) {

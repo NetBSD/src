@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.137 2008/01/04 16:38:46 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.138 2008/01/15 14:50:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.137 2008/01/04 16:38:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.138 2008/01/15 14:50:08 joerg Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_mtrr.h"
@@ -150,7 +150,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * Save p1's npx h/w state to p1's pcb so that we can copy it.
 	 */
 	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l1, 1);
+		npxsave_lwp(l1, true);
 #endif
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
@@ -228,7 +228,7 @@ cpu_swapout(struct lwp *l)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	npxsave_lwp(l, 1);
+	npxsave_lwp(l, true);
 #endif
 }
 
@@ -244,7 +244,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 #if NNPX > 0
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l, 0);
+		npxsave_lwp(l, false);
 #endif
 
 #ifdef MTRR

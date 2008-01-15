@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.15 2007/12/27 16:50:43 joerg Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.16 2008/01/15 14:50:09 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.15 2007/12/27 16:50:43 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.16 2008/01/15 14:50:09 joerg Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -112,13 +112,13 @@ x86_64_ipi_halt(struct cpu_info *ci)
 void
 x86_64_ipi_flush_fpu(struct cpu_info *ci)
 {
-	fpusave_cpu(ci, 0);
+	fpusave_cpu(false);
 }
 
 void
 x86_64_ipi_synch_fpu(struct cpu_info *ci)
 {
-	fpusave_cpu(ci, 1);
+	fpusave_cpu(true);
 }
 
 #ifdef MTRR

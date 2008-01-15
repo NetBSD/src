@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.18 2008/01/15 03:37:10 rmind Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.19 2008/01/15 14:50:07 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.18 2008/01/15 03:37:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.19 2008/01/15 14:50:07 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,6 +303,10 @@ cpu_xc_offline(struct cpu_info *ci)
 	}
 	spc_dunlock(ci, mci);
 	mutex_exit(&proclist_lock);
+
+#ifdef __HAVE_MD_CPU_OFFLINE
+	cpu_offline_md();
+#endif
 }
 
 static void

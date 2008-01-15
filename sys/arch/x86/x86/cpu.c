@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.17 2008/01/14 15:23:56 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.18 2008/01/15 14:50:08 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.17 2008/01/14 15:23:56 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2008/01/15 14:50:08 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -899,13 +899,27 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 }
 #endif	/* __x86_64__ */
 
+void
+cpu_offline_md(void)
+{
+	int s;
+
+	s = splhigh();
+#ifdef __i386__
+	npxsave_cpu(true);
+#else
+	fpusave_cpu(true);
+#endif
+	splx(s);
+}
+
 /* XXX joerg restructure and restart CPUs individually */
 static bool
 cpu_suspend(device_t dv)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
-	int err, s;
+	int err;
 
 	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
@@ -920,14 +934,6 @@ cpu_suspend(device_t dv)
 
 	if (err)
 		return false;
-
-	s = splhigh();
-#ifdef __i386__
-	npxsave_cpu(ci, 1);
-#else
-	fpusave_cpu(ci, 1);
-#endif
-	splx(s);
 
 	return true;
 }
