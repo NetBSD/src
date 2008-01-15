@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.4 2008/01/15 09:14:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.5 2008/01/15 13:57:32 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -142,7 +142,7 @@ vga_post_init(int bus, int device, int function)
 	}
 	sc = kmem_alloc(sizeof(*sc), KM_SLEEP);
 
-	err = uvm_pglistalloc(65536, 0, ~0u, 0, 0, &sc->ram_backing, 1, 1);
+	err = uvm_pglistalloc(65536, 0, (paddr_t)~0ull, 0, 0, &sc->ram_backing, 1, 1);
 	if (err) {
 		uvm_km_free(kernel_map, sc->sys_image, 1024 * 1024, UVM_KMF_VAONLY);
 		pmap_kremove(sc->sys_image, 1024 * 1024);
