@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.211 2008/01/14 22:47:22 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.212 2008/01/15 14:26:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -81,6 +81,7 @@ extern int maxmem;		/* max memory per process */
 extern int physmem;		/* physical memory */
 
 extern dev_t dumpdev;		/* dump device */
+extern dev_t dumpcdev;		/* dump device (character equivalent) */
 extern long dumplo;		/* offset into dumpdev */
 extern int dumpsize;		/* size of dump in pages */
 extern const char *dumpspec;	/* how dump device was specified */
