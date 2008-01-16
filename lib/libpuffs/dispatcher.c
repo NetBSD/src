@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.27 2007/12/16 20:02:57 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.28 2008/01/16 21:30:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.27 2007/12/16 20:02:57 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.28 2008/01/16 21:30:00 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -236,7 +236,7 @@ puffs_docc(void *arg)
 
 	/* can't do this above due to PCC_BORROWED */
 	while ((pcc_iter = LIST_FIRST(&pu->pu_ccnukelst)) != NULL) {
-		LIST_REMOVE(pcc_iter, nlst_entries);
+		LIST_REMOVE(pcc_iter, pcc_rope);
 		puffs_cc_destroy(pcc_iter);
 	}
 	PU_UNLOCK();
@@ -1035,7 +1035,7 @@ processresult(struct puffs_usermount *pu, int how)
 
 	case PUFFCALL_IGNORE:
 		PU_LOCK();
-		LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, nlst_entries);
+		LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, pcc_rope);
 		PU_UNLOCK();
 		break;
 

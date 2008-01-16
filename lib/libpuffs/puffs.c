@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.c,v 1.87 2008/01/16 00:29:42 pooka Exp $	*/
+/*	$NetBSD: puffs.c,v 1.88 2008/01/16 21:30:00 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: puffs.c,v 1.87 2008/01/16 00:29:42 pooka Exp $");
+__RCSID("$NetBSD: puffs.c,v 1.88 2008/01/16 21:30:00 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -210,7 +210,7 @@ puffs_setstacksize(struct puffs_usermount *pu, size_t ss)
 	if (bonus > 1) {
 		stackshift++;
 		fprintf(stderr, "puffs_setstacksize: using next power of two: "
-		    "%zu\n", 1<<stackshift);
+		    "%d\n", 1<<stackshift);
 	}
 
 	pu->pu_cc_stackshift = stackshift;
@@ -619,6 +619,7 @@ _puffs_init(int develv, struct puffs_ops *pops, const char *mntfromname,
 	LIST_INIT(&pu->pu_pnodelst);
 	LIST_INIT(&pu->pu_ios);
 	LIST_INIT(&pu->pu_ios_rmlist);
+	LIST_INIT(&pu->pu_ccmagazin);
 	LIST_INIT(&pu->pu_ccnukelst);
 	TAILQ_INIT(&pu->pu_sched);
 	TAILQ_INIT(&pu->pu_exq);
@@ -846,7 +847,7 @@ puffs_mainloop(struct puffs_usermount *pu)
 		 * Schedule continuations.
 		 */
 		while ((pcc = TAILQ_FIRST(&pu->pu_sched)) != NULL) {
-			TAILQ_REMOVE(&pu->pu_sched, pcc, entries);
+			TAILQ_REMOVE(&pu->pu_sched, pcc, pcc_schedent);
 			puffs_goto(pcc);
 		}
 
