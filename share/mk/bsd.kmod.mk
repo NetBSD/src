@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmod.mk,v 1.85 2008/01/04 14:54:29 ad Exp $
+#	$NetBSD: bsd.kmod.mk,v 1.86 2008/01/16 12:34:56 ad Exp $
 
 .include <bsd.init.mk>
 .include <bsd.klinks.mk>
@@ -53,7 +53,7 @@ ${KMOD}_tramp.S: ${KMOD}_tmp.o $S/lkm/arch/${MACHINE_CPU}/lkmtramp.awk
 
 ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 	${_MKTARGET_LINK}
-	${LD} -e ${KMOD}_lkmentry -r \
+	${LD} -r \
 		`${OBJDUMP} --syms --reloc ${KMOD}_tmp.o | \
 			 awk -f $S/lkm/arch/${MACHINE_CPU}/lkmwrap.awk` \
 		 -o tmp.o ${KMOD}_tmp.o ${KMOD}_tramp.o
@@ -67,7 +67,7 @@ ${PROG}: ${KMOD}_tmp.o ${KMOD}_tramp.o
 .else
 ${PROG}: ${OBJS} ${DPADD}
 	${_MKTARGET_LINK}
-	${LD} -e ${KMOD}_lkmentry -r -o tmp.o ${OBJS}
+	${LD} -r -o tmp.o ${OBJS}
 	mv tmp.o ${.TARGET}
 .endif
 

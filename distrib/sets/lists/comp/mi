@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1110 2008/01/15 16:33:48 njoly Exp $
+#	$NetBSD: mi,v 1.1111 2008/01/16 12:34:54 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1874,6 +1874,7 @@
 ./usr/include/sys/md5.h				comp-c-include
 ./usr/include/sys/midiio.h			comp-c-include
 ./usr/include/sys/mman.h			comp-c-include
+./usr/include/sys/module.h			comp-c-include
 ./usr/include/sys/mount.h			comp-c-include
 ./usr/include/sys/mqueue.h			comp-c-include
 ./usr/include/sys/msg.h				comp-c-include
