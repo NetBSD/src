@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.329 2008/01/12 20:03:41 ad Exp $
+#	$NetBSD: files.i386,v 1.330 2008/01/16 09:37:07 ad Exp $
 #
 # new style config file for i386 architecture
 #
@@ -23,9 +23,6 @@ defflag			XBOX
 # VM86 emulation
 defflag			VM86
 defflag			KVM86
-
-# Floating point emulation
-defflag			MATH_EMULATE
 
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
@@ -85,7 +82,6 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
-file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
