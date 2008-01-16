@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.170 2008/01/07 12:34:12 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.171 2008/01/16 16:00:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -47,7 +47,6 @@
 #include <sys/queue.h>
 #include <sys/lock.h>
 #include <sys/statvfs.h>
-#include <sys/vnode.h>
 #include <sys/specificdata.h>
 #endif	/* !_STANDALONE */
 
@@ -94,6 +93,8 @@
 
 #ifndef _STANDALONE
 
+struct vnode;
+
 /*
  * Structure per mounted file system.  Each mounted file system has an
  * array of operations and an instance record.  The file systems are
@@ -104,7 +105,7 @@ struct mount {
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct vnode	*mnt_syncer;		/* syncer vnode */
-	struct vnodelst	mnt_vnodelist;		/* list of vnodes this mount */
+	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
 	struct lock	mnt_lock;		/* mount structure lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_iflag;		/* internal flags */
