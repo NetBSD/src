@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.183 2008/01/15 03:37:14 rmind Exp $
+#	$NetBSD: Makefile.inc,v 1.184 2008/01/16 12:34:55 ad Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -85,7 +85,7 @@ ASM=	access.S acct.S \
 		_lwp_getprivate.S _lwp_setprivate.S \
 		_lwp_setname.S _lwp_getname.S _lwp_ctl.S \
 	madvise.S mincore.S minherit.S mkdir.S mkfifo.S mknod.S \
-		mlock.S mlockall.S __mount50.S mprotect.S __msgctl13.S \
+		mlock.S mlockall.S modctl.S __mount50.S mprotect.S __msgctl13.S \
 		mremap.S msgget.S munlock.S munlockall.S munmap.S \
 	nfssvc.S __ntp_gettime30.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \

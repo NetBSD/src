@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.44 2008/01/07 23:51:07 elad Exp $ */
+/* $NetBSD: kauth.h,v 1.45 2008/01/16 12:34:54 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -92,7 +92,8 @@ enum {
 	KAUTH_SYSTEM_SETIDCORE,
 	KAUTH_SYSTEM_SWAPCTL,
 	KAUTH_SYSTEM_SYSCTL,
-	KAUTH_SYSTEM_TIME
+	KAUTH_SYSTEM_TIME,
+	KAUTH_SYSTEM_MODULE
 };
 
 /*

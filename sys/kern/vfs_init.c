@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.36 2007/11/07 00:23:25 ad Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.37 2008/01/16 12:34:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.36 2007/11/07 00:23:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.37 2008/01/16 12:34:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.36 2007/11/07 00:23:25 ad Exp $");
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 
 /*
  * Sigh, such primitive tools are these...
@@ -342,6 +343,7 @@ vfsinit(void)
 	 * Establish each file system which was statically
 	 * included in the kernel.
 	 */
+	module_init_class(MODULE_CLASS_VFS);
 	__link_set_foreach(vfsp, vfsops) {
 		if (vfs_attach(*vfsp)) {
 			printf("multiple `%s' file systems",

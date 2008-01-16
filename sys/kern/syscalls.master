@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.184 2008/01/15 03:37:11 rmind Exp $
+	$NetBSD: syscalls.master,v 1.185 2008/01/16 12:34:51 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -514,10 +514,7 @@
 			    siginfo_t *info, \
 			    struct timespec *timeout); }
 245	UNIMPL		sys_sigqueue
-;
-; Syscall 246 is free for any use
-;
-246	UNIMPL
+246	STD MPSAFE	{ int sys_modctl(int cmd, void *arg); }
 #if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
 247	STD MPSAFE	{ int sys__ksem_init(unsigned int value, semid_t *idp); }
 248	STD MPSAFE	{ int sys__ksem_open(const char *name, int oflag, \
