@@ -1,10 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: kdc,v 1.6 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: kdc,v 1.7 2008/01/16 23:58:26 lukem Exp $
 #
 
 # PROVIDE: kdc
-# REQUIRE: NETWORKING
+# REQUIRE: NETWORKING syslogd ntpdate
 # BEFORE:  SERVERS
 
 $_rc_subr_loaded . /etc/rc.subr
