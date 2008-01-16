@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb.c,v 1.43 2006/10/23 19:29:48 he Exp $	*/
+/*	$NetBSD: mdb.c,v 1.44 2008/01/16 09:21:33 tls Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -45,7 +45,7 @@
 #include <sys/cdefs.h>
 
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: mdb.c,v 1.43 2006/10/23 19:29:48 he Exp $");
+__RCSID("$NetBSD: mdb.c,v 1.44 2008/01/16 09:21:33 tls Exp $");
 #endif
 
 
@@ -361,6 +361,10 @@ write_menu_file (char *initcode)
 
 
 	/* menus */
+	if (!do_dynamic) {
+	    (void) fprintf (out_file, "static int num_menus = %d;\n", menu_no);
+	}
+
 	(void) fprintf (out_file, "static struct menudesc menu_def[] = {\n");
 	for (i=0; i<menu_no; i++) {
 		(void) fprintf (out_file,
