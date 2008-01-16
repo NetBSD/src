@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.1 2008/01/16 12:34:52 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.2 2008/01/16 18:28:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,11 +34,15 @@
  */
 
 /*
- * Kernel modules.
+ * Kernel module support.
+ *
+ * XXX Deps for loadable modules don't work, because we must load the
+ * module in order to find out which modules it requires.  Linking may
+ * fail because of missing symbols.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.1 2008/01/16 12:34:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.2 2008/01/16 18:28:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.1 2008/01/16 12:34:52 ad Exp $");
 #include <uvm/uvm_extern.h>
 
 #include <machine/stdarg.h>
+
+#ifndef LKM	/* XXX */
+struct vm_map *lkm_map;
+#endif
 
 struct modlist	module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist	module_bootlist = TAILQ_HEAD_INITIALIZER(module_bootlist);
