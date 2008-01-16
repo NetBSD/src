@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.1 2008/01/16 12:34:51 ad Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.2 2008/01/16 18:29:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.1 2008/01/16 12:34:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.2 2008/01/16 18:29:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	case MODCTL_UNLOAD:
 		/* Authorize. */
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MODULE,
-		    0, (void *)SCARG(uap, cmd), NULL, NULL);
+		    0, (void *)(uintptr_t)SCARG(uap, cmd), NULL, NULL);
 		if (error != 0) {
 			return error;
 		}
