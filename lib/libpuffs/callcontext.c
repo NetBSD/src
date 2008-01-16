@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.16 2007/12/16 20:02:57 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.17 2008/01/16 00:29:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.16 2007/12/16 20:02:57 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.17 2008/01/16 00:29:42 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -157,7 +157,7 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 			return -1;
 
 		pcc = sp;
-		sp = (uint8_t *)sp + psize;
+		mprotect((uint8_t *)sp + psize, (size_t)psize, PROT_NONE);
 	}
 
 	memset(pcc, 0, sizeof(struct puffs_cc));
@@ -185,7 +185,7 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	st = &pcc->pcc_uc.uc_stack;
 
 	st->ss_sp = pcc->pcc_stack = sp;
-	st->ss_size = stacksize - psize;
+	st->ss_size = stacksize;
 	st->ss_flags = 0;
 
 #ifdef PUFFS_WITH_THREADS
