@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.19 2008/01/12 22:32:51 cube Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.20 2008/01/16 12:33:54 is Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -237,11 +237,11 @@ struct aue_softc {
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
-	struct workqueue	*wqp;
-	struct work		wk;
-	u_int			wksem;
-	kcondvar_t		wkdone;
-	kmutex_t		wkmtx;
+	struct lwp		*aue_thread;
+	int			aue_closing;
+	kcondvar_t		aue_domc;
+	kcondvar_t		aue_closemc;
+	kmutex_t		aue_mcmtx;
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
 #elif defined(__OpenBSD__)
