@@ -1,0 +1,19 @@
+#!/bin/sh
+#
+# $NetBSD: kdc,v 1.7.2.2 2008/01/16 23:58:27 lukem Exp $
+#
+
+# PROVIDE: kdc
+# REQUIRE: NETWORKING syslogd ntpdate
+# BEFORE:  SERVERS
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="kdc"
+rcvar=$name
+command="/usr/sbin/${name}"
+pidfile="/var/run/${name}.pid"
+required_files="/etc/krb5.conf"
+
+load_rc_config $name
+run_rc_command "$1"
