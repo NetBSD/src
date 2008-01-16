@@ -1,4 +1,4 @@
-.\" $NetBSD: npx.4,v 1.16 2003/07/26 20:17:34 salo Exp $
+.\" $NetBSD: npx.4,v 1.17 2008/01/16 09:37:04 ad Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -39,7 +39,6 @@
 .Nm npx
 .Nd Numeric Processing Extension coprocessor and emulator
 .Sh SYNOPSIS
-.Cd "options MATH_EMULATE"
 .\" XXX this is awful hackery to get it to work right... -- cgd
 .Cd "npx0 at isa? port" \&"IO_NPX0\&" irq 13
 .Cd "npx* at acpi?"
@@ -48,37 +47,12 @@
 The
 .Nm
 driver enables the use of the system's Numeric Processing Extension
-coprocessor,
-if one is present.  Numeric processing extensions are present in
-systems with
-.Tn 486DX
-CPUs and in systems with
-.Tn 387
-or
-.Tn 487SX
-coprocessors.  The
+coprocessor.
+The
 .Nm
 driver is required for proper system functioning regardless
 of whether or not an NPX is present.
-.Pp
-If there is no NPX present in the system, the "MATH_EMULATE"
-option must be defined in the kernel configuration file.
-It will provide support for the instructions normally executed
-by the NPX.  If there is no NPX in the system and the kernel
-is not built with math emulation, the system will not boot.
 .Sh SEE ALSO
 .Xr acpi 4 ,
 .Xr isa 4 ,
 .Xr pnpbios 4
-.Sh BUGS
-The emulator is much slower than the NPX coprocessor.
-This will result in poor floating-point math performance
-if the emulator must be used.
-.Pp
-There are lots of them, especially on cheap motherboards.  In particular,
-some motherboards do not have the interrupt lines from the NPX to
-the CPU wired properly.  If this is the case, the emulator must be used
-if consistent system operation is desired.
-.Pp
-Emulation of the transcendental functions instructions is incorrect.
-Emulation of other instructions is suspect.
