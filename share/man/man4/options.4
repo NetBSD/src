@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.359 2007/12/31 15:31:42 ad Exp $
+.\"	$NetBSD: options.4,v 1.360 2008/01/16 09:37:04 ad Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd December 31, 2007
+.Dd January 15, 2008
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -2493,14 +2493,6 @@ This gives the user a chance to see error messages from the shutdown
 operations (like NFS unmounts, buffer cache flush, etc ...).
 Setting this to 0 will disable the delay.
 Default is 2 seconds.
-.It Cd options MATH_EMULATE
-Include the floating point emulator.
-This is useful only for
-.Tn CPU Ns s
-that lack an
-internal Floating Point Unit
-.Pq Tn FPU
-or co-processor.
 .It Cd options VM86
 Include support for virtual 8086 mode, used by
 .Tn DOS

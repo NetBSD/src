@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.18 2003/08/07 16:27:59 agc Exp $	*/
+/*	$NetBSD: reg.h,v 1.19 2008/01/16 09:37:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,8 +44,8 @@
  * registers within appropriate frame of 'trap' and 'syscall', relative to
  * base of stack frame.
  *
- * XXX these should be nuked. Currently used by math_emulate.c, and they
- *     used to be used in the NetBSD/i386 bits of gdb, but no more.
+ * XXX these should be nuked. They used to be used in the NetBSD/i386 bits
+ * of gdb, but no more.
  */
 
 /* When referenced during a trap/exception, registers are at these offsets */

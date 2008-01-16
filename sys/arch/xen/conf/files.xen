@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.78 2008/01/12 20:03:42 ad Exp $
+#	$NetBSD: files.xen,v 1.79 2008/01/16 09:37:08 ad Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -48,7 +48,6 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/x86/x86/x86_identcpu.c
-file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/x86/x86/pmap.c
@@ -81,7 +80,6 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
 file	arch/x86/x86/x86_identcpu.c
-file	arch/amd64/amd64/math_emulate.c math_emulate
 file	arch/amd64/amd64/mem.c
 file	arch/x86/x86/pmap.c
 file	arch/amd64/amd64/process_machdep.c

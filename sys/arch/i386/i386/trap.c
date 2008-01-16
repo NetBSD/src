@@ -1,7 +1,7 @@
-/*	$NetBSD: trap.c,v 1.231 2008/01/02 11:48:25 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.232 2008/01/16 09:37:08 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,12 +75,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.231 2008/01/02 11:48:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.232 2008/01/16 09:37:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
-#include "opt_math_emulate.h"
 #include "opt_multiprocessor.h"
 #include "opt_vm86.h"
 #include "opt_kvm86.h"
@@ -543,21 +542,12 @@ copyfault:
 		goto out;
 
 	case T_DNA|T_USER: {
-#ifdef MATH_EMULATE
-		if (math_emulate(frame, &ksi) == 0) {
-			if (frame->tf_eflags & PSL_T)
-				goto trace;
-			return;
-		}
-		goto trapsignal;
-#else
 		KSI_INIT_TRAP(&ksi);
 		ksi.ksi_signo = SIGKILL;
 		ksi.ksi_addr = (void *)frame->tf_eip;
 		printf("pid %d killed due to lack of floating point\n",
 		    p->p_pid);
 		goto trapsignal;
-#endif
 	}
 
 	case T_XMM|T_USER:
@@ -729,9 +719,6 @@ copyfault:
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
-#ifdef MATH_EMULATE
-	trace:
-#endif
 		/*
 		 * Don't go single-stepping into a RAS.
 		 */
