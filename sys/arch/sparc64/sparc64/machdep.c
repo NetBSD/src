@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2008/01/14 00:43:54 mrg Exp $ */
+/*	$NetBSD: machdep.c,v 1.215 2008/01/16 08:00:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2008/01/14 00:43:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2008/01/16 08:00:29 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -714,10 +714,10 @@ dumpsys()
 	uint64_t todo;
 	register struct mem_region *mp;
 
-	/* copy registers to memory */
-	snapshot(curpcb);
+	/* copy registers to dumppcb and flush windows */
+	memset(&dumppcb, 0, sizeof(struct pcb));
+	snapshot(&dumppcb);
 	stackdump();
-	memcpy(&dumppcb, curpcb, sizeof(struct pcb));
 
 	if (dumpdev == NODEV)
 		return;
