@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.3 2008/01/07 08:30:03 martti Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.4 2008/01/16 09:37:09 ad Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -16,7 +16,6 @@ options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 maxusers	32		# estimated number of users
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 

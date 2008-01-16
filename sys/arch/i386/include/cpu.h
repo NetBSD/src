@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.159 2008/01/15 14:50:09 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.160 2008/01/16 09:37:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -40,7 +40,6 @@
 #ifdef _KERNEL
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
-#include "opt_math_emulate.h"
 #include "opt_user_ldt.h"
 #include "opt_vm86.h"
 #include "opt_xen.h"
@@ -432,11 +431,6 @@ void	npxsave_cpu(bool);
 
 /* vm_machdep.c */
 int kvtop(void *);
-
-#ifdef MATH_EMULATE
-/* math_emulate.c */
-int	math_emulate(struct trapframe *, ksiginfo_t *);
-#endif
 
 #ifdef USER_LDT
 /* sys_machdep.h */
