@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.235 2007/12/30 23:14:24 ad Exp $
+#	$NetBSD: BRANCHES,v 1.236 2008/01/16 10:26:14 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -491,53 +491,6 @@ Notes:		This branch is based off of the netbsd-4 branch!
 		reducing inappropriate upcall delivery (hopefully also
 		eliminating the need to mlock stacks), and being
 		able to pthread_kill() running threads.
-
-Branch:		vmlocking
-Description:	Make VM and file system framework MP safe
-Status:		Terminated
-Start Date:	13 March 2007
-End Date:	4 December 2007
-Base Tag:	vmlocking-base
-Maintainer:	Andrew Doran <ad@NetBSD.org>
-Scope:		kernel
-Notes:		Superseded by vmlocking2 branch.
-
-Branch:		vmlocking2
-Description:	Make VM and file system framework MP safe
-Status:		Active
-Start Date:	4 December 2007
-End Date:
-Base Tag:	vmlocking2-base3
-Maintainer:	Andrew Doran <ad@NetBSD.org>
-Scope:		kernel
-Notes:		Goals:
-
-		- Make VM system / trap handling MP safe.
-		- Replace simplelocks with mutexes.
-		- Make file system framework MP safe.
-
-		Status by architecture:
-
-		  alpha		done
-		  i386		done
-		  amd64		done
-		  mips		done
-		  sparc		need pmap/trap locking changes	
-		  sparc64	done
-		  arm		done
-		  powerpc	done
-		  hppa		done
-		  sh3		done
-		  m68k		done
-		  xen		need pmap/trap locking changes
-
-		Remaining MI work to do:
-
-		- Check aliased vnode handling. There may be problems.
-
-		Remaining problems:
-
-		- LFS stalls due to v_numoutput leak.
 
 Branch:		yamt-kmem
 Description:	
@@ -1199,6 +1152,53 @@ Scope:		sys, sbin/savecore, usr.bin/vmstat, usr.sbin/ntp
 Notes:		early (partial conversion) commit to -current
 		ok'ed by core@ on 20060605 for testing and further
 		simplified conversion
+
+Branch:		vmlocking
+Description:	Make VM and file system framework MP safe
+Status:		Terminated
+Start Date:	13 March 2007
+End Date:	4 December 2007
+Base Tag:	vmlocking-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		kernel
+Notes:		Superseded by vmlocking2 branch.
+
+Branch:		vmlocking2
+Description:	Make VM and file system framework MP safe
+Status:		Terminated
+Start Date:	4 December 2007
+End Date:	2 January 2008
+Base Tag:	vmlocking2-base3
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		kernel
+Notes:		Goals:
+
+		- Make VM system / trap handling MP safe.
+		- Replace simplelocks with mutexes.
+		- Make file system framework MP safe.
+
+		Status by architecture:
+
+		  alpha		done
+		  i386		done
+		  amd64		done
+		  mips		done
+		  sparc		need pmap/trap locking changes	
+		  sparc64	done
+		  arm		done
+		  powerpc	done
+		  hppa		done
+		  sh3		done
+		  m68k		done
+		  xen		need pmap/trap locking changes
+
+		Remaining MI work to do:
+
+		- Check aliased vnode handling. There may be problems.
+
+		Remaining problems:
+
+		- LFS stalls due to v_numoutput leak.
 
 Branch:		wrstuden-devbsize
 Description:	Modify buffer cache to deal with different devices having
