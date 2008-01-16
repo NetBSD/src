@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.28 2008/01/16 21:30:00 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.29 2008/01/16 23:17:43 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.28 2008/01/16 21:30:00 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.29 2008/01/16 23:17:43 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -119,7 +119,6 @@ int
 puffs_dopufbuf(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
 	struct puffs_req *preq = puffs__framebuf_getdataptr(pb);
-	struct puffs_executor *pex;
 
 	/*
 	 * XXX: the structure is currently a mess.  anyway, trap
@@ -149,6 +148,10 @@ puffs_dopufbuf(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
 		puffsdump_req(preq);
 
+#if 0
+	XXX: we can't trust to hide preq in pufbuf
+
+	struct puffs_executor *pex;
 	/*
 	 * Check if we are already processing an operation from the same
 	 * caller.  If so, queue this operation until the previous one
@@ -176,6 +179,7 @@ puffs_dopufbuf(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 		}
 	}
 	PU_UNLOCK();
+#endif
 
 	return dopufbuf2(pu, pb);
 }
@@ -189,8 +193,6 @@ puffs_docc(void *arg)
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_req *preq;
 	struct puffs_cc *pcc_iter;
-	struct puffs_executor *pex, *pex_n;
-	int found;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
 
@@ -204,9 +206,14 @@ puffs_docc(void *arg)
 		return NULL;
 	}
 
+	preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
+#if 0
+	XXX: see above, needs more thought
+
+	struct puffs_executor *pex, *pex_n;
+	int found;
 	/* check if we need to schedule FAFs which were stalled */
 	found = 0;
-	preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	PU_LOCK();
 	for (pex = TAILQ_FIRST(&pu->pu_exq); pex; pex = pex_n) {
 		struct puffs_req *pb_preq;
@@ -230,6 +237,7 @@ puffs_docc(void *arg)
 			}
 		}
 	}
+#endif
 
 	if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
 		puffs_framebuf_destroy(pcc->pcc_pb);
