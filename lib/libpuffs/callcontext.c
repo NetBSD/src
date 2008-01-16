@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.17 2008/01/16 00:29:42 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.18 2008/01/16 21:29:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.17 2008/01/16 00:29:42 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.18 2008/01/16 21:29:59 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -95,7 +95,7 @@ puffs_cc_schedule(struct puffs_cc *pcc)
 	struct puffs_usermount *pu = pcc->pcc_pu;
 
 	assert(pu->pu_state & PU_INLOOP);
-	TAILQ_INSERT_TAIL(&pu->pu_sched, pcc, entries);
+	TAILQ_INSERT_TAIL(&pu->pu_sched, pcc, pcc_schedent);
 }
 
 int
@@ -136,6 +136,16 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	stacksize = pthread__stacksize;
 #endif
 
+	/* Do we have a cached copy? */
+	if (pu->pu_cc_nstored) {
+		pcc = LIST_FIRST(&pu->pu_ccmagazin);
+		assert(pcc != NULL);
+
+		LIST_REMOVE(pcc, pcc_rope);
+		pu->pu_cc_nstored--;
+		goto finalize;
+	}
+
 	/*
 	 * There are two paths and in the long run we don't have time to
 	 * change the one we're on.  For non-real cc's, we just simply use
@@ -162,11 +172,9 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 
 	memset(pcc, 0, sizeof(struct puffs_cc));
 	pcc->pcc_pu = pu;
-	pcc->pcc_pb = pb;
-	pcc->pcc_flags = type;
 
 	/* Not a real cc?  Don't need to init more */
-	if (pcc->pcc_flags != PCC_REALCC)
+	if (type != PCC_REALCC)
 		goto out;
 
 	/* initialize both ucontext's */
@@ -178,15 +186,6 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 		munmap(pcc, stacksize);
 		return -1;
 	}
-	/* return here.  it won't actually be "here" due to swapcontext() */
-	pcc->pcc_uc.uc_link = &pcc->pcc_uc_ret;
-
-	/* allocate stack for execution */
-	st = &pcc->pcc_uc.uc_stack;
-
-	st->ss_sp = pcc->pcc_stack = sp;
-	st->ss_size = stacksize;
-	st->ss_flags = 0;
 
 #ifdef PUFFS_WITH_THREADS
 	{
@@ -197,6 +196,24 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	}
 #endif
 
+ finalize:
+	assert(pcc->pcc_pu == pu);
+	pcc->pcc_pb = pb;
+	pcc->pcc_flags = type;
+
+	/* return here.  it won't actually be "here" due to swapcontext() */
+	pcc->pcc_uc.uc_link = &pcc->pcc_uc_ret;
+
+	/* setup stack
+	 *
+	 * XXX: I guess this should theoretically be preserved by
+	 * swapcontext().  However, it gets lost.  So reinit it.
+	 */
+	st = &pcc->pcc_uc.uc_stack;
+	st->ss_sp = pcc;
+	st->ss_size = stacksize;
+	st->ss_flags = 0;
+
 	/*
 	 * Give us an initial context to jump to.
 	 *
@@ -204,8 +221,7 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	 * being able to pass pointers through makecontext().  kjk says
 	 * that NetBSD code doesn't need to worry about this.  uwe says
 	 * it would be like putting a "keep away from children" sign on a
-	 * box of toys.  I didn't ask what simon says; he's probably busy
-	 * "fixing" typos in comments.
+	 * box of toys.
 	 */
 	makecontext(&pcc->pcc_uc, (void *)puffs_calldispatcher,
 	    1, (uintptr_t)pcc);
@@ -229,6 +245,16 @@ puffs_cc_destroy(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
+
+	/* not over limit?  stuff away in the store */
+	if (pu->pu_cc_nstored < PUFFS_CCMAXSTORE) {
+		pcc->pcc_flags &= ~PCC_DONE;
+		LIST_INSERT_HEAD(&pu->pu_ccmagazin, pcc, pcc_rope);
+		pu->pu_cc_nstored++;
+		return;
+	}
+
+	/* else: just dump it */
 
 #ifdef PUFFS_WITH_THREADS
 	extern size_t pthread__stacksize;

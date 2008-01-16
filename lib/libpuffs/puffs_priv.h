@@ -1,7 +1,7 @@
-/*	$NetBSD: puffs_priv.h,v 1.37 2007/12/25 20:38:01 pooka Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.38 2008/01/16 21:30:00 pooka Exp $	*/
 
 /*
- * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -108,6 +108,9 @@ struct puffs_usermount {
 	uint32_t		pu_flags;
 	int			pu_cc_stackshift;
 
+#define PUFFS_CCMAXSTORE 32
+	int			pu_cc_nstored;
+
 	int			pu_kq;
 	int			pu_state;
 #define PU_STATEMASK	0xff
@@ -121,6 +124,8 @@ struct puffs_usermount {
 	struct puffs_node	*pu_pn_root;
 
 	LIST_HEAD(, puffs_node)	pu_pnodelst;
+
+	LIST_HEAD(, puffs_cc)	pu_ccmagazin;
 	LIST_HEAD(, puffs_cc)	pu_ccnukelst;
 	TAILQ_HEAD(, puffs_cc)	pu_sched;
 
@@ -165,15 +170,14 @@ struct puffs_cc {
 
 	ucontext_t		pcc_uc;		/* "continue" 		*/
 	ucontext_t		pcc_uc_ret;	/* "yield" 		*/
-	void			*pcc_stack;
 
 	pid_t			pcc_pid;
 	lwpid_t			pcc_lid;
 
 	int			pcc_flags;
 
-	TAILQ_ENTRY(puffs_cc)	entries;
-	LIST_ENTRY(puffs_cc)	nlst_entries;
+	TAILQ_ENTRY(puffs_cc)	pcc_schedent;
+	LIST_ENTRY(puffs_cc)	pcc_rope;
 };
 #define PCC_FAKECC	0x01
 #define PCC_REALCC	0x02
