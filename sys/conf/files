@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.885 2008/01/15 03:37:10 rmind Exp $
+#	$NetBSD: files,v 1.886 2008/01/16 12:34:50 ad Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1357,6 +1357,7 @@ file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
+file	kern/kern_module.c
 file	kern/kern_mutex.c
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
@@ -1416,6 +1417,7 @@ file	kern/subr_workqueue.c
 file	kern/subr_xcall.c
 file	kern/sys_aio.c
 file	kern/sys_generic.c
+file	kern/sys_module.c
 file	kern/sys_mqueue.c
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
