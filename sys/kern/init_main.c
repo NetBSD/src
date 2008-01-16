@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.339 2008/01/15 03:37:10 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.340 2008/01/16 12:34:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.339 2008/01/15 03:37:10 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.340 2008/01/16 12:34:50 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -131,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.339 2008/01/15 03:37:10 rmind Exp $"
 #include <sys/disk.h>
 #include <sys/mqueue.h>
 #include <sys/msgbuf.h>
+#include <sys/module.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -282,6 +283,9 @@ main(void)
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
+
+	/* Start module system. */
+	module_init();
 
 	/* Initialize callouts, part 1. */
 	callout_startup();
@@ -547,6 +551,13 @@ main(void)
 	 */
 	while (config_pending)
 		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
+
+	/*
+	 * Load any remaining builtin modules, and hand back temporary
+	 * storage to the VM system.
+	 */
+	module_init_class(MODULE_CLASS_ANY);
+	module_jettison();
 
 	/*
 	 * Finalize configuration now that all real devices have been

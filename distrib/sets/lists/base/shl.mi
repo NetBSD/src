@@ -1,9 +1,9 @@
-# $NetBSD: shl.mi,v 1.414 2008/01/03 20:47:57 jdc Exp $
+# $NetBSD: shl.mi,v 1.415 2008/01/16 12:34:55 ad Exp $
 #
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
-./lib/libc.so.12.157				base-sys-shlib
+./lib/libc.so.12.158				base-sys-shlib
 ./lib/libcrypt.so.0.2				base-sys-shlib
 ./lib/libcrypto.so.3.2				base-crypto-shlib	crypto
 ./lib/libedit.so.2.10				base-sys-shlib
@@ -49,7 +49,7 @@
 ./usr/lib/libbluetooth.so.3.0			base-sys-shlib
 ./usr/lib/libbsdmalloc.so.0.0			base-sys-shlib
 ./usr/lib/libbz2.so.1.0				base-sys-shlib
-./usr/lib/libc.so.12.157			base-sys-shlib
+./usr/lib/libc.so.12.158			base-sys-shlib
 ./usr/lib/libcdk.so.1.0				base-obsolete		obsolete
 ./usr/lib/libcom_err.so.4.1			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
