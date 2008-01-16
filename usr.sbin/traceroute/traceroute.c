@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.70 2007/12/15 16:03:31 perry Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.71 2008/01/16 19:18:06 seanb Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997
@@ -29,7 +29,7 @@ static const char rcsid[] =
 #else
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997\n\
 The Regents of the University of California.  All rights reserved.\n");
-__RCSID("$NetBSD: traceroute.c,v 1.70 2007/12/15 16:03:31 perry Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.71 2008/01/16 19:18:06 seanb Exp $");
 #endif
 #endif
 
@@ -340,7 +340,7 @@ int minpacket;			/* min ip packet size */
 int maxpacket = 32 * 1024;	/* max ip packet size */
 int printed_ttl = 0;
 
-char *prog;
+const char *prog;
 char *source;
 char *hostname;
 char *device;
@@ -431,7 +431,6 @@ int
 main(int argc, char **argv)
 {
 	int op, code, n;
-	char *cp;
 	u_char *outp;
 	u_int32_t *ap;
 	struct sockaddr_in *from = &wherefrom;
@@ -447,6 +446,9 @@ main(int argc, char **argv)
 	char errbuf[132];
 	int mib[4] = { CTL_NET, PF_INET, IPPROTO_IP, IPCTL_DEFTTL };
 	size_t size = sizeof(max_ttl);
+
+	setprogname(argv[0]);
+	prog = getprogname();
 
 	if ((s = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
 		Fprintf(stderr, "%s: icmp socket: %s\n", prog, strerror(errno));
@@ -473,11 +475,6 @@ main(int argc, char **argv)
 
 	(void) sysctl(mib, sizeof(mib)/sizeof(mib[0]), &max_ttl, &size,
 	    NULL, 0);
-
-	if ((cp = strrchr(argv[0], '/')) != NULL)
-		prog = cp + 1;
-	else
-		prog = argv[0];
 
 	opterr = 0;
 	while ((op = getopt(argc, argv, "aA:dDFPIMnlrvxf:g:i:m:p:q:s:t:w:")) != -1)
