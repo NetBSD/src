@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.74 2008/01/09 16:15:24 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.75 2008/01/17 10:39:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.74 2008/01/09 16:15:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.75 2008/01/17 10:39:15 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -84,9 +84,6 @@ ufs_inactive(void *v)
 	struct mount *transmp;
 	mode_t mode;
 	int error = 0;
-
-	if (prtactive && vp->v_usecount > 1)
-		vprint("ufs_inactive: pushing active", vp);
 
 	transmp = vp->v_mount;
 	fstrans_start(transmp, FSTRANS_SHARED);
