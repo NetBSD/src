@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.315 2008/01/17 13:06:04 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.316 2008/01/17 17:28:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.315 2008/01/17 13:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.316 2008/01/17 17:28:55 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -950,7 +950,6 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 			KASSERT(vp->v_usecount == 1);
 			vp->v_iflag |= VI_INACTPEND;
 			mutex_enter(&vrele_lock);
-			vp->v_freelisthd = &vrele_list;
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
@@ -1064,8 +1063,6 @@ vrele_thread(void *cookie)
 		vp = TAILQ_FIRST(&vrele_list);
 		TAILQ_REMOVE(&vrele_list, vp, v_freelist);
 		vrele_pending--;
-		KASSERT(vp->v_freelisthd == &vrele_list);
-		vp->v_freelisthd = NULL;
 		mutex_exit(&vrele_lock);
 
 		/*
@@ -1472,14 +1469,34 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 void
 vdevgone(int maj, int minl, int minh, enum vtype type)
 {
-	vnode_t *vp;
+	vnode_t *vp, **vpp;
+	dev_t dev;
 	int mn;
 
 	vp = NULL;	/* XXX gcc */
 
-	for (mn = minl; mn <= minh; mn++)
-		if (vfinddev(makedev(maj, mn), type, &vp))
-			VOP_REVOKE(vp, REVOKEALL);
+	mutex_enter(&spechash_lock);
+	for (mn = minl; mn <= minh; mn++) {
+		dev = makedev(maj, mn);
+		vpp = &speclisth[SPECHASH(dev)];
+		for (vp = *vpp; vp != NULL;) {
+			mutex_enter(&vp->v_interlock);
+			if ((vp->v_iflag & VI_CLEAN) != 0 ||
+			    dev != vp->v_rdev || type != vp->v_type) {
+				mutex_exit(&vp->v_interlock);
+				vp = vp->v_specnext;
+				continue;
+			}
+			mutex_exit(&spechash_lock);
+			if (vget(vp, LK_INTERLOCK) == 0) {
+				VOP_REVOKE(vp, REVOKEALL);
+				vrele(vp);
+			}
+			mutex_enter(&spechash_lock);
+			vp = *vpp;
+		}
+	}
+	mutex_exit(&spechash_lock);
 }
 
 /*
@@ -1523,6 +1540,49 @@ loop:
 	}
 	mutex_exit(&spechash_lock);
 	return (count);
+}
+
+/*
+ * Eliminate all activity associated with the requested vnode
+ * and with all vnodes aliased to the requested vnode.
+ */
+void
+vrevoke(vnode_t *vp)
+{
+	vnode_t *vq, **vpp;
+	enum vtype type;
+	dev_t dev;
+
+	KASSERT(vp->v_usecount > 0);
+
+	mutex_enter(&vp->v_interlock);
+	if ((vp->v_iflag & VI_CLEAN) != 0) {
+		mutex_exit(&vp->v_interlock);
+		return;
+	} else {
+		dev = vp->v_rdev;
+		type = vp->v_type;
+		mutex_exit(&vp->v_interlock);
+	}
+
+	vpp = &speclisth[SPECHASH(dev)];
+	mutex_enter(&spechash_lock);
+	for (vq = *vpp; vq != NULL;) {
+		if (vq->v_rdev != dev || vq->v_type != type) {
+			vq = vq->v_specnext;
+			continue;
+		}
+		mutex_enter(&vq->v_interlock);
+		mutex_exit(&spechash_lock);
+		if (vq->v_usecount++ == 0) {
+			vremfree(vp);
+		}
+		vclean(vq, DOCLOSE);
+		vrelel(vq, 1, 0);
+		mutex_enter(&spechash_lock);
+		vq = *vpp;
+	}
+	mutex_exit(&spechash_lock);
 }
 
 /*

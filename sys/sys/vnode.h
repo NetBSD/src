@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.184 2008/01/09 16:15:23 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.185 2008/01/17 17:28:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -569,6 +569,7 @@ int	vtruncbuf(struct vnode *, daddr_t, bool, int);
 void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
+void	vrevoke(struct vnode *);
 void	vrelel(struct vnode *, int, int);
 struct vnode *
 	vnalloc(struct mount *);
