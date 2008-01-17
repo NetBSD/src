@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.2 2008/01/16 18:29:18 ad Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.3 2008/01/17 22:30:54 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,11 +38,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.2 2008/01/16 18:29:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.3 2008/01/17 22:30:54 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
+#include <sys/namei.h>
 #include <sys/kauth.h>
 #include <sys/kobj.h>
 #include <sys/kmem.h>
@@ -69,6 +70,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	struct iovec iov;
 	int error;
 	void *arg;
+	char *path;
 
 	arg = SCARG(uap, arg);
 
@@ -90,15 +92,17 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	switch (SCARG(uap, cmd)) {
 	case MODCTL_FORCELOAD:
 	case MODCTL_LOAD:
-		error = copyinstr(arg, buf, sizeof(buf) - 1, NULL);
+		path = PNBUF_GET();
+		error = copyinstr(arg, path, MAXPATHLEN, NULL);
 		if (error == 0) {
-			error = module_load(buf,
+			error = module_load(path,
 			    SCARG(uap, cmd) == MODCTL_FORCELOAD);
 		}
+		PNBUF_PUT(path);
 		break;
 
 	case MODCTL_UNLOAD:
-		error = copyinstr(arg, buf, sizeof(buf) - 1, NULL);
+		error = copyinstr(arg, buf, sizeof(buf), NULL);
 		if (error == 0) {
 			error = module_unload(buf);
 		}
