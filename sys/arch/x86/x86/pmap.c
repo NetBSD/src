@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.31 2008/01/17 08:49:52 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32 2008/01/17 10:17:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2008/01/17 08:49:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2008/01/17 10:17:07 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3306,7 +3306,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	pvh = &mdpg->mp_pvhead;
 	myattrs = &mdpg->mp_attrs;
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
-	result = 0;
 	count = SPINLOCK_BACKOFF_MIN;
 startover:
 	mutex_spin_enter(&pvh->pvh_lock);
