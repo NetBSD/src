@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.36 2007/11/26 19:01:48 pooka Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.37 2008/01/17 10:39:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.36 2007/11/26 19:01:48 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.37 2008/01/17 10:39:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,9 +254,6 @@ ntfs_inactive(void *v)
 	dprintf(("ntfs_inactive: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("ntfs_inactive: pushing active", vp);
-
 	VOP_UNLOCK(vp, 0);
 
 	/* XXX since we don't support any filesystem changes
@@ -282,7 +279,7 @@ ntfs_reclaim(void *v)
 	dprintf(("ntfs_reclaim: vnode: %p, ntnode: %llu\n", vp,
 	    (unsigned long long)ip->i_number));
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("ntfs_reclaim: pushing active", vp);
 
 	if ((error = ntfs_ntget(ip)) != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_denode.c,v 1.30 2008/01/02 11:48:41 ad Exp $	*/
+/*	$NetBSD: msdosfs_denode.c,v 1.31 2008/01/17 10:39:14 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.30 2008/01/02 11:48:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_denode.c,v 1.31 2008/01/17 10:39:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -639,7 +639,7 @@ msdosfs_reclaim(v)
 	    dep, dep->de_Name, dep->de_refcnt);
 #endif
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("msdosfs_reclaim(): pushing active", vp);
 	/*
 	 * Remove the denode from its hash chain.
@@ -677,9 +677,6 @@ msdosfs_inactive(v)
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_inactive(): dep %p, de_Name[0] %x\n", dep, dep->de_Name[0]);
 #endif
-
-	if (prtactive && vp->v_usecount != 0)
-		vprint("msdosfs_inactive(): pushing active", vp);
 
 	/*
 	 * Get rid of denodes related to stale file handles.
