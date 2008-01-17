@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.2 2008/01/16 18:28:32 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.3 2008/01/17 22:35:53 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.2 2008/01/16 18:28:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.3 2008/01/17 22:35:53 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -452,6 +452,12 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 	mod->mod_info = *(modinfo_t **)addr;
 	mi = mod->mod_info;
 
+	if (strlen(mi->mi_name) >= MAXMODNAME) {
+		error = EINVAL;
+		module_error("module name too long");
+		goto fail;
+	}
+
 	/*
 	 * If loading a dependency, `filename' is a plain module name.
 	 * The name must match.
@@ -462,13 +468,19 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 	}
 
 	/*
-	 * Check to see if the module is already loaded, and block
-	 * circular dependencies.
+	 * Check to see if the module is already loaded.  If so, we may
+	 * have been recursively called to handle a dependency, so be sure
+	 * to set modp.
 	 */
-	if (module_lookup(mi->mi_name) != NULL) {
+	if ((mod2 = module_lookup(mi->mi_name)) != NULL) {
 		error = EEXIST;
+		*modp = mod2;
 		goto fail;
 	}
+
+	/*
+	 * Block circular dependencies.
+	 */
 	TAILQ_FOREACH(mod2, &pending, mod_chain) {
 		if (mod == mod2) {
 			continue;
@@ -500,7 +512,12 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 			p = s;
 			while (*p != '\0' && *p != ',')
 				p++;
-			len = min(p - s + 1, MAXMODNAME);
+			len = p - s + 1;
+			if (len >= MAXMODNAME) {
+				error = EINVAL;
+				module_error("required module name too long");
+				goto fail;
+			}
 			strlcpy(buf, s, len);
 			if (buf[0] == '\0')
 				break;
@@ -534,6 +551,7 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 	TAILQ_REMOVE(&pending, mod, mod_chain);
 	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {
+		KASSERT(mod_required[i] != NULL);
 		mod->mod_required[i]->mod_refcnt++;
 	}
 	if (modp != NULL) {
