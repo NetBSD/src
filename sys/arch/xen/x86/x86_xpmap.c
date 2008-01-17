@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.12.10 2008/01/15 22:15:58 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.11 2008/01/17 19:15:25 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.10 2008/01/15 22:15:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.11 2008/01/17 19:15:25 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -718,18 +718,27 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	memset(pde, 0, PAGE_SIZE * 5);
 	avail += PAGE_SIZE * 5;
 	addr = ((u_long) pde) - KERNBASE;
-
-	for (i = 0; i < 4; i++, addr += PAGE_SIZE) {
+	/*
+	 * enter L2 pages in the L3.
+	 * The real L2 kernel PD will be the last one (so that
+	 * pde[L2_SLOT_KERN] always point to the shadow).
+	 */
+	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
 		/*
 		 * Xen doens't want R/W mappings in L3 entries, it'll add it
 		 * itself.
 		 */
-		pdtpe[i] =
-		    xpmap_ptom_masked(addr) | PG_k | PG_V;
+		pdtpe[i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
 		__PRINTK(("L2 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64
 		    " -> L3[0x%x]\n", (vaddr_t)pde + PAGE_SIZE * i,
 		    (int64_t)addr, (int64_t)pdtpe[i], i));
 	}
+	addr += PAGE_SIZE;
+	pdtpe[3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+	__PRINTK(("L2 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64
+	    " -> L3[0x%x]\n", (vaddr_t)pde + PAGE_SIZE * 4,
+	    (int64_t)addr, (int64_t)pdtpe[3], 3));
+
 #else /* PAE */
 	pde = bt_pgd;
 #endif /* PTP_LEVELS > 2 */
@@ -821,17 +830,19 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 
 	/* Install recursive page tables mapping */
 #ifdef PAE
-	if (final) {
-		/* we need a shadow page for the kernel's L2 page */
-		printk("memcpy(0x%lx, 0x%lx)\n", &pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN]);
-		memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
-	}
+	/*
+	 * we need a shadow page for the kernel's L2 page
+	 * The real L2 kernel PD will be the last one (so that
+	 * pde[L2_SLOT_KERN] always point to the shadow.
+	 */
+	printk("memcpy(0x%lx, 0x%lx)\n", &pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN]);
+	memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
 
 	/*
 	 * We don't enter a recursive entry from the L3 PD. Instead,
-	 * we enter the first 3 L2 pages, and then the kernel's L2
-	 * shadow.
-	 * 
+	 * we enter the first 4 L2 pages, which includes the kernel's L2
+	 * shadow. But we have to entrer the shadow after switching
+	 * %cr3, or Xen will refcount some PTE with the wrong type.
 	 */
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
@@ -847,7 +858,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	    (int)(PDIR_SLOT_PTE + 3), pde + PAGE_SIZE * 4, (long)addr,
 	    (int64_t)pde[PDIR_SLOT_PTE + 3]));
 #endif
-	/* Mark tables RO, and pin them as L2. We have to do L3[2] last */
+	/* Mark tables RO, and pin the kenrel's shadow as L2 */
 	addr = (u_long)pde - KERNBASE;
 	for (i = 0; i < 5; i++, addr += PAGE_SIZE) {
 		xen_bt_set_readonly(((vaddr_t)pde) + PAGE_SIZE * i);
@@ -859,7 +870,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif
 	}
 	if (final) {
-		addr = (u_long)pde - KERNBASE + 4 * PAGE_SIZE;
+		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
 		__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", 2, (int64_t)addr));
 		xpq_queue_pin_table(xpmap_ptom_masked(addr));
 	}
@@ -894,7 +905,12 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #ifdef __i386__
 	/* Save phys. addr of PDP, for libkvm. */
 	PDPpaddr = (long)pde;
-#endif
+#ifdef PAE
+	/* also save the address of the L3 page */
+	pmap_l3pd = pdtpe;
+	pmap_l3paddr = (new_pgd - KERNBASE);
+#endif /* PAE */
+#endif /* i386 */
 	/* Switch to new tables */
 	__PRINTK(("switch to PDG\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
@@ -903,7 +919,7 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #ifdef PAE
 	if (final) {
 		/* now enter kernel's PTE mappings */
-		addr =  (u_long)pde - KERNBASE + PAGE_SIZE * 4;
+		addr =  (u_long)pde - KERNBASE + PAGE_SIZE * 3;
 		xpq_queue_pte_update(
 		    xpmap_ptom(((vaddr_t)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE), 
 		    xpmap_ptom_masked(addr) | PG_k | PG_V);
