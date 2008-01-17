@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.30 2008/01/15 22:08:33 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.31 2008/01/17 08:49:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.30 2008/01/15 22:08:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.31 2008/01/17 08:49:52 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3038,6 +3038,75 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 }
 
 /*
+ * pmap_sync_pv: sync a pte
+ */
+
+static int
+pmap_sync_pv(struct pv_head *pvh, struct pv_entry *pv, pt_entry_t expect,
+    int clearbits, pt_entry_t *optep)
+{
+	pt_entry_t *ptep;
+	pt_entry_t opte;
+	pt_entry_t npte;
+	bool need_shootdown = false;
+
+	KASSERT(mutex_owned(&pvh->pvh_lock));
+	KASSERT((expect & ~(PG_FRAME | PG_V)) == 0);
+	KASSERT((expect & PG_V) != 0);
+	KASSERT(clearbits == ~0 || (clearbits & ~(PG_M | PG_U | PG_RW)) == 0);
+
+	ptep = pmap_map_pte(pv->pv_ptp, pv->pv_va);
+	do {
+		opte = *ptep;
+		KASSERT((opte & (PG_M | PG_U)) != PG_M);
+		KASSERT(opte == 0 || (opte & PG_V) != 0);
+		if ((opte & (PG_FRAME | PG_V)) != expect) {
+
+			/*
+			 * we lost a race with a V->P operation like
+			 * pmap_remove().  wait for the competitor
+			 * reflecting pte bits into mp_attrs.
+			 *
+			 * issue a redundant TLB shootdown so that
+			 * we can wait for its completion.
+			 */
+
+			pmap_unmap_pte();
+			if (clearbits != 0) {
+				pmap_tlb_shootdown(pv->pv_pmap, pv->pv_va, 0,
+				    (pv->pv_pmap == pmap_kernel() ? PG_G : 0));
+			}
+			return EAGAIN;
+		}
+		if ((opte & clearbits) == 0) {
+			break;
+		}
+
+		npte = opte & ~clearbits;
+		need_shootdown = (opte & PG_U) != 0 &&
+		    !(clearbits == PG_RW && (opte & PG_M) == 0);
+
+		if (need_shootdown) {
+			/*
+			 * clear PG_U and PG_M as
+			 * we need a shootdown anyway.
+			 */
+			npte &= ~(PG_U | PG_M);
+		}
+		KASSERT((npte & (PG_M | PG_U)) != PG_M);
+		KASSERT(npte == 0 || (opte & PG_V) != 0);
+	} while (pmap_pte_cas(ptep, opte, npte) != opte);
+
+	if (need_shootdown) {
+		pmap_tlb_shootdown(pv->pv_pmap, pv->pv_va, 0, opte);
+	}
+	pmap_unmap_pte();
+
+	*optep = opte;
+	return 0;
+}
+
+/*
  * pmap_page_remove: remove a managed vm_page from all pmaps that map it
  *
  * => R/M bits are sync'd back to attrs
@@ -3051,6 +3120,7 @@ pmap_page_remove(struct vm_page *pg)
 	struct vm_page *empty_ptps = NULL;
 	struct vm_page *ptp;
 	pt_entry_t expect;
+	int *myattrs;
 	int count;
 
 #ifdef DIAGNOSTIC
@@ -3066,52 +3136,29 @@ pmap_page_remove(struct vm_page *pg)
 		return;
 	}
 
+	myattrs = &pg->mdpage.mp_attrs;
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	count = SPINLOCK_BACKOFF_MIN;
 startover:
 	mutex_spin_enter(&pvh->pvh_lock);
 	while ((pve = SPLAY_MIN(pvtree, &pvh->pvh_root)) != NULL) {
 		struct pmap *pmap = pve->pv_pmap;
-		pt_entry_t *ptep;
 		pt_entry_t opte;
+		int error;
 
-		/* atomically save the old PTE and zap! it */
-		ptep = pmap_map_pte(pve->pv_ptp, pve->pv_va);
-		do {
-			opte = *ptep;
-			if ((opte & (PG_FRAME | PG_V)) != expect) {
+		error = pmap_sync_pv(pvh, pve, expect, ~0, &opte);
+		if (error == EAGAIN) {
 #if defined(MULTIPROCESSOR)
-				int hold_count;
+			int hold_count;
 #endif /* defined(MULTIPROCESSOR) */
 
-				/*
-				 * we lost a race with a V->P operation like
-				 * pmap_remove().  wait for the competitor
-				 * reflecting pte bits into mp_attrs.
-				 *
-				 * issue a redundant TLB shootdown so that
-				 * we can wait for its completion.
-				 */
-
-				pmap_unmap_pte();
-				pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, 0,
-				    PG_G);
-				mutex_spin_exit(&pvh->pvh_lock);
-				KERNEL_UNLOCK_ALL(curlwp, &hold_count);
-				SPINLOCK_BACKOFF(count);
-				KERNEL_LOCK(hold_count, curlwp);
-				goto startover;
-			}
-		} while (pmap_pte_cas(ptep, opte, 0) != opte);
-		pmap_unmap_pte();
-
-		/* Shootdown only if referenced */
-		if (opte & PG_U)
-			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, 0, opte);
-
-		/* sync R/M bits */
-		pg->mdpage.mp_attrs |= (opte & (PG_U|PG_M));
-
+			mutex_spin_exit(&pvh->pvh_lock);
+			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
+			SPINLOCK_BACKOFF(count);
+			KERNEL_LOCK(hold_count, curlwp);
+			goto startover;
+		}
+		*myattrs |= opte;
 		if (pve->pv_ptp) {
 			pmap_reference(pmap);
 		}
@@ -3178,7 +3225,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	int *myattrs;
 	struct pv_head *pvh;
 	struct pv_entry *pve;
-	pt_entry_t pte;
 	pt_entry_t expect;
 	int result;
 
@@ -3210,16 +3256,16 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 
 	expect = pmap_pa2pte(VM_PAGE_TO_PHYS(pg)) | PG_V;
 	mutex_spin_enter(&pvh->pvh_lock);
-	for (pve = SPLAY_MIN(pvtree, &pvh->pvh_root);
-	     pve != NULL && (*myattrs & testbits) == 0;
-	     pve = SPLAY_NEXT(pvtree, &pvh->pvh_root, pve)) {
-		pt_entry_t *ptep;
+	SPLAY_FOREACH(pve, pvtree, &pvh->pvh_root) {
+		pt_entry_t opte;
+		int error;
 
-		ptep = pmap_map_pte(pve->pv_ptp, pve->pv_va);
-		pte = *ptep;
-		pmap_unmap_pte();
-		if ((pte & (PG_FRAME | PG_V)) == expect) {
-			*myattrs |= pte;
+		if ((*myattrs & testbits) != 0) {
+			break;
+		}
+		error = pmap_sync_pv(pvh, pve, expect, 0, &opte);
+		if (error == 0) {
+			*myattrs |= opte;
 		}
 	}
 	result = *myattrs & testbits;
@@ -3264,80 +3310,26 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	count = SPINLOCK_BACKOFF_MIN;
 startover:
 	mutex_spin_enter(&pvh->pvh_lock);
-	result |= *myattrs & clearbits;
-	*myattrs &= ~clearbits;
 	SPLAY_FOREACH(pve, pvtree, &pvh->pvh_root) {
-		pt_entry_t *ptep;
 		pt_entry_t opte;
+		int error;
 
-		ptep = pmap_map_pte(pve->pv_ptp, pve->pv_va);
-retry:
-		opte = *ptep;
-		if ((opte & (PG_FRAME | PG_V)) != expect) {
+		error = pmap_sync_pv(pvh, pve, expect, clearbits, &opte);
+		if (error == EAGAIN) {
 #if defined(MULTIPROCESSOR)
 			int hold_count;
 #endif /* defined(MULTIPROCESSOR) */
 
-			/*
-			 * we lost a race with a V->P operation like
-			 * pmap_remove().  wait for the competitor
-			 * reflecting pte bits into mp_attrs.
-			 *
-			 * issue a redundant TLB shootdown so that
-			 * we can wait for its completion.
-			 */
-
-			pmap_unmap_pte();
-			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, 0, PG_G);
 			mutex_spin_exit(&pvh->pvh_lock);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			SPINLOCK_BACKOFF(count);
 			KERNEL_LOCK(hold_count, curlwp);
 			goto startover;
 		}
-		if (opte & clearbits) {
-			/* We need to do something */
-			if (clearbits == PG_RW) {
-
-				/*
-				 * On write protect we might not need to flush 
-				 * the TLB
-				 */
-
-				/* First zap the RW bit! */
-				if (pmap_pte_cas(ptep, opte, opte & ~PG_RW)
-				    != opte) {
-					goto retry;
-				}
-				opte &= ~PG_RW;
-				result |= PG_RW;
-
-				/*
-				 * Then test if it is not cached as RW the TLB
-				 */
-				if (!(opte & PG_M))
-					goto no_tlb_shootdown;
-			}
-
-			/*
-			 * Since we need a shootdown we might as well
-			 * always clear PG_U AND PG_M.
-			 */
-
-			/* zap! */
-			if (pmap_pte_cas(ptep, opte, opte & ~(PG_U | PG_M))
-			    != opte) {
-				goto retry;
-			}
-
-			result |= (opte & clearbits);
-			*myattrs |= (opte & ~(clearbits));
-
-			pmap_tlb_shootdown(pve->pv_pmap, pve->pv_va, 0, opte);
-		}
-no_tlb_shootdown:
-		pmap_unmap_pte();
+		*myattrs |= opte;
 	}
+	result = *myattrs & clearbits;
+	*myattrs &= ~clearbits;
 	mutex_spin_exit(&pvh->pvh_lock);
 
 	crit_enter();
