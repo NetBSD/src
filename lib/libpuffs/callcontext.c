@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.18 2008/01/16 21:29:59 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.19 2008/01/17 17:43:14 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006 Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.18 2008/01/16 21:29:59 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.19 2008/01/17 17:43:14 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -198,8 +198,6 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 
  finalize:
 	assert(pcc->pcc_pu == pu);
-	pcc->pcc_pb = pb;
-	pcc->pcc_flags = type;
 
 	/* return here.  it won't actually be "here" due to swapcontext() */
 	pcc->pcc_uc.uc_link = &pcc->pcc_uc_ret;
@@ -227,6 +225,9 @@ puffs_cc_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	    1, (uintptr_t)pcc);
 
  out:
+	pcc->pcc_pb = pb;
+	pcc->pcc_flags = type;
+
 	*pccp = pcc;
 	return 0;
 }
@@ -247,7 +248,8 @@ puffs_cc_destroy(struct puffs_cc *pcc)
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
 
 	/* not over limit?  stuff away in the store */
-	if (pu->pu_cc_nstored < PUFFS_CCMAXSTORE) {
+	if (pu->pu_cc_nstored < PUFFS_CCMAXSTORE
+	    && pcc->pcc_flags & PCC_REALCC) {
 		pcc->pcc_flags &= ~PCC_DONE;
 		LIST_INSERT_HEAD(&pu->pu_ccmagazin, pcc, pcc_rope);
 		pu->pu_cc_nstored++;
