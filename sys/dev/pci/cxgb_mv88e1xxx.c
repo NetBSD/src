@@ -28,7 +28,9 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_mv88e1xxx.c,v 1.2 2007/12/11 11:25:48 lukem Exp $");
+#ifdef __NetBSD__
+__KERNEL_RCSID(0, "$NetBSD: cxgb_mv88e1xxx.c,v 1.3 2008/01/17 06:03:22 jklos Exp $");
+#endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/common/cxgb_mv88e1xxx.c,v 1.2 2007/05/28 22:57:26 kmacy Exp $");
 #endif
@@ -140,171 +142,171 @@ __FBSDID("$FreeBSD: src/sys/dev/cxgb/common/cxgb_mv88e1xxx.c,v 1.2 2007/05/28 22
 #define CROSSOVER_AUTO  3
 
 #define INTR_ENABLE_MASK (MV_INTR_SPEED_CHNG | MV_INTR_DUPLEX_CHNG | \
-	MV_INTR_AUTONEG_DONE | MV_INTR_LINK_CHNG | MV_INTR_FIFO_OVER_UNDER | \
-	MV_INTR_ENG_DETECT_CHNG)
+    MV_INTR_AUTONEG_DONE | MV_INTR_LINK_CHNG | MV_INTR_FIFO_OVER_UNDER | \
+    MV_INTR_ENG_DETECT_CHNG)
 
 /*
  * Reset the PHY.  If 'wait' is set wait until the reset completes.
  */
 static int mv88e1xxx_reset(struct cphy *cphy, int wait)
 {
-	return t3_phy_reset(cphy, 0, wait);
+    return t3_phy_reset(cphy, 0, wait);
 }
 
 static int mv88e1xxx_intr_enable(struct cphy *cphy)
 {
-	return mdio_write(cphy, 0, MV88E1XXX_INTR_ENABLE, INTR_ENABLE_MASK);
+    return mdio_write(cphy, 0, MV88E1XXX_INTR_ENABLE, INTR_ENABLE_MASK);
 }
 
 static int mv88e1xxx_intr_disable(struct cphy *cphy)
 {
-	return mdio_write(cphy, 0, MV88E1XXX_INTR_ENABLE, 0);
+    return mdio_write(cphy, 0, MV88E1XXX_INTR_ENABLE, 0);
 }
 
 static int mv88e1xxx_intr_clear(struct cphy *cphy)
 {
-	u32 val;
+    u32 val;
 
-	/* Clear PHY interrupts by reading the register. */
-	return mdio_read(cphy, 0, MV88E1XXX_INTR_STATUS, &val);
+    /* Clear PHY interrupts by reading the register. */
+    return mdio_read(cphy, 0, MV88E1XXX_INTR_STATUS, &val);
 }
 
 static int mv88e1xxx_crossover_set(struct cphy *cphy, int crossover)
 {
-	return t3_mdio_change_bits(cphy, 0, MV88E1XXX_SPECIFIC_CNTRL,
-				   V_PSCR_MDI_XOVER_MODE(M_PSCR_MDI_XOVER_MODE),
-				   V_PSCR_MDI_XOVER_MODE(crossover));
+    return t3_mdio_change_bits(cphy, 0, MV88E1XXX_SPECIFIC_CNTRL,
+                   V_PSCR_MDI_XOVER_MODE(M_PSCR_MDI_XOVER_MODE),
+                   V_PSCR_MDI_XOVER_MODE(crossover));
 }
 
 static int mv88e1xxx_autoneg_enable(struct cphy *cphy)
 {
-	mv88e1xxx_crossover_set(cphy, CROSSOVER_AUTO);
+    mv88e1xxx_crossover_set(cphy, CROSSOVER_AUTO);
 
-	/* restart autoneg for change to take effect */
-	return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_PDOWN | BMCR_ISOLATE,
-			 	   BMCR_ANENABLE | BMCR_ANRESTART);
+    /* restart autoneg for change to take effect */
+    return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_PDOWN | BMCR_ISOLATE,
+                   BMCR_ANENABLE | BMCR_ANRESTART);
 }
 
 static int mv88e1xxx_autoneg_restart(struct cphy *cphy)
 {
-	return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_PDOWN | BMCR_ISOLATE,
-			 	   BMCR_ANRESTART);
+    return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_PDOWN | BMCR_ISOLATE,
+                   BMCR_ANRESTART);
 }
 
 static int mv88e1xxx_set_loopback(struct cphy *cphy, int mmd, int dir, int on)
 {
-	return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_LOOPBACK,
-			 	   on ? BMCR_LOOPBACK : 0);
+    return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_LOOPBACK,
+                   on ? BMCR_LOOPBACK : 0);
 }
 
 static int mv88e1xxx_get_link_status(struct cphy *cphy, int *link_ok,
-				     int *speed, int *duplex, int *fc)
+                     int *speed, int *duplex, int *fc)
 {
-	u32 status;
-	int sp = -1, dplx = -1, pause = 0;
+    u32 status;
+    int sp = -1, dplx = -1, pause = 0;
 
-	mdio_read(cphy, 0, MV88E1XXX_SPECIFIC_STATUS, &status);
-	if ((status & V_PSSR_STATUS_RESOLVED) != 0) {
-		if (status & V_PSSR_RX_PAUSE)
-			pause |= PAUSE_RX;
-		if (status & V_PSSR_TX_PAUSE)
-			pause |= PAUSE_TX;
-		dplx = (status & V_PSSR_DUPLEX) ? DUPLEX_FULL : DUPLEX_HALF;
-		sp = G_PSSR_SPEED(status);
-		if (sp == 0)
-			sp = SPEED_10;
-		else if (sp == 1)
-			sp = SPEED_100;
-		else
-			sp = SPEED_1000;
-	}
-	if (link_ok)
-		*link_ok = (status & V_PSSR_LINK) != 0;
-	if (speed)
-		*speed = sp;
-	if (duplex)
-		*duplex = dplx;
-	if (fc)
-		*fc = pause;
-	return 0;
+    mdio_read(cphy, 0, MV88E1XXX_SPECIFIC_STATUS, &status);
+    if ((status & V_PSSR_STATUS_RESOLVED) != 0) {
+        if (status & V_PSSR_RX_PAUSE)
+            pause |= PAUSE_RX;
+        if (status & V_PSSR_TX_PAUSE)
+            pause |= PAUSE_TX;
+        dplx = (status & V_PSSR_DUPLEX) ? DUPLEX_FULL : DUPLEX_HALF;
+        sp = G_PSSR_SPEED(status);
+        if (sp == 0)
+            sp = SPEED_10;
+        else if (sp == 1)
+            sp = SPEED_100;
+        else
+            sp = SPEED_1000;
+    }
+    if (link_ok)
+        *link_ok = (status & V_PSSR_LINK) != 0;
+    if (speed)
+        *speed = sp;
+    if (duplex)
+        *duplex = dplx;
+    if (fc)
+        *fc = pause;
+    return 0;
 }
 
 static int mv88e1xxx_downshift_set(struct cphy *cphy, int downshift_enable)
 {
-	/*
-	 * Set the downshift counter to 2 so we try to establish Gb link
-	 * twice before downshifting.
-	 */
-	return t3_mdio_change_bits(cphy, 0, MV88E1XXX_EXT_SPECIFIC_CNTRL,
-		V_DOWNSHIFT_ENABLE | V_DOWNSHIFT_CNT(M_DOWNSHIFT_CNT),
-		downshift_enable ? V_DOWNSHIFT_ENABLE | V_DOWNSHIFT_CNT(2) : 0);
+    /*
+     * Set the downshift counter to 2 so we try to establish Gb link
+     * twice before downshifting.
+     */
+    return t3_mdio_change_bits(cphy, 0, MV88E1XXX_EXT_SPECIFIC_CNTRL,
+        V_DOWNSHIFT_ENABLE | V_DOWNSHIFT_CNT(M_DOWNSHIFT_CNT),
+        downshift_enable ? V_DOWNSHIFT_ENABLE | V_DOWNSHIFT_CNT(2) : 0);
 }
 
 static int mv88e1xxx_power_down(struct cphy *cphy, int enable)
 {
-	return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_PDOWN,
-				   enable ? BMCR_PDOWN : 0);
+    return t3_mdio_change_bits(cphy, 0, MII_BMCR, BMCR_PDOWN,
+                   enable ? BMCR_PDOWN : 0);
 }
 
 static int mv88e1xxx_intr_handler(struct cphy *cphy)
 {
-	const u32 link_change_intrs = MV_INTR_LINK_CHNG |
-		MV_INTR_AUTONEG_DONE | MV_INTR_DUPLEX_CHNG |
-		MV_INTR_SPEED_CHNG | MV_INTR_DOWNSHIFT;
+    const u32 link_change_intrs = MV_INTR_LINK_CHNG |
+        MV_INTR_AUTONEG_DONE | MV_INTR_DUPLEX_CHNG |
+        MV_INTR_SPEED_CHNG | MV_INTR_DOWNSHIFT;
 
-	u32 cause;
-	int cphy_cause = 0;
+    u32 cause;
+    int cphy_cause = 0;
 
-	mdio_read(cphy, 0, MV88E1XXX_INTR_STATUS, &cause);
-	cause &= INTR_ENABLE_MASK;
-	if (cause & link_change_intrs)
-		cphy_cause |= cphy_cause_link_change;
-	if (cause & MV_INTR_FIFO_OVER_UNDER)
-		cphy_cause |= cphy_cause_fifo_error;
-	return cphy_cause;
+    mdio_read(cphy, 0, MV88E1XXX_INTR_STATUS, &cause);
+    cause &= INTR_ENABLE_MASK;
+    if (cause & link_change_intrs)
+        cphy_cause |= cphy_cause_link_change;
+    if (cause & MV_INTR_FIFO_OVER_UNDER)
+        cphy_cause |= cphy_cause_fifo_error;
+    return cphy_cause;
 }
 
 #ifdef C99_NOT_SUPPORTED
 static struct cphy_ops mv88e1xxx_ops = {
-	NULL,
-	mv88e1xxx_reset,
-	mv88e1xxx_intr_enable,
-	mv88e1xxx_intr_disable,
-	mv88e1xxx_intr_clear,
-	mv88e1xxx_intr_handler,
-	mv88e1xxx_autoneg_enable,
-	mv88e1xxx_autoneg_restart,
-	t3_phy_advertise,
-	mv88e1xxx_set_loopback,
-	t3_set_phy_speed_duplex,
-	mv88e1xxx_get_link_status,
-	mv88e1xxx_power_down,
+    NULL,
+    mv88e1xxx_reset,
+    mv88e1xxx_intr_enable,
+    mv88e1xxx_intr_disable,
+    mv88e1xxx_intr_clear,
+    mv88e1xxx_intr_handler,
+    mv88e1xxx_autoneg_enable,
+    mv88e1xxx_autoneg_restart,
+    t3_phy_advertise,
+    mv88e1xxx_set_loopback,
+    t3_set_phy_speed_duplex,
+    mv88e1xxx_get_link_status,
+    mv88e1xxx_power_down,
 };
 #else
 static struct cphy_ops mv88e1xxx_ops = {
-	.reset             = mv88e1xxx_reset,
-	.intr_enable       = mv88e1xxx_intr_enable,
-	.intr_disable      = mv88e1xxx_intr_disable,
-	.intr_clear        = mv88e1xxx_intr_clear,
-	.intr_handler      = mv88e1xxx_intr_handler,
-	.autoneg_enable    = mv88e1xxx_autoneg_enable,
-	.autoneg_restart   = mv88e1xxx_autoneg_restart,
-	.advertise         = t3_phy_advertise,
-	.set_loopback      = mv88e1xxx_set_loopback,
-	.set_speed_duplex  = t3_set_phy_speed_duplex,
-	.get_link_status   = mv88e1xxx_get_link_status,
-	.power_down        = mv88e1xxx_power_down,
+    .reset             = mv88e1xxx_reset,
+    .intr_enable       = mv88e1xxx_intr_enable,
+    .intr_disable      = mv88e1xxx_intr_disable,
+    .intr_clear        = mv88e1xxx_intr_clear,
+    .intr_handler      = mv88e1xxx_intr_handler,
+    .autoneg_enable    = mv88e1xxx_autoneg_enable,
+    .autoneg_restart   = mv88e1xxx_autoneg_restart,
+    .advertise         = t3_phy_advertise,
+    .set_loopback      = mv88e1xxx_set_loopback,
+    .set_speed_duplex  = t3_set_phy_speed_duplex,
+    .get_link_status   = mv88e1xxx_get_link_status,
+    .power_down        = mv88e1xxx_power_down,
 };
 #endif
 
 void t3_mv88e1xxx_phy_prep(struct cphy *phy, adapter_t *adapter, int phy_addr,
-			   const struct mdio_ops *mdio_ops)
+               const struct mdio_ops *mdio_ops)
 {
-	cphy_init(phy, adapter, phy_addr, &mv88e1xxx_ops, mdio_ops);
+    cphy_init(phy, adapter, phy_addr, &mv88e1xxx_ops, mdio_ops);
 
-	/* Configure copper PHY transmitter as class A to reduce EMI. */
-	mdio_write(phy, 0, MV88E1XXX_EXTENDED_ADDR, 0xb);
-	mdio_write(phy, 0, MV88E1XXX_EXTENDED_DATA, 0x8004);
-		
-	mv88e1xxx_downshift_set(phy, 1);   /* Enable downshift */
+    /* Configure copper PHY transmitter as class A to reduce EMI. */
+    mdio_write(phy, 0, MV88E1XXX_EXTENDED_ADDR, 0xb);
+    mdio_write(phy, 0, MV88E1XXX_EXTENDED_DATA, 0x8004);
+        
+    mv88e1xxx_downshift_set(phy, 1);   /* Enable downshift */
 }
