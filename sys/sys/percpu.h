@@ -1,4 +1,4 @@
-/*	$NetBSD: percpu.h,v 1.1 2008/01/14 12:40:02 yamt Exp $	*/
+/*	$NetBSD: percpu.h,v 1.2 2008/01/17 09:01:57 yamt Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -37,12 +37,12 @@ percpu_t *percpu_alloc(size_t);
 void percpu_free(percpu_t *, size_t);
 void *percpu_getptr(percpu_t *);
 
+typedef void (*percpu_callback_t)(void *, void *, struct cpu_info *);
+void percpu_foreach(percpu_t *, percpu_callback_t, void *);
+
+/* low-level api; don't use unless necessary */
 void percpu_traverse_enter(void);
 void percpu_traverse_exit(void);
 void *percpu_getptr_remote(percpu_t *, struct cpu_info *);
-
-void percpu_zero(percpu_t *, size_t);
-typedef void (*percpu_callback_t)(void *, void *);
-void percpu_foreach(percpu_t *, percpu_callback_t, void *);
 
 #endif /* _SYS_PERCPU_H_ */
