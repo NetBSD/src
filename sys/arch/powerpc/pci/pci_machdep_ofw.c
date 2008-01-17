@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.7 2008/01/11 05:18:58 mrg Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.8 2008/01/17 23:42:59 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.7 2008/01/11 05:18:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.8 2008/01/17 23:42:59 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,7 +88,8 @@ genofw_find_picnode(int node)
 void
 genofw_find_ofpics(int startnode)
 {
-	int node, iparent, child, iranges[2];
+	int node, iparent, child, iranges[6], irgot=0, i;
+	uint32_t reg[12];
 	char name[32];
 
 	for (node = startnode; node; node = OF_peer(node)) {
@@ -121,11 +122,21 @@ foundic:
 			picnodes[nrofpics].cells = iparent;
 		else
 			picnodes[nrofpics].cells = 1;
-		if (OF_getprop(node, "interrupt-ranges", iranges,
-		    sizeof(int)*2) == sizeof(int)*2)
-			picnodes[nrofpics].intrs = iranges[1];
-		else
+
+		picnodes[nrofpics].intrs = 0;
+		irgot = OF_getprop(node, "interrupt-ranges", iranges,
+		    sizeof(int)*6); /* XXX is this ok? */
+		if (irgot >= sizeof(int)) {
+			for (i=0; i < irgot/4; i++)
+				if (!picnodes[nrofpics].intrs)
+					picnodes[nrofpics].intrs = iranges[i];
+		}
+
+		irgot = OF_getprop(node, "reg", reg, sizeof(reg));
+		
+		if (!picnodes[nrofpics].intrs)
 			picnodes[nrofpics].intrs = 16;
+		
 		if (nrofpics > 0)
 			picnodes[nrofpics].offset = picnodes[nrofpics-1].offset
 			    + picnodes[nrofpics-1].intrs;
@@ -136,10 +147,15 @@ foundic:
 			picnodes[nrofpics].type = PICNODE_TYPE_OPENPIC;
 		if (strcmp(name, "interrupt-controller") == 0) {
 			OF_getprop(node, "compatible", name, sizeof(name));
-			if (strcmp(name, "heathrow") != 0)
+			if (strcmp(name, "heathrow") == 0)
 				picnodes[nrofpics].type = PICNODE_TYPE_HEATHROW;
-			if (strcmp(name, "chrp,iic") != 0)
+			if (strcmp(name, "chrp,iic") == 0) {
 				picnodes[nrofpics].type = PICNODE_TYPE_8259;
+				if (irgot >= 9 * sizeof(uint32_t) &&
+				    reg[7] == 0x4d0)
+					picnodes[nrofpics].type =
+					    PICNODE_TYPE_IVR;
+			}
 		}
 		if (strlen(name) == 0) {
 			/* probably a Pegasos, assume 8259 */
@@ -158,7 +174,8 @@ genofw_fixup_picnode_offsets(void)
 	curoff=0;
 
 	for (i=0; i < nrofpics; i++) {
-		if (picnodes[i].type == PICNODE_TYPE_8259) {
+		if (picnodes[i].type == PICNODE_TYPE_8259 ||
+		    picnodes[i].type == PICNODE_TYPE_IVR) {
 			picnodes[i].offset = 0;
 			curoff = picnodes[i].intrs;
 		}
@@ -167,6 +184,9 @@ genofw_fixup_picnode_offsets(void)
 		/* now skip the 8259 */
 		if (picnodes[i].type == PICNODE_TYPE_8259)
 			continue;
+		if (picnodes[i].type == PICNODE_TYPE_IVR)
+			continue;
+		
 		picnodes[i].offset = curoff;
 		curoff += picnodes[i].intrs;
 	}
@@ -198,7 +218,7 @@ genofw_setup_pciintr_map(void *v, struct genppc_pci_chipset_businfo *pbi,
 	    sizeof(icells)) == -1)
 		icells = 1;
 
-	parent = map[acells+icells+1];
+	parent = map[acells+icells];
 	if (OF_getprop(parent, "#interrupt-cells", &pcells,
 	    sizeof(pcells)) == -1)
 		pcells = 1;
@@ -213,22 +233,23 @@ genofw_setup_pciintr_map(void *v, struct genppc_pci_chipset_businfo *pbi,
 	prop_dictionary_set(pbi->pbi_properties, "ofw-pci-intrmap", dict);
 	for (i = 0; i < nrofpcidevs; i++) {
 		prop_number_t intr_num;
-		int dev, pin, pic;
+		int dev, pin, pic, func;
 		char key[20];
 
 		pic = genofw_find_picnode(map[i*reclen + acells + icells]);
 		KASSERT(pic != -1);
 		dev = (map[i*reclen] >> 8) / 0x8;
+		func = (map[i*reclen] >> 8) % 0x8;
 		if (curdev != dev)
 			sub = prop_dictionary_create_with_capacity(4);
 		pin = map[i*reclen + acells];
 		intr_num = prop_number_create_integer(map[i*reclen + acells + icells + 1] + picnodes[pic].offset);
-		sprintf(key, "pin-%c", 'A' + pin);
+		sprintf(key, "pin-%c", 'A' + (pin-1));
 		prop_dictionary_set(sub, key, intr_num);
 		prop_object_release(intr_num);
 		/* should we care about level? */
 
-		sprintf(key, "devfunc-%d", dev);
+		sprintf(key, "devfunc-%d", dev*0x8 + func);
 		prop_dictionary_set(dict, key, sub);
 		if (curdev != dev) {
 			prop_object_release(sub);
@@ -237,6 +258,7 @@ genofw_setup_pciintr_map(void *v, struct genppc_pci_chipset_businfo *pbi,
 	}
 	/* the mapping is complete */
 	prop_object_release(dict);
+	aprint_debug("%s\n", prop_dictionary_externalize(pbi->pbi_properties));
 	return;
 
 nomap:
@@ -254,17 +276,20 @@ nomap:
 	for (node = OF_child(pcinode); node; node = OF_peer(node)) {
 		uint32_t irqs[4], reg[5];
 		prop_number_t intr_num;
-		int dev, pin;
+		int dev, pin, func;
 		char key[20];
 
 		/* walk the bus looking for pci devices and map them */
 		if (OF_getprop(node, "AAPL,interrupts", irqs, 4) > 0) {
 			dev = 0;
-			if (OF_getprop(node, "reg", reg, 5) > 0)
+			if (OF_getprop(node, "reg", reg, 5) > 0) {
 				dev = ((reg[0] & 0x0000ff00) >> 8) / 0x8;
-			else if (OF_getprop(node, "assigned-addresses",
-				     reg, 5) > 0)
+				func = ((reg[0] & 0x0000ff00) >> 8) % 0x8;
+			} else if (OF_getprop(node, "assigned-addresses",
+				       reg, 5) > 0) {
 				dev = ((reg[0] & 0x0000ff00) >> 8) / 0x8;
+				func = ((reg[0] & 0x0000ff00) >> 8) % 0x8;
+			}
 			if (dev == 0) {
 				aprint_error("cannot figure out device num "
 				    "for node 0x%x\n", node);
@@ -274,10 +299,10 @@ nomap:
 			if (OF_getprop(node, "interrupts", &pin, 4) < 0)
 				pin = 1;
 			intr_num = prop_number_create_integer(irqs[0]);
-			sprintf(key, "pin-%c", 'A' + pin);
+			sprintf(key, "pin-%c", 'A' + (pin-1));
 			prop_dictionary_set(sub, key, intr_num);
 			prop_object_release(intr_num);
-			sprintf(key, "devfunc-%d", dev);
+			sprintf(key, "devfunc-%d", dev*0x8 + func);
 			prop_dictionary_set(dict, key, sub);
 			prop_object_release(sub);
 			foundirqs++;

@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.7 2008/01/09 21:32:38 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.8 2008/01/17 23:42:59 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.7 2008/01/09 21:32:38 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.8 2008/01/17 23:42:59 garbled Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -446,10 +446,13 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 		case RANGE_TYPE_FIRSTPCI:
 			for (i=0; i < len/(4*reclen); i++) {
 				DPRINTF("FOUND PCI RANGE\n");
-				regions[*cur].type = map[i*reclen] >> 24;
-				regions[*cur].addr = map[i*reclen + acells];
 				regions[*cur].size =
 				    map[i*reclen + acells + scells];
+				/* skip ranges of size==0 */
+				if (regions[*cur].size == 0)
+					continue;
+				regions[*cur].type = map[i*reclen] >> 24;
+				regions[*cur].addr = map[i*reclen + acells];
 				(*cur)++;
 			}
 			break;
