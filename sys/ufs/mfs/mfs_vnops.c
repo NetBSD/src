@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.46 2007/11/26 19:02:33 pooka Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.47 2008/01/17 10:24:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.46 2007/11/26 19:02:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.47 2008/01/17 10:24:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,9 +247,7 @@ mfs_close(void *v)
 	 * There should be no way to have any more uses of this
 	 * vnode, so if we find any other uses, it is a panic.
 	 */
-	if (vp->v_usecount > 1)
-		printf("mfs_close: ref count %d > 1\n", vp->v_usecount);
-	if (vp->v_usecount > 1 || BUFQ_PEEK(mfsp->mfs_buflist) != NULL)
+	if (BUFQ_PEEK(mfsp->mfs_buflist) != NULL)
 		panic("mfs_close");
 	/*
 	 * Send a request to the filesystem server to exit.
