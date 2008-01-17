@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.20 2007/12/30 16:07:02 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.21 2008/01/17 01:56:02 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -79,7 +79,6 @@ locore.o machdep.o: Makefile
 
 acpi_wakeup_low.o busfunc.o cpufunc.o lock_stubs.o: assym.h
 linux32_sigcode.o mptramp.o netbsd32_sigcode.o: assym.h
-clock.o: config_time.h
 
 ##
 ## (7) misc settings
