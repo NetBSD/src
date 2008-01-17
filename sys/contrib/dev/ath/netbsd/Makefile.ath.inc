@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ath.inc,v 1.14 2007/04/08 09:36:31 scw Exp $
+#	$NetBSD: Makefile.ath.inc,v 1.15 2008/01/17 01:13:01 lukem Exp $
 
 # Rules for building a HAL on various platforms.  We put them here
 # to centralize them all in one place.
@@ -69,10 +69,7 @@ ATH_UUDEC?=	@${_MKSHMSG} "uudecode ${.CURDIR:T}/${.TARGET}"; \
 athhal.o: $S/contrib/dev/ath/public/${ATH_HAL}.hal.o.uu
 	${ATH_UUDEC}
 
-athhal_options.h: $S/contrib/dev/ath/public/${ATH_HAL}.opt_ah.h
-	${_MKSHECHO} cp $> ${.TARGET}
-	rm -f ${.TARGET}
-	cp $> ${.TARGET}
+BUILDSYMLINKS+=	$S/contrib/dev/ath/public/${ATH_HAL}.opt_ah.h athhal_options.h
 
 depend if_ath_cardbus.o if_ath_pci.o athrate-sample.o ath_netbsd.o ath.o ah_osdep.o: athhal_options.h
 
