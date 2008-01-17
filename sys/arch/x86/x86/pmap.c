@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32 2008/01/17 10:17:07 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.33 2008/01/17 10:19:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32 2008/01/17 10:17:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2008/01/17 10:19:50 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3038,7 +3038,7 @@ pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 }
 
 /*
- * pmap_sync_pv: sync a pte
+ * pmap_sync_pv: clear pte bits and return the old value of the pte.
  */
 
 static int
@@ -3048,7 +3048,7 @@ pmap_sync_pv(struct pv_head *pvh, struct pv_entry *pv, pt_entry_t expect,
 	pt_entry_t *ptep;
 	pt_entry_t opte;
 	pt_entry_t npte;
-	bool need_shootdown = false;
+	bool need_shootdown;
 
 	KASSERT(mutex_owned(&pvh->pvh_lock));
 	KASSERT((expect & ~(PG_FRAME | PG_V)) == 0);
@@ -3078,19 +3078,33 @@ pmap_sync_pv(struct pv_head *pvh, struct pv_entry *pv, pt_entry_t expect,
 			}
 			return EAGAIN;
 		}
+
+		/*
+		 * check if there's anything to do on this pte.
+		 */
+
 		if ((opte & clearbits) == 0) {
+			need_shootdown = false;
 			break;
 		}
 
-		npte = opte & ~clearbits;
+		/*
+		 * we need a shootdown if the pte is cached. (PG_U)
+		 *
+		 * ...unless we are clearing only the PG_RW bit and
+		 * it isn't cached as RW. (PG_M)
+		 */
+
 		need_shootdown = (opte & PG_U) != 0 &&
 		    !(clearbits == PG_RW && (opte & PG_M) == 0);
 
+		npte = opte & ~clearbits;
+
+		/*
+		 * if we need a shootdown anyway, clear PG_U and PG_M.
+		 */
+
 		if (need_shootdown) {
-			/*
-			 * clear PG_U and PG_M as
-			 * we need a shootdown anyway.
-			 */
 			npte &= ~(PG_U | PG_M);
 		}
 		KASSERT((npte & (PG_M | PG_U)) != PG_M);
