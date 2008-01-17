@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_subr.c,v 1.314 2008/01/10 13:05:01 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.315 2008/01/17 13:06:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.314 2008/01/10 13:05:01 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.315 2008/01/17 13:06:04 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -265,6 +265,7 @@ try_nextlist:
 		 * Don't return to freelist - the holder of the last
 		 * reference will destroy it.
 		 */
+		KASSERT(vp->v_usecount > 1);
 		vp->v_usecount--;
 		mutex_exit(&vp->v_interlock);
 		mutex_enter(&vnode_free_list_lock);
@@ -360,8 +361,10 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 		if (!strncmp(vfsp->vfs_name, fstypename, 
 		    sizeof(mp->mnt_stat.f_fstypename)))
 			break;
-	if (vfsp == NULL)
+	if (vfsp == NULL) {
+		mutex_exit(&vfs_list_lock);
 		return (ENODEV);
+	}
 	vfsp->vfs_refcount++;
 	mutex_exit(&vfs_list_lock);
 
@@ -830,12 +833,11 @@ vget(vnode_t *vp, int flags)
 	 */
 	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
 		if ((flags & LK_NOWAIT) != 0) {
-			vp->v_usecount--;
-			mutex_exit(&vp->v_interlock);
+			vrelel(vp, 0, 0);
 			return EBUSY;
 		}
 		vwait(vp, VI_XLOCK | VI_FREEING);
-		vrelel(vp, 1, 0);
+		vrelel(vp, 0, 0);
 		return ENOENT;
 	}
 	if (flags & LK_TYPE_MASK) {
@@ -874,6 +876,7 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
+	KASSERT(vp->v_freelisthd == NULL);
 
 	if (vp->v_op == dead_vnodeop_p && (vp->v_iflag & VI_CLEAN) == 0) {
 		vpanic(vp, "dead but not clean");
@@ -947,6 +950,7 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 			KASSERT(vp->v_usecount == 1);
 			vp->v_iflag |= VI_INACTPEND;
 			mutex_enter(&vrele_lock);
+			vp->v_freelisthd = &vrele_list;
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
 			if (++vrele_pending > (desiredvnodes >> 8))
 				cv_signal(&vrele_cv); 
@@ -1060,6 +1064,8 @@ vrele_thread(void *cookie)
 		vp = TAILQ_FIRST(&vrele_list);
 		TAILQ_REMOVE(&vrele_list, vp, v_freelist);
 		vrele_pending--;
+		KASSERT(vp->v_freelisthd == &vrele_list);
+		vp->v_freelisthd = NULL;
 		mutex_exit(&vrele_lock);
 
 		/*
@@ -1188,6 +1194,13 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 		if (vp == skipvp)
 			continue;
 		mutex_enter(&vp->v_interlock);
+		/*
+		 * Ignore clean but still referenced vnodes.
+		 */
+		if ((vp->v_iflag & VI_CLEAN) != 0) {
+			mutex_exit(&vp->v_interlock);
+			continue;
+		}
 		/*
 		 * Skip over a vnodes marked VSYSTEM.
 		 */
@@ -1712,8 +1725,10 @@ vfs_scrubvnlist(struct mount *mp)
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		mutex_enter(&vp->v_interlock);
-		if ((vp->v_iflag & VI_CLEAN) != 0)
+		if ((vp->v_iflag & VI_CLEAN) != 0) {
 			TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
+			vp->v_mount = NULL;
+		}
 		mutex_exit(&vp->v_interlock);
 	}
 	mutex_exit(&mntvnode_lock);
