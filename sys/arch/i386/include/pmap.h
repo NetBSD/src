@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97.6.4 2008/01/15 22:15:57 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.6.5 2008/01/17 19:15:23 bouyer Exp $	*/
 
 /*
  *
@@ -198,7 +198,8 @@
  * PTE_BASE and APTE_BASE will need 4 entries in the L2 page table.
  * In addition, we can't recursively map L3[3] (Xen wants the ref count on
  * this page to be exactly once), so we use a shadow PD page for the last
- * L2 PD.
+ * L2 PD. The shadow page could be static too, but to make pm_pdir[]
+ * contigous we'll allocate/copy one page per pmap.
  */
 /* XXX MP should we allocate one APDP_PDE per processor?? */
 
@@ -219,7 +220,7 @@
 #define L2_SLOT_PTE	(KERNBASE/NBPD_L2-4) /* 1532: for recursive PDP map */
 #define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 1536: start of kernel space */
 #define	L2_SLOT_KERNBASE L2_SLOT_KERN
-#define L2_SLOT_APTE	3752                 /* 3756-3839 reserved by Xen */
+#define L2_SLOT_APTE	1960                 /* 1964-2047 reserved by Xen */
 #else /* PAE */
 #define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1) /* 767: for recursive PDP map */
 #define L2_SLOT_KERN	(KERNBASE/NBPD_L2)   /* 768: start of kernel space */
@@ -375,7 +376,16 @@ pmap_pte_flush(void)
 	xpq_flush_queue();
 	splx(s);
 }
+
 #endif
+
+#ifdef PAE
+/* addresses of static pages used for PAE pmap: */
+/* the L3 page */
+pd_entry_t *pmap_l3pd;
+paddr_t pmap_l3paddr;
+#endif
+
 
 struct trapframe;
 
