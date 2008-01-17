@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.123 2007/11/14 14:11:57 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.124 2008/01/17 14:49:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,13 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.123 2007/11/14 14:11:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.124 2008/01/17 14:49:29 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 #include <sys/proc.h>
 #include <sys/malloc.h>
 #define MBTYPES
@@ -84,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.123 2007/11/14 14:11:57 yamt Exp $")
 #include <sys/syslog.h>
 #include <sys/domain.h>
 #include <sys/protosw.h>
+#include <sys/percpu.h>
 #include <sys/pool.h>
 #include <sys/socket.h>
 #include <sys/sysctl.h>
@@ -125,6 +127,8 @@ static const char mclpool_warnmsg[] =
     "WARNING: mclpool limit reached; increase NMBCLUSTERS";
 
 MALLOC_DEFINE(M_MBUF, "mbuf", "mbuf");
+
+static percpu_t *mbstat_percpu;
 
 #ifdef MBUFTRACE
 struct mownerhead mowners = LIST_HEAD_INITIALIZER(mowners);
@@ -170,6 +174,8 @@ mbinit(void)
 	 * reached message max once a minute.
 	 */
 	pool_cache_sethardlimit(mcl_cache, nmbclusters, mclpool_warnmsg, 60);
+
+	mbstat_percpu = percpu_alloc(sizeof(struct mbstat_cpu));
 
 	/*
 	 * Set a low water mark for both mbufs and clusters.  This should
@@ -250,6 +256,30 @@ sysctl_kern_mbuf(SYSCTLFN_ARGS)
 }
 
 #ifdef MBUFTRACE
+static void
+mowner_conver_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+{
+	struct mowner_counter *mc = v1;
+	struct mowner_user *mo_user = v2;
+	int i;
+
+	for (i = 0; i < MOWNER_COUNTER_NCOUNTERS; i++) {
+		mo_user->mo_counter[i] += mc->mc_counter[i];
+	}
+}
+
+static void
+mowner_convert_to_user(struct mowner *mo, struct mowner_user *mo_user)
+{
+
+	memset(mo_user, 0, sizeof(*mo_user));
+	KASSERT(sizeof(mo_user->mo_name) == sizeof(mo->mo_name));
+	KASSERT(sizeof(mo_user->mo_descr) == sizeof(mo->mo_descr));
+	memcpy(mo_user->mo_name, mo->mo_name, sizeof(mo->mo_name));
+	memcpy(mo_user->mo_descr, mo->mo_descr, sizeof(mo->mo_descr));
+	percpu_foreach(mo->mo_counters, mowner_conver_to_user_cb, mo_user);
+}
+
 static int
 sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 {
@@ -263,16 +293,21 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 		return (EPERM);
 
 	LIST_FOREACH(mo, &mowners, mo_link) {
+		struct mowner_user mo_user;
+
+		mowner_convert_to_user(mo, &mo_user);
+
 		if (oldp != NULL) {
-			if (*oldlenp - len < sizeof(*mo)) {
+			if (*oldlenp - len < sizeof(mo_user)) {
 				error = ENOMEM;
 				break;
 			}
-			error = copyout(mo, (char *)oldp + len, sizeof(*mo));
+			error = copyout(&mo_user, (char *)oldp + len,
+			    sizeof(mo_user));
 			if (error)
 				break;
 		}
-		len += sizeof(*mo);
+		len += sizeof(mo_user);
 	}
 
 	if (error == 0)
@@ -281,6 +316,40 @@ sysctl_kern_mbuf_mowners(SYSCTLFN_ARGS)
 	return (error);
 }
 #endif /* MBUFTRACE */
+
+static void
+mbstat_conver_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+{
+	struct mbstat_cpu *mbsc = v1;
+	struct mbstat *mbs = v2;
+	int i;
+
+	for (i = 0; i < __arraycount(mbs->m_mtypes); i++) {
+		mbs->m_mtypes[i] += mbsc->m_mtypes[i];
+	}
+}
+
+static void
+mbstat_convert_to_user(struct mbstat *mbs)
+{
+
+	memset(mbs, 0, sizeof(*mbs));
+	mbs->m_drain = mbstat.m_drain;
+	percpu_foreach(mbstat_percpu, mbstat_conver_to_user_cb, mbs);
+}
+
+static int
+sysctl_kern_mbuf_stats(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct mbstat mbs;
+
+	mbstat_convert_to_user(&mbs);
+	node = *rnode;
+	node.sysctl_data = &mbs;
+	node.sysctl_size = sizeof(mbs);
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
 
 SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 {
@@ -331,7 +400,7 @@ SYSCTL_SETUP(sysctl_kern_mbuf_setup, "sysctl kern.mbuf subtree setup")
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRUCT, "stats",
 		       SYSCTL_DESCR("mbuf allocation statistics"),
-		       NULL, 0, &mbstat, sizeof(mbstat),
+		       sysctl_kern_mbuf_stats, 0, NULL, 0,
 		       CTL_KERN, KERN_MBUF, MBUF_STATS, CTL_EOL);
 #ifdef MBUFTRACE
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -407,8 +476,20 @@ m_get(int nowait, int type)
 {
 	struct mbuf *m;
 
-	MGET(m, nowait, type);
-	return (m);
+	m = pool_cache_get(mb_cache,
+	    nowait == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);
+	if (m == NULL)
+		return NULL;
+
+	mbstat_type_add(type, 1);
+	mowner_init(m, type);
+	m->m_type = type;
+	m->m_next = NULL;
+	m->m_nextpkt = NULL;
+	m->m_data = m->m_dat;
+	m->m_flags = 0;
+
+	return m;
 }
 
 struct mbuf *
@@ -416,8 +497,18 @@ m_gethdr(int nowait, int type)
 {
 	struct mbuf *m;
 
-	MGETHDR(m, nowait, type);
-	return (m);
+	m = m_get(nowait, type);
+	if (m == NULL)
+		return NULL;
+
+	m->m_data = m->m_pktdat;
+	m->m_flags = M_PKTHDR;
+	m->m_pkthdr.rcvif = NULL;
+	m->m_pkthdr.csum_flags = 0;
+	m->m_pkthdr.csum_data = 0;
+	SLIST_INIT(&m->m_pkthdr.tags);
+
+	return m;
 }
 
 struct mbuf *
@@ -1484,3 +1575,127 @@ nextchain:
 	}
 }
 #endif /* defined(DDB) */
+
+void
+mbstat_type_add(int type, int diff)
+{
+	struct mbstat_cpu *mb;
+	int s;
+
+	s = splvm();
+	mb = percpu_getptr(mbstat_percpu);
+	mb->m_mtypes[type] += diff;
+	splx(s);
+}
+
+#if defined(MBUFTRACE)
+void
+mowner_attach(struct mowner *mo)
+{
+
+	KASSERT(mo->mo_counters == NULL);
+	mo->mo_counters = percpu_alloc(sizeof(struct mowner_counter));
+
+	/* XXX lock */
+	LIST_INSERT_HEAD(&mowners, mo, mo_link);
+}
+
+void
+mowner_detach(struct mowner *mo)
+{
+
+	KASSERT(mo->mo_counters != NULL);
+
+	/* XXX lock */
+	LIST_REMOVE(mo, mo_link);
+
+	percpu_free(mo->mo_counters, sizeof(struct mowner_counter));
+	mo->mo_counters = NULL;
+}
+
+static struct mowner_counter *
+mowner_counter(struct mowner *mo)
+{
+
+	return percpu_getptr(mo->mo_counters);
+}
+
+void
+mowner_init(struct mbuf *m, int type)
+{
+	struct mowner_counter *mc;
+	struct mowner *mo;
+	int s;
+
+	m->m_owner = mo = &unknown_mowners[type];
+	s = splvm();
+	mc = mowner_counter(mo);
+	mc->mc_counter[MOWNER_COUNTER_CLAIMS]++;
+	splx(s);
+}
+
+void
+mowner_ref(struct mbuf *m, int flags)
+{
+	struct mowner *mo = m->m_owner;
+	struct mowner_counter *mc;
+	int s;
+
+	s = splvm();
+	mc = mowner_counter(mo);
+	if ((flags & M_EXT) != 0)
+		mc->mc_counter[MOWNER_COUNTER_EXT_CLAIMS]++;
+	if ((flags & M_CLUSTER) != 0)
+		mc->mc_counter[MOWNER_COUNTER_CLUSTER_CLAIMS]++;
+	splx(s);
+}
+
+void
+mowner_revoke(struct mbuf *m, bool all, int flags)
+{
+	struct mowner *mo = m->m_owner;
+	struct mowner_counter *mc;
+	int s;
+
+	s = splvm();
+	mc = mowner_counter(mo);
+	if ((flags & M_EXT) != 0)
+		mc->mc_counter[MOWNER_COUNTER_EXT_RELEASES]++;
+	if ((flags & M_CLUSTER) != 0)
+		mc->mc_counter[MOWNER_COUNTER_CLUSTER_RELEASES]++;
+	if (all)
+		mc->mc_counter[MOWNER_COUNTER_RELEASES]++;
+	splx(s);
+	if (all)
+		m->m_owner = &revoked_mowner;
+}
+
+static void
+mowner_claim(struct mbuf *m, struct mowner *mo)
+{
+	struct mowner_counter *mc;
+	int flags = m->m_flags;
+	int s;
+
+	s = splvm();
+	mc = mowner_counter(mo);
+	mc->mc_counter[MOWNER_COUNTER_CLAIMS]++;
+	if ((flags & M_EXT) != 0)
+		mc->mc_counter[MOWNER_COUNTER_EXT_CLAIMS]++;
+	if ((flags & M_CLUSTER) != 0)
+		mc->mc_counter[MOWNER_COUNTER_CLUSTER_CLAIMS]++;
+	splx(s);
+	m->m_owner = mo;
+}
+
+void
+m_claim(struct mbuf *m, struct mowner *mo)
+{
+
+	if (m->m_owner == mo || mo == NULL)
+		return;
+
+	mowner_revoke(m, true, m->m_flags);
+	mowner_claim(m, mo);
+}
+#endif /* defined(MBUFTRACE) */
