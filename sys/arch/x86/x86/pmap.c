@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.33 2008/01/17 10:19:50 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.34 2008/01/17 13:26:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.33 2008/01/17 10:19:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2008/01/17 13:26:20 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2700,12 +2700,13 @@ pmap_unmap_ptp(void)
 }
 
 static pt_entry_t *
-pmap_map_pte(struct vm_page *ptp, vaddr_t va)
+pmap_map_pte(struct pmap *pmap, struct vm_page *ptp, vaddr_t va)
 {
 
-	if (ptp == NULL) {
-		return kvtopte(va);
+	if (pmap_is_curpmap(pmap)) {
+		return &PTE_BASE[pl1_i(va)]; /* (k)vtopte */
 	}
+	KASSERT(ptp != NULL);
 	return pmap_map_ptp(ptp) + pl1_pi(va);
 }
 
@@ -3045,6 +3046,8 @@ static int
 pmap_sync_pv(struct pv_head *pvh, struct pv_entry *pv, pt_entry_t expect,
     int clearbits, pt_entry_t *optep)
 {
+	struct pmap * const pmap = pv->pv_pmap;
+	const vaddr_t va = pv->pv_va;
 	pt_entry_t *ptep;
 	pt_entry_t opte;
 	pt_entry_t npte;
@@ -3055,7 +3058,7 @@ pmap_sync_pv(struct pv_head *pvh, struct pv_entry *pv, pt_entry_t expect,
 	KASSERT((expect & PG_V) != 0);
 	KASSERT(clearbits == ~0 || (clearbits & ~(PG_M | PG_U | PG_RW)) == 0);
 
-	ptep = pmap_map_pte(pv->pv_ptp, pv->pv_va);
+	ptep = pmap_map_pte(pmap, pv->pv_ptp, va);
 	do {
 		opte = *ptep;
 		KASSERT((opte & (PG_M | PG_U)) != PG_M);
@@ -3073,8 +3076,8 @@ pmap_sync_pv(struct pv_head *pvh, struct pv_entry *pv, pt_entry_t expect,
 
 			pmap_unmap_pte();
 			if (clearbits != 0) {
-				pmap_tlb_shootdown(pv->pv_pmap, pv->pv_va, 0,
-				    (pv->pv_pmap == pmap_kernel() ? PG_G : 0));
+				pmap_tlb_shootdown(pmap, va, 0,
+				    (pmap == pmap_kernel() ? PG_G : 0));
 			}
 			return EAGAIN;
 		}
@@ -3112,7 +3115,7 @@ pmap_sync_pv(struct pv_head *pvh, struct pv_entry *pv, pt_entry_t expect,
 	} while (pmap_pte_cas(ptep, opte, npte) != opte);
 
 	if (need_shootdown) {
-		pmap_tlb_shootdown(pv->pv_pmap, pv->pv_va, 0, opte);
+		pmap_tlb_shootdown(pmap, va, 0, opte);
 	}
 	pmap_unmap_pte();
 
