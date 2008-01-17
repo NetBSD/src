@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.104 2007/11/29 01:39:27 jnemeth Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.105 2008/01/17 01:13:01 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -253,10 +253,7 @@ vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh $S/conf/osrelease.sh
 .endif
 
 .if !target(config_time.h)
-EXTRA_CLEAN+= config_time.h
-config_time.h: Makefile
-	${_MKTARGET_CREATE}
-	cp config_time.src config_time.h
+BUILDSYMLINKS+=	config_time.src config_time.h
 .endif
 
 .if defined(MEMORY_DISK_IMAGE)
@@ -467,6 +464,8 @@ AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
 CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
+
+.include <bsd.files.mk>
 
 ##
 ## the end
