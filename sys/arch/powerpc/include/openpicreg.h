@@ -1,4 +1,4 @@
-/*	$NetBSD: openpicreg.h,v 1.7 2007/10/17 19:56:41 garbled Exp $	*/
+/*	$NetBSD: openpicreg.h,v 1.8 2008/01/17 23:42:58 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -69,7 +69,12 @@
 
 /*
  * INTERRUPT SOURCE register (IDU base + 0x10000)
+ * ABOVE ONLY TRUE FOR NON-DISTRIBUTED OPENPICS!!
  */
+
+#define OPENPIC_DSRC_VECTOR_OFFSET(irq)		((irq) * 0x20)
+#define OPENPIC_DSRC_IDEST_OFFSET(irq)		((irq) * 0x20 + 0x10)
+
 
 /* interrupt vector/priority reg */
 #ifndef OPENPIC_SRC_VECTOR
