@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.c,v 1.27 2008/01/14 12:56:05 yamt Exp $	*/
+/*	$NetBSD: mbuf.c,v 1.28 2008/01/17 14:53:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)mbuf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: mbuf.c,v 1.27 2008/01/14 12:56:05 yamt Exp $");
+__RCSID("$NetBSD: mbuf.c,v 1.28 2008/01/17 14:53:18 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,7 +97,7 @@ mbpr(mbaddr, msizeaddr, mclbaddr, mbpooladdr, mclpooladdr)
 	struct mbtypes *mp;
 	size_t len;
 	void *data;
-	struct mowner *mo;
+	struct mowner_user *mo;
 	int mclbytes, msize;
 
 	if (nmbtypes != 256) {
@@ -227,14 +227,17 @@ dump_drain:
 	    len -= sizeof(*mo), mo++) {
 		char buf[32];
 		if (vflag == 1 &&
-		    mo->mo_claims == 0 &&
-		    mo->mo_ext_claims == 0 &&
-		    mo->mo_cluster_claims == 0)
+		    mo->mo_counter[MOWNER_COUNTER_CLAIMS] == 0 &&
+		    mo->mo_counter[MOWNER_COUNTER_EXT_CLAIMS] == 0 &&
+		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_CLAIMS] == 0)
 			continue;
 		if (vflag == 0 &&
-		    mo->mo_claims == mo->mo_releases &&
-		    mo->mo_ext_claims == mo->mo_ext_releases &&
-		    mo->mo_cluster_claims == mo->mo_cluster_releases)
+		    mo->mo_counter[MOWNER_COUNTER_CLAIMS] ==
+		    mo->mo_counter[MOWNER_COUNTER_RELEASES] &&
+		    mo->mo_counter[MOWNER_COUNTER_EXT_CLAIMS] ==
+		    mo->mo_counter[MOWNER_COUNTER_EXT_RELEASES] &&
+		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_CLAIMS] ==
+		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_RELEASES])
 			continue;
 		snprintf(buf, sizeof(buf), "%16s %-13s",
 		    mo->mo_name, mo->mo_descr);
@@ -245,21 +248,24 @@ dump_drain:
 		}
 		printf("%30s %-8s %10lu %10lu %10lu\n",
 		    buf, "inuse",
-		    mo->mo_claims - mo->mo_releases,
-		    mo->mo_ext_claims - mo->mo_ext_releases,
-		    mo->mo_cluster_claims - mo->mo_cluster_releases);
+		    mo->mo_counter[MOWNER_COUNTER_CLAIMS] -
+		    mo->mo_counter[MOWNER_COUNTER_RELEASES],
+		    mo->mo_counter[MOWNER_COUNTER_EXT_CLAIMS] -
+		    mo->mo_counter[MOWNER_COUNTER_EXT_RELEASES],
+		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_CLAIMS] -
+		    mo->mo_counter[MOWNER_COUNTER_CLUSTER_RELEASES]);
 		lines++;
 		if (vflag) {
 			printf("%30s %-8s %10lu %10lu %10lu\n",
 			    "", "claims",
-			    mo->mo_claims,
-			    mo->mo_ext_claims,
-			    mo->mo_cluster_claims);
+			    mo->mo_counter[MOWNER_COUNTER_CLAIMS],
+			    mo->mo_counter[MOWNER_COUNTER_EXT_CLAIMS],
+			    mo->mo_counter[MOWNER_COUNTER_CLUSTER_CLAIMS]);
 			printf("%30s %-8s %10lu %10lu %10lu\n",
 			    "", "releases",
-			    mo->mo_releases,
-			    mo->mo_ext_releases,
-			    mo->mo_cluster_releases);
+			    mo->mo_counter[MOWNER_COUNTER_RELEASES],
+			    mo->mo_counter[MOWNER_COUNTER_EXT_RELEASES],
+			    mo->mo_counter[MOWNER_COUNTER_CLUSTER_RELEASES]);
 			lines += 2;
 		}
 	}
