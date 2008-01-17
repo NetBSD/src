@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.1 2008/01/14 12:40:03 yamt Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.2 2008/01/17 09:01:57 yamt Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.1 2008/01/14 12:40:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.2 2008/01/17 09:01:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -177,6 +177,25 @@ percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 	return (vmem_addr_t)offset;
 }
 
+static void
+percpu_zero_cb(void *vp, void *vp2, struct cpu_info *ci)
+{
+	size_t sz = (uintptr_t)vp2;
+
+	memset(vp, 0, sz);
+}
+
+/*
+ * percpu_zero: initialize percpu storage with zero.
+ */
+
+static void
+percpu_zero(percpu_t *pc, size_t sz)
+{
+
+	percpu_foreach(pc, percpu_zero_cb, (void *)(uintptr_t)sz);
+}
+
 /*
  * percpu_init: subsystem initialization
  */
@@ -218,6 +237,7 @@ percpu_init_cpu(struct cpu_info *ci)
  *
  * => called in thread context.
  * => considered as an expensive and rare operation.
+ * => allocated storage is initialized with zeros.
  */
 
 percpu_t *
@@ -267,6 +287,7 @@ percpu_getptr(percpu_t *pc)
  * helpers to access remote cpu's percpu data.
  *
  * => called in thread context.
+ * => percpu_traverse_enter can block low-priority xcalls.
  * => typical usage would be:
  *
  *	sum = 0;
@@ -300,28 +321,14 @@ percpu_getptr_remote(percpu_t *pc, struct cpu_info *ci)
 	return &((char *)cpu_percpu(ci)->pcc_data)[percpu_offset(pc)];
 }
 
-static void
-percpu_zero_cb(void *vp, void *vp2)
-{
-	size_t sz = (uintptr_t)vp2;
-
-	memset(vp, 0, sz);
-}
-
-/*
- * percpu_zero: initialize percpu storage with zero.
- */
-void
-percpu_zero(percpu_t *pc, size_t sz)
-{
-
-	percpu_foreach(pc, percpu_zero_cb, (void *)(uintptr_t)sz);
-}
-
 /*
  * percpu_foreach: call the specified callback function for each cpus.
  *
+ * => called in thread context.
  * => caller should not rely on the cpu iteration order.
+ * => the callback function should be minimum because it is executed with
+ *    holding a global lock, which can block low-priority xcalls.
+ *    eg. it's illegal for a callback function to sleep for memory allocation.
  */
 void
 percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
@@ -331,8 +338,7 @@ percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
 
 	percpu_traverse_enter();
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		void *p = percpu_getptr_remote(pc, ci);
-		(*cb)(p, arg);
+		(*cb)(percpu_getptr_remote(pc, ci), arg, ci);
 	}
 	percpu_traverse_exit();
 }
