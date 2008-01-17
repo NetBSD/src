@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.20 2008/01/02 11:48:40 ad Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.21 2008/01/17 10:39:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.20 2008/01/02 11:48:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.21 2008/01/17 10:39:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,9 +215,6 @@ cd9660_inactive(v)
 	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("cd9660_inactive: pushing active", vp);
-
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
@@ -242,7 +239,7 @@ cd9660_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("cd9660_reclaim: pushing active", vp);
 	/*
 	 * Remove the inode from its hash chain.
