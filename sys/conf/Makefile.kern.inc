@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.106 2008/01/17 01:56:03 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.107 2008/01/17 20:14:49 joerg Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -109,6 +109,11 @@ CFLAGS.kern_synch.c+=	-fno-reorder-blocks
 COPTS.${j}+=-g
 . endfor
 .endfor
+
+# Always compile subr_debug_info.c with debug informations.
+# This allows gdb to use type informations.
+#
+COPTS.debugsyms.c+=	-g
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
