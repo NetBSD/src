@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.16.8.2 2008/01/13 19:02:06 bouyer Exp $	*/
+/*	$NetBSD: pte.h,v 1.16.8.3 2008/01/17 19:15:24 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -217,6 +217,9 @@ typedef uint32_t pt_entry_t;		/* PTE */
 #define	PG_FRAME	0x000ffffffffff000ULL /* page frame mask */
 #define	PG_LGFRAME	0x000fffffffe00000ULL /* large (2MB) page frame mask */
 
+/* macros to get real L2 and L3 index, from our "extended" L2 index */
+#define l2tol3(idx)	((idx) >> (L3_SHIFT - L2_SHIFT))
+#define l2tol2(idx)	((idx) & (L2_REALMASK >>  L2_SHIFT))
 #else /* PAE */
 #define	L1_SHIFT	12
 #define	L2_SHIFT	22
