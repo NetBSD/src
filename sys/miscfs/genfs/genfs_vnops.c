@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.160 2008/01/02 11:48:59 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.161 2008/01/17 17:28:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.160 2008/01/02 11:48:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.161 2008/01/17 17:28:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,46 +219,12 @@ genfs_revoke(void *v)
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp, *vq, **vpp;
-	enum vtype type;
-	dev_t dev;
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
 		panic("genfs_revoke: not revokeall");
 #endif
-	vp = ap->a_vp;
-
-	mutex_enter(&vp->v_interlock);
-	if ((vp->v_iflag & VI_CLEAN) != 0) {
-		mutex_exit(&vp->v_interlock);
-		return (0);
-	} else {
-		dev = vp->v_rdev;
-		type = vp->v_type;
-		mutex_exit(&vp->v_interlock);
-	}
-
-	if (type != VBLK && type != VCHR)
-		return (0);
-
-	vpp = &speclisth[SPECHASH(dev)];
-	mutex_enter(&spechash_lock);
-	for (vq = *vpp; vq != NULL;) {
-		if (vq->v_rdev != dev || vq->v_type != type) {
-			vq = vq->v_specnext;
-			continue;
-		}
-		mutex_enter(&vq->v_interlock);
-		mutex_exit(&spechash_lock);
-		vq->v_usecount++;
-		vclean(vq, DOCLOSE);
-		vrelel(vq, 1, 0);
-		mutex_enter(&spechash_lock);
-		vq = *vpp;
-	}
-	mutex_exit(&spechash_lock);
-
+	vrevoke(ap->a_vp);
 	return (0);
 }
 
