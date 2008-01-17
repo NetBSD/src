@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.40 2007/12/31 18:54:34 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.41 2008/01/17 23:42:58 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.40 2007/12/31 18:54:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.41 2008/01/17 23:42:58 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -212,6 +212,7 @@ static const struct cputab models[] = {
 	{ "8245",	MPC8245,	REVFMT_MAJMIN },
 	{ "970",	IBM970,		REVFMT_MAJMIN },
 	{ "970FX",	IBM970FX,	REVFMT_MAJMIN },
+	{ "POWER3II",   IBMPOWER3II,    REVFMT_MAJMIN },
 	{ "",		0,		REVFMT_HEX }
 };
 
@@ -309,6 +310,13 @@ cpu_probe_cache(void)
 		curcpu()->ci_ci.icache_size = 32 K;
 		assoc = 4;
 		break;
+	case IBMPOWER3II:
+		curcpu()->ci_ci.dcache_size = 64 K;
+		curcpu()->ci_ci.icache_size = 32 K;
+		curcpu()->ci_ci.dcache_line_size = 128;
+		curcpu()->ci_ci.icache_line_size = 128;
+		assoc = 128; /* not a typo */
+		break;
 	case IBM970:
 	case IBM970FX:
 		curcpu()->ci_ci.dcache_size = 32 K;
@@ -399,7 +407,7 @@ cpu_setup(self, ci)
 	struct device *self;
 	struct cpu_info *ci;
 {
-	u_int hid0, pvr, vers;
+	u_int hid0, hid0_save, pvr, vers;
 	const char *bitmask;
 	char hidbuf[128];
 	char model[80];
@@ -411,11 +419,7 @@ cpu_setup(self, ci)
 	aprint_normal(": %s, ID %d%s\n", model,  cpu_number(),
 	    cpu_number() == 0 ? " (primary)" : "");
 
-#if defined (PPC_OEA) || defined (PPC_OEA64)
-	hid0 = mfspr(SPR_HID0);
-#elif defined (PPC_OEA64_BRIDGE)
-	hid0 = mfspr(SPR_HID0);
-#endif
+	hid0_save = hid0 = mfspr(SPR_HID0);
 
 	cpu_probe_cache();
 
@@ -468,6 +472,7 @@ cpu_setup(self, ci)
 
 	case IBM970:
 	case IBM970FX:
+	case IBMPOWER3II:
 	default:
 		/* No power-saving mode is available. */ ;
 	}
@@ -499,10 +504,11 @@ cpu_setup(self, ci)
 		break;
 	}
 
-#if defined (PPC_OEA)
-	mtspr(SPR_HID0, hid0);
-	__asm volatile("sync;isync");
-#endif
+	if (hid0 != hid0_save) {
+		mtspr(SPR_HID0, hid0);
+		__asm volatile("sync;isync");
+	}
+
 
 	switch (vers) {
 	case MPC601:
@@ -522,7 +528,8 @@ cpu_setup(self, ci)
 		break;
 	}
 	bitmask_snprintf(hid0, bitmask, hidbuf, sizeof hidbuf);
-	aprint_normal("%s: HID0 %s, powersave: %d\n", self->dv_xname, hidbuf, powersave);
+	aprint_normal("%s: HID0 %s, powersave: %d\n", self->dv_xname, hidbuf,
+	    powersave);
 
 	ci->ci_khz = 0;
 

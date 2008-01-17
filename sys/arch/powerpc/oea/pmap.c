@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2008/01/09 21:12:34 garbled Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2008/01/17 23:42:59 garbled Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2008/01/09 21:12:34 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2008/01/17 23:42:59 garbled Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
@@ -2204,8 +2204,15 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		PMAP_UNLOCK();
 		return false;
 #elif defined (PPC_OEA64_BRIDGE)
-	panic("%s: pm: %s, va: 0x%08lx\n", __func__, 
-		(pm == pmap_kernel() ? "kernel" : "user"), va);
+	if (va >= SEGMENT_LENGTH)
+		panic("%s: pm: %s va >= SEGMENT_LENGTH, va: 0x%08lx\n",
+		    __func__, (pm == pmap_kernel() ? "kernel" : "user"), va);
+	else {
+		if (pap)
+			*pap = va;
+			PMAP_UNLOCK();
+			return true;
+	}
 #elif defined (PPC_OEA64)
 #error PPC_OEA64 not supported
 #endif /* PPC_OEA */

@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.4 2007/10/26 00:34:53 garbled Exp $ */
+/* $NetBSD: ofwpci.c,v 1.5 2008/01/17 23:42:58 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,18 +37,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.4 2007/10/26 00:34:53 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.5 2008/01/17 23:42:58 garbled Exp $");
+
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/extent.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
 #include <machine/autoconf.h>
+#include <machine/isa_machdep.h>
 #include <machine/pio.h>
 
 struct ofwpci_softc {
@@ -71,11 +76,11 @@ ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
 {
 	pc->pc_conf_v = (void *)pc;
 
-	pc->pc_attach_hook = genppc_pci_indirect_attach_hook;
+	pc->pc_attach_hook = genppc_pci_ofmethod_attach_hook;
 	pc->pc_bus_maxdevs = genppc_pci_bus_maxdevs;
-	pc->pc_make_tag = genppc_pci_indirect_make_tag;
-	pc->pc_conf_read = genppc_pci_indirect_conf_read;
-	pc->pc_conf_write = genppc_pci_indirect_conf_write;
+	pc->pc_make_tag = genppc_pci_ofmethod_make_tag;
+	pc->pc_conf_read = genppc_pci_ofmethod_conf_read;
+	pc->pc_conf_write = genppc_pci_ofmethod_conf_write;
 
 	pc->pc_intr_v = (void *)pc;
 
@@ -86,7 +91,7 @@ ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_intr_disestablish = genppc_pci_intr_disestablish;
 
 	pc->pc_conf_interrupt = genppc_pci_conf_interrupt;
-	pc->pc_decompose_tag = genppc_pci_indirect_decompose_tag;
+	pc->pc_decompose_tag = genppc_pci_ofmethod_decompose_tag;
 	pc->pc_conf_hook = genofw_pci_conf_hook;
 
 	pc->pc_addr = 0;
@@ -95,6 +100,7 @@ ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
 	pc->pc_node = 0;
 	pc->pc_memt = 0;
 	pc->pc_iot = 0;
+	pc->pc_ihandle = 0;
 }
 
 static int
@@ -123,19 +129,14 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	struct pcibus_attach_args pba;
 	struct genppc_pci_chipset_businfo *pbi;
 	int node = ca->ca_node;
-	uint32_t reg[2], busrange[2];
-#if 0
-	struct ranges {
-		uint32_t pci_hi, pci_mid, pci_lo;
-		uint32_t host;
-		uint32_t size_hi, size_lo;
-	} ranges[6], *rp = ranges;
+	int i, isprim = 0;
+	uint32_t busrange[2];
+	char buf[64];
+#ifdef PCI_NETBSD_CONFIGURE
+	struct extent *ioext, *memext;
 #endif
 
 	aprint_normal("\n");
-
-	if (OF_getprop(node, "reg", reg, sizeof(reg)) < 8)
-		return;
 
 	/* PCI bus number */
 	if (OF_getprop(node, "bus-range", busrange, sizeof(busrange)) != 8)
@@ -154,10 +155,40 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	    "ofwpci mem-space") != 0)
 		panic("Can't init ofwpci mem tag");
 
+	aprint_debug("io base=0x%x offset=0x%x limit=0x%x\n",
+	    sc->sc_iot.pbs_base, sc->sc_iot.pbs_offset, sc->sc_iot.pbs_limit);
+	
+	aprint_debug("mem base=0x%x offset=0x%x limit=0x%x\n",
+	    sc->sc_memt.pbs_base, sc->sc_memt.pbs_offset,
+	    sc->sc_memt.pbs_limit);
+	
+	/* are we the primary pci bus? */
+	if (of_find_firstchild_byname(OF_finddevice("/"), "pci") == node) {
+		int isa_node;
+
+		isprim++;
+		/* yes we are, now do we have an ISA child? */
+		isa_node = of_find_firstchild_byname(node, "isa");
+		if (isa_node != -1) {
+			/* isa == pci */
+			genppc_isa_io_space_tag = sc->sc_iot;
+			genppc_isa_mem_space_tag = sc->sc_memt;
+			map_isa_ioregs();
+			init_ofppc_interrupt();
+			ofppc_init_comcons(isa_node);
+		}
+	}
+
 	ofwpci_get_chipset_tag(pc);
+
 	pc->pc_node = node;
-	pc->pc_addr = mapiodev(reg[0] + 0xcf8, 4);
-	pc->pc_data = mapiodev(reg[0] + 0xcfc, 4);
+	i = OF_package_to_path(node, buf, sizeof(buf)-5);
+	if (i <= 0)
+		panic("Can't determine path for pci node %d", node);
+	buf[i] = '\0';
+	pc->pc_ihandle = OF_open(buf);
+	if (pc->pc_ihandle < 0)
+		panic("Can't open device %s", buf);
 	pc->pc_bus = busrange[0];
 	pc->pc_iot = &sc->sc_iot;
 	pc->pc_memt = &sc->sc_memt;
@@ -172,6 +203,19 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 
 	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
 
+#ifdef PCI_NETBSD_CONFIGURE
+	ioext  = extent_create("pciio",  0x00fff000, 0x00ffffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", sc->sc_memt.pbs_base, sc->sc_memt.pbs_limit, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+
+	if (pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINESIZE))
+		aprint_error("pci_configure_bus() failed\n");
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+#endif /* PCI_NETBSD_CONFIGURE */
+	
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;
 	pba.pba_iot = pc->pc_iot;
