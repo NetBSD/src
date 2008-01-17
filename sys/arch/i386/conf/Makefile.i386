@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.156 2008/01/03 20:58:06 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.157 2008/01/17 01:56:02 lukem Exp $
 
 # Makefile for NetBSD
 #
@@ -87,7 +87,6 @@ lock_stubs.o svr4_sigcode.o mach_sigcode.o: assym.h
 apmcall.o cpufunc.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 acpi_wakeup_low.o busfunc.o kvm86call.o: assym.h
-clock.o: config_time.h
 
 ##
 ## (7) misc settings

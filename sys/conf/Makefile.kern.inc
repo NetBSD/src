@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.105 2008/01/17 01:13:01 lukem Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.106 2008/01/17 01:56:03 lukem Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -319,19 +319,19 @@ SRCS=${SSRCS} ${CSRCS}
 DEPS=	${SRCS:T:O:u:R:S/$/.d/g}
 
 .for _s in ${SSRCS}
-${_s:T:R}.d: ${_s} assym.h config_time.h
+${_s:T:R}.d: ${_s} assym.h
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endfor
 .for _s in ${CSRCS}
-${_s:T:R}.d: ${_s} config_time.h
+${_s:T:R}.d: ${_s}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endfor
 
-assym.d: assym.h config_time.h
+assym.d: assym.h
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
 	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
