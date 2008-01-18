@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.35 2008/01/18 11:35:49 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.36 2008/01/18 12:03:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2008/01/18 11:35:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2008/01/18 12:03:32 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1502,8 +1502,6 @@ pmap_lock_pvhs(struct pv_head *pvh1, struct pv_head *pvh2)
 /*
  * pmap_enter_pv: enter a mapping onto a pv_head lst
  *
- * => caller should hold the proper lock on pmap_main_lock
- * => caller should have pmap locked
  * => caller should have the pv_head locked
  * => caller should adjust ptp's wire_count before calling
  */
@@ -1526,8 +1524,6 @@ pmap_enter_pv(struct pv_head *pvh,
 /*
  * pmap_remove_pv: try to remove a mapping from a pv_list
  *
- * => caller should hold proper lock on pmap_main_lock
- * => pmap should be locked
  * => caller should hold lock on pv_head [so that attrs can be adjusted]
  * => caller should adjust ptp's wire_count and free PTP if needed
  * => we return the removed pve
