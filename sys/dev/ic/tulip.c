@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.155 2007/12/29 17:59:20 tsutsui Exp $	*/
+/*	$NetBSD: tulip.c,v 1.156 2008/01/18 16:22:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.155 2007/12/29 17:59:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.156 2008/01/18 16:22:50 ad Exp $");
 
 #include "bpfilter.h"
 
@@ -2247,7 +2247,7 @@ tlp_srom_size(struct tulip_softc *sc)
 	SROM_EMIT(sc, 0);
 
 	if (x < 4 || x > 12) {
-		printf("%s: broken MicroWire interface detected; "
+		aprint_debug("%s: broken MicroWire interface detected; "
 		    "setting SROM size to 1Kb\n", sc->sc_dev.dv_xname);
 		return (6);
 	} else {
