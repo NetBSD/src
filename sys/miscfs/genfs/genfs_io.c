@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.2 2008/01/02 11:48:59 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.3 2008/01/18 10:48:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.2 2008/01/02 11:48:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.3 2008/01/18 10:48:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1044,7 +1044,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
 			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
-				(void) pmap_clear_reference(tpg);
 				uvm_pagedeactivate(tpg);
 			} else if (flags & PGO_FREE) {
 				pmap_page_protect(tpg, VM_PROT_NONE);

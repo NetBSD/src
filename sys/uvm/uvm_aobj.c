@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.96 2008/01/02 11:49:15 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.97 2008/01/18 10:48:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.96 2008/01/02 11:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.97 2008/01/18 10:48:23 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -833,7 +833,6 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				continue;
 
 			/* ...and deactivate the page. */
-			pmap_clear_reference(pg);
 			uvm_pagedeactivate(pg);
 			continue;
 

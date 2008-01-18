@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.122 2008/01/02 11:49:16 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.123 2008/01/18 10:48:23 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.122 2008/01/02 11:49:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.123 2008/01/18 10:48:23 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -203,7 +203,6 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 		if (pg && (pg->flags & PG_BUSY) == 0) {
 			mutex_enter(&uvm_pageqlock);
 			if (pg->wire_count == 0) {
-				pmap_clear_reference(pg);
 				uvm_pagedeactivate(pg);
 			}
 			mutex_exit(&uvm_pageqlock);
