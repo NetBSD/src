@@ -38,7 +38,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\n\
 	The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: seq.c,v 1.2 2005/01/20 09:20:03 wiz Exp $");
+__RCSID("$NetBSD: seq.c,v 1.3 2008/01/18 16:16:10 ginsbach Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -336,6 +336,7 @@ unescape(char *orig)
 				c |= (*cp - '0');
 			}
 			*orig = c;
+			--cp;
 			continue;
 		case 'x':	/* hexidecimal number */
 			cp++;	/* skip 'x' */
@@ -350,6 +351,7 @@ unescape(char *orig)
 					    'A') + 10);
 			}
 			*orig = c;
+			--cp;
 			continue;
 		default:
 			--cp;
