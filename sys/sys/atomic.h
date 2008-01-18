@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.6 2007/11/30 17:13:10 ad Exp $	*/
+/*	$NetBSD: atomic.h,v 1.7 2008/01/18 01:20:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	_SYS_ATOMIC_H_
 
 #include <sys/types.h>
-#if !defined(_KERNEL)
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdint.h>
 #endif
 
