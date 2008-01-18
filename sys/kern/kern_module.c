@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.5 2008/01/18 14:29:44 rumble Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.6 2008/01/18 16:41:46 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.5 2008/01/18 14:29:44 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.6 2008/01/18 16:41:46 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -429,6 +429,8 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 			return error;
 		}
 		error = kobj_load(mod->mod_kobj);
+		if (error != 0)
+			module_error("unable to load kernel object");
 		mod->mod_source = MODULE_SOURCE_FILESYS;
 	}
 	TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
@@ -525,6 +527,11 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 			if (mod->mod_nrequired == MAXMODDEPS - 1) {
 				error = EINVAL;
 				module_error("too many required modules");
+				goto fail;
+			}
+			if (strcmp(buf, mi->mi_name) == 0) {
+				error = EDEADLK;
+				module_error("self-dependency detected");
 				goto fail;
 			}
 			error = module_do_load(buf, true, force,
