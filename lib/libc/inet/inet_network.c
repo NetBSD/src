@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.1 2004/05/20 23:13:02 christos Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.2 2008/01/18 16:20:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.1 2004/05/20 23:13:02 christos Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.2 2008/01/18 16:20:57 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -94,9 +94,9 @@ again:
 	}
 	if (!digit)
 		return (INADDR_NONE);
+	if (pp >= parts + 4 || val > 0xff)
+		return (INADDR_NONE);
 	if (*cp == '.') {
-		if (pp >= parts + 4 || val > 0xff)
-			return (INADDR_NONE);
 		*pp++ = val, cp++;
 		goto again;
 	}
