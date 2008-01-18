@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.4 2008/01/18 11:00:53 yamt Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.5 2008/01/18 11:01:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.4 2008/01/18 11:00:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.5 2008/01/18 11:01:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1141,6 +1141,16 @@ retry:
 
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
 	    (vp->v_iflag & VI_ONWORKLST) != 0) {
+#if defined(DEBUG)
+		TAILQ_FOREACH(pg, &uobj->memq, listq) {
+			if ((pg->flags & PG_CLEAN) == 0) {
+				printf("%s: %p: !CLEAN\n", __func__, pg);
+			}
+			if (pmap_is_modified(pg)) {
+				printf("%s: %p: modified\n", __func__, pg);
+			}
+		}
+#endif /* defined(DEBUG) */
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 			vn_syncer_remove_from_worklist(vp);
