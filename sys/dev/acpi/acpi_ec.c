@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.48 2007/12/21 21:22:54 jmcneill Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.49 2008/01/18 00:33:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.48 2007/12/21 21:22:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.49 2008/01/18 00:33:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,7 +554,7 @@ static ACPI_STATUS
 acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i;
+	int i, timeo = 10000;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -570,9 +570,17 @@ acpiec_read(device_t dv, uint8_t addr, uint8_t *val)
 	}
 
 	if (cold || acpiec_cold) {
-		while (sc->sc_state != EC_STATE_FREE) {
+		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
 			delay(1);
 			acpiec_gpe_state_machine(dv);
+		}
+		if (sc->sc_state != EC_STATE_FREE) {
+			mutex_exit(&sc->sc_mtx);
+			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+			acpiec_unlock(dv);
+			aprint_error_dev(dv, "command timed out, state %d\n",
+			    sc->sc_state);
+			return AE_ERROR;
 		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
@@ -594,7 +602,7 @@ static ACPI_STATUS
 acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 {
 	struct acpiec_softc *sc = device_private(dv);
-	int i;
+	int i, timeo = 10000;
 
 	acpiec_lock(dv);
 	mutex_enter(&sc->sc_mtx);
@@ -611,9 +619,17 @@ acpiec_write(device_t dv, uint8_t addr, uint8_t val)
 	}
 
 	if (cold || acpiec_cold) {
-		while (sc->sc_state != EC_STATE_FREE) {
+		while (sc->sc_state != EC_STATE_FREE && timeo-- > 0) {
 			delay(1);
 			acpiec_gpe_state_machine(dv);
+		}
+		if (sc->sc_state != EC_STATE_FREE) {
+			mutex_exit(&sc->sc_mtx);
+			AcpiClearGpe(sc->sc_gpeh, sc->sc_gpebit, ACPI_NOT_ISR);
+			acpiec_unlock(dv);
+			aprint_error_dev(dv, "command timed out, state %d\n",
+			    sc->sc_state);
+			return AE_ERROR;
 		}
 	} else while (cv_timedwait(&sc->sc_cv, &sc->sc_mtx, EC_CMD_TIMEOUT * hz)) {
 		mutex_exit(&sc->sc_mtx);
