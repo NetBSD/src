@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.13 2008/01/18 21:32:27 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.14 2008/01/18 22:08:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.13 2008/01/18 21:32:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.14 2008/01/18 22:08:57 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1991,7 +1991,10 @@ pmap_destroy(struct pmap *pmap)
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
 		for (i = 0; i < PDP_SIZE; i++) {
 	        	pmap_pte_set(&APDP_PDE[i], 0);
-	        	pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
+#ifdef PAE
+			/* clear shadow entry too */
+	    		pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
+#endif
 		}
 		pmap_pte_flush();
 	        pmap_apte_flush(pmap_kernel());
