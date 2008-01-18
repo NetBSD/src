@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.19 2007/12/05 20:25:56 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.20 2008/01/18 16:20:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.19 2007/12/05 20:25:56 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.20 2008/01/18 16:20:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -625,7 +625,16 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 			*q++ = *p++;
 		}
 
-		if (!anymeta) {		/* No expansion, do next segment. */
+                /*
+		 * No expansion, or path ends in dot-slash or dot-dot-slash,
+		 * do next segment.
+		 */
+                 if ((!anymeta) ||
+		     (((pathend-pathbuf) > 1) &&
+		      (((*(pathend-1) == SEP) && (*(pathend-2) == DOT)) &&
+		        ((((pathend-pathbuf) < 3) || (*(pathend-3) == SEP)) ||
+		         (((pathend-pathbuf) < 4) || 
+		         ((*(pathend-3) == DOT) && (*(pathend-4) == SEP))))))) {
 			pathend = q;
 			pattern = p;
 			while (*pattern == SEP) {
