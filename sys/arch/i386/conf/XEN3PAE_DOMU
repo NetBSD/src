@@ -1,0 +1,6 @@
+# $NetBSD: XEN3PAE_DOMU,v 1.1.2.1 2008/01/18 22:12:04 bouyer Exp $
+
+include "arch/i386/conf/XEN3_DOMU"
+
+options 	 PAE
+options DDB_COMMANDONENTER="trace;show registers"
