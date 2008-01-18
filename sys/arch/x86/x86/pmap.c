@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.34 2008/01/17 13:26:20 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.35 2008/01/18 11:35:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.34 2008/01/17 13:26:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.35 2008/01/18 11:35:49 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3158,7 +3158,7 @@ pmap_page_remove(struct vm_page *pg)
 	count = SPINLOCK_BACKOFF_MIN;
 startover:
 	mutex_spin_enter(&pvh->pvh_lock);
-	while ((pve = SPLAY_MIN(pvtree, &pvh->pvh_root)) != NULL) {
+	while ((pve = SPLAY_ROOT(&pvh->pvh_root)) != NULL) {
 		struct pmap *pmap = pve->pv_pmap;
 		pt_entry_t opte;
 		int error;
