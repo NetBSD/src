@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.12.11 2008/01/17 19:15:25 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.12 2008/01/18 21:32:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.11 2008/01/17 19:15:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.12 2008/01/18 21:32:28 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -837,6 +837,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	 */
 	printk("memcpy(0x%lx, 0x%lx)\n", &pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN]);
 	memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
+	pmap_kl2pd = &pde[L2_SLOT_KERN + NPDPG];
+	pmap_kl2paddr = (u_long)pmap_kl2pd - KERNBASE;
 
 	/*
 	 * We don't enter a recursive entry from the L3 PD. Instead,
