@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.9 2008/01/02 11:49:20 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.10 2008/01/18 10:48:23 yamt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.9 2008/01/02 11:49:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.10 2008/01/18 10:48:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -275,7 +275,6 @@ uvmpdpol_balancequeue(int swap_shortage)
 
 		if (inactive_shortage > 0) {
 			/* no need to check wire_count as pg is "active" */
-			pmap_clear_reference(p);
 			uvmpdpol_pagedeactivate(p);
 			uvmexp.pddeact++;
 			inactive_shortage--;
@@ -296,6 +295,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
+		pmap_clear_reference(pg);
 		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		pdpol_state.s_inactive++;

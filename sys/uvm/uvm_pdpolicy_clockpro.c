@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.11 2008/01/13 16:28:41 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.12 2008/01/18 10:48:23 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.11 2008/01/13 16:28:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.12 2008/01/18 10:48:23 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1081,7 +1081,7 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	pg->pqflags &= ~PQ_REFERENCED;
+	clockpro_clearreferencebit(pg);
 }
 
 void
