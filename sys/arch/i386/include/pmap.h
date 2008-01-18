@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97.6.5 2008/01/17 19:15:23 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.6.6 2008/01/18 21:32:27 bouyer Exp $	*/
 
 /*
  *
@@ -255,7 +255,17 @@
 #define AL2_BASE ((pd_entry_t *)((char *)AL1_BASE + L2_SLOT_PTE * NBPD_L1))
 
 #define PDP_PDE		(L2_BASE + PDIR_SLOT_PTE)
+#ifdef PAE
+/*
+ * when PAE is in use we can't write APDP_PDE though the recursive mapping,
+ * because it points to the shadow PD. Use the kernel PD instead, which is 
+ * static
+ */
+#define APDP_PDE	(&pmap_kl2pd[l2tol2(PDIR_SLOT_APTE)])
+#define APDP_PDE_SHADOW	(L2_BASE + PDIR_SLOT_APTE)
+#else /* PAE */
 #define APDP_PDE	(L2_BASE + PDIR_SLOT_APTE)
+#endif /* PAE */
 
 #define PDP_BASE	L2_BASE
 #define APDP_BASE	AL2_BASE
@@ -384,6 +394,9 @@ pmap_pte_flush(void)
 /* the L3 page */
 pd_entry_t *pmap_l3pd;
 paddr_t pmap_l3paddr;
+/* the kernel's L2 page */
+pd_entry_t *pmap_kl2pd;
+paddr_t pmap_kl2paddr;
 #endif
 
 

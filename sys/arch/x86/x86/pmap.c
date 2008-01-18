@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.12 2008/01/17 19:15:24 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.13 2008/01/18 21:32:27 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.12 2008/01/17 19:15:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.13 2008/01/18 21:32:27 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -706,18 +706,17 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
 		s = splvm();
 		/* Make recursive entry usable in user PGD */
 		for (i = 0; i < PDP_SIZE; i++) {
-			npde = pmap_pa2pte(pmap_pdirpa(pmap, i)) | PG_k | PG_V;
+			npde = pmap_pa2pte(
+			    pmap_pdirpa(pmap, i * NPDPG)) | PG_k | PG_V;
 			xpq_queue_pte_update(
 			    xpmap_ptom(pmap_pdirpa(pmap, PDIR_SLOT_PTE + i)),
 			    npde);
-			xpq_queue_pte_update(xpmap_ptetomach(APDP_PDE + i),
+			xpq_queue_pte_update(xpmap_ptetomach(&APDP_PDE[i]),
 			    npde);
 #ifdef PAE
-			/* we updated the real PDE, update entry in shadow too*/
+			/* update shadow entry too */
 			xpq_queue_pte_update(
-			    xpmap_ptom(pmap_pdirpa(pmap, PDIR_SLOT_APTE + i)),
-			    npde);
-
+			    xpmap_ptetomach(&APDP_PDE_SHADOW[i]), npde);
 #endif /* PAE */
 			xpq_queue_invlpg(
 			    (vaddr_t)&pmap->pm_pdir[PDIR_SLOT_PTE + i]);
@@ -1990,8 +1989,11 @@ pmap_destroy(struct pmap *pmap)
 	 * clear APDP_PDE if pmap is the currently mapped
 	 */
 	if (xpmap_ptom_masked(pmap_pdirpa(pmap, 0)) == (*APDP_PDE & PG_FRAME)) {
-		for (i = 0; i < PDP_SIZE; i++)
-	        	xpmap_update(&APDP_PDE[i], 0);
+		for (i = 0; i < PDP_SIZE; i++) {
+	        	pmap_pte_set(&APDP_PDE[i], 0);
+	        	pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
+		}
+		pmap_pte_flush();
 	        pmap_apte_flush(pmap_kernel());
 	}
 #endif
@@ -2379,13 +2381,13 @@ pmap_load(void)
 	 * clear APDP slot, in case it points to a page table that has 
 	 * been freed
 	 */
-	if (pmap->pm_pdir[PDIR_SLOT_APTE]) {
+	if (*APDP_PDE) {
 		int i;
 		for (i = 0; i < PDP_SIZE; i++) {
-			pmap_pte_set(&pmap->pm_pdir[PDIR_SLOT_APTE + i], 0);
+			pmap_pte_set(&APDP_PDE[i], 0);
 #ifdef PAE
-			/* clear the real PDE too */
-			xpq_queue_pte_update(xpmap_ptetomach(APDP_PDE + i), 0);
+			/* clear shadow entry too */
+			pmap_pte_set(&APDP_PDE_SHADOW[i], 0);
 #endif
 		}
 	}
@@ -2404,8 +2406,6 @@ pmap_load(void)
 	int s = splvm();
 	/* don't update the kernel L3 slot */
 	for (i = 0 ; i < PDP_SIZE - 1  ; i++, l3_pd += sizeof(pd_entry_t)) {
-		printf("xpq_queue_pte_update(0x%" PRIx64 ", 0x%" PRIx64 ")\n",
-		    l3_pd, xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 		xpq_queue_pte_update(l3_pd,
 		    xpmap_ptom(pmap->pm_pdirpa[i]) | PG_V);
 	}
@@ -3918,7 +3918,7 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 			if (level == PTP_LEVELS &&  i > L2_SLOT_KERN) {
 				/* update real kernel PD too */
 				xpq_queue_pte_update(
-				    xpmap_ptetomach(&pdep[i + NPDPG]),
+				    xpmap_ptetomach(&pmap_kl2pd[l2tol2(i)]),
 				    pmap_pa2pte(pa) | PG_k | PG_V | PG_RW);
 			}
 #endif
@@ -3964,9 +3964,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		return pmap_maxkvaddr;
 	}
 
-	printf("maxkvaddr 0x%lx ", maxkvaddr);
 	maxkvaddr = x86_round_pdr(maxkvaddr);
-	printf("now 0x%lx\n", maxkvaddr);
 	old = nkptp[PTP_LEVELS - 1];
 	/*
 	 * This loop could be optimized more, but pmap_growkernel()
@@ -4417,12 +4415,10 @@ pmap_pdp_alloc()
 #endif
 	}
 #ifdef XEN
-	printf("pmap_pdp_alloc 0x%lx", (long)pdir);
 	s = splvm();
 	object = (vaddr_t)pdir;
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		printf(", paddr 0x%" PRIx64, (int64_t)pdirpa);
 		/* remap this page RO */
 		pmap_kenter_pa(object, pdirpa, VM_PROT_READ);
 		pmap_update(pmap_kernel());
@@ -4436,10 +4432,8 @@ pmap_pdp_alloc()
 	}
 	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
 	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	printf(", pin paddr 0x%" PRIx64, (int64_t)pdirpa);
 	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
 	xpq_flush_queue();
-	printf("\n");
 	splx(s);
 #endif
 
