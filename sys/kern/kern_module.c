@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.3 2008/01/17 22:35:53 rumble Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.4 2008/01/18 01:41:55 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.3 2008/01/17 22:35:53 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.4 2008/01/18 01:41:55 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -551,7 +551,7 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 	TAILQ_REMOVE(&pending, mod, mod_chain);
 	TAILQ_INSERT_TAIL(&module_list, mod, mod_chain);
 	for (i = 0; i < mod->mod_nrequired; i++) {
-		KASSERT(mod_required[i] != NULL);
+		KASSERT(mod->mod_required[i] != NULL);
 		mod->mod_required[i]->mod_refcnt++;
 	}
 	if (modp != NULL) {
