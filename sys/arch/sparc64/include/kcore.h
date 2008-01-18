@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.5 2007/11/05 00:43:41 martin Exp $	*/
+/*	$NetBSD: kcore.h,v 1.6 2008/01/18 16:24:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -77,4 +77,9 @@ typedef struct cpu_kcore_hdr {
 					   (relative to start of this
 					   header) */
 
+	uint64_t	numcpuinfos;	/* number of per CPU mapping infos */
+	uint64_t	percpusz;	/* size of per cpu mapping */
+	uint64_t	thiscpu;	/* index of the cpu writing the dump */
+	uint64_t	cpusp;		/* physical address of first per-cpu
+					   mapping */
 } cpu_kcore_hdr_t;
