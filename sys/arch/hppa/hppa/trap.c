@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.51 2008/01/10 21:08:40 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.52 2008/01/18 09:56:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.51 2008/01/10 21:08:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2008/01/18 09:56:41 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -1313,10 +1313,10 @@ out:
 		 *	ldil	L%SYSCALLGATE, r1
 		 *	ble	4(sr7, r1)
 		 *	ldi	__CONCAT(SYS_,x), t1
-		 *	ldw	HPPA_FRAME_ERP(sr0,sp), rp
+		 *	comb,<>	%r0, %t1, __cerror
 		 *
 		 * And our offset queue head points to the
-		 * final ldw instruction.  So we need to 
+		 * comb instruction.  So we need to
 		 * subtract twelve to reach the ldil.
 		 */
 		frame->tf_iioq_head -= 12;
