@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.4 2008/01/18 01:41:55 simonb Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.5 2008/01/18 14:29:44 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.4 2008/01/18 01:41:55 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.5 2008/01/18 14:29:44 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -473,8 +473,9 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 	 * to set modp.
 	 */
 	if ((mod2 = module_lookup(mi->mi_name)) != NULL) {
+		if (modp != NULL)
+			*modp = mod2;
 		error = EEXIST;
-		*modp = mod2;
 		goto fail;
 	}
 
