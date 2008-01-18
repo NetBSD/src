@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.8 2008/01/17 21:05:36 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.9 2008/01/18 14:12:19 reinoud Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -253,8 +253,11 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	struct timespec ts;
 	int rv;
 
-	ts.tv_sec = stdticks / 100;
-	ts.tv_nsec = (stdticks % 100) * 1000000;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec  += stdticks / 100;
+	ts.tv_nsec += (stdticks % 100) * 10000000;
+	ts.tv_sec  += ts.tv_nsec / 1000000000;
+	ts.tv_nsec %= 1000000000;
 
 	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
 	if (rv != 0 && rv != ETIMEDOUT)
