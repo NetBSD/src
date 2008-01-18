@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.50 2008/01/02 11:49:15 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.51 2008/01/18 10:48:23 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.50 2008/01/02 11:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.51 2008/01/18 10:48:23 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -409,7 +409,6 @@ uvm_anon_pagein(struct vm_anon *anon)
 	 * deactivate the page (to put it on a page queue)
 	 */
 
-	pmap_clear_reference(pg);
 	mutex_enter(&uvm_pageqlock);
 	if (pg->wire_count == 0)
 		uvm_pagedeactivate(pg);
