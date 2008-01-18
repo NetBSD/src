@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.52 2008/01/18 09:56:41 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.53 2008/01/18 10:00:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.52 2008/01/18 09:56:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.53 2008/01/18 10:00:48 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -187,6 +187,14 @@ volatile int astpending;
 void pmap_hptdump(void);
 void syscall(struct trapframe *, int *);
 
+#if defined(DEBUG)
+struct trapframe *sanity_frame;
+struct lwp *sanity_lwp;
+int sanity_checked = 0;
+void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
+#endif
+
+
 #ifdef USERTRACE
 /*
  * USERTRACE is a crude facility that traces the PC of
@@ -195,6 +203,9 @@ void syscall(struct trapframe *, int *);
  * with certain arguments - see the activation code in
  * syscall().
  */
+static void user_backtrace(struct trapframe *, struct lwp *, int);
+static void user_backtrace_raw(u_int, u_int);
+
 u_int rctr_next_iioq;
 #endif
 
@@ -318,7 +329,6 @@ trap_kdebug(int type, int code, struct trapframe *frame)
  * sets up a frame pointer and stores the return pointer 
  * and arguments in it.
  */
-static void user_backtrace_raw(u_int, u_int);
 static void
 user_backtrace_raw(u_int pc, u_int fp)
 {
@@ -349,7 +359,6 @@ user_backtrace_raw(u_int pc, u_int fp)
 	printf("  backtrace stopped with pc %08x fp 0x%08x\n", pc, fp);
 }
 
-static void user_backtrace(struct trapframe *, struct lwp *, int);
 static void
 user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 {
@@ -406,10 +415,6 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
  * assumptions about what a healthy CPU state should be,
  * with some documented elsewhere, some not.
  */
-struct trapframe *sanity_frame;
-struct lwp *sanity_lwp;
-int sanity_checked = 0;
-void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
 void
 frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 {
