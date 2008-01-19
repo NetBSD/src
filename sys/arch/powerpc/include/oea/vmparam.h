@@ -74,7 +74,7 @@
 #endif
 
 #ifndef	DFLDSIZ
-#define	DFLDSIZ			(128*1024*1024)		/* default data size */
+#define	DFLDSIZ			(256*1024*1024)		/* default data size */
 #endif
 
 #ifndef	DFLSSIZ
