@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.996 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.997 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -331,3 +331,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
 		[tls 20080110]
 	hppa: Added gdb support. [skrll 20080110]
+	bktr(4): Added amd64 support. [jmcneill 20080116]
