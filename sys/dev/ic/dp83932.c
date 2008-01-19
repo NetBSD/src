@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.19 2007/10/19 11:59:50 ad Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.20 2008/01/19 22:20:10 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.19 2007/10/19 11:59:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.20 2008/01/19 22:20:10 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -551,19 +551,15 @@ sonic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch (cmd) {
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				(void) sonic_init(ifp);
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware
+		 * filter accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			(void) sonic_init(ifp);
+		error = 0;
 	}
 
 	splx(s);
