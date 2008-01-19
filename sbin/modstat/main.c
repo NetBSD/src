@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2008/01/16 12:34:57 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2008/01/19 01:18:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2008/01/16 12:34:57 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2008/01/19 01:18:47 ad Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -101,6 +101,7 @@ main(int argc, char **argv)
 			break;
 		}
 		free(iov.iov_base);
+		len = iov.iov_len;
 	}
 
 	printf("NAME\t\tCLASS\tSOURCE\tREFS\tSIZE\tREQUIRES\n");
