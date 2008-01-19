@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp $	*/
+/*	$NetBSD: cats_machdep.c,v 1.59 2008/01/19 13:11:11 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.59 2008/01/19 13:11:11 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -78,7 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp $"
 #include <arm/footbridge/dc21285reg.h>
 
 #include "ksyms.h"
-#include "opt_ipkdb.h"
 #include "opt_ableelf.h"
 
 #include "isa.h"
@@ -114,11 +113,7 @@ u_int dc21285_fclk = FCLK;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 struct ebsaboot ebsabootinfo;
 BootConfig bootconfig;		/* Boot config storage */
@@ -886,13 +881,6 @@ initarm(void *arm_bootargs)
 	printf("irq ");
 	footbridge_intr_init();
 	printf("done.\n");
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 #ifdef __ELF__
