@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.8 2007/03/04 06:03:40 christos Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.9 2008/01/19 08:08:20 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -155,13 +155,25 @@ struct crypt_kop {
 #define CRK_DSA_SIGN		2
 #define CRK_DSA_VERIFY		3
 #define CRK_DH_COMPUTE_KEY	4
-#define CRK_ALGORITHM_MAX	4 /* Keep updated - see below */
+#define CRK_MOD_ADD		5
+#define CRK_MOD_ADDINV		6
+#define CRK_MOD_SUB		7
+#define CRK_MOD_MULT		8
+#define CRK_MOD_MULTINV		9
+#define CRK_MOD			10
+#define CRK_ALGORITHM_MAX	10 /* Keep updated - see below */
 
 #define CRF_MOD_EXP		(1 << CRK_MOD_EXP)
 #define CRF_MOD_EXP_CRT		(1 << CRK_MOD_EXP_CRT)
 #define CRF_DSA_SIGN		(1 << CRK_DSA_SIGN)
 #define CRF_DSA_VERIFY		(1 << CRK_DSA_VERIFY)
 #define CRF_DH_COMPUTE_KEY	(1 << CRK_DH_COMPUTE_KEY)
+#define CRF_MOD_ADD		(1 << CRK_MOD_ADD)
+#define CRF_MOD_ADDINV		(1 << CRK_MOD_ADDINV)
+#define CRF_MOD_SUB		(1 << CRK_MOD_SUB)
+#define CRF_MOD_MULT		(1 << CRK_MOD_MULT)
+#define CRF_MOD_MULTINV		(1 << CRK_MOD_MULTINV)
+#define CRF_MOD			(1 << CRK_MOD)
 
 /*
  * done against open of /dev/crypto, to get a cloned descriptor.
