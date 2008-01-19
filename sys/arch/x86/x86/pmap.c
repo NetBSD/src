@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.15 2008/01/19 12:14:49 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.16 2008/01/19 16:22:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.15 2008/01/19 12:14:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.16 2008/01/19 16:22:11 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -477,13 +477,19 @@ static char *csrcp, *cdstp, *zerop, *ptpp, *early_zerop;
  * pool and cache that PDPs are allocated from
  */
 
-#ifndef PAE
 static struct pool_cache pmap_pdp_cache;
 int	pmap_pdp_ctor(void *, void *, int);
 void	pmap_pdp_dtor(void *, void *);
-#endif
-pd_entry_t * pmap_pdp_alloc(void);
-void pmap_pdp_free(pd_entry_t *);
+#ifdef PAE
+/* need to allocate items of 4 pages */
+void *pmap_pdp_alloc(struct pool *, int);
+void pmap_pdp_free(struct pool *, void *);
+static struct pool_allocator pmap_pdp_allocator = {
+	.pa_alloc = pmap_pdp_alloc,
+	.pa_free = pmap_pdp_free,
+	.pa_pagesz = PAGE_SIZE * PDP_SIZE,
+};
+#endif /* PAE */
 
 void *vmmap; /* XXX: used by mem.c... it should really uvm_map_reserve it */
 
@@ -1342,10 +1348,14 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
 	    "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
-#ifndef PAE
+#ifdef PAE
 	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE * PDP_SIZE, 0, 0, 0,
+	    "pdppl", &pmap_pdp_allocator, IPL_NONE,
+	    pmap_pdp_ctor, pmap_pdp_dtor, NULL);
+#else /* PAE */
+	pool_cache_bootstrap(&pmap_pdp_cache, PAGE_SIZE, 0, 0, 0,
 	    "pdppl", NULL, IPL_NONE, pmap_pdp_ctor, pmap_pdp_dtor, NULL);
-#endif
+#endif /* PAE */
 	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
 	    PR_LARGECACHE, "pvpl", &pool_allocator_meta, IPL_NONE, NULL,
 	    NULL, NULL);
@@ -1778,7 +1788,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
  * p m a p  l i f e c y c l e   f u n c t i o n s
  */
 
-#ifndef PAE
 /*
  * pmap_pdp_ctor: constructor for the PDP cache.
  */
@@ -1826,13 +1835,17 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	memset(pdir, 0, PDIR_SLOT_PTE * sizeof(pd_entry_t));
 
 	object = (vaddr_t)v;
-	/* fetch the physical address of the page directory. */
-	(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-	/* put in recursive PDE to map the PTEs */
-	pdir[PDIR_SLOT_PTE] = pmap_pa2pte(pdirpa) | PG_V;
+	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
+		/* fetch the physical address of the page directory. */
+		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
+		/* put in recursive PDE to map the PTEs */
+		pdir[PDIR_SLOT_PTE + i] = pmap_pa2pte(pdirpa) | PG_V;
 #ifndef XEN
-	pdir[PDIR_SLOT_PTE] |= PG_KW;
+		pdir[PDIR_SLOT_PTE + i] |= PG_KW;
 #endif
+	}
+
+	/* copy kernel's PDE */
 	npde = nkptp[PTP_LEVELS - 1];
 
 	memcpy(&pdir[PDIR_SLOT_KERN], &PDP_BASE[PDIR_SLOT_KERN],
@@ -1856,12 +1869,24 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 		/* remap this page RO */
 		pmap_kenter_pa(object, pdirpa, VM_PROT_READ);
 		pmap_update(pmap_kernel());
-		/* pin as L2/L4 page */
-		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
-		xpq_flush_queue();
-	}
-	splx(s);
+		/*
+		 * pin as L2/L4 page, we have to do the page with the
+		 * PDIR_SLOT_PTE entries last
+		 */
+#ifdef PAE
+		if (i == l2tol3(PDIR_SLOT_PTE))
+			continue;
 #endif
+		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+	}
+#ifdef PAE
+	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
+	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
+	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
+#endif
+	xpq_flush_queue();
+	splx(s);
+#endif /* XEN */
 
 	return (0);
 }
@@ -1880,11 +1905,14 @@ pmap_pdp_dtor(void *arg, void *v)
 	int s = splvm();
 	pt_entry_t *pte;
 
-	/* fetch the physical address of the page directory. */
 	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
+		/* fetch the physical address of the page directory. */
 		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
 		/* unpin page table */
 		xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
+	}
+	object = (vaddr_t)v;
+	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
 		/* Set page RW again */
 		pte = kvtopte(object);
 		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
@@ -1893,6 +1921,30 @@ pmap_pdp_dtor(void *arg, void *v)
 	xpq_flush_queue();
 	splx(s);
 #endif  /* XEN */
+}
+
+#ifdef PAE
+
+/* pmap_pdp_alloc: Allocate a page for the pdp memory pool. */
+
+void *
+pmap_pdp_alloc(struct pool *pp, int flags)
+{
+	return (void *)uvm_km_alloc(kernel_map,
+	    PAGE_SIZE * PDP_SIZE, PAGE_SIZE * PDP_SIZE,
+	    ((flags & PR_WAITOK) ? 0 : UVM_KMF_NOWAIT | UVM_KMF_TRYLOCK)
+	    | UVM_KMF_WIRED);
+}
+
+/*
+ * pmap_pdp_free: free a PDP
+ */
+
+void
+pmap_pdp_free(struct pool *pp, void *v)
+{
+	uvm_km_free(kernel_map, (vaddr_t)v, PAGE_SIZE * PDP_SIZE,
+	    UVM_KMF_WIRED);
 }
 #endif /* PAE */
 
@@ -1931,20 +1983,16 @@ pmap_create(void)
 	pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 
 	/* allocate PDP */
-#ifndef PAE
  try_again:
-#endif
-	pmap->pm_pdir = pmap_pdp_alloc();
+	pmap->pm_pdir = pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
 
 	mutex_enter(&pmaps_lock);
 
-#ifndef PAE
 	if (pmap->pm_pdir[PDIR_SLOT_KERN + nkptp[PTP_LEVELS - 1] - 1] == 0) {
 		mutex_exit(&pmaps_lock);
-		pmap_pdp_free(pmap->pm_pdir);
+		pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
 		goto try_again;
 	}
-#endif
 
 #ifdef PAE
 	for (i = 0; i < PDP_SIZE; i++)
@@ -2031,7 +2079,7 @@ pmap_destroy(struct pmap *pmap)
 	 * MULTIPROCESSOR -- no need to flush out of other processors'
 	 * APTE space because we do that in pmap_unmap_ptes().
 	 */
-	pmap_pdp_free(pmap->pm_pdir);
+	pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
@@ -3657,12 +3705,10 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	if (va == (vaddr_t) PDP_BASE || va == (vaddr_t) APDP_BASE)
 		panic("pmap_enter: trying to map over PDP/APDP!");
 
-#ifndef PAE /* XXXPAE */
 	/* sanity check: kernel PTPs should already have been pre-allocated */
 	if (va >= VM_MIN_KERNEL_ADDRESS &&
 	    !pmap_valid_entry(pmap->pm_pdir[pl_i(va, PTP_LEVELS)]))
 		panic("pmap_enter: missing kernel PTP for va %lx!", va);
-#endif
 #endif /* DIAGNOSTIC */
 #ifdef XEN
 	KASSERT(domid == DOMID_SELF || pa == 0);
@@ -4120,12 +4166,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	mutex_exit(&kpm->pm_lock);
 	splx(s);
 
-#ifndef PAE
 	if (invalidate) {
 		/* Invalidate the PDP cache. */
 		pool_cache_invalidate(&pmap_pdp_cache);
 	}
-#endif
 
 #ifdef XEN
 	printk("pmap_growkernel return 0x%lx\n", maxkvaddr);
@@ -4457,110 +4501,4 @@ pmap_init_tmp_pgtbl(paddr_t pg)
 	tmp_pml[pl_i(pg, 1)] = (pg & PG_FRAME) | PG_RW | PG_V;
 
 	return x86_tmp_pml_paddr[PTP_LEVELS - 1];
-}
-
-/*
- * pmap_pdp_alloc: get a new PDP
- */
-
-pd_entry_t *
-pmap_pdp_alloc()
-{
-#ifdef PAE
-	pd_entry_t *pdir;
-	paddr_t pdirpa = 0;	/* XXX: GCC */
-	vaddr_t object;
-
-	int i;
-	int s;
-
-	/*
-	 * NOTE: The `pmap_lock' is held when the PDP is allocated.
-	 */
-
-	/* allocate memory */
-	pdir = (pd_entry_t *)uvm_km_alloc(kernel_map, PAGE_SIZE * PDP_SIZE, 0,
-	    UVM_KMF_WAITVA | UVM_KMF_WIRED | UVM_KMF_ZERO);
-	if (pdir == NULL)
-		return NULL;
-	/* copy kernel's PDE */
-	memcpy(&pdir[PDIR_SLOT_KERN], &PDP_BASE[PDIR_SLOT_KERN],
-	    nkptp[PTP_LEVELS - 1] * sizeof(pd_entry_t));
-
-	/* enter recursive mappings */
-	object = (vaddr_t)pdir;
-	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
-		/* fetch the physical address of the page directory. */
-		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		/* put in recursive PDE to map the PTEs */
-		pdir[PDIR_SLOT_PTE + i] = pmap_pa2pte(pdirpa) | PG_V;
-#ifndef XEN
-		pdir[PDIR_SLOT_PTE + i] |= PG_KW;
-#endif
-	}
-#ifdef XEN
-	s = splvm();
-	object = (vaddr_t)pdir;
-	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
-		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		/* remap this page RO */
-		pmap_kenter_pa(object, pdirpa, VM_PROT_READ);
-		pmap_update(pmap_kernel());
-		/*
-		 * pin as L2/L4 page, we have to do the page with the
-		 * PDIR_SLOT_PTE entries last
-		 */
-		if (i == l2tol3(PDIR_SLOT_PTE))
-			continue;
-		xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
-	}
-	object = ((vaddr_t)pdir) + PAGE_SIZE  * l2tol3(PDIR_SLOT_PTE);
-	(void)pmap_extract(pmap_kernel(), object, &pdirpa);
-	xpq_queue_pin_table(xpmap_ptom_masked(pdirpa));
-	xpq_flush_queue();
-	splx(s);
-#endif
-
-	return (pdir);
-#else /* PAE */
-	return (pd_entry_t*)pool_cache_get(&pmap_pdp_cache, PR_WAITOK);
-#endif /* PAE */
-}
-
-/*
- * pmap_pdp_free: free a PDP
- */
-
-void
-pmap_pdp_free(pd_entry_t *pdp)
-{
-#ifdef PAE
-#ifdef XEN
-	paddr_t pdirpa = 0;	/* XXX: GCC */
-	vaddr_t object = (vaddr_t)pdp;
-	int i;
-	int s = splvm();
-	pt_entry_t *pte;
-
-	/* fetch the physical address of the page directory. */
-	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
-		(void) pmap_extract(pmap_kernel(), object, &pdirpa);
-		/* unpin page table */
-		xpq_queue_unpin_table(xpmap_ptom_masked(pdirpa));
-	}
-	object = (vaddr_t)pdp;
-	for (i = 0; i < PDP_SIZE; i++, object += PAGE_SIZE) {
-		/* Set page RW again */
-		pte = kvtopte(object);
-		xpq_queue_pte_update(xpmap_ptetomach(pte), *pte | PG_RW);
-		xpq_queue_invlpg((vaddr_t)object);
-	}
-	xpq_flush_queue();
-	splx(s);
-#endif  /* XEN */
-	uvm_km_free(kernel_map, (vaddr_t)pdp, PAGE_SIZE * PDP_SIZE,
-	    UVM_KMF_WIRED);
-#else /* PAE */
-	pool_cache_destruct_object(&pmap_pdp_cache, pdp);
-#endif /* PAE */
 }
