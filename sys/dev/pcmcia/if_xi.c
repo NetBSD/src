@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.62 2007/09/01 07:32:31 dyoung Exp $ */
+/*	$NetBSD: if_xi.c,v 1.63 2008/01/19 22:10:21 dyoung Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.62 2007/09/01 07:32:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.63 2008/01/19 22:10:21 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -152,7 +152,6 @@ STATIC int xi_ioctl(struct ifnet *, u_long, void *);
 STATIC int xi_mdi_read(struct device *, int, int);
 STATIC void xi_mdi_write(struct device *, int, int, int);
 STATIC int xi_mediachange(struct ifnet *);
-STATIC void xi_mediastatus(struct ifnet *, struct ifmediareq *);
 STATIC u_int16_t xi_get(struct xi_softc *);
 STATIC void xi_reset(struct xi_softc *);
 STATIC void xi_set_address(struct xi_softc *);
@@ -241,8 +240,9 @@ xi_attach(sc, myea)
 	sc->sc_mii.mii_readreg = xi_mdi_read;
 	sc->sc_mii.mii_writereg = xi_mdi_write;
 	sc->sc_mii.mii_statchg = xi_statchg;
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, 0, xi_mediachange,
-	    xi_mediastatus);
+	    ether_mediastatus);
 	DPRINTF(XID_MII | XID_CONFIG,
 	    ("xi: bmsr %x\n", xi_mdi_read(&sc->sc_dev, 0, 1)));
 
@@ -689,25 +689,6 @@ xi_mediachange(ifp)
 	return (0);
 }
 
-/*
- * Notify the world which media we're using.
- */
-STATIC void
-xi_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct xi_softc *sc = ifp->if_softc;
-
-	DPRINTF(XID_CONFIG, ("xi_mediastatus()\n"));
-
-	if (LIST_FIRST(&sc->sc_mii.mii_phys)) {
-		mii_pollstat(&sc->sc_mii);
-		ifmr->ifm_status = sc->sc_mii.mii_media_status;
-		ifmr->ifm_active = sc->sc_mii.mii_media_active;
-	}
-}
-
 STATIC void
 xi_reset(sc)
 	struct xi_softc *sc;
@@ -968,7 +949,6 @@ xi_ioctl(ifp, cmd, data)
 	void *data;
 {
 	struct xi_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	DPRINTF(XID_CONFIG, ("xi_ioctl()\n"));
@@ -1014,7 +994,9 @@ xi_ioctl(ifp, cmd, data)
 			error = EIO;
 			break;
 		}
-
+		/*FALLTHROUGH*/
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
@@ -1024,11 +1006,6 @@ xi_ioctl(ifp, cmd, data)
 				xi_set_address(sc);
 			error = 0;
 		}
-		break;
-
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:

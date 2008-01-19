@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.141 2007/12/09 20:28:08 jmcneill Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.142 2008/01/19 22:10:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.141 2007/12/09 20:28:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.142 2008/01/19 22:10:18 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2710,7 +2710,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 			   MII_PHY_ANY, MII_OFFSET_ANY,
 			   MIIF_FORCEANEG|MIIF_DOPAUSE);
 
-		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
+		if (LIST_EMPTY(&sc->bge_mii.mii_phys)) {
 			aprint_error_dev(sc->bge_dev, "no PHY found!\n");
 			ifmedia_add(&sc->bge_mii.mii_media,
 				    IFM_ETHER|IFM_MANUAL, 0, NULL);
@@ -3269,7 +3269,6 @@ bge_tick(void *xsc)
 {
 	struct bge_softc *sc = xsc;
 	struct mii_data *mii = &sc->bge_mii;
-	struct ifmedia *ifm = NULL;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	int s;
 
@@ -3283,7 +3282,6 @@ bge_tick(void *xsc)
 	}
 
 	if (sc->bge_tbi) {
-		ifm = &sc->bge_ifmedia;
 		if (CSR_READ_4(sc, BGE_MAC_STS) &
 		    BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			sc->bge_link++;
@@ -3924,7 +3922,7 @@ bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	const u_int16_t *m;
-	int s, error;
+	int s, error = 0;
 
 	s = splnet();
 
@@ -3997,16 +3995,18 @@ bge_init(struct ifnet *ifp)
 	BGE_CLRBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
 	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 0);
 
-	bge_ifmedia_upd(ifp);
+	if ((error = bge_ifmedia_upd(ifp)) != 0)
+		goto out;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	splx(s);
-
 	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
 
-	return 0;
+out:
+	splx(s);
+
+	return error;
 }
 
 /*
@@ -4018,6 +4018,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 	struct ifmedia *ifm = &sc->bge_ifmedia;
+	int rc;
 
 	/* If this is a 1000baseX NIC, enable the TBI port. */
 	if (sc->bge_tbi) {
@@ -4043,9 +4044,9 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	}
 
 	sc->bge_link = 0;
-	mii_mediachg(mii);
-
-	return(0);
+	if ((rc = mii_mediachg(mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 /*
