@@ -1,4 +1,4 @@
-# $NetBSD: md.zaurus,v 1.3 2007/07/29 14:32:18 nonaka Exp $
+# $NetBSD: md.zaurus,v 1.4 2008/01/19 13:15:46 chris Exp $
 ./usr/include/zaurus				comp-c-include
 ./usr/include/zaurus/ansi.h			comp-c-include
 ./usr/include/zaurus/aout_machdep.h		comp-c-include
@@ -23,7 +23,7 @@
 ./usr/include/zaurus/int_mwgwtypes.h		comp-c-include
 ./usr/include/zaurus/int_types.h		comp-c-include
 ./usr/include/zaurus/intr.h			comp-c-include
-./usr/include/zaurus/ipkdb.h			comp-c-include
+./usr/include/zaurus/ipkdb.h			comp-obsolete		obsolete
 ./usr/include/zaurus/limits.h			comp-c-include
 ./usr/include/zaurus/lock.h			comp-c-include
 ./usr/include/zaurus/math.h			comp-c-include
