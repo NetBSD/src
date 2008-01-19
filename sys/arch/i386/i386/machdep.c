@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.617.2.10 2008/01/19 12:14:20 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.617.2.11 2008/01/19 14:08:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.10 2008/01/19 12:14:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.617.2.11 2008/01/19 14:08:09 bouyer Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -1466,7 +1466,7 @@ init386(paddr_t first_avail)
 	__PRINTK(("pcb_cr3 0x%lx cr3 0x%lx\n",
 	    PDPpaddr - KERNBASE, xpmap_ptom(PDPpaddr - KERNBASE)));
 	XENPRINTK(("proc0paddr %p first_avail %p\n",
-	    proc0paddr, (void *)first_avail));
+	    proc0paddr, (void *)(long)first_avail));
 	XENPRINTK(("ptdpaddr %p atdevbase %p\n", (void *)PDPpaddr,
 	    (void *)atdevbase));
 #endif
@@ -1823,8 +1823,8 @@ init386(paddr_t first_avail)
 	}
 #else /* !XEN */
 	XENPRINTK(("load the memory cluster %p(%d) - %p(%ld)\n",
-	    (void *)avail_start, (int)atop(avail_start),
-	    (void *)avail_end, (int)atop(avail_end)));
+	    (void *)(long)avail_start, (int)atop(avail_start),
+	    (void *)(long)avail_end, (int)atop(avail_end)));
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end),
 	    VM_FREELIST_DEFAULT);
