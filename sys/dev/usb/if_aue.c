@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.108 2008/01/16 12:33:54 is Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.109 2008/01/19 22:10:20 dyoung Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.108 2008/01/16 12:33:54 is Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.109 2008/01/19 22:10:20 dyoung Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -255,7 +255,6 @@ Static void aue_stop(struct aue_softc *);
 Static void aue_watchdog(struct ifnet *);
 Static int aue_openpipes(struct aue_softc *);
 Static int aue_ifmedia_upd(struct ifnet *);
-Static void aue_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 Static int aue_eeprom_getword(struct aue_softc *, int);
 Static void aue_read_mac(struct aue_softc *, u_char *);
@@ -871,7 +870,8 @@ USB_ATTACH(aue)
 	mii->mii_writereg = aue_miibus_writereg;
 	mii->mii_statchg = aue_miibus_statchg;
 	mii->mii_flags = MIIF_AUTOTSLEEP;
-	ifmedia_init(&mii->mii_media, 0, aue_ifmedia_upd, aue_ifmedia_sts);
+	sc->aue_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, aue_ifmedia_upd, ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
@@ -1561,6 +1561,7 @@ aue_ifmedia_upd(struct ifnet *ifp)
 {
 	struct aue_softc	*sc = ifp->if_softc;
 	struct mii_data		*mii = GET_MII(sc);
+	int rc;
 
 	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __func__));
 
@@ -1568,31 +1569,10 @@ aue_ifmedia_upd(struct ifnet *ifp)
 		return (0);
 
 	sc->aue_link = 0;
-	if (mii->mii_instance) {
-		struct mii_softc	*miisc;
-		for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-		    miisc = LIST_NEXT(miisc, mii_list))
-			 mii_phy_reset(miisc);
-	}
-	mii_mediachg(mii);
 
-	return (0);
-}
-
-/*
- * Report current media status.
- */
-Static void
-aue_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct aue_softc	*sc = ifp->if_softc;
-	struct mii_data		*mii = GET_MII(sc);
-
-	DPRINTFN(5,("%s: %s: enter\n", USBDEVNAME(sc->aue_dev), __func__));
-
-	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
-	ifmr->ifm_status = mii->mii_media_status;
+	if ((rc = mii_mediachg(mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 Static int
@@ -1601,7 +1581,6 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 	struct aue_softc	*sc = ifp->if_softc;
 	struct ifaddr 		*ifa = (struct ifaddr *)data;
 	struct ifreq		*ifr = (struct ifreq *)data;
-	struct mii_data		*mii;
 	int			s, error = 0;
 
 	if (sc->aue_dying)
@@ -1655,6 +1634,8 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
 		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 #if defined(__NetBSD__)
@@ -1666,11 +1647,6 @@ aue_ioctl(struct ifnet *ifp, u_long command, void *data)
 			}
 			error = 0;
 		}
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		mii = GET_MII(sc);
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
 		break;
 	default:
 		error = EINVAL;

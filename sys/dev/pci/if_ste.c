@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.31 2007/10/19 12:00:48 ad Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.32 2008/01/19 22:10:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.31 2007/10/19 12:00:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.32 2008/01/19 22:10:19 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -231,9 +231,6 @@ static void	ste_rxintr(struct ste_softc *);
 static int	ste_mii_readreg(struct device *, int, int);
 static void	ste_mii_writereg(struct device *, int, int, int);
 static void	ste_mii_statchg(struct device *);
-
-static int	ste_mediachange(struct ifnet *);
-static void	ste_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static int	ste_match(struct device *, struct cfdata *, void *);
 static void	ste_attach(struct device *, struct device *, void *);
@@ -474,8 +471,9 @@ ste_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = ste_mii_readreg;
 	sc->sc_mii.mii_writereg = ste_mii_writereg;
 	sc->sc_mii.mii_statchg = ste_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ste_mediachange,
-	    ste_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -804,29 +802,19 @@ static int
 ste_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ste_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				ste_set_filter(sc);
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			ste_set_filter(sc);
+		error = 0;
 	}
 
 	/* Try to get more packets going. */
@@ -1339,7 +1327,8 @@ ste_init(struct ifnet *ifp)
 	/*
 	 * Set the current media.
 	 */
-	mii_mediachg(&sc->sc_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/*
 	 * Start the MAC.
@@ -1682,34 +1671,4 @@ ste_mii_bitbang_write(struct device *self, uint32_t val)
 	struct ste_softc *sc = (void *) self;
 
 	bus_space_write_1(sc->sc_st, sc->sc_sh, STE_PhyCtrl, val);
-}
-
-/*
- * ste_mediastatus:	[ifmedia interface function]
- *
- *	Get the current interface media status.
- */
-static void
-ste_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct ste_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
- * ste_mediachange:	[ifmedia interface function]
- *
- *	Set hardware to newly-selected media.
- */
-static int
-ste_mediachange(struct ifnet *ifp)
-{
-	struct ste_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
 }

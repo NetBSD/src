@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.38 2007/10/19 12:00:49 ad Exp $ */
+/* $NetBSD: if_vge.c,v 1.39 2008/01/19 22:10:19 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.38 2007/10/19 12:00:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.39 2008/01/19 22:10:19 dyoung Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -319,8 +319,6 @@ static int vge_suspend(struct device *);
 static int vge_resume(struct device *);
 #endif
 static void vge_shutdown(void *);
-static int vge_ifmedia_upd(struct ifnet *);
-static void vge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static uint16_t vge_read_eeprom(struct vge_softc *, int);
 
@@ -1053,8 +1051,10 @@ vge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = vge_miibus_readreg;
 	sc->sc_mii.mii_writereg = vge_miibus_writereg;
 	sc->sc_mii.mii_statchg = vge_miibus_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, vge_ifmedia_upd,
-	    vge_ifmedia_sts);
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -1781,7 +1781,7 @@ static int
 vge_init(struct ifnet *ifp)
 {
 	struct vge_softc *sc;
-	int i;
+	int i, rc = 0;
 
 	sc = ifp->if_softc;
 
@@ -1950,7 +1950,8 @@ vge_init(struct ifnet *ifp)
 		CSR_WRITE_1(sc, VGE_CRS3, VGE_CR3_INT_GMSK);
 	}
 
-	mii_mediachg(&sc->sc_mii);
+	if ((rc = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1960,38 +1961,8 @@ vge_init(struct ifnet *ifp)
 
 	callout_schedule(&sc->sc_timeout, hz);
 
-	return 0;
-}
-
-/*
- * Set media options.
- */
-static int
-vge_ifmedia_upd(struct ifnet *ifp)
-{
-	struct vge_softc *sc;
-
-	sc = ifp->if_softc;
-	mii_mediachg(&sc->sc_mii);
-
-	return 0;
-}
-
-/*
- * Report current media status.
- */
-static void
-vge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct vge_softc *sc;
-	struct mii_data *mii;
-
-	sc = ifp->if_softc;
-	mii = &sc->sc_mii;
-
-	mii_pollstat(mii);
-	ifmr->ifm_active = mii->mii_media_active;
-	ifmr->ifm_status = mii->mii_media_status;
+out:
+	return rc;
 }
 
 static void
@@ -2046,7 +2017,6 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vge_softc *sc;
 	struct ifreq *ifr;
-	struct mii_data *mii;
 	int s, error;
 
 	sc = ifp->if_softc;
@@ -2083,8 +2053,7 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		sc->sc_if_flags = ifp->if_flags;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
+	default:
 		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -2094,14 +2063,6 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 				vge_setmulti(sc);
 			error = 0;
 		}
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		mii = &sc->sc_mii;
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
-		break;
-	default:
-		error = ether_ioctl(ifp, command, data);
 		break;
 	}
 

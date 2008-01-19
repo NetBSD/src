@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.6 2008/01/08 02:07:52 matt Exp $	*/
+/*	$NetBSD: ixp425_if_npe.c,v 1.7 2008/01/19 22:10:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.6 2008/01/08 02:07:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.7 2008/01/19 22:10:14 dyoung Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -296,6 +296,7 @@ npe_attach(struct device *parent, struct device *self, void *arg)
 		sc->sc_mii.mii_readreg = npe_miibus_readreg;
 		sc->sc_mii.mii_writereg = npe_miibus_writereg;
 		sc->sc_mii.mii_statchg = npe_miibus_statchg;
+		sc->sc_ethercom.ec_mii = &sc->sc_mii;
 
 		mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff,
 		    (sc->sc_phy > IXPNPECF_PHY_DEFAULT) ?
@@ -660,9 +661,9 @@ npe_ifmedia_change(struct ifnet *ifp)
 {
 	struct npe_softc *sc = ifp->if_softc;
 
-	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT && ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
+	if (sc->sc_phy > IXPNPECF_PHY_DEFAULT)
+		return ether_mediachange(ifp);
+	return 0;
 }
 
 /*
@@ -1266,26 +1267,17 @@ npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch (cmd) {
-  	case SIOCSIFMEDIA:
-  	case SIOCGIFMEDIA:
- 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-  		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if ((ifp->if_flags & IFF_UP) == 0 &&
-			    ifp->if_flags & IFF_RUNNING) {
-				ifp->if_flags &= ~IFF_RUNNING;
-				npestop(&sc->sc_ethercom.ec_if, 0);
-			} else {
-				/* reinitialize card on any parameter change */
-				npeinit_locked(sc);
-			}
-			error = 0;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		if ((ifp->if_flags & IFF_UP) == 0 &&
+		    ifp->if_flags & IFF_RUNNING) {
+			ifp->if_flags &= ~IFF_RUNNING;
+			npestop(&sc->sc_ethercom.ec_if, 0);
+		} else {
+			/* reinitialize card on any parameter change */
+			npeinit_locked(sc);
 		}
-		break;
+		error = 0;
 	}
 
 	npestart(ifp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.41 2007/10/19 12:00:47 ad Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.42 2008/01/19 22:10:18 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.41 2007/10/19 12:00:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.42 2008/01/19 22:10:18 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -422,8 +422,6 @@ static int	pcn_79c970_mediachange(struct ifnet *);
 static void	pcn_79c970_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static void	pcn_79c971_mediainit(struct pcn_softc *);
-static int	pcn_79c971_mediachange(struct ifnet *);
-static void	pcn_79c971_mediastatus(struct ifnet *, struct ifmediareq *);
 
 /*
  * Description of a PCnet-PCI variant.  Used to select media access
@@ -1824,7 +1822,8 @@ pcn_init(struct ifnet *ifp)
 	}
 
 	/* Set the media. */
-	(void) (*sc->sc_mii.mii_media.ifm_change)(ifp);
+	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
+		goto out;
 
 	/* Enable interrupts and external activity (and ACK IDON). */
 	pcn_csr_write(sc, LE_CSR0, LE_C0_INEA|LE_C0_STRT|LE_C0_IDON);
@@ -2142,8 +2141,10 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
 	sc->sc_mii.mii_readreg = pcn_mii_readreg;
 	sc->sc_mii.mii_writereg = pcn_mii_writereg;
 	sc->sc_mii.mii_statchg = pcn_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, pcn_79c971_mediachange,
-	    pcn_79c971_mediastatus);
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
@@ -2152,36 +2153,6 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
-}
-
-/*
- * pcn_79c971_mediastatus:	[ifmedia interface function]
- *
- *	Get the current interface media status (Am79c971 version).
- */
-static void
-pcn_79c971_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct pcn_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
- * pcn_79c971_mediachange:	[ifmedia interface function]
- *
- *	Set hardware to newly-selected media (Am79c971 version).
- */
-static int
-pcn_79c971_mediachange(struct ifnet *ifp)
-{
-	struct pcn_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
 }
 
 /*

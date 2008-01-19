@@ -1,4 +1,4 @@
-/*	$NetBSD: dl10019.c,v 1.8 2007/10/19 11:59:50 ad Exp $	*/
+/*	$NetBSD: dl10019.c,v 1.9 2008/01/19 22:10:16 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.8 2007/10/19 11:59:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dl10019.c,v 1.9 2008/01/19 22:10:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,9 +154,11 @@ dl10019_media_fini(struct dp8390_softc *sc)
 int
 dl10019_mediachange(struct dp8390_softc *sc)
 {
+	int rc;
 
-	mii_mediachg(&sc->sc_mii);
-	return (0);
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 void
