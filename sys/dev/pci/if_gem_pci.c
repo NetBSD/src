@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.25 2008/01/05 20:30:22 jdc Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.26 2008/01/19 15:56:52 aymeric Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.25 2008/01/05 20:30:22 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.26 2008/01/19 15:56:52 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,8 @@ gem_attach_pci(parent, self, aux)
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
 		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
 		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3 ||
-		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC)
+		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC ||
+		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID2_GMAC)
 			sc->sc_variant = GEM_APPLE_GMAC;
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_K2_GMAC)
 			sc->sc_variant = GEM_APPLE_K2_GMAC;
