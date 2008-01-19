@@ -1,4 +1,4 @@
-# $NetBSD: md.iyonix,v 1.4 2007/02/09 22:49:47 ad Exp $
+# $NetBSD: md.iyonix,v 1.5 2008/01/19 13:15:46 chris Exp $
 ./usr/include/iyonix				comp-c-include
 ./usr/include/iyonix/ansi.h			comp-c-include
 ./usr/include/iyonix/aout_machdep.h		comp-c-include
@@ -23,7 +23,7 @@
 ./usr/include/iyonix/int_mwgwtypes.h		comp-c-include
 ./usr/include/iyonix/int_types.h		comp-c-include
 ./usr/include/iyonix/intr.h			comp-c-include
-./usr/include/iyonix/ipkdb.h			comp-c-include
+./usr/include/iyonix/ipkdb.h			comp-obsolete		obsolete
 ./usr/include/iyonix/joystick.h			comp-c-include
 ./usr/include/iyonix/limits.h			comp-c-include
 ./usr/include/iyonix/lock.h			comp-c-include

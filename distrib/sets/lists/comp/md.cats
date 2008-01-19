@@ -1,4 +1,4 @@
-# $NetBSD: md.cats,v 1.12 2007/02/09 22:22:32 ad Exp $
+# $NetBSD: md.cats,v 1.13 2008/01/19 13:15:46 chris Exp $
 ./usr/include/cats				comp-c-include
 ./usr/include/cats/ansi.h			comp-c-include
 ./usr/include/cats/aout_machdep.h		comp-c-include
@@ -24,7 +24,7 @@
 ./usr/include/cats/int_mwgwtypes.h		comp-c-include
 ./usr/include/cats/int_types.h			comp-c-include
 ./usr/include/cats/intr.h			comp-c-include
-./usr/include/cats/ipkdb.h			comp-c-include
+./usr/include/cats/ipkdb.h			comp-obsolete		obsolete
 ./usr/include/cats/joystick.h			comp-c-include
 ./usr/include/cats/limits.h			comp-c-include
 ./usr/include/cats/lock.h			comp-c-include
