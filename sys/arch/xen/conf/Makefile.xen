@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.20.6.6 2008/01/10 13:05:53 bouyer Exp $
+#	$NetBSD: Makefile.xen,v 1.20.6.7 2008/01/19 12:14:50 bouyer Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -120,7 +120,6 @@ locore.o machdep.o: Makefile
 cpufunc.o linux32_sigcode.o lock_stubs.o netbsd32_sigcode.o: assym.h
 .endif
 busfunc.o cpufunc.o: assym.h
-clock.o: config_time.h
 
 ##
 ## (7) misc settings

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.138 2007/11/10 13:06:23 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.138.6.1 2008/01/19 12:15:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -80,6 +80,9 @@
 #endif
 #include <sys/pool.h>
 #include <sys/queue.h>
+#if defined(_KERNEL)
+#include <sys/percpu_types.h>
+#endif /* defined(_KERNEL) */
 
 /* For offsetof() */
 #if defined(_KERNEL) || defined(_STANDALONE)
@@ -110,15 +113,35 @@ struct mowner {
 	char mo_name[16];		/* owner name (fxp0) */
 	char mo_descr[16];		/* owner description (input) */
 	LIST_ENTRY(mowner) mo_link;	/* */
-	u_long mo_claims;		/* # of small mbuf claimed */
-	u_long mo_releases;		/* # of small mbuf released */
-	u_long mo_cluster_claims;	/* # of M_CLUSTER mbuf claimed */
-	u_long mo_cluster_releases;	/* # of M_CLUSTER mbuf released */
-	u_long mo_ext_claims;		/* # of M_EXT mbuf claimed */
-	u_long mo_ext_releases;		/* # of M_EXT mbuf released */
+	struct percpu *mo_counters;
 };
 
 #define MOWNER_INIT(x, y) { .mo_name = x, .mo_descr = y }
+
+enum mowner_counter_index {
+	MOWNER_COUNTER_CLAIMS,		/* # of small mbuf claimed */
+	MOWNER_COUNTER_RELEASES,	/* # of small mbuf released */
+	MOWNER_COUNTER_CLUSTER_CLAIMS,	/* # of M_CLUSTER mbuf claimed */
+	MOWNER_COUNTER_CLUSTER_RELEASES,/* # of M_CLUSTER mbuf released */
+	MOWNER_COUNTER_EXT_CLAIMS,	/* # of M_EXT mbuf claimed */
+	MOWNER_COUNTER_EXT_RELEASES,	/* # of M_EXT mbuf released */
+
+	MOWNER_COUNTER_NCOUNTERS,
+};
+
+#if defined(_KERNEL)
+struct mowner_counter {
+	u_long mc_counter[MOWNER_COUNTER_NCOUNTERS];
+};
+#endif /* defined(_KERNEL) */
+
+/* userland-exported version of struct mowner */
+struct mowner_user {
+	char mo_name[16];		/* owner name (fxp0) */
+	char mo_descr[16];		/* owner description (input) */
+	LIST_ENTRY(mowner) mo_link;	/* unused padding; for compatibility */
+	u_long mo_counter[MOWNER_COUNTER_NCOUNTERS]; /* counters */
+};
 
 /*
  * Macros for type conversion
@@ -374,63 +397,28 @@ do {									\
 
 #ifdef MBUFTRACE
 /*
- * mbuf allocation tracing macros
- *
+ * mbuf allocation tracing
  */
-#define _MOWNERINIT(m, type)						\
-	((m)->m_owner = &unknown_mowners[(type)], (m)->m_owner->mo_claims++)
-
-#define	_MOWNERREF(m, flags)	do {					\
-	if ((flags) & M_EXT)						\
-		(m)->m_owner->mo_ext_claims++;				\
-	if ((flags) & M_CLUSTER)					\
-		(m)->m_owner->mo_cluster_claims++;			\
-} while (/* CONSTCOND */ 0)
-
-#define	MOWNERREF(m, flags)	MBUFLOCK( _MOWNERREF((m), (flags)); );
-
-#define	_MOWNERREVOKE(m, all, flags)	do {				\
-	if ((flags) & M_EXT)						\
-		(m)->m_owner->mo_ext_releases++;			\
-	if ((flags) & M_CLUSTER)					\
-		(m)->m_owner->mo_cluster_releases++;			\
-	if (all) {							\
-		(m)->m_owner->mo_releases++;				\
-		(m)->m_owner = &revoked_mowner;				\
-	}								\
-} while (/* CONSTCOND */ 0)
-
-#define	_MOWNERCLAIM(m, mowner)	do {					\
-	(m)->m_owner = (mowner);					\
-	(mowner)->mo_claims++;						\
-	if ((m)->m_flags & M_EXT)					\
-		(mowner)->mo_ext_claims++;				\
-	if ((m)->m_flags & M_CLUSTER)					\
-		(mowner)->mo_cluster_claims++;				\
-} while (/* CONSTCOND */ 0)
-
-#define	MCLAIM(m, mowner) 						\
-	MBUFLOCK(							\
-		if ((m)->m_owner != (mowner) && (mowner) != NULL) {	\
-			_MOWNERREVOKE((m), 1, (m)->m_flags);		\
-			_MOWNERCLAIM((m), (mowner));			\
-		}							\
-	)
-
-#define	MOWNER_ATTACH(mo)	LIST_INSERT_HEAD(&mowners, (mo), mo_link)
-#define	MOWNER_DETACH(mo)	LIST_REMOVE((mo), mo_link)
+void mowner_init(struct mbuf *, int);
+void mowner_ref(struct mbuf *, int);
+void m_claim(struct mbuf *, struct mowner *);
+void mowner_revoke(struct mbuf *, bool, int);
+void mowner_attach(struct mowner *);
+void mowner_detach(struct mowner *);
+void m_claimm(struct mbuf *, struct mowner *);
 #else
-#define _MOWNERINIT(m, type)		do { } while (/* CONSTCOND */ 0)
-#define	_MOWNERREF(m, flags)		do { } while (/* CONSTCOND */ 0)
-#define	MOWNERREF(m, flags)		do { } while (/* CONSTCOND */ 0)
-#define	_MOWNERREVOKE(m, all, flags)	do { } while (/* CONSTCOND */ 0)
-#define	_MOWNERCLAIM(m, mowner)		do { } while (/* CONSTCOND */ 0)
-#define	MCLAIM(m, mowner) 		do { } while (/* CONSTCOND */ 0)
-#define	MOWNER_ATTACH(mo)		do { } while (/* CONSTCOND */ 0)
-#define	MOWNER_DETACH(mo)		do { } while (/* CONSTCOND */ 0)
+#define mowner_init(m, type)		do { } while (/* CONSTCOND */ 0)
+#define	mowner_ref(m, flags)		do { } while (/* CONSTCOND */ 0)
+#define	mowner_revoke(m, all, flags)	do { } while (/* CONSTCOND */ 0)
+#define	m_claim(m, mowner) 		do { } while (/* CONSTCOND */ 0)
+#define	mowner_attach(mo)		do { } while (/* CONSTCOND */ 0)
+#define	mowner_detach(mo)		do { } while (/* CONSTCOND */ 0)
 #define	m_claimm(m, mo)			do { } while (/* CONSTCOND */ 0)
 #endif
 
+#define	MCLAIM(m, mo)		m_claim((m), (mo))
+#define	MOWNER_ATTACH(mo)	mowner_attach(mo)
+#define	MOWNER_DETACH(mo)	mowner_detach(mo)
 
 /*
  * mbuf allocation/deallocation macros:
@@ -445,39 +433,8 @@ do {									\
  * If 'how' is M_WAIT, these macros (and the corresponding functions)
  * are guaranteed to return successfully.
  */
-#define	MGET(m, how, type)						\
-MBUFLOCK(								\
-	(m) = pool_cache_get(mb_cache,					\
-		(how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
-	if (m) {							\
-		mbstat.m_mtypes[type]++;				\
-		_MOWNERINIT((m), (type));				\
-		(m)->m_type = (type);					\
-		(m)->m_next = (struct mbuf *)NULL;			\
-		(m)->m_nextpkt = (struct mbuf *)NULL;			\
-		(m)->m_data = (m)->m_dat;				\
-		(m)->m_flags = 0;					\
-	}								\
-)
-
-#define	MGETHDR(m, how, type)						\
-MBUFLOCK(								\
-	(m) = pool_cache_get(mb_cache,					\
-	    (how) == M_WAIT ? PR_WAITOK|PR_LIMITFAIL : 0);		\
-	if (m) {							\
-		mbstat.m_mtypes[type]++;				\
-		_MOWNERINIT((m), (type));				\
-		(m)->m_type = (type);					\
-		(m)->m_next = (struct mbuf *)NULL;			\
-		(m)->m_nextpkt = (struct mbuf *)NULL;			\
-		(m)->m_data = (m)->m_pktdat;				\
-		(m)->m_flags = M_PKTHDR;				\
-		(m)->m_pkthdr.rcvif = NULL;				\
-		(m)->m_pkthdr.csum_flags = 0;				\
-		(m)->m_pkthdr.csum_data = 0;				\
-		SLIST_INIT(&(m)->m_pkthdr.tags);			\
-	}								\
-)
+#define	MGET(m, how, type)	m = m_get((how), (type))
+#define	MGETHDR(m, how, type)	m = m_gethdr((how), (type))
 
 #if defined(_KERNEL)
 #define	_M_
@@ -520,7 +477,7 @@ do {									\
 	(n)->m_ext.ext_prevref = (o);					\
 	(o)->m_ext.ext_nextref = (n);					\
 	(n)->m_ext.ext_nextref->m_ext.ext_prevref = (n);		\
-	_MOWNERREF((n), (n)->m_flags);					\
+	mowner_ref((n), (n)->m_flags);					\
 	MCLREFDEBUGN((n), __FILE__, __LINE__);				\
 } while (/* CONSTCOND */ 0)
 
@@ -548,15 +505,12 @@ do {									\
  */
 #define	_MCLGET(m, pool_cache, size, how)				\
 do {									\
-	MBUFLOCK(							\
-		(m)->m_ext.ext_buf =					\
-		    pool_cache_get_paddr((pool_cache),			\
-		        (how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,	\
-			&(m)->m_ext.ext_paddr);				\
-		if ((m)->m_ext.ext_buf != NULL)				\
-			_MOWNERREF((m), M_EXT|M_CLUSTER);		\
-	);								\
+	(m)->m_ext.ext_buf =						\
+	    pool_cache_get_paddr((pool_cache),				\
+		(how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,		\
+		&(m)->m_ext.ext_paddr);					\
 	if ((m)->m_ext.ext_buf != NULL) {				\
+		mowner_ref((m), M_EXT|M_CLUSTER);			\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_CLUSTER|M_EXT_RW;		\
@@ -586,7 +540,7 @@ do {									\
 		(m)->m_ext.ext_arg = NULL;				\
 		(m)->m_ext.ext_type = mbtypes[(m)->m_type];		\
 		MCLINITREFERENCE(m);					\
-		MOWNERREF((m), M_EXT);					\
+		mowner_ref((m), M_EXT);					\
 	}								\
 } while (/* CONSTCOND */ 0)
 
@@ -599,13 +553,13 @@ do {									\
 	(m)->m_ext.ext_arg = (arg);					\
 	(m)->m_ext.ext_type = (type);					\
 	MCLINITREFERENCE(m);						\
-	MOWNERREF((m), M_EXT);						\
+	mowner_ref((m), M_EXT);						\
 } while (/* CONSTCOND */ 0)
 
 #define	MEXTREMOVE(m)							\
 do {									\
+	mowner_revoke((m), 0, (m)->m_flags);				\
 	int _ms_ = splvm(); /* MBUFLOCK */				\
-	_MOWNERREVOKE((m), 0, (m)->m_flags);				\
 	m_ext_free(m, FALSE);						\
 	splx(_ms_);							\
 	(m)->m_flags &= ~M_EXTCOPYFLAGS;				\
@@ -631,12 +585,12 @@ do {									\
  * Place the successor, if any, in n.
  */
 #define	MFREE(m, n)							\
+	mowner_revoke((m), 1, (m)->m_flags);				\
+	mbstat_type_add((m)->m_type, -1);				\
 	MBUFLOCK(							\
-		mbstat.m_mtypes[(m)->m_type]--;				\
 		if ((m)->m_flags & M_PKTHDR)				\
 			m_tag_delete_chain((m), NULL);			\
 		(n) = (m)->m_next;					\
-		_MOWNERREVOKE((m), 1, m->m_flags);			\
 		if ((m)->m_flags & M_EXT) {				\
 			m_ext_free(m, TRUE);				\
 		} else {						\
@@ -757,7 +711,8 @@ do {									\
 /* change mbuf to new type */
 #define MCHTYPE(m, t)							\
 do {									\
-	MBUFLOCK(mbstat.m_mtypes[(m)->m_type]--; mbstat.m_mtypes[t]++;); \
+	mbstat_type_add((m)->m_type, -1);				\
+	mbstat_type_add(t, 1);						\
 	(m)->m_type = t;						\
 } while (/* CONSTCOND */ 0)
 
@@ -845,6 +800,10 @@ struct mbstat {
 	u_short	m_mtypes[256];	/* type specific mbuf allocations */
 };
 
+struct mbstat_cpu {
+	u_int	m_mtypes[256];	/* type specific mbuf allocations */
+};
+
 /*
  * Mbuf sysctl variables.
  */
@@ -911,9 +870,6 @@ void	m_adj(struct mbuf *, int);
 int	m_apply(struct mbuf *, int, int,
 		int (*)(void *, void *, unsigned int), void *);
 void	m_cat(struct mbuf *,struct mbuf *);
-#ifdef MBUFTRACE
-void	m_claimm(struct mbuf *, struct mowner *);
-#endif
 void	m_clget(struct mbuf *, int);
 int	m_mballoc(int, int);
 void	m_copyback(struct mbuf *, int, int, const void *);
@@ -929,6 +885,9 @@ void	m_move_pkthdr(struct mbuf *to, struct mbuf *from);
 /* Inline routines. */
 static __inline u_int m_length(struct mbuf *) __unused;
 static __inline void m_ext_free(struct mbuf *, bool) __unused;
+
+/* Statistics */
+void mbstat_type_add(int, int);
 
 /* Packet tag routines */
 struct	m_tag *m_tag_get(int, int, int);

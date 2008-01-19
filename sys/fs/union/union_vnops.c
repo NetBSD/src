@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.24.4.1 2008/01/02 21:55:42 bouyer Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.24.4.2 2008/01/19 12:15:19 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.24.4.1 2008/01/02 21:55:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.24.4.2 2008/01/19 12:15:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1973,10 +1973,10 @@ union_putpages(v)
 
 	ap->a_vp = OTHERVP(vp);
 	mutex_exit(&vp->v_interlock);
-	mutex_enter(&ap->a_vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
 		return 0;
 	}
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

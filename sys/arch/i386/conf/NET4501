@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.58.6.1 2008/01/08 22:09:56 bouyer Exp $
+# $NetBSD: NET4501,v 1.58.6.2 2008/01/19 12:14:17 bouyer Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.58.6.1 $"
+#ident 		"NET4501-$Revision: 1.58.6.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -21,7 +21,6 @@ makeoptions 	CPUFLAGS="-march=i486 -mtune=i486"
 makeoptions 	COPTS="-Os"
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 

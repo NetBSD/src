@@ -1,4 +1,4 @@
-/*	$NetBSD: wrtvid.c,v 1.6 2002/03/24 18:15:03 scw Exp $	*/
+/*	$NetBSD: wrtvid.c,v 1.6.102.1 2008/01/19 12:14:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -89,30 +89,32 @@
  * Write a big-endian 32-bit value at the specified address
  */
 static void
-write32(u_int8_t *vp, u_int32_t value)
+write32(uint8_t *vp, uint32_t value)
 {
-	*vp++ = (u_int8_t) ((value >> 24) & 0xff);
-	*vp++ = (u_int8_t) ((value >> 16) & 0xff);
-	*vp++ = (u_int8_t) ((value >> 8) & 0xff);
-	*vp = (u_int8_t) (value & 0xff);
+
+	*vp++ = (uint8_t)((value >> 24) & 0xff);
+	*vp++ = (uint8_t)((value >> 16) & 0xff);
+	*vp++ = (uint8_t)((value >> 8) & 0xff);
+	*vp = (uint8_t)(value & 0xff);
 }
 
 /*
  * Write a big-endian 16-bit value at the specified address
  */
 static void
-write16(u_int8_t *vp, u_int16_t value)
+write16(uint8_t *vp, uint16_t value)
 {
-	*vp++ = (u_int8_t) ((value >> 8) & 0xff);
-	*vp = (u_int8_t) (value & 0xff);
+
+	*vp++ = (uint8_t)((value >> 8) & 0xff);
+	*vp = (uint8_t)(value & 0xff);
 }
 
 int
 main(int argc, char **argv)
 {
 	struct stat st;
-	u_int16_t len;
-	u_int8_t *vid;
+	uint16_t len;
+	uint8_t *vid;
 	char *fn;
 	int is_disk;
 	int fd;
@@ -139,7 +141,7 @@ usage:
 	}
 
 	/* How many 256-byte logical blocks (rounded up) */
-	len = (u_int16_t) ((st.st_size + 255) / 256);
+	len = (uint16_t)((st.st_size + 255) / 256);
 
 	/* For tapes, round up to 8k */
 	if (is_disk == 0) {
@@ -178,5 +180,5 @@ usage:
 	close(fd);
 	free(vid);
 
-	return(0);
+	return 0;
 }

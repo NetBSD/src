@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.18.66.1 2008/01/02 21:47:21 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.18.66.2 2008/01/19 12:14:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -213,16 +213,13 @@ ENTRY_NP(abort)
 	b	_C_LABEL(abort)
 
 /*
- * part of doing a system dump, we need to save registers and cpsr onto the
- * stack, then save the rest of the registers into the dumppcb
+ * Part of doing a system dump, we need to save a switchframe onto the
+ * stack, then save the rest of the registers into the dumppcb.
  */
 ENTRY(dumpsys)
 	/* push registers onto stack */
-	stmfd	sp!, {r0-r7, lr}
-	
-	/* push the status bits onto the stack */
-	mrs	r0, cpsr_all
-	stmfd	sp!, {r0}
+	mov	ip, sp
+	stmfd	sp!, {r4-r7, ip, lr}
 
 	/* fill in dumppcb */
 	ldr	r0, .Ldumppcb
@@ -239,9 +236,7 @@ ENTRY(dumpsys)
 	bl	_C_LABEL(dodumpsys)
 
 	/* unwind the stack */
-	ldmfd	sp!, {r0}
-	nop
-	ldmfd	sp!, {r0-r7, pc}
+	ldmfd	sp, {r4-r7, sp, pc}
 
 .Ldumppcb:
 	.word	_C_LABEL(dumppcb)

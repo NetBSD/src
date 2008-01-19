@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.167.2.3 2008/01/10 23:44:27 bouyer Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.167.2.4 2008/01/19 12:15:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167.2.3 2008/01/10 23:44:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.167.2.4 2008/01/19 12:15:22 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -141,6 +141,8 @@ MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 #ifdef TFTPROOT
 int tftproot_dhcpboot(struct device *);
 #endif
+
+dev_t	dumpcdev;	/* for savecore */
 
 void
 uio_setup_sysspace(struct uio *uio)
@@ -473,6 +475,14 @@ void
 doshutdownhooks(void)
 {
 	struct hook_desc *dp;
+
+	if (panicstr != NULL) {
+		/*
+		 * Do as few things as possible after a panic.
+		 * We don't know the state the system is in.
+		 */
+		return;
+	}
 
 	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
@@ -1099,6 +1109,7 @@ setroot(struct device *bootdv, int bootpartition)
 		}
 	}
 
+	dumpcdev = devsw_blk2chr(dumpdev);
 	aprint_normal(" dumps on %s", dumpdv->dv_xname);
 	if (DEV_USES_PARTITIONS(dumpdv))
 		aprint_normal("%c", DISKPART(dumpdev) + 'a');
@@ -1107,6 +1118,7 @@ setroot(struct device *bootdv, int bootpartition)
 
  nodumpdev:
 	dumpdev = NODEV;
+	dumpcdev = NODEV;
 	aprint_normal("\n");
 }
 

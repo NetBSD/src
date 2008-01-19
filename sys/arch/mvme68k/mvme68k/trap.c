@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.93.8.1 2008/01/02 21:48:46 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.93.8.2 2008/01/19 12:14:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.8.1 2008/01/02 21:48:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.8.2 2008/01/19 12:14:30 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -115,18 +115,18 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.93.8.1 2008/01/02 21:48:46 bouyer Exp $")
 #include <compat/sunos/sunos_exec.h>
 #endif
 
-int	writeback __P((struct frame *fp, int docachepush));
-void	trap __P((struct frame *fp, int type, u_int code, u_int v));
+int	writeback(struct frame *fp, int docachepush);
+void	trap(struct frame *fp, int type, u_int code, u_int v);
 
 #if defined(M68040) || defined(M68060)
 #ifdef DEBUG
-void	dumpssw __P((u_short));
-void	dumpwb __P((int, u_short, u_int, u_int));
+void	dumpssw(u_short);
+void	dumpwb(int, u_short, u_int, u_int);
 #endif
 #endif
 
-static inline void userret __P((struct lwp *l, struct frame *fp,
-	    u_quad_t oticks, u_int faultaddr, int fromtrap));
+static inline void userret(struct lwp *l, struct frame *fp,
+    u_quad_t oticks, u_int faultaddr, int fromtrap);
 
 int	astpending;
 
@@ -229,12 +229,8 @@ int mmupid = -1;
  * to user mode.
  */
 static inline void
-userret(l, fp, oticks, faultaddr, fromtrap)
-	struct lwp *l;
-	struct frame *fp;
-	u_quad_t oticks;
-	u_int faultaddr;
-	int fromtrap;
+userret(struct lwp *l, struct frame *fp, u_quad_t oticks, u_int faultaddr,
+    int fromtrap)
 {
 	struct proc *p = l->l_proc;
 #ifdef M68040
@@ -300,10 +296,7 @@ again:
 void machine_userret(struct lwp *, struct frame *, u_quad_t);
 
 void
-machine_userret(l, f, t)
-	struct lwp *l;
-	struct frame *f;
-	u_quad_t t;
+machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 
 	userret(l, f, t, 0, 0);
@@ -316,11 +309,7 @@ machine_userret(l, f, t)
  */
 /*ARGSUSED*/
 void
-trap(fp, type, code, v)
-	struct frame *fp;
-	int type;
-	unsigned code;
-	unsigned v;
+trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 {
 	extern char fubail[], subail[];
 	struct lwp *l;
@@ -655,7 +644,7 @@ trap(fp, type, code, v)
 #if defined(M68030) || defined(M68060)
 				if (cputype == CPU_68040)
 #endif
-					(void) writeback(fp, 1);
+					(void)writeback(fp, 1);
 #endif
 				return;
 			}
@@ -718,9 +707,9 @@ char wberrstr[] =
  */
 static inline void fastcopy16(u_int *, u_int *);
 static inline void
-fastcopy16(src, dst)
-	u_int *src, *dst;
+fastcopy16(u_int *src, u_int *dst)
 {
+
 	*src++ = *dst++;
 	*src++ = *dst++;
 	*src++ = *dst++;
@@ -728,9 +717,7 @@ fastcopy16(src, dst)
 }
 
 int
-writeback(fp, docachepush)
-	struct frame *fp;
-	int docachepush;
+writeback(struct frame *fp, int docachepush)
 {
 	struct fmt7 *f = &fp->f_fmt7;
 	struct lwp *l = curlwp;
@@ -789,7 +776,7 @@ writeback(fp, docachepush)
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",
-			       p->p_pid, p->p_comm, kauth_cred_geteuid(l->l_cred));
+			    p->p_pid, p->p_comm, kauth_cred_geteuid(l->l_cred));
 	} else if ((f->f_ssw & (SSW4_RW|SSW4_TTMASK)) == SSW4_TTM16) {
 		/*
 		 * MOVE16 fault.
@@ -799,23 +786,24 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 		if ((mmudebug & MDB_WBFOLLOW) || MDB_ISPID(p->p_pid))
 			printf(" MOVE16 to VA %x(%x), data %x/%x/%x/%x\n",
-			       f->f_fa, f->f_fa & ~0xF, f->f_pd0, f->f_pd1,
-			       f->f_pd2, f->f_pd3);
+			    f->f_fa, f->f_fa & ~0xF, f->f_pd0, f->f_pd1,
+			    f->f_pd2, f->f_pd3);
 		if (f->f_wb1s & SSW4_WBSV)
-			panic("writeback: MOVE16 with WB1S valid");
+			panic("%s: MOVE16 with WB1S valid", __func__);
 		wbstats.move16s++;
 #endif
 		if (KDFAULT_040(f->f_wb1s))
 			fastcopy16(&f->f_pd0, (u_int *)(f->f_fa & ~0xF));
 		else
-			err = suline((void *)(f->f_fa & ~0xF), (void *)&f->f_pd0);
+			err = suline((void *)(f->f_fa & ~0xF),
+			    (void *)&f->f_pd0);
 		if (err) {
 			fa = f->f_fa & ~0xF;
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
 				printf(wberrstr, p->p_pid, p->p_comm,
-				       "MOVE16", fp->f_pc, f->f_fa,
-				       f->f_fa & ~0xF, f->f_pd0);
+				    "MOVE16", fp->f_pc, f->f_fa,
+				    f->f_fa & ~0xF, f->f_pd0);
 #endif
 		}
 	} else if (f->f_wb1s & SSW4_WBSV) {
@@ -866,8 +854,8 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
 				printf(wberrstr, p->p_pid, p->p_comm,
-				       "#1", fp->f_pc, f->f_fa,
-				       f->f_wb1a, f->f_wb1d);
+				    "#1", fp->f_pc, f->f_fa,
+				    f->f_wb1a, f->f_wb1d);
 #endif
 		}
 	}
@@ -910,8 +898,8 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED) {
 				printf(wberrstr, p->p_pid, p->p_comm,
-				       "#2", fp->f_pc, f->f_fa,
-				       f->f_wb2a, f->f_wb2d);
+				    "#2", fp->f_pc, f->f_fa,
+				    f->f_wb2a, f->f_wb2d);
 				dumpssw(f->f_ssw);
 				dumpwb(2, f->f_wb2s, f->f_wb2a, f->f_wb2d);
 			}
@@ -954,21 +942,20 @@ writeback(fp, docachepush)
 #ifdef DEBUG
 			if (mmudebug & MDB_WBFAILED)
 				printf(wberrstr, p->p_pid, p->p_comm,
-				       "#3", fp->f_pc, f->f_fa,
-				       f->f_wb3a, f->f_wb3d);
+				    "#3", fp->f_pc, f->f_fa,
+				    f->f_wb3a, f->f_wb3d);
 #endif
 		}
 	}
 	l->l_addr->u_pcb.pcb_onfault = oonfault;
 	if (err)
 		err = SIGSEGV;
-	return (err);
+	return err;
 }
 
 #ifdef DEBUG
 void
-dumpssw(ssw)
-	u_short ssw;
+dumpssw(u_short ssw)
 {
 	printf(" SSW: %x: ", ssw);
 	if (ssw & SSW4_CP)
@@ -994,18 +981,15 @@ dumpssw(ssw)
 }
 
 void
-dumpwb(num, s, a, d)
-	int num;
-	u_short s;
-	u_int a, d;
+dumpwb(int num, u_short s, u_int a, u_int d)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	paddr_t pa;
 
 	printf(" writeback #%d: VA %x, data %x, SZ=%s, TT=%s, TM=%s\n",
-	       num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
-	       f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
+	    num, a, d, f7sz[(s & SSW4_SZMASK) >> 5],
+	    f7tt[(s & SSW4_TTMASK) >> 3], f7tm[s & SSW4_TMMASK]);
 	printf("               PA ");
 	if (pmap_extract(p->p_vmspace->vm_map.pmap, (vaddr_t)a, &pa) == false)
 		printf("<invalid address>");

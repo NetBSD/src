@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.6 2005/12/11 12:18:19 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.6.64.1 2008/01/19 12:14:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -46,18 +46,18 @@ extern char bootprog_name[], bootprog_rev[];
 int main(void);
 
 int
-main()
+main(void)
 {
 	char *file;
 	int	flag, part;
 
 	printf(">> %s MVME%x bootsd [%s]\n",
-		bootprog_name, bugargs.cputyp, bootprog_rev);
+	    bootprog_name, bugargs.cputyp, bootprog_rev);
 
 	parse_args(&file, &flag, &part);
 
 	exec_mvme(file, flag, part);
 
 	printf("boot: %s: %s\n", file, strerror(errno));
-	return(0);
+	return 0;
 }

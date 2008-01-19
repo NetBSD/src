@@ -1,7 +1,7 @@
-/* $NetBSD: pmap.c,v 1.228.6.1 2008/01/02 21:46:51 bouyer Exp $ */
+/* $NetBSD: pmap.c,v 1.228.6.2 2008/01/19 12:14:08 bouyer Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000, 2001, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -102,6 +102,8 @@
  *
  *	TLB shootdown code was written by Jason R. Thorpe.
  *
+ *	Multiprocessor modifications by Andrew Doran.
+ *
  * Notes:
  *
  *	All page table access is done via K0SEG.  The one exception
@@ -145,7 +147,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228.6.1 2008/01/02 21:46:51 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.228.6.2 2008/01/19 12:14:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -412,23 +414,18 @@ struct pmap_tlb_shootdown_job {
 };
 
 static struct pmap_tlb_shootdown_q {
-	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;
-	int pq_pte;			/* aggregate PTE bits */
-	int pq_count;			/* number of pending requests */
-	int pq_tbia;			/* pending global flush */
-	kmutex_t pq_lock;		/* spin lock on queue */
-} pmap_tlb_shootdown_q[ALPHA_MAXPROCS];
+	TAILQ_HEAD(, pmap_tlb_shootdown_job) pq_head;	/* queue 16b */
+	kmutex_t pq_lock;		/* spin lock on queue 12b */
+	int pq_pte;			/* aggregate PTE bits 4b */
+	int pq_count;			/* number of pending requests 4b */
+	int pq_tbia;			/* pending global flush 4b */
+	uint8_t pq_pad[64-16-12-4-4-4];	/* pad to 64 bytes */
+} pmap_tlb_shootdown_q[ALPHA_MAXPROCS] __aligned(CACHE_LINE_SIZE);
 
 /* If we have more pending jobs than this, we just nail the whole TLB. */
 #define	PMAP_TLB_SHOOTDOWN_MAXJOBS	6
 
-static struct pool pmap_tlb_shootdown_job_pool;
-
-static void	pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *);
-static struct pmap_tlb_shootdown_job *pmap_tlb_shootdown_job_get
-						(struct pmap_tlb_shootdown_q *);
-static void	pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *,
-					   struct pmap_tlb_shootdown_job *);
+static struct pool_cache pmap_tlb_shootdown_job_cache;
 #endif /* MULTIPROCESSOR */
 
 #define	PAGE_IS_MANAGED(pa)	(vm_physseg_find(atop(pa), NULL) != -1)
@@ -905,11 +902,12 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	pmap_ncpuids = ncpuids;
 	pool_cache_bootstrap(&pmap_pmap_cache, PMAP_SIZEOF(pmap_ncpuids), 0,
-	    0, 0, "pmappl", NULL, IPL_NONE, NULL, NULL, NULL);
-	pool_cache_bootstrap(&pmap_l1pt_cache, PAGE_SIZE, 0, 0, 0, "l1ptpl",
+	    0, 0, "pmap", NULL, IPL_NONE, NULL, NULL, NULL);
+	pool_cache_bootstrap(&pmap_l1pt_cache, PAGE_SIZE, 0, 0, 0, "pmapl1pt",
 	    &pmap_l1pt_allocator, IPL_NONE, pmap_l1pt_ctor, NULL, NULL);
 	pool_cache_bootstrap(&pmap_pv_cache, sizeof(struct pv_entry), 0, 0,
-	    0, "pvpl", &pmap_pv_page_allocator, IPL_NONE, NULL, NULL, NULL);
+	    PR_LARGECACHE, "pmappv", &pmap_pv_page_allocator, IPL_NONE, NULL,
+	    NULL, NULL);
 
 	TAILQ_INIT(&pmap_all_pmaps);
 
@@ -950,9 +948,9 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	/*
 	 * Initialize the TLB shootdown queues.
 	 */
-	pool_init(&pmap_tlb_shootdown_job_pool,
-	    sizeof(struct pmap_tlb_shootdown_job), 0, 0, 0, "pmaptlbpl", NULL,
-	    IPL_VM);
+	pool_cache_bootstrap(&pmap_tlb_shootdown_job_cache,
+	    sizeof(struct pmap_tlb_shootdown_job), CACHE_LINE_SIZE,
+	     0, PR_LARGECACHE, "pmaptlb", NULL, IPL_VM, NULL, NULL, NULL);
 	for (i = 0; i < ALPHA_MAXPROCS; i++) {
 		TAILQ_INIT(&pmap_tlb_shootdown_q[i].pq_head);
 		mutex_init(&pmap_tlb_shootdown_q[i].pq_lock, MUTEX_DEFAULT,
@@ -3674,20 +3672,30 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 
 		pq = &pmap_tlb_shootdown_q[ci->ci_cpuid];
 
-		mutex_spin_enter(&pq->pq_lock);
-
-		pq->pq_pte |= pte;
+		/*
+		 * Allocate a job.
+		 */
+		if (pq->pq_count < PMAP_TLB_SHOOTDOWN_MAXJOBS) {
+			pj = pool_cache_get(&pmap_tlb_shootdown_job_cache,
+			    PR_NOWAIT);
+		} else {
+			pj = NULL;
+		}
 
 		/*
 		 * If a global flush is already pending, we
 		 * don't really have to do anything else.
 		 */
+		mutex_spin_enter(&pq->pq_lock);
+		pq->pq_pte |= pte;
 		if (pq->pq_tbia) {
 			mutex_spin_exit(&pq->pq_lock);
+			if (pj != NULL) {
+				pool_cache_put(&pmap_tlb_shootdown_job_cache,
+				    pj);
+			}
 			continue;
 		}
-
-		pj = pmap_tlb_shootdown_job_get(pq);
 		if (pj == NULL) {
 			/*
 			 * Couldn't allocate a job entry.  Just
@@ -3698,11 +3706,10 @@ pmap_tlb_shootdown(pmap_t pmap, vaddr_t va, pt_entry_t pte, u_long *cpumaskp)
 			pj->pj_pmap = pmap;
 			pj->pj_va = va;
 			pj->pj_pte = pte;
+			pq->pq_count++;
 			TAILQ_INSERT_TAIL(&pq->pq_head, pj, pj_list);
 		}
-
 		cpumask |= 1UL << ci->ci_cpuid;
-
 		mutex_spin_exit(&pq->pq_lock);
 	}
 
@@ -3733,90 +3740,35 @@ pmap_do_tlb_shootdown(struct cpu_info *ci, struct trapframe *framep)
 	u_long cpu_id = ci->ci_cpuid;
 	u_long cpu_mask = (1UL << cpu_id);
 	struct pmap_tlb_shootdown_q *pq = &pmap_tlb_shootdown_q[cpu_id];
-	struct pmap_tlb_shootdown_job *pj;
+	struct pmap_tlb_shootdown_job *pj, *next;
+	TAILQ_HEAD(, pmap_tlb_shootdown_job) jobs;
+
+	TAILQ_INIT(&jobs);
 
 	mutex_spin_enter(&pq->pq_lock);
-
+	TAILQ_CONCAT(&jobs, &pq->pq_head, pj_list);
 	if (pq->pq_tbia) {
 		if (pq->pq_pte & PG_ASM)
 			ALPHA_TBIA();
 		else
 			ALPHA_TBIAP();
 		pq->pq_tbia = 0;
-		pmap_tlb_shootdown_q_drain(pq);
+		pq->pq_pte = 0;
 	} else {
-		while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-			TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
+		TAILQ_FOREACH(pj, &jobs, pj_list) {
 			PMAP_INVALIDATE_TLB(pj->pj_pmap, pj->pj_va,
 			    pj->pj_pte & PG_ASM,
 			    pj->pj_pmap->pm_cpus & cpu_mask, cpu_id);
-			pmap_tlb_shootdown_job_put(pq, pj);
 		}
 		pq->pq_pte = 0;
 	}
-
+	pq->pq_count = 0;
 	mutex_spin_exit(&pq->pq_lock);
-}
 
-/*
- * pmap_tlb_shootdown_q_drain:
- *
- *	Drain a processor's TLB shootdown queue.  We do not perform
- *	the shootdown operations.  This is merely a convenience
- *	function.
- *
- *	Note: We expect the queue to be locked.
- */
-static void
-pmap_tlb_shootdown_q_drain(struct pmap_tlb_shootdown_q *pq)
-{
-	struct pmap_tlb_shootdown_job *pj;
-
-	while ((pj = TAILQ_FIRST(&pq->pq_head)) != NULL) {
-		TAILQ_REMOVE(&pq->pq_head, pj, pj_list);
-		pmap_tlb_shootdown_job_put(pq, pj);
+	/* Free jobs back to the cache. */
+	for (pj = TAILQ_FIRST(&jobs); pj != NULL; pj = next) {
+		next = TAILQ_NEXT(pj, pj_list);
+		pool_cache_put(&pmap_tlb_shootdown_job_cache, pj);
 	}
-	pq->pq_pte = 0;
-}
-
-/*
- * pmap_tlb_shootdown_job_get:
- *
- *	Get a TLB shootdown job queue entry.  This places a limit on
- *	the number of outstanding jobs a processor may have.
- *
- *	Note: We expect the queue to be locked.
- */
-static struct pmap_tlb_shootdown_job *
-pmap_tlb_shootdown_job_get(struct pmap_tlb_shootdown_q *pq)
-{
-	struct pmap_tlb_shootdown_job *pj;
-
-	if (pq->pq_count >= PMAP_TLB_SHOOTDOWN_MAXJOBS)
-		return (NULL);
-	pj = pool_get(&pmap_tlb_shootdown_job_pool, PR_NOWAIT);
-	if (pj != NULL)
-		pq->pq_count++;
-	return (pj);
-}
-
-/*
- * pmap_tlb_shootdown_job_put:
- *
- *	Put a TLB shootdown job queue entry onto the free list.
- *
- *	Note: We expect the queue to be locked.
- */
-static void
-pmap_tlb_shootdown_job_put(struct pmap_tlb_shootdown_q *pq,
-    struct pmap_tlb_shootdown_job *pj)
-{
-
-#ifdef DIAGNOSTIC
-	if (pq->pq_count == 0)
-		panic("pmap_tlb_shootdown_job_put: queue length inconsistency");
-#endif
-	pool_put(&pmap_tlb_shootdown_job_pool, pj);
-	pq->pq_count--;
 }
 #endif /* MULTIPROCESSOR */

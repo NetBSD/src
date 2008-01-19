@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.58.14.4 2008/01/11 19:19:16 bouyer Exp $	*/
+/*	$NetBSD: route.h,v 1.58.14.5 2008/01/19 12:15:30 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -402,12 +402,6 @@ rtcache_getdst(const struct route *ro)
 	return ro->ro_sa;
 }
 
-static inline struct rtentry *
-rtcache_getrt(const struct route *ro)
-{
-	return ro->_ro_rt;
-}
-
 /* If the cache is not empty, and the cached route is still present
  * in the routing table, return the cached route.  Otherwise, return
  * NULL.
@@ -421,21 +415,6 @@ rtcache_validate(const struct route *ro)
 		return rt;
 	return NULL;
 
-}
-
-static inline void
-rtcache_check1(struct route *ro, int clone)
-{
-	/* XXX The rt_ifp check should be asserted. */
-	if (rtcache_validate(ro) == NULL)
-		rtcache_update(ro, clone);
-	KASSERT(ro->_ro_rt == NULL || ro->_ro_rt->rt_ifp != NULL);
-}
-
-static inline void
-rtcache_check(struct route *ro)
-{
-	return rtcache_check1(ro, 1);
 }
 
 static inline void

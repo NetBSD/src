@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.33.2.1 2008/01/10 23:44:24 bouyer Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.33.2.2 2008/01/19 12:15:11 bouyer Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.33.2.1 2008/01/10 23:44:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.33.2.2 2008/01/19 12:15:11 bouyer Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -790,10 +790,8 @@ wpi_node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct wpi_node *wn;
 
-	wn = malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT);
+	wn = malloc(sizeof (struct wpi_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 
-	if (wn != NULL)
-		memset(wn, 0, sizeof (struct wpi_node));
 	return (struct ieee80211_node *)wn;
 }
 

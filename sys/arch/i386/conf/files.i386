@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.323.2.3 2008/01/10 23:43:21 bouyer Exp $
+#	$NetBSD: files.i386,v 1.323.2.4 2008/01/19 12:14:18 bouyer Exp $
 #
 # new style config file for i386 architecture
 #
@@ -23,9 +23,6 @@ defflag			XBOX
 # VM86 emulation
 defflag			VM86
 defflag			KVM86
-
-# Floating point emulation
-defflag			MATH_EMULATE
 
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
@@ -75,6 +72,7 @@ file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
@@ -84,7 +82,6 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
-file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c

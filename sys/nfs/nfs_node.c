@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.96.6.1 2008/01/02 21:57:42 bouyer Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.96.6.2 2008/01/19 12:15:37 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.96.6.1 2008/01/02 21:57:42 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.96.6.2 2008/01/19 12:15:37 bouyer Exp $");
 
 #include "opt_nfs.h"
 
@@ -230,8 +230,6 @@ nfs_inactive(v)
 	struct vnode *vp = ap->a_vp;
 
 	np = VTONFS(vp);
-	if (prtactive && vp->v_usecount != 0)
-		vprint("nfs_inactive: pushing active", vp);
 	if (vp->v_type != VDIR) {
 		sp = np->n_sillyrename;
 		np->n_sillyrename = (struct sillyrename *)0;
@@ -288,7 +286,7 @@ nfs_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct nfsnode *np = VTONFS(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("nfs_reclaim: pushing active", vp);
 
 	LIST_REMOVE(np, n_hash);

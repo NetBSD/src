@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcctwo.c,v 1.11 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: zs_pcctwo.c,v 1.11.64.1 2008/01/19 12:14:27 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.11 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.11.64.1 2008/01/19 12:14:27 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_pcctwo.c,v 1.11 2005/12/11 12:18:17 christos Exp 
 #include <mvme68k/dev/mainbus.h>
 #include <mvme68k/dev/zsvar.h>
 
+#include "ioconf.h"
 
 /* Definition of the driver for autoconfig. */
 static int	zsc_pcctwo_match(struct device *, struct cfdata *, void *);
@@ -83,8 +84,6 @@ static void	zsc_pcctwo_attach(struct device *, struct device *, void *);
 CFATTACH_DECL(zsc_pcctwo, sizeof(struct zsc_softc),
     zsc_pcctwo_match, zsc_pcctwo_attach, NULL, NULL);
 
-extern struct cfdriver zsc_cd;
-
 cons_decl(zsc_pcctwo);
 
 
@@ -92,33 +91,27 @@ cons_decl(zsc_pcctwo);
  * Is the zs chip present?
  */
 static int
-zsc_pcctwo_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+zsc_pcctwo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcctwo_attach_args *pa = aux;
 
 	if (strcmp(pa->pa_name, zsc_cd.cd_name) ||
 	    (machineid != MVME_162 && machineid != MVME_172))
-		return (0);
+		return 0;
 
 	pa->pa_ipl = cf->pcctwocf_ipl;
 	if (pa->pa_ipl == -1)
 		pa->pa_ipl = ZSHARD_PRI;
-	return (1);
+	return 1;
 }
 
 /*
  * Attach a found zs.
  */
 static void
-zsc_pcctwo_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+zsc_pcctwo_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct zsc_softc *zsc = (void *) self;
+	struct zsc_softc *zsc = (void *)self;
 	struct pcctwo_attach_args *pa = aux;
 	struct zsdevice zs;
 	bus_space_handle_t bush;
@@ -131,10 +124,10 @@ zsc_pcctwo_attach(parent, self, aux)
 	zs_level = pa->pa_ipl;
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */
-	zs.zs_chan_b.zc_csr = (volatile u_char *) bush + 1;
-	zs.zs_chan_b.zc_data = (volatile u_char *) bush + 3;
-	zs.zs_chan_a.zc_csr = (volatile u_char *) bush + 5;
-	zs.zs_chan_a.zc_data = (volatile u_char *) bush + 7;
+	zs.zs_chan_b.zc_csr = (volatile u_char *)bush + 1;
+	zs.zs_chan_b.zc_data = (volatile u_char *)bush + 3;
+	zs.zs_chan_a.zc_csr = (volatile u_char *)bush + 5;
+	zs.zs_chan_a.zc_data = (volatile u_char *)bush + 7;
 
 	/* Do common parts of SCC configuration. */
 	zs_config(zsc, &zs, vector + PCCTWO_VECBASE, PCLK_162);
@@ -161,8 +154,7 @@ zsc_pcctwo_attach(parent, self, aux)
  * Check for SCC console.  The MVME-1x2 always uses unit 0 chan 0.
  */
 void
-zsc_pcctwocnprobe(cp)
-	struct consdev *cp;
+zsc_pcctwocnprobe(struct consdev *cp)
 {
 	extern const struct cdevsw zstty_cdevsw;
 
@@ -177,20 +169,20 @@ zsc_pcctwocnprobe(cp)
 }
 
 void
-zsc_pcctwocninit(cp)
-	struct consdev *cp;
+zsc_pcctwocninit(struct consdev *cp)
 {
 	bus_space_handle_t bush;
 	struct zsdevice zs;
 
 	bus_space_map(&_mainbus_space_tag,
-	    intiobase_phys + MAINBUS_PCCTWO_OFFSET + MCCHIP_ZS0_OFF, 8, 0,&bush);
+	    intiobase_phys + MAINBUS_PCCTWO_OFFSET + MCCHIP_ZS0_OFF, 8, 0,
+	    &bush);
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */
-	zs.zs_chan_b.zc_csr = (volatile u_char *) bush + 1;
-	zs.zs_chan_b.zc_data = (volatile u_char *) bush + 3;
-	zs.zs_chan_a.zc_csr = (volatile u_char *) bush + 5;
-	zs.zs_chan_a.zc_data = (volatile u_char *) bush + 7;
+	zs.zs_chan_b.zc_csr = (volatile u_char *)bush + 1;
+	zs.zs_chan_b.zc_data = (volatile u_char *)bush + 3;
+	zs.zs_chan_a.zc_csr = (volatile u_char *)bush + 5;
+	zs.zs_chan_a.zc_data = (volatile u_char *)bush + 7;
 
 	/* Do common parts of console init. */
 	zs_cnconfig(0, 0, &zs, PCLK_162);

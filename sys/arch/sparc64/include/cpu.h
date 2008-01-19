@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68 2007/12/09 20:12:54 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.68.2.1 2008/01/19 12:14:44 bouyer Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -204,13 +204,13 @@ void	cpu_boot_secondary_processors(void);
 
 /*
  * Call a function on other cpus:
- *	multicast - send to everyone in the cpuset_t
+ *	multicast - send to everyone in the sparc64_cpuset_t
  *	broadcast - send to to all cpus but ourselves
  *	send - send to just this cpu
  */
 typedef void (* ipifunc_t)(void *);
 
-void	sparc64_multicast_ipi (cpuset_t, ipifunc_t);
+void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t);
 void	sparc64_broadcast_ipi (ipifunc_t);
 void	sparc64_send_ipi (int, ipifunc_t);
 #endif

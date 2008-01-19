@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.9.4.1 2008/01/02 21:56:06 bouyer Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.9.4.2 2008/01/19 12:15:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.9.4.1 2008/01/02 21:56:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.9.4.2 2008/01/19 12:15:23 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -136,7 +136,7 @@ extern unsigned int sched_pstats_ticks; /* defined in kern_synch.c */
 kmutex_t runqueue_lock;
 
 /* Number of hardclock ticks per sched_tick() */
-int rrticks;
+static int rrticks;
 
 const int schedppq = 1;
 
@@ -642,6 +642,12 @@ void
 sched_enqueue(struct lwp *l, bool ctxswitch)
 {
 
+	if (__predict_false(l->l_target_cpu != NULL)) {
+		/* Global mutex is used - just change the CPU */
+		l->l_cpu = l->l_target_cpu;
+		l->l_target_cpu = NULL;
+	}
+
 	if ((l->l_flag & LW_BOUND) != 0)
 		runqueue_enqueue(l->l_cpu->ci_schedstate.spc_sched_info, l);
 	else
@@ -740,8 +746,20 @@ sched_lwp_collect(struct lwp *t)
 }
 
 /*
- * sysctl setup.  XXX This should be split with kern_synch.c.
+ * Sysctl nodes and initialization.
  */
+
+static int
+sysctl_sched_rtts(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int rttsms = hztoms(rrticks);
+
+	node = *rnode;
+	node.sysctl_data = &rttsms;
+	return sysctl_lookup(SYSCTLFN_CALL(&node));
+}
+
 SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 {
 	const struct sysctlnode *node = NULL;
@@ -764,6 +782,12 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl kern.sched subtree setup")
 		CTLFLAG_PERMANENT,
 		CTLTYPE_STRING, "name", NULL,
 		NULL, 0, __UNCONST("4.4BSD"), 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &node, NULL,
+		CTLFLAG_PERMANENT,
+		CTLTYPE_INT, "rtts",
+		SYSCTL_DESCR("Round-robin time quantum (in miliseconds)"),
+		sysctl_sched_rtts, 0, NULL, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_READWRITE,

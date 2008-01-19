@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.15 2007/03/09 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.15.34.1 2008/01/19 12:14:12 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -81,7 +81,9 @@ struct clockframe {
 };
 
 /*
- * Switch frame
+ * Switch frame.
+ *
+ * Should be a multiple of 8 bytes for dumpsys.
  */
 
 struct switchframe {
@@ -89,6 +91,7 @@ struct switchframe {
 	u_int	sf_r5;
 	u_int	sf_r6;
 	u_int	sf_r7;
+	u_int	sf_sp;
 	u_int	sf_pc;
 };
  

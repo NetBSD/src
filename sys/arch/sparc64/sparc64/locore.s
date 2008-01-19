@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.262.2.1 2008/01/08 22:10:28 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.262.2.2 2008/01/19 12:14:45 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3182,7 +3182,7 @@ softtrap:
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
 	or	%g5, %lo(EINTSTACK-STKB), %g5
 	dec	%g7
-	sub	%g5, %g6, %g5
+	sub	%g5, %sp, %g5
 	sethi	%hi(CPCB), %g6
 	andncc	%g5, %g7, %g0
 	bnz,pt	%xcc, Lslowtrap_reenter
@@ -6734,6 +6734,7 @@ Lsw_noras:
  */
 ENTRY(snapshot)
 	rdpr	%pstate, %o1		! save psr
+	stx	%o7, [%o0 + PCB_PC]	! save pc
 	stx	%o6, [%o0 + PCB_SP]	! save sp
 	rdpr	%pil, %o2
 	sth	%o1, [%o0 + PCB_PSTATE]

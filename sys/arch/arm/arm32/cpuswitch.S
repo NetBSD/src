@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.50 2007/10/17 19:53:30 garbled Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.50.8.1 2008/01/19 12:14:11 bouyer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -109,23 +109,6 @@
 	bic	r14, r14, #(I32_bit) ; \
 	msr	cpsr_c, r14 ; \
 
-/*
- * These are used for switching the translation table/DACR.
- * Since the vector page can be invalid for a short time, we must
- * disable both regular IRQs *and* FIQs.
- *
- * XXX: This is not necessary if the vector table is relocated.
- */
-#define IRQdisableALL \
-	mrs	r14, cpsr ; \
-	orr	r14, r14, #(I32_bit | F32_bit) ; \
-	msr	cpsr_c, r14
-
-#define IRQenableALL \
-	mrs	r14, cpsr ; \
-	bic	r14, r14, #(I32_bit | F32_bit) ; \
-	msr	cpsr_c, r14
-
 	.text
 
 #ifdef MULTIPROCESSOR
@@ -145,9 +128,6 @@
 	.word	_C_LABEL(curpcb)
 #endif
 
-.Lcpufuncs:	
-	.word	_C_LABEL(cpufuncs)
-	
 #ifndef MULTIPROCESSOR
 	.data
 	.global	_C_LABEL(curpcb)
@@ -171,7 +151,8 @@ _C_LABEL(curpcb):
  *	r1	'struct lwp *' of the LWP to switch to
  */
 ENTRY(cpu_switchto)
-	stmfd	sp!, {r4-r7, lr}
+	mov	ip, sp
+	stmfd	sp!, {r4-r7, ip, lr}
 
 	mov	r6, r1		/* save new lwp */
 	mov	r4, r0		/* save old lwp, it's the return value */
@@ -249,13 +230,9 @@ ENTRY(cpu_switchto)
 	/* Get the user structure for the new process in r9 */
 	ldr	r9, [r6, #(L_ADDR)]
 
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
+	/* fetch sp for the undefined instruction trap. */
         mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
+        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
 
 	str	sp, [r8, #(PCB_UND_SP)]
@@ -276,25 +253,21 @@ ENTRY(cpu_switchto)
 	mov	r1, r6
 	bl	_C_LABEL(pmap_switch)
 
-
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
 	/* rem: r9 = new PCB */
+	/* rem: interrupts are enabled */
 
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
+	/* set sp for the undefined instruction trap. */
         mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE)
+        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
         msr	cpsr_c, r2
 
 	ldr	sp, [r9, #(PCB_UND_SP)]
 
         msr	cpsr_c, r3		/* Restore the old mode */
 
-	/* Restore all the save registers */
+	/* Restore all the saved registers */
 #ifndef __XSCALE__
 	add	r7, r9, #PCB_R8
 	ldmia	r7, {r8-r13}
@@ -323,9 +296,6 @@ ENTRY(cpu_switchto)
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
 
-	/* We can enable interrupts again */
-	IRQenableALL
-
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
 	/* rem: r6 = new lwp */
@@ -347,10 +317,10 @@ ENTRY(cpu_switchto)
 	mov	r1, r6
 
 	/*
-	 * Pull the registers that got pushed when either savectx() or
-	 * cpu_switchto() was called and return.
+	 * Pull the registers that got pushed when cpu_switchto() was called,
+	 * and return.
 	 */
-	ldmfd	sp!, {r4-r7, pc}
+	ldmfd	sp, {r4-r7, sp, pc}
 
 .Lswitch_do_ras:
 	ldr	r1, [r1, #(TF_PC)]	/* second ras_lookup() arg */
@@ -361,30 +331,13 @@ ENTRY(cpu_switchto)
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
-
-/* LINTSTUB: Func: void savectx(struct pcb *pcb) */
-ENTRY(savectx)
-	/*
-	 * r0 = pcb
-	 */
-
-	/* Push registers.*/
-	stmfd	sp!, {r4-r7, lr}
-
-	/* Store all the registers in the process's pcb */
-#ifndef __XSCALE__
-	add	r2, r0, #(PCB_R8)
-	stmia	r2, {r8-r13}
-#else
-	strd	r8, [r0, #(PCB_R8)]
-	strd	r10, [r0, #(PCB_R10)]
-	strd	r12, [r0, #(PCB_R12)]
-#endif
-
-	/* Pull the regs of the stack */
-	ldmfd	sp!, {r4-r7, pc}
-
 ENTRY(lwp_trampoline)
+	/*
+	 * cpu_switchto gives us:
+	 *
+	 * arg0(r0) = old lwp
+	 * arg1(r1) = new lwp
+	 */
 	bl	_C_LABEL(lwp_startup)
 
 	mov	r0, r5

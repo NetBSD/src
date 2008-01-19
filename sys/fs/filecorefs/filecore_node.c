@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.12.6.2 2008/01/08 22:11:24 bouyer Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.12.6.3 2008/01/19 12:15:17 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.12.6.2 2008/01/08 22:11:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.12.6.3 2008/01/19 12:15:17 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,9 +233,6 @@ filecore_inactive(v)
 	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("filecore_inactive: pushing active", vp);
-
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
@@ -260,7 +257,7 @@ filecore_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("filecore_reclaim: pushing active", vp);
 	/*
 	 * Remove the inode from its hash chain.

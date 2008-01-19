@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_missing.h,v 1.3.28.1 2008/01/02 21:52:46 bouyer Exp $ */
+/*	$NetBSD: linux32_missing.h,v 1.3.28.2 2008/01/19 12:14:59 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -78,12 +78,12 @@ struct linux_sys_nice_args {
 
 struct linux_sys_getgroups16_args {
         syscallarg(int) gidsetsize;
-        syscallarg(linux_gid_t *) gidset;
+        syscallarg(linux_gid16_t *) gidset;
 };
 
 struct linux_sys_setgroups16_args {
         syscallarg(int) gidsetsize;
-        syscallarg(linux_gid_t *) gidset;
+        syscallarg(linux_gid16_t *) gidset;
 };
 
 #ifdef _KERNEL

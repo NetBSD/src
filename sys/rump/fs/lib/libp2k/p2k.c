@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.31.6.2 2008/01/08 22:11:51 bouyer Exp $	*/
+/*	$NetBSD: p2k.c,v 1.31.6.3 2008/01/19 12:15:38 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -174,7 +174,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
-	puffs_setstacksize(pu, 0);
+	puffs_setstacksize(pu, PUFFS_STACKSIZE_MIN);
 	puffs_usethreads = 1;
 
 	puffs_set_prepost(pu, makelwp, clearlwp);

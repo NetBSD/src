@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.49 2007/03/04 06:02:24 christos Exp $	*/
+/*	$NetBSD: machfb.c,v 1.49.28.1 2008/01/19 12:15:11 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0, 
-	"$NetBSD: machfb.c,v 1.49 2007/03/04 06:02:24 christos Exp $");
+	"$NetBSD: machfb.c,v 1.49.28.1 2008/01/19 12:15:11 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1598,11 +1598,15 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			*(u_int *)data = WSDISPLAY_TYPE_PCIMISC;	
 			return 0;
 
+		case WSDISPLAYIO_LINEBYTES:
+			*(u_int *)data = sc->virt_x * sc->bits_per_pixel / 8;
+			return 0;
+
 		case WSDISPLAYIO_GINFO:
 			wdf = (void *)data;
 			wdf->height = sc->virt_y;
 			wdf->width = sc->virt_x;
-			wdf->depth = sc->color_depth;
+			wdf->depth = sc->bits_per_pixel;
 			wdf->cmsize = 256;
 			return 0;
 			

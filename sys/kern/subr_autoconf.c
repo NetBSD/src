@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.125.2.2 2008/01/08 22:11:39 bouyer Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.125.2.3 2008/01/19 12:15:24 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.125.2.2 2008/01/08 22:11:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.125.2.3 2008/01/19 12:15:24 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -399,8 +399,9 @@ configure(void)
 
 	cold = 0;	/* clocks are running, we're warm now! */
 
-#if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
+	mp_online = true;
+#if defined(MULTIPROCESSOR)
 	cpu_boot_secondary_processors();
 #endif
 

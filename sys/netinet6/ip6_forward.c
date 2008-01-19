@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.58.20.2 2008/01/10 23:44:37 bouyer Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.58.20.3 2008/01/19 12:15:34 bouyer Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.58.20.2 2008/01/10 23:44:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.58.20.3 2008/01/19 12:15:34 bouyer Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_pfil_hooks.h"
@@ -334,7 +334,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
 
 	/* adjust pointer */
-	rt = state.ro ? rtcache_getrt(state.ro) : NULL;
+	rt = state.ro ? rtcache_validate(state.ro) : NULL;
 	dst = (const struct sockaddr_in6 *)state.dst;
 	if (dst != NULL && rt != NULL) {
 		ipsecrt = 1;
@@ -360,32 +360,14 @@ ip6_forward(struct mbuf *m, int srcrt)
 	}
 #endif /* FAST_IPSEC */
 
-	if (!srcrt) {
-		/*
-		 * rtcache_getdst(ip6_forward_rt)->sin6_addr is equal to
-		 * ip6->ip6_dst
-		 */
-		rtcache_check(&ip6_forward_rt);
-		if (rtcache_getrt(&ip6_forward_rt) == NULL) {
-			if (rtcache_init(&ip6_forward_rt) == NULL) {
-				ip6stat.ip6s_noroute++;
-				/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
-				if (mcopy) {
-					icmp6_error(mcopy, ICMP6_DST_UNREACH,
-					    ICMP6_DST_UNREACH_NOROUTE, 0);
-				}
-				m_freem(m);
-				return;
-			}
-		}
-	} else {
+	if (srcrt) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_in6	dst6;
 		} u;
 
 		sockaddr_in6_init(&u.dst6, &ip6->ip6_dst, 0, 0, 0);
-		if (rtcache_lookup(&ip6_forward_rt, &u.dst) == NULL) {
+		if ((rt = rtcache_lookup(&ip6_forward_rt, &u.dst)) == NULL) {
 			ip6stat.ip6s_noroute++;
 			/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
 			if (mcopy) {
@@ -395,9 +377,22 @@ ip6_forward(struct mbuf *m, int srcrt)
 			m_freem(m);
 			return;
 		}
+	} else if ((rt = rtcache_validate(&ip6_forward_rt)) == NULL &&
+	           (rt = rtcache_update(&ip6_forward_rt, 1)) == NULL) {
+		/*
+		 * rtcache_getdst(ip6_forward_rt)->sin6_addr was equal to
+		 * ip6->ip6_dst
+		 */
+		ip6stat.ip6s_noroute++;
+		/* XXX in6_ifstat_inc(rt->rt_ifp, ifs6_in_noroute) */
+		if (mcopy) {
+			icmp6_error(mcopy, ICMP6_DST_UNREACH,
+			    ICMP6_DST_UNREACH_NOROUTE, 0);
+		}
+		m_freem(m);
+		return;
 	}
 	dst = satocsin6(rtcache_getdst(&ip6_forward_rt));
-	rt = rtcache_getrt(&ip6_forward_rt);
 #ifdef IPSEC
     skip_routing:;
 #endif /* IPSEC */
