@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.26 2008/01/19 16:03:48 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.27 2008/01/19 16:05:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 
 #include <time.h>	/* For timespec */
 #include <sched.h>
-#include <sys/featureset.h>
+#include <sys/featuretest.h>
 #ifdef _NETBSD_SOURCE
 #include <sys/pset.h>
 #endif
