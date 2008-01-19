@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2008/01/01 14:06:43 chris Exp $
+#	$NetBSD: Makefile,v 1.36 2008/01/19 13:11:09 chris Exp $
 
 INCSDIR= /usr/include/arm
 
@@ -10,7 +10,6 @@ INCS=	ansi.h aout_machdep.h armreg.h asm.h atomic.h \
 	float.h fp.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	ipkdb.h \
 	kcore.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \

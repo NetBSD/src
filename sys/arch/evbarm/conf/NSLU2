@@ -1,4 +1,4 @@
-#	$NetBSD: NSLU2,v 1.9 2008/01/08 02:06:43 matt Exp $
+#	$NetBSD: NSLU2,v 1.10 2008/01/19 13:11:13 chris Exp $
 #
 #	Linksys NSLU2 "Slug" NAS Device
 #
@@ -136,7 +136,6 @@ options 	CONUNIT=0		# Console port number
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
