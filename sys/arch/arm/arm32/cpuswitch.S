@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.53 2008/01/13 02:43:53 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.54 2008/01/19 15:04:10 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -230,15 +230,6 @@ ENTRY(cpu_switchto)
 	/* Get the user structure for the new process in r9 */
 	ldr	r9, [r6, #(L_ADDR)]
 
-	/* fetch sp for the undefined instruction trap. */
-        mrs	r3, cpsr
-        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
-        msr	cpsr_c, r2
-
-	str	sp, [r8, #(PCB_UND_SP)]
-
-        msr	cpsr_c, r3		/* Restore the old mode */
-
 	/* What else needs to be saved? Only FPA stuff when that is supported */
 
 	/* Restore saved context */
@@ -257,15 +248,6 @@ ENTRY(cpu_switchto)
 	/* rem: r6 = new lwp */
 	/* rem: r9 = new PCB */
 	/* rem: interrupts are enabled */
-
-	/* set sp for the undefined instruction trap. */
-        mrs	r3, cpsr
-        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
-        msr	cpsr_c, r2
-
-	ldr	sp, [r9, #(PCB_UND_SP)]
-
-        msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* Restore all the saved registers */
 #ifndef __XSCALE__

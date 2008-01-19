@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.41 2008/01/12 20:50:24 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.42 2008/01/19 15:04:10 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.41 2008/01/12 20:50:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.42 2008/01/19 15:04:10 chris Exp $");
 
 #include "opt_armfpe.h"
 #include "opt_pmap_debug.h"
@@ -144,17 +144,12 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	*pcb = l1->l_addr->u_pcb;
 
 	/* 
-	 * Set up the undefined stack for the process.
+	 * Set up the stack for the process.
 	 * Note: this stack is not in use if we are forking from p1
 	 */
-	pcb->pcb_un.un_32.pcb32_und_sp = (u_int)l2->l_addr +
-	    USPACE_UNDEF_STACK_TOP;
 	pcb->pcb_un.un_32.pcb32_sp = (u_int)l2->l_addr + USPACE_SVC_STACK_TOP;
 
 #ifdef STACKCHECKS
-	/* Fill the undefined stack with a known pattern */
-	memset(((u_char *)l2->l_addr) + USPACE_UNDEF_STACK_BOTTOM, 0xdd,
-	    (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM));
 	/* Fill the kernel stack with a known pattern */
 	memset(((u_char *)l2->l_addr) + USPACE_SVC_STACK_BOTTOM, 0xdd,
 	    (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM));
@@ -218,10 +213,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 		u_char *ptr;
 		int loop;
 
-		ptr = ((u_char *)p2->p_addr) + USPACE_UNDEF_STACK_BOTTOM;
-		for (loop = 0; loop < (USPACE_UNDEF_STACK_TOP - USPACE_UNDEF_STACK_BOTTOM)
-		    && *ptr == 0xdd; ++loop, ++ptr) ;
-		log(LOG_INFO, "%d bytes of undefined stack fill pattern\n", loop);
 		ptr = ((u_char *)p2->p_addr) + USPACE_SVC_STACK_BOTTOM;
 		for (loop = 0; loop < (USPACE_SVC_STACK_TOP - USPACE_SVC_STACK_BOTTOM)
 		    && *ptr == 0xdd; ++loop, ++ptr) ;
