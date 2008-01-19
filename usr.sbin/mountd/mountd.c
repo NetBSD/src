@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.113 2008/01/13 16:39:07 dholland Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.114 2008/01/19 23:01:35 dholland Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.113 2008/01/13 16:39:07 dholland Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.114 2008/01/19 23:01:35 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2256,7 +2256,7 @@ parsecred(namelist, cr)
 		cr->cr_uid = pw->pw_uid;
 		ngroups = NGROUPS + 1;
 		if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups))
-			syslog(LOG_ERR, "Too many groups");
+			syslog(LOG_ERR, "Too many groups for user %s", name);
 		/*
 		 * Convert from int's to gid_t's and compress out duplicate
 		 */
