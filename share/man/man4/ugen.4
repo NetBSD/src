@@ -1,4 +1,4 @@
-.\" $NetBSD: ugen.4,v 1.24 2006/07/24 18:13:42 gdt Exp $
+.\" $NetBSD: ugen.4,v 1.25 2008/01/19 09:58:38 skrll Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 24, 2006
+.Dd January 19, 2008
 .Dt UGEN 4
 .Os
 .Sh NAME
@@ -187,7 +187,7 @@ is ignored in this call.
 .Bd -literal
 struct usb_alt_interface {
 	int	uai_config_index;
-	int	aui_interface_index;
+	int	uai_interface_index;
 	int	uai_alt_no;
 };
 .Ed
