@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.119 2007/01/14 04:45:18 christos Exp $
+# $NetBSD: md.i386,v 1.120 2008/01/19 23:29:29 dyoung Exp $
 ./dev/lms0					base-obsolete		obsolete
 ./dev/mms0					base-obsolete		obsolete
 ./dev/pms0					base-obsolete		obsolete
@@ -53,8 +53,8 @@
 ./usr/mdec/bootfd				base-obsolete		obsolete
 ./usr/mdec/bootsd				base-obsolete		obsolete
 ./usr/mdec/bootwd				base-obsolete		obsolete
-./usr/mdec/bootxx_dosfs				base-obsolete		obsolete
 ./usr/mdec/bootxx_cd9660			base-sysutil-bin
+./usr/mdec/bootxx_dosfs				base-obsolete		obsolete
 ./usr/mdec/bootxx_fat16				base-sysutil-bin
 ./usr/mdec/bootxx_ffsv1				base-sysutil-bin
 ./usr/mdec/bootxx_ffsv2				base-sysutil-bin
@@ -87,8 +87,8 @@
 ./usr/sbin/apmd					base-sysutil-bin
 ./usr/sbin/bad144				base-sysutil-bin
 ./usr/sbin/ipwctl				base-sysutil-bin
-./usr/sbin/zzz					base-sysutil-bin
 ./usr/sbin/ndiscvt				base-sysutil-bin
+./usr/sbin/zzz					base-sysutil-bin
 ./usr/share/pcvt				base-obsolete		obsolete
 ./usr/share/pcvt/fonts				base-obsolete		obsolete
 ./usr/share/pcvt/fonts/vt220h.808		base-obsolete		obsolete
