@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.17.2.3 2008/01/19 12:14:18 bouyer Exp $	*/
+/*	$NetBSD: bios32.c,v 1.17.2.4 2008/01/19 14:08:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.17.2.3 2008/01/19 12:14:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.17.2.4 2008/01/19 14:08:08 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,7 +148,7 @@ bios32_init()
 		entry = *(uint32_t *)(p + 4);
 
 		aprint_debug("BIOS32 rev. %d found at 0x%lx\n",
-		    *(p + 8), entry);
+		    *(p + 8), (u_long)entry);
 
 		if (entry < BIOS32_START ||
 		    entry >= BIOS32_END) {
