@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnodeops.9,v 1.70 2007/12/01 19:46:56 wiz Exp $
+.\"     $NetBSD: vnodeops.9,v 1.71 2008/01/19 19:56:47 pooka Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 26, 2007
+.Dd January 19, 2008
 .Dt VNODEOPS 9
 .Os
 .Sh NAME
@@ -991,23 +991,11 @@ appropriate error code is returned.
 The directory should be locked on entry and will remain locked on
 return.
 .Pp
-If
-.Fn VOP_READDIR
-is called from the NFS server, the extra arguments
-.Fa eofflag ,
+In case
 .Fa ncookies
 and
 .Fa cookies
-are used.
-The value of
-.Fa *eofflag
-will be set to
-.Dv true
-if the end of the directory is reached while
-reading.
-The directory seek cookies are returned to the NFS client and may be
-used later to restart a directory read part way through the directory.
-There should be one cookie returned per directory entry.
+are supplied, one cookie should be returned per directory entry.
 The value of the cookie for each directory entry should be the offset
 within the directory where the on-disk version of the following
 directory entry starts.
@@ -1038,8 +1026,13 @@ code is returned.
 The vnode should be locked on entry and will remain locked on return.
 .It Fn VOP_ABORTOP "dvp" "cnp"
 Abort pending operation on vnode
-.Fa dvp .
-This operation is rarely implemented in file systems.
+.Fa dvp
+and free resources allocated in
+.Fa cnp .
+.Pp
+This operation is rarely implemented in file systems and
+.Fn genfs_abortop
+is typically used instead.
 .It Fn VOP_INACTIVE "vp"
 Release the inactive vnode.
 .Fn VOP_INACTIVE
@@ -1117,6 +1110,10 @@ Convert the logical block number
 of a file specified by vnode
 .Fa vp
 to its physical block number on the disk.
+The physical block is returned in
+.Fa bnp .
+In case the logical block is not allocated, \-1 is used.
+.Pp
 If
 .Fa vpp
 is not
