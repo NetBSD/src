@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_network.c,v 1.2 2008/01/18 16:20:57 christos Exp $	*/
+/*	$NetBSD: inet_network.c,v 1.3 2008/01/19 03:46:52 ginsbach Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: inet_network.c,v 1.2 2008/01/18 16:20:57 christos Exp $");
+__RCSID("$NetBSD: inet_network.c,v 1.3 2008/01/19 03:46:52 ginsbach Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -74,7 +74,7 @@ again:
 	if (*cp == '0')
 		digit = 1, base = 8, cp++;
 	if (*cp == 'x' || *cp == 'X')
-		base = 16, cp++;
+		digit = 0, base = 16, cp++;
 	while ((c = *cp) != 0) {
 		if (isdigit(c)) {
 			if (base == 8 && (c == '8' || c == '9'))
