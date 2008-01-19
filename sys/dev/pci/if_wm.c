@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.151 2008/01/11 13:04:39 ragge Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.152 2008/01/19 22:10:20 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.151 2008/01/11 13:04:39 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.152 2008/01/19 22:10:20 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3229,7 +3229,8 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
 	/* Set the media. */
-	(void) (*sc->sc_mii.mii_media.ifm_change)(ifp);
+	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
+		goto out;
 
 	/*
 	 * Set up the receive control register; we actually program
@@ -4310,6 +4311,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 
 	wm_gmii_reset(sc);
 
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
@@ -4332,9 +4334,8 @@ wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
+	ether_mediastatus(ifp, ifmr);
+	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK) |
 			   sc->sc_flowflags;
 }
 
@@ -4348,39 +4349,43 @@ wm_gmii_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	int rc;
 
-	if (ifp->if_flags & IFF_UP) {
-		sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
-		sc->sc_ctrl |= CTRL_SLU;
-		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
-		    || (sc->sc_type > WM_T_82543)) {
-			sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
-		} else {
-			sc->sc_ctrl &= ~CTRL_ASDE;
-			sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
-			if (ife->ifm_media & IFM_FDX)
-				sc->sc_ctrl |= CTRL_FD;
-			switch(IFM_SUBTYPE(ife->ifm_media)) {
-			case IFM_10_T:
-				sc->sc_ctrl |= CTRL_SPEED_10;
-				break;
-			case IFM_100_TX:
-				sc->sc_ctrl |= CTRL_SPEED_100;
-				break;
-			case IFM_1000_T:
-				sc->sc_ctrl |= CTRL_SPEED_1000;
-				break;
-			default:
-				panic("wm_gmii_mediachange: bad media 0x%x",
-				    ife->ifm_media);
-			}
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+
+	sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
+	sc->sc_ctrl |= CTRL_SLU;
+	if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+	    || (sc->sc_type > WM_T_82543)) {
+		sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
+	} else {
+		sc->sc_ctrl &= ~CTRL_ASDE;
+		sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+		if (ife->ifm_media & IFM_FDX)
+			sc->sc_ctrl |= CTRL_FD;
+		switch(IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_10_T:
+			sc->sc_ctrl |= CTRL_SPEED_10;
+			break;
+		case IFM_100_TX:
+			sc->sc_ctrl |= CTRL_SPEED_100;
+			break;
+		case IFM_1000_T:
+			sc->sc_ctrl |= CTRL_SPEED_1000;
+			break;
+		default:
+			panic("wm_gmii_mediachange: bad media 0x%x",
+			    ife->ifm_media);
 		}
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		if (sc->sc_type <= WM_T_82543)
-			wm_gmii_reset(sc);
-		mii_mediachg(&sc->sc_mii);
 	}
-	return (0);
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	if (sc->sc_type <= WM_T_82543)
+		wm_gmii_reset(sc);
+
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 #define	MDI_IO		CTRL_SWDPIN(2)
