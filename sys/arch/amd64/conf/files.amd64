@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.50.2.3 2008/01/10 23:43:08 bouyer Exp $
+#	$NetBSD: files.amd64,v 1.50.2.4 2008/01/19 12:14:10 bouyer Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -49,7 +49,6 @@ file	netinet/in4_cksum.c			inet
 
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
-file	arch/amd64/amd64/math_emulate.c	math_emulate
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs

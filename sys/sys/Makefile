@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103.2.1 2008/01/02 21:57:57 bouyer Exp $
+#	$NetBSD: Makefile,v 1.103.2.2 2008/01/19 12:15:40 bouyer Exp $
 
 .include <bsd.sys.mk>
 
@@ -20,10 +20,10 @@ INCS=	acct.h agpio.h aio.h ansi.h ataio.h atomic.h audioio.h \
 	kcore.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
 	lkm.h localedef.h lock.h lockf.h lwp.h lwpctl.h \
 	malloc.h mallocvar.h mbuf.h md4.h \
-	md5.h midiio.h mman.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
+	md5.h midiio.h mman.h module.h mount.h mqueue.h msg.h msgbuf.h mtio.h mutex.h \
 	namei.h null.h \
 	param.h pipe.h pmc.h poll.h pool.h power.h proc.h \
-	protosw.h ptrace.h queue.h \
+	protosw.h pset.h ptrace.h queue.h \
 	ras.h reboot.h radioio.h resource.h resourcevar.h rmd160.h rnd.h rwlock.h \
 	scanio.h sched.h scsiio.h select.h selinfo.h sem.h sha1.h sha2.h \
 	shm.h siginfo.h signal.h signalvar.h sigtypes.h simplelock.h \

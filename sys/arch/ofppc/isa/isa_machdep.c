@@ -1,4 +1,4 @@
-/* $NetBSD: isa_machdep.c,v 1.3 2007/11/05 15:49:03 garbled Exp $ */
+/* $NetBSD: isa_machdep.c,v 1.3.10.1 2008/01/19 12:14:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,46 +37,77 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3 2007/11/05 15:49:03 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.3.10.1 2008/01/19 12:14:39 bouyer Exp $");
 
 #include <sys/param.h>
 
 #include <machine/bus.h>
 #include <machine/pio.h>
 
+#include <sys/extent.h>
+
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>
 
+#define IO_ELCR1        0x4d0
+#define IO_ELCR2        0x4d1
+
 struct powerpc_isa_chipset genppc_ict;
-static u_int32_t ofppc_isa_iobase;
+bus_space_handle_t io_icu1h, io_icu2h, io_elcrh;
 
 /*
- * isa_inb and isa_outb are pretty much used to access the 8259's.  This isn't
- * ideal, but, whatever.  Because of this, this is an ultra-stripped down
- * version of those funcitons, just to satisfy the pic driver.
- * This is completely reliant on the fact that the region should be BAT mapped
- * in, and NOT mapped via bus_space_map.  If you bus_space_map a register
- * and then attempt to use isa_*b, you will lose.
+ * These functions can *ONLY* be used to talk to the i8259.  Leave them
+ * alone.  I know they are greusome.
  */
 
 int
-map_isa_ioregs(u_int32_t addr)
+map_isa_ioregs(void)
 {
-	if (addr) {
-		ofppc_isa_iobase = addr;
-		return 1;
-	}
-	return 0;
+	int err, noerr;
+
+	err = bus_space_map(&genppc_isa_io_space_tag, IO_ICU1, 2, 0,
+	    &io_icu1h);
+	if (err != 0)
+		panic("Can't map IO_ICU1 error %d\n", err);
+
+	err = bus_space_map(&genppc_isa_io_space_tag, IO_ICU2, 2, 0,
+	    &io_icu2h);
+	if (err != 0)
+		panic("Can't map IO_ICU2 error %d\n", err);
+
+	noerr = bus_space_map(&genppc_isa_io_space_tag, IO_ELCR1, 2, 0,
+	    &io_elcrh);
+	if (noerr != 0)
+		aprint_error("Can't map IO_ELCR error %d\n", noerr);
+	
+	return err;
 }
 
 uint8_t
 isa_inb(uint32_t addr)
 {
-	return(inb(ofppc_isa_iobase | addr));
+	if (addr == IO_ICU1 || addr == IO_ICU1+1)
+		return bus_space_read_1(&genppc_isa_io_space_tag, io_icu1h,
+		    addr-IO_ICU1);
+	if (addr == IO_ICU2 || addr == IO_ICU2+1)
+		return bus_space_read_1(&genppc_isa_io_space_tag, io_icu2h,
+		    addr-IO_ICU2);
+	if (addr == IO_ELCR1 || addr == IO_ELCR2)
+		return bus_space_read_1(&genppc_isa_io_space_tag, io_elcrh,
+		    addr-IO_ELCR1);
+	return 0;
 }
 
 void
 isa_outb(uint32_t addr, uint8_t val)
 {
-	outb(ofppc_isa_iobase | addr, val);
+	if (addr == IO_ICU1 || addr == IO_ICU1+1)
+		bus_space_write_1(&genppc_isa_io_space_tag, io_icu1h,
+		    addr-IO_ICU1, val);
+	if (addr == IO_ICU2 || addr == IO_ICU2+1)
+		bus_space_write_1(&genppc_isa_io_space_tag, io_icu2h,
+		    addr-IO_ICU2, val);
+	if (addr == IO_ELCR1 || addr == IO_ELCR2)
+		bus_space_write_1(&genppc_isa_io_space_tag, io_elcrh,
+		    addr-IO_ELCR1, val);
 }

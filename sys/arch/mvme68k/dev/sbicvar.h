@@ -1,4 +1,4 @@
-/*	$NetBSD: sbicvar.h,v 1.13 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: sbicvar.h,v 1.13.64.1 2008/01/19 12:14:26 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,8 +43,8 @@
  * DMA chains are used for Scatter-Gather DMA.
  */
 struct  dma_chain {
-    int     dc_count;
-    char    *dc_addr;
+	int dc_count;
+	char *dc_addr;
 };
 
 /*
@@ -56,22 +56,22 @@ struct  dma_chain {
  * occasionally xs->retries.
  */
 struct sbic_acb {
-    TAILQ_ENTRY(sbic_acb)   chain;
-    struct scsipi_xfer        *xs;        /* SCSI xfer ctrl block from above */
-    int                     flags;      /* Status */
-#define ACB_FREE        0x00
-#define ACB_ACTIVE      0x01
-#define ACB_DONE        0x04
-#define ACB_BBUF        0x10    /* DMA input needs to be copied from bounce */
-#define ACB_DATAIN      0x20    /* DMA direction flag */
+	TAILQ_ENTRY(sbic_acb) chain;
+	struct scsipi_xfer *xs;		/* SCSI xfer ctrl block from above */
+	int flags;			/* Status */
+#define ACB_FREE	0x00
+#define ACB_ACTIVE	0x01
+#define ACB_DONE	0x04
+#define ACB_BBUF	0x10	/* DMA input needs to be copied from bounce */
+#define ACB_DATAIN	0x20	/* DMA direction flag */
 
-    struct  scsipi_generic  cmd;        /* SCSI command block */
-    int                     clen;
-    struct  dma_chain       sc_kv;      /* Virtual address of whole DMA */
-    struct  dma_chain       sc_pa;      /* Physical address of DMA segment */
-    u_long                  sc_tcnt;    /* number of bytes for this DMA */
-    u_short                 sc_dmacmd;  /* Internal data for this DMA */
-    char                    *pa_addr;   /* XXXX initial phys addr */
+	struct scsipi_generic cmd;	/* SCSI command block */
+	int clen;
+	struct dma_chain sc_kv;		/* Virtual address of whole DMA */
+	struct dma_chain sc_pa;		/* Physical address of DMA segment */
+	u_long sc_tcnt;			/* number of bytes for this DMA */
+	u_short sc_dmacmd;		/* Internal data for this DMA */
+	char *pa_addr;			/* XXXX initial phys addr */
 };
 
 /*
@@ -80,127 +80,127 @@ struct sbic_acb {
  * this for now.  Is there a way to reliably hook it up to sc->fordriver??
  */
 struct sbic_tinfo {
-    int                     cmds;       /* #commands processed */
-    int                     dconns;     /* #disconnects */
-    int                     lubusy;     /* What local units/subr. are busy? */
+	int cmds;			/* #commands processed */
+	int dconns;			/* #disconnects */
+	int lubusy;			/* What local units/subr. are busy? */
 };
 
 struct  sbic_softc {
-    struct  device          sc_dev;
-    struct  target_sync {
-        u_char  state;
-        u_char  period;
-        u_char  offset;
-    } sc_sync[8];
-    u_char                  target;     /* Currently active target */
-    u_char                  lun;
-    struct  scsipi_channel  sc_channel;    /* proto for sub devices */
-    struct  scsipi_adapter  sc_adapter;
-    sbic_regmap_p           sc_sbicp;   /* the SBIC */
-    void                   *sc_driver;  /* driver specific field */
-    int                     sc_ipl;
+	struct device sc_dev;
+	struct target_sync {
+		u_char state;
+		u_char period;
+		u_char offset;
+	} sc_sync[8];
+	u_char target;			/* Currently active target */
+	u_char lun;
+	struct scsipi_channel sc_channel; /* proto for sub devices */
+	struct scsipi_adapter sc_adapter;
+	sbic_regmap_p sc_sbicp;		/* the SBIC */
+	void *sc_driver;		/* driver specific field */
+	int sc_ipl;
 
-    struct callout	    sc_timo_ch;
+	struct callout sc_timo_ch;
 
-    /* Lists of command blocks */
-    TAILQ_HEAD(acb_list, sbic_acb)  free_list,
-                                    ready_list,
-                                    nexus_list;
+	/* Lists of command blocks */
+	TAILQ_HEAD(acb_list, sbic_acb) free_list,
+				       ready_list,
+				       nexus_list;
 
-    struct sbic_acb         *sc_nexus;  /* current command */
-    struct sbic_acb         sc_acb[8];  /* the real command blocks */
-    struct sbic_tinfo       sc_tinfo[8];
+	struct sbic_acb *sc_nexus;	/* current command */
+	struct sbic_acb sc_acb[8];	/* the real command blocks */
+	struct sbic_tinfo sc_tinfo[8];
 
-    struct  scsipi_xfer       *sc_xs;     /* transfer from high level code */
-    u_char                  sc_flags;
-    u_char                  sc_stat[2];
-    u_char                  sc_msg[7];
-    u_long                  sc_clkfreq;
-    u_long                  sc_tcnt;    /* number of bytes transfered */
-    u_short                 sc_dmacmd;  /* used by DMA drivers */
-    u_long                  sc_dmamask; /* DMA valid mem mask */
+	struct scsipi_xfer *sc_xs;	/* transfer from high level code */
+	u_char sc_flags;
+	u_char sc_stat[2];
+	u_char sc_msg[7];
+	u_long sc_clkfreq;
+	u_long sc_tcnt;			/* number of bytes transfered */
+	u_short sc_dmacmd;		/* used by DMA drivers */
+	u_long sc_dmamask;		/* DMA valid mem mask */
 #ifdef DEBUG
-    u_short                 sc_dmatimo; /* DMA timeout */
+	u_short sc_dmatimo;		/* DMA timeout */
 #endif
-    struct  dma_chain       *sc_cur;
-    struct  dma_chain       *sc_last;
-    int  (*sc_dmago)        __P((struct sbic_softc *, char *, int, int));
-    int  (*sc_dmanext)      __P((struct sbic_softc *));
-    void (*sc_enintr)       __P((struct sbic_softc *));
-    void (*sc_dmastop)      __P((struct sbic_softc *));
+	struct dma_chain *sc_cur;
+	struct dma_chain *sc_last;
+	int (*sc_dmago)(struct sbic_softc *, char *, int, int);
+	int (*sc_dmanext)(struct sbic_softc *);
+	void (*sc_enintr)(struct sbic_softc *);
+	void (*sc_dmastop)(struct sbic_softc *);
 };
 
 /*
  * sc_flags
  */
-#define SBICF_ALIVE         0x01    /* controller initialized */
-#define SBICF_DCFLUSH       0x02    /* need flush for overlap after DMA finishes */
-#define SBICF_SELECTED      0x04    /* bus is in selected state. */
-#define SBICF_ICMD          0x08    /* Immediate command in execution */
-#define SBICF_BADDMA        0x10    /* controller can only DMA to ztwobus space */
-#define SBICF_INTR          0x40    /* SBICF interrupt expected */
-#define SBICF_INDMA         0x80    /* not used yet, DMA I/O in progress */
+#define SBICF_ALIVE	0x01	/* controller initialized */
+#define SBICF_DCFLUSH	0x02	/* need flush for overlap after DMA finishes */
+#define SBICF_SELECTED	0x04	/* bus is in selected state. */
+#define SBICF_ICMD	0x08	/* Immediate command in execution */
+#define SBICF_BADDMA	0x10	/* controller can only DMA to ztwobus space */
+#define SBICF_INTR	0x40	/* SBICF interrupt expected */
+#define SBICF_INDMA	0x80	/* not used yet, DMA I/O in progress */
 
 /*
  * sync states
  */
-#define SYNC_START          0   /* no sync handshake started */
-#define SYNC_SENT           1   /* we sent sync request, no answer yet */
-#define SYNC_DONE           2   /* target accepted our (or inferior) settings,
-                                   or it rejected the request and we stay async */
+#define SYNC_START	0	/* no sync handshake started */
+#define SYNC_SENT	1	/* we sent sync request, no answer yet */
+#define SYNC_DONE	2	/* target accepted our (or inferior) settings,
+				   or it rejected the request and we stay
+				   async */
 
-#define PHASE               0x07    /* mask for psns/pctl phase */
-#define DATA_OUT_PHASE      0x00
-#define DATA_IN_PHASE       0x01
-#define CMD_PHASE           0x02
-#define STATUS_PHASE        0x03
-#define BUS_FREE_PHASE      0x04
-#define ARB_SEL_PHASE       0x05    /* Fuji chip combines arbitration with sel. */
-#define MESG_OUT_PHASE      0x06
-#define MESG_IN_PHASE       0x07
+#define PHASE		0x07	/* mask for psns/pctl phase */
+#define DATA_OUT_PHASE	0x00
+#define DATA_IN_PHASE	0x01
+#define CMD_PHASE	0x02
+#define STATUS_PHASE	0x03
+#define BUS_FREE_PHASE	0x04
+#define ARB_SEL_PHASE	0x05	/* Fuji chip combines arbitration with sel. */
+#define MESG_OUT_PHASE	0x06
+#define MESG_IN_PHASE	0x07
 
-#define MSG_CMD_COMPLETE    0x00
-#define MSG_EXT_MESSAGE     0x01
-#define MSG_SAVE_DATA_PTR   0x02
-#define MSG_RESTORE_PTR     0x03
-#define MSG_DISCONNECT      0x04
-#define MSG_INIT_DETECT_ERROR   0x05
-#define MSG_ABORT           0x06
-#define MSG_REJECT          0x07
-#define MSG_NOOP            0x08
-#define MSG_PARITY_ERROR    0x09
-#define MSG_BUS_DEVICE_RESET    0x0C
-#define MSG_IDENTIFY        0x80
-#define MSG_IDENTIFY_DR     0xc0    /* (disconnect/reconnect allowed) */
-#define MSG_SYNC_REQ        0x01
+#define MSG_CMD_COMPLETE	0x00
+#define MSG_EXT_MESSAGE		0x01
+#define MSG_SAVE_DATA_PTR	0x02
+#define MSG_RESTORE_PTR		0x03
+#define MSG_DISCONNECT		0x04
+#define MSG_INIT_DETECT_ERROR	0x05
+#define MSG_ABORT		0x06
+#define MSG_REJECT		0x07
+#define MSG_NOOP		0x08
+#define MSG_PARITY_ERROR	0x09
+#define MSG_BUS_DEVICE_RESET	0x0C
+#define MSG_IDENTIFY		0x80
+#define MSG_IDENTIFY_DR		0xc0	/* (disconnect/reconnect allowed) */
+#define MSG_SYNC_REQ		0x01
 
-#define MSG_ISIDENTIFY(x)   ((x) & MSG_IDENTIFY)
+#define MSG_ISIDENTIFY(x)	((x) & MSG_IDENTIFY)
 
 
-#define STS_CHECKCOND       0x02    /* Check Condition (ie., read sense) */
-#define STS_CONDMET         0x04    /* Condition Met (ie., search worked) */
-#define STS_BUSY            0x08
-#define STS_INTERMED        0x10    /* Intermediate status sent */
-#define STS_EXT             0x80    /* Extended status valid */
+#define STS_CHECKCOND		0x02	/* Check Condition (ie., read sense) */
+#define STS_CONDMET		0x04	/* Condition Met (ie., search worked) */
+#define STS_BUSY		0x08
+#define STS_INTERMED		0x10	/* Intermediate status sent */
+#define STS_EXT			0x80	/* Extended status valid */
 
 
 /*
  * States returned by our state machine
  */
 
-#define SBIC_STATE_ERROR    -1
-#define SBIC_STATE_DONE     0
-#define SBIC_STATE_RUNNING  1
-#define SBIC_STATE_DISCONNECT   2
+#define SBIC_STATE_ERROR	-1
+#define SBIC_STATE_DONE		0
+#define SBIC_STATE_RUNNING	1
+#define SBIC_STATE_DISCONNECT	2
 
 
 struct buf;
 struct scsipi_xfer;
 
-void sbic_minphys __P((struct buf *bp));
-void sbic_scsi_request __P((struct scsipi_channel *,
-				scsipi_adapter_req_t, void *));
-void sbicinit __P((struct sbic_softc *));
-int sbicintr __P((struct sbic_softc *));
+void sbic_minphys(struct buf *bp);
+void sbic_scsi_request(struct scsipi_channel *, scsipi_adapter_req_t, void *);
+void sbicinit(struct sbic_softc *);
+int sbicintr(struct sbic_softc *);
 
 #endif /* _SBICVAR_H_ */

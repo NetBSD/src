@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.8 2005/12/11 12:18:19 christos Exp $	*/
+/*	$NetBSD: if_le.c,v 1.8.64.1 2008/01/19 12:14:36 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -75,15 +75,15 @@
 
 int     le_debug = 0;
 
-void le_end __P((struct netif *));
-void le_error __P((struct netif *, char *, volatile struct lereg1 *));
-int le_get __P((struct iodesc *, void *, size_t, time_t));
-void le_init __P((struct iodesc *, void *));
-int le_match __P((struct netif *, void *));
-int le_poll __P((struct iodesc *, void *, int));
-int le_probe __P((struct netif *, void *));
-int le_put __P((struct iodesc *, void *, size_t));
-void le_reset __P((struct netif *, u_char *));
+void le_end(struct netif *);
+void le_error(struct netif *, char *, volatile struct lereg1 *);
+int le_get(struct iodesc *, void *, size_t, time_t);
+void le_init(struct iodesc *, void *);
+int le_match(struct netif *, void *);
+int le_poll(struct iodesc *, void *, int);
+int le_probe(struct netif *, void *);
+int le_put(struct iodesc *, void *, size_t);
+void le_reset(struct netif *, u_char *);
 
 struct netif_stats le_stats;
 
@@ -114,7 +114,7 @@ struct le_configuration {
 	{ LANCE_REG_ADDR, 0 }
 };
 
-int     nle_config = sizeof(le_config) / (sizeof(le_config[0]));
+int     nle_config = __arraycount(le_config);
 
 struct {
 	struct lereg1 *sc_r1;	/* LANCE registers */
@@ -124,15 +124,13 @@ struct {
 }       le_softc;
 
 int
-le_match(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+le_match(struct netif *nif, void *machdep_hint)
 {
 	char   *name;
 	int     i, val = 0;
 
 	if (bugargs.cputyp != CPU_147)
-		return (0);
+		return 0;
 	name = machdep_hint;
 	if (name && !memcmp(le_driver.netif_bname, name, 2))
 		val += 10;
@@ -150,9 +148,7 @@ le_match(nif, machdep_hint)
 }
 
 int
-le_probe(nif, machdep_hint)
-	struct netif *nif;
-	void   *machdep_hint;
+le_probe(struct netif *nif, void *machdep_hint)
 {
 
 	/* the set unit is the current unit */
@@ -165,11 +161,9 @@ le_probe(nif, machdep_hint)
 }
 
 void
-le_error(nif, str, ler1)
-	struct netif *nif;
-	char   *str;
-	volatile struct lereg1 *ler1;
+le_error(struct netif *nif, char *str, volatile struct lereg1 *ler1)
 {
+
 	/* ler1->ler1_rap = LE_CSRO done in caller */
 	if (ler1->ler1_rdp & LE_C0_BABL)
 		panic("le%d: been babbling, found by '%s'", nif->nif_unit, str);
@@ -188,9 +182,7 @@ le_error(nif, str, ler1)
 }
 
 void
-le_reset(nif, myea)
-	struct netif *nif;
-	u_char *myea;
+le_reset(struct netif *nif, u_char *myea)
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
@@ -216,22 +208,22 @@ le_reset(nif, myea)
 	ler2->ler2_ladrf0 = 0;
 	ler2->ler2_ladrf1 = 0;
 
-	a = (u_int) ler2->ler2_rmd;
+	a = (u_int)ler2->ler2_rmd;
 	ler2->ler2_rlen = LE_RLEN | (a >> 16);
 	ler2->ler2_rdra = a & LE_ADDR_LOW_MASK;
 
-	a = (u_int) ler2->ler2_tmd;
+	a = (u_int)ler2->ler2_tmd;
 	ler2->ler2_tlen = LE_TLEN | (a >> 16);
 	ler2->ler2_tdra = a & LE_ADDR_LOW_MASK;
 
 	ler1->ler1_rap = LE_CSR1;
-	a = (u_int) ler2;
+	a = (u_int)ler2;
 	ler1->ler1_rdp = a & LE_ADDR_LOW_MASK;
 	ler1->ler1_rap = LE_CSR2;
 	ler1->ler1_rdp = a >> 16;
 
 	for (i = 0; i < LERBUF; i++) {
-		a = (u_int) & ler2->ler2_rbuf[i];
+		a = (u_int)&ler2->ler2_rbuf[i];
 		ler2->ler2_rmd[i].rmd0 = a & LE_ADDR_LOW_MASK;
 		ler2->ler2_rmd[i].rmd1_bits = LE_R1_OWN;
 		ler2->ler2_rmd[i].rmd1_hadr = a >> 16;
@@ -239,7 +231,7 @@ le_reset(nif, myea)
 		ler2->ler2_rmd[i].rmd3 = 0;
 	}
 	for (i = 0; i < LETBUF; i++) {
-		a = (u_int) & ler2->ler2_tbuf[i];
+		a = (u_int)&ler2->ler2_tbuf[i];
 		ler2->ler2_tmd[i].tmd0 = a & LE_ADDR_LOW_MASK;
 		ler2->ler2_tmd[i].tmd1_bits = 0;
 		ler2->ler2_tmd[i].tmd1_hadr = a >> 16;
@@ -269,10 +261,7 @@ le_reset(nif, myea)
 }
 
 int
-le_poll(desc, pkt, len)
-	struct iodesc *desc;
-	void   *pkt;
-	int     len;
+le_poll(struct iodesc *desc, void  *pkt, int len)
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;
 	struct lereg2 *ler2 = le_softc.sc_r2;
@@ -286,7 +275,7 @@ le_poll(desc, pkt, len)
 		ler1->ler1_rdp = LE_C0_RINT;
 	rmd = &ler2->ler2_rmd[le_softc.next_rmd];
 	if (rmd->rmd1_bits & LE_R1_OWN) {
-		return (0);
+		return 0;
 	}
 	if (ler1->ler1_rdp & LE_C0_ERR)
 		le_error(desc->io_netif, "le_poll", ler1);
@@ -297,7 +286,8 @@ le_poll(desc, pkt, len)
 		length = 0;
 		goto cleanup;
 	}
-	if ((rmd->rmd1_bits & (LE_R1_STP | LE_R1_ENP)) != (LE_R1_STP | LE_R1_ENP))
+	if ((rmd->rmd1_bits & (LE_R1_STP | LE_R1_ENP)) !=
+	    (LE_R1_STP | LE_R1_ENP))
 		panic("le_poll: chained packet");
 
 	length = rmd->rmd3;
@@ -306,7 +296,7 @@ le_poll(desc, pkt, len)
 		panic("csr0 when bad things happen: %x", ler1->ler1_rdp);
 		goto cleanup;
 	}
-	if (!length)
+	if (length == 0)
 		goto cleanup;
 	length -= 4;
 	if (length > 0) {
@@ -322,7 +312,7 @@ le_poll(desc, pkt, len)
 		    length);
 	}
 cleanup:
-	a = (u_int) & ler2->ler2_rbuf[le_softc.next_rmd];
+	a = (u_int)&ler2->ler2_rbuf[le_softc.next_rmd];
 	rmd->rmd0 = a & LE_ADDR_LOW_MASK;
 	rmd->rmd1_hadr = a >> 16;
 	rmd->rmd2 = -LEMTU;
@@ -333,10 +323,7 @@ cleanup:
 }
 
 int
-le_put(desc, pkt, len)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
+le_put(struct iodesc *desc, void *pkt, size_t len)
 {
 	volatile struct lereg1 *ler1 = le_softc.sc_r1;
 	volatile struct lereg2 *ler2 = le_softc.sc_r2;
@@ -361,7 +348,7 @@ le_put(desc, pkt, len)
 	if (ler1->ler1_rdp & LE_C0_ERR)
 		le_error(desc->io_netif, "le_put(before xmit)", ler1);
 	tmd->tmd1_bits = LE_T1_STP | LE_T1_ENP | LE_T1_OWN;
-	a = (u_int) & ler2->ler2_tbuf[le_softc.next_tmd];
+	a = (u_int)&ler2->ler2_tbuf[le_softc.next_tmd];
 	tmd->tmd0 = a & LE_ADDR_LOW_MASK;
 	tmd->tmd1_hadr = a >> 16;
 	ler1->ler1_rdp = LE_C0_TDMD;
@@ -372,7 +359,8 @@ le_put(desc, pkt, len)
 			printf("le%d: transmit timeout, stat = 0x%x\n",
 			    nifunit, stat);
 			if (ler1->ler1_rdp & LE_C0_ERR)
-				le_error(desc->io_netif, "le_put(timeout)", ler1);
+				le_error(desc->io_netif, "le_put(timeout)",
+				    ler1);
 			break;
 		}
 		stat = ler1->ler1_rdp;
@@ -382,7 +370,8 @@ le_put(desc, pkt, len)
 		if ((ler1->ler1_rdp & (LE_C0_BABL | LE_C0_CERR | LE_C0_MISS |
 		    LE_C0_MERR)) !=
 		    LE_C0_CERR)
-			printf("le_put: xmit error, buf %d\n", le_softc.next_tmd);
+			printf("le_put: xmit error, buf %d\n",
+			    le_softc.next_tmd);
 		le_error(desc->io_netif, "le_put(xmit error)", ler1);
 	}
 	le_softc.next_tmd = 0;
@@ -403,18 +392,14 @@ le_put(desc, pkt, len)
 		    nifunit, len);
 		printf("le%d: le_put(): tmd1_bits: %x tmd3: %x\n",
 		    nifunit,
-		    (unsigned int) tmd->tmd1_bits,
-		    (unsigned int) tmd->tmd3);
+		    (unsigned int)tmd->tmd1_bits,
+		    (unsigned int)tmd->tmd3);
 	}
 	return len;
 }
 
 int
-le_get(desc, pkt, len, timeout)
-	struct	iodesc *desc;
-	void	*pkt;
-	size_t	len;
-	time_t	timeout;
+le_get(struct iodesc *desc, void *pkt, size_t len, time_t timeout)
 {
 	time_t  t;
 	int     cc;
@@ -430,11 +415,9 @@ le_get(desc, pkt, len, timeout)
  * init le device.   return 0 on failure, 1 if ok.
  */
 void
-le_init(desc, machdep_hint)
-	struct iodesc *desc;
-	void   *machdep_hint;
+le_init(struct iodesc *desc, void *machdep_hint)
 {
-	u_long eram = 4*1024*1024;
+	u_long eram = 4 * 1024 * 1024;
 	struct netif *nif = desc->io_netif;
 
 	if (le_debug)
@@ -442,16 +425,15 @@ le_init(desc, machdep_hint)
 	machdep_common_ether(desc->myea);
 	memset(&le_softc, 0, sizeof(le_softc));
 	le_softc.sc_r1 =
-	    (struct lereg1 *) le_config[nif->nif_unit].phys_addr;
-	le_softc.sc_r2 = (struct lereg2 *) (eram - (1024 * 1024));
+	    (struct lereg1 *)le_config[nif->nif_unit].phys_addr;
+	le_softc.sc_r2 = (struct lereg2 *)(eram - (1024 * 1024));
 	le_reset(desc->io_netif, desc->myea);
 	printf("device: %s%d attached to %s\n", nif->nif_driver->netif_bname,
 	    nif->nif_unit, ether_sprintf(desc->myea));
 }
 
 void
-le_end(nif)
-	struct netif *nif;
+le_end(struct netif *nif)
 {
 	struct lereg1 *ler1 = le_softc.sc_r1;
 

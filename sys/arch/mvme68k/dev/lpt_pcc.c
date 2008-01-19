@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.9 2005/12/11 12:18:17 christos Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.9.64.1 2008/01/19 12:14:24 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.9 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.9.64.1 2008/01/19 12:14:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,15 +57,16 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.9 2005/12/11 12:18:17 christos Exp $")
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
+#include "ioconf.h"
 
 
-static int lpt_pcc_intr __P((void *));
-static void lpt_pcc_open __P((struct lpt_softc *, int));
-static void lpt_pcc_close __P((struct lpt_softc *));
-static void lpt_pcc_iprime __P((struct lpt_softc *));
-static void lpt_pcc_speed __P((struct lpt_softc *, int));
-static int lpt_pcc_notrdy __P((struct lpt_softc *, int));
-static void lpt_pcc_wr_data __P((struct lpt_softc *, u_char));
+static int lpt_pcc_intr(void *);
+static void lpt_pcc_open(struct lpt_softc *, int);
+static void lpt_pcc_close(struct lpt_softc *);
+static void lpt_pcc_iprime(struct lpt_softc *);
+static void lpt_pcc_speed(struct lpt_softc *, int);
+static int lpt_pcc_notrdy(struct lpt_softc *, int);
+static void lpt_pcc_wr_data(struct lpt_softc *, u_char);
 
 struct lpt_funcs lpt_pcc_funcs = {
 	lpt_pcc_open,
@@ -79,43 +80,36 @@ struct lpt_funcs lpt_pcc_funcs = {
 /*
  * Autoconfig stuff
  */
-static int lpt_pcc_match __P((struct device *, struct cfdata *, void *));
-static void lpt_pcc_attach __P((struct device *, struct device *, void *));
+static int lpt_pcc_match(struct device *, struct cfdata *, void *);
+static void lpt_pcc_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(lpt_pcc, sizeof(struct lpt_softc),
     lpt_pcc_match, lpt_pcc_attach, NULL, NULL);
 
-extern struct cfdriver lpt_cd;
-
 
 /*ARGSUSED*/
 static int
-lpt_pcc_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+lpt_pcc_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	struct pcc_attach_args *pa;
 
 	pa = args;
 
 	if (strcmp(pa->pa_name, lpt_cd.cd_name))
-		return (0);
+		return 0;
 
 	pa->pa_ipl = cf->pcccf_ipl;
-	return (1);
+	return 1;
 }
 
 /*ARGSUSED*/
 static void
-lpt_pcc_attach(parent, self, args)
-	struct device *parent, *self;
-	void *args;
+lpt_pcc_attach(struct device *parent, struct device *self, void *args)
 {
 	struct lpt_softc *sc;
 	struct pcc_attach_args *pa;
 
-	sc = (struct lpt_softc *) self;
+	sc = (struct lpt_softc *)self;
 	pa = args;
 
 	sc->sc_bust = pa->pa_bust;
@@ -153,8 +147,7 @@ lpt_pcc_attach(parent, self, args)
  * another char.
  */
 int
-lpt_pcc_intr(arg)
-	void *arg;
+lpt_pcc_intr(void *arg)
 {
 	struct lpt_softc *sc;
 	int i;
@@ -172,14 +165,12 @@ lpt_pcc_intr(arg)
 		    sc->sc_icr | LPI_ACKINT);
 	}
 
-	return (i);
+	return i;
 }
 
 
 static void
-lpt_pcc_open(sc, int_ena)
-	struct lpt_softc *sc;
-	int int_ena;
+lpt_pcc_open(struct lpt_softc *sc, int int_ena)
 {
 	int sps;
 
@@ -195,8 +186,7 @@ lpt_pcc_open(sc, int_ena)
 }
 
 static void
-lpt_pcc_close(sc)
-	struct lpt_softc *sc;
+lpt_pcc_close(struct lpt_softc *sc)
 {
 
 	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL, 0);
@@ -206,8 +196,7 @@ lpt_pcc_close(sc)
 
 /* ARGSUSED */
 static void
-lpt_pcc_iprime(sc)
-	struct lpt_softc *sc;
+lpt_pcc_iprime(struct lpt_softc *sc)
 {
 
 	lpt_control_write(LPC_INPUT_PRIME);
@@ -216,9 +205,7 @@ lpt_pcc_iprime(sc)
 
 /* ARGSUSED */
 static void
-lpt_pcc_speed(sc, speed)
-	struct lpt_softc *sc;
-	int speed;
+lpt_pcc_speed(struct lpt_softc *sc, int speed)
 {
 
 	if (speed == LPT_STROBE_FAST)
@@ -228,9 +215,7 @@ lpt_pcc_speed(sc, speed)
 }
 
 static int
-lpt_pcc_notrdy(sc, err)
-	struct lpt_softc *sc;
-	int err;
+lpt_pcc_notrdy(struct lpt_softc *sc, int err)
 {
 	u_char status;
 	u_char new;
@@ -258,13 +243,11 @@ lpt_pcc_notrdy(sc, err)
 	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL,
 	    sc->sc_icr | LPI_FAULTINT);
 
-	return (status);
+	return status;
 }
 
 static void
-lpt_pcc_wr_data(sc, data)
-	struct lpt_softc *sc;
-	u_char data;
+lpt_pcc_wr_data(struct lpt_softc *sc, u_char data)
 {
 
 	lpt_data_write(sc, data);

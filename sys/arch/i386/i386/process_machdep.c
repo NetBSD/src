@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.65 2007/10/17 19:54:46 garbled Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.65.8.1 2008/01/19 12:14:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.65 2007/10/17 19:54:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.65.8.1 2008/01/19 12:14:20 bouyer Exp $");
 
 #include "opt_vm86.h"
 #include "opt_ptrace.h"
@@ -259,7 +259,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
 #if NNPX > 0
-		npxsave_lwp(l, 1);
+		npxsave_lwp(l, true);
 #endif
 	} else {
 		/*
@@ -363,7 +363,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 
 	if (l->l_md.md_flags & MDL_USEDFPU) {
 #if NNPX > 0
-		npxsave_lwp(l, 0);
+		npxsave_lwp(l, false);
 #endif
 	} else {
 		l->l_md.md_flags |= MDL_USEDFPU;
@@ -415,7 +415,7 @@ process_machdep_read_xmmregs(struct lwp *l, struct xmmregs *regs)
 	if (l->l_md.md_flags & MDL_USEDFPU) {
 #if NNPX > 0
 		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			npxsave_lwp(l, 1);
+			npxsave_lwp(l, true);
 #endif
 	} else {
 		/*
@@ -452,7 +452,7 @@ process_machdep_write_xmmregs(struct lwp *l, struct xmmregs *regs)
 #if NNPX > 0
 		/* If we were using the FPU, drop it. */
 		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			npxsave_lwp(l, 0);
+			npxsave_lwp(l, false);
 #endif
 	} else {
 		l->l_md.md_flags |= MDL_USEDFPU;

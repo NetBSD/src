@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.65 2007/12/09 20:12:54 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.65.2.1 2008/01/19 12:14:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65 2007/12/09 20:12:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.65.2.1 2008/01/19 12:14:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ int ecache_min_line_size;
 int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
 
-volatile cpuset_t cpus_active;/* set of active cpus */
+volatile sparc64_cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
 
 static struct cpu_info *alloc_cpuinfo(u_int);

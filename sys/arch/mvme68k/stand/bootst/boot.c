@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.7 2005/12/11 12:18:19 christos Exp $ */
+/*	$NetBSD: boot.c,v 1.7.64.1 2008/01/19 12:14:31 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -49,13 +49,13 @@ char	line[80];
 int main(void);
 
 int
-main()
+main(void)
 {
 	char *file;
-	int	flag, part;
+	int flag, part;
 
 	printf(">> %s MVME%x tapeboot [%s]\n",
-		bootprog_name, bugargs.cputyp, bootprog_rev);
+	    bootprog_name, bugargs.cputyp, bootprog_rev);
 
 	parse_args(&file, &flag, &part);
 	file = defname;	/* override */
@@ -70,5 +70,5 @@ main()
 	exec_mvme(file, flag | RB_NOSYM, part);
 
 	printf("tapeboot: %s: %s\n", file, strerror(errno));
-	return(0);
+	return 0;
 }

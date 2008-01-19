@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.32 2007/10/17 19:55:47 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.32.8.1 2008/01/19 12:14:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2007/10/17 19:55:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32.8.1 2008/01/19 12:14:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,14 +51,12 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2007/10/17 19:55:47 garbled Exp $"
 int disksubr_debug = 0;
 #endif
 
-static void bsdtocpulabel __P((struct disklabel *lp,
-	struct cpu_disklabel *clp));
-static void cputobsdlabel __P((struct disklabel *lp,
-	struct cpu_disklabel *clp));
+static void bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp);
+static void cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp);
 
 #ifdef DEBUG
-static void printlp __P((struct disklabel *lp, const char *str));
-static void printclp __P((struct cpu_disklabel *clp, const char *str));
+static void printlp(struct disklabel *lp, const char *str);
+static void printclp(struct cpu_disklabel *clp, const char *str);
 #endif
 
 
@@ -71,11 +69,8 @@ static void printclp __P((struct cpu_disklabel *clp, const char *str));
  * Returns null on success and an error string on failure.
  */
 const char *
-readdisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	const char *msg = NULL;
@@ -100,17 +95,17 @@ readdisklabel(dev, strat, lp, clp)
 	brelse(bp, 0);
 
 	if (msg || clp->magic1 != DISKMAGIC || clp->magic2 != DISKMAGIC) {
-		return (msg); 
+		return msg; 
 	}
 
 	cputobsdlabel(lp, clp);
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
-		printlp(lp, "readdisklabel:bsd label");
-		printclp(clp, "readdisklabel:cpu label");
+		printlp(lp, "%s:bsd label", __func__);
+		printclp(clp, "%s:cpu label", __func__);
 	}
 #endif
-	return (msg);
+	return msg;
 }
 
 /*
@@ -118,19 +113,17 @@ readdisklabel(dev, strat, lp, clp)
  * before setting it.
  */
 int
-setdisklabel(olp, nlp, openmask, clp)
-	struct disklabel *olp, *nlp;
-	u_long openmask;
-	struct cpu_disklabel *clp;
+setdisklabel(struct disklabel *olp, struct disklabel *nlp, u_long openmask,
+    struct cpu_disklabel *clp)
 {
 	int i;
 	struct partition *opp, *npp;
 
 #ifdef DEBUG
-	if(disksubr_debug > 0) {
-		printlp(nlp, "setdisklabel:new disklabel");
-		printlp(olp, "setdisklabel:old disklabel");
-		printclp(clp, "setdisklabel:cpu disklabel");
+	if (disksubr_debug > 0) {
+		printlp(nlp, "%s:new disklabel", __func__);
+		printlp(olp, "%s:old disklabel", __func__);
+		printclp(clp, "%s:cpu disklabel", __func__);
 	}
 #endif
 
@@ -138,17 +131,17 @@ setdisklabel(olp, nlp, openmask, clp)
 	/* sanity clause */
 	if (nlp->d_secpercyl == 0 || nlp->d_secsize == 0 ||
 	    (nlp->d_secsize % DEV_BSIZE) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	/* special case to allow disklabel to be invalidated */
 	if (nlp->d_magic == 0xffffffff) {
 		*olp = *nlp;
-		return (0);
+		return 0;
 	}
 
 	if (nlp->d_magic != DISKMAGIC || nlp->d_magic2 != DISKMAGIC ||
 	    dkcksum(nlp) != 0)
-		return (EINVAL);
+		return EINVAL;
 
 	while ((i = ffs(openmask)) != 0) {
 		i--;
@@ -158,7 +151,7 @@ setdisklabel(olp, nlp, openmask, clp)
 		opp = &olp->d_partitions[i];
 		npp = &nlp->d_partitions[i];
 		if (npp->p_offset != opp->p_offset || npp->p_size < opp->p_size)
-			return (EBUSY);
+			return EBUSY;
 		/*
 		 * Copy internally-set partition information
 		 * if new label doesn't include it.		XXX
@@ -176,32 +169,31 @@ setdisklabel(olp, nlp, openmask, clp)
 	*olp = *nlp;
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
-		printlp(olp, "setdisklabel:old->new disklabel");
+		printlp(olp, "%s:old->new disklabel", __func__);
 	}
 #endif
-	return (0);
+	return 0;
 }
 
 /*
  * Write disk label back to device after modification.
  */
 int
-writedisklabel(dev, strat, lp, clp)
-	dev_t dev;
-	void (*strat)(struct buf *);
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
+    struct cpu_disklabel *clp)
 {
 	struct buf *bp;
 	int error;
 
 #ifdef DEBUG
 	if(disksubr_debug > 0) {
-		printlp(lp, "writedisklabel: bsd label");
+		printlp(lp, "%s: bsd label", __func__);
 	}
 #endif
 
-	/* obtain buffer to read initial cpu_disklabel, for bootloader size :-) */
+	/*
+	 * obtain buffer to read initial cpu_disklabel, for bootloader size :-)
+	 */
 	bp = geteblk((int)lp->d_secsize);
 
 	/* request no partition relocation by driver on I/O operations */
@@ -221,14 +213,14 @@ writedisklabel(dev, strat, lp, clp)
 	brelse(bp, 0);
 
 	if (error) {
-		return (error);
+		return error;
 	}
 
 	bsdtocpulabel(lp, clp);
 
 #ifdef DEBUG
 	if (disksubr_debug > 0) {
-		printclp(clp, "writedisklabel:cpu label");
+		printclp(clp, "%s:cpu label", __func__);
 	}
 #endif
 
@@ -239,7 +231,9 @@ writedisklabel(dev, strat, lp, clp)
 
 		memcpy(bp->b_data, clp, sizeof(struct cpu_disklabel));
 
-		/* request no partition relocation by driver on I/O operations */
+		/*
+		 * request no partition relocation by driver on I/O operations
+		 */
 		bp->b_dev = dev;
 		bp->b_blkno = 0; /* contained in block 0 */
 		bp->b_bcount = lp->d_secsize;
@@ -251,13 +245,11 @@ writedisklabel(dev, strat, lp, clp)
 
 		brelse(bp, 0);
 	}
-	return (error); 
+	return error; 
 }
 
 static void
-bsdtocpulabel(lp, clp)
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+bsdtocpulabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 
@@ -312,7 +304,7 @@ bsdtocpulabel(lp, clp)
 	memcpy(clp->vid_4, &lp->d_partitions[0], sizeof(struct partition) * 4);
 	memset(clp->cfg_4, 0, sizeof(struct partition) * 12);
 	memcpy(clp->cfg_4, &lp->d_partitions[4], sizeof(struct partition) 
-		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
+	    * ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 
 	/*
 	 * here are the parts of the cpu_disklabel the kernel must init.
@@ -332,9 +324,7 @@ bsdtocpulabel(lp, clp)
 }
 
 static void
-cputobsdlabel(lp, clp)
-	struct disklabel *lp;
-	struct cpu_disklabel *clp;
+cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 
@@ -395,7 +385,7 @@ cputobsdlabel(lp, clp)
 	/* note: assume at least 4 partitions */
 	memcpy(&lp->d_partitions[0], clp->vid_4, sizeof(struct partition) * 4);
 	memcpy(&lp->d_partitions[4], clp->cfg_4, sizeof(struct partition) 
-		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
+	    * ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 	lp->d_checksum = 0;
 	lp->d_checksum = dkcksum(lp);
 #if DEBUG
@@ -407,9 +397,7 @@ cputobsdlabel(lp, clp)
 
 #ifdef DEBUG
 static void
-printlp(lp, str)
-	struct disklabel *lp;
-	const char *str;
+printlp(struct disklabel *lp, const char *str)
 {
 	int i;
 
@@ -431,9 +419,7 @@ printlp(lp, str)
 }
 
 static void
-printclp(clp, str)
-	struct cpu_disklabel *clp;
-	const char *str;
+printclp(struct cpu_disklabel *clp, const char *str)
 {
 	int maxp, i;
 

@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.42.6.2 2008/01/08 22:11:54 bouyer Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.42.6.3 2008/01/19 12:15:39 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42.6.2 2008/01/08 22:11:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.42.6.3 2008/01/19 12:15:39 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -324,6 +324,11 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		 *             data. For us, this means root.
 		 */
 		result = KAUTH_RESULT_ALLOW;
+		break;
+
+	case KAUTH_SYSTEM_MODULE:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
 		break;
 
 	default:

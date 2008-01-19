@@ -1,4 +1,4 @@
-/*	$NetBSD: sboot.c,v 1.5 2005/12/24 22:45:36 perry Exp $	*/
+/*	$NetBSD: sboot.c,v 1.5.64.1 2008/01/19 12:14:37 bouyer Exp $	*/
 
 /*
  *
@@ -42,105 +42,109 @@ void sboot(void);
 extern char bootprog_rev[];
 
 void
-sboot() 
+sboot(void) 
 {
-  char buf[128], *ebuf;
-  buf[0] = '0';
-  consinit();
-  printf("\nsboot: serial line bootstrap program (&end = %p) [%s]\n\n", &end,
-	bootprog_rev);
-  if (reboot) {  /* global flag from AAstart.s */
-    reboot = 0;
-    printf("[rebooting...]\n");
-    buf[0] = 'b';
-    buf[1] = 0;
-    do_cmd(buf, &buf[1]);
-  }
-  while (1) {
-    printf(">>> ");
-    ebuf = ngets(buf, sizeof(buf));
-    do_cmd(buf, ebuf);
-  }
-  /* not reached */
+	char buf[128], *ebuf;
+
+	buf[0] = '0';
+	consinit();
+	printf("\nsboot: serial line bootstrap program (&end = %p) [%s]\n\n",
+	    &end, bootprog_rev);
+	if (reboot) {  /* global flag from AAstart.s */
+		reboot = 0;
+		printf("[rebooting...]\n");
+		buf[0] = 'b';
+		buf[1] = 0;
+		do_cmd(buf, &buf[1]);
+	}
+	for (;;) {
+		printf(">>> ");
+		ebuf = ngets(buf, sizeof(buf));
+		do_cmd(buf, ebuf);
+	}
+	/* not reached */
 }
 
 /*
  * exit to rom
  */
 
-void callrom () 
+void
+callrom(void) 
 {
-  __asm("trap #15; .word 0x0063");
+
+	__asm("trap #15; .word 0x0063");
 }
 
 /*
  * do_cmd: do a command
  */
 
-void do_cmd(buf, ebuf)
-	char *buf, *ebuf;
+void
+do_cmd(char *buf, char *ebuf)
 {
-  switch (*buf) {
-  case '\0':
-    return;
-  case 'a':
-    if ( rev_arp() ) {
-	printf ("My ip address is: %d.%d.%d.%d\n", myip[0],
-		myip[1], myip[2], myip[3]);
-	printf ("Server ip address is: %d.%d.%d.%d\n", servip[0],
-		servip[1], servip[2], servip[3]);
-    } else  {
-	printf ("Failed.\n");
-    } 
-    return;
-  case 'e':
-    printf("exiting to ROM\n");
-    callrom();
-    return; 
-  case 'f':
-    if (do_get_file() == 1) {
-      printf("Download Failed\n");
-    } else {
-      printf("Download was a success!\n");
-    }
-    return;
-  case 'b':
-    le_init();
-    if ( rev_arp() ) {
-	printf ("My ip address is: %d.%d.%d.%d\n", myip[0],
-		myip[1], myip[2], myip[3]);
-	printf ("Server ip address is: %d.%d.%d.%d\n", servip[0],
-		servip[1], servip[2], servip[3]);
-    } else  {
-	printf ("REVARP: Failed.\n");
-	return;
-    }
-    if (do_get_file() == 1) {
-        printf("Download Failed\n");
-        return;
-    } else {
-        printf("Download was a success!\n");
-    }
-    /*FALLTHROUGH*/
-  case 'g':
-    printf("Start @ 0x%x ... \n", LOAD_ADDR);
-    go(LOAD_ADDR, buf+1, ebuf);
-    return;
-  case 'h':
-  case '?':
-    printf("valid commands\n");
-    printf("a - send a RARP\n");
-    printf("b - boot the system\n");
-    printf("e - exit to ROM\n");
-    printf("f - ftp the boot file\n");
-    printf("g - execute the boot file\n");
-    printf("h - help\n");
-    printf("i - init LANCE enet chip\n");
-    return;
-  case 'i':
-    le_init();
-    return;
-  default:
-    printf("sboot: %s: Unknown command\n", buf);
-  }
+
+	switch (*buf) {
+	case '\0':
+		return;
+	case 'a':
+		if (rev_arp()) {
+			printf("My ip address is: %d.%d.%d.%d\n",
+			    myip[0], myip[1], myip[2], myip[3]);
+			printf("Server ip address is: %d.%d.%d.%d\n",
+			    servip[0], servip[1], servip[2], servip[3]);
+		} else  {
+			printf("Failed.\n");
+		} 
+		return;
+	case 'e':
+		printf("exiting to ROM\n");
+		callrom();
+		return; 
+	case 'f':
+		if (do_get_file() == 1) {
+			printf("Download Failed\n");
+		} else {
+			printf("Download was a success!\n");
+		}
+		return;
+	case 'b':
+		le_init();
+		if (rev_arp()) {
+			printf("My ip address is: %d.%d.%d.%d\n",
+			    myip[0], myip[1], myip[2], myip[3]);
+			printf("Server ip address is: %d.%d.%d.%d\n",
+			    servip[0], servip[1], servip[2], servip[3]);
+		} else  {
+			printf("REVARP: Failed.\n");
+			return;
+		}
+		if (do_get_file() == 1) {
+			printf("Download Failed\n");
+			return;
+		} else {
+			printf("Download was a success!\n");
+		}
+		/*FALLTHROUGH*/
+	case 'g':
+		printf("Start @ 0x%x ... \n", LOAD_ADDR);
+		go(LOAD_ADDR, buf+1, ebuf);
+		return;
+	case 'h':
+	case '?':
+		printf("valid commands\n");
+		printf("a - send a RARP\n");
+		printf("b - boot the system\n");
+		printf("e - exit to ROM\n");
+		printf("f - ftp the boot file\n");
+		printf("g - execute the boot file\n");
+		printf("h - help\n");
+		printf("i - init LANCE enet chip\n");
+		return;
+	case 'i':
+		le_init();
+		return;
+	default:
+		printf("sboot: %s: Unknown command\n", buf);
+	}
 }

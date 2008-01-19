@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.12.8.1 2008/01/08 22:09:14 bouyer Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.12.8.2 2008/01/19 12:14:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12.8.1 2008/01/08 22:09:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.12.8.2 2008/01/19 12:14:09 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 	struct fxsave64 *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		fpusave_lwp(l, 1);
+		fpusave_lwp(l, true);
 	} else {
 		u_int16_t cw;
 		u_int32_t mxcsr, mxcsr_mask;
@@ -172,7 +172,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 	struct fxsave64 *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		fpusave_lwp(l, 0);
+		fpusave_lwp(l, false);
 	} else {
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}

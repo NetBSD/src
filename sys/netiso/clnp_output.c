@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_output.c,v 1.20.20.1 2008/01/02 21:57:36 bouyer Exp $	*/
+/*	$NetBSD: clnp_output.c,v 1.20.20.2 2008/01/19 12:15:35 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.20.20.1 2008/01/02 21:57:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_output.c,v 1.20.20.2 2008/01/19 12:15:35 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -243,7 +243,7 @@ clnp_output(struct mbuf *m0, ...)
 			printf("\tclc_dst %s\n", clnp_iso_addrp(&clcp->clc_dst));
 			printf("\tisop_opts %p, clc_opts %p\n",
 			    isop->isop_options, clcp->clc_options);
-			if ((rt = rtcache_getrt(&isop->isop_route)) != NULL)
+			if ((rt = rtcache_validate(&isop->isop_route)) != NULL)
 				printf("\trt %p, rt_flags x%x\n",
 				    rt, rt->rt_flags);
 			printf("\tflags x%x, clc_flags x%x\n", flags,
@@ -255,7 +255,7 @@ clnp_output(struct mbuf *m0, ...)
 	if ((clcp != NULL) &&	/* cache exists */
 	    (isop->isop_options == clcp->clc_options) &&	/* same options */
 	    (iso_addrmatch1(dst, &clcp->clc_dst)) &&	/* dst still same */
-	    (rt = rtcache_getrt(&isop->isop_route)) != NULL &&	/* route exists */
+	    (rt = rtcache_validate(&isop->isop_route)) != NULL &&	/* route exists */
 	    rt == clcp->clc_rt &&	/* and is cached */
 	    (rt->rt_flags & RTF_UP) &&	/* route still up */
 	    (flags == clcp->clc_flags) &&	/* same flags */
@@ -459,7 +459,7 @@ clnp_output(struct mbuf *m0, ...)
 #endif
 			goto bad;
 		}
-		clcp->clc_rt = rtcache_getrt(&isop->isop_route);/* XXX */
+		clcp->clc_rt = rtcache_validate(&isop->isop_route);/* XXX */
 		clcp->clc_ifp = clcp->clc_ifa->ia_ifp;	/* XXX */
 
 #ifdef ARGO_DEBUG

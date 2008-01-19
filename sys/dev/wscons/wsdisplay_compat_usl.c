@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_compat_usl.c,v 1.43 2007/10/18 18:09:53 joerg Exp $ */
+/* $NetBSD: wsdisplay_compat_usl.c,v 1.43.8.1 2008/01/19 12:15:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.43 2007/10/18 18:09:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay_compat_usl.c,v 1.43.8.1 2008/01/19 12:15:16 bouyer Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -68,7 +68,8 @@ struct usl_syncdata {
 static int usl_sync_init(struct wsscreen *, struct usl_syncdata **,
 			      struct proc *, int, int, int);
 static void usl_sync_done(struct usl_syncdata *);
-static int usl_sync_check(struct usl_syncdata *);
+static int usl_sync_check(void *);
+static int usl_sync_check_sig(struct usl_syncdata *, int, int);
 static struct usl_syncdata *usl_sync_get(struct wsscreen *);
 
 static int usl_detachproc(void *, int, void (*)(void *, int, int), void *);
@@ -81,8 +82,7 @@ static void usl_attachtimeout(void *);
 static const struct wscons_syncops usl_syncops = {
 	usl_detachproc,
 	usl_attachproc,
-#define _usl_sync_check ((int (*)(void *))usl_sync_check)
-	_usl_sync_check,
+	usl_sync_check,
 #define _usl_sync_destroy ((void (*)(void *))usl_sync_done)
 	_usl_sync_destroy
 };
@@ -138,17 +138,30 @@ usl_sync_done(struct usl_syncdata *sd)
 }
 
 static int
-usl_sync_check(struct usl_syncdata *sd)
+usl_sync_check_sig(struct usl_syncdata *sd, int sig, int flags)
 {
-	int rv;
-	mutex_enter(&proclist_mutex);	/* XXXSMP */
-	rv = (sd->s_proc == p_find(sd->s_pid, PFIND_LOCKED));
-	mutex_exit(&proclist_mutex);	/* XXXSMP */
-	if (rv)
+
+	mutex_enter(&proclist_mutex);
+	if (sd->s_proc == p_find(sd->s_pid, PFIND_LOCKED)) {
+		sd->s_flags |= flags;
+		if (sig)
+			psignal(sd->s_proc, sig);
+		mutex_exit(&proclist_mutex);
 		return (1);
+	}
+	mutex_exit(&proclist_mutex);
+
 	printf("usl_sync_check: process %d died\n", sd->s_pid);
 	usl_sync_done(sd);
 	return (0);
+}
+
+static int
+usl_sync_check(void *vsd)
+{
+
+	struct usl_syncdata *sd = vsd;
+	return usl_sync_check_sig(sd, 0, 0);
 }
 
 static struct usl_syncdata *
@@ -167,9 +180,6 @@ usl_detachproc(void *cookie, int waitok,
 {
 	struct usl_syncdata *sd = cookie;
 
-	if (!usl_sync_check(sd))
-		return (0);
-
 	/* we really need a callback */
 	if (!callback)
 		return (EINVAL);
@@ -181,12 +191,10 @@ usl_detachproc(void *cookie, int waitok,
 	 */
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
-	sd->s_flags |= SF_DETACHPENDING;
-	mutex_enter(&proclist_mutex);
-	psignal(sd->s_proc, sd->s_relsig);
-	mutex_exit(&proclist_mutex);
-	callout_schedule(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
+	if (!usl_sync_check_sig(sd, sd->s_relsig, SF_DETACHPENDING))	
+		return (0);
 
+	callout_schedule(&sd->s_detach_ch, wscompat_usl_synctimeout * hz);
 	return (EAGAIN);
 }
 
@@ -233,21 +241,16 @@ usl_attachproc(void *cookie, int waitok,
 {
 	struct usl_syncdata *sd = cookie;
 
-	if (!usl_sync_check(sd))
-		return (0);
-
 	/* we really need a callback */
 	if (!callback)
 		return (EINVAL);
 
 	sd->s_callback = callback;
 	sd->s_cbarg = cbarg;
-	sd->s_flags |= SF_ATTACHPENDING;
-	mutex_enter(&proclist_mutex);
-	psignal(sd->s_proc, sd->s_acqsig);
-	mutex_exit(&proclist_mutex);
-	callout_schedule(&sd->s_attach_ch, wscompat_usl_synctimeout * hz);
+	if (!usl_sync_check_sig(sd, sd->s_acqsig, SF_ATTACHPENDING))
+		return (0);
 
+	callout_schedule(&sd->s_attach_ch, wscompat_usl_synctimeout * hz);
 	return (EAGAIN);
 }
 

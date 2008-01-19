@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49.8.2 2008/01/11 19:19:08 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.49.8.3 2008/01/19 12:14:13 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.8.2 2008/01/11 19:19:08 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.8.3 2008/01/19 12:14:13 bouyer Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -187,6 +187,14 @@ volatile int astpending;
 void pmap_hptdump(void);
 void syscall(struct trapframe *, int *);
 
+#if defined(DEBUG)
+struct trapframe *sanity_frame;
+struct lwp *sanity_lwp;
+int sanity_checked = 0;
+void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
+#endif
+
+
 #ifdef USERTRACE
 /*
  * USERTRACE is a crude facility that traces the PC of
@@ -195,6 +203,9 @@ void syscall(struct trapframe *, int *);
  * with certain arguments - see the activation code in
  * syscall().
  */
+static void user_backtrace(struct trapframe *, struct lwp *, int);
+static void user_backtrace_raw(u_int, u_int);
+
 u_int rctr_next_iioq;
 #endif
 
@@ -318,7 +329,6 @@ trap_kdebug(int type, int code, struct trapframe *frame)
  * sets up a frame pointer and stores the return pointer 
  * and arguments in it.
  */
-static void user_backtrace_raw(u_int, u_int);
 static void
 user_backtrace_raw(u_int pc, u_int fp)
 {
@@ -349,7 +359,6 @@ user_backtrace_raw(u_int pc, u_int fp)
 	printf("  backtrace stopped with pc %08x fp 0x%08x\n", pc, fp);
 }
 
-static void user_backtrace(struct trapframe *, struct lwp *, int);
 static void
 user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 {
@@ -406,10 +415,6 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
  * assumptions about what a healthy CPU state should be,
  * with some documented elsewhere, some not.
  */
-struct trapframe *sanity_frame;
-struct lwp *sanity_lwp;
-int sanity_checked = 0;
-void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
 void
 frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 {
@@ -1313,10 +1318,10 @@ out:
 		 *	ldil	L%SYSCALLGATE, r1
 		 *	ble	4(sr7, r1)
 		 *	ldi	__CONCAT(SYS_,x), t1
-		 *	ldw	HPPA_FRAME_ERP(sr0,sp), rp
+		 *	comb,<>	%r0, %t1, __cerror
 		 *
 		 * And our offset queue head points to the
-		 * final ldw instruction.  So we need to 
+		 * comb instruction.  So we need to
 		 * subtract twelve to reach the ldil.
 		 */
 		frame->tf_iioq_head -= 12;

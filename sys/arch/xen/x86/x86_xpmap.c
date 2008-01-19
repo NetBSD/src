@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.12.12 2008/01/18 21:32:28 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.12.13 2008/01/19 12:14:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.12 2008/01/18 21:32:28 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.12.13 2008/01/19 12:14:51 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -573,6 +573,13 @@ xen_pmap_bootstrap()
 		count++;
 	}
 #ifndef __x86_64__
+	/*
+	 * one more L2 page: we'll alocate several pages after kva_start
+	 * in pmap_bootstrap() before pmap_growkernel(), which have not been
+	 * counted here. It's not a big issue to allocate one more L2 as
+	 * pmap_growkernel() will be called anyway.
+	 */
+	count++;
 	nkptp[1] = count;
 #endif
 

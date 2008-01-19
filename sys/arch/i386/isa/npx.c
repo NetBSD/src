@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.120.2.2 2008/01/06 20:35:44 bouyer Exp $	*/
+/*	$NetBSD: npx.c,v 1.120.2.3 2008/01/19 12:14:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.120.2.2 2008/01/06 20:35:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.120.2.3 2008/01/19 12:14:23 bouyer Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -163,9 +163,6 @@ npxdna_empty(struct cpu_info *ci)
 
 #ifndef XEN
 	panic("npxdna vector not initialized");
-#else
-	/* raise a DNA TRAP, math_emulate would take over eventually */
-	IPRINTF(("Emul"));
 #endif
 	return 0;
 }
@@ -538,7 +535,7 @@ npxdna_xmm(struct cpu_info *ci)
 	 */
 	if (ci->ci_fpcurlwp != NULL) {
 		IPRINTF(("Save"));
-		npxsave_cpu(ci, 1);
+		npxsave_cpu(true);
 	} else {
 		clts();
 		IPRINTF(("Init"));
@@ -550,7 +547,7 @@ npxdna_xmm(struct cpu_info *ci)
 
 	KDASSERT(ci->ci_fpcurlwp == NULL);
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l, 1);
+		npxsave_lwp(l, true);
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 	s = splhigh();
@@ -620,7 +617,7 @@ npxdna_s87(struct cpu_info *ci)
 	 * clear any exceptions.
 	 */
 	if (ci->ci_fpcurlwp != NULL)
-		npxsave_cpu(ci, 1);
+		npxsave_cpu(true);
 	else {
 		clts();
 		IPRINTF(("%s: fp init\n", ci->ci_dev->dv_xname));
@@ -633,7 +630,7 @@ npxdna_s87(struct cpu_info *ci)
 	IPRINTF(("%s: done saving\n", ci->ci_dev->dv_xname));
 	KDASSERT(ci->ci_fpcurlwp == NULL);
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		npxsave_lwp(l, 1);
+		npxsave_lwp(l, true);
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
 	clts();
 	s = splhigh();
@@ -669,12 +666,11 @@ npxdna_s87(struct cpu_info *ci)
 }
 
 void
-npxsave_cpu(struct cpu_info *ci, int save)
+npxsave_cpu(bool save)
 {
+	struct cpu_info *ci = curcpu();
 	struct lwp *l;
 	int s;
-
-	KDASSERT(ci == curcpu());
 
 	l = ci->ci_fpcurlwp;
 	if (l == NULL)
@@ -734,9 +730,8 @@ npxsave_cpu(struct cpu_info *ci, int save)
  * saves us a reload once per fork().
  */
 void
-npxsave_lwp(struct lwp *l, int save)
+npxsave_lwp(struct lwp *l, bool save)
 {
-	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
 
 	KDASSERT(l->l_addr != NULL);
@@ -753,9 +748,9 @@ npxsave_lwp(struct lwp *l, int save)
 	    save? "save" : "flush", l));
 
 #if defined(MULTIPROCESSOR)
-	if (oci == ci) {
+	if (oci == curcpu()) {
 		int s = splhigh();
-		npxsave_cpu(ci, save);
+		npxsave_cpu(save);
 		splx(s);
 	} else {
 #ifdef DIAGNOSTIC
@@ -785,8 +780,7 @@ npxsave_lwp(struct lwp *l, int save)
 		}
 	}
 #else /* MULTIPROCESSOR */
-	KASSERT(ci->ci_fpcurlwp == l);
-	npxsave_cpu(ci, save);
+	npxsave_cpu(save);
 #endif /* MULTIPROCESSOR */
 #ifdef XEN
 	HYPERVISOR_fpu_taskswitch();

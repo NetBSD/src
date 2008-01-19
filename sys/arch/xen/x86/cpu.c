@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3.2.4 2008/01/08 22:10:41 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.2.5 2008/01/19 12:14:51 bouyer Exp $	*/
 /* NetBSD: cpu.c,v 1.18 2004/02/20 17:35:01 yamt Exp  */
 
 /*-
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.4 2008/01/08 22:10:41 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.2.5 2008/01/19 12:14:51 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -129,6 +129,7 @@ int     vcpu_match(struct device *, struct cfdata *, void *);
 void    vcpu_attach(struct device *, struct device *, void *);
 #endif
 void    cpu_attach_common(struct device *, struct device *, void *);
+void	cpu_offline_md(void);
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
@@ -874,4 +875,18 @@ cpu_get_tsc_freq(struct cpu_info *ci)
 	/* XXX this needs to read the shared_info of the CPU being probed.. */
 	ci->ci_tsc_freq = HYPERVISOR_shared_info->cpu_freq;
 #endif /* XEN3 */
+}
+
+void
+cpu_offline_md(void)
+{
+        int s;
+
+        s = splhigh();
+#ifdef __i386__
+        npxsave_cpu(true);
+#else   
+        fpusave_cpu(true);
+#endif
+        splx(s);
 }

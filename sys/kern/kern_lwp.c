@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.83.6.3 2008/01/08 22:11:34 bouyer Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.83.6.4 2008/01/19 12:15:21 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.3 2008/01/08 22:11:34 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.4 2008/01/19 12:15:21 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -225,6 +225,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.83.6.3 2008/01/08 22:11:34 bouyer Exp
 #include <sys/user.h>
 #include <sys/lockdebug.h>
 #include <sys/kmem.h>
+#include <sys/pset.h>
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
@@ -584,15 +585,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_pflag = LP_MPSAFE;
 
 	if (p2->p_flag & PK_SYSTEM) {
-		/*
-		 * Mark it as a system process and not a candidate for
-		 * swapping.
-		 */
+		/* Mark it as a system LWP and not a candidate for swapping */
 		l2->l_flag |= LW_SYSTEM;
-	} else {
-		/* Look for a CPU to start */
-		l2->l_cpu = sched_takecpu(l2);
-		l2->l_mutex = l2->l_cpu->ci_schedstate.spc_mutex;
 	}
 
 	lwp_initspecific(l2);
@@ -635,6 +629,18 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	mutex_enter(&proclist_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
 	mutex_exit(&proclist_lock);
+
+	if ((p2->p_flag & PK_SYSTEM) == 0) {
+		/* Locking is needed, since LWP is in the list of all LWPs */
+		lwp_lock(l2);
+		/* Inherit a processor-set */
+		l2->l_psid = l1->l_psid;
+		/* Inherit an affinity */
+		memcpy(&l2->l_affinity, &l1->l_affinity, sizeof(cpuset_t));
+		/* Look for a CPU to start */
+		l2->l_cpu = sched_takecpu(l2);
+		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_mutex);
+	}
 
 	SYSCALL_TIME_LWP_INIT(l2);
 
@@ -781,6 +787,8 @@ lwp_exit(struct lwp *l)
 
 	lwp_lock(l);
 	l->l_stat = LSZOMB;
+	if (l->l_name != NULL)
+		strcpy(l->l_name, "(zombie)");
 	lwp_unlock(l);
 	p->p_nrlwps--;
 	cv_broadcast(&p->p_lwpcv);
@@ -921,6 +929,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	if (!recycle && l->l_ts != &turnstile0)
 		pool_cache_put(turnstile_cache, l->l_ts);
+	if (l->l_name != NULL)
+		kmem_free(l->l_name, MAXCOMLEN);
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif
@@ -1038,6 +1048,74 @@ proc_representative_lwp(struct proc *p, int *nrlwps, int locking)
 		" %d (%s)", p->p_pid, p->p_comm);
 	/* NOTREACHED */
 	return NULL;
+}
+
+/*
+ * Migrate the LWP to the another CPU.  Unlocks the LWP.
+ */
+void
+lwp_migrate(lwp_t *l, struct cpu_info *ci)
+{
+	struct schedstate_percpu *spc;
+	KASSERT(lwp_locked(l, NULL));
+
+	if (l->l_cpu == ci) {
+		lwp_unlock(l);
+		return;
+	}
+
+	spc = &ci->ci_schedstate;
+	switch (l->l_stat) {
+	case LSRUN:
+		if (l->l_flag & LW_INMEM) {
+			l->l_target_cpu = ci;
+			break;
+		}
+	case LSIDL:
+		l->l_cpu = ci;
+		lwp_unlock_to(l, spc->spc_mutex);
+		KASSERT(!mutex_owned(spc->spc_mutex));
+		return;
+	case LSSLEEP:
+		l->l_cpu = ci;
+		break;
+	case LSSTOP:
+	case LSSUSPENDED:
+		if (l->l_wchan != NULL) {
+			l->l_cpu = ci;
+			break;
+		}
+	case LSONPROC:
+		l->l_target_cpu = ci;
+		break;
+	}
+	lwp_unlock(l);
+}
+
+/*
+ * Find the LWP in the process.
+ * On success - returns LWP locked.
+ */
+struct lwp *
+lwp_find2(pid_t pid, lwpid_t lid)
+{
+	proc_t *p;
+	lwp_t *l;
+
+	/* Find the process */
+	p = p_find(pid, PFIND_UNLOCK_FAIL);
+	if (p == NULL)
+		return NULL;
+	mutex_enter(&p->p_smutex);
+	mutex_exit(&proclist_lock);
+
+	/* Find the thread */
+	l = lwp_find(p, lid);
+	if (l != NULL)
+		lwp_lock(l);
+	mutex_exit(&p->p_smutex);
+
+	return l;
 }
 
 /*

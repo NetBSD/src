@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.89.4.1 2008/01/02 21:52:32 bouyer Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.89.4.2 2008/01/19 12:14:57 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.89.4.1 2008/01/02 21:52:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.89.4.2 2008/01/19 12:14:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -622,66 +622,6 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 		return sys_mknod(l, &bma, retval);
 	}
 }
-
-#if defined(__i386__) || defined(__m68k__) || \
-    defined(__arm__)
-int
-linux_sys_chown16(struct lwp *l, const struct linux_sys_chown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-	struct sys___posix_chown_args bca;
-
-	SCARG(&bca, path) = SCARG(uap, path);
-	SCARG(&bca, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_chown(l, &bca, retval);
-}
-
-int
-linux_sys_fchown16(struct lwp *l, const struct linux_sys_fchown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) fd;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-	struct sys___posix_fchown_args bfa;
-
-	SCARG(&bfa, fd) = SCARG(uap, fd);
-	SCARG(&bfa, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bfa, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_fchown(l, &bfa, retval);
-}
-
-int
-linux_sys_lchown16(struct lwp *l, const struct linux_sys_lchown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-	struct sys___posix_lchown_args bla;
-
-	SCARG(&bla, path) = SCARG(uap, path);
-	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bla, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_lchown(l, &bla, retval);
-}
-#endif /* __i386__ || __m68k__ || __arm__ || __amd64__ */
 
 /*
  * This is just fsync() for now (just as it is in the Linux kernel)

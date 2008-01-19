@@ -1,4 +1,4 @@
-/*	$NetBSD: chiptotime.c,v 1.3 2005/12/11 12:18:19 christos Exp $ */
+/*	$NetBSD: chiptotime.c,v 1.3.64.1 2008/01/19 12:14:34 bouyer Exp $ */
 
 #include <sys/types.h>
 
@@ -25,11 +25,10 @@
  * Will Unix still be here then??
  */
 const short dayyr[12] =
-{0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
+    {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
 
 u_long
-chiptotime(sec, min, hour, day, mon, year)
-	int sec, min, hour, day, mon, year;
+chiptotime(int sec, int min, int hour, int day, int mon, int year)
 {
 	int days, yr;
 
@@ -52,5 +51,5 @@ chiptotime(sec, min, hour, day, mon, year)
 	if (LEAPYEAR(yr) && mon > 2)
 		days++;
 	/* now have days since Jan 1, 1970; the rest is easy... */
-	return (days * SECDAY + hour * 3600 + min * 60 + sec);
+	return days * SECDAY + hour * 3600 + min * 60 + sec;
 }

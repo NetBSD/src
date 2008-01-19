@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28.8.1 2008/01/08 22:10:36 bouyer Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.8.2 2008/01/19 12:14:48 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.8.1 2008/01/08 22:10:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.8.2 2008/01/19 12:14:48 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -376,6 +376,7 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	pcireg_t data;
 	int s;
 
+	KASSERT((reg & 0x3) == 0);
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;
@@ -428,6 +429,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 {
 	int s;
 
+	KASSERT((reg & 0x3) == 0);
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;

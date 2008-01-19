@@ -35,59 +35,59 @@ $FreeBSD: src/sys/dev/cxgb/sys/mbufq.h,v 1.2 2007/05/28 22:57:27 kmacy Exp $
 #include <sys/mbuf.h>
 
 struct mbuf_head {
-	struct mbuf *head;
-	struct mbuf *tail;
-	uint32_t     qlen;
-	struct mtx   lock;
+    struct mbuf *head;
+    struct mbuf *tail;
+    uint32_t     qlen;
+    struct mtx   lock;
 };
 
 static __inline void
 mbufq_init(struct mbuf_head *l)
 {
-	l->head = l->tail = NULL;
+    l->head = l->tail = NULL;
 }
 
 static __inline int
 mbufq_empty(struct mbuf_head *l)
 {
-	return (l->head == NULL);
+    return (l->head == NULL);
 }
 
 static __inline int
 mbufq_len(struct mbuf_head *l)
 {
-	return (l->qlen);
+    return (l->qlen);
 }
 
 
 static __inline void
 mbufq_tail(struct mbuf_head *l, struct mbuf *m)
 {
-	l->qlen++;
-	l->tail->m_nextpkt = m;
-	l->tail = m;
+    l->qlen++;
+    l->tail->m_nextpkt = m;
+    l->tail = m;
 }
 
 static __inline struct mbuf *
 mbufq_dequeue(struct mbuf_head *l)
 {
-	struct mbuf *m;
+    struct mbuf *m;
 
-	m = l->head;
-	if (m) {
-		if (m == l->tail) 
-			l->tail = NULL;
-		l->head = m->m_nextpkt;
-		l->qlen--;
-	}
+    m = l->head;
+    if (m) {
+        if (m == l->tail) 
+            l->tail = NULL;
+        l->head = m->m_nextpkt;
+        l->qlen--;
+    }
 
-	return (m);
+    return (m);
 }
 
 static __inline struct mbuf *
 mbufq_peek(struct mbuf_head *l)
 {
-	return (l->head);
+    return (l->head);
 }
 
 #endif  /* CXGB_MBUFQ_H_ */

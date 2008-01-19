@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.4 2005/12/11 12:17:37 christos Exp $	*/
+/*	$NetBSD: psl.h,v 1.4.64.1 2008/01/19 12:14:14 bouyer Exp $	*/
 
 /*	$OpenBSD: psl.h,v 1.6 1999/11/25 18:29:01 mickey Exp $	*/
 
@@ -48,6 +48,7 @@
 #define	PSW_Y_POS	(0)
 #define	PSW_Z_POS	(1)
 #define	PSW_SS_POS	(3)	/* Reserved, Software-defined */
+#define	PSW_W_POS	(4)
 #define	PSW_E_POS	(5)
 #define	PSW_S_POS	(6)
 #define	PSW_T_POS	(7)
@@ -60,6 +61,7 @@
 #define	PSW_V_POS	(14)
 #define	PSW_M_POS	(15)
 #define	PSW_CB_POS	(16)
+#define	PSW_O_POS	(24)
 #define	PSW_G_POS	(25)
 #define	PSW_F_POS	(26)
 #define	PSW_R_POS	(27)
@@ -68,9 +70,9 @@
 #define	PSW_D_POS	(30)
 #define	PSW_I_POS	(31)
 
-#define	PSW_BITS	"\020\001I\002D\003P\004Q\005R\006F\007G"  \
+#define	PSW_BITS	"\020\001I\002D\003P\004Q\005R\006F\007G\010O"  \
 			"\021M\022V\023C\024B\025X\026N\027L\030H" \
-			"\031T\032S\033E\037Z\040Y"
+			"\031T\032S\033E\034W\037Z\040Y"
 
 /*
  * Processor Status Word Bit Values
@@ -78,6 +80,7 @@
 #define	PSW_Y	(1 << (31-PSW_Y_POS))	/* Data Debug Trap Disable */
 #define	PSW_Z	(1 << (31-PSW_Z_POS))	/* Instruction Debug Trap Disable */
 #define	PSW_SS	(1 << (31-PSW_SS_POS))	/* Reserved; Software Single-Step */
+#define	PSW_W	(1 << (31-PSW_W_POS))	/* 64bit address decode enable */
 #define	PSW_E	(1 << (31-PSW_E_POS))	/* Little Endian Memory Access Enable */
 #define	PSW_S	(1 << (31-PSW_S_POS))	/* Secure Interval Timer */
 #define	PSW_T	(1 << (31-PSW_T_POS))	/* Taken Branch Trap Enable */
@@ -90,6 +93,7 @@
 #define	PSW_V	(1 << (31-PSW_V_POS))	/* Divide Step Correction */
 #define	PSW_M	(1 << (31-PSW_M_POS))	/* High-priority Machine Check Mask */
 #define	PSW_CB	(1 << (31-PSW_CB_POS))	/* Carry/Borrow Bits */
+#define	PSW_O	(1 << (31-PSW_O_POS))	/* Force strong ordering (2.0) */
 #define	PSW_G	(1 << (31-PSW_G_POS))	/* Debug Trap Enable */
 #define	PSW_F	(1 << (31-PSW_F_POS))	/* Perfomance Monitor Interrupt Unmask */
 #define	PSW_R	(1 << (31-PSW_R_POS))	/* Recover Counter Enable */

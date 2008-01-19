@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.1.20.1 2008/01/02 21:56:50 bouyer Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.1.20.2 2008/01/19 12:15:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.1.20.1 2008/01/02 21:56:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.1.20.2 2008/01/19 12:15:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -746,8 +746,8 @@ genfs_putpages(void *v)
 }
 
 int
-genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
-	struct vm_page **busypg)
+genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
+    int origflags, struct vm_page **busypg)
 {
 	struct uvm_object *uobj = &vp->v_uobj;
 	kmutex_t *slock = &uobj->vmobjlock;
@@ -758,24 +758,30 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 	int freeflag;
 	struct vm_page *pgs[maxpages], *pg, *nextpg, *tpg, curmp, endmp;
 	bool wasclean, by_list, needs_clean, yld;
-	bool async = (flags & PGO_SYNCIO) == 0;
+	bool async = (origflags & PGO_SYNCIO) == 0;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp *l = curlwp ? curlwp : &lwp0;
 	struct genfs_node *gp = VTOG(vp);
+	int flags;
 	int dirtygen;
-	bool modified = false;
-	bool has_trans = false;
+	bool modified;
+	bool has_trans;
 	bool cleanall;
+	bool onworklst;
 
 	UVMHIST_FUNC("genfs_putpages"); UVMHIST_CALLED(ubchist);
 
-	KASSERT(flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
+	KASSERT(origflags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE));
 	KASSERT((startoff & PAGE_MASK) == 0 && (endoff & PAGE_MASK) == 0);
 	KASSERT(startoff < endoff || endoff == 0);
 
 	UVMHIST_LOG(ubchist, "vp %p pages %d off 0x%x len 0x%x",
 	    vp, uobj->uo_npages, startoff, endoff - startoff);
 
+retry:
+	modified = false;
+	has_trans = false;
+	flags = origflags;
 	KASSERT((vp->v_iflag & VI_ONWORKLST) != 0 ||
 	    (vp->v_iflag & VI_WRMAPDIRTY) == 0);
 	if (uobj->uo_npages == 0) {
@@ -1044,7 +1050,6 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
 			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
-				(void) pmap_clear_reference(tpg);
 				uvm_pagedeactivate(tpg);
 			} else if (flags & PGO_FREE) {
 				pmap_page_protect(tpg, VM_PROT_NONE);
@@ -1136,6 +1141,16 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff, int flags,
 
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
 	    (vp->v_iflag & VI_ONWORKLST) != 0) {
+#if defined(DEBUG)
+		TAILQ_FOREACH(pg, &uobj->memq, listq) {
+			if ((pg->flags & PG_CLEAN) == 0) {
+				printf("%s: %p: !CLEAN\n", __func__, pg);
+			}
+			if (pmap_is_modified(pg)) {
+				printf("%s: %p: modified\n", __func__, pg);
+			}
+		}
+#endif /* defined(DEBUG) */
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
 			vn_syncer_remove_from_worklist(vp);
@@ -1150,10 +1165,21 @@ skip_scan:
 		while (vp->v_numoutput != 0)
 			cv_wait(&vp->v_cv, slock);
 	}
+	onworklst = (vp->v_iflag & VI_ONWORKLST) != 0;
 	mutex_exit(slock);
 
 	if (has_trans)
 		fstrans_done(vp->v_mount);
+
+	if ((flags & PGO_RECLAIM) != 0 && onworklst) {
+		/*
+		 * in the case of PGO_RECLAIM, ensure to make the vnode clean.
+		 * retrying is not a big deal because, in many cases,
+		 * uobj->uo_npages is already 0 here.
+		 */
+		mutex_enter(slock);
+		goto retry;
+	}
 
 	return (error);
 }

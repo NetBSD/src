@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.298.4.1 2008/01/02 21:54:40 bouyer Exp $
+#	$NetBSD: files.pci,v 1.298.4.2 2008/01/19 12:15:11 bouyer Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -795,12 +795,14 @@ file	dev/pci/cxgb_mc5.c		cxgbc | cxgb
 file	dev/pci/cxgb_vsc8211.c		cxgbc | cxgb
 file	dev/pci/cxgb_ael1002.c		cxgbc | cxgb
 file	dev/pci/cxgb_mv88e1xxx.c	cxgbc | cxgb
+file	dev/pci/cxgb_vsc7323.c		cxgbc | cxgb
 file	dev/pci/cxgb_xgmac.c		cxgbc | cxgb
 file	dev/pci/cxgb_t3_hw.c		cxgbc | cxgb
 file	dev/pci/cxgb_sge.c		cxgbc | cxgb
 file	dev/pci/cxgb_lro.c		cxgbc | cxgb
-file	dev/pci/cxgb_offload.c		cxgbc | cxgb
+# file	dev/pci/cxgb_offload.c		cxgbc | cxgb
 file	dev/pci/cxgb_l2t.c		cxgbc | cxgb
+file	dev/pci/cxgb_osdep.c		cxgbc | cxgb
 
 # Chips & Technologies 65550 framebuffer console driver
 device	chipsfb: wsemuldisplaydev, rasops8, vcons, videomode

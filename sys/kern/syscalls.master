@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.180.6.2 2008/01/08 22:11:43 bouyer Exp $
+	$NetBSD: syscalls.master,v 1.180.6.3 2008/01/19 12:15:26 bouyer Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -514,10 +514,7 @@
 			    siginfo_t *info, \
 			    struct timespec *timeout); }
 245	UNIMPL		sys_sigqueue
-;
-; Syscall 246 is free for any use
-;
-246	UNIMPL
+246	STD MPSAFE	{ int sys_modctl(int cmd, void *arg); }
 #if defined(P1003_1B_SEMAPHORE) || (!defined(_KERNEL) && defined(_LIBC))
 247	STD MPSAFE	{ int sys__ksem_init(unsigned int value, semid_t *idp); }
 248	STD MPSAFE	{ int sys__ksem_open(const char *name, int oflag, \
@@ -696,17 +693,20 @@
 			    const struct kevent *changelist, size_t nchanges, \
 			    struct kevent *eventlist, size_t nevents, \
 			    const struct timespec *timeout); }
-;
-; Syscalls 346-353 are reserved for the IEEE Std1003.1b scheduling syscalls
-;
-346	UNIMPL		sys_sched_setparam
-347	UNIMPL		sys_sched_getparam
-348	UNIMPL		sys_sched_setscheduler
-349	UNIMPL		sys_sched_getscheduler
+
+; Scheduling system calls.
+346	STD MPSAFE	{ int sys__sched_setparam(pid_t pid, lwpid_t lid, \
+			    const struct sched_param *params); }
+347	STD MPSAFE	{ int sys__sched_getparam(pid_t pid, lwpid_t lid, \
+			    struct sched_param *params); }
+348	STD MPSAFE	{ int sys__sched_setaffinity(pid_t pid, lwpid_t lid, \
+			    size_t size, void *cpuset); }
+349	STD MPSAFE	{ int sys__sched_getaffinity(pid_t pid, lwpid_t lid, \
+			    size_t size, void *cpuset); }
 350	STD MPSAFE	{ int sys_sched_yield(void); }
-351	UNIMPL		sys_sched_get_priority_max
-352	UNIMPL		sys_sched_get_priority_min
-353	UNIMPL		sys_sched_rr_get_interval
+351	UNIMPL
+352	UNIMPL
+353	UNIMPL
 
 354	STD MPSAFE	{ int sys_fsync_range(int fd, int flags, off_t start, \
 			    off_t length); }
@@ -824,3 +824,11 @@
 			    size_t data_len); }
 411	STD MPSAFE	{ void *sys_mremap(void *old_address, size_t old_size, \
 			    void *new_address, size_t new_size, int flags); }
+
+; Processor-sets system calls
+412	STD MPSAFE	{ int sys_pset_create(psetid_t *psid); }
+413	STD MPSAFE	{ int sys_pset_destroy(psetid_t psid); }
+414	STD MPSAFE	{ int sys_pset_assign(psetid_t psid, cpuid_t cpuid, \
+			    psetid_t *opsid); }
+415	STD MPSAFE	{ int sys__pset_bind(idtype_t idtype, id_t first_id, \
+			    id_t second_id, psetid_t psid, psetid_t *opsid); }

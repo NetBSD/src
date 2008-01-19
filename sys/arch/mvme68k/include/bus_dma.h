@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.14 2007/03/04 06:00:14 christos Exp $	*/
+/* $NetBSD: bus_dma.h,v 1.14.32.1 2008/01/19 12:14:27 bouyer Exp $	*/
 
 /*
  * This file was extracted from from next68k/include/bus.h
@@ -142,33 +142,33 @@ struct mvme68k_bus_dma_tag {
 	/*
 	 * DMA mapping methods.
 	 */
-	int	(*_dmamap_create) __P((bus_dma_tag_t, bus_size_t, int,
-		    bus_size_t, bus_size_t, int, bus_dmamap_t *));
-	void	(*_dmamap_destroy) __P((bus_dma_tag_t, bus_dmamap_t));
-	int	(*_dmamap_load) __P((bus_dma_tag_t, bus_dmamap_t, void *,
-		    bus_size_t, struct proc *, int));
-	int	(*_dmamap_load_mbuf) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct mbuf *, int));
-	int	(*_dmamap_load_uio) __P((bus_dma_tag_t, bus_dmamap_t,
-		    struct uio *, int));
-	int	(*_dmamap_load_raw) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_dma_segment_t *, int, bus_size_t, int));
-	void	(*_dmamap_unload) __P((bus_dma_tag_t, bus_dmamap_t));
-	void	(*_dmamap_sync) __P((bus_dma_tag_t, bus_dmamap_t,
-		    bus_addr_t, bus_size_t, int));
+	int	(*_dmamap_create)(bus_dma_tag_t, bus_size_t, int,
+		    bus_size_t, bus_size_t, int, bus_dmamap_t *);
+	void	(*_dmamap_destroy)(bus_dma_tag_t, bus_dmamap_t);
+	int	(*_dmamap_load)(bus_dma_tag_t, bus_dmamap_t, void *,
+		    bus_size_t, struct proc *, int);
+	int	(*_dmamap_load_mbuf)(bus_dma_tag_t, bus_dmamap_t,
+		    struct mbuf *, int);
+	int	(*_dmamap_load_uio)(bus_dma_tag_t, bus_dmamap_t,
+		    struct uio *, int);
+	int	(*_dmamap_load_raw)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_dma_segment_t *, int, bus_size_t, int);
+	void	(*_dmamap_unload)(bus_dma_tag_t, bus_dmamap_t);
+	void	(*_dmamap_sync)(bus_dma_tag_t, bus_dmamap_t,
+		    bus_addr_t, bus_size_t, int);
 
 	/*
 	 * DMA memory utility functions.
 	 */
-	int	(*_dmamem_alloc) __P((bus_dma_tag_t, bus_size_t, bus_size_t,
-		    bus_size_t, bus_dma_segment_t *, int, int *, int));
-	void	(*_dmamem_free) __P((bus_dma_tag_t,
-		    bus_dma_segment_t *, int));
-	int	(*_dmamem_map) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, size_t, void **, int));
-	void	(*_dmamem_unmap) __P((bus_dma_tag_t, void *, size_t));
-	paddr_t	(*_dmamem_mmap) __P((bus_dma_tag_t, bus_dma_segment_t *,
-		    int, off_t, int, int));
+	int	(*_dmamem_alloc)(bus_dma_tag_t, bus_size_t, bus_size_t,
+		    bus_size_t, bus_dma_segment_t *, int, int *, int);
+	void	(*_dmamem_free)(bus_dma_tag_t,
+		    bus_dma_segment_t *, int);
+	int	(*_dmamem_map)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, size_t, void **, int);
+	void	(*_dmamem_unmap)(bus_dma_tag_t, void *, size_t);
+	paddr_t	(*_dmamem_mmap)(bus_dma_tag_t, bus_dma_segment_t *,
+		    int, off_t, int, int);
 };
 
 #define	bus_dmamap_create(t, s, n, m, b, f, p)			\
@@ -224,39 +224,38 @@ struct mvme68k_bus_dmamap {
 };
 
 #ifdef _MVME68K_BUS_DMA_PRIVATE
-int	_bus_dmamap_create __P((bus_dma_tag_t, bus_size_t, int, bus_size_t,
-	    bus_size_t, int, bus_dmamap_t *));
-void	_bus_dmamap_destroy __P((bus_dma_tag_t, bus_dmamap_t));
+int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
+	    bus_size_t, int, bus_dmamap_t *);
+void	_bus_dmamap_destroy(bus_dma_tag_t, bus_dmamap_t);
 
-int	_bus_dmamap_load_direct __P((bus_dma_tag_t, bus_dmamap_t,
-	    void *, bus_size_t, struct proc *, int));
-int	_bus_dmamap_load_mbuf_direct __P((bus_dma_tag_t,
-	    bus_dmamap_t, struct mbuf *, int));
-int	_bus_dmamap_load_uio_direct __P((bus_dma_tag_t,
-	    bus_dmamap_t, struct uio *, int));
-int	_bus_dmamap_load_raw_direct __P((bus_dma_tag_t,
-	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int));
-void	_bus_dmamap_unload __P((bus_dma_tag_t, bus_dmamap_t));
-void	_bus_dmamap_sync_030 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
-void	_bus_dmamap_sync_0460 __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
-int	_bus_dmamem_alloc __P((bus_dma_tag_t tag, bus_size_t size,
+int	_bus_dmamap_load_direct(bus_dma_tag_t, bus_dmamap_t,
+	    void *, bus_size_t, struct proc *, int);
+int	_bus_dmamap_load_mbuf_direct(bus_dma_tag_t,
+	    bus_dmamap_t, struct mbuf *, int);
+int	_bus_dmamap_load_uio_direct(bus_dma_tag_t,
+	    bus_dmamap_t, struct uio *, int);
+int	_bus_dmamap_load_raw_direct(bus_dma_tag_t,
+	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int);
+void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+void	_bus_dmamap_sync_030(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+void	_bus_dmamap_sync_0460(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
 	    bus_size_t alignment, bus_size_t boundary,
-	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags));
-void	_bus_dmamem_free __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs));
-int	_bus_dmamem_map __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, size_t size, void **kvap, int flags));
-void	_bus_dmamem_unmap __P((bus_dma_tag_t tag, void *kva,
-	    size_t size));
-paddr_t	_bus_dmamem_mmap __P((bus_dma_tag_t tag, bus_dma_segment_t *segs,
-	    int nsegs, off_t off, int prot, int flags));
+	    bus_dma_segment_t *segs, int nsegs, int *rsegs, int flags);
+void	_bus_dmamem_free(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs);
+int	_bus_dmamem_map(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, size_t size, void **kvap, int flags);
+void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva, size_t size);
+paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
+	    int nsegs, off_t off, int prot, int flags);
 #endif /* _MVME68K_BUS_DMA_PRIVATE */
 
 /* Needed by mvmebus.c */
-int	_bus_dmamem_alloc_common __P((bus_dma_tag_t,
+int	_bus_dmamem_alloc_common(bus_dma_tag_t,
 	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,
-	    bus_dma_segment_t *, int, int *, int));
+	    bus_dma_segment_t *, int, int *, int);
 
 #endif /* _MVME68K_BUS_DMA_H_ */

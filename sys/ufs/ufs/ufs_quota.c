@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.52.4.2 2008/01/08 22:12:05 bouyer Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.52.4.3 2008/01/19 12:15:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.52.4.2 2008/01/08 22:12:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.52.4.3 2008/01/19 12:15:47 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -485,6 +485,7 @@ again:
 			break;
 		}
 		vput(vp);
+		mutex_enter(&mntvnode_lock);
 	}
 	mutex_exit(&mntvnode_lock);
 	vnfree(mvp);

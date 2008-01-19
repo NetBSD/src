@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.1 2007/03/20 08:52:03 dyoung Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.1.32.1 2008/01/19 12:14:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.1 2007/03/20 08:52:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.1.32.1 2008/01/19 12:14:23 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -101,27 +101,12 @@ __KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.1 2007/03/20 08:52:03 dyoung Exp 
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
 	0,					/*  0: IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFT */
-
-	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0,			/*  3: IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0,			/*  4: IPL_SOFTSERIAL */
+	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFTCLOCK */
+	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTNET */
 
 	MIPS_SOFT_INT_MASK_0|
 	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0,			/*  5: IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0,			/*  6: IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-	MIPS_SOFT_INT_MASK_1|
-	MIPS_INT_MASK_0|
-	MIPS_INT_MASK_1,			/*  7: IPL_{SERIAL,TTY} */
+	MIPS_INT_MASK_0,			/*  3: IPL_VM */
 
 	MIPS_SOFT_INT_MASK_0|
 	MIPS_SOFT_INT_MASK_1|
@@ -130,19 +115,7 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
 	MIPS_INT_MASK_2|
 	MIPS_INT_MASK_3|
 	MIPS_INT_MASK_4|
-	MIPS_INT_MASK_5,			/*  8: IPL_{CLOCK,HIGH} */
-};
-
-/*
- * This is a mask of bits to clear in the SR when we go to a
- * given software interrupt priority level.
- * Hardware ipls are port/board specific.
- */
-const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFT */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTCLOCK */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTNET */
-	MIPS_SOFT_INT_MASK_0,			/* IPL_SOFTSERIAL */
+	MIPS_INT_MASK_5,			/*  4: IPL_{SCHED,HIGH} */
 };
 
 #define	NIRQS		32

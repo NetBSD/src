@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.7.8.3 2008/01/11 19:19:10 bouyer Exp $ */
+/* $NetBSD: pegasospci.c,v 1.7.8.4 2008/01/19 12:14:40 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.7.8.3 2008/01/11 19:19:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.7.8.4 2008/01/19 12:14:40 bouyer Exp $");
 
 #include "opt_pci.h"
 
@@ -174,7 +174,8 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 			/* The Pegasos is very simple.  isa == pci */
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
-			map_isa_ioregs(sc->sc_iot.pbs_offset);
+			map_isa_ioregs();
+			init_ofppc_interrupt();
 			ofppc_init_comcons(isa_node);
 		}
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ia64,v 1.1 2006/04/07 14:21:18 cherry Exp $
+#	$NetBSD: Makefile.ia64,v 1.1.64.1 2008/01/19 12:14:23 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -59,8 +59,6 @@ LINKFORMAT=	-T ${IA64}/conf/${KERN_LDSCRIPT}
 ##
 ## (6) port specific target dependencies
 ##
-
-clock.o: config_time.h
 
 ##
 ## (7) misc settings

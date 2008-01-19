@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.115.6.1 2008/01/08 22:09:55 bouyer Exp $
+#	$NetBSD: INSTALL_TINY,v 1.115.6.2 2008/01/19 12:14:17 bouyer Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -23,7 +23,6 @@ options 	MEMORY_DISK_ROOT_SIZE=3100	# size of memory disk, in blocks
 maxusers	2		# estimated number of users
 
 # CPU-related options.
-options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines

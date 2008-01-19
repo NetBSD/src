@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.24.44.1 2008/01/08 22:10:14 bouyer Exp $	*/
+/*      $NetBSD: clock.c,v 1.24.44.2 2008/01/19 12:14:29 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24.44.1 2008/01/08 22:10:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.24.44.2 2008/01/19 12:14:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,10 +75,7 @@ int	clock_statmin;		/* statclock interval - (1/2 * variance) */
  * Common parts of clock autoconfiguration.
  */
 void
-clock_config(dev, ca, ev)
-	struct device *dev;
-	struct clock_attach_args *ca;
-	struct evcnt *ev;
+clock_config(struct device *dev, struct clock_attach_args *ca, struct evcnt *ev)
 {
 	extern int delay_divisor;	/* from machdep.c */
 
@@ -101,7 +98,7 @@ clock_config(dev, ca, ev)
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int statint, minint;
 
@@ -133,8 +130,7 @@ cpu_initclocks()
 }
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* XXX should we do something here? XXX */

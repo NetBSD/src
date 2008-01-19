@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.72.2.2 2008/01/08 22:09:14 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.72.2.3 2008/01/19 12:14:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.2 2008/01/08 22:09:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.72.2.3 2008/01/19 12:14:08 bouyer Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -262,11 +262,9 @@ paddr_t	idt_paddr;
 vaddr_t lo32_vaddr;
 paddr_t lo32_paddr;
 
-#ifdef LKM
 vaddr_t lkm_start, lkm_end;
 static struct vm_map lkm_map_store;
 extern struct vm_map *lkm_map;
-#endif
 vaddr_t kern_end;
 
 struct vm_map *exec_map = NULL;
@@ -369,11 +367,9 @@ cpu_startup(void)
 	mb_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    nmbclusters * mclbytes, VM_MAP_INTRSAFE, false, NULL);
 
-#ifdef LKM
 	uvm_map_setup(&lkm_map_store, lkm_start, lkm_end, VM_MAP_PAGEABLE);
 	lkm_map_store.pmap = pmap_kernel();
 	lkm_map = &lkm_map_store;
-#endif
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
 	printf("avail memory = %s\n", pbuf);
@@ -978,7 +974,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
+		fpusave_lwp(l, false);
 
 #ifdef USER_LDT
 	pmap_ldt_cleanup(l);
@@ -1487,10 +1483,8 @@ init_x86_64(paddr_t first_avail)
 	first_avail = round_page(first_avail);
 
 	kern_end = KERNBASE + first_avail;
-#ifdef LKM
 	lkm_start = kern_end;
 	lkm_end = KERNBASE + NKL2_KIMG_ENTRIES * NBPD_L2;
-#endif
 
 	/*
 	 * Now, load the memory clusters (which have already been
@@ -1849,7 +1843,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
 		if (l->l_addr->u_pcb.pcb_fpcpu)
-			fpusave_lwp(l, 1);
+			fpusave_lwp(l, true);
 		memcpy(mcp->__fpregs, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
@@ -1900,7 +1894,7 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 
 	if ((flags & _UC_FPU) != 0) {
 		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			fpusave_lwp(l, 0);
+			fpusave_lwp(l, false);
 		memcpy(&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave, mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
 		l->l_md.md_flags |= MDP_USEDFPU;

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.15.4.1 2008/01/02 21:52:54 bouyer Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.15.4.2 2008/01/19 12:15:00 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.15.4.1 2008/01/02 21:52:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.15.4.2 2008/01/19 12:15:00 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -293,56 +293,6 @@ linux32_sys_mknod(struct lwp *l, const struct linux32_sys_mknod_args *uap, regis
 }
 
 int
-linux32_sys_chown16(struct lwp *l, const struct linux32_sys_chown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-        struct sys___posix_chown_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-
-        if ((linux32_uid_t)SCARG(uap, uid) == (linux32_uid_t)-1)
-        	SCARG(&ua, uid) = (uid_t)-1;
-	else
-        	SCARG(&ua, uid) = SCARG(uap, uid);
-
-        if ((linux32_gid_t)SCARG(uap, gid) == (linux32_gid_t)-1)
-        	SCARG(&ua, gid) = (gid_t)-1;
-	else
-        	SCARG(&ua, gid) = SCARG(uap, gid);
-       
-        return sys___posix_chown(l, &ua, retval);
-}
-
-int
-linux32_sys_lchown16(struct lwp *l, const struct linux32_sys_lchown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const netbsd32_charp) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-        struct sys___posix_lchown_args ua;
-
-	NETBSD32TOP_UAP(path, const char);
-
-        if ((linux32_uid_t)SCARG(uap, uid) == (linux32_uid_t)-1)
-        	SCARG(&ua, uid) = (uid_t)-1;
-	else
-        	SCARG(&ua, uid) = SCARG(uap, uid);
-
-        if ((linux32_gid_t)SCARG(uap, gid) == (linux32_gid_t)-1)
-        	SCARG(&ua, gid) = (gid_t)-1;
-	else
-        	SCARG(&ua, gid) = SCARG(uap, gid);
-       
-        return sys___posix_lchown(l, &ua, retval);
-}
-
-int
 linux32_sys_break(struct lwp *l, const struct linux32_sys_break_args *uap, register_t *retval)
 {
 #if 0
@@ -367,36 +317,6 @@ linux32_sys_rename(struct lwp *l, const struct linux32_sys_rename_args *uap, reg
 	NETBSD32TOP_UAP(to, const char);
 
 	return sys___posix_rename(l, &ua, retval);
-}
-
-int
-linux32_sys_getgroups16(struct lwp *l, const struct linux32_sys_getgroups16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) gidsetsize;
-		syscallarg(linux32_gidp_t) gidset;
-	} */
-	struct linux_sys_getgroups16_args ua;
-
-	NETBSD32TO64_UAP(gidsetsize);
-	NETBSD32TOP_UAP(gidset, linux_gid_t);
-	
-	return linux_sys_getgroups16(l, &ua, retval);
-}
-
-int
-linux32_sys_setgroups16(struct lwp *l, const struct linux32_sys_setgroups16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) gidsetsize;
-		syscallarg(linux32_gidp_t) gidset;
-	} */
-	struct linux_sys_setgroups16_args ua;
-
-	NETBSD32TO64_UAP(gidsetsize);
-	NETBSD32TOP_UAP(gidset, linux_gid_t);
-	
-	return linux_sys_setgroups16(l, &ua, retval);
 }
 
 int
@@ -461,31 +381,6 @@ linux32_sys_truncate(struct lwp *l, const struct linux32_sys_truncate_args *uap,
 	NETBSD32TO64_UAP(length);
 
 	return compat_43_sys_truncate(l, &ua, retval);
-}
-
-int
-linux32_sys_fchown16(struct lwp *l, const struct linux32_sys_fchown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) fd;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-        struct sys___posix_fchown_args ua;
-
-	SCARG(&ua, fd) = SCARG(uap, fd);
-
-        if ((linux32_uid_t)SCARG(uap, uid) == (linux32_uid_t)-1)
-        	SCARG(&ua, uid) = (uid_t)-1;
-	else
-        	SCARG(&ua, uid) = SCARG(uap, uid);
-
-        if ((linux32_gid_t)SCARG(uap, gid) == (linux32_gid_t)-1)
-        	SCARG(&ua, gid) = (gid_t)-1;
-	else
-        	SCARG(&ua, gid) = SCARG(uap, gid);
-       
-        return sys___posix_fchown(l, &ua, retval);
 }
 
 int
@@ -587,98 +482,4 @@ linux32_sys_setfsgid(struct lwp *l, const struct linux32_sys_setfsgid_args *uap,
 	NETBSD32TO64_UAP(gid);
 
 	return linux_sys_setfsgid(l, &ua, retval);
-}
-
-int
-linux32_sys_setreuid16(struct lwp *l, const struct linux32_sys_setreuid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) ruid;
-		syscallarg(int) euid;
-	} */
-	struct sys_setreuid_args bsa;
-
-	if ((linux32_uid_t)SCARG(uap, ruid) == (linux32_uid_t)-1)
-		SCARG(&bsa, ruid) = (uid_t)-1;
-	else
-		SCARG(&bsa, ruid) = SCARG(uap, ruid);
-	if ((linux32_uid_t)SCARG(uap, euid) == (linux32_uid_t)-1)
-		SCARG(&bsa, euid) = (uid_t)-1;
-	else
-		SCARG(&bsa, euid) = SCARG(uap, euid);
-
-	return sys_setreuid(l, &bsa, retval);
-}
-
-int
-linux32_sys_setregid16(struct lwp *l, const struct linux32_sys_setregid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) rgid;
-		syscallarg(int) egid;
-	} */
-	struct sys_setregid_args bsa;
-
-	if ((linux32_gid_t)SCARG(uap, rgid) == (linux32_gid_t)-1)
-		SCARG(&bsa, rgid) = (gid_t)-1;
-	else
-		SCARG(&bsa, rgid) = SCARG(uap, rgid);
-	if ((linux32_gid_t)SCARG(uap, egid) == (linux32_gid_t)-1)
-		SCARG(&bsa, egid) = (gid_t)-1;
-	else
-		SCARG(&bsa, egid) = SCARG(uap, egid);
-
-	return sys_setregid(l, &bsa, retval);
-}
-
-int
-linux32_sys_setresuid16(struct lwp *l, const struct linux32_sys_setresuid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(uid_t) ruid;
-		syscallarg(uid_t) euid;
-		syscallarg(uid_t) suid;
-	} */
-	struct linux32_sys_setresuid_args lsa;
-
-	if ((linux32_uid_t)SCARG(uap, ruid) == (linux32_uid_t)-1)
-		SCARG(&lsa, ruid) = (uid_t)-1;
-	else
-		SCARG(&lsa, ruid) = SCARG(uap, ruid);
-	if ((linux32_uid_t)SCARG(uap, euid) == (linux32_uid_t)-1)
-		SCARG(&lsa, euid) = (uid_t)-1;
-	else
-		SCARG(&lsa, euid) = SCARG(uap, euid);
-	if ((linux32_uid_t)SCARG(uap, suid) == (linux32_uid_t)-1)
-		SCARG(&lsa, suid) = (uid_t)-1;
-	else
-		SCARG(&lsa, suid) = SCARG(uap, euid);
-
-	return linux32_sys_setresuid(l, &lsa, retval);
-}
-
-int
-linux32_sys_setresgid16(struct lwp *l, const struct linux32_sys_setresgid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(gid_t) rgid;
-		syscallarg(gid_t) egid;
-		syscallarg(gid_t) sgid;
-	} */
-	struct linux32_sys_setresgid_args lsa;
-
-	if ((linux32_gid_t)SCARG(uap, rgid) == (linux32_gid_t)-1)
-		SCARG(&lsa, rgid) = (gid_t)-1;
-	else
-		SCARG(&lsa, rgid) = SCARG(uap, rgid);
-	if ((linux32_gid_t)SCARG(uap, egid) == (linux32_gid_t)-1)
-		SCARG(&lsa, egid) = (gid_t)-1;
-	else
-		SCARG(&lsa, egid) = SCARG(uap, egid);
-	if ((linux32_gid_t)SCARG(uap, sgid) == (linux32_gid_t)-1)
-		SCARG(&lsa, sgid) = (gid_t)-1;
-	else
-		SCARG(&lsa, sgid) = SCARG(uap, sgid);
-
-	return linux32_sys_setresgid(l, &lsa, retval);
 }

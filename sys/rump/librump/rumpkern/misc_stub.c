@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.3.22.2 2008/01/10 23:44:40 bouyer Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.3.22.3 2008/01/19 12:15:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,7 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/module.h>
 
 #ifdef __sparc__
  /* 
@@ -101,6 +102,12 @@ sysctl_relock(void)
 
 void
 sysctl_unlock(void)
+{
+
+}
+
+void
+module_init_class(modclass_t mc)
 {
 
 }

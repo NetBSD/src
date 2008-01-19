@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211 2007/12/09 22:04:32 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.211.2.1 2008/01/19 12:14:46 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211 2007/12/09 22:04:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.2.1 2008/01/19 12:14:46 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -714,10 +714,10 @@ dumpsys()
 	uint64_t todo;
 	register struct mem_region *mp;
 
-	/* copy registers to memory */
-	snapshot(curpcb);
+	/* copy registers to dumppcb and flush windows */
+	memset(&dumppcb, 0, sizeof(struct pcb));
+	snapshot(&dumppcb);
 	stackdump();
-	memcpy(&dumppcb, curpcb, sizeof(struct pcb));
 
 	if (dumpdev == NODEV)
 		return;
@@ -1469,8 +1469,28 @@ paddr_t
 _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 	int prot, int flags)
 {
+	int i;
 
-	panic("_bus_dmamem_mmap: not implemented");
+	for (i = 0; i < nsegs; i++) {
+#ifdef DIAGNOSTIC
+		if (off & PGOFSET)
+			panic("_bus_dmamem_mmap: offset unaligned");
+		if (segs[i].ds_addr & PGOFSET)
+			panic("_bus_dmamem_mmap: segment unaligned");
+		if (segs[i].ds_len & PGOFSET)
+			panic("_bus_dmamem_mmap: segment size not multiple"
+			    " of page size");
+#endif
+		if (off >= segs[i].ds_len) {
+			off -= segs[i].ds_len;
+			continue;
+		}
+
+		return (atop(segs[i].ds_addr + off));
+	}
+
+	/* Page not found. */
+	return (-1);
 }
 
 

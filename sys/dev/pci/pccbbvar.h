@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.30.2.1 2008/01/02 21:54:50 bouyer Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.30.2.2 2008/01/19 12:15:12 bouyer Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -58,7 +58,7 @@ struct pccbb_intrhand_list;
 
 
 struct cbb_pcic_handle {
-	struct device *ph_parent;
+	device_t ph_parent;
 	bus_space_tag_t ph_base_t;
 	bus_space_handle_t ph_base_h;
 	u_int8_t (*ph_read)(struct cbb_pcic_handle *, int);
@@ -81,7 +81,7 @@ struct cbb_pcic_handle {
 		int width;
 	} io[PCIC_IO_WINS];
 	int ih_irq;
-	struct device *pcmcia;
+	device_t pcmcia;
 
 	int shutdown;
 };
@@ -154,8 +154,6 @@ struct pccbb_softc {
 	/* interrupt handler list on the bridge */
 	LIST_HEAD(, pccbb_intrhand_list) sc_pil;
 	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
-
-	pcireg_t sc_ricoh_misc_ctrl;
 };
 
 /*

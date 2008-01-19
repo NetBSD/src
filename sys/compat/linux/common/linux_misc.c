@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.189.4.1 2008/01/02 21:52:36 bouyer Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.189.4.2 2008/01/19 12:14:58 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.189.4.1 2008/01/02 21:52:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.189.4.2 2008/01/19 12:14:58 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -960,166 +960,7 @@ linux_sys_personality(struct lwp *l, const struct linux_sys_personality_args *ua
 	retval[0] = 0;
 	return 0;
 }
-#endif /* !COMPAT_LINUX32 */
 
-#if defined(__i386__) || defined(__m68k__) || defined(COMPAT_LINUX32)
-/*
- * The calls are here because of type conversions.
- */
-#ifndef COMPAT_LINUX32
-int
-linux_sys_setreuid16(struct lwp *l, const struct linux_sys_setreuid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) ruid;
-		syscallarg(int) euid;
-	} */
-	struct sys_setreuid_args bsa;
-
-	SCARG(&bsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, ruid);
-	SCARG(&bsa, euid) = ((linux_uid_t)SCARG(uap, euid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, euid);
-
-	return sys_setreuid(l, &bsa, retval);
-}
-
-int
-linux_sys_setregid16(struct lwp *l, const struct linux_sys_setregid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) rgid;
-		syscallarg(int) egid;
-	} */
-	struct sys_setregid_args bsa;
-
-	SCARG(&bsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, rgid);
-	SCARG(&bsa, egid) = ((linux_gid_t)SCARG(uap, egid) == (linux_gid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, egid);
-
-	return sys_setregid(l, &bsa, retval);
-}
-
-int
-linux_sys_setresuid16(struct lwp *l, const struct linux_sys_setresuid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(uid_t) ruid;
-		syscallarg(uid_t) euid;
-		syscallarg(uid_t) suid;
-	} */
-	struct linux_sys_setresuid_args lsa;
-
-	SCARG(&lsa, ruid) = ((linux_uid_t)SCARG(uap, ruid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, ruid);
-	SCARG(&lsa, euid) = ((linux_uid_t)SCARG(uap, euid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, euid);
-	SCARG(&lsa, suid) = ((linux_uid_t)SCARG(uap, suid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, suid);
-
-	return linux_sys_setresuid(l, &lsa, retval);
-}
-
-int
-linux_sys_setresgid16(struct lwp *l, const struct linux_sys_setresgid16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(gid_t) rgid;
-		syscallarg(gid_t) egid;
-		syscallarg(gid_t) sgid;
-	} */
-	struct linux_sys_setresgid_args lsa;
-
-	SCARG(&lsa, rgid) = ((linux_gid_t)SCARG(uap, rgid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, rgid);
-	SCARG(&lsa, egid) = ((linux_gid_t)SCARG(uap, egid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, egid);
-	SCARG(&lsa, sgid) = ((linux_gid_t)SCARG(uap, sgid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, sgid);
-
-	return linux_sys_setresgid(l, &lsa, retval);
-}
-#endif /* COMPAT_LINUX32 */
-
-int
-linux_sys_getgroups16(struct lwp *l, const struct linux_sys_getgroups16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) gidsetsize;
-		syscallarg(linux_gid_t *) gidset;
-	} */
-	linux_gid_t lset[16];
-	linux_gid_t *gidset;
-	unsigned int ngrps;
-	int i, n, j;
-	int error;
-
-	ngrps = kauth_cred_ngroups(l->l_cred);
-	*retval = ngrps;
-	if (SCARG(uap, gidsetsize) == 0)
-		return 0;
-	if (SCARG(uap, gidsetsize) < ngrps)
-		return EINVAL;
-
-	gidset = SCARG(uap, gidset);
-	for (i = 0; i < (n = ngrps); i += n, gidset += n) {
-		n -= i;
-		if (n > __arraycount(lset))
-			n = __arraycount(lset);
-		for (j = 0; j < n; j++)
-			lset[j] = kauth_cred_group(l->l_cred, i + j);
-		error = copyout(lset, gidset, n * sizeof(lset[0]));
-		if (error != 0)
-			return error;
-	}
-
-	return 0;
-}
-
-/*
- * It is very unlikly that any problem using 16bit groups is written
- * to allow for more than 16 of them, so don't bother trying to
- * support that.
- */
-#define COMPAT_NGROUPS16 16
-
-int
-linux_sys_setgroups16(struct lwp *l, const struct linux_sys_setgroups16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) gidsetsize;
-		syscallarg(linux_gid_t *) gidset;
-	} */
-	linux_gid_t lset[COMPAT_NGROUPS16];
-	kauth_cred_t ncred;
-	int error;
-	gid_t grbuf[COMPAT_NGROUPS16];
-	unsigned int i, ngroups = SCARG(uap, gidsetsize);
-
-	if (ngroups > COMPAT_NGROUPS16)
-		return EINVAL;
-	error = copyin(SCARG(uap, gidset), lset, ngroups);
-	if (error != 0)
-		return error;
-
-	for (i = 0; i < ngroups; i++)
-		grbuf[i] = lset[i];
-
-	ncred = kauth_cred_alloc();
-	error = kauth_cred_setgroups(ncred, grbuf, SCARG(uap, gidsetsize),
-	    -1, UIO_SYSSPACE);
-	if (error != 0) {
-		kauth_cred_free(ncred);
-		return error;
-	}
-
-	return kauth_proc_setgroups(l, ncred);
-}
-
-#endif /* __i386__ || __m68k__ || COMPAT_LINUX32 */
-
-#ifndef COMPAT_LINUX32
 /*
  * We have nonexistent fsuid equal to uid.
  * If modification is requested, refuse.

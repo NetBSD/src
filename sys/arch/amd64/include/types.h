@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.21.6.2 2008/01/10 23:43:09 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.21.6.3 2008/01/19 12:14:11 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -68,6 +68,7 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_CPU_COUNTER
+#define	__HAVE_MD_CPU_OFFLINE
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define __HAVE_TIMECOUNTER

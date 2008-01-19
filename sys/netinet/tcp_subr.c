@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.218.16.1 2008/01/02 21:57:25 bouyer Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.218.16.2 2008/01/19 12:15:33 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.218.16.1 2008/01/02 21:57:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.218.16.2 2008/01/19 12:15:33 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -840,9 +840,9 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		ip6->ip6_plen = htons(tlen);
 		if (tp && tp->t_in6pcb) {
 			struct ifnet *oifp;
-			ro = (struct route *)&tp->t_in6pcb->in6p_route;
-			oifp = (rt = rtcache_getrt(ro)) != NULL ? rt->rt_ifp
-			                                        : NULL;
+			ro = &tp->t_in6pcb->in6p_route;
+			oifp = (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
+			                                           : NULL;
 			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb, oifp);
 		} else
 			ip6->ip6_hlim = ip6_defhlim;
@@ -1029,7 +1029,7 @@ tcp_newtcpcb(int family, void *aux)
 		struct in6pcb *in6p = (struct in6pcb *)aux;
 
 		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
-			(rt = rtcache_getrt(&in6p->in6p_route)) != NULL
+			(rt = rtcache_validate(&in6p->in6p_route)) != NULL
 			    ? rt->rt_ifp
 			    : NULL);
 		in6p->in6p_ppcb = (void *)tp;
@@ -1179,7 +1179,7 @@ tcp_close(struct tcpcb *tp)
 	 * update anything that the user "locked".
 	 */
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
-	    ro && (rt = rtcache_getrt(ro)) != NULL &&
+	    ro && (rt = rtcache_validate(ro)) != NULL &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr)) {
 		u_long i = 0;
 

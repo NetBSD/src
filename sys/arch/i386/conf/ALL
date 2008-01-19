@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.146.2.4 2008/01/10 23:43:17 bouyer Exp $
+# $NetBSD: ALL,v 1.146.2.5 2008/01/19 12:14:14 bouyer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,12 +17,11 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.146.2.4 $"
+#ident 		"ALL-$Revision: 1.146.2.5 $"
 
 maxusers	32		# estimated number of users
 
 # CPU-related options.
-options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines

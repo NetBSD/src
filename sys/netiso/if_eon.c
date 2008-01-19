@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.62.6.2 2008/01/10 23:44:40 bouyer Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.62.6.3 2008/01/19 12:15:36 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.62.6.2 2008/01/10 23:44:40 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.62.6.3 2008/01/19 12:15:36 bouyer Exp $");
 
 #include "opt_eon.h"
 
@@ -302,7 +302,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	}
 	el->el_flags |= RTF_UP;
 	eoniphdr(&el->el_ei, ipaddrloc, &el->el_iproute, EON_NORMAL_ADDR);
-	if ((nrt = rtcache_getrt(&el->el_iproute)) != NULL)
+	if ((nrt = rtcache_validate(&el->el_iproute)) != NULL)
 		rt->rt_rmx.rmx_mtu = nrt->rt_rmx.rmx_mtu - sizeof(el->el_ei);
 }
 

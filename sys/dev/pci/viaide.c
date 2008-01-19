@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.47.6.1 2008/01/02 21:54:59 bouyer Exp $	*/
+/*	$NetBSD: viaide.c,v 1.47.6.2 2008/01/19 12:15:13 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.47.6.1 2008/01/02 21:54:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.47.6.2 2008/01/19 12:15:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,8 @@ static int	viaide_match(struct device *, struct cfdata *, void *);
 static void	viaide_attach(struct device *, struct device *, void *);
 static const struct pciide_product_desc *
 		viaide_lookup(pcireg_t);
+static bool	viaide_suspend(device_t);
+static bool	viaide_resume(device_t);
 
 CFATTACH_DECL(viaide, sizeof(struct pciide_softc),
     viaide_match, viaide_attach, NULL, NULL);
@@ -374,6 +376,9 @@ viaide_attach(struct device *parent, struct device *self, void *aux)
 	if (pp == NULL)
 		panic("viaide_attach");
 	pciide_common_attach(sc, pa, pp);
+
+	if (!pmf_device_register(self, viaide_suspend, viaide_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -384,6 +389,39 @@ via_pcib_match(struct pci_attach_args *pa)
 	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VIATECH)
 		return (1);
 	return 0;
+}
+
+static bool
+viaide_suspend(device_t dv)
+{
+	struct pciide_softc *sc = device_private(dv);
+
+	sc->sc_pm_reg[0] = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc));
+	/* APO_DATATIM(sc) includes APO_UDMA(sc) */
+	sc->sc_pm_reg[1] = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc));
+	/* This two are VIA-only, but should be ignored by other devices. */
+	sc->sc_pm_reg[2] = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_CTLMISC(sc));
+	sc->sc_pm_reg[3] = pci_conf_read(sc->sc_pc, sc->sc_tag, APO_MISCTIM(sc));
+
+	return true;
+}
+
+static bool
+viaide_resume(device_t dv)
+{
+	struct pciide_softc *sc = device_private(dv);
+
+	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_IDECONF(sc),
+	    sc->sc_pm_reg[0]);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_DATATIM(sc),
+	    sc->sc_pm_reg[1]);
+	/* This two are VIA-only, but should be ignored by other devices. */
+	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_CTLMISC(sc),
+	    sc->sc_pm_reg[2]);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, APO_MISCTIM(sc),
+	    sc->sc_pm_reg[3]);
+
+	return true;
 }
 
 static void

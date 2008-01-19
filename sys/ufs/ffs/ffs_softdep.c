@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.102.4.2 2008/01/08 22:12:01 bouyer Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.102.4.3 2008/01/19 12:15:45 bouyer Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.102.4.2 2008/01/08 22:12:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.102.4.3 2008/01/19 12:15:45 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1064,7 +1064,7 @@ softdep_initialize()
 	if (i < sizeof(struct buf))
 		i = sizeof(struct buf);
 	softdep_large_cache = pool_cache_init(i, 0, 0, 0, "sdeplarge", NULL,
-	    IPL_NONE, NULL, NULL, NULL);
+	    IPL_SOFTBIO, NULL, NULL, NULL);
 	KASSERT(softdep_large_cache != NULL);	/* XXX */
 
 	i =  sizeof(struct allocdirect);
@@ -1075,7 +1075,7 @@ softdep_initialize()
 	if (i < sizeof(struct inodedep))
 		i = sizeof(struct inodedep);
 	softdep_medium_cache = pool_cache_init(i, 0, 0, 0, "sdepmedium", NULL,
-	    IPL_NONE, NULL, NULL, NULL);
+	    IPL_SOFTBIO, NULL, NULL, NULL);
 	KASSERT(softdep_medium_cache != NULL);	/* XXX */
 
 	i = sizeof(struct newblk);
@@ -1096,7 +1096,7 @@ softdep_initialize()
 	if (i <  sizeof(struct newdirblk))
 		i =  sizeof(struct newdirblk);
 	softdep_small_cache = pool_cache_init(i, 0, 0, 0, "sdepsmall", NULL,
-	    IPL_NONE, NULL, NULL, NULL);
+	    IPL_SOFTBIO, NULL, NULL, NULL);
 	KASSERT(softdep_small_cache != NULL);	/* XXX */
 
 	LIST_INIT(&mkdirlisthd);

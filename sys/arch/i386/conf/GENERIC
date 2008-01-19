@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.867.2.3 2008/01/10 23:43:18 bouyer Exp $
+# $NetBSD: GENERIC,v 1.867.2.4 2008/01/19 12:14:15 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.867.2.3 $"
+#ident 		"GENERIC-$Revision: 1.867.2.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -30,7 +30,6 @@ makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 options 	VM86		# virtual 8086 emulation
 options 	USER_LDT	# user-settable LDT; used by WINE
 # insert delay no-ops in interrupts; recommended on very old machines

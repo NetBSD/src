@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.75.6.7 2008/01/09 19:25:06 bouyer Exp $
+#	$NetBSD: files.xen,v 1.75.6.8 2008/01/19 12:14:50 bouyer Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -40,6 +40,7 @@ file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
@@ -47,7 +48,6 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/x86/x86/x86_identcpu.c
-file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/x86/x86/pmap.c
@@ -80,7 +80,6 @@ file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
 file	arch/x86/x86/x86_identcpu.c
-file	arch/amd64/amd64/math_emulate.c math_emulate
 file	arch/amd64/amd64/mem.c
 file	arch/x86/x86/pmap.c
 file	arch/amd64/amd64/process_machdep.c

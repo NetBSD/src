@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9.16.1 2008/01/02 21:58:45 bouyer Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9.16.2 2008/01/19 12:15:50 bouyer Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9.16.1 2008/01/02 21:58:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.9.16.2 2008/01/19 12:15:50 bouyer Exp $");
 
 #include "opt_ddb.h"
 
@@ -440,16 +440,25 @@ nonresident_getbucket(objid_t obj, off_t idx)
 static void
 nonresident_rotate(struct bucket *b)
 {
+	int cycle;
+	int cur;
 
-	while (b->cycle - cycle_target < 0) {
-		if (b->pages[b->cur] != NONRES_COOKIE_INVAL) {
+	cycle = b->cycle;
+	cur = b->cur;
+	while (cycle - cycle_target < 0) {
+		if (b->pages[cur] != NONRES_COOKIE_INVAL) {
 			PDPOL_EVCNT_INCR(nreshandhot);
 			COLDTARGET_ADJ(-1);
 		}
-		b->pages[b->cur] = NONRES_COOKIE_INVAL;
-		b->cur = (b->cur + 1) % BUCKETSIZE;
-		b->cycle++;
+		b->pages[cur] = NONRES_COOKIE_INVAL;
+		cur++;
+		if (cur == BUCKETSIZE) {
+			cur = 0;
+		}
+		cycle++;
 	}
+	b->cycle = cycle;
+	b->cur = cur;
 }
 
 static bool
@@ -1072,7 +1081,7 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	pg->pqflags &= ~PQ_REFERENCED;
+	clockpro_clearreferencebit(pg);
 }
 
 void

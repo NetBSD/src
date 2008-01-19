@@ -1,4 +1,4 @@
-/*	$NetBSD: getbrdid.c,v 1.2 1996/05/17 19:50:45 chuck Exp $	*/
+/*	$NetBSD: getbrdid.c,v 1.2.160.1 2008/01/19 12:14:33 bouyer Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -11,7 +11,7 @@
 
 /* BUG - query board routines */
 struct mvmeprom_brdid *
-mvmeprom_getbrdid()
+mvmeprom_getbrdid(void)
 {
 	struct mvmeprom_brdid *id;
 

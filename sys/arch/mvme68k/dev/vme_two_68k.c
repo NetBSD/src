@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_68k.c,v 1.7 2005/12/11 12:18:17 christos Exp $	*/
+/*	$NetBSD: vme_two_68k.c,v 1.7.64.1 2008/01/19 12:14:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_68k.c,v 1.7 2005/12/11 12:18:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_68k.c,v 1.7.64.1 2008/01/19 12:14:26 bouyer Exp $");
 
 #include "vmetwo.h"
 
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: vme_two_68k.c,v 1.7 2005/12/11 12:18:17 christos Exp
 #include <dev/mvme/vme_tworeg.h>
 #include <dev/mvme/vme_twovar.h>
 
+#include "ioconf.h"
 
 static void vmetwoisrlink(void *, int (*)(void *), void *,
 	int, int, struct evcnt *);
@@ -71,20 +72,16 @@ static struct evcnt *vmetwoisrevcnt(void *, int);
 
 #if NVMETWO > 0
 
-int vmetwo_match __P((struct device *, struct cfdata *, void *));
-void vmetwo_attach __P((struct device *, struct device *, void *));
+int vmetwo_match(struct device *, struct cfdata *, void *);
+void vmetwo_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(vmetwo, sizeof(struct vmetwo_softc),
     vmetwo_match, vmetwo_attach, NULL, NULL);
-extern struct cfdriver vmetwo_cd;
 
 
 /* ARGSUSED */
 int
-vmetwo_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+vmetwo_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct mainbus_attach_args *ma;
 	static int matched = 0;
@@ -92,24 +89,21 @@ vmetwo_match(parent, cf, aux)
 	ma = aux;
 
 	if (strcmp(ma->ma_name, vmetwo_cd.cd_name))
-		return (0);
+		return 0;
 
 	/* Only one VMEchip2, please. */
 	if (matched++)
-		return (0);
+		return 0;
 
 	/*
 	 * Some mvme1[67]2 boards have a `no VMEchip2' build option...
 	 */
-	return (vmetwo_probe(ma->ma_bust, ma->ma_offset) ? 1 : 0);
+	return vmetwo_probe(ma->ma_bust, ma->ma_offset) ? 1 : 0;
 }
 
 /* ARGSUSED */
 void
-vmetwo_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+vmetwo_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mainbus_attach_args *ma;
 	struct vmetwo_softc *sc;
@@ -141,8 +135,7 @@ vmetwo_attach(parent, self, aux)
 #endif	/* NVMETWO > 0 */
 
 void
-vmetwo_md_intr_init(sc)
-	struct vmetwo_softc *sc;
+vmetwo_md_intr_init(struct vmetwo_softc *sc)
 {
 
 	sc->sc_isrlink = vmetwoisrlink;
@@ -152,12 +145,8 @@ vmetwo_md_intr_init(sc)
 
 /* ARGSUSED */
 static void
-vmetwoisrlink(cookie, fn, arg, ipl, vec, evcnt)
-	void *cookie;
-	int (*fn)(void *);
-	void *arg;
-	int ipl, vec;
-	struct evcnt *evcnt;
+vmetwoisrlink(void *cookie, int (*fn)(void *), void *arg, int ipl, int vec,
+    struct evcnt *evcnt)
 {
 
 	isrlink_vectored(fn, arg, ipl, vec, evcnt);
@@ -165,9 +154,7 @@ vmetwoisrlink(cookie, fn, arg, ipl, vec, evcnt)
 
 /* ARGSUSED */
 static void
-vmetwoisrunlink(cookie, vec)
-	void *cookie;
-	int vec;
+vmetwoisrunlink(void *cookie, int vec)
 {
 
 	isrunlink_vectored(vec);
@@ -175,10 +162,8 @@ vmetwoisrunlink(cookie, vec)
 
 /* ARGSUSED */
 static struct evcnt *
-vmetwoisrevcnt(cookie, ipl)
-	void *cookie;
-	int ipl;
+vmetwoisrevcnt(void *cookie, int ipl)
 {
 
-	return (isrlink_evcnt(ipl));
+	return isrlink_evcnt(ipl);
 }
