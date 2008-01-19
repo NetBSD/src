@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.7 2008/01/19 00:57:35 rumble Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.8 2008/01/19 18:20:39 rumble Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.7 2008/01/19 00:57:35 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.8 2008/01/19 18:20:39 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,14 +431,15 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 		}
 		error = kobj_load(mod->mod_kobj);
 		if (error != 0) {
+			kobj_close(mod->mod_kobj);
+			kmem_free(mod, sizeof(*mod));
+			depth--;
 			module_error("unable to load kernel object");
+			return error;
 		}
 		mod->mod_source = MODULE_SOURCE_FILESYS;
 	}
 	TAILQ_INSERT_TAIL(&pending, mod, mod_chain);
-	if (error != 0) {
-		goto fail;
-	}
 
 	/*
 	 * Find module info record and check compatibility.
