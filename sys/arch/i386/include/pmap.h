@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.97.6.7 2008/01/19 12:14:22 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.97.6.8 2008/01/19 14:08:09 bouyer Exp $	*/
 
 /*
  *
@@ -356,7 +356,7 @@ pmap_pte_cas(pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
 	pt_entry_t opte = *ptep;
 
 	if (opte == o) {
-		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(ptep), n);
+		xpq_queue_pte_update(xpmap_ptetomach(ptep), n);
 		xpq_flush_queue();
 	}
 	splx(s);
