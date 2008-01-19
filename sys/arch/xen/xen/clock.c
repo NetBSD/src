@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42.6.1 2008/01/10 23:44:10 bouyer Exp $	*/
+/*	$NetBSD: clock.c,v 1.42.6.2 2008/01/19 12:14:51 bouyer Exp $	*/
 
 /*
  *
@@ -34,7 +34,7 @@
 #include "opt_xen.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42.6.1 2008/01/10 23:44:10 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42.6.2 2008/01/19 12:14:51 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42.6.1 2008/01/10 23:44:10 bouyer Exp $"
 #include <machine/cpu_counter.h>
 
 #include <dev/clock_subr.h>
-
-#include "config_time.h"		/* for CONFIG_TIME */
 
 static int xen_timer_handler(void *, struct intrframe *);
 

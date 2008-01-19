@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.h,v 1.11 2006/02/16 20:17:14 perry Exp $ */
+/*	$NetBSD: bus_space.h,v 1.11.58.1 2008/01/19 12:14:27 bouyer Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -93,24 +93,24 @@ struct mvme68k_bus_space_tag {
 				  int, bus_space_handle_t *);
 	void		(*bs_unmap)(void *, bus_space_handle_t, bus_size_t);
 	int		(*bs_peek_1)(void *, bus_space_handle_t,
-				     bus_size_t, u_int8_t *);
+				     bus_size_t, uint8_t *);
 	int		(*bs_peek_2)(void *, bus_space_handle_t,
-				     bus_size_t, u_int16_t *);
+				     bus_size_t, uint16_t *);
 	int		(*bs_peek_4)(void *, bus_space_handle_t,
-				     bus_size_t, u_int32_t *);
+				     bus_size_t, uint32_t *);
 #if 0
 	int		(*bs_peek_8)(void *, bus_space_handle_t,
-				     bus_size_t, u_int64_t *);
+				     bus_size_t, uint64_t *);
 #endif
 	int		(*bs_poke_1)(void *, bus_space_handle_t,
-				     bus_size_t, u_int8_t);
+				     bus_size_t, uint8_t);
 	int		(*bs_poke_2)(void *, bus_space_handle_t,
-				     bus_size_t, u_int16_t);
+				     bus_size_t, uint16_t);
 	int		(*bs_poke_4)(void *, bus_space_handle_t,
-				     bus_size_t, u_int32_t);
+				     bus_size_t, uint32_t);
 #if 0
 	int		(*bs_poke_8)(void *, bus_space_handle_t,
-				     bus_size_t, u_int64_t);
+				     bus_size_t, uint64_t);
 #endif
 };
 
@@ -159,7 +159,7 @@ struct mvme68k_bus_space_tag {
 
 /*
  *	int bus_space_peek_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t *valuep);
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t *valuep);
  *
  * Cautiously read 1, 2, 4 or 8 byte quantity from bus space described
  * by tag/handle/offset.
@@ -182,7 +182,7 @@ struct mvme68k_bus_space_tag {
 
 /*
  *	int bus_space_poke_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t value);
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t value);
  *
  * Cautiously write 1, 2, 4 or 8 byte quantity to bus space described
  * by tag/handle/offset.
@@ -204,23 +204,23 @@ struct mvme68k_bus_space_tag {
 #endif
 
 /*
- *	u_intN_t bus_space_read_N(bus_space_tag_t tag,
+ *	uintN_t bus_space_read_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset);
  *
  * Read a 1, 2, 4, or 8 byte quantity from bus space
  * described by tag/handle/offset.
  */
 #define	bus_space_read_1(t,h,o)	\
-	    (*((volatile u_int8_t *)(intptr_t)((h) + (o))))
+	    (*((volatile uint8_t *)(intptr_t)((h) + (o))))
 #define	bus_space_read_2(t,h,o)	\
-	    (*((volatile u_int16_t *)(intptr_t)((h) + (o))))
+	    (*((volatile uint16_t *)(intptr_t)((h) + (o))))
 #define	bus_space_read_4(t,h,o)	\
-	    (*((volatile u_int32_t *)(intptr_t)((h) + (o))))
+	    (*((volatile uint32_t *)(intptr_t)((h) + (o))))
 
 /*
  *	void bus_space_read_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle/offset and copy into buffer provided.
@@ -275,7 +275,7 @@ struct mvme68k_bus_space_tag {
 /*
  *	void bus_space_read_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t *addr, size_t count);
+ *	    uintN_t *addr, size_t count);
  *
  * Read `count' 1, 2, 4, or 8 byte quantities from bus space
  * described by tag/handle and starting at `offset' and copy into
@@ -331,28 +331,28 @@ struct mvme68k_bus_space_tag {
 /*
  *	void bus_space_write_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    u_intN_t value);
+ *	    uintN_t value);
  *
  * Write the 1, 2, 4, or 8 byte value `value' to bus space
  * described by tag/handle/offset.
  */
 #define	bus_space_write_1(t,h,o,v)					\
 	do {								\
-		*((volatile u_int8_t *)(intptr_t)((h) + (o))) = (v);	\
+		*((volatile uint8_t *)(intptr_t)((h) + (o))) = (v);	\
 	} while (/*CONSTCOND*/0)
 #define	bus_space_write_2(t,h,o,v)					\
 	do {								\
-		*((volatile u_int16_t *)(intptr_t)((h) + (o))) = (v);	\
+		*((volatile uint16_t *)(intptr_t)((h) + (o))) = (v);	\
 	} while (/*CONSTCOND*/0)
 #define	bus_space_write_4(t,h,o,v)					\
 	do {								\
-		*((volatile u_int32_t *)(intptr_t)((h) + (o))) = (v);	\
+		*((volatile uint32_t *)(intptr_t)((h) + (o))) = (v);	\
 	} while (/*CONSTCOND*/0)
 
 /*
  *	void bus_space_write_multi_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer
  * provided to bus space described by tag/handle/offset.
@@ -408,7 +408,7 @@ struct mvme68k_bus_space_tag {
 /*
  *	void bus_space_write_region_N(bus_space_tag_t tag,
  *	    bus_space_handle_t bsh, bus_size_t offset,
- *	    const u_intN_t *addr, size_t count);
+ *	    const uintN_t *addr, size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte quantities from the buffer provided
  * to bus space described by tag/handle starting at `offset'.
@@ -463,7 +463,7 @@ struct mvme68k_bus_space_tag {
 
 /*
  *	void bus_space_set_multi_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write the 1, 2, 4, or 8 byte value `val' to bus space described
@@ -519,7 +519,7 @@ struct mvme68k_bus_space_tag {
 
 /*
  *	void bus_space_set_region_N(bus_space_tag_t tag,
- *	    bus_space_handle_t bsh, bus_size_t offset, u_intN_t val,
+ *	    bus_space_handle_t bsh, bus_size_t offset, uintN_t val,
  *	    size_t count);
  *
  * Write `count' 1, 2, 4, or 8 byte value `val' to bus space described
@@ -585,10 +585,10 @@ struct mvme68k_bus_space_tag {
 
 #define	__MVME68K_copy_region_N(BYTES)					\
 static __inline void __CONCAT(bus_space_copy_region_,BYTES)		\
-	__P((bus_space_tag_t,						\
+	(bus_space_tag_t,						\
 	    bus_space_handle_t bsh1, bus_size_t off1,			\
 	    bus_space_handle_t bsh2, bus_size_t off2,			\
-	    bus_size_t count));						\
+	    bus_size_t count);						\
 									\
 static __inline void							\
 __CONCAT(bus_space_copy_region_,BYTES)(t, h1, o1, h2, o2, c)		\
@@ -643,14 +643,14 @@ extern int _bus_space_map(void *, bus_addr_t, bus_size_t,
     int, bus_space_handle_t *);
 extern void _bus_space_unmap(void *, bus_space_handle_t, bus_size_t);
 extern int _bus_space_peek_1(void *, bus_space_handle_t,
-    bus_size_t, u_int8_t *);
+    bus_size_t, uint8_t *);
 extern int _bus_space_peek_2(void *, bus_space_handle_t,
-    bus_size_t, u_int16_t *);
+    bus_size_t, uint16_t *);
 extern int _bus_space_peek_4(void *, bus_space_handle_t,
-    bus_size_t, u_int32_t *);
-extern int _bus_space_poke_1(void *, bus_space_handle_t, bus_size_t, u_int8_t);
-extern int _bus_space_poke_2(void *, bus_space_handle_t, bus_size_t, u_int16_t);
-extern int _bus_space_poke_4(void *, bus_space_handle_t, bus_size_t, u_int32_t);
+    bus_size_t, uint32_t *);
+extern int _bus_space_poke_1(void *, bus_space_handle_t, bus_size_t, uint8_t);
+extern int _bus_space_poke_2(void *, bus_space_handle_t, bus_size_t, uint16_t);
+extern int _bus_space_poke_4(void *, bus_space_handle_t, bus_size_t, uint32_t);
 #endif /* _MVME68K_BUS_SPACE_PRIVATE */
 
 #endif /* _MVME68K_BUS_SPACE_H_ */

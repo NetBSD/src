@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.25.20.2 2008/01/10 23:44:36 bouyer Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.25.20.3 2008/01/19 12:15:31 bouyer Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.25.20.2 2008/01/10 23:44:36 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.25.20.3 2008/01/19 12:15:31 bouyer Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -366,8 +366,8 @@ at_pcbconnect(ddp, addr, l)
          * If we've changed our address, we may have an old "good looking"
          * route here.  Attempt to detect it.
          */
-	rtcache_check(ro);
-	if ((rt = rtcache_getrt(ro)) != NULL) {
+	if ((rt = rtcache_validate(ro)) != NULL ||
+	    (rt = rtcache_update(ro, 1)) != NULL) {
 		if (hintnet) {
 			net = hintnet;
 		} else {
@@ -386,13 +386,15 @@ at_pcbconnect(ddp, addr, l)
 		cdst = satocsat(rtcache_getdst(ro));
 		if (aa == NULL || (cdst->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
-		    cdst->sat_addr.s_node != sat->sat_addr.s_node))
+		    cdst->sat_addr.s_node != sat->sat_addr.s_node)) {
 			rtcache_free(ro);
+			rt = NULL;
+		}
 	}
 	/*
          * If we've got no route for this interface, try to find one.
          */
-	if ((rt = rtcache_getrt(ro)) == NULL) {
+	if (rt == NULL) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_at	dsta;

@@ -1,4 +1,4 @@
-/*	$NetBSD: outln.c,v 1.2 1996/05/17 19:50:54 chuck Exp $	*/
+/*	$NetBSD: outln.c,v 1.2.160.1 2008/01/19 12:14:33 bouyer Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -10,9 +10,9 @@
 #include "libbug.h"
 
 void
-mvmeprom_outln(start, end)
-	char *start, *end;
+mvmeprom_outln(char *start, char *end)
 {
+
 	MVMEPROM_ARG1(end);
 	MVMEPROM_ARG2(start);
 	MVMEPROM_CALL(MVMEPROM_OUTSTRCRLF);

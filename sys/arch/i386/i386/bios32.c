@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.17.2.2 2008/01/13 11:26:56 bouyer Exp $	*/
+/*	$NetBSD: bios32.c,v 1.17.2.3 2008/01/19 12:14:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.17.2.2 2008/01/13 11:26:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.17.2.3 2008/01/19 12:14:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,8 +147,8 @@ bios32_init()
 
 		entry = *(uint32_t *)(p + 4);
 
-		aprint_verbose("BIOS32 rev. %d found at 0x%lx\n",
-		    *(p + 8), (u_long)entry);
+		aprint_debug("BIOS32 rev. %d found at 0x%lx\n",
+		    *(p + 8), entry);
 
 		if (entry < BIOS32_START ||
 		    entry >= BIOS32_END) {
@@ -207,9 +207,9 @@ bios32_init()
 			pmap_kenter_pa(eva, pa, VM_PROT_READ);
 #endif
 
-		aprint_normal("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
-			    sh->majrev, sh->minrev, (u_long)sh->addr,
-			    sh->count);
+		aprint_debug("SMBIOS rev. %d.%d @ 0x%lx (%d entries)\n",
+		    sh->majrev, sh->minrev, (u_long)sh->addr,
+		    sh->count);
 
 		break;
 	}

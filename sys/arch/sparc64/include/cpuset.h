@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.h,v 1.5 2006/09/13 11:35:53 mrg Exp $ */
+/*	$NetBSD: cpuset.h,v 1.5.44.1 2008/01/19 12:14:44 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
 #ifndef _SPARC64_CPUSET_H_
 #define	_SPARC64_CPUSET_H_
 
-typedef	uint64_t cpuset_t;
-extern volatile cpuset_t cpus_active;
+typedef	uint64_t sparc64_cpuset_t;
+extern volatile sparc64_cpuset_t cpus_active;
 
-#define	CPUSET_SINGLE(cpu)		((cpuset_t)1 << (cpu))
+#define	CPUSET_SINGLE(cpu)		((sparc64_cpuset_t)1 << (cpu))
 
 #define	CPUSET_ADD(set, cpu)		((set) |= CPUSET_SINGLE(cpu))
 #define	CPUSET_DEL(set, cpu)		((set) &= ~CPUSET_SINGLE(cpu))
@@ -50,9 +50,9 @@ extern volatile cpuset_t cpus_active;
 #define	CPUSET_HAS(set, cpu)		((set) & CPUSET_SINGLE(cpu))
 #define	CPUSET_NEXT(set)		(ffs(set) - 1)
 
-#define	CPUSET_EMPTY(set)		((set) == (cpuset_t)0)
+#define	CPUSET_EMPTY(set)		((set) == (sparc64_cpuset_t)0)
 #define	CPUSET_EQUAL(set1, set2)	((set1) == (set2))
-#define	CPUSET_CLEAR(set)		((set) = (cpuset_t)0)
+#define	CPUSET_CLEAR(set)		((set) = (sparc64_cpuset_t)0)
 #define	CPUSET_ASSIGN(set1, set2)	((set1) = (set2))
 
 #endif /* _SPARC64_CPUSET_H_ */

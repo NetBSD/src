@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98.6.1 2008/01/02 21:48:57 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98.6.2 2008/01/19 12:14:39 bouyer Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.6.1 2008/01/02 21:48:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.6.2 2008/01/19 12:14:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -72,7 +72,7 @@ struct pmap ofw_pmap;
 char bootpath[256];
 
 void ofwppc_batinit(void);
-void	ofppc_bootstrap_console(void);
+void ofppc_bootstrap_console(void);
 
 extern u_int l2cr_config;
 extern int machine_has_rtas;
@@ -162,6 +162,7 @@ void
 cpu_startup(void)
 {
 	oea_startup(model_name[0] ? model_name : NULL);
+	bus_space_mallocok();
 }
 
 
@@ -248,6 +249,7 @@ ofppc_init_comcons(int isa_node)
 	uint32_t reg[2], comfreq;
 	uint8_t dll, dlm;
 	int speed, rate, err, com_node, child;
+	bus_space_handle_t comh;
 
 	/* if we have a serial cons, we have work to do */
 	memset(name, 0, sizeof(name));
@@ -287,11 +289,18 @@ ofppc_init_comcons(int isa_node)
 	if (comfreq == 0)
 		comfreq = COM_FREQ;
 
-	isa_outb(reg[1] + com_cfcr, LCR_DLAB);
-	dll = isa_inb(reg[1] + com_dlbl);
-	dlm = isa_inb(reg[1] + com_dlbh);
+	/* we need to BSM this, and then undo that before calling
+	 * comcnattach.
+	 */
+
+	if (bus_space_map(&genppc_isa_io_space_tag, reg[1], 8, 0, &comh) != 0)
+		panic("Can't map isa serial\n");
+
+	bus_space_write_1(&genppc_isa_io_space_tag, comh, com_cfcr, LCR_DLAB);
+	dll = bus_space_read_1(&genppc_isa_io_space_tag, comh, com_dlbl);
+	dlm = bus_space_read_1(&genppc_isa_io_space_tag, comh, com_dlbh);
 	rate = dll | (dlm << 8);
-	isa_outb(reg[1] + com_cfcr, LCR_8BITS);
+	bus_space_write_1(&genppc_isa_io_space_tag, comh, com_cfcr, LCR_8BITS);
 	speed = divrnd((comfreq / 16), rate);
 	err = speed - (speed + 150)/300 * 300;
 	speed -= err;
@@ -299,6 +308,8 @@ ofppc_init_comcons(int isa_node)
 		err = -err;
 	if (err > 50)
 		speed = 9600;
+
+	bus_space_unmap(&genppc_isa_io_space_tag, comh, 8);
 
 	/* Now we can attach the comcons */
 	aprint_verbose("Switching to COM console at speed %d", speed);

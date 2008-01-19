@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.14 2007/03/04 06:03:19 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.14.28.1 2008/01/19 12:15:30 bouyer Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.14 2007/03/04 06:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.14.28.1 2008/01/19 12:15:30 bouyer Exp $");
 #endif
 
 /*
@@ -500,6 +500,27 @@ ieee80211_node_dectestref(struct ieee80211_node *ni)
 	splx(s);
 	return rc;
 }
+
+void
+ieee80211_drain_ifq(struct ifqueue *ifq)
+{
+	struct ieee80211_node *ni;
+	struct mbuf *m;
+
+	for (;;) {
+		IF_DEQUEUE(ifq, m);
+		if (m == NULL)
+			break;
+
+		ni = (struct ieee80211_node *)m->m_pkthdr.rcvif;
+		KASSERT(ni != NULL);
+		ieee80211_free_node(ni);
+		m->m_pkthdr.rcvif = NULL;
+
+		m_freem(m);
+	}
+}
+
 
 void
 if_printf(struct ifnet *ifp, const char *fmt, ...)

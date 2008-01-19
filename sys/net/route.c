@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.98.10.3 2008/01/10 23:44:35 bouyer Exp $	*/
+/*	$NetBSD: route.c,v 1.98.10.4 2008/01/19 12:15:30 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.98.10.3 2008/01/10 23:44:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.98.10.4 2008/01/19 12:15:30 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -1161,10 +1161,10 @@ _rtcache_init(struct route *ro, int flag)
 
 	if (rtcache_getdst(ro) == NULL)
 		return NULL;
-	ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag);
-	if (ro->_ro_rt != NULL) {
-		rtcache(ro);
-	}
+	if ((ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag)) == NULL)
+		return NULL;
+
+	rtcache(ro);
 	return ro->_ro_rt;
 }
 
@@ -1190,14 +1190,19 @@ rtcache_update(struct route *ro, int clone)
 void
 rtcache_copy(struct route *new_ro, const struct route *old_ro)
 {
+	struct rtentry *rt;
+
+	KASSERT(new_ro != old_ro);
+
+	if ((rt = rtcache_validate(old_ro)) != NULL)
+		rt->rt_refcnt++;
+
 	if (rtcache_getdst(old_ro) == NULL ||
 	    rtcache_setdst(new_ro, rtcache_getdst(old_ro)) != 0)
 		return;
-	new_ro->_ro_rt = old_ro->_ro_rt;
-	if (new_ro->_ro_rt != NULL) {
+
+	if ((new_ro->_ro_rt = rt) != NULL)
 		rtcache(new_ro);
-		++new_ro->_ro_rt->rt_refcnt;
-	}
 }
 
 void
@@ -1220,6 +1225,7 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
     int *hitp)
 {
 	const struct sockaddr *odst;
+	struct rtentry *rt = NULL;
 
 	odst = rtcache_getdst(ro);
 
@@ -1227,17 +1233,17 @@ rtcache_lookup2(struct route *ro, const struct sockaddr *dst, int clone,
 		;
 	else if (sockaddr_cmp(odst, dst) != 0)
 		rtcache_free(ro);
-	else if (rtcache_validate(ro) == NULL)
+	else if ((rt = rtcache_validate(ro)) == NULL)
 		rtcache_clear(ro);
 
-	if (ro->_ro_rt == NULL) {
+	if (rt == NULL) {
 		*hitp = 0;
-		rtcache_setdst(ro, dst);
-		_rtcache_init(ro, clone);
+		if (rtcache_setdst(ro, dst) == 0)
+			rt = _rtcache_init(ro, clone);
 	} else
 		*hitp = 1;
 
-	return ro->_ro_rt;
+	return rt;
 }
 
 void

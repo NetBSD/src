@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.c,v 1.2 1996/05/17 19:50:28 chuck Exp $	*/
+/*	$NetBSD: delay.c,v 1.2.160.1 2008/01/19 12:14:32 bouyer Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -11,9 +11,9 @@
 
 /* BUG - timing routine */
 void
-mvmeprom_delay(msec)
-	int msec;
+mvmeprom_delay(int msec)
 {
+
 	MVMEPROM_ARG1(msec);
 	MVMEPROM_CALL(MVMEPROM_DELAY);
 }

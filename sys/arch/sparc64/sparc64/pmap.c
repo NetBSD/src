@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.202.2.2 2008/01/08 22:10:30 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.202.2.3 2008/01/19 12:14:47 bouyer Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.2 2008/01/08 22:10:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.202.2.3 2008/01/19 12:14:47 bouyer Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2224,6 +2224,12 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t blkno)
 	kcpu->newmagic = SPARC64_KCORE_NEWMAGIC;
 	kcpu->num4mbsegs = kernel_tlb_slots;
 	kcpu->off4mbsegs = ALIGN(sizeof(cpu_kcore_hdr_t));
+
+	/* description of per-cpu mappings */
+	kcpu->numcpuinfos = sparc_ncpus;
+	kcpu->percpusz = 64 * 1024;	/* used to be 128k for some time */
+	kcpu->thiscpu = cpu_number();	/* which cpu is doing this dump */
+	kcpu->cpusp = cpu0paddr - 64 * 1024 * sparc_ncpus;
 
 	/* Now the memsegs */
 	kcpu->nmemseg = phys_installed_size;

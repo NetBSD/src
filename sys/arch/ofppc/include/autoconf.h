@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.10 2007/11/26 19:58:30 garbled Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.10.6.1 2008/01/19 12:14:39 bouyer Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -32,6 +32,7 @@ void cpu_initclocks(void);
 void decr_intr(struct clockframe *);
 void setstatclockrate(int);
 void init_interrupt(void);
+void init_ofppc_interrupt(void);
 void ofppc_init_comcons(int);
 void copy_disp_props(struct device *, int, prop_dictionary_t);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.12.2.2 2008/01/08 22:10:37 bouyer Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12.2.3 2008/01/19 12:14:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.2.2 2008/01/08 22:10:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.12.2.3 2008/01/19 12:14:49 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -899,6 +899,20 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 }
 #endif	/* __x86_64__ */
 
+void
+cpu_offline_md(void)
+{
+	int s;
+
+	s = splhigh();
+#ifdef __i386__
+	npxsave_cpu(true);
+#else
+	fpusave_cpu(true);
+#endif
+	splx(s);
+}
+
 /* XXX joerg restructure and restart CPUs individually */
 static bool
 cpu_suspend(device_t dv)
@@ -917,7 +931,11 @@ cpu_suspend(device_t dv)
 	mutex_enter(&cpu_lock);
 	err = cpu_setonline(ci, false);
 	mutex_exit(&cpu_lock);
-	return err == 0;
+
+	if (err)
+		return false;
+
+	return true;
 }
 
 static bool

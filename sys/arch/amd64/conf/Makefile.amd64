@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.18.2.1 2008/01/02 21:47:06 bouyer Exp $
+#	$NetBSD: Makefile.amd64,v 1.18.2.2 2008/01/19 12:14:10 bouyer Exp $
 
 # Makefile for NetBSD
 #
@@ -79,7 +79,6 @@ locore.o machdep.o: Makefile
 
 acpi_wakeup_low.o busfunc.o cpufunc.o lock_stubs.o: assym.h
 linux32_sigcode.o mptramp.o netbsd32_sigcode.o: assym.h
-clock.o: config_time.h
 
 ##
 ## (7) misc settings

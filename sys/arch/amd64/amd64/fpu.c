@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.20.6.1 2008/01/02 21:46:57 bouyer Exp $	*/
+/*	$NetBSD: fpu.c,v 1.20.6.2 2008/01/19 12:14:08 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20.6.1 2008/01/02 21:46:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.20.6.2 2008/01/19 12:14:08 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -233,7 +233,7 @@ fpudna(struct cpu_info *ci)
 	 */
 	KDASSERT(ci->ci_fpcurlwp != l);
 	if (ci->ci_fpcurlwp != 0)
-		fpusave_cpu(ci, 1);
+		fpusave_cpu(true);
 
 	splx(s);
 
@@ -242,7 +242,7 @@ fpudna(struct cpu_info *ci)
 	KDASSERT(l->l_addr->u_pcb.pcb_fpcpu == NULL);
 #else
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l, 1);
+		fpusave_lwp(l, true);
 #endif
 
 	l->l_addr->u_pcb.pcb_cr0 &= ~CR0_TS;
@@ -287,12 +287,11 @@ fpudna(struct cpu_info *ci)
 
 
 void
-fpusave_cpu(struct cpu_info *ci, int save)
+fpusave_cpu(bool save)
 {
+	struct cpu_info *ci = curcpu();
 	struct lwp *l;
 	int s;
-
-	KDASSERT(ci == curcpu());
 
 	l = ci->ci_fpcurlwp;
 	if (l == NULL)
@@ -327,17 +326,16 @@ fpusave_cpu(struct cpu_info *ci, int save)
  * Save l's FPU state, which may be on this processor or another processor.
  */
 void
-fpusave_lwp(struct lwp *l, int save)
+fpusave_lwp(struct lwp *l, bool save)
 {
-	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
 
 	KDASSERT(l->l_addr != NULL);
 
 	oci = l->l_addr->u_pcb.pcb_fpcpu;
-	if (oci == ci) {
+	if (oci == curcpu()) {
 		int s = splipi();
-		fpusave_cpu(ci, save);
+		fpusave_cpu(save);
 		splx(s);
 	} else if (oci != NULL) {
 #ifdef MULTIPROCESSOR

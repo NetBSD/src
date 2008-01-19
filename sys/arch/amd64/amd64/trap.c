@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.40.4.1 2008/01/02 21:47:03 bouyer Exp $	*/
+/*	$NetBSD: trap.c,v 1.40.4.2 2008/01/19 12:14:09 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.4.1 2008/01/02 21:47:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.40.4.2 2008/01/19 12:14:09 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -557,9 +557,6 @@ faultcommon:
 
 	case T_BPTFLT|T_USER:		/* bpt instruction fault */
 	case T_TRCTRAP|T_USER:		/* trace trap */
-#ifdef MATH_EMULATE
-	trace:
-#endif
 		if (p->p_raslist == NULL ||
 		    (ras_lookup(p, (void *)frame->tf_rip) == (void *)-1)) {
 			KSI_INIT_TRAP(&ksi);

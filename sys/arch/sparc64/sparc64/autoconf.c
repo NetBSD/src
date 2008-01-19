@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.146.4.2 2008/01/08 22:10:27 bouyer Exp $ */
+/*	$NetBSD: autoconf.c,v 1.146.4.3 2008/01/19 12:14:45 bouyer Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.146.4.2 2008/01/08 22:10:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.146.4.3 2008/01/19 12:14:45 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -887,55 +887,54 @@ device_register(struct device *dev, void *aux)
 	}
 
 	/* set properties for PCI framebuffers */
-	if (busdev != NULL) {
+	if (busdev == NULL)
+		return;
 
-		if (device_is_a(busdev, "pci")) {
-			/* see if this is going to be console */
-			struct pci_attach_args *pa = aux;
-			prop_dictionary_t dict;
-			int node, sub;
-			int console = 0;
+	if (device_is_a(busdev, "pci")) {
+		/* see if this is going to be console */
+		struct pci_attach_args *pa = aux;
+		prop_dictionary_t dict;
+		int node, sub;
+		int console = 0;
 
-			dict = device_properties(dev);
-			node = PCITAG_NODE(pa->pa_tag);
-			device_setofnode(dev, node);
+		dict = device_properties(dev);
+		node = PCITAG_NODE(pa->pa_tag);
+		device_setofnode(dev, node);
 
-			/* we only care about display devices from here on */
-			if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
-				return;
+		/* we only care about display devices from here on */
+		if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+			return;
 
-			console = (node == console_node);
+		console = (node == console_node);
 
-			if (!console) {
-				/*
-				 * see if any child matches since OF attaches
-				 * nodes for each head and /chosen/stdout
-				 * points to the head rather than the device
-				 * itself in this case
-				 */
-				sub = OF_child(node);
-				while ((sub != 0) && (sub != console_node)) {
-					sub = OF_peer(sub);
-				}
-				if (sub == console_node) {
-					console = true;
-				}
+		if (!console) {
+			/*
+			 * see if any child matches since OF attaches
+			 * nodes for each head and /chosen/stdout
+			 * points to the head rather than the device
+			 * itself in this case
+			 */
+			sub = OF_child(node);
+			while ((sub != 0) && (sub != console_node)) {
+				sub = OF_peer(sub);
 			}
-
-			if (console) {
-				uint64_t cmap_cb;
-
-				prop_dictionary_set_uint32(dict,
-				    "instance_handle", console_instance);
-				copyprops(busdev, console_node, dict);
-
-				gfb_cb.gcc_cookie = 
-				    (void *)(intptr_t)console_instance;
-				gfb_cb.gcc_set_mapreg = of_set_palette;
-				cmap_cb = (uint64_t)&gfb_cb;
-				prop_dictionary_set_uint64(dict,
-				    "cmap_callback", cmap_cb);
+			if (sub == console_node) {
+				console = true;
 			}
+		}
+		
+		if (console) {
+			uint64_t cmap_cb;
+			prop_dictionary_set_uint32(dict,
+			    "instance_handle", console_instance);
+			copyprops(busdev, console_node, dict);
+
+			gfb_cb.gcc_cookie = 
+			    (void *)(intptr_t)console_instance;
+			gfb_cb.gcc_set_mapreg = of_set_palette;
+			cmap_cb = (uint64_t)&gfb_cb;
+			prop_dictionary_set_uint64(dict,
+			    "cmap_callback", cmap_cb);
 		}
 	}
 }
@@ -967,7 +966,9 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "height", temp);
 	}
 	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
-	if (!of_to_uint32_prop(dict, console_node, "depth", "depth")) {
+	if (!of_to_uint32_prop(dict, console_node, "depth", "depth") &&
+	    /* Some cards have an extra space in the property name */
+	    !of_to_uint32_prop(dict, console_node, "depth ", "depth")) {
 		/*
 		 * XXX we should check linebytes vs. width but those
 		 * FBs that don't have a depth property ( /chaos/control... )

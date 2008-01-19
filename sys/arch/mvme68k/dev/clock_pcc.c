@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.16.64.1 2008/01/08 22:10:13 bouyer Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.16.64.2 2008/01/19 12:14:24 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.16.64.1 2008/01/08 22:10:13 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.16.64.2 2008/01/19 12:14:24 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -58,8 +58,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.16.64.1 2008/01/08 22:10:13 bouyer E
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
-int clock_pcc_match __P((struct device *, struct cfdata *, void *));
-void clock_pcc_attach __P((struct device *, struct device *, void *));
+#include "ioconf.h"
+
+int clock_pcc_match(struct device *, struct cfdata *, void *);
+void clock_pcc_attach(struct device *, struct device *, void *);
 
 struct clock_pcc_softc {
 	struct device sc_dev;
@@ -71,14 +73,12 @@ struct clock_pcc_softc {
 CFATTACH_DECL(clock_pcc, sizeof(struct clock_pcc_softc),
     clock_pcc_match, clock_pcc_attach, NULL, NULL);
 
-extern struct cfdriver clock_cd;
 
-
-static int clock_pcc_profintr __P((void *));
-static int clock_pcc_statintr __P((void *));
-static void clock_pcc_initclocks __P((void *, int, int));
+static int clock_pcc_profintr(void *);
+static int clock_pcc_statintr(void *);
+static void clock_pcc_initclocks(void *, int, int);
 static u_int clock_pcc_getcount(struct timecounter *);
-static void clock_pcc_shutdown __P((void *));
+static void clock_pcc_shutdown(void *);
 
 static struct clock_pcc_softc *clock_pcc_sc;
 static uint32_t clock_pcc_count;
@@ -86,10 +86,7 @@ static uint16_t clock_pcc_reload;
 
 /* ARGSUSED */
 int
-clock_pcc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clock_pcc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcc_attach_args *pa;
 
@@ -97,27 +94,24 @@ clock_pcc_match(parent, cf, aux)
 
 	/* Only one clock, please. */
 	if (clock_pcc_sc)
-		return (0);
+		return 0;
 
 	if (strcmp(pa->pa_name, clock_cd.cd_name))
-		return (0);
+		return 0;
 
 	pa->pa_ipl = cf->pcccf_ipl;
 
-	return (1);
+	return 1;
 }
 
 /* ARGSUSED */
 void
-clock_pcc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clock_pcc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcc_attach_args *pa;
 	struct clock_pcc_softc *sc;
 
-	sc = (struct clock_pcc_softc *) self;
+	sc = (struct clock_pcc_softc *)self;
 	pa = aux;
 
 	if (pa->pa_ipl != CLOCK_LEVEL)
@@ -131,7 +125,7 @@ clock_pcc_attach(parent, self, aux)
 	clock_config(self, &sc->sc_clock_args, pccintr_evcnt(pa->pa_ipl));
 
 	/* Ensure our interrupts get disabled at shutdown time. */
-	(void) shutdownhook_establish(clock_pcc_shutdown, NULL);
+	(void)shutdownhook_establish(clock_pcc_shutdown, NULL);
 
 	/* Attach the interrupt handlers. */
 	pccintr_establish(PCCV_TIMER1, clock_pcc_profintr, pa->pa_ipl,
@@ -142,10 +136,7 @@ clock_pcc_attach(parent, self, aux)
 }
 
 void
-clock_pcc_initclocks(arg, prof_us, stat_us)
-	void *arg;
-	int prof_us;
-	int stat_us;
+clock_pcc_initclocks(void *arg, int prof_us, int stat_us)
 {
 	struct clock_pcc_softc *sc = arg;
 
@@ -205,11 +196,10 @@ clock_pcc_getcount(struct timecounter *tc)
 }
 
 int
-clock_pcc_profintr(frame)
-	void *frame;
+clock_pcc_profintr(void *frame)
 {
-	u_int8_t cr;
-	u_int16_t tc;
+	uint8_t cr;
+	uint16_t tc;
 	int s;
 
 	s = splhigh();
@@ -228,12 +218,11 @@ clock_pcc_profintr(frame)
 		hardclock(frame);
 	}
 
-	return (1);
+	return 1;
 }
 
 int
-clock_pcc_statintr(frame)
-	void *frame;
+clock_pcc_statintr(void *frame)
 {
 
 	/* Disable the timer interrupt while we handle it. */
@@ -249,13 +238,12 @@ clock_pcc_statintr(frame)
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL,
 	    clock_pcc_sc->sc_clock_lvl);
 
-	return (1);
+	return 1;
 }
 
 /* ARGSUSED */
 void
-clock_pcc_shutdown(arg)
-	void *arg;
+clock_pcc_shutdown(void *arg)
 {
 
 	/* Make sure the timer interrupts are turned off. */

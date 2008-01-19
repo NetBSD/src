@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.21.6.2 2008/01/08 22:11:54 bouyer Exp $	*/
+/*	$NetBSD: vfs.c,v 1.21.6.3 2008/01/19 12:15:39 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -229,6 +229,12 @@ vholdl(struct vnode *vp)
 
 void
 holdrelel(struct vnode *vp)
+{
+
+}
+
+void
+vrevoke(vnode_t *vp)
 {
 
 }

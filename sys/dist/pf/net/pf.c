@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.41.6.2 2008/01/02 21:55:25 bouyer Exp $	*/
+/*	$NetBSD: pf.c,v 1.41.6.3 2008/01/19 12:15:16 bouyer Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.41.6.2 2008/01/02 21:55:25 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.41.6.3 2008/01/19 12:15:16 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -2745,14 +2745,17 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 
 #ifdef __OpenBSD__
 	rtalloc_noclone(rop, NO_CLONING);
+	if ((rt = ro->ro_rt) != NULL) {
+		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
+		mss = max(tcp_mssdflt, mss);
+	}
 #else
-	rtcache_init_noclone(rop);
-#endif
-	if ((rt = rtcache_getrt(rop)) != NULL) {
+	if ((rt = rtcache_init_noclone(rop)) != NULL) {
 		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
 		mss = max(tcp_mssdflt, mss);
 	}
 	rtcache_free(rop);
+#endif
 	mss = min(mss, offer);
 	mss = max(mss, 64);		/* sanity - at least max opt space */
 	return (mss);
@@ -5309,8 +5312,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 		return (1);
 	}
 #else
-	rtcache_init(&ro);
-	rc = rtcache_getrt(&ro) != NULL ? 1 : 0;
+	rc = rtcache_init(&ro) != NULL ? 1 : 0;
 	rtcache_free(&ro);
 #endif
 
@@ -5353,17 +5355,13 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af,
 
 #ifdef __OpenBSD__
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
-#else
-	rtcache_init((struct route *)&ro);
-#endif
-
-#ifdef __OpenBSD__
 	if (ro.ro_rt != NULL) {
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;
 		RTFREE(ro.ro_rt);
 	}
 #else
+	rtcache_init((struct route *)&ro);
 	rtcache_free((struct route *)&ro);
 #endif
 
@@ -5441,8 +5439,7 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	if (r->rt == PF_FASTROUTE) {
 		struct rtentry *rt;
 
-		rtcache_init(ro);
-		rt = rtcache_getrt(ro);
+		rt = rtcache_init(ro);
 
 		if (rt == NULL) {
 			ipstat.ips_noroute++;

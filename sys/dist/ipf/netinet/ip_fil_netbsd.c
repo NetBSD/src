@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.41.12.2 2008/01/02 21:55:24 bouyer Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.41.12.3 2008/01/19 12:15:16 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.41.12.2 2008/01/02 21:55:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.41.12.3 2008/01/19 12:15:16 bouyer Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.51 2007/05/31 12:27:35 darrenr Exp";
@@ -1149,8 +1149,7 @@ frdest_t *fdp;
 		sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
-	rtcache_init(ro);
-	rt = rtcache_getrt(ro);
+	rt = rtcache_init(ro);
 	if ((ifp == NULL) && (rt != NULL))
 		ifp = rt->rt_ifp;
 
@@ -1441,9 +1440,7 @@ frdest_t *fdp;
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
 
-	rtcache_init(ro);
-
-	rt = rtcache_getrt(ro);
+	rt = rtcache_init(ro);
 	if ((ifp == NULL) && (rt != NULL))
 		ifp = rt->rt_ifp;
 
@@ -1557,8 +1554,7 @@ fr_info_t *fin;
 #if __NetBSD_Version__ >= 499001100
 	sockaddr_in_init(&u.dst4, &fin->fin_src, 0);
 	rtcache_setdst(&iproute, &u.dst);
-	rtcache_init(&iproute);
-	rt = rtcache_getrt(&iproute);
+	rt = rtcache_init(&iproute);
 	if (rt == NULL)
 		rc = 0;
 	else

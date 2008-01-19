@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.58.6.5 2008/01/13 11:26:56 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.58.6.6 2008/01/19 12:14:20 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -141,7 +141,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.5 2008/01/13 11:26:56 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.6 2008/01/19 12:14:20 bouyer Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -247,7 +247,7 @@ _C_LABEL(proc0uarea):	.long	0
 _C_LABEL(PDPpaddr):	.long	0	# paddr of PDP, for libkvm
 _C_LABEL(tablesize):	.long	0
 
-	.space 1024
+	.space 512
 tmpstk:
 
 #ifndef XEN

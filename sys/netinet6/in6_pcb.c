@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.90.6.2 2008/01/10 23:44:37 bouyer Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.90.6.3 2008/01/19 12:15:34 bouyer Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.90.6.2 2008/01/10 23:44:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.90.6.3 2008/01/19 12:15:34 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -437,7 +437,7 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			return (error);
 		}
 	}
-	if (ifp == NULL && (rt = rtcache_getrt(&in6p->in6p_route)) != NULL)
+	if (ifp == NULL && (rt = rtcache_validate(&in6p->in6p_route)) != NULL)
 		ifp = rt->rt_ifp;
 
 	in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim(in6p, ifp);
@@ -648,7 +648,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 		 */
 		if ((PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
-		    (rt = rtcache_getrt(&in6p->in6p_route)) != NULL &&
+		    (rt = rtcache_validate(&in6p->in6p_route)) != NULL &&
 		    !(rt->rt_flags & RTF_HOST)) {
 			const struct sockaddr_in6 *dst6;
 
@@ -761,7 +761,7 @@ in6_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 		nin6p = (struct in6pcb *)CIRCLEQ_NEXT(in6p, in6p_queue);
 		if (in6p->in6p_af != AF_INET6)
 			continue;
-		if ((rt = rtcache_getrt(&in6p->in6p_route)) != NULL &&
+		if ((rt = rtcache_validate(&in6p->in6p_route)) != NULL &&
 		    rt->rt_ifp == ifp)
 			in6_rtchange(in6p, 0);
 	}
@@ -782,22 +782,23 @@ in6_losing(struct in6pcb *in6p)
 	if (in6p->in6p_af != AF_INET6)
 		return;
 
-	if ((rt = rtcache_getrt(&in6p->in6p_route)) != NULL) {
-		memset(&info, 0, sizeof(info));
-		info.rti_info[RTAX_DST] = rtcache_getdst(&in6p->in6p_route);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
-		if (rt->rt_flags & RTF_DYNAMIC) {
-			(void)rtrequest(RTM_DELETE, rt_getkey(rt),
-			    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
-		}
-		rtcache_free(&in6p->in6p_route);
-		/*
-		 * A new route can be allocated
-		 * the next time output is attempted.
-		 */
+	if ((rt = rtcache_validate(&in6p->in6p_route)) == NULL)
+		return;
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = rtcache_getdst(&in6p->in6p_route);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
+	if (rt->rt_flags & RTF_DYNAMIC) {
+		(void)rtrequest(RTM_DELETE, rt_getkey(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
 	}
+	/*
+	 * A new route can be allocated
+	 * the next time output is attempted.
+	 */
+	rtcache_free(&in6p->in6p_route);
 }
 
 /*
@@ -928,18 +929,15 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		KASSERT(IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr));
 		if (cdst.sa4->sin_addr.s_addr != in6p->in6p_faddr.s6_addr32[3])
 			rtcache_free(ro);
-		else
-			rtcache_check(ro);
 	}
 #endif
 	else {
 		if (!IN6_ARE_ADDR_EQUAL(&cdst.sa6->sin6_addr,
 					&in6p->in6p_faddr))
 			rtcache_free(ro);
-		else
-			rtcache_check(ro);
 	}
-	rt = rtcache_getrt(ro);
+	if ((rt = rtcache_validate(ro)) == NULL)
+		rt = rtcache_update(ro, 1);
 #ifdef INET
 	if (rt == NULL && IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
 		union {

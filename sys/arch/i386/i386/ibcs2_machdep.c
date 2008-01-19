@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.32.32.1 2008/01/02 21:48:16 bouyer Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.32.32.2 2008/01/19 12:14:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2000 The NetBSD Foundation, Inc.
@@ -37,11 +37,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.32.32.1 2008/01/02 21:48:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.32.32.2 2008/01/19 12:14:19 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
-#include "opt_math_emulate.h"
 #include "opt_compat_ibcs2.h"
 #endif
 
@@ -191,12 +190,7 @@ ibcs2_sys_sysmachine(struct lwp *l, const struct ibcs2_sys_sysmachine_args *uap,
 
 	switch (SCARG(uap, cmd)) {
 	case IBCS2_SI86FPHW:
-		val = IBCS2_FP_NO;
-#ifdef MATH_EMULATE
-		val = IBCS2_FP_SW;
-#else
-		val = IBCS2_FP_387;		/* a real coprocessor */
-#endif
+		val = IBCS2_FP_387;
 		if ((error = copyout((void *)&val, (void *)SCARG(uap, arg),
 				     sizeof(val))))
 			return error;

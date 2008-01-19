@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.2.6.1 2008/01/02 21:47:08 bouyer Exp $	*/
+/*	$NetBSD: fpu.h,v 1.2.6.2 2008/01/19 12:14:10 bouyer Exp $	*/
 
 #ifndef	_AMD64_FPU_H_
 #define	_AMD64_FPU_H_
@@ -95,8 +95,8 @@ void fpudrop(void);
 void fpusave(struct lwp *);
 void fpudiscard(struct lwp *);
 void fputrap(struct trapframe *);
-void fpusave_lwp(struct lwp *, int);
-void fpusave_cpu(struct cpu_info *, int);
+void fpusave_lwp(struct lwp *, bool);
+void fpusave_cpu(bool);
 
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.15.4.1 2008/01/02 21:55:47 bouyer Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.15.4.2 2008/01/19 12:15:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.15.4.1 2008/01/02 21:55:47 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.15.4.2 2008/01/19 12:15:20 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.15.4.1 2008/01/02 21:55:47 bouyer Exp
 #include <sys/cpu.h>
 #include <sys/cpuio.h>
 #include <sys/proc.h>
+#include <sys/percpu.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/xcall.h>
@@ -98,6 +99,7 @@ const struct cdevsw cpuctl_cdevsw = {
 kmutex_t cpu_lock;
 int	ncpu;
 int	ncpuonline;
+bool	mp_online;
 
 static struct cpu_info *cpu_infos[MAXCPUS];
 
@@ -124,6 +126,7 @@ mi_cpu_attach(struct cpu_info *ci)
 	else
 		ci->ci_data.cpu_onproc = ci->ci_data.cpu_idlelwp;
 
+	percpu_init_cpu(ci);
 	softint_init(ci);
 	xc_init_cpu(ci);
 	pool_cache_cpu_init(ci);
@@ -281,19 +284,8 @@ cpu_xc_offline(struct cpu_info *ci)
 		lwp_unlock(l);
 	}
 
-	/*
-	 * Runqueues are locked with the global lock if pointers match,
-	 * thus hold only one.  Otherwise, double-lock the runqueues.
-	 */
-	if (spc->spc_mutex == mspc->spc_mutex) {
-		spc_lock(ci);
-	} else if (ci < mci) {
-		spc_lock(ci);
-		spc_lock(mci);
-	} else {
-		spc_lock(mci);
-		spc_lock(ci);
-	}
+	/* Double-lock the run-queues */
+	spc_dlock(ci, mci);
 
 	/* Handle LSRUN and LSIDL cases */
 	LIST_FOREACH(l, &alllwp, l_list) {
@@ -309,14 +301,12 @@ cpu_xc_offline(struct cpu_info *ci)
 			lwp_setlock(l, mspc->spc_mutex);
 		}
 	}
-	if (spc->spc_mutex == mspc->spc_mutex) {
-		spc_unlock(ci);
-	} else {
-		spc_unlock(ci);
-		spc_unlock(mci);
-	}
-
+	spc_dunlock(ci, mci);
 	mutex_exit(&proclist_lock);
+
+#ifdef __HAVE_MD_CPU_OFFLINE
+	cpu_offline_md();
+#endif
 }
 
 static void

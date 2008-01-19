@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.38.4.1 2008/01/02 21:51:43 bouyer Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.38.4.2 2008/01/19 12:14:52 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.38.4.1 2008/01/02 21:51:43 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.38.4.2 2008/01/19 12:14:52 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.38.4.1 2008/01/02 21:51:43 bo
 #include <net/if_gre.h>
 #include <net/if_atm.h>
 #include <net/if_tap.h>
+#include <net80211/ieee80211_ioctl.h>
 #include <netinet6/in6_var.h>
 #include <netinet6/nd6.h>
 #include <compat/sys/socket.h>
@@ -420,12 +421,19 @@ compat_cvtcmd(u_long cmd)
 	case GRESADDRS:
 	case GRESPROTO:
 	case GRESSOCK:
+#ifdef COMPAT_20
+	case OSIOCG80211STATS:
+	case OSIOCG80211ZSTATS:
+#endif /* COMPAT_20 */
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 	case SIOCDIFADDR:
 	case SIOCDIFADDR_IN6:
 	case SIOCDIFPHYADDR:
 	case SIOCGDEFIFACE_IN6:
+	case SIOCG80211NWID:
+	case SIOCG80211STATS:
+	case SIOCG80211ZSTATS:
 	case SIOCGIFADDR:
 	case SIOCGIFADDR_IN6:
 	case SIOCGIFAFLAG_IN6:
@@ -450,6 +458,7 @@ compat_cvtcmd(u_long cmd)
 	case SIOCGVH:
 	case SIOCIFCREATE:
 	case SIOCIFDESTROY:
+	case SIOCS80211NWID:
 	case SIOCSDEFIFACE_IN6:
 	case SIOCSIFADDR:
 	case SIOCSIFADDR_IN6:
