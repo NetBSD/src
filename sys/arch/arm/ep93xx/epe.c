@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.13 2007/10/17 19:53:40 garbled Exp $	*/
+/*	$NetBSD: epe.c,v 1.14 2008/01/19 13:11:09 chris Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.13 2007/10/17 19:53:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.14 2008/01/19 13:11:09 chris Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -81,10 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.13 2007/10/17 19:53:40 garbled Exp $");
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #include <net/bpfdesc.h>
-#endif
-
-#ifdef IPKDB_EP93XX
-#include <ipkdb/ipkdb.h>
 #endif
 
 #include <arm/ep93xx/ep93xxreg.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.21 2008/01/13 13:42:58 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.22 2008/01/19 13:11:09 chris Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -31,7 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ipkdb.h"
 #include "assym.h"
 #include <sys/syscall.h>
 #include <sys/errno.h>
@@ -108,7 +107,7 @@ ENTRY_NP(cpu_reset)
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(I32_bit | F32_bit)
-	msr     cpsr_all, r2
+	msr     cpsr_c, r2
 
 	ldr	r4, .Lcpu_reset_address
 	ldr	r4, [r4]
@@ -154,43 +153,6 @@ ENTRY_NP(cpu_reset)
 	.word	_C_LABEL(cpu_reset_needs_v4_MMU_disable)
 
 #endif	/* OFW */
-
-#ifdef IPKDB
-/*
- * Execute(inst, psr, args, sp)
- *
- * Execute INSTruction with PSR and ARGS[0] - ARGS[3] making
- * available stack at SP for next undefined instruction trap.
- *
- * Move the instruction onto the stack and jump to it.
- */
-ENTRY_NP(Execute)
-	mov	ip, sp
-	stmfd	sp!, {r2, r4-r7, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	mov	ip, r3
-	ldr	r7, .Lreturn
-	stmfd	sp!, {r0, r7}
-	adr	r7, .LExec
-	mov	r5, r1
-	mrs	r4, cpsr
-	ldmia	r2, {r0-r3}
-	mov	r6, sp
-	mov	sp, ip
-	msr	cpsr_all, r5
-	mov	pc, r6
-.LExec:
-	mrs	r5, cpsr
-/* XXX Cannot switch thus easily back from user mode */
-	msr	cpsr_all, r4
-	add	sp, r6, #8
-	ldmfd	sp!, {r6}
-	stmia	r6, {r0-r3}
-	mov	r0, r5
-	ldmdb	fp, {r4-r7, fp, sp, pc}
-.Lreturn:
-	mov	pc, r7
-#endif
 
 /*
  * setjump + longjmp

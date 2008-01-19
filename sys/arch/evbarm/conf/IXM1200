@@ -1,4 +1,4 @@
-#	$NetBSD: IXM1200,v 1.30 2008/01/18 09:48:30 he Exp $
+#	$NetBSD: IXM1200,v 1.31 2008/01/19 13:11:13 chris Exp $
 #
 #	IXM1200 -- Intel IXM1200 Evaluation Board Kernel
 #
@@ -130,7 +130,6 @@ options 	USERCONF	# userconf(4) support
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

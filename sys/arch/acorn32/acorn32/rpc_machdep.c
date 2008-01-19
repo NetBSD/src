@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.67 2007/10/17 19:52:53 garbled Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.68 2008/01/19 13:11:10 chris Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.67 2007/10/17 19:52:53 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.68 2008/01/19 13:11:10 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.67 2007/10/17 19:52:53 garbled Exp
 
 static i2c_tag_t acorn32_i2c_tag;
 
-#include "opt_ipkdb.h"
 #include "ksyms.h"
 
 /* Kernel text starts at the base of the kernel address space. */
@@ -127,11 +126,7 @@ u_int cpu_reset_address = 0x0; /* XXX 0x3800000 too for rev0 RiscPC 600 */
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 
 struct bootconfig bootconfig;	/* Boot config storage */
@@ -1007,13 +1002,6 @@ initarm(void *cookie)
 	if (cputype == CPU_ID_SA110)
 		rpc_sa110_cc_setup();	
 #endif	/* CPU_SA110 */
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif	/* NIPKDB */
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	ksyms_init(bootconfig.ksym_end - bootconfig.ksym_start,

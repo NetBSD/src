@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.53 2007/12/16 07:31:48 mrg Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.54 2008/01/19 13:11:09 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.53 2007/12/16 07:31:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.54 2008/01/19 13:11:09 chris Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.53 2007/12/16 07:31:48 mrg Exp $
 #include <arm/arm32/machdep.h>
 #include <machine/bootconfig.h>
 
-#include "opt_ipkdb.h"
 #include "md.h"
 
 struct vm_map *exec_map = NULL;

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2007/02/09 21:55:07 ad Exp $
+#	$NetBSD: Makefile,v 1.21 2008/01/19 13:11:19 chris Exp $
 
 INCSDIR= /usr/include/netwinder
 
@@ -10,7 +10,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	float.h fp.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
-	intr.h ipkdb.h \
+	intr.h \
 	limits.h lock.h \
 	math.h mcontext.h mutex.h \
 	param.h pcb.h pmap.h pmc.h proc.h profile.h ptrace.h \

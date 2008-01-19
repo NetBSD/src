@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.64 2007/03/04 06:00:24 christos Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.65 2008/01/19 13:11:19 chris Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,10 +40,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.64 2007/03/04 06:00:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.65 2008/01/19 13:11:19 chris Exp $");
 
 #include "opt_ddb.h"
-#include "opt_ipkdb.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -124,11 +123,7 @@ u_int dc21285_fclk = 63750000;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 struct nwbootinfo nwbootinfo;
 BootConfig bootconfig;		/* Boot config storage */
@@ -860,14 +855,6 @@ initarm(void *arg)
 	 */
 	if (nwbootinfo.bi_pagesize == 0xdeadbeef)
 		printf("WARNING: NeTTrom boot info corrupt\n");
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
-
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* Firmware doesn't load symbols. */
