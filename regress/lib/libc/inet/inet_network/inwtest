@@ -1,0 +1,58 @@
+#	$NetBSD: inwtest,v 1.1 2008/01/19 04:12:21 ginsbach Exp $
+input: 0x12
+result: 0x00000012
+input: 127.1
+result: 0x00007f01
+input: 127.1.2.3
+result: 0x7f010203
+input: 0X12
+result: 0x00000012
+input: 0
+result: 0x0
+input: 01.02.07.077
+result: 0x0102073f
+input: 0x1.23.045.0
+result: 0x01172500
+input: 0x12.0x34
+result: 0x00001234
+# yes, this is valid (because of the trailing space after the digit)
+input: 1 bar
+result: 0x00000001
+# malformed requests
+input: 4.2.3.1.
+result: 0xffffffff
+input: 0x123456
+result: 0xffffffff
+input: 0x12.0x345
+result: 0xffffffff
+input: 1.2.3.4.5
+result: 0xffffffff
+input: 1..3.4
+result: 0xffffffff
+input: .
+result: 0xffffffff
+input: 1.
+result: 0xffffffff
+input: .1
+result: 0xffffffff
+input: 0x
+result: 0xffffffff
+input: ""
+result: 0xffffffff
+input: " "
+input: bar
+result: 0xffffffff
+input: 1.2bar
+result: 0xffffffff
+input: 1.
+result: 0xffffffff
+input: \xc3\x8a\xc3\x83\xc3\x95\xc3\x8b\xc3\x85\xc3\x8e
+result: 0xffffffff
+input: 255.255.255.255
+result: 0xffffffff
+input: x
+result: 0xffffffff
+input: 078
+result: 0xffffffff
+input: 127.0xfff
+result: 0xffffffff
