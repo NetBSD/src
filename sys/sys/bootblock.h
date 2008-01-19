@@ -1,4 +1,4 @@
-/*	$NetBSD: bootblock.h,v 1.43 2007/11/29 23:18:17 dsl Exp $	*/
+/*	$NetBSD: bootblock.h,v 1.44 2008/01/19 20:53:49 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002-2004 The NetBSD Foundation, Inc.
@@ -607,6 +607,7 @@ static const struct mbr_ptype {
 #define	MBR_BS_EXTINT13	0x02	/* Set by fdisk if LBA needed (deprecated) */
 #define	MBR_BS_READ_LBA	0x04	/* Force LBA reads (deprecated) */
 #define	MBR_BS_EXTLBA	0x08	/* Extended ptn capable (LBA reads) */
+#define	MBR_BS_ASCII	0x10	/* Bootselect code needs ascii key code */
 /* This is always set, the bootsel is located using the magic number...  */
 #define	MBR_BS_NEWMBR	0x80	/* New bootsel at offset 440 */
 
