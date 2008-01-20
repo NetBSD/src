@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.15 2008/01/19 22:10:14 dyoung Exp $	*/
+/*	$NetBSD: epe.c,v 1.16 2008/01/20 13:44:19 dogcow Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.15 2008/01/19 22:10:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.16 2008/01/20 13:44:19 dogcow Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -557,8 +557,6 @@ epe_ifioctl(ifp, cmd, data)
 	u_long cmd;
 	void *data;
 {
-	struct epe_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
