@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.18 2008/01/20 16:49:58 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.19 2008/01/20 16:59:04 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.18 2008/01/20 16:49:58 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.19 2008/01/20 16:59:04 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1372,14 +1372,7 @@ pmap_bootstrap(vaddr_t kva_start)
 
 	kva = VM_MIN_KERNEL_ADDRESS;
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
-#ifdef XEN
-		printk("level %d nkptp[i] %d nbpd[i] %d kva 0x%lx\n",
-		    i, nkptp[i], nbpd[i], kva);
-#endif
 		kva += nkptp[i] * nbpd[i];
-#ifdef XEN
-		printk(" -> 0x%lx\n", kva);
-#endif
 	}
 	pmap_maxkvaddr = kva;
 }
@@ -4033,10 +4026,6 @@ pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
 		index = pl_i_roundup(kva, level);
 		endindex = index + needed_ptps[level - 1] - 1;
 
-#ifdef XEN
-		printk("pmap_alloc_level %d kva 0x%lx index %ld endindex %ld\n",
-		    level, kva, index, endindex);
-#endif
 
 		for (i = index; i <= endindex; i++) {
 			KASSERT(!pmap_valid_entry(pdep[i]));
@@ -4103,13 +4092,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	 * is called infrequently.
 	 */
 	for (i = PTP_LEVELS - 1; i >= 1; i--) {
-
-#ifdef XEN
-		printk("lvl %d maxkvaddr 0x%lx VM_MIN_KERNEL_A 0x%lx ptp_masks[lvl] 0x%lx ptp_shifts[i] %d\n",
-		    i, maxkvaddr, VM_MIN_KERNEL_ADDRESS, ptp_masks[i], ptp_shifts[i]);
-		printk("pl_i_roundup 0x%lx 0x%lx\n", 
-		    pl_i_roundup(maxkvaddr, i + 1), pl_i_roundup(VM_MIN_KERNEL_ADDRESS, i + 1));
-#endif
 		target_nptp = pl_i_roundup(maxkvaddr, i + 1) -
 		    pl_i_roundup(VM_MIN_KERNEL_ADDRESS, i + 1);
 		/*
@@ -4117,9 +4099,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		 */
 		if (target_nptp > nkptpmax[i])
 			panic("out of KVA space");
-#ifdef XEN
-		printk("target_nptp %ld nkptp[%d] %ld\n", target_nptp, i, nkptp[i]);
-#endif
 		KASSERT(target_nptp >= nkptp[i]);
 		needed_kptp[i] = target_nptp - nkptp[i];
 	}
@@ -4171,9 +4150,6 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		pool_cache_invalidate(&pmap_pdp_cache);
 	}
 
-#ifdef XEN
-	printk("pmap_growkernel return 0x%lx\n", maxkvaddr);
-#endif
 	return maxkvaddr;
 }
 
