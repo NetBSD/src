@@ -1,4 +1,4 @@
-/*	$NetBSD: kqueue.c,v 1.4 2003/10/11 18:30:09 provos Exp $	*/
+/*	$NetBSD: kqueue.c,v 1.4.6.1 2008/01/20 21:07:40 bouyer Exp $	*/
 /*	$OpenBSD: kqueue.c,v 1.5 2002/07/10 14:41:31 art Exp $	*/
 
 /*
@@ -170,7 +170,7 @@ kq_insert(struct kqop *kqop, struct kevent *kev)
 			log_error("%s: malloc", __func__);
 			return (-1);
 		}
-		kqop->events = newchange;
+		kqop->events = newresult;
 
 		kqop->nevents = nevents;
 	}
