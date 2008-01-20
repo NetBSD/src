@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.29 2008/01/04 23:05:42 dsl Exp $
+# $NetBSD: md.amd64,v 1.30 2008/01/20 20:23:21 yamt Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -148,6 +148,7 @@
 ./usr/include/x86/mutex.h			comp-c-include
 ./usr/include/x86/pio.h				comp-c-include
 ./usr/include/x86/pmap.h			comp-c-include
+./usr/include/x86/pmap_pv.h			comp-c-include
 ./usr/include/x86/psl.h				comp-c-include
 ./usr/include/x86/rwlock.h			comp-c-include
 ./usr/include/x86/specialreg.h			comp-c-include
