@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.48.10.1 2008/01/01 15:39:14 chris Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.48.10.2 2008/01/20 16:03:55 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -109,23 +109,6 @@
 	bic	r14, r14, #(I32_bit) ; \
 	msr	cpsr_c, r14 ; \
 
-/*
- * These are used for switching the translation table/DACR.
- * Since the vector page can be invalid for a short time, we must
- * disable both regular IRQs *and* FIQs.
- *
- * XXX: This is not necessary if the vector table is relocated.
- */
-#define IRQdisableALL \
-	mrs	r14, cpsr ; \
-	orr	r14, r14, #(I32_bit | F32_bit) ; \
-	msr	cpsr_c, r14
-
-#define IRQenableALL \
-	mrs	r14, cpsr ; \
-	bic	r14, r14, #(I32_bit | F32_bit) ; \
-	msr	cpsr_c, r14
-
 	.text
 
 #ifdef MULTIPROCESSOR
@@ -145,9 +128,6 @@
 	.word	_C_LABEL(curpcb)
 #endif
 
-.Lcpufuncs:	
-	.word	_C_LABEL(cpufuncs)
-	
 #ifndef MULTIPROCESSOR
 	.data
 	.global	_C_LABEL(curpcb)
@@ -171,11 +151,18 @@ _C_LABEL(curpcb):
  *	r1	'struct lwp *' of the LWP to switch to
  */
 ENTRY(cpu_switchto)
-	stmfd	sp!, {r4-r7, lr}
+	mov	ip, sp
+	stmfd	sp!, {r4-r7, ip, lr}
 
-	mov	r6, r1		/* save new lwp */
-	mov	r4, r0		/* save old lwp, it's the return value */
+	/* move lwps and new pcb into caller saved registers */
+	mov	r6, r1
+	mov	r4, r0
+	ldr	r7, [r6, #(L_ADDR)]
 
+	/* rem: r4 = old lwp */
+	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
+	
 	IRQdisable
 
 #ifdef MULTIPROCESSOR
@@ -186,20 +173,19 @@ ENTRY(cpu_switchto)
 	/* l->l_cpu initialized in fork1() for single-processor */
 #endif
 
-	/* We have a new curlwp now so make a note it */
-	ldr	r7, .Lcurlwp
-	str	r6, [r7]
+	/* We have a new curlwp and pcb so make a note of them */
+	ldr	r0, .Lcurlwp
+	ldr	r1, .Lcurpcb
 
-	/* Hook in a new pcb */
-	ldr	r7, .Lcurpcb
-	ldr	r0, [r6, #(L_ADDR)]
-	str	r0, [r7]
+	str	r6, [r0]
+	str	r7, [r1]
 
 	/* At this point we can allow IRQ's again. */
 	IRQenable
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
 	/*
@@ -209,26 +195,26 @@ ENTRY(cpu_switchto)
 	 * straight to restoring the context for the new process.
 	 */
 	teq	r4, #0x00000000
-	ldreq	r9, [r6, #(L_ADDR)]
 	beq	.Ldo_switch
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
 	/* Save old context */
 
 	/* Get the user structure for the old lwp. */
-	ldr	r1, [r4, #(L_ADDR)]
+	ldr	r5, [r4, #(L_ADDR)]
 
 	/* Save all the registers in the old lwp's pcb */
 #ifndef __XSCALE__
-	add	r7, r1, #(PCB_R8)
-	stmia	r7, {r8-r13}
+	add	r0, r5, #(PCB_R8)
+	stmia	r0, {r8-r13}
 #else
-	strd	r8, [r1, #(PCB_R8)]
-	strd	r10, [r1, #(PCB_R10)]
-	strd	r12, [r1, #(PCB_R12)]
+	strd	r8, [r5, #(PCB_R8)]
+	strd	r10, [r5, #(PCB_R10)]
+	strd	r12, [r5, #(PCB_R12)]
 #endif
 
 	/*
@@ -236,72 +222,33 @@ ENTRY(cpu_switchto)
 	 * them for the new process.
 	 */
 
-	/* rem: r1 = old lwp PCB */
 	/* rem: r4 = old lwp */
+	/* rem: r5 = old pcb */
 	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
-
-	/* Remember the old PCB. */
-	mov	r8, r1
-
-	/* r1 now free! */
-
-	/* Get the user structure for the new process in r9 */
-	ldr	r9, [r6, #(L_ADDR)]
-
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
-        mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE | I32_bit)
-        msr	cpsr_c, r2
-
-	str	sp, [r8, #(PCB_UND_SP)]
-
-        msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* What else needs to be saved? Only FPA stuff when that is supported */
 
 	/* Restore saved context */
-
-	/* rem: r4 = old lwp */
-	/* rem: r6 = new lwp */
-	/* rem: r9 = new PCB */
-	/* rem: interrupts are enabled */
 
 .Ldo_switch:
 	mov	r0, r4
 	mov	r1, r6
 	bl	_C_LABEL(pmap_switch)
 
-
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
-	/* rem: r9 = new PCB */
+	/* rem: r7 = new pcb */
+	/* rem: interrupts are enabled */
 
-	/*
-	 * This can be optimised... We know we want to go from SVC32
-	 * mode to UND32 mode
-	 */
-        mrs	r3, cpsr
-	bic	r2, r3, #(PSR_MODE)
-	orr	r2, r2, #(PSR_UND32_MODE)
-        msr	cpsr_c, r2
+	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
-	ldr	sp, [r9, #(PCB_UND_SP)]
-
-        msr	cpsr_c, r3		/* Restore the old mode */
-
-	/* Restore all the save registers */
+	/* Restore all the saved registers */
 #ifndef __XSCALE__
-	add	r7, r9, #PCB_R8
-	ldmia	r7, {r8-r13}
-
-	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
+	add	r0, r7, #PCB_R8
+	ldmia	r0, {r8-r13}
 #else
-	mov	r7, r9
 	ldr	r8, [r7, #(PCB_R8)]
 	ldr	r9, [r7, #(PCB_R9)]
 	ldr	r10, [r7, #(PCB_R10)]
@@ -309,8 +256,6 @@ ENTRY(cpu_switchto)
 	ldr	r12, [r7, #(PCB_R12)]
 	ldr	r13, [r7, #(PCB_SP)]
 #endif
-
-	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
@@ -322,9 +267,6 @@ ENTRY(cpu_switchto)
 	add	r0, r0, #(USER_SIZE) & 0xff00 
 	bl	_C_LABEL(arm_fpe_core_changecontext)
 #endif
-
-	/* We can enable interrupts again */
-	IRQenableALL
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */
@@ -347,10 +289,10 @@ ENTRY(cpu_switchto)
 	mov	r1, r6
 
 	/*
-	 * Pull the registers that got pushed when either savectx() or
-	 * cpu_switchto() was called and return.
+	 * Pull the registers that got pushed when cpu_switchto() was called,
+	 * and return.
 	 */
-	ldmfd	sp!, {r4-r7, pc}
+	ldmfd	sp, {r4-r7, sp, pc}
 
 .Lswitch_do_ras:
 	ldr	r1, [r1, #(TF_PC)]	/* second ras_lookup() arg */
@@ -361,30 +303,13 @@ ENTRY(cpu_switchto)
 	strne	r0, [r1, #(TF_PC)]
 	b	.Lswitch_return
 
-
-/* LINTSTUB: Func: void savectx(struct pcb *pcb) */
-ENTRY(savectx)
-	/*
-	 * r0 = pcb
-	 */
-
-	/* Push registers.*/
-	stmfd	sp!, {r4-r7, lr}
-
-	/* Store all the registers in the process's pcb */
-#ifndef __XSCALE__
-	add	r2, r0, #(PCB_R8)
-	stmia	r2, {r8-r13}
-#else
-	strd	r8, [r0, #(PCB_R8)]
-	strd	r10, [r0, #(PCB_R10)]
-	strd	r12, [r0, #(PCB_R12)]
-#endif
-
-	/* Pull the regs of the stack */
-	ldmfd	sp!, {r4-r7, pc}
-
 ENTRY(lwp_trampoline)
+	/*
+	 * cpu_switchto gives us:
+	 *
+	 * arg0(r0) = old lwp
+	 * arg1(r1) = new lwp
+	 */
 	bl	_C_LABEL(lwp_startup)
 
 	mov	r0, r5

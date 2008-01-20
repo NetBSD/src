@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17.6.1 2008/01/01 15:39:11 chris Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.17.6.2 2008/01/20 16:03:54 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17.6.1 2008/01/01 15:39:11 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17.6.2 2008/01/20 16:03:54 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,7 +224,7 @@ readdisklabel(dev, strat, lp, osdep)
 		i = 0;
 		do {
 			/* read a bad sector table */
-			bp->b_flags &= ~(B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
 			bp->b_flags |= B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
@@ -376,7 +376,7 @@ writedisklabel(dev, strat, lp, osdep)
 	bp->b_blkno = netbsdpartoff + LABELSECTOR;
 	bp->b_cylinder = cyl;
 	bp->b_bcount = lp->d_secsize;
-	bp->b_flags &= ~(B_DONE);
+	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags |= B_READ;
 	(*strat)(bp);
 
@@ -390,7 +390,8 @@ writedisklabel(dev, strat, lp, osdep)
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
 			*dlp = *lp;
-			bp->b_flags &= ~(B_READ|B_DONE);
+			bp->b_flags &= ~(B_READ);
+			bp->b_oflags &= ~(BO_DONE);
 			bp->b_flags |= B_WRITE;
 			(*strat)(bp);
 			error = biowait(bp);

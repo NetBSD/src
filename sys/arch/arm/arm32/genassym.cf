@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.33.10.1 2008/01/01 15:39:16 chris Exp $
+#	$NetBSD: genassym.cf,v 1.33.10.2 2008/01/20 16:03:56 chris Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -65,6 +65,10 @@ ifdef __ARM_FIQ_INDIRECT
 define	__ARM_FIQ_INDIRECT	1
 endif
 
+ifdef __HAVE_FAST_SOFTINTS
+define	__HAVE_FAST_SOFTINTS	1
+endif
+
 define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
@@ -98,7 +102,6 @@ define	PCB_R12			offsetof(struct pcb, pcb_un.un_32.pcb32_r12)
 define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
 define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
-define	PCB_UND_SP		offsetof(struct pcb, pcb_un.un_32.pcb32_und_sp)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 
@@ -136,6 +139,7 @@ define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
 define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 ifdef MULTIPROCESSOR
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB		offsetof(struct cpu_info, ci_curpcb)

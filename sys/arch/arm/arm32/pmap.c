@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.10.1 2008/01/01 15:39:18 chris Exp $	*/
+/*	$NetBSD: pmap.c,v 1.164.10.2 2008/01/20 16:03:57 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -194,8 +194,8 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -203,6 +203,7 @@
 #include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/cdefs.h>
+#include <sys/cpu.h>
  
 #include <uvm/uvm.h>
 
@@ -212,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.10.1 2008/01/01 15:39:18 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.10.2 2008/01/20 16:03:57 chris Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -677,7 +678,7 @@ do {					\
 /*
  * main pv_entry manipulation functions:
  *   pmap_enter_pv: enter a mapping onto a vm_page list
- *   pmap_remove_pv: remove a mappiing from a vm_page list
+ *   pmap_remove_pv: remove a mapping from a vm_page list
  *
  * NOTE: pmap_enter_pv expects to lock the pvh itself
  *       pmap_remove_pv expects te caller to lock the pvh before calling
@@ -946,7 +947,7 @@ pmap_use_l1(pmap_t pm)
 	 * Access to an L1 by the kernel pmap must not affect
 	 * the LRU list.
 	 */
-	if (current_intr_depth || pm == pmap_kernel())
+	if (cpu_intr_p() || pm == pmap_kernel())
 		return;
 
 	l1 = pm->pm_l1;
@@ -1298,6 +1299,9 @@ static inline int
 pmap_get_vac_flags(const struct vm_page *pg)
 {
 	int kidx, uidx;
+
+	if (pg->mdpage.pvh_list == NULL)
+		return -1;
 
 	kidx = 0;
 	if (pg->mdpage.kro_mappings || pg->mdpage.krw_mappings > 1)
@@ -2250,7 +2254,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
  *     going to make _that_ much difference overall.
  */
 
-#define	PMAP_REMOVE_CLEAN_LIST_SIZE	3
+#define	PMAP_REMOVE_CLEAN_LIST_SIZE	10
 
 void
 pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
@@ -2263,7 +2267,7 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 		vaddr_t va;
 		pt_entry_t *pte;
 	} cleanlist[PMAP_REMOVE_CLEAN_LIST_SIZE];
-	u_int mappings, is_exec, is_refd;
+	u_int mappings, pte_entries, is_exec, is_refd;
 
 	NPDEBUG(PDB_REMOVE, printf("pmap_do_remove: pmap=%p sva=%08lx "
 	    "eva=%08lx\n", pm, sva, eva));
@@ -2284,6 +2288,8 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 	total = 0;
 
 	while (sva < eva) {
+		pt_entry_t *startPteSync;
+		bool need_pte_sync = false;
 		/*
 		 * Do one L2 bucket's worth at a time.
 		 */
@@ -2297,14 +2303,16 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 			continue;
 		}
 
-		ptep = &l2b->l2b_kva[l2pte_index(sva)];
+		startPteSync = ptep = &l2b->l2b_kva[l2pte_index(sva)];
 
-		for (mappings = 0; sva < next_bucket; sva += PAGE_SIZE, ptep++){
+		for (mappings = 0, pte_entries = 0; sva < next_bucket;
+			       	sva += PAGE_SIZE, ptep++){
 			struct vm_page *pg;
 			pt_entry_t pte;
 			paddr_t pa;
 
 			pte = *ptep;
+			pte_entries++;
 
 			if (pte == 0) {
 				/* Nothing here, move along */
@@ -2357,6 +2365,7 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 				PTE_SYNC_CURRENT(pm, ptep);
 				continue;
 			}
+			need_pte_sync = true;
 
 			if (cleanlist_idx < PMAP_REMOVE_CLEAN_LIST_SIZE) {
 				/* Add to the clean list. */
@@ -2368,7 +2377,6 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 			if (cleanlist_idx == PMAP_REMOVE_CLEAN_LIST_SIZE) {
 				/* Nuke everything if needed. */
 				pmap_idcache_wbinv_all(pm);
-				pmap_tlb_flushID(pm);
 
 				/*
 				 * Roll back the previous PTE list,
@@ -2379,12 +2387,10 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 					*cleanlist[cnt].pte = 0;
 				}
 				*ptep = 0;
-				PTE_SYNC(ptep);
 				cleanlist_idx++;
 				pm->pm_remove_all = true;
 			} else {
 				*ptep = 0;
-				PTE_SYNC(ptep);
 				if (pm->pm_remove_all == false) {
 					if (is_exec)
 						pmap_tlb_flushID_SE(pm, sva);
@@ -2431,7 +2437,20 @@ pmap_do_remove(pmap_t pm, vaddr_t sva, vaddr_t eva, int skip_wired)
 				pmap_idcache_wbinv_all(pm);
 				pm->pm_remove_all = true;
 			}
+		} else if (need_pte_sync){
+			/* PTE_SYNC everything from this loop */
+			if (PMAP_NEEDS_PTE_SYNC && 
+					pmap_is_cached(pm)) 
+			{
+				PTE_SYNC_RANGE(startPteSync, pte_entries);
+#if 0
+				printf("pmap_remove: pte syncing %p, "
+					"for %d entries and %d mappings\n",
+				       	startPteSync, pte_entries, mappings);
+#endif
+			}
 		}
+
 
 		pmap_free_l2_bucket(pm, l2b, mappings);
 		pm->pm_stats.resident_count -= mappings;

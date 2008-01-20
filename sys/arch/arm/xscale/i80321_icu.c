@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.14.28.1 2008/01/01 15:39:45 chris Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.14.28.2 2008/01/20 16:04:08 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.28.1 2008/01/01 15:39:45 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.28.2 2008/01/20 16:04:08 chris Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -83,6 +83,7 @@ uint32_t intr_steer;
  * ICU registers -- XXX will need to revisit this if those bits are
  * ever used in future steppings).
  */
+#ifdef __HAVE_FAST_SOFTINTS
 static const uint32_t si_to_irqbit[4] = {
 	ICU_INT_bit26,		/* SI_SOFTCLOCK */
 	ICU_INT_bit22,		/* SI_SOFTBIO */
@@ -101,6 +102,7 @@ static const int si_to_ipl[4] = {
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
+#endif
 
 /*
  * Interrupt bit names.
@@ -221,10 +223,12 @@ i80321_intr_calculate_masks(void)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
+#ifdef __HAVE_FAST_SOFTINTS
 	i80321_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
 	i80321_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
 	i80321_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
 	i80321_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+#endif
 
 	i80321_imask[IPL_SOFTBIO] |= i80321_imask[IPL_SOFTCLOCK];
 	i80321_imask[IPL_SOFTNET] |= i80321_imask[IPL_SOFTBIO];
@@ -280,7 +284,7 @@ i80321_do_pending(void)
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
-#endif
+#endif	/* __HAVE_FAST_SOFTINTRS */
 }
 
 void
@@ -304,6 +308,7 @@ _splraise(int ipl)
 	return (i80321_splraise(ipl));
 }
 
+#if __HAVE_FAST_SOFTINTRS
 void
 _setsoftintr(int si)
 {
@@ -317,6 +322,7 @@ _setsoftintr(int si)
 	if ((i80321_ipending & INT_SWMASK) & ~current_spl_level)
 		i80321_do_pending();
 }
+#endif /* __HAVE_FAST_SOFTINTRS */
 
 /*
  * i80321_icu_init:

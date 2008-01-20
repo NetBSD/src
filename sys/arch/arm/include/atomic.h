@@ -1,4 +1,4 @@
-/* $NetBSD: atomic.h,v 1.9 2007/03/04 06:51:53 matt Exp $ */
+/* $NetBSD: atomic.h,v 1.9.20.1 2008/01/20 16:04:00 chris Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -64,16 +64,16 @@ bool atomic_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
 		__asm volatile(			\
 			"mrs  %0, cpsr;"		\
 			"orr  %1, %0, %2;"		\
-			"msr  cpsr_all, %1;"		\
+			"msr  cpsr_c, %1;"		\
 			: "=r" (cpsr_save), "=r" (tmp)	\
 			: "I" (I32_bit)		\
-		        : "cc" );		\
+		        );			\
 		(expr);				\
 		 __asm volatile(		\
-			"msr  cpsr_all, %0"	\
+			"msr  cpsr_c, %0"	\
 			: /* no output */	\
 			: "r" (cpsr_save)	\
-			: "cc" );		\
+			);			\
 	} while(0)
 #else /* __PROG26 */
 #define __with_interrupts_disabled(expr)				\
