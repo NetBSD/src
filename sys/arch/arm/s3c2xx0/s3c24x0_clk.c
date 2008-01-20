@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c24x0_clk.c,v 1.8 2008/01/06 01:37:55 matt Exp $ */
+/*	$NetBSD: s3c24x0_clk.c,v 1.9 2008/01/20 16:28:23 joerg Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -30,12 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.8 2008/01/06 01:37:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c24x0_clk.c,v 1.9 2008/01/20 16:28:23 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 
 #include <machine/bus.h>
 #include <machine/intr.h>
@@ -61,27 +63,26 @@ static unsigned int timer4_mseccount;
 #define counter_to_usec(c,pclk)	\
 	(((c)*timer4_prescaler*1000)/(TIMER_FREQUENCY(pclk)/1000))
 
+static u_int	s3c24x0_get_timecount(struct timecounter *);
 
-/*
- * microtime:
- *
- *	Fill in the specified timeval struct with the current time
- *	accurate to the microsecond.
- */
-void
-microtime(struct timeval *tvp)
+static struct timecounter s3c24x0_timecounter = {
+	s3c24x0_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	0,		/* frequency */
+	"s3c234x0",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static volatile uint32_t s3c24x0_base;
+
+static u_int
+s3c24x0_get_timecount(struct timecounter *tc)
 {
 	struct s3c24x0_softc *sc = (struct s3c24x0_softc *) s3c2xx0_softc;
-	int save, int_pend0, int_pend1, count, delta;
-	static struct timeval last;
-	int pclk = s3c2xx0_softc->sc_pclk;
-
-	if( timer4_reload_value == 0 ){
-		/* not initialized yet */
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
+	int save, int_pend0, int_pend1, count;
 
 	save = disable_interrupts(I32_bit);
 
@@ -92,7 +93,7 @@ microtime(struct timeval *tvp)
 	count = bus_space_read_2(sc->sc_sx.sc_iot, sc->sc_timer_ioh,
 	    TIMER_TCNTO(4));
 	
-	for (;;){
+	for (;;) {
 
 		int_pend1 = S3C24X0_INT_TIMER4 &
 		    bus_space_read_4(sc->sc_sx.sc_iot, sc->sc_sx.sc_intctl_ioh,
@@ -109,63 +110,22 @@ microtime(struct timeval *tvp)
 		    TIMER_TCNTO(4));
 	}
 
-	if( __predict_false(count > timer4_reload_value) ){
+	if (__predict_false(count > timer4_reload_value)) {
 		/* 
 		 * Buggy Hardware Warning --- sometimes timer counter
 		 * reads bogus value like 0xffff.  I guess it happens when
 		 * the timer is reloaded.
 		 */
-		printf( "Bogus value from timer counter: %d\n", count );
+		printf("Bogus value from timer counter: %d\n", count);
 		goto again;
 	}
 
-	/* copy system time */
-	*tvp = time;
-
 	restore_interrupts(save);
 
-	delta = timer4_reload_value - count;
+	if (int_pend1)
+		count -= timer4_reload_value;
 
-	if( int_pend1 ){
-		/*
-		 * down counter underflow, but
-		 * clock interrupt have not serviced yet
-		 */
-		tvp->tv_usec += tick;
-	}
-
-	tvp->tv_usec += counter_to_usec(delta, pclk);
-
-	/* Make sure microseconds doesn't overflow. */
-	tvp->tv_sec += tvp->tv_usec / 1000000;
-	tvp->tv_usec = tvp->tv_usec % 1000000;
-
-	if (last.tv_sec &&
-	    (tvp->tv_sec < last.tv_sec ||
-		(tvp->tv_sec == last.tv_sec && 
-		    tvp->tv_usec < last.tv_usec) ) ){
-
-		/* XXX: This happens very often when the kernel runs
-		   under Multi-ICE */
-#if 0
-		printf("time reversal: %ld.%06ld(%d,%d) -> %ld.%06ld(%d,%d)\n",
-		    last.tv_sec, last.tv_usec,
-		    last_count, last_pend,
-		    tvp->tv_sec, tvp->tv_usec,
-		    count, int_pend1 );
-#endif
-			    
-		/* make sure the time has advanced. */
-		*tvp = last;
-		tvp->tv_usec++;
-		if( tvp->tv_usec >= 1000000 ){
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-
-	last = *tvp;
-
+	return s3c24x0_base - count;
 }
 
 static inline int
@@ -235,8 +195,15 @@ setstatclockrate(int newhz)
 {
 }
 
-#define hardintr	(int (*)(void *))hardclock
-#define statintr	(int (*)(void *))statclock
+static int
+hardintr(void *arg)
+{
+	atomic_add_32(&s3c24x0_base, timer4_reload_value);
+
+	hardclock((struct clockframe *)arg);
+
+	return 1;
+}
 
 void
 cpu_initclocks(void)
@@ -316,6 +283,9 @@ cpu_initclocks(void)
 	bus_space_write_4(iot, ioh, TIMER_TCON, reg |
 	    TCON_AUTORELOAD(3) | TCON_START(3) |
 	    TCON_AUTORELOAD(4) | TCON_START(4) );
+
+	s3c24x0_timecounter.tc_frequency = pclk;
+	tc_init(&s3c24x0_timecounter);
 }
 
 

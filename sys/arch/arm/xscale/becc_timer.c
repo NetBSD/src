@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_timer.c,v 1.13 2008/01/06 01:37:57 matt Exp $	*/
+/*	$NetBSD: becc_timer.c,v 1.14 2008/01/20 16:28:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,12 +40,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.13 2008/01/06 01:37:57 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_timer.c,v 1.14 2008/01/20 16:28:24 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>
 
@@ -64,6 +66,21 @@ void	(*becc_hardclock_hook)(void);
 #define	COUNTS_PER_USEC		((COUNTS_PER_SEC / 1000000) + 1)
 
 static void *clock_ih;
+
+static u_int	becc_get_timecount(struct timecounter *);
+
+static struct timecounter becc_timecounter = {
+	becc_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	COUNTS_PER_SEC,		/* frequency */
+	"becc",			/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static volatile uint32_t becc_base;
 
 /*
  * Since the timer interrupts when the counter underflows, we need to
@@ -115,15 +132,6 @@ cpu_initclocks(void)
 		hz = 100;
 	}
 #endif
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-	}
 
 	/*
 	 * We only have one timer available; stathz and profhz are
@@ -168,6 +176,8 @@ cpu_initclocks(void)
 #endif
 
 	restore_interrupts(oldirqstate);
+
+	tc_init(&becc_timecounter);
 }
 
 /*
@@ -188,49 +198,18 @@ setstatclockrate(int new_hz)
 	 */
 }
 
-/*
- * microtime:
- *
- *	Fill in the specified timeval struct with the current time
- *	accurate to the microsecond.
- */
-void
-microtime(struct timeval *tvp)
+static u_int
+becc_get_timecount(struct timecounter *tc)
 {
-	static struct timeval lasttv;
+	uint32_t counter, base;
 	u_int oldirqstate;
-	uint32_t counts;
 
 	oldirqstate = disable_interrupts(I32_bit);
-
-	/*
-	 * XXX How do we compensate for the -1 behavior of the preload value?
-	 */
-	counts = counts_per_hz - BECC_CSR_READ(BECC_TCVRA);
-
-	/* Fill in the timeval struct. */
-	*tvp = time;
-	tvp->tv_usec += (counts / COUNTS_PER_USEC);
-
-	/* Make sure microseconds doesn't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	/* Make sure the time has advanced. */
-	if (tvp->tv_sec == lasttv.tv_sec &&
-	    tvp->tv_usec <= lasttv.tv_usec) {
-		tvp->tv_usec = lasttv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-
-	lasttv = *tvp;
-
+	counter = BECC_CSR_READ(BECC_TCVRA);
+	base = becc_base;
 	restore_interrupts(oldirqstate);
+
+	return base - counter;
 }
 
 /*
@@ -282,6 +261,8 @@ clockhandler(void *arg)
 	BECC_CSR_WRITE(BECC_TSCRA, TSCRx_TE | TSCRx_CM | TSCRx_TIF);
 
 	hardclock(frame);
+
+	atomic_add_32(&becc_base, counts_per_hz);
 
 	if (becc_hardclock_hook != NULL)
 		(*becc_hardclock_hook)();
