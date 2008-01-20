@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.24 2008/01/19 22:10:15 dyoung Exp $ */
+/* $NetBSD: if_aumac.c,v 1.25 2008/01/20 14:18:05 dogcow Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.24 2008/01/19 22:10:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.25 2008/01/20 14:18:05 dogcow Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -500,7 +500,6 @@ static int
 aumac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct aumac_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error;
 
 	s = splnet();
