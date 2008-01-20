@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.39 2008/01/20 13:43:38 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.40 2008/01/20 21:56:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2008/01/20 13:43:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.40 2008/01/20 21:56:11 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3576,7 +3576,7 @@ void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *ptes, *epte;
-	volatile pt_entry_t *spte;
+	pt_entry_t *spte;
 	pd_entry_t **pdes;
 	vaddr_t blockend, va;
 	pt_entry_t opte;
