@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.60 2007/10/19 11:59:52 ad Exp $	*/
+/*	$NetBSD: hme.c,v 1.60.8.1 2008/01/20 17:51:32 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.60 2007/10/19 11:59:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.60.8.1 2008/01/20 17:51:32 bouyer Exp $");
 
 /* #define HMEDEBUG */
 
@@ -98,7 +98,7 @@ int		hme_ioctl(struct ifnet *, u_long, void *);
 void		hme_tick(void *);
 void		hme_watchdog(struct ifnet *);
 void		hme_shutdown(void *);
-void		hme_init(struct hme_softc *);
+int		hme_init(struct hme_softc *);
 void		hme_meminit(struct hme_softc *);
 void		hme_mifinit(struct hme_softc *);
 void		hme_reset(struct hme_softc *);
@@ -110,7 +110,6 @@ static void	hme_mii_writereg(struct device *, int, int, int);
 static void	hme_mii_statchg(struct device *);
 
 int		hme_mediachange(struct ifnet *);
-void		hme_mediastatus(struct ifnet *, struct ifmediareq *);
 
 struct mbuf	*hme_get(struct hme_softc *, int, uint32_t);
 int		hme_put(struct hme_softc *, int, struct mbuf *);
@@ -263,7 +262,8 @@ hme_config(sc)
 	mii->mii_writereg = hme_mii_writereg;
 	mii->mii_statchg = hme_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, 0, hme_mediachange, hme_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, hme_mediachange, ether_mediastatus);
 
 	hme_mifinit(sc);
 
@@ -273,8 +273,8 @@ hme_config(sc)
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
 		/* No PHY attached */
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
 	} else {
 		/*
 		 * Walk along the list of attached MII devices and
@@ -305,7 +305,7 @@ hme_config(sc)
 		 * XXX - we can really do the following ONLY if the
 		 * phy indeed has the auto negotiation capability!!
 		 */
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 	}
 
 	/* claim 802.1q capability */
@@ -348,7 +348,7 @@ hme_reset(sc)
 	int s;
 
 	s = splnet();
-	hme_init(sc);
+	(void)hme_init(sc);
 	splx(s);
 }
 
@@ -462,7 +462,7 @@ hme_meminit(sc)
  * Initialization of interface; set up initialization block
  * and transmit/receive descriptor rings.
  */
-void
+int
 hme_init(sc)
 	struct hme_softc *sc;
 {
@@ -474,6 +474,7 @@ hme_init(sc)
 	bus_space_handle_t mac = sc->sc_mac;
 	u_int8_t *ea;
 	u_int32_t v;
+	int rc;
 
 	/*
 	 * Initialization sequence. The numbered steps below correspond
@@ -634,7 +635,8 @@ hme_init(sc)
 		(*sc->sc_hwinit)(sc);
 
 	/* Set the current media. */
-	mii_mediachg(&sc->sc_mii);
+	if ((rc = hme_mediachange(ifp)) != 0)
+		return rc;
 
 	/* Start the one second timer. */
 	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
@@ -644,6 +646,7 @@ hme_init(sc)
 	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
 	hme_start(ifp);
+	return 0;
 }
 
 /*
@@ -1169,8 +1172,8 @@ hme_mifinit(sc)
 	int instance, phy;
 	u_int32_t v;
 
-	if (sc->sc_media.ifm_cur != NULL) {
-		instance = IFM_INST(sc->sc_media.ifm_cur->ifm_media);
+	if (sc->sc_mii.mii_media.ifm_cur != NULL) {
+		instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 		phy = sc->sc_phys[instance];
 	} else
 		/* No media set yet, pick phy arbitrarily.. */
@@ -1374,13 +1377,14 @@ hme_mediachange(ifp)
 	bus_space_handle_t mac = sc->sc_mac;
 	int instance = IFM_INST(sc->sc_mii.mii_media.ifm_cur->ifm_media);
 	int phy = sc->sc_phys[instance];
+	int rc;
 	u_int32_t v;
 
 #ifdef HMEDEBUG
 	if (sc->sc_debug)
 		printf("hme_mediachange: phy = %d\n", phy);
 #endif
-	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
+	if (IFM_TYPE(sc->sc_mii.mii_media.ifm_media) != IFM_ETHER)
 		return (EINVAL);
 
 	/* Select the current PHY in the MIF configuration register */
@@ -1397,22 +1401,9 @@ hme_mediachange(ifp)
 		v |= HME_MAC_XIF_MIIENABLE;
 	bus_space_write_4(t, mac, HME_MACI_XIF, v);
 
-	return (mii_mediachg(&sc->sc_mii));
-}
-
-void
-hme_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct hme_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 /*
@@ -1426,7 +1417,6 @@ hme_ioctl(ifp, cmd, data)
 {
 	struct hme_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -1441,14 +1431,14 @@ hme_ioctl(ifp, cmd, data)
 				hme_setladrf(sc);
 			else {
 				ifp->if_flags |= IFF_UP;
-				hme_init(sc);
+				error = hme_init(sc);
 			}
 			arp_ifinit(ifp, ifa);
 			break;
 #endif
 		default:
 			ifp->if_flags |= IFF_UP;
-			hme_init(sc);
+			error = hme_init(sc);
 			break;
 		}
 		break;
@@ -1472,7 +1462,7 @@ hme_ioctl(ifp, cmd, data)
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			hme_init(sc);
+			error = hme_init(sc);
 		} else if ((ifp->if_flags & IFF_UP) != 0) {
 			/*
 			 * If setting debug or promiscuous mode, do not reset
@@ -1485,18 +1475,20 @@ hme_ioctl(ifp, cmd, data)
 				    == (sc->sc_if_flags & (~RESETIGN)))
 					hme_setladrf(sc);
 				else
-					hme_init(sc);
+					error = hme_init(sc);
 			}
 #undef RESETIGN
 		}
 
 		if (sc->sc_ec_capenable != sc->sc_ethercom.ec_capenable)
-			hme_init(sc);
+			error = hme_init(sc);
 
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -1507,12 +1499,6 @@ hme_ioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
 	default:
 		error = EINVAL;
 		break;

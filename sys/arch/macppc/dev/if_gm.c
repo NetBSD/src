@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.31.8.1 2008/01/02 21:48:37 bouyer Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.31.8.2 2008/01/20 17:51:20 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.31.8.1 2008/01/02 21:48:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.31.8.2 2008/01/20 17:51:20 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "rnd.h"
@@ -123,8 +123,6 @@ void gmac_setladrf(struct gmac_softc *);
 int gmac_ioctl(struct ifnet *, u_long, void *);
 void gmac_watchdog(struct ifnet *);
 
-int gmac_mediachange(struct ifnet *);
-void gmac_mediastatus(struct ifnet *, struct ifmediareq *);
 int gmac_mii_readreg(struct device *, int, int);
 void gmac_mii_writereg(struct device *, int, int, int);
 void gmac_mii_statchg(struct device *);
@@ -246,7 +244,8 @@ gmac_attach(parent, self, aux)
 	mii->mii_writereg = gmac_mii_writereg;
 	mii->mii_statchg = gmac_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, 0, gmac_mediachange, gmac_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */
@@ -854,6 +853,8 @@ gmac_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -866,12 +867,6 @@ gmac_ioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
 	default:
 		error = EINVAL;
 	}
@@ -891,28 +886,6 @@ gmac_watchdog(ifp)
 
 	gmac_reset(sc);
 	gmac_init(sc);
-}
-
-int
-gmac_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct gmac_softc *sc = ifp->if_softc;
-
-	return mii_mediachg(&sc->sc_mii);
-}
-
-void
-gmac_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct gmac_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
 int

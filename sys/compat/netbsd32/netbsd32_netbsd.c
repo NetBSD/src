@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.133.2.1 2008/01/02 21:53:09 bouyer Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.133.2.2 2008/01/20 17:51:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.133.2.1 2008/01/02 21:53:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.133.2.2 2008/01/20 17:51:28 bouyer Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1513,6 +1513,27 @@ netbsd32_mmap(struct lwp *l, const struct netbsd32_mmap_args *uap, register_t *r
 		/* Should try to recover and return an error here. */
 	}
 	return (error);
+}
+
+int
+netbsd32_mremap(struct lwp *l, const struct netbsd32_mremap_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(void *) old_address;
+		syscallarg(size_t) old_size;
+		syscallarg(void *) new_address;
+		syscallarg(size_t) new_size;
+		syscallarg(int) flags;
+	} */
+	struct sys_mremap_args ua;
+
+	NETBSD32TOP_UAP(old_address, void);
+	NETBSD32TOX_UAP(old_size, size_t);
+	NETBSD32TOP_UAP(new_address, void);
+	NETBSD32TOX_UAP(new_size, size_t);
+	NETBSD32TO64_UAP(flags);
+
+	return sys_mremap(l, &ua, retval);
 }
 
 int

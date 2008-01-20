@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.154.8.2 2008/01/19 12:15:03 bouyer Exp $	*/
+/*	$NetBSD: tulip.c,v 1.154.8.3 2008/01/20 17:51:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.154.8.2 2008/01/19 12:15:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.154.8.3 2008/01/20 17:51:34 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -3394,22 +3394,24 @@ static int
 tlp_mii_setmedia(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int rc;
 
-	if (ifp->if_flags & IFF_UP) {
-		switch (sc->sc_chip) {
-		case TULIP_CHIP_21142:
-		case TULIP_CHIP_21143:
-			/* Disable the internal Nway engine. */
-			TULIP_WRITE(sc, CSR_SIATXRX, 0);
-			break;
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		/* Disable the internal Nway engine. */
+		TULIP_WRITE(sc, CSR_SIATXRX, 0);
+		break;
 
-		default:
-			/* Nothing. */
-			break;
-		}
-		mii_mediachg(&sc->sc_mii);
+	default:
+		/* Nothing. */
+		break;
 	}
-	return (0);
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 /*

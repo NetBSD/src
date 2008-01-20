@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.44.6.1 2007/12/13 21:55:50 bouyer Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.44.6.2 2008/01/20 17:51:38 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.44.6.1 2007/12/13 21:55:50 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.44.6.2 2008/01/20 17:51:38 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -187,7 +187,6 @@ void sk_stop(struct ifnet *, int);
 void sk_watchdog(struct ifnet *);
 void sk_shutdown(void *);
 int sk_ifmedia_upd(struct ifnet *);
-void sk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void sk_reset(struct sk_softc *);
 int sk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int sk_alloc_jumbo_mem(struct sk_if_softc *);
@@ -979,23 +978,12 @@ int
 sk_ifmedia_upd(struct ifnet *ifp)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
+	int rc;
 
 	(void) sk_init(ifp);
-	mii_mediachg(&sc_if->sk_mii);
-	return 0;
-}
-
-/*
- * Report current media status.
- */
-void
-sk_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct sk_if_softc *sc_if = ifp->if_softc;
-
-	mii_pollstat(&sc_if->sk_mii);
-	ifmr->ifm_active = sc_if->sk_mii.mii_media_active;
-	ifmr->ifm_status = sc_if->sk_mii.mii_media_status;
+	if ((rc = mii_mediachg(&sc_if->sk_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 int
@@ -1003,8 +991,6 @@ sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 	struct sk_softc *sc = sc_if->sk_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
-	struct mii_data *mii;
 	int s, error = 0;
 
 	/* DPRINTFN(2, ("sk_ioctl\n")); */
@@ -1059,12 +1045,6 @@ sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 		error = 0;
 		break;
 
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-	        DPRINTFN(2, ("sk_ioctl MEDIA\n"));
-		mii = &sc_if->sk_mii;
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
-		break;
 	default:
 	        DPRINTFN(2, ("sk_ioctl ETHER\n"));
 		error = ether_ioctl(ifp, command, data);
@@ -1075,9 +1055,6 @@ sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 				DPRINTFN(2, ("sk_ioctl setmulti called\n"));
 			}
 			error = 0;
-		} else if ( error ) {
-			splx(s);
-			return error;
 		}
 		break;
 	}
@@ -1447,11 +1424,12 @@ sk_attach(struct device *parent, struct device *self, void *aux)
 		break;
 	}
 
+	sc_if->sk_ethercom.ec_mii = &sc_if->sk_mii;
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
-	    sk_ifmedia_upd, sk_ifmedia_sts);
+	    sk_ifmedia_upd, ether_mediastatus);
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
-	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
+	if (LIST_EMPTY(&sc_if->sk_mii.mii_phys)) {
 		aprint_error("%s: no PHY found!\n", sc_if->sk_dev.dv_xname);
 		ifmedia_add(&sc_if->sk_mii.mii_media, IFM_ETHER|IFM_MANUAL,
 			    0, NULL);
@@ -2255,7 +2233,7 @@ sk_intr_bcom(struct sk_if_softc *sc_if)
 		    SK_PHYADDR_BCOM, BRGPHY_MII_AUXSTS);
 
 		if (!(lstat & BRGPHY_AUXSTS_LINK) && sc_if->sk_link) {
-			mii_mediachg(mii);
+			(void)mii_mediachg(mii);
 			/* Turn off the link LED. */
 			SK_IF_WRITE_1(sc_if, 0,
 			    SK_LINKLED1_CTL, SK_LINKLED_OFF);
@@ -2714,7 +2692,7 @@ sk_init(struct ifnet *ifp)
 	struct sk_if_softc	*sc_if = ifp->if_softc;
 	struct sk_softc		*sc = sc_if->sk_softc;
 	struct mii_data		*mii = &sc_if->sk_mii;
-	int			s;
+	int			rc = 0, s;
 	u_int32_t		imr, imtimer_ticks;
 
 	DPRINTFN(1, ("sk_init\n"));
@@ -2757,7 +2735,10 @@ sk_init(struct ifnet *ifp)
 		sk_init_yukon(sc_if);
 		break;
 	}
-	mii_mediachg(mii);
+	if ((rc = mii_mediachg(mii)) == ENXIO)
+		rc = 0;
+	else if (rc != 0)
+		goto out;
 
 	if (sc->sk_type == SK_GENESIS) {
 		/* Configure MAC FIFOs */
@@ -2872,8 +2853,9 @@ sk_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+out:
 	splx(s);
-	return 0;
+	return rc;
 }
 
 void

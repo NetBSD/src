@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.50.8.1 2008/01/19 12:14:11 bouyer Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.50.8.2 2008/01/20 17:51:02 bouyer Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -154,9 +154,15 @@ ENTRY(cpu_switchto)
 	mov	ip, sp
 	stmfd	sp!, {r4-r7, ip, lr}
 
-	mov	r6, r1		/* save new lwp */
-	mov	r4, r0		/* save old lwp, it's the return value */
+	/* move lwps and new pcb into caller saved registers */
+	mov	r6, r1
+	mov	r4, r0
+	ldr	r7, [r6, #(L_ADDR)]
 
+	/* rem: r4 = old lwp */
+	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
+	
 	IRQdisable
 
 #ifdef MULTIPROCESSOR
@@ -167,20 +173,19 @@ ENTRY(cpu_switchto)
 	/* l->l_cpu initialized in fork1() for single-processor */
 #endif
 
-	/* We have a new curlwp now so make a note it */
-	ldr	r7, .Lcurlwp
-	str	r6, [r7]
+	/* We have a new curlwp and pcb so make a note of them */
+	ldr	r0, .Lcurlwp
+	ldr	r1, .Lcurpcb
 
-	/* Hook in a new pcb */
-	ldr	r7, .Lcurpcb
-	ldr	r0, [r6, #(L_ADDR)]
-	str	r0, [r7]
+	str	r6, [r0]
+	str	r7, [r1]
 
 	/* At this point we can allow IRQ's again. */
 	IRQenable
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
 	/*
@@ -190,26 +195,26 @@ ENTRY(cpu_switchto)
 	 * straight to restoring the context for the new process.
 	 */
 	teq	r4, #0x00000000
-	ldreq	r9, [r6, #(L_ADDR)]
 	beq	.Ldo_switch
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
 	/* Save old context */
 
 	/* Get the user structure for the old lwp. */
-	ldr	r1, [r4, #(L_ADDR)]
+	ldr	r5, [r4, #(L_ADDR)]
 
 	/* Save all the registers in the old lwp's pcb */
 #ifndef __XSCALE__
-	add	r7, r1, #(PCB_R8)
-	stmia	r7, {r8-r13}
+	add	r0, r5, #(PCB_R8)
+	stmia	r0, {r8-r13}
 #else
-	strd	r8, [r1, #(PCB_R8)]
-	strd	r10, [r1, #(PCB_R10)]
-	strd	r12, [r1, #(PCB_R12)]
+	strd	r8, [r5, #(PCB_R8)]
+	strd	r10, [r5, #(PCB_R10)]
+	strd	r12, [r5, #(PCB_R12)]
 #endif
 
 	/*
@@ -217,36 +222,15 @@ ENTRY(cpu_switchto)
 	 * them for the new process.
 	 */
 
-	/* rem: r1 = old lwp PCB */
 	/* rem: r4 = old lwp */
+	/* rem: r5 = old pcb */
 	/* rem: r6 = new lwp */
+	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
-
-	/* Remember the old PCB. */
-	mov	r8, r1
-
-	/* r1 now free! */
-
-	/* Get the user structure for the new process in r9 */
-	ldr	r9, [r6, #(L_ADDR)]
-
-	/* fetch sp for the undefined instruction trap. */
-        mrs	r3, cpsr
-        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
-        msr	cpsr_c, r2
-
-	str	sp, [r8, #(PCB_UND_SP)]
-
-        msr	cpsr_c, r3		/* Restore the old mode */
 
 	/* What else needs to be saved? Only FPA stuff when that is supported */
 
 	/* Restore saved context */
-
-	/* rem: r4 = old lwp */
-	/* rem: r6 = new lwp */
-	/* rem: r9 = new PCB */
-	/* rem: interrupts are enabled */
 
 .Ldo_switch:
 	mov	r0, r4
@@ -255,26 +239,16 @@ ENTRY(cpu_switchto)
 
 	/* rem: r4 = old lwp */
 	/* rem: r6 = new lwp */
-	/* rem: r9 = new PCB */
+	/* rem: r7 = new pcb */
 	/* rem: interrupts are enabled */
 
-	/* set sp for the undefined instruction trap. */
-        mrs	r3, cpsr
-        orr	r2, r3, #(PSR_UND32_MODE | I32_bit)
-        msr	cpsr_c, r2
-
-	ldr	sp, [r9, #(PCB_UND_SP)]
-
-        msr	cpsr_c, r3		/* Restore the old mode */
+	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
 	/* Restore all the saved registers */
 #ifndef __XSCALE__
-	add	r7, r9, #PCB_R8
-	ldmia	r7, {r8-r13}
-
-	sub	r7, r7, #PCB_R8		/* restore PCB pointer */
+	add	r0, r7, #PCB_R8
+	ldmia	r0, {r8-r13}
 #else
-	mov	r7, r9
 	ldr	r8, [r7, #(PCB_R8)]
 	ldr	r9, [r7, #(PCB_R9)]
 	ldr	r10, [r7, #(PCB_R10)]
@@ -282,8 +256,6 @@ ENTRY(cpu_switchto)
 	ldr	r12, [r7, #(PCB_R12)]
 	ldr	r13, [r7, #(PCB_SP)]
 #endif
-
-	ldr	r5, [r6, #(L_PROC)]	/* fetch the proc for below */
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = new lwp's proc */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.30 2007/10/17 19:56:39 garbled Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.30.8.1 2008/01/20 17:51:23 bouyer Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.30 2007/10/17 19:56:39 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.30.8.1 2008/01/20 17:51:23 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -270,8 +270,6 @@ static int	emac_txde_intr(void *);
 static int	emac_rxde_intr(void *);
 static int	emac_intr(void *);
 
-static int	emac_mediachange(struct ifnet *);
-static void	emac_mediastatus(struct ifnet *, struct ifmediareq *);
 static int	emac_mii_readreg(struct device *, int, int);
 static void	emac_mii_statchg(struct device *);
 static void	emac_mii_tick(void *);
@@ -419,8 +417,8 @@ emac_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_writereg = emac_mii_writereg;
 	mii->mii_statchg = emac_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, 0, emac_mediachange,
-	    emac_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(&sc->sc_dev, mii, 0xffffffff,
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -778,7 +776,8 @@ emac_init(struct ifnet *ifp)
 	/*
 	 * Set the current media.
 	 */
-	mii_mediachg(&sc->sc_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/*
 	 * Give the transmit and receive rings to the MAL.
@@ -1018,25 +1017,16 @@ emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) { 
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				error = emac_set_filter(sc);
-			else
-				error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) { 
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			error = emac_set_filter(sc);
+		else
+			error = 0;
 	}
 
 	/* try to get more packets going */
@@ -1563,27 +1553,4 @@ emac_mii_tick(void *arg)
 	splx(s);
 
 	callout_reset(&sc->sc_callout, hz, emac_mii_tick, sc);
-}
-
-/* ifmedia interface function */
-static void
-emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct emac_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/* ifmedia interface function */
-static int
-emac_mediachange(struct ifnet *ifp)
-{
-	struct emac_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
 }

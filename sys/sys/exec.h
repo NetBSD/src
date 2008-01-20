@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.118.6.2 2008/01/08 22:11:55 bouyer Exp $	*/
+/*	$NetBSD: exec.h,v 1.118.6.3 2008/01/20 17:51:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -111,12 +111,6 @@ struct ps_strings {
 	char	**ps_envstr;	/* first of 0 or more environment strings */
 	int	ps_nenvstr;	/* the number of environment strings */
 };
-
-/*
- * Below the ps_strings and sigtramp, we may require a gap on the stack
- * (used to copyin/copyout various emulation data structures).
- */
-#define	STACKGAPLEN	4096	/* plenty enough for now */
 
 /*
  * the following structures allow execve() to put together processes

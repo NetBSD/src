@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.45.6.1 2008/01/02 21:48:29 bouyer Exp $
+#	$NetBSD: GENERIC,v 1.45.6.2 2008/01/20 17:51:19 bouyer Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/iyonix/conf/std.iyonix"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.45.6.1 $"
+#ident 		"GENERIC-$Revision: 1.45.6.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -93,7 +93,6 @@ makeoptions	DEBUG="-g"	# compile full symbol table
 options 	SYMTAB_SPACE=350000
 options 	PERFCTRS	# performance counters
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 
 #options 	PMAP_INCLUDE_PTE_SYNC

@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.16 2006/05/17 04:22:46 mrg Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.16.52.1 2008/01/20 17:51:16 bouyer Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,11 +105,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.16 2006/05/17 04:22:46 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.16.52.1 2008/01/20 17:51:16 bouyer Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
 
@@ -194,11 +193,7 @@ u_int cpu_reset_address = (u_int)0;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -917,13 +912,6 @@ initarm(void *arg)
 		printf( "sw: %x boothowto: %x\n", gpio, boothowto );
 #endif
 	}
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
 
 #ifdef KGDB
 	if (boothowto & RB_KDB) {

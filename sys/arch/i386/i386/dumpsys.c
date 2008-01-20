@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.1.2.2 2008/01/19 12:14:19 bouyer Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.1.2.3 2008/01/20 17:51:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.1.2.2 2008/01/19 12:14:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.1.2.3 2008/01/20 17:51:18 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.1.2.2 2008/01/19 12:14:19 bouyer Exp $
  * Exports, needed by savecore, the debugger or elsewhere in the kernel.
  */
 
+void	dodumpsys(void);
 void	dumpsys(void);
 
 struct pcb	dumppcb;
@@ -155,14 +156,11 @@ extern phys_ram_seg_t	mem_clusters[VM_PHYSSEG_MAX];
 extern int	mem_cluster_cnt;
 
 void
-dumpsys(void)
+dodumpsys(void)
 {
 	const struct bdevsw *bdev;
 	int dumpend, psize;
 	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
 
 	if (dumpdev == NODEV)
 		return;

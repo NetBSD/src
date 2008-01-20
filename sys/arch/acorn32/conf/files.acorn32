@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.26 2006/08/14 22:04:30 bjh21 Exp $
+#	$NetBSD: files.acorn32,v 1.26.48.1 2008/01/20 17:51:01 bouyer Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -80,15 +80,6 @@ file	arch/acorn32/podulebus/if_ne_pbus.c	ne_pbus
 device	ie: ether, ifnet, arp
 attach	ie at podulebus
 file	arch/acorn32/podulebus/if_ie.c		ie
-
-#define	ipkdb
-
-#device kie: ipkdb
-#attach kie at podule
-#file	arch/acorn32/podulebus/ipkdb_ie.c		kie
-
-#file	arch/arm32/arm32/ipkdb_glue.c		ipkdb
-#file	arch/arm32/arm32/ipkdb_step.c		ipkdb
 
 #
 # Machine-independent SCSI drivers
