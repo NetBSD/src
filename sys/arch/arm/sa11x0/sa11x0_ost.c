@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.20 2006/09/24 15:40:14 peter Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.21 2008/01/20 16:28:24 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.20 2006/09/24 15:40:14 peter Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.21 2008/01/20 16:28:24 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,9 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.20 2006/09/24 15:40:14 peter Exp $"
 static int	saost_match(struct device *, struct cfdata *, void *);
 static void	saost_attach(struct device *, struct device *, void *);
 
-#ifdef __HAVE_TIMECOUNTER
 static void	saost_tc_init(void);
-#endif /* __HAVE_TIMECOUNTER */
 
 static uint32_t	gettick(void);
 static int	clockintr(void *);
@@ -239,12 +237,9 @@ cpu_initclocks(void)
 	/* Zero the counter value */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, SAOST_CR, 0);
 
-#ifdef __HAVE_TIMECOUNTER
 	saost_tc_init();
-#endif /* __HAVE_TIMECOUNTER */
 }
 
-#ifdef __HAVE_TIMECOUNTER
 static u_int
 saost_tc_get_timecount(struct timecounter *tc)
 {
@@ -264,7 +259,6 @@ saost_tc_init(void)
 
 	tc_init(&saost_tc);
 }
-#endif /* __HAVE_TIMECOUNTER */
 
 static uint32_t
 gettick(void)
@@ -279,44 +273,6 @@ gettick(void)
 
 	return counter;
 }
-
-#ifndef __HAVE_TIMECOUNTER
-void
-microtime(struct timeval *tvp)
-{
-	struct saost_softc *sc = saost_sc;
-	int s, tm, deltatm;
-	static struct timeval lasttime;
-
-	if (sc == NULL) {
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
-
-	s = splhigh();
-	tm = bus_space_read_4(sc->sc_iot, sc->sc_ioh, SAOST_CR);
-
-	deltatm = sc->sc_clock_count - tm;
-
-	*tvp = time;
-	tvp->tv_usec++;		/* XXX */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-
-	if (tvp->tv_sec == lasttime.tv_sec &&
-		tvp->tv_usec <= lasttime.tv_usec &&
-		(tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000)
-	{
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-#endif /* !__HAVE_TIMECOUNTER */
 
 void
 delay(u_int usecs)
