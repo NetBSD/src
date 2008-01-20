@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.36 2008/01/18 12:03:32 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.37 2008/01/20 12:58:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.36 2008/01/18 12:03:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2008/01/20 12:58:00 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3380,10 +3380,10 @@ startover:
 void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
-	pt_entry_t *ptes, *epte, xpte;
+	pt_entry_t *ptes, *epte;
 	volatile pt_entry_t *spte;
 	pd_entry_t **pdes;
-	vaddr_t blockend, va, tva;
+	vaddr_t blockend, va;
 	pt_entry_t opte;
 	struct pmap *pmap2;
 
@@ -3392,7 +3392,6 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	/* should be ok, but just in case ... */
 	sva &= PG_FRAME;
 	eva &= PG_FRAME;
-	xpte = 0;
 
 	for (va = sva ; va < eva ; va = blockend) {
 
@@ -3427,24 +3426,32 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		epte = &ptes[pl1_i(blockend)];
 
 		for (/*null */; spte < epte ; spte++) {
-			opte = *spte;
-			xpte |= opte;
-			if ((opte & (PG_RW|PG_V)) == (PG_RW|PG_V)) {
-				pmap_pte_clearbits(spte, PG_RW); /* zap! */
-				if (*spte & PG_M) {
-					tva = x86_ptob(spte - ptes);
-					pmap_tlb_shootdown(pmap, tva, 0, opte);
+			pt_entry_t npte;
+
+			do {
+				opte = *spte;
+				if ((~opte & (PG_RW | PG_V)) != 0) {
+					break;
 				}
+				npte = opte & ~PG_RW;
+			} while (pmap_pte_cas(spte, opte, npte) != opte);
+			if ((opte & PG_M) != 0) {
+				vaddr_t tva;
+
+				tva = x86_ptob(spte - ptes);
+				pmap_tlb_shootdown(pmap, tva, 0, opte);
 			}
 		}
 	}
 
+	pmap_unmap_ptes(pmap, pmap2);	/* unlocks pmap */
+
 	/*
 	 * if we kept a removal record and removed some pages update the TLB
 	 */
-	pmap_tlb_shootdown(pmap, sva, eva, xpte);
+	crit_enter();
 	pmap_tlb_shootwait();
-	pmap_unmap_ptes(pmap, pmap2);	/* unlocks pmap */
+	crit_exit();
 }
 
 /*
