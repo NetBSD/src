@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.69 2008/01/19 22:10:16 dyoung Exp $ */
+/*	$NetBSD: gem.c,v 1.70 2008/01/20 15:12:33 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.69 2008/01/19 22:10:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.70 2008/01/20 15:12:33 jdc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -282,6 +282,8 @@ gem_attach(sc, enaddr)
 	 * GEM_MIF_CONFIG_MDI0 nor GEM_MIF_CONFIG_MDI1 are set
 	 * being set, as both are set on Sun X1141A (with SERDES).  So,
 	 * we rely on our bus attachment setting GEM_SERDES or GEM_SERIAL.
+	 * Also, for Apple variants with 2 PHY's, we prefer the external
+	 * PHY over the internal PHY.
 	 */
 	gem_mifinit(sc);
 
@@ -321,17 +323,27 @@ gem_attach(sc, enaddr)
 				sc->sc_phys[child->mii_inst] = child->mii_phy;
 			}
 
-			if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI0) {
+			/*
+			 * Now select and activate the PHY we will use.
+			 *
+			 * The order of preference is External (MDI1),
+			 * then Internal (MDI0),
+			 */
+			if (sc->sc_phys[1]) {
 #ifdef GEM_DEBUG
-				aprint_debug("%s: using PHY at MDIO_0\n",
+				aprint_debug("%s: using external PHY\n",
 				    sc->sc_dev.dv_xname);
 #endif
+				sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
 			} else {
 #ifdef GEM_DEBUG
-				aprint_debug("%s: using PHY at MDIO_1\n",
+				aprint_debug("%s: using internal PHY\n",
 				    sc->sc_dev.dv_xname);
+				sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
 #endif
 			}
+			bus_space_write_4(t, h, GEM_MIF_CONFIG,
+			    sc->sc_mif_config);
 			if (sc->sc_variant != GEM_SUN_ERI)
 				bus_space_write_4(t, h, GEM_MII_DATAPATH_MODE,
 				    GEM_MII_DATAPATH_MII);
@@ -423,10 +435,9 @@ gem_attach(sc, enaddr)
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_LX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_CX) {
-			if (sc->sc_variant != GEM_APPLE_GMAC)
+			if (!GEM_IS_APPLE(sc))
 				sc->sc_ethercom.ec_capabilities
 				    |= ETHERCAP_JUMBO_MTU;
-
 			sc->sc_flags |= GEM_GIGABIT;
 			break;
 		}
@@ -1237,9 +1248,17 @@ gem_init_regs(struct gem_softc *sc)
 	/*
 	 * Enable MII outputs.  Enable GMII if there is a gigabit PHY.
 	 */
+	sc->sc_mif_config = bus_space_read_4(t, h, GEM_MIF_CONFIG);
 	v = GEM_MAC_XIF_TX_MII_ENA;
-	if (sc->sc_flags & GEM_GIGABIT)
+	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0)  {
+		if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) {
+			v |= GEM_MAC_XIF_FDPLX_LED;
+				if (sc->sc_flags & GEM_GIGABIT)
+					v |= GEM_MAC_XIF_GMII_MODE;
+		}
+	} else {
 		v |= GEM_MAC_XIF_GMII_MODE;
+	}
 	bus_space_write_4(t, h, GEM_MAC_XIF_CONFIG, v);
 }
 
@@ -2307,16 +2326,10 @@ gem_statuschange(struct gem_softc* sc)
 	else
 		sc->sc_flags &= ~GEM_LINK;
 
-	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
-	case IFM_1000_SX:
-	case IFM_1000_LX:
-	case IFM_1000_CX:
-	case IFM_1000_T:
+	if (sc->sc_ethercom.ec_if.if_baudrate == IF_Mbps(1000))
 		gigabit = 1;
-		break;
-	default:
+	else
 		gigabit = 0;
-	}
 
 	/*
 	 * The configuration done here corresponds to the steps F) and
@@ -2367,17 +2380,33 @@ gem_statuschange(struct gem_softc* sc)
 	else
 		v = 0;
 	v |= GEM_MAC_XIF_TX_MII_ENA;
-	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) == 0) {
-		/* MII/GMII needs echo disable if half duplex. */
-		if ((sc->sc_flags &(GEM_SERDES | GEM_SERIAL)) == 0)
-			v |= GEM_MAC_XIF_ECHO_DISABL;
-		v &= ~GEM_MAC_XIF_FDPLX_LED;
+
+	/* If an external transceiver is connected, enable its MII drivers */
+	sc->sc_mif_config = bus_space_read_4(t, mac, GEM_MIF_CONFIG);
+	if ((sc->sc_flags &(GEM_SERDES | GEM_SERIAL)) == 0) {
+		if ((sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) != 0) {
+			/* External MII needs echo disable if half duplex. */
+			if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) &
+			    IFM_FDX) != 0)
+				/* turn on full duplex LED */
+				v |= GEM_MAC_XIF_FDPLX_LED;
+			else
+				/* half duplex -- disable echo */
+				v |= GEM_MAC_XIF_ECHO_DISABL;
+			if (gigabit)
+				v |= GEM_MAC_XIF_GMII_MODE;
+			else
+				v &= ~GEM_MAC_XIF_GMII_MODE;
+		} else
+			/* Internal MII needs buf enable */
+			v |= GEM_MAC_XIF_MII_BUF_ENA;
 	} else {
-		v |= GEM_MAC_XIF_MII_BUF_ENA;
-		v |= GEM_MAC_XIF_FDPLX_LED;
-	}
-	if (gigabit != 0)
+		if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+			v |= GEM_MAC_XIF_FDPLX_LED;
 		v |= GEM_MAC_XIF_GMII_MODE;
+	}
+	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);
+
 	if ((ifp->if_flags & IFF_RUNNING) != 0 &&
 	    (sc->sc_flags & GEM_LINK) != 0) {
 		bus_space_write_4(t, mac, GEM_MAC_TX_CONFIG,
