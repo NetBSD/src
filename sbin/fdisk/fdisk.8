@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.58 2007/12/23 10:47:42 apb Exp $
+.\"	$NetBSD: fdisk.8,v 1.59 2008/01/20 15:04:09 dsl Exp $
 .\"
-.Dd December 23, 2007
+.Dd January 20, 2008
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -91,15 +91,18 @@ The standard MBR boot code will only boot the
 partition.
 However
 .Nx
-contains two alternate boot programs which allow the user to
+contains additional boot programs which allow the user to
 interactively select which of the partitions to boot.
 The
 .Sq mbr_ext
-code will boot
+code will also boot
 .Nx
 from an extended partition but will not work on old systems that do not
-support LBA reads.
-.Pp
+support LBA reads, the
+.Sq mbr_com0
+and
+.Sq mbr_com0_9600
+will read and write from a serial port.
 At the start the
 .Nm
 program will determine whether the disk sector 0 is valid as a boot sector.
