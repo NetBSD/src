@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.156.10.1 2008/01/02 21:57:04 bouyer Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.156.10.2 2008/01/20 17:51:44 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.156.10.1 2008/01/02 21:57:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.156.10.2 2008/01/20 17:51:44 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1536,7 +1536,14 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		error = ether_delmulti(ifreq_getaddr(cmd, ifr), ec);
 		break;
-
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		if (ec->ec_mii == NULL)
+			error = ENOTTY;
+		else
+			error = ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media,
+			    cmd);
+		break;
 	default:
 		error = ENOTTY;
 	}

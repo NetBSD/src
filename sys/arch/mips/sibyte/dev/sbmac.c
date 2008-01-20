@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.26 2007/10/17 19:55:40 garbled Exp $ */
+/* $NetBSD: sbmac.c,v 1.26.8.1 2008/01/20 17:51:21 bouyer Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.26 2007/10/17 19:55:40 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.26.8.1 2008/01/20 17:51:21 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -257,8 +257,6 @@ static void sbmac_start(struct ifnet *ifp);
 static void sbmac_setmulti(struct sbmac_softc *sc);
 static int sbmac_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data);
 static int sbmac_ioctl(struct ifnet *ifp, u_long command, void *data);
-static int sbmac_mediachange(struct ifnet *ifp);
-static void sbmac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr);
 static void sbmac_watchdog(struct ifnet *ifp);
 static int sbmac_match(struct device *parent, struct cfdata *match, void *aux);
 static void sbmac_attach(struct device *parent, struct device *self, void *aux);
@@ -2063,14 +2061,13 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifp->if_flags & IFF_RUNNING) {
-			sbmac_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, command);
+		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
+			error = 0;
+			if (ifp->if_flags & IFF_RUNNING)
+				sbmac_setmulti(sc);
+		}
 		break;
 	default:
 		error = EINVAL;
@@ -2096,16 +2093,6 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
  *	else error code
  */
 
-static int
-sbmac_mediachange(struct ifnet *ifp)
-{
-	struct sbmac_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return(0);
-}
-
 /*
  *  SBMAC_IFMEDIA_STS(ifp, ifmr)
  *
@@ -2118,16 +2105,6 @@ sbmac_mediachange(struct ifnet *ifp)
  *  Return value:
  *	nothing
  */
-
-static void
-sbmac_mediastatus(struct ifnet *ifp, struct ifmediareq *req)
-{
-	struct sbmac_softc	*sc = ifp->if_softc;
-
-  	mii_pollstat(&sc->sc_mii);
-	req->ifm_status = sc->sc_mii.mii_media_status;
-	req->ifm_active = sc->sc_mii.mii_media_active;
-}
 
 /*
  *  SBMAC_WATCHDOG(ifp)
@@ -2387,8 +2364,9 @@ sbmac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg  = sbmac_mii_readreg;
 	sc->sc_mii.mii_writereg = sbmac_mii_writereg;
 	sc->sc_mii.mii_statchg  = sbmac_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, sbmac_mediachange,
-	    sbmac_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 

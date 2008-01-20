@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.21 2007/12/05 07:58:32 ad Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.21.4.1 2008/01/20 17:51:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.21 2007/12/05 07:58:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.21.4.1 2008/01/20 17:51:41 bouyer Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -186,8 +186,6 @@ Static int axe_miibus_readreg(device_ptr_t, int, int);
 Static void axe_miibus_writereg(device_ptr_t, int, int, int);
 Static void axe_miibus_statchg(device_ptr_t);
 Static int axe_cmd(struct axe_softc *, int, int, int, void *);
-Static int axe_ifmedia_upd(struct ifnet *);
-Static void axe_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 Static void axe_reset(struct axe_softc *sc);
 
 Static void axe_setmulti(struct axe_softc *);
@@ -326,40 +324,6 @@ axe_miibus_statchg(device_ptr_t dev)
 		printf("%s: media change failed\n", USBDEVNAME(sc->axe_dev));
 		return;
 	}
-}
-
-/*
- * Set media options.
- */
-Static int
-axe_ifmedia_upd(struct ifnet *ifp)
-{
-        struct axe_softc        *sc = ifp->if_softc;
-        struct mii_data         *mii = GET_MII(sc);
-
-        sc->axe_link = 0;
-        if (mii->mii_instance) {
-                struct mii_softc        *miisc;
-                LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
-                         mii_phy_reset(miisc);
-        }
-        mii_mediachg(mii);
-
-        return (0);
-}
-
-/*
- * Report current media status.
- */
-Static void
-axe_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-        struct axe_softc        *sc = ifp->if_softc;
-        struct mii_data         *mii = GET_MII(sc);
-
-        mii_pollstat(mii);
-        ifmr->ifm_active = mii->mii_media_active;
-        ifmr->ifm_status = mii->mii_media_status;
 }
 
 Static void
@@ -555,10 +519,11 @@ USB_ATTACH(axe)
 	mii->mii_statchg = axe_miibus_statchg;
 	mii->mii_flags = MIIF_AUTOTSLEEP;
 
-	ifmedia_init(&mii->mii_media, 0, axe_ifmedia_upd, axe_ifmedia_sts);
+	sc->axe_ec.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
-	if (LIST_FIRST(&mii->mii_phys) == NULL) {
+	if (LIST_EMPTY(&mii->mii_phys)) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_NONE, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_NONE);
 	} else
@@ -988,17 +953,6 @@ axe_tick_task(void *xsc)
 	s = splnet();
 
 	mii_tick(mii);
-	if (!sc->axe_link) {
-		mii_pollstat(mii);
-		if (mii->mii_media_status & IFM_ACTIVE &&
-		    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
-			DPRINTF(("%s: %s: got link\n",
-				 USBDEVNAME(sc->axe_dev), __func__));
-			sc->axe_link++;
-			if (IFQ_IS_EMPTY(&ifp->if_snd) == 0)
-				   axe_start(ifp);
-		}
-	}
 
 	usb_callout(sc->axe_stat_ch, hz, axe_tick, sc);
 
@@ -1044,13 +998,8 @@ axe_start(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 
-	if (!sc->axe_link) {
+	if ((ifp->if_flags & (IFF_OACTIVE|IFF_RUNNING)) != IFF_RUNNING)
 		return;
-	}
-
-	if (ifp->if_flags & IFF_OACTIVE) {
-		return;
-	}
 
 	IF_DEQUEUE(&ifp->if_snd, m_head);
 	if (m_head == NULL) {
@@ -1184,7 +1133,6 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct axe_softc	*sc = ifp->if_softc;
 	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ifaddr		*ifa = (struct ifaddr *)data;
-	struct mii_data		*mii;
 	u_int16_t		rxmode;
 	int			error = 0;
 
@@ -1250,13 +1198,9 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-#ifdef __NetBSD__
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
 		error = ether_ioctl(ifp, cmd, data);
-#else
-		error = (cmd == SIOCADDMULTI) ?
-		    ether_addmulti(ifr, &sc->arpcom) :
-		    ether_delmulti(ifr, &sc->arpcom);
-#endif /* __NetBSD__ */
 		if (error == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware
@@ -1267,12 +1211,6 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		}
 		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		mii = GET_MII(sc);
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
-		break;
-
 	default:
 		error = EINVAL;
 		break;
@@ -1394,7 +1332,6 @@ axe_stop(struct axe_softc *sc)
 		}
 	}
 
-	sc->axe_link = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
