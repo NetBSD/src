@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.56 2008/01/10 07:29:41 dyoung Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.57 2008/01/20 07:58:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.56 2008/01/10 07:29:41 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.57 2008/01/20 07:58:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -336,16 +336,6 @@ mii_phy_reset(struct mii_softc *sc)
 	else
 		reg = BMCR_RESET | BMCR_ISO;
 	PHY_WRITE(sc, MII_BMCR, reg);
-
-	/*
-	 * It is best to allow a little time for the reset to settle
-	 * in before we start polling the BMCR again.  Notably, the
-	 * DP83840A manual states that there should be a 500us delay
-	 * between asserting software reset and attempting MII serial
-	 * operations.  Also, a DP83815 can get into a bad state on
-	 * cable removal and reinsertion if we do not delay here.
-	 */
-	delay(500);
 
 	/* Wait another 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
