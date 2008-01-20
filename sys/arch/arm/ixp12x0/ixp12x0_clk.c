@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_clk.c,v 1.11 2007/01/06 16:18:18 christos Exp $	*/
+/*	$NetBSD: ixp12x0_clk.c,v 1.12 2008/01/20 16:28:23 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,13 +38,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.11 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.12 2008/01/20 16:28:23 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -60,6 +62,8 @@ __KERNEL_RCSID(0, "$NetBSD: ixp12x0_clk.c,v 1.11 2007/01/06 16:18:18 christos Ex
 
 static int	ixpclk_match(struct device *, struct cfdata *, void *);
 static void	ixpclk_attach(struct device *, struct device *, void *);
+
+static u_int	ixpclk_get_timecount(struct timecounter *);
 
 int		gettick(void);
 void		rtcinit(void);
@@ -119,6 +123,19 @@ static u_int32_t ccf_to_coreclock[MAX_CCF + 1] = {
 
 static struct ixpclk_softc *ixpclk_sc = NULL;
 
+static struct timecounter ixpclk_timecounter = {
+	ixpclk_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	0,			/* frequency */
+	"ixpclk",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static volatile uint32_t ixpclk_base;
+
 #define TIMER_FREQUENCY         3686400         /* 3.6864MHz */
 #define TICKS_PER_MICROSECOND   (TIMER_FREQUENCY/1000000)
 
@@ -143,6 +160,7 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 	struct ixpclk_softc		*sc;
 	struct ixpsip_attach_args	*sa;
 	u_int32_t			ccf;
+	bool first_run = ixpclk_sc == NULL;
 
 	printf("\n");
 
@@ -181,6 +199,11 @@ ixpclk_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXPCLK_CONTROL,
 			  IXPCL_ENABLE | IXPCL_PERIODIC | IXPCL_STP_CORE);
 
+	if (first_run) {
+		ixpclk_timecounter.tc_frequency = sc->sc_coreclock_freq;
+		tc_init(&ixpclk_timecounter);
+	}
+
 	printf("%s: IXP12x0 Interval Timer (core clock %d.%03dMHz)\n",
 	       sc->sc_dev.dv_xname,
 	       sc->sc_coreclock_freq / 1000000,
@@ -198,6 +221,8 @@ ixpclk_intr(void *arg)
 
 	bus_space_write_4(ixpclk_sc->sc_iot, ixpclk_sc->sc_ioh,
 			  IXPCLK_CLEAR, 1);
+
+	atomic_add_32(&ixpclk_base, ixpclk_sc->sc_coreclock_freq);
 
 	hardclock((struct clockframe*) arg);
 	return (1);
@@ -261,55 +286,19 @@ gettick(void)
 	return counter;
 }
 
-/*
- * microtime:
- *
- *	Fill in the specified timeval struct with the current time
- *	accurate to the microsecond.
- */
-void
-microtime(register struct timeval *tvp)
+static u_int
+ixpclk_get_timecount(struct timecounter *tc)
 {
-	u_int			oldirqstate;
-	u_int32_t		counts;
-	static struct timeval	lasttv;
+	u_int	savedints, base, counter;
 
-	if (ixpclk_sc == NULL) {
-#ifdef DEBUG
-		printf("microtime: called befor initialize ixpclk\n");
-#endif
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
+	savedints = disable_interrupts(I32_bit);
+	do {
+		base = ixpclk_base;
+		counter = GET_TIMER_VALUE(ixpclk_sc);
+	} while (base != ixpclk_base);
+	restore_interrupts(savedints);
 
-	oldirqstate = disable_interrupts(I32_bit);
-
-	counts = ixpclk_sc->sc_clock_count - GET_TIMER_VALUE(ixpclk_sc);
-
-        /* Fill in the timeval struct. */
-	*tvp = time;
-	tvp->tv_usec += counts / ixpclk_sc->sc_count_per_usec;
-
-        /* Make sure microseconds doesn't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-        /* Make sure the time has advanced. */
-	if (tvp->tv_sec == lasttv.tv_sec &&
-	    tvp->tv_usec <= lasttv.tv_usec) {
-		tvp->tv_usec = lasttv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-
-	lasttv = *tvp;
-
-	restore_interrupts(oldirqstate);
+	return base - counter;
 }
 
 /*
