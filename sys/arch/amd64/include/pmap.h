@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 2008/01/13 07:05:42 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 2008/01/20 18:41:47 bouyer Exp $	*/
 
 /*
  *
@@ -286,13 +286,13 @@ pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 }
 
 static __inline pt_entry_t
-pmap_pte_cas(pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
+pmap_pte_cas(volatile pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
 {
 	int s = splvm();
 	pt_entry_t opte = *ptep;
 
 	if (opte == o) {
-		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(ptep), n);
+		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(ptep)), n);
 		xpq_flush_queue();
 	}
 	splx(s);
