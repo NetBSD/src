@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.119 2007/12/19 18:32:00 ghen Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.120 2008/01/20 21:08:58 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3884,4 +3884,25 @@ sys/dev/raidframe/rf_netbsdkintf.c		1.231 via patch
 	   3) the slave
 	   4) a used_spare of the slave
 	[sborrill, ticket #1892]
+
+usr.bin/xargs/Makefile				1.4
+usr.bin/xargs/pathnames.h			1.6
+usr.bin/xargs/strnsubst.c			1.1
+usr.bin/xargs/xargs.1				1.18, 1.19
+usr.bin/xargs/xargs.c				1.15, 1.16, 1.18
+
+	xargs(1): Query kernel for maximum argument size instead of using
+	ARG_MAX [joerg 20060328]
+	xargs(1): PR/34182 from der Mouse -- clarify -0 option
+	[jnemeth 20061107]
+	Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
+	GNU compatible exit values. [christos 20070418]
+	Fix PR/34182, PR/36154 and PR/37666
+	[apb, ticket #1893]
+
+lib/libevent/kqueue.c				patch
+
+	fixed a great bug on kq_insert().This bug destroys memory,
+	leaks memory and double-free memory.
+	[msaitoh, ticket #1895]
 
