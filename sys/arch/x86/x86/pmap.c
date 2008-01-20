@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.37 2008/01/20 12:58:00 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.38 2008/01/20 13:16:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.37 2008/01/20 12:58:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2008/01/20 13:16:57 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3431,7 +3431,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			do {
 				opte = *spte;
 				if ((~opte & (PG_RW | PG_V)) != 0) {
-					break;
+					goto next;
 				}
 				npte = opte & ~PG_RW;
 			} while (pmap_pte_cas(spte, opte, npte) != opte);
@@ -3441,6 +3441,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				tva = x86_ptob(spte - ptes);
 				pmap_tlb_shootdown(pmap, tva, 0, opte);
 			}
+next:;
 		}
 	}
 
