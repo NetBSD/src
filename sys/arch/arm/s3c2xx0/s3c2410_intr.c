@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.6 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.6.50.1 2008/01/20 16:04:04 chris Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.6 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.6.50.1 2008/01/20 16:04:04 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,31 +54,37 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.6 2005/12/24 20:06:52 perry Exp $
 
 struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 
-volatile int softint_pending;
 
 volatile int current_spl_level;
 volatile int intr_mask;
+#ifdef __HAVE_FAST_SOFTINTS
+volatile int softint_pending;
 volatile int soft_intr_mask;
+#endif
 volatile int global_intr_mask = 0; /* mask some interrupts at all spl level */
 
 /* interrupt masks for each level */
 int s3c2xx0_imask[NIPL];
 int s3c2xx0_ilevel[ICU_LEN];
+#ifdef __HAVE_FAST_SOFTINTS
 int s3c24x0_soft_imask[NIPL];
+#endif
 
 vaddr_t intctl_base;		/* interrupt controller registers */
 #define icreg(offset) \
 	(*(volatile uint32_t *)(intctl_base+(offset)))
 
+#ifdef __HAVE_FAST_SOFTINTS
 /*
  * Map a software interrupt queue to an interrupt priority level.
  */
-static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
-	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
-	IPL_SOFTNET,		/* SI_SOFTNET */
-	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+static const int si_to_ipl[] = {
+	[SI_SOFTBIO]	= IPL_SOFTBIO,
+	[SI_SOFTCLOCK]	= IPL_SOFTCLOCK,
+	[SI_SOFTNET]	= IPL_SOFTNET,
+	[SI_SOFTSERIAL] = IPL_SOFTSERIAL,
 };
+#endif
 
 #define PENDING_CLEAR_MASK	(~0)
 
@@ -96,7 +102,7 @@ s3c2410_irq_handler(struct clockframe *frame)
 	saved_spl_level = current_spl_level;
 
 #ifdef	DIAGNOSTIC
-	if (current_intr_depth > 10)
+	if (curcpu()->ci_idepth > 10)
 		panic("nested intr too deep");
 #endif
 
@@ -134,10 +140,10 @@ s3c2410_irq_handler(struct clockframe *frame)
 
 	}
 
-
+#ifdef __HAVE_FAST_SOFTINTS
 	if (get_pending_softint())
 		s3c2xx0_do_pending(1);
-
+#endif
 }
 
 /*
@@ -256,6 +262,7 @@ init_interrupt_masks(void)
 	for (i=0; i < NIPL; ++i)
 		s3c2xx0_imask[i] = 0;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	s3c24x0_soft_imask[IPL_NONE] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
 		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK) |
 		SI_TO_IRQBIT(SI_SOFT);
@@ -280,6 +287,7 @@ init_interrupt_masks(void)
 
 	for (i = IPL_BIO; i < IPL_SOFTSERIAL; ++i)
 		s3c24x0_soft_imask[i] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+#endif
 }
 
 void

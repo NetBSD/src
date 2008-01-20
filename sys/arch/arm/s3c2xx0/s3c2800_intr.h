@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_intr.h,v 1.4 2005/12/11 12:16:51 christos Exp $	*/
+/*	$NetBSD: s3c2800_intr.h,v 1.4.50.1 2008/01/20 16:04:05 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -41,6 +41,7 @@
 
 #include <arm/s3c2xx0/s3c2800reg.h>
 
+#ifdef __HAVE_FAST_SOFTINTS
 /*
  * on S3C2800's interrupt controller, interrupt source bits 9, and 29..31 are
  * reserved. we map software interrupts to those unused bits.
@@ -49,6 +50,8 @@
 
 #define	get_pending_softint()	(softint_pending & intr_mask)
 #define	update_softintr_mask()	/* empty */
+#endif
+
 #define	s3c2xx0_update_hw_mask()	\
 	(*s3c2xx0_intr_mask_reg = intr_mask & global_intr_mask)
 

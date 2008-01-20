@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.40.20.1 2008/01/01 15:39:29 chris Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.40.20.2 2008/01/20 16:04:00 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -155,7 +155,6 @@ extern struct cpu_functions cpufuncs;
 extern u_int cputype;
 
 #define cpu_id()		cpufuncs.cf_id()
-#define	cpu_cpwait()		cpufuncs.cf_cpwait()
 
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
@@ -426,7 +425,9 @@ void	ixp12x0_setup		(char *);
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+
 void	xscale_cpwait		(void);
+#define	cpu_cpwait()		xscale_cpwait()
 
 void	xscale_cpu_sleep	(int);
 
@@ -468,6 +469,10 @@ void	xscale_setup		(char *);
 #define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb
 #define drain_writebuf	cpu_drain_writebuf
+
+#ifndef cpu_cpwait
+#define	cpu_cpwait()
+#endif
 
 /*
  * Macros for manipulating CPU interrupts

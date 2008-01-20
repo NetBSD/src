@@ -1,4 +1,4 @@
-/*	$NetBSD: ep93xx_intr.h,v 1.2 2005/12/11 12:16:45 christos Exp $	*/
+/*	$NetBSD: ep93xx_intr.h,v 1.2.50.1 2008/01/20 16:03:58 chris Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -43,7 +43,9 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #endif /* ! _LOCORE */
 

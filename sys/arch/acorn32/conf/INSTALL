@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.46 2006/10/22 14:15:51 bjh21 Exp $
+#	$NetBSD: INSTALL,v 1.46.28.1 2008/01/20 16:04:13 chris Exp $
 #
 #	INSTALL -- NetBSD/acorn32 install configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"INSTALL-$Revision: 1.46 $"
+#ident		"INSTALL-$Revision: 1.46.28.1 $"
 
 # estimated number of users
 maxusers	32
@@ -142,7 +142,6 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table

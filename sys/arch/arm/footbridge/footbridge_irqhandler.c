@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.4 2008/01/01 15:39:26 chris Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.5 2008/01/20 16:03:59 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.4 2008/01/01 15:39:26 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.5 2008/01/20 16:03:59 chris Exp $");
 
 #include "opt_irqstats.h"
 

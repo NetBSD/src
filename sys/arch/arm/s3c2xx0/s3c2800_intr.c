@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_intr.c,v 1.9 2005/12/24 20:06:52 perry Exp $ */
+/* $NetBSD: s3c2800_intr.c,v 1.9.50.1 2008/01/20 16:04:05 chris Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.9 2005/12/24 20:06:52 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.9.50.1 2008/01/20 16:04:05 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: s3c2800_intr.c,v 1.9 2005/12/24 20:06:52 perry Exp $
 
 struct s3c2xx0_intr_dispatch handler[ICU_LEN];
 
+#ifdef __HAVE_FAST_SOFTINTS
 volatile int softint_pending;
+#endif
 
 volatile int current_spl_level;
 volatile int intr_mask;    /* XXX: does this need to be volatile? */
@@ -71,15 +73,17 @@ vaddr_t intctl_base;		/* interrupt controller registers */
 #define icreg(offset) \
 	(*(volatile uint32_t *)(intctl_base+(offset)))
 
+#ifdef __HAVE_FAST_SOFTINTS
 /*
  * Map a software interrupt queue to an interrupt priority level.
  */
-static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
-	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
-	IPL_SOFTNET,		/* SI_SOFTNET */
-	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+static const int si_to_ipl[] = {
+	[SI_SOFTBIO]	= IPL_SOFTBIO,
+	[SI_SOFTCLOCK]	= IPL_SOFTCLOCK,
+	[SI_SOFTNET]	= IPL_SOFTNET,
+	[SI_SOFTSERIAL] = IPL_SOFTSERIAL,
 };
+#endif
 
 /*
  *   Clearing interrupt pending bits affects some built-in
@@ -130,10 +134,10 @@ s3c2800_irq_handler(struct clockframe *frame)
 		s3c2xx0_setipl(saved_spl_level);
 	}
 
-
+#ifdef __HAVE_FAST_SOFTINTS
 	if (softint_pending & intr_mask)
 		s3c2xx0_do_pending(1);
-
+#endif
 }
 
 static const u_char s3c2800_ist[] = {
@@ -195,13 +199,14 @@ s3c2800_intr_establish(int irqno, int level, int type,
 static void
 init_interrupt_masks(void)
 {
-	int i;
+	int i = 0;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	s3c2xx0_imask[IPL_NONE] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
 		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK) |
-		SI_TO_IRQBIT(SI_SOFT);
+		SI_TO_IRQBIT(SI_SOFTBIO);
 
-	s3c2xx0_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
+	s3c2xx0_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTSERIAL) |
 		SI_TO_IRQBIT(SI_SOFTNET) | SI_TO_IRQBIT(SI_SOFTCLOCK);
 
 	/*
@@ -221,6 +226,7 @@ init_interrupt_masks(void)
 
 	for (i = IPL_BIO; i < IPL_SOFTSERIAL; ++i)
 		s3c2xx0_imask[i] = SI_TO_IRQBIT(SI_SOFTSERIAL);
+#endif
 	for (; i < NIPL; ++i)
 		s3c2xx0_imask[i] = 0;
 }
