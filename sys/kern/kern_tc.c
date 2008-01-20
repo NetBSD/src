@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.30 2008/01/05 18:00:37 ad Exp $ */
+/* $NetBSD: kern_tc.c,v 1.31 2008/01/20 18:09:12 joerg Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,12 +11,11 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.30 2008/01/05 18:00:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.31 2008/01/20 18:09:12 joerg Exp $");
 
 #include "opt_ntp.h"
 
 #include <sys/param.h>
-#ifdef __HAVE_TIMECOUNTER	/* XXX */
 #include <sys/kernel.h>
 #include <sys/reboot.h>	/* XXX just to get AB_VERBOSE */
 #include <sys/sysctl.h>
@@ -915,5 +914,3 @@ inittimecounter(void)
 	(void)timecounter->tc_get_timecount(timecounter);
 	(void)timecounter->tc_get_timecount(timecounter);
 }
-
-#endif /* __HAVE_TIMECOUNTER */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.191 2008/01/03 01:26:30 pooka Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.192 2008/01/20 18:09:13 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.191 2008/01/03 01:26:30 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.192 2008/01/20 18:09:13 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -307,9 +307,7 @@ nfs_fsinfo(nmp, vp, cred, l)
 int
 nfs_mountroot()
 {
-#ifdef __HAVE_TIMECOUNTER
 	struct timespec ts;
-#endif
 	struct nfs_diskless *nd;
 	struct vattr attr;
 	struct mount *mp;
@@ -330,13 +328,9 @@ nfs_mountroot()
 	 * current time < nfs_attrtimeo(nmp, np) so keep this in for now.
 	 */
 	if (time_second < NFS_MAXATTRTIMO) {
-#ifdef __HAVE_TIMECOUNTER
 		ts.tv_sec = NFS_MAXATTRTIMO;
 		ts.tv_nsec = 0;
 		tc_setclock(&ts);
-#else /* !__HAVE_TIMECOUNTER */
-		time.tv_sec = NFS_MAXATTRTIMO;
-#endif /* !__HAVE_TIMECOUNTER */
 	}
 
 	/*
