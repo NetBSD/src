@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.16 2008/01/19 16:22:11 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.17 2008/01/20 15:47:10 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.16 2008/01/19 16:22:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.17 2008/01/20 15:47:10 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1800,10 +1800,9 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 	vaddr_t object;
 
 #if !defined(XEN) || !defined(__x86_64__)
-	int npde;
+	int npde, i;
 #endif
 #ifdef XEN
-	int i;
 	int s;
 #endif
 
