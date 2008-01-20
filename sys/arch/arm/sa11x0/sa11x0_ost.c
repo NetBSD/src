@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_ost.c,v 1.21 2008/01/20 16:28:24 joerg Exp $	*/
+/*	$NetBSD: sa11x0_ost.c,v 1.22 2008/01/20 18:09:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.21 2008/01/20 16:28:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_ost.c,v 1.22 2008/01/20 18:09:05 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -307,17 +307,3 @@ delay(u_int usecs)
 		otick = xtick;
 	}
 }
-
-#ifndef __HAVE_GENERIC_TODR
-void
-resettodr(void)
-{
-}
-
-void
-inittodr(time_t base)
-{
-	time.tv_sec = base;
-	time.tv_usec = 0;
-}
-#endif /* !__HAVE_GENERIC_TODR */

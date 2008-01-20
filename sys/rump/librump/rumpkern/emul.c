@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.21 2008/01/04 00:38:24 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.22 2008/01/20 18:09:13 joerg Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,11 +54,7 @@
 #include "rump_private.h"
 #include "rumpuser.h"
 
-#ifdef __HAVE_TIMECOUNTER
 time_t time_second = 1;
-#else
-volatile struct timeval time = { 1, 0 };
-#endif
 
 kmutex_t proclist_mutex;
 kmutex_t proclist_lock;

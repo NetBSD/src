@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.340 2008/01/16 12:34:50 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.340 2008/01/16 12:34:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.341 2008/01/20 18:09:11 joerg Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -245,9 +245,7 @@ __secmodel_none(void)
 void
 main(void)
 {
-#ifdef __HAVE_TIMECOUNTER
 	struct timeval time;
-#endif
 	struct lwp *l;
 	struct proc *p;
 	struct pdevinit *pdev;
@@ -410,10 +408,8 @@ main(void)
 	sysmon_wdog_init();
 #endif
 
-#ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
-#endif /* __HAVE_TIMECOUNTER */
 
 	/* Initialize the device switch tables. */
 	devsw_init();
@@ -621,11 +617,7 @@ main(void)
 	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-#ifdef __HAVE_TIMECOUNTER
 	getmicrotime(&time);
-#else
-	mono_time = time;
-#endif
 	boottime = time;
 	mutex_enter(&proclist_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
