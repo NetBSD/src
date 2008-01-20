@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.9 2007/10/17 19:55:35 garbled Exp $ */
+/* $Id: if_ae.c,v 1.9.8.1 2008/01/20 17:51:21 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.9 2007/10/17 19:55:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.9.8.1 2008/01/20 17:51:21 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -163,9 +163,6 @@ static int	ae_activate(struct device *, enum devact);
 
 static void	ae_reset(struct ae_softc *);
 static void	ae_idle(struct ae_softc *, u_int32_t);
-
-static int	ae_mediachange(struct ifnet *);
-static void	ae_mediastatus(struct ifnet *, struct ifmediareq *);
 
 static void	ae_start(struct ifnet *);
 static void	ae_watchdog(struct ifnet *);
@@ -362,8 +359,9 @@ ae_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = ae_mii_readreg;
 	sc->sc_mii.mii_writereg = ae_mii_writereg;
 	sc->sc_mii.mii_statchg = ae_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, ae_mediachange,
-	    ae_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
@@ -837,10 +835,6 @@ ae_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
 	case SIOCSIFFLAGS:
 		/* If the interface is up and running, only modify the receive
 		 * filter when setting promiscuous or debug mode.  Otherwise
@@ -1465,7 +1459,8 @@ ae_init(struct ifnet *ifp)
 	/*
 	 * Set the current media.
 	 */
-	ae_mediachange(ifp);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/*
 	 * Start the mac.
@@ -1845,48 +1840,6 @@ ae_idle(struct ae_softc *sc, u_int32_t bits)
 			    rxstate_names[(csr & STATUS_RS) >> 17]);
 		}
 	}
-}
-
-/*****************************************************************************
- * Generic media support functions.
- *****************************************************************************/
-
-/*
- * ae_mediastatus:	[ifmedia interface function]
- *
- *	Query the current media.
- */
-void
-ae_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct ae_softc *sc = ifp->if_softc;
-
-	if (AE_IS_ENABLED(sc) == 0) {
-		ifmr->ifm_active = IFM_ETHER | IFM_NONE;
-		ifmr->ifm_status = 0;
-		return;
-	}
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
- * ae_mediachange:	[ifmedia interface function]
- *
- *	Update the current media.
- */
-int
-ae_mediachange(struct ifnet *ifp)
-{
-	struct ae_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return (0);
-
-	mii_mediachg(&sc->sc_mii);
-	return (0);
 }
 
 /*****************************************************************************

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6.2.6 2008/01/17 19:15:24 bouyer Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.7 2008/01/20 17:51:25 bouyer Exp $	*/
 
 /*
  *
@@ -180,21 +180,6 @@ struct pmap {
 #define pmap_pdirpa(pmap, index) \
 	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
 #endif
-
-/*
- * for each managed physical page we maintain a list of <PMAP,VA>'s
- * which it is mapped at.  the list is headed by a pv_head structure.
- * there is one pv_head per managed phys page (allocated at boot time).
- * the pv_head structure points to a list of pv_entry structures (each
- * describes one mapping).
- */
-
-struct pv_entry {			/* locked by its list's pvh_lock */
-	SPLAY_ENTRY(pv_entry) pv_node;	/* splay-tree node */
-	struct pmap *pv_pmap;		/* the pmap */
-	vaddr_t pv_va;			/* the virtual address */
-	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-};
 
 /*
  * global kernel variables

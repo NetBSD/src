@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.8 2007/10/19 11:59:48 ad Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.8.8.1 2008/01/20 17:51:31 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.8 2007/10/19 11:59:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.8.8.1 2008/01/20 17:51:31 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,9 +120,11 @@ ax88190_media_fini(struct dp8390_softc *sc)
 int
 ax88190_mediachange(struct dp8390_softc *sc)
 {
+	int rc;
 
-	mii_mediachg(&sc->sc_mii);
-	return (0);
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 void

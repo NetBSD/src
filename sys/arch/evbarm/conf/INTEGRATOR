@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR,v 1.47 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: INTEGRATOR,v 1.47.46.1 2008/01/20 17:51:09 bouyer Exp $
 #
 #	GENERIC -- ARM Integrator board Generic kernel
 #
@@ -137,7 +137,6 @@ options 	USERCONF	# userconf(4) support
 #options 	PORTMASTER	# Enable PortMaster only options
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	UVMHIST

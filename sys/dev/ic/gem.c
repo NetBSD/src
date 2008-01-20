@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.60.8.2 2008/01/08 22:11:03 bouyer Exp $ */
+/*	$NetBSD: gem.c,v 1.60.8.3 2008/01/20 17:51:31 bouyer Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.60.8.2 2008/01/08 22:11:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.60.8.3 2008/01/20 17:51:31 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -121,8 +121,8 @@ static void	gem_mii_statchg(struct device *);
 
 void		gem_statuschange(struct gem_softc *);
 
-int		gem_mediachange(struct ifnet *);
-void		gem_mediastatus(struct ifnet *, struct ifmediareq *);
+int		gem_ser_mediachange(struct ifnet *);
+void		gem_ser_mediastatus(struct ifnet *, struct ifmediareq *);
 
 struct mbuf	*gem_get(struct gem_softc *, int, int);
 int		gem_put(struct gem_softc *, int, struct mbuf *);
@@ -158,7 +158,6 @@ gem_attach(sc, enaddr)
 	struct mii_data *mii = &sc->sc_mii;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
-	struct mii_softc *child;
 	struct ifmedia_entry *ifm;
 	int i, error;
 	u_int32_t v;
@@ -274,7 +273,7 @@ gem_attach(sc, enaddr)
 	mii->mii_writereg = gem_mii_writereg;
 	mii->mii_statchg = gem_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, IFM_IMASK, gem_mediachange, gem_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
 
 	/*
 	 * Initialization based  on `GEM Gigabit Ethernet ASIC Specification'
@@ -283,26 +282,30 @@ gem_attach(sc, enaddr)
 	 * GEM_MIF_CONFIG_MDI0 nor GEM_MIF_CONFIG_MDI1 are set
 	 * being set, as both are set on Sun X1141A (with SERDES).  So,
 	 * we rely on our bus attachment setting GEM_SERDES or GEM_SERIAL.
+	 * Also, for Apple variants with 2 PHY's, we prefer the external
+	 * PHY over the internal PHY.
 	 */
 	gem_mifinit(sc);
 
 	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0) {
+		ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
+		    ether_mediastatus);
 		mii_attach(&sc->sc_dev, mii, 0xffffffff,
 		    MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
-		child = LIST_FIRST(&mii->mii_phys);
-		if (child == NULL) {
+		if (LIST_EMPTY(&mii->mii_phys)) {
 				/* No PHY attached */
 				aprint_error("%s: PHY probe failed\n",
 				    sc->sc_dev.dv_xname);
 				goto fail_7;
 		} else {
+			struct mii_softc *child;
+
 			/*
 			 * Walk along the list of attached MII devices and
 			 * establish an `MII instance' to `PHY number'
 			 * mapping.
 			 */
-			for (; child != NULL;
-			    child = LIST_NEXT(child, mii_list)) {
+			LIST_FOREACH(child, &mii->mii_phys, mii_list) {
 				/*
 				 * Note: we support just one PHY: the internal
 				 * or external MII is already selected for us
@@ -320,17 +323,27 @@ gem_attach(sc, enaddr)
 				sc->sc_phys[child->mii_inst] = child->mii_phy;
 			}
 
-			if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI0) {
+			/*
+			 * Now select and activate the PHY we will use.
+			 *
+			 * The order of preference is External (MDI1),
+			 * then Internal (MDI0),
+			 */
+			if (sc->sc_phys[1]) {
 #ifdef GEM_DEBUG
-				aprint_debug("%s: using PHY at MDIO_0\n",
+				aprint_debug("%s: using external PHY\n",
 				    sc->sc_dev.dv_xname);
 #endif
+				sc->sc_mif_config |= GEM_MIF_CONFIG_PHY_SEL;
 			} else {
 #ifdef GEM_DEBUG
-				aprint_debug("%s: using PHY at MDIO_1\n",
+				aprint_debug("%s: using internal PHY\n",
 				    sc->sc_dev.dv_xname);
+				sc->sc_mif_config &= ~GEM_MIF_CONFIG_PHY_SEL;
 #endif
 			}
+			bus_space_write_4(t, h, GEM_MIF_CONFIG,
+			    sc->sc_mif_config);
 			if (sc->sc_variant != GEM_SUN_ERI)
 				bus_space_write_4(t, h, GEM_MII_DATAPATH_MODE,
 				    GEM_MII_DATAPATH_MII);
@@ -339,9 +352,11 @@ gem_attach(sc, enaddr)
 			 * XXX - we can really do the following ONLY if the
 			 * PHY indeed has the auto negotiation capability!!
 			 */
-			ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+			ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 		}
 	} else {
+		ifmedia_init(&mii->mii_media, IFM_IMASK, gem_ser_mediachange,
+		    gem_ser_mediastatus);
 		/* SERDES or Serialink */
 		if (sc->sc_flags & GEM_SERDES) {
 			bus_space_write_4(t, h, GEM_MII_DATAPATH_MODE,
@@ -356,20 +371,20 @@ gem_attach(sc, enaddr)
 		    sc->sc_dev.dv_xname,
 		    sc->sc_flags & GEM_SERDES ? "SERDES" : "Serialink");
 
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_AUTO, 0, NULL);
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO, 0, NULL);
 		/* Check for FDX and HDX capabilities */
 		sc->sc_mii_anar = bus_space_read_4(t, h, GEM_MII_ANAR);
 		if (sc->sc_mii_anar & GEM_MII_ANEG_FUL_DUPLX) {
-			ifmedia_add(&sc->sc_media,
+			ifmedia_add(&sc->sc_mii.mii_media,
 			    IFM_ETHER|IFM_1000_SX|IFM_MANUAL|IFM_FDX, 0, NULL);
 			aprint_normal("1000baseSX-FDX, ");
 		}
 		if (sc->sc_mii_anar & GEM_MII_ANEG_HLF_DUPLX) {
-			ifmedia_add(&sc->sc_media,
+			ifmedia_add(&sc->sc_mii.mii_media,
 			    IFM_ETHER|IFM_1000_SX|IFM_MANUAL|IFM_HDX, 0, NULL);
 			aprint_normal("1000baseSX-HDX, ");
 		}
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 		sc->sc_mii_media = IFM_AUTO;
 		aprint_normal("auto\n");
 
@@ -415,15 +430,14 @@ gem_attach(sc, enaddr)
 	 * If we support GigE media, we support jumbo frames too.
 	 * Unless we are Apple.
 	 */
-	TAILQ_FOREACH(ifm, &sc->sc_media.ifm_list, ifm_list) {
+	TAILQ_FOREACH(ifm, &sc->sc_mii.mii_media.ifm_list, ifm_list) {
 		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_T ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_LX ||
 		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_CX) {
-			if (sc->sc_variant != GEM_APPLE_GMAC)
+			if (!GEM_IS_APPLE(sc))
 				sc->sc_ethercom.ec_capabilities
 				    |= ETHERCAP_JUMBO_MTU;
-
 			sc->sc_flags |= GEM_GIGABIT;
 			break;
 		}
@@ -1022,7 +1036,7 @@ gem_init(struct ifnet *ifp)
 	struct gem_softc *sc = (struct gem_softc *)ifp->if_softc;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
-	int s;
+	int rc = 0, s;
 	u_int max_frame_size;
 	u_int32_t v;
 
@@ -1109,8 +1123,9 @@ gem_init(struct ifnet *ifp)
 	gem_rx_common(sc);
 
 	/* step 11. Configure Media */
-	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0)
-		mii_mediachg(&sc->sc_mii);
+	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0 &&
+	    (rc = mii_ifmedia_change(&sc->sc_mii)) != 0)
+		goto out;
 
 	/* step 12. RX_MAC Configuration Register */
 	v = bus_space_read_4(t, h, GEM_MAC_RX_CONFIG);
@@ -1139,7 +1154,7 @@ gem_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 	sc->sc_if_flags = ifp->if_flags;
-
+out:
 	splx(s);
 
 	return (0);
@@ -1233,9 +1248,17 @@ gem_init_regs(struct gem_softc *sc)
 	/*
 	 * Enable MII outputs.  Enable GMII if there is a gigabit PHY.
 	 */
+	sc->sc_mif_config = bus_space_read_4(t, h, GEM_MIF_CONFIG);
 	v = GEM_MAC_XIF_TX_MII_ENA;
-	if (sc->sc_flags & GEM_GIGABIT)
+	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0)  {
+		if (sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) {
+			v |= GEM_MAC_XIF_FDPLX_LED;
+				if (sc->sc_flags & GEM_GIGABIT)
+					v |= GEM_MAC_XIF_GMII_MODE;
+		}
+	} else {
 		v |= GEM_MAC_XIF_GMII_MODE;
+	}
 	bus_space_write_4(t, h, GEM_MAC_XIF_CONFIG, v);
 }
 
@@ -2303,16 +2326,10 @@ gem_statuschange(struct gem_softc* sc)
 	else
 		sc->sc_flags &= ~GEM_LINK;
 
-	switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
-	case IFM_1000_SX:
-	case IFM_1000_LX:
-	case IFM_1000_CX:
-	case IFM_1000_T:
+	if (sc->sc_ethercom.ec_if.if_baudrate == IF_Mbps(1000))
 		gigabit = 1;
-		break;
-	default:
+	else
 		gigabit = 0;
-	}
 
 	/*
 	 * The configuration done here corresponds to the steps F) and
@@ -2363,17 +2380,33 @@ gem_statuschange(struct gem_softc* sc)
 	else
 		v = 0;
 	v |= GEM_MAC_XIF_TX_MII_ENA;
-	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) == 0) {
-		/* MII/GMII needs echo disable if half duplex. */
-		if ((sc->sc_flags &(GEM_SERDES | GEM_SERIAL)) == 0)
-			v |= GEM_MAC_XIF_ECHO_DISABL;
-		v &= ~GEM_MAC_XIF_FDPLX_LED;
+
+	/* If an external transceiver is connected, enable its MII drivers */
+	sc->sc_mif_config = bus_space_read_4(t, mac, GEM_MIF_CONFIG);
+	if ((sc->sc_flags &(GEM_SERDES | GEM_SERIAL)) == 0) {
+		if ((sc->sc_mif_config & GEM_MIF_CONFIG_MDI1) != 0) {
+			/* External MII needs echo disable if half duplex. */
+			if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) &
+			    IFM_FDX) != 0)
+				/* turn on full duplex LED */
+				v |= GEM_MAC_XIF_FDPLX_LED;
+			else
+				/* half duplex -- disable echo */
+				v |= GEM_MAC_XIF_ECHO_DISABL;
+			if (gigabit)
+				v |= GEM_MAC_XIF_GMII_MODE;
+			else
+				v &= ~GEM_MAC_XIF_GMII_MODE;
+		} else
+			/* Internal MII needs buf enable */
+			v |= GEM_MAC_XIF_MII_BUF_ENA;
 	} else {
-		v |= GEM_MAC_XIF_MII_BUF_ENA;
-		v |= GEM_MAC_XIF_FDPLX_LED;
-	}
-	if (gigabit != 0)
+		if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0)
+			v |= GEM_MAC_XIF_FDPLX_LED;
 		v |= GEM_MAC_XIF_GMII_MODE;
+	}
+	bus_space_write_4(t, mac, GEM_MAC_XIF_CONFIG, v);
+
 	if ((ifp->if_flags & IFF_RUNNING) != 0 &&
 	    (sc->sc_flags & GEM_LINK) != 0) {
 		bus_space_write_4(t, mac, GEM_MAC_TX_CONFIG,
@@ -2384,24 +2417,40 @@ gem_statuschange(struct gem_softc* sc)
 }
 
 int
-gem_mediachange(ifp)
-	struct ifnet *ifp;
+gem_ser_mediachange(struct ifnet *ifp)
 {
 	struct gem_softc *sc = ifp->if_softc;
 	u_int s, t;
 
-	if (IFM_TYPE(sc->sc_media.ifm_media) != IFM_ETHER)
+	if (IFM_TYPE(sc->sc_mii.mii_media.ifm_media) != IFM_ETHER)
 		return EINVAL;
 
-	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) != 0) {
-		s = IFM_SUBTYPE(sc->sc_media.ifm_media);
-		if (s == IFM_AUTO) {
-			if (sc->sc_mii_media != s) {
+	s = IFM_SUBTYPE(sc->sc_mii.mii_media.ifm_media);
+	if (s == IFM_AUTO) {
+		if (sc->sc_mii_media != s) {
 #ifdef GEM_DEBUG
-				aprint_debug("%s: setting media to auto\n",
-				    sc->sc_dev.dv_xname);
+			aprint_debug("%s: setting media to auto\n",
+			    sc->sc_dev.dv_xname);
 #endif
-				sc->sc_mii_media = s;
+			sc->sc_mii_media = s;
+			if (ifp->if_flags & IFF_UP) {
+				gem_pcs_stop(sc, 0);
+				gem_pcs_start(sc);
+			}
+		}
+		return 0;
+	}
+	if (s == IFM_1000_SX) {
+		t = IFM_OPTIONS(sc->sc_mii.mii_media.ifm_media);
+		if (t == IFM_FDX || t == IFM_HDX) {
+			if (sc->sc_mii_media != t) {
+				sc->sc_mii_media = t;
+#ifdef GEM_DEBUG
+				aprint_debug("%s:"
+				    " setting media to 1000baseSX-%s\n",
+				    sc->sc_dev.dv_xname,
+				    t == IFM_FDX ? "FDX" : "HDX");
+#endif
 				if (ifp->if_flags & IFF_UP) {
 					gem_pcs_stop(sc, 0);
 					gem_pcs_start(sc);
@@ -2409,42 +2458,17 @@ gem_mediachange(ifp)
 			}
 			return 0;
 		}
-		if (s == IFM_1000_SX) {
-			t = IFM_OPTIONS(sc->sc_media.ifm_media);
-			if (t == IFM_FDX || t == IFM_HDX) {
-				if (sc->sc_mii_media != t) {
-					sc->sc_mii_media = t;
-#ifdef GEM_DEBUG
-					aprint_debug("%s:"
-					    " setting media to 1000baseSX-%s\n",
-					    sc->sc_dev.dv_xname,
-					    t == IFM_FDX ? "FDX" : "HDX");
-#endif
-					if (ifp->if_flags & IFF_UP) {
-						gem_pcs_stop(sc, 0);
-						gem_pcs_start(sc);
-					}
-				}
-				return 0;
-			}
-		}
-		return EINVAL;
-	} else
-		return (mii_mediachg(&sc->sc_mii));
+	}
+	return EINVAL;
 }
 
 void
-gem_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+gem_ser_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct gem_softc *sc = ifp->if_softc;
 
 	if ((ifp->if_flags & IFF_UP) == 0)
 		return;
-
-	if ((sc->sc_flags & (GEM_SERDES | GEM_SERIAL)) == 0)
-		mii_pollstat(&sc->sc_mii);
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 	ifmr->ifm_status = sc->sc_mii.mii_media_status;
 }
@@ -2459,16 +2483,11 @@ gem_ioctl(ifp, cmd, data)
 	void *data;
 {
 	struct gem_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
 	case SIOCSIFFLAGS:
 #define RESETIGN (IFF_CANTCHANGE|IFF_DEBUG)
 		if (((ifp->if_flags & (IFF_UP|IFF_RUNNING))

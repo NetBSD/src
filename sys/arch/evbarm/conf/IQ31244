@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.37 2006/08/26 20:26:44 christos Exp $
+#	$NetBSD: IQ31244,v 1.37.46.1 2008/01/20 17:51:09 bouyer Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -132,7 +132,6 @@ options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

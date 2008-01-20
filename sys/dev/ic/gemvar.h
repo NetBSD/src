@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.15.38.1 2008/01/08 22:11:04 bouyer Exp $ */
+/*	$NetBSD: gemvar.h,v 1.15.38.2 2008/01/20 17:51:32 bouyer Exp $ */
 
 /*
  *
@@ -117,7 +117,6 @@ struct gem_softc {
 	struct device	sc_dev;		/* generic device information */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	struct mii_data	sc_mii;		/* MII media control */
-#define sc_media	sc_mii.mii_media/* shorthand */
 	struct callout	sc_tick_ch;	/* tick callout */
 
 	/* The following bus handles are to be provided by the bus front-end */

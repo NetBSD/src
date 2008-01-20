@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.34.8.1 2008/01/02 21:48:37 bouyer Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.34.8.2 2008/01/20 17:51:20 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.34.8.1 2008/01/02 21:48:37 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.34.8.2 2008/01/20 17:51:20 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -115,8 +115,6 @@ int bmac_put(struct bmac_softc *, void *, struct mbuf *);
 struct mbuf *bmac_get(struct bmac_softc *, void *, int);
 void bmac_watchdog(struct ifnet *);
 int bmac_ioctl(struct ifnet *, u_long, void *);
-int bmac_mediachange(struct ifnet *);
-void bmac_mediastatus(struct ifnet *, struct ifmediareq *);
 void bmac_setladrf(struct bmac_softc *);
 
 int bmac_mii_readreg(struct device *, int, int);
@@ -248,7 +246,8 @@ bmac_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_writereg = bmac_mii_writereg;
 	mii->mii_statchg = bmac_mii_statchg;
 
-	ifmedia_init(&mii->mii_media, 0, bmac_mediachange, bmac_mediastatus);
+	sc->sc_ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 		      MII_OFFSET_ANY, 0);
 
@@ -524,7 +523,7 @@ next:
 		cmd->d_resid = 0;
 		sc->sc_rxlast = i + 1;
 	}
-	bmac_mediachange(ifp);
+	ether_mediachange(ifp);
 
 	dbdma_continue(sc->sc_rxdma);
 
@@ -728,7 +727,6 @@ bmac_ioctl(ifp, cmd, data)
 {
 	struct bmac_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
@@ -783,6 +781,8 @@ bmac_ioctl(ifp, cmd, data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+	case SIOCGIFMEDIA:
+	case SIOCSIFMEDIA:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
 			/*
 			 * Multicast list has changed; set the hardware filter
@@ -795,40 +795,12 @@ bmac_ioctl(ifp, cmd, data)
 			error = 0;
 		}
 		break;
-
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
 	default:
 		error = EINVAL;
 	}
 
 	splx(s);
 	return error;
-}
-
-int
-bmac_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct bmac_softc *sc = ifp->if_softc;
-
-	return mii_mediachg(&sc->sc_mii);
-}
-
-void
-bmac_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct bmac_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
 /*

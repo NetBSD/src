@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.249.8.1 2008/01/10 23:44:16 bouyer Exp $ */
+/*	$NetBSD: wdc.c,v 1.249.8.2 2008/01/20 17:51:34 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.249.8.1 2008/01/10 23:44:16 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.249.8.2 2008/01/20 17:51:34 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -835,9 +835,8 @@ wdcdetach(device_t self, int flags)
 		ATADEBUG_PRINT(("wdcdetach: %s: detaching %s\n",
 		    atac->atac_dev.dv_xname, chp->atabus->dv_xname),
 		    DEBUG_DETACH);
-		error = config_detach(chp->atabus, flags);
-		if (error)
-			break;
+		if ((error = config_detach(chp->atabus, flags)) != 0)
+			return error;
 	}
 	if (adapt->adapt_refcnt != 0) {
 #ifdef DIAGNOSTIC
@@ -845,7 +844,7 @@ wdcdetach(device_t self, int flags)
 #endif
 		(void) (*adapt->adapt_enable)(&atac->atac_dev, 0);
 	}
-	return (error);
+	return 0;
 }
 
 /* restart an interrupted I/O */

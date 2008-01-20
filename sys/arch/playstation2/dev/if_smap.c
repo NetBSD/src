@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.9.32.1 2008/01/02 21:49:01 bouyer Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.9.32.2 2008/01/20 17:51:23 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.9.32.1 2008/01/02 21:49:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.9.32.2 2008/01/20 17:51:23 bouyer Exp $");
 
 #include "debug_playstation2.h"
 
@@ -250,7 +250,8 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_readreg	= emac3_phy_readreg;
 	mii->mii_writereg	= emac3_phy_writereg;
 	mii->mii_statchg	= emac3_phy_statchg;
-	ifmedia_init(&mii->mii_media, 0, emac3_ifmedia_upd, emac3_ifmedia_sts);
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(&emac3->dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	    
@@ -282,22 +283,12 @@ smap_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch (command) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->emac3.mii.mii_media,
-		    command);
-		break;
+	error = ether_ioctl(ifp, command, data);
 
-	default:
-		error = ether_ioctl(ifp, command, data);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				emac3_setmulti(&sc->emac3, &sc->ethercom);
-			error = 0;
-		}
-		break;
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			emac3_setmulti(&sc->emac3, &sc->ethercom);
+		error = 0;
 	}
 
 	splx(s);
@@ -615,6 +606,7 @@ smap_init(struct ifnet *ifp)
 {
 	struct smap_softc *sc = ifp->if_softc;
 	u_int16_t r16;
+	int rc;
 
 	smap_fifo_init(sc);
 	emac3_reset(&sc->emac3);
@@ -636,7 +628,10 @@ smap_init(struct ifnet *ifp)
 	emac3_setmulti(&sc->emac3, &sc->ethercom);
 
 	/* Set current media. */
-	mii_mediachg(&sc->emac3.mii);
+	if ((rc = mii_mediachg(&sc->emac3.mii)) == ENXIO)
+		rc = 0;
+	else if (rc != 0)
+		return rc;
 
 	ifp->if_flags |= IFF_RUNNING;
 

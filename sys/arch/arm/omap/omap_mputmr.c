@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_mputmr.c,v 1.1.44.1 2008/01/08 22:09:30 bouyer Exp $	*/
+/*	$NetBSD: omap_mputmr.c,v 1.1.44.2 2008/01/20 17:51:05 bouyer Exp $	*/
 
 /*
  * Based on i80321_timer.c and arch/arm/sa11x0/sa11x0_ost.c
@@ -73,13 +73,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.1.44.1 2008/01/08 22:09:30 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap_mputmr.c,v 1.1.44.2 2008/01/20 17:51:05 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <dev/clock_subr.h>
@@ -115,7 +116,6 @@ struct omapmputmr_softc {
 
 static uint32_t counts_per_usec, counts_per_hz;
 static uint32_t hardref;
-static struct timeval hardtime;
 static struct omapmputmr_softc *clock_sc = NULL;
 static struct omapmputmr_softc *stat_sc = NULL;
 static struct omapmputmr_softc *ref_sc = NULL;
@@ -237,11 +237,9 @@ clockintr(void *arg)
 	int ticks, i, oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
-	hardtime = time;
 	newref = bus_space_read_4(ref_sc->sc_iot, ref_sc->sc_ioh,
 				  MPU_READ_TIMER);
 	ticks = hardref ? (hardref - newref) / counts_per_hz : 1;
-	hardtime.tv_usec += (hardref - newref) / counts_per_usec;
 	hardref = newref;
 	restore_interrupts(oldirqstate);
 
@@ -300,6 +298,31 @@ setstatclockrate(int schz)
 			    | MPU_ST));
 }
 
+static u_int
+mpu_get_timecount(struct timecounter *tc)
+{
+	uint32_t counter;
+	int oldirqstate;
+
+	oldirqstate = disable_interrupts(I32_bit);
+	counter = bus_space_read_4(ref_sc->sc_iot, ref_sc->sc_ioh,
+			       MPU_READ_TIMER);
+	restore_interrupts(oldirqstate);
+
+	return counter;
+}
+
+static struct timecounter mpu_timecounter = {
+	mpu_get_timecount,
+	NULL,
+	0xffffffff,
+	0,
+	"mpu",
+	100,
+	NULL,
+	NULL,
+};
+
 void
 cpu_initclocks(void)
 {
@@ -325,61 +348,8 @@ cpu_initclocks(void)
 			    clock_sc->sc_dev.dv_xname, clockintr, 0);
 	omap_intr_establish(stat_sc->sc_intr, IPL_HIGH,
 			    stat_sc->sc_dev.dv_xname, statintr, 0);
-}
 
-void
-microtime(struct timeval *tvp)
-{
-	u_int oldirqstate;
-	uint32_t ref, baseref;
-	static struct timeval lasttime;
-	static uint32_t lastref;
-
-	if (clock_sc == NULL) {
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
-
-	oldirqstate = disable_interrupts(I32_bit);
-	ref = bus_space_read_4(ref_sc->sc_iot, ref_sc->sc_ioh,
-			       MPU_READ_TIMER);
-
-	*tvp = hardtime;
-	baseref = hardref;
-
-	/*
-	 * If time was just jumped forward and hardtime hasn't caught up
-	 * then just use time.
-	 */
-
-	if (time.tv_sec - hardtime.tv_sec > 1)
-		*tvp = time;
-
-	if (tvp->tv_sec < lasttime.tv_sec ||
-	    (tvp->tv_sec == lasttime.tv_sec &&
-	     tvp->tv_usec < lasttime.tv_usec)) {
-		*tvp = lasttime;
-		baseref = lastref;
-
-	} else {
-		lasttime = *tvp;
-		lastref = ref;
-	}
-
-	restore_interrupts(oldirqstate);
-
-	/* Prior to the first hardclock completion we don't have a
-	   microtimer reference. */
-
-	if (baseref)
-		tvp->tv_usec += (baseref - ref) / counts_per_usec;
-
-	/* Make sure microseconds doesn't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
+	tc_init(&mpu_timecounter);
 }
 
 void

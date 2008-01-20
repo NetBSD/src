@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.35.8.1 2008/01/08 22:09:25 bouyer Exp $
+#	$NetBSD: genassym.cf,v 1.35.8.2 2008/01/20 17:51:02 bouyer Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -102,7 +102,6 @@ define	PCB_R12			offsetof(struct pcb, pcb_un.un_32.pcb32_r12)
 define	PCB_SP			offsetof(struct pcb, pcb_un.un_32.pcb32_sp)
 define	PCB_LR			offsetof(struct pcb, pcb_un.un_32.pcb32_lr)
 define	PCB_PC			offsetof(struct pcb, pcb_un.un_32.pcb32_pc)
-define	PCB_UND_SP		offsetof(struct pcb, pcb_un.un_32.pcb32_und_sp)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_NOALIGNFLT		PCB_NOALIGNFLT
 

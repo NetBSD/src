@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.38.8.1 2008/01/08 22:09:38 bouyer Exp $
+#	$NetBSD: ADI_BRH,v 1.38.8.2 2008/01/20 17:51:08 bouyer Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -133,7 +133,6 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

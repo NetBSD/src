@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.26 2007/10/19 12:00:33 ad Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.26.8.1 2008/01/20 17:51:35 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.26 2007/10/19 12:00:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.26.8.1 2008/01/20 17:51:35 bouyer Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -155,8 +155,6 @@ STATIC int gfe_ifioctl (struct ifnet *, u_long, void *);
 STATIC void gfe_ifstart (struct ifnet *);
 STATIC void gfe_ifwatchdog (struct ifnet *);
 
-STATIC int gfe_mii_mediachange (struct ifnet *);
-STATIC void gfe_mii_mediastatus (struct ifnet *, struct ifmediareq *);
 STATIC int gfe_mii_read (struct device *, int, int);
 STATIC void gfe_mii_write (struct device *, int, int, int);
 STATIC void gfe_mii_statchg (struct device *);
@@ -309,8 +307,9 @@ gfe_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_writereg = gfe_mii_write;
 	sc->sc_mii.mii_statchg = gfe_mii_statchg;
 
-	ifmedia_init(&sc->sc_mii.mii_media, 0, gfe_mii_mediachange,
-		gfe_mii_mediastatus);
+	sc->sc_ec.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+		ether_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, phyaddr,
 		MII_OFFSET_ANY, MIIF_NOISOLATE);
@@ -469,6 +468,8 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
@@ -485,11 +486,6 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 
 	default:
@@ -1480,29 +1476,6 @@ gfe_intr(void *arg)
 	return claim;
 }
 
-int
-gfe_mii_mediachange (struct ifnet *ifp)
-{
-	struct gfe_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-
-	return (0);
-}
-void
-gfe_mii_mediastatus (struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct gfe_softc *sc = ifp->if_softc;
-
-	if (sc->sc_flags & GE_PHYSTSCHG) {
-		sc->sc_flags &= ~GE_PHYSTSCHG;
-		mii_pollstat(&sc->sc_mii);
-	}
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
 int
 gfe_mii_read (struct device *self, int phy, int reg)
 {

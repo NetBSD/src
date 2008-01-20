@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.52.8.1 2008/01/02 21:47:20 bouyer Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.52.8.2 2008/01/20 17:51:02 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.52.8.1 2008/01/02 21:47:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.52.8.2 2008/01/20 17:51:02 bouyer Exp $");
 
 #include "opt_md.h"
 #include "opt_pmap_debug.h"
@@ -68,7 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.52.8.1 2008/01/02 21:47:20 bouye
 #include <arm/arm32/machdep.h>
 #include <machine/bootconfig.h>
 
-#include "opt_ipkdb.h"
 #include "md.h"
 
 struct vm_map *exec_map = NULL;
@@ -274,8 +273,6 @@ cpu_startup()
 
 	curpcb = &lwp0.l_addr->u_pcb;
 	curpcb->pcb_flags = 0;
-	curpcb->pcb_un.un_32.pcb32_und_sp = (u_int)lwp0.l_addr +
-	    USPACE_UNDEF_STACK_TOP;
 	curpcb->pcb_un.un_32.pcb32_sp = (u_int)lwp0.l_addr +
 	    USPACE_SVC_STACK_TOP;
 

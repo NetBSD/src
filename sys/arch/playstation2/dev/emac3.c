@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3.c,v 1.4.64.1 2008/01/02 21:49:01 bouyer Exp $	*/
+/*	$NetBSD: emac3.c,v 1.4.64.2 2008/01/20 17:51:22 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.4.64.1 2008/01/02 21:49:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emac3.c,v 1.4.64.2 2008/01/20 17:51:22 bouyer Exp $");
 
 #include "debug_playstation2.h"
 
@@ -313,28 +313,6 @@ emac3_config(const u_int8_t *eaddr)
 /*
  * PHY/MII
  */
-int
-emac3_ifmedia_upd(struct ifnet *ifp)
-{
-	struct emac3_softc *sc;
-
-	sc = ifp->if_softc;
-
-	return (mii_mediachg(&sc->mii));
-}
-
-void
-emac3_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct emac3_softc *sc;
-
-	sc = ifp->if_softc;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_status = sc->mii.mii_media_status;
-	ifmr->ifm_active = sc->mii.mii_media_active;
-}
-
 void
 emac3_phy_writereg(struct device *self, int phy, int reg, int data)
 {

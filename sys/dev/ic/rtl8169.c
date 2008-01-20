@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.90.2.2 2008/01/08 22:11:05 bouyer Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.90.2.3 2008/01/20 17:51:33 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.90.2.2 2008/01/08 22:11:05 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.90.2.3 2008/01/20 17:51:33 bouyer Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -165,9 +165,6 @@ static void re_watchdog(struct ifnet *);
 
 static int re_enable(struct rtk_softc *);
 static void re_disable(struct rtk_softc *);
-
-static int re_ifmedia_upd(struct ifnet *);
-static void re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static int re_gmii_readreg(struct device *, int, int);
 static void re_gmii_writereg(struct device *, int, int, int);
@@ -781,8 +778,9 @@ re_attach(struct rtk_softc *sc)
 	sc->mii.mii_readreg = re_miibus_readreg;
 	sc->mii.mii_writereg = re_miibus_writereg;
 	sc->mii.mii_statchg = re_miibus_statchg;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, re_ifmedia_upd,
-	    re_ifmedia_sts);
+	sc->ethercom.ec_mii = &sc->mii;
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
@@ -1891,34 +1889,6 @@ re_init(struct ifnet *ifp)
 	return error;
 }
 
-/*
- * Set media options.
- */
-static int
-re_ifmedia_upd(struct ifnet *ifp)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	return mii_mediachg(&sc->mii);
-}
-
-/*
- * Report current media status.
- */
-static void
-re_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_active = sc->mii.mii_media_active;
-	ifmr->ifm_status = sc->mii.mii_media_status;
-}
-
 static int
 re_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
@@ -1933,10 +1903,6 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 		if (ifr->ifr_mtu > RE_JUMBO_MTU)
 			error = EINVAL;
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->mii.mii_media, command);
 		break;
 	default:
 		error = ether_ioctl(ifp, command, data);

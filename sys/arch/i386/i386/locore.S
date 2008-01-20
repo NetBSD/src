@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.58.6.6 2008/01/19 12:14:20 bouyer Exp $	*/
+/*	$NetBSD: locore.S,v 1.58.6.7 2008/01/20 17:51:18 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -141,7 +141,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.6 2008/01/19 12:14:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.58.6.7 2008/01/20 17:51:18 bouyer Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -881,6 +881,24 @@ ENTRY(longjmp)
 	movl	20(%eax),%edx		# get rta
 	movl	%edx,(%esp)		# put in return frame
 	movl	$1,%eax			# return 1
+	ret
+
+ENTRY(dumpsys)
+	# mimic cpu_switchto() for postmortem debugging.
+
+	# build a fake switch frame.
+	pushl	%ebx
+	pushl	%esi
+	pushl	%edi
+
+	# save a context.
+	movl	$dumppcb,%eax
+	movl	%esp,PCB_ESP(%eax)
+	movl	%ebp,PCB_EBP(%eax)
+
+	call	_C_LABEL(dodumpsys)
+
+	addl	$(3*4), %esp	# sizeof(switchframe) - sizeof(%eip)
 	ret
 
 /*

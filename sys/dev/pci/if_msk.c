@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.13.6.1 2007/12/13 21:55:49 bouyer Exp $ */
+/* $NetBSD: if_msk.c,v 1.13.6.2 2008/01/20 17:51:37 bouyer Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.13.6.1 2007/12/13 21:55:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.13.6.2 2008/01/20 17:51:37 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -116,8 +116,6 @@ int msk_init(struct ifnet *);
 void msk_init_yukon(struct sk_if_softc *);
 void msk_stop(struct ifnet *, int);
 void msk_watchdog(struct ifnet *);
-int msk_ifmedia_upd(struct ifnet *);
-void msk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 void msk_reset(struct sk_softc *);
 int msk_newbuf(struct sk_if_softc *, int, struct mbuf *, bus_dmamap_t);
 int msk_alloc_jumbo_mem(struct sk_if_softc *);
@@ -690,37 +688,11 @@ msk_jfree(struct mbuf *m, void *buf, size_t size, void *arg)
 	splx(s);
 }
 
-/*
- * Set media options.
- */
-int
-msk_ifmedia_upd(struct ifnet *ifp)
-{
-	struct sk_if_softc *sc_if = ifp->if_softc;
-
-	mii_mediachg(&sc_if->sk_mii);
-	return (0);
-}
-
-/*
- * Report current media status.
- */
-void
-msk_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct sk_if_softc *sc_if = ifp->if_softc;
-
-	mii_pollstat(&sc_if->sk_mii);
-	ifmr->ifm_active = sc_if->sk_mii.mii_media_active;
-	ifmr->ifm_status = sc_if->sk_mii.mii_media_status;
-}
-
 int
 msk_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct sk_if_softc *sc_if = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *) data;
-	struct mii_data *mii;
 	int s, error = 0;
 
 	s = splnet();
@@ -735,13 +707,6 @@ msk_ioctl(struct ifnet *ifp, u_long command, void *data)
 		} else if (ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		DPRINTFN(2,("msk_ioctl: SIOC[GS]IFMEDIA\n"));
-		mii = &sc_if->sk_mii;
-		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, command);
-		DPRINTFN(2,("msk_ioctl: SIOC[GS]IFMEDIA done\n"));
 		break;
 	default:
 		DPRINTFN(2, ("msk_ioctl ETHER\n"));
@@ -1106,8 +1071,9 @@ msk_attach(struct device *parent, struct device *self, void *aux)
 	sc_if->sk_mii.mii_writereg = msk_miibus_writereg;
 	sc_if->sk_mii.mii_statchg = msk_miibus_statchg;
 
+	sc_if->sk_ethercom.ec_mii = &sc_if->sk_mii;
 	ifmedia_init(&sc_if->sk_mii.mii_media, 0,
-	    msk_ifmedia_upd, msk_ifmedia_sts);
+	    ether_mediachange, ether_mediastatus);
 	mii_attach(self, &sc_if->sk_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_DOPAUSE|MIIF_FORCEANEG);
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) == NULL) {
@@ -2073,8 +2039,7 @@ msk_init(struct ifnet *ifp)
 {
 	struct sk_if_softc	*sc_if = ifp->if_softc;
 	struct sk_softc		*sc = sc_if->sk_softc;
-	struct mii_data		*mii = &sc_if->sk_mii;
-	int			s;
+	int			rc = 0, s;
 	uint32_t		imr, imtimer_ticks;
 
 
@@ -2089,7 +2054,8 @@ msk_init(struct ifnet *ifp)
 
 	/* Configure XMAC(s) */
 	msk_init_yukon(sc_if);
-	mii_mediachg(mii);
+	if ((rc = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/* Configure transmit arbiter(s) */
 	SK_IF_WRITE_1(sc_if, 0, SK_TXAR1_COUNTERCTL, SK_TXARCTL_ON);
@@ -2204,8 +2170,9 @@ msk_init(struct ifnet *ifp)
 
 	callout_schedule(&sc_if->sk_tick_ch, hz);
 
+out:
 	splx(s);
-	return 0;
+	return rc;
 }
 
 void

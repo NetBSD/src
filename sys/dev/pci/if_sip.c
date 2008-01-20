@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.115.8.2 2008/01/10 23:44:24 bouyer Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.115.8.3 2008/01/20 17:51:37 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.115.8.2 2008/01/10 23:44:24 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.115.8.3 2008/01/20 17:51:37 bouyer Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1761,10 +1761,7 @@ sipcom_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			}
 			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
-		/* FALLTHROUGH */
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
+		goto ethioctl;
 	case SIOCSIFFLAGS:
 		/* If the interface is up and running, only modify the receive
 		 * filter when setting promiscuous or debug mode.  Otherwise
@@ -1791,6 +1788,7 @@ sipcom_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 #undef RESETIGN
 		}
 		/* FALLTHROUGH */
+	ethioctl:
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {

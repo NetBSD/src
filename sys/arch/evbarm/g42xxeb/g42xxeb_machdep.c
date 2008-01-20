@@ -1,4 +1,4 @@
-/*	$NetBSD: g42xxeb_machdep.c,v 1.12 2007/10/17 19:54:12 garbled Exp $ */
+/*	$NetBSD: g42xxeb_machdep.c,v 1.12.8.1 2008/01/20 17:51:12 bouyer Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004, 2005  Genetec Corporation.  
@@ -109,7 +109,6 @@
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_ipkdb.h"
 #include "opt_pmap_debug.h"
 #include "opt_md.h"
 #include "opt_com.h"
@@ -138,10 +137,6 @@
 #include <ddb/db_extern.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
-#endif
-#ifdef IPKDB
-#include <ipkdb/ipkdb.h>		/* for prototypes */
-#include <machine/ipkdb.h>
 #endif
 
 #include <machine/bootconfig.h>
@@ -180,11 +175,7 @@ u_int cpu_reset_address = 0;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -898,13 +889,6 @@ initarm(void *arg)
 	}
 
 	LEDSTEP();
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif
 
 #ifdef KGDB
 	if (boothowto & RB_KDB) {

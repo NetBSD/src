@@ -1,4 +1,4 @@
-/*	$NetBSD: eb7500atx_machdep.c,v 1.8 2007/10/17 19:52:53 garbled Exp $	*/
+/*	$NetBSD: eb7500atx_machdep.c,v 1.8.8.1 2008/01/20 17:51:01 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.8 2007/10/17 19:52:53 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.8.8.1 2008/01/20 17:51:01 bouyer Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -100,7 +100,6 @@ __KERNEL_RCSID(0, "$NetBSD: eb7500atx_machdep.c,v 1.8 2007/10/17 19:52:53 garble
 
 /* static i2c_tag_t acorn32_i2c_tag;*/
 
-#include "opt_ipkdb.h"
 #include "ksyms.h"
 
 /* Kernel text starts at the base of the kernel address space. */
@@ -127,11 +126,7 @@ u_int cpu_reset_address = 0x0; /* XXX 0x3800000 too for rev0 RiscPC 600 */
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 
 struct bootconfig bootconfig;	/* Boot config storage */
@@ -957,13 +952,6 @@ initarm(void *cookie)
 	printf(" VRAM block 0  at %08x size %08x\n\r",
 	    bootconfig.vram[0].address,
 	    bootconfig.vram[0].pages * bootconfig.pagesize);
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
-#endif	/* NIPKDB */
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	ksyms_init(bootconfig.ksym_end - bootconfig.ksym_start,
