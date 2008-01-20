@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.15 2008/01/19 22:10:16 dyoung Exp $ */
+/* $NetBSD: if_mec.c,v 1.16 2008/01/20 14:14:11 he Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.15 2008/01/19 22:10:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.16 2008/01/20 14:14:11 he Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -1077,8 +1077,6 @@ mec_stop(struct ifnet *ifp, int disable)
 STATIC int
 mec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct mec_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (void *)data;
 	int s, error;
 
 	s = splnet();
