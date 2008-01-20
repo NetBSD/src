@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.998 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.999 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -332,3 +332,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[tls 20080110]
 	hppa: Added gdb support. [skrll 20080110]
 	bktr(4): Added amd64 support. [jmcneill 20080116]
+	kernel: All platforms have been converted to use timecounter.
+		[joerg 20080120]
