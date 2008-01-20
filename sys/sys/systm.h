@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.212 2008/01/15 14:26:41 ad Exp $	*/
+/*	$NetBSD: systm.h,v 1.213 2008/01/20 18:09:13 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -279,22 +279,11 @@ void	statclock(struct clockframe *);
 
 #ifdef NTP
 void	ntp_init(void);
-#ifndef __HAVE_TIMECOUNTER
-void	hardupdate(long offset);
-#endif /* !__HAVE_TIMECOUNTER */
 #ifdef PPS_SYNC
-#ifdef __HAVE_TIMECOUNTER
 void	hardpps(struct timespec *, long);
-#else /* !__HAVE_TIMECOUNTER */
-void	hardpps(struct timeval *, long);
-extern void *pps_kc_hardpps_source;
-extern int pps_kc_hardpps_mode;
-#endif /* !__HAVE_TIMECOUNTER */
 #endif /* PPS_SYNC */
 #else
-#ifdef __HAVE_TIMECOUNTER
 void	ntp_init(void);	/* also provides adjtime() functionality */
-#endif /* __HAVE_TIMECOUNTER */
 #endif /* NTP */
 
 void	initclocks(void);

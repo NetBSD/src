@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.15 2008/01/20 16:28:23 joerg Exp $	*/
+/*	$NetBSD: types.h,v 1.16 2008/01/20 18:09:05 joerg Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,7 +80,5 @@ typedef	volatile int		__cpu_simple_lock_t;
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 #endif
-
-#define	__HAVE_TIMECOUNTER
 
 #endif	/* _ARM_TYPES_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.19 2007/12/22 00:34:37 yamt Exp $	*/
+/*	$NetBSD: timevar.h,v 1.20 2008/01/20 18:09:13 joerg Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -179,14 +179,7 @@ int	gettimeleft(struct timeval *, struct timeval *);
 void	timerupcall(struct lwp *);
 void	time_init(void);
 
-#ifdef __HAVE_TIMECOUNTER
 extern time_t time_second;	/* current second in the epoch */
 extern time_t time_uptime;	/* system uptime in seconds */
-#else /* !__HAVE_TIMECOUNTER */
-extern volatile struct timeval mono_time;
-extern volatile struct timeval time;
-#define	time_second	time.tv_sec
-#define	time_uptime	mono_time.tv_sec
-#endif /* !__HAVE_TIMECOUNTER */
 
 #endif /* !_SYS_TIMEVAR_H_ */

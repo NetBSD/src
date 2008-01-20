@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.3 2008/01/07 17:27:12 joerg Exp $ */
+/* $NetBSD: types.h,v 1.4 2008/01/20 18:09:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,8 +39,6 @@
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
 
-#define __HAVE_GENERIC_TODR	1
-
 #if defined(_KERNEL)
 typedef struct label_t {
 	long val[8];
@@ -58,7 +56,5 @@ typedef volatile unsigned char	__cpu_simple_lock_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0
-
-#define __HAVE_TIMECOUNTER
 
 #endif /* !_ARCH_USERMODE_INCLUDE_TYPES_H */

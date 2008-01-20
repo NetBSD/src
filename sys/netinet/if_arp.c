@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.130 2007/12/07 19:46:18 elad Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.130 2007/12/07 19:46:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.131 2008/01/20 18:09:12 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -454,14 +454,10 @@ arp_rtrequest(int req, struct rtentry *rt, struct rt_addrinfo *info)
 		 * so avoid accidentally creating permanent routes.
 		 */
 		if (time_second == 0) {
-#ifdef __HAVE_TIMECOUNTER
 			struct timespec ts;
 			ts.tv_sec = 1;
 			ts.tv_nsec = 0;
 			tc_setclock(&ts);
-#else /* !__HAVE_TIMECOUNTER */
-			time.tv_sec++;
-#endif /* !__HAVE_TIMECOUNTER */
 		}
 		callout_init(&arptimer_ch, 0);
 		callout_reset(&arptimer_ch, hz, arptimer, NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.31 2007/12/21 17:36:09 dsl Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.32 2008/01/20 18:09:10 joerg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.31 2007/12/21 17:36:09 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.32 2008/01/20 18:09:10 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -302,89 +302,41 @@ netbsd32_adjtime(struct lwp *l, const struct netbsd32_adjtime_args *uap, registe
 	struct netbsd32_timeval atv;
 	int error;
 
+	extern int time_adjusted;     /* in kern_ntptime.c */
+	extern int64_t time_adjtime;  /* in kern_ntptime.c */
+
 	if ((error = kauth_authorize_system(l->l_cred,
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_ADJTIME, NULL, NULL,
 	    NULL)) != 0)
 		return (error);
 
-#ifdef __HAVE_TIMECOUNTER
-	{
-		extern int time_adjusted;     /* in kern_ntptime.c */
-		extern int64_t time_adjtime;  /* in kern_ntptime.c */
-		if (SCARG_P32(uap, olddelta)) {
-			atv.tv_sec = time_adjtime / 1000000;
-			atv.tv_usec = time_adjtime % 1000000;
-			if (atv.tv_usec < 0) {
-				atv.tv_usec += 1000000;
-				atv.tv_sec--;
-			}
-			(void) copyout(&atv,
-				       SCARG_P32(uap, olddelta), 
-				       sizeof(atv));
-			if (error)
-				return (error);
+	if (SCARG_P32(uap, olddelta)) {
+		atv.tv_sec = time_adjtime / 1000000;
+		atv.tv_usec = time_adjtime % 1000000;
+		if (atv.tv_usec < 0) {
+			atv.tv_usec += 1000000;
+			atv.tv_sec--;
 		}
-	
-		if (SCARG_P32(uap, delta)) {
-			error = copyin(SCARG_P32(uap, delta), &atv,
-				       sizeof(struct timeval));
-			if (error)
-				return (error);
-
-			time_adjtime = (int64_t)atv.tv_sec * 1000000 +
-				atv.tv_usec;
-
-			if (time_adjtime)
-				/* We need to save the system time during shutdown */
-				time_adjusted |= 1;
-		}
+		(void) copyout(&atv,
+			       SCARG_P32(uap, olddelta), 
+			       sizeof(atv));
+		if (error)
+			return (error);
 	}
-#else /* !__HAVE_TIMECOUNTER */
-	{
-		int32_t ndelta, ntickdelta, odelta;
-		extern long bigadj, timedelta;
-		extern int tickdelta;
-		int s;
+	
+	if (SCARG_P32(uap, delta)) {
 		error = copyin(SCARG_P32(uap, delta), &atv,
 			       sizeof(struct timeval));
 		if (error)
 			return (error);
-		/*
-		 * Compute the total correction and the rate at which to apply it.
-		 * Round the adjustment down to a whole multiple of the per-tick
-		 * delta, so that after some number of incremental changes in
-		 * hardclock(), tickdelta will become zero, lest the correction
-		 * overshoot and start taking us away from the desired final time.
-		 */
-		ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
-		if (ndelta > bigadj)
-			ntickdelta = 10 * tickadj;
-		else
-			ntickdelta = tickadj;
-		if (ndelta % ntickdelta)
-			ndelta = ndelta / ntickdelta * ntickdelta;
 
-		/*
-		 * To make hardclock()'s job easier, make the per-tick delta negative
-		 * if we want time to run slower; then hardclock can simply compute
-		 * tick + tickdelta, and subtract tickdelta from timedelta.
-		 */
-		if (ndelta < 0)
-			ntickdelta = -ntickdelta;
-		s = splclock();
-		odelta = timedelta;
-		timedelta = ndelta;
-		tickdelta = ntickdelta;
-		splx(s);
+		time_adjtime = (int64_t)atv.tv_sec * 1000000 + atv.tv_usec;
 
-		if (SCARG_P32(uap, olddelta)) {
-			atv.tv_sec = odelta / 1000000;
-			atv.tv_usec = odelta % 1000000;
-			(void) copyout(&atv,
-				       SCARG_P32(uap, olddelta), sizeof(atv));
-		}
+		if (time_adjtime)
+			/* We need to save the system time during shutdown */
+			time_adjusted |= 1;
 	}
-#endif /* !__HAVE_TIMECOUNTER */
+
 	return (0);
 }
 
