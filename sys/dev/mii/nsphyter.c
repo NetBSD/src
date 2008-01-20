@@ -1,4 +1,4 @@
-/*	$NetBSD: nsphyter.c,v 1.27 2007/12/09 20:28:04 jmcneill Exp $	*/
+/*	$NetBSD: nsphyter.c,v 1.28 2008/01/20 07:58:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.27 2007/12/09 20:28:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsphyter.c,v 1.28 2008/01/20 07:58:19 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,10 @@ CFATTACH_DECL(nsphyter, sizeof(struct mii_softc),
 
 static int	nsphyter_service(struct mii_softc *, struct mii_data *, int);
 static void	nsphyter_status(struct mii_softc *);
+static void	nsphyter_reset(struct mii_softc *);
 
 static const struct mii_phy_funcs nsphyter_funcs = {
-	nsphyter_service, nsphyter_status, mii_phy_reset,
+	nsphyter_service, nsphyter_status, nsphyter_reset,
 };
 
 static const struct mii_phydesc nsphyters[] = {
@@ -271,4 +272,37 @@ nsphyter_status(struct mii_softc *sc)
 			    IFM_FDX | mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+nsphyter_reset(struct mii_softc *sc)
+{
+	int reg, i;
+
+	if (sc->mii_flags & MIIF_NOISOLATE)
+		reg = BMCR_RESET;
+	else
+		reg = BMCR_RESET | BMCR_ISO;
+	PHY_WRITE(sc, MII_BMCR, reg);
+
+	/*
+	 * It is best to allow a little time for the reset to settle
+	 * in before we start polling the BMCR again.  Notably, the
+	 * DP83840A manual states that there should be a 500us delay
+	 * between asserting software reset and attempting MII serial
+	 * operations.  Also, a DP83815 can get into a bad state on
+	 * cable removal and reinsertion if we do not delay here.
+	 */
+	delay(500);
+
+	/* Wait another 100ms for it to complete. */
+	for (i = 0; i < 100; i++) {
+		reg = PHY_READ(sc, MII_BMCR);
+		if ((reg & BMCR_RESET) == 0)
+			break;
+		delay(1000);
+	}
+
+	if (sc->mii_inst != 0 && ((sc->mii_flags & MIIF_NOISOLATE) == 0))
+		PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 }
