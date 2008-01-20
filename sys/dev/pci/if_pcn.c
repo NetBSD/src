@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.42 2008/01/19 22:10:18 dyoung Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.43 2008/01/20 11:28:12 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.42 2008/01/19 22:10:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.43 2008/01/20 11:28:12 jmmv Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2024,7 +2024,10 @@ pcn_set_filter(struct pcn_softc *sc)
 static void
 pcn_79c970_mediainit(struct pcn_softc *sc)
 {
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	const char *sep = "";
+
+	sc->sc_mii.mii_ifp = ifp;
 
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, pcn_79c970_mediachange,
 	    pcn_79c970_mediastatus);
