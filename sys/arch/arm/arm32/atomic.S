@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.1 2002/10/19 12:46:57 bsh Exp $ */
+/*	$NetBSD: atomic.S,v 1.1.88.1 2008/01/20 16:03:55 chris Exp $ */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -45,13 +45,13 @@
 ENTRY(atomic_set_bit)
 	mrs	r2, cpsr
 	orr	r3, r2, #(I32_bit)
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 
 	ldr	r3, [r0]
 	orr	r3, r3, r1
 	str	r3, [r0]
 
-	msr	cpsr_all, r2
+	msr	cpsr_c, r2
 	mov	pc, lr
 
 
@@ -59,13 +59,13 @@ ENTRY(atomic_set_bit)
 ENTRY(atomic_clear_bit)
 	mrs	r2, cpsr
 	orr	r3, r2, #(I32_bit)
-	msr	cpsr_all, r3
+	msr	cpsr_c, r3
 
 	ldr	r3, [r0]
 	bic	r3, r3, r1
 	str	r3, [r0]
 
-	msr	cpsr_all, r2
+	msr	cpsr_c, r2
 	mov	pc, lr
 
 #endif	/* ATOMIC_SET_BIT_NONINLINE_REQUIRED */

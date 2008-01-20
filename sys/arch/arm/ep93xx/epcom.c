@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.14.20.1 2008/01/01 15:39:22 chris Exp $ */
+/*	$NetBSD: epcom.c,v 1.14.20.2 2008/01/20 16:03:59 chris Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.14.20.1 2008/01/01 15:39:22 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.14.20.2 2008/01/20 16:03:59 chris Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -242,7 +242,7 @@ epcom_attach_subr(struct epcom_softc *sc)
 		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
 	}
 
-	sc->sc_si = softintr_establish(IPL_SOFTSERIAL, epcomsoft, sc);
+	sc->sc_si = softint_establish(SOFTINT_SERIAL, epcomsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
 	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
@@ -1136,7 +1136,7 @@ epcomintr(void* arg)
 	}
 
 	/* Wake up the poller. */
-	softintr_schedule(sc->sc_si);
+	softint_schedule(sc->sc_si);
 
 #if 0 /* XXX: broken */
 #if NRND > 0 && defined(RND_COM)

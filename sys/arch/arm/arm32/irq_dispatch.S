@@ -1,4 +1,4 @@
-/*	$NetBSD: irq_dispatch.S,v 1.8 2007/03/09 19:21:58 thorpej Exp $	*/
+/*	$NetBSD: irq_dispatch.S,v 1.8.20.1 2008/01/20 16:03:56 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -92,7 +92,7 @@
 	.text
 	.align	0
 .Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
+	.word	_C_LABEL(cpu_info_store) + CI_IDEPTH
 
 LOCK_CAS_CHECK_LOCALS
 
@@ -138,8 +138,4 @@ ASENTRY_NP(irq_entry)
 
 	.global _C_LABEL(astpending)
 _C_LABEL(astpending):
-	.word	0
-
-	.global _C_LABEL(current_intr_depth)
-_C_LABEL(current_intr_depth):
 	.word	0

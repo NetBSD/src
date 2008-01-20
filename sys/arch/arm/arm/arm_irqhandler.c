@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_irqhandler.c,v 1.1.2.4 2007/08/18 23:45:45 chris Exp $	*/
+/*	$NetBSD: arm_irqhandler.c,v 1.1.2.5 2008/01/20 16:03:54 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -66,7 +66,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.4 2007/08/18 23:45:45 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.5 2008/01/20 16:03:54 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -169,11 +169,11 @@ void arm_intr_splx_lifter(int newspl)
 	frame.cf_if.if_pc = (unsigned int)&arm_intr_splx_lifter;
 	
 	oldirqstate = disable_interrupts(I32_bit);
-	oldintrdepth = current_intr_depth++;
+	oldintrdepth = curcpu()->ci_idepth++;
 
 	arm_intr_process_pending_ipls(&frame, newspl);
 
-	current_intr_depth = oldintrdepth;
+	curcpu()->ci_idepth = oldintrdepth;
 	restore_interrupts(oldirqstate);
 }
 
@@ -635,10 +635,14 @@ arm_intr_fls(uint32_t n)
 
 	if (n & 0x00f0)
 		offset = 4;
+#if NIPL > 8
 	if (n & 0x0f00)
 		offset = 8;
+#endif
+#if NIPL > 12
 	if (n & 0xf000)
 		offset = 12;
+#endif
 #if NIPL > 16
 #error fls code needs to be examined for larger IPL counts
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30.6.1 2008/01/01 15:39:52 chris Exp $	*/
+/*	$NetBSD: fd.c,v 1.30.6.2 2008/01/20 16:04:17 chris Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30.6.1 2008/01/01 15:39:52 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30.6.2 2008/01/20 16:04:17 chris Exp $");
 
 #include "opt_ddb.h"
 
@@ -1507,17 +1507,17 @@ fdformat(dev, finfo, l)
 	struct ne7_fd_formb *finfo;
 	struct lwp *l;
 {
-	int rv = 0, s;
+	int rv = 0;
 	struct fd_softc *fd = fd_cd.cd_devs[FDUNIT(dev)];
 	struct fd_type *type = fd->sc_type;
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = (struct buf *)malloc(sizeof(struct buf), M_TEMP, M_NOWAIT);
+	bp = getiobuf(NULL, false);
 	if(bp == 0)
 		return ENOBUFS;
-	memset((void *)bp, 0, sizeof(struct buf));
-	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+	bp->b_flags = B_PHYS | B_FORMAT;
+	bp->b_cflags |= BC_BUSY;
 	bp->b_proc = l->l_proc;
 	bp->b_dev = dev;
 
@@ -1540,21 +1540,22 @@ fdformat(dev, finfo, l)
 	fdstrategy(bp);
 
 	/* ...and wait for it to complete */
-	s = splbio();
-	while(!(bp->b_flags & B_DONE)) {
-		rv = tsleep((void *)bp, PRIBIO, "fdform", 20 * hz);
+	/* XXX very dodgy */
+	mutex_enter(bp->b_objlock);
+	while (!(bp->b_oflags & BO_DONE)) {
+		rv = cv_timedwait(&bp->b_done, bp->b_objlock, 20 * hz);
 		if (rv == EWOULDBLOCK)
 			break;
 	}
-	splx(s);
-       
+	mutex_exit(bp->b_objlock);
+
 	if (rv == EWOULDBLOCK) {
 		/* timed out */
 		rv = EIO;
 		biodone(bp);
 	} else if (bp->b_error != 0)
 		rv = bp->b_error;
-	free(bp, M_TEMP);
+	putiobuf(bp);
 	return rv;
 }
 

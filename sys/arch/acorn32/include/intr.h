@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.5.24.1 2008/01/01 15:39:52 chris Exp $	*/
+/* 	$NetBSD: intr.h,v 1.5.24.2 2008/01/20 16:04:17 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -33,8 +33,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM32_INTR_H_
-#define _ARM32_INTR_H_
+#ifndef _ACORN32_INTR_H_
+#define _ACORN32_INTR_H_
 
 /* Define the various Interrupt Priority Levels */
 
@@ -44,7 +44,10 @@
 #define IPL_HIGH	1
 #define	IPL_SCHED	1
 #define	IPL_NONE	2
-
+#define	IPL_SOFTSERIAL	IPL_NONE
+#define	IPL_SOFTNET	IPL_NONE
+#define	IPL_SOFTBIO	IPL_NONE
+#define	IPL_SOFTCLOCK	IPL_NONE
 #define IPL_LEVELS	3
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
@@ -53,6 +56,7 @@
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
 
+#ifdef __HAVE_FAST_SOFTINTRS
 /* Software interrupt priority levels */
 
 #define SOFTIRQ_CLOCK	0
@@ -61,8 +65,9 @@
 #define SOFTIRQ_SERIAL	3
 
 #define SOFTIRQ_BIT(x)	(1 << x)
+#endif
 
 #include <machine/irqhandler.h>
 #include <arm/arm32/psl.h>
 
-#endif	/* _ARM32_INTR_H */
+#endif	/* _ACORN32_INTR_H */

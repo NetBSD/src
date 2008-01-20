@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_aau.c,v 1.9.80.1 2008/01/01 15:39:44 chris Exp $	*/
+/*	$NetBSD: i80321_aau.c,v 1.9.80.2 2008/01/20 16:04:08 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,19 +40,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.9.80.1 2008/01/01 15:39:44 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_aau.c,v 1.9.80.2 2008/01/20 16:04:08 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/uio.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <arm/xscale/i80321reg.h>
 #include <arm/xscale/i80321var.h>

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.116.2.1 2008/01/01 15:39:53 chris Exp $
+# $NetBSD: GENERIC,v 1.116.2.2 2008/01/20 16:04:10 chris Exp $
 #
 # GENERIC machine description file
 # 
@@ -72,7 +72,7 @@ file-system	UMAPFS		# NULLFS + uid and gid remapping
 file-system	UNION		# union file system
 file-system	CODA		# Coda File System; also needs vcode (below)
 file-system	PTYFS		# /dev/pts/N support
-#file-system	TMPFS		# Efficient memory file-system
+file-system	TMPFS		# Efficient memory file-system
 #file-system	UDF		# experimental - OSTA UDF CD/DVD file-system
 
 # File system options
@@ -187,11 +187,10 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	PORTMASTER	# Enable PortMaster only options
 #options 	DIAGNOSTIC	# internally consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
-#makeoptions	DEBUG="-g"	# compile full symbol table
-#options		SYMTAB_SPACE=380000
+makeoptions	DEBUG="-g"	# compile full symbol table
+options		SYMTAB_SPACE=490000
 
 config		netbsd	root on ? type ?
 

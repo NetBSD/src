@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.7.28.1 2008/01/01 15:39:43 chris Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.7.28.2 2008/01/20 16:04:06 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.7.28.1 2008/01/01 15:39:43 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.7.28.2 2008/01/20 16:04:06 chris Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -244,6 +244,7 @@ _splraise(int ipl)
 	return (becc_splraise(ipl));
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 void
 _setsoftintr(int si)
 {
@@ -251,17 +252,16 @@ _setsoftintr(int si)
 	becc_setsoftintr(si);
 }
 
-static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
-	IPL_SOFTBIO,		/* SI_SOFTBIO */
-	IPL_SOFTNET,		/* SI_SOFTNET */
-	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+static const int si_to_ipl[] = {
+	[SI_SOFTBIO]	= IPL_SOFTBIO,
+	[SI_SOFTCLOCK]	= IPL_SOFTCLOCK,
+	[SI_SOFTNET]	= IPL_SOFTNET,	
+	[SI_SOFTSERIAL]	= IPL_SOFTSERIAL,
 };               
 
 int
 becc_softint(void *arg)
 {
-#ifdef __HAVE_FAST_SOFTINTS
 	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
 	uint32_t	new, oldirqstate;
 
@@ -293,10 +293,10 @@ becc_softint(void *arg)
 	__cpu_simple_unlock(&processing);
 
 	restore_interrupts(oldirqstate);
-#endif
 
 	return 1;
 }
+#endif
 
 /*
  * becc_icu_init:
