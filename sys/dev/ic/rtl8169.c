@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.20.2.5 2007/10/27 11:30:59 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.20.2.6 2008/01/21 09:43:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,6 +33,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.20.2.6 2008/01/21 09:43:06 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -162,13 +163,8 @@ static int re_init(struct ifnet *);
 static void re_stop(struct ifnet *, int);
 static void re_watchdog(struct ifnet *);
 
-static void re_shutdown(void *);
 static int re_enable(struct rtk_softc *);
 static void re_disable(struct rtk_softc *);
-static void re_power(int, void *);
-
-static int re_ifmedia_upd(struct ifnet *);
-static void re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static int re_gmii_readreg(struct device *, int, int);
 static void re_gmii_writereg(struct device *, int, int, int);
@@ -782,8 +778,9 @@ re_attach(struct rtk_softc *sc)
 	sc->mii.mii_readreg = re_miibus_readreg;
 	sc->mii.mii_writereg = re_miibus_writereg;
 	sc->mii.mii_statchg = re_miibus_statchg;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, re_ifmedia_upd,
-	    re_ifmedia_sts);
+	sc->ethercom.ec_mii = &sc->mii;
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
@@ -793,25 +790,6 @@ re_attach(struct rtk_softc *sc)
 	 */
 	if_attach(ifp);
 	ether_ifattach(ifp, eaddr);
-
-
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(re_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	/*
-	 * Add a suspend hook to make sure we come back up after a
-	 * resume.
-	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    re_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-
 
 	return;
 
@@ -936,10 +914,6 @@ re_detach(struct rtk_softc *sc)
 	bus_dmamem_free(sc->sc_dmat,
 	    &sc->re_ldata.re_tx_listseg, sc->re_ldata.re_tx_listnseg);
 
-
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
-
 	return 0;
 }
 
@@ -975,41 +949,6 @@ re_disable(struct rtk_softc *sc)
 		sc->sc_flags &= ~RTK_ENABLED;
 	}
 }
-
-/*
- * re_power:
- *     Power management (suspend/resume) hook.
- */
-void
-re_power(int why, void *arg)
-{
-	struct rtk_softc *sc = (void *)arg;
-	struct ifnet *ifp = &sc->ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		re_stop(ifp, 0);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			re_init(ifp);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-
 
 static int
 re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
@@ -1376,20 +1315,6 @@ re_txeof(struct rtk_softc *sc)
 		ifp->if_timer = 0;
 }
 
-/*
- * Stop all chip I/O so that the kernel's probe routines don't
- * get confused by errant DMAs when rebooting.
- */
-static void
-re_shutdown(void *vsc)
-
-{
-	struct rtk_softc	*sc = vsc;
-
-	re_stop(&sc->ethercom.ec_if, 0);
-}
-
-
 static void
 re_tick(void *xsc)
 {
@@ -1457,6 +1382,9 @@ re_intr(void *arg)
 	struct ifnet		*ifp;
 	uint16_t		status;
 	int			handled = 0;
+
+	if (!device_has_power(&sc->sc_dev))
+		return 0;
 
 	ifp = &sc->ethercom.ec_if;
 
@@ -1961,34 +1889,6 @@ re_init(struct ifnet *ifp)
 	return error;
 }
 
-/*
- * Set media options.
- */
-static int
-re_ifmedia_upd(struct ifnet *ifp)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	return mii_mediachg(&sc->mii);
-}
-
-/*
- * Report current media status.
- */
-static void
-re_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_active = sc->mii.mii_media_active;
-	ifmr->ifm_status = sc->mii.mii_media_status;
-}
-
 static int
 re_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
@@ -2003,10 +1903,6 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 		if (ifr->ifr_mtu > RE_JUMBO_MTU)
 			error = EINVAL;
 		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->mii.mii_media, command);
 		break;
 	default:
 		error = ether_ioctl(ifp, command, data);

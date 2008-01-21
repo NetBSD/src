@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.45.2.4 2007/11/15 11:43:26 yamt Exp $
+#	$NetBSD: GENERIC,v 1.45.2.5 2008/01/21 09:39:18 yamt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.45.2.4 $"
+#ident		"GENERIC-$Revision: 1.45.2.5 $"
 
 # estimated number of users
 maxusers	32
@@ -147,7 +147,6 @@ options 	INSECURE		# disable kernel securelevel
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
 options 	LKM		# loadable kernel modules
 options 	KMEMSTATS	# kernel memory statistics, XXX temp required
@@ -159,9 +158,8 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
-#options 	DIAGNOSTIC	# internal consistency checks
+options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 options 	SYMTAB_SPACE=440000 	# reserve symbol space for DDB
 				# (needed because we boot netbsd.aout)
@@ -326,3 +324,7 @@ pseudo-device	ksyms			# /dev/ksyms
 #options VERIFIED_EXEC_FP_SHA512
 #options VERIFIED_EXEC_FP_SHA1
 #options VERIFIED_EXEC_FP_MD5
+
+options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+#options PAX_SEGVGUARD=0			# PaX Segmentation fault guard
+options PAX_ASLR=0			# PaX Address Space Layout Randomization

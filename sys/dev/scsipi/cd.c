@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.223.2.6 2007/12/07 17:31:07 yamt Exp $	*/
+/*	$NetBSD: cd.c,v 1.223.2.7 2008/01/21 09:44:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.223.2.6 2007/12/07 17:31:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.223.2.7 2008/01/21 09:44:33 yamt Exp $");
 
 #include "rnd.h"
 
@@ -289,6 +289,9 @@ cdattach(struct device *parent, struct device *self, void *aux)
 	rnd_attach_source(&cd->rnd_source, cd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -676,7 +679,7 @@ cdstrategy(struct buf *bp)
 			}
 
 			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
-			nbp = getiobuf_nowait();
+			nbp = getiobuf(false, NULL);
 			if (!nbp) {
 				/* No memory -- fail the iop. */
 				free(bounce, M_DEVBUF);
@@ -695,14 +698,12 @@ cdstrategy(struct buf *bp)
 			/* Set up the IOP to the bounce buffer. */
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
-			nbp->b_vp = NULLVP;
-
 			nbp->b_bcount = count;
 			nbp->b_bufsize = count;
-
 			nbp->b_rawblkno = blkno;
-
-			nbp->b_flags = bp->b_flags | B_READ | B_CALL;
+			nbp->b_flags = bp->b_flags | B_READ;
+			nbp->b_oflags = bp->b_oflags;
+			nbp->b_cflags = bp->b_cflags;
 			nbp->b_iodone = cdbounce;
 
 			/* store bounce state in b_private and use new buf */
@@ -967,7 +968,7 @@ cdbounce(struct buf *bp)
 			count = MAXPHYS;
 		}
 
-		nbp = getiobuf_nowait();
+		nbp = getiobuf(false, NULL);
 		if (!nbp) {
 			/* No memory -- fail the iop. */
 			bp->b_error = ENOMEM;
@@ -977,15 +978,13 @@ cdbounce(struct buf *bp)
 		/* Set up the IOP to the bounce buffer. */
 		nbp->b_error = 0;
 		nbp->b_proc = obp->b_proc;
-		nbp->b_vp = NULLVP;
-
 		nbp->b_bcount = count;
 		nbp->b_bufsize = count;
 		nbp->b_data = bp->b_data;
-
 		nbp->b_rawblkno = blkno;
-
-		nbp->b_flags = obp->b_flags | B_READ | B_CALL;
+		nbp->b_flags = obp->b_flags | B_READ;
+		nbp->b_oflags = obp->b_oflags;
+		nbp->b_cflags = obp->b_cflags;
 		nbp->b_iodone = cdbounce;
 
 		/* store bounce state in b_private and use new buf */
@@ -3485,4 +3484,3 @@ mmc_gettrackinfo(struct scsipi_periph *periph,
 
 	return 0;
 }
-

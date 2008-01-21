@@ -1,4 +1,4 @@
-/*	$NetBSD: emac3var.h,v 1.1 2001/10/16 15:38:33 uch Exp $	*/
+/*	$NetBSD: emac3var.h,v 1.1.38.1 2008/01/21 09:38:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,8 +60,6 @@ int emac3_tx_done(void);
 
 void emac3_setmulti(struct emac3_softc *, struct ethercom *);
 
-int emac3_ifmedia_upd(struct ifnet *);
-void emac3_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 int emac3_phy_readreg(struct device *, int, int);
 void emac3_phy_writereg(struct device *, int, int, int);
 void emac3_phy_statchg(struct device *);

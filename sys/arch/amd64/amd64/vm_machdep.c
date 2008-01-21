@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.11.2.5 2007/10/27 11:25:07 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.11.2.6 2008/01/21 09:35:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11.2.5 2007/10/27 11:25:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.11.2.6 2008/01/21 09:35:20 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_user_ldt.h"
@@ -151,7 +151,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * p1's pcb so that we can copy it.
 	 */
 	if (l1->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l1, 1);
+		fpusave_lwp(l1, true);
 
 	l2->l_md.md_flags = l1->l_md.md_flags;
 
@@ -165,29 +165,22 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 		panic("cpu_fork: curproc");
 #endif
 	*pcb = l1->l_addr->u_pcb;
+#if defined(XEN)
+	pcb->pcb_iopl = SEL_KPL;
+#endif /* defined(XEN) */
 
 	/*
-	 * Preset these so that gdt_compact() doesn't get confused if called
-	 * during the allocations below.
-	 *
 	 * Note: pcb_ldt_sel is handled in the pmap_activate() call when
 	 * we run the new process.
 	 */
-	l2->l_md.md_tss_sel = GSEL(GNULL_SEL, SEL_KPL);
-
-	/* Fix up the TSS. */
-	pcb->pcb_tss.tss_rsp0 = (u_int64_t)l2->l_addr + USPACE - 16;
-	pcb->pcb_tss.tss_ist[0] = (u_int64_t)l2->l_addr + PAGE_SIZE - 16;
-	pcb->pcb_tss.tss_ist[1] = (uint64_t)x86_64_doubleflt_stack
-	    + PAGE_SIZE - 16;
-
-	l2->l_md.md_tss_sel = tss_alloc(pcb);
 	l2->l_md.md_astpending = 0;
+
+	pcb->pcb_rsp0 = (USER_TO_UAREA(l2->l_addr) + KSTACK_SIZE - 16) & ~0xf;
 
 	/*
 	 * Copy the trapframe.
 	 */
-	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_tss.tss_rsp0 - 1;
+	l2->l_md.md_regs = tf = (struct trapframe *)pcb->pcb_rsp0 - 1;
 	*tf = *l1->l_md.md_regs;
 
 	setredzone(l2);
@@ -234,7 +227,7 @@ cpu_swapout(struct lwp *l)
 	/*
 	 * Make sure we save the FP state before the user area vanishes.
 	 */
-	fpusave_lwp(l, 1);
+	fpusave_lwp(l, true);
 }
 
 void
@@ -242,7 +235,7 @@ cpu_lwp_free(struct lwp *l, int proc)
 {
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
+		fpusave_lwp(l, false);
 
 	if (proc && l->l_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
@@ -251,8 +244,8 @@ cpu_lwp_free(struct lwp *l, int proc)
 void
 cpu_lwp_free2(struct lwp *l)
 {
-	/* Nuke the TSS. */
-	tss_free(l->l_md.md_tss_sel);
+
+	/* nothing */
 }
 
 #ifdef COREDUMP
@@ -310,8 +303,10 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
 static void
 setredzone(struct lwp *l)
 {
-	pmap_remove(pmap_kernel(), (vaddr_t)l->l_addr + PAGE_SIZE,
-	    (vaddr_t)l->l_addr + 2 * PAGE_SIZE);
+	vaddr_t addr;
+
+	addr = USER_TO_UAREA(l->l_addr);
+	pmap_remove(pmap_kernel(), addr, addr + PAGE_SIZE);
 	pmap_update(pmap_kernel());
 }
 

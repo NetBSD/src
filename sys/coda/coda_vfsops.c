@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.44.2.6 2007/12/07 17:27:36 yamt Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.44.2.7 2008/01/21 09:40:39 yamt Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.44.2.6 2007/12/07 17:27:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.44.2.7 2008/01/21 09:40:39 yamt Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -190,7 +190,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
      */
     /* Ensure that namei() doesn't run off the filename buffer */
     ((char *)data)[*data_len - 1] = 0;
-    NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, data, l);
+    NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, data);
     error = namei(&nd);
     dvp = nd.ni_vp;
 
@@ -203,7 +203,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 	vrele(dvp);
 	return(ENXIO);
     }
-    dev = dvp->v_specinfo->si_rdev;
+    dev = dvp->v_rdev;
     vrele(dvp);
     cdev = cdevsw_lookup(dev);
     if (cdev == NULL) {

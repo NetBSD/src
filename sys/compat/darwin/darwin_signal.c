@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_signal.c,v 1.19.4.4 2007/09/03 14:31:56 yamt Exp $ */
+/*	$NetBSD: darwin_signal.c,v 1.19.4.5 2008/01/21 09:40:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.19.4.4 2007/09/03 14:31:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.19.4.5 2008/01/21 09:40:48 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,16 +63,13 @@ __KERNEL_RCSID(0, "$NetBSD: darwin_signal.c,v 1.19.4.4 2007/09/03 14:31:56 yamt 
 #include <compat/darwin/darwin_syscallargs.h>
 
 int
-darwin_sys_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sigaction(struct lwp *l, const struct darwin_sys_sigaction_args *uap, register_t *retval)
 {
-	struct darwin_sys_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(struct darwin___sigaction *) nsa;
 		syscallarg(struct sigaction13 *) osa;
-	} */ *uap = v;
+	} */
 	struct darwin___sigaction dsa;
 	struct sigaction nsa, osa;
 	struct sigaction13 sa13;
@@ -107,9 +104,7 @@ darwin_sys_sigaction(l, v, retval)
 }
 
 void
-darwin_trapsignal(l, ksi)
-	struct lwp *l;
-	struct ksiginfo *ksi;
+darwin_trapsignal(struct lwp *l, struct ksiginfo *ksi)
 {
 	if (mach_trapsignal1(l, ksi) != 0)
 		trapsignal(l, ksi);
@@ -118,9 +113,7 @@ darwin_trapsignal(l, ksi)
 }
 
 int
-darwin_tracesig(p, signo)
-	struct proc *p;
-	int signo;
+darwin_tracesig(struct proc *p, int signo)
 {
 	struct darwin_emuldata *ded;
 	struct lwp *l;
@@ -146,16 +139,13 @@ darwin_tracesig(p, signo)
 }
 
 int
-darwin_sys_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_sigprocmask(struct lwp *l, const struct darwin_sys_sigprocmask_args *uap, register_t *retval)
 {
-	struct darwin_sys_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(sigset13_t *) set;
 		syscallarg(sigset13_t *) oset;
-	} */ *uap = v;
+	} */
 	int error;
 	sigset13_t kdset;
 	sigset_t kbset, kboset;
@@ -177,9 +167,7 @@ darwin_sys_sigprocmask(l, v, retval)
 }
 
 void
-native_to_darwin_siginfo(ksi, dsi)
-	const struct ksiginfo *ksi;
-	struct darwin___siginfo *dsi;
+native_to_darwin_siginfo(const struct ksiginfo *ksi, struct darwin___siginfo *dsi)
 {
 	dsi->darwin_si_signo = ksi->ksi_signo;
 	dsi->darwin_si_errno = ksi->ksi_errno;

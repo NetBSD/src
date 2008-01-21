@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.82.2.6 2007/12/07 17:31:39 yamt Exp $	*/
+/*	$NetBSD: usb.c,v 1.82.2.7 2008/01/21 09:44:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82.2.6 2007/12/07 17:31:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.82.2.7 2008/01/21 09:44:49 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -247,6 +247,9 @@ USB_ATTACH(usb)
 
 	config_pending_incr();
 	usb_kthread_create(usb_create_event_thread, sc);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -914,6 +917,7 @@ usb_detach(device_ptr_t self, int flags)
 
 	DPRINTF(("usb_detach: start\n"));
 
+	pmf_device_deregister(self);
 	/* Kill off event thread. */
 	while (sc->sc_event_thread != NULL) {
 		wakeup(&sc->sc_bus->needs_explore);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.1.2.4 2007/10/27 11:29:45 yamt Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.1.2.5 2008/01/21 09:41:51 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.1.2.4 2007/10/27 11:29:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.1.2.5 2008/01/21 09:41:51 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.1.2.4 2007/10/27 11:29:45 yamt Ex
 #include <sys/mount.h>
 #include <sys/proc.h>
 #include <sys/syscallargs.h>
+#include <sys/lwpctl.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -48,13 +49,13 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.1.2.4 2007/10/27 11:29:45 yamt Ex
 /* Sycalls conversion */
 
 int
-netbsd32__lwp_create(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_create_args /* {
+	/* {
 		syscallarg(const netbsd32_ucontextp) ucp;
 		syscallarg(netbsd32_u_long) flags;
 		syscallarg(netbsd32_lwpidp) new_lwp;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_create_args ua;
 
 	NETBSD32TOP_UAP(ucp, const ucontext_t);
@@ -65,12 +66,12 @@ netbsd32__lwp_create(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_wait(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_wait(struct lwp *l, const struct netbsd32__lwp_wait_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_wait_args /* {
+	/* {
 		syscallarg(lwpid_t) wait_for;
 		syscallarg(netbsd32_lwpidp) departed;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_wait_args ua;
 
 	NETBSD32TO64_UAP(wait_for);
@@ -79,11 +80,11 @@ netbsd32__lwp_wait(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_suspend(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_suspend(struct lwp *l, const struct netbsd32__lwp_suspend_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_suspend_args /* {
+	/* {
 		syscallarg(lwpid_t) target;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_suspend_args ua;
 
 	NETBSD32TO64_UAP(target);
@@ -91,11 +92,11 @@ netbsd32__lwp_suspend(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_continue(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_continue(struct lwp *l, const struct netbsd32__lwp_continue_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_continue_args /* {
+	/* {
 		syscallarg(lwpid_t) target;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_continue_args ua;
 
 	NETBSD32TO64_UAP(target);
@@ -103,11 +104,11 @@ netbsd32__lwp_continue(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_wakeup(struct lwp *l, const struct netbsd32__lwp_wakeup_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_wakeup_args /* {
+	/* {
 		syscallarg(lwpid_t) target;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_wakeup_args ua;
 
 	NETBSD32TO64_UAP(target);
@@ -115,11 +116,11 @@ netbsd32__lwp_wakeup(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_setprivate(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_setprivate(struct lwp *l, const struct netbsd32__lwp_setprivate_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_setprivate_args /* {
+	/* {
 		syscallarg(netbsd32_voidp) ptr;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_setprivate_args ua;
 
 	NETBSD32TOP_UAP(ptr, void);
@@ -127,14 +128,14 @@ netbsd32__lwp_setprivate(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_park(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_park(struct lwp *l, const struct netbsd32__lwp_park_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_park_args /* {
+	/* {
 		syscallarg(const netbsd32_timespecp) ts;
 		syscallarg(lwpid_t) unpark;
 		syscallarg(netbsd32_voidp) hint;
 		syscallarg(netbsd32_voidp) unparkhint;
-	} */ *uap = v;
+	} */
 	struct timespec ts, *tsp;
 	struct netbsd32_timespec ts32;
 	int error;
@@ -160,12 +161,12 @@ netbsd32__lwp_park(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_kill(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_kill(struct lwp *l, const struct netbsd32__lwp_kill_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_kill_args /* {
+	/* {
 		syscallarg(lwpid_t) target;
 		syscallarg(int) signo;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_kill_args ua;
 
 	NETBSD32TO64_UAP(target);
@@ -173,11 +174,11 @@ netbsd32__lwp_kill(struct lwp *l, void *v, register_t *retval)
 	return sys__lwp_kill(l, &ua, retval);
 }
 int
-netbsd32__lwp_detach(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_detach(struct lwp *l, const struct netbsd32__lwp_detach_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_detach_args /* {
+	/* {
 		syscallarg(lwpid_t) target;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_detach_args ua;
 
 	NETBSD32TO64_UAP(target);
@@ -185,12 +186,12 @@ netbsd32__lwp_detach(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_unpark(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_unpark(struct lwp *l, const struct netbsd32__lwp_unpark_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_unpark_args /* {
+	/* {
 		syscallarg(lwpid_t) target;
 		syscallarg(netbsd32_voidp) hint;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_unpark_args ua;
 
 	NETBSD32TO64_UAP(target);
@@ -199,17 +200,61 @@ netbsd32__lwp_unpark(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-netbsd32__lwp_unpark_all(struct lwp *l, void *v, register_t *retval)
+netbsd32__lwp_unpark_all(struct lwp *l, const struct netbsd32__lwp_unpark_all_args *uap, register_t *retval)
 {
-	struct netbsd32__lwp_unpark_all_args /* {
+	/* {
 		syscallarg(const netbsd32_lwpidp) targets;
 		syscallarg(netbsd32_size_t) ntargets;
 		syscallarg(netbsd32_voidp) hint;
-	} */ *uap = v;
+	} */
 	struct sys__lwp_unpark_all_args ua;
 
 	NETBSD32TOP_UAP(targets, const lwpid_t);
 	NETBSD32TOX_UAP(ntargets, size_t);
 	NETBSD32TOP_UAP(hint, void);
 	return sys__lwp_unpark_all(l, &ua, retval);
+}
+
+int
+netbsd32__lwp_setname(struct lwp *l, const struct netbsd32__lwp_setname_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(lwpid_t) target;
+		syscallarg(const netbsd32_charp) name;
+	} */
+	struct sys__lwp_setname_args ua;
+
+	NETBSD32TO64_UAP(target);
+	NETBSD32TOP_UAP(name, char *);
+	return sys__lwp_setname(l, &ua, retval);
+}
+
+int
+netbsd32__lwp_getname(struct lwp *l, const struct netbsd32__lwp_getname_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(lwpid_t) target;
+		syscallarg(netbsd32_charp) name;
+		syscallarg(netbsd32_size_t) len;
+	} */
+	struct sys__lwp_getname_args ua;
+
+	NETBSD32TO64_UAP(target);
+	NETBSD32TOP_UAP(name, char *);
+	NETBSD32TOX_UAP(len, size_t);
+	return sys__lwp_getname(l, &ua, retval);
+}
+
+int
+netbsd32__lwp_ctl(struct lwp *l, const struct netbsd32__lwp_ctl_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) features;
+		syscallarg(netbsd32_pointer_t) address;
+	} */
+	struct sys__lwp_ctl_args ua;
+
+	NETBSD32TO64_UAP(features);
+	NETBSD32TOP_UAP(address, struct lwpctl *);
+	return sys__lwp_ctl(l, &ua, retval);
 }

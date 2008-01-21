@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.30.2.4 2007/09/03 14:23:47 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30.2.5 2008/01/21 09:36:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,12 +77,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.4 2007/09/03 14:23:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30.2.5 2008/01/21 09:36:00 yamt Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_hpux.h"
 #include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_panicbutton.h"

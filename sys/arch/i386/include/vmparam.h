@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.58.10.4 2007/10/27 11:26:46 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.58.10.5 2008/01/21 09:37:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,6 +38,7 @@
 #define _VMPARAM_H_
 
 #include <sys/tree.h>
+#include <sys/mutex.h>
 
 /*
  * Machine dependent constants for 386.
@@ -113,6 +114,7 @@
  */
 #ifdef _KERNEL_OPT
 #include "opt_uvm.h"
+#include "opt_xen.h"
 #endif
 #define __USE_TOPDOWN_VM
 #define VM_DEFAULT_ADDRESS(da, sz) \
@@ -126,32 +128,31 @@
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
+#ifdef XEN
+#define VM_PHYSSEG_MAX		1
+#else
 #define VM_PHYSSEG_MAX		10	/* 1 "hole" + 9 free lists */
+#endif /* XEN */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 #define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
 
+#ifdef XEN
+#define	VM_NFREELIST		1
+#else
 #define	VM_NFREELIST		2
-#define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_FIRST16	1
+#endif /* XEN */
+#define	VM_FREELIST_DEFAULT	0
+
+#include <x86/pmap_pv.h>
 
 #define	__HAVE_VM_PAGE_MD
-#define	VM_MDPAGE_INIT(pg)							\
-	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage));				\
-	mutex_init(&(pg)->mdpage.mp_pvhead.pvh_lock, MUTEX_NODEBUG, IPL_VM);	\
-	SPLAY_INIT(&(pg)->mdpage.mp_pvhead.pvh_root);
-
-struct pv_entry;
-
-struct pv_head {
-	kmutex_t pvh_lock;		/* locks every pv in this tree */
-	SPLAY_HEAD(pvtree, pv_entry) pvh_root;
-					/* head of tree (locked by pvh_lock) */
-};
+#define	VM_MDPAGE_INIT(pg) \
+	memset(&(pg)->mdpage, 0, sizeof((pg)->mdpage)); \
+	PMAP_PAGE_INIT(&(pg)->mdpage.mp_pp)
 
 struct vm_page_md {
-	struct pv_head mp_pvhead;
-	struct vm_page *mp_link;
-	int mp_attrs;	/* only 2 bits (PG_U and PG_M) are actually used. */
+	struct pmap_page mp_pp;
 };
 
 #endif /* _VMPARAM_H_ */

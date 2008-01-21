@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi_acpi.c,v 1.1.8.3 2007/10/27 11:30:03 yamt Exp $ */
+/* $NetBSD: pcppi_acpi.c,v 1.1.8.4 2008/01/21 09:42:33 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.1.8.3 2007/10/27 11:30:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.1.8.4 2008/01/21 09:42:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,15 +47,15 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi_acpi.c,v 1.1.8.3 2007/10/27 11:30:03 yamt Exp 
 
 #include <dev/isa/pcppivar.h>
 
-static int	pcppi_acpi_match(struct device *, struct cfdata *, void *);
-static void	pcppi_acpi_attach(struct device *, struct device *, void *);
+static int	pcppi_acpi_match(device_t, struct cfdata *, void *);
+static void	pcppi_acpi_attach(device_t, device_t, void *);
 
 struct pcppi_acpi_softc {
 	struct pcppi_softc sc_pcppi;
 };
 
 CFATTACH_DECL(pcppi_acpi, sizeof(struct pcppi_acpi_softc), pcppi_acpi_match,
-    pcppi_acpi_attach, NULL, NULL);
+    pcppi_acpi_attach, pcppi_detach, NULL);
 
 /*
  * Supported device IDs
@@ -70,8 +70,7 @@ static const char * const pcppi_acpi_ids[] = {
  * pcppi_acpi_match: autoconf(9) match routine
  */
 static int
-pcppi_acpi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+pcppi_acpi_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct acpi_attach_args *aa = aux;
 
@@ -85,10 +84,9 @@ pcppi_acpi_match(struct device *parent, struct cfdata *match,
  * pcppi_acpi_attach: autoconf(9) attach routine
  */
 static void
-pcppi_acpi_attach(struct device *parent, struct device *self,
-    void *aux)
+pcppi_acpi_attach(device_t parent, device_t self, void *aux)
 {
-	struct pcppi_acpi_softc *asc = (struct pcppi_acpi_softc *)self;
+	struct pcppi_acpi_softc *asc = device_private(self);
 	struct pcppi_softc *sc = &asc->sc_pcppi;
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
@@ -113,7 +111,8 @@ pcppi_acpi_attach(struct device *parent, struct device *self,
 	}
 
 	sc->sc_iot = aa->aa_iot;
-	if (bus_space_map(sc->sc_iot, io->ar_base, io->ar_length,
+	sc->sc_size = io->ar_length;
+	if (bus_space_map(sc->sc_iot, io->ar_base, sc->sc_size,
 		    0, &sc->sc_ppi_ioh)) {
 		aprint_error("%s: can't map i/o space\n", sc->sc_dv.dv_xname);
 		goto out;

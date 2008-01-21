@@ -1,4 +1,4 @@
-/*	$NetBSD: timekeeper.c,v 1.8 2003/11/01 22:48:01 tsutsui Exp $	*/
+/*	$NetBSD: timekeeper.c,v 1.8.16.1 2008/01/21 09:37:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.8 2003/11/01 22:48:01 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: timekeeper.c,v 1.8.16.1 2008/01/21 09:37:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,4 @@ timekeeper_attach(parent, self, aux)
 	printf(" Time-Keeper RAM\n");
 	printf("%s: %ld bytes NVRAM plus Realtime Clock\n",
 	    sc->sc_dev.dv_xname, sc->sc_nvramsz);
-
-	todr_attach(&sc->sc_handle);
 }

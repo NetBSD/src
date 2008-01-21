@@ -1,4 +1,4 @@
-/*	$NetBSD: intc.c,v 1.2 2003/07/15 02:54:37 lukem Exp $	*/
+/*	$NetBSD: intc.c,v 1.2.16.1 2008/01/21 09:38:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc.c,v 1.2 2003/07/15 02:54:37 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc.c,v 1.2.16.1 2008/01/21 09:38:15 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -125,7 +125,7 @@ intc_intr(u_int32_t mask)
 			if (bit & dispatch) {
 				intc_intr_disable(i);
 				printf("%s: spurious interrupt %d disabled.\n",
-				    __FUNCTION__, i);
+				    __func__, i);
 			}
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77.16.3 2007/10/27 11:25:25 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.77.16.4 2008/01/21 09:35:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -291,6 +291,10 @@ void	pmap_devmap_register(const struct pmap_devmap *);
 bool	pmap_pageidlezero(paddr_t);
 #define PMAP_PAGEIDLEZERO(pa)	pmap_pageidlezero((pa))
 
+/*
+ * used by dumpsys to record the PA of the L1 table
+ */
+uint32_t pmap_kernel_L1_addr(void);
 /*
  * The current top of kernel VM
  */

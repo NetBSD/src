@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.3.16.4 2007/12/07 17:24:06 yamt Exp $	*/
+/*	$NetBSD: profile.h,v 1.3.16.5 2008/01/21 09:35:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,9 @@
 #include "opt_xen.h"
 #endif
 
-#include <machine/atomic.h>
+#ifdef _KERNEL
+#include <machine/lock.h>
+#endif
 
 #define	_MCOUNT_DECL void _mcount
 
@@ -86,11 +88,7 @@ __cpu_simple_lock_t __mcount_lock;
 static inline void
 MCOUNT_ENTER_MP(void)
 {
-	while (x86_atomic_testset_b(&__mcount_lock, __SIMPLELOCK_LOCKED)
-	    != __SIMPLELOCK_UNLOCKED) {
-		while (__mcount_lock == __SIMPLELOCK_LOCKED)
-			;
-	}
+	__cpu_simple_lock(&__mcount_lock);
 	__insn_barrier();
 }
 

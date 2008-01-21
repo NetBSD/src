@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.8.8.1 2007/09/03 14:26:26 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.8.8.2 2008/01/21 09:36:46 yamt Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.14 2001/05/09 15:31:24 art Exp $	*/
 
@@ -82,6 +82,7 @@
 #ifndef	_HPPA_PMAP_H_
 #define	_HPPA_PMAP_H_
 
+#include <sys/simplelock.h>
 #include <machine/pte.h>
 
 typedef

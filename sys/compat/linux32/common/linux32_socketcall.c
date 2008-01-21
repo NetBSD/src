@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socketcall.c,v 1.1.16.3 2007/09/03 14:32:31 yamt Exp $ */
+/*	$NetBSD: linux32_socketcall.c,v 1.1.16.4 2008/01/21 09:41:36 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -31,7 +31,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.1.16.3 2007/09/03 14:32:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.1.16.4 2008/01/21 09:41:36 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include <sys/types.h>
@@ -55,45 +55,43 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_socketcall.c,v 1.1.16.3 2007/09/03 14:32:31 
 #include <compat/linux32/common/linux32_socketcall.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
-#define s(f) sizeof(struct s1(f))
-#define s1(f) f ## _args
+#define sc(emul, fn) { #fn, sizeof (struct emul##_##fn##_args), \
+	(int (*)(struct lwp *, const void *, register_t *))emul##_##fn }
 
 static const struct {
 	const char *name;
 	int argsize;
-	int (*syscall)(struct lwp *, void *, register_t *);
+	int (*syscall)(struct lwp *, const void *, register_t *);
 } linux32_socketcall[LINUX32_MAX_SOCKETCALL+1] = {
 	{"invalid",	-1, NULL},
-	{"socket",	s(linux32_sys_socket), linux32_sys_socket},
-	{"bind",	s(linux32_sys_bind), linux32_sys_bind},
-	{"connect",	s(linux32_sys_connect), linux32_sys_connect},
-	{"listen",	s(netbsd32_listen), netbsd32_listen},
-	{"accept",	s(linux32_sys_accept), linux32_sys_accept},
-	{"getsockname",	s(linux32_sys_getsockname), linux32_sys_getsockname},
-	{"getpeername",	s(linux32_sys_getpeername), linux32_sys_getpeername},
-	{"socketpair",	s(linux32_sys_socketpair), linux32_sys_socketpair},
-	{"send",	s(linux32_sys_send), linux32_sys_send},
-	{"recv",	s(linux32_sys_recv), linux32_sys_recv},
-	{"sendto",	s(linux32_sys_sendto), linux32_sys_sendto},
-	{"recvfrom",	s(linux32_sys_recvfrom), linux32_sys_recvfrom},
-	{"shutdown",	s(netbsd32_shutdown), netbsd32_shutdown},
-	{"setsockopt",	s(linux32_sys_setsockopt), linux32_sys_setsockopt},
-	{"getsockopt",	s(linux32_sys_getsockopt), linux32_sys_getsockopt},
-	{"sendmsg",	s(linux32_sys_sendmsg), linux32_sys_sendmsg},
-	{"recvmsg",	s(linux32_sys_recvmsg), linux32_sys_recvmsg},
+	sc(linux32_sys, socket),
+	sc(linux32_sys, bind),
+	sc(linux32_sys, connect),
+	sc(netbsd32, listen),
+	sc(linux32_sys, accept),
+	sc(linux32_sys, getsockname),
+	sc(linux32_sys, getpeername),
+	sc(linux32_sys, socketpair),
+	sc(linux32_sys, send),
+	sc(linux32_sys, recv),
+	sc(linux32_sys, sendto),
+	sc(linux32_sys, recvfrom),
+	sc(netbsd32, shutdown),
+	sc(linux32_sys, setsockopt),
+	sc(linux32_sys, getsockopt),
+	sc(linux32_sys, sendmsg),
+	sc(linux32_sys, recvmsg),
 };
-#undef s
+#undef sc
+
 
 int
-linux32_sys_socketcall(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_socketcall(struct lwp *l, const struct linux32_sys_socketcall_args *uap, register_t *retval)
 {
-	struct linux32_sys_socketcall_args /* {
+	/* {
 		syscallarg(int) what;
 		syscallarg(netbsd32_voidp) args;
-	} */ *uap = v;
+	} */
 	union linux32_socketcall_args ua;
 	int error;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_socksys.h,v 1.4.4.2 2007/12/07 17:27:45 yamt Exp $	*/
+/*	$NetBSD: ibcs2_socksys.h,v 1.4.4.3 2008/01/21 09:41:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -117,6 +117,12 @@ struct socknewproto {
 	int flags;
 };
 
-int ibcs2_socksys(struct lwp *, void *, register_t *);
+struct ibcs2_socksys_args {
+	int     fd;
+	int     magic;
+	void *argsp;
+};
+
+int ibcs2_socksys(struct lwp *, const struct ibcs2_socksys_args *, register_t *);
 
 #endif /* _IBCS2_SOCKSYS_H */

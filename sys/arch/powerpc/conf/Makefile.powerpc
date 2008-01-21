@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.35.2.1 2006/06/21 14:54:49 yamt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.35.2.2 2008/01/21 09:38:20 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -92,7 +92,7 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-setfault.o: assym.h
+lock_stubs.o setfault.o: assym.h
 
 ##
 ## (7) misc settings

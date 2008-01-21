@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.41.2.4 2007/12/07 17:27:37 yamt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.41.2.5 2008/01/21 09:40:40 yamt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.41.2.4 2007/12/07 17:27:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.41.2.5 2008/01/21 09:40:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,7 +517,7 @@ coda_ioctl(void *v)
        lookupname sooner or later anyway, right? */
 
     NDINIT(&ndp, LOOKUP, (iap->follow ? FOLLOW : NOFOLLOW), UIO_USERSPACE,
-	iap->path, curlwp);
+	iap->path);
     error = namei(&ndp);
     tvp = ndp.ni_vp;
 
@@ -825,7 +825,7 @@ coda_inactive(void *v)
     struct vop_inactive_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    kauth_cred_t cred __attribute__((unused)) = NULL;
+    kauth_cred_t cred __unused = NULL;
 
     /* We don't need to send inactive to venus - DCS */
     MARK_ENTRY(CODA_INACTIVE_STATS);
@@ -872,7 +872,7 @@ coda_inactive(void *v)
 	    printf("coda_inactive: %p ovp != NULL\n", vp);
 	}
 	VOP_UNLOCK(vp, 0);
-	vgone(vp);
+	*ap->a_recycle = true;
     }
 
     MARK_INT_SAT(CODA_INACTIVE_STATS);
@@ -896,7 +896,7 @@ coda_lookup(void *v)
     /* name to lookup */
     struct componentname *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     struct cnode *cp;
     const char *nm = cnp->cn_nameptr;
@@ -1060,7 +1060,7 @@ coda_create(void *v)
     struct vnode **vpp = ap->a_vpp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     struct cnode *cp;
@@ -1157,7 +1157,7 @@ coda_remove(void *v)
     struct vnode *vp = ap->a_vp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1232,7 +1232,7 @@ coda_link(void *v)
     struct cnode *dcp = VTOC(dvp);
     struct componentname *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1302,7 +1302,7 @@ coda_rename(void *v)
     struct cnode *ndcp = VTOC(ndvp);
     struct componentname  *tcnp = ap->a_tcnp;
     kauth_cred_t cred = fcnp->cn_cred;
-    struct lwp *l = fcnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* true args */
     int error;
     const char *fnm = fcnp->cn_nameptr;
@@ -1395,7 +1395,7 @@ coda_mkdir(void *v)
     struct vattr *va = ap->a_vap;
     struct vnode **vpp = ap->a_vpp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1481,7 +1481,7 @@ coda_rmdir(void *v)
     struct vnode *vp = ap->a_vp;
     struct componentname  *cnp = ap->a_cnp;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* true args */
     int error;
     const char *nm = cnp->cn_nameptr;
@@ -1548,7 +1548,7 @@ coda_symlink(void *v)
     struct vattr *tva = ap->a_vap;
     char *path = ap->a_target;
     kauth_cred_t cred = cnp->cn_cred;
-    struct lwp *l = cnp->cn_lwp;
+    struct lwp *l = curlwp;
 /* locals */
     int error;
     u_long saved_cn_flags;
@@ -1700,11 +1700,11 @@ coda_bmap(void *v)
     /* XXX on the global proc */
 /* true args */
     struct vop_bmap_args *ap = v;
-    struct vnode *vp __attribute__((unused)) = ap->a_vp;	/* file's vnode */
-    daddr_t bn __attribute__((unused)) = ap->a_bn;	/* fs block number */
+    struct vnode *vp __unused = ap->a_vp;	/* file's vnode */
+    daddr_t bn __unused = ap->a_bn;	/* fs block number */
     struct vnode **vpp = ap->a_vpp;			/* RETURN vp of device */
-    daddr_t *bnp __attribute__((unused)) = ap->a_bnp;	/* RETURN device block number */
-    struct lwp *l __attribute__((unused)) = curlwp;
+    daddr_t *bnp __unused = ap->a_bnp;	/* RETURN device block number */
+    struct lwp *l __unused = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -1725,8 +1725,8 @@ coda_strategy(void *v)
 {
 /* true args */
     struct vop_strategy_args *ap = v;
-    struct buf *bp __attribute__((unused)) = ap->a_bp;
-    struct lwp *l __attribute__((unused)) = curlwp;
+    struct buf *bp __unused = ap->a_bp;
+    struct lwp *l __unused = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -2002,7 +2002,7 @@ coda_getpages(void *v)
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
 		printf("coda_getpages: control object %p\n", vp);
-		simple_unlock(&vp->v_uobj.vmobjlock);
+		mutex_exit(&vp->v_uobj.vmobjlock);
 		return(EINVAL);
 	}
 
@@ -2017,7 +2017,7 @@ coda_getpages(void *v)
 	waslocked = VOP_ISLOCKED(vp);
 
 	/* Drop the vmobject lock. */
-	simple_unlock(&vp->v_uobj.vmobjlock);
+	mutex_exit(&vp->v_uobj.vmobjlock);
 
 	/* Get container file if not already present. */
 	if (cp->c_ovp == NULL) {
@@ -2065,7 +2065,7 @@ coda_getpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call getpages on it. */
-	simple_lock(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 
 	/* If we opened the vnode, we must close it. */
@@ -2106,7 +2106,7 @@ coda_putpages(void *v)
 	int error;
 
 	/* Drop the vmobject lock. */
-	simple_unlock(&vp->v_uobj.vmobjlock);
+	mutex_exit(&vp->v_uobj.vmobjlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
@@ -2127,7 +2127,7 @@ coda_putpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call putpages on it. */
-	simple_lock(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 
 	return error;

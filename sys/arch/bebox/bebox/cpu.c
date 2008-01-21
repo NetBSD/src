@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.5.16.1 2007/10/27 11:25:29 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.5.16.2 2008/01/21 09:35:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5.16.1 2007/10/27 11:25:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.5.16.2 2008/01/21 09:35:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,20 +51,20 @@ int cpumatch(struct device *, struct cfdata *, void *);
 void cpuattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(cpu, sizeof(struct device),
- cpumatch, cpuattach, NULL, NULL);
+    cpumatch, cpuattach, NULL, NULL);
 
 extern struct cfdriver cpu_cd;
 
 int
 cpumatch(struct device *parent, struct cfdata *cfdata, void *aux)
 {
-  struct confargs *ca = aux;
+	struct confargs *ca = aux;
   
-  if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
-    return (0);
-  if (cpu_info[0].ci_dev != NULL)
-    return (0);
-  return (1);
+	if (strcmp(ca->ca_name, cpu_cd.cd_name) != 0)
+		return (0);
+	if (cpu_info[0].ci_dev != NULL)
+		return (0);
+	return (1);
 }
 
 void

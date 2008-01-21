@@ -1,4 +1,4 @@
-/*	$NetBSD: sif.c,v 1.4 2005/06/26 19:55:14 he Exp $	*/
+/*	$NetBSD: sif.c,v 1.4.2.1 2008/01/21 09:38:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.4 2005/06/26 19:55:14 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sif.c,v 1.4.2.1 2008/01/21 09:38:16 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -54,10 +54,10 @@ int __spd_total_alloc;
 int	sif_debug = 1;
 #define	DPRINTF(fmt, args...)						\
 	if (sif_debug)							\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args) 
 #define	DPRINTFN(n, arg)						\
 	if (sif_debug > (n))						\
-n		printf("%s: " fmt, __FUNCTION__ , ##args) 
+n		printf("%s: " fmt, __func__ , ##args) 
 #else
 #define	DPRINTF(arg...)		((void)0)
 #define DPRINTFN(n, arg...)	((void)0)
@@ -116,7 +116,7 @@ iopdma_allocate_buffer(struct iopdma_segment *seg, size_t size)
 	seg->iop_paddr = iopmem_alloc(seg->size);
 
 	if (seg->iop_paddr == 0) {
-		printf("%s: can't allocate IOP memory.\n", __FUNCTION__);
+		printf("%s: can't allocate IOP memory.\n", __func__);
 		DPRINTF("request = %d byte, current total = %#x\n",
 		    size, __spd_total_alloc);
 		return (1);

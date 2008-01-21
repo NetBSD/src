@@ -1,4 +1,4 @@
-/* $Id: cmos.c,v 1.1.6.2 2007/02/26 09:07:03 yamt Exp $ */
+/*	$NetBSD: cmos.c,v 1.1.6.3 2008/01/21 09:37:09 yamt Exp $	*/
 
 /*
  * Copyright (C) 2003 JONE System Co., Inc.
@@ -63,6 +63,10 @@
  * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: cmos.c,v 1.1.6.3 2008/01/21 09:37:09 yamt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

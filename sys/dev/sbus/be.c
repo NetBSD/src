@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.45.6.4 2007/10/27 11:34:05 yamt Exp $	*/
+/*	$NetBSD: be.c,v 1.45.6.5 2008/01/21 09:44:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.45.6.4 2007/10/27 11:34:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.45.6.5 2008/01/21 09:44:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1077,7 +1077,7 @@ beinit(sc)
 	u_int32_t v;
 	u_int32_t qecaddr;
 	u_int8_t *ea;
-	int s;
+	int rc, s;
 
 	s = splnet();
 
@@ -1159,11 +1159,14 @@ beinit(sc)
 	v |= BE_BR_RXCFG_FIFO | BE_BR_RXCFG_ENABLE;
 	bus_space_write_4(t, br, BE_BRI_RXCFG, v);
 
+	if ((rc = be_ifmedia_upd(ifp)) != 0)
+		goto out;
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	be_ifmedia_upd(ifp);
 	callout_reset(&sc->sc_tick_ch, hz, be_tick, sc);
+out:
 	splx(s);
 }
 
@@ -1509,8 +1512,10 @@ be_ifmedia_upd(ifp)
 	struct be_softc *sc = ifp->if_softc;
 	int error;
 
-	if ((error = mii_mediachg(&sc->sc_mii)) != 0)
-		return (error);
+	if ((error = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		error = 0;
+	else if (error != 0)
+		return error;
 
 	return (be_intphy_service(sc, &sc->sc_mii, MII_MEDIACHG));
 }

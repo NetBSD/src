@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.4.2.2 2007/09/03 14:33:10 yamt Exp $ */
+/* $NetBSD: cgdvar.h,v 1.4.2.3 2008/01/21 09:42:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _DEV_CGDVAR_H_
 #define	_DEV_CGDVAR_H_
+
+#include <sys/simplelock.h>
 
 /* ioctl(2) code */
 struct cgd_ioctl {

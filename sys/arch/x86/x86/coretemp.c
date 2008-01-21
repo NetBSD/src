@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.1.10.3 2007/12/07 17:26:59 yamt Exp $ */
+/* $NetBSD: coretemp.c,v 1.1.10.4 2008/01/21 09:40:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,17 +36,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.10.3 2007/12/07 17:26:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.10.4 2008/01/21 09:40:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
+#include <sys/cpu.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <machine/cpu.h>
 #include <machine/cpuvar.h>
 #include <machine/specialreg.h>
+#include <machine/cpufunc.h>
 
 struct coretemp_softc {
 	struct cpu_info		*sc_ci;

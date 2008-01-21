@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_taskq.c,v 1.4.2.2 2007/12/07 17:31:26 yamt Exp $	*/
+/*	$NetBSD: sysmon_taskq.c,v 1.4.2.3 2008/01/21 09:44:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -41,11 +41,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.4.2.2 2007/12/07 17:31:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_taskq.c,v 1.4.2.3 2008/01/21 09:44:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>

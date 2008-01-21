@@ -1,4 +1,4 @@
-/*      $NetBSD: sa1111.c,v 1.12.2.3 2007/09/03 14:23:24 yamt Exp $	*/
+/*      $NetBSD: sa1111.c,v 1.12.2.4 2008/01/21 09:35:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.12.2.3 2007/09/03 14:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa1111.c,v 1.12.2.4 2008/01/21 09:35:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,18 +149,10 @@ sacc_intr_establish(sacc_chipset_tag_t *ic, int irq, int type, int level,
 		panic("sacc_intr_establish: type must be unique");
 
 	/* install intr handler */
-#if defined(__GENERIC_SOFT_INTERRUPTS_ALL_LEVELS)
-	ih->ih_soft = softintr_establish(level, (void (*)(void *)) ih_fun,
-					 ih_arg);
-#else
 	/* map interrupt level to appropriate softinterrupt level */
-	if (level >= IPL_SOFTSERIAL)
-		level = IPL_SOFTSERIAL;
-	else if (level >= IPL_SOFTNET)
-		level = IPL_SOFTNET;
-	ih->ih_soft = softintr_establish(level, (void (*)(void *)) ih_fun,
+	level = SOFTINT_SERIAL;
+	ih->ih_soft = softint_establish(level, (void (*)(void *)) ih_fun,
 					 ih_arg);
-#endif
 	ih->ih_irq = irq;
 	ih->ih_next = NULL;
 

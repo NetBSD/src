@@ -1,4 +1,4 @@
-#	$NetBSD: majors.zaurus,v 1.1.4.2 2006/12/30 20:47:28 yamt Exp $
+#	$NetBSD: majors.zaurus,v 1.1.4.3 2008/01/21 09:40:38 yamt Exp $
 #
 # Device majors for zaurus
 #
@@ -92,7 +92,6 @@ device-major	clockctl	char 94			clockctl
 device-major	irframe		char 95			irframedrv
 device-major	cir		char 96			cir
 device-major	radio		char 97			radio
-device-major	systrace	char 98			systrace
 device-major	kttcp		char 99			kttcp
 device-major	ixpcom		char 100		ixpcom
 device-major	sysmon		char 101		sysmon_envsys | sysmon_wdog | sysmon_power

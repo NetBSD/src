@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socketcall.c,v 1.29.2.2 2007/09/03 14:32:26 yamt Exp $	*/
+/*	$NetBSD: linux_socketcall.c,v 1.29.2.3 2008/01/21 09:41:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.29.2.2 2007/09/03 14:32:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socketcall.c,v 1.29.2.3 2008/01/21 09:41:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -119,15 +119,12 @@ static const struct {
  * make and take appropriate action.
  */
 int
-linux_sys_socketcall(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_socketcall(struct lwp *l, const struct linux_sys_socketcall_args *uap, register_t *retval)
 {
-	struct linux_sys_socketcall_args /* {
+	/* {
 		syscallarg(int) what;
 		syscallarg(void *) args;
-	} */ *uap = v;
+	} */
 	struct linux_socketcall_dummy_args lda;
 	int error;
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.10.2.7 2007/12/07 17:27:00 yamt Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.10.2.8 2008/01/21 09:40:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.7 2007/12/07 17:27:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.8 2008/01/21 09:40:15 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -80,10 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.7 2007/12/07 17:27:00 yamt Exp $")
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/kernel.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.10.2.7 2007/12/07 17:27:00 yamt Exp $")
 #include <machine/mpbiosvar.h>
 #include <machine/pio.h>
 #include <machine/pmap.h>
+#include <machine/lock.h>
 
 #include "acpi.h"
 #include "opt_mpbios.h"
@@ -389,6 +391,10 @@ ioapic_attach(struct device *parent, struct device *self, void *aux)
 			    sc->sc_pic.pic_apicid);
 		}
 	}
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 #if 0
 	/* output of this was boring. */
 	if (mp_verbose)
@@ -468,6 +474,31 @@ ioapic_enable(void)
 		outb(IMCR_ADDR, IMCR_REGISTER);
 		outb(IMCR_DATA, IMCR_APIC);
 	}
+}
+
+void
+ioapic_reenable(void)
+{
+	int p;
+	struct ioapic_softc *sc;
+
+	if (ioapics == NULL)
+		return;
+
+	aprint_normal("%s reenabling\n", device_xname(&ioapics->sc_pic.pic_dev));
+
+	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
+		ioapic_write(sc,IOAPIC_ID,
+		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
+		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+
+		for (p = 0; p < sc->sc_apic_sz; p++) {
+			apic_set_redir(sc, p, sc->sc_pins[p].ip_vector,
+				    sc->sc_pins[p].ip_cpu);
+		}
+	}
+
+	ioapic_enable();
 }
 
 void

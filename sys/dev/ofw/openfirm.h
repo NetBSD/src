@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.20.2.4 2007/11/15 11:44:15 yamt Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.20.2.5 2008/01/21 09:43:31 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -92,9 +92,9 @@ int	OF_seek(int, u_quad_t);
 void	*OF_claim(void *, u_int, u_int);
 void	OF_release(void *, u_int);
 int	OF_milliseconds(void);
-void	OF_boot(const char *) __attribute__((__noreturn__));
+void	OF_boot(const char *) __dead;
 void	OF_enter(void);
-void	OF_exit(void) __attribute__((__noreturn__));
+void	OF_exit(void) __dead;
 int	OF_interpret(const char *, int, int, ...);
 void	(*OF_set_callback(void(*)(void *)))(void *);
 int	openfirmware(void *);

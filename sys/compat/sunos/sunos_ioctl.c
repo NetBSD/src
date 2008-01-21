@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.50.2.4 2007/12/07 17:29:02 yamt Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.50.2.5 2008/01/21 09:42:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.50.2.4 2007/12/07 17:29:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.50.2.5 2008/01/21 09:42:02 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_execfmt.h"
@@ -127,9 +127,7 @@ static void stio2stios(struct sunos_termio *, struct sunos_termios *);
  */
 
 static void
-stios2btios(st, bt)
-	struct sunos_termios *st;
-	struct termios *bt;
+stios2btios(struct sunos_termios *st, struct termios *bt)
 {
 	u_long l, r;
 
@@ -249,9 +247,7 @@ stios2btios(st, bt)
 
 
 static void
-btios2stios(bt, st)
-	struct termios *bt;
-	struct sunos_termios *st;
+btios2stios(struct termios *bt, struct sunos_termios *st)
 {
 	u_long l, r;
 	int s;
@@ -378,9 +374,7 @@ btios2stios(bt, st)
 }
 
 static void
-stios2stio(ts, t)
-	struct sunos_termios *ts;
-	struct sunos_termio *t;
+stios2stio(struct sunos_termios *ts, struct sunos_termio *t)
 {
 	t->c_iflag = ts->c_iflag;
 	t->c_oflag = ts->c_oflag;
@@ -391,9 +385,7 @@ stios2stio(ts, t)
 }
 
 static void
-stio2stios(t, ts)
-	struct sunos_termio *t;
-	struct sunos_termios *ts;
+stio2stios(struct sunos_termio *t, struct sunos_termios *ts)
 {
 	ts->c_iflag = t->c_iflag;
 	ts->c_oflag = t->c_oflag;
@@ -404,20 +396,18 @@ stio2stios(t, ts)
 }
 
 int
-sunos_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_t *retval)
 {
-	struct sunos_sys_ioctl_args /* {
+	/* {
 		int	fd;
 		u_long	com;
 		void *	data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	int (*ctl)(struct file *, u_long, void *, struct lwp *);
+	struct sys_ioctl_args pass_ua;
 	int error;
 
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
@@ -431,11 +421,12 @@ sunos_sys_ioctl(l, v, retval)
 	}
 
 	error = EPASSTHROUGH;
+	SCARG(&pass_ua, com) = SCARG(uap, com);
 	ctl = fp->f_ops->fo_ioctl;
 
 	switch (SCARG(uap, com)) {
 	case _IOR('t', 0, int):
-		SCARG(uap, com) = TIOCGETD;
+		SCARG(&pass_ua, com) = TIOCGETD;
 		break;
 	case _IOW('t', 1, int):
 	    {
@@ -520,7 +511,7 @@ sunos_sys_ioctl(l, v, retval)
 		break;
 	    }
 	case _IOW('t', 130, int):	/* TIOCSETPGRP: posix variant */
-		SCARG(uap, com) = TIOCSPGRP;
+		SCARG(&pass_ua, com) = TIOCSPGRP;
 		break;
 	case _IOR('t', 131, int):	/* TIOCGETPGRP: posix variant */
 	    {
@@ -546,7 +537,7 @@ sunos_sys_ioctl(l, v, retval)
 		break;
 	    }
 	case _IO('t', 132):
-		SCARG(uap, com) = TIOCSCTTY;
+		SCARG(&pass_ua, com) = TIOCSCTTY;
 		break;
 	case SUNOS_TCGETA:
 	case SUNOS_TCGETS:
@@ -914,8 +905,11 @@ sunos_sys_ioctl(l, v, retval)
 
 out:
 	FILE_UNUSE(fp, l);
-	if (error == EPASSTHROUGH)
-		error = sys_ioctl(l, uap, retval);
+	if (error == EPASSTHROUGH) {
+		SCARG(&pass_ua, fd) = SCARG(uap, fd);
+		SCARG(&pass_ua, data) = SCARG(uap, data);
+		error = sys_ioctl(l, &pass_ua, retval);
+	}
 	return (error);
 }
 
@@ -943,9 +937,7 @@ static void sunos_to_bsd_flock(struct sunos_flock *, struct flock *);
 #define SUNOS_F_UNLCK	3
 
 static void
-bsd_to_sunos_flock(iflp, oflp)
-	struct flock		*iflp;
-	struct sunos_flock	*oflp;
+bsd_to_sunos_flock(struct flock *iflp, struct sunos_flock *oflp)
 {
 	switch (iflp->l_type) {
 	case F_RDLCK:
@@ -971,9 +963,7 @@ bsd_to_sunos_flock(iflp, oflp)
 
 
 static void
-sunos_to_bsd_flock(iflp, oflp)
-	struct sunos_flock	*iflp;
-	struct flock		*oflp;
+sunos_to_bsd_flock(struct sunos_flock *iflp, struct flock *oflp)
 {
 	switch (iflp->l_type) {
 	case SUNOS_F_RDLCK:
@@ -1018,14 +1008,15 @@ static struct {
 };
 
 int
-sunos_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sunos_sys_fcntl(struct lwp *l, const struct sunos_sys_fcntl_args *uap, register_t *retval)
 {
-	struct sunos_sys_fcntl_args *uap = v;
 	long flg;
 	int n, ret;
+	struct sys_fcntl_args bsd_ua;
+
+	SCARG(&bsd_ua, fd) = SCARG(uap, fd);
+	SCARG(&bsd_ua, cmd) = SCARG(uap, cmd);
+	SCARG(&bsd_ua, arg) = SCARG(uap, arg);
 
 
 	switch (SCARG(uap, cmd)) {
@@ -1038,7 +1029,7 @@ sunos_sys_fcntl(l, v, retval)
 				flg |= sunfcntl_flgtab[n].bsd_flg;
 			}
 		}
-		SCARG(uap, arg) = (void *)flg;
+		SCARG(&bsd_ua, arg) = (void *)flg;
 		break;
 
 	case F_GETLK:
@@ -1076,9 +1067,9 @@ sunos_sys_fcntl(l, v, retval)
 		break;
 	}
 
-	ret = sys_fcntl(l, uap, retval);
+	ret = sys_fcntl(l, &bsd_ua, retval);
 
-	switch (SCARG(uap, cmd)) {
+	switch (SCARG(&bsd_ua, cmd)) {
 	case F_GETFL:
 		n = sizeof(sunfcntl_flgtab) / sizeof(sunfcntl_flgtab[0]);
 		while (--n >= 0) {

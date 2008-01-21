@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_timer.c,v 1.11.2.4 2007/12/07 17:24:20 yamt Exp $	*/
+/*	$NetBSD: i80321_timer.c,v 1.11.2.5 2008/01/21 09:35:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.11.2.4 2007/12/07 17:24:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_timer.c,v 1.11.2.5 2008/01/21 09:35:51 yamt Exp $");
 
 #include "opt_perfctrs.h"
 #include "opt_i80321.h"
@@ -68,9 +68,7 @@ void	(*i80321_hardclock_hook)(void);
 #endif
 #define	COUNTS_PER_USEC		(COUNTS_PER_SEC / 1000000)
 
-#ifdef __HAVE_TIMECOUNTER
 static void tmr1_tc_init(void);
-#endif
 
 static void *clock_ih;
 
@@ -125,8 +123,6 @@ trr0_write(uint32_t val)
 		: "r" (val));
 }
 
-#ifdef __HAVE_TIMECOUNTER
-
 static inline uint32_t
 tmr1_read(void)
 {
@@ -173,8 +169,6 @@ trr1_write(uint32_t val)
 		:
 		: "r" (val));
 }
-
-#endif /* __HAVE_TIMECOUNTER */
 
 static inline void
 tisr_write(uint32_t val)
@@ -225,17 +219,6 @@ cpu_initclocks(void)
 		aprint_error("Cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
-#ifndef __HAVE_TIMECOUNTER
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-	}
-#endif
 
 	/*
 	 * We only have one timer available; stathz and profhz are
@@ -282,9 +265,7 @@ cpu_initclocks(void)
 
 	restore_interrupts(oldirqstate);
 
-#ifdef	__HAVE_TIMECOUNTER
 	tmr1_tc_init();
-#endif
 }
 
 /*
@@ -304,53 +285,6 @@ setstatclockrate(int newhz)
 	 * XXX Use TMR1?
 	 */
 }
-
-#ifndef __HAVE_TIMECOUNTER
-
-/*
- * microtime:
- *
- *	Fill in the specified timeval struct with the current time
- *	accurate to the microsecond.
- */
-void
-microtime(struct timeval *tvp)
-{
-	static struct timeval lasttv;
-	u_int oldirqstate;
-	uint32_t counts;
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-	counts = counts_per_hz - tcr0_read();
-
-	/* Fill in the timeval struct. */
-	*tvp = time;
-	tvp->tv_usec += (counts / COUNTS_PER_USEC);
-
-	/* Make sure microseconds doesn't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	/* Make sure the time has advanced. */
-	if (tvp->tv_sec == lasttv.tv_sec &&
-	    tvp->tv_usec <= lasttv.tv_usec) {
-		tvp->tv_usec = lasttv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-
-	lasttv = *tvp;
-
-	restore_interrupts(oldirqstate);
-}
-
-
-#else
 
 static inline uint32_t
 tmr1_tc_get(struct timecounter *tch)
@@ -379,7 +313,6 @@ tmr1_tc_init(void)
 	trr1_write(~0);
 	tc_init(&tmr1_tc);
 }
-#endif
 
 /*
  * delay:

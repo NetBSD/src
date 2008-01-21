@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.16.2.3 2007/10/27 11:27:16 yamt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.16.2.4 2008/01/21 09:37:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.2.3 2007/10/27 11:27:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.16.2.4 2008/01/21 09:37:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ readdisklabel(dev, strat, lp, clp)
 		return "error reading disklabel";
 
 	/* Check for NetBSD label in second sector */
-	dlp = (struct disklabel *)((char *)bp->b_un.b_addr + LABELOFFSET);
+	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC)
 		if (!dkcksum(dlp)) {
 			memcpy(lp, dlp, LABELSIZE(dlp));
@@ -120,7 +120,7 @@ readdisklabel(dev, strat, lp, clp)
 	if (err)
 		return "error reading volume header";
 
-	mvp = (struct mips_volheader *)bp->b_un.b_addr;
+	mvp = (struct mips_volheader *)bp->b_data;
 	/* Check for MIPS RISC/os volume header */
 	if (mvp->vh_magic == MIPS_VHMAGIC)
 		return disklabel_mips_to_bsd(mvp, lp);
@@ -226,7 +226,8 @@ writedisklabel(dev, strat, lp, clp)
 		goto ioerror;
 
 	/* Write MIPS RISC/os label to first sector */
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags &= ~(B_READ);
+	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
@@ -238,7 +239,8 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
-	bp->b_flags &= ~(B_READ | B_DONE);
+	bp->b_flags &= ~(B_READ);
+	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

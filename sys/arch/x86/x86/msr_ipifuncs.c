@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.9.14.3 2007/10/27 11:29:03 yamt Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.9.14.4 2008/01/21 09:40:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,22 +34,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.9.14.3 2007/10/27 11:29:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.9.14.4 2008/01/21 09:40:16 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/mutex.h>
-#include <sys/lock.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <x86/cpu_msr.h>
 
-#include <machine/cpu.h>
 #include <machine/intrdefs.h>
+#include <machine/cpufunc.h>
 
 static kmutex_t msr_mtx;
 static volatile uint64_t msr_setvalue, msr_setmask;
-static volatile int msr_type, msr_runcount, msr_read;
+static volatile int msr_type, msr_read;
+static volatile u_int msr_runcount;
 
 
 /*
@@ -78,7 +80,7 @@ msr_write_ipi(struct cpu_info *ci)
 	wrmsr(msr_type, msr);
 
 	/* This cpu has finished making all tasks, update the counter. */
-	__asm volatile ("lock; incl (%0)" :: "r" (&msr_runcount));
+	atomic_inc_uint(&msr_runcount);
 }
 
 /*
@@ -108,7 +110,7 @@ msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 	 * Issue a full memory barrier, to make sure the operations
 	 * are done in a serialized way.
 	 */
-	mb_memory();
+	membar_sync();
 
 	/* Run the IPI write handler in the CPUs. */
 	msr_write_ipi(curcpu());
@@ -132,5 +134,6 @@ msr_cpu_broadcast(struct msr_cpu_broadcast *mcb)
 void
 msr_cpu_broadcast_initmtx(void)
 {
-	mutex_init(&msr_mtx, MUTEX_DRIVER, IPL_NONE);
+
+	mutex_init(&msr_mtx, MUTEX_DEFAULT, IPL_NONE);
 }

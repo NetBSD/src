@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.23.4.2 2006/12/30 20:47:06 yamt Exp $
+# $NetBSD: FOURMEG,v 1.23.4.3 2008/01/21 09:39:38 yamt Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.23.4.2 $"
+#ident 		"FOURMEG-$Revision: 1.23.4.3 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -46,10 +46,11 @@ options		PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 # Compatibility options
 #options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
 #options 	COMPAT_43	# and 4.3BSD and ...
+options 	COMPAT_16	# NetBSD 1.6
+options 	COMPAT_20	# NetBSD 2.0
+options 	COMPAT_30	# NetBSD 3.0
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	COMPAT_AOUT_M68K # support for NetBSD a.out executables
-options 	COMPAT_16
-options 	COMPAT_20
-options 	COMPAT_30	# NetBSD 3.0 compatibility.
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 options 	EXEC_AOUT	# support for a.out executables
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

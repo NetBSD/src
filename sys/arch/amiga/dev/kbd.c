@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.47.2.2 2007/09/03 14:22:55 yamt Exp $ */
+/*	$NetBSD: kbd.c,v 1.47.2.3 2008/01/21 09:35:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.47.2.2 2007/09/03 14:22:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.47.2.3 2008/01/21 09:35:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -724,7 +724,7 @@ kbdstuffchar(u_char c)
 	}
 	fe->id = KEY_CODE(c);
 	fe->value = KEY_UP(c) ? VKEY_UP : VKEY_DOWN;
-	fe->time = time;
+	getmicrotime(&fe->time);
 	k->k_events.ev_put = put;
 	EV_WAKEUP(&k->k_events);
 }

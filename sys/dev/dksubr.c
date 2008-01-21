@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.15.2.4 2007/12/07 17:29:16 yamt Exp $ */
+/* $NetBSD: dksubr.c,v 1.15.2.5 2008/01/21 09:42:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.4 2007/12/07 17:29:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.15.2.5 2008/01/21 09:42:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,7 +637,7 @@ dk_lookup(const char *path, struct lwp *l, struct vnode **vpp,
 	if (l == NULL)
 		return ESRCH;	/* Is ESRCH the best choice? */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, segflg, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, segflg, path);
 	if ((error = vn_open(&nd, FREAD | FWRITE, 0)) != 0) {
 		DPRINTF((DKDB_FOLLOW|DKDB_INIT),
 		    ("dk_lookup: vn_open error = %d\n", error));

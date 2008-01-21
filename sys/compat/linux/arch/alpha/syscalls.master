@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.51.2.4 2007/12/07 17:27:50 yamt Exp $
+	$NetBSD: syscalls.master,v 1.51.2.5 2008/01/21 09:41:09 yamt Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -41,7 +41,6 @@
 ;			(i.e. reboot, msgrcv? )
 ;		make sure linux_foo() matches expected prototypes in .c files.
 ;		kill not used functions.  (ifdef the actual code)
-;		fix getfsuid in linux_misc.c
 ;		make linux_sys_sigreturn in linux_machdep.c use frame.extramask
 ;
 ; NOT USED = This syscall is not really used in Linux, except in its
@@ -387,7 +386,7 @@
 210	NOARGS		{ int linux_sys_shmctl(int shmid, int cmd, \
 			    struct linux_shmid_ds *buf); }
 211	NOARGS		{ int sys_shmdt(const void *shmaddr); }
-212	STD		{ int linux_sys_shmget(key_t key, size_t size, int shmflg); }
+212	NOARGS		{ int linux_sys_shmget(key_t key, size_t size, int shmflg); }
 #else
 209	UNIMPL		shmat
 210	UNIMPL		shmctl
@@ -414,7 +413,7 @@
 230	UNIMPL
 231	UNIMPL
 232	UNIMPL
-233	STD		{ int linux_sys_getpgid(int pid); }
+233	NOARGS		{ pid_t sys_getpgid(pid_t pid); }
 234	NOARGS		{ pid_t sys_getsid(pid_t pid); }
 235	UNIMPL		sigaltstack
 236	UNIMPL
@@ -519,7 +518,7 @@
 323	STD		{ int linux_sys_times(struct times *tms); }
 324	STD		{ int linux_sys_personality(int per); }
 325	STD		{ int linux_sys_setfsuid(uid_t uid); }
-326	UNIMPL		setfsgid
+326	STD		{ int linux_sys_setfsgid(gid_t gid); }
 327	UNIMPL		ustat
 328	STD		{ int linux_sys_statfs(const char *path, \
 			    struct linux_statfs *sp); }

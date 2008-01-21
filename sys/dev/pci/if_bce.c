@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.8.6.3 2007/09/03 14:36:52 yamt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.8.6.4 2008/01/21 09:43:51 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,6 +35,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.8.6.4 2008/01/21 09:43:51 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -185,8 +186,6 @@ static	void	bce_set_filter(struct ifnet *);
 static	int	bce_mii_read(struct device *, int, int);
 static	void	bce_mii_write(struct device *, int, int, int);
 static	void	bce_statchg(struct device *);
-static	int	bce_mediachange(struct ifnet *);
-static	void	bce_mediastatus(struct ifnet *, struct ifmediareq *);
 static	void	bce_tick(void *);
 
 #define BCE_DEBUG
@@ -469,8 +468,10 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	sc->bce_mii.mii_readreg = bce_mii_read;
 	sc->bce_mii.mii_writereg = bce_mii_write;
 	sc->bce_mii.mii_statchg = bce_statchg;
-	ifmedia_init(&sc->bce_mii.mii_media, 0, bce_mediachange,
-	    bce_mediastatus);
+
+	sc->ethercom.ec_mii = &sc->bce_mii;
+	ifmedia_init(&sc->bce_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->bce_dev, &sc->bce_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->bce_mii.mii_phys) == NULL) {
@@ -520,23 +521,13 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 static int
 bce_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct bce_softc *sc = ifp->if_softc;
-	struct ifreq   *ifr = (struct ifreq *) data;
 	int             s, error;
 
 	s = splnet();
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->bce_mii.mii_media, cmd);
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/* change multicast list */
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/* change multicast list */
+		error = 0;
 	}
 
 	/* Try to get more packets going. */
@@ -1032,7 +1023,8 @@ bce_init(struct ifnet *ifp)
 	    BCE_NRXDESC * sizeof(struct bce_dma_slot));
 
 	/* set media */
-	mii_mediachg(&sc->bce_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		return error;
 
 	/* turn on the ethernet mac */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_ENET_CTL,
@@ -1491,28 +1483,6 @@ bce_statchg(struct device *self)
 	/* enable traffic meter led mode */
 	bce_mii_write((struct device *) sc, 1, 26,	/* MAGIC */
 	    bce_mii_read((struct device *) sc, 1, 27) | (1 << 6));	/* MAGIC */
-}
-
-/* Set hardware to newly-selected media */
-int
-bce_mediachange(struct ifnet *ifp)
-{
-	struct bce_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->bce_mii);
-	return (0);
-}
-
-/* Get the current interface media status */
-static void
-bce_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct bce_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->bce_mii);
-	ifmr->ifm_active = sc->bce_mii.mii_media_active;
-	ifmr->ifm_status = sc->bce_mii.mii_media_status;
 }
 
 /* One second timer, checks link status */

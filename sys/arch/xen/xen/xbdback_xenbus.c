@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.3.4.4 2007/12/07 17:27:23 yamt Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.3.4.5 2008/01/21 09:40:36 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -953,6 +953,8 @@ xbdback_co_io_gotreq(struct xbdback_instance *xbdi, void *obj)
 static void *
 xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 {
+	struct xbdback_io *xio;
+
 	(void)obj;
 	if (xbdi->xbdi_segno < xbdi->xbdi_xen_req.nr_segments) {
 		uint8_t this_fs, this_ls, last_fs, last_ls;
@@ -1014,7 +1016,9 @@ xbdback_co_io_loop(struct xbdback_instance *xbdi, void *obj)
 
 		if (xbdi->xbdi_io == NULL) {
 			xbdi->xbdi_cont = xbdback_co_io_gotio;
-			return xbdback_pool_get(&xbdback_io_pool, xbdi);
+			xio = xbdback_pool_get(&xbdback_io_pool, xbdi);
+			buf_init(&xio->xio_buf);
+			return xio;
 		} else {
 			xbdi->xbdi_cont = xbdback_co_io_gotio2;
 		}
@@ -1045,16 +1049,18 @@ xbdback_co_io_gotio(struct xbdback_instance *xbdi, void *obj)
 	start_offset = xbdi->xbdi_this_fs * VBD_BSIZE;
 	
 	if (xbdi->xbdi_xen_req.operation == BLKIF_OP_WRITE) {
-		buf_flags = B_WRITE | B_CALL;
+		buf_flags = B_WRITE;
 	} else {
-		buf_flags = B_READ | B_CALL;
+		buf_flags = B_READ;
 	}
 
-	BUF_INIT(&xbd_io->xio_buf);
 	xbd_io->xio_buf.b_flags = buf_flags;
+	xbd_io->xio_buf.b_cflags = 0;
+	xbd_io->xio_buf.b_oflags = 0;
 	xbd_io->xio_buf.b_iodone = xbdback_iodone;
 	xbd_io->xio_buf.b_proc = NULL;
 	xbd_io->xio_buf.b_vp = xbdi->xbdi_vp;
+	xbd_io->xio_buf.b_objlock = &xbdi->xbdi_vp->v_interlock;
 	xbd_io->xio_buf.b_dev = xbdi->xbdi_dev;
 	xbd_io->xio_buf.b_blkno = xbdi->xbdi_next_sector;
 	xbd_io->xio_buf.b_bcount = 0;
@@ -1249,6 +1255,7 @@ xbdback_iodone(struct buf *bp)
 		xbdback_pool_put(&xbdback_request_pool, xbd_req);
 	}
 	xbdi_put(xbdi);
+	buf_destroy(&xbd_io->xio_buf);
 	xbdback_pool_put(&xbdback_io_pool, xbd_io);
 }
 

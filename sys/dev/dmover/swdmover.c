@@ -1,4 +1,4 @@
-/*	$NetBSD: swdmover.c,v 1.8.4.1 2007/09/03 14:33:36 yamt Exp $	*/
+/*	$NetBSD: swdmover.c,v 1.8.4.2 2008/01/21 09:42:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -49,10 +49,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.8.4.1 2007/09/03 14:33:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swdmover.c,v 1.8.4.2 2008/01/21 09:42:44 yamt Exp $");
 
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/kthread.h>
 #include <sys/systm.h>
 #include <sys/uio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vr4122ip.c,v 1.5 2003/07/15 02:29:35 lukem Exp $	*/
+/*	$NetBSD: vr4122ip.c,v 1.5.16.1 2008/01/21 09:36:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 TAKEMURA Shin
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr4122ip.c,v 1.5 2003/07/15 02:29:35 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr4122ip.c,v 1.5.16.1 2008/01/21 09:36:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-
-#include <machine/bus.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include "opt_vr41xx.h"
 #include <hpcmips/vr/vrcpudef.h>

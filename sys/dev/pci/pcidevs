@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.725.2.7 2007/12/07 17:30:28 yamt Exp $
+$NetBSD: pcidevs,v 1.725.2.8 2008/01/21 09:44:08 yamt Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -827,6 +827,7 @@ product ADP2 PERC_2QC		0x1364	Dell PERC 2/QC
 /* XXX guess */
 product ADP2 PERC_3QC		0x1365	Dell PERC 3/QC
 product ADP2 HP_M110_G2		0x3227	HP M110 G2 / ASR-2610SA
+product ADP2 SERVERAID		0x0250	ServeRAID 6/7 (marco)
 
 /* Addtron Products */
 product ADDTRON 8139	0x1360	8139 Ethernet
@@ -1007,6 +1008,7 @@ product APPLE U3_PPB4		0x0048	U3 PCI-PCI bridge
 product APPLE U3_PPB5		0x0049	U3 PCI-PCI bridge
 product APPLE U3_AGP		0x004b	U3 AGP Interface
 product APPLE K2_GMAC		0x004c	GMAC Ethernet
+product APPLE SHASTA_GMAC	0x0051	Shasta GMAC
 product APPLE INTREPID2_AGP	0x0066	Intrepid 2 AGP
 product APPLE INTREPID2_PCI1	0x0067	Intrepid 2 PCI
 product APPLE INTREPID2_PCI2	0x0068	Intrepid 2 PCI
@@ -1982,7 +1984,7 @@ product IBM MCABRIDGE2	0x0020	MCA Bridge
 product IBM 82351	0x0022	82351 PCI-PCI Bridge
 product IBM MONNAV	0x002c	Montana/Nevada PCI Bridge and Memory Controller
 product IBM PYTHON	0x002d	Python PCI-PCI Bridge
-product IBM SERVERAID	0x002e	ServeRAID
+product IBM SERVERAID	0x002e	ServeRAID (copperhead)
 product IBM GXT250P	0x003c	GXT-250P Graphics Adapter
 product IBM OLYMPIC	0x003e	16/4 Token Ring
 product IBM MIAMI	0x0036	Miami/PCI
@@ -2005,7 +2007,7 @@ product IBM GXT4000P	0x016e	GXT-4000P Graphics Adapter
 product IBM GXT6000P	0x0170	GXT-6000P Graphics Adapter
 product IBM GXT300P	0x017d	GXT-300P Graphics Adapter
 product IBM 133PCIX	0x01a7	133 PCI-X Bridge
-product IBM SERVERAID4	0x01bd	ServeRAID 4/5
+product IBM SERVERAID4	0x01bd	ServeRAID 4/5 (morpheus)
 product IBM 440GP	0x01ef	PPC 440GP PCI Bridge
 product IBM IBMETHER	0x01ff	10/100 Ethernet
 product IBM GXT6500P	0x021b	GXT-6500P Graphics Adapter
@@ -2121,6 +2123,7 @@ product INTEL 82571EB_FIBER	0x105f	i82571EB 1000baseX Ethernet
 product INTEL 82571EB_SERDES	0x1060	i82571EB Gigabit Ethernet (SERDES)
 product INTEL 82801FB_LAN	0x1064	82801FB 10/100 Ethernet
 product INTEL PRO_100_VE_5	0x1068	PRO/100 VE (LOM) Network Controller
+product INTEL 82801GB_LAN	0x1069	82801GB 10/100 Ethernet
 product INTEL 82547GI		0x1075	i82547GI Gigabit Ethernet
 product INTEL 82541GI		0x1076	i82541GI Gigabit Ethernet
 product INTEL 82541GI_MOBILE	0x1077	i82541GI Mobile Gigabit Ethernet
@@ -2148,6 +2151,7 @@ product INTEL 82546GB_QUAD_COPPER_KSP3 0x10b5 i82546GB quad-port Gigabit Etherne
 product INTEL 82572EI		0x10b9	i82572EI 1000baseT Ethernet
 product INTEL 80K3LAN_CPR_SPT 0x10ba	i80003 1000baseT Ethernet
 product INTEL 80K3LAN_SDS_SPT 0x10bb	i80003 Gigabit Ethernet (SERDES)
+product	INTEL 82571GB_QUAD_COPPER 0x10bc i82571GB quad 1000baseT Ethernet
 product INTEL 82801I_IGP_AMT	0x10bd	82801I (AMT) LAN Controller
 product INTEL 82801I_IFE	0x10c0	82801I LAN Controller
 product INTEL 82801I_IFE_G	0x10c2	82801I (G) LAN Controller
@@ -2792,7 +2796,7 @@ product SYMBIOS 895A			0x0012	53c895A
 product SYMBIOS 875A			0x0013	53c875A
 product SYMBIOS 1010			0x0020	53c1010
 product SYMBIOS 1010_2			0x0021	53c1010 (66MHz)
-product SYMBIOS 1030			0x0030	53c1030
+product SYMBIOS 1030			0x0030	53c1020/53c1030
 product SYMBIOS 1030R			0x1030	53c1030R
 product SYMBIOS 1030ZC			0x0031	53c1030ZC
 product SYMBIOS 1035			0x0040	53c1035
@@ -3084,7 +3088,7 @@ product NVIDIA	MCP65_MEM	0x0444	nForce MCP65 Memory Controller
 product NVIDIA	MCP65_MEM2	0x0445	nForce MCP65 Memory Controller
 product NVIDIA	MCP65_SMB	0x0446	nForce MCP65 SMBus Controller
 product NVIDIA	MCP65_IDE	0x0448	nForce MCP65 ATA133 IDE Controller
-product NVIDIA	MCP65_PCI	0x0449  nForce MCP65 PCI Brige
+product NVIDIA	MCP65_PCI	0x0449  nForce MCP65 PCI Bridge
 product NVIDIA	MCP65_HDA_1	0x044a	nForce MCP65 High Definition Audio Controller
 product NVIDIA	MCP65_HDA_2	0x044b	nForce MCP65 High Definition Audio Controller
 product NVIDIA	MCP65_AHCI_1	0x044c  nForce MCP65 AHCI Controller

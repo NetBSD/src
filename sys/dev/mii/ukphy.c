@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.24.12.2 2006/12/30 20:48:38 yamt Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.24.12.3 2008/01/21 09:43:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.24.12.2 2006/12/30 20:48:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.24.12.3 2008/01/21 09:43:30 yamt Exp $");
 
 #include "opt_mii.h"
 
@@ -175,6 +175,9 @@ ukphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -182,9 +185,6 @@ ukphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

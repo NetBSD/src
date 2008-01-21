@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.21.2.5 2007/12/07 17:27:00 yamt Exp $	*/
+/*	$NetBSD: intr.c,v 1.21.2.6 2008/01/21 09:40:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.2.5 2007/12/07 17:27:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.21.2.6 2008/01/21 09:40:15 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -214,7 +214,7 @@ intr_default_setup(void)
 
 	/* icu vectors */
 	for (i = 0; i < NUM_LEGACY_IRQS; i++) {
-		idt_allocmap[ICU_OFFSET + i] = 1;
+		idt_vec_reserve(ICU_OFFSET + i);
 		setgate(&idt[ICU_OFFSET + i],
 		    i8259_stubs[i].ist_entry, 0, SDT_SYS386IGT,
 		    SEL_KPL, GSEL(GCODE_SEL, SEL_KPL));
@@ -224,6 +224,61 @@ intr_default_setup(void)
 	 * Eventually might want to check if it's actually there.
 	 */
 	i8259_default_setup();
+}
+
+struct nmi_handler {
+	int				(*n_func)(void *);
+	void				*n_arg;
+	SLIST_ENTRY(nmi_handler)	n_next;
+};
+
+SLIST_HEAD(nmi_handler_head, nmi_handler) nmi_handlers =
+    SLIST_HEAD_INITIALIZER(nmi_handler_head);
+
+void *
+nmi_establish(int (*func)(void *), void *arg)
+{
+	struct nmi_handler *n;
+
+	n = malloc(sizeof(*n), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+
+	if (n == NULL)
+		return NULL;
+
+	n->n_func = func;
+	n->n_arg = arg;
+	SLIST_INSERT_HEAD(&nmi_handlers, n, n_next);
+	KASSERT(SLIST_FIRST(&nmi_handlers) == n);
+	return n;
+}
+
+bool
+nmi_disestablish(void *n0)
+{
+	struct nmi_handler *n;
+
+	SLIST_FOREACH(n, &nmi_handlers, n_next) {
+		if (n == n0)
+			break;
+	}
+	if (n == NULL)
+		return false;
+	SLIST_REMOVE(&nmi_handlers, n, nmi_handler, n_next);
+	free(n, M_DEVBUF);
+	return true;
+}
+
+int
+nmi_dispatch(void)
+{
+	int handled = 0;
+	struct nmi_handler *n;
+
+	SLIST_FOREACH(n, &nmi_handlers, n_next) {
+		if ((*n->n_func)(n->n_arg))
+			handled = 1;
+	}
+	return handled;
 }
 
 /*
@@ -913,6 +968,9 @@ cpu_intr_init(struct cpu_info *ci)
 #if defined(INTRSTACKSIZE)
 	cp = (char *)uvm_km_alloc(kernel_map, INTRSTACKSIZE, 0, UVM_KMF_WIRED);
 	ci->ci_intrstack = cp + INTRSTACKSIZE - sizeof(register_t);
+#if defined(__x86_64__)
+	ci->ci_tss.tss_ist[0] = (uintptr_t)ci->ci_intrstack & ~0xf;
+#endif /* defined(__x86_64__) */
 #endif /* defined(INTRSTACKSIZE) */
 	ci->ci_idepth = -1;
 }

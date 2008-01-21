@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.8.2.1 2007/09/03 14:25:33 yamt Exp $
+# $NetBSD: Makefile.hp700,v 1.8.2.2 2008/01/21 09:36:32 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -32,30 +32,17 @@ GENASSYM_CONF=	${HP700}/hp700/genassym.cf
 ## (2) compile settings
 ##
 CPPFLAGS+=	-Dhppa -Dhp700
-.if ${IDENT:M-DDDB} != ""
-COPTS+=		-fno-omit-frame-pointer
-.endif
-.if ${IDENT:M-DHP7000_CPU} != ""
-COPTS+=		-mpa-risc-1-0 -mschedule=700
-.elif ${IDENT:M-DHP8*_CPU} != ""
-COPTS+=		-mpa-risc-2-0
-.else
-COPTS+=		-mpa-risc-1-1
-.endif
-.if ${IDENT:M-DHP*_CPU} == ${IDENT:M-DHP7100LC_CPU}
-# XXX they said gcc has bugs in 7100lc scheduling
-#COPTS+=	-mschedule=7100LC
-.endif
-.if ${IDENT:M-DFPEMUL} != ""
-COPTS+=	-msoft-float -mdisable-fpregs
+CFLAGS+=	-mpa-risc-1-1 -msoft-float -mdisable-fpregs
+
 .include "${HPPA}/spmath/Makefile.inc"
+
 .ifndef PROF
 LIBSPMATH=	${SPMATH}
 .else
 LIBSPMATH=	${SPMATH_PROF}
 .endif
-.endif
-COPTS+=		-mno-space-regs -mfast-indirect-calls -mportable-runtime
+
+CFLAGS+=	-mno-space-regs -mfast-indirect-calls -mportable-runtime
 APPFLAGS=	-x assembler-with-cpp -P -traditional ${CPPFLAGS} -D_LOCORE
 
 # Do NOT assume the compiler does "-x funny_format" (gcc-specific)

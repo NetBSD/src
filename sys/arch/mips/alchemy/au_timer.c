@@ -1,4 +1,4 @@
-/* $NetBSD: au_timer.c,v 1.3.4.3 2007/09/03 14:27:52 yamt Exp $ */
+/* $NetBSD: au_timer.c,v 1.3.4.4 2008/01/21 09:37:30 yamt Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.3.4.3 2007/09/03 14:27:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_timer.c,v 1.3.4.4 2008/01/21 09:37:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -128,7 +128,7 @@ au_cal_timers(bus_space_tag_t st, bus_space_handle_t sh)
 	 * On the SB1 these appear to be 40-72 clocks for DIV/DIVU and 3
 	 * clocks for MUL/MULTU.
 	 *
-	 * The strategy we use to to calculate the reciprical of cycles
+	 * The strategy we use to to calculate the reciprocal of cycles
 	 * per MHz, scaled by 1<<32.  Then we can simply issue a MULTU
 	 * and pluck of the HI register and have the results of the
 	 * division.

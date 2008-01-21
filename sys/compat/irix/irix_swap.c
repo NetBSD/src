@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_swap.c,v 1.13.4.3 2007/09/03 14:32:09 yamt Exp $ */
+/*	$NetBSD: irix_swap.c,v 1.13.4.4 2008/01/21 09:41:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.13.4.3 2007/09/03 14:32:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.13.4.4 2008/01/21 09:41:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -63,15 +63,12 @@ __KERNEL_RCSID(0, "$NetBSD: irix_swap.c,v 1.13.4.3 2007/09/03 14:32:09 yamt Exp 
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_swapctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_swapctl(struct lwp *l, const struct irix_sys_swapctl_args *uap, register_t *retval)
 {
-	struct irix_sys_swapctl_args /* {
+	/* {
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 	struct sys_swapctl_args cup;
 	int error = 0;
 

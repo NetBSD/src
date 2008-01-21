@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_sockio.c,v 1.9.4.4 2007/12/07 17:29:11 yamt Exp $	 */
+/*	$NetBSD: svr4_32_sockio.c,v 1.9.4.5 2008/01/21 09:42:13 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.9.4.4 2007/12/07 17:29:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_sockio.c,v 1.9.4.5 2008/01/21 09:42:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -73,8 +73,7 @@ static int bsd_to_svr4_flags(int);
 	if (bf & __CONCAT(I,a))	sf |= __CONCAT(SVR4_I,a)
 
 static int
-bsd_to_svr4_flags(bf)
-	int bf;
+bsd_to_svr4_flags(int bf)
 {
 	int sf = 0;
 	bsd_to_svr4_flag(FF_UP);
@@ -92,13 +91,7 @@ bsd_to_svr4_flags(bf)
 }
 
 int
-svr4_32_sock_ioctl(fp, l, retval, fd, cmd, data)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	void *data;
+svr4_32_sock_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *data)
 {
 	int error;
 	int (*ctl)(struct file *, u_long, void *, struct lwp *) =

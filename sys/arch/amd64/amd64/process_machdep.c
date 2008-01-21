@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.6.2.3 2007/09/03 14:22:33 yamt Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.6.2.4 2008/01/21 09:35:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6.2.3 2007/09/03 14:22:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.6.2.4 2008/01/21 09:35:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,9 @@ process_read_regs(struct lwp *l, struct reg *regs)
 {
 	struct trapframe *tf = process_frame(l);
 
-	memcpy(regs, tf, sizeof (*regs));
+#define copy_to_reg(reg, REG, idx) regs->regs[_REG_##REG] = tf->tf_##reg;
+	_FRAME_GREG(copy_to_reg)
+#undef copy_to_reg
 
 	return (0);
 }
@@ -115,7 +117,7 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 	struct fxsave64 *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		fpusave_lwp(l, 1);
+		fpusave_lwp(l, true);
 	} else {
 		u_int16_t cw;
 		u_int32_t mxcsr, mxcsr_mask;
@@ -157,7 +159,9 @@ process_write_regs(struct lwp *l, const struct reg *regp)
 	if (error != 0)
 		return error;
 
-	memcpy(tf, regs, sizeof (*tf));
+#define copy_to_frame(reg, REG, idx) tf->tf_##reg = regs[_REG_##REG];
+	_FRAME_GREG(copy_to_frame)
+#undef copy_to_frame
 
 	return (0);
 }
@@ -168,7 +172,7 @@ process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 	struct fxsave64 *frame = process_fpframe(l);
 
 	if (l->l_md.md_flags & MDP_USEDFPU) {
-		fpusave_lwp(l, 0);
+		fpusave_lwp(l, false);
 	} else {
 		l->l_md.md_flags |= MDP_USEDFPU;
 	}

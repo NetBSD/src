@@ -1,4 +1,4 @@
-/*	$NetBSD: diskwr.c,v 1.2 1996/05/17 19:50:40 chuck Exp $	*/
+/*	$NetBSD: diskwr.c,v 1.2.84.1 2008/01/21 09:37:47 yamt Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -11,8 +11,7 @@
 
 /* returns 0: success, nonzero: error */
 int
-mvmeprom_diskwr(arg)
-	struct mvmeprom_dskio *arg;
+mvmeprom_diskwr(struct mvmeprom_dskio *arg)
 {
 	int ret;
 

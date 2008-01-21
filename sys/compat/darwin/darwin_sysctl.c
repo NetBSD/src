@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.36.2.4 2007/09/03 14:31:57 yamt Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.36.2.5 2008/01/21 09:40:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.4 2007/09/03 14:31:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.36.2.5 2008/01/21 09:40:50 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -286,9 +286,8 @@ SYSCTL_SETUP(sysctl_darwin_emul_setup, "darwin emulated sysctl tree setup")
 
 
 int
-darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
+darwin_sys___sysctl(struct lwp *l, const struct darwin_sys___sysctl_args *uap, register_t *retval)
 {
-	struct darwin_sys___sysctl_args *uap = v;
 	int error, nerror, name[CTL_MAXNAME];
 	size_t savelen = 0, oldlen = 0;
 
@@ -317,24 +316,14 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	ktrmib(name, SCARG(uap, namelen));
 
 	/*
-	 * wire old so that copyout() is less likely to fail?
-	 */
-	error = sysctl_lock(l, SCARG(uap, oldp), savelen);
-	if (error)
-		return (error);
-
-	/*
 	 * dispatch request into darwin sysctl tree
 	 */
+	sysctl_lock(SCARG(uap, newp) != NULL);
 	error = sysctl_dispatch(&name[0], SCARG(uap, namelen),
 				SCARG(uap, oldp), &oldlen,
 				SCARG(uap, newp), SCARG(uap, newlen),
 				&name[0], l, &darwin_sysctl_root);
-
-	/*
-	 * release the sysctl lock
-	 */
-	sysctl_unlock(l);
+	sysctl_unlock();
 
 	/*
 	 * reset caller's oldlen, even if we got an error
@@ -439,7 +428,7 @@ SYSCTL_SETUP(sysctl_emul_darwin_setup, "sysctl emul.darwin subtree setup")
  * of course).
  */
 int
-darwin_sys_getpid(struct lwp *l, void *v, register_t *retval)
+darwin_sys_getpid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct darwin_emuldata *ded;
 	struct proc *p = l->l_proc;
@@ -739,9 +728,7 @@ again:
  * Native struct proc to Darwin's struct kinfo_proc
  */
 static void
-darwin_fill_kproc(p, dkp)
-	struct proc *p;
-	struct darwin_kinfo_proc *dkp;
+darwin_fill_kproc(struct proc *p, struct darwin_kinfo_proc *dkp)
 {
 	struct lwp *l;
 	struct darwin_extern_proc *dep;

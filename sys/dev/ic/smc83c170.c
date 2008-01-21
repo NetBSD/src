@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.59.4.3 2007/10/27 11:31:04 yamt Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.59.4.4 2008/01/21 09:43:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.59.4.3 2007/10/27 11:31:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.59.4.4 2008/01/21 09:43:09 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -99,7 +99,6 @@ void	epic_tick(void *);
 
 void	epic_statchg(struct device *);
 int	epic_mediachange(struct ifnet *);
-void	epic_mediastatus(struct ifnet *, struct ifmediareq *);
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \
 	    INTSTAT_TXC | INTSTAT_RXE | INTSTAT_RQE | INTSTAT_RCC)
@@ -262,11 +261,13 @@ epic_attach(sc)
 	sc->sc_mii.mii_readreg = epic_mii_read;
 	sc->sc_mii.mii_writereg = epic_mii_write;
 	sc->sc_mii.mii_statchg = epic_statchg;
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, epic_mediachange,
-	    epic_mediastatus);
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, miiflags);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
@@ -570,32 +571,22 @@ epic_ioctl(ifp, cmd, data)
 	void *data;
 {
 	struct epic_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.  Update our idea of the current media;
-			 * epic_set_mchash() needs to know what it is.
-			 */
-			if (ifp->if_flags & IFF_RUNNING) {
-				mii_pollstat(&sc->sc_mii);
-				epic_set_mchash(sc);
-			}
-			error = 0;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.  Update our idea of the current media;
+		 * epic_set_mchash() needs to know what it is.
+		 */
+		if (ifp->if_flags & IFF_RUNNING) {
+			mii_pollstat(&sc->sc_mii);
+			epic_set_mchash(sc);
 		}
-		break;
+		error = 0;
 	}
 
 	splx(s);
@@ -735,7 +726,7 @@ epic_intr(arg)
 #if NBPFILTER > 0
 			/*
 			 * Pass this up to any BPF listeners, but only
-			 * pass it up the stack if its for us.
+			 * pass it up the stack if it's for us.
 			 */
 			if (ifp->if_bpf)
 				bpf_mtap(ifp->if_bpf, m);
@@ -996,7 +987,8 @@ epic_init(ifp)
 	bus_space_write_4(st, sh, EPIC_RXCON, reg0);
 
 	/* Set the current media. */
-	epic_mediachange(ifp);
+	if ((error = epic_mediachange(ifp)) != 0)
+		goto out;
 
 	/* Set up the multicast hash table. */
 	epic_set_mchash(sc);
@@ -1460,22 +1452,10 @@ epic_statchg(self)
 }
 
 /*
- * Callback from ifmedia to request current media status.
- */
-void
-epic_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct epic_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
  * Callback from ifmedia to request new media setting.
+ *
+ * XXX Looks to me like some of this complexity should move into
+ * XXX one or two custom PHY drivers. --dyoung
  */
 int
 epic_mediachange(ifp)
@@ -1487,9 +1467,9 @@ epic_mediachange(ifp)
 	int media = ifm->ifm_cur->ifm_media;
 	uint32_t miicfg;
 	struct mii_softc *miisc;
-	int cfg;
+	int cfg, rc;
 
-	if (!(ifp->if_flags & IFF_UP))
+	if ((ifp->if_flags & IFF_UP) == 0)
 		return (0);
 
 	if (IFM_INST(media) != sc->sc_serinst) {
@@ -1502,7 +1482,8 @@ epic_mediachange(ifp)
 		bus_space_write_4(sc->sc_st, sc->sc_sh, EPIC_MIICFG, miicfg);
 	}
 
-	mii_mediachg(mii);
+	if ((rc = mii_mediachg(mii)) == ENXIO)
+		rc = 0;
 
 	if (IFM_INST(media) == sc->sc_serinst) {
 		/* select serial interface */
@@ -1522,8 +1503,7 @@ epic_mediachange(ifp)
 	}
 
 	/* Lookup selected PHY */
-	for (miisc = LIST_FIRST(&mii->mii_phys); miisc != NULL;
-	     miisc = LIST_NEXT(miisc, mii_list)) {
+	LIST_FOREACH(miisc, &mii->mii_phys, mii_list) {
 		if (IFM_INST(media) == miisc->mii_inst)
 			break;
 	}
@@ -1555,5 +1535,5 @@ epic_mediachange(ifp)
 		PHY_WRITE(miisc, MII_LXTPHY_CONFIG, cfg);
 	}
 
-	return (0);
+	return rc;
 }

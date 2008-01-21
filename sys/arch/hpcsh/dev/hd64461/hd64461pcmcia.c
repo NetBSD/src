@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.30.2.2 2007/09/03 14:26:16 yamt Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.30.2.3 2008/01/21 09:36:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.30.2.2 2007/09/03 14:26:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.30.2.3 2008/01/21 09:36:41 yamt Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -294,7 +294,7 @@ hd64461pcmcia_event_thread(void *arg)
 			splx(s);
 			switch (pe->pe_type) {
 			default:
-				printf("%s: unknown event.\n", __FUNCTION__);
+				printf("%s: unknown event.\n", __func__);
 				break;
 			case EVENT_INSERT:
 				DPRINTF("insert event.\n");
@@ -488,7 +488,7 @@ queue_event(struct hd64461pcmcia_channel *ch,
 	}
 
 	if (pe == 0) {
-		printf("%s: event FIFO overflow (max %d).\n", __FUNCTION__,
+		printf("%s: event FIFO overflow (max %d).\n", __func__,
 		    EVENT_QUEUE_MAX);
 		goto out;
 	}

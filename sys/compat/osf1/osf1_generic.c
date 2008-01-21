@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_generic.c,v 1.7.2.3 2007/10/27 11:29:48 yamt Exp $ */
+/* $NetBSD: osf1_generic.c,v 1.7.2.4 2008/01/21 09:41:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.7.2.3 2007/10/27 11:29:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_generic.c,v 1.7.2.4 2008/01/21 09:41:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,9 +119,8 @@ osf1_get_iov(struct osf1_iovec *uiov, unsigned int iovcnt, struct iovec **iovp)
 }
 
 int
-osf1_sys_readv(struct lwp *l, void *v, register_t *retval)
+osf1_sys_readv(struct lwp *l, const struct osf1_sys_readv_args *uap, register_t *retval)
 {
-	struct osf1_sys_readv_args *uap = v;
 	struct iovec aiov[UIO_SMALLIOV], *niov = aiov;
 	int error;
 
@@ -140,9 +139,8 @@ osf1_sys_readv(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_writev(struct lwp *l, void *v, register_t *retval)
+osf1_sys_writev(struct lwp *l, const struct osf1_sys_writev_args *uap, register_t *retval)
 {
-	struct osf1_sys_readv_args *uap = v;
 	struct iovec aiov[UIO_SMALLIOV], *niov = aiov;
 	int error;
 
@@ -161,9 +159,8 @@ osf1_sys_writev(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-osf1_sys_select(struct lwp *l, void *v, register_t *retval)
+osf1_sys_select(struct lwp *l, const struct osf1_sys_select_args *uap, register_t *retval)
 {
-	struct osf1_sys_select_args *uap = v;
 	struct osf1_timeval otv;
 	struct timeval tv, *tvp;
 	int error;

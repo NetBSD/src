@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_filio.c,v 1.7.12.3 2007/09/03 14:32:57 yamt Exp $	 */
+/*	$NetBSD: svr4_32_filio.c,v 1.7.12.4 2008/01/21 09:42:11 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.7.12.3 2007/09/03 14:32:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.7.12.4 2008/01/21 09:42:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,13 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_32_filio.c,v 1.7.12.3 2007/09/03 14:32:57 yamt 
 
 
 int
-svr4_32_fil_ioctl(fp, l, retval, fd, cmd, data)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	void *data;
+svr4_32_fil_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *data)
 {
 	int error;
 	int num;
@@ -87,10 +81,12 @@ svr4_32_fil_ioctl(fp, l, retval, fd, cmd, data)
 	switch (cmd) {
 	case SVR4_FIOCLEX:
 		fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
+		FILE_UNLOCK(fp);
 		return 0;
 
 	case SVR4_FIONCLEX:
 		fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
+		FILE_UNLOCK(fp);
 		return 0;
 
 	case SVR4_FIOGETOWN:
@@ -98,9 +94,6 @@ svr4_32_fil_ioctl(fp, l, retval, fd, cmd, data)
 	case SVR4_FIOASYNC:
 	case SVR4_FIONBIO:
 	case SVR4_FIONREAD:
-		if ((error = copyin(data, &num, sizeof(num))) != 0)
-			return error;
-
 		switch (cmd) {
 		case SVR4_FIOGETOWN:	cmd = FIOGETOWN; break;
 		case SVR4_FIOSETOWN:	cmd = FIOSETOWN; break;
@@ -109,7 +102,12 @@ svr4_32_fil_ioctl(fp, l, retval, fd, cmd, data)
 		case SVR4_FIONREAD:	cmd = FIONREAD;  break;
 		}
 
-		error = (*ctl)(fp, cmd,  &num, p);
+		FILE_USE(fp);
+		error = copyin(data, &num, sizeof(num));
+
+		if (error == 0)
+			error = (*ctl)(fp, cmd,  &num, p);
+		FILE_UNUSE(fp, l);
 
 		if (error)
 			return error;
@@ -117,6 +115,7 @@ svr4_32_fil_ioctl(fp, l, retval, fd, cmd, data)
 		return copyout(&num, data, sizeof(num));
 
 	default:
+		FILE_UNLOCK(fp);
 		DPRINTF(("Unknown svr4_32 filio %lx\n", cmd));
 		return 0;	/* ENOSYS really */
 	}

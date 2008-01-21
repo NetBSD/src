@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.h,v 1.2 2005/05/02 14:55:12 kochi Exp $	*/
+/*	$NetBSD: acpi_machdep.h,v 1.2.2.1 2008/01/21 09:40:06 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,10 +41,12 @@
  */
 
 #include <machine/pio.h>
+#include <machine/i82489var.h>
+#include <machine/i82489reg.h>
 
 ACPI_STATUS	acpi_md_OsInitialize(void);
 ACPI_STATUS	acpi_md_OsTerminate(void);
-ACPI_STATUS	acpi_md_OsGetRootPointer(UINT32, ACPI_POINTER *);
+ACPI_PHYSICAL_ADDRESS	acpi_md_OsGetRootPointer(void);
 
 #define	acpi_md_OsIn8(x)	inb((x))
 #define	acpi_md_OsIn16(x)	inw((x))
@@ -68,9 +70,5 @@ BOOLEAN		acpi_md_OsWritable(void *, UINT32);
 void		acpi_md_OsDisableInterrupt(void);
 
 int		acpi_md_sleep(int);
-void		acpi_md_callback(struct device *);
-
-#ifdef ACPI_MACHDEP_PRIVATE
-u_int32_t	acpi_md_get_npages_of_wakecode(void);
-void		acpi_md_install_wakecode(paddr_t);
-#endif
+void		acpi_md_sleep_init(void);
+void		acpi_md_callback(void);

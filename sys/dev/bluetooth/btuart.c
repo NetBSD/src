@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.1.2.6 2007/12/07 17:29:40 yamt Exp $	*/
+/*	$NetBSD: btuart.c,v 1.1.2.7 2008/01/21 09:42:38 yamt Exp $	*/
 /*
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.6 2007/12/07 17:29:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.1.2.7 2008/01/21 09:42:38 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1080,7 +1080,7 @@ bth4init_input(struct hci_unit *unit, struct mbuf *m)
 	    btuart_debug ||
 #endif
 	    pktstr != NULL) {
-		aprint_error_dev(unit->hci_dev, "%s:", __FUNCTION__);
+		aprint_error_dev(unit->hci_dev, "%s:", __func__);
 		for (i = 0; i < m->m_len; i++)
 			aprint_error(" %02x", *(rptr + i));
 		aprint_error("\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: bf_cbc.S,v 1.4 2005/02/26 23:04:16 perry Exp $ */
+/* $NetBSD: bf_cbc.S,v 1.4.4.1 2008/01/21 09:42:20 yamt Exp $ */
 
 /* Copyright (C) 1995-1998 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -63,6 +63,7 @@
  */
 
 #include <i386/include/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: bf_cbc.S,v 1.4.4.1 2008/01/21 09:42:20 yamt Exp $");
 
 ENTRY(BF_cbc_encrypt)
 

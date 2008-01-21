@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.37.8.2 2007/12/07 17:25:21 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.37.8.3 2008/01/21 09:37:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,8 +78,6 @@
 
 #ifndef _MIPS_VMPARAM_H_
 #define	_MIPS_VMPARAM_H_
-
-#include <sys/simplelock.h>
 
 /*
  * Machine dependent VM constants for MIPS.
@@ -176,14 +174,12 @@
  */
 struct vm_page_md {
 	struct pv_entry *pvh_list;	/* pv_entry list */
-	struct simplelock pvh_slock;	/* lock on this head */
 	u_int pvh_attrs;		/* page attributes */
 };
 
 #define VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
-	simple_lock_init(&(pg)->mdpage.pvh_slock);			\
 } while (/* CONSTCOND */ 0)
 
 #endif /* ! _MIPS_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.70.2.5 2007/10/27 11:30:04 yamt Exp $	*/
+/*	$NetBSD: ata.c,v 1.70.2.6 2008/01/21 09:42:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70.2.5 2007/10/27 11:30:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70.2.6 2008/01/21 09:42:36 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.70.2.5 2007/10/27 11:30:04 yamt Exp $");
 #include <sys/kthread.h>
 #include <sys/errno.h>
 #include <sys/ataio.h>
-
+#include <sys/kmem.h>
+#include <sys/simplelock.h>
 #include <sys/intr.h>
 #include <sys/bus.h>
 
@@ -106,7 +107,9 @@ const struct cdevsw atabus_cdevsw = {
 
 extern struct cfdriver atabus_cd;
 
-static void atabus_powerhook(int, void *);
+static void atabus_childdetached(device_t, device_t);
+static bool atabus_resume(device_t);
+static bool atabus_suspend(device_t);
 
 /*
  * atabusprint:
@@ -216,7 +219,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 			 * Fake the autoconfig "not configured" message
 			 */
 			aprint_normal("atapibus at %s not configured\n",
-			    atac->atac_dev.dv_xname);
+			    device_xname(&atac->atac_dev));
 			chp->atapibus = NULL;
 			s = splbio();
 			for (i = 0; i < chp->ch_ndrive; i++)
@@ -371,7 +374,7 @@ atabus_thread(void *arg)
  *	Autoconfiguration match routine.
  */
 static int
-atabus_match(struct device *parent, struct cfdata *cf, void *aux)
+atabus_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct ata_channel *chp = aux;
 
@@ -391,9 +394,9 @@ atabus_match(struct device *parent, struct cfdata *cf, void *aux)
  *	Autoconfiguration attach routine.
  */
 static void
-atabus_attach(struct device *parent, struct device *self, void *aux)
+atabus_attach(device_t parent, device_t self, void *aux)
 {
-	struct atabus_softc *sc = (void *) self;
+	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = aux;
 	struct atabus_initq *initq;
 	int error;
@@ -412,15 +415,12 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
 	config_pending_incr();
 
 	if ((error = kthread_create(PRI_NONE, 0, NULL, atabus_thread, sc,
-	    &chp->ch_thread, "%s", sc->sc_dev.dv_xname)) != 0)
-		aprint_error("%s: unable to create kernel thread: error %d\n",
-		    sc->sc_dev.dv_xname, error);
+	    &chp->ch_thread, "%s", device_xname(self))) != 0)
+		aprint_error_dev(self,
+		    "unable to create kernel thread: error %d\n", error);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    atabus_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, atabus_suspend, atabus_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 /*
@@ -429,11 +429,11 @@ atabus_attach(struct device *parent, struct device *self, void *aux)
  *	Autoconfiguration activation routine.
  */
 static int
-atabus_activate(struct device *self, enum devact act)
+atabus_activate(device_t self, enum devact act)
 {
-	struct atabus_softc *sc = (void *) self;
+	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = sc->sc_chan;
-	struct device *dev = NULL;
+	device_t dev = NULL;
 	int s, i, error = 0;
 
 	s = splbio();
@@ -458,8 +458,8 @@ atabus_activate(struct device *self, enum devact act)
 		for (i = 0; i < chp->ch_ndrive; i++) {
 			if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
 				ATADEBUG_PRINT(("atabus_activate: %s: "
-				    "deactivating %s\n", sc->sc_dev.dv_xname,
-				    dev->dv_xname),
+				    "deactivating %s\n", device_xname(self),
+				    device_xname(dev)),
 				    DEBUG_DETACH);
 				error = config_deactivate(dev);
 				if (error)
@@ -474,8 +474,8 @@ atabus_activate(struct device *self, enum devact act)
 #ifdef ATADEBUG
 	if (dev != NULL && error != 0)
 		ATADEBUG_PRINT(("atabus_activate: %s: "
-		    "error %d deactivating %s\n", sc->sc_dev.dv_xname,
-		    error, dev->dv_xname), DEBUG_DETACH);
+		    "error %d deactivating %s\n", device_xname(self),
+		    error, device_xname(dev)), DEBUG_DETACH);
 #endif /* ATADEBUG */
 
 	return (error);
@@ -487,31 +487,31 @@ atabus_activate(struct device *self, enum devact act)
  *	Autoconfiguration detach routine.
  */
 static int
-atabus_detach(struct device *self, int flags)
+atabus_detach(device_t self, int flags)
 {
-	struct atabus_softc *sc = (void *) self;
+	struct atabus_softc *sc = device_private(self);
 	struct ata_channel *chp = sc->sc_chan;
-	struct device *dev = NULL;
+	device_t dev = NULL;
 	int s, i, error = 0;
 
 	/* Shutdown the channel. */
 	s = splbio();		/* XXX ALSO NEED AN INTERLOCK HERE. */
 	chp->ch_flags |= ATACH_SHUTDOWN;
 	splx(s);
+
 	wakeup(&chp->ch_thread);
+
 	while (chp->ch_thread != NULL)
 		(void) tsleep(&chp->ch_flags, PRIBIO, "atadown", 0);
 
-	/* power hook */
-	if (sc->sc_powerhook)
-		powerhook_disestablish(sc->sc_powerhook);
 
 	/*
 	 * Detach atapibus and its children.
 	 */
 	if ((dev = chp->atapibus) != NULL) {
 		ATADEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
-		    sc->sc_dev.dv_xname, dev->dv_xname), DEBUG_DETACH);
+		    device_xname(self), device_xname(dev)), DEBUG_DETACH);
+
 		error = config_detach(dev, flags);
 		if (error)
 			goto out;
@@ -525,7 +525,7 @@ atabus_detach(struct device *self, int flags)
 			continue;
 		if ((dev = chp->ch_drive[i].drv_softc) != NULL) {
 			ATADEBUG_PRINT(("atabus_detach: %s: detaching %s\n",
-			    sc->sc_dev.dv_xname, dev->dv_xname),
+			    device_xname(self), device_xname(dev)),
 			    DEBUG_DETACH);
 			error = config_detach(dev, flags);
 			if (error)
@@ -537,15 +537,47 @@ atabus_detach(struct device *self, int flags)
 #ifdef ATADEBUG
 	if (dev != NULL && error != 0)
 		ATADEBUG_PRINT(("atabus_detach: %s: error %d detaching %s\n",
-		    sc->sc_dev.dv_xname, error, dev->dv_xname),
+		    device_xname(self), error, device_xname(dev)),
 		    DEBUG_DETACH);
 #endif /* ATADEBUG */
 
 	return (error);
 }
 
-CFATTACH_DECL(atabus, sizeof(struct atabus_softc),
-    atabus_match, atabus_attach, atabus_detach, atabus_activate);
+void
+atabus_childdetached(device_t self, device_t child)
+{
+	struct atabus_softc *sc = device_private(self);
+	struct ata_channel *chp = sc->sc_chan;
+	int i;
+
+	/*
+	 * atapibus detached.
+	 */
+	if (child == chp->atapibus) {
+		chp->atapibus = NULL;
+		return;
+	}
+
+	/*
+	 * Detach our other children.
+	 */
+	for (i = 0; i < chp->ch_ndrive; i++) {
+		if (chp->ch_drive[i].drive_flags & DRIVE_ATAPI)
+			continue;
+		if (child == chp->ch_drive[i].drv_softc) {
+			chp->ch_drive[i].drv_softc = NULL;
+			chp->ch_drive[i].drive_flags = 0;
+			return;
+		}
+	}
+
+	aprint_error_dev(self, "unknown child %p", (const void *)child);
+}
+
+CFATTACH_DECL2(atabus, sizeof(struct atabus_softc),
+    atabus_match, atabus_attach, atabus_detach, atabus_activate, NULL,
+    atabus_childdetached);
 
 /*****************************************************************************
  * Common ATA bus operations.
@@ -556,16 +588,16 @@ int
 ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
     struct ataparams *prms)
 {
-	char tb[DEV_BSIZE];
 	struct ata_command ata_c;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-	int i;
+	char *tb;
+	int i, rv;
 	u_int16_t *p;
 
 	ATADEBUG_PRINT(("%s\n", __func__), DEBUG_FUNCS);
 
-	memset(tb, 0, DEV_BSIZE);
+	tb = kmem_zalloc(DEV_BSIZE, KM_SLEEP);
 	memset(prms, 0, sizeof(struct ataparams));
 	memset(&ata_c, 0, sizeof(struct ata_command));
 
@@ -582,7 +614,8 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	} else {
 		ATADEBUG_PRINT(("ata_get_parms: no disks\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_ERR;
+		rv = CMD_ERR;
+		goto out;
 	}
 	ata_c.flags = AT_READ | flags;
 	ata_c.data = tb;
@@ -591,16 +624,20 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 						&ata_c) != ATACMD_COMPLETE) {
 		ATADEBUG_PRINT(("ata_get_parms: wdc_exec_command failed\n"),
 		    DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_AGAIN;
+		rv = CMD_AGAIN;
+		goto out;
 	}
 	if (ata_c.flags & (AT_ERROR | AT_TIMEOU | AT_DF)) {
 		ATADEBUG_PRINT(("ata_get_parms: ata_c.flags=0x%x\n",
 		    ata_c.flags), DEBUG_FUNCS|DEBUG_PROBE);
-		return CMD_ERR;
+		rv = CMD_ERR;
+		goto out;
 	}
 	/* if we didn't read any data something is wrong */
-	if ((ata_c.flags & AT_XFDONE) == 0)
-		return CMD_ERR;
+	if ((ata_c.flags & AT_XFDONE) == 0) {
+		rv = CMD_ERR;
+		goto out;
+	}
 
 	/* Read in parameter block. */
 	memcpy(prms, tb, sizeof(struct ataparams));
@@ -624,8 +661,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 	     ((M(0) == 'N' && M(1) == 'E') ||
 	      (M(0) == 'F' && M(1) == 'X') ||
 	      (M(0) == 'P' && M(1) == 'i')) :
-	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K'))))
-		return CMD_OK;
+	     ((M(0) == 'T' && M(1) == 'D' && M(2) == 'K')))) {
+		rv = CMD_OK;
+		goto out;
+	     }
 #undef M
 	for (i = 0; i < sizeof(prms->atap_model); i += 2) {
 		p = (u_int16_t *)(prms->atap_model + i);
@@ -640,7 +679,10 @@ ata_get_params(struct ata_drive_datas *drvp, u_int8_t flags,
 		*p = bswap16(*p);
 	}
 
-	return CMD_OK;
+	rv = CMD_OK;
+ out:
+	kmem_free(tb, DEV_BSIZE);
+	return rv;
 }
 
 int
@@ -1010,8 +1052,8 @@ ata_print_modes(struct ata_channel *chp)
 		if ((drvp->drive_flags & DRIVE) == 0 || drvp->drv_softc == NULL)
 			continue;
 		aprint_verbose("%s(%s:%d:%d): using PIO mode %d",
-			drvp->drv_softc->dv_xname,
-			atac->atac_dev.dv_xname,
+			device_xname(drvp->drv_softc),
+			device_xname(&atac->atac_dev),
 			chp->ch_channel, drvp->drive, drvp->PIO_mode);
 #if NATA_DMA
 		if (drvp->drive_flags & DRIVE_DMA)
@@ -1058,7 +1100,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 {
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-	struct device *drv_dev = drvp->drv_softc;
+	device_t drv_dev = drvp->drv_softc;
 	int cf_flags = device_cfdata(drv_dev)->cf_flags;
 
 	/* if drive or controller don't know its mode, we can't do much */
@@ -1078,7 +1120,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
 		drvp->UDMA_mode--;
 		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
-		    drv_dev->dv_xname, drvp->UDMA_mode);
+		    device_xname(drv_dev), drvp->UDMA_mode);
 	}
 #endif
 
@@ -1089,7 +1131,7 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 		drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 		drvp->PIO_mode = drvp->PIO_cap;
 		printf("%s: transfer error, downgrading to PIO mode %d\n",
-		    drv_dev->dv_xname, drvp->PIO_mode);
+		    device_xname(drv_dev), drvp->PIO_mode);
 	} else /* already using PIO, can't downgrade */
 		return 0;
 
@@ -1111,7 +1153,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	struct ataparams params, params2;
 	struct ata_channel *chp = drvp->chnl_softc;
 	struct atac_softc *atac = chp->ch_atac;
-	struct device *drv_dev = drvp->drv_softc;
+	device_t drv_dev = drvp->drv_softc;
 	int i, printed, s;
 	const char *sep = "";
 	int cf_flags;
@@ -1138,7 +1180,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			splx(s);
 		} else {
 			aprint_verbose("%s: 32-bit data port\n",
-			    drv_dev->dv_xname);
+			    device_xname(drv_dev));
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
@@ -1147,7 +1189,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
 				aprint_verbose("%s: ATA version %d\n",
-				    drv_dev->dv_xname, i);
+				    device_xname(drv_dev), i);
 				drvp->ata_vers = i;
 				break;
 			}
@@ -1193,7 +1235,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 					continue;
 			if (!printed) {
 				aprint_verbose("%s: drive supports PIO mode %d",
-				    drv_dev->dv_xname, i + 3);
+				    device_xname(drv_dev), i + 3);
 				sep = ",";
 				printed = 1;
 			}
@@ -1463,7 +1505,7 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 				    chp->ch_drive[drive].drv_softc, 0);
 				if (error)
 					return (error);
-				chp->ch_drive[drive].drv_softc = NULL;
+				KASSERT(chp->ch_drive[drive].drv_softc == NULL);
 			}
 		}
 		error = 0;
@@ -1475,33 +1517,38 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 	return (error);
 };
 
-static void
-atabus_powerhook(int why, void *hdl)
+static bool
+atabus_suspend(device_t dv)
 {
-	struct atabus_softc *sc = (struct atabus_softc *)hdl;
+	struct atabus_softc *sc = device_private(dv);
+	struct ata_channel *chp = sc->sc_chan;
+
+	ata_queue_idle(chp->ch_queue);
+
+	return true;
+}
+
+static bool
+atabus_resume(device_t dv)
+{
+	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
 	int s;
 
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-		/* freeze the queue and wait for the controller to be idle */
-		ata_queue_idle(chp->ch_queue);
-		break;
-	case PWR_RESUME:
-		printf("%s: resuming...\n", sc->sc_dev.dv_xname);
-		s = splbio();
-		KASSERT(chp->ch_queue->queue_freeze > 0);
-		/* unfreeze the queue and reset drives (to wake them up) */
-		chp->ch_queue->queue_freeze--;
-		ata_reset_channel(chp, AT_WAIT);
+	/*
+	 * XXX joerg: with wdc, the first channel unfreezes the controler.
+	 * Move this the reset and queue idling into wdc.
+	 */
+	s = splbio();
+	if (chp->ch_queue->queue_freeze == 0) {
 		splx(s);
-		break;
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-	case PWR_SOFTRESUME:
-		break;
+		return true;
 	}
+	KASSERT(chp->ch_queue->queue_freeze > 0);
+	/* unfreeze the queue and reset drives */
+	chp->ch_queue->queue_freeze--;
+	ata_reset_channel(chp, AT_WAIT);
+	splx(s);
 
-	return;
+	return true;
 }

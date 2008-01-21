@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock.c,v 1.1.8.2 2006/12/30 20:47:02 yamt Exp $ */
+/*	$NetBSD: mkclock.c,v 1.1.8.3 2008/01/21 09:39:30 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.1.8.2 2006/12/30 20:47:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock.c,v 1.1.8.3 2008/01/21 09:39:30 yamt Exp $");
 
 /*    
  * Clock driver for 'mkclock' - Mostek MK48Txx TOD clock.
@@ -213,14 +213,13 @@ mkclock_attach(struct mk48txx_softc *sc, int node)
 
 	/* Our TOD clock year 0 is 1968 */
 	sc->sc_year0 = 1968;
-	mk48txx_attach(sc);
-
-	printf("\n");
 
 	/* Save info for the clock wenable call. */
 	sc->sc_handle.todr_setwen = mkclock_wenable;
 
-	todr_attach(&sc->sc_handle);
+	mk48txx_attach(sc);
+
+	printf("\n");
 }
 
 /*

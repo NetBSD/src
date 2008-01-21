@@ -1,4 +1,4 @@
-/* $NetBSD: cy82c693.c,v 1.3.32.1 2007/10/27 11:32:41 yamt Exp $ */
+/* $NetBSD: cy82c693.c,v 1.3.32.2 2008/01/21 09:43:48 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.3.32.1 2007/10/27 11:32:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.3.32.2 2008/01/21 09:43:48 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -50,9 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: cy82c693.c,v 1.3.32.1 2007/10/27 11:32:41 yamt Exp $
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
-#include <sys/lock.h>
-
 #include <sys/bus.h>
+#include <sys/simplelock.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

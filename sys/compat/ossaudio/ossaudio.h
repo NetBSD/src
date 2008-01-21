@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.h,v 1.8.18.2 2007/12/07 17:29:01 yamt Exp $	*/
+/*	$NetBSD: ossaudio.h,v 1.8.18.3 2008/01/21 09:42:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,9 +35,9 @@
 
 struct oss_sys_ioctl_args;
 
-int oss_ioctl_audio(struct lwp *, struct oss_sys_ioctl_args *,
+int oss_ioctl_audio(struct lwp *, const struct oss_sys_ioctl_args *,
     register_t *);
-int oss_ioctl_mixer(struct lwp *, struct oss_sys_ioctl_args *,
+int oss_ioctl_mixer(struct lwp *, const struct oss_sys_ioctl_args *,
     register_t *);
-int oss_ioctl_sequencer(struct lwp *, struct oss_sys_ioctl_args *,
+int oss_ioctl_sequencer(struct lwp *, const struct oss_sys_ioctl_args *,
     register_t *);

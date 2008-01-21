@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.4.2.4 2007/12/07 17:25:57 yamt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.4.2.5 2008/01/21 09:38:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.2.4 2007/12/07 17:25:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.2.5 2008/01/21 09:38:24 yamt Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -356,19 +356,14 @@ noranges:
 void
 ofwoea_batinit(void)
 {
-#if 0
-	/* this is what macppc used to do */
-        oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
-                    0x90000000, BAT_BL_256M, 0xa0000000, BAT_BL_256M,
-                                0xb0000000, BAT_BL_256M, 0);
-#else
+#ifdef PPC_OEA
         u_int16_t bitmap;
 	int node, i;
 
 	node = OF_finddevice("/");
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
-
+	
 #ifdef macppc
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
@@ -451,10 +446,13 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 		case RANGE_TYPE_FIRSTPCI:
 			for (i=0; i < len/(4*reclen); i++) {
 				DPRINTF("FOUND PCI RANGE\n");
-				regions[*cur].type = map[i*reclen] >> 24;
-				regions[*cur].addr = map[i*reclen + acells];
 				regions[*cur].size =
 				    map[i*reclen + acells + scells];
+				/* skip ranges of size==0 */
+				if (regions[*cur].size == 0)
+					continue;
+				regions[*cur].type = map[i*reclen] >> 24;
+				regions[*cur].addr = map[i*reclen + acells];
 				(*cur)++;
 			}
 			break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.12.2.2 2006/12/30 20:48:02 yamt Exp $ */
+/*	$NetBSD: gemvar.h,v 1.12.2.3 2008/01/21 09:42:59 yamt Exp $ */
 
 /*
  *
@@ -117,7 +117,6 @@ struct gem_softc {
 	struct device	sc_dev;		/* generic device information */
 	struct ethercom sc_ethercom;	/* ethernet common data */
 	struct mii_data	sc_mii;		/* MII media control */
-#define sc_media	sc_mii.mii_media/* shorthand */
 	struct callout	sc_tick_ch;	/* tick callout */
 
 	/* The following bus handles are to be provided by the bus front-end */
@@ -130,16 +129,27 @@ struct gem_softc {
 	int		sc_phys[2];	/* MII instance -> PHY map */
 
 	int		sc_mif_config;	/* Selected MII reg setting */
+	uint32_t	sc_mii_anar;	/* copy of PCS GEM_MII_ANAR register */
+	int		sc_mii_media;	/* Media selected for PCS MII */
 
-	int		sc_pci;		/* XXXXX -- PCI buses are LE. */
 	u_int		sc_variant;	/* which GEM are we dealing with? */
 #define	GEM_UNKNOWN		0	/* don't know */
 #define	GEM_SUN_GEM		1	/* Sun GEM variant */
-#define	GEM_APPLE_GMAC		2	/* Apple GMAC variant */
+#define	GEM_SUN_ERI		2	/* Sun ERI variant */
+#define	GEM_APPLE_GMAC		3	/* Apple GMAC variant */
+#define GEM_APPLE_K2_GMAC	4	/* Apple K2 GMAC */
+
+#define	GEM_IS_APPLE(sc) \
+	((sc)->sc_variant == GEM_APPLE_GMAC || \
+	(sc)->sc_variant == GEM_APPLE_K2_GMAC)
 
 	u_int		sc_flags;	/* */
 	short		sc_if_flags;	/* copy of ifp->if_flags */
 #define	GEM_GIGABIT		0x0001	/* has a gigabit PHY */
+#define GEM_LINK		0x0002	/* link is up */
+#define	GEM_PCI			0x0004	/* XXX PCI busses are little-endian */
+#define	GEM_SERDES		0x0008	/* use the SERDES */
+#define	GEM_SERIAL		0x0010	/* use the serial link */
 
 	void *sc_sdhook;		/* shutdown hook */
 	void *sc_powerhook;		/* power management hook */
@@ -179,6 +189,7 @@ struct gem_softc {
 
 	/* ========== */
 	int		sc_inited;
+	int		sc_meminited;
 	int		sc_debug;
 	void		*sc_sh;		/* shutdownhook cookie */
 
@@ -207,13 +218,15 @@ struct gem_softc {
 #endif
 
 
-#define	GEM_DMA_READ(sc, v)	(((sc)->sc_pci) ? le64toh(v) : be64toh(v))
-#define	GEM_DMA_WRITE(sc, v)	(((sc)->sc_pci) ? htole64(v) : htobe64(v))
+#define	GEM_DMA_READ(sc, v)						\
+	(((sc)->sc_flags & GEM_PCI) ? le64toh(v) : be64toh(v))
+#define	GEM_DMA_WRITE(sc, v)						\
+	(((sc)->sc_flags & GEM_PCI) ? htole64(v) : htobe64(v))
 
 #define	GEM_CDTXADDR(sc, x)	((sc)->sc_cddma + GEM_CDTXOFF((x)))
 #define	GEM_CDRXADDR(sc, x)	((sc)->sc_cddma + GEM_CDRXOFF((x)))
 
-#define	GEM_CDSPADDR(sc)	((sc)->sc_cddma + GEM_CDSPOFF)
+#define	GEM_CDADDR(sc)	((sc)->sc_cddma + GEM_CDOFF)
 
 #define	GEM_CDTXSYNC(sc, x, n, ops)					\
 do {									\
@@ -240,9 +253,9 @@ do {									\
 	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,		\
 	    GEM_CDRXOFF((x)), sizeof(struct gem_desc), (ops))
 
-#define	GEM_CDSPSYNC(sc, ops)						\
+#define	GEM_CDSYNC(sc, ops)						\
 	bus_dmamap_sync((sc)->sc_dmatag, (sc)->sc_cddmamap,		\
-	    GEM_CDSPOFF, GEM_SETUP_PACKET_LEN, (ops))
+	    0, sizeof(struct gem_control_data), (ops))
 
 #define	GEM_INIT_RXDESC(sc, x)						\
 do {									\
@@ -258,6 +271,18 @@ do {									\
 			(((__m->m_ext.ext_size)<<GEM_RD_BUFSHIFT)	\
 				& GEM_RD_BUFSIZE) | GEM_RD_OWN);	\
 	GEM_CDRXSYNC((sc), (x), BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE); \
+} while (0)
+
+#define GEM_UPDATE_RXDESC(sc, x)					\
+do {									\
+	struct gem_rxsoft *__rxs = &sc->sc_rxsoft[(x)];			\
+	struct gem_desc *__rxd = &sc->sc_rxdescs[(x)];			\
+	struct mbuf *__m = __rxs->rxs_mbuf;				\
+									\
+	__rxd->gd_flags =						\
+	    GEM_DMA_WRITE((sc),						\
+			(((__m->m_ext.ext_size)<<GEM_RD_BUFSHIFT)	\
+				& GEM_RD_BUFSIZE) | GEM_RD_OWN);	\
 } while (0)
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/* $NetBSD: linux_sg.c,v 1.5.6.5 2007/10/27 11:29:40 yamt Exp $ */
+/* $NetBSD: linux_sg.c,v 1.5.6.6 2008/01/21 09:41:28 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.5 2007/10/27 11:29:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sg.c,v 1.5.6.6 2008/01/21 09:41:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,7 @@ static int bsd_to_linux_host_status(int);
 static int bsd_to_linux_driver_status(int);
 
 int
-linux_ioctl_sg(struct lwp *l, struct linux_sys_ioctl_args *uap,
+linux_ioctl_sg(struct lwp *l, const struct linux_sys_ioctl_args *uap,
     register_t *retval)
 {
 	struct file *fp;

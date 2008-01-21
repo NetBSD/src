@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_acad.c,v 1.16.12.6 2007/12/07 17:29:36 yamt Exp $	*/
+/*	$NetBSD: acpi_acad.c,v 1.16.12.7 2008/01/21 09:42:29 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.16.12.6 2007/12/07 17:29:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_acad.c,v 1.16.12.7 2008/01/21 09:42:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,9 @@ acpiacad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_flags = AACAD_F_VERBOSE;
 #endif
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	acpiacad_init_envsys(self);
 }
 
@@ -247,7 +250,7 @@ acpiacad_notify_handler(ACPI_HANDLE handle, UINT32 notify, void *context)
 		acpiacad_clear_status(sc);
 		mutex_exit(&sc->sc_mtx);
 		if (sc->sc_status == -1 || !sc->sc_notifysent) {
-			rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO,
+			rv = AcpiOsExecute(OSL_NOTIFY_HANDLER,
 			    acpiacad_get_status, dv);
 			if (ACPI_FAILURE(rv))
 				aprint_error_dev(dv,

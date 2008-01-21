@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46.2.3 2007/09/03 14:23:41 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.2.4 2008/01/21 09:35:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -219,11 +219,6 @@ int	cpu_dumpsize __P((void));
  * Prototypes from autoconf.c
  */
 void	config_console __P((void));
-
-/*
- * Prototypes from clock.c
- */
-long	clkread __P((void));
 
 /*
  * Prototypes from fpu.c

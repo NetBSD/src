@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.2.26.3 2007/12/07 17:29:37 yamt Exp $ */
+/*	$NetBSD: apm.c,v 1.2.26.4 2008/01/21 09:42:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2.26.3 2007/12/07 17:29:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2.26.4 2008/01/21 09:42:35 yamt Exp $");
 
 #include "opt_apm.h"
 
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.2.26.3 2007/12/07 17:29:37 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
-#include <sys/lock.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -316,11 +315,8 @@ apm_suspend(struct apm_softc *sc)
 	sc->sc_power_state = PWR_SUSPEND;
  
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		dopowerhooks(PWR_SOFTSUSPEND);
-
+		pmf_system_suspend();
 		apm_spl = splhigh();
-
-		dopowerhooks(PWR_SUSPEND);
 	}
 
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
@@ -345,11 +341,8 @@ apm_standby(struct apm_softc *sc)
 	sc->sc_power_state = PWR_STANDBY;
 
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		dopowerhooks(PWR_SOFTSTANDBY);
-
+		pmf_system_suspend();
 		apm_spl = splhigh();
-
-		dopowerhooks(PWR_STANDBY);
 	}
 	error = (*sc->sc_ops->aa_set_powstate)(sc->sc_cookie, APM_DEV_ALLDEVS,
 	    APM_SYS_STANDBY);
@@ -379,11 +372,8 @@ apm_resume(struct apm_softc *sc, u_int event_type, u_int event_info)
 
 	inittodr(time_second);
 	if (!(sc->sc_hwflags & APM_F_DONT_RUN_HOOKS)) {
-		dopowerhooks(PWR_RESUME);
-
 		splx(apm_spl);
-
-		dopowerhooks(PWR_SOFTRESUME);
+		pmf_system_resume();
 	}
 
 	apm_record_event(sc, event_type);
@@ -694,6 +684,9 @@ apm_attach(struct apm_softc *sc)
 		    "kernel APM support disabled\n",
 		    sc->sc_dev.dv_xname);
 	}
+
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
 }
 
 void

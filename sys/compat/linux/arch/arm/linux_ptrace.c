@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.3.18.3 2007/09/03 14:32:14 yamt Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.3.18.4 2008/01/21 09:41:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.3.18.3 2007/09/03 14:32:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.3.18.4 2008/01/21 09:41:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -95,17 +95,14 @@ struct linux_reg {
 #define LINUX_REG_ORIG_R0 17
 
 int
-linux_sys_ptrace_arch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap, register_t *retval)
 {
-	struct linux_sys_ptrace_args /* {
+	/* {
 		syscallarg(int) request;
 		syscallarg(int) pid;
 		syscallarg(int) addr;
 		syscallarg(int) data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int request, error;
 	struct proc *t;				/* target process */

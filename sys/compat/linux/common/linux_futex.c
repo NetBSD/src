@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_futex.c,v 1.5.18.5 2007/11/15 11:43:50 yamt Exp $ */
+/*	$NetBSD: linux_futex.c,v 1.5.18.6 2008/01/21 09:41:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.5.18.5 2007/11/15 11:43:50 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: linux_futex.c,v 1.5.18.6 2008/01/21 09:41:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -84,16 +84,16 @@ static int futex_sleep(struct futex *, unsigned int);
 static int futex_wake(struct futex *, int, struct futex *);
 
 int
-linux_sys_futex(struct lwp *l, void *v, register_t *retval)
+linux_sys_futex(struct lwp *l, const struct linux_sys_futex_args *uap, register_t *retval)
 {
-	struct linux_sys_futex_args /* {
+	/* {
 		syscallarg(int *) uaddr;
 		syscallarg(int) op;
 		syscallarg(int) val;
 		syscallarg(const struct timespec *) timeout;
 		syscallarg(int *) uaddr2;
 		syscallarg(int) val3;
-	} */ *uap = v;
+	} */
 	int val;
 	int ret;
 	struct timespec timeout = { 0, 0 };

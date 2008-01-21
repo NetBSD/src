@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.21.2.2 2006/12/30 20:46:03 yamt Exp $	*/
+/*	$NetBSD: rtc.c,v 1.21.2.3 2008/01/21 09:36:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,13 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21.2.2 2006/12/30 20:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21.2.3 2008/01/21 09:36:39 yamt Exp $");
 
 #include "opt_vr41xx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
+#include <sys/device.h>
 
 #include <machine/sysconf.h>
 #include <machine/bus.h>

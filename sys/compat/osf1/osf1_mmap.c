@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_mmap.c,v 1.10.18.1 2007/02/26 09:09:35 yamt Exp $ */
+/* $NetBSD: osf1_mmap.c,v 1.10.18.2 2008/01/21 09:41:58 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.10.18.1 2007/02/26 09:09:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.10.18.2 2008/01/21 09:41:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,12 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_mmap.c,v 1.10.18.1 2007/02/26 09:09:35 yamt Exp
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_madvise(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_madvise(struct lwp *l, const struct osf1_sys_madvise_args *uap, register_t *retval)
 {
-	struct osf1_sys_madvise_args *uap = v;
 	struct sys_madvise_args a;
 	int error;
 
@@ -112,12 +108,8 @@ osf1_sys_madvise(l, v, retval)
 }
 
 int
-osf1_sys_mmap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_mmap(struct lwp *l, const struct osf1_sys_mmap_args *uap, register_t *retval)
 {
-	struct osf1_sys_mmap_args *uap = v;
 	struct proc *p = l->l_proc;
 	struct sys_mmap_args a;
 	unsigned long leftovers;
@@ -209,12 +201,8 @@ done:
 }
 
 int
-osf1_sys_mprotect(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_mprotect(struct lwp *l, const struct osf1_sys_mprotect_args *uap, register_t *retval)
 {
-	struct osf1_sys_mprotect_args *uap = v;
 	struct sys_mprotect_args a;
 	unsigned long leftovers;
 

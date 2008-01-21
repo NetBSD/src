@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.44.4.2 2006/12/30 20:48:38 yamt Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.44.4.3 2008/01/21 09:43:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.44.4.2 2006/12/30 20:48:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.44.4.3 2008/01/21 09:43:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -337,16 +337,6 @@ mii_phy_reset(struct mii_softc *sc)
 		reg = BMCR_RESET | BMCR_ISO;
 	PHY_WRITE(sc, MII_BMCR, reg);
 
-	/*
-	 * It is best to allow a little time for the reset to settle
-	 * in before we start polling the BMCR again.  Notably, the
-	 * DP83840A manual states that there should be a 500us delay
-	 * between asserting software reset and attempting MII serial
-	 * operations.  Also, a DP83815 can get into a bad state on
-	 * cable removal and reinsertion if we do not delay here.
-	 */
-	delay(500);
-
 	/* Wait another 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
 		reg = PHY_READ(sc, MII_BMCR);
@@ -572,6 +562,7 @@ mii_phy_detach(struct device *self, int flags)
 		callout_stop(&sc->mii_nway_ch);
 
 	mii_phy_delete_media(sc);
+	LIST_REMOVE(sc, mii_list);
 
 	return (0);
 }
@@ -632,4 +623,13 @@ mii_phy_flowstatus(struct mii_softc *sc)
 		return (IFM_FLOW|IFM_ETH_RXPAUSE|IFM_ETH_TXPAUSE);
 	}
 	/* NOTREACHED */
+}
+
+bool
+mii_phy_resume(device_t dv)
+{
+	struct mii_softc *sc = device_private(dv);
+
+	PHY_RESET(sc);
+	return PHY_SERVICE(sc, sc->mii_pdata, MII_MEDIACHG) == 0;
 }

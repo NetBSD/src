@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.103.2.6 2007/12/07 17:26:26 yamt Exp $ */
+/*	$NetBSD: autoconf.c,v 1.103.2.7 2008/01/21 09:39:32 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103.2.6 2007/12/07 17:26:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.103.2.7 2008/01/21 09:39:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,6 +135,7 @@ int kgdb_break_at_attach;
 #define	OFPATHLEN	128
 #define	OFNODEKEY	"OFpnode"
 
+char	machine_banner[100];
 char	machine_model[100];
 char	ofbootpath[OFPATHLEN], *ofboottarget, *ofbootpartition;
 int	ofbootpackage;
@@ -249,7 +250,9 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	void *bi;
 	long bmagic;
 
+#if NKSYMS || defined(DDB) || defined(LKM)
 	struct btinfo_symtab *bi_sym;
+#endif
 	struct btinfo_count *bi_count;
 	struct btinfo_kernend *bi_kend;
 	struct btinfo_tlb *bi_tlb;
@@ -516,6 +519,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 	struct mainbus_attach_args ma;
 	char sbuf[32];
 	const char *const *ssp, *sp = NULL;
+	char *c;
 	int node0, node, rv, i;
 
 	static const char *const openboot_special[] = {
@@ -534,9 +538,26 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		NULL
 	};
 
+	if (OF_getprop(findroot(), "banner-name", machine_banner,
+	    sizeof machine_banner) < 0)
+		i = 0;
+	else {
+		i = 1;
+		if (((c = strchr(machine_banner, '(')) != NULL) &&
+		    c != &machine_banner[0]) {
+				while (*c == '(' || *c == ' ') {
+					*c = '\0';
+					c--;
+				}
+			}
+	}
 	OF_getprop(findroot(), "name", machine_model, sizeof machine_model);
 	prom_getidprom();
-	printf(": %s: hostid %lx\n", machine_model, hostid);
+	if (i)
+		printf(": %s (%s): hostid %lx\n", machine_model,
+		    machine_banner, hostid);
+	else
+		printf(": %s: hostid %lx\n", machine_model, hostid);
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be
@@ -866,55 +887,54 @@ device_register(struct device *dev, void *aux)
 	}
 
 	/* set properties for PCI framebuffers */
-	if (busdev != NULL) {
+	if (busdev == NULL)
+		return;
 
-		if (device_is_a(busdev, "pci")) {
-			/* see if this is going to be console */
-			struct pci_attach_args *pa = aux;
-			prop_dictionary_t dict;
-			int node, sub;
-			int console = 0;
+	if (device_is_a(busdev, "pci")) {
+		/* see if this is going to be console */
+		struct pci_attach_args *pa = aux;
+		prop_dictionary_t dict;
+		int node, sub;
+		int console = 0;
 
-			dict = device_properties(dev);
-			node = PCITAG_NODE(pa->pa_tag);
-			device_setofnode(dev, node);
+		dict = device_properties(dev);
+		node = PCITAG_NODE(pa->pa_tag);
+		device_setofnode(dev, node);
 
-			/* we only care about display devices from here on */
-			if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
-				return;
+		/* we only care about display devices from here on */
+		if (PCI_CLASS(pa->pa_class) != PCI_CLASS_DISPLAY)
+			return;
 
-			console = (node == console_node);
+		console = (node == console_node);
 
-			if (!console) {
-				/*
-				 * see if any child matches since OF attaches
-				 * nodes for each head and /chosen/stdout
-				 * points to the head rather than the device
-				 * itself in this case
-				 */
-				sub = OF_child(node);
-				while ((sub != 0) && (sub != console_node)) {
-					sub = OF_peer(sub);
-				}
-				if (sub == console_node) {
-					console = true;
-				}
+		if (!console) {
+			/*
+			 * see if any child matches since OF attaches
+			 * nodes for each head and /chosen/stdout
+			 * points to the head rather than the device
+			 * itself in this case
+			 */
+			sub = OF_child(node);
+			while ((sub != 0) && (sub != console_node)) {
+				sub = OF_peer(sub);
 			}
-
-			if (console) {
-				uint64_t cmap_cb;
-
-				prop_dictionary_set_uint32(dict,
-				    "instance_handle", console_instance);
-				copyprops(busdev, console_node, dict);
-
-				gfb_cb.gcc_cookie = 
-				    (void *)(intptr_t)console_instance;
-				gfb_cb.gcc_set_mapreg = of_set_palette;
-				cmap_cb = (uint64_t)&gfb_cb;
-				prop_dictionary_set_uint64(dict,
-				    "cmap_callback", cmap_cb);
+			if (sub == console_node) {
+				console = true;
 			}
+		}
+		
+		if (console) {
+			uint64_t cmap_cb;
+			prop_dictionary_set_uint32(dict,
+			    "instance_handle", console_instance);
+			copyprops(busdev, console_node, dict);
+
+			gfb_cb.gcc_cookie = 
+			    (void *)(intptr_t)console_instance;
+			gfb_cb.gcc_set_mapreg = of_set_palette;
+			cmap_cb = (uint64_t)&gfb_cb;
+			prop_dictionary_set_uint64(dict,
+			    "cmap_callback", cmap_cb);
 		}
 	}
 }
@@ -946,7 +966,9 @@ copyprops(struct device *busdev, int node, prop_dictionary_t dict)
 		prop_dictionary_set_uint32(dict, "height", temp);
 	}
 	of_to_uint32_prop(dict, console_node, "linebytes", "linebytes");
-	if (!of_to_uint32_prop(dict, console_node, "depth", "depth")) {
+	if (!of_to_uint32_prop(dict, console_node, "depth", "depth") &&
+	    /* Some cards have an extra space in the property name */
+	    !of_to_uint32_prop(dict, console_node, "depth ", "depth")) {
 		/*
 		 * XXX we should check linebytes vs. width but those
 		 * FBs that don't have a depth property ( /chaos/control... )

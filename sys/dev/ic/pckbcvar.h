@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.11 2005/02/27 00:27:02 perry Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.11.4.1 2008/01/21 09:43:04 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -110,5 +110,8 @@ void pckbcintr_soft(void *);
 
 /* md hook for use without mi wscons */
 int pckbc_machdep_cnattach(pckbc_tag_t, pckbc_slot_t);
+
+/* power management */
+bool pckbc_resume(device_t);
 
 #endif /* _DEV_IC_PCKBCVAR_H_ */

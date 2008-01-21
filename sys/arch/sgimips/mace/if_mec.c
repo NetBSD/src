@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.6.2.3 2007/09/03 14:29:19 yamt Exp $ */
+/* $NetBSD: if_mec.c,v 1.6.2.4 2008/01/21 09:39:14 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -60,11 +60,11 @@
  */
 
 /*
- * MACE MAC-110 ethernet driver
+ * MACE MAC-110 Ethernet driver
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.6.2.3 2007/09/03 14:29:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.6.2.4 2008/01/21 09:39:14 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -271,7 +271,7 @@ struct mec_softc {
 	bus_space_tag_t sc_st;		/* bus_space tag */
 	bus_space_handle_t sc_sh;	/* bus_space handle */
 	bus_dma_tag_t sc_dmat;		/* bus_dma tag */
-	void *sc_sdhook;		/* shoutdown hook */
+	void *sc_sdhook;		/* shutdown hook */
 
 	struct ethercom sc_ethercom;	/* Ethernet common part */
 
@@ -284,7 +284,7 @@ struct mec_softc {
 	bus_dmamap_t sc_cddmamap;	/* bus_dma map for control data */
 #define sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
 
-	/* pointer to allocalted control data */
+	/* pointer to allocated control data */
 	struct mec_control_data *sc_control_data;
 #define sc_txdesc	sc_control_data->mcd_txdesc
 #define sc_rxdesc	sc_control_data->mcd_rxdesc
@@ -338,8 +338,6 @@ STATIC int	mec_mii_readreg(struct device *, int, int);
 STATIC void	mec_mii_writereg(struct device *, int, int, int);
 STATIC int	mec_mii_wait(struct mec_softc *);
 STATIC void	mec_statchg(struct device *);
-STATIC void	mec_mediastatus(struct ifnet *, struct ifmediareq *);
-STATIC int	mec_mediachange(struct ifnet *);
 
 static void	enaddr_aton(const char *, uint8_t *);
 
@@ -411,7 +409,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	 * BUS_DMA_COHERENT (which disables cache) may cause some performance
 	 * issue on copying data from the RX buffer to mbuf on normal memory,
 	 * though we have to make sure all bus_dmamap_sync(9) ops are called
-	 * proprely in that case.
+	 * properly in that case.
 	 */
 	if ((err = bus_dmamem_map(sc->sc_dmat, &seg, rseg,
 	    sizeof(struct mec_control_data),
@@ -449,7 +447,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 
 	callout_init(&sc->sc_tick_ch, 0);
 
-	/* get ethernet address from ARCBIOS */
+	/* get Ethernet address from ARCBIOS */
 	if ((macaddr = ARCBIOS->GetEnvironmentVariable("eaddr")) == NULL) {
 		printf(": unable to get MAC address!\n");
 		goto fail_4;
@@ -475,8 +473,9 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_statchg = mec_statchg;
 
 	/* Set up PHY properties */
-	ifmedia_init(&sc->sc_mii.mii_media, 0, mec_mediachange,
-	    mec_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 
@@ -642,30 +641,6 @@ mec_statchg(struct device *self)
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
 }
 
-STATIC void
-mec_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct mec_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-STATIC int
-mec_mediachange(struct ifnet *ifp)
-{
-	struct mec_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return 0;
-
-	return mii_mediachg(&sc->sc_mii);
-}
-
 /*
  * XXX
  * maybe this function should be moved to common part
@@ -703,7 +678,7 @@ mec_init(struct ifnet *ifp)
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
 	struct mec_rxdesc *rxd;
-	int i;
+	int i, rc;
 
 	/* cancel any pending I/O */
 	mec_stop(ifp, 0);
@@ -747,11 +722,12 @@ mec_init(struct ifnet *ifp)
 
 	callout_reset(&sc->sc_tick_ch, hz, mec_tick, sc);
 
+	if ((rc = ether_mediachange(ifp)) != 0)
+		return rc;
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	mec_start(ifp);
-
-	mii_mediachg(&sc->sc_mii);
 
 	return 0;
 }
@@ -770,7 +746,7 @@ mec_reset(struct mec_softc *sc)
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, 0);
 	delay(1000);
 
-	/* set ethernet address */
+	/* set Ethernet address */
 	address = 0;
 	for (i = 0; i < ETHER_ADDR_LEN; i++) {
 		address = address << 8;
@@ -778,7 +754,7 @@ mec_reset(struct mec_softc *sc)
 	}
 	bus_space_write_8(st, sh, MEC_STATION, address);
 
-	/* Default to 100/half and let autonegotiation work its magic */
+	/* Default to 100/half and let auto-negotiation work its magic */
 	control = MEC_MAC_SPEED_SELECT | MEC_MAC_FILTER_MATCHMULTI |
 	    MEC_MAC_IPG_DEFAULT;
 
@@ -864,12 +840,12 @@ mec_start(struct ifnet *ifp)
 		} else {
 			/*
 			 * If the packet won't fit the buffer in txdesc,
-			 * we have to use concatinate pointer to handle it.
+			 * we have to use concatenate pointer to handle it.
 			 * While MEC can handle up to three segments to
-			 * concatinate, MEC requires that both the second and
+			 * concatenate, MEC requires that both the second and
 			 * third segments have to be 8 byte aligned.
 			 * Since it's unlikely for mbuf clusters, we use
-			 * only the first concatinate pointer. If the packet
+			 * only the first concatenate pointer. If the packet
 			 * doesn't fit in one DMA segment, allocate new mbuf
 			 * and copy the packet to it.
 			 *
@@ -1059,7 +1035,7 @@ mec_start(struct ifnet *ifp)
 
 		/*
 		 * If the transmitter was idle,
-		 * reset the txdirty pointer and reenable TX interrupt.
+		 * reset the txdirty pointer and re-enable TX interrupt.
 		 */
 		if (opending == 0) {
 			sc->sc_txdirty = firsttx;
@@ -1101,31 +1077,20 @@ mec_stop(struct ifnet *ifp, int disable)
 STATIC int
 mec_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct mec_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (void *)data;
 	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				error = mec_init(ifp);
-			else
-				error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			error = mec_init(ifp);
+		else
+			error = 0;
 	}
 
 	/* Try to get more packets going. */
@@ -1398,7 +1363,7 @@ mec_rxintr(struct mec_softc *sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack it its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);

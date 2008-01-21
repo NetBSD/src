@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.14.2.6 2007/12/07 17:23:58 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.14.2.7 2008/01/21 09:35:17 yamt Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -904,22 +904,24 @@ ENTRY(cpu_switchto)
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
-	/* Set curlwp. */
-	movq	%r12,CPUVAR(CURLWP)
+	/*
+	 * Set curlwp.  This must be globally visible in order to permit
+	 * non-interlocked mutex release.
+	 */
+	movq	%r12,%rcx
+	xchgq	%rcx,CPUVAR(CURLWP)
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl
 	jnz	4f
 
-	/* Switch TSS. Reset "task busy" flag before loading. */
-#ifdef XEN
+	/* Switch ring0 stack */
+#ifndef XEN
+	movq	PCB_RSP0(%r14),%rax
+	movq	%rax,CPUVAR(RSP0)
+#else
 	movq	%r14, %rdi
 	callq	_C_LABEL(x86_64_switch_context);
-#else
-	movq    CPUVAR(GDT),%rax
-	movl	L_MD_TSS_SEL(%r12),%edx
-	andl	$~0x0200,4(%rax,%rdx, 1)
-	ltr	%dx
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */
@@ -1012,11 +1014,10 @@ IDTVEC(syscall)
 	 * ss:rsp, etc, so that all GP registers can be
 	 * saved. Then, fill in the rest.
 	 */
-	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))
-	pushq	%r15
-	subq	$(TF_RSP-TF_TRAPNO),%rsp
+	pushq	$(LSEL(LUDATA_SEL, SEL_UPL))	/* Known to be user ss */
+	pushq	%r15				/* User space rsp */
 	movq	CPUVAR(SCRATCH),%r15
-	subq	$32,%rsp
+	subq	$TF_REGSIZE+(TF_RSP-TF_TRAPNO),%rsp
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
@@ -1024,20 +1025,18 @@ IDTVEC(syscall)
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),TF_DS(%rsp)
 	movq	%r11, TF_RFLAGS(%rsp)	/* old rflags from syscall insn */
 	movq	$(LSEL(LUCODE_SEL, SEL_UPL)), TF_CS(%rsp)
-	movq	%rcx,TF_RIP(%rsp)
+	movq	%rcx,TF_RIP(%rsp)	/* syscall saves rip in rcx */
 	movq	$2,TF_ERR(%rsp)
 	movq	$T_ASTFLT, TF_TRAPNO(%rsp)
 #else
 	/* Xen already switched to kernel stack */
 	pushq	%rsi
-	pushq	%rdi
-	STI(si,di)
-	popq	%rdi
+	STI(si)
 	popq	%rsi
-	addq $0x10,%rsp
-	pushq	$2	/* error code */
+	addq	$0x10,%rsp	/* gap to match cs:rip */
+	pushq	$2		/* error code */
 	pushq	$T_ASTFLT
-	subq	$32,%rsp
+	subq	$TF_REGSIZE,%rsp
 	INTR_SAVE_GPRS
 	movw	%fs,TF_FS(%rsp)
 	movw	%gs,TF_GS(%rsp)
@@ -1049,23 +1048,23 @@ IDTVEC(syscall)
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)
-	movq	%rsp,%rdi
+	movq	%rsp,%rdi		/* Pass frame as arg0 */
 	call	*P_MD_SYSCALL(%r15)
 .Lsyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	CLI(si,di)
+	CLI(si)
 	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
-	STI(si,di)
+	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 1:	CHECK_DEFERRED_SWITCH
 	jnz	9f
-	STI(si,di)
+	STI(si)
 	testl	$MDP_IRET, L_MD_FLAGS(%r14)
 	jne	iret_return;
 syscall_return:
@@ -1088,10 +1087,10 @@ syscall_return:
 	INTR_RESTORE_GPRS
 	movw	$(LSEL(LUDATA_SEL, SEL_UPL)),%r11
 	movw	%r11,%ds
-	addq	$48,%rsp
+	addq	$TF_REGSIZE+16,%rsp	/* + T_xxx and error code */
 #ifndef XEN
 	popq	%rcx	/* return rip */
-	addq	$8,%rsp
+	addq	$8,%rsp	/* discard cs */
 	popq	%r11	/* flags as set by sysret insn */
 	movq	%ss:(%rsp),%rsp
 	sysretq
@@ -1114,7 +1113,7 @@ syscall_return:
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL %d %d EXIT %x %x\n"
 #endif
 
-9:	STI(si,di)
+9:	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 
@@ -1188,7 +1187,7 @@ IDTVEC(osyscall)
 osyscall1:
 	pushq	$T_ASTFLT	# trap # for doing ASTs
 	INTRENTRY
-	STI(si,di)
+	STI(si)
 	movq	CPUVAR(CURLWP),%r14
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%rdx
@@ -1197,12 +1196,12 @@ osyscall1:
 _C_LABEL(osyscall_return):
 .Losyscall_checkast:
 	/* Check for ASTs on exit to user mode. */
-	CLI(si,di)
+	CLI(si)
 	CHECK_ASTPENDING(%r14)
 	je	1f
 	/* Always returning to user mode here. */
 	CLEAR_ASTPENDING(%r14)
-	STI(si,di)
+	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
 	call	_C_LABEL(trap)
@@ -1217,7 +1216,7 @@ iret_return:
 	jne	3f
 	INTRFASTEXIT
 3:
-	STI(si,di)
+	STI(si)
 	movabsq	$4f, %rdi
 	xorq	%rax,%rax
 	call	_C_LABEL(printf)
@@ -1226,7 +1225,7 @@ iret_return:
 	jmp	.Losyscall_checkast
 4:	.asciz	"WARNING: SPL NOT LOWERED ON SYSCALL EXIT\n"
 #endif /* DIAGNOSTIC */
-9:	STI(si,di)
+9:	STI(si)
 	call	_C_LABEL(do_pmap_load)
 	jmp	.Losyscall_checkast	/* re-check ASTs */
 

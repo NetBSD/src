@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848.c,v 1.20.10.3 2007/10/27 11:30:25 yamt Exp $	*/
+/*	$NetBSD: ad1848.c,v 1.20.10.4 2008/01/21 09:42:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.20.10.3 2007/10/27 11:30:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ad1848.c,v 1.20.10.4 2008/01/21 09:42:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,8 +628,8 @@ ad1848_get_mic_gain(struct ad1848_softc *sc, struct ad1848_volume *gp)
 	return 0;
 }
 
-static ad1848_devmap_t *
-ad1848_mixer_find_dev(ad1848_devmap_t *map, int cnt, mixer_ctrl_t *cp)
+static const ad1848_devmap_t *
+ad1848_mixer_find_dev(const ad1848_devmap_t *map, int cnt, mixer_ctrl_t *cp)
 {
 	int i;
 
@@ -642,10 +642,10 @@ ad1848_mixer_find_dev(ad1848_devmap_t *map, int cnt, mixer_ctrl_t *cp)
 }
 
 int
-ad1848_mixer_get_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
+ad1848_mixer_get_port(struct ad1848_softc *ac, const struct ad1848_devmap *map,
     int cnt, mixer_ctrl_t *cp)
 {
-	ad1848_devmap_t *entry;
+	const ad1848_devmap_t *entry;
 	struct ad1848_volume vol;
 	int error;
 	int dev;
@@ -715,10 +715,10 @@ ad1848_mixer_get_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
 }
 
 int
-ad1848_mixer_set_port(struct ad1848_softc *ac, struct ad1848_devmap *map,
+ad1848_mixer_set_port(struct ad1848_softc *ac, const struct ad1848_devmap *map,
     int cnt, mixer_ctrl_t *cp)
 {
-	ad1848_devmap_t *entry;
+	const ad1848_devmap_t *entry;
 	struct ad1848_volume vol;
 	int error;
 	int dev;

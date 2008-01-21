@@ -1,4 +1,4 @@
-/* $NetBSD: adm5120_extiovar.h,v 1.1.20.2 2007/09/03 14:27:50 yamt Exp $ */
+/* $NetBSD: adm5120_extiovar.h,v 1.1.20.3 2008/01/21 09:37:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -32,6 +32,7 @@
 #ifndef _ADM5120_EXTIOVAR_H_
 #define _ADM5120_EXTIOVAR_H_
 
+#include <sys/device.h>
 #include <sys/types.h>
 #include <sys/gpio.h>
 #include <sys/ioctl.h>

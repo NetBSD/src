@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.2.14.3 2006/12/30 20:46:11 yamt Exp $ */
+/* $NetBSD: viapcib.c,v 1.2.14.4 2008/01/21 09:37:14 yamt Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,15 +55,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.2.14.3 2006/12/30 20:46:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.2.14.4 2008/01/21 09:37:14 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/proc.h>
-
-#include <machine/bus.h>
+#include <sys/simplelock.h>
+#include <sys/bus.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>

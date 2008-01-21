@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2.4.3 2007/12/07 17:25:20 yamt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.4.4 2008/01/21 09:37:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -47,8 +47,8 @@ struct krwlock {
 
 #define	__HAVE_SIMPLE_RW_LOCKS		1
 
-#define	RW_RECEIVE(rw)			/* nothing */
-#define	RW_GIVE(rw)			mb_memory()
+#define	RW_RECEIVE(rw)			membar_enter()
+#define	RW_GIVE(rw)			membar_exit()
 
 #define	RW_CAS(p, o, n)			\
     (_atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))

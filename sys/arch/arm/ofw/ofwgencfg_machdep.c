@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_machdep.c,v 1.7.16.2 2007/09/03 14:23:23 yamt Exp $	*/
+/*	$NetBSD: ofwgencfg_machdep.c,v 1.7.16.3 2008/01/21 09:35:46 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.7.16.2 2007/09/03 14:23:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.7.16.3 2008/01/21 09:35:46 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: ofwgencfg_machdep.c,v 1.7.16.2 2007/09/03 14:23:23 y
 #include <machine/irqhandler.h>
 #include <arm/arm32/machdep.h>
 #include <arm/undefined.h>
-
-#include "opt_ipkdb.h"
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>

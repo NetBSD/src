@@ -1,4 +1,4 @@
-#	$NetBSD: majors.vax,v 1.15.2.2 2006/12/30 20:47:13 yamt Exp $
+#	$NetBSD: majors.vax,v 1.15.2.3 2008/01/21 09:39:59 yamt Exp $
 #
 # Device majors for vax
 #
@@ -77,7 +77,6 @@ device-major	scsibus		char 72			scsibus
 device-major	raid		char 73  block 25	raid
 device-major	wsmux		char 74			wsmux
 device-major	clockctl	char 75			clockctl
-device-major	systrace	char 76			systrace
 device-major	cgd		char 77  block 26	cgd
 device-major	rf		char 78  block 27	rf
 device-major	ksyms		char 79			ksyms

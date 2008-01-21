@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.8 2004/02/13 11:36:13 wiz Exp $	*/
+/*	$NetBSD: locore.S,v 1.8.16.1 2008/01/21 09:36:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -31,7 +31,6 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_ipkdb.h"
 #include "assym.h"
 #include <sys/syscall.h>
 #include <sys/errno.h>
@@ -63,8 +62,8 @@ ASENTRY_NP(start)
 	mov	r4, #0
 	mcr	15, 0, r4, c13, c0, 0
 
-	mov	fp, #0x00000000			/* trace back starts here */
-	bl	_C_LABEL(initarm)		/* Off we go */
+	mov	fp, #0x00000000		/* trace back starts here */
+	bl	_C_LABEL(initarm)	/* Off we go */
 
 	/* init arm will return the new stack pointer. */
 	mov	sp, r0
@@ -93,7 +92,7 @@ ASENTRY_NP(start)
 	.text
 	.align	0
 
-Lcpufuncs:	
+.Lcpufuncs:	
 	.word	_C_LABEL(cpufuncs)
 
 ENTRY_NP(cpu_reset)
@@ -101,12 +100,12 @@ ENTRY_NP(cpu_reset)
 	bic	r2, r2, #(PSR_MODE)
 	orr     r2, r2, #(PSR_SVC32_MODE)
 	orr	r2, r2, #(I32_bit | F32_bit)
-	msr     cpsr, r2
+	msr     cpsr_all, r2
 
-	ldr	r4, Lcpu_reset_address
+	ldr	r4, .Lcpu_reset_address
 	ldr	r4, [r4]
 
-	ldr	r0, Lcpufuncs
+	ldr	r0, .Lcpufuncs
 	mov	lr, pc
 	ldr	pc, [r0, #CF_IDCACHE_WBINV_ALL]
 
@@ -125,45 +124,8 @@ ENTRY_NP(cpu_reset)
 	 * This variable is provided by the hardware specific code
 	 */
 
-Lcpu_reset_address:
+.Lcpu_reset_address:
 	.word	_C_LABEL(cpu_reset_address)
-
-#ifdef IPKDB
-/*
- * Execute(inst, psr, args, sp)
- *
- * Execute INSTruction with PSR and ARGS[0] - ARGS[3] making
- * available stack at SP for next undefined instruction trap.
- *
- * Move the instruction onto the stack and jump to it.
- */
-ENTRY_NP(Execute)
-	mov	ip, sp
-	stmfd	sp!, {r2, r4-r7, fp, ip, lr, pc}
-	sub	fp, ip, #4
-	mov	ip, r3
-	ldr	r7, return
-	stmfd	sp!, {r0, r7}
-	adr	r7, LExec
-	mov	r5, r1
-	mrs	r4, cpsr
-	ldmia	r2, {r0-r3}
-	mov	r6, sp
-	mov	sp, ip
-	msr	cpsr, r5
-	mov	pc, r6
-LExec:
-	mrs	r5, cpsr
-/* XXX Cannot switch thus easily back from user mode */
-	msr	cpsr, r4
-	add	sp, r6, #8
-	ldmfd	sp!, {r6}
-	stmia	r6, {r0-r3}
-	mov	r0, r5
-	ldmdb	fp, {r4-r7, fp, sp, pc}
-return:
-	mov	pc, r7
-#endif
 
 /*
  * setjump + longjmp
@@ -185,5 +147,38 @@ _C_LABEL(esym):	.word	_C_LABEL(end)
 ENTRY_NP(abort)
 	b	_C_LABEL(abort)
 
+/*
+ * part of doing a system dump, we need to save registers and cpsr onto the
+ * stack, then save the rest of the registers into the dumppcb
+ */
+ENTRY(dumpsys)
+	/* push registers onto stack */
+	stmfd	sp!, {r0-r7, lr}
+	
+	/* push the status bits onto the stack */
+	mrs	r0, cpsr_all
+	stmfd	sp!, {r0}
+
+	/* fill in dumppcb */
+	ldr	r0, .Ldumppcb
+
+#ifndef __XSCALE__
+        add     r2, r0, #(PCB_R8)
+        stmia   r2, {r8-r13}
+#else
+        strd    r8, [r0, #(PCB_R8)]
+        strd    r10, [r0, #(PCB_R10)]
+        strd    r12, [r0, #(PCB_R12)]
+#endif
+
+	bl	_C_LABEL(dodumpsys)
+
+	/* unwind the stack */
+	ldmfd	sp!, {r0}
+	nop
+	ldmfd	sp!, {r0-r7, pc}
+
+.Ldumppcb:
+	.word	_C_LABEL(dumppcb)
 
 /* End of locore.S */

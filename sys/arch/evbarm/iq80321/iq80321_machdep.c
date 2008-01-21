@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80321_machdep.c,v 1.33.10.2 2006/12/30 20:45:51 yamt Exp $	*/
+/*	$NetBSD: iq80321_machdep.c,v 1.33.10.3 2008/01/21 09:36:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003 Wasabi Systems, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.33.10.2 2006/12/30 20:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.33.10.3 2008/01/21 09:36:13 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: iq80321_machdep.c,v 1.33.10.2 2006/12/30 20:45:51 ya
 #include <evbarm/iq80321/iq80321var.h>
 #include <evbarm/iq80321/obiovar.h>
 
-#include "opt_ipkdb.h"
 #include "ksyms.h"
 
 /* Kernel text starts 2MB in from the bottom of the kernel address space. */
@@ -142,11 +141,7 @@ u_int cpu_reset_address = 0x00000000;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -787,13 +782,6 @@ initarm(void *arg)
 
 #ifdef BOOTHOWTO
 	boothowto = BOOTHOWTO;
-#endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)

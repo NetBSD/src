@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_geode_reg.h,v 1.3 2005/02/27 00:27:33 perry Exp $	*/
+/*	$NetBSD: pciide_geode_reg.h,v 1.3.4.1 2008/01/21 09:44:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004 Manuel Bouyer.
@@ -42,21 +42,21 @@
  * geode_udma sets bit 23 to 1. I don't know if it's the definition of
  * DMA_REG_UDMA which is wrong (bit 23 instead of 20) or these values.
  */
-static const int32_t geode_cs5530_pio[] __attribute__((__unused__)) =
+static const int32_t geode_cs5530_pio[] __unused =
     {0x9172d132, 0x21717121, 0x00803020, 0x20102010, 0x00100010};
-static const int32_t geode_cs5530_dma[] __attribute__((__unused__)) =
+static const int32_t geode_cs5530_dma[] __unused =
     {0x00077771, 0x00012121, 0x00002020};
-static const int32_t geode_cs5530_udma[] __attribute__((__unused__)) =
+static const int32_t geode_cs5530_udma[] __unused =
     {0x00921250, 0x00911140, 0x00911030};
 
 #define SC1100_PIO_REG(chan, drv)	(0x40 + (chan) * 0x10 + (drv) * 0x8)
 #define SC1100_DMA_REG(chan, drv)	(0x44 + (chan) * 0x10 + (drv) * 0x8)
 
 /* Timings from FreeBSD */
-static const int32_t geode_sc1100_pio[] __attribute__((__unused__)) =
+static const int32_t geode_sc1100_pio[] __unused =
     {0x9172d132, 0x21717121, 0x00803020, 0x20102010, 0x00100010, 0x00803020,
      0x20102010, 0x00100010, 0x00100010, 0x00100010, 0x00100010};
-static const int32_t geode_sc1100_dma[] __attribute__((__unused__)) =
+static const int32_t geode_sc1100_dma[] __unused =
     {0x80077771, 0x80012121, 0x80002020};
-static const int32_t geode_sc1100_udma[] __attribute__((__unused__)) =
+static const int32_t geode_sc1100_udma[] __unused =
     {0x80921250, 0x80911140, 0x80911030};

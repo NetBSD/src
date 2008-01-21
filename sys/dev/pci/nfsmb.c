@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsmb.c,v 1.6.2.5 2007/12/07 17:30:26 yamt Exp $	*/
+/*	$NetBSD: nfsmb.c,v 1.6.2.6 2008/01/21 09:44:07 yamt Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.6.2.5 2007/12/07 17:30:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfsmb.c,v 1.6.2.6 2008/01/21 09:44:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -158,7 +158,6 @@ nfsmbc_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_NFORCE3_SMBUS:
 	case PCI_PRODUCT_NVIDIA_NFORCE3_250_SMBUS:
 	case PCI_PRODUCT_NVIDIA_NFORCE4_SMBUS:
-	case PCI_PRODUCT_NVIDIA_NFORCE430_SMBUS:
 		baseregs[0] = NFORCE_OLD_SMB1;
 		baseregs[1] = NFORCE_OLD_SMB2;
 		break;

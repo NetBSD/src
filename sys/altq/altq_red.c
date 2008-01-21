@@ -1,4 +1,4 @@
-/*	$NetBSD: altq_red.c,v 1.11.4.3 2007/09/03 14:21:57 yamt Exp $	*/
+/*	$NetBSD: altq_red.c,v 1.11.4.4 2008/01/21 09:34:59 yamt Exp $	*/
 /*	$KAME: altq_red.c,v 1.20 2005/04/13 03:44:25 suz Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.11.4.3 2007/09/03 14:21:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altq_red.c,v 1.11.4.4 2008/01/21 09:34:59 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq.h"
@@ -1085,11 +1085,7 @@ red_purgeq(red_queue_t *rqp)
 
 #define	FV_STATS
 
-#if (__FreeBSD_version > 300000) || defined(__HAVE_TIMECOUNTER)
 #define	FV_TIMESTAMP(tp)	getmicrotime(tp)
-#else
-#define	FV_TIMESTAMP(tp)	{ (*(tp)) = time; }
-#endif
 
 /*
  * Brtt table: 127 entry table to convert drop rate (p) to

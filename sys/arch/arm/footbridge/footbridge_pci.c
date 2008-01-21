@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.11.2.1 2007/09/03 14:23:18 yamt Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.11.2.2 2008/01/21 09:35:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.11.2.1 2007/09/03 14:23:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.11.2.2 2008/01/21 09:35:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,13 +95,15 @@ struct arm32_pci_chipset footbridge_pci_chipset = {
 	footbridge_pci_intr_disestablish
 };
 
+struct arm32_dma_range footbridge_dma_ranges[1];
+
 /*
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
 struct arm32_bus_dma_tag footbridge_pci_bus_dma_tag = {
-	0,
-	0,
+	footbridge_dma_ranges,
+	1,
 	NULL,
 	_bus_dmamap_create, 
 	_bus_dmamap_destroy,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.1.16.3 2007/02/26 09:09:25 yamt Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.1.16.4 2008/01/21 09:41:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.1.16.3 2007/02/26 09:09:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.1.16.4 2008/01/21 09:41:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,16 +70,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.1.16.3 2007/02/26 09:09:25 yamt
 #include <compat/linux32/linux32_syscallargs.h>
 
 int
-linux32_sys_getdents(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getdents(struct lwp *l, const struct linux32_sys_getdents_args *uap, register_t *retval)
 {
-	struct linux32_sys_getdents_args /* {
+	/* {
 		syscallcarg(int) fd;
 		syscallcarg(linux32_direntp_t) dent;
 		syscallcarg(unsigned int) count;
-	} */ *uap = v;
+	} */
 	struct linux_sys_getdents_args ua;
 
 	NETBSD32TO64_UAP(fd);
@@ -91,16 +88,13 @@ linux32_sys_getdents(l, v, retval)
 
 
 int
-linux32_sys_getdents64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_getdents64(struct lwp *l, const struct linux32_sys_getdents64_args *uap, register_t *retval)
 {
-	struct linux32_sys_getdents64_args /* {
+	/* {
 		syscallcarg(int) fd;
 		syscallcarg(linux32_dirent64p_t) dent;
 		syscallcarg(unsigned int) count;
-	} */ *uap = v;
+	} */
 	struct linux_sys_getdents64_args ua;
 
 	NETBSD32TO64_UAP(fd);
@@ -110,3 +104,24 @@ linux32_sys_getdents64(l, v, retval)
 	return linux_sys_getdents64(l, &ua, retval);
 }
 
+int
+linux32_sys_readdir(struct lwp *l, const struct linux32_sys_readdir_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(struct linux32_direntp_t) dent;
+		syscallarg(unsigned int) count;
+	} */
+	int error;
+	struct linux32_sys_getdents_args da;
+
+	SCARG(&da, fd) = SCARG(uap, fd);
+	SCARG(&da, dent) = SCARG(uap, dent);
+	SCARG(&da, count) = 1;
+
+	error = linux32_sys_getdents(l, &da, retval);
+	if (error == 0 && *retval > 1)
+		*retval = 1;
+
+	return error;
+}

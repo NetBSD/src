@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.3.2.3 2007/10/27 11:32:54 yamt Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.3.2.4 2008/01/21 09:43:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -143,10 +143,6 @@ struct iwi_softc {
 	pci_chipset_tag_t	sc_pct;
 	pcitag_t		sc_pcitag;
 	bus_size_t		sc_sz;
-
-	void			*sc_sdhook;	/* shutdown hook */
-	void			*sc_powerhook;	/* power management hook */
-	struct pci_conf_state	sc_pciconf;
 
 	struct sysctllog	*sc_sysctllog;
 

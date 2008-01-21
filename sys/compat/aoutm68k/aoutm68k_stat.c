@@ -1,4 +1,4 @@
-/*	$NetBSD: aoutm68k_stat.c,v 1.10.18.4 2007/09/03 14:31:47 yamt Exp $	*/
+/*	$NetBSD: aoutm68k_stat.c,v 1.10.18.5 2008/01/21 09:40:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.18.4 2007/09/03 14:31:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_stat.c,v 1.10.18.5 2008/01/21 09:40:40 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -74,12 +74,8 @@ static void aoutm68k_stat13_convert(struct stat *, struct aoutm68k_stat *);
 
 #ifdef COMPAT_43
 int
-aoutm68k_compat_43_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_compat_43_sys_stat(struct lwp *l, const struct aoutm68k_compat_43_sys_stat_args *uap, register_t *retval)
 {
-	struct aoutm68k_compat_43_sys_stat_args *uap = v;
 	struct aoutm68k_stat43 ast;
 	struct stat sb;
 	int error;
@@ -94,12 +90,8 @@ aoutm68k_compat_43_sys_stat(l, v, retval)
 }
 
 int
-aoutm68k_compat_43_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_compat_43_sys_fstat(struct lwp *l, const struct aoutm68k_compat_43_sys_fstat_args *uap, register_t *retval)
 {
-	struct aoutm68k_compat_43_sys_fstat_args *uap = v;
 	struct aoutm68k_stat43 ast;
 	struct stat sb;
 	int error;
@@ -114,12 +106,8 @@ aoutm68k_compat_43_sys_fstat(l, v, retval)
 }
 
 int
-aoutm68k_compat_43_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_compat_43_sys_lstat(struct lwp *l, const struct aoutm68k_compat_43_sys_lstat_args *uap, register_t *retval)
 {
-	struct aoutm68k_compat_43_sys_lstat_args *uap = v;
 	struct aoutm68k_stat43 ast;
 	struct stat sb;
 	int error;
@@ -136,12 +124,8 @@ aoutm68k_compat_43_sys_lstat(l, v, retval)
 
 #ifdef COMPAT_12
 int
-aoutm68k_compat_12_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_compat_12_sys_stat(struct lwp *l, const struct aoutm68k_compat_12_sys_stat_args *uap, register_t *retval)
 {
-	struct aoutm68k_compat_12_sys_stat_args *uap = v;
 	struct aoutm68k_stat12 ast;
 	struct stat sb;
 	int error;
@@ -156,12 +140,8 @@ aoutm68k_compat_12_sys_stat(l, v, retval)
 }
 
 int
-aoutm68k_compat_12_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_compat_12_sys_fstat(struct lwp *l, const struct aoutm68k_compat_12_sys_fstat_args *uap, register_t *retval)
 {
-	struct aoutm68k_compat_12_sys_fstat_args *uap = v;
 	struct aoutm68k_stat12 ast;
 	struct stat sb;
 	int error;
@@ -176,12 +156,8 @@ aoutm68k_compat_12_sys_fstat(l, v, retval)
 }
 
 int
-aoutm68k_compat_12_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_compat_12_sys_lstat(struct lwp *l, const struct aoutm68k_compat_12_sys_lstat_args *uap, register_t *retval)
 {
-	struct aoutm68k_compat_12_sys_lstat_args *uap = v;
 	struct aoutm68k_stat12 ast;
 	struct stat sb;
 	int error;
@@ -197,12 +173,8 @@ aoutm68k_compat_12_sys_lstat(l, v, retval)
 #endif /* COMPAT_12 */
 
 int
-aoutm68k_sys___stat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_sys___stat13(struct lwp *l, const struct aoutm68k_sys___stat13_args *uap, register_t *retval)
 {
-	struct aoutm68k_sys___stat13_args *uap = v;
 	struct aoutm68k_stat ast;
 	struct stat sb;
 	int error;
@@ -217,12 +189,8 @@ aoutm68k_sys___stat13(l, v, retval)
 }
 
 int
-aoutm68k_sys___fstat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_sys___fstat13(struct lwp *l, const struct aoutm68k_sys___fstat13_args *uap, register_t *retval)
 {
-	struct aoutm68k_sys___fstat13_args *uap = v;
 	struct aoutm68k_stat ast;
 	struct stat sb;
 	int error;
@@ -238,12 +206,8 @@ aoutm68k_sys___fstat13(l, v, retval)
 }
 
 int
-aoutm68k_sys___lstat13(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_sys___lstat13(struct lwp *l, const struct aoutm68k_sys___lstat13_args *uap, register_t *retval)
 {
-	struct aoutm68k_sys___lstat13_args *uap = v;
 	struct aoutm68k_stat ast;
 	struct stat sb;
 	int error;
@@ -258,12 +222,8 @@ aoutm68k_sys___lstat13(l, v, retval)
 }
 
 int
-aoutm68k_sys_fhstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+aoutm68k_sys_fhstat(struct lwp *l, const struct aoutm68k_sys_fhstat_args *uap, register_t *retval)
 {
-	struct aoutm68k_sys_fhstat_args *uap = v;
 	struct aoutm68k_stat ast;
 	struct stat sb;
 	int error;
@@ -278,9 +238,7 @@ aoutm68k_sys_fhstat(l, v, retval)
 
 #ifdef COMPAT_43
 static void
-aoutm68k_stat43_convert(st, ast)
-	struct stat *st;
-	struct aoutm68k_stat43 *ast;
+aoutm68k_stat43_convert(struct stat *st, struct aoutm68k_stat43 *ast)
 {
 
 	memset(ast, 0, sizeof(*ast));
@@ -310,9 +268,7 @@ aoutm68k_stat43_convert(st, ast)
 
 #ifdef COMPAT_12
 static void
-aoutm68k_stat12_convert(st, ast)
-	struct stat *st;
-	struct aoutm68k_stat12 *ast;
+aoutm68k_stat12_convert(struct stat *st, struct aoutm68k_stat12 *ast)
 {
 
 	memset(ast, 0, sizeof(*ast));
@@ -341,9 +297,7 @@ aoutm68k_stat12_convert(st, ast)
 #endif /* COMPAT_12 */
 
 static void
-aoutm68k_stat13_convert(st, ast)
-	struct stat *st;
-	struct aoutm68k_stat *ast;
+aoutm68k_stat13_convert(struct stat *st, struct aoutm68k_stat *ast)
 {
 
 	memset(ast, 0, sizeof(*ast));

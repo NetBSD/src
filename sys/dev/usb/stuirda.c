@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.2.16.3 2007/12/07 17:31:32 yamt Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.2.16.4 2008/01/21 09:44:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -35,14 +35,16 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.2.16.4 2008/01/21 09:44:44 yamt Exp $");
+
 #include <sys/param.h>
 
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/ioctl.h>
 #include <sys/conf.h>
 #include <sys/file.h>

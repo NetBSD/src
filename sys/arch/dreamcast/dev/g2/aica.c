@@ -1,4 +1,4 @@
-/*	$NetBSD: aica.c,v 1.9.2.3 2007/09/03 14:23:56 yamt Exp $	*/
+/*	$NetBSD: aica.c,v 1.9.2.4 2008/01/21 09:36:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 SHIMIZU Ryo <ryo@misakimix.org>
@@ -29,10 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.9.2.3 2007/09/03 14:23:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aica.c,v 1.9.2.4 2008/01/21 09:36:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/audioio.h>

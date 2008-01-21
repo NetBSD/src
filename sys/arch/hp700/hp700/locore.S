@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13.12.5 2007/11/15 11:42:44 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.13.12.6 2008/01/21 09:36:32 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
 /*
@@ -84,7 +84,7 @@
 #define	ccr	cr10
 #define	rctr	cr0
 #define	vtop	cr25
-#define	hptmask cr24
+#define	hptmask	cr24
 
 /*
  * Very crude debugging macros that write to com1.

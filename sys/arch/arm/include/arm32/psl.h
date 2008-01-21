@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.6.18.4 2007/12/07 17:24:17 yamt Exp $	*/
+/*	$NetBSD: psl.h,v 1.6.18.5 2008/01/21 09:35:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -57,6 +57,7 @@
  */
 
 #define _SPL_0		0
+#ifdef __HAVE_FAST_SOFTINTS
 #define _SPL_SOFTCLOCK	1
 #define _SPL_SOFTBIO	2
 #define _SPL_SOFTNET	3
@@ -65,23 +66,42 @@
 #define _SPL_SCHED	6
 #define _SPL_HIGH	7
 #define _SPL_LEVELS	8
+#else
+#define _SPL_SOFTCLOCK	_SPL_0
+#define _SPL_SOFTBIO	_SPL_0
+#define _SPL_SOFTNET	_SPL_0
+#define _SPL_SOFTSERIAL	_SPL_0
+#define _SPL_VM		1
+#define _SPL_SCHED	2
+#define _SPL_HIGH	3
+#define _SPL_LEVELS	4
+#endif
 
 #define spl0()		splx(_SPL_0)
+#ifdef __HAVE_FAST_SOFTINTS
 #define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
 #define splsoftbio()	raisespl(_SPL_SOFTBIO)
 #define splsoftnet()	raisespl(_SPL_SOFTNET)
 #define splsoftserial()	raisespl(_SPL_SOFTSERIAL)
+#else
+#define splsoftclock()	spl0()
+#define splsoftbio()	spl0()
+#define splsoftnet()	spl0()
+#define splsoftserial()	spl0()
+#endif
 #define splvm()		raisespl(_SPL_VM)
 #define splsched()	raisespl(_SPL_SCHED)
 #define splhigh()	raisespl(_SPL_HIGH)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
-int raisespl	__P((int));
-int lowerspl	__P((int));
-int splx	__P((int));
+int raisespl	(int);
+int lowerspl	(int);
+int splx	(int);
 
+#ifdef __HAVE_FAST_SOFTINTS
 void _setsoftintr	(int si);
+#endif
 
 extern int current_spl_level;
 

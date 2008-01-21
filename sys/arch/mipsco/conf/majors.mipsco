@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mipsco,v 1.12.2.2 2006/12/30 20:46:33 yamt Exp $
+#	$NetBSD: majors.mipsco,v 1.12.2.3 2008/01/21 09:37:35 yamt Exp $
 #
 # Device majors for mipsco
 #
@@ -40,7 +40,6 @@ device-major	ses		char 58			ses
 device-major	scsibus		char 73			scsibus
 device-major	raid		char 74  block 32	raid
 device-major	clockctl	char 75			clockctl
-device-major	systrace	char 76			systrace
 device-major	ksyms		char 77			ksyms
 
 device-major	nsmb		char 98			nsmb

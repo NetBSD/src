@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.4.4.7 2007/12/07 17:27:38 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.4.4.8 2008/01/21 09:40:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.4.4.7 2007/12/07 17:27:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.4.4.8 2008/01/21 09:40:45 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -137,23 +137,23 @@ vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
  */
 /* ARGSUSED */
 int
-compat_20_sys_statfs(struct lwp *l, void *v, register_t *retval)
+compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap, register_t *retval)
 {
-	struct compat_20_sys_statfs_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct statfs12 *) buf;
-	} */ *uap = v;
+	} */
 	struct mount *mp;
 	struct statvfs *sbuf;
 	int error = 0;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return error;
 
 	mp = nd.ni_vp->v_mount;
-	vrele(nd.ni_vp);
 
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = dostatvfs(mp, sbuf, l, 0, 1)) != 0)
@@ -161,6 +161,7 @@ compat_20_sys_statfs(struct lwp *l, void *v, register_t *retval)
 
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 done:
+	vrele(nd.ni_vp);
 	free(sbuf, M_TEMP);
 	return error;
 }
@@ -170,12 +171,12 @@ done:
  */
 /* ARGSUSED */
 int
-compat_20_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
+compat_20_sys_fstatfs(struct lwp *l, const struct compat_20_sys_fstatfs_args *uap, register_t *retval)
 {
-	struct compat_20_sys_fstatfs_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct statfs12 *) buf;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct mount *mp;
@@ -201,16 +202,13 @@ compat_20_sys_fstatfs(struct lwp *l, void *v, register_t *retval)
  * Get statistics on all filesystems.
  */
 int
-compat_20_sys_getfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args *uap, register_t *retval)
 {
-	struct compat_20_sys_getfsstat_args /* {
+	/* {
 		syscallarg(struct statfs12 *) buf;
 		syscallarg(long) bufsize;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	int root = 0;
 	struct mount *mp, *nmp;
 	struct statvfs *sbuf;
@@ -272,12 +270,12 @@ out:
 }
 
 int
-compat_20_sys_fhstatfs(struct lwp *l, void *v, register_t *retval)
+compat_20_sys_fhstatfs(struct lwp *l, const struct compat_20_sys_fhstatfs_args *uap, register_t *retval)
 {
-	struct compat_20_sys_fhstatfs_args /*
+	/* {
 		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct statfs12 *) buf;
-	} */ *uap = v;
+	} */
 	struct statvfs *sbuf;
 	struct compat_30_fhandle fh;
 	struct mount *mp;
@@ -299,12 +297,13 @@ compat_20_sys_fhstatfs(struct lwp *l, void *v, register_t *retval)
 	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
-	vput(vp);
+	VOP_UNLOCK(vp, 0);
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = VFS_STATVFS(mp, sbuf)) != 0)
 		goto out;
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 out:
+	vrele(vp);
 	free(sbuf, M_TEMP);
 	return error;
 }

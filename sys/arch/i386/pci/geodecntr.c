@@ -1,4 +1,4 @@
-/*	$NetBSD: geodecntr.c,v 1.2.6.3 2006/12/30 20:46:11 yamt Exp $	*/
+/*	$NetBSD: geodecntr.c,v 1.2.6.4 2008/01/21 09:37:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.2.6.3 2006/12/30 20:46:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodecntr.c,v 1.2.6.4 2008/01/21 09:37:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,8 +60,7 @@ static unsigned geode_get_timecount(struct timecounter *);
 static int attached = 0;
 
 static int
-geodecntr_match(struct device *parent, struct cfdata *match,
-    void *aux)
+geodecntr_match(device_t parent, struct cfdata *match, void *aux)
 {
 	return !attached;
 }
@@ -70,13 +69,13 @@ geodecntr_match(struct device *parent, struct cfdata *match,
  * attach time counter
  */
 static void
-geodecntr_attach(struct device *parent, struct device *self, void *aux)
+geodecntr_attach(device_t parent, device_t self, void *aux)
 {
-	struct geodecntr_softc *sc = (struct geodecntr_softc *) self;
+	struct geodecntr_softc *sc = device_private(self);
 
 	aprint_normal(": AMD Geode SC1100 27Mhz Counter\n");
 
-	sc->sc_gcb_dev = (struct geode_gcb_softc *)parent;
+	sc->sc_gcb_dev = device_private(parent);
 
 	/*
 	 * select 27MHz, no powerdown, no interrupt
@@ -99,6 +98,15 @@ geodecntr_attach(struct device *parent, struct device *self, void *aux)
 	attached = 1;
 }
 
+static int
+geodecntr_detach(device_t self, int flags)
+{
+	struct geodecntr_softc *sc = device_private(self);
+
+	attached = 0;
+	return tc_detach(&sc->sc_tc);
+}
+
 /*
  * read counter
  */
@@ -106,9 +114,10 @@ static unsigned geode_get_timecount(struct timecounter *tc)
 {
 	struct geodecntr_softc *sc = (struct geodecntr_softc *)tc->tc_priv;
 
-	return bus_space_read_4(sc->sc_gcb_dev->sc_iot, sc->sc_gcb_dev->sc_ioh, SC1100_GCB_TMVALUE_L);
+	return bus_space_read_4(sc->sc_gcb_dev->sc_iot, sc->sc_gcb_dev->sc_ioh,
+	    SC1100_GCB_TMVALUE_L);
 }
 
 CFATTACH_DECL(geodecntr, sizeof(struct geodecntr_softc),
-	      geodecntr_match, geodecntr_attach, NULL, NULL);
+	      geodecntr_match, geodecntr_attach, geodecntr_detach, NULL);
 

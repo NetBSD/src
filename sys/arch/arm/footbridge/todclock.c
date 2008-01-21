@@ -1,4 +1,4 @@
-/*	$NetBSD: todclock.c,v 1.7.2.2 2006/12/30 20:45:33 yamt Exp $	*/
+/*	$NetBSD: todclock.c,v 1.7.2.3 2008/01/21 09:35:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.7.2.2 2006/12/30 20:45:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.7.2.3 2008/01/21 09:35:40 yamt Exp $");
 
 /* Include header files */
 
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.7.2.2 2006/12/30 20:45:33 yamt Exp $"
 
 #include <machine/rtc.h>
 #include <arm/footbridge/todclockvar.h>
+#include <dev/clock_subr.h>
 
 #include "todclock.h"
 
@@ -64,7 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: todclock.c,v 1.7.2.2 2006/12/30 20:45:33 yamt Exp $"
 #error "Can only had 1 todclock device"
 #endif
 
-static int yeartoday __P((int));
+static int tod_get_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+static int tod_set_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
  
 /*
  * softc structure for the todclock device
@@ -136,6 +138,8 @@ todclockattach(parent, self, aux)
 	struct device *self;
 	void *aux;
 {
+	static struct todr_chip_handle	tch;
+
 	struct todclock_softc *sc = (void *)self;
 	struct todclock_attach_args *ta = aux;
 
@@ -145,98 +149,29 @@ todclockattach(parent, self, aux)
 	todclock_sc->sc_rtc_write = ta->ta_rtc_write;
 	todclock_sc->sc_rtc_read = ta->ta_rtc_read;
 
+	tch.todr_gettime_ymdhms = tod_get_ymdhms;
+	tch.todr_settime_ymdhms = tod_set_ymdhms;
+	tch.todr_setwen = NULL;
+
+	todr_attach(&tch);
+
 	printf("\n");
 }
 
-static inline int
-yeartoday(year)
-	int year;
+static int
+tod_set_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	return((year % 4) ? 365 : 366);
-}
-
-                 
-static int month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
-static int timeset = 0;
-
-#define SECPERDAY	(24*60*60)
-#define SECPERNYEAR	(365*SECPERDAY)
-#define SECPER4YEARS	(4*SECPERNYEAR+SECPERDAY)
-#define EPOCHYEAR	1970
-
-/*
- * Globally visable functions
- *
- * These functions are used from other parts of the kernel.
- * These functions use the functions defined in the tod_sc
- * to actually read and write the rtc.
- *
- * The first todclock to be attached will be used for handling
- * the time of day.
- */
-
-/*
- * Write back the time of day to the rtc
- */
-
-void
-resettodr()
-{
-	int s;
-	time_t year, mon, day, hour, mins, sec;
 	rtc_t rtc;
+	int s;
 
-	/* Have we set the system time in inittodr() */
-	if (!timeset)
-		return;
-
-	/* We need a todclock device and should always have one */
-	if (!todclock_sc)
-		return;
-
-	/* Abort early if there is not actually an RTC write routine */
-	if (todclock_sc->sc_rtc_write == NULL)
-		return;
-
-	sec = time_second;
-	sec -= rtc_offset * 60;
-	year = (sec / SECPER4YEARS) * 4;
-	sec %= SECPER4YEARS;
-
-	/* year now hold the number of years rounded down 4 */
-
-	while (sec > (yeartoday(EPOCHYEAR+year) * SECPERDAY)) {
-		sec -= yeartoday(EPOCHYEAR+year)*SECPERDAY;
-		year++;
-	}
-
-	/* year is now a correct offset from the EPOCHYEAR */
-
-	year+=EPOCHYEAR;
-	mon=0;
-	if (yeartoday(year) == 366)
-		month[1]=29;
-	else
-		month[1]=28;
-	while (sec >= month[mon]*SECPERDAY) {
-		sec -= month[mon]*SECPERDAY;
-		mon++;
-	}
-
-	day = sec / SECPERDAY;
-	sec %= SECPERDAY;
-	hour = sec / 3600;
-	sec %= 3600;
-	mins = sec / 60;
-	sec %= 60;
-	rtc.rtc_cen = year / 100;
-	rtc.rtc_year = year % 100;
-	rtc.rtc_mon = mon+1;
-	rtc.rtc_day = day+1;
-	rtc.rtc_hour = hour;
-	rtc.rtc_min = mins;
-	rtc.rtc_sec = sec;
-	rtc.rtc_centi =
+	rtc.rtc_cen = dt->dt_year / 100;
+	rtc.rtc_year = dt->dt_year % 100;
+	rtc.rtc_mon = dt->dt_mon + 1;
+	rtc.rtc_day = dt->dt_day + 1;
+	rtc.rtc_hour = dt->dt_hour;
+	rtc.rtc_min = dt->dt_min;
+	rtc.rtc_sec = dt->dt_sec;
+	rtc.rtc_centi = 0;
 	rtc.rtc_micro = 0;
 
 	printf("resettod: %02d/%02d/%02d%02d %02d:%02d:%02d\n", rtc.rtc_day,
@@ -245,85 +180,30 @@ resettodr()
 
 	s = splclock();
 	todclock_sc->sc_rtc_write(todclock_sc->sc_rtc_arg, &rtc);
-	(void)splx(s);
+	splx(s);
 }
 
-/*
- * Initialise the time of day register, based on the time base which is, e.g.
- * from a filesystem.
- */
-
-void
-inittodr(base)
-	time_t base;
+static int
+tod_get_ymdhms(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	time_t n;
-	int i, days = 0;
-	int s;
-	int year;
 	rtc_t rtc;
+	int s, err;
 
-	/*
-	 * Default to the suggested time but replace that we one from an
-	 * RTC is we can.
-	 */
-
-	/* Use the suggested time as a fall back */
-	time_second = base;
-
-	/* Can we read an RTC ? */
-	if (todclock_sc != NULL && todclock_sc->sc_rtc_read) {
-		s = splclock();
-		if (todclock_sc->sc_rtc_read(todclock_sc->sc_rtc_arg, &rtc) == 0) {
-			(void)splx(s);
-			return;
-		}
-		(void)splx(s);
-	} else
-		return;
-			
-	/* Convert the rtc time into seconds */
-
-	n = rtc.rtc_sec + 60 * rtc.rtc_min + 3600 * rtc.rtc_hour;
-	n += (rtc.rtc_day - 1) * 3600 * 24;
-	year = (rtc.rtc_year + rtc.rtc_cen * 100) - 1900;
-
-	if (yeartoday(year) == 366)
-		month[1] = 29;
-	for (i = rtc.rtc_mon - 2; i >= 0; i--)
-		days += month[i];
-	month[1] = 28;
-
-	for (i = 70; i < year; i++)
-		days += yeartoday(i);
-
-	n += days * 3600 * 24;
-
-	n += rtc_offset * 60;
-
-	time_second = n;
-
-	/* timeset is used to ensure the time is valid before a resettodr() */
-
-	timeset = 1;
-
-	/* If the base was 0 then keep quiet */
-
-	if (base) {
-		printf("inittodr: %02d:%02d:%02d.%02d%02d %02d/%02d/%02d%02d\n",
-		    rtc.rtc_hour, rtc.rtc_min, rtc.rtc_sec, rtc.rtc_centi,
-		    rtc.rtc_micro, rtc.rtc_day, rtc.rtc_mon, rtc.rtc_cen,
-		    rtc.rtc_year);
-
-		if (n > base + 60) {
-			days = (n - base) / SECPERDAY;
-			printf("Clock has gained %d day%c %ld hours %ld minutes %ld secs\n",
-			    days, ((days == 1) ? 0 : 's'),
-			    (long)((n - base) / 3600) % 24,
-			    (long)((n - base) / 60)   % 60,
-			    (long) (n - base)         % 60);
-		}
+	s = splclock();
+	if (todclock_sc->sc_rtc_read(todclock_sc->sc_rtc_arg, &rtc) == 0) {
+		splx(s);
+		return -1;
 	}
-}  
+	splx(s);
+
+	dt->dt_year = rtc.rtc_cen * 100 + rtc.rtc_year;
+	dt->dt_mon = rtc.rtc_mon - 1;
+	dt->dt_day = rtc.rtc_day - 1;
+	dt->dt_hour = rtc.rtc_hour;
+	dt->dt_min = rtc.rtc_min;
+	dt->dt_sec = rtc.rtc_sec;
+
+	return 0;
+}
 
 /* End of todclock.c */

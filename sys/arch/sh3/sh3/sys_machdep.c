@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.10.16.1 2007/02/26 09:08:08 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.10.16.2 2008/01/21 09:39:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.16.1 2007/02/26 09:08:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.16.2 2008/01/21 09:39:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.10.16.1 2007/02/26 09:08:08 yamt E
 #include <sys/syscallargs.h>
 
 int
-sys_sysarch(struct lwp *l, void *v, register_t *retval)
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
-	struct sys_sysarch_args __attribute__((__unused__)) *uap = v;
 
 	return (ENOSYS);
 }

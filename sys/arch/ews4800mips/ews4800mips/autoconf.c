@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.18.4 2007/12/07 17:24:39 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.18.5 2008/01/21 09:36:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.18.4 2007/12/07 17:24:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.18.5 2008/01/21 09:36:22 yamt Exp $");
 
 #include "opt_sbd.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/device.h>
 
 #include <machine/sbdvar.h>
 #include <machine/disklabel.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 2003/08/07 16:27:03 agc Exp $	*/
+/*	$NetBSD: param.h,v 1.29.16.1 2008/01/21 09:35:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -112,7 +112,7 @@
 
 #include <machine/intr.h>
 
-void delay __P((int));
+void delay(unsigned int);
 
 #define	DELAY(n)	delay(n)
 #endif	/* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.37.12.2 2007/09/03 14:36:10 yamt Exp $	*/
+/*	$NetBSD: mii.c,v 1.37.12.3 2008/01/21 09:43:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.37.12.2 2007/09/03 14:36:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.37.12.3 2008/01/21 09:43:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,8 +94,7 @@ mii_attach(struct device *parent, struct mii_data *mii, int capmask,
 		 * address.  This allows mii_attach() to be called
 		 * multiple times.
 		 */
-		for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
-		     child = LIST_NEXT(child, mii_list)) {
+		LIST_FOREACH(child, &mii->mii_phys, mii_list) {
 			if (child->mii_phy == ma.mii_phyno) {
 				/*
 				 * Yes, there is already something
@@ -169,8 +168,7 @@ mii_activate(struct mii_data *mii, enum devact act, int phyloc, int offloc)
 	if ((mii->mii_flags & MIIF_INITDONE) == 0)
 		return;
 
-	for (child = LIST_FIRST(&mii->mii_phys);
-	     child != NULL; child = LIST_NEXT(child, mii_list)) {
+	LIST_FOREACH(child, &mii->mii_phys, mii_list) {
 		if (phyloc != MII_PHY_ANY || offloc != MII_OFFSET_ANY) {
 			if (phyloc != MII_PHY_ANY &&
 			    phyloc != child->mii_phy)
@@ -214,7 +212,6 @@ mii_detach(struct mii_data *mii, int phyloc, int offloc)
 			    offloc != child->mii_offset)
 				continue;
 		}
-		LIST_REMOVE(child, mii_list);
 		(void) config_detach(&child->mii_dev, DETACH_FORCE);
 	}
 }
@@ -233,6 +230,20 @@ mii_print(void *aux, const char *pnp)
 	return (UNCONF);
 }
 
+static inline int
+phy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
+{
+	if (!device_is_active(&sc->mii_dev))
+		return ENXIO;
+	return PHY_SERVICE(sc, mii, cmd);
+}
+
+int
+mii_ifmedia_change(struct mii_data *mii)
+{
+	return ifmedia_change(&mii->mii_media, mii->mii_ifp);
+}
+
 /*
  * Media changed; notify all PHYs.
  */
@@ -245,9 +256,8 @@ mii_mediachg(struct mii_data *mii)
 	mii->mii_media_status = 0;
 	mii->mii_media_active = IFM_NONE;
 
-	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
-	     child = LIST_NEXT(child, mii_list)) {
-		rv = PHY_SERVICE(child, mii, MII_MEDIACHG);
+	LIST_FOREACH(child, &mii->mii_phys, mii_list) {
+		rv = phy_service(child, mii, MII_MEDIACHG);
 		if (rv)
 			return (rv);
 	}
@@ -262,9 +272,8 @@ mii_tick(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
-	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
-	     child = LIST_NEXT(child, mii_list))
-		(void) PHY_SERVICE(child, mii, MII_TICK);
+	LIST_FOREACH(child, &mii->mii_phys, mii_list)
+		(void)phy_service(child, mii, MII_TICK);
 }
 
 /*
@@ -278,9 +287,8 @@ mii_pollstat(struct mii_data *mii)
 	mii->mii_media_status = 0;
 	mii->mii_media_active = IFM_NONE;
 
-	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
-	     child = LIST_NEXT(child, mii_list))
-		(void) PHY_SERVICE(child, mii, MII_POLLSTAT);
+	LIST_FOREACH(child, &mii->mii_phys, mii_list)
+		(void)phy_service(child, mii, MII_POLLSTAT);
 }
 
 /*
@@ -291,9 +299,8 @@ mii_down(struct mii_data *mii)
 {
 	struct mii_softc *child;
 
-	for (child = LIST_FIRST(&mii->mii_phys); child != NULL;
-	     child = LIST_NEXT(child, mii_list))
-		(void) PHY_SERVICE(child, mii, MII_DOWN);
+	LIST_FOREACH(child, &mii->mii_phys, mii_list)
+		(void)phy_service(child, mii, MII_DOWN);
 }
 
 static unsigned char

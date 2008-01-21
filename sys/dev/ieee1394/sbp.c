@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.11.6.6 2007/11/15 11:44:14 yamt Exp $	*/
+/*	$NetBSD: sbp.c,v 1.11.6.7 2008/01/21 09:43:16 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -35,6 +35,9 @@
  * $FreeBSD: src/sys/dev/firewire/sbp.c,v 1.92 2007/06/06 14:31:36 simokawa Exp $
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.11.6.7 2008/01/21 09:43:16 yamt Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>

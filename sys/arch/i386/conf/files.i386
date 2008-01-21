@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.269.2.7 2007/12/07 17:24:57 yamt Exp $
+#	$NetBSD: files.i386,v 1.269.2.8 2008/01/21 09:36:54 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -24,9 +24,6 @@ defflag			XBOX
 defflag			VM86
 defflag			KVM86
 
-# Floating point emulation
-defflag			MATH_EMULATE
-
 # User-settable LDT (used by WINE)
 defflag			USER_LDT
 
@@ -35,6 +32,9 @@ defflag	opt_xserver.h	XSERVER XSERVER_DDB
 
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 # understand boot device passed by pre-1.3 bootblocks
 defflag			COMPAT_OLDBOOT
@@ -72,15 +72,16 @@ file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
+file	arch/i386/i386/dumpsys.c
 file	kern/subr_disk_mbr.c		disk
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/i386func.S
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
+file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
-file	arch/i386/i386/math_emulate.c	math_emulate
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
@@ -142,7 +143,8 @@ define	vesabiosbus {}
 
 # XXX BIOS32 only if something that uses it is configured!
 device	mainbus: isabus, eisabus, mcabus, pcibus, bios32, acpibus,
-	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus
+	cpubus, ioapicbus, apmbus, pnpbiosbus, vesabiosbus, ipmibus,
+	bioscall
 attach	mainbus at root
 file	arch/i386/i386/mainbus.c	mainbus
 
@@ -174,9 +176,17 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 include "arch/x86/pci/files.pci"
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
-device	elansc: sysmon_wdog, gpiobus
+define elanparbus { }
+define elanpexbus { }
+device	elansc: sysmon_wdog, gpiobus, elanparbus, elanpexbus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
+
+device elanpar
+attach elanpar at elanparbus
+
+device elanpex
+attach elanpex at elanpexbus
 
 # AMD Geode CS5535 Companion IDE controller
 device	gcscide: ata, ata_dma, ata_udma, pciide_common, wdc_common
@@ -212,6 +222,11 @@ file	arch/i386/pci/pceb.c		pceb
 device	gscpcib: isabus, gpiobus
 attach	gscpcib at pci
 file	arch/i386/pci/gscpcib.c		gscpcib
+
+# AMD Geode CS5535/CS5536 PCI-ISA bridge
+device	gcscpcib: isabus, sysmon_wdog, gpiobus
+attach	gcscpcib at pci
+file	arch/i386/pci/gcscpcib.c	gcscpcib
 
 device	piixpcib: isabus, bioscall
 attach	piixpcib at pci
@@ -471,7 +486,7 @@ include	"dev/ieee1394/files.ieee1394"
 include	"arch/i386/pnpbios/files.pnpbios"
 
 include "dev/acpi/files.acpi"
-file	arch/i386/acpi/acpi_wakeup.c	acpi
+file	arch/i386/acpi/acpi_wakeup_low.S	acpi
 
 # Toshiba VALD 
 device	vald
@@ -481,11 +496,6 @@ file	arch/i386/acpi/vald_acpi.c		vald_acpi
 # Sony SPIC (jog dial etc.)
 attach	spic at acpinodebus with spic_acpi
 file	arch/i386/acpi/spic_acpi.c		spic_acpi
-
-# Sony Misc (brightness etc.)
-device	sony
-attach	sony at acpinodebus with sony_acpi
-file	arch/i386/acpi/sony_acpi.c		sony_acpi
 
 # Numeric Processing Extension; Math Co-processor
 attach	npx at acpinodebus with npx_acpi
@@ -498,11 +508,11 @@ defflag	opt_vesabios.h	VESABIOSVERBOSE
 
 include	"dev/rasops/files.rasops"
 
-device	vesafb: wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
+device	vesafb: displaydev, wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach	vesafb at vesabios
 file	arch/i386/bios/vesafb.c		vesafb needs-flag
-defparam 	opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
-defflag 	opt_vesafb.h	VESAFB_PM
+defparam opt_vesafb.h	VESAFB_WIDTH VESAFB_HEIGHT VESAFB_DEPTH
+defflag	opt_vesafb.h	VESAFB_PM
 
 device	vesatext
 attach	vesatext at vesabios

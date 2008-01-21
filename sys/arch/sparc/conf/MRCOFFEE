@@ -1,4 +1,4 @@
-# $NetBSD: MRCOFFEE,v 1.8.2.3 2007/09/03 14:29:54 yamt Exp $
+# $NetBSD: MRCOFFEE,v 1.8.2.4 2008/01/21 09:39:21 yamt Exp $
 # From: NetBSD: GENERIC,v 1.197 2006/12/04 23:43:35 elad Exp
 #
 # Mr.Coffee (JavaStation 1) machine description file
@@ -12,7 +12,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MRCOFFEE-$Revision: 1.8.2.3 $"
+#ident 		"MRCOFFEE-$Revision: 1.8.2.4 $"
 
 maxusers	32
 
@@ -51,7 +51,6 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 ## Collect statistics on kernel malloc's and free's.  This does have a
 ## significant performance hit on slower machines, so it is intended for

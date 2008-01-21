@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_clock.c,v 1.8.2.1 2006/06/21 14:50:46 yamt Exp $ */
+/*	$NetBSD: ifpga_clock.c,v 1.8.2.2 2008/01/21 09:36:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -39,13 +39,15 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.8.2.1 2006/06/21 14:50:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_clock.c,v 1.8.2.2 2008/01/21 09:36:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <arm/cpufunc.h>
@@ -81,6 +83,21 @@ static int statprev;		/* previous value in stat timer */
 
 #define COUNTS_PER_SEC (IFPGA_TIMER1_FREQ / 16)
 
+static u_int	ifpga_get_timecount(struct timecounter *);
+
+static struct timecounter ifpga_timecounter = {
+	ifpga_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	COUNTS_PER_SEC,		/* frequency */
+	"ifpga",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static volatile uint32_t ifpga_base;
+
 extern struct ifpga_softc *ifpga_sc;
 
 static int clock_started = 0;
@@ -115,6 +132,9 @@ clockhandler(void *fr)
 
 	bus_space_write_4(ifpga_sc->sc_iot, ifpga_sc->sc_tmr_ioh,
 	    TIMER_1_CLEAR, 0);
+
+	atomic_add_32(&ifpga_base, ifpga_sc->sc_clock_count);
+
 	hardclock(frame);
 	return 0;	/* Pass the interrupt on down the chain */
 }
@@ -283,65 +303,26 @@ cpu_initclocks()
 
 	/* Set up timer 2 as statclk/profclk. */
 	ifpga_sc->sc_statclockintr = ifpga_intr_establish(IFPGA_TIMER2_IRQ,
-	    IPL_STATCLOCK, statclockhandler, 0);
+	    IPL_HIGH, statclockhandler, 0);
 	if (ifpga_sc->sc_statclockintr == NULL)
 		panic("%s: Cannot install timer 2 interrupt handler",
 		    ifpga_sc->sc_dev.dv_xname);
 	load_timer(IFPGA_TIMER2_BASE, statint);
+
+	tc_init(&ifpga_timecounter);
 }
 
-
-/*
- * void microtime(struct timeval *tvp)
- *
- * Fill in the specified timeval struct with the current time
- * accurate to the microsecond.
- */
-
-void
-microtime(struct timeval *tvp)
+static u_int
+ifpga_get_timecount(struct timecounter *tc)
 {
-	int s;
-	int tm;
-	int deltatm;
-	static struct timeval oldtv;
+	u_int base, counter;
 
-	if (ifpga_sc == NULL || ifpga_sc->sc_clock_count == 0)
-		return;
+	do {
+		base = ifpga_base;
+		counter = getclock();
+	} while (base != ifpga_base);
 
-	s = splhigh();
-
-	tm = getclock();
-
-	deltatm = ifpga_sc->sc_clock_count - tm;
-
-#ifdef DIAGNOSTIC
-	if (deltatm < 0)
-		panic("opps deltatm < 0 tm=%d deltatm=%d", tm, deltatm);
-#endif
-
-	/* Fill in the timeval struct */
-	*tvp = time;
-	tvp->tv_usec += ((deltatm << 8) / ifpga_sc->sc_clock_ticks_per_256us);
-
-	/* Make sure the micro seconds don't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		++tvp->tv_sec;
-	}
-
-	/* Make sure the time has advanced. */
-	if (tvp->tv_sec == oldtv.tv_sec &&
-	    tvp->tv_usec <= oldtv.tv_usec) {
-		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			++tvp->tv_sec;
-		}
-	}
-
-	oldtv = *tvp;
-	(void)splx(s);
+	return base - counter;
 }
 
 /*

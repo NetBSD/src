@@ -1,4 +1,4 @@
-/* $NetBSD: pnpbioscall.S,v 1.1 2002/11/22 15:02:12 fvdl Exp $ */
+/* $NetBSD: pnpbioscall.S,v 1.1.24.1 2008/01/21 09:37:14 yamt Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -25,8 +25,10 @@
  * SUCH DAMAGE.
  */
 
-#include "assym.h"
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: pnpbioscall.S,v 1.1.24.1 2008/01/21 09:37:14 yamt Exp $");
+
+#include "assym.h"
 #include <machine/segments.h>
 
 	.data

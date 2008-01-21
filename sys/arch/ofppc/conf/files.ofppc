@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.23.12.5 2007/12/07 17:25:47 yamt Exp $
+#	$NetBSD: files.ofppc,v 1.23.12.6 2008/01/21 09:37:51 yamt Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -87,6 +87,9 @@ device	rtas
 attach	rtas at mainbus
 file	arch/powerpc/powerpc/rtas.c		rtas needs-flag
 
+include "dev/usb/files.usb"
+include "dev/ieee1394/files.ieee1394"
+
 #
 # PCI bus support
 #
@@ -135,4 +138,4 @@ file	arch/ofppc/ofppc/cpu.c			cpu
 #file	arch/ofppc/ofwgen/ofwgen.c
 #file	arch/ofppc/ofwgen/ofwgen_intr.c
 
-include "arch/ofppc/conf/majors.ofppc"
+include "arch/powerpc/conf/majors.powerpc"

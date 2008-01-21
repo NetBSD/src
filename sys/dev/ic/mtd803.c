@@ -1,4 +1,4 @@
-/* $NetBSD: mtd803.c,v 1.8.4.5 2007/12/07 17:29:55 yamt Exp $ */
+/* $NetBSD: mtd803.c,v 1.8.4.6 2008/01/21 09:43:02 yamt Exp $ */
 
 /*-
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.8.4.5 2007/12/07 17:29:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtd803.c,v 1.8.4.6 2008/01/21 09:43:02 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -125,8 +125,6 @@ void mtd_stop(struct ifnet *, int);
 int mtd_ioctl(struct ifnet *, u_long, void *);
 void mtd_setmulti(struct mtd_softc *);
 void mtd_watchdog(struct ifnet *);
-int mtd_mediachange(struct ifnet *);
-void mtd_mediastatus(struct ifnet *, struct ifmediareq *);
 
 int mtd_init(struct ifnet *);
 void mtd_reset(struct mtd_softc *);
@@ -168,7 +166,9 @@ mtd_config(sc)
 	sc->mii.mii_writereg = mtd_mii_writereg;
 	sc->mii.mii_statchg = mtd_mii_statchg;
 
-	ifmedia_init(&sc->mii.mii_media, 0, mtd_mediachange, mtd_mediastatus);
+	sc->ethercom.ec_mii = &sc->mii;
+	ifmedia_init(&sc->mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 
 	mii_attach(&sc->dev, &sc->mii, 0xffffffff, MII_PHY_ANY, 0, 0);
 
@@ -587,24 +587,14 @@ mtd_ioctl(ifp, cmd, data)
 
 	s = splnet();
 
-	/* Don't do anything special */
-	switch(cmd) {
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware
-			 * filter accordingly.
-			 */
-			 if (ifp->if_flags & IFF_RUNNING)
-				 mtd_setmulti(sc);
-			 error = 0;
-		}
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		break;
+	if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware
+		 * filter accordingly.
+		 */
+		 if (ifp->if_flags & IFF_RUNNING)
+			 mtd_setmulti(sc);
+		 error = 0;
 	}
 
 	splx(s);
@@ -943,35 +933,6 @@ mtd_reset(sc)
 
 	/* Wait a little so chip can stabilize */
 	DELAY(1000);
-}
-
-
-int
-mtd_mediachange(ifp)
-	struct ifnet *ifp;
-{
-	struct mtd_softc *sc = ifp->if_softc;
-
-	if (IFM_TYPE(sc->mii.mii_media.ifm_media) != IFM_ETHER)
-		return EINVAL;
-
-	return mii_mediachg(&sc->mii);
-}
-
-
-void
-mtd_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	struct mtd_softc *sc = ifp->if_softc;
-
-	if ((ifp->if_flags & IFF_UP) == 0)
-		return;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_active = sc->mii.mii_media_active;
-	ifmr->ifm_status = sc->mii.mii_media_status;
 }
 
 
