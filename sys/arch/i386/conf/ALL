@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.155 2008/01/16 09:37:05 ad Exp $
+# $NetBSD: ALL,v 1.156 2008/01/21 08:04:51 dyoung Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.155 $"
+#ident 		"ALL-$Revision: 1.156 $"
 
 maxusers	32		# estimated number of users
 
@@ -435,6 +435,8 @@ options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 # System Controllers
 elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
+elanpar*	at elansc?
+elanpex*	at elansc?
 
 # PCI bridges
 amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
