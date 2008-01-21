@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_exec_aout.c,v 1.6.16.1 2006/06/21 14:58:50 yamt Exp $	*/
+/*	$NetBSD: freebsd_exec_aout.c,v 1.6.16.2 2008/01/21 09:40:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.6.16.1 2006/06/21 14:58:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.6.16.2 2008/01/21 09:40:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,9 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: freebsd_exec_aout.c,v 1.6.16.1 2006/06/21 14:58:50 y
  */
 
 int
-exec_freebsd_aout_makecmds(l, epp)
-	struct lwp *l;
-	struct exec_package *epp;
+exec_freebsd_aout_makecmds(struct lwp *l, struct exec_package *epp)
 {
 	u_long midmag;
 	int error = ENOEXEC;

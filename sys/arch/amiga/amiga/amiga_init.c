@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.89.2.3 2007/09/03 14:22:39 yamt Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.89.2.4 2008/01/21 09:35:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -36,7 +36,7 @@
 #include "opt_devreload.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.89.2.3 2007/09/03 14:22:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.89.2.4 2008/01/21 09:35:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -765,7 +765,6 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync,
 void
 start_c_finish()
 {
-	extern u_int32_t delaydivisor;
 #ifdef	P5PPC68KBOARD
         struct cfdev *cdp, *ecdp;
 #endif
@@ -901,21 +900,6 @@ start_c_finish()
 			}
         }
 #endif
-	/*
-	 * preliminary delay divisor value
-	 */
-
-	if (machineid & AMIGA_68060)
-		delaydivisor = (1024 * 1) / 80;	/* 80 MHz 68060 w. BTC */
-
-	else if (machineid & AMIGA_68040)
-		delaydivisor = (1024 * 3) / 40;	/* 40 MHz 68040 */
-
-	else if (machineid & AMIGA_68030)
-		delaydivisor = (1024 * 8) / 50;	/* 50 MHz 68030 */
-
-	else
-		delaydivisor = (1024 * 8) / 33; /* 33 MHz 68020 */
 }
 
 void

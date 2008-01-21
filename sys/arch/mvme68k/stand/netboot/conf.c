@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.5 2005/06/28 21:03:02 junyoung Exp $ */
+/*	$NetBSD: conf.c,v 1.5.2.1 2008/01/21 09:37:50 yamt Exp $ */
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -11,12 +11,12 @@
 struct fs_ops file_system[] = {
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
 };
-int nfsys = sizeof(file_system) / sizeof(file_system[0]);
+int nfsys = __arraycount(file_system);
 
 struct devsw devsw[] = {
 	{ "net",  net_strategy,  net_open,  net_close,  net_ioctl },
 };
-int	ndevs = sizeof(devsw) / sizeof(devsw[0]);
+int	ndevs = __arraycount(devsw);
 
 extern struct netif_driver le_driver;
 extern struct netif_driver ie_driver;
@@ -25,7 +25,7 @@ struct netif_driver *netif_drivers[] = {
 	&le_driver,
 	&ie_driver,
 };
-int n_netif_drivers = sizeof(netif_drivers) / sizeof(netif_drivers[0]);
+int n_netif_drivers = __arraycount(netif_drivers);
 
 
 /* XXX */

@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.49.2.5 2007/10/27 11:28:47 yamt Exp $	*/
+/*	$NetBSD: xd.c,v 1.49.2.6 2008/01/21 09:39:40 yamt Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.49.2.5 2007/10/27 11:28:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.49.2.6 2008/01/21 09:39:40 yamt Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -309,8 +309,8 @@ xddummystrat(struct buf *bp)
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
 	memcpy(bp->b_data, xd_labeldata, XDFM_BPS);
-	bp->b_flags |= B_DONE;
-	bp->b_flags &= ~B_BUSY;
+	bp->b_oflags |= BO_DONE;
+	bp->b_cflags &= ~BC_BUSY;
 }
 
 int 

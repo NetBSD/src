@@ -1,4 +1,4 @@
-/*	$NetBSD: spic_acpi.c,v 1.12.12.2 2006/12/30 20:46:04 yamt Exp $	*/
+/*	$NetBSD: spic_acpi.c,v 1.12.12.3 2008/01/21 09:36:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.12.12.2 2006/12/30 20:46:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic_acpi.c,v 1.12.12.3 2008/01/21 09:36:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,6 +131,11 @@ spic_acpi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ih = isa_intr_establish(NULL, irq->ar_irq,
 	    IST_EDGE, IPL_TTY, spic_intr, sc);
 #endif
+
+	if (!pmf_device_register(self, spic_suspend, spic_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_input_register(self);
 
 	spic_attach(&sc->sc_spic);
  out:

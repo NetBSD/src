@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.1.18.6 2007/12/07 17:24:40 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.1.18.7 2008/01/21 09:36:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2004 The NetBSD Foundation, Inc.
@@ -38,10 +38,6 @@
 
 #ifndef _EWS4800MIPS_INTR_H_
 #define	_EWS4800MIPS_INTR_H_
-
-#include <sys/device.h>
-#include <sys/lock.h>
-#include <sys/queue.h>
 
 #define IPL_NONE	0	/* disable only this interrupt */
 #define IPL_SOFTCLOCK	1	/* clock software interrupts (SI 0) */

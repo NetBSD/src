@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_cdrom.c,v 1.18.4.4 2007/10/27 11:29:34 yamt Exp $ */
+/*	$NetBSD: linux_cdrom.c,v 1.18.4.5 2008/01/21 09:41:21 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.18.4.4 2007/10/27 11:29:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_cdrom.c,v 1.18.4.5 2008/01/21 09:41:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,15 +93,13 @@ bsd_to_linux_msf_lba(unsigned address_format, union msf_lba *bml,
 }
 
 int
-linux_ioctl_cdrom(l, uap, retval)
-	struct lwp *l;
-	struct linux_sys_ioctl_args /* {
+linux_ioctl_cdrom(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	int error, idata;
 	u_long com, ncom;
 	struct file *fp;

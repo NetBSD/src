@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88.2.3 2007/09/03 14:28:25 yamt Exp $
+# $NetBSD: GENERIC,v 1.88.2.4 2008/01/21 09:37:58 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,14 +22,13 @@ include 	"arch/next68k/conf/std.next68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88.2.3 $"
+#ident 		"GENERIC-$Revision: 1.88.2.4 $"
 
 # Needs to be set per system.  i.e change these as you see fit
 maxusers	16
 
 # Standard system options
 options 	KTRACE		# system call tracing
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores
 #options 	SEMMNI=10	# number of semaphore identifiers

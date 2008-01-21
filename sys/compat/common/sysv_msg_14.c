@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg_14.c,v 1.6.4.4 2007/12/07 17:27:38 yamt Exp $	*/
+/*	$NetBSD: sysv_msg_14.c,v 1.6.4.5 2008/01/21 09:40:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.6.4.4 2007/12/07 17:27:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg_14.c,v 1.6.4.5 2008/01/21 09:40:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ static void msqid_ds14_to_native(struct msqid_ds14 *, struct msqid_ds *);
 static void native_to_msqid_ds14(struct msqid_ds *, struct msqid_ds14 *);
 
 static void
-msqid_ds14_to_native(omsqbuf, msqbuf)
-	struct msqid_ds14 *omsqbuf;
-	struct msqid_ds *msqbuf;
+msqid_ds14_to_native(struct msqid_ds14 *omsqbuf, struct msqid_ds *msqbuf)
 {
 
 	ipc_perm14_to_native(&omsqbuf->msg_perm, &msqbuf->msg_perm);
@@ -78,9 +76,7 @@ msqid_ds14_to_native(omsqbuf, msqbuf)
 }
 
 static void
-native_to_msqid_ds14(msqbuf, omsqbuf)
-	struct msqid_ds *msqbuf;
-	struct msqid_ds14 *omsqbuf;
+native_to_msqid_ds14(struct msqid_ds *msqbuf, struct msqid_ds14 *omsqbuf)
 {
 
 	native_to_ipc_perm14(&msqbuf->msg_perm, &omsqbuf->msg_perm);
@@ -102,13 +98,13 @@ native_to_msqid_ds14(msqbuf, omsqbuf)
 }
 
 int
-compat_14_sys_msgctl(struct lwp *l, void *v, register_t *retval)
+compat_14_sys_msgctl(struct lwp *l, const struct compat_14_sys_msgctl_args *uap, register_t *retval)
 {
-	struct compat_14_sys_msgctl_args /* {
+	/* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds14 *) buf;
-	} */ *uap = v;
+	} */
 	struct msqid_ds msqbuf;
 	struct msqid_ds14 omsqbuf;
 	int cmd, error;

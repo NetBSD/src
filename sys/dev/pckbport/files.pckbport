@@ -1,5 +1,7 @@
-# $NetBSD: files.pckbport,v 1.4 2005/05/04 02:35:22 augustss Exp $
+# $NetBSD: files.pckbport,v 1.4.2.1 2008/01/21 09:44:26 yamt Exp $
 # devices attached at pckbport, for use with wscons
+
+defflag	opt_wskbdmap.h			WSKBD_USONLY
 
 file	dev/pckbport/pckbport.c		pckbport | pckbport_machdep_cnattach
 								needs-flag

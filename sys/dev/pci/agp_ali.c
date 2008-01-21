@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_ali.c,v 1.7.2.2 2007/10/27 11:32:30 yamt Exp $	*/
+/*	$NetBSD: agp_ali.c,v 1.7.2.3 2008/01/21 09:43:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.7.2.2 2007/10/27 11:32:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.7.2.3 2008/01/21 09:43:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: agp_ali.c,v 1.7.2.2 2007/10/27 11:32:30 yamt Exp $")
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/agpio.h>
 
 #include <uvm/uvm_extern.h>

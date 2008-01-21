@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_commpage.c,v 1.8.2.3 2007/10/27 11:29:30 yamt Exp $ */
+/*	$NetBSD: darwin_commpage.c,v 1.8.2.4 2008/01/21 09:40:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.8.2.3 2007/10/27 11:29:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_commpage.c,v 1.8.2.4 2008/01/21 09:40:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -73,8 +73,7 @@ static struct uvm_object *darwin_commpage_uao = NULL;
 static void darwin_commpage_init(struct darwin_commpage *);
 
 int
-darwin_commpage_map(p)
-	struct proc *p;
+darwin_commpage_map(struct proc *p)
 {
 	int error;
 	vaddr_t kvaddr;
@@ -147,8 +146,7 @@ darwin_commpage_map(p)
 }
 
 void
-darwin_commpage_init(dcp)
-	struct darwin_commpage *dcp;
+darwin_commpage_init(struct darwin_commpage *dcp)
 {
 	/*
 	 * XXX Only one page is mapped yet (see higher in the file)

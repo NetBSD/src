@@ -1,4 +1,4 @@
-/*	$NetBSD: tlphy.c,v 1.42.4.3 2007/10/27 11:32:19 yamt Exp $	*/
+/*	$NetBSD: tlphy.c,v 1.42.4.4 2008/01/21 09:43:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.42.4.3 2007/10/27 11:32:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tlphy.c,v 1.42.4.4 2008/01/21 09:43:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -200,6 +200,9 @@ tlphyattach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n");
 #undef ADD
 #undef PRINT
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static int
@@ -208,9 +211,6 @@ tlphy_service(struct mii_softc *self, struct mii_data *mii, int cmd)
 	struct tlphy_softc *sc = (struct tlphy_softc *) self;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
-
-	if (!device_is_active(&sc->sc_mii.mii_dev))
-		return (ENXIO);
 
 	if ((sc->sc_mii.mii_flags & MIIF_DOINGAUTO) == 0 && sc->sc_need_acomp)
 		tlphy_acomp(sc);

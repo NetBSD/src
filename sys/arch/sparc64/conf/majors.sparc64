@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sparc64,v 1.21.2.2 2006/12/30 20:47:02 yamt Exp $
+#	$NetBSD: majors.sparc64,v 1.21.2.3 2008/01/21 09:39:29 yamt Exp $
 #
 # Device majors for sparc64
 #
@@ -103,7 +103,6 @@ device-major	pcons		char 122		pcons
 device-major	pci		char 123		pci
 device-major	clcd		char 124		clcd
 device-major	clockctl	char 125		clockctl
-device-major	systrace	char 126		systrace
 device-major	cgd		char 127 block 26	cgd
 device-major	kttcp		char 128		kttcp
 device-major	dmoverio	char 129		dmoverio

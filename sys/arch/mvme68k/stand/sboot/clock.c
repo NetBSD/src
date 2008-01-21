@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2003/08/07 16:28:46 agc Exp $ */
+/*	$NetBSD: clock.c,v 1.4.16.1 2008/01/21 09:37:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -94,12 +94,12 @@
 #include <machine/prom.h>
 #include "libsa.h"
 
-static struct clockreg *clockreg = (struct clockreg *) CLOCK_ADDR;
+static struct clockreg *clockreg = (struct clockreg *)CLOCK_ADDR;
 
 /*
  * Set up the system's time, given a `reasonable' time value.
  */
-u_long time()
+u_long time(void)
 {
 	struct clockreg *cl = clockreg;
 	int sec, min, hour, day, mon, year;
@@ -112,5 +112,5 @@ u_long time()
 	mon = cl->cl_month;
 	year = cl->cl_year;
 	cl->cl_csr &= ~CLK_READ;	/* time wears on */
-	return(chiptotime(sec, min, hour, day, mon, year));
+	return chiptotime(sec, min, hour, day, mon, year);
 }

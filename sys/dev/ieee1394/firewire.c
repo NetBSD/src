@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.8.4.6 2007/11/15 11:44:11 yamt Exp $	*/
+/*	$NetBSD: firewire.c,v 1.8.4.7 2008/01/21 09:43:13 yamt Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -35,6 +35,9 @@
  * $FreeBSD: src/sys/dev/firewire/firewire.c,v 1.101 2007/10/20 23:23:14 julian Exp $
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.8.4.7 2008/01/21 09:43:13 yamt Exp $");
 
 #if defined(__FreeBSD__)
 #include <sys/param.h>
@@ -562,6 +565,11 @@ FW_ATTACH(firewire)
 	/* bus_reset */
 	fw_busreset(fc, FWBUSNOTREADY);
 	fc->ibr(fc);
+
+#ifdef __NetBSD__
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+#endif
 
 	FW_ATTACH_RETURN(0);
 }
@@ -1140,7 +1148,7 @@ fw_tl_free(struct firewire_comm *fc, struct fw_xfer *xfer)
 	if (txfer == NULL) {
 		printf("%s: the xfer is not in the queue "
 		    "(tlabel=%d, flag=0x%x)\n",
-		    __FUNCTION__, xfer->tl, xfer->flag);
+		    __func__, xfer->tl, xfer->flag);
 		fw_dump_hdr(&xfer->send.hdr, "send");
 		fw_dump_hdr(&xfer->recv.hdr, "recv");
 		kdb_backtrace();
@@ -1177,7 +1185,7 @@ fw_tl2xfer(struct firewire_comm *fc, int node, int tlabel, int tcode)
 			req = xfer->send.hdr.mode.hdr.tcode;
 			if (xfer->fc->tcode[req].valid_res != tcode) {
 				printf("%s: invalid response tcode "
-				    "(0x%x for 0x%x)\n", __FUNCTION__,
+				    "(0x%x for 0x%x)\n", __func__,
 				    tcode, req);
 				return(NULL);
 			}
@@ -1587,7 +1595,7 @@ fw_explore_csrblock(struct fw_device *fwdev, int offset, int recur)
 
 		off = offset + reg[i].val * sizeof(uint32_t);
 		if (off > CROMSIZE) {
-			printf("%s: invalid offset %d\n", __FUNCTION__, off);
+			printf("%s: invalid offset %d\n", __func__, off);
 			return(-1);
 		}
 		err = fw_explore_csrblock(fwdev, off, recur);
@@ -1756,7 +1764,7 @@ fw_explore(struct firewire_comm *fc)
 				nodes[todo2++] = nodes[i];
 			if (firewire_debug)
 				printf("%s: node %d, err = %d\n",
-					__FUNCTION__, node, err);
+					__func__, node, err);
 		}
 		todo = todo2;
 	}

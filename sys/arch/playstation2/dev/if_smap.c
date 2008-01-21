@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.6.12.2 2007/09/03 14:28:47 yamt Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.6.12.3 2008/01/21 09:38:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6.12.2 2007/09/03 14:28:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6.12.3 2008/01/21 09:38:15 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -89,16 +89,16 @@ __KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6.12.2 2007/09/03 14:28:47 yamt Exp $"
 int	smap_debug = 0;
 #define	DPRINTF(fmt, args...)						\
 	if (smap_debug)							\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args) 
 #define	DPRINTFN(n, arg)						\
 	if (smap_debug > (n))						\
-		printf("%s: " fmt, __FUNCTION__ , ##args) 
+		printf("%s: " fmt, __func__ , ##args) 
 #define STATIC
 struct smap_softc *__sc;
 void __smap_status(int);
 void __smap_lock_check(const char *, int);
-#define FUNC_ENTER()	__smap_lock_check(__FUNCTION__, 1)
-#define FUNC_EXIT()	__smap_lock_check(__FUNCTION__, 0)
+#define FUNC_ENTER()	__smap_lock_check(__func__, 1)
+#define FUNC_EXIT()	__smap_lock_check(__func__, 0)
 #else
 #define	DPRINTF(arg...)		((void)0)
 #define DPRINTFN(n, arg...)	((void)0)
@@ -250,7 +250,8 @@ smap_attach(struct device *parent, struct device *self, void *aux)
 	mii->mii_readreg	= emac3_phy_readreg;
 	mii->mii_writereg	= emac3_phy_writereg;
 	mii->mii_statchg	= emac3_phy_statchg;
-	ifmedia_init(&mii->mii_media, 0, emac3_ifmedia_upd, emac3_ifmedia_sts);
+	sc->ethercom.ec_mii = mii;
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange, ether_mediastatus);
 	mii_attach(&emac3->dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	    
@@ -282,22 +283,12 @@ smap_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	s = splnet();
 
-	switch (command) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->emac3.mii.mii_media,
-		    command);
-		break;
+	error = ether_ioctl(ifp, command, data);
 
-	default:
-		error = ether_ioctl(ifp, command, data);
-
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				emac3_setmulti(&sc->emac3, &sc->ethercom);
-			error = 0;
-		}
-		break;
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			emac3_setmulti(&sc->emac3, &sc->ethercom);
+		error = 0;
 	}
 
 	splx(s);
@@ -615,6 +606,7 @@ smap_init(struct ifnet *ifp)
 {
 	struct smap_softc *sc = ifp->if_softc;
 	u_int16_t r16;
+	int rc;
 
 	smap_fifo_init(sc);
 	emac3_reset(&sc->emac3);
@@ -636,7 +628,10 @@ smap_init(struct ifnet *ifp)
 	emac3_setmulti(&sc->emac3, &sc->ethercom);
 
 	/* Set current media. */
-	mii_mediachg(&sc->emac3.mii);
+	if ((rc = mii_mediachg(&sc->emac3.mii)) == ENXIO)
+		rc = 0;
+	else if (rc != 0)
+		return rc;
 
 	ifp->if_flags |= IFF_RUNNING;
 

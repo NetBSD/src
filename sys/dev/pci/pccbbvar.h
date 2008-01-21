@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbvar.h,v 1.24.6.4 2007/09/03 14:37:16 yamt Exp $	*/
+/*	$NetBSD: pccbbvar.h,v 1.24.6.5 2008/01/21 09:44:08 yamt Exp $	*/
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
  *
@@ -58,7 +58,7 @@ struct pccbb_intrhand_list;
 
 
 struct cbb_pcic_handle {
-	struct device *ph_parent;
+	device_t ph_parent;
 	bus_space_tag_t ph_base_t;
 	bus_space_handle_t ph_base_h;
 	u_int8_t (*ph_read)(struct cbb_pcic_handle *, int);
@@ -81,7 +81,7 @@ struct cbb_pcic_handle {
 		int width;
 	} io[PCIC_IO_WINS];
 	int ih_irq;
-	struct device *pcmcia;
+	device_t pcmcia;
 
 	int shutdown;
 };
@@ -110,6 +110,7 @@ struct pccbb_softc {
 
 	bus_space_tag_t sc_base_memt;
 	bus_space_handle_t sc_base_memh;
+	bus_size_t sc_base_size;
 
 	struct callout sc_insert_ch;
 
@@ -122,6 +123,7 @@ struct pccbb_softc {
 #define	CBB_16BITCARD	0x04
 #define	CBB_32BITCARD	0x08
 #define	CBB_MEMHMAPPED	0x02000000
+#define	CBB_SPECMAPPED	0x04000000	/* "special" mapping */
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;
@@ -131,9 +133,6 @@ struct pccbb_softc {
 	bus_addr_t sc_mem_end;		/* CardBus/PCMCIA memory end */
 	bus_addr_t sc_io_start;		/* CardBus/PCMCIA io start */
 	bus_addr_t sc_io_end;		/* CardBus/PCMCIA io end */
-
-	pcireg_t sc_sockbase;		/* Socket base register */
-	pcireg_t sc_busnum;		/* bus number */
 
 	/* CardBus stuff */
 	struct cardslot_softc *sc_csc;
@@ -155,10 +154,6 @@ struct pccbb_softc {
 	/* interrupt handler list on the bridge */
 	LIST_HEAD(, pccbb_intrhand_list) sc_pil;
 	int sc_pil_intr_enable;	/* can i call intr handler for child device? */
-
-	int sc_pwrmgt_offs;	/* Offset for power management capability */
-	struct pci_conf_state sc_pciconf;
-	pcireg_t sc_ricoh_misc_ctrl;
 };
 
 /*

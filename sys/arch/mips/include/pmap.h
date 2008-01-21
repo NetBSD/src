@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.47.2.1 2007/09/03 14:27:57 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.47.2.2 2008/01/21 09:37:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -115,7 +115,7 @@ struct segtab {
  */
 typedef struct pmap {
 	int			pm_count;	/* pmap reference count */
-	struct simplelock	pm_lock;	/* lock on pmap */
+	kmutex_t		pm_lock;	/* lock on pmap */
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	unsigned		pm_asid;	/* TLB address space tag */
 	unsigned		pm_asidgen;	/* its generation number */

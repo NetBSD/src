@@ -1,0 +1,9 @@
+# $NetBSD: GENERIC32,v 1.1.6.2 2008/01/21 09:39:43 yamt Exp $
+
+include "arch/usermode/conf/GENERIC"
+
+no options EXEC_ELF64
+
+#options 	INCLUDE_CONFIG_FILE
+#ident 		"GENERIC32-$Revision: 1.1.6.2 $"
+

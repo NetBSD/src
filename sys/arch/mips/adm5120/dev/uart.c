@@ -1,4 +1,4 @@
-/* $NetBSD: uart.c,v 1.2.20.3 2007/12/07 17:25:19 yamt Exp $ */
+/* $NetBSD: uart.c,v 1.2.20.4 2008/01/21 09:37:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.2.20.3 2007/12/07 17:25:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uart.c,v 1.2.20.4 2008/01/21 09:37:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -214,8 +214,8 @@ uart_open(dev_t dev, int flag, int mode, struct lwp *l)
 		tp->t_lflag = TTYDEF_LFLAG;
 		tp->t_ispeed = tp->t_ospeed = 115200;
 		ttsetwater(tp);
-	} else if (tp->t_state & TS_XCLUDE &&
-	    kauth_authorize_generic(l->l_proc->p_cred, KAUTH_GENERIC_ISSUSER, &l->l_proc->p_acflag) != 0) {
+	} else if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN,
+	    tp) != 0) {
 		splx(s);
 		return (EBUSY);
 	}

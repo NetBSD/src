@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.6 2007/12/07 17:28:47 yamt Exp $	*/
+/*	$NetBSD: netbsd32_compat_20.c,v 1.1.14.7 2008/01/21 09:41:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.6 2007/12/07 17:28:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_20.c,v 1.1.14.7 2008/01/21 09:41:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,9 +54,7 @@ static inline void compat_20_netbsd32_from_statvfs(struct statvfs *,
     struct netbsd32_statfs *);
 
 static inline void
-compat_20_netbsd32_from_statvfs(sbp, sb32p)
-	struct statvfs *sbp;
-	struct netbsd32_statfs *sb32p;
+compat_20_netbsd32_from_statvfs(struct statvfs *sbp, struct netbsd32_statfs *sb32p)
 {
 	sb32p->f_flags = sbp->f_flag;
 	sb32p->f_bsize = (netbsd32_long)sbp->f_bsize;
@@ -90,16 +88,13 @@ compat_20_netbsd32_from_statvfs(sbp, sb32p)
 }
 
 int
-compat_20_netbsd32_getfsstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_getfsstat(struct lwp *l, const struct compat_20_netbsd32_getfsstat_args *uap, register_t *retval)
 {
-	struct compat_20_netbsd32_getfsstat_args /* {
+	/* {
 		syscallarg(netbsd32_statfsp_t) buf;
 		syscallarg(netbsd32_long) bufsize;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct mount *mp, *nmp;
 	struct statvfs *sp;
 	struct netbsd32_statfs sb32;
@@ -155,22 +150,20 @@ compat_20_netbsd32_getfsstat(l, v, retval)
 }
 
 int
-compat_20_netbsd32_statfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_statfs(struct lwp *l, const struct compat_20_netbsd32_statfs_args *uap, register_t *retval)
 {
-	struct compat_20_netbsd32_statfs_args /* {
+	/* {
 		syscallarg(const netbsd32_charp) path;
 		syscallarg(netbsd32_statfsp_t) buf;
-	} */ *uap = v;
+	} */
 	struct mount *mp;
 	struct statvfs *sp;
 	struct netbsd32_statfs s32;
 	int error;
 	struct nameidata nd;
 
-	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE, SCARG_P32(uap, path), l);
+	NDINIT(&nd, LOOKUP, FOLLOW | TRYEMULROOT, UIO_USERSPACE,
+	    SCARG_P32(uap, path));
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	mp = nd.ni_vp->v_mount;
@@ -184,15 +177,12 @@ compat_20_netbsd32_statfs(l, v, retval)
 }
 
 int
-compat_20_netbsd32_fstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_fstatfs(struct lwp *l, const struct compat_20_netbsd32_fstatfs_args *uap, register_t *retval)
 {
-	struct compat_20_netbsd32_fstatfs_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_statfsp_t) buf;
-	} */ *uap = v;
+	} */
 	struct file *fp;
 	struct mount *mp;
 	struct statvfs *sp;
@@ -216,15 +206,12 @@ compat_20_netbsd32_fstatfs(l, v, retval)
 }
 
 int
-compat_20_netbsd32_fhstatfs(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_20_netbsd32_fhstatfs(struct lwp *l, const struct compat_20_netbsd32_fhstatfs_args *uap, register_t *retval)
 {
-	struct compat_20_netbsd32_fhstatfs_args /* {
+	/* {
 		syscallarg(const netbsd32_fhandlep_t) fhp;
 		syscallarg(struct statvfs *) buf;
-	} */ *uap = v;
+	} */
 	struct compat_30_sys_fhstatvfs1_args ua;
 
 	NETBSD32TOP_UAP(fhp, const struct compat_30_fhandle);

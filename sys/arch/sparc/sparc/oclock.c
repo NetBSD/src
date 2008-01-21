@@ -1,4 +1,4 @@
-/*	$NetBSD: oclock.c,v 1.10.12.2 2006/12/30 20:46:58 yamt Exp $ */
+/*	$NetBSD: oclock.c,v 1.10.12.3 2008/01/21 09:39:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.10.12.2 2006/12/30 20:46:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oclock.c,v 1.10.12.3 2008/01/21 09:39:26 yamt Exp $");
 
 #include "opt_sparc_arch.h"
 
@@ -192,7 +192,6 @@ oclockattach(struct device *parent, struct device *self, void *aux)
 	intersil7170_attach(sc);
 
 	printf("\n");
-	todr_attach(&sc->sc_handle);
 #endif /* SUN4 */
 }
 

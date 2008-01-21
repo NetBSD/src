@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ipc_10.c,v 1.17.16.3 2007/09/03 14:31:51 yamt Exp $	*/
+/*	$NetBSD: kern_ipc_10.c,v 1.17.16.4 2008/01/21 09:40:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass and Charles M. Hannum.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.17.16.3 2007/09/03 14:31:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.17.16.4 2008/01/21 09:40:43 yamt Exp $");
 
 #include "opt_sysv.h"
 
@@ -50,18 +50,15 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ipc_10.c,v 1.17.16.3 2007/09/03 14:31:51 yamt E
 
 #if defined(SYSVSEM) && !defined(_LP64)
 int
-compat_10_sys_semsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_10_sys_semsys(struct lwp *l, const struct compat_10_sys_semsys_args *uap, register_t *retval)
 {
-	struct compat_10_sys_semsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 		syscallarg(int) a5;
-	} */ *uap = v;
+	} */
 	struct sys_semget_args /* {
 		syscallarg(key_t) key;
 		syscallarg(int) nsems;
@@ -78,6 +75,7 @@ compat_10_sys_semsys(l, v, retval)
 	struct semid_ds sembuf;
 	struct semid_ds14 osembuf;
 	void *pass_arg;
+	int a5 = SCARG(uap, a5);
 	int error;
 
 	switch (SCARG(uap, which)) {
@@ -85,7 +83,7 @@ compat_10_sys_semsys(l, v, retval)
 #define	semctl_semid	SCARG(uap, a2)
 #define	semctl_semnum	SCARG(uap, a3)
 #define	semctl_cmd	SCARG(uap, a4)
-#define	semctl_arg	((union __semun *)&SCARG(uap, a5))
+#define	semctl_arg	((union __semun *)&a5)
 		pass_arg = get_semctl_arg(semctl_cmd, &sembuf, semctl_arg);
 		if (semctl_cmd == IPC_SET) {
 			error = copyin(semctl_arg->buf, &osembuf, sizeof osembuf);
@@ -130,17 +128,14 @@ compat_10_sys_semsys(l, v, retval)
 
 #if defined(SYSVSHM) && !defined(_LP64)
 int
-compat_10_sys_shmsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_10_sys_shmsys(struct lwp *l, const struct compat_10_sys_shmsys_args *uap, register_t *retval)
 {
-	struct compat_10_sys_shmsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
-	} */ *uap = v;
+	} */
 	struct sys_shmat_args /* {
 		syscallarg(int) shmid;
 		syscallarg(void *) shmaddr;
@@ -194,19 +189,16 @@ compat_10_sys_shmsys(l, v, retval)
 
 #if defined(SYSVMSG) && !defined(_LP64)
 int
-compat_10_sys_msgsys(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_10_sys_msgsys(struct lwp *l, const struct compat_10_sys_msgsys_args *uap, register_t *retval)
 {
-	struct compat_10_sys_msgsys_args /* {
+	/* {
 		syscallarg(int) which;
 		syscallarg(int) a2;
 		syscallarg(int) a3;
 		syscallarg(int) a4;
 		syscallarg(int) a5;
 		syscallarg(int) a6;
-	} */ *uap = v;
+	} */
 	struct compat_14_sys_msgctl_args /* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;

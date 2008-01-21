@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.21.4.4 2007/11/15 11:44:19 yamt Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.21.4.5 2008/01/21 09:43:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.21.4.4 2007/11/15 11:44:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.21.4.5 2008/01/21 09:43:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,17 +62,15 @@ struct fwohci_pci_softc {
 
 	pci_chipset_tag_t psc_pc;
 	pcitag_t psc_tag;
-	struct pci_conf_state psc_pciconf;
 
 	void *psc_ih;
-	void *psc_shutdownhook;
-	void *psc_powerhook;
 };
 
 static int fwohci_pci_match(struct device *, struct cfdata *, void *);
 static void fwohci_pci_attach(struct device *, struct device *, void *);
-static void fwohci_pci_shutdown(void *);
-static void fwohci_pci_power(int, void *);
+
+static bool fwohci_pci_suspend(device_t);
+static bool fwohci_pci_resume(device_t);
 
 CFATTACH_DECL(fwohci_pci, sizeof(struct fwohci_pci_softc),
     fwohci_pci_match, fwohci_pci_attach, NULL, NULL);
@@ -118,7 +116,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 	    NULL, &psc->psc_sc.bssize)) {
 		aprint_error("%s: can't map OHCI register space\n",
 		    self->dv_xname);
-		return;
+		goto fail;
 	}
 
 	/* Disable interrupts, so we don't get any spurious ones. */
@@ -132,7 +130,7 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error("%s: couldn't map interrupt\n", self->dv_xname);
-		return;
+		goto fail;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	psc->psc_ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, fwohci_filt,
@@ -143,57 +141,51 @@ fwohci_pci_attach(struct device *parent, struct device *self,
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal("%s: interrupting at %s\n", self->dv_xname, intrstr);
 
-	psc->psc_shutdownhook =
-	    shutdownhook_establish(fwohci_pci_shutdown, psc);
-	psc->psc_powerhook =
-	    powerhook_establish(self->dv_xname, fwohci_pci_power, psc);
+	if (!pmf_device_register(self, fwohci_pci_suspend, fwohci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	if (fwohci_init(&(psc->psc_sc), &(psc->psc_sc.fc._dev)) != 0) {
 		pci_intr_disestablish(pa->pa_pc, psc->psc_ih);
 		bus_space_unmap(psc->psc_sc.bst, psc->psc_sc.bsh,
 		    psc->psc_sc.bssize);
 	}
+
+	return;
+
+fail:
+	/* In the event that we fail to attach, register a null pnp handler */
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
+	return;
 }
 
-static void
-fwohci_pci_shutdown(void *arg)
+static bool
+fwohci_pci_suspend(device_t dv)
 {
-	struct fwohci_pci_softc *psc = arg;
-
-	fwohci_stop(&psc->psc_sc, psc->psc_sc.fc.dev);
-}
-
-static void
-fwohci_pci_power(int why, void *arg)
-{
-	struct fwohci_pci_softc *psc = arg;
+	struct fwohci_pci_softc *psc = device_private(dv);
 	int s;
 
 	s = splbio();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		printf("%s: suspending...\n", psc->psc_sc.fc._dev.dv_xname);
-
-		pci_conf_capture(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
-		fwohci_stop(&psc->psc_sc, psc->psc_sc.fc.dev);
-		break;
-
-	case PWR_RESUME:
-		printf("%s: resuming...\n", psc->psc_sc.fc._dev.dv_xname);
-
-		pci_conf_restore(psc->psc_pc, psc->psc_tag, &psc->psc_pciconf);
-		fwohci_resume(&psc->psc_sc, psc->psc_sc.fc.dev);
-		break;
-
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	fwohci_stop(&psc->psc_sc, psc->psc_sc.fc.dev);
 	splx(s);
+
+	return true;
+}
+
+static bool
+fwohci_pci_resume(device_t dv)
+{
+	struct fwohci_pci_softc *psc = device_private(dv);
+	int s;
+
+	s = splbio();
+	fwohci_resume(&psc->psc_sc, psc->psc_sc.fc.dev);
+	splx(s);
+
+	return true;
 }

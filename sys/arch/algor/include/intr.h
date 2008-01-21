@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.40.5 2007/12/07 17:23:47 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.40.6 2008/01/21 09:35:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,7 @@
 #ifndef _ALGOR_INTR_H_
 #define _ALGOR_INTR_H_
 
-#include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */

@@ -1,4 +1,4 @@
-/* $NetBSD: drm_agpsupport.c,v 1.2.14.3 2007/12/07 17:29:43 yamt Exp $ */
+/* $NetBSD: drm_agpsupport.c,v 1.2.14.4 2008/01/21 09:42:44 yamt Exp $ */
 
 /* drm_agpsupport.h -- DRM support for AGP/GART backend -*- linux-c -*-
  * Created: Mon Dec 13 09:56:45 1999 by faith@precisioninsight.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.2.14.4 2008/01/21 09:42:44 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_agpsupport.c,v 1.5 2006/04/09 20:45:44 anholt Exp $");
 */

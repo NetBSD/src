@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80busvar.h,v 1.2 2004/04/19 12:44:10 wiz Exp $	*/
+/*	$NetBSD: cs80busvar.h,v 1.2.12.1 2008/01/21 09:42:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -88,26 +88,26 @@ struct cs80_describecmd {		/* describe command */
 	u_int8_t c_unit;
 	u_int8_t c_vol;
 	u_int8_t c_cmd;
-} __attribute__((__packed__));
+} __packed;
 
 struct	cs80_clearcmd {			/* clear device command */
 	u_int8_t	c_unit;
 	u_int8_t	c_cmd;
-} __attribute__((__packed__));
+} __packed;
 
 struct	cs80_srcmd {			/* s? release */
 	u_int8_t	c_unit;
 	u_int8_t	c_nop;
 	u_int8_t	c_cmd;
 	u_int8_t	c_param;
-} __attribute__((__packed__));
+} __packed;
 
 struct	cs80_statuscmd {		/* status command */
 	u_int8_t	c_unit;
 	u_int8_t	c_sram;
 	u_int8_t	c_param;
 	u_int8_t	c_cmd;
-} __attribute__((__packed__));
+} __packed;
 
 struct	cs80_ssmcmd {			/* status mask */
 	u_int8_t	c_unit;
@@ -120,7 +120,7 @@ struct	cs80_ssmcmd {			/* status mask */
 #define	FEF_MASK	0x0
 #define	AEF_MASK	0x0
 #define	IEF_MASK	0xF970
-} __attribute__((__packed__));
+} __packed;
 
 struct cs80_soptcmd {			/* set options */
 	u_int8_t	c_unit;
@@ -131,7 +131,7 @@ struct cs80_soptcmd {			/* set options */
 #define C_SKSPAR	0x02
 #define C_SPAR		0x04
 #define C_IMRPT		0x08
-} __attribute__((__packed__));
+} __packed;
 
 
 
@@ -161,7 +161,7 @@ struct cs80_description {
 	u_int16_t	d_maxvsecth;	/* volume: max volume block (MSW) */
 	u_int32_t	d_maxvsectl;	/* volume: max volume block (LSWs) */
 	u_int8_t	d_interleave;	/* volume: current interleave */
-} __attribute__((__packed__));
+} __packed;
 
 struct	cs80_stat {		/* device status */
 	u_int8_t	c_vu;	/* volume/unit */
@@ -219,7 +219,7 @@ struct	cs80_stat {		/* device status */
 #define c_raw	c_pf.cu_raw
 #define c_blk	c_pf.cu_sva.cu_lsl
 #define c_tva	c_pf.cu_tva
-} __attribute__((__packed__));
+} __packed;
 
 
 int cs80describe(void *, int, int, struct cs80_description *);

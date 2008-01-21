@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.103.2.6 2007/11/15 11:44:22 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.103.2.7 2008/01/21 09:44:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103.2.6 2007/11/15 11:44:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103.2.7 2008/01/21 09:44:03 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -268,11 +268,8 @@ struct wm_softc {
 	bus_space_handle_t sc_flashh;	/* flash registers space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power hook */
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_pcitag;
-	struct pci_conf_state sc_pciconf;
 
 	wm_chip_type sc_type;		/* chip type */
 	int sc_flags;			/* flags; see below */
@@ -523,9 +520,6 @@ static int	wm_ioctl(struct ifnet *, u_long, void *);
 static int	wm_init(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
 
-static void	wm_shutdown(void *);
-static void	wm_powerhook(int, void *);
-
 static void	wm_reset(struct wm_softc *);
 static void	wm_rxdrain(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_softc *, int);
@@ -767,6 +761,10 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
 	  "Intel i82572EI 1000baseT Ethernet",
 	  WM_T_82572,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
+	  "Intel® PRO/1000 PT Quad Port Server Adapter",
+	  WM_T_82571,		WMP_F_1000T, },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
@@ -1617,19 +1615,11 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	    NULL, sc->sc_dev.dv_xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
-	/*
-	 * Make sure the interface is shutdown during reboot.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(wm_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    wm_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
 	return;
 
 	/*
@@ -1657,48 +1647,6 @@ wm_attach(struct device *parent, struct device *self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
  fail_0:
-	return;
-}
-
-/*
- * wm_shutdown:
- *
- *	Make sure the interface is stopped at reboot time.
- */
-static void
-wm_shutdown(void *arg)
-{
-	struct wm_softc *sc = arg;
-
-	wm_stop(&sc->sc_ethercom.ec_if, 1);
-}
-
-static void
-wm_powerhook(int why, void *arg)
-{
-	struct wm_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t tag = sc->sc_pcitag;
-
-	switch (why) {
-	case PWR_SOFTSUSPEND:
-		wm_shutdown(sc);
-		break;
-	case PWR_SOFTRESUME:
-		ifp->if_flags &= ~IFF_RUNNING;
-		wm_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			wm_start(ifp);
-		break;
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		break;
-	}
-
 	return;
 }
 
@@ -3088,8 +3036,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
 		CSR_WRITE(sc, WMREG_TDH, 0);
 		CSR_WRITE(sc, WMREG_TDT, 0);
-		CSR_WRITE(sc, WMREG_TIDV, 64);
-		CSR_WRITE(sc, WMREG_TADV, 128);
+		CSR_WRITE(sc, WMREG_TIDV, 375);		/* ITR / 4 */
+		CSR_WRITE(sc, WMREG_TADV, 375);		/* should be same */
 
 		CSR_WRITE(sc, WMREG_TXDCTL, TXDCTL_PTHRESH(0) |
 		    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
@@ -3130,8 +3078,8 @@ wm_init(struct ifnet *ifp)
 		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
 		CSR_WRITE(sc, WMREG_RDH, 0);
 		CSR_WRITE(sc, WMREG_RDT, 0);
-		CSR_WRITE(sc, WMREG_RDTR, 0 | RDTR_FPD);
-		CSR_WRITE(sc, WMREG_RADV, 128);
+		CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD);	/* ITR/4 */
+		CSR_WRITE(sc, WMREG_RADV, 375);		/* MUST be same */
 	}
 	for (i = 0; i < WM_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -3247,8 +3195,18 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
 
 	if (sc->sc_type >= WM_T_82543) {
-		/* Set up the interrupt throttling register (units of 256ns) */
-		sc->sc_itr = 1000000000 / (7000 * 256);
+		/*
+		 * Set up the interrupt throttling register (units of 256ns)
+		 * Note that a footnote in Intel's documentation says this
+		 * ticker runs at 1/4 the rate when the chip is in 100Mbit
+		 * or 10Mbit mode.  Empirically, it appears to be the case
+		 * that that is also true for the 1024ns units of the other
+		 * interrupt-related timer registers -- so, really, we ought
+		 * to divide this value by 4 when the link speed is low.
+		 *
+		 * XXX implement this division at link speed change!
+		 */
+		sc->sc_itr = 1000000000 / (1500 * 256);	/* 2604 ints/sec */
 		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
@@ -3271,7 +3229,8 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
 	/* Set the media. */
-	(void) (*sc->sc_mii.mii_media.ifm_change)(ifp);
+	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
+		goto out;
 
 	/*
 	 * Set up the receive control register; we actually program
@@ -4352,6 +4311,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 
 	wm_gmii_reset(sc);
 
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
@@ -4374,9 +4334,8 @@ wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
+	ether_mediastatus(ifp, ifmr);
+	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK) |
 			   sc->sc_flowflags;
 }
 
@@ -4390,39 +4349,43 @@ wm_gmii_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	int rc;
 
-	if (ifp->if_flags & IFF_UP) {
-		sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
-		sc->sc_ctrl |= CTRL_SLU;
-		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
-		    || (sc->sc_type > WM_T_82543)) {
-			sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
-		} else {
-			sc->sc_ctrl &= ~CTRL_ASDE;
-			sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
-			if (ife->ifm_media & IFM_FDX)
-				sc->sc_ctrl |= CTRL_FD;
-			switch(IFM_SUBTYPE(ife->ifm_media)) {
-			case IFM_10_T:
-				sc->sc_ctrl |= CTRL_SPEED_10;
-				break;
-			case IFM_100_TX:
-				sc->sc_ctrl |= CTRL_SPEED_100;
-				break;
-			case IFM_1000_T:
-				sc->sc_ctrl |= CTRL_SPEED_1000;
-				break;
-			default:
-				panic("wm_gmii_mediachange: bad media 0x%x",
-				    ife->ifm_media);
-			}
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+
+	sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
+	sc->sc_ctrl |= CTRL_SLU;
+	if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+	    || (sc->sc_type > WM_T_82543)) {
+		sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
+	} else {
+		sc->sc_ctrl &= ~CTRL_ASDE;
+		sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+		if (ife->ifm_media & IFM_FDX)
+			sc->sc_ctrl |= CTRL_FD;
+		switch(IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_10_T:
+			sc->sc_ctrl |= CTRL_SPEED_10;
+			break;
+		case IFM_100_TX:
+			sc->sc_ctrl |= CTRL_SPEED_100;
+			break;
+		case IFM_1000_T:
+			sc->sc_ctrl |= CTRL_SPEED_1000;
+			break;
+		default:
+			panic("wm_gmii_mediachange: bad media 0x%x",
+			    ife->ifm_media);
 		}
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		if (sc->sc_type <= WM_T_82543)
-			wm_gmii_reset(sc);
-		mii_mediachg(&sc->sc_mii);
 	}
-	return (0);
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	if (sc->sc_type <= WM_T_82543)
+		wm_gmii_reset(sc);
+
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 #define	MDI_IO		CTRL_SWDPIN(2)

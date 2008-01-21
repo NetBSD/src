@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_usbd.c,v 1.1.2.1 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD");
+__KERNEL_RCSID(0, "$NetBSD: subr_usbd.c,v 1.2.14.4 2008/01/21 09:41:47 yamt Exp $");
 #endif
 
 #include <sys/param.h>

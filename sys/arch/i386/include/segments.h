@@ -1,4 +1,4 @@
-/*	$NetBSD: segments.h,v 1.41.16.3 2007/11/15 11:42:59 yamt Exp $	*/
+/*	$NetBSD: segments.h,v 1.41.16.4 2008/01/21 09:37:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -80,18 +80,32 @@
 
 #ifndef _I386_SEGMENTS_H_
 #define _I386_SEGMENTS_H_
+#ifdef _KERNEL_OPT
+#include "opt_xen.h"
+#endif
 
 /*
  * Selectors
  */
 
 #define	ISPL(s)		((s) & SEL_RPL)	/* what is the priority level of a selector */
+#ifndef XEN
 #define	SEL_KPL		0		/* kernel privilege level */
+#else
+#define	SEL_XEN		0		/* Xen privilege level */
+#define	SEL_KPL		1		/* kernel privilege level */
+#endif /* XEN */
 #define	SEL_UPL		3		/* user privilege level */
 #define	SEL_RPL		3		/* requester's privilege level mask */
+#ifdef XEN
+#define	CHK_UPL		2		/* user privilege level mask */
+#else
+#define CHK_UPL		SEL_RPL
+#endif /* XEN */
 #define	ISLDT(s)	((s) & SEL_LDT)	/* is it local or global */
 #define	SEL_LDT		4		/* local descriptor table */
 #define	IDXSEL(s)	(((s) >> 3) & 0x1fff)		/* index of selector */
+#define	IDXSELN(s)	(((s) >> 3))			/* index of selector */
 #define	GSEL(s,r)	(((s) << 3) | r)		/* a global selector */
 #define	LSEL(s,r)	(((s) << 3) | r | SEL_LDT)	/* a local selector */
 #define	GSYSSEL(s,r)	GSEL(s,r)	/* compat with amd64 */
@@ -128,7 +142,7 @@ struct segment_descriptor {
 	unsigned sd_def32:1;		/* default 32 vs 16 bit size */
 	unsigned sd_gran:1;		/* limit granularity (byte/page) */
 	unsigned sd_hibase:8;		/* segment base address (msb) */
-} __attribute__((packed));
+} __packed;
 
 /*
  * Gate descriptors (e.g. indirect descriptors)
@@ -142,7 +156,12 @@ struct gate_descriptor {
 	unsigned gd_dpl:2;		/* segment descriptor priority level */
 	unsigned gd_p:1;		/* segment descriptor present */
 	unsigned gd_hioffset:16;	/* gate offset (msb) */
-} __attribute__((packed));
+} __packed;
+
+struct ldt_descriptor {
+	vaddr_t ld_base;
+	uint32_t ld_entries;
+} __packed;
 
 /*
  * Generic descriptor
@@ -150,7 +169,10 @@ struct gate_descriptor {
 union descriptor {
 	struct segment_descriptor sd;
 	struct gate_descriptor gd;
-} __attribute__((packed));
+	struct ldt_descriptor ld;
+	uint32_t raw[2];
+	uint64_t raw64;
+} __packed;
 
 /*
  * region descriptors, used to load gdt/idt tables before segments yet exist.
@@ -158,7 +180,7 @@ union descriptor {
 struct region_descriptor {
 	unsigned rd_limit:16;		/* segment extent */
 	unsigned rd_base:32;		/* base address  */
-} __attribute__((packed));
+} __packed;
 
 #if __GNUC__ == 2 && __GNUC_MINOR__ < 7
 #pragma pack(4)
@@ -170,12 +192,14 @@ extern struct gate_descriptor *idt;
 
 void setgate(struct gate_descriptor *, void *, int, int, int, int);
 void setregion(struct region_descriptor *, void *, size_t);
-void setsegment(struct segment_descriptor *, void *, size_t, int, int,
+void setsegment(struct segment_descriptor *, const void *, size_t, int, int,
     int, int);
-void setgdt(int, void *, size_t, int, int, int, int);
+void setgdt(int, const void *, size_t, int, int, int, int);
 void unsetgate(struct gate_descriptor *);
 void cpu_init_idt(void);
 
+void idt_init(void);
+void idt_vec_reserve(int);
 int idt_vec_alloc(int, int);
 void idt_vec_set(int, void (*)(void));
 void idt_vec_free(int);

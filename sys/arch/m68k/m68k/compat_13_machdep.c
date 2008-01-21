@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.7.12.3 2007/02/26 09:07:12 yamt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7.12.4 2008/01/21 09:37:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7.12.3 2007/02/26 09:07:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7.12.4 2008/01/21 09:37:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,11 +105,11 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7.12.3 2007/02/26 09:07:12 y
  * a machine fault.
  */
 int
-compat_13_sys_sigreturn(struct lwp *l, void *v, register_t *retval)
+compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sigcontext13 *scp;
 	struct frame *frame;

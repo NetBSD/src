@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.14.3 2006/12/30 20:46:20 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.1.14.4 2008/01/21 09:37:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,8 +69,6 @@ typedef	__volatile int		__cpu_simple_lock_t;
 
 #if defined(_KERNEL)
 #define __HAVE_RAS
-#define	__HAVE_TIMECOUNTER
-#define	__HAVE_GENERIC_TODR
 #endif
 
 #endif	/* _MACHTYPES_H_ */

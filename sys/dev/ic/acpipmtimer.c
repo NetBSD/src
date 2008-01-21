@@ -1,11 +1,9 @@
-/* $NetBSD: acpipmtimer.c,v 1.1.16.4 2007/10/27 11:30:25 yamt Exp $ */
+/* $NetBSD: acpipmtimer.c,v 1.1.16.5 2008/01/21 09:42:52 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.1.16.4 2007/10/27 11:30:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipmtimer.c,v 1.1.16.5 2008/01/21 09:42:52 yamt Exp $");
 
 #include <sys/types.h>
-
-#ifdef __HAVE_TIMECOUNTER
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -89,5 +87,3 @@ acpihwtimer_read_fast(struct timecounter *tc)
 
 	return r(h);
 }
-
-#endif

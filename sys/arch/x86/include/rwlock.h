@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2.4.3 2007/12/07 17:26:57 yamt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.4.4 2008/01/21 09:40:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -58,9 +58,11 @@ struct krwlock {
  */
 #define	RW_GIVE(rw)			/* nothing */
 
-#define	RW_CAS(p, o, n)			_lock_cas((p), (o), (n))
+#define	RW_CAS(p, o, n)			\
+    (_atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))
 
-int	_lock_cas(volatile uintptr_t *, uintptr_t, uintptr_t);
+unsigned long	_atomic_cas_ulong(volatile unsigned long *,
+    unsigned long, unsigned long);
 
 #endif	/* __RWLOCK_PRIVATE */
 

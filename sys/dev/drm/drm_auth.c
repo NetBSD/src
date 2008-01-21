@@ -1,4 +1,4 @@
-/* $NetBSD: drm_auth.c,v 1.2.14.3 2007/12/07 17:29:44 yamt Exp $ */
+/* $NetBSD: drm_auth.c,v 1.2.14.4 2008/01/21 09:42:44 yamt Exp $ */
 
 /* drm_auth.h -- IOCTLs for authentication -*- linux-c -*-
  * Created: Tue Feb  2 08:37:54 1999 by faith@valinux.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_auth.c,v 1.2.14.4 2008/01/21 09:42:44 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_auth.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

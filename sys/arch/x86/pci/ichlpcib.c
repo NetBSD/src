@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.4.3 2007/12/07 17:26:57 yamt Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.4.4 2008/01/21 09:40:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,13 +46,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.4.3 2007/12/07 17:26:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.4.4 2008/01/21 09:40:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/sysctl.h>
+#include <sys/timetc.h>
 #include <machine/bus.h>
 
 #include <dev/pci/pcivar.h>
@@ -61,8 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.4.3 2007/12/07 17:26:57 yamt Exp $"
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <dev/ic/i82801lpcreg.h>
 #include <dev/ic/acpipmtimer.h>
+#include <dev/ic/i82801lpcreg.h>
+#include <dev/ic/hpetreg.h>
+#include <dev/ic/hpetvar.h>
+
+#include "hpet.h"
 
 struct lpcib_softc {
 	/* Device object. */
@@ -71,43 +76,90 @@ struct lpcib_softc {
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 
+	struct pci_attach_args	sc_pa;
+	int			sc_has_rcba;
+	int			sc_has_ich5_hpet;
+
+	/* RCBA */
+	bus_space_tag_t		sc_rcbat;
+	bus_space_handle_t	sc_rcbah;
+	pcireg_t		sc_rcba_reg;
+
 	/* Watchdog variables. */
 	struct sysmon_wdog	sc_smw;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
-	
+
+#if NHPET > 0
+	/* HPET variables. */
+	uint32_t		sc_hpet_reg;
+#endif
+
 	/* Power management */
-	void			*sc_powerhook;
-	struct pci_conf_state	sc_pciconf;
-	pcireg_t		sc_pirq[8];
+	pcireg_t		sc_pirq[2];
+	pcireg_t		sc_pmcon;
+	pcireg_t		sc_fwhsel2;
 };
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
-static void lpcib_powerhook(int, void *);
+static bool lpcib_suspend(device_t);
+static bool lpcib_resume(device_t);
 
-static void pmtimer_configure(struct lpcib_softc *, struct pci_attach_args *);
+static void pmtimer_configure(struct lpcib_softc *);
 
-static void tcotimer_configure(struct lpcib_softc *, struct pci_attach_args *);
+static void tcotimer_configure(struct lpcib_softc *);
 static int tcotimer_setmode(struct sysmon_wdog *);
 static int tcotimer_tickle(struct sysmon_wdog *);
 static void tcotimer_stop(struct lpcib_softc *);
 static void tcotimer_start(struct lpcib_softc *);
 static void tcotimer_status_reset(struct lpcib_softc *);
-static int  tcotimer_disable_noreboot(struct lpcib_softc *, bus_space_tag_t,
-				      bus_space_handle_t);
+static int  tcotimer_disable_noreboot(struct lpcib_softc *);
 
-static void speedstep_configure(struct lpcib_softc *, struct pci_attach_args *);
+static void speedstep_configure(struct lpcib_softc *);
 static int speedstep_sysctl_helper(SYSCTLFN_ARGS);
 
+#if NHPET > 0
+static void lpcib_hpet_configure(struct lpcib_softc *);
+#endif
+
 struct lpcib_softc *speedstep_cookie;	/* XXX */
-static int lpcib_ich6 = 0;
 
 /* Defined in arch/.../pci/pcib.c. */
 extern void pcibattach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(ichlpcib, sizeof(struct lpcib_softc),
     lpcibmatch, lpcibattach, NULL, NULL);
+
+static struct lpcib_device {
+	pcireg_t vendor, product;
+	int has_rcba;
+	int has_ich5_hpet;
+} lpcib_devices[] = {
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801AA_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BA_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801BAM_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CA_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801CAM_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_LPC, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801DB_ISA, 0, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801EB_LPC, 0, 1 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FB_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801FBM_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801G_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GBM_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GHM_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801H_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HEM_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HH_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HO_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801HBM_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IH_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IO_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IR_LPC, 1, 0 },
+	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801IB_LPC, 1, 0 },
+	{ 0, 0, 0, 0 },
+};
 
 /*
  * Autoconf callbacks.
@@ -116,40 +168,17 @@ static int
 lpcibmatch(struct device *parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
+	struct lpcib_device *lpcib_dev;
 
 	/* We are ISA bridge, of course */
 	if (PCI_CLASS(pa->pa_class) != PCI_CLASS_BRIDGE ||
 	    PCI_SUBCLASS(pa->pa_class) != PCI_SUBCLASS_BRIDGE_ISA)
 		return 0;
 
-	/* Matches only Intel ICH */
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_INTEL_82801AA_LPC:	/* ICH */
-		case PCI_PRODUCT_INTEL_82801AB_LPC:	/* ICH0 */
-		case PCI_PRODUCT_INTEL_82801BA_LPC:	/* ICH2 */
-		case PCI_PRODUCT_INTEL_82801BAM_LPC:	/* ICH2-M */
-		case PCI_PRODUCT_INTEL_82801CA_LPC:	/* ICH3-S */
-		case PCI_PRODUCT_INTEL_82801CAM_LPC:	/* ICH3-M */
-		case PCI_PRODUCT_INTEL_82801DB_LPC:	/* ICH4 */
-		case PCI_PRODUCT_INTEL_82801DB_ISA:	/* ICH4-M */
-		case PCI_PRODUCT_INTEL_82801EB_LPC:	/* ICH5 */
+	for (lpcib_dev = lpcib_devices; lpcib_dev->vendor; ++lpcib_dev) {
+		if (PCI_VENDOR(pa->pa_id) == lpcib_dev->vendor &&
+		    PCI_PRODUCT(pa->pa_id) == lpcib_dev->product)
 			return 10;
-		case PCI_PRODUCT_INTEL_82801FB_LPC:	/* ICH6 */
-		case PCI_PRODUCT_INTEL_82801FBM_LPC:	/* ICH6-M */
-		case PCI_PRODUCT_INTEL_82801G_LPC:	/* ICH7 */
-		case PCI_PRODUCT_INTEL_82801GBM_LPC:	/* ICH7-M */
-		case PCI_PRODUCT_INTEL_82801GHM_LPC:	/* ICH7-M DH */
-		case PCI_PRODUCT_INTEL_82801H_LPC:	/* ICH8 */
-		case PCI_PRODUCT_INTEL_82801HH_LPC:	/* ICH8 DH */
-		case PCI_PRODUCT_INTEL_82801HO_LPC:	/* ICH8 DO */
-		case PCI_PRODUCT_INTEL_82801HBM_LPC:    /* iCH8-M */
-		case PCI_PRODUCT_INTEL_82801IH_LPC:	/* ICH9 */
-		case PCI_PRODUCT_INTEL_82801IR_LPC:	/* ICH9-R */
-		case PCI_PRODUCT_INTEL_82801IB_LPC:	/* ICH9 ? */
-			lpcib_ich6 = 1;
-			return 10;	/* prior to pcib */
-		}
 	}
 
 	return 0;
@@ -159,10 +188,21 @@ static void
 lpcibattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct lpcib_softc *sc = (void*) self;
+	struct lpcib_softc *sc = device_private(self);
+	struct lpcib_device *lpcib_dev;
 
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+	sc->sc_pa = *pa;
+
+	for (lpcib_dev = lpcib_devices; lpcib_dev->vendor; ++lpcib_dev) {
+		if (PCI_VENDOR(pa->pa_id) != lpcib_dev->vendor ||
+		    PCI_PRODUCT(pa->pa_id) != lpcib_dev->product)
+			continue;
+		sc->sc_has_rcba = lpcib_dev->has_rcba;
+		sc->sc_has_ich5_hpet = lpcib_dev->has_ich5_hpet;
+		break;
+	}
 
 	pcibattach(parent, self, aux);
 
@@ -178,72 +218,110 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* For ICH6 and later, always enable RCBA */
+	if (sc->sc_has_rcba) {
+		pcireg_t rcba;
+
+		sc->sc_rcbat = sc->sc_pa.pa_memt;
+
+		rcba = pci_conf_read(sc->sc_pc, sc->sc_pcitag, LPCIB_RCBA);
+		if ((rcba & LPCIB_RCBA_EN) == 0) {
+			aprint_error("%s: RCBA is not enabled",
+			    sc->sc_dev.dv_xname);
+			return;
+		}
+		rcba &= ~LPCIB_RCBA_EN;
+
+		if (bus_space_map(sc->sc_rcbat, rcba, LPCIB_RCBA_SIZE, 0,
+				  &sc->sc_rcbah)) {
+			aprint_error("%s: RCBA could not be mapped",
+			    sc->sc_dev.dv_xname);		
+			return;
+		}
+	}
+
 	/* Set up the power management timer. */
-	pmtimer_configure(sc, pa);
+	pmtimer_configure(sc);
 
 	/* Set up the TCO (watchdog). */
-	tcotimer_configure(sc, pa);
+	tcotimer_configure(sc);
 
 	/* Set up SpeedStep. */
-	speedstep_configure(sc, pa);
+	speedstep_configure(sc);
 
-	/* Install powerhook */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    lpcib_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+#if NHPET > 0
+	/* Set up HPET. */
+	lpcib_hpet_configure(sc);
+#endif
+
+	/* Install power handler */
+	if (!pmf_device_register(self, lpcib_suspend, lpcib_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-static void
-lpcib_powerhook(int why, void *opaque)
+static bool
+lpcib_suspend(device_t dv)
 {
-	struct lpcib_softc *sc;
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
+	struct lpcib_softc *sc = device_private(dv);
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
 
-	sc = (struct lpcib_softc *)opaque;
-	pc = sc->sc_pc;
-	tag = sc->sc_pcitag;
+	/* capture PIRQ routing control registers */
+	sc->sc_pirq[0] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQA_ROUT);
+	sc->sc_pirq[1] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQE_ROUT);
 
-	switch (why) {
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
+	sc->sc_pmcon = pci_conf_read(pc, tag, LPCIB_PCI_GEN_PMCON_1);
+	sc->sc_fwhsel2 = pci_conf_read(pc, tag, LPCIB_PCI_GEN_STA);
 
-		/* capture PIRQ routing control registers */
-		sc->sc_pirq[0] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQA_ROUT);
-		sc->sc_pirq[1] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQB_ROUT);
-		sc->sc_pirq[2] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQC_ROUT);
-		sc->sc_pirq[3] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQD_ROUT);
-		sc->sc_pirq[4] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQE_ROUT);
-		sc->sc_pirq[5] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQF_ROUT);
-		sc->sc_pirq[6] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQG_ROUT);
-		sc->sc_pirq[7] = pci_conf_read(pc, tag, LPCIB_PCI_PIRQH_ROUT);
-
-		break;
-
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-
-		/* restore PIRQ routing control registers */
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT, sc->sc_pirq[0]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQB_ROUT, sc->sc_pirq[1]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQC_ROUT, sc->sc_pirq[2]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQD_ROUT, sc->sc_pirq[3]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT, sc->sc_pirq[4]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQF_ROUT, sc->sc_pirq[5]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQG_ROUT, sc->sc_pirq[6]);
-		pci_conf_write(pc, tag, LPCIB_PCI_PIRQH_ROUT, sc->sc_pirq[7]);
-
-		break;
+	if (sc->sc_has_rcba) {
+		sc->sc_rcba_reg = pci_conf_read(pc, tag, LPCIB_RCBA);
+#if NHPET > 0
+		sc->sc_hpet_reg = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah,
+		    LPCIB_RCBA_HPTC);
+#endif
+	} else if (sc->sc_has_ich5_hpet) {
+#if NHPET > 0
+		sc->sc_hpet_reg = pci_conf_read(pc, tag, LPCIB_PCI_GEN_CNTL);
+#endif
 	}
+
+	return true;
+}
+
+static bool
+lpcib_resume(device_t dv)
+{
+	struct lpcib_softc *sc = device_private(dv);
+	pci_chipset_tag_t pc = sc->sc_pc;
+	pcitag_t tag = sc->sc_pcitag;
+
+	/* restore PIRQ routing control registers */
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQA_ROUT, sc->sc_pirq[0]);
+	pci_conf_write(pc, tag, LPCIB_PCI_PIRQE_ROUT, sc->sc_pirq[1]);
+
+	pci_conf_write(pc, tag, LPCIB_PCI_GEN_PMCON_1, sc->sc_pmcon);
+	pci_conf_write(pc, tag, LPCIB_PCI_GEN_STA, sc->sc_fwhsel2);
+
+	if (sc->sc_has_rcba) {
+		pci_conf_write(pc, tag, LPCIB_RCBA, sc->sc_rcba_reg);
+#if NHPET > 0
+		bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_RCBA_HPTC,
+		    sc->sc_hpet_reg);
+#endif
+	} else if (sc->sc_has_ich5_hpet) {
+#if NHPET > 0
+		pci_conf_write(pc, tag, LPCIB_PCI_GEN_CNTL, sc->sc_hpet_reg);
+#endif
+	}
+
+	return true;
 }
 
 /*
  * Initialize the power management timer.
  */
 static void
-pmtimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+pmtimer_configure(struct lpcib_softc *sc)
 {
 	pcireg_t control;
 
@@ -251,10 +329,10 @@ pmtimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	 * Check if power management I/O space is enabled and enable the ACPI_EN
 	 * bit if it's disabled.
 	 */
-	control = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_PCI_ACPI_CNTL);
+	control = pci_conf_read(sc->sc_pc, sc->sc_pcitag, LPCIB_PCI_ACPI_CNTL);
 	if ((control & LPCIB_PCI_ACPI_CNTL_EN) == 0) {
 		control |= LPCIB_PCI_ACPI_CNTL_EN;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, LPCIB_PCI_ACPI_CNTL,
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, LPCIB_PCI_ACPI_CNTL,
 		    control);
 	}
 
@@ -267,34 +345,16 @@ pmtimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
  * Initialize the watchdog timer.
  */
 static void
-tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+tcotimer_configure(struct lpcib_softc *sc)
 {
-	bus_space_handle_t gcs_memh;
-	pcireg_t pcireg;
 	uint32_t ioreg;
 	unsigned int period;
-
-	/*
-	 * Map the memory space necessary for GCS (General Control
-	 * and Status Register). This is where the No Reboot (NR) bit
-	 * lives on ICH6 and newer.
-	 */
-	if (lpcib_ich6) {
-		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_RCBA);
-		pcireg &= 0xffffc000;
-		if (bus_space_map(pa->pa_memt, pcireg + LPCIB_GCS_OFFSET,
-		    		  LPCIB_GCS_SIZE, 0, &gcs_memh)) {
-			aprint_error("%s: can't map GCS memory space; "
-			    "TCO timer disabled\n", sc->sc_dev.dv_xname);
-			return;
-		}
-	}
 
 	/* 
 	 * Clear the No Reboot (NR) bit. If this fails, enabling the TCO_EN bit
 	 * in the SMI_EN register is the last chance.
 	 */
-	if (tcotimer_disable_noreboot(sc, pa->pa_memt, gcs_memh)) {
+	if (tcotimer_disable_noreboot(sc)) {
 		ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
 		ioreg |= LPCIB_SMI_EN_TCO_EN;
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN, ioreg);
@@ -313,7 +373,7 @@ tcotimer_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
 	sc->sc_smw.smw_cookie = sc;
 	sc->sc_smw.smw_setmode = tcotimer_setmode;
 	sc->sc_smw.smw_tickle = tcotimer_tickle;
-	if (lpcib_ich6)
+	if (sc->sc_has_rcba)
 		period = LPCIB_TCOTIMER2_MAX_TICK;
 	else
 		period = LPCIB_TCOTIMER_MAX_TICK;
@@ -345,16 +405,16 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		tcotimer_stop(sc);
 	} else {
 		/* 
-		 * ICH5 or older are limited to 4s min and 39s max.
 		 * ICH6 or newer are limited to 2s min and 613s max.
+		 * ICH5 or older are limited to 4s min and 39s max.
 		 */
-		if (!lpcib_ich6) {
-			if (smw->smw_period < LPCIB_TCOTIMER_MIN_TICK ||
-			    smw->smw_period > LPCIB_TCOTIMER_MAX_TICK)
-				return EINVAL;
-		} else {
+		if (sc->sc_has_rcba) {
 			if (smw->smw_period < LPCIB_TCOTIMER2_MIN_TICK ||
 			    smw->smw_period > LPCIB_TCOTIMER2_MAX_TICK)
+				return EINVAL;
+		} else {
+			if (smw->smw_period < LPCIB_TCOTIMER_MIN_TICK ||
+			    smw->smw_period > LPCIB_TCOTIMER_MAX_TICK)
 				return EINVAL;
 		}
 		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
@@ -363,7 +423,7 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		tcotimer_stop(sc);
 
 		/* set the timeout, */
-		if (lpcib_ich6) {
+		if (sc->sc_has_rcba) {
 			/* ICH6 or newer */
 			ich6period = bus_space_read_2(sc->sc_iot, sc->sc_ioh,
 						      LPCIB_TCO_TMR2);
@@ -393,10 +453,10 @@ tcotimer_tickle(struct sysmon_wdog *smw)
 	struct lpcib_softc *sc = smw->smw_cookie;
 
 	/* any value is allowed */
-	if (!lpcib_ich6)
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
-	else
+	if (sc->sc_has_rcba)
 		bus_space_write_2(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
+	else
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_TCO_RLD, 1);
 
 	return 0;
 }
@@ -437,13 +497,21 @@ tcotimer_status_reset(struct lpcib_softc *sc)
  * reaches the timeout for the second time.
  */
 static int
-tcotimer_disable_noreboot(struct lpcib_softc *sc, bus_space_tag_t gcs_memt,
-			  bus_space_handle_t gcs_memh)
+tcotimer_disable_noreboot(struct lpcib_softc *sc)
 {
-	pcireg_t pcireg;
-	uint16_t status = 0;
 
-	if (!lpcib_ich6) {
+	if (sc->sc_has_rcba) {
+		uint32_t status;
+
+		status = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_GCS_OFFSET);
+		status &= ~LPCIB_GCS_NO_REBOOT;
+		bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_GCS_OFFSET, status);
+		status = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_GCS_OFFSET);
+		if (status & LPCIB_GCS_NO_REBOOT)
+			goto error;
+	} else {
+		pcireg_t pcireg;
+
 		pcireg = pci_conf_read(sc->sc_pc, sc->sc_pcitag, 
 				       LPCIB_PCI_GEN_STA);
 		if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT) {
@@ -454,14 +522,6 @@ tcotimer_disable_noreboot(struct lpcib_softc *sc, bus_space_tag_t gcs_memt,
 			if (pcireg & LPCIB_PCI_GEN_STA_NO_REBOOT)
 				goto error;
 		}
-	} else {
-		status = bus_space_read_4(gcs_memt, gcs_memh, 0);
-		status &= ~LPCIB_GCS_NO_REBOOT;
-		bus_space_write_4(gcs_memt, gcs_memh, 0, status);
-		status = bus_space_read_4(gcs_memt, gcs_memh, 0);
-		bus_space_unmap(gcs_memt, gcs_memh, LPCIB_GCS_SIZE);
-		if (status & LPCIB_GCS_NO_REBOOT)
-			goto error;
 	}
 
 	return 0;
@@ -496,23 +556,23 @@ speedstep_bad_hb_check(struct pci_attach_args *pa)
 }
 
 static void
-speedstep_configure(struct lpcib_softc *sc, struct pci_attach_args *pa)
+speedstep_configure(struct lpcib_softc *sc)
 {
 	const struct sysctlnode	*node, *ssnode;
 	int rv;
 
 	/* Supported on ICH2-M, ICH3-M and ICH4-M.  */
-	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801DB_ISA ||
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
-	     pci_find_device(pa, speedstep_bad_hb_check) == 0)) {
+	if (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801DB_ISA ||
+	    PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801CAM_LPC ||
+	    (PCI_PRODUCT(sc->sc_pa.pa_id) == PCI_PRODUCT_INTEL_82801BAM_LPC &&
+	     pci_find_device(&sc->sc_pa, speedstep_bad_hb_check) == 0)) {
 		uint8_t pmcon;
 
 		/* Enable SpeedStep if it isn't already enabled. */
-		pmcon = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		pmcon = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
 				      LPCIB_PCI_GEN_PMCON_1);
 		if ((pmcon & LPCIB_PCI_GEN_PMCON_1_SS_EN) == 0)
-			pci_conf_write(pa->pa_pc, pa->pa_tag,
+			pci_conf_write(sc->sc_pc, sc->sc_pcitag,
 				       LPCIB_PCI_GEN_PMCON_1,
 				       pmcon | LPCIB_PCI_GEN_PMCON_1_SS_EN);
 
@@ -604,3 +664,112 @@ speedstep_sysctl_helper(SYSCTLFN_ARGS)
 out:
 	return error;
 }
+
+#if NHPET > 0
+struct lpcib_hpet_attach_arg {
+	bus_space_tag_t hpet_mem_t;
+	uint32_t hpet_reg;
+};
+
+static int
+lpcib_hpet_match(device_t parent, struct cfdata *match, void *aux)
+{
+	struct lpcib_hpet_attach_arg *arg = aux;
+	bus_space_tag_t tag;
+	bus_space_handle_t handle;
+
+	tag = arg->hpet_mem_t;
+
+	if (bus_space_map(tag, arg->hpet_reg, HPET_WINDOW_SIZE, 0, &handle)) {
+		aprint_verbose("%s: HPET window not mapped, skipping\n",
+		    parent->dv_xname);
+		return 0;
+	}
+	bus_space_unmap(tag, handle, HPET_WINDOW_SIZE);
+
+	return 1;
+}
+
+static void
+lpcib_hpet_attach(device_t parent, device_t self, void *aux)
+{
+	struct hpet_softc *sc = device_private(self);
+	struct lpcib_hpet_attach_arg *arg = aux;
+
+	aprint_naive("\n");
+	aprint_normal("\n");
+
+	sc->sc_memt = arg->hpet_mem_t;
+
+	if (bus_space_map(sc->sc_memt, arg->hpet_reg, HPET_WINDOW_SIZE, 0,
+			  &sc->sc_memh)) {
+		aprint_error("%s: HPET memory window could not be mapped",
+		    sc->sc_dev.dv_xname);		
+		return;
+	}
+
+	hpet_attach_subr(sc);
+}
+
+CFATTACH_DECL(ichlpcib_hpet, sizeof(struct hpet_softc), lpcib_hpet_match,
+    lpcib_hpet_attach, NULL, NULL);
+
+static void
+lpcib_hpet_configure(struct lpcib_softc *sc)
+{
+	struct lpcib_hpet_attach_arg arg;
+	uint32_t hpet_reg, val;
+
+	if (sc->sc_has_ich5_hpet) {
+		val = pci_conf_read(sc->sc_pc, sc->sc_pcitag, LPCIB_PCI_GEN_CNTL);
+		switch (val & LPCIB_ICH5_HPTC_WIN_MASK) {
+		case LPCIB_ICH5_HPTC_0000:
+			hpet_reg = LPCIB_ICH5_HPTC_0000_BASE;
+			break;
+		case LPCIB_ICH5_HPTC_1000:
+			hpet_reg = LPCIB_ICH5_HPTC_1000_BASE;
+			break;
+		case LPCIB_ICH5_HPTC_2000:
+			hpet_reg = LPCIB_ICH5_HPTC_2000_BASE;
+			break;
+		case LPCIB_ICH5_HPTC_3000:
+			hpet_reg = LPCIB_ICH5_HPTC_3000_BASE;
+			break;
+		default:
+			return;
+		}
+		val |= sc->sc_hpet_reg | LPCIB_ICH5_HPTC_EN;
+		pci_conf_write(sc->sc_pc, sc->sc_pcitag, LPCIB_PCI_GEN_CNTL, val);
+	} else if (sc->sc_has_rcba) {
+		val = bus_space_read_4(sc->sc_rcbat, sc->sc_rcbah,
+		    LPCIB_RCBA_HPTC);
+		switch (val & LPCIB_RCBA_HPTC_WIN_MASK) {
+		case LPCIB_RCBA_HPTC_0000:
+			hpet_reg = LPCIB_RCBA_HPTC_0000_BASE;
+			break;
+		case LPCIB_RCBA_HPTC_1000:
+			hpet_reg = LPCIB_RCBA_HPTC_1000_BASE;
+			break;
+		case LPCIB_RCBA_HPTC_2000:
+			hpet_reg = LPCIB_RCBA_HPTC_2000_BASE;
+			break;
+		case LPCIB_RCBA_HPTC_3000:
+			hpet_reg = LPCIB_RCBA_HPTC_3000_BASE;
+			break;
+		default:
+			return;
+		}
+		val |= LPCIB_RCBA_HPTC_EN;
+		bus_space_write_4(sc->sc_rcbat, sc->sc_rcbah, LPCIB_RCBA_HPTC,
+		    val);
+	} else {
+		/* No HPET here */
+		return;
+	}
+
+	arg.hpet_mem_t = sc->sc_pa.pa_memt;
+	arg.hpet_reg = hpet_reg;
+
+	config_found_ia((struct device *)sc, "hpetichbus", &arg, NULL);
+}
+#endif

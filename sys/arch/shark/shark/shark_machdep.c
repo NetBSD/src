@@ -1,4 +1,4 @@
-/*	$NetBSD: shark_machdep.c,v 1.20.10.3 2007/09/03 14:29:52 yamt Exp $	*/
+/*	$NetBSD: shark_machdep.c,v 1.20.10.4 2008/01/21 09:39:20 yamt Exp $	*/
 
 /*
  * Copyright 1997
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.20.10.3 2007/09/03 14:29:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.20.10.4 2008/01/21 09:39:20 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: shark_machdep.c,v 1.20.10.3 2007/09/03 14:29:52 yamt
 #include <machine/pio.h>
 #include <arm/arm32/machdep.h>
 #include <arm/undefined.h>
-
-#include "opt_ipkdb.h"
 
 #include <dev/ofw/openfirm.h>
 #include <machine/ofw.h>

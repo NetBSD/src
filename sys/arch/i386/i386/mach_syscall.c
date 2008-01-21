@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_syscall.c,v 1.13.2.4 2007/09/03 14:26:41 yamt Exp $	*/
+/*	$NetBSD: mach_syscall.c,v 1.13.2.5 2008/01/21 09:37:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.13.2.4 2007/09/03 14:26:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.13.2.5 2008/01/21 09:37:02 yamt Exp $");
 
 #include "opt_vm86.h"
 
@@ -53,7 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: mach_syscall.c,v 1.13.2.4 2007/09/03 14:26:41 yamt E
 #include <machine/cpu.h>
 #include <machine/psl.h>
 #include <machine/userret.h>
+#include <compat/mach/mach_clock.h>
 #include <compat/mach/mach_syscall.h>
+#include <compat/mach/mach_syscallargs.h>
 
 void mach_syscall_intern(struct proc *);
 void mach_syscall_plain(struct trapframe *);
@@ -87,7 +89,7 @@ mach_syscall_plain(frame)
 	struct proc *p = l->l_proc;
 	int error;
 	size_t argsize;
-	register_t code, args[8], rval[2];
+	register_t code, args[MACH_SYS_MAXSYSARGS], rval[2];
 
 	uvmexp.syscalls++;
 	LWP_CACHE_CREDS(l, p);
@@ -175,7 +177,7 @@ mach_syscall_fancy(frame)
 	struct proc *p = l->l_proc;
 	int error;
 	size_t argsize;
-	register_t code, realcode, args[8], rval[2];
+	register_t code, realcode, args[MACH_SYS_MAXSYSARGS], rval[2];
 
 	uvmexp.syscalls++;
 	LWP_CACHE_CREDS(l, p);
@@ -223,7 +225,7 @@ mach_syscall_fancy(frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, realcode, callp - code, args)) != 0)
+	if ((error = trace_enter(code, realcode, callp - code, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -254,7 +256,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, realcode, args, rval, error);
+	trace_exit(realcode, args, rval, error);
 
 	userret(l);
 }

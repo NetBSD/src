@@ -1,4 +1,4 @@
-/*	$NetBSD: iopi2cvar.h,v 1.1 2003/10/06 16:06:06 thorpej Exp $	*/
+/*	$NetBSD: iopi2cvar.h,v 1.1.18.1 2008/01/21 09:35:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@ struct iopiic_softc {
 	void *sc_ih;
 
 	struct i2c_controller sc_i2c;
-	struct lock sc_buslock;
+	kmutex_t sc_buslock;
 	uint32_t sc_icr;
 };
 

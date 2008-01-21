@@ -1,3 +1,5 @@
+/*	$NetBSD: r300_cmdbuf.c,v 1.3.16.4 2008/01/21 09:44:22 yamt Exp $	*/
+
 /* r300_cmdbuf.c -- Command buffer emission for R300 -*- linux-c -*-
  *
  * Copyright (C) The Weather Channel, Inc.  2002.
@@ -32,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: r300_cmdbuf.c,v 1.3.16.4 2008/01/21 09:44:22 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/r300_cmdbuf.c,v 1.5 2006/05/17 06:36:28 anholt Exp $");
 */

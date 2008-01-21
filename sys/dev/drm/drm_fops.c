@@ -1,4 +1,4 @@
-/* $NetBSD: drm_fops.c,v 1.2.16.3 2007/12/07 17:29:45 yamt Exp $ */
+/* $NetBSD: drm_fops.c,v 1.2.16.4 2008/01/21 09:42:46 yamt Exp $ */
 
 /* drm_fops.h -- File operations for DRM -*- linux-c -*-
  * Created: Mon Jan  4 08:58:31 1999 by faith@valinux.com
@@ -35,6 +35,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.2.16.4 2008/01/21 09:42:46 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_fops.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

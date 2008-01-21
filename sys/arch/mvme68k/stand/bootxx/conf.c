@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.2 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.2.2.1 2008/01/21 09:37:46 yamt Exp $	*/
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -9,6 +9,6 @@
 struct devsw devsw[] = {
 	{ "bugsc", bugscstrategy, bugscopen, bugscclose, bugscioctl },
 };
-int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
+int     ndevs = __arraycount(devsw);
 
 int debug;

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4.14.3 2007/09/03 14:29:01 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.4.14.4 2008/01/21 09:38:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.14.3 2007/09/03 14:29:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.14.4 2008/01/21 09:38:28 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_altivec.h"
@@ -168,11 +168,11 @@ sendsig_sigcontext(int sig, const sigset_t *mask, u_long code)
  * System call to cleanup state after a signal handler returns.
  */
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sigcontext sc;
 	struct trapframe *tf;

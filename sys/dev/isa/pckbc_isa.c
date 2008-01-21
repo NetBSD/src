@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_isa.c,v 1.16.4.4 2007/10/27 11:31:53 yamt Exp $ */
+/* $NetBSD: pckbc_isa.c,v 1.16.4.5 2008/01/21 09:43:20 yamt Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.16.4.4 2007/10/27 11:31:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.16.4.5 2008/01/21 09:43:20 yamt Exp $");
 
 #include "opt_pckbc.h"
 
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_isa.c,v 1.16.4.4 2007/10/27 11:31:53 yamt Exp 
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
 
 #include <sys/bus.h>
 

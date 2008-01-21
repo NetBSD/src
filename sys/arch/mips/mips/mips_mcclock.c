@@ -1,4 +1,4 @@
-/* $NetBSD: mips_mcclock.c,v 1.12.10.1 2006/06/21 14:53:44 yamt Exp $ */
+/* $NetBSD: mips_mcclock.c,v 1.12.10.2 2008/01/21 09:37:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -34,12 +34,13 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.12.10.1 2006/06/21 14:53:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_mcclock.c,v 1.12.10.2 2008/01/21 09:37:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 
+#include <dev/clock_subr.h>
 #include <dev/ic/mc146818reg.h>
 #include <dev/dec/mcclockvar.h>
 #include <dev/dec/mcclock_pad32.h>

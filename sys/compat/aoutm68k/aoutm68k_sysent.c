@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_sysent.c,v 1.17.4.5 2007/11/15 11:43:48 yamt Exp $ */
+/* $NetBSD: aoutm68k_sysent.c,v 1.17.4.6 2008/01/21 09:40:41 yamt Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.17.4.5 2007/11/15 11:43:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.17.4.6 2008/01/21 09:40:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ktrace.h"
@@ -33,154 +33,154 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_sysent.c,v 1.17.4.5 2007/11/15 11:43:48 yam
 
 struct sysent aoutm68k_sysent[] = {
 	{ ns(struct sys_syscall_args), SYCALL_INDIRECT | 0,
-	    sys_syscall },			/* 0 = syscall */
+	    (sy_call_t *)sys_syscall },		/* 0 = syscall */
 	{ ns(struct sys_exit_args), 0,
-	    sys_exit },				/* 1 = exit */
+	    (sy_call_t *)sys_exit },		/* 1 = exit */
 	{ 0, 0, 0,
-	    sys_fork },				/* 2 = fork */
+	    (sy_call_t *)sys_fork },		/* 2 = fork */
 	{ ns(struct sys_read_args), 0,
-	    sys_read },				/* 3 = read */
+	    (sy_call_t *)sys_read },		/* 3 = read */
 	{ ns(struct sys_write_args), 0,
-	    sys_write },			/* 4 = write */
+	    (sy_call_t *)sys_write },		/* 4 = write */
 	{ ns(struct sys_open_args), 0,
-	    sys_open },				/* 5 = open */
+	    (sy_call_t *)sys_open },		/* 5 = open */
 	{ ns(struct sys_close_args), 0,
-	    sys_close },			/* 6 = close */
+	    (sy_call_t *)sys_close },		/* 6 = close */
 	{ ns(struct sys_wait4_args), 0,
-	    sys_wait4 },			/* 7 = wait4 */
+	    (sy_call_t *)sys_wait4 },		/* 7 = wait4 */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_creat_args), 0,
-	    compat_43_sys_creat },		/* 8 = ocreat */
+	    (sy_call_t *)compat_43_sys_creat },	/* 8 = ocreat */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 8 = excluded compat_43_sys_creat */
 #endif
 	{ ns(struct sys_link_args), 0,
-	    sys_link },				/* 9 = link */
+	    (sy_call_t *)sys_link },		/* 9 = link */
 	{ ns(struct sys_unlink_args), 0,
-	    sys_unlink },			/* 10 = unlink */
+	    (sy_call_t *)sys_unlink },		/* 10 = unlink */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 11 = obsolete execv */
 	{ ns(struct sys_chdir_args), 0,
-	    sys_chdir },			/* 12 = chdir */
+	    (sy_call_t *)sys_chdir },		/* 12 = chdir */
 	{ ns(struct sys_fchdir_args), 0,
-	    sys_fchdir },			/* 13 = fchdir */
+	    (sy_call_t *)sys_fchdir },		/* 13 = fchdir */
 	{ ns(struct sys_mknod_args), 0,
-	    sys_mknod },			/* 14 = mknod */
+	    (sy_call_t *)sys_mknod },		/* 14 = mknod */
 	{ ns(struct sys_chmod_args), 0,
-	    sys_chmod },			/* 15 = chmod */
+	    (sy_call_t *)sys_chmod },		/* 15 = chmod */
 	{ ns(struct sys_chown_args), 0,
-	    sys_chown },			/* 16 = chown */
+	    (sy_call_t *)sys_chown },		/* 16 = chown */
 	{ ns(struct sys_obreak_args), 0,
-	    sys_obreak },			/* 17 = break */
+	    (sy_call_t *)sys_obreak },		/* 17 = break */
 #if defined(COMPAT_20) || !defined(_KERNEL)
 	{ ns(struct compat_20_sys_getfsstat_args), 0,
-	    compat_20_sys_getfsstat },		/* 18 = getfsstat */
+	    (sy_call_t *)compat_20_sys_getfsstat },/* 18 = getfsstat */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 18 = excluded compat_20_sys_getfsstat */
 #endif
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_lseek_args), 0,
-	    compat_43_sys_lseek },		/* 19 = olseek */
+	    (sy_call_t *)compat_43_sys_lseek },	/* 19 = olseek */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 19 = excluded compat_43_sys_lseek */
 #endif
 	{ 0, 0, SYCALL_MPSAFE | 0,
-	    sys_getpid },			/* 20 = getpid */
+	    (sy_call_t *)sys_getpid },		/* 20 = getpid */
 	{ ns(struct compat_40_sys_mount_args), 0,
-	    compat_40_sys_mount },		/* 21 = mount */
+	    (sy_call_t *)compat_40_sys_mount },	/* 21 = mount */
 	{ ns(struct sys_unmount_args), 0,
-	    sys_unmount },			/* 22 = unmount */
+	    (sy_call_t *)sys_unmount },		/* 22 = unmount */
 	{ ns(struct sys_setuid_args), 0,
-	    sys_setuid },			/* 23 = setuid */
+	    (sy_call_t *)sys_setuid },		/* 23 = setuid */
 	{ 0, 0, 0,
-	    sys_getuid },			/* 24 = getuid */
+	    (sy_call_t *)sys_getuid },		/* 24 = getuid */
 	{ 0, 0, 0,
-	    sys_geteuid },			/* 25 = geteuid */
+	    (sy_call_t *)sys_geteuid },		/* 25 = geteuid */
 	{ ns(struct sys_ptrace_args), 0,
-	    sys_ptrace },			/* 26 = ptrace */
+	    (sy_call_t *)sys_ptrace },		/* 26 = ptrace */
 	{ ns(struct sys_recvmsg_args), 0,
-	    sys_recvmsg },			/* 27 = recvmsg */
+	    (sy_call_t *)sys_recvmsg },		/* 27 = recvmsg */
 	{ ns(struct sys_sendmsg_args), 0,
-	    sys_sendmsg },			/* 28 = sendmsg */
+	    (sy_call_t *)sys_sendmsg },		/* 28 = sendmsg */
 	{ ns(struct sys_recvfrom_args), 0,
-	    sys_recvfrom },			/* 29 = recvfrom */
+	    (sy_call_t *)sys_recvfrom },	/* 29 = recvfrom */
 	{ ns(struct sys_accept_args), 0,
-	    sys_accept },			/* 30 = accept */
+	    (sy_call_t *)sys_accept },		/* 30 = accept */
 	{ ns(struct sys_getpeername_args), 0,
-	    sys_getpeername },			/* 31 = getpeername */
+	    (sy_call_t *)sys_getpeername },	/* 31 = getpeername */
 	{ ns(struct sys_getsockname_args), 0,
-	    sys_getsockname },			/* 32 = getsockname */
+	    (sy_call_t *)sys_getsockname },	/* 32 = getsockname */
 	{ ns(struct sys_access_args), 0,
-	    sys_access },			/* 33 = access */
+	    (sy_call_t *)sys_access },		/* 33 = access */
 	{ ns(struct sys_chflags_args), 0,
-	    sys_chflags },			/* 34 = chflags */
+	    (sy_call_t *)sys_chflags },		/* 34 = chflags */
 	{ ns(struct sys_fchflags_args), 0,
-	    sys_fchflags },			/* 35 = fchflags */
+	    (sy_call_t *)sys_fchflags },	/* 35 = fchflags */
 	{ 0, 0, 0,
-	    sys_sync },				/* 36 = sync */
+	    (sy_call_t *)sys_sync },		/* 36 = sync */
 	{ ns(struct sys_kill_args), 0,
-	    sys_kill },				/* 37 = kill */
+	    (sy_call_t *)sys_kill },		/* 37 = kill */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct aoutm68k_compat_43_sys_stat_args), 0,
-	    aoutm68k_compat_43_sys_stat },	/* 38 = stat43 */
+	    (sy_call_t *)aoutm68k_compat_43_sys_stat },/* 38 = stat43 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 38 = excluded aoutm68k_compat_43_sys_stat */
 #endif
 	{ 0, 0, 0,
-	    sys_getppid },			/* 39 = getppid */
+	    (sy_call_t *)sys_getppid },		/* 39 = getppid */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct aoutm68k_compat_43_sys_lstat_args), 0,
-	    aoutm68k_compat_43_sys_lstat },	/* 40 = lstat43 */
+	    (sy_call_t *)aoutm68k_compat_43_sys_lstat },/* 40 = lstat43 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 40 = excluded aoutm68k_compat_43_sys_lstat */
 #endif
 	{ ns(struct sys_dup_args), 0,
-	    sys_dup },				/* 41 = dup */
+	    (sy_call_t *)sys_dup },		/* 41 = dup */
 	{ 0, 0, 0,
-	    sys_pipe },				/* 42 = pipe */
+	    (sy_call_t *)sys_pipe },		/* 42 = pipe */
 	{ 0, 0, 0,
-	    sys_getegid },			/* 43 = getegid */
+	    (sy_call_t *)sys_getegid },		/* 43 = getegid */
 	{ ns(struct sys_profil_args), 0,
-	    sys_profil },			/* 44 = profil */
+	    (sy_call_t *)sys_profil },		/* 44 = profil */
 #if defined(KTRACE) || !defined(_KERNEL)
 	{ ns(struct sys_ktrace_args), 0,
-	    sys_ktrace },			/* 45 = ktrace */
+	    (sy_call_t *)sys_ktrace },		/* 45 = ktrace */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 45 = excluded ktrace */
 #endif
 #if defined(COMPAT_13) || !defined(_KERNEL)
 	{ ns(struct compat_13_sys_sigaction_args), 0,
-	    compat_13_sys_sigaction },		/* 46 = sigaction13 */
+	    (sy_call_t *)compat_13_sys_sigaction },/* 46 = sigaction13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 46 = excluded compat_13_sys_sigaction */
 #endif
 	{ 0, 0, 0,
-	    sys_getgid },			/* 47 = getgid */
+	    (sy_call_t *)sys_getgid },		/* 47 = getgid */
 #if defined(COMPAT_13) || !defined(_KERNEL)
 	{ ns(struct compat_13_sys_sigprocmask_args), 0,
-	    compat_13_sys_sigprocmask },	/* 48 = sigprocmask13 */
+	    (sy_call_t *)compat_13_sys_sigprocmask },/* 48 = sigprocmask13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 48 = excluded compat_13_sys_sigprocmask */
 #endif
 	{ ns(struct sys___getlogin_args), 0,
-	    sys___getlogin },			/* 49 = __getlogin */
+	    (sy_call_t *)sys___getlogin },	/* 49 = __getlogin */
 	{ ns(struct sys___setlogin_args), 0,
-	    sys___setlogin },			/* 50 = __setlogin */
+	    (sy_call_t *)sys___setlogin },	/* 50 = __setlogin */
 	{ ns(struct sys_acct_args), 0,
-	    sys_acct },				/* 51 = acct */
+	    (sy_call_t *)sys_acct },		/* 51 = acct */
 #if defined(COMPAT_13) || !defined(_KERNEL)
 	{ 0, 0, 0,
-	    compat_13_sys_sigpending },		/* 52 = sigpending13 */
+	    (sy_call_t *)compat_13_sys_sigpending },/* 52 = sigpending13 */
 	{ ns(struct compat_13_sys_sigaltstack_args), 0,
-	    compat_13_sys_sigaltstack },	/* 53 = sigaltstack13 */
+	    (sy_call_t *)compat_13_sys_sigaltstack },/* 53 = sigaltstack13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 52 = excluded compat_13_sys_sigpending */
@@ -188,33 +188,33 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 53 = excluded compat_13_sys_sigaltstack */
 #endif
 	{ ns(struct sys_ioctl_args), 0,
-	    sys_ioctl },			/* 54 = ioctl */
+	    (sy_call_t *)sys_ioctl },		/* 54 = ioctl */
 #if defined(COMPAT_12) || !defined(_KERNEL)
 	{ ns(struct compat_12_sys_reboot_args), 0,
-	    compat_12_sys_reboot },		/* 55 = oreboot */
+	    (sy_call_t *)compat_12_sys_reboot },/* 55 = oreboot */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 55 = excluded compat_12_sys_reboot */
 #endif
 	{ ns(struct sys_revoke_args), 0,
-	    sys_revoke },			/* 56 = revoke */
+	    (sy_call_t *)sys_revoke },		/* 56 = revoke */
 	{ ns(struct sys_symlink_args), 0,
-	    sys_symlink },			/* 57 = symlink */
+	    (sy_call_t *)sys_symlink },		/* 57 = symlink */
 	{ ns(struct sys_readlink_args), 0,
-	    sys_readlink },			/* 58 = readlink */
+	    (sy_call_t *)sys_readlink },	/* 58 = readlink */
 	{ ns(struct sys_execve_args), 0,
-	    sys_execve },			/* 59 = execve */
+	    (sy_call_t *)sys_execve },		/* 59 = execve */
 	{ ns(struct sys_umask_args), 0,
-	    sys_umask },			/* 60 = umask */
+	    (sy_call_t *)sys_umask },		/* 60 = umask */
 	{ ns(struct sys_chroot_args), 0,
-	    sys_chroot },			/* 61 = chroot */
+	    (sy_call_t *)sys_chroot },		/* 61 = chroot */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct aoutm68k_compat_43_sys_fstat_args), 0,
-	    aoutm68k_compat_43_sys_fstat },	/* 62 = fstat43 */
+	    (sy_call_t *)aoutm68k_compat_43_sys_fstat },/* 62 = fstat43 */
 	{ ns(struct compat_43_sys_getkerninfo_args), 0,
-	    compat_43_sys_getkerninfo },	/* 63 = ogetkerninfo */
+	    (sy_call_t *)compat_43_sys_getkerninfo },/* 63 = ogetkerninfo */
 	{ 0, 0, 0,
-	    compat_43_sys_getpagesize },	/* 64 = ogetpagesize */
+	    (sy_call_t *)compat_43_sys_getpagesize },/* 64 = ogetpagesize */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 62 = excluded aoutm68k_compat_43_sys_fstat */
@@ -225,75 +225,75 @@ struct sysent aoutm68k_sysent[] = {
 #endif
 #if defined(COMPAT_12) || !defined(_KERNEL)
 	{ ns(struct compat_12_sys_msync_args), 0,
-	    compat_12_sys_msync },		/* 65 = msync */
+	    (sy_call_t *)compat_12_sys_msync },	/* 65 = msync */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 65 = excluded compat_12_sys_msync */
 #endif
 	{ 0, 0, 0,
-	    sys_vfork },			/* 66 = vfork */
+	    (sy_call_t *)sys_vfork },		/* 66 = vfork */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 67 = obsolete vread */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 68 = obsolete vwrite */
 	{ ns(struct sys_sbrk_args), 0,
-	    sys_sbrk },				/* 69 = sbrk */
+	    (sy_call_t *)sys_sbrk },		/* 69 = sbrk */
 	{ ns(struct sys_sstk_args), 0,
-	    sys_sstk },				/* 70 = sstk */
+	    (sy_call_t *)sys_sstk },		/* 70 = sstk */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_mmap_args), 0,
-	    compat_43_sys_mmap },		/* 71 = ommap */
+	    (sy_call_t *)compat_43_sys_mmap },	/* 71 = ommap */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 71 = excluded compat_43_sys_mmap */
 #endif
 	{ ns(struct sys_ovadvise_args), 0,
-	    sys_ovadvise },			/* 72 = vadvise */
+	    (sy_call_t *)sys_ovadvise },	/* 72 = vadvise */
 	{ ns(struct sys_munmap_args), 0,
-	    sys_munmap },			/* 73 = munmap */
+	    (sy_call_t *)sys_munmap },		/* 73 = munmap */
 	{ ns(struct sys_mprotect_args), 0,
-	    sys_mprotect },			/* 74 = mprotect */
+	    (sy_call_t *)sys_mprotect },	/* 74 = mprotect */
 	{ ns(struct sys_madvise_args), 0,
-	    sys_madvise },			/* 75 = madvise */
+	    (sy_call_t *)sys_madvise },		/* 75 = madvise */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 76 = obsolete vhangup */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 77 = obsolete vlimit */
 	{ ns(struct sys_mincore_args), 0,
-	    sys_mincore },			/* 78 = mincore */
+	    (sy_call_t *)sys_mincore },		/* 78 = mincore */
 	{ ns(struct sys_getgroups_args), 0,
-	    sys_getgroups },			/* 79 = getgroups */
+	    (sy_call_t *)sys_getgroups },	/* 79 = getgroups */
 	{ ns(struct sys_setgroups_args), 0,
-	    sys_setgroups },			/* 80 = setgroups */
+	    (sy_call_t *)sys_setgroups },	/* 80 = setgroups */
 	{ 0, 0, 0,
-	    sys_getpgrp },			/* 81 = getpgrp */
+	    (sy_call_t *)sys_getpgrp },		/* 81 = getpgrp */
 	{ ns(struct sys_setpgid_args), 0,
-	    sys_setpgid },			/* 82 = setpgid */
+	    (sy_call_t *)sys_setpgid },		/* 82 = setpgid */
 	{ ns(struct sys_setitimer_args), 0,
-	    sys_setitimer },			/* 83 = setitimer */
+	    (sy_call_t *)sys_setitimer },	/* 83 = setitimer */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ 0, 0, 0,
-	    compat_43_sys_wait },		/* 84 = owait */
+	    (sy_call_t *)compat_43_sys_wait },	/* 84 = owait */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 84 = excluded compat_43_sys_wait */
 #endif
 #if defined(COMPAT_12) || !defined(_KERNEL)
 	{ ns(struct compat_12_sys_swapon_args), 0,
-	    compat_12_sys_swapon },		/* 85 = oswapon */
+	    (sy_call_t *)compat_12_sys_swapon },/* 85 = oswapon */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 85 = excluded compat_12_sys_swapon */
 #endif
 	{ ns(struct sys_getitimer_args), 0,
-	    sys_getitimer },			/* 86 = getitimer */
+	    (sy_call_t *)sys_getitimer },	/* 86 = getitimer */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_gethostname_args), 0,
-	    compat_43_sys_gethostname },	/* 87 = ogethostname */
+	    (sy_call_t *)compat_43_sys_gethostname },/* 87 = ogethostname */
 	{ ns(struct compat_43_sys_sethostname_args), 0,
-	    compat_43_sys_sethostname },	/* 88 = osethostname */
+	    (sy_call_t *)compat_43_sys_sethostname },/* 88 = osethostname */
 	{ 0, 0, 0,
-	    compat_43_sys_getdtablesize },	/* 89 = ogetdtablesize */
+	    (sy_call_t *)compat_43_sys_getdtablesize },/* 89 = ogetdtablesize */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 87 = excluded compat_43_sys_gethostname */
@@ -303,37 +303,37 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 89 = excluded compat_43_sys_getdtablesize */
 #endif
 	{ ns(struct sys_dup2_args), 0,
-	    sys_dup2 },				/* 90 = dup2 */
+	    (sy_call_t *)sys_dup2 },		/* 90 = dup2 */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 91 = unimplemented getdopt */
 	{ ns(struct sys_fcntl_args), 0,
-	    sys_fcntl },			/* 92 = fcntl */
+	    (sy_call_t *)sys_fcntl },		/* 92 = fcntl */
 	{ ns(struct sys_select_args), 0,
-	    sys_select },			/* 93 = select */
+	    (sy_call_t *)sys_select },		/* 93 = select */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 94 = unimplemented setdopt */
 	{ ns(struct sys_fsync_args), 0,
-	    sys_fsync },			/* 95 = fsync */
+	    (sy_call_t *)sys_fsync },		/* 95 = fsync */
 	{ ns(struct sys_setpriority_args), 0,
-	    sys_setpriority },			/* 96 = setpriority */
+	    (sy_call_t *)sys_setpriority },	/* 96 = setpriority */
 	{ ns(struct compat_30_sys_socket_args), 0,
-	    compat_30_sys_socket },		/* 97 = socket */
+	    (sy_call_t *)compat_30_sys_socket },/* 97 = socket */
 	{ ns(struct sys_connect_args), 0,
-	    sys_connect },			/* 98 = connect */
+	    (sy_call_t *)sys_connect },		/* 98 = connect */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_accept_args), 0,
-	    compat_43_sys_accept },		/* 99 = oaccept */
+	    (sy_call_t *)compat_43_sys_accept },/* 99 = oaccept */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 99 = excluded compat_43_sys_accept */
 #endif
 	{ ns(struct sys_getpriority_args), 0,
-	    sys_getpriority },			/* 100 = getpriority */
+	    (sy_call_t *)sys_getpriority },	/* 100 = getpriority */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_send_args), 0,
-	    compat_43_sys_send },		/* 101 = osend */
+	    (sy_call_t *)compat_43_sys_send },	/* 101 = osend */
 	{ ns(struct compat_43_sys_recv_args), 0,
-	    compat_43_sys_recv },		/* 102 = orecv */
+	    (sy_call_t *)compat_43_sys_recv },	/* 102 = orecv */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 101 = excluded compat_43_sys_send */
@@ -342,26 +342,26 @@ struct sysent aoutm68k_sysent[] = {
 #endif
 #if defined(COMPAT_13) || !defined(_KERNEL)
 	{ ns(struct compat_13_sys_sigreturn_args), 0,
-	    compat_13_sys_sigreturn },		/* 103 = sigreturn13 */
+	    (sy_call_t *)compat_13_sys_sigreturn },/* 103 = sigreturn13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 103 = excluded compat_13_sys_sigreturn */
 #endif
 	{ ns(struct sys_bind_args), 0,
-	    sys_bind },				/* 104 = bind */
+	    (sy_call_t *)sys_bind },		/* 104 = bind */
 	{ ns(struct sys_setsockopt_args), 0,
-	    sys_setsockopt },			/* 105 = setsockopt */
+	    (sy_call_t *)sys_setsockopt },	/* 105 = setsockopt */
 	{ ns(struct sys_listen_args), 0,
-	    sys_listen },			/* 106 = listen */
+	    (sy_call_t *)sys_listen },		/* 106 = listen */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 107 = obsolete vtimes */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_sigvec_args), 0,
-	    compat_43_sys_sigvec },		/* 108 = osigvec */
+	    (sy_call_t *)compat_43_sys_sigvec },/* 108 = osigvec */
 	{ ns(struct compat_43_sys_sigblock_args), 0,
-	    compat_43_sys_sigblock },		/* 109 = osigblock */
+	    (sy_call_t *)compat_43_sys_sigblock },/* 109 = osigblock */
 	{ ns(struct compat_43_sys_sigsetmask_args), 0,
-	    compat_43_sys_sigsetmask },		/* 110 = osigsetmask */
+	    (sy_call_t *)compat_43_sys_sigsetmask },/* 110 = osigsetmask */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 108 = excluded compat_43_sys_sigvec */
@@ -372,18 +372,18 @@ struct sysent aoutm68k_sysent[] = {
 #endif
 #if defined(COMPAT_13) || !defined(_KERNEL)
 	{ ns(struct compat_13_sys_sigsuspend_args), 0,
-	    compat_13_sys_sigsuspend },		/* 111 = sigsuspend13 */
+	    (sy_call_t *)compat_13_sys_sigsuspend },/* 111 = sigsuspend13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 111 = excluded compat_13_sys_sigsuspend */
 #endif
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_sigstack_args), 0,
-	    compat_43_sys_sigstack },		/* 112 = osigstack */
+	    (sy_call_t *)compat_43_sys_sigstack },/* 112 = osigstack */
 	{ ns(struct compat_43_sys_recvmsg_args), 0,
-	    compat_43_sys_recvmsg },		/* 113 = orecvmsg */
+	    (sy_call_t *)compat_43_sys_recvmsg },/* 113 = orecvmsg */
 	{ ns(struct compat_43_sys_sendmsg_args), 0,
-	    compat_43_sys_sendmsg },		/* 114 = osendmsg */
+	    (sy_call_t *)compat_43_sys_sendmsg },/* 114 = osendmsg */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 112 = excluded compat_43_sys_sigstack */
@@ -395,41 +395,41 @@ struct sysent aoutm68k_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 115 = obsolete vtrace */
 	{ ns(struct sys_gettimeofday_args), 0,
-	    sys_gettimeofday },			/* 116 = gettimeofday */
+	    (sy_call_t *)sys_gettimeofday },	/* 116 = gettimeofday */
 	{ ns(struct sys_getrusage_args), 0,
-	    sys_getrusage },			/* 117 = getrusage */
+	    (sy_call_t *)sys_getrusage },	/* 117 = getrusage */
 	{ ns(struct sys_getsockopt_args), 0,
-	    sys_getsockopt },			/* 118 = getsockopt */
+	    (sy_call_t *)sys_getsockopt },	/* 118 = getsockopt */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 119 = obsolete resuba */
 	{ ns(struct sys_readv_args), 0,
-	    sys_readv },			/* 120 = readv */
+	    (sy_call_t *)sys_readv },		/* 120 = readv */
 	{ ns(struct sys_writev_args), 0,
-	    sys_writev },			/* 121 = writev */
+	    (sy_call_t *)sys_writev },		/* 121 = writev */
 	{ ns(struct sys_settimeofday_args), 0,
-	    sys_settimeofday },			/* 122 = settimeofday */
+	    (sy_call_t *)sys_settimeofday },	/* 122 = settimeofday */
 	{ ns(struct sys_fchown_args), 0,
-	    sys_fchown },			/* 123 = fchown */
+	    (sy_call_t *)sys_fchown },		/* 123 = fchown */
 	{ ns(struct sys_fchmod_args), 0,
-	    sys_fchmod },			/* 124 = fchmod */
+	    (sy_call_t *)sys_fchmod },		/* 124 = fchmod */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_recvfrom_args), 0,
-	    compat_43_sys_recvfrom },		/* 125 = orecvfrom */
+	    (sy_call_t *)compat_43_sys_recvfrom },/* 125 = orecvfrom */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 125 = excluded compat_43_sys_recvfrom */
 #endif
 	{ ns(struct sys_setreuid_args), 0,
-	    sys_setreuid },			/* 126 = setreuid */
+	    (sy_call_t *)sys_setreuid },	/* 126 = setreuid */
 	{ ns(struct sys_setregid_args), 0,
-	    sys_setregid },			/* 127 = setregid */
+	    (sy_call_t *)sys_setregid },	/* 127 = setregid */
 	{ ns(struct sys_rename_args), 0,
-	    sys_rename },			/* 128 = rename */
+	    (sy_call_t *)sys_rename },		/* 128 = rename */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_truncate_args), 0,
-	    compat_43_sys_truncate },		/* 129 = otruncate */
+	    (sy_call_t *)compat_43_sys_truncate },/* 129 = otruncate */
 	{ ns(struct compat_43_sys_ftruncate_args), 0,
-	    compat_43_sys_ftruncate },		/* 130 = oftruncate */
+	    (sy_call_t *)compat_43_sys_ftruncate },/* 130 = oftruncate */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 129 = excluded compat_43_sys_truncate */
@@ -437,38 +437,38 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 130 = excluded compat_43_sys_ftruncate */
 #endif
 	{ ns(struct sys_flock_args), 0,
-	    sys_flock },			/* 131 = flock */
+	    (sy_call_t *)sys_flock },		/* 131 = flock */
 	{ ns(struct sys_mkfifo_args), 0,
-	    sys_mkfifo },			/* 132 = mkfifo */
+	    (sy_call_t *)sys_mkfifo },		/* 132 = mkfifo */
 	{ ns(struct sys_sendto_args), 0,
-	    sys_sendto },			/* 133 = sendto */
+	    (sy_call_t *)sys_sendto },		/* 133 = sendto */
 	{ ns(struct sys_shutdown_args), 0,
-	    sys_shutdown },			/* 134 = shutdown */
+	    (sy_call_t *)sys_shutdown },	/* 134 = shutdown */
 	{ ns(struct sys_socketpair_args), 0,
-	    sys_socketpair },			/* 135 = socketpair */
+	    (sy_call_t *)sys_socketpair },	/* 135 = socketpair */
 	{ ns(struct sys_mkdir_args), 0,
-	    sys_mkdir },			/* 136 = mkdir */
+	    (sy_call_t *)sys_mkdir },		/* 136 = mkdir */
 	{ ns(struct sys_rmdir_args), 0,
-	    sys_rmdir },			/* 137 = rmdir */
+	    (sy_call_t *)sys_rmdir },		/* 137 = rmdir */
 	{ ns(struct sys_utimes_args), 0,
-	    sys_utimes },			/* 138 = utimes */
+	    (sy_call_t *)sys_utimes },		/* 138 = utimes */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 139 = obsolete 4.2 sigreturn */
 	{ ns(struct sys_adjtime_args), 0,
-	    sys_adjtime },			/* 140 = adjtime */
+	    (sy_call_t *)sys_adjtime },		/* 140 = adjtime */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_getpeername_args), 0,
-	    compat_43_sys_getpeername },	/* 141 = ogetpeername */
+	    (sy_call_t *)compat_43_sys_getpeername },/* 141 = ogetpeername */
 	{ 0, 0, 0,
-	    compat_43_sys_gethostid },		/* 142 = ogethostid */
+	    (sy_call_t *)compat_43_sys_gethostid },/* 142 = ogethostid */
 	{ ns(struct compat_43_sys_sethostid_args), 0,
-	    compat_43_sys_sethostid },		/* 143 = osethostid */
+	    (sy_call_t *)compat_43_sys_sethostid },/* 143 = osethostid */
 	{ ns(struct compat_43_sys_getrlimit_args), 0,
-	    compat_43_sys_getrlimit },		/* 144 = ogetrlimit */
+	    (sy_call_t *)compat_43_sys_getrlimit },/* 144 = ogetrlimit */
 	{ ns(struct compat_43_sys_setrlimit_args), 0,
-	    compat_43_sys_setrlimit },		/* 145 = osetrlimit */
+	    (sy_call_t *)compat_43_sys_setrlimit },/* 145 = osetrlimit */
 	{ ns(struct compat_43_sys_killpg_args), 0,
-	    compat_43_sys_killpg },		/* 146 = okillpg */
+	    (sy_call_t *)compat_43_sys_killpg },/* 146 = okillpg */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 141 = excluded compat_43_sys_getpeername */
@@ -484,14 +484,14 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 146 = excluded compat_43_sys_killpg */
 #endif
 	{ 0, 0, 0,
-	    sys_setsid },			/* 147 = setsid */
+	    (sy_call_t *)sys_setsid },		/* 147 = setsid */
 	{ ns(struct sys_quotactl_args), 0,
-	    sys_quotactl },			/* 148 = quotactl */
+	    (sy_call_t *)sys_quotactl },	/* 148 = quotactl */
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ 0, 0, 0,
-	    compat_43_sys_quota },		/* 149 = oquota */
+	    (sy_call_t *)compat_43_sys_quota },	/* 149 = oquota */
 	{ ns(struct compat_43_sys_getsockname_args), 0,
-	    compat_43_sys_getsockname },	/* 150 = ogetsockname */
+	    (sy_call_t *)compat_43_sys_getsockname },/* 150 = ogetsockname */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 149 = excluded compat_43_sys_quota */
@@ -508,28 +508,28 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 154 = unimplemented */
 #if defined(NFS) || defined(NFSSERVER) || !defined(_KERNEL)
 	{ ns(struct sys_nfssvc_args), 0,
-	    sys_nfssvc },			/* 155 = nfssvc */
+	    (sy_call_t *)sys_nfssvc },		/* 155 = nfssvc */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 155 = excluded nfssvc */
 #endif
 #if defined(COMPAT_43) || !defined(_KERNEL)
 	{ ns(struct compat_43_sys_getdirentries_args), 0,
-	    compat_43_sys_getdirentries },	/* 156 = ogetdirentries */
+	    (sy_call_t *)compat_43_sys_getdirentries },/* 156 = ogetdirentries */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 156 = excluded compat_43_sys_getdirentries */
 #endif
 #if defined(COMPAT_20) || !defined(_KERNEL)
 	{ ns(struct compat_20_sys_statfs_args), 0,
-	    compat_20_sys_statfs },		/* 157 = statfs */
+	    (sy_call_t *)compat_20_sys_statfs },/* 157 = statfs */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 157 = excluded compat_20_sys_statfs */
 #endif
 #if defined(COMPAT_20) || !defined(_KERNEL)
 	{ ns(struct compat_20_sys_fstatfs_args), 0,
-	    compat_20_sys_fstatfs },		/* 158 = fstatfs */
+	    (sy_call_t *)compat_20_sys_fstatfs },/* 158 = fstatfs */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 158 = excluded compat_20_sys_statfs */
@@ -539,14 +539,14 @@ struct sysent aoutm68k_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 160 = unimplemented */
 	{ ns(struct compat_30_sys_getfh_args), 0,
-	    compat_30_sys_getfh },		/* 161 = getfh */
+	    (sy_call_t *)compat_30_sys_getfh },	/* 161 = getfh */
 #if defined(COMPAT_09) || !defined(_KERNEL)
 	{ ns(struct compat_09_sys_getdomainname_args), 0,
-	    compat_09_sys_getdomainname },	/* 162 = ogetdomainname */
+	    (sy_call_t *)compat_09_sys_getdomainname },/* 162 = ogetdomainname */
 	{ ns(struct compat_09_sys_setdomainname_args), 0,
-	    compat_09_sys_setdomainname },	/* 163 = osetdomainname */
+	    (sy_call_t *)compat_09_sys_setdomainname },/* 163 = osetdomainname */
 	{ ns(struct compat_09_sys_uname_args), 0,
-	    compat_09_sys_uname },		/* 164 = ouname */
+	    (sy_call_t *)compat_09_sys_uname },	/* 164 = ouname */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 162 = excluded compat_09_sys_getdomainname */
@@ -556,7 +556,7 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 164 = excluded compat_09_sys_uname */
 #endif
 	{ ns(struct sys_sysarch_args), 0,
-	    sys_sysarch },			/* 165 = sysarch */
+	    (sy_call_t *)sys_sysarch },		/* 165 = sysarch */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 166 = unimplemented */
 	{ 0, 0, 0,
@@ -565,21 +565,21 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 168 = unimplemented */
 #if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 	{ ns(struct compat_10_sys_semsys_args), 0,
-	    compat_10_sys_semsys },		/* 169 = osemsys */
+	    (sy_call_t *)compat_10_sys_semsys },/* 169 = osemsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 169 = excluded 1.0 semsys */
 #endif
 #if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 	{ ns(struct compat_10_sys_msgsys_args), 0,
-	    compat_10_sys_msgsys },		/* 170 = omsgsys */
+	    (sy_call_t *)compat_10_sys_msgsys },/* 170 = omsgsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 170 = excluded 1.0 msgsys */
 #endif
 #if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
 	{ ns(struct compat_10_sys_shmsys_args), 0,
-	    compat_10_sys_shmsys },		/* 171 = oshmsys */
+	    (sy_call_t *)compat_10_sys_shmsys },/* 171 = oshmsys */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 171 = excluded 1.0 shmsys */
@@ -587,14 +587,14 @@ struct sysent aoutm68k_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 172 = unimplemented */
 	{ ns(struct sys_pread_args), 0,
-	    sys_pread },			/* 173 = pread */
+	    (sy_call_t *)sys_pread },		/* 173 = pread */
 	{ ns(struct sys_pwrite_args), 0,
-	    sys_pwrite },			/* 174 = pwrite */
+	    (sy_call_t *)sys_pwrite },		/* 174 = pwrite */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 175 = unimplemented { int sys_ntp_gettime ( struct ntptimeval * ntvp ) ; } */
 #if defined(NTP) || !defined(_KERNEL)
 	{ ns(struct sys_ntp_adjtime_args), 0,
-	    sys_ntp_adjtime },			/* 176 = ntp_adjtime */
+	    (sy_call_t *)sys_ntp_adjtime },	/* 176 = ntp_adjtime */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 176 = excluded ntp_adjtime */
@@ -608,20 +608,20 @@ struct sysent aoutm68k_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 180 = unimplemented */
 	{ ns(struct sys_setgid_args), 0,
-	    sys_setgid },			/* 181 = setgid */
+	    (sy_call_t *)sys_setgid },		/* 181 = setgid */
 	{ ns(struct sys_setegid_args), 0,
-	    sys_setegid },			/* 182 = setegid */
+	    (sy_call_t *)sys_setegid },		/* 182 = setegid */
 	{ ns(struct sys_seteuid_args), 0,
-	    sys_seteuid },			/* 183 = seteuid */
+	    (sy_call_t *)sys_seteuid },		/* 183 = seteuid */
 #if defined(LFS) || !defined(_KERNEL)
 	{ ns(struct sys_lfs_bmapv_args), 0,
-	    sys_lfs_bmapv },			/* 184 = lfs_bmapv */
+	    (sy_call_t *)sys_lfs_bmapv },	/* 184 = lfs_bmapv */
 	{ ns(struct sys_lfs_markv_args), 0,
-	    sys_lfs_markv },			/* 185 = lfs_markv */
+	    (sy_call_t *)sys_lfs_markv },	/* 185 = lfs_markv */
 	{ ns(struct sys_lfs_segclean_args), 0,
-	    sys_lfs_segclean },			/* 186 = lfs_segclean */
+	    (sy_call_t *)sys_lfs_segclean },	/* 186 = lfs_segclean */
 	{ ns(struct sys_lfs_segwait_args), 0,
-	    sys_lfs_segwait },			/* 187 = lfs_segwait */
+	    (sy_call_t *)sys_lfs_segwait },	/* 187 = lfs_segwait */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 184 = excluded lfs_bmapv */
@@ -634,11 +634,11 @@ struct sysent aoutm68k_sysent[] = {
 #endif
 #if defined(COMPAT_12) || !defined(_KERNEL)
 	{ ns(struct aoutm68k_compat_12_sys_stat_args), 0,
-	    aoutm68k_compat_12_sys_stat },	/* 188 = stat12 */
+	    (sy_call_t *)aoutm68k_compat_12_sys_stat },/* 188 = stat12 */
 	{ ns(struct aoutm68k_compat_12_sys_fstat_args), 0,
-	    aoutm68k_compat_12_sys_fstat },	/* 189 = fstat12 */
+	    (sy_call_t *)aoutm68k_compat_12_sys_fstat },/* 189 = fstat12 */
 	{ ns(struct aoutm68k_compat_12_sys_lstat_args), 0,
-	    aoutm68k_compat_12_sys_lstat },	/* 190 = lstat12 */
+	    (sy_call_t *)aoutm68k_compat_12_sys_lstat },/* 190 = lstat12 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 188 = excluded aoutm68k_compat_12_sys_stat */
@@ -648,69 +648,69 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 190 = excluded aoutm68k_compat_12_sys_lstat */
 #endif
 	{ ns(struct sys_pathconf_args), 0,
-	    sys_pathconf },			/* 191 = pathconf */
+	    (sy_call_t *)sys_pathconf },	/* 191 = pathconf */
 	{ ns(struct sys_fpathconf_args), 0,
-	    sys_fpathconf },			/* 192 = fpathconf */
+	    (sy_call_t *)sys_fpathconf },	/* 192 = fpathconf */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 193 = unimplemented */
 	{ ns(struct sys_getrlimit_args), 0,
-	    sys_getrlimit },			/* 194 = getrlimit */
+	    (sy_call_t *)sys_getrlimit },	/* 194 = getrlimit */
 	{ ns(struct sys_setrlimit_args), 0,
-	    sys_setrlimit },			/* 195 = setrlimit */
+	    (sy_call_t *)sys_setrlimit },	/* 195 = setrlimit */
 #if defined(COMPAT_12) || !defined(_KERNEL)
 	{ ns(struct compat_12_sys_getdirentries_args), 0,
-	    compat_12_sys_getdirentries },	/* 196 = getdirentries */
+	    (sy_call_t *)compat_12_sys_getdirentries },/* 196 = getdirentries */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 196 = excluded compat_12_sys_getdirentries */
 #endif
 	{ ns(struct sys_mmap_args), 0,
-	    sys_mmap },				/* 197 = mmap */
+	    (sy_call_t *)sys_mmap },		/* 197 = mmap */
 	{ ns(struct sys___syscall_args), SYCALL_INDIRECT | 0,
-	    sys___syscall },			/* 198 = __syscall */
+	    (sy_call_t *)sys___syscall },	/* 198 = __syscall */
 	{ ns(struct sys_lseek_args), 0,
-	    sys_lseek },			/* 199 = lseek */
+	    (sy_call_t *)sys_lseek },		/* 199 = lseek */
 	{ ns(struct sys_truncate_args), 0,
-	    sys_truncate },			/* 200 = truncate */
+	    (sy_call_t *)sys_truncate },	/* 200 = truncate */
 	{ ns(struct sys_ftruncate_args), 0,
-	    sys_ftruncate },			/* 201 = ftruncate */
+	    (sy_call_t *)sys_ftruncate },	/* 201 = ftruncate */
 	{ ns(struct sys___sysctl_args), 0,
-	    sys___sysctl },			/* 202 = __sysctl */
+	    (sy_call_t *)sys___sysctl },	/* 202 = __sysctl */
 	{ ns(struct sys_mlock_args), 0,
-	    sys_mlock },			/* 203 = mlock */
+	    (sy_call_t *)sys_mlock },		/* 203 = mlock */
 	{ ns(struct sys_munlock_args), 0,
-	    sys_munlock },			/* 204 = munlock */
+	    (sy_call_t *)sys_munlock },		/* 204 = munlock */
 	{ ns(struct sys_undelete_args), 0,
-	    sys_undelete },			/* 205 = undelete */
+	    (sy_call_t *)sys_undelete },	/* 205 = undelete */
 	{ ns(struct sys_futimes_args), 0,
-	    sys_futimes },			/* 206 = futimes */
+	    (sy_call_t *)sys_futimes },		/* 206 = futimes */
 	{ ns(struct sys_getpgid_args), 0,
-	    sys_getpgid },			/* 207 = getpgid */
+	    (sy_call_t *)sys_getpgid },		/* 207 = getpgid */
 	{ ns(struct sys_reboot_args), 0,
-	    sys_reboot },			/* 208 = reboot */
+	    (sy_call_t *)sys_reboot },		/* 208 = reboot */
 	{ ns(struct sys_poll_args), 0,
-	    sys_poll },				/* 209 = poll */
+	    (sy_call_t *)sys_poll },		/* 209 = poll */
 #if defined(LKM) || !defined(_KERNEL)
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 210 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 210 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 211 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 211 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 212 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 212 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 213 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 213 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 214 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 214 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 215 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 215 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 216 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 216 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 217 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 217 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 218 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 218 = lkmnosys */
 	{ 0, 0, 0,
-	    sys_lkmnosys },			/* 219 = lkmnosys */
+	    (sy_call_t *)sys_lkmnosys },	/* 219 = lkmnosys */
 #else	/* !LKM */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 210 = excluded lkmnosys */
@@ -736,17 +736,17 @@ struct sysent aoutm68k_sysent[] = {
 #if defined(SYSVSEM) || !defined(_KERNEL)
 #if defined(COMPAT_14) || !defined(_KERNEL)
 	{ ns(struct compat_14_sys___semctl_args), 0,
-	    compat_14_sys___semctl },		/* 220 = __semctl */
+	    (sy_call_t *)compat_14_sys___semctl },/* 220 = __semctl */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 220 = excluded compat_14_semctl */
 #endif
 	{ ns(struct sys_semget_args), 0,
-	    sys_semget },			/* 221 = semget */
+	    (sy_call_t *)sys_semget },		/* 221 = semget */
 	{ ns(struct sys_semop_args), 0,
-	    sys_semop },			/* 222 = semop */
+	    (sy_call_t *)sys_semop },		/* 222 = semop */
 	{ ns(struct sys_semconfig_args), 0,
-	    sys_semconfig },			/* 223 = semconfig */
+	    (sy_call_t *)sys_semconfig },	/* 223 = semconfig */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 220 = excluded compat_14_semctl */
@@ -760,17 +760,17 @@ struct sysent aoutm68k_sysent[] = {
 #if defined(SYSVMSG) || !defined(_KERNEL)
 #if defined(COMPAT_14) || !defined(_KERNEL)
 	{ ns(struct compat_14_sys_msgctl_args), 0,
-	    compat_14_sys_msgctl },		/* 224 = msgctl */
+	    (sy_call_t *)compat_14_sys_msgctl },/* 224 = msgctl */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 224 = excluded compat_14_sys_msgctl */
 #endif
 	{ ns(struct sys_msgget_args), 0,
-	    sys_msgget },			/* 225 = msgget */
+	    (sy_call_t *)sys_msgget },		/* 225 = msgget */
 	{ ns(struct sys_msgsnd_args), 0,
-	    sys_msgsnd },			/* 226 = msgsnd */
+	    (sy_call_t *)sys_msgsnd },		/* 226 = msgsnd */
 	{ ns(struct sys_msgrcv_args), 0,
-	    sys_msgrcv },			/* 227 = msgrcv */
+	    (sy_call_t *)sys_msgrcv },		/* 227 = msgrcv */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 224 = excluded compat_14_msgctl */
@@ -783,18 +783,18 @@ struct sysent aoutm68k_sysent[] = {
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 	{ ns(struct sys_shmat_args), 0,
-	    sys_shmat },			/* 228 = shmat */
+	    (sy_call_t *)sys_shmat },		/* 228 = shmat */
 #if defined(COMPAT_14) || !defined(_KERNEL)
 	{ ns(struct compat_14_sys_shmctl_args), 0,
-	    compat_14_sys_shmctl },		/* 229 = shmctl */
+	    (sy_call_t *)compat_14_sys_shmctl },/* 229 = shmctl */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 229 = excluded compat_14_sys_shmctl */
 #endif
 	{ ns(struct sys_shmdt_args), 0,
-	    sys_shmdt },			/* 230 = shmdt */
+	    (sy_call_t *)sys_shmdt },		/* 230 = shmdt */
 	{ ns(struct sys_shmget_args), 0,
-	    sys_shmget },			/* 231 = shmget */
+	    (sy_call_t *)sys_shmget },		/* 231 = shmget */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 228 = excluded shmat */
@@ -806,11 +806,11 @@ struct sysent aoutm68k_sysent[] = {
 	    sys_nosys },			/* 231 = excluded shmget */
 #endif
 	{ ns(struct sys_clock_gettime_args), 0,
-	    sys_clock_gettime },		/* 232 = clock_gettime */
+	    (sy_call_t *)sys_clock_gettime },	/* 232 = clock_gettime */
 	{ ns(struct sys_clock_settime_args), 0,
-	    sys_clock_settime },		/* 233 = clock_settime */
+	    (sy_call_t *)sys_clock_settime },	/* 233 = clock_settime */
 	{ ns(struct sys_clock_getres_args), 0,
-	    sys_clock_getres },			/* 234 = clock_getres */
+	    (sy_call_t *)sys_clock_getres },	/* 234 = clock_getres */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 235 = unimplemented timer_create */
 	{ 0, 0, 0,
@@ -822,13 +822,13 @@ struct sysent aoutm68k_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 239 = unimplemented timer_getoverrun */
 	{ ns(struct sys_nanosleep_args), 0,
-	    sys_nanosleep },			/* 240 = nanosleep */
+	    (sy_call_t *)sys_nanosleep },	/* 240 = nanosleep */
 	{ ns(struct sys_fdatasync_args), 0,
-	    sys_fdatasync },			/* 241 = fdatasync */
+	    (sy_call_t *)sys_fdatasync },	/* 241 = fdatasync */
 	{ ns(struct sys_mlockall_args), 0,
-	    sys_mlockall },			/* 242 = mlockall */
+	    (sy_call_t *)sys_mlockall },	/* 242 = mlockall */
 	{ 0, 0, 0,
-	    sys_munlockall },			/* 243 = munlockall */
+	    (sy_call_t *)sys_munlockall },	/* 243 = munlockall */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 244 = unimplemented */
 	{ 0, 0, 0,
@@ -882,121 +882,121 @@ struct sysent aoutm68k_sysent[] = {
 	{ 0, 0, 0,
 	    sys_nosys },			/* 269 = unimplemented */
 	{ ns(struct sys___posix_rename_args), 0,
-	    sys___posix_rename },		/* 270 = __posix_rename */
+	    (sy_call_t *)sys___posix_rename },	/* 270 = __posix_rename */
 	{ ns(struct sys_swapctl_args), 0,
-	    sys_swapctl },			/* 271 = swapctl */
+	    (sy_call_t *)sys_swapctl },		/* 271 = swapctl */
 #if defined(COMPAT_30) || !defined(_KERNEL)
 	{ ns(struct compat_30_sys_getdents_args), 0,
-	    compat_30_sys_getdents },		/* 272 = getdents */
+	    (sy_call_t *)compat_30_sys_getdents },/* 272 = getdents */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 272 = excluded compat_30_sys_getdents */
 #endif
 	{ ns(struct sys_minherit_args), 0,
-	    sys_minherit },			/* 273 = minherit */
+	    (sy_call_t *)sys_minherit },	/* 273 = minherit */
 	{ ns(struct sys_lchmod_args), 0,
-	    sys_lchmod },			/* 274 = lchmod */
+	    (sy_call_t *)sys_lchmod },		/* 274 = lchmod */
 	{ ns(struct sys_lchown_args), 0,
-	    sys_lchown },			/* 275 = lchown */
+	    (sy_call_t *)sys_lchown },		/* 275 = lchown */
 	{ ns(struct sys_lutimes_args), 0,
-	    sys_lutimes },			/* 276 = lutimes */
+	    (sy_call_t *)sys_lutimes },		/* 276 = lutimes */
 	{ ns(struct sys___msync13_args), 0,
-	    sys___msync13 },			/* 277 = __msync13 */
+	    (sy_call_t *)sys___msync13 },	/* 277 = __msync13 */
 	{ ns(struct aoutm68k_sys___stat13_args), 0,
-	    aoutm68k_sys___stat13 },		/* 278 = __stat13 */
+	    (sy_call_t *)aoutm68k_sys___stat13 },/* 278 = __stat13 */
 	{ ns(struct aoutm68k_sys___fstat13_args), 0,
-	    aoutm68k_sys___fstat13 },		/* 279 = __fstat13 */
+	    (sy_call_t *)aoutm68k_sys___fstat13 },/* 279 = __fstat13 */
 	{ ns(struct aoutm68k_sys___lstat13_args), 0,
-	    aoutm68k_sys___lstat13 },		/* 280 = __lstat13 */
+	    (sy_call_t *)aoutm68k_sys___lstat13 },/* 280 = __lstat13 */
 	{ ns(struct sys___sigaltstack14_args), 0,
-	    sys___sigaltstack14 },		/* 281 = __sigaltstack14 */
+	    (sy_call_t *)sys___sigaltstack14 },	/* 281 = __sigaltstack14 */
 	{ 0, 0, 0,
-	    sys___vfork14 },			/* 282 = __vfork14 */
+	    (sy_call_t *)sys___vfork14 },	/* 282 = __vfork14 */
 	{ ns(struct sys___posix_chown_args), 0,
-	    sys___posix_chown },		/* 283 = __posix_chown */
+	    (sy_call_t *)sys___posix_chown },	/* 283 = __posix_chown */
 	{ ns(struct sys___posix_fchown_args), 0,
-	    sys___posix_fchown },		/* 284 = __posix_fchown */
+	    (sy_call_t *)sys___posix_fchown },	/* 284 = __posix_fchown */
 	{ ns(struct sys___posix_lchown_args), 0,
-	    sys___posix_lchown },		/* 285 = __posix_lchown */
+	    (sy_call_t *)sys___posix_lchown },	/* 285 = __posix_lchown */
 	{ ns(struct sys_getsid_args), 0,
-	    sys_getsid },			/* 286 = getsid */
+	    (sy_call_t *)sys_getsid },		/* 286 = getsid */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 287 = unimplemented */
 #if defined(KTRACE) || !defined(_KERNEL)
 	{ ns(struct sys_fktrace_args), 0,
-	    sys_fktrace },			/* 288 = fktrace */
+	    (sy_call_t *)sys_fktrace },		/* 288 = fktrace */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 288 = excluded ktrace */
 #endif
 	{ ns(struct sys_preadv_args), 0,
-	    sys_preadv },			/* 289 = preadv */
+	    (sy_call_t *)sys_preadv },		/* 289 = preadv */
 	{ ns(struct sys_pwritev_args), 0,
-	    sys_pwritev },			/* 290 = pwritev */
+	    (sy_call_t *)sys_pwritev },		/* 290 = pwritev */
 #if defined(COMPAT_16) || !defined(_KERNEL)
 	{ ns(struct compat_16_sys___sigaction14_args), 0,
-	    compat_16_sys___sigaction14 },	/* 291 = __sigaction14 */
+	    (sy_call_t *)compat_16_sys___sigaction14 },/* 291 = __sigaction14 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 291 = excluded compat_16_sys___sigaction14 */
 #endif
 	{ ns(struct sys___sigpending14_args), 0,
-	    sys___sigpending14 },		/* 292 = __sigpending14 */
+	    (sy_call_t *)sys___sigpending14 },	/* 292 = __sigpending14 */
 	{ ns(struct sys___sigprocmask14_args), 0,
-	    sys___sigprocmask14 },		/* 293 = __sigprocmask14 */
+	    (sy_call_t *)sys___sigprocmask14 },	/* 293 = __sigprocmask14 */
 	{ ns(struct sys___sigsuspend14_args), 0,
-	    sys___sigsuspend14 },		/* 294 = __sigsuspend14 */
+	    (sy_call_t *)sys___sigsuspend14 },	/* 294 = __sigsuspend14 */
 #if defined(COMPAT_16) || !defined(_KERNEL)
 	{ ns(struct compat_16_sys___sigreturn14_args), 0,
-	    compat_16_sys___sigreturn14 },	/* 295 = __sigreturn14 */
+	    (sy_call_t *)compat_16_sys___sigreturn14 },/* 295 = __sigreturn14 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 295 = excluded compat_16_sys___sigreturn14 */
 #endif
 	{ ns(struct sys___getcwd_args), 0,
-	    sys___getcwd },			/* 296 = __getcwd */
+	    (sy_call_t *)sys___getcwd },	/* 296 = __getcwd */
 	{ ns(struct sys_fchroot_args), 0,
-	    sys_fchroot },			/* 297 = fchroot */
+	    (sy_call_t *)sys_fchroot },		/* 297 = fchroot */
 	{ ns(struct compat_30_sys_fhopen_args), 0,
-	    compat_30_sys_fhopen },		/* 298 = fhopen */
+	    (sy_call_t *)compat_30_sys_fhopen },/* 298 = fhopen */
 	{ ns(struct aoutm68k_sys_fhstat_args), 0,
-	    aoutm68k_sys_fhstat },		/* 299 = fhstat */
+	    (sy_call_t *)aoutm68k_sys_fhstat },	/* 299 = fhstat */
 #if defined(COMPAT_20) || !defined(_KERNEL)
 	{ ns(struct compat_20_sys_fhstatfs_args), 0,
-	    compat_20_sys_fhstatfs },		/* 300 = fhstatfs */
+	    (sy_call_t *)compat_20_sys_fhstatfs },/* 300 = fhstatfs */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 300 = excluded compat_20_sys_fhstatfs */
 #endif
 #if defined(SYSVSEM) || !defined(_KERNEL)
 	{ ns(struct sys_____semctl13_args), 0,
-	    sys_____semctl13 },			/* 301 = ____semctl13 */
+	    (sy_call_t *)sys_____semctl13 },	/* 301 = ____semctl13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 301 = excluded ____semctl13 */
 #endif
 #if defined(SYSVMSG) || !defined(_KERNEL)
 	{ ns(struct sys___msgctl13_args), 0,
-	    sys___msgctl13 },			/* 302 = __msgctl13 */
+	    (sy_call_t *)sys___msgctl13 },	/* 302 = __msgctl13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 302 = excluded __msgctl13 */
 #endif
 #if defined(SYSVSHM) || !defined(_KERNEL)
 	{ ns(struct sys___shmctl13_args), 0,
-	    sys___shmctl13 },			/* 303 = __shmctl13 */
+	    (sy_call_t *)sys___shmctl13 },	/* 303 = __shmctl13 */
 #else
 	{ 0, 0, 0,
 	    sys_nosys },			/* 303 = excluded __shmctl13 */
 #endif
 	{ ns(struct sys_lchflags_args), 0,
-	    sys_lchflags },			/* 304 = lchflags */
+	    (sy_call_t *)sys_lchflags },	/* 304 = lchflags */
 	{ 0, 0, 0,
-	    sys_issetugid },			/* 305 = issetugid */
+	    (sy_call_t *)sys_issetugid },	/* 305 = issetugid */
 	{ ns(struct sys_getcontext_args), 0,
-	    sys_getcontext },			/* 306 = getcontext */
+	    (sy_call_t *)sys_getcontext },	/* 306 = getcontext */
 	{ ns(struct sys_setcontext_args), 0,
-	    sys_setcontext },			/* 307 = setcontext */
+	    (sy_call_t *)sys_setcontext },	/* 307 = setcontext */
 	{ 0, 0, 0,
 	    sys_nosys },			/* 308 = filler */
 	{ 0, 0, 0,

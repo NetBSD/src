@@ -1,4 +1,4 @@
-/* $NetBSD: blkif.h,v 1.2.8.4 2007/12/07 17:27:15 yamt Exp $ */
+/* $NetBSD: blkif.h,v 1.2.8.5 2008/01/21 09:40:31 yamt Exp $ */
 /******************************************************************************
  * blkif.h
  * 
@@ -106,7 +106,7 @@ struct blkif_x86_32_request {
     uint64_t       id;           /* private guest value, echoed in resp  */
     blkif_sector_t sector_number;/* start sector idx on disk (r/w only)  */
     struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
-} __attribute__((packed));
+} __packed;
 typedef struct blkif_x86_32_request blkif_x86_32_request_t;
 
 struct blkif_x86_32_response {
@@ -114,7 +114,7 @@ struct blkif_x86_32_response {
     uint8_t         operation;       /* copied from request */
     uint8_t         _pad; 
     int16_t         status;          /* BLKIF_RSP_???       */
-} __attribute__((packed));
+} __packed;
 typedef struct blkif_x86_32_response blkif_x86_32_response_t;
 
 /* amd64-type requests/responses (always used in frontends ) */

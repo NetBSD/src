@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.2.2.4 2007/12/07 17:25:48 yamt Exp $ */
+/* $NetBSD: pegasospci.c,v 1.2.2.5 2008/01/21 09:37:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,14 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.2.4 2007/12/07 17:25:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.2.2.5 2008/01/21 09:37:54 yamt Exp $");
+
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/extent.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
@@ -133,6 +137,9 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	struct genppc_pci_chipset_businfo *pbi;
 	int isprim = 0, node = ca->ca_node;
 	uint32_t reg[2], busrange[2];
+#ifdef PCI_NETBSD_CONFIGURE
+	struct extent *ioext, *memext;
+#endif
 
 	aprint_normal("\n");
 
@@ -167,7 +174,8 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 			/* The Pegasos is very simple.  isa == pci */
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
-			map_isa_ioregs(sc->sc_iot.pbs_offset);
+			map_isa_ioregs();
+			init_ofppc_interrupt();
 			ofppc_init_comcons(isa_node);
 		}
 	}
@@ -204,6 +212,19 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	SIMPLEQ_INSERT_TAIL(&pc->pc_pbi, pbi, next);
 
 	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
+
+#ifdef PCI_NETBSD_CONFIGURE
+	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
+	    NULL, 0, EX_NOWAIT);
+
+	if (pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINESIZE))
+		printf("pci_configure_bus() failed\n");
+
+	extent_destroy(ioext);
+	extent_destroy(memext);
+#endif /* PCI_NETBSD_CONFIGURE */
 
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;

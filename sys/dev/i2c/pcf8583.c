@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8583.c,v 1.2.2.3 2007/02/26 09:10:03 yamt Exp $	*/
+/*	$NetBSD: pcf8583.c,v 1.2.2.4 2008/01/21 09:42:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -41,6 +41,9 @@
  * This driver is partially derived from Ben Harris's PCF8583 driver
  * for NetBSD/acorn26.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pcf8583.c,v 1.2.2.4 2008/01/21 09:42:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

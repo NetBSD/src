@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.34 2005/02/27 00:27:01 perry Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.34.4.1 2008/01/21 09:43:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -169,9 +169,7 @@ struct fxp_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus dma tag */
 	struct ethercom sc_ethercom;	/* ethernet common part */
-	void *sc_sdhook;		/* shutdown hook */
 	void *sc_ih;			/* interrupt handler cookie */
-	void *sc_powerhook;		/* power hook */
 
 	struct mii_data sc_mii;		/* MII/media information */
 	struct callout sc_callout;	/* MII callout */
@@ -318,7 +316,8 @@ do {									\
 	__rfa->size = htole16(FXP_RXBUFSIZE((sc), (m)));		\
 	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->rfa_status = 0;						\
-	__rfa->rfa_control = htole16(FXP_RFA_CONTROL_EL);		\
+	__rfa->rfa_control =						\
+	    htole16(FXP_RFA_CONTROL_EL | FXP_RFA_CONTROL_S);		\
 	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->actual_size = 0;						\
 									\
@@ -341,7 +340,8 @@ do {									\
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);	\
 		memcpy((void *)&__p_rfa->link_addr, &__v,		\
 		    sizeof(__v));					\
-		__p_rfa->rfa_control &= htole16(~FXP_RFA_CONTROL_EL);	\
+		__p_rfa->rfa_control &= htole16(~(FXP_RFA_CONTROL_EL|	\
+		    FXP_RFA_CONTROL_S));				\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
 	}								\

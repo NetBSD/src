@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.4.8.4 2007/09/03 14:27:58 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.4.8.5 2008/01/21 09:37:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 	
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.8.4 2007/09/03 14:27:58 yamt Exp $"); 
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.4.8.5 2008/01/21 09:37:33 yamt Exp $"); 
 
 #include "opt_cputype.h"
 #include "opt_compat_netbsd.h"
@@ -223,11 +223,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *returnmask)
  */
 /* ARGSUSED */
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct sigcontext *scp, ksc;
 	struct frame *f;
 	struct proc *p = l->l_proc;

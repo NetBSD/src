@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raidreg.h,v 1.2.2.1 2007/09/03 14:33:26 yamt Exp $	*/
+/*	$NetBSD: ata_raidreg.h,v 1.2.2.2 2008/01/21 09:42:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -68,7 +68,7 @@ struct promise_raid_conf {
 		uint8_t		disk_number;
 		uint8_t		channel;
 		uint8_t		device;
-		uint64_t	magic_0 __attribute__((__packed__));
+		uint64_t	magic_0 __packed;
 		uint32_t	disk_offset;	/* 0x210 */
 		uint32_t	disk_sectors;
 		uint32_t	rebuild_lba;
@@ -97,18 +97,18 @@ struct promise_raid_conf {
 		uint16_t	cylinders;
 		uint8_t		heads;
 		uint8_t		sectors;
-		uint64_t	magic_1 __attribute__((__packed__));
+		uint64_t	magic_1 __packed;
 		struct {
 			uint8_t		flags;
 			uint8_t		dummy_0;
 			uint8_t		channel;
 			uint8_t		device;
-			uint64_t	magic_0 __attribute__((__packed__));
+			uint64_t	magic_0 __packed;
 		} disk[8];
 	} raid;
 	uint32_t	filler2[346];
 	uint32_t	checksum;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Macro to compute the LBA of the Adaptec HostRAID configuration structure,
@@ -168,7 +168,7 @@ struct adaptec_raid_conf {
 	uint32_t	magic_4;
 #define ADP_MAGIC_4		0x0950f89f
 	uint32_t	dummy_9[62];
-} __attribute__((__packed__));
+} __packed;
 
 /* VIA Tech V-RAID Metadata */
 /* Derrived from FreeBSD ata-raid.h 1.46 */
@@ -200,6 +200,6 @@ struct via_raid_conf {
 	uint32_t		disks[8];
 	uint8_t			checksum;
 	uint8_t			pad_0[461];
-} __attribute__((__packed__));
+} __packed;
 
 #endif /* _DEV_PCI_PCIIDE_PROMISE_RAID_H_ */

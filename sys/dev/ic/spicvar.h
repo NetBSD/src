@@ -1,4 +1,4 @@
-/* $NetBSD: spicvar.h,v 1.1.30.1 2006/06/21 15:02:56 yamt Exp $ */
+/* $NetBSD: spicvar.h,v 1.1.30.2 2008/01/21 09:43:10 yamt Exp $ */
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -23,5 +23,7 @@ struct spic_softc {
 };
 
 void spic_attach(struct spic_softc *);
+bool spic_suspend(device_t);
+bool spic_resume(device_t);
 
 int spic_intr(void *);

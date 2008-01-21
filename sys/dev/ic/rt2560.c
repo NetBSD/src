@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.3.4.5 2007/10/27 11:30:59 yamt Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.3.4.6 2008/01/21 09:43:05 yamt Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.3.4.5 2007/10/27 11:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.3.4.6 2008/01/21 09:43:05 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -148,8 +148,7 @@ static const char *rt2560_get_rf(int);
 static void	rt2560_read_eeprom(struct rt2560_softc *);
 static int	rt2560_bbp_init(struct rt2560_softc *);
 static int	rt2560_init(struct ifnet *);
-static void	rt2560_stop(void *);
-static void	rt2560_powerhook(int, void *);
+static void	rt2560_stop(struct ifnet *, int);
 
 /*
  * Supported rates for 802.11a/b/g modes (in 500Kbps unit).
@@ -401,16 +400,10 @@ rt2560_attach(void *xsc, int id)
 		goto fail5;
 	}
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    rt2560_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
-	sc->sc_suspend = PWR_RESUME;
-
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_init = rt2560_init;
+	ifp->if_stop = rt2560_stop;
 	ifp->if_ioctl = rt2560_ioctl;
 	ifp->if_start = rt2560_start;
 	ifp->if_watchdog = rt2560_watchdog;
@@ -496,6 +489,11 @@ rt2560_attach(void *xsc, int id)
 
 	ieee80211_announce(ic);
 
+	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
+		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(&sc->sc_dev, ifp);
+
 	return 0;
 
 fail5:	rt2560_free_tx_ring(sc, &sc->bcnq);
@@ -516,10 +514,9 @@ rt2560_detach(void *xsc)
 	callout_stop(&sc->scan_ch);
 	callout_stop(&sc->rssadapt_ch);
 
-	if (sc->sc_powerhook != NULL)
-		powerhook_disestablish(sc->sc_powerhook);
+	pmf_device_deregister(&sc->sc_dev);
 
-	rt2560_stop(sc);
+	rt2560_stop(ifp, 1);
 
 	ieee80211_ifdetach(&sc->sc_ic);	/* free all nodes */
 	if_detach(ifp);
@@ -1457,37 +1454,6 @@ rt2560_rx_intr(struct rt2560_softc *sc)
 	RAL_WRITE(sc, RT2560_SECCSR0, RT2560_KICK_DECRYPT);
 }
 
-#if 0
-void
-rt2560_shutdown(void *xsc)
-{
-	struct rt2560_softc *sc = xsc;
-
-	rt2560_stop(sc);
-}
-
-void
-rt2560_suspend(void *xsc)
-{
-	struct rt2560_softc *sc = xsc;
-
-	rt2560_stop(sc);
-}
-
-void
-rt2560_resume(void *xsc)
-{
-	struct rt2560_softc *sc = xsc;
-	struct ifnet *ifp = sc->sc_ic.ic_ifp;
-
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp->if_softc);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
-	}
-}
-
-#endif
 /*
  * This function is called periodically in IBSS mode when a new beacon must be
  * sent out.
@@ -1534,15 +1500,14 @@ rt2560_intr(void *arg)
 	struct ifnet *ifp = &sc->sc_if;
 	uint32_t r;
 
+	if (!device_is_active(&sc->sc_dev))
+		return 0;
+
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2560_CSR8, 0xffffffff);
 
 	/* don't re-enable interrupts if we're shutting down */
 	if (!(ifp->if_flags & IFF_RUNNING))
-		return 0;
-
-	/* if we're suspended, don't bother */
-	if (sc->sc_suspend != PWR_RESUME)
 		return 0;
 
 	r = RAL_READ(sc, RT2560_CSR7);
@@ -2257,7 +2222,7 @@ rt2560_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				rt2560_init(ifp);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
-				rt2560_stop(sc);
+				rt2560_stop(ifp, 1);
 		}
 		break;
 
@@ -2819,7 +2784,7 @@ rt2560_init(struct ifnet *ifp)
 		sc->sc_flags |= RT2560_ENABLED;
 	}
 
-	rt2560_stop(sc);
+	rt2560_stop(ifp, 1);
 
 	/* setup tx rings */
 	tmp = RT2560_PRIO_RING_COUNT << 24 |
@@ -2850,8 +2815,6 @@ rt2560_init(struct ifnet *ifp)
 	/* set basic rate set (will be updated later) */
 	RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x153);
 
-	rt2560_set_txantenna(sc, 1);
-	rt2560_set_rxantenna(sc, 1);
 	rt2560_update_slot(ifp);
 	rt2560_update_plcp(sc);
 	rt2560_update_led(sc, 0, 0);
@@ -2860,9 +2823,12 @@ rt2560_init(struct ifnet *ifp)
 	RAL_WRITE(sc, RT2560_CSR1, RT2560_HOST_READY);
 
 	if (rt2560_bbp_init(sc) != 0) {
-		rt2560_stop(sc);
+		rt2560_stop(ifp, 1);
 		return EIO;
 	}
+
+	rt2560_set_txantenna(sc, 1);
+	rt2560_set_rxantenna(sc, 1);
 
 	/* set default BSS channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;
@@ -2902,11 +2868,10 @@ rt2560_init(struct ifnet *ifp)
 }
 
 static void
-rt2560_stop(void *priv)
+rt2560_stop(struct ifnet *ifp, int disable)
 {
-	struct rt2560_softc *sc = priv;
+	struct rt2560_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = ic->ic_ifp;
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
@@ -2937,42 +2902,4 @@ rt2560_stop(void *priv)
 	rt2560_reset_tx_ring(sc, &sc->bcnq);
 	rt2560_reset_rx_ring(sc, &sc->rxq);
 
-}
-
-static void
-rt2560_powerhook(int why, void *opaque)
-{
-	struct rt2560_softc *sc;
-	struct ifnet *ifp;
-	int s;
-
-	sc = (struct rt2560_softc *)opaque;
-	ifp = &sc->sc_if;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-		sc->sc_suspend = why;
-		rt2560_stop(sc);
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		break;
-	case PWR_RESUME:
-		sc->sc_suspend = why;
-		if (ifp->if_flags & IFF_UP) {
-			if (sc->sc_power != NULL)
-				(*sc->sc_power)(sc, why);
-			rt2560_init(ifp);
-			if (ifp->if_flags & IFF_RUNNING)
-				rt2560_start(ifp);
-		}
-		break;
-	case PWR_STANDBY:
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-
-	return;
 }

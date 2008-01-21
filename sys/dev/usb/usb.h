@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.72.2.3 2007/09/03 14:39:21 yamt Exp $	*/
+/*	$NetBSD: usb.h,v 1.72.2.4 2008/01/21 09:44:50 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
 /*
@@ -99,7 +99,7 @@ typedef u_int8_t uDWord[4];
 #define USETDW(w,v) (*(u_int32_t *)(w) = (v))
 #endif
 
-#define UPACKED __attribute__((__packed__))
+#define UPACKED __packed
 
 typedef struct {
 	uByte		bmRequestType;

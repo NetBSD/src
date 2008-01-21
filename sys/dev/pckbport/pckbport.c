@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.4.12.3 2007/09/03 14:38:01 yamt Exp $ */
+/* $NetBSD: pckbport.c,v 1.4.12.4 2008/01/21 09:44:26 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.4.12.3 2007/09/03 14:38:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.4.12.4 2008/01/21 09:44:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.4.12.3 2007/09/03 14:38:01 yamt Exp $
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
 
 #include <dev/pckbport/pckbdreg.h>
 #include <dev/pckbport/pckbportvar.h>

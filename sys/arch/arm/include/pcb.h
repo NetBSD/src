@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11.16.3 2007/10/27 11:25:25 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11.16.4 2008/01/21 09:35:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -57,7 +57,6 @@ struct pcb_arm32 {
 	u_int	pcb32_sp;			/* used */
 	u_int	pcb32_lr;
 	u_int	pcb32_pc;
-	u_int	pcb32_und_sp;
 };
 #define	pcb_pagedir	pcb_un.un_32.pcb32_pagedir
 #define	pcb_pl1vec	pcb_un.un_32.pcb32_pl1vec

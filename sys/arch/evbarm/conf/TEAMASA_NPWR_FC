@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR_FC,v 1.9.4.2 2006/12/30 20:45:49 yamt Exp $
+#	$NetBSD: TEAMASA_NPWR_FC,v 1.9.4.3 2008/01/21 09:36:08 yamt Exp $
 #
 #	TeamASA NPWR-FC, i80321-based SBC
 #
@@ -81,7 +81,7 @@ options 	NFS_BOOT_DHCP
 
 #options 	COMPAT_43	# 4.3BSD compatibility.
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
-options 	COMPAT_20	# NetBSD 2.0 compatibility
+options 	COMPAT_20	# NetBSD 2.0 compatibility.
 options 	COMPAT_16	# NetBSD 1.6 compatibility.
 options 	COMPAT_15	# NetBSD 1.5 compatibility.
 options 	COMPAT_14	# NetBSD 1.4 compatibility.
@@ -133,12 +133,11 @@ options 	PERFCTRS	# performance counters
 options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=250000
+options 	SYMTAB_SPACE=300000
 
 config		netbsd		root on ? type ?
 config		netbsd-wm0	root on wm0 type nfs

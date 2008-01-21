@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.50.2.6 2007/12/07 17:24:50 yamt Exp $
+# $NetBSD: GENERIC,v 1.50.2.7 2008/01/21 09:36:40 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -66,7 +66,6 @@ options 	KLOADER
 				# (overrides tz info that hpcboot.exe passes)
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores

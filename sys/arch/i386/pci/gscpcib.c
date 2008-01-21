@@ -1,4 +1,4 @@
-/* $NetBSD: gscpcib.c,v 1.5.18.3 2006/12/30 20:46:11 yamt Exp $ */
+/*	$NetBSD: gscpcib.c,v 1.5.18.4 2008/01/21 09:37:13 yamt Exp $	*/
 /*	$OpenBSD: gscpcib.c,v 1.3 2004/10/05 19:02:33 grange Exp $	*/
 /*
  * Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -22,6 +22,9 @@
  * functionality this driver provides support for the GPIO interface.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: gscpcib.c,v 1.5.18.4 2008/01/21 09:37:13 yamt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -41,6 +44,8 @@
 struct gscpcib_softc {
 	struct device sc_dev;
 
+	bool sc_gpio_present;
+
 	/* GPIO interface */
 	bus_space_tag_t sc_gpio_iot;
 	bus_space_handle_t sc_gpio_ioh;
@@ -48,24 +53,34 @@ struct gscpcib_softc {
 	gpio_pin_t sc_gpio_pins[GSCGPIO_NPINS];
 };
 
-int	gscpcib_match(struct device *, struct cfdata *, void *);
-void	gscpcib_attach(struct device *, struct device *, void *);
+int	gscpcib_match(device_t, struct cfdata *, void *);
+void	gscpcib_attach(device_t, device_t, void *);
+int	gscpcib_detach(device_t, int);
+void	gscpcib_childdetached(device_t, device_t);
 
 int	gscpcib_gpio_pin_read(void *, int);
 void	gscpcib_gpio_pin_write(void *, int, int);
 void	gscpcib_gpio_pin_ctl(void *, int, int);
 
 /* arch/i386/pci/pcib.c */
-void    pcibattach(struct device *, struct device *, void *);
+void    pcibattach(device_t, device_t, void *);
 
-CFATTACH_DECL(gscpcib, sizeof(struct gscpcib_softc),
-	gscpcib_match, gscpcib_attach, NULL, NULL);
+CFATTACH_DECL2(gscpcib, sizeof(struct gscpcib_softc),
+	gscpcib_match, gscpcib_attach, gscpcib_detach, NULL, NULL,
+	gscpcib_childdetached);
 
 extern struct cfdriver gscpcib_cd;
 
+void
+gscpcib_childdetached(device_t self, device_t child)
+{
+	/* We hold no pointers to child devices, so there is nothing
+	 * to do here.
+	 */
+}
+
 int
-gscpcib_match(struct device *parent, struct cfdata *match,
-    void *aux)
+gscpcib_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -81,14 +96,13 @@ gscpcib_match(struct device *parent, struct cfdata *match,
 }
 
 void
-gscpcib_attach(struct device *parent, struct device *self, void *aux)
+gscpcib_attach(device_t parent, device_t self, void *aux)
 {
-	struct gscpcib_softc *sc = (struct gscpcib_softc *)self;
+	struct gscpcib_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct gpiobus_attach_args gba;
 	pcireg_t gpiobase;
 	int i;
-	int gpio_present = 0;
 
 	/* Map GPIO I/O space */
 	gpiobase = pci_conf_read(pa->pa_pc, pa->pa_tag, GSCGPIO_BASE);
@@ -124,15 +138,30 @@ gscpcib_attach(struct device *parent, struct device *self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = GSCGPIO_NPINS;
 
-	gpio_present = 1;
+	sc->sc_gpio_present = true;
 
 corepcib:
 	/* Provide core pcib(4) functionality */
 	pcibattach(parent, self, aux);
 
 	/* Attach GPIO framework */
-	if (gpio_present)
-		config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
+	if (sc->sc_gpio_present)
+		config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+}
+
+int
+gscpcib_detach(device_t self, int flags)
+{
+	int rc;
+	struct gscpcib_softc *sc = device_private(self);
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	if (sc->sc_gpio_present)
+		bus_space_unmap(sc->sc_gpio_iot, sc->sc_gpio_ioh, GSCGPIO_SIZE);
+
+	return rc;
 }
 
 static inline void

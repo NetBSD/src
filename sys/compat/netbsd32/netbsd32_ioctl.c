@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.23.4.4 2007/09/03 14:32:39 yamt Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.23.4.5 2008/01/21 09:41:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.23.4.4 2007/09/03 14:32:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.23.4.5 2008/01/21 09:41:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,10 +118,7 @@ static inline void netbsd32_from_sioc_sg_req(struct sioc_sg_req *,
 /* convert to/from different structures */
 
 static inline void
-netbsd32_to_partinfo(s32p, p, cmd)
-	struct netbsd32_partinfo *s32p;
-	struct partinfo *p;
-	u_long cmd;
+netbsd32_to_partinfo(struct netbsd32_partinfo *s32p, struct partinfo *p, u_long cmd)
 {
 
 	p->disklab = (struct disklabel *)NETBSD32PTR64(s32p->disklab);
@@ -130,10 +127,7 @@ netbsd32_to_partinfo(s32p, p, cmd)
 
 #if 0
 static inline void
-netbsd32_to_format_op(s32p, p, cmd)
-	struct netbsd32_format_op *s32p;
-	struct format_op *p;
-	u_long cmd;
+netbsd32_to_format_op(struct netbsd32_format_op *s32p, struct format_op *p, u_long cmd)
 {
 
 	p->df_buf = (char *)NETBSD32PTR64(s32p->df_buf);
@@ -144,10 +138,7 @@ netbsd32_to_format_op(s32p, p, cmd)
 #endif
 
 static inline void
-netbsd32_to_ifreq(s32p, p, cmd)
-	struct netbsd32_ifreq *s32p;
-	struct ifreq *p;
-	u_long cmd;
+netbsd32_to_ifreq(struct netbsd32_ifreq *s32p, struct ifreq *p, u_long cmd)
 {
 
 	memcpy(p, s32p, sizeof *s32p);
@@ -162,10 +153,7 @@ netbsd32_to_ifreq(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_to_ifconf(s32p, p, cmd)
-	struct netbsd32_ifconf *s32p;
-	struct ifconf *p;
-	u_long cmd;
+netbsd32_to_ifconf(struct netbsd32_ifconf *s32p, struct ifconf *p, u_long cmd)
 {
 
 	p->ifc_len = s32p->ifc_len;
@@ -174,10 +162,7 @@ netbsd32_to_ifconf(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_to_ifmediareq(s32p, p, cmd)
-	struct netbsd32_ifmediareq *s32p;
-	struct ifmediareq *p;
-	u_long cmd;
+netbsd32_to_ifmediareq(struct netbsd32_ifmediareq *s32p, struct ifmediareq *p, u_long cmd)
 {
 
 	memcpy(p, s32p, sizeof *s32p);
@@ -185,10 +170,7 @@ netbsd32_to_ifmediareq(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_to_ifdrv(s32p, p, cmd)
-	struct netbsd32_ifdrv *s32p;
-	struct ifdrv *p;
-	u_long cmd;
+netbsd32_to_ifdrv(struct netbsd32_ifdrv *s32p, struct ifdrv *p, u_long cmd)
 {
 
 	memcpy(p, s32p, sizeof *s32p);
@@ -196,10 +178,7 @@ netbsd32_to_ifdrv(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_to_sioc_vif_req(s32p, p, cmd)
-	struct netbsd32_sioc_vif_req *s32p;
-	struct sioc_vif_req *p;
-	u_long cmd;
+netbsd32_to_sioc_vif_req(struct netbsd32_sioc_vif_req *s32p, struct sioc_vif_req *p, u_long cmd)
 {
 
 	p->vifi = s32p->vifi;
@@ -210,10 +189,7 @@ netbsd32_to_sioc_vif_req(s32p, p, cmd)
 }
 
 static inline void
-netbsd32_to_sioc_sg_req(s32p, p, cmd)
-	struct netbsd32_sioc_sg_req *s32p;
-	struct sioc_sg_req *p;
-	u_long cmd;
+netbsd32_to_sioc_sg_req(struct netbsd32_sioc_sg_req *s32p, struct sioc_sg_req *p, u_long cmd)
 {
 
 	p->src = s32p->src;
@@ -228,10 +204,7 @@ netbsd32_to_sioc_sg_req(s32p, p, cmd)
  */
 
 static inline void
-netbsd32_from_partinfo(p, s32p, cmd)
-	struct partinfo *p;
-	struct netbsd32_partinfo *s32p;
-	u_long cmd;
+netbsd32_from_partinfo(struct partinfo *p, struct netbsd32_partinfo *s32p, u_long cmd)
 {
 
 	NETBSD32PTR32(s32p->disklab, p->disklab);
@@ -240,10 +213,7 @@ netbsd32_from_partinfo(p, s32p, cmd)
 
 #if 0
 static inline void
-netbsd32_from_format_op(p, s32p, cmd)
-	struct format_op *p;
-	struct netbsd32_format_op *s32p;
-	u_long cmd;
+netbsd32_from_format_op(struct format_op *p, struct netbsd32_format_op *s32p, u_long cmd)
 {
 
 /* filled in */
@@ -257,10 +227,7 @@ netbsd32_from_format_op(p, s32p, cmd)
 #endif
 
 static inline void
-netbsd32_from_ifreq(p, s32p, cmd)
-	struct ifreq *p;
-	struct netbsd32_ifreq *s32p;
-	u_long cmd;
+netbsd32_from_ifreq(struct ifreq *p, struct netbsd32_ifreq *s32p, u_long cmd)
 {
 
 	/*
@@ -275,10 +242,7 @@ netbsd32_from_ifreq(p, s32p, cmd)
 }
 
 static inline void
-netbsd32_from_ifconf(p, s32p, cmd)
-	struct ifconf *p;
-	struct netbsd32_ifconf *s32p;
-	u_long cmd;
+netbsd32_from_ifconf(struct ifconf *p, struct netbsd32_ifconf *s32p, u_long cmd)
 {
 
 	s32p->ifc_len = p->ifc_len;
@@ -287,10 +251,7 @@ netbsd32_from_ifconf(p, s32p, cmd)
 }
 
 static inline void
-netbsd32_from_ifmediareq(p, s32p, cmd)
-	struct ifmediareq *p;
-	struct netbsd32_ifmediareq *s32p;
-	u_long cmd;
+netbsd32_from_ifmediareq(struct ifmediareq *p, struct netbsd32_ifmediareq *s32p, u_long cmd)
 {
 
 	memcpy(s32p, p, sizeof *p);
@@ -301,10 +262,7 @@ netbsd32_from_ifmediareq(p, s32p, cmd)
 }
 
 static inline void
-netbsd32_from_ifdrv(p, s32p, cmd)
-	struct ifdrv *p;
-	struct netbsd32_ifdrv *s32p;
-	u_long cmd;
+netbsd32_from_ifdrv(struct ifdrv *p, struct netbsd32_ifdrv *s32p, u_long cmd)
 {
 
 	memcpy(s32p, p, sizeof *p);
@@ -315,10 +273,7 @@ netbsd32_from_ifdrv(p, s32p, cmd)
 }
 
 static inline void
-netbsd32_from_sioc_vif_req(p, s32p, cmd)
-	struct sioc_vif_req *p;
-	struct netbsd32_sioc_vif_req *s32p;
-	u_long cmd;
+netbsd32_from_sioc_vif_req(struct sioc_vif_req *p, struct netbsd32_sioc_vif_req *s32p, u_long cmd)
 {
 
 	s32p->vifi = p->vifi;
@@ -329,10 +284,7 @@ netbsd32_from_sioc_vif_req(p, s32p, cmd)
 }
 
 static inline void
-netbsd32_from_sioc_sg_req(p, s32p, cmd)
-	struct sioc_sg_req *p;
-	struct netbsd32_sioc_sg_req *s32p;
-	u_long cmd;
+netbsd32_from_sioc_sg_req(struct sioc_sg_req *p, struct netbsd32_sioc_sg_req *s32p, u_long cmd)
 {
 
 	s32p->src = p->src;
@@ -350,16 +302,13 @@ netbsd32_from_sioc_sg_req(p, s32p, cmd)
  * on the ioctl command before and afterwards.
  */
 int
-netbsd32_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t *retval)
 {
-	struct netbsd32_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_voidp) data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	struct filedesc *fdp;

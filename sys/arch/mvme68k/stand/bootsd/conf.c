@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.3 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: conf.c,v 1.3.2.1 2008/01/21 09:37:45 yamt Exp $	*/
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -10,11 +10,9 @@
 struct fs_ops file_system[] = {
 	FS_OPS(ufs),
 };
-int nfsys = sizeof(file_system)/sizeof(struct fs_ops);
+int nfsys = __arraycount(file_system);
 
 struct devsw devsw[] = {
         { "bugsc", bugscstrategy, bugscopen, bugscclose, bugscioctl },
 };
-int     ndevs = (sizeof(devsw)/sizeof(devsw[0]));
-
-
+int     ndevs = __arraycount(devsw);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.9.2.4 2007/10/27 11:29:58 yamt Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.9.2.5 2008/01/21 09:42:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _SYS_DEV_FSSVAR_H
 #define _SYS_DEV_FSSVAR_H
+
+#include <sys/simplelock.h>
 
 #define FSS_UNCONFIG_ON_CLOSE	0x01	/* Unconfigure on last close */
 

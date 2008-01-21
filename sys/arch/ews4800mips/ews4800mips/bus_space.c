@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2.4.2 2006/06/21 14:51:12 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2.4.3 2008/01/21 09:36:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.2 2006/06/21 14:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.3 2008/01/21 09:36:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,10 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2.4.2 2006/06/21 14:51:12 yamt Exp $
 int	bus_space_debug = 0;
 #define	DPRINTF(fmt, args...)						\
 	if (bus_space_debug)						\
-		printf("%s: " fmt, __FUNCTION__ , ##args)
+		printf("%s: " fmt, __func__ , ##args)
 #define	DPRINTFN(n, arg)						\
 	if (bus_space_debug > (n))					\
-		printf("%s: " fmt, __FUNCTION__ , ##args)
+		printf("%s: " fmt, __func__ , ##args)
 #else
 #define	DPRINTF(arg...)		((void)0)
 #define	DPRINTFN(n, arg...)	((void)0)
@@ -176,7 +176,7 @@ bus_space_create(bus_space_tag_t t, const char *name,
 		    M_DEVBUF, 0, 0, EX_NOWAIT);
 		if (ebs->ebs_extent == NULL) {
 			panic("%s:: unable to create bus_space for "
-			    "0x%08lx-%#lx", __FUNCTION__, addr, size);
+			    "0x%08lx-%#lx", __func__, addr, size);
 		}
 	}
 

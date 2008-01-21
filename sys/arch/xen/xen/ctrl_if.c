@@ -1,4 +1,4 @@
-/*	$NetBSD: ctrl_if.c,v 1.10.2.3 2007/12/07 17:27:20 yamt Exp $	*/
+/*	$NetBSD: ctrl_if.c,v 1.10.2.4 2008/01/21 09:40:34 yamt Exp $	*/
 
 /******************************************************************************
  * ctrl_if.c
@@ -9,13 +9,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.10.2.3 2007/12/07 17:27:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ctrl_if.c,v 1.10.2.4 2008/01/21 09:40:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/malloc.h>
+#include <sys/simplelock.h>
 
 #include <xen/xen.h>
 #include <xen/hypervisor.h>

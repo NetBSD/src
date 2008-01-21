@@ -1,4 +1,4 @@
-/*	$NetBSD: icpsp.c,v 1.11.4.4 2007/10/27 11:30:45 yamt Exp $	*/
+/*	$NetBSD: icpsp.c,v 1.11.4.5 2008/01/21 09:43:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.11.4.4 2007/10/27 11:30:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.11.4.5 2008/01/21 09:43:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: icpsp.c,v 1.11.4.4 2007/10/27 11:30:45 yamt Exp $");
 #include <sys/endian.h>
 #include <sys/malloc.h>
 #include <sys/scsiio.h>
-#include <sys/lock.h>
 
 #include <sys/bswap.h>
 #include <sys/bus.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.26.16.5 2007/12/07 17:25:03 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.26.16.6 2008/01/21 09:37:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -47,12 +47,12 @@
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
-	int	md_tss_sel;		/* TSS selector */
 	volatile int md_astpending;	/* AST pending for this process */
 };
 
 /* md_flags */
 #define	MDL_USEDFPU	0x0001	/* has used the FPU */
+#define	MDL_IOPL	0x0002	/* XEN: i/o privilege */
 
 struct mdproc {
 	int	md_flags;

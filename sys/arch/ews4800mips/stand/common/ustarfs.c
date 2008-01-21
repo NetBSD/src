@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.2.16.4 2007/02/26 09:06:32 yamt Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.2.16.5 2008/01/21 09:36:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -100,12 +100,12 @@ ustarfs_load(const char *file, void **addrp, size_t *sizep)
 	/* Load file */
 	sz = ROUND_SECTOR(sz);
 	if ((*addrp = alloc(sz)) == 0) {
-		printf("%s: can't allocate memory.\n", __FUNCTION__);
+		printf("%s: can't allocate memory.\n", __func__);
 		return false;
 	}
 
 	if (!__block_read_n(*addrp, block, sz >> DEV_BSHIFT)) {
-		printf("%s: can't load file.\n", __FUNCTION__);
+		printf("%s: can't load file.\n", __func__);
 		dealloc(*addrp, sz);
 		return false;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fdio.c,v 1.7.18.4 2007/10/27 11:29:36 yamt Exp $	*/
+/*	$NetBSD: linux_fdio.c,v 1.7.18.5 2008/01/21 09:41:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.7.18.4 2007/10/27 11:29:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.7.18.5 2008/01/21 09:41:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_fdio.c,v 1.7.18.4 2007/10/27 11:29:36 yamt Exp
 #include <compat/linux/linux_syscallargs.h>
 
 int
-linux_ioctl_fdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
+linux_ioctl_fdio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		 register_t *retval)
 {
 	struct filedesc *fdp;

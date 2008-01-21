@@ -1,4 +1,4 @@
-/* $NetBSD: if_aumac.c,v 1.12.12.3 2007/09/03 14:27:54 yamt Exp $ */
+/* $NetBSD: if_aumac.c,v 1.12.12.4 2008/01/21 09:37:30 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.12.12.3 2007/09/03 14:27:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aumac.c,v 1.12.12.4 2008/01/21 09:37:30 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -202,9 +202,6 @@ static void	aumac_mii_writereg(struct device *, int, int, int);
 static void	aumac_mii_statchg(struct device *);
 static int	aumac_mii_wait(struct aumac_softc *, const char *);
 
-static int	aumac_mediachange(struct ifnet *);
-static void	aumac_mediastatus(struct ifnet *, struct ifmediareq *);
-
 static int	aumac_match(struct device *, struct cfdata *, void *);
 static void	aumac_attach(struct device *, struct device *, void *);
 
@@ -326,8 +323,9 @@ aumac_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_mii.mii_readreg = aumac_mii_readreg;
 	sc->sc_mii.mii_writereg = aumac_mii_writereg;
 	sc->sc_mii.mii_statchg = aumac_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, 0, aumac_mediachange,
-	    aumac_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ether_mediachange,
+	    ether_mediastatus);
 
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
@@ -502,28 +500,18 @@ static int
 aumac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct aumac_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				aumac_set_filter(sc);
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			aumac_set_filter(sc);
 	}
 
 	/* Try to get more packets going. */
@@ -828,7 +816,8 @@ aumac_init(struct ifnet *ifp)
 #endif
 
 	/* Set the media. */
-	aumac_mediachange(ifp);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/*
 	 * Set the receive filter.  This will actually start the transmit
@@ -843,6 +832,7 @@ aumac_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING; 
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+out:
 	if (error)
 		printf("%s: interface not running\n", sc->sc_dev.dv_xname);
 	return (error);
@@ -993,36 +983,6 @@ aumac_set_filter(struct aumac_softc *sc)
 	sc->sc_control |= CONTROL_PM;
 	bus_space_write_4(sc->sc_st, sc->sc_mac_sh, MAC_CONTROL,
 	    sc->sc_control);
-}
-
-/*
- * aumac_mediastatus:	[ifmedia interface function]
- *
- *	Get the current interface media status.
- */
-static void
-aumac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct aumac_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
- * aumac_mediachange:	[ifmedia interface function]
- *
- *	Set hardware to newly selected media.
- */
-static int
-aumac_mediachange(struct ifnet *ifp)
-{
-	struct aumac_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.14.2.4 2007/12/07 17:28:49 yamt Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.14.2.5 2008/01/21 09:41:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.4 2007/12/07 17:28:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.14.2.5 2008/01/21 09:41:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,16 +56,13 @@ static int recvit32(struct lwp *, int, struct netbsd32_msghdr *, struct iovec *,
 			 register_t *);
 
 int
-netbsd32_recvmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_recvmsg(struct lwp *l, const struct netbsd32_recvmsg_args *uap, register_t *retval)
 {
-	struct netbsd32_recvmsg_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_msghdrp_t) msg;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct netbsd32_msghdr msg;
 	struct iovec aiov[UIO_SMALLIOV], *uiov, *iov;
 	int error;
@@ -99,13 +96,7 @@ done:
 }
 
 int
-recvit32(l, s, mp, iov, namelenp, retsize)
-	struct lwp *l;
-	int s;
-	struct netbsd32_msghdr *mp;
-	struct iovec *iov;
-	void *namelenp;
-	register_t *retsize;
+recvit32(struct lwp *l, int s, struct netbsd32_msghdr *mp, struct iovec *iov, void *namelenp, register_t *retsize)
 {
 	struct file *fp;
 	struct uio auio;
@@ -227,16 +218,13 @@ recvit32(l, s, mp, iov, namelenp, retsize)
 }
 
 int
-netbsd32_sendmsg(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sendmsg(struct lwp *l, const struct netbsd32_sendmsg_args *uap, register_t *retval)
 {
-	struct netbsd32_sendmsg_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(const netbsd32_msghdrp_t) msg;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 	struct msghdr msg;
 	struct netbsd32_msghdr msg32;
 	struct iovec aiov[UIO_SMALLIOV], *iov;
@@ -275,19 +263,16 @@ done:
 }
 
 int
-netbsd32_recvfrom(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_recvfrom(struct lwp *l, const struct netbsd32_recvfrom_args *uap, register_t *retval)
 {
-	struct netbsd32_recvfrom_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) flags;
 		syscallarg(netbsd32_sockaddrp_t) from;
 		syscallarg(netbsd32_intp) fromlenaddr;
-	} */ *uap = v;
+	} */
 	struct netbsd32_msghdr msg;
 	struct iovec aiov;
 	int error;
@@ -311,19 +296,16 @@ netbsd32_recvfrom(l, v, retval)
 }
 
 int
-netbsd32_sendto(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+netbsd32_sendto(struct lwp *l, const struct netbsd32_sendto_args *uap, register_t *retval)
 {
-	struct netbsd32_sendto_args /* {
+	/* {
 		syscallarg(int) s;
 		syscallarg(const netbsd32_voidp) buf;
 		syscallarg(netbsd32_size_t) len;
 		syscallarg(int) flags;
 		syscallarg(const netbsd32_sockaddrp_t) to;
 		syscallarg(int) tolen;
-	} */ *uap = v;
+	} */
 	struct msghdr msg;
 	struct iovec aiov;
 

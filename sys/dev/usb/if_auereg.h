@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.16.34.2 2007/12/07 17:31:28 yamt Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.16.34.3 2008/01/21 09:44:42 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -237,8 +237,11 @@ struct aue_softc {
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
-	struct workqueue	*wqp;
-	struct work		wk;
+	struct lwp		*aue_thread;
+	int			aue_closing;
+	kcondvar_t		aue_domc;
+	kcondvar_t		aue_closemc;
+	kmutex_t		aue_mcmtx;
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
 #elif defined(__OpenBSD__)
@@ -276,7 +279,6 @@ struct aue_softc {
 	struct usb_task		aue_stop_task;
 
 	kmutex_t		aue_mii_lock;
-
 };
 
 #define AUE_TIMEOUT		1000

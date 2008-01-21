@@ -1,4 +1,4 @@
-/*	$NetBSD: getextmemx.c,v 1.6 2004/03/24 16:46:28 drochner Exp $	*/
+/*	$NetBSD: getextmemx.c,v 1.6.16.1 2008/01/21 09:37:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -50,7 +50,7 @@ getextmemx()
 		uint32_t dta[8];
 		/* pad to 64 bytes - without this, machine would reset */
 		uint8_t __pad[30];
-	} __attribute__((__packed__)) bufps2;
+	} __packed bufps2;
 #endif
 
 #ifdef DEBUG_MEMSIZE

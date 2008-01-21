@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_timer.c,v 1.17.2.2 2007/02/26 09:06:20 yamt Exp $	*/
+/*	$NetBSD: iq80310_timer.c,v 1.17.2.3 2008/01/21 09:36:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -47,12 +47,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.17.2.2 2007/02/26 09:06:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.17.2.3 2008/01/21 09:36:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>
 
@@ -79,6 +81,21 @@ __KERNEL_RCSID(0, "$NetBSD: iq80310_timer.c,v 1.17.2.2 2007/02/26 09:06:20 yamt 
 static void *clock_ih;
 
 static uint32_t counts_per_hz;
+
+static u_int	iq80310_get_timecount(struct timecounter *);
+
+static struct timecounter iq80310_timecounter = {
+	iq80310_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	COUNTS_PER_SEC,		/* frequency */
+	"iq80310",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static volatile uint32_t iq80310_base;
 
 int	clockhandler(void *);
 
@@ -177,15 +194,6 @@ cpu_initclocks(void)
 		printf("Cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-	}
 
 	/*
 	 * We only have one timer available; stathz and profhz are
@@ -221,6 +229,8 @@ cpu_initclocks(void)
 	timer_enable(TIMER_ENABLE_EN);
 
 	restore_interrupts(oldirqstate);
+
+	tc_init(&iq80310_timecounter);
 }
 
 /*
@@ -242,46 +252,17 @@ setstatclockrate(int newhz)
 	 */
 }
 
-/*
- * microtime:
- *
- *	Fill in the specified timeval struct with the current time
- *	accurate to the microsecond.
- */
-void
-microtime(struct timeval *tvp)
+static u_int
+iq80310_get_timecount(struct timecounter *tc)
 {
-	static struct timeval lasttv;
-	u_int oldirqstate;
-	uint32_t counts;
+	u_int oldirqstate, base, counter;
 
 	oldirqstate = disable_interrupts(I32_bit);
-
-	counts = timer_read();
-
-	/* Fill in the timeval struct. */
-	*tvp = time;
-	tvp->tv_usec += (counts / COUNTS_PER_USEC);
-
-	/* Make sure microseconds doesn't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	/* Make sure the time has advanced. */
-	if (tvp->tv_sec == lasttv.tv_sec &&
-	    tvp->tv_usec <= lasttv.tv_usec) {
-		tvp->tv_usec = lasttv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-
-	lasttv = *tvp;
-
+	base = iq80310_base;
+	counter = timer_read();
 	restore_interrupts(oldirqstate);
+
+	return base + counter;
 }
 
 /*
@@ -331,6 +312,8 @@ clockhandler(void *arg)
 
 	timer_disable(TIMER_ENABLE_INTEN);
 	timer_enable(TIMER_ENABLE_INTEN);
+
+	atomic_add_32(&iq80310_base, counts_per_hz);
 
 	hardclock(frame);
 

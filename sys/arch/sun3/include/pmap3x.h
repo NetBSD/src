@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.19.8.1 2006/12/30 20:47:12 yamt Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.19.8.2 2008/01/21 09:39:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  * XXX - Does user-level code really see this struct?
  */
 
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 struct pmap {
 	struct a_tmgr_struct	*pm_a_tmgr; 	/* Level-A table manager */

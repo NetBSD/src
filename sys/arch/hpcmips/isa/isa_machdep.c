@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.30.2.1 2006/06/21 14:51:50 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.30.2.2 2008/01/21 09:36:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.30.2.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.30.2.2 2008/01/21 09:36:38 yamt Exp $");
 
 #include "opt_vr41xx.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
 
 #include <dev/isa/isavar.h>
 #include <dev/isa/isareg.h>

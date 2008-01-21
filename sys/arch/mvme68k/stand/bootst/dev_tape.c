@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_tape.c,v 1.6.2.1 2007/09/03 14:28:13 yamt Exp $	*/
+/*	$NetBSD: dev_tape.c,v 1.6.2.2 2008/01/21 09:37:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -65,26 +65,23 @@ static int hackprom_diskrd(struct mvmeprom_dskio *);
  * can open the appropriate tape segment.
  */
 int
-devopen(f, fname, file)
-	struct open_file *f;
-	const char *fname;		/* normally "1" */
-	char **file;
+devopen(struct open_file *f, const char *fname, char **file)
 {
 	struct devsw *dp;
 
-	*file = (char*)fname;
+	*file = (char *)fname;
 	dp = &devsw[0];
 	f->f_dev = dp;
 
 	/* The following will call tape_open() */
-	return (dp->dv_open(f, fname));
+	return dp->dv_open(f, fname);
 }
 
 int
 tape_open(struct open_file *f, ...)
 {
 	char *fname;		/* partition number, i.e. "1" */
-	int	part;
+	int part;
 	struct mvmeprom_dskio *ti;
 	va_list ap;
 
@@ -119,15 +116,13 @@ tape_open(struct open_file *f, ...)
 
 	f->f_devdata = ti;
 
-	return (0);
+	return 0;
 }
 
 int
-tape_close(f)
-	struct open_file *f;
+tape_close(struct open_file *f)
 {
 	struct mvmeprom_dskio *ti;
-
 
 	ti = f->f_devdata;
 	f->f_devdata = NULL;
@@ -137,13 +132,8 @@ tape_close(f)
 #define MVMEPROM_SCALE (512/MVMEPROM_BLOCK_SIZE)
 
 int
-tape_strategy(devdata, flag, dblk, size, buf, rsize)
-	void	*devdata;
-	int	flag;
-	daddr_t	dblk;
-	u_int	size;
-	void	*buf;
-	u_int	*rsize;
+tape_strategy(void *devdata, int flag, daddr_t dblk, u_int size, void *buf,
+    u_int *rsize)
 {
 	struct mvmeprom_dskio *ti;
 	int ret;
@@ -151,7 +141,7 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	ti = devdata;
 
 	if (flag != F_READ)
-		return(EROFS);
+		return EROFS;
 
 	ti->status = 0;
 	ti->pbuffer = buf;
@@ -159,23 +149,24 @@ tape_strategy(devdata, flag, dblk, size, buf, rsize)
 	ti->blk_cnt = size / (512 / MVMEPROM_SCALE);
 
 	/* work around for stupid '147 prom bug */
-	if ( bugargs.cputyp == 0x147 )
+	if (bugargs.cputyp == 0x147)
 		ret = hackprom_diskrd(ti);
 	else
 		ret = mvmeprom_diskrd(ti);
 
 	if (ret != 0)
-		return (EIO);
+		return EIO;
 
 	*rsize = (ti->blk_cnt / MVMEPROM_SCALE) * 512;
 	ti->flag |= IGNORE_FILENUM; /* ignore next time */
 
-	return (0);
+	return 0;
 }
 
 int
 tape_ioctl(struct open_file *f, u_long cmd, void *data)
 {
+
 	return EIO;
 }
 
@@ -184,10 +175,10 @@ hackprom_diskrd(struct mvmeprom_dskio *ti)
 {
 	static int blkoffset = 0;
 
-#define	hackload_addr	((char *) 0x080000)	/* Load tape segment here */
+#define	hackload_addr	((char *)0x080000)	/* Load tape segment here */
 #define hackload_blocks 0x2000			/* 2Mb worth */
 
-	if ( (ti->flag & IGNORE_FILENUM) == 0 ) {
+	if ((ti->flag & IGNORE_FILENUM) == 0) {
 		/*
 		 * First time through. Load the whole tape segment...
 		 */
@@ -206,7 +197,7 @@ hackprom_diskrd(struct mvmeprom_dskio *ti)
 		 * PROM returns 1 on end-of-file. This isn't an
 		 * error in this instance, just in case you're wondering! ;-)
 		 */
-		if ( ret < 0 || ret > 1 )
+		if (ret < 0 || ret > 1)
 			return ret;
 
 		blkoffset = 0;
@@ -216,7 +207,7 @@ hackprom_diskrd(struct mvmeprom_dskio *ti)
 	 * Grab the required number of block(s)
 	 */
 	memcpy(ti->pbuffer, &(hackload_addr[blkoffset]),
-	      ti->blk_cnt * MVMEPROM_BLOCK_SIZE);
+	    ti->blk_cnt * MVMEPROM_BLOCK_SIZE);
 
 	blkoffset += (ti->blk_cnt * MVMEPROM_BLOCK_SIZE);
 

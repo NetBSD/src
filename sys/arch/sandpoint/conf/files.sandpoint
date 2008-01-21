@@ -1,4 +1,4 @@
-#	$NetBSD: files.sandpoint,v 1.17.16.4 2007/12/07 17:26:00 yamt Exp $
+#	$NetBSD: files.sandpoint,v 1.17.16.5 2008/01/21 09:39:07 yamt Exp $
 #
 # Motorola's "SandPoint" evaluation board's specific configuration info
 #
@@ -113,4 +113,4 @@ attach	fd at fdc
 
 include	"dev/usb/files.usb"
 
-include "arch/sandpoint/conf/majors.sandpoint"
+include "arch/powerpc/conf/majors.powerpc"

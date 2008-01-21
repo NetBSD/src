@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.26.2.6 2007/12/07 17:30:22 yamt Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.26.2.7 2008/01/21 09:43:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,13 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.26.2.6 2007/12/07 17:30:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.26.2.7 2008/01/21 09:43:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -95,8 +94,7 @@ struct agp_i810_softc {
 	bus_space_handle_t gtt_bsh;	/* GTT bus_space handle */
 	struct pci_attach_args vga_pa;
 
-	void *sc_powerhook;
-	struct pci_conf_state sc_pciconf;
+	u_int32_t pgtblctl;
 };
 
 static u_int32_t agp_i810_get_aperture(struct agp_softc *);
@@ -110,7 +108,9 @@ static struct agp_memory *agp_i810_alloc_memory(struct agp_softc *, int,
 static int agp_i810_free_memory(struct agp_softc *, struct agp_memory *);
 static int agp_i810_bind_memory(struct agp_softc *, struct agp_memory *, off_t);
 static int agp_i810_unbind_memory(struct agp_softc *, struct agp_memory *);
-static void agp_i810_powerhook(int, void *);
+
+static bool agp_i810_resume(device_t);
+static int agp_i810_init(struct agp_softc *);
 
 static int agp_i810_init(struct agp_softc *);
 
@@ -331,6 +331,9 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 
 	gatt->ag_entries = AGP_GET_APERTURE(sc) >> AGP_PAGE_SHIFT;
 
+	if (!pmf_device_register(self, NULL, agp_i810_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	return agp_i810_init(sc);
 }
 
@@ -499,12 +502,6 @@ static int agp_i810_init(struct agp_softc *sc)
 	 * Make sure the chipset can see everything.
 	 */
 	agp_flush_cache();
-
-	isc->sc_powerhook = powerhook_establish(sc->as_dev.dv_xname,
-	    agp_i810_powerhook, sc);
-	if (isc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish PCI power hook\n",
-		    sc->as_dev.dv_xname);
 
 #if 0
 	/*      
@@ -888,17 +885,14 @@ agp_i810_unbind_memory(struct agp_softc *sc, struct agp_memory *mem)
 	return 0;
 }
 
-static void
-agp_i810_powerhook(int why, void *arg)
+static bool
+agp_i810_resume(device_t dv)
 {
-	struct agp_softc *sc = (struct agp_softc *)arg;
+	struct agp_softc *sc = device_private(dv);
 	struct agp_i810_softc *isc = sc->as_chipc;
 
-	if (why == PWR_RESUME) {
-		pci_conf_restore(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
-		agp_flush_cache();
-	} else if ((why == PWR_STANDBY) || (why == PWR_SUSPEND))
-		pci_conf_capture(sc->as_pc, sc->as_tag, &isc->sc_pciconf);
+	isc->pgtblctl = READ4(AGP_I810_PGTBL_CTL);
+	agp_flush_cache();
 
-	return;
+	return true;
 }

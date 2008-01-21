@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_hy.c,v 1.25.2.3 2007/09/03 14:25:05 yamt Exp $	*/
+/*	$NetBSD: grf_hy.c,v 1.25.2.4 2008/01/21 09:36:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -120,9 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.25.2.3 2007/09/03 14:25:05 yamt Exp $");
-
-#include "opt_compat_hpux.h"
+__KERNEL_RCSID(0, "$NetBSD: grf_hy.c,v 1.25.2.4 2008/01/21 09:36:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,43 +309,6 @@ hy_mode(struct grf_data *gp, int cmd, void *data)
 	case GM_UNMAP:
 		gp->g_data = 0;
 		break;
-
-#ifdef COMPAT_HPUX
-	case GM_DESCRIBE:
-	{
-		struct grf_fbinfo *fi = (struct grf_fbinfo *)data;
-		struct grfinfo *gi = &gp->g_display;
-		int i;
-
-		/* feed it what HP-UX expects */
-		fi->id = gi->gd_id;
-		fi->mapsize = gi->gd_fbsize;
-		fi->dwidth = gi->gd_dwidth;
-		fi->dlength = gi->gd_dheight;
-		fi->width = gi->gd_fbwidth;
-		fi->length = gi->gd_fbheight;
-		fi->bpp = NBBY;
-		fi->xlen = (fi->width * fi->bpp) / NBBY;
-		fi->npl = gi->gd_planes;
-		fi->bppu = fi->npl;
-		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
-		memcpy(fi->name, "A1096A", 7);	/* ?? */
-		fi->attr = 0;			/* ?? */
-		/*
-		 * If mapped, return the UVA where mapped.
-		 */
-		if (gp->g_data) {
-			fi->regbase = gp->g_data;
-			fi->fbbase = fi->regbase + gp->g_display.gd_regsize;
-		} else {
-			fi->fbbase = 0;
-			fi->regbase = 0;
-		}
-		for (i = 0; i < 6; i++)
-			fi->regions[i] = 0;
-		break;
-	}
-#endif
 
 	default:
 		error = EINVAL;

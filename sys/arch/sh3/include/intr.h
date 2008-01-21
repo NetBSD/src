@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.19.16.2 2007/12/07 17:26:08 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.19.16.3 2008/01/21 09:39:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -36,9 +36,6 @@
 #ifndef _SH3_INTR_H_
 #define	_SH3_INTR_H_
 
-#include <sys/device.h>
-#include <sys/lock.h>
-#include <sys/queue.h>
 #include <sh3/psl.h>
 
 /* Interrupt sharing types. */

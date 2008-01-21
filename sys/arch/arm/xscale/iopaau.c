@@ -1,4 +1,4 @@
-/*	$NetBSD: iopaau.c,v 1.11.16.2 2007/11/15 11:42:35 yamt Exp $	*/
+/*	$NetBSD: iopaau.c,v 1.11.16.3 2008/01/21 09:35:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -43,18 +43,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.11.16.2 2007/11/15 11:42:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopaau.c,v 1.11.16.3 2008/01/21 09:35:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
-#include <sys/lock.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/uio.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm.h>
-
-#include <machine/bus.h>
 
 #include <arm/xscale/iopaaureg.h>
 #include <arm/xscale/iopaauvar.h>

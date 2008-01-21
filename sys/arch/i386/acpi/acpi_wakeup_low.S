@@ -1,0 +1,123 @@
+/*	$NetBSD: acpi_wakeup_low.S,v 1.4.4.2 2008/01/21 09:36:48 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 2007 Joerg Sonnenberger <joerg@netbsd.org>
+ * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
+ * Copyright (c) 2001 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup_low.S,v 1.4.4.2 2008/01/21 09:36:48 yamt Exp $");
+
+#include "assym.h"
+#include <machine/segments.h>
+
+	.text
+	.p2align 2, 0x90
+	.globl acpi_md_sleep_exit
+acpi_md_sleep_exit:
+	lgdt	ACPI_SUSPEND_GDT(%edx)
+
+	/* Reload fixed descriptors for new GDT */
+	movw	$GSEL(GDATA_SEL, SEL_KPL),%ax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
+
+	movw	ACPI_SUSPEND_FS(%edx),%ax
+	movw	%ax,%fs
+	movw	ACPI_SUSPEND_GS(%edx),%ax
+	movw	%ax,%gs
+
+	movl	ACPI_SUSPEND_CR2(%edx),%eax
+	movl	%eax,%cr2
+
+	movl	ACPI_SUSPEND_CR4(%edx),%eax
+	movl	%eax,%cr4
+	movl	ACPI_SUSPEND_CR3(%edx),%eax
+	movl	%eax,%cr3
+
+	jmp 1f
+1:
+
+	lidt	ACPI_SUSPEND_IDT(%edx)
+	lldt	ACPI_SUSPEND_LDT(%edx)
+
+	movl	CPUVAR(GDT),%eax
+	movzwl	ACPI_SUSPEND_TR(%edx),%ecx
+	andl	$~0x0200,4(%eax,%ecx, 1)
+	ltr	%cx
+
+	movl	ACPI_SUSPEND_EBX(%edx),%ebx
+	movl	ACPI_SUSPEND_ESI(%edx),%esi
+	movl	ACPI_SUSPEND_EDI(%edx),%edi
+	movl	ACPI_SUSPEND_EBP(%edx),%ebp
+	movl	ACPI_SUSPEND_ESP(%edx),%esp
+
+	pushl	ACPI_SUSPEND_EFL(%edx)
+	popfl
+
+	xorl	%eax,%eax
+
+	ret
+
+	.p2align 2, 0x90
+	.type acpi_md_sleep_prepare, @function
+	.globl acpi_md_sleep_prepare
+acpi_md_sleep_prepare:
+	movl	CPUVAR(SELF),%edx
+	movw	%fs,ACPI_SUSPEND_FS(%edx)
+	movw	%gs,ACPI_SUSPEND_GS(%edx)
+
+	movl	%ebx,ACPI_SUSPEND_EBX(%edx)
+	movl	%esi,ACPI_SUSPEND_ESI(%edx)
+	movl	%edi,ACPI_SUSPEND_EDI(%edx)
+	movl	%ebp,ACPI_SUSPEND_EBP(%edx)
+	movl	%esp,ACPI_SUSPEND_ESP(%edx)
+
+	movl	%cr0,%eax
+	movl	%eax,ACPI_SUSPEND_CR0(%edx)
+	movl	%cr2,%eax
+	movl	%eax,ACPI_SUSPEND_CR2(%edx)
+	movl	%cr3,%eax
+	movl	%eax,ACPI_SUSPEND_CR3(%edx)
+	movl	%cr4,%eax
+	movl	%eax,ACPI_SUSPEND_CR4(%edx)
+
+	pushfl
+	popl	ACPI_SUSPEND_EFL(%edx)
+
+	sgdt	ACPI_SUSPEND_GDT(%edx)
+	sidt	ACPI_SUSPEND_IDT(%edx)
+	sldt	ACPI_SUSPEND_LDT(%edx)
+	str	ACPI_SUSPEND_TR(%edx)
+
+	movl	4(%esp),%eax
+	pushl	%eax
+	call	acpi_md_sleep_enter
+	/* acpi_md_sleep_enter only returns on failure. */
+	popl	%eax
+	movl	$-1,%eax
+	ret

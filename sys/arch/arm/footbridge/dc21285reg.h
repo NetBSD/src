@@ -1,4 +1,4 @@
-/*	$NetBSD: dc21285reg.h,v 1.4 2003/01/17 22:29:43 thorpej Exp $	*/
+/*	$NetBSD: dc21285reg.h,v 1.4.18.1 2008/01/21 09:35:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -46,6 +46,9 @@
 #define DC21285_DEVICE_ID	0x1065
 #define REVISION		0x08
 #define CLASS			0x0A
+#define CSR_BASE_MEMORY_ADDR	0x10
+#define CSR_BASE_IO_ADDR	0x14
+#define SDRAM_MEMORY_ADDR	0x18
 
 /* Other PCI control / status registers */
 

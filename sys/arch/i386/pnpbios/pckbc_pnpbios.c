@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.8.18.2 2007/09/03 14:26:54 yamt Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.8.18.3 2008/01/21 09:37:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.8.18.2 2007/09/03 14:26:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.8.18.3 2008/01/21 09:37:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,9 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.8.18.2 2007/09/03 14:26:54 yamt 
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
-
-#include <machine/bus.h>
+#include <sys/bus.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>

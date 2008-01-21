@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.28.2.6 2007/11/15 11:42:45 yamt Exp $	*/
+/*	$NetBSD: trap.c,v 1.28.2.7 2008/01/21 09:36:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -69,13 +69,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.6 2007/11/15 11:42:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.7 2008/01/21 09:36:45 yamt Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 /* #define USERTRACE */
 
 #include "opt_kgdb.h"
+#include "opt_ptrace.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +112,15 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.28.2.6 2007/11/15 11:42:45 yamt Exp $");
 
 #include <ddb/db_output.h>
 #include <ddb/db_interface.h>
+
+#ifdef PTRACE
+void ss_clear_breakpoints(struct lwp *l);
+int ss_put_value(struct lwp *, vaddr_t, u_int);
+int ss_get_value(struct lwp *, vaddr_t, u_int *);
+#endif
+
+/* single-step breakpoint */
+#define SSBREAKPOINT   (HPPA_BREAK_KERNEL | (HPPA_BREAK_SS << 13))
 
 #if defined(DEBUG) || defined(DIAGNOSTIC)
 /*
@@ -177,6 +187,14 @@ volatile int astpending;
 void pmap_hptdump(void);
 void syscall(struct trapframe *, int *);
 
+#if defined(DEBUG)
+struct trapframe *sanity_frame;
+struct lwp *sanity_lwp;
+int sanity_checked = 0;
+void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
+#endif
+
+
 #ifdef USERTRACE
 /*
  * USERTRACE is a crude facility that traces the PC of
@@ -185,6 +203,9 @@ void syscall(struct trapframe *, int *);
  * with certain arguments - see the activation code in
  * syscall().
  */
+static void user_backtrace(struct trapframe *, struct lwp *, int);
+static void user_backtrace_raw(u_int, u_int);
+
 u_int rctr_next_iioq;
 #endif
 
@@ -308,7 +329,6 @@ trap_kdebug(int type, int code, struct trapframe *frame)
  * sets up a frame pointer and stores the return pointer 
  * and arguments in it.
  */
-static void user_backtrace_raw(u_int, u_int);
 static void
 user_backtrace_raw(u_int pc, u_int fp)
 {
@@ -339,7 +359,6 @@ user_backtrace_raw(u_int pc, u_int fp)
 	printf("  backtrace stopped with pc %08x fp 0x%08x\n", pc, fp);
 }
 
-static void user_backtrace(struct trapframe *, struct lwp *, int);
 static void
 user_backtrace(struct trapframe *tf, struct lwp *l, int type)
 {
@@ -396,10 +415,6 @@ user_backtrace(struct trapframe *tf, struct lwp *l, int type)
  * assumptions about what a healthy CPU state should be,
  * with some documented elsewhere, some not.
  */
-struct trapframe *sanity_frame;
-struct lwp *sanity_lwp;
-int sanity_checked = 0;
-void frame_sanity_check(int, int, struct trapframe *, struct lwp *);
 void
 frame_sanity_check(int where, int type, struct trapframe *tf, struct lwp *l)
 {
@@ -497,7 +512,8 @@ trap(int type, struct trapframe *frame)
 
 	type_raw = type & ~T_USER;
 	opcode = frame->tf_iir;
-	if (type_raw == T_ITLBMISS || type_raw == T_ITLBMISSNA) {
+	if (type_raw == T_ITLBMISS || type_raw == T_ITLBMISSNA ||
+	    type_raw == T_IBREAK || type_raw == T_TAKENBR) {
 		va = frame->tf_iioq_head;
 		space = frame->tf_iisq_head;
 		vftype = VM_PROT_EXECUTE;
@@ -683,8 +699,35 @@ do_onfault:
 
 	case T_IBREAK | T_USER:
 	case T_DBREAK | T_USER:
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_trap = type_raw;
+		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+#ifdef PTRACE
+		ss_clear_breakpoints(l);
+		if (opcode == SSBREAKPOINT)
+			ksi.ksi_code = TRAP_BRKPT;
+#endif
 		/* pass to user debugger */
+		trapsignal(l, &ksi);
+ 
 		break;
+
+#ifdef PTRACE
+	case T_TAKENBR | T_USER:
+		ss_clear_breakpoints(l);
+
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_signo = SIGTRAP;
+		ksi.ksi_code = TRAP_TRACE;
+		ksi.ksi_trap = type_raw;
+		ksi.ksi_addr = (void *)frame->tf_iioq_head;
+
+                /* pass to user debugger */
+		trapsignal(l, &ksi);
+		break;
+#endif
 
 	case T_EXCEPTION | T_USER: {	/* co-proc assist trap */
 		uint64_t *fpp;
@@ -928,6 +971,104 @@ child_return(void *arg)
 #endif /* DEBUG */
 }
 
+#ifdef PTRACE
+
+#include <sys/ptrace.h>
+
+int
+ss_get_value(struct lwp *l, vaddr_t addr, u_int *value)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = (void *)value;
+	iov.iov_len = sizeof(u_int);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)addr;
+	uio.uio_resid = sizeof(u_int);
+	uio.uio_rw = UIO_READ;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	return (process_domem(curlwp, l, &uio));
+}
+
+int
+ss_put_value(struct lwp *l, vaddr_t addr, u_int value)
+{
+	struct uio uio;
+	struct iovec iov;
+
+	iov.iov_base = (void *)&value;
+	iov.iov_len = sizeof(u_int);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = (off_t)addr;
+	uio.uio_resid = sizeof(u_int);
+	uio.uio_rw = UIO_WRITE;
+	UIO_SETUP_SYSSPACE(&uio);
+
+	return (process_domem(curlwp, l, &uio));
+}
+
+void
+ss_clear_breakpoints(struct lwp *l)
+{
+	/* Restore origional instructions. */
+	if (l->l_md.md_bpva != 0) {
+		ss_put_value(l, l->l_md.md_bpva, l->l_md.md_bpsave[0]);
+		ss_put_value(l, l->l_md.md_bpva + 4, l->l_md.md_bpsave[1]);
+		l->l_md.md_bpva = 0;
+	}
+}
+
+
+int
+process_sstep(struct lwp *l, int sstep)
+{
+	struct trapframe *tf = l->l_md.md_regs;
+	int error;
+
+	ss_clear_breakpoints(l);
+
+	/* We're continuing... */
+	/* Don't touch the syscall gateway page. */
+	/* XXX head */
+	if (sstep == 0 ||
+	    (tf->tf_iioq_tail & ~PAGE_MASK) == SYSCALLGATE) {
+		tf->tf_ipsw &= ~PSW_T;
+		return 0;
+	}
+
+	l->l_md.md_bpva = tf->tf_iioq_tail & ~HPPA_PC_PRIV_MASK;
+
+	/*
+	 * Insert two breakpoint instructions; the first one might be
+	 * nullified.  Of course we need to save two instruction
+	 * first.
+	 */
+
+	error = ss_get_value(l, l->l_md.md_bpva, &l->l_md.md_bpsave[0]);
+	if (error)
+		return (error);
+	error = ss_get_value(l, l->l_md.md_bpva + 4, &l->l_md.md_bpsave[1]);
+	if (error)
+		return (error);
+
+	error = ss_put_value(l, l->l_md.md_bpva, SSBREAKPOINT);
+	if (error)
+		return error;
+	error = ss_put_value(l, l->l_md.md_bpva + 4, SSBREAKPOINT);
+	if (error)
+		return error;
+
+	tf->tf_ipsw |= PSW_T;
+
+	return 0;
+}
+#endif
+
+
 /*
  * call actual syscall routine
  * from the low-level syscall handler:
@@ -1149,7 +1290,7 @@ syscall(struct trapframe *frame, int *args)
 		callp += code;
 	argsize = callp->sy_argsize;
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -1177,10 +1318,10 @@ out:
 		 *	ldil	L%SYSCALLGATE, r1
 		 *	ble	4(sr7, r1)
 		 *	ldi	__CONCAT(SYS_,x), t1
-		 *	ldw	HPPA_FRAME_ERP(sr0,sp), rp
+		 *	comb,<>	%r0, %t1, __cerror
 		 *
 		 * And our offset queue head points to the
-		 * final ldw instruction.  So we need to 
+		 * comb instruction.  So we need to
 		 * subtract twelve to reach the ldil.
 		 */
 		frame->tf_iioq_head -= 12;
@@ -1196,7 +1337,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 
 	userret(l, frame->tf_iioq_head, 0);
 #ifdef DEBUG

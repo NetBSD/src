@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.8.7 2007/11/15 11:42:50 yamt Exp $
+# $NetBSD: INSTALL_XEN2_DOMU,v 1.1.8.8 2008/01/21 09:36:52 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -6,8 +6,8 @@ options 	XEN
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	CPUFLAGS="-march=i686"
-makeoptions	COPTS="-Os"
+makeoptions 	CPUFLAGS="-march=i686"
+makeoptions 	COPTS="-Os"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -18,7 +18,6 @@ options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 maxusers	32		# estimated number of users
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
@@ -51,7 +50,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI

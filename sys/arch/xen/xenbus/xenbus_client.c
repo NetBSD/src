@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.4.10.5 2007/12/07 17:27:25 yamt Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.4.10.6 2008/01/21 09:40:38 yamt Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,11 +29,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.4.10.5 2007/12/07 17:27:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.4.10.6 2008/01/21 09:40:38 yamt Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
-    printk("xenbus_client (%s:%d) " fmt ".\n", __FUNCTION__, __LINE__, ##args)
+    printk("xenbus_client (%s:%d) " fmt ".\n", __func__, __LINE__, ##args)
 #else
 #define DPRINTK(fmt, args...) ((void)0)
 #endif

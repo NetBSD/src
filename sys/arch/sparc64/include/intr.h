@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.12.4 2007/12/07 17:26:26 yamt Exp $ */
+/*	$NetBSD: intr.h,v 1.11.12.5 2008/01/21 09:39:31 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ void	sparc64_ipi_nop (void *);
 void	mp_halt_cpus (void);
 void	mp_pause_cpus (void);
 void	mp_resume_cpus (void);
-int	mp_cpu_is_paused (cpuset_t);
+int	mp_cpu_is_paused (sparc64_cpuset_t);
 #endif
 
 #endif /* _SPARC64_INTR_H_ */

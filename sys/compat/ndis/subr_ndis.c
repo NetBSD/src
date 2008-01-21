@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/subr_ndis.c,v 1.67.2.7 2005/03/31 21:50:11 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.4.6.6 2007/12/07 17:28:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ndis.c,v 1.4.6.7 2008/01/21 09:41:47 yamt Exp $");
 #endif
 
 /*
@@ -851,7 +851,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 #else /* __NetBSD__ */
 	mib[0] = sc->ndis_sysctl_mib;
 	
-	sysctl_lock(curlwp, NULL, 0);
+	sysctl_lock(false);
 		error = sysctl_locate(curlwp, &mib[0], 1, &pnode, NULL);
 	
 		numcld  = pnode->sysctl_csize;
@@ -865,7 +865,7 @@ NdisReadConfiguration(status, parm, cfg, key, type)
 			}
 			ndiscld++;
 		}
-	sysctl_unlock(curlwp);
+	sysctl_unlock();
 	
 	if(i < numcld) {
 		/* Found it */
@@ -1674,7 +1674,9 @@ NdisReadNetworkAddress(status, addr, addrlen, adapter)
 #ifdef __FreeBSD__
 		*addr = sc->arpcom.ac_enaddr;
 #else
-                *addr = LLADDR(sc->arpcom.ec_if.if_sadl);
+		memcpy(sc->ndis_mac, CLLADDR(sc->arpcom.ec_if.if_sadl),
+		    ETHER_ADDR_LEN);
+                *addr = sc->ndis_mac;
 #endif
 		*addrlen = ETHER_ADDR_LEN;
 		*status = NDIS_STATUS_SUCCESS;

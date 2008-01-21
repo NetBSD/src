@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.69.2.6 2007/12/07 17:28:20 yamt Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.69.2.7 2008/01/21 09:41:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.6 2007/12/07 17:28:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.69.2.7 2008/01/21 09:41:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,7 +81,6 @@ static void bsd_to_linux_flock(struct flock *, struct linux_flock *);
 static void linux_to_bsd_flock(struct linux_flock *, struct flock *);
 #ifndef __amd64__
 static void bsd_to_linux_stat(struct stat *, struct linux_stat *);
-static int linux_stat1(struct lwp *, void *, register_t *, int);
 #endif
 
 /*
@@ -94,8 +93,7 @@ static int linux_stat1(struct lwp *, void *, register_t *, int);
  * of the flags used in open(2) and fcntl(2).
  */
 static int
-linux_to_bsd_ioflags(lflags)
-	int lflags;
+linux_to_bsd_ioflags(int lflags)
 {
 	int res = 0;
 
@@ -115,8 +113,7 @@ linux_to_bsd_ioflags(lflags)
 }
 
 static int
-bsd_to_linux_ioflags(bflags)
-	int bflags;
+bsd_to_linux_ioflags(int bflags)
 {
 	int res = 0;
 
@@ -145,15 +142,12 @@ bsd_to_linux_ioflags(bflags)
  * Just call open(2) with the TRUNC, CREAT and WRONLY flags.
  */
 int
-linux_sys_creat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_creat(struct lwp *l, const struct linux_sys_creat_args *uap, register_t *retval)
 {
-	struct linux_sys_creat_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
-	} */ *uap = v;
+	} */
 	struct sys_open_args oa;
 
 	SCARG(&oa, path) = SCARG(uap, path);
@@ -170,16 +164,13 @@ linux_sys_creat(l, v, retval)
  * (XXX is this necessary?)
  */
 int
-linux_sys_open(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t *retval)
 {
-	struct linux_sys_open_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error, fl;
 	struct sys_open_args boa;
@@ -225,9 +216,7 @@ linux_sys_open(l, v, retval)
  * the fields, and the 'whence' value.
  */
 static void
-bsd_to_linux_flock(bfp, lfp)
-	struct flock *bfp;
-	struct linux_flock *lfp;
+bsd_to_linux_flock(struct flock *bfp, struct linux_flock *lfp)
 {
 
 	lfp->l_start = bfp->l_start;
@@ -248,9 +237,7 @@ bsd_to_linux_flock(bfp, lfp)
 }
 
 static void
-linux_to_bsd_flock(lfp, bfp)
-	struct linux_flock *lfp;
-	struct flock *bfp;
+linux_to_bsd_flock(struct linux_flock *lfp, struct flock *bfp)
 {
 
 	bfp->l_start = lfp->l_start;
@@ -277,16 +264,13 @@ linux_to_bsd_flock(lfp, bfp)
  * because the flag values and lock structure are different.
  */
 int
-linux_sys_fcntl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_t *retval)
 {
-	struct linux_sys_fcntl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(int) cmd;
 		syscallarg(void *) arg;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int fd, cmd, error;
 	u_long val;
@@ -478,9 +462,7 @@ linux_sys_fcntl(l, v, retval)
  * things against constant major device numbers? sigh)
  */
 static void
-bsd_to_linux_stat(bsp, lsp)
-	struct stat *bsp;
-	struct linux_stat *lsp;
+bsd_to_linux_stat(struct stat *bsp, struct linux_stat *lsp)
 {
 
 	lsp->lst_dev     = linux_fakedev(bsp->st_dev, 0);
@@ -511,15 +493,12 @@ bsd_to_linux_stat(bsp, lsp)
  * by one function to avoid code duplication.
  */
 int
-linux_sys_fstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap, register_t *retval)
 {
-	struct linux_sys_fstat_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(linux_stat *) sp;
-	} */ *uap = v;
+	} */
 	struct linux_stat tmplst;
 	struct stat tmpst;
 	int error;
@@ -533,16 +512,11 @@ linux_sys_fstat(l, v, retval)
 }
 
 static int
-linux_stat1(l, v, retval, flags)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-	int flags;
+linux_stat1(struct lwp *l, const struct linux_sys_stat_args *uap, register_t *retval, int flags)
 {
 	struct linux_stat tmplst;
 	struct stat tmpst;
 	int error;
-	struct linux_sys_stat_args *uap = v;
 
 	error = do_sys_stat(l, SCARG(uap, path), flags, &tmpst);
 	if (error != 0)
@@ -554,15 +528,12 @@ linux_stat1(l, v, retval, flags)
 }
 
 int
-linux_sys_stat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap, register_t *retval)
 {
-	struct linux_sys_stat_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct linux_stat *) sp;
-	} */ *uap = v;
+	} */
 
 	return linux_stat1(l, uap, retval, FOLLOW);
 }
@@ -570,17 +541,14 @@ linux_sys_stat(l, v, retval)
 /* Note: this is "newlstat" in the Linux sources */
 /*	(we don't bother with the old lstat currently) */
 int
-linux_sys_lstat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap, register_t *retval)
 {
-	struct linux_sys_lstat_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct linux_stat *) sp;
-	} */ *uap = v;
+	} */
 
-	return linux_stat1(l, uap, retval, NOFOLLOW);
+	return linux_stat1(l, (const void *)uap, retval, NOFOLLOW);
 }
 #endif /* !__amd64__ */
 
@@ -588,19 +556,15 @@ linux_sys_lstat(l, v, retval)
  * The following syscalls are mostly here because of the alternate path check.
  */
 int
-linux_sys_unlink(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-
+linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, register_t *retval)
 {
-	struct linux_sys_unlink_args /* {
+	/* {
 		syscallarg(const char *) path;
-	} */ *uap = v;
+	} */
 	int error;
 	struct nameidata nd;
 
-	error = sys_unlink(l, uap, retval);
+	error = sys_unlink(l, (const void *)uap, retval);
 	if (error != EPERM)
 		return (error);
 
@@ -611,7 +575,7 @@ linux_sys_unlink(l, v, retval)
 	 * is the case.
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	    SCARG(uap, path));
 	if (namei(&nd) == 0) {
 		struct stat sb;
 
@@ -626,16 +590,13 @@ linux_sys_unlink(l, v, retval)
 }
 
 int
-linux_sys_mknod(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_t *retval)
 {
-	struct linux_sys_mknod_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(int) mode;
 		syscallarg(int) dev;
-	} */ *uap = v;
+	} */
 
 	/*
 	 * BSD handles FIFOs separately
@@ -662,75 +623,6 @@ linux_sys_mknod(l, v, retval)
 	}
 }
 
-#if defined(__i386__) || defined(__m68k__) || \
-    defined(__arm__)
-int
-linux_sys_chown16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_chown16_args /* {
-		syscallarg(const char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */ *uap = v;
-	struct sys___posix_chown_args bca;
-
-	SCARG(&bca, path) = SCARG(uap, path);
-	SCARG(&bca, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_chown(l, &bca, retval);
-}
-
-int
-linux_sys_fchown16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_fchown16_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */ *uap = v;
-	struct sys___posix_fchown_args bfa;
-
-	SCARG(&bfa, fd) = SCARG(uap, fd);
-	SCARG(&bfa, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bfa, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_fchown(l, &bfa, retval);
-}
-
-int
-linux_sys_lchown16(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux_sys_lchown16_args /* {
-		syscallarg(char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */ *uap = v;
-	struct sys___posix_lchown_args bla;
-
-	SCARG(&bla, path) = SCARG(uap, path);
-	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bla, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_lchown(l, &bla, retval);
-}
-#endif /* __i386__ || __m68k__ || __arm__ || __amd64__ */
-
 /*
  * This is just fsync() for now (just as it is in the Linux kernel)
  * Note: this is not implemented under Linux on Alpha and Arm
@@ -738,34 +630,27 @@ linux_sys_lchown16(l, v, retval)
  *	(syscall #148 on the arm)
  */
 int
-linux_sys_fdatasync(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_fdatasync(struct lwp *l, const struct linux_sys_fdatasync_args *uap, register_t *retval)
 {
-#ifdef notdef
-	struct linux_sys_fdatasync_args /* {
+	/* {
 		syscallarg(int) fd;
-	} */ *uap = v;
-#endif
-	return sys_fsync(l, v, retval);
+	} */
+
+	return sys_fsync(l, (const void *)uap, retval);
 }
 
 /*
  * pread(2).
  */
 int
-linux_sys_pread(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_pread(struct lwp *l, const struct linux_sys_pread_args *uap, register_t *retval)
 {
-	struct linux_sys_pread_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
 		syscallarg(linux_off_t) offset;
-	} */ *uap = v;
+	} */
 	struct sys_pread_args pra;
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
@@ -780,17 +665,14 @@ linux_sys_pread(l, v, retval)
  * pwrite(2).
  */
 int
-linux_sys_pwrite(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_pwrite(struct lwp *l, const struct linux_sys_pwrite_args *uap, register_t *retval)
 {
-	struct linux_sys_pwrite_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(void *) buf;
 		syscallarg(size_t) nbyte;
 		syscallarg(linux_off_t) offset;
-	} */ *uap = v;
+	} */
 	struct sys_pwrite_args pra;
 
 	SCARG(&pra, fd) = SCARG(uap, fd);
@@ -803,7 +685,7 @@ linux_sys_pwrite(l, v, retval)
 
 #define LINUX_NOT_SUPPORTED(fun) \
 int \
-fun(struct lwp *l, void *v, register_t *retval) \
+fun(struct lwp *l, const struct fun##_args *uap, register_t *retval) \
 { \
 	return EOPNOTSUPP; \
 }
@@ -823,3 +705,4 @@ LINUX_NOT_SUPPORTED(linux_sys_flistxattr)
 LINUX_NOT_SUPPORTED(linux_sys_removexattr)
 LINUX_NOT_SUPPORTED(linux_sys_lremovexattr)
 LINUX_NOT_SUPPORTED(linux_sys_fremovexattr)
+

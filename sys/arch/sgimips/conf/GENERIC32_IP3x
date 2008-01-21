@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP3x,v 1.26.2.4 2007/11/15 11:43:23 yamt Exp $
+#	$NetBSD: GENERIC32_IP3x,v 1.26.2.5 2008/01/21 09:39:12 yamt Exp $
 #
 # GENERIC32_IP3x machine description file
 # 
@@ -28,7 +28,7 @@ makeoptions	TEXTADDR="0x80069000"	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32_IP3x-$Revision: 1.26.2.4 $"
+#ident		"GENERIC32_IP3x-$Revision: 1.26.2.5 $"
 
 maxusers	32
 
@@ -42,7 +42,6 @@ options		ENABLE_MIPS4_CACHE_R10K # enable R10000 cache ops
 
 #options 	NTP		# NTP phase/frequence locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V message queues
 options 	SYSVSEM		# System V semaphores

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.11.16.4 2007/12/07 17:24:03 yamt Exp $
+#	$NetBSD: majors.amd64,v 1.11.16.5 2008/01/21 09:35:23 yamt Exp $
 #
 # Device majors for amd64
 #
@@ -74,7 +74,6 @@ device-major	iop		char 76			iop
 device-major	altq		char 77			altq
 device-major	mlx		char 78			mlx
 device-major	clockctl	char 79			clockctl
-device-major	systrace	char 80			systrace
 device-major	cgd		char 81  block 20	cgd
 device-major	agp		char 82			agp
 device-major	pci		char 83			pci

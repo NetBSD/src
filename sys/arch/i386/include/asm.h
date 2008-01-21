@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.28.12.4 2007/11/15 11:42:58 yamt Exp $	*/
+/*	$NetBSD: asm.h,v 1.28.12.5 2008/01/21 09:37:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -124,15 +124,15 @@
 #ifdef _STANDALONE
 #define ALIGN_DATA	.align	4
 #define ALIGN_TEXT	.align	4	/* 4-byte boundaries */
-#define SUPERALIGN_TEXT	.align	32	/* 32-byte boundaries */
+#define SUPERALIGN_TEXT	.align	16	/* 15-byte boundaries */
 #elif defined __ELF__
 #define ALIGN_DATA	.align	4
-#define ALIGN_TEXT	.align	32	/* 32-byte boundaries */
-#define SUPERALIGN_TEXT	.align	32	/* 32-byte boundaries */
+#define ALIGN_TEXT	.align	16	/* 16-byte boundaries */
+#define SUPERALIGN_TEXT	.align	16	/* 16-byte boundaries */
 #else
 #define ALIGN_DATA	.align	2
-#define ALIGN_TEXT	.align	5	/* 32-byte boundaries */
-#define SUPERALIGN_TEXT	.align	5	/* 32-byte boundaries */
+#define ALIGN_TEXT	.align	4	/* 16-byte boundaries */
+#define SUPERALIGN_TEXT	.align	4	/* 16-byte boundaries */
 #endif /* __ELF__ */
 
 #define _ALIGN_TEXT ALIGN_TEXT
@@ -171,7 +171,7 @@
 #define	ASMSTR		.asciz
 
 #ifdef __ELF__
-#define RCSID(x)	.section ".ident"; .asciz x
+#define RCSID(x)	.pushsection ".ident"; .asciz x; .popsection
 #else
 #define RCSID(x)	.text; .asciz x
 #endif

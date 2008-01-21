@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.9.2.4 2007/10/27 11:32:35 yamt Exp $ */
+/* $NetBSD: auixp.c,v 1.9.2.5 2008/01/21 09:43:37 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9.2.4 2007/10/27 11:32:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.9.2.5 2008/01/21 09:43:37 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -164,15 +164,6 @@ static int	auixp_allocmem(struct auixp_softc *, size_t, size_t,
 static int	auixp_freemem(struct auixp_softc *, struct auixp_dma *);
 static paddr_t	auixp_mappage(void *, void *, off_t, int);
 
-
-/* power management (do we support that already?) */
-#if 0
-static void	auixp_powerhook(int, void *);
-static int	auixp_suspend(struct auixp_softc *);
-static int	auixp_resume(struct auixp_softc *);
-#endif
-
-
 /* Supporting subroutines */
 static int	auixp_init(struct auixp_softc *);
 static void	auixp_autodetect_codecs(struct auixp_softc *);
@@ -202,6 +193,8 @@ static void	auixp_program_dma_chain(struct auixp_softc *,
 					struct auixp_dma *);
 static void	auixp_dma_update(struct auixp_softc *, struct auixp_dma *);
 static void	auixp_update_busbusy(struct auixp_softc *);
+
+static bool	auixp_resume(device_t);
 
 
 #ifdef DEBUG_AUIXP
@@ -1107,7 +1100,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	const char *intrstr;
 	uint32_t data;
 	char devinfo[256];
-	int revision, len, error;
+	int revision, error;
 
 	sc = (struct auixp_softc *)self;
 	pa = (struct pci_attach_args *)aux;
@@ -1202,27 +1195,8 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	/* XXX set up power hooks; not implemented yet XXX */
-
-	len = 1;	/* shut up gcc */
-#ifdef notyet
-	/* create suspend save area */
-	len = sizeof(uint16_t) * (ESA_REV_B_CODE_MEMORY_LENGTH
-	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
-	sc->savemem = (uint16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->savemem == NULL) {
-		aprint_error("%s: unable to allocate suspend buffer\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-
-	sc->powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    auixp_powerhook, sc);
-	if (sc->powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish powerhook\n",
-		    sc->sc_dev.dv_xname);
-
-#endif
+	if (!pmf_device_register(self, NULL, auixp_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/*
 	 * delay further configuration of codecs and audio after interrupts
@@ -1393,8 +1367,7 @@ auixp_detach(struct device *self, int flags)
 	if (sc->sc_ios)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
 
-	if (sc->savemem)
-		free(sc->savemem, M_DEVBUF);
+	pmf_device_deregister(self);
 
 	return 0;
 }
@@ -1785,52 +1758,17 @@ auixp_init(struct auixp_softc *sc)
 	return 0;
 }
 
-
-/*
- * TODO power saving and suspend / resume support
- *
- */
-
-#if 0
-static void
-auixp_powerhook(int why, void *hdl)
+static bool
+auixp_resume(device_t dv)
 {
-	struct auixp_softc *sc;
+	struct auixp_softc *sc = device_private(dv);
 
-	sc = (struct auixp_softc *)hdl;
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		auixp_suspend(sc);
-		break;
-	case PWR_RESUME:
-		auixp_resume(sc);
-#if notyet
-		/* XXX fix me XXX */
-		(sc->codec_if->vtbl->restore_ports)(sc->codec_if);
-#endif
-		break;
-	}
+	auixp_reset_codec(sc);
+	delay(1000);
+	(sc->sc_codec[0].codec_if->vtbl->restore_ports)(sc->sc_codec[0].codec_if);
+
+	return true;
 }
-
-
-static int
-auixp_suspend(struct auixp_softc *sc)
-{
-
-	/* XXX no power functions yet XXX */
-	return 0;
-}
-
-
-static int
-auixp_resume(struct auixp_softc *sc)
-{
-
-	/* XXX no power functions yet XXX */
-	return 0;
-}
-#endif /* 0 */
 
 #ifdef DEBUG_AUIXP
 

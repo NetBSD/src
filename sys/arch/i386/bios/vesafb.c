@@ -1,4 +1,4 @@
-/* $NetBSD: vesafb.c,v 1.15.6.5 2007/10/27 11:26:20 yamt Exp $ */
+/* $NetBSD: vesafb.c,v 1.15.6.6 2008/01/21 09:36:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.15.6.5 2007/10/27 11:26:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vesafb.c,v 1.15.6.6 2008/01/21 09:36:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,9 @@ static void	vesafb_show_screen_cb(struct vcons_screen *);
 static void	vesafb_init_screen(void *, struct vcons_screen *,
 					int, long *);
 
-static void	vesafb_init(struct vesafb_softc *);
-static void	vesafb_powerhook(int, void *);
+static void	vesafb_init(struct vesafb_softc *, int);
 
-static int	vesafb_svideo(struct vesafb_softc *, u_int *);
+static int	vesafb_svideo(struct vesafb_softc *, int);
 static int	vesafb_gvideo(struct vesafb_softc *, u_int *);
 static int	vesafb_putcmap(struct vesafb_softc *,
 				    struct wsdisplay_cmap *);
@@ -92,6 +91,12 @@ static int	vesafb_getcmap(struct vesafb_softc *,
 				    struct wsdisplay_cmap *);
 
 static void	vesafb_set_palette(struct vesafb_softc *, int, struct paletteentry);
+
+static void	vesafb_display_on(device_t);
+static void	vesafb_display_standby(device_t);
+static void	vesafb_display_suspend(device_t);
+static void	vesafb_display_off(device_t);
+static void	vesafb_display_reduced(device_t);
 
 struct wsdisplay_accessops vesafb_accessops = {
 	vesafb_ioctl,
@@ -250,22 +255,14 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 			"possible\n", sc->sc_dev.dv_xname);
 
 	if (sc->sc_pm) {
-		aprint_normal("%s: VBE/PM %d.%d", sc->sc_dev.dv_xname,
+		aprint_normal("%s: VBE/PM %d.%d\n", sc->sc_dev.dv_xname,
 		    (sc->sc_pmver >> 4), sc->sc_pmver & 0xf);
-		if (sc->sc_pmstates & 1)
-			aprint_normal(" [standby]");
-		if (sc->sc_pmstates & 2)
-			aprint_normal(" [suspend]");
-		if (sc->sc_pmstates & 4)
-			aprint_normal(" [off]");
-		if (sc->sc_pmstates & 8)
-			aprint_normal(" [reduced on]");
-		aprint_normal("\n");
 	}
 
 	res = _x86_memio_map(X86_BUS_SPACE_MEM, mi->PhysBasePtr,
 			      sc->sc_fbsize,		/* was sc_screensize */
-			      BUS_SPACE_MAP_LINEAR, &h);
+			      BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE,
+			      &h);
 	if (res) {
 		aprint_error("%s: framebuffer mapping failed\n",
 		    sc->sc_dev.dv_xname);
@@ -293,7 +290,7 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 	sc->sc_displ_hwbits = NULL;
 #endif /* !VESAFB_SHADOW_FB */
 
-	vesafb_init(sc);
+	vesafb_init(sc, 1);
 
 	vesafb_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
 	vcons_init_screen(&sc->sc_vd, &vesafb_console_screen, 1, &defattr);
@@ -341,11 +338,33 @@ vesafb_attach(struct device *parent, struct device *dev, void *aux)
 
 	sc->sc_isconsole = 1;
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    vesafb_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: unable to establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(dev, NULL, NULL))
+		aprint_error_dev(dev, "couldn't establish power handler\n");
+	else if (!pmf_class_display_register(dev))
+		aprint_error_dev(dev, "couldn't set display class\n");
+
+	if (!pmf_event_register(dev, PMFE_DISPLAY_ON, vesafb_display_on, true))
+		aprint_error_dev(dev, "couldn't register DISPLAY ON event\n");
+	if ((sc->sc_pmstates & 1) != 0 &&
+	    !pmf_event_register(dev, PMFE_DISPLAY_STANDBY,
+				vesafb_display_standby, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY STANDBY event\n");
+	if ((sc->sc_pmstates & 2) != 0 &&
+	    !pmf_event_register(dev, PMFE_DISPLAY_SUSPEND,
+				vesafb_display_suspend, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY SUSPEND event\n");
+	if ((sc->sc_pmstates & 4) != 0 &&
+	    !pmf_event_register(dev, PMFE_DISPLAY_OFF,
+				vesafb_display_off, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY OFF event\n");
+	if ((sc->sc_pmstates & 8) != 0 &&
+	    !pmf_event_register(dev, PMFE_DISPLAY_REDUCED,
+				vesafb_display_reduced, true))
+		aprint_error_dev(dev,
+		    "couldn't register DISPLAY REDUCED event\n");
 
 	config_found(dev, &aa, wsemuldisplaydevprint);
 
@@ -384,9 +403,13 @@ vesafb_ioctl(void *v, void *vs, u_long cmd, void *data,
 		else
 			return ENODEV;
 	case WSDISPLAYIO_SVIDEO:
-		if (sc->sc_pm)
-			return vesafb_svideo(sc, (u_int *)data);
-		else
+		if (sc->sc_pm) {
+			u_int on = *(u_int *)data;
+			if (on == WSDISPLAYIO_VIDEO_OFF)
+				return vesafb_svideo(sc, 4);
+			else
+				return vesafb_svideo(sc, 0);
+		} else
 			return ENODEV;
 	case WSDISPLAYIO_GETCMAP:
 		if (sc->sc_mi.BitsPerPixel == 8)
@@ -408,8 +431,10 @@ vesafb_ioctl(void *v, void *vs, u_long cmd, void *data,
 			int new_mode = *(int *)data;
 			if (new_mode != sc->sc_wsmode) {
 				sc->sc_wsmode = new_mode;
-				if (new_mode == WSDISPLAYIO_MODE_EMUL)
+				if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+					/* vesafb_init(sc, 0); */
 					vcons_redraw_screen(vd->active);
+				}
 			}
 		}
 		return 0;
@@ -617,53 +642,40 @@ vesafb_init_screen(void *c, struct vcons_screen *scr, int existing,
 }
 
 static void
-vesafb_init(struct vesafb_softc *sc)
+vesafb_init(struct vesafb_softc *sc, int setmode)
 {
-	struct trapframe tf;
-#if notyet
 	struct bioscallregs regs;
-#endif
 	struct modeinfoblock *mi;
 	struct paletteentry pe;
-	int res;
-	int i, j;
+	int i, j, s;
 
 	mi = &sc->sc_mi;
 
-	/* set mode */
-#if 1
-	memset(&tf, 0, sizeof(struct trapframe));
-	tf.tf_eax = 0x4f02; /* function code */
-	tf.tf_ebx = sc->sc_mode | 0x4000; /* flat */
+	s = splsched();
 
-	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xff) != 0x4f) {
-		aprint_error("%s: vbecall: res=%d, ax=%x\n",
-		    sc->sc_dev.dv_xname, res, tf.tf_eax);
-		return;
+	if (setmode) {
+		/* set mode */
+		regs.EAX = 0x4f02;
+		regs.EBX = sc->sc_mode | 0x4000;
+		kvm86_bioscall_simple(0x10, &regs);
+		if ((regs.EAX & 0xff) != 0x4f) {
+			aprint_error("%s: bioscall failed\n",
+			    sc->sc_dev.dv_xname);
+			goto out;
+		}
 	}
-#else
-	regs.EAX = 0x4f02;
-	regs.EBX = sc->sc_mode | 0x4000;
-	bioscall(0x10, &regs);
-	if ((regs.EAX & 0xff) != 0x4f) {
-		aprint_error("%s: bioscall failed\n",
-		    sc->sc_dev.dv_xname);
-		return;
-	}
-#endif
 
 	/* setup palette, not required in direct colour mode */
 	if (mi->BitsPerPixel == 8) {
-		memset(&tf, 0, sizeof(struct trapframe));
-		tf.tf_eax = 0x4f08; /* function code */
-		tf.tf_ebx = 0x0600; /* we want a 6-bit palette */
+		memset(&regs, 0, sizeof(struct bioscallregs));
+		regs.EAX = 0x4f08; /* function code */
+		regs.EBX = 0x0600; /* we want a 6-bit palette */
 
-		res = kvm86_bioscall(0x10, &tf);
-		if (res || (tf.tf_eax & 0xff) != 0x4f) {
-			aprint_error("%s: vbecall: res=%d, ax=%x\n",
-			    sc->sc_dev.dv_xname, res, tf.tf_eax);
-			return;
+		kvm86_bioscall_simple(0x10, &regs);
+		if ((regs.EAX & 0xff) != 0x4f) {
+			aprint_error("%s: vbecall failed: ax=%x\n",
+			    sc->sc_dev.dv_xname, regs.EAX);
+			goto out;
 		}
 
 		j = 0;
@@ -702,28 +714,54 @@ vesafb_init(struct vesafb_softc *sc)
 		}
 	}
 
+out:
+	splx(s);
 	return;
 }
 
 static void
-vesafb_powerhook(int why, void *opaque)
+vesafb_display_on(device_t dv)
 {
-#if notyet
-	struct vesafb_softc *sc;
+	struct vesafb_softc *sc = device_private(dv);
 
-	sc = (struct vesafb_softc *)opaque;
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 0);
+}
 
-	switch (why) {
-	case PWR_STANDBY:
-	case PWR_SUSPEND:
-		break;
-	case PWR_RESUME:
-		vesafb_init(sc);
-		break;
-	}
-#endif
+static void
+vesafb_display_standby(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
 
-	return;
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+	vesafb_svideo(sc, 1);
+}
+
+static void
+vesafb_display_suspend(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 2);
+}
+
+static void
+vesafb_display_off(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 4);
+}
+
+static void
+vesafb_display_reduced(device_t dv)
+{
+	struct vesafb_softc *sc = device_private(dv);
+
+	if (sc->sc_wsmode == WSDISPLAYIO_MODE_EMUL)
+		vesafb_svideo(sc, 8);
 }
 
 static void
@@ -764,28 +802,23 @@ vesafb_set_palette(struct vesafb_softc *sc, int reg,
 }
 
 static int
-vesafb_svideo(struct vesafb_softc *sc, u_int *on)
+vesafb_svideo(struct vesafb_softc *sc, int bh)
 {
 #ifdef VESAFB_PM
-	struct trapframe tf;
-	int res, bh;
+	struct bioscallregs regs;
+	int s;
 
-	if (*on == WSDISPLAYIO_VIDEO_OFF)
-		bh = 1; /* 1:standby 2:suspend, 4:off, 8:reduced_on */
-	else
-		bh = 0; /* 0:on */
-
-	/* set video pm state */
-	memset(&tf, 0, sizeof(struct trapframe));
-	tf.tf_eax = 0x4f10; /* function code */
-	tf.tf_ebx = (bh << 8) | 1;
-
-	res = kvm86_bioscall(0x10, &tf);
-	if (res || (tf.tf_eax & 0xff) != 0x4f) {
-		aprint_error("%s: unable to set power state (0x%04x)\n",
-		    sc->sc_dev.dv_xname, (tf.tf_eax & 0xffff));
+	/* If the power management state is not supported, bail */
+	if ((sc->sc_pmstates & bh) != bh)
 		return ENODEV;
-	}
+
+	memset(&regs, 0, sizeof(struct bioscallregs));
+	regs.EAX = 0x4f10;
+	regs.EBX = (bh << 8) | 1;
+
+	s = splsched();
+	kvm86_bioscall_simple(0x10, &regs);
+	splx(s);
 
 	return 0;
 #else

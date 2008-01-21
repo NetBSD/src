@@ -1,4 +1,4 @@
-/*	$NetBSD: inchr.c,v 1.2 2005/06/28 21:03:02 junyoung Exp $	*/
+/*	$NetBSD: inchr.c,v 1.2.2.1 2008/01/21 09:37:48 yamt Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -12,7 +12,7 @@
 
 /* returns 0 if no characters ready to read */
 int
-getchar()
+getchar(void)
 {
 	int ret;
 

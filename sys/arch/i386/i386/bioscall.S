@@ -1,4 +1,4 @@
-/*	$NetBSD: bioscall.S,v 1.3.12.1 2006/06/21 14:52:18 yamt Exp $ */
+/*	$NetBSD: bioscall.S,v 1.3.12.2 2008/01/21 09:36:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -36,9 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <machine/bioscall.h>
-
 #include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: bioscall.S,v 1.3.12.2 2008/01/21 09:36:56 yamt Exp $");
+
+#include <machine/bioscall.h>
 
 #include "assym.h"
 
@@ -47,6 +48,7 @@
 
 	.globl	_C_LABEL(PDPpaddr)	/* from locore.S */
 
+	.section ".rodata"
 _C_LABEL(biostramp_image):
 	.globl	_C_LABEL(biostramp_image)
 
@@ -58,6 +60,7 @@ _C_LABEL(biostramp_image):
 _C_LABEL(biostramp_image_size):
 	.long	9b - 8b
 
+	.text
 /*
  * void bioscall(int function, struct bioscallregs *regs):
  * 	call the BIOS interrupt "function" from real mode with

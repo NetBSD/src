@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.14.6.3 2007/09/03 14:37:06 yamt Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.14.6.4 2008/01/21 09:44:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -48,7 +48,7 @@
 typedef struct wiseman_addr {
 	uint32_t	wa_low;		/* low-order 32 bits */
 	uint32_t	wa_high;	/* high-order 32 bits */
-} __attribute__((__packed__)) wiseman_addr_t;
+} __packed wiseman_addr_t;
 
 /*
  * The Wiseman receive descriptor.
@@ -65,7 +65,7 @@ typedef struct wiseman_rxdesc {
 	uint8_t		wrx_status;	/* Rx status */
 	uint8_t		wrx_errors;	/* Rx errors */
 	uint16_t	wrx_special;	/* special field (VLAN, etc.) */
-} __attribute__((__packed__)) wiseman_rxdesc_t;
+} __packed wiseman_rxdesc_t;
 
 /* wrx_status bits */
 #define	WRX_ST_DD	(1U << 0)	/* descriptor done */
@@ -102,12 +102,12 @@ typedef struct wiseman_tx_fields {
 	uint8_t wtxu_status;		/* Tx status */
 	uint8_t wtxu_options;		/* options */
 	uint16_t wtxu_vlan;		/* VLAN info */
-} __attribute__((__packed__)) wiseman_txfields_t;
+} __packed wiseman_txfields_t;
 typedef struct wiseman_txdesc {
 	wiseman_addr_t	wtx_addr;	/* buffer address */
 	uint32_t	wtx_cmdlen;	/* command and length */
 	wiseman_txfields_t wtx_fields;	/* fields; see below */
-} __attribute__((__packed__)) wiseman_txdesc_t;
+} __packed wiseman_txdesc_t;
 
 /* Commands for wtx_cmdlen */
 #define	WTX_CMD_EOP	(1U << 24)	/* end of packet */

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.61.4.3 2007/09/03 14:32:50 yamt Exp $
+	$NetBSD: syscalls.master,v 1.61.4.4 2008/01/21 09:42:04 yamt Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -87,15 +87,15 @@
 30	UNIMPL		old_sunos_utime
 31	UNIMPL		old_sunos_stty
 32	UNIMPL		old_sunos_gtty
-33	STD		{ int sunos_sys_access(const char *path, int flags); }
+33	NOARGS		{ int sys_access(const char *path, int flags); }
 34	UNIMPL		old_sunos_nice
 35	UNIMPL		old_sunos_ftime
 36	NOARGS		{ int sys_sync(void); }
 37	NOARGS		{ int sys_kill(int pid, int signum); }
-38	STD		{ int sunos_sys_stat(const char *path, \
+38	NOARGS		{ int compat_43_sys_stat(const char *path, \
 			    struct stat43 *ub); }
 39	UNIMPL		sunos_setpgrp
-40	STD		{ int sunos_sys_lstat(const char *path, \
+40	NOARGS		{ int compat_43_sys_lstat(const char *path, \
 			    struct stat43 *ub); }
 41	NOARGS		{ int sys_dup(u_int fd); }
 42	NOARGS		{ int sys_pipe(void); }

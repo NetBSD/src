@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11.16.3 2007/09/03 14:23:15 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.11.16.4 2008/01/21 09:35:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -75,7 +75,7 @@
 #include "opt_compat_netbsd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11.16.3 2007/09/03 14:23:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11.16.4 2008/01/21 09:35:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11.16.3 2007/09/03 14:23:15 yamt Exp $");
 
 #include <uvm/uvm_extern.h>
 
-extern char *memhook;            /* poor name! */
+extern vaddr_t memhook;            /* poor name! */
 void *zeropage;
 int physlock;
 
@@ -143,14 +143,14 @@ mmrw(dev, uio, flags)
 			v = uio->uio_offset;
 			prot = uio->uio_rw == UIO_READ ? VM_PROT_READ :
 			    VM_PROT_WRITE;
-			pmap_enter(pmap_kernel(), (vaddr_t)memhook,
+			pmap_enter(pmap_kernel(), memhook,
 			    trunc_page(v), prot, prot|PMAP_WIRED);
 			pmap_update(pmap_kernel());
 			o = uio->uio_offset & PGOFSET;
 			c = min(uio->uio_resid, (int)(PAGE_SIZE - o));
 			error = uiomove((char *)memhook + o, c, uio);
-			pmap_remove(pmap_kernel(), (vaddr_t)memhook,
-			    (vaddr_t)memhook + PAGE_SIZE);
+			pmap_remove(pmap_kernel(), memhook,
+			    memhook + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 			break;
 

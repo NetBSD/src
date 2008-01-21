@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.2.4.5 2007/12/07 17:30:26 yamt Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.2.4.6 2008/01/21 09:44:04 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -166,7 +166,6 @@ struct wpi_softc {
 	int8_t			maxpwr[IEEE80211_CHAN_MAX];
 
 	int			sc_tx_timer;
-	void			*powerhook;
 
 #if NBPFILTER > 0
 	void *			sc_drvbpf;
@@ -187,4 +186,6 @@ struct wpi_softc {
 #endif
 
 	bool		is_scanning;
+
+	struct sysctllog	*sc_sysctllog;
 };

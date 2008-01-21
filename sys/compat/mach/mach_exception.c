@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_exception.c,v 1.6.2.4 2007/12/07 17:28:43 yamt Exp $ */
+/*	$NetBSD: mach_exception.c,v 1.6.2.5 2008/01/21 09:41:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.6.2.4 2007/12/07 17:28:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_exception.c,v 1.6.2.5 2008/01/21 09:41:39 yamt Exp $");
 
 #include "opt_compat_darwin.h"
 
@@ -404,9 +404,7 @@ out:
 }
 
 static void
-mach_siginfo_to_exception(ksi, code)
-	const struct ksiginfo *ksi;
-	int *code;
+mach_siginfo_to_exception(const struct ksiginfo *ksi, int *code)
 {
 	code[1] = (long)ksi->ksi_addr;
 	switch (ksi->ksi_signo) {
@@ -479,8 +477,7 @@ mach_siginfo_to_exception(ksi, code)
 }
 
 int
-mach_exception_raise(args)
-	struct mach_trap_args *args;
+mach_exception_raise(struct mach_trap_args *args)
 {
 	struct lwp *l = args->l;
 	mach_exception_raise_reply_t *rep;
@@ -530,15 +527,13 @@ mach_exception_raise(args)
 }
 
 int
-mach_exception_raise_state(args)
-	struct mach_trap_args *args;
+mach_exception_raise_state(struct mach_trap_args *args)
 {
 	return mach_exception_raise(args);
 }
 
 int
-mach_exception_raise_state_identity(args)
-	struct mach_trap_args *args;
+mach_exception_raise_state_identity(struct mach_trap_args *args)
 {
 	return mach_exception_raise(args);
 }

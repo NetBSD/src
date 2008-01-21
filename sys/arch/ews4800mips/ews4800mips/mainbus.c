@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.18.3 2008/01/21 09:36:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.18.2 2006/06/21 14:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.18.3 2008/01/21 09:36:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/sbdvar.h>

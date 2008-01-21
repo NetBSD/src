@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2661var.h,v 1.5.6.3 2007/09/03 14:35:08 yamt Exp $	*/
+/*	$NetBSD: rt2661var.h,v 1.5.6.4 2008/01/21 09:43:06 yamt Exp $	*/
 /*	$OpenBSD: rt2661var.h,v 1.4 2006/02/25 12:56:47 damien Exp $	*/
 
 /*-
@@ -98,7 +98,6 @@ struct rt2661_softc {
 
 	int				(*sc_enable)(struct rt2661_softc *);
 	void				(*sc_disable)(struct rt2661_softc *);
-	void				(*sc_power)(struct rt2661_softc *, int);
 
 	bus_dma_tag_t			sc_dmat;
 	bus_space_tag_t			sc_st;

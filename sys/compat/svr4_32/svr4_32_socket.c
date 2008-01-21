@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_32_socket.c,v 1.4.18.3 2007/02/26 09:09:44 yamt Exp $	*/
+/*	$NetBSD: svr4_32_socket.c,v 1.4.18.4 2008/01/21 09:42:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.4.18.3 2007/02/26 09:09:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_socket.c,v 1.4.18.4 2008/01/21 09:42:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,11 +86,7 @@ static TAILQ_HEAD(svr4_sockcache_head, svr4_sockcache_entry) svr4_head;
 static int initialized = 0;
 
 struct sockaddr_un *
-svr4_32_find_socket(p, fp, dev, ino)
-	struct proc *p;
-	struct file *fp;
-	dev_t dev;
-	svr4_ino_t ino;
+svr4_32_find_socket(struct proc *p, struct file *fp, dev_t dev, svr4_ino_t ino)
 {
 	struct svr4_sockcache_entry *e;
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
@@ -123,9 +119,7 @@ svr4_32_find_socket(p, fp, dev, ino)
 
 #if 0
 void
-svr4_32_delete_socket(p, fp)
-	struct proc *p;
-	struct file *fp;
+svr4_32_delete_socket(struct proc *p, struct file *fp)
 {
 	struct svr4_sockcache_entry *e;
 	void *cookie = ((struct socket *) fp->f_data)->so_internal;
@@ -149,10 +143,7 @@ svr4_32_delete_socket(p, fp)
 
 #if 0
 int
-svr4_32_add_socket(p, path, st)
-	struct proc *p;
-	const char *path;
-	struct stat *st;
+svr4_32_add_socket(struct proc *p, const char *path, struct stat *st)
 {
 	struct svr4_sockcache_entry *e;
 	size_t len;
@@ -187,13 +178,9 @@ svr4_32_add_socket(p, path, st)
 #endif
 
 int
-svr4_32_sys_socket(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+svr4_32_sys_socket(struct lwp *l, const struct svr4_32_sys_socket_args *uap, register_t *retval)
 {
-	struct svr4_32_sys_socket_args *uap = v;
-	struct compat_30_sys_socket_args uap0;
+	struct sys___socket30_args uap0;
 
 	/*
 	 * We need to use a separate args since native has a different

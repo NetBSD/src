@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_errno.c,v 1.15 2005/02/26 23:10:19 perry Exp $ */
+/*	$NetBSD: mach_errno.c,v 1.15.4.1 2008/01/21 09:41:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.15 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_errno.c,v 1.15.4.1 2008/01/21 09:41:39 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -139,9 +139,7 @@ int native_to_mach_errno[] = {
 };
 
 int
-mach_msg_error(args, error)
-	struct mach_trap_args *args;
-	int error;
+mach_msg_error(struct mach_trap_args *args, int error)
 {
 	mach_msg_header_t *req = args->smsg;
 	mach_error_reply_t *rep = args->rmsg;
@@ -163,9 +161,7 @@ mach_msg_error(args, error)
 }
 
 int
-mach_iokit_error(args, error)
-	struct mach_trap_args *args;
-	int error;
+mach_iokit_error(struct mach_trap_args *args, int error)
 {
 	mach_msg_header_t *req = args->smsg;
 	mach_error_reply_t *rep = args->rmsg;

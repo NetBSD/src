@@ -1,4 +1,4 @@
-/* $NetBSD: vgavar.h,v 1.22.4.3 2007/09/03 14:35:21 yamt Exp $ */
+/* $NetBSD: vgavar.h,v 1.22.4.4 2008/01/21 09:43:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -192,6 +192,8 @@ int	vga_is_console(bus_space_tag_t, int);
 int	vga_cnattach(bus_space_tag_t, bus_space_tag_t, int, int);
 int	vga_cndetach(void);
 
+void	vga_resume(struct vga_softc *);
+
 #ifndef VGA_RASTERCONSOLE
 struct wsscreen_descr;
 void 	vga_loadchars(struct vga_handle *, int, int, int, int, const char *);
@@ -204,8 +206,7 @@ void 	vga_setscreentype(struct vga_handle *, const struct wsscreen_descr *);
 #else /* !VGA_RASTERCONSOLE */
 void 	vga_load_builtinfont(struct vga_handle *, u_int8_t *, int, int);
 #endif /* !VGA_RASTERCONSOLE */
-#ifdef VGA_RESET
 void	vga_reset(struct vga_handle *, void (*)(struct vga_handle *));
-#endif
+void	vga_initregs(struct vga_handle *);
 
 extern int vga_no_builtinfont;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.3 2003/11/02 10:31:06 wiz Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.3.16.1 2008/01/21 09:42:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -88,14 +88,14 @@ struct	rd_iocmd {
 	u_int8_t	c_slen;		/* CS80CMD_SLEN */
 	u_int32_t	c_len;		/* number of sectors */
 	u_int8_t	c_cmd;		/* CS80CMD_READ/CS80CMD_WRITE */
-} __attribute__((__packed__));
+} __packed;
 
 struct	rd_rscmd {		/* different */
 	u_int8_t	c_unit;
 	u_int8_t	c_sram;
 	u_int8_t	c_ram;
 	u_int8_t	c_cmd;
-} __attribute__((__packed__));
+} __packed;
 
 /* HW ids */
 #define	RD7946AID	0x220	/* also 7945A */

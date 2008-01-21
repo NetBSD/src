@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.64.2.3 2007/10/27 11:25:13 yamt Exp $ */
+/*	$NetBSD: fd.c,v 1.64.2.4 2008/01/21 09:35:29 yamt Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64.2.3 2007/10/27 11:25:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.64.2.4 2008/01/21 09:35:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -912,7 +912,8 @@ fdputdisklabel(struct fd_softc *sc, dev_t dev)
 	bcopy(lp, dlp, sizeof(struct disklabel));
 	bp->b_blkno = 0;
 	bp->b_cylinder = 0;
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags &= ~(B_READ);
+	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags |= B_WRITE;
 	fdstrategy(bp);
 	error = biowait(bp);

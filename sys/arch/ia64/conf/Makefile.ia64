@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ia64,v 1.1.14.2 2006/06/21 14:52:44 yamt Exp $
+#	$NetBSD: Makefile.ia64,v 1.1.14.3 2008/01/21 09:37:17 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -59,8 +59,6 @@ LINKFORMAT=	-T ${IA64}/conf/${KERN_LDSCRIPT}
 ##
 ## (6) port specific target dependencies
 ##
-
-clock.o: config_time.h
 
 ##
 ## (7) misc settings

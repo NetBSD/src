@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.6.16.2 2007/09/03 14:23:25 yamt Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.6.16.3 2008/01/21 09:35:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -53,7 +53,7 @@ Lcurrent_spl_level:
 	.word	_C_LABEL(current_spl_level)
 
 Lcurrent_intr_depth:
-	.word	_C_LABEL(current_intr_depth)
+	.word	_C_LABEL(cpu_info_store) + CI_IDEPTH
 
 Lspl_masks:
 	.word	_C_LABEL(spl_masks)
@@ -226,7 +226,9 @@ nextirq:
 	/* Restore previous disabled mask */
 	bl	_C_LABEL(irq_setmasks)
 
+#ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Handle the soft interrupts */
+#endif
 
 	/* Kill IRQ's in preparation for exit */
         mrs     r0, cpsr_all

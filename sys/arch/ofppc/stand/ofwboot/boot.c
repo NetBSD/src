@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14.16.1 2007/10/27 11:27:32 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.14.16.2 2008/01/21 09:37:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@
 
 #include <machine/cpu.h>
 
-#include "alloc.h"
 #include "boot.h"
 #include "ofdev.h"
 #include "openfirm.h"
@@ -157,8 +156,6 @@ chain(boot_entry_t entry, char *args, void *ssym, void *esym)
 {
 	extern char end[], *cp;
 	u_int l, magic = 0x19730224;
-
-	freeall();
 
 	/*
 	 * Stash pointer to start and end of symbol table after the argument

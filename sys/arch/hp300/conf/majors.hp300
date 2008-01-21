@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hp300,v 1.15.2.2 2006/12/30 20:45:56 yamt Exp $
+#	$NetBSD: majors.hp300,v 1.15.2.3 2008/01/21 09:36:26 yamt Exp $
 #
 # Device majors for hp300
 #
@@ -41,7 +41,6 @@ device-major	svr4_net	char 36			compat_svr4
 #device-major	wsmux		char 40			wsmux
 #device-major	wsfont		char 41			wsfont
 device-major	clockctl	char 42			clockctl
-device-major	systrace	char 43			systrace
 device-major	cgd		char 44  block 16	cgd
 device-major	ksyms		char 45			ksyms
 

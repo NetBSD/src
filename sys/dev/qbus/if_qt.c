@@ -1,4 +1,4 @@
-/*	$NetBSD: if_qt.c,v 1.6.4.4 2007/10/27 11:34:00 yamt Exp $	*/
+/*	$NetBSD: if_qt.c,v 1.6.4.5 2008/01/21 09:44:30 yamt Exp $	*/
 /*
  * Copyright (c) 1992 Steven M. Schultz
  * All rights reserved.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.4 2007/10/27 11:34:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.5 2008/01/21 09:44:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_qt.c,v 1.6.4.4 2007/10/27 11:34:00 yamt Exp $");
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/time.h>

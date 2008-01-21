@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.9.2.4 2007/11/15 11:43:38 yamt Exp $	*/
+/*	$NetBSD: lock.h,v 1.9.2.5 2008/01/21 09:40:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -43,12 +43,6 @@
 #ifndef _X86_LOCK_H_
 #define	_X86_LOCK_H_
 
-#ifdef _KERNEL
-#include <machine/cpufunc.h>
-#endif
-#include <machine/atomic.h>
-
-
 static __inline int
 __SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
 {
@@ -75,14 +69,32 @@ __cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
 	*__ptr = __SIMPLELOCK_UNLOCKED;
 }
 
+#ifdef _KERNEL
+
+#include <machine/cpufunc.h>
+
+void	__cpu_simple_lock_init(__cpu_simple_lock_t *);
+void	__cpu_simple_lock(__cpu_simple_lock_t *);
+int	__cpu_simple_lock_try(__cpu_simple_lock_t *);
+void	__cpu_simple_unlock(__cpu_simple_lock_t *);
+
+#define	SPINLOCK_SPIN_HOOK	/* nothing */
+
+#ifdef SPINLOCK_BACKOFF_HOOK
+#undef SPINLOCK_BACKOFF_HOOK
+#endif
+#define	SPINLOCK_BACKOFF_HOOK	x86_pause()
+
+#else
+
 static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
@@ -92,30 +104,26 @@ __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
 	__insn_barrier();
 }
 
+static __inline int
+__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
+{
+	uint8_t val;
+
+	val = __SIMPLELOCK_LOCKED;
+	__asm volatile ("xchgb %0,(%2)" : 
+	    "=r" (val)
+	    :"0" (val), "r" (lockp));
+	__insn_barrier();
+	return val == __SIMPLELOCK_UNLOCKED;
+}
+
 static __inline void
 __cpu_simple_lock(__cpu_simple_lock_t *lockp)
 {
 
-	while (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
-	    != __SIMPLELOCK_UNLOCKED) {
-		do {
-#ifdef _KERNEL
-			x86_pause();
-#endif /* _KERNEL */
-		} while (*lockp == __SIMPLELOCK_LOCKED);
-	}
+	while (!__cpu_simple_lock_try(lockp))
+		/* nothing */;
 	__insn_barrier();
-}
-
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
-{
-	int r = (x86_atomic_testset_b(lockp, __SIMPLELOCK_LOCKED)
-	    == __SIMPLELOCK_UNLOCKED);
-
-	__insn_barrier();
-
-	return (r);
 }
 
 /*
@@ -178,13 +186,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 	*lockp = __SIMPLELOCK_UNLOCKED;
 }
 
-#define	SPINLOCK_SPIN_HOOK	/* nothing */
-#define	SPINLOCK_BACKOFF_HOOK	x86_pause()
-
-#ifdef _KERNEL
-void	mb_read(void);
-void	mb_write(void);
-void	mb_memory(void);
 #endif	/* _KERNEL */
 
 #endif /* _X86_LOCK_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_16_machdep.c,v 1.6.18.3 2007/09/03 14:26:37 yamt Exp $	*/
+/*	$NetBSD: compat_16_machdep.c,v 1.6.18.4 2008/01/21 09:36:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.18.3 2007/09/03 14:26:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.18.4 2008/01/21 09:36:56 yamt Exp $");
 
 #include "opt_vm86.h"
 #include "opt_compat_netbsd.h"
@@ -77,14 +77,14 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.6.18.3 2007/09/03 14:26:37 y
  * psl to gain improper privileges or to cause
  * a machine fault.
  */
-int compat_16_sys___sigreturn14(struct lwp *, void *, register_t *);
+int compat_16_sys___sigreturn14(struct lwp *, const struct compat_16_sys___sigreturn14_args *, register_t *);
 
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigreturn14_args /* {
+	/* {
 		syscallarg(struct sigcontext *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct sigcontext *scp, context;
 	struct trapframe *tf;

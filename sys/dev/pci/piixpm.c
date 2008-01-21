@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.3.2.5 2007/10/27 11:33:28 yamt Exp $ */
+/* $NetBSD: piixpm.c,v 1.3.2.6 2008/01/21 09:44:14 yamt Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -20,6 +20,9 @@
 /*
  * Intel PIIX and compatible Power Management controller driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.3.2.6 2008/01/21 09:44:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,15 +76,14 @@ struct piixpm_softc {
 		volatile int error;
 	}			sc_i2c_xfer;
 
-	void *			sc_powerhook;
-	struct pci_conf_state	sc_pciconf;
 	pcireg_t		sc_devact[2];
 };
 
 int	piixpm_match(struct device *, struct cfdata *, void *);
 void	piixpm_attach(struct device *, struct device *, void *);
 
-void	piixpm_powerhook(int, void *);
+static bool	piixpm_suspend(device_t);
+static bool	piixpm_resume(device_t);
 
 int	piixpm_i2c_acquire_bus(void *, int);
 void	piixpm_i2c_release_bus(void *, int);
@@ -150,11 +152,8 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
 		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    piixpm_powerhook, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register(self, piixpm_suspend, piixpm_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
@@ -240,27 +239,30 @@ nopowermanagement:
 	return;
 }
 
-void
-piixpm_powerhook(int why, void *cookie)
+static bool
+piixpm_suspend(device_t dv)
 {
-	struct piixpm_softc *sc = cookie;
-	pci_chipset_tag_t pc = sc->sc_pc;
-	pcitag_t tag = sc->sc_pcitag;
+	struct piixpm_softc *sc = device_private(dv);
 
-	switch (why) {
-	case PWR_SUSPEND:
-		pci_conf_capture(pc, tag, &sc->sc_pciconf);
-		sc->sc_devact[0] = pci_conf_read(pc, tag, PIIX_DEVACTA);
-		sc->sc_devact[1] = pci_conf_read(pc, tag, PIIX_DEVACTB);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(pc, tag, &sc->sc_pciconf);
-		pci_conf_write(pc, tag, PIIX_DEVACTA, sc->sc_devact[0]);
-		pci_conf_write(pc, tag, PIIX_DEVACTB, sc->sc_devact[1]);
-		break;
-	}
+	sc->sc_devact[0] = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	    PIIX_DEVACTA);
+	sc->sc_devact[1] = pci_conf_read(sc->sc_pc, sc->sc_pcitag,
+	    PIIX_DEVACTB);
 
-	return;
+	return true;
+}
+
+static bool
+piixpm_resume(device_t dv)
+{
+	struct piixpm_softc *sc = device_private(dv);
+
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_DEVACTA,
+	    sc->sc_devact[0]);
+	pci_conf_write(sc->sc_pc, sc->sc_pcitag, PIIX_DEVACTB,
+	    sc->sc_devact[1]);
+
+	return true;
 }
 
 int

@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.10.64.1 2007/09/03 14:22:17 yamt Exp $ */
+/* $NetBSD: mcclock.c,v 1.10.64.2 2008/01/21 09:35:08 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.10.64.1 2007/09/03 14:22:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.10.64.2 2008/01/21 09:35:08 yamt Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
@@ -82,7 +82,6 @@ mcclock_attach(struct mc146818_softc *sc)
 
 	mcclock_set_pcc_freq(sc);
 
-	todr_attach(&sc->sc_handle);
 	clockattach(mcclock_init, (void *)sc);
 }
 

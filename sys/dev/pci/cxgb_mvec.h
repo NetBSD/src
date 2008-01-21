@@ -39,30 +39,30 @@
 #define M_IOVEC               0x100000 /* mbuf immediate data area is used for cluster ptrs */
 #define MBUF_IOV_TYPE_MASK   ((1<<3)-1) 
 #define mbuf_vec_set_type(mv, i, type) \
-	(mv)->mv_vec[(i)].mi_flags = (((mv)->mv_vec[(i)].mi_flags \
-		& ~MBUF_IOV_TYPE_MASK) | type)
+    (mv)->mv_vec[(i)].mi_flags = (((mv)->mv_vec[(i)].mi_flags \
+        & ~MBUF_IOV_TYPE_MASK) | type)
  
 #define mbuf_vec_get_type(mv, i) \
-	((mv)->mv_vec[(i)].mi_flags & MBUF_IOV_TYPE_MASK)
+    ((mv)->mv_vec[(i)].mi_flags & MBUF_IOV_TYPE_MASK)
 
 
 struct mbuf_iovec {
-	uint16_t mi_flags;     /* per-cluster flags          */ 
-	uint16_t mi_len;       /* length of cluster          */ 
-	uint32_t mi_offset;    /* data offsets into cluster  */ 
-	uint8_t  *mi_base;     /* pointers to cluster        */
-	volatile uint32_t *mi_refcnt;   /* refcnt for cluster*/
+    uint16_t mi_flags;     /* per-cluster flags          */ 
+    uint16_t mi_len;       /* length of cluster          */ 
+    uint32_t mi_offset;    /* data offsets into cluster  */ 
+    uint8_t  *mi_base;     /* pointers to cluster        */
+    volatile uint32_t *mi_refcnt;   /* refcnt for cluster*/
 #ifdef __i386__
-	void     *mi_args;      /* for sf_buf                 */
-#endif	
+    void     *mi_args;      /* for sf_buf                 */
+#endif  
 };
 
 #define MAX_MBUF_IOV          ((MHLEN-8)/sizeof(struct mbuf_iovec))
 struct mbuf_vec {
-	uint16_t mv_first;     /* first valid cluster        */
-	uint16_t mv_count;     /* # of clusters              */
-	uint32_t mv_flags;     /* flags for iovec            */
-	struct mbuf_iovec mv_vec[MAX_MBUF_IOV];
+    uint16_t mv_first;     /* first valid cluster        */
+    uint16_t mv_count;     /* # of clusters              */
+    uint32_t mv_flags;     /* flags for iovec            */
+    struct mbuf_iovec mv_vec[MAX_MBUF_IOV];
 };
 
 int _m_explode(struct mbuf *);
@@ -72,32 +72,32 @@ void mb_free_vec(struct mbuf *m);
 static inline void 
 m_iovinit(struct mbuf *m) 
 { 
-	struct mbuf_vec *mv = mtomv(m); 
+    struct mbuf_vec *mv = mtomv(m); 
 
-	mv->mv_first = mv->mv_count = 0;
-	m->m_pkthdr.len = m->m_len = 0;
-	m->m_flags |= M_IOVEC; 
+    mv->mv_first = mv->mv_count = 0;
+    m->m_pkthdr.len = m->m_len = 0;
+    m->m_flags |= M_IOVEC; 
 } 
  
 static inline void 
 m_iovappend(struct mbuf *m, uint8_t *cl, int size, int len, int offset)
 { 
-	struct mbuf_vec *mv = mtomv(m);
-	struct mbuf_iovec *iov;
-	int idx = mv->mv_first + mv->mv_count; 
+    struct mbuf_vec *mv = mtomv(m);
+    struct mbuf_iovec *iov;
+    int idx = mv->mv_first + mv->mv_count; 
 
 #ifdef __FreeBSD__
         KASSERT(idx <= MAX_MBUF_IOV, ("tried to append too many clusters to mbuf iovec")); 
 #endif
-	if ((m->m_flags & M_EXT) != 0) 
-		panic("invalid flags in %s", __func__); 
+    if ((m->m_flags & M_EXT) != 0) 
+        panic("invalid flags in %s", __func__); 
 
         if (mv->mv_count == 0)
-		m->m_data = cl + offset; 
+        m->m_data = cl + offset; 
 
         iov = &mv->mv_vec[idx];
 #ifdef __FreeBSD__
-	iov->mi_flags = m_gettype(size); 
+    iov->mi_flags = m_gettype(size); 
 #endif
         iov->mi_base = cl; 
         iov->mi_len = len; 
@@ -110,81 +110,86 @@ m_iovappend(struct mbuf *m, uint8_t *cl, int size, int len, int offset)
 static inline int
 m_explode(struct mbuf *m)
 {
-	if ((m->m_flags & M_IOVEC) == 0)
-		return (0);
+    if ((m->m_flags & M_IOVEC) == 0)
+        return (0);
 
-	return _m_explode(m); 
+    return _m_explode(m); 
 } 
  
 static inline int
 m_collapse(struct mbuf *m, int maxbufs, struct mbuf **mnew) 
 {
-#if (!defined(__sparc64__) && !defined(__sun4v__)) 	
-	if (m->m_next == NULL)
-#endif		
-	{
-		*mnew = m;
-		return (0);
-	}
-	return _m_collapse(m, maxbufs, mnew);
+#if (!defined(__sparc64__) && !defined(__sun4v__))  
+    if (m->m_next == NULL)
+#endif      
+    {
+        *mnew = m;
+        return (0);
+    }
+    return _m_collapse(m, maxbufs, mnew);
 } 
 
 static inline struct mbuf *
 m_free_vec(struct mbuf *m)
 {
-	struct mbuf *n = m->m_next;
-
 #ifdef __FreeBSD__
-	if (m->m_flags & M_IOVEC)
-		mb_free_vec(m);
-	else if (m->m_flags & M_EXT)
-		mb_free_ext(m);
-	else
-		uma_zfree(zone_mbuf, m);
+    struct mbuf *n = m->m_next;
+
+    if (m->m_flags & M_IOVEC)
+        mb_free_vec(m);
+    else if (m->m_flags & M_EXT)
+        mb_free_ext(m);
+    else
+        uma_zfree(zone_mbuf, m);
 #endif
-	return (n);
+#ifdef __NetBSD__
+    struct mbuf *n = NULL;
+
+    MFREE(m, n);
+#endif
+    return (n);
 }
 
 static inline void 
 m_freem_vec(struct mbuf *m)
 {
-	while (m != NULL)
-		m = m_free_vec(m);
+    while (m != NULL)
+        m = m_free_vec(m);
 }
 
 #ifdef __FreeBSD__
 static inline uma_zone_t
 m_getzonefromtype(int type)
 {
-	uma_zone_t zone;
-	
-	switch (type) {
-	case EXT_MBUF:
-		zone = zone_mbuf;
-		break;
-	case EXT_CLUSTER:
-		zone = zone_clust;
-		break;
+    uma_zone_t zone;
+    
+    switch (type) {
+    case EXT_MBUF:
+        zone = zone_mbuf;
+        break;
+    case EXT_CLUSTER:
+        zone = zone_clust;
+        break;
 #if MJUMPAGESIZE != MCLBYTES
-	case EXT_JUMBOP:
-		zone = zone_jumbop;
-		break;
+    case EXT_JUMBOP:
+        zone = zone_jumbop;
+        break;
 #endif
-	case EXT_JUMBO9:
-		zone = zone_jumbo9;
-		break;
-	case EXT_JUMBO16:
-		zone = zone_jumbo16;
-		break;
+    case EXT_JUMBO9:
+        zone = zone_jumbo9;
+        break;
+    case EXT_JUMBO16:
+        zone = zone_jumbo16;
+        break;
 #ifndef PACKET_ZONE_DISABLED
-	case EXT_PACKET:
-		zone = zone_pack;
-		break;
-#endif		
-	default:
-		panic("%s: invalid cluster type %d", __func__, type);
-	}
-	return (zone);
+    case EXT_PACKET:
+        zone = zone_pack;
+        break;
+#endif      
+    default:
+        panic("%s: invalid cluster type %d", __func__, type);
+    }
+    return (zone);
 }
 #endif
 

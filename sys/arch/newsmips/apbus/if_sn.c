@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.17.2.4 2007/10/27 11:27:23 yamt Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.17.2.5 2008/01/21 09:37:57 yamt Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.17.2.4 2007/10/27 11:27:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.17.2.5 2008/01/21 09:37:57 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -72,7 +72,7 @@ static void	snstart(struct ifnet *ifp);
 static void	snreset(struct sn_softc *sc);
 
 static void	caminitialise(struct sn_softc *);
-static void	camentry(struct sn_softc *, int, u_char *ea);
+static void	camentry(struct sn_softc *, int, const u_char *ea);
 static void	camprogram(struct sn_softc *);
 static void	initialise_tda(struct sn_softc *);
 static void	initialise_rda(struct sn_softc *);
@@ -613,7 +613,7 @@ caminitialise(struct sn_softc *sc)
 }
 
 static void 
-camentry(struct sn_softc *sc, int entry, u_char *ea)
+camentry(struct sn_softc *sc, int entry, const u_char *ea)
 {
 	void	*p_cda = sc->p_cda;
 	int	camoffset = entry * CDA_CAMDESC;
@@ -640,7 +640,7 @@ camprogram(struct sn_softc *sc)
 	ifp = &sc->sc_if;
 
 	/* Always load our own address first. */
-	camentry(sc, mcount, LLADDR(ifp->if_sadl));
+	camentry(sc, mcount, CLLADDR(ifp->if_sadl));
 	mcount++;
 
 	/* Assume we won't need allmulti bit. */

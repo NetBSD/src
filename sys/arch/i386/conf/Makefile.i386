@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.139.2.5 2007/12/07 17:24:56 yamt Exp $
+#	$NetBSD: Makefile.i386,v 1.139.2.6 2008/01/21 09:36:52 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -82,12 +82,11 @@ LINKFORMAT=	-z
 ## (6) port specific target dependencies
 ##
 
-freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
-svr4_sigcode.o mach_sigcode.o: assym.h
+freebsd_sigcode.o i386func.o ibcs2_sigcode.o linux_sigcode.o: assym.h
+lock_stubs.o svr4_sigcode.o mach_sigcode.o: assym.h
 apmcall.o cpufunc.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
-busfunc.o kvm86call.o: assym.h
-clock.o: config_time.h
+acpi_wakeup_low.o busfunc.o kvm86call.o: assym.h
 
 ##
 ## (7) misc settings
@@ -110,6 +109,7 @@ clock.o: config_time.h
 
 ## Include rules for Atheros WLAN
 .include "$S/contrib/dev/ath/netbsd/Makefile.ath.inc"
+.include "$S/arch/x86/acpi/Makefile.wakecode.inc"
 
 ##
 ## (9) port independent kernel machinery

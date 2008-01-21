@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysv_ipc.c,v 1.4.18.1 2007/02/26 09:09:36 yamt Exp $ */
+/* $NetBSD: osf1_sysv_ipc.c,v 1.4.18.2 2008/01/21 09:42:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_sysv_ipc.c,v 1.4.18.1 2007/02/26 09:09:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_sysv_ipc.c,v 1.4.18.2 2008/01/21 09:42:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,10 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_sysv_ipc.c,v 1.4.18.1 2007/02/26 09:09:36 yamt 
 #include <compat/osf1/osf1_cvt.h>
 
 int
-osf1_sys_shmat(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_shmat(struct lwp *l, const struct osf1_sys_shmat_args *v, register_t *retval)
 {
 
 	/* XXX */
@@ -57,10 +54,7 @@ osf1_sys_shmat(l, v, retval)
 }
 
 int
-osf1_sys_shmctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_shmctl(struct lwp *l, const struct osf1_sys_shmctl_args *v, register_t *retval)
 {
 
 	/* XXX */
@@ -68,10 +62,7 @@ osf1_sys_shmctl(l, v, retval)
 }
 
 int
-osf1_sys_shmdt(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_shmdt(struct lwp *l, const struct osf1_sys_shmdt_args *v, register_t *retval)
 {
 
 	/* XXX */
@@ -79,10 +70,7 @@ osf1_sys_shmdt(l, v, retval)
 }
 
 int
-osf1_sys_shmget(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+osf1_sys_shmget(struct lwp *l, const struct osf1_sys_shmget_args *v, register_t *retval)
 {
 
 	/* XXX */

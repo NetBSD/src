@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.13 2003/07/15 02:29:31 lukem Exp $	*/
+/*	$NetBSD: cpu.c,v 1.13.16.1 2008/01/21 09:36:37 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
  * Copyright (c) 1999-2001 SATO Kazumi, All rights reserved.
@@ -56,13 +56,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13 2003/07/15 02:29:31 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.13.16.1 2008/01/21 09:36:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include <machine/sysconf.h>
-#include <machine/bus.h>
 #include <machine/autoconf.h>
 
 /* Definition of the driver for autoconfig. */

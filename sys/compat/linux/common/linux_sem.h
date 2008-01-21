@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sem.h,v 1.5.18.2 2007/12/07 17:28:24 yamt Exp $	*/
+/*	$NetBSD: linux_sem.h,v 1.5.18.3 2008/01/21 09:41:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -84,17 +84,15 @@ struct linux_sys_semctl_args {
 	syscallarg(int) cmd;
 	syscallarg(union linux_semun) arg;
 };
+int linux_sys_semctl(struct lwp *, const struct linux_sys_semctl_args *, register_t *);
 #endif
 
 
 #ifdef SYSVSEM
 #ifdef _KERNEL
 __BEGIN_DECLS
-int linux_sys_semctl(struct lwp *, void *, register_t *);
-void bsd_to_linux_semid_ds(struct semid_ds *,
-    struct linux_semid_ds *);
-void linux_to_bsd_semid_ds(struct linux_semid_ds *,
-    struct semid_ds *);
+void bsd_to_linux_semid_ds(struct semid_ds *, struct linux_semid_ds *);
+void linux_to_bsd_semid_ds(struct linux_semid_ds *, struct semid_ds *);
 __END_DECLS
 #endif	/* !_KERNEL */
 #endif	/* !SYSVSEM */

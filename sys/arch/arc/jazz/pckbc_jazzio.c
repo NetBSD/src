@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.13.8.1 2007/09/03 14:23:10 yamt Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.13.8.2 2008/01/21 09:35:33 yamt Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.13.8.1 2007/09/03 14:23:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.13.8.2 2008/01/21 09:35:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,10 +37,9 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.13.8.1 2007/09/03 14:23:10 yamt E
 #include <sys/malloc.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/bus.h>
 
 #include <machine/autoconf.h>
-#include <machine/bus.h>
 #include <arc/jazz/pica.h>
 #include <arc/jazz/jazziovar.h>
 

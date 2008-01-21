@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.52.10.3 2007/12/07 17:25:51 yamt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.52.10.4 2008/01/21 09:38:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,11 +106,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.52.10.3 2007/12/07 17:25:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.52.10.4 2008/01/21 09:38:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/intr.h>
@@ -140,17 +141,13 @@ static void	dec_3min_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
 static void	kn02ba_wbflush __P((void));
-static unsigned	kn02ba_clkread __P((void));
 
+static void	dec_3min_tc_init(void);
 
 /*
  * Local declarations.
  */
 static u_int32_t kmin_tc3_imask;
-
-#ifdef MIPS3
-static unsigned latched_cycle_cnt;
-#endif
 
 static const int dec_3min_ipl2spl_table[] = {
 	[IPL_NONE] = 0,
@@ -176,7 +173,7 @@ dec_3min_init()
 	platform.iointr = dec_3min_intr;
 	platform.intr_establish = dec_3min_intr_establish;
 	platform.memsize = memsize_bitmap;
-	platform.clkread = kn02ba_clkread;
+	platform.tc_init = dec_3min_tc_init;
 
 	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KMIN_REG_TIMEOUT) = 0;
@@ -409,11 +406,7 @@ dec_3min_intr(status, cause, pc, ipending)
 
 			__asm volatile("lbu $0,48(%0)" ::
 				"r"(ioasic_base + IOASIC_SLOT_8_START));
-#ifdef MIPS3
-			if (CPUISMIPS3) {
-				latched_cycle_cnt = mips3_cp0_count_read();
-			}
-#endif
+
 			cf.pc = pc;
 			cf.sr = status;
 			hardclock(&cf);
@@ -502,18 +495,26 @@ kn02ba_wbflush()
 	    "i"(MIPS_PHYS_TO_KSEG1(KMIN_REG_IMSK)));
 }
 
-static unsigned
-kn02ba_clkread()
-{
-#ifdef MIPS3
-	if (CPUISMIPS3) {
-		u_int32_t mips3_cycles;
+/*
+ * Support for using the MIPS 3 clock as a timecounter.
+ */
 
-		mips3_cycles = mips3_cp0_count_read() - latched_cycle_cnt;
-		/* XXX divides take 78 cycles: approximate with * 41/2048 */
-		return((mips3_cycles >> 6) + (mips3_cycles >> 8) +
-		       (mips3_cycles >> 11));
+void
+dec_3min_tc_init(void)
+{
+	static struct timecounter tc =  {
+		.tc_get_timecount = (timecounter_get_t *)mips3_cp0_count_read,
+		.tc_counter_mask = ~0u,
+		.tc_name = "mips3_cp0_counter",
+		.tc_quality = 100,
+	};
+
+	if (MIPS_HAS_CLOCK) {
+		tc.tc_frequency = cpu_mhz * 1000000;
+		if (mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT) {
+			tc.tc_frequency /= 2;
+		}
+
+		tc_init(&tc);
 	}
-#endif
-	return 0;
 }

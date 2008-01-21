@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.82.12.5 2007/12/07 17:25:03 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.82.12.6 2008/01/21 09:37:08 yamt Exp $	*/
 
 /*
  *
@@ -72,6 +72,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_user_ldt.h"
+#include "opt_xen.h"
 #endif
 
 #include <sys/atomic.h>
@@ -83,6 +84,10 @@
 #endif
 
 #include <uvm/uvm_object.h>
+#ifdef XEN
+#include <xen/xenfunc.h>
+#include <xen/xenpmap.h>
+#endif /* XEN */
 
 /*
  * see pte.h for a description of i386 MMU terminology and hardware
@@ -194,7 +199,12 @@
 #define L2_SLOT_PTE	(KERNBASE/NBPD_L2-1)	/* 767: for recursive PDP map */
 #define L2_SLOT_KERN	(KERNBASE/NBPD_L2)	/* 768: start of kernel space */
 #define	L2_SLOT_KERNBASE L2_SLOT_KERN
+#ifndef XEN
 #define L2_SLOT_APTE	1023		/* 1023: alternative recursive slot */
+#else
+#define L2_SLOT_APTE	1007		/* 1008-1023 reserved by Xen */
+#endif
+
 
 #define PDIR_SLOT_KERN	L2_SLOT_KERN
 #define PDIR_SLOT_PTE	L2_SLOT_PTE
@@ -261,9 +271,13 @@
  */
 #define NPTECL		8
 
+#include <x86/pmap.h>
+
+#ifndef XEN
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PG_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
+#define pmap_pte_cas(p, o, n)		atomic_cas_32((p), (o), (n))
 #define pmap_pte_testset(p, n)		\
     atomic_swap_ulong((volatile unsigned long *)p, n)
 #define pmap_pte_setbits(p, b)		\
@@ -271,8 +285,80 @@
 #define pmap_pte_clearbits(p, b)	\
     atomic_and_ulong((volatile unsigned long *)p, ~(b))
 #define pmap_pte_flush()		/* nothing */
+#else
+static __inline pt_entry_t
+pmap_pa2pte(paddr_t pa)
+{
+	return (pt_entry_t)xpmap_ptom_masked(pa);
+}
 
-#include <x86/pmap.h>
+static __inline paddr_t
+pmap_pte2pa(pt_entry_t pte)
+{
+	return xpmap_mtop_masked(pte & PG_FRAME);
+}
+static __inline void
+pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
+{
+	int s = splvm();
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), npte);
+	splx(s);
+}
+
+static __inline pt_entry_t
+pmap_pte_cas(volatile pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
+{
+	int s = splvm();
+	pt_entry_t opte = *ptep;
+
+	if (opte == o) {
+		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(ptep)), n);
+		xpq_flush_queue();
+	}
+	splx(s);
+	return opte;
+}
+
+static __inline pt_entry_t
+pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
+{
+	int s = splvm();
+	pt_entry_t opte = *pte;
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	    npte);
+	xpq_flush_queue();
+	splx(s);
+	return opte;
+}
+
+static __inline void
+pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
+{
+	int s = splvm();
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	    (*pte) | bits);
+	xpq_flush_queue();
+	splx(s);
+}
+
+static __inline void
+pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
+{	
+	int s = splvm();
+	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	    (*pte) & ~bits);
+	xpq_flush_queue();
+	splx(s);
+}
+
+static __inline void
+pmap_pte_flush(void)
+{
+	int s = splvm();
+	xpq_flush_queue();
+	splx(s);
+}
+#endif
 
 struct trapframe;
 

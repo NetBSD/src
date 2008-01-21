@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.14.16.3 2007/09/03 14:30:20 yamt Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.14.16.4 2008/01/21 09:39:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.3 2007/09/03 14:30:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.4 2008/01/21 09:39:32 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,14 +67,11 @@ __KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.14.16.3 2007/09/03 14:30:20 
  */
 /* ARGSUSED */
 int
-compat_13_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct compat_13_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct sigcontext13 *) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct sigcontext13 sc, *scp;
 	struct trapframe64 *tf;
 	struct proc *p = l->l_proc;

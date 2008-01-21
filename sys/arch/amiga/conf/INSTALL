@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.56.2.3 2007/09/03 14:22:43 yamt Exp $
+# $NetBSD: INSTALL,v 1.56.2.4 2008/01/21 09:35:29 yamt Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -28,7 +28,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.56.2.3 $"
+#ident 		"GENERIC-$Revision: 1.56.2.4 $"
 
 makeoptions	COPTS="-Os"
 
@@ -127,7 +127,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Support for various kernel options
 #
 
-#options 	SYSTRACE	# system call vetting via systrace(1)
 #options 	INSECURE	# disable kernel security levels
 options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	USERCONF	# userconf(4) support

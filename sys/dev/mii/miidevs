@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.59.2.5 2007/10/27 11:32:17 yamt Exp $
+$NetBSD: miidevs,v 1.59.2.6 2008/01/21 09:43:27 yamt Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -193,6 +193,7 @@ model xxMARVELL E1000_3		0x0003 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E1000_5		0x0005 Marvell 88E1000 Gigabit PHY
 model xxMARVELL E6060		0x0008 Marvell 88E6060 10/100 5-port PHY switch
 model xxMARVELL E1111		0x000c Marvell 88E1111 Gigabit PHY
+model xxMARVELL E1116		0x0021 Marvell 88E1116 Gigabit PHY
 
 /* Myson Technology PHYs */
 model xxMYSON MTD972		0x0000 MTD972 10/100 media interface

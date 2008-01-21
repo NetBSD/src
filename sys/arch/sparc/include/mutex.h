@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.3.4.4 2007/12/07 17:26:14 yamt Exp $	*/
+/*	$NetBSD: mutex.h,v 1.3.4.5 2008/01/21 09:39:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -88,6 +88,8 @@ struct kmutex {
 };
 
 #else	/* __MUTEX_PRIVATE */
+
+#include <machine/lock.h>
 
 struct kmutex {
 	union {

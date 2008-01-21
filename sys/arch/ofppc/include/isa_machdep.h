@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.h,v 1.2.4.3 2007/11/15 11:43:13 yamt Exp $	*/
+/*	$NetBSD: isa_machdep.h,v 1.2.4.4 2008/01/21 09:37:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@ extern struct pic_ops *isa_pic;
 extern int isa_pcmciamask;
 
 /* prototypes from isa_machdep.c */
-int map_isa_ioregs(uint32_t);
+int map_isa_ioregs(void);
 uint8_t isa_inb(uint32_t);
 void isa_outb(uint32_t, uint8_t);
 

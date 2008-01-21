@@ -1,4 +1,4 @@
-/*	$NetBSD: aps.c,v 1.2.2.3 2007/12/07 17:30:16 yamt Exp $	*/
+/*	$NetBSD: aps.c,v 1.2.2.4 2008/01/21 09:43:17 yamt Exp $	*/
 /*	$OpenBSD: aps.c,v 1.15 2007/05/19 19:14:11 tedu Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.2.2.3 2007/12/07 17:30:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aps.c,v 1.2.2.4 2008/01/21 09:43:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ struct aps_softc {
 	struct callout sc_callout;
 
 	struct sensor_rec aps_data;
-	void *sc_powerhook;
 };
 
 static int 	aps_match(struct device *, struct cfdata *, void *);
@@ -115,7 +114,8 @@ static uint8_t  aps_mem_read_1(bus_space_tag_t, bus_space_handle_t,
 			       int, uint8_t);
 static void 	aps_refresh_sensor_data(struct aps_softc *sc);
 static void 	aps_refresh(void *);
-static void 	aps_power(int, void *);
+static bool 	aps_suspend(device_t);
+static bool 	aps_resume(device_t);
 
 CFATTACH_DECL(aps, sizeof(struct aps_softc),
 	      aps_match, aps_attach, aps_detach, NULL);
@@ -215,9 +215,9 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Initialize sensors */
 #define INITDATA(idx, unit, string)					\
-	sc->sc_sensor[idx].units = unit;					\
-	snprintf(sc->sc_sensor[idx].desc, sizeof(sc->sc_sensor[idx].desc),	\
-	    "%s %s", sc->sc_dev.dv_xname, string);
+	sc->sc_sensor[idx].units = unit;				\
+	strlcpy(sc->sc_sensor[idx].desc, string,			\
+	    sizeof(sc->sc_sensor[idx].desc));
 
 	INITDATA(APS_SENSOR_XACCEL, ENVSYS_INTEGER, "X_ACCEL");
 	INITDATA(APS_SENSOR_YACCEL, ENVSYS_INTEGER, "Y_ACCEL");
@@ -251,12 +251,8 @@ aps_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-					       aps_power,
-					       sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: can't establish powerhook\n",
-		    device_xname(&sc->sc_dev));
+	if (!pmf_device_register(self, aps_suspend, aps_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Refresh sensor data every 0.5 seconds */
 	callout_init(&sc->sc_callout, 0);
@@ -404,28 +400,36 @@ aps_refresh(void *arg)
 	callout_schedule(&sc->sc_callout, (hz) / 2);
 }
 
-static void
-aps_power(int why, void *arg)
+static bool
+aps_suspend(device_t dv)
 {
-	struct aps_softc *sc = (struct aps_softc *)arg;
+	struct aps_softc *sc = device_private(dv);
 
-	if (why != PWR_RESUME) {
-		callout_stop(&sc->sc_callout);
-	} else {
-		/*
-		 * Redo the init sequence on resume, because APS is 
-		 * as forgetful as it is deaf.
-		 */
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_INIT, 0x13);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_CMD, 0x01);
-		bus_space_read_1(sc->sc_iot, sc->sc_ioh, APS_CMD);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_INIT, 0x13);
-		bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_CMD, 0x01);
-	
-		if (aps_mem_read_1(sc->sc_iot, sc->sc_ioh, APS_CMD, 0x00) &&
-		    aps_init(sc))
-			callout_schedule(&sc->sc_callout, (hz) / 2);
-		else
-			printf("aps: failed to wake up\n");
-	}
+	callout_stop(&sc->sc_callout);
+
+	return true;
+}
+
+static bool
+aps_resume(device_t dv)
+{
+	struct aps_softc *sc = device_private(dv);
+
+	/*
+	 * Redo the init sequence on resume, because APS is 
+	 * as forgetful as it is deaf.
+	 */
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_INIT, 0x13);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_CMD, 0x01);
+	bus_space_read_1(sc->sc_iot, sc->sc_ioh, APS_CMD);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_INIT, 0x13);
+	bus_space_write_1(sc->sc_iot, sc->sc_ioh, APS_CMD, 0x01);
+
+	if (aps_mem_read_1(sc->sc_iot, sc->sc_ioh, APS_CMD, 0x00) &&
+	    aps_init(sc))
+		callout_schedule(&sc->sc_callout, (hz) / 2);
+	else
+		aprint_error_dev(dv, "failed to wake up\n");
+
+	return true;
 }

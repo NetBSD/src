@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_sis_reg.h,v 1.13 2005/06/16 19:30:02 bouyer Exp $ */
+/*	$NetBSD: pciide_sis_reg.h,v 1.13.2.1 2008/01/21 09:44:12 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -94,23 +94,23 @@
 
 /* timings values, mostly from FreeBSD */
 /* PIO timings, for all up to 133NEW */
-static const u_int8_t sis_pio_act[] __attribute__((__unused__)) =
+static const u_int8_t sis_pio_act[] __unused =
     {12, 6, 4, 3, 3};
-static const u_int8_t sis_pio_rec[] __attribute__((__unused__)) =
+static const u_int8_t sis_pio_rec[] __unused =
     {11, 7, 4, 3, 1};
 /* DMA timings for 66 and 100OLD */
-static const u_int8_t sis_udma66_tim[] __attribute__((__unused__)) =
+static const u_int8_t sis_udma66_tim[] __unused =
     {15, 13, 11, 10, 9, 8};
 /* DMA timings for 100NEW */
-static const u_int8_t sis_udma100new_tim[] __attribute__((__unused__)) =
+static const u_int8_t sis_udma100new_tim[] __unused =
     {0x8b, 0x87, 0x85, 0x84, 0x82, 0x81};
 /* DMA timings for 133OLD */
-static const u_int8_t sis_udma133old_tim[] __attribute__((__unused__)) =
+static const u_int8_t sis_udma133old_tim[] __unused =
     {0x8f, 0x8a, 0x87, 0x85, 0x83, 0x82, 0x81};
 /* PIO, DMA and UDMA timings for 133NEW */
-static const u_int32_t sis_pio133new_tim[] __attribute__((__unused__)) =
+static const u_int32_t sis_pio133new_tim[] __unused =
     {0x28269008, 0x0c266008, 0x4263008, 0x0c0a3008, 0x05093008};
-static const u_int32_t sis_dma133new_tim[] __attribute__((__unused__)) =
+static const u_int32_t sis_dma133new_tim[] __unused =
     {0x22196008, 0x0c0a3008, 0x05093008};
-static const u_int32_t sis_udma133new_tim[] __attribute__((__unused__)) =
+static const u_int32_t sis_udma133new_tim[] __unused =
     {0x9f4, 0x64a, 0x474, 0x254, 0x234, 0x224, 0x214};

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.16.6 2007/12/07 17:23:57 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.3.16.7 2008/01/21 09:35:15 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -169,7 +169,6 @@ define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
-define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
@@ -198,9 +197,8 @@ define	PCB_CR3			offsetof(struct pcb, pcb_cr3)
 define	PCB_RBP			offsetof(struct pcb, pcb_rbp)
 define	PCB_RSP			offsetof(struct pcb, pcb_rsp)
 define	PCB_USERSP		offsetof(struct pcb, pcb_usersp)
-define	PCB_RSP0		offsetof(struct pcb, pcb_tss.tss_rsp0)
+define	PCB_RSP0		offsetof(struct pcb, pcb_rsp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
-define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 
@@ -231,6 +229,9 @@ define	TF_RFLAGS		offsetof(struct trapframe, tf_rflags)
 define	TF_RSP			offsetof(struct trapframe, tf_rsp)
 define	TF_SS			offsetof(struct trapframe, tf_ss)
 
+# Size of stack area needed for saving registers
+define	TF_REGSIZE		offsetof(struct trapframe, tf_trapno)
+# Total size includes regsisters pushed by hardware
 define	FRAMESIZE		sizeof(struct trapframe)
 
 define	CPU_INFO_SCRATCH	offsetof(struct cpu_info, ci_scratch)
@@ -247,6 +248,7 @@ define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
+define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
@@ -259,6 +261,31 @@ define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
+
+define	ACPI_SUSPEND_GDT		offsetof(struct cpu_info, ci_suspend_gdt)
+define	ACPI_SUSPEND_IDT		offsetof(struct cpu_info, ci_suspend_idt)
+define	ACPI_SUSPEND_TR			offsetof(struct cpu_info, ci_suspend_tr)
+define	ACPI_SUSPEND_LDT		offsetof(struct cpu_info, ci_suspend_ldt)
+define	ACPI_SUSPEND_FS_BASE_L		offsetof(struct cpu_info, ci_suspend_fs_base_l)
+define	ACPI_SUSPEND_FS_BASE_H		offsetof(struct cpu_info, ci_suspend_fs_base_h)
+define	ACPI_SUSPEND_GS_BASE_L		offsetof(struct cpu_info, ci_suspend_gs_base_l)
+define	ACPI_SUSPEND_GS_BASE_H		offsetof(struct cpu_info, ci_suspend_gs_base_h)
+define	ACPI_SUSPEND_GS_KERNELBASE_L	offsetof(struct cpu_info, ci_suspend_gs_kernelbase_l)
+define	ACPI_SUSPEND_GS_KERNELBASE_H	offsetof(struct cpu_info, ci_suspend_gs_kernelbase_h)
+define	ACPI_SUSPEND_MSR_EFER		offsetof(struct cpu_info, ci_suspend_msr_efer)
+define	ACPI_SUSPEND_RBX		offsetof(struct cpu_info, ci_suspend_rbx)
+define	ACPI_SUSPEND_RBP		offsetof(struct cpu_info, ci_suspend_rbp)
+define	ACPI_SUSPEND_RSP		offsetof(struct cpu_info, ci_suspend_rsp)
+define	ACPI_SUSPEND_R12		offsetof(struct cpu_info, ci_suspend_r12)
+define	ACPI_SUSPEND_R13		offsetof(struct cpu_info, ci_suspend_r13)
+define	ACPI_SUSPEND_R14		offsetof(struct cpu_info, ci_suspend_r14)
+define	ACPI_SUSPEND_R15		offsetof(struct cpu_info, ci_suspend_r15)
+define	ACPI_SUSPEND_RFL		offsetof(struct cpu_info, ci_suspend_rfl)
+define	ACPI_SUSPEND_CR0		offsetof(struct cpu_info, ci_suspend_cr0)
+define	ACPI_SUSPEND_CR2		offsetof(struct cpu_info, ci_suspend_cr2)
+define	ACPI_SUSPEND_CR3		offsetof(struct cpu_info, ci_suspend_cr3)
+define	ACPI_SUSPEND_CR4		offsetof(struct cpu_info, ci_suspend_cr4)
+define	ACPI_SUSPEND_CR8		offsetof(struct cpu_info, ci_suspend_cr8)
 
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
@@ -366,3 +393,5 @@ define	NKL2_KIMG_ENTRIES	NKL2_KIMG_ENTRIES
 
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
+
+define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)

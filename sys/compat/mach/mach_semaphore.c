@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_semaphore.c,v 1.11.4.3 2007/12/07 17:28:45 yamt Exp $ */
+/*	$NetBSD: mach_semaphore.c,v 1.11.4.4 2008/01/21 09:41:41 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.11.4.3 2007/12/07 17:28:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_semaphore.c,v 1.11.4.4 2008/01/21 09:41:41 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -72,12 +72,11 @@ static void mach_waiting_lwp_put
     (struct mach_waiting_lwp *, struct mach_semaphore *, int);
 
 int
-mach_sys_semaphore_wait_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_wait_trap(struct lwp *l, const struct mach_sys_semaphore_wait_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_wait_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) wait_name;
-	} */ *uap = v;
+	} */
 	struct mach_semaphore *ms;
 	struct mach_waiting_lwp *mwl;
 	struct mach_right *mr;
@@ -109,12 +108,11 @@ mach_sys_semaphore_wait_trap(struct lwp *l, void *v,
 }
 
 int
-mach_sys_semaphore_signal_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_signal_trap(struct lwp *l, const struct mach_sys_semaphore_signal_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_signal_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) signal_name;
-	} */ *uap = v;
+	} */
 	struct mach_semaphore *ms;
 	struct mach_waiting_lwp *mwl;
 	struct mach_right *mr;
@@ -146,8 +144,7 @@ mach_sys_semaphore_signal_trap(struct lwp *l, void *v,
 }
 
 int
-mach_semaphore_create(args)
-	struct mach_trap_args *args;
+mach_semaphore_create(struct mach_trap_args *args)
 {
 	mach_semaphore_create_request_t *req = args->smsg;
 	mach_semaphore_create_reply_t *rep = args->rmsg;
@@ -174,8 +171,7 @@ mach_semaphore_create(args)
 }
 
 int
-mach_semaphore_destroy(args)
-	struct mach_trap_args *args;
+mach_semaphore_destroy(struct mach_trap_args *args)
 {
 	mach_semaphore_destroy_request_t *req = args->smsg;
 	mach_semaphore_destroy_reply_t *rep = args->rmsg;
@@ -220,9 +216,7 @@ mach_semaphore_init(void)
 }
 
 static struct mach_semaphore *
-mach_semaphore_get(value, policy)
-	int value;
-	int policy;
+mach_semaphore_get(int value, int policy)
 {
 	struct mach_semaphore *ms;
 
@@ -241,8 +235,7 @@ mach_semaphore_get(value, policy)
 }
 
 static void
-mach_semaphore_put(ms)
-	struct mach_semaphore *ms;
+mach_semaphore_put(struct mach_semaphore *ms)
 {
 	struct mach_waiting_lwp *mwl;
 
@@ -262,9 +255,7 @@ mach_semaphore_put(ms)
 }
 
 static struct mach_waiting_lwp *
-mach_waiting_lwp_get(l, ms)
-	struct lwp *l;
-	struct mach_semaphore *ms;
+mach_waiting_lwp_get(struct lwp *l, struct mach_semaphore *ms)
 {
 	struct mach_waiting_lwp *mwl;
 
@@ -280,10 +271,7 @@ mach_waiting_lwp_get(l, ms)
 }
 
 static void
-mach_waiting_lwp_put(mwl, ms, locked)
-	struct mach_waiting_lwp *mwl;
-	struct mach_semaphore *ms;
-	int locked;
+mach_waiting_lwp_put(struct mach_waiting_lwp *mwl, struct mach_semaphore *ms, int locked)
 {
 	if (!locked)
 		rw_enter(&ms->ms_lock, RW_WRITER);
@@ -300,8 +288,7 @@ mach_waiting_lwp_put(mwl, ms, locked)
  * can be some memory leaks here.
  */
 void
-mach_semaphore_cleanup(l)
-	struct lwp *l;
+mach_semaphore_cleanup(struct lwp *l)
 {
 	struct mach_semaphore *ms;
 	struct mach_waiting_lwp *mwl;
@@ -324,15 +311,12 @@ mach_semaphore_cleanup(l)
 }
 
 int
-mach_sys_semaphore_wait_signal_trap(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_semaphore_wait_signal_trap(struct lwp *l, const struct mach_sys_semaphore_wait_signal_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_wait_signal_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) wait_name;
 		syscallarg(mach_port_name_t) signal_name;
-	} */ *uap = v;
+	} */
 	struct mach_sys_semaphore_wait_trap_args cupwait;
 	struct mach_sys_semaphore_signal_trap_args cupsig;
 	int error;
@@ -350,13 +334,12 @@ mach_sys_semaphore_wait_signal_trap(l, v, retval)
 
 
 int
-mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_signal_thread_trap(struct lwp *l, const struct mach_sys_semaphore_signal_thread_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_signal_thread_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) signal_name;
 		syscallarg(mach_port_name_t) thread;
-	} */ *uap = v;
+	} */
 	struct mach_right *mr;
 	struct mach_semaphore *ms;
 	mach_port_t mn;
@@ -419,12 +402,11 @@ mach_sys_semaphore_signal_thread_trap(struct lwp *l, void *v,
 
 
 int
-mach_sys_semaphore_signal_all_trap(struct lwp *l, void *v,
-    register_t *retval)
+mach_sys_semaphore_signal_all_trap(struct lwp *l, const struct mach_sys_semaphore_signal_all_trap_args *uap, register_t *retval)
 {
-	struct mach_sys_semaphore_signal_all_trap_args /* {
+	/* {
 		syscallarg(mach_port_name_t) signal_name;
-	} */ *uap = v;
+	} */
 	struct mach_right *mr;
 	struct mach_semaphore *ms;
 	mach_port_t mn;

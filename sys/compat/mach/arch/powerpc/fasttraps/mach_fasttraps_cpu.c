@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_fasttraps_cpu.c,v 1.4 2005/02/26 23:10:20 perry Exp $ */
+/*	$NetBSD: mach_fasttraps_cpu.c,v 1.4.4.1 2008/01/21 09:41:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.4 2005/02/26 23:10:20 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.4.4.1 2008/01/21 09:41:45 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -63,10 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_fasttraps_cpu.c,v 1.4 2005/02/26 23:10:20 perry
 
 /* We do not emulate anything here right now */
 int
-mach_sys_processor_facilities_used(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_processor_facilities_used(struct lwp *l, const void *v, register_t *retval)
 {
 	*retval = 0;
 	return 0;
@@ -74,10 +71,7 @@ mach_sys_processor_facilities_used(l, v, retval)
 
 /* This seems to be called only from within the kernel in Mach */
 int
-mach_sys_load_msr(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+mach_sys_load_msr(struct lwp *l, const void *v, register_t *retval)
 {
 	printf("mach_sys_load_msr()\n");
 	return 0;

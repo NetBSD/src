@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19.18.1 2007/02/26 09:06:00 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19.18.2 2008/01/21 09:35:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #ifndef __ASSEMBLER__
-#include <sys/lock.h>		/* struct simplelock */ 
+#include <sys/simplelock.h>	/* struct simplelock */ 
 #endif /* __ASSEMBLER__ */
 #include <arm/arm32/pte.h>	/* pt_entry_t */
 

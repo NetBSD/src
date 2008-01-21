@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.6 2004/08/02 18:07:41 tacha Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.6.12.1 2008/01/21 09:38:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -57,8 +57,6 @@ struct pci_attach_args;	/* Forward declaration */
 typedef struct pci_chipset *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
-
-extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 struct pci_chipset_functions {
 	void (*pcf_bus_attach_hook)(struct device *, struct device *,

@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.2.2.3 2007/02/26 09:10:02 yamt Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.2.2.4 2008/01/21 09:42:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.2.2.4 2008/01/21 09:42:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

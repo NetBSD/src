@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.58.2.4 2007/09/03 14:38:39 yamt Exp $	*/
+/*	$NetBSD: if_se.c,v 1.58.2.5 2008/01/21 09:44:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58.2.4 2007/09/03 14:38:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.58.2.5 2008/01/21 09:44:34 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -823,6 +823,7 @@ se_init(sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct scsi_ctron_ether_generic set_addr_cmd;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 	int error;
 
 #if NBPFILTER > 0
@@ -838,9 +839,10 @@ se_init(sc)
 
 	PROTOCMD(ctron_ether_set_addr, set_addr_cmd);
 	_lto2b(ETHER_ADDR_LEN, set_addr_cmd.length);
+	memcpy(enaddr, CLLADDR(ifp->if_sadl), sizeof(enaddr));
 	error = se_scsipi_cmd(sc->sc_periph,
 	    (void *)&set_addr_cmd, sizeof(set_addr_cmd),
-	    LLADDR(ifp->if_sadl), ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
+	    enaddr, ETHER_ADDR_LEN, SERETRIES, SETIMEOUT, NULL,
 	    XS_CTL_DATA_OUT);
 	if (error != 0)
 		return (error);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.10.6.6 2007/12/07 17:31:34 yamt Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.10.6.7 2008/01/21 09:44:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ucycom.c,v 1.10.6.6 2007/12/07 17:31:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.10.6.7 2008/01/21 09:44:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

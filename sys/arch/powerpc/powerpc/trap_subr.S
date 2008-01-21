@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.57.4.1 2006/12/30 20:46:44 yamt Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.57.4.2 2008/01/21 09:38:29 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -177,7 +177,7 @@
  * Save/restore MPC601 MQ register.
  * Note: oea_init() relies on this instruction sequence.
  */
-#if !defined(PPC_OEA64)
+#if !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
 #define	SAVE_MQ(tf,b)							\
 	mfspr	b,SPR_MQ;						\
 	streg	b,(FRAME_MQ+(2*SZREG))(tf);

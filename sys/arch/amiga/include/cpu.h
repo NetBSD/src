@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59.12.2 2007/09/03 14:22:59 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59.12.3 2008/01/21 09:35:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -205,11 +205,6 @@ int	is_a4000 __P((void));
 #ifdef DRACO
 #define	is_draco() ((machineid >> 24) == 0x7d ? (machineid >> 16) & 0xff : 0)
 #endif
-
-/*
- * Prototypes from clock.c
- */
-u_long	clkread __P((void));
 
 #ifdef DRACO
 /*

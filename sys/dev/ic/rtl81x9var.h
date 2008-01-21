@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9var.h,v 1.19.2.3 2007/09/03 14:35:09 yamt Exp $	*/
+/*	$NetBSD: rtl81x9var.h,v 1.19.2.4 2008/01/21 09:43:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -215,13 +215,9 @@ struct rtk_softc {
 	int			sc_txthresh;	/* Early tx threshold */
 	int			sc_rev;		/* MII revision */
 
-	void	*sc_sdhook;			/* shutdown hook */
-	void	*sc_powerhook;			/* power management hook */
-
 	/* Power management hooks. */
 	int	(*sc_enable)	(struct rtk_softc *);
 	void	(*sc_disable)	(struct rtk_softc *);
-	void	(*sc_power)	(struct rtk_softc *, int);
 #if NRND > 0
 	rndsource_element_t     rnd_source;
 #endif

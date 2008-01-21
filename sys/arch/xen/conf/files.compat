@@ -1,4 +1,4 @@
-#	$NetBSD: files.compat,v 1.8.2.4 2007/12/07 17:27:04 yamt Exp $
+#	$NetBSD: files.compat,v 1.8.2.5 2008/01/21 09:40:20 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 
 # options for MP configuration through the MP spec
@@ -14,6 +14,7 @@ defflag opt_xen.h		XEN XEN3
 # XXX define fake options to make config create the .h files
 defflag	lapic.h			XXXLAPIC
 defflag	apm.h			XXXAPM
+defflag	apmbios.h		XXXAPMBIOS
 defflag	eisa.h			XXXEISA
 defflag	isadma.h		XXXISADMA
 defflag	mca.h			XXXMCA
@@ -29,9 +30,6 @@ defflag	opt_pcifixup.h		XXXOPT_PCIFIXUP
 # VM86 emulation
 defflag	opt_vm86.h			XXXVM86
 defflag	opt_kvm86.h			XXXKVM86
-
-# Floating point emulation
-defflag opt_math_emulate.h		XXXMATH_EMULATE
 
 # User-settable LDT (used by WINE)
 defflag	opt_user_ldt.h			XXXUSER_LDT
@@ -68,3 +66,9 @@ defflag	opt_enhanced_speedstep.h XXXENHANCED_SPEEDSTEP
 defflag opt_est.h		XXXEST_FREQ_USERWRITE
 
 defflag opt_powernow_k7.h XXXPOWERNOW_K7
+
+# Multiboot support
+defflag 	opt_multiboot.h		XXXMULTIBOOT
+
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	XXXPHYSMEM_MAX_ADDR XXXPHYSMEM_MAX_SIZE

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_signal.c,v 1.1.16.4 2007/09/03 14:32:31 yamt Exp $ */
+/*	$NetBSD: linux32_signal.c,v 1.1.16.5 2008/01/21 09:41:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -30,6 +30,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux32_signal.c,v 1.1.16.5 2008/01/21 09:41:35 yamt Exp $");
+
 #include <sys/param.h>
 #include <sys/ucred.h>
 #include <sys/signalvar.h>
@@ -53,9 +57,7 @@ extern const int native_to_linux32_signo[];
 extern const int linux32_to_native_signo[];
 
 void
-linux32_to_native_sigset(bss, lss)
-	sigset_t *bss;
-	const linux32_sigset_t *lss;
+linux32_to_native_sigset(sigset_t *bss, const linux32_sigset_t *lss)
 {
 	int i, newsig;
 
@@ -70,9 +72,7 @@ linux32_to_native_sigset(bss, lss)
 }
 
 void
-native_to_linux32_sigset(lss, bss)
-	linux32_sigset_t *lss;
-	const sigset_t *bss;
+native_to_linux32_sigset(linux32_sigset_t *lss, const sigset_t *bss)
 {
 	int i, newsig;
 
@@ -87,8 +87,7 @@ native_to_linux32_sigset(lss, bss)
 }
 
 unsigned int 
-native_to_linux32_sigflags(bsf)
-	const int bsf;
+native_to_linux32_sigflags(const int bsf)
 {
 	unsigned int lsf = 0;
 	if ((bsf & SA_NOCLDSTOP) != 0)
@@ -109,8 +108,7 @@ native_to_linux32_sigflags(bsf)
 }
  
 int
-linux32_to_native_sigflags(lsf)
-	const unsigned long lsf;
+linux32_to_native_sigflags(const unsigned long lsf)
 {
 	int bsf = 0;
 	if ((lsf & LINUX32_SA_NOCLDSTOP) != 0)
@@ -137,9 +135,7 @@ linux32_to_native_sigflags(lsf)
 }    
 
 void
-linux32_to_native_sigaction(bsa, lsa)
-	struct sigaction *bsa;
-	const struct linux32_sigaction *lsa;
+linux32_to_native_sigaction(struct sigaction *bsa, const struct linux32_sigaction *lsa)
 {
 	bsa->sa_handler = NETBSD32PTR64(lsa->linux_sa_handler);
 	linux32_to_native_sigset(&bsa->sa_mask, &lsa->linux_sa_mask);
@@ -147,9 +143,7 @@ linux32_to_native_sigaction(bsa, lsa)
 }
 
 void
-native_to_linux32_sigaction(lsa, bsa)
-	struct linux32_sigaction *lsa;
-	const struct sigaction *bsa;
+native_to_linux32_sigaction(struct linux32_sigaction *lsa, const struct sigaction *bsa)
 {
 	NETBSD32PTR32(lsa->linux_sa_handler, bsa->sa_handler);
 	native_to_linux32_sigset(&lsa->linux_sa_mask, &bsa->sa_mask);
@@ -158,9 +152,7 @@ native_to_linux32_sigaction(lsa, bsa)
 }
 
 void
-native_to_linux32_sigaltstack(lss, bss)
-	struct linux32_sigaltstack *lss;
-	const struct sigaltstack *bss;
+native_to_linux32_sigaltstack(struct linux32_sigaltstack *lss, const struct sigaltstack *bss)
 {
 	NETBSD32PTR32(lss->ss_sp, bss->ss_sp);
 	lss->ss_size = bss->ss_size;
@@ -174,9 +166,7 @@ native_to_linux32_sigaltstack(lss, bss)
 
 
 void
-native_to_linux32_old_sigset(lss, bss)
-	linux32_old_sigset_t *lss;
-	const sigset_t *bss;
+native_to_linux32_old_sigset(linux32_old_sigset_t *lss, const sigset_t *bss)
 {
 	linux32_sigset_t lsnew;
  
@@ -187,9 +177,7 @@ native_to_linux32_old_sigset(lss, bss)
 }
 
 void
-linux32_old_to_native_sigset(bss, lss)
-	sigset_t *bss;
-	const linux32_old_sigset_t *lss;
+linux32_old_to_native_sigset(sigset_t *bss, const linux32_old_sigset_t *lss)
 {
 	linux32_sigset_t ls;
 
@@ -200,17 +188,14 @@ linux32_old_to_native_sigset(bss, lss)
 }
 
 int
-linux32_sys_rt_sigaction(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_rt_sigaction(struct lwp *l, const struct linux32_sys_rt_sigaction_args *uap, register_t *retval)
 {
-	struct linux32_sys_rt_sigaction_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(const linux32_sigactionp_t) nsa;
 		syscallarg(linux32_sigactionp_t) osa;
 		syscallarg(netbsd32_size_t) sigsetsize;
-	} */ *uap = v;
+	} */
 	struct linux32_sigaction nls32;
 	struct linux32_sigaction ols32;
 	struct sigaction ns;
@@ -259,17 +244,14 @@ linux32_sys_rt_sigaction(l, v, retval)
 }
 
 int
-linux32_sys_rt_sigprocmask(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_rt_sigprocmask(struct lwp *l, const struct linux32_sys_rt_sigprocmask_args *uap, register_t *retval)
 {
-	struct linux32_sys_rt_sigprocmask_args /* {
+	/* {
 		syscallarg(int) how;
 		syscallarg(const linux32_sigsetp_t) set;
 		syscallarg(linux32_sigsetp_t) oset;
 		syscallarg(netbsd32_size_t) sigsetsize;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	linux32_sigset_t nls32, ols32;
 	sigset_t ns, os;
@@ -321,15 +303,12 @@ linux32_sys_rt_sigprocmask(l, v, retval)
 }
 
 int
-linux32_sys_kill(l, v, retval)  
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{  
-	struct linux32_sys_kill_args /* {
+linux32_sys_kill(struct lwp *l, const struct linux32_sys_kill_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) pid;
 		syscallarg(int) signum;
-	} */ *uap = v;
+	} */
  
 	struct sys_kill_args ka;
 	int sig;
@@ -343,15 +322,12 @@ linux32_sys_kill(l, v, retval)
 }  
 
 int
-linux32_sys_rt_sigsuspend(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{  
-	struct linux32_sys_rt_sigsuspend_args /* {
+linux32_sys_rt_sigsuspend(struct lwp *l, const struct linux32_sys_rt_sigsuspend_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(linux32_sigsetp_t) unewset;
                 syscallarg(netbsd32_size_t) sigsetsize;
-	} */ *uap = v;
+	} */
 	linux32_sigset_t lss;
 	sigset_t bss;
 	int error;
@@ -369,15 +345,12 @@ linux32_sys_rt_sigsuspend(l, v, retval)
 }
 
 int
-linux32_sys_signal(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux32_sys_signal(struct lwp *l, const struct linux32_sys_signal_args *uap, register_t *retval)
 {
-	struct linux32_sys_signal_args /* {
+	/* {
 		syscallarg(int) signum;
 		syscallarg(linux32_handler_t) handler;
-	} */ *uap = v;
+	} */
         struct sigaction nbsa, obsa;
         int error, sig;
 

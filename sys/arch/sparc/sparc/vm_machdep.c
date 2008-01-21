@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.83.2.4 2007/09/03 14:30:08 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.83.2.5 2008/01/21 09:39:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83.2.4 2007/09/03 14:30:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83.2.5 2008/01/21 09:39:28 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_coredump.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.83.2.4 2007/09/03 14:30:08 yamt Exp
 #include <sys/buf.h>
 #include <sys/exec.h>
 #include <sys/vnode.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 

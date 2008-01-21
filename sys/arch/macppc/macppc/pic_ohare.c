@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_ohare.c,v 1.2.4.2 2007/10/27 11:27:12 yamt Exp $ */
+/*	$NetBSD: pic_ohare.c,v 1.2.4.3 2008/01/21 09:37:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.2.4.2 2007/10/27 11:27:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.2.4.3 2008/01/21 09:37:28 yamt Exp $");
 
 #include "opt_interrupt.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_ohare.c,v 1.2.4.2 2007/10/27 11:27:12 yamt Exp $
 static void ohare_enable_irq(struct pic_ops *, int, int);
 static void ohare_reenable_irq(struct pic_ops *, int, int);
 static void ohare_disable_irq(struct pic_ops *, int);
-static int  ohare_get_irq(struct pic_ops *);
+static int  ohare_get_irq(struct pic_ops *, int);
 static void ohare_ack_irq(struct pic_ops *, int);
 static void ohare_establish_irq(struct pic_ops *, int, int, int);
 
@@ -223,7 +223,7 @@ ohare_read_events(struct ohare_ops *ohare)
 }
 
 static int
-ohare_get_irq(struct pic_ops *pic)
+ohare_get_irq(struct pic_ops *pic, int mode)
 {
 	struct ohare_ops *ohare = (struct ohare_ops *)pic;
 	uint32_t evt;

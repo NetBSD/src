@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_syscall.c,v 1.26.2.4 2007/09/03 14:26:45 yamt Exp $	*/
+/*	$NetBSD: svr4_syscall.c,v 1.26.2.5 2008/01/21 09:37:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.26.2.4 2007/09/03 14:26:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_syscall.c,v 1.26.2.5 2008/01/21 09:37:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -200,7 +200,7 @@ svr4_syscall_fancy(frame)
 	}
 
 	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -233,7 +233,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 
 	userret(l);
 }

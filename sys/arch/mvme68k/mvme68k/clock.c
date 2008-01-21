@@ -1,4 +1,4 @@
-/*      $NetBSD: clock.c,v 1.22.2.1 2006/12/30 20:46:36 yamt Exp $	*/
+/*      $NetBSD: clock.c,v 1.22.2.2 2008/01/21 09:37:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22.2.1 2006/12/30 20:46:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.22.2.2 2008/01/21 09:37:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -75,10 +75,7 @@ int	clock_statmin;		/* statclock interval - (1/2 * variance) */
  * Common parts of clock autoconfiguration.
  */
 void
-clock_config(dev, ca, ev)
-	struct device *dev;
-	struct clock_attach_args *ca;
-	struct evcnt *ev;
+clock_config(struct device *dev, struct clock_attach_args *ca, struct evcnt *ev)
 {
 	extern int delay_divisor;	/* from machdep.c */
 
@@ -101,7 +98,7 @@ clock_config(dev, ca, ev)
  * The frequencies of these clocks must be an even number of microseconds.
  */
 void
-cpu_initclocks()
+cpu_initclocks(void)
 {
 	int statint, minint;
 
@@ -133,45 +130,8 @@ cpu_initclocks()
 }
 
 void
-setstatclockrate(newhz)
-	int newhz;
+setstatclockrate(int newhz)
 {
 
 	/* XXX should we do something here? XXX */
 }
-
-/*
- * Return the best possible estimate of the time in the timeval
- * to which tvp points.  We do this by returning the current time
- * plus the amount of time, in uSec, since the last clock interrupt
- * (clock_args->ca_microtime()) was handled.
- *
- * Check that this time is no less than any previously-reported time,
- * which could happen around the time of a clock adjustment.  Just for fun,
- * we guarantee that the time will be greater than the value obtained by a
- * previous call.
- */
-
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s = splhigh();
-	static struct timeval lasttime;
-
-	*tvp = time;
-	tvp->tv_usec += (*clock_args->ca_microtime)(clock_args->ca_arg);
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	if (tvp->tv_sec == lasttime.tv_sec &&
-	    tvp->tv_usec <= lasttime.tv_usec &&
-	    (tvp->tv_usec = lasttime.tv_usec + 1) >= 1000000) {
-		tvp->tv_sec++;
-		tvp->tv_usec -= 1000000;
-	}
-	lasttime = *tvp;
-	splx(s);
-}
-

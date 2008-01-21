@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_sbdio.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: mkclock_sbdio.c,v 1.1.18.3 2008/01/21 09:36:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_sbdio.c,v 1.1.18.2 2006/06/21 14:51:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_sbdio.c,v 1.1.18.3 2008/01/21 09:36:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -117,8 +117,6 @@ mkclock_sbdio_attach(struct device *parent, struct device *self, void *aux)
 	mk48txx_attach(sc);
 
 	printf("\n");
-
-	todr_attach(&sc->sc_handle);
 }
 
 static uint8_t

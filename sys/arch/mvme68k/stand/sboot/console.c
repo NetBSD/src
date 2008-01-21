@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.5 2000/07/24 18:40:01 jdolecek Exp $	*/
+/*	$NetBSD: console.c,v 1.5.40.1 2008/01/21 09:37:51 yamt Exp $	*/
 
 /*
  *
@@ -42,8 +42,8 @@
  */
 
 struct zs_hw {
-  volatile u_char ctl;
-  volatile u_char data;
+	volatile u_char ctl;
+	volatile u_char data;
 };
 
 struct zs_hw *zs =  (struct zs_hw *)CONS_ZS_ADDR;
@@ -53,29 +53,41 @@ struct zs_hw *zs =  (struct zs_hw *)CONS_ZS_ADDR;
  */
 
 void
-consinit()
-
+consinit(void)
 {
-  int mark = time();
-  int rr1;
-  while (1) {
-    if (time() > mark + 5) break;
-    zs->ctl = 1; rr1 = zs->ctl;
-    zs->ctl = 0;
-    if ((rr1 & 0x1) == 1 && (zs->ctl & 0x4) == 4) break; /* zs_drain! */
-  }
-  zs->ctl =  9; zs->ctl = 0x00; /* clear interrupt */
-  zs->ctl =  4; zs->ctl = 0x44; /* 16x clk, 1 stop bit */
-  zs->ctl =  5; zs->ctl = 0xea; /* DTR on, 8 bit xmit, xmit on, RTS on */
-  zs->ctl =  3; zs->ctl = 0xc1; /* 8 bit recv, auto cd_cts, recv on */
-  zs->ctl =  1; zs->ctl = 0x00; /* no intrs */
-  zs->ctl =  2; zs->ctl = 0x00; /* no vector */
-  zs->ctl = 10; zs->ctl = 0x00; /* */
-  zs->ctl = 11; zs->ctl = 0x50; /* clocking options */
-  zs->ctl = 12; zs->ctl = 0x0e; /* 9600 baud, part 1 */
-  zs->ctl = 13; zs->ctl = 0x00; /* 9600 baud, part 2 */
-  zs->ctl = 14; zs->ctl = 0x03; /* more clocking options */
-  zs->ctl = 15; zs->ctl = 0x00; /* clear intrs */
+	int mark = time();
+	int rr1;
+	for (;;) {
+		if (time() > mark + 5) break;
+		zs->ctl = 1; rr1 = zs->ctl;
+		zs->ctl = 0;
+		if ((rr1 & 0x1) == 1 && (zs->ctl & 0x4) == 4)
+			break; /* zs_drain! */
+	}
+	zs->ctl =  9;
+	zs->ctl = 0x00; /* clear interrupt */
+	zs->ctl =  4;
+	zs->ctl = 0x44; /* 16x clk, 1 stop bit */
+	zs->ctl =  5;
+	zs->ctl = 0xea; /* DTR on, 8 bit xmit, xmit on, RTS on */
+	zs->ctl =  3;
+	zs->ctl = 0xc1; /* 8 bit recv, auto cd_cts, recv on */
+	zs->ctl =  1;
+	zs->ctl = 0x00; /* no intrs */
+	zs->ctl =  2;
+	zs->ctl = 0x00; /* no vector */
+	zs->ctl = 10;
+	zs->ctl = 0x00; /* */
+	zs->ctl = 11;
+	zs->ctl = 0x50; /* clocking options */
+	zs->ctl = 12;
+	zs->ctl = 0x0e; /* 9600 baud, part 1 */
+	zs->ctl = 13;
+	zs->ctl = 0x00; /* 9600 baud, part 2 */
+	zs->ctl = 14;
+	zs->ctl = 0x03; /* more clocking options */
+	zs->ctl = 15;
+	zs->ctl = 0x00; /* clear intrs */
 }
 
 /*
@@ -84,60 +96,66 @@ consinit()
 
 void putchar(int c) 
 {
-  if (c == '\n') putchar('\r');  /* avoid the need for \r\n in printf */
-  zs->ctl = 0;
-  while ((zs->ctl & 0x04) == 0) {
-    zs->ctl = 0;
-  }
-  zs->ctl = 8;
-  zs->ctl = (char) c;
+	if (c == '\n')
+		putchar('\r');	/* avoid the need for \r\n in printf */
+	zs->ctl = 0;
+	while ((zs->ctl & 0x04) == 0) {
+		zs->ctl = 0;
+	}
+	zs->ctl = 8;
+	zs->ctl = (char)c;
 }
 
 /*
  * cngetc: get 1 char from console
  */
 
-char cngetc () 
+char cngetc(void) 
 {
-  zs->ctl = 0;
-  while ((zs->ctl & 0x1) == 0) {
-    zs->ctl = 0;
-  }
-  zs->ctl = 8;
-  return zs->ctl;
+
+	zs->ctl = 0;
+	while ((zs->ctl & 0x1) == 0) {
+		zs->ctl = 0;
+	}
+	zs->ctl = 8;
+	return zs->ctl;
 }
 
 /*
  * puts: put string to console
  */
 
-void puts ( char * str )
+void
+puts(char *str)
 {
-  while ( *str != '\0' ) {
-    putchar(*str);
-    str++;
-  }
+
+	while (*str != '\0') {
+		putchar(*str);
+		str++;
+	}
 }
 
 /*
  * ngets: get string from console 
  */
 
-char *ngets ( char * str, int size )
+char *
+ngets(char *str, int size)
 {
-  int i = 0;
-  while ( (i < size - 1) && (str[i] = cngetc()) != '\r') {
-    if ( str[i] == '\b' || str[i] == 0x7F ) {
-      if ( i == 0) continue;
-      i--;
-      puts("\b \b");
-      continue;
-    }
-    putchar(str[i]);
-    i++;
-  }
-  puts("\n");
-  str[i] = '\0';
-  return(&str[i]);
-}
 
+	int i = 0;
+	while ((i < size - 1) && (str[i] = cngetc()) != '\r') {
+		if (str[i] == '\b' || str[i] == 0x7F) {
+			if (i == 0)
+				continue;
+			i--;
+			puts("\b \b");
+			continue;
+		}
+		putchar(str[i]);
+		i++;
+	}
+	puts("\n");
+	str[i] = '\0';
+	return &str[i];
+}

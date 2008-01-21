@@ -1,4 +1,4 @@
-/*	$NetBSD: irqhandler.h,v 1.1.36.2 2007/09/03 14:29:47 yamt Exp $	*/
+/*	$NetBSD: irqhandler.h,v 1.1.36.3 2008/01/21 09:39:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -129,6 +129,8 @@ typedef struct irqhandler {
 	u_int ih_maskbits;		/* interrupt bit for expansion cards */
 	struct irqhandler *ih_next;	/* next handler */
 	struct evcnt ih_ev;		/* evcnt structure */
+	int (*ih_realfunc)(void *arg);	/* XXX real handler function */
+	void *ih_realarg;
 } irqhandler_t;
 
 #ifdef _KERNEL

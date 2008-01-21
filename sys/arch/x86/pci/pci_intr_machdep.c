@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_intr_machdep.c,v 1.1.16.3 2006/12/30 20:47:22 yamt Exp $	*/
+/*	$NetBSD: pci_intr_machdep.c,v 1.1.16.4 2008/01/21 09:40:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.1.16.3 2006/12/30 20:47:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.1.16.4 2008/01/21 09:40:11 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,11 +88,9 @@ __KERNEL_RCSID(0, "$NetBSD: pci_intr_machdep.c,v 1.1.16.3 2006/12/30 20:47:22 ya
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/intr.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/intr.h>
 
 #include <dev/pci/pcivar.h>
 

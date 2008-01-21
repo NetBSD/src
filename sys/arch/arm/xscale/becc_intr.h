@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_intr.h,v 1.1.18.1 2006/06/21 14:49:41 yamt Exp $	*/
+/*	$NetBSD: becc_intr.h,v 1.1.18.2 2008/01/21 09:35:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -106,6 +106,7 @@ becc_spllower(int ipl)
 	return (old);
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 static inline void __attribute__((__unused__))
 becc_setsoftintr(int si)
 {
@@ -116,20 +117,25 @@ becc_setsoftintr(int si)
 }
 
 int	becc_softint(void *arg);
+#endif
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
 #define	_splraise(ipl)		becc_splraise(ipl)
 #define	splx(new)		becc_splx(new)
 #define	_spllower(ipl)		becc_spllower(ipl)
+#ifdef __HAVE_FAST_SOFTINTS
 #define	_setsoftintr(si)	becc_setsoftintr(si)
+#endif
 
 #else
 
 int	_splraise(int);
 void	splx(int);
 int	_spllower(int);
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #endif /* ! EVBARM_SPL_NOINLINE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tv.c,v 1.10.8.1 2007/09/03 14:31:05 yamt Exp $	*/
+/*	$NetBSD: grf_tv.c,v 1.10.8.2 2008/01/21 09:40:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -81,9 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tv.c,v 1.10.8.1 2007/09/03 14:31:05 yamt Exp $");
-
-#include "opt_compat_hpux.h"
+__KERNEL_RCSID(0, "$NetBSD: grf_tv.c,v 1.10.8.2 2008/01/21 09:40:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>

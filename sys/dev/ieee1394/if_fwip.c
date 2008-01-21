@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.4.18.5 2007/11/15 11:44:13 yamt Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.4.18.6 2008/01/21 09:43:15 yamt Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -36,6 +36,9 @@
  * 
  * $FreeBSD: src/sys/dev/firewire/if_fwip.c,v 1.16 2007/06/06 14:31:36 simokawa Exp $
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.4.18.6 2008/01/21 09:43:15 yamt Exp $");
 
 #ifdef HAVE_KERNEL_OPTION_HEADERS
 #include "opt_device_polling.h"
@@ -312,6 +315,13 @@ FW_ATTACH(fwip)
 	s = splfwnet();
 	FIREWIRE_IFATTACH(ifp, hwaddr);
 	splx(s);
+
+#if defined(__NetBSD__)
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
+#endif
 
 	FWIPDEBUG(ifp, "interface created\n");
 	FW_ATTACH_RETURN(0);

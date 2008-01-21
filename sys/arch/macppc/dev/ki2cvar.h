@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2cvar.h,v 1.2.18.2 2006/06/21 14:53:13 yamt Exp $	*/
+/*	$NetBSD: ki2cvar.h,v 1.2.18.3 2008/01/21 09:37:27 yamt Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -88,7 +88,7 @@ struct ki2c_softc {
 	int sc_regstep;
 	
 	struct i2c_controller sc_i2c;
-	struct lock sc_buslock;
+	kmutex_t sc_buslock;
 
 	int sc_flags;
 	u_char *sc_data;

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.34.2.5 2007/10/27 11:29:45 yamt Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.34.2.6 2008/01/21 09:41:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -149,6 +149,7 @@ typedef netbsd32_pointer_t netbsd32_fsid_tp_t;
 typedef netbsd32_pointer_t netbsd32_lwpidp;
 typedef netbsd32_pointer_t netbsd32_ucontextp;
 typedef netbsd32_pointer_t netbsd32_caddr_t;
+typedef netbsd32_pointer_t netbsd32_lwpctlp;
 
 /*
  * now, the compatibility structures and their fake pointer types.
@@ -544,7 +545,7 @@ struct netbsd32_stat13 {
 	u_int32_t st_spare2;
 } 
 #ifdef __x86_64__
-__attribute__((packed))
+__packed
 #endif
 ;
 
@@ -569,7 +570,7 @@ struct netbsd32_stat {
 	u_int32_t st_spare[2];
 }
 #ifdef __x86_64__
-__attribute__((packed))
+__packed
 #endif
 ;
 
@@ -674,9 +675,11 @@ struct netbsd32_kevent {
 	uint32_t		fflags;
 	int64_t			data;
 	netbsd32_intptr_t	udata;
-} __attribute__((packed));
+} __packed;
 
+#if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
+#endif
 
 /*
  * here are some macros to convert between netbsd32 and sparc64 types.
@@ -715,7 +718,8 @@ void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);
 void	netbsd32_si32_to_si(siginfo_t *, const siginfo32_t *);
 
 void	startlwp32(void *);
-int	do_netbsd32___semctl14(struct lwp *, void *, register_t *, void *);
+struct netbsd32___semctl14_args;
+int	do_netbsd32___semctl14(struct lwp *, const struct netbsd32___semctl14_args *, register_t *, void *);
 
 struct iovec *netbsd32_get_iov(struct netbsd32_iovec *, int, struct iovec *,
 	    int);

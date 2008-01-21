@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.6.2.2 2007/10/27 11:30:51 yamt Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.6.2.3 2008/01/21 09:43:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.6.2.2 2007/10/27 11:30:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.6.2.3 2008/01/21 09:43:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,10 +56,10 @@ mc146818_attach(struct mc146818_softc *sc)
 #ifdef DIAGNOSTIC
 	if (sc->sc_mcread == NULL ||
 	    sc->sc_mcwrite == NULL)
-		panic("mc146818_attach: invalid read/write functions");
+		panic("%s: invalid read/write functions", __func__);
 #endif
 
-	printf(": mc146818 compatible time-of-day clock");
+	aprint_normal(": mc146818 compatible time-of-day clock");
 
 	handle = &sc->sc_handle;
 	handle->cookie = sc;
@@ -68,6 +68,8 @@ mc146818_attach(struct mc146818_softc *sc)
 	handle->todr_gettime_ymdhms = mc146818_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mc146818_settime_ymdhms;
 	handle->todr_setwen  = NULL;
+
+	todr_attach(handle);
 }
 
 /*
@@ -92,7 +94,7 @@ mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		if ((*sc->sc_mcread)(sc, MC_REGA) & MC_REGA_UIP)
 			break;
 		if (--timeout < 0) {
-			printf("mc146818_gettime: timeout\n");
+			printf("%s: timeout\n", __func__);
 			return EBUSY;
 		}
 	}
@@ -148,7 +150,7 @@ mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		if ((*sc->sc_mcread)(sc, MC_REGA) & MC_REGA_UIP)
 			break;
 		if (--timeout < 0) {
-			printf("mc146818_settime: timeout\n");
+			printf("%s: timeout\n", __func__);
 			return EBUSY;
 		}
 	}

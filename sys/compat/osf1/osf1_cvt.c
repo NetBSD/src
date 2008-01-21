@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_cvt.c,v 1.18.4.3 2007/09/03 14:32:43 yamt Exp $ */
+/* $NetBSD: osf1_cvt.c,v 1.18.4.4 2008/01/21 09:41:57 yamt Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.18.4.3 2007/09/03 14:32:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_cvt.c,v 1.18.4.4 2008/01/21 09:41:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,9 +291,7 @@ const struct emul_flags_xtab osf1_wait_options_xtab[] = {
 };
 
 void
-osf1_cvt_flock_from_native(nf, of)
-	const struct flock *nf;
-	struct osf1_flock *of;
+osf1_cvt_flock_from_native(const struct flock *nf, struct osf1_flock *of)
 {
 
 	memset(of, 0, sizeof of);
@@ -332,9 +330,7 @@ osf1_cvt_flock_from_native(nf, of)
 }
 
 int
-osf1_cvt_flock_to_native(of, nf)
-	const struct osf1_flock *of;
-	struct flock *nf;
+osf1_cvt_flock_to_native(const struct osf1_flock *of, struct flock *nf)
 {
 
 	memset(nf, 0, sizeof nf);
@@ -381,9 +377,7 @@ osf1_cvt_flock_to_native(of, nf)
 }
 
 int
-osf1_cvt_msghdr_xopen_to_native(omh, bmh)
-	const struct osf1_msghdr_xopen *omh;
-	struct msghdr *bmh;
+osf1_cvt_msghdr_xopen_to_native(const struct osf1_msghdr_xopen *omh, struct msghdr *bmh)
 {
 	unsigned long leftovers;
 
@@ -468,9 +462,7 @@ osf1_cvt_pathconf_name_to_native(oname, bnamep)
  * Convert from as rusage structure to an osf1 rusage structure.
  */
 void
-osf1_cvt_rusage_from_native(ru, oru)
-	const struct rusage *ru;
-	struct osf1_rusage *oru;
+osf1_cvt_rusage_from_native(const struct rusage *ru, struct osf1_rusage *oru)
 {
 
 	oru->ru_utime.tv_sec = ru->ru_utime.tv_sec;
@@ -499,9 +491,7 @@ osf1_cvt_rusage_from_native(ru, oru)
  * XXX: Only a subset of the flags is currently implemented.
  */
 void
-osf1_cvt_sigaction_from_native(bsa, osa)
-	const struct sigaction *bsa;
-	struct osf1_sigaction *osa;
+osf1_cvt_sigaction_from_native(const struct sigaction *bsa, struct osf1_sigaction *osa)
 {
 
 	osa->osf1_sa_handler = bsa->sa_handler;
@@ -513,9 +503,7 @@ osf1_cvt_sigaction_from_native(bsa, osa)
 }
 
 int
-osf1_cvt_sigaction_to_native(osa, bsa)
-	const struct osf1_sigaction *osa;
-	struct sigaction *bsa;
+osf1_cvt_sigaction_to_native(const struct osf1_sigaction *osa, struct sigaction *bsa)
 {
 
 	bsa->sa_handler = osa->osf1_sa_handler;
@@ -530,9 +518,7 @@ osf1_cvt_sigaction_to_native(osa, bsa)
 }
 
 void
-osf1_cvt_sigset_from_native(bss, oss)
-	const sigset_t *bss;
-	osf1_sigset_t *oss;
+osf1_cvt_sigset_from_native(const sigset_t *bss, osf1_sigset_t *oss)
 {
 	int i, newsig;
 
@@ -547,9 +533,7 @@ osf1_cvt_sigset_from_native(bss, oss)
 }
 
 int
-osf1_cvt_sigset_to_native(oss, bss)
-	const osf1_sigset_t *oss;
-	sigset_t *bss;
+osf1_cvt_sigset_to_native(const osf1_sigset_t *oss, sigset_t *bss)
 {
 	int i, newsig;
 
@@ -568,9 +552,7 @@ osf1_cvt_sigset_to_native(oss, bss)
  * Convert from a stat structure to an osf1 stat structure.
  */
 void
-osf1_cvt_stat_from_native(st, ost)
-	const struct stat *st;
-	struct osf1_stat *ost;
+osf1_cvt_stat_from_native(const struct stat *st, struct osf1_stat *ost)
 {
 
 	ost->st_dev = osf1_cvt_dev_from_native(st->st_dev);
@@ -597,9 +579,7 @@ osf1_cvt_stat_from_native(st, ost)
  * Convert from a stat structure to an osf1 stat structure.
  */
 void
-osf1_cvt_stat2_from_native(st, ost)
-	const struct stat *st;
-	struct osf1_stat2 *ost;
+osf1_cvt_stat2_from_native(const struct stat *st, struct osf1_stat2 *ost)
 {
 
 	memset(ost, 0, sizeof *ost);
@@ -621,9 +601,7 @@ osf1_cvt_stat2_from_native(st, ost)
 }
 
 void
-osf1_cvt_statfs_from_native(bsfs, osfs)
-	const struct statvfs *bsfs;
-	struct osf1_statfs *osfs;
+osf1_cvt_statfs_from_native(const struct statvfs *bsfs, struct osf1_statfs *osfs)
 {
 
 	memset(osfs, 0, sizeof (struct osf1_statfs));

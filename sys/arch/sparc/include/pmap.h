@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.75.8.2 2007/09/03 14:30:01 yamt Exp $ */
+/*	$NetBSD: pmap.h,v 1.75.8.3 2008/01/21 09:39:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -143,7 +143,6 @@ struct pmap {
 	union	ctxinfo *pm_ctx;	/* current context, if any */
 	int	pm_ctxnum;		/* current context's number */
 	u_int	pm_cpuset;		/* CPU's this pmap has context on */
-	struct simplelock pm_lock;	/* spinlock */
 	int	pm_refcount;		/* just what it says */
 
 	struct mmuhd	pm_reglist;	/* MMU regions on this pmap (4/4c) */

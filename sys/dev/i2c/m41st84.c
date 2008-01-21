@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.4.2.3 2007/02/26 09:10:03 yamt Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.4.2.4 2008/01/21 09:42:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.4.2.4 2008/01/21 09:42:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

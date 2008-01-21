@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_ioctl.c,v 1.7.4.5 2007/12/07 17:27:46 yamt Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.7.4.6 2008/01/21 09:41:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.7.4.5 2007/12/07 17:27:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.7.4.6 2008/01/21 09:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,16 +71,13 @@ __KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.7.4.5 2007/12/07 17:27:46 yamt Exp 
 #include <compat/irix/irix_syscallargs.h>
 
 int
-irix_sys_ioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+irix_sys_ioctl(struct lwp *l, const struct irix_sys_ioctl_args *uap, register_t *retval)
 {
-	struct irix_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	extern const struct cdevsw irix_usema_cdevsw;
 	struct proc *p = l->l_proc;
 	u_long	cmd;
@@ -103,8 +100,10 @@ irix_sys_ioctl(l, v, retval)
 	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
+	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
+		FILE_UNLOCK(fp);
 		return EBADF;
+	}
 
 	/*
 	 * A special hook for /dev/usemaclone ioctls. Some of the ioctl
@@ -120,8 +119,10 @@ irix_sys_ioctl(l, v, retval)
 	 * are defined _IO but really are _IOR. XXX need security review.
 	 */
 	if ((cmd & IRIX_UIOC_MASK) == IRIX_UIOC) {
-		if (fp->f_type != DTYPE_VNODE)
+		if (fp->f_type != DTYPE_VNODE) {
+			FILE_UNLOCK(fp);
 			return ENOTTY;
+		}
 		FILE_USE(fp);
 		vp = (struct vnode*)fp->f_data;
 		if (vp->v_type != VCHR ||
@@ -142,13 +143,16 @@ out:
 
 	switch (cmd) {
 	case IRIX_SIOCNREAD: /* number of bytes to read */
-		return (*(fp->f_ops->fo_ioctl))(fp, FIONREAD,
+		error = (*(fp->f_ops->fo_ioctl))(fp, FIONREAD,
 		    SCARG(uap, data), l);
-		break;
+		FILE_UNLOCK(fp);
+		return error;
 
 	case IRIX_MTIOCGETBLKSIZE: /* get tape block size in 512B units */
-		if (fp->f_type != DTYPE_VNODE)
+		if (fp->f_type != DTYPE_VNODE) {
+			FILE_UNLOCK(fp);
 			return ENOSYS;
+		}
 
 		FILE_USE(fp);
 		vp = (struct vnode*)fp->f_data;
@@ -177,12 +181,9 @@ out:
 
 		FILE_UNUSE(fp, l);
 		return error;
-		break;
 
 	default: /* Fallback to the standard SVR4 ioctl's */
-		error = svr4_sys_ioctl(l, v, retval);
-		break;
+		FILE_UNLOCK(fp);
+		return svr4_sys_ioctl(l, (const void *)uap, retval);
 	}
-
-	return error;
 }

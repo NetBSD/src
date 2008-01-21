@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.1.4.3 2007/09/03 14:31:29 yamt Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.1.4.4 2008/01/21 09:40:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1.4.3 2007/09/03 14:31:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1.4.4 2008/01/21 09:40:19 yamt Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -31,9 +31,11 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.1.4.3 2007/09/03 14:31:29 yamt Exp
 #include <sys/rnd.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/cpu.h>
 
-#include <machine/cpu.h>
 #include <x86/specialreg.h>
+
+#include <machine/cpufunc.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptosoft.h>

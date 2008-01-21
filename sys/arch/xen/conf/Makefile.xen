@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.9.2.3 2007/12/07 17:27:03 yamt Exp $
+#	$NetBSD: Makefile.xen,v 1.9.2.4 2008/01/21 09:40:19 yamt Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -29,17 +29,9 @@ NEED_OWN_INSTALL_TARGET?=no
 XEN=		$S/arch/xen
 I386=		$S/arch/i386
 AMD64=          $S/arch/amd64
-.if ${XEN_BUILD} == "i386"
-GENASSYM_CONF=	$S/arch/xen/i386/genassym.cf
-.else
 GENASSYM_CONF=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/genassym.cf
-.endif
 
-.if ${XEN_BUILD} == "amd64"
-ARCH_INC=	$S/arch/xen/include/amd64
-.elif ${XEN_BUILD} == "i386"
-ARCH_INC=	$S/arch/xen/include
-.endif
+ARCH_INC=	$S/arch/xen/include/${XEN_BUILD}
 
 ##
 ## (2) compile settings
@@ -67,42 +59,22 @@ KERN_AS=	obj
 MD_OBJS=	locore.o spl.o copy.o vector.o
 MD_CFILES=
 
-.if ${XEN_BUILD} == i386
-MD_SFILES=	${XEN}/${XEN_BUILD}/locore.S \
-		${XEN}/${XEN_BUILD}/spl.S \
-		${XEN}/${XEN_BUILD}/vector.S \
-		${I386}/i386/copy.S
+MD_SFILES=	$S/arch/${XEN_BUILD}/${XEN_BUILD}/locore.S \
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S \
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S \
+		$S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S
 
-copy.o: ${I386}/i386/copy.S assym.h
+copy.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/copy.S assym.h
 	${NORMAL_S}
 
-locore.o: ${XEN}/${XEN_BUILD}/locore.S assym.h
+locore.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/locore.S assym.h
 	${NORMAL_S}
 
-spl.o: ${XEN}/${XEN_BUILD}/spl.S assym.h
+spl.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/spl.S assym.h
 	${NORMAL_S}
 
-vector.o: ${XEN}/${XEN_BUILD}/vector.S assym.h
+vector.o: $S/arch/${XEN_BUILD}/${XEN_BUILD}/vector.S assym.h
 	${NORMAL_S}
-.elif ${XEN_BUILD} == amd64
-MD_SFILES=	${AMD64}/amd64/locore.S \
-		${AMD64}/amd64/spl.S \
-		${AMD64}/amd64/copy.S \
-		${AMD64}/amd64/vector.S
-
-locore.o: ${AMD64}/amd64/locore.S assym.h
-	${NORMAL_S}
-
-spl.o: ${AMD64}/amd64/spl.S assym.h
-	${NORMAL_S}
-
-copy.o: ${AMD64}/amd64/copy.S assym.h
-	${NORMAL_S}
-
-vector.o: ${AMD64}/amd64/vector.S assym.h
-	${NORMAL_S}
-.endif
-
 .ifndef noBEGIN
 .if !make(obj) && !make(clean) && !make(cleandir)
 .BEGIN:
@@ -140,14 +112,14 @@ LINKFORMAT=	-z
 
 .if ${XEN_BUILD} == i386
 freebsd_sigcode.o ibcs2_sigcode.o linux_sigcode.o: assym.h
-svr4_sigcode.o mach_sigcode.o: assym.h
+lock_stubs.o svr4_sigcode.o mach_sigcode.o: assym.h
 apmcall.o in_cksum.o pnpbioscall.o bioscall.o: assym.h
 mptramp.o: assym.h
 .elif  ${XEN_BUILD} == amd64
 locore.o machdep.o: Makefile
-busfunc.o cpufunc.o netbsd32_sigcode.o: assym.h
+cpufunc.o linux32_sigcode.o lock_stubs.o netbsd32_sigcode.o: assym.h
 .endif
-clock.o: config_time.h
+busfunc.o cpufunc.o: assym.h
 
 ##
 ## (7) misc settings

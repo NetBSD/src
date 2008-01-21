@@ -1,4 +1,4 @@
-/*	$NetBSD: isr.c,v 1.6.8.5 2007/12/07 17:26:30 yamt Exp $	*/
+/*	$NetBSD: isr.c,v 1.6.8.6 2008/01/21 09:39:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.8.5 2007/12/07 17:26:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isr.c,v 1.6.8.6 2008/01/21 09:39:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,7 @@ isr_autovec(struct clockframe cf)
 	struct isr *isr;
 	int n, ipl, vec;
 
-#ifdef DIAGNOSTIC
 	idepth++;
-#endif
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
 #ifdef DIAGNOSTIC
@@ -140,9 +138,7 @@ isr_autovec(struct clockframe cf)
 		printf("isr_autovec: ipl %d not claimed\n", ipl);
 
  out:
-#ifdef DIAGNOSTIC
 	idepth--;
-#endif
 
 	LOCK_CAS_CHECK(&cf);
 }
@@ -185,9 +181,7 @@ isr_vectored(struct clockframe cf)
 	struct vector_handler *vh;
 	int ipl, vec;
 
-#ifdef DIAGNOSTIC
 	idepth++;
-#endif
 
 	vec = (cf.cf_vo & 0xFFF) >> 2;
 	ipl = _getsr();
@@ -214,9 +208,7 @@ isr_vectored(struct clockframe cf)
 		printf("isr_vectored: vector=0x%x (not claimed)\n", vec);
 
  out:
-#ifdef DIAGNOSTIC
 	idepth--;
-#endif
 	LOCK_CAS_CHECK(&cf);
 }
 

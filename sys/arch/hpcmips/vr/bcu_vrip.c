@@ -1,4 +1,4 @@
-/*	$NetBSD: bcu_vrip.c,v 1.26 2005/06/07 12:19:46 he Exp $	*/
+/*	$NetBSD: bcu_vrip.c,v 1.26.2.1 2008/01/21 09:36:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 SATO Kazumi. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.26 2005/06/07 12:19:46 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcu_vrip.c,v 1.26.2.1 2008/01/21 09:36:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ vrbcu_addr()
 
 	if (addr == 0) {
 		if ((p = platid_search_data(&platid, addrs)) == NULL)
-			panic("%s: can't find VR BCU address", __FUNCTION__);
+			panic("%s: can't find VR BCU address", __func__);
 		addr = (bus_addr_t)p->data;
 	}
 

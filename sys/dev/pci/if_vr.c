@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.74.6.4 2007/10/27 11:33:05 yamt Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.74.6.5 2008/01/21 09:44:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.74.6.4 2007/10/27 11:33:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.74.6.5 2008/01/21 09:44:02 yamt Exp $");
 
 #include "rnd.h"
 
@@ -323,9 +323,6 @@ static void	vr_stop(struct ifnet *, int);
 static void	vr_rxdrain(struct vr_softc *);
 static void	vr_watchdog(struct ifnet *);
 static void	vr_tick(void *);
-
-static int	vr_ifmedia_upd(struct ifnet *);
-static void	vr_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static int	vr_mii_readreg(struct device *, int, int);
 static void	vr_mii_writereg(struct device *, int, int, int);
@@ -1261,7 +1258,8 @@ vr_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, VR_TXADDR, VR_CDTXADDR(sc, VR_NEXTTX(sc->vr_txlast)));
 
 	/* Set current media. */
-	mii_mediachg(&sc->vr_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/* Enable receiver and transmitter. */
 	CSR_WRITE_2(sc, VR_COMMAND, VR_CMD_TX_NOPOLL|VR_CMD_START|
@@ -1287,59 +1285,23 @@ vr_init(struct ifnet *ifp)
 	return (error);
 }
 
-/*
- * Set media options.
- */
-static int
-vr_ifmedia_upd(struct ifnet *ifp)
-{
-	struct vr_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->vr_mii);
-	return (0);
-}
-
-/*
- * Report current media status.
- */
-static void
-vr_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct vr_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->vr_mii);
-	ifmr->ifm_status = sc->vr_mii.mii_media_status;
-	ifmr->ifm_active = sc->vr_mii.mii_media_active;
-}
-
 static int
 vr_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct vr_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
-	switch (command) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->vr_mii.mii_media, command);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				vr_setmulti(sc);
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, command, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			vr_setmulti(sc);
+		error = 0;
 	}
 
 	splx(s);
@@ -1738,8 +1700,10 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	sc->vr_mii.mii_readreg = vr_mii_readreg;
 	sc->vr_mii.mii_writereg = vr_mii_writereg;
 	sc->vr_mii.mii_statchg = vr_mii_statchg;
-	ifmedia_init(&sc->vr_mii.mii_media, IFM_IMASK, vr_ifmedia_upd,
-		vr_ifmedia_sts);
+
+	sc->vr_ec.ec_mii = &sc->vr_mii;
+	ifmedia_init(&sc->vr_mii.mii_media, IFM_IMASK, ether_mediachange,
+		ether_mediastatus);
 	mii_attach(&sc->vr_dev, &sc->vr_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, MIIF_FORCEANEG);
 	if (LIST_FIRST(&sc->vr_mii.mii_phys) == NULL) {

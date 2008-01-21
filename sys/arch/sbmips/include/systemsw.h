@@ -1,4 +1,4 @@
-/* $NetBSD: systemsw.h,v 1.4.18.2 2006/12/30 20:46:50 yamt Exp $ */
+/* $NetBSD: systemsw.h,v 1.4.18.3 2008/01/21 09:39:11 yamt Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -40,9 +40,6 @@
 struct systemsw {
 	/* ordered to match likely locality. */
 	void	(*s_cpu_intr)(uint32_t, uint32_t, uint32_t, uint32_t);
-	void	(*s_microtime)(struct timeval *);
-	uint32_t (*s_clkread)(void);
-	void	(*s_delay)(u_long);
 
 	void	*s_clock_arg;
 	void	(*s_clock_init)(void *);
@@ -58,9 +55,6 @@ extern struct systemsw systemsw;
 
 int	system_set_clockfns(void *, void (*)(void *));
 int	system_set_todrfns(void *, void (*)(void *, time_t), void (*)(void *));
-
-#define	delay(n)	((*systemsw.s_delay)(n))
-#define	DELAY(n)	((*systemsw.s_delay)(n))
 
 #define	cpu_intr_establish(n,s,f,a)	((*systemsw.s_intr_establish)(n,s,f,a))
 

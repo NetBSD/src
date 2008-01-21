@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36.12.5 2007/10/27 11:25:23 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36.12.6 2008/01/21 09:35:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -139,14 +139,13 @@ extern int cpu_do_powersave;
  * CLKF_INTR: True if we took the interrupt from inside another
  * interrupt handler.
  */
-extern int current_intr_depth;
 #ifdef __PROG32
 /* Hack to treat FPE time as interrupt time so we can measure it */
 #define CLKF_INTR(frame)						\
-	((current_intr_depth > 1) ||					\
+	((curcpu()->ci_idepth > 1) ||					\
 	    (frame->cf_if.if_spsr & PSR_MODE) == PSR_UND32_MODE)
 #else
-#define CLKF_INTR(frame)	(current_intr_depth > 1) 
+#define CLKF_INTR(frame)	(curcpu()->ci_idepth > 1) 
 #endif
 
 /*
@@ -220,6 +219,7 @@ struct cpu_info {
 	int32_t ci_mtx_count;
 	int ci_mtx_oldspl;
 	int ci_want_resched;
+	int ci_idepth;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
 #endif

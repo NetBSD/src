@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMemory.c,v 1.1.14.2 2006/06/21 15:02:32 yamt Exp $	*/
+/*	$NetBSD: OsdMemory.c,v 1.1.14.3 2008/01/21 09:42:34 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.1.14.2 2006/06/21 15:02:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMemory.c,v 1.1.14.3 2008/01/21 09:42:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -58,12 +58,16 @@ MALLOC_DECLARE(M_ACPI);
  *
  *	Map physical memory into the caller's address space.
  */
-ACPI_STATUS
-AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length,
-    void **LogicalAddress)
+void *
+AcpiOsMapMemory(ACPI_PHYSICAL_ADDRESS PhysicalAddress, ACPI_SIZE Length)
 {
+	ACPI_STATUS Status;
+	void *LogicalAddress = NULL;
 
-	return acpi_md_OsMapMemory(PhysicalAddress, Length, LogicalAddress);
+	Status = acpi_md_OsMapMemory(PhysicalAddress, Length, &LogicalAddress);
+	if (ACPI_FAILURE (Status))
+		return NULL;
+	return LogicalAddress;
 }
 
 /*
@@ -138,4 +142,19 @@ AcpiOsWritable(void *Pointer, ACPI_SIZE Length)
 {
 
 	return acpi_md_OsWritable(Pointer, Length);
+}
+
+ACPI_STATUS
+AcpiOsValidateInterface(char *Interface)
+{
+
+	return AE_SUPPORT;
+}
+
+ACPI_STATUS
+AcpiOsValidateAddress(UINT8 SpaceId, ACPI_PHYSICAL_ADDRESS Address,
+    ACPI_SIZE Length)
+{
+
+	return AE_OK;
 }

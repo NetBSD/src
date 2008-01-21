@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.2.8.2 2007/12/07 17:24:01 yamt Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.2.8.3 2008/01/21 09:35:21 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -16,7 +16,6 @@ options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 maxusers	32		# estimated number of users
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
@@ -49,8 +48,8 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
+makeoptions 	DEBUG="-g"	# compile full symbol table
+makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
 

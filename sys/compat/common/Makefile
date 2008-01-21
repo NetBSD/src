@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34.4.3 2007/09/03 14:31:49 yamt Exp $
+#	$NetBSD: Makefile,v 1.34.4.4 2008/01/21 09:40:41 yamt Exp $
 
 LIB=		compat
 NOPIC=		# defined
@@ -9,7 +9,7 @@ CPPFLAGS=	${COMPATCPPFLAGS} ${SKIP_AUTODEP::=}
 .PATH.c: ${COMPATDIR}
 
 # Common compatibility code, used by all emulations
-SRCS=	compat_exec.c compat_util.c compat_file.c
+SRCS=	compat_exec.c compat_util.c
 
 # Compatibility code for 4.3BSD
 SRCS+=	kern_exit_43.c kern_info_43.c kern_resource_43.c kern_sig_43.c \

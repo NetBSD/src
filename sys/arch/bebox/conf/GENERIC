@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.83.2.4 2007/10/27 11:25:33 yamt Exp $
+# $NetBSD: GENERIC,v 1.83.2.5 2008/01/21 09:35:57 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/bebox/conf/std.bebox"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.83.2.4 $"
+#ident 		"GENERIC-$Revision: 1.83.2.5 $"
 
 maxusers	32
 
@@ -39,7 +39,6 @@ options 	TRAP_PANICWAIT
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 options 	KTRACE
-#options 	SYSTRACE		# system call vetting via systrace(1)
 options 	USERCONF		# userconf(4) support
 #options	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_30.c,v 1.9.6.5 2007/09/03 14:31:53 yamt Exp $	*/
+/*	$NetBSD: vfs_syscalls_30.c,v 1.9.6.6 2008/01/21 09:40:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9.6.5 2007/09/03 14:31:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_30.c,v 1.9.6.6 2008/01/21 09:40:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,12 +94,12 @@ cvtstat(struct stat13 *ost, const struct stat *st)
  */
 /* ARGSUSED */
 int
-compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
+compat_30_sys___stat13(struct lwp *l, const struct compat_30_sys___stat13_args *uap, register_t *retval)
 {
-	struct compat_30_sys___stat13_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat13 *) ub;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct stat13 osb;
 	int error;
@@ -118,12 +118,12 @@ compat_30_sys___stat13(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
+compat_30_sys___lstat13(struct lwp *l, const struct compat_30_sys___lstat13_args *uap, register_t *retval)
 {
-	struct compat_30_sys___lstat13_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct stat13 *) ub;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct stat13 osb;
 	int error;
@@ -138,12 +138,12 @@ compat_30_sys___lstat13(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_fhstat(struct lwp *l, const struct compat_30_sys_fhstat_args *uap, register_t *retval)
 {
-	struct compat_30_sys_fhstat_args /* {
+	/* {
 		syscallarg(const struct compat_30_fhandle *) fhp;
 		syscallarg(struct stat13 *) sb;
-	} */ *uap = v;
+	} */
 	struct stat sb;
 	struct stat13 osb;
 	int error;
@@ -181,12 +181,12 @@ compat_30_sys_fhstat(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-compat_30_sys___fstat13(struct lwp *l, void *v, register_t *retval)
+compat_30_sys___fstat13(struct lwp *l, const struct compat_30_sys___fstat13_args *uap, register_t *retval)
 {
-	struct compat_30_sys___fstat13_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(struct stat13 *) sb;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int fd = SCARG(uap, fd);
 	struct filedesc *fdp = p->p_fd;
@@ -213,13 +213,13 @@ compat_30_sys___fstat13(struct lwp *l, void *v, register_t *retval)
  * Read a block of directory entries in a file system independent format.
  */
 int
-compat_30_sys_getdents(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_getdents(struct lwp *l, const struct compat_30_sys_getdents_args *uap, register_t *retval)
 {
-	struct compat_30_sys_getdents_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(char *) buf;
 		syscallarg(size_t) count;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct dirent *bdp;
 	struct vnode *vp;
@@ -343,12 +343,12 @@ out1:
  * Get file handle system call
  */
 int
-compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_getfh(struct lwp *l, const struct compat_30_sys_getfh_args *uap, register_t *retval)
 {
-	struct compat_30_sys_getfh_args /* {
+	/* {
 		syscallarg(char *) fname;
 		syscallarg(struct compat_30_fhandle *) fhp;
-	} */ *uap = v;
+	} */
 	struct vnode *vp;
 	struct compat_30_fhandle fh;
 	int error;
@@ -363,7 +363,7 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, fname), l);
+	    SCARG(uap, fname));
 	error = namei(&nd);
 	if (error)
 		return (error);
@@ -387,12 +387,12 @@ compat_30_sys_getfh(struct lwp *l, void *v, register_t *retval)
  * and call the device open routine if any.
  */
 int
-compat_30_sys_fhopen(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_fhopen(struct lwp *l, const struct compat_30_sys_fhopen_args *uap, register_t *retval)
 {
-	struct compat_30_sys_fhopen_args /* {
+	/* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(int) flags;
-	} */ *uap = v;
+	} */
 
 	return dofhopen(l, SCARG(uap, fhp), FHANDLE_SIZE_COMPAT,
 	    SCARG(uap, flags), retval);
@@ -400,12 +400,12 @@ compat_30_sys_fhopen(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_30_sys___fhstat30(struct lwp *l, void *v, register_t *retval)
+compat_30_sys___fhstat30(struct lwp *l, const struct compat_30_sys___fhstat30_args *uap_30, register_t *retval)
 {
-	struct compat_30_sys___fhstat30_args /* {
+	/* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct stat *) sb;
-	} */ *uap_30 = v;
+	} */
 	struct sys___fhstat40_args uap;
 
 	SCARG(&uap, fhp) = SCARG(uap_30, fhp);
@@ -417,13 +417,13 @@ compat_30_sys___fhstat30(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-compat_30_sys_fhstatvfs1(struct lwp *l, void *v, register_t *retval)
+compat_30_sys_fhstatvfs1(struct lwp *l, const struct compat_30_sys_fhstatvfs1_args *uap_30, register_t *retval)
 {
-	struct compat_30_sys_fhstatvfs1_args /* {
+	/* {
 		syscallarg(const fhandle_t *) fhp;
 		syscallarg(struct statvfs *) buf;
 		syscallarg(int)	flags;
-	} */ *uap_30 = v;
+	} */
 	struct sys___fhstatvfs140_args uap;
 
 	SCARG(&uap, fhp) = SCARG(uap_30, fhp);

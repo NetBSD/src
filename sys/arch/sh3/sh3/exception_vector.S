@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.13.16.4 2007/10/27 11:28:31 yamt Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.13.16.5 2008/01/21 09:39:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.13.16.4 2007/10/27 11:28:31 yamt Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.13.16.5 2008/01/21 09:39:16 yamt Exp $")
 
 
 /*
@@ -453,6 +453,22 @@ VECTOR_END_MARKER(sh4_vector_tlbmiss_end)
 NENTRY(sh_vector_interrupt)
 	__EXCEPTION_ENTRY
 	stc	r0_bank, r6		! ssp - 3rd arg to intc_intr()
+
+	mov.l	.Li_intfp, r8
+	mov.l	@r8, r8
+	cmp/hi	r8, r14		! r14 > intfp ?
+	bf	1f		! if (r14 <= intfp) already on intstack
+
+	!! else - switch to the interrupt stack
+	mov.l	.Li_intsp, r9
+	mov.l	@r9, r9
+
+	mov.l	r15, @-r9
+	stc.l	r6_bank, @-r9
+	mov	r9, r15
+	ldc	r8, r6_bank	! intfp
+1:
+
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)	! enable exceptions for P3 access
 
@@ -464,6 +480,27 @@ NENTRY(sh_vector_interrupt)
 	add	#1, r3			! ++uvmexp.intrs
 	jsr	@r0			! intc_intr(ssr, spc, ssp)
 	 mov.l	r3, @r2
+
+	!! AST check should be run on lwp's stack, so that if
+	!! interrupted lwp is preemtped, it is later resumed on its
+	!! own stack, not on the intterupt stack
+	stc	r6_bank, r0
+	cmp/eq	r0, r8		! r6_bank == intfp?
+	bf	1f
+
+	mov	#0x10, r10
+	stc	sr, r11
+	swap.b	r10, r10
+	mov	r11, r2
+	swap.w	r10, r10	! r10 = PSL_BL
+	or	r10, r2
+	ldc	r2, sr		! block exceptions
+
+	ldc.l	@r15+, r6_bank
+	mov.l	@r15+, r15
+
+	ldc	r11, sr		! unblock exceptions
+1:
 
 	mov.l	@(TF_SSR, r14), r2
 	mov.l	.Li_PSL_MD, r1
@@ -495,6 +532,8 @@ NENTRY(sh_vector_interrupt)
 	__EXCEPTION_RETURN
 
 	.align	5
+.Li_intfp:		.long	_C_LABEL(intfp)
+.Li_intsp:		.long	_C_LABEL(intsp)
 .Li_uvmexp_intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
 .Li_intc_intr:		.long	_C_LABEL(intc_intr)
 .Li_PSL_MD:		.long	0x40000000 /* PSL_MD */

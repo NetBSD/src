@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.54.2.6 2007/12/07 17:24:27 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.54.2.7 2008/01/21 09:36:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.6 2007/12/07 17:24:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.7 2008/01/21 09:36:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -268,7 +268,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* all models have Rm5200, which is CPU_MIPS_DOUBLE_COUNT */
 	curcpu()->ci_cycles_per_hz /= 2;
 	curcpu()->ci_divisor_delay /= 2;
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 
@@ -531,8 +531,10 @@ icu_intr_establish(int irq, int type, int ipl, int (*func)(void *),
 	struct cobalt_intrhand *ih;
 
 	ih = &icu_intrtab[irq];
-	if (ih->ih_func != NULL)
-		panic("icu_intr_establish(): irq %d is already in use", irq);
+	if (ih->ih_func != NULL) {
+		printf("%s: irq %d is already in use\n", __func__, irq);
+		return NULL;
+	}
 
 	ih->ih_cookie_type = COBALT_COOKIE_TYPE_ICU;
 	ih->ih_func = func;

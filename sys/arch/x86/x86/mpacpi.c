@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.33.2.6 2007/12/07 17:27:01 yamt Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.33.2.7 2008/01/21 09:40:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33.2.6 2007/12/07 17:27:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.33.2.7 2008/01/21 09:40:16 yamt Exp $");
 
 #include "acpi.h"
 #include "opt_acpi.h"
@@ -101,10 +101,10 @@ static int mpacpi_cpuprint(void *, const char *);
 static int mpacpi_ioapicprint(void *, const char *);
 
 /* acpi_madt_walk callbacks */
-static ACPI_STATUS mpacpi_count(APIC_HEADER *, void *);
-static ACPI_STATUS mpacpi_config_cpu(APIC_HEADER *, void *);
-static ACPI_STATUS mpacpi_config_ioapic(APIC_HEADER *, void *);
-static ACPI_STATUS mpacpi_nonpci_intr(APIC_HEADER *, void *);
+static ACPI_STATUS mpacpi_count(ACPI_SUBTABLE_HEADER *, void *);
+static ACPI_STATUS mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *, void *);
+static ACPI_STATUS mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *, void *);
+static ACPI_STATUS mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *, void *);
 
 #if NPCI > 0
 /* Callbacks for the ACPI namespace walk */
@@ -170,20 +170,20 @@ mpacpi_ioapicprint(void *aux, const char *pnp)
  * This is a callback function for acpi_madt_walk().
  */
 static ACPI_STATUS
-mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
+mpacpi_nonpci_intr(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
 	int *index = aux, pin, lindex;
 	struct mp_intr_map *mpi;
-	MADT_NMI_SOURCE *ioapic_nmi;
-	MADT_LOCAL_APIC_NMI *lapic_nmi;
-	MADT_INTERRUPT_OVERRIDE *isa_ovr;
+	ACPI_MADT_NMI_SOURCE *ioapic_nmi;
+	ACPI_MADT_LOCAL_APIC_NMI *lapic_nmi;
+	ACPI_MADT_INTERRUPT_OVERRIDE *isa_ovr;
 	struct pic *pic;
 	extern struct acpi_softc *acpi_softc;	/* XXX */
 
 	switch (hdrp->Type) {
-	case APIC_NMI:
-		ioapic_nmi = (MADT_NMI_SOURCE *)hdrp;
-		pic = intr_findpic(ioapic_nmi->Interrupt);
+	case ACPI_MADT_TYPE_NMI_SOURCE:
+		ioapic_nmi = (ACPI_MADT_NMI_SOURCE *)hdrp;
+		pic = intr_findpic(ioapic_nmi->GlobalIrq);
 		if (pic == NULL)
 			break;
 #if NIOAPIC == 0
@@ -196,7 +196,7 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		mpi->bus = NULL;
 		mpi->type = MPS_INTTYPE_NMI;
 		mpi->ioapic = pic;
-		pin = ioapic_nmi->Interrupt - pic->pic_vecbase;
+		pin = ioapic_nmi->GlobalIrq - pic->pic_vecbase;
 		mpi->ioapic_pin = pin;
 		mpi->bus_pin = -1;
 		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
@@ -209,12 +209,11 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		} else
 #endif
 			mpi->ioapic_ih = pin;
-		mpi->flags = ioapic_nmi->Polarity |
-		    (ioapic_nmi->TriggerMode << 2);
-		mpi->global_int = ioapic_nmi->Interrupt;
+		mpi->flags = ioapic_nmi->IntiFlags;
+		mpi->global_int = ioapic_nmi->GlobalIrq;
 		break;
-	case APIC_LOCAL_NMI:
-		lapic_nmi = (MADT_LOCAL_APIC_NMI *)hdrp;
+	case ACPI_MADT_TYPE_LOCAL_APIC_NMI:
+		lapic_nmi = (ACPI_MADT_LOCAL_APIC_NMI *)hdrp;
 		mpi = &mp_intrs[*index];
 		(*index)++;
 		mpi->next = NULL;
@@ -226,27 +225,27 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		mpi->redir = (IOAPIC_REDLO_DEL_NMI<<IOAPIC_REDLO_DEL_SHIFT);
 		mpi->global_int = -1;
 		break;
-	case APIC_XRUPT_OVERRIDE:
-		isa_ovr = (MADT_INTERRUPT_OVERRIDE *)hdrp;
+	case ACPI_MADT_TYPE_INTERRUPT_OVERRIDE:
+		isa_ovr = (ACPI_MADT_INTERRUPT_OVERRIDE *)hdrp;
 		if (mp_verbose) {
 			printf("mpacpi: ISA interrupt override %d -> %d (%d/%d)\n",
-			    isa_ovr->Source, isa_ovr->Interrupt,
-			    isa_ovr->Polarity,
-			    isa_ovr->TriggerMode);
+			    isa_ovr->SourceIrq, isa_ovr->GlobalIrq,
+			    isa_ovr->IntiFlags & ACPI_MADT_POLARITY_MASK,
+			    (isa_ovr->IntiFlags & ACPI_MADT_TRIGGER_MASK) >> 2);
 		}
-		if (isa_ovr->Source > 15 || isa_ovr->Source == 2 ||
-		    (isa_ovr->Source == 0 && isa_ovr->Interrupt == 2 &&
+		if (isa_ovr->SourceIrq > 15 || isa_ovr->SourceIrq == 2 ||
+		    (isa_ovr->SourceIrq == 0 && isa_ovr->GlobalIrq == 2 &&
 			(acpi_softc->sc_quirks & ACPI_QUIRK_IRQ0)))
 			break;
-		pic = intr_findpic(isa_ovr->Interrupt);
+		pic = intr_findpic(isa_ovr->GlobalIrq);
 		if (pic == NULL)
 			break;
 #if NIOAPIC == 0
 		if (pic->pic_type == PIC_IOAPIC)
 			break;
 #endif
-		pin = isa_ovr->Interrupt - pic->pic_vecbase;
-		lindex = isa_ovr->Source;
+		pin = isa_ovr->GlobalIrq - pic->pic_vecbase;
+		lindex = isa_ovr->SourceIrq;
 		/*
 		 * IRQ 2 was skipped in the default setup.
 		 */
@@ -261,39 +260,50 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
 		} else
 #endif
 			mpi->ioapic_ih = pin;
-		mpi->bus_pin = isa_ovr->Source;
+		mpi->bus_pin = isa_ovr->SourceIrq;
 		mpi->ioapic = (struct pic *)pic;
 		mpi->ioapic_pin = pin;
 		mpi->sflags |= MPI_OVR;
 		mpi->redir = 0;
-		mpi->global_int = isa_ovr->Interrupt;
-		switch (isa_ovr->Polarity) {
-		case MPS_INTPO_ACTHI:
+		mpi->global_int = isa_ovr->GlobalIrq;
+		switch (isa_ovr->IntiFlags & ACPI_MADT_POLARITY_MASK) {
+		case ACPI_MADT_POLARITY_ACTIVE_HIGH:
 			mpi->redir &= ~IOAPIC_REDLO_ACTLO;
 			break;
-		case MPS_INTPO_DEF:
-		case MPS_INTPO_ACTLO:
+		case ACPI_MADT_POLARITY_ACTIVE_LOW:
 			mpi->redir |= IOAPIC_REDLO_ACTLO;
+			break;
+		case ACPI_MADT_POLARITY_CONFORMS:
+			if (isa_ovr->SourceIrq == AcpiGbl_FADT.SciInterrupt)
+				mpi->redir |= IOAPIC_REDLO_ACTLO;
+			else
+				mpi->redir &= ~IOAPIC_REDLO_ACTLO;
 			break;
 		}
 		mpi->redir |= (IOAPIC_REDLO_DEL_FIXED<<IOAPIC_REDLO_DEL_SHIFT);
-		switch (isa_ovr->TriggerMode) {
-		case MPS_INTTR_DEF:
-		case MPS_INTTR_LEVEL:
+		switch (isa_ovr->IntiFlags & ACPI_MADT_TRIGGER_MASK) {
+		case ACPI_MADT_TRIGGER_LEVEL:
 			mpi->redir |= IOAPIC_REDLO_LEVEL;
 			break;
-		case MPS_INTTR_EDGE:
+		case ACPI_MADT_TRIGGER_EDGE:
 			mpi->redir &= ~IOAPIC_REDLO_LEVEL;
 			break;
+		case ACPI_MADT_TRIGGER_CONFORMS:
+			if (isa_ovr->SourceIrq == AcpiGbl_FADT.SciInterrupt)
+				mpi->redir |= IOAPIC_REDLO_LEVEL;
+			else
+				mpi->redir &= ~IOAPIC_REDLO_LEVEL;
+			break;
 		}
-		mpi->flags = isa_ovr->Polarity | (isa_ovr->TriggerMode << 2);
+		mpi->flags = isa_ovr->IntiFlags;
 #if NIOAPIC > 0
 		if (pic->pic_type == PIC_IOAPIC)
 			((struct ioapic_softc *)pic)->sc_pins[pin].ip_map = mpi;
 #endif
-		if (isa_ovr->Source == AcpiGbl_FADT->SciInt)
+		if (isa_ovr->SourceIrq == AcpiGbl_FADT.SciInterrupt)
 			mpacpi_sci_override = mpi;
-			
+
+		break;
 	default:
 		break;
 	}
@@ -305,23 +315,23 @@ mpacpi_nonpci_intr(APIC_HEADER *hdrp, void *aux)
  * This is a callback function for acpi_madt_walk().
  */
 static ACPI_STATUS
-mpacpi_count(APIC_HEADER *hdrp, void *aux)
+mpacpi_count(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
-	MADT_ADDRESS_OVERRIDE *lop;
+	ACPI_MADT_LOCAL_APIC_OVERRIDE *lop;
 
 	switch (hdrp->Type) {
-	case APIC_PROCESSOR:
+	case ACPI_MADT_TYPE_LOCAL_APIC:
 		mpacpi_ncpu++;
 		break;
-	case APIC_IO:
+	case ACPI_MADT_TYPE_IO_APIC:
 		mpacpi_nioapic++;
 		break;
-	case APIC_NMI:
-	case APIC_LOCAL_NMI:
+	case ACPI_MADT_TYPE_NMI_SOURCE:
+	case ACPI_MADT_TYPE_LOCAL_APIC_NMI:
 		mpacpi_nintsrc++;
 		break;
-	case APIC_ADDRESS_OVERRIDE:
-		lop = (MADT_ADDRESS_OVERRIDE *)hdrp;
+	case ACPI_MADT_TYPE_LOCAL_APIC_OVERRIDE:
+		lop = (ACPI_MADT_LOCAL_APIC_OVERRIDE *)hdrp;
 		mpacpi_lapic_base = lop->Address;;
 	default:
 		break;
@@ -330,10 +340,10 @@ mpacpi_count(APIC_HEADER *hdrp, void *aux)
 }
 
 static ACPI_STATUS
-mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
+mpacpi_config_cpu(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
 	struct device *parent = aux;
-	MADT_PROCESSOR_APIC *p;
+	ACPI_MADT_LOCAL_APIC *p;
 	struct cpu_attach_args caa;
 	int cpunum = 0;
 	int locs[CPUBUSCF_NLOCS];
@@ -343,14 +353,14 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 		cpunum = lapic_cpu_number();
 #endif
 
-	if (hdrp->Type == APIC_PROCESSOR) {
-		p = (MADT_PROCESSOR_APIC *)hdrp;
-		if (p->ProcessorEnabled) {
-			if (p->LocalApicId != cpunum)
+	if (hdrp->Type == ACPI_MADT_TYPE_LOCAL_APIC) {
+		p = (ACPI_MADT_LOCAL_APIC *)hdrp;
+		if (p->LapicFlags & ACPI_MADT_ENABLED) {
+			if (p->Id != cpunum)
 				caa.cpu_role = CPU_ROLE_AP;
 			else
 				caa.cpu_role = CPU_ROLE_BP;
-			caa.cpu_number = p->LocalApicId;
+			caa.cpu_number = p->Id;
 			caa.cpu_func = &mp_cpu_funcs;
 			locs[CPUBUSCF_APID] = caa.cpu_number;
 			config_found_sm_loc(parent, "cpubus", locs,
@@ -361,20 +371,20 @@ mpacpi_config_cpu(APIC_HEADER *hdrp, void *aux)
 }
 
 static ACPI_STATUS
-mpacpi_config_ioapic(APIC_HEADER *hdrp, void *aux)
+mpacpi_config_ioapic(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
 	struct device *parent = aux;
 	struct apic_attach_args aaa;
-	MADT_IO_APIC *p;
+	ACPI_MADT_IO_APIC *p;
 	int locs[IOAPICBUSCF_NLOCS];
 
-	if (hdrp->Type == APIC_IO) {
-		p = (MADT_IO_APIC *)hdrp;
-		aaa.apic_id = p->IoApicId;
+	if (hdrp->Type == ACPI_MADT_TYPE_IO_APIC) {
+		p = (ACPI_MADT_IO_APIC *)hdrp;
+		aaa.apic_id = p->Id;
 		aaa.apic_address = p->Address;
 		aaa.apic_version = -1;
 		aaa.flags = IOAPIC_VWIRE;
-		aaa.apic_vecbase = p->Interrupt;
+		aaa.apic_vecbase = p->GlobalIrqBase;
 		locs[IOAPICBUSCF_APID] = aaa.apic_id;
 		config_found_sm_loc(parent, "ioapicbus", locs, &aaa,
 			mpacpi_ioapicprint, config_stdsubmatch);
@@ -537,7 +547,7 @@ mpacpi_derive_bus(ACPI_HANDLE handle, struct acpi_softc *acpi)
 	 */
 	TAILQ_FOREACH(dev, &dev_list, list) {
 		rv = acpi_eval_integer(dev->handle, METHOD_NAME__ADR, &val);
-		if (ACPI_FAILURE(rv))
+		if (ACPI_FAILURE(rv) || val == 0xffffffff)
 			return -1;
 
 		tag = pci_make_tag(acpi->sc_pc, bus,

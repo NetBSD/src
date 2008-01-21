@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.35.4.3 2007/10/27 11:30:10 yamt Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.35.4.4 2008/01/21 09:42:40 yamt Exp $	*/
 
 /*
  * CardBus specific routines for 3Com 3C575-family CardBus ethernet adapter
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.35.4.3 2007/10/27 11:30:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.35.4.4 2008/01/21 09:42:40 yamt Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -413,14 +413,12 @@ void
 ex_cardbus_setup(csc)
 	struct ex_cardbus_softc *csc;
 {
-	struct ex_softc *sc = &csc->sc_softc;
 	cardbus_devfunc_t ct = csc->sc_ct;
 	cardbus_chipset_tag_t cc = ct->ct_cc;
 	cardbus_function_tag_t cf = ct->ct_cf;
 	cardbusreg_t  reg;
 
-	(void)cardbus_setpowerstate(sc->sc_dev.dv_xname, ct, csc->sc_tag,
-	    PCI_PWR_D0);
+	(void)cardbus_set_powerstate(ct, csc->sc_tag, PCI_PWR_D0);
 
 	/* Program the BAR */
 	cardbus_conf_write(cc, cf, csc->sc_tag,

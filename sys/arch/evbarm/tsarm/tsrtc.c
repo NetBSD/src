@@ -1,4 +1,4 @@
-/*	$NetBSD: tsrtc.c,v 1.1 2004/12/27 02:41:54 joff Exp $	*/
+/*	$NetBSD: tsrtc.c,v 1.1.12.1 2008/01/21 09:36:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.1 2004/12/27 02:41:54 joff Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsrtc.c,v 1.1.12.1 2008/01/21 09:36:16 yamt Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -133,8 +133,6 @@ tsrtc_attach(parent, self, aux)
 
 	(*sc->sc_mc.sc_mcwrite)((struct mc146818_softc *)sc, MC_REGB, 
 		MC_REGB_24HR);
-
-	todr_attach(&sc->sc_mc.sc_handle);
 }
 
 void

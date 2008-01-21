@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_isa.c,v 1.46.12.3 2007/10/27 11:31:59 yamt Exp $ */
+/*	$NetBSD: wdc_isa.c,v 1.46.12.4 2008/01/21 09:43:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.46.12.3 2007/10/27 11:31:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_isa.c,v 1.46.12.4 2008/01/21 09:43:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,11 +74,13 @@ struct wdc_isa_softc {
 	int	sc_drq;
 };
 
-static int	wdc_isa_probe(struct device *, struct cfdata *, void *);
-static void	wdc_isa_attach(struct device *, struct device *, void *);
+static int	wdc_isa_probe(device_t , struct cfdata *, void *);
+static void	wdc_isa_attach(device_t, device_t, void *);
+static int	wdc_isa_detach(device_t, int);
 
-CFATTACH_DECL(wdc_isa, sizeof(struct wdc_isa_softc),
-    wdc_isa_probe, wdc_isa_attach, NULL, NULL);
+CFATTACH_DECL2(wdc_isa, sizeof(struct wdc_isa_softc),
+    wdc_isa_probe, wdc_isa_attach, wdc_isa_detach, NULL, NULL,
+    wdc_childdetached);
 
 #if 0
 static void	wdc_isa_dma_setup(struct wdc_isa_softc *);
@@ -88,8 +90,7 @@ static int	wdc_isa_dma_finish(void*, int, int, int);
 #endif
 
 static int
-wdc_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+wdc_isa_probe(device_t parent, struct cfdata *match, void *aux)
 {
 	struct ata_channel ch;
 	struct isa_attach_args *ia = aux;
@@ -152,10 +153,28 @@ out:
 	return (result);
 }
 
-static void
-wdc_isa_attach(struct device *parent, struct device *self, void *aux)
+static int
+wdc_isa_detach(device_t self, int flags)
 {
-	struct wdc_isa_softc *sc = (void *)self;
+	struct wdc_isa_softc *sc = device_private(self);
+	struct wdc_regs *wdr = &sc->wdc_regs;
+	int rc;
+
+	if ((rc = wdcdetach(self, flags)) != 0)
+		return rc;
+
+	isa_intr_disestablish(sc->sc_ic, sc->sc_ih);
+
+	bus_space_unmap(wdr->ctl_iot, wdr->ctl_ioh, WDC_ISA_AUXREG_NPORTS);
+	bus_space_unmap(wdr->cmd_iot, wdr->cmd_baseioh, WDC_ISA_REG_NPORTS);
+
+	return 0;
+}
+
+static void
+wdc_isa_attach(device_t parent, device_t self, void *aux)
+{
+	struct wdc_isa_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct isa_attach_args *ia = aux;
 	int wdc_cf_flags = device_cfdata(self)->cf_flags;

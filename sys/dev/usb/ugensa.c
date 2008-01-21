@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.3.2.6 2007/12/07 17:31:35 yamt Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.3.2.7 2008/01/21 09:44:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.3.2.7 2008/01/21 09:44:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +97,7 @@ static const struct usb_devno ugensa_devs[] = {
 	{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS },
 	{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD580 },
+	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MINI5725},
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_CDMA_MODEM },
 	{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }
 };
@@ -202,6 +206,8 @@ USB_ATTACH(ugensa)
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 					    ucomprint, ucomsubmatch);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	USB_ATTACH_SUCCESS_RETURN;
 
 bad:
@@ -238,6 +244,7 @@ USB_DETACH(ugensa)
 	DPRINTF(("ugensa_detach: sc=%p flags=%d\n", sc, flags));
 
 	sc->sc_dying = 1;
+	pmf_device_deregister(self);
 
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);

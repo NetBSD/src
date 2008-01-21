@@ -1,4 +1,4 @@
-/* $NetBSD: e820.h,v 1.2.10.2 2007/10/27 11:29:21 yamt Exp $ */
+/* $NetBSD: e820.h,v 1.2.10.3 2008/01/21 09:40:31 yamt Exp $ */
 
 /*
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,7 +38,7 @@ struct e820entry {
     uint64_t addr;
     uint64_t size;
     uint32_t type;
-} __attribute__((packed));
+} __packed;
 
 #define HVM_BELOW_4G_RAM_END        0xF0000000
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ibus.c,v 1.8.16.1 2007/09/03 14:28:51 yamt Exp $	*/
+/*	$NetBSD: if_le_ibus.c,v 1.8.16.2 2008/01/21 09:38:17 yamt Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -20,13 +20,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.8.16.1 2007/09/03 14:28:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ibus.c,v 1.8.16.2 2008/01/21 09:38:17 yamt Exp $");
 
 #include "opt_inet.h"
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_ether.h>

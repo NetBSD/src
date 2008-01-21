@@ -1,4 +1,4 @@
-/*	$NetBSD: hilvar.h,v 1.20.12.2 2007/09/03 14:25:11 yamt Exp $	*/
+/*	$NetBSD: hilvar.h,v 1.20.12.3 2008/01/21 09:36:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -170,12 +170,4 @@ void	send_hildev_cmd(struct hil_softc *, char, char);
 void	polloff(struct hil_dev *);
 void	pollon(struct hil_dev *);
 
-#ifndef _LKM
-#include "opt_compat_hpux.h"
-#endif
-
-#ifdef COMPAT_HPUX
-int	hpuxhilioctl(dev_t, int, void *, int);
-int	hildevno(dev_t);
-#endif /* COMPAT_HPUX */
 #endif /* _KERNEL */

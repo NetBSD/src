@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2_intr.c,v 1.1.18.6 2007/12/07 17:24:39 yamt Exp $	*/
+/*	$NetBSD: tr2_intr.c,v 1.1.18.7 2008/01/21 09:36:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.1.18.6 2007/12/07 17:24:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2_intr.c,v 1.1.18.7 2008/01/21 09:36:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
 #include <machine/locore.h>	/* mips3_cp0* */
 #include <machine/sbdvar.h>
 #define	_SBD_TR2_PRIVATE

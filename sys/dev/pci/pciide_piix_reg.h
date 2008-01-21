@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_piix_reg.h,v 1.9.4.2 2006/12/30 20:48:48 yamt Exp $	*/
+/*	$NetBSD: pciide_piix_reg.h,v 1.9.4.3 2008/01/21 09:44:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Manuel Bouyer.
@@ -113,15 +113,15 @@
  * ISP and RTC registers for the various PIO and DMA mode
  * (from the PIIX4 doc).
  */
-static const int8_t piix_isp_pio[] __attribute__((__unused__)) =
+static const int8_t piix_isp_pio[] __unused =
     {0x00, 0x00, 0x01, 0x02, 0x02};
-static const int8_t piix_rtc_pio[] __attribute__((__unused__)) =
+static const int8_t piix_rtc_pio[] __unused =
     {0x00, 0x00, 0x00, 0x01, 0x03};
-static const int8_t piix_isp_dma[] __attribute__((__unused__)) =
+static const int8_t piix_isp_dma[] __unused =
     {0x00, 0x02, 0x02};
-static const int8_t piix_rtc_dma[] __attribute__((__unused__)) =
+static const int8_t piix_rtc_dma[] __unused =
     {0x00, 0x02, 0x03};
-static const int8_t piix4_sct_udma[] __attribute__((__unused__)) =
+static const int8_t piix4_sct_udma[] __unused =
     {0x00, 0x01, 0x02, 0x01, 0x02, 0x01};
 
 /*

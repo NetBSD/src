@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.53.2.6 2007/12/07 17:29:50 yamt Exp $	*/
+/*	$NetBSD: ath.c,v 1.53.2.7 2008/01/21 09:42:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.6 2007/12/07 17:29:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.7 2008/01/21 09:42:54 yamt Exp $");
 #endif
 
 /*
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.53.2.6 2007/12/07 17:29:50 yamt Exp $");
 #include <sys/sysctl.h>
 #include <sys/mbuf.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/kernel.h>
 #include <sys/socket.h>
 #include <sys/sockio.h>
@@ -203,7 +202,6 @@ static void	ath_setcurmode(struct ath_softc *, enum ieee80211_phymode);
 #ifdef __NetBSD__
 int	ath_enable(struct ath_softc *);
 void	ath_disable(struct ath_softc *);
-void	ath_power(int, void *);
 #endif
 
 #if NBPFILTER > 0
@@ -526,6 +524,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST;
 	ifp->if_start = ath_start;
+	ifp->if_stop = ath_stop;
 	ifp->if_watchdog = ath_watchdog;
 	ifp->if_ioctl = ath_ioctl;
 	ifp->if_init = ath_ifinit;
@@ -639,14 +638,7 @@ ath_attach(u_int16_t devid, struct ath_softc *sc)
 	ath_bpfattach(sc);
 #endif
 
-#ifdef __NetBSD__
 	sc->sc_flags |= ATH_ATTACHED;
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    ath_power, sc);
-	if (sc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish power hook\n",
-			sc->sc_dev.dv_xname);
-#endif
 
 	/*
 	 * Setup dynamic sysctl's now that country code and
@@ -708,81 +700,17 @@ ath_detach(struct ath_softc *sc)
 	ath_hal_detach(sc->sc_ah);
 	if_detach(ifp);
 	splx(s);
-	powerhook_disestablish(sc->sc_powerhook);
 
 	return 0;
 }
 
-#ifdef __NetBSD__
 void
-ath_power(int why, void *arg)
+ath_resume(struct ath_softc *sc)
 {
-	struct ath_softc *sc = arg;
-	int s;
-
-	DPRINTF(sc, ATH_DEBUG_ANY, "ath_power(%d)\n", why);
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		ath_suspend(sc, why);
-		break;
-	case PWR_RESUME:
-		ath_resume(sc, why);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-#endif
-
-void
-ath_suspend(struct ath_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_if;
-
-	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags %x\n",
-		__func__, ifp->if_flags);
-
-	ath_stop(ifp, 1);
-	if (sc->sc_power != NULL)
-		(*sc->sc_power)(sc, why);
-}
-
-void
-ath_resume(struct ath_softc *sc, int why)
-{
-	struct ifnet *ifp = &sc->sc_if;
-
-	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags %x\n",
-		__func__, ifp->if_flags);
-
-	if (ifp->if_flags & IFF_UP) {
-		ath_init(sc);
-#if 0
-		(void)ath_intr(sc);
-#endif
-		if (sc->sc_power != NULL)
-			(*sc->sc_power)(sc, why);
-		if (ifp->if_flags & IFF_RUNNING)
-			ath_start(ifp);
-	}
 	if (sc->sc_softled) {
 		ath_hal_gpioCfgOutput(sc->sc_ah, sc->sc_ledpin);
 		ath_hal_gpioset(sc->sc_ah, sc->sc_ledpin, !sc->sc_ledon);
 	}
-}
-
-void
-ath_shutdown(void *arg)
-{
-	struct ath_softc *sc = arg;
-
-	ath_stop(&sc->sc_if, 1);
 }
 
 /*
@@ -1017,6 +945,9 @@ ath_init(struct ath_softc *sc)
 
 	DPRINTF(sc, ATH_DEBUG_ANY, "%s: if_flags 0x%x\n",
 		__func__, ifp->if_flags);
+
+	if (!device_has_power(&sc->sc_dev))
+		return EBUSY;
 
 	ATH_LOCK(sc);
 

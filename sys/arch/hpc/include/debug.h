@@ -1,4 +1,4 @@
-/*	$NetBSD: debug.h,v 1.6 2005/06/07 12:02:05 he Exp $	*/
+/*	$NetBSD: debug.h,v 1.6.2.1 2008/01/21 09:36:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 /*
  * debug printf with Function name 
  */
-#define	PRINTF(fmt, args...)	printf("%s: " fmt, __FUNCTION__ , ##args) 
+#define	PRINTF(fmt, args...)	printf("%s: " fmt, __func__ , ##args) 
 #ifdef DPRINTF_ENABLE
 #ifndef DPRINTF_DEBUG
 #error "specify unique debug symbol"
@@ -121,7 +121,7 @@ void dbg_banner_title(const char *, size_t);
 void dbg_banner_line(void);
 #define dbg_banner_function()						\
 {									\
-	const char funcname[] = __FUNCTION__;				\
+	const char funcname[] = __func__;				\
 	dbg_banner_title(funcname, sizeof funcname);			\
 }
 

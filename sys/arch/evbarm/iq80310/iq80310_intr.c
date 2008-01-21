@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.c,v 1.20.16.2 2006/12/30 20:45:50 yamt Exp $	*/
+/*	$NetBSD: iq80310_intr.c,v 1.20.16.3 2008/01/21 09:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.20.16.2 2006/12/30 20:45:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iq80310_intr.c,v 1.20.16.3 2008/01/21 09:36:12 yamt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -79,6 +79,7 @@ volatile int iq80310_ipending;
 /* Software copy of the IRQs we have enabled. */
 uint32_t intr_enabled;
 
+#ifdef __HAVE_FAST_SOFTINTRS
 /*
  * Map a software interrupt queue index (at the top of the word, and
  * highest priority softintr is encountered first in an ffs()).
@@ -94,6 +95,7 @@ static const int si_to_ipl[SI_NQUEUES] = {
 	IPL_SOFTNET,		/* SI_SOFTNET */
 	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
 };
+#endif
 
 void	iq80310_intr_dispatch(struct irqframe *frame);
 
@@ -173,21 +175,9 @@ iq80310_intr_calculate_masks(void)
 	}
 
 	iq80310_imask[IPL_NONE] = 0;
-
-	/*
-	 * Initialize the soft interrupt masks to block themselves.
-	 */
-	iq80310_imask[IPL_SOFT] = SI_TO_IRQBIT(SI_SOFT);
-	iq80310_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
-	iq80310_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
-	iq80310_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-
-	/*
-	 * splsoftclock() is the only interface that users of the
-	 * generic software interrupt facility have to block their
-	 * soft intrs, so splsoftclock() must also block IPL_SOFT.
-	 */
-	iq80310_imask[IPL_SOFTCLOCK] |= iq80310_imask[IPL_SOFT];
+	iq80310_imask[IPL_SOFTCLOCK] = 0;
+	iq80310_imask[IPL_SOFTNET] = 0;
+	iq80310_imask[IPL_SOFTSERIAL] = 0;
 
 	/*
 	 * splsoftnet() must also block splsoftclock(), since we don't
@@ -227,12 +217,18 @@ iq80310_intr_calculate_masks(void)
 	/*
 	 * No separate statclock on the IQ80310.
 	 */
+#ifdef IPL_STATCLOCK
 	iq80310_imask[IPL_STATCLOCK] |= iq80310_imask[IPL_CLOCK];
+#endif
 
 	/*
 	 * splhigh() must block "everything".
 	 */
+#ifdef IPL_STATCLOCK
 	iq80310_imask[IPL_HIGH] |= iq80310_imask[IPL_STATCLOCK];
+#else
+	iq80310_imask[IPL_HIGH] |= iq80310_imask[IPL_CLOCK];
+#endif
 
 	/*
 	 * XXX We need serial drivers to run at the absolute highest priority
@@ -256,6 +252,7 @@ iq80310_intr_calculate_masks(void)
 	}
 }
 
+#ifdef __HAVE_FAST_SOFTINTRS
 void
 iq80310_do_soft(void)
 {
@@ -288,6 +285,7 @@ iq80310_do_soft(void)
 
 	restore_interrupts(oldirqstate);
 }
+#endif	/* __HAVE_SOFT_FASTINTRS */
 
 int
 _splraise(int ipl)
@@ -310,6 +308,7 @@ _spllower(int ipl)
 	return (iq80310_spllower(ipl));
 }
 
+#ifdef __HAVE_FAST_SOFTINTRS
 void
 _setsoftintr(int si)
 {
@@ -323,6 +322,7 @@ _setsoftintr(int si)
 	if ((iq80310_ipending & ~IRQ_BITS) & ~current_spl_level)
 		iq80310_do_soft();
 }
+#endif
 
 void
 iq80310_intr_init(void)
@@ -466,12 +466,14 @@ iq80310_intr_dispatch(struct irqframe *frame)
 		printf("Stray external interrupt\n");
 #endif
 
+#if 0
 	/* Check for pendings soft intrs. */
 	if ((iq80310_ipending & ~IRQ_BITS) & ~current_spl_level) {
 		oldirqstate = enable_interrupts(I32_bit);
 		iq80310_do_soft();
 		restore_interrupts(oldirqstate);
 	}
+#endif
 
 	/*
 	 * If no hardware interrupts are masked, re-enable external

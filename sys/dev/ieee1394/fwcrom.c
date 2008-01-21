@@ -1,4 +1,4 @@
-/*	$NetBSD: fwcrom.c,v 1.3.6.3 2007/09/03 14:35:25 yamt Exp $	*/
+/*	$NetBSD: fwcrom.c,v 1.3.6.4 2008/01/21 09:43:14 yamt Exp $	*/
 /*-
  * Copyright (c) 2002-2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -33,8 +33,9 @@
  * SUCH DAMAGE.
  */
 
-#ifdef __FreeBSD__
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: fwcrom.c,v 1.3.6.4 2008/01/21 09:43:14 yamt Exp $");
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: /repoman/r/ncvs/src/sys/dev/firewire/fwcrom.c,v 1.14 2006/02/04 21:37:39 imp Exp $");
 #endif
 

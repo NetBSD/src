@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.15.2.4 2007/09/03 14:27:14 yamt Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.15.2.5 2008/01/21 09:37:22 yamt Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15.2.4 2007/09/03 14:27:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.15.2.5 2008/01/21 09:37:22 yamt Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -288,6 +288,8 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 			if (p->p_emul != &emul_netbsd_aoutm68k)
 				frame->f_regs[A0] = rval[0];
 		}
+#else
+		frame->f_regs[A0] = rval[0];
 #endif
 		break;
 	case ERESTART:
@@ -303,7 +305,7 @@ syscall_plain(register_t code, struct lwp *l, struct frame *frame)
 	default:
 	bad:
 		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
+		 * XXX: SVR4 uses this code-path, so we may have
 		 * to translate errno.
 		 */
 		if (p->p_emul->e_errno)
@@ -378,7 +380,7 @@ syscall_fancy(register_t code, struct lwp *l, struct frame *frame)
 			goto bad;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -407,6 +409,8 @@ out:
 			if (p->p_emul != &emul_netbsd_aoutm68k)
 				frame->f_regs[A0] = rval[0];
 		}
+#else
+	frame->f_regs[A0] = rval[0];
 #endif
 		break;
 	case ERESTART:
@@ -422,7 +426,7 @@ out:
 	default:
 	bad:
 		/*
-		 * XXX: HPUX and SVR4 use this code-path, so we may have
+		 * XXX: SVR4 uses this code-path, so we may have
 		 * to translate errno.
 		 */
 		if (p->p_emul->e_errno)
@@ -432,7 +436,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 }
 
 void

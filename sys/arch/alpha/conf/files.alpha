@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.167.12.4 2007/12/07 17:23:50 yamt Exp $
+# $NetBSD: files.alpha,v 1.167.12.5 2008/01/21 09:35:10 yamt Exp $
 #
 # alpha-specific configuration info
 
@@ -412,6 +412,7 @@ file	arch/alpha/alpha/clock.c
 file	arch/alpha/alpha/cpuconf.c
 file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/ipifuncs.c		multiprocessor
+file	arch/alpha/alpha/kobj_machdep.c		modular
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c

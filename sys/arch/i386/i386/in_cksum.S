@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2.16.2 2006/06/21 14:52:18 yamt Exp $	*/
+/*	$NetBSD: in_cksum.S,v 1.2.16.3 2008/01/21 09:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -65,9 +65,11 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.S,v 1.2.16.3 2008/01/21 09:37:00 yamt Exp $");
+
 #include "opt_inet.h"
 	
-#include <machine/asm.h>
 #include "assym.h"
 
 /* LINTSTUB: include <sys/types.h> */

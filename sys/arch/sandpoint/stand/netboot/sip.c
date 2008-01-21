@@ -1,4 +1,4 @@
-/* $NetBSD: sip.c,v 1.4.2.4 2007/12/07 17:26:03 yamt Exp $ */
+/* $NetBSD: sip.c,v 1.4.2.5 2008/01/21 09:39:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -119,8 +119,8 @@ struct local {
 };
 
 static int read_eeprom(struct local *, int);
-static unsigned sip_mii_read(struct local *, int, int);
-static void sip_mii_write(struct local *, int, int, int);
+static unsigned mii_read(struct local *, int, int);
+static void mii_write(struct local *, int, int, int);
 static void mii_initphy(struct local *);
 static void mii_dealan(struct local *, unsigned);
 
@@ -174,14 +174,13 @@ sip_init(unsigned tag, void *data)
 	en[5] = ((*ee & 0x1FE) >> 1);
 	for (i = 0; i < 6; i++)
 		en[i] = bbr(en[i]);
-#if 1
+
 	printf("MAC address %02x:%02x:%02x:%02x:%02x:%02x, ",
-		en[0], en[1], en[2], en[3], en[4], en[5]);
+	    en[0], en[1], en[2], en[3], en[4], en[5]);
 	printf("PHY %d (%04x.%04x)\n", l->phy,
-	    sip_mii_read(l, l->phy, 2), sip_mii_read(l, l->phy, 3));
+	    mii_read(l, l->phy, 2), mii_read(l, l->phy, 3));
 
 	mii_dealan(l, 5);
-#endif
 
 	/* speed and duplexity are found in CFG */
 	val = CSR_READ(l, SIP_CFG);
@@ -352,7 +351,7 @@ read_eeprom(struct local *l, int loc)
 #define MII_ANLPAR	0x05	/* Autonegotiation lnk partner abilities (rw) */
 
 unsigned
-sip_mii_read(struct local *l, int phy, int reg)
+mii_read(struct local *l, int phy, int reg)
 {
 	unsigned val;
 
@@ -363,7 +362,7 @@ sip_mii_read(struct local *l, int phy, int reg)
 }
 
 void
-sip_mii_write(struct local *l, int phy, int reg, int val)
+mii_write(struct local *l, int phy, int reg, int val)
 {
 
 	CSR_WRITE(l, SIP_BMCR + (reg << 2), val);
@@ -375,20 +374,20 @@ mii_initphy(struct local *l)
 	int phy, ctl, sts, bound;
 
 	for (phy = 0; phy < 32; phy++) {
-		ctl = sip_mii_read(l, phy, MII_BMCR);
-		sts = sip_mii_read(l, phy, MII_BMSR);
+		ctl = mii_read(l, phy, MII_BMCR);
+		sts = mii_read(l, phy, MII_BMSR);
 		if (ctl != 0xffff && sts != 0xffff)
 			goto found;
 	}
 	printf("MII: no PHY found\n");
 	return;
   found:
-	ctl = sip_mii_read(l, phy, MII_BMCR);
-	sip_mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
+	ctl = mii_read(l, phy, MII_BMCR);
+	mii_write(l, phy, MII_BMCR, ctl | BMCR_RESET);
 	bound = 100;
 	do {
 		DELAY(10);
-		ctl = sip_mii_read(l, phy, MII_BMCR);
+		ctl = mii_read(l, phy, MII_BMCR);
 		if (ctl == 0xffff) {
 			printf("MII: PHY %d has died after reset\n", phy);
 			return;
@@ -398,9 +397,9 @@ mii_initphy(struct local *l)
 		printf("PHY %d reset failed\n", phy);
 	}
 	ctl &= ~BMCR_ISO;
-	sip_mii_write(l, phy, MII_BMCR, ctl);
-	sts = sip_mii_read(l, phy, MII_BMSR) |
-	    sip_mii_read(l, phy, MII_BMSR); /* read twice */
+	mii_write(l, phy, MII_BMCR, ctl);
+	sts = mii_read(l, phy, MII_BMSR) |
+	    mii_read(l, phy, MII_BMSR); /* read twice */
 	l->phy = phy; /* should be 0 */
 	l->bmsr = sts;
 }
@@ -411,15 +410,15 @@ mii_dealan(struct local *l, unsigned timo)
 	unsigned anar, bound;
 
 	anar = ANAR_TX_FD | ANAR_TX | ANAR_10_FD | ANAR_10 | ANAR_CSMA;
-	sip_mii_write(l, l->phy, MII_ANAR, anar);
-	sip_mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
+	mii_write(l, l->phy, MII_ANAR, anar);
+	mii_write(l, l->phy, MII_BMCR, BMCR_AUTOEN | BMCR_STARTNEG);
 	l->anlpar = 0;
 	bound = getsecs() + timo;
 	do {
-		l->bmsr = sip_mii_read(l, l->phy, MII_BMSR) |
-		   sip_mii_read(l, l->phy, MII_BMSR); /* read twice */
+		l->bmsr = mii_read(l, l->phy, MII_BMSR) |
+		   mii_read(l, l->phy, MII_BMSR); /* read twice */
 		if ((l->bmsr & BMSR_LINK) && (l->bmsr & BMSR_ACOMP)) {
-			l->anlpar = sip_mii_read(l, l->phy, MII_ANLPAR);
+			l->anlpar = mii_read(l, l->phy, MII_ANLPAR);
 			break;
 		}
 		DELAY(10 * 1000);

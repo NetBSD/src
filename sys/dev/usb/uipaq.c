@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.2.18.5 2007/10/27 11:34:37 yamt Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.2.18.6 2008/01/21 09:44:47 yamt Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -47,6 +47,9 @@
  *
  * Contact isis@cs.umd.edu if you have any questions/comments about this driver
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.2.18.6 2008/01/21 09:44:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

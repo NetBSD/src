@@ -1,4 +1,4 @@
-/*	$NetBSD: bt8xx.h,v 1.7.18.1 2007/09/03 14:34:23 yamt Exp $	*/
+/*	$NetBSD: bt8xx.h,v 1.7.18.2 2008/01/21 09:42:56 yamt Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
 /* The copyright below only applies to the ioctl_meteor.h part of this file. */
@@ -60,24 +60,24 @@ struct meteor_geomet {
 	u_short		rows;
 	u_short		columns;
 	u_short		frames;
-	u_long		oformat;
+	u_int		oformat;
 };
 
 /* structure for METEORGCOUNT-get count of frames, fifo errors and DMA errors */
 struct meteor_counts {
-	u_long fifo_errors;	/* count of fifo errors since open */
-	u_long dma_errors;	/* count of DMA errors since open */
-	u_long frames_captured;	/* count of frames captured since open */
-	u_long even_fields_captured; /* count of even fields captured */
-	u_long odd_fields_captured; /* count of odd fields captured */
+	u_int fifo_errors;	/* count of fifo errors since open */
+	u_int dma_errors;	/* count of DMA errors since open */
+	u_int frames_captured;	/* count of frames captured since open */
+	u_int even_fields_captured; /* count of even fields captured */
+	u_int odd_fields_captured; /* count of odd fields captured */
 };
 
 /* structure for getting and setting direct transfers to vram */
 struct meteor_video {
-	u_long	addr;	/* Address of location to DMA to */
-	u_long	width;	/* Width of memory area */
-	u_long	banksize;	/* Size of Vram bank */
-	u_long	ramsize;	/* Size of Vram */
+	u_int	addr;	/* Address of location to DMA to */
+	u_int	width;	/* Width of memory area */
+	u_int	banksize;	/* Size of Vram bank */
+	u_int	ramsize;	/* Size of Vram */
 };
 
 #define METEORCAPTUR _IOW('x', 1, int)			 /* capture a frame */
@@ -87,10 +87,10 @@ struct meteor_video {
 #define METEORSTATUS _IOR('x', 5, unsigned short)	/* get status */
 #define METEORSHUE   _IOW('x', 6, signed char)		/* set hue */
 #define METEORGHUE   _IOR('x', 6, signed char)		/* get hue */
-#define METEORSFMT   _IOW('x', 7, unsigned long)	/* set format */
-#define METEORGFMT   _IOR('x', 7, unsigned long)	/* get format */
-#define METEORSINPUT _IOW('x', 8, unsigned long)	/* set input dev */
-#define METEORGINPUT _IOR('x', 8, unsigned long)	/* get input dev */
+#define METEORSFMT   _IOW('x', 7, unsigned int)	/* set format */
+#define METEORGFMT   _IOR('x', 7, unsigned int)	/* get format */
+#define METEORSINPUT _IOW('x', 8, unsigned int)	/* set input dev */
+#define METEORGINPUT _IOR('x', 8, unsigned int)	/* get input dev */
 #define	METEORSCHCV  _IOW('x', 9, unsigned char)	/* set uv gain */
 #define	METEORGCHCV  _IOR('x', 9, unsigned char)	/* get uv gain */
 #define	METEORSCOUNT _IOW('x',10, struct meteor_counts)
@@ -340,7 +340,7 @@ struct eeProm {
  * b23-b16:  i2c addr (write)
  * b31-b24:  1 = write, 0 = read
  */
-#define BT848_I2CWR     _IOWR('x', 57, u_long)    /* i2c read-write */
+#define BT848_I2CWR     _IOWR('x', 57, u_int)    /* i2c read-write */
 
 struct bktr_msp_control {
 	unsigned char function;
@@ -388,7 +388,7 @@ struct meteor_pixfmt {
 	u_int          index;         /* Index in supported pixfmt list     */
 	METEOR_PIXTYPE type;          /* What's the board gonna feed us     */
 	u_int          Bpp;           /* Bytes per pixel                    */
-	u_long         masks[3];      /* R,G,B or Y,U,V masks, respectively */
+	u_int          masks[3];      /* R,G,B or Y,U,V masks, respectively */
 	unsigned       swap_bytes :1; /* Bytes  swapped within shorts       */
 	unsigned       swap_shorts:1; /* Shorts swapped within longs        */
 };
@@ -420,8 +420,8 @@ struct _bktr_clip {
 
 
 /* set input format */
-#define BT848SFMT		_IOW('x', 67, unsigned long)
-#define BT848GFMT		_IOR('x', 67, unsigned long)
+#define BT848SFMT		_IOW('x', 67, unsigned int)
+#define BT848GFMT		_IOR('x', 67, unsigned int)
 
 /* set clear-buffer-on-start */
 #define BT848SCBUF	_IOW('x', 68, int)

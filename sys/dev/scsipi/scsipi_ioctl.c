@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.52.6.2 2007/09/03 14:38:40 yamt Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.52.6.3 2008/01/21 09:44:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.52.6.2 2007/09/03 14:38:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.52.6.3 2008/01/21 09:44:35 yamt Exp $");
 
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
@@ -85,7 +85,7 @@ si_get(void)
 	int s;
 
 	si = malloc(sizeof(struct scsi_ioctl), M_TEMP, M_WAITOK|M_ZERO);
-	simple_lock_init(&si->si_bp.b_interlock);
+	buf_init(&si->si_bp);
 	s = splbio();
 	LIST_INSERT_HEAD(&si_head, si, si_list);
 	splx(s);
@@ -100,6 +100,7 @@ si_free(struct scsi_ioctl *si)
 	s = splbio();
 	LIST_REMOVE(si, si_list);
 	splx(s);
+	buf_destroy(&si->si_bp);
 	free(si, M_TEMP);
 }
 

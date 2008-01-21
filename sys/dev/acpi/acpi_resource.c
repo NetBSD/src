@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.17.2.4 2007/12/07 17:29:37 yamt Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.17.2.5 2008/01/21 09:42:31 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.17.2.4 2007/12/07 17:29:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.17.2.5 2008/01/21 09:42:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,7 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 	const struct acpi_resource_parse_ops *ops;
 	int i;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	ops = arg->ops;
 
@@ -340,7 +340,7 @@ acpi_resource_parse(struct device *dev, ACPI_HANDLE handle, const char *path,
 	struct resource_parse_callback_arg cbarg;
 	ACPI_STATUS rv;
 
-	ACPI_FUNCTION_TRACE(__FUNCTION__);
+	ACPI_FUNCTION_TRACE(__func__);
 
 	if (ops->init)
 		(*ops->init)(dev, arg, &cbarg.context);

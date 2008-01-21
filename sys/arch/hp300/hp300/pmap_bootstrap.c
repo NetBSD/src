@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.26.2.2 2007/10/27 11:26:09 yamt Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.26.2.3 2008/01/21 09:36:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26.2.2 2007/10/27 11:26:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.26.2.3 2008/01/21 09:36:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,7 +71,7 @@ extern int protection_codes[];
 extern int pmap_aliasmask;
 #endif
 
-void	pmap_bootstrap __P((paddr_t, paddr_t));
+void	pmap_bootstrap(paddr_t, paddr_t);
 
 /*
  * Special purpose kernel virtual addresses, used for mapping

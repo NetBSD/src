@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.2.18.6 2007/12/07 17:24:58 yamt Exp $	*/
+/*	$NetBSD: copy.S,v 1.2.18.7 2008/01/21 09:36:57 yamt Exp $	*/
 /*	NetBSD: locore.S,v 1.34 2005/04/01 11:59:31 yamt Exp $	*/
 
 /*-
@@ -71,11 +71,13 @@
  *	@(#)locore.s	7.3 (Berkeley) 5/13/91
  */
 
+#include <machine/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: copy.S,v 1.2.18.7 2008/01/21 09:36:57 yamt Exp $");
+
 #include "assym.h"
 
 #include <sys/errno.h>
 
-#include <machine/asm.h>
 #include <machine/frameasm.h>
 #include <machine/cputypes.h>
 

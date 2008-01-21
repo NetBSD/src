@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.8.2.3 2007/10/27 11:25:50 yamt Exp $ */
+/* $NetBSD: disksubr.c,v 1.8.2.4 2008/01/21 09:36:17 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.8.2.3 2007/10/27 11:25:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.8.2.4 2008/01/21 09:36:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		i = 0;
 		do {
 			/* read a bad sector table */
-			bp->b_flags &= ~(B_DONE);
+			bp->b_oflags &= ~(BO_DONE);
 			bp->b_flags |= B_READ;
 			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
 			if (lp->d_secsize > DEV_BSIZE)
@@ -216,7 +216,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	dlp = (struct disklabel *)((char *)bp->b_data + LABELOFFSET);
 	*dlp = *lp;     /* struct assignment */
 
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_oflags &= ~(BO_DONE);
+	bp->b_flags &= ~(B_READ);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

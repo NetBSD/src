@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.67.2.3 2007/12/07 17:31:07 yamt Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.67.2.4 2008/01/21 09:44:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.67.2.3 2007/12/07 17:31:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.67.2.4 2008/01/21 09:44:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,9 @@ atapibusattach(struct device *parent, struct device *self, void *aux)
 	chan->chan_init_cb = NULL;
 	chan->chan_init_cb_arg = NULL;
 	scsipi_channel_init(chan);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Probe the bus for devices. */
 	atapi_probe_bus(sc, -1);

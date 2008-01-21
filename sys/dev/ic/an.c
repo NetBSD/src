@@ -1,4 +1,4 @@
-/*	$NetBSD: an.c,v 1.35.2.5 2007/10/27 11:30:30 yamt Exp $	*/
+/*	$NetBSD: an.c,v 1.35.2.6 2008/01/21 09:42:53 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35.2.5 2007/10/27 11:30:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: an.c,v 1.35.2.6 2008/01/21 09:42:53 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -446,41 +446,6 @@ an_activate(struct device *self, enum devact act)
 	splx(s);
 
 	return error;
-}
-
-void
-an_power(int why, void *arg)
-{
-	int s;
-	struct an_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_if;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		an_stop(ifp, 1);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP) {
-			an_init(ifp);
-			(void)an_intr(sc);
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
-}
-
-void
-an_shutdown(struct an_softc *sc)
-{
-
-	if (sc->sc_attached)
-		an_stop(&sc->sc_if, 1);
 }
 
 int

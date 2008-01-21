@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.4.2.2 2007/10/27 11:27:48 yamt Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.4.2.3 2008/01/21 09:38:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -53,6 +53,8 @@
 typedef struct genppc_pci_chipset *pci_chipset_tag_t;
 typedef int pcitag_t;
 typedef int pci_intr_handle_t;
+
+extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * Forward declarations.
@@ -166,11 +168,6 @@ pcireg_t genppc_pci_ofmethod_conf_read(void *, pcitag_t, int);
 void genppc_pci_ofmethod_conf_write(void *, pcitag_t, int, pcireg_t);
 void genppc_pci_ofmethod_decompose_tag(void *, pcitag_t, int *, int *, int *);
 
-/* XXX for now macppc needs its own pci_bus_dma_tag */
-#ifndef macppc
-extern struct powerpc_bus_dma_tag pci_bus_dma_tag;
-#endif
-
 /* Generic OFW PCI functions */
 
 int genofw_find_picnode(int);
@@ -187,6 +184,7 @@ int genofw_pci_conf_hook(pci_chipset_tag_t, int, int, int, pcireg_t);
 #define PICNODE_TYPE_8259	2
 #define PICNODE_TYPE_HEATHROW	3
 #define PICNODE_TYPE_OHARE	4
+#define PICNODE_TYPE_IVR	5
 
 typedef struct _ofw_pic_node_t {
 	int node;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154.2.5 2007/11/15 11:42:35 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154.2.6 2008/01/21 09:35:37 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -194,8 +194,8 @@
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -203,6 +203,7 @@
 #include <sys/user.h>
 #include <sys/pool.h>
 #include <sys/cdefs.h>
+#include <sys/cpu.h>
  
 #include <uvm/uvm.h>
 
@@ -212,7 +213,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154.2.5 2007/11/15 11:42:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154.2.6 2008/01/21 09:35:37 yamt Exp $");
 
 #ifdef PMAP_DEBUG
 
@@ -303,7 +304,7 @@ static paddr_t pmap_kernel_l2ptp_phys;
  */
 static pt_entry_t *csrc_pte, *cdst_pte;
 static vaddr_t csrcp, cdstp;
-char *memhook;
+vaddr_t memhook;
 extern void *msgbufaddr;
 
 /*
@@ -946,7 +947,7 @@ pmap_use_l1(pmap_t pm)
 	 * Access to an L1 by the kernel pmap must not affect
 	 * the LRU list.
 	 */
-	if (current_intr_depth || pm == pmap_kernel())
+	if (cpu_intr_p() || pm == pmap_kernel())
 		return;
 
 	l1 = pm->pm_l1;
@@ -3963,7 +3964,7 @@ pmap_bootstrap(pd_entry_t *kernel_l1pt, vaddr_t vstart, vaddr_t vend)
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)csrc_pte);
 	pmap_alloc_specials(&virtual_avail, 1, &cdstp, &cdst_pte);
 	pmap_set_pt_cache_mode(kernel_l1pt, (vaddr_t)cdst_pte);
-	pmap_alloc_specials(&virtual_avail, 1, (void *)&memhook, NULL);
+	pmap_alloc_specials(&virtual_avail, 1, &memhook, NULL);
 	pmap_alloc_specials(&virtual_avail, round_page(MSGBUFSIZE) / PAGE_SIZE,
 	    (void *)&msgbufaddr, NULL);
 
@@ -4984,6 +4985,14 @@ pmap_uarea(vaddr_t va)
 	cpu_cpwait();
 }
 #endif /* ARM_MMU_XSCALE == 1 */
+
+/*
+ * return the PA of the current L1 table, for use when handling a crash dump
+ */
+uint32_t pmap_kernel_L1_addr()
+{
+	return pmap_kernel()->pm_l1->l1_physaddr;
+}
 
 #if defined(DDB)
 /*

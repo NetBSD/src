@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock.c,v 1.1.14.2 2006/06/21 14:50:07 yamt Exp $	*/
+/*	$NetBSD: mcclock.c,v 1.1.14.3 2008/01/21 09:36:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.1.14.2 2006/06/21 14:50:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.1.14.3 2008/01/21 09:36:02 yamt Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -91,8 +91,6 @@ mcclock_attach(struct device *parent, struct device *self, void *aux)
 	printf("\n");
 
 	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_24HR);
-
-	todr_attach(&sc->sc_handle);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60.16.3 2007/02/26 09:08:40 yamt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.60.16.4 2008/01/21 09:39:59 yamt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -80,6 +80,8 @@
 
 #ifndef PMAP_H
 #define PMAP_H
+
+#include <sys/simplelock.h>
 
 #include <machine/pte.h>
 #include <machine/mtpr.h>

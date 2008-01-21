@@ -1,4 +1,4 @@
-/*	$NetBSD: arcbios.h,v 1.9 2005/06/03 18:58:40 martin Exp $	*/
+/*	$NetBSD: arcbios.h,v 1.9.2.1 2008/01/21 09:42:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -347,24 +347,24 @@ struct arcbios_fv {
 			    char **);		/* envp */
 
 	void		(*Halt)(void)
-			    __attribute__((__noreturn__));
+			    __dead;
 
 	void		(*PowerDown)(void)
-			    __attribute__((__noreturn__));
+			    __dead;
 
 	void		(*Restart)(void)
-			    __attribute__((__noreturn__));
+			    __dead;
 
 	void		(*Reboot)(void)
-			    __attribute__((__noreturn__));
+			    __dead;
 
 	void		(*EnterInteractiveMode)(void)
-			    __attribute__((__noreturn__));
+			    __dead;
 #if defined(sgimips)
 	void		*reserved0;
 #else
 	void		(*ReturnFromMain)(void)
-			    __attribute__((__noreturn__));
+			    __dead;
 #endif
 	void		*(*GetPeer)(
 			    void *);		/* component */

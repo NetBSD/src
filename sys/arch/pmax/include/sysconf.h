@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.h,v 1.10.44.1 2007/09/03 14:28:52 yamt Exp $	*/
+/*	$NetBSD: sysconf.h,v 1.10.44.2 2008/01/21 09:38:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -63,7 +63,7 @@ struct platform {
 	 *	iointr		-	I/O interrupt handler
 	 *	intr_establish	-	establish interrupt handler
 	 *	intr_disestablish -	disestablish interrupt handler
-	 *	clkread		-	interporate HZ with hi-resolution timer
+	 *	tc_init		-	initialize timecounters
 	 */
 	void	(*bus_reset) __P((void));
 	void	(*cons_init) __P((void));
@@ -71,7 +71,7 @@ struct platform {
 	void	(*intr_establish) __P((struct device *, void *, int,
 		    int (*)(void *), void *));
 	int	(*memsize) __P((void *));
-	unsigned (*clkread) __P((void));
+	void	(*tc_init)(void);
 };
 
 /*

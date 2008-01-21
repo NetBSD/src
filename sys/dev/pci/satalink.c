@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.25.2.3 2007/02/26 09:10:35 yamt Exp $	*/
+/*	$NetBSD: satalink.c,v 1.25.2.4 2008/01/21 09:44:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.25.2.3 2007/02/26 09:10:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.25.2.4 2008/01/21 09:44:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -389,9 +389,11 @@ ba5_write_4(struct pciide_softc *sc, bus_addr_t reg, uint32_t val)
  * This may also happen on the 3114 (ragge 050527)
  */
 static void
-sii_fixup_cacheline(struct pciide_softc *sc, struct pci_attach_args *pa)
+sii_fixup_cacheline(struct pciide_softc *sc, struct pci_attach_args *pa, int n)
 {
-	pcireg_t cls, reg40, reg44;
+	pcireg_t cls, reg;
+	int i;
+	static bus_addr_t addr[] = { 0x40, 0x44, 0x240, 0x244 };
 
 	cls = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
 	cls = (cls >> PCI_CACHELINE_SHIFT) & PCI_CACHELINE_MASK;
@@ -406,12 +408,11 @@ sii_fixup_cacheline(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (cls < 32)
 		cls = 32;
 	cls = (cls + 31) / 32;
-	reg40 = ba5_read_4(sc, 0x40);
-	reg44 = ba5_read_4(sc, 0x44);
-	if ((reg40 & 0x7) < cls)
-		ba5_write_4(sc, 0x40, (reg40 & ~0x07) | cls);
-	if ((reg44 & 0x7) < cls)
-		ba5_write_4(sc, 0x44, (reg44 & ~0x07) | cls);
+	for (i = 0; i < n; i++) {
+		reg = ba5_read_4(sc, addr[i]);
+		if ((reg & 0x7) < cls)
+			ba5_write_4(sc, addr[i], (reg & 0x07) | cls);
+	}
 }
 
 static void
@@ -479,7 +480,7 @@ sii3112_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		sc->sc_dma_boundary = 8192;
 	}
 
-	sii_fixup_cacheline(sc, pa);
+	sii_fixup_cacheline(sc, pa, 2);
 
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;
@@ -725,7 +726,7 @@ sii3114_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	sii3114_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 
-	sii_fixup_cacheline(sc, pa);
+	sii_fixup_cacheline(sc, pa, 4);
 
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;

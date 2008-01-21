@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.3.2.5 2007/10/27 11:28:09 yamt Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.3.2.6 2008/01/21 09:38:32 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.3.2.5 2007/10/27 11:28:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.3.2.6 2008/01/21 09:38:32 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,10 +47,10 @@ __KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.3.2.5 2007/10/27 11:28:09 yamt Ex
 #include <sys/kthread.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <machine/isa_machdep.h>
 /* clock stuff for motorolla machines */
 #include <dev/clock_subr.h>
@@ -210,7 +210,6 @@ nvram_pnpbus_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: attaching clock", device_xname(self));
 	mk48txx_attach((struct mk48txx_softc *)&sc->sc_mksc);
 	aprint_normal("\n");
-	todr_attach(&sc->sc_mksc.sc_handle);
 }
 
 /*

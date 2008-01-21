@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.60.8.2 2007/12/07 17:26:33 yamt Exp $
+#	$NetBSD: files.x68k,v 1.60.8.3 2008/01/21 09:40:02 yamt Exp $
 #
 # new style config file for x68k architecture
 #
@@ -192,10 +192,6 @@ include "compat/aoutm68k/files.aoutm68k"
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include	"compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# HP-UX Binary Compatibility (COMPAT_HPUX)
-include	"compat/hpux/files.hpux"
-file	arch/m68k/m68k/hpux_machdep.c	compat_hpux
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
 include "compat/svr4/files.svr4"

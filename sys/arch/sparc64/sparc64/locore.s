@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205.2.5 2007/10/27 11:28:41 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.205.2.6 2008/01/21 09:39:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3182,7 +3182,7 @@ softtrap:
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
 	or	%g5, %lo(EINTSTACK-STKB), %g5
 	dec	%g7
-	sub	%g5, %g6, %g5
+	sub	%g5, %sp, %g5
 	sethi	%hi(CPCB), %g6
 	andncc	%g5, %g7, %g0
 	bnz,pt	%xcc, Lslowtrap_reenter
@@ -4027,6 +4027,13 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	ba,pt	%icc, setup_sparcintr
 	 LDPTR	[%g3 + PTRSZ], %g5	! intrlev[1] is reserved for %tick intr.
 0:
+
+	! Increment the per-cpu interrupt level
+	set	CPUINFO_VA+CI_IDEPTH, %g1
+	ld	[%g1], %g2
+	inc	%g2
+	st	%g2, [%g1]
+
 #ifdef TRAPSTATS
 	sethi	%hi(_C_LABEL(kintrcnt)), %g1
 	sethi	%hi(_C_LABEL(uintrcnt)), %g2
@@ -4161,6 +4168,12 @@ intrcmplt:
 	btst	%l3, %l7		! leave mask in %l3 for retry code
 	bnz,pn	%icc, sparc_intr_retry
 	 mov	1, %l5			! initialize intr count for next run
+
+	! Decrement this cpu's interrupt depth
+	set	CPUINFO_VA+CI_IDEPTH, %l4
+	ld	[%l4], %l5
+	dec	%l5
+	st	%l5, [%l4]
 
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o2
@@ -4958,7 +4971,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
 	cmp	%l3, %l2			! Does it match?
 	bne,a,pt	%icc, 0b		! no
-	 ld	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
+	 LDPTR	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
 
 
 	/*
@@ -6721,6 +6734,7 @@ Lsw_noras:
  */
 ENTRY(snapshot)
 	rdpr	%pstate, %o1		! save psr
+	stx	%o7, [%o0 + PCB_PC]	! save pc
 	stx	%o6, [%o0 + PCB_SP]	! save sp
 	rdpr	%pil, %o2
 	sth	%o1, [%o0 + PCB_PSTATE]

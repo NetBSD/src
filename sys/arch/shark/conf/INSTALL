@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.20.4.4 2007/11/15 11:43:26 yamt Exp $
+#	$NetBSD: INSTALL,v 1.20.4.5 2008/01/21 09:39:18 yamt Exp $
 #
 #	Shark installation kernel
 #
@@ -133,7 +133,6 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	PORTMASTER	# Enable PortMaster only options
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=0	# don't run DDB at panictime
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB

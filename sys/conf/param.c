@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.48.12.3 2007/09/03 14:33:05 yamt Exp $	*/
+/*	$NetBSD: param.c,v 1.48.12.4 2008/01/21 09:42:19 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.48.12.3 2007/09/03 14:33:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.48.12.4 2008/01/21 09:42:19 yamt Exp $");
 
 #include "opt_hz.h"
 #include "opt_rtc_offset.h"
@@ -108,7 +108,7 @@ int	tickadj = (240000 / (60 * HZ)) ? (240000 / (60 * HZ)) : 1;
 int	rtc_offset = RTC_OFFSET;
 int	maxproc = NPROC;
 int	desiredvnodes = NVNODE;
-int	maxfiles = MAXFILES;
+u_int	maxfiles = MAXFILES;
 int	fscale = FSCALE;	/* kernel uses `FSCALE', user uses `fscale' */
 
 /*

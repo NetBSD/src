@@ -1,4 +1,4 @@
-/* $NetBSD: freebsd_syscall.h,v 1.58.4.3 2007/09/03 14:31:59 yamt Exp $ */
+/* $NetBSD: freebsd_syscall.h,v 1.58.4.4 2008/01/21 09:40:53 yamt Exp $ */
 
 /*
  * System call numbers.
@@ -9,6 +9,8 @@
 
 #ifndef _FREEBSD_SYS_SYSCALL_H_
 #define	_FREEBSD_SYS_SYSCALL_H_
+
+#define	FREEBSD_SYS_MAXSYSARGS	8
 
 /* syscall: "syscall" ret: "int" args: */
 #define	FREEBSD_SYS_syscall	0

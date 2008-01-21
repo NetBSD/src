@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.3.16.3 2007/12/07 17:24:05 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.3.16.4 2008/01/21 09:35:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -34,6 +34,7 @@
 #ifndef _AMD64_PROC_H
 #define _AMD64_PROC_H
 
+#include <sys/user.h> /* for sizeof(struct user) */
 #include <machine/frame.h>
 
 /*
@@ -42,7 +43,6 @@
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
-	int	md_tss_sel;		/* TSS selector */
 	volatile int md_astpending;
 };
 
@@ -58,5 +58,9 @@ struct mdproc {
 #define MDP_SYSCALL	0x0004	/* entered kernel via syscall ins */
 #define MDP_USEDMTRR	0x0008	/* has set volatile MTRRs */
 #define MDP_IRET	0x0010	/* return via iret, not sysret */
+
+#define	UAREA_USER_OFFSET	(USPACE - ALIGN(sizeof(struct user)))
+#define	KSTACK_LOWEST_ADDR(l)	((void *)USER_TO_UAREA((l)->l_addr))
+#define	KSTACK_SIZE		UAREA_USER_OFFSET
 
 #endif /* _AMD64_PROC_H */

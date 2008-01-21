@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36.2.3 2007/12/07 17:25:25 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36.2.4 2008/01/21 09:37:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.2.3 2007/12/07 17:25:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36.2.4 2008/01/21 09:37:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -569,11 +569,7 @@ void
 intc_intr(int ssr, int spc, int ssp)
 {
 	struct intc_intrhand *ih;
-	struct cpu_info *ci;
 	int s, evtcode;
-
-	ci = curcpu();
-	ci->ci_idepth++;
 
 	evtcode = _reg_read_4(SH3_INTEVT);
 
@@ -596,8 +592,6 @@ intc_intr(int ssr, int spc, int ssp)
 	} else {
 		(*ih->ih_func)(ih->ih_arg);
 	}
-
-	ci->ci_idepth--;
 }
 
 void *

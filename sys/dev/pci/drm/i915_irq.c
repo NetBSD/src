@@ -1,3 +1,5 @@
+/*	$NetBSD: i915_irq.c,v 1.1.16.3 2008/01/21 09:44:19 yamt Exp $	*/
+
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
 /*-
@@ -27,6 +29,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.1.16.3 2008/01/21 09:44:19 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_irq.c,v 1.4 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -53,7 +56,7 @@ irqreturn_t i915_driver_irq_handler(DRM_IRQ_ARGS)
 	temp &= (USER_INT_FLAG | VSYNC_PIPEA_FLAG | VSYNC_PIPEB_FLAG);
 
 /*
-	DRM_DEBUG("%s flag=%08x\n", __FUNCTION__, (int)temp);
+	DRM_DEBUG("%s flag=%08x\n", __func__, (int)temp);
 */
 
 	if (temp == 0)
@@ -83,7 +86,7 @@ static int i915_emit_irq(drm_device_t * dev)
 
 	i915_kernel_lost_context(dev);
 
-	DRM_DEBUG("%s\n", __FUNCTION__);
+	DRM_DEBUG("%s\n", __func__);
 
 	dev_priv->sarea_priv->last_enqueue = ++dev_priv->counter;
 
@@ -110,7 +113,7 @@ static int i915_wait_irq(drm_device_t * dev, int irq_nr)
 	drm_i915_private_t *dev_priv = (drm_i915_private_t *) dev->dev_private;
 	int ret = 0;
 
-	DRM_DEBUG("%s irq_nr=%d breadcrumb=%d\n", __FUNCTION__, irq_nr,
+	DRM_DEBUG("%s irq_nr=%d breadcrumb=%d\n", __func__, irq_nr,
 		  (int)READ_BREADCRUMB(dev_priv));
 
 	if (READ_BREADCRUMB(dev_priv) >= irq_nr)
@@ -123,7 +126,7 @@ static int i915_wait_irq(drm_device_t * dev, int irq_nr)
 
 	if (ret == DRM_ERR(EBUSY)) {
 		DRM_ERROR("%s: EBUSY -- rec: %d emitted: %d\n",
-			  __FUNCTION__,
+			  __func__,
 			  (int)READ_BREADCRUMB(dev_priv), (int)dev_priv->counter);
 	}
 
@@ -138,7 +141,7 @@ int i915_driver_vblank_wait(drm_device_t *dev, unsigned int *sequence)
 	int ret = 0;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -163,7 +166,7 @@ int i915_irq_emit(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -189,7 +192,7 @@ int i915_irq_wait(DRM_IOCTL_ARGS)
 	drm_i915_irq_wait_t irqwait;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -211,7 +214,7 @@ static int i915_enable_interrupt (drm_device_t *dev)
 		flag |= VSYNC_PIPEB_FLAG;
 	if (dev_priv->vblank_pipe & ~(DRM_I915_VBLANK_PIPE_A|DRM_I915_VBLANK_PIPE_B)) {
 		DRM_ERROR("%s called with invalid pipe 0x%x\n", 
-			  __FUNCTION__, dev_priv->vblank_pipe);
+			  __func__, dev_priv->vblank_pipe);
 		return DRM_ERR(EINVAL);
 	}
 	I915_WRITE16(I915REG_INT_ENABLE_R, USER_INT_FLAG | flag);
@@ -227,7 +230,7 @@ int i915_vblank_pipe_set(DRM_IOCTL_ARGS)
 	drm_i915_vblank_pipe_t pipe;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -246,7 +249,7 @@ int i915_vblank_pipe_get(DRM_IOCTL_ARGS)
 	u16 flag;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

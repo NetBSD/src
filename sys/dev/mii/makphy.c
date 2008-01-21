@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.16.2.3 2007/02/26 09:10:18 yamt Exp $	*/
+/*	$NetBSD: makphy.c,v 1.16.2.4 2008/01/21 09:43:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.16.2.3 2007/02/26 09:10:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.16.2.4 2008/01/21 09:43:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,6 +115,9 @@ static const struct mii_phydesc makphys[] = {
 
 	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1111,
 	  MII_STR_xxMARVELL_E1111 },
+
+	{ MII_OUI_xxMARVELL,		MII_MODEL_xxMARVELL_E1116,
+	  MII_STR_xxMARVELL_E1116 },
 
 	{ 0,				0,
 	  NULL },
@@ -165,6 +168,9 @@ makphyattach(struct device *parent, struct device *self, void *aux)
 	else
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static void

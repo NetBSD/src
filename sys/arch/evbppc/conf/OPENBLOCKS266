@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.18.2.2 2006/12/30 20:45:52 yamt Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.18.2.3 2008/01/21 09:36:19 yamt Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include		"arch/evbppc/conf/std.obs405"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.18.2.2 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.18.2.3 $"
 
 maxusers	32
 
@@ -19,7 +19,6 @@ maxusers	32
 #options 	INSECURE		# disable kernel security levels
 #options 	NTP			# NTP phase/frequency locked loop
 #options 	KTRACE			# system call tracing via ktrace(1)
-#options	SYSTRACE		# system call vetting via systrace(1)
 
 options 	SYSVMSG			# System V message queues
 options 	SYSVSEM			# System V semaphores

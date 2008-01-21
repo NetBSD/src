@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.2.4.2 2007/10/27 11:27:57 yamt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.2.4.3 2008/01/21 09:38:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.2.4.2 2007/10/27 11:27:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.2.4.3 2008/01/21 09:38:25 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,6 +162,12 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	 * setting it up differently.  Reset it to 0000h.
 	 */
 
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SYMPHONY &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SYMPHONY_83C553) {
+		v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44) & 0xffff0000;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x44, v);
+	}
+
 #ifdef prep
 	rav = prop_dictionary_get(device_properties(parent),
 	    "prep-raven-pchb");
@@ -177,9 +183,6 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 		v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x40) & 0x00ffffff;
 		v |= 0xee000000;
 		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x40, v);
-
-		v = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44) & 0xffff0000;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x44, v);
 
 		pbi = SIMPLEQ_FIRST(&genppc_pct->pc_pbi);
 		dict = prop_dictionary_get(pbi->pbi_properties,

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.30.2.4 2007/10/27 11:29:34 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.30.2.5 2008/01/21 09:41:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995, 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30.2.4 2007/10/27 11:29:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30.2.5 2008/01/21 09:41:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,10 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.30.2.4 2007/10/27 11:29:34 yamt 
  * entry uses NetBSD's native setregs instead of linux_setregs
  */
 void
-linux_setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+linux_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	setregs(l, pack, stack);
 }
@@ -277,14 +274,11 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
  * XXX not tested
  */
 int
-linux_sys_rt_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_rt_sigreturn(struct lwp *l, const struct linux_sys_rt_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_rt_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_rt_sigframe *) sfp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct linux_rt_sigframe *scp, sigframe;
 	struct linux_sigregs sregs;
@@ -370,14 +364,11 @@ linux_sys_rt_sigreturn(l, v, retval)
  * The following needs code review for potential security issues
  */
 int
-linux_sys_sigreturn(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_sigreturn(struct lwp *l, const struct linux_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct linux_sys_sigreturn_args /* {
+	/* {
 		syscallarg(struct linux_sigcontext *) scp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct linux_sigcontext *scp, context;
 	struct linux_sigregs sregs;
@@ -460,10 +451,7 @@ linux_sys_sigreturn(l, v, retval)
 
 #if 0
 int
-linux_sys_modify_ldt(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
+linux_sys_modify_ldt(struct proc *p, void *v, register_t *retval)
 {
 	/*
 	 * This syscall is not implemented in Linux/PowerPC: we should not
@@ -480,9 +468,7 @@ linux_sys_modify_ldt(p, v, retval)
  * major device numbers remapping
  */
 dev_t
-linux_fakedev(dev, raw)
-	dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 	/* XXX write me */
 	return dev;
@@ -492,16 +478,13 @@ linux_fakedev(dev, raw)
  * We come here in a last attempt to satisfy a Linux ioctl() call
  */
 int
-linux_machdepioctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_t *retval)
 {
-	struct linux_sys_ioctl_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
-	} */ *uap = v;
+	} */
 	struct sys_ioctl_args bia;
 	u_long com;
 
@@ -525,10 +508,7 @@ linux_machdepioctl(l, v, retval)
  * to rely on I/O permission maps, which are not implemented.
  */
 int
-linux_sys_iopl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_iopl(struct lwp *l, const void *v, register_t *retval)
 {
 	/*
 	 * This syscall is not implemented in Linux/PowerPC: we should not be here
@@ -545,10 +525,7 @@ linux_sys_iopl(l, v, retval)
  * just let it have the whole range.
  */
 int
-linux_sys_ioperm(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *uap, register_t *retval)
 {
 	/*
 	 * This syscall is not implemented in Linux/PowerPC: we should not be here
@@ -563,24 +540,18 @@ linux_sys_ioperm(l, v, retval)
  * wrapper linux_sys_new_uname() -> linux_sys_uname()
  */
 int
-linux_sys_new_uname(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_new_uname(struct lwp *l, const struct linux_sys_new_uname_args *uap, register_t *retval)
 {
-	return linux_sys_uname(l, v, retval);
+	return linux_sys_uname(l, (const void *)uap, retval);
 }
 
 /*
  * wrapper linux_sys_new_select() -> linux_sys_select()
  */
 int
-linux_sys_new_select(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_new_select(struct lwp *l, const struct linux_sys_new_select_args *uap, register_t *retval)
 {
-	return linux_sys_select(l, v, retval);
+	return linux_sys_select(l, (const void *)uap, retval);
 }
 
 int

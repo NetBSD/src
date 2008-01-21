@@ -1,4 +1,4 @@
-/*	$NetBSD: rawfs.c,v 1.6.2.1 2006/06/21 14:54:01 yamt Exp $	*/
+/*	$NetBSD: rawfs.c,v 1.6.2.2 2008/01/21 09:37:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -53,16 +53,13 @@ struct file {
 	daddr_t		fs_nextblk;	/* block number to read next */
 	daddr_t		fs_curblk;	/* block number currently in buffer */
 	int		fs_len;		/* amount left in f_buf */
-	char *		fs_ptr;		/* read pointer into f_buf */
+	char		*fs_ptr;	/* read pointer into f_buf */
 	char		fs_buf[RAWFS_BSIZE];
 };
 
-static int
-rawfs_get_block __P((struct open_file *));
+static int rawfs_get_block(struct open_file *);
 
-int	rawfs_open(path, f)
-	const char *path;
-	struct open_file *f;
+int rawfs_open(const char *path, struct open_file *f)
 {
 	struct file *fs;
 
@@ -77,28 +74,23 @@ int	rawfs_open(path, f)
 	fs->fs_ptr = fs->fs_buf;
 
 	f->f_fsdata = fs;
-	return (0);
+	return 0;
 }
 
-int	rawfs_close(f)
-	struct open_file *f;
+int rawfs_close(struct open_file *f)
 {
 	struct file *fs;
 
-	fs = (struct file *) f->f_fsdata;
-	f->f_fsdata = (void *)0;
+	fs = (struct file *)f->f_fsdata;
+	f->f_fsdata = NULL;
 
-	if (fs != (struct file *)0)
+	if (fs != NULL)
 		dealloc(fs, sizeof(*fs));
 
-	return (0);
+	return 0;
 }
 
-int	rawfs_read(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	u_int size;
-	u_int *resid;
+int rawfs_read(struct open_file *f, void *start, u_int size, u_int *resid)
 {
 	struct file *fs = (struct file *)f->f_fsdata;
 	char *addr = start;
@@ -132,23 +124,17 @@ int	rawfs_read(f, start, size, resid)
 		error = -1;
 	}
 
-	return (error);
+	return error;
 }
 
-int	rawfs_write(f, start, size, resid)
-	struct open_file *f;
-	void *start;
-	size_t size;
-	size_t *resid;	/* out */
+int rawfs_write(struct open_file *f, void *start, size_t size, size_t *resid)
 {
+
 	errno = EROFS;
-	return (-1);
+	return -1;
 }
 
-off_t	rawfs_seek(f, offset, where)
-	struct open_file *f;
-	off_t offset;
-	int where;
+off_t rawfs_seek(struct open_file *f, off_t offset, int where)
 {
 	struct file *fs = (struct file *)f->f_fsdata;
 	daddr_t curblk, targblk;
@@ -186,12 +172,12 @@ off_t	rawfs_seek(f, offset, where)
 
 	default:
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 
 	if (newoff < (curblk * RAWFS_BSIZE)) {
 		errno = EINVAL;
-		return (-1);
+		return -1;
 	}
 
 	targblk = newoff / RAWFS_BSIZE;
@@ -205,7 +191,7 @@ off_t	rawfs_seek(f, offset, where)
 
 	if (err) {
 		errno = err;
-		return (-1);
+		return -1;
 	}
 
 	/*
@@ -215,15 +201,14 @@ off_t	rawfs_seek(f, offset, where)
 	fs->fs_len = RAWFS_BSIZE - idx;
 	fs->fs_ptr = &fs->fs_buf[idx];
 
-	return (newoff);
+	return newoff;
 }
 
-int	rawfs_stat(f, sb)
-	struct open_file *f;
-	struct stat *sb;
+int rawfs_stat(struct open_file *f, struct stat *sb)
 {
+
 	errno = EFTYPE;
-	return (-1);
+	return -1;
 }
 
 
@@ -232,8 +217,7 @@ int	rawfs_stat(f, sb)
  * (In our case, a tape drive.)
  */
 static int
-rawfs_get_block(f)
-	struct open_file *f;
+rawfs_get_block(struct open_file *f)
 {
 	struct file *fs;
 	int error;
@@ -244,10 +228,10 @@ rawfs_get_block(f)
 
 	twiddle();
 	error = f->f_dev->dv_strategy(f->f_devdata, F_READ,
-		fs->fs_nextblk * (RAWFS_BSIZE / DEV_BSIZE),
-		RAWFS_BSIZE, fs->fs_buf, &len);
+	    fs->fs_nextblk * (RAWFS_BSIZE / DEV_BSIZE),
+	    RAWFS_BSIZE, fs->fs_buf, &len);
 
-	if (!error) {
+	if (error == 0) {
 		fs->fs_len = len;
 		fs->fs_curblk = fs->fs_nextblk;
 		fs->fs_nextblk += 1;
@@ -256,5 +240,5 @@ rawfs_get_block(f)
 		error = -1;
 	}
 
-	return (error);
+	return error;
 }

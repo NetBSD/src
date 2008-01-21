@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6.2.4 2007/12/07 17:27:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6.2.5 2008/01/21 09:40:32 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -118,12 +118,11 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6.2.4 2007/12/07 17:27:17 yamt Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/errno.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/atomic.h>
 #include <machine/i8259.h>
-#include <machine/cpu.h>
 #include <machine/pio.h>
 #include <xen/evtchn.h>
 
@@ -438,7 +437,6 @@ intr_printconfig(void)
 		for (i = 0; i < NIPL; i++)
 			printf("IPL %d mask %lx unmask %lx\n", i,
 			    (u_long)ci->ci_imask[i], (u_long)ci->ci_iunmask[i]);
-		simple_lock(&ci->ci_slock);
 		for (i = 0; i < MAX_INTR_SOURCES; i++) {
 			isp = ci->ci_isources[i];
 			if (isp == NULL)
@@ -452,7 +450,6 @@ intr_printconfig(void)
 				    ih->ih_fun, ih->ih_level);
 
 		}
-		simple_unlock(&ci->ci_slock);
 	}
 }
 #endif

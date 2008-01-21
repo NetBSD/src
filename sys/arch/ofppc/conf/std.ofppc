@@ -1,4 +1,4 @@
-#	$NetBSD: std.ofppc,v 1.10.16.1 2006/06/21 14:54:24 yamt Exp $
+#	$NetBSD: std.ofppc,v 1.10.16.2 2008/01/21 09:37:51 yamt Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 
@@ -12,3 +12,5 @@ options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
 options 	INTSTK=0x2000
+
+options 	PCI_NETBSD_CONFIGURE

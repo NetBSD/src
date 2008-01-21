@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplayvar.h,v 1.33.2.4 2007/10/27 11:34:51 yamt Exp $ */
+/* $NetBSD: wsdisplayvar.h,v 1.33.2.5 2008/01/21 09:44:53 yamt Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -224,7 +224,6 @@ int wsdisplay_stat_inject(struct device *, u_int, int);
  * for general use
  */
 #define WSDISPLAY_NULLSCREEN	-1
-void wsdisplay_switchtoconsole(void);
 const struct wsscreen_descr *wsdisplay_screentype_pick(
     const struct wsscreen_list *, const char *);
 
