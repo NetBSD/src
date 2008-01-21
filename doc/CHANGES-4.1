@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.7 2008/01/21 20:49:12 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.8 2008/01/21 20:55:39 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -79,7 +79,7 @@ usr.bin/xargs/xargs.1				1.19
 usr.bin/xargs/xargs.c				1.16, 1.18
 
 	Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
-	GNU compatible exit values.
+	GNU compatible exit values. Fixes PRs 36154 and 37666.
 	[apb, ticket #1036]
 
 dist/iscsi/src/Makefile.in			patch
