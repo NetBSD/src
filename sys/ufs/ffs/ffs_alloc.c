@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.105 2008/01/02 11:49:08 ad Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.106 2008/01/21 23:36:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2002 Networks Associates Technology, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.105 2008/01/02 11:49:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.106 2008/01/21 23:36:26 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -112,6 +112,9 @@ extern const u_char * const fragtbl[];
  *      inode for the file.
  *   2) quadradically rehash into other cylinder groups, until an
  *      available block is located.
+ *
+ * => called with um_lock held
+ * => releases um_lock before returning
  */
 int
 ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
@@ -203,6 +206,9 @@ nospace:
  * and new size is also specified. The allocator attempts to extend
  * the original block. Failing that, the regular block allocator is
  * invoked to get an appropriate block.
+ *
+ * => called with um_lock held
+ * => return with um_lock released
  */
 int
 ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
@@ -670,6 +676,8 @@ fail:
  *   1) allocate an inode in cylinder group 0.
  *   2) quadradically rehash into other cylinder groups, until an
  *      available inode is located.
+ *
+ * => um_lock not held upon entry or return
  */
 int
 ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred,
@@ -905,6 +913,8 @@ ffs_dirpref(struct inode *pip)
  * contiguously allocate fs_maxcontig blocks.  The end of one of these
  * contiguous blocks and the beginning of the next is laid out
  * contigously if possible.
+ *
+ * => um_lock held on entry and exit
  */
 daddr_t
 ffs_blkpref_ufs1(struct inode *ip, daddr_t lbn, int indx,
@@ -1001,6 +1011,10 @@ ffs_blkpref_ufs2(struct inode *ip, daddr_t lbn, int indx, int64_t *bap)
  *   1) allocate the block in its requested cylinder group.
  *   2) quadradically rehash on the cylinder group number.
  *   3) brute force search for a free block.
+ *
+ * => called with um_lock held
+ * => returns with um_lock released on success, held on failure
+ *    (*allocator releases lock on success, retains lock on failure)
  */
 /*VARARGS5*/
 static daddr_t
@@ -1052,6 +1066,9 @@ ffs_hashalloc(struct inode *ip, int cg, daddr_t pref,
  *
  * Check to see if the necessary fragments are available, and
  * if they are, allocate them.
+ *
+ * => called with um_lock held
+ * => returns with um_lock released on success, held on failure
  */
 static daddr_t
 ffs_fragextend(struct inode *ip, int cg, daddr_t bprev, int osize, int nsize)
@@ -1576,6 +1593,8 @@ gotit:
  * The specified block or fragment is placed back in the
  * free map. If a fragment is deallocated, a possible
  * block reassembly is checked.
+ *
+ * => um_lock not held on entry or exit
  */
 void
 ffs_blkfree(struct fs *fs, struct vnode *devvp, daddr_t bno, long size,
