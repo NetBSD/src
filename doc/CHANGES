@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1000 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1001 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -338,3 +338,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	bktr(4): Added amd64 support. [jmcneill 20080116]
 	kernel: All platforms have been converted to use timecounter.
 		[joerg 20080120]
+	usb: add uhmodem(4) driver for Huawei E220 wireless modem.
+		[ichiro 20080121]
