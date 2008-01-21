@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_string.3,v 1.4 2007/08/16 16:31:00 thorpej Exp $
+.\"	$NetBSD: prop_string.3,v 1.5 2008/01/21 22:15:04 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 22, 2006
+.Dd January 21, 2008
 .Dt PROP_STRING 3
 .Os
 .Sh NAME
@@ -91,24 +91,43 @@ family of functions operate on a string value property object type.
 .Bl -tag -width "xxxxx"
 .It Fn prop_string_create "void"
 Create an empty mutable string.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_string_create_cstring "const char *cstring"
 Create a mutable string that contains a copy of
 .Fa cstring .
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_string_create_cstring_nocopy "const char *cstring"
 Create an immutable string that contains a reference to
 .Fa cstring .
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_string_copy "prop_string_t string"
 Copy a string.
 If the the string being copied is an immutable external C string reference,
 then the copy is also immutable and references the same external C string.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_string_copy_mutable "prop_string_t string"
 Copy a string, always creating a mutable copy.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_string_size "prop_string_t string"
 Returns the size of the string, not including the terminating NUL.
+If the supplied object isn't a string, zero is returned.
 .It Fn prop_string_mutable "prop_string_t string"
 Returns
 .Dv true
 if the string is mutable.
+If the supplied object isn't a string,
+.Dv false
+is returned.
 .It Fn prop_string_cstring "prop_string_t string"
 Returns a copy of the string's contents as a C string.
 The caller is responsible for freeing the returned buffer.
@@ -119,9 +138,16 @@ In the kernel, the buffer is allocated using
 .Xr malloc 9
 using the malloc type
 .Dv M_TEMP .
+.Pp
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_string_cstring_nocopy "prop_string_t string"
 Returns an immutable reference to the contents of the string as a
 C string.
+If the supplied object isn't a string,
+.Dv NULL
+is returned.
 .It Fn prop_string_append "prop_string_t str1" "prop_string_t str2"
 Append the contents of
 .Fa str2
