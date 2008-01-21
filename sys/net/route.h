@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.66 2008/01/21 20:04:37 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.67 2008/01/21 20:25:33 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,12 +39,28 @@
 #include <sys/types.h>
 #include <net/if.h>
 
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
+
 /*
  * Kernel resident routing tables.
  *
  * The routing tables are initialized when interface addresses
  * are set by making entries for all directly connected interfaces.
  */
+
+/*
+ * A route consists of a destination address and a reference
+ * to a routing entry.  These are often held by protocols
+ * in their control blocks, e.g. inpcb.
+ */
+struct route {
+	struct	rtentry		*_ro_rt;
+	struct	sockaddr	*ro_sa;
+	LIST_ENTRY(route)	ro_rtcache_next;
+	bool			ro_invalid;
+};
 
 /*
  * These numbers are used by reliable protocols for determining
@@ -271,18 +287,6 @@ struct rttimer_queue {
 #else
 #define	RT_DPRINTF(__fmt, ...)	/* do nothing */
 #endif
-
-/*
- * A route consists of a destination address and a reference
- * to a routing entry.  These are often held by protocols
- * in their control blocks, e.g. inpcb.
- */
-struct route {
-	struct	rtentry		*_ro_rt;
-	struct	sockaddr	*ro_sa;
-	LIST_ENTRY(route)	ro_rtcache_next;
-	bool			ro_invalid;
-};
 
 struct rtwalk {
 	int (*rw_f)(struct rtentry *, void *);
