@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1051 2008/01/21 08:10:51 dyoung Exp $
+# $NetBSD: mi,v 1.1052 2008/01/21 08:13:56 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -967,6 +967,8 @@
 ./usr/share/man/cat4/i386/cons.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/console.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/ed.0			man-sys-catman		.cat
+./usr/share/man/cat4/i386/elanpar.0		man-sys-catman		.cat
+./usr/share/man/cat4/i386/elanpex.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/elansc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/i386/fdc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/i386/gcscide.0		man-sys-catman		.cat
@@ -3485,6 +3487,8 @@
 ./usr/share/man/man4/i386/cons.4		man-sys-man		.man
 ./usr/share/man/man4/i386/console.4		man-sys-man		.man
 ./usr/share/man/man4/i386/ed.4			man-sys-man		.man
+./usr/share/man/man4/i386/elanpar.4		man-sys-man		.man
+./usr/share/man/man4/i386/elanpex.4		man-sys-man		.man
 ./usr/share/man/man4/i386/elansc.4		man-sys-man		.man
 ./usr/share/man/man4/i386/fdc.4			man-sys-man		.man
 ./usr/share/man/man4/i386/gcscide.4		man-sys-man		.man
