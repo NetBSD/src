@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.29 2004/07/08 03:57:33 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.30 2008/01/21 06:43:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.29 2004/07/08 03:57:33 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.30 2008/01/21 06:43:03 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -241,8 +241,10 @@ openredirect(union node *redir, char memory[10], int flags)
 	INTON;
 	return;
 ecreate:
+	exerrno = 1;
 	error("cannot create %s: %s", fname, errmsg(errno, E_CREAT));
 eopen:
+	exerrno = 1;
 	error("cannot open %s: %s", fname, errmsg(errno, E_OPEN));
 }
 
