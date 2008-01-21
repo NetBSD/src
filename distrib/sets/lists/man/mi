@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.955.2.17 2008/01/11 17:03:19 xtraeme Exp $
+# $NetBSD: mi,v 1.955.2.18 2008/01/21 20:17:49 bouyer Exp $
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -2362,6 +2362,7 @@
 ./usr/share/man/cat8/tbrconfig.0		man-router-catman	.cat
 ./usr/share/man/cat8/tcpdchk.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tcpdmatch.0		man-netutil-catman	.cat
+./usr/share/man/cat8/tcpdrop.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tcpdump.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/telnetd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/tftpd.0			man-netutil-catman	.cat
@@ -4777,6 +4778,7 @@
 ./usr/share/man/man8/tbrconfig.8		man-router-man		.man
 ./usr/share/man/man8/tcpdchk.8			man-netutil-man		.man
 ./usr/share/man/man8/tcpdmatch.8		man-netutil-man		.man
+./usr/share/man/man8/tcpdrop.8			man-netutil-man		.man
 ./usr/share/man/man8/tcpdump.8			man-netutil-man		.man
 ./usr/share/man/man8/telnetd.8			man-netutil-man		.man
 ./usr/share/man/man8/tftpd.8			man-netutil-man		.man
