@@ -1,4 +1,4 @@
-.\"	$NetBSD: elansc.4,v 1.8 2008/01/21 21:51:57 dyoung Exp $
+.\"	$NetBSD: elansc.4,v 1.9 2008/01/21 22:00:37 dyoung Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 6, 2005
+.Dd January 21, 2005
 .Dt ELANSC 4 i386
 .Os
 .Sh NAME
@@ -43,6 +43,8 @@
 .Sh SYNOPSIS
 .Cd "elansc* at pci? dev ? function ?"
 .Cd "gpio* at elansc?"
+.Cd "elanpar* at elansc?"
+.Cd "elanpex* at elansc?"
 .Sh DESCRIPTION
 The
 .Nm
@@ -61,6 +63,18 @@ Watchdog timer.
 The watchdog timer may be configured for a 1
 second, 2 second, 4 second, 8 second, 16 second, or 32 second
 expiration period.
+.It
+PCI exceptions reporting.
+The SC520 microcontroller can report exceptions that occur as it
+acts as both a PCI bus master and a bus target.
+See
+.Xr elanpex 4 .
+.It
+RAM write-protection.
+The SC520 microcontroller can designate write-protected regions of RAM using
+the Programmable Address Regions registers.
+See
+.Xr elanpar 4 .
 .It
 Programmable Input/Output.
 The SC520 microcontroller supports 32 programmable I/O signals (PIOs)
@@ -93,6 +107,9 @@ PIO function support was added in
 .Ox 3.6 ,
 and subsequently ported to
 .Nx 4.0 .
+Support for PCI exceptions reporting and for RAM write-protection
+first appeared in
+.Nx 5.0 .
 .Sh AUTHORS
 The
 .Nm
@@ -109,3 +126,6 @@ and was ported to
 .Nx
 by
 .An Jeff Rizzo Aq riz@NetBSD.org .
+.An David Young Aq dyoung@NetBSD.org
+added support for PCI exceptions reporting and for RAM write-protection
+using the Programmable Address Regions.
