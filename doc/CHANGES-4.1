@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.5 2008/01/21 19:21:17 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.6 2008/01/21 20:45:16 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -56,4 +56,115 @@ xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
 
 	Apply security fix for CVE-2008-0006.
 	[tron, ticket #1047]
+
+distrib/hp700/Makefile				1.3
+distrib/hp700/sysnbsd/Makefile			1.1
+distrib/notes/common/netboot			1.32
+distrib/notes/common/sysinst			1.84
+distrib/notes/common/xfer			1.61
+distrib/notes/hp700/Makefile			1.2
+distrib/notes/hp700/hardware			1.4
+distrib/notes/hp700/install			1.2
+distrib/notes/hp700/upgrade			1.2
+distrib/notes/hp700/xfer			1.2
+
+	Improve hp700 install notes somewhat.
+	Actually build and install a SYSNBSD.
+	[skrll, ticket #1035]
+
+usr.bin/xargs/Makefile				1.4
+usr.bin/xargs/pathnames.h			1.6
+usr.bin/xargs/strnsubst.c			1.1
+usr.bin/xargs/xargs.1				1.19
+usr.bin/xargs/xargs.c				1.16, 1.18
+
+	Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
+	GNU compatible exit values.
+	[apb, ticket #1036]
+
+dist/iscsi/src/Makefile.in			patch
+dist/iscsi/src/TODO				patch
+dist/iscsi/src/auths				patch
+dist/iscsi/src/conffile.c			patch
+dist/iscsi/src/configure			patch
+dist/iscsi/src/configure.ac			patch
+dist/iscsi/src/disk.c				patch
+dist/iscsi/src/driver.c				patch
+dist/iscsi/src/initiator.c			patch
+dist/iscsi/src/iscsi-harness.8			patch
+dist/iscsi/src/iscsi-harness.c			patch
+dist/iscsi/src/iscsi-target.c			patch
+dist/iscsi/src/iscsi.c				patch
+dist/iscsi/src/iscsiconfig.c			patch
+dist/iscsi/src/ktarget.c			patch
+dist/iscsi/src/ktest.c				patch
+dist/iscsi/src/md5.c				patch
+dist/iscsi/src/md5c.c				patch
+dist/iscsi/src/md5hl.c				patch
+dist/iscsi/src/mknodes.c			patch
+dist/iscsi/src/mount_iscsi.c			patch
+dist/iscsi/src/netmask.c			patch
+dist/iscsi/src/osd-target.c			patch
+dist/iscsi/src/osd.c				patch
+dist/iscsi/src/osd_ops.c			patch
+dist/iscsi/src/osdfs.c				patch
+dist/iscsi/src/parameters.c			patch
+dist/iscsi/src/so.c				patch
+dist/iscsi/src/storage.c			patch
+dist/iscsi/src/strtoll.c			patch
+dist/iscsi/src/target.c				patch
+dist/iscsi/src/targets				patch
+dist/iscsi/src/targets.5			patch
+dist/iscsi/src/tests.c				patch
+dist/iscsi/src/usocktest.c			patch
+dist/iscsi/src/util.c				patch
+dist/iscsi/src/uuid.c				patch
+
+	Sync the iscsi-target up to current, fixing a number of bugs
+	(including "multiple targets show up as one").
+	Delete unused files.
+	[agc, ticket #1038]
+
+distrib/sets/lists/base/mi			1.712
+distrib/sets/lists/comp/mi			1.1035
+distrib/sets/lists/man/mi			1.1010
+sys/netinet/tcp_usrreq.c			1.133
+sys/netinet/tcp_var.h				1.148
+usr.sbin/Makefile				1.228 via patch
+usr.sbin/tcpdrop/Makefile			1.1
+usr.sbin/tcpdrop/tcpdrop.8			1.1
+usr.sbin/tcpdrop/tcpdrop.c			1.1 - 1.3
+
+	Import tcpdrop(8) from OpenBSD
+	[ghen, ticket #1039]
+
+sys/arch/algor/algor/algor_p4032_intr.c		1.15, 1.17 via patch
+sys/arch/algor/algor/algor_p5064_intr.c		1.18, 1.20 via patch
+sys/arch/algor/algor/algor_p6032_intr.c		1.12, 1.14 via patch
+sys/arch/algor/algor/locore_machdep.S		1.4
+sys/arch/algor/dev/mcclock_mainbus.c		1.7
+sys/arch/algor/isa/mcclock_isa.c		1.9
+sys/arch/mips/mips/mips3_clock.c		1.8, 1.9
+
+	Fix botch on MI todr(9) migration of algor on September 2006:
+	initialize necessary values for mips3_delay().
+	[tsutsui, ticket #1040]
+
+sys/dev/ic/bt8xx.h				1.9
+sys/dev/pci/bktr/bktr_audio.c			1.18
+sys/dev/pci/bktr/bktr_core.c			1.46
+sys/dev/pci/bktr/bktr_core.h			1.10
+sys/dev/pci/bktr/bktr_os.c			1.49
+sys/dev/pci/bktr/bktr_reg.h			1.18
+
+	Don't assume that sizeof(long) == sizeof(int);
+	makes bktr work on amd64.
+	[jmcneill, ticket #1046]
+
+sys/dev/usb/if_aue.c				1.107, 1.108 via patch	
+sys/dev/usb/if_auereg.h				1.19, 1.20 via patch 
+
+	Prevents hang on close by unprotected creation of the formerly used
+	workqueue item.
+	[is, ticket #1048]
 
