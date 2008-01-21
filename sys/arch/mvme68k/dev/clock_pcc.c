@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_pcc.c,v 1.15 2005/06/03 08:45:47 scw Exp $	*/
+/*	$NetBSD: clock_pcc.c,v 1.15.2.1 2008/01/21 09:37:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -42,12 +42,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.15 2005/06/03 08:45:47 scw Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.15.2.1 2008/01/21 09:37:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/psl.h>
 #include <machine/bus.h>
@@ -57,35 +58,35 @@ __KERNEL_RCSID(0, "$NetBSD: clock_pcc.c,v 1.15 2005/06/03 08:45:47 scw Exp $");
 #include <mvme68k/dev/pccreg.h>
 #include <mvme68k/dev/pccvar.h>
 
-int clock_pcc_match __P((struct device *, struct cfdata *, void *));
-void clock_pcc_attach __P((struct device *, struct device *, void *));
+#include "ioconf.h"
+
+int clock_pcc_match(struct device *, struct cfdata *, void *);
+void clock_pcc_attach(struct device *, struct device *, void *);
 
 struct clock_pcc_softc {
 	struct device sc_dev;
 	struct clock_attach_args sc_clock_args;
 	u_char sc_clock_lvl;
+	struct timecounter sc_tc;
 };
 
 CFATTACH_DECL(clock_pcc, sizeof(struct clock_pcc_softc),
     clock_pcc_match, clock_pcc_attach, NULL, NULL);
 
-extern struct cfdriver clock_cd;
 
-
-static int clock_pcc_profintr __P((void *));
-static int clock_pcc_statintr __P((void *));
-static void clock_pcc_initclocks __P((void *, int, int));
-static long clock_pcc_microtime __P((void *));
-static void clock_pcc_shutdown __P((void *));
+static int clock_pcc_profintr(void *);
+static int clock_pcc_statintr(void *);
+static void clock_pcc_initclocks(void *, int, int);
+static u_int clock_pcc_getcount(struct timecounter *);
+static void clock_pcc_shutdown(void *);
 
 static struct clock_pcc_softc *clock_pcc_sc;
+static uint32_t clock_pcc_count;
+static uint16_t clock_pcc_reload;
 
 /* ARGSUSED */
 int
-clock_pcc_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+clock_pcc_match(struct device *parent, struct cfdata *cf, void *aux)
 {
 	struct pcc_attach_args *pa;
 
@@ -93,27 +94,24 @@ clock_pcc_match(parent, cf, aux)
 
 	/* Only one clock, please. */
 	if (clock_pcc_sc)
-		return (0);
+		return 0;
 
 	if (strcmp(pa->pa_name, clock_cd.cd_name))
-		return (0);
+		return 0;
 
 	pa->pa_ipl = cf->pcccf_ipl;
 
-	return (1);
+	return 1;
 }
 
 /* ARGSUSED */
 void
-clock_pcc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+clock_pcc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct pcc_attach_args *pa;
 	struct clock_pcc_softc *sc;
 
-	sc = (struct clock_pcc_softc *) self;
+	sc = (struct clock_pcc_softc *)self;
 	pa = aux;
 
 	if (pa->pa_ipl != CLOCK_LEVEL)
@@ -122,13 +120,12 @@ clock_pcc_attach(parent, self, aux)
 	clock_pcc_sc = sc;
 	sc->sc_clock_args.ca_arg = sc;
 	sc->sc_clock_args.ca_initfunc = clock_pcc_initclocks;
-	sc->sc_clock_args.ca_microtime = clock_pcc_microtime;
 
 	/* Do common portions of clock config. */
 	clock_config(self, &sc->sc_clock_args, pccintr_evcnt(pa->pa_ipl));
 
 	/* Ensure our interrupts get disabled at shutdown time. */
-	(void) shutdownhook_establish(clock_pcc_shutdown, NULL);
+	(void)shutdownhook_establish(clock_pcc_shutdown, NULL);
 
 	/* Attach the interrupt handlers. */
 	pccintr_establish(PCCV_TIMER1, clock_pcc_profintr, pa->pa_ipl,
@@ -139,15 +136,12 @@ clock_pcc_attach(parent, self, aux)
 }
 
 void
-clock_pcc_initclocks(arg, prof_us, stat_us)
-	void *arg;
-	int prof_us;
-	int stat_us;
+clock_pcc_initclocks(void *arg, int prof_us, int stat_us)
 {
 	struct clock_pcc_softc *sc = arg;
 
-	pcc_reg_write16(sys_pcc, PCCREG_TMR1_PRELOAD,
-	    pcc_timer_us2lim(prof_us));
+	clock_pcc_reload = pcc_timer_us2lim(prof_us);
+	pcc_reg_write16(sys_pcc, PCCREG_TMR1_PRELOAD, clock_pcc_reload);
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERCLEAR);
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_CONTROL, PCC_TIMERSTART);
 	pcc_reg_write(sys_pcc, PCCREG_TMR1_INTR_CTRL, sc->sc_clock_lvl);
@@ -157,20 +151,25 @@ clock_pcc_initclocks(arg, prof_us, stat_us)
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERCLEAR);
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_CONTROL, PCC_TIMERSTART);
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL, sc->sc_clock_lvl);
+
+	sc->sc_tc.tc_get_timecount = clock_pcc_getcount;
+	sc->sc_tc.tc_name = "pcc_count";
+	sc->sc_tc.tc_frequency = PCC_TIMERFREQ;
+	sc->sc_tc.tc_quality = 100;
+	sc->sc_tc.tc_counter_mask = ~0;
+	tc_init(&sc->sc_tc);
 }
 
 /* ARGSUSED */
-long
-clock_pcc_microtime(arg)
-	void *arg;
+u_int
+clock_pcc_getcount(struct timecounter *tc)
 {
-	static int ovfl_adj[] = {
-		0,       10000,  20000,  30000,
-		40000,   50000,  60000,  70000,
-		80000,   90000, 100000, 110000,
-		120000, 130000, 140000, 150000};
-	u_int8_t cr;
-	u_int16_t tc, tc2;
+	u_int cnt;
+	uint16_t tc1, tc2;
+	uint8_t cr;
+	int s;
+
+	s = splhigh();
 
 	/*
 	 * There's no way to latch the counter and overflow registers
@@ -178,24 +177,29 @@ clock_pcc_microtime(arg)
 	 * race by checking for counter wrap-around and re-reading the
 	 * overflow counter if necessary.
 	 *
-	 * Note: This only works because we're called at splhigh().
+	 * Note: This only works because we're at splhigh().
 	 */
-	tc = pcc_reg_read16(sys_pcc, PCCREG_TMR1_COUNT);
+	tc1 = pcc_reg_read16(sys_pcc, PCCREG_TMR1_COUNT);
 	cr = pcc_reg_read(sys_pcc, PCCREG_TMR1_CONTROL);
-	if (tc > (tc2 = pcc_reg_read16(sys_pcc, PCCREG_TMR1_COUNT))) {
+	tc2 = pcc_reg_read16(sys_pcc, PCCREG_TMR1_COUNT);
+	if (tc1 > tc2) {
 		cr = pcc_reg_read(sys_pcc, PCCREG_TMR1_CONTROL);
-		tc = tc2;
+		tc1 = tc2;
 	}
+	cnt = clock_pcc_count;
+	splx(s);
+	/* XXX assume HZ == 100 */
+	cnt += (tc1 - clock_pcc_reload) +
+	    (PCC_TIMERFREQ / 100) * (cr >> PCC_TIMEROVFLSHIFT);
 
-	return ((long) pcc_timer_cnt2us(tc) + ovfl_adj[cr>>PCC_TIMEROVFLSHIFT]);
+	return cnt;
 }
 
 int
-clock_pcc_profintr(frame)
-	void *frame;
+clock_pcc_profintr(void *frame)
 {
-	u_int8_t cr;
-	u_int16_t tc;
+	uint8_t cr;
+	uint16_t tc;
 	int s;
 
 	s = splhigh();
@@ -208,15 +212,17 @@ clock_pcc_profintr(frame)
 	    clock_pcc_sc->sc_clock_lvl);
 	splx(s);
 
-	for (cr >>= PCC_TIMEROVFLSHIFT; cr; cr--)
+	for (cr >>= PCC_TIMEROVFLSHIFT; cr; cr--) {
+		/* XXX assume HZ == 100 */
+		clock_pcc_count += PCC_TIMERFREQ / 100;
 		hardclock(frame);
+	}
 
-	return (1);
+	return 1;
 }
 
 int
-clock_pcc_statintr(frame)
-	void *frame;
+clock_pcc_statintr(void *frame)
 {
 
 	/* Disable the timer interrupt while we handle it. */
@@ -232,13 +238,12 @@ clock_pcc_statintr(frame)
 	pcc_reg_write(sys_pcc, PCCREG_TMR2_INTR_CTRL,
 	    clock_pcc_sc->sc_clock_lvl);
 
-	return (1);
+	return 1;
 }
 
 /* ARGSUSED */
 void
-clock_pcc_shutdown(arg)
-	void *arg;
+clock_pcc_shutdown(void *arg)
 {
 
 	/* Make sure the timer interrupts are turned off. */

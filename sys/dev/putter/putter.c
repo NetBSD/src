@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.4.4.3 2007/12/07 17:31:02 yamt Exp $	*/
+/*	$NetBSD: putter.c,v 1.4.4.4 2008/01/21 09:44:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.4.3 2007/12/07 17:31:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.4.4 2008/01/21 09:44:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -127,7 +127,7 @@ static int get_pi_idx(struct putter_instance *);
 #endif
 
 #ifdef PUTTERDEBUG
-static int putterdebug = 0;
+int putterdebug = 0;
 #define DPRINTF(x) if (putterdebug > 0) printf x
 #define DPRINTF_VERBOSE(x) if (putterdebug > 1) printf x
 #else

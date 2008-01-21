@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.91.2.4 2007/10/27 11:30:43 yamt Exp $	*/
+/*	$NetBSD: i82557.c,v 1.91.2.5 2008/01/21 09:43:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.91.2.4 2007/10/27 11:30:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.91.2.5 2008/01/21 09:43:00 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -175,7 +175,6 @@ const u_int8_t fxp_cb_config_template[] = {
 };
 
 void	fxp_mii_initmedia(struct fxp_softc *);
-int	fxp_mii_mediachange(struct ifnet *);
 void	fxp_mii_mediastatus(struct ifnet *, struct ifmediareq *);
 
 void	fxp_80c24_initmedia(struct fxp_softc *);
@@ -189,7 +188,7 @@ int	fxp_init(struct ifnet *);
 void	fxp_stop(struct ifnet *, int);
 
 void	fxp_txintr(struct fxp_softc *);
-void	fxp_rxintr(struct fxp_softc *);
+int	fxp_rxintr(struct fxp_softc *);
 
 int	fxp_rx_hwcksum(struct mbuf *, const struct fxp_rfa *);
 
@@ -206,9 +205,6 @@ void	fxp_get_info(struct fxp_softc *, u_int8_t *);
 void	fxp_tick(void *);
 void	fxp_mc_setup(struct fxp_softc *);
 void	fxp_load_ucode(struct fxp_softc *);
-
-void	fxp_shutdown(void *);
-void	fxp_power(int, void *);
 
 int	fxp_copy_small = 0;
 
@@ -438,24 +434,6 @@ fxp_attach(struct fxp_softc *sc)
 	}
 #endif /* FXP_EVENT_COUNTERS */
 
-	/*
-	 * Add shutdown hook so that DMA is disabled prior to reboot. Not
-	 * doing do could allow DMA to corrupt kernel memory during the
-	 * reboot before the driver initializes.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(fxp_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-	/*
-  	 * Add suspend hook, for similar reasons..
-	 */
-	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,
-	    fxp_power, sc);
-	if (sc->sc_powerhook == NULL)
-		aprint_error("%s: WARNING: unable to establish power hook\n",
-		    sc->sc_dev.dv_xname);
-
 	/* The attach is successful. */
 	sc->sc_flags |= FXPF_ATTACHED;
 
@@ -499,7 +477,9 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	sc->sc_mii.mii_readreg = fxp_mdi_read;
 	sc->sc_mii.mii_writereg = fxp_mdi_write;
 	sc->sc_mii.mii_statchg = fxp_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, fxp_mii_mediachange,
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
 	    fxp_mii_mediastatus);
 
 	flags = MIIF_NOISOLATE;
@@ -510,7 +490,7 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	 */
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, flags);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
@@ -533,53 +513,6 @@ fxp_80c24_initmedia(struct fxp_softc *sc)
 	    fxp_80c24_mediastatus);
 	ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
 	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_MANUAL);
-}
-
-/*
- * Device shutdown routine. Called at system shutdown after sync. The
- * main purpose of this routine is to shut off receiver DMA so that
- * kernel memory doesn't get clobbered during warmboot.
- */
-void
-fxp_shutdown(void *arg)
-{
-	struct fxp_softc *sc = arg;
-
-	/*
-	 * Since the system's going to halt shortly, don't bother
-	 * freeing mbufs.
-	 */
-	fxp_stop(&sc->sc_ethercom.ec_if, 0);
-}
-/*
- * Power handler routine. Called when the system is transitioning
- * into/out of power save modes.  As with fxp_shutdown, the main
- * purpose of this routine is to shut off receiver DMA so it doesn't
- * clobber kernel memory at the wrong time.
- */
-void
-fxp_power(int why, void *arg)
-{
-	struct fxp_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	int s;
-
-	s = splnet();
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		fxp_stop(ifp, 0);
-		break;
-	case PWR_RESUME:
-		if (ifp->if_flags & IFF_UP)
-			fxp_init(ifp);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
-	splx(s);
 }
 
 /*
@@ -821,7 +754,7 @@ fxp_write_eeprom(struct fxp_softc *sc, u_int16_t *data, int offset, int words)
 		/* Shift in write opcode, address, data. */
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, FXP_EEPROM_EECS);
 		fxp_eeprom_shiftin(sc, FXP_EEPROM_OPC_WRITE, 3);
-		fxp_eeprom_shiftin(sc, offset, sc->sc_eeprom_size);
+		fxp_eeprom_shiftin(sc, i + offset, sc->sc_eeprom_size);
 		fxp_eeprom_shiftin(sc, data[i], 16);
 		CSR_WRITE_2(sc, FXP_CSR_EEPROMCONTROL, 0);
 		DELAY(4);
@@ -916,7 +849,7 @@ fxp_start(struct ifnet *ifp)
 			break;
 		m = NULL;
 
-		if (sc->sc_txpending == FXP_NTXCB) {
+		if (sc->sc_txpending == FXP_NTXCB - 1) {
 			FXP_EVCNT_INCR(&sc->sc_ev_txstall);
 			break;
 		}
@@ -1067,7 +1000,7 @@ fxp_start(struct ifnet *ifp)
 #endif
 	}
 
-	if (sc->sc_txpending == FXP_NTXCB) {
+	if (sc->sc_txpending == FXP_NTXCB - 1) {
 		/* No more slots; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
@@ -1084,9 +1017,23 @@ fxp_start(struct ifnet *ifp)
 		 * Cause the chip to interrupt and suspend command
 		 * processing once the last packet we've enqueued
 		 * has been transmitted.
+		 *
+		 * To avoid a race between updating status bits
+		 * by the fxp chip and clearing command bits
+		 * by this function on machines which don't have
+		 * atomic methods to clear/set bits in memory
+		 * smaller than 32bits (both cb_status and cb_command
+		 * members are uint16_t and in the same 32bit word),
+		 * we have to prepare a dummy TX descriptor which has
+		 * NOP command and just causes a TX completion interrupt.
 		 */
-		FXP_CDTX(sc, sc->sc_txlast)->txd_txcb.cb_command |=
-		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
+		sc->sc_txpending++;
+		sc->sc_txlast = FXP_NEXTTX(sc->sc_txlast);
+		txd = FXP_CDTX(sc, sc->sc_txlast);
+		/* BIG_ENDIAN: no need to swap to store 0 */
+		txd->txd_txcb.cb_status = 0;
+		txd->txd_txcb.cb_command = htole16(FXP_CB_COMMAND_NOP |
+		    FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
 		FXP_CDTXSYNC(sc, sc->sc_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1121,7 +1068,7 @@ fxp_intr(void *arg)
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_dmamap_t rxmap;
-	int claimed = 0;
+	int claimed = 0, rnr;
 	u_int8_t statack;
 
 	if (!device_is_active(&sc->sc_dev) || sc->sc_enabled == 0)
@@ -1152,20 +1099,12 @@ fxp_intr(void *arg)
 		 * condition exists, get whatever packets we can and
 		 * re-start the receiver.
 		 */
-		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
+		rnr = (statack & (FXP_SCB_STATACK_RNR | FXP_SCB_STATACK_SWI)) ?
+		    1 : 0;
+		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR |
+		    FXP_SCB_STATACK_SWI)) {
 			FXP_EVCNT_INCR(&sc->sc_ev_rxintr);
-			fxp_rxintr(sc);
-		}
-
-		if (statack & FXP_SCB_STATACK_RNR) {
-			fxp_scb_wait(sc);
-			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_ABORT);
-			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
-			fxp_scb_wait(sc);
-			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-			    rxmap->dm_segs[0].ds_addr +
-			    RFA_ALIGNMENT_FUDGE);
-			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
+			rnr |= fxp_rxintr(sc);
 		}
 
 		/*
@@ -1187,6 +1126,17 @@ fxp_intr(void *arg)
 				if (sc->sc_flags & FXPF_WANTINIT)
 					(void) fxp_init(ifp);
 			}
+		}
+
+		if (rnr) {
+			fxp_scb_wait(sc);
+			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_ABORT);
+			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
+			fxp_scb_wait(sc);
+			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
+			    rxmap->dm_segs[0].ds_addr +
+			    RFA_ALIGNMENT_FUDGE);
+			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 		}
 	}
 
@@ -1217,6 +1167,11 @@ fxp_txintr(struct fxp_softc *sc)
 
 		FXP_CDTXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		/* skip dummy NOP TX descriptor */
+		if ((le16toh(txd->txd_txcb.cb_command) & FXP_CB_COMMAND_CMD)
+		    == FXP_CB_COMMAND_NOP)
+			continue;
 
 		txstat = le16toh(txd->txd_txcb.cb_status);
 
@@ -1301,7 +1256,7 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 /*
  * Handle receive interrupts.
  */
-void
+int
 fxp_rxintr(struct fxp_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1309,7 +1264,10 @@ fxp_rxintr(struct fxp_softc *sc)
 	struct mbuf *m, *m0;
 	bus_dmamap_t rxmap;
 	struct fxp_rfa *rfa;
+	int rnr;
 	u_int16_t len, rxstat;
+
+	rnr = 0;
 
 	for (;;) {
 		m = sc->sc_rxq.ifq_head;
@@ -1321,13 +1279,16 @@ fxp_rxintr(struct fxp_softc *sc)
 
 		rxstat = le16toh(rfa->rfa_status);
 
+		if ((rxstat & FXP_RFA_STATUS_RNR) != 0)
+			rnr = 1;
+
 		if ((rxstat & FXP_RFA_STATUS_C) == 0) {
 			/*
 			 * We have processed all of the
 			 * receive buffers.
 			 */
 			FXP_RFASYNC(sc, m, BUS_DMASYNC_PREREAD);
-			return;
+			return rnr;
 		}
 
 		IF_DEQUEUE(&sc->sc_rxq, m);
@@ -1403,7 +1364,7 @@ fxp_rxintr(struct fxp_softc *sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack it its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -1923,17 +1884,20 @@ fxp_init(struct ifnet *ifp)
 	/*
 	 * Initialize receiver buffer area - RFA.
 	 */
+#if 0	/* initialization will be done by FXP_SCB_INTRCNTL_REQUEST_SWI later */
 	rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
 	    rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
+#endif
 
 	if (sc->sc_flags & FXPF_MII) {
 		/*
 		 * Set current media.
 		 */
-		mii_mediachg(&sc->sc_mii);
+		if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
+			goto out;
 	}
 
 	/*
@@ -1942,6 +1906,16 @@ fxp_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	/*
+	 * Request a software generated interrupt that will be used to 
+	 * (re)start the RU processing.  If we direct the chip to start
+	 * receiving from the start of queue now, instead of letting the
+	 * interrupt handler first process all received packets, we run
+	 * the risk of having it overwrite mbuf clusters while they are
+	 * being processed or after they have been returned to the pool.
+	 */
+	CSR_WRITE_1(sc, FXP_CSR_SCB_INTRCNTL, FXP_SCB_INTRCNTL_REQUEST_SWI);
+ 
 	/*
 	 * Start the one second timer.
 	 */
@@ -1963,19 +1937,6 @@ fxp_init(struct ifnet *ifp)
 }
 
 /*
- * Change media according to request.
- */
-int
-fxp_mii_mediachange(struct ifnet *ifp)
-{
-	struct fxp_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
-}
-
-/*
  * Notify the world which media we're using.
  */
 void
@@ -1989,9 +1950,7 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		return;
 	}
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ether_mediastatus(ifp, ifmr);
 
 	/*
 	 * XXX Flow control is always turned on if the chip supports
@@ -2471,9 +2430,6 @@ fxp_detach(struct fxp_softc *sc)
 	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
 	    sizeof(struct fxp_control_data));
 	bus_dmamem_free(sc->sc_dmat, &sc->sc_cdseg, sc->sc_cdnseg);
-
-	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_powerhook);
 
 	return (0);
 }

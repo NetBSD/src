@@ -1,4 +1,4 @@
-/* $NetBSD: clockvar.h,v 1.7 2005/02/27 00:26:59 perry Exp $ */
+/* $NetBSD: clockvar.h,v 1.7.4.1 2008/01/21 09:42:41 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,22 +32,6 @@
  */
 
 /*
- * clocktime structure:
- *
- * structure passed to TOY clocks when setting them.  broken out this
- * way, so that the time_t -> field conversion can be shared.
- */
-struct clocktime {
-	int	year;			/* year - 1900 */
-	int	mon;			/* month (1 - 12) */
-	int	day;			/* day (1 - 31) */
-	int	hour;			/* hour (0 - 23) */
-	int	min;			/* minute (0 - 59) */
-	int	sec;			/* second (0 - 59) */
-	int	dow;			/* day of week (0 - 6; 0 = Sunday) */
-};
-
-/*
  * clockfns structure:
  *
  * function switch used by chip-independent clock code, to access
@@ -55,8 +39,6 @@ struct clocktime {
  */
 struct clockfns {
 	void	(*cf_init)(struct device *);
-	void	(*cf_get)(struct device *, time_t, struct clocktime *);
-	void	(*cf_set)(struct device *, struct clocktime *);
 };
 
 void clockattach(struct device *, const struct clockfns *);

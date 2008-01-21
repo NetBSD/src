@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.15.12.5 2007/12/07 17:26:56 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.15.12.6 2008/01/21 09:40:07 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -162,11 +162,12 @@ extern struct intrstub ioapic_level_stubs[];
 
 struct cpu_info;
 
-extern char idt_allocmap[];
-
 struct pcibus_attach_args;
 
 void intr_default_setup(void);
+void *nmi_establish(int (*)(void *), void *);
+bool nmi_disestablish(void *);
+int nmi_dispatch(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct cpu_info *);
 int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);

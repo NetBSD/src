@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.19 2004/02/13 11:36:15 wiz Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.19.16.1 2008/01/21 09:37:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.19 2004/02/13 11:36:15 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.19.16.1 2008/01/21 09:37:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -163,7 +163,7 @@ vme_pcc_attach(parent, self, aux)
 	struct pcc_attach_args *pa;
 	struct vme_pcc_softc *sc;
 	vme_am_t am;
-	u_int8_t reg;
+	uint8_t reg;
 
 	sc = (struct vme_pcc_softc *) self;
 	pa = aux;

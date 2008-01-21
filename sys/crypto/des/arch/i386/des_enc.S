@@ -1,4 +1,4 @@
-/* $NetBSD: des_enc.S,v 1.3 2005/02/26 23:04:17 perry Exp $ */
+/* $NetBSD: des_enc.S,v 1.3.4.1 2008/01/21 09:42:20 yamt Exp $ */
 
 /* Copyright (C) 1995-1997 Eric Young (eay@cryptsoft.com)
  * All rights reserved.
@@ -63,6 +63,7 @@
  */
 
 #include <i386/include/asm.h>
+__KERNEL_RCSID(0, "$NetBSD: des_enc.S,v 1.3.4.1 2008/01/21 09:42:20 yamt Exp $");
 
 ENTRY(des_encrypt1)
 	pushl	%esi

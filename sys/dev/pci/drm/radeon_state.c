@@ -1,3 +1,5 @@
+/*	$NetBSD: radeon_state.c,v 1.3.16.4 2008/01/21 09:44:23 yamt Exp $	*/
+
 /* radeon_state.c -- State support for Radeon -*- linux-c -*- */
 /*-
  * Copyright 2000 VA Linux Systems, Inc., Fremont, California.
@@ -28,6 +30,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: radeon_state.c,v 1.3.16.4 2008/01/21 09:44:23 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/radeon_state.c,v 1.22 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -1321,7 +1324,7 @@ static void radeon_cp_dispatch_flip(drm_device_t * dev)
 	    ? dev_priv->front_offset : dev_priv->back_offset;
 	RING_LOCALS;
 	DRM_DEBUG("%s: pfCurrentPage=%d\n",
-		  __FUNCTION__,
+		  __func__,
 		  dev_priv->sarea_priv->pfCurrentPage);
 
 	/* Do some trivial performance monitoring...
@@ -1983,7 +1986,7 @@ static int radeon_surface_alloc(DRM_IOCTL_ARGS)
 	drm_radeon_surface_alloc_t alloc;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -2004,7 +2007,7 @@ static int radeon_surface_free(DRM_IOCTL_ARGS)
 	drm_radeon_surface_free_t memfree;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -2130,7 +2133,7 @@ static int radeon_cp_vertex(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -2221,7 +2224,7 @@ static int radeon_cp_indices(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 	sarea_priv = dev_priv->sarea_priv;
@@ -2372,7 +2375,7 @@ static int radeon_cp_indirect(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -2449,7 +2452,7 @@ static int radeon_cp_vertex2(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -2759,7 +2762,7 @@ static int radeon_emit_wait(drm_device_t * dev, int flags)
 	drm_radeon_private_t *dev_priv = dev->dev_private;
 	RING_LOCALS;
 
-	DRM_DEBUG("%s: %x\n", __FUNCTION__, flags);
+	DRM_DEBUG("%s: %x\n", __func__, flags);
 	switch (flags) {
 	case RADEON_WAIT_2D:
 		BEGIN_RING(2);
@@ -2799,7 +2802,7 @@ static int radeon_cp_cmdbuf(DRM_IOCTL_ARGS)
 	LOCK_TEST_WITH_RETURN(dev, filp);
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -2966,7 +2969,7 @@ static int radeon_cp_getparam(DRM_IOCTL_ARGS)
 	int value;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 
@@ -3056,7 +3059,7 @@ static int radeon_cp_setparam(DRM_IOCTL_ARGS)
 	struct drm_radeon_driver_file_fields *radeon_priv;
 
 	if (!dev_priv) {
-		DRM_ERROR("%s called with no initialization\n", __FUNCTION__);
+		DRM_ERROR("%s called with no initialization\n", __func__);
 		return DRM_ERR(EINVAL);
 	}
 

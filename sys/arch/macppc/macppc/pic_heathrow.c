@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_heathrow.c,v 1.2.4.2 2007/10/27 11:27:11 yamt Exp $ */
+/*	$NetBSD: pic_heathrow.c,v 1.2.4.3 2008/01/21 09:37:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.2.4.2 2007/10/27 11:27:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.2.4.3 2008/01/21 09:37:28 yamt Exp $");
 
 #include "opt_interrupt.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: pic_heathrow.c,v 1.2.4.2 2007/10/27 11:27:11 yamt Ex
 static void heathrow_enable_irq(struct pic_ops *, int, int);
 static void heathrow_reenable_irq(struct pic_ops *, int, int);
 static void heathrow_disable_irq(struct pic_ops *, int);
-static int  heathrow_get_irq(struct pic_ops *);
+static int  heathrow_get_irq(struct pic_ops *, int);
 static void heathrow_ack_irq(struct pic_ops *, int);
 static void heathrow_establish_irq(struct pic_ops *, int, int, int);
 
@@ -223,7 +223,7 @@ heathrow_read_events(struct heathrow_ops *heathrow)
 }
 
 static int
-heathrow_get_irq(struct pic_ops *pic)
+heathrow_get_irq(struct pic_ops *pic, int mode)
 {
 	struct heathrow_ops *heathrow = (struct heathrow_ops *)pic;
 	int bit, mask;

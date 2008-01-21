@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.23.6.3 2007/10/27 11:31:26 yamt Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.23.6.4 2008/01/21 09:43:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.23.6.3 2007/10/27 11:31:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.23.6.4 2008/01/21 09:43:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,13 +103,14 @@ struct com_isa_softc {
 
 int com_isa_probe(struct device *, struct cfdata *, void *);
 void com_isa_attach(struct device *, struct device *, void *);
+static int com_isa_detach(device_t, int);
 #ifdef COM_HAYESP
 int com_isa_isHAYESP(bus_space_handle_t, struct com_softc *);
 #endif
 
 
 CFATTACH_DECL(com_isa, sizeof(struct com_isa_softc),
-    com_isa_probe, com_isa_attach, NULL, NULL);
+    com_isa_probe, com_isa_attach, com_isa_detach, NULL);
 
 int
 com_isa_probe(struct device *parent, struct cfdata *match,
@@ -208,6 +209,9 @@ com_isa_attach(struct device *parent, struct device *self,
 
 	com_attach_subr(sc);
 
+	if (!pmf_device_register(self, NULL, com_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	isc->sc_ih = isa_intr_establish(ia->ia_ic, irq, IST_EDGE, IPL_SERIAL,
 	    comintr, sc);
 
@@ -217,6 +221,14 @@ com_isa_attach(struct device *parent, struct device *self,
 	 */
 	if (shutdownhook_establish(com_cleanup, sc) == NULL)
 		panic("com_isa_attach: could not establish shutdown hook");
+}
+
+static int
+com_isa_detach(struct device *self, int flags)
+{
+	pmf_device_deregister(self);
+
+	return com_detach(self, flags);
 }
 
 #ifdef COM_HAYESP

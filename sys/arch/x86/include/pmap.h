@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.6.4 2007/12/07 17:26:57 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.6.5 2008/01/21 09:40:08 yamt Exp $	*/
 
 /*
  *
@@ -159,54 +159,6 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
-#define	PMF_USER_XPIN	0x02	/* pmap pdirpa is pinned (Xen) */
-#define	PMF_USER_RELOAD	0x04	/* reload user pmap on PTE unmap (Xen) */
-
-
-/*
- * for each managed physical page we maintain a list of <PMAP,VA>'s
- * which it is mapped at.  the list is headed by a pv_head structure.
- * there is one pv_head per managed phys page (allocated at boot time).
- * the pv_head structure points to a list of pv_entry structures (each
- * describes one mapping).
- */
-
-struct pv_entry {			/* locked by its list's pvh_lock */
-	SPLAY_ENTRY(pv_entry) pv_node;	/* splay-tree node */
-	struct pmap *pv_pmap;		/* the pmap */
-	vaddr_t pv_va;			/* the virtual address */
-	struct vm_page *pv_ptp;		/* the vm_page of the PTP */
-};
-
-/*
- * pv_entrys are dynamically allocated in chunks from a single page.
- * we keep track of how many pv_entrys are in use for each page and
- * we can free pv_entry pages if needed.  there is one lock for the
- * entire allocation system.
- */
-
-struct pv_page_info {
-	TAILQ_ENTRY(pv_page) pvpi_list;
-	struct pv_entry *pvpi_pvfree;
-	int pvpi_nfree;
-};
-
-/*
- * number of pv_entry's in a pv_page
- * (note: won't work on systems where NPBG isn't a constant)
- */
-
-#define PVE_PER_PVPAGE ((PAGE_SIZE - sizeof(struct pv_page_info)) / \
-			sizeof(struct pv_entry))
-
-/*
- * a pv_page: where pv_entrys are allocated from
- */
-
-struct pv_page {
-	struct pv_page_info pvinfo;
-	struct pv_entry pvents[PVE_PER_PVPAGE];
-};
 
 /*
  * global kernel variables
@@ -250,6 +202,7 @@ void		pmap_remove(struct pmap *, vaddr_t, vaddr_t);
 bool		pmap_test_attrs(struct vm_page *, unsigned);
 void		pmap_write_protect(struct pmap *, vaddr_t, vaddr_t, vm_prot_t);
 void		pmap_load(void);
+paddr_t		pmap_init_tmp_pgtbl(paddr_t);
 
 vaddr_t reserve_dumppages(vaddr_t); /* XXX: not a pmap fn */
 
@@ -280,7 +233,7 @@ pmap_remove_all(struct pmap *pmap)
  *	if hardware doesn't support one-page flushing)
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_pg(vaddr_t va)
 {
 	invlpg(va);
@@ -290,7 +243,7 @@ pmap_update_pg(vaddr_t va)
  * pmap_update_2pg: flush two pages from the TLB
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_update_2pg(vaddr_t va, vaddr_t vb)
 {
 	invlpg(va);
@@ -306,7 +259,7 @@ pmap_update_2pg(vaddr_t va, vaddr_t vb)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -326,7 +279,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
  *	unprotecting a page is done on-demand at fault time.
  */
 
-__inline static void __attribute__((__unused__))
+__inline static void __unused
 pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	if ((prot & VM_PROT_WRITE) == 0) {
@@ -349,7 +302,7 @@ pmap_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 #include <lib/libkern/libkern.h>
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 vtopte(vaddr_t va)
 {
 
@@ -358,7 +311,7 @@ vtopte(vaddr_t va)
 	return (PTE_BASE + pl1_i(va));
 }
 
-static __inline pt_entry_t * __attribute__((__unused__))
+static __inline pt_entry_t * __unused
 kvtopte(vaddr_t va)
 {
 	pd_entry_t *pde;
@@ -383,7 +336,12 @@ void	sse2_copy_page(void *, void *);
 #ifdef XEN
 
 #define XPTE_MASK	L1_FRAME
+/* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
+#ifdef __x86_64__
 #define XPTE_SHIFT	9
+#else
+#define XPTE_SHIFT	10
+#endif
 
 /* PTE access inline fuctions */
 

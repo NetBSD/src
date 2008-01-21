@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3maxplus.c,v 1.51.10.3 2007/12/07 17:25:50 yamt Exp $ */
+/* $NetBSD: dec_3maxplus.c,v 1.51.10.4 2008/01/21 09:38:18 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,11 +106,12 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.51.10.3 2007/12/07 17:25:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3maxplus.c,v 1.51.10.4 2008/01/21 09:38:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/timetc.h>
 
 #include <machine/cpu.h>
 #include <machine/sysconf.h>
@@ -140,7 +141,8 @@ static void	dec_3maxplus_intr_establish __P((struct device *, void *,
 		    int, int (*)(void *), void *));
 
 static void	kn03_wbflush __P((void));
-static unsigned	kn03_clkread __P((void));
+
+static void	dec_3maxplus_tc_init(void);
 
 /*
  * Local declarations
@@ -173,8 +175,8 @@ dec_3maxplus_init()
 	platform.iointr = dec_3maxplus_intr;
 	platform.intr_establish = dec_3maxplus_intr_establish;
 	platform.memsize = memsize_bitmap;
-	platform.clkread = kn03_clkread;
 	/* 3MAX+ has IOASIC free-running high resolution timer */
+	platform.tc_init = dec_3maxplus_tc_init;
 
 	/* clear any memory errors */
 	*(u_int32_t *)MIPS_PHYS_TO_KSEG1(KN03_SYS_ERRADR) = 0;
@@ -337,7 +339,6 @@ dec_3maxplus_intr(status, cause, pc, ipending)
 
 		__asm volatile("lbu $0,48(%0)" ::
 			"r"(ioasic_base + IOASIC_SLOT_8_START));
-		latched_cycle_cnt = *(u_int32_t *)(ioasic_base + IOASIC_CTR);
 		cf.pc = pc;
 		cf.sr = status;
 		hardclock(&cf);
@@ -455,34 +456,25 @@ kn03_wbflush()
 }
 
 /*
- * TURBOchannel bus-cycle counter provided by IOASIC;
- * Interpolate micro-seconds since the last RTC clock tick.  The
- * interpolation base is the copy of the bus cycle-counter taken by
- * the RTC interrupt handler.
+ * TURBOchannel bus-cycle counter provided by IOASIC;  25 MHz
  */
+
 static unsigned
-kn03_clkread()
+dec_3maxplus_get_timecount(struct timecounter *tc)
 {
-	u_int32_t usec, cycles;
+	return *(u_int32_t*)(ioasic_base + IOASIC_CTR);
+}
 
-	cycles = *(u_int32_t*)(ioasic_base + IOASIC_CTR);
-	cycles = cycles - latched_cycle_cnt;
+static void
+dec_3maxplus_tc_init(void)
+{
+	static struct timecounter tc = {
+		.tc_get_timecount = dec_3maxplus_get_timecount,
+		.tc_quality = 100,
+		.tc_frequency = 25000000,
+		.tc_counter_mask = ~0,
+		.tc_name = "turbochannel_counter",
+	};
 
-	/*
-	 * Scale from 40ns to microseconds.
-	 * Avoid a kernel FP divide (by 25) using the approximation
-	 * 1/25 = 40/1000 =~ 41/ 1024, which is good to 0.0975 %
-	 */
-	usec = cycles + (cycles << 3) + (cycles << 5);
-	usec = usec >> 10;
-
-#ifdef CLOCK_DEBUG
-	if (usec > 3906 +4) {
-		addlog("clkread: usec %d, counter=%lx\n",
-		    usec, latched_cycle_cnt);
-		stacktrace();
-	}
-#endif /*CLOCK_DEBUG*/
-
-	return usec;
+	tc_init(&tc);
 }

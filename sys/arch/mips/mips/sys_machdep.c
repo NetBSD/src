@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.29.2.2 2007/09/03 14:28:03 yamt Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.29.2.3 2008/01/21 09:37:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29.2.2 2007/09/03 14:28:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29.2.3 2008/01/21 09:37:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,15 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29.2.2 2007/09/03 14:28:03 yamt Ex
 #include <uvm/uvm_extern.h>
 
 int
-sys_sysarch(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
 {
-	struct sys_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(void *) parms;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error = 0;
 
@@ -102,11 +99,7 @@ sys_sysarch(l, v, retval)
  * range from the i-cache, d-cache, or both.
  */
 int
-mips_user_cacheflush(p, va, nbytes, whichcache)
-	struct proc *p;
-	vaddr_t va;
-	size_t nbytes;
-	int whichcache;
+mips_user_cacheflush(struct proc *p, vaddr_t va, size_t nbytes, int whichcache)
 {
 
 	/* validate the cache we're going to flush. */
@@ -156,11 +149,7 @@ mips_user_cacheflush(p, va, nbytes, whichcache)
  * non-cacheable.
  */
 int
-mips_user_cachectl(p, va, nbytes, cachectlval)
-	struct proc *p;
-	vaddr_t va;
-	size_t nbytes;
-	int cachectlval;
+mips_user_cachectl(struct proc *p, vaddr_t va, size_t nbytes, int cachectlval)
 {
 	/* validate the cache we're going to flush. */
 	switch (cachectlval) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.5.2.5 2007/11/15 11:44:01 yamt Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.5.2.6 2008/01/21 09:42:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,11 +47,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.5.2.5 2007/11/15 11:44:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.5.2.6 2008/01/21 09:42:26 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>
 #include <sys/systm.h>
@@ -59,8 +58,11 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.5.2.5 2007/11/15 11:44:01 yamt Exp $"
 #include <sys/kmem.h>
 #include <sys/conf.h>
 #include <sys/syslog.h>
+#include <sys/atomic.h>
 
 #include <dev/lockstat.h>
+
+#include <machine/lock.h>
 
 #ifndef __HAVE_CPU_COUNTER
 #error CPU counters not available
@@ -209,10 +211,10 @@ lockstat_start(lsenable_t *le)
 	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockstart = le->le_lockstart;
 	lockstat_lockend = le->le_lockend;
-	mb_memory();
+	membar_sync();
 	getnanotime(&lockstat_stime);
 	lockstat_enabled = le->le_mask;
-	mb_write();
+	membar_producer();
 }
 
 /*
@@ -234,7 +236,7 @@ lockstat_stop(lsdisable_t *ld)
 	 * to exit lockstat_event().
 	 */
 	lockstat_enabled = 0;
-	mb_write();
+	membar_producer();
 	getnanotime(&ts);
 	tsleep(&lockstat_stop, PPAUSE, "lockstat", mstohz(10));
 

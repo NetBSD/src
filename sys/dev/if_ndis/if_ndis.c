@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.9.4.6 2007/10/27 11:31:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.9.4.7 2008/01/21 09:43:16 yamt Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -743,8 +743,6 @@ ndis_attach(dev)
 
 #ifdef __FreeBSD__
 	bcopy(eaddr, (char *)&sc->arpcom.ec_if.ac_enaddr, ETHER_ADDR_LEN);
-#else /* __NetBSD__ */
-	bcopy(eaddr, (char *)LLADDR(sc->arpcom.ec_if.if_sadl), ETHER_ADDR_LEN);
 #endif
 	/*
 	 * Figure out if we're allowed to use multipacket sends

@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.9.16.3 2007/09/03 14:24:16 yamt Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.9.16.4 2008/01/21 09:36:19 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9.16.3 2007/09/03 14:24:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9.16.4 2008/01/21 09:36:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,38 +64,22 @@ __KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.9.16.3 2007/09/03 14:24:16 yamt Exp
  * given hardware interrupt priority level.
  */
 const uint32_t ipl_sr_bits[_IPL_N] = {
-	0,					/*  0: IPL_NONE */
-
-	MIPS_SOFT_INT_MASK_0,			/*  1: IPL_SOFT */
-
-	MIPS_SOFT_INT_MASK_0,			/*  2: IPL_SOFTCLOCK */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/*  3: IPL_SOFTNET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1,		/*  4: IPL_SOFTSERIAL */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/*  5: IPL_BIO */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/*  6: IPL_NET */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0,		/*  7: IPL_{TTY,SERIAL} */
-
-	MIPS_SOFT_INT_MASK_0|
-		MIPS_SOFT_INT_MASK_1|
-		MIPS_INT_MASK_0|
-		MIPS_INT_MASK_1|
-		MIPS_INT_MASK_2|
-		MIPS_INT_MASK_3|
-		MIPS_INT_MASK_4|
-		MIPS_INT_MASK_5,		/*  8: IPL_{CLOCK,HIGH} */
+	[IPL_NONE] = 0,
+	[IPL_SOFTCLOCK] =
+	    MIPS_SOFT_INT_MASK_0,
+	[IPL_SOFTNET] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1,
+	[IPL_VM] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0,
+	[IPL_SCHED] =
+	    MIPS_SOFT_INT_MASK_0 | MIPS_SOFT_INT_MASK_1 |
+	    MIPS_INT_MASK_0 |
+	    MIPS_INT_MASK_1 |
+	    MIPS_INT_MASK_2 |
+	    MIPS_INT_MASK_3 |
+	    MIPS_INT_MASK_4 |
+	    MIPS_INT_MASK_5,
 };
 
 /*
@@ -103,11 +87,9 @@ const uint32_t ipl_sr_bits[_IPL_N] = {
  * given software interrupt priority level.
  * Hardware ipls are port/board specific.
  */
-const uint32_t mips_ipl_si_to_sr[SI_NQUEUES] = {
-	[SI_SOFT] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTCLOCK] = MIPS_SOFT_INT_MASK_0,
-	[SI_SOFTNET] = MIPS_SOFT_INT_MASK_1,
-	[SI_SOFTSERIAL] = MIPS_SOFT_INT_MASK_1,
+const uint32_t mips_ipl_si_to_sr[2] = {
+	MIPS_SOFT_INT_MASK_0,
+	MIPS_SOFT_INT_MASK_1, /* XXX is this right with the new softints? */
 };
 
 struct malta_cpuintr {
@@ -211,10 +193,10 @@ malta_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	/* Compute the number of ticks for hz. */
 	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
 
-	/* Compute the delay divisor and reciprical. */
+	/* Compute the delay divisor and reciprocal. */
 	curcpu()->ci_divisor_delay =
 	    ((curcpu()->ci_cpu_freq + 500000) / 1000000);
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	/*
 	 * Get correct cpu frequency if the CPU runs at twice the

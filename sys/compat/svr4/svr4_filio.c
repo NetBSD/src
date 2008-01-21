@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_filio.c,v 1.13.12.3 2007/09/03 14:32:53 yamt Exp $	 */
+/*	$NetBSD: svr4_filio.c,v 1.13.12.4 2008/01/21 09:42:06 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.13.12.3 2007/09/03 14:32:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.13.12.4 2008/01/21 09:42:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -66,13 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: svr4_filio.c,v 1.13.12.3 2007/09/03 14:32:53 yamt Ex
 
 
 int
-svr4_fil_ioctl(fp, l, retval, fd, cmd, data)
-	struct file *fp;
-	struct lwp *l;
-	register_t *retval;
-	int fd;
-	u_long cmd;
-	void *data;
+svr4_fil_ioctl(struct file *fp, struct lwp *l, register_t *retval, int fd, u_long cmd, void *data)
 {
 	struct proc *p = l->l_proc;
 	int error;
@@ -88,10 +82,12 @@ svr4_fil_ioctl(fp, l, retval, fd, cmd, data)
 	switch (cmd) {
 	case SVR4_FIOCLEX:
 		fdp->fd_ofileflags[fd] |= UF_EXCLOSE;
+		FILE_UNLOCK(fp);
 		return 0;
 
 	case SVR4_FIONCLEX:
 		fdp->fd_ofileflags[fd] &= ~UF_EXCLOSE;
+		FILE_UNLOCK(fp);
 		return 0;
 
 	case SVR4_FIOGETOWN:
@@ -99,8 +95,10 @@ svr4_fil_ioctl(fp, l, retval, fd, cmd, data)
 	case SVR4_FIOASYNC:
 	case SVR4_FIONBIO:
 	case SVR4_FIONREAD:
-		if ((error = copyin(data, &num, sizeof(num))) != 0)
+		if ((error = copyin(data, &num, sizeof(num))) != 0) {
+			FILE_UNLOCK(fp);
 			return error;
+		}
 
 		switch (cmd) {
 		case SVR4_FIOGETOWN:	cmd = FIOGETOWN; break;
@@ -110,7 +108,9 @@ svr4_fil_ioctl(fp, l, retval, fd, cmd, data)
 		case SVR4_FIONREAD:	cmd = FIONREAD;  break;
 		}
 
+		FILE_USE(fp);
 		error = (*ctl)(fp, cmd, (void *) &num, l);
+		FILE_UNUSE(fp, l);
 
 		if (error)
 			return error;
@@ -118,6 +118,7 @@ svr4_fil_ioctl(fp, l, retval, fd, cmd, data)
 		return copyout(&num, data, sizeof(num));
 
 	default:
+		FILE_UNLOCK(fp);
 		DPRINTF(("Unknown svr4 filio %lx\n", cmd));
 		return 0;	/* ENOSYS really */
 	}

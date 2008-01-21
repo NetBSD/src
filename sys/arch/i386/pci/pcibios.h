@@ -1,4 +1,4 @@
-/*	$NetBSD: pcibios.h,v 1.8.2.2 2006/12/30 20:46:11 yamt Exp $	*/
+/*	$NetBSD: pcibios.h,v 1.8.2.3 2008/01/21 09:37:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, by UCHIYAMA Yasushi
@@ -51,7 +51,7 @@
 struct pcibios_linkmap {
 	uint8_t		link;
 	uint16_t	bitmap;
-} __attribute__((__packed__));
+} __packed;
 
 struct pcibios_intr_routing {
 	uint8_t		bus;
@@ -59,7 +59,7 @@ struct pcibios_intr_routing {
 	struct pcibios_linkmap linkmap[4];	/* INT[A:D]# */
 	uint8_t		slot;
 	uint8_t		reserved;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * $PIR header.  Reference:
@@ -77,7 +77,7 @@ struct pcibios_pir_header {
 	uint32_t	miniport;
 	uint8_t		reserved[11];
 	uint8_t		checksum;
-} __attribute__((__packed__));
+} __packed;
 
 #define	PIR_DEVFUNC_DEVICE(devfunc)	(((devfunc) >> 3) & 0x1f)
 #define	PIR_DEVFUNC_FUNCTION(devfunc)	((devfunc) & 7)

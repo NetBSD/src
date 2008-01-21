@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.76.2.6 2007/12/07 17:31:37 yamt Exp $	*/
+/*	$NetBSD: uhub.c,v 1.76.2.7 2008/01/21 09:44:46 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.6 2007/12/07 17:31:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.76.2.7 2008/01/21 09:44:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,6 +358,9 @@ USB_ATTACH(uhub)
 
 	sc->sc_running = 1;
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	USB_ATTACH_SUCCESS_RETURN;
 
  bad:
@@ -595,6 +598,7 @@ USB_DETACH(uhub)
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
+	pmf_device_deregister(self);
 	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_hdio.c,v 1.9.4.4 2007/10/27 11:29:37 yamt Exp $	*/
+/*	$NetBSD: linux_hdio.c,v 1.9.4.5 2008/01/21 09:41:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.9.4.4 2007/10/27 11:29:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.9.4.5 2008/01/21 09:41:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_hdio.c,v 1.9.4.4 2007/10/27 11:29:37 yamt Exp 
 #include <compat/linux/linux_syscallargs.h>
 
 int
-linux_ioctl_hdio(struct lwp *l, struct linux_sys_ioctl_args *uap,
+linux_ioctl_hdio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		 register_t *retval)
 {
 	struct proc *p = l->l_proc;

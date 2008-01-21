@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.36.8.3 2007/09/03 14:28:59 yamt Exp $	*/
+/*	$NetBSD: spr.h,v 1.36.8.4 2008/01/21 09:38:22 yamt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -81,13 +81,39 @@
 #define	  IBM401E2		  0x0025
 #define	  IBM401F2		  0x0026
 #define	  IBM401G2		  0x0027
-#define	  IBMPOWER3		  0x0041
+#define   IBMRS64II		  0x0033
+#define   IBMRS64IIIp		  0x0034
+#define   IBMPOWER4		  0x0035
+#define   IBMRS64IIIi		  0x0036
+#define   IBMRS64IV		  0x0037
+#define   IBMPOWER4II		  0x0038
+#define   IBM970		  0x0039
+#define   IBMPOWER5GR		  0x003a
+#define   IBMPOWER5GS		  0x003b
+#define   IBM970FX		  0x003c
+#define   IBMPOWER6		  0x003e
+#define   IBMPOWER3		  0x0040
+#define	  IBMPOWER3II		  0x0041
+#define   IBM970MP		  0x0044
+#define   IBM970GX		  0x0045
 #define	  MPC860		  0x0050
+#define   IBMCELL		  0x0070
 #define	  MPC8240		  0x0081
+#define   PA6T			  0x0090
+#define   IBMPOWER6P5		  0x0f00
+#define   XILVIRTEX		  0x2001
 #define	  IBM405GP		  0x4011
-#define	  IBM405GPR		  0x5091
+#define   IBMSTB03		  0x4013
+#define   IBMSTB04		  0x4081
+#define   IBM405GS3		  0x40b1
+#define   IBM405H		  0x4141
 #define	  IBM405L		  0x4161
+#define   IBM405LP		  0x41f1
+#define	  IBM405GPR		  0x5091
+#define   IBM405EP		  0x5121
+#define   IBMSTB25		  0x5151
 #define	  IBM750FX		  0x7000
+#define   IBM750GX		  0x7002
 #define	  MPC7450		  0x8000
 #define	  MPC7455		  0x8001
 #define   MPC7457		  0x8002
@@ -96,10 +122,13 @@
 #define MPC745X_P(v)		  ((v & 0xFFF8) == 0x8000)
 #define	  MPC7410		  0x800c
 #define	  MPC5200		  0x8011
+#define   MPCe500		  0x8020
+#define   MPCe500v2		  0x8021
 #define	  MPC8245		  0x8081
 #define   MPCG2			  0x8082
-#define	  IBM970		  0x0039
-#define   IBM970FX		  0x003c
+#define   MPCe300c1		  0x8083
+#define   MPCe300c2		  0x8084
+#define   MPCe300c3		  0x8085
 
 #define	SPR_IBAT0U		0x210	/* .68 Instruction BAT Reg 0 Upper */
 #define	SPR_IBAT0L		0x211	/* .6. Instruction BAT Reg 0 Lower */

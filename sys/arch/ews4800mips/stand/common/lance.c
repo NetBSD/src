@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.1.18.3 2007/02/26 09:06:31 yamt Exp $	*/
+/*	$NetBSD: lance.c,v 1.1.18.4 2008/01/21 09:36:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ lance_get(void *data, size_t len)
 		}
 	}
 #ifdef DEBUG
-	printf("%s: %d [%d,%d] %d\n", __FUNCTION__, len, start, end, n);
+	printf("%s: %d [%d,%d] %d\n", __func__, len, start, end, n);
 #endif
 	if (start < 0 || end < 0)
 		return false;

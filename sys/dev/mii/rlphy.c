@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.9.6.6 2007/11/15 11:44:15 yamt Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.9.6.7 2008/01/21 09:43:29 yamt Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.9.6.6 2007/11/15 11:44:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.9.6.7 2008/01/21 09:43:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,9 @@ rlphyattach(struct device *parent, struct device *self, void *aux)
 	if (sc->mii_capabilities & BMSR_MEDIAMASK)
 		mii_phy_add_media(sc);
 	aprint_normal("\n");
+
+	if (!pmf_device_register(self, NULL, mii_phy_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int
@@ -148,9 +151,6 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
 	int rv;
-
-	if (!device_is_active(&sc->mii_dev))
-		return ENXIO;
 
 	/*
 	 * Can't isolate the RTL8139 phy, so it has to be the only one.

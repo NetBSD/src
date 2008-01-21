@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_machdep.c,v 1.7.2.4 2007/10/27 11:28:59 yamt Exp $	*/
+/*	$NetBSD: acpi_machdep.c,v 1.7.2.5 2008/01/21 09:40:12 yamt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7.2.4 2007/10/27 11:28:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7.2.5 2008/01/21 09:40:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,19 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.7.2.4 2007/10/27 11:28:59 yamt Ex
 #include "opt_mpbios.h"
 #include "opt_acpi.h"
 
-static int acpi_intrcold = 1;
-
-struct acpi_intr_defer {
-	UINT32	number;
-	ACPI_OSD_HANDLER function;
-	void *context;
-	void *ih;
-	LIST_ENTRY(acpi_intr_defer) list;
-};
-
-static LIST_HEAD(, acpi_intr_defer) acpi_intr_deferq =
-    LIST_HEAD_INITIALIZER(acpi_intr_deferq);
-
 ACPI_STATUS
 acpi_md_OsInitialize(void)
 {
@@ -102,11 +89,17 @@ acpi_md_OsTerminate(void)
 	return (AE_OK);
 }
 
-ACPI_STATUS
-acpi_md_OsGetRootPointer(UINT32 Flags, ACPI_POINTER *PhysicalAddress)
+ACPI_PHYSICAL_ADDRESS
+acpi_md_OsGetRootPointer(void)
 {
+	ACPI_PHYSICAL_ADDRESS PhysicalAddress;
+	ACPI_STATUS Status;
 
-	return (AcpiFindRootPointer(Flags, PhysicalAddress));
+	Status = AcpiFindRootPointer(&PhysicalAddress);
+	if (ACPI_FAILURE(Status))
+		PhysicalAddress = 0;
+
+	return PhysicalAddress;
 }
 
 ACPI_STATUS
@@ -116,24 +109,8 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	void *ih;
 	struct pic *pic;
 	int irq, pin, trigger;
-	struct acpi_intr_defer *aip;
 
-	if (acpi_intrcold) {
-		aip = malloc(sizeof(struct acpi_intr_defer), M_TEMP, M_WAITOK);
-		aip->number = InterruptNumber;
-		aip->function = ServiceRoutine;
-		aip->context = Context;
-		aip->ih = NULL;
-
-		LIST_INSERT_HEAD(&acpi_intr_deferq, aip, list);
-
-		*cookiep = (void *)aip;
-		return AE_OK;
-	}
-
-	trigger = IST_LEVEL;
-
-#if NACPI > 0 && NIOAPIC > 0
+#if NIOAPIC > 0
 	/*
 	 * Can only match on ACPI global interrupt numbers if the ACPI
 	 * interrupt info was extracted, which is in the ACPI case.
@@ -153,13 +130,13 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 	}
 #endif
 
- 	/*
- 	 * There was no ACPI interrupt source override,
- 	 *
- 	 * If the interrupt is handled via IOAPIC, mark it
- 	 * as level-triggered, active low in the table.
- 	 */
- 
+	/*
+	 * There was no ACPI interrupt source override,
+	 *
+	 * If the interrupt is handled via IOAPIC, mark it
+	 * as level-triggered, active low in the table.
+	 */
+
 #if NIOAPIC > 0
 	pic = (struct pic *)ioapic_find_bybase(InterruptNumber);
 	if (pic != NULL) {
@@ -186,14 +163,12 @@ acpi_md_OsInstallInterruptHandler(UINT32 InterruptNumber,
 		irq = pin = (int)InterruptNumber;
 	}
 
-#if NACPI > 0 && NIOAPIC > 0
-#endif
-
 	trigger = IST_LEVEL;
 
 #if NIOAPIC > 0
 sci_override:
 #endif
+
 	/*
 	 * XXX probably, IPL_BIO is enough.
 	 */
@@ -208,16 +183,6 @@ sci_override:
 void
 acpi_md_OsRemoveInterruptHandler(void *cookie)
 {
-	struct acpi_intr_defer *aip;
-
-	LIST_FOREACH(aip, &acpi_intr_deferq, list) {
-		if (aip == cookie) {
-			if (aip->ih != NULL)
-				intr_disestablish(aip->ih);
-			return;
-		}
-	}
-
 	intr_disestablish(cookie);
 }
 
@@ -310,21 +275,14 @@ acpi_md_OsDisableInterrupt(void)
 }
 
 void
-acpi_md_callback(struct device *acpi)
+acpi_md_callback(void)
 {
-	struct acpi_intr_defer *aip;
-
-#if NACPI > 0
 #ifdef MPBIOS
 	if (!mpbios_scanned)
 #endif
-	mpacpi_find_interrupts(acpi);
-#endif
-	acpi_intrcold = 0;
+	mpacpi_find_interrupts(acpi_softc);
 
-	/* Proces deferred interrupt handler establish calls. */
-	LIST_FOREACH(aip, &acpi_intr_deferq, list) {
-		acpi_md_OsInstallInterruptHandler(aip->number, aip->function,
-		    aip->context, &aip->ih);
-	}
+#ifndef XEN
+	acpi_md_sleep_init();
+#endif
 }

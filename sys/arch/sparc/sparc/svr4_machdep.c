@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_machdep.c,v 1.55.4.4 2007/10/27 11:28:35 yamt Exp $	 */
+/*	$NetBSD: svr4_machdep.c,v 1.55.4.5 2008/01/21 09:39:27 yamt Exp $	 */
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55.4.4 2007/10/27 11:28:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_machdep.c,v 1.55.4.5 2008/01/21 09:39:27 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -536,6 +536,7 @@ svr4_trap(int type, struct lwp *l)
 	struct trapframe *tf = l->l_md.md_tf;
 	struct timespec ts;
 	struct timeval tv;
+	struct timeval rtime, stime;
 	uint64_t tm;
 
 	if (l->l_proc->p_emul != &emul_svr4)
@@ -588,11 +589,12 @@ svr4_trap(int type, struct lwp *l)
 		 * current runtime is the best we can do.
 		 */
 		microtime(&tv); /* XXX should move on to struct bintime */
+		bintime2timeval(&l->l_rtime, &rtime);
+		bintime2timeval(&l->l_stime, &stime);
 
-		tm = (l->l_rtime.tv_sec + tv.tv_sec -
-		    l->l_stime.tv_sec) * 1000000ull;
-		tm += l->l_rtime.tv_usec + tv.tv_usec;
-		tm -= l->l_stime.tv_usec;
+		tm = (rtime.tv_sec + tv.tv_sec - stime.tv_sec) * 1000000ull;
+		tm += rtime.tv_usec + tv.tv_usec;
+		tm -= stime.tv_usec;
 		tm *= 1000u;
 		tf->tf_out[0] = (tm >> 32) & 0x00000000ffffffffUL;
 		tf->tf_out[1] = tm & 0x00000000ffffffffUL;
@@ -618,9 +620,8 @@ svr4_trap(int type, struct lwp *l)
 /*
  */
 int
-svr4_sys_sysarch(struct lwp *l, void *v, register_t *retval)
+svr4_sys_sysarch(struct lwp *l, const struct svr4_sys_sysarch_args *uap, register_t *retval)
 {
-	struct svr4_sys_sysarch_args *uap = v;
 
 	switch (SCARG(uap, op)) {
 	default:

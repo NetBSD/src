@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.9.2.5 2007/10/27 11:29:32 yamt Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.9.2.6 2008/01/21 09:41:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.5 2007/10/27 11:29:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.6 2008/01/21 09:41:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,10 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.9.2.5 2007/10/27 11:29:32 yamt E
 static void linux_buildcontext(struct lwp *, void *, void *);
 
 void
-linux_setregs(l, epp, stack) 
-        struct lwp *l;
-	struct exec_package *epp;
-	u_long stack; 
+linux_setregs(struct lwp *l, struct exec_package *epp, u_long stack)
 {
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf;
@@ -131,10 +128,8 @@ linux_setregs(l, epp, stack)
 	return;
 }
 
-void    
-linux_sendsig(ksi, mask)
-	const ksiginfo_t *ksi;
-	const sigset_t *mask;
+void
+linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -328,38 +323,27 @@ linux_sendsig(ksi, mask)
 	return;
 }
 
-int     
-linux_sys_modify_ldt(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
-{ 
+int
+linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *v, register_t *retval)
+{
 	printf("linux_sys_modify_ldt\n");
 	return 0;
 }
 
-int     
-linux_sys_iopl(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
-{  
+int
+linux_sys_iopl(struct lwp *l, const struct linux_sys_iopl_args *v, register_t *retval)
+{
 	return 0;
 }
 
-int     
-linux_sys_ioperm(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
-{    
+int
+linux_sys_ioperm(struct lwp *l, const struct linux_sys_ioperm_args *v, register_t *retval)
+{
 	return 0;
 }
 
 dev_t
-linux_fakedev(dev, raw)
-        dev_t dev;
-	int raw;
+linux_fakedev(dev_t dev, int raw)
 {
 
        extern const struct cdevsw ptc_cdevsw, pts_cdevsw;
@@ -383,21 +367,15 @@ linux_fakedev(dev, raw)
 	    | (((unsigned long long int) (major(dev) & ~0xfff)) << 32));
 }
 
-int  
-linux_machdepioctl(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
-{  
+int
+linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *v, register_t *retval)
+{
 	return 0;
 }
 
 int
-linux_sys_rt_sigreturn(l, v, retval)
-        struct lwp *l;
-        void *v;
-        register_t *retval;
-{  
+linux_sys_rt_sigreturn(struct lwp *l, const void *v, register_t *retval)
+{
 	struct linux_ucontext *luctx;
 	struct trapframe *tf = l->l_md.md_regs;
 	struct linux_sigcontext *lsigctx;
@@ -454,7 +432,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mctx->__gregs[_REG_RDX] = lsigctx->rdx;
 	mctx->__gregs[_REG_RCX] = lsigctx->rcx;
 	mctx->__gregs[_REG_RIP] = lsigctx->rip;
-	mctx->__gregs[_REG_RFL] = lsigctx->eflags;
+	mctx->__gregs[_REG_RFLAGS] = lsigctx->eflags;
 	mctx->__gregs[_REG_CS] = lsigctx->cs;
 	mctx->__gregs[_REG_GS] = lsigctx->gs;
 	mctx->__gregs[_REG_FS] = lsigctx->fs;
@@ -462,7 +440,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mctx->__gregs[_REG_TRAPNO] = lsigctx->trapno;
 	mctx->__gregs[_REG_ES] = tf->tf_es;
 	mctx->__gregs[_REG_DS] = tf->tf_ds;
-	mctx->__gregs[_REG_URSP] = lsigctx->rsp; /* XXX */
+	mctx->__gregs[_REG_RSP] = lsigctx->rsp; /* XXX */
 	mctx->__gregs[_REG_SS] = tf->tf_ss;
 
 	/*
@@ -516,15 +494,12 @@ linux_sys_rt_sigreturn(l, v, retval)
 }
 
 int
-linux_sys_arch_prctl(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+linux_sys_arch_prctl(struct lwp *l, const struct linux_sys_arch_prctl_args *uap, register_t *retval)
 {
-	struct linux_sys_arch_prctl_args /* {
+	/* {
 		syscallarg(int) code;
 		syscallarg(unsigned long) addr;
-	} */ *uap = v;
+	} */
 	struct pcb *pcb = &l->l_addr->u_pcb;
 	struct trapframe *tf = l->l_md.md_regs;
 	int error;
@@ -659,8 +634,7 @@ linux_buildcontext(struct lwp *l, void *catcher, void *f)
 }
 
 void *
-linux_get_newtls(l)
-	struct lwp *l;
+linux_get_newtls(struct lwp *l)
 {
 	struct trapframe *tf = l->l_md.md_regs;
 
@@ -668,9 +642,7 @@ linux_get_newtls(l)
 }
 
 int
-linux_set_newtls(l, tls)
-	struct lwp *l;
-	void *tls;
+linux_set_newtls(struct lwp *l, void *tls)
 {
 	struct linux_sys_arch_prctl_args cup;
 	register_t retval;

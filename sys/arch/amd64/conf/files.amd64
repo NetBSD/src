@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.16.2.6 2007/12/07 17:24:02 yamt Exp $
+#	$NetBSD: files.amd64,v 1.16.2.7 2008/01/21 09:35:22 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -18,6 +18,9 @@ defparam		CPURESET_DELAY
 # The REAL{BASE,EXT}MEM options
 defparam opt_realmem.h	REALBASEMEM REALEXTMEM
 
+# The PHYSMEM_MAX_{SIZE,ADDR} optionms
+defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
+
 #
 # XXX these are just here at the moment so that we can share files
 # with the i386 (they include the opt_*.h for these)
@@ -34,18 +37,18 @@ file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
+file	arch/amd64/amd64/kobj_machdep.c		modular
 file	arch/amd64/amd64/kgdb_machdep.c		kgdb
 file	kern/subr_disk_mbr.c			disk
 file	arch/amd64/amd64/gdt.c
+file	arch/amd64/amd64/in_cksum.S		inet
 #
 # XXXfvdl write the optimized versions for these.
 #
-file	netinet/in_cksum.c			inet
 file	netinet/in4_cksum.c			inet
 
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
-file	arch/amd64/amd64/math_emulate.c	math_emulate
 file	arch/amd64/amd64/mem.c
 file	arch/amd64/amd64/process_machdep.c
 file	arch/amd64/amd64/procfs_machdep.c	procfs
@@ -187,7 +190,7 @@ include "dev/bluetooth/files.bluetooth"
 include	"dev/ieee1394/files.ieee1394"
 include "dev/apm/files.apm"
 include "dev/acpi/files.acpi"
-file	arch/amd64/acpi/acpi_wakeup.c	acpi
+file	arch/amd64/acpi/acpi_wakeup_low.S	acpi
 
 include	"arch/amd64/conf/majors.amd64"
 endif #xen

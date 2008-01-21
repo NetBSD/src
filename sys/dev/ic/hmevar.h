@@ -1,4 +1,4 @@
-/*	$NetBSD: hmevar.h,v 1.13.6.1 2007/09/03 14:34:36 yamt Exp $	*/
+/*	$NetBSD: hmevar.h,v 1.13.6.2 2008/01/21 09:43:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@ struct hme_softc {
 	struct device	sc_dev;		/* boilerplate device view */
 	struct ethercom	sc_ethercom;	/* Ethernet common part */
 	struct mii_data	sc_mii;		/* MII media control */
-#define sc_media	sc_mii.mii_media/* shorthand */
 	struct callout	sc_tick_ch;	/* tick callout */
 
 	/* The following bus handles are to be provided by the bus front-end */

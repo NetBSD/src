@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.23.2.3 2007/02/26 09:07:31 yamt Exp $	*/
+/*	$NetBSD: syscall.c,v 1.23.2.4 2008/01/21 09:37:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23.2.3 2007/02/26 09:07:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23.2.4 2008/01/21 09:37:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,7 +414,7 @@ EMULNAME(syscall_fancy)(struct lwp *l, u_int status, u_int cause, u_int opc)
 		break;
 	}
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 #if !defined(_MIPS_BSD_API) || _MIPS_BSD_API == _MIPS_BSD_API_LP32
@@ -452,7 +452,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 
 	userret(l);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: xs_wire.h,v 1.4.6.3 2007/10/27 11:29:26 yamt Exp $ */
+/* $NetBSD: xs_wire.h,v 1.4.6.4 2008/01/21 09:40:31 yamt Exp $ */
 /*
  * Details of the "wire" protocol between Xen Store Daemon and client
  * library or guest kernel.
@@ -61,7 +61,7 @@ struct xsd_errors
     const char *errstring;
 };
 #define XSD_ERROR(x) { x, #x }
-static struct xsd_errors xsd_errors[] __attribute__((unused)) = {
+static struct xsd_errors xsd_errors[] __unused = {
     XSD_ERROR(EINVAL),
     XSD_ERROR(EACCES),
     XSD_ERROR(EEXIST),

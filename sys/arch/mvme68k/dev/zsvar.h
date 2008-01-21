@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.10 2000/11/20 19:35:29 scw Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.10.40.1 2008/01/21 09:37:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -84,10 +84,10 @@ struct zsdevice {
 extern	u_char zs_init_reg[];
 
 /* Functions exported to ASIC-specific drivers. */
-void	zs_config __P((struct zsc_softc *, struct zsdevice *, int, int));
-void	zs_cnconfig __P((int, int, struct zsdevice *, int));
+void	zs_config(struct zsc_softc *, struct zsdevice *, int, int);
+void	zs_cnconfig(int, int, struct zsdevice *, int);
 #ifdef MVME147
-int	zshard_shared __P((void *));
+int	zshard_shared(void *);
 #endif
 #if defined(MVME162) || defined(MVME172)
 int	zshard_unshared(void *);

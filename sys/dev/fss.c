@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.15.2.7 2007/12/07 17:29:16 yamt Exp $	*/
+/*	$NetBSD: fss.c,v 1.15.2.8 2008/01/21 09:42:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.7 2007/12/07 17:29:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.8 2008/01/21 09:42:25 yamt Exp $");
 
 #include "fss.h"
 
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.15.2.7 2007/12/07 17:29:16 yamt Exp $");
 #include <sys/conf.h>
 #include <sys/kthread.h>
 #include <sys/fstrans.h>
+#include <sys/simplelock.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -540,7 +541,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the mounted file system.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_mount);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -558,7 +559,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Check for file system internal snapshot.
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -566,7 +567,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 		vrele(nd.ni_vp);
 		sc->sc_flags |= FSS_PERSISTENT;
 
-		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+		NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 		if ((error = vn_open(&nd, FREAD, 0)) != 0)
 			return error;
 		sc->sc_bs_vp = nd.ni_vp;
@@ -599,7 +600,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 */
 
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE,
-	    sc->sc_mount->mnt_stat.f_mntfromname, l);
+	    sc->sc_mount->mnt_stat.f_mntfromname);
 	if ((error = namei(&nd)) != 0)
 		return error;
 
@@ -622,7 +623,7 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	 * Get the backing store
 	 */
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, fss->fss_bstore);
 	if ((error = vn_open(&nd, FREAD|FWRITE, 0)) != 0)
 		return error;
 	VOP_UNLOCK(nd.ni_vp, 0);
@@ -895,8 +896,8 @@ restart:
 		if (len > MAXPHYS)
 			len = MAXPHYS;
 
-		bp = getiobuf();
-		bp->b_flags = B_READ|B_CALL;
+		bp = getiobuf(NULL, true);
+		bp->b_flags = B_READ;
 		bp->b_bcount = len;
 		bp->b_bufsize = bp->b_bcount;
 		bp->b_error = 0;
@@ -904,7 +905,6 @@ restart:
 		bp->b_blkno = dblk;
 		bp->b_proc = NULL;
 		bp->b_dev = sc->sc_bdev;
-		bp->b_vp = NULLVP;
 		bp->b_private = scp;
 		bp->b_iodone = fss_cluster_iodone;
 
@@ -952,7 +952,7 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	    data, len, off, UIO_SYSSPACE, IO_UNIT|IO_NODELOCKED,
 	    sc->sc_bs_lwp->l_cred, NULL, NULL);
 	if (error == 0) {
-		simple_lock(&sc->sc_bs_vp->v_interlock);
+		mutex_enter(&sc->sc_bs_vp->v_interlock);
 		error = VOP_PUTPAGES(sc->sc_bs_vp, trunc_page(off),
 		    round_page(off+len), PGO_CLEANIT|PGO_SYNCIO|PGO_FREE);
 	}
@@ -1019,7 +1019,7 @@ fss_bs_thread(void *arg)
 
 	scl = sc->sc_cache+sc->sc_cache_size;
 
-	nbp = getiobuf();
+	nbp = getiobuf(NULL, true);
 
 	nfreed = nio = 1;		/* Dont sleep the first time */
 
@@ -1148,7 +1148,7 @@ fss_bs_thread(void *arg)
 
 		FSS_UNLOCK(sc, s);
 
-		BUF_INIT(nbp);
+		buf_init(nbp);
 		nbp->b_flags = B_READ;
 		nbp->b_bcount = bp->b_bcount;
 		nbp->b_bufsize = bp->b_bcount;
@@ -1157,7 +1157,6 @@ fss_bs_thread(void *arg)
 		nbp->b_blkno = bp->b_blkno;
 		nbp->b_proc = bp->b_proc;
 		nbp->b_dev = sc->sc_bdev;
-		nbp->b_vp = NULLVP;
 
 		bdev_strategy(nbp);
 

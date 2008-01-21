@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_ataraid.c,v 1.13.12.4 2007/12/07 17:29:39 yamt Exp $	*/
+/*	$NetBSD: ld_ataraid.c,v 1.13.12.5 2008/01/21 09:42:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13.12.4 2007/12/07 17:29:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_ataraid.c,v 1.13.12.5 2008/01/21 09:42:37 yamt Exp $");
 
 #include "rnd.h"
 
@@ -246,11 +246,14 @@ ld_ataraid_make_cbuf(struct ld_ataraid_softc *sc, struct buf *bp,
 	cbp = CBUF_GET();
 	if (cbp == NULL)
 		return (NULL);
-	BUF_INIT(&cbp->cb_buf);
-	cbp->cb_buf.b_flags = bp->b_flags | B_CALL;
+	buf_init(&cbp->cb_buf);
+	cbp->cb_buf.b_flags = bp->b_flags;
+	cbp->cb_buf.b_oflags = bp->b_oflags;
+	cbp->cb_buf.b_cflags = bp->b_cflags;
 	cbp->cb_buf.b_iodone = sc->sc_iodone;
 	cbp->cb_buf.b_proc = bp->b_proc;
 	cbp->cb_buf.b_vp = sc->sc_vnodes[comp];
+	cbp->cb_buf.b_objlock = &sc->sc_vnodes[comp]->v_interlock;
 	cbp->cb_buf.b_blkno = bn + sc->sc_aai->aai_offset;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_bcount = bcount;
@@ -303,6 +306,7 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 			/* Free the already allocated component buffers. */
 			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
+				buf_destroy(&cbp->cb_buf);
 				CBUF_PUT(cbp);
 			}
 			return (EAGAIN);
@@ -322,8 +326,11 @@ ld_ataraid_start_span(struct ld_softc *ld, struct buf *bp)
 	/* Now fire off the requests. */
 	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-		if ((cbp->cb_buf.b_flags & B_READ) == 0)
+		if ((cbp->cb_buf.b_flags & B_READ) == 0) {
+			mutex_enter(&cbp->cb_buf.b_vp->v_interlock);
 			cbp->cb_buf.b_vp->v_numoutput++;
+			mutex_exit(&cbp->cb_buf.b_vp->v_interlock);
+		}
 		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 	}
 
@@ -400,6 +407,7 @@ free_and_exit:
 			/* Free the already allocated component buffers. */
 			while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 				SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
+				buf_destroy(&cbp->cb_buf);
 				CBUF_PUT(cbp);
 			}
 			return (error);
@@ -425,8 +433,11 @@ free_and_exit:
 	/* Now fire off the requests. */
 	while ((cbp = SIMPLEQ_FIRST(&cbufq)) != NULL) {
 		SIMPLEQ_REMOVE_HEAD(&cbufq, cb_q);
-		if ((cbp->cb_buf.b_flags & B_READ) == 0)
+		if ((cbp->cb_buf.b_flags & B_READ) == 0) {
+			mutex_enter(&cbp->cb_buf.b_vp->v_interlock);
 			cbp->cb_buf.b_vp->v_numoutput++;
+			mutex_exit(&cbp->cb_buf.b_vp->v_interlock);
+		}
 		VOP_STRATEGY(cbp->cb_buf.b_vp, &cbp->cb_buf);
 	}
 

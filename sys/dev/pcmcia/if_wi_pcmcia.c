@@ -1,4 +1,4 @@
-/* $NetBSD: if_wi_pcmcia.c,v 1.67.2.2 2007/10/27 11:33:47 yamt Exp $ */
+/* $NetBSD: if_wi_pcmcia.c,v 1.67.2.3 2008/01/21 09:44:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.67.2.2 2007/10/27 11:33:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pcmcia.c,v 1.67.2.3 2008/01/21 09:44:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,6 @@ static void	wi_pcmcia_attach(struct device *, struct device *, void *);
 static int	wi_pcmcia_detach(struct device *, int);
 static int	wi_pcmcia_enable(struct wi_softc *);
 static void	wi_pcmcia_disable(struct wi_softc *);
-static void	wi_pcmcia_powerhook(int, void *);
-static void	wi_pcmcia_shutdown(void *);
 
 #if WI_PCMCIA_SPECTRUM24T_FW
 /* support to download firmware for symbol CF card */
@@ -100,8 +98,6 @@ static int	wi_pcmcia_set_hcr(struct wi_softc *, int);
 struct wi_pcmcia_softc {
 	struct wi_softc sc_wi;
 
-	void *sc_powerhook;			/* power hook descriptor */
-	void *sc_sdhook;			/* shutdown hook */
 	int sc_symbol_cf;			/* Spectrum24t CF card */
 
 	struct pcmcia_function *sc_pf;		/* PCMCIA function */
@@ -392,9 +388,10 @@ wi_pcmcia_attach(struct device  *parent, struct device *self,
 		goto fail2;
 	}
 
-	psc->sc_sdhook    = shutdownhook_establish(wi_pcmcia_shutdown, psc);
-	psc->sc_powerhook = powerhook_establish(self->dv_xname,
-	    wi_pcmcia_powerhook, psc);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->sc_if);
 
 	wi_pcmcia_disable(sc);
 	psc->sc_state = WI_PCMCIA_ATTACHED;
@@ -415,11 +412,6 @@ wi_pcmcia_detach(struct device *self, int flags)
 	if (psc->sc_state != WI_PCMCIA_ATTACHED)
 		return (0);
 
-	if (psc->sc_powerhook)
-		powerhook_disestablish(psc->sc_powerhook);
-	if (psc->sc_sdhook)
-		shutdownhook_disestablish(psc->sc_sdhook);
-
 	error = wi_detach(&psc->sc_wi);
 	if (error != 0)
 		return (error);
@@ -427,27 +419,6 @@ wi_pcmcia_detach(struct device *self, int flags)
 	pcmcia_function_unconfigure(psc->sc_pf);
 
 	return (0);
-}
-
-static void
-wi_pcmcia_powerhook(why, arg)
-	int why;
-	void *arg;
-{
-	struct wi_pcmcia_softc *psc = arg;
-	struct wi_softc *sc = &psc->sc_wi;
-
-	wi_power(sc, why);
-}
-
-static void
-wi_pcmcia_shutdown(arg)
-	void *arg;
-{
-	struct wi_pcmcia_softc *psc = arg;
-	struct wi_softc *sc = &psc->sc_wi;
-
-	wi_shutdown(sc);
 }
 
 /*

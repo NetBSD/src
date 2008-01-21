@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.h,v 1.2.18.2 2006/06/21 15:00:00 yamt Exp $	*/
+/*	$NetBSD: stat.h,v 1.2.18.3 2008/01/21 09:42:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -134,6 +134,10 @@ struct stat13 {
 	int	__pad5;
 #endif
 };
+
+#if defined(_KERNEL)
+void compat_12_stat_conv(const struct stat *st, struct stat12 *ost);
+#endif
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 

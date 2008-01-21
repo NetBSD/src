@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.4.2.6 2007/12/07 17:24:30 yamt Exp $
+#	$NetBSD: GUMSTIX,v 1.4.2.7 2008/01/21 09:36:05 yamt Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -128,7 +128,6 @@ options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 # Miscellaneous kernel options
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
 #options 	KMEMSTATS	# kernel memory statistics
@@ -152,7 +151,7 @@ options 	DDB		# in-kernel debugger
 #options 	KGDB
 #options 	DEBUG_KGDB
 makeoptions	DEBUG="-g -O2"	# compile full symbol table
-options 	SYMTAB_SPACE=350000
+options 	SYMTAB_SPACE=380000
 #options 	AUDIO_DEBUG=2
 
 config		netbsd		root on ? type ?

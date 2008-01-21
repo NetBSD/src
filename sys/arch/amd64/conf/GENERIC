@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.55.2.7 2007/12/07 17:24:00 yamt Exp $
+# $NetBSD: GENERIC,v 1.55.2.8 2008/01/21 09:35:20 yamt Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.55.2.7 $"
+#ident 		"GENERIC-$Revision: 1.55.2.8 $"
 
 maxusers	32		# estimated number of users
 
@@ -44,6 +44,13 @@ maxusers	32		# estimated number of users
 #options 	REALBASEMEM=639		# size of base memory (in KB)
 #options 	REALEXTMEM=15360	# size of extended memory (in KB)
 
+# The following options limit the overall size of physical memory
+# and/or the maximum address used by the system.
+# Contrary to REALBASEMEM and REALEXTMEM, they still use the BIOS memory map
+# and can deal with holes in the memory layout.
+#options 	PHYSMEM_MAX_SIZE=64	# max size of physical memory (in MB)
+#options 	PHYSMEM_MAX_ADDR=2048	# don't use memory above this (in MB)
+
 # Standard system options
 
 options 	INSECURE	# disable kernel security levels - X needs this
@@ -52,7 +59,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -60,7 +66,7 @@ options 	SYSVSHM		# System V-like memory sharing
 options 	P1003_1B_SEMAPHORE	# p1003.1b semaphore support
 
 options 	LKM		# loadable kernel modules
-
+options 	MULTIPROCESSOR	# SMP
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -75,7 +81,7 @@ options 	POWERNOW_K8
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 # options       INTEL_ONDEMAND_CLOCKMOD
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -95,7 +101,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 #options 	SYSCALL_STATS	# per syscall counts
 #options 	SYSCALL_TIMES	# per syscall times
 #options 	SYSCALL_TIMES_HASCOUNTER	# use 'broken' rdtsc (soekris)
@@ -111,10 +117,17 @@ options 	COMPAT_43	# and 4.3BSD
 
 options 	COMPAT_OSSAUDIO
 options 	COMPAT_NETBSD32
-#options 	COMPAT_LINUX
-#options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
+options 	COMPAT_LINUX
+options 	COMPAT_LINUX32	# req. COMPAT_LINUX and COMPAT_NETBSD32
 options 	EXEC_ELF32
 options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+
+# Wedge support
+options 	DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
+# The following two options can break /etc/fstab, so handle with care
+#options 	DKWEDGE_METHOD_BSDLABEL	# Support disklabel entries as wedges
+#options 	DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
 
 # File systems
 file-system 	FFS		# UFS
@@ -146,7 +159,7 @@ options 	QUOTA		# UFS quotas
 options 	SOFTDEP		# FFS soft updates support.
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
 				# immutable) behave as system flags.
@@ -245,22 +258,25 @@ mainbus0 at root
 # ACPI will be used if present. If not it will fall back to MPBIOS
 acpi0 		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
-options 	MPBIOS			# configure CPUs and APICs using MPBIOS 
+options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_INTR_FIXUP		# PCI interrupt routing via ACPI
 #options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
-#options	ACPICA_PEDANTIC		# force strict conformance to the Spec.
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 # ACPI devices
 acpiacad* 	at acpi?		# ACPI AC Adapter
 acpibat* 	at acpi?		# ACPI Battery
 acpibut* 	at acpi?		# ACPI Button
-acpiec* 	at acpi?		# ACPI Embedded Controller
+# The ACPI Embedded Controller is generally configured via the special ECDT.
+# This is required as parts of the DSDT can reference the EC before the normal
+# attach phase.
+acpiec* 	at acpi?		# ACPI Embedded Controller (late binding)
+acpiecdt* 	at acpi?		# ACPI Embedded Controller (early binding)
 acpilid* 	at acpi?		# ACPI Lid Switch
 acpitz* 	at acpi?		# ACPI Thermal Zone
 
 # Mainboard devices
-apm*		at acpi?		# ACPI apm emulation
 aiboost* 	at acpi?		# ASUS AI Booster Hardware monitor
 attimer*	at acpi?		# AT Timer
 #com* 		at acpi?		# Serial communications interface
@@ -271,6 +287,8 @@ joy*		at acpi?		# Joystick/Game port
 mpu*		at acpi?		# Roland MPU-401 MIDI UART
 pckbc*  	at acpi?		# PC keyboard controller
 pcppi*  	at acpi?                # AT-style speaker sound
+sony*		at acpi?		# Sony Notebook Controller
+thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 ug* 		at acpi?		# Abit uGuru Hardware monitor
 wss* 		at acpi?		# NeoMagic 256AV in wss mode
 
@@ -395,6 +413,10 @@ nfsmbc*	at pci? dev ? function ?
 nfsmb*	at nfsmbc?
 iic*	at nfsmb?
 
+# Intel PIIX4 power management controllers
+piixpm* at pci? dev ? function ?	# PIIX4 compatible PM controller
+iic*	at piixpm?			# SMBus on PIIX4
+
 # Intel Core's on-die Thermal sensor
 options 	INTEL_CORETEMP
 
@@ -406,7 +428,7 @@ iic*	at ichsmb?
 #adt7463c* at iic? addr 0x2D		# Tyan S2881
 #adt7463c* at iic? addr 0x2E            # Tyan S2882-D
 
-# iTE IT87xxF and compatible hardware monitors
+# iTE IT87xxF Super I/O with watchdog and sensors support
 #itesio0 	at isa? port 0x2e
 
 # Abit uGuru Hardware system monitor
@@ -550,8 +572,8 @@ wd*	at atabus? drive ? flags 0x0000
 atapibus* at atapi?
 
 
-# ATA RAID configuration support, as found on some Promise controllers.  
-pseudo-device ataraid  
+# ATA RAID configuration support, as found on some Promise controllers.
+pseudo-device ataraid
 ld*     at ataraid? vendtype ? unit ?
 
 # ATAPI devices
@@ -850,8 +872,8 @@ ucom*	at ugensa?
 
 # PCI IEEE1394 controllers
 fwohci*	at pci? dev ? function ?	# IEEE1394 Open Host Controller
- 
-# CardBus IEEE1394 controllers 
+
+# CardBus IEEE1394 controllers
 fwohci*	at cardbus? function ?		# IEEE1394 Open Host Controller
 
 ieee1394if* at fwohci?
@@ -1005,7 +1027,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 
 # miscellaneous pseudo-devices
@@ -1035,6 +1057,9 @@ pseudo-device	wsfont
 # pseudo audio device driver
 pseudo-device	pad
 
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device	drvctl
+
 options 	FILEASSOC		# fileassoc(9) - required for Veriexec
 
 # Veriexec
@@ -1053,4 +1078,5 @@ options VERIFIED_EXEC_FP_SHA512
 options VERIFIED_EXEC_FP_SHA1
 options VERIFIED_EXEC_FP_MD5
 
-options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options 	PAX_ASLR=0		# PaX Address Space Layout Randomization

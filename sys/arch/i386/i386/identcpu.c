@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.19.2.7 2007/12/07 17:24:59 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.19.2.8 2008/01/21 09:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.7 2007/12/07 17:24:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.19.2.8 2008/01/21 09:37:00 yamt Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -265,7 +265,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				"Pentium Pro, II or III"	/* Default */
 			},
 			NULL,
-			NULL,
+			intel_family_new_probe,
 			NULL,
 		},
 		/* Family > 6 */
@@ -908,6 +908,8 @@ cpu_probe_base_features(struct cpu_info *ci)
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
+	ci->ci_initapicid = 0;
+
 	if (ci->ci_cpuid_level < 0)
 		return;
 
@@ -944,6 +946,8 @@ cpu_probe_base_features(struct cpu_info *ci)
 	/* CLFLUSH line size is next 8 bits */
 	if (ci->ci_feature_flags & CPUID_CFLUSH)
 		ci->ci_cflush_lsize = ((miscbytes >> 8) & 0xff) << 3;
+
+	ci->ci_initapicid = (miscbytes >> 24) & 0xff;
 
 	if (ci->ci_cpuid_level < 2)
 		return;
@@ -1002,7 +1006,7 @@ cpu_probe_features(struct cpu_info *ci)
 	if (ci->ci_cpuid_level < 1)
 		return;
 
-	xmax = sizeof (i386_cpuid_cpus) / sizeof (i386_cpuid_cpus[0]);
+	xmax = sizeof(__arraycount(i386_cpuid_cpus));
 	for (i = 0; i < xmax; i++) {
 		if (!strncmp((char *)ci->ci_vendor,
 		    i386_cpuid_cpus[i].cpu_id, 12)) {
@@ -1063,7 +1067,7 @@ amd_family6_probe(struct cpu_info *ci)
 	if (*cpu_brand_string == '\0')
 		return;
 	
-	for (i = 1; i < sizeof(amd_brand) / sizeof(amd_brand[0]); i++)
+	for (i = 1; i < sizeof(__arraycount(amd_brand)); i++)
 		if ((p = strstr(cpu_brand_string, amd_brand[i])) != NULL) {
 			ci->ci_brand_id = i;
 			strlcpy(amd_brand_name, p, sizeof(amd_brand_name));
@@ -1515,6 +1519,14 @@ identifycpu(struct cpu_info *ci)
 #endif
 #endif
 	}
+
+	/*
+	 * Everything past this point requires a Pentium or later.
+	 */
+	if (ci->ci_cpuid_level < 0)
+		return;
+
+	identifycpu_cpuids(ci);
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.

@@ -1,4 +1,4 @@
-/* $NetBSD: drm_ioctl.c,v 1.1.16.3 2007/12/07 17:29:45 yamt Exp $ */
+/* $NetBSD: drm_ioctl.c,v 1.1.16.4 2008/01/21 09:42:46 yamt Exp $ */
 
 /* drm_ioctl.h -- IOCTL processing for DRM -*- linux-c -*-
  * Created: Fri Jan  8 09:01:26 1999 by faith@valinux.com
@@ -34,6 +34,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: drm_ioctl.c,v 1.1.16.4 2008/01/21 09:42:46 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_ioctl.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */

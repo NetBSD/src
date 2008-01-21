@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.16.2.1 2007/12/07 17:24:48 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.16.2.2 2008/01/21 09:36:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,11 +77,12 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.2.1 2007/12/07 17:24:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.16.2.2 2008/01/21 09:36:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>	/* setroot() */
+#include <sys/device.h>
 
 #include <machine/disklabel.h>
 

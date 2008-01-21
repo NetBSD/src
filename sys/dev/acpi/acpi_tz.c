@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_tz.c,v 1.16.2.6 2007/12/07 17:29:37 yamt Exp $ */
+/* $NetBSD: acpi_tz.c,v 1.16.2.7 2008/01/21 09:42:32 yamt Exp $ */
 
 /*
  * Copyright (c) 2003 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.16.2.6 2007/12/07 17:29:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_tz.c,v 1.16.2.7 2008/01/21 09:42:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,15 +169,13 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	rv = acpi_eval_integer(sc->sc_devnode->ad_handle, "_TZP", &v);
-	if (ACPI_FAILURE(rv)) {
-		aprint_verbose("%s: unable to get polling interval; using default of",
-		    sc->sc_dev.dv_xname);
+	if (ACPI_FAILURE(rv))
 		sc->sc_zone.tzp = ATZ_TZP_RATE;
-	} else {
+	else
 		sc->sc_zone.tzp = v;
-		aprint_verbose("%s: polling interval is", sc->sc_dev.dv_xname);
-	}
-	aprint_verbose(" %d.%ds\n", sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
+
+	aprint_debug(" sample rate %d.%ds\n",
+	    sc->sc_zone.tzp / 10, sc->sc_zone.tzp % 10);
 
 	/* XXX a value of 0 means "polling is not necessary" */
 	if (sc->sc_zone.tzp == 0)
@@ -201,6 +199,9 @@ acpitz_attach(struct device *parent, struct device *self, void *aux)
 	callout_setfunc(&sc->sc_callout, acpitz_tick, sc);
 
 	acpitz_init_envsys(sc);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error(": couldn't establish power handler\n");
 
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }
@@ -525,7 +526,7 @@ acpitz_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 
 	KASSERT(func != NULL);
 
-	rv = AcpiOsQueueForExecution(OSD_PRIORITY_LO, func, sc);
+	rv = AcpiOsExecute(OSL_NOTIFY_HANDLER, func, sc);
 	if (rv != AE_OK)
 		printf("%s: unable to queue %s\n", sc->sc_dev.dv_xname, name);
 
@@ -566,7 +567,7 @@ acpitz_tick(void *opaque)
 {
 	struct acpitz_softc *sc = opaque;
 
-	AcpiOsQueueForExecution(OSD_PRIORITY_LO, acpitz_get_status, sc);
+	AcpiOsExecute(OSL_NOTIFY_HANDLER, acpitz_get_status, sc);
 
 	callout_schedule(&sc->sc_callout, sc->sc_zone.tzp * hz / 10);
 }

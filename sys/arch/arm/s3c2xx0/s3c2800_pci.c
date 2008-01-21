@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.10.2.2 2007/09/03 14:23:24 yamt Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.10.2.3 2008/01/21 09:35:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.10.2.2 2007/09/03 14:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.10.2.3 2008/01/21 09:35:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -258,10 +258,10 @@ sspci_attach(struct device *parent, struct device *self, void *aux)
 		sspci_intr, sc))
 		FAIL("intr_establish");
 
-	sc->sc_softinterrupt = softintr_establish(IPL_SOFT,
+	sc->sc_softinterrupt = softint_establish(SOFTINT_SERIAL,
 	    sspci_softintr, sc);
 	if (sc->sc_softinterrupt == NULL)
-		FAIL("softintr_establish");
+		FAIL("softint_establish");
 
 #if defined(PCI_NETBSD_CONFIGURE)
 	if (sspci_init_controller(sc)) {
@@ -686,7 +686,7 @@ sspci_intr(void *arg)
 
 	if (interrupts & PCIINT_INA) {
 		s = splhigh();
-		softintr_schedule(sc->sc_softinterrupt);
+		softint_schedule(sc->sc_softinterrupt);
 
 		/* mask INTA itnerrupt until softinterrupt is handled */
 		sc->sc_pciinten &= ~PCIINT_INA;

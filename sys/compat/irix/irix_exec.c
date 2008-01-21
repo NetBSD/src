@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_exec.c,v 1.41.2.4 2007/12/07 17:27:46 yamt Exp $ */
+/*	$NetBSD: irix_exec.c,v 1.41.2.5 2008/01/21 09:41:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.41.2.4 2007/12/07 17:27:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_exec.c,v 1.41.2.5 2008/01/21 09:41:03 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_syscall_debug.h"
@@ -129,10 +129,7 @@ const struct emul emul_irix = {
  * set registers on exec for N32 applications
  */
 void
-irix_n32_setregs(l, pack, stack)
-	struct lwp *l;
-	struct exec_package *pack;
-	u_long stack;
+irix_n32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
@@ -144,9 +141,7 @@ irix_n32_setregs(l, pack, stack)
  * per-process emuldata allocation
  */
 static void
-irix_e_proc_init(p, vmspace)
-	struct proc *p;
-	struct vmspace *vmspace;
+irix_e_proc_init(struct proc *p, struct vmspace *vmspace)
 {
 	struct irix_emuldata *ied;
 	vaddr_t vm_min;
@@ -169,9 +164,7 @@ irix_e_proc_init(p, vmspace)
  * exec() hook used to allocate per process structures
  */
 static void
-irix_e_proc_exec(p, epp)
-	struct proc *p;
-	struct exec_package *epp;
+irix_e_proc_exec(struct proc *p, struct exec_package *epp)
 {
 	int error;
 
@@ -189,8 +182,7 @@ irix_e_proc_exec(p, epp)
  * exit() hook used to free per process data structures
  */
 static void
-irix_e_proc_exit(p)
-	struct proc *p;
+irix_e_proc_exit(struct proc *p)
 {
 	struct proc *pp;
 	struct irix_emuldata *ied;

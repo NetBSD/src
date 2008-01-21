@@ -1,4 +1,4 @@
-/*	$NetBSD: bugdev.c,v 1.9 2005/07/03 22:22:50 he Exp $	*/
+/*	$NetBSD: bugdev.c,v 1.9.2.1 2008/01/21 09:37:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ bugscstrategy(void *devdata, int func, daddr_t dblk, size_t size, void *buf,
 
 	*rsize = dio.blk_cnt * BUG_BLOCK_SIZE;
 #ifdef DEBUG
-printf("rsize %d status %x\n", *rsize, dio.status);
+	printf("rsize %d status %x\n", *rsize, dio.status);
 #endif
 
 	if (dio.status)
@@ -159,6 +159,7 @@ printf("rsize %d status %x\n", *rsize, dio.status);
 int
 bugscopen(struct open_file *f, ...)
 {
+
 #ifdef DEBUG
 	printf("bugscopen:\n");
 #endif
@@ -177,6 +178,7 @@ bugscopen(struct open_file *f, ...)
 int
 bugscclose(struct open_file *f)
 {
+
 	return EIO;
 }
 
@@ -184,6 +186,7 @@ bugscclose(struct open_file *f)
 int
 bugscioctl(struct open_file *f, u_long cmd, void *data)
 {
+
 	return EIO;
 }
 
@@ -192,27 +195,27 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 {
 	int i;
 
-	lp->d_magic   = (u_int32_t)clp->magic1;
-	lp->d_type    = (u_int16_t)clp->type;
-	lp->d_subtype = (u_int16_t)clp->subtype;
+	lp->d_magic   = (uint32_t)clp->magic1;
+	lp->d_type    = (uint16_t)clp->type;
+	lp->d_subtype = (uint16_t)clp->subtype;
 
 	memcpy(lp->d_typename, clp->vid_vd, 16);
 	memcpy(lp->d_packname, clp->packname, 16);
 
-	lp->d_secsize        = (u_int32_t)clp->cfg_psm;
-	lp->d_nsectors       = (u_int32_t)clp->cfg_spt;
-	lp->d_ncylinders     = (u_int32_t)clp->cfg_trk; /* trk is num of cyl! */
-	lp->d_ntracks        = (u_int32_t)clp->cfg_hds;
-	lp->d_secpercyl      = (u_int32_t)clp->secpercyl;
-	lp->d_secperunit     = (u_int32_t)clp->secperunit;
-	lp->d_sparespertrack = (u_int16_t)clp->sparespertrack;
-	lp->d_sparespercyl   = (u_int16_t)clp->sparespercyl;
-	lp->d_acylinders     = (u_int32_t)clp->acylinders;
-	lp->d_rpm            = (u_int16_t)clp->rpm;
-	lp->d_interleave     = (u_int16_t)clp->cfg_ilv;
-	lp->d_trackskew      = (u_int16_t)clp->cfg_sof;
-	lp->d_cylskew        = (u_int16_t)clp->cylskew;
-	lp->d_headswitch     = (u_int32_t)clp->headswitch;
+	lp->d_secsize        = (uint32_t)clp->cfg_psm;
+	lp->d_nsectors       = (uint32_t)clp->cfg_spt;
+	lp->d_ncylinders     = (uint32_t)clp->cfg_trk; /* trk is num of cyl! */
+	lp->d_ntracks        = (uint32_t)clp->cfg_hds;
+	lp->d_secpercyl      = (uint32_t)clp->secpercyl;
+	lp->d_secperunit     = (uint32_t)clp->secperunit;
+	lp->d_sparespertrack = (uint16_t)clp->sparespertrack;
+	lp->d_sparespercyl   = (uint16_t)clp->sparespercyl;
+	lp->d_acylinders     = (uint32_t)clp->acylinders;
+	lp->d_rpm            = (uint16_t)clp->rpm;
+	lp->d_interleave     = (uint16_t)clp->cfg_ilv;
+	lp->d_trackskew      = (uint16_t)clp->cfg_sof;
+	lp->d_cylskew        = (uint16_t)clp->cylskew;
+	lp->d_headswitch     = (uint32_t)clp->headswitch;
 
 	/* this silly table is for winchester drives */
 	switch (clp->cfg_ssr) {
@@ -235,24 +238,24 @@ cputobsdlabel(struct disklabel *lp, struct cpu_disklabel *clp)
 		lp->d_trkseek = 0;
 		break;
 	}
-	lp->d_flags = (u_int32_t)clp->flags;
+	lp->d_flags = (uint32_t)clp->flags;
 
 	for (i = 0; i < NDDATA; i++)
-		lp->d_drivedata[i] = (u_int32_t)clp->drivedata[i];
+		lp->d_drivedata[i] = (uint32_t)clp->drivedata[i];
 
 	for (i = 0; i < NSPARE; i++)
-		lp->d_spare[i] = (u_int32_t)clp->spare[i];
+		lp->d_spare[i] = (uint32_t)clp->spare[i];
 
-	lp->d_magic2      = (u_int32_t)clp->magic2;
-	lp->d_checksum    = (u_int16_t)clp->checksum;
-	lp->d_npartitions = (u_int16_t)clp->partitions;
-	lp->d_bbsize      = (u_int32_t)clp->bbsize;
-	lp->d_sbsize      = (u_int32_t)clp->sbsize;
+	lp->d_magic2      = (uint32_t)clp->magic2;
+	lp->d_checksum    = (uint16_t)clp->checksum;
+	lp->d_npartitions = (uint16_t)clp->partitions;
+	lp->d_bbsize      = (uint32_t)clp->bbsize;
+	lp->d_sbsize      = (uint32_t)clp->sbsize;
 
 	memcpy(&(lp->d_partitions[0]), clp->vid_4,
 	    sizeof(struct partition) * 4);
 
 	/* CONSTCOND */
 	memcpy(&(lp->d_partitions[4]), clp->cfg_4, sizeof(struct partition)
-		* ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
+	    * ((MAXPARTITIONS < 16) ? (MAXPARTITIONS - 4) : 12));
 }

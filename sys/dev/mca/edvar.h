@@ -1,4 +1,4 @@
-/*	$NetBSD: edvar.h,v 1.9.4.1 2006/06/21 15:04:46 yamt Exp $	*/
+/*	$NetBSD: edvar.h,v 1.9.4.2 2008/01/21 09:43:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,6 +32,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/simplelock.h>
 
 struct edc_mca_softc;
 

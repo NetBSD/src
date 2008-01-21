@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.6.4.7 2007/12/07 17:30:25 yamt Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.6.4.8 2008/01/21 09:44:04 yamt Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.6.4.7 2007/12/07 17:30:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.6.4.8 2008/01/21 09:44:04 yamt Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -94,7 +94,6 @@ static const struct ieee80211_rateset wpi_rateset_11g =
 static int  wpi_match(device_t, struct cfdata *, void *);
 static void wpi_attach(device_t, device_t, void *);
 static int  wpi_detach(device_t , int);
-static void wpi_power(int, void *);
 static int  wpi_dma_contig_alloc(bus_dma_tag_t, struct wpi_dma_info *,
 	void **, bus_size_t, bus_size_t, int);
 static void wpi_dma_contig_free(struct wpi_dma_info *);
@@ -164,6 +163,9 @@ static int  wpi_reset(struct wpi_softc *);
 static void wpi_hw_config(struct wpi_softc *);
 static int  wpi_init(struct ifnet *);
 static void wpi_stop(struct ifnet *, int);
+static bool wpi_resume(device_t);
+static int	wpi_getrfkill(struct wpi_softc *);
+static void wpi_sysctlattach(struct wpi_softc *);
 
 CFATTACH_DECL_NEW(wpi, sizeof (struct wpi_softc), wpi_match, wpi_attach,
 	wpi_detach, NULL);
@@ -212,10 +214,7 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
 
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
+	pci_disable_retry(pa->pa_pc, pa->pa_tag);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
@@ -343,8 +342,12 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	sc->amrr.amrr_min_success_threshold = 1;
 	sc->amrr.amrr_max_success_threshold = 15;
 
-	/* set powerhook */
-	sc->powerhook = powerhook_establish(device_xname(self), wpi_power, sc);
+	wpi_sysctlattach(sc);
+
+	if (!pmf_device_register(self, NULL, wpi_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 
 #if NBPFILTER > 0
 	bpfattach2(ifp, DLT_IEEE802_11_RADIO,
@@ -404,32 +407,6 @@ wpi_detach(device_t self, int flags __unused)
 	bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_sz);
 
 	return 0;
-}
-
-static void
-wpi_power(int why, void *arg)
-{
-	struct wpi_softc *sc = arg;
-	struct ifnet *ifp;
-	pcireg_t data;
-	int s;
-
-	if (why != PWR_RESUME)
-		return;
-
-	/* clear device specific PCI configuration register 0x41 */
-	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, 0x40);
-	data &= ~0x0000ff00;
-	pci_conf_write(sc->sc_pct, sc->sc_pcitag, 0x40, data);
-
-	s = splnet();
-	ifp = sc->sc_ic.ic_ifp;
-	if (ifp->if_flags & IFF_UP) {
-		ifp->if_init(ifp);
-		if (ifp->if_flags & IFF_RUNNING)
-			ifp->if_start(ifp);
-	}
-	splx(s);
 }
 
 static int
@@ -813,10 +790,8 @@ wpi_node_alloc(struct ieee80211_node_table *nt __unused)
 {
 	struct wpi_node *wn;
 
-	wn = malloc(sizeof (struct wpi_node), M_DEVBUF, M_NOWAIT);
+	wn = malloc(sizeof (struct wpi_node), M_80211_NODE, M_NOWAIT | M_ZERO);
 
-	if (wn != NULL)
-		memset(wn, 0, sizeof (struct wpi_node));
 	return (struct ieee80211_node *)wn;
 }
 
@@ -3064,13 +3039,9 @@ wpi_init(struct ifnet *ifp)
 	}
 
 	/* Check the status of the radio switch */
-	wpi_mem_lock(sc);
-	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
-	wpi_mem_unlock(sc);
-
-	if (!(tmp & 0x01)) {
+	if (wpi_getrfkill(sc)) {
 		aprint_error_dev(sc->sc_dev, "Radio is disabled by hardware switch\n");
-		error = EPERM; // XXX
+		error = EBUSY; 
 		goto fail1;
 	}
 
@@ -3152,4 +3123,92 @@ wpi_stop(struct ifnet *ifp, int disable)
 
 	tmp = WPI_READ(sc, WPI_RESET);
 	WPI_WRITE(sc, WPI_RESET, tmp | WPI_SW_RESET);
+}
+
+static bool
+wpi_resume(device_t dv)
+{
+	struct wpi_softc *sc = device_private(dv);
+
+	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
+	(void)wpi_reset(sc);
+
+	return true;
+}
+
+/*
+ * Return whether or not the radio is enabled in hardware
+ * (i.e. the rfkill switch is "off").
+ */
+static int
+wpi_getrfkill(struct wpi_softc *sc)
+{
+	uint32_t tmp;
+
+	wpi_mem_lock(sc);
+	tmp = wpi_mem_read(sc, WPI_MEM_RFKILL);
+	wpi_mem_unlock(sc);
+
+	return !(tmp & 0x01);
+}
+
+static int
+wpi_sysctl_radio(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct wpi_softc *sc;
+	int val, error;
+
+	node = *rnode;
+	sc = (struct wpi_softc *)node.sysctl_data;
+
+	val = !wpi_getrfkill(sc);
+
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	return 0;
+}
+
+static void
+wpi_sysctlattach(struct wpi_softc *sc)
+{
+	int rc;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	struct sysctllog **clog = &sc->sc_sysctllog;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "hw", NULL,
+	    NULL, 0, NULL, 0, CTL_HW, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, device_xname(sc->sc_dev),
+	    SYSCTL_DESCR("wpi controls and statistics"),
+	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_INT, "radio",
+	    SYSCTL_DESCR("radio transmitter switch state (0=off, 1=on)"),
+	    wpi_sysctl_radio, 0, sc, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+
+#ifdef WPI_DEBUG
+	/* control debugging printfs */
+	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &wpi_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
+		goto err;
+#endif
+
+	return;
+err:
+	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }

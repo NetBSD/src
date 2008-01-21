@@ -1,4 +1,4 @@
-#	$NetBSD: NAPPI,v 1.16.4.2 2006/12/30 20:45:49 yamt Exp $
+#	$NetBSD: NAPPI,v 1.16.4.3 2008/01/21 09:36:07 yamt Exp $
 #
 #	NAPPI -- Netwise APlication Platform Board Kernel
 #
@@ -124,12 +124,11 @@ options 	USERCONF	# userconf(4) support
 options 	DIAGNOSTIC	# internally consistency checks
 options 	DEBUG
 options 	PMAP_DEBUG	# Enable pmap_debug_level code
-#options 	IPKDB		# remote kernel debugging
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
-options 	SYMTAB_SPACE=200000
+options 	SYMTAB_SPACE=280000
 
 config		netbsd		root on ? type ?
 

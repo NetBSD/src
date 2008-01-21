@@ -1,4 +1,4 @@
-/* $NetBSD: pic_bebox.c,v 1.2.4.2 2007/10/27 11:25:32 yamt Exp $ */
+/* $NetBSD: pic_bebox.c,v 1.2.4.3 2008/01/21 09:35:56 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.2.4.2 2007/10/27 11:25:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_bebox.c,v 1.2.4.3 2008/01/21 09:35:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -60,7 +60,7 @@ extern paddr_t bebox_mb_reg;
 
 static void bebox_enable_irq(struct pic_ops *, int, int);
 static void bebox_disable_irq(struct pic_ops *, int);
-static int bebox_get_irq(struct pic_ops *);
+static int bebox_get_irq(struct pic_ops *, int);
 static void bebox_ack_irq(struct pic_ops *, int);
 struct pic_ops * setup_bebox_intr(void); 
 
@@ -100,7 +100,7 @@ bebox_disable_irq(struct pic_ops *pic, int irq)
 }
 
 static int
-bebox_get_irq(struct pic_ops *pic)
+bebox_get_irq(struct pic_ops *pic, int mode)
 {
 	int irq;
 

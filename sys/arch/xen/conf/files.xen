@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.25.2.6 2007/12/07 17:27:04 yamt Exp $
+#	$NetBSD: files.xen,v 1.25.2.7 2008/01/21 09:40:20 yamt Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -40,22 +40,22 @@ file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
 file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
-file	arch/xen/i386/gdt.c
+file	arch/i386/i386/dumpsys.c
+file	arch/i386/i386/gdt.c
 file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
-file	arch/xen/i386/machdep.c
+file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
-file	arch/i386/i386/math_emulate.c	math_emulate
+file	arch/x86/x86/x86_identcpu.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
-file	arch/xen/i386/pmap.c
+file	arch/x86/x86/pmap.c
 file	arch/i386/i386/process_machdep.c
 file	arch/i386/i386/procfs_machdep.c	procfs
 file	arch/i386/i386/syscall.c
 file	arch/i386/i386/trap.c
 file	arch/i386/i386/vm_machdep.c
-file	arch/xen/i386/xpmap.c
 file	arch/i386/i386/lock_stubs.S
 
 file	arch/i386/i386/mptramp.S		multiprocessor
@@ -79,7 +79,7 @@ file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
-file	arch/amd64/amd64/math_emulate.c math_emulate
+file	arch/x86/x86/x86_identcpu.c
 file	arch/amd64/amd64/mem.c
 file	arch/x86/x86/pmap.c
 file	arch/amd64/amd64/process_machdep.c
@@ -148,9 +148,9 @@ include	"arch/xen/conf/files.compat"
 # BIOS32 routines
 define	bios32
 ifdef i386
-file	arch/xen/i386/bios32.c		bios32 needs-flag
+file	arch/i386/i386/bios32.c		bios32 needs-flag
 elifdef amd64
-file	arch/amd64/amd64/bios32.c		bios32 needs-flag
+file	arch/amd64/amd64/bios32.c	bios32 needs-flag
 endif
 
 # xen specific mainbus attributes
@@ -189,7 +189,7 @@ file arch/xen/xenbus/xenbus_xs.c xenbus & xen3 needs-flag
 ifdef i386
 # Numeric Processing Extension; Math Co-processor
 device	npx
-file	arch/xen/i386/npx.c		npx needs-flag
+file	arch/i386/isa/npx.c		npx needs-flag
 
 attach	npx at xendevbus with npx_hv
 file	arch/xen/i386/npx_hv.c		npx_hv

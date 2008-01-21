@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.12.3 2007/12/07 17:25:07 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.12.4 2008/01/21 09:37:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.12.3 2007/12/07 17:25:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.12.4 2008/01/21 09:37:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ cpu_configure(void)
 
 	/* Start configuration */
 	splhigh();
-	softintr_init();
 	intr_init();
 
 	if (config_rootfound("mainbus", NULL) == NULL)

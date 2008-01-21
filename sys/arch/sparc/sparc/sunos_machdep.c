@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_machdep.c,v 1.14.16.3 2007/09/03 14:30:07 yamt Exp $	*/
+/*	$NetBSD: sunos_machdep.c,v 1.14.16.4 2008/01/21 09:39:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.14.16.3 2007/09/03 14:30:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_machdep.c,v 1.14.16.4 2008/01/21 09:39:27 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -182,10 +182,9 @@ void sunos_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 int
-sunos_sys_sigreturn(register struct lwp *l, void *v, register_t *retval)
+sunos_sys_sigreturn(struct lwp *l, const struct sunos_sys_sigreturn_args *uap, register_t *retval)
 {
-	struct sunos_sys_sigreturn_args *uap = v;
 
 	return (compat_13_sys_sigreturn(l,
-			(struct compat_13_sys_sigreturn_args *)uap, retval));
+			(const struct compat_13_sys_sigreturn_args *)uap, retval));
 }

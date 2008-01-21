@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.6.16.1 2007/09/03 14:22:37 yamt Exp $	*/
+/*	$NetBSD: frame.h,v 1.6.16.2 2008/01/21 09:35:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -79,6 +79,7 @@
 
 #include <sys/signal.h>
 #include <machine/fpu.h>
+#include <machine/frame_regs.h>
 
 /*
  * System stack frames.
@@ -87,70 +88,18 @@
 /*
  * Exception/Trap Stack Frame
  */
+#define tf(reg, REG, idx) uint64_t tf_##reg;
 struct trapframe {
-	uint64_t	tf_rdi;
-	uint64_t	tf_rsi;
-	uint64_t	tf_rdx;
-	uint64_t	tf_rcx;
-	uint64_t	tf_r8;
-	uint64_t 	tf_r9;
-	uint64_t	tf_r10;
-	uint64_t 	tf_r11;
-	uint64_t 	tf_r12;
-	uint64_t 	tf_r13;
-	uint64_t 	tf_r14;
-	uint64_t 	tf_r15;
-	uint64_t	tf_rbp;
-	uint64_t	tf_rbx;
-	uint64_t	tf_rax;
-	uint64_t	tf_gs;
-	uint64_t	tf_fs;
-	uint64_t	tf_es;
-	uint64_t	tf_ds;
-	uint64_t	tf_trapno;
-	/* below portion defined in hardware */
-	uint64_t	tf_err;
-	uint64_t	tf_rip;
-	uint64_t	tf_cs;
-	uint64_t	tf_rflags;
-	/* These are pushed unconditionally on the x86-64 */
-	uint64_t	tf_rsp;
-	uint64_t	tf_ss;
+    _FRAME_REG(tf, tf)
 };
+#undef tf
 
 /*
  * Interrupt stack frame
  */
 struct intrframe {
-	uint64_t	if_ppl;
-	uint64_t	if_rdi;
-	uint64_t	if_rsi;
-	uint64_t	if_rdx;
-	uint64_t	if_rcx;
-	uint64_t	if_r8;
-	uint64_t	if_r9;
-	uint64_t	if_r10;
-	uint64_t	if_r11;
-	uint64_t	if_r12;
-	uint64_t	if_r13;
-	uint64_t	if_r14;
-	uint64_t	if_r15;
-	uint64_t	if_rbp;
-	uint64_t	if_rbx;
-	uint64_t	if_rax;
-	uint64_t	tf_gs;
-	uint64_t	tf_fs;
-	uint64_t	tf_es;
-	uint64_t	tf_ds;
-	u_int64_t __if_trapno; /* for compat with trap frame - trapno */
-	u_int64_t __if_err;	/* for compat with trap frame - err */
-	/* below portion defined in hardware */
-	uint64_t	if_rip;
-	uint64_t	if_cs;
-	uint64_t	if_rflags;
-	/* These are pushed unconditionally on the x86-64 */
-	uint64_t	if_rsp;
-	uint64_t	if_ss;
+	uint64_t	if_ppl;		/* Old interrupt mask level */
+	struct trapframe if_tf;
 };
 
 /*

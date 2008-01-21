@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_kmem.c,v 1.5.4.1 2006/06/21 14:58:51 yamt Exp $ */
+/*	$NetBSD: irix_kmem.c,v 1.5.4.2 2008/01/21 09:41:03 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.5.4.1 2006/06/21 14:58:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_kmem.c,v 1.5.4.2 2008/01/21 09:41:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,10 +78,7 @@ const struct cdevsw irix_kmem_cdevsw = {
 };
 
 void
-irix_kmemattach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+irix_kmemattach(struct device *parent, struct device *self, void *aux)
 {
 	return;
 }
@@ -96,10 +93,7 @@ irix_kmemopen(dev, flags, fmt, l)
 }
 
 int
-irix_kmemread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+irix_kmemread(dev_t dev, struct uio *uio, int flag)
 {
 	void *buf = NULL;
 	off_t buflen = 0;
@@ -135,10 +129,7 @@ irix_kmemread(dev, uio, flag)
 }
 
 int
-irix_kmemwrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+irix_kmemwrite(dev_t dev, struct uio *uio, int flag)
 {
 	return 0;
 }

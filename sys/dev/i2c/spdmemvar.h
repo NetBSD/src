@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.1.8.2 2007/09/03 14:34:06 yamt Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.1.8.3 2008/01/21 09:42:51 yamt Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -53,7 +53,7 @@ struct spdmem_fpm {				/* FPM and EDO DIMMS */
 	uint8_t	fpm_unused2[17];
 	uint8_t	fpm_superset;
 	uint8_t fpm_unused3[30];
-} __attribute__((__packed__));
+} __packed;
 
 struct spdmem_sdram {				/* PC66/PC100/PC133 SDRAM */
 	SPD_BITFIELD(				\
@@ -119,7 +119,7 @@ struct spdmem_sdram {				/* PC66/PC100/PC133 SDRAM */
 	uint8_t	sdr_esdram;
 	uint8_t	sdr_super_tech;
 	uint8_t	sdr_spdrev;
-} __attribute__((__packed__));
+} __packed;
 
 struct spdmem_rom {
 	uint8_t rom_rows;
@@ -136,7 +136,7 @@ struct spdmem_rom {
 	uint8_t	rom_burstlength;
 	uint8_t rom_unused2[14];
 	uint8_t	rom_superset[31];
-} __attribute__((__packed__));
+} __packed;
 
 
 struct spdmem_ddr {				/* Dual Data Rate SDRAM */
@@ -206,7 +206,7 @@ struct spdmem_ddr {				/* Dual Data Rate SDRAM */
 	uint8_t	ddr_unused3;
 	uint8_t	ddr_height;
 	uint8_t ddr_unused4[15];
-} __attribute__((__packed__));
+} __packed;
 
 struct spdmem_ddr2 {				/* Dual Data Rate 2 SDRAM */
 	SPD_BITFIELD(				\
@@ -292,7 +292,7 @@ struct spdmem_ddr2 {				/* Dual Data Rate 2 SDRAM */
 	uint8_t	ddr2_dt_PLL_Active;
 	uint8_t	ddr2_dt_Reg_Active;
 	uint8_t ddr2_spdrev;
-} __attribute__((__packed__));
+} __packed;
 
 struct spdmem_fbdimm {				/* Fully-buffered DIMM */
 	SPD_BITFIELD(				\
@@ -368,14 +368,14 @@ struct spdmem_fbdimm {				/* Fully-buffered DIMM */
 	uint8_t	fbdimm_DT5B;
 	uint8_t	fbdimm_DT7;
 	uint8_t	fbdimm_unused4[21];
-} __attribute__((__packed__));
+} __packed;
 
 struct spdmem_rambus {				/* Direct Rambus DRAM */
 	SPD_BITFIELD(				\
 		uint8_t	rdr_rows:4,		\
 		uint8_t	rdr_cols:4, ,		\
 	);
-} __attribute__((__packed__));
+} __packed;
 
 struct spdmem {
 	uint8_t sm_len;
@@ -398,7 +398,7 @@ struct spdmem {
 #define	sm_rom		sm_u1.u1_rom
 #define	sm_sdr		sm_u1.u1_sdr
 	uint8_t	sm_cksum;
-} __attribute__((__packed__));
+} __packed;
 
 /* some fields are in the same place for all memory types */
 

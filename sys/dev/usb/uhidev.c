@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.27.2.5 2007/12/07 17:31:36 yamt Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.27.2.6 2008/01/21 09:44:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27.2.5 2007/12/07 17:31:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.27.2.6 2008/01/21 09:44:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +122,9 @@ USB_ATTACH(uhidev)
 	aprint_normal("%s: %s, iclass %d/%d\n", USBDEVNAME(sc->sc_dev),
 	       devinfop, id->bInterfaceClass, id->bInterfaceSubClass);
 	usbd_devinfo_free(devinfop);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	(void)usbd_set_idle(iface, 0, 0);
 #if 0
@@ -399,6 +402,8 @@ USB_DETACH(uhidev)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	pmf_device_deregister(self);
 
 	return (rv);
 }

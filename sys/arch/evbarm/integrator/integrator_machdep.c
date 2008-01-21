@@ -1,4 +1,4 @@
-/*	$NetBSD: integrator_machdep.c,v 1.53.10.1 2006/06/21 14:50:47 yamt Exp $	*/
+/*	$NetBSD: integrator_machdep.c,v 1.53.10.2 2008/01/21 09:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001,2002 ARM Ltd
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.53.10.1 2006/06/21 14:50:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.53.10.2 2008/01/21 09:36:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -103,7 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: integrator_machdep.c,v 1.53.10.1 2006/06/21 14:50:47
 
 #include <evbarm/integrator/integrator_boot.h>
 
-#include "opt_ipkdb.h"
 #include "pci.h"
 #include "ksyms.h"
 
@@ -130,11 +129,7 @@ u_int cpu_reset_address = (u_int) ifpga_reset;
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 BootConfig bootconfig;		/* Boot config storage */
 char *boot_args = NULL;
@@ -784,13 +779,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n");
-#endif
-
-#ifdef IPKDB
-	/* Initialise ipkdb */
-	ipkdb_init();
-	if (boothowto & RB_KDB)
-		ipkdb_connect(0);
 #endif
 
 #if NKSYMS || defined(DDB) || defined(LKM)

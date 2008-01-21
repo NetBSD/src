@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.13 2005/05/29 22:10:28 christos Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.13.2.1 2008/01/21 09:42:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -171,9 +171,9 @@ void	ad1848_reset(struct ad1848_softc *);
 int	ad1848_open(void *, int);
 void	ad1848_close(void *);
 
-int	ad1848_mixer_get_port(struct ad1848_softc *, ad1848_devmap_t *,
+int	ad1848_mixer_get_port(struct ad1848_softc *, const ad1848_devmap_t *,
 	    int, mixer_ctrl_t *);
-int	ad1848_mixer_set_port(struct ad1848_softc *, ad1848_devmap_t *,
+int	ad1848_mixer_set_port(struct ad1848_softc *, const ad1848_devmap_t *,
 	    int, mixer_ctrl_t *);
 int	ad1848_set_speed(struct ad1848_softc *, u_int *);
 void	ad1848_mute_wave_output(struct ad1848_softc *, int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.1.16.4 2007/09/03 14:32:31 yamt Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.1.16.5 2008/01/21 09:41:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1995-2006  The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.1.16.4 2007/09/03 14:32:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.1.16.5 2008/01/21 09:41:37 yamt Exp $");
 
 #include "opt_compat_linux32.h"
 
@@ -69,15 +69,13 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.1.16.4 2007/09/03 14:32:31 yam
 #include <compat/linux/linux_syscallargs.h>
 
 int
-linux32_ioctl_termios(l, uap, retval)
-	struct lwp *l;
-	struct linux32_sys_ioctl_args /* {
+linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, register_t *retval)
+{
+	/* {
 		syscallarg(int) fd;
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_charp) data;
-	} */ *uap;
-	register_t *retval;
-{
+	} */
 	struct file *fp;
 	struct filedesc *fdp;
 	u_long com;

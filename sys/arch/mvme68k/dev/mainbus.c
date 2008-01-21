@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.17 2003/07/15 02:43:46 lukem Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.17.16.1 2008/01/21 09:37:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2003/07/15 02:43:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17.16.1 2008/01/21 09:37:37 yamt Exp $");
 
 #include "vmetwo.h"
 
@@ -67,9 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.17 2003/07/15 02:43:46 lukem Exp $");
 #endif
 #endif
 
-void mainbus_attach __P((struct device *, struct device *, void *));
-int mainbus_match __P((struct device *, struct cfdata *, void *));
-int mainbus_print __P((void *, const char *));
+void mainbus_attach(struct device *, struct device *, void *);
+int mainbus_match(struct device *, struct cfdata *, void *);
+int mainbus_print(void *, const char *);
 
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
@@ -129,25 +129,19 @@ struct mvme68k_bus_space_tag _mainbus_space_tag = {
 
 /* ARGSUSED */
 int
-mainbus_match(parent, cf, args)
-	struct device *parent;
-	struct cfdata *cf;
-	void *args;
+mainbus_match(struct device *parent, struct cfdata *cf, void *args)
 {
 	static int mainbus_matched;
 
 	if (mainbus_matched)
-		return (0);
+		return 0;
 
-	return ((mainbus_matched = 1));
+	return (mainbus_matched = 1);
 }
 
 /* ARGSUSED */
 void
-mainbus_attach(parent, self, args)
-	struct device *parent;
-	struct device *self;
-	void *args;
+mainbus_attach(struct device *parent, struct device *self, void *args)
 {
 	struct mainbus_attach_args ma;
 	struct mainbus_devices *devices;
@@ -194,7 +188,7 @@ mainbus_attach(parent, self, args)
 		    && machineid != MVME_147
 #endif
 		    ) {
-			(void) vmetwo_probe(&_mainbus_space_tag,
+			(void)vmetwo_probe(&_mainbus_space_tag,
 			    intiobase_phys + MAINBUS_VMETWO_OFFSET);
 			continue;
 		}
@@ -205,7 +199,7 @@ mainbus_attach(parent, self, args)
 		ma.ma_bust = &_mainbus_space_tag;
 		ma.ma_offset = devices[i].md_offset + intiobase_phys;
 
-		(void) config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print);
 	}
 
 
@@ -225,9 +219,9 @@ mainbus_attach(parent, self, args)
 		ma.ma_dmat = &_mainbus_dma_tag;
 		ma.ma_bust = &_mainbus_space_tag;
 		ma.ma_offset = MAINBUS_MEMC1_OFFSET + intiobase_phys;
-		(void) config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print);
 		ma.ma_offset = MAINBUS_MEMC2_OFFSET + intiobase_phys;
-		(void) config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print);
 	}
 #endif
 
@@ -243,15 +237,13 @@ mainbus_attach(parent, self, args)
 		ma.ma_dmat = &_mainbus_dma_tag;
 		ma.ma_bust = &_mainbus_space_tag;
 		ma.ma_offset = MAINBUS_IPACK_OFFSET + intiobase_phys;
-		(void) config_found(self, &ma, mainbus_print);
+		(void)config_found(self, &ma, mainbus_print);
 	}
 #endif
 }
 
 int
-mainbus_print(aux, cp)
-	void *aux;
-	const char *cp;
+mainbus_print(void *aux, const char *cp)
 {
 	struct mainbus_attach_args *ma;
 
@@ -262,5 +254,5 @@ mainbus_print(aux, cp)
 
 	aprint_normal(" address 0x%lx", ma->ma_offset);
 
-	return (UNCONF);
+	return UNCONF;
 }

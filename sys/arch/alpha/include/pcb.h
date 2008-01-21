@@ -1,4 +1,4 @@
-/* $NetBSD: pcb.h,v 1.12.18.2 2007/09/03 14:22:24 yamt Exp $ */
+/* $NetBSD: pcb.h,v 1.12.18.3 2008/01/21 09:35:11 yamt Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 #endif
 
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 #include <machine/frame.h>
 #include <machine/reg.h>

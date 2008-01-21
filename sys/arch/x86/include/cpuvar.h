@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.3.16.4 2007/12/07 17:26:56 yamt Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.3.16.5 2008/01/21 09:40:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #define	_X86_CPUVAR_H_
 
 struct cpu_functions {
-	int (*start)(struct cpu_info *);
+	int (*start)(struct cpu_info *, paddr_t);
 	int (*stop)(struct cpu_info *);
 	void (*cleanup)(struct cpu_info *);
 };
@@ -110,7 +110,9 @@ int x86_ipi_init(int);
 void x86_errata(void);
 
 void identifycpu(struct cpu_info *);
+void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
+void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
 
 #ifdef INTEL_CORETEMP

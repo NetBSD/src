@@ -1,4 +1,4 @@
-/*	$NetBSD: ds17485.c,v 1.2.4.2 2007/10/27 11:26:00 yamt Exp $	*/
+/*	$NetBSD: ds17485.c,v 1.2.4.3 2008/01/21 09:36:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.2.4.2 2007/10/27 11:26:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds17485.c,v 1.2.4.3 2008/01/21 09:36:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,7 +219,6 @@ rtc_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_year0 = 1900;
 	mc146818_attach(sc);
 
-	todr_attach(&sc->sc_handle);
 	/* printf(": Dallas Semiconductor DS17485\n"); */
 	printf("\n");
 }

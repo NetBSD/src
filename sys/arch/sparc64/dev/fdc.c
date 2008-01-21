@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc.c,v 1.1.8.6 2007/12/07 17:26:24 yamt Exp $	*/
+/*	$NetBSD: fdc.c,v 1.1.8.7 2008/01/21 09:39:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -108,7 +108,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.1.8.6 2007/12/07 17:26:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc.c,v 1.1.8.7 2008/01/21 09:39:29 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -2327,12 +2327,13 @@ fdformat(dev_t dev, struct ne7_fd_formb *finfo, struct proc *p)
 	struct buf *bp;
 
 	/* set up a buffer header for fdstrategy() */
-	bp = getiobuf_nowait();
+	bp = getiobuf(NULL, false);
 	if (bp == NULL)
 		return ENOBUFS;
 
 	bp->b_vp = NULL;
-	bp->b_flags = B_BUSY | B_PHYS | B_FORMAT;
+	bp->b_cflags = BC_BUSY;
+	bp->b_flags = B_PHYS | B_FORMAT;
 	bp->b_proc = p;
 	bp->b_dev = dev;
 
@@ -2515,14 +2516,13 @@ fd_read_md_image(size_t	*sizep, void **addrp)
 		bp->b_error = 0;
 		bp->b_resid = 0;
 		bp->b_proc = NULL;
-		bp->b_flags = B_BUSY | B_PHYS | B_RAW | B_READ;
+		bp->b_cflags = BC_BUSY;
+		bp->b_flags = B_PHYS | B_RAW | B_READ;
 		bp->b_blkno = btodb(offset);
 		bp->b_bcount = DEV_BSIZE;
 		bp->b_data = addr;
 		fdstrategy(bp);
-		while ((bp->b_flags & B_DONE) == 0) {
-			tsleep((void *)bp, PRIBIO + 1, "physio", 0);
-		}
+		biowait(bp);
 		if (bp->b_error)
 			panic("fd: mountroot: fdread error %d", bp->b_error);
 

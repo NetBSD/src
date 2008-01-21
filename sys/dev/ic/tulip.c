@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.137.2.5 2007/10/27 11:31:08 yamt Exp $	*/
+/*	$NetBSD: tulip.c,v 1.137.2.6 2008/01/21 09:43:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.5 2007/10/27 11:31:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.137.2.6 2008/01/21 09:43:10 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1412,7 +1412,7 @@ tlp_rxintr(struct tulip_softc *sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack if its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -2247,7 +2247,7 @@ tlp_srom_size(struct tulip_softc *sc)
 	SROM_EMIT(sc, 0);
 
 	if (x < 4 || x > 12) {
-		printf("%s: broken MicroWire interface detected; "
+		aprint_debug("%s: broken MicroWire interface detected; "
 		    "setting SROM size to 1Kb\n", sc->sc_dev.dv_xname);
 		return (6);
 	} else {
@@ -3394,22 +3394,24 @@ static int
 tlp_mii_setmedia(struct tulip_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	int rc;
 
-	if (ifp->if_flags & IFF_UP) {
-		switch (sc->sc_chip) {
-		case TULIP_CHIP_21142:
-		case TULIP_CHIP_21143:
-			/* Disable the internal Nway engine. */
-			TULIP_WRITE(sc, CSR_SIATXRX, 0);
-			break;
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+	switch (sc->sc_chip) {
+	case TULIP_CHIP_21142:
+	case TULIP_CHIP_21143:
+		/* Disable the internal Nway engine. */
+		TULIP_WRITE(sc, CSR_SIATXRX, 0);
+		break;
 
-		default:
-			/* Nothing. */
-			break;
-		}
-		mii_mediachg(&sc->sc_mii);
+	default:
+		/* Nothing. */
+		break;
 	}
-	return (0);
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 /*

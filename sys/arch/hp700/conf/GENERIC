@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.47.2.5 2007/11/15 11:42:44 yamt Exp $
+# $NetBSD: GENERIC,v 1.47.2.6 2008/01/21 09:36:32 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -23,7 +23,7 @@ include 	"arch/hp700/conf/std.hp700"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.47.2.5 $"
+#ident 		"GENERIC-$Revision: 1.47.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -36,7 +36,7 @@ options 	HP7300LC_CPU		# PCX-L2
 #options 	HP8000_CPU		# PCX-U  (in 32bit mode)
 #options 	HP8200_CPU		# PCX-V/U+ (in 32bit mode)
 #options 	HP8500_CPU		# PCX-W  (in 32bit mode)
-#options	HP8600_CPU		# PCX-W+ (in 32bit mode)
+#options 	HP8600_CPU		# PCX-W+ (in 32bit mode)
 
 # CPU-related options.
 options 	FPEMUL		# floating point emulation XXX DO NOT REMOVE
@@ -53,7 +53,6 @@ options 	INSECURE	# disable kernel security levels
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -83,7 +82,6 @@ options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
 
-#options 	COMPAT_HPUX	# HP-UX binary compatibility
 #options 	COMPAT_OSF1	# OSF1 binary compatibility
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.

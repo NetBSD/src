@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.266.2.6 2007/12/07 17:23:49 yamt Exp $
+# $NetBSD: GENERIC,v 1.266.2.7 2008/01/21 09:35:10 yamt Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.266.2.6 $"
+ident		"GENERIC-$Revision: 1.266.2.7 $"
 
 maxusers 32
 
@@ -46,7 +46,6 @@ options 	API_UP1000	# EV6:		Alpha Processor, Inc. UP1000
 
 # Standard system options
 options 	KTRACE			# System call tracing support
-#options 	SYSTRACE		# System call vetting via systrace(1)
 options 	NTP			# kernel PLL for NTP
 
 # Enable experimental buffer queue strategy for better responsiveness under
@@ -748,4 +747,6 @@ pseudo-device	btuart			# Bluetooth HCI UART (H4)
 #options 	VERIFIED_EXEC_FP_SHA1
 #options 	VERIFIED_EXEC_FP_MD5
 
-options 	PAX_MPROTECT=0		# PaX mprotect(2) restrictions
+options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
+#options PAX_SEGVGUARD=0			# PaX Segmentation fault guard
+options PAX_ASLR=0			# PaX Address Space Layout Randomization

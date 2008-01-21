@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.8.2.6 2007/12/07 17:26:57 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.8.2.7 2008/01/21 09:40:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.6 2007/12/07 17:26:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.7 2008/01/21 09:40:10 yamt Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -136,11 +136,12 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.6 2007/12/07 17:26:57 yamt Exp $");
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/mutex.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
 
-#include <machine/cpu.h>
-#include <machine/intr.h>
 #include <machine/pio.h>
 #include <machine/cpufunc.h>
+#include <machine/lock.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -148,10 +149,9 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.6 2007/12/07 17:26:57 yamt Exp $");
 #include <dev/ic/i8253reg.h>
 #include <i386/isa/nvram.h>
 #include <x86/x86/tsc.h>
+#include <x86/lock.h>
 #include <dev/clock_subr.h>
 #include <machine/specialreg.h> 
-
-#include "config_time.h"		/* for CONFIG_TIME */
 
 #ifndef __x86_64__
 #include "mca.h"
@@ -166,9 +166,10 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.8.2.6 2007/12/07 17:26:57 yamt Exp $");
 
 int sysbeepmatch(struct device *, struct cfdata *, void *);
 void sysbeepattach(struct device *, struct device *, void *);
+int sysbeepdetach(device_t, int);
 
 CFATTACH_DECL(sysbeep, sizeof(struct device),
-    sysbeepmatch, sysbeepattach, NULL, NULL);
+    sysbeepmatch, sysbeepattach, sysbeepdetach, NULL);
 
 static int ppi_attached;
 static pcppi_tag_t ppicookie;
@@ -194,6 +195,7 @@ static void	rtcput(mc_todregs *);
 static int	cmoscheck(void);
 
 static int	clock_expandyear(int);
+int 		sysbeepdetach(device_t, int);
 
 static unsigned int	gettick_broken_latch(void);
 
@@ -428,7 +430,8 @@ i8254_get_timecount(struct timecounter *tc)
 	/* insb to make the read atomic */
 	insb(IO_TIMER1+TIMER_CNTR0, &rdval, 2);
 	count = rtclock_tval - rdval;
-	if (rtclock_tval && (count < i8254_lastcount || !i8254_ticked)) {
+	if (rtclock_tval && (count < i8254_lastcount &&
+			     (!i8254_ticked || rtclock_tval == 0xFFFF))) {
 		i8254_ticked = 1;
 		i8254_offset += rtclock_tval;
 	}
@@ -475,11 +478,6 @@ i8254_delay(unsigned int n)
 {
 	unsigned int cur_tick, initial_tick;
 	int remaining;
-	static const int delaytab[26] = {
-		 0,  2,  3,  4,  5,  6,  7,  9, 10, 11,
-		12, 13, 15, 16, 17, 18, 19, 21, 22, 23,
-		24, 25, 27, 28, 29, 30,
-	};
 
 	/* allow DELAY() to be used before startrtclock() */
 	if (!rtclock_init)
@@ -491,9 +489,7 @@ i8254_delay(unsigned int n)
 	 */
 	initial_tick = gettick();
 
-	if (n <= 25)
-		remaining = delaytab[n];
-	else if (n <= UINT_MAX / TIMER_FREQ) {
+	if (n <= UINT_MAX / TIMER_FREQ) {
 		/*
 		 * For unsigned arithmetic, division can be replaced with
 		 * multiplication with the inverse and a shift.
@@ -554,6 +550,17 @@ sysbeepattach(struct device *parent, struct device *self,
 
 	ppicookie = ((struct pcppi_attach_args *)aux)->pa_cookie;
 	ppi_attached = 1;
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
+
+int
+sysbeepdetach(device_t self, int flags)
+{
+	pmf_device_deregister(self);
+	ppi_attached = 0;
+	return 0;
 }
 #endif
 

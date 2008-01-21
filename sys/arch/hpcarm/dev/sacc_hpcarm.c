@@ -1,4 +1,4 @@
-/*      $NetBSD: sacc_hpcarm.c,v 1.2.2.2 2006/12/30 20:46:02 yamt Exp $	*/
+/*      $NetBSD: sacc_hpcarm.c,v 1.2.2.3 2008/01/21 09:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.2.2.2 2006/12/30 20:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_hpcarm.c,v 1.2.2.3 2008/01/21 09:36:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,14 +162,14 @@ sacc_intr(void *arg)
 					  SACCIC_INTSTATCLR0, 1 << i);
 
 			for (ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
-				softintr_schedule(ih->ih_soft);
+				softint_schedule(ih->ih_soft);
 		}
 	for (i = 0, mask = 1; i < SACCIC_LEN - 32; i++, mask <<= 1)
 		if (intstat.hi & mask) {
 			bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 					  SACCIC_INTSTATCLR1, 1 << i);
 			for (ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
-				softintr_schedule(ih->ih_soft);
+				softint_schedule(ih->ih_soft);
 		}
 	return 1;
 }

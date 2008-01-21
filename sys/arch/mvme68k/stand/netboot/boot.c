@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2005/06/28 21:03:02 junyoung Exp $ */
+/*	$NetBSD: boot.c,v 1.14.2.1 2008/01/21 09:37:50 yamt Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -47,13 +47,13 @@ extern	char bootprog_name[], bootprog_rev[];
 char	line[80];
 
 int
-main()
+main(void)
 {
 	char *cp, *file;
 	int ask = 0, howto, part, sboot = 0;
 
 	printf(">> %s MVME%x netboot (via %s) [%s]\n",
-		bootprog_name, bugargs.cputyp, bugargs.arg_start, bootprog_rev);
+	    bootprog_name, bugargs.cputyp, bugargs.arg_start, bootprog_rev);
 	if (memcmp("sboot", bugargs.arg_start, 5) == 0)
 		sboot = 1;
 	/* cycle in the correct args */
@@ -95,7 +95,7 @@ machdep_common_ether(u_char *ether)
 	if (bugargs.cputyp == CPU_147) {
 		ea = (u_char *) ETHER_ADDR_147;
 
-		if ((*(int *) ea & 0x2fffff00) == 0x2fffff00)
+		if ((*(int *)ea & 0x2fffff00) == 0x2fffff00)
 			panic("ERROR: ethernet address not set!");
 		ether[0] = 0x08;
 		ether[1] = 0x00;
@@ -104,7 +104,7 @@ machdep_common_ether(u_char *ether)
 		ether[4] = ea[1];
 		ether[5] = ea[2];
 	} else {
-		ea = (u_char *) ETHER_ADDR_16X;
+		ea = (u_char *)ETHER_ADDR_16X;
 
 		if (ea[0] + ea[1] + ea[2] + ea[3] + ea[4] + ea[5] == 0)
 			panic("ERROR: ethernet address not set!");

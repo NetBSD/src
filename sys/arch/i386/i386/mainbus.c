@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.59.2.3 2007/09/03 14:26:42 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.59.2.4 2008/01/21 09:37:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59.2.3 2007/09/03 14:26:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59.2.4 2008/01/21 09:37:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,12 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.59.2.3 2007/09/03 14:26:42 yamt Exp $"
 #endif
 #endif
 
+void	mainbus_childdetached(device_t, device_t);
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(mainbus, sizeof(struct device),
-    mainbus_match, mainbus_attach, NULL, NULL);
+CFATTACH_DECL2(mainbus, sizeof(struct device),
+    mainbus_match, mainbus_attach, NULL, NULL, NULL, mainbus_childdetached);
 
 int	mainbus_print(void *, const char *);
 
@@ -164,6 +165,11 @@ int mp_verbose = 0;
 #endif
 #endif
 
+void
+mainbus_childdetached(device_t self, device_t child)
+{
+	/* mainbus holds no pointers to its children, so this is ok */
+}
 
 /*
  * Probe for the mainbus; always succeeds.
@@ -373,6 +379,9 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	if (apm_busprobe())
 		config_found_ia(self, "apmbus", 0, 0);
 #endif
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 int

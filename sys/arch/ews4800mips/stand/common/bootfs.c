@@ -1,4 +1,4 @@
-/*	$NetBSD: bootfs.c,v 1.2.16.2 2006/06/21 14:51:20 yamt Exp $	*/
+/*	$NetBSD: bootfs.c,v 1.2.16.3 2008/01/21 09:36:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ bfs_open(const char *name, struct open_file *f)
 		return -3;
 	}
 
-	printf("%s: %s %d %d %d\n", __FUNCTION__, name, file->start,
+	printf("%s: %s %d %d %d\n", __func__, name, file->start,
 	    file->end, file->size);
 
 	f->f_fsdata = file;

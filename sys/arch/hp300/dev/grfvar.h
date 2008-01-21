@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.19.2.1 2007/09/03 14:25:09 yamt Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.19.2.2 2008/01/21 09:36:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -165,26 +165,6 @@ int	grfunmap(dev_t, void *, struct proc *);
 int	grfon(dev_t);
 int	grfoff(dev_t);
 paddr_t	grfaddr(struct grf_softc *, off_t);
-
-#ifndef _LKM
-#include "opt_compat_hpux.h"
-#endif
-
-#ifdef COMPAT_HPUX
-int	hpuxgrfioctl(dev_t, int, void *, int, struct proc *);
-
-int	grflock(struct grf_data *, int);
-int	grfunlock(struct grf_data *);
-int	grfdevno(dev_t);
-
-int	iommap(dev_t, void **);
-int	iounmmap(dev_t, void *);
-
-int	grffindpid(struct grf_data *);
-void	grfrmpid(struct grf_data *);
-int	grflckmmap(dev_t, void **);
-int	grflckunmmap(dev_t, void *);
-#endif /* COMPAT_HPUX */
 
 /* grf_subr.c prototypes */
 void	grfdev_attach(struct grfdev_softc *,

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.11.2.4 2007/12/07 17:27:25 yamt Exp $      */
+/*      $NetBSD: xennetback.c,v 1.11.2.5 2008/01/21 09:40:37 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -392,7 +392,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		if (error) {
 			pmap_remove(pmap_kernel(), ring_rxaddr,
 			    ring_rxaddr + PAGE_SIZE);
-			pmap_update();
+			pmap_update(pmap_kernel());
 fail_1:
 			uvm_km_free(kernel_map, ring_rxaddr, PAGE_SIZE,
 			    UVM_KMF_VAONLY);

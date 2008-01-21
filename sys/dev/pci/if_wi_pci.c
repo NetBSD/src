@@ -1,4 +1,4 @@
-/*      $NetBSD: if_wi_pci.c,v 1.37.2.2 2007/10/27 11:33:06 yamt Exp $  */
+/*      $NetBSD: if_wi_pci.c,v 1.37.2.3 2008/01/21 09:44:03 yamt Exp $  */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.37.2.2 2007/10/27 11:33:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wi_pci.c,v 1.37.2.3 2008/01/21 09:44:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,8 +92,7 @@ struct wi_pci_softc {
 	/* PCI-specific goo */
 	pci_intr_handle_t psc_ih;
 	pci_chipset_tag_t psc_pc;
-
-	void *sc_powerhook;		/* power hook descriptor */
+	pcitag_t psc_pcitag;
 };
 
 static int	wi_pci_match(struct device *, struct cfdata *, void *);
@@ -101,7 +100,6 @@ static void	wi_pci_attach(struct device *, struct device *, void *);
 static int	wi_pci_enable(struct wi_softc *);
 static void	wi_pci_disable(struct wi_softc *);
 static void	wi_pci_reset(struct wi_softc *);
-static void	wi_pci_powerhook(int, void *);
 
 static const struct wi_pci_product
 	*wi_pci_lookup(struct pci_attach_args *);
@@ -236,6 +234,7 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t memh, ioh, plxh, tmdh;
 
 	psc->psc_pc = pc;
+	psc->psc_pcitag = pa->pa_tag;
 
 	wpp = wi_pci_lookup(pa);
 #ifdef DIAGNOSTIC
@@ -383,19 +382,8 @@ wi_pci_attach(struct device *parent, struct device *self, void *aux)
 	if (!wpp->wpp_chip)
 		sc->sc_reset = wi_pci_reset;
 
-	/* Add a suspend hook to restore PCI config state */
-	psc->sc_powerhook = powerhook_establish(self->dv_xname,
-	    wi_pci_powerhook, psc);
-	if (psc->sc_powerhook == NULL)
-		printf("%s: WARNING: unable to establish pci power hook\n",
-		    self->dv_xname);
-}
-
-static void
-wi_pci_powerhook(int why, void *arg)
-{
-	struct wi_pci_softc *psc = arg;
-	struct wi_softc *sc = &psc->psc_wi;
-
-	wi_power(sc, why);
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, &sc->sc_if);
 }

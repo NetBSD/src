@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.12.10.1 2007/09/03 14:36:49 yamt Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.12.10.2 2008/01/21 09:43:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -178,10 +178,6 @@ struct esm_softc {
 
 	void			(*sc_rintr)(void *);
 	void			*sc_rarg;
-
-	/* Power Management */
-	char			esm_suspend;
-	void			*esm_powerhook;
 };
 
 enum esm_quirk_flags {
@@ -202,7 +198,6 @@ int	esm_attach_codec(void *, struct ac97_codec_if *);
 int	esm_reset_codec(void *);
 enum ac97_host_flags	esm_flags_codec(void *);
 
-void	esm_power(struct esm_softc *, int);
 void	esm_init(struct esm_softc *);
 void	esm_initcodec(struct esm_softc *);
 
@@ -234,9 +229,5 @@ int	esm_intr(void *);
 
 int	esm_allocmem(struct esm_softc *, size_t, size_t,
 	    struct esm_dma *);
-
-int	esm_suspend(struct esm_softc *);
-int	esm_resume(struct esm_softc *);
-int	esm_shutdown(struct esm_softc *);
 
 enum esm_quirk_flags	esm_get_quirks(pcireg_t);

@@ -1,4 +1,4 @@
-/* $NetBSD: glxsb.c,v 1.2.18.2 2007/09/03 14:26:52 yamt Exp $ */
+/*	$NetBSD: glxsb.c,v 1.2.18.3 2008/01/21 09:37:13 yamt Exp $	*/
 /* $OpenBSD: glxsb.c,v 1.7 2007/02/12 14:31:45 tom Exp $ */
 
 /*
@@ -25,6 +25,8 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: glxsb.c,v 1.2.18.3 2008/01/21 09:37:13 yamt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -33,8 +35,9 @@
 #include <sys/types.h>
 #include <sys/callout.h>
 #include <sys/rnd.h>
+#include <sys/bus.h>
 
-#include <machine/bus.h>
+#include <machine/cpufunc.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>

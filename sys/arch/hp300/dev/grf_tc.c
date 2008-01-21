@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_tc.c,v 1.31.10.3 2007/09/03 14:25:08 yamt Exp $	*/
+/*	$NetBSD: grf_tc.c,v 1.31.10.4 2008/01/21 09:36:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -117,9 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.31.10.3 2007/09/03 14:25:08 yamt Exp $");
-
-#include "opt_compat_hpux.h"
+__KERNEL_RCSID(0, "$NetBSD: grf_tc.c,v 1.31.10.4 2008/01/21 09:36:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -430,67 +428,6 @@ tc_mode(struct grf_data *gp, int cmd, void *data)
 	case GM_UNMAP:
 		gp->g_data = 0;
 		break;
-
-#ifdef COMPAT_HPUX
-	case GM_DESCRIBE:
-	{
-		struct grf_fbinfo *fi = (struct grf_fbinfo *)data;
-		struct grfinfo *gi = &gp->g_display;
-		int i;
-
-		/* feed it what HP-UX expects */
-		fi->id = gi->gd_id;
-		fi->mapsize = gi->gd_fbsize;
-		fi->dwidth = gi->gd_dwidth;
-		fi->dlength = gi->gd_dheight;
-		fi->width = gi->gd_fbwidth;
-		fi->length = gi->gd_fbheight;
-		fi->bpp = NBBY;
-		fi->xlen = (fi->width * fi->bpp) / NBBY;
-		fi->npl = gi->gd_planes;
-		fi->bppu = fi->npl;
-		fi->nplbytes = fi->xlen * ((fi->length * fi->bpp) / NBBY);
-		/* XXX */
-		switch (gp->g_sw->gd_hwid) {
-		case GID_HRCCATSEYE:
-			memcpy(fi->name, "HP98550", 8);
-			break;
-		case GID_LRCATSEYE:
-			memcpy(fi->name, "HP98549", 8);
-			break;
-		case GID_HRMCATSEYE:
-			memcpy(fi->name, "HP98548", 8);
-			break;
-		case GID_TOPCAT:
-			switch (gi->gd_colors) {
-			case 64:
-				memcpy(fi->name, "HP98547", 8);
-				break;
-			case 16:
-				memcpy(fi->name, "HP98545", 8);
-				break;
-			case 2:
-				memcpy(fi->name, "HP98544", 8);
-				break;
-			}
-			break;
-		}
-		fi->attr = 2;	/* HW block mover */
-		/*
-		 * If mapped, return the UVA where mapped.
-		 */
-		if (gp->g_data) {
-			fi->regbase = gp->g_data;
-			fi->fbbase = fi->regbase + gp->g_display.gd_regsize;
-		} else {
-			fi->fbbase = 0;
-			fi->regbase = 0;
-		}
-		for (i = 0; i < 6; i++)
-			fi->regions[i] = 0;
-		break;
-	}
-#endif
 
 	default:
 		error = EINVAL;

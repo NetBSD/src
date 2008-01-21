@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88.2.5 2007/12/07 17:24:11 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.88.2.6 2008/01/21 09:35:31 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -78,7 +78,7 @@
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88.2.5 2007/12/07 17:24:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88.2.6 2008/01/21 09:35:31 yamt Exp $");
 
 #include "fs_mfs.h"
 #include "opt_ddb.h"
@@ -402,7 +402,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		curcpu()->ci_cycles_per_hz /= 2;
 		curcpu()->ci_divisor_delay /= 2;
 	}
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 	sprintf(cpu_model, "%s %s%s",
 	    platform->vendor, platform->model, platform->variant);
 

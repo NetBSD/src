@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.267.2.6 2007/11/15 11:42:49 yamt Exp $
+#	$NetBSD: INSTALL,v 1.267.2.7 2008/01/21 09:36:51 yamt Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -13,9 +13,9 @@ include "arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	CPUFLAGS="-march=i486 -mtune=i486"	# i486 is densest code
-makeoptions	COPTS="-Os"
-makeoptions	USE_SSP="no"
+makeoptions 	CPUFLAGS="-march=i486 -mtune=i486"	# i486 is densest code
+makeoptions 	COPTS="-Os"
+makeoptions 	USE_SSP="no"
 
 # Enable the hooks used for initializing the root memory-disk.
 options 	MEMORY_DISK_HOOKS
@@ -26,7 +26,6 @@ options 	MEMORY_DISK_ROOT_SIZE=10000	# size of memory disk, in blocks
 maxusers	2		# estimated number of users
 
 # CPU-related options.
-#options 	MATH_EMULATE	# floating point emulation
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
 
@@ -64,10 +63,10 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	USERCONF	# userconf(4) support
 options 	PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
-no options	EXEC_AOUT
+no options 	EXEC_AOUT
 
-no options	RFC2292		# Previous version of Adv. Sockets API for IPv6
-no options	PTRACE		# Include ptrace(2)
+no options 	RFC2292		# Previous version of Adv. Sockets API for IPv6
+no options 	PTRACE		# Include ptrace(2)
 
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
@@ -78,7 +77,7 @@ options 	DDB		# in-kernel debugger
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 #options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -101,7 +100,7 @@ options 	COMPAT_40	# NetBSD 4.0
 #options 	COMPAT_IBCS2	# binary compatibility with SCO and ISC
 #options 	COMPAT_LINUX	# binary compatibility with Linux
 #options 	COMPAT_FREEBSD	# binary compatibility with FreeBSD
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.48.6.4 2007/10/27 11:30:35 yamt Exp $	*/
+/*	$NetBSD: comvar.h,v 1.48.6.5 2008/01/21 09:42:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -206,16 +206,7 @@ struct com_softc {
 	void (*disable)(struct com_softc *);
 	int enabled;
 
-#ifdef __HAVE_TIMECOUNTER
 	struct pps_state sc_pps_state;	/* pps state */
-#else /* !__HAVE_TIMECOUNTER */
-	/* PPS signal on DCD, with or without inkernel clock disciplining */
-	u_char	sc_ppsmask;			/* pps signal mask */
-	u_char	sc_ppsassert;			/* pps leading edge */
-	u_char	sc_ppsclear;			/* pps trailing edge */
-	pps_info_t ppsinfo;
-	pps_params_t ppsparam;
-#endif /* !__HAVE_TIMECOUNTER */
 
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
@@ -229,6 +220,7 @@ int comintr(void *);
 void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
+bool com_resume(device_t);
 int com_activate(struct device *, enum devact);
 void com_cleanup(void *);
 

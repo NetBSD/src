@@ -1,4 +1,4 @@
-/* $NetBSD: oosiopvar.h,v 1.3 2005/01/02 12:22:19 tsutsui Exp $ */
+/* $NetBSD: oosiopvar.h,v 1.3.10.1 2008/01/21 09:43:02 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Shuichiro URATA.  All rights reserved.
@@ -40,7 +40,7 @@ struct oosiop_xfer {
 	uint8_t msgout[8];
 	uint8_t status;
 	uint8_t pad[7];
-} __attribute__((__packed__));
+} __packed;
 
 #define	SCSI_OOSIOP_NOSTATUS	0xff	/* device didn't report status */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54.8.1 2006/12/30 20:47:12 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.54.8.2 2008/01/21 09:39:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.8.1 2006/12/30 20:47:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54.8.2 2008/01/21 09:39:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,8 +183,6 @@ oclock_attach(struct device *parent, struct device *self, void *aux)
 	intersil7170_attach(sc);
 
 	printf("\n");
-
-	todr_attach(&sc->sc_handle);
 
 	/*
 	 * Can not hook up the ISR until cpu_initclocks()

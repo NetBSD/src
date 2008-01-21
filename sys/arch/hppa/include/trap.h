@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1 2002/06/05 01:04:23 fredette Exp $	*/
+/*	$NetBSD: trap.h,v 1.1.26.1 2008/01/21 09:36:47 yamt Exp $	*/
 
 /*	$OpenBSD: trap.h,v 1.8 2000/02/10 20:05:39 mickey Exp $	*/
 
@@ -68,6 +68,9 @@
 #define	T_DATACC	26	/* data access rights >=7100 */
 #define	T_DATAPID	27	/* data protection ID >=7100 */
 #define	T_DATALIGN	28	/* unaligned data ref */
+#define	T_PERFMON	29	/* performance monitor interrupt */
+#define	T_IDEBUG	30	/* debug SFU interrupt */
+#define	T_DDEBUG	31	/* debug SFU interrupt */
 
 /*
  * Reserved range for traps is 0-63, place user flag at 6th bit
@@ -99,6 +102,7 @@
 /* im5 */
 #define	HPPA_BREAK_KERNEL	0
 /* im13 */
+#define	HPPA_BREAK_SS		4
 #define	HPPA_BREAK_KGDB		5
 #define	HPPA_BREAK_GET_PSW	9
 #define	HPPA_BREAK_SET_PSW	10

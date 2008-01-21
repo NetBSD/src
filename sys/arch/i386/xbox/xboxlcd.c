@@ -1,4 +1,4 @@
-/* $NetBSD: xboxlcd.c,v 1.2.6.2 2007/02/26 09:07:05 yamt Exp $ */
+/*	$NetBSD: xboxlcd.c,v 1.2.6.3 2008/01/21 09:37:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Andrew Gillham
@@ -31,6 +31,10 @@
 /*
  *  Driver for Xecuter X3 LCD add-on
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xboxlcd.c,v 1.2.6.3 2008/01/21 09:37:17 yamt Exp $");
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>

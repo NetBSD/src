@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_two_isr.c,v 1.5.6.2 2007/12/07 17:30:21 yamt Exp $	*/
+/*	$NetBSD: vme_two_isr.c,v 1.5.6.3 2008/01/21 09:43:31 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.5.6.2 2007/12/07 17:30:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.5.6.3 2008/01/21 09:43:31 yamt Exp $");
 
 #include "vmetwo.h"
 
@@ -52,8 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: vme_two_isr.c,v 1.5.6.2 2007/12/07 17:30:21 yamt Exp
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
-
 #include <sys/cpu.h>
 #include <sys/bus.h>
 

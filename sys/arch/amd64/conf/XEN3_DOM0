@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.4.2.2 2007/12/07 17:24:01 yamt Exp $
+# $NetBSD: XEN3_DOM0,v 1.4.2.3 2008/01/21 09:35:22 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -13,7 +13,7 @@ maxusers	32		# estimated number of users
 #
 options 	DOM0OPS
 # boot messages with MPBIOS, acpi and ioapic can be quite large
-options		MSGBUFSIZE=24576
+options 	MSGBUFSIZE=24576
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -29,7 +29,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -55,8 +54,8 @@ options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-makeoptions	DEBUG="-g"	# compile full symbol table
-makeoptions	COPTS="-O2 -fno-omit-frame-pointer"
+makeoptions 	DEBUG="-g"	# compile full symbol table
+makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
 options DDB_COMMANDONENTER="trace;show registers"
 
 # Compatibility options
@@ -168,13 +167,13 @@ xenbus*		at hypervisor?		# Xen virtual bus
 xencons*	at hypervisor?		# Xen virtual console
 
 acpi0 		at hypervisor?
-options		MPBIOS
-options		MPDEBUG
-options		MPVERBOSE
+options 	MPBIOS
+options 	MPDEBUG
+options 	MPVERBOSE
 options 	ACPIVERBOSE
-#options 	 PCI_ADDR_FIXUP		# fixup PCI I/O addresses
-#options 	 PCI_BUS_FIXUP		# fixup PCI bus numbering
-#options 	 PCI_INTR_FIXUP		# fixup PCI interrupt routing
+#options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
+#options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
+#options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 
 ioapic*		at mainbus? apid ?
 
@@ -727,6 +726,9 @@ pseudo-device	nsmb			# experimental - SMB requester
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
 pseudo-device	wsfont
+
+# userland interface to drivers, including autoconf and properties retrieval
+pseudo-device   drvctl
 
 # xen pseudo-devices
 pseudo-device	xenevt

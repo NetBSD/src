@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.70.2.4 2007/10/27 11:33:03 yamt Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.70.2.5 2008/01/21 09:44:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.70.2.4 2007/10/27 11:33:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.70.2.5 2008/01/21 09:44:01 yamt Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -124,7 +124,6 @@ static int tl_intr(void *);
 
 static int tl_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
 static int tl_mediachange(struct ifnet *);
-static void tl_mediastatus(struct ifnet *, struct ifmediareq *);
 static void tl_ifwatchdog(struct ifnet *);
 static void tl_shutdown(void*);
 
@@ -453,8 +452,9 @@ tl_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->tl_mii.mii_readreg = tl_mii_read;
 	sc->tl_mii.mii_writereg = tl_mii_write;
 	sc->tl_mii.mii_statchg = tl_statchg;
+	sc->tl_ec.ec_mii = &sc->tl_mii;
 	ifmedia_init(&sc->tl_mii.mii_media, IFM_IMASK, tl_mediachange,
-	    tl_mediastatus);
+	    ether_mediastatus);
 	mii_attach(self, &sc->tl_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->tl_mii.mii_phys) == NULL) {
@@ -751,7 +751,12 @@ static int tl_init(ifp)
 	    BUS_DMASYNC_PREWRITE);
 
 	/* set media */
-	mii_mediachg(&sc->tl_mii);
+	if ((error = mii_mediachg(&sc->tl_mii)) == ENXIO)
+		error = 0;
+	else if (error != 0) {
+		errstring = "could not set media";
+		goto bad; 
+	}
 
 	/* start ticks calls */
 	callout_reset(&sc->tl_tick_ch, hz, tl_ticks, sc);
@@ -1258,22 +1263,14 @@ tl_ifioctl(ifp, cmd, data)
 	void *data;
 {
 	struct tl_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
-	switch(cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->tl_mii.mii_media, cmd);
-		break;
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				tl_addr_filter(sc);
-			error = 0;
-		}
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING)
+			tl_addr_filter(sc);
+		error = 0;
 	}
 	splx(s);
 	return error;
@@ -1476,18 +1473,6 @@ tl_mediachange(ifp)
 	if (ifp->if_flags & IFF_UP)
 		tl_init(ifp);
 	return (0);
-}
-
-static void
-tl_mediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
-{
-	tl_softc_t *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->tl_mii);
-	ifmr->ifm_active = sc->tl_mii.mii_media_active;
-	ifmr->ifm_status = sc->tl_mii.mii_media_status;
 }
 
 static int tl_add_RxBuff(sc, Rx, oldm)

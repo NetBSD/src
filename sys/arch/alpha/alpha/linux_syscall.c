@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscall.c,v 1.14.2.4 2007/09/03 14:22:16 yamt Exp $ */
+/* $NetBSD: linux_syscall.c,v 1.14.2.5 2008/01/21 09:35:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14.2.4 2007/09/03 14:22:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.14.2.5 2008/01/21 09:35:07 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ linux_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	args += hidden;
 
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, code, NULL, args)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -324,7 +324,7 @@ out:
 
 	KERNEL_UNLOCK_LAST(l);
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, args, rval, error);
 
 	userret(l);
 }

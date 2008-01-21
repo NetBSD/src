@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_apple.c,v 1.1.18.3 2007/10/27 11:32:31 yamt Exp $ */
+/*	$NetBSD: agp_apple.c,v 1.1.18.4 2008/01/21 09:43:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.1.18.3 2007/10/27 11:32:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.1.18.4 2008/01/21 09:43:33 yamt Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/device.h>

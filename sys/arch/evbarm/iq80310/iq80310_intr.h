@@ -1,4 +1,4 @@
-/*	$NetBSD: iq80310_intr.h,v 1.3.16.1 2006/06/21 14:50:47 yamt Exp $	*/
+/*	$NetBSD: iq80310_intr.h,v 1.3.16.2 2008/01/21 09:36:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -66,7 +66,9 @@
 #define	IRQ_READ_XINT0		1	/* XXX only if board rev >= F */
 #endif /* list of IQ80310-based designs */
 
+#ifdef __HAVE_FAST_SOFTINTS
 void	iq80310_do_soft(void);
+#endif
 
 static inline int __attribute__((__unused__))
 iq80310_splraise(int ipl)
@@ -97,9 +99,11 @@ iq80310_splx(int new)
 	old = current_spl_level;
 	current_spl_level = new;
 
+#ifdef __HAVE_FAST_SOFTINTS
 	/* If there are software interrupts to process, do it. */
 	if ((iq80310_ipending & ~IRQ_BITS) & ~new)
 		iq80310_do_soft();
+#endif
 
 	/*
 	 * If there are pending hardware interrupts (i.e. the
@@ -131,14 +135,18 @@ iq80310_spllower(int ipl)
 #define _splraise(ipl)		iq80310_splraise(ipl)
 #define	_spllower(ipl)		iq80310_spllower(ipl)
 #define	splx(spl)		iq80310_splx(spl)
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
+#ifdef __HAVE_FAST_SOFTINTS
 void	_setsoftintr(int);
+#endif
 
 #endif /* ! EVBARM_SPL_NOINLINE */
 

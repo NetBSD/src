@@ -1,4 +1,4 @@
-/*	$NetBSD: lm75.c,v 1.2.12.4 2007/12/07 17:29:48 yamt Exp $	*/
+/*	$NetBSD: lm75.c,v 1.2.12.5 2008/01/21 09:42:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: lm75.c,v 1.2.12.5 2008/01/21 09:42:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

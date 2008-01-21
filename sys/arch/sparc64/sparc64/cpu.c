@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.41.2.4 2007/10/27 11:28:40 yamt Exp $ */
+/*	$NetBSD: cpu.c,v 1.41.2.5 2008/01/21 09:39:33 yamt Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41.2.4 2007/10/27 11:28:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41.2.5 2008/01/21 09:39:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ int ecache_min_line_size;
 int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
 
-volatile cpuset_t cpus_active;/* set of active cpus */
+volatile sparc64_cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
 
 static struct cpu_info *alloc_cpuinfo(u_int);
@@ -149,6 +149,7 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_paddr = pa0;
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
+	cpi->ci_idepth = -1;
 
 	/*
 	 * Finally, add itself to the list of active cpus.

@@ -1,4 +1,4 @@
-#	$NetBSD: majors.evbmips,v 1.12.2.3 2007/09/03 14:24:14 yamt Exp $
+#	$NetBSD: majors.evbmips,v 1.12.2.4 2008/01/21 09:36:17 yamt Exp $
 #
 # Device majors for evbmips
 #
@@ -68,7 +68,6 @@ device-major	mlx		char 65			mlx
 device-major	pci		char 66			pci
 
 device-major	clockctl	char 69			clockctl
-device-major	systrace	char 70			systrace
 device-major	kttcp		char 71			kttcp
 device-major	wsfont		char 72			wsfont
 

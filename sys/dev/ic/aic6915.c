@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.13.4.3 2007/10/27 11:30:28 yamt Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.13.4.4 2008/01/21 09:42:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.13.4.3 2007/10/27 11:30:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.13.4.4 2008/01/21 09:42:53 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -100,9 +100,6 @@ static void	sf_mii_write(struct device *, int, int, int);
 static void	sf_mii_statchg(struct device *);
 
 static void	sf_tick(void *);
-
-static int	sf_mediachange(struct ifnet *);
-static void	sf_mediastatus(struct ifnet *, struct ifmediareq *);
 
 #define	sf_funcreg_read(sc, reg)					\
 	bus_space_read_4((sc)->sc_st, (sc)->sc_sh_func, (reg))
@@ -271,8 +268,9 @@ sf_attach(struct sf_softc *sc)
 	sc->sc_mii.mii_readreg = sf_mii_read;
 	sc->sc_mii.mii_writereg = sf_mii_write;
 	sc->sc_mii.mii_statchg = sf_mii_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, sf_mediachange,
-	    sf_mediastatus);
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
@@ -527,29 +525,19 @@ static int
 sf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct sf_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *) data;
 	int s, error;
 
 	s = splnet();
 
-	switch (cmd) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			/*
-			 * Multicast list has changed; set the hardware filter
-			 * accordingly.
-			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				sf_set_filter(sc);
-			error = 0;
-		}
-		break;
+	error = ether_ioctl(ifp, cmd, data);
+	if (error == ENETRESET) {
+		/*
+		 * Multicast list has changed; set the hardware filter
+		 * accordingly.
+		 */
+		if (ifp->if_flags & IFF_RUNNING)
+			sf_set_filter(sc);
+		error = 0;
 	}
 
 	/* Try to get more packets going. */
@@ -1088,7 +1076,8 @@ sf_init(struct ifnet *ifp)
 	/*
 	 * Set the media.
 	 */
-	mii_mediachg(&sc->sc_mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	/*
 	 * Initialize the interrupt register.
@@ -1442,34 +1431,4 @@ sf_mii_statchg(struct device *self)
 	sf_macreset(sc);
 
 	sf_genreg_write(sc, SF_BkToBkIPG, ipg);
-}
-
-/*
- * sf_mediastatus:	[ifmedia interface function]
- *
- *	Callback from ifmedia to request current media status.
- */
-static void
-sf_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct sf_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-}
-
-/*
- * sf_mediachange:	[ifmedia interface function]
- *
- *	Callback from ifmedia to request new media setting.
- */
-static int
-sf_mediachange(struct ifnet *ifp)
-{
-	struct sf_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
 }

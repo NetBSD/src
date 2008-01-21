@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1.20.2 2007/09/03 14:24:10 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.1.20.3 2008/01/21 09:36:16 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,15 +67,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.20.2 2007/09/03 14:24:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.20.3 2008/01/21 09:36:16 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 
 #include <mips/adm5120/include/adm5120var.h>
-
-#include <machine/bus.h>
 
 /*
  * Configure all devices on system

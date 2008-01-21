@@ -31,7 +31,10 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ndis_pccard.c,v 1.1.14.4 2008/01/21 09:43:16 yamt Exp $");
+#ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis_pccard.c,v 1.6.2.3 2005/03/31 04:24:36 wpaul Exp $");
+#endif
 
 #include <sys/ctype.h>
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.17.2.4 2007/09/03 14:22:32 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.17.2.5 2008/01/21 09:35:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.4 2007/09/03 14:22:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.5 2008/01/21 09:35:18 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -71,6 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.17.2.4 2007/09/03 14:22:32 ya
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
+#include <compat/sys/signal.h>
+#include <compat/sys/signalvar.h>
+
 /* Provide a the name of the architecture we're emulating */
 const char	machine32[] = "i386";
 const char	machine_arch32[] = "i386";	
@@ -103,7 +106,7 @@ cpu_exec_aout_makecmds(struct lwp *p, struct exec_package *e)
  * COMPAT_16 is useful for i386 emulation (COMPAT_NETBSD32) only.
  */
 int
-compat_16_sys___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigreturn14_args *uap, register_t *retval)
 {
 
 	return ENOSYS;
@@ -120,7 +123,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
+		fpusave_lwp(l, false);
 
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
@@ -361,11 +364,11 @@ netbsd32_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 int
-compat_16_netbsd32___sigreturn14(struct lwp *l, void *v, register_t *retval)
+compat_16_netbsd32___sigreturn14(struct lwp *l, const struct compat_16_netbsd32___sigreturn14_args *uap, register_t *retval)
 {
-	struct compat_16_netbsd32___sigreturn14_args /* {
+	/* {
 		syscallarg(netbsd32_sigcontextp_t) sigcntxp;
-	} */ *uap = v;
+	} */
 	struct netbsd32_sigcontext *scp, context;
 	struct proc *p = l->l_proc;
 	struct trapframe *tf;
@@ -580,12 +583,12 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 }
 
 int
-netbsd32_sysarch(struct lwp *l, void *v, register_t *retval)
+netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap, register_t *retval)
 {
-	struct netbsd32_sysarch_args /* {
+	/* {
 		syscallarg(int) op;
 		syscallarg(netbsd32_voidp) parms;
-	} */ *uap = v;
+	} */
 	int error;
 
 	switch (SCARG(uap, op)) {
@@ -839,7 +842,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		 * If we were using the FPU, forget that we were.
 		 */
 		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			fpusave_lwp(l, 0);
+			fpusave_lwp(l, false);
 		memcpy(&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave, &mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
 		/* If not set already. */
@@ -893,7 +896,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
 		if (l->l_addr->u_pcb.pcb_fpcpu)
-			fpusave_lwp(l, 1);
+			fpusave_lwp(l, true);
 		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;
@@ -966,3 +969,73 @@ netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
 {
 	return VM_DEFAULT_ADDRESS32(base, size);
 }
+
+#ifdef COMPAT_13
+int
+compat_13_sys_sigreturn(struct lwp *l, const struct compat_13_sys_sigreturn_args *uap, register_t *retval)
+{
+	return ENOSYS;
+}
+
+int
+compat_13_netbsd32_sigreturn(struct lwp *l, const struct compat_13_netbsd32_sigreturn_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(struct netbsd32_sigcontext13 *) sigcntxp;
+	} */
+	struct proc *p = l->l_proc;
+	struct netbsd32_sigcontext13 *scp, context;
+	struct trapframe *tf;
+	sigset_t mask;
+	int error;
+
+	/*
+	 * The trampoline code hands us the context.
+	 * It is unsafe to keep track of it ourselves, in the event that a
+	 * program jumps out of a signal handler.
+	 */
+	scp = (struct netbsd32_sigcontext13 *)NETBSD32PTR64(SCARG(uap, sigcntxp));
+	if (copyin((void *)scp, &context, sizeof(*scp)) != 0)
+		return (EFAULT);
+
+	/* Restore register context. */
+	tf = l->l_md.md_regs;
+
+	/*
+	 * Check for security violations.
+	 */
+	error = check_sigcontext32((const struct netbsd32_sigcontext *)&context, tf);
+	if (error != 0)
+		return error;
+
+	tf->tf_gs = context.sc_gs;
+	tf->tf_fs = context.sc_fs;		
+	tf->tf_es = context.sc_es;
+	tf->tf_ds = context.sc_ds;
+	tf->tf_rflags = context.sc_eflags;
+	tf->tf_rdi = context.sc_edi;
+	tf->tf_rsi = context.sc_esi;
+	tf->tf_rbp = context.sc_ebp;
+	tf->tf_rbx = context.sc_ebx;
+	tf->tf_rdx = context.sc_edx;
+	tf->tf_rcx = context.sc_ecx;
+	tf->tf_rax = context.sc_eax;
+	tf->tf_rip = context.sc_eip;
+	tf->tf_cs = context.sc_cs;
+	tf->tf_rsp = context.sc_esp;
+	tf->tf_ss = context.sc_ss;
+
+	mutex_enter(&p->p_smutex);
+	/* Restore signal stack. */
+	if (context.sc_onstack & SS_ONSTACK)
+		l->l_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
+	/* Restore signal mask. */
+	native_sigset13_to_sigset((sigset13_t *)&context.sc_mask, &mask);
+	(void) sigprocmask1(l, SIG_SETMASK, &mask, 0);
+	mutex_exit(&p->p_smutex);
+
+	return (EJUSTRETURN);
+}
+#endif

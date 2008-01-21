@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12.16.2 2007/11/15 11:43:15 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12.16.3 2008/01/21 09:37:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.16.2 2007/11/15 11:43:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.16.3 2008/01/21 09:37:54 yamt Exp $");
+
+#include "opt_interrupt.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -57,17 +59,42 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.16.2 2007/11/15 11:43:15 yamt Exp $
 int	mainbus_match(struct device *, struct cfdata *, void *);
 void	mainbus_attach(struct device *, struct device *, void *);
 
-static int pegasos_get_irq(struct pic_ops *);
-
 CFATTACH_DECL(mainbus, sizeof(struct device),
     mainbus_match, mainbus_attach, NULL, NULL);
 
 int mainbus_found = 0;
 struct pic_ops *isa_pic;
 
+#ifdef PIC_PREPIVR
+vaddr_t prep_intr_reg;
+uint32_t prep_intr_reg_off;
+#endif
+
 extern ofw_pic_node_t picnodes[8];
 extern int nrofpics;
 extern int primary_pic;
+
+#ifdef PIC_PREPIVR
+static struct pic_ops *
+init_prepivr(int node)
+{
+	int pcinode;
+	uint32_t ivr;
+
+	pcinode = OF_finddevice("/pci");
+	if (OF_getprop(pcinode, "8259-interrupt-acknowledge", &ivr,
+		sizeof(ivr)) != sizeof(ivr)) {
+		aprint_error("Incorrectly identified i8259 as prepivr\n");
+		return setup_i8259();
+	}
+	prep_intr_reg = (vaddr_t)mapiodev(ivr, sizeof(uint32_t));
+	prep_intr_reg_off = 0; /* hack */
+	if (!prep_intr_reg)
+		panic("startup: no room for interrupt register");
+
+	return setup_prepivr(PIC_IVR_MOT);
+}
+#endif
 
 static int
 init_openpic(int node)
@@ -79,16 +106,24 @@ init_openpic(int node)
 		uint32_t size_hi, size_lo;
 	} ranges[6], *rp = ranges;
 	unsigned char *baseaddr = NULL;
+	uint32_t reg[12];
 	int parent, len;
+#ifdef PIC_DISTOPENPIC
+	unsigned char *isu[OPENPIC_MAX_ISUS];
+	int i, j;
+	int isumap[OPENPIC_MAX_ISUS];
+#endif
 
 	if (OF_getprop(node, "assigned-addresses", &aadr, sizeof(aadr))
 	    != sizeof(aadr))
-		return FALSE;
+		goto noaadr;
 
 	parent = OF_parent(node);
 	len = OF_getprop(parent, "ranges", ranges, sizeof(ranges));
 	if (len == -1)
-		return FALSE;
+		goto noaadr;
+
+#ifdef PIC_OPENPIC
 	while (len >= sizeof(ranges[0])) {
 		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
 		    (aadr.phys_hi & OFW_PCI_PHYS_HI_SPACEMASK) &&
@@ -100,7 +135,51 @@ init_openpic(int node)
 			setup_openpic(baseaddr, 0);
 			return TRUE;
 		}
+		/* XXX I think this is correct */
+		rp++;
+		len -= sizeof(ranges[0]);
 	}
+#endif
+	rp = 0; /* satisfy -Wall */
+	return FALSE;
+ noaadr:
+	/* this isn't a PCI-attached openpic */
+	len = OF_getprop(node, "reg", &reg, sizeof(reg));
+	if (len < sizeof(int)*2)
+		return FALSE;
+
+	if (len == sizeof(int)*2) {	
+		baseaddr = (unsigned char *)mapiodev(reg[0], reg[1]);
+		aprint_verbose("Found openpic at %08x\n", reg[0]);
+#ifdef PIC_OPENPIC
+		(void)setup_openpic(baseaddr, 0);
+		return TRUE;
+#else
+		aprint_error("No openpic support compiled into kernel!");
+		return FALSE;
+#endif
+	}
+
+#ifdef PIC_DISTOPENPIC
+	/* otherwise, we have a distributed openpic */
+	i = len/(sizeof(int)*2) - 1;
+	if (i == 0)
+		return FALSE;
+	if (i > OPENPIC_MAX_ISUS)
+		aprint_error("Increase OPENPIC_MAX_ISUS to %d\n", i);
+	
+	baseaddr = (unsigned char *)mapiodev(reg[0], 0x40000);
+	aprint_verbose("Found openpic at %08x\n", reg[0]);
+
+	for (j=0; j < i; j++) {
+		isu[j] = (unsigned char *)mapiodev(reg[(j+1)*2],
+		    reg[(j+1)*2+1]);
+		isumap[j] = reg[(j+1)*2+1];
+	}
+	(void)setup_distributed_openpic(baseaddr, i, (void **)isu, isumap);
+	return TRUE;
+#endif
+	aprint_error("PIC support not present or PIC error\n");
 	return FALSE;
 }
 
@@ -163,8 +242,13 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 void
 init_interrupt(void)
 {
+	/* Do nothing, not ready yet */
+}
+
+void
+init_ofppc_interrupt(void)
+{
 	int node, i, isa_cascade = 0;
-	char name[32];
 
 	/* Now setup the PIC's */
 	node = OF_finddevice("/");
@@ -175,14 +259,27 @@ init_interrupt(void)
 	pic_init();
 
 	/* find ISA first */
-	for (i = 0; i < nrofpics; i++)
-		if (picnodes[i].type == PICNODE_TYPE_8259)
+	for (i = 0; i < nrofpics; i++) {
+		if (picnodes[i].type == PICNODE_TYPE_8259) {
+			aprint_debug("calling i8259 setup\n");
 			isa_pic = setup_i8259();
-
+		}
+		if (picnodes[i].type == PICNODE_TYPE_IVR) {
+			aprint_debug("calling prepivr setup\n");
+#ifdef PIC_PREPIVR
+			isa_pic = init_prepivr(picnodes[i].node);
+#else
+			isa_pic = setup_i8259();
+#endif
+		}
+	}
 	for (i = 0; i < nrofpics; i++) {
 		if (picnodes[i].type == PICNODE_TYPE_8259)
 			continue;
+		if (picnodes[i].type == PICNODE_TYPE_IVR)
+			continue;
 		if (picnodes[i].type == PICNODE_TYPE_OPENPIC) {
+			aprint_debug("calling openpic setup\n");
 			if (isa_pic != NULL)
 				isa_cascade = 1;
 			(void)init_openpic(picnodes[i].node);
@@ -195,32 +292,4 @@ init_interrupt(void)
 		intr_establish(16, IST_LEVEL, IPL_NONE, pic_handle_intr,
 		    isa_pic);
 	}
-
-	/* The PegasosII is wierd (surprise!) and needs a prepivr style
-	 * get_irq routine.  yay.
-	 */
-	memset(name, 0, sizeof(name));
-	OF_getprop(node, "name", name, sizeof(name));
-	if (strcmp(name, "bplan,Pegasos2") == 0)
-		isa_pic->pic_get_irq = pegasos_get_irq;
-}
-
-static int
-pegasos_get_irq(struct pic_ops *pic)
-{
-	static int lirq;
-	int irq;
-
-	irq = i8259_get_irq(pic);
-
-	if (lirq == 7 && irq == lirq) {
-		lirq = -1;
-		return 255;
-	}
-
-	lirq = irq;
-	if (irq == 0)
-		return 255;
-
-	return irq;
 }

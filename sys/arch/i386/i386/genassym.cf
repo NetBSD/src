@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40.16.8 2007/12/07 17:24:58 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.40.16.9 2008/01/21 09:36:59 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -80,6 +80,7 @@ include "opt_compat_freebsd.h"
 include "opt_compat_linux.h"
 include "opt_compat_netbsd.h"
 include "opt_multiprocessor.h"
+include	"opt_xen.h"
 endif
 
 quote #define __MUTEX_PRIVATE
@@ -109,9 +110,19 @@ include <machine/intr.h>
 include <machine/types.h>
 include <machine/segments.h>
 
+ifdef XEN
+ifdef XEN3
+include <xen/xen3-public/sched.h>
+else
+include <xen/xen-public/xen.h>
+endif
+endif
+
 if defined(_KERNEL) && !defined(_LKM)
 include "ioapic.h"
+ifndef XEN
 include "apmbios.h"
+endif
 endif
 if NAPMBIOS > 0
 include <machine/bioscall.h>
@@ -151,6 +162,7 @@ endif
 
 include <machine/tlog.h>
 
+
 include <x86/busdefs.h>
 
 define	PAGE_SIZE		PAGE_SIZE
@@ -177,6 +189,8 @@ define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
 define	PTE_BASE		PTE_BASE
 
+define	IOMAPSIZE		IOMAPSIZE
+
 define	VM_MAXUSER_ADDRESS	(int)VM_MAXUSER_ADDRESS
 
 define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
@@ -184,7 +198,6 @@ define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_MD_TSS_SEL		offsetof(struct lwp, l_md.md_tss_sel)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
@@ -218,11 +231,11 @@ define	PCB_EBP			offsetof(struct pcb, pcb_ebp)
 define	PCB_ESP			offsetof(struct pcb, pcb_esp)
 define	PCB_ESP0		offsetof(struct pcb, pcb_esp0)
 define	PCB_CR0			offsetof(struct pcb, pcb_cr0)
-define	PCB_LDT_SEL		offsetof(struct pcb, pcb_ldt_sel)
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCPU		offsetof(struct pcb, pcb_fpcpu)
 define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
 define	PCB_GSD			offsetof(struct pcb, pcb_gsd)
+define	PCB_IOMAP		offsetof(struct pcb, pcb_iomap)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
@@ -266,7 +279,11 @@ endif
 define	IH_FUN			offsetof(struct intrhand, ih_fun)
 define	IH_ARG			offsetof(struct intrhand, ih_arg)
 define	IH_LEVEL		offsetof(struct intrhand, ih_level)
+ifdef XEN
+define	IH_IPL_NEXT		offsetof(struct intrhand, ih_ipl_next)
+else
 define	IH_NEXT			offsetof(struct intrhand, ih_next)
+endif
 
 if NAPMBIOS > 0
 define	APM_CODE32		offsetof(struct apm_connect_info, apm_code32_seg_base)
@@ -299,6 +316,12 @@ define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
+define	CPU_INFO_TSS		offsetof(struct cpu_info, ci_tss)
+define	CPU_INFO_TSS_SEL	offsetof(struct cpu_info, ci_tss_sel)
+define	CPU_INFO_ESP0		offsetof(struct cpu_info, ci_tss.tss_esp0)
+define	CPU_INFO_IOBASE		offsetof(struct cpu_info, ci_tss.tss_iobase)
+define	CPU_INFO_IOMAP		offsetof(struct cpu_info, ci_iomap)
+define	IOMAP_INVALOFF		IOMAP_INVALOFF
 
 define	CPU_INFO_LEVEL		offsetof(struct cpu_info, ci_cpuid_level)
 define	CPU_INFO_VENDOR		offsetof(struct cpu_info, ci_vendor[0])
@@ -321,6 +344,24 @@ define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CPU_INFO_INTRSTACK	offsetof(struct cpu_info, ci_intrstack)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
 
+define	ACPI_SUSPEND_GDT		offsetof(struct cpu_info, ci_suspend_gdt)
+define	ACPI_SUSPEND_IDT		offsetof(struct cpu_info, ci_suspend_idt)
+define	ACPI_SUSPEND_TR			offsetof(struct cpu_info, ci_suspend_tr)
+define	ACPI_SUSPEND_LDT		offsetof(struct cpu_info, ci_suspend_ldt)
+define	ACPI_SUSPEND_FS			offsetof(struct cpu_info, ci_suspend_fs)
+define	ACPI_SUSPEND_GS			offsetof(struct cpu_info, ci_suspend_gs)
+
+define	ACPI_SUSPEND_EBX		offsetof(struct cpu_info, ci_suspend_ebx)
+define	ACPI_SUSPEND_ESI		offsetof(struct cpu_info, ci_suspend_esi)
+define	ACPI_SUSPEND_EDI		offsetof(struct cpu_info, ci_suspend_edi)
+define	ACPI_SUSPEND_EBP		offsetof(struct cpu_info, ci_suspend_ebp)
+define	ACPI_SUSPEND_ESP		offsetof(struct cpu_info, ci_suspend_esp)
+define	ACPI_SUSPEND_EFL		offsetof(struct cpu_info, ci_suspend_efl)
+define	ACPI_SUSPEND_CR0		offsetof(struct cpu_info, ci_suspend_cr0)
+define	ACPI_SUSPEND_CR2		offsetof(struct cpu_info, ci_suspend_cr2)
+define	ACPI_SUSPEND_CR3		offsetof(struct cpu_info, ci_suspend_cr3)
+define	ACPI_SUSPEND_CR4		offsetof(struct cpu_info, ci_suspend_cr4)
+
 if NIOAPIC > 0
 define		IOAPIC_SC_REG		offsetof(struct ioapic_softc, sc_reg)
 define		IOAPIC_SC_DATA		offsetof(struct ioapic_softc, sc_data)
@@ -328,10 +369,16 @@ define		PIC_LOCK		offsetof(struct pic, pic_lock)
 endif
 
 define	SIZEOF_CPU_INFO		sizeof(struct cpu_info)
-
-define	SIZEOF_ISOURCE		sizeof(struct intrsource)
 define	SIZEOF_ISTUB		sizeof(struct intrstub)
 
+ifdef XEN
+define	SIZEOF_IPLSOURCE	sizeof(struct iplsource)
+define	IS_RECURSE		offsetof(struct iplsource, ipl_recurse)
+define	IS_RESUME		offsetof(struct iplsource, ipl_resume)
+define	IS_HANDLERS		offsetof(struct iplsource, ipl_handlers)
+define	EV_EVCNTL		offsetof(struct evcnt, ev_count)
+else
+define	SIZEOF_ISOURCE		sizeof(struct intrsource)
 define	IS_RECURSE		offsetof(struct intrsource, is_recurse)
 define	IS_RESUME		offsetof(struct intrsource, is_resume)
 define	IS_EVCNTLO		offsetof(struct intrsource, is_evcnt.ev_count)
@@ -343,6 +390,7 @@ define	IS_PIN			offsetof(struct intrsource, is_pin)
 define	IS_TYPE			offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL		offsetof(struct intrsource, is_maxlevel)
 define	IS_LWP			offsetof(struct intrsource, is_lwp)
+endif
 
 define	TREC_SP			offsetof(struct trec, tr_sp)
 define	TREC_HPC		offsetof(struct trec, tr_hpc)
@@ -414,3 +462,26 @@ define	L2_SHIFT		L2_SHIFT
 define	L2_FRAME		L2_FRAME
 define	PGOFSET			PGOFSET
 define	PGSHIFT			PGSHIFT
+
+ifdef XEN
+ifdef XEN3
+define START_INFO_SHARED_INFO	offsetof(struct start_info, shared_info)
+define START_INFO_FLAGS		offsetof(struct start_info, flags)
+define START_INFO_CONSOLE_MFN	offsetof(struct start_info, console_mfn)
+define START_INFO_STORE_MFN	offsetof(struct start_info, store_mfn)
+else
+define START_INFO_SHARED_INFO	offsetof(start_info_t, shared_info)
+endif
+define SIF_INITDOMAIN		SIF_INITDOMAIN
+ifdef XEN3
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info, vcpu_info[0].evtchn_upcall_mask)
+else
+define EVTCHN_UPCALL_PENDING	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_pending)
+define EVTCHN_UPCALL_MASK	offsetof(struct shared_info_st, vcpu_info[0].evtchn_upcall_mask)
+endif
+
+define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
+define SCHEDOP_yield		SCHEDOP_yield
+endif
+

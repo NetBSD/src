@@ -1,4 +1,4 @@
-/*	$NetBSD: attimervar.h,v 1.1.8.1 2007/10/27 11:30:32 yamt Exp $	*/
+/*	$NetBSD: attimervar.h,v 1.1.8.2 2008/01/21 09:42:56 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -36,8 +36,10 @@ struct attimer_softc {
 #define ATT_CONFIGURED	0x02
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_size_t sc_size;
 };
 
 void			attimer_attach(struct attimer_softc *);
+int			attimer_detach(device_t, int);
 struct attimer_softc	*attimer_attach_speaker(void);
 void			attimer_set_pitch(struct attimer_softc *, int);

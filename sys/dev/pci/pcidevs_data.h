@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.725.2.7 2007/12/07 17:30:29 yamt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.725.2.8 2008/01/21 09:44:10 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.919 2007/11/24 01:44:55 markd Exp
+ *	NetBSD: pcidevs,v 1.926 2008/01/11 20:47:21 tnn Exp
  */
 
 /*
@@ -3040,6 +3040,10 @@ static const struct pci_product pci_products[] = {
 	    "HP M110 G2 / ASR-2610SA",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_SERVERAID,
+	    "ServeRAID 6/7 (marco)",
+	},
+	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 	    "8139 Ethernet",
 	},
@@ -3654,6 +3658,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
 	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_GMAC,
+	    "Shasta GMAC",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_AGP,
@@ -6865,7 +6873,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
-	    "ServeRAID",
+	    "ServeRAID (copperhead)",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P,
@@ -6957,7 +6965,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID4,
-	    "ServeRAID 4/5",
+	    "ServeRAID 4/5 (morpheus)",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_440GP,
@@ -7356,6 +7364,10 @@ static const struct pci_product pci_products[] = {
 	    "PRO/100 VE (LOM) Network Controller",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801GB_LAN,
+	    "82801GB 10/100 Ethernet",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82547GI,
 	    "i82547GI Gigabit Ethernet",
 	},
@@ -7462,6 +7474,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
 	    "i80003 Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
+	    "i82571GB quad 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_AMT,
@@ -9729,7 +9745,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030,
-	    "53c1030",
+	    "53c1020/53c1030",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030R,
@@ -10801,7 +10817,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI,
-	    "nForce MCP65 PCI Brige",
+	    "nForce MCP65 PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_1,
@@ -13960,4 +13976,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2891;
+const int pci_nproducts = 2895;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_ap.c,v 1.3 2005/02/06 02:18:02 tsutsui Exp $	*/
+/*	$NetBSD: mkclock_ap.c,v 1.3.6.1 2008/01/21 09:37:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.3 2005/02/06 02:18:02 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_ap.c,v 1.3.6.1 2008/01/21 09:37:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -97,8 +97,6 @@ mkclock_ap_attach(struct device *parent, struct device *self, void *aux)
 	mk48txx_attach(sc);
 
 	printf("\n");
-
-	todr_attach(&sc->sc_handle);
 }
 
 static uint8_t

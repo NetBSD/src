@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.54.10.3 2007/02/26 09:05:54 yamt Exp $	*/
+/*	$NetBSD: fault.c,v 1.54.10.4 2008/01/21 09:35:36 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54.10.3 2007/02/26 09:05:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54.10.4 2008/01/21 09:35:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54.10.3 2007/02/26 09:05:54 yamt Exp $")
 #include <sys/user.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -100,7 +101,6 @@ __KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.54.10.3 2007/02/26 09:05:54 yamt Exp $")
 
 #include <machine/frame.h>
 #include <arm/arm32/katelib.h>
-#include <machine/cpu.h>
 #include <machine/intr.h>
 #if defined(DDB) || defined(KGDB)
 #include <machine/db_machdep.h>
@@ -443,7 +443,7 @@ data_abort_handler(trapframe_t *tf)
 		goto out;
 	}
 
-	if (__predict_false(current_intr_depth > 0)) {
+	if (__predict_false(curcpu()->ci_idepth > 0)) {
 		if (pcb->pcb_onfault) {
 			tf->tf_r0 = EINVAL;
 			tf->tf_pc = (register_t)(intptr_t) pcb->pcb_onfault;
@@ -832,7 +832,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	}
 
 #ifdef DIAGNOSTIC
-	if (__predict_false(current_intr_depth > 0)) {
+	if (__predict_false(cpu_intr_p())) {
 		printf("\nNon-emulated prefetch abort with intr_depth > 0\n");
 		dab_fatal(tf, 0, tf->tf_pc, NULL, NULL);
 	}

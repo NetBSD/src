@@ -1,9 +1,6 @@
-/*	$NetBSD: types.h,v 1.2.34.2 2007/09/03 14:28:49 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.2.34.3 2008/01/21 09:38:16 yamt Exp $	*/
 
 #include <mips/types.h>
-
-#define	__HAVE_GENERIC_TODR
-#define	__HAVE_TIMECOUNTER
 
 #if defined(_KERNEL) && defined(MIPS3_5900)
 typedef int int128_t __attribute__((__mode__(TI)));

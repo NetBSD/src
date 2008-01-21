@@ -1,4 +1,4 @@
-/*	$NetBSD: sacc_obio.c,v 1.4.2.1 2006/12/30 20:45:51 yamt Exp $ */
+/*	$NetBSD: sacc_obio.c,v 1.4.2.2 2008/01/21 09:36:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.4.2.1 2006/12/30 20:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sacc_obio.c,v 1.4.2.2 2008/01/21 09:36:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,7 +199,7 @@ sacc_obio_intr(void *arg)
 				  SACCIC_INTSTATCLR0, 1U<<i );
 
 		for(ih = sc->sc_intrhand[i]; ih; ih = ih->ih_next)
-			softintr_schedule(ih->ih_soft);
+			softint_schedule(ih->ih_soft);
 
 		intstat.lo &= ~(1U<<i);
 	}
@@ -209,7 +209,7 @@ sacc_obio_intr(void *arg)
 				  SACCIC_INTSTATCLR1, 1U<<i);
 
 		for(ih = sc->sc_intrhand[i + 32]; ih; ih = ih->ih_next)
-			softintr_schedule(ih->ih_soft);
+			softint_schedule(ih->ih_soft);
 
 		intstat.hi &= ~(1U<<i);
 	}

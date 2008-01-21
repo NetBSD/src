@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p6032_intr.c,v 1.6.16.3 2007/12/07 17:23:47 yamt Exp $	*/
+/*	$NetBSD: algor_p6032_intr.c,v 1.6.16.4 2008/01/21 09:35:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.6.16.3 2007/12/07 17:23:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.6.16.4 2008/01/21 09:35:05 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: algor_p6032_intr.c,v 1.6.16.3 2007/12/07 17:23:47 ya
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
+#include <sys/cpu.h>
 
 #include <machine/bus.h>
 #include <machine/autoconf.h>
@@ -287,21 +288,25 @@ algor_p6032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 		ctrdiff[i] = endctr - startctr;
 	}
 
-	/* Compute the number of cycles per second. */
+	/* Update CPU frequency values */
 	cps = ((ctrdiff[2] + ctrdiff[3]) / 2) * 16;
-
-	/* Compute the number of ticks for hz. */
-	cycles_per_hz = cps / hz;
-
-	/* Compute the delay divisor. */
-	delay_divisor = (cps / 1000000) / 2;
+	/* XXX mips_cpu_flags isn't set here; assume CPU_MIPS_DOUBLE_COUNT */
+	curcpu()->ci_cpu_freq = cps * 2;
+	curcpu()->ci_cycles_per_hz = (curcpu()->ci_cpu_freq + hz / 2) / hz;
+	curcpu()->ci_divisor_delay =
+	    ((curcpu()->ci_cpu_freq + (1000000 / 2)) / 1000000);
+	/* XXX assume CPU_MIPS_DOUBLE_COUNT */
+	curcpu()->ci_cycles_per_hz /= 2;
+	curcpu()->ci_divisor_delay /= 2;
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	printf("Timer calibration: %lu cycles/sec [(%lu, %lu) * 16]\n",
 	    cps, ctrdiff[2], ctrdiff[3]);
 	printf("CPU clock speed = %lu.%02luMHz "
-	    "(hz cycles = %lu, delay divisor = %u)\n",
-	    cps / 1000000, (cps % 1000000) / 10000,
-	    cycles_per_hz, delay_divisor);
+	    "(hz cycles = %lu, delay divisor = %lu)\n",
+	    curcpu()->ci_cpu_freq / 1000000,
+	    (curcpu()->ci_cpu_freq % 1000000) / 10000,
+	    curcpu()->ci_cycles_per_hz, curcpu()->ci_divisor_delay);
 }
 
 void *

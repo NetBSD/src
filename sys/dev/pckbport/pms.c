@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.6.4.5 2007/12/07 17:30:59 yamt Exp $ */
+/* $NetBSD: pms.c,v 1.6.4.6 2008/01/21 09:44:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.4.5 2007/12/07 17:30:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.6.4.6 2008/01/21 09:44:26 yamt Exp $");
 
 #include "opt_pms.h"
 
@@ -85,9 +85,9 @@ static void	pms_reset_thread(void*);
 int	pms_enable(void *);
 int	pms_ioctl(void *, u_long, void *, int, struct lwp *);
 void	pms_disable(void *);
-#ifndef PMS_DISABLE_POWERHOOK
-void	pms_power(int, void *);
-#endif /* !PMS_DISABLE_POWERHOOK */
+
+static bool	pms_suspend(device_t);
+static bool	pms_resume(device_t);
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -230,9 +230,10 @@ pmsattach(struct device *parent, struct device *self, void *aux)
 	    &sc->sc_event_thread, sc->sc_dev.dv_xname);
 
 #ifndef PMS_DISABLE_POWERHOOK
-	sc->sc_powerhook = powerhook_establish(self->dv_xname, pms_power, sc);
 	sc->sc_suspended = 0;
-#endif /* !PMS_DISABLE_POWERHOOK */
+#endif
+	if (!pmf_device_register(self, pms_suspend, pms_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static void
@@ -334,43 +335,36 @@ pms_disable(void *v)
 	splx(s);
 }
 
-#ifndef PMS_DISABLE_POWERHOOK
-void
-pms_power(int why, void *v)
+static bool
+pms_suspend(device_t dv)
 {
-	struct pms_softc *sc = v;
+	struct pms_softc *sc = device_private(dv);
 
-	switch (why) {
-	case PWR_STANDBY:
-		break;
-	case PWR_SUSPEND:
-		if (sc->sc_enabled) {
-			do_disable(sc);
-			sc->sc_suspended = 1;
-		}
-		break;
-	case PWR_RESUME:
-#ifdef PMS_SYNAPTICS_TOUCHPAD
-		if (sc->protocol == PMS_SYNAPTICS) {
-			pms_synaptics_resume(sc);
-			sc->sc_suspended = 0;
-			do_enable(sc);
-		}
-#endif
-		if (sc->sc_enabled && sc->sc_suspended) {
-			/* recheck protocol & init mouse */
-			sc->protocol = PMS_UNKNOWN;
-			sc->sc_suspended = 0;
-			do_enable(sc); /* only if we were suspended */
-		}
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	if (sc->sc_enabled)
+		do_disable(sc);
+
+	return true;
 }
-#endif /* !PMS_DISABLE_POWERHOOK */
+
+static bool
+pms_resume(device_t dv)
+{
+	struct pms_softc *sc = device_private(dv);
+
+#ifdef PMS_SYNAPTICS_TOUCHPAD
+	if (sc->protocol == PMS_SYNAPTICS) {
+		pms_synaptics_resume(sc);
+		do_enable(sc);
+	} else
+#endif
+	if (sc->sc_enabled) {
+		/* recheck protocol & init mouse */
+		sc->protocol = PMS_UNKNOWN;
+		do_enable(sc); /* only if we were suspended */
+	}
+
+	return true;
+}
 
 int
 pms_ioctl(void *v, u_long cmd, void *data, int flag,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.46.12.6 2007/12/07 17:30:30 yamt Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.46.12.7 2008/01/21 09:44:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -650,14 +650,14 @@ typedef u_int8_t pci_intr_line_t;
 struct pci_vpd_smallres {
 	uint8_t		vpdres_byte0;		/* length of data + tag */
 	/* Actual data. */
-} __attribute__((__packed__));
+} __packed;
 
 struct pci_vpd_largeres {
 	uint8_t		vpdres_byte0;
 	uint8_t		vpdres_len_lsb;		/* length of data only */
 	uint8_t		vpdres_len_msb;
 	/* Actual data. */
-} __attribute__((__packed__));
+} __packed;
 
 #define	PCI_VPDRES_ISLARGE(x)			((x) & 0x80)
 
@@ -678,7 +678,7 @@ struct pci_vpd {
 	uint8_t		vpd_key1;
 	uint8_t		vpd_len;		/* length of data only */
 	/* Actual data. */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Recommended VPD fields:
@@ -715,7 +715,7 @@ struct pci_rom_header {
 	uint16_t		romh_magic;	/* 0xAA55 little endian */
 	uint8_t			romh_reserved[22];
 	uint16_t		romh_data_ptr;	/* pointer to pci_rom struct */
-} __attribute__((__packed__));
+} __packed;
 
 #define	PCI_ROM_HEADER_MAGIC	0xAA55		/* little endian */
 
@@ -735,7 +735,7 @@ struct pci_rom {
 	uint8_t			rom_indicator;
 	uint16_t		rom_reserved;
 	/* Actual data. */
-} __attribute__((__packed__));
+} __packed;
 
 #define	PCI_ROM_SIGNATURE	0x52494350	/* "PCIR", endian reversed */
 #define	PCI_ROM_CODE_TYPE_X86	0		/* Intel x86 BIOS */

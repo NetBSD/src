@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_attr.c,v 1.6.2.5 2007/12/07 17:27:39 yamt Exp $ */
+/*	$NetBSD: darwin_attr.c,v 1.6.2.6 2008/01/21 09:40:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.5 2007/12/07 17:27:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_attr.c,v 1.6.2.6 2008/01/21 09:40:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,11 +76,7 @@ static int darwin_attr_append(const char *, size_t, char **, size_t *);
 
 
 static int
-darwin_attr_append(x, size, bp, len)
-	const char *x;
-	size_t size;
-	char **bp;
-	size_t *len;
+darwin_attr_append(const char *x, size_t size, char **bp, size_t *len)
 {
 	if (*len < size)
 		return -1;
@@ -94,18 +90,15 @@ darwin_attr_append(x, size, bp, len)
 }
 
 int
-darwin_sys_getattrlist(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
+darwin_sys_getattrlist(struct lwp *l, const struct darwin_sys_getattrlist_args *uap, register_t *retval)
 {
-	struct darwin_sys_getattrlist_args /* {
+	/* {
 		syscallarg(const char *) path;
 		syscallarg(struct darwin_attrlist *) alist;
 		syscallarg(void *) attributes;
 		syscallarg(size_t) buflen;
 		syscallarg(unsigned long) options;
-	} */ *uap = v;
+	} */
 	struct darwin_attrlist kalist;
 	char *tbuf;
 	char *bp;
@@ -155,7 +148,7 @@ darwin_sys_getattrlist(l, v, retval)
 	kauth_cred_setegid(cred, kauth_cred_getgid(l->l_cred));
 
 	NDINIT(&nd, LOOKUP, follow | LOCKLEAF | TRYEMULROOT, UIO_USERSPACE,
-	    SCARG(uap, path), l);
+	    SCARG(uap, path));
 	if ((error = namei(&nd)) != 0)
 		goto out2;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mach_host.c,v 1.28 2005/02/26 23:10:19 perry Exp $ */
+/*	$NetBSD: mach_host.c,v 1.28.4.1 2008/01/21 09:41:40 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002-2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.28 2005/02/26 23:10:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.28.4.1 2008/01/21 09:41:40 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -58,8 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: mach_host.c,v 1.28 2005/02/26 23:10:19 perry Exp $")
 #include <compat/mach/mach_services.h>
 
 int
-mach_host_info(args)
-	struct mach_trap_args *args;
+mach_host_info(struct mach_trap_args *args)
 {
 	mach_host_info_request_t *req = args->smsg;
 	mach_host_info_reply_t *rep = args->rmsg;
@@ -130,8 +129,7 @@ mach_host_info(args)
 
 
 int
-mach_host_page_size(args)
-	struct mach_trap_args *args;
+mach_host_page_size(struct mach_trap_args *args)
 {
 	mach_host_page_size_request_t *req = args->smsg;
 	mach_host_page_size_reply_t *rep = args->rmsg;
@@ -148,8 +146,7 @@ mach_host_page_size(args)
 }
 
 int
-mach_host_get_clock_service(args)
-	struct mach_trap_args *args;
+mach_host_get_clock_service(struct mach_trap_args *args)
 {
 	mach_host_get_clock_service_request_t *req = args->smsg;
 	mach_host_get_clock_service_reply_t *rep = args->rmsg;
@@ -168,8 +165,7 @@ mach_host_get_clock_service(args)
 }
 
 void
-mach_host_priority_info(info)
-	struct mach_host_priority_info *info;
+mach_host_priority_info(struct mach_host_priority_info *info)
 {
 	/* XXX One day, try to fill this correctly */
 	info->kernel_priority = 0x50;
@@ -185,8 +181,7 @@ mach_host_priority_info(info)
 }
 
 int
-mach_host_get_io_master(args)
-	struct mach_trap_args *args;
+mach_host_get_io_master(struct mach_trap_args *args)
 {
 	mach_host_get_io_master_request_t *req = args->smsg;
 	mach_host_get_io_master_reply_t *rep = args->rmsg;
@@ -205,8 +200,7 @@ mach_host_get_io_master(args)
 }
 
 int
-mach_processor_set_default(args)
-	struct mach_trap_args *args;
+mach_processor_set_default(struct mach_trap_args *args)
 {
 	mach_processor_set_default_request_t *req = args->smsg;
 	mach_processor_set_default_reply_t *rep = args->rmsg;
@@ -227,8 +221,7 @@ mach_processor_set_default(args)
 }
 
 int
-mach_host_processor_set_priv(args)
-	struct mach_trap_args *args;
+mach_host_processor_set_priv(struct mach_trap_args *args)
 {
 	mach_host_processor_set_priv_request_t *req = args->smsg;
 	mach_host_processor_set_priv_reply_t *rep = args->rmsg;

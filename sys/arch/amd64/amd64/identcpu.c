@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.2.16.7 2007/12/07 17:23:57 yamt Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.2.16.8 2008/01/21 09:35:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.7 2007/12/07 17:23:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.2.16.8 2008/01/21 09:35:15 yamt Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_coretemp.h"
@@ -151,9 +151,11 @@ identifycpu(struct cpu_info *ci)
 
 	x86_print_cacheinfo(ci);
 
+	identifycpu_cpuids(ci);
+
 #ifdef POWERNOW_K8
-	if (CPUID2FAMILY(ci->ci_signature) == 15 &&
-	    (cpu_model[0] == 'A' || cpu_model[0] == 'O') &&
+	if (cpu_vendor == CPUVENDOR_AMD &&
+	    CPUID2FAMILY(ci->ci_signature) == 15 &&
 	    powernow_probe(ci))
 		k8_powernow_init();
 #endif
@@ -182,6 +184,11 @@ identifycpu(struct cpu_info *ci)
 void
 cpu_probe_features(struct cpu_info *ci)
 {
+	uint32_t descs[4];
+
 	ci->ci_feature_flags = cpu_feature;
 	ci->ci_signature = 0;
+
+	x86_cpuid(1, descs);
+	ci->ci_initapicid = (descs[1] >> 24) & 0xff;
 }

@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.38.12.4 2007/10/27 11:33:38 yamt Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.38.12.5 2008/01/21 09:44:18 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.38.12.4 2007/10/27 11:33:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.38.12.5 2008/01/21 09:44:18 yamt Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -320,14 +320,14 @@ bktr_probe(device_t dev)
 static int
 bktr_attach(device_t dev)
 {
-	u_long		latency;
-	u_long		fun;
-	u_long		val;
+	u_int		latency;
+	u_int		fun;
+	u_int		val;
 	unsigned int	rev;
 	unsigned int	unit;
 	int		error = 0;
 #ifdef BROOKTREE_IRQ
-	u_long		old_irq, new_irq;
+	u_int		old_irq, new_irq;
 #endif
 
 	struct bktr_softc *bktr = device_get_softc(dev);
@@ -849,7 +849,7 @@ static const char*	bktr_probe(pcici_t tag, pcidi_t type);
 static void		bktr_attach(pcici_t tag, int unit);
 static void		bktr_intr(void *arg) { common_bktr_intr(arg); }
 
-static u_long	bktr_count;
+static u_int	bktr_count;
 
 static struct	pci_device bktr_device = {
 	"bktr",
@@ -926,12 +926,12 @@ static	void
 bktr_attach(pcici_t tag, int unit)
 {
 	bktr_ptr_t	bktr;
-	u_long		latency;
-	u_long		fun;
+	u_int		latency;
+	u_int		fun;
 	unsigned int	rev;
 	unsigned long	base;
 #ifdef BROOKTREE_IRQ
-	u_long		old_irq, new_irq;
+	u_int		old_irq, new_irq;
 #endif
 
 	bktr = &brooktree[unit];
@@ -1382,10 +1382,10 @@ static void
 bktr_attach(struct device *parent, struct device *self, void *aux)
 {
 	bktr_ptr_t	bktr;
-	u_long		latency;
+	u_int		latency;
 
 #if defined(__OpenBSD__)
-	u_long		fun;
+	u_int		fun;
 	unsigned int	rev;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;

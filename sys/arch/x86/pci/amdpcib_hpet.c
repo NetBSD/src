@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.1.2.2 2007/10/27 11:28:57 yamt Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.1.2.3 2008/01/21 09:40:10 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.1.2.2 2007/10/27 11:28:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.1.2.3 2008/01/21 09:40:10 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -86,7 +86,5 @@ amdpcib_hpet_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-#ifdef __HAVE_TIMECOUNTER
 	hpet_attach_subr(sc);
-#endif
 }

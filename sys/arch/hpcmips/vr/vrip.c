@@ -1,4 +1,4 @@
-/*	$NetBSD: vrip.c,v 1.30.2.1 2006/06/21 14:51:50 yamt Exp $	*/
+/*	$NetBSD: vrip.c,v 1.30.2.2 2008/01/21 09:36:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.30.2.1 2006/06/21 14:51:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrip.c,v 1.30.2.2 2008/01/21 09:36:40 yamt Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -534,7 +534,7 @@ __vrip_register_gpio(vrip_chipset_tag_t vc, hpcio_chip_t chip)
 	struct vrip_softc *sc = vc->vc_sc;
 
 	if (chip->hc_chipid < 0 || VRIP_NIOCHIPS <= chip->hc_chipid)
-		panic("%s: '%s' has unknown id, %d", __FUNCTION__,
+		panic("%s: '%s' has unknown id, %d", __func__,
 		    chip->hc_name, chip->hc_chipid);
 	sc->sc_gpio_chips[chip->hc_chipid] = chip;
 }

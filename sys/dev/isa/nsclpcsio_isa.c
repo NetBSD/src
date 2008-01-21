@@ -1,4 +1,4 @@
-/* $NetBSD: nsclpcsio_isa.c,v 1.8.4.7 2007/12/07 17:30:18 yamt Exp $ */
+/* $NetBSD: nsclpcsio_isa.c,v 1.8.4.8 2008/01/21 09:43:20 yamt Exp $ */
 
 /*
  * Copyright (c) 2002
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.4.7 2007/12/07 17:30:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsclpcsio_isa.c,v 1.8.4.8 2008/01/21 09:43:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,6 +300,39 @@ found:
 	return 1;
 }
 
+static struct sysmon_envsys *
+nsclpcsio_envsys_init(struct nsclpcsio_softc *sc)
+{
+	int i;
+	struct sysmon_envsys *sme;
+
+	sme = sysmon_envsys_create();
+	for (i = 0; i < SIO_NUM_SENSORS; i++) {
+		if (sysmon_envsys_sensor_attach(sme, &sc->sc_sensor[i]) != 0) {
+			aprint_error_dev(&sc->sc_dev,
+			    "could not attach sensor %d", i);
+			goto err;
+		}
+	}
+
+	/*
+	 * Hook into the System Monitor.
+	 */
+	sme->sme_name = device_xname(&sc->sc_dev);
+	sme->sme_cookie = sc;
+	sme->sme_refresh = nsclpcsio_refresh;
+
+	if (sysmon_envsys_register(sme) != 0) {
+		aprint_error("%s: unable to register with sysmon\n",
+		    sc->sc_dev.dv_xname);
+		goto err;
+	}
+	return sme;
+err:
+	sysmon_envsys_destroy(sme);
+	return NULL;
+}
+
 static void
 nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 {
@@ -317,8 +350,8 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	if (bus_space_map(ia->ia_iot, iobase, 2, 0, &sc->sc_ioh)) {
 		aprint_error(": can't map i/o space\n");
-			return;
-		}
+		return;
+	}
 
 	aprint_normal(": NSC PC87366 rev. 0x%d ",
 	    nsread(sc->sc_iot, sc->sc_ioh, SIO_REG_SRID));
@@ -356,30 +389,7 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	nsclpcsio_tms_init(sc);
 	nsclpcsio_vlm_init(sc);
-
-	sc->sc_sme = sysmon_envsys_create();
-	for (i = 0; i < SIO_NUM_SENSORS; i++) {
-		if (sysmon_envsys_sensor_attach(sc->sc_sme,
-						&sc->sc_sensor[i])) {
-			sysmon_envsys_destroy(sc->sc_sme);
-			return;
-		}
-	}
-
-	/*
-	 * Hook into the System Monitor.
-	 */
-	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
-	sc->sc_sme->sme_cookie = sc;
-	sc->sc_sme->sme_refresh = nsclpcsio_refresh;
-
-	if (sysmon_envsys_register(sc->sc_sme)) {
-		aprint_error("%s: unable to register with sysmon\n",
-		    sc->sc_dev.dv_xname);
-		sysmon_envsys_destroy(sc->sc_sme);
-		return;
-	}
-
+	sc->sc_sme = nsclpcsio_envsys_init(sc);
 
 #if NGPIO > 0
 	/* attach GPIO framework */
@@ -395,10 +405,24 @@ nsclpcsio_isa_attach(struct device *parent, struct device *self, void *aux)
 static int
 nsclpcsio_isa_detach(struct device *self, int flags)
 {
+	int i, rc;
 	struct nsclpcsio_softc *sc = device_private(self);
 
-	sysmon_envsys_unregister(sc->sc_sme);
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	if (sc->sc_sme != NULL)
+		sysmon_envsys_unregister(sc->sc_sme);
 	mutex_destroy(&sc->sc_lock);
+
+	for (i = 0; i < __arraycount(sio_ld); i++) {
+		if (sc->sc_ld_en[sio_ld[i].ld_num] &&
+		    sio_ld[i].ld_iosize != 0) {
+			bus_space_unmap(sc->sc_iot,
+			    sc->sc_ld_ioh[sio_ld[i].ld_num],
+			    sio_ld[i].ld_iosize);
+		}
+	}
 
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, 2);
 
@@ -442,26 +466,26 @@ nsclpcsio_vlm_init(struct nsclpcsio_softc *sc)
 {
 	int i;
 	char tmp[16];
+	envsys_data_t *sensor = &sc->sc_sensor[SIO_VLM_OFF];
 
-	for (i = SIO_VLM_OFF; i < SIO_NUM_SENSORS; i++) {
-		VLM_WRITE(sc, SIO_VLMBS, i - SIO_VLM_OFF);
+	for (i = 0; i < SIO_NUM_SENSORS - SIO_VLM_OFF; i++) {
+		VLM_WRITE(sc, SIO_VLMBS, i);
 		VLM_WRITE(sc, SIO_VCHCFST, 0x01);
-		sc->sc_sensor[i].units = ENVSYS_SVOLTS_DC;
+		sensor[i].units = ENVSYS_SVOLTS_DC;
 	}
 
 	for (i = 0; i < 7; i++) {
 		(void)snprintf(tmp, sizeof(tmp), "VSENS%d", i);
-		COPYDESCR(sc->sc_sensor[i + SIO_VLM_OFF].desc, tmp);
+		COPYDESCR(sensor[i].desc, tmp);
 	}
 
-	i += SIO_VLM_OFF;
-	COPYDESCR(sc->sc_sensor[i + 1].desc, "VSB");
-	COPYDESCR(sc->sc_sensor[i + 2].desc, "VDD");
-	COPYDESCR(sc->sc_sensor[i + 3].desc, "VBAT");
-	COPYDESCR(sc->sc_sensor[i + 4].desc, "AVDD");
-	COPYDESCR(sc->sc_sensor[i + 5].desc, "TS1");
-	COPYDESCR(sc->sc_sensor[i + 6].desc, "TS2");
-	COPYDESCR(sc->sc_sensor[i + 7].desc, "TS3");
+	COPYDESCR(sensor[7 ].desc, "VSB");
+	COPYDESCR(sensor[8 ].desc, "VDD");
+	COPYDESCR(sensor[9 ].desc, "VBAT");
+	COPYDESCR(sensor[10].desc, "AVDD");
+	COPYDESCR(sensor[11].desc, "TS1");
+	COPYDESCR(sensor[12].desc, "TS2");
+	COPYDESCR(sensor[13].desc, "TS3");
 }
 
 

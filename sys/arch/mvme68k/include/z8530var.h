@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.8.16.2 2007/12/07 17:25:40 yamt Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.8.16.3 2008/01/21 09:37:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -102,13 +102,13 @@ struct zsc_softc {
  * These could be inlines, but with the delay, speed is moot.
  */
 
-u_char zs_read_reg __P((struct zs_chanstate *cs, u_char reg));
-u_char zs_read_csr __P((struct zs_chanstate *cs));
-u_char zs_read_data __P((struct zs_chanstate *cs));
+u_char zs_read_reg(struct zs_chanstate *cs, u_char reg);
+u_char zs_read_csr(struct zs_chanstate *cs);
+u_char zs_read_data(struct zs_chanstate *cs);
 
-void  zs_write_reg __P((struct zs_chanstate *cs, u_char reg, u_char val));
-void  zs_write_csr __P((struct zs_chanstate *cs, u_char val));
-void  zs_write_data __P((struct zs_chanstate *cs, u_char val));
+void  zs_write_reg(struct zs_chanstate *cs, u_char reg, u_char val);
+void  zs_write_csr(struct zs_chanstate *cs, u_char val);
+void  zs_write_data(struct zs_chanstate *cs, u_char val);
 
 /* Interrupt priority for the SCC chip; needs to match ZSHARD_PRI. */
 #define splzs()		splserial()

@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.2.12.1 2006/06/21 14:52:30 yamt Exp $	*/
+/*	$NetBSD: kcore.h,v 1.2.12.2 2008/01/21 09:37:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -42,5 +42,12 @@ typedef struct cpu_kcore_hdr {
 	phys_ram_seg_t  memsegs[];		/* RAM segments */
 #endif
 } cpu_kcore_hdr_t;
+
+#ifdef _KERNEL
+void	dumpsys(void);
+
+extern struct pcb dumppcb;
+extern int	sparse_dump;
+#endif
 
 #endif /* _I386_KCORE_H_ */
