@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.156 2008/01/21 08:04:51 dyoung Exp $
+# $NetBSD: ALL,v 1.157 2008/01/21 22:12:00 ichiro Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.156 $"
+#ident 		"ALL-$Revision: 1.157 $"
 
 maxusers	32		# estimated number of users
 
@@ -1107,6 +1107,10 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
