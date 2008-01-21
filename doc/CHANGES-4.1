@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.4 2008/01/11 17:06:42 xtraeme Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.5 2008/01/21 19:21:17 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -52,3 +52,8 @@ distrib/sets/lists/man/mi			patch
 	Add the Areca Technology Corporation SATA RAID controller driver,
 	ported from OpenBSD.
 	[christos, ticket #1037]
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
+
+	Apply security fix for CVE-2008-0006.
+	[tron, ticket #1047]
+
