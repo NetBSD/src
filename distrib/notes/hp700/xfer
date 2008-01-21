@@ -1,4 +1,4 @@
-.\"	$NetBSD: xfer,v 1.1 2003/10/10 23:53:21 mbw Exp $
+.\"	$NetBSD: xfer,v 1.1.16.1 2008/01/21 19:36:57 bouyer Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -32,19 +32,4 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .
-Because
-.Nx*M
-must run diskless, the distribution must be
-installed to a remote machine that NFS exports to the \*M machine.
-As a result, there is no automated install procedure.
-Begin by retrieving the
-.Nx
-set files onto the serving machine.
-These can be found at ftp.NetBSD.org.
-You may want to keep the following information handy:
-.(disp
-IP Address: ftp.NetBSD.org
-Login: anonymous
-Password: \*<your e-mail address\*>
-Server path: /pub/NetBSD/NetBSD-\*V/\*M/binary/sets
-.disp)
+.so ../common/xfer
