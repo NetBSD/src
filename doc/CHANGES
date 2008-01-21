@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1003 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1004 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -22,7 +22,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		(WLAN/DSL/ppp/...). [kardel 20070106]
 	kernel: Global 'securelevel' variable removed; it is now internal to
 		the secmodel. [elad 20070110]
-	GCC: Updated to version 4.1.2-20070110.  [mrg 20070111]
+	GCC: Updated to version 4.1.2-20070110. [mrg 20070111]
 	acpitools: Added from FreeBSD via fvdl. [christos 20070114]
 	scsictl(8): Added setspeed command, to set the highest speed that the
 		optical drive should use for reading data,
@@ -53,7 +53,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	file(1): Update to 4.20.  [pooka 20070304]
 	hfs: Add read-only Apple HFS+ file system support. [dillo 20070305]
 	ipv6: Add ipv6 fast forward. [liamjfoy 20070307]
-	openssh: Import 4.6 [christos 20070310]
+	openssh: Import 4.6. [christos 20070310]
 	aiboost(4): ASUS AI Booster ACPI Hardware monitor driver,
 		adapted from FreeBSD for envsys(4). [xtraeme 20070313]
 	evbmips: Add Infineon ADM5120 port. [dyoung 20070320]
@@ -61,7 +61,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		power and overheating in CPUs supporting the Thermal
 		Monitor feature (TM). Adapted from OpenBSD/FreeBSD.
 		See options(4) for more information. [xtraeme 20070320]
-	kernel: Import of DRM (Direct Rendering Manager).  Not yet enabled
+	kernel: Import of DRM (Direct Rendering Manager). Not yet enabled
 		by default. [drochner 20070320]
 	libc: Add support for LC_TIME. [manu 20070328]
 	genfb: Generic framebuffer console driver with PCI and SBus
@@ -81,13 +81,13 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		to locate files within an emulation's root directory.
 		Instead get namei() to check the emulation root first.
 		[dsl 20070422]
-	prep: Add support for the MTX604 RAVEN based machine.  Other RAVEN
+	prep: Add support for the MTX604 RAVEN based machine. Other RAVEN
 		based machines are also likely to work now. [garbled 20070426]
 	kernel: Added support for POSIX Asynchronous I/O. [rmind 20070430]
 	puffs(3): Add puffs_framebuf(3), which abstracts the buffer
 		management and event loop for networked file systems
 		using puffs_cc(3). Convert mount_psshfs(8) and
-		mount_9p(8) to use it.  [pooka 20070505]
+		mount_9p(8) to use it. [pooka 20070505]
 	kernel: Add the TFTPROOT kernel option for TFTP'ing root RAMdisk
 		at root mount time. [manu 20070508]
 	pf(4): Make 'nat' and 'rdr' translation rules obey state
@@ -112,7 +112,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	powerpc: Add booted_kernel and booted_device sysctl. [nisimura 20070601]
 	smsc(4): Added a driver for the hardware monitoring portion of
 		the SMSC LPC47B397. [blymn 20070601]
-	file(1): Update to 4.21.  [pooka 20070607]
+	file(1): Update to 4.21. [pooka 20070607]
 	zyd(4): Added OpenBSD's driver. Supports ZyDAS ZD1211/ZD1211B
 		USB IEEE 802.11b/g wireless network device. [kiyohara 20070609]
 	mac68k: Switch sn(4) Ethernet on mac68k to using MI SONIC driver.
@@ -155,7 +155,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		configure network interfaces through DHCP.  [jmmv 20070729]
 	sparc: The cgfourteen driver now supports wscons. [macallan 20070730]
 	shark: Switched the installation disk to use wscons instead of
-		pccons.  [jmmv 20070731]
+		pccons. [jmmv 20070731]
 	tcp(4): TCP socket buffers automatic sizing, ported from FreeBSD.
 		[rmind 20070802]
 	agp(4): Add support agp_amd64. Imported from FreeBSD.
@@ -168,10 +168,10 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	rump: Add the Runnable Userspace Meta Program framework to sys/rump.
 		These are programs which compile in a part from the standard
 		kernel sources and run in userspace.  Their main use is
-		testing/debugging.  Currently supported are a number of
+		testing/debugging. Currently supported are a number of
 		file systems (e.g. ffs) through puffs(3). [pooka 20070805]
 	wscons: Add scrollback support to vcons, this should work with
-		any framebuffer console driver that uses vcons
+		any framebuffer console driver that uses vcons.
 		[macallan 20070805]
 	wtf(6): Search pkgsrc's help database when ran inside a package
 		directory. [hubertf 20070806]
@@ -219,57 +219,57 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		is no more. [dyoung 20071005]
 	malloc: Replace the default memory allocator with 'jemalloc',
 		designed to perform well in both single- and multi-
-		threaded processes.  This provides a significant
+		threaded processes. This provides a significant
 		performance boost for many threaded workloads that
 		make use of malloc, such as MySQL. [ad 20071006]
 	kernel: A new SCHED_M2 scheduler, improves the performance on
 		MP systems, supports real-time and time-sharing classes,
 		ready for the CPU affinity. [rmind 20071009]
 	powerpc, prep, pmppc, evbppc, macppc, ibmnws, bebox, sandpoint, ofwppc:
-		Merge ppcoea-renovation branch [garbled 20071017]
-	prep: Convert to generic powerpc PCI framework [garbled 20071017]
-	powerpc: New generic interrupt handler framework [macallan 20071017]
-	macppc: Switch to generic powerpc interrupt framework
+		Merge ppcoea-renovation branch. [garbled 20071017]
+	prep: Convert to generic powerpc PCI framework. [garbled 20071017]
+	powerpc: New generic interrupt handler framework. [macallan 20071017]
+	macppc: Switch to generic powerpc interrupt framework.
 		[macallan 20071017]
-	prep: Convert to generic powerpc ISA framework [garbled 20071017]
-	bebox: Convert to generic soft interrupts [matt 20071017]
-	prep: Switch to generic powerpc interrupt framework [garbled 20071017]
-	powerpc: New generic shared timecounters-based clock routines
+	prep: Convert to generic powerpc ISA framework. [garbled 20071017]
+	bebox: Convert to generic soft interrupts. [matt 20071017]
+	prep: Switch to generic powerpc interrupt framework. [garbled 20071017]
+	powerpc: New generic shared timecounters-based clock routines.
 		[garbled 20071017]
-	prep: Convert to generic powerpc clock [garbled 20071017]
-	sandpoint: Convert to generic soft interrupts [nisimura 20071017]
-	sandpoint: Switch to generic powerpc interrupt framework
+	prep: Convert to generic powerpc clock. [garbled 20071017]
+	sandpoint: Convert to generic soft interrupts. [nisimura 20071017]
+	sandpoint: Switch to generic powerpc interrupt framework.
 		[nisimura 20071017]
-	sandpoint: Convert to generic powerpc clock/PCI/ISA framework
+	sandpoint: Convert to generic powerpc clock/PCI/ISA framework.
 		[nisimura 20071017]
-	macppc: Convert to generic powerpc clock/PCI framework
+	macppc: Convert to generic powerpc clock/PCI framework.
 		[macallan 20071017]
-	pmppc: Convert to generic powerpc clock/PCI/interrupt framework
+	pmppc: Convert to generic powerpc clock/PCI/interrupt framework.
 		[garbled 20071017]
 	pmppc: Remove pmppc as a port, and move it to a supported board under
-		evbppc [garbled 20071017]
-	ibmnws: Convert to generic powerpc clock.c/PCI/interrupt framework
+		evbppc. [garbled 20071017]
+	ibmnws: Convert to generic powerpc clock.c/PCI/interrupt framework.
 		[rjs 20071017]
-	mvmeppc: Convert to generic powerpc clock.c/PCI/interrupt framework
+	mvmeppc: Convert to generic powerpc clock.c/PCI/interrupt framework.
 		[garbled 20071017]
-	powerpc: Add shared PReP memory maps [garbled 20071017]
-	sandpoint: DHCP/NFS bootloader [nisimura 20071017]
-	macppc: Convert to generic powerpc bus_dma [matt 20071017]
-	macppc: Convert to generic powerpc bus_space [garbled 20071017]
-	powerpc: Generic powerpc OpenFirmware code [garbled 20071017]
-	ofppc: Completely rewrite ofppc port from scratch [garbled 20071017]
-	bebox: Convert to generic powerpc PCI/ISA framework [ober 20071017]
-	macppc: Use genfb as the default framebuffer instead of ofb
+	powerpc: Add shared PReP memory maps. [garbled 20071017]
+	sandpoint: DHCP/NFS bootloader. [nisimura 20071017]
+	macppc: Convert to generic powerpc bus_dma. [matt 20071017]
+	macppc: Convert to generic powerpc bus_space. [garbled 20071017]
+	powerpc: Generic powerpc OpenFirmware code. [garbled 20071017]
+	ofppc: Completely rewrite ofppc port from scratch. [garbled 20071017]
+	bebox: Convert to generic powerpc PCI/ISA framework. [ober 20071017]
+	macppc: Use genfb as the default framebuffer instead of ofb.
 		[macallan 20071017]
-	macppc: switch to new ADB subsystem [macallan 20071017]
-	macppc: add support for bus speed control found in some Intrepid-based
-		*Books like the 800MHz iBook G4 [macallan 20071017] 
-	powerpc: New generic powerpc IPI framework [garbled 20071017]
-	macppc: Convert to generic powerpc IPI framework [garbled 20071017]
-	powerpc: New generic powerpc SMP support framework [garbled 20071017]
-	macppc: Convert to generic powerpc SMP framework [macallan 20071017]
-	prep: Convert to generic powerpc IPI/SMP framework [garbled 20071017]
-	ofppc: New ofwpci configuration methods, add rtas device
+	macppc: Switch to new ADB subsystem. [macallan 20071017]
+	macppc: Add support for bus speed control found in some Intrepid-based
+		*Books like the 800MHz iBook G4. [macallan 20071017] 
+	powerpc: New generic powerpc IPI framework. [garbled 20071017]
+	macppc: Convert to generic powerpc IPI framework. [garbled 20071017]
+	powerpc: New generic powerpc SMP support framework. [garbled 20071017]
+	macppc: Convert to generic powerpc SMP framework. [macallan 20071017]
+	prep: Convert to generic powerpc IPI/SMP framework. [garbled 20071017]
+	ofppc: New ofwpci configuration methods, add rtas device.
 		[garbled 20071025]
 	shark: Removed pccons(4), obsoleted by wscons(4). [jmmv 20071028]
 	coretemp(4): Driver for Intel Core's on-die thermal sensor,
@@ -277,7 +277,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[xtraeme 20071029]
 	i386, amd64: Added support for Intel 82G965 chipset. [jnemeth 20071030]
 	ofppc: Stop using ofbus driver, rewrite console code [garbled 20071104]
-	ofppc, macppc: Convert to shared ofw_autoconf [garbled 20071107]
+	ofppc, macppc: Convert to shared ofw_autoconf. [garbled 20071107]
 	nsclpcsio(4): Added support for the VLM logical device. This provides
 		14 voltage sensors in addition to the previous 3 temperature
 		sensors provided in the TMS logical device. From OpenBSD.
@@ -326,17 +326,17 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[bouyer 20071202]
 	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]
-	ofppc: Convert to shared powerpc major numbers [garbled 20071210]
-	ofppc: Added support for the bplan/Genesi Pegasos II [garbled 20071210]
-	sandpoint: Convert to shared powerpc major numbers [nisimura 20071211]
-	macppc: Convert to shared powerpc major numbers [macallan 20071211]
+	ofppc: Convert to shared powerpc major numbers. [garbled 20071210]
+	ofppc: Added support for the bplan/Genesi Pegasos II. [garbled 20071210]
+	sandpoint: Convert to shared powerpc major numbers. [nisimura 20071211]
+	macppc: Convert to shared powerpc major numbers. [macallan 20071211]
 	acpi: Updated ACPI-CA to 20070320. [jmcneill 20071211]
 	kernel: Added a new power management framework, see pmf(9) for details.
 		[jmcneill,joerg 20071211]
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
-	rs6000: New port of NetBSD to the MCA based IBM RS/6000 7006-41T
+	rs6000: New port of NetBSD to the MCA based IBM RS/6000 7006-41T.
 		[garbled 20071217]
 	openssh: Import 4.7. [christos 20071217]
 	i386, amd64: Add support for ACPI S3 (suspend-to-RAM) on MP systems.
@@ -378,7 +378,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Device with support for Timecounter, Watchdog Timer and
 		GPIO. Adapted from OpenBSD by Yojiro UO. [xtraeme 20080109]
 	pc532: Port deleted. [simonb 20080109]
-	ofppc: Fix ofwboot to work on an IBM CHRP-based RS/6000
+	ofppc: Fix ofwboot to work on an IBM CHRP-based RS/6000.
 		[garbled 20080109]
 	i386: Add sparse kernel core dumps (minidumps) for this platform
 		using a backwards-compatible on-disk core format. Not
@@ -392,7 +392,7 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	schedctl(8): A new program to control scheduling of processes and
 		threads. [rmind 20080115]
 	bktr(4): Added amd64 support. [jmcneill 20080116]
-	ofppc: Add support for the IBM 7044-270 [garbled 20080117]
+	ofppc: Add support for the IBM 7044-270. [garbled 20080117]
 	kernel: All platforms have been converted to use timecounter.
 		[joerg 20080120]
 	usb: Add uhmodem(4) driver for Huawei E220 wireless modem.
