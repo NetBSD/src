@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-2.2,v 1.1.2.123 2007/12/01 17:39:27 bouyer Exp $
+#	$NetBSD: CHANGES-2.2,v 1.1.2.124 2008/01/21 19:16:34 bouyer Exp $
 
 A complete list of changes from the NetBSD 2.1 release to the NetBSD 2.2 
 release
@@ -1379,4 +1379,9 @@ sys/dev/ic/com.c				1.233
 	default: it appears to break output on the Soekris net4501, which
 	is a rather popular platform. This should fix PR kern/29612.
 	[is, ticket #11394]
+
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
+
+	Apply security fix for CVE-2008-0006.
+	[tron, ticket #11398]
 
