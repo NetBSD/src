@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.16 2008/01/03 02:48:03 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.17 2008/01/21 03:40:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,7 @@ static int rump_specopen(void *);
 static int rump_specioctl(void *);
 static int rump_specclose(void *);
 static int rump_specfsync(void *);
+static int rump_specbmap(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 static int rump_specsimpleul(void *);
@@ -60,6 +61,7 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_close_desc, rump_specclose },		/* close */
 	{ &vop_ioctl_desc, rump_specioctl },		/* ioctl */
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
+	{ &vop_bmap_desc, rump_specbmap },		/* bmap */
 	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
 	{ &vop_getpages_desc, rump_specsimpleul },	/* getpages */
@@ -178,6 +180,27 @@ rump_specfsync(void *v)
 int
 rump_specputpages(void *v)
 {
+
+	return 0;
+}
+
+static int
+rump_specbmap(void *v)
+{
+	struct vop_bmap_args /* {
+		struct vnode *a_vp;
+		daddr_t a_bn;
+		struct vnode **a_vpp;
+		daddr_t *a_bnp;
+		int *a_runp;
+	} */ *ap = v;
+
+	if (ap->a_vpp != NULL)
+		*ap->a_vpp = ap->a_vp;
+	if (ap->a_bnp != NULL)
+		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = (MAXBSIZE >> DEV_BSHIFT) -1;
 
 	return 0;
 }
