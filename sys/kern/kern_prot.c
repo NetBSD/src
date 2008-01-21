@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.84.12.4 2007/09/03 14:40:53 yamt Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.84.12.5 2008/01/21 09:46:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.84.12.4 2007/09/03 14:40:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.84.12.5 2008/01/21 09:46:10 yamt Exp $");
 
 #include "opt_compat_43.h"
 
@@ -61,16 +61,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.84.12.4 2007/09/03 14:40:53 yamt Exp
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 
-int	sys_getpid(struct lwp *, void *, register_t *);
-int	sys_getpid_with_ppid(struct lwp *, void *, register_t *);
-int	sys_getuid(struct lwp *, void *, register_t *);
-int	sys_getuid_with_euid(struct lwp *, void *, register_t *);
-int	sys_getgid(struct lwp *, void *, register_t *);
-int	sys_getgid_with_egid(struct lwp *, void *, register_t *);
+int	sys_getpid(struct lwp *, const void *, register_t *);
+int	sys_getpid_with_ppid(struct lwp *, const void *, register_t *);
+int	sys_getuid(struct lwp *, const void *, register_t *);
+int	sys_getuid_with_euid(struct lwp *, const void *, register_t *);
+int	sys_getgid(struct lwp *, const void *, register_t *);
+int	sys_getgid_with_egid(struct lwp *, const void *, register_t *);
 
 /* ARGSUSED */
 int
-sys_getpid(struct lwp *l, void *v, register_t *retval)
+sys_getpid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -80,7 +80,7 @@ sys_getpid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getpid_with_ppid(struct lwp *l, void *v, register_t *retval)
+sys_getpid_with_ppid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -93,7 +93,7 @@ sys_getpid_with_ppid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getppid(struct lwp *l, void *v, register_t *retval)
+sys_getppid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -105,7 +105,7 @@ sys_getppid(struct lwp *l, void *v, register_t *retval)
 
 /* Get process group ID; note that POSIX getpgrp takes no parameter */
 int
-sys_getpgrp(struct lwp *l, void *v, register_t *retval)
+sys_getpgrp(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -120,11 +120,11 @@ sys_getpgrp(struct lwp *l, void *v, register_t *retval)
  * for the specified process.
  */
 int
-sys_getsid(struct lwp *l, void *v, register_t *retval)
+sys_getsid(struct lwp *l, const struct sys_getsid_args *uap, register_t *retval)
 {
-	struct sys_getsid_args /* {
+	/* {
 		syscalldarg(pid_t) pid;
-	} */ *uap = v;
+	} */
 	pid_t pid = SCARG(uap, pid);
 	struct proc *p;
 	int error = 0;
@@ -142,11 +142,11 @@ sys_getsid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_getpgid(struct lwp *l, void *v, register_t *retval)
+sys_getpgid(struct lwp *l, const struct sys_getpgid_args *uap, register_t *retval)
 {
-	struct sys_getpgid_args /* {
+	/* {
 		syscallarg(pid_t) pid;
-	} */ *uap = v;
+	} */
 	pid_t pid = SCARG(uap, pid);
 	struct proc *p;
 	int error = 0;
@@ -165,7 +165,7 @@ sys_getpgid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getuid(struct lwp *l, void *v, register_t *retval)
+sys_getuid(struct lwp *l, const void *v, register_t *retval)
 {
 
 	*retval = kauth_cred_getuid(l->l_cred);
@@ -174,7 +174,7 @@ sys_getuid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getuid_with_euid(struct lwp *l, void *v, register_t *retval)
+sys_getuid_with_euid(struct lwp *l, const void *v, register_t *retval)
 {
 
 	retval[0] = kauth_cred_getuid(l->l_cred);
@@ -184,7 +184,7 @@ sys_getuid_with_euid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_geteuid(struct lwp *l, void *v, register_t *retval)
+sys_geteuid(struct lwp *l, const void *v, register_t *retval)
 {
 
 	*retval = kauth_cred_geteuid(l->l_cred);
@@ -193,7 +193,7 @@ sys_geteuid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getgid(struct lwp *l, void *v, register_t *retval)
+sys_getgid(struct lwp *l, const void *v, register_t *retval)
 {
 
 	*retval = kauth_cred_getgid(l->l_cred);
@@ -202,7 +202,7 @@ sys_getgid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getgid_with_egid(struct lwp *l, void *v, register_t *retval)
+sys_getgid_with_egid(struct lwp *l, const void *v, register_t *retval)
 {
 
 	retval[0] = kauth_cred_getgid(l->l_cred);
@@ -217,7 +217,7 @@ sys_getgid_with_egid(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_getegid(struct lwp *l, void *v, register_t *retval)
+sys_getegid(struct lwp *l, const void *v, register_t *retval)
 {
 
 	*retval = kauth_cred_getegid(l->l_cred);
@@ -225,12 +225,12 @@ sys_getegid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_getgroups(struct lwp *l, void *v, register_t *retval)
+sys_getgroups(struct lwp *l, const struct sys_getgroups_args *uap, register_t *retval)
 {
-	struct sys_getgroups_args /* {
+	/* {
 		syscallarg(int) gidsetsize;
 		syscallarg(gid_t *) gidset;
-	} */ *uap = v;
+	} */
 
 	*retval = kauth_cred_ngroups(l->l_cred);
 	if (SCARG(uap, gidsetsize) == 0)
@@ -244,7 +244,7 @@ sys_getgroups(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setsid(struct lwp *l, void *v, register_t *retval)
+sys_setsid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 	int error;
@@ -273,12 +273,12 @@ sys_setsid(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_setpgid(struct lwp *l, void *v, register_t *retval)
+sys_setpgid(struct lwp *l, const struct sys_setpgid_args *uap, register_t *retval)
 {
-	struct sys_setpgid_args /* {
+	/* {
 		syscallarg(int) pid;
 		syscallarg(int) pgid;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	pid_t targp, pgid;
 
@@ -434,11 +434,11 @@ do_setresgid(struct lwp *l, gid_t r, gid_t e, gid_t sv, u_int flags)
 
 /* ARGSUSED */
 int
-sys_setuid(struct lwp *l, void *v, register_t *retval)
+sys_setuid(struct lwp *l, const struct sys_setuid_args *uap, register_t *retval)
 {
-	struct sys_setuid_args /* {
+	/* {
 		syscallarg(uid_t) uid;
-	} */ *uap = v;
+	} */
 	uid_t uid = SCARG(uap, uid);
 
 	return do_setresuid(l, uid, uid, uid,
@@ -447,22 +447,22 @@ sys_setuid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_seteuid(struct lwp *l, void *v, register_t *retval)
+sys_seteuid(struct lwp *l, const struct sys_seteuid_args *uap, register_t *retval)
 {
-	struct sys_seteuid_args /* {
+	/* {
 		syscallarg(uid_t) euid;
-	} */ *uap = v;
+	} */
 
 	return do_setresuid(l, -1, SCARG(uap, euid), -1, ID_E_EQ_R | ID_E_EQ_S);
 }
 
 int
-sys_setreuid(struct lwp *l, void *v, register_t *retval)
+sys_setreuid(struct lwp *l, const struct sys_setreuid_args *uap, register_t *retval)
 {
-	struct sys_setreuid_args /* {
+	/* {
 		syscallarg(uid_t) ruid;
 		syscallarg(uid_t) euid;
-	} */ *uap = v;
+	} */
 	kauth_cred_t cred = l->l_cred;
 	uid_t ruid, euid, svuid;
 
@@ -485,11 +485,11 @@ sys_setreuid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setgid(struct lwp *l, void *v, register_t *retval)
+sys_setgid(struct lwp *l, const struct sys_setgid_args *uap, register_t *retval)
 {
-	struct sys_setgid_args /* {
+	/* {
 		syscallarg(gid_t) gid;
-	} */ *uap = v;
+	} */
 	gid_t gid = SCARG(uap, gid);
 
 	return do_setresgid(l, gid, gid, gid,
@@ -498,22 +498,22 @@ sys_setgid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setegid(struct lwp *l, void *v, register_t *retval)
+sys_setegid(struct lwp *l, const struct sys_setegid_args *uap, register_t *retval)
 {
-	struct sys_setegid_args /* {
+	/* {
 		syscallarg(gid_t) egid;
-	} */ *uap = v;
+	} */
 
 	return do_setresgid(l, -1, SCARG(uap, egid), -1, ID_E_EQ_R | ID_E_EQ_S);
 }
 
 int
-sys_setregid(struct lwp *l, void *v, register_t *retval)
+sys_setregid(struct lwp *l, const struct sys_setregid_args *uap, register_t *retval)
 {
-	struct sys_setregid_args /* {
+	/* {
 		syscallarg(gid_t) rgid;
 		syscallarg(gid_t) egid;
-	} */ *uap = v;
+	} */
 	kauth_cred_t cred = l->l_cred;
 	gid_t rgid, egid, svgid;
 
@@ -535,7 +535,7 @@ sys_setregid(struct lwp *l, void *v, register_t *retval)
 }
 
 int
-sys_issetugid(struct lwp *l, void *v, register_t *retval)
+sys_issetugid(struct lwp *l, const void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
@@ -553,12 +553,12 @@ sys_issetugid(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setgroups(struct lwp *l, void *v, register_t *retval)
+sys_setgroups(struct lwp *l, const struct sys_setgroups_args *uap, register_t *retval)
 {
-	struct sys_setgroups_args /* {
+	/* {
 		syscallarg(int) gidsetsize;
 		syscallarg(const gid_t *) gidset;
-	} */ *uap = v;
+	} */
 	kauth_cred_t ncred;
 	int error;
 
@@ -578,12 +578,12 @@ sys_setgroups(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___getlogin(struct lwp *l, void *v, register_t *retval)
+sys___getlogin(struct lwp *l, const struct sys___getlogin_args *uap, register_t *retval)
 {
-	struct sys___getlogin_args /* {
+	/* {
 		syscallarg(char *) namebuf;
 		syscallarg(size_t) namelen;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	char login[sizeof(p->p_session->s_login)];
 	int namelen = SCARG(uap, namelen);
@@ -601,11 +601,11 @@ sys___getlogin(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___setlogin(struct lwp *l, void *v, register_t *retval)
+sys___setlogin(struct lwp *l, const struct sys___setlogin_args *uap, register_t *retval)
 {
-	struct sys___setlogin_args /* {
+	/* {
 		syscallarg(const char *) namebuf;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct session *sp;
 	char newname[sizeof sp->s_login + 1];

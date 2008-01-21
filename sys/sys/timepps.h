@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps.h,v 1.8.4.2 2007/09/03 14:46:41 yamt Exp $	*/
+/*	$NetBSD: timepps.h,v 1.8.4.3 2008/01/21 09:48:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone
@@ -131,7 +131,6 @@ typedef struct {
 
 #ifdef _KERNEL
 
-#ifdef __HAVE_TIMECOUNTER
 struct pps_state {
 	/* Capture information. */
 	struct timehands *capth;
@@ -151,7 +150,6 @@ void pps_capture(struct pps_state *);
 void pps_event(struct pps_state *, int);
 void pps_init(struct pps_state *);
 int pps_ioctl(unsigned long, void *, struct pps_state *);
-#endif /* __HAVE_TIMECOUNTER */
 
 #else /* !_KERNEL */
 

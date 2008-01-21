@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.138.2.5 2007/10/27 11:36:35 yamt Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.138.2.6 2008/01/21 09:48:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1060,6 +1060,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	void name(struct sysctllog **)
 #ifdef SYSCTL_DEBUG_SETUP
 #define SYSCTL_SETUP(name, desc)				\
+	SYSCTL_SETUP_PROTO(name);				\
 	static void __CONCAT(___,name)(struct sysctllog **);	\
 	void name(struct sysctllog **clog) {			\
 		printf("%s\n", desc);				\
@@ -1068,6 +1069,7 @@ extern struct ctldebug debug15, debug16, debug17, debug18, debug19;
 	static void __CONCAT(___,name)(struct sysctllog **clog)
 #else  /* !SYSCTL_DEBUG_SETUP */
 #define SYSCTL_SETUP(name, desc)				\
+	SYSCTL_SETUP_PROTO(name);				\
 	__link_set_add_text(sysctl_funcs, name);		\
 	void name(struct sysctllog **clog)
 #endif /* !SYSCTL_DEBUG_SETUP */
@@ -1120,9 +1122,10 @@ void	sysctl_init(void);
 /*
  * typical syscall call order
  */
-int	sysctl_lock(struct lwp *, void *, size_t);
+void	sysctl_lock(bool);
 int	sysctl_dispatch(SYSCTLFN_PROTO);
-void	sysctl_unlock(struct lwp *);
+void	sysctl_unlock(void);
+void	sysctl_relock(void);
 
 /*
  * tree navigation primitives (must obtain lock before using these)

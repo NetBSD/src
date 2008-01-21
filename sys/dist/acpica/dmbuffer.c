@@ -1,7 +1,9 @@
+/*	$NetBSD: dmbuffer.c,v 1.1.14.3 2008/01/21 09:45:06 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dmbuffer - AML disassembler, buffer and string support
- *              xRevision: 1.20 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,14 +116,13 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmbuffer.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmbuffer.c,v 1.1.14.3 2008/01/21 09:45:06 yamt Exp $");
 
-#include "acpi.h"
-#include "acdisasm.h"
-#include "acparser.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acdisasm.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
 
 
 #ifdef ACPI_DISASSEMBLER
@@ -146,7 +147,8 @@ AcpiDmUnicode (
  *
  * RETURN:      None
  *
- * DESCRIPTION: Dump an AML "ByteList" in Hex format
+ * DESCRIPTION: Dump an AML "ByteList" in Hex format. 8 bytes per line, prefixed
+ *              with the hex buffer offset.
  *
  ******************************************************************************/
 
@@ -159,12 +161,31 @@ AcpiDmDisasmByteList (
     UINT32                  i;
 
 
-    AcpiDmIndent (Level);
+    if (!ByteCount)
+    {
+        return;
+    }
 
     /* Dump the byte list */
 
     for (i = 0; i < ByteCount; i++)
     {
+        /* New line every 8 bytes */
+
+        if (((i % 8) == 0) && (i < ByteCount))
+        {
+            if (i > 0)
+            {
+                AcpiOsPrintf ("\n");
+            }
+
+            AcpiDmIndent (Level);
+            if (ByteCount > 7)
+            {
+                AcpiOsPrintf ("/* %04X */    ", i);
+            }
+        }
+
         AcpiOsPrintf ("0x%2.2X", (UINT32) ByteData[i]);
 
         /* Add comma if there are more bytes to display */
@@ -172,14 +193,6 @@ AcpiDmDisasmByteList (
         if (i < (ByteCount -1))
         {
             AcpiOsPrintf (", ");
-        }
-
-        /* New line every 8 bytes */
-
-        if ((((i+1) % 8) == 0) && ((i+1) < ByteCount))
-        {
-            AcpiOsPrintf ("\n");
-            AcpiDmIndent (Level);
         }
     }
 
@@ -224,7 +237,7 @@ AcpiDmByteList (
     {
     case ACPI_DASM_RESOURCE:
 
-        AcpiDmResourceTemplate (Info, ByteData, ByteCount);
+        AcpiDmResourceTemplate (Info, Op->Common.Parent, ByteData, ByteCount);
         break;
 
     case ACPI_DASM_STRING:
@@ -463,7 +476,7 @@ AcpiDmIsEisaId (
 
     /* We are looking for _HID */
 
-    if (ACPI_STRNCMP ((char *) &Name, METHOD_NAME__HID, 4))
+    if (ACPI_STRNCMP((char *)&Name, METHOD_NAME__HID, 4))
     {
         return;
     }

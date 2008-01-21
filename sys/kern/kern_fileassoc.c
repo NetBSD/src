@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.18.2.4 2007/09/03 14:40:46 yamt Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.18.2.5 2008/01/21 09:46:04 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.18.2.4 2007/09/03 14:40:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.18.2.5 2008/01/21 09:46:04 yamt Exp $");
 
 #include "opt_fileassoc.h"
 
@@ -528,14 +528,20 @@ fileassoc_file_delete(struct vnode *vp)
 	struct fileassoc_table *tbl;
 	struct fileassoc_hash_entry *mhe;
 
+	KERNEL_LOCK(1, NULL);
+
 	mhe = fileassoc_file_lookup(vp, NULL);
-	if (mhe == NULL)
+	if (mhe == NULL) {
+		KERNEL_UNLOCK_ONE(NULL);
 		return (ENOENT);
+	}
 
 	file_free(mhe);
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
 	--(tbl->hash_used); /* XXX gc? */
+
+	KERNEL_UNLOCK_ONE(NULL);
 
 	return (0);
 }

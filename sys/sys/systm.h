@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.179.2.7 2007/12/07 17:34:58 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.179.2.8 2008/01/21 09:48:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -42,7 +42,6 @@
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
-#include "opt_syscall_debug.h"
 #endif
 
 #include <machine/endian.h>
@@ -82,6 +81,7 @@ extern int maxmem;		/* max memory per process */
 extern int physmem;		/* physical memory */
 
 extern dev_t dumpdev;		/* dump device */
+extern dev_t dumpcdev;		/* dump device (character equivalent) */
 extern long dumplo;		/* offset into dumpdev */
 extern int dumpsize;		/* size of dump in pages */
 extern const char *dumpspec;	/* how dump device was specified */
@@ -93,6 +93,9 @@ extern const char *rootspec;	/* how root device was specified */
 
 extern int ncpu;		/* number of CPUs configured */
 extern int ncpuonline;		/* number of CPUs online */
+#if defined(_KERNEL)
+extern bool mp_online;		/* secondary processors are started */
+#endif /* defined(_KERNEL) */
 
 extern const char hexdigits[];	/* "0123456789abcdef" in subr_prf.c */
 extern const char HEXDIGITS[];	/* "0123456789ABCDEF" in subr_prf.c */
@@ -107,7 +110,7 @@ extern struct vnode *swapdev_vp;/* vnode equivalent to above */
 
 extern const dev_t zerodev;	/* /dev/zero */
 
-typedef int	sy_call_t(struct lwp *, void *, register_t *);
+typedef int	sy_call_t(struct lwp *, const void *, register_t *);
 
 extern struct sysent {		/* system call table */
 	short	sy_narg;	/* number of args */
@@ -152,7 +155,7 @@ struct malloc_type;
 void	*hashinit(u_int, enum hashtype, struct malloc_type *, int, u_long *);
 void	hashdone(void *, struct malloc_type *);
 int	seltrue(dev_t, int, struct lwp *);
-int	sys_nosys(struct lwp *, void *, register_t *);
+int	sys_nosys(struct lwp *, const void *, register_t *);
 
 
 #ifdef _KERNEL
@@ -276,22 +279,11 @@ void	statclock(struct clockframe *);
 
 #ifdef NTP
 void	ntp_init(void);
-#ifndef __HAVE_TIMECOUNTER
-void	hardupdate(long offset);
-#endif /* !__HAVE_TIMECOUNTER */
 #ifdef PPS_SYNC
-#ifdef __HAVE_TIMECOUNTER
 void	hardpps(struct timespec *, long);
-#else /* !__HAVE_TIMECOUNTER */
-void	hardpps(struct timeval *, long);
-extern void *pps_kc_hardpps_source;
-extern int pps_kc_hardpps_mode;
-#endif /* !__HAVE_TIMECOUNTER */
 #endif /* PPS_SYNC */
 #else
-#ifdef __HAVE_TIMECOUNTER
 void	ntp_init(void);	/* also provides adjtime() functionality */
-#endif /* __HAVE_TIMECOUNTER */
 #endif /* NTP */
 
 void	initclocks(void);
@@ -372,9 +364,9 @@ void	doforkhooks(struct proc *, struct proc *);
  */
 #ifdef _KERNEL
 bool	trace_is_enabled(struct proc *);
-int	trace_enter(struct lwp *, register_t, register_t,
-	    const struct sysent *, void *);
-void	trace_exit(struct lwp *, register_t, void *, register_t [], int);
+int	trace_enter(register_t, register_t,
+	    const struct sysent *, const register_t *);
+void	trace_exit(register_t, const register_t *, register_t [], int);
 #endif
 
 int	uiomove(void *, size_t, struct uio *);
@@ -382,7 +374,7 @@ int	uiomove_frombuf(void *, size_t, struct uio *);
 
 #ifdef _KERNEL
 int	setjmp(label_t *);
-void	longjmp(label_t *) __attribute__((__noreturn__));
+void	longjmp(label_t *) __dead;
 #endif
 
 void	consinit(void);
@@ -465,10 +457,9 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif
 #endif /* _KERNEL */
 
-#ifdef SYSCALL_DEBUG
-void scdebug_call(struct lwp *, register_t, register_t[]);
-void scdebug_ret(struct lwp *, register_t, int, register_t[]);
-#endif /* SYSCALL_DEBUG */
+/* For SYSCALL_DEBUG */
+void scdebug_call(register_t, const register_t[]);
+void scdebug_ret(register_t, int, const register_t[]);
 
 void	kernel_lock_init(void);
 void	_kernel_lock(int, struct lwp *);

@@ -1,8 +1,10 @@
+/*	$NetBSD: dsopcode.c,v 1.1.14.3 2008/01/21 09:45:09 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dsopcode - Dispatcher Op Region support and handling of
  *                         "control" opcodes
- *              xRevision: 1.106 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -10,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,17 +118,17 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsopcode.c,v 1.1.14.3 2008/01/21 09:45:09 yamt Exp $");
 
 #define __DSOPCODE_C__
 
-#include "acpi.h"
-#include "acparser.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#include "acevents.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acdispat.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acevents.h>
 
 #define _COMPONENT          ACPI_DISPATCHER
         ACPI_MODULE_NAME    ("dsopcode")
@@ -177,7 +179,7 @@ AcpiDsExecuteArguments (
     ACPI_WALK_STATE         *WalkState;
 
 
-    ACPI_FUNCTION_TRACE ("DsExecuteArguments");
+    ACPI_FUNCTION_TRACE (DsExecuteArguments);
 
 
     /*
@@ -203,7 +205,7 @@ AcpiDsExecuteArguments (
     }
 
     Status = AcpiDsInitAmlWalk (WalkState, Op, NULL, AmlStart,
-                    AmlLength, NULL, 1);
+                    AmlLength, NULL, ACPI_IMODE_LOAD_PASS1);
     if (ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
@@ -250,7 +252,7 @@ AcpiDsExecuteArguments (
     /* Execute the opcode and arguments */
 
     Status = AcpiDsInitAmlWalk (WalkState, Op, NULL, AmlStart,
-                    AmlLength, NULL, 3);
+                    AmlLength, NULL, ACPI_IMODE_EXECUTE);
     if (ACPI_FAILURE (Status))
     {
         AcpiDsDeleteWalkState (WalkState);
@@ -290,7 +292,7 @@ AcpiDsGetBufferFieldArguments (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsGetBufferFieldArguments", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (DsGetBufferFieldArguments, ObjDesc);
 
 
     if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
@@ -336,7 +338,7 @@ AcpiDsGetBufferArguments (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsGetBufferArguments", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (DsGetBufferArguments, ObjDesc);
 
 
     if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
@@ -385,7 +387,7 @@ AcpiDsGetPackageArguments (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsGetPackageArguments", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (DsGetPackageArguments, ObjDesc);
 
 
     if (ObjDesc->Common.Flags & AOPOBJ_DATA_VALID)
@@ -435,7 +437,7 @@ AcpiDsGetRegionArguments (
     ACPI_OPERAND_OBJECT     *ExtraDesc;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsGetRegionArguments", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (DsGetRegionArguments, ObjDesc);
 
 
     if (ObjDesc->Region.Flags & AOPOBJ_DATA_VALID)
@@ -462,6 +464,28 @@ AcpiDsGetRegionArguments (
 
     Status = AcpiDsExecuteArguments (Node, AcpiNsGetParentNode (Node),
                 ExtraDesc->Extra.AmlLength, ExtraDesc->Extra.AmlStart);
+    if (ACPI_FAILURE (Status))
+    {
+        return_ACPI_STATUS (Status);
+    }
+
+    /* Validate the region address/length via the host OS */
+
+    Status = AcpiOsValidateAddress (ObjDesc->Region.SpaceId,
+                ObjDesc->Region.Address, (ACPI_SIZE) ObjDesc->Region.Length);
+    if (ACPI_FAILURE (Status))
+    {
+        /*
+         * Invalid address/length. We will emit an error message and mark
+         * the region as invalid, so that it will cause an additional error if
+         * it is ever used. Then return AE_OK.
+         */
+        ACPI_EXCEPTION ((AE_INFO, Status,
+            "During address validation of OpRegion [%4.4s]", Node->Name.Ascii));
+        ObjDesc->Common.Flags |= AOPOBJ_INVALID;
+        Status = AE_OK;
+    }
+
     return_ACPI_STATUS (Status);
 }
 
@@ -528,7 +552,7 @@ AcpiDsInitBufferField (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsInitBufferField", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (DsInitBufferField, ObjDesc);
 
 
     /* Host object must be a Buffer */
@@ -728,7 +752,7 @@ AcpiDsEvalBufferFieldOperands (
     ACPI_PARSE_OBJECT       *NextOp;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsEvalBufferFieldOperands", Op);
+    ACPI_FUNCTION_TRACE_PTR (DsEvalBufferFieldOperands, Op);
 
 
     /*
@@ -821,7 +845,7 @@ AcpiDsEvalRegionOperands (
     ACPI_PARSE_OBJECT       *NextOp;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsEvalRegionOperands", Op);
+    ACPI_FUNCTION_TRACE_PTR (DsEvalRegionOperands, Op);
 
 
     /*
@@ -923,10 +947,16 @@ AcpiDsEvalDataObjectOperands (
     UINT32                  Length;
 
 
-    ACPI_FUNCTION_TRACE ("DsEvalDataObjectOperands");
+    ACPI_FUNCTION_TRACE (DsEvalDataObjectOperands);
 
 
     /* The first operand (for all of these data objects) is the length */
+
+    /*
+     * Set proper index into operand stack for AcpiDsObjStackPush
+     * invoked inside AcpiDsCreateOperand.
+     */
+    WalkState->OperandIndex = WalkState->NumOperands;
 
     Status = AcpiDsCreateOperand (WalkState, Op->Common.Value.Arg, 1);
     if (ACPI_FAILURE (Status))
@@ -1020,7 +1050,7 @@ AcpiDsExecBeginControlOp (
     ACPI_GENERIC_STATE      *ControlState;
 
 
-    ACPI_FUNCTION_NAME ("DsExecBeginControlOp");
+    ACPI_FUNCTION_NAME (DsExecBeginControlOp);
 
 
     ACPI_DEBUG_PRINT ((ACPI_DB_DISPATCH, "Op=%p Opcode=%2.2X State=%p\n", Op,
@@ -1103,7 +1133,7 @@ AcpiDsExecEndControlOp (
     ACPI_GENERIC_STATE      *ControlState;
 
 
-    ACPI_FUNCTION_NAME ("DsExecEndControlOp");
+    ACPI_FUNCTION_NAME (DsExecEndControlOp);
 
 
     switch (Op->Common.AmlOpcode)
@@ -1198,8 +1228,7 @@ AcpiDsExecEndControlOp (
              */
             WalkState->ReturnDesc = WalkState->Operands[0];
         }
-        else if ((WalkState->Results) &&
-                 (WalkState->Results->Results.NumResults > 0))
+        else if (WalkState->ResultCount)
         {
             /* Since we have a real Return(), delete any implicit return */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.5.12.3 2007/09/03 14:40:02 yamt Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.5.12.4 2008/01/21 09:45:41 yamt Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.12 2004/05/19 17:50:51 dhartmei Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -33,6 +33,9 @@
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.5.12.4 2008/01/21 09:45:41 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

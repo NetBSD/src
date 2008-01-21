@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_er.c,v 1.16.4.2 2007/09/03 14:43:59 yamt Exp $	*/
+/*	$NetBSD: clnp_er.c,v 1.16.4.3 2008/01/21 09:47:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.16.4.2 2007/09/03 14:43:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_er.c,v 1.16.4.3 2008/01/21 09:47:28 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -370,7 +370,7 @@ clnp_emit_er(m, reason)
 
 	/* send packet */
 	INCSTAT(cns_er_outhist[clnp_er_index(reason)]);
-	(void) (*ifp->if_output) (ifp, m, first_hop, route.ro_rt);
+	(void) (*ifp->if_output) (ifp, m, first_hop, rtcache_validate(&route));
 	goto done;
 
 bad:

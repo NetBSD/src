@@ -1,7 +1,9 @@
+/*	$NetBSD: dmobject.c,v 1.1.14.3 2008/01/21 09:45:07 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dmobject - ACPI object decode and display
- *              xRevision: 1.19 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,15 +116,14 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmobject.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmobject.c,v 1.1.14.3 2008/01/21 09:45:07 yamt Exp $");
 
-#include "acpi.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acdisasm.h"
-#include "acparser.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acdisasm.h>
+#include <dist/acpica/acparser.h>
 
 
 #ifdef ACPI_DISASSEMBLER
@@ -213,13 +214,16 @@ AcpiDmDumpMethodInfo (
 
         if (NextWalkState == WalkState)
         {
-            /* Display currently executing ASL statement */
+            if (Op)
+            {
+                /* Display currently executing ASL statement */
 
-            Next = Op->Common.Next;
-            Op->Common.Next = NULL;
+                Next = Op->Common.Next;
+                Op->Common.Next = NULL;
 
-            AcpiDmDisassemble (NextWalkState, Op, ACPI_UINT32_MAX);
-            Op->Common.Next = Next;
+                AcpiDmDisassemble (NextWalkState, Op, ACPI_UINT32_MAX);
+                Op->Common.Next = Next;
+            }
         }
         else
         {
@@ -614,8 +618,6 @@ AcpiDmDisplayArguments (
 {
     UINT32                  i;
     ACPI_OPERAND_OBJECT     *ObjDesc;
-    UINT32                  NumArgs;
-    UINT32                  Concurrency;
     ACPI_NAMESPACE_NODE     *Node;
 
 
@@ -634,12 +636,9 @@ AcpiDmDisplayArguments (
         return;
     }
 
-    NumArgs     = ObjDesc->Method.ParamCount;
-    Concurrency = ObjDesc->Method.Concurrency;
-
     AcpiOsPrintf (
         "Arguments for Method [%4.4s]:  (%X arguments defined, max concurrency = %X)\n",
-        AcpiUtGetNodeName (Node), NumArgs, Concurrency);
+        AcpiUtGetNodeName (Node), ObjDesc->Method.ParamCount, ObjDesc->Method.SyncLevel);
 
     for (i = 0; i < ACPI_METHOD_NUM_ARGS; i++)
     {

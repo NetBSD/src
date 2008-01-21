@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.17.2.5 2007/12/07 17:31:47 yamt Exp $	*/
+/*	$NetBSD: pf.c,v 1.17.2.6 2008/01/21 09:45:41 yamt Exp $	*/
 /*	$OpenBSD: pf.c,v 1.487 2005/04/22 09:53:18 dhartmei Exp $ */
 
 /*
@@ -35,6 +35,9 @@
  * Materiel Command, USAF, under agreement number F30602-01-2-0537.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf.c,v 1.17.2.6 2008/01/21 09:45:41 yamt Exp $");
 
 #include "bpfilter.h"
 #include "pflog.h"
@@ -2716,6 +2719,7 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 	} u;
 	struct route		 ro;
 	struct route *rop = &ro;
+	struct rtentry *rt;
 	int			 hlen;
 	u_int16_t		 mss = tcp_mssdflt;
 
@@ -2741,14 +2745,17 @@ pf_calc_mss(struct pf_addr *addr, sa_family_t af, u_int16_t offer)
 
 #ifdef __OpenBSD__
 	rtalloc_noclone(rop, NO_CLONING);
+	if ((rt = ro->ro_rt) != NULL) {
+		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
+		mss = max(tcp_mssdflt, mss);
+	}
 #else
-	rtcache_init_noclone(rop);
-#endif
-	if (rop->ro_rt != NULL) {
-		mss = rop->ro_rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
+	if ((rt = rtcache_init_noclone(rop)) != NULL) {
+		mss = rt->rt_ifp->if_mtu - hlen - sizeof(struct tcphdr);
 		mss = max(tcp_mssdflt, mss);
 	}
 	rtcache_free(rop);
+#endif
 	mss = min(mss, offer);
 	mss = max(mss, 64);		/* sanity - at least max opt space */
 	return (mss);
@@ -5305,8 +5312,7 @@ pf_routable(struct pf_addr *addr, sa_family_t af)
 		return (1);
 	}
 #else
-	rtcache_init(&ro);
-	rc = (ro.ro_rt != NULL) ? 1 : 0;
+	rc = rtcache_init(&ro) != NULL ? 1 : 0;
 	rtcache_free(&ro);
 #endif
 
@@ -5349,17 +5355,13 @@ pf_rtlabel_match(struct pf_addr *addr, sa_family_t af,
 
 #ifdef __OpenBSD__
 	rtalloc_noclone((struct route *)&ro, NO_CLONING);
-#else
-	rtcache_init((struct route *)&ro);
-#endif
-
-#ifdef __OpenBSD__
 	if (ro.ro_rt != NULL) {
 		if (ro.ro_rt->rt_labelid == aw->v.rtlabel)
 			ret = 1;
 		RTFREE(ro.ro_rt);
 	}
 #else
+	rtcache_init((struct route *)&ro);
 	rtcache_free((struct route *)&ro);
 #endif
 
@@ -5435,17 +5437,20 @@ pf_route(struct mbuf **m, struct pf_rule *r, int dir, struct ifnet *oifp,
 	rtcache_setdst(ro, dst);
 
 	if (r->rt == PF_FASTROUTE) {
-		rtcache_init(ro);
-		if (ro->ro_rt == NULL) {
+		struct rtentry *rt;
+
+		rt = rtcache_init(ro);
+
+		if (rt == NULL) {
 			ipstat.ips_noroute++;
 			goto bad;
 		}
 
-		ifp = ro->ro_rt->rt_ifp;
-		ro->ro_rt->rt_use++;
+		ifp = rt->rt_ifp;
+		rt->rt_use++;
 
-		if (ro->ro_rt->rt_flags & RTF_GATEWAY)
-			dst = ro->ro_rt->rt_gateway;
+		if (rt->rt_flags & RTF_GATEWAY)
+			dst = rt->rt_gateway;
 	} else {
 		if (TAILQ_EMPTY(&r->rpool.list)) {
 			DPFPRINTF(PF_DEBUG_URGENT,

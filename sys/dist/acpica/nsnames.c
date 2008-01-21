@@ -1,7 +1,9 @@
+/*	$NetBSD: nsnames.c,v 1.2.6.3 2008/01/21 09:45:19 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsnames - Name manipulation and search
- *              xRevision: 1.94 $
+ *              $Revision: 1.2.6.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,25 +117,17 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.2.6.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsnames.c,v 1.2.6.3 2008/01/21 09:45:19 yamt Exp $");
 
 #define __NSNAMES_C__
 
-#include "acpi.h"
-#include "amlcode.h"
-#include "acnamesp.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
 
 
 #define _COMPONENT          ACPI_NAMESPACE
         ACPI_MODULE_NAME    ("nsnames")
-
-/* Local prototypes */
-
-static void
-AcpiNsBuildExternalPath (
-    ACPI_NAMESPACE_NODE     *Node,
-    ACPI_SIZE               Size,
-    char                    *NameBuffer);
 
 
 /*******************************************************************************
@@ -151,7 +145,7 @@ AcpiNsBuildExternalPath (
  *
  ******************************************************************************/
 
-static void
+void
 AcpiNsBuildExternalPath (
     ACPI_NAMESPACE_NODE     *Node,
     ACPI_SIZE               Size,
@@ -232,7 +226,7 @@ AcpiNsGetExternalPathname (
     ACPI_SIZE               Size;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("NsGetExternalPathname", Node);
+    ACPI_FUNCTION_TRACE_PTR (NsGetExternalPathname, Node);
 
 
     /* Calculate required buffer size based on depth below root */
@@ -241,7 +235,7 @@ AcpiNsGetExternalPathname (
 
     /* Allocate a buffer to be returned to caller */
 
-    NameBuffer = ACPI_MEM_CALLOCATE (Size);
+    NameBuffer = ACPI_ALLOCATE_ZEROED (Size);
     if (!NameBuffer)
     {
         ACPI_ERROR ((AE_INFO, "Allocation failure"));
@@ -325,7 +319,7 @@ AcpiNsHandleToPathname (
     ACPI_SIZE               RequiredSize;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("NsHandleToPathname", TargetHandle);
+    ACPI_FUNCTION_TRACE_PTR (NsHandleToPathname, TargetHandle);
 
 
     Node = AcpiNsMapHandleToNode (TargetHandle);

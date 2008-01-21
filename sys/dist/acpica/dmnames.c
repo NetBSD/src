@@ -1,7 +1,9 @@
+/*	$NetBSD: dmnames.c,v 1.1.14.3 2008/01/21 09:45:07 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dmnames - AML disassembler, names, namestrings, pathnames
- *              xRevision: 1.12 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,15 +116,14 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmnames.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmnames.c,v 1.1.14.3 2008/01/21 09:45:07 yamt Exp $");
 
-#include "acpi.h"
-#include "acparser.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acdisasm.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acdisasm.h>
 
 
 #ifdef ACPI_DISASSEMBLER
@@ -157,21 +158,33 @@ AcpiDmDumpName (
 {
     UINT32                  i;
     UINT32                  Length;
-    char                    *End = Name + ACPI_NAME_SIZE;
+    char                    NewName[4];
 
 
-    for (i = 0; i < ACPI_NAME_SIZE; i++)
+    /* Ensure that the name is printable, even if we have to fix it */
+
+    *(UINT32 *) NewName = AcpiUtRepairName (Name);
+
+    /* Remove all trailing underscores from the name */
+
+    Length = ACPI_NAME_SIZE;
+    for (i = (ACPI_NAME_SIZE - 1); i != 0; i--)
     {
-        if (Name[i] != '_')
+        if (NewName[i] == '_')
         {
-            End = &Name[i];
+            Length--;
+        }
+        else
+        {
+            break;
         }
     }
 
-    Length = (UINT32)(End - Name) + 1;
+    /* Dump the name, up to the start of the trailing underscores */
+
     for (i = 0; i < Length; i++)
     {
-        AcpiOsPrintf ("%c", Name[i]);
+        AcpiOsPrintf ("%c", NewName[i]);
     }
 
     return (Length);
@@ -248,7 +261,7 @@ AcpiPsDisplayObjectPathname (
     }
 
     AcpiOsPrintf ("  (Path %s)", (char *) Buffer.Pointer);
-    ACPI_MEM_FREE (Buffer.Pointer);
+    ACPI_FREE (Buffer.Pointer);
 
 
 Exit:

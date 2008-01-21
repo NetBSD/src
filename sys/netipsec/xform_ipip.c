@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.11.2.5 2007/12/07 17:34:39 yamt Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.11.2.6 2008/01/21 09:47:27 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.11.2.5 2007/12/07 17:34:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.11.2.6 2008/01/21 09:47:27 yamt Exp $");
 
 /*
  * IP-inside-IP processing
@@ -685,19 +685,37 @@ static struct xformsw ipe4_xformsw = {
 #ifdef INET
 extern struct domain inetdomain;
 static struct ipprotosw ipe4_protosw = {
-  SOCK_RAW,	&inetdomain,	IPPROTO_IPV4,	PR_ATOMIC|PR_ADDR|PR_LASTHDR,
-  ip4_input,	0, 		0,		rip_ctloutput,
-  rip_usrreq,
-  0,		0,		0,		0,
+ .pr_type = SOCK_RAW,
+ .pr_domain = &inetdomain,
+ .pr_protocol = IPPROTO_IPV4,
+ .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+ .pr_input = ip4_input,
+ .pr_output = 0,
+ .pr_ctlinput = 0,
+ .pr_ctloutput = rip_ctloutput,
+ .pr_usrreq = rip_usrreq,
+ .pr_init = 0,
+ .pr_fasttimo = 0,
+ .pr_slowtimo =	0,
+ .pr_drain = 0,
 };
 #endif
 #ifdef INET6
 extern struct domain inet6domain;
 static struct ip6protosw ipe4_protosw6 = {
- SOCK_RAW,     &inet6domain,   IPPROTO_IPV6,PR_ATOMIC|PR_ADDR|PR_LASTHDR,
- ip4_input6,	0,	0, 	rip6_ctloutput,
- rip6_usrreq,
- 0,	0,	0,	0,
+ .pr_type = SOCK_RAW,
+ .pr_domain = &inet6domain,
+ .pr_protocol = IPPROTO_IPV6,
+ .pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+ .pr_input = ip4_input6,
+ .pr_output = 0,
+ .pr_ctlinput = 0,
+ .pr_ctloutput = rip6_ctloutput,
+ .pr_usrreq = rip6_usrreq,
+ .pr_init = 0,
+ .pr_fasttimo = 0,
+ .pr_slowtimo = 0,
+ .pr_drain = 0,
 };
 #endif
 

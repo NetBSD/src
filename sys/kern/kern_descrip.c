@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.134.2.7 2007/12/07 17:32:38 yamt Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.134.2.8 2008/01/21 09:46:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.7 2007/12/07 17:32:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.8 2008/01/21 09:46:02 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,12 +67,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.134.2.7 2007/12/07 17:32:38 yamt 
 
 static int	cwdi_ctor(void *, void *, int);
 static void	cwdi_dtor(void *, void *);
+static int	file_ctor(void *, void *, int);
+static void	file_dtor(void *, void *);
 
 /*
  * Descriptor management.
  */
 struct filelist	filehead;	/* head of list of open files */
-int		nfiles;		/* actual number of open files */
+u_int		nfiles;		/* actual number of open files */
 
 static pool_cache_t cwdi_cache;
 static pool_cache_t filedesc0_cache;
@@ -205,9 +207,9 @@ fd_getfile(struct filedesc *fdp, int fd)
 		return (NULL);
 	}
 
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	if (FILE_IS_USABLE(fp) == 0) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		rw_exit(&fdp->fd_lock);
 		return (NULL);
 	}
@@ -246,12 +248,12 @@ finishdup(struct lwp *l, int old, int new, register_t *retval)
 	rw_exit(&fdp->fd_lock);
 
 	*retval = new;
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	fp->f_count++;
 	FILE_UNUSE_HAVELOCK(fp, l);
 
 	if (delfp != NULL) {
-		mutex_enter(&delfp->f_lock);
+		FILE_LOCK(delfp);
 		FILE_USE(delfp);
 		if (new < fdp->fd_knlistsize)
 			knote_fdclose(l, new);
@@ -270,7 +272,7 @@ filedesc_init(void)
 	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	file_cache = pool_cache_init(sizeof(struct file), 0, 0, 0,
-	    "filepl", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "filepl", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
 	KASSERT(file_cache != NULL);
 
 	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), 0, 0, 0,
@@ -291,11 +293,11 @@ filedesc_init(void)
  */
 /* ARGSUSED */
 int
-sys_dup(struct lwp *l, void *v, register_t *retval)
+sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 {
-	struct sys_dup_args /* {
+	/* {
 		syscallarg(int)	fd;
-	} */ *uap = v;
+	} */
 	struct file	*fp;
 	struct filedesc	*fdp;
 	struct proc	*p;
@@ -330,12 +332,12 @@ sys_dup(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_dup2(struct lwp *l, void *v, register_t *retval)
+sys_dup2(struct lwp *l, const struct sys_dup2_args *uap, register_t *retval)
 {
-	struct sys_dup2_args /* {
+	/* {
 		syscallarg(int)	from;
 		syscallarg(int)	to;
-	} */ *uap = v;
+	} */
 	struct file	*fp;
 	struct filedesc	*fdp;
 	struct proc	*p;
@@ -352,12 +354,12 @@ sys_dup2(struct lwp *l, void *v, register_t *retval)
 
 	if ((u_int)new >= p->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)new >= maxfiles) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (EBADF);
 	}
 
 	if (old == new) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		*retval = new;
 		return (0);
 	}
@@ -545,13 +547,13 @@ do_fcntl_lock(struct lwp *l, int fd, int cmd, struct flock *fl)
  */
 /* ARGSUSED */
 int
-sys_fcntl(struct lwp *l, void *v, register_t *retval)
+sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 {
-	struct sys_fcntl_args /* {
+	/* {
 		syscallarg(int)		fd;
 		syscallarg(int)		cmd;
 		syscallarg(void *)	arg;
-	} */ *uap = v;
+	} */
 	struct filedesc *fdp;
 	struct file	*fp;
 	struct proc	*p;
@@ -714,9 +716,9 @@ fdrelease(struct lwp *l, int fd)
 	if (fp == NULL)
 		goto badf;
 
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	if (!FILE_IS_USABLE(fp)) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		goto badf;
 	}
 
@@ -740,11 +742,11 @@ badf:
  */
 /* ARGSUSED */
 int
-sys_close(struct lwp *l, void *v, register_t *retval)
+sys_close(struct lwp *l, const struct sys_close_args *uap, register_t *retval)
 {
-	struct sys_close_args /* {
+	/* {
 		syscallarg(int)	fd;
-	} */ *uap = v;
+	} */
 	int		fd;
 	struct filedesc	*fdp;
 	struct proc *p;
@@ -787,12 +789,12 @@ do_sys_fstat(struct lwp *l, int fd, struct stat *sb)
  */
 /* ARGSUSED */
 int
-sys___fstat30(struct lwp *l, void *v, register_t *retval)
+sys___fstat30(struct lwp *l, const struct sys___fstat30_args *uap, register_t *retval)
 {
-	struct sys___fstat30_args /* {
+	/* {
 		syscallarg(int)			fd;
 		syscallarg(struct stat *)	sb;
-	} */ *uap = v;
+	} */
 	struct stat	sb;
 	int		error;
 
@@ -809,12 +811,12 @@ sys___fstat30(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys_fpathconf(struct lwp *l, void *v, register_t *retval)
+sys_fpathconf(struct lwp *l, const struct sys_fpathconf_args *uap, register_t *retval)
 {
-	struct sys_fpathconf_args /* {
+	/* {
 		syscallarg(int)	fd;
 		syscallarg(int)	name;
-	} */ *uap = v;
+	} */
 	int		fd;
 	struct filedesc	*fdp;
 	struct file	*fp;
@@ -1009,7 +1011,7 @@ int
 falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 {
 	struct filedesc	*fdp;
-	struct file	*fp, *fq;
+	struct file	*fp;
 	struct proc	*p;
 	int		error, i;
 
@@ -1026,45 +1028,44 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 	}
 
 	fp = pool_cache_get(file_cache, PR_WAITOK);
-	memset(fp, 0, sizeof(struct file));
-	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_enter(&filelist_lock);
-	if (nfiles >= maxfiles) {
+
+	if (atomic_inc_uint_nv(&nfiles) >= maxfiles) {
+		atomic_dec_uint(&nfiles);
 		tablefull("file", "increase kern.maxfiles or MAXFILES");
-		mutex_exit(&filelist_lock);
 		rw_enter(&fdp->fd_lock, RW_WRITER);
 		fd_unused(fdp, i);
 		rw_exit(&fdp->fd_lock);
-		mutex_destroy(&fp->f_lock);
 		pool_cache_put(file_cache, fp);
 		return (ENFILE);
 	}
+
+	fp->f_advice = 0;
+	fp->f_msgcount = 0;
+	fp->f_offset = 0;
+
 	/*
 	 * Allocate a new file descriptor.
 	 * If the process has file descriptor zero open, add to the list
 	 * of open files at that point, otherwise put it at the front of
 	 * the list of open files.
 	 */
-	nfiles++;
 	fp->f_iflags = FIF_LARVAL;
-	cv_init(&fp->f_cv, "closef");
-	rw_enter(&fdp->fd_lock, RW_WRITER);	/* XXXAD check order */
-	if ((fq = fdp->fd_ofiles[0]) != NULL) {
-		LIST_INSERT_AFTER(fq, fp, f_list);
-	} else {
-		LIST_INSERT_HEAD(&filehead, fp, f_list);
-	}
-	KDASSERT(fdp->fd_ofiles[i] == NULL);
-	fdp->fd_ofiles[i] = fp;
-	fp->f_count = 1;
 	fp->f_cred = l->l_cred;
 	kauth_cred_hold(fp->f_cred);
+
+	FILE_LOCK(fp);
+	fp->f_count = 1;
+	FILE_UNLOCK(fp);
+
+	rw_enter(&fdp->fd_lock, RW_WRITER);	/* XXXAD check order */
+	KDASSERT(fdp->fd_ofiles[i] == NULL);
+	fdp->fd_ofiles[i] = fp;
+	rw_exit(&fdp->fd_lock);
+
 	if (resultfp) {
 		fp->f_usecount = 1;
 		*resultfp = fp;
 	}
-	mutex_exit(&filelist_lock);
-	rw_exit(&fdp->fd_lock);
 	if (resultfd)
 		*resultfd = i;
 
@@ -1077,26 +1078,12 @@ falloc(struct lwp *l, struct file **resultfp, int *resultfd)
 void
 ffree(struct file *fp)
 {
-	kauth_cred_t cred;
 
-#ifdef DIAGNOSTIC
-	if (fp->f_usecount)
-		panic("ffree");
-#endif
+	KASSERT(fp->f_usecount == 0);
 
-	mutex_enter(&filelist_lock);
-	LIST_REMOVE(fp, f_list);
-	cred = fp->f_cred;
-#ifdef DIAGNOSTIC
-	fp->f_cred = NULL;
-	fp->f_count = 0; /* What's the point? */
-#endif
-	nfiles--;
-	mutex_exit(&filelist_lock);
-	mutex_destroy(&fp->f_lock);
-	cv_destroy(&fp->f_cv);
+	atomic_dec_uint(&nfiles);
+	kauth_cred_free(fp->f_cred);
 	pool_cache_put(file_cache, fp);
-	kauth_cred_free(cred);
 }
 
 /*
@@ -1132,9 +1119,8 @@ cwdinit(struct proc *p)
 static int
 cwdi_ctor(void *arg, void *obj, int flags)
 {
-	struct cwdinfo *cwdi;
+	struct cwdinfo *cwdi = obj;
 
-	cwdi = obj;
 	rw_init(&cwdi->cwdi_lock);
 
 	return 0;
@@ -1143,10 +1129,59 @@ cwdi_ctor(void *arg, void *obj, int flags)
 static void
 cwdi_dtor(void *arg, void *obj)
 {
-	struct cwdinfo *cwdi;
+	struct cwdinfo *cwdi = obj;
 
-	cwdi = obj;
 	rw_destroy(&cwdi->cwdi_lock);
+}
+
+static int
+file_ctor(void *arg, void *obj, int flags)
+{
+	struct file *fp = obj;
+
+	memset(fp, 0, sizeof(*fp));
+	mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&fp->f_cv, "closef");
+
+	mutex_enter(&filelist_lock);
+	LIST_INSERT_HEAD(&filehead, fp, f_list);
+	mutex_exit(&filelist_lock);
+
+	return 0;
+}
+
+static void
+file_dtor(void *arg, void *obj)
+{
+	struct file *fp = obj;
+
+	mutex_enter(&filelist_lock);
+	LIST_REMOVE(fp, f_list);
+	mutex_exit(&filelist_lock);
+
+	mutex_destroy(&fp->f_lock);
+	cv_destroy(&fp->f_cv);
+}
+
+struct file *
+fgetdummy(void)
+{
+	struct file *fp;
+
+	fp = kmem_alloc(sizeof(*fp), KM_SLEEP);
+	if (fp != NULL) {
+		memset(fp, 0, sizeof(*fp));
+		mutex_init(&fp->f_lock, MUTEX_DEFAULT, IPL_NONE);
+	}
+	return fp;
+}
+
+void
+fputdummy(struct file *fp)
+{
+
+	mutex_destroy(&fp->f_lock);
+	kmem_free(fp, sizeof(*fp));
 }
 
 /*
@@ -1373,9 +1408,9 @@ restart:
 			/* kq descriptors cannot be copied. */
 			fdremove(newfdp, i);
 		else {
-			mutex_enter(&(*fpp)->f_lock);
+			FILE_LOCK(*fpp);
 			(*fpp)->f_count++;
-			mutex_exit(&(*fpp)->f_lock);
+			FILE_UNLOCK(*fpp);
 		}
 	}
 
@@ -1410,7 +1445,7 @@ fdfree(struct lwp *l)
 		fp = *fpp;
 		if (fp != NULL) {
 			*fpp = NULL;
-			mutex_enter(&fp->f_lock);
+			FILE_LOCK(fp);
 			FILE_USE(fp);
 			if ((fdp->fd_lastfile - i) < fdp->fd_knlistsize)
 				knote_fdclose(l, fdp->fd_lastfile - i);
@@ -1474,7 +1509,7 @@ closef(struct file *fp, struct lwp *l)
 	 * happen if a filedesc structure is shared by multiple
 	 * processes.
 	 */
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	if (fp->f_iflags & FIF_WANTCLOSE) {
 		/*
 		 * Another user of the file is already closing, and is
@@ -1490,7 +1525,7 @@ closef(struct file *fp, struct lwp *l)
 #endif
 		if (--fp->f_usecount == 1)
 			cv_broadcast(&fp->f_cv);
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return (0);
 	} else {
 		/*
@@ -1504,7 +1539,7 @@ closef(struct file *fp, struct lwp *l)
 				panic("closef: no wantclose and usecount < 1");
 #endif
 			fp->f_usecount--;
-			mutex_exit(&fp->f_lock);
+			FILE_UNLOCK(fp);
 			return (0);
 		}
 	}
@@ -1538,7 +1573,7 @@ closef(struct file *fp, struct lwp *l)
 		panic("closef: usecount != 1");
 #endif
 
-	mutex_exit(&fp->f_lock);
+	FILE_UNLOCK(fp);
 	if ((fp->f_flag & FHASLOCK) && fp->f_type == DTYPE_VNODE) {
 		lf.l_whence = SEEK_SET;
 		lf.l_start = 0;
@@ -1567,12 +1602,12 @@ closef(struct file *fp, struct lwp *l)
  */
 /* ARGSUSED */
 int
-sys_flock(struct lwp *l, void *v, register_t *retval)
+sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 {
-	struct sys_flock_args /* {
+	/* {
 		syscallarg(int)	fd;
 		syscallarg(int)	how;
-	} */ *uap = v;
+	} */
 	int		fd, how, error;
 	struct proc	*p;
 	struct filedesc	*fdp;
@@ -1627,14 +1662,14 @@ sys_flock(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_posix_fadvise(struct lwp *l, void *v, register_t *retval)
+sys_posix_fadvise(struct lwp *l, const struct sys_posix_fadvise_args *uap, register_t *retval)
 {
-	const struct sys_posix_fadvise_args /* {
+	/* {
 		syscallarg(int) fd;
 		syscallarg(off_t) offset;
 		syscallarg(off_t) len;
 		syscallarg(int) advice;
-	} */ *uap = v;
+	} */
 	const int fd = SCARG(uap, fd);
 	const int advice = SCARG(uap, advice);
 	struct proc *p = l->l_proc;
@@ -1780,7 +1815,7 @@ dupfdopen(struct lwp *l, int indx, int dfd, int mode, int error)
 		fdp->fd_ofiles[indx] = wfp;
 		fdp->fd_ofileflags[indx] = fdp->fd_ofileflags[dfd];
 		rw_exit(&fdp->fd_lock);
-		mutex_enter(&wfp->f_lock);
+		FILE_LOCK(wfp);
 		wfp->f_count++;
 		/* 'indx' has been fd_used'ed by caller */
 		FILE_UNUSE_HAVELOCK(wfp, l);
@@ -1867,8 +1902,7 @@ fdcheckstd(struct lwp *l)
 		if (devnullfp == NULL) {
 			if ((error = falloc(l, &fp, &fd)) != 0)
 				return (error);
-			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null",
-			    l);
+			NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/null");
 			if ((error = vn_open(&nd, flags, 0)) != 0) {
 				FILE_UNUSE(fp, l);
 				ffree(fp);
@@ -1893,7 +1927,7 @@ restart:
 				return (error);
 			}
 
-			mutex_enter(&devnullfp->f_lock);
+			FILE_LOCK(devnullfp);
 			FILE_USE(devnullfp);
 			/* finishdup() will unuse the descriptors for us */
 			if ((error = finishdup(l, devnull, fd, &retval)) != 0)

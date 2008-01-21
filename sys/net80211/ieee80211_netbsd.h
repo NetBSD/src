@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.3.2.2 2007/09/03 14:42:29 yamt Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.3.2.3 2008/01/21 09:47:09 yamt Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -179,6 +179,9 @@ typedef struct ieee80211_lock acl_lock_t;
 struct ieee80211_node;
 int ieee80211_node_dectestref(struct ieee80211_node *ni);
 #define	ieee80211_node_refcnt(_ni)	(_ni)->ni_refcnt
+
+struct ifqueue;
+void	ieee80211_drain_ifq(struct ifqueue *);
 
 struct mbuf *ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen);
 #define	M_PWR_SAV	M_PROTO1		/* bypass PS handling */

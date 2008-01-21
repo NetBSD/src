@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.4.8.5 2007/12/07 17:32:42 yamt Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.4.8.6 2008/01/21 09:46:04 yamt Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4.8.5 2007/12/07 17:32:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.4.8.6 2008/01/21 09:46:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -49,7 +49,7 @@ idle_loop(void *dummy)
 
 	/* Update start time for this thread. */
 	lwp_lock(l);
-	microtime(&l->l_stime);
+	binuptime(&l->l_stime);
 	lwp_unlock(l);
 
 	KERNEL_UNLOCK_ALL(l, NULL);

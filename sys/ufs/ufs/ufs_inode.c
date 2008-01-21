@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.47.8.6 2007/12/07 17:35:24 yamt Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.47.8.7 2008/01/21 09:48:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.8.6 2007/12/07 17:35:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.47.8.7 2008/01/21 09:48:16 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -77,17 +77,13 @@ ufs_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		struct bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
 	struct mount *transmp;
-	struct lwp *l = curlwp;
 	mode_t mode;
 	int error = 0;
-
-	if (prtactive && vp->v_usecount != 0)
-		vprint("ufs_inactive: pushing active", vp);
 
 	transmp = vp->v_mount;
 	fstrans_start(transmp, FSTRANS_SHARED);
@@ -104,10 +100,10 @@ ufs_inactive(void *v)
 		(void)chkiq(ip, -1, NOCRED, 0);
 #endif
 #ifdef UFS_EXTATTR
-		ufs_extattr_vnode_inactive(vp, l);
+		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		if (ip->i_size != 0) {
-			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED, l);
+			error = UFS_TRUNCATE(vp, (off_t)0, 0, NOCRED);
 		}
 		/*
 		 * Setting the mode to zero needs to wait for the inode
@@ -120,9 +116,9 @@ ufs_inactive(void *v)
 		ip->i_mode = 0;
 		DIP_ASSIGN(ip, mode, 0);
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		vp->v_iflag |= VI_FREEING;
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		if (DOINGSOFTDEP(vp))
 			softdep_change_linkcnt(ip);
 		UFS_VFREE(vp, ip->i_number, mode);
@@ -132,14 +128,12 @@ ufs_inactive(void *v)
 		UFS_UPDATE(vp, NULL, NULL, 0);
 	}
 out:
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-
-	if (ip->i_mode == 0)
-		vrecycle(vp, NULL, l);
+	*ap->a_recycle = (ip->i_mode == 0);
+	VOP_UNLOCK(vp, 0);
 	fstrans_done(transmp);
 	return (error);
 }
@@ -152,7 +146,7 @@ ufs_reclaim(struct vnode *vp)
 {
 	struct inode *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("ufs_reclaim: pushing active", vp);
 
 	UFS_UPDATE(vp, NULL, NULL, UPDATE_CLOSE);
@@ -223,23 +217,23 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	pgssize = npages * sizeof(struct vm_page *);
 	pgs = kmem_zalloc(pgssize, KM_SLEEP);
 
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0,
 	    PGO_SYNCIO|PGO_PASTEOF|PGO_NOBLOCKALLOC|PGO_NOTIMESTAMP);
 	if (error) {
 		goto out;
 	}
-	simple_lock(&uobj->vmobjlock);
-	uvm_lock_pageq();
+	mutex_enter(&uobj->vmobjlock);
+	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		UVMHIST_LOG(ubchist, "got pgs[%d] %p", i, pgs[i],0,0);
 		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
 		pgs[i]->flags &= ~PG_CLEAN;
 		uvm_pageactivate(pgs[i]);
 	}
-	uvm_unlock_pageq();
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uvm_pageqlock);
+	mutex_exit(&uobj->vmobjlock);
 
 	/*
 	 * adjust off to be block-aligned.
@@ -263,7 +257,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	 */
 
 	GOP_SIZE(vp, off + len, &eob, 0);
-	simple_lock(&uobj->vmobjlock);
+	mutex_enter(&uobj->vmobjlock);
 	for (i = 0; i < npages; i++) {
 		if (error) {
 			pgs[i]->flags |= PG_RELEASED;
@@ -273,15 +267,15 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		}
 	}
 	if (error) {
-		uvm_lock_pageq();
+		mutex_enter(&uvm_pageqlock);
 		uvm_page_unbusy(pgs, npages);
-		uvm_unlock_pageq();
+		mutex_exit(&uvm_pageqlock);
 	} else {
 		uvm_page_unbusy(pgs, npages);
 	}
-	simple_unlock(&uobj->vmobjlock);
+	mutex_exit(&uobj->vmobjlock);
 
  out:
-	kmem_free(pgs, pgssize);
+ 	kmem_free(pgs, pgssize);
 	return error;
 }

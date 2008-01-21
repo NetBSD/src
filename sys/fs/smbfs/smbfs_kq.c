@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.8.4.5 2007/12/07 17:32:07 yamt Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.8.4.6 2008/01/21 09:45:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.8.4.5 2007/12/07 17:32:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.8.4.6 2008/01/21 09:45:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.8.4.5 2007/12/07 17:32:07 yamt Exp $"
 #include <sys/kthread.h>
 #include <sys/file.h>
 #include <sys/dirent.h>
+#include <sys/simplelock.h>
 
 #include <machine/limits.h>
 

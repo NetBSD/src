@@ -1,7 +1,9 @@
+/*	$NetBSD: rsmemory.c,v 1.1.14.3 2008/01/21 09:45:25 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: rsmem24 - Memory resource descriptors
- *              xRevision: 1.33 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,12 +117,12 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.1.14.2 2006/06/21 15:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rsmemory.c,v 1.1.14.3 2008/01/21 09:45:25 yamt Exp $");
 
 #define __RSMEMORY_C__
 
-#include "acpi.h"
-#include "acresrc.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acresrc.h>
 
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rsmemory")

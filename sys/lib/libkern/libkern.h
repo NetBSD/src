@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.50.16.5 2007/10/27 11:35:44 yamt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.50.16.6 2008/01/21 09:46:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,15 +53,15 @@ LIBKERN_INLINE u_long ulmax __P((u_long, u_long)) __attribute__ ((unused));
 LIBKERN_INLINE u_long ulmin __P((u_long, u_long)) __attribute__ ((unused));
 LIBKERN_INLINE int abs __P((int)) __attribute__ ((unused));
 
-LIBKERN_INLINE int isspace __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isascii __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isupper __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int islower __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isalpha __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isdigit __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isxdigit __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int toupper __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int tolower __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int isspace __P((int)) __unused;
+LIBKERN_INLINE int isascii __P((int)) __unused;
+LIBKERN_INLINE int isupper __P((int)) __unused;
+LIBKERN_INLINE int islower __P((int)) __unused;
+LIBKERN_INLINE int isalpha __P((int)) __unused;
+LIBKERN_INLINE int isdigit __P((int)) __unused;
+LIBKERN_INLINE int isxdigit __P((int)) __unused;
+LIBKERN_INLINE int toupper __P((int)) __unused;
+LIBKERN_INLINE int tolower __P((int)) __unused;
 
 #ifdef LIBKERN_BODY
 LIBKERN_INLINE int

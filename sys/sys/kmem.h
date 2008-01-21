@@ -1,4 +1,4 @@
-/*	$NetBSD: kmem.h,v 1.2.16.2 2006/12/30 20:50:55 yamt Exp $	*/
+/*	$NetBSD: kmem.h,v 1.2.16.3 2008/01/21 09:47:50 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -39,7 +39,11 @@ void kmem_free(void *, size_t);
 void kmem_init(void);
 size_t kmem_roundup_size(size_t);
 
-/* km_flag_t */
+/*
+ * km_flag_t
+ *
+ * Values match [PR_WAITOK, PR_NOWAIT].
+ */
 #define	KM_SLEEP	0x00000001	/* can sleep */
 #define	KM_NOSLEEP	0x00000002	/* don't sleep */
 

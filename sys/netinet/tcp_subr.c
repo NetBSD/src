@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.191.2.4 2007/09/03 14:43:03 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.191.2.5 2008/01/21 09:47:18 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191.2.4 2007/09/03 14:43:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191.2.5 2008/01/21 09:47:18 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -597,6 +597,9 @@ int
 tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
     struct tcphdr *th0, tcp_seq ack, tcp_seq seq, int flags)
 {
+#ifdef INET6
+	struct rtentry *rt;
+#endif
 	struct route *ro;
 	int error, tlen, win = 0;
 	int hlen;
@@ -837,8 +840,9 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		ip6->ip6_plen = htons(tlen);
 		if (tp && tp->t_in6pcb) {
 			struct ifnet *oifp;
-			ro = (struct route *)&tp->t_in6pcb->in6p_route;
-			oifp = ro->ro_rt ? ro->ro_rt->rt_ifp : NULL;
+			ro = &tp->t_in6pcb->in6p_route;
+			oifp = (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
+			                                           : NULL;
 			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb, oifp);
 		} else
 			ip6->ip6_hlim = ip6_defhlim;
@@ -983,6 +987,9 @@ tcp_tcpcb_template(void)
 struct tcpcb *
 tcp_newtcpcb(int family, void *aux)
 {
+#ifdef INET6
+	struct rtentry *rt;
+#endif
 	struct tcpcb *tp;
 	int i;
 
@@ -1022,8 +1029,9 @@ tcp_newtcpcb(int family, void *aux)
 		struct in6pcb *in6p = (struct in6pcb *)aux;
 
 		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
-			in6p->in6p_route.ro_rt ? in6p->in6p_route.ro_rt->rt_ifp
-					       : NULL);
+			(rt = rtcache_validate(&in6p->in6p_route)) != NULL
+			    ? rt->rt_ifp
+			    : NULL);
 		in6p->in6p_ppcb = (void *)tp;
 
 		tp->t_in6pcb = in6p;
@@ -1171,7 +1179,7 @@ tcp_close(struct tcpcb *tp)
 	 * update anything that the user "locked".
 	 */
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
-	    ro && (rt = ro->ro_rt) &&
+	    ro && (rt = rtcache_validate(ro)) != NULL &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr)) {
 		u_long i = 0;
 

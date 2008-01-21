@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_syscall.c,v 1.1.6.2 2007/11/15 11:44:52 yamt Exp $	*/
+/*	$NetBSD: sys_syscall.c,v 1.1.6.3 2008/01/21 09:46:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sys_syscall.c,v 1.1.6.2 2007/11/15 11:44:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_syscall.c,v 1.1.6.3 2008/01/21 09:46:25 yamt Exp $");
 
 #include <sys/syscall_stats.h>
 
@@ -47,12 +47,13 @@ __RCSID("$NetBSD: sys_syscall.c,v 1.1.6.2 2007/11/15 11:44:52 yamt Exp $");
 #define CONCAT(a,b) __CONCAT(a,b)
 
 int
-SYS_SYSCALL(struct lwp *l, void *v, register_t *rval)
+SYS_SYSCALL(struct lwp *l, const struct CONCAT(SYS_SYSCALL, _args) *uap,
+    register_t *rval)
 {
-	struct CONCAT(SYS_SYSCALL, _args) /* {
+	/* {
 		syscallarg(int) code;
 		syscallarg(register_t) args[SYS_MAXSYSARGS];
-	} */ *uap = v;
+	} */
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
 	int code;
@@ -62,7 +63,7 @@ SYS_SYSCALL(struct lwp *l, void *v, register_t *rval)
 	int i, narg;
 	#define TRACE_ARGS args64
 #else
-	#define TRACE_ARGS &uap->args
+	#define TRACE_ARGS &SCARG(uap, args[0])
 #endif
 
 	callp = p->p_emul->e_sysent;
@@ -81,14 +82,13 @@ SYS_SYSCALL(struct lwp *l, void *v, register_t *rval)
 	narg = callp->sy_argsize >> 2;
 	for (i = 0; i < narg; i++)
 		args64[i] = SCARG(uap, args[i]);
-	/* XXX systrace will not modify the correct arguments! */
 #endif
 
-	error = trace_enter(l, code, code, NULL, TRACE_ARGS);
+	error = trace_enter(code, code, NULL, TRACE_ARGS);
 	if (__predict_false(error != 0))
 		return error;
 	error = callp->sy_call(l, &uap->args, rval);
-	trace_exit(l, code, TRACE_ARGS, rval, error);
+	trace_exit(code, TRACE_ARGS, rval, error);
 	return error;
 
 	#undef TRACE_ARGS

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.2 2005/02/26 22:45:13 perry Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.2.4.1 2008/01/21 09:47:27 yamt Exp $ */
 /*	$FreeBSD: sys/netipsec/xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -29,6 +29,10 @@
  */
 
 /* TCP MD5 Signature Option (RFC2385) */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.2.4.1 2008/01/21 09:47:27 yamt Exp $");
+
 #include "opt_inet.h"
 
 #include <sys/param.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.39.2.7 2007/12/07 17:33:12 yamt Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.39.2.8 2008/01/21 09:46:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.39.2.7 2007/12/07 17:33:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.39.2.8 2008/01/21 09:46:26 yamt Exp $");
 
 #define SYSVMSG
 
@@ -399,13 +399,13 @@ msg_freehdr(struct __msg *msghdr)
 }
 
 int
-sys___msgctl13(struct lwp *l, void *v, register_t *retval)
+sys___msgctl13(struct lwp *l, const struct sys___msgctl13_args *uap, register_t *retval)
 {
-	struct sys___msgctl13_args /* {
+	/* {
 		syscallarg(int) msqid;
 		syscallarg(int) cmd;
 		syscallarg(struct msqid_ds *) buf;
-	} */ *uap = v;
+	} */
 	struct msqid_ds msqbuf;
 	int cmd, error;
 
@@ -536,12 +536,12 @@ unlock:
 }
 
 int
-sys_msgget(struct lwp *l, void *v, register_t *retval)
+sys_msgget(struct lwp *l, const struct sys_msgget_args *uap, register_t *retval)
 {
-	struct sys_msgget_args /* {
+	/* {
 		syscallarg(key_t) key;
 		syscallarg(int) msgflg;
-	} */ *uap = v;
+	} */
 	int msqid, error = 0;
 	int key = SCARG(uap, key);
 	int msgflg = SCARG(uap, msgflg);
@@ -633,14 +633,14 @@ unlock:
 }
 
 int
-sys_msgsnd(struct lwp *l, void *v, register_t *retval)
+sys_msgsnd(struct lwp *l, const struct sys_msgsnd_args *uap, register_t *retval)
 {
-	struct sys_msgsnd_args /* {
+	/* {
 		syscallarg(int) msqid;
 		syscallarg(const void *) msgp;
 		syscallarg(size_t) msgsz;
 		syscallarg(int) msgflg;
-	} */ *uap = v;
+	} */
 
 	return msgsnd1(l, SCARG(uap, msqid), SCARG(uap, msgp),
 	    SCARG(uap, msgsz), SCARG(uap, msgflg), sizeof(long), copyin);
@@ -935,15 +935,15 @@ unlock:
 }
 
 int
-sys_msgrcv(struct lwp *l, void *v, register_t *retval)
+sys_msgrcv(struct lwp *l, const struct sys_msgrcv_args *uap, register_t *retval)
 {
-	struct sys_msgrcv_args /* {
+	/* {
 		syscallarg(int) msqid;
 		syscallarg(void *) msgp;
 		syscallarg(size_t) msgsz;
 		syscallarg(long) msgtyp;
 		syscallarg(int) msgflg;
-	} */ *uap = v;
+	} */
 
 	return msgrcv1(l, SCARG(uap, msqid), SCARG(uap, msgp),
 	    SCARG(uap, msgsz), SCARG(uap, msgtyp), SCARG(uap, msgflg),
@@ -1216,7 +1216,10 @@ sysctl_ipc_msgmni(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	return msgrealloc(newsize, msginfo.msgseg);
+	sysctl_unlock();
+	error = msgrealloc(newsize, msginfo.msgseg);
+	sysctl_relock();
+	return error;
 }
 
 static int
@@ -1232,7 +1235,10 @@ sysctl_ipc_msgseg(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	return msgrealloc(msginfo.msgmni, newsize);
+	sysctl_unlock();
+	error = msgrealloc(msginfo.msgmni, newsize);
+	sysctl_relock();
+	return error;
 }
 
 SYSCTL_SETUP(sysctl_ipc_msg_setup, "sysctl kern.ipc subtree setup")

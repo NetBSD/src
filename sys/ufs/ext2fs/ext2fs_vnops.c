@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vnops.c,v 1.60.2.6 2007/12/07 17:35:19 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vnops.c,v 1.60.2.7 2008/01/21 09:48:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.60.2.6 2007/12/07 17:35:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vnops.c,v 1.60.2.7 2008/01/21 09:48:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -189,7 +189,7 @@ ext2fs_mknod(void *v)
 	 * checked to see if it is an alias of an existing entry in
 	 * the inode cache.
 	 */
-	vput(*vpp);
+	VOP_UNLOCK(*vpp, 0);
 	(*vpp)->v_type = VNON;
 	vgone(*vpp);
 	error = VFS_VGET(mp, ino, vpp);
@@ -400,7 +400,7 @@ ext2fs_setattr(void *v)
 		default:
 			break;
 		}
-		error = ext2fs_truncate(vp, vap->va_size, 0, cred, l->l_proc);
+		error = ext2fs_truncate(vp, vap->va_size, 0, cred);
 		if (error)
 			return (error);
 	}
@@ -918,7 +918,7 @@ abortit:
 			if (--xp->i_e2fs_nlink != 0)
 				panic("rename: linked directory");
 			error = ext2fs_truncate(tvp, (off_t)0, IO_SYNC,
-			    tcnp->cn_cred, tcnp->cn_lwp->l_proc);
+			    tcnp->cn_cred);
 		}
 		xp->i_flag |= IN_CHANGE;
 		VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1222,8 +1222,7 @@ ext2fs_rmdir(void *v)
 	 * worry about them later.
 	 */
 	ip->i_e2fs_nlink -= 2;
-	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred,
-	    cnp->cn_lwp->l_proc);
+	error = ext2fs_truncate(vp, (off_t)0, IO_SYNC, cnp->cn_cred);
 	cache_purge(ITOV(ip));
 out:
 	VN_KNOTE(vp, NOTE_DELETE);
@@ -1378,7 +1377,6 @@ ext2fs_vinit(struct mount *mntp, int (**specops)(void *),
 			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*

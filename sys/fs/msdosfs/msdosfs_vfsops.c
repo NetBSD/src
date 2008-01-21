@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.24.2.6 2007/12/07 17:31:58 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.24.2.7 2008/01/21 09:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24.2.6 2007/12/07 17:31:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24.2.7 2008/01/21 09:45:47 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -333,7 +333,7 @@ msdosfs_mount(mp, path, data, data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0) {
 		DPRINTF(("namei %d\n", error));
 		return (error);
@@ -638,6 +638,14 @@ msdosfs_mountfs(devvp, mp, l, argp)
 		pmp->pm_FATsecs     *= tmp;
 		SecPerClust         *= tmp;
 	}
+
+	/* Check that fs has nonzero FAT size */
+	if (pmp->pm_FATsecs == 0) {
+		DPRINTF(("FATsecs is 0\n"));
+		error = EINVAL;
+		goto error_exit;
+	}
+
 	pmp->pm_fatblk = pmp->pm_ResSectors;
 	if (FAT32(pmp)) {
 		pmp->pm_rootdirblk = getulong(b710->bpbRootClust);
@@ -937,7 +945,7 @@ msdosfs_sync(mp, waitfor, cred)
 	int waitfor;
 	kauth_cred_t cred;
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct denode *dep;
 	struct msdosfsmount *pmp = VFSTOMSDOSFS(mp);
 	int error, allerror = 0;
@@ -953,44 +961,47 @@ msdosfs_sync(mp, waitfor, cred)
 			/* update fats here */
 		}
 	}
+	/* Allocate a marker vnode. */
+	if ((mvp = vnalloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * Write back each (modified) denode.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
 		dep = VTODE(vp);
 		if (waitfor == MNT_LAZY || vp->v_type == VNON ||
 		    (((dep->de_flag &
 		    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 		     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
 		      UVM_OBJ_IS_CLEAN(&vp->v_uobj)))) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		if ((error = VOP_FSYNC(vp, cred,
 		    waitfor == MNT_WAIT ? FSYNC_WAIT : 0, 0, 0)) != 0)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
+	vnfree(mvp);
+
 	/*
 	 * Force stale file system control information to be flushed.
 	 */

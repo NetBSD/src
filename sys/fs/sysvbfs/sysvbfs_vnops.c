@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.7 2007/12/07 17:32:10 yamt Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.3.6.8 2008/01/21 09:45:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.7 2007/12/07 17:32:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.3.6.8 2008/01/21 09:45:54 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -84,7 +84,7 @@ sysvbfs_lookup(void *arg)
 	int error;
 	bool islastcn = cnp->cn_flags & ISLASTCN;
 
-	DPRINTF("%s: %s op=%d %ld\n", __FUNCTION__, name, nameiop,
+	DPRINTF("%s: %s op=%d %ld\n", __func__, name, nameiop,
 	    cnp->cn_flags);
 
 	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
@@ -101,7 +101,7 @@ sysvbfs_lookup(void *arg)
 		    &dirent)) {
 			if (nameiop != CREATE && nameiop != RENAME) {
 				DPRINTF("%s: no such a file. (1)\n",
-				    __FUNCTION__);
+				    __func__);
 				return ENOENT;
 			}
 			if ((error = VOP_ACCESS(v, VWRITE, cnp->cn_cred)) != 0)
@@ -112,7 +112,7 @@ sysvbfs_lookup(void *arg)
 
 		/* Allocate v-node */
 		if ((error = sysvbfs_vget(v->v_mount, dirent->inode, &vpp)) != 0) {
-			DPRINTF("%s: can't get vnode.\n", __FUNCTION__);
+			DPRINTF("%s: can't get vnode.\n", __func__);
 			return error;
 		}
 		*a->a_vpp = vpp;
@@ -143,7 +143,7 @@ sysvbfs_create(void *arg)
 	kauth_cred_t cr = a->a_cnp->cn_cred;
 	int err = 0;
 
-	DPRINTF("%s: %s\n", __FUNCTION__, a->a_cnp->cn_nameptr);
+	DPRINTF("%s: %s\n", __func__, a->a_cnp->cn_nameptr);
 	KDASSERT(a->a_vap->va_type == VREG);
 	attr.uid = kauth_cred_geteuid(cr);
 	attr.gid = kauth_cred_getegid(cr);
@@ -151,7 +151,7 @@ sysvbfs_create(void *arg)
 
 	if ((err = bfs_file_create(bfs, a->a_cnp->cn_nameptr, 0, 0, &attr))
 	    != 0) {
-		DPRINTF("%s: bfs_file_create failed.\n", __FUNCTION__);
+		DPRINTF("%s: bfs_file_create failed.\n", __func__);
 		goto unlock_exit;
 	}
 
@@ -159,7 +159,7 @@ sysvbfs_create(void *arg)
 		panic("no dirent for created file.");
 
 	if ((err = sysvbfs_vget(mp, dirent->inode, a->a_vpp)) != 0) {
-		DPRINTF("%s: sysvbfs_vget failed.\n", __FUNCTION__);
+		DPRINTF("%s: sysvbfs_vget failed.\n", __func__);
 		goto unlock_exit;
 	}
 	bnode = (*a->a_vpp)->v_data;
@@ -188,7 +188,7 @@ sysvbfs_open(void *arg)
 	struct bfs *bfs = bnode->bmp->bfs;
 	struct bfs_dirent *dirent;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	KDASSERT(v->v_type == VREG || v->v_type == VDIR);
 
 	if (!bfs_dirent_lookup_by_inode(bfs, inode->number, &dirent))
@@ -217,7 +217,7 @@ sysvbfs_close(void *arg)
 	struct sysvbfs_node *bnode = v->v_data;
 	struct bfs_fileattr attr;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	uvm_vnp_setsize(v, bnode->size);
 
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
@@ -246,7 +246,7 @@ sysvbfs_access(void *arg)
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs_fileattr *attr = &bnode->inode->attr;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	if ((ap->a_mode & VWRITE) && (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return EROFS;
 
@@ -269,7 +269,7 @@ sysvbfs_getattr(void *v)
 	struct sysvbfs_mount *bmp = bnode->bmp;
 	struct vattr *vap = ap->a_vap;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 
 	vap->va_type = vp->v_type;
 	vap->va_mode = attr->mode;
@@ -310,7 +310,7 @@ sysvbfs_setattr(void *arg)
 	struct bfs_fileattr *attr = &inode->attr;
 	struct bfs *bfs = bnode->bmp->bfs;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		return EROFS;
 
@@ -356,7 +356,7 @@ sysvbfs_read(void *arg)
 	void *win;
 	const int advice = IO_ADV_DECODE(a->a_ioflag);
 
-	DPRINTF("%s: type=%d\n", __FUNCTION__, v->v_type);
+	DPRINTF("%s: type=%d\n", __func__, v->v_type);
 	if (v->v_type != VREG)
 		return EINVAL;
 
@@ -370,7 +370,7 @@ sysvbfs_read(void *arg)
 		ubc_release(win, 0);
 		if (err)
 			break;
-		DPRINTF("%s: read %ldbyte\n", __FUNCTION__, sz);
+		DPRINTF("%s: read %ldbyte\n", __func__, sz);
 	}
 
 	return  sysvbfs_update(v, NULL, NULL, UPDATE_WAIT);
@@ -417,7 +417,7 @@ sysvbfs_write(void *arg)
 		ubc_release(win, 0);
 		if (err)
 			break;
-		DPRINTF("%s: write %ldbyte\n", __FUNCTION__, sz);
+		DPRINTF("%s: write %ldbyte\n", __func__, sz);
 	}
 	inode->end_sector = bnode->data_block +
 	    (ROUND_SECTOR(bnode->size) >> DEV_BSHIFT) - 1;
@@ -446,13 +446,13 @@ sysvbfs_remove(void *arg)
 	struct bfs *bfs = bmp->bfs;
 	int err;
 
-	DPRINTF("%s: delete %s\n", __FUNCTION__, ap->a_cnp->cn_nameptr);
+	DPRINTF("%s: delete %s\n", __func__, ap->a_cnp->cn_nameptr);
 
 	if (vp->v_type == VDIR)
 		return EPERM;
 
 	if ((err = bfs_file_delete(bfs, ap->a_cnp->cn_nameptr)) != 0)
-		DPRINTF("%s: bfs_file_delete failed.\n", __FUNCTION__);
+		DPRINTF("%s: bfs_file_delete failed.\n", __func__);
 
 	VN_KNOTE(ap->a_vp, NOTE_DELETE);
 	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
@@ -484,7 +484,7 @@ sysvbfs_rename(void *arg)
 	const char *to_name = ap->a_tcnp->cn_nameptr;
 	int error;
 
-	DPRINTF("%s: %s->%s\n", __FUNCTION__, from_name, to_name);
+	DPRINTF("%s: %s->%s\n", __func__, from_name, to_name);
 	if ((fvp->v_mount != ap->a_tdvp->v_mount) ||
 	    (tvp && (fvp->v_mount != tvp->v_mount))) {
 		error = EXDEV;
@@ -526,7 +526,7 @@ sysvbfs_readdir(void *v)
 	struct bfs_dirent *file;
 	int i, n, error;
 
-	DPRINTF("%s: offset=%lld residue=%d\n", __FUNCTION__,
+	DPRINTF("%s: offset=%lld residue=%d\n", __func__,
 	    uio->uio_offset, uio->uio_resid);
 
 	KDASSERT(vp->v_type == VDIR);
@@ -544,7 +544,7 @@ sysvbfs_readdir(void *v)
 			continue;
 		if (i == bfs->max_dirent) {
 			DPRINTF("%s: file system inconsistent.\n",
-			    __FUNCTION__);
+			    __func__);
 			break;
 		}
 		i++;
@@ -555,12 +555,12 @@ sysvbfs_readdir(void *v)
 		strncpy(dp->d_name, file->name, BFS_FILENAME_MAXLEN);
 		dp->d_reclen = sizeof(struct dirent);
 		if ((error = uiomove(dp, dp->d_reclen, uio)) != 0) {
-			DPRINTF("%s: uiomove failed.\n", __FUNCTION__);
+			DPRINTF("%s: uiomove failed.\n", __func__);
 			free(dp, M_BFS);
 			return error;
 		}
 	}
-	DPRINTF("%s: %d %d %d\n", __FUNCTION__, i, n, bfs->n_dirent);
+	DPRINTF("%s: %d %d %d\n", __func__, i, n, bfs->n_dirent);
 	*ap->a_eofflag = (i == bfs->n_dirent);
 
 	free(dp, M_BFS);
@@ -572,12 +572,13 @@ sysvbfs_inactive(void *arg)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *a = arg;
 	struct vnode *v = a->a_vp;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
+	*a->a_recycle = true;
 	VOP_UNLOCK(v, 0);
-	vrecycle(v, NULL, curlwp);
 
 	return 0;
 }
@@ -592,10 +593,10 @@ sysvbfs_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct sysvbfs_node *bnode = vp->v_data;
 
-	DPRINTF("%s:\n", __FUNCTION__);
-	simple_lock(&mntvnode_slock);
+	DPRINTF("%s:\n", __func__);
+	mutex_enter(&mntvnode_lock);
 	LIST_REMOVE(bnode, link);
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	cache_purge(vp);
 	genfs_node_destroy(vp);
 	pool_put(&sysvbfs_node_pool, bnode);
@@ -620,7 +621,7 @@ sysvbfs_bmap(void *arg)
 	struct bfs_inode *inode = bnode->inode;
 	daddr_t blk;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	/* BFS algorithm is contiguous allocation */
 	blk = inode->start_sector + a->a_bn;
 
@@ -629,7 +630,7 @@ sysvbfs_bmap(void *arg)
 
 	*a->a_vpp = bmp->devvp;
 	*a->a_runp = 0;
-	DPRINTF("%s: %d + %lld\n", __FUNCTION__, inode->start_sector, a->a_bn);
+	DPRINTF("%s: %d + %lld\n", __func__, inode->start_sector, a->a_bn);
 
 	*a->a_bnp = blk;
 
@@ -650,7 +651,7 @@ sysvbfs_strategy(void *arg)
 	struct sysvbfs_mount *bmp = bnode->bmp;
 	int error;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	KDASSERT(v->v_type == VREG);
 	if (b->b_blkno == b->b_lblkno) {
 		error = VOP_BMAP(v, b->b_lblkno, NULL, &b->b_blkno, NULL);
@@ -678,7 +679,7 @@ sysvbfs_print(void *v)
 	} */ *ap = v;
 	struct sysvbfs_node *bnode = ap->a_vp->v_data;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	bfs_dump(bnode->bmp->bfs);
 
 	return 0;
@@ -696,7 +697,7 @@ sysvbfs_advlock(void *v)
 	} */ *ap = v;
 	struct sysvbfs_node *bnode = ap->a_vp->v_data;
 
-	DPRINTF("%s: op=%d\n", __FUNCTION__, ap->a_op);
+	DPRINTF("%s: op=%d\n", __func__, ap->a_op);
 
 	return lf_advlock(ap, &bnode->lockf, bfs_file_size(bnode->inode));
 }
@@ -711,7 +712,7 @@ sysvbfs_pathconf(void *v)
 	} */ *ap = v;
 	int err = 0;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 
 	switch (ap->a_name) {
 	case _PC_LINK_MAX:
@@ -778,7 +779,7 @@ sysvbfs_update(struct vnode *vp, const struct timespec *acc,
 	struct sysvbfs_node *bnode = vp->v_data;
 	struct bfs_fileattr attr;
 
-	DPRINTF("%s:\n", __FUNCTION__);
+	DPRINTF("%s:\n", __func__);
 	memset(&attr, 0xff, sizeof attr);	/* Set VNOVAL all */
 	if (bnode->update_atime) {
 		attr.atime = acc ? acc->tv_sec : time_second;

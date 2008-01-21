@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.3.4.1 2007/10/27 11:34:58 yamt Exp $	*/
+/*	$NetBSD: adutil.c,v 1.3.4.2 2008/01/21 09:45:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.3.4.1 2007/10/27 11:34:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.3.4.2 2008/01/21 09:45:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.3.4.1 2007/10/27 11:34:58 yamt Exp $");
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
+#include <sys/simplelock.h>
 #include <fs/adosfs/adosfs.h>
 
 /*
@@ -69,7 +70,7 @@ start_over:
 	for (ap = hp->lh_first; ap != NULL; ap = ap->link.le_next) {
 		if (ap->block == an) {
 			vp = ATOV(ap);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&adosfs_hashlock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto start_over;

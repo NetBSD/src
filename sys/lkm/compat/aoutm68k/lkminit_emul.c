@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.6 2005/02/26 22:58:57 perry Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.6.4.1 2008/01/21 09:46:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.6 2005/02/26 22:58:57 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.6.4.1 2008/01/21 09:46:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.6 2005/02/26 22:58:57 perry Exp $
 
 extern const struct emul emul_netbsd_aoutm68k;
 
-int compat_aoutm68k_lkmentry __P((struct lkm_table *, int, int));
+int compat_aoutm68k_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_netbsd_aoutm68k =
 	/* Native a.out */

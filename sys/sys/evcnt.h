@@ -1,4 +1,4 @@
-/*	$NetBSD: evcnt.h,v 1.2.18.4 2007/09/03 14:46:10 yamt Exp $	*/
+/*	$NetBSD: evcnt.h,v 1.2.18.5 2008/01/21 09:47:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -76,6 +76,7 @@
 #define	_SYS_EVCNT_H_
 
 #include <sys/queue.h>
+#include <sys/stdint.h>
 
 /*
  * event counters

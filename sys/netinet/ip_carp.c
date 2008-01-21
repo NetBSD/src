@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.4.4.7 2007/12/07 17:34:29 yamt Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.4.4.8 2008/01/21 09:47:15 yamt Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -26,6 +26,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.4.4.8 2008/01/21 09:47:15 yamt Exp $");
 
 /*
  * TODO:
@@ -970,7 +973,7 @@ carp_send_ad(void *v)
 		ip->ip_hl = sizeof(*ip) >> 2;
 		ip->ip_tos = IPTOS_LOWDELAY;
 		ip->ip_len = htons(len);
-		ip->ip_id = htons(ip_randomid());
+		ip->ip_id = 0;	/* no need for id, we don't support fragments */
 		ip->ip_off = htons(IP_DF);
 		ip->ip_ttl = CARP_DFLTTL;
 		ip->ip_p = IPPROTO_CARP;
@@ -1595,8 +1598,7 @@ carp_set_enaddr(struct carp_softc *sc)
 		enaddr[4] = 1;
 		enaddr[5] = sc->sc_vhid;
 	}
-	(void)sockaddr_dl_setaddr(sc->sc_if.if_sadl, sc->sc_if.if_sadl->sdl_len,
-	    enaddr, sizeof(enaddr));
+	if_set_sadl(&sc->sc_if, enaddr, sizeof(enaddr));
 }
 
 void

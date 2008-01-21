@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.2.14.4 2007/12/07 17:32:01 yamt Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.2.14.5 2008/01/21 09:45:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.4 2007/12/07 17:32:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.5 2008/01/21 09:45:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,8 +142,7 @@ ptyfs_getinfo(struct ptyfsnode *ptyfs, struct lwp *l)
 			ptyfs->ptyfs_pty, ptyfs->ptyfs_type == PTYFSpts ? 't'
 			: 'p')) != 0)
 				goto out;
-		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, ttyname,
-		     l);
+		NDINIT(&nd, LOOKUP, NOFOLLOW|LOCKLEAF, UIO_SYSSPACE, ttyname);
 		if ((error = namei(&nd)) != 0)
 			goto out;
 		cred = kauth_cred_alloc();
@@ -240,7 +239,6 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 			vp->v_vflag &= ~VV_LOCKSWORK;
 			VOP_UNLOCK(vp, 0);
 			vp->v_op = spec_vnodeop_p;
-			vrele(vp);
 			vgone(vp);
 			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
 			/*
@@ -375,7 +373,7 @@ loop:
 		vp = PTYFSTOV(pp);
 		if (pty == pp->ptyfs_pty && pp->ptyfs_type == type &&
 		    vp->v_mount == mp) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			mutex_exit(&ptyfs_used_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;

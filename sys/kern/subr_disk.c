@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.69.2.4 2007/10/27 11:35:32 yamt Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.69.2.5 2008/01/21 09:46:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69.2.4 2007/10/27 11:35:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.69.2.5 2008/01/21 09:46:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -391,7 +391,8 @@ disk_read_sectors(void (*strat)(struct buf *), const struct disklabel *lp,
 {
 	bp->b_blkno = sector;
 	bp->b_bcount = count * lp->d_secsize;
-	bp->b_flags = (bp->b_flags & ~(B_WRITE | B_DONE)) | B_READ;
+	bp->b_flags = (bp->b_flags & ~B_WRITE) | B_READ;
+	bp->b_oflags &= ~BO_DONE;
 	bp->b_cylinder = sector / lp->d_secpercyl;
 	(*strat)(bp);
 	return biowait(bp);

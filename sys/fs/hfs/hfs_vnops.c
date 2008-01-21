@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.4.4.3 2007/12/07 17:31:56 yamt Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.4.4.4 2008/01/21 09:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4.4.3 2007/12/07 17:31:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4.4.4 2008/01/21 09:45:46 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -401,12 +401,9 @@ hfs_vop_lookup(void *v)
 		*vpp = vdp;
 	} else {
 		hfs_callback_args cbargs;
-		hfs_libcb_argsread argsread;
 		uint8_t len;
 
 		hfslib_init_cbargs(&cbargs);
-		argsread.l = cnp->cn_lwp;
-		argsread.cred = cnp->cn_cred;
 
 		/* XXX: when decomposing, string could grow
 		   and we have to handle overflow */
@@ -487,7 +484,6 @@ hfs_vop_open(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -512,7 +508,6 @@ hfs_vop_close(void *v)
 		struct vnode *a_vp;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -532,7 +527,6 @@ hfs_vop_access(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
@@ -571,7 +565,6 @@ hfs_vop_getattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct hfsnode	*hp;
@@ -663,7 +656,6 @@ hfs_vop_setattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
@@ -1003,7 +995,6 @@ hfs_vop_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct hfsnode *hp;

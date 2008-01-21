@@ -1,4 +1,4 @@
-/*	$NetBSD: igmp.h,v 1.9.16.1 2006/06/21 15:11:00 yamt Exp $	*/
+/*	$NetBSD: igmp.h,v 1.9.16.2 2008/01/21 09:47:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -88,7 +88,7 @@ struct igmp {
 	u_int8_t	igmp_code;	/* code for routing sub-messages   */
 	u_int16_t	igmp_cksum;	/* IP-style checksum               */
 	struct in_addr	igmp_group;	/* group address being reported    */
-} __attribute__((__packed__));		/*  (zero for queries)             */
+} __packed;		/*  (zero for queries)             */
 
 #define	IGMP_MINLEN		     8
 

@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.28.2.7 2007/12/07 17:34:55 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.28.2.8 2008/01/21 09:47:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+#include <sys/pset.h>
 #include <sys/signalvar.h>
 #include <sys/specificdata.h>
 #include <sys/syncobj.h>
@@ -82,10 +83,10 @@ struct lwp {
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
 	int		l_stat;		/* l: overall LWP status */
-	struct timeval 	l_rtime;	/* l: real time */
-	struct timeval	l_stime;	/* l: start time (while ONPROC) */
+	struct bintime 	l_rtime;	/* l: real time */
+	struct bintime	l_stime;	/* l: start time (while ONPROC) */
 	u_int		l_swtime;	/* l: time swapped in or out */
-	int		l_holdcnt;	/* l: if non-zero, don't swap */
+	u_int		l_holdcnt;	/* l: if non-zero, don't swap */
 	int		l_biglocks;	/* l: biglock count before sleep */
 	int		l_class;	/* l: scheduling class */
 	int		l_kpriority;	/* !: has kernel priority boost */
@@ -98,9 +99,12 @@ struct lwp {
 	int		l_cpticks;	/* t: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* t: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
+	psetid_t	l_psid;		/* l: assigned processor-set ID */
+	struct cpu_info *l_target_cpu;	/* l: target CPU to migrate */
 	kmutex_t	l_swaplock;	/* l: lock to prevent swapping */
 	struct lwpctl	*l_lwpctl;	/* p: lwpctl block kernel address */
 	struct lcpage	*l_lcpage;	/* p: lwpctl containing page */
+	cpuset_t	l_affinity;	/* l: CPU set for affinity */
 
 	/* Synchronisation */
 	struct turnstile *l_ts;		/* l: current turnstile */
@@ -191,6 +195,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
 #define	LW_WEXIT	0x00100000 /* Exit before return to user */
+#define	LW_AFFINITY	0x00200000 /* Affinity is assigned to the thread */
 #define	LW_PENDSIG	0x01000000 /* Pending signal for us */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WUSERRET	0x04000000 /* Call proc::p_userret on return to user */
@@ -207,6 +212,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #define	LP_OWEUPC	0x00000010 /* Owe user profiling tick */
 #define	LP_MPSAFE	0x00000020 /* Starts life without kernel_lock */
 #define	LP_INTR		0x00000040 /* Soft interrupt handler */
+#define	LP_SYSCTLWRITE	0x00000080 /* sysctl write lock held */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
@@ -263,13 +269,15 @@ void	lwp_continue(lwp_t *);
 void	cpu_setfunc(lwp_t *, void (*)(void *), void *);
 void	startlwp(void *);
 void	upcallret(lwp_t *);
-void	lwp_exit(lwp_t *) __attribute__((__noreturn__));
+void	lwp_exit(lwp_t *) __dead;
 void	lwp_exit_switchaway(lwp_t *);
 lwp_t *proc_representative_lwp(struct proc *, int *, int);
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_update_creds(lwp_t *);
-lwp_t *lwp_find(struct proc *, int);
+void	lwp_migrate(lwp_t *, struct cpu_info *);
+lwp_t *lwp_find2(pid_t, lwpid_t);
+lwp_t *lwp_find(proc_t *, int);
 void	lwp_userret(lwp_t *);
 void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
@@ -288,6 +296,9 @@ void	lwp_setspecific(specificdata_key_t, void *);
 /* Syscalls */
 int	lwp_park(struct timespec *, const void *);
 int	lwp_unpark(lwpid_t, const void *);
+
+/* ddb */
+void lwp_whatis(uintptr_t, void (*)(const char *, ...));
 
 
 /*
@@ -376,6 +387,39 @@ static inline void
 spc_unlock(struct cpu_info *ci)
 {
 	mutex_spin_exit(ci->ci_schedstate.spc_mutex);
+}
+
+static inline void
+spc_dlock(struct cpu_info *ci1, struct cpu_info *ci2)
+{
+	struct schedstate_percpu *spc1 = &ci1->ci_schedstate;
+	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
+
+	KASSERT(ci1 != ci2);
+	if (spc1->spc_mutex == spc2->spc_mutex) {
+		mutex_spin_enter(spc1->spc_mutex);
+	} else if (ci1 < ci2) {
+		mutex_spin_enter(spc1->spc_mutex);
+		mutex_spin_enter(spc2->spc_mutex);
+	} else {
+		mutex_spin_enter(spc2->spc_mutex);
+		mutex_spin_enter(spc1->spc_mutex);
+	}
+}
+
+static inline void
+spc_dunlock(struct cpu_info *ci1, struct cpu_info *ci2)
+{
+	struct schedstate_percpu *spc1 = &ci1->ci_schedstate;
+	struct schedstate_percpu *spc2 = &ci2->ci_schedstate;
+
+	KASSERT(ci1 != ci2);
+	if (spc1->spc_mutex == spc2->spc_mutex) {
+		mutex_spin_exit(spc1->spc_mutex);
+	} else {
+		mutex_spin_exit(spc1->spc_mutex);
+		mutex_spin_exit(spc2->spc_mutex);
+	}
 }
 
 #endif /* _KERNEL */

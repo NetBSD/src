@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.12.2.5 2007/12/07 17:34:48 yamt Exp $	*/
+/*	$NetBSD: vfs.c,v 1.12.2.6 2008/01/21 09:47:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,27 +70,34 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
 
+struct vnode *speclisth[SPECHSZ];
+
+void
+vn_init1(void)
+{
+
+}
 
 int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	struct vnode **vpp)
 {
 	struct vnode *vp;
-	struct uvm_object *uobj;
 
-	vp = rumpuser_malloc(sizeof(struct vnode), 0);
-	memset(vp, 0, sizeof(struct vnode));
+	vp = kmem_zalloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_mount = mp;
 	vp->v_tag = tag;
 	vp->v_op = vops;
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
-	simple_lock_init(&vp->v_interlock);
-	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	cv_init(&vp->v_cv, "vnode");
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
 
-	uobj = &vp->v_uobj;
-	uobj->pgops = &uvm_vnodeops;
-	TAILQ_INIT(&uobj->memq);
+	UVM_OBJ_INIT(&vp->v_uobj, &uvm_vnodeops, 1);
+
+	if (mp) {
+		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
+	}
 
 	*vpp = vp;
 
@@ -102,8 +109,9 @@ rump_putnode(struct vnode *vp)
 {
 
 	if (vp->v_specinfo)
-		rumpuser_free(vp->v_specinfo);
-	rumpuser_free(vp);
+		kmem_free(vp->v_specinfo, sizeof(*vp->v_specinfo));
+	UVM_OBJ_DESTROY(&vp->v_uobj);
+	kmem_free(vp, sizeof(*vp));
 }
 
 void
@@ -130,11 +138,15 @@ int
 vget(struct vnode *vp, int lockflag)
 {
 
-	if (lockflag & LK_TYPE_MASK)
-		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
-	if (lockflag & LK_INTERLOCK)
-		simple_unlock(&vp->v_interlock);
+	if ((lockflag & LK_INTERLOCK) == 0)
+		mutex_enter(&vp->v_interlock);
 
+	if (lockflag & LK_TYPE_MASK) {
+		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
+		return 0;
+	}
+
+	mutex_exit(&vp->v_interlock);
 	return 0;
 }
 
@@ -145,9 +157,41 @@ vrele(struct vnode *vp)
 }
 
 void
-vrele2(struct vnode *vp, int onhead)
+vrelel(struct vnode *vp, int doinactive, int onhead)
 {
 
+}
+
+void
+vrele2(struct vnode *vp, bool onhead)
+{
+
+}
+
+vnode_t *
+vnalloc(struct mount *mp)
+{
+	struct vnode *vp;
+
+	/* assuming mp != NULL */
+
+	vp = kmem_zalloc(sizeof(struct vnode), KM_SLEEP);
+	vp->v_type = VBAD;
+	vp->v_iflag = VI_MARKER;
+	vp->v_mount = mp;
+	UVM_OBJ_INIT(&vp->v_uobj, &uvm_vnodeops, 1);
+	cv_init(&vp->v_cv, "vnode");
+
+	return vp;
+}
+
+
+void
+vnfree(vnode_t *vp)
+{
+
+	UVM_OBJ_DESTROY(&vp->v_uobj);
+	kmem_free(vp, sizeof(struct vnode));
 }
 
 void
@@ -159,6 +203,13 @@ vput(struct vnode *vp)
 
 void
 vgone(struct vnode *vp)
+{
+
+	vgonel(vp, curlwp);
+}
+
+void
+vclean(struct vnode *vp, int flag)
 {
 
 	vgonel(vp, curlwp);
@@ -182,19 +233,26 @@ holdrelel(struct vnode *vp)
 
 }
 
+void
+vrevoke(vnode_t *vp)
+{
+
+}
+
 int
-vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
+vrecycle(struct vnode *vp, kmutex_t *inter_lkp, struct lwp *l)
 {
 	struct mount *mp = vp->v_mount;
+	bool recycle;
 
 	if (vp->v_usecount == 1) {
 		vp->v_usecount = 0;
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (inter_lkp)
-			simple_unlock(inter_lkp);
+			mutex_exit(inter_lkp);
 		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
 		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		VOP_INACTIVE(vp);
+		VOP_INACTIVE(vp, &recycle);
 
 		VOP_RECLAIM(vp);
 		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
@@ -254,7 +312,7 @@ makevnode(struct stat *sb, const char *path)
 	struct vnode *vp;
 	struct rump_specpriv *sp;
 
-	vp = rumpuser_malloc(sizeof(struct vnode), 0);
+	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
 	vp->v_size = vp->v_writesize = sb->st_size;
 	vp->v_type = mode2vt(sb->st_mode);
 	if (vp->v_type != VBLK)
@@ -264,15 +322,17 @@ makevnode(struct stat *sb, const char *path)
 	if (vp->v_type != VBLK)
 		panic("namei: only VBLK results supported currently");
 
-	vp->v_specinfo = rumpuser_malloc(sizeof(struct specinfo), 0);
+	vp->v_specinfo = kmem_alloc(sizeof(struct specinfo), KM_SLEEP);
 	vp->v_rdev = sb->st_dev;
-	sp = rumpuser_malloc(sizeof(struct rump_specpriv), 0);
+	sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
 	strcpy(sp->rsp_path, path);
 	vp->v_data = sp;
 	vp->v_op = spec_vnodeop_p;
 	vp->v_mount = &mnt_dummy;
 	vp->v_vnlock = &vp->v_lock;
-	simple_lock_init(&vp->v_interlock);
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+	cv_init(&vp->v_cv, "vnode");
 
 	return vp;
 }
@@ -388,7 +448,7 @@ checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
 
 	/* Can this cause any funnies? */
 
-	nvp->v_specinfo = rumpuser_malloc(sizeof(struct specinfo), 0);
+	nvp->v_specinfo = kmem_alloc(sizeof(struct specinfo), KM_SLEEP);
 	nvp->v_rdev = nvp_rdev;
 	return NULLVP;
 }

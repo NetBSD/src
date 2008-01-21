@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.222.2.6 2007/12/07 17:34:45 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.222.2.7 2008/01/21 09:47:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.222.2.6 2007/12/07 17:34:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.222.2.7 2008/01/21 09:47:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.222.2.6 2007/12/07 17:34:45 yamt Exp
 #include <sys/condvar.h>
 #include <sys/disk.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/mutex.h>
 #include <sys/namei.h>
@@ -921,7 +922,7 @@ dorpc:
 		NFSX_FH(v3) + NFSX_UNSIGNED + nfsm_rndup(len));
 	nfsm_fhtom(np, v3);
 	nfsm_strtom(cnp->cn_nameptr, len, NFS_MAXNAMLEN);
-	nfsm_request(np, NFSPROC_LOOKUP, cnp->cn_lwp, cnp->cn_cred);
+	nfsm_request(np, NFSPROC_LOOKUP, curlwp, cnp->cn_cred);
 	if (error) {
 		nfsm_postop_attr(dvp, attrflag, 0);
 		m_freem(mrep);
@@ -1571,12 +1572,12 @@ nfs_mknodrpc(dvp, vpp, cnp, vap)
 		txdr_nfsv2time(&vap->va_atime, &sp->sa_atime);
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
-	nfsm_request(dnp, NFSPROC_MKNOD, cnp->cn_lwp, cnp->cn_cred);
+	nfsm_request(dnp, NFSPROC_MKNOD, curlwp, cnp->cn_cred);
 	if (!error) {
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 		if (!gotvp) {
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
-			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_lwp, &np);
+			    cnp->cn_namelen, cnp->cn_cred, curlwp, &np);
 			if (!error)
 				newvp = NFSTOV(np);
 		}
@@ -1654,9 +1655,10 @@ nfs_create(v)
 	struct nfsnode *dnp, *np = (struct nfsnode *)0;
 	struct vnode *newvp = (struct vnode *)0;
 	char *bpos, *dpos, *cp2;
-	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0, fmode = 0;
+	int error, wccflag = NFSV3_WCCRATTR, gotvp = 0;
 	struct mbuf *mreq, *mrep, *md, *mb;
 	const int v3 = NFS_ISV3(dvp);
+	u_int32_t excl_mode = NFSV3CREATE_UNCHECKED;
 
 	/*
 	 * Oops, not for me..
@@ -1667,8 +1669,9 @@ nfs_create(v)
 	KASSERT(vap->va_type == VREG);
 
 #ifdef VA_EXCLUSIVE
-	if (vap->va_vaflags & VA_EXCLUSIVE)
-		fmode |= O_EXCL;
+	if (vap->va_vaflags & VA_EXCLUSIVE) {
+		excl_mode = NFSV3CREATE_EXCLUSIVE;
+	}
 #endif
 again:
 	error = 0;
@@ -1681,7 +1684,7 @@ again:
 #ifndef NFS_V2_ONLY
 	if (v3) {
 		nfsm_build(tl, u_int32_t *, NFSX_UNSIGNED);
-		if (fmode & O_EXCL) {
+		if (excl_mode == NFSV3CREATE_EXCLUSIVE) {
 			*tl = txdr_unsigned(NFSV3CREATE_EXCLUSIVE);
 			nfsm_build(tl, u_int32_t *, NFSX_V3CREATEVERF);
 #ifdef INET
@@ -1695,7 +1698,7 @@ again:
 #endif
 			*tl = ++create_verf;
 		} else {
-			*tl = txdr_unsigned(NFSV3CREATE_UNCHECKED);
+			*tl = txdr_unsigned(excl_mode);
 			nfsm_v3attrbuild(vap, false);
 		}
 	} else
@@ -1709,12 +1712,12 @@ again:
 		txdr_nfsv2time(&vap->va_atime, &sp->sa_atime);
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
-	nfsm_request(dnp, NFSPROC_CREATE, cnp->cn_lwp, cnp->cn_cred);
+	nfsm_request(dnp, NFSPROC_CREATE, curlwp, cnp->cn_cred);
 	if (!error) {
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 		if (!gotvp) {
 			error = nfs_lookitup(dvp, cnp->cn_nameptr,
-			    cnp->cn_namelen, cnp->cn_cred, cnp->cn_lwp, &np);
+			    cnp->cn_namelen, cnp->cn_cred, curlwp, &np);
 			if (!error)
 				newvp = NFSTOV(np);
 		}
@@ -1728,11 +1731,16 @@ again:
 		/*
 		 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
 		 */
-		if (v3 && (fmode & O_EXCL) && error == ENOTSUP) {
-			fmode &= ~O_EXCL;
-			goto again;
+		if (v3 && error == ENOTSUP) {
+			if (excl_mode == NFSV3CREATE_EXCLUSIVE) {
+				excl_mode = NFSV3CREATE_GUARDED;
+				goto again;
+			} else if (excl_mode == NFSV3CREATE_GUARDED) {
+				excl_mode = NFSV3CREATE_UNCHECKED;
+				goto again;
+			}
 		}
-	} else if (v3 && (fmode & O_EXCL)) {
+	} else if (v3 && (excl_mode == NFSV3CREATE_EXCLUSIVE)) {
 		struct timespec ts;
 
 		getnanotime(&ts);
@@ -1750,7 +1758,7 @@ again:
 		if (vap->va_mtime.tv_sec == VNOVAL)
 			vap->va_mtime = ts;
 
-		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, cnp->cn_lwp);
+		error = nfs_setattrrpc(newvp, vap, cnp->cn_cred, curlwp);
 	}
 	if (error == 0) {
 		if (cnp->cn_flags & MAKEENTRY)
@@ -1824,11 +1832,11 @@ nfs_remove(v)
 		 * throw away biocache buffers, mainly to avoid
 		 * unnecessary delayed writes later.
 		 */
-		error = nfs_vinvalbuf(vp, 0, cnp->cn_cred, cnp->cn_lwp, 1);
+		error = nfs_vinvalbuf(vp, 0, cnp->cn_cred, curlwp, 1);
 		/* Do the rpc */
 		if (error != EINTR)
 			error = nfs_removerpc(dvp, cnp->cn_nameptr,
-				cnp->cn_namelen, cnp->cn_cred, cnp->cn_lwp);
+				cnp->cn_namelen, cnp->cn_cred, curlwp);
 	} else if (!np->n_sillyrename)
 		error = nfs_sillyrename(dvp, vp, cnp, false);
 	PNBUF_PUT(cnp->cn_pnbuf);
@@ -1961,7 +1969,7 @@ nfs_rename(v)
 
 	error = nfs_renamerpc(fdvp, fcnp->cn_nameptr, fcnp->cn_namelen,
 		tdvp, tcnp->cn_nameptr, tcnp->cn_namelen, tcnp->cn_cred,
-		tcnp->cn_lwp);
+		curlwp);
 
 	VN_KNOTE(fdvp, NOTE_WRITE);
 	VN_KNOTE(tdvp, NOTE_WRITE);
@@ -1997,7 +2005,7 @@ nfs_renameit(sdvp, scnp, sp)
 	struct sillyrename *sp;
 {
 	return (nfs_renamerpc(sdvp, scnp->cn_nameptr, scnp->cn_namelen,
-		sdvp, sp->s_name, sp->s_namlen, scnp->cn_cred, scnp->cn_lwp));
+		sdvp, sp->s_name, sp->s_namlen, scnp->cn_cred, curlwp));
 }
 
 /*
@@ -2150,7 +2158,7 @@ nfs_link(v)
 	VOP_FSYNC(vp, cnp->cn_cred, FSYNC_WAIT, 0, 0);
 
 	error = nfs_linkrpc(dvp, vp, cnp->cn_nameptr, cnp->cn_namelen,
-	    cnp->cn_cred, cnp->cn_lwp);
+	    cnp->cn_cred, curlwp);
 
 	if (error == 0)
 		cache_purge1(dvp, cnp, 0);
@@ -2215,7 +2223,7 @@ nfs_symlink(v)
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
 #endif
-	nfsm_request1(dnp, NFSPROC_SYMLINK, cnp->cn_lwp, cnp->cn_cred,
+	nfsm_request1(dnp, NFSPROC_SYMLINK, curlwp, cnp->cn_cred,
 	    &rexmit);
 #ifndef NFS_V2_ONlY
 	if (v3) {
@@ -2236,7 +2244,7 @@ nfs_symlink(v)
 		struct nfsnode *np = NULL;
 
 		error = nfs_lookitup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
-		    cnp->cn_cred, cnp->cn_lwp, &np);
+		    cnp->cn_cred, curlwp, &np);
 		if (error == 0)
 			newvp = NFSTOV(np);
 	}
@@ -2305,7 +2313,7 @@ nfs_mkdir(v)
 		txdr_nfsv2time(&vap->va_atime, &sp->sa_atime);
 		txdr_nfsv2time(&vap->va_mtime, &sp->sa_mtime);
 	}
-	nfsm_request1(dnp, NFSPROC_MKDIR, cnp->cn_lwp, cnp->cn_cred, &rexmit);
+	nfsm_request1(dnp, NFSPROC_MKDIR, curlwp, cnp->cn_cred, &rexmit);
 	if (!error)
 		nfsm_mtofh(dvp, newvp, v3, gotvp);
 	if (v3)
@@ -2324,7 +2332,7 @@ nfs_mkdir(v)
 			newvp = (struct vnode *)0;
 		}
 		error = nfs_lookitup(dvp, cnp->cn_nameptr, len, cnp->cn_cred,
-			cnp->cn_lwp, &np);
+			curlwp, &np);
 		if (!error) {
 			newvp = NFSTOV(np);
 			if (newvp->v_type != VDIR || newvp == dvp)
@@ -2390,7 +2398,7 @@ nfs_rmdir(v)
 		NFSX_FH(v3) + NFSX_UNSIGNED + nfsm_rndup(cnp->cn_namelen));
 	nfsm_fhtom(dnp, v3);
 	nfsm_strtom(cnp->cn_nameptr, cnp->cn_namelen, NFS_MAXNAMLEN);
-	nfsm_request1(dnp, NFSPROC_RMDIR, cnp->cn_lwp, cnp->cn_cred, &rexmit);
+	nfsm_request1(dnp, NFSPROC_RMDIR, curlwp, cnp->cn_cred, &rexmit);
 #ifndef NFS_V2_ONLY
 	if (v3)
 		nfsm_wcc_data(dvp, wccflag, 0, !error);
@@ -2984,14 +2992,13 @@ nfs_sillyrename(dvp, vp, cnp, dolink)
 	if (vp->v_type == VDIR)
 		panic("nfs: sillyrename dir");
 #endif
-	MALLOC(sp, struct sillyrename *, sizeof (struct sillyrename),
-		M_NFSREQ, M_WAITOK);
+	sp = kmem_alloc(sizeof(*sp), KM_SLEEP);
 	sp->s_cred = kauth_cred_dup(cnp->cn_cred);
 	sp->s_dvp = dvp;
 	VREF(dvp);
 
 	/* Fudge together a funny name */
-	pid = cnp->cn_lwp->l_proc->p_pid;
+	pid = curlwp->l_proc->p_pid;
 	memcpy(sp->s_name, ".nfsAxxxx4.4", 13);
 	sp->s_namlen = 12;
 	sp->s_name[8] = hexdigits[pid & 0xf];
@@ -3001,7 +3008,7 @@ nfs_sillyrename(dvp, vp, cnp, dolink)
 
 	/* Try lookitups until we get one that isn't there */
 	while (nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
-		cnp->cn_lwp, (struct nfsnode **)0) == 0) {
+		curlwp, (struct nfsnode **)0) == 0) {
 		sp->s_name[4]++;
 		if (sp->s_name[4] > 'z') {
 			error = EINVAL;
@@ -3010,7 +3017,7 @@ nfs_sillyrename(dvp, vp, cnp, dolink)
 	}
 	if (dolink) {
 		error = nfs_linkrpc(dvp, vp, sp->s_name, sp->s_namlen,
-		    sp->s_cred, cnp->cn_lwp);
+		    sp->s_cred, curlwp);
 		/*
 		 * nfs_request maps NFSERR_NOTSUPP to ENOTSUP.
 		 */
@@ -3023,13 +3030,13 @@ nfs_sillyrename(dvp, vp, cnp, dolink)
 	if (error)
 		goto bad;
 	error = nfs_lookitup(dvp, sp->s_name, sp->s_namlen, sp->s_cred,
-		cnp->cn_lwp, &np);
+		curlwp, &np);
 	np->n_sillyrename = sp;
 	return (0);
 bad:
 	vrele(sp->s_dvp);
 	kauth_cred_free(sp->s_cred);
-	free((void *)sp, M_NFSREQ);
+	kmem_free(sp, sizeof(*sp));
 	return (error);
 }
 
@@ -3075,14 +3082,14 @@ nfs_lookitup(dvp, name, len, cred, l, npp)
 		if (*npp) {
 		    np = *npp;
 		    if (np->n_fhsize > NFS_SMALLFH && fhlen <= NFS_SMALLFH) {
-			free((void *)np->n_fhp, M_NFSBIGFH);
+			kmem_free(np->n_fhp, np->n_fhsize);
 			np->n_fhp = &np->n_fh;
 		    }
 #if NFS_SMALLFH < NFSX_V3FHMAX
-		    else if (np->n_fhsize <= NFS_SMALLFH && fhlen>NFS_SMALLFH)
-			np->n_fhp =(nfsfh_t *)malloc(fhlen,M_NFSBIGFH,M_WAITOK);
+		    else if (np->n_fhsize <= NFS_SMALLFH && fhlen > NFS_SMALLFH)
+			np->n_fhp = kmem_alloc(fhlen, KM_SLEEP);
 #endif
-		    memcpy((void *)np->n_fhp, (void *)nfhp, fhlen);
+		    memcpy(np->n_fhp, nfhp, fhlen);
 		    np->n_fhsize = fhlen;
 		    newvp = NFSTOV(np);
 		} else if (NFS_CMPFH(dnp, nfhp, fhlen)) {
@@ -3277,7 +3284,7 @@ nfs_flush(struct vnode *vp, kauth_cred_t cred, int waitfor, struct lwp *l,
 	int flushflags = PGO_ALLPAGES|PGO_CLEANIT|PGO_SYNCIO;
 	UVMHIST_FUNC("nfs_flush"); UVMHIST_CALLED(ubchist);
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (np->n_flag & NWRITEERR) {
 		error = np->n_error;

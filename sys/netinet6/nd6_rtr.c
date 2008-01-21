@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.52.2.5 2007/12/07 17:34:38 yamt Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.52.2.6 2008/01/21 09:47:24 yamt Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.52.2.5 2007/12/07 17:34:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.52.2.6 2008/01/21 09:47:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -422,8 +422,7 @@ nd6_rtmsg(int cmd, struct rtentry *rt)
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	if (rt->rt_ifp) {
-		info.rti_info[RTAX_IFP] =
-		    IFADDR_FIRST(rt->rt_ifp)->ifa_addr;
+		info.rti_info[RTAX_IFP] = rt->rt_ifp->if_dl->ifa_addr;
 		info.rti_info[RTAX_IFA] = rt->rt_ifa->ifa_addr;
 	}
 

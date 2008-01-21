@@ -1,4 +1,4 @@
-/*	$NetBSD: kthread.h,v 1.4.40.1 2007/09/03 14:46:21 yamt Exp $	*/
+/*	$NetBSD: kthread.h,v 1.4.40.2 2008/01/21 09:47:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@ int	kthread_create(pri_t, int, struct cpu_info *,
 		       void (*)(void *), void *,
 		       lwp_t **, const char *, ...)
 	    __attribute__((__format__(__printf__,7,8)));
-void	kthread_exit(int) __attribute__((__noreturn__));
+void	kthread_exit(int) __dead;
 void	kthread_destroy(lwp_t *);
 #endif /* _KERNEL */
 

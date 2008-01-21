@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.3.4.4 2007/12/07 17:32:49 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.3.4.5 2008/01/21 09:46:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -184,7 +184,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.3.4.4 2007/12/07 17:32:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.3.4.5 2008/01/21 09:46:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -363,10 +363,18 @@ softint_establish(u_int flags, void (*func)(void *), void *arg)
 	}
 
 	/* Set up the handler on each CPU. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
+	if (ncpu < 2) {
+		/* XXX hack for machines with no CPU_INFO_FOREACH() early on */
+		sc = curcpu()->ci_data.cpu_softcpu;
+		sh = &sc->sc_hand[index];
+		sh->sh_isr = &sc->sc_int[level];
+		sh->sh_func = func;
+		sh->sh_arg = arg;
+		sh->sh_flags = flags;
+		sh->sh_pending = 0;
+	} else for (CPU_INFO_FOREACH(cii, ci)) {
 		sc = ci->ci_data.cpu_softcpu;
 		sh = &sc->sc_hand[index];
-		
 		sh->sh_isr = &sc->sc_int[level];
 		sh->sh_func = func;
 		sh->sh_arg = arg;
@@ -734,7 +742,7 @@ softint_thread(void *cookie)
 void
 softint_dispatch(lwp_t *pinned, int s)
 {
-	struct timeval now;
+	struct bintime now;
 	softint_t *si;
 	u_int timing;
 	lwp_t *l;
@@ -758,10 +766,10 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * for it.
 	 */
 	if (timing)
-		microtime(&l->l_stime);
+		bintime(&l->l_stime);
 	softint_execute(si, l, s);
 	if (timing) {
-		microtime(&now);
+		bintime(&now);
 		updatertime(l, &now);
 		l->l_flag &= ~LW_TIMEINTR;
 	}

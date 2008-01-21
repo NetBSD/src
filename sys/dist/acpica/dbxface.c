@@ -1,7 +1,9 @@
+/*	$NetBSD: dbxface.c,v 1.1.14.3 2008/01/21 09:45:06 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dbxface - AML Debugger external interfaces
- *              xRevision: 1.76 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,14 +116,13 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbxface.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbxface.c,v 1.1.14.3 2008/01/21 09:45:06 yamt Exp $");
 
-#include "acpi.h"
-#include "amlcode.h"
-#include "acdebug.h"
-#include "acdisasm.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acdebug.h>
+#include <dist/acpica/acdisasm.h>
 
 
 #ifdef ACPI_DEBUGGER
@@ -376,7 +377,9 @@ AcpiDbSingleStep (
 
         /* Now we can display it */
 
+#ifdef ACPI_DISASSEMBLER
         AcpiDmDisassemble (WalkState, DisplayOp, ACPI_UINT32_MAX);
+#endif
 
         if ((Op->Common.AmlOpcode == AML_IF_OP) ||
             (Op->Common.AmlOpcode == AML_WHILE_OP))
@@ -488,9 +491,11 @@ AcpiDbInitialize (
     AcpiGbl_DbOutputFlags       = ACPI_DB_CONSOLE_OUTPUT;
 
     AcpiGbl_DbOpt_tables        = FALSE;
-    AcpiGbl_DbOpt_disasm        = FALSE;
     AcpiGbl_DbOpt_stats         = FALSE;
+#ifdef ACPI_DISASSEMBLER
+    AcpiGbl_DbOpt_disasm        = FALSE;
     AcpiGbl_DbOpt_verbose       = TRUE;
+#endif
     AcpiGbl_DbOpt_ini_methods   = TRUE;
 
     AcpiGbl_DbBuffer = AcpiOsAllocate (ACPI_DEBUG_BUFFER_SIZE);
@@ -531,7 +536,7 @@ AcpiDbInitialize (
 
         /* Create the debug execution thread to execute commands */
 
-        Status = AcpiOsQueueForExecution (0, AcpiDbExecuteThread, NULL);
+        Status = AcpiOsExecute (OSL_DEBUGGER_THREAD, AcpiDbExecuteThread, NULL);
         if (ACPI_FAILURE (Status))
         {
             AcpiOsPrintf ("Could not start debugger thread\n");
@@ -539,11 +544,13 @@ AcpiDbInitialize (
         }
     }
 
+#ifdef ACPI_DISASSEMBLER
     if (!AcpiGbl_DbOpt_verbose)
     {
         AcpiGbl_DbOpt_disasm = TRUE;
         AcpiGbl_DbOpt_stats = FALSE;
     }
+#endif
 
     return (AE_OK);
 }

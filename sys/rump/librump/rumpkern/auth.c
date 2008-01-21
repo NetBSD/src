@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.2.6.2 2007/09/03 14:45:26 yamt Exp $	*/
+/*	$NetBSD: auth.c,v 1.2.6.3 2008/01/21 09:47:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include "rump.h"
 #include "rumpuser.h"
@@ -40,17 +41,16 @@ struct kauth_cred {
 	gid_t cr_gid;
 
 	size_t cr_ngroups;
-	gid_t cr_groups[0];
+	gid_t cr_groups[NGROUPS];
 };
 
 kauth_cred_t
 rump_cred_create(uid_t uid, gid_t gid, size_t ngroups, gid_t *groups)
 {
 	kauth_cred_t cred;
-	size_t credsize;
 
-	credsize = sizeof(struct kauth_cred) + ngroups * sizeof(gid_t);
-	cred = rumpuser_malloc(credsize, 0);
+	KASSERT(ngroups <= NGROUPS);
+	cred = kmem_alloc(sizeof(struct kauth_cred), KM_SLEEP);
 
 	cred->cr_uid = uid;
 	cred->cr_gid = gid;
@@ -64,7 +64,7 @@ void
 rump_cred_destroy(kauth_cred_t cred)
 {
 
-	rumpuser_free(cred);
+	kmem_free(cred, sizeof(struct kauth_cred));
 }
 
 int
@@ -148,4 +148,41 @@ kauth_cred_group(kauth_cred_t cred, u_int idx)
 	KASSERT(idx < cred->cr_ngroups);
 
 	return cred->cr_groups[idx];
+}
+
+void
+kauth_cred_to_uucred(struct uucred *uucred, const kauth_cred_t cred)
+{
+
+	if (cred == RUMPCRED_SUSER) {
+		memset(uucred, 0, sizeof(struct uucred));
+		return;
+	}
+
+	uucred->cr_uid = cred->cr_uid;
+	uucred->cr_gid = cred->cr_gid;
+	uucred->cr_ngroups = cred->cr_ngroups;
+	memcpy(uucred->cr_groups, cred->cr_groups,
+	    cred->cr_ngroups * sizeof(gid_t));
+}
+
+void
+kauth_cred_hold(kauth_cred_t cred)
+{
+
+	/* nada: creds are always destroyed upon exit from VOP */
+}
+
+void
+kauth_cred_free(kauth_cred_t cred)
+{
+
+	/* nada: see above */
+}
+
+kauth_cred_t
+kauth_cred_get()
+{
+
+	return curlwp->l_cred;
 }

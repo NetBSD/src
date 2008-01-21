@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.109.2.4 2007/12/07 17:34:53 yamt Exp $	*/
+/*	$NetBSD: exec.h,v 1.109.2.5 2008/01/21 09:47:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -113,12 +113,6 @@ struct ps_strings {
 };
 
 /*
- * Below the ps_strings and sigtramp, we may require a gap on the stack
- * (used to copyin/copyout various emulation data structures).
- */
-#define	STACKGAPLEN	4096	/* plenty enough for now */
-
-/*
  * the following structures allow execve() to put together processes
  * in a more extensible and cleaner way.
  *
@@ -195,7 +189,11 @@ struct exec_package {
 	vaddr_t	ep_vm_minaddr;		/* bottom of process address space */
 	vaddr_t	ep_vm_maxaddr;		/* top of process address space */
 	u_int	ep_flags;		/* flags; see below. */
-	char	**ep_fa;		/* a fake args vector for scripts */
+	size_t	ep_fa_len;		/* byte size of ep_fa */
+	struct exec_fakearg {
+		char *fa_arg;
+		size_t fa_len;
+	} *ep_fa;			/* a fake args vector for scripts */
 	int	ep_fd;			/* a file descriptor we're holding */
 	void	*ep_emul_arg;		/* emulation argument */
 	const struct	execsw *ep_esch;/* execsw entry */
@@ -227,10 +225,6 @@ struct exec_vmcmd {
 };
 
 #ifdef _KERNEL
-#include <sys/mallocvar.h>
-
-MALLOC_DECLARE(M_EXEC);
-
 /*
  * funtions used either by execve() or the various CPU-dependent execve()
  * hooks.

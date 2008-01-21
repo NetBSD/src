@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.6 2005/02/26 22:58:58 perry Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.6.4.1 2008/01/21 09:46:45 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2005/02/26 22:58:58 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6.4.1 2008/01/21 09:46:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2005/02/26 22:58:58 perry Exp $
 #include <compat/netbsd32/netbsd32_exec.h>
 #include <compat/sunos32/sunos32_exec.h>
 
-int exec_sunos32_aout_lkmentry __P((struct lkm_table *, int, int));
+int exec_sunos32_aout_lkmentry(struct lkm_table *, int, int);
 
 static struct execsw exec_sunos32_aout =
 	/* 32-bit SunOS a.out on 64-bit */

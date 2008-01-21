@@ -1,11 +1,8 @@
-/* $NetBSD: lkminit_exec.c,v 1.6 2005/02/26 22:58:58 perry Exp $ */
+/* $NetBSD: pmf.h,v 1.4.8.2 2008/01/21 09:47:56 yamt Exp $ */
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,8 +14,7 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
+ *        This product includes software developed by Jared D. McNeill.
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
@@ -36,52 +32,61 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.6 2005/02/26 22:58:58 perry Exp $");
+#ifndef _SYS_PMF_H
+#define _SYS_PMF_H
 
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/exec.h>
-#include <sys/exec_aout.h>
-#include <sys/exec_elf.h>
-#include <sys/proc.h>
-#include <sys/lkm.h>
-#include <sys/signalvar.h>
+#ifdef _KERNEL
 
-#include <compat/hpux/hpux_exec.h>
+#include <sys/callout.h>
 
-int exec_hpux_aout_lkmentry __P((struct lkm_table *, int, int));
+typedef enum {
+	PMFE_DISPLAY_ON,
+	PMFE_DISPLAY_REDUCED,
+	PMFE_DISPLAY_STANDBY,
+	PMFE_DISPLAY_SUSPEND,
+	PMFE_DISPLAY_OFF,
+	PMFE_DISPLAY_BRIGHTNESS_UP,
+	PMFE_DISPLAY_BRIGHTNESS_DOWN,
+	PMFE_AUDIO_VOLUME_UP,
+	PMFE_AUDIO_VOLUME_DOWN,
+	PMFE_AUDIO_VOLUME_TOGGLE,
+	PMFE_CHASSIS_LID_CLOSE,
+	PMFE_CHASSIS_LID_OPEN
+} pmf_generic_event_t;
 
-static struct execsw exec_hpux_aout =
-	/* HP-UX a.out for m68k (native word size) */
-	{ HPUX_EXEC_HDR_SIZE,
-	  exec_hpux_makecmds,
-	  { NULL },
-	  NULL,
-	  EXECSW_PRIO_ANY,
-	  0,
-	  copyargs,
-	  NULL,
-	  coredump_netbsd,
-	  exec_setup_stack };
+void	pmf_init(void);
 
-/*
- * declare the exec
- */
-MOD_EXEC("exec_hpux_aout", -1, &exec_hpux_aout, "hpux");
+bool	pmf_event_inject(device_t, pmf_generic_event_t);
+bool	pmf_event_register(device_t, pmf_generic_event_t,
+			   void (*)(device_t), bool);
+void	pmf_event_deregister(device_t, pmf_generic_event_t,
+			     void (*)(device_t), bool);
 
-/*
- * entry point
- */
-int
-exec_hpux_aout_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;
-	int cmd;
-	int ver;
-{
-	DISPATCH(lkmtp, cmd, ver,
-		 lkm_nofunc,
-		 lkm_nofunc,
-		 lkm_nofunc);
-}
+bool		pmf_set_platform(const char *, const char *);
+const char	*pmf_get_platform(const char *);
+
+bool		pmf_system_resume(void);
+bool		pmf_system_bus_resume(void);
+bool		pmf_system_suspend(void);
+void		pmf_system_shutdown(void);
+
+bool		pmf_device_register(device_t,
+		    bool (*)(device_t),
+		    bool (*)(device_t));
+void		pmf_device_deregister(device_t);
+bool		pmf_device_suspend(device_t);
+bool		pmf_device_resume(device_t);
+
+bool		pmf_device_recursive_suspend(device_t);
+bool		pmf_device_recursive_resume(device_t);
+bool		pmf_device_resume_subtree(device_t);
+
+struct ifnet;
+void		pmf_class_network_register(device_t, struct ifnet *);
+
+bool		pmf_class_input_register(device_t);
+bool		pmf_class_display_register(device_t);
+
+#endif /* !_KERNEL */
+
+#endif /* !_SYS_PMF_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_osfp.c,v 1.4.12.1 2007/09/03 14:40:04 yamt Exp $	*/
+/*	$NetBSD: pf_osfp.c,v 1.4.12.2 2008/01/21 09:45:42 yamt Exp $	*/
 /*	$OpenBSD: pf_osfp.c,v 1.10 2004/04/09 19:30:41 frantzen Exp $ */
 
 /*
@@ -17,6 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf_osfp.c,v 1.4.12.2 2008/01/21 09:45:42 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

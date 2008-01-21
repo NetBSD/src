@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.18.2.2 2007/02/26 09:12:27 yamt Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.18.2.3 2008/01/21 09:48:19 yamt Exp $	*/
 
 /*
  *
@@ -53,7 +53,7 @@
 
 struct vm_anon {
 	int an_ref;			/* reference count [an_lock] */
-	struct simplelock an_lock;	/* lock for an_ref */
+	kmutex_t an_lock;		/* lock for an_ref */
 	struct vm_page *an_page;/* if in RAM [an_lock] */
 #if defined(VMSWAP) || 1 /* XXX libkvm */
 	int an_swslot;		/* drum swap slot # (if != 0)

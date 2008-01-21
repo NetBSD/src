@@ -1,4 +1,4 @@
-/*	$NetBSD: lkminit_vfs.c,v 1.1.8.3 2007/11/15 11:44:59 yamt Exp $ */
+/*	$NetBSD: lkminit_vfs.c,v 1.1.8.4 2008/01/21 09:46:49 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,13 +40,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1.8.3 2007/11/15 11:44:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.1.8.4 2008/01/21 09:46:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/lkm.h>
 
-static int puffs_dispatch_vfs __P((struct lkm_table *, int, int));
-int puffs_lkmentry __P((struct lkm_table *, int, int));
+static int puffs_dispatch_vfs(struct lkm_table *, int, int);
+int puffs_lkmentry(struct lkm_table *, int, int);
 
 /*
  * The VFS part of module.

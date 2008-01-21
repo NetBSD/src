@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.56.2.6 2007/12/07 17:33:13 yamt Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.56.2.7 2008/01/21 09:46:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.56.2.6 2007/12/07 17:33:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.56.2.7 2008/01/21 09:46:27 yamt Exp $");
 
 #define SYSVSEM
 
@@ -278,7 +278,7 @@ semrealloc(int newsemmni, int newsemmns, int newsemmnu)
  */
 
 int
-sys_semconfig(struct lwp *l, void *v, register_t *retval)
+sys_semconfig(struct lwp *l, const struct sys_semconfig_args *uap, register_t *retval)
 {
 
 	*retval = 0;
@@ -448,14 +448,14 @@ semundo_clear(int semid, int semnum)
 }
 
 int
-sys_____semctl13(struct lwp *l, void *v, register_t *retval)
+sys_____semctl13(struct lwp *l, const struct sys_____semctl13_args *uap, register_t *retval)
 {
-	struct sys_____semctl13_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(int) semnum;
 		syscallarg(int) cmd;
 		syscallarg(union __semun *) arg;
-	} */ *uap = v;
+	} */
 	struct semid_ds sembuf;
 	int cmd, error;
 	void *pass_arg;
@@ -639,13 +639,13 @@ semctl1(struct lwp *l, int semid, int semnum, int cmd, void *v,
 }
 
 int
-sys_semget(struct lwp *l, void *v, register_t *retval)
+sys_semget(struct lwp *l, const struct sys_semget_args *uap, register_t *retval)
 {
-	struct sys_semget_args /* {
+	/* {
 		syscallarg(key_t) key;
 		syscallarg(int) nsems;
 		syscallarg(int) semflg;
-	} */ *uap = v;
+	} */
 	int semid, error = 0;
 	int key = SCARG(uap, key);
 	int nsems = SCARG(uap, nsems);
@@ -739,13 +739,13 @@ sys_semget(struct lwp *l, void *v, register_t *retval)
 #define SMALL_SOPS 8
 
 int
-sys_semop(struct lwp *l, void *v, register_t *retval)
+sys_semop(struct lwp *l, const struct sys_semop_args *uap, register_t *retval)
 {
-	struct sys_semop_args /* {
+	/* {
 		syscallarg(int) semid;
 		syscallarg(struct sembuf *) sops;
 		syscallarg(size_t) nsops;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int semid = SCARG(uap, semid), seq;
 	size_t nsops = SCARG(uap, nsops);
@@ -764,13 +764,20 @@ restart:
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
 	} else if (nsops <= seminfo.semopm) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
 		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 	} else {
 		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
 		    seminfo.semopm, nsops));
 		return (E2BIG);
+	}
+
+	error = copyin(SCARG(uap, sops), sops, nsops * sizeof(sops[0]));
+	if (error) {
+		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
+		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
+		if (sops != small_sops)
+			kmem_free(sops, nsops * sizeof(*sops));
+		return error;
 	}
 
 	mutex_enter(&semlock);
@@ -794,13 +801,6 @@ restart:
 
 	if ((error = ipcperm(cred, &semaptr->sem_perm, IPC_W))) {
 		SEM_PRINTF(("error = %d from ipaccess\n", error));
-		goto out;
-	}
-
-	if ((error = copyin(SCARG(uap, sops),
-	    sops, nsops * sizeof(sops[0]))) != 0) {
-		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
-		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
 		goto out;
 	}
 
@@ -1005,11 +1005,8 @@ done:
 
  out:
 	mutex_exit(&semlock);
-	if (sops != small_sops) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
+	if (sops != small_sops)
 		kmem_free(sops, nsops * sizeof(*sops));
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
-	}
 	return error;
 }
 

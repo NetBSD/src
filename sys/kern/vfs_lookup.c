@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.62.2.7 2007/12/07 17:33:21 yamt Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.62.2.8 2008/01/21 09:46:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.7 2007/12/07 17:33:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.8 2008/01/21 09:46:32 yamt Exp $");
 
-#include "opt_systrace.h"
 #include "opt_magiclinks.h"
 
 #include <sys/param.h>
@@ -58,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.62.2.7 2007/12/07 17:33:21 yamt Exp
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #ifndef MAGICLINKS
 #define MAGICLINKS 0
@@ -223,12 +218,13 @@ namei(struct nameidata *ndp)
 	char *cp;			/* pointer into pathname argument */
 	struct vnode *dp;		/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
+	struct lwp *l = curlwp;		/* thread doing namei() */
 	struct uio auio;
 	int error, linklen;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 #ifdef DIAGNOSTIC
-	if (!cnp->cn_cred || !cnp->cn_lwp)
+	if (!cnp->cn_cred)
 		panic("namei: bad cred/proc");
 	if (cnp->cn_nameiop & (~OPMASK))
 		panic("namei: nameiop contaminated with flags");
@@ -266,7 +262,7 @@ namei(struct nameidata *ndp)
 	/*
 	 * Get root directory for the translation.
 	 */
-	cwdi = cnp->cn_lwp->l_proc->p_cwdi;
+	cwdi = l->l_proc->p_cwdi;
 	rw_enter(&cwdi->cwdi_lock, RW_READER);
 	dp = cwdi->cwdi_rdir;
 	if (dp == NULL)
@@ -315,17 +311,12 @@ namei(struct nameidata *ndp)
 			if (cnp->cn_flags & EMULROOTSET)
 				emul_path = ndp->ni_next;
 			else
-				emul_path = cnp->cn_lwp->l_proc->p_emul->e_path;
+				emul_path = l->l_proc->p_emul->e_path;
 			ktrnamei2(emul_path, strlen(emul_path),
 			    cnp->cn_pnbuf, ndp->ni_pathlen);
 		} else
 			ktrnamei(cnp->cn_pnbuf, ndp->ni_pathlen);
 	}
-
-#ifdef SYSTRACE
-	if (ISSET(cnp->cn_lwp->l_proc->p_flag, PK_SYSTRACE))
-		systrace_namei(ndp);
-#endif
 
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 	/* Loop through symbolic links */
@@ -409,7 +400,7 @@ badlink:
 		 * check length for potential overflow.
 		 */
 		if ((vfs_magiclinks &&
-		     symlink_magic(cnp->cn_lwp->l_proc, cp, &linklen)) ||
+		     symlink_magic(l->l_proc, cp, &linklen)) ||
 		    (linklen + ndp->ni_pathlen >= MAXPATHLEN)) {
 			error = ENAMETOOLONG;
 			goto badlink;
@@ -526,7 +517,7 @@ lookup(struct nameidata *ndp)
 	int error = 0;
 	int slashes;
 	struct componentname *cnp = &ndp->ni_cnd;
-	struct lwp *l = cnp->cn_lwp;
+	struct lwp *l = curlwp;
 
 	/*
 	 * Setup: break out flag bits into variables.

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_macho.c,v 1.33.2.3 2007/12/07 17:32:34 yamt Exp $	*/
+/*	$NetBSD: exec_macho.c,v 1.33.2.4 2008/01/21 09:45:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.33.2.3 2007/12/07 17:32:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_macho.c,v 1.33.2.4 2008/01/21 09:45:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -307,7 +307,7 @@ exec_macho_load_file(struct lwp *l, struct exec_package *epp,
 	 * 2. read filehdr
 	 * 3. map text, data, and bss out of it using VM_*
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path, l);
+	NDINIT(&nd, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, path);
 	if ((error = namei(&nd)) != 0)
 		return error;
 	vp = nd.ni_vp;
@@ -579,7 +579,7 @@ exec_macho_makecmds(struct lwp *l, struct exec_package *epp)
 	if (error)
 		return (error);
 
-	emea = malloc(sizeof(struct exec_macho_emul_arg), M_EXEC, M_WAITOK);
+	emea = malloc(sizeof(struct exec_macho_emul_arg), M_TEMP, M_WAITOK);
 	epp->ep_emul_arg = (void *)emea;
 	emea->dynamic = 0;
 
@@ -615,6 +615,6 @@ exec_macho_makecmds(struct lwp *l, struct exec_package *epp)
 bad:
 	kill_vmcmds(&epp->ep_vmcmds);
 bad2:
-	free(emea, M_EXEC);
+	free(emea, M_TEMP);
 	return error;
 }

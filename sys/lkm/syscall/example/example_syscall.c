@@ -1,4 +1,4 @@
-/*	$NetBSD: example_syscall.c,v 1.4 2003/12/30 06:53:26 atatat Exp $	*/
+/*	$NetBSD: example_syscall.c,v 1.4.16.1 2008/01/21 09:46:47 yamt Exp $	*/
 
 /*
  * example_syscall.c
@@ -37,13 +37,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.4 2003/12/30 06:53:26 atatat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example_syscall.c,v 1.4.16.1 2008/01/21 09:46:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/systm.h>
 
-int     example_syscall __P((struct lwp *, void *, register_t *));
+int     example_syscall(struct lwp *, void *, register_t *);
 
 /*
  * This is the actual code for system call...  it can be static because

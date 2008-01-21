@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_xxx.c,v 1.55.2.4 2007/11/15 11:44:46 yamt Exp $	*/
+/*	$NetBSD: kern_xxx.c,v 1.55.2.5 2008/01/21 09:46:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.55.2.4 2007/11/15 11:44:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.55.2.5 2008/01/21 09:46:16 yamt Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -50,12 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_xxx.c,v 1.55.2.4 2007/11/15 11:44:46 yamt Exp $
 
 /* ARGSUSED */
 int
-sys_reboot(struct lwp *l, void *v, register_t *retval)
+sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 {
-	struct sys_reboot_args /* {
+	/* {
 		syscallarg(int) opt;
 		syscallarg(char *) bootstr;
-	} */ *uap = v;
+	} */
 	int error;
 	char *bootstr, bs[128];
 
@@ -108,8 +108,9 @@ int	scdebug = SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS|SCDEBUG_ALL;
 #endif
 
 void
-scdebug_call(struct lwp *l, register_t code, register_t args[])
+scdebug_call(register_t code, const register_t args[])
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;
@@ -150,8 +151,9 @@ scdebug_call(struct lwp *l, register_t code, register_t args[])
 }
 
 void
-scdebug_ret(struct lwp *l, register_t code, int error, register_t retval[])
+scdebug_ret(register_t code, int error, const register_t retval[])
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 	const struct sysent *sy;
 	const struct emul *em;

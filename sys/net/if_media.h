@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.42.12.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_media.h,v 1.42.12.2 2008/01/21 09:47:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -121,6 +121,8 @@ struct ifmedia {
 
 /* Initialize an interface's struct if_media field. */
 void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
+
+int ifmedia_change(struct ifmedia *, struct ifnet *);
 
 /* Add one supported medium to a struct ifmedia. */
 void	ifmedia_add(struct ifmedia *, int, int, void *);

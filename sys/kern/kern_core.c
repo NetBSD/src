@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.3.2.5 2007/12/07 17:32:37 yamt Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.3.2.6 2008/01/21 09:46:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.3.2.5 2007/12/07 17:32:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.3.2.6 2008/01/21 09:46:01 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -161,7 +161,7 @@ coredump(struct lwp *l, const char *pattern)
 	mutex_exit(&proclist_lock);
 	if (error)
 		goto done;
-	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, l);
+	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name);
 	if ((error = vn_open(&nd, O_CREAT | O_NOFOLLOW | FWRITE,
 	    S_IRUSR | S_IWUSR)) != 0)
 		goto done;

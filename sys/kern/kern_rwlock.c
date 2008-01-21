@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.1.18.4 2007/12/07 17:32:47 yamt Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.1.18.5 2008/01/21 09:46:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.18.4 2007/12/07 17:32:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.18.5 2008/01/21 09:46:11 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.1.18.4 2007/12/07 17:32:47 yamt Ex
 #include <sys/systm.h>
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
+#include <sys/lock.h>
 
 #include <dev/lockstat.h>
 

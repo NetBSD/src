@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.8.4.4 2007/12/07 17:34:42 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.8.4.5 2008/01/21 09:47:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,15 +37,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.8.4.4 2007/12/07 17:34:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.8.4.5 2008/01/21 09:47:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/condvar.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
-#include <sys/malloc.h>
 #include <sys/mutex.h>
 #include <sys/vnode.h>
 #include <sys/unistd.h>
@@ -195,7 +195,7 @@ filt_nfsdetach(struct knote *kn)
 				/* last user, g/c */
 				cv_destroy(&ke->cv);
 				SLIST_REMOVE(&kevlist, ke, kevq, kev_link);
-				FREE(ke, M_KEVENT);
+				kmem_free(ke, sizeof(*ke));
 			}
 			break;
 		}
@@ -301,8 +301,7 @@ nfs_kqfilter(void *v)
 		ke->usecount++;
 	} else {
 		/* need a new one */
-		MALLOC(ke, struct kevq *, sizeof(struct kevq), M_KEVENT,
-			M_WAITOK);
+		ke = kmem_alloc(sizeof(*ke), KM_SLEEP);
 		ke->vp = vp;
 		ke->usecount = 1;
 		ke->flags = 0;

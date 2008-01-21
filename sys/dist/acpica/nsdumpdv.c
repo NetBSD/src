@@ -1,7 +1,9 @@
+/*	$NetBSD: nsdumpdv.c,v 1.1.14.3 2008/01/21 09:45:19 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: nsdump - table dumping routines for debug
- *              xRevision: 1.17 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,11 +118,11 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.1.14.3 2008/01/21 09:45:19 yamt Exp $");
 
 #define __NSDUMPDV_C__
 
-#include "acpi.h"
+#include <dist/acpica/acpi.h>
 
 
 /* TBD: This entire module is apparently obsolete and should be removed */
@@ -131,7 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: nsdumpdv.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $
 #ifdef ACPI_OBSOLETE_FUNCTIONS
 #if defined(ACPI_DEBUG_OUTPUT) || defined(ACPI_DEBUGGER)
 
-#include "acnamesp.h"
+#include <dist/acpica/acnamesp.h>
 
 /*******************************************************************************
  *
@@ -162,7 +164,7 @@ AcpiNsDumpOneDevice (
     UINT32                  i;
 
 
-    ACPI_FUNCTION_NAME ("NsDumpOneDevice");
+    ACPI_FUNCTION_NAME (NsDumpOneDevice);
 
 
     Status = AcpiNsDumpOneObject (ObjHandle, Level, Context, ReturnValue);
@@ -181,7 +183,7 @@ AcpiNsDumpOneDevice (
             "    HID: %s, ADR: %8.8X%8.8X, Status: %X\n",
             Info->HardwareId.Value, ACPI_FORMAT_UINT64 (Info->Address),
             Info->CurrentStatus));
-        ACPI_MEM_FREE (Info);
+        ACPI_FREE (Info);
     }
 
     return (Status);
@@ -208,7 +210,7 @@ AcpiNsDumpRootDevices (
     ACPI_STATUS             Status;
 
 
-    ACPI_FUNCTION_NAME ("NsDumpRootDevices");
+    ACPI_FUNCTION_NAME (NsDumpRootDevices);
 
 
     /* Only dump the table if tracing is enabled */

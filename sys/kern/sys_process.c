@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.95.4.6 2007/11/15 11:44:52 yamt Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.95.4.7 2008/01/21 09:46:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.4.6 2007/11/15 11:44:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.4.7 2008/01/21 09:46:24 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -117,14 +117,14 @@ __KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.95.4.6 2007/11/15 11:44:52 yamt Ex
  * Process debugging system call.
  */
 int
-sys_ptrace(struct lwp *l, void *v, register_t *retval)
+sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 {
-	struct sys_ptrace_args /* {
+	/* {
 		syscallarg(int) req;
 		syscallarg(pid_t) pid;
 		syscallarg(void *) addr;
 		syscallarg(int) data;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	struct lwp *lt;
 	struct proc *t;				/* target process */
@@ -134,6 +134,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 	struct ptrace_lwpinfo pl;
 	struct vmspace *vm;
 	int error, write, tmp, req, pheld;
+	int signo;
 	ksiginfo_t ksi;
 #ifdef COREDUMP
 	char *path;
@@ -560,6 +561,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			t->p_opptr = NULL;
 		}
 
+		signo = SCARG(uap, data);
 	sendsig:
 		/* Finally, deliver the requested signal (or none). */
 		mutex_enter(&proclist_mutex);
@@ -570,11 +572,11 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 			 * signal, make all efforts to ensure that at
 			 * an LWP runs to see it.
 			 */
-			t->p_xstat = SCARG(uap, data);
+			t->p_xstat = signo;
 			proc_unstop(t);
-		} else if (SCARG(uap, data) != 0) {
+		} else if (signo != 0) {
 			KSI_INIT_EMPTY(&ksi);
-			ksi.ksi_signo = SCARG(uap, data);
+			ksi.ksi_signo = signo;
 			kpsignal2(t, &ksi);
 		}
 		mutex_exit(&t->p_smutex);
@@ -583,7 +585,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 
 	case  PT_KILL:
 		/* just send the process a KILL signal. */
-		SCARG(uap, data) = SIGKILL;
+		signo = SIGKILL;
 		goto sendsig;	/* in PT_CONTINUE, above. */
 
 	case  PT_ATTACH:
@@ -605,7 +607,7 @@ sys_ptrace(struct lwp *l, void *v, register_t *retval)
 		mutex_enter(&t->p_smutex);
 		SET(t->p_slflag, PSL_TRACED);
 		mutex_exit(&t->p_smutex);
-		SCARG(uap, data) = SIGSTOP;
+		signo = SIGSTOP;
 		goto sendsig;
 
 	case PT_LWPINFO:
@@ -859,7 +861,7 @@ process_validfpregs(struct lwp *l)
 }
 #endif /* PTRACE */
 
-#if defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
+#if defined(KTRACE) || defined(PTRACE)
 int
 process_domem(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
@@ -903,12 +905,13 @@ process_domem(struct lwp *curl /*tracer*/,
 #endif
 	return (error);
 }
-#endif /* KTRACE || PTRACE || SYSTRACE */
+#endif /* KTRACE || PTRACE */
 
 #if defined(KTRACE) || defined(PTRACE)
 void
-process_stoptrace(struct lwp *l)
+process_stoptrace(void)
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc, *pp;
 
 	/* XXXSMP proc_stop -> child_psignal -> kpsignal2 -> pool_get */ 

@@ -1,7 +1,9 @@
+/*	$NetBSD: utdebug.c,v 1.1.14.3 2008/01/21 09:45:30 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: utdebug - Debug print routines
- *              xRevision: 1.127 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,11 +117,11 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.14.2 2006/06/21 15:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.14.3 2008/01/21 09:45:30 yamt Exp $");
 
 #define __UTDEBUG_C__
 
-#include "acpi.h"
+#include <dist/acpica/acpi.h>
 
 #define _COMPONENT          ACPI_UTILITIES
         ACPI_MODULE_NAME    ("utdebug")
@@ -128,8 +130,8 @@ __KERNEL_RCSID(0, "$NetBSD: utdebug.c,v 1.1.14.2 2006/06/21 15:08:25 yamt Exp $"
 #ifdef ACPI_DEBUG_OUTPUT
 
 static UINT32   AcpiGbl_PrevThreadId = 0xFFFFFFFF;
-static const char *AcpiGbl_FnEntryStr = "----Entry";
-static const char *AcpiGbl_FnExitStr  = "----Exit-";
+static const char     *AcpiGbl_FnEntryStr = "----Entry";
+static const char     *AcpiGbl_FnExitStr  = "----Exit-";
 
 /* Local prototypes */
 
@@ -262,7 +264,7 @@ AcpiUtDebugPrint (
     const char              *Format,
     ...)
 {
-    UINT32                  ThreadId;
+    ACPI_THREAD_ID          ThreadId;
     va_list                 args;
 
 
@@ -279,7 +281,6 @@ AcpiUtDebugPrint (
      * Thread tracking and context switch notification
      */
     ThreadId = AcpiOsGetThreadId ();
-
     if (ThreadId != AcpiGbl_PrevThreadId)
     {
         if (ACPI_LV_THREADS & AcpiDbgLevel)
@@ -309,6 +310,8 @@ AcpiUtDebugPrint (
     va_start (args, Format);
     AcpiOsVprintf (Format, args);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiUtDebugPrint)
 
 
 /*******************************************************************************
@@ -353,6 +356,8 @@ AcpiUtDebugPrintRaw (
     AcpiOsVprintf (Format, args);
 }
 
+ACPI_EXPORT_SYMBOL (AcpiUtDebugPrintRaw)
+
 
 /*******************************************************************************
  *
@@ -385,6 +390,8 @@ AcpiUtTrace (
         LineNumber, FunctionName, ModuleName, ComponentId,
         "%s\n", AcpiGbl_FnEntryStr);
 }
+
+ACPI_EXPORT_SYMBOL (AcpiUtTrace)
 
 
 /*******************************************************************************
@@ -522,6 +529,8 @@ AcpiUtExit (
     AcpiGbl_NestingLevel--;
 }
 
+ACPI_EXPORT_SYMBOL (AcpiUtExit)
+
 
 /*******************************************************************************
  *
@@ -567,6 +576,8 @@ AcpiUtStatusExit (
     AcpiGbl_NestingLevel--;
 }
 
+ACPI_EXPORT_SYMBOL (AcpiUtStatusExit)
+
 
 /*******************************************************************************
  *
@@ -601,6 +612,8 @@ AcpiUtValueExit (
 
     AcpiGbl_NestingLevel--;
 }
+
+ACPI_EXPORT_SYMBOL (AcpiUtValueExit)
 
 
 /*******************************************************************************
@@ -655,25 +668,16 @@ AcpiUtPtrExit (
  ******************************************************************************/
 
 void
-AcpiUtDumpBuffer (
+AcpiUtDumpBuffer2 (
     UINT8                   *Buffer,
     UINT32                  Count,
-    UINT32                  Display,
-    UINT32                  ComponentId)
+    UINT32                  Display)
 {
     ACPI_NATIVE_UINT        i = 0;
     ACPI_NATIVE_UINT        j;
     UINT32                  Temp32;
     UINT8                   BufChar;
 
-
-    /* Only dump the buffer if tracing is enabled */
-
-    if (!((ACPI_LV_TABLES & AcpiDbgLevel) &&
-        (ComponentId & AcpiDbgLayer)))
-    {
-        return;
-    }
 
     if ((Count < 4) || (Count & 0x01))
     {
@@ -703,6 +707,7 @@ AcpiUtDumpBuffer (
 
             switch (Display)
             {
+            case DB_BYTE_DISPLAY:
             default:    /* Default is BYTE display */
 
                 AcpiOsPrintf ("%02X ", Buffer[i + j]);
@@ -768,4 +773,40 @@ AcpiUtDumpBuffer (
 
     return;
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtDumpBuffer
+ *
+ * PARAMETERS:  Buffer              - Buffer to dump
+ *              Count               - Amount to dump, in bytes
+ *              Display             - BYTE, WORD, DWORD, or QWORD display
+ *              ComponentID         - Caller's component ID
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Generic dump buffer in both hex and ascii.
+ *
+ ******************************************************************************/
+
+void
+AcpiUtDumpBuffer (
+    UINT8                   *Buffer,
+    UINT32                  Count,
+    UINT32                  Display,
+    UINT32                  ComponentId)
+{
+
+    /* Only dump the buffer if tracing is enabled */
+
+    if (!((ACPI_LV_TABLES & AcpiDbgLevel) &&
+        (ComponentId & AcpiDbgLayer)))
+    {
+        return;
+    }
+
+    AcpiUtDumpBuffer2 (Buffer, Count, Display);
+}
+
 

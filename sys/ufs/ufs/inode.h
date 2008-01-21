@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.h,v 1.41.4.2 2007/09/03 14:46:58 yamt Exp $	*/
+/*	$NetBSD: inode.h,v 1.41.4.3 2008/01/21 09:48:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -267,7 +267,7 @@ struct indir {
 #define	ITOV(ip)	((ip)->i_vnode)
 
 /* Determine if soft dependencies are being done */
-#define	DOINGSOFTDEP(vp)	((vp)->v_mount->mnt_flag & MNT_SOFTDEP)
+#define	DOINGSOFTDEP(vp)	((vp)->v_uflag & VU_SOFTDEP)
 
 /* This overlays the fid structure (see fstypes.h). */
 struct ufid {

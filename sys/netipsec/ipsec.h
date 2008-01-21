@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.11.2.4 2007/09/03 14:43:44 yamt Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.11.2.5 2008/01/21 09:47:26 yamt Exp $	*/
 /*	$FreeBSD: /usr/local/www/cvsroot/FreeBSD/src/sys/netipsec/ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -330,6 +330,9 @@ int ipsec4_process_packet (struct mbuf *, struct ipsecrequest *,
 int ipsec_process_done (struct mbuf *, struct ipsecrequest *);
 #define ipsec_indone(m)	\
 	(m_tag_find((m), PACKET_TAG_IPSEC_IN_DONE, NULL) != NULL)
+
+#define ipsec_outdone(m) \
+	(m_tag_find((m), PACKET_TAG_IPSEC_OUT_DONE, NULL) != NULL)
 
 struct mbuf *ipsec_copypkt (struct mbuf *);
 

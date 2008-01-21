@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.h,v 1.67.2.5 2007/12/07 17:34:59 yamt Exp $	*/
+/*	$NetBSD: tty.h,v 1.67.2.6 2008/01/21 09:48:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -62,6 +62,7 @@ struct clist {
 	u_char	*c_ce;		/* c_ce + c_len */
 	u_char	*c_cq;		/* N bits/bytes long, see tty_subr.c */
 	kcondvar_t c_cv;	/* notifier, locked by tty lock */
+	kcondvar_t c_cvf;	/* notifier, locked by tty lock */
 	int	c_cc;		/* count of characters in queue */
 	int	c_cn;		/* total ring buffer length */
 };
@@ -211,7 +212,7 @@ extern	int tty_count;			/* number of ttys in global ttylist */
 extern	struct ttychars ttydefaults;
 
 /* Symbolic sleep message strings. */
-extern	 const char ttyin[], ttyout[], ttopen[], ttclos[], ttybg[], ttybuf[];
+extern	 const char ttclos[];
 
 int	 b_to_q(const u_char *, int, struct clist *);
 void	 catq(struct clist *, struct clist *);

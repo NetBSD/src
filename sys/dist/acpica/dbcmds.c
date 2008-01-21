@@ -1,7 +1,9 @@
+/*	$NetBSD: dbcmds.c,v 1.1.14.3 2008/01/21 09:45:05 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dbcmds - debug commands and output routines
- *              xRevision: 1.140 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,21 +116,20 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcmds.c,v 1.1.14.3 2008/01/21 09:45:05 yamt Exp $");
 
-#include "acpi.h"
-#include "acdispat.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acevents.h"
-#include "acdebug.h"
-#include "acresrc.h"
-#include "acdisasm.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acdispat.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acevents.h>
+#include <dist/acpica/acdebug.h>
+#include <dist/acpica/acresrc.h>
+#include <dist/acpica/acdisasm.h>
 
 
-#include "acparser.h"
+#include <dist/acpica/acparser.h>
 
 #ifdef ACPI_DEBUGGER
 
@@ -288,9 +289,6 @@ ACPI_STATUS
 AcpiDbSleep (
     char                    *ObjectArg)
 {
-#if ACPI_MACHINE_WIDTH == 16
-    return (AE_OK);
-#else
     ACPI_STATUS             Status;
     UINT8                   SleepState;
 
@@ -315,7 +313,6 @@ AcpiDbSleep (
     Status = AcpiLeaveSleepState (SleepState);
 
     return (Status);
-#endif
 }
 
 
@@ -414,11 +411,11 @@ AcpiDbDisplayLocks (
     UINT32                  i;
 
 
-    for (i = 0; i < MAX_MUTEX; i++)
+    for (i = 0; i < ACPI_MAX_MUTEX; i++)
     {
         AcpiOsPrintf ("%26s : %s\n", AcpiUtGetMutexName (i),
-                    AcpiGbl_MutexInfo[i].ThreadId == ACPI_MUTEX_NOT_ACQUIRED
-                        ? "Locked" : "Unlocked");
+            AcpiGbl_MutexInfo[i].ThreadId == ACPI_MUTEX_NOT_ACQUIRED
+                ? "Locked" : "Unlocked");
     }
 }
 
@@ -440,30 +437,28 @@ void
 AcpiDbDisplayTableInfo (
     char                    *TableArg)
 {
-    UINT32                  i;
+    ACPI_NATIVE_UINT        i;
     ACPI_TABLE_DESC         *TableDesc;
 
 
-    for (i = 0; i < NUM_ACPI_TABLE_TYPES; i++)
+    /*
+     * Walk the root table list
+     */
+    for (i = 0; i < AcpiGbl_RootTableList.Count; i++)
     {
-        TableDesc = AcpiGbl_TableLists[i].Next;
-        while (TableDesc)
+        TableDesc = &AcpiGbl_RootTableList.Tables[i];
+        AcpiOsPrintf ( "%4.4s at %p length %.5X",
+                TableDesc->Signature.Ascii, TableDesc->Pointer,
+                (UINT32) TableDesc->Length);
+
+        if (TableDesc->Pointer && (i != ACPI_TABLE_INDEX_FACS))
         {
-            AcpiOsPrintf ( "%s at %p length %.5X",
-                    AcpiGbl_TableData[i].Name, TableDesc->Pointer,
-                    (UINT32) TableDesc->Length);
-
-            if (i != ACPI_TABLE_FACS)
-            {
-                AcpiOsPrintf (" OemID=%6s TableId=%8s OemRevision=%8.8X",
-                        TableDesc->Pointer->OemId,
-                        TableDesc->Pointer->OemTableId,
-                        TableDesc->Pointer->OemRevision);
-            }
-            AcpiOsPrintf ("\n");
-
-            TableDesc = TableDesc->Next;
+            AcpiOsPrintf (" OemId=\"%6s\" OemTableId=\"%8s\" OemRevision=%8.8X",
+                    TableDesc->Pointer->OemId,
+                    TableDesc->Pointer->OemTableId,
+                    TableDesc->Pointer->OemRevision);
         }
+        AcpiOsPrintf ("\n");
     }
 }
 
@@ -488,13 +483,16 @@ AcpiDbUnloadAcpiTable (
     char                    *TableArg,
     char                    *InstanceArg)
 {
+/* TBD: Need to reimplement for new data structures */
+
+#if 0
     UINT32                  i;
     ACPI_STATUS             Status;
 
 
     /* Search all tables for the target type */
 
-    for (i = 0; i < NUM_ACPI_TABLE_TYPES; i++)
+    for (i = 0; i < (ACPI_TABLE_ID_MAX+1); i++)
     {
         if (!ACPI_STRNCMP (TableArg, AcpiGbl_TableData[i].Signature,
                 AcpiGbl_TableData[i].SigLength))
@@ -517,6 +515,7 @@ AcpiDbUnloadAcpiTable (
     }
 
     AcpiOsPrintf ("Unknown table type [%s]\n", TableArg);
+#endif
 }
 
 
@@ -628,7 +627,9 @@ AcpiDbDisassembleAml (
         NumStatements = ACPI_STRTOUL (Statements, NULL, 0);
     }
 
+#ifdef ACPI_DISASSEMBLER
     AcpiDmDisassemble (NULL, Op, NumStatements);
+#endif
 }
 
 
@@ -680,7 +681,7 @@ AcpiDbDisassembleMethod (
 
     Status = AcpiDsInitAmlWalk (WalkState, Op, NULL,
                     ObjDesc->Method.AmlStart,
-                    ObjDesc->Method.AmlLength, NULL, 1);
+                    ObjDesc->Method.AmlLength, NULL, ACPI_IMODE_LOAD_PASS1);
     if (ACPI_FAILURE (Status))
     {
         return (Status);
@@ -692,7 +693,9 @@ AcpiDbDisassembleMethod (
     WalkState->ParseFlags |= ACPI_PARSE_DISASSEMBLE;
     Status = AcpiPsParseAml (WalkState);
 
+#ifdef ACPI_DISASSEMBLER
     AcpiDmDisassemble (NULL, Op, 0);
+#endif
     AcpiPsDeleteParseTree (Op);
     return (AE_OK);
 }
@@ -1025,7 +1028,7 @@ AcpiDbWalkForSpecificObjects (
     }
 
     AcpiOsPrintf ("%32s", (char *) Buffer.Pointer);
-    ACPI_MEM_FREE (Buffer.Pointer);
+    ACPI_FREE (Buffer.Pointer);
 
     /* Dump short info about the object */
 
@@ -1149,7 +1152,7 @@ AcpiDbWalkAndMatchName (
 
         AcpiOsPrintf ("%32s", (char *) Buffer.Pointer);
         (void) AcpiNsDumpOneObject (ObjHandle, NestingLevel, &Info, NULL);
-        ACPI_MEM_FREE (Buffer.Pointer);
+        ACPI_FREE (Buffer.Pointer);
     }
 
     return (AE_OK);
@@ -1224,8 +1227,8 @@ AcpiDbSetScope (
     {
         /* Validate new scope from the root */
 
-        Status = AcpiNsGetNodeByPath (Name, AcpiGbl_RootNode,
-                    ACPI_NS_NO_UPSEARCH, &Node);
+        Status = AcpiNsGetNode (AcpiGbl_RootNode, Name, ACPI_NS_NO_UPSEARCH,
+                    &Node);
         if (ACPI_FAILURE (Status))
         {
             goto ErrorExit;
@@ -1238,8 +1241,8 @@ AcpiDbSetScope (
     {
         /* Validate new scope relative to old scope */
 
-        Status = AcpiNsGetNodeByPath (Name, AcpiGbl_DbScopeNode,
-                    ACPI_NS_NO_UPSEARCH, &Node);
+        Status = AcpiNsGetNode (AcpiGbl_DbScopeNode, Name, ACPI_NS_NO_UPSEARCH,
+                    &Node);
         if (ACPI_FAILURE (Status))
         {
             goto ErrorExit;
@@ -1421,11 +1424,11 @@ AcpiDmTestResourceConversion (
 
     /* Cleanup and exit */
 
-    ACPI_MEM_FREE (NewAml.Pointer);
+    ACPI_FREE (NewAml.Pointer);
 Exit2:
-    ACPI_MEM_FREE (ResourceObj.Pointer);
+    ACPI_FREE (ResourceObj.Pointer);
 Exit1:
-    ACPI_MEM_FREE (ReturnObj.Pointer);
+    ACPI_FREE (ReturnObj.Pointer);
     return (Status);
 }
 
@@ -1446,8 +1449,6 @@ void
 AcpiDbDisplayResources (
     char                    *ObjectArg)
 {
-#if ACPI_MACHINE_WIDTH != 16
-
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
     ACPI_BUFFER             ReturnObj;
@@ -1585,7 +1586,6 @@ Cleanup:
 
     AcpiDbSetOutputDestination (ACPI_DB_CONSOLE_OUTPUT);
     return;
-#endif
 }
 
 
@@ -1765,7 +1765,7 @@ AcpiDbBusWalk (
     /* Display the full path */
 
     AcpiOsPrintf ("%-32s", (char *) Buffer.Pointer);
-    ACPI_MEM_FREE (Buffer.Pointer);
+    ACPI_FREE (Buffer.Pointer);
 
     /* _PRT info */
 
@@ -1809,7 +1809,7 @@ AcpiDbBusWalk (
     if (ACPI_SUCCESS (Status))
     {
         AcpiOsPrintf (" _CID=%s", Cid->Id[0].Value);
-        ACPI_MEM_FREE (Cid);
+        ACPI_FREE (Cid);
     }
 
     AcpiOsPrintf ("\n");

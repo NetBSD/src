@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_aout.c,v 1.7.4.2 2007/12/07 17:33:43 yamt Exp $ */
+/* $NetBSD: loadfile_aout.c,v 1.7.4.3 2008/01/21 09:46:37 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -92,11 +92,7 @@
 #ifdef BOOT_AOUT
 
 int
-loadfile_aout(fd, x, marks, flags)
-	int fd;
-	struct exec *x;
-	u_long *marks;
-	int flags;
+loadfile_aout(int fd, struct exec *x, u_long *marks, int flags)
 {
 	u_long entry = x->a_entry;
 	paddr_t aoutp = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.6.6.4 2007/11/15 11:45:27 yamt Exp $	*/
+/*	$NetBSD: specfs.c,v 1.6.6.5 2008/01/21 09:47:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,7 @@ static int rump_specopen(void *);
 static int rump_specioctl(void *);
 static int rump_specclose(void *);
 static int rump_specfsync(void *);
+static int rump_specbmap(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 static int rump_specsimpleul(void *);
@@ -60,6 +61,7 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_close_desc, rump_specclose },		/* close */
 	{ &vop_ioctl_desc, rump_specioctl },		/* ioctl */
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
+	{ &vop_bmap_desc, rump_specbmap },		/* bmap */
 	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
 	{ &vop_getpages_desc, rump_specsimpleul },	/* getpages */
@@ -182,6 +184,27 @@ rump_specputpages(void *v)
 	return 0;
 }
 
+static int
+rump_specbmap(void *v)
+{
+	struct vop_bmap_args /* {
+		struct vnode *a_vp;
+		daddr_t a_bn;
+		struct vnode **a_vpp;
+		daddr_t *a_bnp;
+		int *a_runp;
+	} */ *ap = v;
+
+	if (ap->a_vpp != NULL)
+		*ap->a_vpp = ap->a_vp;
+	if (ap->a_bnp != NULL)
+		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = (MAXBSIZE >> DEV_BSHIFT) -1;
+
+	return 0;
+}
+
 int
 rump_specstrategy(void *v)
 {
@@ -219,7 +242,7 @@ rump_specstrategy(void *v)
 	if (bp->b_flags & B_ASYNC) {
 		struct rumpuser_aio *rua;
 
-		rua = rumpuser_malloc(sizeof(struct rumpuser_aio), 0);
+		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
 		rua->rua_fd = sp->rsp_fd;
 		rua->rua_data = bp->b_data;
 		rua->rua_dlen = bp->b_bcount;
@@ -239,7 +262,7 @@ rump_specstrategy(void *v)
 		 * so for now set N_AIOS high and FIXXXME some day.
 		 */
 		if ((rua_head+1) % N_AIOS == rua_tail) {
-			rumpuser_free(rua);
+			kmem_free(rua, sizeof(*rua));
 			rumpuser_mutex_exit(&rua_mtx);
 			goto syncfallback;
 		}
@@ -252,10 +275,10 @@ rump_specstrategy(void *v)
 	} else {
  syncfallback:
 		if (bp->b_flags & B_READ) {
-			rumpuser_read(sp->rsp_fd, bp->b_data,
+			rumpuser_read_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		} else {
-			rumpuser_write(sp->rsp_fd, bp->b_data,
+			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
 		biowait(bp);
@@ -275,7 +298,7 @@ rump_specsimpleul(void *v)
 	KASSERT(offset != VDESC_NO_OFFSET);
 
 	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return 0;
 }

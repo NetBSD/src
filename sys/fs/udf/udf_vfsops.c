@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.6.4.7 2007/12/07 17:32:13 yamt Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.6.4.8 2008/01/21 09:45:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vfsops.c,v 1.6.4.7 2007/12/07 17:32:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.6.4.8 2008/01/21 09:45:56 yamt Exp $");
 #endif /* not lint */
 
 
@@ -281,7 +281,7 @@ udf_mount(struct mount *mp, const char *path,
 	}
 
 	/* lookup name to get its vnode */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	error = namei(&nd);
 	if (error)
 		return error;

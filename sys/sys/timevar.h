@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.4.4.7 2007/12/07 17:34:59 yamt Exp $	*/
+/*	$NetBSD: timevar.h,v 1.4.4.8 2008/01/21 09:48:01 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2005 The NetBSD Foundation.
@@ -129,7 +129,6 @@ struct	ptimers {
  * 
  */
 
-#ifdef __HAVE_TIMECOUNTER
 void	binuptime(struct bintime *);
 void	nanouptime(struct timespec *);
 void	microuptime(struct timeval *);
@@ -145,19 +144,6 @@ void	getmicrouptime(struct timeval *);
 void	getbintime(struct bintime *);
 void	getnanotime(struct timespec *);
 void	getmicrotime(struct timeval *);
-#else /* !__HAVE_TIMECOUNTER */
-/* timecounter compat functions */
-void	microtime(struct timeval *);
-void	nanotime(struct timespec *);
-
-void	nanouptime(struct timespec *);
-void	getbinuptime(struct bintime *);
-void	getnanouptime(struct timespec *);
-void	getmicrouptime(struct timeval *);
-
-void	getnanotime(struct timespec *);
-void	getmicrotime(struct timeval *);
-#endif /* !__HAVE_TIMECOUNTER */
 
 /* Other functions */
 int	adjtime1(const struct timeval *, struct timeval *, struct proc *);
@@ -193,14 +179,7 @@ int	gettimeleft(struct timeval *, struct timeval *);
 void	timerupcall(struct lwp *);
 void	time_init(void);
 
-#ifdef __HAVE_TIMECOUNTER
 extern time_t time_second;	/* current second in the epoch */
 extern time_t time_uptime;	/* system uptime in seconds */
-#else /* !__HAVE_TIMECOUNTER */
-extern volatile struct timeval mono_time;
-extern volatile struct timeval time;
-#define	time_second	time.tv_sec
-#define	time_uptime	mono_time.tv_sec
-#endif /* !__HAVE_TIMECOUNTER */
 
 #endif /* !_SYS_TIMEVAR_H_ */

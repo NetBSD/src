@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.41.2.4 2007/09/03 14:42:24 yamt Exp $	*/
+/*	$NetBSD: route.h,v 1.41.2.5 2008/01/21 09:47:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -52,7 +52,7 @@
  * in their control blocks, e.g. inpcb.
  */
 struct route {
-	struct	rtentry		*ro_rt;
+	struct	rtentry		*_ro_rt;
 	struct	sockaddr	*ro_sa;
 	LIST_ENTRY(route)	ro_rtcache_next;
 };
@@ -319,10 +319,8 @@ void	 rt_timer_remove_all(struct rtentry *, int);
 unsigned long	rt_timer_count(struct rttimer_queue *);
 void	 rt_timer_timer(void *);
 void	 rtable_init(void **);
-void	 rtalloc(struct route *);
 void	 rtcache(struct route *);
 void	 rtflushall(int);
-void	 rtflush(struct route *);
 struct rtentry *
 	 rtalloc1(const struct sockaddr *, int);
 void	 rtfree(struct rtentry *);
@@ -367,23 +365,14 @@ out:
 
 struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 
-#ifdef RTCACHE_DEBUG
-#define	rtcache_init(ro)		rtcache_init_debug(__func__, ro)
-#define	rtcache_init_noclone(ro)	rtcache_init_noclone_debug(__func__, ro)
-#define	rtcache_copy(ro, oro)	rtcache_copy_debug(__func__, ro, oro)
-void	rtcache_init_debug(const char *, struct route *);
-void	rtcache_init_noclone_debug(const char *, struct route *);
-void	rtcache_copy_debug(const char *, struct route *, const struct route *);
-#else
-void	rtcache_init(struct route *);
-void	rtcache_init_noclone(struct route *);
+struct rtentry *rtcache_init(struct route *);
+struct rtentry *rtcache_init_noclone(struct route *);
 void	rtcache_copy(struct route *, const struct route *);
-#endif
 
 struct rtentry *rtcache_lookup2(struct route *, const struct sockaddr *, int,
     int *);
 void	rtcache_clear(struct route *);
-void	rtcache_update(struct route *, int);
+struct rtentry *rtcache_update(struct route *, int);
 void	rtcache_free(struct route *);
 int	rtcache_setdst(struct route *, const struct sockaddr *);
 
@@ -413,30 +402,19 @@ rtcache_getdst(const struct route *ro)
 	return ro->ro_sa;
 }
 
-/* Return 0 if the route is still present in the routing table.
- * Otherwise, return non-zero.
+/* If the cache is not empty, and the cached route is still present
+ * in the routing table, return the cached route.  Otherwise, return
+ * NULL.
  */
-static inline int
-rtcache_down(const struct route *ro)
+static inline struct rtentry *
+rtcache_validate(const struct route *ro)
 {
-	return ro->ro_rt != NULL &&
-	       ((ro->ro_rt->rt_flags & RTF_UP) == 0 ||
-	        ro->ro_rt->rt_ifp == NULL);
-}
+	struct rtentry *rt = ro->_ro_rt;
 
-static inline void
-rtcache_check1(struct route *ro, int clone)
-{
-	/* XXX The rt_ifp check should be asserted. */
-	if (rtcache_down(ro))
-		rtcache_update(ro, clone);
-	KASSERT(ro->ro_rt == NULL || ro->ro_rt->rt_ifp != NULL);
-}
+	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0 && rt->rt_ifp != NULL)
+		return rt;
+	return NULL;
 
-static inline void
-rtcache_check(struct route *ro)
-{
-	return rtcache_check1(ro, 1);
 }
 
 static inline void

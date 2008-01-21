@@ -1,4 +1,4 @@
-/*	$NetBSD: fs.h,v 1.45.4.2 2007/12/07 17:35:21 yamt Exp $	*/
+/*	$NetBSD: fs.h,v 1.45.4.3 2008/01/21 09:48:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -722,7 +722,7 @@ struct appleufslabel {
 	u_int64_t	ul_uuid;	/* Note this is only 4 byte aligned */
 	u_char	ul_reserved[24];
 	u_char	ul_unused[460];
-} __attribute__((__packed__));
+} __packed;
 
 
 #endif /* !_UFS_FFS_FS_H_ */

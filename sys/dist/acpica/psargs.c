@@ -1,7 +1,9 @@
+/*	$NetBSD: psargs.c,v 1.1.14.3 2008/01/21 09:45:21 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: psargs - Parse AML opcode arguments
- *              xRevision: 1.90 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,15 +117,15 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.1.14.2 2006/06/21 15:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psargs.c,v 1.1.14.3 2008/01/21 09:45:21 yamt Exp $");
 
 #define __PSARGS_C__
 
-#include "acpi.h"
-#include "acparser.h"
-#include "amlcode.h"
-#include "acnamesp.h"
-#include "acdispat.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acdispat.h>
 
 #define _COMPONENT          ACPI_PARSER
         ACPI_MODULE_NAME    ("psargs")
@@ -163,7 +165,7 @@ AcpiPsGetNextPackageLength (
     UINT8                   ByteZeroMask = 0x3F; /* Default [0:5] */
 
 
-    ACPI_FUNCTION_TRACE ("PsGetNextPackageLength");
+    ACPI_FUNCTION_TRACE (PsGetNextPackageLength);
 
 
     /*
@@ -218,7 +220,7 @@ AcpiPsGetNextPackageEnd (
     UINT32                  PackageLength;
 
 
-    ACPI_FUNCTION_TRACE ("PsGetNextPackageEnd");
+    ACPI_FUNCTION_TRACE (PsGetNextPackageEnd);
 
 
     /* Function below updates ParserState->Aml */
@@ -252,7 +254,7 @@ AcpiPsGetNextNamestring (
     UINT8                   *End = ParserState->Aml;
 
 
-    ACPI_FUNCTION_TRACE ("PsGetNextNamestring");
+    ACPI_FUNCTION_TRACE (PsGetNextNamestring);
 
 
     /* Point past any namestring prefix characters (backslash or carat) */
@@ -340,7 +342,7 @@ AcpiPsGetNextNamepath (
     ACPI_GENERIC_STATE      ScopeInfo;
 
 
-    ACPI_FUNCTION_TRACE ("PsGetNextNamepath");
+    ACPI_FUNCTION_TRACE (PsGetNextNamepath);
 
 
     Path = AcpiPsGetNextNamestring (ParserState);
@@ -502,7 +504,7 @@ AcpiPsGetNextSimpleArg (
     UINT8                   *Aml = ParserState->Aml;
 
 
-    ACPI_FUNCTION_TRACE_U32 ("PsGetNextSimpleArg", ArgType);
+    ACPI_FUNCTION_TRACE_U32 (PsGetNextSimpleArg, ArgType);
 
 
     switch (ArgType)
@@ -609,7 +611,7 @@ AcpiPsGetNextField (
     UINT32                  Name;
 
 
-    ACPI_FUNCTION_TRACE ("PsGetNextField");
+    ACPI_FUNCTION_TRACE (PsGetNextField);
 
 
     /* Determine field type */
@@ -722,7 +724,7 @@ AcpiPsGetNextArg (
     ACPI_STATUS             Status = AE_OK;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("PsGetNextArg", ParserState);
+    ACPI_FUNCTION_TRACE_PTR (PsGetNextArg, ParserState);
 
 
     switch (ArgType)

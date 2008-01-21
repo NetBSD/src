@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.29.2.5 2007/10/27 11:36:32 yamt Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.29.2.6 2008/01/21 09:47:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -132,6 +132,7 @@ void lim_addref(struct plimit *lim);
 void lim_privatise(struct proc *p, bool set_shared);
 void limfree(struct plimit *);
 
+void	resource_init(void);
 void	ruadd(struct rusage *, struct rusage *);
 struct	pstats *pstatscopy(struct pstats *);
 void 	pstatsfree(struct pstats *);

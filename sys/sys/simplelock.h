@@ -1,4 +1,4 @@
-/*	$NetBSD: simplelock.h,v 1.1.18.2 2007/10/27 11:36:33 yamt Exp $	*/
+/*	$NetBSD: simplelock.h,v 1.1.18.3 2008/01/21 09:47:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -102,13 +102,6 @@ struct simplelock {
 #endif
 };
 
-/*
- * Indicator that no process/cpu holds exclusive lock
- */
-#define	LK_KERNPROC	((pid_t) -2)
-#define	LK_NOPROC	((pid_t) -1)
-#define	LK_NOCPU	((cpuid_t) -1)
-
 #define	SIMPLELOCK_INITIALIZER	{ .lock_data = __SIMPLELOCK_UNLOCKED }
 
 #ifdef _KERNEL
@@ -129,16 +122,6 @@ do {					\
 #define	simple_lock_held(alp)	1
 #define	simple_lock_try(alp)	1
 #define	simple_unlock(alp)	simple_lock_nothing(alp)
-#endif
-
-#define	simple_lock_only_held(x,y)			/* nothing */
-#define simple_lock_assert_locked(alp,lockname)		/* nothing */
-#define simple_lock_assert_unlocked(alp,lockname)	/* nothing */
-
-#ifdef LOCKDEBUG
-#define	LOCK_ASSERT(x)		KASSERT(x)
-#else
-#define	LOCK_ASSERT(x)		/* nothing */
 #endif
 
 #endif	/* _KERNEL */

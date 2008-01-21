@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippisubr.c,v 1.20.2.4 2007/10/27 11:36:01 yamt Exp $	*/
+/*	$NetBSD: if_hippisubr.c,v 1.20.2.5 2008/01/21 09:47:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.20.2.4 2007/10/27 11:36:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hippisubr.c,v 1.20.2.5 2008/01/21 09:47:04 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -332,7 +332,6 @@ hippi_ifattach(struct ifnet *ifp, void *lla)
 {
 
 	ifp->if_type = IFT_HIPPI;
-	ifp->if_addrlen = 6;  /* regular 802.3 MAC address */
 	ifp->if_hdrlen = sizeof(struct hippi_header) + 8; /* add CCI */
 	ifp->if_dlt = DLT_HIPPI;
 	ifp->if_mtu = HIPPIMTU;
@@ -340,9 +339,7 @@ hippi_ifattach(struct ifnet *ifp, void *lla)
 	ifp->if_input = hippi_input;
 	ifp->if_baudrate = IF_Mbps(800);	/* XXX double-check */
 
-	if_alloc_sadl(ifp);
-	sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, lla,
-	    ifp->if_addrlen);
+	if_set_sadl(ifp, lla, 6);
 
 #if NBPFILTER > 0
 	bpfattach(ifp, DLT_HIPPI, sizeof(struct hippi_header));

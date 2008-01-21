@@ -1,7 +1,9 @@
+/*	$NetBSD: dbhistry.c,v 1.1.14.3 2008/01/21 09:45:05 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dbhistry - debugger HISTORY command
- *              xRevision: 1.33 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,12 +116,11 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbhistry.c,v 1.1.14.3 2008/01/21 09:45:05 yamt Exp $");
 
-#include "acpi.h"
-#include "acdebug.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acdebug.h>
 
 #ifdef ACPI_DEBUGGER
 

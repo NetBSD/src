@@ -1,7 +1,9 @@
+/*	$NetBSD: dbutils.c,v 1.1.14.3 2008/01/21 09:45:06 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: dbutils - AML debugger utilities
- *              xRevision: 1.80 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,14 +116,13 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbutils.c,v 1.1.14.3 2008/01/21 09:45:06 yamt Exp $");
 
-#include "acpi.h"
-#include "acnamesp.h"
-#include "acdebug.h"
-#include "acdisasm.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acdebug.h>
+#include <dist/acpica/acdisasm.h>
 
 
 #ifdef ACPI_DEBUGGER
@@ -140,6 +141,8 @@ void
 AcpiDbDumpBuffer (
     UINT32                  Address);
 #endif
+
+static const char           *Converter = "0123456789ABCDEF";
 
 
 /*******************************************************************************
@@ -426,8 +429,49 @@ AcpiDbLocalNsLookup (
                 Name, AcpiFormatException (Status));
     }
 
-    ACPI_MEM_FREE (InternalPath);
+    ACPI_FREE (InternalPath);
     return (Node);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbUInt32ToHexString
+ *
+ * PARAMETERS:  Value           - The value to be converted to string
+ *              Buffer          - Buffer for result (not less than 11 bytes)
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Convert the unsigned 32-bit value to the hexadecimal image
+ *
+ * NOTE: It is the caller's responsibility to ensure that the length of buffer
+ *       is sufficient.
+ *
+ ******************************************************************************/
+
+void
+AcpiDbUInt32ToHexString (
+    UINT32                  Value,
+    char                    *Buffer)
+{
+    UINT8                   i;
+
+
+    if (Value == 0)
+    {
+        ACPI_STRCPY (Buffer, "0");
+        return;
+    }
+
+    ACPI_STRCPY (Buffer, "0x");
+    Buffer[10] = '\0';
+
+    for (i = 9; i > 1; i--)
+    {
+        Buffer[i] = Converter [Value & 0x0F];
+        Value = Value >> 4;
+    }
 }
 
 

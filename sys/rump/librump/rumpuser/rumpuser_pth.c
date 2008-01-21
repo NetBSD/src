@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.4.4.3 2007/12/07 17:34:48 yamt Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.4.4.4 2008/01/21 09:47:45 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -80,10 +80,10 @@ iothread(void *arg)
 		pthread_mutex_unlock(&rua_mtx.pthmtx);
 
 		if (rua->rua_op)
-			rumpuser_read(rua->rua_fd, rua->rua_data,
+			rumpuser_read_bio(rua->rua_fd, rua->rua_data,
 			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
 		else
-			rumpuser_write(rua->rua_fd, rua->rua_data,
+			rumpuser_write_bio(rua->rua_fd, rua->rua_data,
 			    rua->rua_dlen, rua->rua_off, rua->rua_bp);
 
 		free(rua);
@@ -253,8 +253,11 @@ rumpuser_cv_timedwait(struct rumpuser_cv *cv, struct rumpuser_mtx *mtx,
 	struct timespec ts;
 	int rv;
 
-	ts.tv_sec = stdticks / 100;
-	ts.tv_nsec = (stdticks % 100) * 100000000;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	ts.tv_sec  += stdticks / 100;
+	ts.tv_nsec += (stdticks % 100) * 10000000;
+	ts.tv_sec  += ts.tv_nsec / 1000000000;
+	ts.tv_nsec %= 1000000000;
 
 	rv = pthread_cond_timedwait(&cv->pthcv, &mtx->pthmtx, &ts);
 	if (rv != 0 && rv != ETIMEDOUT)

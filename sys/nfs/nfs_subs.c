@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.149.2.7 2007/12/07 17:34:44 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.149.2.8 2008/01/21 09:47:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.7 2007/12/07 17:34:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.8 2008/01/21 09:47:35 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.7 2007/12/07 17:34:44 yamt Exp 
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
@@ -1191,9 +1192,9 @@ nfs_dirhash(off)
 }
 
 #define	_NFSDC_MTX(np)		(&NFSTOV(np)->v_interlock)
-#define	NFSDC_LOCK(np)		simple_lock(_NFSDC_MTX(np))
-#define	NFSDC_UNLOCK(np)	simple_unlock(_NFSDC_MTX(np))
-#define	NFSDC_ASSERT_LOCKED(np) LOCK_ASSERT(simple_lock_held(_NFSDC_MTX(np)))
+#define	NFSDC_LOCK(np)		mutex_enter(_NFSDC_MTX(np))
+#define	NFSDC_UNLOCK(np)	mutex_exit(_NFSDC_MTX(np))
+#define	NFSDC_ASSERT_LOCKED(np) KASSERT(mutex_owned(_NFSDC_MTX(np)))
 
 void
 nfs_initdircache(vp)
@@ -1226,8 +1227,7 @@ nfs_initdirxlatecookie(vp)
 
 	KASSERT(VFSTONFS(vp->v_mount)->nm_flag & NFSMNT_XLATECOOKIE);
 
-	dirgens = malloc(NFS_DIRHASHSIZ * sizeof (unsigned), M_NFSDIROFF,
-	    M_WAITOK|M_ZERO);
+	dirgens = kmem_zalloc(NFS_DIRHASHSIZ * sizeof(unsigned), KM_SLEEP);
 	NFSDC_LOCK(np);
 	if (np->n_dirgens == NULL) {
 		np->n_dirgens = dirgens;
@@ -1235,7 +1235,7 @@ nfs_initdirxlatecookie(vp)
 	}
 	NFSDC_UNLOCK(np);
 	if (dirgens)
-		free(dirgens, M_NFSDIROFF);
+		kmem_free(dirgens, NFS_DIRHASHSIZ * sizeof(unsigned));
 }
 
 static const struct nfsdircache dzero;
@@ -1279,7 +1279,7 @@ nfs_putdircache(np, ndp)
 	NFSDC_UNLOCK(np);
 
 	if (ref == 0)
-		free(ndp, M_NFSDIROFF);
+		kmem_free(ndp, sizeof(*ndp));
 }
 
 static void
@@ -1295,7 +1295,7 @@ nfs_putdircache_unlocked(struct nfsnode *np, struct nfsdircache *ndp)
 	KASSERT(ndp->dc_refcnt > 0);
 	ref = --ndp->dc_refcnt;
 	if (ref == 0)
-		free(ndp, M_NFSDIROFF);
+		kmem_free(ndp, sizeof(*ndp));
 }
 
 struct nfsdircache *
@@ -1417,7 +1417,7 @@ retry:
 	if (!ndp) {
 		if (newndp == NULL) {
 			NFSDC_UNLOCK(np);
-			newndp = malloc(sizeof(*ndp), M_NFSDIROFF, M_WAITOK);
+			newndp = kmem_alloc(sizeof(*newndp), KM_SLEEP);
 			newndp->dc_refcnt = 1;
 			LIST_NEXT(newndp, dc_hash) = (void *)-1;
 			goto retry;
@@ -1502,7 +1502,8 @@ nfs_invaldircache(vp, flags)
 		}
 		np->n_dircachesize = 0;
 		if (forcefree && np->n_dirgens) {
-			FREE(np->n_dirgens, M_NFSDIROFF);
+			kmem_free(np->n_dirgens,
+			    NFS_DIRHASHSIZ * sizeof(unsigned));
 			np->n_dirgens = NULL;
 		}
 	} else {
@@ -1718,7 +1719,6 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 				vp->v_data = NULL;
 				VOP_UNLOCK(vp, 0);
 				vp->v_op = spec_vnodeop_p;
-				vrele(vp);
 				vgone(vp);
 				lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
 				    &nvp->v_interlock);
@@ -1801,7 +1801,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 					np->n_flag |= NTRUNCDELAYED;
 				} else {
 					genfs_node_wrlock(vp);
-					simple_lock(&vp->v_interlock);
+					mutex_enter(&vp->v_interlock);
 					(void)VOP_PUTPAGES(vp, 0,
 					    0, PGO_SYNCIO | PGO_CLEANIT |
 					    PGO_FREE | PGO_ALLPAGES);
@@ -1878,7 +1878,7 @@ nfs_delayedtruncate(vp)
 	if (np->n_flag & NTRUNCDELAYED) {
 		np->n_flag &= ~NTRUNCDELAYED;
 		genfs_node_wrlock(vp);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		(void)VOP_PUTPAGES(vp, 0,
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);
@@ -2217,7 +2217,6 @@ nfs_namei(ndp, nsfh, len, slp, nam, mdp, dposp, retdirp, l, kerbflag, pubflag)
 		cnp->cn_flags |= NOCROSSMOUNT;
 	}
 
-	cnp->cn_lwp = l;
 	VREF(dp);
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 
@@ -2682,7 +2681,7 @@ nfs_clearcommit(mp)
 	struct nfsmount *nmp = VFSTONFS(mp);
 
 	rw_enter(&nmp->nm_writeverflock, RW_WRITER);
-
+	mutex_enter(&mntvnode_lock);
 	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 		KASSERT(vp->v_mount == mp);
 		if (vp->v_type != VREG)
@@ -2692,12 +2691,13 @@ nfs_clearcommit(mp)
 		    np->n_pushedhi = 0;
 		np->n_commitflags &=
 		    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-		simple_lock(&vp->v_uobj.vmobjlock);
+		mutex_enter(&vp->v_uobj.vmobjlock);
 		TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq) {
 			pg->flags &= ~PG_NEEDCOMMIT;
 		}
-		simple_unlock(&vp->v_uobj.vmobjlock);
+		mutex_exit(&vp->v_uobj.vmobjlock);
 	}
+	mutex_exit(&mntvnode_lock);
 	mutex_enter(&nmp->nm_lock);
 	nmp->nm_iflag &= ~NFSMNT_STALEWRITEVERF;
 	mutex_exit(&nmp->nm_lock);

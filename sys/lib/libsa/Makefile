@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56.2.2 2007/12/07 17:33:30 yamt Exp $
+#	$NetBSD: Makefile,v 1.56.2.3 2008/01/21 09:46:37 yamt Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -46,8 +46,8 @@ SRCS+=	bootp.c rarp.c bootparam.c
 SRCS+=	nfs.c tftp.c
 .endif
 
-SRCS+=	ffsv1.c ffsv2.c
-SRCS+=	lfsv1.c lfsv2.c ufs_ls.c
+SRCS+=	ffsv1.c ffsv2.c ufs_ls.c
+SRCS+=	lfsv1.c lfsv2.c
 SRCS+=	cd9660.c
 SRCS+=	ustarfs.c
 SRCS+=	dosfs.c

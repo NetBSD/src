@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.57.2.2 2007/12/07 17:33:53 yamt Exp $	*/
+/*	$NetBSD: stand.h,v 1.57.2.3 2008/01/21 09:46:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -241,9 +241,9 @@ void	twiddle(void);
 void	gets(char *);
 int	getfile(char *prompt, int mode);
 char	*strerror(int);
-__dead void	exit(int) __attribute__((__noreturn__));
-__dead void	panic(const char *, ...) __attribute__((__noreturn__));
-__dead void	_rtt(void) __attribute__((__noreturn__));
+__dead void	exit(int);
+__dead void	panic(const char *, ...);
+__dead void	_rtt(void);
 void	(bcopy)(const void *, void *, size_t);
 void	*memcpy(void *, const void *, size_t);
 void	*memmove(void *, const void *, size_t);

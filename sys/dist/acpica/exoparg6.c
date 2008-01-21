@@ -1,8 +1,9 @@
+/*	$NetBSD: exoparg6.c,v 1.1.14.3 2008/01/21 09:45:15 yamt Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exoparg6 - AML execution - opcodes with 6 arguments
- *              xRevision: 1.26 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -10,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -117,14 +118,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exoparg6.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exoparg6.c,v 1.1.14.3 2008/01/21 09:45:15 yamt Exp $");
 
 #define __EXOPARG6_C__
 
-#include "acpi.h"
-#include "acinterp.h"
-#include "acparser.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acparser.h>
+#include <dist/acpica/amlcode.h>
 
 
 #define _COMPONENT          ACPI_EXECUTER
@@ -312,7 +313,7 @@ AcpiExOpcode_6A_0T_1R (
     ACPI_OPERAND_OBJECT     *ThisElement;
 
 
-    ACPI_FUNCTION_TRACE_STR ("ExOpcode_6A_0T_1R",
+    ACPI_FUNCTION_TRACE_STR (ExOpcode_6A_0T_1R,
         AcpiPsGetOpcodeName (WalkState->Opcode));
 
 
@@ -423,8 +424,6 @@ AcpiExOpcode_6A_0T_1R (
         goto Cleanup;
     }
 
-    WalkState->ResultObj = ReturnDesc;
-
 
 Cleanup:
 
@@ -433,6 +432,13 @@ Cleanup:
     if (ACPI_FAILURE (Status))
     {
         AcpiUtRemoveReference (ReturnDesc);
+    }
+
+    /* Save return object on success */
+
+    else
+    {
+        WalkState->ResultObj = ReturnDesc;
     }
 
     return_ACPI_STATUS (Status);
