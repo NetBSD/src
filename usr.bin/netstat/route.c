@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.69 2007/07/19 20:51:04 dyoung Exp $	*/
+/*	$NetBSD: route.c,v 1.70 2008/01/21 20:34:13 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,10 +34,11 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.69 2007/07/19 20:51:04 dyoung Exp $");
+__RCSID("$NetBSD: route.c,v 1.70 2008/01/21 20:34:13 dyoung Exp $");
 #endif
 #endif /* not lint */
 
+#include <stdbool.h>
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
