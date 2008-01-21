@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.1 2008/01/21 11:36:47 ichiro Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.2 2008/01/21 12:16:31 ichiro Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -145,23 +145,22 @@ struct	ubsa_softc {
 };
 
 
-Static	void ubsa_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+void ubsa_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 
-Static	void ubsa_get_status(void *, int, u_char *, u_char *);
-Static	void ubsa_set(void *, int, int, int);
-Static	int  ubsa_param(void *, int, struct termios *);
-Static	int  ubsa_open(void *, int);
-Static	void ubsa_close(void *, int);
+void ubsa_get_status(void *, int, u_char *, u_char *);
+void ubsa_set(void *, int, int, int);
+int  ubsa_param(void *, int, struct termios *);
+int  ubsa_open(void *, int);
+void ubsa_close(void *, int);
 
-Static  void ubsa_break(struct ubsa_softc *sc, int, int onoff);
-Static	int  ubsa_request(struct ubsa_softc *, int, u_int8_t, u_int16_t);
-Static	void ubsa_dtr(struct ubsa_softc *, int, int);
-Static	void ubsa_quadumts_dtr(struct ubsa_softc *, int, int);
-Static	void ubsa_rts(struct ubsa_softc *, int, int);
-Static	void ubsa_quadumts_rts(struct ubsa_softc *, int, int);
-Static	void ubsa_baudrate(struct ubsa_softc *, int, speed_t);
-Static	void ubsa_parity(struct ubsa_softc *, int, tcflag_t);
-Static	void ubsa_databits(struct ubsa_softc *, int, tcflag_t);
-Static	void ubsa_stopbits(struct ubsa_softc *, int, tcflag_t);
-Static	void ubsa_flow(struct ubsa_softc *, int, tcflag_t, tcflag_t);
-
+void ubsa_break(struct ubsa_softc *sc, int, int onoff);
+int  ubsa_request(struct ubsa_softc *, int, u_int8_t, u_int16_t);
+void ubsa_dtr(struct ubsa_softc *, int, int);
+void ubsa_quadumts_dtr(struct ubsa_softc *, int, int);
+void ubsa_rts(struct ubsa_softc *, int, int);
+void ubsa_quadumts_rts(struct ubsa_softc *, int, int);
+void ubsa_baudrate(struct ubsa_softc *, int, speed_t);
+void ubsa_parity(struct ubsa_softc *, int, tcflag_t);
+void ubsa_databits(struct ubsa_softc *, int, tcflag_t);
+void ubsa_stopbits(struct ubsa_softc *, int, tcflag_t);
+void ubsa_flow(struct ubsa_softc *, int, tcflag_t, tcflag_t);
