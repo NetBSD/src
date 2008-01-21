@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.232 2008/01/16 09:37:08 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.233 2008/01/21 02:56:13 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.232 2008/01/16 09:37:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.233 2008/01/21 02:56:13 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -741,6 +741,8 @@ copyfault:
 		if (tprof_pmi_nmi(frame))
 			return;
 #endif /* NTPROF > 0 */
+		if (nmi_dispatch())
+			return;
 #if !defined(XEN) && (NISA > 0 || NMCA > 0)
 #if defined(KGDB) || defined(DDB)
 		/* NMI can be hooked up to a pushbutton for debugging */
