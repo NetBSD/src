@@ -1,4 +1,4 @@
-/*	$NetBSD: mcclock_mainbus.c,v 1.6 2006/09/05 01:33:24 gdamore Exp $	*/
+/*	$NetBSD: mcclock_mainbus.c,v 1.6.6.1 2008/01/21 20:36:49 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.6 2006/09/05 01:33:24 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock_mainbus.c,v 1.6.6.1 2008/01/21 20:36:49 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -87,9 +87,13 @@ mcclock_mainbus_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_flag = 0;
 
 	/* Algor uses year 1980 as offset */
-	sc->sc_year0 = 80;
+	sc->sc_year0 = 1980;
 
 	mc146818_attach(sc);
+
+	aprint_normal("\n");
+
+	todr_attach(&sc->sc_handle);
 }
 
 void
