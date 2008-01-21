@@ -1,4 +1,4 @@
-/*	$NetBSD: progressbar.c,v 1.17 2007/05/05 18:09:24 martin Exp $	*/
+/*	$NetBSD: progressbar.c,v 1.18 2008/01/21 10:31:28 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: progressbar.c,v 1.17 2007/05/05 18:09:24 martin Exp $");
+__RCSID("$NetBSD: progressbar.c,v 1.18 2008/01/21 10:31:28 lukem Exp $");
 #endif /* not lint */
 
 /*
@@ -180,8 +180,8 @@ progressmeter(int flag)
 			    "transfer aborted because stalled for %lu sec.\r\n",
 			    getprogname(), (unsigned long)wait.tv_sec);
 			(void)write(fileno(ttyout), buf, len);
-			(void)xsignal(SIGALRM, SIG_DFL);
 			alarmtimer(0);
+			(void)xsignal(SIGALRM, SIG_DFL);
 			siglongjmp(toplevel, 1);
 		}
 #endif	/* !STANDALONE_PROGRESS */
@@ -198,8 +198,8 @@ progressmeter(int flag)
 			(void)xsignal_restart(SIGALRM, updateprogressmeter, 1);
 			alarmtimer(1);		/* set alarm timer for 1 Hz */
 		} else if (flag == 1) {
-			(void)xsignal(SIGALRM, SIG_DFL);
 			alarmtimer(0);
+			(void)xsignal(SIGALRM, SIG_DFL);
 		}
 	}
 #ifndef NO_PROGRESS
