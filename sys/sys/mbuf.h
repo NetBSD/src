@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.16 2008/01/21 09:47:52 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.17 2008/01/21 10:41:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -506,7 +506,7 @@ do {									\
 		(how) == M_WAIT ? (PR_WAITOK|PR_LIMITFAIL) : 0,		\
 		&(m)->m_ext_storage.ext_paddr);				\
 	if ((m)->m_ext_storage.ext_buf != NULL) {			\
-		mowner_ref((m), M_EXT|M_CLUSTER);			\
+		MCLINITREFERENCE(m);					\
 		(m)->m_data = (m)->m_ext.ext_buf;			\
 		(m)->m_flags = ((m)->m_flags & ~M_EXTCOPYFLAGS) |	\
 				M_EXT|M_CLUSTER|M_EXT_RW;		\
@@ -515,6 +515,7 @@ do {									\
 		(m)->m_ext.ext_free = NULL;				\
 		(m)->m_ext.ext_arg = (pool_cache);			\
 		/* ext_paddr initialized above */			\
+		mowner_ref((m), M_EXT|M_CLUSTER);			\
 	}								\
 } while (/* CONSTCOND */ 0)
 
