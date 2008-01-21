@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_data.3,v 1.4 2007/08/16 16:31:00 thorpej Exp $
+.\"	$NetBSD: prop_data.3,v 1.5 2008/01/21 22:15:03 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,20 +82,34 @@ Create a data object that contains a copy of
 .Fa blob
 with size
 .Fa len .
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_data_create_data_nocopy "const void *blob" "size_t len"
 Create a data object that contains a reference to
 .Fa blob
 with size
 .Fa len .
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_data_copy "prop_data_t data"
 Copy a data object.
-If the the data object being copied is an external data reference,
+If the data object being copied is an external data reference,
 then the copy also references the same external data.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_data_size "prop_data_t data"
 Returns the size of the data object.
+If the supplied object isn't a data object, zero is returned.
 .It Fn prop_data_data "prop_data_t data"
 Returns a copy of the data object's contents.
 The caller is responsible for freeing the returned buffer.
+If the supplied object isn't a data object or
+if the data container is empty,
+.Dv NULL
+is returned.
 .Pp
 In user space, the buffer is allocated using
 .Xr malloc 3 .
@@ -105,10 +119,16 @@ using the malloc type
 .Dv M_TEMP .
 .It Fn prop_data_data_nocopy "prop_data_t data"
 Returns an immutable reference to the contents of the data object.
+If the supplied object isn't a data object,
+.Dv NULL
+is returned.
 .It Fn prop_data_equals "prop_data_t dat1" "prop_data_t dat2"
 Returns
 .Dv true
 if the two data objects are equivalent.
+If at least one of the supplied objects isn't a data object,
+.Dv false
+is returned.
 .It Fn prop_data_equals_data "prop_data_t data" "const void *blob" "size_t len"
 Returns
 .Dv true
@@ -116,6 +136,9 @@ if the data object's value is equivalent to
 .Fa blob
 with size
 .Fa len .
+If the supplied object isn't a data object,
+.Dv false
+is returned.
 .El
 .Sh SEE ALSO
 .Xr prop_array 3 ,
