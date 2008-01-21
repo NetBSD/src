@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.21 2008/01/08 04:47:44 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.22 2008/01/21 08:04:51 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,10 +47,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.21 2008/01/08 04:47:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.22 2008/01/21 08:04:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/time.h>
 #include <sys/device.h>
 #include <sys/gpio.h>
 #include <sys/mutex.h>
@@ -73,8 +74,16 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.21 2008/01/08 04:47:44 dyoung Exp $");
 
 #include <dev/sysmon/sysmonvar.h>
 
+#define	ELAN_IRQ	1
+#define	IDT_PROT_SIZE	PAGE_SIZE
+
 struct elansc_softc {
 	struct device sc_dev;
+	device_t sc_par;
+	device_t sc_pex;
+
+	pci_chipset_tag_t sc_pc;
+	pcitag_t sc_tag;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
 	int sc_echobug;
@@ -82,6 +91,13 @@ struct elansc_softc {
 	kmutex_t sc_mtx;
 
 	struct sysmon_wdog sc_smw;
+	void		*sc_eih;
+	void		*sc_pih;
+	void		*sc_sh;
+	uint8_t		sc_mpicmode;
+	uint8_t		sc_picicr;
+	int		sc_idtpar;
+	int		sc_textpar;
 #if NGPIO > 0
 	/* GPIO interface */
 	struct gpio_chipset_tag sc_gpio_gc;
@@ -89,17 +105,33 @@ struct elansc_softc {
 #endif
 };
 
+int elansc_wpvnmi = 1;
+int elansc_pcinmi = 1;
+int elansc_do_protect_idt = 0;
+
 #if NGPIO > 0
 static int	elansc_gpio_pin_read(void *, int);
 static void	elansc_gpio_pin_write(void *, int, int);
 static void	elansc_gpio_pin_ctl(void *, int, int);
 #endif
 
+static void elansc_print_par(device_t, int, uint32_t);
+static void elanpex_intr_establish(device_t, struct elansc_softc *);
+static void elanpar_intr_establish(device_t, struct elansc_softc *);
+static void elanpex_intr_disestablish(struct elansc_softc *);
+static void elanpar_intr_disestablish(struct elansc_softc *);
+
 static void
 elansc_childdetached(device_t self, device_t child)
 {
-	/* elansc does not presently keep a pointer to children such
-	 * as the gpio, so there is nothing to do.
+	struct elansc_softc *sc = device_private(self);
+
+	if (child == sc->sc_par)
+		sc->sc_par = NULL;
+	if (child == sc->sc_pex)
+		sc->sc_pex = NULL;
+	/* elansc does not presently keep a pointer to 
+	 * the gpio, so there is nothing to do if it is detached.
 	 */
 }
 
@@ -252,6 +284,345 @@ static const char *elansc_speeds[] = {
 	"(reserved 11)",
 };
 
+static int
+elanpar_intr(void *arg)
+{
+	struct elansc_softc *sc = arg;
+	uint16_t wpvsta;
+	unsigned win;
+	uint32_t par;
+	const char *wpvstr;
+
+	wpvsta = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_WPVSTA);
+
+	if ((wpvsta & MMCR_WPVSTA_WPV_STA) == 0)
+		return 0;
+
+	win = __SHIFTOUT(wpvsta, MMCR_WPVSTA_WPV_WINDOW);
+
+	par = bus_space_read_4(sc->sc_memt, sc->sc_memh, MMCR_PAR(win));
+
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_WPVSTA,
+	    MMCR_WPVSTA_WPV_STA);
+
+	switch (wpvsta & MMCR_WPVSTA_WPV_MSTR) {
+	case MMCR_WPVSTA_WPV_MSTR_CPU:
+		wpvstr = "cpu";
+		break;
+	case MMCR_WPVSTA_WPV_MSTR_PCI:
+		wpvstr = "pci";
+		break;
+	case MMCR_WPVSTA_WPV_MSTR_GP:
+		wpvstr = "gp";
+		break;
+	default:
+		wpvstr = "unknown";
+		break;
+	}
+	aprint_error_dev(sc->sc_par,
+	    "%s violated write-protect window %u\n", wpvstr, win);
+	elansc_print_par(sc->sc_par, win, par);
+	return 0;
+}
+
+static int
+elanpex_intr(void *arg)
+{
+	static struct {
+		const char *string;
+		bool nonfatal;
+	} cmd[16] = {
+		  [0] =	{.string = "not latched"}
+		, [1] =	{.string = "special cycle"}
+		, [2] =	{.string = "i/o read"}
+		, [3] =	{.string = "i/o write"}
+		, [4] =	{.string = "4"}
+		, [5] =	{.string = "5"}
+		, [6] =	{.string = "memory rd"}
+		, [7] =	{.string = "memory wr"}
+		, [8] =	{.string = "8"}
+		, [9] =	{.string = "9"}
+		, [10] = {.string = "cfg rd", .nonfatal = true}
+		, [11] = {.string = "cfg wr"}
+		, [12] = {.string = "memory rd mul"}
+		, [13] = {.string = "dual-address cycle"}
+		, [14] = {.string = "memory rd line"}
+		, [15] = {.string = "memory wr & inv"}
+	};
+
+	static const struct {
+		uint16_t bit;
+		const char *msg;
+	} mmsg[] = {
+		  {MMCR_HBMSTIRQSTA_M_RTRTO_IRQ_STA, "retry timeout"}
+		, {MMCR_HBMSTIRQSTA_M_TABRT_IRQ_STA, "target abort"} 
+		, {MMCR_HBMSTIRQSTA_M_MABRT_IRQ_STA, "abort"} 
+		, {MMCR_HBMSTIRQSTA_M_SERR_IRQ_STA, "system error"} 
+		, {MMCR_HBMSTIRQSTA_M_RPER_IRQ_STA, "received parity error"} 
+		, {MMCR_HBMSTIRQSTA_M_DPER_IRQ_STA, "detected parity error"}
+	}, tmsg[] = {
+		  {MMCR_HBTGTIRQSTA_T_DLYTO_IRQ_STA, "delayed txn timeout"}
+		, {MMCR_HBTGTIRQSTA_T_APER_IRQ_STA, "address parity"}
+		, {MMCR_HBTGTIRQSTA_T_DPER_IRQ_STA, "data parity"}
+	};
+	uint8_t pciarbsta;
+	uint16_t mstcmd, mstirq, tgtid, tgtirq;
+	uint32_t mstaddr;
+	uint16_t mstack = 0, tgtack = 0;
+	int fatal = 0, i, handled = 0;
+	struct elansc_softc *sc = arg;
+
+	pciarbsta = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_PCIARBSTA);
+	mstirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBMSTIRQSTA);
+	mstaddr = bus_space_read_4(sc->sc_memt, sc->sc_memh, MMCR_MSTINTADD);
+	tgtirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQSTA);
+
+	if ((pciarbsta & MMCR_PCIARBSTA_GNT_TO_STA) != 0) {
+		aprint_error_dev(sc->sc_pex,
+		    "grant time-out, GNT%" __PRIuBITS "# asserted\n",
+		    __SHIFTOUT(pciarbsta, MMCR_PCIARBSTA_GNT_TO_ID));
+		bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_PCIARBSTA,
+		    MMCR_PCIARBSTA_GNT_TO_STA);
+		handled = true;
+	}
+
+	mstcmd = __SHIFTOUT(mstirq, MMCR_HBMSTIRQSTA_M_CMD_IRQ_ID);
+
+	for (i = 0; i < __arraycount(mmsg); i++) {
+		if ((mstirq & mmsg[i].bit) == 0)
+			continue;
+		aprint_error_dev(sc->sc_pex,
+		    "%s %08" PRIx32 " master %s\n",
+		    cmd[mstcmd].string, mstaddr, mmsg[i].msg);
+
+		mstack |= mmsg[i].bit;
+		if (!cmd[mstcmd].nonfatal)
+			fatal = true;
+	}
+
+	tgtid = __SHIFTOUT(tgtirq, MMCR_HBTGTIRQSTA_T_IRQ_ID);
+
+	for (i = 0; i < __arraycount(tmsg); i++) {
+		if ((tgtirq & tmsg[i].bit) == 0)
+			continue;
+		aprint_error_dev(sc->sc_pex, "%1x target %s\n", tgtid,
+		    tmsg[i].msg);
+		tgtack |= tmsg[i].bit;
+	}
+
+	/* acknowledge interrupts */
+	if (tgtack != 0) {
+		handled = true;
+		bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQSTA,
+		    tgtack);
+	}
+	if (mstack != 0) {
+		handled = true;
+		bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_HBMSTIRQSTA,
+		    mstack);
+	}
+	return fatal ? 0 : (handled ? 1 : 0);
+}
+
+#define	elansc_print_1(__dev, __sc, __reg)				\
+do {									\
+	aprint_debug_dev(__dev,						\
+	    "%s: %s %02" PRIx8 "\n", __func__, #__reg,			\
+	    bus_space_read_1((__sc)->sc_memt, (__sc)->sc_memh, __reg));	\
+} while (/*CONSTCOND*/0)
+
+static void
+elansc_print_par(device_t dev, int i, uint32_t par)
+{
+	uint32_t addr, sz, unit;
+	const char *tgtstr;
+
+	switch (par & MMCR_PAR_TARGET) {
+	default:
+	case MMCR_PAR_TARGET_OFF:
+		tgtstr = "off";
+		break;
+	case MMCR_PAR_TARGET_GPIO:
+		tgtstr = "gpio";
+		break;
+	case MMCR_PAR_TARGET_GPMEM:
+		tgtstr = "gpmem";
+		break;
+	case MMCR_PAR_TARGET_PCI:
+		tgtstr = "pci";
+		break;
+	case MMCR_PAR_TARGET_BOOTCS:
+		tgtstr = "bootcs";
+		break;
+	case MMCR_PAR_TARGET_ROMCS1:
+		tgtstr = "romcs1";
+		break;
+	case MMCR_PAR_TARGET_ROMCS2:
+		tgtstr = "romcs2";
+		break;
+	case MMCR_PAR_TARGET_SDRAM:
+		tgtstr = "sdram";
+		break;
+	}
+	if ((par & MMCR_PAR_TARGET) == MMCR_PAR_TARGET_GPIO) {
+		unit = 1;
+		sz = __SHIFTOUT(par, MMCR_PAR_IO_SZ);
+		addr = __SHIFTOUT(par, MMCR_PAR_IO_ST_ADR);
+	} else if ((par & MMCR_PAR_PG_SZ) != 0) {
+		unit = 64 * 1024;
+		sz = __SHIFTOUT(par, MMCR_PAR_64KB_SZ);
+		addr = __SHIFTOUT(par, MMCR_PAR_64KB_ST_ADR);
+	} else {
+		unit = 4 * 1024;
+		sz = __SHIFTOUT(par, MMCR_PAR_4KB_SZ);
+		addr = __SHIFTOUT(par, MMCR_PAR_4KB_ST_ADR);
+	}
+
+	aprint_debug_dev(dev,
+	    "PAR[%d] %08" PRIx32 " tgt %s attr %1" __PRIxBITS
+	    " start %08" PRIx32 " size %" PRIu32 "\n",
+	    i, par, tgtstr, __SHIFTOUT(par, MMCR_PAR_ATTR),
+	    addr * unit, (sz + 1) * unit);
+}
+
+static void
+elansc_print_all_par(device_t dev,
+    bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	int i;
+	uint32_t par;
+
+	for (i = 0; i < 16; i++) {
+		par = bus_space_read_4(memt, memh, MMCR_PAR(i));
+		elansc_print_par(dev, i, par);
+	}
+}
+
+static int
+elansc_alloc_par(bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	int i;
+	uint32_t par;
+
+	for (i = 0; i < 16; i++) {
+
+		par = bus_space_read_4(memt, memh, MMCR_PAR(i));
+
+		if ((par & MMCR_PAR_TARGET) == MMCR_PAR_TARGET_OFF)
+			break;
+	}
+	if (i == 16)
+		return -1;
+	return i;
+}
+
+static void
+elansc_disable_par(bus_space_tag_t memt, bus_space_handle_t memh, int idx)
+{
+	uint32_t par;
+	par = bus_space_read_4(memt, memh, MMCR_PAR(idx));
+	par &= ~MMCR_PAR_TARGET;
+	par |= MMCR_PAR_TARGET_OFF;
+	bus_space_write_4(memt, memh, MMCR_PAR(idx), par);
+}
+
+static int
+elansc_protect_text(device_t self, struct elansc_softc *sc)
+{
+	int i;
+	uint32_t par;
+	uint32_t protsize, unprotsize;
+	const uint32_t sfkb = 64 * 1024;
+	paddr_t start_pa, end_pa;
+	extern char kernel_text, etext;
+	bus_space_tag_t memt;
+	bus_space_handle_t memh;
+
+	memt = sc->sc_memt;
+	memh = sc->sc_memh;
+
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)&kernel_text, &start_pa) ||
+	    !pmap_extract(pmap_kernel(), (vaddr_t)&etext, &end_pa))
+		return -1;
+
+	if (&etext - &kernel_text != end_pa - start_pa) {
+		aprint_error_dev(self, "kernel text may not be contiguous\n");
+		return -1;
+	}
+
+	if ((i = elansc_alloc_par(memt, memh)) == -1) {
+		aprint_error_dev(self, "cannot allocate PAR\n");
+		return -1;
+	}
+
+	par = bus_space_read_4(memt, memh, MMCR_PAR(i));
+
+	aprint_debug_dev(self,
+	    "protect kernel text at physical addresses %p - %p\n",
+	    (void *)start_pa, (void *)end_pa);
+
+	unprotsize = sfkb - start_pa % sfkb;
+	start_pa += unprotsize;
+	unprotsize += end_pa % sfkb;
+	end_pa -= end_pa % sfkb;
+
+	aprint_debug_dev(self,
+	    "actually protect kernel text at physical addresses %p - %p\n",
+	    (void *)start_pa, (void *)end_pa);
+
+	aprint_verbose_dev(self,
+	    "%" PRIu32 " bytes of kernel text are unprotected\n", unprotsize);
+
+	protsize = end_pa - start_pa;
+
+	/* clear PG_SZ, attribute, target, size, address. */
+	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE | MMCR_PAR_PG_SZ;
+	par |= __SHIFTIN(protsize / sfkb - 1, MMCR_PAR_64KB_SZ);
+	par |= __SHIFTIN(start_pa / sfkb, MMCR_PAR_64KB_ST_ADR);
+	bus_space_write_4(memt, memh, MMCR_PAR(i), par);
+	return i;
+}
+
+static int
+elansc_protect_idt(struct elansc_softc *sc)
+{
+	int i;
+	uint32_t par;
+	extern paddr_t idt_paddr;
+	bus_space_tag_t memt;
+	bus_space_handle_t memh;
+
+	memt = sc->sc_memt;
+	memh = sc->sc_memh;
+
+	if (elansc_do_protect_idt == 0)
+		return -1;
+
+	if ((i = elansc_alloc_par(memt, memh)) == -1)
+		return -1;
+
+	par = bus_space_read_4(memt, memh, MMCR_PAR(i));
+
+	aprint_debug_dev(sc->sc_par, "protect IDT at paddr %p\n",
+	    (const void *)idt_paddr);
+
+	/* clear PG_SZ, attribute, target, size, address. */
+	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE;
+	par |= __SHIFTIN(IDT_PROT_SIZE / PAGE_SIZE - 1, MMCR_PAR_4KB_SZ);
+	par |= __SHIFTIN(idt_paddr / PAGE_SIZE, MMCR_PAR_4KB_ST_ADR);
+	bus_space_write_4(memt, memh, MMCR_PAR(i), par);
+	return i;
+}
+
+static void
+elanpex_intr_ack(bus_space_tag_t memt, bus_space_handle_t memh)
+{
+	bus_space_write_1(memt, memh, MMCR_PCIARBSTA,
+	    MMCR_PCIARBSTA_GNT_TO_STA);
+	bus_space_write_2(memt, memh, MMCR_HBTGTIRQSTA, MMCR_TGTIRQ_ACT);
+	bus_space_write_2(memt, memh, MMCR_HBMSTIRQSTA, MMCR_MSTIRQ_ACT);
+}
+
 static bool
 elansc_suspend(device_t dev)
 {
@@ -314,19 +685,312 @@ elansc_detach(device_t self, int flags)
 	return 0;
 }
 
+static void *
+elansc_intr_establish(device_t dev, int (*handler)(void *), void *arg)
+{
+	struct pic *pic;
+	void *ih;
+
+	if ((pic = intr_findpic(ELAN_IRQ)) == NULL) {
+		aprint_error_dev(dev, "PIC for irq %d not found\n",
+		    ELAN_IRQ);
+		return NULL;
+	} else if ((ih = intr_establish(ELAN_IRQ, pic, ELAN_IRQ,
+	    IST_LEVEL, IPL_HIGH, handler, arg)) == NULL) {
+		aprint_error_dev(dev,
+		    "could not establish interrupt\n");
+		return NULL;
+	}
+	aprint_verbose_dev(dev, "interrupting at irq %d\n", ELAN_IRQ);
+	return ih;
+}
+
+static bool
+elanpex_resume(device_t self)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	elanpex_intr_establish(self, sc);
+	return sc->sc_eih != NULL;
+}
+
+static bool
+elanpex_suspend(device_t self)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	elanpex_intr_disestablish(sc);
+
+	return true;
+}
+
+static bool
+elanpar_resume(device_t self)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	elanpar_intr_establish(self, sc);
+	return sc->sc_pih != NULL;
+}
+
+static bool
+elanpar_suspend(device_t self)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	elanpar_intr_disestablish(sc->sc_pih);
+
+	return true;
+}
+
+static void
+elanpex_intr_establish(device_t self, struct elansc_softc *sc)
+{
+	uint8_t sysarbctl;
+	uint16_t pcihostmap, mstirq, tgtirq;
+
+	pcihostmap = bus_space_read_2(sc->sc_memt, sc->sc_memh,
+	    MMCR_PCIHOSTMAP);
+	/* Priority P2 (Master PIC IR1) */
+	pcihostmap &= ~MMCR_PCIHOSTMAP_PCI_IRQ_MAP;
+	pcihostmap |= __SHIFTIN(__BIT(ELAN_IRQ), MMCR_PCIHOSTMAP_PCI_IRQ_MAP);
+	if (elansc_pcinmi)
+		pcihostmap |= MMCR_PCIHOSTMAP_PCI_NMI_ENB;
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_PCIHOSTMAP,
+	    pcihostmap);
+
+	elanpex_intr_ack(sc->sc_memt, sc->sc_memh);
+
+	sysarbctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_SYSARBCTL);
+	mstirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBMSTIRQCTL);
+	tgtirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQCTL);
+
+	sysarbctl |= MMCR_SYSARBCTL_GNT_TO_INT_ENB;
+
+	mstirq |= MMCR_HBMSTIRQCTL_M_RTRTO_IRQ_ENB;
+	mstirq |= MMCR_HBMSTIRQCTL_M_TABRT_IRQ_ENB;
+	mstirq |= MMCR_HBMSTIRQCTL_M_MABRT_IRQ_ENB;
+	mstirq |= MMCR_HBMSTIRQCTL_M_SERR_IRQ_ENB;
+	mstirq |= MMCR_HBMSTIRQCTL_M_RPER_IRQ_ENB;
+	mstirq |= MMCR_HBMSTIRQCTL_M_DPER_IRQ_ENB;
+
+	tgtirq |= MMCR_HBTGTIRQCTL_T_DLYTO_IRQ_ENB;
+	tgtirq |= MMCR_HBTGTIRQCTL_T_APER_IRQ_ENB;
+	tgtirq |= MMCR_HBTGTIRQCTL_T_DPER_IRQ_ENB;
+
+	if (elansc_pcinmi) {
+		sc->sc_eih = nmi_establish(elanpex_intr, sc);
+
+		mstirq |= MMCR_HBMSTIRQCTL_M_RTRTO_IRQ_SEL;
+		mstirq |= MMCR_HBMSTIRQCTL_M_TABRT_IRQ_SEL;
+		mstirq |= MMCR_HBMSTIRQCTL_M_MABRT_IRQ_SEL;
+		mstirq |= MMCR_HBMSTIRQCTL_M_SERR_IRQ_SEL;
+		mstirq |= MMCR_HBMSTIRQCTL_M_RPER_IRQ_SEL;
+		mstirq |= MMCR_HBMSTIRQCTL_M_DPER_IRQ_SEL;
+
+		tgtirq |= MMCR_HBTGTIRQCTL_T_DLYTO_IRQ_SEL;
+		tgtirq |= MMCR_HBTGTIRQCTL_T_APER_IRQ_SEL;
+		tgtirq |= MMCR_HBTGTIRQCTL_T_DPER_IRQ_SEL;
+	} else
+		sc->sc_eih = elansc_intr_establish(self, elanpex_intr, sc);
+
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_SYSARBCTL, sysarbctl);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_HBMSTIRQCTL, mstirq);
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQCTL, tgtirq);
+}
+
+static void
+elanpex_attach(device_t parent, device_t self, void *aux)
+{
+	struct elansc_softc *sc = device_private(parent);
+
+	aprint_naive(": PCI Exceptions\n");
+	aprint_normal(": AMD Elan SC520 PCI Exceptions\n");
+
+	elanpex_intr_establish(self, sc);
+
+	aprint_debug_dev(self, "HBMSTIRQCTL %04x\n",
+	    bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBMSTIRQCTL));
+
+	aprint_debug_dev(self, "HBTGTIRQCTL %04x\n",
+	    bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQCTL));
+
+	aprint_debug_dev(self, "PCIHOSTMAP %04x\n",
+	    bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_PCIHOSTMAP));
+
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG,
+	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG) |
+	    PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
+
+	if (!pmf_device_register(self, elanpex_suspend, elanpex_resume))
+		aprint_error_dev(self, "could not establish power hooks\n");
+}
+
+static void
+elanpex_intr_disestablish(struct elansc_softc *sc)
+{
+	uint8_t sysarbctl;
+	uint16_t pcihostmap, mstirq, tgtirq;
+
+	sysarbctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_SYSARBCTL);
+	sysarbctl &= ~MMCR_SYSARBCTL_GNT_TO_INT_ENB;
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_SYSARBCTL, sysarbctl);
+
+	mstirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBMSTIRQCTL);
+	mstirq &= ~MMCR_HBMSTIRQCTL_M_RTRTO_IRQ_ENB;
+	mstirq &= ~MMCR_HBMSTIRQCTL_M_TABRT_IRQ_ENB;
+	mstirq &= ~MMCR_HBMSTIRQCTL_M_MABRT_IRQ_ENB;
+	mstirq &= ~MMCR_HBMSTIRQCTL_M_SERR_IRQ_ENB;
+	mstirq &= ~MMCR_HBMSTIRQCTL_M_RPER_IRQ_ENB;
+	mstirq &= ~MMCR_HBMSTIRQCTL_M_DPER_IRQ_ENB;
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_HBMSTIRQCTL, mstirq);
+
+	tgtirq = bus_space_read_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQCTL);
+	tgtirq &= ~MMCR_HBTGTIRQCTL_T_DLYTO_IRQ_ENB;
+	tgtirq &= ~MMCR_HBTGTIRQCTL_T_APER_IRQ_ENB;
+	tgtirq &= ~MMCR_HBTGTIRQCTL_T_DPER_IRQ_ENB;
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_HBTGTIRQCTL, tgtirq);
+
+	pcihostmap = bus_space_read_2(sc->sc_memt, sc->sc_memh,
+	    MMCR_PCIHOSTMAP);
+	/* Priority P2 (Master PIC IR1) */
+	pcihostmap &= ~MMCR_PCIHOSTMAP_PCI_IRQ_MAP;
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_PCIHOSTMAP,
+	    pcihostmap);
+
+	if (elansc_pcinmi)
+		nmi_disestablish(sc->sc_eih);
+	else
+		intr_disestablish(sc->sc_eih);
+	sc->sc_eih = NULL;
+
+}
+
+static int
+elanpex_detach(device_t self, int flags)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	pmf_device_deregister(self);
+	elanpex_intr_disestablish(sc);
+
+	return 0;
+}
+
+static void
+elanpar_intr_establish(device_t self, struct elansc_softc *sc)
+{
+	uint8_t adddecctl, wpvmap;
+
+	wpvmap = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_WPVMAP);
+	wpvmap &= ~MMCR_WPVMAP_INT_MAP;
+	if (elansc_wpvnmi)
+		wpvmap |= MMCR_WPVMAP_INT_NMI;
+	else
+		wpvmap |= __SHIFTIN(__BIT(ELAN_IRQ), MMCR_WPVMAP_INT_MAP);
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_WPVMAP, wpvmap);
+
+	/* clear interrupt status */
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_WPVSTA,
+	    MMCR_WPVSTA_WPV_STA);
+
+	/* establish interrupt */
+	if (elansc_wpvnmi)
+		sc->sc_pih = nmi_establish(elanpar_intr, sc);
+	else
+		sc->sc_pih = elansc_intr_establish(self, elanpar_intr, sc);
+
+	adddecctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_ADDDECCTL);
+	adddecctl |= MMCR_ADDDECCTL_WPV_INT_ENB;
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_ADDDECCTL, adddecctl);
+}
+
+static void
+elanpar_attach(device_t parent, device_t self, void *aux)
+{
+	struct elansc_softc *sc = device_private(parent);
+
+	aprint_naive(": Programmable Address Regions\n");
+	aprint_normal(": AMD Elan SC520 Programmable Address Regions\n");
+
+	elansc_print_1(self, sc, MMCR_WPVMAP);
+	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
+
+	sc->sc_idtpar = elansc_protect_idt(sc);
+	sc->sc_textpar = elansc_protect_text(self, sc);
+
+	elanpar_intr_establish(self, sc);
+
+	elansc_print_1(self, sc, MMCR_ADDDECCTL);
+
+	if (!pmf_device_register(self, elanpar_suspend, elanpar_resume))
+		aprint_error_dev(self, "could not establish power hooks\n");
+}
+
+static void
+elanpar_intr_disestablish(struct elansc_softc *sc)
+{
+	uint8_t adddecctl, wpvmap;
+
+	/* disable interrupt, acknowledge it, disestablish our
+	 * handler, unmap it
+	 */
+	adddecctl = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_ADDDECCTL);
+	adddecctl &= ~MMCR_ADDDECCTL_WPV_INT_ENB;
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_ADDDECCTL, adddecctl);
+
+	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_WPVSTA,
+	    MMCR_WPVSTA_WPV_STA);
+
+	if (elansc_wpvnmi)
+		nmi_disestablish(sc->sc_pih);
+	else
+		intr_disestablish(sc->sc_pih);
+	sc->sc_pih = NULL;
+
+	wpvmap = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_WPVMAP);
+	wpvmap &= ~MMCR_WPVMAP_INT_MAP;
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_WPVMAP, wpvmap);
+}
+
+static int
+elanpar_detach(device_t self, int flags)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	pmf_device_deregister(self);
+
+	if (sc->sc_textpar != -1) {
+		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_textpar);
+		sc->sc_textpar = -1;
+	}
+	if (sc->sc_idtpar != -1) {
+		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_idtpar);
+		sc->sc_idtpar = -1;
+	}
+
+	elanpar_intr_disestablish(sc);
+
+	return 0;
+}
+
 static void
 elansc_attach(device_t parent, device_t self, void *aux)
 {
 	struct elansc_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	uint16_t rev;
-	uint8_t ressta, cpuctl;
+	uint8_t cpuctl, picicr, ressta;
+#if 0
+	struct pci_conf_state pcf;
+#endif
 #if NGPIO > 0
 	struct gpiobus_attach_args gba;
-	int pin;
-	int reg, shift;
+	int pin, reg, shift;
 	uint16_t data;
 #endif
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_tag = pa->pa_tag;
 
 	aprint_naive(": System Controller\n");
 	aprint_normal(": AMD Elan SC520 System Controller\n");
@@ -377,13 +1041,39 @@ elansc_attach(device_t parent, device_t self, void *aux)
 		    "WARNING: LAST RESET DUE TO WATCHDOG EXPIRATION!\n");
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_RESSTA, ressta);
 
+	elansc_print_1(self, sc, MMCR_MPICMODE);
+	elansc_print_1(self, sc, MMCR_SL1PICMODE);
+	elansc_print_1(self, sc, MMCR_SL2PICMODE);
+	elansc_print_1(self, sc, MMCR_PICICR);
+
+	sc->sc_mpicmode = bus_space_read_1(sc->sc_memt, sc->sc_memh,
+	    MMCR_MPICMODE);
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_MPICMODE,
+	    sc->sc_mpicmode | __BIT(ELAN_IRQ));
+
+	sc->sc_picicr = bus_space_read_1(sc->sc_memt, sc->sc_memh, MMCR_PICICR);
+	picicr = sc->sc_picicr;
+	if (elansc_pcinmi || elansc_wpvnmi)
+		picicr |= MMCR_PICICR_NMI_ENB;
+#if 0
+	/* PC/AT compatibility */
+	picicr |= MMCR_PICICR_S1_GINT_MODE|MMCR_PICICR_M_GINT_MODE;
+#endif
+	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_PICICR, picicr);
+
+	elansc_print_1(self, sc, MMCR_PICICR);
+	elansc_print_1(self, sc, MMCR_MPICMODE);
+
+	mutex_enter(&sc->sc_mtx);
 	/* Set up the watchdog registers with some defaults. */
 	elansc_wdogctl_write(sc, WDTMRCTL_WRST_ENB | WDTMRCTL_EXP_SEL30);
 
 	/* ...and clear it. */
 	elansc_wdogctl_reset(sc);
+	mutex_exit(&sc->sc_mtx);
 
-	pmf_device_register(self, elansc_suspend, elansc_resume);
+	if (!pmf_device_register(self, elansc_suspend, elansc_resume))
+		aprint_error_dev(self, "could not establish power hooks\n");
 
 #if NGPIO > 0
 	/* Initialize GPIO pins array */
@@ -416,6 +1106,8 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	gba.gba_pins = sc->sc_gpio_pins;
 	gba.gba_npins = ELANSC_PIO_NPINS;
 
+	sc->sc_par = config_found_ia(&sc->sc_dev, "elanparbus", NULL, NULL);
+	sc->sc_pex = config_found_ia(&sc->sc_dev, "elanpexbus", NULL, NULL);
 	/* Attach GPIO framework */
 	config_found_ia(&sc->sc_dev, "gpiobus", &gba, gpiobus_print);
 #endif /* NGPIO */
@@ -433,6 +1125,28 @@ elansc_attach(device_t parent, device_t self, void *aux)
 		    "unable to register watchdog with sysmon\n");
 	}
 }
+
+static int
+elanpex_match(device_t parent, struct cfdata *match, void *aux)
+{
+	struct elansc_softc *sc = device_private(parent);
+
+	return sc->sc_pex == NULL;
+}
+
+static int
+elanpar_match(device_t parent, struct cfdata *match, void *aux)
+{
+	struct elansc_softc *sc = device_private(parent);
+
+	return sc->sc_par == NULL;
+}
+
+CFATTACH_DECL_NEW(elanpar, sizeof(struct device),
+    elanpar_match, elanpar_attach, elanpar_detach, NULL);
+
+CFATTACH_DECL_NEW(elanpex, sizeof(struct device),
+    elanpex_match, elanpex_attach, elanpex_detach, NULL);
 
 CFATTACH_DECL2(elansc, sizeof(struct elansc_softc),
     elansc_match, elansc_attach, elansc_detach, NULL, NULL,
