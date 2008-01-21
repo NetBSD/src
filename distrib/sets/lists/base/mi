@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.678.2.10 2007/11/25 08:57:05 xtraeme Exp $
+# $NetBSD: mi,v 1.678.2.11 2008/01/21 20:17:51 bouyer Exp $
 .						base-sys-root
 ./altroot					base-sys-root
 ./bin						base-sys-root
@@ -1249,6 +1249,7 @@
 ./usr/sbin/tbrconfig				base-obsolete		obsolete
 ./usr/sbin/tcpdchk				base-netutil-bin
 ./usr/sbin/tcpdmatch				base-netutil-bin
+./usr/sbin/tcpdrop				base-netutil-bin
 ./usr/sbin/tcpdump				base-netutil-bin
 ./usr/sbin/timed				base-timed-bin
 ./usr/sbin/timedc				base-timed-bin

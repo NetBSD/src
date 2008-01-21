@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.141 2006/10/21 10:08:54 yamt Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.141.2.1 2008/01/21 20:17:48 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -696,7 +696,8 @@ struct	tcpstat {
 #define	TCPCTL_STATS		30	/* TCP statistics */
 #define	TCPCTL_DEBUG		31	/* TCP debug sockets */
 #define	TCPCTL_DEBX		32	/* # of tcp debug sockets */
-#define	TCPCTL_MAXID		33
+#define	TCPCTL_DROP		33	/* drop tcp connection */
+#define	TCPCTL_MAXID		34
 
 #define	TCPCTL_NAMES { \
 	{ 0, 0 }, \
@@ -732,6 +733,7 @@ struct	tcpstat {
 	{ "stats", CTLTYPE_STRUCT }, \
 	{ "debug", CTLTYPE_STRUCT }, \
 	{ "debx", CTLTYPE_INT }, \
+	{ "drop", CTLTYPE_STRUCT }, \
 }
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.981.2.8 2007/10/29 19:50:58 pavel Exp $
+#	$NetBSD: mi,v 1.981.2.9 2008/01/21 20:17:48 bouyer Exp $
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		bfd
 ./usr/bin/ar					comp-util-bin		bfd
@@ -2964,6 +2964,7 @@
 ./usr/libdata/debug/usr/sbin/syslogd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdchk.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdmatch.debug	comp-netutil-debug	debug
+./usr/libdata/debug/usr/sbin/tcpdrop.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdump.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/timed.debug	comp-timed-debug	debug
 ./usr/libdata/debug/usr/sbin/timedc.debug	comp-timed-debug	debug
