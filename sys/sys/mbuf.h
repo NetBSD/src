@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.17 2008/01/21 10:41:33 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.18 2008/01/21 10:55:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -397,20 +397,6 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_DONTWAIT	M_NOWAIT
 #define	M_WAIT		M_WAITOK
 
-/*
- * mbuf utility macros:
- *
- *	MBUFLOCK(code)
- * prevents a section of code from from being interrupted by network
- * drivers.
- */
-#define	MBUFLOCK(code)							\
-do {									\
-	int _ms = splvm();						\
-	{ code }							\
-	splx(_ms);							\
-} while (/* CONSTCOND */ 0)
-
 #ifdef MBUFTRACE
 /*
  * mbuf allocation tracing
@@ -456,8 +442,6 @@ void m_claimm(struct mbuf *, struct mowner *);
 #define	_M_
 /*
  * Macros for tracking external storage associated with an mbuf.
- *
- * Note: add and delete reference must be called at splvm().
  */
 #ifdef DEBUG
 #define MCLREFDEBUGN(m, file, line)					\
@@ -576,16 +560,14 @@ do {									\
 #define	MFREE(m, n)							\
 	mowner_revoke((m), 1, (m)->m_flags);				\
 	mbstat_type_add((m)->m_type, -1);				\
-	MBUFLOCK(							\
-		if ((m)->m_flags & M_PKTHDR)				\
-			m_tag_delete_chain((m), NULL);			\
-		(n) = (m)->m_next;					\
-		if ((m)->m_flags & M_EXT) {				\
-			m_ext_free(m);					\
-		} else {						\
-			pool_cache_put(mb_cache, (m));			\
-		}							\
-	)
+	if ((m)->m_flags & M_PKTHDR)					\
+		m_tag_delete_chain((m), NULL);				\
+	(n) = (m)->m_next;						\
+	if ((m)->m_flags & M_EXT) {					\
+		m_ext_free(m);						\
+	} else {							\
+		pool_cache_put(mb_cache, (m));				\
+	}								\
 
 /*
  * Copy mbuf pkthdr from `from' to `to'.
