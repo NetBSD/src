@@ -5,7 +5,6 @@ add HUP support to read sig and targets file
 CRC/digests
 finish reservations
 RAID 1 rebuilding, breaking etc
-bind to cmdline port properly now too
 proper allow_netmask support for IPv6
 add ability to add a target in, take one out (if !busy)
 proper IPv6 support in harness
@@ -47,3 +46,4 @@ add poll configure glue
 use poll if we have it
 proper IPv6 support in target
 VPD 80 handling
+bind to cmdline port properly now too

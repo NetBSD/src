@@ -52,7 +52,7 @@
 #endif
            
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 
 
 /*
@@ -546,7 +546,7 @@ iscsi_login_cmd_decap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 
 	cmd->transit = (header[1] & 0x80) ? 1 : 0;	/* Transit */
 	cmd->cont = (header[1] & 0x40) ? 1 : 0;	/* Continue */
-	cmd->csg = (header[1] & 0x0c) >> 2;	/* CSG */
+	cmd->csg = (header[1] & 0x0cU) >> 2;	/* CSG */
 	cmd->nsg = header[1] & 0x03;	/* NSG */
 	cmd->version_max = header[2];	/* Version-Max  */
 	cmd->version_min = header[3];	/* Version-Min  */
@@ -574,7 +574,7 @@ iscsi_login_cmd_decap(uint8_t *header, iscsi_login_cmd_args_t * cmd)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:             %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN:         %u\n", cmd->ExpStatSN);
 
-	RETURN_NOT_EQUAL("Byte 1, bits 2-3", (header[1] & 0x30) >> 4, 0, NO_CLEANUP, 1);
+	RETURN_NOT_EQUAL("Byte 1, bits 2-3", (header[1] & 0x30U) >> 4U, 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 22-23", *((uint16_t *) (void *) (header + 22)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 32-35", *((uint32_t *) (void *) (header + 32)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 36-39", *((uint32_t *) (void *) (header + 36)), 0, NO_CLEANUP, 1);
@@ -652,9 +652,9 @@ iscsi_login_rsp_decap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 
 	RETURN_NOT_EQUAL("Opcode", ISCSI_OPCODE(header), ISCSI_LOGIN_RSP, NO_CLEANUP, 1);
 
-	rsp->transit = (header[1] & 0x80) >> 7;	/* Transit  */
-	rsp->cont = (header[1] & 0x40) >> 6;	/* Continue */
-	rsp->csg = (header[1] & 0x0c) >> 2;	/* CSG  */
+	rsp->transit = (header[1] & 0x80U) >> 7;	/* Transit  */
+	rsp->cont = (header[1] & 0x40U) >> 6;	/* Continue */
+	rsp->csg = (header[1] & 0x0cU) >> 2;	/* CSG  */
 	rsp->nsg = header[1] & 0x03;	/* NSG  */
 	rsp->version_max = header[2];	/* Version-max */
 	rsp->version_active = header[3];	/* Version-active */
@@ -688,7 +688,7 @@ iscsi_login_rsp_decap(uint8_t *header, iscsi_login_rsp_args_t * rsp)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Status-Class:      %u\n", rsp->status_class);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "Status-Detail:     %u\n", rsp->status_detail);
 
-	RETURN_NOT_EQUAL("Byte 1, bits 2-3", (header[1] & 0x30) >> 4, 0, NO_CLEANUP, 1);
+	RETURN_NOT_EQUAL("Byte 1, bits 2-3", (header[1] & 0x30U) >> 4, 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 20-23", *((uint32_t *) (void *) (header + 20)), 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Byte 38", header[38], 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Byte 39", header[39], 0, NO_CLEANUP, 1);
@@ -749,8 +749,8 @@ iscsi_logout_cmd_decap(uint8_t *header, iscsi_logout_cmd_args_t * cmd)
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "CmdSN:     %u\n", cmd->CmdSN);
 	iscsi_trace(TRACE_ISCSI_ARGS, __FILE__, __LINE__, "ExpStatSN: %u\n", cmd->ExpStatSN);
 
-	RETURN_NOT_EQUAL("Byte 0 bit 0", header[0] >> 7, 0, NO_CLEANUP, 1);
-	RETURN_NOT_EQUAL("Byte 1 bit 0", header[1] >> 7, 1, NO_CLEANUP, 1);
+	RETURN_NOT_EQUAL("Byte 0 bit 0", (unsigned)(header[0]) >> 7U, 0, NO_CLEANUP, 1);
+	RETURN_NOT_EQUAL("Byte 1 bit 0", (unsigned)(header[1]) >> 7U, 1, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Byte 2", header[2], 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Byte 3", header[3], 0, NO_CLEANUP, 1);
 	RETURN_NOT_EQUAL("Bytes 4-7", *((uint32_t *) (void *) (header + 4)), 0, NO_CLEANUP, 1);

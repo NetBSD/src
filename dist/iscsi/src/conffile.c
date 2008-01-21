@@ -1,4 +1,4 @@
-/* $NetBSD: conffile.c,v 1.4 2006/08/03 20:21:59 agc Exp $ */
+/* $NetBSD: conffile.c,v 1.4.4.1 2008/01/21 20:02:42 bouyer Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -89,21 +89,27 @@ iscomment(conffile_t *sp, char *from)
 }
 
 /* split the entry up into fields */
-static int
-split_split(conffile_t *sp, ent_t *ep, char *from)
+int
+conffile_split(conffile_t *sp, ent_t *ep, char *from)
 {
+	FILE	*fp;
+	const char	*seps;
 	char	*to;
 	char	 was;
 	int	 sepseen;
 	int	 cc;
 
+	seps = (sp == NULL) ? " \t" : sp->sep;
+	fp = (sp == NULL) ? stdin : sp->fp;
 	for (ep->sv.c = 0 ; *from && *from != '\n' ; ) {
-		for (to = from, sepseen = 0 ; *to && *to != '\n' && strchr(sp->sep, *to) == NULL ; to++) {
+		for (to = from, sepseen = 0 ; *to && *to != '\n' && strchr(seps, *to) == NULL ; to++) {
 			if (*to == '\\') {
 				if (*(to + 1) == '\n') {
 					cc = (int)(to - ep->buf);
-					if (fgets(&ep->buf[cc], sizeof(ep->buf) - cc, sp->fp) != NULL) {
-						sp->lineno += 1;
+					if (fgets(&ep->buf[cc], (int)(sizeof(ep->buf) - cc), fp) != NULL) {
+						if (sp != NULL) {
+							sp->lineno += 1;
+						}
 					}
 				} else {
 					sepseen = 1;
@@ -119,7 +125,7 @@ split_split(conffile_t *sp, ent_t *ep, char *from)
 			char	*cp;
 
 			for (cp = from ; *cp ; cp++) {
-				if (strchr(sp->sep, *cp) != NULL) {
+				if (strchr(seps, *cp) != NULL) {
 					(void) strcpy(cp - 1, cp);
 				}
 			}
@@ -127,7 +133,7 @@ split_split(conffile_t *sp, ent_t *ep, char *from)
 		if (was == 0x0 || was == '\n') {
 			break;
 		}
-		for (from = to + 1 ; *from && *from != '\n' && strchr(sp->sep, *from) != NULL ; from++) {
+		for (from = to + 1 ; *from && *from != '\n' && strchr(seps, *from) != NULL ; from++) {
 		}
 	}
 	return 1;
@@ -146,7 +152,7 @@ conffile_getent(conffile_t *sp, ent_t *ep)
 		if (iscomment(sp, from)) {
 			continue;
 		}
-		return split_split(sp, ep, from);
+		return conffile_split(sp, ep, from);
 	}
 }
 
@@ -178,7 +184,7 @@ conffile_get_by_field(conffile_t *sp, ent_t *ep, int f, char *val)
 
 /* check that we wrote `cc' chars of `buf' to `fp' */
 static int
-safe_write(FILE *fp, char *buf, int cc)
+safe_write(FILE *fp, char *buf, unsigned cc)
 {
 	return fwrite(buf, sizeof(char), cc, fp) == cc;
 }
@@ -240,7 +246,7 @@ conffile_putent(conffile_t *sp, int f, char *val, char *newent)
 				return report_error(fp, name, "Short write 1 to `%s' (%s)\n", name, strerror(errno));
 			}
 		}
-		(void) split_split(sp, &e, from);
+		(void) conffile_split(sp, &e, from);
 		if (val != NULL && f < e.sv.c && strcmp(val, e.sv.v[f]) == 0) {
 			/* replace it */
 			if (!safe_write(fp, newent, strlen(newent))) {

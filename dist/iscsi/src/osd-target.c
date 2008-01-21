@@ -1,4 +1,4 @@
-/* $NetBSD: osd-target.c,v 1.5 2006/03/31 23:22:24 agc Exp $ */
+/* $NetBSD: osd-target.c,v 1.5.4.1 2008/01/21 20:02:45 bouyer Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -11,11 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Alistair Crooks
- *	for the NetBSD project.
- * 4. The name of the author may not be used to endorse or promote
+ * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
@@ -36,7 +32,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright © 2006 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: osd-target.c,v 1.5 2006/03/31 23:22:24 agc Exp $");
+__RCSID("$NetBSD: osd-target.c,v 1.5.4.1 2008/01/21 20:02:45 bouyer Exp $");
 #endif
 #include "config.h"
 
@@ -56,7 +52,7 @@ __RCSID("$NetBSD: osd-target.c,v 1.5 2006/03/31 23:22:24 agc Exp $");
 #include <unistd.h>
 
 #include "iscsi.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "target.h"
 #include "device.h"
 
