@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.99 2006/11/16 01:33:26 christos Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.99.2.1 2008/01/21 20:43:34 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99 2006/11/16 01:33:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99.2.1 2008/01/21 20:43:34 bouyer Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -142,7 +142,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.99 2006/11/16 01:33:26 christos Exp $")
 #include <dev/usb/usbdevs.h>
 
 #if defined(__NetBSD__)
-#include <sys/workqueue.h>
+#include <sys/kthread.h>
 #endif
 
 #include <dev/usb/if_auereg.h>
@@ -235,7 +235,7 @@ Static const struct aue_type aue_devs[] = {
 USB_DECLARE_DRIVER(aue);
 
 #if defined(__NetBSD__)
-Static void aue_multiwork(struct work *wkp, void *arg);
+Static void aue_multithread(void *);
 #endif
 
 Static void aue_reset_pegasus_II(struct aue_softc *sc);
@@ -763,11 +763,12 @@ USB_ATTACH(aue)
 		USB_ATTACH_ERROR_RETURN;
 	}
 #if defined(__NetBSD__)
-	err = workqueue_create(&sc->wqp, USBDEVNAME(sc->aue_dev),
-		aue_multiwork, sc, 0, IPL_NET, 0);
+	sc->aue_closing = 0;
+	err = kthread_create1(aue_multithread, sc, &sc->aue_thread,
+				"%s-mc", USBDEVNAME(sc->aue_dev));
 
 	if (err) {
-		printf("%s: creating multicast configuration work queue\n",
+		printf("%s: creating multicast configuration thread\n",
 		    USBDEVNAME(sc->aue_dev));
 		USB_ATTACH_ERROR_RETURN;
 	}
@@ -894,6 +895,9 @@ USB_DETACH(aue)
 	usb_rem_task(sc->aue_udev, &sc->aue_tick_task);
 	usb_rem_task(sc->aue_udev, &sc->aue_stop_task);
 
+	sc->aue_closing = 1;
+	wakeup(&sc->aue_thread);
+	tsleep(&sc->aue_closing, PZERO, "auemccl", 0);
 	s = splusb();
 
 	if (ifp->if_flags & IFF_RUNNING)
@@ -1621,8 +1625,7 @@ aue_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		if (error == ENETRESET) {
 			if (ifp->if_flags & IFF_RUNNING) {
 #if defined(__NetBSD__)
-				workqueue_enqueue(sc->wqp,&sc->wk);
-				/* XXX */
+				wakeup(&sc->aue_thread);
 #else
 				aue_init(sc);
 				aue_setmulti(sc);
@@ -1764,14 +1767,27 @@ aue_stop(struct aue_softc *sc)
 
 #if defined(__NetBSD__)
 Static void
-aue_multiwork(struct work *wkp, void *arg) {
+aue_multithread(void *arg) {
 	struct aue_softc *sc;
+	int s;
 
 	sc = (struct aue_softc *)arg;
-	(void)wkp;
 
-	aue_init(sc);
-	/* XXX called by aue_init, but rc ifconfig hangs without it: */
-	aue_setmulti(sc);
+	while (1) {
+		tsleep(&sc->aue_thread, PZERO, "auemc", 0);
+
+		if (sc->aue_closing)
+			break;
+
+		s = splnet();
+		aue_init(sc);
+		/* XXX called by aue_init, but rc ifconfig hangs without it: */
+		aue_setmulti(sc);
+		splx(s);
+	}
+
+	wakeup(&sc->aue_closing);
+
+	kthread_exit(0);
 }
 #endif
