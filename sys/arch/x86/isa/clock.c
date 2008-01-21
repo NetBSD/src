@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.7 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.7.2.1 2008/01/21 20:48:54 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.7.2.1 2008/01/21 20:48:54 bouyer Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -439,7 +439,7 @@ i8254_get_timecount(struct timecounter *tc)
 	high = inb(IO_TIMER1 + TIMER_CNTR0);
 	count = rtclock_tval - ((high << 8) | low);
 
-	if (rtclock_tval && (count < i8254_lastcount || !i8254_ticked)) {
+	if (rtclock_tval && (count < i8254_lastcount && !i8254_ticked)) {
 		i8254_ticked = 1;
 		i8254_offset += rtclock_tval;
 	}
