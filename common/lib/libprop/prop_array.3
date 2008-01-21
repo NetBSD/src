@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_array.3,v 1.6 2007/11/06 11:41:35 mjf Exp $
+.\"	$NetBSD: prop_array.3,v 1.7 2008/01/21 22:15:03 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -120,10 +120,16 @@ same order with which they were stored.
 .It Fn prop_array_create "void"
 Create an empty array.
 The array initially has no capacity.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_array_create_with_capacity "unsigned int capacity"
 Create an array with the capacity to store
 .Fa capacity
 objects.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_array_copy "prop_array_t array"
 Copy an array.
 The new array has an initial capacity equal to the number of objects stored
@@ -132,6 +138,9 @@ The new array contains references to the original array's objects, not
 copies of those objects
 .Pq i.e. a shallow copy is made .
 If the original array is immutable, the resulting array is also immutable.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_array_copy_mutable "prop_array_t array"
 Like
 .Fn prop_array_copy ,
@@ -139,8 +148,10 @@ except the resulting array is always mutable.
 .It Fn prop_array_capacity "prop_array_t array"
 Returns the total capacity of the array, including objects already stored
 in the array.
+If the supplied object isn't an array, zero is returned.
 .It Fn prop_array_count "prop_array_t array"
 Returns the number of objects stored in the array.
+If the supplied object isn't an array, zero is returned.
 .It Fn prop_array_ensure_capacity "prop_array_t array" "unsigned int capacity"
 Ensure that the array has a total capacity of
 .Fa capacity ,
@@ -159,6 +170,9 @@ The array is retained by the iterator.
 An array iterator returns the object references stored in the array.
 Storing to or removing from the array invalidates any active iterators for
 the array.
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_array_make_immutable "prop_array_t array"
 Make
 .Fa array
@@ -170,6 +184,9 @@ if the array is mutable.
 .It Fn prop_array_get "prop_array_t array" "unsigned int index"
 Return the object stored at the array index
 .Fa index .
+Returns
+.Dv NULL
+on failure.
 .It Fn prop_array_set "prop_array_t array" "unsigned int index" \
        "prop_object_t obj"
 Store a reference to the object
@@ -198,6 +215,14 @@ Returns
 if storing the object was successful and
 .Dv false
 otherwise.
+.Pp
+During expansion, array's capacity is augmented by the
+.Dv EXPAND_STEP
+constant, as defined in
+.Pa libprop/prop_array.c
+file, e.g.
+.Pp
+#define	EXPAND_STEP		16
 .It Fn prop_array_remove "prop_array_t array" "unsigned int index"
 Remove the reference to the object stored at array index
 .Fa index .
@@ -207,6 +232,9 @@ the removal.
 Returns
 .Dv true
 if the two arrays are equivalent.
+If at least one of the supplied objects isn't an array,
+.Dv false
+is returned.
 Note: Objects contained in the array are compared by value, not by reference.
 .It Fn prop_array_externalize "prop_array_t array"
 Externalizes an array, returning a NUL-terminated buffer containing
@@ -245,6 +273,9 @@ if externalizing or writing the array fails for any reason.
 Reads the XML property list contained in the file specified by
 .Fa path ,
 internalizes it, and returns the corresponding array.
+Returns
+.Dv NULL
+on failure.
 .El
 .Sh SEE ALSO
 .Xr prop_bool 3 ,

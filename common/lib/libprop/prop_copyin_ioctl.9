@@ -1,4 +1,4 @@
-.\"	$NetBSD: prop_copyin_ioctl.9,v 1.2 2007/04/22 11:23:29 yamt Exp $
+.\"	$NetBSD: prop_copyin_ioctl.9,v 1.3 2008/01/21 22:15:03 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -68,12 +68,42 @@ functions implement the kernel side of a protocol for sending property lists
 to and from the kernel using
 .Xr ioctl 2 .
 .Pp
-A kernel ioctl routine receivig or returning a property list will be passed a
+A kernel ioctl routine receiving or returning a property list will be passed a
 pointer to a
 .Vt struct plistref .
 This structure encapsulates the reference to the property list in externalized
 form.
+.Sh RETURN VALUES
+If successful, functions return zero. Otherwise, an error number will be returned to indicate the error.
+.Sh ERRORS
+.Fn prop_array_copyin_ioctl
+and
+.Fn prop_dictionary_copyin_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Bad address
+.It Bq Er EIO
+Input/output error
+.It Bq Er ENOMEM
+Cannot allocate memory
+.It Bq Er ENOTSUP
+Not supported
+.El
 .Pp
+.Fn prop_array_copyout_ioctl
+and
+.Fn prop_dictionary_copyout_ioctl
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EFAULT
+Bad address
+.It Bq Er ENOMEM
+Cannot allocate memory
+.It Bq Er ENOTSUP
+Not supported
+.El
+.Sh EXAMPLES
 The following
 .Pq simplified
 example demonstrates using
