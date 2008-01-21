@@ -1,7 +1,9 @@
-# $NetBSD: mi,v 1.1050 2008/01/09 14:23:46 xtraeme Exp $
+# $NetBSD: mi,v 1.1051 2008/01/21 08:10:51 dyoung Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+# will be reinstated after texinfo update to 4.8
+#./usr/share/info/groff.info			man-groff-info		info
 ./etc/mtree/set.man				man-sys-root
 ./usr/share/info/am-utils.info			man-amd-info		info
 ./usr/share/info/as.info			man-computil-info	bfd,info
@@ -25,8 +27,6 @@
 ./usr/share/info/gprof.info			man-debug-info		bfd,info
 ./usr/share/info/grep.info			man-util-info		info
 ./usr/share/info/groff.info			man-obsolete		obsolete
-# will be reinstated after texinfo update to 4.8
-#./usr/share/info/groff.info			man-groff-info		info
 ./usr/share/info/gzip.info			man-obsolete		obsolete
 ./usr/share/info/heimdal.info			man-krb5-info		kerberos,info
 ./usr/share/info/info-stnd.info			man-texinfo-info	info
@@ -664,8 +664,9 @@
 ./usr/share/man/cat4/amr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ams.0			man-sys-catman		.cat
 ./usr/share/man/cat4/an.0			man-sys-catman		.cat
-./usr/share/man/cat4/arcmsr.0			man-sys-catman		.cat
+./usr/share/man/cat4/aps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arc/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/arcmsr.0			man-sys-catman		.cat
 ./usr/share/man/cat4/aria.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arm26/arckbd.0		man-obsolete		obsolete
 ./usr/share/man/cat4/arm26/arcwskbd.0		man-obsolete		obsolete
@@ -701,7 +702,6 @@
 ./usr/share/man/cat4/arm32/ptsc.0		man-obsolete		obsolete
 ./usr/share/man/cat4/arm32/quadmouse.0		man-obsolete		obsolete
 ./usr/share/man/cat4/arm32/wd.0			man-obsolete		obsolete
-./usr/share/man/cat4/aps.0			man-sys-catman		.cat
 ./usr/share/man/cat4/arp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/artsata.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ast.0			man-sys-catman		.cat
@@ -1064,14 +1064,14 @@
 ./usr/share/man/cat4/iso.0			man-sys-catman		.cat
 ./usr/share/man/cat4/isp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/it.0			man-sys-catman		obsolete
-./usr/share/man/cat4/itesio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iteide.0			man-sys-catman		.cat
-./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
+./usr/share/man/cat4/itesio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iwi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iwic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ix.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ixpide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/iy.0			man-sys-catman		.cat
+./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
 ./usr/share/man/cat4/joy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kloader.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kse.0			man-sys-catman		.cat
@@ -3182,8 +3182,9 @@
 ./usr/share/man/man4/amr.4			man-sys-man		.man
 ./usr/share/man/man4/ams.4			man-sys-man		.man
 ./usr/share/man/man4/an.4			man-sys-man		.man
-./usr/share/man/man4/arcmsr.4			man-sys-man		.man
+./usr/share/man/man4/aps.4			man-sys-man		.man
 ./usr/share/man/man4/arc/intro.4		man-sys-man		.man
+./usr/share/man/man4/arcmsr.4			man-sys-man		.man
 ./usr/share/man/man4/aria.4			man-sys-man		.man
 ./usr/share/man/man4/arm26/arckbd.4		man-obsolete		obsolete
 ./usr/share/man/man4/arm26/arcwskbd.4		man-obsolete		obsolete
@@ -3219,7 +3220,6 @@
 ./usr/share/man/man4/arm32/ptsc.4		man-obsolete		obsolete
 ./usr/share/man/man4/arm32/quadmouse.4		man-obsolete		obsolete
 ./usr/share/man/man4/arm32/wd.4			man-obsolete		obsolete
-./usr/share/man/man4/aps.4			man-sys-man		.man
 ./usr/share/man/man4/arp.4			man-sys-man		.man
 ./usr/share/man/man4/artsata.4			man-sys-man		.man
 ./usr/share/man/man4/ast.4			man-sys-man		.man
@@ -3582,14 +3582,14 @@
 ./usr/share/man/man4/iso.4			man-sys-man		.man
 ./usr/share/man/man4/isp.4			man-sys-man		.man
 ./usr/share/man/man4/it.4			man-sys-man		obsolete
-./usr/share/man/man4/itesio.4			man-sys-man		.man
 ./usr/share/man/man4/iteide.4			man-sys-man		.man
-./usr/share/man/man4/jmide.4			man-sys-man		.man
+./usr/share/man/man4/itesio.4			man-sys-man		.man
 ./usr/share/man/man4/iwi.4			man-sys-man		.man
 ./usr/share/man/man4/iwic.4			man-sys-man		.man
 ./usr/share/man/man4/ix.4			man-sys-man		.man
 ./usr/share/man/man4/ixpide.4			man-sys-man		.man
 ./usr/share/man/man4/iy.4			man-sys-man		.man
+./usr/share/man/man4/jmide.4			man-sys-man		.man
 ./usr/share/man/man4/joy.4			man-sys-man		.man
 ./usr/share/man/man4/kloader.4			man-sys-man		.man
 ./usr/share/man/man4/kse.4			man-sys-man		.man
