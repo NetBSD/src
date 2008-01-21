@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.999 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1000 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -331,6 +331,10 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
 		[tls 20080110]
 	hppa: Added gdb support. [skrll 20080110]
+	kernel: Implementation of processor-sets and affinity. [rmind 20080115]
+	libpthread: POSIX real-time extensions. [rmind 20080115]
+	schedctl(8): A new program to control scheduling of processes and
+		threads. [rmind 20080115]
 	bktr(4): Added amd64 support. [jmcneill 20080116]
 	kernel: All platforms have been converted to use timecounter.
 		[joerg 20080120]
