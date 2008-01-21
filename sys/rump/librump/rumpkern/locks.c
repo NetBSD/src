@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.8 2008/01/02 12:46:07 ad Exp $	*/
+/*	$NetBSD: locks.c,v 1.9 2008/01/21 17:56:48 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -190,17 +190,20 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
 	extern int hz;
 
-	KASSERT(hz == 100);
-	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	if (ticks == 0) {
+		cv_wait(cv, mtx);
+		return 0;
+	} else {
+		KASSERT(hz == 100);
+		return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	}
 }
 
 int
 cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
-	extern int hz;
 
-	KASSERT(hz == 100);
-	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	return cv_timedwait(cv, mtx, ticks);
 }
 
 void
