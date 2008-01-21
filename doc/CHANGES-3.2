@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.120 2008/01/20 21:08:58 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.121 2008/01/21 19:08:53 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3905,4 +3905,9 @@ lib/libevent/kqueue.c				patch
 	fixed a great bug on kq_insert().This bug destroys memory,
 	leaks memory and double-free memory.
 	[msaitoh, ticket #1895]
+
+xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
+
+	Apply security fix for CVE-2008-0006.
+	[tron, ticket #1896]
 
