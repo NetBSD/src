@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_audio.c,v 1.6 2003/03/11 23:11:20 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_audio.c,v 1.16 2006/11/24 22:52:16 wiz Exp $	*/
+/*	$NetBSD: bktr_audio.c,v 1.16.2.1 2008/01/21 20:40:14 bouyer Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_audio.c,v 1.8 2000/10/31 13:09:56 roger Exp$ */
 /*
  * This is part of the Driver for Video Capture Cards (Frame grabbers)
@@ -71,7 +71,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.16 2006/11/24 22:52:16 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_audio.c,v 1.16.2.1 2008/01/21 20:40:14 bouyer Exp $");
 
 #include <sys/proc.h>
 #include <dev/ic/bt8xx.h>	/* NetBSD location of .h files */
@@ -127,7 +127,7 @@ void init_audio_devices(bktr_ptr_t bktr) {
 int
 set_audio(bktr_ptr_t bktr, int cmd)
 {
-	u_long		temp;
+	u_int		temp;
 	volatile u_char	idx;
 
 #if defined(AUDIOMUX_DISCOVER)
@@ -392,7 +392,7 @@ set_bctv_audio(bktr_ptr_t bktr)
 void
 bctv_gpio_write(bktr_ptr_t bktr, int port, int val)
 {
-        u_long data, outbits;
+        u_int data, outbits;
 
         port &= BCTV_GPIO_PORT_MASK;
         switch (port) {
@@ -422,7 +422,7 @@ bctv_gpio_write(bktr_ptr_t bktr, int port, int val)
 int
 bctv_gpio_read(bktr_ptr_t bktr, int port)
 {
-        u_long data, outbits, ret;
+        u_int data, outbits, ret;
 
         port &= BCTV_GPIO_PORT_MASK;
         switch (port) {

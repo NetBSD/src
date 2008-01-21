@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_core.h,v 1.3 2003/03/11 23:11:23 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_core.h,v 1.8 2006/09/03 19:06:32 bouyer Exp $	*/
+/*	$NetBSD: bktr_core.h,v 1.8.6.1 2008/01/21 20:40:15 bouyer Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.h,v 1.4 2000/06/26 09:41:32 roger Exp$ */
 
 /*
@@ -76,7 +76,7 @@ const char *bktr_name(bktr_ptr_t bktr);
 
 /* Prototypes for attatch and interrupt functions */
 int	common_bktr_attach(bktr_ptr_t bktr, int unit,
-			u_long pci_id, u_int rev);
+			u_int pci_id, u_int rev);
 int	common_bktr_intr(void *arg);
 
 
