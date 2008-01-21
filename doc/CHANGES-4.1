@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.6 2008/01/21 20:45:16 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.7 2008/01/21 20:49:12 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -167,4 +167,10 @@ sys/dev/usb/if_auereg.h				1.19, 1.20 via patch
 	Prevents hang on close by unprotected creation of the formerly used
 	workqueue item.
 	[is, ticket #1048]
+
+src/sys/arch/x86/isa/clock.c 1.23 via patch
+	fixes clock accounting problem in i8254_get_timecount that caused
+	the auich auich_calibrate() function to get the wrong ac97 freq
+	(may cause audio to play at wrong speed on some systems).
+	[chuck, ticket #1049]
 
