@@ -1,4 +1,4 @@
-/*	$NetBSD: if_auereg.h,v 1.17 2006/09/15 10:47:34 is Exp $	*/
+/*	$NetBSD: if_auereg.h,v 1.17.4.1 2008/01/21 20:43:34 bouyer Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -237,8 +237,8 @@ struct aue_softc {
 #if NRND > 0
 	rndsource_element_t	rnd_source;
 #endif
-	struct workqueue	*wqp;
-	struct work		wk;
+	struct proc		*aue_thread;
+	int			aue_closing;
 #define GET_IFP(sc) (&(sc)->aue_ec.ec_if)
 #define GET_MII(sc) (&(sc)->aue_mii)
 #elif defined(__OpenBSD__)
