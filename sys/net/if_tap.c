@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.10.2.5 2007/12/07 17:34:17 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.10.2.6 2008/01/21 09:47:06 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.5 2007/12/07 17:34:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.6 2008/01/21 09:47:06 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.5 2007/12/07 17:34:17 yamt Exp $")
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
+#include <sys/simplelock.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -510,13 +511,12 @@ tap_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 static int
 tap_lifaddr(struct ifnet *ifp, u_long cmd, struct ifaliasreq *ifra)
 {
-	struct sockaddr *sa = (struct sockaddr *)&ifra->ifra_addr;
+	const struct sockaddr_dl *sdl = satosdl(&ifra->ifra_addr);
 
-	if (sa->sa_family != AF_LINK)
+	if (sdl->sdl_family != AF_LINK)
 		return (EINVAL);
 
-	(void)sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len,
-	    sa->sa_data, ETHER_ADDR_LEN);
+	if_set_sadl(ifp, CLLADDR(sdl), ETHER_ADDR_LEN);
 
 	return (0);
 }
@@ -1285,9 +1285,8 @@ tap_sysctl_handler(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* Commit change */
-	if (ether_nonstatic_aton(enaddr, addr) != 0 ||
-	    sockaddr_dl_setaddr(ifp->if_sadl, ifp->if_sadl->sdl_len, enaddr,
-	                        ETHER_ADDR_LEN) == NULL)
+	if (ether_nonstatic_aton(enaddr, addr) != 0)
 		return (EINVAL);
+	if_set_sadl(ifp, enaddr, ETHER_ADDR_LEN);
 	return (error);
 }

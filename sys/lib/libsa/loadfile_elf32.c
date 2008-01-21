@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.10.4.3 2007/12/07 17:33:44 yamt Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.10.4.4 2008/01/21 09:46:38 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -263,11 +263,7 @@ externalize_shdr(Elf_Byte bo, Elf_Shdr *shdr)
 #endif /* _STANDALONE */
 
 int
-ELFNAMEEND(loadfile)(fd, elf, marks, flags)
-	int fd;
-	Elf_Ehdr *elf;
-	u_long *marks;
-	int flags;
+ELFNAMEEND(loadfile)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 {
 	Elf_Shdr *shp;
 	Elf_Phdr *phdr;

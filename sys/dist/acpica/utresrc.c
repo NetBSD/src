@@ -1,7 +1,9 @@
+/*	$NetBSD: utresrc.c,v 1.2.6.3 2008/01/21 09:45:32 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: utresrc - Resource managment utilities
- *              xRevision: 1.9 $
+ *              $Revision: 1.2.6.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -114,18 +116,17 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utresrc.c,v 1.2.6.2 2006/06/21 15:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utresrc.c,v 1.2.6.3 2008/01/21 09:45:32 yamt Exp $");
 
 #define __UTRESRC_C__
 
-#include "acpi.h"
-#include "amlresrc.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlresrc.h>
 
 
 #define _COMPONENT          ACPI_UTILITIES
-        ACPI_MODULE_NAME    ("utmisc")
+        ACPI_MODULE_NAME    ("utresrc")
 
 
 #if defined(ACPI_DISASSEMBLER) || defined (ACPI_DEBUGGER)
@@ -134,13 +135,13 @@ __KERNEL_RCSID(0, "$NetBSD: utresrc.c,v 1.2.6.2 2006/06/21 15:08:25 yamt Exp $")
  * Strings used to decode resource descriptors.
  * Used by both the disasssembler and the debugger resource dump routines
  */
-const char                      *AcpiGbl_BMDecode[2] =
+const char                      *AcpiGbl_BmDecode[] =
 {
     "NotBusMaster",
     "BusMaster"
 };
 
-const char                      *AcpiGbl_ConfigDecode[4] =
+const char                      *AcpiGbl_ConfigDecode[] =
 {
     "0 - Good Configuration",
     "1 - Acceptable Configuration",
@@ -148,43 +149,43 @@ const char                      *AcpiGbl_ConfigDecode[4] =
     "3 - ***Invalid Configuration***",
 };
 
-const char                      *AcpiGbl_ConsumeDecode[2] =
+const char                      *AcpiGbl_ConsumeDecode[] =
 {
     "ResourceProducer",
     "ResourceConsumer"
 };
 
-const char                      *AcpiGbl_DECDecode[2] =
+const char                      *AcpiGbl_DecDecode[] =
 {
     "PosDecode",
     "SubDecode"
 };
 
-const char                      *AcpiGbl_HEDecode[2] =
+const char                      *AcpiGbl_HeDecode[] =
 {
     "Level",
     "Edge"
 };
 
-const char                      *AcpiGbl_IoDecode[2] =
+const char                      *AcpiGbl_IoDecode[] =
 {
     "Decode10",
     "Decode16"
 };
 
-const char                      *AcpiGbl_LLDecode[2] =
+const char                      *AcpiGbl_LlDecode[] =
 {
     "ActiveHigh",
     "ActiveLow"
 };
 
-const char                      *AcpiGbl_MaxDecode[2] =
+const char                      *AcpiGbl_MaxDecode[] =
 {
     "MaxNotFixed",
     "MaxFixed"
 };
 
-const char                      *AcpiGbl_MEMDecode[4] =
+const char                      *AcpiGbl_MemDecode[] =
 {
     "NonCacheable",
     "Cacheable",
@@ -192,13 +193,13 @@ const char                      *AcpiGbl_MEMDecode[4] =
     "Prefetchable"
 };
 
-const char                      *AcpiGbl_MinDecode[2] =
+const char                      *AcpiGbl_MinDecode[] =
 {
     "MinNotFixed",
     "MinFixed"
 };
 
-const char                      *AcpiGbl_MTPDecode[4] =
+const char                      *AcpiGbl_MtpDecode[] =
 {
     "AddressRangeMemory",
     "AddressRangeReserved",
@@ -206,7 +207,7 @@ const char                      *AcpiGbl_MTPDecode[4] =
     "AddressRangeNVS"
 };
 
-const char                      *AcpiGbl_RNGDecode[4] =
+const char                      *AcpiGbl_RngDecode[] =
 {
     "InvalidRanges",
     "NonISAOnlyRanges",
@@ -214,19 +215,19 @@ const char                      *AcpiGbl_RNGDecode[4] =
     "EntireRange"
 };
 
-const char                      *AcpiGbl_RWDecode[2] =
+const char                      *AcpiGbl_RwDecode[] =
 {
     "ReadOnly",
     "ReadWrite"
 };
 
-const char                      *AcpiGbl_SHRDecode[2] =
+const char                      *AcpiGbl_ShrDecode[] =
 {
     "Exclusive",
     "Shared"
 };
 
-const char                      *AcpiGbl_SIZDecode[4] =
+const char                      *AcpiGbl_SizDecode[] =
 {
     "Transfer8",
     "Transfer8_16",
@@ -234,19 +235,19 @@ const char                      *AcpiGbl_SIZDecode[4] =
     "InvalidSize"
 };
 
-const char                      *AcpiGbl_TRSDecode[2] =
+const char                      *AcpiGbl_TrsDecode[] =
 {
     "DenseTranslation",
     "SparseTranslation"
 };
 
-const char                      *AcpiGbl_TTPDecode[2] =
+const char                      *AcpiGbl_TtpDecode[] =
 {
     "TypeStatic",
     "TypeTranslation"
 };
 
-const char                      *AcpiGbl_TYPDecode[4] =
+const char                      *AcpiGbl_TypDecode[] =
 {
     "Compatibility",
     "TypeA",
@@ -341,6 +342,113 @@ static const UINT8          AcpiGbl_ResourceTypes[] =
     ACPI_VARIABLE_LENGTH,
     ACPI_FIXED_LENGTH
 };
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiUtWalkAmlResources
+ *
+ * PARAMETERS:  Aml             - Pointer to the raw AML resource template
+ *              AmlLength       - Length of the entire template
+ *              UserFunction    - Called once for each descriptor found. If
+ *                                NULL, a pointer to the EndTag is returned
+ *              Context         - Passed to UserFunction
+ *
+ * RETURN:      Status
+ *
+ * DESCRIPTION: Walk a raw AML resource list(buffer). User function called
+ *              once for each resource found.
+ *
+ ******************************************************************************/
+
+ACPI_STATUS
+AcpiUtWalkAmlResources (
+    UINT8                   *Aml,
+    ACPI_SIZE               AmlLength,
+    ACPI_WALK_AML_CALLBACK  UserFunction,
+    void                    *Context)
+{
+    ACPI_STATUS             Status;
+    UINT8                   *EndAml;
+    UINT8                   ResourceIndex;
+    UINT32                  Length;
+    UINT32                  Offset = 0;
+
+
+    ACPI_FUNCTION_TRACE (UtWalkAmlResources);
+
+
+    /* The absolute minimum resource template is one EndTag descriptor */
+
+    if (AmlLength < sizeof (AML_RESOURCE_END_TAG))
+    {
+        return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
+    }
+
+    /* Point to the end of the resource template buffer */
+
+    EndAml = Aml + AmlLength;
+
+    /* Walk the byte list, abort on any invalid descriptor type or length */
+
+    while (Aml < EndAml)
+    {
+        /* Validate the Resource Type and Resource Length */
+
+        Status = AcpiUtValidateResource (Aml, &ResourceIndex);
+        if (ACPI_FAILURE (Status))
+        {
+            return_ACPI_STATUS (Status);
+        }
+
+        /* Get the length of this descriptor */
+
+        Length = AcpiUtGetDescriptorLength (Aml);
+
+        /* Invoke the user function */
+
+        if (UserFunction)
+        {
+            Status = UserFunction (Aml, Length, Offset, ResourceIndex, Context);
+            if (ACPI_FAILURE (Status))
+            {
+                return (Status);
+            }
+        }
+
+        /* An EndTag descriptor terminates this resource template */
+
+        if (AcpiUtGetResourceType (Aml) == ACPI_RESOURCE_NAME_END_TAG)
+        {
+            /*
+             * There must be at least one more byte in the buffer for
+             * the 2nd byte of the EndTag
+             */
+            if ((Aml + 1) >= EndAml)
+            {
+                return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
+            }
+
+            /* Return the pointer to the EndTag if requested */
+
+            if (!UserFunction)
+            {
+                *(void **) Context = Aml;
+            }
+
+            /* Normal exit */
+
+            return_ACPI_STATUS (AE_OK);
+        }
+
+        Aml += Length;
+        Offset += Length;
+    }
+
+    /* Did not find an EndTag descriptor */
+
+    return (AE_AML_NO_RESOURCE_END_TAG);
+}
 
 
 /*******************************************************************************
@@ -644,68 +752,25 @@ AcpiUtGetResourceEndTag (
     UINT8                   **EndTag)
 {
     ACPI_STATUS             Status;
-    UINT8                   *Aml;
-    UINT8                   *EndAml;
 
 
-    ACPI_FUNCTION_TRACE ("UtGetResourceEndTag");
+    ACPI_FUNCTION_TRACE (UtGetResourceEndTag);
 
-
-    /* Get start and end pointers */
-
-    Aml    = ObjDesc->Buffer.Pointer;
-    EndAml = Aml + ObjDesc->Buffer.Length;
 
     /* Allow a buffer length of zero */
 
     if (!ObjDesc->Buffer.Length)
     {
-        *EndTag = Aml;
+        *EndTag = ObjDesc->Buffer.Pointer;
         return_ACPI_STATUS (AE_OK);
     }
 
-    /* Walk the resource template, one descriptor per iteration */
+    /* Validate the template and get a pointer to the EndTag */
 
-    while (Aml < EndAml)
-    {
-        /* Validate the Resource Type and Resource Length */
+    Status = AcpiUtWalkAmlResources (ObjDesc->Buffer.Pointer,
+                ObjDesc->Buffer.Length, NULL, EndTag);
 
-        Status = AcpiUtValidateResource (Aml, NULL);
-        if (ACPI_FAILURE (Status))
-        {
-            return_ACPI_STATUS (Status);
-        }
-
-        /* EndTag resource indicates the end of the resource template */
-
-        if (AcpiUtGetResourceType (Aml) == ACPI_RESOURCE_NAME_END_TAG)
-        {
-            /*
-             * There must be at least one more byte in the buffer for
-             * the 2nd byte of the EndTag
-             */
-            if ((Aml + 1) >= EndAml)
-            {
-                return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
-            }
-
-            /* Return the pointer to the EndTag */
-
-            *EndTag = Aml;
-            return_ACPI_STATUS (AE_OK);
-        }
-
-        /*
-         * Point to the next resource descriptor in the AML buffer. The
-         * descriptor length is guaranteed to be non-zero by resource
-         * validation above.
-         */
-        Aml += AcpiUtGetDescriptorLength (Aml);
-    }
-
-    /* Did not find an EndTag resource descriptor */
-
-    return_ACPI_STATUS (AE_AML_NO_RESOURCE_END_TAG);
+    return_ACPI_STATUS (Status);
 }
 
 

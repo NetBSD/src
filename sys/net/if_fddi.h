@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddi.h,v 1.9.38.2 2007/09/03 14:42:05 yamt Exp $	*/
+/*	$NetBSD: if_fddi.h,v 1.9.38.3 2008/01/21 09:47:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Matt Thomas (thomas@lkg.dec.com)
@@ -37,7 +37,7 @@ struct	fddi_header {
 	u_char	fddi_fc;
 	u_char	fddi_dhost[6];
 	u_char	fddi_shost[6];
-} __attribute__((__packed__));
+} __packed;
 
 #define	FDDIIPMTU		4352
 #define	FDDIMTU			4470

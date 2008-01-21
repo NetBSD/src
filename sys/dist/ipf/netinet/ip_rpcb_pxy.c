@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_rpcb_pxy.c,v 1.6.4.3 2007/09/03 14:39:58 yamt Exp $	*/
+/*	$NetBSD: ip_rpcb_pxy.c,v 1.6.4.4 2008/01/21 09:45:40 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Ryan Beasley <ryanb@goddamnbastard.org>
@@ -41,6 +41,9 @@
  *
  *	Id: ip_rpcb_pxy.c,v 2.25.2.6 2007/01/17 11:34:54 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_rpcb_pxy.c,v 1.6.4.4 2008/01/21 09:45:40 yamt Exp $");
 
 #define	IPF_RPCB_PROXY
 

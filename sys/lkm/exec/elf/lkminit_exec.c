@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_exec.c,v 1.7.4.1 2006/06/21 15:10:24 yamt Exp $ */
+/* $NetBSD: lkminit_exec.c,v 1.7.4.2 2008/01/21 09:46:43 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7.4.1 2006/06/21 15:10:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7.4.2 2008/01/21 09:46:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_exec.c,v 1.7.4.1 2006/06/21 15:10:24 yamt Ex
 #include <sys/exec_elf.h>
 #include <sys/signalvar.h>
 
-int exec_elf_lkmentry __P((struct lkm_table *, int, int));
+int exec_elf_lkmentry(struct lkm_table *, int, int);
 
 extern const struct emul emul_netbsd;	/* XXX */
 extern int netbsd_elf32_probe(struct lwp *, struct exec_package *, void *,

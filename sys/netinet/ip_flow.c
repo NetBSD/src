@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.29.6.4 2007/09/03 14:42:50 yamt Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.29.6.5 2008/01/21 09:47:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.29.6.4 2007/09/03 14:42:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.29.6.5 2008/01/21 09:47:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,7 +100,7 @@ int ip_maxflows = IPFLOW_MAX;
 int ip_hashsize = IPFLOW_DEFAULT_HASHSIZE;
 
 static size_t 
-ipflow_hash(struct ip *ip)
+ipflow_hash(const struct ip *ip)
 {
 	size_t hash = ip->ip_tos;
 	size_t idx;
@@ -114,7 +114,7 @@ ipflow_hash(struct ip *ip)
 }
 
 static struct ipflow *
-ipflow_lookup(struct ip *ip)
+ipflow_lookup(const struct ip *ip)
 {
 	size_t hash;
 	struct ipflow *ipf;
@@ -158,7 +158,8 @@ ipflow_init(int table_size)
 int
 ipflow_fastforward(struct mbuf *m)
 {
-	struct ip *ip, ip_store;
+	struct ip *ip;
+	struct ip ip_store;
 	struct ipflow *ipf;
 	struct rtentry *rt;
 	const struct sockaddr *dst;
@@ -181,10 +182,10 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * IP header with no option and valid version and length
 	 */
-	if (IP_HDR_ALIGNED_P(mtod(m, void *)))
+	if (IP_HDR_ALIGNED_P(mtod(m, const void *)))
 		ip = mtod(m, struct ip *);
 	else {
-		memcpy(&ip_store, mtod(m, void *), sizeof(ip_store));
+		memcpy(&ip_store, mtod(m, const void *), sizeof(ip_store));
 		ip = &ip_store;
 	}
 	iplen = ntohs(ip->ip_len);
@@ -220,7 +221,7 @@ ipflow_fastforward(struct mbuf *m)
 	/*
 	 * Route and interface still up?
 	 */
-	if (rtcache_down(&ipf->ipf_ro) || (rt = ipf->ipf_ro.ro_rt) == NULL ||
+	if ((rt = rtcache_validate(&ipf->ipf_ro)) == NULL ||
 	    (rt->rt_ifp->if_flags & IFF_UP) == 0)
 		return 0;
 
@@ -254,6 +255,8 @@ ipflow_fastforward(struct mbuf *m)
 
 	/*
 	 * Done modifying the header; copy it back, if necessary.
+	 *
+	 * XXX Use m_copyback_cow(9) here? --dyoung
 	 */
 	if (IP_HDR_ALIGNED_P(mtod(m, void *)) == 0)
 		memcpy(mtod(m, void *), &ip_store, sizeof(ip_store));
@@ -292,8 +295,10 @@ ipflow_fastforward(struct mbuf *m)
 static void
 ipflow_addstats(struct ipflow *ipf)
 {
-	if (!rtcache_down(&ipf->ipf_ro) && ipf->ipf_ro.ro_rt != NULL)
-		ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
+	struct rtentry *rt;
+
+	if ((rt = rtcache_validate(&ipf->ipf_ro)) != NULL)
+		rt->rt_use += ipf->ipf_uses;
 	ipstat.ips_cantforward += ipf->ipf_errors + ipf->ipf_dropped;
 	ipstat.ips_total += ipf->ipf_uses;
 	ipstat.ips_forward += ipf->ipf_uses;
@@ -333,8 +338,7 @@ ipflow_reap(int just_one)
 			 * If this no longer points to a valid route
 			 * reclaim it.
 			 */
-			if (rtcache_down(&ipf->ipf_ro) ||
-			    ipf->ipf_ro.ro_rt == NULL)
+			if (rtcache_validate(&ipf->ipf_ro) == NULL)
 				goto done;
 			/*
 			 * choose the one that's been least recently
@@ -371,16 +375,17 @@ ipflow_reap(int just_one)
 void
 ipflow_slowtimo(void)
 {
+	struct rtentry *rt;
 	struct ipflow *ipf, *next_ipf;
 
 	for (ipf = LIST_FIRST(&ipflowlist); ipf != NULL; ipf = next_ipf) {
 		next_ipf = LIST_NEXT(ipf, ipf_list);
 		if (PRT_SLOW_ISEXPIRED(ipf->ipf_timer) ||
-		    rtcache_down(&ipf->ipf_ro) || ipf->ipf_ro.ro_rt == NULL) {
+		    (rt = rtcache_validate(&ipf->ipf_ro)) == NULL) {
 			ipflow_free(ipf);
 		} else {
 			ipf->ipf_last_uses = ipf->ipf_uses;
-			ipf->ipf_ro.ro_rt->rt_use += ipf->ipf_uses;
+			rt->rt_use += ipf->ipf_uses;
 			ipstat.ips_total += ipf->ipf_uses;
 			ipstat.ips_forward += ipf->ipf_uses;
 			ipstat.ips_fastforward += ipf->ipf_uses;
@@ -392,7 +397,7 @@ ipflow_slowtimo(void)
 void
 ipflow_create(const struct route *ro, struct mbuf *m)
 {
-	struct ip *const ip = mtod(m, struct ip *);
+	const struct ip *const ip = mtod(m, const struct ip *);
 	struct ipflow *ipf;
 	size_t hash;
 	int s;

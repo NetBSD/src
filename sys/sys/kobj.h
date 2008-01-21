@@ -1,11 +1,8 @@
-/* $NetBSD: lkminit_emul.c,v 1.5 2005/02/26 22:58:57 perry Exp $ */
+/*	$NetBSD: kobj.h,v 1.5.2.2 2008/01/21 09:47:50 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Michael Graff <explorer@flame.org>.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,37 +33,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.5 2005/02/26 22:58:57 perry Exp $");
+#ifndef _SYS_KOBJ_H_
+#define	_SYS_KOBJ_H_
 
-#include <sys/param.h>
-#include <sys/ioctl.h>
-#include <sys/systm.h>
-#include <sys/conf.h>
-#include <sys/mount.h>
-#include <sys/exec.h>
-#include <sys/lkm.h>
-#include <sys/file.h>
-#include <sys/errno.h>
+typedef struct kobj *kobj_t;
 
-extern const struct emul emul_hpux;
+/* External interface. */
+int		kobj_open_file(kobj_t *, const char *);
+int		kobj_open_mem(kobj_t *, void *, ssize_t);
+void		kobj_close(kobj_t);
+int		kobj_load(kobj_t);
+void		kobj_unload(kobj_t);
+void		kobj_stat(kobj_t, vaddr_t *, size_t *);
+int		kobj_set_name(kobj_t, const char *);
+int		kobj_find_section(kobj_t, const char *, void **, size_t *);
 
-int compat_hpux_lkmentry __P((struct lkm_table *, int, int));
+/* MI-MD interface. */
+uintptr_t	kobj_sym_lookup(kobj_t, uintptr_t);
+int		kobj_reloc(kobj_t, uintptr_t, const void *, bool, bool);
+int		kobj_machdep(kobj_t, void *, size_t, bool);
 
-/*
- * declare the emulation
- */
-MOD_COMPAT("compat_hpux", -1, &emul_hpux);
-
-/*
- * entry point
- */
-int
-compat_hpux_lkmentry(lkmtp, cmd, ver)
-	struct lkm_table *lkmtp;
-	int cmd;
-	int ver;
-{
-
-	DISPATCH(lkmtp, cmd, ver, lkm_nofunc, lkm_nofunc, lkm_nofunc);
-}
+#endif /* !_SYS_KOBJ_H_ */

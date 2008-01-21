@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_vfs.c,v 1.4 2005/02/26 22:58:59 perry Exp $ */
+/* $NetBSD: lkminit_vfs.c,v 1.4.4.1 2008/01/21 09:46:50 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4 2005/02/26 22:58:59 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4.4.1 2008/01/21 09:46:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_vfs.c,v 1.4 2005/02/26 22:58:59 perry Exp $"
 
 #include <fs/smbfs/smbfs_subr.h>
 
-int smbfs_lkmentry __P((struct lkm_table *, int, int));
+int smbfs_lkmentry(struct lkm_table *, int, int);
 
 /*
  * This is the vfsops table for the file system in question
@@ -70,8 +70,8 @@ MOD_VFS("smbfs", -1, &smbfs_vfsops);
 /*
  * take care of fs specific sysctl nodes
  */
-static int load __P((struct lkm_table *, int));
-static int unload __P((struct lkm_table *, int));
+static int load(struct lkm_table *, int);
+static int unload(struct lkm_table *, int);
 static struct sysctllog *_smbfs_log;
 
 /*

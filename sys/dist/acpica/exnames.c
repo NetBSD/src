@@ -1,8 +1,9 @@
+/*	$NetBSD: exnames.c,v 1.1.14.3 2008/01/21 09:45:14 yamt Exp $	*/
 
 /******************************************************************************
  *
  * Module Name: exnames - interpreter/scanner name load/execute
- *              xRevision: 1.107 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -10,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -116,13 +117,13 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exnames.c,v 1.1.14.3 2008/01/21 09:45:14 yamt Exp $");
 
 #define __EXNAMES_C__
 
-#include "acpi.h"
-#include "acinterp.h"
-#include "amlcode.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/amlcode.h>
 
 #define _COMPONENT          ACPI_EXECUTER
         ACPI_MODULE_NAME    ("exnames")
@@ -165,7 +166,7 @@ AcpiExAllocateNameString (
     char                    *NameString;
     UINT32                   SizeNeeded;
 
-    ACPI_FUNCTION_TRACE ("ExAllocateNameString");
+    ACPI_FUNCTION_TRACE (ExAllocateNameString);
 
 
     /*
@@ -188,7 +189,7 @@ AcpiExAllocateNameString (
      * Allocate a buffer for the name.
      * This buffer must be deleted by the caller!
      */
-    NameString = ACPI_MEM_ALLOCATE (SizeNeeded);
+    NameString = ACPI_ALLOCATE (SizeNeeded);
     if (!NameString)
     {
         ACPI_ERROR ((AE_INFO,
@@ -263,7 +264,7 @@ AcpiExNameSegment (
     char                    CharBuf[5];
 
 
-    ACPI_FUNCTION_TRACE ("ExNameSegment");
+    ACPI_FUNCTION_TRACE (ExNameSegment);
 
 
     /*
@@ -281,7 +282,7 @@ AcpiExNameSegment (
     ACPI_DEBUG_PRINT ((ACPI_DB_LOAD, "Bytes from stream:\n"));
 
     for (Index = 0;
-        (Index < ACPI_NAME_SIZE) && (AcpiUtValidAcpiCharacter (*AmlAddress));
+        (Index < ACPI_NAME_SIZE) && (AcpiUtValidAcpiChar (*AmlAddress, 0));
         Index++)
     {
         CharBuf[Index] = *AmlAddress++;
@@ -369,7 +370,7 @@ AcpiExGetNameString (
     BOOLEAN                 HasPrefix = FALSE;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("ExGetNameString", AmlAddress);
+    ACPI_FUNCTION_TRACE_PTR (ExGetNameString, AmlAddress);
 
 
     if (ACPI_TYPE_LOCAL_REGION_FIELD == DataType   ||
@@ -549,7 +550,7 @@ AcpiExGetNameString (
     {
         if (NameString)
         {
-            ACPI_MEM_FREE (NameString);
+            ACPI_FREE (NameString);
         }
         return_ACPI_STATUS (Status);
     }

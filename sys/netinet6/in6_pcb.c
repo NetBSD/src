@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.67.2.6 2007/12/07 17:34:35 yamt Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.67.2.7 2008/01/21 09:47:22 yamt Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.67.2.6 2007/12/07 17:34:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.67.2.7 2008/01/21 09:47:22 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -344,6 +344,7 @@ in6_pcbbind(void *v, struct mbuf *nam, struct lwp *l)
 int
 in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 {
+	struct rtentry *rt;
 	struct in6pcb *in6p = v;
 	struct in6_addr *in6a = NULL;
 	struct sockaddr_in6 *sin6 = mtod(nam, struct sockaddr_in6 *);
@@ -436,8 +437,8 @@ in6_pcbconnect(void *v, struct mbuf *nam, struct lwp *l)
 			return (error);
 		}
 	}
-	if (ifp == NULL && in6p->in6p_route.ro_rt != NULL)
-		ifp = in6p->in6p_route.ro_rt->rt_ifp;
+	if (ifp == NULL && (rt = rtcache_validate(&in6p->in6p_route)) != NULL)
+		ifp = rt->rt_ifp;
 
 	in6p->in6p_ip6.ip6_hlim = (u_int8_t)in6_selecthlim(in6p, ifp);
 
@@ -566,6 +567,7 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
     u_int fport_arg, const struct sockaddr *src, u_int lport_arg, int cmd,
     void *cmdarg, void (*notify)(struct in6pcb *, int))
 {
+	struct rtentry *rt;
 	struct in6pcb *in6p, *nin6p;
 	struct sockaddr_in6 sa6_src;
 	const struct sockaddr_in6 *sa6_dst;
@@ -646,8 +648,8 @@ in6_pcbnotify(struct inpcbtable *table, const struct sockaddr *dst,
 		 */
 		if ((PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD) &&
 		    IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_laddr) &&
-		    in6p->in6p_route.ro_rt != NULL &&
-		    !(in6p->in6p_route.ro_rt->rt_flags & RTF_HOST)) {
+		    (rt = rtcache_validate(&in6p->in6p_route)) != NULL &&
+		    !(rt->rt_flags & RTF_HOST)) {
 			const struct sockaddr_in6 *dst6;
 
 			dst6 = (const struct sockaddr_in6 *)
@@ -750,6 +752,7 @@ in6_pcbpurgeif0(struct inpcbtable *table, struct ifnet *ifp)
 void
 in6_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 {
+	struct rtentry *rt;
 	struct in6pcb *in6p, *nin6p;
 
 	for (in6p = (struct in6pcb *)CIRCLEQ_FIRST(&table->inpt_queue);
@@ -758,8 +761,8 @@ in6_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 		nin6p = (struct in6pcb *)CIRCLEQ_NEXT(in6p, in6p_queue);
 		if (in6p->in6p_af != AF_INET6)
 			continue;
-		if (in6p->in6p_route.ro_rt != NULL &&
-		    in6p->in6p_route.ro_rt->rt_ifp == ifp)
+		if ((rt = rtcache_validate(&in6p->in6p_route)) != NULL &&
+		    rt->rt_ifp == ifp)
 			in6_rtchange(in6p, 0);
 	}
 }
@@ -779,22 +782,23 @@ in6_losing(struct in6pcb *in6p)
 	if (in6p->in6p_af != AF_INET6)
 		return;
 
-	if ((rt = in6p->in6p_route.ro_rt) != NULL) {
-		memset(&info, 0, sizeof(info));
-		info.rti_info[RTAX_DST] = rtcache_getdst(&in6p->in6p_route);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
-		if (rt->rt_flags & RTF_DYNAMIC) {
-			(void)rtrequest(RTM_DELETE, rt_getkey(rt),
-			    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
-		}
-		rtcache_free(&in6p->in6p_route);
-		/*
-		 * A new route can be allocated
-		 * the next time output is attempted.
-		 */
+	if ((rt = rtcache_validate(&in6p->in6p_route)) == NULL)
+		return;
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = rtcache_getdst(&in6p->in6p_route);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
+	if (rt->rt_flags & RTF_DYNAMIC) {
+		(void)rtrequest(RTM_DELETE, rt_getkey(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
 	}
+	/*
+	 * A new route can be allocated
+	 * the next time output is attempted.
+	 */
+	rtcache_free(&in6p->in6p_route);
 }
 
 /*
@@ -902,6 +906,7 @@ in6_pcblookup_port(struct inpcbtable *table, struct in6_addr *laddr6,
 struct rtentry *
 in6_pcbrtentry(struct in6pcb *in6p)
 {
+	struct rtentry *rt;
 	struct route *ro;
 	union {
 		const struct sockaddr *sa;
@@ -924,19 +929,17 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		KASSERT(IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr));
 		if (cdst.sa4->sin_addr.s_addr != in6p->in6p_faddr.s6_addr32[3])
 			rtcache_free(ro);
-		else
-			rtcache_check(ro);
 	}
 #endif
 	else {
 		if (!IN6_ARE_ADDR_EQUAL(&cdst.sa6->sin6_addr,
 					&in6p->in6p_faddr))
 			rtcache_free(ro);
-		else
-			rtcache_check(ro);
 	}
+	if ((rt = rtcache_validate(ro)) == NULL)
+		rt = rtcache_update(ro, 1);
 #ifdef INET
-	if (ro->ro_rt == NULL && IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
+	if (rt == NULL && IN6_IS_ADDR_V4MAPPED(&in6p->in6p_faddr)) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_in	dst4;
@@ -948,10 +951,10 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		sockaddr_in_init(&u.dst4, &addr, 0);
 		rtcache_setdst(ro, &u.dst);
 
-		rtcache_init(ro);
+		rt = rtcache_init(ro);
 	} else
 #endif
-	if (ro->ro_rt == NULL && !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
+	if (rt == NULL && !IN6_IS_ADDR_UNSPECIFIED(&in6p->in6p_faddr)) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_in6	dst6;
@@ -960,9 +963,9 @@ in6_pcbrtentry(struct in6pcb *in6p)
 		sockaddr_in6_init(&u.dst6, &in6p->in6p_faddr, 0, 0, 0);
 		rtcache_setdst(ro, &u.dst);
 
-		rtcache_init(ro);
+		rt = rtcache_init(ro);
 	}
-	return ro->ro_rt;
+	return rt;
 }
 
 struct in6pcb *

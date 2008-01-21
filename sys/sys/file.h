@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.53.6.3 2007/10/27 11:36:29 yamt Exp $	*/
+/*	$NetBSD: file.h,v 1.53.6.4 2008/01/21 09:47:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -120,22 +120,29 @@ do {									\
 
 /*
  * FILE_USE() must be called with the file lock held.
- * (Typical usage is: `fp = fd_getfile(..); FILE_USE(fp);'
  * and fd_getfile() returns the file locked)
+ * Typical usage is either:
+ *    fp = fd_getfile(..); FILE_USE(fp); ...; FILE_UNUSE(fp, l);
+ * or:
+ *    fp = fd_getfile(..); ...; FILE_UNLOCK(fp);
  */
+
+#define FILE_LOCK(fp) mutex_enter(&(fp)->f_lock)
+#define FILE_UNLOCK(fp) mutex_exit(&(fp)->f_lock)
+
 #define	FILE_USE(fp)							\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
-	mutex_exit(&(fp)->f_lock);					\
+	FILE_UNLOCK(fp);						\
 } while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
-		mutex_enter(&(fp)->f_lock);				\
+		FILE_LOCK(fp);						\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
-		mutex_exit(&(fp)->f_lock);				\
+		FILE_UNLOCK(fp);					\
 		/* Will drop usecount */				\
 		(void) closef((fp), (l));				\
 		break;							\
@@ -143,7 +150,7 @@ do {									\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
-	mutex_exit(&(fp)->f_lock);					\
+	FILE_UNLOCK(fp);						\
 } while (/* CONSTCOND */ 0)
 #define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
 #define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
@@ -156,8 +163,8 @@ do {									\
 
 LIST_HEAD(filelist, file);
 extern struct filelist	filehead;	/* head of list of open files */
-extern int		maxfiles;	/* kernel limit on # of open files */
-extern int		nfiles;		/* actual number of open files */
+extern u_int		maxfiles;	/* kernel limit on # of open files */
+extern u_int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 

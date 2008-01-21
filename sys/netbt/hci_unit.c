@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_unit.c,v 1.1.2.7 2007/12/07 17:34:25 yamt Exp $	*/
+/*	$NetBSD: hci_unit.c,v 1.1.2.8 2008/01/21 09:47:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.1.2.7 2007/12/07 17:34:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_unit.c,v 1.1.2.8 2008/01/21 09:47:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,6 +57,22 @@ MALLOC_DEFINE(M_BLUETOOTH, "Bluetooth", "Bluetooth System Memory");
 int hci_eventq_max = 20;
 int hci_aclrxq_max = 50;
 int hci_scorxq_max = 50;
+
+/*
+ * This is the default minimum command set supported by older
+ * devices. Anything conforming to 1.2 spec or later will get
+ * updated during init.
+ */
+static const uint8_t hci_cmds_v10[HCI_COMMANDS_SIZE] = {
+	0xff, 0xff, 0xff, 0x01, 0xfe, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0x7f, 0x32, 0x03, 0xb8, 0xfe,
+	0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
 
 /*
  * bluetooth unit functions
@@ -139,6 +155,8 @@ hci_enable(struct hci_unit *unit)
 	 */
 	unit->hci_acl_mask = HCI_PKT_DM1 | HCI_PKT_DH1;
 	unit->hci_packet_type = unit->hci_acl_mask;
+
+	memcpy(unit->hci_cmds, hci_cmds_v10, HCI_COMMANDS_SIZE);
 
 	unit->hci_rxint = softint_establish(SOFTINT_NET, &hci_intr, unit);
 	if (unit->hci_rxint == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.13.2.7 2007/12/07 17:32:02 yamt Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.13.2.8 2008/01/21 09:45:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.13.2.7 2007/12/07 17:32:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.13.2.8 2008/01/21 09:45:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -562,7 +562,7 @@ puffs_msg_sendresp(struct puffs_mount *pmp, struct puffs_req *origpreq, int rv)
 	struct puffs_msgpark *park;
 	struct puffs_req *preq;
 
-	puffs_msgmem_alloc(sizeof(struct puffs_req), &park, (void **)&preq, 1);
+	puffs_msgmem_alloc(sizeof(struct puffs_req), &park, (void *)&preq, 1);
 	puffs_msg_setfaf(park); /* XXXXXX: avoids reqid override */
 
 	memcpy(preq, origpreq, sizeof(struct puffs_req));
@@ -927,7 +927,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 			break;
 		}
 
-		simple_lock(&vp->v_uobj.vmobjlock);
+		mutex_enter(&vp->v_uobj.vmobjlock);
 		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
 		break;
 
@@ -1032,18 +1032,18 @@ puffs_msgif_close(void *this)
 	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt++;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 
 	mutex_enter(&syncer_mutex);
 
-	simple_lock(&mp->mnt_slock);
+	mutex_enter(&mp->mnt_mutex);
 	mp->mnt_wcnt--;
 	if (mp->mnt_wcnt == 0)
 		wakeup(&mp->mnt_wcnt);
 	gone = mp->mnt_iflag & IMNT_GONE;
-	simple_unlock(&mp->mnt_slock);
+	mutex_exit(&mp->mnt_mutex);
 	if (gone) {
 		mutex_exit(&syncer_mutex);
 		return 0;

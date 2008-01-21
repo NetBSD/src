@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.16.2.2 2007/09/03 14:46:31 yamt Exp $ */
+/* $NetBSD: pipe.h,v 1.16.2.3 2008/01/21 09:47:56 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -87,9 +87,6 @@ struct pipemapping {
  * Bits in pipe_state.
  */
 #define PIPE_ASYNC	0x001	/* Async I/O */
-#define PIPE_WANTR	0x002	/* Reader wants some characters */
-#define PIPE_WANTW	0x004	/* Writer wants space to put characters */
-#define PIPE_WANTCLOSE	0x008	/* Pipe is wanted to be run-down */
 #define PIPE_EOF	0x010	/* Pipe is in EOF condition */
 #define PIPE_SIGNALR	0x020	/* Do selwakeup() on read(2) */
 #define PIPE_DIRECTW	0x040	/* Pipe in direct write mode setup */
@@ -104,7 +101,7 @@ struct pipemapping {
  * Two of these are linked together to produce bi-directional pipes.
  */
 struct pipe {
-	kmutex_t pipe_lock;		/* pipe mutex */
+	kmutex_t *pipe_lock;		/* pipe mutex */
 	kcondvar_t pipe_cv;		/* general synchronization */
 	kcondvar_t pipe_lkcv;		/* locking */
 	struct	pipebuf pipe_buffer;	/* data storage */

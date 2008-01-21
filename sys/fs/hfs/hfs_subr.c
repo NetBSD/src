@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.3.12.4 2007/12/07 17:31:55 yamt Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.3.12.5 2008/01/21 09:45:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.3.12.4 2007/12/07 17:31:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.3.12.5 2008/01/21 09:45:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 			    vp->v_vflag &= ~VV_LOCKSWORK;
 			    VOP_UNLOCK(vp, 0);
 			    vp->v_op = specops;
-			    vrele(vp);
 			    vgone(vp);
 			    lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
 				    &nvp->v_interlock);

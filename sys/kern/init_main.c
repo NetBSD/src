@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp $	*/
+/*	$NetBSD: init_main.c,v 1.248.2.8 2008/01/21 09:45:59 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.8 2008/01/21 09:45:59 yamt Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -79,7 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp
 #include "opt_posix.h"
 #include "opt_syscall_debug.h"
 #include "opt_sysv.h"
-#include "opt_systrace.h"
 #include "opt_fileassoc.h"
 #include "opt_ktrace.h"
 #include "opt_pax.h"
@@ -116,6 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp
 #include <sys/exec.h>
 #include <sys/socketvar.h>
 #include <sys/protosw.h>
+#include <sys/percpu.h>
+#include <sys/sysctl.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
 #include <sys/sysctl.h>
@@ -130,6 +131,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp
 #include <sys/disk.h>
 #include <sys/mqueue.h>
 #include <sys/msgbuf.h>
+#include <sys/module.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -141,9 +143,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp
 #endif
 #ifdef SYSVMSG
 #include <sys/msg.h>
-#endif
-#ifdef SYSTRACE
-#include <sys/systrace.h>
 #endif
 #ifdef P1003_1B_SEMAPHORE
 #include <sys/ksem.h>
@@ -169,9 +168,10 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.248.2.7 2007/12/07 17:32:35 yamt Exp
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 #include <sys/pax.h>
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
+
 #include <ufs/ufs/quota.h>
 
 #include <miscfs/genfs/genfs.h>
@@ -245,9 +245,7 @@ __secmodel_none(void)
 void
 main(void)
 {
-#ifdef __HAVE_TIMECOUNTER
 	struct timeval time;
-#endif
 	struct lwp *l;
 	struct proc *p;
 	struct pdevinit *pdev;
@@ -265,18 +263,6 @@ main(void)
 #endif
 
 	/*
-	 * XXX This is a temporary check to be removed before
-	 * NetBSD 5.0 is released.
-	 */
-#if !defined(__i386__ ) && !defined(__x86_64__)
-	if (curlwp != l) {
-		printf("NOTICE: curlwp should be set before main()\n");
-		DELAY(250000);
-		curlwp = l;
-	}
-#endif
-
-	/*
 	 * Attempt to find console and initialize
 	 * in case of early panic or other messages.
 	 */
@@ -288,11 +274,16 @@ main(void)
 
 	kmem_init();
 
+	percpu_init();
+
 	/* Initialize the extent manager. */
 	extent_init();
 
 	/* Do machine-dependent initialization. */
 	cpu_startup();
+
+	/* Start module system. */
+	module_init();
 
 	/* Initialize callouts, part 1. */
 	callout_startup();
@@ -310,12 +301,6 @@ main(void)
 
 	/* Initialize the buffer cache */
 	bufinit();
-
-	/*
-	 * Initialize mbuf's.  Do this now because we might attempt to
-	 * allocate mbufs or mbuf clusters during autoconfiguration.
-	 */
-	mbinit();
 
 	/* Initialize sockets. */
 	soinit();
@@ -335,6 +320,9 @@ main(void)
 	/* Initialize signal-related data structures. */
 	signal_init();
 
+	/* Initialize resource management. */
+	resource_init();
+
 	/* Create process 0 (the swapper). */
 	proc0_init();
 
@@ -353,9 +341,18 @@ main(void)
 	turnstile_init();
 	sleeptab_init(&sleeptab);
 
+	/* Initialize processor-sets */
+	psets_init();
+
 	/* MI initialization of the boot cpu */
 	error = mi_cpu_attach(curcpu());
 	KASSERT(error == 0);
+
+	/*
+	 * Initialize mbuf's.  Do this now because we might attempt to
+	 * allocate mbufs or mbuf clusters during autoconfiguration.
+	 */
+	mbinit();
 
 	/* Initialize the sysctl subsystem. */
 	sysctl_init();
@@ -411,10 +408,8 @@ main(void)
 	sysmon_wdog_init();
 #endif
 
-#ifdef __HAVE_TIMECOUNTER
 	inittimecounter();
 	ntp_init();
-#endif /* __HAVE_TIMECOUNTER */
 
 	/* Initialize the device switch tables. */
 	devsw_init();
@@ -422,6 +417,9 @@ main(void)
 	/* Initialize tty subsystem. */
 	tty_init();
 	ttyldisc_init();
+
+	/* Initialize the buffer cache, part 2. */
+	bufinit2();
 
 	/* Initialize the disk wedge subsystem. */
 	dkwedge_init();
@@ -457,10 +455,6 @@ main(void)
 	/* Lock the kernel on behalf of proc0. */
 	KERNEL_LOCK(1, l);
 
-#ifdef SYSTRACE
-	systrace_init();
-#endif
-
 #ifdef SYSVSHM
 	/* Initialize System V style shared memory. */
 	shminit();
@@ -488,9 +482,9 @@ main(void)
 	veriexec_init();
 #endif /* NVERIEXEC > 0 */
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD)
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
 	pax_init();
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 	/* Attach pseudo-devices. */
 	for (pdev = pdevinit; pdev->pdev_attach != NULL; pdev++)
@@ -555,6 +549,13 @@ main(void)
 		(void) tsleep(&config_pending, PWAIT, "cfpend", hz);
 
 	/*
+	 * Load any remaining builtin modules, and hand back temporary
+	 * storage to the VM system.
+	 */
+	module_init_class(MODULE_CLASS_ANY);
+	module_jettison();
+
+	/*
 	 * Finalize configuration now that all real devices have been
 	 * found.  This needs to be done before the root device is
 	 * selected, since finalization may create the root device.
@@ -616,11 +617,7 @@ main(void)
 	 * from the file system.  Reset l->l_rtime as it may have been
 	 * munched in mi_switch() after the time got set.
 	 */
-#ifdef __HAVE_TIMECOUNTER
 	getmicrotime(&time);
-#else
-	mono_time = time;
-#endif
 	boottime = time;
 	mutex_enter(&proclist_lock);
 	LIST_FOREACH(p, &allproc, p_list) {
@@ -629,13 +626,13 @@ main(void)
 		p->p_stats->p_start = time;
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lwp_lock(l);
-			l->l_rtime.tv_sec = l->l_rtime.tv_usec = 0;
+			memset(&l->l_rtime, 0, sizeof(l->l_rtime));
 			lwp_unlock(l);
 		}
 		mutex_exit(&p->p_smutex);
 	}
 	mutex_exit(&proclist_lock);
-	curlwp->l_stime = time;
+	binuptime(&curlwp->l_stime);
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci->ci_schedstate.spc_lastmod = time_second;
@@ -643,17 +640,18 @@ main(void)
 
 	/* Create the pageout daemon kernel thread. */
 	uvm_swap_init();
-	if (kthread_create(PRI_PGDAEMON, 0, NULL, uvm_pageout,
+	if (kthread_create(PRI_PGDAEMON, KTHREAD_MPSAFE, NULL, uvm_pageout,
 	    NULL, NULL, "pgdaemon"))
 		panic("fork pagedaemon");
 
 	/* Create the filesystem syncer kernel thread. */
-	if (kthread_create(PRI_IOFLUSH, 0, NULL, sched_sync, NULL, NULL, "ioflush"))
+	if (kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL, sched_sync,
+	    NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
 	/* Create the aiodone daemon kernel thread. */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PRI_VM, IPL_BIO, 0))
+	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
 		panic("fork aiodoned");
 
 	vmem_rehash_start();
@@ -678,7 +676,7 @@ check_console(struct lwp *l)
 	struct nameidata nd;
 	int error;
 
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console");
 	error = namei(&nd);
 	if (error == 0)
 		vrele(nd.ni_vp);

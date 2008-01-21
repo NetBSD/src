@@ -1,4 +1,4 @@
-/* $NetBSD: zalloc.c,v 1.3.44.1 2006/06/21 15:10:23 yamt Exp $ */
+/* $NetBSD: zalloc.c,v 1.3.44.2 2008/01/21 09:46:39 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -46,24 +46,20 @@
  */
 
 voidpf
-zcalloc(opaque, items, size)
-	voidpf opaque;
-	unsigned items;
-	unsigned size;
+zcalloc(voidpf opaque, unsigned int items, unsigned int size)
 {
-	unsigned totalsize;
+	unsigned int totalsize;
 
 	totalsize = items * size;
 	opaque = alloc(totalsize);
 	if (opaque != NULL)
 		bzero(opaque, totalsize);
-	return(opaque);
+	return opaque;
 }
 
 void
-zcfree(opaque, ptr)
-	voidpf opaque;
-	voidpf ptr;
+zcfree(voidpf opaque, voidpf ptr)
 {
+
 	dealloc(ptr, 0);	/* XXX: size not known */
 }

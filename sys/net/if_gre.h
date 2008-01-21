@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.14.4.6 2007/12/07 17:34:16 yamt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.14.4.7 2008/01/21 09:47:03 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@ struct gre_h {
 	struct gre_sre[] routing Routing fileds (see below)
 				Present if (rt_pres == 1)
  */
-} __attribute__((__packed__));
+} __packed;
 
 #define GRE_CP		0x8000  /* Checksum Present */
 #define GRE_RP		0x4000  /* Routing Present */

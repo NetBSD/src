@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.32.6.3 2007/10/27 11:36:36 yamt Exp $	*/
+/*	$NetBSD: unistd.h,v 1.32.6.4 2008/01/21 09:48:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -87,6 +87,8 @@
 #define	_POSIX_MESSAGE_PASSING	200112L
 				/* monotonic clock */
 #define	_POSIX_MONOTONIC_CLOCK	200112L
+				/* priority scheduling */
+#define	_POSIX_PRIORITY_SCHEDULING	200112L
 				/* threads */
 #define	_POSIX_THREADS		200112L
 				/* semaphores */
@@ -206,11 +208,16 @@
 #define	_SC_MESSAGE_PASSING	53
 #define	_SC_MQ_OPEN_MAX		54
 #define	_SC_MQ_PRIO_MAX		55
+#define	_SC_PRIORITY_SCHEDULING	56
 
 #ifdef _NETBSD_SOURCE
 /* Commonly provided sysconf() extensions */
 #define	_SC_NPROCESSORS_CONF	1001
 #define	_SC_NPROCESSORS_ONLN	1002
+/* Native variables */
+#define	_SC_SCHED_RT_TS		2001
+#define	_SC_SCHED_PRI_MIN	2002
+#define	_SC_SCHED_PRI_MAX	2003
 #endif	/* _NETBSD_SOURCE */
 
 /* configurable system strings */

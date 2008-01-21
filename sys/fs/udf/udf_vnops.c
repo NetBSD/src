@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.6.4.7 2007/12/07 17:32:14 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.6.4.8 2008/01/21 09:45:56 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_vnops.c,v 1.6.4.7 2007/12/07 17:32:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.6.4.8 2008/01/21 09:45:56 yamt Exp $");
 #endif /* not lint */
 
 
@@ -85,9 +85,6 @@ udf_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("udf_inactive(): pushing active", vp);
-
 	VOP_UNLOCK(vp, 0);
 
 	DPRINTF(LOCKING, ("udf_inactive called for node %p\n", VTOI(vp)));
@@ -112,7 +109,7 @@ udf_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct udf_node *node = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("udf_reclaim(): pushing active", vp);
 
 	/* purge old data from namei */
@@ -842,11 +839,11 @@ udf_close(void *v)
 	DPRINTF(CALL, ("udf_close called\n"));
 	udf_node = udf_node;	/* shut up gcc */
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 		if (vp->v_usecount > 1) {
 			/* TODO update times */
 		}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.135.2.4 2007/09/03 14:44:09 yamt Exp $	*/
+/*	$NetBSD: key.c,v 1.135.2.5 2008/01/21 09:47:30 yamt Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.135.2.4 2007/09/03 14:44:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.135.2.5 2008/01/21 09:47:30 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -6993,7 +6993,7 @@ key_register(so, m, mhp)
 	}
 #endif
 
-#ifdef DIGAGNOSTIC
+#ifdef DIAGNOSTIC
 	if (off != len)
 		panic("length assumption failed in key_register");
 #endif

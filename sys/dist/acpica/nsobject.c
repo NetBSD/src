@@ -1,8 +1,10 @@
+/*	$NetBSD: nsobject.c,v 1.1.14.3 2008/01/21 09:45:20 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: nsobject - Utilities for objects attached to namespace
  *                         table entries
- *              xRevision: 1.96 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -10,7 +12,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,14 +117,13 @@
  *
  *****************************************************************************/
 
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nsobject.c,v 1.1.14.3 2008/01/21 09:45:20 yamt Exp $");
 
 #define __NSOBJECT_C__
 
-#include "acpi.h"
-#include "acnamesp.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acnamesp.h>
 
 
 #define _COMPONENT          ACPI_NAMESPACE
@@ -161,7 +162,7 @@ AcpiNsAttachObject (
     ACPI_OBJECT_TYPE        ObjectType = ACPI_TYPE_ANY;
 
 
-    ACPI_FUNCTION_TRACE ("NsAttachObject");
+    ACPI_FUNCTION_TRACE (NsAttachObject);
 
 
     /*
@@ -301,7 +302,7 @@ AcpiNsDetachObject (
     ACPI_OPERAND_OBJECT     *ObjDesc;
 
 
-    ACPI_FUNCTION_TRACE ("NsDetachObject");
+    ACPI_FUNCTION_TRACE (NsDetachObject);
 
 
     ObjDesc = Node->Object;
@@ -356,7 +357,7 @@ ACPI_OPERAND_OBJECT *
 AcpiNsGetAttachedObject (
     ACPI_NAMESPACE_NODE     *Node)
 {
-    ACPI_FUNCTION_TRACE_PTR ("NsGetAttachedObject", Node);
+    ACPI_FUNCTION_TRACE_PTR (NsGetAttachedObject, Node);
 
 
     if (!Node)
@@ -394,7 +395,7 @@ ACPI_OPERAND_OBJECT *
 AcpiNsGetSecondaryObject (
     ACPI_OPERAND_OBJECT     *ObjDesc)
 {
-    ACPI_FUNCTION_TRACE_PTR ("NsGetSecondaryObject", ObjDesc);
+    ACPI_FUNCTION_TRACE_PTR (NsGetSecondaryObject, ObjDesc);
 
 
     if ((!ObjDesc)                                                ||

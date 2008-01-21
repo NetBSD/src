@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.11.4.6 2007/12/07 17:32:15 yamt Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.11.4.7 2008/01/21 09:45:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.11.4.6 2007/12/07 17:32:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.11.4.7 2008/01/21 09:45:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1093,7 +1093,7 @@ union_revoke(v)
 		VOP_REVOKE(UPPERVP(vp), ap->a_flags);
 	if (LOWERVP(vp))
 		VOP_REVOKE(LOWERVP(vp), ap->a_flags);
-	vgone(vp);
+	vgone(vp);	/* XXXAD?? */
 	return (0);
 }
 
@@ -1200,7 +1200,7 @@ union_remove(v)
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_vp);
 
-		if (union_dowhiteout(un, cnp->cn_cred, cnp->cn_lwp))
+		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_REMOVE(dvp, vp, cnp);
 		if (!error)
@@ -1228,7 +1228,6 @@ union_link(v)
 	} */ *ap = v;
 	int error = 0;
 	struct componentname *cnp = ap->a_cnp;
-	struct lwp *l = cnp->cn_lwp;
 	struct union_node *dun;
 	struct vnode *vp;
 	struct vnode *dvp;
@@ -1256,7 +1255,7 @@ union_link(v)
 				dun->un_flags &= ~UN_ULOCK;
 				VOP_UNLOCK(dun->un_uppervp, 0);
 			}
-			error = union_copyup(un, 1, cnp->cn_cred, l);
+			error = union_copyup(un, 1, cnp->cn_cred, curlwp);
 			if (dun->un_uppervp == un->un_dirvp) {
 				/*
 				 * During copyup, we dropped the lock on the
@@ -1481,7 +1480,7 @@ union_rmdir(v)
 		un->un_flags |= UN_KLOCK;
 		vput(ap->a_vp);
 
-		if (union_dowhiteout(un, cnp->cn_cred, cnp->cn_lwp))
+		if (union_dowhiteout(un, cnp->cn_cred))
 			cnp->cn_flags |= DOWHITEOUT;
 		error = VOP_RMDIR(dvp, vp, ap->a_cnp);
 		if (!error)
@@ -1620,6 +1619,7 @@ union_inactive(v)
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct union_node *un = VTOUNION(vp);
@@ -1645,10 +1645,8 @@ union_inactive(v)
 		un->un_dircache = 0;
 	}
 
+	*ap->a_recycle = ((un->un_flags & UN_CACHED) == 0);
 	VOP_UNLOCK(vp, 0);
-
-	if ((un->un_flags & UN_CACHED) == 0)
-		vgone(vp);
 
 	return (0);
 }
@@ -1678,9 +1676,6 @@ union_lock(v)
 	int flags = ap->a_flags;
 	struct union_node *un;
 	int error;
-#ifdef DIAGNOSTIC
-	int drain = 0;
-#endif
 
 	/* XXX unionfs can't handle shared locks yet */
 	if ((flags & LK_TYPE_MASK) == LK_SHARED) {
@@ -1700,30 +1695,6 @@ union_lock(v)
 	flags &= ~LK_INTERLOCK;
 
 	un = VTOUNION(vp);
-#ifdef DIAGNOSTIC
-	if (un->un_flags & (UN_DRAINING|UN_DRAINED)) {
-		if (un->un_flags & UN_DRAINED)
-			panic("union: %p: warning: locking decommissioned lock", vp);
-		if ((flags & LK_TYPE_MASK) != LK_RELEASE)
-			panic("union: %p: non-release on draining lock: %d",
-			    vp, flags & LK_TYPE_MASK);
-		un->un_flags &= ~UN_DRAINING;
-		if ((flags & LK_REENABLE) == 0)
-			un->un_flags |= UN_DRAINED;
-	}
-#endif
-
-	/*
-	 * Don't pass DRAIN through to sub-vnode lock; keep track of
-	 * DRAIN state at this level, and just get an exclusive lock
-	 * on the underlying vnode.
-	 */
-	if ((flags & LK_TYPE_MASK) == LK_DRAIN) {
-#ifdef DIAGNOSTIC
-		drain = 1;
-#endif
-		flags = LK_EXCLUSIVE | (flags & ~LK_TYPE_MASK);
-	}
 start:
 	un = VTOUNION(vp);
 
@@ -1765,8 +1736,6 @@ start:
 		un->un_pid = curproc->p_pid;
 	else
 		un->un_pid = -1;
-	if (drain)
-		un->un_flags |= UN_DRAINING;
 #endif
 
 	un->un_flags |= UN_LOCKED;
@@ -1800,8 +1769,6 @@ union_unlock(v)
 	if (curproc && un->un_pid != curproc->p_pid &&
 			curproc->p_pid > -1 && un->un_pid > -1)
 		panic("union: unlocking other process's union node");
-	if (un->un_flags & UN_DRAINED)
-		panic("union: %p: warning: unlocking decommissioned lock", ap->a_vp);
 #endif
 
 	un->un_flags &= ~UN_LOCKED;
@@ -1818,10 +1785,6 @@ union_unlock(v)
 
 #ifdef DIAGNOSTIC
 	un->un_pid = 0;
-	if (un->un_flags & UN_DRAINING) {
-		un->un_flags |= UN_DRAINED;
-		un->un_flags &= ~UN_DRAINING;
-	}
 #endif
 	genfs_nounlock(ap);
 
@@ -1985,8 +1948,8 @@ union_getpages(v)
 		return EBUSY;
 	}
 	ap->a_vp = OTHERVP(vp);
-	simple_unlock(&vp->v_interlock);
-	simple_lock(&ap->a_vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 	return error;
 }
@@ -2009,11 +1972,11 @@ union_putpages(v)
 	 */
 
 	ap->a_vp = OTHERVP(vp);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	if (ap->a_flags & PGO_RECLAIM) {
 		return 0;
 	}
-	simple_lock(&ap->a_vp->v_interlock);
+	mutex_enter(&ap->a_vp->v_interlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 	return error;
 }

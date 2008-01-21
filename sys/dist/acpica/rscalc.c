@@ -1,7 +1,9 @@
+/*	$NetBSD: rscalc.c,v 1.1.14.3 2008/01/21 09:45:23 yamt Exp $	*/
+
 /*******************************************************************************
  *
  * Module Name: rscalc - Calculate stream and list lengths
- *              xRevision: 1.75 $
+ *              $Revision: 1.1.14.3 $
  *
  ******************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,14 +117,14 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rscalc.c,v 1.1.14.2 2006/06/21 15:08:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rscalc.c,v 1.1.14.3 2008/01/21 09:45:23 yamt Exp $");
 
 #define __RSCALC_C__
 
-#include "acpi.h"
-#include "acresrc.h"
-#include "amlcode.h"
-#include "acnamesp.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acresrc.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acnamesp.h>
 
 #define _COMPONENT          ACPI_RESOURCES
         ACPI_MODULE_NAME    ("rscalc")
@@ -291,7 +293,7 @@ AcpiRsGetAmlLength (
     ACPI_RS_LENGTH          TotalSize;
 
 
-    ACPI_FUNCTION_TRACE ("RsGetAmlLength");
+    ACPI_FUNCTION_TRACE (RsGetAmlLength);
 
 
     /* Traverse entire list of internal resource descriptors */
@@ -450,7 +452,7 @@ AcpiRsGetListLength (
     UINT8                   MinimumAmlResourceLength;
 
 
-    ACPI_FUNCTION_TRACE ("RsGetListLength");
+    ACPI_FUNCTION_TRACE (RsGetListLength);
 
 
     *SizeNeeded = 0;
@@ -540,7 +542,7 @@ AcpiRsGetListLength (
              * included in the minimum descriptor size (reason for the -1)
              */
             ExtraStructBytes = (Buffer[1] - 1) * sizeof (UINT32);
-                
+
             /* Add the size of the optional ResourceSource */
 
             ExtraStructBytes += AcpiRsStreamOptionLength (
@@ -560,17 +562,17 @@ AcpiRsGetListLength (
          */
         BufferSize = AcpiGbl_ResourceStructSizes[ResourceIndex] +
                         ExtraStructBytes;
-        BufferSize = ACPI_ROUND_UP_TO_NATIVE_WORD (BufferSize);
+        BufferSize = (UINT32) ACPI_ROUND_UP_TO_NATIVE_WORD (BufferSize);
 
         *SizeNeeded += BufferSize;
 
         ACPI_DEBUG_PRINT ((ACPI_DB_RESOURCES,
-            "Type %.2X, Aml %.2X internal %.2X\n", 
+            "Type %.2X, AmlLength %.2X InternalLength %.2X\n",
             AcpiUtGetResourceType (AmlBuffer),
             AcpiUtGetDescriptorLength (AmlBuffer), BufferSize));
 
         /*
-         * Point to the next resource within the AML stream using the length 
+         * Point to the next resource within the AML stream using the length
          * contained in the resource descriptor header
          */
         AmlBuffer += AcpiUtGetDescriptorLength (AmlBuffer);
@@ -614,7 +616,7 @@ AcpiRsGetPciRoutingTableLength (
     UINT32                  TableIndex;
 
 
-    ACPI_FUNCTION_TRACE ("RsGetPciRoutingTableLength");
+    ACPI_FUNCTION_TRACE (RsGetPciRoutingTableLength);
 
 
     NumberOfElements = PackageObject->Package.Count;

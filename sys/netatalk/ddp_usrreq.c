@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.13.4.4 2007/09/03 14:42:31 yamt Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.13.4.5 2008/01/21 09:47:11 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.4 2007/09/03 14:42:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.5 2008/01/21 09:47:11 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -335,6 +335,7 @@ at_pcbconnect(ddp, addr, l)
 	struct mbuf    *addr;
 	struct lwp     *l;
 {
+	struct rtentry *rt;
 	const struct sockaddr_at *cdst;
 	struct sockaddr_at *sat = mtod(addr, struct sockaddr_at *);
 	struct route *ro;
@@ -365,14 +366,14 @@ at_pcbconnect(ddp, addr, l)
          * If we've changed our address, we may have an old "good looking"
          * route here.  Attempt to detect it.
          */
-	rtcache_check(ro);
-	if (ro->ro_rt != NULL) {
+	if ((rt = rtcache_validate(ro)) != NULL ||
+	    (rt = rtcache_update(ro, 1)) != NULL) {
 		if (hintnet) {
 			net = hintnet;
 		} else {
 			net = sat->sat_addr.s_net;
 		}
-		if ((ifp = ro->ro_rt->rt_ifp) != NULL) {
+		if ((ifp = rt->rt_ifp) != NULL) {
 			TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 				if (aa->aa_ifp == ifp &&
 				    ntohs(net) >= ntohs(aa->aa_firstnet) &&
@@ -385,13 +386,15 @@ at_pcbconnect(ddp, addr, l)
 		cdst = satocsat(rtcache_getdst(ro));
 		if (aa == NULL || (cdst->sat_addr.s_net !=
 		    (hintnet ? hintnet : sat->sat_addr.s_net) ||
-		    cdst->sat_addr.s_node != sat->sat_addr.s_node))
+		    cdst->sat_addr.s_node != sat->sat_addr.s_node)) {
 			rtcache_free(ro);
+			rt = NULL;
+		}
 	}
 	/*
          * If we've got no route for this interface, try to find one.
          */
-	if (ro->ro_rt == NULL) {
+	if (rt == NULL) {
 		union {
 			struct sockaddr		dst;
 			struct sockaddr_at	dsta;
@@ -402,12 +405,12 @@ at_pcbconnect(ddp, addr, l)
 			u.dsta.sat_addr.s_net = hintnet;
 		rtcache_setdst(ro, &u.dst);
 
-		rtcache_init(ro);
+		rt = rtcache_init(ro);
 	}
 	/*
          * Make sure any route that we have has a valid interface.
          */
-	if (ro->ro_rt != NULL && (ifp = ro->ro_rt->rt_ifp) != NULL) {
+	if (rt != NULL && (ifp = rt->rt_ifp) != NULL) {
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (aa->aa_ifp == ifp)
 				break;

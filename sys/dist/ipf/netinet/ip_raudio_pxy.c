@@ -1,7 +1,4 @@
-/*	$NetBSD: ip_raudio_pxy.c,v 1.2.4.1 2007/09/03 14:39:57 yamt Exp $	*/
-
-#include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.2.4.1 2007/09/03 14:39:57 yamt Exp $");
+/*	$NetBSD: ip_raudio_pxy.c,v 1.2.4.2 2008/01/21 09:45:39 yamt Exp $	*/
 
 /*
  * Copyright (C) 1998-2003 by Darren Reed
@@ -10,6 +7,9 @@ __KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.2.4.1 2007/09/03 14:39:57 yamt E
  *
  * Id: ip_raudio_pxy.c,v 1.40.2.4 2006/07/14 06:12:17 darrenr Exp
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(1, "$NetBSD: ip_raudio_pxy.c,v 1.2.4.2 2008/01/21 09:45:39 yamt Exp $");
 
 #define	IPF_RAUDIO_PROXY
 

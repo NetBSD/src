@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_subr.c,v 1.18.2.6 2007/12/07 17:34:12 yamt Exp $	*/
+/*	$NetBSD: sync_subr.c,v 1.18.2.7 2008/01/21 09:46:57 yamt Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18.2.6 2007/12/07 17:34:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18.2.7 2008/01/21 09:46:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: sync_subr.c,v 1.18.2.6 2007/12/07 17:34:12 yamt Exp 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
 
+static void	vn_syncer_add1(struct vnode *, int);
+
 /*
  * Defines and variables for the syncer process.
  */
@@ -58,9 +60,11 @@ time_t filedelay = 30;			/* time to delay syncing files */
 time_t dirdelay  = 15;			/* time to delay syncing directories */
 time_t metadelay = 10;			/* time to delay syncing metadata */
 
-kmutex_t syncer_mutex;			/* used to freeze syncer */
+kmutex_t syncer_mutex;			/* used to freeze syncer, long term */
+static kmutex_t syncer_data_lock;	/* short term lock on data structures */
 
 static int rushjob;			/* number of slots to run ASAP */
+static kcondvar_t syncer_cv;		/* cv for rushjob */
 static int stat_rush_requests;		/* number of times I/O speeded up */
 
 static int syncer_delayno = 0;
@@ -82,6 +86,8 @@ vn_initialize_syncerd()
 		TAILQ_INIT(&syncer_workitem_pending[i]);
 
 	mutex_init(&syncer_mutex, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&syncer_data_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&syncer_cv, "syncer");
 }
 
 /*
@@ -113,19 +119,29 @@ vn_initialize_syncerd()
 /*
  * Add an item to the syncer work queue.
  */
-void
-vn_syncer_add_to_worklist(vp, delayx)
+static void
+vn_syncer_add1(vp, delayx)
 	struct vnode *vp;
 	int delayx;
 {
 	struct synclist *slp;
-	int s;
 
-	s = splbio();
+	KASSERT(mutex_owned(&syncer_data_lock));
 
 	if (vp->v_iflag & VI_ONWORKLST) {
 		slp = &syncer_workitem_pending[vp->v_synclist_slot];
 		TAILQ_REMOVE(slp, vp, v_synclist);
+	} else {
+		/*
+		 * We must not modify v_iflag if the vnode
+		 * is already on a synclist: sched_sync()
+		 * calls this routine while holding only
+		 * syncer_data_lock in order to adjust the
+		 * position of the vnode.  syncer_data_lock
+		 * does not protect v_iflag.
+		 */
+		KASSERT(mutex_owned(&vp->v_interlock));
+		vp->v_iflag |= VI_ONWORKLST;
 	}
 
 	if (delayx > syncer_maxdelay - 2)
@@ -134,8 +150,19 @@ vn_syncer_add_to_worklist(vp, delayx)
 
 	slp = &syncer_workitem_pending[vp->v_synclist_slot];
 	TAILQ_INSERT_TAIL(slp, vp, v_synclist);
-	vp->v_iflag |= VI_ONWORKLST;
-	splx(s);
+}
+
+void
+vn_syncer_add_to_worklist(vp, delayx)
+	struct vnode *vp;
+	int delayx;
+{
+
+	KASSERT(mutex_owned(&vp->v_interlock));
+
+	mutex_enter(&syncer_data_lock);
+	vn_syncer_add1(vp, delayx);
+	mutex_exit(&syncer_data_lock);
 }
 
 /*
@@ -146,9 +173,10 @@ vn_syncer_remove_from_worklist(vp)
 	struct vnode *vp;
 {
 	struct synclist *slp;
-	int s;
 
-	s = splbio();
+	KASSERT(mutex_owned(&vp->v_interlock));
+
+	mutex_enter(&syncer_data_lock);
 
 	if (vp->v_iflag & VI_ONWORKLST) {
 		vp->v_iflag &= ~VI_ONWORKLST;
@@ -156,7 +184,7 @@ vn_syncer_remove_from_worklist(vp)
 		TAILQ_REMOVE(slp, vp, v_synclist);
 	}
 
-	splx(s);
+	mutex_exit(&syncer_data_lock);
 }
 
 /*
@@ -168,80 +196,88 @@ sched_sync(void *v)
 	struct synclist *slp;
 	struct vnode *vp;
 	long starttime;
-	int s;
 
 	updateproc = curlwp;
 
 	for (;;) {
+		mutex_enter(&syncer_mutex);
+		mutex_enter(&syncer_data_lock);
+
 		starttime = time_second;
 
 		/*
 		 * Push files whose dirty time has expired. Be careful
 		 * of interrupt race on slp queue.
 		 */
-		s = splbio();
 		slp = &syncer_workitem_pending[syncer_delayno];
 		syncer_delayno += 1;
 		if (syncer_delayno >= syncer_last)
 			syncer_delayno = 0;
-		splx(s);
-
-		mutex_enter(&syncer_mutex);
 
 		while ((vp = TAILQ_FIRST(slp)) != NULL) {
-			if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) == 0) {
-				(void) VOP_FSYNC(vp, curlwp->l_cred,
-				    FSYNC_LAZY, 0, 0);
-				VOP_UNLOCK(vp, 0);
+			/* We are locking in the wrong direction. */
+			if (mutex_tryenter(&vp->v_interlock)) {
+				mutex_exit(&syncer_data_lock);
+				if (vget(vp, LK_EXCLUSIVE | LK_NOWAIT |
+				    LK_INTERLOCK) == 0) {
+					(void) VOP_FSYNC(vp, curlwp->l_cred,
+					    FSYNC_LAZY, 0, 0);
+					vput(vp);
+				}
+				mutex_enter(&syncer_data_lock);
 			}
-			s = splbio();
-			if (TAILQ_FIRST(slp) == vp) {
 
+			/* XXXAD The vnode may have been recycled. */
+			if (TAILQ_FIRST(slp) == vp) {
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
 				 * position and then add us back in at a later
 				 * position.
 				 */
-
-				vn_syncer_add_to_worklist(vp, syncdelay);
+				vn_syncer_add1(vp, syncdelay);
 			}
-			splx(s);
 		}
+
+		mutex_exit(&syncer_data_lock);
 
 		/*
 		 * Do soft update processing.
 		 */
-		if (bioopsp)
-			bioopsp->io_sync(NULL);
+		if (bioopsp != NULL)
+			(*bioopsp->io_sync)(NULL);
 
 		mutex_exit(&syncer_mutex);
 
-		/*
-		 * The variable rushjob allows the kernel to speed up the
-		 * processing of the filesystem syncer process. A rushjob
-		 * value of N tells the filesystem syncer to process the next
-		 * N seconds worth of work on its queue ASAP. Currently rushjob
-		 * is used by the soft update code to speed up the filesystem
-		 * syncer process when the incore state is getting so far
-		 * ahead of the disk that the kernel memory pool is being
-		 * threatened with exhaustion.
-		 */
+		mutex_enter(&syncer_data_lock);
 		if (rushjob > 0) {
+			/*
+			 * The variable rushjob allows the kernel to speed
+			 * up the processing of the filesystem syncer
+			 * process. A rushjob value of N tells the
+			 * filesystem syncer to process the next N seconds
+			 * worth of work on its queue ASAP. Currently
+			 * rushjob is used by the soft update code to
+			 * speed up the filesystem syncer process when the
+			 * incore state is getting so far ahead of the
+			 * disk that the kernel memory pool is being
+			 * threatened with exhaustion.
+			 */
 			rushjob--;
-			continue;
+		} else {
+			/*
+			 * If it has taken us less than a second to
+			 * process the current work, then wait. Otherwise
+			 * start right over again. We can still lose time
+			 * if any single round takes more than two
+			 * seconds, but it does not really matter as we
+			 * are just trying to generally pace the
+			 * filesystem activity.
+			 */
+			if (time_second == starttime)
+				cv_timedwait(&syncer_cv, &syncer_data_lock, hz);
 		}
-
-		/*
-		 * If it has taken us less than a second to process the
-		 * current work, then wait. Otherwise start right over
-		 * again. We can still lose time if any single round
-		 * takes more than two seconds, but it does not really
-		 * matter as we are just trying to generally pace the
-		 * filesystem activity.
-		 */
-		if (time_second == starttime)
-			tsleep(&rushjob, PPAUSE, "syncer", hz);
+		mutex_exit(&syncer_data_lock);
 	}
 }
 
@@ -253,13 +289,17 @@ sched_sync(void *v)
 int
 speedup_syncer()
 {
+
+	mutex_enter(&syncer_data_lock);
 	if (rushjob >= syncdelay / 2) {
+		mutex_exit(&syncer_data_lock);
 		return (0);
 	}
-
 	rushjob++;
-	wakeup(&rushjob);
+	cv_signal(&syncer_cv);
 	stat_rush_requests += 1;
+	mutex_exit(&syncer_data_lock);
+
 	return (1);
 }
 

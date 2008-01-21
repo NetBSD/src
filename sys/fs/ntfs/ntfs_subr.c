@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.16.2.5 2007/10/27 11:35:07 yamt Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.16.2.6 2008/01/21 09:45:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16.2.5 2007/10/27 11:35:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.16.2.6 2008/01/21 09:45:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,7 +385,7 @@ ntfs_ntget(ip)
 	dprintf(("ntfs_ntget: get ntnode %llu: %p, usecount: %d\n",
 	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
 
-	simple_lock(&ip->i_interlock);
+	mutex_enter(&ip->i_interlock);
 	ip->i_usecount++;
 	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock);
 
@@ -445,7 +445,7 @@ ntfs_ntlookup(
 
 	/* init lock and lock the newborn ntnode */
 	lockinit(&ip->i_lock, PINOD, "ntnode", 0, LK_EXCLUSIVE);
-	simple_lock_init(&ip->i_interlock);
+	mutex_init(&ip->i_interlock, MUTEX_DEFAULT, IPL_NONE);
 	ntfs_ntget(ip);
 
 	ntfs_nthashins(ip);
@@ -475,7 +475,7 @@ ntfs_ntput(ip)
 	dprintf(("ntfs_ntput: rele ntnode %llu: %p, usecount: %d\n",
 	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
 
-	simple_lock(&ip->i_interlock);
+	mutex_enter(&ip->i_interlock);
 	ip->i_usecount--;
 
 #ifdef DIAGNOSTIC
@@ -501,6 +501,8 @@ ntfs_ntput(ip)
 			LIST_REMOVE(vap,va_list);
 			ntfs_freentvattr(vap);
 		}
+		mutex_destroy(&ip->i_interlock);
+		lockdestroy(&ip->i_lock);
 		FREE(ip, M_NTFSNTNODE);
 	}
 }
@@ -512,9 +514,9 @@ void
 ntfs_ntref(ip)
 	struct ntnode *ip;
 {
-	simple_lock(&ip->i_interlock);
+	mutex_enter(&ip->i_interlock);
 	ip->i_usecount++;
-	simple_unlock(&ip->i_interlock);
+	mutex_exit(&ip->i_interlock);
 
 	dprintf(("ntfs_ntref: ino %llu, usecount: %d\n",
 	    (unsigned long long)ip->i_number, ip->i_usecount));
@@ -531,13 +533,13 @@ ntfs_ntrele(ip)
 	dprintf(("ntfs_ntrele: rele ntnode %llu: %p, usecount: %d\n",
 	    (unsigned long long)ip->i_number, ip, ip->i_usecount));
 
-	simple_lock(&ip->i_interlock);
+	mutex_enter(&ip->i_interlock);
 	ip->i_usecount--;
 
 	if (ip->i_usecount < 0)
 		panic("ntfs_ntrele: ino: %llu usecount: %d ",
 		    (unsigned long long)ip->i_number, ip->i_usecount);
-	simple_unlock(&ip->i_interlock);
+	mutex_exit(&ip->i_interlock);
 }
 
 /*

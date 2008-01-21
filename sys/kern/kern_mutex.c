@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_mutex.c,v 1.1.18.5 2007/12/07 17:32:45 yamt Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.1.18.6 2008/01/21 09:46:07 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -47,7 +47,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.18.5 2007/12/07 17:32:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.18.6 2008/01/21 09:46:07 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -61,8 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.1.18.5 2007/12/07 17:32:45 yamt Exp
 #include <sys/kernel.h>
 #include <sys/atomic.h>
 #include <sys/intr.h>
+#include <sys/lock.h>
 
 #include <dev/lockstat.h>
+
+#include <machine/lock.h>
 
 /*
  * When not running a debug kernel, spin mutexes are not much
@@ -254,7 +257,6 @@ __strong_alias(mutex_spin_exit,mutex_vector_exit);
 void	mutex_abort(kmutex_t *, const char *, const char *);
 void	mutex_dump(volatile void *);
 int	mutex_onproc(uintptr_t, struct cpu_info **);
-static struct lwp *mutex_owner(wchan_t);
 
 lockops_t mutex_spin_lockops = {
 	"Mutex",
@@ -273,7 +275,7 @@ syncobj_t mutex_syncobj = {
 	turnstile_unsleep,
 	turnstile_changepri,
 	sleepq_lendpri,
-	mutex_owner,
+	(void *)mutex_owner,
 };
 
 /*
@@ -507,16 +509,9 @@ mutex_vector_enter(kmutex_t *mtx)
 	MUTEX_ASSERT(mtx, curthread != 0);
 	MUTEX_WANTLOCK(mtx);
 
-#ifdef LOCKDEBUG
 	if (panicstr == NULL) {
-		simple_lock_only_held(NULL, "mutex_enter");
-#ifdef MULTIPROCESSOR
 		LOCKDEBUG_BARRIER(&kernel_lock, 1);
-#else
-		LOCKDEBUG_BARRIER(NULL, 1);
-#endif
 	}
-#endif
 
 	LOCKSTAT_ENTER(lsflag);
 
@@ -816,10 +811,9 @@ mutex_owned(kmutex_t *mtx)
  *	Return the current owner of an adaptive mutex.  Used for
  *	priority inheritance.
  */
-static struct lwp *
-mutex_owner(wchan_t obj)
+lwp_t *
+mutex_owner(kmutex_t *mtx)
 {
-	kmutex_t *mtx = (void *)(uintptr_t)obj; /* discard qualifiers */
 
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	return (struct lwp *)MUTEX_OWNER(mtx->mtx_owner);

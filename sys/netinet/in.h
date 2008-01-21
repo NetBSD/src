@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.70.6.5 2007/10/27 11:36:07 yamt Exp $	*/
+/*	$NetBSD: in.h,v 1.70.6.6 2008/01/21 09:47:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -152,7 +152,7 @@ typedef __sa_family_t	sa_family_t;
  */
 struct in_addr {
 	in_addr_t s_addr;
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Definitions of bits in internet address integers.
@@ -500,7 +500,7 @@ struct ip_mreq {
  *		dst		Destination IP address
  *		lenproto	htons(proto-hdr-len + proto-number)
  */
-static __inline u_int16_t __attribute__((__unused__))
+static __inline u_int16_t __unused
 in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
 {
 	u_int32_t sum;
@@ -524,7 +524,7 @@ in_cksum_phdr(u_int32_t src, u_int32_t dst, u_int32_t lenproto)
  *
  *	Add the two 16-bit network-order values, carry, and return.
  */
-static __inline u_int16_t __attribute__((__unused__))
+static __inline u_int16_t __unused
 in_cksum_addword(u_int16_t a, u_int16_t b)
 {
 	u_int32_t sum = a + b;

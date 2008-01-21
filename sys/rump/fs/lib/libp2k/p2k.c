@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.19.4.5 2007/12/07 17:34:46 yamt Exp $	*/
+/*	$NetBSD: p2k.c,v 1.19.4.6 2008/01/21 09:47:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -141,8 +141,8 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, setattr);
 #if 0
 	PUFFSOP_SET(pops, p2k, node, poll);
-	PUFFSOP_SET(pops, p2k, node, mmap);
 #endif
+	PUFFSOP_SET(pops, p2k, node, mmap);
 	PUFFSOP_SET(pops, p2k, node, fsync);
 	PUFFSOP_SET(pops, p2k, node, seek);
 	PUFFSOP_SET(pops, p2k, node, remove);
@@ -160,7 +160,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	PUFFSOP_SET(pops, p2k, node, reclaim);
 
 	strcpy(typebuf, "p2k|");
-	strlcat(typebuf, vfsname, sizeof(typebuf));
+	if (strcmp(vfsname, "puffs") == 0) { /* XXX */
+		struct puffs_kargs *args = arg;
+		strlcat(typebuf, args->pa_typename, sizeof(typebuf));
+	} else {
+		strlcat(typebuf, vfsname, sizeof(typebuf));
+	}
 
 	pu = puffs_init(pops, devpath, typebuf, ukfs_getmp(ukfs), puffs_flags);
 	if (pu == NULL)
@@ -169,6 +174,7 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
 	puffs_setroot(pu, pn_root);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
+	puffs_setstacksize(pu, PUFFS_STACKSIZE_MIN);
 	puffs_usethreads = 1;
 
 	puffs_set_prepost(pu, makelwp, clearlwp);
@@ -429,6 +435,20 @@ p2k_node_fsync(struct puffs_usermount *pu, void *opc, const struct puffs_cred *p
 }
 
 int
+p2k_node_mmap(struct puffs_usermount *pu, void *opc, vm_prot_t flags,
+	const struct puffs_cred *pcr)
+{
+	kauth_cred_t cred;
+	int rv;
+
+	cred = cred_create(pcr);
+	rv = RUMP_VOP_MMAP(opc, flags, cred);
+	cred_destroy(cred);
+
+	return rv;
+}
+
+int
 p2k_node_seek(struct puffs_usermount *pu, void *opc, off_t oldoff, off_t newoff,
 	const struct puffs_cred *pcr)
 {
@@ -669,11 +689,13 @@ int
 p2k_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct vnode *vp = opc;
+	bool recycle;
 	int rv;
 
+	rump_vp_interlock(vp);
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
-	rv = RUMP_VOP_INACTIVE(vp);
+	rv = RUMP_VOP_INACTIVE(vp, &recycle);
 	if (vp->v_usecount == 0)
 		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 

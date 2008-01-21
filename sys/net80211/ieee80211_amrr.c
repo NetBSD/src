@@ -1,5 +1,5 @@
+/*	$NetBSD: ieee80211_amrr.c,v 1.1.8.3 2008/01/21 09:47:09 yamt Exp $	*/
 /*	$OpenBSD: ieee80211_amrr.c,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
-/*	$NetBSD: ieee80211_amrr.c,v 1.1.8.2 2006/12/30 20:50:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006
@@ -17,6 +17,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_amrr.c,v 1.1.8.3 2008/01/21 09:47:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

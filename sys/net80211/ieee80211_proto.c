@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.20.2.2 2006/12/30 20:50:28 yamt Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.20.2.3 2008/01/21 09:47:10 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.20.2.2 2006/12/30 20:50:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.20.2.3 2008/01/21 09:47:10 yamt Exp $");
 #endif
 
 /*
@@ -147,7 +147,7 @@ ieee80211_proto_detach(struct ieee80211com *ic)
 	if (ic->ic_auth->ia_detach)
 		ic->ic_auth->ia_detach(ic);
 
-	IF_PURGE(&ic->ic_mgtq);
+	ieee80211_drain_ifq(&ic->ic_mgtq);
 
 	/*
 	 * Detach any ACL'ator.
@@ -967,7 +967,7 @@ ieee80211_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg
 		case IEEE80211_S_AUTH:
 		reset:
 			ic->ic_mgt_timer = 0;
-			IF_PURGE(&ic->ic_mgtq);
+			ieee80211_drain_ifq(&ic->ic_mgtq);
 			ieee80211_reset_bss(ic);
 			break;
 		}
