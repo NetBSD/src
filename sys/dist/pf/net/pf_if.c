@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.9.2.2 2007/12/07 17:31:48 yamt Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.9.2.3 2008/01/21 09:45:41 yamt Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
@@ -30,6 +30,9 @@
  * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.9.2.3 2008/01/21 09:45:41 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"

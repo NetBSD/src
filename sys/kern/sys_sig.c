@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.5.2.3 2007/09/03 14:41:10 yamt Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.5.2.4 2008/01/21 09:46:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.5.2.3 2007/09/03 14:41:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.5.2.4 2008/01/21 09:46:25 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -92,13 +92,13 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.5.2.3 2007/09/03 14:41:10 yamt Exp $")
 #ifdef COMPAT_16
 /* ARGSUSED */
 int
-compat_16_sys___sigaction14(struct lwp *l, void *v, register_t *retval)
+compat_16_sys___sigaction14(struct lwp *l, const struct compat_16_sys___sigaction14_args *uap, register_t *retval)
 {
-	struct compat_16_sys___sigaction14_args /* {
+	/* {
 		syscallarg(int)				signum;
 		syscallarg(const struct sigaction *)	nsa;
 		syscallarg(struct sigaction *)		osa;
-	} */ *uap = v;
+	} */
 	struct sigaction	nsa, osa;
 	int			error;
 
@@ -123,15 +123,15 @@ compat_16_sys___sigaction14(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys___sigaction_sigtramp(struct lwp *l, void *v, register_t *retval)
+sys___sigaction_sigtramp(struct lwp *l, const struct sys___sigaction_sigtramp_args *uap, register_t *retval)
 {
-	struct sys___sigaction_sigtramp_args /* {
+	/* {
 		syscallarg(int)				signum;
 		syscallarg(const struct sigaction *)	nsa;
 		syscallarg(struct sigaction *)		osa;
 		syscallarg(void *)			tramp;
 		syscallarg(int)				vers;
-	} */ *uap = v;
+	} */
 	struct sigaction nsa, osa;
 	int error;
 
@@ -158,13 +158,13 @@ sys___sigaction_sigtramp(struct lwp *l, void *v, register_t *retval)
  * return old mask as return value; the library stub does the rest.
  */
 int
-sys___sigprocmask14(struct lwp *l, void *v, register_t *retval)
+sys___sigprocmask14(struct lwp *l, const struct sys___sigprocmask14_args *uap, register_t *retval)
 {
-	struct sys___sigprocmask14_args /* {
+	/* {
 		syscallarg(int)			how;
 		syscallarg(const sigset_t *)	set;
 		syscallarg(sigset_t *)		oset;
-	} */ *uap = v;
+	} */
 	struct proc	*p = l->l_proc;
 	sigset_t	nss, oss;
 	int		error;
@@ -190,11 +190,11 @@ sys___sigprocmask14(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys___sigpending14(struct lwp *l, void *v, register_t *retval)
+sys___sigpending14(struct lwp *l, const struct sys___sigpending14_args *uap, register_t *retval)
 {
-	struct sys___sigpending14_args /* {
+	/* {
 		syscallarg(sigset_t *)	set;
-	} */ *uap = v;
+	} */
 	sigset_t ss;
 
 	sigpending1(l, &ss);
@@ -208,11 +208,11 @@ sys___sigpending14(struct lwp *l, void *v, register_t *retval)
  */
 /* ARGSUSED */
 int
-sys___sigsuspend14(struct lwp *l, void *v, register_t *retval)
+sys___sigsuspend14(struct lwp *l, const struct sys___sigsuspend14_args *uap, register_t *retval)
 {
-	struct sys___sigsuspend14_args /* {
+	/* {
 		syscallarg(const sigset_t *)	set;
-	} */ *uap = v;
+	} */
 	sigset_t	ss;
 	int		error;
 
@@ -227,12 +227,12 @@ sys___sigsuspend14(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys___sigaltstack14(struct lwp *l, void *v, register_t *retval)
+sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap, register_t *retval)
 {
-	struct sys___sigaltstack14_args /* {
+	/* {
 		syscallarg(const struct sigaltstack *)	nss;
 		syscallarg(struct sigaltstack *)	oss;
-	} */ *uap = v;
+	} */
 	struct sigaltstack	nss, oss;
 	int			error;
 
@@ -255,12 +255,12 @@ sys___sigaltstack14(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_kill(struct lwp *l, void *v, register_t *retval)
+sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 {
-	struct sys_kill_args /* {
+	/* {
 		syscallarg(int)	pid;
 		syscallarg(int)	signum;
-	} */ *uap = v;
+	} */
 	struct proc	*p;
 	ksiginfo_t	ksi;
 	int signum = SCARG(uap, signum);
@@ -305,11 +305,11 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_getcontext(struct lwp *l, void *v, register_t *retval)
+sys_getcontext(struct lwp *l, const struct sys_getcontext_args *uap, register_t *retval)
 {
-	struct sys_getcontext_args /* {
+	/* {
 		syscallarg(struct __ucontext *) ucp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	ucontext_t uc;
 
@@ -322,11 +322,11 @@ sys_getcontext(struct lwp *l, void *v, register_t *retval)
 
 /* ARGSUSED */
 int
-sys_setcontext(struct lwp *l, void *v, register_t *retval)
+sys_setcontext(struct lwp *l, const struct sys_setcontext_args *uap, register_t *retval)
 {
-	struct sys_setcontext_args /* {
+	/* {
 		syscallarg(const ucontext_t *) ucp;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	ucontext_t uc;
 	int error;
@@ -353,10 +353,10 @@ sys_setcontext(struct lwp *l, void *v, register_t *retval)
  * it's own sigtimedwait() wrapper to DTRT WRT individual threads.
  */
 int
-sys___sigtimedwait(struct lwp *l, void *v, register_t *retval)
+sys___sigtimedwait(struct lwp *l, const struct sys___sigtimedwait_args *uap, register_t *retval)
 {
 
-	return __sigtimedwait1(l, v, retval, copyout, copyin, copyout);
+	return __sigtimedwait1(l, uap, retval, copyout, copyin, copyout);
 }
 
 int
@@ -616,14 +616,14 @@ sigaltstack1(struct lwp *l, const struct sigaltstack *nss,
 }
 
 int
-__sigtimedwait1(struct lwp *l, void *v, register_t *retval,
+__sigtimedwait1(struct lwp *l, const struct sys___sigtimedwait_args *uap, register_t *retval,
     copyout_t put_info, copyin_t fetch_timeout, copyout_t put_timeout)
 {
-	struct sys___sigtimedwait_args /* {
+	/* {
 		syscallarg(const sigset_t *) set;
 		syscallarg(siginfo_t *) info;
 		syscallarg(struct timespec *) timeout;
-	} */ *uap = v;
+	} */
 	struct proc *p = l->l_proc;
 	int error, signum;
 	int timo = 0;
@@ -670,9 +670,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	/*
 	 * Allocate a ksi up front.  We can't sleep with the mutex held.
 	 */
-	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_alloc() -> pool_get()  */
 	ksi = ksiginfo_alloc(p, NULL, PR_WAITOK);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 	if (ksi == NULL)
 		return (ENOMEM);
 
@@ -750,9 +748,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 		error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),
 		    sizeof(ksi->ksi_info));
 
-	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_free() -> pool_put()  */	
 	ksiginfo_free(ksi);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 
 	return error;
 }

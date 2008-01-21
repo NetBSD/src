@@ -1,4 +1,4 @@
-/* $NetBSD: ecma167-udf.h,v 1.2.16.4 2007/02/26 09:11:00 yamt Exp $ */
+/* $NetBSD: ecma167-udf.h,v 1.2.16.5 2008/01/21 09:45:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2004, 2005, 2006 Reinoud Zandijk <reinoud@netbsd.org>
@@ -59,7 +59,7 @@
 */
 
 #ifndef __packed
-#define __packed __attribute__((packed))
+#define __packed __packed
 #endif
 
 

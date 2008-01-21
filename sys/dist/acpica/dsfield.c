@@ -1,7 +1,9 @@
+/*	$NetBSD: dsfield.c,v 1.1.14.3 2008/01/21 09:45:08 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dsfield - Dispatcher field routines
- *              xRevision: 1.81 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,16 +117,16 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsfield.c,v 1.1.14.3 2008/01/21 09:45:08 yamt Exp $");
 
 #define __DSFIELD_C__
 
-#include "acpi.h"
-#include "amlcode.h"
-#include "acdispat.h"
-#include "acinterp.h"
-#include "acnamesp.h"
-#include "acparser.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/amlcode.h>
+#include <dist/acpica/acdispat.h>
+#include <dist/acpica/acinterp.h>
+#include <dist/acpica/acnamesp.h>
+#include <dist/acpica/acparser.h>
 
 
 #define _COMPONENT          ACPI_DISPATCHER
@@ -171,7 +173,7 @@ AcpiDsCreateBufferField (
     UINT32                  Flags;
 
 
-    ACPI_FUNCTION_TRACE ("DsCreateBufferField");
+    ACPI_FUNCTION_TRACE (DsCreateBufferField);
 
 
     /* Get the NameString argument */
@@ -227,7 +229,8 @@ AcpiDsCreateBufferField (
         }
     }
 
-    /* We could put the returned object (Node) on the object stack for later,
+    /*
+     * We could put the returned object (Node) on the object stack for later,
      * but for now, we will put it in the "op" object that the parser uses,
      * so we can get it again at the end of this scope
      */
@@ -311,7 +314,7 @@ AcpiDsGetFieldNames (
     ACPI_INTEGER            Position;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsGetFieldNames", Info);
+    ACPI_FUNCTION_TRACE_PTR (DsGetFieldNames, Info);
 
 
     /* First field starts at bit zero */
@@ -454,7 +457,7 @@ AcpiDsCreateField (
     ACPI_CREATE_FIELD_INFO  Info;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsCreateField", Op);
+    ACPI_FUNCTION_TRACE_PTR (DsCreateField, Op);
 
 
     /* First arg is the name of the parent OpRegion (must already exist) */
@@ -515,7 +518,7 @@ AcpiDsInitFieldObjects (
     UINT8                   Type = 0;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsInitFieldObjects", Op);
+    ACPI_FUNCTION_TRACE_PTR (DsInitFieldObjects, Op);
 
 
     switch (WalkState->Opcode)
@@ -604,7 +607,7 @@ AcpiDsCreateBankField (
     ACPI_CREATE_FIELD_INFO  Info;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsCreateBankField", Op);
+    ACPI_FUNCTION_TRACE_PTR (DsCreateBankField, Op);
 
 
     /* First arg is the name of the parent OpRegion (must already exist) */
@@ -636,8 +639,33 @@ AcpiDsCreateBankField (
 
     /* Third arg is the BankValue */
 
+    /* TBD: This arg is a TermArg, not a constant, and must be evaluated */
+
     Arg = Arg->Common.Next;
-    Info.BankValue = (UINT32) Arg->Common.Value.Integer;
+
+    /* Currently, only the following constants are supported */
+
+    switch (Arg->Common.AmlOpcode)
+    {
+    case AML_ZERO_OP:
+        Info.BankValue = 0;
+        break;
+
+    case AML_ONE_OP:
+        Info.BankValue = 1;
+        break;
+
+    case AML_BYTE_OP:
+    case AML_WORD_OP:
+    case AML_DWORD_OP:
+    case AML_QWORD_OP:
+        Info.BankValue = (UINT32) Arg->Common.Value.Integer;
+        break;
+
+    default:
+        Info.BankValue = 0;
+        ACPI_ERROR ((AE_INFO, "Non-constant BankValue for BankField is not implemented"));
+    }
 
     /* Fourth arg is the field flags */
 
@@ -680,7 +708,7 @@ AcpiDsCreateIndexField (
     ACPI_CREATE_FIELD_INFO  Info;
 
 
-    ACPI_FUNCTION_TRACE_PTR ("DsCreateIndexField", Op);
+    ACPI_FUNCTION_TRACE_PTR (DsCreateIndexField, Op);
 
 
     /* First arg is the name of the Index register (must already exist) */

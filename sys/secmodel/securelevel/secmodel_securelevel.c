@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.4.6.2 2007/12/07 17:34:50 yamt Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.4.6.3 2008/01/21 09:47:46 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.4.6.2 2007/12/07 17:34:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.4.6.3 2008/01/21 09:47:46 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -201,6 +201,7 @@ secmodel_securelevel_system_cb(kauth_cred_t cred,
 		break;
 
 	case KAUTH_SYSTEM_LKM:
+	case KAUTH_SYSTEM_MODULE:
 		if (securelevel > 0)
 			result = KAUTH_RESULT_DENY;
 		break;
@@ -309,7 +310,6 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 		}
 
 	case KAUTH_PROCESS_CANPTRACE:
-	case KAUTH_PROCESS_CANSYSTRACE:
 		if ((p == initproc) && (securelevel >= 0))
 			result = KAUTH_RESULT_DENY;
 
@@ -425,7 +425,7 @@ secmodel_securelevel_device_cb(kauth_cred_t cred,
 
 		KASSERT(vp != NULL);
 
-		dev = vp->v_un.vu_specinfo->si_rdev;
+		dev = vp->v_rdev;
 		d_type = D_OTHER;
 		bvp = NULL;
 

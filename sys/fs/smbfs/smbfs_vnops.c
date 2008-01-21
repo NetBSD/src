@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vnops.c,v 1.46.4.6 2007/12/07 17:32:08 yamt Exp $	*/
+/*	$NetBSD: smbfs_vnops.c,v 1.46.4.7 2008/01/21 09:45:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.46.4.6 2007/12/07 17:32:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vnops.c,v 1.46.4.7 2008/01/21 09:45:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -578,7 +578,7 @@ smbfs_create(v)
 	if (vap->va_type != VREG)
 		goto out;
 
-	smb_makescred(&scred, cnp->cn_lwp, cnp->cn_cred);
+	smb_makescred(&scred, curlwp, cnp->cn_cred);
 	error = smbfs_smb_create(dnp, name, nmlen, &scred);
 	if (error)
 		goto out;
@@ -626,7 +626,7 @@ smbfs_remove(v)
 		/* XXX Eventually should do something along NFS sillyrename */
 		error = EPERM;
 	} else {
-		smb_makescred(&scred, cnp->cn_lwp, cnp->cn_cred);
+		smb_makescred(&scred, curlwp, cnp->cn_cred);
 		error = smbfs_smb_delete(np, &scred);
 	}
 
@@ -689,7 +689,7 @@ smbfs_rename(v)
 		goto out;
 	}
 #endif
-	smb_makescred(&scred, tcnp->cn_lwp, tcnp->cn_cred);
+	smb_makescred(&scred, curlwp, tcnp->cn_cred);
 	/*
 	 * It seems that Samba doesn't implement SMB_COM_MOVE call...
 	 */
@@ -788,7 +788,7 @@ smbfs_mkdir(v)
 		goto out;
 	}
 
-	smb_makescred(&scred, cnp->cn_lwp, cnp->cn_cred);
+	smb_makescred(&scred, curlwp, cnp->cn_cred);
 	error = smbfs_smb_mkdir(dnp, name, len, &scred);
 	if (error)
 		goto out;
@@ -836,7 +836,7 @@ smbfs_rmdir(v)
 		return (EINVAL);
 	}
 
-	smb_makescred(&scred, cnp->cn_lwp, cnp->cn_cred);
+	smb_makescred(&scred, curlwp, cnp->cn_cred);
 	error = smbfs_smb_rmdir(np, &scred);
 	dnp->n_flag |= NMODIFIED;
 	smbfs_attr_cacheremove(dvp);
@@ -1285,7 +1285,7 @@ smbfs_lookup(v)
 	/*
 	 * entry is not in the cache or has been expired
 	 */
-	smb_makescred(&scred, cnp->cn_lwp, cnp->cn_cred);
+	smb_makescred(&scred, curlwp, cnp->cn_cred);
 	if (flags & ISDOTDOT)
 		error = smbfs_smb_lookup(VTOSMB(dnp->n_parent), NULL, 0,
 		    &fattr, &scred);

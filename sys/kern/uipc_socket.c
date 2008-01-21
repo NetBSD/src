@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.10 2007/12/07 17:33:17 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.11 2008/01/21 09:46:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.10 2007/12/07 17:33:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.11 2008/01/21 09:46:30 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -578,13 +578,13 @@ sobind(struct socket *so, struct mbuf *nam, struct lwp *l)
 }
 
 int
-solisten(struct socket *so, int backlog)
+solisten(struct socket *so, int backlog, struct lwp *l)
 {
 	int	s, error;
 
 	s = splsoftnet();
 	error = (*so->so_proto->pr_usrreq)(so, PRU_LISTEN, NULL,
-	    NULL, NULL, NULL);
+	    NULL, NULL, l);
 	if (error != 0) {
 		splx(s);
 		return error;

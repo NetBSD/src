@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.18.2.1 2007/02/26 09:12:28 yamt Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.18.2.2 2008/01/21 09:48:20 yamt Exp $	*/
 
 /*
  *
@@ -76,9 +76,9 @@ uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 {
 
 	if (anon)
-		simple_unlock(&anon->an_lock);
+		mutex_exit(&anon->an_lock);
 	if (uobj)
-		simple_unlock(&uobj->vmobjlock);
+		mutex_exit(&uobj->vmobjlock);
 	if (amap)
 		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, false);

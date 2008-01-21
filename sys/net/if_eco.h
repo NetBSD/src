@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eco.h,v 1.5.4.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: if_eco.h,v 1.5.4.2 2008/01/21 09:47:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -56,7 +56,7 @@ struct eco_header {
 	u_int8_t	eco_shost[ECO_ADDR_LEN];
 	u_int8_t	eco_control;
 	u_int8_t	eco_port;
-} __attribute__((__packed__));
+} __packed;
 
 #define ECO_PORT_IMMEDIATE	0x00
 #define ECO_PORT_DSTAPE		0x54 /* DigitalServicesTapeStore */

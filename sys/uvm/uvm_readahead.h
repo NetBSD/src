@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_readahead.h,v 1.2.20.2 2006/06/21 15:12:40 yamt Exp $	*/
+/*	$NetBSD: uvm_readahead.h,v 1.2.20.3 2008/01/21 09:48:25 yamt Exp $	*/
 
 /*-
  * Copyright (c)2003, 2005 YAMAMOTO Takashi,
@@ -32,6 +32,7 @@
 struct uvm_object;
 struct uvm_ractx;
 
+void uvm_ra_init(void);
 struct uvm_ractx *uvm_ra_allocctx(void);
 void uvm_ra_freectx(struct uvm_ractx *);
 void uvm_ra_request(struct uvm_ractx *, int, struct uvm_object *, off_t,

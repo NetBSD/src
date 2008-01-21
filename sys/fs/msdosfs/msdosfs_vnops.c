@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.7 2007/12/07 17:31:59 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.14.4.8 2008/01/21 09:45:47 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.7 2007/12/07 17:31:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.14.4.8 2008/01/21 09:45:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,10 +213,10 @@ msdosfs_close(v)
 	struct vnode *vp = ap->a_vp;
 	struct denode *dep = VTODE(vp);
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_usecount > 1)
 		DETIMES(dep, NULL, NULL, NULL, dep->de_pmp->pm_gmtoff);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
@@ -636,7 +636,8 @@ msdosfs_write(v)
 			goto errexit;
 
 		dep->de_FileSize = uio->uio_offset + resid;
-		uvm_vnp_setsize(vp, dep->de_FileSize);
+		/* hint uvm to not read in extended part */
+		uvm_vnp_setwritesize(vp, dep->de_FileSize);
 		extended = 1;
 	}
 
@@ -658,13 +659,16 @@ msdosfs_write(v)
 		 */
 
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16, PGO_CLEANIT);
 		}
 	} while (error == 0 && uio->uio_resid > 0);
+
+	/* set final size */
+	uvm_vnp_setsize(vp, dep->de_FileSize);
 	if (error == 0 && ioflag & IO_SYNC) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, trunc_page(oldoff),
 		    round_page(oldoff + bytelen), PGO_CLEANIT | PGO_SYNCIO);
 	}
@@ -1718,19 +1722,37 @@ msdosfs_bmap(v)
 		int *a_runp;
 	} */ *ap = v;
 	struct denode *dep = VTODE(ap->a_vp);
+	int run, maxrun;
+	daddr_t runbn;
 	int status;
 
 	if (ap->a_vpp != NULL)
 		*ap->a_vpp = dep->de_devvp;
 	if (ap->a_bnp == NULL)
 		return (0);
-	if (ap->a_runp) {
-		/*
-		 * Sequential clusters should be counted here.
-		 */
-		*ap->a_runp = 0;
-	}
 	status = pcbmap(dep, ap->a_bn, ap->a_bnp, 0, 0);
+
+	/*
+	 * From FreeBSD:
+	 * A little kludgy, but we loop calling pcbmap until we
+	 * reach the end of the contiguous piece, or reach MAXPHYS.
+	 * Since it reduces disk I/Os, the "wasted" CPU is put to
+	 * good use (4 to 5 fold sequential read I/O improvement on USB
+	 * drives).
+	 */
+	if (ap->a_runp != NULL) {
+		/* taken from ufs_bmap */
+		maxrun = ulmin(MAXPHYS / dep->de_pmp->pm_bpcluster - 1,
+			       dep->de_pmp->pm_maxcluster - ap->a_bn);
+		for (run = 1; run <= maxrun; run++) {
+			if (pcbmap(dep, ap->a_bn + run, &runbn, NULL, NULL)
+			    != 0 || runbn !=
+			            *ap->a_bnp + de_cn2bn(dep->de_pmp, run))
+				break;
+		}
+		*ap->a_runp = run - 1;
+	}
+
 	/*
 	 * We need to scale *ap->a_bnp by sector_size/DEV_BSIZE
 	 */

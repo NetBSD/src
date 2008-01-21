@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.99.2.7 2007/12/07 17:32:45 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.99.2.8 2008/01/21 09:46:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99.2.7 2007/12/07 17:32:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.99.2.8 2008/01/21 09:46:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -429,7 +429,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 			freep->next = cp;
 		}
 		freep->next = savedlist;
-		if (kbp->kb_last == NULL)
+		if (savedlist == NULL)
 			kbp->kb_last = (void *)freep;
 	}
 	va = kbp->kb_next;

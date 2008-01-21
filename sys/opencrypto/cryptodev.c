@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.12.12.3 2007/09/03 14:44:23 yamt Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.12.12.4 2008/01/21 09:47:38 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.3 2007/09/03 14:44:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.4 2008/01/21 09:47:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -544,6 +544,30 @@ cryptodev_key(struct crypt_kop *kop)
 		return (EINVAL);
 	case CRK_DH_COMPUTE_KEY:
 		if (in == 3 && out == 1)
+			break;
+		return (EINVAL);
+	case CRK_MOD_ADD:
+		if (in == 3 && out == 1)
+			break;
+		return (EINVAL);
+	case CRK_MOD_ADDINV:
+		if (in == 2 && out == 1)
+			break;
+		return (EINVAL);
+	case CRK_MOD_SUB:
+		if (in == 3 && out == 1)
+			break;
+		return (EINVAL);
+	case CRK_MOD_MULT:
+		if (in == 3 && out == 1)
+			break;
+		return (EINVAL);
+	case CRK_MOD_MULTINV:
+		if (in == 2 && out == 1)
+			break;
+		return (EINVAL);
+	case CRK_MOD:
+		if (in == 2 && out == 1)
 			break;
 		return (EINVAL);
 	default:

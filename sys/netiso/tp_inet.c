@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_inet.c,v 1.28.4.3 2007/09/03 14:44:05 yamt Exp $	*/
+/*	$NetBSD: tp_inet.c,v 1.28.4.4 2008/01/21 09:47:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -73,7 +73,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.28.4.3 2007/09/03 14:44:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_inet.c,v 1.28.4.4 2008/01/21 09:47:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -314,7 +314,7 @@ in_getnetaddr(void *v, struct mbuf *name, int which)
  * suffices.
  *
  * SIDE EFFECTS:
- * Sets tp_routep pointer in pcb.
+ * Sets tp_route in pcb.
  *
  * NOTES:
  */
@@ -330,7 +330,7 @@ tpip_mtu(void *v)
 		printf("tpip_mtu routing to addr 0x%x\n", inp->inp_faddr.s_addr);
 	}
 #endif
-	tpcb->tp_routep = &inp->inp_route.ro_rt;
+	tpcb->tp_routep = &inp->inp_route;
 	return sizeof(struct ip);
 
 }

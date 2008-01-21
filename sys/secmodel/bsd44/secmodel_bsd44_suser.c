@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.23.2.4 2007/12/07 17:34:49 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.23.2.5 2008/01/21 09:47:45 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.4 2007/12/07 17:34:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.5 2008/01/21 09:47:45 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.4 2007/12/07 17:34:4
 #include <net/route.h>
 #include <sys/ptrace.h>
 #include <sys/vnode.h>
+#include <sys/proc.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -325,6 +326,11 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
+	case KAUTH_SYSTEM_MODULE:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		break;
+
 	default:
 		result = KAUTH_RESULT_DEFER;
 		break;
@@ -520,21 +526,6 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_CANSYSTRACE:
-		if (isroot) {
-			result = KAUTH_RESULT_ALLOW;
-			break;
-		}
-
-		if (kauth_cred_getuid(cred) != kauth_cred_getuid(p->p_cred) ||
-		    ISSET(p->p_flag, PK_SUGID)) {
-			result = KAUTH_RESULT_DENY;
-			break;
-		}
-
-		result = KAUTH_RESULT_ALLOW;
-		break;
-
 	case KAUTH_PROCESS_CORENAME:
 		result = KAUTH_RESULT_ALLOW;
 
@@ -547,6 +538,22 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		break;
+
+	case KAUTH_PROCESS_FORK: {
+		int lnprocs = (int)(unsigned long)arg2;
+
+		/*
+		 * Don't allow a nonprivileged user to use the last few
+		 * processes. The variable lnprocs is the current number of
+		 * processes, maxproc is the limit.
+		 */
+		if (__predict_false((lnprocs >= maxproc - 5) && !isroot))
+			result = KAUTH_RESULT_DENY;
+		else
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+		}
 
 	case KAUTH_PROCESS_NICE:
 		if (isroot) {

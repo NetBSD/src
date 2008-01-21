@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.3 2007/02/26 09:12:32 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.4 2008/01/21 09:48:25 yamt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.3 2007/02/26 09:12:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.4 2008/01/21 09:48:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -175,7 +175,7 @@ uvmpdpol_selectvictim(void)
 	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
 	struct vm_page *pg;
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 
 	while (/* CONSTCOND */ 1) {
 		struct vm_anon *anon;
@@ -275,7 +275,6 @@ uvmpdpol_balancequeue(int swap_shortage)
 
 		if (inactive_shortage > 0) {
 			/* no need to check wire_count as pg is "active" */
-			pmap_clear_reference(p);
 			uvmpdpol_pagedeactivate(p);
 			uvmexp.pddeact++;
 			inactive_shortage--;
@@ -287,7 +286,7 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	UVM_LOCK_ASSERT_PAGEQ();
+	KASSERT(mutex_owned(&uvm_pageqlock));
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq);
 		pg->pqflags &= ~PQ_ACTIVE;
@@ -296,6 +295,7 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 	}
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
+		pmap_clear_reference(pg);
 		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pageq);
 		pg->pqflags |= PQ_INACTIVE;
 		pdpol_state.s_inactive++;
@@ -317,13 +317,13 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 {
 
 	if (pg->pqflags & PQ_ACTIVE) {
-		UVM_LOCK_ASSERT_PAGEQ();
+		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq);
 		pg->pqflags &= ~PQ_ACTIVE;
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
 	} else if (pg->pqflags & PQ_INACTIVE) {
-		UVM_LOCK_ASSERT_PAGEQ();
+		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pageq);
 		pg->pqflags &= ~PQ_INACTIVE;
 		KASSERT(pdpol_state.s_inactive > 0);

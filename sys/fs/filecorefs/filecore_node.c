@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.6.4.5 2007/12/07 17:31:54 yamt Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.6.4.6 2008/01/21 09:45:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.6.4.5 2007/12/07 17:31:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.6.4.6 2008/01/21 09:45:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.6.4.5 2007/12/07 17:31:54 yamt E
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/stat.h>
+#include <sys/simplelock.h>
 
 #include <fs/filecorefs/filecore.h>
 #include <fs/filecorefs/filecore_extern.h>
@@ -174,7 +175,7 @@ loop:
 	LIST_FOREACH(ip, &filecorehashtbl[INOHASH(dev, inum)], i_hash) {
 		if (inum == ip->i_number && dev == ip->i_dev) {
 			vp = ITOV(ip);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			simple_unlock(&filecore_ihash_slock);
 			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
 				goto loop;
@@ -226,23 +227,19 @@ filecore_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("filecore_inactive: pushing active", vp);
-
-	ip->i_flag = 0;
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (filecore_staleinode(ip))
-		vrecycle(vp, (struct simplelock *)0, curlwp);
+	ip->i_flag = 0;
+	*ap->a_recycle = (filecore_staleinode(ip) != 0);
+	VOP_UNLOCK(vp, 0);
 	return error;
 }
 
@@ -260,7 +257,7 @@ filecore_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct filecore_node *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("filecore_reclaim: pushing active", vp);
 	/*
 	 * Remove the inode from its hash chain.

@@ -1,4 +1,4 @@
-/*	$NetBSD: once.h,v 1.3.16.2 2006/06/21 15:12:03 yamt Exp $	*/
+/*	$NetBSD: once.h,v 1.3.16.3 2008/01/21 09:47:54 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -29,7 +29,7 @@
 #ifndef _SYS_ONCE_H_
 #define	_SYS_ONCE_H_
 
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 typedef struct {
 	struct simplelock o_lock;

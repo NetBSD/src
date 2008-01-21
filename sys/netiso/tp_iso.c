@@ -1,4 +1,4 @@
-/*	$NetBSD: tp_iso.c,v 1.19.4.4 2007/09/03 14:44:06 yamt Exp $	*/
+/*	$NetBSD: tp_iso.c,v 1.19.4.5 2008/01/21 09:47:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -75,7 +75,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19.4.4 2007/09/03 14:44:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tp_iso.c,v 1.19.4.5 2008/01/21 09:47:30 yamt Exp $");
 
 #include "opt_iso.h"
 #ifdef ISO
@@ -339,13 +339,11 @@ tpclnp_mtu(void *v)
 		printf("tpclnp_mtu(tpcb %p)\n", tpcb);
 	}
 #endif
-	tpcb->tp_routep = &isop->isop_route.ro_rt;
+	tpcb->tp_routep = &isop->isop_route;
 	if (tpcb->tp_netservice == ISO_CONS)
 		return 0;
-	else
-		return (sizeof(struct clnp_fixed) + sizeof(struct clnp_segment) +
-			2 * sizeof(struct iso_addr));
-
+	return (sizeof(struct clnp_fixed) + sizeof(struct clnp_segment) +
+		2 * sizeof(struct iso_addr));
 }
 
 /*

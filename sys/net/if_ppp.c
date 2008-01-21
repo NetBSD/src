@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.101.2.5 2007/10/27 11:36:02 yamt Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.101.2.6 2008/01/21 09:47:05 yamt Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101.2.5 2007/10/27 11:36:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101.2.6 2008/01/21 09:47:05 yamt Exp $");
 
 #include "ppp.h"
 
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.101.2.5 2007/10/27 11:36:02 yamt Exp $"
 #include <sys/conf.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
+#include <sys/simplelock.h>
 
 #include <net/if.h>
 #include <net/if_types.h>

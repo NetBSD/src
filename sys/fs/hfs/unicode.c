@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.c,v 1.1.1.1.20.2 2007/09/03 14:40:23 yamt Exp $ */
+/* $NetBSD: unicode.c,v 1.1.1.1.20.3 2008/01/21 09:45:46 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: unicode.c,v 1.1.1.1.20.3 2008/01/21 09:45:46 yamt Exp $");
 
 #include <sys/null.h>
 

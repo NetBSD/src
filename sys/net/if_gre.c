@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.57.2.7 2007/12/07 17:34:16 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.57.2.8 2008/01/21 09:47:02 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57.2.7 2007/12/07 17:34:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57.2.8 2008/01/21 09:47:02 yamt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -366,6 +366,7 @@ gre_clone_destroy(struct ifnet *ifp)
 #if NBPFILTER > 0
 	bpfdetach(ifp);
 #endif
+	s = splnet();
 	if_detach(ifp);
 
 	/* Some LWPs may still wait in gre_ioctl_lock(), however,
@@ -384,7 +385,6 @@ gre_clone_destroy(struct ifnet *ifp)
 	 * we can release the mutex.
 	 */
 	mutex_exit(&sc->sc_mtx);
-	s = splnet();
 	GRE_DPRINTF(sc, "%s: l.%d\n", __func__, __LINE__);
 	/* Note that we must not hold the mutex while we call gre_reconf(). */
 	sc->sc_so = gre_reconf(sc, sc->sc_so, sc->sc_lwp, NULL);

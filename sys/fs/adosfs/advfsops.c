@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.23.2.6 2007/12/07 17:31:49 yamt Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.23.2.7 2008/01/21 09:45:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.23.2.6 2007/12/07 17:31:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.23.2.7 2008/01/21 09:45:43 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.23.2.6 2007/12/07 17:31:49 yamt Exp $
 #include <sys/buf.h>
 #include <sys/conf.h>
 #include <sys/kauth.h>
+#include <sys/simplelock.h>
 #include <fs/adosfs/adosfs.h>
 
 VFS_PROTOS(adosfs);
@@ -117,7 +118,7 @@ adosfs_mount(mp, path, data, data_len)
 	 * Not an update, or updating the name: look up the name
 	 * and verify that it refers to a sensible block device.
 	 */
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec, l);
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, args->fspec);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 	devvp = nd.ni_vp;

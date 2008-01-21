@@ -1,7 +1,9 @@
+/*	$NetBSD: dswscope.c,v 1.1.14.3 2008/01/21 09:45:10 yamt Exp $	*/
+
 /******************************************************************************
  *
  * Module Name: dswscope - Scope stack manipulation
- *              xRevision: 1.66 $
+ *              $Revision: 1.1.14.3 $
  *
  *****************************************************************************/
 
@@ -9,7 +11,7 @@
  *
  * 1. Copyright Notice
  *
- * Some or all of this work - Copyright (c) 1999 - 2006, Intel Corp.
+ * Some or all of this work - Copyright (c) 1999 - 2007, Intel Corp.
  * All rights reserved.
  *
  * 2. License
@@ -115,12 +117,12 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.1.14.2 2006/06/21 15:08:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dswscope.c,v 1.1.14.3 2008/01/21 09:45:10 yamt Exp $");
 
 #define __DSWSCOPE_C__
 
-#include "acpi.h"
-#include "acdispat.h"
+#include <dist/acpica/acpi.h>
+#include <dist/acpica/acdispat.h>
 
 
 #define _COMPONENT          ACPI_DISPATCHER
@@ -146,7 +148,7 @@ AcpiDsScopeStackClear (
 {
     ACPI_GENERIC_STATE      *ScopeInfo;
 
-    ACPI_FUNCTION_NAME ("DsScopeStackClear");
+    ACPI_FUNCTION_NAME (DsScopeStackClear);
 
 
     while (WalkState->ScopeInfo)
@@ -189,7 +191,7 @@ AcpiDsScopeStackPush (
     ACPI_GENERIC_STATE      *OldScopeInfo;
 
 
-    ACPI_FUNCTION_TRACE ("DsScopeStackPush");
+    ACPI_FUNCTION_TRACE (DsScopeStackPush);
 
 
     if (!Node)
@@ -218,9 +220,9 @@ AcpiDsScopeStackPush (
 
     /* Init new scope object */
 
-    ScopeInfo->Common.DataType  = ACPI_DESC_TYPE_STATE_WSCOPE;
-    ScopeInfo->Scope.Node       = Node;
-    ScopeInfo->Common.Value     = (UINT16) Type;
+    ScopeInfo->Common.DescriptorType = ACPI_DESC_TYPE_STATE_WSCOPE;
+    ScopeInfo->Scope.Node = Node;
+    ScopeInfo->Common.Value = (UINT16) Type;
 
     WalkState->ScopeDepth++;
 
@@ -273,7 +275,7 @@ AcpiDsScopeStackPop (
     ACPI_GENERIC_STATE      *NewScopeInfo;
 
 
-    ACPI_FUNCTION_TRACE ("DsScopeStackPop");
+    ACPI_FUNCTION_TRACE (DsScopeStackPop);
 
 
     /*

@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.4.2.1 2006/06/21 15:10:46 yamt Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.4.2.2 2008/01/21 09:47:10 yamt Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -102,7 +102,7 @@ struct ieee80211_node_sysctl {
 	u_int16_t	ns_nextdtim;	/* time to next DTIM */
 	u_int16_t	ns_timoffset;
 #endif
-} __attribute__((__packed__));
+} __packed;
 
 #ifdef __NetBSD__
 enum ieee80211_node_walk_state {

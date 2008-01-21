@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.44.4.3 2007/12/07 17:33:56 yamt Exp $	*/
+/*	$NetBSD: ufs.c,v 1.44.4.4 2008/01/21 09:46:38 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -68,6 +68,7 @@
 #include <ufs/ufs/dir.h>
 #ifdef LIBSA_LFS
 #include <sys/queue.h>
+#include <sys/condvar.h>
 #include <sys/mount.h>			/* XXX for MNAMELEN */
 #include <ufs/lfs/lfs.h>
 #else

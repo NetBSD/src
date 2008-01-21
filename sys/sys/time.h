@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.46.2.2 2007/09/03 14:46:41 yamt Exp $	*/
+/*	$NetBSD: time.h,v 1.46.2.3 2008/01/21 09:48:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,7 +74,7 @@ struct timezone {
 };
 
 /* Operations on timevals. */
-#define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0
+#define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0L
 #define	timerisset(tvp)		((tvp)->tv_sec || (tvp)->tv_usec)
 #define	timercmp(tvp, uvp, cmp)						\
 	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
@@ -99,7 +99,6 @@ struct timezone {
 		}							\
 	} while (/* CONSTCOND */ 0)
 
-#ifdef _KERNEL
 struct bintime {
 	time_t	sec;
 	uint64_t frac;
@@ -189,11 +188,10 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
 }
-#endif /* _KERNEL */
 
 /* Operations on timespecs. */
-#define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
-#define	timespecisset(tsp)		((tsp)->tv_sec || (tsp)->tv_nsec)
+#define	timespecclear(tsp)	(tsp)->tv_sec = (time_t)((tsp)->tv_nsec = 0L)
+#define	timespecisset(tsp)	((tsp)->tv_sec || (tsp)->tv_nsec)
 #define	timespeccmp(tsp, usp, cmp)					\
 	(((tsp)->tv_sec == (usp)->tv_sec) ?				\
 	    ((tsp)->tv_nsec cmp (usp)->tv_nsec) :			\

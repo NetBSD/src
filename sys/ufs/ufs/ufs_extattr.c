@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.9.4.6 2007/12/07 17:35:23 yamt Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.9.4.7 2008/01/21 09:48:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ufs_extattr.c,v 1.9.4.6 2007/12/07 17:35:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.9.4.7 2008/01/21 09:48:16 yamt Exp $");
 
 #include "opt_ffs.h"
 

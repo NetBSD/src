@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.c,v 1.4.12.2 2007/09/03 14:40:22 yamt Exp $	*/
+/*	$NetBSD: libhfs.c,v 1.4.12.3 2008/01/21 09:45:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -45,6 +45,9 @@
  *	or write to a memory buffer, which has been previously allocated by the
  *	caller.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: libhfs.c,v 1.4.12.3 2008/01/21 09:45:46 yamt Exp $");
 
 #include "libhfs.h"
 

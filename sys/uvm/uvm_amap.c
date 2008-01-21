@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.62.2.4 2007/09/03 14:47:03 yamt Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.62.2.5 2008/01/21 09:48:18 yamt Exp $	*/
 
 /*
  *
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.62.2.4 2007/09/03 14:47:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.62.2.5 2008/01/21 09:48:18 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -57,15 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.62.2.4 2007/09/03 14:47:03 yamt Exp $
 #include <uvm/uvm_swap.h>
 
 /*
- * pool for allocation of vm_map structures.  note that the pool has
- * its own simplelock for its protection.  also note that in order to
- * avoid an endless loop, the amap pool's allocator cannot allocate
+ * cache for allocation of vm_map structures.  note that in order to
+ * avoid an endless loop, the amap cache's allocator cannot allocate
  * memory from an amap (it currently goes through the kernel uobj, so
  * we are ok).
  */
-POOL_INIT(uvm_amap_pool, sizeof(struct vm_amap), 0, 0, 0, "amappl",
-    &pool_allocator_nointr, IPL_NONE);
-
+static struct pool_cache uvm_amap_cache;
 static kmutex_t amap_list_lock;
 static LIST_HEAD(, vm_amap) amap_list;
 
@@ -182,7 +179,7 @@ amap_alloc1(int slots, int padslots, int waitf)
 	int totalslots;
 	km_flag_t kmflags;
 
-	amap = pool_get(&uvm_amap_pool,
+	amap = pool_cache_get(&uvm_amap_cache,
 	    ((waitf & UVM_FLAG_NOWAIT) != 0) ? PR_NOWAIT : PR_WAITOK);
 	if (amap == NULL)
 		return(NULL);
@@ -220,7 +217,7 @@ fail2:
 	kmem_free(amap->am_slots, totalslots * sizeof(int));
 fail1:
 	mutex_destroy(&amap->am_l);
-	pool_put(&uvm_amap_pool, amap);
+	pool_cache_put(&uvm_amap_cache, amap);
 
 	/*
 	 * XXX hack to tell the pagedaemon how many pages we need,
@@ -272,6 +269,9 @@ uvm_amap_init(void)
 {
 
 	mutex_init(&amap_list_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	pool_cache_bootstrap(&uvm_amap_cache, sizeof(struct vm_amap), 0, 0, 0,
+	    "amappl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -299,7 +299,7 @@ amap_free(struct vm_amap *amap)
 		kmem_free(amap->am_ppref, slots * sizeof(*amap->am_ppref));
 #endif
 	mutex_destroy(&amap->am_l);
-	pool_put(&uvm_amap_pool, amap);
+	pool_cache_put(&uvm_amap_cache, amap);
 	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%x", amap, 0, 0, 0);
 }
 
@@ -704,11 +704,11 @@ amap_wipeout(struct vm_amap *amap)
 		if (anon == NULL || anon->an_ref == 0)
 			panic("amap_wipeout: corrupt amap");
 
-		simple_lock(&anon->an_lock);
+		mutex_enter(&anon->an_lock);
 		UVMHIST_LOG(maphist,"  processing anon 0x%x, ref=%d", anon,
 		    anon->an_ref, 0, 0);
 		refs = --anon->an_ref;
-		simple_unlock(&anon->an_lock);
+		mutex_exit(&anon->an_lock);
 		if (refs == 0) {
 
 			/*
@@ -860,9 +860,9 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 		    srcamap->am_anon[entry->aref.ar_pageoff + lcv];
 		if (amap->am_anon[lcv] == NULL)
 			continue;
-		simple_lock(&amap->am_anon[lcv]->an_lock);
+		mutex_enter(&amap->am_anon[lcv]->an_lock);
 		amap->am_anon[lcv]->an_ref++;
-		simple_unlock(&amap->am_anon[lcv]->an_lock);
+		mutex_exit(&amap->am_anon[lcv]->an_lock);
 		amap->am_bckptr[lcv] = amap->am_nused;
 		amap->am_slots[amap->am_nused] = lcv;
 		amap->am_nused++;
@@ -947,7 +947,7 @@ ReStart:
 
 		slot = amap->am_slots[lcv];
 		anon = amap->am_anon[slot];
-		simple_lock(&anon->an_lock);
+		mutex_enter(&anon->an_lock);
 
 		/*
 		 * If the anon has only one ref, we must have already copied it.
@@ -958,7 +958,7 @@ ReStart:
 
 		if (anon->an_ref == 1) {
 			KASSERT(anon->an_page != NULL || anon->an_swslot != 0);
-			simple_unlock(&anon->an_lock);
+			mutex_exit(&anon->an_lock);
 			continue;
 		}
 
@@ -976,7 +976,7 @@ ReStart:
 		 */
 
 		if (pg->loan_count != 0) {
-			simple_unlock(&anon->an_lock);
+			mutex_exit(&anon->an_lock);
 			continue;
 		}
 		KASSERT(pg->uanon == anon && pg->uobject == NULL);
@@ -1011,10 +1011,10 @@ ReStart:
 
 			if (nanon) {
 				nanon->an_ref--;
-				simple_unlock(&nanon->an_lock);
+				mutex_exit(&nanon->an_lock);
 				uvm_anfree(nanon);
 			}
-			simple_unlock(&anon->an_lock);
+			mutex_exit(&anon->an_lock);
 			amap_unlock(amap);
 			uvm_wait("cownowpage");
 			goto ReStart;
@@ -1034,13 +1034,13 @@ ReStart:
 		 * locked the whole time it can't be PG_RELEASED or PG_WANTED.
 		 */
 
-		uvm_lock_pageq();
+		mutex_enter(&uvm_pageqlock);
 		uvm_pageactivate(npg);
-		uvm_unlock_pageq();
+		mutex_exit(&uvm_pageqlock);
 		npg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(npg, NULL);
-		simple_unlock(&nanon->an_lock);
-		simple_unlock(&anon->an_lock);
+		mutex_exit(&nanon->an_lock);
+		mutex_exit(&anon->an_lock);
 	}
 	amap_unlock(amap);
 }
@@ -1253,9 +1253,9 @@ amap_wiperange(struct vm_amap *amap, int slotoff, int slots)
 		 * drop anon reference count
 		 */
 
-		simple_lock(&anon->an_lock);
+		mutex_enter(&anon->an_lock);
 		refs = --anon->an_ref;
-		simple_unlock(&anon->an_lock);
+		mutex_exit(&anon->an_lock);
 		if (refs == 0) {
 
 			/*
@@ -1334,11 +1334,11 @@ amap_swap_off(int startslot, int endslot)
 
 			slot = am->am_slots[i];
 			anon = am->am_anon[slot];
-			simple_lock(&anon->an_lock);
+			mutex_enter(&anon->an_lock);
 
 			swslot = anon->an_swslot;
 			if (swslot < startslot || endslot <= swslot) {
-				simple_unlock(&anon->an_lock);
+				mutex_exit(&anon->an_lock);
 				continue;
 			}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.53.2.6 2007/12/07 17:34:13 yamt Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.53.2.7 2008/01/21 09:46:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53.2.6 2007/12/07 17:34:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.53.2.7 2008/01/21 09:46:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -112,7 +112,7 @@ umapfs_mount(mp, path, data, data_len)
 	 * Find lower node
 	 */
 	NDINIT(&nd, LOOKUP, FOLLOW|LOCKLEAF,
-		UIO_USERSPACE, args->umap_target, l);
+		UIO_USERSPACE, args->umap_target);
 	if ((error = namei(&nd)) != 0)
 		return (error);
 
@@ -256,18 +256,14 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	vprint("alias root of lower", rtvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
 	mutex_destroy(&amp->umapm_hashlock);
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(amp, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return (0);
 }

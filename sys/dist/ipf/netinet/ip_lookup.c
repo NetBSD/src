@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_lookup.c,v 1.1.16.3 2007/09/03 14:39:53 yamt Exp $	*/
+/*	$NetBSD: ip_lookup.c,v 1.1.16.4 2008/01/21 09:45:35 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002-2003 by Darren Reed.
@@ -65,7 +65,12 @@ struct file;
 /* END OF INCLUDES */
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_lookup.c,v 1.1.16.4 2008/01/21 09:45:35 yamt Exp $");
+#else
 static const char rcsid[] = "@(#)Id: ip_lookup.c,v 2.35.2.15 2007/05/26 13:05:13 darrenr Exp";
+#endif
 #endif
 
 #ifdef	IPFILTER_LOOKUP

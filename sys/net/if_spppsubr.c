@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.85.2.4 2007/09/03 14:42:11 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.85.2.5 2008/01/21 09:47:05 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.4 2007/09/03 14:42:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.5 2008/01/21 09:47:05 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -193,14 +193,14 @@ struct ppp_header {
 	u_int8_t address;
 	u_int8_t control;
 	u_int16_t protocol;
-} __attribute__((__packed__));
+} __packed;
 #define PPP_HEADER_LEN          sizeof (struct ppp_header)
 
 struct lcp_header {
 	u_int8_t type;
 	u_int8_t ident;
 	u_int16_t len;
-} __attribute__((__packed__));
+} __packed;
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
 
 struct cisco_packet {
@@ -210,7 +210,7 @@ struct cisco_packet {
 	u_int16_t rel;
 	u_int16_t time0;
 	u_int16_t time1;
-} __attribute__((__packed__));
+} __packed;
 #define CISCO_PACKET_LEN 18
 
 /*

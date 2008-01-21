@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.78.2.5 2007/12/07 17:34:19 yamt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.78.2.6 2008/01/21 09:47:08 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78.2.5 2007/12/07 17:34:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.78.2.6 2008/01/21 09:47:08 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -327,7 +327,7 @@ route_output(struct mbuf *m, ...)
 				;
 			else if ((ifp = rt->rt_ifp) != NULL) {
 				const struct ifaddr *rtifa;
-				ifpaddr = IFADDR_FIRST(ifp)->ifa_addr;
+				ifpaddr = ifp->if_dl->ifa_addr;
                                 /* rtifa used to be simply rt->rt_ifa.
                                  * If rt->rt_ifa != NULL, then
                                  * rt_get_ifa() != NULL.  So this
@@ -801,7 +801,7 @@ rt_newaddrmsg(int cmd, struct ifaddr *ifa, int error, struct rtentry *rt)
 			int ncmd = cmd == RTM_ADD ? RTM_NEWADDR : RTM_DELADDR;
 
 			ifaaddr = sa = ifa->ifa_addr;
-			ifpaddr = IFADDR_FIRST(ifp)->ifa_addr;
+			ifpaddr = ifp->if_dl->ifa_addr;
 			netmask = ifa->ifa_netmask;
 			brdaddr = ifa->ifa_dstaddr;
 			memset(&ifam, 0, sizeof(ifam));
@@ -931,7 +931,7 @@ sysctl_dumpentry(struct rtentry *rt, void *v)
 	netmask = rt_mask(rt);
 	if (rt->rt_ifp) {
 		const struct ifaddr *rtifa;
-		ifpaddr = IFADDR_FIRST(rt->rt_ifp)->ifa_addr;
+		ifpaddr = rt->rt_ifp->if_dl->ifa_addr;
 		/* rtifa used to be simply rt->rt_ifa.  If rt->rt_ifa != NULL,
 		 * then rt_get_ifa() != NULL.  So this ought to still be safe.
 		 * --dyoung
@@ -973,10 +973,9 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 	IFNET_FOREACH(ifp) {
 		if (w->w_arg && w->w_arg != ifp->if_index)
 			continue;
-		ifa = IFADDR_FIRST(ifp);
-		if (ifa == NULL)
+		if (IFADDR_EMPTY(ifp))
 			continue;
-		ifpaddr = ifa->ifa_addr;
+		ifpaddr = ifp->if_dl->ifa_addr;
 		switch (type) {
 		case NET_RT_IFLIST:
 			error =
@@ -1064,7 +1063,7 @@ sysctl_iflist(int af, struct walkarg *w, int type)
 				panic("sysctl_iflist(2)");
 			}
 		}
-		while ((ifa = IFADDR_NEXT(ifa)) != NULL) {
+		IFADDR_FOREACH(ifa, ifp) {
 			if (af && af != ifa->ifa_addr->sa_family)
 				continue;
 			ifaaddr = ifa->ifa_addr;

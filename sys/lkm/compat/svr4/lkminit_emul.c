@@ -1,4 +1,4 @@
-/* $NetBSD: lkminit_emul.c,v 1.9 2005/02/26 22:58:57 perry Exp $ */
+/* $NetBSD: lkminit_emul.c,v 1.9.4.1 2008/01/21 09:46:42 yamt Exp $ */
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.9 2005/02/26 22:58:57 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.9.4.1 2008/01/21 09:46:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -48,10 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: lkminit_emul.c,v 1.9 2005/02/26 22:58:57 perry Exp $
 
 extern const struct emul emul_svr4;
 
-int compat_svr4_lkmentry __P((struct lkm_table *, int, int));
+int compat_svr4_lkmentry(struct lkm_table *, int, int);
 
-static int svr4_init __P((struct lkm_table *lkmtp, int cmd));
-static int svr4_done __P((struct lkm_table *lkmtp, int cmd));
+static int svr4_init(struct lkm_table *lkmtp, int cmd);
+static int svr4_done(struct lkm_table *lkmtp, int cmd);
 
 /*
  * declare the emulation
@@ -84,7 +84,7 @@ svr4_init(lkmtp, cmd)
 	 * overkill given that only svr4 compat needs an initialization.
 	 */
 #define	IDTVEC(name)	__CONCAT(X, name)
-	extern void IDTVEC(svr4_fasttrap) __P((void));
+	extern void IDTVEC(svr4_fasttrap)(void);
 
 	setgate(&idt[0xd2], &IDTVEC(svr4_fasttrap), 0, SDT_SYS386TGT,
 		SEL_UPL, GSEL(GCODE_SEL, SEL_KPL));

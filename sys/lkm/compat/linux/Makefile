@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26.2.3 2007/10/27 11:35:45 yamt Exp $
+#	$NetBSD: Makefile,v 1.26.2.4 2008/01/21 09:46:40 yamt Exp $
 
 .include "../Makefile.inc"
 
@@ -49,7 +49,7 @@ SRCS+=	linux_sigcode.S
 .if ${MACHINE_ARCH} == "m68k"
 SRCS+=	linux_ipccall.c linux_llseek.c linux_misc_notalpha.c		\
 	linux_oldselect.c linux_sig_notalpha.c 	\
-	linux_socketcall.c linux_oldmmap.c linux_file64.c
+	linux_socketcall.c linux_oldmmap.c linux_file64.c linux_uid16.c
 SRCS+=	linux_sig_machdep.S
 .endif
 

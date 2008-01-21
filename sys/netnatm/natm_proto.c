@@ -1,4 +1,4 @@
-/*	$NetBSD: natm_proto.c,v 1.7.4.3 2007/09/03 14:44:11 yamt Exp $	*/
+/*	$NetBSD: natm_proto.c,v 1.7.4.4 2008/01/21 09:47:31 yamt Exp $	*/
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.7.4.3 2007/09/03 14:44:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm_proto.c,v 1.7.4.4 2008/01/21 09:47:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,20 +65,47 @@ struct	ifqueue natmintrq;       	/* natm packet input queue */
 int	natmqmaxlen = IFQ_MAXLEN;	/* max # of packets on queue */
 
 const struct protosw natmsw[] = {
-{ SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL5, PR_CONNREQUIRED,
-  0,	0,	0,	0,
-  natm_usrreq,
-  0,	0,	0,	0,
+{ .pr_type = SOCK_STREAM,
+  .pr_domain = &natmdomain,
+  .pr_protocol = PROTO_NATMAAL5,
+  .pr_flags = PR_CONNREQUIRED,
+  .pr_input = 0,
+  .pr_output = 0,
+  .pr_ctlinput = 0,
+  .pr_ctloutput = 0,
+  .pr_usrreq = natm_usrreq,
+  .pr_init = 0,
+  .pr_fasttimo = 0,
+  .pr_slowtimo = 0,
+  .pr_drain = 0
 },
-{ SOCK_DGRAM,	&natmdomain,	PROTO_NATMAAL5,	PR_CONNREQUIRED | PR_ATOMIC,
-  0,	0,	0,	0,
-  natm_usrreq,
-  0,	0,	0,	0,
+{ .pr_type = SOCK_DGRAM,
+  .pr_domain = &natmdomain,
+  .pr_protocol = PROTO_NATMAAL5,
+  .pr_flags = PR_CONNREQUIRED | PR_ATOMIC,
+  .pr_input = 0,
+  .pr_output = 0,
+  .pr_ctlinput = 0,
+  .pr_ctloutput = 0,
+  .pr_usrreq = natm_usrreq,
+  .pr_init = 0,
+  .pr_fasttimo = 0,
+  .pr_slowtimo = 0,
+  .pr_drain = 0
 },
-{ SOCK_STREAM,	&natmdomain,	PROTO_NATMAAL0, PR_CONNREQUIRED,
-  0,	0,	0,	0,
-  natm_usrreq,
-  0,	0,	0,	0,
+{ .pr_type = SOCK_STREAM,
+  .pr_domain = &natmdomain,
+  .pr_protocol = PROTO_NATMAAL0,
+  .pr_flags = PR_CONNREQUIRED,
+  .pr_input = 0,
+  .pr_output = 0,
+  .pr_ctlinput = 0,
+  .pr_ctloutput = 0,
+  .pr_usrreq = natm_usrreq,
+  .pr_init = 0,
+  .pr_fasttimo = 0,
+  .pr_slowtimo = 0,
+  .pr_drain = 0
 },
 };
 

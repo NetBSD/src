@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.117.2.6 2007/12/07 17:32:50 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.117.2.7 2008/01/21 09:46:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,14 +86,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.6 2007/12/07 17:32:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.7 2008/01/21 09:46:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
 #include "opt_syscall_debug.h"
 #include "opt_ktrace.h"
 #include "opt_ptrace.h"
-#include "opt_systrace.h"
 #include "opt_powerhook.h"
 #include "opt_tftproot.h"
 
@@ -108,12 +107,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.6 2007/12/07 17:32:50 yamt Exp
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/queue.h>
-#include <sys/systrace.h>
 #include <sys/ktrace.h>
 #include <sys/ptrace.h>
 #include <sys/fcntl.h>
 #include <sys/kauth.h>
 #include <sys/vnode.h>
+#include <sys/pmf.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -143,6 +142,8 @@ MALLOC_DEFINE(M_IOV, "iov", "large iov's");
 int tftproot_dhcpboot(struct device *);
 #endif
 
+dev_t	dumpcdev;	/* for savecore */
+
 void
 uio_setup_sysspace(struct uio *uio)
 {
@@ -157,15 +158,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	struct iovec *iov;
 	u_int cnt;
 	int error = 0;
-	size_t on;
 	char *cp = buf;
-#ifdef MULTIPROCESSOR
-	int hold_count;
-#endif
-
-	if ((on = n) >= 1024) {
-		KERNEL_UNLOCK_ALL(NULL, &hold_count);
-	}
 
 	ASSERT_SLEEPABLE(NULL, "uiomove");
 
@@ -209,9 +202,6 @@ uiomove(void *buf, size_t n, struct uio *uio)
 		n -= cnt;
 	}
 
-	if (on >= 1024) {
-		KERNEL_LOCK(hold_count, NULL);
-	}
 	return (error);
 }
 
@@ -486,6 +476,14 @@ doshutdownhooks(void)
 {
 	struct hook_desc *dp;
 
+	if (panicstr != NULL) {
+		/*
+		 * Do as few things as possible after a panic.
+		 * We don't know the state the system is in.
+		 */
+		return;
+	}
+
 	while ((dp = LIST_FIRST(&shutdownhook_list)) != NULL) {
 		LIST_REMOVE(dp, hk_list);
 		(*dp->hk_fn)(dp->hk_arg);
@@ -500,6 +498,8 @@ doshutdownhooks(void)
 		free(dp, M_DEVBUF);
 #endif
 	}
+
+	pmf_system_shutdown();
 }
 
 /*
@@ -645,6 +645,7 @@ powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
 	strlcpy(ndp->sfd_name, name, sizeof(ndp->sfd_name));
 	CIRCLEQ_INSERT_HEAD(&powerhook_list, ndp, sfd_list);
 
+	aprint_error("%s: WARNING: powerhook_establish is deprecated\n", name);
 	return (ndp);
 }
 
@@ -1108,6 +1109,7 @@ setroot(struct device *bootdv, int bootpartition)
 		}
 	}
 
+	dumpcdev = devsw_blk2chr(dumpdev);
 	aprint_normal(" dumps on %s", dumpdv->dv_xname);
 	if (DEV_USES_PARTITIONS(dumpdv))
 		aprint_normal("%c", DISKPART(dumpdev) + 'a');
@@ -1116,6 +1118,7 @@ setroot(struct device *bootdv, int bootpartition)
 
  nodumpdev:
 	dumpdev = NODEV;
+	dumpcdev = NODEV;
 	aprint_normal("\n");
 }
 
@@ -1341,10 +1344,6 @@ trace_is_enabled(struct proc *p)
 	if (ISSET(p->p_traceflag, (KTRFAC_SYSCALL | KTRFAC_SYSRET)))
 		return (true);
 #endif
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE))
-		return (true);
-#endif
 #ifdef PTRACE
 	if (ISSET(p->p_slflag, PSL_SYSCALL))
 		return (true);
@@ -1361,34 +1360,20 @@ trace_is_enabled(struct proc *p)
  * system call number range for emulation the process runs under.
  */
 int
-trace_enter(struct lwp *l, register_t code,
-    register_t realcode, const struct sysent *callp, void *args)
+trace_enter(register_t code, register_t realcode,
+    const struct sysent *callp, const register_t *args)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
-	struct proc *p = l->l_proc;
-
 #ifdef SYSCALL_DEBUG
-	scdebug_call(l, code, args);
+	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
 
 	ktrsyscall(code, realcode, callp, args);
 
 #ifdef PTRACE
-	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace(l);
+		process_stoptrace();
 #endif
-
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE)) {
-		int error;
-		KERNEL_LOCK(1, l);
-		error = systrace_enter(l, code, args);
-		KERNEL_UNLOCK_ONE(l);
-		return error;
-	}
-#endif
-#endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
 	return 0;
 }
 
@@ -1400,32 +1385,20 @@ trace_enter(struct lwp *l, register_t code,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(struct lwp *l, register_t code, void *args, register_t rval[],
-    int error)
+trace_exit(register_t code, const register_t *args, 
+    register_t rval[], int error)
 {
-#if defined(SYSCALL_DEBUG) || defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
-	struct proc *p = l->l_proc;
-
 #ifdef SYSCALL_DEBUG
-	scdebug_ret(l, code, error, rval);
+	scdebug_ret(code, error, rval);
 #endif /* SYSCALL_DEBUG */
 
 	ktrsysret(code, error, rval);
 	
 #ifdef PTRACE
-	if ((p->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
+	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
 	    (PSL_SYSCALL|PSL_TRACED))
-		process_stoptrace(l);
+		process_stoptrace();
 #endif
-
-#ifdef SYSTRACE
-	if (ISSET(p->p_flag, PK_SYSTRACE)) {
-		KERNEL_LOCK(1, l);
-		systrace_exit(l, code, args, rval, error);
-		KERNEL_UNLOCK_ONE(l);
-	}
-#endif
-#endif /* SYSCALL_DEBUG || {K,P,SYS}TRACE */
 }
 
 /*

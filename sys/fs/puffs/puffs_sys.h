@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_sys.h,v 1.16.2.7 2007/12/07 17:32:05 yamt Exp $	*/
+/*	$NetBSD: puffs_sys.h,v 1.16.2.8 2008/01/21 09:45:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -152,7 +152,6 @@ struct puffs_mount {
 
 
 #define PNODE_NOREFS	0x01	/* no backend reference			*/
-#define PNODE_DYING	0x02	/* NOREF + inactive 			*/
 #define PNODE_SUSPEND	0x04	/* issue all operations as FAF		*/
 #define PNODE_DOINACT	0x08	/* if inactive-on-demand, call inactive */
 
@@ -219,9 +218,8 @@ void	puffs_referencenode(struct puffs_node *);
 int	puffs_cookie2vnode(struct puffs_mount *, void *, int, int,
 			   struct vnode **);
 void	puffs_makecn(struct puffs_kcn *, struct puffs_kcred *,
-		     struct puffs_kcid *, const struct componentname *, int);
+		     const struct componentname *, int);
 void	puffs_credcvt(struct puffs_kcred *, kauth_cred_t);
-void	puffs_cidcvt(struct puffs_kcid *, const struct lwp *);
 
 void	puffs_parkdone_asyncbioread(struct puffs_mount *,
 				    struct puffs_req *, void *);
@@ -272,7 +270,7 @@ checkerr(struct puffs_mount *pmp, int error, const char *str)
 
 #define PUFFS_MSG_ALLOC(type, a)					\
 	puffs_msgmem_alloc(sizeof(struct puffs_##type##msg_##a),	\
-	    &park_##a, (void **)& a##_msg, 1)
+	    &park_##a, (void *)& a##_msg, 1)
 
 #define PUFFS_MSG_RELEASE(a) 						\
 do {									\
