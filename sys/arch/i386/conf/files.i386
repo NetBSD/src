@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.330 2008/01/16 09:37:07 ad Exp $
+#	$NetBSD: files.i386,v 1.331 2008/01/21 08:04:51 dyoung Exp $
 #
 # new style config file for i386 architecture
 #
@@ -176,9 +176,17 @@ file	arch/i386/pci/pcic_pci_machdep.c	pcic_pci
 include "arch/x86/pci/files.pci"
 
 # AMD Elan SC520 System Controller (PCI-Host bridge)
-device	elansc: sysmon_wdog, gpiobus
+define elanparbus { }
+define elanpexbus { }
+device	elansc: sysmon_wdog, gpiobus, elanparbus, elanpexbus
 attach	elansc at pci
 file	arch/i386/pci/elan520.c		elansc
+
+device elanpar
+attach elanpar at elanparbus
+
+device elanpex
+attach elanpex at elanpexbus
 
 # AMD Geode CS5535 Companion IDE controller
 device	gcscide: ata, ata_dma, ata_udma, pciide_common, wdc_common
