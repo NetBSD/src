@@ -84,7 +84,7 @@
 #include "iscsi.h"
 #include "target.h"
 #include "device.h"
-#include "md5.h"
+#include "iscsi-md5.h"
 #include "parameters.h"
 
 enum {
@@ -106,6 +106,17 @@ static iscsi_mutex_t	g_session_q_mutex;
  * Private Functions *
  *********************/
 
+static char *
+get_iqn(target_session_t *sess, int t, char *buf, size_t size)
+{
+	if (sess->globals->tv->v[t].iqn != NULL) {
+		(void) strlcpy(buf, sess->globals->tv->v[t].iqn, size);
+		return buf;
+	}
+	(void) snprintf(buf, size, "%s:%s", sess->globals->targetname,
+			sess->globals->tv->v[t].target);
+	return buf;
+}
 
 static int 
 reject_t(target_session_t * sess, uint8_t *header, uint8_t reason)
@@ -134,7 +145,7 @@ reject_t(target_session_t * sess, uint8_t *header, uint8_t reason)
 }
 
 static int 
-scsi_command_t(target_session_t * sess, uint8_t *header)
+scsi_command_t(target_session_t *sess, uint8_t *header)
 {
 	target_cmd_t    cmd;
 	iscsi_scsi_cmd_args_t scsi_cmd;
@@ -186,12 +197,13 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 		    scsi_cmd.length, sess->sess_params.max_data_seg_length);
 		return -1;
 	}
-	/* if (scsi_cmd.final&&scsi_cmd.output) { */
-	/*
-	 * RETURN_NOT_EQUAL("Length", scsi_cmd.length, scsi_cmd.trans_len,
-	 * NO_CLEANUP, -1);
-	 */
-	/* } */
+
+#if 0
+	/* commented out in original Intel reference code */
+	if (scsi_cmd.final && scsi_cmd.output) {
+		RETURN_NOT_EQUAL("Length", scsi_cmd.length, scsi_cmd.trans_len, NO_CLEANUP, -1);
+	}
+#endif
 
 	/* Read AHS.  Need to optimize/clean this.   */
 	/* We should not be calling malloc(). */
@@ -223,11 +235,11 @@ scsi_command_t(target_session_t * sess, uint8_t *header)
 			ahs_len = ISCSI_NTOHS(*((uint16_t *) (void *)ahs_ptr));
 			RETURN_EQUAL("AHS Length", ahs_len, 0, AHS_CLEANUP, -1);
 			switch (ahs_type = *(ahs_ptr + 2)) {
-			case 0x01:
+			case ISCSI_AHS_EXTENDED_CDB:
 				iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "Got ExtendedCDB AHS (%u bytes extra CDB)\n", ahs_len - 1);
 				scsi_cmd.ext_cdb = ahs_ptr + 4;
 				break;
-			case 0x02:
+			case ISCSI_AHS_BIDI_READ:
 				scsi_cmd.bidi_trans_len = ISCSI_NTOHL(*((uint32_t *) (void *) (ahs_ptr + 4)));
 				*((uint32_t *) (void *) (ahs_ptr + 4)) = scsi_cmd.bidi_trans_len;
 				iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "Got Bidirectional Read AHS (expected read length %u)\n", scsi_cmd.bidi_trans_len);
@@ -652,7 +664,7 @@ text_command_t(target_session_t * sess, uint8_t *header)
 				for (i = 0 ; i < sess->globals->tv->c ; i++) {
 					if (sess->address_family == ISCSI_IPv6 ||
 					    (sess->address_family == ISCSI_IPv4 && allow_netmask(sess->globals->tv->v[i].mask, sess->initiator))) {
-						(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
+						(void) get_iqn(sess, i, buf, sizeof(buf));
 						PARAM_TEXT_ADD(sess->params, "TargetName", buf, text_out, &len_out, 2048, 0, TC_ERROR);
 						PARAM_TEXT_ADD(sess->params, "TargetAddress", sess->globals->targetaddress, text_out, &len_out, 2048, 0, TC_ERROR);
 					} else {
@@ -705,6 +717,36 @@ text_command_t(target_session_t * sess, uint8_t *header)
 	return 0;
 }
 
+/* given a target's iqn, find the relevant target that we're exporting */
+int
+find_target_iqn(target_session_t *sess)
+{
+	char	buf[BUFSIZ];
+	int	i;
+
+	for (i = 0 ; i < sess->globals->tv->c ; i++) {
+		if (param_equiv(sess->params, "TargetName",
+				get_iqn(sess, i, buf, sizeof(buf)))) {
+			return sess->d = i;
+		}
+	}
+	return -1;
+}
+
+/* given a tsih, find the relevant target that we're exporting */
+int
+find_target_tsih(globals_t *globals, int tsih)
+{
+	int	i;
+
+	for (i = 0 ; i < globals->tv->c ; i++) {
+		if (globals->tv->v[i].tsih == tsih) {
+			return i;
+		}
+	}
+	return -1;
+}
+
 /*
  * login_command_t() handles login requests and replies.
  */
@@ -714,14 +756,13 @@ login_command_t(target_session_t * sess, uint8_t *header)
 {
 	iscsi_login_cmd_args_t cmd;
 	iscsi_login_rsp_args_t rsp;
-	uint8_t   rsp_header[ISCSI_HEADER_LEN];
+	uint8_t		rsp_header[ISCSI_HEADER_LEN];
 	char           *text_in = NULL;
 	char           *text_out = NULL;
-	char		buf[BUFSIZ];
+	char		logbuf[BUFSIZ];
 	int             len_in = 0;
 	int             len_out = 0;
 	int             status = 0;
-	int		found;
 	int		i;
 
 	/* Initialize response */
@@ -758,7 +799,7 @@ login_command_t(target_session_t * sess, uint8_t *header)
 	} else if ((cmd.version_max < ISCSI_VERSION) || (cmd.version_min > ISCSI_VERSION)) {
 		iscsi_trace_error(__FILE__, __LINE__, "Target iscsi version (%u) not supported by initiator [Max Ver (%u) and Min Ver (%u)]\n", ISCSI_VERSION, cmd.version_max, cmd.version_min);
 		rsp.status_class = ISCSI_LOGIN_STATUS_INITIATOR_ERROR;
-		rsp.status_detail = 0x05;	/* Version not supported */
+		rsp.status_detail = ISCSI_LOGIN_DETAIL_VERSION_NOT_SUPPORTED;
 		rsp.version_max = ISCSI_VERSION;
 		rsp.version_active = ISCSI_VERSION;
 		goto response;
@@ -798,12 +839,10 @@ login_command_t(target_session_t * sess, uint8_t *header)
 		if ((status = param_text_parse(sess->params, &sess->sess_params.cred, text_in, len_in, text_out, &len_out, 2048, 0)) != 0) {
 			switch (status) {
 			case ISCSI_PARAM_STATUS_FAILED:
-				rsp.status_detail = 0;
+				rsp.status_detail = ISCSI_LOGIN_DETAIL_SUCCESS;
 				break;
 			case ISCSI_PARAM_STATUS_AUTH_FAILED:
-				rsp.status_detail = 1;	/* Initiator
-							 * Authentication
-							 * faiture */
+				rsp.status_detail = ISCSI_LOGIN_DETAIL_INIT_AUTH_FAILURE;
 				break;
 			default:
 				/*
@@ -841,7 +880,7 @@ login_command_t(target_session_t * sess, uint8_t *header)
 		if (param_equiv(sess->params, "AuthResult", "No")) {
 			rsp.transit = 0;
 		} else if (param_equiv(sess->params, "AuthResult", "Fail")) {
-			rsp.status_class = rsp.status_detail = 1;
+			rsp.status_class = rsp.status_detail = ISCSI_LOGIN_DETAIL_INIT_AUTH_FAILURE;
 			goto response;
 		}
 	}
@@ -860,17 +899,16 @@ login_command_t(target_session_t * sess, uint8_t *header)
 				iscsi_trace_error(__FILE__, __LINE__, "TargetName not specified\n");
 				goto response;
 			}
-			for (found = 0, i = 0 ; !found && i < sess->globals->tv->c ; i++) {
-				(void) snprintf(buf, sizeof(buf), "%s:%s", sess->globals->targetname, sess->globals->tv->v[i].target);
-				if (param_equiv(sess->params, "TargetName", buf)) {
-					found = 1;
-					sess->d = i;
-				}
-			}
-			if (!found) {
+			if ((i = find_target_iqn(sess)) < 0) { 
 				iscsi_trace_error(__FILE__, __LINE__, "Bad TargetName \"%s\"\n", param_val(sess->params, "TargetName"));
 				goto response;
 			}
+			if (cmd.tsih != 0 && find_target_tsih(sess->globals, cmd.tsih) != i) {
+				iscsi_trace_error(__FILE__, __LINE__, "target tsih expected %d, cmd.tsih %d, i %d\n", sess->globals->tv->v[i].tsih, cmd.tsih, i);
+			}
+			sess->d = i;
+		} else if ((i = find_target_tsih(sess->globals, cmd.tsih)) < 0) {
+			iscsi_trace_error(__FILE__, __LINE__, "Abnormal SessionType cmd.tsih %d not found\n", cmd.tsih);
 		}
 		if (param_equiv(sess->params, "SessionType", "")) {
 			iscsi_trace_error(__FILE__, __LINE__, "SessionType not specified\n");
@@ -880,7 +918,7 @@ login_command_t(target_session_t * sess, uint8_t *header)
 		sess->cid = cmd.cid;
 		sess->isid = cmd.isid;
 
-		sess->tsih = sess->id + 1;
+		sess->globals->tv->v[i].tsih = sess->tsih = ++sess->globals->last_tsih;
 		sess->IsFullFeature = 1;
 
 		sess->IsLoggedIn = 1;
@@ -888,13 +926,15 @@ login_command_t(target_session_t * sess, uint8_t *header)
 			(void) strlcpy(param_val(sess->params, "MaxConnections"), "1", 2);
 		}
 		set_session_parameters(sess->params, &sess->sess_params);
-#ifdef HAVE_SYSLOG_H
-		syslog(LOG_INFO, "> %s login from %s on %s", param_val(sess->params, "SessionType"), param_val(sess->params, "InitiatorName"), sess->initiator);
-#endif
+	} else {
+		if ((i = find_target_tsih(sess->globals, cmd.tsih)) < 0) {
+			iscsi_trace_error(__FILE__, __LINE__, "cmd.tsih %d not found\n", cmd.tsih);
+		}
 	}
+
 	/* No errors */
 
-	rsp.status_class = rsp.status_detail = 0;
+	rsp.status_class = rsp.status_detail = ISCSI_LOGIN_DETAIL_SUCCESS;
 	rsp.length = len_out;
 
 	/* Send login response */
@@ -934,15 +974,20 @@ response:
 	}
 	if (cmd.transit && cmd.nsg == ISCSI_LOGIN_STAGE_FULL_FEATURE) {
 
-		printf("**************************************************\n");
-		printf("*                LOGIN SUCCESSFUL                *\n");
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "CID", sess->cid);
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20" PRIu64 " *\n", "ISID", sess->isid);
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "TSIH", sess->tsih);
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "StatSN", sess->StatSN);
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "ExpCmdSN", sess->ExpCmdSN);
-		iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "* %20s:%20u *\n", "MaxCmdSN", sess->MaxCmdSN);
-		printf("**************************************************\n");
+		/* log information to stdout */
+		(void) snprintf(logbuf, sizeof(logbuf),
+			"> iSCSI %s login  successful from %s on %s disk %d, ISID %" PRIu64 ", TSIH %u",
+			param_val(sess->params, "SessionType"),
+			param_val(sess->params, "InitiatorName"),
+			sess->initiator,
+			sess->d,
+			sess->isid,
+			sess->tsih);
+		printf("%s\n", logbuf);
+#ifdef HAVE_SYSLOG_H
+		/* log information to syslog */
+		syslog(LOG_INFO, "%s", logbuf);
+#endif
 
 		/* Buffer for data xfers to/from the scsi device */
 		if (!param_equiv(sess->params, "MaxRecvDataSegmentLength", "0")) {
@@ -967,6 +1012,8 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 	iscsi_logout_cmd_args_t	cmd;
 	iscsi_logout_rsp_args_t	rsp;
 	uint8_t			rsp_header[ISCSI_HEADER_LEN];
+	char			logbuf[BUFSIZ];
+	int			i;
 
 	(void) memset(&rsp, 0x0, sizeof(rsp));
 	if (iscsi_logout_cmd_decap(header, &cmd) != 0) {
@@ -994,16 +1041,19 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 	}
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "sent logout response OK\n");
 
-	printf("**************************************************\n");
-	printf("*               LOGOUT SUCCESSFUL                *\n");
-	printf("*                                                *\n");
-	printf("* %20s:%20u      *\n", "CID", sess->cid);
-	printf("* %20s:%20" PRIu64 "    *\n", "ISID", sess->isid);
-	printf("* %20s:%20u      *\n", "TSIH", sess->tsih);
-	printf("**************************************************\n");
-
+	/* log information to stdout */
+	(void) snprintf(logbuf, sizeof(logbuf), 
+		"< iSCSI %s logout successful from %s on %s disk %d, ISID %" PRIu64 ", TSIH %u",
+		param_val(sess->params, "SessionType"),
+		param_val(sess->params, "InitiatorName"),
+		sess->initiator,
+		sess->d,
+		sess->isid,
+		sess->tsih);
+	printf("%s\n", logbuf);
 #ifdef HAVE_SYSLOG
-	syslog(LOG_INFO, "< %s logout from %s on %s", param_val(sess->params, "SessionType"), param_val(sess->params, "InitiatorName"), sess->initiator);
+	/* log information to syslog */
+	syslog(LOG_INFO, "%s", logbuf);
 #endif
 
 	sess->IsLoggedIn = 0;
@@ -1012,6 +1062,13 @@ logout_command_t(target_session_t * sess, uint8_t *header)
 		free(sess->sess_params.cred.user);
 		sess->sess_params.cred.user = NULL;
 	}
+
+	if ((i = find_target_tsih(sess->globals, sess->tsih)) < 0) {
+		iscsi_trace_error(__FILE__, __LINE__, "logout sess->tsih %d not found\n", sess->tsih);
+	} else {
+		sess->globals->tv->v[i].tsih = 0;
+	}
+	sess->tsih = 0;
 
 	return 0;
 }
@@ -1035,7 +1092,7 @@ verify_cmd_t(target_session_t * sess, uint8_t *header)
 		/* Create Login Reject response */
 		(void) memset(&rsp, 0x0, sizeof(rsp));
 		rsp.status_class = ISCSI_LOGIN_STATUS_INITIATOR_ERROR;
-		rsp.status_detail = 0x0b;
+		rsp.status_detail = ISCSI_LOGIN_DETAIL_NOT_LOGGED_IN;
 		rsp.version_max = ISCSI_VERSION;
 		rsp.version_active = ISCSI_VERSION;
 
@@ -1056,8 +1113,12 @@ verify_cmd_t(target_session_t * sess, uint8_t *header)
 	return 0;
 }
 
+/*
+ * this function looks at the opcode in the received header for the session,
+ * and does a switch on the opcode to call the required function.
+ */
 static int 
-execute_t(target_session_t * sess, uint8_t *header)
+execute_t(target_session_t *sess, uint8_t *header)
 {
 	int             op = ISCSI_OPCODE(header);
 
@@ -1586,7 +1647,7 @@ target_listen(globals_t *gp)
 	gp->listener_listening++;
 	iscsi_trace(TRACE_ISCSI_DEBUG, __FILE__, __LINE__, "listener thread started\n");
 
-	if (!iscsi_socks_establish(gp->sockv, gp->famv, &gp->sockc, gp->address_family)) {
+	if (!iscsi_socks_establish(gp->sockv, gp->famv, &gp->sockc, gp->address_family, gp->port)) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_sock_establish() failed\n");
 		goto done;
 	}
@@ -1603,7 +1664,9 @@ target_listen(globals_t *gp)
 			goto done;
 		}
 		ISCSI_UNLOCK(&g_session_q_mutex, return -1);
+#if 0
 		(void) memset(sess, 0x0, sizeof(*sess));
+#endif
 
 		sess->globals = gp;
 
