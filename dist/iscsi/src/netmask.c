@@ -1,4 +1,4 @@
-/* $NetBSD: netmask.c,v 1.7 2006/11/27 22:24:27 agc Exp $ */
+/* $NetBSD: netmask.c,v 1.7.2.1 2008/01/21 20:02:45 bouyer Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -11,11 +11,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Alistair Crooks
- *	for the NetBSD project.
- * 4. The name of the author may not be used to endorse or promote
+ * 3. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
@@ -49,7 +45,7 @@
 #include <arpa/inet.h>
 #endif
 
-#include "util.h"
+#include "iscsiutil.h"
 
 enum {
 	NETMASK_BUFFER_SIZE = 256
@@ -117,7 +113,8 @@ allow_netmask(const char *netmaskarg, const char *addr)
 		}
 	}
 	for ( ; i < 3 ; i++) {
-		(void) strlcat(maskaddr, ".0", sizeof(maskaddr));
+		(void) snprintf(cp, sizeof(maskaddr) - (int)(cp - maskaddr), ".0");
+		cp += 2;
 	}
 
 	/* translate netmask to in_addr */

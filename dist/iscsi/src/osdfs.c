@@ -47,7 +47,7 @@
 #include <scsi.h>
 #include "osd.h"
 #include "osd_ops.h"
-#include "util.h"
+#include "iscsiutil.h"
 #include "util.c"
 
 

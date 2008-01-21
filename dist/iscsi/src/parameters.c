@@ -47,10 +47,10 @@
 #include <netinet/in.h>
 #endif
 
-#include "util.h"
+#include "iscsi-md5.h"
+#include "iscsiutil.h"
 #include "parameters.h"
 #include "conffile.h"
-#include "md5.c"
 
 
 int 
@@ -394,8 +394,8 @@ find_credentials(iscsi_cred_t *cred, char *user, const char *auth)
 {
 	conffile_t	 conf;
 	const char	*authtype;
+	unsigned	 cc;
 	ent_t	 	 e;
-	int	 	 cc;
 
 	(void) memset(&conf, 0x0, sizeof(conf));
 	(void) memset(&e, 0x0, sizeof(e));
@@ -406,7 +406,7 @@ find_credentials(iscsi_cred_t *cred, char *user, const char *auth)
 	}
 	while (conffile_getent(&conf, &e)) {
 		if (strcasecmp(e.sv.v[0], user) == 0) {
-			authtype = (e.sv.c == 1) ? "none" : __UNCONST(e.sv.v[1]);
+			authtype = (e.sv.c == 1) ? "none" : e.sv.v[1];
 			cc = strlen(authtype);
 			if (auth == NULL || (strncasecmp(authtype, auth, cc) == 0 && cc == strlen(auth))) {
 				cred->user = strdup(e.sv.v[0]);
@@ -458,7 +458,7 @@ param_parse_security(iscsi_parameter_t * head,
 	static uint8_t chapdata[ISCSI_CHAP_DATA_LENGTH];
 	static uint8_t respdata[ISCSI_CHAP_DATA_LENGTH];
 	char           *chapstring = NULL;
-	MD5Context_t   *context = NULL;
+	iSCSI_MD5_CTX   *context = NULL;
 	iscsi_parameter_t *param = NULL;
 	int             ret = 1;
 
@@ -466,7 +466,7 @@ param_parse_security(iscsi_parameter_t * head,
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 		return -1;
 	}
-	if ((context = iscsi_malloc(sizeof(MD5Context_t))) == NULL) {
+	if ((context = iscsi_malloc(sizeof(*context))) == NULL) {
 		iscsi_trace_error(__FILE__, __LINE__, "iscsi_malloc() failed\n");
 		if (chapstring != NULL)
 			iscsi_free(chapstring);
@@ -561,20 +561,20 @@ param_parse_security(iscsi_parameter_t * head,
 		}
 		param->tx_offer = 1;	/* sending an offer */
 		param->rx_offer = 0;	/* reset */
-		MD5Init(context);
-		MD5Update(context, &idData, 1);
+		iSCSI_MD5Init(context);
+		iSCSI_MD5Update(context, &idData, 1);
 
 		if (cred->shared_secret == NULL) {
 			iscsi_trace_error(__FILE__, __LINE__, "null shared secret\n");
 			PPS_ERROR;
 		} else {
-			MD5Update(context, cred->shared_secret, strlen(cred->shared_secret));
+			iSCSI_MD5Update(context, (const uint8_t *)cred->shared_secret, strlen(cred->shared_secret));
 		}
 
 		HexDataToText(chapdata, ISCSI_CHAP_DATA_LENGTH,
 			      param->offer_tx, ISCSI_CHAP_STRING_LENGTH);
-		MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
-		MD5Final(chapdata, context);
+		iSCSI_MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
+		iSCSI_MD5Final(chapdata, context);
 		HexDataToText(chapdata, ISCSI_CHAP_DATA_LENGTH,
 			      param->offer_tx, ISCSI_CHAP_STRING_LENGTH);
 
@@ -620,9 +620,9 @@ param_parse_security(iscsi_parameter_t * head,
 
 	} else if (strcmp(param_in->key, "CHAP_R") == 0) {
 
-		MD5Init(context);
+		iSCSI_MD5Init(context);
 
-		MD5Update(context, &idData, 1);
+		iSCSI_MD5Update(context, &idData, 1);
 
 		HexDataToText(&idData, 1, param_in->offer_tx, ISCSI_CHAP_STRING_LENGTH);
 		HexDataToText(chapdata, ISCSI_CHAP_DATA_LENGTH,
@@ -632,11 +632,11 @@ param_parse_security(iscsi_parameter_t * head,
 			iscsi_trace_error(__FILE__, __LINE__, "Null shared secret in initiator\n");
 			PPS_ERROR;
 		} else {
-			MD5Update(context, cred->shared_secret, strlen(cred->shared_secret));
+			iSCSI_MD5Update(context, (const uint8_t *)cred->shared_secret, strlen(cred->shared_secret));
 		}
 
-		MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
-		MD5Final(chapdata, context);
+		iSCSI_MD5Update(context, chapdata, ISCSI_CHAP_DATA_LENGTH);
+		iSCSI_MD5Final(chapdata, context);
 
 		HexTextToData((param_in->rx_offer) ? param_in->offer_rx : param_in->answer_rx, ISCSI_CHAP_STRING_LENGTH,
 				      respdata, ISCSI_CHAP_DATA_LENGTH);
@@ -817,13 +817,17 @@ param_text_parse(iscsi_parameter_t * head,
 		if (outgoing) {
 			if (param->rx_offer) {
 				param->tx_answer = 1;	/* sending an answer */
+				param->rx_answer = 0; /* reset */
+				param->tx_offer = 0; /* reset */
+				param->rx_offer = 0; /* reset */
 				(void) strlcpy(param->answer_tx, value, sizeof(param->answer_tx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "sending answer \"%s\"=\"%s\" for offer \"%s\"\n",
 				      param->key, param->answer_tx, param->offer_rx);
 				goto negotiate;
 			} else {
 				param->tx_offer = 1;	/* sending an offer */
-				param->rx_offer = 0;	/* reset */
+				param->tx_answer = 0;
+				param->rx_answer = 0;
 				(void) strlcpy(param->offer_tx, value, sizeof(param->offer_tx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "sending offer \"%s\"=\"%s\"\n", param->key, param->offer_tx);
 				if ((param->type == ISCSI_PARAM_TYPE_DECLARATIVE) ||
@@ -835,6 +839,8 @@ param_text_parse(iscsi_parameter_t * head,
 		} else {
 			if (param->tx_offer) {
 				param->rx_answer = 1;	/* received an answer */
+				param->tx_answer = 0;
+				param->rx_offer = 0;
 				param->tx_offer = 0;	/* reset */
 				(void) strlcpy(param->answer_rx, value, sizeof(param->answer_rx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "received answer \"%s\"=\"%s\" for offer \"%s\"\n",
@@ -859,6 +865,8 @@ param_text_parse(iscsi_parameter_t * head,
 				return ISCSI_PARAM_STATUS_AUTH_FAILED;
 			} else {
 				param->rx_offer = 1;	/* received an offer */
+				param->rx_answer = 0;
+				param->tx_answer = 0; 
 				(void) strlcpy(param->offer_rx, value, sizeof(param->offer_rx));
 				iscsi_trace(TRACE_ISCSI_PARAM, __FILE__, __LINE__, "received offer \"%s\"=\"%s\"\n", param->key, param->offer_rx);
 
@@ -1052,7 +1060,17 @@ negotiate:
 			goto declarative_negotiate;
 		case ISCSI_PARAM_TYPE_DECLARATIVE:
 declarative_negotiate:
-			(void) strlcpy(param->negotiated, (outgoing) ? param->offer_tx : param->offer_rx, sizeof(param->negotiated));
+			if (param->tx_answer) {
+				(void) strlcpy(param->negotiated, param->answer_tx, sizeof(param->negotiated));
+			} else if (param->tx_offer) {
+				(void) strlcpy(param->negotiated, param->offer_tx, sizeof(param->negotiated));
+			} else if (param->rx_answer) {
+				(void) strlcpy(param->negotiated, param->answer_rx, sizeof(param->negotiated));
+			} else if (param->rx_offer) {
+				(void) strlcpy(param->negotiated, param->offer_rx, sizeof(param->negotiated));
+			} else {
+				iscsi_trace_error(__FILE__, __LINE__, "Invalid negotiation!?!?\n");	
+			}
 			break;
 		case ISCSI_PARAM_TYPE_BINARY_AND:
 			goto binary_or_negotiate;
