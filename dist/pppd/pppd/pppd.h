@@ -1,4 +1,4 @@
-/*	$NetBSD: pppd.h,v 1.6 2006/11/05 09:16:20 martin Exp $	*/
+/*	$NetBSD: pppd.h,v 1.7 2008/01/21 20:47:38 dyoung Exp $	*/
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -51,6 +51,7 @@
 #ifndef __PPPD_H__
 #define __PPPD_H__
 
+#include <stdbool.h>		/* for bool */
 #include <stdio.h>		/* for FILE */
 #include <limits.h>		/* for NGROUPS_MAX */
 #include <sys/param.h>		/* for MAXPATHLEN and BSD4_4, if defined */
@@ -86,8 +87,6 @@
 /*
  * Option descriptor structure.
  */
-
-typedef unsigned char	bool;
 
 enum opt_type {
 	o_special_noarg = 0,
