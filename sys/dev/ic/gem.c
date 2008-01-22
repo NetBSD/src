@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.71 2008/01/22 09:42:06 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.72 2008/01/22 23:19:14 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.71 2008/01/22 09:42:06 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.72 2008/01/22 23:19:14 jdc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1793,8 +1793,8 @@ gem_rint(sc)
 			if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
 				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN -
 					 ETHER_VLAN_ENCAP_LEN;
-				eh = (struct ether_header *) mtod(m, void *) +
-					ETHER_VLAN_ENCAP_LEN;
+				eh = (struct ether_header *) (mtod(m, char *) +
+					ETHER_VLAN_ENCAP_LEN);
 			} else {
 				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN;
 				eh = mtod(m, struct ether_header *);
