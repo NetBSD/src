@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.8 2008/01/21 20:55:39 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.9 2008/01/22 19:07:03 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -81,49 +81,6 @@ usr.bin/xargs/xargs.c				1.16, 1.18
 	Bring in xargs from FreeBSD to gain -I, -J etc. but keep our
 	GNU compatible exit values. Fixes PRs 36154 and 37666.
 	[apb, ticket #1036]
-
-dist/iscsi/src/Makefile.in			patch
-dist/iscsi/src/TODO				patch
-dist/iscsi/src/auths				patch
-dist/iscsi/src/conffile.c			patch
-dist/iscsi/src/configure			patch
-dist/iscsi/src/configure.ac			patch
-dist/iscsi/src/disk.c				patch
-dist/iscsi/src/driver.c				patch
-dist/iscsi/src/initiator.c			patch
-dist/iscsi/src/iscsi-harness.8			patch
-dist/iscsi/src/iscsi-harness.c			patch
-dist/iscsi/src/iscsi-target.c			patch
-dist/iscsi/src/iscsi.c				patch
-dist/iscsi/src/iscsiconfig.c			patch
-dist/iscsi/src/ktarget.c			patch
-dist/iscsi/src/ktest.c				patch
-dist/iscsi/src/md5.c				patch
-dist/iscsi/src/md5c.c				patch
-dist/iscsi/src/md5hl.c				patch
-dist/iscsi/src/mknodes.c			patch
-dist/iscsi/src/mount_iscsi.c			patch
-dist/iscsi/src/netmask.c			patch
-dist/iscsi/src/osd-target.c			patch
-dist/iscsi/src/osd.c				patch
-dist/iscsi/src/osd_ops.c			patch
-dist/iscsi/src/osdfs.c				patch
-dist/iscsi/src/parameters.c			patch
-dist/iscsi/src/so.c				patch
-dist/iscsi/src/storage.c			patch
-dist/iscsi/src/strtoll.c			patch
-dist/iscsi/src/target.c				patch
-dist/iscsi/src/targets				patch
-dist/iscsi/src/targets.5			patch
-dist/iscsi/src/tests.c				patch
-dist/iscsi/src/usocktest.c			patch
-dist/iscsi/src/util.c				patch
-dist/iscsi/src/uuid.c				patch
-
-	Sync the iscsi-target up to current, fixing a number of bugs
-	(including "multiple targets show up as one").
-	Delete unused files.
-	[agc, ticket #1038]
 
 distrib/sets/lists/base/mi			1.712
 distrib/sets/lists/comp/mi			1.1035
