@@ -1,11 +1,12 @@
-#	$NetBSD: Makefile.inc,v 1.4 2007/12/22 23:19:40 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.5 2008/01/22 12:34:58 nakayama Exp $
 
 .include <bsd.own.mk>
 
 .if ${MACHINE} == "sparc64"
 
 SPARC64DIR=	${.PARSEDIR}/../../sparc64/atomic
-.PATH: ${SPARC64DIR}
+.PATH.c: ${SPARC64DIR}
+.PATH.S: ${SPARC64DIR}
 
 .include "${SPARC64DIR}/Makefile.inc"
 
