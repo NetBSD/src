@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1052 2008/01/21 08:13:56 dyoung Exp $
+# $NetBSD: mi,v 1.1053 2008/01/22 06:58:13 uebayasi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1482,6 +1482,7 @@
 ./usr/share/man/cat4/uhci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uhid.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uhidev.0			man-sys-catman		.cat
+./usr/share/man/cat4/uhmodem.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uhub.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uipaq.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uirda.0			man-sys-catman		.cat
@@ -4002,6 +4003,7 @@
 ./usr/share/man/man4/uhci.4			man-sys-man		.man
 ./usr/share/man/man4/uhid.4			man-sys-man		.man
 ./usr/share/man/man4/uhidev.4			man-sys-man		.man
+./usr/share/man/man4/uhmodem.4			man-sys-man		.man
 ./usr/share/man/man4/uhub.4			man-sys-man		.man
 ./usr/share/man/man4/uipaq.4			man-sys-man		.man
 ./usr/share/man/man4/uirda.4			man-sys-man		.man
