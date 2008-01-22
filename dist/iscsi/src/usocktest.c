@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <string.h>
-#include "iscsiutil.h"
+#include "util.h"
 
 /*
  * NOTE: THIS IS A WORK IN PROGRESS. 

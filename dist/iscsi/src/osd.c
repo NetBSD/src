@@ -83,7 +83,7 @@
 #include "scsi_cmd_codes.h"
 
 #include "iscsi.h"
-#include "iscsiutil.h"
+#include "util.h"
 #include "device.h"
 #include "osd.h"
 

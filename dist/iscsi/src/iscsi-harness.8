@@ -1,4 +1,4 @@
-.\" $NetBSD: iscsi-harness.8,v 1.3.4.1 2008/01/21 20:02:43 bouyer Exp $
+.\" $NetBSD: iscsi-harness.8,v 1.3.4.2 2008/01/22 19:06:04 bouyer Exp $
 .\"
 .\" Copyright © 2006 Alistair Crooks.  All rights reserved.
 .\"
@@ -26,7 +26,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 8, 2007
+.Dd March 4, 2006
 .Dt ISCSI-HARNESS 8
 .Os
 .Sh NAME
@@ -38,9 +38,9 @@
 .Op Fl a Ar authentication type
 .Op Fl d Ar digest type
 .Op Fl h Ar target hostname
+.Op Fl l Ar number of luns
 .Op Fl n Ar number of test iterations
-.Op Fl p Ar port number of iSCSI target
-.Op Fl t Ar target name
+.Op Fl t Ar number of targets
 .Op Fl u Ar user name
 .Sh DESCRIPTION
 .Nm
@@ -79,14 +79,6 @@ or
 .Ar none .
 The default value is
 .Ar none .
-.It Fl p Ar iSCSI target port number
-This option allows the
-.Nm
-utility to connect to a specific port number
-upon which the
-.Xr iscsi-target 8
-process is listening.
-The default port number is 3260.
 .It Fl V
 .Nm
 will print the utility name and version number,
