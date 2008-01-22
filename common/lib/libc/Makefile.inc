@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.7 2007/11/28 15:25:44 ad Exp $
+# $NetBSD: Makefile.inc,v 1.8 2008/01/22 12:34:58 nakayama Exp $
 
 COMMON_DIR:=${.PARSEDIR}
 COMMON_CODEDIRS=atomic gen gmon inet md net quad stdlib string
@@ -19,12 +19,12 @@ COMMON_ARCHDIR=${COMMON_DIR}/arch/${COMMON_ARCHSUBDIR}
 .if exists(${COMMON_DIR}/$i)
 .PATH.c: ${COMMON_DIR}/$i
 .endif
+.if exists(${COMMON_ARCHDIR}/${i}/Makefile.inc)
+.include "${COMMON_ARCHDIR}/${i}/Makefile.inc"
+.endif
 .if exists(${COMMON_ARCHDIR}/$i)
 .PATH.c: ${COMMON_ARCHDIR}/$i
 .PATH.S: ${COMMON_ARCHDIR}/$i
-.endif
-.if exists(${COMMON_ARCHDIR}/${i}/Makefile.inc)
-.include "${COMMON_ARCHDIR}/${i}/Makefile.inc"
 .endif
 .endfor
 
