@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.359 2008/01/09 11:26:02 simonb Exp $
+#	$NetBSD: NetBSD.dist,v 1.360 2008/01/22 01:21:04 lukem Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -40,7 +40,7 @@
 ./etc/openssl
 ./etc/openssl/certs
 ./etc/openssl/misc
-./etc/openssl/private
+./etc/openssl/private		mode=0700
 ./etc/pam.d
 ./etc/postfix
 ./etc/powerd
