@@ -72,7 +72,6 @@ main(int argc, char **argv)
 	char			hostname[1024];
 	char		       *host;
 	char		       *user;
-	int			address_family;
 	int             	tgtlo = 0;
 	int             	tgthi = CONFIG_INITIATOR_NUM_TARGETS;
 	int             	target = -1;
@@ -80,7 +79,7 @@ main(int argc, char **argv)
         int			mutual_auth;
         int			auth_type;
 	int             	lun = 0;
-	int             	i, j;
+	int             	i;
 	int             	iterations;
 
 	/* Check args */
@@ -90,17 +89,10 @@ main(int argc, char **argv)
 	(void) gethostname(host = hostname, sizeof(hostname));
 	digest_type = DigestNone;
 	auth_type = AuthNone;
-	address_family = ISCSI_UNSPEC;
 	mutual_auth = 0;
 
-	while ((i = getopt(argc, argv, "46a:d:h:l:n:t:u:V")) != -1) {
+	while ((i = getopt(argc, argv, "a:d:h:l:n:t:u:")) != -1) {
 		switch(i) {
-		case '4':
-			address_family = ISCSI_IPv4;
-			break;
-		case '6':
-			address_family = ISCSI_IPv6;
-			break;
 		case 'a':
 			if (strcasecmp(optarg, "chap") == 0) {
 				auth_type = AuthCHAP;
@@ -134,10 +126,6 @@ main(int argc, char **argv)
 		case 'u':
 			user = optarg;
 			break;
-		case 'V':
-			(void) printf("\"%s\" %s\nPlease send all bug reports to %s\n", PACKAGE_NAME, PACKAGE_VERSION, PACKAGE_BUGREPORT);
-			exit(EXIT_SUCCESS);
-			/* NOTREACHED */
 		default:
 			(void) fprintf(stderr, "%s: unknown option `%c'", *argv, i);
 		}
@@ -153,52 +141,38 @@ main(int argc, char **argv)
 
 	if (target != -1) {
 		if (target >= CONFIG_INITIATOR_NUM_TARGETS) {
-			iscsi_trace_error(__FILE__, __LINE__, "initiator only configured with %d targets\n", CONFIG_INITIATOR_NUM_TARGETS);
+			iscsi_trace_error(__FILE__, __LINE__, "initiator only configured with %i targets\n", CONFIG_INITIATOR_NUM_TARGETS);
 			exit(EXIT_FAILURE);
 		}
 		tgtlo = target;
 		tgthi = target + 1;
 	}
 	if (argc == 1) {
-		(void) fprintf(stderr, "usage: %s [-4] [-6] [-V] [-a auth-type] [-d digest-type] [-h hostname] [-l lun] [-n iterations] [-t target] [-u user]\n", *argv);
+		(void) fprintf(stderr, "usage: %s [-h hostname] [-l lun] [-n iterations] [-t target]\n", *argv);
 		exit(EXIT_FAILURE);
 	}
-	for (j = 0; j < iterations; j++) {
 
-		printf("<ITERATION %d>\n", j);
+	/* Ignore sigpipe */
 
-		/* Ignore sigpipe */
+	act.sa_handler = SIG_IGN;
+	sigaction(SIGPIPE, &act, NULL);
 
-		act.sa_handler = SIG_IGN;
-		sigaction(SIGPIPE, &act, NULL);
-
+	for (i = optind ; i < argc ; i++) {
 		/* Initialize Initiator */
-		if (initiator_init(host, address_family, user, auth_type, mutual_auth, digest_type) == -1) {
+		if (initiator_init(host, user, auth_type, mutual_auth, digest_type) == -1) {
 			iscsi_trace_error(__FILE__, __LINE__, "initiator_init() failed\n");
-			return -1;
+			exit(EXIT_FAILURE);
 		}
-		/* Run tests for each target */
 
-		for (i = tgtlo; i < tgthi; i++) {
-			if (test_all(i, lun) != 0) {
-				iscsi_trace_error(__FILE__, __LINE__, "test_all() failed\n");
-				return -1;
-			}
-		}
+		/* Run tests for each target */
+		initiator_discover(host, 0, 0);
 
 		/* Shutdown Initiator */
-
 		if (initiator_shutdown() == -1) {
 			iscsi_trace_error(__FILE__, __LINE__, "initiator_shutdown() failed\n");
-			return -1;
+			exit(EXIT_FAILURE);
 		}
 	}
-
-	printf("\n");
-	printf("************************************\n");
-	printf("* ALL TESTS COMPLETED SUCCESSFULLY *\n");
-	printf("************************************\n");
-	printf("\n");
 
 	exit(EXIT_SUCCESS);
 }

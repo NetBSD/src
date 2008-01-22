@@ -93,7 +93,7 @@ nop_out(uint64_t target, int lun, int length, int ping, const char *data)
 	(void) memset(&nop_cmd, 0x0, sizeof(iscsi_nop_out_args_t));
 	RETURN_GREATER("length", length, 4096, NO_CLEANUP, -1);
 	nop_cmd.length = length;
-	nop_cmd.data = (const uint8_t *) data;
+	nop_cmd.data = data;
 	nop_cmd.lun = lun;
 	if (!ping) {
 		nop_cmd.tag = 0xffffffff;
@@ -172,10 +172,10 @@ read_capacity(uint64_t target, uint32_t lun, uint32_t *max_lba, uint32_t *block_
 		iscsi_trace_error(__FILE__, __LINE__, "READ_CAPACITY failed (status %#x)\n", args.status);
 		return -1;
 	}
-	*max_lba = ISCSI_NTOHL(*((uint32_t *) (data)));
-	*block_len = ISCSI_NTOHL(*((uint32_t *) (data + 4)));
 	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "Max LBA (lun %u):   %u\n", lun, *max_lba);
 	iscsi_trace(TRACE_SCSI_DEBUG, __FILE__, __LINE__, "Block Len (lun %u): %u\n", lun, *block_len);
+	*max_lba = ISCSI_NTOHL(*((uint32_t *) (data)));
+	*block_len = ISCSI_NTOHL(*((uint32_t *) (data + 4)));
 	if (*max_lba == 0) {
 		iscsi_trace_error(__FILE__, __LINE__, "Device returned Maximum LBA of zero\n");
 		return -1;
@@ -200,15 +200,12 @@ read_capacity(uint64_t target, uint32_t lun, uint32_t *max_lba, uint32_t *block_
 int 
 write_read_test(uint64_t target, uint32_t lun, int type)
 {
-	iscsi_scsi_cmd_args_t	args;
-	initiator_cmd_t		cmd;
-	uint32_t        	max_lba;
-	uint32_t        	block_len;
-	uint32_t		i;
-	uint16_t		len = 1;
-	uint8_t   		data[4096];
-	uint8_t   		cdb[16];
-	int             	j;
+	uint32_t        max_lba, block_len;
+	uint8_t   data[4096], cdb[16];
+	initiator_cmd_t cmd;
+	iscsi_scsi_cmd_args_t args;
+	int16_t             len = 1;
+	int             i, j;
 
 	if ((type != 6) && (type != 10)) {
 		iscsi_trace_error(__FILE__, __LINE__, "bad type, select 6 or 10\n");
@@ -591,25 +588,6 @@ nop_test(uint32_t target, uint32_t lun, uint32_t iters)
 	return 0;
 }
 
-static const char *
-humanise(uint8_t op)
-{
-	switch(op) {
-	case TEST_UNIT_READY:
-		return "TEST_UNIT_READY";
-	case INQUIRY:
-		return "INQUIRY";
-	case READ_10:
-		return "READ_10";
-	case WRITE_10:
-		return "WRITE_10";
-	case READ_CAPACITY:
-		return "READ CAPACITY";
-	default:
-		return "unknown";
-	}
-}
-
 /* latency_test() performs <op> for a number of iterations and outputs */
 /* the average latency.  <op> can be any of WRITE_10, READ_10,  */
 /* TEST_UNIT_READY, READ_CAPACITY or INQUIRY. */
@@ -718,8 +696,8 @@ latency_test(uint64_t target, uint32_t lun, uint8_t op, uint32_t iters)
 
 	/* Output results */
 
-	printf("SCSI op 0x%2x (%s): %u iters in %.2f sec --> %.2f usec\n",
-	      op, humanise(op), iters, toSeconds(t_stop) - toSeconds(t_start),
+	printf("SCSI op 0x%2x: %u iters in %.2f sec --> %.2f usec\n",
+	      op, iters, toSeconds(t_stop) - toSeconds(t_start),
 	      ((toSeconds(t_stop) - toSeconds(t_start)) * 1e6) / iters);
 
 	rc = 0;
@@ -730,8 +708,13 @@ done:
 
 /*
  * scatter_gather() tests scatter/gather performance for WRITE_10 and
- * READ_10.  Instead of specifying a data buffer in args.send_data and
- * arg.recv_data, we specify a scatter/gather list.  */
+ * READ_10.
+ */
+/*
+ * Instead of specifying a data buffer in args.send_data and arg.recv_data,
+ * we
+ */
+/* specify a scatter/gather list. */
 
 int 
 scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
@@ -855,8 +838,8 @@ scatter_gather_test(uint64_t target, uint32_t lun, uint8_t op)
 	}
 
 	gettimeofday(&t_stop, 0);
-	printf("SCSI op %#x (%s): %u bytes (%s) in %.2f secs --> %.2f MB/sec\n",
-	       op, humanise(op), xfer_size, (op == WRITE_10) ? "gathered" : "scattered",
+	printf("SCSI op %#x: %u bytes (%s) in %.2f secs --> %.2f MB/sec\n",
+	       op, xfer_size, (op == WRITE_10) ? "gathered" : "scattered",
 	       toSeconds(t_stop) - toSeconds(t_start),
 	  (xfer_size / 1048576) / (toSeconds(t_stop) - toSeconds(t_start)));
 	rc = 0;
@@ -1005,80 +988,6 @@ test_all(int target, int lun)
 {
 	uint32_t        device_type = 0;
 	const char           *data = "Hello, world!";
-
-	/* Initial Tests */
-
-	printf("##BEGIN INITIAL TESTS[%d:%d]##\n", target, lun);
-	if (nop_out(target, lun, 13, 0, data) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "nop_out() failed\n");
-		return -1;
-	}
-	printf("nop_out() PASSED\n");
-	if (nop_out(target, lun, 13, 1, data) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "nop_out() w/ ping failed\n");
-		return -1;
-	}
-	printf("nop_out() w/ ping PASSED\n");
-	if (inquiry(target, lun, &device_type) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "inquiry() failed\n");
-		return -1;
-	}
-	printf("inquiry() PASSED: device type %#x\n", device_type);
-	printf("##END INITIAL TESTS[%d:%d]##\n\n", target, lun);
-
-	/* iSCSI Latency Tests */
-
-	printf("##BEGIN iSCSI LATENCY TESTS[%d:%d]##\n", target, lun);
-	if (nop_test(target, lun, 1000) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "nop_test() failed\n");
-		return -1;
-	}
-	printf("##END iSCSI LATENCY TESTS[%d:%d]##\n\n", target, lun);
-
-	/* SCSI Latency Tests */
-
-	printf("##BEGIN SCSI LATENCY TESTS[%d:%d]##\n", target, lun);
-	if (latency_test(target, lun, TEST_UNIT_READY, 1000) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "latency_test(TEST_UNIT_READY) failed\n");
-		return -1;
-	}
-	if (latency_test(target, lun, INQUIRY, 1000) != 0) {
-		iscsi_trace_error(__FILE__, __LINE__, "latency_test(INQUIRY) failed\n");
-		return -1;
-	}
-	printf("##END SCSI LATENCY TESTS[%d:%d]##\n\n", target, lun);
-
-	/* Device-specific tests */
-
-	printf("##BEGIN DEVICE-SPECIFIC TESTS[%d:%d]##\n", target, lun);
-	switch (device_type) {
-	case 0x00:
-		if (disk_tests(target, lun) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "disk_tests() failed\n");
-			return -1;
-		}
-		break;
-	case 0x0e:
-		if (osd_tests(target, lun) != 0) {
-			iscsi_trace_error(__FILE__, __LINE__, "osd_tests() failed\n");
-			return -1;
-		}
-		break;
-	default:
-		break;
-	}
-	printf("##END DEVICE-SPECIFIC TESTS[%d:%d]##\n\n", target, lun);
-
-	return 0;
-}
-
-int 
-ii_test_all(void)
-{
-	uint32_t        device_type = 0;
-	const char           *data = "Hello, world!";
-	int		target = 0;
-	int		lun = 0;
 
 	/* Initial Tests */
 

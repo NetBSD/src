@@ -1,4 +1,4 @@
-/* $NetBSD: iscsi-target.c,v 1.11.4.1 2008/01/21 20:02:43 bouyer Exp $ */
+/* $NetBSD: iscsi-target.c,v 1.11.4.2 2008/01/22 19:06:04 bouyer Exp $ */
 
 /*
  * Copyright © 2006 Alistair Crooks.  All rights reserved.
@@ -11,7 +11,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Alistair Crooks
+ *	for the NetBSD project.
+ * 4. The name of the author may not be used to endorse or promote
  *    products derived from this software without specific prior written
  *    permission.
  *
@@ -46,7 +50,7 @@
 #include <unistd.h>
 
 #include "iscsi.h"
-#include "iscsiutil.h"
+#include "util.h"
 #include "target.h"
 #include "device.h"
 
