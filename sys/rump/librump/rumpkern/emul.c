@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.22 2008/01/20 18:09:13 joerg Exp $	*/
+/*	$NetBSD: emul.c,v 1.23 2008/01/22 09:23:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -346,6 +346,10 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct kthdesc *k;
 	struct lwp *l;
 	int rv;
+
+#ifdef RUMP_WITHOUT_THREADS
+	panic("threads not available, undef RUMP_WITHOUT_THREADS");
+#endif
 
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
