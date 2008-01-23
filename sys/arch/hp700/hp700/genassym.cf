@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.14 2007/10/17 19:54:26 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.15 2008/01/23 18:11:29 skrll Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -137,7 +137,6 @@ member	TF_FLAGS	tf_flags
 member	TF_PHYS		tf_sar
 member	TF_R1		tf_r1
 member	TF_R2		tf_rp
-member	TF_GOTO		tf_rp
 member	TF_R3		tf_r3
 member	TF_R4		tf_r4
 member	TF_R5		tf_r5
