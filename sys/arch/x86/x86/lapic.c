@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.30 2007/12/26 11:51:12 yamt Exp $ */
+/* $NetBSD: lapic.c,v 1.31 2008/01/23 20:02:16 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.30 2007/12/26 11:51:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.31 2008/01/23 20:02:16 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.30 2007/12/26 11:51:12 yamt Exp $");
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 #include <x86/x86/tsc.h>
+#include <x86/i82093var.h>
 
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -147,7 +148,7 @@ lapic_set_lvt(void)
 	struct cpu_info *ci = curcpu();
 	int i;
 	struct mp_intr_map *mpi;
-	uint32_t lint0;
+	uint32_t lint0, lint1;
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
@@ -159,14 +160,22 @@ lapic_set_lvt(void)
 #endif
 
 	/*
-	 * Disable ExtINT by default when using I/O APICs.
-	 * XXX mp_nintr > 0 isn't quite the right test for this.
+	 * If an I/O APIC has been attached, assume that it is used instead of
+	 * the 8259A for interrupt delivery.  Otherwise request the LAPIC to
+	 * get external interrupts via LINT0 for the primary CPU.
 	 */
-	if (mp_nintr > 0) {
-		lint0 = i82489_readreg(LAPIC_LVINT0);
+	lint0 = LAPIC_DLMODE_EXTINT;
+	if (nioapics > 0 || !CPU_IS_PRIMARY(curcpu()))
 		lint0 |= LAPIC_LVT_MASKED;
-		i82489_writereg(LAPIC_LVINT0, lint0);
-	}
+	i82489_writereg(LAPIC_LVINT0, lint0);
+
+	/*
+	 * Non Maskable Interrupts are to be delivered to the primary CPU.
+	 */
+	lint1 = LAPIC_DLMODE_NMI;
+	if (!CPU_IS_PRIMARY(curcpu()))
+		lint1 |= LAPIC_LVT_MASKED;
+	i82489_writereg(LAPIC_LVINT1, lint1);
 
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
