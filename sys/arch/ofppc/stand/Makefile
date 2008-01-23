@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 1997/04/16 20:29:01 thorpej Exp $
+#	$NetBSD: Makefile,v 1.3 2008/01/23 23:09:42 garbled Exp $
 
-SUBDIR=	ofwboot
+SUBDIR=	ofwboot bootinfo
 
 .include <bsd.subdir.mk>
