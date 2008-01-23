@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.1 2008/01/02 11:39:02 mrg Exp $
+#	$NetBSD: list.ramdisk,v 1.2 2008/01/23 23:15:37 garbled Exp $
 
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin libexec
 
@@ -17,6 +17,8 @@ COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # we need the boot block in /usr/mdec + the MBR copy
 COPY	${DESTDIR}/usr/mdec/ofwboot		usr/mdec/ofwboot
+COPY	${DESTDIR}/usr/mdec/netbsd.chrp		usr/mdec/netbsd.chrp
+COPY	${DESTDIR}/usr/mdec/mkbootinfo		usr/mdec/mkbootinfo	755
 
 # and the common installation tools
 COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap

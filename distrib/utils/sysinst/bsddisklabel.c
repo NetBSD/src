@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.43 2008/01/02 11:23:22 mrg Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.44 2008/01/23 23:15:37 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -91,26 +91,7 @@
 #define DEFSWAPSIZE	128
 #endif
 
-static int set_ptn_size(menudesc *, void *);
-
-struct ptn_info {
-	int		menu_no;
-	struct ptn_size {
-		int	ptn_id;
-		char	mount[20];
-		int	dflt_size;
-		int	size;
-		int	limit;
-		char	changed;
-	}		ptn_sizes[MAXPARTITIONS + 1];	/* +1 for delete code */
-	menu_ent	ptn_menus[MAXPARTITIONS + 1];	/* +1 for unit chg */
-	int		free_parts;
-	int		free_space;
-	struct ptn_size *pool_part;
-	char		exit_msg[70];
-};
-
-static int
+int
 save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 {
 	static int maxptn;
@@ -156,7 +137,7 @@ save_ptn(int ptn, int start, int size, int fstype, const char *mountpt)
 	return ptn;
 }
 
-static void
+void
 set_ptn_titles(menudesc *m, int opt, void *arg)
 {
 	struct ptn_info *pi = arg;
@@ -181,7 +162,7 @@ set_ptn_titles(menudesc *m, int opt, void *arg)
 		p == pi->pool_part ? '+' : ' ', p->mount);
 }
 
-static void
+void
 set_ptn_menu(struct ptn_info *pi)
 {
 	struct ptn_size *p;
@@ -215,7 +196,7 @@ set_ptn_menu(struct ptn_info *pi)
 	set_menu_numopts(pi->menu_no, m - pi->ptn_menus);
 }
 
-static int
+int
 set_ptn_size(menudesc *m, void *arg)
 {
 	struct ptn_info *pi = arg;
@@ -352,7 +333,7 @@ set_ptn_size(menudesc *m, void *arg)
 	return 0;
 }
 
-static void
+void
 get_ptn_sizes(int part_start, int sectors, int no_swap)
 {
 	int i;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.133 2007/11/12 15:07:33 jmmv Exp $	*/
+/*	$NetBSD: defs.h,v 1.134 2008/01/23 23:15:37 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,6 +54,7 @@ deconst(const void *p)
 }
 
 #include "msg_defs.h"
+#include "menu_defs.h"
 
 #define min(a,b)	((a) < (b) ? (a) : (b))
 #define max(a,b)	((a) > (b) ? (a) : (b))
@@ -191,6 +192,22 @@ typedef struct _partinfo {
 #define PIF_RESET	0x1000		/* internal - restore previous values */
 } partinfo;	/* Single partition from a disklabel */
 
+struct ptn_info {
+	int		menu_no;
+	struct ptn_size {
+		int	ptn_id;
+		char	mount[20];
+		int	dflt_size;
+		int	size;
+		int	limit;
+		int	changed;
+	}		ptn_sizes[MAXPARTITIONS + 1];	/* +1 for delete code */
+	menu_ent	ptn_menus[MAXPARTITIONS + 1];	/* +1 for unit chg */
+	int		free_parts;
+	int		free_space;
+	struct ptn_size	*pool_part;
+	char		exit_msg[70];
+};
 
 /* variables */
 
@@ -429,6 +446,11 @@ void	unwind_mounts(void);
 
 /* from bsddisklabel.c */
 int	make_bsd_partitions(void);
+int	save_ptn(int, int, int, int, const char *);
+void	set_ptn_titles(menudesc *, int, void *);
+void	set_ptn_menu(struct ptn_info *);
+int	set_ptn_size(menudesc *, void *);
+void	get_ptn_sizes(int, int, int);
 
 /* from aout2elf.c */
 int move_aout_libs(void);
