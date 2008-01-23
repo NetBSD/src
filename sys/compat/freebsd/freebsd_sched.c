@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.14 2008/01/23 17:55:40 elad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.15 2008/01/23 19:06:59 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.14 2008/01/23 17:55:40 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.15 2008/01/23 19:06:59 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -169,7 +169,7 @@ freebsd_sys_sched_setscheduler(struct lwp *l, const struct freebsd_sys_sched_set
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_SCHEDULER, p,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SET),
-		    SCARG(uap, policy), &lp);
+		    KAUTH_ARG(SCARG(uap, policy)), &lp);
 	mutex_exit(&proclist_lock);
 
 	if (error)
