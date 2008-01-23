@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.18 2008/01/07 23:51:06 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.19 2008/01/23 15:04:38 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.18 2008/01/07 23:51:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.19 2008/01/23 15:04:38 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -224,14 +224,16 @@ secmodel_example_process_cb(kauth_cred_t cred, kauth_action_t action,
 	result = KAUTH_RESULT_DENY;
 
 	switch (action) {
-	case KAUTH_PROCESS_CANPROCFS:
+	case KAUTH_PROCESS_PROCFS:
 	case KAUTH_PROCESS_CANSEE:
-	case KAUTH_PROCESS_CANSIGNAL:
-	case KAUTH_PROCESS_CANPTRACE:
+	case KAUTH_PROCESS_SIGNAL:
+	case KAUTH_PROCESS_PTRACE:
 	case KAUTH_PROCESS_CORENAME:
 	case KAUTH_PROCESS_FORK:
+	case KAUTH_PROCESS_KEVENT_FILTER:
 	case KAUTH_PROCESS_NICE:
 	case KAUTH_PROCESS_RLIMIT:
+	case KAUTH_PROCESS_SCHEDULER:
 	case KAUTH_PROCESS_SETID:
 	case KAUTH_PROCESS_STOPFLAG:
 	default:
@@ -382,6 +384,7 @@ secmodel_example_device_cb(kauth_cred_t cred, kauth_action_t action,
 	switch (action) {
 	case KAUTH_DEVICE_TTY_OPEN:
 	case KAUTH_DEVICE_TTY_PRIVSET:
+	case KAUTH_DEVICE_TTY_STI:
 		break;
 
 	case KAUTH_DEVICE_RAWIO_SPEC:
