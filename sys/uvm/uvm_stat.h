@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.39.54.1 2008/01/02 21:58:46 bouyer Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.39.54.2 2008/01/23 19:27:50 bouyer Exp $	*/
 
 /*
  *
@@ -131,7 +131,7 @@ do { \
 	(NAME).namelen = strlen(__STRING(NAME)); \
 	(NAME).n = sizeof(BUF) / sizeof(struct uvm_history_ent); \
 	(NAME).f = 0; \
-	mutex_init((&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
+	mutex_init(&(NAME).l, MUTEX_SPIN, IPL_HIGH); \
 	(NAME).e = (struct uvm_history_ent *) (BUF); \
 	memset((NAME).e, 0, sizeof(struct uvm_history_ent) * (NAME).n); \
 	LIST_INSERT_HEAD(&uvm_histories, &(NAME), list); \

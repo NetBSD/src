@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.130.4.2 2008/01/08 22:11:33 bouyer Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.130.4.3 2008/01/23 19:27:39 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.130.4.2 2008/01/08 22:11:33 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.130.4.3 2008/01/23 19:27:39 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1522,7 +1522,7 @@ ktrcanset(lwp_t *calll, struct proc *targetp)
 	KASSERT(mutex_owned(&targetp->p_mutex));
 	KASSERT(mutex_owned(&ktrace_lock));
 
-	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_CANKTRACE,
+	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_KTRACE,
 	    targetp, NULL, NULL, NULL) == 0)
 		return (1);
 

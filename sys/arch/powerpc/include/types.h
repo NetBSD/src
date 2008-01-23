@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.30.6.1 2008/01/08 22:10:19 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.30.6.2 2008/01/23 19:27:24 bouyer Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -72,7 +72,5 @@ typedef volatile int __cpu_simple_lock_t;
 #ifdef _LP64
 #define	__HAVE_ATOMIC64_OPS
 #endif
-
-#define	__HAVE_TIMECOUNTER
 
 #endif	/* _MACHTYPES_H_ */

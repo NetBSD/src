@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37.4.2 2008/01/08 22:10:38 bouyer Exp $	*/
+/*	$NetBSD: intr.c,v 1.37.4.3 2008/01/23 19:27:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.4.2 2008/01/08 22:10:38 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37.4.3 2008/01/23 19:27:28 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_acpi.h"
@@ -224,6 +224,61 @@ intr_default_setup(void)
 	 * Eventually might want to check if it's actually there.
 	 */
 	i8259_default_setup();
+}
+
+struct nmi_handler {
+	int				(*n_func)(void *);
+	void				*n_arg;
+	SLIST_ENTRY(nmi_handler)	n_next;
+};
+
+SLIST_HEAD(nmi_handler_head, nmi_handler) nmi_handlers =
+    SLIST_HEAD_INITIALIZER(nmi_handler_head);
+
+void *
+nmi_establish(int (*func)(void *), void *arg)
+{
+	struct nmi_handler *n;
+
+	n = malloc(sizeof(*n), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
+
+	if (n == NULL)
+		return NULL;
+
+	n->n_func = func;
+	n->n_arg = arg;
+	SLIST_INSERT_HEAD(&nmi_handlers, n, n_next);
+	KASSERT(SLIST_FIRST(&nmi_handlers) == n);
+	return n;
+}
+
+bool
+nmi_disestablish(void *n0)
+{
+	struct nmi_handler *n;
+
+	SLIST_FOREACH(n, &nmi_handlers, n_next) {
+		if (n == n0)
+			break;
+	}
+	if (n == NULL)
+		return false;
+	SLIST_REMOVE(&nmi_handlers, n, nmi_handler, n_next);
+	free(n, M_DEVBUF);
+	return true;
+}
+
+int
+nmi_dispatch(void)
+{
+	int handled = 0;
+	struct nmi_handler *n;
+
+	SLIST_FOREACH(n, &nmi_handlers, n_next) {
+		if ((*n->n_func)(n->n_arg))
+			handled = 1;
+	}
+	return handled;
 }
 
 /*

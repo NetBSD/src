@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.134.4.1 2008/01/02 21:56:03 bouyer Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.134.4.2 2008/01/23 19:27:41 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.134.4.1 2008/01/02 21:56:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.134.4.2 2008/01/23 19:27:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -405,12 +405,6 @@ settimeofday1(const struct timeval *utv, bool userspace,
 	return settime1(l->l_proc, &ts, check_kauth);
 }
 
-#ifndef __HAVE_TIMECOUNTER
-int	tickdelta;			/* current clock skew, us. per tick */
-long	timedelta;			/* unapplied time correction, us. */
-long	bigadj = 1000000;		/* use 10x skew above bigadj us. */
-#endif
-
 int	time_adjusted;			/* set if an adjustment is made */
 
 /* ARGSUSED */
@@ -436,14 +430,8 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 	struct timeval atv;
 	int error = 0;
 
-#ifdef __HAVE_TIMECOUNTER
 	extern int64_t time_adjtime;  /* in kern_ntptime.c */
-#else /* !__HAVE_TIMECOUNTER */
-	long ndelta, ntickdelta, odelta;
-	int s;
-#endif /* !__HAVE_TIMECOUNTER */
 
-#ifdef __HAVE_TIMECOUNTER
 	if (olddelta) {
 		atv.tv_sec = time_adjtime / 1000000;
 		atv.tv_usec = time_adjtime % 1000000;
@@ -468,48 +456,6 @@ adjtime1(const struct timeval *delta, struct timeval *olddelta, struct proc *p)
 			/* We need to save the system time during shutdown */
 			time_adjusted |= 1;
 	}
-#else /* !__HAVE_TIMECOUNTER */
-	error = copyin(delta, &atv, sizeof(struct timeval));
-	if (error)
-		return (error);
-
-	/*
-	 * Compute the total correction and the rate at which to apply it.
-	 * Round the adjustment down to a whole multiple of the per-tick
-	 * delta, so that after some number of incremental changes in
-	 * hardclock(), tickdelta will become zero, lest the correction
-	 * overshoot and start taking us away from the desired final time.
-	 */
-	ndelta = atv.tv_sec * 1000000 + atv.tv_usec;
-	if (ndelta > bigadj || ndelta < -bigadj)
-		ntickdelta = 10 * tickadj;
-	else
-		ntickdelta = tickadj;
-	if (ndelta % ntickdelta)
-		ndelta = ndelta / ntickdelta * ntickdelta;
-
-	/*
-	 * To make hardclock()'s job easier, make the per-tick delta negative
-	 * if we want time to run slower; then hardclock can simply compute
-	 * tick + tickdelta, and subtract tickdelta from timedelta.
-	 */
-	if (ndelta < 0)
-		ntickdelta = -ntickdelta;
-	if (ndelta != 0)
-		/* We need to save the system clock time during shutdown */
-		time_adjusted |= 1;
-	s = splclock();
-	odelta = timedelta;
-	timedelta = ndelta;
-	tickdelta = ntickdelta;
-	splx(s);
-
-	if (olddelta) {
-		atv.tv_sec = odelta / 1000000;
-		atv.tv_usec = odelta % 1000000;
-		error = copyout(&atv, olddelta, sizeof(struct timeval));
-	}
-#endif /* __HAVE_TIMECOUNTER */
 
 	return error;
 }

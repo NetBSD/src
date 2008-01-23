@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.29.6.1 2008/01/02 21:51:19 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.29.6.2 2008/01/23 19:27:28 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -165,6 +165,9 @@ struct cpu_info;
 struct pcibus_attach_args;
 
 void intr_default_setup(void);
+void *nmi_establish(int (*)(void *), void *);
+bool nmi_disestablish(void *);
+int nmi_dispatch(void);
 int x86_nmi(void);
 void intr_calculatemasks(struct cpu_info *);
 int intr_allocate_slot_cpu(struct cpu_info *, struct pic *, int, int *);

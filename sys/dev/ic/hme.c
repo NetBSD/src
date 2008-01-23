@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.60.8.1 2008/01/20 17:51:32 bouyer Exp $	*/
+/*	$NetBSD: hme.c,v 1.60.8.2 2008/01/23 19:27:34 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.60.8.1 2008/01/20 17:51:32 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.60.8.2 2008/01/23 19:27:34 bouyer Exp $");
 
 /* #define HMEDEBUG */
 
@@ -1384,8 +1384,6 @@ hme_mediachange(ifp)
 	if (sc->sc_debug)
 		printf("hme_mediachange: phy = %d\n", phy);
 #endif
-	if (IFM_TYPE(sc->sc_mii.mii_media.ifm_media) != IFM_ETHER)
-		return (EINVAL);
 
 	/* Select the current PHY in the MIF configuration register */
 	v = bus_space_read_4(t, mif, HME_MIFI_CFG);

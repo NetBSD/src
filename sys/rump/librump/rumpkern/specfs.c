@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.13.6.2 2008/01/08 22:11:53 bouyer Exp $	*/
+/*	$NetBSD: specfs.c,v 1.13.6.3 2008/01/23 19:27:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -46,6 +46,7 @@ static int rump_specopen(void *);
 static int rump_specioctl(void *);
 static int rump_specclose(void *);
 static int rump_specfsync(void *);
+static int rump_specbmap(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 static int rump_specsimpleul(void *);
@@ -60,6 +61,7 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_close_desc, rump_specclose },		/* close */
 	{ &vop_ioctl_desc, rump_specioctl },		/* ioctl */
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
+	{ &vop_bmap_desc, rump_specbmap },		/* bmap */
 	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
 	{ &vop_getpages_desc, rump_specsimpleul },	/* getpages */
@@ -182,6 +184,27 @@ rump_specputpages(void *v)
 	return 0;
 }
 
+static int
+rump_specbmap(void *v)
+{
+	struct vop_bmap_args /* {
+		struct vnode *a_vp;
+		daddr_t a_bn;
+		struct vnode **a_vpp;
+		daddr_t *a_bnp;
+		int *a_runp;
+	} */ *ap = v;
+
+	if (ap->a_vpp != NULL)
+		*ap->a_vpp = ap->a_vp;
+	if (ap->a_bnp != NULL)
+		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = (MAXBSIZE >> DEV_BSHIFT) -1;
+
+	return 0;
+}
+
 int
 rump_specstrategy(void *v)
 {
@@ -217,6 +240,9 @@ rump_specstrategy(void *v)
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
 	if (bp->b_flags & B_ASYNC) {
+#ifdef RUMP_WITHOUT_THREADS
+		goto syncfallback;
+#else
 		struct rumpuser_aio *rua;
 
 		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
@@ -249,6 +275,7 @@ rump_specstrategy(void *v)
 		rua_head = (rua_head+1) % (N_AIOS-1);
 		rumpuser_cv_signal(&rua_cv);
 		rumpuser_mutex_exit(&rua_mtx);
+#endif /* !RUMP_WITHOUT_THREADS */
 	} else {
  syncfallback:
 		if (bp->b_flags & B_READ) {
