@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.18 2008/01/09 19:34:44 garbled Exp $	*/
+/*	$NetBSD: Locore.c,v 1.19 2008/01/23 23:09:43 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -528,7 +528,7 @@ setup(void)
 	    sizeof(stdout))
 		OF_exit();
 
-	printf("Allocating 0x20000 bytes of ram for boot\n");
+	/*printf("Allocating 0x20000 bytes of ram for boot\n");*/
 	heapspace = OF_claim(0, 0x20000, NBPG);
 	if (heapspace == (char *)-1) {
 		printf("WARNING: Failed to alloc ram, using bss\n");
