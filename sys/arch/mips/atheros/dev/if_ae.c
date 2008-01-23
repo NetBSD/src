@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.9.8.1 2008/01/20 17:51:21 bouyer Exp $ */
+/* $Id: if_ae.c,v 1.9.8.2 2008/01/23 19:27:21 bouyer Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.9.8.1 2008/01/20 17:51:21 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.9.8.2 2008/01/23 19:27:21 bouyer Exp $");
 
 #include "bpfilter.h"
 
@@ -829,7 +829,6 @@ static int
 ae_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ae_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();

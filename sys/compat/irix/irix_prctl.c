@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_prctl.c,v 1.43.4.1 2008/01/02 21:52:07 bouyer Exp $ */
+/*	$NetBSD: irix_prctl.c,v 1.43.4.2 2008/01/23 19:27:30 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.43.4.1 2008/01/02 21:52:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_prctl.c,v 1.43.4.2 2008/01/23 19:27:30 bouyer Exp $");
 
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -170,7 +170,6 @@ irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t 
 		pid_t pid = (pid_t)SCARG(uap, arg1);
 		struct irix_emuldata *ied;
 		struct proc *target;
-		kauth_cred_t pc;
 
 		if (pid == 0)
 			pid = p->p_pid;
@@ -181,12 +180,9 @@ irix_sys_prctl(struct lwp *l, const struct irix_sys_prctl_args *uap, register_t 
 		if (irix_check_exec(target) == 0)
 			return 0;
 
-		pc = l->l_cred;
-		if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
-		    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
-		    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
-		    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
-		    kauth_cred_geteuid(pc) == kauth_cred_geteuid(target->p_cred)))
+		if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		    target, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL,
+		    NULL) != 0)
 			return EPERM;
 
 		ied = (struct irix_emuldata *)(target->p_emuldata);
@@ -535,7 +531,6 @@ irix_sys_procblk(struct lwp *l, const struct irix_sys_procblk_args *uap, registe
 	struct irix_emuldata *iedp;
 	struct irix_share_group *isg;
 	struct proc *target;
-	kauth_cred_t pc;
 	int oldcount;
 	struct lwp *ied_lwp;
 	int error, last_error;
@@ -546,12 +541,9 @@ irix_sys_procblk(struct lwp *l, const struct irix_sys_procblk_args *uap, registe
 		return ESRCH;
 
 	/* May we stop it? */
-	pc = l->l_cred;
-	if (!(kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 || \
-	    kauth_cred_getuid(pc) == kauth_cred_getuid(target->p_cred) || \
-	    kauth_cred_geteuid(pc) == kauth_cred_getuid(target->p_cred) || \
-	    kauth_cred_getuid(pc) == kauth_cred_geteuid(target->p_cred) || \
-	    kauth_cred_geteuid(pc) == kauth_cred_geteuid(target->p_cred)))
+	/* XXX-elad: Is hardcoding SIGSTOP here correct? */
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SIGNAL, target,
+	    KAUTH_ARG(SIGSTOP), NULL, NULL) != 0)
 		return EPERM;
 
 	/* Is it an IRIX process? */

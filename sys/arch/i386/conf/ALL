@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.146.2.5 2008/01/19 12:14:14 bouyer Exp $
+# $NetBSD: ALL,v 1.146.2.6 2008/01/23 19:27:15 bouyer Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.146.2.5 $"
+#ident 		"ALL-$Revision: 1.146.2.6 $"
 
 maxusers	32		# estimated number of users
 
@@ -42,6 +42,9 @@ options 	VIA_PADLOCK
 
 # Intel(R) On Demand Clock Modulation (aka ODCM)
 options 	INTEL_ONDEMAND_CLOCKMOD
+
+# XBOX support
+options		XBOX
 
 options 	MTRR		# memory-type range register syscall support
 # doesn't work with MP just yet..
@@ -435,6 +438,8 @@ options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
 # System Controllers
 elansc* at pci? dev ? function ?	# AMD Elan SC520 System Controller
 gpio* 	at elansc?
+elanpar*	at elansc?
+elanpex*	at elansc?
 
 # PCI bridges
 amdpcib* at pci? dev ? function ?	# AMD 8111 PCI-ISA w/ HPET
@@ -539,8 +544,12 @@ options 	VESAFB_PM		# power management support
 wsdisplay*	at vesafb? console ?
 
 # VIA Unichrome framebuffer console
-unichromefb*   at pci? dev ? function ?
-wsdisplay*     at unichromefb?
+unichromefb*	at pci? dev ? function ?
+wsdisplay*	at unichromefb?
+
+# XBOX framebuffer console
+xboxfb0		at pci? dev ? function ?
+wsdisplay*	at xboxfb? console ?
 
 # DRI driver
 i915drm*	at vga?		# Intel i915, i945 DRM driver
@@ -637,6 +646,9 @@ iic*	at piixpm?			# SMBus on PIIX4
 adt7463c* at iic? addr 0x2C		# Unknown other motherboard(s)
 adt7463c* at iic? addr 0x2D		# Tyan S2881
 adt7463c* at iic? addr 0x2E		# Tyan S2882-D
+
+pic16lc*	at iic? addr 0x10	# XBOX PIC16LC
+xbseeprom*	at iic? addr 0x54	# XBOX serial EEPROM
 
 # IBM Thinkpad Active Protection System
 aps0 	at isa? port 0x1600
@@ -1106,6 +1118,10 @@ ulpt*	at uhub? port ? configuration ? interface ?
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
 
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
+
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?
 wd*	at umass?
@@ -1194,6 +1210,10 @@ uyap* at uhub? port ?
 # D-Link DSB-R100 USB radio
 udsbr*	at uhub? port ?
 radio*	at udsbr?
+
+# XBOX controller
+xboxcontroller*	at uhub? port ?
+wsmouse*	at xboxcontroller? mux 0
 
 # USB Generic driver
 ugen*	at uhub? port ?

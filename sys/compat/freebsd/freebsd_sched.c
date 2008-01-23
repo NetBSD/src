@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.11.4.1 2008/01/02 21:51:52 bouyer Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.11.4.2 2008/01/23 19:27:29 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.11.4.1 2008/01/02 21:51:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.11.4.2 2008/01/23 19:27:29 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -64,45 +64,6 @@ freebsd_sys_yield(struct lwp *l, const void *v, register_t *retval)
 	return 0;
 }
 
-/*
- * Verify access to the target process.
- * If we did any work this would need to return a reference to the
- * proc and have the mutex still held.
- * But we don't do anything, so it is ok.
- */
-static int
-check_proc_access(struct lwp *l, pid_t pid)
-{
-	struct proc *p;
-	kauth_cred_t pc;
-
-	if (pid == 0)
-		return 0;
-	if (pid < 0)
-		return EINVAL;
-
-	mutex_enter(&proclist_lock);
-
-	p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-	if (p == NULL)
-		return ESRCH;
-
-	pc = l->l_cred;
-
-	if (!(l->l_proc == p ||
-	    kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-	    kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-	    kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-	    kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred))) {
-		mutex_exit(&proclist_lock);
-		if (kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) != 0)
-		    return EPERM;
-	} else
-		mutex_exit(&proclist_lock);
-
-	return 0;
-}
-
 int
 freebsd_sys_sched_setparam(struct lwp *l, const struct freebsd_sys_sched_setparam_args *uap, register_t *retval)
 {
@@ -112,22 +73,31 @@ freebsd_sys_sched_setparam(struct lwp *l, const struct freebsd_sys_sched_setpara
 	} */
 	int error;
 	struct freebsd_sched_param lp;
+	struct proc *p;
 
 	/*
 	 * We only check for valid parameters and return afterwards.
 	 */
-	if (SCARG(uap, sp) == NULL)
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
 		return EINVAL;
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		return error;
 
-	error = check_proc_access(l, SCARG(uap, pid));
-	if (error)
-		return error;
+	mutex_enter(&proclist_lock);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	if (p == NULL)
+		error = ESRCH;
+	if (l->l_proc == p)
+		error = 0;
+	else
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, &lp);
+	mutex_exit(&proclist_lock);
 
-	return 0;
+	return error;
 }
 
 int
@@ -139,15 +109,27 @@ freebsd_sys_sched_getparam(struct lwp *l, const struct freebsd_sys_sched_getpara
 	} */
 	struct freebsd_sched_param lp;
 	int error;
+	struct proc *p;
 
 	/*
 	 * We only check for valid parameters and return a dummy
 	 * priority afterwards.
 	 */
-	if (SCARG(uap, sp) == NULL)
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
 		return EINVAL;
 
-	error = check_proc_access(l, SCARG(uap, pid));
+	mutex_enter(&proclist_lock);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	if (p == NULL)
+		error = ESRCH;
+	if (l->l_proc == p)
+		error = 0;
+	else
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL, NULL);
+	mutex_exit(&proclist_lock);
+
 	if (error)
 		return error;
 
@@ -165,18 +147,31 @@ freebsd_sys_sched_setscheduler(struct lwp *l, const struct freebsd_sys_sched_set
 	} */
 	int error;
 	struct freebsd_sched_param lp;
+	struct proc *p;
 
 	/*
 	 * We only check for valid parameters and return afterwards.
 	 */
-	if (SCARG(uap, sp) == NULL)
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
 		return EINVAL;
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
 		return error;
 
-	error = check_proc_access(l, SCARG(uap, pid));
+	mutex_enter(&proclist_lock);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	if (p == NULL)
+		error = ESRCH;
+	if (l->l_proc == p)
+		error = 0;
+	else
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SET),
+		    SCARG(uap, policy), &lp);
+	mutex_exit(&proclist_lock);
+
 	if (error)
 		return error;
 
@@ -196,14 +191,25 @@ freebsd_sys_sched_getscheduler(struct lwp *l, const struct freebsd_sys_sched_get
 		syscallarg(pid_t) pid;
 	} */
 	int error;
+	struct proc *p;
 
 	*retval = -1;
 
 	/*
 	 * We only check for valid parameters and return afterwards.
 	 */
+	mutex_enter(&proclist_lock);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	if (p == NULL)
+		error = ESRCH;
+	if (l->l_proc == p)
+		error = 0;
+	else
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GET), NULL, NULL);
+	mutex_exit(&proclist_lock);
 
-	error = check_proc_access(l, SCARG(uap, pid));
 	if (error)
 		return error;
 

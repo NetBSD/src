@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.19.6.2 2008/01/08 22:11:52 bouyer Exp $	*/
+/*	$NetBSD: emul.c,v 1.19.6.3 2008/01/23 19:27:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -54,11 +54,7 @@
 #include "rump_private.h"
 #include "rumpuser.h"
 
-#ifdef __HAVE_TIMECOUNTER
 time_t time_second = 1;
-#else
-volatile struct timeval time = { 1, 0 };
-#endif
 
 kmutex_t proclist_mutex;
 kmutex_t proclist_lock;
@@ -350,6 +346,10 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct kthdesc *k;
 	struct lwp *l;
 	int rv;
+
+#ifdef RUMP_WITHOUT_THREADS
+	panic("threads not available, undef RUMP_WITHOUT_THREADS");
+#endif
 
 	KASSERT(fmt != NULL);
 	if (ci != NULL)

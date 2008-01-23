@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.35.4.2 2008/01/08 22:09:56 bouyer Exp $
+# $NetBSD: XEN2_DOM0,v 1.35.4.3 2008/01/23 19:27:16 bouyer Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -518,6 +518,10 @@ ulpt*   at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*   at umodem?
+
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?

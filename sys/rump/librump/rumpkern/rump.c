@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.23.4.2 2008/01/08 22:11:53 bouyer Exp $	*/
+/*	$NetBSD: rump.c,v 1.23.4.3 2008/01/23 19:27:46 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,7 @@ struct fakeblk {
 
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
+#ifndef RUMP_WITHOUT_THREADS
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
 {
@@ -71,6 +72,7 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 	KASSERT(&bp->b_work == wk);
 	bp->b_iodone(bp);
 }
+#endif /* RUMP_WITHOUT_THREADS */
 
 int rump_inited;
 
@@ -120,10 +122,12 @@ rump_init()
 
 	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
 
+#ifndef RUMP_WITHOUT_THREADS
 	/* aieeeedondest */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    rump_aiodone_worker, NULL, 0, 0, 0))
 		panic("aiodoned");
+#endif /* RUMP_WITHOUT_THREADS */
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);

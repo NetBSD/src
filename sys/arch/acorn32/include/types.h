@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.6 2006/09/03 13:51:23 bjh21 Exp $ */
+/* $NetBSD: types.h,v 1.6.48.1 2008/01/23 19:27:08 bouyer Exp $ */
 
 #ifndef _ARM32_TYPES_H_
 #define	_ARM32_TYPES_H_
@@ -6,6 +6,4 @@
 #include <arm/arm32/types.h>
 
 #define	__HAVE_DEVICE_REGISTER
-#define __HAVE_GENERIC_TODR
-#define __HAVE_TIMECOUNTER
 #endif

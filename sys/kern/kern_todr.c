@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.25.6.1 2008/01/02 21:56:04 bouyer Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.25.6.2 2008/01/23 19:27:41 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -76,7 +76,7 @@
  *	@(#)clock.c	8.1 (Berkeley) 6/10/93
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.25.6.1 2008/01/02 21:56:04 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.25.6.2 2008/01/23 19:27:41 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -86,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.25.6.1 2008/01/02 21:56:04 bouyer Ex
 #include <sys/intr.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
-
-#ifdef	__HAVE_GENERIC_TODR
 
 static todr_chip_handle_t todr_handle = NULL;
 
@@ -235,8 +233,6 @@ resettodr(void)
 			printf("Cannot set TOD clock time\n");
 }
 
-#endif	/* __HAVE_GENERIC_TODR */
-
 #ifdef	TODR_DEBUG
 static void
 todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
@@ -279,10 +275,8 @@ todr_gettime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 		 * Some unconverted ports have their own references to
 		 * rtc_offset.   A converted port must not do that.
 		 */
-#ifdef	__HAVE_GENERIC_TODR
 		if (rv == 0)
 			tvp->tv_sec += rtc_offset * 60;
-#endif
 		todr_debug("TODR-GET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_gettime_ymdhms) {
@@ -336,13 +330,9 @@ todr_settime(todr_chip_handle_t tch, volatile struct timeval *tvp)
 
 	if (tch->todr_settime) {
 		/* See comments above in gettime why this is ifdef'd */
-#ifdef	__HAVE_GENERIC_TODR
 		struct timeval	copy = *tvp;
 		copy.tv_sec -= rtc_offset * 60;
 		rv = tch->todr_settime(tch, &copy);
-#else
-		rv = tch->todr_settime(tch, tvp);
-#endif
 		todr_debug("TODR-SET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_settime_ymdhms) {

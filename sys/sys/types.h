@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.77.12.1 2008/01/19 12:15:45 bouyer Exp $	*/
+/*	$NetBSD: types.h,v 1.77.12.2 2008/01/23 19:27:49 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -107,8 +107,6 @@ typedef unsigned char	unchar;		/* Sys V compatibility */
 typedef	unsigned short	ushort;		/* Sys V compatibility */
 typedef	unsigned int	uint;		/* Sys V compatibility */
 typedef unsigned long	ulong;		/* Sys V compatibility */
-
-typedef	u_long		cpuid_t;
 #endif
 
 typedef	uint64_t	u_quad_t;	/* quads */
@@ -198,6 +196,8 @@ typedef	__uid_t		uid_t;		/* user id */
 typedef	int32_t		dtime_t;	/* on-disk time_t */
 
 typedef int		mqd_t;
+
+typedef	unsigned long	cpuid_t;
 
 typedef	int		psetid_t;
 

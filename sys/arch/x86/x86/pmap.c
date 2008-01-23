@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.13.2.20 2008/01/20 17:51:26 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13.2.21 2008/01/23 19:27:28 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.20 2008/01/20 17:51:26 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13.2.21 2008/01/23 19:27:28 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3710,7 +3710,7 @@ void
 pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *ptes, *epte;
-	volatile pt_entry_t *spte;
+	pt_entry_t *spte;
 	pd_entry_t **pdes;
 	vaddr_t blockend, va;
 	pt_entry_t opte;
@@ -3976,21 +3976,41 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 
 	ptep = &ptes[pl1_i(va)];
-
-#ifdef XEN
-	if (domid != DOMID_SELF) {
-		int s = splvm();
+	do {
 		opte = *ptep;
-		error = xpq_update_foreign(
-			    vtomach((vaddr_t)ptep), npte, domid);
-		splx(s);
-		if (error) {
-			pmap_unmap_ptes(pmap, pmap2);
-			goto out;
+
+		/*
+		 * if the same page, inherit PG_U and PG_M.
+		 */
+		if (((opte ^ npte) & (PG_FRAME | PG_V)) == 0) {
+			npte |= opte & (PG_U | PG_M);
 		}
-	} else
-#endif /* XEN */
-		opte = pmap_pte_testset(ptep, npte);   /* zap! */
+#if defined(XEN)
+		if (domid != DOMID_SELF) {
+			/* pmap_pte_cas with error handling */
+			int s = splvm();
+			if (opte != *ptep) {
+				splx(s);
+				continue;
+			}
+			error = xpq_update_foreign(
+			    vtomach((vaddr_t)ptep), npte, domid);
+			splx(s);
+			if (error) {
+				struct vm_page *empty_ptps = NULL;
+
+				if (ptp != NULL && ptp->wire_count <= 1) {
+					pmap_free_ptp(pmap, ptp, va, ptes, pdes,
+					    &empty_ptps);
+				}
+				pmap_unmap_ptes(pmap, pmap2);
+				pmap_free_empty_ptps(empty_ptps);
+				goto out;
+			}
+			break;
+		}
+#endif /* defined(XEN) */
+	} while (pmap_pte_cas(ptep, opte, npte) != opte);
 
 	/*
 	 * update statistics and PTP's reference count.
