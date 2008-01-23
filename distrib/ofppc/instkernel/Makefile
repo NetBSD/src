@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2008/01/02 11:39:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/01/23 23:15:37 garbled Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -13,6 +13,7 @@ ${V}=		${${V}DIR}/${F}.fs
 .endfor
 
 MDSETTARGETS=		INSTALL		${RAMDISK}	-
+MDSETTARGETS+=		INSTALL_B64	${RAMDISK}	-
 
 MDSET_RELEASEDIR=	binary/kernel
 
