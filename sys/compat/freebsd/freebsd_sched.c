@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.13 2008/01/23 15:04:39 elad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.14 2008/01/23 17:55:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.13 2008/01/23 15:04:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.14 2008/01/23 17:55:40 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -86,7 +86,7 @@ freebsd_sys_sched_setparam(struct lwp *l, const struct freebsd_sys_sched_setpara
 		return error;
 
 	mutex_enter(&proclist_lock);
-	p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
 	if (l->l_proc == p)
@@ -119,7 +119,7 @@ freebsd_sys_sched_getparam(struct lwp *l, const struct freebsd_sys_sched_getpara
 		return EINVAL;
 
 	mutex_enter(&proclist_lock);
-	p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
 	if (l->l_proc == p)
@@ -160,7 +160,7 @@ freebsd_sys_sched_setscheduler(struct lwp *l, const struct freebsd_sys_sched_set
 		return error;
 
 	mutex_enter(&proclist_lock);
-	p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
 	if (l->l_proc == p)
@@ -199,7 +199,7 @@ freebsd_sys_sched_getscheduler(struct lwp *l, const struct freebsd_sys_sched_get
 	 * We only check for valid parameters and return afterwards.
 	 */
 	mutex_enter(&proclist_lock);
-	p = p_find(pid, PFIND_LOCKED | PFIND_UNLOCK_FAIL);
+	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
 	if (l->l_proc == p)
