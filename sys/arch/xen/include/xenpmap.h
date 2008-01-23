@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.18 2008/01/11 20:00:42 bouyer Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.19 2008/01/23 19:46:45 bouyer Exp $	*/
 
 /*
  *
@@ -34,22 +34,22 @@
 
 #ifndef _XEN_XENPMAP_H_
 #define _XEN_XENPMAP_H_
+#include "opt_xen.h"
 
 #define	INVALID_P2M_ENTRY	(~0UL)
 
 void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
-void xpq_queue_pde_update(pd_entry_t *, pd_entry_t);
-void xpq_queue_pte_update(pt_entry_t *, pt_entry_t);
+void xpq_queue_pte_update(paddr_t, pt_entry_t);
 void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
 void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t);
 void xpq_queue_unpin_table(paddr_t);
-int  xpq_update_foreign(pt_entry_t *, pt_entry_t, int);
+int  xpq_update_foreign(paddr_t, pt_entry_t, int);
 
-extern paddr_t *xpmap_phys_to_machine_mapping;
+extern unsigned long *xpmap_phys_to_machine_mapping;
 
 /*   
  * On Xen-2, the start of the day virual memory starts at KERNTEXTOFF
@@ -82,23 +82,23 @@ xpmap_mtop_masked(paddr_t mpa)
 static __inline paddr_t
 xpmap_ptom(paddr_t ppa)
 {
-	return (xpmap_phys_to_machine_mapping[(ppa -
-	    XPMAP_OFFSET) >> PAGE_SHIFT] << PAGE_SHIFT)
+	return (((paddr_t)xpmap_phys_to_machine_mapping[(ppa -
+	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT)
 		| (ppa & ~PG_FRAME);
 }
 
 static __inline paddr_t
 xpmap_ptom_masked(paddr_t ppa)
 {
-	return (xpmap_phys_to_machine_mapping[(ppa -
-	    XPMAP_OFFSET) >> PAGE_SHIFT] << PAGE_SHIFT);
+	return (((paddr_t)xpmap_phys_to_machine_mapping[(ppa -
+	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT);
 }
 
 #ifdef XEN3
 static inline void
 MULTI_update_va_mapping(
 	multicall_entry_t *mcl, vaddr_t va,
-	paddr_t new_val, unsigned long flags)
+	pt_entry_t new_val, unsigned long flags)
 {
 	mcl->op = __HYPERVISOR_update_va_mapping;
 	mcl->args[0] = va;
@@ -106,8 +106,12 @@ MULTI_update_va_mapping(
 	mcl->args[1] = new_val;
 	mcl->args[2] = flags;
 #else
-	mcl->args[1] = new_val;
+	mcl->args[1] = (new_val & 0xffffffff);
+#ifdef PAE
+	mcl->args[2] = (new_val >> 32);
+#else
 	mcl->args[2] = 0;
+#endif
 	mcl->args[3] = flags;
 #endif
 }
@@ -115,7 +119,7 @@ MULTI_update_va_mapping(
 static inline void
 MULTI_update_va_mapping_otherdomain(
 	multicall_entry_t *mcl, vaddr_t va,
-	paddr_t new_val, unsigned long flags, domid_t domid)
+	pt_entry_t new_val, unsigned long flags, domid_t domid)
 {
 	mcl->op = __HYPERVISOR_update_va_mapping_otherdomain;
 	mcl->args[0] = va;
@@ -124,8 +128,12 @@ MULTI_update_va_mapping_otherdomain(
 	mcl->args[2] = flags;
 	mcl->args[3] = domid;
 #else
-	mcl->args[1] = new_val;   
+	mcl->args[1] = (new_val & 0xffffffff);
+#ifdef PAE
+	mcl->args[2] = (new_val >> 32);
+#else
 	mcl->args[2] = 0;
+#endif
 	mcl->args[3] = flags;
 	mcl->args[4] = domid;
 #endif

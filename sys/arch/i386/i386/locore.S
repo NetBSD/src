@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.65 2008/01/21 08:22:42 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.66 2008/01/23 19:46:44 bouyer Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -141,7 +141,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.65 2008/01/21 08:22:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.66 2008/01/23 19:46:44 bouyer Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_ddb.h"
@@ -191,6 +191,9 @@ __KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.65 2008/01/21 08:22:42 skrll Exp $");
 #if !defined(XEN_COMPAT_030001)
 	.ascii  ",HYPERCALL_PAGE=0x00000101"
 		/* (???+HYPERCALL_PAGE_OFFSET)/PAGE_SIZE) */
+#endif
+#ifdef PAE
+	.ascii  ",PAE=yes[extended-cr3]"
 #endif
 #else /* !XEN3 */
 	.ascii	"GUEST_OS=netbsd,GUEST_VER=2.0,XEN_VER=2.0"

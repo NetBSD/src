@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.57 2008/01/20 18:09:06 joerg Exp $	*/
+/*	$NetBSD: types.h,v 1.58 2008/01/23 19:46:44 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -49,8 +49,13 @@ typedef struct label_t {
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if defined(_NETBSD_SOURCE)
+#ifdef PAE
+typedef unsigned long long paddr_t;
+typedef unsigned long long psize_t;
+#else
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
+#endif /* PAE */
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
