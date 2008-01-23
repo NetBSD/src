@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.46 2007/12/20 23:02:56 dsl Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.47 2008/01/23 15:04:39 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.46 2007/12/20 23:02:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.47 2008/01/23 15:04:39 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -164,16 +164,13 @@ linux_sys_sched_setparam(struct lwp *l, const struct linux_sys_sched_setparam_ar
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
-
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
+
+		if (l->l_proc != p &&
+		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL,
+		    &lp) != 0)
 			return EPERM;
 	}
 
@@ -197,16 +194,13 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 		return EINVAL;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
-
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
+
+		if (l->l_proc != p &&
+		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL,
+		    NULL) != 0)
 			return EPERM;
 	}
 
@@ -238,16 +232,13 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 		return error;
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
-
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
+
+		if (l->l_proc != p &&
+		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SET),
+		    KAUTH_ARG(SCARG(uap, policy)), &lp) != 0)
 			return EPERM;
 	}
 
@@ -275,16 +266,13 @@ linux_sys_sched_getscheduler(struct lwp *l, const struct linux_sys_sched_getsche
  */
 
 	if (SCARG(uap, pid) != 0) {
-		kauth_cred_t pc = l->l_cred;
-
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
-		if (!(l->l_proc == p ||
-		      kauth_authorize_generic(pc, KAUTH_GENERIC_ISSUSER, NULL) == 0 ||
-		      kauth_cred_getuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_getuid(p->p_cred) ||
-		      kauth_cred_getuid(pc) == kauth_cred_geteuid(p->p_cred) ||
-		      kauth_cred_geteuid(pc) == kauth_cred_geteuid(p->p_cred)))
+
+		if (l->l_proc != p &&
+		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GET), NULL,
+		    NULL) != 0)
 			return EPERM;
 	}
 

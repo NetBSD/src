@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.83 2008/01/02 11:49:01 ad Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.84 2008/01/23 15:04:40 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.83 2008/01/02 11:49:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.84 2008/01/23 15:04:40 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,10 +368,10 @@ procfs_rw(v)
 	 * Do not allow init to be modified while in secure mode; it
 	 * could be duped into changing the security level.
 	 */
-#define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_CANPROCFS_READ : \
-		 KAUTH_REQ_PROCESS_CANPROCFS_WRITE)
+#define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_PROCFS_READ : \
+		 KAUTH_REQ_PROCESS_PROCFS_WRITE)
 	mutex_enter(&p->p_mutex);
-	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_CANPROCFS,
+	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_PROCFS,
 	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
 	mutex_exit(&p->p_mutex);
 	if (error) {
