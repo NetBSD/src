@@ -1,4 +1,4 @@
-/* $NetBSD: ar5312.c,v 1.4 2007/02/28 04:21:53 thorpej Exp $ */
+/* $NetBSD: ar5312.c,v 1.5 2008/01/23 05:23:59 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -62,6 +62,8 @@
 #include <sys/socket.h>		/* these three just to get ETHER_ADDR_LEN(!) */
 #include <net/if.h>
 #include <net/if_ether.h>
+
+#include <prop/proplib.h>
 
 #include <mips/atheros/include/ar5312reg.h>
 #include <mips/atheros/include/ar531xvar.h>
