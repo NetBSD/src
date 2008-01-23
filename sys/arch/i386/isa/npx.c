@@ -1,4 +1,4 @@
-/*	$NetBSD: npx.c,v 1.120.2.3 2008/01/19 12:14:23 bouyer Exp $	*/
+/*	$NetBSD: npx.c,v 1.120.2.4 2008/01/23 19:27:18 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.120.2.3 2008/01/19 12:14:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx.c,v 1.120.2.4 2008/01/23 19:27:18 bouyer Exp $");
 
 #if 0
 #define IPRINTF(x)	printf x
@@ -317,6 +317,19 @@ npxattach(struct npx_softc *sc)
 
 	if (!pmf_device_register(&sc->sc_dev, NULL, NULL))
 		aprint_error_dev(&sc->sc_dev, "couldn't establish power handler\n");
+}
+
+int
+npxdetach(device_t self, int flags)
+{
+	struct npx_softc *sc = device_private(self);
+
+	if (sc->sc_type == NPX_INTERRUPT)
+		return EBUSY;
+
+	pmf_device_deregister(self);
+	
+	return 0;
 }
 
 /*

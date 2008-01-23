@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.S,v 1.1.2.2 2008/01/10 23:43:07 bouyer Exp $ */
+/* $NetBSD: in_cksum.S,v 1.1.2.3 2008/01/23 19:27:09 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -83,19 +83,11 @@ ENTRY(in_cksum)
 	/* Already aligned on a word boundary? */
 	testb	$1, %bl
 	jz	.Mmbuf_align_dword
-	/*
-	 * Invert %dl.
-	 * If the current position is equivalent to an odd index,
-	 * byte swap the overall sum and add the byte as if it was part
-	 * of the last mbuf.
-	 *
-	 * In the even case, adding it without byte swap has the same effect.
-	 */
-	testb	$1, %dl
+
+	/* Invert %dl. */
+	testb	%dl, %dl
 	setz	%dl
-	jz	1f
-	rolq	$8, %r8
-1:
+
 	movzbl	(%rbx), %ecx
 	xchgb	%cl, %ch
 	addq	%rcx, %r9

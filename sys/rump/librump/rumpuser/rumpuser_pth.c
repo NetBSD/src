@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.6.6.2 2008/01/19 12:15:39 bouyer Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.6.6.3 2008/01/23 19:27:47 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,7 @@ struct rumpuser_aio *rua_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
+#ifndef RUMP_WITHOUT_THREADS
 static void *
 iothread(void *arg)
 {
@@ -90,11 +91,14 @@ iothread(void *arg)
 		NOFAIL(pthread_mutex_lock(&rua_mtx.pthmtx) == 0);
 	}
 }
+#endif /* RUMP_WITHOUT_THREADS */
 
 int
 rumpuser_thrinit()
 {
+#ifndef RUMP_WITHOUT_THREADS
 	pthread_t iothr;
+#endif
 
 	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
 	pthread_cond_init(&rua_cv.pthcv, NULL);
@@ -103,7 +107,9 @@ rumpuser_thrinit()
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
 
+#ifndef RUMP_WITHOUT_THREADS
 	pthread_create(&iothr, NULL, iothread, NULL);
+#endif
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.57.10.1 2008/01/02 21:54:10 bouyer Exp $	*/
+/*	$NetBSD: comvar.h,v 1.57.10.2 2008/01/23 19:27:34 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -206,16 +206,7 @@ struct com_softc {
 	void (*disable)(struct com_softc *);
 	int enabled;
 
-#ifdef __HAVE_TIMECOUNTER
 	struct pps_state sc_pps_state;	/* pps state */
-#else /* !__HAVE_TIMECOUNTER */
-	/* PPS signal on DCD, with or without inkernel clock disciplining */
-	u_char	sc_ppsmask;			/* pps signal mask */
-	u_char	sc_ppsassert;			/* pps leading edge */
-	u_char	sc_ppsclear;			/* pps trailing edge */
-	pps_info_t ppsinfo;
-	pps_params_t ppsparam;
-#endif /* !__HAVE_TIMECOUNTER */
 
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;

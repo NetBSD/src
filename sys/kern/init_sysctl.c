@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.113.6.4 2008/01/19 12:15:19 bouyer Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.113.6.5 2008/01/23 19:27:38 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.113.6.4 2008/01/19 12:15:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.113.6.5 2008/01/23 19:27:38 bouyer Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -1310,6 +1310,10 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 */
 	mutex_enter(&filelist_lock);
 	for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
+		/*
+		 * XXX Need to prevent that from being an alternative way
+		 * XXX to getting process information.
+		 */
 		if (kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
 		    	np = LIST_NEXT(fp, f_list);
@@ -1948,6 +1952,10 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		sysctl_unlock();
 		mutex_enter(&filelist_lock);
 		LIST_FOREACH(fp, &filehead, f_list) {
+			/*
+			 * XXX Need to prevent that from being an alternative
+			 * XXX way for getting process information.
+			 */
 			if (kauth_authorize_generic(l->l_cred,
 			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
 				continue;
@@ -1985,6 +1993,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			/* -1 means all processes */
 			return (EINVAL);
 		sysctl_unlock();
+		/* XXX Why not use pfind()? */
 		mutex_enter(&proclist_lock);
 		LIST_FOREACH(p, &allproc, p_list) {
 			if (p->p_stat == SIDL) {
@@ -1998,7 +2007,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 			mutex_enter(&p->p_mutex);
 			error = kauth_authorize_process(l->l_cred,
-			    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+			    KAUTH_PROCESS_CANSEE, p,
+			    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_OPENFILES),
+			    NULL, NULL);
 			mutex_exit(&p->p_mutex);
 			if (error != 0) {
 				continue;
@@ -2012,6 +2023,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 			mutex_exit(&proclist_lock);
 
+			/* XXX Do we need to check permission per file? */
 			fd = p->p_fd;
 			rw_enter(&fd->fd_lock, RW_READER);
 			for (i = 0; i < fd->fd_nfiles; i++) {
@@ -2168,7 +2180,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 		mutex_enter(&p->p_mutex);
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+		    KAUTH_PROCESS_CANSEE, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (error != 0) {
 			mutex_exit(&p->p_mutex);
 			continue;
@@ -2381,26 +2394,19 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 	mutex_enter(&p->p_mutex);
-	error = kauth_authorize_process(l->l_cred,
-	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+
+	/* Check permission. */
+	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV)
+		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ARGS), NULL, NULL);
+	else if (type == KERN_PROC_ENV || type == KERN_PROC_NENV)
+		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENV), NULL, NULL);
+	else
+		error = EINVAL; /* XXXGCC */
 	if (error) {
 		mutex_exit(&p->p_mutex);
 		goto out_locked;
-	}
-
-	/* only root or same user change look at the environment */
-	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			if (kauth_cred_getuid(l->l_cred) !=
-			    kauth_cred_getuid(p->p_cred) ||
-			    kauth_cred_getuid(l->l_cred) !=
-			    kauth_cred_getsvuid(p->p_cred)) {
-				error = EPERM;
-				mutex_exit(&p->p_mutex);
-				goto out_locked;
-			}
-		}
 	}
 
 	if (oldp == NULL) {
