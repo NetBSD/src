@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2008/01/02 11:30:32 mrg Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2008/01/23 23:15:37 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -64,6 +64,9 @@ Puede que no sea posible iniciar desde ahi.
 message set_kernel_1
 {Núcleo (GENERIC)}
 
+message set_kernel_2
+{N\xfacleo (GENERIC_B64)}
+
 message nobootpart
 {There is no boot partition in the MBR partition table.}
 
@@ -74,3 +77,16 @@ however a size of at least 100MB is reccomended.}
 message nobootpartdisklabel
 {There is no boot partition in the disklabel.  The boot partition should 
 match the boot partition you set up in the MBR partition table.}
+
+message preptoosmall
+{You need to have two PReP partitions to boot an IBM RS/6000.  One needs to
+be at least 1MB in size, and the other must be at least 1KB in size.}
+
+message bootnotright
+{In order to boot ofppc, you need either a FAT12 partition of at least 2MB
+in size, or a pair of PReP partitions.  The PReP partitions need to be at
+least 1KB, and 1MB in size.  IBM RS/6000 machines generally need the PReP
+partitions, however some can utilize the FAT12.  Most other machines require
+the FAT12 partition.  If you are not sure which to choose, accept the
+defaults, and install all three.  You do not currently have any partitions
+that meet the minimum requirements.}

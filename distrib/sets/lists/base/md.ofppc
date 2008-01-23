@@ -1,2 +1,4 @@
-# $NetBSD: md.ofppc,v 1.7 2005/05/22 03:45:30 lukem Exp $
+# $NetBSD: md.ofppc,v 1.8 2008/01/23 23:15:37 garbled Exp $
 ./usr/mdec/ofwboot				base-sysutil-bin
+./usr/mdec/mkbootinfo				base-sysutil-bin
+./usr/mdec/netbsd.chrp				base-sysutil-bin
