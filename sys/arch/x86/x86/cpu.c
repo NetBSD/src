@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.18 2008/01/15 14:50:08 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.19 2008/01/23 20:02:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.18 2008/01/15 14:50:08 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2008/01/23 20:02:16 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -369,6 +369,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		 * Enable local apic
 		 */
 		lapic_enable();
+		lapic_set_lvt();
 		lapic_calibrate_timer(ci);
 #endif
 #if NIOAPIC > 0
