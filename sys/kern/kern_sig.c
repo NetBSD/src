@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.263 2007/12/26 22:11:51 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.264 2008/01/23 17:52:32 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.263 2007/12/26 22:11:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.264 2008/01/23 17:52:32 elad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -806,8 +806,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 				continue;
 			mutex_enter(&p->p_mutex);
 			if (kauth_authorize_process(pc,
-			    KAUTH_PROCESS_CANSIGNAL, p,
-			    (void *)(uintptr_t)signo, NULL, NULL) == 0) {
+			    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signo), NULL,
+			    NULL) == 0) {
 				nfound++;
 				if (signo) {
 					mutex_enter(&proclist_mutex);
@@ -834,8 +834,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM)
 				continue;
 			mutex_enter(&p->p_mutex);
-			if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
-			    p, (void *)(uintptr_t)signo, NULL, NULL) == 0) {
+			if (kauth_authorize_process(pc, KAUTH_PROCESS_SIGNAL,
+			    p, KAUTH_ARG(signo), NULL, NULL) == 0) {
 				nfound++;
 				if (signo) {
 					mutex_enter(&proclist_mutex);
