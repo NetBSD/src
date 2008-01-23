@@ -1,0 +1,12 @@
+# $NetBSD: INSTALL_B64,v 1.1 2008/01/23 23:11:22 garbled Exp $
+#
+# INSTALL machine description file for ofppc
+
+include	"arch/ofppc/conf/GENERIC_B64"
+
+#ident 		"INSTALL-$Revision: 1.1 $"
+
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
+options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
