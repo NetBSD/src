@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.213 2008/01/22 22:26:30 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.214 2008/01/23 16:51:19 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.213 2008/01/22 22:26:30 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.214 2008/01/23 16:51:19 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -1599,6 +1599,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			 */
 			(void)(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
 			    (void *)&ifrq);
+			error = 0;
 		}
 		splx(s);
 
