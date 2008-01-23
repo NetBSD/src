@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.232 2007/12/23 19:14:03 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.233 2008/01/23 14:14:55 gson Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.232 2007/12/23 19:14:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.233 2008/01/23 14:14:55 gson Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1709,9 +1709,10 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 
 		/*
 		 * cc is the amount of data in the sc_rustream excluding
-		 * wrapped data
+		 * wrapped data.  Note the tricky case of inp == outp, which
+		 * must mean the buffer is full, not empty, because used > 0.
 		 */
-		cc = outp <= inp ? inp - outp :sc->sc_rustream->end - outp;
+		cc = outp < inp ? inp - outp :sc->sc_rustream->end - outp;
 		DPRINTFN(1,("audio_read: outp=%p, cc=%d\n", outp, cc));
 
 		n = uio->uio_resid;
