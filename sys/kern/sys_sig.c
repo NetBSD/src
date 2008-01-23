@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.10 2008/01/02 11:48:53 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.11 2008/01/23 17:56:53 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.10 2008/01/02 11:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.11 2008/01/23 17:56:53 elad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -279,7 +279,7 @@ sys_kill(struct lwp *l, const struct sys_kill_args *uap, register_t *retval)
 			return (ESRCH);
 		mutex_enter(&p->p_mutex);
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANSIGNAL, p, (void *)(uintptr_t)signum,
+		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signum),
 		    NULL, NULL);
 		if (!error && signum) {
 			mutex_enter(&proclist_mutex);
