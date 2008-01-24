@@ -1,4 +1,4 @@
-.\" $NetBSD: accton.8,v 1.10 2003/02/14 16:11:34 grant Exp $
+.\" $NetBSD: accton.8,v 1.11 2008/01/24 05:27:10 jnemeth Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd October 18, 1993
+.Dd January 23, 2008
 .Dt ACCTON 8
 .Os
 .Sh NAME
@@ -48,9 +48,32 @@ With an argument naming an existing
 causes system accounting information for every process executed
 to be placed at the end of the file.  If no argument is given,
 accounting is turned off.
+.Pp
+The default accounting file is /var/account/acct.
+Typically, accounting is enabled by rc scripts during the boot process.
+In
+.Nx ,
+one may enable accounting by setting the variable
+.Dq accounting
+to
+.Dq YES
+in /etc/rc.conf.
+.Pp
+Note that, traditionally, the system accounting log file can not be rotated
+cleanly by
+.Xr newsyslog 8 .
+Instead, a default installation of
+.Nx
+rotates /var/account/acct using the /etc/daily script.
+.Sh FILES
+.Bl -tag -width /var/account/acct -compact
+.It Pa /var/account/acct
+Default accounting file.
+.El
 .Sh SEE ALSO
 .Xr lastcomm 1 ,
-.Xr acct 5
+.Xr acct 5 ,
+.Xr sa 8
 .Sh HISTORY
 The
 .Nm
