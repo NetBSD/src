@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.24 2008/01/24 08:34:49 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.25 2008/01/24 15:02:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,7 +63,7 @@ struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
 struct vm_map *kernel_map;
-int physmem = 256*1024*1024 / PAGE_SIZE;
+int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
