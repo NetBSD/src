@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.185 2008/01/17 17:28:54 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.186 2008/01/24 17:32:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,7 +135,7 @@ struct vnode {
 	union {
 		struct mount	*vu_mountedhere;/* v: ptr to vfs (VDIR) */
 		struct socket	*vu_socket;	/* v: unix ipc (VSOCK) */
-		struct specinfo	*vu_specinfo;	/* v: device (VCHR, VBLK) */
+		struct specnode	*vu_specnode;	/* v: device (VCHR, VBLK) */
 		struct fifoinfo	*vu_fifoinfo;	/* v: fifo (VFIFO) */
 		struct uvm_ractx *vu_ractx;	/* i: read-ahead ctx (VREG) */
 	} v_un;
@@ -150,7 +150,7 @@ struct vnode {
 #define	v_interlock	v_uobj.vmobjlock
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
-#define	v_specinfo	v_un.vu_specinfo
+#define	v_specnode	v_un.vu_specnode
 #define	v_fifoinfo	v_un.vu_fifoinfo
 #define	v_ractx		v_un.vu_ractx
 
@@ -192,7 +192,6 @@ typedef struct vnode vnode_t;
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
 #define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
 #define	VI_XLOCK	0x00001000	/* vnode is locked to change type */
-#define	VI_ALIASED	0x00002000	/* vnode has an alias */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
 #define	VI_MARKER	0x00008000	/* Dummy marker vnode */
 #define	VI_LAYER	0x00020000	/* vnode is on a layer filesystem */
@@ -210,7 +209,7 @@ typedef struct vnode vnode_t;
 
 #define	VNODE_FLAGBITS \
     "\20\1ROOT\2SYSTEM\3ISTTY\4MAPPED\5MPSAFE\6LOCKSWORK\11TEXT\12EXECMAP" \
-    "\13WRMAP\14WRMAPDIRTY\15XLOCK\16ALIASED\17ONWORKLST\20MARKER" \
+    "\13WRMAP\14WRMAPDIRTY\15XLOCK\17ONWORKLST\20MARKER" \
     "\22LAYER\23MAPPED\24CLEAN\25INACTPEND\26INACTREDO\27FREEING" \
     "\31DIROP\32SOFTDEP" 
 
@@ -544,8 +543,6 @@ struct vnode;
 /* see vnode(9) */
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
-struct vnode *
-	checkalias(struct vnode *, dev_t, struct mount *);
 int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
 	    struct vnode **);
 void	ungetnewvnode(struct vnode *);

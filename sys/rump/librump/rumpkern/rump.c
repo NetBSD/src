@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.29 2008/01/22 09:23:39 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.30 2008/01/24 17:32:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -288,7 +288,7 @@ rump_getvninfo(struct vnode *vp, enum vtype *vtype, voff_t *vsize, dev_t *vdev)
 
 	*vtype = vp->v_type;
 	*vsize = vp->v_size;
-	if (vp->v_specinfo)
+	if (vp->v_specnode)
 		*vdev = vp->v_rdev;
 	else
 		*vdev = 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.22 2008/01/02 11:48:55 ad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.23 2008/01/24 17:32:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.22 2008/01/02 11:48:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.23 2008/01/24 17:32:54 ad Exp $");
 
 #include "opt_ptm.h"
 
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.22 2008/01/02 11:48:55 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+
+#include <miscfs/specfs/specdev.h>
 
 #ifdef DEBUG_PTM
 #define DPRINTF(a)	printf a
@@ -195,7 +197,6 @@ int
 pty_grant_slave(struct lwp *l, dev_t dev)
 {
 	int error;
-	bool revoke;
 	struct vnode *vp;
 
 	/*
@@ -224,13 +225,8 @@ pty_grant_slave(struct lwp *l, dev_t dev)
 			return error;
 		}
 	}
-	mutex_enter(&vp->v_interlock);
-	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED) ||
-	    (vp->v_iflag & VI_LAYER));
-	mutex_exit(&vp->v_interlock);
 	VOP_UNLOCK(vp, 0);
-	if (revoke)
-		VOP_REVOKE(vp, REVOKEALL);
+	VOP_REVOKE(vp, REVOKEALL);
 
 	/*
 	 * The vnode is useless after the revoke, we need to get it again.

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.58 2008/01/04 14:58:16 pooka Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.59 2008/01/24 17:32:53 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.58 2008/01/04 14:58:16 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.59 2008/01/24 17:32:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -370,22 +370,6 @@ msdosfs_mount(mp, path, data, data_len)
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		int xflags;
 
-		/*
-		 * Disallow multiple mounts of the same device.
-		 * Disallow mounting of a device that is currently in use
-		 * (except for root, which might share swap device for
-		 * miniroot).
-		 */
-		error = vfs_mountedon(devvp);
-		if (error) {
-			DPRINTF(("vfs_mountedon %d\n", error));
-			goto fail;
-		}
-		if (vcount(devvp) > 1 && devvp != rootvp) {
-			DPRINTF(("vcount %d\n", error));
-			error = EBUSY;
-			goto fail;
-		}
 		if (mp->mnt_flag & MNT_RDONLY)
 			xflags = FREAD;
 		else

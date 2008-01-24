@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.45 2007/12/08 19:29:42 pooka Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.46 2008/01/24 17:32:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.45 2007/12/08 19:29:42 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.46 2008/01/24 17:32:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -285,7 +285,6 @@ filecore_mountfs(devvp, mp, l, argp)
 	dev_t dev = devvp->v_rdev;
 	int error = EINVAL;
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	extern struct vnode *rootvp;
 	struct filecore_disc_record *fcdr;
 	unsigned map;
 	unsigned log2secsize;
@@ -293,18 +292,7 @@ filecore_mountfs(devvp, mp, l, argp)
 	if (!ronly)
 		return EROFS;
 
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return error;
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return EBUSY;
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0))
-	    != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED);

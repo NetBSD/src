@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.85 2007/11/26 19:02:32 pooka Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.86 2008/01/24 17:32:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.85 2007/11/26 19:02:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.86 2008/01/24 17:32:57 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -313,8 +313,6 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		return (error);
 	devvp->v_type = VBLK;
-	if (checkalias(devvp, makedev(255, mfs_minor), (struct mount *)0))
-		panic("mfs_mount: dup dev");
 	mfs_minor++;
 	mfsp = (struct mfsnode *)malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
 	devvp->v_data = mfsp;

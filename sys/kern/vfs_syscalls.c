@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.341 2008/01/10 19:04:23 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.342 2008/01/24 17:32:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.341 2008/01/10 19:04:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.342 2008/01/24 17:32:55 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -71,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.341 2008/01/10 19:04:23 ad Exp $"
 
 #include <miscfs/genfs/genfs.h>
 #include <miscfs/syncfs/syncfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #ifdef COMPAT_30
 #include "opt_nfsserver.h"
@@ -680,6 +681,7 @@ dounmount(struct mount *mp, int flags, struct lwp *l)
 		if (error == 0)
 			error = VFS_SYNC(mp, MNT_WAIT, l->l_cred);
 	}
+	vfs_scrubvnlist(mp);
 	if (error == 0 || (flags & MNT_FORCE))
 		error = VFS_UNMOUNT(mp, flags);
 	if (error) {
@@ -3550,21 +3552,13 @@ dorevoke(struct vnode *vp, kauth_cred_t cred)
 {
 	struct vattr vattr;
 	int error;
-	bool revoke;
 
 	if ((error = VOP_GETATTR(vp, &vattr, cred)) != 0)
-		goto out;
+		return error;
 	if (kauth_cred_geteuid(cred) != vattr.va_uid &&
 	    (error = kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		goto out;
-	mutex_enter(&vp->v_interlock);
-	revoke = (vp->v_usecount > 1 || (vp->v_iflag & (VI_ALIASED|VI_LAYER)));
-	mutex_exit(&vp->v_interlock);
-	if (revoke)
+	    KAUTH_GENERIC_ISSUSER, NULL)) == 0)
 		VOP_REVOKE(vp, REVOKEALL);
-
- out:
 	return (error);
 }
 

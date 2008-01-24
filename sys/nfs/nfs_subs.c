@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.196 2008/01/02 19:26:46 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.197 2008/01/24 17:32:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.196 2008/01/02 19:26:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.197 2008/01/24 17:32:56 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1623,7 +1623,6 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 	u_short vmode;
 	struct timespec mtime;
 	struct timespec ctime;
-	struct vnode *nvp;
 	int32_t rdev;
 	struct nfsnode *np;
 	extern int (**spec_nfsv2nodeop_p) __P((void *));
@@ -1674,31 +1673,7 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 			mutex_init(&np->n_commitlock, MUTEX_DEFAULT, IPL_NONE);
 		} else if (vp->v_type == VCHR || vp->v_type == VBLK) {
 			vp->v_op = spec_nfsv2nodeop_p;
-			nvp = checkalias(vp, (dev_t)rdev, vp->v_mount);
-			if (nvp) {
-				/*
-				 * Discard unneeded vnode, but save its nfsnode.
-				 * Since the nfsnode does not have a lock, its
-				 * vnode lock has to be carried over.
-				 */
-				/*
-				 * XXX is the old node sure to be locked here?
-				 */
-				KASSERT(lockstatus(&vp->v_lock) ==
-				    LK_EXCLUSIVE);
-				nvp->v_data = vp->v_data;
-				vp->v_data = NULL;
-				VOP_UNLOCK(vp, 0);
-				vp->v_op = spec_vnodeop_p;
-				vgone(vp);
-				lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
-				    &nvp->v_interlock);
-				/*
-				 * Reinitialize aliased node.
-				 */
-				np->n_vnode = nvp;
-				*vpp = vp = nvp;
-			}
+			spec_node_init(vp, (dev_t)rdev);
 		}
 		np->n_mtime = mtime;
 	}

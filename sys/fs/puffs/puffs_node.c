@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.9 2008/01/02 11:48:43 ad Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.10 2008/01/24 17:32:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.9 2008/01/02 11:48:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.10 2008/01/24 17:32:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -70,7 +70,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 {
 	struct puffs_mount *pmp;
 	struct puffs_newcookie *pnc;
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	struct puffs_node *pnode;
 	struct puffs_node_hashlist *plist;
 	int error;
@@ -158,22 +158,7 @@ puffs_getvnode(struct mount *mp, void *cookie, enum vtype type,
 		 * if it decides its a character or block special file
 		 */
 		vp->v_op = puffs_specop_p;
-
-		/* do the standard checkalias-dance */
-		if ((nvp = checkalias(vp, rdev, mp)) != NULL) {
-			/*
-			 * found: release & unallocate aliased
-			 * old (well, actually, new) node
-			 */
-			vp->v_op = spec_vnodeop_p;
-			vp->v_vflag &= ~VV_LOCKSWORK;
-			vgone(vp); /* cya */
-
-			/* init "new" vnode */
-			vp = nvp;
-			vp->v_vnlock = NULL;
-			vp->v_mount = mp;
-		}
+		spec_node_init(vp, rdev);
 		break;
 
 	case VFIFO:

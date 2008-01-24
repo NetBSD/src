@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.53 2008/01/02 11:48:40 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.54 2008/01/24 17:32:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.53 2008/01/02 11:48:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.54 2008/01/24 17:32:52 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -226,19 +226,6 @@ cd9660_mount(mp, path, data, data_len)
 		}
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
-		/*
-		 * Disallow multiple mounts of the same device.
-		 * Disallow mounting of a device that is currently in use
-		 * (except for root, which might share swap device for
-		 * miniroot).
-		 */
-		error = vfs_mountedon(devvp);
-		if (error)
-			goto fail;
-		if (vcount(devvp) > 1 && devvp != rootvp) {
-			error = EBUSY;
-			goto fail;
-		}
 		error = VOP_OPEN(devvp, FREAD, FSCRED);
 		if (error)
 			goto fail;
@@ -697,7 +684,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 	struct iso_mnt *imp;
 	struct iso_node *ip;
 	struct buf *bp;
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	dev_t dev;
 	int error;
 
@@ -862,24 +849,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
 		 * if device, look at device number table for translation
 		 */
 		vp->v_op = cd9660_specop_p;
-		if ((nvp = checkalias(vp, ip->inode.iso_rdev, mp)) != NULL) {
-			/*
-			 * Discard unneeded vnode, but save its iso_node.
-			 * Note that the lock is carried over in the iso_node
-			 * to the replacement vnode.
-			 */
-			nvp->v_data = vp->v_data;
-			vp->v_data = NULL;
-			VOP_UNLOCK(vp, 0);
-			vp->v_op = spec_vnodeop_p;
-			vgone(vp);
-			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
-			/*
-			 * Reinitialize aliased inode.
-			 */
-			vp = nvp;
-			ip->i_vnode = vp;
-		}
+		spec_node_init(vp, ip->inode.iso_rdev);
 		break;
 	case VLNK:
 	case VNON:

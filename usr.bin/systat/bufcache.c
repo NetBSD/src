@@ -1,4 +1,4 @@
-/*	$NetBSD: bufcache.c,v 1.20 2006/10/22 16:43:24 christos Exp $	*/
+/*	$NetBSD: bufcache.c,v 1.21 2008/01/24 17:32:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: bufcache.c,v 1.20 2006/10/22 16:43:24 christos Exp $");
+__RCSID("$NetBSD: bufcache.c,v 1.21 2008/01/24 17:32:58 ad Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: bufcache.c,v 1.20 2006/10/22 16:43:24 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -320,12 +321,15 @@ again:
 			 * References to mounted-on vnodes should be
 			 * counted towards the mounted filesystem.
 			 */
-			if (vn->v_type == VBLK && vn->v_specinfo != NULL) {
-				struct specinfo sp;
-				if (!KREAD(vn->v_specinfo, &sp, sizeof(sp)))
+			if (vn->v_type == VBLK && vn->v_specnode != NULL) {
+				specnode_t sn;
+				specdev_t sd;
+				if (!KREAD(vn->v_specnode, &sn, sizeof(sn)))
 					continue;
-				if (sp.si_mountpoint)
-					mp = sp.si_mountpoint;
+				if (!KREAD(sn.sn_dev, &sd, sizeof(sd)))
+					continue;
+				if (sd.sd_mountpoint)
+					mp = sd.sd_mountpoint;
 			}
 			if (mp != NULL)
 				mt = ml_lookup(mp,
