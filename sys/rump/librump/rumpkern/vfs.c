@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.30 2008/01/24 17:32:56 ad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.31 2008/01/24 20:06:46 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -322,8 +322,7 @@ makevnode(struct stat *sb, const char *path)
 	if (vp->v_type != VBLK)
 		panic("namei: only VBLK results supported currently");
 
-	vp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
-	vp->v_rdev = sb->st_dev;
+	spec_node_init(vp, sb->st_dev);
 	sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
 	strcpy(sp->rsp_path, path);
 	vp->v_data = sp;
@@ -445,10 +444,13 @@ vfs_unbusy(struct mount *mp)
 void
 spec_node_init(struct vnode *nvp, dev_t nvp_rdev)
 {
+	specdev_t *sd;
 
-	/* Can this cause any funnies? */
-
+	sd = kmem_zalloc(sizeof(specdev_t), KM_SLEEP);
+	sd->sd_rdev = nvp_rdev;
+	sd->sd_refcnt = 1;
 	nvp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
+	nvp->v_specnode->sn_dev = sd;
 	nvp->v_rdev = nvp_rdev;
 }
 
