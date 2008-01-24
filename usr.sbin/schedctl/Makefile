@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2008/01/15 03:37:15 rmind Exp $
+#	$NetBSD: Makefile,v 1.2 2008/01/24 19:34:06 rmind Exp $
 
 PROG=	schedctl
-MAN=
+MAN=	schedctl.8
 
 LDADD+=	-lrt -lkvm
 
