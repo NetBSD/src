@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.59 2008/01/24 16:26:44 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.60 2008/01/24 17:29:56 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.59 2008/01/24 16:26:44 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.60 2008/01/24 17:29:56 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -164,6 +164,7 @@ si_mount_dtor(void *arg)
 
 	KASSERT(TAILQ_EMPTY(&si->si_snapshots));
 	mutex_destroy(&si->si_lock);
+	lockdestroy(&si->si_vnlock);
 	KASSERT(si->si_snapblklist == NULL);
 	free(si, M_MOUNT);
 }
