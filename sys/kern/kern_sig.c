@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.264 2008/01/23 17:52:32 elad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.265 2008/01/24 13:57:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.264 2008/01/23 17:52:32 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.265 2008/01/24 13:57:52 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -164,7 +164,7 @@ signal_init(void)
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
-	callout_init(&proc_stop_ch, 0);
+	callout_init(&proc_stop_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
 }
 
