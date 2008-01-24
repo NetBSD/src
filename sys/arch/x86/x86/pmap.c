@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.42 2008/01/23 19:46:45 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.43 2008/01/24 13:55:09 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.42 2008/01/23 19:46:45 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2008/01/24 13:55:09 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2271,7 +2271,7 @@ pmap_destroy(struct pmap *pmap)
 	 * MULTIPROCESSOR -- no need to flush out of other processors'
 	 * APTE space because we do that in pmap_unmap_ptes().
 	 */
-	pool_cache_destruct_object(&pmap_pdp_cache, pmap->pm_pdir);
+	pool_cache_put(&pmap_pdp_cache, pmap->pm_pdir);
 
 #ifdef USER_LDT
 	if (pmap->pm_flags & PMF_USER_LDT) {
