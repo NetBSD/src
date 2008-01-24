@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.2 2008/01/15 09:11:29 yamt Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.3 2008/01/24 14:41:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.2 2008/01/15 09:11:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.3 2008/01/24 14:41:12 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -437,7 +437,6 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 		error = ESRCH;
 		goto error;
 	}
-	*retval = lcnt;
 	if (SCARG(uap, opsid))
 		error = copyout(&opsid, SCARG(uap, opsid), sizeof(psetid_t));
 error:
