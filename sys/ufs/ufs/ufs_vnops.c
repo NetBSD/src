@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.162 2008/01/03 19:28:51 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.163 2008/01/24 17:32:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.162 2008/01/03 19:28:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.163 2008/01/24 17:32:57 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2032,7 +2032,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 {
 	struct timeval	tv;
 	struct inode	*ip;
-	struct vnode	*vp, *nvp;
+	struct vnode	*vp;
 	dev_t		rdev;
 	struct ufsmount	*ump;
 
@@ -2049,24 +2049,7 @@ ufs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 		else
 			rdev = (dev_t)ufs_rw64(ip->i_ffs2_rdev,
 			    UFS_MPNEEDSWAP(ump));
-		if ((nvp = checkalias(vp, rdev, mntp)) != NULL) {
-			/*
-			 * Discard unneeded vnode, but save its inode.
-			 */
-			nvp->v_data = vp->v_data;
-			vp->v_data = NULL;
-			/* XXX spec_vnodeops has no locking, do it explicitly */
-			vp->v_vflag &= ~VV_LOCKSWORK;
-			VOP_UNLOCK(vp, 0);
-			vp->v_op = spec_vnodeop_p;
-			vgone(vp);
-			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
-			/*
-			 * Reinitialize aliased inode.
-			 */
-			vp = nvp;
-			ip->i_vnode = vp;
-		}
+		spec_node_init(vp, rdev);
 		break;
 	case VFIFO:
 		vp->v_op = fifoops;

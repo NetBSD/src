@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.46 2008/01/04 21:18:07 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.47 2008/01/24 17:32:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.46 2008/01/04 21:18:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.47 2008/01/24 17:32:52 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -176,18 +176,7 @@ adosfs_mountfs(devvp, mp, l)
 	part = DISKPART(devvp->v_rdev);
 	amp = NULL;
 
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return (error);
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return (EBUSY);
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0))
-	    != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	/*
