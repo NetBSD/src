@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2008/01/15 14:25:21 chs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2008/01/24 12:50:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2008/01/15 14:25:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2008/01/24 12:50:35 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -477,7 +477,7 @@ hppa_init(paddr_t start)
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
 	    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
 #ifdef DEBUG
-		printf("WARNING: PDC_BTLB error %d", error);
+		printf("WARNING: PDC_BTLB error %d\n", error);
 #endif
 	} else {
 #define BTLBDEBUG 1
