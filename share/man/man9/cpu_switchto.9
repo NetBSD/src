@@ -1,4 +1,4 @@
-.\"	$NetBSD: cpu_switchto.9,v 1.8 2007/12/02 19:44:02 wiz Exp $
+.\"	$NetBSD: cpu_switchto.9,v 1.9 2008/01/24 23:06:10 ad Exp $
 .\"
 .\" Copyright (c)2007 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -38,7 +38,7 @@
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft lwp_t *
 .Fn cpu_switchto \
-"lwp_t *oldlwp" "lwp_t *newlwp"
+"lwp_t *oldlwp" "lwp_t *newlwp" "bool returning"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
 .Fn cpu_switchto
@@ -77,6 +77,17 @@ the context of the LWP currently running on this processor is not saved.
 Specify the lwp to which we are going to switch.
 It must not be
 .Dv NULL .
+.It Fa returning
+Only meaningful if the architecture implements fast software interrupts.
+If true, it indicates that
+.Fa oldlwp
+is a soft interrupt LWP that is blocking.
+It's a good indication that any kind of address space or user activity
+can be completely ignored.
+For example: ras_lookup(), cache flushes, TLB wirings, adjusting lazy FPU
+state.
+All that is required is to restore the register state and stack, and
+return to the interrupted LWP.
 .El
 .\" ------------------------------------------------------------
 .Sh RETURN VALUES
