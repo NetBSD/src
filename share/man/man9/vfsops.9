@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfsops.9,v 1.34 2007/12/02 19:35:39 wiz Exp $
+.\"     $NetBSD: vfsops.9,v 1.35 2008/01/24 07:11:25 tnn Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 26, 2007
+.Dd January 24, 2008
 .Dt VFSOPS 9
 .Os
 .Sh NAME
@@ -374,7 +374,8 @@ All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The vfs operations are implemented within the files
-.Pa sys/kern/vfs_subr.c
+.Pa sys/kern/vfs_subr.c ,
+.Pa sys/kern/vfs_subr2.c
 and
 .Pa sys/kern/vfs_init.c .
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-.\"     $NetBSD: vfssubr.9,v 1.14 2007/01/21 15:42:36 hannken Exp $
+.\"     $NetBSD: vfssubr.9,v 1.15 2008/01/24 07:11:26 tnn Exp $
 .\"
 .\" Copyright (c) 2003, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -203,7 +203,8 @@ All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The vfs interface functions are implemented within the files
-.Pa sys/kern/vfs_subr.c
+.Pa sys/kern/vfs_subr.c ,
+.Pa sys/kern/vfs_subr2.c ,
 and
 .Pa sys/kern/vfs_init.c .
 .Sh SEE ALSO
