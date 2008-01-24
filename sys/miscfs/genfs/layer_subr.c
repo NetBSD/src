@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.24 2008/01/23 20:11:32 ad Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.25 2008/01/24 17:32:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.24 2008/01/23 20:11:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.25 2008/01/24 17:32:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,10 +223,7 @@ layer_node_alloc(mp, lowervp, vpp)
 		return ENOMEM;
 	}
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {
-		MALLOC(vp->v_specinfo, struct specinfo *,
-		    sizeof(struct specinfo), M_VNODE, M_WAITOK);
-		vp->v_hashchain = NULL;
-		vp->v_rdev = lowervp->v_rdev;
+		spec_node_init(vp, lowervp->v_rdev);
 	}
 
 	vp->v_data = xp;
@@ -248,7 +245,7 @@ layer_node_alloc(mp, lowervp, vpp)
 		/* free the substructures we've allocated. */
 		kmem_free(xp, lmp->layerm_size);
 		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			FREE(vp->v_specinfo, M_VNODE);
+			spec_node_destroy(vp);
 
 		vp->v_type = VBAD;		/* node is discarded */
 		vp->v_op = dead_vnodeop_p;	/* so ops will still work */

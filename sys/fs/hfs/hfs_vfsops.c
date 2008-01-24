@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.13 2007/12/08 19:29:43 pooka Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.14 2008/01/24 17:32:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.13 2007/12/08 19:29:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.14 2008/01/24 17:32:53 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -274,19 +274,6 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (update) {
 		printf("HFS: live remounting not yet supported!\n");
 		error = EINVAL;
-		goto error;
-	}
-
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		goto error;
-	if (vcount(devvp) > 1 && devvp != rootvp) {
-		error = EBUSY;
 		goto error;
 	}
 

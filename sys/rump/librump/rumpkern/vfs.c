@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.29 2008/01/17 17:31:48 ad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.30 2008/01/24 17:32:56 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,7 +70,7 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
 
-struct vnode *speclisth[SPECHSZ];
+vnode_t *specfs_hash[SPECHSZ];
 
 void
 vn_init1(void)
@@ -108,8 +108,8 @@ void
 rump_putnode(struct vnode *vp)
 {
 
-	if (vp->v_specinfo)
-		kmem_free(vp->v_specinfo, sizeof(*vp->v_specinfo));
+	if (vp->v_specnode)
+		kmem_free(vp->v_specnode, sizeof(*vp->v_specnode));
 	UVM_OBJ_DESTROY(&vp->v_uobj);
 	kmem_free(vp, sizeof(*vp));
 }
@@ -209,7 +209,7 @@ vgone(struct vnode *vp)
 }
 
 void
-vclean(struct vnode *vp, int flag)
+vclean(struct vnode *vp, int flags)
 {
 
 	vgonel(vp, curlwp);
@@ -322,7 +322,7 @@ makevnode(struct stat *sb, const char *path)
 	if (vp->v_type != VBLK)
 		panic("namei: only VBLK results supported currently");
 
-	vp->v_specinfo = kmem_alloc(sizeof(struct specinfo), KM_SLEEP);
+	vp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
 	vp->v_rdev = sb->st_dev;
 	sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
 	strcpy(sp->rsp_path, path);
@@ -442,15 +442,14 @@ vfs_unbusy(struct mount *mp)
 	return;
 }
 
-struct vnode *
-checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
+void
+spec_node_init(struct vnode *nvp, dev_t nvp_rdev)
 {
 
 	/* Can this cause any funnies? */
 
-	nvp->v_specinfo = kmem_alloc(sizeof(struct specinfo), KM_SLEEP);
+	nvp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
 	nvp->v_rdev = nvp_rdev;
-	return NULLVP;
 }
 
 void

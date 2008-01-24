@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.64 2007/07/09 21:00:28 ad Exp $	*/
+/*	$NetBSD: cons.c,v 1.65 2008/01/24 17:32:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.64 2007/07/09 21:00:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.65 2008/01/24 17:32:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -118,9 +118,8 @@ struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
 int
 cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	const struct cdevsw *cdev;
 	dev_t cndev;
-	int unit;
+	int unit, error;
 
 	unit = minor(dev);
 	if (unit > 1)
@@ -152,46 +151,37 @@ cnopen(dev_t dev, int flag, int mode, struct lwp *l)
 		 */
 		panic("cnopen: cn_tab->cn_dev == dev");
 	}
-	cdev = cdevsw_lookup(cndev);
-	if (cdev == NULL)
-		return (ENXIO);
-
-	if (cn_devvp[unit] == NULLVP) {
-		/* try to get a reference on its vnode, but fail silently */
-		cdevvp(cndev, &cn_devvp[unit]);
+	if (cn_devvp[unit] != NULLVP)
+		return 0;
+	if ((error = cdevvp(cndev, &cn_devvp[unit])) != 0)
+		printf("cnopen: unable to get vnode reference\n");
+	error = vn_lock(cn_devvp[unit], LK_EXCLUSIVE | LK_RETRY);
+	if (error == 0) {
+		error = VOP_OPEN(cn_devvp[unit], flag, kauth_cred_get());
+		VOP_UNLOCK(cn_devvp[unit], 0);
 	}
-	return cdev_open(cndev, flag, mode, l);
+	return error;
 }
 
 int
 cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	const struct cdevsw *cdev;
 	struct vnode *vp;
-	int unit;
+	int unit, error;
 
 	unit = minor(dev);
 
 	if (cn_tab == NULL)
 		return (0);
 
-	/*
-	 * If the real console isn't otherwise open, close it.
-	 * If it's otherwise open, don't close it, because that'll
-	 * screw up others who have it open.
-	 */
-	dev = cn_tab->cn_dev;
-	cdev = cdevsw_lookup(dev);
-	if (cdev == NULL)
-		return (ENXIO);
-	if (cn_devvp[unit] != NULLVP) {
-		/* release our reference to real dev's vnode */
-		vrele(cn_devvp[unit]);
-		cn_devvp[unit] = NULLVP;
+	vp = cn_devvp[unit];
+	cn_devvp[unit] = NULL;
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error == 0) {
+		error = VOP_CLOSE(vp, flag, kauth_cred_get());
+		VOP_UNLOCK(vp, 0);
 	}
-	if (vfinddev(dev, VCHR, &vp) && vcount(vp))
-		return (0);
-	return cdev_close(dev, flag, mode, l);
+	return error;
 }
 
 int

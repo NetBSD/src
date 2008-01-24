@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.33 2007/12/11 12:05:28 lukem Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.34 2008/01/24 17:32:54 ad Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.33 2007/12/11 12:05:28 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.34 2008/01/24 17:32:54 ad Exp $");
 #endif /* not lint */
 
 
@@ -320,21 +320,6 @@ udf_mount(struct mount *mp, const char *path,
 			vrele(devvp);
 			return error;
 		}
-	}
-
-	/*
-	 * Disallow multiple mounts of the same device.  Disallow mounting of
-	 * a device that is currently in use (except for root, which might
-	 * share swap device for miniroot).
-	 */
-	error = vfs_mountedon(devvp);
-	if (error) {
-		vrele(devvp);
-		return error;
-	}
-	if ((vcount(devvp) > 1) && (devvp != rootvp)) {
-		vrele(devvp);
-		return EBUSY;
 	}
 
 	/*

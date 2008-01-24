@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.60 2007/12/08 19:29:43 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.61 2008/01/24 17:32:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.60 2007/12/08 19:29:43 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.61 2008/01/24 17:32:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,19 +356,6 @@ ntfs_mount (
 		if (err)
 			goto fail;
 
-		/*
-		 * Disallow multiple mounts of the same device.
-		 * Disallow mounting of a device that is currently in use
-		 * (except for root, which might share swap device for
-		 * miniroot).
-		 */
-		err = vfs_mountedon(devvp);
-		if (err)
-			goto fail;
-		if (vcount(devvp) > 1 && devvp != rootvp) {
-			err = EBUSY;
-			goto fail;
-		}
 		if (mp->mnt_flag & MNT_RDONLY)
 			flags = FREAD;
 		else
