@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1053 2008/01/22 06:58:13 uebayasi Exp $
+# $NetBSD: mi,v 1.1054 2008/01/24 19:34:05 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2406,6 +2406,7 @@
 ./usr/share/man/cat8/sgimips/sgivol.0		man-sys-catman		.cat
 ./usr/share/man/cat8/shark/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/shark/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/schedctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/showmount.0		man-nfsclient-catman	.cat
 ./usr/share/man/cat8/showq.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat8/shutdown.0			man-sysutil-catman	.cat
@@ -4927,6 +4928,7 @@
 ./usr/share/man/man8/sgimips/sgivol.8		man-sys-man		.man
 ./usr/share/man/man8/shark/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/shark/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/schedctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/showmount.8		man-nfsclient-man	.man
 ./usr/share/man/man8/showq.8			man-postfix-man		postfix,.man
 ./usr/share/man/man8/shutdown.8			man-sysutil-man		.man
