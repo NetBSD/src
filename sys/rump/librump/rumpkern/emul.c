@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.25 2008/01/24 15:02:16 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.26 2008/01/24 22:41:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -85,6 +85,11 @@ u_long	bufmem;
 u_int	nbuf;
 
 const char *panicstr;
+const char ostype[] = "NetBSD";
+const char osrelease[] = "999"; /* paradroid 4evah */
+const char kernel_ident[] = "RUMP-ROAST";
+const char *domainname;
+int domainnamelen;
 
 const struct filterops seltrue_filtops;
 

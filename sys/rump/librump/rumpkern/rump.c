@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.30 2008/01/24 17:32:56 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.31 2008/01/24 22:41:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,7 +48,7 @@ struct proc rump_proc;
 struct cwdinfo rump_cwdi;
 struct pstats rump_stats;
 struct plimit rump_limits;
-kauth_cred_t rump_cred;
+kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
 struct filedesc0 rump_filedesc0;
 
@@ -102,6 +102,7 @@ rump_init()
 	l->l_cred = rump_cred;
 	l->l_proc = p;
 	l->l_lid = 1;
+	rw_init(&rump_cwdi.cwdi_lock);
 
 	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpvm_init();
@@ -116,6 +117,8 @@ rump_init()
 	bufinit();
 	filedesc_init();
 	selsysinit();
+
+	rumpvfs_init();
 
 	rump_sleepers_init();
 	rumpuser_thrinit();
@@ -183,6 +186,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	kauth_cred_t creds, struct lwp *l)
 {
 	struct componentname *cnp;
+	const char *cp = NULL;
 
 	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
 
@@ -193,6 +197,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	strcpy(cnp->cn_pnbuf, name);
 	cnp->cn_nameptr = cnp->cn_pnbuf;
 	cnp->cn_namelen = namelen;
+	cnp->cn_hash = namei_hash(name, &cp);
 
 	cnp->cn_cred = creds;
 

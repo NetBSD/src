@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.31 2008/01/24 20:06:46 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.32 2008/01/24 22:41:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -42,9 +42,12 @@
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
+#include <miscfs/genfs/genfs.h>
 
 #include "rump_private.h"
 #include "rumpuser.h"
+
+static int rump_vop_lookup(void *);
 
 int (**dead_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
@@ -70,13 +73,22 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
 
+int (**rump_vnodeop_p)(void *);
+const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, rump_vop_lookup },
+	{ &vop_lock_desc, genfs_lock },
+	{ &vop_unlock_desc, genfs_unlock },
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc rump_vnodeop_opv_desc =
+	{ &rump_vnodeop_p, rump_vnodeop_entries };
+const struct vnodeopv_desc * const rump_opv_descs[] = {
+	&rump_vnodeop_opv_desc,
+	NULL
+};
+
 vnode_t *specfs_hash[SPECHSZ];
-
-void
-vn_init1(void)
-{
-
-}
 
 int
 getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
@@ -119,6 +131,12 @@ ungetnewvnode(struct vnode *vp)
 {
 
 	rump_putnode(vp);
+}
+
+void
+vn_init1(void)
+{
+
 }
 
 int
@@ -281,6 +299,40 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 
 struct mount mnt_dummy;
 
+static struct vnode *
+rump_makevnode(const char *path, size_t size, enum vtype vt, dev_t rdev)
+{
+	struct vnode *vp;
+	struct rump_specpriv *sp;
+
+	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
+	vp->v_size = vp->v_writesize = size;
+	vp->v_type = vt;
+	if (vp->v_type != VBLK)
+		if (rump_fakeblk_find(path))
+			vp->v_type = VBLK;
+
+	if (vp->v_type != VBLK && vp->v_type != VDIR)
+		panic("rump_makevnode: only VBLK/VDIR vnodes supported");
+
+	if (vp->v_type == VBLK) {
+		spec_node_init(vp, rdev);
+		sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
+		strcpy(sp->rsp_path, path);
+		vp->v_data = sp;
+		vp->v_op = spec_vnodeop_p;
+	} else {
+		vp->v_op = rump_vnodeop_p;
+	}
+	vp->v_mount = &mnt_dummy;
+	vp->v_vnlock = &vp->v_lock;
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+	cv_init(&vp->v_cv, "vnode");
+
+	return vp;
+}
+
 /* from libpuffs, but let's decouple this from that */
 static enum vtype
 mode2vt(mode_t mode)
@@ -306,91 +358,38 @@ mode2vt(mode_t mode)
 	}
 }
 
-static struct vnode *
-makevnode(struct stat *sb, const char *path)
+/*
+ * Simple lookup for faking lookup of device entry for rump file systems 
+ */
+static int
+rump_vop_lookup(void *v)
 {
-	struct vnode *vp;
-	struct rump_specpriv *sp;
-
-	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
-	vp->v_size = vp->v_writesize = sb->st_size;
-	vp->v_type = mode2vt(sb->st_mode);
-	if (vp->v_type != VBLK)
-		if (rump_fakeblk_find(path))
-			vp->v_type = VBLK;
-
-	if (vp->v_type != VBLK)
-		panic("namei: only VBLK results supported currently");
-
-	spec_node_init(vp, sb->st_dev);
-	sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
-	strcpy(sp->rsp_path, path);
-	vp->v_data = sp;
-	vp->v_op = spec_vnodeop_p;
-	vp->v_mount = &mnt_dummy;
-	vp->v_vnlock = &vp->v_lock;
-	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
-	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
-	cv_init(&vp->v_cv, "vnode");
-
-	return vp;
-}
-
-int
-namei(struct nameidata *ndp)
-{
-	struct componentname *cnp = &ndp->ni_cnd;
+	struct vop_lookup_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+	}; */ *ap = v;
+	struct componentname *cnp = ap->a_cnp;
 	struct stat sb_node;
-	struct vnode *vp;
 	int rv, error;
 
-	if (cnp->cn_flags & LOCKPARENT)
-		panic("%s: LOCKPARENT not supported", __func__);
-
-	if ((cnp->cn_flags & HASBUF) == 0)
-		cnp->cn_pnbuf = PNBUF_GET();
-
-	error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
-	    MAXPATHLEN, &ndp->ni_pathlen);
-
-#if 0
-	/* uh, why did I put this here originally? */
-	if (!error && ndp->ni_pathlen == 1)
-		error = ENOENT;
-#endif
-
-	if (error) {
-		PNBUF_PUT(cnp->cn_pnbuf);
-		ndp->ni_vp = NULL;
-		return error;
-	}
+	/* we handle only some "non-special" cases */
+	KASSERT(cnp->cn_nameiop == LOOKUP);
+	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
+	KASSERT(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.');
 
 	if (cnp->cn_flags & FOLLOW)
 		rv = rumpuser_stat(cnp->cn_pnbuf, &sb_node, &error);
 	else
 		rv = rumpuser_lstat(cnp->cn_pnbuf, &sb_node, &error);
-
-	if (rv == -1) {
-		PNBUF_PUT(cnp->cn_pnbuf);
+	if (rv)
 		return error;
-	}
 
-	vp = makevnode(&sb_node, cnp->cn_pnbuf);
-	if (cnp->cn_flags & LOCKLEAF)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	ndp->ni_vp = vp;
-
-	return 0;
-}
-
-int
-relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
-{
-	int error;
-
-	error = VOP_LOOKUP(dvp, vpp, cnp);
-	if (error && error != EJUSTRETURN)
-		return error;
+	*ap->a_vpp = rump_makevnode(cnp->cn_pnbuf, sb_node.st_size,
+	    mode2vt(sb_node.st_mode), sb_node.st_rdev);
+	vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE);
+	cnp->cn_consume = strlen(cnp->cn_nameptr + cnp->cn_namelen);
+	cnp->cn_flags &= ~REQUIREDIR;
 
 	return 0;
 }
@@ -466,4 +465,12 @@ vfs_mountedon(struct vnode *vp)
 {
 
 	return 0;
+}
+
+void
+rumpvfs_init()
+{
+
+	vfs_opv_init(rump_opv_descs);
+	rootvnode = rump_makevnode("/", 0, VDIR, -1);
 }
