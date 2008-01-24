@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.112 2008/01/24 17:32:55 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.113 2008/01/24 21:05:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.112 2008/01/24 17:32:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.113 2008/01/24 21:05:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -779,7 +779,6 @@ spec_fsync(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	if (vp->v_type == VBLK) {
-		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 		vflushbuf(vp, (ap->a_flags & FSYNC_WAIT) != 0);
 	}
 	return (0);
