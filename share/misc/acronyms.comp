@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.80 2007/12/29 15:12:05 dholland Exp $
+$NetBSD: acronyms.comp,v 1.81 2008/01/24 15:01:21 tnn Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -134,6 +134,8 @@ GPU	graphics processing unit
 GRE	generic routing encapsulation
 GUI	graphics user interface
 HA	high availability
+HCI	host controller interface
+HCI	human-computer interaction
 HDCP	high-bandwidth digital content protection
 HTML	hyper-text markup language
 HTTP	hyper-text transfer protocol
