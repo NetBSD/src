@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota.c,v 1.56 2008/01/15 21:30:46 christos Exp $	*/
+/*	$NetBSD: ufs_quota.c,v 1.57 2008/01/24 22:55:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.56 2008/01/15 21:30:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota.c,v 1.57 2008/01/24 22:55:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -536,7 +536,8 @@ again:
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
 		vmark(mvp, vp);
 		mutex_enter(&vp->v_interlock);
-		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON) {
+		if (vp->v_mount != mp || vismarker(vp) || vp->v_type == VNON ||
+		    (vp->v_iflag & VI_CLEAN) != 0) {
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
