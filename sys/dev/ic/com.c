@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.270 2008/01/20 18:09:10 joerg Exp $	*/
+/*	$NetBSD: com.c,v 1.271 2008/01/24 18:50:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.270 2008/01/20 18:09:10 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.271 2008/01/24 18:50:15 ad Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -632,6 +632,9 @@ com_detach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+
+	/* Destroy the lock. */
+	mutex_destroy(&sc->sc_lock);
 
 	return (0);
 }
