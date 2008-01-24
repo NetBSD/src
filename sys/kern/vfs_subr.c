@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.320 2008/01/24 18:31:52 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.321 2008/01/24 21:04:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.320 2008/01/24 18:31:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.321 2008/01/24 21:04:12 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -863,7 +863,8 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 		}
 
 #ifdef DIAGNOSTIC
-		if (vp->v_specnode != NULL && vp->v_specnode->sn_opencnt != 0) {
+		if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
+		    vp->v_specnode != NULL && vp->v_specnode->sn_opencnt != 0) {
 			vprint("vrelel: missing VOP_CLOSE()", vp);
 		}
 #endif
