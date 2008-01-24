@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.5 2008/01/15 03:37:11 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.6 2008/01/24 14:41:12 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.5 2008/01/15 03:37:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.6 2008/01/24 14:41:12 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -158,9 +158,7 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		lcnt++;
 	}
 	mutex_exit(&p->p_smutex);
-	if (lcnt != 0)
-		*retval = lcnt;
-	else
+	if (lcnt == 0)
 		error = ESRCH;
 error:
 	kmem_free(sp, sizeof(struct sched_param));
@@ -294,8 +292,6 @@ sys__sched_setaffinity(struct lwp *l,
 	mutex_exit(&p->p_smutex);
 	if (lcnt == 0)
 		error = ESRCH;
-	else
-		*retval = lcnt;
 error:
 	if (cpuset != NULL)
 		kmem_free(cpuset, sizeof(cpuset_t));
