@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.58 2008/01/03 01:26:32 pooka Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.59 2008/01/24 16:26:44 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.58 2008/01/03 01:26:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.59 2008/01/24 16:26:44 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -437,7 +437,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	 * and vclean() can be called indirectly
 	 */
 	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = vunmark(mvp)) {
-		vmark(mvp, vp);
+		vmark(mvp, xvp);
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
