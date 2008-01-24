@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.5 2008/01/03 02:48:02 pooka Exp $	*/
+/*	$NetBSD: auth.c,v 1.6 2008/01/24 22:41:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -90,6 +90,13 @@ kauth_authorize_system(kauth_cred_t cred, kauth_action_t op,
 
 	/* always allow */
 	return 0;
+}
+
+uid_t
+kauth_cred_getuid(kauth_cred_t cred)
+{
+
+	return kauth_cred_geteuid(cred);
 }
 
 uid_t
