@@ -1,4 +1,4 @@
-.\" $NetBSD: ypwhich.1,v 1.14 2005/02/26 16:22:27 wiz Exp $
+.\" $NetBSD: ypwhich.1,v 1.15 2008/01/24 23:56:55 christos Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 26, 2005
+.Dd January 24, 2008
 .Dt YPWHICH 1
 .Os
 .Sh NAME
@@ -41,11 +41,13 @@
 .Op Fl h
 .Ar host
 .Oc
+.Op Fl T
 .Nm
 .Op Fl d Ar domain
 .Op Fl h Ar host
 .Op Fl f
 .Op Fl t
+.Op Fl T
 .Fl m Op Ar mname
 .Nm
 .Fl x
@@ -83,6 +85,8 @@ directly, without using the local copy of
 .It Fl t
 Inhibit translation of map nicknames
 to their corresponding map names.
+.It Fl T
+Use TCP protocol instead of UDP.
 .It Fl m Op Ar mname
 Find the master
 .Tn NIS

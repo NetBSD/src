@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.13 2003/07/12 14:03:46 itojun Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.14 2008/01/24 23:56:55 christos Exp $	*/
 
 /*
  *
@@ -74,10 +74,11 @@
  *   -h: specify a host to ask [default = localhost]
  *   -m: find master server for a specific map (no map means 'all maps')
  *   -t: inhibit nickname translation
+ *   -T: use TCP instead of UDP
  *   -x: print list of yp map aliases and exit
  */
 
-static char *ypnicknames[] = {
+static const char *ypnicknames[] = {
 	"aliases",	"mail.aliases",
 	"ethers",	"ethers.byname",
 	"group",	"group.byname",
@@ -94,24 +95,23 @@ static char *ypnicknames[] = {
  * prototypes
  */
 
-void		find_mapmaster __P((const char *, const char *, const char *,
-				    int, int));
-struct in_addr *find_server __P((const char *, const char *));
-int		main __P((int, char *[]));
-void		usage __P((void));
+static void find_mapmaster(const char *, const char *, const char *,
+    int, int, int);
+static struct in_addr *find_server(const char *, const char *, int);
+static CLIENT *mkclient(struct sockaddr_in *, unsigned long, unsigned long,
+    int);
+static void usage(void) __attribute__((__noreturn__));
 
 /*
  * main
  */
 int
-main(argc, argv)
-	int     argc;
-	char  **argv;
+main(int argc, char *argv[])
 
 {
-	char   *targhost = "localhost";
+	const char   *targhost = "localhost";
 	char   *ourdomain;
-	int     inhibit = 0, force = 0;
+	int     inhibit = 0, force = 0, tcp = 0;
 	char   *targmap = NULL;
 	int     ch, saw_m, lcv;
 	struct in_addr *inaddr;
@@ -121,9 +121,9 @@ main(argc, argv)
          * get default domainname and parse options
          */
 
-	yp_get_default_domain(&ourdomain);
+	(void)yp_get_default_domain(&ourdomain);
 	saw_m = 0;
-	while ((ch = getopt(argc, argv, "h:d:xtfm")) != -1) {
+	while ((ch = getopt(argc, argv, "h:d:xtTfm")) != -1) {
 		switch (ch) {
 		case 'h':
 			targhost = optarg;
@@ -133,14 +133,17 @@ main(argc, argv)
 			break;
 		case 'x':
 			for (lcv = 0; ypnicknames[lcv]; lcv += 2)
-				printf("Use \"%s\" for map \"%s\"\n",
+				(void)printf("Use \"%s\" for map \"%s\"\n",
 				    ypnicknames[lcv], ypnicknames[lcv + 1]);
-			exit(0);
+			return 0;
 		case 'f':
 			force = 1;
 			break;
 		case 't':
 			inhibit = 1;
+			break;
+		case 'T':
+			tcp = 1;
 			break;
 		case 'm':
 			if (optind < argc && argv[optind][0] != '-')
@@ -160,8 +163,9 @@ main(argc, argv)
 		targhost = argv[0];
 	}
 #ifdef DEBUG
-	printf("target_host=%s, domain=%s, inhibit=%d, saw_m=%d, map=%s, force=%d\n",
-	    targhost, ourdomain, inhibit, saw_m, targmap, force);
+	(void)printf("target_host=%s, domain=%s, inhibit=%d, saw_m=%d, map=%s, "
+	    "force=%d, tcp=%d\n",
+	    targhost, ourdomain, inhibit, saw_m, targmap, force, tcp);
 #endif
 
 	/*
@@ -175,44 +179,55 @@ main(argc, argv)
          * now do it
          */
 	if (saw_m)
-		find_mapmaster(targhost, ourdomain, targmap, inhibit, force);
+		find_mapmaster(targhost, ourdomain, targmap, inhibit, force,
+		    tcp);
 	else {
-		inaddr = find_server(targhost, ourdomain);
-		he = gethostbyaddr((char *) &inaddr->s_addr,
+		inaddr = find_server(targhost, ourdomain, tcp);
+		he = gethostbyaddr((void *)&inaddr->s_addr,
 		    sizeof(inaddr->s_addr), AF_INET);
 		if (he)
-			printf("%s\n", he->h_name);
+			(void)printf("%s\n", he->h_name);
 		else
-			printf("%s\n", inet_ntoa(*inaddr));
+			(void)printf("%s\n", inet_ntoa(*inaddr));
 	}
-	exit(0);
+	return 0;
 }
 
 /*
  * usage: print usage and exit
  */
-void
-usage()
+static void
+usage(void)
 {
-	fprintf(stderr, "usage:\n");
-	fprintf(stderr, "\t%s [-d domain] [[-h] host]\n", getprogname());
-	fprintf(stderr, "\t%s [-h host] [-d domain] [-f] [-t] -m [mapname]\n",
-	    getprogname());
-	fprintf(stderr, "\t%s -x\n", getprogname());
+	const char *pname = getprogname();
+	(void)fprintf(stderr, "Usage:\t%s [-T] [-d domain] [[-h] host]\n"
+	    "\t%s [-T] [-h host] [-d domain] [-f] [-t] -m [mapname]\n"
+	    "\t%s [-T] -x\n", pname, pname, pname);
 	exit(1);
+}
+
+static CLIENT *
+mkclient(struct sockaddr_in *sin, unsigned long prog, unsigned long vers,
+    int tcp)
+{
+	static struct timeval tv = { 0, 15 };
+	int fd = RPC_ANYSOCK;
+
+	if (tcp)
+		return clnttcp_create(sin, prog, vers, &fd, 0, 0);
+	else
+		return clntudp_create(sin, prog, vers, tv, &fd);
 }
 
 /*
  * find_server: ask a host's ypbind who its current ypserver is
  */
-struct in_addr *
-find_server(host, domain)
-	const char *host, *domain;
+static struct in_addr *
+find_server(const char *host, const char *domain, int tcp)
 {
 	static struct in_addr result;
 	struct sockaddr_in sin;
 	CLIENT *ypbind;
-	int     ypbind_fd;
 	struct timeval tv;
 	enum clnt_stat retval;
 	struct ypbind_resp ypbind_resp;
@@ -220,7 +235,7 @@ find_server(host, domain)
 	/*
          * get address of host
          */
-	memset(&sin, 0, sizeof(sin));
+	(void)memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	if (inet_aton(host, &sin.sin_addr) == 0) {
 		struct hostent *he;
@@ -228,18 +243,15 @@ find_server(host, domain)
 		he = gethostbyname(host);
 		if (he == NULL)
 			errx(1, "%s: %s", host, hstrerror(h_errno));
-		memmove(&sin.sin_addr, he->h_addr, sizeof(sin.sin_addr));
+		(void)memmove(&sin.sin_addr, he->h_addr, sizeof(sin.sin_addr));
 	}
 
 	/*
          * establish connection to ypbind
          */
-	tv.tv_sec = 15;
-	tv.tv_usec = 0;
-	ypbind_fd = RPC_ANYSOCK;
-	ypbind = clntudp_create(&sin, YPBINDPROG, YPBINDVERS, tv, &ypbind_fd);
+	ypbind = mkclient(&sin, YPBINDPROG, YPBINDVERS, tcp);
 	if (ypbind == NULL)
-		errx(1, "clntudp_create: %s: %s", host,
+		errx(1, "clnt%s_create: %s: %s", tcp ? "tcp" : "udp", host,
 		    yperr_string(YPERR_YPBIND));
 
 	/*
@@ -247,8 +259,9 @@ find_server(host, domain)
          */
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
-	retval = clnt_call(ypbind, YPBINDPROC_DOMAIN, xdr_ypdomain_wrap_string,
-	    &domain, xdr_ypbind_resp, &ypbind_resp, tv);
+	retval = clnt_call(ypbind, (unsigned int)YPBINDPROC_DOMAIN,
+	    xdr_ypdomain_wrap_string, &domain, xdr_ypbind_resp, &ypbind_resp,
+	    tv);
 	clnt_destroy(ypbind);
 	if (retval != RPC_SUCCESS)
 		errx(1, "clnt_call: %s: %s", host, clnt_sperrno(retval));
@@ -267,19 +280,18 @@ find_server(host, domain)
 /*
  * find_mapmaster: ask a host's ypserver who its map's master is
  */
-void
-find_mapmaster(host, domain, map, inhibit, force)
-	const char	*host, *domain, *map;
-	int		 inhibit, force;
+static void
+find_mapmaster(const char *host, const char *domain, const char *map,
+    int inhibit, int force, int tcp)
 {
 	struct in_addr *inaddr, faddr;
 	struct hostent *he;
 	int     lcv;
 	struct sockaddr_in sin;
 	CLIENT *ypserv;
-	int     ypserv_fd, yperr;
-	struct timeval tv;
+	int     yperr;
 	enum clnt_stat retval;
+	struct timeval tv;
 	struct ypresp_maplist yprespmlist;
 	struct ypmaplist fakelist, *ypml;
 	struct ypresp_master yprespmaster;
@@ -294,12 +306,12 @@ find_mapmaster(host, domain, map, inhibit, force)
 			he = gethostbyname(host);
 			if (he == NULL)
 				errx(1, "%s: %s", host, hstrerror(h_errno));
-			memmove(&faddr, he->h_addr, sizeof(faddr));
+			(void)memmove(&faddr, he->h_addr, sizeof(faddr));
 		}
 		inaddr = &faddr;
 	} else {
 		/* ask host "host" who is currently serving its maps  */
-		inaddr = find_server(host, domain);
+		inaddr = find_server(host, domain, tcp);
 	}
 
 	/*
@@ -313,22 +325,19 @@ find_mapmaster(host, domain, map, inhibit, force)
 			}
 		}
 #ifdef DEBUG
-		printf("translated map name = %s\n", map);
+		(void)printf("translated map name = %s\n", map);
 #endif
 	}
 
 	/*
          * now we try and connect to host's ypserv
          */
-	memset(&sin, 0, sizeof(sin));
+	(void)memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = inaddr->s_addr;
-	tv.tv_sec = 15;
-	tv.tv_usec = 0;
-	ypserv_fd = RPC_ANYSOCK;
-	ypserv = clntudp_create(&sin, YPPROG, YPVERS, tv, &ypserv_fd);
+	ypserv = mkclient(&sin, YPPROG, YPVERS, tcp);
 	if (ypserv == NULL) {
-		warnx("clntudp_create: %s: %s", host,
+		warnx("clnt%s_create: %s: %s", tcp ? "tcp" : "udp", host,
 		    yperr_string(YPERR_YPSERV));
 		goto error;
 	}
@@ -340,10 +349,10 @@ find_mapmaster(host, domain, map, inhibit, force)
 		/*
 	         * if no map specified, we ask ypserv for a list of all maps
 	         */
-		memset(&yprespmlist, 0, sizeof(yprespmlist));
+		(void)memset(&yprespmlist, 0, sizeof(yprespmlist));
 		tv.tv_sec = 5;
 		tv.tv_usec = 0;
-		retval = clnt_call(ypserv, YPPROC_MAPLIST,
+		retval = clnt_call(ypserv, (unsigned int)YPPROC_MAPLIST,
 		    xdr_ypdomain_wrap_string, &domain, xdr_ypresp_maplist,
 		    &yprespmlist, tv);
 		if (retval != RPC_SUCCESS) {
@@ -362,8 +371,8 @@ find_mapmaster(host, domain, map, inhibit, force)
 	         * build a fake "list" of maps containing only the list the user
 	         * asked about in it.
 	         */
-		memset(&fakelist, 0, sizeof(fakelist));
-		strlcpy(fakelist.ypml_name, map, sizeof(fakelist.ypml_name));
+		(void)memset(&fakelist, 0, sizeof(fakelist));
+		(void)strlcpy(fakelist.ypml_name, map, sizeof(fakelist.ypml_name));
 		fakelist.ypml_next = NULL;
 		ypml = &fakelist;
 	}
@@ -375,11 +384,12 @@ find_mapmaster(host, domain, map, inhibit, force)
 	for ( /* null */ ; ypml != NULL; ypml = ypml->ypml_next) {
 		ypreqkey.domain = domain;
 		ypreqkey.map = ypml->ypml_name;
-		memset(&yprespmaster, 0, sizeof(yprespmaster));
+		(void)memset(&yprespmaster, 0, sizeof(yprespmaster));
 		tv.tv_sec = 5;
 		tv.tv_usec = 0;
-		retval = clnt_call(ypserv, YPPROC_MASTER, xdr_ypreq_nokey,
-		    &ypreqkey, xdr_ypresp_master, &yprespmaster, tv);
+		retval = clnt_call(ypserv, (unsigned int)YPPROC_MASTER,
+		    xdr_ypreq_nokey, &ypreqkey, xdr_ypresp_master,
+		    &yprespmaster, tv);
 		if (retval != RPC_SUCCESS) {
 			warnx("clnt_call MASTER: %s: %s", host,
 			    clnt_sperrno(retval));
@@ -390,9 +400,10 @@ find_mapmaster(host, domain, map, inhibit, force)
 			warnx("clnt_call: %s: %s: %s", host, ypml->ypml_name,
 			    yperr_string(yperr));
 		} else {
-			printf("%s %s\n", ypml->ypml_name, yprespmaster.master);
+			(void)printf("%s %s\n", ypml->ypml_name,
+			    yprespmaster.master);
 		}
-		xdr_free(xdr_ypresp_master, (char *) &yprespmaster);
+		xdr_free(xdr_ypresp_master, (void *)&yprespmaster);
 	}
 	clnt_destroy(ypserv);
 
@@ -406,7 +417,8 @@ error:
 	if (ypserv)
 		clnt_destroy(ypserv);
 	if (!force)
-		fprintf(stderr, "\t[note %s's ypserv running on host %s]\n",
+		(void)fprintf(stderr,
+		    "\t[note %s's ypserv running on host %s]\n",
 		    host, inet_ntoa(*inaddr));
 	exit(1);
 }
