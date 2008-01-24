@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.12 2008/01/02 11:48:43 ad Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.13 2008/01/24 17:32:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.12 2008/01/02 11:48:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.13 2008/01/24 17:32:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,7 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
     struct lwp *l)
 {
 	struct ptyfsnode *ptyfs;
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	int error;
 
 	do {
@@ -229,24 +229,7 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 	case PTYFSpts:	/* /pts/N = cxxxxxxxxx */
 	case PTYFSptc:	/* controlling side = cxxxxxxxxx */
 		vp->v_type = VCHR;
-		if ((nvp = checkalias(vp, PTYFS_MAKEDEV(ptyfs), mp)) != NULL) {
-			/*
-			 * Discard unneeded vnode, but save its inode.
-			 */
-			nvp->v_data = vp->v_data;
-			vp->v_data = NULL;
-			/* XXX spec_vnodeops has no locking, do it explicitly */
-			vp->v_vflag &= ~VV_LOCKSWORK;
-			VOP_UNLOCK(vp, 0);
-			vp->v_op = spec_vnodeop_p;
-			vgone(vp);
-			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
-			/*
-			 * Reinitialize aliased inode.
-			 */
-			vp = nvp;
-			ptyfs->ptyfs_vnode = vp;
-		}
+		spec_node_init(vp, PTYFS_MAKEDEV(ptyfs));
 		break;
 	default:
 		panic("ptyfs_allocvp");

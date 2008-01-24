@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.12 2008/01/09 16:15:22 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.13 2008/01/24 17:32:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.12 2008/01/09 16:15:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.13 2008/01/24 17:32:55 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -127,7 +127,7 @@ kmutex_t mountlist_lock;
 kmutex_t mntid_lock;
 kmutex_t mntvnode_lock;
 kmutex_t vnode_free_list_lock;
-kmutex_t spechash_lock;
+kmutex_t specfs_lock;
 kmutex_t vfs_list_lock;
 
 struct mntlist mountlist =			/* mounted filesystem list */
@@ -158,7 +158,7 @@ vntblinit(void)
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&spechash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&specfs_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mount_specificdata_domain = specificdata_domain_create();

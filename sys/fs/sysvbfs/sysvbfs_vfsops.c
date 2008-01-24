@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.21 2008/01/02 11:48:46 ad Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.22 2008/01/24 17:32:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.21 2008/01/02 11:48:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.22 2008/01/24 17:32:54 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,8 +118,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_specinfo->si_rdev) ==
-			    NULL)
+			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
 				error = ENXIO;
 		} else {
 			/*
@@ -173,10 +172,6 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct partinfo dpart;
 	int error;
 
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return error;	/* Already mounted */
-	if (vcount(devvp) > 1)
-		return EBUSY;	/* Opened by other */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);

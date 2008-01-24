@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs.c,v 1.3 2006/05/11 11:56:38 yamt Exp $	*/
+/*	$NetBSD: ptyfs.c,v 1.4 2008/01/24 17:32:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ptyfs.c,v 1.3 2006/05/11 11:56:38 yamt Exp $");
+__RCSID("$NetBSD: ptyfs.c,v 1.4 2008/01/24 17:32:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,6 +46,8 @@ __RCSID("$NetBSD: ptyfs.c,v 1.3 2006/05/11 11:56:38 yamt Exp $");
 #include <sys/stat.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+
+#include <stdbool.h>
 
 #define _KERNEL
 #include <miscfs/specfs/specdev.h>
@@ -62,7 +64,7 @@ int
 ptyfs_filestat(struct vnode *vp, struct filestat *fsp)
 {
 	struct ptyfsnode pn;
-	struct specinfo si;
+	struct specnode sn;
 	struct mount mt;
 
 	if (!KVM_READ(VTOPTYFS(vp), &pn, sizeof(pn))) {
@@ -82,12 +84,12 @@ ptyfs_filestat(struct vnode *vp, struct filestat *fsp)
 	switch (pn.ptyfs_type) {
 	    case PTYFSpts:
 	    case PTYFSptc:
-		if (!KVM_READ(vp->v_specinfo, &si, sizeof(si))) {
-			dprintf("can't read specinfo at %p for pid %d",
-				VTOPTYFS(vp), Pid);
+		if (!KVM_READ(vp->v_specnode, &sn, sizeof(sn))) {
+			dprintf("can't read specnode at %p for pid %d",
+				vp->v_specnode, Pid);
 			return 0;
 		}
-		fsp->rdev = si.si_rdev;
+		fsp->rdev = sn.sn_rdev;
 		fsp->mode |= S_IFCHR;
 		break;
 	    case PTYFSroot:
