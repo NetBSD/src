@@ -1,4 +1,4 @@
-.\"     $NetBSD: vattr.9,v 1.8 2007/06/24 22:49:44 rumble Exp $
+.\"     $NetBSD: vattr.9,v 1.9 2008/01/24 07:02:31 tnn Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 24, 2007
+.Dd January 24, 2008
 .Dt VATTR 9
 .Os
 .Sh NAME
@@ -118,7 +118,7 @@ All pathnames are relative to
 .Pa /usr/src .
 .Pp
 The vnode attributes ares implemented within the file
-.Pa sys/kern/vfs_subr.c .
+.Pa sys/kern/vfs_subr2.c .
 .Sh SEE ALSO
 .Xr intro 9 ,
 .Xr vfs 9 ,
