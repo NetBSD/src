@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.319 2008/01/24 17:57:14 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.320 2008/01/24 18:31:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.319 2008/01/24 17:57:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.320 2008/01/24 18:31:52 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -1151,11 +1151,19 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 			vp->v_usecount++;
 			if (vp->v_type != VBLK && vp->v_type != VCHR) {
 				vclean(vp, DOCLOSE);
+				vrelel(vp, 1, 0);
 			} else {
 				vclean(vp, 0);
 				vp->v_op = spec_vnodeop_p; /* XXXSMP */
+				mutex_exit(&vp->v_interlock);
+				/*
+				 * The vnode isn't clean, but still resides
+				 * on the mount list.  Remove it. XXX This
+				 * is a bit dodgy.
+				 */
+				insmntque(vp, NULL);
+				vrele(vp);
 			}
-			vrelel(vp, 1, 0);
 			mutex_enter(&mntvnode_lock);
 			continue;
 		}
