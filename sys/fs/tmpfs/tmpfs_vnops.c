@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.45 2008/01/02 11:48:47 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.46 2008/01/25 14:32:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.45 2008/01/02 11:48:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.46 2008/01/25 14:32:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -109,7 +109,6 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc,		tmpfs_pathconf },
 	{ &vop_islocked_desc,		tmpfs_islocked },
 	{ &vop_advlock_desc,		tmpfs_advlock },
-	{ &vop_lease_desc,		tmpfs_lease },
 	{ &vop_bwrite_desc,		tmpfs_bwrite },
 	{ &vop_getpages_desc,		tmpfs_getpages },
 	{ &vop_putpages_desc,		tmpfs_putpages },
