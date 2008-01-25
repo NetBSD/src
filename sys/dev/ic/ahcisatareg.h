@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatareg.h,v 1.3 2007/12/25 18:33:37 perry Exp $	*/
+/*	$NetBSD: ahcisatareg.h,v 1.4 2008/01/25 21:41:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -146,6 +146,7 @@ struct ahci_r_fis {
 #define AHCI_VS		0x10 /* AHCI version */
 #define 	AHCI_VS_10	0x00010000 /* AHCI spec 1.0 */
 #define 	AHCI_VS_11	0x00010100 /* AHCI spec 1.1 */
+#define 	AHCI_VS_12	0x00010200 /* AHCI spec 1.2 */
 
 #define AHCI_CC_CTL	0x14 /* command completion coalescing control */
 #define 	AHCI_CC_TV_MASK	0xffff0000 /* timeout value */
