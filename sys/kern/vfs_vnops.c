@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.150 2008/01/05 19:08:49 dsl Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.151 2008/01/25 06:32:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.150 2008/01/05 19:08:49 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.151 2008/01/25 06:32:20 pooka Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.150 2008/01/05 19:08:49 dsl Exp $");
 #include <sys/syslog.h>
 #include <sys/fstrans.h>
 #include <sys/atomic.h>
+#include <sys/filedesc.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -456,9 +457,10 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error, ioflag = IO_UNIT;
+	int count, error, ioflag;
 
 	FILE_LOCK(fp);
+	ioflag = IO_ADV_ENCODE(fp->f_advice) | IO_UNIT;
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
