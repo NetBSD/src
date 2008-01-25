@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.20 2007/03/05 21:11:04 he Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.21 2008/01/25 08:47:44 dogcow Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.20 2007/03/05 21:11:04 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.21 2008/01/25 08:47:44 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,6 @@ grfmmap(dev_t dev, off_t off, int prot)
 int
 grfmap(dev_t dev, struct macfb_softc *sc, void **addrp, struct proc *p)
 {
-	struct specinfo si;
 	struct vnode vn;
 	u_long len;
 	int error, flags;
@@ -318,7 +317,6 @@ grfmap(dev_t dev, struct macfb_softc *sc, void **addrp, struct proc *p)
 	flags = MAP_SHARED | MAP_FIXED;
 
 	vn.v_type = VCHR;		/* XXX */
-	vn.v_specinfo = &si;		/* XXX */
 	vn.v_rdev = dev;		/* XXX */
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
