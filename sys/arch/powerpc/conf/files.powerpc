@@ -1,4 +1,4 @@
-#	$NetBSD: files.powerpc,v 1.66 2008/01/07 00:26:32 ad Exp $
+#	$NetBSD: files.powerpc,v 1.67 2008/01/25 21:12:12 joerg Exp $
 
 defflag	opt_altivec.h	ALTIVEC K_ALTIVEC
 defflag	opt_openpic.h	OPENPIC OPENPIC_SERIAL_MODE
@@ -10,7 +10,6 @@ defparam opt_pmap.h	PTEGCOUNT PMAP_MEMLIMIT
 file	arch/powerpc/powerpc/copystr.c
 file	arch/powerpc/powerpc/fubyte.c
 file	arch/powerpc/powerpc/fuswintr.c
-file	arch/powerpc/powerpc/in_cksum.c			inet | inet6
 file	arch/powerpc/powerpc/ipkdb_glue.c		ipkdb
 file	arch/powerpc/powerpc/kgdb_machdep.c		kgdb
 file	arch/powerpc/powerpc/kobj_machdep.c		modular
