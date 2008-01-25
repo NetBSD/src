@@ -1,4 +1,4 @@
-.\"	$NetBSD: yppoll.8,v 1.8 2005/02/26 16:20:36 wiz Exp $
+.\"	$NetBSD: yppoll.8,v 1.9 2008/01/25 19:58:53 christos Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 26, 2005
+.Dd January 25, 2008
 .Dt YPPOLL 8
 .Os
 .Sh NAME
@@ -42,6 +42,7 @@
 .Nd ask version of NIS map from NIS server
 .Sh SYNOPSIS
 .Nm
+.Op Fl T
 .Op Fl h Ar host
 .Op Fl d Ar domain
 .Ar mapname
@@ -55,6 +56,10 @@ server for
 .Pp
 The options are as follows:
 .Bl -tag -width indent
+.It Fl T
+Use TCP protocol instead of UDP for request if
+.Ar -h
+option is present.
 .It Fl h Ar host
 Ask the
 .Tn NIS
