@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rwlock.c,v 1.15 2008/01/04 21:54:49 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.16 2008/01/25 19:02:31 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.15 2008/01/04 21:54:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.16 2008/01/25 19:02:31 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -155,6 +155,7 @@ RW_SET_WAITERS(krwlock_t *rw, uintptr_t need, uintptr_t set)
 #ifndef __HAVE_RW_STUBS
 __strong_alias(rw_enter,rw_vector_enter);
 __strong_alias(rw_exit,rw_vector_exit);
+__strong_alias(rw_tryenter,rw_vector_tryenter);
 #endif
 
 static void	rw_dump(volatile void *);
@@ -474,19 +475,18 @@ rw_vector_exit(krwlock_t *rw)
 }
 
 /*
- * rw_tryenter:
+ * rw_vector_tryenter:
  *
  *	Try to acquire a rwlock.
  */
 int
-rw_tryenter(krwlock_t *rw, const krw_t op)
+rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 {
 	uintptr_t curthread, owner, incr, need_wait;
 
 	curthread = (uintptr_t)curlwp;
 
 	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, op);
 
 	if (op == RW_READER) {
 		incr = RW_READ_INCR;
@@ -509,6 +509,7 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 		return 0;
 	}
 
+	RW_WANTLOCK(rw, op);
 	RW_LOCKED(rw, op);
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));

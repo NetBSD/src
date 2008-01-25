@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.h,v 1.3 2007/11/21 10:19:11 yamt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.4 2008/01/25 19:02:31 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -113,6 +113,7 @@
  *
  *	rw_enter()
  *	rw_exit()
+ *	rw_tryenter()
  */
 
 #if defined(_KERNEL_OPT)
@@ -151,6 +152,7 @@ typedef struct krwlock krwlock_t;
 
 void	rw_vector_enter(krwlock_t *, const krw_t);
 void	rw_vector_exit(krwlock_t *);
+int	rw_vector_tryenter(krwlock_t *, const krw_t);
 #endif	/* __RWLOCK_PRIVATE */
 
 #include <machine/rwlock.h>
