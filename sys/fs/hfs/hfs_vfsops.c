@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.14 2008/01/24 17:32:53 ad Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.15 2008/01/25 20:49:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.14 2008/01/24 17:32:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.15 2008/01/25 20:49:15 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -135,7 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.14 2008/01/24 17:32:53 ad Exp $");
 
 MALLOC_JUSTDEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
-extern struct lock hfs_hashlock;
+extern kmutex_t hfs_hashlock;
 
 const struct vnodeopv_desc * const hfs_vnodeopv_descs[] = {
 	&hfs_vnodeop_opv_desc,
@@ -518,6 +518,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	if (fork != HFS_RSRCFORK)
 	    fork = HFS_DATAFORK;
 
+ retry:
 	/* Check if this vnode has already been allocated. If so, just return it. */
 	if ((*vpp = hfs_nhashget(dev, cnid, fork, LK_EXCLUSIVE)) != NULL)
 		return 0;
@@ -525,24 +526,22 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, &vp)) != 0)
 		goto error;
+	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
+		M_WAITOK + M_ZERO);
 
 	/*
 	 * If someone beat us to it while sleeping in getnewvnode(),
 	 * push back the freshly allocated vnode we don't need, and return.
 	 */
+	mutex_enter(&hfs_hashlock);
+	if (hfs_nhashget(dev, cnid, fork, 0) != NULL) {
+		mutex_exit(&hfs_hashlock);
+		ungetnewvnode(vp);
+		FREE(hnode, M_TEMP);
+		goto retry;
+	}
 
-	do {
-		if ((*vpp = hfs_nhashget(dev, cnid, fork, LK_EXCLUSIVE))
-		    != NULL) {
-			ungetnewvnode(vp);
-			return 0;
-		}
-	} while (lockmgr(&hfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
-
-	vp->v_vflag |= VV_LOCKSWORK;
-	
-	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
-		M_WAITOK + M_ZERO);
+	vp->v_vflag |= VV_LOCKSWORK;	
 	vp->v_data = hnode;
 	genfs_node_init(vp, &hfs_genfsops);
 	
@@ -564,7 +563,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	hnode->h_fork = fork;
 
 	hfs_nhashinsert(hnode);
-	lockmgr(&hfs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&hfs_hashlock);
 
 
 	/*
