@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.32 2008/01/24 22:41:08 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.33 2008/01/25 06:43:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -391,23 +391,6 @@ rump_vop_lookup(void *v)
 	cnp->cn_consume = strlen(cnp->cn_nameptr + cnp->cn_namelen);
 	cnp->cn_flags &= ~REQUIREDIR;
 
-	return 0;
-}
-
-/*
- * Ok, we can't actually do getcwd() for lvp, so just pretend we can.
- * Currently this is called only from set_statvfs_info().  If would be
- * nice if we could assert on that.
- */
-int
-getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
-	int limit, int flags, struct lwp *l)
-{
-
-	assert(rvp == rootvnode);
-
-	**bpp = '/';
-	(*bpp)--;
 	return 0;
 }
 
