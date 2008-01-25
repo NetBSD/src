@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.104 2005/12/11 12:16:26 christos Exp $
+#	$NetBSD: Makefile.amiga,v 1.105 2008/01/25 19:39:22 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -57,6 +57,8 @@ KERN_AS=	obj
 MD_OBJS=	locore.o ${FPSP}
 MD_CFILES=
 MD_SFILES=	${AMIGA}/amiga/locore.s
+
+copy.o copypage.o lock_stubs.o: assym.h
 
 locore.o: ${AMIGA}/amiga/locore.s assym.h
 	${NORMAL_S}
