@@ -1,4 +1,4 @@
-.\"	$NetBSD: schedctl.8,v 1.1 2008/01/24 19:34:06 rmind Exp $
+.\"	$NetBSD: schedctl.8,v 1.2 2008/01/25 00:05:35 xtraeme Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,7 @@ Processors are defined as numbers (starting from zero) and separated by commas.
 Value of -1 is used to unset the affinity.
 .It Fl C Ar class
 Scheduling class (policy) might be:
-.Bl -tag -width 0: SCHED_OTHER
+.Bl -tag -width SCHEDOTHERXX
 .It Dv 0: SCHED_OTHER
 Time-sharing (TS) scheduling policy.
 The default policy in
@@ -86,6 +86,7 @@ For all scheduling classes, priority might be set to any value in the range from
 (0) to
 .Dv SCHED_PRI_MAX
 (63).
+.El
 .Pp
 .Sh EXAMPLES
 Show scheduling information about process whose ID is '123':
