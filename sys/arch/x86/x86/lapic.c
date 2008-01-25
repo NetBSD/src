@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.32 2008/01/25 18:50:22 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.33 2008/01/25 18:56:55 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.32 2008/01/25 18:50:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.33 2008/01/25 18:56:55 xtraeme Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -355,23 +355,31 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 				fdelta = -fdelta;
 
 			if (fdelta > last_factor[cid] / 10) {
-				printf("cpu%d: freq skew exceeds 10%%: delta %u, factor %u, last %u\n", cid, fdelta, tsc_delta / delta, last_factor[cid]);
+				printf("cpu%d: freq skew exceeds 10%%: delta %u, "
+				    "factor %u, last %u\n", cid, fdelta,
+				    tsc_delta / delta, last_factor[cid]);
 			}
 			factor = tsc_delta / delta;
 		}
 
 		if (ddelta > last_delta[cid] / 10) {
-			printf("cpu%d: tick delta exceeds 10%%: delta %u, last %u, tick %u, last %u, factor %u, last %u\n",
-			       cid, ddelta, last_delta[cid], c_count, last_count[cid], factor, last_factor[cid]);
+			printf("cpu%d: tick delta exceeds 10%%: delta %u, "
+			    "last %u, tick %u, last %u, factor %u, last %u\n",
+			    cid, ddelta, last_delta[cid], c_count,
+			    last_count[cid], factor, last_factor[cid]);
 		}
 
 		if (last_count[cid] > c_count) {
-			printf("cpu%d: tick wrapped/lost: delta %u, tick %u, last %u\n", cid, last_count[cid] - c_count, c_count, last_count[cid]);
+			printf("cpu%d: tick wrapped/lost: delta %u, tick %u, "
+			    "last %u\n", cid, last_count[cid] - c_count,
+			    c_count, last_count[cid]);
 		}
 
 		if (idelta > last_tscdelta[cid] / 10) {
-			printf("cpu%d: TSC delta exceeds 10%%: delta %u, last %u, tsc %u, factor %u, last %u\n", cid, idelta, last_tscdelta[cid], last_tsc[cid],
-				factor, last_factor[cid]);
+			printf("cpu%d: TSC delta exceeds 10%%: delta %u, "
+			    "last %u, tsc %u, factor %u, last %u\n", cid, idelta,
+			    last_tscdelta[cid], last_tsc[cid],
+			    factor, last_factor[cid]);
 		}
  
 		last_factor[cid]   = factor;
