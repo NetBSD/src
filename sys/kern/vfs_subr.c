@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.321 2008/01/24 21:04:12 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.322 2008/01/25 16:59:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.321 2008/01/24 21:04:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.322 2008/01/25 16:59:31 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ddb.h"
@@ -851,7 +851,6 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 			 */
 			KASSERT(mutex_owned(&vp->v_interlock));
 			KASSERT((vp->v_iflag & VI_INACTPEND) == 0);
-			KASSERT(vp->v_usecount == 1);
 			vp->v_iflag |= VI_INACTPEND;
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
