@@ -1,4 +1,4 @@
-/*	$NetBSD: ypwhich.c,v 1.14 2008/01/24 23:56:55 christos Exp $	*/
+/*	$NetBSD: ypwhich.c,v 1.15 2008/01/25 19:54:40 christos Exp $	*/
 
 /*
  *
@@ -210,7 +210,7 @@ static CLIENT *
 mkclient(struct sockaddr_in *sin, unsigned long prog, unsigned long vers,
     int tcp)
 {
-	static struct timeval tv = { 0, 15 };
+	static struct timeval tv = { 15, 0 };
 	int fd = RPC_ANYSOCK;
 
 	if (tcp)
