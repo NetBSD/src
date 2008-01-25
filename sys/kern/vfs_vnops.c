@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.152 2008/01/25 14:32:15 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.153 2008/01/25 14:37:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.152 2008/01/25 14:32:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.153 2008/01/25 14:37:33 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -717,8 +717,10 @@ vn_closefile(struct file *fp, struct lwp *l)
 u_int
 vn_setrecurse(struct vnode *vp)
 {
-	struct lock *lkp = vp->v_vnlock;
+	struct lock *lkp;
 	u_int retval;
+
+	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 
 	mutex_enter(&lkp->lk_interlock);
 	retval = lkp->lk_flags & LK_CANRECURSE;
@@ -734,7 +736,9 @@ vn_setrecurse(struct vnode *vp)
 void
 vn_restorerecurse(struct vnode *vp, u_int flags)
 {
-	struct lock *lkp = vp->v_vnlock;
+	struct lock *lkp;
+
+	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 
 	mutex_enter(&lkp->lk_interlock);
 	lkp->lk_flags &= ~LK_CANRECURSE;
