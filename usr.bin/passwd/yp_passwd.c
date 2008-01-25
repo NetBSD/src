@@ -1,4 +1,4 @@
-/*	$NetBSD: yp_passwd.c,v 1.31 2005/02/26 07:19:25 thorpej Exp $	*/
+/*	$NetBSD: yp_passwd.c,v 1.32 2008/01/25 19:36:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from:  @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: yp_passwd.c,v 1.31 2005/02/26 07:19:25 thorpej Exp $");
+__RCSID("$NetBSD: yp_passwd.c,v 1.32 2008/01/25 19:36:12 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,22 +148,44 @@ getnewpasswd(struct passwd *pw, char **old_pass)
 	return (p);
 }
 
+static void
+makeypp(struct yppasswd *ypp, struct passwd *pw)
+{
+	/* prompt for new password */
+	ypp->newpw.pw_passwd = getnewpasswd(pw, &ypp->oldpass);
+
+	/* tell rpc.yppasswdd */
+	ypp->newpw.pw_name	= estrdup(pw->pw_name);
+	ypp->newpw.pw_uid 	= pw->pw_uid;
+	ypp->newpw.pw_gid	= pw->pw_gid;
+	ypp->newpw.pw_gecos	= estrdup(pw->pw_gecos);
+	ypp->newpw.pw_dir	= estrdup(pw->pw_dir);
+	ypp->newpw.pw_shell	= estrdup(pw->pw_shell);
+}
+
 static int
-ypgetpwnam(const char *nam)
+ypgetpwnam(const char *nam, struct passwd *pwd)
 {
 	char *val;
 	int reason, vallen;
+	int flags;
+	int ok = 0;
 	
 	val = NULL;
-	reason = yp_match(domain, "passwd.byname", nam, strlen(nam),
+	reason = yp_match(domain, "passwd.byname", nam, (int)strlen(nam),
 			  &val, &vallen);
-	if (reason != 0) {
-		if (val != NULL)
-			free(val);
-		return 0;
-	}
-	free(val);
-	return 1;
+	if (reason != 0)
+		goto out;
+
+	flags = _PASSWORD_OLDFMT;
+	if (pw_scan(val, pwd, &flags) == 0)
+		goto out;
+
+	ok = 1;
+out:
+	if (val)
+		free(val);
+	return ok;
 }
 
 #ifdef USE_PAM
@@ -189,8 +211,9 @@ pwyp_process(const char *username, int argc, char **argv)
 {
 	char *master;
 	int ch, r, rpcport, status;
-	struct yppasswd yppasswd;
-	struct passwd *pw;
+	struct yppasswd ypp;
+	struct passwd pwb, *pw;
+	char pwbuf[1024];
 	struct timeval tv;
 	CLIENT *client;
 
@@ -261,41 +284,16 @@ pwyp_process(const char *username, int argc, char **argv)
 
 	/* Bail out if this is a local (non-yp) user, */
 	/* then get user's login identity */
-	/* XXX This should always fetch from NIS, not rely on getpwnam()! */
-	if (!ypgetpwnam(username) ||
-	    !(pw = getpwnam(username)))
+	if (!ypgetpwnam(username, pw = &pwb) ||
+	    getpwnam_r(username, &pwb, pwbuf, sizeof(pwbuf), &pw) ||
+	    pw == NULL)
 		errx(1, "NIS unknown user %s", username);
 
 	if (uid && uid != pw->pw_uid)
 		errx(1, "you may only change your own password: %s",
 		    strerror(EACCES));
 
-	/* prompt for new password */
-	yppasswd.newpw.pw_passwd = getnewpasswd(pw, &yppasswd.oldpass);
-
-	/* tell rpc.yppasswdd */
-	yppasswd.newpw.pw_name	= strdup(pw->pw_name);
-	if (!yppasswd.newpw.pw_name) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
-	yppasswd.newpw.pw_uid 	= pw->pw_uid;
-	yppasswd.newpw.pw_gid	= pw->pw_gid;
-	yppasswd.newpw.pw_gecos = strdup(pw->pw_gecos);
-	if (!yppasswd.newpw.pw_gecos) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
-	yppasswd.newpw.pw_dir	= strdup(pw->pw_dir);
-	if (!yppasswd.newpw.pw_dir) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
-	yppasswd.newpw.pw_shell	= strdup(pw->pw_shell);
-	if (!yppasswd.newpw.pw_shell) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
+	makeypp(&ypp, pw);
 
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client == NULL)
@@ -306,7 +304,7 @@ pwyp_process(const char *username, int argc, char **argv)
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPPASSWDPROC_UPDATE,
-	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
+	    xdr_yppasswd, &ypp, xdr_int, &status, tv);
 	if (r)
 		errx(1, "rpc to yppasswdd failed.");
 	else if (status)
@@ -375,8 +373,9 @@ yp_chpw(username)
 {
 	char *master;
 	int r, rpcport, status;
-	struct yppasswd yppasswd;
-	struct passwd *pw;
+	struct yppasswd ypp;
+	struct passwd *pw, pwb;
+	char pwbuf[1024];
 	struct timeval tv;
 	CLIENT *client;
 
@@ -419,8 +418,9 @@ yp_chpw(username)
 
 	/* Bail out if this is a local (non-yp) user, */
 	/* then get user's login identity */
-	if (!ypgetpwnam(username) ||
-	    !(pw = getpwnam(username))) {
+	if (!ypgetpwnam(username, pw = &pwb) ||
+	    getpwnam_r(username, &pwb, pwbuf, sizeof(pwbuf), &pw) ||
+	    pw == NULL) {
 		warnx("NIS unknown user %s", username);
 		/* continuation */
 		return(-1);
@@ -430,32 +430,7 @@ yp_chpw(username)
 		errx(1, "you may only change your own password: %s",
 		    strerror(EACCES));
 
-	/* prompt for new password */
-	yppasswd.newpw.pw_passwd = getnewpasswd(pw, &yppasswd.oldpass);
-
-	/* tell rpc.yppasswdd */
-	yppasswd.newpw.pw_name	= strdup(pw->pw_name);
-	if (!yppasswd.newpw.pw_name) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
-	yppasswd.newpw.pw_uid 	= pw->pw_uid;
-	yppasswd.newpw.pw_gid	= pw->pw_gid;
-	yppasswd.newpw.pw_gecos = strdup(pw->pw_gecos);
-	if (!yppasswd.newpw.pw_gecos) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
-	yppasswd.newpw.pw_dir	= strdup(pw->pw_dir);
-	if (!yppasswd.newpw.pw_dir) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
-	yppasswd.newpw.pw_shell	= strdup(pw->pw_shell);
-	if (!yppasswd.newpw.pw_shell) {
-		err(1, "strdup");
-		/*NOTREACHED*/
-	}
+	makeypp(&ypp, pw);
 
 	client = clnt_create(master, YPPASSWDPROG, YPPASSWDVERS, "udp");
 	if (client == NULL) {
@@ -468,7 +443,7 @@ yp_chpw(username)
 	tv.tv_sec = 2;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPPASSWDPROC_UPDATE,
-	    xdr_yppasswd, &yppasswd, xdr_int, &status, tv);
+	    xdr_yppasswd, &ypp, xdr_int, &status, tv);
 	if (r)
 		errx(1, "rpc to yppasswdd failed.");
 	else if (status)
