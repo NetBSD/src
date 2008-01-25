@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1006 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1007 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -400,3 +400,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	compat_linux32: Add ossaudio support. [jmcneill 20080121]
 	xen: Added support for the i386 PAE extention to Xen3 domU
 		[bouyer 20080123]
+	uhub(4): The device attachment function has been optimized to
+		improve system startup time. [jmcneill 20080124]
