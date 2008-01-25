@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.42 2008/01/25 01:09:18 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.43 2008/01/25 02:12:10 rafal Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.42 2008/01/25 01:09:18 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.43 2008/01/25 02:12:10 rafal Exp $");
 
 #include <sys/types.h>
 
@@ -185,9 +185,7 @@ pthread_mutex_lock(pthread_mutex_t *mutex)
 static int
 pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 {
-	extern int pthread__started;
 	struct mutex_private *mp;
-	sigset_t ss;
 	int count;
 
 	pthread__error(EINVAL, "Invalid mutex",
