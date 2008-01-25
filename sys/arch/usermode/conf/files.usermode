@@ -1,4 +1,4 @@
-# $NetBSD: files.usermode,v 1.1 2007/12/29 14:38:30 jmcneill Exp $
+# $NetBSD: files.usermode,v 1.2 2008/01/25 21:12:13 joerg Exp $
 
 maxpartitions 8
 maxusers 8 16 64
@@ -22,9 +22,6 @@ file	arch/usermode/dev/clock.c		clock
 device	ttycons { } : tty
 attach	ttycons at thunkbus
 file	arch/usermode/dev/ttycons.c		ttycons
-
-file	netinet/in_cksum.c			inet
-file	netinet/in4_cksum.c			inet
 
 file	arch/usermode/usermode/copy.c
 file	arch/usermode/usermode/machdep.c
