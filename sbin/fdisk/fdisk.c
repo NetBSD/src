@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.114 2008/01/20 06:39:31 tsutsui Exp $ */
+/*	$NetBSD: fdisk.c,v 1.115 2008/01/25 23:19:10 dsl Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.114 2008/01/20 06:39:31 tsutsui Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.115 2008/01/25 23:19:10 dsl Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -106,6 +106,12 @@ __RCSID("$NetBSD: fdisk.c,v 1.114 2008/01/20 06:39:31 tsutsui Exp $");
 #define	SCAN_F1		0x3b
 #define	SCAN_1		0x2
 
+#define	MAX_BIOS_DISKS	16	/* Going beyond F12 is hard though! */
+
+/* We same the dflt 'boot partition' as a disk block, with some magic values. */
+#define DEFAULT_ACTIVE	(~(daddr_t)0)
+#define	DEFAULT_DISK(n)	(DEFAULT_ACTIVE - MAX_BIOS_DISKS + (n))
+
 #endif
 
 #define LBUF 100
@@ -153,8 +159,6 @@ const char *boot_dir = DEFAULT_BOOTDIR;
 char *boot_path = 0;			/* name of file we actually opened */
 
 #ifdef BOOTSEL
-
-#define DEFAULT_ACTIVE	(~(daddr_t)0)
 
 #define OPTIONS			"0123BFSafiluvs:b:c:E:r:w:t:T:"
 #else
@@ -1157,15 +1161,27 @@ get_default_boot(void)
 		/* default to first active partition */
 		return DEFAULT_ACTIVE;
 
-	if (mboot.mbr_bootsel.mbrbs_defkey == SCAN_ENTER)
-		return DEFAULT_ACTIVE;
-		
 	id = mboot.mbr_bootsel.mbrbs_defkey;
 
-	/* 1+ => allocated partition id, F1+ => disk 0+ */
-	if (id >= SCAN_F1)
-		return id - SCAN_F1;
-	id -= SCAN_1;
+	if (mboot.mbr_bootsel.mbrbs_flags & MBR_BS_ASCII) {
+		/* Keycode is ascii */
+		if (id == '\r')
+		    return DEFAULT_ACTIVE;
+		/* '1'+ => allocated partition id, 'a'+ => disk 0+ */
+		if (id >= 'a' && id < 'a' + MAX_BIOS_DISKS)
+			return DEFAULT_DISK(id - 'a');
+		id -= '1';
+	} else {
+		/* keycode is PS/2 keycode */
+		if (id == SCAN_ENTER)
+			return DEFAULT_ACTIVE;
+		/* 1+ => allocated partition id, F1+ => disk 0+ */
+		if (id >= SCAN_F1 && id < SCAN_F1 + MAX_BIOS_DISKS)
+			return DEFAULT_DISK(id - SCAN_F1);
+		id -= SCAN_1;
+	}
+
+	/* Convert partition index to the invariant start sector number */
 
 	for (p = 0; p < MBR_PART_COUNT; p++) {
 		if (mboot.mbr_parts[p].mbrp_type == 0)
@@ -1193,27 +1209,39 @@ void
 set_default_boot(daddr_t default_ptn)
 {
 	int p;
-	int key = SCAN_1;
+	static const unsigned char key_list[] = { SCAN_ENTER, SCAN_F1, SCAN_1,
+						'\r', 'a', '1' };
+	const unsigned char *key = key_list;
 
 	if (mboot.mbr_bootsel_magic != LE_MBR_BS_MAGIC)
 		/* sanity */
 		return;
 
+	if (mboot.mbr_bootsel.mbrbs_flags & MBR_BS_ASCII)
+		/* Use ascii values */
+		key += 3;
+
 	if (default_ptn == DEFAULT_ACTIVE) {
-		mboot.mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
+		mboot.mbr_bootsel.mbrbs_defkey = key[0];
 		return;
 	}
 
+	if (default_ptn >= DEFAULT_DISK(0)
+	    && default_ptn < DEFAULT_DISK(MAX_BIOS_DISKS)) {
+		mboot.mbr_bootsel.mbrbs_defkey = key[1]
+		    + default_ptn - DEFAULT_DISK(0);
+		return;
+	}
+
+	mboot.mbr_bootsel.mbrbs_defkey = key[2];
 	for (p = 0; p < MBR_PART_COUNT; p++) {
 		if (mboot.mbr_parts[p].mbrp_type == 0)
 			continue;
 		if (mboot.mbr_bootsel.mbrbs_nametab[p][0] == 0)
 			continue;
-		if (le32toh(mboot.mbr_parts[p].mbrp_start) == default_ptn) {
-			mboot.mbr_bootsel.mbrbs_defkey = key;
+		if (le32toh(mboot.mbr_parts[p].mbrp_start) == default_ptn)
 			return;
-		}
-		key++;
+		mboot.mbr_bootsel.mbrbs_defkey++;
 	}
 
 	if (mboot.mbr_bootsel.mbrbs_flags & MBR_BS_EXTLBA) {
@@ -1223,22 +1251,14 @@ set_default_boot(daddr_t default_ptn)
 			if (ext.ptn[p].mbr_bootsel.mbrbs_nametab[0][0] == 0)
 				continue;
 			if (le32toh(ext.ptn[p].mbr_parts[0].mbrp_start) +
-			    ext_offset(p) == default_ptn) {
-				mboot.mbr_bootsel.mbrbs_defkey = key;
+			    ext_offset(p) == default_ptn)
 				return;
-			}
-			key++;
+			mboot.mbr_bootsel.mbrbs_defkey++;
 		}
 	}
 
-	if (default_ptn < 8) {
-		key = SCAN_F1;
-		mboot.mbr_bootsel.mbrbs_defkey = key + default_ptn;
-		return;
-	}
-
 	/* Default to first active partition */
-	mboot.mbr_bootsel.mbrbs_defkey = SCAN_ENTER;
+	mboot.mbr_bootsel.mbrbs_defkey = key[0];
 }
 
 void
@@ -1357,11 +1377,11 @@ configure_bootsel(daddr_t default_ptn)
 #if (defined(__i386__) || defined(__x86_64__)) && !HAVE_NBTOOL_CONFIG_H
 	if (dl != NULL) {
 		num_bios_disks = dl->dl_nbiosdisks;
-		if (num_bios_disks > 8)
-			num_bios_disks = 8;
+		if (num_bios_disks > MAX_BIOS_DISKS)
+			num_bios_disks = MAX_BIOS_DISKS;
 	} else
 #endif
-		num_bios_disks = 8;
+		num_bios_disks = MAX_BIOS_DISKS;
 
 	printf("\nBoot selector configuration:\n");
 
@@ -1411,8 +1431,8 @@ configure_bootsel(daddr_t default_ptn)
 	}
 	for (i = 0; i < num_bios_disks; i++) {
 		printf("%d: Harddisk %d\n", ++opt, i);
-		off[opt] = i;
-		if (i == default_ptn)
+		off[opt] = DEFAULT_DISK(i);
+		if (DEFAULT_DISK(i) == default_ptn)
 			item = opt;
 	}
 
@@ -2440,17 +2460,24 @@ validate_bootsel(struct mbr_bootsel *mbs)
 	/*
 	 * Check default key is sane
 	 * - this is the most likely field to be stuffed
-	 * 12 disks and 12 bootable partitions seems enough!
+	 * 16 disks and 16 bootable partitions seems enough!
 	 * (the keymap decode starts falling apart at that point)
 	 */
-	if (key != 0 && !(key == SCAN_ENTER
-	    || (key >= SCAN_1 && key < SCAN_1 + 12)
-	    || (key >= SCAN_F1 && key < SCAN_F1 + 12)))
-		return 1;
+	if (mbs->mbrbs_flags & MBR_BS_ASCII) {
+		if (key != 0 && !(key == '\r'
+		    || (key >= '1' && key < '1' + MAX_BIOS_DISKS)
+		    || (key >= 'a' && key < 'a' + MAX_BIOS_DISKS)))
+			return 1;
+	} else {
+		if (key != 0 && !(key == SCAN_ENTER
+		    || (key >= SCAN_1 && key < SCAN_1 + MAX_BIOS_DISKS)
+		    || (key >= SCAN_F1 && key < SCAN_F1 + MAX_BIOS_DISKS)))
+			return 1;
+	}
 
 	/* Checking the flags will lead to breakage... */
 
-	/* Timeout value is expecyed to be a multiple of a second */
+	/* Timeout value is expected to be a multiple of a second */
 	tmo = htole16(mbs->mbrbs_timeo);
 	if (tmo != 0 && tmo != 0xffff && tmo != (10 * tmo + 9) / 182 * 182 / 10)
 		return 2;
