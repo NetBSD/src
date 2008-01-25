@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.41 2008/01/08 20:56:08 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.42 2008/01/25 01:09:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.41 2008/01/08 20:56:08 christos Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.42 2008/01/25 01:09:18 ad Exp $");
 
 #include <sys/types.h>
 
@@ -243,16 +243,6 @@ pthread_mutex_lock_slow(pthread_t self, pthread_mutex_t *mutex)
 				mp->recursecount++;
 				return 0;
 			}
-		}
-
-		if (pthread__started == 0) {
-			/* The spec says we must deadlock, so... */
-			pthread__assert(mp->type == PTHREAD_MUTEX_NORMAL);
-			(void) sigprocmask(SIG_SETMASK, NULL, &ss);
-			for (;;) {
-				sigsuspend(&ss);
-			}
-			/*NOTREACHED*/
 		}
 
 		/*
