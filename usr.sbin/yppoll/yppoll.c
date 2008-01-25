@@ -1,4 +1,4 @@
-/*	$NetBSD: yppoll.c,v 1.13 2003/12/10 17:10:34 jdolecek Exp $	*/
+/*	$NetBSD: yppoll.c,v 1.14 2008/01/25 19:58:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppoll.c,v 1.13 2003/12/10 17:10:34 jdolecek Exp $");
+__RCSID("$NetBSD: yppoll.c,v 1.14 2008/01/25 19:58:54 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -78,25 +78,28 @@ __RCSID("$NetBSD: yppoll.c,v 1.13 2003/12/10 17:10:34 jdolecek Exp $");
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
 
-int	main __P((int, char *[]));
-int	get_remote_info __P((char *, char *, char *, int *, char **));
-void	usage __P((void));
+static CLIENT *mkclient(struct sockaddr_in *, unsigned long, unsigned long,
+    int);
+static int get_remote_info(const char *, const char *, const char *, int *,
+    char **, int);
+static void usage(void) __attribute__((__noreturn__));
 
 int
-main(argc, argv)
-	int  argc;
-	char **argv;
+main(int  argc, char *argv[])
 {
 	char *domainname;
 	char *hostname = NULL;
 	char *inmap, *master;
 	int order;
-	int c, r;
+	int c, r, tcp = 0;
 
-	yp_get_default_domain(&domainname);
+	(void)yp_get_default_domain(&domainname);
 
-	while ((c = getopt(argc, argv, "h:d:")) != -1) {
+	while ((c = getopt(argc, argv, "Th:d:")) != -1) {
 		switch (c) {
+		case 'T':
+			tcp = 1;
+			break;
 		case 'd':
 			domainname = optarg;
 			break;
@@ -124,7 +127,7 @@ main(argc, argv)
 
 	if (hostname != NULL)
 		r = get_remote_info(domainname, inmap, hostname,
-		    &order, &master);
+		    &order, &master, tcp);
 	else {
 		r = yp_order(domainname, inmap, &order);
 		if (r == 0)
@@ -135,19 +138,28 @@ main(argc, argv)
 		errx(1, "no such map %s. Reason: %s",
 		    inmap, yperr_string(r));
 
-	printf("Map %s has order number %d. %s", inmap, order,
+	(void)printf("Map %s has order number %d. %s", inmap, order,
 	    ctime((void *)&order));
-	printf("The master server is %s.\n", master);
-	exit(0);
+	(void)printf("The master server is %s.\n", master);
+	return 0;
 }
 
-int
-get_remote_info(indomain, inmap, server, outorder, outname)
-	char *indomain;
-	char *inmap;
-	char *server;
-	int *outorder;
-	char **outname;
+static CLIENT *
+mkclient(struct sockaddr_in *sin, unsigned long prog, unsigned long vers,
+    int tcp)
+{
+	static struct timeval tv = { 10, 0 };
+	int fd = RPC_ANYSOCK;
+
+	if (tcp)
+		return clnttcp_create(sin, prog, vers, &fd, 0, 0);
+	else
+		return clntudp_create(sin, prog, vers, tv, &fd);
+}
+
+static int
+get_remote_info(const char *indomain, const char *inmap, const char *server,
+    int *outorder, char **outname, int tcp)
 {
 	struct ypresp_order ypro;
 	struct ypresp_master yprm;
@@ -155,64 +167,65 @@ get_remote_info(indomain, inmap, server, outorder, outname)
 	struct timeval tv;
 	int r;
 	struct sockaddr_in rsrv_sin;
-	int rsrv_sock;
 	CLIENT *client;
 	struct hostent *h;
 
-	memset(&rsrv_sin, 0, sizeof(rsrv_sin));
+	(void)memset(&rsrv_sin, 0, sizeof(rsrv_sin));
 	rsrv_sin.sin_len = sizeof rsrv_sin;
 	rsrv_sin.sin_family = AF_INET;
-	rsrv_sock = RPC_ANYSOCK;
 
 	h = gethostbyname(server);
 	if (h == NULL) {
 		if (inet_aton(server, &rsrv_sin.sin_addr) == 0)
 			errx(1, "unknown host %s", server);
 	} else
-		memcpy(&rsrv_sin.sin_addr.s_addr, h->h_addr, h->h_length);
+		(void)memcpy(&rsrv_sin.sin_addr.s_addr, h->h_addr,
+		    (size_t)h->h_length);
 
-	tv.tv_sec = 10;
-	tv.tv_usec = 0;
-
-	client = clntudp_create(&rsrv_sin, YPPROG, YPVERS, tv, &rsrv_sock);
+	client = mkclient(&rsrv_sin, YPPROG, YPVERS, tcp);
 	if (client == NULL)
-		errx(1, "clntudp_create: no contact with host %s.", server);
+		errx(1, "clnt%s_create: no contact with host %s.",
+		    tcp ? "tcp" : "udp", server);
 	
 	yprnk.domain = indomain;
 	yprnk.map = inmap;
 
-	memset(&ypro, 0, sizeof(ypro));
+	(void)memset(&ypro, 0, sizeof(ypro));
 
-	r = clnt_call(client, YPPROC_ORDER, xdr_ypreq_nokey, &yprnk,
-	    xdr_ypresp_order, &ypro, tv);
+	tv.tv_sec = 10;
+	tv.tv_usec = 0;
+
+	r = clnt_call(client, (unsigned int)YPPROC_ORDER, xdr_ypreq_nokey,
+	    &yprnk, xdr_ypresp_order, &ypro, tv);
 	if (r != RPC_SUCCESS)
 		clnt_perror(client, "yp_order: clnt_call");
 
 	*outorder = ypro.ordernum;
-	xdr_free(xdr_ypresp_order, (char *)&ypro);
+	xdr_free(xdr_ypresp_order, (void *)&ypro);
 
 	r = ypprot_err(ypro.status);
 	if (r == RPC_SUCCESS) {
-		memset(&yprm, 0, sizeof(yprm));
+		(void)memset(&yprm, 0, sizeof(yprm));
 
-		r = clnt_call(client, YPPROC_MASTER, xdr_ypreq_nokey,
-		    &yprnk, xdr_ypresp_master, &yprm, tv);
+		r = clnt_call(client, (unsigned int)YPPROC_MASTER,
+		    xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
 		if (r != RPC_SUCCESS)
 			clnt_perror(client, "yp_master: clnt_call");
 		r = ypprot_err(yprm.status);
 		if (r == 0)
 			*outname = (char *)strdup(yprm.master);
-		xdr_free(xdr_ypresp_master, (char *)&yprm);
+		xdr_free(xdr_ypresp_master, (void *)&yprm);
 	}
 	clnt_destroy(client);
 	return r;
 }
 
-void
-usage()
+static void
+usage(void)
 {
 
-	fprintf(stderr, "usage: %s [-h host] [-d domainname] mapname\n",
+	(void)fprintf(stderr,
+	    "Usage: %s [-T] [-h host] [-d domainname] mapname\n",
 	    getprogname());
 	exit(1);
 }
