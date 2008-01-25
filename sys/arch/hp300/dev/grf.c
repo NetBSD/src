@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.62 2007/12/31 13:38:48 ad Exp $	*/
+/*	$NetBSD: grf.c,v 1.63 2008/01/25 20:21:44 oster Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.62 2007/12/31 13:38:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.63 2008/01/25 20:21:44 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -358,7 +358,6 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 	struct grf_data *gp = sc->sc_data;
 	int len, error;
 	struct vnode vn;
-	struct specinfo si;
 	int flags;
 
 #ifdef DEBUG
@@ -373,7 +372,6 @@ grfmap(dev_t dev, void **addrp, struct proc *p)
 		*addrp = (void *)
 		    VM_DEFAULT_ADDRESS(p->p_vmspace->vm_daddr, len);
 	vn.v_type = VCHR;			/* XXX */
-	vn.v_specinfo = &si;			/* XXX */
 	vn.v_rdev = dev;			/* XXX */
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			 (vsize_t)len, VM_PROT_READ|VM_PROT_WRITE,
