@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.26 2008/01/16 10:10:18 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.27 2008/01/25 14:32:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.26 2008/01/16 10:10:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.27 2008/01/25 14:32:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ int union_getattr(void *);
 int union_setattr(void *);
 int union_read(void *);
 int union_write(void *);
-int union_lease(void *);
 int union_ioctl(void *);
 int union_poll(void *);
 int union_revoke(void *);
@@ -155,7 +154,6 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_setattr_desc, union_setattr },		/* setattr */
 	{ &vop_read_desc, union_read },			/* read */
 	{ &vop_write_desc, union_write },		/* write */
-	{ &vop_lease_desc, union_lease },		/* lease */
 	{ &vop_ioctl_desc, union_ioctl },		/* ioctl */
 	{ &vop_poll_desc, union_poll },			/* select */
 	{ &vop_revoke_desc, union_revoke },		/* revoke */
@@ -1030,21 +1028,6 @@ union_write(v)
 	}
 
 	return (error);
-}
-
-int
-union_lease(v)
-	void *v;
-{
-	struct vop_lease_args /* {
-		struct vnode *a_vp;
-		kauth_cred_t a_cred;
-		int a_flag;
-	} */ *ap = v;
-	struct vnode *ovp = OTHERVP(ap->a_vp);
-
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_lease), ap));
 }
 
 int
