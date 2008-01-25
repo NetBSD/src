@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.93 2008/01/04 03:56:47 smb Exp $	*/
+/*	$NetBSD: uhub.c,v 1.94 2008/01/25 00:29:12 jmcneill Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.93 2008/01/04 03:56:47 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.94 2008/01/25 00:29:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,9 +350,11 @@ USB_ATTACH(uhub)
 			       USBDEVNAME(sc->sc_dev), port,
 			       usbd_errstr(err));
 		DPRINTF(("usb_init_port: turn on port %d power\n", port));
-		/* Wait for stable power. */
-		usbd_delay_ms(dev, pwrdly);
 	}
+
+	/* Wait for stable power if we are not a root hub */
+	if (dev->powersrc->parent != NULL)
+		usbd_delay_ms(dev, pwrdly);
 
 	/* The usual exploration will finish the setup. */
 
