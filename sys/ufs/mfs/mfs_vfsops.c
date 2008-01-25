@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.86 2008/01/24 17:32:57 ad Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.87 2008/01/25 10:30:20 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.86 2008/01/24 17:32:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.87 2008/01/25 10:30:20 pooka Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.86 2008/01/24 17:32:57 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 
+#include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
 #include <ufs/ufs/quota.h>
@@ -313,6 +314,7 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		return (error);
 	devvp->v_type = VBLK;
+	spec_node_init(devvp, makedev(255, mfs_minor));
 	mfs_minor++;
 	mfsp = (struct mfsnode *)malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
 	devvp->v_data = mfsp;
