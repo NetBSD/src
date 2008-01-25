@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.S,v 1.12 2007/12/20 23:46:10 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,7 +44,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.12 2007/12/20 23:46:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.13 2008/01/25 19:02:32 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -170,6 +170,44 @@ ENTRY(rw_exit)
 	 * Slow path.
 	 */
 3:	jmp	_C_LABEL(rw_vector_exit)
+
+/*
+ * int rw_tryenter(krwlock_t *rwl, krw_t op);
+ *
+ * Try to acquire one hold on a RW lock.
+ */
+ENTRY(rw_tryenter)
+	movl	4(%esp), %edx
+	cmpl	$RW_READER, 8(%esp)
+	jne	2f
+
+	/*
+	 * Reader
+	 */
+1:	movl	RW_OWNER(%edx), %eax
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+	leal	RW_READ_INCR(%eax), %ecx
+	jnz	3f
+	LOCK(12)
+	cmpxchgl %ecx, RW_OWNER(%edx)
+	movl	$0, %eax
+	setz	%al
+	ret
+
+	/*
+	 * Writer
+	 */
+2:	movl	CPUVAR(CURLWP), %ecx
+	xorl	%eax, %eax
+	orl	$RW_WRITE_LOCKED, %ecx
+	LOCK(13)
+	cmpxchgl %ecx, RW_OWNER(%edx)
+	movl	$0, %eax
+	setz	%al
+	ret
+
+3:	xorl	%eax, %eax
+	ret
 
 #ifndef __XEN__
 
@@ -313,7 +351,8 @@ NENTRY(__cpu_simple_lock_try)
 #ifndef LOCKDEBUG
 LABEL(x86_lockpatch)
 	.long	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
-	.long	.Lpatch5, .Lpatch6, .Lpatch7
+	.long	.Lpatch5, .Lpatch6, .Lpatch7, .Lpatch12
+	.long	.Lpatch13
 #if defined(FULL) && !defined(__XEN__)
 	.long	.Lpatch11
 #endif
