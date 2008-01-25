@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.114 2008/01/25 14:32:16 ad Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.115 2008/01/25 16:21:04 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.114 2008/01/25 14:32:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.115 2008/01/25 16:21:04 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -455,6 +455,9 @@ spec_open(void *v)
 	} else if (error != 0) {
 		sd->sd_opencnt--;
 		sn->sn_opencnt--;
+		if (vp->v_type == VBLK)
+			sd->sd_bdevvp = NULL;
+
 	}
 	mutex_exit(&specfs_lock);
 
