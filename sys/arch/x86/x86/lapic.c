@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.31 2008/01/23 20:02:16 joerg Exp $ */
+/* $NetBSD: lapic.c,v 1.32 2008/01/25 18:50:22 joerg Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.31 2008/01/23 20:02:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.32 2008/01/25 18:50:22 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -419,9 +419,9 @@ extern void (*initclock_func)(void); /* XXX put in header file */
 void
 lapic_calibrate_timer(struct cpu_info *ci)
 {
-	unsigned int starttick, tick1, tick2, endtick;
-	unsigned int startapic, apic1, apic2, endapic;
-	uint64_t dtick, dapic, tmp;
+	unsigned int seen, delta, initial_i8254, initial_lapic;
+	unsigned int cur_i8254, cur_lapic;
+	uint64_t tmp;
 	int i;
 	char tbuf[9];
 
@@ -435,37 +435,27 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	i82489_writereg (LAPIC_ICR_TIMER, 0x80000000);
 
-	starttick = gettick();
-	startapic = lapic_gettick();
+	x86_disable_intr();
 
-	for (i=0; i<hz; i++) {
-		i8254_delay(2);
-		do {
-			tick1 = gettick();
-			apic1 = lapic_gettick();
-		} while (tick1 < starttick);
-		i8254_delay(2);
-		do {
-			tick2 = gettick();
-			apic2 = lapic_gettick();
-		} while (tick2 > starttick);
+	initial_lapic = lapic_gettick();
+	initial_i8254 = gettick();
+
+	for (seen = 0; seen < TIMER_FREQ / 100; seen += delta) {
+		cur_i8254 = gettick();
+		if (cur_i8254 > initial_i8254)
+			delta = rtclock_tval - (cur_i8254 - initial_i8254);
+		else
+			delta = initial_i8254 - cur_i8254;
+		initial_i8254 = cur_i8254;
 	}
+	cur_lapic = lapic_gettick();
 
-	endtick = gettick();
-	endapic = lapic_gettick();
+	x86_enable_intr();
 
-	dtick = hz * rtclock_tval + (starttick-endtick);
-	dapic = startapic-endapic;
+	tmp = initial_lapic - cur_lapic;
+	lapic_per_second = (tmp * TIMER_FREQ + seen / 2) / seen;
 
-	/*
-	 * there are TIMER_FREQ ticks per second.
-	 * in dtick ticks, there are dapic bus clocks.
-	 */
-	tmp = (TIMER_FREQ * dapic) / dtick;
-
-	lapic_per_second = tmp;
-
-	humanize_number(tbuf, sizeof(tbuf), tmp, "Hz", 1000);
+	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
 
 	aprint_verbose("%s: apic clock running at %s\n",
 	    ci->ci_dev->dv_xname, tbuf);
