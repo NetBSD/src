@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.10 2007/12/04 15:42:05 spz Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.11 2008/01/25 21:41:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.10 2007/12/04 15:42:05 spz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.11 2008/01/25 21:41:48 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -233,6 +233,9 @@ ahci_attach(struct ahci_softc *sc)
 		break;
 	case AHCI_VS_11:
 		aprint_normal("1.1");
+		break;
+	case AHCI_VS_12:
+		aprint_normal("1.2");
 		break;
 	default:
 		aprint_normal("0x%x", ahci_rev);
