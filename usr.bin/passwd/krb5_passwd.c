@@ -1,4 +1,4 @@
-/* $NetBSD: krb5_passwd.c,v 1.13 2005/02/26 07:19:25 thorpej Exp $ */
+/* $NetBSD: krb5_passwd.c,v 1.14 2008/01/25 19:36:27 christos Exp $ */
 
 /*
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ pwkrb5_process(const char *username, int argc, char **argv)
 
 	krb5_get_init_creds_opt_init(&opt);
     
-	krb5_get_init_creds_opt_set_tkt_life(&opt, 300);
+	krb5_get_init_creds_opt_set_tkt_life(&opt, 300L);
 	krb5_get_init_creds_opt_set_forwardable(&opt, FALSE);
 	krb5_get_init_creds_opt_set_proxiable(&opt, FALSE);
 
@@ -156,7 +156,7 @@ pwkrb5_process(const char *username, int argc, char **argv)
 					   NULL,
 					   krb5_prompter_posix,
 					   NULL,
-					   0,
+					   0L,
 					   "kadmin/changepw",
 					   &opt);
 
@@ -173,7 +173,6 @@ pwkrb5_process(const char *username, int argc, char **argv)
 	case KRB5KRB_AP_ERR_MODIFIED :
 		fprintf(stderr, "Password incorrect\n");
 		goto bad;
-		break;
 
 	default:
 		warnx("failed to get credentials: %s", 
