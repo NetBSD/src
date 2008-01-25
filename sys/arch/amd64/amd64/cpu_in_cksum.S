@@ -1,4 +1,4 @@
-/* $NetBSD: in_cksum.S,v 1.2 2008/01/23 13:05:42 joerg Exp $ */
+/* $NetBSD: cpu_in_cksum.S,v 1.1 2008/01/25 21:12:10 joerg Exp $ */
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -32,7 +32,7 @@
 #include <machine/asm.h>
 #include "assym.h"
 
-ENTRY(in_cksum)
+ENTRY(cpu_in_cksum)
 	pushq	%rbp
 	pushq	%rbx
 
@@ -52,8 +52,31 @@ ENTRY(in_cksum)
 	 * %dl:  Current mbuf started at odd position. A word was split.
 	 */
 
+	movl	%ecx, %eax
+	movl	%edx, %ecx
+	movq	%rax, %r8
 	xorl	%edx,%edx
-	xorq	%r8, %r8
+
+	/* All requested bytes checksummed? */
+	testl	%esi, %esi
+	jz	.Mdone
+
+.Mmbuf_preloop:
+	/* No more data to process? */
+	testq	%rdi, %rdi
+	jz	.Mout_of_mbufs
+	movl	M_LEN(%rdi), %ebp
+	cmpl	%ebp, %ecx
+	jbe	1f
+	subl	%ebp, %ecx
+	movq	M_NEXT(%rdi), %rdi
+	jmp	.Mmbuf_preloop
+1:
+	subl	%ecx, %ebp
+	movq	M_DATA(%rdi), %rbx
+	movl	%ecx, %eax
+	addq	%rax, %rbx 
+	jmp	.Mmbuf_load_data
 
 .Mmbuf_loop:
 	/* All requested bytes checksummed? */
@@ -66,6 +89,7 @@ ENTRY(in_cksum)
 
 	movl	M_LEN(%rdi), %ebp
 	movq	M_DATA(%rdi), %rbx
+.Mmbuf_load_data:
 
 	/* Skip empty mbufs. */
 	testl	%ebp, %ebp
@@ -176,8 +200,8 @@ ENTRY(in_cksum)
 	 * No more overflow checks needed here.
 	 */
 .Mmbuf_trailing_owords:
-	cmpl	$16, %ebp
-	jb	.Mmbuf_trailing_qwords
+	testw	$16, %bp
+	jz	.Mmbuf_trailing_qwords
 	movl	0(%rbx), %ecx
 	movl	4(%rbx), %eax
 	addq	%rcx, %r9
@@ -189,38 +213,34 @@ ENTRY(in_cksum)
 	addq	%rax, %r10
 
 	leaq	16(%rbx), %rbx
-	leal	-16(%ebp), %ebp
 
 .Mmbuf_trailing_qwords:
-	cmpl	$8, %ebp
-	jb	.Mmbuf_trailing_dwords
+	testw	$8, %bp
+	jz	.Mmbuf_trailing_dwords
 	movl	0(%rbx), %ecx
 	movl	4(%rbx), %eax
 	addq	%rcx, %r9
 	addq	%rax, %r10
 
 	leaq	8(%rbx), %rbx
-	leal	-8(%ebp), %ebp
 
 .Mmbuf_trailing_dwords:
-	cmpl	$4, %ebp
-	jb	.Mmbuf_trailing_words
+	testw	$4, %bp
+	jz	.Mmbuf_trailing_words
 	movl	(%rbx), %ecx
 	addq	%rcx, %r9
 	leaq	4(%rbx), %rbx
-	leal	-4(%ebp), %ebp
 
 .Mmbuf_trailing_words:
-	cmpl	$2, %ebp
-	jb	.Mmbuf_trailing_bytes
+	testw	$2, %bp
+	jz	.Mmbuf_trailing_bytes
 	movzwl	(%rbx), %ecx
 	addq	%rcx, %r9
 	leaq	2(%rbx), %rbx
-	leal	-2(%ebp), %ebp
 
 .Mmbuf_trailing_bytes:
-	cmpl	$1, %ebp
-	jne	.Mbyte_swap
+	testw	$1, %bp
+	jz	.Mbyte_swap
 	movzbl	(%rbx), %ecx
 	addq	%rcx, %r9
 	/* Invert %dl as this is a split in a word. */

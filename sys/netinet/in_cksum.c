@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.21 2008/01/09 17:13:52 joerg Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.22 2008/01/25 21:12:15 joerg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -32,130 +32,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.21 2008/01/09 17:13:52 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.22 2008/01/25 21:12:15 joerg Exp $");
 
 #include <sys/param.h>
-#include <sys/mbuf.h>
-#ifdef _KERNEL
-#include <sys/systm.h>
-#else
-#include <stdio.h>
-#endif
 #include <netinet/in.h>
-
-/*
- * Checksum routine for Internet Protocol family headers (Portable Version).
- *
- * This routine is very heavily used in the network
- * code and should be modified for each CPU to be as fast as possible.
- *
- * A discussion of different implementation techniques can be found in
- * RFC 1071.
- */
-
-#define ADDCARRY(x)  (x > 65535 ? x -= 65535 : x)
-#define REDUCE {l_util.l = sum; sum = l_util.s[0] + l_util.s[1]; ADDCARRY(sum);}
-
-#ifndef _KERNEL
-int	in_cksum(struct mbuf*, int);
-#endif
 
 int
 in_cksum(struct mbuf *m, int len)
 {
-	u_int16_t *w;
-	int sum = 0;
-	int mlen = 0;
-	int byte_swapped = 0;
+	KASSERT(len >= 0);
 
-	union {
-		u_int8_t  c[2];
-		u_int16_t s;
-	} s_util;
-	union {
-		u_int16_t s[2];
-		u_int32_t l;
-	} l_util;
-
-	for (;m && len; m = m->m_next) {
-		if (m->m_len == 0)
-			continue;
-		w = mtod(m, u_int16_t *);
-		if (mlen == -1) {
-			/*
-			 * The first byte of this mbuf is the continuation
-			 * of a word spanning between this mbuf and the
-			 * last mbuf.
-			 *
-			 * s_util.c[0] is already saved when scanning previous
-			 * mbuf.
-			 */
-			s_util.c[1] = *(u_int8_t *)w;
-			sum += s_util.s;
-			w = (u_int16_t *)((u_int8_t *)w + 1);
-			mlen = m->m_len - 1;
-			len--;
-		} else
-			mlen = m->m_len;
-		if (len < mlen)
-			mlen = len;
-		len -= mlen;
-		/*
-		 * Force to even boundary.
-		 */
-		if ((1 & (long) w) && (mlen > 0)) {
-			REDUCE;
-			sum <<= 8;
-			s_util.c[0] = *(u_int8_t *)w;
-			w = (u_int16_t *)((int8_t *)w + 1);
-			mlen--;
-			byte_swapped = 1;
-		}
-		/*
-		 * Unroll the loop to make overhead from
-		 * branches &c small.
-		 */
-		while ((mlen -= 32) >= 0) {
-			sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
-			sum += w[4]; sum += w[5]; sum += w[6]; sum += w[7];
-			sum += w[8]; sum += w[9]; sum += w[10]; sum += w[11];
-			sum += w[12]; sum += w[13]; sum += w[14]; sum += w[15];
-			w += 16;
-		}
-		mlen += 32;
-		while ((mlen -= 8) >= 0) {
-			sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
-			w += 4;
-		}
-		mlen += 8;
-		if (mlen == 0 && byte_swapped == 0)
-			continue;
-		REDUCE;
-		while ((mlen -= 2) >= 0) {
-			sum += *w++;
-		}
-		if (byte_swapped) {
-			REDUCE;
-			sum <<= 8;
-			byte_swapped = 0;
-			if (mlen == -1) {
-				s_util.c[1] = *(u_int8_t *)w;
-				sum += s_util.s;
-				mlen = 0;
-			} else
-				mlen = -1;
-		} else if (mlen == -1)
-			s_util.c[0] = *(u_int8_t *)w;
-	}
-	if (len)
-		printf("cksum: out of data\n");
-	if (mlen == -1) {
-		/* The last mbuf has odd # of bytes. Follow the
-		   standard (the odd byte may be shifted left by 8 bits
-		   or not as determined by endian-ness of the machine) */
-		s_util.c[1] = 0;
-		sum += s_util.s;
-	}
-	REDUCE;
-	return (~sum & 0xffff);
+	return cpu_in_cksum(m, len, 0, 0);
 }

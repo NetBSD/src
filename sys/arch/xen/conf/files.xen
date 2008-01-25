@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.79 2008/01/16 09:37:08 ad Exp $
+#	$NetBSD: files.xen,v 1.80 2008/01/25 21:12:13 joerg Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -35,6 +35,7 @@ file	arch/xen/x86/autoconf.c
 ifdef i386
 file	arch/i386/i386/busfunc.S
 file	arch/i386/i386/cpufunc.S
+file	arch/i386/i386/cpu_in_cksum.S   (inet | inet6) & cpu_in_cksum
 file	arch/i386/i386/db_dbgreg.S	ddb | kstack_check_dr0
 file	arch/i386/i386/db_disasm.c	ddb
 file	arch/i386/i386/db_interface.c	ddb
@@ -42,7 +43,6 @@ file	arch/i386/i386/db_memrw.c	ddb | kgdb
 file	arch/i386/i386/db_trace.c	ddb
 file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
-file	arch/i386/i386/in_cksum.S	inet | inet6
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/machdep.c
@@ -71,6 +71,7 @@ file	crypto/blowfish/arch/i386/bf_cbc.S	blowfish
 elifdef amd64
 file	arch/amd64/amd64/busfunc.S		dom0ops
 file	arch/amd64/amd64/cpufunc.S
+file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	 ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
@@ -91,11 +92,6 @@ file	arch/amd64/amd64/fpu.c
 file	arch/amd64/amd64/lock_stubs.S
 file	arch/amd64/amd64/mptramp.S		multiprocessor
 file	arch/amd64/amd64/ipifuncs.c		multiprocessor
-#
-# XXXfvdl write the optimized versions for these.
-#
-file	netinet/in_cksum.c			inet
-file	netinet/in4_cksum.c			inet
 endif
 
 file	kern/subr_disk_mbr.c		disk
