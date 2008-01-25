@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.161 2008/01/17 17:28:55 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.162 2008/01/25 15:34:59 riz Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.161 2008/01/17 17:28:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.162 2008/01/25 15:34:59 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -303,16 +303,6 @@ genfs_nounlock(void *v)
 
 int
 genfs_noislocked(void *v)
-{
-
-	return (0);
-}
-
-/*
- * Local lease check.
- */
-int
-genfs_lease_check(void *v)
 {
 
 	return (0);
