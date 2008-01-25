@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.17 2007/12/11 12:16:34 lukem Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.18 2008/01/25 10:49:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.17 2007/12/11 12:16:34 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.18 2008/01/25 10:49:32 pooka Exp $");
 
 #include "opt_ffs.h"
 
@@ -198,6 +198,7 @@ ufs_extattr_uepm_destroy(struct ufs_extattr_per_mount *uepm)
 	 */
 	uepm->uepm_flags &= ~UFS_EXTATTR_UEPM_INITIALIZED;
 	lockmgr(&uepm->uepm_lock, LK_DRAIN, NULL);
+	lockdestroy(&uepm->uepm_lock);
 }
 
 /*
@@ -528,12 +529,11 @@ ufs_extattr_autostart(struct mount *mp, struct lwp *l)
 /*
  * Stop extended attribute support on an FS.
  */
-int
+void
 ufs_extattr_stop(struct mount *mp, struct lwp *l)
 {
 	struct ufs_extattr_list_entry *uele;
 	struct ufsmount *ump = VFSTOUFS(mp);
-	int error = 0;
 
 	ufs_extattr_uepm_lock(ump);
 
@@ -542,7 +542,6 @@ ufs_extattr_stop(struct mount *mp, struct lwp *l)
 	 * the processing work.
 	 */
 	if (!(ump->um_extattr.uepm_flags & UFS_EXTATTR_UEPM_STARTED)) {
-		error = EOPNOTSUPP;
 		goto unlock;
 	}
 
@@ -559,8 +558,6 @@ ufs_extattr_stop(struct mount *mp, struct lwp *l)
 
  unlock:
 	ufs_extattr_uepm_unlock(ump);
-
-	return (error);
 }
 
 /*
@@ -738,8 +735,8 @@ ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename_vp,
 		if (attrname != NULL)
 			return (EINVAL);
 
-		error = ufs_extattr_stop(mp, l);
-		return (error);
+		ufs_extattr_stop(mp, l);
+		return (0);
 
 	case UFS_EXTATTR_CMD_ENABLE:
 		if (filename_vp == NULL)

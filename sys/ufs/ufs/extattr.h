@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.6 2007/11/26 19:02:33 pooka Exp $	*/
+/*	$NetBSD: extattr.h,v 1.7 2008/01/25 10:49:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -106,7 +106,7 @@ void	ufs_extattr_uepm_init(struct ufs_extattr_per_mount *uepm);
 void	ufs_extattr_uepm_destroy(struct ufs_extattr_per_mount *uepm);
 int	ufs_extattr_start(struct mount *mp, struct lwp *l);
 int	ufs_extattr_autostart(struct mount *mp, struct lwp *l);
-int	ufs_extattr_stop(struct mount *mp, struct lwp *l);
+void	ufs_extattr_stop(struct mount *mp, struct lwp *l);
 int	ufs_extattrctl(struct mount *mp, int cmd, struct vnode *filename,
 	    int attrnamespace, const char *attrname);
 int	ufs_getextattr(struct vop_getextattr_args *ap);
