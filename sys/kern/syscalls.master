@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.185 2008/01/16 12:34:51 ad Exp $
+	$NetBSD: syscalls.master,v 1.186 2008/01/25 13:38:57 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -719,70 +719,70 @@
 			    int flags); }
 359	COMPAT_30 MPSAFE	{ int sys_fhstatvfs1(const struct compat_30_fhandle *fhp, \
 			    struct statvfs *buf, int flags); }
-360	STD		{ int sys_extattrctl(const char *path, int cmd, \
+360	STD MPSAFE	{ int sys_extattrctl(const char *path, int cmd, \
 			    const char *filename, int attrnamespace, \
 			    const char *attrname); }
-361	STD		{ int sys_extattr_set_file(const char *path, \
+361	STD MPSAFE	{ int sys_extattr_set_file(const char *path, \
 			    int attrnamespace, const char *attrname, \
 			    const void *data, size_t nbytes); }
-362	STD		{ ssize_t sys_extattr_get_file(const char *path, \
+362	STD MPSAFE	{ ssize_t sys_extattr_get_file(const char *path, \
 			    int attrnamespace, const char *attrname, \
 			    void *data, size_t nbytes); }
-363	STD		{ int sys_extattr_delete_file(const char *path, \
+363	STD MPSAFE	{ int sys_extattr_delete_file(const char *path, \
 			    int attrnamespace, const char *attrname); }
-364	STD		{ int sys_extattr_set_fd(int fd, \
+364	STD MPSAFE	{ int sys_extattr_set_fd(int fd, \
 			    int attrnamespace, const char *attrname, \
 			    const void *data, size_t nbytes); }
-365	STD		{ ssize_t sys_extattr_get_fd(int fd, \
+365	STD MPSAFE	{ ssize_t sys_extattr_get_fd(int fd, \
 			    int attrnamespace, const char *attrname, \
 			    void *data, size_t nbytes); }
-366	STD		{ int sys_extattr_delete_fd(int fd, \
+366	STD MPSAFE	{ int sys_extattr_delete_fd(int fd, \
 			    int attrnamespace, const char *attrname); }
-367	STD		{ int sys_extattr_set_link(const char *path, \
+367	STD MPSAFE	{ int sys_extattr_set_link(const char *path, \
 			    int attrnamespace, const char *attrname, \
 			    const void *data, size_t nbytes); }
-368	STD		{ ssize_t sys_extattr_get_link(const char *path, \
+368	STD MPSAFE	{ ssize_t sys_extattr_get_link(const char *path, \
 			    int attrnamespace, const char *attrname, \
 			    void *data, size_t nbytes); }
-369	STD		{ int sys_extattr_delete_link(const char *path, \
+369	STD MPSAFE	{ int sys_extattr_delete_link(const char *path, \
 			    int attrnamespace, const char *attrname); }
-370	STD		{ ssize_t sys_extattr_list_fd(int fd, \
+370	STD MPSAFE	{ ssize_t sys_extattr_list_fd(int fd, \
 			    int attrnamespace, void *data, size_t nbytes); }
-371	STD		{ ssize_t sys_extattr_list_file(const char *path, \
+371	STD MPSAFE	{ ssize_t sys_extattr_list_file(const char *path, \
 			    int attrnamespace, void *data, size_t nbytes); }
-372	STD		{ ssize_t sys_extattr_list_link(const char *path, \
+372	STD MPSAFE	{ ssize_t sys_extattr_list_link(const char *path, \
 			    int attrnamespace, void *data, size_t nbytes); }
 373	STD MPSAFE	{ int sys_pselect(int nd, fd_set *in, fd_set *ou, \
 			    fd_set *ex, const struct timespec *ts, \
 			    const sigset_t *mask); }
 374	STD MPSAFE	{ int sys_pollts(struct pollfd *fds, u_int nfds, \
 			    const struct timespec *ts, const sigset_t *mask); }
-375	STD		{ int sys_setxattr(const char *path, \
+375	STD MPSAFE	{ int sys_setxattr(const char *path, \
 			    const char *name, void *value, size_t size, \
 			    int flags); }
-376	STD		{ int sys_lsetxattr(const char *path, \
+376	STD MPSAFE	{ int sys_lsetxattr(const char *path, \
 			    const char *name, void *value, size_t size, \
 			    int flags); }
-377	STD		{ int sys_fsetxattr(int fd, \
+377	STD MPSAFE	{ int sys_fsetxattr(int fd, \
 			    const char *name, void *value, size_t size, \
 			    int flags); }
-378	STD		{ int sys_getxattr(const char *path, \
+378	STD MPSAFE	{ int sys_getxattr(const char *path, \
 			    const char *name, void *value, size_t size); }
-379	STD		{ int sys_lgetxattr(const char *path, \
+379	STD MPSAFE	{ int sys_lgetxattr(const char *path, \
 			    const char *name, void *value, size_t size); }
-380	STD		{ int sys_fgetxattr(int fd, \
+380	STD MPSAFE	{ int sys_fgetxattr(int fd, \
 			    const char *name, void *value, size_t size); }
-381	STD		{ int sys_listxattr(const char *path, \
+381	STD MPSAFE	{ int sys_listxattr(const char *path, \
 			    char *list, size_t size); }
-382	STD		{ int sys_llistxattr(const char *path, \
+382	STD MPSAFE	{ int sys_llistxattr(const char *path, \
 			    char *list, size_t size); }
-383	STD		{ int sys_flistxattr(int fd, \
+383	STD MPSAFE	{ int sys_flistxattr(int fd, \
 			    char *list, size_t size); }
-384	STD		{ int sys_removexattr(const char *path, \
+384	STD MPSAFE	{ int sys_removexattr(const char *path, \
 			    const char *name); }
-385	STD		{ int sys_lremovexattr(const char *path, \
+385	STD MPSAFE	{ int sys_lremovexattr(const char *path, \
 			    const char *name); }
-386	STD		{ int sys_fremovexattr(int fd, \
+386	STD MPSAFE	{ int sys_fremovexattr(int fd, \
 			    const char *name); }
 387	STD MPSAFE	{ int sys___stat30(const char *path, struct stat *ub); }
 388	STD MPSAFE	{ int sys___fstat30(int fd, struct stat *sb); }
