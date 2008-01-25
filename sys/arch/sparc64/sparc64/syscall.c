@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.23 2008/01/05 12:53:54 dsl Exp $ */
+/*	$NetBSD: syscall.c,v 1.24 2008/01/25 12:48:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.23 2008/01/05 12:53:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2008/01/25 12:48:05 skrll Exp $");
 
 #define NEW_FPSTATE
 
@@ -477,8 +477,7 @@ out:
  * Process the tail end of a fork() for the child.
  */
 void
-child_return(arg)
-	void *arg;
+child_return(void *arg)
 {
 	struct lwp *l = arg;
 
@@ -496,8 +495,7 @@ child_return(arg)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;
