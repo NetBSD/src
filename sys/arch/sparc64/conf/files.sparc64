@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.115 2008/01/06 18:04:02 ad Exp $
+#	$NetBSD: files.sparc64,v 1.116 2008/01/25 21:12:13 joerg Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -183,8 +183,6 @@ file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
 file	arch/sparc64/sparc64/clock.c
 file	arch/sparc64/sparc64/emul.c
-file	arch/sparc64/sparc64/in_cksum.S
-file	arch/sparc64/sparc64/in4_cksum.c	inet
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 file	arch/sparc64/sparc64/kobj_machdep.c	modular

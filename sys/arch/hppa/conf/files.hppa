@@ -1,4 +1,4 @@
-#	$NetBSD: files.hppa,v 1.9 2007/12/31 13:38:50 ad Exp $
+#	$NetBSD: files.hppa,v 1.10 2008/01/25 21:12:11 joerg Exp $
 #
 #	$OpenBSD: files.hppa,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -22,7 +22,6 @@ file	arch/hppa/hppa/process_machdep.c
 file	arch/hppa/hppa/sig_machdep.c
 file	arch/hppa/hppa/trap.c
 file	arch/hppa/hppa/vm_machdep.c
-file	arch/hppa/hppa/in_cksum.c		inet
 file	arch/hppa/hppa/procfs_machdep.c		procfs
 file	netinet/in4_cksum.c			inet
 
