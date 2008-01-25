@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.27 2008/01/19 08:08:20 tls Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.28 2008/01/25 07:09:56 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.27 2008/01/19 08:08:20 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.28 2008/01/25 07:09:56 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -695,6 +695,10 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 {
 	struct csession *cse;
 
+	/* Don't let the session ID wrap! */
+	if (fcr->sesn + 1 == 0)
+		return NULL;
+
 	MALLOC(cse, struct csession *, sizeof(struct csession),
 	    M_XDATA, M_NOWAIT);
 	if (cse == NULL)
@@ -708,8 +712,12 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 	cse->mac = mac;
 	cse->txform = txform;
 	cse->thash = thash;
-	cseadd(fcr, cse);
-	return (cse);
+	if (cseadd(fcr, cse))
+		return (cse);
+	else {
+		FREE(cse, M_XDATA);
+		return NULL;
+	}
 }
 
 static int
@@ -760,7 +768,11 @@ cryptoioctl(dev_t dev, u_long cmd, void *data, int flag,
 		MALLOC(fcr, struct fcrypt *,
 		    sizeof(struct fcrypt), M_XDATA, M_WAITOK);
 		TAILQ_INIT(&fcr->csessions);
-		fcr->sesn = 0;
+		/*
+	 	 * Don't ever return session 0 to allow detection of
+		 * failed creation attempts with multi-create ioctl.
+		 */
+		fcr->sesn = 1;
 
 		error = falloc(l, &f, &fd);
 		if (error) {
