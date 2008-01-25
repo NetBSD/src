@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.10 2006/09/23 20:38:51 elad Exp $
+.\"	$NetBSD: crypto.4,v 1.11 2008/01/25 07:09:56 tls Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Jonathan Stone <jonathan@dsg.stanford.edu>. All rights reserved.
@@ -127,18 +127,31 @@ yielding a new file descriptor which can be used to create
 crypto sessions and request crypto operations.
 .\"
 .It Dv CIOCGSESSION Fa struct session_op *sessp
-Persistently bind a file descriptor returned by a previous
+Create a new cryptographic session on a file descriptor returned by a
+previous
 .Dv CRIOGET
-to a session: that is, to the chosen privacy algorithm, integrity
-algorithm, and keys specified in
+to a session: that is, a persistent object specific to the chosen
+privacy algorithm, integrity algorithm, and keys specified in
 .Fa sessp .
 The special value 0 for either privacy or integrity
 is reserved to indicate that the indicated operation (privacy or integrity)
 is not desired for this session.
 .Pp
+Multiple sessions may be bound to a single file descriptor.  The session
+ID returned in
+.Fa sessp\*[Gt]ses
+is supplied as a required field in the symmetric-operation structure
+.Fa crypt_op
+for future encryption or hashing requests.
+.Pp
+This implementation will never return a session ID of 0 for a successful
+creation of a session, which is a
+.Nx
+extension.
+.Pp
 For non-zero symmetric-key privacy algorithms, the privacy algorithm
 must be specified in
-.Fa sess-\*[Gt]cipher ,
+.Fa sessp-\*[Gt]cipher ,
 the key length in
 .Fa sessp-\*[Gt]keylen ,
 and the key value in the octets addressed by
@@ -249,6 +262,14 @@ which in turn is based on code which appeared in
 .Ox 3.2 .
 .Sh BUGS
 Error checking and reporting is weak.
+.Pp
+The CRIOGET ioctl exists only because this device driver predates support
+for cloning devices in
+.Ox
+or
+.Nx .
+It should be deprecated, but is presently required instead.
+.Pp
 The values specified for symmetric-key key sizes to
 .Dv CIOCGSESSION
 must exactly match the values expected by
