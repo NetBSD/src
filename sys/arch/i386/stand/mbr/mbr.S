@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.16 2008/01/19 21:01:34 dsl Exp $	*/
+/*	$NetBSD: mbr.S,v 1.17 2008/01/25 21:40:58 dsl Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -88,8 +88,8 @@
 #ifdef COM_PORT
 /* ASCII values for the keys */
 #define	KEY_ACTIVE	'\m'
-#define	KEY_DISK1		'a'
-#define	KEY_PTN1		'1'
+#define	KEY_DISK1	'a'
+#define	KEY_PTN1	'1'
 #else
 /* Scan values for the various keys we use, as returned by the BIOS */
 #define	SCAN_ENTER	0x1c
@@ -97,8 +97,8 @@
 #define	SCAN_1		0x2
 
 #define	KEY_ACTIVE	SCAN_ENTER
-#define	KEY_DISK1		SCAN_F1
-#define	KEY_PTN1		SCAN_1
+#define	KEY_DISK1	SCAN_F1
+#define	KEY_PTN1	SCAN_1
 #endif
 
 /*
