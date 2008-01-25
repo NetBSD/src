@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.18 2008/01/25 10:49:32 pooka Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.19 2008/01/25 13:31:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.18 2008/01/25 10:49:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.19 2008/01/25 13:31:22 ad Exp $");
 
 #include "opt_ffs.h"
 
@@ -314,7 +314,9 @@ ufs_extattr_enable_with_open(struct ufsmount *ump, struct vnode *vp,
 		return (error);
 	}
 
+	mutex_enter(&vp->v_interlock);
 	vp->v_writecount++;
+	mutex_exit(&vp->v_interlock);
 
 	vref(vp);
 
@@ -608,7 +610,6 @@ ufs_extattr_enable(struct ufsmount *ump, int attrnamespace,
 	auio.uio_rw = UIO_READ;
 	UIO_SETUP_SYSSPACE(&auio);
 
-	VOP_LEASE(backing_vnode, l->l_cred, LEASE_WRITE);
 	vn_lock(backing_vnode, LK_SHARED | LK_RETRY);
 	error = VOP_READ(backing_vnode, &auio, IO_NODELOCKED,
 	    ump->um_extattr.uepm_ucred);
@@ -868,10 +869,6 @@ ufs_extattr_get(struct vnode *vp, int attrnamespace, const char *name,
 	UIO_SETUP_SYSSPACE(&local_aio);
 
 	/*
-	 * Acquire locks.
-	 */
-	VOP_LEASE(attribute->uele_backing_vnode, cred, LEASE_READ);
-	/*
 	 * Don't need to get a lock on the backing file if the getattr is
 	 * being applied to the backing file, as the lock is already held.
 	 */
@@ -1008,8 +1005,10 @@ vop_setextattr {
 	/*
 	 * XXX: No longer a supported way to delete extended attributes.
 	 */
-	if (ap->a_uio == NULL)
+	if (ap->a_uio == NULL) {
+		ufs_extattr_uepm_unlock(ump);
 		return (EINVAL);
+	}
 
 	error = ufs_extattr_set(ap->a_vp, ap->a_attrnamespace, ap->a_name,
 	    ap->a_uio, ap->a_cred, curlwp);
@@ -1085,11 +1084,6 @@ ufs_extattr_set(struct vnode *vp, int attrnamespace, const char *name,
 	local_aio.uio_offset = base_offset;
 	local_aio.uio_resid = sizeof(struct ufs_extattr_header);
 	UIO_SETUP_SYSSPACE(&local_aio);
-
-	/*
-	 * Acquire locks.
-	 */
-	VOP_LEASE(attribute->uele_backing_vnode, cred, LEASE_WRITE);
 
 	/*
 	 * Don't need to get a lock on the backing file if the setattr is
@@ -1187,8 +1181,6 @@ ufs_extattr_rm(struct vnode *vp, int attrnamespace, const char *name,
 	local_aio.uio_offset = base_offset;
 	local_aio.uio_resid = sizeof(struct ufs_extattr_header);
 	UIO_SETUP_SYSSPACE(&local_aio);
-
-	VOP_LEASE(attribute->uele_backing_vnode, cred, LEASE_WRITE);
 
 	/*
 	 * Don't need to get the lock on the backing vnode if the vnode we're
