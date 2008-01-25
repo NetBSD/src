@@ -1,4 +1,4 @@
-/*	$NetBSD: local_passwd.c,v 1.30 2005/02/26 07:19:25 thorpej Exp $	*/
+/*	$NetBSD: local_passwd.c,v 1.31 2008/01/25 19:36:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)local_passwd.c    8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: local_passwd.c,v 1.30 2005/02/26 07:19:25 thorpej Exp $");
+__RCSID("$NetBSD: local_passwd.c,v 1.31 2008/01/25 19:36:27 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ pwlocal_process(const char *username, int argc, char **argv)
 	 * Get class restrictions for this user, then get the new password. 
 	 */
 #ifdef LOGIN_CAP
-	if((lc = login_getclass(pw->pw_class))) {
+	if((lc = login_getclass(pw->pw_class)) != NULL) {
 		min_pw_len = (int) login_getcapnum(lc, "minpasswordlen", 0, 0);
 		pw_expiry  = (int) login_getcaptime(lc, "passwordtime", 0, 0);
 		login_close(lc);
