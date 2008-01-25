@@ -1,4 +1,4 @@
-/*	$NetBSD: specdev.h,v 1.34 2008/01/24 17:32:55 ad Exp $	*/
+/*	$NetBSD: specdev.h,v 1.35 2008/01/25 14:32:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -132,7 +132,6 @@ int	spec_close(void *);
 #define	spec_setattr	genfs_ebadf
 int	spec_read(void *);
 int	spec_write(void *);
-#define	spec_lease_check genfs_nullop
 #define spec_fcntl	genfs_fcntl
 int	spec_ioctl(void *);
 int	spec_poll(void *);

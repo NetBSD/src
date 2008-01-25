@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.30 2007/12/08 19:29:45 pooka Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.31 2008/01/25 14:32:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.30 2007/12/08 19:29:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.31 2008/01/25 14:32:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -656,10 +656,8 @@ union_copyfile(fvp, tvp, cred, l)
 	UIO_SETUP_SYSSPACE(&uio);
 
 	VOP_UNLOCK(fvp, 0);			/* XXX */
-	VOP_LEASE(fvp, cred, LEASE_READ);
 	vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 	VOP_UNLOCK(tvp, 0);			/* XXX */
-	VOP_LEASE(tvp, cred, LEASE_WRITE);
 	vn_lock(tvp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 
 	tbuf = malloc(MAXBSIZE, M_TEMP, M_WAITOK);
@@ -882,9 +880,6 @@ union_mkshadow(um, dvp, cnp, vpp)
 	va.va_type = VDIR;
 	va.va_mode = um->um_cmode;
 
-	/* VOP_LEASE: dvp is locked */
-	VOP_LEASE(dvp, cn.cn_cred, LEASE_WRITE);
-
 	vref(dvp);
 	error = VOP_MKDIR(dvp, vpp, &cn, &va);
 	return (error);
@@ -923,9 +918,6 @@ union_mkwhiteout(um, dvp, cnp, path)
 		vput(wvp);
 		return (EEXIST);
 	}
-
-	/* VOP_LEASE: dvp is locked */
-	VOP_LEASE(dvp, kauth_cred_get(), LEASE_WRITE);
 
 	error = VOP_WHITEOUT(dvp, &cn, CREATE);
 	if (error)
@@ -1008,7 +1000,6 @@ union_vn_create(vpp, un, l)
 	VATTR_NULL(vap);
 	vap->va_type = VREG;
 	vap->va_mode = cmode;
-	VOP_LEASE(un->un_dirvp, cred, LEASE_WRITE);
 	vref(un->un_dirvp);
 	if ((error = VOP_CREATE(un->un_dirvp, &vp, &cn, vap)) != 0)
 		return (error);

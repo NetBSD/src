@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.8 2007/12/08 19:29:47 pooka Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.9 2008/01/25 14:32:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.8 2007/12/08 19:29:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.9 2008/01/25 14:32:14 ad Exp $");
 
 #include "opt_coredump.h"
 
@@ -182,7 +182,6 @@ coredump(struct lwp *l, const char *pattern)
 		vattr.va_mode = security_setidcore_mode;
 	}
 
-	VOP_LEASE(vp, cred, LEASE_WRITE);
 	VOP_SETATTR(vp, &vattr, cred);
 	p->p_acflag |= ACORE;
 

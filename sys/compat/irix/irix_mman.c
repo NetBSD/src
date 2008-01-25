@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_mman.c,v 1.19 2007/12/20 23:02:50 dsl Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.20 2008/01/25 14:32:12 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.19 2007/12/20 23:02:50 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.20 2008/01/25 14:32:12 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -191,7 +191,6 @@ irix_mmap(struct lwp *l, void *addr, size_t len, int prot, int flags, int fd, of
 			VATTR_NULL(&vattr);
 			vattr.va_size = round_page(pos + len);
 
-			VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 			error = VOP_SETATTR(vp, &vattr, l->l_cred);
