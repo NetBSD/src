@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.66 2008/01/02 11:48:34 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.67 2008/01/25 14:32:11 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.66 2008/01/02 11:48:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.67 2008/01/25 14:32:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_pathconf_desc, coda_vop_error },	/* pathconf */
     { &vop_advlock_desc, coda_vop_nop },	/* advlock */
     { &vop_bwrite_desc, coda_vop_error },	/* bwrite */
-    { &vop_lease_desc, coda_vop_nop },		/* lease */
     { &vop_seek_desc, genfs_seek },		/* seek */
     { &vop_poll_desc, genfs_poll },		/* poll */
     { &vop_getpages_desc, coda_getpages },	/* getpages */
@@ -164,7 +163,7 @@ coda_vop_error(void *anon) {
     return EIO;
 }
 
-/* A generic do-nothing.  For lease_check, advlock */
+/* A generic do-nothing. */
 int
 coda_vop_nop(void *anon) {
     struct vnodeop_desc **desc = (struct vnodeop_desc **)anon;

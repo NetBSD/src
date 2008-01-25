@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.125 2008/01/02 22:37:21 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.126 2008/01/25 14:32:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.125 2008/01/02 22:37:21 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.126 2008/01/25 14:32:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -161,7 +161,6 @@ const struct vnodeopv_entry_desc puffs_specop_entries[] = {
 	{ &vop_setattr_desc, puffs_vnop_checkop },		/* setattr */
 	{ &vop_read_desc, puffs_vnop_spec_read },		/* update, read */
 	{ &vop_write_desc, puffs_vnop_spec_write },		/* update, write */
-	{ &vop_lease_desc, spec_lease_check },		/* genfs_nullop */
 	{ &vop_ioctl_desc, spec_ioctl },		/* spec_ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
 	{ &vop_poll_desc, spec_poll },			/* spec_poll */
@@ -219,7 +218,6 @@ const struct vnodeopv_entry_desc puffs_fifoop_entries[] = {
 	{ &vop_setattr_desc, puffs_vnop_checkop },		/* setattr */
 	{ &vop_read_desc, puffs_vnop_fifo_read },		/* read, update */
 	{ &vop_write_desc, puffs_vnop_fifo_write },		/* write, update */
-	{ &vop_lease_desc, fifo_lease_check },		/* genfs_nullop */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* dummy */
 	{ &vop_poll_desc, fifo_poll },			/* poll */

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.47 2008/01/05 18:42:14 christos Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.48 2008/01/25 14:32:12 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.47 2008/01/05 18:42:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.48 2008/01/25 14:32:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1961,7 +1961,6 @@ const struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, msdosfs_setattr },		/* setattr */
 	{ &vop_read_desc, msdosfs_read },		/* read */
 	{ &vop_write_desc, msdosfs_write },		/* write */
-	{ &vop_lease_desc, msdosfs_lease_check },	/* lease */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, msdosfs_poll },		/* poll */

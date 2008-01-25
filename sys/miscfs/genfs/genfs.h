@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs.h,v 1.21 2007/04/24 22:46:03 perseant Exp $	*/
+/*	$NetBSD: genfs.h,v 1.22 2008/01/25 14:32:16 ad Exp $	*/
 
 int	genfs_badop(void *);
 int	genfs_nullop(void *);
@@ -17,7 +17,6 @@ int	genfs_fcntl(void *);
 int	genfs_seek(void *);
 int	genfs_abortop(void *);
 int	genfs_revoke(void *);
-int	genfs_lease_check(void *);
 int	genfs_lock(void *);
 int	genfs_islocked(void *);
 int	genfs_unlock(void *);

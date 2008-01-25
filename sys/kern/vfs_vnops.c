@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.151 2008/01/25 06:32:20 pooka Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.152 2008/01/25 14:32:15 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.151 2008/01/25 06:32:20 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.152 2008/01/25 14:32:15 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -142,7 +142,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			va.va_mode = cmode;
 			if (fmode & O_EXCL)
 				 va.va_vaflags |= VA_EXCLUSIVE;
-			VOP_LEASE(ndp->ni_dvp, cred, LEASE_WRITE);
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
 			if (error)
@@ -184,7 +183,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 
-		VOP_LEASE(vp, cred, LEASE_WRITE);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
@@ -427,7 +425,6 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error, ioflag;
 
-	VOP_LEASE(vp, cred, LEASE_READ);
 	FILE_LOCK(fp);
 	ioflag = IO_ADV_ENCODE(fp->f_advice);
 	if (fp->f_flag & FNONBLOCK)
@@ -475,7 +472,6 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
 	FILE_UNLOCK(fp);
-	VOP_LEASE(vp, cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
