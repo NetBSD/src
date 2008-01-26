@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1008 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1009 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -404,3 +404,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		improve system startup time. [jmcneill 20080124]
 	kernel: The interface for IP chcecksumming was changed to reduce
 		duplication and more general use. [joerg 20080125]
+	hostapd/wpa_supplicant: Upgrade to 0.6.2 [christos 20080126]
