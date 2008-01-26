@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.47 2007/12/20 23:03:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.48 2008/01/26 21:01:23 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.47 2007/12/20 23:03:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.48 2008/01/26 21:01:23 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -124,16 +124,12 @@ compat_43_netbsd32_olseek(struct lwp *l, const struct compat_43_netbsd32_olseek_
 		syscallarg(int) whence;
 	} */
 	struct sys_lseek_args ua;
-	int rv;
-	off_t rt;
 
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	NETBSD32TOX_UAP(offset, long);
 	NETBSD32TO64_UAP(whence);
-	rv = sys_lseek(l, &ua, (register_t *)&rt);
-	*retval = rt;
-
-	return (rv);
+	/* Maybe offsets > 2^32 should generate an error ? */
+	return sys_lseek(l, &ua, retval);
 }
 
 int
