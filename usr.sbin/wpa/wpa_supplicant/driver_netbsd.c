@@ -1,4 +1,4 @@
-/*	$NetBSD: driver_netbsd.c,v 1.4 2007/12/15 00:14:23 perry Exp $	*/
+/*	$NetBSD: driver_netbsd.c,v 1.5 2008/01/26 21:50:22 christos Exp $	*/
 
 /*
  * WPA Supplicant - driver interaction with BSD net80211 layer
@@ -27,9 +27,9 @@
 #include "common.h"
 #include "driver.h"
 #include "eloop.h"
-#include "wpa_supplicant.h"
+#include "ieee802_11_defs.h"
 #include "l2_packet.h"
-#include "wpa.h"			/* XXX for RSN_INFO_ELEM */
+#include "wpa.h"
 
 #include <sys/socket.h>
 #include <net/if.h>
@@ -427,7 +427,7 @@ wpa_driver_bsd_associate(void *priv, struct wpa_driver_associate_params *params)
 
 	if (params->wpa_ie_len &&
 	    set80211param(drv, IEEE80211_IOC_WPA,
-			  params->wpa_ie[0] == RSN_INFO_ELEM ? 2 : 1) < 0)
+			  params->wpa_ie[0] == WLAN_EID_RSN ? 2 : 1) < 0)
 		return -1;
 
 	memset(&mlme, 0, sizeof(mlme));

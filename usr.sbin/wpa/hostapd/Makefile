@@ -1,37 +1,29 @@
-# $NetBSD: Makefile,v 1.1 2006/04/12 15:37:07 rpaulo Exp $
+# $NetBSD: Makefile,v 1.2 2008/01/26 21:50:21 christos Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
-.PATH.c: ${HOSTAPD_DISTDIR} ${.CURDIR}/..
 
 PROG=	hostapd
-SRCS=	hostapd.c eloop.c ieee802_1x.c eapol_sm.c radius.c md5.c rc4.c \
-	common.c ieee802_11.c config.c ieee802_11_auth.c accounting.c \
-	sta_info.c radius_client.c sha1.c wpa.c aes_wrap.c tls_none.c \
-	ctrl_iface.c driver_conf.c l2_packet.c driver_netbsd.c
+SRCS=	accounting.c ap_list.c beacon.c common.c config.c crypto_libc.c \
+	ctrl_iface.c driver_bsd.c drivers.c eap.c eap_common.c \
+	eap_identity.c eap_methods.c eapol_sm.c eloop.c hostapd.c \
+	hw_features.c ieee802_11.c ieee802_11_auth.c ieee802_11h.c \
+	ieee802_1x.c ip_addr.c l2_packet_freebsd.c md5.c mlme.c os_unix.c \
+	pmksa_cache.c radius.c radius_client.c rc4.c sha1.c sta_info.c \
+	tls_none.c vlan_init.c wme.c wpa.c wpa_auth_ie.c wpa_common.c \
+	wpa_debug.c wpabuf.c
 
-CLEANFILES=driver_conf.c
+.PATH.c: \
+	${HOSTAPD_DISTDIR} \
+	${WPA_DISTDIR}/src/eap_server \
+	${WPA_DISTDIR}/src/radius \
+	${.CURDIR}/../wpa_supplicant
 
 MAN=	hostapd.8 hostapd.conf.5
 
-CFLAGS+= -I${.CURDIR} -I${HOSTAPD_DISTDIR}
-CFLAGS+= -DCONFIG_DRIVER_BSD
+CPPFLAGS+= -I${.CURDIR} -I${HOSTAPD_DISTDIR}
+CPPFLAGS+= -DCONFIG_DRIVER_BSD
 DPADD+= ${LIBPCAP}
 LDADD+= -lpcap
-
-driver_conf.c: Makefile
-	rm -f driver_conf.c
-	echo '/* THIS FILE AUTOMATICALLY GENERATED, DO NOT EDIT! */' \
-							> driver_conf.c
-	echo '#include <stdlib.h>'                      >> driver_conf.c
-	echo '#include <stdio.h>'                       >> driver_conf.c
-	echo '#include <sys/types.h>'                   >> driver_conf.c
-	echo '#include <netinet/in.h>'                  >> driver_conf.c
-	echo '#include "hostapd.h"'                     >> driver_conf.c
-	echo '#include "driver.h"'                      >> driver_conf.c
-	echo "void bsd_driver_register(void);"          >> driver_conf.c
-	echo 'void register_drivers(void) {'            >> driver_conf.c
-	echo "bsd_driver_register();"                   >> driver_conf.c
-	echo '}'                                        >> driver_conf.c
 
 .include <bsd.prog.mk>
