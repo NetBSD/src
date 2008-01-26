@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.65 2008/01/19 22:25:12 dsl Exp $
+	$NetBSD: syscalls.master,v 1.66 2008/01/26 08:35:51 dsl Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -642,7 +642,7 @@
 			    netbsd32_charp path, netbsd32_statp_t ub); }
 390     STD             { int netbsd32_sys___getdents30(int fd, \
 			    netbsd32_charp buf, netbsd32_size_t count); }
-391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
+391	STD		{ int netbsd32_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
 392	COMPAT_30	{ int netbsd32_sys___fhstat30( \
 			    netbsd32_fhandlep_t fhp, \

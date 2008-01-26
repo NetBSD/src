@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.135 2008/01/19 22:25:12 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.136 2008/01/26 08:35:51 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.135 2008/01/19 22:25:12 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.136 2008/01/26 08:35:51 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2501,6 +2501,23 @@ netbsd32_fremovexattr(struct lwp *l, const struct netbsd32_fremovexattr_args *ua
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(name, const char);
 	return sys_fremovexattr(l, &ua, retval);
+}
+
+int
+netbsd32_posix_fadvise(struct lwp *l, const struct netbsd32_posix_fadvise_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) len;
+		syscallarg(int) advice;
+	} */
+	struct sys_posix_fadvise_args ua;
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TO64_UAP(offset);
+	NETBSD32TO64_UAP(len);
+	NETBSD32TO64_UAP(advice);
+	return sys_posix_fadvise(l, &ua, retval);
 }
 
 /*
