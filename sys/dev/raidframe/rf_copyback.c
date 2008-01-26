@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_copyback.c,v 1.40 2007/11/26 19:01:37 pooka Exp $	*/
+/*	$NetBSD: rf_copyback.c,v 1.41 2008/01/26 20:44:37 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -38,7 +38,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.40 2007/11/26 19:01:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_copyback.c,v 1.41 2008/01/26 20:44:37 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -95,7 +95,6 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 	struct vnode *vp;
 	struct vattr va;
-	struct lwp *l;
 
 	int ac;
 
@@ -116,8 +115,6 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 
 	badDisk = &raidPtr->Disks[fcol];
 
-	l = raidPtr->engine_thread;
-
 	/* This device may have been opened successfully the first time. Close
 	 * it before trying to open it again.. */
 
@@ -136,7 +133,7 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 	printf("About to (re-)open the device: %s\n",
 	    raidPtr->Disks[fcol].devname);
 
-	retcode = dk_lookup(raidPtr->Disks[fcol].devname, l, &vp,
+	retcode = dk_lookup(raidPtr->Disks[fcol].devname, curlwp, &vp,
 	    UIO_SYSSPACE);
 
 	if (retcode) {
@@ -153,9 +150,9 @@ rf_CopybackReconstructedData(RF_Raid_t *raidPtr)
 		/* Ok, so we can at least do a lookup... How about actually
 		 * getting a vp for it? */
 
-		if ((retcode = VOP_GETATTR(vp, &va, l->l_cred)) != 0)
+		if ((retcode = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0)
 			return;
-		retcode = rf_getdisksize(vp, l, &raidPtr->Disks[fcol]);
+		retcode = rf_getdisksize(vp, curlwp, &raidPtr->Disks[fcol]);
 		if (retcode) {
 			return;
 		}

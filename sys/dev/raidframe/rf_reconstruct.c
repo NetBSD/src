@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconstruct.c,v 1.100 2007/11/26 19:01:40 pooka Exp $	*/
+/*	$NetBSD: rf_reconstruct.c,v 1.101 2008/01/26 20:45:06 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -33,7 +33,7 @@
  ************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.100 2007/11/26 19:01:40 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_reconstruct.c,v 1.101 2008/01/26 20:45:06 oster Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -357,7 +357,6 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	struct partinfo dpart;
 	struct vnode *vp;
 	struct vattr va;
-	struct lwp *lwp;
 	int retcode;
 	int ac;
 
@@ -412,7 +411,6 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return (EINVAL);
 	}
 #endif
-	lwp = raidPtr->engine_thread;
 
 	/* This device may have been opened successfully the
 	   first time. Close it before trying to open it again.. */
@@ -437,7 +435,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	       raidPtr->Disks[col].devname);
 #endif
 	RF_UNLOCK_MUTEX(raidPtr->mutex);
-	retcode = dk_lookup(raidPtr->Disks[col].devname, lwp, &vp, UIO_SYSSPACE);
+	retcode = dk_lookup(raidPtr->Disks[col].devname, curlwp, &vp, UIO_SYSSPACE);
 
 	if (retcode) {
 		printf("raid%d: rebuilding: dk_lookup on device: %s failed: %d!\n",raidPtr->raidid,
@@ -455,7 +453,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 	/* Ok, so we can at least do a lookup...
 	   How about actually getting a vp for it? */
 
-	if ((retcode = VOP_GETATTR(vp, &va, lwp->l_cred)) != 0) {
+	if ((retcode = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
 		RF_UNLOCK_MUTEX(raidPtr->mutex);
@@ -463,7 +461,7 @@ rf_ReconstructInPlace(RF_Raid_t *raidPtr, RF_RowCol_t col)
 		return(retcode);
 	}
 
-	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, lwp->l_cred);
+	retcode = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, curlwp->l_cred);
 	if (retcode) {
 		RF_LOCK_MUTEX(raidPtr->mutex);
 		raidPtr->reconInProgress--;
