@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.26 2008/01/15 03:37:14 rmind Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.27 2008/01/26 17:55:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.26 2008/01/15 03:37:14 rmind Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.27 2008/01/26 17:55:30 rmind Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -357,7 +357,7 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 
 /* Native */
 	case _SC_SCHED_RT_TS:
-		if (sysctlgetmibinfo("kern.sched.rt_ts", &mib[0], &mib_len,
+		if (sysctlgetmibinfo("kern.sched.rtts", &mib[0], &mib_len,
 		    NULL, NULL, NULL, SYSCTL_VERSION))      
 			return -1;              
 		break;

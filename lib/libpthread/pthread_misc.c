@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.4 2008/01/15 03:37:14 rmind Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.5 2008/01/26 17:55:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.4 2008/01/15 03:37:14 rmind Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.5 2008/01/26 17:55:30 rmind Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -68,15 +68,15 @@ __strong_alias(__libc_thr_yield,pthread__sched_yield)
 int
 pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
 {
-	int error;
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
-	error = _sched_getparam(getpid(), thread->pt_lid, param);
-	if (error == 0)
-		*policy = param->sched_class;
-	return error;
+	if (_sched_getparam(getpid(), thread->pt_lid, param) < 0)
+		return errno;
+
+	*policy = param->sched_class;
+	return 0;
 }
 
 int
@@ -90,7 +90,10 @@ pthread_setschedparam(pthread_t thread, int policy,
 
 	memcpy(&sp, param, sizeof(struct sched_param));
 	sp.sched_class = policy;
-	return _sched_setparam(getpid(), thread->pt_lid, &sp);
+	if (_sched_setparam(getpid(), thread->pt_lid, &sp) < 0)
+		return errno;
+
+	return 0;
 }
 
 int
@@ -100,7 +103,10 @@ pthread_getaffinity_np(pthread_t thread, size_t size, cpuset_t *cpuset)
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
-	return _sched_getaffinity(getpid(), thread->pt_lid, size, cpuset);
+	if (_sched_getaffinity(getpid(), thread->pt_lid, size, cpuset) < 0)
+		return errno;
+
+	return 0;
 }
 
 int
@@ -110,7 +116,10 @@ pthread_setaffinity_np(pthread_t thread, size_t size, cpuset_t *cpuset)
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
-	return _sched_setaffinity(getpid(), thread->pt_lid, size, cpuset);
+	if (_sched_setaffinity(getpid(), thread->pt_lid, size, cpuset) < 0)
+		return errno;
+
+	return 0;
 }
 
 int
@@ -123,7 +132,10 @@ pthread_setschedprio(pthread_t thread, int prio)
 
 	sp.sched_class = SCHED_NONE;
 	sp.sched_priority = prio;
-	return _sched_setparam(getpid(), thread->pt_lid, &sp);
+	if (_sched_setparam(getpid(), thread->pt_lid, &sp) < 0)
+		return errno;
+
+	return 0;
 }
 
 int

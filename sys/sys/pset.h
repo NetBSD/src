@@ -1,4 +1,4 @@
-/*	$NetBSD: pset.h,v 1.1 2008/01/15 03:41:50 rmind Exp $	*/
+/*	$NetBSD: pset.h,v 1.2 2008/01/26 17:55:29 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -51,32 +51,6 @@ int	pset_bind(psetid_t, idtype_t, id_t, psetid_t *);
 int	pset_create(psetid_t *);
 int	pset_destroy(psetid_t);
 __END_DECLS
-
-/* Size of the CPU set bitmap */
-#define	CPUSET_SHIFT	5
-#define	CPUSET_MASK	31
-#if MAXCPUS > 32
-#define	CPUSET_SIZE	(MAXCPUS >> CPUSET_SHIFT)
-#else
-#define	CPUSET_SIZE	1
-#endif
-
-/* Bitmap of the CPUs */
-typedef struct {
-	uint32_t	bits[CPUSET_SIZE];
-} cpuset_t;
-
-#define	CPU_ZERO(c)	\
-	(memset(c, 0, sizeof(cpuset_t)))
-
-#define	CPU_ISSET(i, c)	\
-	((1 << (i & CPUSET_MASK)) & (c)->bits[i >> CPUSET_SHIFT])
-
-#define	CPU_SET(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] |= 1 << (i & CPUSET_MASK))
-
-#define	CPU_CLR(i, c)	\
-	((c)->bits[i >> CPUSET_SHIFT] &= ~(1 << (i & CPUSET_MASK)))
 
 #ifdef _NETBSD_SOURCE
 int	_pset_bind(idtype_t, id_t, id_t, psetid_t, psetid_t *);
