@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.117 2007/12/03 15:34:18 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.118 2008/01/26 14:35:24 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.117 2007/12/03 15:34:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2008/01/26 14:35:24 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -178,7 +178,7 @@ extern void mips1_fpu_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 extern void mips3_clock_intr(u_int32_t, u_int32_t, u_int32_t, u_int32_t);
 #endif
 
-void	mach_init(int, char **, int, struct btinfo_common *);
+void	mach_init(int, char **, u_int, void *);
 
 void	sgimips_count_cpus(struct arcbios_component *,
 	    struct arcbios_treewalk_context *);
@@ -225,11 +225,13 @@ struct platform platform = {
  */
 int	safepri = MIPS1_PSL_LOWIPL;
 
-extern void *esym;
 extern u_int32_t ssir;
 extern struct user *proc0paddr;
+extern char kernel_text[], edata[], end[];
 
-static struct btinfo_common *bootinfo;
+uint8_t *bootinfo;			/* pointer to bootinfo structure */
+static uint8_t bi_buf[BOOTINFO_SIZE];	/* buffer to store bootinfo data */
+static const char *bootinfo_msg = NULL;
 
 #if defined(_LP64)
 #define ARCS_VECTOR 0xa800000000001000
@@ -242,20 +244,23 @@ static struct btinfo_common *bootinfo;
  * Process arguments passed to us by the ARCS firmware.
  */
 void
-mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
+mach_init(int argc, char *argv[], u_int magic, void *bip)
 {
-	extern char kernel_text[], _end[];
 	paddr_t first, last;
 	int firstpfn, lastpfn;
 	void *v;
 	vsize_t size;
 	struct arcbios_mem *mem;
 	const char *cpufreq, *osload;
-	struct btinfo_symtab *bi_syms;
-	void *ssym;
 	vaddr_t kernend;
 	int kernstartpfn, kernendpfn;
-	int i, rv, nsym;
+	int i, rv;
+#if NKSYMS > 0 || defined(DDB) || defined(LKM)
+	int nsym = 0;
+	char *ssym = NULL;
+	char *esym = NULL;
+	struct btinfo_symtab *bi_syms;
+#endif
 
 	/*
 	 * Initialize firmware.  This will set up the bootstrap console.
@@ -278,23 +283,34 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 
 	uvm_setpagesize();
 
-	nsym = 0;
-	ssym = esym = NULL;
-	kernend = round_page((vaddr_t) _end);
-	bi_syms = NULL;
-	bootinfo = NULL;
+	/* set up bootinfo structures */
+	if (magic == BOOTINFO_MAGIC && bip != NULL) {
+		struct btinfo_magic *bi_magic;
 
-	if (magic == BOOTINFO_MAGIC && btinfo != NULL) {
-		printf("Found bootinfo at %p\n", btinfo);
-		bootinfo = btinfo;
+		memcpy(bi_buf, bip, BOOTINFO_SIZE);
+		bootinfo = bi_buf;
+		bi_magic = lookup_bootinfo(BTINFO_MAGIC);
+		if (bi_magic == NULL || bi_magic->magic != BOOTINFO_MAGIC)
+			bootinfo_msg =
+			    "invalid magic number in bootinfo structure.\n";
+		else
+			bootinfo_msg = "bootinfo found.\n";
+	} else
+		bootinfo_msg = "no bootinfo found. (old bootblocks?)\n";
 
-		bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
-		if (bi_syms != NULL) {
-			nsym = bi_syms->nsym;
-			ssym = (void *) bi_syms->ssym;
-			esym = (void *) bi_syms->esym;
-			kernend = round_page((vaddr_t) esym);
-		}
+#if NKSYM > 0 || defined(DDB) || defined(LKM)
+	bi_syms = lookup_bootinfo(BTINFO_SYMTAB);
+
+	/* check whether there is valid bootinfo symtab info */
+	if (bi_syms != NULL) {
+		nsym = bi_syms->nsym;
+		ssym = (char *)bi_syms->ssym;
+		esym = (char *)bi_syms->esym;
+		kernend = mips_round_page(esym);
+	} else
+#endif
+	{
+		kernend = mips_round_page(end);
 	}
 
 	/* Leave 1 page before kernel untouched as that's where our initial
@@ -431,25 +447,31 @@ mach_init(int argc, char **argv, int magic, struct btinfo_common *btinfo)
 	if (mach_type <= 0)
 		panic("invalid architecture");
 
+#if NKSYMS || defined(DDB) || defined(LKM)
+	/* init symbols if present */
+	if (esym)
+		ksyms_init(nsym, ssym, esym);
+#ifdef SYMTAB_SPACE
+	else
+		ksyms_init(0, NULL, NULL);
+#endif /* SYMTAB_SPACE */
+#endif /* NKSYMS || defined(DDB) || defined(LKM) */
+
 #if defined(KGDB) || defined(DDB)
 	/* Set up DDB hook to turn off watchdog on entry */
 	db_trap_callback = ddb_trap_hook;
 
-#if NKSYMS || defined(DDB) || defined(LKM)
-	ksyms_init(nsym, ssym, esym);
-#endif /* NKSYMS || defined(DDB) || defined(LKM) */
-
-#  ifdef DDB
+#ifdef DDB
 	if (boothowto & RB_KDB)
 		Debugger();
-#  endif
+#endif
 
-#  ifdef KGDB
+#ifdef KGDB
 	kgdb_port_init();
 
 	if (boothowto & RB_KDB)
 		kgdb_connect(0);
-#  endif
+#endif
 #endif
 
 	switch (mach_type) {
@@ -668,6 +690,11 @@ cpu_startup()
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
+#ifdef BOOTINFO_DEBUG
+	if (bootinfo_msg)
+		printf(bootinfo_msg);
+#endif
+
 	printf("%s%s", copyright, version);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
@@ -856,15 +883,24 @@ nullvoid()
 void *
 lookup_bootinfo(int type)
 {
-	struct btinfo_common *b = bootinfo;
+	struct btinfo_common *bt;
+	uint8_t *bip;
 
-	while (bootinfo != NULL) {
-		if (b->type == type)
-			return (b);
-		b = b->next;
-	}
+	/* check for a bootinfo record first */
+	if (bootinfo == NULL)
+		return NULL;
 
-	return (NULL);
+	bip = bootinfo;
+	do {
+		bt = (struct btinfo_common *)bip;
+		if (bt->type == type)
+			return (void *)bt;
+		bip += bt->next;
+	} while (bt->next != 0 &&
+	    bt->next < BOOTINFO_SIZE /* sanity */ &&
+	    (size_t)bip < (size_t)bootinfo + BOOTINFO_SIZE);
+
+	return NULL;
 }
 
 #if defined(DDB) || defined(KGDB)
