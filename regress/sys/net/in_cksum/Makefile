@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/01/26 02:07:13 chris Exp $
+#	$NetBSD: Makefile,v 1.3 2008/01/26 04:56:45 simonb Exp $
 #
 # To use this, copy / link the cpu_in_cksum.S from the arch subdirectory
 # and copy assym.h from the build directory of a kernel.
@@ -35,9 +35,13 @@ test:
 	./in_cksum 16 1 ${TIMING_LOOPS}	\
 	    1 3 1 3 1 3 1
 	./in_cksum 16 1 ${TIMING_LOOPS}	40
-	./in_cksum 16 0 ${TIMING_LOOPS}	2048
 	./in_cksum 16 1 ${TIMING_LOOPS}	1536
 	./in_cksum 16 1 ${TIMING_LOOPS}	576
 	./in_cksum 16 1 ${TIMING_LOOPS}	1536 1536 1536 1536 1536 640
+	./in_cksum 16 0 ${TIMING_LOOPS}	2048
+	./in_cksum 16 0 ${TIMING_LOOPS}	40
+	./in_cksum 16 0 ${TIMING_LOOPS}	1536
+	./in_cksum 16 0 ${TIMING_LOOPS}	576
+	./in_cksum 16 0 ${TIMING_LOOPS}	1536 1536 1536 1536 1536 640
 
 .include <bsd.prog.mk>
