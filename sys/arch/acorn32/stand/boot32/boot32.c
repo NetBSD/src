@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.31 2008/01/21 00:41:13 chris Exp $	*/
+/*	$NetBSD: boot32.c,v 1.32 2008/01/26 00:01:54 chris Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -374,7 +374,7 @@ get_memory_configuration(void)
 			case  0:
 				break;
 			case osmemory_TYPE_DRAM:
-				if (phys_page < PODRAM_START) {
+				if ((phys_page * nbpp)< PODRAM_START) {
 					DRAM_addr[dram_blocks]  =
 					    phys_page * nbpp;
 					DRAM_pages[dram_blocks] =
@@ -605,6 +605,7 @@ get_memory_map(void)
 		printf("-0x%x]  ", phys_addr + nbpp -1);
 	}
 	printf("\n\n");
+
 	if (first_mapped_PODRAM_page_index < 0 && PODRAM_addr[0])
 		panic("Found no (S)DRAM mapped in the bootloader");
 	if (first_mapped_DRAM_page_index < 0)
@@ -801,8 +802,8 @@ create_configuration(int argc, char **argv, int start_args)
 		bconfig->dram[i].flags   = PHYSMEM_TYPE_GENERIC;
 	}
 	for (; i < dram_blocks + podram_blocks; i++) {
-		bconfig->dram[i].address = PODRAM_addr[i];
-		bconfig->dram[i].pages   = PODRAM_pages[i];
+		bconfig->dram[i].address = PODRAM_addr[i-dram_blocks];
+		bconfig->dram[i].pages   = PODRAM_pages[i-dram_blocks];
 		bconfig->dram[i].flags   = PHYSMEM_TYPE_PROCESSOR_ONLY;
 	}
 	for (i = 0; i < vram_blocks; i++) {
@@ -862,7 +863,7 @@ main(int argc, char **argv)
 	kernel_free_vm_start = (marks[MARK_END] + nbpp-1) & ~(nbpp-1);
 
 	/* we seem to be forced to clear the marks[] ? */
-	bzero(marks, sizeof(marks[MARK_MAX]));
+	bzero(marks, sizeof(marks));
 
 	/* really load it ! */
 	ret = loadfile(booted_file, marks, LOAD_KERNEL);
@@ -881,7 +882,7 @@ main(int argc, char **argv)
 	 */
 	prepare_and_check_relocation_system();
 	
-	printf("\nStarting at 0x%lx\n", marks[MARK_ENTRY]);
+	printf("\nStarting at 0x%lx, p@0x%lx\n", marks[MARK_ENTRY], kernel_physical_start);
 	printf("Will boot in a few secs due to relocation....\n"
 	    "bye bye from RISC OS!");
 
