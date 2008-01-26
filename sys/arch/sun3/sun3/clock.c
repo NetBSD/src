@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.58 2008/01/10 16:04:57 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.59 2008/01/26 14:02:54 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.58 2008/01/10 16:04:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59 2008/01/26 14:02:54 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -302,6 +302,8 @@ void
 clock_intr(struct clockframe cf)
 {
 
+	idepth++;
+
 	/* Read the clock interrupt register. */
 	intersil_clear();
 
@@ -326,4 +328,6 @@ clock_intr(struct clockframe cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
+
+	idepth--;
 }
