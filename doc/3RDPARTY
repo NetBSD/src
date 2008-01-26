@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.577 2008/01/24 07:49:30 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.578 2008/01/26 22:13:02 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -380,18 +380,6 @@ Mailing List:	heimdal-discuss@pdc.kth.se
 Responsible:	joda, lha
 License:	BSD
 Notes:
-
-Package:	hostapd
-Version:	0.4.9
-Current Vers:	0.4.9
-Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
-Archive Site:	http://hostap.epitest.fi/releases/
-Home Page:	http://hostap.epitest.fi/hostapd/
-Mailing List:
-Responsible:	None
-License:	BSD or GPLv2
-Notes:
-See /usr/src/dist/hostapd/NetBSD-upgrade for update instructions.
 
 Package:	hunt
 Version:	2003-04-16
@@ -912,17 +900,17 @@ Notes:
 Use src/lib/libc/time/tzcode2netbsd to prepare the source tree
 for import.
 
-Package:	wpa_supplicant
-Version:	0.4.9
-Current Vers:	0.4.9
+Package:	wpa_supplicant/hostapd
+Version:	0.6.2
+Current Vers:	0.6.2
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/
 Mailing List:
-Responsible:	scw, dyoung
+Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
 Notes:
-See /usr/src/dist/wpa_supplicant/NetBSD-upgrade for update instructions.
+See /usr/src/dist/wpa/NetBSD-upgrade for update instructions.
 
 Package:	XFree86
 Version:	4.5.0
