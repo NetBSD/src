@@ -1,4 +1,4 @@
-.\"	$NetBSD: schedctl.8,v 1.2 2008/01/25 00:05:35 xtraeme Exp $
+.\"	$NetBSD: schedctl.8,v 1.3 2008/01/26 14:27:42 wiz Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,34 +39,30 @@
 .Os
 .Sh NAME
 .Nm schedctl
-.Nd a program to control scheduling of processes and threads.
+.Nd control scheduling of processes and threads
 .Sh SYNOPSIS
 .Nm
 .Fl p Ar pid
-.Oo Fl t Ar lid Oc
-.Oo Fl A Ar processors Oc
-.Oo Fl C Ar class Oc
-.Oo Fl P Ar priority Oc
+.Op Fl A Ar processors
+.Op Fl C Ar class
+.Op Fl P Ar priority
+.Op Fl t Ar lid
 .Sh DESCRIPTION
 The
 .Nm
-command can be used to control scheduling of processes and threads.
-It also returns the information about current scheduling parameters
+command can be used to control the scheduling of processes and threads.
+It also returns information about current scheduling parameters
 of the process or thread.
 Only the super-user may change the scheduling parameters.
 .Pp
 Available options:
 .Bl -tag -width indent
-.It Fl p Ar pid
-The target process which will be affected.
-If process has more than one thread, all of them will be affected.
-.It Fl t Ar lid
-Thread in the specified process.
-If specified, only this thread will be affected in the process.
 .It Fl A Ar processors
-Set of the processors on which process or thread should run, that is, affinity.
-Processors are defined as numbers (starting from zero) and separated by commas.
-Value of -1 is used to unset the affinity.
+Set of the processors on which process or thread should run, that
+is, affinity.
+Processors are defined as numbers (starting from zero) and separated
+by commas.
+A value of \-1 is used to unset the affinity.
 .It Fl C Ar class
 Scheduling class (policy) might be:
 .Bl -tag -width SCHEDOTHERXX
@@ -77,29 +73,40 @@ The default policy in
 .It Dv 1: SCHED_FIFO
 First in, first out (FIFO) scheduling policy.
 .It Dv 2: SCHED_RR
-Round robin scheduling policy.
+Round-robin scheduling policy.
 .El
 .It Fl P Ar priority
 Priority which will be set for the process or thread.
-For all scheduling classes, priority might be set to any value in the range from
+For all scheduling classes, priority might be set to any value in
+the range from
 .Dv SCHED_PRI_MIN
 (0) to
 .Dv SCHED_PRI_MAX
 (63).
+.It Fl p Ar pid
+The target process which will be affected.
+If the process has more than one thread, all of them will be affected.
+.It Fl t Ar lid
+Thread in the specified process.
+If specified, only this thread in the process will be affected.
 .El
-.Pp
 .Sh EXAMPLES
-Show scheduling information about process whose ID is '123':
+Show scheduling information about the process whose ID is
+.Dq 123 :
 .Bd -literal -offset indent
 # schedctl -p 123
 .Ed
 .Pp
-Set the affinity to CPU 0 and CPU 1, policy to SCHED_RR, and priority to 63
-for thread whose ID is '1' in process whose ID is '123':
+Set the affinity to CPU 0 and CPU 1, policy to
+.Dv SCHED_RR ,
+and priority to 63
+for thread whose ID is
+.Dq 1
+in process whose ID is
+.Dq 123 :
 .Bd -literal -offset indent
 # schedctl -p 123 -t 1 -A 0,1 -C 2 -P 63
 .Ed
-.Pp
 .Sh SEE ALSO
 .Xr nice 1 ,
 .Xr getpriority 2 ,
