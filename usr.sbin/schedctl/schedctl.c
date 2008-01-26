@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.1 2008/01/15 03:37:15 rmind Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.2 2008/01/26 17:52:08 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.1 2008/01/15 03:37:15 rmind Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.2 2008/01/26 17:52:08 rmind Exp $");
 #endif
 
 #include <stdio.h>
@@ -45,7 +45,6 @@ __RCSID("$NetBSD: schedctl.c,v 1.1 2008/01/15 03:37:15 rmind Exp $");
 #include <kvm.h>
 #include <unistd.h>
 
-#include <sys/param.h>
 #include <sys/pset.h>
 #include <sys/sched.h>
 #include <sys/sysctl.h>
@@ -63,6 +62,8 @@ static cpuset_t	*makecpuset(char *);
 static char	*showcpuset(cpuset_t *);
 static void	usage(void);
 
+static u_int	ncpu;
+
 int
 main(int argc, char **argv)
 {
@@ -74,6 +75,8 @@ main(int argc, char **argv)
 	pid_t pid;
 	lwpid_t lid;
 	bool set;
+
+	ncpu = sysconf(_SC_NPROCESSORS_CONF);
 
 	pid = lid = 0;
 	cpuset = NULL;
@@ -246,7 +249,7 @@ makecpuset(char *str)
 			memset(cpuset, 0, sizeof(cpuset_t));
 			break;
 		}
-		if ((unsigned int)i > MAXCPUS) {
+		if ((unsigned int)i >= ncpu) {
 			free(cpuset);
 			cpuset = NULL;
 			break;
@@ -267,13 +270,13 @@ showcpuset(cpuset_t *cpuset)
 	size_t size;
 	int i;
 
-	size = 3 * MAXCPUS;	/* XXX */
+	size = 3 * ncpu;	/* XXX */
 	buf = malloc(size + 1);
 	if (cpuset == NULL)
 		err(EXIT_FAILURE, "malloc");
 	memset(buf, '\0', size + 1);
 
-	for (i = 0; i < MAXCPUS; i++)
+	for (i = 0; i < ncpu; i++)
 		if (CPU_ISSET(i, cpuset))
 			snprintf(buf, size, "%s%d,", buf, i);
 
