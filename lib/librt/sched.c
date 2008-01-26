@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.1 2008/01/15 03:37:15 rmind Exp $	*/
+/*	$NetBSD: sched.c,v 1.2 2008/01/26 17:55:30 rmind Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.1 2008/01/15 03:37:15 rmind Exp $");
+__RCSID("$NetBSD: sched.c,v 1.2 2008/01/26 17:55:30 rmind Exp $");
 
 #include <string.h>
 #include <unistd.h>
@@ -37,6 +37,9 @@ __RCSID("$NetBSD: sched.c,v 1.1 2008/01/15 03:37:15 rmind Exp $");
 #include <sys/pset.h>
 #include <sys/types.h>
 
+/* All LWPs in the process */
+#define	P_ALL_LWPS		0
+
 /*
  * Scheduling parameters.
  */
@@ -44,36 +47,51 @@ __RCSID("$NetBSD: sched.c,v 1.1 2008/01/15 03:37:15 rmind Exp $");
 int
 sched_setparam(pid_t pid, const struct sched_param *param)
 {
+	struct sched_param sp;
 
-	return _sched_setparam(pid, 0, param);
+	memset(&sp, 0, sizeof(struct sched_param));
+	sp.sched_priority = param->sched_priority;
+	sp.sched_class = SCHED_NONE;
+	return _sched_setparam(pid, P_ALL_LWPS, &sp);
 }
 
 int
 sched_getparam(pid_t pid, struct sched_param *param)
 {
 
-	return _sched_getparam(pid, 0, param);
+	return _sched_getparam(pid, P_ALL_LWPS, param);
 }
 
 int
 sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)
 {
 	struct sched_param sp;
+	int ret, old_policy;
 
-	memcpy(&sp, param, sizeof(struct sched_param));
+	ret = _sched_getparam(pid, P_ALL_LWPS, &sp);
+	if (ret < 0)
+		return ret;
+	old_policy = sp.sched_class;
+
+	memset(&sp, 0, sizeof(struct sched_param));
+	sp.sched_priority = param->sched_priority;
 	sp.sched_class = policy;
-	return _sched_setparam(pid, 0, &sp);
+	ret = _sched_setparam(pid, P_ALL_LWPS, &sp);
+	if (ret < 0)
+		return ret;
+
+	return old_policy;
 }
 
 int
 sched_getscheduler(pid_t pid)
 {
 	struct sched_param sp;
-	int error;
+	int ret;
 
-	error = _sched_getparam(pid, 0, &sp);
-	if (error)
-		return error;
+	ret = _sched_getparam(pid, P_ALL_LWPS, &sp);
+	if (ret < 0)
+		return ret;
 
 	return sp.sched_class;
 }
@@ -86,6 +104,10 @@ int
 sched_get_priority_max(int policy)
 {
 
+	if (policy < SCHED_OTHER || policy > SCHED_RR) {
+		errno = EINVAL;
+		return -1;
+	}
 	return sysconf(_SC_SCHED_PRI_MAX);
 }
 
@@ -93,6 +115,10 @@ int
 sched_get_priority_min(int policy)
 {
 
+	if (policy < SCHED_OTHER || policy > SCHED_RR) {
+		errno = EINVAL;
+		return -1;
+	}
 	return sysconf(_SC_SCHED_PRI_MIN);
 }
 
@@ -113,5 +139,5 @@ int
 pset_bind(psetid_t psid, idtype_t idtype, id_t id, psetid_t *opsid)
 {
 
-	return _pset_bind(idtype, id, 0, psid, opsid);
+	return _pset_bind(idtype, id, P_ALL_LWPS, psid, opsid);
 }
