@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2007/07/15 21:24:46 wiz Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2008/01/26 14:29:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.10 2007/07/15 21:24:46 wiz Exp $");
+__RCSID("$NetBSD: main.c,v 1.11 2008/01/26 14:29:31 ad Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -109,7 +109,6 @@ typedef struct name {
 const name_t locknames[] = {
 	{ "adaptive_mutex", LB_ADAPTIVE_MUTEX },
 	{ "spin_mutex", LB_SPIN_MUTEX },
-	{ "lockmgr", LB_LOCKMGR },
 	{ "rwlock", LB_RWLOCK },
 	{ "kernel_lock", LB_KERNEL_LOCK },
 	{ NULL, 0 }
@@ -126,7 +125,6 @@ const name_t alltypes[] = {
 	{ "Adaptive mutex spin", LB_ADAPTIVE_MUTEX | LB_SPIN },
 	{ "Adaptive mutex sleep", LB_ADAPTIVE_MUTEX | LB_SLEEP1 },
 	{ "Spin mutex spin", LB_SPIN_MUTEX | LB_SPIN },
-	{ "lockmgr sleep", LB_LOCKMGR | LB_SLEEP1 },
 	{ "RW lock sleep (writer)", LB_RWLOCK | LB_SLEEP1 },
 	{ "RW lock sleep (reader)", LB_RWLOCK | LB_SLEEP2 },
 	{ "Kernel lock spin", LB_KERNEL_LOCK | LB_SPIN },
