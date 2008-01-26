@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.27 2008/01/06 13:18:19 dsl Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.28 2008/01/26 15:48:11 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.27 2008/01/06 13:18:19 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.28 2008/01/26 15:48:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,7 +135,6 @@ const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, irix_usema_fcntl },
 	{ &vop_poll_desc, irix_usema_poll },
 	{ &vop_abortop_desc, genfs_abortop },
-	{ &vop_lease_desc, genfs_nullop },
 	{ &vop_lock_desc, genfs_lock },
 	{ &vop_unlock_desc, genfs_unlock },
 	{ &vop_islocked_desc, genfs_islocked },
