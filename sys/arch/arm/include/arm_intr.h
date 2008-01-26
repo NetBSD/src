@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.5 2008/01/01 16:01:38 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.6 2008/01/26 19:27:10 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -189,26 +189,51 @@ typedef void *irq_hardware_cookie_t;
 void arm_intr_init(void);
 void arm_intr_enable_irqs(void);
 
+/* this overlaps with armv6 pic stuff */
+/* operations that are performed on the PIC */
+struct pic_ops {
+	void (*pic_set_irq_hardware_mask)(uint32_t intr_enabled);
+	void (*pic_set_irq_hardware_type)(int irq_line, int type);
+};
 
-irqgroup_t
-arm_intr_register_irq_provider(const char *name, int nirqs, 
-		void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled),
-		void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type),
-		irq_hardware_cookie_t);
+struct pic_softc {
+	const struct pic_ops pic_ops;
+	
+	int pic_nirqs;			/* number of irq lines */
+	uint32_t pic_pre_assigned_irqs; /* irqs that have a pre-assigned use */
+	char pic_name[16];
+
+	/* everything below here is initialized by the arm_intr code */
+	TAILQ_ENTRY(pic_softc) irq_pics_list;	/* link on pics list */
+
+	/* Software copy of the IRQs we have enabled in hardware */
+	uint32_t pic_intr_enabled;
+
+	/*
+	 * Interrupt lines that have been enabled from software,
+	 * This allows drivers to establish an interrupt handler, but
+	 * disable the irq.  Common on acorn32.
+	 */
+	uint32_t pic_soft_enabled;
+
+	struct intrline *pic_intrlines;	/* array of interrupt lines */
+};
+
+struct pic_softc *
+arm_intr_register_pic(struct pic_softc *);
 
 irqhandler_t
-arm_intr_claim(irqgroup_t, int irq, int type, int ipl, const char *name, int (*func)(void *), void *arg);
-void arm_intr_disestablish(irqgroup_t, irqhandler_t cookie);
+arm_intr_claim(struct pic_softc*, int irq, int type, int ipl, const char *name, int (*func)(void *), void *arg);
+void arm_intr_disestablish(struct pic_softc *, irqhandler_t cookie);
 
-void arm_intr_schedule(irqgroup_t, irqhandler_t);
+void arm_intr_schedule(struct pic_softc *, irqhandler_t);
 
-const struct evcnt * arm_intr_evcnt(irqgroup_t, int ih);
+const struct evcnt * arm_intr_evcnt(struct pic_softc *, int ih);
 
-void arm_intr_soft_enable_irq(irqgroup_t, int irq);
-void arm_intr_soft_disable_irq(irqgroup_t, int irq);
-void arm_intr_queue_irqs(irqgroup_t, uint32_t);
+void arm_intr_soft_enable_irq(struct pic_softc *, int irq);
+void arm_intr_soft_disable_irq(struct pic_softc *, int irq);
+void arm_intr_queue_irqs(struct pic_softc *pic, uint32_t hqpend);
 void arm_intr_process_pending_ipls(struct clockframe *frame, int target_ipl_level);
-
 
 /* autoconf's like to print out the IPL masks */
 extern void arm_intr_print_all_masks(void);
@@ -243,54 +268,25 @@ struct intrhand {
 #define	IST_EDGE	2       /* edge-triggered */
 #define	IST_LEVEL	3       /* level-triggered */
 
-struct intrq {
-	TAILQ_HEAD(, intrhand) iq_list;	/* handler list */
-	TAILQ_ENTRY(intrq) ipl_list;	/* link on iplq list */
-	struct evcnt iq_ev;		/* event counter */
-	int iq_levels;			/* IPL_*'s this IRQ has */
-	int iq_ipl;				/* highest ipl this IRQ has */
-	int iq_ist;				/* share type */
-	int iq_irq;				/* irq line */
-	int iq_mask;
-	irqgroup_t iq_group;	/* which irq group owns this irq */
-	bool iq_pending;		/* is there an irq pending */
-	char iq_name[IRQNAMESIZE];	/* interrupt name */
+struct intrline {
+	TAILQ_HEAD(, intrhand) il_handler_list;	/* handler list */
+	TAILQ_ENTRY(intrline)  il_ipl_list;/* link on iplq list */
+	struct evcnt il_ev;		/* event counter */
+	int il_levels;			/* IPL_*'s this IRQ has */
+	int il_ipl;			/* highest ipl this IRQ has */
+	int il_ist;			/* share type */
+	int il_irq;			/* irq line */
+	int il_mask;
+	struct pic_softc *il_pic;	/* which pic owns this irq */
+	bool il_pending;		/* is there an irq pending */
+	char il_name[IRQNAMESIZE];	/* interrupt name */
 };
 
 struct iplq {
-	TAILQ_HEAD(, intrq) ipl_list;	/* irqs list */
-	struct evcnt ipl_ev;				/* event counter */
-	char ipl_name[IRQNAMESIZE];		/* ipl name */
+	TAILQ_HEAD(, intrline) ipl_il_list;	/* irqs list */
+	struct evcnt ipl_ev;		/* event counter */
+	char ipl_name[IRQNAMESIZE];	/* ipl name */
 };
-
-/* an irq group consists of the items that are needed to make an irq provider generic
- * Originally this was hoped to be hidden from the users, but that provided to be more pain
- * that it's worth, eg footbridge/isa needs access to the iqs so it can find free ones and
- * handle ists
- */
-struct irq_group
-{
-	struct intrq *irqs;		/* array of irq handlers, one for each line */
-	int nirqs;				/* number of irq lines */
-
-	TAILQ_ENTRY(irq_group) irq_groups_list;	/* link on irq group list */
-
-	/* Software copy of the IRQs we have enabled in hardware */
-	uint32_t intr_enabled;
-
-	/* 
-	 * Interrupt lines that have been enabled from software, by default everything
-	 */
-	uint32_t intr_soft_enabled;
-
-	/* used to set and retrieve the hardware irq status */
-	void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled);
-	irq_hardware_cookie_t irq_hardware_cookie;
-	void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type);
-
-	const char *group_name;
-};
-
 
 #endif /* _LOCORE */
 #endif

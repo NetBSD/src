@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.5 2008/01/20 16:03:59 chris Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.6 2008/01/26 19:27:10 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.5 2008/01/20 16:03:59 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.6 2008/01/26 19:27:10 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -60,12 +60,18 @@ __KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.5 2008/01/20 16:03:
 
 extern void isa_intr_init(void);
 
-static irqgroup_t footbridge_irq_group;
+static void footbridge_set_irq_mask(uint32_t intr_enabled);
+static struct pic_softc footbridge_pic =
+{
+	.pic_ops.pic_set_irq_hardware_mask = footbridge_set_irq_mask,
+	.pic_pre_assigned_irqs = 0,
+	.pic_nirqs = FOOTBRIDGE_NIRQ,
+	.pic_name = "footbridge"
+};
 
-static void footbridge_set_irq_mask(irq_hardware_cookie_t, uint32_t intr_enabled);
 static uint32_t footbridge_irq_status(void);
 
-const struct evcnt *footbridge_pci_intr_evcnt __P((void *, pci_intr_handle_t));
+const struct evcnt *footbridge_pci_intr_evcnt (void *, pci_intr_handle_t);
 
 const struct evcnt *
 footbridge_pci_intr_evcnt(void *pcv, pci_intr_handle_t ih)
@@ -76,16 +82,13 @@ footbridge_pci_intr_evcnt(void *pcv, pci_intr_handle_t ih)
 		return isa_intr_evcnt(NULL, (ih & 0x0f));
 	}
 #endif
-	return arm_intr_evcnt(footbridge_irq_group, ih);
+	return arm_intr_evcnt(&footbridge_pic, ih);
 }
 
 void
 footbridge_intr_init(void)
 {
-	footbridge_irq_group = arm_intr_register_irq_provider("footbridge", FOOTBRIDGE_NIRQ,
-		   	footbridge_set_irq_mask,
-			NULL,
-			NULL);
+	arm_intr_register_pic(&footbridge_pic);
 
 	/*
 	 * Since various PCI interrupts could be routed via the ICU
@@ -97,7 +100,7 @@ footbridge_intr_init(void)
 }
 
 static void
-footbridge_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled)
+footbridge_set_irq_mask(uint32_t intr_enabled)
 {
     ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_SET>>2] = intr_enabled;
     ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_CLEAR>>2] = ~intr_enabled;
@@ -115,13 +118,13 @@ footbridge_intr_claim(int irq, int ipl, const char *name, int (*func)(void *), v
 	if (irq < 0 || irq >= FOOTBRIDGE_NIRQ)
 		panic("footbridge_intr_establish: IRQ %d out of range", irq);
 
-	return arm_intr_claim(footbridge_irq_group, irq, IST_LEVEL, ipl, name, func, arg);
+	return arm_intr_claim(&footbridge_pic, irq, IST_LEVEL, ipl, name, func, arg);
 }
 
 void
 footbridge_intr_disestablish(void *cookie)
 {
-	return arm_intr_disestablish(footbridge_irq_group, cookie);
+	return arm_intr_disestablish(&footbridge_pic, cookie);
 }
 
 void
@@ -133,7 +136,7 @@ footbridge_intr_dispatch(struct clockframe * frame)
 	hwpend = footbridge_irq_status();
 
 	/* queue up the interrupts for processing */
-	arm_intr_queue_irqs(footbridge_irq_group, hwpend);
+	arm_intr_queue_irqs(&footbridge_pic, hwpend);
 
 	/* process interrupts */
 	arm_intr_process_pending_ipls(frame, current_ipl_level);

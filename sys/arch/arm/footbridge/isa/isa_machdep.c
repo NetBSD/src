@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6.50.3 2008/01/01 15:39:27 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6.50.4 2008/01/26 19:27:10 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.50.3 2008/01/01 15:39:27 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.50.4 2008/01/26 19:27:10 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -117,9 +117,16 @@ int isa_irqdispatch __P((void *arg));
 
 uint32_t imen;
 
-static irqgroup_t isa_irq_group;
-static void isa_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled);
-static void isa_set_irq_hardware_type(irq_hardware_cookie_t cookie, int irq, int type);
+static void isa_set_irq_mask(uint32_t intr_enabled);
+static void isa_set_irq_hardware_type(int irq, int type);
+static struct pic_softc isa_pic =
+{
+	.pic_ops.pic_set_irq_hardware_mask = isa_set_irq_mask,
+	.pic_ops.pic_set_irq_hardware_type = isa_set_irq_hardware_type,
+	.pic_nirqs = ICU_LEN,
+	.pic_pre_assigned_irqs = 0xefbf,
+	.pic_name = "isa"
+};
 
 
 #define AUTO_EOI_1
@@ -211,7 +218,7 @@ isa_intr_alloc(ic, mask, type, irq)
 	int *irq;
 {
 	int i, tmp, bestirq, count;
-	struct intrq *iq;
+	struct intrline *il;
 	struct intrhand *ih;
 
 	if (type == IST_NONE)
@@ -234,8 +241,8 @@ isa_intr_alloc(ic, mask, type, irq)
 			continue;
 		
 		/* XXX shouldn't expose internals of arm_intr here */
-		iq = &(isa_irq_group->irqs[i]);
-		switch(iq->iq_ist) {
+		il = &(isa_pic.pic_intrlines[i]);
+		switch(il->il_ist) {
 		case IST_NONE:
 			/*
 			 * if nothing's using the irq, just return it
@@ -245,7 +252,7 @@ isa_intr_alloc(ic, mask, type, irq)
 
 		case IST_EDGE:
 		case IST_LEVEL:
-			if (type != iq->iq_ist)
+			if (type != il->il_ist)
 				continue;
 			/*
 			 * if the irq is shareable, count the number of other
@@ -257,7 +264,7 @@ isa_intr_alloc(ic, mask, type, irq)
 			 * IPL_TTY, etc.
 			 */
 			tmp = 0;
-			TAILQ_FOREACH(ih, &(iq->iq_list), ih_list)
+			TAILQ_FOREACH(ih, &(il->il_handler_list), ih_list)
 			     tmp++;
 			if ((bestirq == -1) || (count > tmp)) {
 				bestirq = i;
@@ -282,7 +289,7 @@ isa_intr_alloc(ic, mask, type, irq)
 const struct evcnt *
 isa_intr_evcnt(isa_chipset_tag_t ic, int irq)
 {
-    return arm_intr_evcnt(isa_irq_group, irq);
+    return arm_intr_evcnt(&isa_pic, irq);
 }
 
 /*
@@ -301,7 +308,7 @@ isa_intr_establish(ic, irq, type, level, ih_fun, ih_arg)
 	if (!LEGAL_IRQ(irq) || type == IST_NONE)
 		panic("intr_establish: bogus irq or type");
 
-	return arm_intr_claim(isa_irq_group, irq, type, level, NULL, ih_fun, ih_arg);
+	return arm_intr_claim(&isa_pic, irq, type, level, NULL, ih_fun, ih_arg);
 }
 
 /*
@@ -312,11 +319,11 @@ isa_intr_disestablish(ic, arg)
 	isa_chipset_tag_t ic;
 	void *arg;
 {
-	return arm_intr_disestablish(isa_irq_group, arg);
+	return arm_intr_disestablish(&isa_pic, arg);
 }
 
 static void
-isa_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled)
+isa_set_irq_mask(uint32_t intr_enabled)
 {
 	uint32_t oldirqstate;
 
@@ -329,7 +336,7 @@ isa_set_irq_mask(irq_hardware_cookie_t cookie, uint32_t intr_enabled)
 }
 
 static void
-isa_set_irq_hardware_type(irq_hardware_cookie_t cookie, int irq, int type)
+isa_set_irq_hardware_type(int irq, int type)
 {
 	/* irq trigger types are setup in the m1543 */
 	if (irq < 8) {
@@ -354,10 +361,7 @@ isa_intr_init(void)
  
 	isa_icu_init();
 
-	isa_irq_group = arm_intr_register_irq_provider("isa", ICU_LEN,
-			isa_set_irq_mask,
-			isa_set_irq_hardware_type,
-			NULL);
+	arm_intr_register_pic(&isa_pic);
 	
 	/* something to break the build in an informative way */
 #ifndef ISA_FOOTBRIDGE_IRQ 
@@ -430,8 +434,12 @@ isa_irqdispatch(arg)
 	}
 	restore_interrupts(oldirqstate);
 	
-	/* setup the interupts into the ipl lists */
-	arm_intr_queue_irqs(isa_irq_group, ipendingmask);
+	/*
+	 * Setup the interrupts into the ipl lists.
+	 * They'll be processed later, as the only way to get here is from
+	 * an interrupt
+	 */
+	arm_intr_queue_irqs(&isa_pic, ipendingmask);
 
 	return 1;
 }
