@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_tx39.c,v 1.5 2005/12/24 20:07:19 perry Exp $	*/
+/*	$NetBSD: cache_tx39.c,v 1.6 2008/01/26 14:40:08 tsutsui Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.5 2005/12/24 20:07:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_tx39.c,v 1.6 2008/01/26 14:40:08 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -154,7 +154,7 @@ tx3920_icache_sync_all_16wb(void)
 
 	mips_dcache_wbinv_all();
 
-	__asm volatile("sync");
+	__asm volatile(".set push; .set mips2; sync; .set pop");
 
 	tx3920_icache_do_inv_16(MIPS_PHYS_TO_KSEG0(0),
 	    MIPS_PHYS_TO_KSEG0(mips_picache_size));
@@ -179,7 +179,7 @@ tx3920_icache_sync_range_16wb(vaddr_t va, vsize_t size)
 
 	mips_dcache_wb_range(va, (eva - va));
 
-	__asm volatile("sync");
+	__asm volatile(".set push; .set mips2; sync; .set pop");
 
 	tx3920_icache_do_inv_16(va, eva);
 }
