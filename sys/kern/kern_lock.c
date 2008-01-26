@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lock.c,v 1.132 2008/01/10 20:14:12 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.133 2008/01/26 14:29:31 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.132 2008/01/10 20:14:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.133 2008/01/26 14:29:31 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -136,12 +136,8 @@ acquire(struct lock **lkpp, int *s, int extflags,
 {
 	int error;
 	struct lock *lkp = *lkpp;
-	LOCKSTAT_TIMER(slptime);
-	LOCKSTAT_FLAG(lsflag);
 
 	KASSERT(drain || (wanted & LK_WAIT_NONZERO) == 0);
-
-	LOCKSTAT_ENTER(lsflag);
 
 	for (error = 0; (lkp->lk_flags & wanted) != 0; ) {
 		if (drain)
@@ -150,13 +146,9 @@ acquire(struct lock **lkpp, int *s, int extflags,
 			lkp->lk_waitcount++;
 			lkp->lk_flags |= LK_WAIT_NONZERO;
 		}
-		LOCKSTAT_START_TIMER(lsflag, slptime);
 		error = mtsleep(drain ? (void *)&lkp->lk_flags : (void *)lkp,
 		    lkp->lk_prio, lkp->lk_wmesg, lkp->lk_timo,
 		    __UNVOLATILE(&lkp->lk_interlock));
-		LOCKSTAT_STOP_TIMER(lsflag, slptime);
-		LOCKSTAT_EVENT_RA(lsflag, (void *)(uintptr_t)lkp,
-		    LB_LOCKMGR | LB_SLEEP1, 1, slptime, ra);
 		if (!drain) {
 			lkp->lk_waitcount--;
 			if (lkp->lk_waitcount == 0)
@@ -169,8 +161,6 @@ acquire(struct lock **lkpp, int *s, int extflags,
 			break;
 		}
 	}
-
-	LOCKSTAT_EXIT(lsflag);
 
 	return error;
 }
