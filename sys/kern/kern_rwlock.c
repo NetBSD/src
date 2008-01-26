@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.16 2008/01/25 19:02:31 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.17 2008/01/26 14:13:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.16 2008/01/25 19:02:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.17 2008/01/26 14:13:37 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -677,7 +677,8 @@ rw_write_held(krwlock_t *rw)
 	if (panicstr != NULL)
 		return 1;
 
-	return (rw->rw_owner & RW_WRITE_LOCKED) != 0;
+	return (rw->rw_owner & (RW_WRITE_LOCKED | RW_THREAD)) ==
+	    (RW_WRITE_LOCKED | RW_OWNER(rw));
 }
 
 /*
