@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.26 2008/01/19 22:10:18 dyoung Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.27 2008/01/26 14:13:06 tsutsui Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.26 2008/01/19 22:10:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.27 2008/01/26 14:13:06 tsutsui Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -278,7 +278,7 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP73_LAN2:
 	case PCI_PRODUCT_NVIDIA_MCP73_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP73_LAN4:
-		sc->sc_flags |= NFE_40BIT_ADDR;
+		sc->sc_flags |= NFE_40BIT_ADDR |NFE_PWR_MGMT;
 		break;
 	case PCI_PRODUCT_NVIDIA_CK804_LAN1:
 	case PCI_PRODUCT_NVIDIA_CK804_LAN2:
@@ -293,8 +293,20 @@ nfe_attach(struct device *parent, struct device *self, void *aux)
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN3:
 	case PCI_PRODUCT_NVIDIA_MCP65_LAN4:
 		sc->sc_flags |= NFE_JUMBO_SUP | NFE_40BIT_ADDR | NFE_HW_CSUM |
-		    NFE_HW_VLAN;
+		    NFE_HW_VLAN | NFE_PWR_MGMT;
 		break;
+	}
+
+	if ((sc->sc_flags & NFE_PWR_MGMT) != 0) {
+		/* wakeup some newer chips from powerdown mode */
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_RESET | NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_MAC_RESET, NFE_MAC_RESET_MAGIC);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_MAC_RESET, 0);
+		DELAY(100);
+		NFE_WRITE(sc, NFE_RXTX_CTL, NFE_RXTX_BIT2);
+		NFE_WRITE(sc, NFE_PWR2_CTL,
+		    NFE_READ(sc, NFE_PWR2_CTL) & ~NFE_PWR2_WAKEUP_MASK);
 	}
 
 #ifndef NFE_NO_JUMBO
