@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.79 2007/03/14 12:27:22 drochner Exp $
+#	$NetBSD: TX3922,v 1.80 2008/01/26 15:09:12 tsutsui Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -10,7 +10,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	16
 
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
-makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
+makeoptions	CPUFLAGS="-march=r3900"	# CPU codegen options
 options 	TX392X			# Toshiba TX3922
 
 options 	TX39_DEBUG
