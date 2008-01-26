@@ -1,8 +1,4 @@
-<<<<<<< intr.c
-/*	$NetBSD: intr.c,v 1.22.2.3 2008/01/20 16:03:56 chris Exp $	*/
-=======
-/*	$NetBSD: intr.c,v 1.22.2.3 2008/01/20 16:03:56 chris Exp $	*/
->>>>>>> 1.26
+/*	$NetBSD: intr.c,v 1.22.2.4 2008/01/26 19:31:47 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,11 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-<<<<<<< intr.c
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.3 2008/01/20 16:03:56 chris Exp $");
-=======
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.3 2008/01/20 16:03:56 chris Exp $");
->>>>>>> 1.26
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.4 2008/01/26 19:31:47 chris Exp $");
 
 #include "opt_irqstats.h"
 
