@@ -445,7 +445,7 @@ static void hostapd_cli_recv_pending(struct wpa_ctrl *ctrl, int in_read)
 
 static void hostapd_cli_interactive(void)
 {
-	const int max_args = 10;
+#define max_args 10
 	char cmd[256], *res, *argv[max_args], *pos;
 	int argc;
 
