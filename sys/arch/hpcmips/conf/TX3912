@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.67 2006/08/26 20:26:45 christos Exp $
+#	$NetBSD: TX3912,v 1.68 2008/01/26 15:09:12 tsutsui Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -11,7 +11,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	16
 
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
-makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
+makeoptions	CPUFLAGS="-march=r3900"	# CPU codegen options
 options 	TX391X			# Product TMPR3912
 
 options 	TX39_DEBUG
