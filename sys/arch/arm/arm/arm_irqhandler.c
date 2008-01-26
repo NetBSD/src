@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_irqhandler.c,v 1.1.2.5 2008/01/20 16:03:54 chris Exp $	*/
+/*	$NetBSD: arm_irqhandler.c,v 1.1.2.6 2008/01/26 19:27:10 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -66,7 +66,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.5 2008/01/20 16:03:54 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.6 2008/01/26 19:27:10 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -89,66 +89,62 @@ __KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.5 2008/01/20 16:03:54 chris 
 /* ipl queues */
 static struct iplq arm_iplq[NIPL];
 
-TAILQ_HEAD(, irq_group) irq_groups_list;	/* groups list */
+TAILQ_HEAD(, pic_softc) irq_pics_list;
 
 static void arm_intr_run_handlers_for_ipl(int ipl_level, struct clockframe *frame);
 static int arm_intr_fls(uint32_t n);
 
 const struct evcnt *
-arm_intr_evcnt(irqgroup_t cookie, int irq)
+arm_intr_evcnt(struct pic_softc *pic, int irq)
 {
-	struct irq_group *irqs = cookie;
-	if (irq < 0 || irq >= irqs->nirqs)
+	if (irq < 0 || irq >= pic->pic_nirqs)
 		return NULL;
 	else
-		return &(irqs->irqs[irq].iq_ev);
-}
-
-/* XXX should this be a define so it's always inlined? */
-static inline void
-arm_intr_set_hardware_mask(struct irq_group *irqs)
-{
-	irqs->set_irq_hardware_mask(irqs->irq_hardware_cookie, irqs->intr_enabled & (irqs->intr_soft_enabled));
+		return &(pic->pic_intrlines[irq].il_ev);
 }
 
 static inline void
-arm_intr_enable_irq(struct irq_group *irqs, int irq)
+arm_intr_set_hardware_mask(struct pic_softc *pic)
 {
-	irqs->intr_enabled |= (1U << irq);
-	arm_intr_set_hardware_mask(irqs);
+	pic->pic_ops.pic_set_irq_hardware_mask(pic->pic_intr_enabled & (pic->pic_soft_enabled));
 }
 
 static inline void
-arm_intr_disable_irq(struct irq_group *irqs, int irq)
+arm_intr_enable_irq(struct pic_softc *pic, int irq)
 {
-	irqs->intr_enabled &= ~(1U << irq);
-	arm_intr_set_hardware_mask(irqs);
+	pic->pic_intr_enabled |= (1U << irq);
+	arm_intr_set_hardware_mask(pic);
+}
+
+static inline void
+arm_intr_disable_irq(struct pic_softc *pic, int irq)
+{
+	pic->pic_intr_enabled &= ~(1U << irq);
+	arm_intr_set_hardware_mask(pic);
 }
 
 void
-arm_intr_soft_enable_irq(irqgroup_t cookie, int irq)
+arm_intr_soft_enable_irq(struct pic_softc *pic, int irq)
 {
-	struct irq_group *irqs = cookie;	
 	uint32_t oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
 
-	irqs->intr_soft_enabled |= (1U << irq);
-	arm_intr_set_hardware_mask(irqs);
+	pic->pic_soft_enabled |= (1U << irq);
+	arm_intr_set_hardware_mask(pic);
 	
 	restore_interrupts(oldirqstate);
 }
 
 void
-arm_intr_soft_disable_irq(irqgroup_t cookie, int irq)
+arm_intr_soft_disable_irq(struct pic_softc *pic, int irq)
 {
-	struct irq_group *irqs = cookie;
 	uint32_t oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
 
-	irqs->intr_soft_enabled &= ~(1U << irq);
-	arm_intr_set_hardware_mask(irqs);
+	pic->pic_soft_enabled &= ~(1U << irq);
+	arm_intr_set_hardware_mask(pic);
 	
 	restore_interrupts(oldirqstate);
 }
@@ -181,37 +177,37 @@ void arm_intr_splx_lifter(int newspl)
  * NOTE: This routine must be called with interrupts disabled in the CPSR.
  */
 static void
-arm_intr_calculate_masks(struct irq_group *irqs)
+arm_intr_calculate_masks(struct pic_softc *pic)
 {
-	struct intrq *iq;
+	struct intrline *il;
 	struct intrhand *ih;
 	int irq;
 
 	/* First, figure out which IPLs each IRQ has. */
-	for (irq = 0; irq < irqs->nirqs; irq++) {
-		iq = &(irqs->irqs[irq]);
-		arm_intr_disable_irq(irqs, irq);
+	for (irq = 0; irq < pic->pic_nirqs; irq++) {
+		il = &(pic->pic_intrlines[irq]);
+		arm_intr_disable_irq(pic, irq);
 		
-		TAILQ_REMOVE(&(arm_iplq[iq->iq_ipl].ipl_list), iq, ipl_list);
+		TAILQ_REMOVE(&(arm_iplq[il->il_ipl].ipl_il_list), il, il_ipl_list);
 
-		iq->iq_ipl = IPL_NONE;
-		TAILQ_FOREACH(ih, &(iq->iq_list), ih_list)
+		il->il_ipl = IPL_NONE;
+		TAILQ_FOREACH(ih, &(il->il_handler_list), ih_list)
 		{
 			/* check if this is the highest ipl for this irq */
-			if (iq->iq_ipl < ih->ih_ipl)
-				iq->iq_ipl = ih->ih_ipl;
+			if (il->il_ipl < ih->ih_ipl)
+				il->il_ipl = ih->ih_ipl;
 		}
 	}
 
 	/*
-	 * flag enable all active lines in the hardware
+	 * enable all active lines in the hardware
 	 */
-	for (irq = 0; irq < irqs->nirqs; irq++) {
-		iq = &(irqs->irqs[irq]);
-		TAILQ_INSERT_TAIL(&(arm_iplq[iq->iq_ipl].ipl_list), iq, ipl_list);
-		if (!(TAILQ_EMPTY(&iq->iq_list)))
+	for (irq = 0; irq < pic->pic_nirqs; irq++) {
+		il = &(pic->pic_intrlines[irq]);
+		TAILQ_INSERT_TAIL(&(arm_iplq[il->il_ipl].ipl_il_list), il, il_ipl_list);
+		if (!(TAILQ_EMPTY(&il->il_handler_list)))
 		{
-			arm_intr_enable_irq(irqs, irq);
+			arm_intr_enable_irq(pic, irq);
 		}
 	}
 }
@@ -249,14 +245,14 @@ arm_intr_init(void)
 	
 	for (i = 0; i < NIPL; i++) {
 		ipl = &arm_iplq[i];
-		TAILQ_INIT(&ipl->ipl_list);
+		TAILQ_INIT(&ipl->ipl_il_list);
 
 		/* XXX: this should be a hard coded array */
 		sprintf(ipl->ipl_name, "ipl %d", i);
 		evcnt_attach_dynamic(&ipl->ipl_ev, EVCNT_TYPE_MISC,
 		    NULL, "arm_intr", ipl->ipl_name);
 	}
-	TAILQ_INIT(&irq_groups_list);	/* groups list */
+	TAILQ_INIT(&irq_pics_list);	/* groups list */
 	disable_interrupts(I32_bit|F32_bit);
 
 }
@@ -268,101 +264,83 @@ arm_intr_enable_irqs(void)
 	spl0();
 }
 
-
-irqgroup_t
-arm_intr_register_irq_provider(const char *name, int nirqs, 
-		void (*set_irq_hardware_mask)(irq_hardware_cookie_t, uint32_t intr_enabled),
-		void (*set_irq_hardware_type)(irq_hardware_cookie_t, int irq_line, int type),
-		irq_hardware_cookie_t cookie)
+struct pic_softc *
+arm_intr_register_pic(struct pic_softc *pic)
 {
-	struct irq_group *irqg;
 	int i;
 	
 	/* grab all the memory we need */
-	irqg = malloc(sizeof(*irqg), M_DEVBUF, M_NOWAIT);
-	if (irqg == NULL)
+	pic->pic_intrlines = malloc(sizeof(struct intrline) * pic->pic_nirqs, M_DEVBUF,
+		       	M_NOWAIT);
+	if (pic->pic_intrlines == NULL)
 	{
-		panic("No memory for irqgroup %s", name);
-		return NULL;
-	}
-
-	irqg->irqs = malloc(sizeof(struct intrq) * nirqs, M_DEVBUF, M_NOWAIT);
-	if (irqg->irqs == NULL)
-	{
-		panic("No memory for irq handlers for group %s", name);
-		free(irqg, M_DEVBUF);
+		panic("No memory for irq queues for pic %s", pic->pic_name);
 		return NULL;
 	}
 
 	/* initialise the structure */
-	irqg->nirqs = nirqs;
-	irqg->intr_enabled = 0;
-	irqg->intr_soft_enabled = 0xffffffff;
-	irqg->set_irq_hardware_mask = set_irq_hardware_mask;
-	irqg->set_irq_hardware_type = set_irq_hardware_type;
-	irqg->irq_hardware_cookie = cookie;
-	irqg->group_name = name;
+	pic->pic_intr_enabled = 0;
+	pic->pic_soft_enabled = 0xffffffff;
 
-	for (i = 0; i < nirqs; i++) {
-	   	struct intrq *iq = &(irqg->irqs[i]);
-	       	TAILQ_INIT(&iq->iq_list);
+	for (i = 0; i < pic->pic_nirqs; i++) {
+	   	struct intrline *il = &(pic->pic_intrlines[i]);
+	       	TAILQ_INIT(&il->il_handler_list);
 		
-		sprintf(iq->iq_name, "irq %d", i);
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-	       			NULL, irqg->group_name, iq->iq_name);
-		iq->iq_ipl = IPL_NONE;
-		iq->iq_ist = IST_NONE;
-		iq->iq_irq = i;
-		iq->iq_mask = 0;
-		iq->iq_group = irqg;
-		iq->iq_pending = false;
-		TAILQ_INSERT_TAIL(&(arm_iplq[IPL_NONE].ipl_list), iq, ipl_list);
+		sprintf(il->il_name, "irq %d", i);
+		evcnt_attach_dynamic(&il->il_ev, EVCNT_TYPE_INTR,
+	       			NULL, pic->pic_name, il->il_name);
+		il->il_ipl = IPL_NONE;
+		il->il_ist = IST_NONE;
+		il->il_irq = i;
+		il->il_mask = 0;
+		il->il_pic = pic;
+		il->il_pending = false;
+		TAILQ_INSERT_TAIL(&(arm_iplq[IPL_NONE].ipl_il_list), il, il_ipl_list);
     	}
 	
-	TAILQ_INSERT_TAIL(&irq_groups_list, irqg, irq_groups_list);
+	TAILQ_INSERT_TAIL(&irq_pics_list, pic, irq_pics_list);
 
 	/* clear the masks etc */
-	arm_intr_calculate_masks(irqg);
-	return irqg;
+	arm_intr_calculate_masks(pic);
+	return pic;
 }
 
 irqhandler_t
-arm_intr_claim(irqgroup_t cookie, int irq, int type, int ipl, const char *name,
+arm_intr_claim(struct pic_softc *pic, int irq, int type, int ipl, const char *name,
 		int (*func)(void *), void *arg)
 {
-	struct irq_group *irqg = cookie;
-	struct intrq *iq;
+	struct intrline *il;
 	struct intrhand *ih;
 	u_int oldirqstate;
 
-	if (irq < 0 || irq >= irqg->nirqs)
+	if (irq < 0 || irq >= pic->pic_nirqs)
 		panic("arm_intr_establish: IRQ %d out of range", irq);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
 	{
-		printf("No memory for irq %d, group %s", irq, irqg->group_name);
+		printf("No memory for irq %d, pic %s", irq, pic->pic_name);
 		return (NULL);
 	}
 
-	iq = &(irqg->irqs[irq]);
-	switch (iq->iq_ist)
+	il = &(pic->pic_intrlines[irq]);
+	switch (il->il_ist)
 	{
 		case IST_NONE:
-			iq->iq_ist = type;
-			if (irqg->set_irq_hardware_type)
+			il->il_ist = type;
+			if (pic->pic_ops.pic_set_irq_hardware_type)
 			{
-				irqg->set_irq_hardware_type(irqg->irq_hardware_cookie, irq, type);
+				pic->pic_ops.pic_set_irq_hardware_type(irq, type);
 			}
 			break;
 		case IST_EDGE:
 		case IST_LEVEL:
-			if (iq->iq_ist == type)
+			if (il->il_ist == type)
 				break;
 		case IST_PULSE:
 			if (type != IST_NONE)
 				panic("Can't share irq type %d with %d",
-						iq->iq_ist, type);
+						il->il_ist, type);
 			break;
 	}
 
@@ -373,20 +351,20 @@ arm_intr_claim(irqgroup_t cookie, int irq, int type, int ipl, const char *name,
 
 	oldirqstate = disable_interrupts(I32_bit);
 
-	TAILQ_INSERT_TAIL(&iq->iq_list, ih, ih_list);
+	TAILQ_INSERT_TAIL(&il->il_handler_list, ih, ih_list);
 
-	arm_intr_calculate_masks(irqg);
+	arm_intr_calculate_masks(pic);
 
 	if (name != NULL)
 	{
 		/* detach the existing event counter and add the new name */
-		evcnt_detach(&iq->iq_ev);
-		evcnt_attach_dynamic(&iq->iq_ev, EVCNT_TYPE_INTR,
-				NULL, irqg->group_name, name);
+		evcnt_detach(&il->il_ev);
+		evcnt_attach_dynamic(&il->il_ev, EVCNT_TYPE_INTR,
+				NULL, pic->pic_name, name);
 	}
 	else
 	{
-		iq->iq_ev.ev_count = 0;
+		il->il_ev.ev_count = 0;
 	}
 	
 	restore_interrupts(oldirqstate);
@@ -395,52 +373,49 @@ arm_intr_claim(irqgroup_t cookie, int irq, int type, int ipl, const char *name,
 }
 
 void
-arm_intr_disestablish(irqgroup_t group_cookie, irqhandler_t cookie)
+arm_intr_disestablish(struct pic_softc *pic, irqhandler_t cookie)
 {
-	struct irq_group *irqg = group_cookie;
 	struct intrhand *ih = cookie;
-	struct intrq *iq = &(irqg->irqs[ih->ih_irq]);
+	struct intrline *il = &(pic->pic_intrlines[ih->ih_irq]);
 	int oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
 
-	TAILQ_REMOVE(&iq->iq_list, ih, ih_list);
+	TAILQ_REMOVE(&il->il_handler_list, ih, ih_list);
 	
 	/* reset the IST type */
-	if (TAILQ_EMPTY(&iq->iq_list))
+	if (TAILQ_EMPTY(&il->il_handler_list))
 	{
-		iq->iq_ist = IST_NONE;
-		if (irqg->set_irq_hardware_type)
+		il->il_ist = IST_NONE;
+		if (pic->pic_ops.pic_set_irq_hardware_type)
 		{
-			irqg->set_irq_hardware_type(irqg->irq_hardware_cookie,
-				       	ih->ih_irq, IST_NONE);
+			pic->pic_ops.pic_set_irq_hardware_type(ih->ih_irq, IST_NONE);
 		}
 	}
 
-	arm_intr_calculate_masks(irqg);
+	arm_intr_calculate_masks(pic);
 
 	restore_interrupts(oldirqstate);
 	free(ih, M_DEVBUF);
 }
 
-void arm_intr_schedule(irqgroup_t group_cookie, irqhandler_t cookie)
+void arm_intr_schedule(struct pic_softc *pic, irqhandler_t cookie)
 {
-	struct irq_group *irqg = group_cookie;
 	struct intrhand *ih = cookie;
-	struct intrq *iq = &(irqg->irqs[ih->ih_irq]);
+	struct intrline *il = &(pic->pic_intrlines[ih->ih_irq]);
 	int oldirqstate;
 
 	oldirqstate = disable_interrupts(I32_bit);
 
 	/* flag irq line as pending */
-	iq->iq_pending = true;
+	il->il_pending = true;
 	/* flag ipl level as pending */
-	ipls_pending |= 1 << iq->iq_ipl;
+	ipls_pending |= 1 << il->il_ipl;
 
 	restore_interrupts(oldirqstate);
 
-	if (current_ipl_level < iq->iq_ipl)
-		arm_intr_splx_lifter(iq->iq_ipl);
+	if (current_ipl_level < il->il_ipl)
+		arm_intr_splx_lifter(il->il_ipl);
 }
 
 void
@@ -450,16 +425,17 @@ arm_intr_print_all_masks()
 
 	for (ipl = NIPL-1; ipl > 0; ipl--)
 	{
-		struct intrq *iplq;
+		struct intrline *il;
 		printf("%02d: ", ipl);
 
 		/* process the interrupt queues */
-		for (iplq = TAILQ_FIRST(&(arm_iplq[ipl].ipl_list));
-				(iplq != NULL);
-				iplq = TAILQ_NEXT(iplq, ipl_list))
+		for (il = TAILQ_FIRST(&(arm_iplq[ipl].ipl_il_list));
+				(il != NULL);
+				il = TAILQ_NEXT(il, il_ipl_list))
 		{
-		 	struct irq_group *irqg = iplq->iq_group;
-			printf("%s (%s irq %d) ->", iplq->iq_name, irqg->group_name, iplq->iq_irq);
+		 	struct pic_softc *pic = il->il_pic;
+			printf("%s (%s irq %d) ->", il->il_name,
+				       	pic->pic_name, il->il_irq);
 		}
 		printf("\n");
 	}
@@ -473,69 +449,69 @@ void
 arm_intr_print_pending_irq_details()
 {
 	int ipl;
-	struct irq_group *irqg;
+	struct pic_softc *pic;
 
 	printf("ipls_pending: 0x%0x\n", ipls_pending);
 
 	for (ipl = NIPL-1; ipl > 0; ipl--)
 	{
-		struct intrq *iplq;
+		struct intrline *il;
 		printf("%02d: ", ipl);
 
 		/* process the interrupt queues */
-		for (iplq = TAILQ_FIRST(&(arm_iplq[ipl].ipl_list));
-				(iplq != NULL);
-				iplq = TAILQ_NEXT(iplq, ipl_list))
+		for (il = TAILQ_FIRST(&(arm_iplq[ipl].ipl_il_list));
+				(il != NULL);
+				il = TAILQ_NEXT(il, il_ipl_list))
 		{
-			if (iplq->iq_pending)
+			if (il->il_pending)
 			{
-				irqg = iplq->iq_group;
-				printf("%s (%s irq %d) ->", iplq->iq_name, irqg->group_name, iplq->iq_irq);
+				pic = il->il_pic;
+				printf("%s (%s irq %d) ->", il->il_name,
+					       pic->pic_name, il->il_irq);
 			}
 		}
 		printf("\n");
 	}
 
-	TAILQ_FOREACH(irqg, &irq_groups_list, irq_groups_list)
+	TAILQ_FOREACH(pic, &irq_pics_list, irq_pics_list)
 	{
-		printf("%s: enabled: 0x%0x, soft_enabled = 0x%08x\n", irqg->group_name,
-				irqg->intr_enabled, 
-				irqg->intr_soft_enabled);
+		printf("%s: enabled: 0x%0x, soft_enabled = 0x%08x\n", pic->pic_name,
+				pic->pic_intr_enabled, 
+				pic->pic_soft_enabled);
 	}
-	
 }
 
 
 static void
 arm_intr_run_handlers_for_ipl(int ipl_level, struct clockframe *frame)
 {
-	struct intrq *iplq;
+	struct intrline *il;
 	int oldirqstate;
 
 	arm_iplq[ipl_level].ipl_ev.ev_count++;
 	
 	/* process the interrupt queues */
-	TAILQ_FOREACH(iplq, &(arm_iplq[ipl_level].ipl_list), ipl_list)
+	TAILQ_FOREACH(il, &(arm_iplq[ipl_level].ipl_il_list), il_ipl_list)
 	{
 		struct intrhand *ih;
 		int intr_rc = 0;
 		/* process the handler list queue */
 		/* skip the intrq if it's not pending */
-		if (__predict_false(!iplq->iq_pending))
+		if (__predict_false(!il->il_pending))
 			continue;
 
 		/* 
 		 * we're handling this item, so clear the pending flag
 		 * Note it may get set again while we're running the irq handlers
 		 */
-		iplq->iq_pending = false;
+		il->il_pending = false;
 		
 		/* bump stats */
-		iplq->iq_ev.ev_count++;
+		il->il_ev.ev_count++;
 		uvmexp.intrs++;
 		
 		oldirqstate = enable_interrupts(I32_bit);
-		for (ih = TAILQ_FIRST(&iplq->iq_list);
+		for (ih = TAILQ_FIRST(&il->il_handler_list);
 			((ih != NULL) && (intr_rc != 1));
 		     ih = TAILQ_NEXT(ih, ih_list)) {
 			intr_rc = (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
@@ -543,7 +519,7 @@ arm_intr_run_handlers_for_ipl(int ipl_level, struct clockframe *frame)
 		restore_interrupts(oldirqstate);
 
 		/* Re-enable this interrupt now that it has been handled */
-		arm_intr_enable_irq(iplq->iq_group, iplq->iq_irq);
+		arm_intr_enable_irq(il->il_pic, il->il_irq);
 	}
 }
 
@@ -580,17 +556,16 @@ arm_intr_process_pending_ipls(struct clockframe *frame, int target_ipl_level)
 }
 
 void
-arm_intr_queue_irqs(irqgroup_t group_cookie, uint32_t hwpend)
+arm_intr_queue_irqs(struct pic_softc *pic, uint32_t hwpend)
 {
-	struct irq_group *irqg = group_cookie;
 	uint32_t oldirqstate;
 
 	/*
 	 * Disable all the interrupts that are pending.  We will
 	 * reenable them once they are processed and not masked.
 	 */
-	irqg->intr_enabled &= ~hwpend;
-	arm_intr_set_hardware_mask(irqg);
+	pic->pic_intr_enabled &= ~hwpend;
+	arm_intr_set_hardware_mask(pic);
 	
 	/* protect ipls_pending by disabling interrupts */
 	oldirqstate = disable_interrupts(I32_bit);
@@ -598,16 +573,16 @@ arm_intr_queue_irqs(irqgroup_t group_cookie, uint32_t hwpend)
 	/* run through the pending bits */
 	while (hwpend != 0) {
 		int irq;
-		struct intrq *iq;
+		struct intrline *il;
 		
 		irq = ffs(hwpend) - 1;
-		iq = &(irqg->irqs[irq]);
+		il = &(pic->pic_intrlines[irq]);
 		hwpend &= ~(1 << irq);
 		
 		/* flag irq line as pending */
-		iq->iq_pending = true;
+		il->il_pending = true;
 		/* flag ipl level as pending */
-		ipls_pending |= 1 << iq->iq_ipl;
+		ipls_pending |= 1 << il->il_ipl;
 	}
 	restore_interrupts(oldirqstate);
 }
