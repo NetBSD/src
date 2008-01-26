@@ -586,7 +586,13 @@ bsd_new_sta(struct bsd_driver_data *drv, u8 addr[IEEE80211_ADDR_LEN])
 }
 
 #include <net/route.h>
+#if defined(__NetBSD__)
+#include <net80211/ieee80211_netbsd.h>
+#elif defined(__FreeBSD__)
 #include <net80211/ieee80211_freebsd.h>
+#else
+	#error "Unsupported OS"
+#endif
 
 static void
 bsd_wireless_event_receive(int sock, void *ctx, void *sock_ctx)
@@ -746,10 +752,28 @@ static int
 bsd_get_ssid(const char *ifname, void *priv, u8 *buf, int len)
 {
 	struct bsd_driver_data *drv = priv;
-	int ssid_len = get80211var(drv, IEEE80211_IOC_SSID, buf, len);
+	int ssid_len;
 
+#if defined(IEEE80211_IOC_SSID)
+	ssid_len = get80211var(drv, IEEE80211_IOC_SSID, buf, len);
+#elif defined(SIOCG80211NWID)
+	struct ieee80211_nwid nwid;
+	struct ifreq ifr;
+
+	(void)memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	ifr.ifr_data = (void *)&nwid;
+	if (ioctl(drv->ioctl_sock, SIOCG80211NWID, &ifr) < 0 ||
+	    nwid.i_len > IEEE80211_NWID_LEN)
+		return -1;
+	if (nwid.i_len > len)
+		nwid.i_len = len;
+	(void)memcpy(buf, nwid.i_nwid, nwid.i_len);
+	ssid_len = nwid.i_len;
+#else
+	#error "Cannot find get ssid call"
+#endif
 	wpa_printf(MSG_DEBUG, "%s: ssid=\"%.*s\"", __func__, ssid_len, buf);
-
 	return ssid_len;
 }
 
@@ -760,7 +784,23 @@ bsd_set_ssid(const char *ifname, void *priv, const u8 *buf, int len)
 
 	wpa_printf(MSG_DEBUG, "%s: ssid=\"%.*s\"", __func__, len, buf);
 
+#if defined(IEEE80211_IOC_SSID)
 	return set80211var(drv, IEEE80211_IOC_SSID, buf, len);
+#elif defined(SIOCS80211NWID)
+	{
+		struct ieee80211_nwid nwid;
+		struct ifreq ifr;
+
+		(void)memcpy(nwid.i_nwid, buf, len);
+		nwid.i_len = len;
+		(void)memset(&ifr, 0, sizeof(ifr));
+		(void)strncpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+		ifr.ifr_data = (void *)&nwid;
+		return ioctl(drv->ioctl_sock, SIOCS80211NWID, &ifr);
+	}
+#else
+	#error "Cannot find set ssid call"
+#endif
 }
 
 static void *
