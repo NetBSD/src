@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.136 2008/01/26 08:35:51 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.137 2008/01/26 09:07:01 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.136 2008/01/26 08:35:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.137 2008/01/26 09:07:01 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1295,17 +1295,13 @@ netbsd32_pread(struct lwp *l, const struct netbsd32_pread_args *uap, register_t 
 		syscallarg(off_t) offset;
 	} */
 	struct sys_pread_args ua;
-	ssize_t rt;
-	int error;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TOX_UAP(nbyte, size_t);
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
-	error = sys_pread(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_pread(l, &ua, retval);
 }
 
 int
@@ -1319,17 +1315,13 @@ netbsd32_pwrite(struct lwp *l, const struct netbsd32_pwrite_args *uap, register_
 		syscallarg(off_t) offset;
 	} */
 	struct sys_pwrite_args ua;
-	ssize_t rt;
-	int error;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TOX_UAP(nbyte, size_t);
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
-	error = sys_pwrite(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_pwrite(l, &ua, retval);
 }
 
 int
@@ -1406,14 +1398,10 @@ netbsd32_pathconf(struct lwp *l, const struct netbsd32_pathconf_args *uap, regis
 		syscallarg(int) name;
 	} */
 	struct sys_pathconf_args ua;
-	long rt;
-	int error;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(name);
-	error = sys_pathconf(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_pathconf(l, &ua, retval);
 }
 
 int
@@ -1424,14 +1412,10 @@ netbsd32_fpathconf(struct lwp *l, const struct netbsd32_fpathconf_args *uap, reg
 		syscallarg(int) name;
 	} */
 	struct sys_fpathconf_args ua;
-	long rt;
-	int error;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(name);
-	error = sys_fpathconf(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_fpathconf(l, &ua, retval);
 }
 
 int
