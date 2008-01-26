@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.88 2008/01/25 21:12:11 joerg Exp $
+#	$NetBSD: files.arm,v 1.89 2008/01/26 02:06:04 chris Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -82,6 +82,7 @@ file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/compat_16_machdep.c	compat_16
 file	arch/arm/arm/copystr.S
+file	arch/arm/arm/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
 file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm3
