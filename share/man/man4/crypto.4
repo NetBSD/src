@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypto.4,v 1.11 2008/01/25 07:09:56 tls Exp $
+.\"	$NetBSD: crypto.4,v 1.12 2008/01/26 00:04:27 tls Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Jonathan Stone <jonathan@dsg.stanford.edu>. All rights reserved.
@@ -121,16 +121,16 @@ as symmetric-key hash algorithms with a zero-length key.
 .Bl -tag -width CIOCFKEY
 .\"
 .It Dv CRIOGET Fa int *fd
-Clone the fd argument to
+This operation is deprecated and will be removed after
+.Nx 5.0.
+It clones the fd argument to
 .Xr ioctl 4 ,
-yielding a new file descriptor which can be used to create
-crypto sessions and request crypto operations.
+yielding a new file descriptor for the creation of sessions.  Because the
+device now clones on open, this operation is unnecessary.
 .\"
 .It Dv CIOCGSESSION Fa struct session_op *sessp
-Create a new cryptographic session on a file descriptor returned by a
-previous
-.Dv CRIOGET
-to a session: that is, a persistent object specific to the chosen
+Create a new cryptographic session on a file descriptor for the device;
+that is, a persistent object specific to the chosen
 privacy algorithm, integrity algorithm, and keys specified in
 .Fa sessp .
 The special value 0 for either privacy or integrity
@@ -262,13 +262,6 @@ which in turn is based on code which appeared in
 .Ox 3.2 .
 .Sh BUGS
 Error checking and reporting is weak.
-.Pp
-The CRIOGET ioctl exists only because this device driver predates support
-for cloning devices in
-.Ox
-or
-.Nx .
-It should be deprecated, but is presently required instead.
 .Pp
 The values specified for symmetric-key key sizes to
 .Dv CIOCGSESSION
