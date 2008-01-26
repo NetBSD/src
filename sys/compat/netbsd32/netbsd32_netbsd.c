@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.137 2008/01/26 09:07:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.138 2008/01/26 20:57:46 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.137 2008/01/26 09:07:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.138 2008/01/26 20:57:46 dsl Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1530,17 +1530,28 @@ netbsd32_lseek(struct lwp *l, const struct netbsd32_lseek_args *uap, register_t 
 		syscallarg(int) whence;
 	} */
 	struct sys_lseek_args ua;
+	union {
+	    register_t retval64[2];
+	    register32_t retval32[4];
+	} newpos;
 	int rv;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
 	NETBSD32TO64_UAP(whence);
-	rv = sys_lseek(l, &ua, retval);
-#ifdef NETBSD32_OFF_T_RETURN
-	if (rv == 0)
-		NETBSD32_OFF_T_RETURN(retval);
-#endif
+	rv = sys_lseek(l, &ua, newpos.retval64);
+
+	/*
+	 * We have to split the 64 bit value into 2 halves which will
+	 * end up in separate 32 bit registers.
+	 * This should DTRT on big and little-endian systems provided that
+	 * gcc's 'strict aliasing' tests don't decide that the retval32[]
+	 * entries can't have been assigned to, so need not be read!
+	 */
+	retval[0] = newpos.retval32[0];
+	retval[1] = newpos.retval32[1];
+
 	return rv;
 }
 
