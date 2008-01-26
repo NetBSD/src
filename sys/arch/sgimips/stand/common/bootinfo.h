@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.2 2001/11/21 23:33:18 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3 2008/01/26 14:35:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,5 @@
 
 #include <machine/bootinfo.h>
 
-extern struct btinfo_common *bootinfo;
-
-void	bi_init(void);
-void	bi_add(void *, int);
+void	bi_init(void *);
+void	bi_add(void *, int, size_t);
