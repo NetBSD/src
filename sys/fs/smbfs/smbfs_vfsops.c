@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.75 2008/01/03 01:26:29 pooka Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.76 2008/01/26 14:25:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.75 2008/01/03 01:26:29 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.76 2008/01/26 14:25:38 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -190,7 +190,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST,
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
 
-	lockinit(&smp->sm_hashlock, PVFS, "smbfsh", 0, 0);
+	mutex_init(&smp->sm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	smp->sm_share = ssp;
 	smp->sm_root = NULL;
 	smp->sm_args = *args;
@@ -247,11 +247,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	mp->mnt_data = NULL;
 
 	free(smp->sm_hash, M_SMBFSHASH);
-#ifdef __NetBSD__
-	lockmgr(&smp->sm_hashlock, LK_DRAIN, NULL);
-#else
-	lockdestroy(&smp->sm_hashlock);
-#endif
+	mutex_destroy(&smp->sm_hashlock);
 	FREE(smp, M_SMBFSDATA);
 	return error;
 }
