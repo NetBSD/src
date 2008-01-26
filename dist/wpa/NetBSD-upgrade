@@ -1,0 +1,27 @@
+$NetBSD: NetBSD-upgrade,v 1.1 2008/01/26 21:46:03 christos Exp $
+
+WPA Supplicant/Hostapd
+	originals can be found at: http://hostap.epitest.fi/releases/
+
+
+For the import files and directories were pruned by:
+
+	tar -zxf wpa_supplicant-0.6.2.tar.gz
+	tar -zxf hostapd-0.6.2.tar.gz
+	mv hostapd-0.6.2/hostapd wpa_supplicant-0.6.2
+
+then imported by:
+
+	cd wpa_supplicant-0.6.2
+	cvs import -m 'Import wpa_supplicant and hostapd' \
+		src/dist/wpa MALINEN v0_6_2
+
+To make local changes to wpa, simply patch and commit
+to the main branch (aka HEAD).  Never make local changes on the
+vendor (MALINEN) branch.
+
+All local changes should be submitted to Jouni Malinen for inclusion in
+the next vendor release.
+
+sam@FreeBSD.org & scw@NetBSD.org, christos@NetBSD.org
+26-January-2008
