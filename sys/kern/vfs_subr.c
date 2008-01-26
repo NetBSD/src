@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.322 2008/01/25 16:59:31 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.323 2008/01/26 22:53:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,9 +82,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.322 2008/01/25 16:59:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.323 2008/01/26 22:53:10 pooka Exp $");
 
-#include "opt_inet.h"
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
