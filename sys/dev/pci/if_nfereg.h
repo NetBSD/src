@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfereg.h,v 1.5 2007/12/17 12:41:07 tsutsui Exp $	*/
+/*	$NetBSD: if_nfereg.h,v 1.6 2008/01/26 14:13:06 tsutsui Exp $	*/
 /*	$OpenBSD: if_nfereg.h,v 1.16 2006/02/22 19:23:44 damien Exp $	*/
 
 /*-
@@ -36,6 +36,7 @@
 #define NFE_IRQ_MASK		0x004
 #define NFE_SETUP_R6		0x008
 #define NFE_IMTIMER		0x00c
+#define NFE_MAC_RESET		0x03c
 #define NFE_MISC1		0x080
 #define NFE_TX_CTL		0x084
 #define NFE_TX_STATUS		0x088
@@ -76,11 +77,14 @@
 #define NFE_PWR_CAP		0x268
 #define NFE_PWR_STATE		0x26c
 #define NFE_VTAG_CTL		0x300
+#define NFE_PWR2_CTL		0x600
 
 #define NFE_PHY_ERROR		0x00001
 #define NFE_PHY_WRITE		0x00400
 #define NFE_PHY_BUSY		0x08000
 #define NFE_PHYADD_SHIFT	5
+
+#define NFE_MAC_RESET_MAGIC	0x00f3
 
 #define NFE_STATUS_MAGIC	0x140000
 
@@ -129,6 +133,7 @@
 
 #define NFE_PWR_VALID		(1 << 8)
 #define NFE_PWR_WAKEUP		(1 << 15)
+#define NFE_PWR2_WAKEUP_MASK	0x0f11
 
 #define NFE_MEDIA_SET		0x10000
 #define	NFE_MEDIA_1000T		0x00032
