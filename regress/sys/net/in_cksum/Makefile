@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.1 2008/01/24 18:12:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2008/01/26 02:07:13 chris Exp $
 #
 # To use this, copy / link the cpu_in_cksum.S from the arch subdirectory
-# and copy assum.h from the build directory of a kernel.
+# and copy assym.h from the build directory of a kernel.
 #
 
 NOMAN=	# defined
