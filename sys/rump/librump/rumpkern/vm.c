@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.27 2008/01/03 02:48:03 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.28 2008/01/27 00:16:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -173,7 +173,6 @@ vn_get(struct uvm_object *uobj, voff_t off, struct vm_page **pgs,
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	mutex_enter(&vp->v_interlock);
 	return VOP_GETPAGES(vp, off, pgs, npages, centeridx, access_type,
 	    advice, flags);
 }
@@ -183,7 +182,6 @@ vn_put(struct uvm_object *uobj, voff_t offlo, voff_t offhi, int flags)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
-	mutex_enter(&vp->v_interlock);
 	return VOP_PUTPAGES(vp, offlo, offhi, flags);
 }
 
@@ -307,6 +305,7 @@ rump_ubc_magic_uiomove(void *va, size_t n, struct uio *uio, int *rvp,
 
 	allocsize = npages * sizeof(pgs);
 	pgs = kmem_zalloc(allocsize, KM_SLEEP);
+	mutex_enter(&uwinp->uwin_obj->vmobjlock);
 	rv = uwinp->uwin_obj->pgops->pgo_get(uwinp->uwin_obj,
 	    uwinp->uwin_off + ((uint8_t *)va - uwinp->uwin_mem),
 	    pgs, &npages, 0, 0, 0, 0);
