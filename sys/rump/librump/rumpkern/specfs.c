@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.18 2008/01/22 09:23:39 pooka Exp $	*/
+/*	$NetBSD: specfs.c,v 1.19 2008/01/27 19:07:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,6 +35,7 @@
 #include <sys/disklabel.h>
 
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -305,4 +306,38 @@ rump_specsimpleul(void *v)
 	mutex_exit(&vp->v_interlock);
 
 	return 0;
+}
+
+void
+spec_node_init(struct vnode *nvp, dev_t nvp_rdev)
+{
+	specdev_t *sd;
+
+	sd = kmem_zalloc(sizeof(specdev_t), KM_SLEEP);
+	sd->sd_rdev = nvp_rdev;
+	sd->sd_refcnt = 1;
+	nvp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
+	nvp->v_specnode->sn_dev = sd;
+	nvp->v_rdev = nvp_rdev;
+}
+
+void
+spec_node_destroy(vnode_t *vp)
+{
+	specnode_t *sn;
+	specdev_t *sd;
+
+	sn = vp->v_specnode;
+	sd = sn->sn_dev;
+
+	KASSERT(sd->sd_refcnt == 1);
+	kmem_free(sd, sizeof(*sd));
+	kmem_free(sn, sizeof(*sn));
+}
+
+void
+spec_node_revoke(vnode_t *vp)
+{
+
+	panic("spec_node_revoke: should not be called");
 }

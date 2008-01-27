@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.8 2008/01/02 11:49:05 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.9 2008/01/27 19:07:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -45,6 +45,7 @@ void rump_splx(int);
 #define splsched() rump_splfoo()
 #define splvm() rump_splfoo()
 #define splx(x) rump_splx(x)
+#define spl0() ((void)0)
 
 #define IPL_NONE 0
 #define	IPL_SOFTBIO 0

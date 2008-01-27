@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.33 2008/01/25 06:43:30 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.34 2008/01/27 19:07:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,7 @@
 #include <sys/namei.h>
 #include <sys/queue.h>
 #include <sys/filedesc.h>
+#include <sys/syscallargs.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
@@ -89,203 +90,22 @@ const struct vnodeopv_desc * const rump_opv_descs[] = {
 };
 
 vnode_t *specfs_hash[SPECHSZ];
+int (*mountroot)(void);
 
 int
-getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
-	struct vnode **vpp)
-{
-	struct vnode *vp;
-
-	vp = kmem_zalloc(sizeof(struct vnode), KM_SLEEP);
-	vp->v_mount = mp;
-	vp->v_tag = tag;
-	vp->v_op = vops;
-	vp->v_vnlock = &vp->v_lock;
-	vp->v_usecount = 1;
-	cv_init(&vp->v_cv, "vnode");
-	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
-
-	UVM_OBJ_INIT(&vp->v_uobj, &uvm_vnodeops, 1);
-
-	if (mp) {
-		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	}
-
-	*vpp = vp;
-
-	return 0;
-}
-
-void
-rump_putnode(struct vnode *vp)
+sys_sync(struct lwp *l, const void *v, register_t *rv)
 {
 
-	if (vp->v_specnode)
-		kmem_free(vp->v_specnode, sizeof(*vp->v_specnode));
-	UVM_OBJ_DESTROY(&vp->v_uobj);
-	kmem_free(vp, sizeof(*vp));
-}
-
-void
-ungetnewvnode(struct vnode *vp)
-{
-
-	rump_putnode(vp);
-}
-
-void
-vn_init1(void)
-{
-
+	panic("%s: unimplemented", __func__);
 }
 
 int
-vflush(struct mount *mp, struct vnode *skipvp, int flags)
+dounmount(struct mount *mp, int flags, struct lwp *l)
 {
 
-	return 0;
+	VFS_UNMOUNT(mp, MNT_FORCE);
+	panic("control fd is dead");
 }
-
-void
-vref(struct vnode *vp)
-{
-
-}
-
-int
-vget(struct vnode *vp, int lockflag)
-{
-
-	if ((lockflag & LK_INTERLOCK) == 0)
-		mutex_enter(&vp->v_interlock);
-
-	if (lockflag & LK_TYPE_MASK) {
-		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
-		return 0;
-	}
-
-	mutex_exit(&vp->v_interlock);
-	return 0;
-}
-
-void
-vrele(struct vnode *vp)
-{
-
-}
-
-void
-vrelel(struct vnode *vp, int doinactive, int onhead)
-{
-
-}
-
-void
-vrele2(struct vnode *vp, bool onhead)
-{
-
-}
-
-vnode_t *
-vnalloc(struct mount *mp)
-{
-	struct vnode *vp;
-
-	/* assuming mp != NULL */
-
-	vp = kmem_zalloc(sizeof(struct vnode), KM_SLEEP);
-	vp->v_type = VBAD;
-	vp->v_iflag = VI_MARKER;
-	vp->v_mount = mp;
-	UVM_OBJ_INIT(&vp->v_uobj, &uvm_vnodeops, 1);
-	cv_init(&vp->v_cv, "vnode");
-
-	return vp;
-}
-
-
-void
-vnfree(vnode_t *vp)
-{
-
-	UVM_OBJ_DESTROY(&vp->v_uobj);
-	kmem_free(vp, sizeof(struct vnode));
-}
-
-void
-vput(struct vnode *vp)
-{
-
-	VOP_UNLOCK(vp, 0);
-}
-
-void
-vgone(struct vnode *vp)
-{
-
-	vgonel(vp, curlwp);
-}
-
-void
-vclean(struct vnode *vp, int flags)
-{
-
-	vgonel(vp, curlwp);
-}
-
-void
-vgonel(struct vnode *vp, struct lwp *l)
-{
-
-}
-
-void
-vholdl(struct vnode *vp)
-{
-
-}
-
-void
-holdrelel(struct vnode *vp)
-{
-
-}
-
-void
-vrevoke(vnode_t *vp)
-{
-
-}
-
-int
-vrecycle(struct vnode *vp, kmutex_t *inter_lkp, struct lwp *l)
-{
-	struct mount *mp = vp->v_mount;
-	bool recycle;
-
-	if (vp->v_usecount == 1) {
-		vp->v_usecount = 0;
-		mutex_enter(&vp->v_interlock);
-		if (inter_lkp)
-			mutex_exit(inter_lkp);
-		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
-		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		VOP_INACTIVE(vp, &recycle);
-
-		VOP_RECLAIM(vp);
-		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	}
-
-	return 0;
-}
-
-int
-vcount(struct vnode *vp)
-{
-
-	return 1;
-}
-
 
 int
 vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
@@ -326,6 +146,7 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, dev_t rdev)
 	}
 	vp->v_mount = &mnt_dummy;
 	vp->v_vnlock = &vp->v_lock;
+	vp->v_usecount = 1;
 	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
 	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
 	cv_init(&vp->v_cv, "vnode");
@@ -401,53 +222,11 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	return 0;
 }
 
-int
-vfs_rootmountalloc(const char *fstypename, const char *devname,
-	struct mount **mpp)
-{
-
-	panic("%s: not supported", __func__);
-}
-
-int
-vfs_busy(struct mount *mp, int flags, kmutex_t *interlck)
-{
-
-	return 0;
-}
-
-void
-vfs_unbusy(struct mount *mp)
-{
-
-	return;
-}
-
-void
-spec_node_init(struct vnode *nvp, dev_t nvp_rdev)
-{
-	specdev_t *sd;
-
-	sd = kmem_zalloc(sizeof(specdev_t), KM_SLEEP);
-	sd->sd_rdev = nvp_rdev;
-	sd->sd_refcnt = 1;
-	nvp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
-	nvp->v_specnode->sn_dev = sd;
-	nvp->v_rdev = nvp_rdev;
-}
-
 void
 fifo_printinfo(struct vnode *vp)
 {
 
 	return;
-}
-
-int
-vfs_mountedon(struct vnode *vp)
-{
-
-	return 0;
 }
 
 void

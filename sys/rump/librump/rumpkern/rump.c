@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.31 2008/01/24 22:41:08 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.32 2008/01/27 19:07:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -150,6 +150,7 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mp->mnt_op = vfsops;
 	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
+	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 
 	mount_initspecific(mp);
 
@@ -218,13 +219,6 @@ rump_freecn(struct componentname *cnp, int flags)
 		PNBUF_PUT(cnp->cn_pnbuf);
 	}
 	kmem_free(cnp, sizeof(*cnp));
-}
-
-int
-rump_recyclenode(struct vnode *vp)
-{
-
-	return vrecycle(vp, NULL, curlwp);
 }
 
 static struct fakeblk *
@@ -359,7 +353,9 @@ void
 rump_vp_incref(struct vnode *vp)
 {
 
+	mutex_enter(&vp->v_interlock);
 	++vp->v_usecount;
+	mutex_exit(&vp->v_interlock);
 }
 
 int
@@ -373,7 +369,25 @@ void
 rump_vp_decref(struct vnode *vp)
 {
 
+	mutex_enter(&vp->v_interlock);
 	--vp->v_usecount;
+	mutex_exit(&vp->v_interlock);
+}
+
+void
+rump_vp_recycle(struct vnode *vp)
+{
+
+	mutex_enter(&vp->v_interlock);
+	vclean(vp, DOCLOSE);
+	vrelel(vp, 0, 0);
+}
+
+void
+rump_vp_rele(struct vnode *vp)
+{
+
+	vrele(vp);
 }
 
 struct uio *
