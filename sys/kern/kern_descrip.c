@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.169 2008/01/05 23:53:21 ad Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.170 2008/01/27 16:16:50 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.169 2008/01/05 23:53:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.170 2008/01/27 16:16:50 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ static int	cwdi_ctor(void *, void *, int);
 static void	cwdi_dtor(void *, void *);
 static int	file_ctor(void *, void *, int);
 static void	file_dtor(void *, void *);
+int		do_posix_fadvise(struct lwp *l, int fd, off_t offset,
+		off_t len, int advice, register_t *retval);
 
 /*
  * Descriptor management.
@@ -1660,18 +1662,10 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	return (error);
 }
 
-/* ARGSUSED */
 int
-sys_posix_fadvise(struct lwp *l, const struct sys_posix_fadvise_args *uap, register_t *retval)
+do_posix_fadvise(struct lwp *l, int fd, off_t offset, off_t len, int advice,
+	register_t *retval)
 {
-	/* {
-		syscallarg(int) fd;
-		syscallarg(off_t) offset;
-		syscallarg(off_t) len;
-		syscallarg(int) advice;
-	} */
-	const int fd = SCARG(uap, fd);
-	const int advice = SCARG(uap, advice);
 	struct proc *p = l->l_proc;
 	struct file *fp;
 	int error = 0;
@@ -1726,6 +1720,23 @@ out:
 	}
 	*retval = error;
 	return 0;
+}
+
+/* ARGSUSED */
+int
+sys___posix_fadvise50(struct lwp *l,
+	const struct sys___posix_fadvise50_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) pad;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) len;
+		syscallarg(int) advice;
+	} */
+
+	return do_posix_fadvise(l, SCARG(uap, fd), SCARG(uap, offset),
+		SCARG(uap, len), SCARG(uap, advice), retval);
 }
 
 /*
