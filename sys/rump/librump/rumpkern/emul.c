@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.26 2008/01/24 22:41:08 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.27 2008/01/27 19:07:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -67,12 +67,12 @@ int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
+int dovfsusermount = 1;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
@@ -128,6 +128,16 @@ uprintf(const char *fmt, ...)
 
 void
 printf_nolog(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_normal(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -353,7 +363,11 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	int rv;
 
 #ifdef RUMP_WITHOUT_THREADS
-	panic("threads not available, undef RUMP_WITHOUT_THREADS");
+	/* XXX: fake it */
+	if (strcmp(fmt, "vrele") == 0)
+		return 0;
+	else
+		panic("threads not available, undef RUMP_WITHOUT_THREADS");
 #endif
 
 	KASSERT(fmt != NULL);
@@ -473,4 +487,11 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 		return error;
 
 	return 0;
+}
+
+void
+suspendsched()
+{
+
+	panic("%s: not implemented", __func__);
 }
