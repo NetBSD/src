@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.66 2008/01/26 08:35:51 dsl Exp $
+	$NetBSD: syscalls.master,v 1.67 2008/01/27 20:13:07 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -683,3 +683,11 @@
 			    netbsd32_size_t old_size, \
 			    netbsd32_voidp new_address, \
 			    netbsd32_size_t new_size, int flags); }
+
+412	UNIMPL
+413	UNIMPL
+414	UNIMPL
+415	UNIMPL
+
+416	STD MPSAFE	{ int netbsd32___posix_fadvise50(int fd, int pad, \
+			    off_t offset, off_t len, int advice); }
