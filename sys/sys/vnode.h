@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.187 2008/01/27 19:08:07 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.188 2008/01/27 22:47:31 pooka Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -566,7 +566,9 @@ void	vwakeup(struct buf *);
 void	vwait(struct vnode *, int);
 void	vclean(struct vnode *, int);
 void	vrevoke(struct vnode *);
-void	vrelel(struct vnode *, int, int);
+void	vrelel(struct vnode *, int);
+#define VRELEL_NOINACTIVE	0x01
+#define VRELEL_ONHEAD 		0x02
 struct vnode *
 	vnalloc(struct mount *);
 void	vnfree(struct vnode *);

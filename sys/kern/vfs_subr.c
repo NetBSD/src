@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.323 2008/01/26 22:53:10 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.324 2008/01/27 22:47:31 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.323 2008/01/26 22:53:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.324 2008/01/27 22:47:31 pooka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -533,7 +533,7 @@ ungetnewvnode(vnode_t *vp)
 
 	mutex_enter(&vp->v_interlock);
 	vp->v_iflag |= VI_CLEAN;
-	vrelel(vp, 0, 0);
+	vrelel(vp, 0);
 }
 
 /*
@@ -736,11 +736,11 @@ vget(vnode_t *vp, int flags)
 	 */
 	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
 		if ((flags & LK_NOWAIT) != 0) {
-			vrelel(vp, 0, 0);
+			vrelel(vp, 0);
 			return EBUSY;
 		}
 		vwait(vp, VI_XLOCK | VI_FREEING);
-		vrelel(vp, 0, 0);
+		vrelel(vp, 0);
 		return ENOENT;
 	}
 	if (flags & LK_TYPE_MASK) {
@@ -772,7 +772,7 @@ vput(vnode_t *vp)
  * routine and either return to freelist or free to the pool.
  */
 void
-vrelel(vnode_t *vp, int doinactive, int onhead)
+vrelel(vnode_t *vp, int flags)
 {
 	bool recycle, defer;
 	int error;
@@ -959,7 +959,7 @@ vrele(vnode_t *vp)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
 	mutex_enter(&vp->v_interlock);
-	vrelel(vp, 1, 0);
+	vrelel(vp, 0);
 }
 
 static void
@@ -989,7 +989,7 @@ vrele_thread(void *cookie)
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		vrelel(vp, 1, 0);
+		vrelel(vp, 0);
 	}
 }
 
@@ -1135,7 +1135,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 			vremfree(vp);
 			vp->v_usecount++;
 			vclean(vp, DOCLOSE);
-			vrelel(vp, 1, 0);
+			vrelel(vp, 0);
 			mutex_enter(&mntvnode_lock);
 			continue;
 		}
@@ -1150,7 +1150,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 			vp->v_usecount++;
 			if (vp->v_type != VBLK && vp->v_type != VCHR) {
 				vclean(vp, DOCLOSE);
-				vrelel(vp, 1, 0);
+				vrelel(vp, 0);
 			} else {
 				vclean(vp, 0);
 				vp->v_op = spec_vnodeop_p; /* XXXSMP */
@@ -1296,7 +1296,7 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 	vremfree(vp);
 	vp->v_usecount++;
 	vclean(vp, DOCLOSE);
-	vrelel(vp, 0, 0);
+	vrelel(vp, 0);
 	return (1);
 }
 
@@ -1310,7 +1310,7 @@ vgone(vnode_t *vp)
 
 	mutex_enter(&vp->v_interlock);
 	vclean(vp, DOCLOSE);
-	vrelel(vp, 0, 0);
+	vrelel(vp, 0);
 }
 
 /*
@@ -1431,7 +1431,7 @@ vrevoke(vnode_t *vp)
 		}
 		vq->v_usecount++;
 		vclean(vq, DOCLOSE);
-		vrelel(vq, 1, 0);
+		vrelel(vq, 0);
 		mutex_enter(&specfs_lock);
 		vq = *vpp;
 	}
