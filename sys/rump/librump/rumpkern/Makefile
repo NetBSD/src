@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2008/01/25 06:42:29 pooka Exp $
+#	$NetBSD: Makefile,v 1.28 2008/01/27 19:07:21 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -22,8 +22,8 @@ SRCS+=	fstrans_stub.c misc_stub.c pmap_stub.c vfsops_stub.c
 SRCS+=	clock_subr.c kern_descrip.c kern_lock.c kern_stub.c param.c	\
 	subr_bufq.c subr_hash.c subr_prf2.c subr_specificdata.c		\
 	subr_time.c subr_workqueue.c sys_generic.c vfs_bio.c		\
-	vfs_cache.c vfs_getcwd.c vfs_vnops.c vfs_init.c vfs_lookup.c	\
-	vfs_subr2.c vfs_getcwd.c vnode_if.c
+	vfs_cache.c vfs_getcwd.c vfs_init.c vfs_lookup.c vfs_subr.c	\
+	vfs_subr2.c vfs_vnops.c vnode_if.c
 
 # sys/miscfs
 SRCS+=	genfs_vnops.c sync_subr.c
