@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.28 2008/01/27 00:16:22 pooka Exp $	*/
+/*	$NetBSD: vm.c,v 1.29 2008/01/27 20:10:53 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -260,6 +260,7 @@ void
 uao_detach(struct uvm_object *uobj)
 {
 
+	mutex_enter(&uobj->vmobjlock);
 	ao_put(uobj, 0, 0, PGO_ALLPAGES | PGO_FREE);
 	kmem_free(uobj, sizeof(*uobj));
 }
