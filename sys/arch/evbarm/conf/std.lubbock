@@ -1,9 +1,10 @@
-#	$NetBSD: std.lubbock,v 1.5 2005/12/11 12:17:07 christos Exp $
+#	$NetBSD: std.lubbock,v 1.6 2008/01/27 12:37:12 chris Exp $
 #
 # standard NetBSD/evbarm for LUBBOCK options
 
 machine	evbarm arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 # Pull in LUBBOCK config definitions.
 include "arch/evbarm/conf/files.lubbock"
