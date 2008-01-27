@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.33 2008/01/27 20:01:29 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.34 2008/01/27 22:47:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -387,7 +387,7 @@ rump_vp_recycle_nokidding(struct vnode *vp)
 	mutex_enter(&vp->v_interlock);
 	vp->v_usecount = 1;
 	vclean(vp, DOCLOSE);
-	vrelel(vp, 0, 0);
+	vrelel(vp, 0);
 }
 
 void
