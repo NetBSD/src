@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.578 2008/01/26 22:13:02 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.579 2008/01/27 01:25:18 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -597,8 +597,8 @@ be to get multibyte characters support. For now this means waiting for
 additions in our libcurses.
 
 Package:	OpenPAM
-Version:	20050616
-Current Vers:	20050616
+Version:	20071221
+Current Vers:	20071221
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
@@ -606,6 +606,7 @@ Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
 Notes:
+Next import will need $ Id removal..
 
 Package:	OpenSSH
 Version:	4.6
