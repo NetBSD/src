@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.34 2008/01/02 11:48:42 ad Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.35 2008/01/27 21:58:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.34 2008/01/02 11:48:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.35 2008/01/27 21:58:40 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -387,7 +387,11 @@ ntfs_ntget(ip)
 
 	mutex_enter(&ip->i_interlock);
 	ip->i_usecount++;
-	lockmgr(&ip->i_lock, LK_EXCLUSIVE | LK_INTERLOCK, &ip->i_interlock);
+	while (ip->i_busy != 0) {
+		cv_wait(&ip->i_lock, &ip->i_interlock);
+	}
+	ip->i_busy = 1;
+	mutex_exit(&ip->i_interlock);
 
 	return 0;
 }
@@ -444,7 +448,7 @@ ntfs_ntlookup(
 	LIST_INIT(&ip->i_fnlist);
 
 	/* init lock and lock the newborn ntnode */
-	lockinit(&ip->i_lock, PINOD, "ntnode", 0, LK_EXCLUSIVE);
+	cv_init(&ip->i_lock, "ntfslk");
 	mutex_init(&ip->i_interlock, MUTEX_DEFAULT, IPL_NONE);
 	ntfs_ntget(ip);
 
@@ -485,7 +489,9 @@ ntfs_ntput(ip)
 	}
 #endif
 
-	lockmgr(&ip->i_lock, LK_RELEASE|LK_INTERLOCK, &ip->i_interlock);
+	ip->i_busy = 0;
+	cv_signal(&ip->i_lock);
+	mutex_exit(&ip->i_interlock);
 
 	if (ip->i_usecount == 0) {
 		dprintf(("ntfs_ntput: deallocating ntnode: %llu\n",
@@ -502,7 +508,7 @@ ntfs_ntput(ip)
 			ntfs_freentvattr(vap);
 		}
 		mutex_destroy(&ip->i_interlock);
-		lockdestroy(&ip->i_lock);
+		cv_destroy(&ip->i_lock);
 		FREE(ip, M_NTFSNTNODE);
 	}
 }
