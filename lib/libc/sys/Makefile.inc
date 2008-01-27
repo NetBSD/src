@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.184 2008/01/16 12:34:55 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.185 2008/01/27 16:18:22 martin Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -23,7 +23,8 @@ CLEANFILES+=	${_LSRC:MLintSys*.c}
 .endif
 
 # glue to offer userland wrappers for some syscalls
-SRCS+=	sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c swapon.c
+SRCS+=	posix_fadvise.c sigtimedwait.c sigwait.c sigwaitinfo.c statvfs.c \
+	swapon.c
 
 # glue to provide compatibility between GCC 1.X and 2.X and for compat
 # with old syscall interfaces.
@@ -89,7 +90,7 @@ ASM=	access.S acct.S \
 		mremap.S msgget.S munlock.S munlockall.S munmap.S \
 	nfssvc.S __ntp_gettime30.S \
 	pathconf.S pmc_get_info.S pmc_control.S __posix_chown.S \
-		posix_fadvise.S \
+		__posix_fadvise50.S \
 		__posix_fchown.S __posix_lchown.S __posix_rename.S profil.S \
 	quotactl.S \
 	rasctl.S reboot.S recvfrom.S recvmsg.S rename.S revoke.S \
