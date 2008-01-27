@@ -1,4 +1,4 @@
-/* $NetBSD: drvctlio.h,v 1.3 2006/09/22 04:37:37 thorpej Exp $ */
+/* $NetBSD: drvctlio.h,v 1.4 2008/01/27 01:38:33 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -50,6 +50,21 @@ struct devdetachargs {
 	char devname[16];
 };
 
+struct devlistargs {
+	char l_devname[16];
+	char (*l_childname)[16];
+	size_t l_children;
+};
+
+enum devpmflags {
+	DEVPM_F_SUBTREE = 0x1
+};
+
+struct devpmargs {
+	char devname[16];
+	uint32_t flags;
+};
+
 struct devrescanargs {
 	char busname[16];
 	char ifattr[16];
@@ -59,6 +74,9 @@ struct devrescanargs {
 
 #define DRVDETACHDEV _IOW('D', 123, struct devdetachargs)
 #define DRVRESCANBUS _IOW('D', 124, struct devrescanargs)
+#define DRVSUSPENDDEV _IOW('D', 125, struct devpmargs)
+#define DRVRESUMEDEV _IOW('D', 126, struct devpmargs)
+#define DRVLISTDEV _IOWR('D', 127, struct devlistargs)
 
 /*
  * Generic ioctl that takes a dictionary as an argument (specifies the
