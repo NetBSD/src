@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2004-2007 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -31,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/pam_strerror.c#13 $
+ * $Id: pam_strerror.c,v 1.4 2008/01/27 01:23:01 christos Exp $
  */
 
 #include <stdio.h>
@@ -81,7 +82,7 @@ const char *_pam_err_name[PAM_NUM_ERRORS] = {
  */
 
 const char *
-pam_strerror(pam_handle_t *pamh,
+pam_strerror(const pam_handle_t *pamh,
 	int error_number)
 {
 	static char unknown[16];
