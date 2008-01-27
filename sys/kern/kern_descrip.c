@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.170 2008/01/27 16:16:50 martin Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.171 2008/01/27 19:48:53 dsl Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.170 2008/01/27 16:16:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.171 2008/01/27 19:48:53 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ static int	cwdi_ctor(void *, void *, int);
 static void	cwdi_dtor(void *, void *);
 static int	file_ctor(void *, void *, int);
 static void	file_dtor(void *, void *);
-int		do_posix_fadvise(struct lwp *l, int fd, off_t offset,
-		off_t len, int advice, register_t *retval);
 
 /*
  * Descriptor management.
