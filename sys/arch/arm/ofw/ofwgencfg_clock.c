@@ -1,4 +1,4 @@
-/*	$NetBSD: ofwgencfg_clock.c,v 1.7 2007/03/08 20:48:39 matt Exp $	*/
+/*	$NetBSD: ofwgencfg_clock.c,v 1.7.20.1 2008/01/27 13:08:38 chris Exp $	*/
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* Include header files */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.7 2007/03/08 20:48:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwgencfg_clock.c,v 1.7.20.1 2008/01/27 13:08:38 chris Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,50 +133,6 @@ cpu_initclocks()
 	if (stathz) {
 	    printf("Not installing statclock: OFW generic has only one clock.\n");
 	}
-}
-
-
-/*
- * void microtime(struct timeval *tvp)
- *
- * Fill in the specified timeval struct with the current time
- * accurate to the microsecond.
- */
-
-void
-microtime(tvp)
-	struct timeval *tvp;
-{
-	int s;
-	static struct timeval oldtv;
-
-	s = splhigh();
-
-	/* Fill in the timeval struct */
-
-	*tvp = time;    
-
-	/* Make sure the micro seconds don't overflow. */
-
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		++tvp->tv_sec;
-	}
-
-	/* Make sure the time has advanced. */
-
-	if (tvp->tv_sec == oldtv.tv_sec &&
-	    tvp->tv_usec <= oldtv.tv_usec) {
-		tvp->tv_usec = oldtv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			++tvp->tv_sec;
-		}
-	}
-	    
-
-	oldtv = *tvp;
-	(void)splx(s);		
 }
 
 /*

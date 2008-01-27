@@ -1,4 +1,4 @@
-/*	$NetBSD: epclk.c,v 1.10 2007/01/06 16:18:18 christos Exp $	*/
+/*	$NetBSD: epclk.c,v 1.10.24.1 2008/01/27 13:08:37 chris Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -47,13 +47,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.10 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.10.24.1 2008/01/27 13:08:37 chris Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <machine/bus.h>
@@ -69,8 +70,11 @@ __KERNEL_RCSID(0, "$NetBSD: epclk.c,v 1.10 2007/01/06 16:18:18 christos Exp $");
 
 #include "opt_hz.h"
 
+#define	TIMER_FREQ	983040
+
 static int	epclk_match(struct device *, struct cfdata *, void *);
 static void	epclk_attach(struct device *, struct device *, void *);
+static u_int	epclk_get_timecount(struct timecounter *);
 
 void		rtcinit(void);
 
@@ -88,35 +92,18 @@ struct epclk_softc {
 	int			sc_intr;
 };
 
+static struct timecounter epclk_timecounter = {
+	epclk_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	~0u,			/* counter_mask */
+	TIMER_FREQ,		/* frequency */
+	"epclk",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
 static struct epclk_softc *epclk_sc = NULL;
-static u_int32_t tmark;
-
-
-/* This is a quick ARM way to multiply by 983040/1000000 */
-#define US_TO_TIMER4VAL(x) { \
-	u_int32_t hi, lo, scalar = 4222124650UL; \
-	__asm volatile ( \
-		"umull %0, %1, %2, %3;" \
-		: "=&r"(lo), "=&r"(hi) \
-		: "r"((x)), "r"(scalar) \
-	); \
-	(x) = hi; \
-}
-
-/* This is a quick ARM way to multiply by 1000000/983040 */
-#define TIMER4VAL_TO_US(x) { \
-	u_int32_t hi, lo, scalar = 2184533333UL; \
-	__asm volatile ( \
-		"umull %0, %1, %2, %3;" \
-		"mov %1, %1, lsl #1;" \
-		"mov %0, %0, lsr #31;" \
-		"orr %1, %1, %0;" \
-		: "=&r"(lo), "=&r"(hi) \
-		: "r"((x)), "r"(scalar) \
-	); \
-	(x) = hi; \
-}
-
 
 CFATTACH_DECL(epclk, sizeof(struct epclk_softc),
     epclk_match, epclk_attach, NULL, NULL);
@@ -136,6 +123,7 @@ epclk_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct epclk_softc		*sc;
 	struct epsoc_attach_args	*sa;
+	bool first_run;
 
 	printf("\n");
 
@@ -145,8 +133,10 @@ epclk_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_baseaddr = sa->sa_addr;
 	sc->sc_intr = sa->sa_intr;
 
-	if (epclk_sc == NULL)
+	if (epclk_sc == NULL) {
+		first_run = true;
 		epclk_sc = sc;
+	}
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr, sa->sa_size, 
 		0, &sc->sc_ioh))
@@ -160,6 +150,9 @@ epclk_attach(struct device *parent, struct device *self, void *aux)
 	/* clear and start the debug timer (Timer4) */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EP93XX_TIMERS_Timer4Enable, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EP93XX_TIMERS_Timer4Enable, 0x100);
+
+	if (first_run)
+		tc_init(&epclk_timecounter);
 }
 
 /*
@@ -172,7 +165,6 @@ epclk_intr(void *arg)
 {
 	struct epclk_softc*	sc;
 
-	tmark = TIMER4VAL();
 	sc = epclk_sc;
 
 #if defined(HZ) && (HZ == 64)
@@ -239,72 +231,15 @@ cpu_initclocks(void)
 }
 
 /*
- * microtime:
- *
- *	Fill in the specified timeval struct with the current time
- *	accurate to the microsecond.
- */
-void
-microtime(register struct timeval *tvp)
-{
-	u_int			oldirqstate;
-	u_int			tmarknow, delta;
-	static struct timeval	lasttv;
-
-#ifdef DEBUG
-	if (epclk_sc == NULL) {
-		printf("microtime: called before initialize epclk\n");
-		tvp->tv_sec = 0;
-		tvp->tv_usec = 0;
-		return;
-	}
-#endif
-
-	oldirqstate = disable_interrupts(I32_bit);
-	tmarknow = TIMER4VAL();
-
-        /* Fill in the timeval struct. */
-	*tvp = time;
-	if (__predict_false(tmarknow < tmark)) { /* overflow */
-		delta = tmarknow + (UINT_MAX - tmark);
-	} else {
-		delta = tmarknow - tmark;
-	}
-
-	TIMER4VAL_TO_US(delta);
-
-	tvp->tv_usec += delta;
-
-        /* Make sure microseconds doesn't overflow. */
-	while (__predict_false(tvp->tv_usec >= 1000000)) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-        /* Make sure the time has advanced. */
-	if (__predict_false(tvp->tv_sec == lasttv.tv_sec &&
-	    tvp->tv_usec <= lasttv.tv_usec)) {
-		tvp->tv_usec = lasttv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-
-	lasttv = *tvp;
-
-	restore_interrupts(oldirqstate);
-}
-
-/*
  * delay:
  *
  *	Delay for at least N microseconds.
  */
 void
-delay(unsigned int len)
+delay(unsigned int n)
 {
-	u_int32_t	start, end, ticks;
+	unsigned int cur_tick, initial_tick;
+	int remaining;
 
 #ifdef DEBUG
 	if (epclk_sc == NULL) {
@@ -313,14 +248,37 @@ delay(unsigned int len)
 	}
 #endif
 
-	ticks = start = TIMER4VAL();
-	US_TO_TIMER4VAL(len);
-	end = start + len;
-	while (start <= ticks && ticks > end) {
-		/* wait for Timer4ValueLow wraparound */
-		ticks = TIMER4VAL();
+	/*
+	 * Read the counter first, so that the rest of the setup overhead is
+	 * counted.
+	 */
+	initial_tick = TIMER4VAL();
+
+	if (n <= UINT_MAX / TIMER_FREQ) {
+		/*
+		 * For unsigned arithmetic, division can be replaced with
+		 * multiplication with the inverse and a shift.
+		 */
+		remaining = n * TIMER_FREQ / 1000000;
+	} else {
+		/* This is a very long delay.
+		 * Being slow here doesn't matter.
+		 */
+		remaining = (unsigned long long) n * TIMER_FREQ / 1000000;
 	}
-	while (ticks <= end) {
-		ticks = TIMER4VAL();
+
+	while (remaining > 0) {
+		cur_tick = TIMER4VAL();
+		if (cur_tick > initial_tick)
+			remaining -= UINT_MAX - (cur_tick - initial_tick);
+		else
+			remaining -= initial_tick - cur_tick;
+		initial_tick = cur_tick;
 	}
+}
+
+static u_int
+epclk_get_timecount(struct timecounter *tc)
+{
+	return TIMER4VAL();
 }
