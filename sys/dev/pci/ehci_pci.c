@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.32 2007/12/09 20:28:07 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.33 2008/01/27 20:09:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.32 2007/12/09 20:28:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.33 2008/01/27 20:09:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,8 @@ static void
 ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	const char *devname = sc->sc_bus.bdev.dv_xname;
-	u_int32_t cparams, addr, cap, legsup;
+	u_int32_t cparams, addr, cap;
+	pcireg_t legsup;
 	int maxcap = 10;
 	int ms;
 
@@ -306,23 +307,29 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		return;
 
 	legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
-	/* Ask BIOS to give up ownership */
-	legsup |= EHCI_LEG_HC_OS_OWNED;
-	pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, legsup);
-	for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
-		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
-		if (!(legsup & EHCI_LEG_HC_BIOS_OWNED))
-			break;
-		delay(1000);
+	if (legsup & EHCI_LEG_HC_BIOS_OWNED) {
+		/* Ask BIOS to give up ownership */
+		legsup |= EHCI_LEG_HC_OS_OWNED;
+		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, legsup);
+		for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
+			legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
+			if (!(legsup & EHCI_LEG_HC_BIOS_OWNED))
+				break;
+			delay(1000);
+		}
+		if (ms == EHCI_MAX_BIOS_WAIT) {
+			aprint_normal("%s: BIOS refuses to give up ownership, "
+				      "using force\n", devname);
+			pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, 0);
+		} else {
+			aprint_verbose("%s: BIOS has given up ownership\n", devname);
+		}
 	}
-	if (ms == EHCI_MAX_BIOS_WAIT) {
-		aprint_normal("%s: BIOS refuses to give up ownership, "
-			      "using force\n", devname);
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, 0);
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS, 0);
-	} else {
-		aprint_verbose("%s: BIOS has given up ownership\n", devname);
-	}
+
+	/* Disable SMIs */
+	pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS,
+	    EHCI_LEG_EXT_SMI_BAR | EHCI_LEG_EXT_SMI_PCICMD |
+	    EHCI_LEG_EXT_SMI_OS_CHANGE);
 }
 
 static bool
