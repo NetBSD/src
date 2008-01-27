@@ -1,4 +1,4 @@
-/* $NetBSD: audit-packages.c,v 1.1.1.4 2007/08/23 15:19:13 joerg Exp $ */
+/* $NetBSD: audit-packages.c,v 1.1.1.5 2008/01/27 14:11:29 joerg Exp $ */
 
 /*
  * Copyright (c) 2007 Adrian Portelli <adrianp@NetBSD.org>.
@@ -104,7 +104,6 @@ char *ignore = NULL;				/* ignore urls */
 /* globals */
 char *conf_file = SYSCONFDIR"/audit-packages.conf"; /* config file location */
 char *program_name;				/* the program name */
-char *pkgname;					/* package name in msg */
 
 /* program defaults */
 int verbose = 0;				/* be quiet */
@@ -112,58 +111,54 @@ Boolean eol = FALSE;				/* don't check eol */
 Boolean quiet = FALSE;				/* display full data */
 
 int main(int, char **);
-void *safe_calloc(size_t, size_t);
-char *ap_fixpkgname(char *);
-static int checkforpkg(const char *);
-void usage(void);
-int dvl(void);
-void old_pvfile(void);
-void pv_format(FILE *);
-char *gen_hash(char *);
-char *get_hash(char *);
-int check_hash(char *);
-int check_sig(char *);
-int pv_message(char *[]);
-int ap_ignore(char *[]);
-void show_info(char *);
-void set_pvfile(const char *);
-char *clean_conf(char *);
-int get_confvalues(void);
-char *safe_strdup(const char *);
+static void *safe_calloc(size_t, size_t);
+static char *checkforpkg(const char *);
+static void usage(void);
+static int dvl(void);
+static void old_pvfile(void);
+static void pv_format(FILE *);
+static char *gen_hash(char *);
+static char *get_hash(char *);
+static int check_hash(char *);
+static int check_sig(char *);
+static int pv_message(char *[], char *);
+static int ap_ignore(char *[]);
+static void show_info(char *);
+static void set_pvfile(const char *);
+static char *clean_conf(char *);
+static int get_confvalues(void);
+static char *safe_strdup(const char *);
+static int checkforvuln(FILE *, char *, Boolean, char *, Boolean);
+static char *trim_r(char *);
 
 /*
  * TODO:
  *
+ * built in gz/bzip2 support
  * merge download-vulnerability-list(1)
  *
  */
 
 /*
- * get the options for what were doing and do the actual processing of
+ * get the options for what we are doing, and do the actual processing of
  * the pkg-vulnerabilities file
  */
 int
 main(int argc, char **argv)
 {
-	char *line_ptr;
-	char *one_pkg = NULL;
-	char *one_package = NULL;
+	char *bpkg = NULL;
+	char *bpkg_ptr = NULL;
 	char *pkg_type = NULL;
-	char *pv_token = NULL;
-	char *line_tmp = NULL;
-	char *pv_entry[] = {NULL, NULL, NULL};
-	char *line = NULL;
 	char *check_hash_file = NULL;
 	char *gen_hash_file = NULL;
 	char *hash_generated = NULL;
 	char *query_var = NULL;
+	char *pkgname = NULL;
+	char *bulk_file = NULL;
 
-	int ch, i;
-	int line_count = 0;
+	int ch = 0;
 	int retval = -1;
-	int vuln_count = 0;
 
-	Boolean ignore_found = FALSE;
 	Boolean download = FALSE;
 	Boolean pkg_installed = FALSE;
 	Boolean verify_sig = FALSE;
@@ -171,10 +166,11 @@ main(int argc, char **argv)
 	Boolean type = FALSE;
 	Boolean cli_check_hash = FALSE;
 	Boolean cli_gen_hash = FALSE;
-	Boolean vuln_found = FALSE;
 	Boolean info = FALSE;
+	Boolean bulk = FALSE;
+	Boolean vuln_found = FALSE;
 
-	FILE *pv;
+	FILE *pv, *bf;
 
 	program_name = argv[0];
 
@@ -184,7 +180,7 @@ main(int argc, char **argv)
 
 	opterr = 0;
 
-	while ((ch = getopt(argc, argv, ":dveqK:n:h:g:c:p:st:Q:V")) != -1) {
+	while ((ch = getopt(argc, argv, ":dveqK:n:h:g:c:p:st:F:Q:V")) != -1) {
 
 		switch (ch) {
 
@@ -211,7 +207,7 @@ main(int argc, char **argv)
 			break;
 
 		case 'n':
-			one_package = optarg;
+			pkgname = optarg;
 			check_one = TRUE;
 			pkg_installed = FALSE;
 			break;
@@ -221,13 +217,18 @@ main(int argc, char **argv)
 			break;
 
 		case 'p':
-			one_package = optarg;
+			pkgname = optarg;
 			check_one = TRUE;
 			pkg_installed = TRUE;
 			break;
-		
+
 		case 'q':
 			quiet = TRUE;
+			break;
+
+		case 'F':
+			bulk_file = optarg;
+			bulk = TRUE;
 			break;
 
 		case 's':
@@ -279,7 +280,7 @@ main(int argc, char **argv)
 	 * check the hash and/or sig for a specified file
 	 *
 	 * if -h <file> is given then just the hash is checked
-	 * but if -s -f <file> are given then both the hash and the
+	 * but if -s -h <file> are given then both the hash and the
 	 * sig are checked.  this is purely for
 	 * download-vulnerability-list, users should not be directly
 	 * calling audit-packages with -h <file> or -s -h <file>.
@@ -309,9 +310,6 @@ main(int argc, char **argv)
 	retval = get_confvalues();
 
 	/* if we found some IGNORE_URLS lines */
-	if (ignore != NULL)
-		ignore_found = TRUE;
-
 	if (verbose >= 2) {
 		fprintf(stderr, "debug2: Using PKGDB_DIR: %s\n", _pkgdb_getPKGDB_DIR());
 		fprintf(stderr, "debug2: Using pkg-vulnerabilities file: %s\n", pvfile);
@@ -373,41 +371,104 @@ main(int argc, char **argv)
 
 	/*
 	 * this is for -p:
-	 * (Check a specific installed package for vulnerabilities.)
-	 * we run pkg_info to get the package name into one_pkg
-	 * and to check if it's actually installed.
-	 *
-	 * if we find that it's not installed then just exit silently.
+	 *  check a specific installed package for vulnerabilities
+	 *  if we find that it's not installed, just exit silently
 	 */
 	if ((pkg_installed == TRUE) && (check_one == TRUE)) {
-		if ((checkforpkg(one_package)) == 0) {
+		if ((checkforpkg(pkgname)) != NULL) {
 			if (verbose >= 3)
-				fprintf(stderr, "debug3: Package found to be installed (-p): %s\n", one_package);
+				fprintf(stderr, "debug3: Package found to be installed (-p): %s\n", pkgname);
 		} else {
 			if (verbose >= 3)
-				fprintf(stderr, "debug3: Package not found to be installed (-p): %s\n", one_package);
+				fprintf(stderr, "debug3: Package not found to be installed (-p): %s\n", pkgname);
 			exit(EXIT_SUCCESS);
 		}
 	}
 
 	/*
-	 * this is for -n
-	 * Check a specific installed package for vulnerabilities.
-	 *
-	 * here we don't care if it's installed or not.
+	 * this is for -n:
+	 *  check a specific package for vulnerabilities
+	 *  here we don't care if it's installed or not
 	 */
 	if ((pkg_installed == FALSE) && (check_one == TRUE)) {
-		one_pkg = one_package;
-		pkgname = one_package;
-
 		if (verbose >= 3)
-			fprintf(stderr, "debug3: Looking for package (-n): %s\n", one_pkg);
+			fprintf(stderr, "debug3: Looking for package (-n): %s\n", pkgname);
 	}
 
-	line = safe_calloc(MAXLINELEN, sizeof(char));
 	rewind(pv);
 
-	while ((line_ptr = fgets(line, MAXLINELEN, pv)) != NULL) {
+	/* check a package for vulnerabilities */
+	if (bulk == FALSE) {
+		retval = checkforvuln(pv, pkgname, type, pkg_type, check_one);
+
+		if (retval != 0)
+			vuln_found = TRUE;
+	} else {
+		check_one = TRUE;
+
+		if ((bf = fopen(bulk_file, "r")) == NULL) {
+			errx(EXIT_FAILURE, "Unable to open: %s", bulk_file);
+		}
+
+		bpkg = safe_calloc(MAXLINELEN, sizeof(char));
+
+		while ((bpkg_ptr = fgets(bpkg, MAXLINELEN, bf)) != NULL) {
+
+			/* what we're not interested in */
+			if ((bpkg[0] == '#') || (bpkg[0] == '\n'))
+				continue;
+
+			bpkg = trim_r(bpkg);
+
+			retval = checkforvuln(pv, bpkg, type, pkg_type, check_one);
+			if (retval != 0)
+				vuln_found = TRUE;
+		}
+
+		free(bpkg);
+
+		/* bail if ferror is set */
+		if (ferror(bf) != 0)
+			errx(EXIT_FAILURE, "Unable to read: %s", bulk_file);
+
+		fclose(bf);
+	}
+
+	fclose(pv);
+
+	if ((verbose >= 1) && (vuln_found == FALSE))
+		fprintf(stderr, "No vulnerable packages found.\n");
+
+	if (vuln_found == FALSE) {
+		return EXIT_SUCCESS;
+	} else {
+		return EXIT_FAILURE;
+	}
+}
+
+/* end main() */
+
+/*
+ * check a given pattern/package for a hit in the pkg-vulnerabilities file
+ */
+static int
+checkforvuln(FILE *vuln_file, char *package, Boolean type, char *pkg_type, Boolean check_one)
+{
+	Boolean vuln_found = FALSE;
+
+	char *line = NULL;
+	char *line_tmp = NULL;
+	char *pv_token = NULL;
+	char *pv_entry[] = {NULL, NULL, NULL};
+
+	int line_count = 0;
+	int i = 0;
+	int retval = -1;
+	int vuln_count = 0;
+
+	line = safe_calloc(MAXLINELEN, sizeof(char));
+
+	while (fgets(line, MAXLINELEN, vuln_file) != NULL) {
 
 		++line_count;
 
@@ -424,10 +485,7 @@ main(int argc, char **argv)
 
 		i = 0;
 
-		line_tmp = safe_strdup(line);
-
-		if (line_tmp[strlen(line_tmp) - 1] == '\n')
-			line_tmp[strlen(line_tmp) - 1] = ' ';
+		line_tmp = trim_r(line);
 
 		do {
 			pv_token = strsep(&line_tmp, " \t");
@@ -460,7 +518,7 @@ main(int argc, char **argv)
 		}
 
 		/* deal with URLs that we're ignorning */
-		if (ignore_found == TRUE) {
+		if (ignore != NULL) {
 			retval = ap_ignore(pv_entry);
 
 			/* if we got an ignore hit then stop here */
@@ -478,12 +536,8 @@ main(int argc, char **argv)
 			 * matching.
 			 */
 
-			if ((pkg_match(pv_entry[0], one_package)) == 1) {
-
-				/* flag to indicate we have found something */
+			if ((pkg_match(pv_entry[0], package)) == 1)
 				vuln_found = TRUE;
-			}
-
 		} else {
 
 			/*
@@ -492,18 +546,16 @@ main(int argc, char **argv)
 			 * pattern in pv_entry[0] is installed.
 			 */
 
-			if ((checkforpkg(pv_entry[0])) == 0) {
-
-				/* flag to indicate we have found something */
+			package = checkforpkg(pv_entry[0]);
+			if (package != NULL)
 				vuln_found = TRUE;
-			}
 		}
 
 		/* display the messages for all the vulnerable packages seen */
 		if (vuln_found == TRUE) {
 
 			/* EOL or vulnerable message and increment the count */
-			retval = pv_message(pv_entry);
+			retval = pv_message(pv_entry, package);
 			vuln_count = vuln_count + retval;
 
 			/* reset the found flag */
@@ -512,26 +564,19 @@ main(int argc, char **argv)
 	}
 
 	/* bail if ferror is set */
-	if (ferror(pv) != 0) {
+	if (ferror(vuln_file) != 0)
 		errx(EXIT_FAILURE, "Unable to read specified pkg-vulnerabilities file: %s", pvfile);
-	}
 
-	fclose(pv);
-
+	rewind(vuln_file);
 	free(line);
 
-	if ((verbose >= 1) && (vuln_count == 0))
-		fprintf(stderr, "No vulnerable packages found.\n");
-
-	if (vuln_count == 0) {
-		return EXIT_SUCCESS;
-	} else {
-		return EXIT_FAILURE;
-	}
+	return vuln_count;
 }
 
-/* wrap calloc in some common error checking */
-void *
+/*
+ * wrap calloc in some common error checking
+ */
+static void *
 safe_calloc(size_t number, size_t size)
 {
 	void *ptr;
@@ -545,35 +590,31 @@ safe_calloc(size_t number, size_t size)
 	return ptr;
 }
 
-/* fix a pkgname by removing a directory prefix (if any) */
-char *
-ap_fixpkgname(char *fixpkgname)
-{
-	char *tmppkgname = NULL;
-	char *retval = NULL;
-
-	retval = safe_calloc(MAXPKGNAMELEN, sizeof(char));
-
-	/* get the last separator */
-	tmppkgname = strrchr(fixpkgname, '/');
-
-	/* if there's no separator present then we assume the name is ok */
-	if (tmppkgname == NULL) {
-		retval = fixpkgname;
-	} else {
-		/* strrchr will leave the first separator still in the string */
-		if (tmppkgname[0] == '/')
-			strlcpy(retval, &tmppkgname[1], MAXPKGNAMELEN);
-	}
-
-	return retval;
-}
-
-/* clean a valid line from the configuration file */
-char *
-clean_conf(char *conf_line)
+/*
+ * strip any trailing characters we don't want from a string
+ */
+static char *
+trim_r(char *trimmer)
 {
 	int i = 0;
+
+	for (i = (strlen(trimmer) - 1); i > 0; --i) {
+		if (STRIP(trimmer[i])) {
+			trimmer[i] = '\0';
+		} else {
+			i = 0;
+		}
+	}
+
+	return trimmer;
+}
+
+/*
+ * clean a valid line from the configuration file
+ */
+static char *
+clean_conf(char *conf_line)
+{
 	size_t len = 0;
 	char *token = NULL;
 	char *cp;
@@ -593,13 +634,7 @@ clean_conf(char *conf_line)
 	}
 
 	/* remove any trailing characters we don't want */
-	for (i = (strlen(token) - 1); i > 0; --i) {
-		if (STRIP(token[i])) {
-			token[i] = '\0';
-		} else {
-			i = 0;
-		}
-	}
+	token = trim_r(token);
 
 	len = strlen(token);
 
@@ -611,8 +646,10 @@ clean_conf(char *conf_line)
 	return token;
 }
 
-/* read in our values from a configuration file */
-int
+/*
+ * read in our values from a configuration file
+ */
+static int
 get_confvalues(void)
 {
 	FILE *conf;
@@ -640,7 +677,7 @@ get_confvalues(void)
 		if ((line[0] == '#') || (line[0] == '\n'))
 			continue;
 
-		if ((strncmp(line, "IGNORE_URLS", 11) == 0) && 
+		if ((strncmp(line, "IGNORE_URLS", 11) == 0) &&
 		    (f_ignore == FALSE)) {
 			retval = clean_conf(line);
 			if (retval != NULL) {
@@ -656,7 +693,7 @@ get_confvalues(void)
 				f_verify_bin = TRUE;
 			}
 		}
-		else if ((strncmp(line, "PKGVULNDIR", 9) == 0) && 
+		else if ((strncmp(line, "PKGVULNDIR", 9) == 0) &&
 		    (f_set_pvfile == FALSE)) {
 			retval = clean_conf(line);
 			if (retval != NULL) {
@@ -669,9 +706,8 @@ get_confvalues(void)
 	}
 
 	/* bail if eof has not been set or ferror is set */
-	if ((feof(conf) == 0) || (ferror(conf) != 0)) {
+	if ((feof(conf) == 0) || (ferror(conf) != 0))
 		errx(EXIT_FAILURE, "Unable to read specified configuration file: %s", conf_file);
-	}
 
 	free(line);
 	fclose(conf);
@@ -679,28 +715,36 @@ get_confvalues(void)
 	return 0;
 }
 
-/* check to see if a package exists */
-static int
-checkforpkg(const char *one_package)
+/*
+ * check to see if a package exists
+ */
+static char *
+checkforpkg(const char *package)
 {
-	pkgname = find_best_matching_installed_pkg(one_package);
-	if (pkgname == NULL && !ispkgpattern(one_package)) {
+	char *retval = NULL;
+
+	retval = find_best_matching_installed_pkg(package);
+
+	if (retval == NULL && !ispkgpattern(package)) {
 		char *pattern;
 
-		if (asprintf(&pattern, "%s-[0-9]*", one_package) == -1)
+		if (asprintf(&pattern, "%s-[0-9]*", package) == -1)
 			errx(EXIT_FAILURE, "asprintf failed");
 
-		pkgname = find_best_matching_installed_pkg(pattern);
+		retval = find_best_matching_installed_pkg(pattern);
 		free(pattern);
 	}
-	return pkgname == NULL ? 1 : 0;
+
+	return retval;
 }
 
-/* usage message for this program */
-void
+/*
+ * usage message for this program
+ */
+static void
 usage(void)
 {
-	fprintf(stderr, "Usage: %s [-deqsVv] [-c config_file] [-g file] [-h file] [-K pkg_dbdir] [-n package] [-p package] [-Q varname ] [-t type]\n", program_name);
+	fprintf(stderr, "Usage: %s [-deqsVv] [-c config_file] [-F file] [-g file] [-h file] [-K pkg_dbdir] [-n package] [-p package] [-Q varname ] [-t type]\n", program_name);
 	fprintf(stderr, "\t-d : Run the download-vulnerability-list script before anything else.\n");
 	fprintf(stderr, "\t-e : Check for end-of-life (eol) packages.\n");
 	fprintf(stderr, "\t-q : Be quiet and just dump the detected vulnerable package names.\n");
@@ -708,6 +752,7 @@ usage(void)
 	fprintf(stderr, "\t-V : Display version and exit.\n");
 	fprintf(stderr, "\t-v : Be more verbose. Specify multiple -v flags to increase verbosity.\n");
 	fprintf(stderr, "\t-c : Specify a custom configuration file to use.\n");
+	fprintf(stderr, "\t-F : Check all packages listed in a file for vulnerabilities.\n");
 	fprintf(stderr, "\t-g : Compute the hash of a file.\n");
 	fprintf(stderr, "\t-h : Check the hash of a file against the internally stored value.\n");
 	fprintf(stderr, "\t-K : Use pkg_dbdir as PKG_DBDIR.\n");
@@ -718,8 +763,10 @@ usage(void)
 	exit(EXIT_SUCCESS);
 }
 
-/* we need to download the file first */
-int
+/*
+ * we need to download the file first
+ */
+static int
 dvl(void)
 {
 	int retval = -1;
@@ -734,8 +781,10 @@ dvl(void)
 	return retval;
 }
 
-/* check for an old vulnerabilities file if we're being verbose */
-void
+/*
+ * check for an old vulnerabilities file if we're being verbose
+ */
+static void
 old_pvfile(void)
 {
 	float t_diff;
@@ -763,8 +812,10 @@ old_pvfile(void)
 	}
 }
 
-/* get the #FORMAT from the pkg-vulnerabilities file */
-void
+/*
+ * get the #FORMAT from the pkg-vulnerabilities file
+ */
+static void
 pv_format(FILE * pv)
 {
 	char *line = NULL;
@@ -814,8 +865,10 @@ pv_format(FILE * pv)
 	free(line);
 }
 
-/* extract the stored hash in the pkg-vulnerabilities file */
-char *
+/*
+ * extract the stored hash in the pkg-vulnerabilities file
+ */
+static char *
 get_hash(char *hash_input)
 {
 	char *line = NULL;
@@ -853,8 +906,10 @@ get_hash(char *hash_input)
 	return hash;
 }
 
-/* check the internally stored hash against the computed hash (-h <file>) */
-int
+/*
+ * check the internally stored hash against the computed hash (-h <file>)
+ */
+static int
 check_hash(char *hash_input)
 {
 	int retval = -1;
@@ -889,8 +944,10 @@ check_hash(char *hash_input)
 	return retval;
 }
 
-/* do the hash calculation on specified input */
-char *
+/*
+ * do the hash calculation on specified input
+ */
+static char *
 gen_hash(char *hash_input)
 {
 	char *hash_result = NULL;
@@ -947,8 +1004,10 @@ gen_hash(char *hash_input)
 	return hash_calc;
 }
 
-/* do signature checking - if required */
-int
+/*
+ * do signature checking - if required
+ */
+static int
 check_sig(char *sig_input)
 {
 	int retval = -1;
@@ -962,9 +1021,11 @@ check_sig(char *sig_input)
 	return retval;
 }
 
-/* print the messages for eol and vulnerable packages */
-int
-pv_message(char *pv_entry[])
+/*
+ * print the messages for eol and vulnerable packages
+ */
+static int
+pv_message(char *pv_entry[], char *package)
 {
 	int retval = 0;
 
@@ -982,21 +1043,23 @@ pv_message(char *pv_entry[])
 		retval = 1;
 
 		/* Just make sure we display _something_ useful here */
-		if (pkgname == NULL)
-			pkgname = pv_entry[0];
+		if (package == NULL)
+			package = pv_entry[0];
 
-		if (quiet == FALSE) {	
-			fprintf(stdout, "Package %s has a %s vulnerability, see %s\n", pkgname, pv_entry[1], pv_entry[2]);
+		if (quiet == FALSE) {
+			fprintf(stdout, "Package %s has a %s vulnerability, see: %s\n", package, pv_entry[1], pv_entry[2]);
 		} else {
-			fprintf(stdout, "%s\n", pkgname);
+			fprintf(stdout, "%s\n", package);
 		}
 	}
 
 	return retval;
 }
 
-/* deal with URLs that we're ignorning */
-int
+/*
+ * deal with URLs that we're ignorning
+ */
+static int
 ap_ignore(char *pv_entry[])
 {
 	char *ignore_tmp = NULL;
@@ -1032,14 +1095,18 @@ ap_ignore(char *pv_entry[])
 	return retval;
 }
 
-/* at the moment we really don't need to clean anything up */
+/*
+ * at the moment we really don't need to clean anything up
+ */
 void
 cleanup(int signo)
 {
 }
 
-/* print what the current settings are */
-void
+/*
+ * print what the current settings are
+ */
+static void
 show_info(char *varname)
 {
 	if (strncmp(varname, "GPG", 3) == 0) {
@@ -1053,8 +1120,10 @@ show_info(char *varname)
 	}
 }
 
-/* set the location for the pkg-vulnerabilities file */
-void
+/*
+ * set the location for the pkg-vulnerabilities file
+ */
+static void
 set_pvfile(const char *vuln_dir)
 {
 	char *pvloc = NULL;
@@ -1071,8 +1140,10 @@ set_pvfile(const char *vuln_dir)
 	free(pvloc);
 }
 
-/* duplicate a string and check the return value */
-char *
+/*
+ * duplicate a string and check the return value
+ */
+static char *
 safe_strdup(const char *dupe)
 {
 	char *retval;

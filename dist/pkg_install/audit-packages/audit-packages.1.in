@@ -1,4 +1,4 @@
-.\" $NetBSD: audit-packages.1.in,v 1.1.1.3 2007/08/14 22:59:50 joerg Exp $
+.\" $NetBSD: audit-packages.1.in,v 1.1.1.4 2008/01/27 14:11:29 joerg Exp $
 .\"
 .\" Copyright (c) 2003 Jeremy C. Reed.  All rights reserved.
 .\"
@@ -30,7 +30,7 @@
 .\" NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 10, 2007
+.Dd January 7, 2008
 .Os
 .Dt AUDIT-PACKAGES 1
 .Sh NAME
@@ -41,6 +41,7 @@
 .Nm
 .Op Fl deqsVv
 .Op Fl c Ar config_file
+.Op Fl F Ar file
 .Op Fl g Ar file
 .Op Fl h Ar file
 .Op Fl K Ar pkg_dbdir
@@ -63,16 +64,49 @@ vulnerable package.
 .Pp
 The following flags are supported:
 .Bl -tag -width XcXconfigXfileXX
-.It Fl c Ar config_file
-Specify a custom
-.Ar config_file
-configuration file to use.
 .It Fl d
 Attempt to download the vulnerabilities file using the
 .Nm download-vulnerability-list
 script before scanning the installed packages for vulnerabilities.
 .It Fl e
 Check for end-of-life (eol) packages.
+.It Fl q
+Be ``quiet'' in emitting report headers and such, just dump the
+raw info (basically, assume a non-human reading).
+.It Fl s
+Verify the signature of the current
+.Pa pkg-vulnerabilities
+file.
+The key used to sign the file is available from:
+.Pa ftp://ftp.netbsd.org/pub/NetBSD/security/PGP/pkgsrc-security@NetBSD.org.asc
+.Pp
+In order for this to function correctly the above key must be
+added to the gpg keyring of the user who runs
+.Ic audit-packages -s
+and/or
+.Ic download-vulnerability-list -s .
+In addition to this the gpg binary must be installed on your system.
+The path to the gpg binary can be set in
+.Xr audit-packages.conf 5 .
+.Pp
+The requirement for GnuPG may go away in the future when a suitable
+replacement is implemented.
+.It Fl V
+Display the version number and exit.
+.It Fl v
+Be more verbose.
+Specify multiple
+.Fl v
+flags to increase verbosity.
+Currently a maximum level of three is supported.
+.It Fl c Ar config_file
+Specify a custom
+.Ar config_file
+configuration file to use.
+.It Fl F Ar file
+Load a 
+.Ar file
+containing a list of package names and or package patterns to check.
 .It Fl g Ar file
 Compute the SHA512 hash on
 .Ar file .
@@ -102,39 +136,10 @@ are
 .Dv PKGVULNDIR ,
 and
 .Dv IGNORE_URLS .
-.It Fl q
-Be ``quiet'' in emitting report headers and such, just dump the
-raw info (basically, assume a non-human reading).
-.It Fl s
-Verify the signature of the current
-.Pa pkg-vulnerabilities
-file.
-The key used to sign the file is available from:
-.Pa ftp://ftp.netbsd.org/pub/NetBSD/security/PGP/pkgsrc-security@NetBSD.org.asc
-.Pp
-In order for this to function correctly the above key must be
-added to the gpg keyring of the user who runs
-.Ic audit-packages -s
-and/or
-.Ic download-vulnerability-list -s .
-In addition to this the gpg binary must be installed on your system.
-The path to the gpg binary can be set in
-.Xr audit-packages.conf 5 .
-.Pp
-The requirement for GnuPG may go away in the future when a suitable
-replacement is implemented.
 .It Fl t Ar type
 Only check for the specified
 .Ar type
 of vulnerability.
-.It Fl V
-Display the version number and exit.
-.It Fl v
-Be more verbose.
-Specify multiple
-.Fl v
-flags to increase verbosity.
-Currently a maximum level of three is supported.
 .El
 .Pp
 The

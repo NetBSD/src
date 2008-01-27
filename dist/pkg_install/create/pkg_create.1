@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_create.1,v 1.1.1.4 2007/12/24 00:03:05 joerg Exp $
+.\" $NetBSD: pkg_create.1,v 1.1.1.5 2008/01/27 14:11:30 joerg Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -441,8 +441,9 @@ This name is potentially different than the name of the file it came in,
 and is used when keeping track of the package for later deinstallation.
 Note that
 .Nm
-will derive this field from the package name and add it automatically
-if none is given.
+will derive this field from the
+.Ar pkg-name
+and add it automatically if none is given.
 .It Cm @dirrm Ar name
 Declare directory
 .Pa name
