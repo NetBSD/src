@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.85.10.2 2008/01/20 16:03:58 chris Exp $
+#	$NetBSD: files.arm,v 1.85.10.3 2008/01/27 13:08:37 chris Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -44,9 +44,6 @@ defflag	opt_arm32_pmap.h	ARM32_NEW_VM_LAYOUT
 # MI console support
 file	dev/cons.c
 
-# generic networking files
-file	arch/arm/arm/in_cksum_arm.S		inet
-
 # DDB
 file	arch/arm/arm/db_disasm.c		ddb
 file	arch/arm/arm32/db_interface.c		(ddb|kgdb) & arm32
@@ -85,6 +82,7 @@ file	arch/arm/arm/bootconfig.c
 file	arch/arm/arm/compat_13_machdep.c	compat_13
 file	arch/arm/arm/compat_16_machdep.c	compat_16
 file	arch/arm/arm/copystr.S
+file	arch/arm/arm/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/arm/arm/cpufunc.c
 file	arch/arm/arm/cpufunc_asm.S
 file	arch/arm/arm/cpufunc_asm_arm3.S		cpu_arm3

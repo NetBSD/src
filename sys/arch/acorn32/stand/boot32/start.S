@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 2002/12/28 23:57:37 reinoud Exp $	*/
+/*	$NetBSD: start.S,v 1.1.82.1 2008/01/27 13:08:41 chris Exp $	*/
 
 /*
  * Copyright (c) 2002 Reinoud Zandijk
@@ -105,10 +105,6 @@ loop_one_page:
 	bne	loop_relocate_pages
 
 	/* OK! all is relocated... now switch over to the new L1 pages						*/
-	/* disable SA110 clock switching (WHY?)									*/
-	mov	r0, #0
-	cmp	r14, #0
-	mcrne	15, 0, r0, c15, c2, 2
 
 	/* flush ID cache											*/
 	mov	r0, #0

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_timer.c,v 1.13 2007/01/06 16:18:18 christos Exp $ */
+/*	$NetBSD: ixp425_timer.c,v 1.13.24.1 2008/01/27 13:08:39 chris Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.13 2007/01/06 16:18:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.13.24.1 2008/01/27 13:08:39 chris Exp $");
 
 #include "opt_ixp425.h"
 #include "opt_perfctrs.h"
@@ -43,7 +43,9 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.13 2007/01/06 16:18:18 christos E
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 #include <sys/time.h>
+#include <sys/timetc.h>
 #include <sys/device.h>
 
 #include <dev/clock_subr.h>
@@ -59,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_timer.c,v 1.13 2007/01/06 16:18:18 christos E
 
 static int	ixpclk_match(struct device *, struct cfdata *, void *);
 static void	ixpclk_attach(struct device *, struct device *, void *);
+static u_int	ixpclk_get_timecount(struct timecounter *);
 
 static uint32_t counts_per_hz;
 
@@ -82,6 +85,19 @@ struct ixpclk_softc {
 #define	COUNTS_PER_USEC		((COUNTS_PER_SEC / 1000000) + 1)
 
 static struct ixpclk_softc *ixpclk_sc;
+
+static struct timecounter ixpclk_timecounter = {
+	ixpclk_get_timecount,	/* get_timecount */
+	0,			/* no poll_pps */
+	0xffffffff,		/* counter_mask */
+	COUNTS_PER_SEC,		/* frequency */
+	"ixpclk",		/* name */
+	100,			/* quality */
+	NULL,			/* prev */
+	NULL,			/* next */
+};
+
+static volatile uint32_t ixpclk_base;
 
 CFATTACH_DECL(ixpclk, sizeof(struct ixpclk_softc),
 		ixpclk_match, ixpclk_attach, NULL, NULL);
@@ -137,15 +153,6 @@ cpu_initclocks(void)
 		aprint_error("Cannot get %d Hz clock; using 100 Hz\n", hz);
 		hz = 100;
 	}
-	tick = 1000000 / hz;	/* number of microseconds between interrupts */
-	tickfix = 1000000 - (hz * tick);
-	if (tickfix) {
-		int ftp;
-
-		ftp = min(ffs(tickfix), ffs(hz));
-		tickfix >>= (ftp - 1);
-		tickfixinterval = hz >> (ftp - 1);
-	}
 
 	/*
 	 * We only have one timer available; stathz and profhz are
@@ -192,6 +199,8 @@ cpu_initclocks(void)
 			  (counts_per_hz & TIMERRELOAD_MASK) | OST_TIMER_EN);
 
 	restore_interrupts(oldirqstate);
+
+	tc_init(&ixpclk_timecounter);
 }
 
 /*
@@ -212,47 +221,17 @@ setstatclockrate(int newhz)
 	 */
 }
 
-/*
- * microtime:
- *
- *	Fill in the specified timeval struct with the current time
- *	accurate to the microsecond.
- */
-void
-microtime(struct timeval *tvp)
+static u_int
+ixpclk_get_timecount(struct timecounter *tc)
 {
-	struct ixpclk_softc* sc = ixpclk_sc;
-	static struct timeval lasttv;
-	u_int oldirqstate;
-	uint32_t counts;
+	u_int	savedints, base, counter;
 
-	oldirqstate = disable_interrupts(I32_bit);
+	savedints = disable_interrupts(I32_bit);
+	base = ixpclk_base;
+	counter = GET_TIMER_VALUE(ixpclk_sc);
+	restore_interrupts(savedints);
 
-	counts = counts_per_hz - GET_TIMER_VALUE(sc);
-
-	/* Fill in the timeval struct. */
-	*tvp = time;
-	tvp->tv_usec += (counts / COUNTS_PER_USEC);
-
-	/* Make sure microseconds doesn't overflow. */
-	while (tvp->tv_usec >= 1000000) {
-		tvp->tv_usec -= 1000000;
-		tvp->tv_sec++;
-	}
-
-	/* Make sure the time has advanced. */
-	if (tvp->tv_sec == lasttv.tv_sec &&
-	    tvp->tv_usec <= lasttv.tv_usec) {
-		tvp->tv_usec = lasttv.tv_usec + 1;
-		if (tvp->tv_usec >= 1000000) {
-			tvp->tv_usec -= 1000000;
-			tvp->tv_sec++;
-		}
-	}
-
-	lasttv = *tvp;
-
-	restore_interrupts(oldirqstate);
+	return base - counter;
 }
 
 /*
@@ -303,6 +282,8 @@ ixpclk_intr(void *arg)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IXP425_OST_STATUS,
 			  OST_TIM0_INT);
+
+	atomic_add_32(&ixpclk_base, counts_per_hz);
 
 	hardclock(frame);
 

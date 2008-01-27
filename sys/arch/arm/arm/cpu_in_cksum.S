@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum_arm.S,v 1.8 2006/10/08 12:41:51 bjh21 Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.1.2.2 2008/01/27 13:08:36 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -39,36 +39,51 @@
  * Hand-optimised in_cksum() and in4_cksum() implementations for ARM/Xscale
  */
 
-#include "opt_inet.h"
-
 #include <machine/asm.h>
-RCSID("$NetBSD: in_cksum_arm.S,v 1.8 2006/10/08 12:41:51 bjh21 Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.1.2.2 2008/01/27 13:08:36 chris Exp $")
 	
 #include "assym.h"
 
-
 /*
- * int in_cksum(struct mbuf *m, int len)
+ * int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum)
  *
  * Entry:
  *	r0	m
  *	r1	len
- *
- * NOTE: Assumes 'm' is *never* NULL.
+ *	r2	off
+ *	r3	initial_sum
  */
-/* LINTSTUB: Func: int in_cksum(struct mbuf *, int) */
-ENTRY(in_cksum)
+/* LINTSTUB: Func: int cpu_in_cksum(struct mbuf *, int, int, uint32_t) */
+ENTRY(cpu_in_cksum)
 	stmfd	sp!, {r4-r11,lr}
-	mov	r8, #0x00
-	mov	r9, r1
-	mov	r10, #0x00
+	
+	mov	r8, r3			/* Accumulate sum in r8 */
+	mov	r9, r1			/* save len in r9 */
+
+.Lin_cksum_skip_loop:
+	ldr	r1, [r0, #(M_LEN)]
+	ldr	r6, [r0, #(M_DATA)]
+	ldr	r0, [r0, #(M_NEXT)]
+.Lin_cksum_skip_entry:
+	subs	r2, r2, r1
+	blt	.Lin_cksum_skip_done
+	cmp	r0, #0x00
+	bne	.Lin_cksum_skip_loop
+	b	.Lin_cksum_whoops
+
+.Lin_cksum_skip_done:
 	mov	ip, r0
+	add	r0, r2, r6
+	add	r0, r0, r1
+	rsb	r1, r2, #0x00
+	mov	r10, #0x00
+	b	.Lin_cksum_entry
 
 .Lin_cksum_loop:
-	ldr	r1, [ip, #(M_LEN)]
-	ldr	r0, [ip, #(M_DATA)]
-	ldr	ip, [ip, #(M_NEXT)]
-.Lin_cksum_entry4:
+	ldr	r1, [r0, #(M_LEN)]
+	ldr	r6, [r0, #(M_DATA)]
+	ldr	r0, [r0, #(M_NEXT)]
+.Lin_cksum_entry:
 	cmp	r9, r1
 	movlt	r1, r9
 	sub	r9, r9, r1
@@ -80,9 +95,9 @@ ENTRY(in_cksum)
 	movne	r2, r2, ror #8
 	adds	r8, r8, r2
 	adc	r8, r8, #0x00
-	cmp	ip, #0x00
+	cmp	ip, #00
 	bne	.Lin_cksum_loop
-
+	
 	mov	r1, #0xff
 	orr	r1, r1, #0xff00
 	and	r0, r8, r1
@@ -90,143 +105,14 @@ ENTRY(in_cksum)
 	add	r0, r0, r0, lsr #16
 	and	r0, r0, r1
 	eor	r0, r0, r1
-	ldmfd	sp!, {r4-r11,pc}
+	ldmfd	sp!, {r4-r11, pc}
 
-
-#ifdef INET
-/*
- * int in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
- *
- * Entry:
- *	r0	m
- *	r1	nxt
- *	r2	off
- *	r3	len
- */
-/* LINTSTUB: Func: int in4_cksum(struct mbuf *, u_int8_t, int, int) */
-ENTRY(in4_cksum)
-	stmfd	sp!, {r4-r11,lr}
-	mov	r8, #0x00		/* Accumulate sum in r8 */
-
-	/*
-	 * First, deal with a pseudo header, if present
-	 */
-	ldr	r6, [r0, #(M_DATA)]
-	cmp	r1, #0x00
-	beq	.Lin4_cksum_skip_entry
-
-#ifdef __XSCALE__
-	pld	[r6, #(IP_SRC)]
-#endif
-	add	r4, r6, #(IP_SRC)
-	ands	r4, r4, #0x03
-	add	r8, r1, r3		/* sum = nxt + len */
-	addne	pc, pc, r4, lsl #5	/* Handle alignment of pseudo header */
-
-	/* 0x00: Data 32-bit aligned */
-	ldr	r5, [r6, #(IP_SRC)]
-	ldr	r4, [r6, #(IP_DST)]
-	b	.Lin4_cksum_add_ips
-	nop
-	nop
-	nop
-	nop
-	nop
-	nop
-
-	/* 0x01: Data 8-bit aligned */
-	ldr	r4, [r6, #(IP_SRC - 1)]	/* BE:r4 = x012  LE:r4 = 210x */
-	ldr	r5, [r6, #(IP_SRC + 3)]	/* BE:r5 = 3456  LE:r5 = 6543 */
-	ldrb	r7, [r6, #(IP_SRC + 7)]	/* r7 = ...7 */
-#ifdef __ARMEB__
-	mov	r4, r4, lsl #8		/* r4 = 012. */
-	orr	r4, r4, r5, lsr #24	/* r4 = 0123 */
-	orr	r5, r7, r5, lsl #8	/* r5 = 4567 */
-	b	.Lin4_cksum_add_ips
-	nop
-#else
-	mov	r4, r4, lsr #8		/* r4 = .210 */
-	orr	r4, r4, r5, lsl #24	/* r4 = 3210 */
-	mov	r5, r5, lsr #8		/* r5 = .654 */
-	orr	r5, r5, r7, lsl #24	/* r5 = 7654 */
-	b	.Lin4_cksum_add_ips
-#endif
-
-	/* 0x02: Data 16-bit aligned */
-#ifdef __XSCALE__
-	ldrh	r5, [r6, #(IP_SRC)]	/* BE:r5 = ..01  LE:r5 = ..10 */
-	ldrh	r7, [r6, #(IP_DST + 2)]	/* BE:r7 = ..67  LE:r7 = ..76 */
-	ldr	r4, [r6, #(IP_SRC + 2)]	/* BE:r4 = 2345  LE:r4 = 5432 */
-	orr	r5, r7, r5, lsl #16	/* BE:r5 = 0167  LE:r5 = 1076 */
-	b	.Lin4_cksum_add_ips
-	nop
-	nop
-	nop
-#else
-	ldr	r4, [r6, #(IP_SRC - 2)]	/* r4 = 10xx */
-	ldr	r7, [r6, #(IP_DST - 2)]	/* r7 = xx76 */
-	ldr	r5, [r6, #(IP_SRC + 2)]	/* r5 = 5432 */
-	mov	r4, r4, lsr #16		/* r4 = ..10 */
-	orr	r4, r4, r7, lsl #16	/* r4 = 7610 */
-	b	.Lin4_cksum_add_ips
-	nop
-	nop
-#endif
-
-	/* 0x03: Data 8-bit aligned */
-	ldrb	r4, [r6, #(IP_SRC)]	/* r4 = ...0 */
-	ldr	r5, [r6, #(IP_SRC + 1)]	/* BE:r5 = 1234  LE:r5 = 4321 */
-	ldr	r7, [r6, #(IP_SRC + 5)]	/* BE:r7 = 567x  LE:r7 = x765 */
-#ifdef __ARMEB__
-	mov	r4, r4, lsl #24		/* r4 = 0... */
-	orr	r4, r4, r5, lsr #8	/* r4 = 0123 */
-	mov	r5, r5, lsl #24		/* r5 = 4... */
-	orr	r5, r5, r7, lsr #8	/* r5 = 4567 */
-#else
-	orr	r4, r4, r5, lsl #8	/* r4 = 3210 */
-	mov	r5, r5, lsr #24		/* r4 = ...4 */
-	orr	r5, r5, r7, lsl #8	/* r5 = 7654 */
-#endif
-	/* FALLTHROUGH */
-
-.Lin4_cksum_add_ips:
-	adds	r5, r5, r4
-#ifndef __ARMEB__
-	adcs	r8, r5, r8, lsl #8
-#else
-	adcs	r8, r5, r8
-#endif
-	adc	r8, r8, #0x00
-	mov	r1, #0x00
-	b	.Lin4_cksum_skip_entry
-
-.Lin4_cksum_skip_loop:
-	ldr	r1, [r0, #(M_LEN)]
-	ldr	r6, [r0, #(M_DATA)]
-	ldr	r0, [r0, #(M_NEXT)]
-.Lin4_cksum_skip_entry:
-	subs	r2, r2, r1
-	blt	.Lin4_cksum_skip_done
-	cmp	r0, #0x00
-	bne	.Lin4_cksum_skip_loop
-	b	.Lin4_cksum_whoops
-
-.Lin4_cksum_skip_done:
-	mov	ip, r0
-	add	r0, r2, r6
-	add	r0, r0, r1
-	rsb	r1, r2, #0x00
-	mov	r9, r3
-	mov	r10, #0x00
-	b	.Lin_cksum_entry4
-
-.Lin4_cksum_whoops:
-	adr	r0, .Lin4_cksum_whoops_str
+.Lin_cksum_whoops:
+	adr	r0, .Lin_cksum_whoops_str
 	bl	_C_LABEL(panic)
-.Lin4_cksum_whoops_str:
-	.asciz	"in4_cksum: out of mbufs\n"
+.Lin_cksum_whoops_str:
+	.asciz	"in_cksum: out of mbufs\n"
 	.align	5
-#endif	/* INET */
 
 
 /*
