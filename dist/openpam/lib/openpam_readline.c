@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2004-2007 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -31,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_readline.c#3 $
+ * $Id: openpam_readline.c,v 1.5 2008/01/27 01:22:59 christos Exp $
  */
 
 #include <ctype.h>
@@ -52,7 +53,7 @@
 char *
 openpam_readline(FILE *f, int *lineno, size_t *lenp)
 {
-	unsigned char *line;
+	char *line;
 	size_t len, size;
 	int ch;
 
@@ -63,7 +64,7 @@ openpam_readline(FILE *f, int *lineno, size_t *lenp)
 
 #define line_putch(ch) do { \
 	if (len >= size - 1) { \
-		unsigned char *tmp = realloc(line, size *= 2); \
+		char *tmp = realloc(line, size *= 2); \
 		if (tmp == NULL) \
 			goto fail; \
 		line = tmp; \
