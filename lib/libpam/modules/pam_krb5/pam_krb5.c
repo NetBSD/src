@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.20 2007/03/10 18:30:45 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.21 2008/01/27 01:23:20 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.20 2007/03/10 18:30:45 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.21 2008/01/27 01:23:20 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -114,7 +114,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags __unused,
 	krb5_get_init_creds_opt opts;
 	struct passwd *pwd, pwres;
 	int retval;
-	void *ccache_data;
+	const void *ccache_data;
 	const char *user, *pass;
 	const void *sourceuser, *service;
 	char *principal, *princ_name, *ccache_name, luser[32], *srvdup;
@@ -376,7 +376,7 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 	int retval;
 	const char *cache_name, *q;
 	const void *user;
-	void *cache_data;
+	const void *cache_data;
 	char *cache_name_buf = NULL, *p, *cache_name_buf2 = NULL;
 	char pwbuf[1024];
 
@@ -626,7 +626,7 @@ pam_sm_acct_mgmt(pam_handle_t *pamh, int flags __unused,
 	krb5_principal princ;
 	int retval;
 	const void *user;
-	void *ccache_name;
+	const void *ccache_name;
 
 	retval = pam_get_item(pamh, PAM_USER, &user);
 	if (retval != PAM_SUCCESS)
