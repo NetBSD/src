@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.1 2008/01/24 18:12:29 joerg Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.2 2008/01/27 16:49:13 chris Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.1 2008/01/24 18:12:29 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.2 2008/01/27 16:49:13 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -133,7 +133,13 @@ main(int argc, char **argv)
 		randomise_mbuf_chain(m);
 		init_sum = rand();
 		len = mbuf_len(m);
-		off = len ? rand() % len : 0;
+
+		/* force one loop over all data */
+		if (loops == 1)
+			off = 0;
+		else
+			off = len ? rand() % len : 0;
+
 		len -= off;
 		old_sum = portable_cpu_in_cksum(m, len, off, init_sum);
 		new_sum = cpu_in_cksum(m, len, off, init_sum);
