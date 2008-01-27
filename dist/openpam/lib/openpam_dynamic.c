@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2004-2007 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -31,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_dynamic.c#14 $
+ * $Id: openpam_dynamic.c,v 1.1.1.3 2008/01/27 00:54:54 christos Exp $
  */
 
 #include <dlfcn.h>
@@ -80,6 +81,7 @@ openpam_dynamic(const char *path)
 		*strrchr(vpath, '.') = '\0';
 		if ((dlh = dlopen(vpath, RTLD_NOW)) == NULL) {
 			openpam_log(PAM_LOG_DEBUG, "%s: %s", vpath, dlerror());
+			FREE(vpath);
 			FREE(module);
 			return (NULL);
 		}
