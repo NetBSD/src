@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.6 2007/12/24 00:03:04 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.7 2008/01/27 14:11:27 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +14,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.44 1997/10/13 15:03:46 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.6 2007/12/24 00:03:04 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.7 2008/01/27 14:11:27 joerg Exp $");
 #endif
 #endif
 
@@ -191,6 +191,9 @@ installprereq(const char *name, int *errc, int doupdate)
 			    Force ? "-f" : "",
 			    Prefix ? "-p" : "", Prefix ? Prefix : "",
 			    Verbose ? "-v" : "",
+			    OverrideMachine ? "-m" : "",
+			    OverrideMachine ? OverrideMachine : "",
+			    NoInstall ? "-I" : "",
 			    "-A", name, NULL)) {
 		warnx("autoload of dependency `%s' failed%s",
 			name, Force ? " (proceeding anyway)" : "!");
