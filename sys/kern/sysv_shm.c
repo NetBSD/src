@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.103 2008/01/07 16:12:54 ad Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.104 2008/01/27 18:37:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.103 2008/01/07 16:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.104 2008/01/27 18:37:50 rmind Exp $");
 
 #define SYSVSHM
 
@@ -651,13 +651,14 @@ sys_shmget(struct lwp *l, const struct sys_shmget_args *uap, register_t *retval)
 {
 	/* {
 		syscallarg(key_t) key;
-		syscallarg(int) size;
+		syscallarg(size_t) size;
 		syscallarg(int) shmflg;
 	} */
 	struct shmid_ds *shmseg;
 	kauth_cred_t cred = l->l_cred;
 	key_t key = SCARG(uap, key);
-	int error, mode, segnum, size;
+	size_t size;
+	int error, mode, segnum;
 	bool lockmem;
 
 	mode = SCARG(uap, shmflg) & ACCESSPERMS;
@@ -876,17 +877,18 @@ shmexit(struct vmspace *vm)
 static int
 shmrealloc(int newshmni)
 {
-	int i, lsegid, sz;
 	vaddr_t v;
 	struct shmid_ds *oldshmsegs, *newshmsegs;
 	kcondvar_t *newshm_cv;
+	size_t sz;
+	int i, lsegid;
 
 	if (newshmni < 1)
 		return EINVAL;
 
 	/* Allocate new memory area */
 	sz = ALIGN(newshmni * sizeof(struct shmid_ds)) +
-	    ALIGN(shminfo.shmmni * sizeof(kcondvar_t));
+	    ALIGN(newshmni * sizeof(kcondvar_t));
 	v = uvm_km_alloc(kernel_map, round_page(sz), 0,
 	    UVM_KMF_WIRED|UVM_KMF_ZERO);
 	if (v == 0)
@@ -899,7 +901,7 @@ shmrealloc(int newshmni)
 	/*
 	 * Get the number of last segment.  Fail we are trying to
 	 * reallocate less memory than we use.
-	 * */
+	 */
 	lsegid = 0;
 	for (i = 0; i < shminfo.shmmni; i++)
 		if ((shmsegs[i].shm_perm.mode & SHMSEG_FREE) == 0)
@@ -947,8 +949,9 @@ shmrealloc(int newshmni)
 void
 shminit(void)
 {
-	int i, sz;
 	vaddr_t v;
+	size_t sz;
+	int i;
 
 	mutex_init(&shm_lock, MUTEX_DEFAULT, IPL_NONE);
 	pool_init(&shmmap_entry_pool, sizeof(struct shmmap_entry), 0, 0, 0,
