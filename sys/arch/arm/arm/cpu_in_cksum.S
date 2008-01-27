@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.1 2008/01/26 02:06:04 chris Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.2 2008/01/27 16:58:05 chris Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <machine/asm.h>
-RCSID("$NetBSD: cpu_in_cksum.S,v 1.1 2008/01/26 02:06:04 chris Exp $")
+RCSID("$NetBSD: cpu_in_cksum.S,v 1.2 2008/01/27 16:58:05 chris Exp $")
 	
 #include "assym.h"
 
@@ -52,6 +52,11 @@ RCSID("$NetBSD: cpu_in_cksum.S,v 1.1 2008/01/26 02:06:04 chris Exp $")
  *	r1	len
  *	r2	off
  *	r3	initial_sum
+ *
+ * Function wide register usage
+ *	r8	accumulated sum
+ *	r9	remaining length to parse
+ *	ip	pointer to next mbuf
  */
 /* LINTSTUB: Func: int cpu_in_cksum(struct mbuf *, int, int, uint32_t) */
 ENTRY(cpu_in_cksum)
@@ -59,30 +64,31 @@ ENTRY(cpu_in_cksum)
 	
 	mov	r8, r3			/* Accumulate sum in r8 */
 	mov	r9, r1			/* save len in r9 */
+	mov	ip, r0			/* set ip to the current mbuf */
 
 .Lin_cksum_skip_loop:
-	ldr	r1, [r0, #(M_LEN)]
-	ldr	r6, [r0, #(M_DATA)]
-	ldr	r0, [r0, #(M_NEXT)]
+	ldr	r1, [ip, #(M_LEN)]
+	ldr	r0, [ip, #(M_DATA)]
+	ldr	ip, [ip, #(M_NEXT)]
 .Lin_cksum_skip_entry:
-	subs	r2, r2, r1
-	blt	.Lin_cksum_skip_done
-	cmp	r0, #0x00
+	subs	r2, r2, r1		/* offset = offset - mbuf length */
+	blt	.Lin_cksum_skip_done	/* if offset has gone negative start with this mbuf */
+	cmp	ip, #0x00
 	bne	.Lin_cksum_skip_loop
 	b	.Lin_cksum_whoops
 
 .Lin_cksum_skip_done:
-	mov	ip, r0
-	add	r0, r2, r6
-	add	r0, r0, r1
-	rsb	r1, r2, #0x00
+	add	r0, r2, r0		/* data += offset (offset is < 0) */ 
+	add	r0, r0, r1		/* data += length of mbuf */
+					/* data == start of data to cksum */
+	rsb	r1, r2, #0x00		/* length = remainder of mbuf to read */
 	mov	r10, #0x00
 	b	.Lin_cksum_entry
 
 .Lin_cksum_loop:
-	ldr	r1, [r0, #(M_LEN)]
-	ldr	r6, [r0, #(M_DATA)]
-	ldr	r0, [r0, #(M_NEXT)]
+	ldr	r1, [ip, #(M_LEN)]
+	ldr	r0, [ip, #(M_DATA)]
+	ldr	ip, [ip, #(M_NEXT)]
 .Lin_cksum_entry:
 	cmp	r9, r1
 	movlt	r1, r9
