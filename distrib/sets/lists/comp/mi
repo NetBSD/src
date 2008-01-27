@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1111 2008/01/16 12:34:54 ad Exp $
+#	$NetBSD: mi,v 1.1112 2008/01/27 01:30:18 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1743,6 +1743,7 @@
 ./usr/include/sdp.h				comp-c-include
 ./usr/include/search.h				comp-c-include
 ./usr/include/security/openpam.h		comp-c-include		pam
+./usr/include/security/openpam_attr.h		comp-c-include		pam
 ./usr/include/security/openpam_version.h	comp-c-include		pam
 ./usr/include/security/pam_appl.h		comp-c-include		pam
 ./usr/include/security/pam_constants.h		comp-c-include		pam
