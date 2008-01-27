@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.11 2007/04/03 23:02:39 rmind Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.12 2008/01/27 01:38:33 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.11 2007/04/03 23:02:39 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.12 2008/01/27 01:38:33 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,41 +48,113 @@ const struct cdevsw drvctl_cdevsw = {
 };
 
 void drvctlattach(int);
+static struct device *devbyname(const char *);
 
 #define MAXLOCATORS 100
 
 static int drvctl_command(struct lwp *, struct plistref *, u_long, int flag);
+
+static struct device *
+devbyname(const char *devname)
+{
+	struct device *d;
+
+	TAILQ_FOREACH(d, &alldevs, dv_list) {
+		if (strcmp(devname, device_xname(d)) == 0)
+			break;
+	}
+	return d;
+}
+
+static int
+pmdevbyname(int cmd, struct devpmargs *a)
+{
+	struct device *d;
+
+	if ((d = devbyname(a->devname)) == NULL)
+		return ENXIO;
+
+	switch (cmd) {
+	case DRVSUSPENDDEV:
+		return pmf_device_recursive_suspend(d) ? 0 : EBUSY;
+	case DRVRESUMEDEV:
+		if (a->flags & DEVPM_F_SUBTREE)
+			return pmf_device_resume_subtree(d) ? 0 : EBUSY;
+		else
+			return pmf_device_recursive_resume(d) ? 0 : EBUSY;
+	default:
+		return EPASSTHROUGH;
+	}
+}
+
+struct listdevchild_arg {
+	int			la_error;
+	int			la_idx;
+	struct devlistargs	*la_l;
+};
+
+static bool
+listdevchild(device_t child, void *arg)
+{
+	struct listdevchild_arg *la = arg;
+	struct devlistargs *l = la->la_l;
+	int idx;
+	
+	idx = la->la_idx++;
+
+	aprint_debug_dev(child, "idx %d\n", idx);
+
+	if (l->l_childname == NULL || idx >= l->l_children)
+		return true;
+
+	la->la_error = copyoutstr(device_xname(child), l->l_childname[idx],
+	    sizeof(l->l_childname[idx]), NULL);
+
+	return la->la_error == 0;
+}
+
+static int
+listdevbyname(struct devlistargs *l)
+{
+	struct device *d;
+	struct listdevchild_arg la = {.la_idx = 0, .la_l = l, .la_error = 0};
+
+	if ((d = devbyname(l->l_devname)) == NULL)
+		return ENXIO;
+
+	if (!device_foreach_child(d, listdevchild, &la))
+		return la.la_error;
+
+	l->l_children = la.la_idx;
+	return 0;
+}
 
 static int
 detachdevbyname(const char *devname)
 {
 	struct device *d;
 
-	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		if (!strcmp(devname, d->dv_xname)) {
-#ifndef XXXFULLRISK
-			/*
-			 * If the parent cannot be notified, it might keep
-			 * pointers to the detached device.
-			 * There might be a private notification mechanism,
-			 * but better play save here.
-			 */
-			if (d->dv_parent &&
-			    !d->dv_parent->dv_cfattach->ca_childdetached)
-				return (ENOTSUP);
-#endif
-			return (config_detach(d, 0));
-		}
-	}
+	if ((d = devbyname(devname)) == NULL)
+		return ENXIO;
 
-	return (ENXIO);
+#ifndef XXXFULLRISK
+	/*
+	 * If the parent cannot be notified, it might keep
+	 * pointers to the detached device.
+	 * There might be a private notification mechanism,
+	 * but better play save here.
+	 */
+	if (d->dv_parent && !d->dv_parent->dv_cfattach->ca_childdetached)
+		return (ENOTSUP);
+#endif
+	return (config_detach(d, 0));
 }
 
 static int
 rescanbus(const char *busname, const char *ifattr,
 	  int numlocators, const int *locators)
 {
-	int i;
+	int i, rc;
 	struct device *d;
 	const struct cfiattrdata * const *ap;
 
@@ -95,35 +167,34 @@ rescanbus(const char *busname, const char *ifattr,
 	for (i = 0; i < numlocators;i++)
 		locs[i] = locators[i];
 
-	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		if (!strcmp(busname, d->dv_xname)) {
-			/*
-			 * must support rescan, and must have something
-			 * to attach to
-			 */
-			if (!d->dv_cfattach->ca_rescan ||
-			    !d->dv_cfdriver->cd_attrs)
-				return (ENODEV);
+	if ((d = devbyname(busname)) == NULL)
+		return ENXIO;
 
-			/* allow to omit attribute if there is exactly one */
-			if (!ifattr) {
-				if (d->dv_cfdriver->cd_attrs[1])
-					return (EINVAL);
-				ifattr = d->dv_cfdriver->cd_attrs[0]->ci_name;
-			} else {
-				/* check for valid attribute passed */
-				for (ap = d->dv_cfdriver->cd_attrs; *ap; ap++)
-					if (!strcmp((*ap)->ci_name, ifattr))
-						break;
-				if (!*ap)
-					return (EINVAL);
-			}
+	/*
+	 * must support rescan, and must have something
+	 * to attach to
+	 */
+	if (!d->dv_cfattach->ca_rescan ||
+	    !d->dv_cfdriver->cd_attrs)
+		return (ENODEV);
 
-			return (*d->dv_cfattach->ca_rescan)(d, ifattr, locs);
-		}
+	/* allow to omit attribute if there is exactly one */
+	if (!ifattr) {
+		if (d->dv_cfdriver->cd_attrs[1])
+			return (EINVAL);
+		ifattr = d->dv_cfdriver->cd_attrs[0]->ci_name;
+	} else {
+		/* check for valid attribute passed */
+		for (ap = d->dv_cfdriver->cd_attrs; *ap; ap++)
+			if (!strcmp((*ap)->ci_name, ifattr))
+				break;
+		if (!*ap)
+			return (EINVAL);
 	}
 
-	return (ENXIO);
+	rc = (*d->dv_cfattach->ca_rescan)(d, ifattr, locs);
+	config_deferred(NULL);
+	return rc;
 }
 
 int
@@ -134,6 +205,15 @@ drvctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *p)
 	int *locs;
 
 	switch (cmd) {
+	case DRVSUSPENDDEV:
+	case DRVRESUMEDEV:
+#define d ((struct devpmargs *)data)
+		res = pmdevbyname(cmd, d);
+#undef d
+		break;
+	case DRVLISTDEV:
+		res = listdevbyname((struct devlistargs *)data);
+		break;
 	case DRVDETACHDEV:
 #define d ((struct devdetachargs *)data)
 		res = detachdevbyname(d->devname);
