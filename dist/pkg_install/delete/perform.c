@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.4 2007/12/24 00:03:05 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.5 2008/01/27 14:11:31 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.4 2007/12/24 00:03:05 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.5 2008/01/27 14:11:31 joerg Exp $");
 #endif
 #endif
 
@@ -783,9 +783,7 @@ pkg_do(char *pkg)
 	if (!Fake) {
 		/* Some packages aren't packed right, so we need to just ignore delete_package()'s status.  Ugh! :-( */
 		if (delete_package(FALSE, CleanDirs, &Plist, NoDeleteFiles) == FAIL)
-			warnx(
-		"couldn't entirely delete package `%s'\n"
-		"(perhaps the packing list is incorrectly specified?)", pkg);
+			warnx("couldn't entirely delete package `%s'\n", pkg);
 	}
 	else {   /* Fake means Verbose */
 		printf("Attempting to delete package `%s'\n", pkg);
