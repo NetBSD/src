@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.17 2008/01/27 19:07:21 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.18 2008/01/27 20:01:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -164,8 +164,7 @@ ukfs_ll_recycle(struct vnode *vp)
 	VLE(vp);
 	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0);
 	RUMP_VOP_INACTIVE(vp, &recycle);
-	rump_vp_incref(vp); /* XXX */
-	rump_vp_recycle(vp);
+	rump_vp_recycle_nokidding(vp);
 }
 
 /*

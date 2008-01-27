@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.32 2008/01/27 19:07:21 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.33 2008/01/27 20:01:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -374,11 +374,18 @@ rump_vp_decref(struct vnode *vp)
 	mutex_exit(&vp->v_interlock);
 }
 
+/*
+ * Really really recycle with a cherry on top.  We should be
+ * extra-sure we can do this.  For example with p2k there is
+ * no problem, since puffs in the kernel takes care of refcounting
+ * for us.
+ */
 void
-rump_vp_recycle(struct vnode *vp)
+rump_vp_recycle_nokidding(struct vnode *vp)
 {
 
 	mutex_enter(&vp->v_interlock);
+	vp->v_usecount = 1;
 	vclean(vp, DOCLOSE);
 	vrelel(vp, 0, 0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.39 2008/01/27 19:19:42 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.40 2008/01/27 20:01:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -234,21 +234,23 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 	int rv;
 
 	/*
-	 * This makes the reference count of the root vnode drop
-	 * to 0 so that vflush() typically present in unmount can
-	 * succeed.  If unmount fails, we try to rescue ourselves
-	 * if we can.
+	 * We recycle the root node already here (god knows how
+	 * many references it has due to lookup).  This is good
+	 * because VFS_UNMOUNT would do it anyway.  But it is
+	 * very bad if VFS_UNMOUNT fails for a reason or another
+	 * (puffs guards against busy fs, but there might be other
+	 * reasons).
 	 *
 	 * Theoretically we're going south, sinking fast & dying
-	 * out here because the old vnode will probably have been
-	 * completely nuked by vflush().  But as this shouldn't
-	 * likely fail, worth an attempt.
+	 * out here because the old vnode will be freed and we are
+	 * unlikely to get a vnode at the same address.  But try
+	 * anyway.
 	 *
 	 * XXX: reallyfixmesomeday.  either introduce VFS_ROOT to
 	 * puffs (blah) or check the cookie in every routine
 	 * against the root cookie, which might change (blah2).
 	 */
-	rump_vp_rele(rvp);
+	rump_vp_recycle_nokidding(rvp);
 	rv = VFS_UNMOUNT(mp, flags);
 	if (rv) {
 		int rv2;
@@ -261,7 +263,8 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 }
 
 int
-p2k_fs_sync(struct puffs_usermount *pu, int waitfor, const struct puffs_cred *pcr)
+p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
+	const struct puffs_cred *pcr)
 {
 	struct mount *mp = puffs_getspecific(pu);
 	kauth_cred_t cred;
@@ -301,7 +304,8 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 }
 
 int
-p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid, size_t *fidsize)
+p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid,
+	size_t *fidsize)
 {
 	struct vnode *vp = cookie;
 
@@ -309,8 +313,8 @@ p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid, size_t *fid
 }
 
 int
-p2k_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn)
+p2k_node_lookup(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
 	struct componentname *cn;
 	struct vnode *vp;
@@ -341,8 +345,9 @@ p2k_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni
 }
 
 int
-p2k_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *vap)
+p2k_node_create(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *vap)
 {
 	struct componentname *cn;
 	struct vnode *vp;
@@ -465,8 +470,8 @@ p2k_node_setattr(struct puffs_usermount *pu, void *opc, const struct vattr *vap,
 }
 
 int
-p2k_node_fsync(struct puffs_usermount *pu, void *opc, const struct puffs_cred *pcr,
-	int flags, off_t offlo, off_t offhi)
+p2k_node_fsync(struct puffs_usermount *pu, void *opc,
+	const struct puffs_cred *pcr, int flags, off_t offlo, off_t offhi)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -754,6 +759,6 @@ int
 p2k_node_reclaim(struct puffs_usermount *pu, void *opc)
 {
 
-	rump_vp_recycle(opc);
+	rump_vp_recycle_nokidding(opc);
 	return 0;
 }
