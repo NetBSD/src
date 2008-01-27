@@ -1,9 +1,10 @@
-#	$NetBSD: std.ixm1200,v 1.9 2005/12/11 12:17:07 christos Exp $
+#	$NetBSD: std.ixm1200,v 1.10 2008/01/27 12:37:11 chris Exp $
 #
 # standard NetBSD/evbarm for IXM1200 options
 
 machine	evbarm arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 # Pull in IXM1200 config definitions.
 include "arch/evbarm/conf/files.ixm1200"
