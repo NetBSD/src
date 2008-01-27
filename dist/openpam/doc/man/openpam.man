@@ -1,5 +1,5 @@
 .\"
-.\" $P4: //depot/projects/openpam/doc/man/openpam.man#2 $
+.\" $Id: openpam.man,v 1.1.1.3 2008/01/27 00:54:55 christos Exp $
 .\"
 .Sh DESCRIPTION
 These functions are OpenPAM extensions to the PAM API.
