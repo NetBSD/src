@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.38 2008/01/27 19:07:20 pooka Exp $	*/
+/*	$NetBSD: p2k.c,v 1.39 2008/01/27 19:19:42 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -211,6 +211,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	return rv;
 }
 
+/* XXX: vn_lock() */
+#define VLE(a) RUMP_VOP_LOCK(a, LK_EXCLUSIVE)
+#define VLS(a) RUMP_VOP_LOCK(a, LK_SHARED)
+#define VUL(a) RUMP_VOP_UNLOCK(a, 0);
+#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
+
 int
 p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 {
@@ -249,6 +255,7 @@ p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 
 		rv2 = VFS_ROOT(mp, &rvp2);
 		assert(rv2 == 0 && rvp == rvp2);
+		VUL(rvp);
 	}
 	return rv;
 }
@@ -300,12 +307,6 @@ p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid, size_t *fid
 
 	return VFS_VPTOFH(vp, fid, fidsize);
 }
-
-/* XXX: vn_lock() */
-#define VLE(a) RUMP_VOP_LOCK(a, LK_EXCLUSIVE)
-#define VLS(a) RUMP_VOP_LOCK(a, LK_SHARED)
-#define VUL(a) RUMP_VOP_UNLOCK(a, 0);
-#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
 
 int
 p2k_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
