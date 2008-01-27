@@ -1,9 +1,10 @@
-#       $NetBSD: std.nslu2,v 1.1 2006/02/28 20:40:33 scw Exp $
+#       $NetBSD: std.nslu2,v 1.2 2008/01/27 12:37:12 chris Exp $
 #
 # Standard NetBSD/evbarm options for Linksys NSLU2
 
 machine evbarm arm
 include		"conf/std"      # MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 # Pull in NSLU2 config definitions.
 include "arch/evbarm/conf/files.nslu2"
