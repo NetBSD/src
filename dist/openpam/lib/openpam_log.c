@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2004-2007 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -31,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_log.c#24 $
+ * $Id: openpam_log.c,v 1.1.1.3 2008/01/27 00:54:52 christos Exp $
  */
 
 #include <ctype.h>
@@ -45,7 +46,11 @@
 
 #include "openpam_impl.h"
 
+#ifdef OPENPAM_DEBUG
+int _openpam_debug = 1;
+#else
 int _openpam_debug = 0;
+#endif
 
 #if !defined(openpam_log)
 

@@ -1,3 +1,3 @@
-# $P4: //depot/projects/openpam/include/Makefile.am#2 $
+# $Id: Makefile.am,v 1.1.1.3 2008/01/27 00:54:58 christos Exp $
 
 SUBDIRS = security
