@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.25 2006/10/09 11:38:54 mlelstv Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.26 2008/01/27 20:06:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -68,6 +68,9 @@
 #define  EHCI_LEG_HC_OS_OWNED		0x01000000
 #define  EHCI_LEG_HC_BIOS_OWNED		0x00010000
 #define PCI_EHCI_USBLEGCTLSTS	0x04
+#define  EHCI_LEG_EXT_SMI_BAR		0x80000000
+#define  EHCI_LEG_EXT_SMI_PCICMD	0x40000000
+#define  EHCI_LEG_EXT_SMI_OS_CHANGE	0x20000000
 
 #define EHCI_CAP_GET_ID(cap) ((cap) & 0xff)
 #define EHCI_CAP_GET_NEXT(cap) (((cap) >> 8) & 0xff)
