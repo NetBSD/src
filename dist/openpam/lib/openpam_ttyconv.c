@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2004-2007 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -31,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_ttyconv.c#26 $
+ * $Id: openpam_ttyconv.c,v 1.11 2008/01/27 01:23:00 christos Exp $
  */
 
 #include <sys/types.h>
@@ -65,7 +66,7 @@ prompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 {
 	char buf[PAM_MAX_RESP_SIZE];
 	struct sigaction action, saved_action;
-	sigset_t saved_sigs, sigs;
+	sigset_t saved_sigset, sigs;
 	unsigned int saved_alarm;
 	int eof, error, fd;
 	size_t len;
@@ -76,7 +77,7 @@ prompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 	sigemptyset(&sigs);
 	sigaddset(&sigs, SIGINT);
 	sigaddset(&sigs, SIGTSTP);
-	sigprocmask(SIG_SETMASK, &sigs, &saved_sigs);
+	sigprocmask(SIG_SETMASK, &sigs, &saved_sigset);
 	action.sa_handler = &timeout;
 	action.sa_flags = 0;
 	sigemptyset(&action.sa_mask);
@@ -91,6 +92,7 @@ prompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 	fd = fileno(infp);
 	buf[0] = '\0';
 	eof = error = 0;
+	saved_alarm = 0;
 	if (openpam_ttyconv_timeout >= 0)
 		saved_alarm = alarm((unsigned int)openpam_ttyconv_timeout);
 	ch = '\0';
@@ -113,8 +115,8 @@ prompt(const char *msg, FILE *infp, FILE *outfp, FILE *errfp)
 	if (openpam_ttyconv_timeout >= 0)
 		alarm(0);
 	sigaction(SIGALRM, &saved_action, NULL);
-	sigprocmask(SIG_SETMASK, &saved_sigs, NULL);
-	if (openpam_ttyconv_timeout >= 0)
+	sigprocmask(SIG_SETMASK, &saved_sigset, NULL);
+	if (saved_alarm > 0)
 		alarm(saved_alarm);
 	if (error == EINTR)
 		fputs(" timeout!", errfp);

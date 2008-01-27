@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
+ * Copyright (c) 2004-2007 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -31,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $P4: //depot/projects/openpam/lib/openpam_nullconv.c#7 $
+ * $Id: openpam_nullconv.c,v 1.5 2008/01/27 01:22:59 christos Exp $
  */
 
 #include <sys/types.h>
