@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.129 2008/01/28 01:52:31 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.130 2008/01/28 20:58:23 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.129 2008/01/28 01:52:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.130 2008/01/28 20:58:23 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1020,19 +1020,16 @@ bool
 ehci_resume(device_t dv)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)dv;
-	int i, s;
 	uint32_t cmd, hcr;
-
-	s = splhardusb();
-
-	sc->sc_bus.use_polling++;
+	int i;
 
 	/* restore things in case the bios sucks */
 	EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 	EOWRITE4(sc, EHCI_ASYNCLISTADDR,
 	    sc->sc_async_head->physaddr | EHCI_LINK_QH);
-	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
+
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs & ~EHCI_INTR_PCIE);
 
 	EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
 
@@ -1059,6 +1056,7 @@ ehci_resume(device_t dv)
 	}
 
 	EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
 	for (i = 0; i < 100; i++) {
 		hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
@@ -1069,12 +1067,6 @@ ehci_resume(device_t dv)
 	}
 	if (hcr == EHCI_STS_HCH)
 		printf("%s: config timeout\n", USBDEVNAME(sc->sc_bus.bdev));
-
-	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-
-	sc->sc_bus.use_polling--;
-
-	splx(s);
 
 	return true;
 }
