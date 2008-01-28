@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.18 2008/01/28 04:04:17 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.19 2008/01/28 05:38:54 dholland Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.18 2008/01/28 04:04:17 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.19 2008/01/28 05:38:54 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -127,8 +127,8 @@ typedef char   *va_list;
 #endif	/* NOVARARGS */
 
 #define LINBUFSIZE 128	/* size of the lgetw() and lgetl() buffer */
-int             lfd;	/* output file numbers */
-int             fd;	/* input file numbers */
+int             io_outfd; /* output file numbers */
+int             io_infd; /* input file numbers */
 static struct sgttyb ttx;/* storage for the tty modes */
 static int      ipoint = MAXIBUF, iepoint = MAXIBUF;	/* input buffering
 							 * pointers    */
@@ -284,19 +284,21 @@ lwrite(buf, len)
 	char  *buf;
 	int             len;
 {
-	char  *str;
-	int    num2;
+	char *s;
+	u_char *t;
+	int num2;
+
 	if (len > 399) {	/* don't copy data if can just write it */
 #ifdef EXTRA
 		c[BYTESOUT] += len;
 #endif
 
 #ifndef VT100
-		for (str = buf; len > 0; --len)
-			lprc(*str++);
+		for (s = buf; len > 0; --len)
+			lprc(*s++);
 #else	/* VT100 */
 		lflush();
-		write(lfd, buf, len);
+		write(io_outfd, buf, len);
 #endif	/* VT100 */
 	} else
 		while (len) {
@@ -306,11 +308,11 @@ lwrite(buf, len)
 							 * output buffer	 */
 			if (num2 > len)
 				num2 = len;
-			str = lpnt;
+			t = lpnt;
 			len -= num2;
 			while (num2--)
-				*str++ = *buf++;	/* copy in the bytes */
-			lpnt = str;
+				*t++ = *buf++;	/* copy in the bytes */
+			lpnt = t;
 		}
 }
 
@@ -327,7 +329,7 @@ lgetc()
 		return (inbuffer[ipoint++]);
 	if (iepoint != MAXIBUF)
 		return (0);
-	if ((i = read(fd, inbuffer, MAXIBUF)) <= 0) {
+	if ((i = read(io_infd, inbuffer, MAXIBUF)) <= 0) {
 		if (i != 0)
 			write(1, "error reading from input file\n", 30);
 		iepoint = ipoint = 0;
@@ -375,12 +377,13 @@ lrfill(adr, num)
 	char  *adr;
 	int             num;
 {
-	char  *pnt;
+	u_char  *pnt;
 	int    num2;
+
 	while (num) {
 		if (iepoint == ipoint) {
 			if (num > 5) {	/* fast way */
-				if (read(fd, adr, num) != num)
+				if (read(io_infd, adr, num) != num)
 					write(2, "error reading from input file\n", 30);
 				num = 0;
 			} else {
@@ -466,15 +469,15 @@ lcreat(str)
 	lpnt = lpbuf;
 	lpend = lpbuf + BUFBIG;
 	if (str == NULL)
-		return (lfd = 1);
-	if ((lfd = creat(str, 0644)) < 0) {
-		lfd = 1;
+		return (io_outfd = 1);
+	if ((io_outfd = creat(str, 0644)) < 0) {
+		io_outfd = 1;
 		lprintf("error creating file <%s>: %s\n", str,
 			strerror(errno));
 		lflush();
 		return (-1);
 	}
-	return (lfd);
+	return (io_outfd);
 }
 
 /*
@@ -490,14 +493,14 @@ lopen(str)
 {
 	ipoint = iepoint = MAXIBUF;
 	if (str == NULL)
-		return (fd = 0);
-	if ((fd = open(str, 0)) < 0) {
+		return (io_infd = 0);
+	if ((io_infd = open(str, O_RDONLY)) < 0) {
 		lwclose();
-		lfd = 1;
+		io_outfd = 1;
 		lpnt = lpbuf;
 		return (-1);
 	}
-	return (fd);
+	return (io_infd);
 }
 
 /*
@@ -514,13 +517,13 @@ lappend(str)
 	lpnt = lpbuf;
 	lpend = lpbuf + BUFBIG;
 	if (str == NULL)
-		return (lfd = 1);
-	if ((lfd = open(str, 2)) < 0) {
-		lfd = 1;
+		return (io_outfd = 1);
+	if ((io_outfd = open(str, 2)) < 0) {
+		io_outfd = 1;
 		return (-1);
 	}
-	lseek(lfd, 0, 2);	/* seek to end of file */
-	return (lfd);
+	lseek(io_outfd, 0, SEEK_END);	/* seek to end of file */
+	return (io_outfd);
 }
 
 /*
@@ -531,8 +534,10 @@ lappend(str)
 void
 lrclose()
 {
-	if (fd > 0)
-		close(fd);
+	if (io_infd > 0) {
+		close(io_infd);
+		io_infd = 0;
+	}
 }
 
 /*
@@ -544,8 +549,10 @@ void
 lwclose()
 {
 	lflush();
-	if (lfd > 2)
-		close(lfd);
+	if (io_outfd > 2) {
+		close(io_outfd);
+		io_outfd = 1;
+	}
 }
 
 /*
@@ -553,10 +560,9 @@ lwclose()
  *			    	avoids calls to lprintf (time consuming)
  */
 void
-lprcat(str)
-	char  *str;
+lprcat(const char *str)
 {
-	char  *str2;
+	u_char  *str2;
 	if (lpnt >= lpend)
 		lflush();
 	str2 = lpnt;
@@ -768,8 +774,7 @@ cl_dn(x, y)
  * standout(str)	Print the argument string in inverse video (standout mode).
  */
 void
-standout(str)
-	char  *str;
+standout(const char *str)
 {
 #ifdef VT100
 	setbold();
@@ -818,7 +823,7 @@ lflush()
 #endif
 		if (enable_scroll <= -1) {
 			flush_buf();
-			if (write(lfd, lpbuf, lpoint) != lpoint)
+			if (write(io_outfd, lpbuf, lpoint) != lpoint)
 				write(2, "error writing to output file\n", 29);
 			lpnt = lpbuf;	/* point back to beginning of buffer */
 			return;
@@ -936,7 +941,7 @@ lflush()
 #ifdef EXTRA
 		c[BYTESOUT] += lpoint;
 #endif
-		if (write(lfd, lpbuf, lpoint) != lpoint)
+		if (write(io_outfd, lpbuf, lpoint) != lpoint)
 			write(2, "error writing to output file\n", 29);
 	}
 	lpnt = lpbuf;		/* point back to beginning of buffer */
@@ -949,10 +954,9 @@ static int      vindex = 0;
  * xputchar(ch)		Print one character in decoded output buffer.
  */
 int 
-xputchar(c)
-	int             c;
+xputchar(int ch)
 {
-	outbuf[vindex++] = c;
+	outbuf[vindex++] = ch;
 	if (vindex >= BUFBIG)
 		flush_buf();
 	return (0);
@@ -965,7 +969,7 @@ void
 flush_buf()
 {
 	if (vindex)
-		write(lfd, outbuf, vindex);
+		write(io_outfd, outbuf, vindex);
 	vindex = 0;
 }
 

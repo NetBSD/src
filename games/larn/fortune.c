@@ -1,4 +1,4 @@
-/*	$NetBSD: fortune.c,v 1.5 2003/08/07 09:37:23 agc Exp $	*/
+/*	$NetBSD: fortune.c,v 1.6 2008/01/28 05:38:53 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)fortune.c	5.5 (Berkeley) 6/10/91";
 #else
-__RCSID("$NetBSD: fortune.c,v 1.5 2003/08/07 09:37:23 agc Exp $");
+__RCSID("$NetBSD: fortune.c,v 1.6 2008/01/28 05:38:53 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -48,7 +48,7 @@ __RCSID("$NetBSD: fortune.c,v 1.5 2003/08/07 09:37:23 agc Exp $");
  * function to return a random fortune from the fortune file
  */
 
-char           *flines[] = {
+const char     *flines[] = {
 	"gem value = gem * 2 ^ perfection",
 	"sitting down can have unexpected results",
 	"don't pry into the affairs of others",
@@ -87,8 +87,8 @@ char           *flines[] = {
 
 #define NFORTUNES	34
 
-char *
-fortune()
+const char *
+fortune(void)
 {
 	return (flines[random() % NFORTUNES]);
 }

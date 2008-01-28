@@ -1,9 +1,9 @@
-/*	$NetBSD: tok.c,v 1.6 2006/05/11 00:22:52 mrg Exp $	*/
+/*	$NetBSD: tok.c,v 1.7 2008/01/28 05:38:54 dholland Exp $	*/
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tok.c,v 1.6 2006/05/11 00:22:52 mrg Exp $");
+__RCSID("$NetBSD: tok.c,v 1.7 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -178,7 +178,7 @@ sethard(hard)
 void
 readopts()
 {
-	char  *i;
+	const char  *i;
 	int    j, k;
 	int             flag;
 	flag = 1;		/* set to 0 if he specifies a name for his
@@ -189,7 +189,7 @@ readopts()
 	}
 	i = " ";
 	while (*i) {
-		if ((i = (char *) lgetw()) == 0)
+		if ((i = lgetw()) == NULL)
 			break;	/* check for EOF */
 		while ((*i == ' ') || (*i == '\t'))
 			i++;	/* eat leading whitespace */
@@ -218,9 +218,7 @@ readopts()
 			if (strcmp(i, "monster:") == 0) {	/* name favorite monster */
 				if ((i = lgetw()) == 0)
 					break;
-				if (strlen(i) >= MAXMNAME)
-					i[MAXMNAME - 1] = 0;
-				strcpy(usermonster[usermpoint], i);
+				strlcpy(usermonster[usermpoint], i, MAXMNAME);
 				if (usermpoint >= MAXUM)
 					break;	/* defined all of em */
 				if (isalpha(j = usermonster[usermpoint][0])) {
@@ -238,9 +236,7 @@ readopts()
 			if (strcmp(i, "name:") == 0) {	/* defining players name */
 				if ((i = lgetw()) == 0)
 					break;
-				if (strlen(i) >= LOGNAMESIZE)
-					i[LOGNAMESIZE - 1] = 0;
-				strcpy(logname, i);
+				strlcpy(logname, i, LOGNAMESIZE);
 				flag = 0;
 			} else if (strcmp(i, "no-introduction") == 0)
 				nowelcome = 1;
@@ -252,9 +248,7 @@ readopts()
 			if (strcmp(i, "process-name:") == 0) {
 				if ((i = lgetw()) == 0)
 					break;
-				if (strlen(i) >= PSNAMESIZE)
-					i[PSNAMESIZE - 1] = 0;
-				strcpy(psname, i);
+				strlcpy(psname, i, PSNAMESIZE);
 			} else if (strcmp(i, "play-day-play") == 0)
 				dayplay = 1;
 			break;

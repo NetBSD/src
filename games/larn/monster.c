@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.12 2008/01/28 03:39:31 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.13 2008/01/28 05:38:54 dholland Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.12 2008/01/28 03:39:31 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.13 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -169,15 +169,14 @@ createmonster(mon)
  * This routine will return FALSE if at a wall or the dungeon exit on level 1
  */
 int 
-cgood(x, y, itm, monst)
-	int    x, y;
-	int             itm, monst;
+cgood(int x, int y, int theitem, int monst)
 {
+#define itm __lose
 	if ((y >= 0) && (y <= MAXY - 1) && (x >= 0) && (x <= MAXX - 1))
 		/* within bounds? */
 		if (item[x][y] != OWALL) /* can't make anything on walls */
 			/* is it free of items? */
-			if (itm == 0 || (item[x][y] == 0))
+			if (theitem == 0 || (item[x][y] == 0))
 				/* is it free of monsters? */
 				if (monst == 0 || (mitem[x][y] == 0))
 					if ((level != 1) || (x != 33) ||
@@ -271,12 +270,12 @@ over:		lprcat(aborted);
  * Please insure that there are 2 spaces before all messages here
  */
 void
-speldamage(x)
-	int             x;
+speldamage(int x)
 {
 	int    i, j, clev;
 	int             xl, xh, yl, yh;
-	char  *p, *kn, *pm;
+	u_char  *p, *kn, *pm;
+
 	if (x >= SPNUM)
 		return;		/* no such spell */
 	if (c[TIMESTOP]) {
@@ -313,10 +312,10 @@ speldamage(x)
 		c[DEXCOUNT] += 400;
 		return;
 
-	case 3:
+	case 3:		/* sleep		 */
 		i = rnd(3) + 1;
-		p = "  While the %s slept, you smashed it %d times";
-ws:		direct(x, fullhit(i), p, i);	/* sleep	 */
+		direct(x, fullhit(i),
+		       "  While the %s slept, you smashed it %ld times", i);
 		return;
 
 	case 4:		/* charm monster	 */
@@ -329,10 +328,11 @@ ws:		direct(x, fullhit(i), p, i);	/* sleep	 */
 
 		/* ----- LEVEL 2 SPELLS ----- */
 
-	case 6:
+	case 6:		/* web 			*/
 		i = rnd(3) + 2;
-		p = "  While the %s is entangled, you hit %d times";
-		goto ws;	/* web */
+		direct(x, fullhit(i),
+		       "  While the %s is entangled, you hit %ld times", i);
+		return;
 
 	case 7:
 		if (c[STRCOUNT] == 0)
@@ -713,7 +713,7 @@ fullhit(xx)
 void
 direct(spnum, dam, str, arg)
 	int             spnum, dam, arg;
-	char           *str;
+	const char     *str;
 {
 	int             x, y;
 	int    m;
@@ -775,9 +775,9 @@ direct(spnum, dam, str, arg)
 void
 godirect(spnum, dam, str, delay, cshow)
 	int             spnum, dam, delay;
-	char           *str, cshow;
+	const char     *str, cshow;
 {
-	char  *p;
+	u_char  *p;
 	int    x, y, m;
 	int             dx, dy;
 	if (spnum < 0 || spnum >= SPNUM || str == 0 || delay < 0)
@@ -897,10 +897,10 @@ godirect(spnum, dam, str, delay, cshow)
  * Returns no value.
  */
 void
-ifblind(x, y)
-	int             x, y;
+ifblind(int x, int y)
 {
-	char           *p;
+	const char *p;
+
 	vxy(&x, &y);		/* verify correct x,y coordinates */
 	if (c[BLINDCOUNT]) {
 		lastnum = 279;
@@ -956,11 +956,10 @@ tdirect(spnum)
  * Returns no value.
  */
 void
-omnidirect(spnum, dam, str)
-	int             spnum, dam;
-	char           *str;
+omnidirect(int spnum, int dam, const char *str)
 {
 	int    x, y, m;
+
 	if (spnum < 0 || spnum >= SPNUM || str == 0)
 		return;		/* bad args */
 	for (x = playerx - 1; x < playerx + 2; x++)
@@ -1337,16 +1336,15 @@ dropgold(amount)
  * Returns nothing of value.
  */
 void
-something(level)
-	int             level;
+something(int cavelevel)
 {
 	int    j;
 	int             i;
-	if (level < 0 || level > MAXLEVEL + MAXVLEVEL)
+	if (cavelevel < 0 || cavelevel > MAXLEVEL + MAXVLEVEL)
 		return;		/* correct level? */
 	if (rnd(101) < 8)
-		something(level);	/* possibly more than one item */
-	j = newobject(level, &i);
+		something(cavelevel);	/* possibly more than one item */
+	j = newobject(cavelevel, &i);
 	createitem(j, i);
 }
 
@@ -1506,7 +1504,8 @@ spattack(x, xx, yy)
 	int             x, xx, yy;
 {
 	int    i, j = 0, k, m;
-	char  *p = 0;
+	const char *p = NULL;
+
 	if (c[CANCELLATION])
 		return (0);
 	vxy(&xx, &yy);		/* verify x & y coordinates */

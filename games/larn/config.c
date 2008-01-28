@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.5 1997/10/18 20:03:08 christos Exp $	 */
+/*	$NetBSD: config.c,v 1.6 2008/01/28 05:38:53 dholland Exp $	 */
 
 /*
  * config.c --	This defines the installation dependent variables.
@@ -10,7 +10,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.5 1997/10/18 20:03:08 christos Exp $");
+__RCSID("$NetBSD: config.c,v 1.6 2008/01/28 05:38:53 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -43,7 +43,7 @@ char  playerids[] = _PATH_PLAYERIDS;
 
 char  diagfile[] = "Diagfile";		/* the diagnostic filename */
 char  ckpfile[] = "Larn12.0.ckp";	/* the checkpoint filename */
-char *password = "pvnert(x)";		/* the wizards password <=32 */
+const char *password = "pvnert(x)";	/* the wizards password <=32 */
 char  psname[PSNAMESIZE] = "larn";	/* the process name */
 
 #define	WIZID	1

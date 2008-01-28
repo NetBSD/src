@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.14 2008/01/28 03:39:31 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.15 2008/01/28 05:38:54 dholland Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.14 2008/01/28 03:39:31 dholland Exp $");
+__RCSID("$NetBSD: scores.c,v 1.15 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -86,7 +86,7 @@ struct log_fmt {		/* 102 bytes struct for the log file 				 */
 static struct scofmt sco[SCORESIZE];	/* the structure for the scoreboard  */
 static struct wscofmt winr[SCORESIZE];	/* struct for the winning scoreboard */
 static struct log_fmt logg;	/* structure for the log file 		 */
-static char    *whydead[] = {
+static const char *whydead[] = {
 	"quit", "suspended", "self - annihilated", "shot by an arrow",
 	"hit by a dart", "fell into a pit", "fell into a bottomless pit",
 	"a winner", "trapped in solid rock", "killed by a missing save file",
@@ -595,7 +595,8 @@ died(x)
 	int             x;
 {
 	int    f, win;
-	char            ch, *mod;
+	char            ch;
+	const char     *mod;
 	time_t          zzz;
 	if (c[LIFEPROT] > 0) {	/* if life protection */
 		switch ((x > 0) ? x : -x) {
@@ -732,10 +733,11 @@ invalid:
  * 	int x;
  */
 void
-diedsub(x)
-	int             x;
+diedsub(int x)
 {
-	char   ch, *mod;
+	char   ch;
+	const char *mod;
+
 	lprintf("Score: %ld, Diff: %ld,  %s ", (long) c[GOLD], (long) c[HARDGAME], logname);
 	if (x < 256) {
 		ch = *monster[x].name;
@@ -766,7 +768,7 @@ diedlog()
 		lprintf("Can't locate log file <%s>\n", logfile);
 		return;
 	}
-	if (fstat(fd, &stbuf) < 0) {
+	if (fstat(io_infd, &stbuf) < 0) {
 		lprintf("Can't  stat log file <%s>\n", logfile);
 		return;
 	}
@@ -779,10 +781,10 @@ diedlog()
 #ifdef EXTRA
 		if (logg.moves <= 0)
 			logg.moves = 1;
-		lprintf("  Experience Level: %d,  AC: %d,  HP: %d/%d,  Elapsed Time: %d minutes\n", (long) (logg.lev), (long) (logg.ac), (long) (logg.hp), (long) (logg.hpmax), (long) (logg.elapsedtime));
-		lprintf("  CPU time used: %d seconds,  Machine usage: %d.%02d%%\n", (long) (logg.cputime), (long) (logg.usage / 100), (long) (logg.usage % 100));
-		lprintf("  BYTES in: %d, out: %d, moves: %d, deaths: %d, spells cast: %d\n", (long) (logg.bytin), (long) (logg.bytout), (long) (logg.moves), (long) (logg.killed), (long) (logg.spused));
-		lprintf("  out bytes per move: %d,  time per move: %d ms\n", (long) (logg.bytout / logg.moves), (long) ((logg.cputime * 1000) / logg.moves));
+		lprintf("  Experience Level: %ld,  AC: %ld,  HP: %ld/%ld,  Elapsed Time: %ld minutes\n", (long) (logg.lev), (long) (logg.ac), (long) (logg.hp), (long) (logg.hpmax), (long) (logg.elapsedtime));
+		lprintf("  CPU time used: %ld seconds,  Machine usage: %ld.%02ld%%\n", (long) (logg.cputime), (long) (logg.usage / 100), (long) (logg.usage % 100));
+		lprintf("  BYTES in: %ld, out: %ld, moves: %ld, deaths: %ld, spells cast: %ld\n", (long) (logg.bytin), (long) (logg.bytout), (long) (logg.moves), (long) (logg.killed), (long) (logg.spused));
+		lprintf("  out bytes per move: %ld,  time per move: %ld ms\n", (long) (logg.bytout / logg.moves), (long) ((logg.cputime * 1000) / logg.moves));
 #endif
 	}
 	lflush();
@@ -840,7 +842,7 @@ getplid(nam)
 addone:
 	if (lappend(playerids) < 0)
 		return (-1);	/* can't open file for append */
-	lprintf("%d\n%s", (long) ++high, name);	/* new id # and name */
+	lprintf("%ld\n%s", (long) ++high, name);	/* new id # and name */
 	lwclose();
 	lcreat((char *) 0);	/* re-open terminal channel */
 	return (high);

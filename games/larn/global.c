@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.8 2008/01/28 03:39:31 dholland Exp $	*/
+/*	$NetBSD: global.c,v 1.9 2008/01/28 05:38:53 dholland Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -23,7 +23,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.8 2008/01/28 03:39:31 dholland Exp $");
+__RCSID("$NetBSD: global.c,v 1.9 2008/01/28 05:38:53 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -31,7 +31,6 @@ __RCSID("$NetBSD: global.c,v 1.8 2008/01/28 03:39:31 dholland Exp $");
 #include "header.h"
 #include "extern.h"
 extern int      score[], dropflag;
-extern int      random;		/* the random number seed		*/
 extern char     *what[], *who[];
 extern char     winner[];
 extern char     sciv[SCORESIZE + 1][26][2];
@@ -472,8 +471,7 @@ more()
 	returns 0 if success, 1 if a failure
  */
 int
-take(itm, arg)
-	int             itm, arg;
+take(int theitem, int arg)
 {
 	int    i, limit;
 	/* cursors(); */
@@ -481,10 +479,10 @@ take(itm, arg)
 		limit = 26;
 	for (i = 0; i < limit; i++)
 		if (iven[i] == 0) {
-			iven[i] = itm;
+			iven[i] = theitem;
 			ivenarg[i] = arg;
 			limit = 0;
-			switch (itm) {
+			switch (theitem) {
 			case OPROTRING:
 			case ODAMRING:
 			case OBELT:
@@ -545,12 +543,12 @@ int
 drop_object(k)
 	int             k;
 {
-	int             itm;
+	int             theitem;
 	if ((k < 0) || (k > 25))
 		return (0);
-	itm = iven[k];
+	theitem = iven[k];
 	cursors();
-	if (itm == 0) {
+	if (theitem == 0) {
 		lprintf("\nYou don't have item %c! ", k + 'a');
 		return (1);
 	}
@@ -561,7 +559,7 @@ drop_object(k)
 	}
 	if (playery == MAXY - 1 && playerx == 33)
 		return (1);	/* not in entrance */
-	item[playerx][playery] = itm;
+	item[playerx][playery] = theitem;
 	iarg[playerx][playery] = ivenarg[k];
 	srcount = 0;
 	lprcat("\n  You drop:");
@@ -574,7 +572,7 @@ drop_object(k)
 		c[WEAR] = -1;
 	if (c[SHIELD] == k)
 		c[SHIELD] = -1;
-	adjustcvalues(itm, ivenarg[k]);
+	adjustcvalues(theitem, ivenarg[k]);
 	dropflag = 1;		/* say dropped an item so wont ask to pick it
 				 * up right away */
 	return (0);
@@ -742,12 +740,11 @@ creategem()
 	that affects these characteristics
  */
 void
-adjustcvalues(itm, arg)
-	int             itm, arg;
+adjustcvalues(int theitem, int arg)
 {
 	int    flag;
 	flag = 0;
-	switch (itm) {
+	switch (theitem) {
 	case ODEXRING:
 		c[DEXTERITY] -= arg + 1;
 		flag = 1;
