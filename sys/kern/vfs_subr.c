@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.324 2008/01/27 22:47:31 pooka Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.325 2008/01/28 18:24:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.324 2008/01/27 22:47:31 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.325 2008/01/28 18:24:05 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1686,9 +1686,10 @@ vfs_unmountall(struct lwp *l)
 	int allerror, error;
 
 	printf("unmounting file systems...");
-	for (allerror = 0,
-	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
-		nmp = mp->mnt_list.cqe_prev;
+	for (allerror = 0, mp = CIRCLEQ_LAST(&mountlist);
+	     !CIRCLEQ_EMPTY(&mountlist);
+	     mp = nmp) {
+		nmp = CIRCLEQ_PREV(mp, mnt_list);
 #ifdef DEBUG
 		printf("\nunmounting %s (%s)...",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
