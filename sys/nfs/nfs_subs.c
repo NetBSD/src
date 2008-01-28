@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.197 2008/01/24 17:32:56 ad Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.198 2008/01/28 10:44:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.197 2008/01/24 17:32:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.198 2008/01/28 10:44:51 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1858,21 +1858,15 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 		long now = time_second;
 		const struct timespec *omtime = &np->n_vattr->va_mtime;
 		const struct timespec *octime = &np->n_vattr->va_ctime;
-#if defined(DEBUG)
 		const char *reason = NULL; /* XXX: gcc */
-#endif
 
 		if (timespeccmp(omtime, mtime, <=)) {
-#if defined(DEBUG)
 			reason = "mtime";
-#endif
 			error = EINVAL;
 		}
 
 		if (vp->v_type == VDIR && timespeccmp(octime, ctime, <=)) {
-#if defined(DEBUG)
 			reason = "ctime";
-#endif
 			error = EINVAL;
 		}
 
@@ -1894,7 +1888,6 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			 */
 
 			mutex_enter(&nmp->nm_lock);
-#if defined(DEBUG)
 			if (!NFS_WCCKLUDGE(nmp, now)) {
 				printf("%s: inaccurate wcc data (%s) detected,"
 				    " disabling wcc"
@@ -1911,7 +1904,6 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 				    (unsigned int)mtime->tv_sec,
 				    (unsigned int)mtime->tv_nsec);
 			}
-#endif
 			nmp->nm_iflag |= NFSMNT_WCCKLUDGE;
 			nmp->nm_wcckludgetime = now;
 			mutex_exit(&nmp->nm_lock);
@@ -1920,10 +1912,8 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
 			mutex_enter(&nmp->nm_lock);
 			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
-#if defined(DEBUG)
 				printf("%s: re-enabling wcc\n",
 				    vp->v_mount->mnt_stat.f_mntfromname);
-#endif
 				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
 			}
 			mutex_exit(&nmp->nm_lock);
