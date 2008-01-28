@@ -1,4 +1,4 @@
-/*	$NetBSD: movem.c,v 1.5 1997/10/18 20:03:34 christos Exp $	*/
+/*	$NetBSD: movem.c,v 1.6 2008/01/28 05:38:54 dholland Exp $	*/
 
 /*
  * movem.c (move monster)		Larn is copyrighted 1986 by Noah Morgan.
@@ -12,7 +12,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: movem.c,v 1.5 1997/10/18 20:03:34 christos Exp $");
+__RCSID("$NetBSD: movem.c,v 1.6 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -274,7 +274,8 @@ mmove(aa, bb, cc, dd)
 	int             aa, bb, cc, dd;
 {
 	int    tmp, i, flag;
-	char           *who = NULL, *p;
+	const char *who = NULL, *p;
+
 	flag = 0;		/* set to 1 if monster hit by arrow trap */
 	if ((cc == playerx) && (dd == playery)) {
 		hitplayer(aa, bb);

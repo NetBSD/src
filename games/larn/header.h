@@ -1,4 +1,4 @@
-/* $NetBSD: header.h,v 1.16 2006/11/24 22:52:16 wiz Exp $	 */
+/* $NetBSD: header.h,v 1.17 2008/01/28 05:38:53 dholland Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -32,7 +32,7 @@
 
 /* this is the structure definition of the monster data	 */
 struct monst {
-	char           *name;
+	const char     *name;
 	char            level;
 	short           armorclass;
 	char            damage;
@@ -332,26 +332,29 @@ struct sphere {
 #ifndef NODEFS
 extern char     VERSION, SUBVERSION;
 extern u_char   alpha[], beenhere[], boldon, cheat, ckpflag;
-extern u_char  *class[], course[];
+extern const char *class[];
+extern u_char   course[];
 extern char     diagfile[], helpfile[], ckpfile[], larnlevels[],
 		playerids[], optsfile[1024], psname[], savefilename[],
 		scorefile[];
 extern u_char  *inbuffer, is_alpha[], is_digit[];
 extern u_char   item[MAXX][MAXY], iven[], know[MAXX][MAXY];
-extern char    *levelname[], logfile[], loginname[], logname[],
-                lastmonst[];
+extern const char *levelname[];
+extern char     logfile[], loginname[], logname[], lastmonst[];
 extern u_char  *lpbuf, *lpend;
 extern u_char  *lpnt, moved[MAXX][MAXY], mitem[MAXX][MAXY], monstlevel[];
 extern char     monstnamelist[], objnamelist[];
 extern u_char   nch[], ndgg[], nlpts[], nomove, nosignal, nowelcome;
 extern u_char   nplt[], nsw[];
-extern char    *objectname[], *potionhide[], *potionname[],
-               *spelcode[], *spelname[], *spelmes[], aborted[],
-	        spelweird[MAXMONST + 8][SPNUM];
+extern const char *objectname[];
+extern const char *potionhide[], *potionname[];
+extern const char *spelcode[], *spelname[], *spelmes[];
+extern char     aborted[], spelweird[MAXMONST + 8][SPNUM];
 extern u_char   potprob[];
 extern u_char   predostuff, restorflag, scprob[];
 extern u_char   screen[MAXX][MAXY], sex;
-extern char    *speldescript[], *scrollhide[], *scrollname[];
+extern const char *speldescript[];
+extern const char *scrollhide[], *scrollname[];
 extern u_char   spelknow[];
 extern u_char   splev[], stealth[MAXX][MAXY], to_lower[], to_upper[], wizard;
 extern short    diroffx[], diroffy[], hitflag, hit2flag, hit3flag, hitp[MAXX][MAXY];
@@ -359,7 +362,7 @@ extern short    iarg[MAXX][MAXY], ivenarg[], lasthx, lasthy, lastnum, lastpx,
                 lastpy;
 extern short    nobeep, oldx, oldy, playerx, playery, level;
 extern int      dayplay, enable_scroll, srcount, yrepcount, userid, wisid,
-                lfd, fd;
+		io_outfd, io_infd;
 extern uid_t    uid, euid;
 extern long     outstanding_taxes, skill[], gltime, c[], cbak[];
 extern time_t	initialtime;

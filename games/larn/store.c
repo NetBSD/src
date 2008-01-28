@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.11 2008/01/28 03:39:31 dholland Exp $	 */
+/*	$NetBSD: store.c,v 1.12 2008/01/28 05:38:54 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.11 2008/01/28 03:39:31 dholland Exp $");
+__RCSID("$NetBSD: store.c,v 1.12 2008/01/28 05:38:54 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -46,7 +46,7 @@ static void handsfull(void);
 static void outofstock(void);
 static void nogold(void);
 static void dnditem(int);
-static void banktitle(char *);
+static void banktitle(const char *);
 static void otradhead(void);
 
 static int      dndcount = 0, dnditm = 0;
@@ -520,9 +520,9 @@ obank2()
 {
 	banktitle("Welcome to the 5th level branch office of the First National Bank of Larn.");
 }
+
 static void
-banktitle(str)
-	char           *str;
+banktitle(const char *str)
 {
 	nosignal = 1;		/* disable signals */
 	clear();
@@ -577,7 +577,7 @@ static long     gemvalue[26] = {0};	/* the appraisal of the gems */
 void
 obanksub()
 {
-	unsigned long   amt;
+	long   amt;
 	int    i, k;
 	ointerest();		/* credit any needed interest */
 
@@ -850,7 +850,7 @@ void
 olrs()
 {
 	int    i, first;
-	unsigned long   amt;
+	long   amt;
 	first = nosignal = 1;	/* disable signals */
 	clear();
 	resetscroll();
@@ -881,7 +881,7 @@ olrs()
 			} else if (amt > c[GOLD])
 				lprcat("  You don't have that much.\n");
 			else
-				c[GOLD] -= paytaxes((long) amt);
+				c[GOLD] -= paytaxes(amt);
 			break;
 
 		case '\33':

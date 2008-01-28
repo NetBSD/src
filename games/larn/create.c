@@ -1,10 +1,10 @@
-/* $NetBSD: create.c,v 1.8 2005/02/25 15:04:43 simonb Exp $	 */
+/* $NetBSD: create.c,v 1.9 2008/01/28 05:38:53 dholland Exp $	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: create.c,v 1.8 2005/02/25 15:04:43 simonb Exp $");
+__RCSID("$NetBSD: create.c,v 1.9 2008/01/28 05:38:53 dholland Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -490,12 +490,10 @@ fillmroom(n, what, arg)
 		fillroom(what, arg);
 }
 void
-froom(n, itm, arg)
-	int             n, arg;
-	char            itm;
+froom(int n, int theitem, int arg)
 {
 	if (rnd(151) < n)
-		fillroom(itm, arg);
+		fillroom(theitem, arg);
 }
 
 /*

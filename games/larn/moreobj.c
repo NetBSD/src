@@ -1,4 +1,4 @@
-/*	$NetBSD: moreobj.c,v 1.7 2008/01/28 03:39:31 dholland Exp $	*/
+/*	$NetBSD: moreobj.c,v 1.8 2008/01/28 05:38:54 dholland Exp $	*/
 
 /*
  * moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -9,7 +9,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moreobj.c,v 1.7 2008/01/28 03:39:31 dholland Exp $");
+__RCSID("$NetBSD: moreobj.c,v 1.8 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 #include <stdlib.h>
 #include <unistd.h>
@@ -29,7 +29,7 @@ static void fch(int, long *);
 void
 oaltar()
 {
-	unsigned long   k;
+	long amt;
 
 	lprcat("\nDo you (p) pray  (d) desecrate");
 	iopts();
@@ -66,13 +66,13 @@ oaltar()
 						cursor(1, 23);
 						cltoeoln();
 						lprcat("how much do you donate? ");
-						k = readnum((long) c[GOLD]);
-						if (c[GOLD] < k) {
+						amt = readnum((long) c[GOLD]);
+						if (amt < 0 || c[GOLD] < amt) {
 							lprcat("\nYou don't have that much!");
 							return;
 						}
-						c[GOLD] -= k;
-						if (k < c[GOLD] / 10 || k < rnd(50)) {
+						c[GOLD] -= amt;
+						if (amt < c[GOLD] / 10 || amt < rnd(50)) {
 							createmonster(makemonst(level + 1));
 							c[AGGRAVATE] += 200;
 						} else if (rnd(101) > 50) {
