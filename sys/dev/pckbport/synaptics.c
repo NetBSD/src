@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.18 2008/01/28 22:28:32 jmcneill Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.19 2008/01/28 22:30:27 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.18 2008/01/28 22:28:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.19 2008/01/28 22:30:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -757,7 +757,8 @@ pms_synaptics_input(void *vsc, int data)
 	if (psc->inputstate > 0) {
 		timersub(&psc->current, &psc->last, &diff);
 		if (diff.tv_sec > 0 || diff.tv_usec >= 40000) {
-			printf("%s: pms_input: unusual delay (%ld.%06ld s), "
+			aprint_debug(
+			    "%s: pms_input: unusual delay (%ld.%06ld s), "
 			    "scheduling reset\n", psc->sc_dev.dv_xname,
 			    (long)diff.tv_sec, (long)diff.tv_usec);
 			psc->inputstate = 0;
