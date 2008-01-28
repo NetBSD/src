@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.fight.c,v 1.7 2006/03/29 01:18:39 jnemeth Exp $	*/
+/*	$NetBSD: hack.fight.c,v 1.8 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.fight.c,v 1.7 2006/03/29 01:18:39 jnemeth Exp $");
+__RCSID("$NetBSD: hack.fight.c,v 1.8 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -78,9 +78,10 @@ hitmm(magr, mdef)
 	struct monst   *magr, *mdef;
 {
 	const struct permonst *pa = magr->data, *pd = mdef->data;
-	int             hit;
+	int             didhit;
 	schar           tmp;
 	boolean         vis;
+
 	if (strchr("Eauy", pa->mlet))
 		return (0);
 	if (magr->mfroz)
@@ -91,8 +92,8 @@ hitmm(magr, mdef)
 		if (mdef->msleep)
 			mdef->msleep = 0;
 	}
-	hit = (tmp > rnd(20));
-	if (hit)
+	didhit = (tmp > rnd(20));
+	if (didhit)
 		mdef->msleep = 0;
 	vis = (cansee(magr->mx, magr->my) && cansee(mdef->mx, mdef->my));
 	if (vis) {
@@ -102,7 +103,7 @@ hitmm(magr, mdef)
 		if (magr->mimic)
 			seemimic(magr);
 		(void) sprintf(buf, "%s %s", Monnam(magr),
-			       hit ? "hits" : "misses");
+			       didhit ? "hits" : "misses");
 		pline("%s %s.", buf, monnam(mdef));
 	} else {
 		boolean         far = (dist(magr->mx, magr->my) > 15);
@@ -113,7 +114,7 @@ hitmm(magr, mdef)
 			      far ? " in the distance" : "");
 		}
 	}
-	if (hit) {
+	if (didhit) {
 		if (magr->data->mlet == 'c' && !magr->cham) {
 			magr->mhpmax += 3;
 			if (vis)
@@ -121,7 +122,7 @@ hitmm(magr, mdef)
 			else if (mdef->mtame)
 				pline("You have a peculiarly sad feeling for a moment, then it passes.");
 			monstone(mdef);
-			hit = 2;
+			didhit = 2;
 		} else if ((mdef->mhp -= d(pa->damn, pa->damd)) < 1) {
 			magr->mhpmax += 1 + rn2(pd->mlevel + 1);
 			if (magr->mtame && magr->mhpmax > 8 * pa->mlevel) {
@@ -135,10 +136,10 @@ hitmm(magr, mdef)
 			else if (mdef->mtame)
 				pline("You have a sad feeling for a moment, then it passes.");
 			mondied(mdef);
-			hit = 2;
+			didhit = 2;
 		}
 	}
-	return (hit);
+	return (didhit);
 }
 
 /* drop (perhaps) a cadaver and remove monster */

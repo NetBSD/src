@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.lev.c,v 1.6 2003/04/02 18:36:37 jsm Exp $	*/
+/*	$NetBSD: hack.lev.c,v 1.7 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.lev.c,v 1.6 2003/04/02 18:36:37 jsm Exp $");
+__RCSID("$NetBSD: hack.lev.c,v 1.7 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -327,8 +327,8 @@ mread(fd, buf, len)
 {
 	int             rlen;
 
-	rlen = read(fd, buf, (int) len);
-	if (rlen != len) {
+	rlen = read(fd, buf, len);
+	if (rlen < 0 || (size_t)rlen != len) {
 		pline("Read %d instead of %u bytes.\n", rlen, len);
 		if (restoring) {
 			(void) unlink(SAVEF);

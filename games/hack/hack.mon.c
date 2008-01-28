@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.mon.c,v 1.7 2006/03/30 01:28:46 jnemeth Exp $	*/
+/*	$NetBSD: hack.mon.c,v 1.8 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.mon.c,v 1.7 2006/03/30 01:28:46 jnemeth Exp $");
+__RCSID("$NetBSD: hack.mon.c,v 1.8 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -217,9 +217,10 @@ dochugw(mtmp)
 {
 	int x = mtmp->mx;
 	int y = mtmp->my;
-	int d = dochug(mtmp);
+	int dead = dochug(mtmp);
 	int dd;
-	if (!d)			/* monster still alive */
+
+	if (!dead)		/* monster still alive */
 		if (Warning)
 			if (!mtmp->mpeaceful)
 				if (mtmp->data->mlevel > warnlevel)
@@ -227,7 +228,7 @@ dochugw(mtmp)
 						if (dd < 100)
 							if (!canseemon(mtmp))
 								warnlevel = mtmp->data->mlevel;
-	return (d);
+	return (dead);
 }
 
 /* returns 1 if monster died moving, 0 otherwise */
