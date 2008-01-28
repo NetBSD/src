@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.169 2007/12/17 23:59:41 wiz Exp $
+$NetBSD: UPDATING,v 1.170 2008/01/28 03:30:26 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -15,6 +15,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20080126:
+	The posix_fadvise system call has been changed from an assembly
+	stub, to a c file that calls an assembly stub. You need to
+	'rm -f posix_fadvise.* .depend' in the libc build directory to
+	avoid using the old assembly stub.
 
 20071209:
 	The acpiec(4) driver has been split into two attachments. If you
