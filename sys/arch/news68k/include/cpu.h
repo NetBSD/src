@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2007/10/17 19:55:53 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2008/01/28 17:07:19 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -156,7 +156,8 @@ struct clockframe {
 #define CLKF_INTR(framep)	(((framep)->sr & PSL_M) == 0)
 #else
 /* but until we start using PSL_M, we have to do this instead */
-#define CLKF_INTR(framep)	(0)	/* XXX */
+#include <machine/intr.h>
+#define CLKF_INTR(framep)	(idepth > 1)	/* XXX */
 #endif
 
 
