@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.220 2008/01/25 10:49:32 pooka Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.221 2008/01/28 14:31:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.220 2008/01/25 10:49:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.221 2008/01/28 14:31:20 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.220 2008/01/25 10:49:32 pooka Exp $
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/ufs/quota.h>
@@ -111,6 +112,8 @@ struct vfsops ffs_vfsops = {
 	ffs_snapshot,
 	ffs_extattrctl,
 	ffs_suspendctl,
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	ffs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

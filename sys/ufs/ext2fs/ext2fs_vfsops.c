@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.128 2008/01/24 17:32:56 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.129 2008/01/28 14:31:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.128 2008/01/24 17:32:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.129 2008/01/28 14:31:20 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.128 2008/01/24 17:32:56 ad Exp $
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/ufs/quota.h>
@@ -141,6 +142,8 @@ struct vfsops ext2fs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	ext2fs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

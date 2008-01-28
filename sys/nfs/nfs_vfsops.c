@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.192 2008/01/20 18:09:13 joerg Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.193 2008/01/28 14:31:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.192 2008/01/20 18:09:13 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.193 2008/01/28 14:31:20 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -119,6 +119,8 @@ struct vfsops nfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	nfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

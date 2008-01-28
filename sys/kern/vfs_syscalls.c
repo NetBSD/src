@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.343 2008/01/25 14:32:15 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.344 2008/01/28 14:31:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.343 2008/01/25 14:32:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.344 2008/01/28 14:31:18 dholland Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -307,6 +307,7 @@ mount_domount(struct lwp *l, struct vnode **vpp, struct vfsops *vfsops,
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
 	mutex_init(&mp->mnt_mutex, MUTEX_DEFAULT, IPL_NONE);
+ 	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	(void)vfs_busy(mp, LK_NOWAIT, 0);
 
 	mp->mnt_vnodecovered = vp;
@@ -3278,8 +3279,10 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 {
 	struct vnode *tvp, *fvp, *tdvp;
 	struct nameidata fromnd, tond;
+	struct mount *fs;
 	struct lwp *l = curlwp;
 	struct proc *p;
+	uint32_t saveflag;
 	int error;
 
 	NDINIT(&fromnd, DELETE, LOCKPARENT | SAVESTART | TRYEMULROOT,
@@ -3289,11 +3292,57 @@ do_sys_rename(const char *from, const char *to, enum uio_seg seg, int retain)
 	if (fromnd.ni_dvp != fromnd.ni_vp)
 		VOP_UNLOCK(fromnd.ni_dvp, 0);
 	fvp = fromnd.ni_vp;
+
+	fs = fvp->v_mount;
+	error = VFS_RENAMELOCK_ENTER(fs);
+	if (error) {
+		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
+		vrele(fromnd.ni_dvp);
+		vrele(fvp);
+		goto out1;
+	}
+
+	/*
+	 * close, partially, yet another race - ideally we should only
+	 * go as far as getting fromnd.ni_dvp before getting the per-fs
+	 * lock, and then continue to get fromnd.ni_vp, but we can't do
+	 * that with namei as it stands.
+	 *
+	 * This still won't prevent rmdir from nuking fromnd.ni_vp
+	 * under us. The real fix is to get the locks in the right
+	 * order and do the lookups in the right places, but that's a
+	 * major rototill.
+	 *
+	 * Preserve the SAVESTART in cn_flags, because who knows what
+	 * might happen if we don't.
+	 *
+	 * Note: this logic (as well as this whole function) is cloned
+	 * in nfs_serv.c. Proceed accordingly.
+	 */
+	vrele(fvp);
+	saveflag = fromnd.ni_cnd.cn_flags & SAVESTART;
+	fromnd.ni_cnd.cn_flags &= ~SAVESTART;
+	vn_lock(fromnd.ni_dvp, LK_EXCLUSIVE | LK_RETRY);
+	error = relookup(fromnd.ni_dvp, &fromnd.ni_vp, &fromnd.ni_cnd);
+	fromnd.ni_cnd.cn_flags |= saveflag;
+	if (error) {
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
+		VFS_RENAMELOCK_EXIT(fs);
+		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
+		vrele(fromnd.ni_dvp);
+		goto out1;
+	}
+	VOP_UNLOCK(fromnd.ni_vp, 0);
+	if (fromnd.ni_dvp != fromnd.ni_vp)
+		VOP_UNLOCK(fromnd.ni_dvp, 0);
+	fvp = fromnd.ni_vp;
+
 	NDINIT(&tond, RENAME,
 	    LOCKPARENT | LOCKLEAF | NOCACHE | SAVESTART | TRYEMULROOT
 	      | (fvp->v_type == VDIR ? CREATEDIR : 0),
 	    seg, to);
 	if ((error = namei(&tond)) != 0) {
+		VFS_RENAMELOCK_EXIT(fs);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		vrele(fvp);
@@ -3351,6 +3400,7 @@ out:
 	if (!error) {
 		error = VOP_RENAME(fromnd.ni_dvp, fromnd.ni_vp, &fromnd.ni_cnd,
 				   tond.ni_dvp, tond.ni_vp, &tond.ni_cnd);
+		VFS_RENAMELOCK_EXIT(fs);
 	} else {
 		VOP_ABORTOP(tond.ni_dvp, &tond.ni_cnd);
 		if (tdvp == tvp)
@@ -3359,6 +3409,7 @@ out:
 			vput(tdvp);
 		if (tvp)
 			vput(tvp);
+		VFS_RENAMELOCK_EXIT(fs);
 		VOP_ABORTOP(fromnd.ni_dvp, &fromnd.ni_cnd);
 		vrele(fromnd.ni_dvp);
 		vrele(fvp);

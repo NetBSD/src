@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.888 2008/01/25 21:12:14 joerg Exp $
+#	$NetBSD: files,v 1.889 2008/01/28 14:31:15 dholland Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1467,6 +1467,7 @@ file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
+file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm

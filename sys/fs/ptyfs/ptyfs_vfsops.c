@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.30 2007/11/26 19:01:49 pooka Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.31 2008/01/28 14:31:16 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.30 2007/11/26 19:01:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.31 2008/01/28 14:31:16 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.30 2007/11/26 19:01:49 pooka Exp 
 #include <sys/kauth.h>
 
 #include <fs/ptyfs/ptyfs.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 MALLOC_JUSTDEFINE(M_PTYFSMNT, "ptyfs mount", "ptyfs mount structures");
@@ -393,6 +394,8 @@ struct vfsops ptyfs_vfsops = {
 	(void *)eopnotsupp,
 	(void *)eopnotsupp,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	ptyfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

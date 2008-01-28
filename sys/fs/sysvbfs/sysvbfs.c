@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs.c,v 1.8 2008/01/25 14:32:13 ad Exp $	*/
+/*	$NetBSD: sysvbfs.c,v 1.9 2008/01/28 14:31:17 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.8 2008/01/25 14:32:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs.c,v 1.9 2008/01/28 14:31:17 dholland Exp $");
 
 #include <sys/resource.h>
 #include <sys/param.h>
@@ -133,6 +133,8 @@ struct vfsops sysvbfs_vfsops = {
 	    eopnotsupp,		/* snapshot */
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	sysvbfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL }

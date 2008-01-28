@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.47 2008/01/24 17:32:52 ad Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.48 2008/01/28 14:31:15 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.47 2008/01/24 17:32:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.48 2008/01/28 14:31:15 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.47 2008/01/24 17:32:52 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/disklabel.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h> /* XXX */
 #include <sys/fcntl.h>
 #include <sys/namei.h>
@@ -826,6 +827,8 @@ struct vfsops adosfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	adosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
