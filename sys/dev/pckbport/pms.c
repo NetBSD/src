@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.22 2007/12/09 20:28:13 jmcneill Exp $ */
+/* $NetBSD: pms.c,v 1.23 2008/01/28 22:29:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.22 2007/12/09 20:28:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.23 2008/01/28 22:29:00 jmcneill Exp $");
 
 #include "opt_pms.h"
 
@@ -354,7 +354,9 @@ pms_resume(device_t dv)
 #ifdef PMS_SYNAPTICS_TOUCHPAD
 	if (sc->protocol == PMS_SYNAPTICS) {
 		pms_synaptics_resume(sc);
-		do_enable(sc);
+		if (sc->sc_enabled) {
+			do_enable(sc);
+		}
 	} else
 #endif
 	if (sc->sc_enabled) {
