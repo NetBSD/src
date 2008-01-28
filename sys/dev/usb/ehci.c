@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.127 2007/12/09 20:28:23 jmcneill Exp $ */
+/*	$NetBSD: ehci.c,v 1.128 2008/01/28 00:47:05 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.127 2007/12/09 20:28:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.128 2008/01/28 00:47:05 jmcneill Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -929,6 +929,8 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	/* XXX free other data structures XXX */
 	mutex_destroy(&sc->sc_doorbell_lock);
+
+	EOWRITE4(sc, EHCI_CONFIGFLAG, 0);
 
 	return (rv);
 }
