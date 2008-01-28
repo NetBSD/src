@@ -17,7 +17,7 @@ void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	    int (*func)(void *), void *arg);
 int	pic_alloc_irq(struct pic_softc *pic);
 void	pic_disestablish_source(struct intrsource *is);
-void	pic_do_pending_ints(register_t psw, int newipl);
+void	pic_do_pending_ints(register_t psw, int newipl, void *frame);
 void	pic_dispatch(struct intrsource *is, void *frame);
 
 void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
@@ -52,6 +52,7 @@ struct pic_softc {
 	const struct pic_ops *pic_ops;
 	struct intrsource **pic_sources;
 	uint32_t pic_pending_irqs[(PIC_MAXSOURCES + 31) / 32];
+	uint32_t pic_blocked_irqs[(PIC_MAXSOURCES + 31) / 32];
 	uint32_t pic_pending_ipls;
 	size_t pic_maxsources;
 	uint8_t pic_id;

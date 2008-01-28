@@ -34,11 +34,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.5 2007/11/06 19:21:35 matt Exp $");
+__KERNEL_RCSID(0, "pic.c,v 1.1.2.5 2007/11/06 19:21:35 matt Exp");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
 #include <sys/evcnt.h>
+#include <sys/atomic.h>
 #include <sys/malloc.h>
 #include <sys/mallocvar.h>
 
@@ -48,29 +49,23 @@ __KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.1.2.5 2007/11/06 19:21:35 matt Exp $");
 
 #include <arm/pic/picvar.h>
 
-/* should be in atomic.h */
-uint32_t atomic_or_32(volatile uint32_t *, uint32_t);
-uint32_t atomic_and_32(volatile uint32_t *, uint32_t);
-uint32_t atomic_nand_32(volatile uint32_t *, uint32_t);
-uint32_t atomic_or_32_nv(volatile uint32_t *, uint32_t);
-uint32_t atomic_and_32_nv(volatile uint32_t *, uint32_t);
-uint32_t atomic_nand_32_nv(volatile uint32_t *, uint32_t);
-uint32_t atomic_inc_32_nv(volatile uint32_t *);
-uint32_t atomic_dec_32_nv(volatile uint32_t *);
-
 MALLOC_DEFINE(M_INTRSOURCE, "intrsource", "interrupt source");
 
 static uint32_t
 	pic_find_pending_irqs_by_ipl(struct pic_softc *, uint32_t, int);
 static struct pic_softc *
-	pic_list_find_pic_by_pending_ipl(size_t, uint32_t);
+	pic_list_find_pic_by_pending_ipl(uint32_t);
 static void
-	pic_deliver_irqs(struct pic_softc *, register_t, int, void *);
+	pic_deliver_irqs(struct pic_softc *, int, void *);
 static void
 	pic_list_deliver_irqs(register_t, int, void *);
 
 struct pic_softc *pic_list[PIC_MAXPICS];
-volatile uint32_t pic_pending_pics[(PIC_MAXPICS + 31) / 32];
+#if PIC_MAXPICS > 32
+#error PIC_MAXPICS > 32 not supported
+#endif
+volatile uint32_t pic_blocked_pics;
+volatile uint32_t pic_pending_pics;
 volatile uint32_t pic_pending_ipls;
 volatile uint32_t pic_pending_ipl_refcnt[NIPL];
 struct intrsource *pic_sources[PIC_MAXMAXSOURCES];
@@ -80,6 +75,9 @@ struct intrsource **pic_iplsource[NIPL] = {
 };
 size_t pic_ipl_offset[NIPL+1];
 size_t pic_sourcebase;
+static struct evcnt pic_deferral_ev = 
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "deferred", "intr");
+EVCNT_ATTACH_STATIC(pic_deferral_ev);
 
 
 
@@ -102,11 +100,9 @@ pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 	atomic_or_32(&pic->pic_pending_irqs[is->is_iplidx >> 5],
 	    __BIT(is->is_iplidx & 0x1f));
 
-	if ((atomic_or_32(&pic->pic_pending_ipls, ipl_mask) & ipl_mask) == 0)
-		if ((atomic_or_32(&pic_pending_ipls, ipl_mask) & ipl_mask) == 0)
-			atomic_inc_32_nv(&pic_pending_ipl_refcnt[is->is_ipl]);
-
-	atomic_or_32(&pic_pending_pics[pic->pic_id >> 5], __BIT(pic->pic_id));
+	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
+	atomic_or_32(&pic_pending_ipls, ipl_mask);
+	atomic_or_32(&pic_pending_pics, __BIT(pic->pic_id));
 }
 
 void
@@ -127,8 +123,8 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, uint32_t pending, int ipl)
 	uint32_t irq_mask;
 
 	for (;;) {
-		int irq = 31 - __builtin_clz(pending);
-		if (irq < 0)
+		int irq = ffs(pending);
+		if (irq-- == 0)
 			return ipl_irq_mask;
 
 		irq_mask = __BIT(irq);
@@ -145,22 +141,29 @@ pic_dispatch(struct intrsource *is, void *frame)
 {
 	int rv;
 
-	if (__predict_false(frame != NULL && is->is_arg == NULL)) {
+	if (__predict_false(is->is_arg == NULL)
+	    && __predict_true(frame != NULL)) {
 		rv = (*is->is_func)(frame);
-	} else {
+	} else if (__predict_true(is->is_arg != NULL)) {
 		rv = (*is->is_func)(is->is_arg);
+	} else {
+		pic_deferral_ev.ev_count++;
+		return;
 	}
 	is->is_ev.ev_count++;
 }
 
 void
-pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
+pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 {
 	const uint32_t ipl_mask = __BIT(ipl);
 	struct intrsource *is;
 	uint32_t *ipending = pic->pic_pending_irqs;
+	uint32_t *iblocked = pic->pic_blocked_irqs;
 	size_t irq_base;
+#if PIC_MAXSOURCES > 32
 	size_t irq_count;
+#endif
 	uint32_t pending_irqs;
 	uint32_t blocked_irqs;
 	int irq;
@@ -168,20 +171,25 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 	KASSERT(pic->pic_pending_ipls & ipl_mask);
 
 	irq_base = 0;
+#if PIC_MAXSOURCES > 32
 	irq_count = 0;
+#endif
 
 	for (;;) {
 		pending_irqs = pic_find_pending_irqs_by_ipl(pic, ipl,
 		    *ipending);
 		if (pending_irqs == 0) {
-#if PIC_MAXPICS > 32
+#if PIC_MAXSOURCES > 32
 			irq_count += 32;
 			if (__predict_true(irq_count >= pic->pic_maxsources))
 				break;
 			irq_base += 32;
 			ipending++;
-			if (irq_base > pic->pic_maxsources)
+			iblocked++;
+			if (irq_base > pic->pic_maxsources) {
 				ipending = pic->pic_pending_irqs;
+				iblocked = pic->pic_blocked_irqs;
+			}
 			continue;
 #else
 			break;
@@ -189,14 +197,13 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 		}
 		blocked_irqs = pending_irqs;
 		do {
-			irq = 31 - __builtin_clz(pending_irqs);
+			irq = ffs(pending_irqs) - 1;
 			KASSERT(irq >= 0);
 
-			atomic_nand_32(ipending, __BIT(irq));
+			*ipending &= ~__BIT(irq);
 			is = pic->pic_sources[irq_base + irq];
 			if (is != NULL) {
-				if ((psw & I32_bit) == 0)
-					cpsie(I32_bit);
+				cpsie(I32_bit);
 				pic_dispatch(is, frame);
 				cpsid(I32_bit);
 			} else {
@@ -205,34 +212,71 @@ pic_deliver_irqs(struct pic_softc *pic, register_t psw, int ipl, void *frame)
 			pending_irqs = pic_find_pending_irqs_by_ipl(pic, ipl,
 			    *ipending);
 		} while (pending_irqs);
-		if (blocked_irqs)
-			(*pic->pic_ops->pic_unblock_irqs)(pic,
-			    irq_base, blocked_irqs);
+		if (blocked_irqs) {
+			*iblocked |= blocked_irqs;
+			pic_blocked_pics |= __BIT(pic->pic_id);
+		}
 	}
 
 	/*
 	 * Since interrupts are disabled, we don't have to be too careful
 	 * about these.
 	 */
-	if (atomic_nand_32_nv(&pic->pic_pending_ipls, ipl_mask) == 0)
-		atomic_nand_32(&pic_pending_pics[pic->pic_id >> 5],
-		    __BIT(pic->pic_id & 0x1f));
-	if (atomic_dec_32_nv(&pic_pending_ipl_refcnt[ipl]) == 0)
-		atomic_nand_32(&pic_pending_ipls, ipl_mask);
+	pic->pic_pending_ipls &= ~ipl_mask;
+	if (pic->pic_pending_ipls == 0)
+		pic_pending_pics &= ~__BIT(pic->pic_id);
 }
 
-struct pic_softc *
-pic_list_find_pic_by_pending_ipl(size_t pic_base, uint32_t ipl_mask)
+static void
+pic_list_unblock_irqs(void)
 {
-	uint32_t pending = pic_pending_pics[pic_base >> 5];
+	uint32_t blocked = pic_blocked_pics;
+
+	pic_blocked_pics = 0;
+	for (;;) {
+		struct pic_softc *pic;
+#if PIC_MAXSOURCES > 32
+		uint32_t *iblocked;
+		size_t irq_base;
+#endif
+
+		int pic_id = ffs(blocked);
+		if (pic_id-- == 0)
+			return;
+
+		pic = pic_list[pic_id];
+		KASSERT(pic != NULL);
+#if PIC_MAXSOURCES > 32
+		for (irq_base = 0, iblocked = pic->pic_blocked_irqs;
+		     irq_base < pic->pic_maxsources;
+		     irq_base += 32, iblocked++) {
+			if (*iblocked) {
+				(*pic->pic_ops->pic_unblock_irqs)(pic,
+				    irq_base, *iblocked);
+				*iblocked = 0;
+			}
+		}
+#else
+		KASSERT(pic->pic_blocked_irqs[0] != 0);
+		(*pic->pic_ops->pic_unblock_irqs)(pic,
+		    0, pic->pic_blocked_irqs[0]);
+#endif
+	}
+}
+
+
+struct pic_softc *
+pic_list_find_pic_by_pending_ipl(uint32_t ipl_mask)
+{
+	uint32_t pending = pic_pending_pics;
 	struct pic_softc *pic;
 
 	for (;;) {
-		int pic_id = 31 - __builtin_clz(pending);
-		if (pic_id < 0)
+		int pic_id = ffs(pending);
+		if (pic_id-- == 0)
 			return NULL;
 
-		pic = pic_list[pic_base + pic_id];
+		pic = pic_list[pic_id];
 		KASSERT(pic != NULL);
 		if (pic->pic_pending_ipls & ipl_mask)
 			return pic;
@@ -245,31 +289,24 @@ pic_list_deliver_irqs(register_t psw, int ipl, void *frame)
 {	
 	const uint32_t ipl_mask = __BIT(ipl);
 	struct pic_softc *pic;
-	size_t pic_base = 0;
-	size_t pic_count = 0;
-	
-	for (;;) {
-		pic = pic_list_find_pic_by_pending_ipl(pic_base, ipl_mask);
-		if (pic != NULL) {
-			pic_deliver_irqs(pic, psw, ipl, frame);
-			KASSERT((pic->pic_pending_ipls & ipl_mask) == 0);
-			pic_count = 0;
-			continue;
-		}
-#if PIC_MAXPICS > 32
-		pic_count += 32;
-		if (pic_count >= PIC_MAXPICS)
-			break;
-		pic_base = (pic_base + 32) % PIC_MAXPICS;
-#endif
+
+	cpsid(I32_bit);
+	while ((pic = pic_list_find_pic_by_pending_ipl(ipl_mask)) != NULL) {
+		pic_deliver_irqs(pic, ipl, frame);
+		KASSERT((pic->pic_pending_ipls & ipl_mask) == 0);
 	}
-	KASSERT((pic_pending_ipls & ipl_mask) == 0);
+	pic_pending_ipls &= ~ipl_mask;
+	if ((psw & I32_bit) == 0)
+		cpsie(I32_bit);
 }
 
 void
-pic_do_pending_ints(register_t psw, int newipl)
+pic_do_pending_ints(register_t psw, int newipl, void *frame)
 {
 	struct cpu_info * const ci = curcpu();
+	if (__predict_false(newipl == IPL_HIGH))
+		return;
+	KASSERT(pic_blocked_pics == 0);
 	while ((pic_pending_ipls & ~__BIT(newipl)) > __BIT(newipl)) {
 		KASSERT(pic_pending_ipls < __BIT(NIPL));
 		for (;;) {
@@ -279,10 +316,17 @@ pic_do_pending_ints(register_t psw, int newipl)
 				break;
 
 			ci->ci_cpl = ipl;
-			pic_list_deliver_irqs(psw, ipl, NULL);
+			pic_list_unblock_irqs();
+			pic_list_deliver_irqs(psw, ipl, frame);
 		}
 	}
-	ci->ci_cpl = newipl;
+	if (ci->ci_cpl != newipl) {
+		ci->ci_cpl = newipl;
+		pic_list_unblock_irqs();
+	}
+#ifdef __HAVE_FAST_SOFTINTS
+	cpu_dosoftints();
+#endif
 }
 
 void
@@ -443,7 +487,7 @@ _spllower(int newipl)
 	KASSERT(panicstr || newipl <= ci->ci_cpl);
 	if (newipl < ci->ci_cpl) {
 		register_t psw = disable_interrupts(I32_bit);
-		pic_do_pending_ints(psw, newipl);
+		pic_do_pending_ints(psw, newipl, NULL);
 		restore_interrupts(psw);
 	}
 	return oldipl;
@@ -456,7 +500,7 @@ splx(int savedipl)
 	KASSERT(savedipl < NIPL);
 	if (savedipl < ci->ci_cpl) {
 		register_t psw = disable_interrupts(I32_bit);
-		pic_do_pending_ints(psw, savedipl);
+		pic_do_pending_ints(psw, savedipl, NULL);
 		restore_interrupts(psw);
 	}
 	ci->ci_cpl = savedipl;
