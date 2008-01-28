@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.save.c,v 1.9 2007/12/15 19:44:41 perry Exp $	*/
+/*	$NetBSD: hack.save.c,v 1.10 2008/01/28 06:55:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.save.c,v 1.9 2007/12/15 19:44:41 perry Exp $");
+__RCSID("$NetBSD: hack.save.c,v 1.10 2008/01/28 06:55:42 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -175,7 +175,7 @@ dorecover(fd)
 	fcobj = restobjchn(fd);
 	fallen_down = restmonchn(fd);
 	mread(fd, (char *) &tmp, sizeof tmp);
-	if (tmp != getuid()) {	/* strange ... */
+	if (tmp != (int) getuid()) {	/* strange ... */
 		(void) close(fd);
 		(void) unlink(SAVEF);
 		puts("Saved game was not yours.");

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.8 2007/12/15 19:44:41 perry Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.9 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.8 2007/12/15 19:44:41 perry Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.9 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -448,8 +448,8 @@ topten()
 				t1->plchar, t1->sex, t1->name, t1->death);
 		if (done_stopprint)
 			continue;
-		if (rank > flags.end_top &&
-		    (rank < rank0 - flags.end_around || rank > rank0 + flags.end_around)
+		if (rank > (int)flags.end_top &&
+		    (rank < rank0 - (int)flags.end_around || rank > rank0 + (int)flags.end_around)
 		    && (!flags.end_own ||
 #ifdef PERS_IS_UID
 			t1->uid != t0->uid))
@@ -457,8 +457,8 @@ topten()
 			strncmp(t1->name, t0->name, NAMSZ)))
 #endif	/* PERS_IS_UID */
 			continue;
-		if (rank == rank0 - flags.end_around &&
-		    rank0 > flags.end_top + flags.end_around + 1 &&
+		if (rank == rank0 - (int)flags.end_around &&
+		    rank0 > (int)flags.end_top + (int)flags.end_around + 1 &&
 		    !flags.end_own)
 			(void) putchar('\n');
 		if (rank != rank0)
@@ -499,8 +499,9 @@ outheader()
 int
 outentry(int rank, struct toptenentry *t1, int so)
 {
-	boolean         quit = FALSE, killed = FALSE, starv = FALSE;
+	boolean         quit = FALSE, gotkilled = FALSE, starv = FALSE;
 	char            linebuf[BUFSZ];
+
 	linebuf[0] = 0;
 	if (rank)
 		Sprintf(eos(linebuf), "%3d", rank);
@@ -530,15 +531,15 @@ outentry(int rank, struct toptenentry *t1, int so)
 		else if (!strncmp(t1->death, "starv", 5))
 			Sprintf(eos(linebuf), "starved to death"), starv = TRUE;
 		else
-			Sprintf(eos(linebuf), "was killed"), killed = TRUE;
+			Sprintf(eos(linebuf), "was killed"), gotkilled = TRUE;
 		Sprintf(eos(linebuf), " on%s level %d",
-			(killed || starv) ? "" : " dungeon", t1->level);
+			(gotkilled || starv) ? "" : " dungeon", t1->level);
 		if (t1->maxlvl != t1->level)
 			Sprintf(eos(linebuf), " [max %d]", t1->maxlvl);
 		if (quit && t1->death[4])
 			Sprintf(eos(linebuf), t1->death + 4);
 	}
-	if (killed)
+	if (gotkilled)
 		Sprintf(eos(linebuf), " by %s%s",
 			(!strncmp(t1->death, "trick", 5) || !strncmp(t1->death, "the ", 4))
 			? "" :
@@ -588,9 +589,10 @@ const char           *
 ordin(n)
 	int             n;
 {
-	int             d = n % 10;
-	return ((d == 0 || d > 3 || n / 10 == 1) ? "th" : (d == 1) ? "st" :
-		(d == 2) ? "nd" : "rd");
+	int             dg = n % 10;
+
+	return ((dg == 0 || dg > 3 || n / 10 == 1) ? "th" : (dg == 1) ? "st" :
+		(dg == 2) ? "nd" : "rd");
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.u_init.c,v 1.8 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: hack.u_init.c,v 1.9 2008/01/28 06:55:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.u_init.c,v 1.8 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: hack.u_init.c,v 1.9 2008/01/28 06:55:42 dholland Exp $");
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -311,9 +311,9 @@ got_suffix:
 	}
 	find_ac();
 	if (!rn2(20)) {
-		int    d = rn2(7) - 2;	/* biased variation */
-		u.ustr += d;
-		u.ustrmax += d;
+		int    dr = rn2(7) - 2;	/* biased variation */
+		u.ustr += dr;
+		u.ustrmax += dr;
 	}
 #ifdef WIZARD
 	if (wizard)

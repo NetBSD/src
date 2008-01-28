@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.track.c,v 1.5 2003/04/02 18:36:41 jsm Exp $	*/
+/*	$NetBSD: hack.track.c,v 1.6 2008/01/28 06:55:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.track.c,v 1.5 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("$NetBSD: hack.track.c,v 1.6 2008/01/28 06:55:42 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -98,16 +98,17 @@ coord          *
 gettrack(x, y)
 	int x, y;
 {
-	int             i, cnt, dist;
+	int             i, cnt, distsq;
 	coord           tc;
+
 	cnt = utcnt;
 	for (i = utpnt - 1; cnt--; i--) {
 		if (i == -1)
 			i = UTSZ - 1;
 		tc = utrack[i];
-		dist = (x - tc.x) * (x - tc.x) + (y - tc.y) * (y - tc.y);
-		if (dist < 3)
-			return (dist ? &(utrack[i]) : 0);
+		distsq = (x - tc.x) * (x - tc.x) + (y - tc.y) * (y - tc.y);
+		if (distsq < 3)
+			return (distsq ? &(utrack[i]) : 0);
 	}
 	return (0);
 }

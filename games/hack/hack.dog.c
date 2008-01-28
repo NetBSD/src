@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.dog.c,v 1.8 2006/03/30 01:31:13 jnemeth Exp $	*/
+/*	$NetBSD: hack.dog.c,v 1.9 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.dog.c,v 1.8 2006/03/30 01:31:13 jnemeth Exp $");
+__RCSID("$NetBSD: hack.dog.c,v 1.9 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include "hack.h"
@@ -239,7 +239,7 @@ dog_move(struct monst *mtmp, int after)
 	/* Note: if apport == 1 then our behaviour is independent of udist */
 	if (mtmp->minvent) {
 		if (!rn2(udist) || !rn2((int) edog->apport))
-			if (rn2(10) < edog->apport) {
+			if ((unsigned) rn2(10) < edog->apport) {
 				relobj(mtmp, (int) mtmp->minvis);
 				if (edog->apport > 1)
 					edog->apport--;
@@ -255,7 +255,7 @@ dog_move(struct monst *mtmp, int after)
 					goto eatobj;
 				}
 				if (obj->owt < 10 * mtmp->data->mlevel)
-					if (rn2(20) < edog->apport + 3)
+					if ((unsigned) rn2(20) < edog->apport + 3)
 						if (rn2(udist) || !rn2((int) edog->apport)) {
 							freeobj(obj);
 							unpobj(obj);
@@ -291,7 +291,7 @@ dog_move(struct monst *mtmp, int after)
 			}
 		} else if (gtyp == UNDEF && dogroom >= 0 &&
 			   uroom == dogroom &&
-			   !mtmp->minvent && edog->apport > rn2(8)) {
+			   !mtmp->minvent && edog->apport > (unsigned)rn2(8)) {
 			gx = obj->ox;
 			gy = obj->oy;
 			gtyp = APPORT;

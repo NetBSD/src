@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.objnam.c,v 1.6 2003/04/02 18:36:39 jsm Exp $	*/
+/*	$NetBSD: hack.objnam.c,v 1.7 2008/01/28 06:55:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.objnam.c,v 1.6 2003/04/02 18:36:39 jsm Exp $");
+__RCSID("$NetBSD: hack.objnam.c,v 1.7 2008/01/28 06:55:42 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -418,7 +418,8 @@ readobjnam(bp)
 	char           *bp;
 {
 	char           *p;
-	int             i;
+	unsigned        ii;
+	int		i;
 	int             cnt, spe, spesgn, typ, heavy;
 	char            let;
 	char           *un, *dn, *an;
@@ -550,18 +551,18 @@ sing:
 		an = bp;
 		goto srch;
 	}
-	for (i = 0; i < sizeof(wrpsym); i++) {
-		int             j = strlen(wrp[i]);
-		if (!strncmp(bp, wrp[i], j)) {
-			let = wrpsym[i];
+	for (ii = 0; ii < sizeof(wrpsym); ii++) {
+		int             j = strlen(wrp[ii]);
+		if (!strncmp(bp, wrp[ii], j)) {
+			let = wrpsym[ii];
 			bp += j;
 			if (!strncmp(bp, " of ", 4))
 				an = bp + 4;
 			/* else if(*bp) ?? */
 			goto srch;
 		}
-		if (!strcmp(p - j, wrp[i])) {
-			let = wrpsym[i];
+		if (!strcmp(p - j, wrp[ii])) {
+			let = wrpsym[ii];
 			p -= j;
 			*p = 0;
 			if (p[-1] == ' ')

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.cmd.c,v 1.7 2003/04/02 18:36:35 jsm Exp $	*/
+/*	$NetBSD: hack.cmd.c,v 1.8 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.cmd.c,v 1.7 2003/04/02 18:36:35 jsm Exp $");
+__RCSID("$NetBSD: hack.cmd.c,v 1.8 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -228,7 +228,7 @@ rush:
 	{
 		char            expcmd[10];
 		char  *cp = expcmd;
-		while (*cmd && cp - expcmd < sizeof(expcmd) - 2) {
+		while (*cmd && cp - expcmd < (int)sizeof(expcmd) - 2) {
 			if (*cmd >= 040 && *cmd < 0177)
 				*cp++ = *cmd++;
 			else {
