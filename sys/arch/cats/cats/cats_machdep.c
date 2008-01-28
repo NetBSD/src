@@ -1,4 +1,4 @@
-/*	$NetBSD: cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp $	*/
+/*	cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp $");
+__KERNEL_RCSID(0, "cats_machdep.c,v 1.58 2006/11/24 22:04:21 wiz Exp");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -352,7 +352,6 @@ initarm(void *arm_bootargs)
 	int loop;
 	int loop1;
 	u_int l1pagetable;
-	pv_addr_t kernel_l1pt;
 	extern u_int cpu_get_control(void);
 
 	/*
@@ -508,7 +507,6 @@ initarm(void *arm_bootargs)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
@@ -879,8 +877,7 @@ initarm(void *arm_bootargs)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Setup the IRQ system */
 	printf("irq ");

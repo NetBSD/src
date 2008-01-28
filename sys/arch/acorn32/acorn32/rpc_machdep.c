@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.66.4.1 2007/11/06 23:13:34 matt Exp $	*/
+/*	rpc_machdep.c,v 1.66.4.1 2007/11/06 23:13:34 matt Exp	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.66.4.1 2007/11/06 23:13:34 matt Exp $");
+__KERNEL_RCSID(0, "rpc_machdep.c,v 1.66.4.1 2007/11/06 23:13:34 matt Exp");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -432,7 +432,6 @@ initarm(void *cookie)
 	u_int kerneldatasize;
 	u_int l1pagetable;
 	struct exec *kernexec = (struct exec *)KERNEL_TEXT_BASE;
-	pv_addr_t kernel_l1pt = { {0} };
 
 	/*
 	 * Heads up ... Setup the CPU / MMU / TLB functions
@@ -598,7 +597,6 @@ initarm(void *cookie)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
@@ -943,8 +941,7 @@ initarm(void *cookie)
 #ifdef VERBOSE_INIT_ARM
 	printf("pmap ");
 #endif
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 	console_flush();
 
 	/* Setup the IRQ system */

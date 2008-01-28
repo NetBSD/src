@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.64 2007/03/04 06:00:24 christos Exp $	*/
+/*	netwinder_machdep.c,v 1.64 2007/03/04 06:00:24 christos Exp	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.64 2007/03/04 06:00:24 christos Exp $");
+__KERNEL_RCSID(0, "netwinder_machdep.c,v 1.64 2007/03/04 06:00:24 christos Exp");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -150,7 +150,6 @@ int max_processes = 64;			/* Default number */
 #endif	/* !PMAP_STATIC_L1S */
 
 /* Physical and virtual addresses for some global pages */
-pv_addr_t systempage;
 pv_addr_t irqstack;
 pv_addr_t undstack;
 pv_addr_t abtstack;
@@ -413,7 +412,6 @@ initarm(void *arg)
 	int loop1;
 	u_int l1pagetable;
 	extern char _end[];
-	pv_addr_t kernel_l1pt;
 
 	/*
 	 * Turn the led off, then turn it yellow.
@@ -536,7 +534,6 @@ initarm(void *arg)
 	memset((char *)(var), 0, ((np) * PAGE_SIZE));
 
 	loop1 = 0;
-	kernel_l1pt.pv_pa = kernel_l1pt.pv_va = 0;
 	for (loop = 0; loop <= NUM_KERNEL_PTS; ++loop) {
 		/* Are we 16KB aligned for an L1 ? */
 		if ((physical_freestart & (L1_TABLE_SIZE - 1)) == 0
@@ -843,8 +840,7 @@ initarm(void *arg)
 
 	/* Boot strap pmap telling it where the kernel page table is */
 	printf("pmap ");
-	pmap_bootstrap((pd_entry_t *)kernel_l1pt.pv_va, KERNEL_VM_BASE,
-	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
+	pmap_bootstrap(KERNEL_VM_BASE, KERNEL_VM_BASE + KERNEL_VM_SIZE);
 
 	/* Now that pmap is inited, we can set cpu_reset_address */
 	cpu_reset_address = (u_int)vtophys((vaddr_t)netwinder_reset);
