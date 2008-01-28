@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_getport.c,v 1.17 2008/01/25 19:43:53 christos Exp $	*/
+/*	$NetBSD: pmap_getport.c,v 1.18 2008/01/28 01:10:22 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -35,7 +35,7 @@
 static char *sccsid = "@(#)pmap_getport.c 1.9 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)pmap_getport.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: pmap_getport.c,v 1.17 2008/01/25 19:43:53 christos Exp $");
+__RCSID("$NetBSD: pmap_getport.c,v 1.18 2008/01/28 01:10:22 christos Exp $");
 #endif
 #endif
 
@@ -87,15 +87,22 @@ remote_pmap_getport(CLIENT *client, struct pmap *parms, u_short *port)
 	CLNT_DESTROY(client);
 }
 
+static CLIENT *
+get_client(struct sockaddr_in *address, int tcp)
+{
+	int sock = -1;
+	if (tcp)
+		return clnttcp_create(address, PMAPPROG, PMAPVERS, &sock, 0, 0);
+	else
+		return clntudp_bufcreate(address, PMAPPROG, PMAPVERS, timeout,
+		    &sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
+}
+
 u_short
-pmap_getport(address, program, version, protocol)
-	struct sockaddr_in *address;
-	u_long program;
-	u_long version;
-	u_int protocol;
+pmap_getport(struct sockaddr_in *address, u_long program, u_long version,
+    u_int protocol)
 {
 	u_short port = 0;
-	int sock = -1;
 	CLIENT *client;
 	struct pmap parms;
 
@@ -107,17 +114,17 @@ pmap_getport(address, program, version, protocol)
 	parms.pm_port = 0;  /* not needed or used */
 
 	address->sin_port = htons(PMAPPORT);
-	if (protocol == IPPROTO_TCP) {
-	    client = clnttcp_create(address, PMAPPROG, PMAPVERS, &sock, 0, 0);
-	    if (client != NULL)
-		    remote_pmap_getport(client, &parms, &port);
-	}
+
+	client = get_client(address, protocol == IPPROTO_TCP);
+	if (client != NULL)
+		remote_pmap_getport(client, &parms, &port);
+
 	if (port == 0) {
-	    client = clntudp_bufcreate(address, PMAPPROG, PMAPVERS, timeout,
-		&sock, RPCSMALLMSGSIZE, RPCSMALLMSGSIZE);
-	    if (client != NULL)
-		    remote_pmap_getport(client, &parms, &port);
+		client = get_client(address, protocol != IPPROTO_TCP);
+		if (client != NULL)
+			remote_pmap_getport(client, &parms, &port);
 	}
+
 	address->sin_port = 0;
-	return (port);
+	return port;
 }
