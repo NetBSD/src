@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.1 2008/01/20 13:43:38 yamt Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.2 2008/01/28 11:06:42 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -56,7 +56,7 @@ struct pv_pte {
 struct pv_entry {
 	struct pv_pte pve_pte;		/* should be the first member */
 	LIST_ENTRY(pv_entry) pve_list;	/* on pv_head::pvh_list */
-	LIST_ENTRY(pv_entry) pve_hash;
+	SLIST_ENTRY(pv_entry) pve_hash;
 };
 #define	pve_next	pve_list.le_next
 
