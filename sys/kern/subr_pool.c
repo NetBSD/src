@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.147 2008/01/04 21:18:13 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.148 2008/01/28 10:26:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.147 2008/01/04 21:18:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.148 2008/01/28 10:26:12 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -2534,7 +2534,9 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			object = pcg->pcg_objects[--pcg->pcg_avail].pcgo_va;
 			if (pap != NULL)
 				*pap = pcg->pcg_objects[pcg->pcg_avail].pcgo_pa;
+#if defined(DIAGNOSTIC)
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = NULL;
+#endif /* defined(DIAGNOSTIC) */
 			KASSERT(pcg->pcg_avail <= pcg->pcg_size);
 			KASSERT(object != NULL);
 			cc->cc_hits++;
