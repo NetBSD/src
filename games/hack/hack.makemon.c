@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.makemon.c,v 1.6 2003/04/02 18:36:37 jsm Exp $	*/
+/*	$NetBSD: hack.makemon.c,v 1.7 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.makemon.c,v 1.6 2003/04/02 18:36:37 jsm Exp $");
+__RCSID("$NetBSD: hack.makemon.c,v 1.7 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include	"hack.h"
@@ -84,6 +84,7 @@ makemon(const struct permonst *ptr, int x, int y)
 {
 	struct monst   *mtmp;
 	int		tmp, ct;
+	unsigned	i;
 	boolean         anything = (!ptr);
 
 	if (x != 0 || y != 0)
@@ -117,8 +118,8 @@ makemon(const struct permonst *ptr, int x, int y)
 gotmon:
 	mtmp = newmonst(ptr->pxlth);
 	*mtmp = zeromonst;	/* clear all entries in structure */
-	for (ct = 0; ct < ptr->pxlth; ct++)
-		((char *) &(mtmp->mextra[0]))[ct] = 0;
+	for (i = 0; i < ptr->pxlth; i++)
+		((char *) &(mtmp->mextra[0]))[i] = 0;
 	mtmp->nmon = fmon;
 	fmon = mtmp;
 	mtmp->m_id = flags.ident++;

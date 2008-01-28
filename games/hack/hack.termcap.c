@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.termcap.c,v 1.15 2007/01/17 02:35:28 chuck Exp $	*/
+/*	$NetBSD: hack.termcap.c,v 1.16 2008/01/28 06:55:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.termcap.c,v 1.15 2007/01/17 02:35:28 chuck Exp $");
+__RCSID("$NetBSD: hack.termcap.c,v 1.16 2008/01/28 06:55:42 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -76,8 +76,8 @@ __RCSID("$NetBSD: hack.termcap.c,v 1.15 2007/01/17 02:35:28 chuck Exp $");
 #include "def.flag.h"		/* for flags.nonull */
 
 static struct tinfo *info;
-static char    *HO, *CL, *CE, *CM, *ND, *XD, *BC_BS, *SO, *SE, *TI, *TE;
-static char    *VS, *VE;
+static const char    *HO, *CL, *CE, *CM, *ND, *XD, *BC_BS, *SO, *SE, *TI, *TE;
+static const char    *VS, *VE;
 static int      SG;
 char           *CD;		/* tested in pri.c: docorner() */
 int             CO, LI;		/* used in pri.c and whatis.c */
@@ -236,21 +236,19 @@ cmov(x, y)
 }
 
 int
-xputc(c)
-	char            c;
+xputc(int c)
 {
 	return (fputc(c, stdout));
 }
 
 void
-xputs(s)
-	char           *s;
+xputs(const char *s)
 {
 	tputs(s, 1, xputc);
 }
 
 void
-cl_end()
+cl_end(void)
 {
 	if (CE)
 		xputs(CE);

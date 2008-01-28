@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -503,7 +503,7 @@ void curs(int, int);
 void nocmov(int, int);
 void cmov(int, int);
 int xputc(int);
-void xputs(char *);
+void xputs(const char *);
 void cl_end(void);
 void clear_screen(void);
 void home(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.main.c,v 1.9 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: hack.main.c,v 1.10 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.main.c,v 1.9 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: hack.main.c,v 1.10 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -513,7 +513,7 @@ askname()
 		if (c != '-')
 			if (c < 'A' || (c > 'Z' && c < 'a') || c > 'z')
 				c = '_';
-		if (ct < sizeof(plname) - 1)
+		if (ct < (int)sizeof(plname) - 1)
 			plname[ct++] = c;
 	}
 	plname[ct] = 0;
