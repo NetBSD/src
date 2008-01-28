@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.8 2008/01/17 23:42:59 garbled Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.9 2008/01/28 18:24:22 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.8 2008/01/17 23:42:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.9 2008/01/28 18:24:22 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -494,19 +494,24 @@ genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 		    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT82C586A_IDE)
 			return 0;
 
-		/* we want to leave fwochi(4) without mem space */
+		/* leave the audio IO alone */
 		if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH &&
-		    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT6306)
-			return (PCI_CONF_ALL & ~PCI_CONF_MAP_MEM);
-	}
+		    PCI_PRODUCT(id) == PCI_PRODUCT_VIATECH_VT82C686A_AC97)
+			return (PCI_CONF_ALL & ~PCI_CONF_MAP_IO);
 
+	}
+	
+	tag = pci_make_tag(pct, bus, dev, func);
+	class = pci_conf_read(pct, tag, PCI_CLASS_REG);
+
+	/* leave video cards alone */
+	if (PCI_CLASS(class) == PCI_CLASS_DISPLAY)
+		return 0;
+	
 	/* NOTE, all device specific stuff must be above this line */
 	/* don't do this on the primary host bridge */
 	if (bus == 0 && dev == 0 && func == 0)
 		return PCI_CONF_DEFAULT;
-
-	tag = genppc_pci_indirect_make_tag(pct, bus, dev, func);
-	class = genppc_pci_indirect_conf_read(pct, tag, PCI_CLASS_REG);
 
 	/*
 	 * PCI bridges have special needs.  We need to discover where they

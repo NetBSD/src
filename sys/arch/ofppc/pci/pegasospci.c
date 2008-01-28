@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.12 2008/01/17 23:42:58 garbled Exp $ */
+/* $NetBSD: pegasospci.c,v 1.13 2008/01/28 18:24:21 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.12 2008/01/17 23:42:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.13 2008/01/28 18:24:21 garbled Exp $");
 
 #include "opt_pci.h"
 
@@ -214,16 +214,18 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext  = extent_create("pciio",  0x00008000, 0x0000ffff, M_DEVBUF,
-	    NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", 0x00000000, 0x0fffffff, M_DEVBUF,
-	    NULL, 0, EX_NOWAIT);
+	if (isprim) {
+		ioext  = extent_create("pciio",  0x00001400, 0x0000ffff,
+		    M_DEVBUF, NULL, 0, EX_NOWAIT);
+		memext = extent_create("pcimem", sc->sc_memt.pbs_base,
+		    sc->sc_memt.pbs_limit-1, M_DEVBUF, NULL, 0, EX_NOWAIT);
 
-	if (pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINESIZE))
-		printf("pci_configure_bus() failed\n");
+		if (pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINESIZE))
+			printf("pci_configure_bus() failed\n");
 
-	extent_destroy(ioext);
-	extent_destroy(memext);
+		extent_destroy(ioext);
+		extent_destroy(memext);
+	}
 #endif /* PCI_NETBSD_CONFIGURE */
 
 	memset(&pba, 0, sizeof(pba));

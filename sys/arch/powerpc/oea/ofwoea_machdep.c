@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.8 2008/01/17 23:42:59 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.9 2008/01/28 18:24:21 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.8 2008/01/17 23:42:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.9 2008/01/28 18:24:21 garbled Exp $");
 
 
 #include "opt_compat_netbsd.h"
@@ -356,7 +356,7 @@ noranges:
 void
 ofwoea_batinit(void)
 {
-#ifdef PPC_OEA
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
         u_int16_t bitmap;
 	int node, i;
 
@@ -377,7 +377,7 @@ ofwoea_batinit(void)
 			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
 		}
 	}
-#endif
+#endif /* OEA || BRIDGE */
 }
 
 
