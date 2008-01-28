@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.11 2007/04/22 02:09:02 mouse Exp $	 */
+/*	$NetBSD: data.c,v 1.12 2008/01/28 05:38:53 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)data.c	5.3 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: data.c,v 1.11 2007/04/22 02:09:02 mouse Exp $");
+__RCSID("$NetBSD: data.c,v 1.12 2008/01/28 05:38:53 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ static char     aa6[] = "    major deity    ";
 static char     aa7[] = "  novice guardian  ";
 static char     aa8[] = "apprentice guardian";
 static char     aa9[] = "    The Creator    ";
-u_char           *class[] =
+const char   *class[] =
 {
 	"  novice explorer  ", "apprentice explorer", " practiced explorer",	/* -3 */
 	"   expert explorer ", "  novice adventurer", "     adventurer    ",	/* -6 */
@@ -173,12 +173,12 @@ int             enable_scroll = 0;	/* constant for enabled/disabled
 char            aborted[] = " aborted";
 struct sphere  *spheres = 0;	/* pointer to linked list for spheres of
 				 * annihilation */
-char           *levelname[] =
+const char     *levelname[] =
 {" H", " 1", " 2", " 3", " 4", " 5", " 6", " 7", " 8", " 9", "10", "V1", "V2", "V3"};
 
 char            objnamelist[] = " ATOP%^F&^+M=%^$$f*OD#~][[)))(((||||||||{?!BC}o:@.<<<<EVV))([[]]](^ [H*** ^^ S tsTLc............................................";
 char            monstnamelist[] = " BGHJKOScjtAELNQRZabhiCTYdegmvzFWflorXV pqsyUkMwDDPxnDDuD        ...............................................................";
-char           *objectname[] =
+const char     *objectname[] =
 {0, "a holy altar", "a handsome jewel encrusted throne", "the orb", "a pit",
 	"a staircase leading upwards", "an elevator going up", "a bubbling fountain",
 	"a great marble statue", "a teleport trap", "the college of Larn",
@@ -333,10 +333,10 @@ struct monst    monster[] = {
 
 /* name array for scrolls		 */
 
-char           *scrollname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
+const char     *scrollname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
 "", "", "", "", "", "", "", "", "", "", "", "", "", ""};
 
-char           *scrollhide[] = {
+const char     *scrollhide[] = {
 	" enchant armor",
 	" enchant weapon",
 	" enlightenment",
@@ -367,12 +367,12 @@ char           *scrollhide[] = {
 	"  "
 };
 
-char           *potionname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
+const char     *potionname[] = {"", "", "", "", "", "", "", "", "", "", "", "", "", "",
 	"", "", "", "", "", "", "", "", "", "", "", "", "", "",
 "", "", "", "", "", "", ""};
 
 /* name array for magic potions	 */
-char           *potionhide[] = {
+const char     *potionhide[] = {
 	" sleep",
 	" healing",
 	" raise level",
@@ -418,7 +418,7 @@ char           *potionhide[] = {
 u_char          spelknow[SPNUM] = {0};
 u_char          splev[] = {1, 4, 9, 14, 18, 22, 26, 29, 32, 35, 37, 37, 37, 37, 37};
 
-char           *spelcode[] = {
+const char     *spelcode[] = {
 	"pro", "mle", "dex", "sle", "chm", "ssp",
 	"web", "str", "enl", "hel", "cbl", "cre", "pha", "inv",
 	"bal", "cld", "ply", "can", "has", "ckl", "vpr",
@@ -427,7 +427,7 @@ char           *spelcode[] = {
 	"sph", "gen", "sum", "wtw", "alt", "per"
 };
 
-char           *spelname[] = {
+const char     *spelname[] = {
 	"protection", "magic missile", "dexterity",
 	"sleep", "charm monster", "sonic spear",
 
@@ -450,7 +450,7 @@ char           *spelname[] = {
 	""
 };
 
-char           *speldescript[] = {
+const char     *speldescript[] = {
 	/* 1 */
 	"generates a +2 protection field",
 	"creates and hurls a magic missile equivalent to a +1 magic arrow",
@@ -604,7 +604,7 @@ char            spelweird[MAXMONST + 8][SPNUM] = {
 
 };
 
-char           *spelmes[] = {"",
+const char     *spelmes[] = {"",
 	 /* 1 */ "the web had no effect on the %s",
 	 /* 2 */ "the %s changed shape to avoid the web",
 	 /* 3 */ "the %s isn't afraid of you",
