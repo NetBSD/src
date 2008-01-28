@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.26 2007/12/16 20:02:57 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.27 2008/01/28 18:35:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.26 2007/12/16 20:02:57 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.27 2008/01/28 18:35:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -328,7 +328,7 @@ errnotify(struct puffs_usermount *pu, struct puffs_framebuf *pufbuf, int error)
 
 	pufbuf->rv = error;
 	if (pufbuf->pcc) {
-		puffs_goto(pufbuf->pcc);
+		puffs__goto(pufbuf->pcc);
 	} else if (pufbuf->fcb) {
 		pufbuf->istat &= ~ISTAT_NODESTROY;
 		pufbuf->fcb(pu, pufbuf, pufbuf->fcb_arg, error);
@@ -597,7 +597,7 @@ puffs_framev_enqueue_waitevent(struct puffs_cc *pcc, int fd, int *what)
 }
 
 void
-puffs_framev_notify(struct puffs_fctrl_io *fio, int what)
+puffs__framev_notify(struct puffs_fctrl_io *fio, int what)
 {
 	struct puffs_fbevent *fbevp;
 
@@ -652,7 +652,7 @@ puffs__framebuf_moveinfo(struct puffs_framebuf *from, struct puffs_framebuf *to)
 }
 
 void
-puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
+puffs__framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	struct puffs_fctrl_io *fio)
 {
 	struct puffs_framebuf *pufbuf, *appbuf;
@@ -672,7 +672,7 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 
 		/* error */
 		if (rv) {
-			puffs_framev_readclose(pu, fio, rv);
+			puffs__framev_readclose(pu, fio, rv);
 			fio->cur_in = NULL;
 			if ((pufbuf->istat & ISTAT_DIRECT) == 0) {
 				assert((pufbuf->istat & ISTAT_NODESTROY) == 0);
@@ -712,7 +712,7 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		appbuf->istat &= ~ISTAT_NODESTROY;
 	
 		if (appbuf->pcc) {
-			puffs_docc(appbuf->pcc);
+			puffs__cc_cont(appbuf->pcc);
 		} else if (appbuf->fcb) {
 			appbuf->fcb(pu, appbuf, appbuf->fcb_arg, 0);
 		} else {
@@ -724,7 +724,7 @@ puffs_framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 }
 
 int
-puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
+puffs__framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 	struct puffs_fctrl_io *fio)
 {
 	struct puffs_framebuf *pufbuf;
@@ -740,7 +740,7 @@ puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 		rv = fctrl->wfb(pu, pufbuf, fio->io_fd, &complete);
 
 		if (rv) {
-			puffs_framev_writeclose(pu, fio, rv);
+			puffs__framev_writeclose(pu, fio, rv);
 			done = 1;
 			break;
 		}
@@ -758,8 +758,8 @@ puffs_framev_output(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 			done = 1;
 		} else if ((pufbuf->istat & ISTAT_DIRECT)) {
 			pufbuf->istat &= ~ISTAT_NODESTROY;
-			puffs_docc(pufbuf->pcc);
 			done = 1;
+			puffs__cc_cont(pufbuf->pcc);
 		} else if ((pufbuf->istat & ISTAT_NOREPLY) == 0) {
 			TAILQ_INSERT_TAIL(&fio->res_qing, pufbuf,
 			    pfb_entries);
@@ -915,7 +915,7 @@ puffs_framev_disablefd(struct puffs_usermount *pu, int fd, int what)
 }
 
 void
-puffs_framev_readclose(struct puffs_usermount *pu,
+puffs__framev_readclose(struct puffs_usermount *pu,
 	struct puffs_fctrl_io *fio, int error)
 {
 	struct puffs_framebuf *pufbuf;
@@ -952,7 +952,7 @@ puffs_framev_readclose(struct puffs_usermount *pu,
 }
 
 void
-puffs_framev_writeclose(struct puffs_usermount *pu,
+puffs__framev_writeclose(struct puffs_usermount *pu,
 	struct puffs_fctrl_io *fio, int error)
 {
 	struct puffs_framebuf *pufbuf;
@@ -986,14 +986,14 @@ removefio(struct puffs_usermount *pu, struct puffs_fctrl_io *fio, int error)
 
 	LIST_REMOVE(fio, fio_entries);
 	if (pu->pu_state & PU_INLOOP) {
-		puffs_framev_readclose(pu, fio, error);
-		puffs_framev_writeclose(pu, fio, error);
+		puffs__framev_readclose(pu, fio, error);
+		puffs__framev_writeclose(pu, fio, error);
 	}
 
 	while ((fbevp = LIST_FIRST(&fio->ev_qing)) != NULL) {
 		fbevp->rv = error;
 		LIST_REMOVE(fbevp, pfe_entries);
-		puffs_goto(fbevp->pcc);
+		puffs__goto(fbevp->pcc);
 	}
 
 	/* don't bother with realloc */
@@ -1056,7 +1056,7 @@ puffs_framev_init(struct puffs_usermount *pu,
 }
 
 void
-puffs_framev_exit(struct puffs_usermount *pu)
+puffs__framev_exit(struct puffs_usermount *pu)
 {
 	struct puffs_fctrl_io *fio;
 
