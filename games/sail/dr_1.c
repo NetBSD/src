@@ -1,4 +1,4 @@
-/*	$NetBSD: dr_1.c,v 1.22 2006/03/19 00:41:46 christos Exp $	*/
+/*	$NetBSD: dr_1.c,v 1.23 2008/01/28 01:58:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dr_1.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: dr_1.c,v 1.22 2006/03/19 00:41:46 christos Exp $");
+__RCSID("$NetBSD: dr_1.c,v 1.23 2008/01/28 01:58:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -142,7 +142,7 @@ fightitout(struct ship *from, struct ship *to, int key)
 	int crewfrom[3], crewto[3], menfrom, mento;
 	int pcto, pcfrom, fromstrength, strengthto, frominjured, toinjured;
 	int topoints;
-	int index, totalfrom = 0, totalto = 0;
+	int indx, totalfrom = 0, totalto = 0;
 	int count;
 	char message[60];
 
@@ -170,15 +170,15 @@ fightitout(struct ship *from, struct ship *to, int key)
 	     ((fromstrength < strengthto * 3 && strengthto < fromstrength * 3)
 	      || fromstrength == -1) && count < 4;
 	     count++) {
-		index = fromstrength/10;
-		if (index > 8)
-			index = 8;
-		toinjured = MT[index][2 - dieroll() / 3];
+		indx = fromstrength/10;
+		if (indx > 8)
+			indx = 8;
+		toinjured = MT[indx][2 - dieroll() / 3];
 		totalto += toinjured;
-		index = strengthto/10;
-		if (index > 8)
-			index = 8;
-		frominjured = MT[index][2 - dieroll() / 3];
+		indx = strengthto/10;
+		if (indx > 8)
+			indx = 8;
+		frominjured = MT[indx][2 - dieroll() / 3];
 		totalfrom += frominjured;
 		menfrom -= frominjured;
 		mento -= toinjured;
@@ -273,7 +273,7 @@ compcombat(void)
 	struct ship *closest;
 	int crew[3], men = 0, target, temp;
 	int r, guns, ready, load, car;
-	int index, rakehim, sternrake;
+	int indx, rakehim, sternrake;
 	int shootat, hit;
 
 	foreachship(sp) {
@@ -345,21 +345,21 @@ compcombat(void)
 			if (temp > 8)
 				temp -= 8;
 			sternrake = temp > 4 && temp < 6;
-			index = guns;
+			indx = guns;
 			if (target < 3)
-				index += car;
-			index = (index - 1) / 3;
-			index = index > 8 ? 8 : index;
+				indx += car;
+			indx = (indx - 1) / 3;
+			indx = indx > 8 ? 8 : indx;
 			if (!rakehim)
-				hit = HDT[index][target-1];
+				hit = HDT[indx][target-1];
 			else
-				hit = HDTrake[index][target-1];
+				hit = HDTrake[indx][target-1];
 			if (rakehim && sternrake)
 				hit++;
-			hit += QUAL[index][capship(sp)->specs->qual - 1];
+			hit += QUAL[indx][capship(sp)->specs->qual - 1];
 			for (n = 0; n < 3 && sp->file->captured == 0; n++)
 				if (!crew[n]) {
-					if (index <= 5)
+					if (indx <= 5)
 						hit--;
 					else
 						hit -= 2;
@@ -369,18 +369,18 @@ compcombat(void)
 					sp->file->readyL &= ~R_INITIAL;
 				else
 					sp->file->readyR &= ~R_INITIAL;
-				if (index <= 3)
+				if (indx <= 3)
 					hit++;
 				else
 					hit += 2;
 			}
 			if (sp->file->captured != 0) {
-				if (index <= 1)
+				if (indx <= 1)
 					hit--;
 				else
 					hit -= 2;
 			}
-			hit += AMMO[index][load - 1];
+			hit += AMMO[indx][load - 1];
 			temp = sp->specs->class;
 			if ((temp >= 5 || temp == 1) && windspeed == 5)
 				hit--;

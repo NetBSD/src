@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.5 2003/08/07 09:37:43 agc Exp $	*/
+/*	$NetBSD: machdep.h,v 1.6 2008/01/28 01:58:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,15 +36,15 @@
 /* for POSIX systems */
 #define	blockalarm() \
 	do {								\
-		sigset_t sigset;					\
-		sigemptyset(&sigset);					\
-		sigaddset(&sigset, SIGALRM);				\
-		sigprocmask(SIG_BLOCK, &sigset, (sigset_t *)0);		\
+		sigset_t set;						\
+		sigemptyset(&set);					\
+		sigaddset(&set, SIGALRM);				\
+		sigprocmask(SIG_BLOCK, &set, (sigset_t *)0);		\
 	} while (0)
 #define	unblockalarm() \
 	do {								\
-		sigset_t sigset;					\
-		sigemptyset(&sigset);					\
-		sigaddset(&sigset, SIGALRM);				\
-		sigprocmask(SIG_UNBLOCK, &sigset, (sigset_t *)0);	\
+		sigset_t set;						\
+		sigemptyset(&set);					\
+		sigaddset(&set, SIGALRM);				\
+		sigprocmask(SIG_UNBLOCK, &set, (sigset_t *)0);		\
 	} while (0)
