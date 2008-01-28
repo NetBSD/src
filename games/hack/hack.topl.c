@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.topl.c,v 1.7 2003/04/02 18:36:41 jsm Exp $	*/
+/*	$NetBSD: hack.topl.c,v 1.8 2008/01/28 06:55:42 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.topl.c,v 1.7 2003/04/02 18:36:41 jsm Exp $");
+__RCSID("$NetBSD: hack.topl.c,v 1.8 2008/01/28 06:55:42 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -141,7 +141,7 @@ addtopl(s)
 	const char           *s;
 {
 	curs(tlx, tly);
-	if (tlx + strlen(s) > CO)
+	if (tlx + (int)strlen(s) > CO)
 		putsym('\n');
 	putstr(s);
 	tlx = curx;
@@ -232,7 +232,7 @@ vpline(line, ap)
 	/* But messages like "You die..." deserve their own line */
 	n0 = strlen(bp);
 	if (flags.toplin == 1 && tly == 1 &&
-	    n0 + strlen(toplines) + 3 < CO - 8 &&	/* leave room for
+	    n0 + (int)strlen(toplines) + 3 < CO - 8 &&	/* leave room for
 							 * --More-- */
 	    strncmp(bp, "You ", 4)) {
 		(void) strcat(toplines, "  ");

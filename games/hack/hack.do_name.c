@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.do_name.c,v 1.6 2003/04/02 18:36:36 jsm Exp $	*/
+/*	$NetBSD: hack.do_name.c,v 1.7 2008/01/28 06:55:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.do_name.c,v 1.6 2003/04/02 18:36:36 jsm Exp $");
+__RCSID("$NetBSD: hack.do_name.c,v 1.7 2008/01/28 06:55:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <stdlib.h>
@@ -116,7 +116,8 @@ do_mname()
 {
 	char            buf[BUFSZ];
 	coord           cc;
-	int             cx, cy, lth, i;
+	int             cx, cy, lth;
+	unsigned        i;
 	struct monst   *mtmp, *mtmp2;
 	cc = getpos(0, "the monster you want to name");
 	cx = cc.x;
