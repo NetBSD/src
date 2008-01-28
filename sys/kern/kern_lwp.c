@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.91 2008/01/15 03:37:11 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.92 2008/01/28 10:24:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.91 2008/01/15 03:37:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.92 2008/01/28 10:24:45 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -862,6 +862,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	struct proc *p = l->l_proc;
 	ksiginfoq_t kq;
 
+	KASSERT(l != curlwp);
+
 	/*
 	 * If this was not the last LWP in the process, then adjust
 	 * counters and unlock.
@@ -934,6 +936,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif
+	KASSERT((l->l_flag & LW_INMEM) != 0);
 	uvm_lwp_exit(l);
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);
