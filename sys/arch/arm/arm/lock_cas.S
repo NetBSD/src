@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.1.24.1 2008/01/09 01:45:10 matt Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.1.24.2 2008/01/28 18:14:31 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -66,6 +66,18 @@
  * r2	New value.
  */
 ENTRY_NP(_lock_cas)
+#ifdef _ARCH_ARM_6
+	.globl	_C_LABEL(_lock_cas_end)
+        mov	ip, r0
+1:      ldrex	r0, [ip]		/* eventual return value */
+        cmp	r1, r0
+	RETc(ne)
+        strex	r3, r2, [ip]
+        cmp	r3, #0
+        bne	1b
+        RET
+        END(_lock_cas)
+#else
 	ldr	r3, [r0]
 	teq	r3, r1
 	bne	1f
@@ -105,6 +117,7 @@ _C_LABEL(_lock_cas_end):
 #endif /* ARM_LOCK_CAS_DEBUG */
 	mov	r0, r3			/* return actual value */
 	RET
+#endif
 
 STRONG_ALIAS(_atomic_cas_ulong,_lock_cas)
 STRONG_ALIAS(atomic_cas_ulong,_lock_cas)
