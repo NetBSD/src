@@ -1,4 +1,4 @@
-/*	$NetBSD: brd.dat,v 1.3 2003/08/07 09:37:27 agc Exp $	*/
+/*	$NetBSD: brd.dat,v 1.4 2008/01/28 06:16:13 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -33,29 +33,29 @@
 
 /* name (COLOR)			owner	type	desc		cost	*/
 
-{"=== GO ===",			-1,	SAFE,	0			},
+{"=== GO ===",			-1,	SAFE,	NULL,		0	},
 {"Mediterranean ave. (P)",	-1,	PRPTY,	&prop[0],	60	},
-{"Community Chest i",		-1,	CC,				},
+{"Community Chest i",		-1,	CC,	NULL,		0	},
 {"Baltic ave. (P)",		-1,	PRPTY,	&prop[1],	60	},
-{"Income Tax",			-1,	INC_TAX,			},
+{"Income Tax",			-1,	INC_TAX, NULL,		0	},
 {"Reading RR",			-1,	RR,	&rr[0],		200	},
 {"Oriental ave. (L)",		-1,	PRPTY,	&prop[2],	100	},
-{"Chance i",			-1,	CHANCE,				},
+{"Chance i",			-1,	CHANCE,	NULL,		0	},
 {"Vermont ave. (L)",		-1,	PRPTY,	&prop[3],	100	},
 {"Connecticut ave. (L)",	-1,	PRPTY,	&prop[4],	120	},
-{"Just Visiting",		-1,	SAFE,	0			},
+{"Just Visiting",		-1,	SAFE,	NULL,		0	},
 {"St. Charles pl. (V)",		-1,	PRPTY,	&prop[5],	140	},
 {"Electric Co.",		-1,	UTIL,	&util[0],	150	},
 {"States ave. (V)",		-1,	PRPTY,	&prop[6],	140	},
 {"Virginia ave. (V)",		-1,	PRPTY,	&prop[7],	160	},
 {"Pennsylvania RR",		-1,	RR,	&rr[1],		200	},
 {"St. James pl. (O)",		-1,	PRPTY,	&prop[8],	180	},
-{"Community Chest ii",		-1,	CC,				},
+{"Community Chest ii",		-1,	CC,	NULL,		0	},
 {"Tennessee ave. (O)",		-1,	PRPTY,	&prop[9],	180	},
 {"New York ave. (O)",		-1,	PRPTY,	&prop[10],	200	},
-{"Free Parking",		-1,	SAFE,	0			},
+{"Free Parking",		-1,	SAFE,	NULL,		0	},
 {"Kentucky ave. (R)",		-1,	PRPTY,	&prop[11],	220	},
-{"Chance ii",			-1,	CHANCE,				},
+{"Chance ii",			-1,	CHANCE,	NULL,		0	},
 {"Indiana ave. (R)",		-1,	PRPTY,	&prop[12],	220	},
 {"Illinois ave. (R)",		-1,	PRPTY,	&prop[13],	240	},
 {"B&O RR",			-1,	RR,	&rr[2],		200	},
@@ -63,14 +63,14 @@
 {"Ventnor ave. (Y)",		-1,	PRPTY,	&prop[15],	260	},
 {"Water Works",			-1,	UTIL,	&util[1],	150	},
 {"Marvin Gardens (Y)",		-1,	PRPTY,	&prop[16],	280	},
-{"GO TO JAIL",			-1,	GOTO_J,				},
+{"GO TO JAIL",			-1,	GOTO_J,	NULL,		0	},
 {"Pacific ave. (G)",		-1,	PRPTY,	&prop[17],	300	},
 {"N. Carolina ave. (G)",	-1,	PRPTY,	&prop[18],	300	},
-{"Community Chest iii",		-1,	CC,				},
+{"Community Chest iii",		-1,	CC,	NULL,		0	},
 {"Pennsylvania ave. (G)",	-1,	PRPTY,	&prop[19],	320	},
 {"Short Line RR",		-1,	RR,	&rr[3],		200	},
-{"Chance iii",			-1,	CHANCE,				},
+{"Chance iii",			-1,	CHANCE,	NULL,		0	},
 {"Park place (D)",		-1,	PRPTY,	&prop[20],	350	},
-{"Luxury Tax",			-1,	LUX_TAX,			},
+{"Luxury Tax",			-1,	LUX_TAX, NULL,		0	},
 {"Boardwalk (D)",		-1,	PRPTY,	&prop[21],	400	},
-{"JAIL",			-1,	IN_JAIL,				}
+{"JAIL",			-1,	IN_JAIL, NULL,		0	}

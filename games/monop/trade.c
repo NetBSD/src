@@ -1,4 +1,4 @@
-/*	$NetBSD: trade.c,v 1.9 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: trade.c,v 1.10 2008/01/28 06:16:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trade.c,v 1.9 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: trade.c,v 1.10 2008/01/28 06:16:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -107,7 +107,7 @@ get_list(struct_no, play_no)
 {
 	int sn, pn;
 	PLAY *pp;
-	int numin, prop, num_prp;
+	int numin, propnum, num_prp;
 	OWN *op;
 	TRADE *tp;
 
@@ -121,16 +121,16 @@ get_list(struct_no, play_no)
 	if (pp->own_list) {
 		numin = set_list(pp->own_list);
 		for (num_prp = numin; num_prp; ) {
-			prop = getinp("Which property do you wish to trade? ",
+			propnum=getinp("Which property do you wish to trade? ",
 			    plist);
-			if (prop == numin)
+			if (propnum == numin)
 				break;
-			else if (used[prop])
+			else if (used[propnum])
 				printf("You've already allocated that.\n");
 			else {
 				num_prp--;
-				used[prop] = TRUE;
-				for (op = pp->own_list; prop--; op = op->next)
+				used[propnum] = TRUE;
+				for (op = pp->own_list; propnum--; op = op->next)
 					continue;
 				add_list(pn, &(tp->prop_list), sqnum(op->sqr));
 			}
