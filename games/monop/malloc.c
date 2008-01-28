@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.4 2004/12/14 00:21:01 nathanw Exp $	*/
+/*	$NetBSD: malloc.c,v 1.5 2008/01/28 06:16:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.4 2004/12/14 00:21:01 nathanw Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.5 2008/01/28 06:16:13 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -208,7 +208,7 @@ malloc(nbytes)
 	 * stored in hash buckets which satisfies request.
 	 * Account for space used per block for accounting.
 	 */
-	if (nbytes <= (n = pagesz - sizeof (*op) - RSLOP)) {
+	if (nbytes <= (size_t)(n = pagesz - sizeof (*op) - RSLOP)) {
 #ifndef RCHECK
 		amt = 8;	/* size of first bucket */
 		bucket = 0;
@@ -221,7 +221,7 @@ malloc(nbytes)
 		amt = (unsigned)pagesz;
 		bucket = pagebucket;
 	}
-	while (nbytes > amt + n) {
+	while (nbytes > (size_t)(amt + n)) {
 		amt <<= 1;
 		if (amt == 0)
 			return (NULL);
@@ -390,7 +390,7 @@ realloc(cp, nbytes)
 			i = NBUCKETS;
 	}
 	onb = (u_long)1 << (u_long)(i + 3);
-	if (onb < pagesz)
+	if (onb < (u_long)pagesz)
 		onb -= sizeof (*op) + RSLOP;
 	else
 		onb += pagesz - sizeof (*op) - RSLOP;
@@ -403,7 +403,7 @@ realloc(cp, nbytes)
 			else
 				i += pagesz - sizeof (*op) - RSLOP;
 		}
-		if (nbytes <= onb && nbytes > i) {
+		if (nbytes <= onb && nbytes > (size_t) i) {
 #ifdef RCHECK
 			op->ov_size = (nbytes + RSLOP - 1) & ~(RSLOP - 1);
 			*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;

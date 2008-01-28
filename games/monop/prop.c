@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.11 2006/03/19 00:18:47 christos Exp $	*/
+/*	$NetBSD: prop.c,v 1.12 2008/01/28 06:16:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.11 2006/03/19 00:18:47 christos Exp $");
+__RCSID("$NetBSD: prop.c,v 1.12 2008/01/28 06:16:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,13 +48,13 @@ static int value(SQUARE *);
  * appropriate flags.
  */
 void
-buy(player, sqrp)
-	int player;
+buy(playernum, sqrp)
+	int playernum;
 	SQUARE *sqrp;
 {
 	trading = FALSE;
-	sqrp->owner = player;
-	add_list(player, &(play[player].own_list), cur_p->loc);
+	sqrp->owner = playernum;
+	add_list(playernum, &(play[playernum].own_list), cur_p->loc);
 }
 
 /*
