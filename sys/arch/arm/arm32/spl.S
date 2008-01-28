@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5.2.2 2008/01/09 01:45:13 matt Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.2.3 2008/01/28 18:29:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1996-1998 Mark Brinicombe.
@@ -61,11 +61,11 @@ ENTRY(raisespl)
 	/* Disable interrupts */
 	mrs	r4, cpsr_all
 	orr	r2, r4, #(I32_bit)
-	msr	cpsr_all, r2
+	msr	cpsr_c, r2
 
 	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
-	msr	cpsr_all, r4		/* Restore interrupts */
+	msr	cpsr_c, r4		/* Restore interrupts */
 
 	ldmfd	sp!, {r0, r1, r4, pc}	/* Restore registers */
 
@@ -81,7 +81,7 @@ ENTRY(lowerspl)
 	/* Disable interrupts */
 	mrs	r4, cpsr_all
 	orr	r2, r4,  #(I32_bit)
-	msr	cpsr_all, r2
+	msr	cpsr_c, r2
 
 	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
@@ -100,16 +100,17 @@ ENTRY(splx)
 	RETc(eq)
 
 	stmfd	sp!, {r0, r1, r4, lr}
+
 	/* Disable interrupts */
 	mrs	r4, cpsr_all
 	orr	r2, r4,  #(I32_bit)
-	msr	cpsr_all, r2
+	msr	cpsr_c, r2
 
 	str	r3, [r1, #CI_CPL]	/* Store the new spl level */
 
 	bl	_C_LABEL(irq_setmasks)	/* Update the actual masks */
-	msr	cpsr_all, r4
 #ifdef __HAVE_FAST_SOFTINTS
 	bl	_C_LABEL(dosoftints)	/* Process any pending soft ints */
 #endif
+	msr	cpsr_c, r4
 	ldmfd	sp!, {r0, r1, r4, pc}

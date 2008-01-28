@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.9.30.1 2007/11/09 05:37:45 matt Exp $	*/
+/*	i80321_intr.h,v 1.9.30.1 2007/11/09 05:37:45 matt Exp	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -50,8 +50,6 @@
 #include <arm/xscale/i80321reg.h>
 
 #ifdef __PROG32
-void i80321_do_pending(void);
-
 static inline void __attribute__((__unused__))
 i80321_set_intrmask(void)
 {
@@ -62,14 +60,9 @@ i80321_set_intrmask(void)
 		: "r" (intr_enabled & ICU_INT_HWMASK));
 }
 
-#define INT_SWMASK							\
-	((1U << ICU_INT_bit26) | (1U << ICU_INT_bit22) |		\
-	 (1U << ICU_INT_bit5)  | (1U << ICU_INT_bit4))
-
 #define INT_HPIMASK	(1u << ICU_INT_HPI)
 extern volatile uint32_t intr_enabled;
 extern volatile int i80321_ipending;
-extern void i80321_do_pending(void);
 extern int i80321_imask[];
 
 static inline void __attribute__((__unused__))
@@ -82,7 +75,7 @@ i80321_splx(int new)
 
 	set_curcpl(new);
 
-	hwpend = (i80321_ipending & ICU_INT_HWMASK) & ~new;
+	hwpend = (i80321_ipending & ICU_INT_HWMASK) & ~i80321_imask[new];
 	if (hwpend != 0) {
 		oldirqstate = disable_interrupts(I32_bit);
 		intr_enabled |= hwpend;
@@ -94,15 +87,16 @@ i80321_splx(int new)
 		restore_interrupts(oldirqstate);
 	}
 
-	if ((i80321_ipending & INT_SWMASK) & ~new)
-		i80321_do_pending();
+#ifdef __HAVE_FAST_SOFTINTS
+	cpu_dosoftints();
+#endif
 }
 
 static inline int __attribute__((__unused__))
 i80321_splraise(int ipl)
 {
 	int old = curcpl();
-	set_curcpl(old | i80321_imask[ipl]);
+	set_curcpl(ipl);
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
@@ -114,8 +108,7 @@ static inline int __attribute__((__unused__))
 i80321_spllower(int ipl)
 {
 	int old = curcpl();
-
-	i80321_splx(i80321_imask[ipl]);
+	i80321_splx(ipl);
 	return(old);
 }
 

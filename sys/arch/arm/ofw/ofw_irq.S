@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_irq.S,v 1.8.2.3 2008/01/09 01:45:20 matt Exp $	*/
+/*	$NetBSD: ofw_irq.S,v 1.8.2.4 2008/01/28 18:29:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -164,13 +164,13 @@ ASENTRY_NP(irq_entry)
 	PUSHFRAMEINSVC			/* Push an interrupt frame */
 
 	/*
-	 *  Can't field this interrupt now if priority is _SPL_CLOCK
+	 *  Can't field this interrupt now if priority is IPL_CLOCK
 	 *  or higher.  For now, we'll just ignore the interrupt.
 	 *  Soon, we will have to schedule it for later action.
 	 */
 	ldr	r0, Lcurrent_spl_level
 	ldr	r0, [r4, #CI_CPL]
-	cmp	r0, #_SPL_CLOCK
+	cmp	r0, #IPL_CLOCK
 	blt	ofwtakeint
 
 	PULLFRAMEFROMSVCANDEXIT
@@ -222,7 +222,7 @@ ofwtakeint:
 	 * This would benefit from a special ffs type routine
 	 */
 
-	mov	r9, #(_SPL_LEVELS - 1)
+	mov	r9, #(NIPL - 1)
 	ldr	r7, Lspl_masks
 
 Lfind_highest_ipl:

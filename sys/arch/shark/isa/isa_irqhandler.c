@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.15.2.2 2008/01/09 01:48:51 matt Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.15.2.3 2008/01/28 18:29:13 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.15.2.2 2008/01/09 01:48:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.15.2.3 2008/01/28 18:29:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ irqhandler_t *irqhandlers[NIRQS];
 u_int current_mask;
 u_int actual_mask;
 u_int disabled_mask;
-u_int irqmasks[IPL_LEVELS];
+u_int irqmasks[NIPL];
 
 /* Prototypes */
 
@@ -124,7 +124,7 @@ irq_init()
 	 * We will start with no bits set and these will be updated as handlers
 	 * are installed at different IPL's.
 	 */
-	for (loop = 0; loop < IPL_LEVELS; ++loop)
+	for (loop = 0; loop < NIPL; ++loop)
 		irqmasks[loop] = 0;
 
 	current_mask = 0x00000000;
@@ -172,7 +172,7 @@ irq_claim(irq, handler, group, name)
 		return(-1);
 
 	/* Make sure the level is valid */
-	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
+	if (handler->ih_level < 0 || handler->ih_level >= NIPL)
     	        return(-1);
 
 	/* Attach evcnt */
@@ -290,7 +290,7 @@ irq_calculatemasks()
 	}
 
 	/* Then figure out which IRQs use each level. */
-	for (level = 0; level < IPL_LEVELS; level++) {
+	for (level = 0; level < NIPL; level++) {
 		int irqs = 0;
 		for (irq = 0; irq < NIRQS; irq++)
 			if (irqlevel[irq] & (1 << level))
@@ -302,6 +302,7 @@ irq_calculatemasks()
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
+	KASSERT(irqmasks[IPL_NONE] == ~0);
 	irqmasks[IPL_SOFTCLOCK] &= irqmasks[IPL_NONE];
 	irqmasks[IPL_SOFTBIO] &= irqmasks[IPL_SOFTCLOCK];
 	irqmasks[IPL_SOFTNET] &= irqmasks[IPL_SOFTBIO];

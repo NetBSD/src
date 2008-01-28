@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_intr.h,v 1.1.2.1 2008/01/08 17:34:33 matt Exp $ */
+/*	$NetBSD: omap2_intr.h,v 1.1.2.2 2008/01/28 18:29:08 matt Exp $ */
 
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
@@ -27,8 +27,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_OMAP_SDP2430_INTR_H_
-#define _ARM_OMAP_SDP2430_INTR_H_
+#ifndef _ARM_OMAP_OMAP2_INTR_H_
+#define _ARM_OMAP_OMAP2_INTR_H_
 
 #define	ARM_IRQ_HANDLER	_C_LABEL(omap_irq_handler)
 
@@ -38,7 +38,6 @@
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/atomic.h>
-#include <arm/softintr.h>
 
 uint32_t omap_microtimer_read(void);
 uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
@@ -52,7 +51,7 @@ uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
 #define	IRQ_SSM_ABORT		6	/* (2430) MPU subsystem secure state-machine abort */
 #define	IRQ_SYS_nIRQ0		7	/* External interrupt (active low) */
 #define	IRQ_D2D_FW_STACKED		8	/* (2430) Occurs when modem does a security violation and has been automatically put DEVICE_SECURITY [0] under reset. */
-#define	M_IRQ_9			9	/* Reserved */
+#define	IRQ_RSVD9		9	/* Reserved */
 #define	IRQ_L3			10	/* (2420) L2 interconnect (transaction error) */
 #define	IRQ_SMX_APE_IA_ARM1136	10	/* (2430) Error flag for reporting application and unknown errors from SMX-APE (4) rd_wrSError_o */
 #define	IRQ_PRCM_MPU		11	/* PRCM */
@@ -66,7 +65,7 @@ uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
 #define	IRQ_McBSP5_COMMON	19	/* (2430) McBSP5 common IRQ. This IRQ regroups all interrupt sources of the McBSPLP. Not backward-compatible with the previous McBSP. */
 #define	IRQ_GPMC		20	/* General-purpose memory controller module */
 #define	IRQ_GFX			21	/* (2430) 2D/3D graphics module */
-#define	M_IRQ_22		22	/* Reserved */
+#define	IRQ_RSVD22		22	/* Reserved */
 #define	IRQ_EAC			23	/* Audio Controller (2420) */
 #define	IRQ_CAM0		24	/* Camera interface interrupt request 0 */
 #define	IRQ_DSS			25	/* Display subsystem module (5) */
@@ -95,7 +94,7 @@ uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
 #define	IRQ_GPT10		46	/* General-purpose timer module 10 */
 #define	IRQ_GPT11		47	/* General-purpose timer module 11 (PWM) */
 #define	IRQ_GPT12		48	/* General-purpose timer module 12 (PWM) */
-#define	M_IRQ_49		49	/* Reserved */
+#define	IRQ_RSVD49		49	/* Reserved */
 #define	IRQ_PKA			50	/* (2430) PKA crypto-accelerator */
 #define	IRQ_SHA1MD5		51	/* (2430) SHA-1/MD5 crypto-accelerator */
 #define	IRQ_RNG			52	/* (2430) RNG module */
@@ -141,13 +140,15 @@ uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
 #define	IRQ_HS_USB_MC		92	/* (2430) Module HS USB OTG controller (3) */
 #define	IRQ_HS_USB_DMA		93	/* (2430) Module HS USB OTG DMA controller interrupt (3) */
 #define	IRQ_Carkit		94	/* (2430) Carkit interrupt when the external HS USB transceiver is used in carkit mode (2) */
-#define	M_IRQ_95		95	/* Reserved */
+#define	IRQ_RSVD95		95	/* Reserved */
 
-#define	PIC_MAXMAXSOURCES	(128+96+160)
+#define	PIC_MAXSOURCES		96
+#define	PIC_MAXMAXSOURCES	(96+160)
+
+extern void omap_irq_handler(void *);
 
 #include <arm/pic/picvar.h>
-#include <arm/pic/softintr.h>
 
 #endif /* ! _LOCORE */
 
-#endif /* _ARM_OMAP_SDP2430_INTR_H_ */
+#endif /* _ARM_OMAP_OMAP2_INTR_H_ */

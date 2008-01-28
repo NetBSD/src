@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.10.22.2 2008/01/09 01:45:15 matt Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.10.22.3 2008/01/28 18:29:04 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -74,22 +74,23 @@
 
 /* only call this with interrupts off */
 static inline void __attribute__((__unused__))
-    footbridge_set_intrmask(void)
+footbridge_set_intrmask(void)
 {
-    extern volatile uint32_t intr_enabled;
-    /* fetch once so we write the same number to both registers */
-    uint32_t tmp = intr_enabled & ICU_INT_HWMASK;
+	extern volatile uint32_t intr_enabled;
+	volatile uint32_t * const dc21285_armcsr_vbase = 
+	    (volatile uint32_t *)(DC21285_ARMCSR_VBASE);
 
-    ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_SET>>2] = tmp;
-    ((volatile uint32_t*)(DC21285_ARMCSR_VBASE))[IRQ_ENABLE_CLEAR>>2] = ~tmp;
+	/* fetch once so we write the same number to both registers */
+	uint32_t tmp = intr_enabled & ICU_INT_HWMASK;
+
+	dc21285_armcsr_vbase[IRQ_ENABLE_SET>>2] = tmp;
+	dc21285_armcsr_vbase[IRQ_ENABLE_CLEAR>>2] = ~tmp;
 }
-#ifdef __HAVE_FAST_SOFTINTS
-void footbridge_do_pending(void);
-#endif
     
 static inline void __attribute__((__unused__))
-footbridge_splx(int newspl)
+footbridge_splx(int ipl)
 {
+	extern int footbridge_imask[];
 	extern volatile uint32_t intr_enabled;
 	extern volatile int footbridge_ipending;
 	int oldirqstate, hwpend;
@@ -97,9 +98,9 @@ footbridge_splx(int newspl)
 	/* Don't let the compiler re-order this code with preceding code */
 	__insn_barrier();
 
-	set_curcpl(newspl);
+	set_curcpl(ipl);
 
-	hwpend = (footbridge_ipending & ICU_INT_HWMASK) & ~newspl;
+	hwpend = footbridge_ipending & ICU_INT_HWMASK & ~footbridge_imask[ipl];
 	if (hwpend != 0) {
 		oldirqstate = disable_interrupts(I32_bit);
 		intr_enabled |= hwpend;
@@ -108,19 +109,17 @@ footbridge_splx(int newspl)
 	}
 
 #ifdef __HAVE_FAST_SOFTINTS
-	if ((footbridge_ipending & INT_SWMASK) & ~newspl)
-		footbridge_do_pending();
+	cpu_dosoftints();
 #endif
 }
 
 static inline int __attribute__((__unused__))
 footbridge_splraise(int ipl)
 {
-	extern int footbridge_imask[];
 	int	old;
 
 	old = curcpl();
-	set_curcpl(old | footbridge_imask[ipl]);
+	set_curcpl(ipl);
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
@@ -131,10 +130,9 @@ footbridge_splraise(int ipl)
 static inline int __attribute__((__unused__))
 footbridge_spllower(int ipl)
 {
-	extern int footbridge_imask[];
 	int old = curcpl();
 
-	footbridge_splx(footbridge_imask[ipl]);
+	footbridge_splx(ipl);
 	return(old);
 }
 
@@ -185,9 +183,6 @@ splraiseipl(ipl_cookie_t icookie)
 
 #include <sys/spl.h>
 
-/* Use generic software interrupt support. */
-#include <arm/softintr.h>
-
 /* footbridge has 32 interrupt lines */
 #define	NIRQ		32
 
@@ -207,6 +202,7 @@ struct intrq {
 	int iq_mask;			/* IRQs to mask while handling */
 	int iq_levels;			/* IPL_*'s this IRQ has */
 	int iq_ist;			/* share type */
+	int iq_ipl;			/* max ipl */
 	char iq_name[IRQNAMESIZE];	/* interrupt name */
 };
 

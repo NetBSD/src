@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irq.S,v 1.10.22.2 2008/01/09 01:45:25 matt Exp $	*/
+/*	$NetBSD: sa11x0_irq.S,v 1.10.22.3 2008/01/28 18:29:09 matt Exp $	*/
 
 /*
  * Copyright (c) 1998 Mark Brinicombe.
@@ -116,7 +116,7 @@ ASENTRY_NP(irq_entry)
 	 * This would benefit from a special ffs type routine
 	 */
 
-	mov	r9, #(_SPL_LEVELS - 1)
+	mov	r9, #(NIPL - 1)
 	ldr	r7, Lspl_masks
 
 Lfind_highest_ipl:

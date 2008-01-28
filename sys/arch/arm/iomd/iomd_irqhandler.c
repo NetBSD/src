@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.14.2.2 2008/01/09 01:45:19 matt Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.14.2.3 2008/01/28 18:29:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.14.2.2 2008/01/09 01:45:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.14.2.3 2008/01/28 18:29:06 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -62,7 +62,7 @@ irqhandler_t *irqhandlers[NIRQS];
 u_int current_mask;
 u_int actual_mask;
 u_int disabled_mask;
-u_int irqmasks[IPL_LEVELS];
+u_int irqmasks[NIPL];
 
 extern char *_intrnames;
 
@@ -109,7 +109,7 @@ irq_init(void)
 	 * We will start with no bits set and these will be updated as handlers
 	 * are installed at different IPL's.
 	 */
-	for (loop = 0; loop < IPL_LEVELS; ++loop)
+	for (loop = 0; loop < NIPL; ++loop)
 		irqmasks[loop] = 0;
 
 	current_mask = 0x00000000;
@@ -155,7 +155,7 @@ irq_claim(int irq, irqhandler_t *handler)
 		return -1;
 
 	/* Make sure the level is valid */
-	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
+	if (handler->ih_level < 0 || handler->ih_level >= NIPL)
     	        return -1;
 
 	oldirqstate = disable_interrupts(I32_bit);
@@ -197,7 +197,7 @@ irq_claim(int irq, irqhandler_t *handler)
 	 * If ih_level is out of range then don't bother to update
 	 * the masks.
 	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
+	if (handler->ih_level >= 0 && handler->ih_level < NIPL) {
 		irqhandler_t *ptr;
 
 		/*
@@ -311,11 +311,11 @@ irq_release(int irq, irqhandler_t *handler)
 	 * If ih_level is out of range then don't bother to update
 	 * the masks.
 	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
+	if (handler->ih_level >= 0 && handler->ih_level < NIPL) {
 		irqhandler_t *ptr;
 
 		/* Clean the bit from all the masks */
-		for (level = 0; level < IPL_LEVELS; ++level)
+		for (level = 0; level < NIPL; ++level)
 			irqmasks[level] &= ~(1 << irq);
 
 		/*

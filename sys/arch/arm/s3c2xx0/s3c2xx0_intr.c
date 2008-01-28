@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2xx0_intr.c,v 1.11.30.2 2008/01/09 01:45:23 matt Exp $ */
+/* $NetBSD: s3c2xx0_intr.c,v 1.11.30.3 2008/01/28 18:29:08 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.11.30.2 2008/01/09 01:45:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2xx0_intr.c,v 1.11.30.3 2008/01/28 18:29:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,48 +123,6 @@ s3c2xx0_update_intr_masks(int irqno, int level)
 	s3c2xx0_imask[IPL_CLOCK] &= s3c2xx0_imask[IPL_VM];
 	s3c2xx0_imask[IPL_HIGH] &= s3c2xx0_imask[IPL_CLOCK];
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-void
-s3c2xx0_do_pending(int enable_int)
-{
-	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
-	int oldirqstate, irqstate, spl_save;
-
-	if (__cpu_simple_lock_try(&processing) == 0)
-		return;
-
-	spl_save = curcpl();
-
-	oldirqstate = irqstate = disable_interrupts(I32_bit);
-
-	if (enable_int)
-		irqstate &= ~I32_bit;
-
-
-#define	DO_SOFTINT(si,ipl)						\
-	if (get_pending_softint() & SI_TO_IRQBIT(si)) {			\
-		softint_pending &= ~SI_TO_IRQBIT(si);			\
-                __raise(ipl);                                           \
-		restore_interrupts(irqstate);				\
-		softintr_dispatch(si);					\
-		disable_interrupts(I32_bit);				\
-		s3c2xx0_setipl(spl_save);				\
-	}
-
-	do {
-		DO_SOFTINT(SI_SOFTSERIAL, IPL_SOFTSERIAL);
-		DO_SOFTINT(SI_SOFTNET, IPL_SOFTNET);
-		DO_SOFTINT(SI_SOFTBIO, IPL_SOFTBIO);
-		DO_SOFTINT(SI_SOFTCLOCK, IPL_SOFTCLOCK);
-	} while (get_pending_softint());
-
-	__cpu_simple_unlock(&processing);
-
-	restore_interrupts(oldirqstate);
-}
-#endif /* __HAVE_FAST_SOFTINTS */
-
 
 static int
 stray_interrupt(void *cookie)
@@ -231,12 +189,3 @@ _spllower(int ipl)
 {
 	return s3c2xx0_spllower(ipl);
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-#undef _setsoftintr
-void
-_setsoftintr(int si)
-{
-	return s3c2xx0_setsoftintr(si);
-}
-#endif

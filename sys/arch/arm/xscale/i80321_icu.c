@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_icu.c,v 1.14.30.2 2008/01/09 01:45:26 matt Exp $	*/
+/*	$NetBSD: i80321_icu.c,v 1.14.30.3 2008/01/28 18:29:09 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.30.2 2008/01/09 01:45:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_icu.c,v 1.14.30.3 2008/01/28 18:29:09 matt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -76,35 +76,9 @@ volatile uint32_t intr_enabled;
 uint32_t intr_steer;
 
 /*
- * Map a software interrupt queue index (to the unused bits in the
- * ICU registers -- XXX will need to revisit this if those bits are
- * ever used in future steppings).
- */
-#ifdef __HAVE_FAST_SOFTINTS
-static const uint32_t si_to_irqbit[4] = {
-	ICU_INT_bit26,		/* SI_SOFTCLOCK */
-	ICU_INT_bit22,		/* SI_SOFTBIO */
-	ICU_INT_bit5,		/* SI_SOFTNET */
-	ICU_INT_bit4,		/* SI_SOFTSERIAL */
-};
-
-#define	SI_TO_IRQBIT(si)	(1U << si_to_irqbit[(si)])
-
-/*
- * Map a software interrupt queue to an interrupt priority level.
- */
-static const int si_to_ipl[4] = {
-	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
-	IPL_SOFTBIO,		/* SI_SOFTBIO */
-	IPL_SOFTNET,		/* SI_SOFTNET */
-	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
-};
-#endif
-
-/*
  * Interrupt bit names.
  */
-const char *i80321_irqnames[] = {
+const char * const i80321_irqnames[] = {
 	"DMA0 EOT",
 	"DMA0 EOC",
 	"DMA1 EOT",
@@ -220,17 +194,9 @@ i80321_intr_calculate_masks(void)
 	 * limited input buffer space/"real-time" requirements) a better
 	 * chance at not dropping data.
 	 */
-#ifdef __HAVE_FAST_SOFTINTS
-	i80321_imask[IPL_SOFTCLOCK] = SI_TO_IRQBIT(SI_SOFTCLOCK);
-	i80321_imask[IPL_SOFTBIO] = SI_TO_IRQBIT(SI_SOFTBIO);
-	i80321_imask[IPL_SOFTNET] = SI_TO_IRQBIT(SI_SOFTNET);
-	i80321_imask[IPL_SOFTSERIAL] = SI_TO_IRQBIT(SI_SOFTSERIAL);
-#endif
 
-	i80321_imask[IPL_SOFTBIO] |= i80321_imask[IPL_SOFTCLOCK];
-	i80321_imask[IPL_SOFTNET] |= i80321_imask[IPL_SOFTBIO];
-	i80321_imask[IPL_SOFTSERIAL] |= i80321_imask[IPL_SOFTNET];
-	i80321_imask[IPL_VM] |= i80321_imask[IPL_SOFTSERIAL];
+	KASSERT(i80321_imask[IPL_VM] != 0);
+	i80321_imask[IPL_SCHED] |= i80321_imask[IPL_VM];
 	i80321_imask[IPL_HIGH] |= i80321_imask[IPL_SCHED];
 
 	/*
@@ -250,76 +216,22 @@ i80321_intr_calculate_masks(void)
 }
 
 void
-i80321_do_pending(void)
-{
-#ifdef __HAVE_FAST_SOFTINTS
-	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
-	int new, oldirqstate;
-
-	if (__cpu_simple_lock_try(&processing) == 0)
-		return;
-
-	new = curcpl();
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-#define	DO_SOFTINT(si)							\
-	if ((i80321_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
-		i80321_ipending &= ~SI_TO_IRQBIT(si);			\
-		set_curcpl(new | i80321_imask[si_to_ipl[(si)]]);	\
-		restore_interrupts(oldirqstate);			\
-		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
-		set_curcpl(new);					\
-	}
-
-	DO_SOFTINT(SI_SOFTSERIAL);
-	DO_SOFTINT(SI_SOFTNET);
-	DO_SOFTINT(SI_SOFTCLOCK);
-	DO_SOFTINT(SI_SOFT);
-
-	__cpu_simple_unlock(&processing);
-
-	restore_interrupts(oldirqstate);
-#endif	/* __HAVE_FAST_SOFTINTRS */
-}
-
-void
 splx(int new)
 {
-
 	i80321_splx(new);
 }
 
 int
 _spllower(int ipl)
 {
-
 	return (i80321_spllower(ipl));
 }
 
 int
 _splraise(int ipl)
 {
-
 	return (i80321_splraise(ipl));
 }
-
-#if __HAVE_FAST_SOFTINTRS
-void
-_setsoftintr(int si)
-{
-	int oldirqstate;
-
-	oldirqstate = disable_interrupts(I32_bit);
-	i80321_ipending |= SI_TO_IRQBIT(si);
-	restore_interrupts(oldirqstate);
-
-	/* Process unmasked pending soft interrupts. */
-	if ((i80321_ipending & INT_SWMASK) & ~curcpl())
-		i80321_do_pending();
-}
-#endif /* __HAVE_FAST_SOFTINTRS */
 
 /*
  * i80321_icu_init:
@@ -453,12 +365,14 @@ i80321_intr_dispatch(struct clockframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
-	int oldirqstate, pcpl, irq, ibit, hwpend;
+	int oldirqstate, irq, ibit, hwpend;
 #ifdef I80321_HPI_ENABLED
 	int oldpending;
 #endif
+	struct cpu_info * const ci = curcpu();
+	const int ppl = ci->ci_cpl;
+	const uint32_t imask = i80321_imask[ppl];
 
-	pcpl = curcpl();
 	hwpend = i80321_iintsrc_read();
 
 	/*
@@ -484,7 +398,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 
 		hwpend &= ~ibit;
 
-		if (pcpl & ibit) {
+		if (imask & ibit) {
 			/*
 			 * IRQ is masked; mark it as pending and check
 			 * the next one.  Note: the IRQ is already disabled.
@@ -514,24 +428,20 @@ i80321_intr_dispatch(struct clockframe *frame)
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		set_curcpl(pcpl | iq->iq_mask);
 #ifdef I80321_HPI_ENABLED
 		/*
 		 * Re-enable interrupts iff an HPI is not pending
 		 */
-		if (__predict_true((oldpending & INT_HPIMASK) == 0))
+		if (__predict_true((oldpending & INT_HPIMASK) == 0)) {
 #endif
-		oldirqstate = enable_interrupts(I32_bit);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list)) {
-			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
-		}
+			TAILQ_FOREACH (ih, &iq->iq_list, ih_list) {
+				ci->ci_cpl = ih->ih_ipl;
+				oldirqstate = enable_interrupts(I32_bit);
+				(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+				restore_interrupts(oldirqstate);
+			}
 #ifdef I80321_HPI_ENABLED
-		if (__predict_true((oldpending & INT_HPIMASK) == 0))
-#endif
-		restore_interrupts(oldirqstate);
-#ifdef I80321_HPI_ENABLED
-		else if (irq == ICU_INT_HPI) {
+		} else if (irq == ICU_INT_HPI) {
 			/*
 			 * We've just handled the HPI. Make sure IRQs
 			 * are enabled in the interrupt frame.
@@ -541,7 +451,7 @@ i80321_intr_dispatch(struct clockframe *frame)
 			frame->cf_if.if_spsr &= ~I32_bit;
 		}
 #endif
-		set_curcpl(pcpl);
+		ci->ci_cpl = ppl;
 
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
@@ -551,21 +461,10 @@ i80321_intr_dispatch(struct clockframe *frame)
 		 * Don't forget to include interrupts which may have
 		 * arrived in the meantime.
 		 */
-		hwpend |= ((i80321_ipending & ICU_INT_HWMASK) & ~pcpl);
+		hwpend |= ((i80321_ipending & ICU_INT_HWMASK) & ~imask);
 	}
 
-	/* Check for pendings soft intrs. */
-	if ((i80321_ipending & INT_SWMASK) & ~curcpl()) {
-#ifdef I80321_HPI_ENABLED
-		/* XXX: This is only necessary if HPI is < IPL_SOFT* */
-		if (__predict_true((i80321_ipending & INT_HPIMASK) == 0))
+#ifdef __HAVE_FAST_SOFTINTS
+	cpu_dosoftints();
 #endif
-		oldirqstate = enable_interrupts(I32_bit);
-		i80321_do_pending();
-#ifdef I80321_HPI_ENABLED
-		/* XXX: This is only necessary if HPI is < IPL_NET* */
-		if (__predict_true((i80321_ipending & INT_HPIMASK) == 0))
-#endif
-		restore_interrupts(oldirqstate);
-	}
 }

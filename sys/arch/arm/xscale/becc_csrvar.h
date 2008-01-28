@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_csrvar.h,v 1.2 2005/12/24 20:06:52 perry Exp $	*/
+/*	becc_csrvar.h,v 1.2 2005/12/24 20:06:52 perry Exp	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -50,6 +50,6 @@ extern vaddr_t becc_vaddr;
 #define	BECC_CSR_READ(x)	*(volatile uint32_t *)(becc_vaddr + (x))
 #define	BECC_CSR_WRITE(x, v)	*(volatile uint32_t *)(becc_vaddr + (x)) = (v)
 
-extern const char *becc_irqnames[];
+extern const char * const becc_irqnames[];
 
 #endif /* _BECC_CSRVAR_H_ */

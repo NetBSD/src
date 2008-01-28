@@ -1,4 +1,4 @@
-/*	$NetBSD: sa11x0_irqhandler.c,v 1.11.2.2 2008/01/09 01:45:25 matt Exp $	*/
+/*	$NetBSD: sa11x0_irqhandler.c,v 1.11.2.3 2008/01/28 18:29:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.11.2.2 2008/01/09 01:45:25 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.11.2.3 2008/01/28 18:29:09 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -96,12 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: sa11x0_irqhandler.c,v 1.11.2.2 2008/01/09 01:45:25 m
 irqhandler_t *irqhandlers[NIRQS];
 
 u_int actual_mask;
-#ifdef hpcarm
-#define IPL_LEVELS (NIPL+1)
-u_int imask[NIPL];
-#else
-u_int irqmasks[IPL_LEVELS];
-#endif
+u_int irqmasks[NIPL];
 
 extern void set_spl_masks(void);
 static int fakeintr(void *);
@@ -113,6 +108,9 @@ void intr_calculatemasks(void);
 const struct evcnt *sa11x0_intr_evcnt(sa11x0_chipset_tag_t, int);
 void stray_irqhandler(void *);
 
+#if IPL_NONE > IPL_HIGH	
+#error IPL_NONE must be less than IPL_HIGH
+#endif
 /*
  * Recalculate the interrupt masks from scratch.
  * We could code special registry and deregistry versions of this function that
@@ -122,46 +120,33 @@ void stray_irqhandler(void *);
 void
 intr_calculatemasks(void)
 {
-	int irq, level;
+	int irq, ipl;
 	struct irqhandler *q;
 	int intrlevel[ICU_LEN];
 
 	/* First, figure out which levels each IRQ uses. */
 	for (irq = 0; irq < ICU_LEN; irq++) {
-		int levels = 0;
+		int ipls = 0;
 		for (q = irqhandlers[irq]; q; q = q->ih_next)
-			levels |= 1 << q->ih_level;
-		intrlevel[irq] = levels;
+			ipls |= 1 << q->ih_level;
+		intrlevel[irq] = ipls;
 	}
 
 	/* Then figure out which IRQs use each level. */
-#ifdef hpcarm
-	for (level = 0; level < NIPL; level++) {
-#else
-	for (level = 0; level <= IPL_LEVELS; level++) {
-#endif
+	for (ipl = 0; ipl < NIPL; ipl++) {
 		int irqs = 0;
 		for (irq = 0; irq < ICU_LEN; irq++)
-			if (intrlevel[irq] & (1 << level))
+			if (intrlevel[irq] & (1 << ipl))
 				irqs |= 1 << irq;
-#ifdef hpcarm
-		imask[level] = irqs;
-#else
-		irqmasks[level] = irqs;
-#endif
+		irqmasks[ipl] = irqs;
 	}
 
 	/*
 	 * Enforce a hierarchy that gives slow devices a better chance at not
 	 * dropping data.
 	 */
-#ifdef hpcarm
-	for (level = NIPL - 1; level > 0; level--)
-		imask[level - 1] |= imask[level];
-#else
-	for (level = IPL_LEVELS; level > 0; level--)
-		irqmasks[level - 1] |= irqmasks[level];
-#endif
+	for (ipl = IPL_NONE; ipl < NIPL - 1; ipl++)
+		irqmasks[ipl + 1] |= irqmasks[ipl];
 }
 
 

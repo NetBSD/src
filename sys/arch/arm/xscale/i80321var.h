@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321var.h,v 1.11 2006/04/10 03:36:03 simonb Exp $	*/
+/*	i80321var.h,v 1.11 2006/04/10 03:36:03 simonb Exp	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -164,7 +164,7 @@ struct iopxs_attach_args {
 
 extern struct bus_space i80321_bs_tag;
 extern struct i80321_softc *i80321_softc;
-extern const char *i80321_irqnames[];
+extern const char * const i80321_irqnames[];
 
 extern void (*i80321_hardclock_hook)(void);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irq.S,v 1.8.2.2 2008/01/09 01:48:51 matt Exp $	*/
+/*	$NetBSD: isa_irq.S,v 1.8.2.3 2008/01/28 18:29:13 matt Exp $	*/
 
 /*
  * Copyright 1997
@@ -101,13 +101,13 @@
  * is zero then a pointer to the IRQ frame on the stack is passed instead.
  */
 
-Ldisabled_mask:
+.Ldisabled_mask:
 	.word	_C_LABEL(disabled_mask)
 
-Lvam_io_data:
+.Lvam_io_data:
 	.word	_C_LABEL(isa_io_bs_tag)
 
-Lspl_masks:
+.Lspl_masks:
 	.word	_C_LABEL(spl_masks)
 
 /*
@@ -131,12 +131,12 @@ ASENTRY_NP(irq_entry)
 	/* r8 <- irq's pending [15:0] */
 
 	/* address of 8259 #1 */
-	ldr	r0, Lvam_io_data
+	ldr	r0, .Lvam_io_data
 	ldr	r0, [r0]
 	ldrb	r8, [r0, #IO_ICU1]                /* ocw3 = irr */
 	
 	/* clear the IRR bits that are currently masked. */
-	ldr	r2, Li8259_mask
+	ldr	r2, .Li8259_mask
 	ldr	r2, [r2]
 	mvn	r2, r2                            /* disabled -> enabled */
 
@@ -164,7 +164,7 @@ ASENTRY_NP(irq_entry)
 
 	/* Block the current requested interrupts */
 
-	ldr	r1, Ldisabled_mask
+	ldr	r1, .Ldisabled_mask
 	ldr	r0, [r1]
 	stmfd	sp!, {r0}
 	orr	r0, r0, r8
@@ -182,14 +182,14 @@ ASENTRY_NP(irq_entry)
 	 * This would benefit from a special ffs type routine
 	 */
 
-	mov	r9, #(_SPL_LEVELS - 1)
-	ldr	r7, Lspl_masks
+	mov	r9, #(NIPL - 1)
+	ldr	r7, .Lspl_masks
 
-Lfind_highest_ipl:
+.Lfind_highest_ipl:
 	ldr	r2, [r7, r9, lsl #2]
 	tst	r8, r2
 	subeq	r9, r9, #1
-	beq	Lfind_highest_ipl
+	beq	.Lfind_highest_ipl
 
 	/* r9 = SPL level of highest priority interrupt */
 	add	r9, r9, #1
@@ -210,7 +210,7 @@ Lfind_highest_ipl:
 	bic	r0, r0, #I32_bit
 	msr	cpsr_all, r0
 
-	ldr	r7, Lirqhandlers
+	ldr	r7, .Lirqhandlers
 	mov	r9, #0x00000001
 
 irqloop:
@@ -224,7 +224,7 @@ irqloop:
 	moveq	r0, r8			/* IRQ requests as arg 0 */
 	beq	_C_LABEL(stray_irqhandler) /* call special handler */
 
-	ldr	r0, Lcnt
+	ldr	r0, .Lcnt
 	ldr	r1, [r0, #(V_INTR)]
 	add	r1, r1, #0x00000001
 	str	r1, [r0, #(V_INTR)]
@@ -263,7 +263,7 @@ nextirq:
 
 	/* Restore previous disabled mask */
 	ldmfd	sp!, {r2}
-	ldr	r1, Ldisabled_mask
+	ldr	r1, .Ldisabled_mask
 	str	r2, [r1]
 	bl	_C_LABEL(irq_setmasks)
 
@@ -289,10 +289,10 @@ nextirq:
 	/* NOT REACHED */
 	b	. - 8
 
-Lcurrent_mask:
+.Lcurrent_mask:
 	.word	_C_LABEL(current_mask)	/* irq's that are usable */
 
-Lcpu_info_store:
+.Lcpu_info_store:
 	.word	_C_LABEL(cpu_info_store)
 
 LOCK_CAS_CHECK_LOCALS
@@ -307,15 +307,15 @@ ENTRY(irq_setmasks)
 	msr	cpsr_all, r1
 
 	/* Calculate interrupt mask */
-	ldr	r1, Lcurrent_mask	/* All the enabled interrupts */
+	ldr	r1, .Lcurrent_mask	/* All the enabled interrupts */
 	ldrh	r1, [r1]		/* get hardware bits of mask */
 /*	.word	0xe0d110b0 */		/* hand-assembled ldrh r1, [r1] */
-	ldr	r0, Lspl_masks
-	ldr	r2, Lcpu_info_store
+	ldr	r0, .Lspl_masks
+	ldr	r2, .Lcpu_info_store
 	ldr	r2, [r2, #CI_CPL]
 	ldr	r2, [r0, r2, lsl #2]
 	and	r1, r1, r2
-	ldr	r2, Ldisabled_mask	/* Block due to active interrupts */
+	ldr	r2, .Ldisabled_mask	/* Block due to active interrupts */
 	ldr	r2, [r2]
 	bic	r1, r1, r2
 
@@ -323,7 +323,7 @@ ENTRY(irq_setmasks)
 	   possible to avoid them */
 
 	/* get current mask: these are the bits */
-	ldr	r0, Li8259_mask
+	ldr	r0, .Li8259_mask
 	ldr	r2, [r0]
 	/*       r2 = 0000.0000.0000.0000.ZZZZ.ZZZZ.ZZZZ.ZZZZ   */
 
@@ -359,7 +359,7 @@ ENTRY(irq_setmasks)
 
 	/* have to set at least one of the 8259's, store new mask */
 	str	r1, [r0]
-	ldr	r0, Lvam_io_data
+	ldr	r0, .Lvam_io_data
 	ldr	r0, [r0]
 
 	/* see if there's any change for 8259 #1 (master) */
@@ -375,11 +375,11 @@ ENTRY(irq_setmasks)
 	msr	cpsr_all, r3
 	mov	pc, lr
 
-Lcnt:
+.Lcnt:
 	.word	_C_LABEL(uvmexp)
 
-Li8259_mask:
+.Li8259_mask:
 	.word	_C_LABEL(i8259_mask)
 
-Lirqhandlers:
+.Lirqhandlers:
 	.word	_C_LABEL(irqhandlers)	/* Pointer to array of irqhandlers */

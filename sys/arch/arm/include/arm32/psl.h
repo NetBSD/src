@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.12.4.1 2008/01/09 01:45:18 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.12.4.2 2008/01/28 18:29:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,9 +45,6 @@
 #ifndef _ARM_PSL_H_
 #define _ARM_PSL_H_
 #include <machine/intr.h>
-#if (! defined(_LOCORE)) && (! defined(hpcarm))
-#include <arm/softintr.h>
-#endif
 
 /*
  * These are the different SPL states
@@ -56,42 +53,21 @@
  * indicate which interrupts are allowed.
  */
 
-#define _SPL_0		0
+#define spl0()		splx(IPL_NONE)
 #ifdef __HAVE_FAST_SOFTINTS
-#define _SPL_SOFTCLOCK	1
-#define _SPL_SOFTBIO	2
-#define _SPL_SOFTNET	3
-#define _SPL_SOFTSERIAL	4
-#define _SPL_VM		5
-#define _SPL_SCHED	6
-#define _SPL_HIGH	7
-#define _SPL_LEVELS	8
-#else
-#define _SPL_SOFTCLOCK	_SPL_0
-#define _SPL_SOFTBIO	_SPL_0
-#define _SPL_SOFTNET	_SPL_0
-#define _SPL_SOFTSERIAL	_SPL_0
-#define _SPL_VM		1
-#define _SPL_SCHED	2
-#define _SPL_HIGH	3
-#define _SPL_LEVELS	4
-#endif
-
-#define spl0()		splx(_SPL_0)
-#ifdef __HAVE_FAST_SOFTINTS
-#define splsoftclock()	raisespl(_SPL_SOFTCLOCK)
-#define splsoftbio()	raisespl(_SPL_SOFTBIO)
-#define splsoftnet()	raisespl(_SPL_SOFTNET)
-#define splsoftserial()	raisespl(_SPL_SOFTSERIAL)
+#define splsoftclock()	raisespl(IPL_SOFTCLOCK)
+#define splsoftbio()	raisespl(IPL_SOFTBIO)
+#define splsoftnet()	raisespl(IPL_SOFTNET)
+#define splsoftserial()	raisespl(IPL_SOFTSERIAL)
 #else
 #define splsoftclock()	spl0()
 #define splsoftbio()	spl0()
 #define splsoftnet()	spl0()
 #define splsoftserial()	spl0()
 #endif
-#define splvm()		raisespl(_SPL_VM)
-#define splsched()	raisespl(_SPL_SCHED)
-#define splhigh()	raisespl(_SPL_HIGH)
+#define splvm()		raisespl(IPL_VM)
+#define splsched()	raisespl(IPL_SCHED)
+#define splhigh()	raisespl(IPL_HIGH)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
@@ -103,29 +79,23 @@ int splx	(int);
 void _setsoftintr	(int si);
 #endif
 
-extern int current_spl_level;
-
-extern u_int spl_masks[_SPL_LEVELS + 1];
-
 typedef uint8_t ipl_t;
 typedef struct {
-	uint8_t _spl;
+	uint8_t _ipl;
 } ipl_cookie_t;
-
-int ipl_to_spl(ipl_t);
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)
 {
 
-	return (ipl_cookie_t){._spl = (uint8_t)ipl_to_spl(ipl)};
+	return (ipl_cookie_t){._ipl = (uint8_t)ipl};
 }
 
 static inline int
 splraiseipl(ipl_cookie_t icookie)
 {
 
-	return raisespl(icookie._spl);
+	return raisespl(icookie._ipl);
 }
 #endif /* _LOCORE */
 #endif /* _KERNEL */
