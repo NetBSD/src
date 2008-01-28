@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.35 2008/01/17 18:22:52 pooka Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.36 2008/01/28 14:31:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.35 2008/01/17 18:22:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.36 2008/01/28 14:31:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.35 2008/01/17 18:22:52 pooka Exp 
 #include <sys/vnode.h>
 #include <sys/proc.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <fs/tmpfs/tmpfs.h>
 
 /* --------------------------------------------------------------------- */
@@ -439,6 +440,8 @@ struct vfsops tmpfs_vfsops = {
 	tmpfs_snapshot,			/* vfs_snapshot */
 	vfs_stdextattrctl,		/* vfs_extattrctl */
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	tmpfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },

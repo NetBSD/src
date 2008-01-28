@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.171 2008/01/16 16:00:42 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.172 2008/01/28 14:31:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -116,6 +116,7 @@ struct mount {
 	int		mnt_wcnt;		/* count of vfs_busy waiters */
 	struct lwp	*mnt_unmounter;		/* who is unmounting */
 	kmutex_t	mnt_mutex;		/* mutex for wcnt */
+	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
 	void		*mnt_transinfo;		/* for FS-internal use */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
@@ -211,6 +212,8 @@ struct vfsops {
 	int	(*vfs_extattrctl) (struct mount *, int,
 				    struct vnode *, int, const char *);
 	int	(*vfs_suspendctl) (struct mount *, int);
+	int	(*vfs_renamelock_enter)(struct mount *);
+	void	(*vfs_renamelock_exit)(struct mount *);
 	const struct vnodeopv_desc * const *vfs_opv_descs;
 	int	vfs_refcount;
 	LIST_ENTRY(vfsops) vfs_list;
@@ -218,6 +221,8 @@ struct vfsops {
 
 /* XXX Actually file system internal. */
 #define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+#define VFS_RENAMELOCK_ENTER(MP)  (*(MP)->mnt_op->vfs_renamelock_enter)(MP)
+#define VFS_RENAMELOCK_EXIT(MP)   (*(MP)->mnt_op->vfs_renamelock_exit)(MP)
 
 int	VFS_MOUNT(struct mount *, const char *, void *, size_t *);
 int	VFS_START(struct mount *, int);

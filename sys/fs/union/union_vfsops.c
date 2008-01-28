@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.50 2007/12/08 19:29:46 pooka Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.51 2008/01/28 14:31:17 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.50 2007/12/08 19:29:46 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.51 2008/01/28 14:31:17 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -481,6 +481,23 @@ union_vget(struct mount *mp, ino_t ino,
 	return (EOPNOTSUPP);
 }
 
+static int
+union_renamelock_enter(struct mount *mp)
+{
+	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
+
+	/* Lock just the upper fs, where the action happens. */
+	return VFS_RENAMELOCK_ENTER(um->um_uppervp->v_mount);
+}
+
+static void
+union_renamelock_exit(struct mount *mp)
+{
+	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
+
+	VFS_RENAMELOCK_EXIT(um->um_uppervp->v_mount);
+}
+
 SYSCTL_SETUP(sysctl_vfs_union_setup, "sysctl vfs.union subtree setup")
 {
 
@@ -529,6 +546,8 @@ struct vfsops union_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	union_renamelock_enter,
+	union_renamelock_exit,
 	union_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },
