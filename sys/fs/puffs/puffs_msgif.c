@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.63 2008/01/02 22:33:10 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.64 2008/01/28 21:06:36 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.63 2008/01/02 22:33:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.64 2008/01/28 21:06:36 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -276,12 +276,13 @@ puffs_msg_setdelta(struct puffs_msgpark *park, size_t delta)
 }
 
 void
-puffs_msg_setinfo(struct puffs_msgpark *park, int class, int type, void *cookie)
+puffs_msg_setinfo(struct puffs_msgpark *park, int class, int type,
+	puffs_cookie_t ck)
 {
 
 	park->park_preq->preq_opclass = PUFFSOP_OPCLASS(class);
 	park->park_preq->preq_optype = type;
-	park->park_preq->preq_cookie = cookie;
+	park->park_preq->preq_cookie = ck;
 }
 
 void
