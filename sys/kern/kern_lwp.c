@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.92 2008/01/28 10:24:45 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.93 2008/01/28 12:23:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.92 2008/01/28 10:24:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.93 2008/01/28 12:23:42 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -918,7 +918,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the
-	 * caller wants to recycle them.  Also, free the scheduler specific data.
+	 * caller wants to recycle them.  Also, free the scheduler specific
+	 * data.
 	 *
 	 * We can't return turnstile0 to the pool (it didn't come from it),
 	 * so if it comes up just drop it quietly and move on.
