@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.11 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: execute.c,v 1.12 2008/01/28 06:16:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.11 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: execute.c,v 1.12 2008/01/28 06:16:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ rest_f(file)
 {
 	char *sp;
 	int inf, num;
-	char buf[80];
+	char xbuf[80];
 	char *start, *end;
 	STAT sbuf;
 
@@ -263,10 +263,10 @@ rest_f(file)
 		start += num;
 	}
 	close(inf);
-	strcpy(buf, ctime(&sbuf.st_mtime));
-	for (sp = buf; *sp != '\n'; sp++)
+	strcpy(xbuf, ctime(&sbuf.st_mtime));
+	for (sp = xbuf; *sp != '\n'; sp++)
 		continue;
 	*sp = '\0';
-	printf("[%s]\n", buf);
+	printf("[%s]\n", xbuf);
 	return TRUE;
 }
