@@ -1,9 +1,9 @@
-/*	$NetBSD: display.c,v 1.5 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: display.c,v 1.6 2008/01/28 03:39:30 dholland Exp $	*/
 
 /* display.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.5 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: display.c,v 1.6 2008/01/28 03:39:30 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -64,18 +64,18 @@ bot_linex()
 	if (cbak[SPELLS] <= -50 || (always)) {
 		cursor(1, 18);
 		if (c[SPELLMAX] > 99)
-			lprintf("Spells:%3d(%3d)", (long) c[SPELLS], (long) c[SPELLMAX]);
+			lprintf("Spells:%3ld(%3ld)", (long) c[SPELLS], (long) c[SPELLMAX]);
 		else
-			lprintf("Spells:%3d(%2d) ", (long) c[SPELLS], (long) c[SPELLMAX]);
-		lprintf(" AC: %-3d  WC: %-3d  Level", (long) c[AC], (long) c[WCLASS]);
+			lprintf("Spells:%3ld(%2ld) ", (long) c[SPELLS], (long) c[SPELLMAX]);
+		lprintf(" AC: %-3ld  WC: %-3ld  Level", (long) c[AC], (long) c[WCLASS]);
 		if (c[LEVEL] > 99)
-			lprintf("%3d", (long) c[LEVEL]);
+			lprintf("%3ld", (long) c[LEVEL]);
 		else
-			lprintf(" %-2d", (long) c[LEVEL]);
-		lprintf(" Exp: %-9d %s\n", (long) c[EXPERIENCE], class[c[LEVEL] - 1]);
-		lprintf("HP: %3d(%3d) STR=%-2d INT=%-2d ",
+			lprintf(" %-2ld", (long) c[LEVEL]);
+		lprintf(" Exp: %-9ld %s\n", (long) c[EXPERIENCE], class[c[LEVEL] - 1]);
+		lprintf("HP: %3ld(%3ld) STR=%-2ld INT=%-2ld ",
 			(long) c[HP], (long) c[HPMAX], (long) (c[STRENGTH] + c[STREXTRA]), (long) c[INTELLIGENCE]);
-		lprintf("WIS=%-2d CON=%-2d DEX=%-2d CHA=%-2d LV:",
+		lprintf("WIS=%-2ld CON=%-2ld DEX=%-2ld CHA=%-2ld LV:",
 			(long) c[WISDOM], (long) c[CONSTITUTION], (long) c[DEXTERITY], (long) c[CHARISMA]);
 
 		if ((level == 0) || (wizard))
@@ -84,7 +84,7 @@ bot_linex()
 			lprcat(" ?");
 		else
 			lprcat(levelname[level]);
-		lprintf("  Gold: %-6d", (long) c[GOLD]);
+		lprintf("  Gold: %-6ld", (long) c[GOLD]);
 		always = 1;
 		botside();
 		c[TMP] = c[STRENGTH] + c[STREXTRA];
