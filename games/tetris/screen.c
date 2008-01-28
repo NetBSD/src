@@ -1,4 +1,4 @@
-/*	$NetBSD: screen.c,v 1.21 2007/12/15 19:44:43 perry Exp $	*/
+/*	$NetBSD: screen.c,v 1.22 2008/01/28 01:38:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -174,7 +174,8 @@ scr_init()
 		{"sg", &sgnum},
 		{ {0}, NULL}
 	};
-	
+	static char backspace[] = "\b";
+
 	if ((term = getenv("TERM")) == NULL)
 		stop("you must set the TERM environment variable");
 	if (t_getent(&info, term) <= 0)
@@ -194,7 +195,7 @@ scr_init()
 			*p->tcaddr = t_getnum(info, p->tcname);
 	}
 	if (bsflag)
-		BC = "\b";
+		BC = backspace;
 	else if (BC == NULL && bcstr != NULL)
 		BC = bcstr;
 	if (CLstr == NULL)
@@ -219,13 +220,13 @@ static void
 stopset(sig)
 	int sig;
 {
-	sigset_t sigset;
+	sigset_t set;
 
 	(void) signal(sig, SIG_DFL);
 	(void) kill(getpid(), sig);
-	sigemptyset(&sigset);
-	sigaddset(&sigset, sig);
-	(void) sigprocmask(SIG_UNBLOCK, &sigset, (sigset_t *)0);
+	sigemptyset(&set);
+	sigaddset(&set, sig);
+	(void) sigprocmask(SIG_UNBLOCK, &set, (sigset_t *)0);
 	longjmp(scr_onstop, 1);
 }
 
@@ -233,13 +234,13 @@ static void
 scr_stop(sig)
 	int sig;
 {
-	sigset_t sigset;
+	sigset_t set;
 
 	scr_end();
 	(void) kill(getpid(), sig);
-	sigemptyset(&sigset);
-	sigaddset(&sigset, sig);
-	(void) sigprocmask(SIG_UNBLOCK, &sigset, (sigset_t *)0);
+	sigemptyset(&set);
+	sigaddset(&set, sig);
+	(void) sigprocmask(SIG_UNBLOCK, &set, (sigset_t *)0);
 	scr_set();
 	scr_msg(key_msg, 1);
 }
@@ -252,13 +253,13 @@ scr_set()
 {
 	struct winsize ws;
 	struct termios newtt;
-	sigset_t sigset, osigset;
+	sigset_t nsigset, osigset;
 	void (*ttou)(int);
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGTSTP);
-	sigaddset(&sigset, SIGTTOU);
-	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	sigaddset(&nsigset, SIGTSTP);
+	sigaddset(&nsigset, SIGTTOU);
+	(void) sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 	if ((tstp = signal(SIGTSTP, stopset)) == SIG_IGN)
 		(void) signal(SIGTSTP, SIG_IGN);
 	if ((ttou = signal(SIGTTOU, stopset)) == SIG_IGN)
@@ -293,7 +294,7 @@ scr_set()
 	if (tcsetattr(0, TCSADRAIN, &newtt) < 0)
 		stop("tcsetattr() fails");
 	ospeed = cfgetospeed(&newtt);
-	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	(void) sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 
 	/*
 	 * We made it.  We are now in screen mode, modulo TIstr
@@ -317,12 +318,12 @@ scr_set()
 void
 scr_end()
 {
-	sigset_t sigset, osigset;
+	sigset_t nsigset, osigset;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGTSTP);
-	sigaddset(&sigset, SIGTTOU);
-	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	sigaddset(&nsigset, SIGTSTP);
+	sigaddset(&nsigset, SIGTTOU);
+	(void) sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 	/* move cursor to last line */
 	if (LLstr)
 		putstr(LLstr);	/* termcap(5) says this is not padded */
@@ -377,12 +378,12 @@ scr_update()
 	cell *bp, *sp;
 	regcell so, cur_so = 0;
 	int i, ccol, j;
-	sigset_t sigset, osigset;
+	sigset_t nsigset, osigset;
 	static const struct shape *lastshape;
 
-	sigemptyset(&sigset);
-	sigaddset(&sigset, SIGTSTP);
-	(void) sigprocmask(SIG_BLOCK, &sigset, &osigset);
+	sigemptyset(&nsigset);
+	sigaddset(&nsigset, SIGTSTP);
+	(void) sigprocmask(SIG_BLOCK, &nsigset, &osigset);
 
 	/* always leave cursor after last displayed point */
 	curscreen[D_LAST * B_COLS - 1] = -1;
@@ -398,7 +399,6 @@ scr_update()
 
 	/* draw preview of nextpattern */
 	if (showpreview && (nextshape != lastshape)) {
-		int i;
 		static int r=5, c=2;
 		int tr, tc, t; 
 
