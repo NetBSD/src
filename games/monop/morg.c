@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.10 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: morg.c,v 1.11 2008/01/28 06:16:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.10 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: morg.c,v 1.11 2008/01/28 06:16:13 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,8 @@ static void fix_ex(int);
 void
 mortgage()
 {
-	int prop;
+#define prop __suk
+	int propnum;
 
 	for (;;) {
 		if (set_mlist() == 0) {
@@ -102,10 +103,11 @@ mortgage()
 				m(square[0]);
 			return;
 		}
-		prop = getinp("Which property do you want to mortgage? ",names);
-		if (prop == num_good)
+		propnum = getinp("Which property do you want to mortgage? ",
+				names);
+		if (propnum == num_good)
 			return;
-		m(square[prop]);
+		m(square[propnum]);
 		notify();
 	}
 }
