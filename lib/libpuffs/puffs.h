@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs.h,v 1.104 2008/01/14 13:57:27 pooka Exp $	*/
+/*	$NetBSD: puffs.h,v 1.105 2008/01/28 18:35:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -465,8 +465,11 @@ void			puffs_vattr_null(struct vattr *);
 
 void			puffs_null_setops(struct puffs_ops *);
 
-int			puffs_dopufbuf(struct puffs_usermount *,
-				       struct puffs_framebuf *);
+int			puffs_dispatch_create(struct puffs_usermount *,
+					      struct puffs_framebuf *,
+					      struct puffs_cc **);
+int			puffs_dispatch_exec(struct puffs_cc *,
+					    struct puffs_framebuf **);
 
 /*
  * generic/dummy routines applicable for some file systems
@@ -531,7 +534,6 @@ void			puffs_cc_continue(struct puffs_cc *);
 void			puffs_cc_schedule(struct puffs_cc *);
 int			puffs_cc_getcaller(struct puffs_cc *,pid_t *,lwpid_t *);
 struct puffs_cc		*puffs_cc_getcc(struct puffs_usermount *);
-void			*puffs_docc(void *);
 
 /*
  * Flushing / invalidation routines

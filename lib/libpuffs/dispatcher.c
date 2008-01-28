@@ -1,10 +1,11 @@
-/*	$NetBSD: dispatcher.c,v 1.29 2008/01/16 23:17:43 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.30 2008/01/28 18:35:50 pooka Exp $	*/
 
 /*
- * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
  *
  * Development of this software was supported by the
- * Ulla Tuominen Foundation and the Finnish Cultural Foundation.
+ * Ulla Tuominen Foundation, the Finnish Cultural Foundation and
+ * Research Foundation of Helsinki University of Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.29 2008/01/16 23:17:43 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.30 2008/01/28 18:35:50 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -49,15 +50,7 @@ __RCSID("$NetBSD: dispatcher.c,v 1.29 2008/01/16 23:17:43 pooka Exp $");
 
 #include "puffs_priv.h"
 
-static void processresult(struct puffs_usermount *, int);
-
-/*
- * Set the following to 1 to not handle each request on a separate
- * stack.  This is highly volatile kludge, therefore no external
- * interface.
- */
-int puffs_fakecc;
-
+#if 0 /* me not worka now */
 /*
  * Set the following to 1 to handle each request in a separate pthread.
  * This is not exported as it should not be used yet unless having a
@@ -65,219 +58,100 @@ int puffs_fakecc;
  * threadsafe).
  */
 int puffs_usethreads;
+#endif
 
-static int
-dopufbuf2(struct puffs_usermount *pu, struct puffs_framebuf *pb)
+static void dispatch(struct puffs_cc *);
+
+/* for our eyes only */
+void
+puffs__ml_dispatch(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
-	struct puffs_req *preq = puffs__framebuf_getdataptr(pb);
-	struct puffs_cc *pcc;
-	int type;
+	struct puffs_cc *pcc = puffs_cc_getcc(pu);
+	struct puffs_req *preq;
 
-	if (puffs_fakecc) {
-		type = PCC_FAKECC;
-	} else if (puffs_usethreads) {
-		type = PCC_THREADED;
-#ifndef PUFFS_WITH_THREADS
-		type = PCC_FAKECC;
-#endif
+	pcc->pcc_pb = pb;
+	pcc->pcc_flags |= PCC_MLCONT;
+	dispatch(pcc);
+
+	/* Put result to kernel sendqueue if necessary */
+	preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
+	if (PUFFSOP_WANTREPLY(preq->preq_opclass)) {
+		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
+			puffsdump_rv(preq);
+
+		puffs_framev_enqueue_justsend(pu, pu->pu_fd,
+		    pcc->pcc_pb, 0, 0);
 	} else {
-		type = PCC_REALCC;
+		puffs_framebuf_destroy(pcc->pcc_pb);
 	}
 
-	if (puffs_cc_create(pu, pb, type, &pcc) == -1)
-		return errno;
-
-	puffs_cc_setcaller(pcc, preq->preq_pid, preq->preq_lid);
-
-#ifdef PUFFS_WITH_THREADS
-	if (puffs_usethreads) {
-		pthread_attr_t pattr;
-		pthread_t ptid;
-		int rv;
-
-		pthread_attr_init(&pattr);
-		pthread_attr_setdetachstate(&pattr, PTHREAD_CREATE_DETACHED);
-		pthread_attr_destroy(&pattr);
-
-		ap->pwa_pcc = pcc;
-
-		rv = pthread_create(&ptid, &pattr, puffs_docc, pcc);
-
-		return rv;
+	/* who needs information when you're living on borrowed time? */
+	if (pcc->pcc_flags & PCC_BORROWED) {
+		puffs_cc_yield(pcc); /* back to borrow source */
 	}
-#endif
-	puffs_docc(pcc);
+	pcc->pcc_flags = 0;
+}
+
+/* public, but not really tested and only semi-supported */
+int
+puffs_dispatch_create(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+	struct puffs_cc **pccp)
+{
+	struct puffs_cc *pcc;
+
+	if (puffs__cc_create(pu, dispatch, &pcc) == -1)
+		return -1;
+
+	pcc->pcc_pb = pb;
+	*pccp = pcc;
+
 	return 0;
 }
 
-/*
- * User-visible point to handle a request from.
- *
- * <insert text here>
- */
 int
-puffs_dopufbuf(struct puffs_usermount *pu, struct puffs_framebuf *pb)
+puffs_dispatch_exec(struct puffs_cc *pcc, struct puffs_framebuf **pbp)
 {
-	struct puffs_req *preq = puffs__framebuf_getdataptr(pb);
+	int rv;
 
-	/*
-	 * XXX: the structure is currently a mess.  anyway, trap
-	 * the cacheops here already, since they don't need a cc.
-	 * I really should get around to revamping the operation
-	 * dispatching code one of these days.
-	 *
-	 * Do the same for error notifications.
-	 */
-	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_CACHE) {
-		struct puffs_cacheinfo *pci = (void *)preq;
+	puffs_cc_continue(pcc);
 
-		if (pu->pu_ops.puffs_cache_write == NULL)
-			return 0;
-
-		pu->pu_ops.puffs_cache_write(pu, preq->preq_cookie,
-		    pci->pcache_nruns, pci->pcache_runs);
-		return 0;
-	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_ERROR) {
-		struct puffs_error *perr = (void *)preq;
-
-		pu->pu_errnotify(pu, preq->preq_optype,
-		    perr->perr_error, perr->perr_str, preq->preq_cookie);
-		return 0;
+	if (pcc->pcc_flags & PCC_DONE) {
+		rv = 1;
+		*pbp = pcc->pcc_pb;
+		pcc->pcc_flags = 0;
+		puffs__cc_destroy(pcc, 0);
+	} else {
+		rv = 0;
 	}
 
-	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
-		puffsdump_req(preq);
-
-#if 0
-	XXX: we can't trust to hide preq in pufbuf
-
-	struct puffs_executor *pex;
-	/*
-	 * Check if we are already processing an operation from the same
-	 * caller.  If so, queue this operation until the previous one
-	 * finishes.  This prevents us from executing certain operations
-	 * out-of-order (e.g. fsync and reclaim).
-	 *
-	 * Each preq will only remove its own pex from the tailq.
-	 * See puffs_docc() for the details on other-end removal
-	 * and dispatching.
-	 */
-	pex = malloc(sizeof(struct puffs_executor));
-	pex->pex_pufbuf = pb;
-	PU_LOCK();
-	TAILQ_INSERT_TAIL(&pu->pu_exq, pex, pex_entries);
-	TAILQ_FOREACH(pex, &pu->pu_exq, pex_entries) {
-		struct puffs_req *pb_preq;
-
-		pb_preq = puffs__framebuf_getdataptr(pex->pex_pufbuf);
-		if (pb_preq->preq_pid == preq->preq_pid
-		    && pb_preq->preq_lid == preq->preq_lid) {
-			if (pb_preq != preq) {
-				PU_UNLOCK();
-				return 0;
-			}
-		}
-	}
-	PU_UNLOCK();
-#endif
-
-	return dopufbuf2(pu, pb);
+	return rv;
 }
 
-enum {PUFFCALL_ANSWER, PUFFCALL_IGNORE, PUFFCALL_AGAIN};
-
-void *
-puffs_docc(void *arg)
-{
-	struct puffs_cc *pcc = arg;
-	struct puffs_usermount *pu = pcc->pcc_pu;
-	struct puffs_req *preq;
-	struct puffs_cc *pcc_iter;
-
-	assert((pcc->pcc_flags & PCC_DONE) == 0);
-
-	if (pcc->pcc_flags & PCC_REALCC)
-		puffs_cc_continue(pcc);
-	else
-		puffs_calldispatcher(pcc);
-
-	if ((pcc->pcc_flags & PCC_DONE) == 0) {
-		assert(pcc->pcc_flags & PCC_REALCC);
-		return NULL;
-	}
-
-	preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
-#if 0
-	XXX: see above, needs more thought
-
-	struct puffs_executor *pex, *pex_n;
-	int found;
-	/* check if we need to schedule FAFs which were stalled */
-	found = 0;
-	PU_LOCK();
-	for (pex = TAILQ_FIRST(&pu->pu_exq); pex; pex = pex_n) {
-		struct puffs_req *pb_preq;
-
-		pb_preq = puffs__framebuf_getdataptr(pex->pex_pufbuf);
-		pex_n = TAILQ_NEXT(pex, pex_entries);
-		if (pb_preq->preq_pid == preq->preq_pid
-		    && pb_preq->preq_lid == preq->preq_lid) {
-			if (found == 0) {
-				/* this is us */
-				assert(pb_preq == preq);
-				TAILQ_REMOVE(&pu->pu_exq, pex, pex_entries);
-				free(pex);
-				found = 1;
-			} else {
-				/* down at the mardi gras */
-				PU_UNLOCK();
-				dopufbuf2(pu, pex->pex_pufbuf);
-				PU_LOCK();
-				break;
-			}
-		}
-	}
-#endif
-
-	if (!PUFFSOP_WANTREPLY(preq->preq_opclass))
-		puffs_framebuf_destroy(pcc->pcc_pb);
-
-	/* can't do this above due to PCC_BORROWED */
-	while ((pcc_iter = LIST_FIRST(&pu->pu_ccnukelst)) != NULL) {
-		LIST_REMOVE(pcc_iter, pcc_rope);
-		puffs_cc_destroy(pcc_iter);
-	}
-	PU_UNLOCK();
-
-	return NULL;
-}
-
-/* library private, but linked from callcontext.c */
-
-void
-puffs_calldispatcher(struct puffs_cc *pcc)
+static void
+dispatch(struct puffs_cc *pcc)
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_ops *pops = &pu->pu_ops;
 	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
 	void *auxbuf = preq; /* help with typecasting */
 	void *opcookie = preq->preq_cookie;
-	int error, rv, buildpath;
+	int error, buildpath;
 
-	assert(pcc->pcc_flags & (PCC_FAKECC | PCC_REALCC | PCC_THREADED));
-	assert(pcc == puffs_cc_getcc(pu)); /* remove me soon */
-
-	if (PUFFSOP_WANTREPLY(preq->preq_opclass))
-		rv = PUFFCALL_ANSWER;
-	else
-		rv = PUFFCALL_IGNORE;
+	assert((pcc->pcc_flags & PCC_DONE) == 0);
 
 	buildpath = pu->pu_flags & PUFFS_FLAG_BUILDPATH;
 	preq->preq_setbacks = 0;
 
+	if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
+		puffsdump_req(preq);
+
+	puffs__cc_setcaller(pcc, preq->preq_pid, preq->preq_lid);
+
+	/* pre-operation */
 	if (pu->pu_oppre)
 		pu->pu_oppre(pu);
 
+	/* Execute actual operation */
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
 		switch (preq->preq_optype) {
 		case PUFFS_VFS_UNMOUNT:
@@ -1003,62 +877,32 @@ puffs_calldispatcher(struct puffs_cc *pcc)
 			error = EINVAL;
 			break;
 		}
+
+	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_CACHE) {
+		struct puffs_cacheinfo *pci = (void *)preq;
+
+		if (pu->pu_ops.puffs_cache_write) {
+			pu->pu_ops.puffs_cache_write(pu, preq->preq_cookie,
+			    pci->pcache_nruns, pci->pcache_runs);
+		}
+		error = 0;
+
+	} else if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_ERROR) {
+		struct puffs_error *perr = (void *)preq;
+
+		pu->pu_errnotify(pu, preq->preq_optype,
+		    perr->perr_error, perr->perr_str, preq->preq_cookie);
+		error = 0;
 	} else {
 		/*
-		 * this one also
+		 * I guess the kernel sees this one coming also
 		 */
 		error = EINVAL;
 	}
-
 	preq->preq_rv = error;
-	pcc->pcc_flags |= PCC_DONE;
 
 	if (pu->pu_oppost)
 		pu->pu_oppost(pu);
 
-	/*
-	 * Note, we are calling this from here so that we can run it
-	 * off of the continuation stack.  Otherwise puffs_goto() would
-	 * not work.
-	 */
-	processresult(pu, rv);
-}
-
-static void
-processresult(struct puffs_usermount *pu, int how)
-{
-	struct puffs_cc *pcc = puffs_cc_getcc(pu);
-	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
-	int pccflags = pcc->pcc_flags;
-
-	/* check if we need to store this reply */
-	switch (how) {
-	case PUFFCALL_ANSWER:
-		if (pu->pu_flags & PUFFS_FLAG_OPDUMP)
-			puffsdump_rv(preq);
-
-		puffs_framev_enqueue_justsend(pu, pu->pu_fd,
-		    pcc->pcc_pb, 0, 0);
-		/*FALLTHROUGH*/
-
-	case PUFFCALL_IGNORE:
-		PU_LOCK();
-		LIST_INSERT_HEAD(&pu->pu_ccnukelst, pcc, pcc_rope);
-		PU_UNLOCK();
-		break;
-
-	case PUFFCALL_AGAIN:
-		if ((pcc->pcc_flags & PCC_REALCC) == 0)
-			assert(pcc->pcc_flags & PCC_DONE);
-		break;
-
-	default:
-		assert(/*CONSTCOND*/0);
-	}
-
-	/* who needs information when you're living on borrowed time? */
-	if (pccflags & PCC_BORROWED) {
-		assert((pccflags & PCC_THREADED) == 0);
-		puffs_cc_yield(pcc); /* back to borrow source */
-	}
+	pcc->pcc_flags |= PCC_DONE;
 }

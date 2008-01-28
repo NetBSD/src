@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.20 2007/12/05 11:06:05 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.21 2008/01/28 18:35:51 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.20 2007/12/05 11:06:05 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.21 2008/01/28 18:35:51 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -56,7 +56,7 @@ __RCSID("$NetBSD: requests.c,v 1.20 2007/12/05 11:06:05 pooka Exp $");
  */
 /*ARGSUSED*/
 int
-puffs_fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+puffs__fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	int fd, int *done)
 {
 	struct putter_hdr phdr;
@@ -117,7 +117,7 @@ puffs_fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
  */
 /*ARGSUSED*/
 int
-puffs_fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
+puffs__fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	int fd, int *done)
 {
 	void *win;
@@ -200,7 +200,7 @@ puffs_fsframe_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
  */
 /*ARGSUSED*/
 int
-puffs_fsframe_cmp(struct puffs_usermount *pu,
+puffs__fsframe_cmp(struct puffs_usermount *pu,
 	struct puffs_framebuf *pb1, struct puffs_framebuf *pb2, int *notresp)
 {
 	struct puffs_req *preq1, *preq2;
@@ -233,7 +233,7 @@ puffs_fsframe_cmp(struct puffs_usermount *pu,
 }
 
 void
-puffs_fsframe_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
+puffs__fsframe_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
 	struct puffs_framebuf *newpb;
 
@@ -245,5 +245,5 @@ puffs_fsframe_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 	if (puffs_framebuf_reserve_space(newpb, PUFFS_MSG_MAXSIZE) == -1)
 		abort();
 
-	puffs_dopufbuf(pu, newpb);
+	puffs__ml_dispatch(pu, newpb);
 }
