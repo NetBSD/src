@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.17 2007/12/11 11:28:46 lukem Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.18 2008/01/28 22:28:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.17 2007/12/11 11:28:46 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.18 2008/01/28 22:28:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -314,7 +314,8 @@ pms_synaptics_resume(void *vsc)
 	cmd[0] = PMS_RESET;
 	res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 2,
 	    resp, 1);
-	printf("%s: pms_synaptics_resume: reset on resume %d 0x%02x 0x%02x\n",
+	aprint_debug(
+	    "%s: pms_synaptics_resume: reset on resume %d 0x%02x 0x%02x\n",
 	    psc->sc_dev.dv_xname, res, resp[0], resp[1]);
 }
 
