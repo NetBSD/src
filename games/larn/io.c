@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.17 2007/04/22 02:09:02 mouse Exp $	*/
+/*	$NetBSD: io.c,v 1.18 2008/01/28 04:04:17 dholland Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,13 +62,14 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.17 2007/04/22 02:09:02 mouse Exp $");
+__RCSID("$NetBSD: io.c,v 1.18 2008/01/28 04:04:17 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
 #include "extern.h"
 #include <string.h>
 #include <unistd.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <termcap.h>
 #include <fcntl.h>
@@ -226,132 +227,21 @@ newgame()
  *		are done beforehand if needed.
  *	Returns nothing of value.
  */
-#ifdef lint
-/* VARARGS */
-lprintf(str)
-	char           *str;
+void
+lprintf(const char *fmt, ...)
 {
-	char           *str2;
-	str2 = str;
-	str = str2;		/* to make lint happy */
-}
-/* VARARGS */
-sprintf(str)
-	char           *str;
-{
-	char           *str2;
-	str2 = str;
-	str = str2;		/* to make lint happy */
-}
-#else	/* lint */
-/* VARARGS */
-void lprintf(const char *fmt, ...)
-{
-	va_list         ap;	/* pointer for variable argument list */
-	char  *outb, *tmpb;
-	long   wide, left, cont, n;	/* data for lprintf	 */
-	char            db[12];	/* %d buffer in lprintf	 */
+	va_list ap;
+	char buf[BUFBIG/2];
 
 	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+
 	if (lpnt >= lpend)
 		lflush();
-	outb = lpnt;
-	for (;;) {
-		while (*fmt != '%')
-			if (*fmt)
-				*outb++ = *fmt++;
-			else {
-				lpnt = outb;
-				va_end(ap);
-				return;
-			}
-		wide = 0;
-		left = 1;
-		cont = 1;
-		while (cont)
-			switch (*(++fmt)) {
-			case 'd':
-				n = va_arg(ap, long);
-				if (n < 0) {
-					n = -n;
-					*outb++ = '-';
-					if (wide)
-						--wide;
-				}
-				tmpb = db + 11;
-				*tmpb = (char) (n % 10 + '0');
-				while (n > 9)
-					*(--tmpb) = (char) ((n /= 10) % 10 + '0');
-				if (wide == 0)
-					while (tmpb < db + 12)
-						*outb++ = *tmpb++;
-				else {
-					wide -= db - tmpb + 12;
-					if (left)
-						while (wide-- > 0)
-							*outb++ = ' ';
-					while (tmpb < db + 12)
-						*outb++ = *tmpb++;
-					if (left == 0)
-						while (wide-- > 0)
-							*outb++ = ' ';
-				}
-				cont = 0;
-				break;
 
-			case 's':
-				tmpb = va_arg(ap, char *);
-				if (wide == 0) {
-					while ((*outb++ = *tmpb++) != '\0')
-						continue;
-					--outb;
-				} else {
-					n = wide - strlen(tmpb);
-					if (left)
-						while (n-- > 0)
-							*outb++ = ' ';
-					while ((*outb++ = *tmpb++) != '\0')
-						continue;
-					--outb;
-					if (left == 0)
-						while (n-- > 0)
-							*outb++ = ' ';
-				}
-				cont = 0;
-				break;
-
-			case 'c':
-				*outb++ = va_arg(ap, int);
-				cont = 0;
-				break;
-
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-				wide = 10 * wide + *fmt - '0';
-				break;
-
-			case '-':
-				left = 0;
-				break;
-
-			default:
-				*outb++ = *fmt;
-				cont = 0;
-				break;
-			};
-		fmt++;
-	}
-	va_end(ap);
+	lprcat(buf);
 }
-#endif	/* lint */
 
 /*
  *	lprint(long-integer)	send binary integer to output buffer
