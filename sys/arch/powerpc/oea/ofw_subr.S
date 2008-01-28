@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.5 2007/10/17 19:56:43 garbled Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.6 2008/01/28 21:06:29 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -118,13 +118,14 @@ ENTRY(openfirmware)
 	cmpwi	4,1
 	bne	1f
 	blrl
+	b	4f
 1:
-#else
+#endif
 	mfmsr	4			/* save msr */
 	stw	4,8(1)
 
 	li	0,0			/* clear battable translations */
-#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mtdbatu	2,0
 	mtdbatu	3,0
 	mtibatu	2,0
@@ -182,8 +183,7 @@ ENTRY(openfirmware)
 	lwz	4,8(1)			/* restore msr */
 	mtmsr	4
 	isync
-#endif /* FIRMWORKSBUGS */
-
+4:	
 	lis	4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
 	addi	4,4,ofwsprg0save@l
 	lwz	5,0(4)
