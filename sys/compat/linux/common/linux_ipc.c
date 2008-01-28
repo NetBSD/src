@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.43 2008/01/28 14:05:32 njoly Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.44 2008/01/28 14:31:35 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.43 2008/01/28 14:05:32 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.44 2008/01/28 14:31:35 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.43 2008/01/28 14:05:32 njoly Exp $")
 #include <compat/linux/linux_syscall.h>
 
 #include <compat/linux/common/linux_ipccall.h>
+#include <compat/linux/common/linux_machdep.h>
 
 /*
  * Note: Not all linux architechtures have explicit versions
@@ -485,6 +486,10 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 
 	shmid = SCARG(uap, shmid);
 	cmd = SCARG(uap, cmd);
+#ifdef LINUX_SHMCTL_FORCEIPC64
+	if (cmd == LINUX_IPC_STAT || cmd == LINUX_SHM_STAT)
+		cmd |= LINUX_IPC_64;
+#endif
 
 	switch (cmd) {
 	case LINUX_IPC_STAT:
