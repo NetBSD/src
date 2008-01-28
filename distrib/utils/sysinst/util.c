@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.149 2007/11/12 15:07:33 jmmv Exp $	*/
+/*	$NetBSD: util.c,v 1.150 2008/01/28 02:47:12 rumble Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -189,6 +189,9 @@ init_set_status(int minimal)
 	i = strlen(msg_some); if (i > len) {len = i; longest = msg_some; }
 	i = strlen(msg_none); if (i > len) {len = i; longest = msg_none; }
 	select_menu_width = snprintf(NULL, 0, msg_cur_distsets_row, "",longest);
+
+	/* Give the md code a chance to choose the right kernel, etc. */
+	md_init_set_status(minimal);
 }
 
 int

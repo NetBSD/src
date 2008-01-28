@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20 2006/04/05 16:55:06 garbled Exp $ */
+/*	$NetBSD: md.c,v 1.21 2008/01/28 02:47:16 rumble Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -154,6 +154,12 @@ void
 md_init()
 {
 	/* Nothing to do */
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
 }
 
 int

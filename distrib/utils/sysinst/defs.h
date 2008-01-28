@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.134 2008/01/23 23:15:37 garbled Exp $	*/
+/*	$NetBSD: defs.h,v 1.135 2008/01/28 02:47:12 rumble Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -321,6 +321,7 @@ int	md_pre_update(void);
 int	md_update(void);
 int	md_post_extract(void);
 void	md_init(void);
+void	md_init_set_status(int);
 void	md_set_no_x(void);
 
 /* from main.c */

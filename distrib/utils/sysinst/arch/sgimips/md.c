@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2006/08/11 13:39:44 hubertf Exp $	*/
+/*	$NetBSD: md.c,v 1.23 2008/01/28 02:47:16 rumble Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -197,6 +197,13 @@ md_pre_update()
 void
 md_init()
 {
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
+
         /*
          * Get the name of the Install Kernel we are running under and
          * enable the installation of the corresponding GENERIC kernel.
