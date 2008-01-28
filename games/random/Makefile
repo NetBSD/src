@@ -1,7 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2005/08/10 14:02:10 rpaulo Exp $
+#	$NetBSD: Makefile,v 1.5 2008/01/28 07:03:59 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 3/31/94
 
-WARNS=	3
 PROG=	random
 MAN=	random.6
 
