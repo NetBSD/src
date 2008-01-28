@@ -1,4 +1,4 @@
-/*	$NetBSD: driver.c,v 1.12 2006/10/07 17:27:57 elad Exp $	*/
+/*	$NetBSD: driver.c,v 1.13 2008/01/28 03:23:29 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: driver.c,v 1.12 2006/10/07 17:27:57 elad Exp $");
+__RCSID("$NetBSD: driver.c,v 1.13 2008/01/28 03:23:29 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/ioctl.h>
@@ -464,18 +464,18 @@ makeboots()
  *	Check the damage to the given player, and see if s/he is killed
  */
 void
-checkdam(ouch, gotcha, credit, amt, shot_type)
+checkdam(ouch, gotcha, credit, amt, this_shot_type)
 	PLAYER	*ouch, *gotcha;
 	IDENT	*credit;
 	int	amt;
-	char	shot_type;
+	char	this_shot_type;
 {
-	char	*cp;
+	const char	*cp;
 
 	if (ouch->p_death[0] != '\0')
 		return;
 # ifdef BOOTS
-	if (shot_type == SLIME)
+	if (this_shot_type == SLIME)
 		switch (ouch->p_nboots) {
 		  default:
 			break;
@@ -497,7 +497,7 @@ checkdam(ouch, gotcha, credit, amt, shot_type)
 	}
 
 	/* Someone DIED */
-	switch (shot_type) {
+	switch (this_shot_type) {
 	  default:
 		cp = "Killed";
 		break;
@@ -542,7 +542,7 @@ checkdam(ouch, gotcha, credit, amt, shot_type)
 	}
 	if (credit == NULL) {
 		(void) sprintf(ouch->p_death, "| %s by %s |", cp,
-			(shot_type == MINE || shot_type == GMINE) ?
+			(this_shot_type == MINE || this_shot_type == GMINE) ?
 			"a mine" : "act of God");
 		return;
 	}

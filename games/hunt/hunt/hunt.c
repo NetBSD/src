@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.25 2007/12/15 19:44:41 perry Exp $	*/
+/*	$NetBSD: hunt.c,v 1.26 2008/01/28 03:23:29 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.25 2007/12/15 19:44:41 perry Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.26 2008/01/28 03:23:29 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/param.h>
@@ -111,8 +111,8 @@ extern int	cur_row, cur_col;
 void	dump_scores(SOCKET);
 long	env_init(long);
 void	fill_in_blanks(void);
-void	leave(int, char *) __dead;
-void	leavex(int, char *) __dead;
+void	leave(int, const char *) __dead;
+void	leavex(int, const char *) __dead;
 void	fincurs(void);
 int	main(int, char *[]);
 # ifdef INTERNET
@@ -424,6 +424,7 @@ list_drivers()
 	u_long			local_net;
 # endif
 	int			i;
+	unsigned		j;
 	static	SOCKET		*listv;
 	static	unsigned int	listmax;
 	unsigned int		listc;
@@ -539,11 +540,11 @@ get_response:
 			 * order since the port number *should* be in network
 			 * order:
 			 */
-			for (i = 0; i < listc; i += 1)
+			for (j = 0; j < listc; j += 1)
 				if (listv[listc].sin_addr.s_addr
-				== listv[i].sin_addr.s_addr)
+				== listv[j].sin_addr.s_addr)
 					break;
-			if (i == listc)
+			if (j == listc)
 				listv[listc++].sin_port = port_num;
 			continue;
 		}
@@ -883,12 +884,10 @@ void fincurs()
 /*
  * leave:
  *	Leave the game somewhat gracefully, restoring all current
- *	tty stats.
+ *	tty stats, and print errno.
  */
 void
-leave(eval, mesg)
-	int	eval;
-	char	*mesg;
+leave(int eval, const char *mesg)
 {
 	int serrno = errno;
 	fincurs();
@@ -897,14 +896,12 @@ leave(eval, mesg)
 }
 
 /*
- * leave:
+ * leavex:
  *	Leave the game somewhat gracefully, restoring all current
  *	tty stats.
  */
 void
-leavex(eval, mesg)
-	int	eval;
-	char	*mesg;
+leavex(int eval, const char *mesg)
 {
 	fincurs();
 	errx(eval, mesg ? mesg : "");

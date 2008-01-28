@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.4 2003/06/11 12:00:23 wiz Exp $	*/
+/*	$NetBSD: terminal.c,v 1.5 2008/01/28 03:23:29 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: terminal.c,v 1.4 2003/06/11 12:00:23 wiz Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.5 2008/01/28 03:23:29 dholland Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -79,7 +79,7 @@ outch(pp, ch)
 void
 outstr(pp, str, len)
 	PLAYER	*pp;
-	char	*str;
+	const char *str;
 	int	len;
 {
 	pp->p_curx += len;
