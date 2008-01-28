@@ -1,4 +1,4 @@
-/*	$NetBSD: save.c,v 1.11 2003/08/07 09:37:26 agc Exp $	*/
+/*	$NetBSD: save.c,v 1.12 2008/01/28 05:55:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)save.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: save.c,v 1.11 2003/08/07 09:37:26 agc Exp $");
+__RCSID("$NetBSD: save.c,v 1.12 2008/01/28 05:55:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -60,7 +60,7 @@ bool
 save()
 {
 	char	*sp;
-	int	outf;
+	int	outfd;
 	time_t	*tp;
 	char	buf[80];
 	time_t	tme;
@@ -112,15 +112,15 @@ over:
 	    && getyn(OVERWRITEFILEPROMPT) == FALSE))
 		return FALSE;
 
-	if ((outf = creat(buf, 0644)) < 0) {
+	if ((outfd = creat(buf, 0644)) < 0) {
 		error(strerror(errno));
 		return FALSE;
 	}
 	mvwaddstr(Score, ERR_Y, ERR_X, buf);
 	wrefresh(Score);
 	time(tp);			/* get current time		*/
-	rv = varpush(outf, writev);
-	close(outf);
+	rv = varpush(outfd, writev);
+	close(outfd);
 	if (rv == FALSE) {
 		unlink(buf);
 	} else {
