@@ -1,4 +1,4 @@
-/*	$NetBSD: pickmove.c,v 1.12 2007/12/15 19:44:40 perry Exp $	*/
+/*	$NetBSD: pickmove.c,v 1.13 2008/01/28 07:01:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pickmove.c	8.2 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: pickmove.c,v 1.12 2007/12/15 19:44:40 perry Exp $");
+__RCSID("$NetBSD: pickmove.c,v 1.13 2008/01/28 07:01:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -1087,7 +1087,7 @@ checkframes(cbp, fcbp, osp, s, vertices)
 	struct ovlp_info *vertices;
 {
 	struct combostr *tcbp, *lcbp;
-	int i, n, mask, flg, verts, loop, index, fcnt;
+	int i, n, mask, flg, verts, loop, myindex, fcnt;
 	union comboval cb;
 	u_char *str;
 	short *ip;
@@ -1099,7 +1099,7 @@ checkframes(cbp, fcbp, osp, s, vertices)
 	fcnt = cb.c.a - 2;
 	verts = 0;
 	loop = 0;
-	index = cbp->c_nframes;
+	myindex = cbp->c_nframes;
 	n = (fcbp - frames) * FAREA;
 	str = &overlap[n];
 	ip = &intersect[n];
@@ -1114,7 +1114,7 @@ checkframes(cbp, fcbp, osp, s, vertices)
 			return (-1);	/* fcbp is already included */
 
 		/* check for intersection of 'tcbp' with 'fcbp' */
-		index--;
+		myindex--;
 		mask = str[tcbp - frames];
 		flg = cbp->c_flg;
 		n = i + ((flg & C_OPEN_1) != 0);
@@ -1157,7 +1157,7 @@ checkframes(cbp, fcbp, osp, s, vertices)
 				vertices->o_link = 1;
 				vertices->o_off = (n - tcbp->c_vertex) /
 					dd[tcbp->c_dir];
-				vertices->o_frameindex = index;
+				vertices->o_frameindex = myindex;
 				verts++;
 			}
 		}
