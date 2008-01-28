@@ -1,4 +1,4 @@
-/*	$NetBSD: omap_intr.h,v 1.1.32.1 2008/01/09 01:45:21 matt Exp $ */
+/*	$NetBSD: omap_intr.h,v 1.1.32.2 2008/01/28 18:29:08 matt Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -117,11 +117,6 @@ extern uint32_t omap_spl_masks[NIPL][OMAP_NBANKS];
 /* Array of globally-off masks while interrupts processed. */
 extern uint32_t omap_global_masks[OMAP_NBANKS];
 
-#ifdef __HAVE_FAST_SOFTINTS
-/* Array to translate from software interrupt numbers to an irq number. */
-extern int omap_si_to_irq[OMAP_FREE_IRQ_NUM];
-#endif
-
 /*
  * Direct access is being done because 1) it's faster and 2) the interrupt
  * controller code is still very tied to the OMAP so we don't really have
@@ -148,15 +143,17 @@ omap_splx(int new)
 	write_icu(bases[2], OMAP_INTB_MIR, masks[2] | omap_global_masks[2]);
 	write_icu(bases[3], OMAP_INTB_MIR, masks[3] | omap_global_masks[3]);
 	write_icu(bases[4], OMAP_INTB_MIR, masks[4] | omap_global_masks[4]);
+#ifdef __HAVE_FAST_SOFTINTS
+	cpu_dosoftintrs();
+#endif
 	restore_interrupts(psw);
 }
 
 static inline int
 omap_splraise(int ipl)
 {
-	struct cpu_info * const ci = curcpu();
-	const int old = ci->ci_cpl;
-	if (ipl > ci->ci_cpl)
+	const int old = curcpl();
+	if (ipl > old)
 		omap_splx(ipl);
 	return (old);
 }
@@ -164,35 +161,10 @@ omap_splraise(int ipl)
 static inline int
 omap_spllower(int ipl)
 {
-	struct cpu_info * const ci = curcpu();
-	const int old = ci->ci_cpl;
+	const int old = curcpl();
 	omap_splx(ipl);
 	return(old);
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-static inline void
-omap_setsoftintr(int si)
-{
-	const omap_intr_info_t *info;
-
-	KDASSERT(si < OMAP_FREE_IRQ_NUM);
-
-	int irqno = omap_si_to_irq[si];
-	KDASSERT(irqno >= OMAP_IRQ_MIN);
-	KDASSERT(irqno < OMAP_NIRQ);
-
-	info = &omap_intr_info[irqno];
-	KDASSERT(info->trig != INVALID);
-
-#if OMAP_INT_FREE1 < OMAP_INT_L1_NIRQ
-	/* Level 1 Interrupt Controller needs a zero before the one. */
-	write_icu(info->bank_base, OMAP_INTB_SISR, 0);
-#endif
-	write_icu(info->bank_base, OMAP_INTB_SISR, info->mask);
-}
-#endif
-
 
 int	_splraise(int);
 int	_spllower(int);

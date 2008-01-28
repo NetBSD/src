@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.9.10.2 2008/01/09 01:46:11 matt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.9.10.3 2008/01/28 18:29:12 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -36,31 +36,35 @@
 #ifndef _HPCARM_INTR_H_
 #define _HPCARM_INTR_H_
 
-#define IPL_SOFTCLOCK	0
-#define IPL_SOFTBIO	1
-#define IPL_SOFTNET	2
-#define IPL_SOFTSERIAL	3
-#define IPL_VM		4
-#define IPL_SCHED	5
-#define IPL_HIGH	6
-#define IPL_NONE	7
+#ifdef __HAVE_FAST_SOFTINTS
+#define IPL_NONE	0
+#define IPL_SOFTCLOCK	1
+#define IPL_SOFTBIO	2
+#define IPL_SOFTNET	3
+#define IPL_SOFTSERIAL	4
+#define IPL_VM		5
+#define IPL_SCHED	6
+#define IPL_HIGH	7
 
 #define NIPL		8
+#else
+#define IPL_NONE	0
+#define IPL_SOFTCLOCK	IPL_NONE
+#define IPL_SOFTBIO	IPL_NONE
+#define IPL_SOFTNET	IPL_NONE
+#define IPL_SOFTSERIAL	IPL_NONE
+#define IPL_VM		1
+#define IPL_SCHED	2
+#define IPL_HIGH	3
+
+#define NIPL		4
+#endif
 
 #define	IST_UNUSABLE	-1	/* interrupt cannot be used */
 #define	IST_NONE	0	/* none (dummy) */
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
-
-/* Software interrupt priority levels */
-
-#define SOFTIRQ_CLOCK	0
-#define SOFTIRQ_BIO	1
-#define SOFTIRQ_NET	2
-#define SOFTIRQ_SERIAL	3
-
-#define SOFTIRQ_BIT(x)	(1 << x)
 
 #include <machine/irqhandler.h>
 #include <arm/arm32/psl.h>

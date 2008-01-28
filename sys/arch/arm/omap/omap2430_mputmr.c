@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_mputmr.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $	*/
+/*	omap2430_mputmr.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp	*/
 
 /*
  * OMAP 2430 GP timers
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_mputmr.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $");
+__KERNEL_RCSID(0, "omap2430_mputmr.c,v 1.1.2.4 2008/01/08 07:16:27 matt Exp");
 
 #include "opt_omap.h"
 
@@ -169,55 +169,19 @@ _timer_start(struct omap2430mputmr_softc *sc, timer_factors *tfp)
 }
 
 
-static volatile ulong ticks_pending;
 int
-clockintr(void *arg)
+clockintr(void *frame)
 {
-	struct clockframe *frame = arg;
-	unsigned int ticks;
-	uint32_t oipl = curcpu()->ci_cpl;
-
 	_timer_intr_ack(clock_sc);
-
-	if (oipl >= IPL_CLOCK) {
-		ticks_pending++;
-		return 1;
-	}
-
-	curcpu()->ci_cpl = IPL_CLOCK;
-	ticks = ticks_pending;
-	ticks_pending = 0;
-	ticks++;			/* this tick */
-	while (ticks--) {
-		enable_interrupts(I32_bit);
-		hardclock(frame);
-		disable_interrupts(I32_bit);
-		ticks += ticks_pending;
-		ticks_pending = 0;
-	}
-	curcpu()->ci_cpl = oipl;
+	hardclock(frame);
 	return 1;
 }
 
 int
-statintr(void *arg)
+statintr(void *frame)
 {
-	struct clockframe *frame = arg;
-	uint32_t oipl = curcpu()->ci_cpl;
-
 	_timer_intr_ack(stat_sc);
-
-	/* XXX what about missed ticks? */
-	if (oipl >= IPL_STATCLOCK)
-		return 1;
-
-	curcpu()->ci_cpl = IPL_CLOCK;
-	enable_interrupts(I32_bit);
-
 	statclock(frame);
-
-	disable_interrupts(I32_bit);
-	curcpu()->ci_cpl = oipl;
 	return 1;
 }
 
@@ -269,7 +233,7 @@ cpu_initclocks(void)
 	 */
 
 	intr_establish(clock_sc->sc_intr, IPL_CLOCK, IST_LEVEL, clockintr, 0);
-	intr_establish(stat_sc->sc_intr, IPL_STATCLOCK, IST_LEVEL, statintr, 0);
+	intr_establish(stat_sc->sc_intr, IPL_HIGH, IST_LEVEL, statintr, 0);
 
 	_timer_intr_enb(clock_sc);
 	_timer_intr_enb(stat_sc);

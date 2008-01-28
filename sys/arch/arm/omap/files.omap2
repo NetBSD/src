@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.1.2.4 2008/01/08 07:16:27 matt Exp $
+#	files.omap2,v 1.1.2.4 2008/01/08 07:16:27 matt Exp
 #
 # Configuration info for Texas Instruments OMAP2 CPU support
 # Based on xscale/files.pxa2x0
@@ -6,7 +6,6 @@
 
 include "arch/arm/pic/files.pic"
 
-file	arch/arm/arm/softintr.c			!pic
 file	arch/arm/arm32/irq_dispatch.S
 
 # Memory size in megabytes

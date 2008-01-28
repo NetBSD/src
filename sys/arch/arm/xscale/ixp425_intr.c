@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.c,v 1.15.30.2 2008/01/09 01:45:27 matt Exp $ */
+/*	$NetBSD: ixp425_intr.c,v 1.15.30.3 2008/01/28 18:29:10 matt Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15.30.2 2008/01/09 01:45:27 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_intr.c,v 1.15.30.3 2008/01/28 18:29:10 matt Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -262,77 +262,23 @@ ixp425_intr_calculate_masks(void)
 	}
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-void
-ixp425_do_pending(void)
-{
-	static __cpu_simple_lock_t processing = __SIMPLELOCK_UNLOCKED;
-	int new, oldirqstate;
-
-	if (__cpu_simple_lock_try(&processing) == 0)
-		return;
-
-	new = curcpl();
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-#define	DO_SOFTINT(si)							\
-	if ((ixp425_ipending & ~new) & SI_TO_IRQBIT(si)) {		\
-		ixp425_ipending &= ~SI_TO_IRQBIT(si);			\
-		set_curcpl(new | ixp425_imask[si_to_ipl[(si)]]);	\
-		restore_interrupts(oldirqstate);			\
-		softintr_dispatch(si);					\
-		oldirqstate = disable_interrupts(I32_bit);		\
-		set_curcpl(new);					\
-	}
-
-	DO_SOFTINT(SI_SOFTSERIAL);
-	DO_SOFTINT(SI_SOFTNET);
-	DO_SOFTINT(SI_SOFTCLOCK);
-	DO_SOFTINT(SI_SOFT);
-
-	__cpu_simple_unlock(&processing);
-
-	restore_interrupts(oldirqstate);
-}
-#endif
-
 void
 splx(int new)
 {
-
 	ixp425_splx(new);
 }
 
 int
 _spllower(int ipl)
 {
-
 	return (ixp425_spllower(ipl));
 }
 
 int
 _splraise(int ipl)
 {
-
 	return (ixp425_splraise(ipl));
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-void
-_setsoftintr(int si)
-{
-	int oldirqstate;
-
-	oldirqstate = disable_interrupts(I32_bit);
-	ixp425_ipending |= SI_TO_IRQBIT(si);
-	restore_interrupts(oldirqstate);
-
-	/* Process unmasked pending soft interrupts. */
-	if ((ixp425_ipending & INT_SWMASK) & ~curcpl())
-		ixp425_do_pending();
-}
-#endif /* __HAVE_FAST_SOFTINTS */
 
 /*
  * ixp425_icu_init:
@@ -439,9 +385,10 @@ ixp425_intr_dispatch(struct clockframe *frame)
 {
 	struct intrq *iq;
 	struct intrhand *ih;
-	int oldirqstate, pcpl, irq, ibit, hwpend;
-
-	pcpl = curcpl();
+	int oldirqstate, irq, ibit, hwpend;
+	struct cpu_info * const ci = curcpu();
+	const int ppl = ci->ci_cpl;
+	const uint32_t imask = ixp425_imask[ppl];
 
 	hwpend = ixp425_irq_read();
 
@@ -458,7 +405,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 
 		hwpend &= ~ibit;
 
-		if (pcpl & ibit) {
+		if (imask & ibit) {
 			/*
 			 * IRQ is masked; mark it as pending and check
 			 * the next one.  Note: the IRQ is already disabled.
@@ -472,7 +419,6 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		iq = &intrq[irq];
 		iq->iq_ev.ev_count++;
 		uvmexp.intrs++;
-		set_curcpl(pcpl | iq->iq_mask);
 
 		/* Clear down non-level triggered GPIO interrupts now */
 		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist != IST_LEVEL) {
@@ -480,12 +426,12 @@ ixp425_intr_dispatch(struct clockframe *frame)
 			    ixp425_irq2gpio_bit(irq);
 		}
 
-		oldirqstate = enable_interrupts(I32_bit);
-		for (ih = TAILQ_FIRST(&iq->iq_list); ih != NULL;
-		     ih = TAILQ_NEXT(ih, ih_list)) {
+		TAILQ_FOREACH(ih, &iq->iq_list, ih_list) {
+			ci->ci_cpl = ih->ih_ipl;
+			oldirqstate = enable_interrupts(I32_bit);
 			(void) (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
+			restore_interrupts(oldirqstate);
 		}
-		restore_interrupts(oldirqstate);
 
 		/* Clear down level triggered GPIO interrupts now */
 		if ((ibit & IXP425_INT_GPIOMASK) && iq->iq_ist == IST_LEVEL) {
@@ -493,7 +439,7 @@ ixp425_intr_dispatch(struct clockframe *frame)
 			    ixp425_irq2gpio_bit(irq);
 		}
 
-		set_curcpl(pcpl);
+		ci->ci_cpl = ppl;
 
 		/* Re-enable this interrupt now that's it's cleared. */
 		intr_enabled |= ibit;
@@ -503,15 +449,10 @@ ixp425_intr_dispatch(struct clockframe *frame)
 		 * Don't forget to include interrupts which may have
 		 * arrived in the meantime.
 		 */
-		hwpend |= ((ixp425_ipending & IXP425_INT_HWMASK) & ~pcpl);
+		hwpend |= ((ixp425_ipending & IXP425_INT_HWMASK) & ~imask);
 	}
 
 #ifdef __HAVE_FAST_SOFTINTS
-	/* Check for pendings soft intrs. */
-	if ((ixp425_ipending & INT_SWMASK) & ~curcpl()) {
-		oldirqstate = enable_interrupts(I32_bit);
-		ixp425_do_pending();
-		restore_interrupts(oldirqstate);
-	}
+	cpu_dosoftints();
 #endif
 }

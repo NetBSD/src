@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.4.20.1 2008/01/09 01:50:25 matt Exp $	*/
+/*	$NetBSD: intr.h,v 1.4.20.2 2008/01/28 18:29:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Wasabi Systems, Inc.
@@ -90,7 +90,6 @@
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #else	/* _LKM */
 
@@ -104,7 +103,6 @@ void	_setsoftintr(int);
  * int	_splraise(int);
  * int	_spllower(int);
  * void	splx(int);
- * void	_setsoftintr(int);
  *
  * These may be defined as functions, static inline functions, or macros,
  * but there must be a _spllower() and splx() defined as functions callable
@@ -164,9 +162,6 @@ splraiseipl(ipl_cookie_t icookie)
 #define	spl0()		_spllower(IPL_NONE)
 
 #include <sys/spl.h>
-
-/* Use generic software interrupt support. */
-#include <arm/softintr.h>
 
 #endif /* ! _LOCORE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_intr.h,v 1.10.22.3 2008/01/09 01:45:28 matt Exp $ */
+/*	$NetBSD: pxa2x0_intr.h,v 1.10.22.4 2008/01/28 18:29:10 matt Exp $ */
 
 /* Derived from i80321_intr.h */
 
@@ -49,7 +49,6 @@
 #include <arm/cpufunc.h>
 #include <machine/atomic.h>
 #include <machine/intr.h>
-#include <arm/softintr.h>
 
 #include <arm/xscale/pxa2x0reg.h>
 
@@ -67,10 +66,6 @@ extern int pxa2x0_imask[];
  * Cotulla's integrated ICU doesn't have IRQ0..7, so
  * we map software interrupts to bit 0..3
  */
-#define SI_TO_IRQBIT(si)  (1U<<(si))
-extern volatile int softint_pending;
-void pxa2x0_do_pending(void);
-
 static inline void
 pxa2x0_setipl(int new)
 {
@@ -90,9 +85,7 @@ pxa2x0_splx(int new)
 	restore_interrupts(psw);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	/* If there are software interrupts to process, do it. */
-	if (softint_pending & intr_mask)
-		pxa2x0_do_pending();
+	cpu_dosoftints();
 #endif
 }
 
@@ -122,21 +115,6 @@ pxa2x0_spllower(int ipl)
 	restore_interrupts(psw);
 	return old;
 }
-
-#ifdef __HAVE_FAST_SOFTINTS
-static inline void
-pxa2x0_setsoftintr(int si)
-{
-
-	atomic_set_bit((u_int *)__UNVOLATILE(&softint_pending),
-	    SI_TO_IRQBIT(si));
-
-	/* Process unmasked pending soft interrupts. */
-	if (softint_pending & intr_mask)
-		pxa2x0_do_pending();
-}
-#endif
-
 
 /*
  * An useful function for interrupt handlers.
