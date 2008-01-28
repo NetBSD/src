@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.38 2008/01/14 13:57:26 pooka Exp $
+.\"	$NetBSD: puffs.3,v 1.39 2008/01/28 18:35:50 pooka Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd January 14, 2008
+.Dd January 28, 2008
 .Dt PUFFS 3
 .Os
 .Sh NAME
@@ -80,7 +80,12 @@
 .Ft int
 .Fn puffs_mainloop "struct puffs_usermount *pu"
 .Ft int
-.Fn puffs_dopufbuf "struct puffs_usermount *pu" "struct puffs_framebuf *pb"
+.Fo puffs_dispatch_create
+.Fa "struct puffs_usermount *pu" "struct puffs_framebuf *pb"
+.Fa "struct puffs_cc **pccp"
+.Fc
+.Ft int
+.Fn puffs_dispatch_exec .Fa "struct puffs_cc *pcc" "struct puffs_framebuf **pbp"
 .Sh DESCRIPTION
 .Em IMPORTANT NOTE!
 This document describes interfaces which are not yet guaranteed to be
@@ -434,13 +439,39 @@ In case
 .Xr puffs_framebuf 3
 has been initialized, I/O from the relevant descriptors is processed
 automatically by the eventloop.
-.It Fn puffs_dopufbuf pu pb
-Decode and dispatch the file system request in
-.Ar pb .
-The contents of
+.It Fn puffs_dispatch_create pu pb pccp
+.It Fn puffs_dispatch_exec pcc pbp
+In case the use of
+.Fn puffs_mainloop
+is not possible, requests may be dispatched manually.
+However, as this is less efficient than using the mainloop,
+it should never be the first preference.
+.Pp
+Calling 
+.Fn puffs_dispatch_create
+creates a dispatch request.
+The argument
 .Ar pb
-must be of type
-.Vt "struct puffs_req" .
+should contains a valid request and upon success
+.Ar pccp
+will contain a valid request context.
+This context is passed to
+.Fn puffs_dispatch_exec
+to execute the request.
+If the request yielded before completing, the routine returns 0,
+otherwise 1.
+When the routine completes,
+.Ar pcc
+is made invalid and a pointer to the processed buffer is placed in
+.Ar pbp .
+It is the responsibility of the caller to send the response (if
+necessary) and destroy the buffer.
+.Pp
+See
+.Xr puffs_cc 3
+and
+.Xr puffs_framebuf 3
+for further information.
 .El
 .Ss Cookies
 Every file (regular file, directory, device node, ...) instance is
