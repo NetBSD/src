@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2007/05/28 12:06:17 tls Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2008/01/28 07:03:58 dholland Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 5/31/93
 
 MKHIDEGAME?=	no
@@ -20,4 +20,4 @@ BINGRP=		games
 BINMODE=	2555
 .endif
 .endif
-WARNS?=		1
+WARNS?=		4

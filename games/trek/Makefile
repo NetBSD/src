@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/01/28 01:15:55 dholland Exp $
+#	$NetBSD: Makefile,v 1.12 2008/01/28 07:03:59 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	trek
@@ -14,7 +14,6 @@ MAN=	trek.6
 DPADD=	${LIBM}
 LDADD=	-lm
 HIDEGAME=hidegame
-WARNS=	4
 
 .if make(install)
 SUBDIR+=USD.doc
