@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_init.c,v 1.31 2008/01/02 11:49:17 ad Exp $	*/
+/*	$NetBSD: uvm_init.c,v 1.32 2008/01/28 12:22:47 yamt Exp $	*/
 
 /*
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.31 2008/01/02 11:49:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_init.c,v 1.32 2008/01/28 12:22:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,8 @@ uvm_init(void)
 	 */
 
 	uvm_anon_init();
+
+	uvm_uarea_init();
 
 	/*
 	 * init readahead module

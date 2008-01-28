@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.h,v 1.8 2005/12/11 12:25:29 christos Exp $	*/
+/*	$NetBSD: uvm_glue.h,v 1.9 2008/01/28 12:22:47 yamt Exp $	*/
 
 /*
  *
@@ -44,6 +44,8 @@
  */
 
 void uvm_swapout_threads(void);
+
+void uvm_uarea_init(void);
 
 #endif /* _KERNEL */
 
