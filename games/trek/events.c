@@ -1,4 +1,4 @@
-/*	$NetBSD: events.c,v 1.7 2003/08/07 09:37:51 agc Exp $	*/
+/*	$NetBSD: events.c,v 1.8 2008/01/28 01:15:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)events.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: events.c,v 1.7 2003/08/07 09:37:51 agc Exp $");
+__RCSID("$NetBSD: events.c,v 1.8 2008/01/28 01:15:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -50,12 +50,12 @@ __RCSID("$NetBSD: events.c,v 1.7 2003/08/07 09:37:51 agc Exp $");
 **	This routine does a hell of a lot.  It elapses time, eats up
 **	energy, regenerates energy, processes any events that occur,
 **	and so on.
+**
+**      'timewarp' is set if called in a time warp.
 */
 
-
 int
-events(warp)
-int	warp;		/* set if called in a time warp */
+events(int timewarp)
 {
 	int		i;
 	char			*p;
@@ -455,7 +455,7 @@ int	warp;		/* set if called in a time warp */
 	if ((e = Now.eventptr[E_ATTACK]) != NULL)
 		unschedule(e);
 
-	if (!warp)
+	if (!timewarp)
 	{
 		/* eat up energy if cloaked */
 		if (Ship.cloaked)
