@@ -1,4 +1,4 @@
-/*	$NetBSD: cfscores.c,v 1.13 2005/07/01 16:50:55 jmc Exp $	*/
+/*	$NetBSD: cfscores.c,v 1.14 2008/01/28 02:37:50 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)cfscores.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cfscores.c,v 1.13 2005/07/01 16:50:55 jmc Exp $");
+__RCSID("$NetBSD: cfscores.c,v 1.14 2008/01/28 02:37:50 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,7 +72,7 @@ int
 main(int argc, char *argv[])
 {
 	struct passwd *pw;
-	int uid;
+	uid_t uid;
 
 	/* Revoke setgid privileges */
 	setgid(getgid());
@@ -116,13 +116,16 @@ void
 printuser(const struct passwd *pw, int printfail)
 {
 	struct betinfo total;
+	off_t pos;
 	int i;
 
-	if (pw->pw_uid < 0) {
-		printf("Bad uid %d\n", pw->pw_uid);
+	pos = pw->pw_uid * (off_t)sizeof(struct betinfo);
+	/* test pos, not pw_uid; uid_t can be unsigned, which makes gcc warn */
+	if (pos < 0) {
+		printf("Bad uid %d\n", (int)pw->pw_uid);
 		return;
 	}
-	i = lseek(dbfd, pw->pw_uid * sizeof(struct betinfo), SEEK_SET);
+	i = lseek(dbfd, pos, SEEK_SET);
 	if (i < 0)
 		warn("lseek %s", _PATH_SCORE);
 	i = read(dbfd, (char *)&total, sizeof(total));
