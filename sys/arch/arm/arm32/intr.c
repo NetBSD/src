@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.23.2.2 2008/01/09 01:45:11 matt Exp $	*/
+/*	$NetBSD: intr.c,v 1.23.2.3 2008/01/28 18:29:04 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.2.2 2008/01/09 01:45:11 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.2.3 2008/01/28 18:29:04 matt Exp $");
 
 #include "opt_irqstats.h"
 
@@ -52,89 +52,10 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.23.2.2 2008/01/09 01:45:11 matt Exp $");
 #include <machine/intr.h>
 #include <machine/cpu.h>
 
-#include <net/netisr.h>
-
 #include <arm/arm32/machdep.h>
  
-static u_int spl_smasks[_SPL_LEVELS];
-
-/* Eventually these will become macros */
-
-#ifdef __HAVE_FAST_SOFTINTS
-/* Generate soft interrupt counts if IRQSTATS is defined */
-/* Prototypes */
-static void clearsoftintr(u_int); 
- 
-static u_int soft_interrupts = 0;
-#define	SI_SOFTMASK(si)	(1U << (si))
-
-static inline void
-clearsoftintr(u_int intrmask)
-{
-	atomic_clear_bit(&soft_interrupts, intrmask);
-}
-
-void
-_setsoftintr(int si)
-{
-	atomic_set_bit(&soft_interrupts, SI_SOFTMASK(si));
-}
-
-/* Handle software interrupts */
-
-void
-dosoftints(void)
-{
-	u_int softints;
-	int s;
-
-	softints = soft_interrupts & spl_smasks[curcpu()->ci_cpl];
-	if (softints == 0) return;
-
-	/*
-	 * Serial software interrupts
-	 */
-	if (softints & SI_SOFTMASK(SI_SOFTSERIAL)) {
-		s = splsoftserial();
-		clearsoftintr(SI_SOFTMASK(SI_SOFTSERIAL));
-		softintr_dispatch(SI_SOFTSERIAL);
-		(void)splx(s);
-	}
-
-	/*
-	 * Network software interrupts
-	 */
-	if (softints & SI_SOFTMASK(SI_SOFTNET)) {
-		s = splsoftnet();
-		clearsoftintr(SI_SOFTMASK(SI_SOFTNET));
-		softintr_dispatch(SI_SOFTNET);
-		(void)splx(s);
-	}
-
-	/*
-	 * Block software interrupts
-	 */
-	if (softints & SI_SOFTMASK(SI_SOFTBIO)) {
-		s = splsoftbio();
-		clearsoftintr(SI_SOFTMASK(SI_SOFTBIO));
-		softintr_dispatch(SI_SOFTBIO);
-		(void)splx(s);
-	}
-
-	/*
-	 * Software clock interrupts
-	 */
-	if (softints & SI_SOFTMASK(SI_SOFTCLOCK)) {
-		s = splsoftclock();
-		clearsoftintr(SI_SOFTMASK(SI_SOFTCLOCK));
-		softintr_dispatch(SI_SOFTCLOCK);
-		(void)splx(s);
-	}
-}
-#endif
-
-u_int spl_masks[_SPL_LEVELS + 1];
-int safepri = _SPL_0;
+u_int spl_masks[NIPL];
+int safepri = IPL_NONE;
 
 extern u_int irqmasks[];
 
@@ -143,52 +64,15 @@ set_spl_masks(void)
 {
 	int loop;
 
-	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
+	for (loop = 0; loop < NIPL; ++loop) {
 		spl_masks[loop] = 0xffffffff;
-		spl_smasks[loop] = 0;
 	}
 
-	spl_masks[_SPL_VM]         = irqmasks[IPL_VM];
-	spl_masks[_SPL_SCHED]      = irqmasks[IPL_SCHED];
-	spl_masks[_SPL_HIGH]       = irqmasks[IPL_HIGH];
-	spl_masks[_SPL_LEVELS]     = 0;
+	spl_masks[IPL_VM]	= irqmasks[IPL_VM];
+	spl_masks[IPL_SCHED]	= irqmasks[IPL_SCHED];
+	spl_masks[IPL_HIGH]	= irqmasks[IPL_HIGH];
+	spl_masks[IPL_NONE]	= 0;
 
-	spl_smasks[_SPL_0] = 0xffffffff;
-#ifdef __HAVE_FAST_SOFTINTS
-	for (loop = 0; loop < _SPL_SOFTSERIAL; ++loop)
-		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTSERIAL);
-	for (loop = 0; loop < _SPL_SOFTNET; ++loop)
-		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTNET);
-	for (loop = 0; loop < _SPL_SOFTCLOCK; ++loop)
-		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTCLOCK);
-	for (loop = 0; loop < _SPL_SOFTBIO; ++loop)
-		spl_smasks[loop] |= SI_SOFTMASK(SI_SOFTBIO);
-#endif
-}
-
-static const int ipl_to_spl_map[] = {
-	[IPL_NONE] = 1 + _SPL_0,
-	[IPL_SOFTCLOCK] = 1 + _SPL_SOFTCLOCK,
-	[IPL_SOFTBIO] = 1 + _SPL_SOFTBIO,
-	[IPL_SOFTNET] = 1 + _SPL_SOFTNET,
-	[IPL_SOFTSERIAL] = 1 + _SPL_SOFTSERIAL,
-	[IPL_VM] = 1 + _SPL_VM,
-	[IPL_SCHED] = 1 + _SPL_SCHED,
-	[IPL_HIGH] = 1 + _SPL_HIGH,
-};
-
-int
-ipl_to_spl(ipl_t ipl)
-{
-	int spl;
-
-	KASSERT(ipl < __arraycount(ipl_to_spl_map));
-	KASSERT(ipl_to_spl_map[ipl]);
-
-	spl = ipl_to_spl_map[ipl] - 1;
-	KASSERT(spl < 0x100);
-
-	return spl;
 }
 
 #ifdef DIAGNOSTIC
@@ -197,10 +81,8 @@ dump_spl_masks(void)
 {
 	int loop;
 
-	for (loop = 0; loop < _SPL_LEVELS; ++loop) {
-		printf("spl_masks[%d]=%08x splsmask[%d]=%08x\n", loop,
-		    spl_masks[loop], loop, spl_smasks[loop]);
-	}
+	for (loop = 0; loop < NIPL; ++loop)
+		printf("spl_masks[%d]=%08x\n", loop, spl_masks[loop]);
 }
 #endif
 

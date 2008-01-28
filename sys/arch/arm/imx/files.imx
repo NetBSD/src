@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx,v 1.1.2.2 2007/09/11 02:32:26 matt Exp $
+#	files.imx,v 1.1.2.2 2007/09/11 02:32:26 matt Exp
 #
 # Configuration info for the Freescale i.MX31
 #
@@ -20,7 +20,7 @@ file	arch/arm/imx/imx31_ahb.c		ahb
 
 # iMX AdVanced Interrupt Controller
 include "arch/arm/pic/files.pic"
-device	avic
+device	avic: pic
 attach	avic at ahb
 file	arch/arm/imx/imx31_icu.c		avic		needs-flag
 file	arch/arm/arm32/irq_dispatch.S

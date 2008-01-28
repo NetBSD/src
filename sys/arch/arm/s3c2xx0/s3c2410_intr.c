@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2410_intr.c,v 1.6.52.1 2008/01/09 01:45:22 matt Exp $ */
+/* $NetBSD: s3c2410_intr.c,v 1.6.52.2 2008/01/28 18:29:08 matt Exp $ */
 
 /*
  * Copyright (c) 2003  Genetec corporation.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.6.52.1 2008/01/09 01:45:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2410_intr.c,v 1.6.52.2 2008/01/28 18:29:08 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,8 +140,7 @@ s3c2410_irq_handler(struct clockframe *frame)
 	}
 
 #ifdef __HAVE_FAST_SOFTINTS
-	if (get_pending_softint())
-		s3c2xx0_do_pending(1);
+	cpu_dosoftints();
 #endif
 }
 

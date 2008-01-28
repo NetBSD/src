@@ -34,7 +34,7 @@
 #include "opt_omap.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.4 2007/11/05 18:23:12 matt Exp $");
+__KERNEL_RCSID(0, "omap2430_intr.c,v 1.1.2.4 2007/11/05 18:23:12 matt Exp");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.4 2007/11/05 18:23:12 matt E
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/atomic.h>
-#include <arm/softintr.h>
 #include <arm/omap/omap2430reg.h>
 #include <arm/omap/omap2430reg.h>
 
@@ -69,14 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: omap2430_intr.c,v 1.1.2.4 2007/11/05 18:23:12 matt E
 #define	GPIO3_BASE	GPIO3_BASE_2420
 #define	GPIO4_BASE	GPIO4_BASE_2420
 #endif
-
-#define	IRQ_SOFTSERIAL	M_IRQ_9
-#define	IRQ_SOFTCLOCK	M_IRQ_22
-#define	IRQ_SOFTNET	M_IRQ_49
-#define	IRQ_SOFT	M_IRQ_95
-
-#define	SOFTIPL_MASK	(__BIT(IPL_SOFT)|__BIT(IPL_SOFTCLOCK)|\
-			 __BIT(IPL_SOFTNET)|__BIT(IPL_SOFTSERIAL))
 
 struct intrsource {
 	struct evcnt is_ev;
@@ -110,38 +101,6 @@ static struct intrgroup {
 #ifdef OMAP_2430
 	[7].ig_sources[ 0 ... 31 ].is_group = 7,
 #endif
-	[IRQ_SOFTSERIAL/32].ig_sources[IRQ_SOFTSERIAL&31] = {
-		.is_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL,
-					   "soft serial", "intr"),
-		.is_ipl = IPL_SOFTSERIAL,
-		.is_func = (int (*)(void *)) softintr_dispatch,
-		.is_arg = (void *) SI_SOFTSERIAL,
-		.is_group = IRQ_SOFTSERIAL/32,
-	},
-	[IRQ_SOFTCLOCK/32].ig_sources[IRQ_SOFTCLOCK&31] = {
-		.is_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL,
-					   "soft clock", "intr"),
-		.is_ipl = IPL_SOFTCLOCK,
-		.is_func = (int (*)(void *)) softintr_dispatch,
-		.is_arg = (void *) SI_SOFTCLOCK,
-		.is_group = IRQ_SOFTCLOCK/32,
-	},
-	[IRQ_SOFTNET/32].ig_sources[IRQ_SOFTNET&31] = {
-		.is_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL,
-					   "soft net", "intr"),
-		.is_ipl = IPL_SOFTNET,
-		.is_func = (int (*)(void *)) softintr_dispatch,
-		.is_arg = (void *) SI_SOFTNET,
-		.is_group = IRQ_SOFTNET/32,
-	},
-	[IRQ_SOFT/32].ig_sources[IRQ_SOFT&31] = {
-		.is_ev = EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL,
-					   "soft", "intr"),
-		.is_ipl = IPL_SOFT,
-		.is_func = (int (*)(void *)) softintr_dispatch,
-		.is_arg = (void *) SI_SOFT,
-		.is_group = IRQ_SOFT/32,
-	},
 };
 
 volatile uint32_t pending_ipls;
@@ -484,8 +443,7 @@ deliver_irqs(register_t psw, int ipl, void *frame)
 #if 0
 		KASSERT(group < 3 || (GPIO_READ(ig, GPIO_IRQSTATUS1) & blocked_irqs) == 0);
 #endif
-		if ((ipl_mask & SOFTIPL_MASK) == 0)
-			unblock_irq(group, blocked_irqs);
+		unblock_irq(group, blocked_irqs);
 	} while (*pending_igroups);
 	/*
 	 * Since there are no more pending interrupts for this IPL,
@@ -554,44 +512,6 @@ splx(int savedipl)
 		restore_interrupts(psw);
 	}
 	curcpu()->ci_cpl = savedipl;
-}
-
-static struct intrsource * const si_to_is[4] = {
-	[SI_SOFTSERIAL] =
-	    &intrgroups[IRQ_SOFTSERIAL / 32].ig_sources[IRQ_SOFTSERIAL & 31],
-	[SI_SOFTCLOCK] =
-	    &intrgroups[IRQ_SOFTCLOCK / 32].ig_sources[IRQ_SOFTCLOCK & 31],
-	[SI_SOFTNET] =
-	    &intrgroups[IRQ_SOFTNET / 32].ig_sources[IRQ_SOFTNET & 31],
-	[SI_SOFT] =
-	    &intrgroups[IRQ_SOFT / 32].ig_sources[IRQ_SOFT & 31],
-};
-
-void
-_setsoftintr(int si)
-{
-	struct intrsource * const is = si_to_is[si];
-	struct intrgroup * const ig = &intrgroups[is->is_group];
-
-	if (__predict_false(curcpu()->ci_cpl < is->is_ipl)) {
-		/*
-		 * If we are less than the desired IPL, raise IPL and dispatch
-		 * it immediately.  This is improbable.
-		 */
-		int s = _splraise(is->is_ipl);
-		softintr_dispatch(si);
-		splx(s);
-	} else {
-		/*
-		 * Mark the software interrupt for delivery.
-		 */
-		register_t psw = disable_interrupts(I32_bit);
-		ig->ig_pending_irqs |= __BIT(is - ig->ig_sources);
-		pending_igroupsbyipl[is->is_ipl] |= __BIT(is->is_group);
-		pending_ipls |= __BIT(is->is_ipl);
-		is->is_marked++;
-		restore_interrupts(psw);
-	}
 }
 
 void
@@ -710,11 +630,6 @@ omap2430_intr_init(bus_space_tag_t memt)
 {
 	int error;
 	int group;
-
-	evcnt_attach_static(&intrgroups[IRQ_SOFTSERIAL/32].ig_sources[IRQ_SOFTSERIAL&31].is_ev);
-	evcnt_attach_static(&intrgroups[IRQ_SOFTCLOCK/32].ig_sources[IRQ_SOFTCLOCK&31].is_ev);
-	evcnt_attach_static(&intrgroups[IRQ_SOFTNET/32].ig_sources[IRQ_SOFTNET&31].is_ev);
-	evcnt_attach_static(&intrgroups[IRQ_SOFT/32].ig_sources[IRQ_SOFT&31].is_ev);
 
 	for (group = 0; group < NIGROUPS; group++)
 		intrgroups[group].ig_memt = memt;

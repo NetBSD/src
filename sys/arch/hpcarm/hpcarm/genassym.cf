@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2001/12/20 01:20:28 thorpej Exp $
+#	genassym.cf,v 1.6 2001/12/20 01:20:28 thorpej Exp
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -35,6 +35,8 @@
 # SUCH DAMAGE.
 
 include <machine/irqhandler.h>
+
+define	NIPL			NIPL
 
 define	IH_FUNC			offsetof(irqhandler_t, ih_func)
 define	IH_ARG			offsetof(irqhandler_t, ih_arg)

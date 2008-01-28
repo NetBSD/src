@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irq.S,v 1.7.2.3 2008/01/09 01:45:19 matt Exp $	*/
+/*	$NetBSD: iomd_irq.S,v 1.7.2.4 2008/01/28 18:29:06 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -183,7 +183,7 @@ irq_entry_continue:
 	 * This would benefit from a special ffs type routine
 	 */
 
-	mov	r9, #(_SPL_LEVELS - 1)
+	mov	r9, #(NIPL - 1)
 	ldr	r7, Lspl_masks
 
 Lfind_highest_ipl:

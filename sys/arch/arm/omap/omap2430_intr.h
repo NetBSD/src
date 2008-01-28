@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2430_intr.h,v 1.1.2.2 2007/11/05 05:06:40 matt Exp $ */
+/*	omap2430_intr.h,v 1.1.2.2 2007/11/05 05:06:40 matt Exp */
 
 /*
  * Define the SDP2430 specific information and then include the generic OMAP
@@ -47,7 +47,6 @@
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
 #include <machine/atomic.h>
-#include <arm/softintr.h>
 
 uint32_t omap_microtimer_read(void);
 uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
@@ -155,12 +154,10 @@ uint32_t omap_microtimer_interval(uint32_t start, uint32_t end);
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-void	_setsoftintr(int);
 
 #define	omap_splx		splx
 #define	omap_splrasise		_splrasise
 #define	omap_spllower		_spllower
-#define	omap_setsoftintr	_setsoftintr
 
 void omap_irq_handler(void *);
 void *omap_intr_establish(int, int, const char *, int (*)(void *), void *);

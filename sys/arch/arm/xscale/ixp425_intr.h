@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_intr.h,v 1.6.52.2 2008/01/09 01:45:27 matt Exp $	*/
+/*	$NetBSD: ixp425_intr.h,v 1.6.52.3 2008/01/28 18:29:10 matt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -44,7 +44,6 @@
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
-#include <arm/cpu.h>
 
 #include <arm/xscale/ixp425reg.h>
 
@@ -58,28 +57,20 @@ ixp425_set_intrmask(void)
 	IXPREG(IXP425_INT_ENABLE) = intr_enabled & IXP425_INT_HWMASK;
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-void ixp425_do_pending(void);
-
-#define INT_SWMASK						\
-	((1U << IXP425_INT_bit31) | (1U << IXP425_INT_bit30) |	\
-	 (1U << IXP425_INT_bit14) | (1U << IXP425_INT_bit11))
-#endif
-
 static inline void __attribute__((__unused__))
-ixp425_splx(int new)
+ixp425_splx(int ipl)
 {
+	extern int ixp425_imask[];
 	extern volatile uint32_t intr_enabled;
 	extern volatile int ixp425_ipending;
-	extern void ixp425_do_pending(void);
 	int oldirqstate, hwpend;
 
 	/* Don't let the compiler re-order this code with preceding code */
 	__insn_barrier();
 
-	set_curcpl(new);
+	set_curcpl(ipl);
 
-	hwpend = (ixp425_ipending & IXP425_INT_HWMASK) & ~new;
+	hwpend = (ixp425_ipending & IXP425_INT_HWMASK) & ~ixp425_imask[ipl];
 	if (hwpend != 0) {
 		oldirqstate = disable_interrupts(I32_bit);
 		intr_enabled |= hwpend;
@@ -88,18 +79,15 @@ ixp425_splx(int new)
 	}
 
 #ifdef __HAVE_FAST_SOFTINTS
-	if ((ixp425_ipending & INT_SWMASK) & ~new)
-		ixp425_do_pending();
+	cpu_dosoftints();
 #endif
 }
 
 static inline int __attribute__((__unused__))
 ixp425_splraise(int ipl)
 {
-	extern int ixp425_imask[];
 	int old = curcpl();
-
-	set_curcpl(old | ixp425_imask[ipl]);
+	set_curcpl(ipl);
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
@@ -110,32 +98,22 @@ ixp425_splraise(int ipl)
 static inline int __attribute__((__unused__))
 ixp425_spllower(int ipl)
 {
-	extern int ixp425_imask[];
 	int old = curcpl();
-
-	ixp425_splx(ixp425_imask[ipl]);
+	ixp425_splx(ipl);
 	return(old);
 }
-
-#endif /* __PROG32 */
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
 #define splx(new)		ixp425_splx(new)
 #define	_spllower(ipl)		ixp425_spllower(ipl)
 #define	_splraise(ipl)		ixp425_splraise(ipl)
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #else
 
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #endif /* ! EVBARM_SPL_NOINLINE */
 

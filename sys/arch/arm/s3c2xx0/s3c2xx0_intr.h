@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2xx0_intr.h,v 1.10.52.2 2008/01/09 01:45:24 matt Exp $ */
+/*	$NetBSD: s3c2xx0_intr.h,v 1.10.52.3 2008/01/28 18:29:08 matt Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -92,9 +92,6 @@ extern volatile int softint_pending;
 extern int s3c2xx0_imask[];
 extern int s3c2xx0_ilevel[];
 
-#ifdef __HAVE_FAST_SOFTINTS
-void s3c2xx0_do_pending(int);
-#endif
 void s3c2xx0_update_intr_masks( int, int );
 
 static inline void
@@ -137,9 +134,7 @@ s3c2xx0_splx(int new)
 	restore_interrupts(psw);
 
 #ifdef __HAVE_FAST_SOFTINTS
-	/* If there are software interrupts to process, do it. */
-	if (get_pending_softint())
-		s3c2xx0_do_pending(0);
+	cpu_dosoftints();
 #endif
 }
 
@@ -169,36 +164,15 @@ s3c2xx0_spllower(int ipl)
 	return(old);
 }
 
-#ifdef __HAVE_FAST_SOFTINTS
-static inline void
-s3c2xx0_setsoftintr(int si)
-{
-
-	atomic_set_bit( (u_int *)__UNVOLATILE(&softint_pending),
-		SI_TO_IRQBIT(si) );
-
-	/* Process unmasked pending soft interrupts. */
-	if (get_pending_softint())
-		s3c2xx0_do_pending(0);
-}
-#endif
-
-
 int	_splraise(int);
 int	_spllower(int);
 void	splx(int);
-#ifdef __HAVE_FAST_SOFTINTS
-void	_setsoftintr(int);
-#endif
 
 #if !defined(EVBARM_SPL_NOINLINE)
 
 #define	splx(new)		s3c2xx0_splx(new)
 #define	_spllower(ipl)		s3c2xx0_spllower(ipl)
 #define	_splraise(ipl)		s3c2xx0_splraise(ipl)
-#if 0
-#define	_setsoftintr(si)	s3c2xx0_setsoftintr(si)
-#endif
 
 #endif	/* !EVBARM_SPL_NOINTR */
 
