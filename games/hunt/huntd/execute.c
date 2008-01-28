@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.4 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: execute.c,v 1.5 2008/01/28 03:23:29 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,14 +32,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: execute.c,v 1.4 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: execute.c,v 1.5 2008/01/28 03:23:29 dholland Exp $");
 #endif /* not lint */
 
 # include	<stdlib.h>
 # include	"hunt.h"
 
 static	void	cloak(PLAYER *);
-static	void	face(PLAYER *, int);
+static	void	turn_player(PLAYER *, int);
 static	void	fire(PLAYER *, int);
 static	void	fire_slime(PLAYER *, int);
 static	void	move_player(PLAYER *, int);
@@ -104,25 +104,25 @@ execute(pp)
 		move_player(pp, LEFTS);
 		break;
 	  case 'H':
-		face(pp, LEFTS);
+		turn_player(pp, LEFTS);
 		break;
 	  case 'j':
 		move_player(pp, BELOW);
 		break;
 	  case 'J':
-		face(pp, BELOW);
+		turn_player(pp, BELOW);
 		break;
 	  case 'k':
 		move_player(pp, ABOVE);
 		break;
 	  case 'K':
-		face(pp, ABOVE);
+		turn_player(pp, ABOVE);
 		break;
 	  case 'l':
 		move_player(pp, RIGHT);
 		break;
 	  case 'L':
-		face(pp, RIGHT);
+		turn_player(pp, RIGHT);
 		break;
 	  case 'f':
 	  case '1':
@@ -324,11 +324,11 @@ move_player(pp, dir)
 }
 
 /*
- * face:
+ * turn_player:
  *	Change the direction the player is facing
  */
 static void
-face(pp, dir)
+turn_player(pp, dir)
 	PLAYER	*pp;
 	int	dir;
 {
