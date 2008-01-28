@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.1.90.1 2007/09/11 18:41:22 matt Exp $ */
+/*	atomic.S,v 1.1.90.1 2007/09/11 18:41:22 matt Exp */
 
 /*
  * Copyright (C) 1994-1997 Mark Brinicombe
@@ -70,7 +70,7 @@ ENTRY(atomic_clear_bit)
 
 #endif	/* ATOMIC_SET_BIT_NONINLINE_REQUIRED */
 
-#ifdef _ARM_ARCH_6
+#if 0 && defined(_ARM_ARCH_6)
 
 #define	ATOMIC_OP(NAME, OP, ARG)	\
 ENTRY_NP(atomic_##NAME##_32)		;\
