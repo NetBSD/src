@@ -1,4 +1,4 @@
-/*	$NetBSD: morse.c,v 1.13 2004/02/13 23:16:11 jsm Exp $	*/
+/*	$NetBSD: morse.c,v 1.14 2008/01/28 06:18:23 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)morse.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morse.c,v 1.13 2004/02/13 23:16:11 jsm Exp $");
+__RCSID("$NetBSD: morse.c,v 1.14 2008/01/28 06:18:23 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,10 +152,10 @@ main(argc, argv)
 			} while (*++argv);
 		} else {
 			char foo[10];	/* All morse chars shorter than this */
-			int isblank, i;
+			int is_blank, i;
 
 			i = 0;
-			isblank = 0;
+			is_blank = 0;
 			while ((ch = getchar()) != EOF) {
 				if (ch == '-' || ch == '.') {
 					foo[i++] = ch;
@@ -167,20 +167,20 @@ main(argc, argv)
 						while ((ch = getchar()) != EOF &&
 						    (ch == '.' || ch == '-'))
 							;
-						isblank = 1;
+						is_blank = 1;
 					}
 				} else if (i) {
 					foo[i] = '\0';
 					decode(foo);
 					i = 0;
-					isblank = 0;
+					is_blank = 0;
 				} else if (isspace(ch)) {
-					if (isblank) {
+					if (is_blank) {
 						/* print whitespace for each double blank */
 						putchar(' ');
-						isblank = 0;
+						is_blank = 0;
 					} else
-						isblank = 1;
+						is_blank = 1;
 				}
 			}
 		}
