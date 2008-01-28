@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.28 2007/12/21 01:03:58 tnn Exp $
+#	$NetBSD: sshd_config,v 1.29 2008/01/28 13:57:02 christos Exp $
 #	$OpenBSD: sshd_config,v 1.75 2007/03/19 01:01:29 djm Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -10,7 +10,6 @@
 # default value.
 
 #Port 22
-Protocol 2
 #AddressFamily any
 #ListenAddress 0.0.0.0
 #ListenAddress ::
