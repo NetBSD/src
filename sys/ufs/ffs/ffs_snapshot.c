@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.60 2008/01/24 17:29:56 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.61 2008/01/28 17:49:06 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.60 2008/01/24 17:29:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.61 2008/01/28 17:49:06 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -164,7 +164,6 @@ si_mount_dtor(void *arg)
 
 	KASSERT(TAILQ_EMPTY(&si->si_snapshots));
 	mutex_destroy(&si->si_lock);
-	lockdestroy(&si->si_vnlock);
 	KASSERT(si->si_snapblklist == NULL);
 	free(si, M_MOUNT);
 }
@@ -448,6 +447,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		VI_LOCK(xvp);
 		if ((xvp->v_iflag & VI_XLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
+		    VTOI(xvp) == NULL ||
 		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
 			VI_UNLOCK(xvp);
 			continue;
@@ -1462,9 +1462,10 @@ ffs_snapremove(struct vnode *vp)
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
 			lockmgr(lkp, LK_DRAIN, NULL);
-			lockmgr(lkp, LK_RELEASE, NULL);
 			fscow_disestablish(mp, ffs_copyonwrite, devvp);
 			mutex_enter(&si->si_lock);
+			lockmgr(lkp, LK_RELEASE, NULL);
+			lockdestroy(lkp);
 		}
 		si->si_gen++;
 		mutex_exit(&si->si_lock);
