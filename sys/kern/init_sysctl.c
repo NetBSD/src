@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.120 2008/01/23 15:04:39 elad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.121 2008/01/28 20:05:21 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.120 2008/01/23 15:04:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.121 2008/01/28 20:05:21 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -1310,23 +1310,31 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 */
 	mutex_enter(&filelist_lock);
 	for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
+	    	np = LIST_NEXT(fp, f_list);
+	    	mutex_enter(&fp->f_lock);
+	    	if (fp->f_count == 0) {
+		    	mutex_exit(&fp->f_lock);
+	    		continue;
+		}
 		/*
 		 * XXX Need to prevent that from being an alternative way
 		 * XXX to getting process information.
 		 */
 		if (kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
-		    	np = LIST_NEXT(fp, f_list);
+		    	mutex_exit(&fp->f_lock);
 			continue;
 		}
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
 			mutex_exit(&filelist_lock);
 			error = ENOMEM;
+		    	mutex_exit(&fp->f_lock);
 			break;
 		}
 		memcpy(&fbuf, fp, sizeof(fbuf));
 		LIST_INSERT_AFTER(fp, dp, f_list);
+	    	mutex_exit(&fp->f_lock);
 		mutex_exit(&filelist_lock);
 		error = dcopyout(l, &fbuf, where, sizeof(fbuf));
 		if (error) {
@@ -1915,7 +1923,7 @@ static int
 sysctl_kern_file2(SYSCTLFN_ARGS)
 {
 	struct proc *p;
-	struct file *fp;
+	struct file *fp, *tp, *np;
 	struct filedesc *fd;
 	struct kinfo_file kf;
 	char *dp;
@@ -1950,42 +1958,55 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		sysctl_unlock();
+		/*
+		 * allocate dummy file descriptor to make position in list
+		 */
+		if ((tp = fgetdummy()) == NULL) {
+		 	sysctl_relock();
+			return ENOMEM;
+		}
 		mutex_enter(&filelist_lock);
-		LIST_FOREACH(fp, &filehead, f_list) {
-			/*
-			 * XXX Need to prevent that from being an alternative
-			 * XXX way for getting process information.
-			 */
-			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
-				continue;
+		for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
+			np = LIST_NEXT(fp, f_list);
 			mutex_enter(&fp->f_lock);
 			if (fp->f_count == 0) {
 				mutex_exit(&fp->f_lock);
 				continue;
 			}
-			FILE_USE(fp);
+			/*
+			 * XXX Need to prevent that from being an alternative
+			 * XXX way for getting process information.
+			 */
+			if (kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
+				mutex_exit(&fp->f_lock);
+				continue;
+			}
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
+				LIST_INSERT_AFTER(fp, tp, f_list);
+				mutex_exit(&fp->f_lock);
+				mutex_exit(&filelist_lock);
 				error = dcopyout(l, &kf, dp, out_size);
+				mutex_enter(&filelist_lock);
+				np = LIST_NEXT(tp, f_list);
+				LIST_REMOVE(tp, f_list);
 				if (error) {
-					mutex_enter(&filelist_lock);
-					FILE_UNUSE(fp, NULL);
 					break;
 				}
 				dp += elem_size;
 				len -= elem_size;
+			} else {
+				mutex_exit(&fp->f_lock);
 			}
 			if (elem_count > 0) {
 				needed += elem_size;
 				if (elem_count != INT_MAX)
 					elem_count--;
 			}
-			/* XXXAD can't work?? */
-			mutex_enter(&filelist_lock);
-			FILE_UNUSE(fp, NULL);
 		}
 		mutex_exit(&filelist_lock);
+		fputdummy(tp);
 		sysctl_relock();
 		break;
 	case KERN_FILE_BYPID:
@@ -1993,7 +2014,6 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			/* -1 means all processes */
 			return (EINVAL);
 		sysctl_unlock();
-		/* XXX Why not use pfind()? */
 		mutex_enter(&proclist_lock);
 		LIST_FOREACH(p, &allproc, p_list) {
 			if (p->p_stat == SIDL) {
@@ -2271,12 +2291,16 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				error = dcopyout(l, p, &dp->kp_proc,
 				    sizeof(struct proc));
 				mutex_enter(&proclist_lock);
-				if (error)
+				if (error) {
+					rw_exit(&p->p_reflock);
 					goto cleanup;
+				}
 				error = dcopyout(l, eproc, &dp->kp_eproc,
 				    sizeof(*eproc));
-				if (error)
+				if (error) {
+					rw_exit(&p->p_reflock);
 					goto cleanup;
+				}
 				dp++;
 				buflen -= sizeof(struct kinfo_proc);
 			} else {
@@ -2295,8 +2319,10 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				error = dcopyout(l, kproc2, dp2,
 				    min(sizeof(*kproc2), elem_size));
 				mutex_enter(&proclist_lock);
-				if (error)
+				if (error) {
+					rw_exit(&p->p_reflock);
 					goto cleanup;
+				}
 				dp2 += elem_size;
 				buflen -= elem_size;
 				elem_count--;
