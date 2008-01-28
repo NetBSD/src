@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.11 2007/04/22 02:09:02 mouse Exp $	*/
+/*	$NetBSD: monster.c,v 1.12 2008/01/28 03:39:31 dholland Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.11 2007/04/22 02:09:02 mouse Exp $");
+__RCSID("$NetBSD: monster.c,v 1.12 2008/01/28 03:39:31 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -130,7 +130,7 @@ createmonster(mon)
 	if (mon < 1 || mon > MAXMONST + 8) {	/* check for monster number
 						 * out of bounds */
 		beep();
-		lprintf("\ncan't createmonst(%d)\n", (long) mon);
+		lprintf("\ncan't createmonst(%ld)\n", (long) mon);
 		nap(3000);
 		return;
 	}
@@ -623,7 +623,7 @@ ws:		direct(x, fullhit(i), p, i);	/* sleep	 */
 		return;
 
 	default:
-		lprintf("  spell %d not available!", (long) x);
+		lprintf("  spell %ld not available!", (long) x);
 		beep();
 		return;
 	};

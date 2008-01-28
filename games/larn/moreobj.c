@@ -1,4 +1,4 @@
-/*	$NetBSD: moreobj.c,v 1.6 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: moreobj.c,v 1.7 2008/01/28 03:39:31 dholland Exp $	*/
 
 /*
  * moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -9,7 +9,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moreobj.c,v 1.6 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: moreobj.c,v 1.7 2008/01/28 03:39:31 dholland Exp $");
 #endif				/* not lint */
 #include <stdlib.h>
 #include <unistd.h>
@@ -247,7 +247,7 @@ ochest()
 					beep();
 					i = rnd(10);
 					lastnum = 281;	/* in case he dies */
-					lprintf("\nYou suffer %d hit points damage!", (long) i);
+					lprintf("\nYou suffer %ld hit points damage!", (long) i);
 					checkloss(i);
 					switch (rnd(10)) {	/* see if he gets a
 								 * curse */
@@ -347,7 +347,7 @@ ofountain()
 			lprcat("wash yourself");
 			if (rnd(100) < 11) {
 				x = rnd((level << 2) + 2);
-				lprintf("\nOh no!  The water was foul!  You suffer %d hit points!", (long) x);
+				lprintf("\nOh no!  The water was foul!  You suffer %ld hit points!", (long) x);
 				lastnum = 273;
 				losehp(x);
 				bottomline();
@@ -424,14 +424,14 @@ fntchange(how)
 	case 7:
 		j = rnd(level + 1);
 		if (how < 0) {
-			lprintf("You lose %d hit point", (long) j);
+			lprintf("You lose %ld hit point", (long) j);
 			if (j > 1)
 				lprcat("s!");
 			else
 				lprc('!');
 			losemhp((int) j);
 		} else {
-			lprintf("You gain %d hit point", (long) j);
+			lprintf("You gain %ld hit point", (long) j);
 			if (j > 1)
 				lprcat("s!");
 			else
@@ -444,14 +444,14 @@ fntchange(how)
 	case 8:
 		j = rnd(level + 1);
 		if (how > 0) {
-			lprintf("You just gained %d spell", (long) j);
+			lprintf("You just gained %ld spell", (long) j);
 			raisemspells((int) j);
 			if (j > 1)
 				lprcat("s!");
 			else
 				lprc('!');
 		} else {
-			lprintf("You just lost %d spell", (long) j);
+			lprintf("You just lost %ld spell", (long) j);
 			losemspells((int) j);
 			if (j > 1)
 				lprcat("s!");
@@ -464,14 +464,14 @@ fntchange(how)
 	case 9:
 		j = 5 * rnd((level + 1) * (level + 1));
 		if (how < 0) {
-			lprintf("You just lost %d experience point", (long) j);
+			lprintf("You just lost %ld experience point", (long) j);
 			if (j > 1)
 				lprcat("s!");
 			else
 				lprc('!');
 			loseexperience((long) j);
 		} else {
-			lprintf("You just gained %d experience point", (long) j);
+			lprintf("You just gained %ld experience point", (long) j);
 			if (j > 1)
 				lprcat("s!");
 			else

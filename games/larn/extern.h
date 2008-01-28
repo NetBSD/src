@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.5 2006/05/11 10:23:24 mrg Exp $	*/
+/*	$NetBSD: extern.h,v 1.6 2008/01/28 03:39:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -131,7 +131,7 @@ int lgetchar(void);
 void scbr(void);
 void sncbr(void);
 void newgame(void);
-void lprintf(const char *, ...);
+void lprintf(const char *, ...) __attribute__((__format__(__printf__, 1, 2)));
 void lprint(long);
 void lwrite(char *, int);
 long lgetc(void);

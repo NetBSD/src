@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.13 2007/04/22 02:09:02 mouse Exp $	*/
+/*	$NetBSD: scores.c,v 1.14 2008/01/28 03:39:31 dholland Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.13 2007/04/22 02:09:02 mouse Exp $");
+__RCSID("$NetBSD: scores.c,v 1.14 2008/01/28 03:39:31 dholland Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -268,7 +268,7 @@ winshou()
 				if (p->order == i) {
 					if (p->score) {
 						count++;
-						lprintf("%10d     %2d      %5d Mobuls   %s \n",
+						lprintf("%10ld     %2ld      %5ld Mobuls   %s \n",
 							(long) p->score, (long) p->hardlev, (long) p->timeused, p->who);
 					}
 					break;
@@ -305,7 +305,7 @@ shou(x)
 				if (sco[j].order == i) {
 					if (sco[j].score) {
 						count++;
-						lprintf("%10d     %2d       %s ",
+						lprintf("%10ld     %2ld       %s ",
 							(long) sco[j].score, (long) sco[j].hardlev, sco[j].who);
 						if (sco[j].what < 256)
 							lprintf("killed by a %s", monster[sco[j].what].name);
@@ -736,7 +736,7 @@ diedsub(x)
 	int             x;
 {
 	char   ch, *mod;
-	lprintf("Score: %d, Diff: %d,  %s ", (long) c[GOLD], (long) c[HARDGAME], logname);
+	lprintf("Score: %ld, Diff: %ld,  %s ", (long) c[GOLD], (long) c[HARDGAME], logname);
 	if (x < 256) {
 		ch = *monster[x].name;
 		if (ch == 'a' || ch == 'e' || ch == 'i' || ch == 'o' || ch == 'u')
@@ -775,7 +775,7 @@ diedlog()
 		p = ctime(&logg.diedtime);
 		p[16] = '\n';
 		p[17] = 0;
-		lprintf("Score: %d, Diff: %d,  %s %s on %d at %s", (long) (logg.score), (long) (logg.diff), logg.who, logg.what, (long) (logg.cavelev), p + 4);
+		lprintf("Score: %ld, Diff: %ld,  %s %s on %ld at %s", (long) (logg.score), (long) (logg.diff), logg.who, logg.what, (long) (logg.cavelev), p + 4);
 #ifdef EXTRA
 		if (logg.moves <= 0)
 			logg.moves = 1;
