@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.25 2006/06/07 09:21:06 jnemeth Exp $
+#	$NetBSD: Makefile,v 1.26 2008/01/28 07:03:58 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
 
-WARNS=	4
 PROG=	atc
 CPPFLAGS+=-DBSD -I${.CURDIR} -I. -DYY_NO_UNPUT
 SRCS=	extern.c grammar.y graphics.c input.c lex.l list.c log.c \
