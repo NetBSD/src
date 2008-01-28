@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.7 2008/01/04 21:17:44 ad Exp $ */
+/* $NetBSD: coretemp.c,v 1.8 2008/01/28 20:19:06 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.7 2008/01/04 21:17:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.8 2008/01/28 20:19:06 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -76,7 +76,7 @@ coretemp_register(struct cpu_info *ci)
 	if ((regs[0] & 0x1) != 1)
 		return;
 
-	sc = kmem_zalloc(sizeof(*sc), KM_NOSLEEP);
+	sc = kmem_zalloc(sizeof(struct coretemp_softc), KM_NOSLEEP);
 	if (!sc)
 		return;
 
@@ -100,8 +100,7 @@ coretemp_register(struct cpu_info *ci)
 		if (msr < 0x39) {
 			aprint_debug("%s: not supported (Intel errata AE18), "
 			    "try updating your BIOS\n", sc->sc_dvname);
-			kmem_free(sc, sizeof(*sc));
-			return;
+			goto bad;
 		}
 	}
 
@@ -133,7 +132,7 @@ coretemp_register(struct cpu_info *ci)
 	sc->sc_sme = sysmon_envsys_create();
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
-		return;
+		goto bad;
 	}
 
 	/*
@@ -147,8 +146,13 @@ coretemp_register(struct cpu_info *ci)
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dvname);
 		sysmon_envsys_destroy(sc->sc_sme);
-		kmem_free(sc, sizeof(*sc));
+		goto bad;
 	}
+
+	return;
+
+bad:
+	kmem_free(sc, sizeof(struct coretemp_softc));
 }
 
 static void
