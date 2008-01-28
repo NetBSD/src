@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.6 2008/01/28 03:39:30 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.7 2008/01/28 05:38:53 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -81,7 +81,7 @@ void seemagic(int);
 void seepage(void);
 
 /* fortune.c */
-char *fortune(void);
+const char *fortune(void);
 
 /* global.c */
 void raiselevel(void);
@@ -144,14 +144,14 @@ int lopen(char *);
 int lappend(char *);
 void lrclose(void);
 void lwclose(void);
-void lprcat(char *);
+void lprcat(const char *);
 void cursor(int, int);
 void cursors(void);
 void init_term(void);
 void cl_line(int, int);
 void cl_up(int, int);
 void cl_dn(int, int);
-void standout(char *);
+void standout(const char *);
 void set_score_output(void);
 void lflush(void);
 int xputchar(int);
@@ -170,7 +170,7 @@ void showwield(void);
 void showread(void);
 void showeat(void);
 void showquaff(void);
-void show1(int, char *[]);
+void show1(int, const char *[]);
 void show3(int);
 void randmonst(void);
 void parse(void);
@@ -184,7 +184,7 @@ void dropobj(void);
 void readscr(void);
 void eatcookie(void);
 void quaff(void);
-int whatitem(char *);
+int whatitem(const char *);
 unsigned long readnum(long);
 void szero(char *);
 
@@ -198,11 +198,11 @@ void loseint(void);
 int isconfuse(void);
 int nospell(int, int);
 int fullhit(int);
-void direct(int, int, char *, int);
-void godirect(int, int, char *, int, int);
+void direct(int, int, const char *, int);
+void godirect(int, int, const char *, int, int);
 void ifblind(int, int);
 void tdirect(int);
-void omnidirect(int, int, char *);
+void omnidirect(int, int, const char *);
 int vxy(int *, int *);
 void dirpoly(int);
 void hitmonster(int, int);

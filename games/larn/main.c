@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.19 2008/01/28 03:39:31 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2008/01/28 05:38:54 dholland Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.19 2008/01/28 03:39:31 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -576,7 +576,7 @@ showquaff()
 void
 show1(idx, str2)
 	int    idx;
-	char  *str2[];
+	const char  *str2[];
 {
 	lprintf("\n%c)   %s", idx + 'a', objectname[iven[idx]]);
 	if (str2 != 0 && str2[ivenarg[idx]][0] != 0)
@@ -584,15 +584,14 @@ show1(idx, str2)
 }
 
 void
-show3(index)
-	int    index;
+show3(int indx)
 {
-	switch (iven[index]) {
+	switch (iven[indx]) {
 	case OPOTION:
-		show1(index, potionname);
+		show1(indx, potionname);
 		break;
 	case OSCROLL:
-		show1(index, scrollname);
+		show1(indx, scrollname);
 		break;
 
 	case OLARNEYE:
@@ -606,20 +605,20 @@ show3(index)
 	case OCOOKIE:
 	case OSAPPHIRE:
 	case ONOTHEFT:
-		show1(index, (char **) 0);
+		show1(indx, NULL);
 		break;
 
 	default:
-		lprintf("\n%c)   %s", index + 'a', objectname[iven[index]]);
-		if (ivenarg[index] > 0)
-			lprintf(" + %ld", (long) ivenarg[index]);
-		else if (ivenarg[index] < 0)
-			lprintf(" %ld", (long) ivenarg[index]);
+		lprintf("\n%c)   %s", indx + 'a', objectname[iven[indx]]);
+		if (ivenarg[indx] > 0)
+			lprintf(" + %ld", (long) ivenarg[indx]);
+		else if (ivenarg[indx] < 0)
+			lprintf(" %ld", (long) ivenarg[indx]);
 		break;
 	}
-	if (c[WIELD] == index)
+	if (c[WIELD] == indx)
 		lprcat(" (weapon in hand)");
-	if ((c[WEAR] == index) || (c[SHIELD] == index))
+	if ((c[WEAR] == indx) || (c[SHIELD] == indx))
 		lprcat(" (being worn)");
 	if (++srcount >= 22) {
 		srcount = 0;
@@ -1105,7 +1104,7 @@ void
 dropobj()
 {
 	int    i;
-	char  *p;
+	unsigned char  *p;
 	long            amt;
 	p = &item[playerx][playery];
 	while (1) {
@@ -1201,10 +1200,11 @@ readscr()
  *	subroutine to eat a cookie one is carrying
  */
 void
-eatcookie()
+eatcookie(void)
 {
-	int    i;
-	char           *p;
+	const char *p;
+	int i;
+
 	while (1) {
 		if ((i = whatitem("eat")) == '\33')
 			return;
@@ -1268,8 +1268,7 @@ quaff()
 	function to ask what player wants to do
  */
 int
-whatitem(str)
-	char           *str;
+whatitem(const char *str)
 {
 	int             i;
 	cursors();

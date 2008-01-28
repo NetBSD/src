@@ -1,9 +1,9 @@
-/*	$NetBSD: savelev.c,v 1.4 1997/10/18 20:03:45 christos Exp $	*/
+/*	$NetBSD: savelev.c,v 1.5 2008/01/28 05:38:54 dholland Exp $	*/
 
 /* savelev.c		 Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: savelev.c,v 1.4 1997/10/18 20:03:45 christos Exp $");
+__RCSID("$NetBSD: savelev.c,v 1.5 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -15,7 +15,7 @@ void
 savelevel()
 {
 	struct cel *pcel;
-	char  *pitem, *pknow, *pmitem;
+	u_char  *pitem, *pknow, *pmitem;
 	short *phitp, *piarg;
 	struct cel *pecel;
 	pcel = &cell[level * MAXX * MAXY];	/* pointer to this level's
@@ -43,7 +43,7 @@ void
 getlevel()
 {
 	struct cel *pcel;
-	char  *pitem, *pknow, *pmitem;
+	u_char  *pitem, *pknow, *pmitem;
 	short *phitp, *piarg;
 	struct cel *pecel;
 	pcel = &cell[level * MAXX * MAXY];	/* pointer to this level's

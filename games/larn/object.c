@@ -1,10 +1,10 @@
-/*	$NetBSD: object.c,v 1.11 2008/01/28 03:39:31 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.12 2008/01/28 05:38:54 dholland Exp $	*/
 
 /* object.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: object.c,v 1.11 2008/01/28 03:39:31 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.12 2008/01/28 05:38:54 dholland Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -498,13 +498,12 @@ lookforobject()
 	function to say what object we found and ask if player wants to take it
  */
 void
-finditem(itm)
-	int             itm;
+finditem(int theitem)
 {
 	int             tmp, i;
-	lprintf("\n\nYou have found %s ", objectname[itm]);
+	lprintf("\n\nYou have found %s ", objectname[theitem]);
 	tmp = iarg[playerx][playery];
-	switch (itm) {
+	switch (theitem) {
 	case ODIAMOND:
 	case ORUBY:
 	case OEMERALD:
@@ -528,7 +527,7 @@ finditem(itm)
 		i = lgetchar();
 	if (i == 't') {
 		lprcat("take");
-		if (take(itm, tmp) == 0)
+		if (take(theitem, tmp) == 0)
 			forget();
 		return;
 	}
@@ -1217,9 +1216,10 @@ readbook(lev)
 }
 
 void
-ocookie()
+ocookie(void)
 {
-	char           *p;
+	const char *p;
+
 	lprcat("\nDo you (e) eat it, (t) take it");
 	iopts();
 	while (1)
