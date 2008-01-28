@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 2006/08/19 22:41:27 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.22 2008/01/28 02:47:17 rumble Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -203,6 +203,12 @@ md_pre_update()
 void
 md_init()
 {
+}
+
+void
+md_init_set_status(int minimal)
+{
+	(void)minimal;
 }
 
 int
