@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_osm.c,v 1.25 2007/03/04 06:01:49 christos Exp $	*/
+/*	$NetBSD: aic7xxx_osm.c,v 1.26 2008/01/28 16:08:37 macallan Exp $	*/
 
 /*
  * Bus independent FreeBSD shim for the aic7xxx based adaptec SCSI controllers
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.25 2007/03/04 06:01:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx_osm.c,v 1.26 2008/01/28 16:08:37 macallan Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -623,6 +623,7 @@ ahc_execute_scb(void *arg, bus_dma_segment_t *dm_segs, int nsegments)
 	/*
 	 * If we can't use interrupts, poll for completion
 	 */
+
 	SC_DEBUG(xs->xs_periph, SCSIPI_DB3, ("cmd_poll\n"));
 	do {
 		if (ahc_poll(ahc, xs->timeout)) {
@@ -1048,8 +1049,7 @@ ahc_detach(struct device *self, int flags)
 	if (rv == 0 && ahc->sc_child_b != NULL)
 		rv = config_detach(ahc->sc_child_b, flags);
 
-	shutdownhook_disestablish(ahc->shutdown_hook);
-
+	pmf_device_deregister(self);
 	ahc_free(ahc);
 
 	return (rv);

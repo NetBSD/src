@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.124 2007/03/04 06:01:48 christos Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.125 2008/01/28 16:08:37 macallan Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.124 2007/03/04 06:01:48 christos Exp $
+ * $Id: aic7xxx.c,v 1.125 2008/01/28 16:08:37 macallan Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.124 2007/03/04 06:01:48 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.125 2008/01/28 16:08:37 macallan Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -4885,9 +4885,6 @@ ahc_init(struct ahc_softc *ahc)
 			ahc_delay(100);
 		ahc_unpause(ahc);
 	}
-
-	/* We have to wait until after any system dumps... */
-	ahc->shutdown_hook = shutdownhook_establish(ahc_shutdown, ahc);
 
 	return (0);
 }
