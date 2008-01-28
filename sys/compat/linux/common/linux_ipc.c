@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.42 2007/12/20 23:02:54 dsl Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.43 2008/01/28 14:05:32 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.42 2007/12/20 23:02:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.43 2008/01/28 14:05:32 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.42 2007/12/20 23:02:54 dsl Exp $");
 #include <sys/msg.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -480,47 +481,50 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 	struct linux_shmid64_ds ls64;
 	struct linux_shminfo64 lsi64;
 	struct linux_shm_info lsi;
-	int error, i, cmd;
+	int error, i, cmd, shmid;
 
+	shmid = SCARG(uap, shmid);
 	cmd = SCARG(uap, cmd);
+
 	switch (cmd) {
 	case LINUX_IPC_STAT:
 	case LINUX_SHM_STAT:
-		error = shmctl1(l, SCARG(uap, shmid), IPC_STAT, &bs);
+		if (cmd == LINUX_SHM_STAT) {
+			shmid = IXSEQ_TO_IPCID(shmid, shmsegs[shmid].shm_perm);
+			retval[0] = shmid;
+		}
+		error = shmctl1(l, shmid, IPC_STAT, &bs);
 		if (error != 0)
 			return error;
 		bsd_to_linux_shmid_ds(&bs, &ls);
-		if (cmd == LINUX_SHM_STAT)
-			retval[0] = IXSEQ_TO_IPCID(bs.shm_perm._key,
-			    bs.shm_perm);
 		return copyout(&ls, SCARG(uap, buf), sizeof ls);
 
 	case LINUX_IPC_STAT | LINUX_IPC_64:
 	case LINUX_SHM_STAT | LINUX_IPC_64:
-		error = shmctl1(l, SCARG(uap, shmid), IPC_STAT, &bs);
+		if (cmd == (LINUX_SHM_STAT | LINUX_IPC_64)) {
+			shmid = IXSEQ_TO_IPCID(shmid, shmsegs[shmid].shm_perm);
+			retval[0] = shmid;
+		}
+		error = shmctl1(l, shmid, IPC_STAT, &bs);
 		if (error != 0)
 			return error;
 		bsd_to_linux_shmid64_ds(&bs, &ls64);
-		if (cmd == (LINUX_SHM_STAT | LINUX_IPC_64)) {
-			retval[0] = IXSEQ_TO_IPCID(bs.shm_perm._key,
-						   bs.shm_perm);
-		}
 		return copyout(&ls64, SCARG(uap, buf), sizeof ls64);
 
 	case LINUX_IPC_SET:
 		if ((error = copyin(SCARG(uap, buf), &ls, sizeof ls)))
 			return error;
 		linux_to_bsd_shmid_ds(&ls, &bs);
-		return shmctl1(l, SCARG(uap, shmid), IPC_SET, &bs);
+		return shmctl1(l, shmid, IPC_SET, &bs);
 
 	case LINUX_IPC_RMID:
-		return shmctl1(l, SCARG(uap, shmid), IPC_RMID, NULL);
+		return shmctl1(l, shmid, IPC_RMID, NULL);
 
 	case LINUX_SHM_LOCK:
-		return shmctl1(l, SCARG(uap, shmid), SHM_LOCK, NULL);
+		return shmctl1(l, shmid, SHM_LOCK, NULL);
 
 	case LINUX_SHM_UNLOCK:
-		return shmctl1(l, SCARG(uap, shmid), SHM_UNLOCK, NULL);
+		return shmctl1(l, shmid, SHM_UNLOCK, NULL);
 
 	case LINUX_IPC_INFO:
 		memset(&lsi64, 0, sizeof lsi64);
@@ -529,6 +533,10 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 		lsi64.l_shmmni = shminfo.shmmni;
 		lsi64.l_shmseg = shminfo.shmseg;
 		lsi64.l_shmall = shminfo.shmall;
+		for (i = shminfo.shmmni - 1; i > 0; i--)
+			if (shmsegs[i].shm_perm.mode & SHMSEG_ALLOCATED)
+				break;
+		retval[0] = i;
 		return copyout(&lsi64, SCARG(uap, buf), sizeof lsi64);
 
 	case LINUX_SHM_INFO:
@@ -536,11 +544,17 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 		lsi.l_used_ids = shm_nused;
 		for (i = 0; i < shminfo.shmmni; i++)
 			if (shmsegs[i].shm_perm.mode & SHMSEG_ALLOCATED)
-				lsi.l_shm_tot += shmsegs[i].shm_segsz;
+				lsi.l_shm_tot +=
+				    round_page(shmsegs[i].shm_segsz) /
+				    uvmexp.pagesize;
 		lsi.l_shm_rss = 0;
 		lsi.l_shm_swp = 0;
 		lsi.l_swap_attempts = 0;
 		lsi.l_swap_successes = 0;
+		for (i = shminfo.shmmni - 1; i > 0; i--)
+			if (shmsegs[i].shm_perm.mode & SHMSEG_ALLOCATED)
+				break;
+		retval[0] = i;
 		return copyout(&lsi, SCARG(uap, buf), sizeof lsi);
 
 	default:
