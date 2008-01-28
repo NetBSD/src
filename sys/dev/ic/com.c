@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.271 2008/01/24 18:50:15 ad Exp $	*/
+/*	$NetBSD: com.c,v 1.272 2008/01/28 18:12:29 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.271 2008/01/24 18:50:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.272 2008/01/28 18:12:29 dyoung Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -598,6 +598,9 @@ com_detach(struct device *self, int flags)
 {
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
+
+        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		return EBUSY;
 
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
