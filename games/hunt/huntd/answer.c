@@ -1,4 +1,4 @@
-/*	$NetBSD: answer.c,v 1.8 2006/05/09 20:18:06 mrg Exp $	*/
+/*	$NetBSD: answer.c,v 1.9 2008/01/28 03:23:29 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: answer.c,v 1.8 2006/05/09 20:18:06 mrg Exp $");
+__RCSID("$NetBSD: answer.c,v 1.9 2008/01/28 03:23:29 dholland Exp $");
 #endif /* not lint */
 
 # include	<ctype.h>
@@ -56,8 +56,8 @@ answer()
 	static char		team;
 	static int		enter_status;
 	static socklen_t	socklen;
-	static u_long		machine;
-	static u_int32_t	uid;
+	static uint32_t		machine;
+	static uint32_t		uid;
 	static SOCKET		sockstruct;
 	char			*cp1, *cp2;
 	int			flags;
@@ -92,7 +92,7 @@ answer()
 	version = htonl((u_int32_t) HUNT_VERSION);
 	(void) write(newsock, (char *) &version, LONGLEN);
 	(void) read(newsock, (char *) &uid, LONGLEN);
-	uid = ntohl((unsigned long) uid);
+	uid = ntohl(uid);
 	(void) read(newsock, name, NAMELEN);
 	(void) read(newsock, &team, 1);
 	(void) read(newsock, (char *) &enter_status, LONGLEN);
@@ -375,8 +375,8 @@ rand_dir()
  */
 IDENT *
 get_ident(machine, uid, name, team)
-	u_long	machine;
-	u_long	uid;
+	uint32_t machine;
+	uint32_t uid;
 	char	*name;
 	char	team;
 {

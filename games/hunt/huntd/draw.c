@@ -1,4 +1,4 @@
-/*	$NetBSD: draw.c,v 1.3 2003/06/11 12:00:22 wiz Exp $	*/
+/*	$NetBSD: draw.c,v 1.4 2008/01/28 03:23:29 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: draw.c,v 1.3 2003/06/11 12:00:22 wiz Exp $");
+__RCSID("$NetBSD: draw.c,v 1.4 2008/01/28 03:23:29 dholland Exp $");
 #endif /* not lint */
 
 # include	"hunt.h"
@@ -262,13 +262,13 @@ check(pp, y, x)
 	PLAYER	*pp;
 	int	y, x;
 {
-	int	index;
+	int	indx;
 	int	ch;
 	PLAYER	*rpp;
 
-	index = y * sizeof Maze[0] + x;
-	ch = ((char *) Maze)[index];
-	if (ch != ((char *) pp->p_maze)[index]) {
+	indx = y * sizeof Maze[0] + x;
+	ch = ((char *) Maze)[indx];
+	if (ch != ((char *) pp->p_maze)[indx]) {
 		rpp = pp;
 		cgoto(rpp, y, x);
 		if (x == rpp->p_x && y == rpp->p_y)
@@ -277,7 +277,7 @@ check(pp, y, x)
 			outch(rpp, player_sym(rpp, y, x));
 		else
 			outch(rpp, ch);
-		((char *) rpp->p_maze)[index] = ch;
+		((char *) rpp->p_maze)[indx] = ch;
 	}
 }
 
@@ -353,7 +353,7 @@ drawplayer(pp, draw)
 void
 message(pp, s)
 	PLAYER	*pp;
-	char	*s;
+	const char	*s;
 {
 	cgoto(pp, HEIGHT, 0);
 	outstr(pp, s, strlen(s));

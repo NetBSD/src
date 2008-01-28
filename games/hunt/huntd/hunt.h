@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.h,v 1.11 2004/02/08 22:23:50 jsm Exp $	*/
+/*	$NetBSD: hunt.h,v 1.12 2008/01/28 03:23:29 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
@@ -290,8 +290,8 @@ typedef struct sockaddr_un	SOCKET;
 struct ident_def {
 	char	i_name[NAMELEN];
 	char	i_team;
-	long	i_machine;
-	long	i_uid;
+	uint32_t i_machine;
+	uint32_t i_uid;
 	float	i_kills;
 	int	i_entries;
 	float	i_score;
@@ -370,7 +370,7 @@ extern FLAG	Last_player;
 
 extern char	Buf[BUFSIZ], Maze[HEIGHT][WIDTH2], Orig_maze[HEIGHT][WIDTH2];
 
-extern char	*Driver;
+extern const char *Driver;
 
 extern int	Nplayer, Socket, Status;
 extern struct	pollfd fdset[];
@@ -439,20 +439,20 @@ void		execute(PLAYER *);
 void		faketalk(void);
 void		find_driver(FLAG);
 void		fixshots(int, int, char);
-IDENT	       *get_ident(u_long, u_long, char *, char);
+IDENT	       *get_ident(uint32_t, uint32_t, char *, char);
 void		get_local_name(char *);
 int		get_remote_name(char *);
 BULLET	       *is_bullet(int, int);
 void		look(PLAYER *);
 void		makemaze(void);
-void		message(PLAYER *, char *);
+void		message(PLAYER *, const char *);
 void		mon_execute(PLAYER *);
 void		moveshots(void);
 void		open_ctl(void);
 int		opposite(int, char);
 void		otto(int, int, char);
 void		outch(PLAYER *, int);
-void		outstr(PLAYER *, char *, int);
+void		outstr(PLAYER *, const char *, int);
 int		player_sym(PLAYER *, int, int);
 PLAYER	       *play_at(int, int);
 void		playit(void);
