@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45.4.6 2008/01/09 01:45:17 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45.4.7 2008/01/28 18:20:39 matt Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -221,6 +221,9 @@ void	arm32_vector_init(vaddr_t, int);
  */
 static inline int curcpl(void);
 static inline void set_curcpl(int);
+#ifdef __HAVE_FAST_SOFTINTS
+static inline void cpu_dosoftints(void);
+#endif
 
 #include <sys/device.h>
 #include <sys/cpu_data.h>
@@ -237,8 +240,12 @@ struct cpu_info {
 	int ci_want_resched;		/* resched() was called */
 	int ci_intr_depth;		/* */
 	struct pcb *ci_curpcb;		/* current pcb */
+#ifdef __HAVE_FAST_SOFTINTS
+	lwp_t *ci_softlwps[SOFTINT_COUNT];
+	uint32_t ci_softints;
+#endif
 #if !defined(PROCESS_ID_IS_CURLWP)
-	struct lwp *ci_curlwp;		/* current lwp */
+	lwp_t *ci_curlwp;		/* current lwp */
 #endif
 #ifdef _ARM_ARCH_6
 	uint32_t ci_ccnt_freq;		/* cycle count frequency */
@@ -269,7 +276,11 @@ _curlwp_set(struct lwp *l)
 }
 
 #define	curlwp		(_curlwp())
-#define	curcpu()	(curlwp->l_cpu)
+static inline struct cpu_info *
+curcpu(void)
+{
+	return curlwp->l_cpu;
+}
 #elif defined(PROCESS_ID_IS_CURCPU)
 static inline struct cpu_info *
 curcpu(void)
@@ -302,6 +313,16 @@ set_curcpl(int pri)
 {
 	curcpu()->ci_cpl = pri;
 }
+
+#ifdef __HAVE_FAST_SOFTINTS
+void	dosoftints(void);
+static inline void
+cpu_dosoftints(void)
+{
+	if (curcpu()->ci_softints && curcpu()->ci_cpl < IPL_SOFTCLOCK)
+		dosoftints();
+}
+#endif
 
 #ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);
