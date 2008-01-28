@@ -1,4 +1,4 @@
-/*	$NetBSD: callcontext.c,v 1.20 2008/01/28 18:35:49 pooka Exp $	*/
+/*	$NetBSD: callcontext.c,v 1.21 2008/01/28 18:51:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: callcontext.c,v 1.20 2008/01/28 18:35:49 pooka Exp $");
+__RCSID("$NetBSD: callcontext.c,v 1.21 2008/01/28 18:51:03 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -266,7 +266,7 @@ puffs__cc_destroy(struct puffs_cc *pcc, int nonuke)
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	size_t stacksize = 1<<pu->pu_cc_stackshift;
 
-	assert(pcc->pcc_flags = 0);
+	assert(pcc->pcc_flags == 0);
 
 	/* not over limit?  stuff away in the store, otherwise nuke */
 	if (nonuke || pu->pu_cc_nstored < PUFFS_CCMAXSTORE) {
