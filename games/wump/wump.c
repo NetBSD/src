@@ -1,4 +1,4 @@
-/*	$NetBSD: wump.c,v 1.21 2007/12/15 19:44:45 perry Exp $	*/
+/*	$NetBSD: wump.c,v 1.22 2008/01/28 01:06:19 dholland Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -43,7 +43,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)wump.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: wump.c,v 1.21 2007/12/15 19:44:45 perry Exp $");
+__RCSID("$NetBSD: wump.c,v 1.22 2008/01/28 01:06:19 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -410,7 +410,7 @@ shoot(room_list)
 	char *room_list;
 {
 	int chance, next, roomcnt;
-	int j, arrow_location, link, ok;
+	int j, arrow_location, lnk, ok;
 	char *p;
 
 	/*
@@ -451,24 +451,24 @@ shoot(room_list)
 			} else
 				arrow_location = next;
 		} else {
-			link = (random() % link_num);
-			if (link == player_loc)
+			lnk = (random() % link_num);
+			if (lnk == player_loc)
 				(void)printf(
 "*thunk*  The arrow can't find a way from %d to %d and flys back into\n\
 your room!\n",
 				    arrow_location, next);
-			else if (cave[arrow_location].tunnel[link] > room_num)
+			else if (cave[arrow_location].tunnel[lnk] > room_num)
 				(void)printf(
 "*thunk*  The arrow flys randomly into a magic tunnel, thence into\n\
 room %d!\n",
-				    cave[arrow_location].tunnel[link]);
+				    cave[arrow_location].tunnel[lnk]);
 			else
 				(void)printf(
 "*thunk*  The arrow can't find a way from %d to %d and flys randomly\n\
 into room %d!\n",
 				    arrow_location, next,
-				    cave[arrow_location].tunnel[link]);
-			arrow_location = cave[arrow_location].tunnel[link];
+				    cave[arrow_location].tunnel[lnk]);
+			arrow_location = cave[arrow_location].tunnel[lnk];
 			break;
 		}
 		chance = random() % 10;
@@ -533,7 +533,7 @@ gcd(a, b)
 void
 cave_init()
 {
-	int i, j, k, link;
+	int i, j, k, lnk;
 	int delta;
 
 	/*
@@ -562,31 +562,31 @@ cave_init()
 	} while (gcd(room_num, delta + 1) != 1);
 
 	for (i = 1; i <= room_num; ++i) {
-		link = ((i + delta) % room_num) + 1;	/* connection */
-		cave[i].tunnel[0] = link;		/* forw link */
-		cave[link].tunnel[1] = i;		/* back link */
+		lnk = ((i + delta) % room_num) + 1;	/* connection */
+		cave[i].tunnel[0] = lnk;		/* forw link */
+		cave[lnk].tunnel[1] = i;		/* back link */
 	}
 	/* now fill in the rest of the cave with random connections */
 	for (i = 1; i <= room_num; i++)
 		for (j = 2; j < link_num ; j++) {
 			if (cave[i].tunnel[j] != -1)
 				continue;
-try_again:		link = (random() % room_num) + 1;
+try_again:		lnk = (random() % room_num) + 1;
 			/* skip duplicates */
 			for (k = 0; k < j; k++)
-				if (cave[i].tunnel[k] == link)
+				if (cave[i].tunnel[k] == lnk)
 					goto try_again;
-			cave[i].tunnel[j] = link;
+			cave[i].tunnel[j] = lnk;
 			if (random() % 2 == 1)
 				continue;
 			for (k = 0; k < link_num; ++k) {
 				/* if duplicate, skip it */
-				if (cave[link].tunnel[k] == i)
+				if (cave[lnk].tunnel[k] == i)
 					k = link_num;
 
 				/* if open link, use it, force exit */
-				if (cave[link].tunnel[k] == -1) {
-					cave[link].tunnel[k] = i;
+				if (cave[lnk].tunnel[k] == -1) {
+					cave[lnk].tunnel[k] = i;
 					k = link_num;
 				}
 			}
