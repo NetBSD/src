@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.13 2008/01/24 17:32:55 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.14 2008/01/28 14:31:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.13 2008/01/24 17:32:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.14 2008/01/28 14:31:18 dholland Exp $");
 
 #include "opt_ddb.h"
 
@@ -198,6 +198,7 @@ vfs_destroy(struct mount *mp)
 {
 
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
+	mutex_destroy(&mp->mnt_renamelock);
 	mutex_destroy(&mp->mnt_mutex);
 	lockdestroy(&mp->mnt_lock);
 	free(mp, M_MOUNT);
