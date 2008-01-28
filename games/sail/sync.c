@@ -1,4 +1,4 @@
-/*	$NetBSD: sync.c,v 1.24 2006/05/18 18:42:59 mrg Exp $	*/
+/*	$NetBSD: sync.c,v 1.25 2008/01/28 01:58:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sync.c,v 1.24 2006/05/18 18:42:59 mrg Exp $");
+__RCSID("$NetBSD: sync.c,v 1.25 2008/01/28 01:58:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,13 +118,13 @@ makemsg(struct ship *from, const char *fmt, ...)
 }
 
 int
-sync_exists(int game)
+sync_exists(int gamenum)
 {
 	char buf[sizeof sync_file];
 	struct stat s;
 	time_t t;
 
-	sprintf(buf, SF, game);
+	sprintf(buf, SF, gamenum);
 	time(&t);
 	setegid(egid);
 	if (stat(buf, &s) < 0) {
@@ -133,7 +133,7 @@ sync_exists(int game)
 	}
 	if (s.st_mtime < t - 60*60*2) {		/* 2 hours */
 		unlink(buf);
-		sprintf(buf, LF, game);
+		sprintf(buf, LF, gamenum);
 		unlink(buf);
 		setegid(gid);
 		return 0;
@@ -166,11 +166,11 @@ sync_open(void)
 }
 
 void
-sync_close(int remove)
+sync_close(int doremove)
 {
 	if (sync_fp != 0)
 		fclose(sync_fp);
-	if (remove) {
+	if (doremove) {
 		setegid(egid);
 		unlink(sync_file);
 		setegid(gid);
@@ -251,13 +251,13 @@ Sync(void)
 		if (isstr != 0 && isstr != 1)
 			goto bad;
 		if (isstr) {
-			int c;
+			int ch;
 			char *p;
 
 			for (p = buf;;) {
-				c = getc(sync_fp);
-				*p++ = (char)c;
-				switch (c) {
+				ch = getc(sync_fp);
+				*p++ = (char)ch;
+				switch (ch) {
 				case '\n':
 					p--;
 				case EOF:

@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15 2004/11/05 21:30:32 dsl Exp $	*/
+/*	$NetBSD: misc.c,v 1.16 2008/01/28 01:58:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: misc.c,v 1.15 2004/11/05 21:30:32 dsl Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2008/01/28 01:58:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -106,27 +106,27 @@ closestenemy(struct ship *from, int side, int anyship)
 }
 
 static int
-angle(int dr, int dc)
+angle(int Dr, int Dc)
 {
 	int i;
 
-	if (dc >= 0 && dr > 0)
+	if (Dc >= 0 && Dr > 0)
 		i = 0;
-	else if (dr <= 0 && dc > 0)
+	else if (Dr <= 0 && Dc > 0)
 		i = 2;
-	else if (dc <= 0 && dr < 0)
+	else if (Dc <= 0 && Dr < 0)
 		i = 4;
 	else
 		i = 6;
-	dr = abs(dr);
-	dc = abs(dc);
-	if ((i == 0 || i == 4) && dc * 2.4 > dr) {
+	Dr = abs(Dr);
+	Dc = abs(Dc);
+	if ((i == 0 || i == 4) && Dc * 2.4 > Dr) {
 		i++;
-		if (dc > dr * 2.4)
+		if (Dc > Dr * 2.4)
 			i++;
-	} else if ((i == 2 || i == 6) && dr * 2.4 > dc) {
+	} else if ((i == 2 || i == 6) && Dr * 2.4 > Dc) {
 		i++;
-		if (dr > dc * 2.4)
+		if (Dr > Dc * 2.4)
 			i++;
 	}
 	return i % 8 + 1;

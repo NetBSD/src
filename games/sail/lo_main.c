@@ -1,4 +1,4 @@
-/*	$NetBSD: lo_main.c,v 1.12 2003/08/07 09:37:43 agc Exp $	*/
+/*	$NetBSD: lo_main.c,v 1.13 2008/01/28 01:58:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: lo_main.c,v 1.12 2003/08/07 09:37:43 agc Exp $");
+__RCSID("$NetBSD: lo_main.c,v 1.13 2008/01/28 01:58:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,7 +61,7 @@ lo_main(void)
 {
 	FILE *fp;
 	char sbuf[32];
-	int n = 0, people;
+	int n = 0, npeople;
 	struct passwd *pass;
 	struct logs log;
 	struct ship *ship;
@@ -70,7 +70,7 @@ lo_main(void)
 		perror(_PATH_LOGFILE);
 		exit(1);
 	}
-	switch (fread((char *)&people, sizeof people, 1, fp)) {
+	switch (fread((char *)&npeople, sizeof npeople, 1, fp)) {
 	case 0:
 		printf("Nobody has sailed yet.\n");
 		exit(0);
@@ -91,6 +91,6 @@ lo_main(void)
 			title[n++], sbuf, ship->shipname, log.l_netpoints,
 			(float) log.l_netpoints / ship->specs->pts);
 	}
-	printf("\n%d people have played.\n", people);
+	printf("\n%d people have played.\n", npeople);
 	return 0;
 }

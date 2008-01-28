@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2000/06/11 15:37:51 mycroft Exp $
+#	$NetBSD: Makefile,v 1.14 2008/01/28 01:58:01 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	sail
@@ -10,5 +10,6 @@ DPADD=	${LIBCURSES}
 LDADD=	-lcurses
 HIDEGAME=hidegame
 SETGIDGAME=yes
+WARNS=	4
 
 .include <bsd.prog.mk>

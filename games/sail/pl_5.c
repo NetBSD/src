@@ -1,4 +1,4 @@
-/*	$NetBSD: pl_5.c,v 1.18 2006/03/18 01:43:52 abs Exp $	*/
+/*	$NetBSD: pl_5.c,v 1.19 2008/01/28 01:58:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pl_5.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: pl_5.c,v 1.18 2006/03/18 01:43:52 abs Exp $");
+__RCSID("$NetBSD: pl_5.c,v 1.19 2008/01/28 01:58:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,7 @@ acceptmove(void)
 	char af;
 	int moved = 0;
 	int vma, dir;
-	char prompt[60];
+	char promptstr[60];
 	char buf[60], last = '\0';
 	char *p;
 
@@ -70,8 +70,9 @@ acceptmove(void)
 
 	ta = maxturns(ms, &af);
 	ma = maxmove(ms, mf->dir, 0);
-	sprintf(prompt, "move (%d,%c%d): ", ma, af ? '\'' : ' ', ta);
-	sgetstr(prompt, buf, sizeof buf);
+	snprintf(promptstr, sizeof(promptstr),
+		"move (%d,%c%d): ", ma, af ? '\'' : ' ', ta);
+	sgetstr(promptstr, buf, sizeof buf);
 	dir = mf->dir;
 	vma = ma;
 	for (p = buf; *p; p++)
