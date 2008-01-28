@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.18 2007/04/22 02:09:02 mouse Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2008/01/28 03:39:31 dholland Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.18 2007/04/22 02:09:02 mouse Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2008/01/28 03:39:31 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -327,7 +327,7 @@ qshowstr()
 	sigsav = nosignal;
 	nosignal = 1;		/* don't allow ^c etc */
 	if (c[GOLD]) {
-		lprintf(".)   %d gold pieces", (long) c[GOLD]);
+		lprintf(".)   %ld gold pieces", (long) c[GOLD]);
 		srcount++;
 	}
 	for (k = 26; k >= 0; k--)
@@ -338,7 +338,7 @@ qshowstr()
 						show3(j);
 			k = 0;
 		}
-	lprintf("\nElapsed time is %d.  You have %d mobuls left", (long) ((gltime + 99) / 100 + 1), (long) ((TIMELIMIT - gltime) / 100));
+	lprintf("\nElapsed time is %ld.  You have %ld mobuls left", (long) ((gltime + 99) / 100 + 1), (long) ((TIMELIMIT - gltime) / 100));
 	more();
 	nosignal = sigsav;
 }
@@ -612,9 +612,9 @@ show3(index)
 	default:
 		lprintf("\n%c)   %s", index + 'a', objectname[iven[index]]);
 		if (ivenarg[index] > 0)
-			lprintf(" + %d", (long) ivenarg[index]);
+			lprintf(" + %ld", (long) ivenarg[index]);
 		else if (ivenarg[index] < 0)
-			lprintf(" %d", (long) ivenarg[index]);
+			lprintf(" %ld", (long) ivenarg[index]);
 		break;
 	}
 	if (c[WIELD] == index)
@@ -902,7 +902,7 @@ parse()
 
 		case 'g':
 			cursors();
-			lprintf("\nThe stuff you are carrying presently weighs %d pounds", (long) packweight());
+			lprintf("\nThe stuff you are carrying presently weighs %ld pounds", (long) packweight());
 		case ' ':
 			yrepcount = 0;
 			nomove = 1;
@@ -911,7 +911,9 @@ parse()
 		case 'v':
 			yrepcount = 0;
 			cursors();
-			lprintf("\nCaverns of Larn, Version %d.%d, Diff=%d", (long) VERSION, (long) SUBVERSION, (long) c[HARDGAME]);
+			lprintf("\nCaverns of Larn, Version %ld.%ld, Diff=%ld",
+				(long) VERSION, (long) SUBVERSION,
+				(long) c[HARDGAME]);
 			if (wizard)
 				lprcat(" Wizard");
 			nomove = 1;
@@ -947,7 +949,8 @@ parse()
 		case 'P':
 			cursors();
 			if (outstanding_taxes > 0)
-				lprintf("\nYou presently owe %d gp in taxes.", (long) outstanding_taxes);
+				lprintf("\nYou presently owe %ld gp in taxes.",
+					(long) outstanding_taxes);
 			else
 				lprcat("\nYou do not owe any taxes.");
 			return;
@@ -1146,7 +1149,7 @@ dropobj()
 					amt = 32767000L;
 				}
 				c[GOLD] -= amt;
-				lprintf("You drop %d gold pieces", (long) amt);
+				lprintf("You drop %ld gold pieces", (long)amt);
 				iarg[playerx][playery] = i;
 				bottomgold();
 				know[playerx][playery] = 0;

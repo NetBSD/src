@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.7 2001/02/05 00:57:33 christos Exp $	*/
+/*	$NetBSD: global.c,v 1.8 2008/01/28 03:39:31 dholland Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -23,7 +23,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.7 2001/02/05 00:57:33 christos Exp $");
+__RCSID("$NetBSD: global.c,v 1.8 2008/01/28 03:39:31 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -95,7 +95,7 @@ raiseexperience(x)
 	if (c[LEVEL] != i) {
 		cursors();
 		beep();
-		lprintf("\nWelcome to level %d", (long) c[LEVEL]);	/* if we changed levels	 */
+		lprintf("\nWelcome to level %ld", (long) c[LEVEL]);	/* if we changed levels	 */
 	}
 	bottomline();
 }
@@ -129,7 +129,7 @@ loseexperience(x)
 	if (i != c[LEVEL]) {
 		cursors();
 		beep();
-		lprintf("\nYou went down to level %d!", (long) c[LEVEL]);
+		lprintf("\nYou went down to level %ld!", (long) c[LEVEL]);
 	}
 	bottomline();
 }
