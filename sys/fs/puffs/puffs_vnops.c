@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.126 2008/01/25 14:32:13 ad Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.127 2008/01/28 21:06:37 pooka Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.126 2008/01/25 14:32:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.127 2008/01/28 21:06:37 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -395,12 +395,12 @@ puffs_vnop_checkop(void *v)
 	return rv;
 }
 
-static int callremove(struct puffs_mount *, void *, void *,
+static int callremove(struct puffs_mount *, puffs_cookie_t, puffs_cookie_t,
 			    struct componentname *);
-static int callrmdir(struct puffs_mount *, void *, void *,
+static int callrmdir(struct puffs_mount *, puffs_cookie_t, puffs_cookie_t,
 			   struct componentname *);
-static void callinactive(struct puffs_mount *, void *, int);
-static void callreclaim(struct puffs_mount *, void *);
+static void callinactive(struct puffs_mount *, puffs_cookie_t, int);
+static void callreclaim(struct puffs_mount *, puffs_cookie_t);
 
 #define PUFFS_ABORT_LOOKUP	1
 #define PUFFS_ABORT_CREATE	2
@@ -413,22 +413,22 @@ static void callreclaim(struct puffs_mount *, void *);
  */
 static void
 puffs_abortbutton(struct puffs_mount *pmp, int what,
-	void *dcookie, void *cookie, struct componentname *cnp)
+	puffs_cookie_t dck, puffs_cookie_t ck, struct componentname *cnp)
 {
 
 	switch (what) {
 	case PUFFS_ABORT_CREATE:
 	case PUFFS_ABORT_MKNOD:
 	case PUFFS_ABORT_SYMLINK:
-		callremove(pmp, dcookie, cookie, cnp);
+		callremove(pmp, dck, ck, cnp);
 		break;
 	case PUFFS_ABORT_MKDIR:
-		callrmdir(pmp, dcookie, cookie, cnp);
+		callrmdir(pmp, dck, ck, cnp);
 		break;
 	}
 
-	callinactive(pmp, cookie, 0);
-	callreclaim(pmp, cookie);
+	callinactive(pmp, ck, 0);
+	callreclaim(pmp, ck);
 }
 
 /*
@@ -984,7 +984,7 @@ doinact(struct puffs_mount *pmp, int iaflag)
 }
 
 static void
-callinactive(struct puffs_mount *pmp, void *cookie, int iaflag)
+callinactive(struct puffs_mount *pmp, puffs_cookie_t ck, int iaflag)
 {
 	int error;
 	PUFFS_MSG_VARS(vn, inactive);
@@ -992,7 +992,7 @@ callinactive(struct puffs_mount *pmp, void *cookie, int iaflag)
 	if (doinact(pmp, iaflag)) {
 		PUFFS_MSG_ALLOC(vn, inactive);
 		puffs_msg_setinfo(park_inactive, PUFFSOP_VN,
-		    PUFFS_VN_INACTIVE, cookie);
+		    PUFFS_VN_INACTIVE, ck);
 
 		PUFFS_MSG_ENQUEUEWAIT(pmp, park_inactive, error);
 		PUFFS_MSG_RELEASE(inactive);
@@ -1038,7 +1038,7 @@ puffs_vnop_inactive(void *v)
 }
 
 static void
-callreclaim(struct puffs_mount *pmp, void *cookie)
+callreclaim(struct puffs_mount *pmp, puffs_cookie_t ck)
 {
 	PUFFS_MSG_VARS(vn, reclaim);
 
@@ -1047,7 +1047,7 @@ callreclaim(struct puffs_mount *pmp, void *cookie)
 
 	PUFFS_MSG_ALLOC(vn, reclaim);
 	puffs_msg_setfaf(park_reclaim);
-	puffs_msg_setinfo(park_reclaim, PUFFSOP_VN, PUFFS_VN_RECLAIM, cookie);
+	puffs_msg_setinfo(park_reclaim, PUFFSOP_VN, PUFFS_VN_RECLAIM, ck);
 
 	puffs_msg_enqueue(pmp, park_reclaim);
 	PUFFS_MSG_RELEASE(reclaim);
@@ -1376,17 +1376,17 @@ puffs_vnop_seek(void *v)
 }
 
 static int
-callremove(struct puffs_mount *pmp, void *dcookie, void *cookie,
+callremove(struct puffs_mount *pmp, puffs_cookie_t dck, puffs_cookie_t ck,
 	struct componentname *cnp)
 {
 	PUFFS_MSG_VARS(vn, remove);
 	int error;
 
 	PUFFS_MSG_ALLOC(vn, remove);
-	remove_msg->pvnr_cookie_targ = cookie;
+	remove_msg->pvnr_cookie_targ = ck;
 	puffs_makecn(&remove_msg->pvnr_cn, &remove_msg->pvnr_cn_cred,
 	    cnp, PUFFS_USE_FULLPNBUF(pmp));
-	puffs_msg_setinfo(park_remove, PUFFSOP_VN, PUFFS_VN_REMOVE, dcookie);
+	puffs_msg_setinfo(park_remove, PUFFSOP_VN, PUFFS_VN_REMOVE, dck);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_remove, error);
 	PUFFS_MSG_RELEASE(remove);
@@ -1489,17 +1489,17 @@ puffs_vnop_mkdir(void *v)
 }
 
 static int
-callrmdir(struct puffs_mount *pmp, void *dcookie, void *cookie,
+callrmdir(struct puffs_mount *pmp, puffs_cookie_t dck, puffs_cookie_t ck,
 	struct componentname *cnp)
 {
 	PUFFS_MSG_VARS(vn, rmdir);
 	int error;
 
 	PUFFS_MSG_ALLOC(vn, rmdir);
-	rmdir_msg->pvnr_cookie_targ = cookie;
+	rmdir_msg->pvnr_cookie_targ = ck;
 	puffs_makecn(&rmdir_msg->pvnr_cn, &rmdir_msg->pvnr_cn_cred,
 	    cnp, PUFFS_USE_FULLPNBUF(pmp));
-	puffs_msg_setinfo(park_rmdir, PUFFSOP_VN, PUFFS_VN_RMDIR, dcookie);
+	puffs_msg_setinfo(park_rmdir, PUFFSOP_VN, PUFFS_VN_RMDIR, dck);
 
 	PUFFS_MSG_ENQUEUEWAIT(pmp, park_rmdir, error);
 	PUFFS_MSG_RELEASE(rmdir);
