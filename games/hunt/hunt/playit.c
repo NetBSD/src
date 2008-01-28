@@ -1,4 +1,4 @@
-/*	$NetBSD: playit.c,v 1.8 2004/01/27 20:30:29 jsm Exp $	*/
+/*	$NetBSD: playit.c,v 1.9 2008/01/28 03:23:29 dholland Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: playit.c,v 1.8 2004/01/27 20:30:29 jsm Exp $");
+__RCSID("$NetBSD: playit.c,v 1.9 2008/01/28 03:23:29 dholland Exp $");
 #endif /* not lint */
 
 # include	<sys/file.h>
@@ -113,7 +113,7 @@ playit()
 		bad_con();
 		/* NOTREACHED */
 	}
-	if (ntohl(version) != HUNT_VERSION) {
+	if (ntohl(version) != (u_int32_t)HUNT_VERSION) {
 		bad_ver();
 		/* NOTREACHED */
 	}
@@ -648,7 +648,7 @@ do_message()
 		bad_con();
 		/* NOTREACHED */
 	}
-	if (ntohl(version) != HUNT_VERSION) {
+	if (ntohl(version) != (u_int32_t)HUNT_VERSION) {
 		bad_ver();
 		/* NOTREACHED */
 	}
