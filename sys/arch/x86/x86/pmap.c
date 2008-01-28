@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.43 2008/01/24 13:55:09 bouyer Exp $	*/
+/*	$NetBSD: pmap.c,v 1.44 2008/01/28 11:06:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.43 2008/01/24 13:55:09 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2008/01/28 11:06:43 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -434,7 +434,7 @@ struct pv_hash_lock {
     __aligned(CACHE_LINE_SIZE);
 
 struct pv_hash_head {
-	LIST_HEAD(, pv_entry) hh_list;
+	SLIST_HEAD(, pv_entry) hh_list;
 } pv_hash_heads[PV_HASH_SIZE];
 
 #define	hh_lock(hh)	mutex_spin_enter(&(hh)->hh_lock)
@@ -462,15 +462,23 @@ pvhash_lock(u_int hash)
 }
 
 static struct pv_entry *
-pvhash_search(struct pv_hash_head *hh, struct vm_page *ptp, vaddr_t va)
+pvhash_remove(struct pv_hash_head *hh, struct vm_page *ptp, vaddr_t va)
 {
 	struct pv_entry *pve;
+	struct pv_entry *prev;
 
-	LIST_FOREACH(pve, &hh->hh_list, pve_hash) {
+	prev = NULL;
+	SLIST_FOREACH(pve, &hh->hh_list, pve_hash) {
 		if (pve->pve_pte.pte_ptp == ptp &&
 		    pve->pve_pte.pte_va == va) {
+			if (prev != NULL) {
+				SLIST_REMOVE_AFTER(prev, pve_hash);
+			} else {
+				SLIST_REMOVE_HEAD(&hh->hh_list, pve_hash);
+			}
 			break;
 		}
+		prev = pve;
 	}
 	return pve;
 }
@@ -1566,7 +1574,7 @@ pmap_init(void)
 	int i;
 
 	for (i = 0; i < PV_HASH_SIZE; i++) {
-		LIST_INIT(&pv_hash_heads[i].hh_list);
+		SLIST_INIT(&pv_hash_heads[i].hh_list);
 	}
 	for (i = 0; i < PV_HASH_LOCK_CNT; i++) {
 		mutex_init(&pv_hash_locks[i].lock, MUTEX_NODEBUG, IPL_VM);
@@ -1653,7 +1661,7 @@ insert_pv(struct pmap_page *pp, struct pv_entry *pve)
 	lock = pvhash_lock(hash);
 	hh = pvhash_head(hash);
 	mutex_spin_enter(lock);
-	LIST_INSERT_HEAD(&hh->hh_list, pve, pve_hash);
+	SLIST_INSERT_HEAD(&hh->hh_list, pve, pve_hash);
 	mutex_spin_exit(lock);
 
 	LIST_INSERT_HEAD(&pp->pp_head.pvh_list, pve, pve_list);
@@ -1715,23 +1723,20 @@ pmap_enter_pv(struct pmap_page *pp,
  */
 
 static struct pv_entry *
-pmap_remove_pv(struct pmap_page *pp, struct pv_entry *pve,
-    struct vm_page *ptp, vaddr_t va)
+pmap_remove_pv(struct pmap_page *pp, struct vm_page *ptp, vaddr_t va)
 {
 	struct pv_hash_head *hh;
+	struct pv_entry *pve;
 	kmutex_t *lock;
 	u_int hash;
 
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
 	KASSERT(ptp == NULL || ptp_va2o(va, 1) == ptp->offset);
 	KASSERT(pp_locked(pp));
-	KASSERT(pve == NULL ||
-	    (pve->pve_pte.pte_ptp == ptp && pve->pve_pte.pte_va == va));
 
 	if ((pp->pp_flags & PP_EMBEDDED) != 0) {
 		KASSERT(pp->pp_pte.pte_ptp == ptp);
 		KASSERT(pp->pp_pte.pte_va == va);
-		KASSERT(pve == NULL || pve_to_pvpte(pve) == &pp->pp_pte);
 
 		pp->pp_flags &= ~PP_EMBEDDED;
 		LIST_INIT(&pp->pp_head.pvh_list);
@@ -1739,19 +1744,11 @@ pmap_remove_pv(struct pmap_page *pp, struct pv_entry *pve,
 		return NULL;
 	}
 
-	KASSERT(pve_to_pvpte(pve) != &pp->pp_pte);
-
 	hash = pvhash_hash(ptp, va);
 	lock = pvhash_lock(hash);
 	hh = pvhash_head(hash);
 	mutex_spin_enter(lock);
-	if (pve == NULL) {
-		pve = pvhash_search(hh, ptp, va);
-		KASSERT(pve != NULL);
-	} else {
-		KASSERT(pve == pvhash_search(hh, ptp, va));
-	}
-	LIST_REMOVE(pve, pve_hash);
+	pve = pvhash_remove(hh, ptp, va);
 	mutex_spin_exit(lock);
 
 	LIST_REMOVE(pve, pve_list);
@@ -3134,7 +3131,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 		pp = VM_PAGE_TO_PP(pg);
 		pp_lock(pp);
 		pp->pp_attrs |= opte;
-		pve = pmap_remove_pv(pp, NULL, ptp, startva);
+		pve = pmap_remove_pv(pp, ptp, startva);
 		pp_unlock(pp);
 
 		if (pve != NULL) {
@@ -3219,7 +3216,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	pp = VM_PAGE_TO_PP(pg);
 	pp_lock(pp);
 	pp->pp_attrs |= opte;
-	pve = pmap_remove_pv(pp, NULL, ptp, va);
+	pve = pmap_remove_pv(pp, ptp, va);
 	pp_unlock(pp);
 
 	if (pve) { 
@@ -3523,7 +3520,7 @@ startover:
 		if (ptp != NULL) {
 			pmap_reference(pmap);
 		}
-		pve = pmap_remove_pv(pp, pvpte_to_pve(pvpte), ptp, va);
+		pve = pmap_remove_pv(pp, ptp, va);
 		pp_unlock(pp);
 
 		/* update the PTP reference count.  free if last reference. */
@@ -4047,7 +4044,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		old_pp = VM_PAGE_TO_PP(pg);
 
 		pp_lock(old_pp);
-		old_pve = pmap_remove_pv(old_pp, NULL, ptp, va);
+		old_pve = pmap_remove_pv(old_pp, ptp, va);
 		old_pp->pp_attrs |= opte;
 		pp_unlock(old_pp);
 	}
