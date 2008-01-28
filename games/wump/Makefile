@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 1999/02/13 02:54:22 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2008/01/28 01:06:19 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -10,5 +10,6 @@ HIDEGAME=hidegame
 FILES=wump.info
 FILESDIR=/usr/share/games
 .endif
+WARNS=	4
 
 .include <bsd.prog.mk>
