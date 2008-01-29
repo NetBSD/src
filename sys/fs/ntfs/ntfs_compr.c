@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_compr.c,v 1.3 2005/12/11 12:24:29 christos Exp $	*/
+/*	$NetBSD: ntfs_compr.c,v 1.4 2008/01/29 18:21:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.3 2005/12/11 12:24:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.4 2008/01/29 18:21:10 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_compr.c,v 1.3 2005/12/11 12:24:29 christos Exp 
 #include <sys/buf.h>
 #include <sys/file.h>
 #include <sys/malloc.h>
-#ifdef __FreeBSD__
-#include <machine/clock.h>
-#endif
 
 #include <miscfs/specfs/specdev.h>
 
