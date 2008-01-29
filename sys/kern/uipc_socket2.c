@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.86 2007/09/25 14:04:07 ad Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.87 2008/01/29 09:31:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.86 2007/09/25 14:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.87 2008/01/29 09:31:22 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -456,8 +456,7 @@ sbrelease(struct sockbuf *sb, struct socket *so)
 {
 
 	sbflush(sb);
-	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0,
-	    RLIM_INFINITY);
+	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0, RLIM_INFINITY);
 	sb->sb_mbmax = 0;
 }
 
