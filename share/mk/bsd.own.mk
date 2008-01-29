@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.500 2008/01/10 22:21:43 skrll Exp $
+#	$NetBSD: bsd.own.mk,v 1.501 2008/01/29 14:14:54 nakayama Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -251,7 +251,7 @@ TOOL_ROFF_DVI=		${TOOL_GROFF} -Tdvi
 TOOL_ROFF_HTML=		${TOOL_GROFF} -Tlatin1 -mdoc2html
 TOOL_ROFF_PS=		${TOOL_GROFF} -Tps
 TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
-TOOL_RPCGEN=		CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
+TOOL_RPCGEN=		RPCGEN_CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
 TOOL_SED=		${TOOLDIR}/bin/${_TOOL_PREFIX}sed
 TOOL_SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
 TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
