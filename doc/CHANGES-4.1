@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.9 2008/01/22 19:07:03 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.10 2008/01/29 22:42:24 pavel Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -130,4 +130,10 @@ src/sys/arch/x86/isa/clock.c 1.23 via patch
 	the auich auich_calibrate() function to get the wrong ac97 freq
 	(may cause audio to play at wrong speed on some systems).
 	[chuck, ticket #1049]
+
+sys/netinet/tcp_usrreq.c			1.134
+
+	Protect inet6_ident_core() with #ifdef INET6, fixes building without
+	options INET6.
+	[joerg, ticket #1057]
 
