@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.29 2008/01/26 00:04:27 tls Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.30 2008/01/29 20:33:44 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.29 2008/01/26 00:04:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.30 2008/01/29 20:33:44 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,7 +308,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 		}
 
 		error = crypto_newsession(&sid, (txform ? &crie : &cria),
-			    crypto_devallowsoft ? 0 : 1);
+			    crypto_devallowsoft);
 		if (error) {
 		  	DPRINTF(("SIOCSESSION violates kernel parameters %d\n",
 			    error));
