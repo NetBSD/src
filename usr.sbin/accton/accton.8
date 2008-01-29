@@ -1,4 +1,4 @@
-.\" $NetBSD: accton.8,v 1.11 2008/01/24 05:27:10 jnemeth Exp $
+.\" $NetBSD: accton.8,v 1.12 2008/01/29 07:05:30 wiz Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -49,7 +49,8 @@ causes system accounting information for every process executed
 to be placed at the end of the file.  If no argument is given,
 accounting is turned off.
 .Pp
-The default accounting file is /var/account/acct.
+The default accounting file is
+.Pa /var/account/acct .
 Typically, accounting is enabled by rc scripts during the boot process.
 In
 .Nx ,
@@ -57,14 +58,19 @@ one may enable accounting by setting the variable
 .Dq accounting
 to
 .Dq YES
-in /etc/rc.conf.
+in
+.Pa /etc/rc.conf .
 .Pp
 Note that, traditionally, the system accounting log file can not be rotated
 cleanly by
 .Xr newsyslog 8 .
 Instead, a default installation of
 .Nx
-rotates /var/account/acct using the /etc/daily script.
+rotates
+.Pa /var/account/acct
+using the
+.Pa /etc/daily
+script.
 .Sh FILES
 .Bl -tag -width /var/account/acct -compact
 .It Pa /var/account/acct
