@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.h,v 1.17 2007/10/10 20:42:24 ad Exp $	*/
+/*	$NetBSD: ntfs.h,v 1.18 2008/01/29 18:21:10 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -31,7 +31,7 @@
 #ifndef _NTFS_NTFS_H_
 #define _NTFS_NTFS_H_
 
-#if defined(__NetBSD__) && defined(_KERNEL_OPT)
+#if defined(_KERNEL_OPT)
 #include "opt_ntfs.h"
 #endif
 
@@ -292,7 +292,6 @@ struct ntfsmount {
 #define	ntfs_bpbl	(daddr_t)((ntmp)->ntm_bps)
 
 #ifdef _KERNEL
-#if __FreeBSD_version >= 300000 || defined(__NetBSD__)
 MALLOC_DECLARE(M_NTFSMNT);
 MALLOC_DECLARE(M_NTFSNTNODE);
 MALLOC_DECLARE(M_NTFSFNODE);
@@ -302,19 +301,11 @@ MALLOC_DECLARE(M_NTFSNTVATTR);
 MALLOC_DECLARE(M_NTFSRDATA);
 MALLOC_DECLARE(M_NTFSDECOMP);
 MALLOC_DECLARE(M_NTFSRUN);
-#endif
 #endif /* _KERNEL */
 
-#ifdef __NetBSD__
 typedef int (vop_t)(void *);
 #define HASHINIT(a, b, c, d)	hashinit((a), HASH_LIST, (b), (c), (d))
 #define bqrelse(bp)		brelse(bp, 0)
-#else /* !NetBSD */
-#define HASHINIT(a, b, c, d)	hashinit((a), (b), (d))
-#define VOP__UNLOCK(a, b, c)	VOP_UNLOCK((a), (b), (c))
-#define VGET(a, b)		vget((a), (b))
-#define VN_LOCK(a, b, c)	vn_lock((a), (b), (c))
-#endif /* NetBSD */
 
 #ifdef NTFS_DEBUG
 extern int ntfs_debug;
