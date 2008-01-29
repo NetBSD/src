@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.63 2008/01/29 18:21:10 pooka Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.64 2008/01/29 18:22:24 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.63 2008/01/29 18:21:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.64 2008/01/29 18:22:24 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -830,6 +830,7 @@ ntfs_vgetex(
 	vp->v_data = fp;
 	if (f_type != VBAD)
 		vp->v_type = f_type;
+	genfs_node_init(vp, &ntfs_genfsops);
 
 	if (ino == NTFS_ROOTINO)
 		vp->v_vflag |= VV_ROOT;
@@ -842,7 +843,6 @@ ntfs_vgetex(
 		}
 	}
 
-	genfs_node_init(vp, &ntfs_genfsops);
 	uvm_vnp_setsize(vp, 0); /* XXX notused */
 	VREF(ip->i_devvp);
 	*vpp = vp;
