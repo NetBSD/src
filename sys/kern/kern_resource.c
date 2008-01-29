@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.131 2008/01/23 15:04:39 elad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.131 2008/01/23 15:04:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.131 2008/01/23 15:04:39 elad Exp
 #include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -1046,14 +1047,14 @@ again:
 			mutex_exit(&uihashtbl_lock);
 			if (newuip) {
 				mutex_destroy(&newuip->ui_lock);
-				free(newuip, M_PROC);
+				kmem_free(newuip, sizeof(*newuip));
 			}
 			return uip;
 		}
 	if (newuip == NULL) {
 		mutex_exit(&uihashtbl_lock);
 		/* Must not be called from interrupt context. */
-		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
+		newuip = kmem_zalloc(sizeof(*newuip), KM_SLEEP);
 		/* XXX this could be IPL_SOFTNET */
 		mutex_init(&newuip->ui_lock, MUTEX_DEFAULT, IPL_VM);
 		goto again;
