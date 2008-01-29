@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.152 2008/01/19 22:10:20 dyoung Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.153 2008/01/29 20:24:41 tls Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.152 2008/01/19 22:10:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.153 2008/01/29 20:24:41 tls Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3206,7 +3206,15 @@ wm_init(struct ifnet *ifp)
 		 *
 		 * XXX implement this division at link speed change!
 		 */
-		sc->sc_itr = 1000000000 / (1500 * 256);	/* 2604 ints/sec */
+
+		 /*
+		  * For N interrupts/sec, set this value to:
+		  * 1000000000 / (N * 256).  Note that we set the
+		  * absolute and packet timer values to this value
+		  * divided by 4 to get "simple timer" behavior.
+		  */
+
+		sc->sc_itr = 1500;		/* 2604 ints/sec */
 		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
