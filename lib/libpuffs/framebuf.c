@@ -1,4 +1,4 @@
-/*	$NetBSD: framebuf.c,v 1.27 2008/01/28 18:35:50 pooka Exp $	*/
+/*	$NetBSD: framebuf.c,v 1.28 2008/01/29 10:07:29 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: framebuf.c,v 1.27 2008/01/28 18:35:50 pooka Exp $");
+__RCSID("$NetBSD: framebuf.c,v 1.28 2008/01/29 10:07:29 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -359,7 +359,7 @@ puffs_framev_enqueue_cc(struct puffs_cc *pcc, int fd,
 	struct puffs_fctrl_io *fio;
 
 	/*
-	 * Technically we shouldn't allow this is RDGONE, but it's
+	 * Technically we shouldn't allow this if RDGONE, but it's
 	 * difficult to trap write close without allowing writes.
 	 * And besides, there's probably a disconnect sequence in
 	 * the protocol, so unexpectedly getting a closed fd is
@@ -420,6 +420,8 @@ puffs_framev_enqueue_justsend(struct puffs_usermount *pu, int fd,
 {
 	struct puffs_fctrl_io *fio;
 
+	assert((pufbuf->istat & ISTAT_INTERNAL) == 0);
+
 	GETFIO(fd);
 
 	pufbuf->pcc = NULL;
@@ -446,6 +448,8 @@ puffs_framev_enqueue_directreceive(struct puffs_cc *pcc, int fd,
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_fctrl_io *fio;
+
+	assert((pufbuf->istat & ISTAT_INTERNAL) == 0);
 
 	fio = getfiobyfd(pu, fd);
 	if (fio == NULL) {
@@ -480,6 +484,8 @@ puffs_framev_enqueue_directsend(struct puffs_cc *pcc, int fd,
 {
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_fctrl_io *fio;
+
+	assert((pufbuf->istat & ISTAT_INTERNAL) == 0);
 
 	if (flags & PUFFS_FBQUEUE_URGENT)
 		abort(); /* EOPNOTSUPP for now */
@@ -695,12 +701,12 @@ puffs__framev_input(struct puffs_usermount *pu, struct puffs_framectrl *fctrl,
 			 * gotfb, give frame to that.  Otherwise drop it.
 			 */
 			if (appbuf == NULL) {
-				if (fctrl->gotfb)
+				if (fctrl->gotfb) {
+					pufbuf->istat &= ~ISTAT_INTERNAL;
 					fctrl->gotfb(pu, pufbuf);
-
-				/* XXX: ugly */
-				pufbuf->istat &= ~ISTAT_NODESTROY;
-				puffs_framebuf_destroy(pufbuf);
+				} else {
+					puffs_framebuf_destroy(pufbuf);
+				}
 				continue;
 			}
 			

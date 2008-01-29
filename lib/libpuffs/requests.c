@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.21 2008/01/28 18:35:51 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.22 2008/01/29 10:07:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.21 2008/01/28 18:35:51 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.22 2008/01/29 10:07:30 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -235,15 +235,7 @@ puffs__fsframe_cmp(struct puffs_usermount *pu,
 void
 puffs__fsframe_gotframe(struct puffs_usermount *pu, struct puffs_framebuf *pb)
 {
-	struct puffs_framebuf *newpb;
 
-	if ((newpb = puffs_framebuf_make()) == NULL)
-		abort();
-	/* XXX: optimize */
-	puffs__framebuf_moveinfo(pb, newpb);
-	puffs_framebuf_seekset(newpb, 0);
-	if (puffs_framebuf_reserve_space(newpb, PUFFS_MSG_MAXSIZE) == -1)
-		abort();
-
-	puffs__ml_dispatch(pu, newpb);
+	puffs_framebuf_seekset(pb, 0);
+	puffs__ml_dispatch(pu, pb);
 }

@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs_framebuf.3,v 1.21 2007/12/08 10:56:06 wiz Exp $
+.\"	$NetBSD: puffs_framebuf.3,v 1.22 2008/01/29 10:07:30 pooka Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -509,7 +509,10 @@ request.
 May not block.
 .It Fn puffs_framev_gotframe_fn pu pufbuf
 Called when no outstanding request matches an incoming frame.
-The incoming buffer must not be destroyed.
+The ownership of
+.Ar pufbuf
+is transferred to the called function and must be destroyed once
+processing is over.
 May not block.
 .It Fn puffs_framev_fdnotify_fn pu fd what
 Is called when the read or write side of the file descriptor
