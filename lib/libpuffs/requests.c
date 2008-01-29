@@ -1,4 +1,4 @@
-/*	$NetBSD: requests.c,v 1.22 2008/01/29 10:07:30 pooka Exp $	*/
+/*	$NetBSD: requests.c,v 1.23 2008/01/29 14:54:08 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: requests.c,v 1.22 2008/01/29 10:07:30 pooka Exp $");
+__RCSID("$NetBSD: requests.c,v 1.23 2008/01/29 14:54:08 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -64,8 +64,6 @@ puffs__fsframe_read(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 	size_t howmuch, winlen, curoff;
 	ssize_t n;
 	int lenstate;
-
-	puffs_framebuf_reserve_space(pb, PUFFS_MSG_MAXSIZE);
 
 	/* How much to read? */
  the_next_level:
