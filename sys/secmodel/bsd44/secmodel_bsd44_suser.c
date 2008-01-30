@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.46 2008/01/23 15:04:41 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.47 2008/01/30 17:54:56 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.46 2008/01/23 15:04:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.47 2008/01/30 17:54:56 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -234,6 +234,33 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		break;
+
+	case KAUTH_SYSTEM_PSET: {
+		psetid_t id;
+
+		id = (psetid_t)(unsigned long)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_PSET_ASSIGN:
+		case KAUTH_REQ_SYSTEM_PSET_BIND:
+			if (isroot || id == PS_QUERY)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_SYSTEM_PSET_CREATE:
+		case KAUTH_REQ_SYSTEM_PSET_DESTROY:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+		}
 
 	case KAUTH_SYSTEM_TIME:
 		switch (req) {
@@ -657,7 +684,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_SCHEDULER: {
 		unsigned long req;
 
-		req = (unsigned long)arg2;
+		req = (unsigned long)arg1;
 
 		switch (req) {
 		case KAUTH_REQ_PROCESS_SCHEDULER_GET:
@@ -673,6 +700,17 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 			     kauth_cred_geteuid(p->p_cred) ||
 			    kauth_cred_geteuid(cred) ==
 			     kauth_cred_geteuid(p->p_cred)))
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY:
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY:
+			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
 
 			break;
