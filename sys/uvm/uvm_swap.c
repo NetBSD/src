@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.135 2008/01/27 17:18:09 hannken Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.136 2008/01/30 14:25:21 hannken Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.135 2008/01/27 17:18:09 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.136 2008/01/30 14:25:21 hannken Exp $");
 
 #include "fs_nfs.h"
 #include "opt_uvmhist.h"
@@ -256,8 +256,11 @@ uvm_swap_init(void)
 
 	if (bdevvp(swapdev, &swapdev_vp))
 		panic("uvm_swap_init: can't get vnode for swap device");
+	if (vn_lock(swapdev_vp, LK_EXCLUSIVE | LK_RETRY))
+		panic("uvm_swap_init: can't lock swap device");
 	if (VOP_OPEN(swapdev_vp, FREAD | FWRITE, NOCRED))
 		panic("uvm_swap_init: can't open swap device");
+	VOP_UNLOCK(swapdev_vp, 0);
 
 	/*
 	 * create swap block resource map to map /dev/drum.   the range
