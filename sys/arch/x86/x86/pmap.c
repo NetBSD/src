@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.45 2008/01/30 13:26:09 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.46 2008/01/30 13:28:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2008/01/30 13:26:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2008/01/30 13:28:29 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3505,6 +3505,17 @@ startover:
 		vaddr_t va;
 		int error;
 
+		/*
+		 * add a reference to the pmap before clearing the pte.
+		 * otherwise the pmap can disapper behind us.
+		 */
+
+		ptp = pvpte->pte_ptp;
+		pmap = ptp_to_pmap(ptp);
+		if (ptp != NULL) {
+			pmap_reference(pmap);
+		}
+
 		error = pmap_sync_pv(pvpte, expect, ~0, &opte);
 		if (error == EAGAIN) {
 #if defined(MULTIPROCESSOR)
@@ -3513,17 +3524,16 @@ startover:
 
 			pp_unlock(pp);
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
+			if (ptp != NULL) {
+				pmap_destroy(pmap);
+			}
 			SPINLOCK_BACKOFF(count);
 			KERNEL_LOCK(hold_count, curlwp);
 			goto startover;
 		}
+
 		pp->pp_attrs |= opte;
-		ptp = pvpte->pte_ptp;
 		va = pvpte->pte_va;
-		pmap = ptp_to_pmap(ptp);
-		if (ptp != NULL) {
-			pmap_reference(pmap);
-		}
 		pve = pmap_remove_pv(pp, ptp, va);
 		pp_unlock(pp);
 
