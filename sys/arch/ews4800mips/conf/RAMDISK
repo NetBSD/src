@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.8 2007/10/17 19:54:20 garbled Exp $
+# 	$NetBSD: RAMDISK,v 1.9 2008/01/30 16:27:43 tsutsui Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -28,8 +28,15 @@ no options 	SYSVSHM
 no options 	P1003_1B_SEMAPHORE
 no options 	SYSCTL_INCLUDE_DESCR
 
+no options	COMPAT_13
+no options	COMPAT_14
+no options	COMPAT_15
+no options	COMPAT_16
+
 no file-system	EXT2FS
+no file-system	LFS
 no file-system	FDESC
+no file-system	KERNFS
 no file-system	NULLFS
 no file-system	OVERLAY
 no file-system	PORTAL
