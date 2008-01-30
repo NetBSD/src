@@ -1,6 +1,6 @@
-.\"	$NetBSD: ftpd.8,v 1.78 2007/06/10 20:24:31 christos Exp $
+.\"	$NetBSD: ftpd.8,v 1.79 2008/01/30 02:16:35 lukem Exp $
 .\"
-.\" Copyright (c) 1997-2007 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -63,7 +63,7 @@
 .\"
 .\"     @(#)ftpd.8	8.2 (Berkeley) 4/19/94
 .\"
-.Dd June 10, 2007
+.Dd January 30, 2008
 .Dt FTPD 8
 .Os
 .Sh NAME
@@ -382,21 +382,22 @@ specific commands are supported by the SITE request.
 The following
 .Tn FTP
 requests (as specified in
-.Cm RFC 959 )
+.Cm RFC 959
+and
+.Cm RFC 2228 )
 are recognized, but are not implemented:
 .Sy ACCT ,
-.Sy SMNT ,
+.Sy ADAT ,
+.Sy AUTH ,
+.Sy CCC ,
+.Sy CONF ,
+.Sy ENC ,
+.Sy MIC ,
+.Sy PBSZ ,
+.Sy PROT ,
+.Sy REIN ,
 and
-.Sy REIN .
-.Sy MDTM
-and
-.Sy SIZE
-are not specified in
-.Cm RFC 959 ,
-but will appear in the
-next updated
-.Tn FTP
-RFC.
+.Sy SMNT .
 .Pp
 The
 .Nm
@@ -465,6 +466,10 @@ to the directory specified in the
 .Sy chroot
 directive (if set),
 or to the home directory of the user.
+This facility may also be triggered by enabling the boolean
+.Sy ftp-chroot
+in
+.Xr login.conf 5 .
 However, the user must still supply a password.
 This feature is intended as a compromise between a fully anonymous account
 and a fully privileged account.
@@ -729,6 +734,7 @@ Login history database.
 .Xr ftpchroot 5 ,
 .Xr ftpd.conf 5 ,
 .Xr ftpusers 5 ,
+.Xr login.conf 5 ,
 .Xr syslogd 8
 .Sh STANDARDS
 .Nm
@@ -857,3 +863,12 @@ directive
 .Sy upload ,
 then this directory cannot be abused by the user in this way, so it
 should be safe to create.
+.Pp
+To avoid possible denial-of-service attacks,
+.Sy SIZE
+requests against files larger than 10240 bytes will be denied if
+the current transfer
+.Sy TYPE
+is
+.Sq Li A 
+(ASCII).
