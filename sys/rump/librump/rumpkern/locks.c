@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.10 2008/01/30 09:50:24 ad Exp $	*/
+/*	$NetBSD: locks.c,v 1.11 2008/01/30 10:22:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -154,7 +154,6 @@ rw_read_held(krwlock_t *rw)
 {
 
 	return rumpuser_rw_rdheld(rw->krw_pthlock);
-	return 1;
 }
 
 int
@@ -162,7 +161,6 @@ rw_lock_held(krwlock_t *rw)
 {
 
 	return rumpuser_rw_held(rw->krw_pthlock);
-	return 1;
 }
 
 /* curriculum vitaes */
