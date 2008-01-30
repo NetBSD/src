@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.55 2008/01/06 13:33:21 kent Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.56 2008/01/30 22:09:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.55 2008/01/06 13:33:21 kent Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.56 2008/01/30 22:09:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -130,6 +130,7 @@ static int	ad1981hd_init_widget(const codec_t *, widget_t *, nid_t);
 static int	ad1981hd_mixer_init(codec_t *);
 static int	ad1983_mixer_init(codec_t *);
 static int	ad1983_unsol_event(codec_t *, int);
+static int	ad1984_init_dacgroup(codec_t *);
 static int	ad1984_init_widget(const codec_t *, widget_t *, nid_t);
 static int	ad1984_mixer_init(codec_t *);
 static int	ad1986a_init_dacgroup(codec_t *);
@@ -242,6 +243,7 @@ azalia_codec_init_vtbl(codec_t *this)
 	case 0x11d41984:
 		/* http://www.analog.com/en/prod/0,2877,AD1984,00.html */
 		this->name = "Analog Devices AD1984";
+		this->init_dacgroup = ad1984_init_dacgroup;
 		this->init_widget = ad1984_init_widget;
 		this->mixer_init = ad1984_mixer_init;
 		break;
@@ -3157,6 +3159,23 @@ ad1983_unsol_event(codec_t *this, int tag)
 #define AD1984_THINKPAD	0x20ac17aa
 
 static int
+ad1984_init_dacgroup(codec_t *this)
+{
+	static const convgroupset_t dacs = {
+		-1, 2,
+		{{2, {0x04, 0x03}},	/* analog 4ch */
+		 {1, {0x02}}}};		/* digital */
+	static const convgroupset_t adcs = {
+		-1, 3,
+		{{2, {0x08, 0x09}},	/* analog 4ch */
+		 {1, {0x06}},		/* digital */
+		 {1, {0x05}}}}; 	/* digital */
+	this->dacs = dacs;
+	this->adcs = adcs;
+	return 0;
+}
+
+static int
 ad1984_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
@@ -3166,12 +3185,14 @@ ad1984_mixer_init(codec_t *this)
 	if (err)
 		return err;
 
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
 	if (this->subid == AD1984_THINKPAD) {
-		mc.dev = -1;
-		mc.type = AUDIO_MIXER_ENUM;
 		mc.un.ord = 1;
 		generic_mixer_set(this, 0x12, MI_TARGET_EAPD, &mc);
 	}
+	mc.un.ord = 1; /* dac */
+	generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc);
 
 	return 0;
 }
