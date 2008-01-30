@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.153 2008/01/25 14:37:33 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.154 2008/01/30 09:50:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.153 2008/01/25 14:37:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.154 2008/01/30 09:50:22 ad Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -717,17 +717,12 @@ vn_closefile(struct file *fp, struct lwp *l)
 u_int
 vn_setrecurse(struct vnode *vp)
 {
-	struct lock *lkp;
-	u_int retval;
+	struct vnlock *lkp;
 
 	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
+	atomic_inc_uint(&lkp->vl_canrecurse);
 
-	mutex_enter(&lkp->lk_interlock);
-	retval = lkp->lk_flags & LK_CANRECURSE;
-	lkp->lk_flags |= LK_CANRECURSE;
-	mutex_exit(&lkp->lk_interlock);
-
-	return retval;
+	return 0;
 }
 
 /*
@@ -736,14 +731,10 @@ vn_setrecurse(struct vnode *vp)
 void
 vn_restorerecurse(struct vnode *vp, u_int flags)
 {
-	struct lock *lkp;
+	struct vnlock *lkp;
 
 	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
-
-	mutex_enter(&lkp->lk_interlock);
-	lkp->lk_flags &= ~LK_CANRECURSE;
-	lkp->lk_flags |= flags;
-	mutex_exit(&lkp->lk_interlock);
+	atomic_dec_uint(&lkp->vl_canrecurse);
 }
 
 /*

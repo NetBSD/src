@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.188 2008/01/27 22:47:31 pooka Exp $	*/
+/*	$NetBSD: vnode.h,v 1.189 2008/01/30 09:50:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,9 +35,10 @@
 #define	_SYS_VNODE_H_
 
 #include <sys/event.h>
-#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>
+#include <sys/rwlock.h>
+#include <sys/mutex.h>
 
 /* XXX: clean up includes later */
 #include <uvm/uvm_param.h>	/* XXX */
@@ -93,6 +94,12 @@ struct buf;
 LIST_HEAD(buflists, buf);
 TAILQ_HEAD(vnodelst, vnode);
 
+struct vnlock {
+	krwlock_t	vl_lock;
+	u_int		vl_canrecurse;
+	u_int		vl_recursecnt;
+};
+
 /*
  * Reading or writing any of these items requires holding the appropriate
  * lock.  Field markings and the corresponding locks:
@@ -141,8 +148,8 @@ struct vnode {
 	} v_un;
 	enum vtype	v_type;			/* :: vnode type */
 	enum vtagtype	v_tag;			/* :: type of underlying data */
-	struct lock	v_lock;			/* v: lock for this vnode */
-	struct lock	*v_vnlock;		/* v: pointer to lock */
+	struct vnlock	v_lock;			/* v: lock for this vnode */
+	struct vnlock	*v_vnlock;		/* v: pointer to lock */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
 };
@@ -610,6 +617,8 @@ void	vn_syncer_add_to_worklist(struct vnode *, int);
 void	vn_syncer_remove_from_worklist(struct vnode *);
 int	speedup_syncer(void);
 int	dorevoke(struct vnode *, kauth_cred_t);
+int	vlockmgr(struct vnlock *, int);
+int	vlockstatus(struct vnlock *);
 
 /* from vfs_syscalls.c - abused by compat code */
 int	getvnode(struct filedesc *, int, struct file **);
