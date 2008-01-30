@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.65 2008/01/30 11:47:00 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.66 2008/01/30 11:57:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.65 2008/01/30 11:47:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.66 2008/01/30 11:57:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -982,7 +982,7 @@ puffs_msgif_close(void *this)
 {
 	struct puffs_mount *pmp = this;
 	struct mount *mp = PMPTOMP(pmp);
-	int gone, rv;
+	int rv;
 
 	mutex_enter(&pmp->pmp_lock);
 	puffs_mp_reference(pmp);
@@ -1033,20 +1033,11 @@ puffs_msgif_close(void *this)
 	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
-	mutex_enter(&mp->mnt_mutex);
-	mp->mnt_wcnt++;
-	mutex_exit(&mp->mnt_mutex);
-
+	atomic_inc_uint(&mp->mnt_refcnt);
 	mutex_enter(&syncer_mutex);
-
-	mutex_enter(&mp->mnt_mutex);
-	mp->mnt_wcnt--;
-	if (mp->mnt_wcnt == 0)
-		wakeup(&mp->mnt_wcnt);
-	gone = mp->mnt_iflag & IMNT_GONE;
-	mutex_exit(&mp->mnt_mutex);
-	if (gone) {
+	if (mp->mnt_iflag & IMNT_GONE) {
 		mutex_exit(&syncer_mutex);
+		vfs_destroy(mp);
 		return 0;
 	}
 
@@ -1063,6 +1054,7 @@ puffs_msgif_close(void *this)
 	 */
 	if (vfs_busy(mp, RW_WRITER, NULL)) {
 		mutex_exit(&syncer_mutex);
+		vfs_destroy(mp);
 		return 0;
 	}
 
@@ -1073,6 +1065,7 @@ puffs_msgif_close(void *this)
 	 */
 	rv = dounmount(mp, MNT_FORCE, curlwp);
 	KASSERT(rv == 0);
+	vfs_destroy(mp);
 
 	return 0;
 }
