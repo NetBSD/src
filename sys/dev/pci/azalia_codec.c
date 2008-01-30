@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.56 2008/01/30 22:09:00 jmcneill Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.57 2008/01/30 23:03:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.56 2008/01/30 22:09:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.57 2008/01/30 23:03:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -3179,11 +3179,46 @@ static int
 ad1984_mixer_init(codec_t *this)
 {
 	mixer_ctrl_t mc;
-	int err;
+	mixer_item_t *m, *mdac = NULL;
+	mixer_devinfo_t *d;
+	int err, i;
 
 	err = generic_mixer_init(this);
 	if (err)
 		return err;
+
+	/* Clear mixer indexes, to make generic_mixer_fix_indexes happy */
+	for (i = 0; i < this->nmixers; i++) {
+		d = &this->mixers[i].devinfo;
+		d->index = d->prev = d->next = 0;
+	}
+
+	/* We're looking for inputs.dac, which we know is nid 0x04 */
+	for (i = 0; i < this->nmixers; i++)
+		if (this->mixers[i].nid == 0x04) {
+			mdac = &this->mixers[i];
+			break;
+		}
+	if (mdac) {
+		/*
+		 * AD1984 doesn't have a master mixer, so create a fake
+		 * outputs.master that mirrors inputs.dac
+		 */
+		err = generic_mixer_ensure_capacity(this, this->nmixers + 1);
+		if (err)
+			return err;
+
+		m = &this->mixers[this->nmixers];
+		d = &m->devinfo;
+		memcpy(m, mdac, sizeof(*m));
+		d->mixer_class = AZ_CLASS_OUTPUT;
+		snprintf(d->label.name, sizeof(d->label.name), AudioNmaster);
+		this->nmixers++;
+	}
+
+	/* Recreate mixer indexes and defaults after making a mess of things */
+	generic_mixer_fix_indexes(this);
+	generic_mixer_default(this);
 
 	mc.dev = -1;
 	mc.type = AUDIO_MIXER_ENUM;
