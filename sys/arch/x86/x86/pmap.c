@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2008/01/28 11:06:43 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2008/01/30 13:26:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2008/01/28 11:06:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2008/01/30 13:26:09 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3093,9 +3093,11 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 
 		/* atomically save the old PTE and zap! it */
 		opte = pmap_pte_testset(pte, 0);
-		pmap_exec_account(pmap, startva, opte, 0);
-		KASSERT(pmap_valid_entry(opte));
+		if (!pmap_valid_entry(opte)) {
+			continue;
+		}
 
+		pmap_exec_account(pmap, startva, opte, 0);
 		pmap_stats_update_bypte(pmap, 0, opte);
 		xpte |= opte;
 
@@ -3176,9 +3178,11 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 
 	/* atomically save the old PTE and zap! it */
 	opte = pmap_pte_testset(pte, 0);
-	pmap_exec_account(pmap, va, opte, 0);
-	KASSERT(pmap_valid_entry(opte));
+	if (!pmap_valid_entry(opte)) {
+		return false;
+	}
 
+	pmap_exec_account(pmap, va, opte, 0);
 	pmap_stats_update_bypte(pmap, 0, opte);
 
 	if (opte & PG_U)
