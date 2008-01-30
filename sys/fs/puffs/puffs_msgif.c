@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.66 2008/01/30 11:57:24 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.67 2008/01/30 14:16:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.66 2008/01/30 11:57:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.67 2008/01/30 14:16:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -992,8 +992,6 @@ puffs_msgif_close(void *this)
 	 * The syncer might be jogging around in this file system
 	 * currently.  If we allow it to go to the userspace of no
 	 * return while trying to get the syncer lock, well ...
-	 * synclk: I feel happy, I feel fine.
-	 * lockmgr: You're not fooling anyone, you know.
 	 */
 	puffs_userdead(pmp);
 
