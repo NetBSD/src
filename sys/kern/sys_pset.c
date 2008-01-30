@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.3 2008/01/24 14:41:12 rmind Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.4 2008/01/30 17:54:56 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.3 2008/01/24 14:41:12 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.4 2008/01/30 17:54:56 elad Exp $");
 
 #include <sys/param.h>
 
@@ -243,7 +243,8 @@ sys_pset_create(struct lwp *l, const struct sys_pset_create_args *uap,
 	int error;
 
 	/* Available only for super-user */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_PSET,
+	    KAUTH_REQ_SYSTEM_PSET_CREATE, NULL, NULL, NULL))
 		return EPERM;
 
 	error = kern_pset_create(&psid);
@@ -266,7 +267,9 @@ sys_pset_destroy(struct lwp *l, const struct sys_pset_destroy_args *uap,
 	} */
 
 	/* Available only for super-user */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_PSET,
+	    KAUTH_REQ_SYSTEM_PSET_DESTROY,
+	    KAUTH_ARG(SCARG(uap, psid)), NULL, NULL))
 		return EPERM;
 
 	return kern_pset_destroy(SCARG(uap, psid));
@@ -288,8 +291,9 @@ sys_pset_assign(struct lwp *l, const struct sys_pset_assign_args *uap,
 	int error = 0;
 
 	/* Available only for super-user, except the case of PS_QUERY */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) &&
-	    psid != PS_QUERY)
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_PSET,
+	    KAUTH_REQ_SYSTEM_PSET_ASSIGN, KAUTH_ARG(SCARG(uap, psid)), NULL,
+	    NULL))
 		return EPERM;
 
 	/* Find the target CPU */
@@ -346,8 +350,9 @@ sys__pset_bind(struct lwp *l, const struct sys__pset_bind_args *uap,
 	psid = SCARG(uap, psid);
 
 	/* Available only for super-user, except the case of PS_QUERY */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL) &&
-	    psid != PS_QUERY)
+	if (kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_PSET,
+	    KAUTH_REQ_SYSTEM_PSET_BIND, KAUTH_ARG(SCARG(uap, psid)), NULL,
+	    NULL))
 		return EPERM;
 
 	mutex_enter(&psets_lock);
