@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.47 2008/01/28 14:31:16 dholland Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.48 2008/01/30 11:46:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.47 2008/01/28 14:31:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.48 2008/01/30 11:46:59 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -172,8 +172,7 @@ filecore_mountroot()
 
 	args.flags = FILECOREMNT_ROOT;
 	if ((error = filecore_mountfs(rootvp, mp, p, &args)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -181,7 +180,7 @@ filecore_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
 	(void)filecore_statvfs(mp, &mp->mnt_stat, p);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return (0);
 }
 #endif

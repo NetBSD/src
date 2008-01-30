@@ -1,7 +1,8 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.254 2008/01/28 14:31:20 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.255 2008/01/30 11:47:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.254 2008/01/28 14:31:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.255 2008/01/30 11:47:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -218,7 +219,7 @@ lfs_writerd(void *arg)
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+			if (vfs_trybusy(mp, RW_WRITER, &mountlist_lock)) {
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
 			}
@@ -248,7 +249,7 @@ lfs_writerd(void *arg)
 
 			mutex_enter(&mountlist_lock);
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			vfs_unbusy(mp);
+			vfs_unbusy(mp, false);
 		}
 		mutex_exit(&mountlist_lock);
 
@@ -351,8 +352,7 @@ lfs_mountroot()
 		return (error);
 	}
 	if ((error = lfs_mountfs(rootvp, mp, l))) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -360,7 +360,7 @@ lfs_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	(void)lfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	setrootfstime((time_t)(VFSTOUFS(mp)->um_lfs->lfs_tstamp));
 	return (0);
 }
