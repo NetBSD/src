@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.16 2008/01/30 11:47:01 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.17 2008/01/30 14:56:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.16 2008/01/30 11:47:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.17 2008/01/30 14:56:44 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.16 2008/01/30 11:47:01 ad Exp $");
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#include <sys/atomic.h>
 
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
