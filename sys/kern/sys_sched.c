@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.7 2008/01/26 17:55:29 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.8 2008/01/30 17:54:56 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.7 2008/01/26 17:55:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.8 2008/01/30 17:54:56 elad Exp $");
 
 #include <sys/param.h>
 
@@ -118,7 +118,8 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 	int error;
 
 	/* Available only for super-user */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, NULL, NULL))
 		return EPERM;
 
 	/* Get the parameters from the user-space */
@@ -211,6 +212,10 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	lwpid_t lid;
 	int error;
 
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL, NULL, NULL))
+		return EACCES;
+
 	sp = kmem_zalloc(sizeof(struct sched_param), KM_SLEEP);
 
 	/* If not specified, use the first LWP */
@@ -273,7 +278,9 @@ sys__sched_setaffinity(struct lwp *l,
 	int error;
 
 	/* Available only for super-user */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    l->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY), NULL,
+	    NULL))
 		return EPERM;
 
 	if (SCARG(uap, size) <= 0)
@@ -367,6 +374,11 @@ sys__sched_getaffinity(struct lwp *l,
 
 	if (SCARG(uap, size) <= 0)
 		return EINVAL;
+
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    l->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY), NULL,
+	    NULL))
+		return EACCES;
 
 	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
 
