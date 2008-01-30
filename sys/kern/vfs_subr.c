@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.327 2008/01/30 11:47:01 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.328 2008/01/30 12:33:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.327 2008/01/30 11:47:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.328 2008/01/30 12:33:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1918,7 +1918,7 @@ vlockmgr(struct vnlock *vl, int flags)
 			return 0;
 		}
 		if ((flags & LK_NOWAIT) != 0) {
-			return EDEADLK;
+			return EBUSY;
 		}
 		rw_enter(&vl->vl_lock, RW_READER);
 		return 0;
@@ -1933,7 +1933,7 @@ vlockmgr(struct vnlock *vl, int flags)
 			return 0;
 		}
 		if ((flags & LK_NOWAIT) != 0) {
-			return EDEADLK;
+			return EBUSY;
 		}
 		rw_enter(&vl->vl_lock, RW_WRITER);
 		return 0;
