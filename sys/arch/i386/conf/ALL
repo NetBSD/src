@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.158 2008/01/23 00:12:03 jmcneill Exp $
+# $NetBSD: ALL,v 1.159 2008/01/30 14:24:11 ad Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ALL-$Revision: 1.158 $"
+#ident 		"ALL-$Revision: 1.159 $"
 
 maxusers	32		# estimated number of users
 
@@ -191,6 +191,7 @@ options 	SOFTDEP		# FFS soft updates support.
 # Note that UFS_DIRHASH is suspected of causing kernel memory corruption.
 # It is not recommended for general use.
 options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+options		UFS_EXTATTR
 options 	NFSSERVER	# Network File System server
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 options 	EXT2FS_SYSTEM_FLAGS # makes ext2fs file flags (append and
