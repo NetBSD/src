@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.328 2008/01/30 12:33:45 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.329 2008/01/30 14:53:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,11 +82,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.328 2008/01/30 12:33:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.329 2008/01/30 14:53:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
+
+#define	__RWLOCK_PRIVATE	/* XXX LFS */
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1961,6 +1963,10 @@ vlockstatus(struct vnlock *vl)
 	}
 	if (rw_read_held(&vl->vl_lock)) {
 		return LK_SHARED;
+	}
+	if ((vl->vl_lock.rw_owner & RW_WRITE_LOCKED) != 0) {
+		/* XXX LFS */
+		return LK_EXCLOTHER;
 	}
 	return 0;
 }
