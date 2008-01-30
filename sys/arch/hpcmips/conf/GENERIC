@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.199 2008/01/26 15:09:11 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.200 2008/01/30 13:49:09 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.199 $"
+#ident 		"GENERIC-$Revision: 1.200 $"
 
 maxusers	16
 
@@ -452,7 +452,12 @@ ucbio*		at ucb?
 # interrupt-mode don't work. use polling mode.
 tc5165buf*	at txcsbus1 iocs 1 iocsbase 0 iocssize 0x100 iocswidth 16
 hpckbd*		at tc5165buf?
-#wsmouse*	at ucbtp? mux 0
+wsmouse*	at ucbtp? mux 0
+
+#
+# Fujitsu PenCentra 200
+#
+txcsbus3	at tx39biu? platform FUJITSU_PENCENTRA_200
 
 # TC6358TB(Plum2)
 #  register space: CS3,
