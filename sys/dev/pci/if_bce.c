@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.20 2008/01/30 11:54:08 simonb Exp $	 */
+/* $NetBSD: if_bce.c,v 1.21 2008/01/30 12:00:35 simonb Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.20 2008/01/30 11:54:08 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.21 2008/01/30 12:00:35 simonb Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -182,6 +182,7 @@ static	int	bce_add_rxbuf(struct bce_softc *, int);
 static	void	bce_rxdrain(struct bce_softc *);
 static	void	bce_stop(struct ifnet *, int);
 static	void	bce_reset(struct bce_softc *);
+static	bool	bce_resume(device_t);
 static	void	bce_set_filter(struct ifnet *);
 static	int	bce_mii_read(struct device *, int, int);
 static	void	bce_mii_write(struct device *, int, int, int);
@@ -480,6 +481,11 @@ bce_attach(struct device *parent, struct device *self, void *aux)
 	    RND_TYPE_NET, 0);
 #endif
 	callout_init(&sc->bce_timeout, 0);
+
+	if (!pmf_device_register(self, NULL, bce_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else
+		pmf_class_network_register(self, ifp);
 }
 
 /* handle media, and ethernet requests */
@@ -1356,6 +1362,16 @@ bce_set_filter(struct ifnet *ifp)
 		    bus_space_read_4(sc->bce_btag, sc->bce_bhandle,
 		    BCE_FILT_CTL) | 1);
 	}
+}
+
+static bool
+bce_resume(device_t dv)
+{
+	struct bce_softc *sc = device_private(dv);
+
+	bce_reset(sc);
+
+	return true;
 }
 
 /* Read a PHY register on the MII. */
