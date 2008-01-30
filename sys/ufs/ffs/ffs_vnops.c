@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.97 2008/01/25 14:32:17 ad Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.98 2008/01/30 09:50:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.97 2008/01/25 14:32:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.98 2008/01/30 09:50:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -720,9 +720,14 @@ ffs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
-	struct lock *lkp;
+	struct vnlock *lkp;
 	int flags = ap->a_flags;
 	int result;
+
+	if ((flags & LK_INTERLOCK) != 0) {
+		mutex_exit(&vp->v_interlock);
+		flags &= ~LK_INTERLOCK;
+	}
 
 	/*
 	 * Fake lock during file system suspension.
@@ -730,20 +735,12 @@ ffs_lock(void *v)
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((flags & LK_INTERLOCK) != 0)
-			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
-	KASSERT((flags & ~(LK_SHARED | LK_EXCLUSIVE | LK_SLEEPFAIL |
-	    LK_INTERLOCK | LK_NOWAIT | LK_CANRECURSE)) == 0);
 	for (;;) {
-		if ((flags & LK_INTERLOCK) == 0) {
-			mutex_enter(&vp->v_interlock);
-			flags |= LK_INTERLOCK;
-		}
 		lkp = vp->v_vnlock;
-		result = lockmgr(lkp, flags, &vp->v_interlock);
+		result = vlockmgr(lkp, flags);
 		if (lkp == vp->v_vnlock || result != 0)
 			return result;
 		/*
@@ -752,8 +749,7 @@ ffs_lock(void *v)
 		 * thread slept.  The lock currently held is not the right
 		 * lock.  Release it, and try to get the new lock.
 		 */
-		(void) lockmgr(lkp, LK_RELEASE, NULL);
-		flags &= ~LK_INTERLOCK;
+		(void) vlockmgr(lkp, LK_RELEASE);
 	}
 }
 
@@ -770,18 +766,17 @@ ffs_unlock(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
 
+	KASSERT(ap->a_flags == 0);
+
 	/*
 	 * Fake unlock during file system suspension.
 	 */
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((ap->a_flags & LK_INTERLOCK) != 0)
-			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
-	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock));
+	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
 }
 
 /*
@@ -795,5 +790,5 @@ ffs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockstatus(vp->v_vnlock));
+	return (vlockstatus(vp->v_vnlock));
 }

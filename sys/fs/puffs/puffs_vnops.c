@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.127 2008/01/28 21:06:37 pooka Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.128 2008/01/30 09:50:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.127 2008/01/28 21:06:37 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.128 2008/01/30 09:50:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -2031,7 +2031,6 @@ puffs_vnop_print(void *v)
 	    "    userspace cookie: %p\n", vp, pn, pn->pn_cookie);
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
-	lockmgr_printinfo(&vp->v_lock);
 
 	/* userspace portion */
 	if (EXISTSOP(pmp, PRINT)) {
@@ -2525,10 +2524,16 @@ puffs_vnop_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
+	int flags = ap->a_flags;
 
 #if 0
 	DPRINTF(("puffs_lock: lock %p, args 0x%x\n", vp, ap->a_flags));
 #endif
+
+	if (flags & LK_INTERLOCK) {
+		mutex_exit(&vp->v_interlock);
+		flags &= ~LK_INTERLOCK;
+	}
 
 	/*
 	 * XXX: this avoids deadlocking when we're suspending.
@@ -2542,12 +2547,10 @@ puffs_vnop_lock(void *v)
 	 * vnode locks alltogether.
 	 */
 	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
-		if (ap->a_flags & LK_INTERLOCK)
-			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
-	return lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock);
+	return vlockmgr(&vp->v_lock, flags);
 }
 
 int
@@ -2566,12 +2569,10 @@ puffs_vnop_unlock(void *v)
 
 	/* XXX: see puffs_lock() */
 	if (fstrans_is_owner(mp) && fstrans_getstate(mp) == FSTRANS_SUSPENDING){
-		if (ap->a_flags & LK_INTERLOCK)
-			mutex_exit(&vp->v_interlock);
 		return 0;
 	}
 
-	return lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock);
+	return vlockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE);
 }
 
 int
@@ -2580,7 +2581,7 @@ puffs_vnop_islocked(void *v)
 	struct vop_islocked_args *ap = v;
 	int rv;
 
-	rv = lockstatus(&ap->a_vp->v_lock);
+	rv = vlockstatus(&ap->a_vp->v_lock);
 	return rv;
 }
 

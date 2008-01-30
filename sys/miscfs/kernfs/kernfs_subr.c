@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_subr.c,v 1.14 2008/01/02 11:49:00 ad Exp $	*/
+/*	$NetBSD: kernfs_subr.c,v 1.15 2008/01/30 09:50:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.14 2008/01/02 11:49:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_subr.c,v 1.15 2008/01/30 09:50:23 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -347,7 +347,7 @@ kernfs_hashins(pp)
 	struct kfs_hashhead *ppp;
 
 	/* lock the kfsnode, then put it on the appropriate hash list */
-	lockmgr(&pp->kfs_vnode->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&pp->kfs_vnode->v_lock, LK_EXCLUSIVE);
 
 	mutex_enter(&kfs_ihash_lock);
 	ppp = &kfs_hashtbl[KFSVALUEHASH(pp->kfs_value)];

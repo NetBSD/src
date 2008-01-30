@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.126 2008/01/02 11:49:12 ad Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.127 2008/01/30 09:50:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.126 2008/01/02 11:49:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.127 2008/01/30 09:50:27 ad Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -1133,7 +1133,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
-			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
+			vlockmgr(&vp->v_lock, LK_RELEASE);
 			lfs_vunref(vp);
 			*vpp = NULL;
 			return (error);
@@ -1156,7 +1156,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
-			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
+			vlockmgr(&vp->v_lock, LK_RELEASE);
 			lfs_vunref(vp);
 			brelse(bp, 0);
 			*vpp = NULL;

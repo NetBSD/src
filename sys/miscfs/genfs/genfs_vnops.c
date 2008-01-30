@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.162 2008/01/25 15:34:59 riz Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.163 2008/01/30 09:50:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.162 2008/01/25 15:34:59 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.163 2008/01/30 09:50:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -239,8 +239,14 @@ genfs_lock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	int flags = ap->a_flags;
 
-	return (lockmgr(vp->v_vnlock, ap->a_flags, &vp->v_interlock));
+	if ((flags & LK_INTERLOCK) != 0) {
+		flags &= ~LK_INTERLOCK;
+		mutex_exit(&vp->v_interlock);
+	}
+
+	return (vlockmgr(vp->v_vnlock, flags));
 }
 
 /*
@@ -255,8 +261,9 @@ genfs_unlock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock));
+	KASSERT(ap->a_flags == 0);
+
+	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
 }
 
 /*
@@ -270,7 +277,7 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockstatus(vp->v_vnlock));
+	return (vlockstatus(vp->v_vnlock));
 }
 
 /*

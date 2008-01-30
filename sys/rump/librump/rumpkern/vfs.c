@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.34 2008/01/27 19:07:22 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.35 2008/01/30 09:50:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -148,7 +148,8 @@ rump_makevnode(const char *path, size_t size, enum vtype vt, dev_t rdev)
 	vp->v_vnlock = &vp->v_lock;
 	vp->v_usecount = 1;
 	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
-	lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+	memset(&vp->v_lock, 0, sizeof(vp->v_lock));
+	rw_init(&vp->v_lock.vl_lock);
 	cv_init(&vp->v_cv, "vnode");
 
 	return vp;

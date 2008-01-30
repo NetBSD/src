@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.163 2008/01/24 17:32:57 ad Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.164 2008/01/30 09:50:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1995
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.163 2008/01/24 17:32:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.164 2008/01/30 09:50:27 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1823,7 +1823,6 @@ ufs_print(void *v)
 	    (long long)ip->i_size);
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
-	lockmgr_printinfo(&vp->v_lock);
 	printf("\n");
 	return (0);
 }

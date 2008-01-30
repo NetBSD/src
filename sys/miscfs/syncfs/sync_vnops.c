@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.20 2008/01/02 11:49:02 ad Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.21 2008/01/30 09:50:23 ad Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.20 2008/01/02 11:49:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.21 2008/01/30 09:50:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -201,14 +201,7 @@ int
 sync_print(v)
 	void *v;
 {
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
-	printf("syncer vnode");
-	if (vp->v_vnlock != NULL)
-		lockmgr_printinfo(vp->v_vnlock);
-	printf("\n");
+	printf("syncer vnode\n");
 	return (0);
 }

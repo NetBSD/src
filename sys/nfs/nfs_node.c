@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.100 2008/01/26 15:30:07 ad Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.101 2008/01/30 09:50:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.100 2008/01/26 15:30:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.101 2008/01/30 09:50:24 ad Exp $");
 
 #include "opt_nfs.h"
 
@@ -225,7 +225,7 @@ loop:
 	kauth_cred_hold(np->n_rcred);
 	np->n_wcred = curlwp->l_cred;
 	kauth_cred_hold(np->n_wcred);
-	lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&vp->v_lock, LK_EXCLUSIVE);
 	NFS_INVALIDATE_ATTRCACHE(np);
 	uvm_vnp_setsize(vp, 0);
 	LIST_INSERT_HEAD(nhpp, np, n_hash);

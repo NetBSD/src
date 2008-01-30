@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vnops.c,v 1.39 2008/01/29 18:21:10 pooka Exp $	*/
+/*	$NetBSD: ntfs_vnops.c,v 1.40 2008/01/30 09:50:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.39 2008/01/29 18:21:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vnops.c,v 1.40 2008/01/30 09:50:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,7 +273,6 @@ ntfs_print(void *v)
 	    (unsigned long long)ip->i_number, ip->i_flag, ip->i_usecount,
 	    ip->i_nlink);
 	printf("       ");
-	lockmgr_printinfo(ap->a_vp->v_vnlock);
 	printf("\n");
 	return (0);
 }
