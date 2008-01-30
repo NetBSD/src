@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.880 2008/01/21 22:12:00 ichiro Exp $
+# $NetBSD: GENERIC,v 1.881 2008/01/30 19:58:19 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,9 +22,9 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.880 $"
+#ident 		"GENERIC-$Revision: 1.881 $"
 
-maxusers	32		# estimated number of users
+maxusers	64		# estimated number of users
 
 makeoptions 	CPUFLAGS="-march=i486 -mtune=pentiumpro" # Assume at least 486,
 							# tune for more modern
