@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.104 2008/01/27 18:37:50 rmind Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.105 2008/01/30 21:09:41 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.104 2008/01/27 18:37:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.105 2008/01/30 21:09:41 njoly Exp $");
 
 #define SYSVSHM
 
@@ -915,7 +915,7 @@ shmrealloc(int newshmni)
 
 	newshmsegs = (void *)v;
 	newshm_cv = (void *)(ALIGN(newshmsegs) +
-	    newshmni * sizeof(kcondvar_t));
+	    newshmni * sizeof(struct shmid_ds));
 
 	/* Copy all memory to the new area */
 	for (i = 0; i < shm_nused; i++)
@@ -967,7 +967,7 @@ shminit(void)
 		panic("sysv_shm: cannot allocate memory");
 	shmsegs = (void *)v;
 	shm_cv = (void *)(ALIGN(shmsegs) +
-	    shminfo.shmmni * sizeof(kcondvar_t));
+	    shminfo.shmmni * sizeof(struct shmid_ds));
 
 	shminfo.shmmax *= PAGE_SIZE;
 
