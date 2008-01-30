@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.67 2008/01/25 14:32:11 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.68 2008/01/30 09:50:19 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.67 2008/01/25 14:32:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.68 2008/01/30 09:50:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1777,6 +1777,7 @@ coda_lock(void *v)
     struct vop_lock_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
+    int flags  = ap->a_flags;
 /* upcall decl */
 /* locals */
 
@@ -1787,7 +1788,12 @@ coda_lock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock));
+    if ((flags & LK_INTERLOCK) != 0) {
+    	mutex_exit(&vp->v_interlock);
+    	flags &= ~LK_INTERLOCK;
+    }
+
+    return (vlockmgr(&vp->v_lock, flags));
 }
 
 int
@@ -1806,7 +1812,7 @@ coda_unlock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock));
+    return (vlockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE));
 }
 
 int
@@ -1816,7 +1822,7 @@ coda_islocked(void *v)
     struct vop_islocked_args *ap = v;
     ENTRY;
 
-    return (lockstatus(&ap->a_vp->v_lock));
+    return (vlockstatus(&ap->a_vp->v_lock));
 }
 
 /*

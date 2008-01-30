@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.10 2008/01/22 09:23:40 pooka Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.11 2008/01/30 09:50:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -186,6 +186,13 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 	free(mtx);
 }
 
+int
+rumpuser_mutex_held(struct rumpuser_mtx *mtx)
+{
+
+	return pthread_mutex_held_np(&mtx->pthmtx);
+}
+
 void
 rumpuser_rw_init(struct rumpuser_rw **rw)
 {
@@ -227,6 +234,27 @@ rumpuser_rw_destroy(struct rumpuser_rw *rw)
 
 	NOFAIL(pthread_rwlock_destroy(&rw->pthrw) == 0);
 	free(rw);
+}
+
+int
+rumpuser_rw_held(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_held_np(&rw->pthrw);
+}
+
+int
+rumpuser_rw_rdheld(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_rdheld_np(&rw->pthrw);
+}
+
+int
+rumpuser_rw_wrheld(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_wrheld_np(&rw->pthrw);
 }
 
 void

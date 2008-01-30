@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_subr2.c,v 1.14 2008/01/28 14:31:18 dholland Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.15 2008/01/30 09:50:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.14 2008/01/28 14:31:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.15 2008/01/30 09:50:22 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -679,9 +679,11 @@ const char vnode_flagbits[] = VNODE_FLAGBITS;
 void
 vprint(const char *label, struct vnode *vp)
 {
+	struct vnlock *vl;
 	char bf[96];
 	int flag;
 
+	vl = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
 	bitmask_snprintf(flag, vnode_flagbits, bf, sizeof(bf));
 
@@ -689,11 +691,11 @@ vprint(const char *label, struct vnode *vp)
 		printf("%s: ", label);
 	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
 	    "usecount %d, writecount %d, holdcount %d\n"
-	    "\tfreelisthd %p, mount %p, data %p\n", vp, bf,
-	    ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
+	    "\tfreelisthd %p, mount %p, data %p lock %p recursecnt %d\n",
+	    vp, bf, ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_freelisthd, vp->v_mount, vp->v_data);
+	    vp->v_freelisthd, vp->v_mount, vp->v_data, vl, vl->vl_recursecnt);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);

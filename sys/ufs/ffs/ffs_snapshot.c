@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.61 2008/01/28 17:49:06 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.62 2008/01/30 09:50:25 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.61 2008/01/28 17:49:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.62 2008/01/30 09:50:25 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -128,7 +128,7 @@ static inline void idb_assign(struct inode *, void *, int, ufs2_daddr_t);
 
 struct snap_info {
 	kmutex_t si_lock;			/* Lock this snapinfo */
-	struct lock si_vnlock;			/* Snapshot vnode common lock */
+	struct vnlock si_vnlock;		/* Snapshot vnode common lock */
 	TAILQ_HEAD(inodelst, inode) si_snapshots; /* List of active snapshots */
 	daddr_t *si_snapblklist;		/* Snapshot block hints list */
 	uint32_t si_gen;			/* Incremented on change */
@@ -164,6 +164,7 @@ si_mount_dtor(void *arg)
 
 	KASSERT(TAILQ_EMPTY(&si->si_snapshots));
 	mutex_destroy(&si->si_lock);
+	rw_destroy(&si->si_vnlock.vl_lock);
 	KASSERT(si->si_snapblklist == NULL);
 	free(si, M_MOUNT);
 }
@@ -519,13 +520,14 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		VI_LOCK(vp);
 		vp->v_vnlock = ITOV(xp)->v_vnlock;
 	} else {
-		lockinit(&si->si_vnlock, PVFS, "snaplk", 0, LK_CANRECURSE);
+		rw_init(&si->si_vnlock.vl_lock);
+		si->si_vnlock.vl_canrecurse = 1;
 		VI_LOCK(vp);
 		vp->v_vnlock = &si->si_vnlock;
 	}
 	mutex_exit(&si->si_lock);
 	vn_lock(vp, LK_INTERLOCK | LK_EXCLUSIVE | LK_RETRY);
-	lockmgr(&vp->v_lock, LK_RELEASE, NULL);
+	vlockmgr(&vp->v_lock, LK_RELEASE);
 	/*
 	 * If this is the first snapshot on this filesystem, then we need
 	 * to allocate the space for the list of preallocated snapshot blocks.
@@ -1428,7 +1430,7 @@ ffs_snapremove(struct vnode *vp)
 	struct vnode *devvp = ip->i_devvp;
 	struct fs *fs = ip->i_fs;
 	struct mount *mp = devvp->v_specmountpoint;
-	struct lock *lkp;
+	struct vnlock *lkp;
 	struct buf *ibp;
 	struct snap_info *si;
 	ufs2_daddr_t numblks, blkno, dblk;
@@ -1446,13 +1448,12 @@ ffs_snapremove(struct vnode *vp)
 	 */
 	if (ip->i_nextsnap.tqe_prev != 0) {
 		mutex_enter(&si->si_lock);
-		lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
+		vlockmgr(&vp->v_lock, LK_EXCLUSIVE);
 		TAILQ_REMOVE(&si->si_snapshots, ip, i_nextsnap);
 		ip->i_nextsnap.tqe_prev = 0;
-		VI_LOCK(vp);
 		lkp = vp->v_vnlock;
 		vp->v_vnlock = &vp->v_lock;
-		lockmgr(lkp, LK_RELEASE | LK_INTERLOCK, VI_MTX(vp));
+		vlockmgr(lkp, LK_RELEASE);
 		if (TAILQ_FIRST(&si->si_snapshots) != 0) {
 			/* Roll back the list of preallocated blocks. */
 			xp = TAILQ_LAST(&si->si_snapshots, inodelst);
@@ -1461,11 +1462,11 @@ ffs_snapremove(struct vnode *vp)
 			si->si_snapblklist = 0;
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
-			lockmgr(lkp, LK_DRAIN, NULL);
+			vlockmgr(lkp, LK_RELEASE);
 			fscow_disestablish(mp, ffs_copyonwrite, devvp);
 			mutex_enter(&si->si_lock);
-			lockmgr(lkp, LK_RELEASE, NULL);
-			lockdestroy(lkp);
+			vlockmgr(lkp, LK_RELEASE);
+			rw_destroy(&lkp->vl_lock);
 		}
 		si->si_gen++;
 		mutex_exit(&si->si_lock);
@@ -1811,13 +1812,13 @@ ffs_snapshot_mount(struct mount *mp)
 			VI_LOCK(vp);
 			vp->v_vnlock = ITOV(xp)->v_vnlock;
 		} else {
-			lockinit(&si->si_vnlock, PVFS, "snaplk",
-			    0, LK_CANRECURSE);
+			rw_init(&si->si_vnlock.vl_lock);
+			si->si_vnlock.vl_canrecurse = 1;
 			VI_LOCK(vp);
 			vp->v_vnlock = &si->si_vnlock;
 		}
 		vn_lock(vp, LK_INTERLOCK | LK_EXCLUSIVE | LK_RETRY);
-		lockmgr(&vp->v_lock, LK_RELEASE, NULL);
+		vlockmgr(&vp->v_lock, LK_RELEASE);
 		/*
 		 * Link it onto the active snapshot list.
 		 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.9 2008/01/21 17:56:48 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.10 2008/01/30 09:50:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -94,8 +94,7 @@ int
 mutex_owned(kmutex_t *mtx)
 {
 
-	/* XXX */
-	return 1;
+	return rumpuser_mutex_held(mtx->kmtx_mtx);
 }
 
 /* reader/writer locks */
@@ -147,7 +146,22 @@ int
 rw_write_held(krwlock_t *rw)
 {
 
-	/* XXX: always held for now */
+	return rumpuser_rw_wrheld(rw->krw_pthlock);
+}
+
+int
+rw_read_held(krwlock_t *rw)
+{
+
+	return rumpuser_rw_rdheld(rw->krw_pthlock);
+	return 1;
+}
+
+int
+rw_lock_held(krwlock_t *rw)
+{
+
+	return rumpuser_rw_held(rw->krw_pthlock);
 	return 1;
 }
 
