@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.19 2008/01/23 20:02:16 joerg Exp $	*/
+/*	$NetBSD: cpu.c,v 1.20 2008/01/30 01:10:21 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.19 2008/01/23 20:02:16 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.20 2008/01/30 01:10:21 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -129,6 +129,7 @@ static bool	cpu_resume(device_t);
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
+	bool sc_wasonline;
 };
 
 int mp_cpu_start(struct cpu_info *, paddr_t); 
@@ -929,12 +930,16 @@ cpu_suspend(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, false);
-	mutex_exit(&cpu_lock);
+	sc->sc_wasonline = !(ci->ci_schedstate.spc_flags & SPCF_OFFLINE);
 
-	if (err)
-		return false;
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, false);
+		mutex_exit(&cpu_lock);
+	
+		if (err)
+			return false;
+	}
 
 	return true;
 }
@@ -944,7 +949,7 @@ cpu_resume(device_t dv)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
-	int err;
+	int err = 0;
 
 	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
@@ -953,9 +958,11 @@ cpu_resume(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, true);
-	mutex_exit(&cpu_lock);
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, true);
+		mutex_exit(&cpu_lock);
+	}
 
 	return err == 0;
 }
