@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.64 2008/01/28 21:06:36 pooka Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.65 2008/01/30 11:47:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.64 2008/01/28 21:06:36 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.65 2008/01/30 11:47:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/fstrans.h>
@@ -1061,7 +1061,7 @@ puffs_msgif_close(void *this)
 	 * is already a goner.
 	 * XXX: skating on the thin ice of modern calling conventions ...
 	 */
-	if (vfs_busy(mp, 0, 0)) {
+	if (vfs_busy(mp, RW_WRITER, NULL)) {
 		mutex_exit(&syncer_mutex);
 		return 0;
 	}
