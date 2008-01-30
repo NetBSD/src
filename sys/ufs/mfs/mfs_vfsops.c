@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.88 2008/01/28 14:31:21 dholland Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.89 2008/01/30 11:47:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.88 2008/01/28 14:31:21 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.89 2008/01/30 11:47:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -198,8 +198,7 @@ mfs_mountroot(void)
 	mfsp->mfs_shutdown = 0;
 	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		bufq_free(mfsp->mfs_buflist);
 		vfs_destroy(mp);
 		free(mfsp, M_MFSNODE);
@@ -213,7 +212,7 @@ mfs_mountroot(void)
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return (0);
 }
 
@@ -387,7 +386,7 @@ mfs_start(struct mount *mp, int flags)
 			 * the mount point.  See dounmount() for details.
 			 */
 			mutex_enter(&syncer_mutex);
-			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
+			if (vfs_trybusy(mp, RW_WRITER, NULL) != 0)
 				mutex_exit(&syncer_mutex);
 			else if (dounmount(mp, 0, l) != 0) {
 				p = l->l_proc;

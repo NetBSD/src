@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.221 2008/01/28 14:31:20 dholland Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.222 2008/01/30 11:47:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.221 2008/01/28 14:31:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.222 2008/01/30 11:47:04 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -164,8 +164,7 @@ ffs_mountroot(void)
 		return (error);
 	}
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -177,7 +176,7 @@ ffs_mountroot(void)
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	setrootfstime((time_t)fs->fs_time);
 	return (0);
 }

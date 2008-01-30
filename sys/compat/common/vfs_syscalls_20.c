@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.24 2008/01/07 16:08:46 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.25 2008/01/30 11:46:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.24 2008/01/07 16:08:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.25 2008/01/30 11:46:59 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -223,7 +223,7 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -232,12 +232,12 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 			if (error) {
 				mutex_enter(&mountlist_lock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
-				vfs_unbusy(mp);
+				vfs_unbusy(mp, false);
 				continue;
 			}
 			error = vfs2fs(sfsp, sbuf);
 			if (error) {
-				vfs_unbusy(mp);
+				vfs_unbusy(mp, false);
 				goto out;
 			}
 			sfsp++;
@@ -246,7 +246,7 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 		count++;
 		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	}
 	mutex_exit(&mountlist_lock);
 	if (root == 0 && l->l_proc->p_cwdi->cwdi_rdir) {

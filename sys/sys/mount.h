@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.172 2008/01/28 14:31:20 dholland Exp $	*/
+/*	$NetBSD: mount.h,v 1.173 2008/01/30 11:47:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -45,7 +45,7 @@
 #include <sys/ucred.h>
 #include <sys/fstypes.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/rwlock.h>
 #include <sys/statvfs.h>
 #include <sys/specificdata.h>
 #endif	/* !_STANDALONE */
@@ -102,22 +102,22 @@ struct vnode;
  */
 struct mount {
 	CIRCLEQ_ENTRY(mount) mnt_list;		/* mount list */
+	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct vnode	*mnt_syncer;		/* syncer vnode */
-	TAILQ_HEAD(, vnode) mnt_vnodelist;	/* list of vnodes this mount */
-	struct lock	mnt_lock;		/* mount structure lock */
+	void		*mnt_transinfo;		/* for FS-internal use */
+	void		*mnt_data;		/* private data */
+	struct lwp	*mnt_writer;		/* who is [un]mounting */
+	krwlock_t	mnt_lock;		/* mount structure lock */
+	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
+	int		mnt_refcnt;		/* ref count on this structure */
+	int		mnt_recursecnt;		/* count of write locks */
 	int		mnt_flag;		/* flags */
 	int		mnt_iflag;		/* internal flags */
 	int		mnt_fs_bshift;		/* offset shift for lblkno */
 	int		mnt_dev_bshift;		/* shift for device sectors */
 	struct statvfs	mnt_stat;		/* cache of filesystem stats */
-	void		*mnt_data;		/* private data */
-	int		mnt_wcnt;		/* count of vfs_busy waiters */
-	struct lwp	*mnt_unmounter;		/* who is unmounting */
-	kmutex_t	mnt_mutex;		/* mutex for wcnt */
-	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
-	void		*mnt_transinfo;		/* for FS-internal use */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
 };
@@ -330,9 +330,10 @@ int	vfs_mountedon(struct vnode *);/* is a vfs mounted on vp */
 int	vfs_mountroot(void);
 void	vfs_shutdown(void);	    /* unmount and sync file systems */
 void	vfs_unmountall(struct lwp *);	    /* unmount file systems */
-int 	vfs_busy(struct mount *, int, kmutex_t *);
+int 	vfs_busy(struct mount *, const krw_t, kmutex_t *);
+int 	vfs_trybusy(struct mount *, const krw_t, kmutex_t *);
 int	vfs_rootmountalloc(const char *, const char *, struct mount **);
-void	vfs_unbusy(struct mount *);
+void	vfs_unbusy(struct mount *, bool);
 int	vfs_attach(struct vfsops *);
 int	vfs_detach(struct vfsops *);
 void	vfs_reinit(void);
