@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.27 2008/01/10 08:55:31 dyoung Exp $ */
+/* $NetBSD: pcppi.c,v 1.28 2008/01/30 12:30:01 he Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.27 2008/01/10 08:55:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.28 2008/01/30 12:30:01 he Exp $");
 
 #include "attimer.h"
 
@@ -166,11 +166,6 @@ pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
         printf("\n");
 
         pcppi_attach(sc);
-        if (!device_pmf_is_registered(self))
-		if (!pmf_device_register(self, NULL, NULL))
-			aprint_error_dev(self,
-			    "couldn't establish power handler\n"); 
-
 }
 
 int
@@ -199,6 +194,7 @@ void
 pcppi_attach(struct pcppi_softc *sc)
 {
         struct pcppi_attach_args pa;
+	struct device *self = (struct device *)sc;
 
         callout_init(&sc->sc_bell_ch, 0);
 
@@ -211,6 +207,10 @@ pcppi_attach(struct pcppi_softc *sc)
 #if NATTIMER > 0
 	config_defer(&sc->sc_dv, pcppi_attach_speaker);
 #endif
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
 
 	pa.pa_cookie = sc;
 	config_search_loc(pcppisearch, &sc->sc_dv, "pcppi", NULL, &pa);
