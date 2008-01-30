@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.121 2008/01/28 20:05:21 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.122 2008/01/30 00:43:47 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.121 2008/01/28 20:05:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122 2008/01/30 00:43:47 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -1327,9 +1327,8 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 		}
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
-			mutex_exit(&filelist_lock);
-			error = ENOMEM;
 		    	mutex_exit(&fp->f_lock);
+			error = ENOMEM;
 			break;
 		}
 		memcpy(&fbuf, fp, sizeof(fbuf));
