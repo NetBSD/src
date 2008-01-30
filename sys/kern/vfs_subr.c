@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.325 2008/01/28 18:24:05 dyoung Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.326 2008/01/30 09:50:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.325 2008/01/28 18:24:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.326 2008/01/30 09:50:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -564,7 +564,7 @@ vnalloc(struct mount *mp)
 		vp->v_type = VBAD;
 		vp->v_iflag = VI_MARKER;
 	} else {
-		lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+		rw_init(&vp->v_lock.vl_lock);
 	}
 
 	return vp;
@@ -580,7 +580,7 @@ vnfree(vnode_t *vp)
 	KASSERT(vp->v_usecount == 0);
 
 	if ((vp->v_iflag & VI_MARKER) == 0) {
-		lockdestroy(&vp->v_lock);
+		rw_destroy(&vp->v_lock.vl_lock);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
 		mutex_exit(&vnode_free_list_lock);
@@ -1848,4 +1848,66 @@ done:
 		vrele(rootvp);
 	}
 	return (error);
+}
+
+/*
+ * Sham lock manager for vnodes.  This is a temporary measure.
+ */
+int
+vlockmgr(struct vnlock *vl, int flags)
+{
+
+	KASSERT((flags & ~(LK_CANRECURSE | LK_NOWAIT | LK_TYPE_MASK)) == 0);
+
+	switch (flags & LK_TYPE_MASK) {
+	case LK_SHARED:
+		if (rw_tryenter(&vl->vl_lock, RW_READER)) {
+			return 0;
+		}
+		if ((flags & LK_NOWAIT) != 0) {
+			return EDEADLK;
+		}
+		rw_enter(&vl->vl_lock, RW_READER);
+		return 0;
+
+	case LK_EXCLUSIVE:
+		if (rw_tryenter(&vl->vl_lock, RW_WRITER)) {
+			return 0;
+		}
+		if ((vl->vl_canrecurse || (flags & LK_CANRECURSE) != 0) &&
+		    rw_write_held(&vl->vl_lock)) {
+			vl->vl_recursecnt++;
+			return 0;
+		}
+		if ((flags & LK_NOWAIT) != 0) {
+			return EDEADLK;
+		}
+		rw_enter(&vl->vl_lock, RW_WRITER);
+		return 0;
+
+	case LK_RELEASE:
+		if (vl->vl_recursecnt != 0) {
+			KASSERT(rw_write_held(&vl->vl_lock));
+			vl->vl_recursecnt--;
+			return 0;
+		}
+		rw_exit(&vl->vl_lock);
+		return 0;
+
+	default:
+		panic("vlockmgr: flags %x", flags);
+	}
+}
+
+int
+vlockstatus(struct vnlock *vl)
+{
+
+	if (rw_write_held(&vl->vl_lock)) {
+		return LK_EXCLUSIVE;
+	}
+	if (rw_read_held(&vl->vl_lock)) {
+		return LK_SHARED;
+	}
+	return 0;
 }

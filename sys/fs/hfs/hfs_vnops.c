@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.8 2008/01/25 14:32:12 ad Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.9 2008/01/30 09:50:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.8 2008/01/25 14:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.9 2008/01/30 09:50:20 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1041,7 +1041,6 @@ hfs_vop_print(void *v)
 	hp = VTOH(vp);
 
 	printf("dummy = %X\n", (unsigned)hp->dummy);
-	lockmgr_printinfo(&vp->v_lock);
 	printf("\n");
 
 	return 0;

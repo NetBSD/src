@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.6 2008/01/25 20:49:15 ad Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.7 2008/01/30 09:50:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.6 2008/01/25 20:49:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.7 2008/01/30 09:50:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ hfs_nhashinsert(struct hfsnode *hp)
 	struct nhashhead *hpp;
 
 	/* lock the inode, then put it on the appropriate hash list */
-	lockmgr(&hp->h_vnode->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&hp->h_vnode->v_lock, LK_EXCLUSIVE);
 
 	mutex_enter(&hfs_nhash_lock);
 	hpp = &nhashtbl[HNOHASH(hp->h_dev, hp->h_rec.cnid, hp->h_fork)];

@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vnops.c,v 1.48 2008/01/25 14:32:12 ad Exp $	*/
+/*	$NetBSD: msdosfs_vnops.c,v 1.49 2008/01/30 09:50:20 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.48 2008/01/25 14:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vnops.c,v 1.49 2008/01/30 09:50:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -905,8 +905,7 @@ abortit:
 
 	/*
 	 * XXX: This can deadlock since we hold tdvp/tvp locked.
-	 * But I'm not going to fix it now.  If lockmgr detected the
-	 * deadlock, this might actually work... sorta.
+	 * But I'm not going to fix it now.
 	 */
 	if ((error = vn_lock(fvp, LK_EXCLUSIVE)) != 0)
 		goto abortit;
@@ -1818,7 +1817,6 @@ msdosfs_print(v)
 	    "tag VT_MSDOSFS, startcluster %ld, dircluster %ld, diroffset %ld ",
 	    dep->de_StartCluster, dep->de_dirclust, dep->de_diroffset);
 	printf(" dev %d, %d ", major(dep->de_dev), minor(dep->de_dev));
-	lockmgr_printinfo(&ap->a_vp->v_lock);
 	printf("\n");
 	return (0);
 }

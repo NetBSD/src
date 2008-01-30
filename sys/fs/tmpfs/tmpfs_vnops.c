@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.46 2008/01/25 14:32:13 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.47 2008/01/30 09:50:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.46 2008/01/25 14:32:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.47 2008/01/30 09:50:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1310,11 +1310,8 @@ tmpfs_print(void *v)
 	    ", status 0x%x\n",
 	    node->tn_mode, node->tn_uid, node->tn_gid,
 	    (uintmax_t)node->tn_size, node->tn_status);
-
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
-	lockmgr_printinfo(&vp->v_lock);
-
 	printf("\n");
 
 	return 0;
