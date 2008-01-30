@@ -1,4 +1,4 @@
-/*	$NetBSD: extattr.h,v 1.7 2008/01/25 10:49:32 pooka Exp $	*/
+/*	$NetBSD: extattr.h,v 1.8 2008/01/30 14:54:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001 Robert N. M. Watson
@@ -96,9 +96,10 @@ struct ufs_extattr_list_entry {
 
 struct lock;
 struct ufs_extattr_per_mount {
-	struct lock			uepm_lock;
+	kmutex_t			uepm_lock;
 	struct ufs_extattr_list_head	uepm_list;
 	kauth_cred_t			uepm_ucred;
+	int				uepm_lockcnt;
 	int				uepm_flags;
 };
 

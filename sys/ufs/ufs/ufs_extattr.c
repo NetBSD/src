@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extattr.c,v 1.19 2008/01/25 13:31:22 ad Exp $	*/
+/*	$NetBSD: ufs_extattr.c,v 1.20 2008/01/30 14:54:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002 Robert N. M. Watson
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.19 2008/01/25 13:31:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_extattr.c,v 1.20 2008/01/30 14:54:01 ad Exp $");
 
 #include "opt_ffs.h"
 
@@ -107,16 +107,23 @@ static void
 ufs_extattr_uepm_lock(struct ufsmount *ump)
 {
 
-	/* Ideally, LK_CANRECURSE would not be used, here. */
-	lockmgr(&ump->um_extattr.uepm_lock, LK_EXCLUSIVE |
-	    LK_CANRECURSE, NULL);
+	/* XXX Why does this need to be recursive? */
+	if (mutex_owned(&ump->um_extattr.uepm_lock)) {
+		ump->um_extattr.uepm_lockcnt++;
+		return;
+	}
+	mutex_enter(&ump->um_extattr.uepm_lock);
 }
 
 static void
 ufs_extattr_uepm_unlock(struct ufsmount *ump)
 {
 
-	lockmgr(&ump->um_extattr.uepm_lock, LK_RELEASE, NULL);
+	if (ump->um_extattr.uepm_lockcnt != 0) {
+		KASSERT(mutex_owned(&ump->um_extattr.uepm_lock));
+		ump->um_extattr.uepm_lockcnt--;
+	}
+	mutex_exit(&ump->um_extattr.uepm_lock);
 }
 
 /*-
@@ -170,10 +177,10 @@ ufs_extattr_uepm_init(struct ufs_extattr_per_mount *uepm)
 {
 
 	uepm->uepm_flags = 0;
+	uepm->uepm_lockcnt = 0;
 
 	LIST_INIT(&uepm->uepm_list);
-	/* XXX is PVFS right, here? */
-	lockinit(&uepm->uepm_lock, PVFS, "ufsea", 0, 0);
+	mutex_init(&uepm->uepm_lock, MUTEX_DEFAULT, IPL_NONE);
 	uepm->uepm_flags |= UFS_EXTATTR_UEPM_INITIALIZED;
 }
 
@@ -197,8 +204,7 @@ ufs_extattr_uepm_destroy(struct ufs_extattr_per_mount *uepm)
 	 * during unmount, and with vfs_busy().
 	 */
 	uepm->uepm_flags &= ~UFS_EXTATTR_UEPM_INITIALIZED;
-	lockmgr(&uepm->uepm_lock, LK_DRAIN, NULL);
-	lockdestroy(&uepm->uepm_lock);
+	mutex_destroy(&uepm->uepm_lock);
 }
 
 /*
