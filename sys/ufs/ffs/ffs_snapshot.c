@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.63 2008/01/30 11:47:03 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.64 2008/01/30 14:50:28 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.63 2008/01/30 11:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.64 2008/01/30 14:50:28 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1565,12 +1565,13 @@ retry:
 	TAILQ_FOREACH(ip, &si->si_snapshots, i_nextsnap) {
 		vp = ITOV(ip);
 		if (snapshot_locked == 0) {
-			mutex_exit(&si->si_lock);
-			if (VOP_LOCK(vp, LK_EXCLUSIVE | LK_SLEEPFAIL) != 0) {
+			error = VOP_LOCK(vp, LK_EXCLUSIVE | LK_NOWAIT);
+			if (error != 0) {
+				mutex_exit(&si->si_lock);
+				kpause("snaplock", false, 1, NULL);
 				mutex_enter(&si->si_lock);
 				goto retry;
 			}
-			mutex_enter(&si->si_lock);
 			snapshot_locked = 1;
 			if (gen != si->si_gen)
 				goto retry;
@@ -1960,12 +1961,13 @@ retry:
 		if (bp->b_vp == vp)
 			continue;
 		if (snapshot_locked == 0) {
-			mutex_exit(&si->si_lock);
-			if (VOP_LOCK(vp, LK_EXCLUSIVE | LK_SLEEPFAIL) != 0) {
+			error = VOP_LOCK(vp, LK_EXCLUSIVE | LK_NOWAIT);
+			if (error != 0) {
+				mutex_exit(&si->si_lock);
+				kpause("snaplock", false, 1, NULL);
 				mutex_enter(&si->si_lock);
 				goto retry;
 			}
-			mutex_enter(&si->si_lock);
 			snapshot_locked = 1;
 			if (gen != si->si_gen)
 				goto retry;
