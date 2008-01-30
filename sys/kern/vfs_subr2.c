@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.15 2008/01/30 09:50:22 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.16 2008/01/30 11:47:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.15 2008/01/30 09:50:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.16 2008/01/30 11:47:01 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -191,17 +191,22 @@ vfs_getvfs(fsid_t *fsid)
 }
 
 /*
- * Free a mount structure.
+ * Drop a reference to a mount structure, freeing if the last reference.
  */
 void
 vfs_destroy(struct mount *mp)
 {
 
+	if (atomic_dec_uint_nv(&mp->mnt_refcnt) > 0) {
+		return;
+	}
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
+	rw_destroy(&mp->mnt_lock);
+	if (mp->mnt_op != NULL) {
+		vfs_delref(mp->mnt_op);
+	}
 	mutex_destroy(&mp->mnt_renamelock);
-	mutex_destroy(&mp->mnt_mutex);
-	lockdestroy(&mp->mnt_lock);
-	free(mp, M_MOUNT);
+	kmem_free(mp, sizeof(*mp));
 }
 
 /*
@@ -717,7 +722,7 @@ printlockedvnodes(void)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -727,7 +732,7 @@ printlockedvnodes(void)
 		}
 		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	}
 	mutex_exit(&mountlist_lock);
 }
@@ -1255,25 +1260,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(mp->mnt_iflag, __IMNT_FLAG_BITS, sbuf, sizeof(sbuf));
 	(*pr)("iflag = %s\n", sbuf);
 
-	/* XXX use lockmgr_printinfo */
-	if (mp->mnt_lock.lk_sharecount)
-		(*pr)(" lock type %s: SHARED (count %d)", mp->mnt_lock.lk_wmesg,
-		    mp->mnt_lock.lk_sharecount);
-	else if (mp->mnt_lock.lk_flags & LK_HAVE_EXCL) {
-		(*pr)(" lock type %s: EXCL (count %d) by ",
-		    mp->mnt_lock.lk_wmesg, mp->mnt_lock.lk_exclusivecount);
-		(*pr)("pid %d.%d", mp->mnt_lock.lk_lockholder,
-		    mp->mnt_lock.lk_locklwp);
-	} else
-		(*pr)(" not locked");
-	if (mp->mnt_lock.lk_waitcount > 0)
-		(*pr)(" with %d pending", mp->mnt_lock.lk_waitcount);
-
-	(*pr)("\n");
-
-	if (mp->mnt_unmounter) {
-		(*pr)("unmounter pid = %d ",mp->mnt_unmounter->l_proc);
-	}
+	(*pr)("refcnt = %d lock @ %p writer = %p\n", mp->mnt_refcnt,
+	    &mp->mnt_lock, mp->mnt_writer);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);
@@ -1312,7 +1300,6 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		int cnt = 0;
 		struct vnode *vp;
 		(*pr)("locked vnodes =");
-		/* XXX would take mountlist lock, except ddb may not have context */
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp)) {
 				if ((++cnt % 6) == 0) {
@@ -1329,7 +1316,6 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		int cnt = 0;
 		struct vnode *vp;
 		(*pr)("all vnodes =");
-		/* XXX would take mountlist lock, except ddb may not have context */
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
 				(*pr)(" %p", vp);

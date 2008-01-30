@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.36 2008/01/03 19:28:51 ad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.37 2008/01/30 11:47:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.36 2008/01/03 19:28:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.37 2008/01/30 11:47:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -133,8 +133,9 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 	type = cmds & SUBCMDMASK;
 	if ((u_int)type >= MAXQUOTAS)
 		return (EINVAL);
-	if (vfs_busy(mp, LK_NOWAIT, 0))
-		return (0);
+	error = vfs_trybusy(mp, RW_READER, NULL);
+	if (error != 0)
+		return (error);
 
 	switch (cmd) {
 
@@ -165,7 +166,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 	default:
 		error = EINVAL;
 	}
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return (error);
 #endif
 }

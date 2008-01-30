@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.62 2008/01/30 09:50:25 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.63 2008/01/30 11:47:03 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.62 2008/01/30 09:50:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.63 2008/01/30 11:47:03 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -166,7 +166,7 @@ si_mount_dtor(void *arg)
 	mutex_destroy(&si->si_lock);
 	rw_destroy(&si->si_vnlock.vl_lock);
 	KASSERT(si->si_snapblklist == NULL);
-	free(si, M_MOUNT);
+	kmem_free(si, sizeof(*si));
 }
 
 static struct snap_info *
@@ -175,18 +175,18 @@ si_mount_init(struct mount *mp)
 	struct snap_info *new;
 
 	mutex_enter(&si_mount_init_lock);
-
 	if ((new = mount_getspecific(mp, si_mount_data_key)) != NULL) {
 		mutex_exit(&si_mount_init_lock);
 		return new;
 	}
-
-	new = malloc(sizeof(*new), M_MOUNT, M_WAITOK);
-	TAILQ_INIT(&new->si_snapshots);
-	mutex_init(&new->si_lock, MUTEX_DEFAULT, IPL_NONE);
-	new->si_gen = 0;
-	new->si_snapblklist = NULL;
-	mount_setspecific(mp, si_mount_data_key, new);
+	new = kmem_alloc(sizeof(*new), KM_SLEEP);
+	if (new != NULL) {
+		TAILQ_INIT(&new->si_snapshots);
+		mutex_init(&new->si_lock, MUTEX_DEFAULT, IPL_NONE);
+		new->si_gen = 0;
+		new->si_snapblklist = NULL;
+		mount_setspecific(mp, si_mount_data_key, new);
+	}
 	mutex_exit(&si_mount_init_lock);
 	return new;
 }
@@ -225,8 +225,12 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	struct snap_info *si;
 
 	ns = UFS_FSNEEDSWAP(fs);
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
+	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL) {
 		si = si_mount_init(mp);
+		if (si == NULL)
+			return ENOMEM;
+	}
+
 	/*
 	 * Need to serialize access to snapshot code per filesystem.
 	 */
@@ -1730,8 +1734,11 @@ ffs_snapshot_mount(struct mount *mp)
 	if (UFS_MPISAPPLEUFS(VFSTOUFS(mp)))
 		return;
 
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
+	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL) {
 		si = si_mount_init(mp);
+		if (si == NULL)
+			return;
+	}
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
 	 * XXX The following needs to be set before ffs_truncate or
