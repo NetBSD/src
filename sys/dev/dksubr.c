@@ -1,7 +1,7 @@
-/* $NetBSD: dksubr.c,v 1.33 2007/12/08 19:29:41 pooka Exp $ */
+/* $NetBSD: dksubr.c,v 1.34 2008/01/30 15:30:12 ad Exp $ */
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 1999, 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.33 2007/12/08 19:29:41 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.34 2008/01/30 15:30:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -654,12 +654,6 @@ dk_lookup(const char *path, struct lwp *l, struct vnode **vpp,
 	/* XXX: eventually we should handle VREG, too. */
 	if (va.va_type != VBLK) {
 		error = ENOTBLK;
-		goto out;
-	}
-
-	/* XXX: wedges have a writecount of 1; this is disgusting */
-	if (vp->v_usecount > 1 + (major(va.va_rdev) == 168)) {
-		error = EBUSY;
 		goto out;
 	}
 
