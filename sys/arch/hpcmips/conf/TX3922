@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.81 2008/01/30 13:31:02 tsutsui Exp $
+#	$NetBSD: TX3922,v 1.82 2008/01/30 13:49:09 tsutsui Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -106,6 +106,7 @@ apmdev0	at hpcapm0			# APM
 
 txcsbus1	at tx39biu? platform SHARP_TELIOS
 txcsbus2	at tx39biu? platform VICTOR_INTERLINK
+txcsbus3	at tx39biu? platform FUJITSU_PENCENTRA_200
 
 # IO module manager (virtual bridge) DO NOT DELETE
 txioman* at txsim?
@@ -154,7 +155,7 @@ ucbio*		at ucb?
 # interrupt-mode don't work. use polling mode.
 tc5165buf*	at txcsbus1 iocs 1 iocsbase 0 iocssize 0x100 iocswidth 16
 hpckbd*		at tc5165buf?
-#wsmouse*	at ucbtp? mux 0
+wsmouse*	at ucbtp? mux 0
 
 # VICTOR InterLink keyboard driver
 # chip select: CARD1 IRQ ???
