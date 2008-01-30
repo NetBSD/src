@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.77 2008/01/28 14:31:17 dholland Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.78 2008/01/30 14:08:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.77 2008/01/28 14:31:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.78 2008/01/30 14:08:00 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -180,7 +180,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = smb_dev2share(args->dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
-	smb_share_unlock(ssp, 0);	/* keep ref, but unlock */
+	smb_share_unlock(ssp);	/* keep ref, but unlock */
 	vcp = SSTOVC(ssp);
 	mp->mnt_stat.f_iosize = vcp->vc_txmax;
 	mp->mnt_stat.f_namemax =
@@ -245,7 +245,7 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	} while (error == EBUSY && smp->sm_didrele != 0);
 
 	smb_makescred(&scred, l, l->l_cred);
-	smb_share_lock(smp->sm_share, 0);
+	smb_share_lock(smp->sm_share);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
 
