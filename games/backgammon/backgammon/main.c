@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.23 2007/12/15 19:44:38 perry Exp $	*/
+/*	$NetBSD: main.c,v 1.24 2008/01/31 05:22:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.23 2007/12/15 19:44:38 perry Exp $");
+__RCSID("$NetBSD: main.c,v 1.24 2008/01/31 05:22:45 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -93,7 +93,7 @@ main(int argc __unused, char **argv)
 	int     i;		/* non-descript index */
 	int     l;		/* non-descript index */
 	char    c;		/* non-descript character storage */
-	long    t;		/* time for random num generator */
+	time_t  t;		/* time for random num generator */
 
 	/* revoke setgid privileges */
 	setgid(getgid());
