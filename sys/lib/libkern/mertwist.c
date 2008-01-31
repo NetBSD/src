@@ -1,4 +1,4 @@
-/*	$NetBSD: mertwist.c,v 1.3 2008/01/31 03:34:04 simonb Exp $	*/
+/*	$NetBSD: mertwist.c,v 1.4 2008/01/31 03:37:13 simonb Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -229,7 +229,7 @@ mtprng_random(void *v)
 	 */
 
 	for (n = 0, a = 0; n < 9; n++)
-		a = (a << 4) + mtprng_random(v);
+		a = (a << 4) + mtprng_rawrandom(v);
 
 	/*
 	 * Now we have a 64 bit number.  Add the top and bottom 32bit
