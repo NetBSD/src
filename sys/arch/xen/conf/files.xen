@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.80 2008/01/25 21:12:13 joerg Exp $
+#	$NetBSD: files.xen,v 1.81 2008/01/31 13:46:33 jmmv Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -45,6 +45,7 @@ file	arch/i386/i386/dumpsys.c
 file	arch/i386/i386/gdt.c
 file	arch/i386/i386/ipkdb_glue.c	ipkdb
 file	arch/i386/i386/kgdb_machdep.c	kgdb
+file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
 file	arch/x86/x86/x86_identcpu.c
@@ -77,6 +78,7 @@ file	arch/amd64/amd64/db_interface.c	 ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
 file	arch/amd64/amd64/db_trace.c		ddb
 file	arch/amd64/amd64/kgdb_machdep.c	 kgdb
+file	arch/amd64/amd64/kobj_machdep.c	 	modular
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
