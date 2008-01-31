@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.67 2008/01/30 14:16:43 ad Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.68 2008/01/31 08:23:04 tnn Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.67 2008/01/30 14:16:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.68 2008/01/31 08:23:04 tnn Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/fstrans.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -1031,7 +1032,7 @@ puffs_msgif_close(void *this)
 	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
-	atomic_inc_uint(&mp->mnt_refcnt);
+	atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
 	mutex_enter(&syncer_mutex);
 	if (mp->mnt_iflag & IMNT_GONE) {
 		mutex_exit(&syncer_mutex);
