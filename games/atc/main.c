@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2006/06/07 09:35:03 jnemeth Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2008/01/31 05:19:44 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,7 +51,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: main.c,v 1.17 2006/06/07 09:35:03 jnemeth Exp $");
+__RCSID("$NetBSD: main.c,v 1.18 2008/01/31 05:19:44 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ extern FILE	*yyin;
 int
 main(int argc, char *argv[])
 {
-	int			seed;
+	unsigned long		seed;
 	int			f_usage = 0, f_list = 0, f_showscore = 0;
 	int			f_printpath = 0;
 	const char		*file = NULL;
@@ -77,7 +77,8 @@ main(int argc, char *argv[])
 	open_score_file();
 	(void)setgid(getgid());
 
-	start_time = seed = time(NULL);
+	start_time = time(NULL);
+	seed = start_time;
 
 	while ((ch = getopt(argc, argv, ":u?lstpg:f:r:")) != -1) {
 		switch (ch) {
@@ -107,7 +108,7 @@ main(int argc, char *argv[])
 	}
 	if (optind < argc)
 		f_usage++;
-	srandom((unsigned long)seed);
+	srandom(seed);
 
 	if (f_usage)
 		(void)fprintf(stderr, 
