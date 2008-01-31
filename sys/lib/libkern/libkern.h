@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.72 2007/12/25 18:33:44 perry Exp $	*/
+/*	$NetBSD: libkern.h,v 1.73 2008/01/31 02:36:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -235,6 +235,12 @@ tolower(int ch)
     ((size_t)(unsigned long)(&(((type *)0)->member)))
 #endif
 
+#define	MTPRNG_RLEN		624
+struct mtprng_state {
+	unsigned int mt_idx; 
+	uint32_t mt_elem[MTPRNG_RLEN];
+};
+
 /* Prototypes for non-quad routines. */
 /* XXX notyet #ifdef _STANDALONE */
 int	 bcmp __P((const void *, const void *, size_t));
@@ -307,6 +313,9 @@ char	*initstate __P((unsigned long, char *, size_t));
 char	*setstate __P((char *));
 #endif /* SMALL_RANDOM */
 long	 random __P((void));
+void	 mtprng_init(void *, const uint8_t *, size_t);
+uint32_t mtprng_rawrandom(void *);
+uint32_t mtprng_random(void *);
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
 int	 strcasecmp __P((const char *, const char *));
