@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.25 2008/01/31 10:07:09 mlelstv Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.26 2008/01/31 11:50:40 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.25 2008/01/31 10:07:09 mlelstv Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.26 2008/01/31 11:50:40 ad Exp $");
 
 #include <errno.h>
 
@@ -461,7 +461,7 @@ int
 _pthread_rwlock_wrheld_np(pthread_rwlock_t *ptr)
 {
 
-	return ptr->ptr_writer != 0;
+	return ptr->ptr_writer == pthread__self();
 }
 
 #endif	/* !PTHREAD__HAVE_ATOMIC */
