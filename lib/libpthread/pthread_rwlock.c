@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.24 2008/01/08 20:55:25 christos Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.25 2008/01/31 10:07:09 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.24 2008/01/08 20:55:25 christos Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.25 2008/01/31 10:07:09 mlelstv Exp $");
 
 #include <errno.h>
 
@@ -46,9 +46,9 @@ __RCSID("$NetBSD: pthread_rwlock.c,v 1.24 2008/01/08 20:55:25 christos Exp $");
 
 #ifndef	PTHREAD__HAVE_ATOMIC
 
-__weak_alias(pthread_mutex_held_np,_pthread_rwlock_held_np)
-__weak_alias(pthread_mutex_rdheld_np,_pthread_rwlock_rdheld_np)
-__weak_alias(pthread_mutex_wrheld_np,_pthread_rwlock_wrheld_np)
+__weak_alias(pthread_rwlock_held_np,_pthread_rwlock_held_np)
+__weak_alias(pthread_rwlock_rdheld_np,_pthread_rwlock_rdheld_np)
+__weak_alias(pthread_rwlock_wrheld_np,_pthread_rwlock_wrheld_np)
 
 int	_pthread_rwlock_held_np(pthread_rwlock_t *);
 int	_pthread_rwlock_rdheld_np(pthread_rwlock_t *);
