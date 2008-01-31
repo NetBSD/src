@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock2.c,v 1.8 2007/12/24 14:46:29 ad Exp $ */
+/*	$NetBSD: pthread_rwlock2.c,v 1.9 2008/01/31 11:50:40 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock2.c,v 1.8 2007/12/24 14:46:29 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock2.c,v 1.9 2008/01/31 11:50:40 ad Exp $");
 
 #include <errno.h>
 #include <stddef.h>
@@ -553,7 +553,8 @@ _pthread_rwlock_wrheld_np(pthread_rwlock_t *ptr)
 {
 	uintptr_t owner = (uintptr_t)ptr->ptr_owner;
 
-	return (owner & RW_THREAD) != 0 && (owner & RW_WRITE_LOCKED) != 0;
+	return (owner & (RW_THREAD | RW_WRITE_LOCKED)) ==
+	    ((uintptr_t)pthread__self() | RW_WRITE_LOCKED);
 }
 
 int
