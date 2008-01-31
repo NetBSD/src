@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.47 2008/01/30 09:50:21 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.48 2008/01/31 13:13:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.47 2008/01/30 09:50:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.48 2008/01/31 13:13:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -941,18 +941,6 @@ tmpfs_rename(void *v)
 		 * node on the end of the target's node list. */
 		de2 = tmpfs_dir_lookup(tdnode, tcnp);
 		KASSERT(de2 != NULL);
-/* XXXREMOVEME */
-		if (de2 == de) {
-			panic("tmpfs_rename: to self 1");
-		}
-		if (de2->td_node == de->td_node) {
-			panic("tmpfs_rename: to self 2");
-		}
-		if (de2->td_node != tnode) {
-			panic("tmpfs_rename: found wrong entry [%s]",
-			    tcnp->cn_nameptr);
-		}
-/* XXXREMOVEME */
 		KASSERT(de2->td_node == tnode);
 		tmpfs_dir_detach(tdvp, de2);
 
