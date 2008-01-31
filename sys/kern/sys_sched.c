@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.8 2008/01/30 17:54:56 elad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.9 2008/01/31 01:21:17 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.8 2008/01/30 17:54:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.9 2008/01/31 01:21:17 elad Exp $");
 
 #include <sys/param.h>
 
@@ -214,7 +214,7 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 
 	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
 	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL, NULL, NULL))
-		return EACCES;
+		return EPERM;
 
 	sp = kmem_zalloc(sizeof(struct sched_param), KM_SLEEP);
 
@@ -378,7 +378,7 @@ sys__sched_getaffinity(struct lwp *l,
 	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
 	    l->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY), NULL,
 	    NULL))
-		return EACCES;
+		return EPERM;
 
 	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
 
