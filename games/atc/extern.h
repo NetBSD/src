@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2005/08/10 17:53:28 rpaulo Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2008/01/31 05:19:44 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -46,7 +46,8 @@
 extern char		GAMES[];
 extern const char	*filename;
 
-extern int		clck, safe_planes, start_time, test_mode;
+extern int		clck, safe_planes, test_mode;
+extern time_t		start_time;
 
 #if 0
 extern FILE		*filein, *fileout;
