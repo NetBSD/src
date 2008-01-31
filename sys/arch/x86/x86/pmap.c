@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2008/01/30 13:28:29 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2008/01/31 09:57:27 wiz Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2008/01/30 13:28:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2008/01/31 09:57:27 wiz Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3507,7 +3507,7 @@ startover:
 
 		/*
 		 * add a reference to the pmap before clearing the pte.
-		 * otherwise the pmap can disapper behind us.
+		 * otherwise the pmap can disappear behind us.
 		 */
 
 		ptp = pvpte->pte_ptp;
