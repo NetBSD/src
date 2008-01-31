@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.57 2008/01/30 23:03:09 jmcneill Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.58 2008/01/31 18:58:57 markd Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.57 2008/01/30 23:03:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.58 2008/01/31 18:58:57 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,6 +133,7 @@ static int	ad1983_unsol_event(codec_t *, int);
 static int	ad1984_init_dacgroup(codec_t *);
 static int	ad1984_init_widget(const codec_t *, widget_t *, nid_t);
 static int	ad1984_mixer_init(codec_t *);
+static int	ad1984_unsol_event(codec_t *, int);
 static int	ad1986a_init_dacgroup(codec_t *);
 static int	ad1986a_mixer_init(codec_t *);
 static int	ad1988_init_dacgroup(codec_t *);
@@ -246,6 +247,7 @@ azalia_codec_init_vtbl(codec_t *this)
 		this->init_dacgroup = ad1984_init_dacgroup;
 		this->init_widget = ad1984_init_widget;
 		this->mixer_init = ad1984_mixer_init;
+		this->unsol_event = ad1984_unsol_event;
 		break;
 	case 0x11d41986:
 		/* http://www.analog.com/en/prod/0,2877,AD1986A,00.html */
@@ -3156,7 +3158,8 @@ ad1983_unsol_event(codec_t *this, int tag)
  * Analog Devices AD1984
  * ---------------------------------------------------------------- */
 
-#define AD1984_THINKPAD	0x20ac17aa
+#define AD1984_THINKPAD			0x20ac17aa
+#define AD1984_DELL_OPTIPLEX_755	0x02111028
 
 static int
 ad1984_init_dacgroup(codec_t *this)
@@ -3227,7 +3230,18 @@ ad1984_mixer_init(codec_t *this)
 		generic_mixer_set(this, 0x12, MI_TARGET_EAPD, &mc);
 	}
 	mc.un.ord = 1; /* dac */
-	generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc);
+	generic_mixer_set(this, 0x22, MI_TARGET_CONNLIST, &mc); /* hpsel */
+	generic_mixer_set(this, 0x0e, MI_TARGET_CONNLIST, &mc); /* monosel */
+
+	if (this->subid == AD1984_DELL_OPTIPLEX_755) {
+		/* setup a unsolicited event for the headphones and speaker */
+		this->comresp(this, 0x12, CORB_SET_UNSOLICITED_RESPONSE,
+			      CORB_UNSOL_ENABLE | AD1983_EVENT_SPEAKER, NULL);
+		this->comresp(this, 0x11, CORB_SET_UNSOLICITED_RESPONSE,
+			      CORB_UNSOL_ENABLE | AD1983_EVENT_HP, NULL);
+		ad1984_unsol_event(this, AD1983_EVENT_SPEAKER);
+		ad1984_unsol_event(this, AD1983_EVENT_HP);
+	}
 
 	return 0;
 }
@@ -3235,12 +3249,131 @@ ad1984_mixer_init(codec_t *this)
 static int
 ad1984_init_widget(const codec_t *this, widget_t *w, nid_t nid)
 {
-	if (this->subid == AD1984_THINKPAD) {
-		switch (nid) {
-		case 0x04:
-			strlcpy(w->name, AudioNdac, sizeof(w->name));
+	switch (nid) {
+	case 0x04:
+		strlcpy(w->name, AudioNdac, sizeof(w->name));
+		break;
+	case 0x07:
+		strlcpy(w->name, "hp", sizeof(w->name));
+		break;
+	case 0x0a:
+		strlcpy(w->name, "spkr", sizeof(w->name));
+		break;
+	case 0x0b:
+		strlcpy(w->name, AudioNaux, sizeof(w->name));
+		break;
+	case 0x0c:
+		strlcpy(w->name, "adc08", sizeof(w->name));
+		break;
+	case 0x0d:
+		strlcpy(w->name, "adc09", sizeof(w->name));
+		break;
+	case 0x0e:
+		strlcpy(w->name, AudioNmono "sel", sizeof(w->name));
+		break;
+	case 0x0f:
+		strlcpy(w->name, AudioNaux "sel", sizeof(w->name));
+		break;
+	case 0x10:
+		strlcpy(w->name, "beep", sizeof(w->name));
+		break;
+	case 0x11:
+		strlcpy(w->name, AudioNheadphone, sizeof(w->name));
+		break;
+	case 0x12:
+		strlcpy(w->name, AudioNspeaker, sizeof(w->name));
+		break;
+	case 0x13:
+		strlcpy(w->name, AudioNmono, sizeof(w->name));
+		break;
+	case 0x14:
+		strlcpy(w->name, AudioNmicrophone, sizeof(w->name));
+		break;
+	case 0x15:
+		strlcpy(w->name, AudioNline, sizeof(w->name));
+		break;
+	case 0x16:
+		strlcpy(w->name, AudioNaux, sizeof(w->name));
+		break;
+	case 0x1a:
+		strlcpy(w->name, "beep", sizeof(w->name));
+		break;
+	case 0x1c:
+		strlcpy(w->name, "dock", sizeof(w->name));
+		break;
+	case 0x1e:
+		strlcpy(w->name, AudioNmono, sizeof(w->name));
+		break;
+	case 0x22:
+		strlcpy(w->name, "hp" "sel", sizeof(w->name));
+		break;
+	case 0x23:
+		strlcpy(w->name, "dock" "sel", sizeof(w->name));
+		break;
+	case 0x24:
+		strlcpy(w->name, "dock", sizeof(w->name));
+		break;
+	case 0x25:
+		strlcpy(w->name, "dock.pre", sizeof(w->name));
+		break;
+	}
+	return 0;
+}
+
+static int
+ad1984_unsol_event(codec_t *this, int tag)
+{
+	int err;
+	uint32_t value;
+	mixer_ctrl_t mc;
+
+	mc.dev = -1;
+	mc.type = AUDIO_MIXER_ENUM;
+
+	switch (tag) {
+	case AD1983_EVENT_HP:
+		err = this->comresp(this, 0x11, CORB_GET_PIN_SENSE, 0, &value);
+		if (err)
 			break;
+		if (value & CORB_PS_PRESENCE) {
+			DPRINTF(("%s: headphone has been inserted.\n", __func__));
+			mc.un.ord = 1; /* mute */
+			generic_mixer_set(this, 0x12, MI_TARGET_OUTAMP, &mc);
+			generic_mixer_set(this, 0x13, MI_TARGET_OUTAMP, &mc);
+		} else {
+			DPRINTF(("%s: headphone has been pulled out.\n", __func__));
+			mc.un.ord = 0; /* unmute */
+			generic_mixer_set(this, 0x12, MI_TARGET_OUTAMP, &mc);
+			/* if no speaker unmute internal mono */
+			err = this->comresp(this, 0x12, CORB_GET_PIN_SENSE, 0, &value);
+			if (err)
+				break;
+			if (!(value & CORB_PS_PRESENCE))
+				generic_mixer_set(this, 0x13, MI_TARGET_OUTAMP, &mc);
 		}
+		break;
+	case AD1983_EVENT_SPEAKER:
+		err = this->comresp(this, 0x12, CORB_GET_PIN_SENSE, 0, &value);
+		if (err)
+			break;
+		if (value & CORB_PS_PRESENCE) {
+			DPRINTF(("%s: speaker has been inserted.\n", __func__));
+			mc.un.ord = 1; /* mute */
+			generic_mixer_set(this, 0x13, MI_TARGET_OUTAMP, &mc);
+		} else {
+			DPRINTF(("%s: speaker has been pulled out.\n", __func__));
+			/* if no headphones unmute internal mono */
+			err = this->comresp(this, 0x11, CORB_GET_PIN_SENSE, 0, &value);
+			if (err)
+				break;
+			if (!(value & CORB_PS_PRESENCE)) {
+				mc.un.ord = 0; /* unmute */
+				generic_mixer_set(this, 0x13, MI_TARGET_OUTAMP, &mc);
+			}
+		}
+		break;
+	default:
+		printf("%s: unknown tag: %d\n", __func__, tag);
 	}
 	return 0;
 }
