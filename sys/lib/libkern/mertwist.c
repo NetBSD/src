@@ -1,4 +1,4 @@
-/*	$NetBSD: mertwist.c,v 1.2 2008/01/31 02:36:09 matt Exp $	*/
+/*	$NetBSD: mertwist.c,v 1.3 2008/01/31 03:34:04 simonb Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -140,7 +140,7 @@ mtprng_init(void *v, const uint8_t *key, size_t len)
 			keylen = len / xlen;
 		}
 	}
-	KASSERT(j == MTPRNG_LEN);
+	KASSERT(j == MTPRNG_RLEN);
 	mtprng_refresh(mt);
 }
 
