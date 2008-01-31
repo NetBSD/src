@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia_codec.c,v 1.58 2008/01/31 18:58:57 markd Exp $	*/
+/*	$NetBSD: azalia_codec.c,v 1.59 2008/01/31 19:01:50 markd Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.58 2008/01/31 18:58:57 markd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia_codec.c,v 1.59 2008/01/31 19:01:50 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -3075,8 +3075,8 @@ ad1983_mixer_init(codec_t *this)
 	generic_mixer_fix_indexes(this);
 	generic_mixer_default(this);
 
-#define AD1983_EVENT_HP		1
-#define AD1983_EVENT_SPEAKER	2
+#define AD198X_EVENT_HP		1
+#define AD198X_EVENT_SPEAKER	2
 
 	mc.dev = -1;		/* no need for generic_mixer_set() */
 	mc.type = AUDIO_MIXER_ENUM;
@@ -3088,11 +3088,11 @@ ad1983_mixer_init(codec_t *this)
 
 	/* setup a unsolicited event for the headphones and speaker */
 	this->comresp(this, 0x05, CORB_SET_UNSOLICITED_RESPONSE,
-            CORB_UNSOL_ENABLE | AD1983_EVENT_SPEAKER, NULL);
+            CORB_UNSOL_ENABLE | AD198X_EVENT_SPEAKER, NULL);
 	this->comresp(this, 0x06, CORB_SET_UNSOLICITED_RESPONSE,
-            CORB_UNSOL_ENABLE | AD1983_EVENT_HP, NULL);
-	ad1983_unsol_event(this, AD1983_EVENT_SPEAKER);
-	ad1983_unsol_event(this, AD1983_EVENT_HP);
+            CORB_UNSOL_ENABLE | AD198X_EVENT_HP, NULL);
+	ad1983_unsol_event(this, AD198X_EVENT_SPEAKER);
+	ad1983_unsol_event(this, AD198X_EVENT_HP);
 	return 0;
 }
 
@@ -3107,7 +3107,7 @@ ad1983_unsol_event(codec_t *this, int tag)
 	mc.type = AUDIO_MIXER_ENUM;
 
 	switch (tag) {
-	case AD1983_EVENT_HP:
+	case AD198X_EVENT_HP:
 		err = this->comresp(this, 0x06, CORB_GET_PIN_SENSE, 0, &value);
 		if (err)
 			break;
@@ -3128,7 +3128,7 @@ ad1983_unsol_event(codec_t *this, int tag)
 				generic_mixer_set(this, 0x07, MI_TARGET_OUTAMP, &mc);
 		}
 		break;
-	case AD1983_EVENT_SPEAKER:
+	case AD198X_EVENT_SPEAKER:
 		err = this->comresp(this, 0x05, CORB_GET_PIN_SENSE, 0, &value);
 		if (err)
 			break;
@@ -3236,11 +3236,11 @@ ad1984_mixer_init(codec_t *this)
 	if (this->subid == AD1984_DELL_OPTIPLEX_755) {
 		/* setup a unsolicited event for the headphones and speaker */
 		this->comresp(this, 0x12, CORB_SET_UNSOLICITED_RESPONSE,
-			      CORB_UNSOL_ENABLE | AD1983_EVENT_SPEAKER, NULL);
+			      CORB_UNSOL_ENABLE | AD198X_EVENT_SPEAKER, NULL);
 		this->comresp(this, 0x11, CORB_SET_UNSOLICITED_RESPONSE,
-			      CORB_UNSOL_ENABLE | AD1983_EVENT_HP, NULL);
-		ad1984_unsol_event(this, AD1983_EVENT_SPEAKER);
-		ad1984_unsol_event(this, AD1983_EVENT_HP);
+			      CORB_UNSOL_ENABLE | AD198X_EVENT_HP, NULL);
+		ad1984_unsol_event(this, AD198X_EVENT_SPEAKER);
+		ad1984_unsol_event(this, AD198X_EVENT_HP);
 	}
 
 	return 0;
@@ -3331,7 +3331,7 @@ ad1984_unsol_event(codec_t *this, int tag)
 	mc.type = AUDIO_MIXER_ENUM;
 
 	switch (tag) {
-	case AD1983_EVENT_HP:
+	case AD198X_EVENT_HP:
 		err = this->comresp(this, 0x11, CORB_GET_PIN_SENSE, 0, &value);
 		if (err)
 			break;
@@ -3352,7 +3352,7 @@ ad1984_unsol_event(codec_t *this, int tag)
 				generic_mixer_set(this, 0x13, MI_TARGET_OUTAMP, &mc);
 		}
 		break;
-	case AD1983_EVENT_SPEAKER:
+	case AD198X_EVENT_SPEAKER:
 		err = this->comresp(this, 0x12, CORB_GET_PIN_SENSE, 0, &value);
 		if (err)
 			break;
