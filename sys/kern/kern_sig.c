@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.265 2008/01/24 13:57:52 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.266 2008/01/31 00:50:32 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.265 2008/01/24 13:57:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.266 2008/01/31 00:50:32 rmind Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -1053,8 +1053,10 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	 * If killing the process, make it run fast.
 	 */
 	if (__predict_false((prop & SA_KILL) != 0) &&
-	    action == SIG_DFL && l->l_priority > PUSER)
-		lwp_changepri(l, PUSER);
+	    action == SIG_DFL && l->l_priority < MAXPRI_USER) {
+		KASSERT(l->l_class == SCHED_OTHER);
+		lwp_changepri(l, MAXPRI_USER);
+	}
 
 	/*
 	 * If the LWP is running or on a run queue, then we win.  If it's
