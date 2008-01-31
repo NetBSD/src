@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.178 2008/01/12 11:47:13 wiz Exp $
+$NetBSD: acronyms,v 1.179 2008/01/31 11:45:16 tnn Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -104,6 +104,7 @@ IANAL	I am not a lawyer
 IC	I see
 ICBW	I could be wrong
 ICCL	I couldn't care less
+IDK	I don't know
 IHAFC	I haven't a fucking clue
 IHBW	I have been wrong
 IHNFC	I have no fucking clue
