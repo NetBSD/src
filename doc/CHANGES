@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1011 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1012 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -406,3 +406,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		duplication and more general use. [joerg 20080125]
 	hostapd/wpa_supplicant: Upgrade to 0.6.2 [christos 20080126]
 	openpam: upgrade to 20071221 [christos 20080126]
+	azalia(4): Analog Devices AD1984 codec support has been improved
+		to support headphones and 4 channel playback, and now
+		exposes an outputs.master mixer control that mirrors the
+		inputs.dac mixer control to make libossaudio happy.
+		[jmcneill 20080130]
