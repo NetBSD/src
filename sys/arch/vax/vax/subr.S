@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.18 2007/10/17 19:58:00 garbled Exp $	   */
+/*	$NetBSD: subr.S,v 1.19 2008/01/31 03:31:31 christos Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -480,8 +480,6 @@ ENTRY(fuswintr,0)
 	movl	%r1,%r0
 	ret
 
-#if defined(MULTIPROCESSOR) || defined(DEBUG) || defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-
 JSBENTRY(Slock)
 1:	bbssi	$0,(%r1),1b
 	rsb
@@ -495,8 +493,6 @@ JSBENTRY(Slocktry)
 JSBENTRY(Sunlock)
 	bbcci	$0,(%r1),1f
 1:	rsb
-
-#endif
 
 #
 # data department
