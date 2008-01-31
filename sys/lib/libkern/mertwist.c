@@ -1,4 +1,4 @@
-/*	$NetBSD: mertwist.c,v 1.4 2008/01/31 03:37:13 simonb Exp $	*/
+/*	$NetBSD: mertwist.c,v 1.5 2008/01/31 08:23:13 simonb Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,10 +35,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/systm.h>
+
+#include <lib/libkern/libkern.h>
 #else
 #include <stdlib.h>
 #include <string.h>
