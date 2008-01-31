@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.79 2008/01/31 18:32:51 dyoung Exp $	*/
+/*	$NetBSD: fd.c,v 1.80 2008/01/31 18:45:45 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.79 2008/01/31 18:32:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.80 2008/01/31 18:45:45 dyoung Exp $");
 
 #include "rnd.h"
 #include "opt_ddb.h"
@@ -254,7 +254,7 @@ void fdctimeout(void *arg);
 void fdcpseudointr(void *arg);
 void fdcretry(struct fdc_softc *fdc);
 void fdfinish(struct fd_softc *fd, struct buf *bp);
-inline const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
+static const struct fd_type *fd_dev_to_type(struct fd_softc *, dev_t);
 int fdformat(dev_t, struct ne7_fd_formb *, struct lwp *);
 static void fd_set_properties(struct fd_softc *fd);
 
@@ -278,7 +278,7 @@ struct fdc_attach_args {
 int
 fdprint(void *aux, const char *fdc)
 {
-	register struct fdc_attach_args *fa = aux;
+	struct fdc_attach_args *fa = aux;
 
 	if (!fdc)
 		aprint_normal(" drive %d", fa->fa_drive);
@@ -553,7 +553,7 @@ fd_nvtotype(const char *fdc, int nvraminfo, int drive)
 }
 #endif /* i386 */
 
-inline const struct fd_type *
+static const struct fd_type *
 fd_dev_to_type(struct fd_softc *fd, dev_t dev)
 {
 	u_int type = FDTYPE(dev);
@@ -1278,7 +1278,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	int error;
 	unsigned int scratch;
 	int il[FD_MAX_NSEC + 1];
-	register int i, j;
+	int i, j;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
