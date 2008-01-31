@@ -1,4 +1,4 @@
-/*	$NetBSD: mertwist.c,v 1.1 2008/01/31 02:09:54 matt Exp $	*/
+/*	$NetBSD: mertwist.c,v 1.2 2008/01/31 02:36:09 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,10 +41,6 @@
 #include <sys/systm.h>
 #else
 #include <stdlib.h>
-#ifdef TEST
-#include <stdbool.h>
-#include <stdio.h>
-#endif
 #include <string.h>
 #include <inttypes.h>
 #include <assert.h>
@@ -63,24 +59,18 @@
 
 #define	KNUTH_MULTIPLIER	0x6c078965
 
-#define	RLEN			624
-#define	POS1			397
+#ifndef MTPRNG_RLEN
+#define	MTPRNG_RLEN		624
+#endif
+#define	MTPRNG_POS1		397
 
-struct mtprng_state {
-	unsigned int mt_idx; 
-	uint32_t mt_elem[RLEN];
-};
-
-void mtprng_reset(void *, const uint8_t *, size_t);
-void mtprng_refresh(struct mtprng_state *);
-uint32_t mtprng_rawrandom(void *);
-uint32_t mtprng_random(void *);
+static void mtprng_refresh(struct mtprng_state *);
 
 /*
  * Initialize the generator from a seed
  */
 void
-mtprng_reset(void *v, const uint8_t *key, size_t len)
+mtprng_init(void *v, const uint8_t *key, size_t len)
 {
 	struct mtprng_state * const mt = v;
 	size_t i, j, n;
@@ -90,7 +80,7 @@ mtprng_reset(void *v, const uint8_t *key, size_t len)
 	 * If we have more than half of all the key data, simply copy it in
 	 * and refresh/mix.
 	 */
-	if (len >= RLEN * sizeof(uint32_t) / 2) {
+	if (len >= MTPRNG_RLEN * sizeof(uint32_t) / 2) {
 		if (len > sizeof(mt->mt_elem))
 			len = sizeof(mt->mt_elem);
 		memcpy(mt->mt_elem, key, len);
@@ -106,13 +96,13 @@ mtprng_reset(void *v, const uint8_t *key, size_t len)
 	/*
 	 * Divide the keydata into equal-sized blobs
 	 */
-	n = RLEN / xlen;
+	n = MTPRNG_RLEN / xlen;
 	keylen = len / xlen;
 
 	/*
 	 * Except for the first which gets and left overs (0 to 3 bytes)
 	 */
-	n += RLEN - n * xlen;
+	n += MTPRNG_RLEN - n * xlen;
 	keylen += len - keylen * xlen;
 
 	mt->mt_idx = 0;
@@ -146,11 +136,11 @@ mtprng_reset(void *v, const uint8_t *key, size_t len)
 		 * values.
 		 */
 		if (passes == 0) {
-			n = RLEN / xlen;
+			n = MTPRNG_RLEN / xlen;
 			keylen = len / xlen;
 		}
 	}
-	KASSERT(j == 624);
+	KASSERT(j == MTPRNG_LEN);
 	mtprng_refresh(mt);
 }
 
@@ -165,21 +155,22 @@ mtprng_refresh(struct mtprng_state *mt)
 	/*
 	 * The following has been refactored to avoid the need for 'mod 624'
 	*/
-	for (i = 0, j = POS1; j < RLEN; i++, j++) {
+	for (i = 0, j = MTPRNG_POS1; j < MTPRNG_RLEN; i++, j++) {
 		y = MIX(mt->mt_elem[i], mt->mt_elem[i+1]);
 		mt->mt_elem[i] = mt->mt_elem[j] ^ (y >> 1) ^ MATRIX_A(y);
 	}
-	for (j = 0; i < RLEN - 1; i++, j++) {
+	for (j = 0; i < MTPRNG_RLEN - 1; i++, j++) {
 		y = MIX(mt->mt_elem[i], mt->mt_elem[i+1]);
 		mt->mt_elem[i] = mt->mt_elem[j] ^ (y >> 1) ^ MATRIX_A(y);
 	}
-	y = MIX(mt->mt_elem[RLEN - 1], mt->mt_elem[0]);
-	mt->mt_elem[RLEN - 1] = mt->mt_elem[POS1 - 1] ^ (y >> 1) ^ MATRIX_A(y);
+	y = MIX(mt->mt_elem[MTPRNG_RLEN - 1], mt->mt_elem[0]);
+	mt->mt_elem[MTPRNG_RLEN - 1] =
+	    mt->mt_elem[MTPRNG_POS1 - 1] ^ (y >> 1) ^ MATRIX_A(y);
 }
  
 /*
  * Extract a tempered PRN based on the current index.  Then recompute a
- * new value for the index.  Since avoids having to regenerate the array
+ * new value for the index.  This avoids having to regenerate the array
  * every 624 iterations. We can do this since recomputing only the next
  * element and the [(i + 397) % 624] one.
  */
@@ -204,17 +195,17 @@ mtprng_rawrandom(void *v)
 	 * Next recalculate the next sequence for the current position.
 	 */
 	y = mt->mt_elem[i];
-	if (__predict_true(i < RLEN - 1)) {
+	if (__predict_true(i < MTPRNG_RLEN - 1)) {
 		/*
 		 * Avoid doing % since it can be expensive.
-		 * j = (i + POS1) % RLEN;
+		 * j = (i + MTPRNG_POS1) % MTPRNG_RLEN;
 		 */
-		j = i + POS1;
-		if (j >= RLEN)
-			j -= RLEN;
+		j = i + MTPRNG_POS1;
+		if (j >= MTPRNG_RLEN)
+			j -= MTPRNG_RLEN;
 		mt->mt_idx++;
 	} else {
-		j = POS1 - 1;
+		j = MTPRNG_POS1 - 1;
 		mt->mt_idx = 0;
 	}
 	y = MIX(y, mt->mt_elem[mt->mt_idx]);
