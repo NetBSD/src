@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.88 2006/03/29 04:16:48 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.89 2008/01/31 03:30:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.88 2006/03/29 04:16:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.89 2008/01/31 03:30:36 christos Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -71,13 +71,6 @@ void	gencnslask __P((void));
 
 struct cpu_dep *dep_call;
 
-struct evcnt softnet_intrcnt =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "net");
-struct evcnt softserial_intrcnt =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "serial");
-struct evcnt softclock_intrcnt =
-	EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "soft", "clock");
-
 #define MAINBUS	0
 
 void
@@ -86,10 +79,6 @@ cpu_configure(void)
 
 	if (config_rootfound("mainbus", NULL) == NULL)
 		panic("mainbus not configured");
-
-	evcnt_attach_static(&softserial_intrcnt);
-	evcnt_attach_static(&softnet_intrcnt);
-	evcnt_attach_static(&softclock_intrcnt);
 
 	/*
 	 * We're ready to start up. Clear CPU cold start flag.
