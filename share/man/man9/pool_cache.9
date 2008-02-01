@@ -1,4 +1,4 @@
-.\"	$NetBSD: pool_cache.9,v 1.5 2007/02/16 23:13:05 rmind Exp $
+.\"	$NetBSD: pool_cache.9,v 1.6 2008/02/01 09:05:52 ad Exp $
 .\"
 .\" Copyright (c)2003 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -24,50 +24,43 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
+.\" Copyright (c) 1997, 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\" 
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Paul Kranenburg; by Jason R. Thorpe of the Numerical Aerospace
+.\" Simulation Facility, NASA Ames Research Center, and by Andrew Doran.
+.\" 
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\" 	This product includes software developed by the NetBSD
+.\" 	Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
 .\"
-.\" following copyright notice is from sys/kern/subr_pool.c.
-.\" they are here because i took some comments from it.  yamt@NetBSD.org
-.\"
-.\"
-.\"/*-
-.\" * Copyright (c) 1997, 1999, 2000 The NetBSD Foundation, Inc.
-.\" * All rights reserved.
-.\" *
-.\" * This code is derived from software contributed to The NetBSD Foundation
-.\" * by Paul Kranenburg; by Jason R. Thorpe of the Numerical Aerospace
-.\" * Simulation Facility, NASA Ames Research Center.
-.\" *
-.\" * Redistribution and use in source and binary forms, with or without
-.\" * modification, are permitted provided that the following conditions
-.\" * are met:
-.\" * 1. Redistributions of source code must retain the above copyright
-.\" *    notice, this list of conditions and the following disclaimer.
-.\" * 2. Redistributions in binary form must reproduce the above copyright
-.\" *    notice, this list of conditions and the following disclaimer in the
-.\" *    documentation and/or other materials provided with the distribution.
-.\" * 3. All advertising materials mentioning features or use of this software
-.\" *    must display the following acknowledgement:
-.\" *	This product includes software developed by the NetBSD
-.\" *	Foundation, Inc. and its contributors.
-.\" * 4. Neither the name of The NetBSD Foundation nor the names of its
-.\" *    contributors may be used to endorse or promote products derived
-.\" *    from this software without specific prior written permission.
-.\" *
-.\" * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
-.\" * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-.\" * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
-.\" * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
-.\" * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-.\" * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-.\" * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-.\" * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-.\" * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-.\" * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-.\" * POSSIBILITY OF SUCH DAMAGE.
-.\" */
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\" ------------------------------------------------------------
-.Dd September 8, 2003
+.Dd Febuary 1, 2008
 .Dt POOL_CACHE 9
 .Os
 .\" ------------------------------------------------------------
@@ -80,79 +73,147 @@
 .Nm pool_cache_put_paddr ,
 .Nm pool_cache_put ,
 .Nm pool_cache_destruct_object ,
-.Nm pool_cache_invalidate
+.Nm pool_cache_invalidate ,
+.Nm pool_cache_sethiwat ,
+.Nm pool_cache_setlowat
 .Nd resource-pool cache manager
 .\" ------------------------------------------------------------
 .Sh SYNOPSIS
 .In sys/pool.h
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-.Ft void
+.Ft pool_cache_t
 .Fn pool_cache_init \
-"struct pool_cache *pc" "struct pool *pp" \
+"size_t size" "u_int align" "u_int align_offset" "int flags" \
+"const char *name" "struct pool_allocator *palloc" "int ipl" \
 "int (*ctor)(void *, void *, int)" "void (*dtor)(void *, void *)" "void *arg"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn pool_cache_destroy \
-"struct pool_cache *pc"
+"pool_cache_t pc"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void *
 .Fn pool_cache_get_paddr \
-"struct pool_cache *pc" "int flags" "paddr_t *pap"
+"pool_cache_t pc" "int flags" "paddr_t *pap"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void *
 .Fn pool_cache_get \
-"struct pool_cache *pc" "int flags"
+"pool_cache_t pc" "int flags"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn pool_cache_put_paddr \
-"struct pool_cache *pc" "void *object" "paddr_t pa"
+"pool_cache_t pc" "void *object" "paddr_t pa"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn pool_cache_put \
-"struct pool_cache *pc" "void *object"
+"pool_cache_t pc" "void *object"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn pool_cache_destruct_object \
-"struct pool_cache *pc" "void *object"
+"pool_cache_t pc" "void *object"
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .Ft void
 .Fn pool_cache_invalidate \
-"struct pool_cache *pc"
+"pool_cache_t pc"
+.Ft void
+.Fn pool_cache_sethiwat \
+"pool_cache_t pc" "int nitems"
+.Ft void
+.Fn pool_cache_setlowat \
+"pool_cache_t pc" "int nitems"
 .\" ------------------------------------------------------------
 .Sh DESCRIPTION
-The
-.Nm
-utility routines are provided to support caching of constructed objects,
-similar to the Solaris SLAB allocator.
-.Nm
-uses
-.Xr pool 9
-to allocate memory areas used for objects.
-If the pool must be protected from interrupts,
-.Nm
-routines expect to be called at the appropriate interrupt priority level.
+These utility routines provide management of pools of fixed-sized
+areas of memory.
+Resource pools set aside an amount of memory for exclusive use by the resource
+pool owner.
+This can be used by applications to guarantee the availability of a minimum
+amount of memory needed to continue operation independent of the memory
+resources currently available from the system-wide memory allocator.
+.Pp
+Global and per-CPU caches of constructed objects are maintained.
+The two levels of cache work together to allow for low overhead
+allocation and release of objects, and improved L1/L2/L3 hardware
+cache locality in multiprocessor systems.
 .\" ------------------------------------------------------------
 .Sh FUNCTIONS
 .Bl -tag -width compact
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_init "pc" "pp" "ctor" "dtor" "arg"
-Initialize a pool cache
-.Fa pc .
-The pool
-.Fa pp
-should be initialized by the caller in advance.
-.Fa ctor
-and
-.Fa dtor
-are object constructor and destructor.
-They can be
+.Pp
+Allocate and initialize a pool cache.
+The arguments are:
+.Pp
+.Bl -tag -width four
+.It Fa size
+.Pp
+Specifies the size of the memory items managed by the pool.
+.It Fa align
+.Pp
+Specifies the memory address alignment of the items returned by
+.Fn pool_cache_get .
+This argument must be a power of two.
+If zero,
+the alignment defaults to an architecture-specific natural alignment.
+.It Fa align_offset
+.Pp
+The offset within an item to which the
+.Fa align
+parameter applies.
+.It Fa flags
+.Pp
+Should be set to zero or
+.Dv PR_NOTOUCH .
+If
+.Dv PR_NOTOUCH
+is given, free items are never used to keep internal state so that
+the pool can be used for non memory backed objects.
+.It Fa name
+.Pp
+The name used to identify the object in diagnostic output.
+.It Fa palloc
+.Pp
+Should be typically be set to NULL, instructing
+.Fn pool_cache_init
+to select an appropriate back-end allocator.
+Alternate allocators can be used to partition space from arbitrary sources.
+Use of alternate allocators is not documented here as it is not a stable,
+endorsed part of the API.
+.It Fa ipl
+.Pp
+Specifies an interrupt priority level that will block all interrupt
+handlers that could potentially access the pool.
+The
+.Nm
+facility provides its own synchronization.
+The users of any given
+.Nm
+need not provide additional synchronization for access to it.
+.It Fa ctor
+.Pp
+Specifies a constructor used to initialize newly allocated objects.
+If no constructor is required, specify
 .Dv NULL .
+.It Fa dtor
+.Pp
+Specifies a destructor used to destroy cached objects prior to
+their release to backing store.
+If no destructor is required, specify
+.Dv NULL .
+.It Fa arg
+.Pp
+This value of this argument will be passed to both the constructor
+and destructor routines.
+.El
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_destroy "pc"
-Destroy a pool cache
+.Pp
+Destroy a pool cache.
+All other access to the cache must be stopped before this call
+can be made.
 .Fa pc .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_get_paddr "pc" "flags" "pap"
+.Pp
 Get an object from a pool cache
 .Fa pc .
 If
@@ -171,6 +232,7 @@ and the object constructor specified when the pool cache is created by
 .Fn pool_cache_init .
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_get "pc" "flags"
+.Pp
 .Fn pool_cache_get
 is the same as
 .Fn pool_cache_get_paddr
@@ -181,6 +243,7 @@ argument.
 It's implemented as a macro.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_put_paddr "pc" "object" "pa"
+.Pp
 Put an object
 .Fa object
 back to the pool cache
@@ -190,8 +253,15 @@ should be physical address of the object
 .Fa object
 or
 .Dv POOL_PADDR_INVALID .
+.Fa pp .
+If the number of available items in the backing pool exceeds the maximum
+pool size set by
+.Fn pool_cache_sethiwat
+and there are no outstanding requests for pool items,
+the excess items will be returned to the system.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_put "pc" "object"
+.Pp
 .Fn pool_cache_put
 is the same as
 .Fn pool_cache_put_paddr
@@ -202,14 +272,48 @@ argument.
 It's implemented as a macro.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_destruct_object "pc" "object"
+.Pp
 Force destruction of an object
 .Fa object
 and its release back into the pool.
 .\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 .It Fn pool_cache_invalidate "pc"
+.Pp
 Invalidate a pool cache
 .Fa pc .
-Destruct and release all of the cached objects.
+Destruct and release all objects in the global cache.
+Per-CPU caches will not be invalidated by this call, meaning that it
+is still possible to allocate "stale" items from the cache.
+If relevant, the user must check for this condition when allocating
+items.
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.It Fn pool_cache_sethiwat "pc" "nitems"
+.Pp
+A pool will attempt to increase its resource usage to keep up with the demand
+for its items.
+Conversely,
+it will return unused memory to the system should the number of accumulated
+unused items in the pool exceed a programmable limit.
+The limits for the minimum and maximum number of items which a pool should keep
+at hand are known as the high and low
+.Sy watermarks .
+.Pp
+The function
+.Fn pool_cache_sethiwat
+sets the backing pool's high water mark.
+As items are returned and the total number of pages in the pool is larger
+than the maximum set by this function,
+any completely unused pages are released immediately.
+If this function is not used to specify a maximum number of items,
+the pages will remain associated with the pool until the system runs low
+on memory,
+at which point the VM system will try to reclaim unused pages.
+.\" - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+.It Fn pool_cache_setlowat "pc" "nitems"
+.Pp
+Set the minimum number of items to keep in the pool.
+The number pages in the pool will not decrease below the required value to
+accommodate the minimum number of items specified by this function.
 .El
 .\" ------------------------------------------------------------
 .Sh CODE REFERENCES
@@ -228,6 +332,7 @@ subsystem is implemented within the file
 .Pa sys/kern/subr_pool.c .
 .Sh SEE ALSO
 .Xr intro 9 ,
-.Xr malloc 9 ,
+.Xr kmem_alloc 9 ,
+.Xr kmem_free 9 ,
 .Xr memoryallocators 9 ,
 .Xr pool 9
