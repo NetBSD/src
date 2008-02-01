@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.5 2007/05/30 16:23:22 tls Exp $
+#	$NetBSD: list.ramdisk,v 1.6 2008/02/01 13:43:12 tsutsui Exp $
 
 SRCDIRS	usr.bin/less
 SRCDIRS	bin sbin usr.bin usr.sbin gnu/usr.bin
@@ -79,7 +79,7 @@ COPY	${DESTDIR}/usr/mdec/mbr_ext		usr/mdec/mbr_ext
 COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
 
 # and the common installation tools
-COPY	${CURDIR}/../common/termcap.mini	usr/share/misc/termcap
+COPY	${NETBSDSRCDIR}/distrib/common/termcap.mini	usr/share/misc/termcap
 
 # and the boot script
 CMD	sed -e "s/@BOOTMODEL@/${BOOTMODEL}/" < ${CURDIR}/../common/dot.profile > .profile
