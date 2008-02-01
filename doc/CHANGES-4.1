@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.10 2008/01/29 22:42:24 pavel Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.11 2008/02/01 05:44:03 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -136,4 +136,32 @@ sys/netinet/tcp_usrreq.c			1.134
 	Protect inet6_ident_core() with #ifdef INET6, fixes building without
 	options INET6.
 	[joerg, ticket #1057]
+
+sys/dev/pci/azalia_codec.c			1.48
+
+	When converting mixer values to hardware values, round up. This makes
+	stepping and restore actually work.
+	[joerg, ticket #982]
+
+lib/libkvm/kvm_sparc64.c			1.11
+sys/arch/sparc64/include/kcore.h		1.5
+sys/arch/sparc64/sparc64/pmap.c			1.201
+
+	Extend the sparc64 cpu kcore segment so that it records all kernel
+	mappings done via locked 4 MB pages.
+	[martin, ticket #983]
+
+sys/dev/pci/uhci_pci.c				1.38
+
+	Be paranoid about disabling interrupts and acknowledging any pending
+	interrupts while attaching uhci. Fixes recent problems with uvm_fault
+	during uhci attach.
+	[gavan, ticket #1000]
+
+sys/arch/xen/xen/isa_machdep.c			1.9
+sys/arch/xen/xen/pciide_machdep.c		1.7
+
+	Properly setup the IO APIC for ISA and pciide compat interrupts too.
+	Makes ACPI kernels works again with pciide controllers in compat mode.
+	[bouyer, ticket #1001]
 
