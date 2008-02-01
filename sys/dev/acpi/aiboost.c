@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.21 2008/01/29 19:35:05 xtraeme Exp $ */
+/* $NetBSD: aiboost.c,v 1.22 2008/02/01 23:12:30 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.21 2008/01/29 19:35:05 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.22 2008/02/01 23:12:30 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,13 +333,13 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 	}
 
 	clen = sizeof(struct aiboost_comp) + sizeof(struct aiboost_elem) *
-	    (elem->Integer.Value - 1);
+	    (o->Package.Count - 1);
 	c = kmem_zalloc(clen, KM_NOSLEEP);
 	if (!c)
 		goto error;
 
 	*comp = c;
-	c->num = elem->Integer.Value;
+	c->num = o->Package.Count - 1;
 
 	for (i = 1; i < o->Package.Count; i++) {
 		elem = &o->Package.Elements[i];
