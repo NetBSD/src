@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $	*/
+/*	$NetBSD: getent.c,v 1.10 2008/02/01 22:39:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $");
+__RCSID("$NetBSD: getent.c,v 1.10 2008/02/01 22:39:21 christos Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -55,6 +55,8 @@ __RCSID("$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <paths.h>
+#include <err.h>
 
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
@@ -66,38 +68,46 @@ __RCSID("$NetBSD: getent.c,v 1.9 2006/08/27 06:58:55 simonb Exp $");
 
 #include <rpc/rpcent.h>
 
-static int	usage(void);
+#include <disktab.h>
+
+static int	usage(void) __attribute__((__noreturn__));
 static int	parsenum(const char *, unsigned long *);
+static int	disktab(int, char *[]);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
 static int	networks(int, char *[]);
 static int	passwd(int, char *[]);
+static int	printcap(int, char *[]);
 static int	protocols(int, char *[]);
 static int	rpc(int, char *[]);
 static int	services(int, char *[]);
 static int	shells(int, char *[]);
+static int	termcap(int, char *[]);
 
 enum {
 	RV_OK		= 0,
 	RV_USAGE	= 1,
 	RV_NOTFOUND	= 2,
-	RV_NOENUM	= 3,
+	RV_NOENUM	= 3
 };
 
 static struct getentdb {
 	const char	*name;
 	int		(*callback)(int, char *[]);
 } databases[] = {
+	{	"disktab",	disktab,	},
 	{	"ethers",	ethers,		},
 	{	"group",	group,		},
 	{	"hosts",	hosts,		},
 	{	"networks",	networks,	},
 	{	"passwd",	passwd,		},
+	{	"princap",	printcap,	},
 	{	"protocols",	protocols,	},
 	{	"rpc",		rpc,		},
 	{	"services",	services,	},
 	{	"shells",	shells,		},
+	{	"termcap",	termcap,	},
 
 	{	NULL,		NULL,		},
 };
@@ -112,16 +122,13 @@ main(int argc, char *argv[])
 
 	if (argc < 2)
 		usage();
-	for (curdb = databases; curdb->name != NULL; curdb++) {
-		if (strcmp(curdb->name, argv[1]) == 0) {
-			exit(curdb->callback(argc, argv));
-			break;
-		}
-	}
-	fprintf(stderr, "Unknown database: %s\n", argv[1]);
+	for (curdb = databases; curdb->name != NULL; curdb++)
+		if (strcmp(curdb->name, argv[1]) == 0)
+			return (*curdb->callback)(argc, argv);
+
+	warn("Unknown database `%s'", argv[1]);
 	usage();
 	/* NOTREACHED */
-	return RV_USAGE;
 }
 
 static int
@@ -129,13 +136,12 @@ usage(void)
 {
 	struct getentdb	*curdb;
 
-	fprintf(stderr, "Usage: %s database [key ...]\n",
+	(void)fprintf(stderr, "Usage: %s database [key ...]\n",
 	    getprogname());
-	fprintf(stderr, "       database may be one of:\n\t");
-	for (curdb = databases; curdb->name != NULL; curdb++) {
-		fprintf(stderr, " %s", curdb->name);
-	}
-	fprintf(stderr, "\n");
+	(void)fprintf(stderr, "       database may be one of:\n\t");
+	for (curdb = databases; curdb->name != NULL; curdb++)
+		(void)fprintf(stderr, " %s", curdb->name);
+	(void)fprintf(stderr, "\n");
 	exit(RV_USAGE);
 	/* NOTREACHED */
 }
@@ -169,21 +175,22 @@ parsenum(const char *word, unsigned long *result)
  */
 static void
 printfmtstrings(char *strings[], const char *prefix, const char *sep,
-	const char *fmt, ...)
+    const char *fmt, ...)
 {
 	va_list		ap;
 	const char	*curpref;
-	int		i;
+	size_t		i;
 
 	va_start(ap, fmt);
-	vprintf(fmt, ap);
+	(void)vprintf(fmt, ap);
+	va_end(ap);
 
 	curpref = prefix;
 	for (i = 0; strings[i] != NULL; i++) {
-		printf("%s%s", curpref, strings[i]);
+		(void)printf("%s%s", curpref, strings[i]);
 		curpref = sep;
 	}
-	printf("\n");
+	(void)printf("\n");
 }
 
 
@@ -201,11 +208,11 @@ ethers(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
-#define ETHERSPRINT	printf("%-17s  %s\n", ether_ntoa(eap), hp)
+#define ETHERSPRINT	(void)printf("%-17s  %s\n", ether_ntoa(eap), hp)
 
 	rv = RV_OK;
 	if (argc == 2) {
-		fprintf(stderr, "Enumeration not supported on ethers\n");
+		warnx("Enumeration not supported on ethers");
 		rv = RV_NOENUM;
 	} else {
 		for (i = 2; i < argc; i++) {
@@ -246,7 +253,7 @@ group(int argc, char *argv[])
 #define GROUPPRINT	printfmtstrings(gr->gr_mem, ":", ",", "%s:%s:%u", \
 			    gr->gr_name, gr->gr_passwd, gr->gr_gid)
 
-	setgroupent(1);
+	(void)setgroupent(1);
 	rv = RV_OK;
 	if (argc == 2) {
 		while ((gr = getgrent()) != NULL)
@@ -254,7 +261,7 @@ group(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				gr = getgrgid(id);
+				gr = getgrgid((gid_t)id);
 			else
 				gr = getgrnam(argv[i]);
 			if (gr != NULL)
@@ -281,7 +288,7 @@ hostsprint(const struct hostent *he)
 
 	assert(he != NULL);
 	if (inet_ntop(he->h_addrtype, he->h_addr, buf, sizeof(buf)) == NULL)
-		strlcpy(buf, "# unknown", sizeof(buf));
+		(void)strlcpy(buf, "# unknown", sizeof(buf));
 	printfmtstrings(he->h_aliases, "  ", " ", "%-16s  %s", buf, he->h_name);
 }
 
@@ -334,7 +341,7 @@ networksprint(const struct netent *ne)
 	assert(ne != NULL);
 	ianet = inet_makeaddr(ne->n_net, 0);
 	if (inet_ntop(ne->n_addrtype, &ianet, buf, sizeof(buf)) == NULL)
-		strlcpy(buf, "# unknown", sizeof(buf));
+		(void)strlcpy(buf, "# unknown", sizeof(buf));
 	printfmtstrings(ne->n_aliases, "  ", " ", "%-16s  %s", ne->n_name, buf);
 }
 
@@ -387,11 +394,11 @@ passwd(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
-#define PASSWDPRINT	printf("%s:%s:%u:%u:%s:%s:%s\n", \
+#define PASSWDPRINT	(void)printf("%s:%s:%u:%u:%s:%s:%s\n", \
 			    pw->pw_name, pw->pw_passwd, pw->pw_uid, \
 			    pw->pw_gid, pw->pw_gecos, pw->pw_dir, pw->pw_shell)
 
-	setpassent(1);
+	(void)setpassent(1);
 	rv = RV_OK;
 	if (argc == 2) {
 		while ((pw = getpwent()) != NULL)
@@ -399,7 +406,7 @@ passwd(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				pw = getpwuid(id);
+				pw = getpwuid((uid_t)id);
 			else
 				pw = getpwnam(argv[i]);
 			if (pw != NULL)
@@ -414,7 +421,145 @@ passwd(int argc, char *argv[])
 	return rv;
 }
 
+static char *
+mygetent(const char * const * db_array, const char *name)
+{
+	char *buf = NULL;
+	int error;
 
+	switch (error = cgetent(&buf, db_array, name)) {
+	case -3:
+		warnx("tc= loop in record `%s' in `%s'", name, db_array[0]);
+		break;
+	case -2:
+		warn("system error fetching record `%s' in `%s'", name,
+		    db_array[0]);
+		break;
+	case -1:
+	case 0:
+		break;
+	case 1:
+		warnx("tc= reference not found in record for `%s' in `%s'",
+		    name, db_array[0]);
+		break;
+	default:
+		warnx("unknown error %d in record `%s' in `%s'", error, name,
+		    db_array[0]);
+		break;
+	}
+	return buf;
+}
+
+static char *
+mygetone(const char * const * db_array, int first)
+{
+	char *buf = NULL;
+	int error;
+
+	switch (error = (first ? cgetfirst : cgetnext)(&buf, db_array)) {
+	case -2:
+		warnx("tc= loop in `%s'", db_array[0]);
+		break;
+	case -1:
+		warn("system error fetching record in `%s'", db_array[0]);
+		break;
+	case 0:
+	case 1:
+		break;
+	case 2:
+		warnx("tc= reference not found in `%s'", db_array[0]);
+		break;
+	default:
+		warnx("unknown error %d in `%s'", error, db_array[0]);
+		break;
+	}
+	return buf;
+}
+
+static void
+capprint(const char *cap)
+{
+	char *c = strchr(cap, ':');
+	if (c)
+		if (c == cap)
+			(void)printf("true\n");
+		else {
+			int l = (int)(c - cap);
+			(void)printf("%*.*s\n", l, l, cap);
+		}
+	else
+		(void)printf("%s\n", cap);
+}
+		
+static int
+handlecap(const char *db, int argc, char *argv[])
+{
+	static const char sfx[] = "=#:";
+	const char *db_array[] = { db, NULL };
+	char	*b, *cap;
+	int	i, j, rv;
+
+	assert(argc > 1);
+	assert(argv != NULL);
+
+	rv = RV_OK;
+	if (argc == 2) {
+		for (b = mygetone(db_array, 1); b; b = mygetone(db_array, 0)) {
+			(void)printf("%s\n", b);
+			free(b);
+		}
+	} else {
+		if ((b = mygetent(db_array, argv[2])) == NULL)
+			return RV_NOTFOUND;
+		if (argc == 3)
+			(void)printf("%s\n", b);
+		else {
+			for (i = 3; i < argc; i++) {
+				for (j = 0; j < sizeof(sfx) - 1; j++) {
+					cap = cgetcap(b, argv[i], sfx[j]);
+					if (cap) {
+						capprint(cap);
+						break;
+					} 
+				}
+				if (j == sizeof(sfx) - 1)
+					printf("false\n");
+			}
+		}
+		free(b);
+	}
+	return rv;
+}
+
+		/*
+		 * printcap
+		 */
+
+static int
+printcap(int argc, char *argv[])
+{
+	return handlecap(_PATH_PRINTCAP, argc, argv);
+}
+
+		/*
+		 * disktab
+		 */
+
+static int
+disktab(int argc, char *argv[])
+{
+	return handlecap(_PATH_DISKTAB, argc, argv);
+}
+
+		/*
+		 * termcap
+		 */
+
+static int
+termcap(int argc, char *argv[])
+{
+	return handlecap(_PATH_TERMCAP, argc, argv);
+}
 		/*
 		 * protocols
 		 */
@@ -440,7 +585,7 @@ protocols(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				pe = getprotobynumber(id);
+				pe = getprotobynumber((int)id);
 			else
 				pe = getprotobyname(argv[i]);
 			if (pe != NULL)
@@ -481,7 +626,7 @@ rpc(int argc, char *argv[])
 	} else {
 		for (i = 2; i < argc; i++) {
 			if (parsenum(argv[i], &id))
-				re = getrpcbynumber(id);
+				re = getrpcbynumber((int)id);
 			else
 				re = getrpcbyname(argv[i]);
 			if (re != NULL)
@@ -555,7 +700,7 @@ shells(int argc, char *argv[])
 	assert(argc > 1);
 	assert(argv != NULL);
 
-#define SHELLSPRINT	printf("%s\n", sh)
+#define SHELLSPRINT	(void)printf("%s\n", sh)
 
 	setusershell();
 	rv = RV_OK;
