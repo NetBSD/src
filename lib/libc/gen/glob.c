@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.20 2008/01/18 16:20:00 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.21 2008/02/01 23:29:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.20 2008/01/18 16:20:00 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.21 2008/02/01 23:29:54 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,6 +76,7 @@ __RCSID("$NetBSD: glob.c,v 1.20 2008/01/18 16:20:00 christos Exp $");
 #include <glob.h>
 #include <pwd.h>
 #include <stdio.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -584,6 +585,8 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 	__gl_stat_t sb;
 	Char *p, *q;
 	int anymeta;
+	Char *pend;
+	ptrdiff_t diff;
 
 	_DIAGASSERT(pathbuf != NULL);
 	_DIAGASSERT(pathend != NULL);
@@ -626,15 +629,25 @@ glob2(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern, glob_t *pglob,
 		}
 
                 /*
-		 * No expansion, or path ends in dot-slash or dot-dot-slash,
+		 * No expansion, or path ends in slash-dot shash-dot-dot,
 		 * do next segment.
 		 */
-                 if ((!anymeta) ||
-		     (((pathend-pathbuf) > 1) &&
-		      (((*(pathend-1) == SEP) && (*(pathend-2) == DOT)) &&
-		        ((((pathend-pathbuf) < 3) || (*(pathend-3) == SEP)) ||
-		         (((pathend-pathbuf) < 4) || 
-		         ((*(pathend-3) == DOT) && (*(pathend-4) == SEP))))))) {
+		if (pglob->gl_flags & GLOB_PERIOD) {
+			for (pend = pathend; pend > pathbuf && pend[-1] == '/';
+			    pend--)
+				continue;
+			diff = pend - pathbuf;
+		} else {
+			/* XXX: GCC */
+			diff = 0;
+			pend = pathend;
+		}
+			
+                if ((!anymeta) ||
+		    ((pglob->gl_flags & GLOB_PERIOD) &&
+		     (diff >= 1 && pend[-1] == DOT) &&
+		     (diff >= 2 && (pend[-2] == SLASH || pend[-2] == DOT)) &&
+		     (diff < 3 || pend[-3] == SLASH))) {
 			pathend = q;
 			pattern = p;
 			while (*pattern == SEP) {
