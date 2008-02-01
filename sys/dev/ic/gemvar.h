@@ -1,4 +1,4 @@
-/*	$NetBSD: gemvar.h,v 1.17 2008/01/19 22:20:42 dyoung Exp $ */
+/*	$NetBSD: gemvar.h,v 1.18 2008/02/01 10:53:25 jdc Exp $ */
 
 /*
  *
@@ -139,9 +139,14 @@ struct gem_softc {
 #define	GEM_APPLE_GMAC		3	/* Apple GMAC variant */
 #define GEM_APPLE_K2_GMAC	4	/* Apple K2 GMAC */
 
+#define GEM_IS_SUN(sc) \
+	((sc)->sc_variant == GEM_SUN_GEM || \
+	(sc)->sc_variant == GEM_SUN_ERI)
 #define	GEM_IS_APPLE(sc) \
 	((sc)->sc_variant == GEM_APPLE_GMAC || \
 	(sc)->sc_variant == GEM_APPLE_K2_GMAC)
+
+	int		sc_chiprev;	/* hardware revision */
 
 	u_int		sc_flags;	/* */
 	short		sc_if_flags;	/* copy of ifp->if_flags */
