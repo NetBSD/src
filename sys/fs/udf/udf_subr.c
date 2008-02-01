@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.23.2.5 2007/11/04 01:19:50 xtraeme Exp $ */
+/* $NetBSD: udf_subr.c,v 1.23.2.6 2008/02/01 14:42:55 riz Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: udf_subr.c,v 1.23.2.5 2007/11/04 01:19:50 xtraeme Exp $");
+__RCSID("$NetBSD: udf_subr.c,v 1.23.2.6 2008/02/01 14:42:55 riz Exp $");
 #endif /* not lint */
 
 
@@ -493,7 +493,6 @@ udf_update_discinfo(struct udf_mount *ump)
 	/* TODO problem with last_possible_lba on resizable VND; request */
 	di->last_possible_lba = dpart.part->p_size;
 	di->sector_size       = dpart.disklab->d_secsize;
-	di->blockingnr        = 1;
 
 	di->num_sessions = 1;
 	di->num_tracks   = 1;
@@ -572,12 +571,14 @@ udf_search_tracks(struct udf_mount *ump, struct udf_args *args,
 		args->sessionnr = ump->discinfo.num_sessions;
 
 	/* search the tracks for this session, zero session nr indicates last */
-	if (args->sessionnr == 0) {
+	if (args->sessionnr == 0)
 		args->sessionnr = ump->discinfo.num_sessions;
-		if (ump->discinfo.last_session_state == MMC_STATE_EMPTY) {
-			args->sessionnr--;
-		}
-	}
+	if (ump->discinfo.last_session_state == MMC_STATE_EMPTY)
+		args->sessionnr--;
+
+	/* sanity */
+	if (args->sessionnr == 0)
+		args->sessionnr = 1;
 
 	/* search the first and last track of the specified session */
 	num_tracks  = ump->discinfo.num_tracks;
@@ -707,9 +708,8 @@ udf_read_anchors(struct udf_mount *ump, struct udf_args *args)
 	}
 
 	/* VATs are only recorded on sequential media, but initialise */
-	ump->first_possible_vat_location = track_start + 256 + 1;
-	ump->last_possible_vat_location  = track_end
-		+ ump->discinfo.blockingnr;
+	ump->first_possible_vat_location = track_start + 2;
+	ump->last_possible_vat_location  = track_end + last_track.packet_size;
 
 	return ok;
 }
@@ -1293,7 +1293,7 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 	mapping = mapping;
 
 	vat_loc = ump->last_possible_vat_location;
-	early_vat_loc = vat_loc - 2 * ump->discinfo.blockingnr;
+	early_vat_loc = vat_loc - 256;	/* 8 blocks of 32 sectors */
 	early_vat_loc = MAX(early_vat_loc, ump->first_possible_vat_location);
 	late_vat_loc  = vat_loc + 1024;
 
@@ -1308,7 +1308,6 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 		if (!error) break;
 		if (vat_node) {
 			vput(vat_node->vnode);
-			udf_dispose_node(vat_node);
 			vat_node = NULL;
 		}
 		vat_loc--;	/* walk backwards */
