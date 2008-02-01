@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.7 2007/05/10 23:22:28 dogcow Exp $
+#	$NetBSD: list,v 1.8 2008/02/01 17:18:07 tsutsui Exp $
 
 # usr.bin/less has to be first, otherwise the ramdisk.mk generation fails
 SRCDIRS usr.bin/less bin sbin usr.bin usr.sbin gnu/usr.bin
@@ -78,7 +78,7 @@ COPY	${NETBSDSRCDIR}/etc/protocols		etc/protocols
 COPY	${NETBSDSRCDIR}/distrib/common/services		etc/services
 
 # and the common installation tools
-COPY	${CURDIR}/termcap.mini		usr/share/misc/termcap
+COPY	${NETBSDSRCDIR}/distrib/common/termcap.mini	usr/share/misc/termcap
 
 # the disktab explanation file
 COPY	${CURDIR}/disktab.preinstall	etc/disktab.preinstall
