@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.30 2006/11/16 01:33:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.30.2.1 2008/02/01 14:47:37 riz Exp $");
 
 #include "opt_inet.h"
 
@@ -942,11 +942,12 @@ in6_pcbsetport(laddr, in6p, l)
 		if (IN6_IS_ADDR_V4MAPPED(laddr)) {
 			t = in_pcblookup_port(table,
 			    *(struct in_addr *)&laddr->s6_addr32[3],
-			    lport, wild);
+			    htons(lport), wild);
 		} else
 #endif
 		{
-			t = in6_pcblookup_port(table, laddr, lport, wild);
+			t = in6_pcblookup_port(table, laddr, htons(lport),
+			    wild);
 		}
 		if (t == 0)
 			goto found;
