@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.37 2008/01/25 21:12:13 joerg Exp $
+#	$NetBSD: files.sh3,v 1.38 2008/02/01 16:37:30 tsutsui Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -10,7 +10,6 @@ file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb | kgdb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
-file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
 file	arch/sh3/sh3/kobj_machdep.c	modular
 file	arch/sh3/sh3/exception.c
