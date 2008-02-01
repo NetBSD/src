@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.72 2008/01/22 23:19:14 jdc Exp $ */
+/*	$NetBSD: gem.c,v 1.73 2008/02/01 11:03:19 jdc Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.72 2008/01/22 23:19:14 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.73 2008/02/01 11:03:19 jdc Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -416,9 +416,16 @@ gem_attach(sc, enaddr)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
-	/* The GEM hardware supports basic TCP checksum offloading only. */
-	ifp->if_capabilities |=
-	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
+	/*
+	 * The GEM hardware supports basic TCP checksum offloading only.
+	 * Several (all?) revisions (Sun rev. 01 and Apple rev. 00 and 80)
+	 * have bugs in the receive checksum, so don't enable it for now.
+	if ((GEM_IS_SUN(sc) && sc->sc_chiprev != 1) ||
+	    (GEM_IS_APPLE(sc) &&
+	    (sc->sc_chiprev != 0 && sc->sc_chiprev != 0x80)))
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx;
+	*/
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx;
 	ifp->if_start = gem_start;
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;
@@ -2144,9 +2151,6 @@ gem_intr(v)
 	}
 	if (status & GEM_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, h, GEM_MAC_RX_STATUS);
-		if (rxstat & ~GEM_MAC_RX_DONE)
-			printf("%s: MAC rx fault, status %x\n",
-			    sc->sc_dev.dv_xname, rxstat);
 		/*
 		 * At least with GEM_SUN_GEM and some GEM_SUN_ERI
 		 * revisions GEM_MAC_RX_OVERFLOW happen often due to a
@@ -2157,7 +2161,7 @@ gem_intr(v)
 			ifp->if_ierrors++;
 			gem_reset_rxdma(sc);
 		} else if (rxstat & ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT))
-			printf("%s: MAC rx fault, status %x\n",
+			printf("%s: MAC rx fault, status 0x%02x\n",
 			    sc->sc_dev.dv_xname, rxstat);
 	}
 	if (status & GEM_INTR_PCS) {
