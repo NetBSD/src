@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.260.2.1 2007/01/15 22:15:13 pavel Exp $	*/
+/*	$NetBSD: cd.c,v 1.260.2.2 2008/02/01 14:42:54 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.260.2.1 2007/01/15 22:15:13 pavel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.260.2.2 2008/02/01 14:42:54 riz Exp $");
 
 #include "rnd.h"
 
@@ -2671,6 +2671,7 @@ static void
 mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 		    uint16_t feature, int cur, uint8_t *rpos)
 {
+	uint32_t blockingnr;
 	uint64_t flags;
 
 	if (cur == 1) {
@@ -2681,10 +2682,8 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 
 	switch (feature) {
 	case 0x0010 :	/* random readable feature */
-		mmc_discinfo->sector_size =  rpos[3] | (rpos[2] << 8) |
-					    (rpos[1] << 16) | (rpos[0] << 24);
-		mmc_discinfo->blockingnr  =  rpos[5] | (rpos[4] << 8);
-		if (mmc_discinfo->blockingnr > 1)
+		blockingnr  =  rpos[5] | (rpos[4] << 8);
+		if (blockingnr > 1)
 			flags |= MMC_CAP_PACKET;
 
 		/* RW error page */
@@ -2692,13 +2691,15 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 	case 0x0020 :	/* random writable feature */
 		flags |= MMC_CAP_RECORDABLE;
 		flags |= MMC_CAP_REWRITABLE;
+		blockingnr  =  rpos[9] | (rpos[8] << 8);
+		if (blockingnr > 1)
+			flags |= MMC_CAP_PACKET;
 		break;
 	case 0x0021 :	/* incremental streaming write feature */
 		flags |= MMC_CAP_RECORDABLE;
 		flags |= MMC_CAP_SEQUENTIAL;
-		if (cur) {
+		if (cur)
 			mmc_discinfo->link_block_penalty = rpos[4];
-		}
 		if (rpos[2] & 1)
 			flags |= MMC_CAP_ZEROLINKBLK;
 		break;
@@ -2724,7 +2725,12 @@ mmc_process_feature(struct mmc_discinfo *mmc_discinfo,
 	case 0x0028 :	/* MRW formatted media support feature */
 		flags |= MMC_CAP_MRW;
 		break;
-	case 0x002c :	/* regid restricted overwrite feature */
+	case 0x002b :	/* DVD+R read (and opt. write) support */
+		flags |= MMC_CAP_SEQUENTIAL;
+		if (rpos[0] & 1) /* write support */
+			flags |= MMC_CAP_RECORDABLE;
+		break;
+	case 0x002c :	/* rigid restricted overwrite feature */
 		flags |= MMC_CAP_RECORDABLE;
 		flags |= MMC_CAP_REWRITABLE;
 		flags |= MMC_CAP_STRICTOVERWRITE;
@@ -2898,7 +2904,6 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 	mmc_discinfo->mmc_class   = MMC_CLASS_UNKN;
 	mmc_discinfo->mmc_cur     = 0;
 	mmc_discinfo->mmc_cap     = 0;
-	mmc_discinfo->blockingnr  = 1;	/* not relevant if non packet write */
 	mmc_discinfo->link_block_penalty = 0;
 
 	/* determine mmc profile and class */
@@ -2962,7 +2967,13 @@ mmc_getdiscinfo(struct scsipi_periph *periph,
 					    gcf->feature_dependent);
 
 			last_feature = MAX(last_feature, feature);
-			assert((feature_len & 3) == 0);
+#ifdef DIAGNOSTIC
+			/* assert((feature_len & 3) == 0); */
+			if ((feature_len & 3) != 0) {
+				printf("feature %d having length %d\n",
+					feature, feature_len);
+			}
+#endif
 
 			pos  += 4 + feature_len;
 			fpos += 4 + feature_len;
@@ -3388,6 +3399,12 @@ mmc_gettrackinfo(struct scsipi_periph *periph,
 
 	/* (re)initialise structure */
 	memset(trackinfo, 0, sizeof(struct mmc_trackinfo));
+
+	/* account for short returns screwing up track and session msb */
+	if ((ti.data_len[1] | (ti.data_len[0] << 8)) <= 32) {
+		ti.track_msb   = 0;
+		ti.session_msb = 0;
+	}
 
 	trackinfo->tracknr    = ti.track_lsb   | (ti.track_msb   << 8);
 	trackinfo->sessionnr  = ti.session_lsb | (ti.session_msb << 8);
