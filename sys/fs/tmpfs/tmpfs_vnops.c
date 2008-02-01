@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.32.2.3 2007/07/24 10:14:47 liamjfoy Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.32.2.4 2008/02/01 14:55:49 riz Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.32.2.3 2007/07/24 10:14:47 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.32.2.4 2008/02/01 14:55:49 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -866,11 +866,29 @@ tmpfs_rename(void *v)
 
 	/* If we need to move the directory between entries, lock the
 	 * source so that we can safely operate on it. */
+
+	/* XXX: this is a potential locking order violation! */
 	if (fdnode != tdnode) {
 		error = vn_lock(fdvp, LK_EXCLUSIVE | LK_RETRY);
 		if (error != 0)
 			goto out;
 	}
+
+	/* Make sure we have the correct cached dirent */
+	fcnp->cn_flags &= ~(MODMASK | SAVESTART);
+	fcnp->cn_flags |= LOCKPARENT | LOCKLEAF;
+	if ((error = relookup(fdvp, &fvp, fcnp))) {
+		goto out_locked;
+	}
+	KASSERT(fvp != NULL);
+	/* Relookup always returns with vpp locked and 1UP referenced */
+	VOP_UNLOCK(fvp, 0);
+	vrele(((struct vop_rename_args *)v)->a_fvp);
+
+	/* Reacquire values.  fvp might have changed.  Since we only
+	 * used fvp to sanitycheck fcnp values above, we can do this. */
+	fnode = VP_TO_TMPFS_NODE(fvp);
+	de = fnode->tn_lookup_dirent;
 
 	/* Ensure that we have enough memory to hold the new name, if it
 	 * has to be changed. */
@@ -972,8 +990,6 @@ out_locked:
 
 out:
 	/* Release target nodes. */
-	/* XXX: I don't understand when tdvp can be the same as tvp, but
-	 * other code takes care of this... */
 	if (tdvp == tvp)
 		vrele(tdvp);
 	else
