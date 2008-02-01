@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.330 2008/01/30 15:00:52 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.331 2008/02/01 08:53:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.330 2008/01/30 15:00:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.331 2008/02/01 08:53:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -417,6 +417,7 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 		return ENOMEM;
 	mp->mnt_refcnt = 1;
 	rw_init(&mp->mnt_lock);
+	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	(void)vfs_busy(mp, RW_WRITER, NULL);
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	mp->mnt_op = vfsp;
