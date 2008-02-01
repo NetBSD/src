@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.184.2.3 2007/08/31 09:26:11 liamjfoy Exp $	*/
+/*	$NetBSD: pmap.c,v 1.184.2.4 2008/02/01 05:35:12 riz Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.2.3 2007/08/31 09:26:11 liamjfoy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.184.2.4 2008/02/01 05:35:12 riz Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -2155,6 +2155,7 @@ pmap_dumpsize()
 	int	sz;
 
 	sz = ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t));
+	sz += kernel_tlb_slots * sizeof(struct cpu_kcore_4mbseg);
 	sz += phys_installed_size * sizeof(phys_ram_seg_t);
 
 	return btodb(sz + DEV_BSIZE - 1);
@@ -2178,8 +2179,9 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 	kcore_seg_t	*kseg;
 	cpu_kcore_hdr_t	*kcpu;
 	phys_ram_seg_t	memseg;
+	struct cpu_kcore_4mbseg ktlb;
 	int	error = 0;
-	int	i, memsegoffset;
+	int	i;
 	int	buffer[dbtob(1) / sizeof(int)];
 	int	*bp, *ep;
 
@@ -2218,16 +2220,24 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 	/* Describe the locked text segment */
 	kcpu->ktextbase = (uint64_t)ktext;
 	kcpu->ktextp = (uint64_t)ktextp;
-	kcpu->ktextsz = (uint64_t)ektextp - ktextp;
+	kcpu->ktextsz = (uint64_t)ektext - ktext;
+	if (kcpu->ktextsz > 4*MEG)
+		kcpu->ktextsz = 0;	/* old version can not work */
 
 	/* Describe locked data segment */
 	kcpu->kdatabase = (uint64_t)kdata;
 	kcpu->kdatap = (uint64_t)kdatap;
 	kcpu->kdatasz = (uint64_t)ekdatap - kdatap;
 
+	/* new version of locked segments description */
+	kcpu->newmagic = SPARC64_KCORE_NEWMAGIC;
+	kcpu->num4mbsegs = kernel_tlb_slots;
+	kcpu->off4mbsegs = ALIGN(sizeof(cpu_kcore_hdr_t));
+
 	/* Now the memsegs */
 	kcpu->nmemseg = phys_installed_size;
-	kcpu->memsegoffset = memsegoffset = ALIGN(sizeof(cpu_kcore_hdr_t));
+	kcpu->memsegoffset = kcpu->off4mbsegs
+		+ kernel_tlb_slots * sizeof(struct cpu_kcore_4mbseg);
 
 	/* Now we need to point this at our kernel pmap. */
 	kcpu->nsegmap = STSZ;
@@ -2236,6 +2246,14 @@ pmap_dumpmmu(int (*dump)(dev_t, daddr_t, caddr_t, size_t), daddr_t blkno)
 	/* Note: we have assumed everything fits in buffer[] so far... */
 	bp = (int *)((long)kcpu + ALIGN(sizeof(cpu_kcore_hdr_t)));
 
+	/* write locked kernel 4MB TLBs */
+	for (i = 0; i < kernel_tlb_slots; i++) {
+		ktlb.va = kernel_tlbs[i].te_va;
+		ktlb.pa = kernel_tlbs[i].te_pa;
+		EXPEDITE(&ktlb, sizeof(ktlb));
+	}
+
+	/* write memsegs */
 	for (i = 0; i < phys_installed_size; i++) {
 		memseg.start = phys_installed[i].start;
 		memseg.size = phys_installed[i].size;
