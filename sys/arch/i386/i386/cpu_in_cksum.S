@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.1 2008/01/25 21:12:12 joerg Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.2 2008/02/01 09:39:20 tnn Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.1 2008/01/25 21:12:12 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.2 2008/02/01 09:39:20 tnn Exp $");
 
 #include "assym.h"
 
@@ -78,12 +78,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.1 2008/01/25 21:12:12 joerg Exp $
 /*
  * Checksum routine for Internet Protocol family headers.
  *
- * in_cksum(m, len)
+ * int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum);
  *
  * Registers used:
- * %eax = sum
+ * %eax = sum (entry: initial_sum)
  * %ebx = m->m_data
- * %cl = rotation count to unswap
+ * %ecx = off (initially)
+ * %cl = rotation count to unswap (later)
  * %edx = m->m_len
  * %ebp = m
  * %esi = len
@@ -122,7 +123,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.1 2008/01/25 21:12:12 joerg Exp $
 	addw	%dx, %ax	; \
 	adcw	$0, %ax
 
-/* LINTSTUB: Func: int in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum) */
+/* LINTSTUB: Func: int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum) */
 ENTRY(cpu_in_cksum)
 	pushl	%ebp
 	pushl	%ebx
