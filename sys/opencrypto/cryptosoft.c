@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.17 2007/03/04 06:03:40 christos Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.18 2008/02/01 04:52:35 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.17 2007/03/04 06:03:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.18 2008/02/01 04:52:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -291,119 +291,6 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 	} else if (outtype == CRYPTO_BUF_IOV) {
 		struct uio *uio = (struct uio *) buf;
 
-#ifdef __FreeBSD__
-		struct iovec *iov;
-		/* Find beginning of data */
-		iov = cuio_getptr(uio, crd->crd_skip, &k);
-		if (iov == NULL)
-			return EINVAL;
-
-		i = crd->crd_len;
-
-		while (i > 0) {
-			/*
-			 * If there's insufficient data at the end of
-			 * an iovec, we have to do some copying.
-			 */
-			if (iov->iov_len < k + blks && iov->iov_len != k) {
-				cuio_copydata(uio, k, blks, blk);
-
-				/* Actual encryption/decryption */
-				if (crd->crd_flags & CRD_F_ENCRYPT) {
-					/* XOR with previous block */
-					for (j = 0; j < blks; j++)
-						blk[j] ^= ivp[j];
-
-					exf->encrypt(sw->sw_kschedule, blk);
-
-					/*
-					 * Keep encrypted block for XOR'ing
-					 * with next block
-					 */
-					bcopy(blk, iv, blks);
-					ivp = iv;
-				} else {	/* decrypt */
-					/*
-					 * Keep encrypted block for XOR'ing
-					 * with next block
-					 */
-					if (ivp == iv)
-						bcopy(blk, piv, blks);
-					else
-						bcopy(blk, iv, blks);
-
-					exf->decrypt(sw->sw_kschedule, blk);
-
-					/* XOR with previous block */
-					for (j = 0; j < blks; j++)
-						blk[j] ^= ivp[j];
-
-					if (ivp == iv)
-						bcopy(piv, iv, blks);
-					else
-						ivp = iv;
-				}
-
-				/* Copy back decrypted block */
-				cuio_copyback(uio, k, blks, blk);
-
-				/* Advance pointer */
-				iov = cuio_getptr(uio, k + blks, &k);
-				if (iov == NULL)
-					return EINVAL;
-
-				i -= blks;
-
-				/* Could be done... */
-				if (i == 0)
-					break;
-			}
-
-			/*
-			 * Warning: idat may point to garbage here, but
-			 * we only use it in the while() loop, only if
-			 * there are indeed enough data.
-			 */
-			idat = (char *)iov->iov_base + k;
-
-	   		while (iov->iov_len >= k + blks && i > 0) {
-				if (crd->crd_flags & CRD_F_ENCRYPT) {
-					/* XOR with previous block/IV */
-					for (j = 0; j < blks; j++)
-						idat[j] ^= ivp[j];
-
-					exf->encrypt(sw->sw_kschedule, idat);
-					ivp = idat;
-				} else {	/* decrypt */
-					/*
-					 * Keep encrypted block to be used
-					 * in next block's processing.
-					 */
-					if (ivp == iv)
-						bcopy(idat, piv, blks);
-					else
-						bcopy(idat, iv, blks);
-
-					exf->decrypt(sw->sw_kschedule, idat);
-
-					/* XOR with previous block/IV */
-					for (j = 0; j < blks; j++)
-						idat[j] ^= ivp[j];
-
-					if (ivp == iv)
-						bcopy(piv, iv, blks);
-					else
-						ivp = iv;
-				}
-
-				idat += blks;
-				k += blks;
-				i -= blks;
-			}
-		}
-
-		return 0; /* Done with mbuf encryption/decryption */
-#else  /* !freebsd iov */
 		/* Find beginning of data */
 		count = crd->crd_skip;
 		ind = cuio_getptr(uio, count, &k);
@@ -518,7 +405,6 @@ swcr_encdec(struct cryptodesc *crd, struct swcr_data *sw, void *bufv,
 				i -= blks;
 			}
 		}
-#endif
 		return 0; /* Done with mbuf encryption/decryption */
 	}
 
@@ -557,10 +443,6 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 			return err;
 		break;
 	case CRYPTO_BUF_IOV:
-#ifdef __FreeBSD__
-		/*XXX FIXME: handle iov case*/
-		return EINVAL;
-#else
 		err = cuio_apply((struct uio *) buf, crd->crd_skip,
 		    crd->crd_len,
 		    (int (*)(void *, void *, unsigned int)) axf->Update,
@@ -568,7 +450,6 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		if (err) {
 			return err;
 		}
-#endif
 		break;
 	default:
 		return EINVAL;
@@ -1145,11 +1026,7 @@ swcr_init(void)
 #undef REGISTER
 }
 
-#ifdef __FreeBSD__
-SYSINIT(cryptosoft_init, SI_SUB_PSEUDO, SI_ORDER_ANY, swcr_init, NULL)
-#endif
 
-#ifdef __NetBSD__
 /*
  * Pseudo-device init routine for software crypto.
  */
@@ -1161,4 +1038,3 @@ swcryptoattach(int num)
 
 	swcr_init();
 }
-#endif /* __NetBSD__ */
