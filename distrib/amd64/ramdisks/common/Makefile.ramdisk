@@ -1,0 +1,47 @@
+#	$NetBSD: Makefile.ramdisk,v 1.3.2.2 2008/02/01 13:43:13 tsutsui Exp $
+
+.include <bsd.own.mk>
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+AMD64COMMON=	${.CURDIR}/../common
+
+.PATH:		${AMD64COMMON}
+
+WARNS=		1
+DBG=		-Os -fno-asynchronous-unwind-tables
+CRUNCHGEN_FLAGS= -d "${DBG}"
+
+CRUNCHBIN=	ramdiskbin
+LISTS=		${.CURDIR}/list ${AMD64COMMON}/list.ramdisk
+MTREECONF=	${DISTRIBDIR}/common/mtree.common
+IMAGEENDIAN=	le
+IMAGEDEPENDS+= 	${CRUNCHBIN} \
+		dot.profile \
+		${DESTDIR}/usr/mdec/boot \
+		${DESTDIR}/usr/mdec/bootxx_ffsv1 \
+		${DESTDIR}/usr/mdec/mbr \
+		${DESTDIR}/usr/mdec/mbr_ext \
+		${DESTDIR}/usr/mdec/mbr_bootsel \
+		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
+		${NETBSDSRCDIR}/etc/netconfig ${NETBSDSRCDIR}/etc/protocols \
+		${NETBSDSRCDIR}/distrib/common/services \
+		${NETBSDSRCDIR}/distrib/common/termcap.mini
+PARSELISTENV+=	BOOTMODEL=${BOOTMODEL:Q}
+
+.if defined(USE_SYSINST)
+LISTS+=		${DISTRIBDIR}/common/list.sysinst
+MAKEFS_FLAGS+=	-f 14
+.endif
+
+# Use stubs to eliminate some large stuff from libc
+HACKSRC=	${DISTRIBDIR}/utils/libhack
+.include	"${HACKSRC}/Makefile.inc"
+${CRUNCHBIN}:	libhack.o
+
+.include "${DISTRIBDIR}/common/Makefile.crunch"
+.include "${DISTRIBDIR}/common/Makefile.makedev"
+.include "${DISTRIBDIR}/common/Makefile.image"
+
+release:
+
+.include <bsd.prog.mk>
