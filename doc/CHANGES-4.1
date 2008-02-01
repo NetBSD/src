@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.11 2008/02/01 05:44:03 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.12 2008/02/01 14:57:46 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -164,4 +164,41 @@ sys/arch/xen/xen/pciide_machdep.c		1.7
 	Properly setup the IO APIC for ISA and pciide compat interrupts too.
 	Makes ACPI kernels works again with pciide controllers in compat mode.
 	[bouyer, ticket #1001]
+
+sys/dev/pci/if_bnx.c				1.11
+
+	Reprogram multicast filter after SIOCADDMULTI / SIOCDELMULTI.
+	[dyoung, ticket #1011]
+
+sys/dev/scsipi/cd.c				1.270
+sys/fs/udf/udf_subr.c				1.42
+sys/sys/cdio.h					1.29
+
+	Fix panics on certain UDF disc mounts.
+	[reinoud, ticket #1004]
+
+etc/Makefile					1.347
+
+	Remove MKUUCP from RELEASEVARS.  It is no longer used in src.
+	[minskim, ticket #1005]
+
+sys/netinet6/in6_src.c				1.40
+
+	Fix ipv6 ephemeral port allocation.
+	[yamt, ticket #1006]
+
+sys/fs/msdosfs/msdosfs_vnops.c			1.43
+
+	Fix msdos rename routine.
+	[pooka, ticket #1007]
+
+sys/fs/tmpfs/tmpfs_pool.c			1.11
+
+	Fix a diagnostic panic if the pool allocator is called with NOWAIT.
+	[pooka, ticket #1008]
+
+sys/fs/tmpfs/tmpfs_vnops.c			1.43
+
+	Fix a race condition in rename.
+	[pooka, ticket #1010]
 
