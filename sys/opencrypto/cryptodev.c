@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.30 2008/01/29 20:33:44 tls Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.31 2008/02/01 04:52:35 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.30 2008/01/29 20:33:44 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.31 2008/02/01 04:52:35 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,9 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.30 2008/01/29 20:33:44 tls Exp $");
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
 
-#ifdef __NetBSD__
   #define splcrypto splnet
-#endif
 #ifdef CRYPTO_DEBUG
 #define DPRINTF(a) uprintf a
 #else
@@ -806,7 +804,6 @@ struct cdevsw crypto_cdevsw = {
 	/* type */	D_OTHER,
 };
 
-#ifdef __NetBSD__
 /*
  * Pseudo-device initialization routine for /dev/crypto
  */
@@ -830,4 +827,3 @@ cryptoattach(int num)
 	pool_prime(&fcrpl, 64);
 	pool_prime(&csepl, 64 * 5);
 }
-#endif /* __NetBSD__ */

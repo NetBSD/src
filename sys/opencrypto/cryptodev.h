@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.9 2008/01/19 08:08:20 tls Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.10 2008/02/01 04:52:35 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -413,17 +413,8 @@ struct	mbuf	*m_getptr(struct mbuf *, int, int *);
 struct uio;
 extern	void cuio_copydata(struct uio* uio, int off, int len, void *cp);
 extern	void cuio_copyback(struct uio* uio, int off, int len, void *cp);
-#ifdef __FreeBSD__
-extern struct iovec *cuio_getptr(struct uio *uio, int loc, int *off);
-#else
 extern int	cuio_getptr(struct uio *, int loc, int *off);
-#endif
 
-#ifdef __FreeBSD__	/* Standalone m_apply()/m_getptr() */
-extern  int m_apply(struct mbuf *m, int off, int len,
-                    int (*f)(void *, void *, unsigned int), void *fstate);
-extern  struct mbuf * m_getptr(struct mbuf *m, int loc, int *off);
-#endif	/* Standalone m_apply()/m_getptr() */
 
 #endif /* _KERNEL */
 #endif /* _CRYPTO_CRYPTO_H_ */

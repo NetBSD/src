@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.21 2007/10/08 16:18:05 ad Exp $ */
+/*	$NetBSD: crypto.c,v 1.22 2008/02/01 04:52:35 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.21 2007/10/08 16:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.22 2008/02/01 04:52:35 tls Exp $");
 
 /* XXX FIXME: should be defopt'ed */
 #define CRYPTO_TIMING			/* enable cryptop timing stuff */
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.21 2007/10/08 16:18:05 ad Exp $");
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>			/* XXX for M_XDATA */
 
-#ifdef __NetBSD__
   #define splcrypto splnet
   /* below is kludges to check whats still missing */
   #define SWI_CRYPTO 17
@@ -51,7 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.21 2007/10/08 16:18:05 ad Exp $");
   softint_establish(SOFTINT_NET, (void (*)(void*))fn, NULL)
   #define unregister_swi(lvl, fn)  softint_disestablish(softintr_cookie)
   #define setsoftcrypto(x) softint_schedule(x)
-#endif
 
 #define	SESID2HID(sid)	(((sid) >> 32) & 0xffffffff)
 
@@ -109,18 +107,6 @@ int	crypto_userasymcrypto = 1;	/* userland may do asym crypto reqs */
  */
 int	crypto_devallowsoft = 1;	/* only use hardware crypto */
 
-#ifdef __FreeBSD__
-SYSCTL_INT(_kern, OID_AUTO, usercrypto, CTLFLAG_RW,
-	   &crypto_usercrypto, 0,
-	   "Enable/disable user-mode access to crypto support");
-SYSCTL_INT(_kern, OID_AUTO, userasymcrypto, CTLFLAG_RW,
-	   &crypto_userasymcrypto, 0,
-	   "Enable/disable user-mode access to asymmetric crypto support");
-SYSCTL_INT(_kern, OID_AUTO, cryptodevallowsoft, CTLFLAG_RW,
-	   &crypto_devallowsoft, 0,
-	   "Enable/disable use of software asym crypto support");
-#endif
-#ifdef __NetBSD__
 SYSCTL_SETUP(sysctl_opencrypto_setup, "sysctl opencrypto subtree setup")
 {
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -150,7 +136,6 @@ SYSCTL_SETUP(sysctl_opencrypto_setup, "sysctl opencrypto subtree setup")
 		       NULL, 0, &crypto_devallowsoft, 0,
 		       CTL_KERN, CTL_CREATE, CTL_EOL);
 }
-#endif
 
 MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
 
@@ -187,30 +172,12 @@ static	int crypto_kinvoke(struct cryptkop *krp, int hint);
 static struct cryptostats cryptostats;
 static	int crypto_timing = 0;
 
-#ifdef __FreeBSD__
-SYSCTL_STRUCT(_kern, OID_AUTO, crypto_stats, CTLFLAG_RW, &cryptostats,
-	    cryptostats, "Crypto system statistics");
-
-SYSCTL_INT(_debug, OID_AUTO, crypto_timing, CTLFLAG_RW,
-	   &crypto_timing, 0, "Enable/disable crypto timing support");
-SYSCTL_STRUCT(_kern, OID_AUTO, crypto_stats, CTLFLAG_RW, &cryptostats,
-	    cryptostats, "Crypto system statistics");
-#endif /* __FreeBSD__ */
 
 static int
 crypto_init0(void)
 {
 	int error;
 
-#ifdef __FreeBSD__
-	cryptop_zone = zinit("cryptop", sizeof (struct cryptop), 0, 0, 1);
-	cryptodesc_zone = zinit("cryptodesc", sizeof (struct cryptodesc),
-				0, 0, 1);
-	if (cryptodesc_zone == NULL || cryptop_zone == NULL) {
-		printf("crypto_init: cannot setup crypto zones\n");
-		return;
-	}
-#endif
 
 	crypto_drivers = malloc(CRYPTO_DRIVERS_INITIAL *
 	    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
@@ -221,13 +188,8 @@ crypto_init0(void)
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
 	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
-#ifdef __FreeBSD__
-	error = kthread_create((void (*)(void *)) cryptoret, NULL,
-		    &cryptothread, "cryptoret");
-#else
 	error = kthread_create(PRI_NONE, 0, NULL, (void (*)(void*))cryptoret,
 	    NULL, &cryptothread, "cryptoret");
-#endif
 	if (error) {
 		printf("crypto_init: cannot start cryptoret thread; error %d",
 			error);
@@ -971,29 +933,6 @@ crypto_done(struct cryptop *crp)
 	 * On netbsd 1.6O, CBIMM does its wake_one() before the requestor
 	 * has done its tsleep().
 	 */
-#ifndef __NetBSD__
-	if (crp->crp_flags & CRYPTO_F_CBIMM) {
-		/*
-		 * Do the callback directly.  This is ok when the
-		 * callback routine does very little (e.g. the
-		 * /dev/crypto callback method just does a wakeup).
-		 */
-#ifdef CRYPTO_TIMING
-		if (crypto_timing) {
-			/*
-			 * NB: We must copy the timestamp before
-			 * doing the callback as the cryptop is
-			 * likely to be reclaimed.
-			 */
-			struct timespec t = crp->crp_tstamp;
-			crypto_tstat(&cryptostats.cs_cb, &t);
-			crp->crp_callback(crp);
-			crypto_tstat(&cryptostats.cs_finis, &t);
-		} else
-#endif
-			crp->crp_callback(crp);
-	} else
-#endif /* __NetBSD__ */
 	{
 		int s, wasempty;
 		/*
@@ -1219,37 +1158,5 @@ cryptoret(void)
 }
 
 
-#ifdef __FreeBSD__
-/*
- * Initialization code, both for static and dynamic loading.
- */
-static int
-crypto_modevent(module_t mod, int type, void *unused)
-{
-	int error = EINVAL;
-
-	switch (type) {
-	case MOD_LOAD:
-		error = crypto_init();
-		if (error == 0 && bootverbose)
-			printf("crypto: <crypto core>\n");
-		break;
-	case MOD_UNLOAD:
-		/*XXX disallow if active sessions */
-		error = 0;
-		crypto_destroy();
-		break;
-	}
-	return error;
-}
-static moduledata_t crypto_mod = {
-	"crypto",
-	crypto_modevent,
-	0
-};
-
-MODULE_VERSION(crypto, 1);
-DECLARE_MODULE(crypto, crypto_mod, SI_SUB_DRIVERS, SI_ORDER_FIRST);
-#endif /* __FreeBSD__ */
 
 
