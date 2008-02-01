@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2003/07/26 17:06:37 salo Exp $
+# $NetBSD: dot.profile,v 1.4 2008/02/01 17:18:07 tsutsui Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=pc3
+TERM=wsvt25
 export TERM
 HOME=/
 export HOME
