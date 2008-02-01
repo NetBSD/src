@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.65 2008/01/30 17:54:55 elad Exp $
+.\" $NetBSD: kauth.9,v 1.66 2008/02/01 20:01:06 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 30, 2008
+.Dd February 1, 2008
 .Dt KAUTH 9
 .Os
 .Sh NAME
@@ -181,6 +181,15 @@ is allowed.
 Check if calling
 .Xr fchroot 2
 is allowed.
+.El
+.It Dv KAUTH_SYSTEM_CPU
+Check CPU-manipulation access.
+.Pp
+.Ar req
+can be any of the following:
+.Bl -tag
+.It Dv KAUTH_REQ_SYSTEM_CPU_SETSTATE
+Set CPU state, including setting it online or offline.
 .El
 .It Dv KAUTH_SYSTEM_DEBUG
 This request concentrates several debugging-related operations.

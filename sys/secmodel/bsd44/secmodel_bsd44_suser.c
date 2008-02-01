@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.47 2008/01/30 17:54:56 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.48 2008/02/01 20:01:06 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.47 2008/01/30 17:54:56 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.48 2008/02/01 20:01:06 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,6 +156,20 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
+	case KAUTH_SYSTEM_CPU:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_CPU_SETSTATE:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
 	case KAUTH_SYSTEM_MOUNT:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_MOUNT_GET:
