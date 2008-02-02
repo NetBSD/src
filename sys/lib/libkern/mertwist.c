@@ -1,4 +1,4 @@
-/*	$NetBSD: mertwist.c,v 1.5 2008/01/31 08:23:13 simonb Exp $	*/
+/*	$NetBSD: mertwist.c,v 1.6 2008/02/02 01:13:04 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -50,14 +50,16 @@
 #endif
 
 /*
- * Mersenne Twister
+ * Mersenne Twister.  Produces identical output compared to mt19937ar.c
  * http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
  */
 
 #define	MATRIX_A(a)		(((a) & 1) ? 0x9908b0df : 0)
 #define	TEMPERING_MASK_B	0x9d2c5680
 #define	TEMPERING_MASK_C	0xefc60000
-#define	MIX(a,b)		(((a) & 0x80000000) | ((b) & 0x7fffffff))
+#define	UPPER_MASK		0x80000000
+#define	LOWER_MASK		0x7fffffff
+#define	MIX(u,l)		(((u) & UPPER_MASK) | ((l) & LOWER_MASK))
 
 #define	KNUTH_MULTIPLIER	0x6c078965
 
@@ -72,77 +74,69 @@ static void mtprng_refresh(struct mtprng_state *);
  * Initialize the generator from a seed
  */
 void
-mtprng_init(void *v, const uint8_t *key, size_t len)
+mtprng_init32(struct mtprng_state *mt, uint32_t seed)
 {
-	struct mtprng_state * const mt = v;
-	size_t i, j, n;
-	size_t xlen, keylen, passes;
+	size_t i;
 
 	/*
-	 * If we have more than half of all the key data, simply copy it in
-	 * and refresh/mix.
+	 * Use Knuth's algorithm for expanding this seed over its
+	 * portion of the key space.
 	 */
-	if (len >= MTPRNG_RLEN * sizeof(uint32_t) / 2) {
-		if (len > sizeof(mt->mt_elem))
-			len = sizeof(mt->mt_elem);
-		memcpy(mt->mt_elem, key, len);
-		mtprng_refresh(mt);
-		return;
+	mt->mt_elem[0] = seed;
+	for (i = 1; i < MTPRNG_RLEN; i++) {
+		mt->mt_elem[i] = KNUTH_MULTIPLIER
+		    * (mt->mt_elem[i-1] ^ (mt->mt_elem[i-1] >> 30)) + i;
 	}
 
-	/*
-	 * Figure out how many 32bit words of key data we have.
-	 */
-	xlen = (len + 3) >> 2;
-	
-	/*
-	 * Divide the keydata into equal-sized blobs
-	 */
-	n = MTPRNG_RLEN / xlen;
-	keylen = len / xlen;
+	mtprng_refresh(mt);
+}
+
+void
+mtprng_initarray(struct mtprng_state *mt, const uint32_t *key, size_t keylen)
+{
+	uint32_t *mp;
+	size_t i, j, k;
 
 	/*
-	 * Except for the first which gets and left overs (0 to 3 bytes)
+	 * Use Knuth's algorithm for expanding this seed over its
+	 * portion of the key space.
 	 */
-	n += MTPRNG_RLEN - n * xlen;
-	keylen += len - keylen * xlen;
+	mt->mt_elem[0] = 19650218UL;
+	for (i = 1; i < MTPRNG_RLEN; i++) {
+		mt->mt_elem[i] = KNUTH_MULTIPLIER
+		    * (mt->mt_elem[i-1] ^ (mt->mt_elem[i-1] >> 30)) + i;
+	}
 
-	mt->mt_idx = 0;
+	KASSERT(keylen > 0);
 
-	for (passes = 0, j = 0; passes < xlen; passes++) {
-		uint32_t seed;
+	i = 1;
+	j = 0;
+	k = (keylen < MTPRNG_RLEN ? MTPRNG_RLEN : keylen);
 
-		KASSERT(0 < keylen);
-		KASSERT(keylen <= 4);
-
-		/*
-		 * We need each key to be 32bit (or so).
-		 */
-		for (i = 0, seed = 0; i < keylen; i++) {
-			seed = (seed << 8) | (seed >> 24);
-			seed |= *key++;
+	mp = &mt->mt_elem[1];
+	for (; k-- > 0; mp++) {
+		mp[0] ^= (mp[-1] ^ (mp[-1] >> 30)) * 1664525UL;
+		mp[0] += key[j] + j;
+		if (++i == MTPRNG_RLEN) {
+			KASSERT(mp == mt->mt_elem + MTPRNG_RLEN - 1);
+			mt->mt_elem[0] = mp[0];
+			i = 1;
+			mp = mt->mt_elem;
 		}
-
-		/*
-		 * Use Knuth's algorithm for expanding this seed over its
-		 * portion of the key space.
-		 */
-		mt->mt_elem[j++] = seed;
-		for (i = 1; i < n; i++, j++) {
-			mt->mt_elem[j] = KNUTH_MULTIPLIER
-			    * (mt->mt_elem[j-1] ^ (mt->mt_elem[j-1] >> 30)) + i;
-		}
-
-		/*
-		 * After the first pass, reset keylen and n to their correct
-		 * values.
-		 */
-		if (passes == 0) {
-			n = MTPRNG_RLEN / xlen;
-			keylen = len / xlen;
+		if (++j == keylen)
+			j = 0;
+	}
+	for (j = MTPRNG_RLEN; --j > 0; mp++) {
+		mp[0] ^= (mp[-1] ^ (mp[-1] >> 30)) * 1566083941UL;
+		mp[0] -= i;
+		if (++i == MTPRNG_RLEN) {
+			KASSERT(mp == mt->mt_elem + MTPRNG_RLEN - 1);
+			mt->mt_elem[0] = mp[0];
+			i = 1;
+			mp = mt->mt_elem;
 		}
 	}
-	KASSERT(j == MTPRNG_RLEN);
+	mt->mt_elem[0] = 0x80000000;
 	mtprng_refresh(mt);
 }
 
@@ -177,9 +171,8 @@ mtprng_refresh(struct mtprng_state *mt)
  * element and the [(i + 397) % 624] one.
  */
 uint32_t
-mtprng_rawrandom(void *v)
+mtprng_rawrandom(struct mtprng_state *mt)
 {
-	struct mtprng_state * const mt = v;
 	uint32_t x, y;
 	const size_t i = mt->mt_idx;
 	size_t j;
@@ -219,23 +212,60 @@ mtprng_rawrandom(void *v)
 	return x;
 }
 
+/*
+ * This is a non-standard routine which attempts to return a cryptographically
+ * strong random number by collapsing 8 32bit values outputed by the twister
+ * into one 32bit value.  The resulting is checked so that when concatenated
+ * with the previous return value, that no sequence of 16 1's or 0's are
+ * present.  If such a pattern is found, the value is discarded and and the
+ * process is restarted.
+ */
 uint32_t
-mtprng_random(void *v)
+mtprng_random(struct mtprng_state *mt)
 {
-	uint64_t a;
+	uint32_t a, d;
 	size_t n;
 
 	/*
-	 * Grab 8 raw 32bit numbers.  Add them together shifting by 4 for
-	 * each iteration.
+	 * Grab 8 raw 32bit numbers and collapse them.
 	 */
 
-	for (n = 0, a = 0; n < 9; n++)
-		a = (a << 4) + mtprng_rawrandom(v);
-
-	/*
-	 * Now we have a 64 bit number.  Add the top and bottom 32bit
-	 * numbers and return that as the hashed value.
-	 */
-	return a + (a >> 32);
+	for (;;) {
+		size_t b;
+		uint32_t mu, ml;
+		bool fail;
+		a = mtprng_rawrandom(mt);
+		for (n = 1; n < 8; n++) {
+			d = mtprng_rawrandom(mt);
+			a = (d ^ (1566083941UL * (a ^ (a >> 30)))) + n;
+		}
+		/*
+		 * The following loop looks for runs of 16 0's or 16 1's
+		 * between the current candidate and last one.  Since we
+		 * know which was the user will look at the bits we will
+		 * wraparound at both ends.
+		 */
+#define INC	2
+		for (b = 32 - 16, ml = 0xffff << b, mu = 0, fail = false;
+		     !fail && (b = b + INC) < 64;) {
+			if (ml & 0x80000000) {
+				KASSERT((mu & 0x80000000) == 0);
+				mu = (mu << INC) | ((1 << INC) - 1);
+				ml <<= INC;
+			} else if (mu & 0x80000000) {
+				KASSERT((ml & 0x80000000) == 0);
+				ml = (ml << INC) | ((1 << INC) - 1);
+				mu <<= INC;
+			} else {
+				mu <<= INC;
+				ml <<= INC;
+			}
+			fail = (((a & mu) == 0 && (mt->mt_last & ml) == 0)
+			    || ((a & mu) == mu && (mt->mt_last & ml) == ml));
+		} 
+		if (fail)
+			continue;
+		mt->mt_last = a;
+		return a;
+	}
 }
