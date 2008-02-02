@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.7 2007/08/01 14:20:40 jmmv Exp $
+#	$NetBSD: Makefile,v 1.8 2008/02/02 04:19:51 itohy Exp $
 #
-# Makefile for arm32
+# Makefile for shark
 #
 
 MD_OPTIONS=	AOUT2ELF

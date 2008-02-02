@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.12 2005/02/19 17:00:39 dsl Exp $
+#	$NetBSD: Makefile,v 1.13 2008/02/02 04:19:51 itohy Exp $
 #
-# Makefile for i386
+# Makefile for hpcmips
 #
 
 MENUS_MD=       menus.md.${SYSINSTLANG} menus.mbr
