@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.73 2008/02/02 14:34:56 dsl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.74 2008/02/02 15:17:06 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -497,12 +497,12 @@ struct netbsd32_stat12 {		/* NetBSD-1.2 stat struct */
 	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
 	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
 	netbsd32_int64	st_size;	/* file size, in bytes */
-	netbsd32_int64_t st_blocks;	/* blocks allocated for file */
+	netbsd32_int64	st_blocks;	/* blocks allocated for file */
 	uint32_t	st_blksize;	/* optimal blocksize for I/O */
 	uint32_t	st_flags;	/* user defined flags for file */
 	uint32_t	st_gen;		/* file generation number */
 	int32_t		st_lspare;
-	netbsd32_int64_t st_qspare[2];
+	netbsd32_int64	st_qspare[2];
 };
 
 typedef netbsd32_pointer_t netbsd32_stat43p_t;
