@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.72 2008/02/02 13:58:18 dsl Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.73 2008/02/02 14:34:56 dsl Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -486,23 +486,23 @@ struct netbsd32_omsghdr {
 /* from <sys/stat.h> */
 typedef netbsd32_pointer_t netbsd32_stat12p_t;
 struct netbsd32_stat12 {		/* NetBSD-1.2 stat struct */
-	dev_t	  st_dev;		/* inode's device */
-	uint32_t  st_ino;		/* inode's number */
-	uint16_t  st_mode;		/* inode protection mode */
-	uint16_t  st_nlink;		/* number of hard links */
-	uid_t	  st_uid;		/* user ID of the file's owner */
-	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
+	dev_t		st_dev;		/* inode's device */
+	uint32_t	st_ino;		/* inode's number */
+	uint16_t	st_mode;	/* inode protection mode */
+	uint16_t	st_nlink;	/* number of hard links */
+	uid_t		st_uid;		/* user ID of the file's owner */
+	gid_t		st_gid;		/* group ID of the file's group */
+	dev_t		st_rdev;	/* device type */
 	struct netbsd32_timespec st_atimespec;/* time of last access */
 	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
 	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
-	off_t	  st_size;		/* file size, in bytes */
-	int64_t	  st_blocks;		/* blocks allocated for file */
-	uint32_t  st_blksize;		/* optimal blocksize for I/O */
-	uint32_t  st_flags;		/* user defined flags for file */
-	uint32_t  st_gen;		/* file generation number */
-	int32_t	  st_lspare;
-	int64_t	  st_qspare[2];
+	netbsd32_int64	st_size;	/* file size, in bytes */
+	netbsd32_int64_t st_blocks;	/* blocks allocated for file */
+	uint32_t	st_blksize;	/* optimal blocksize for I/O */
+	uint32_t	st_flags;	/* user defined flags for file */
+	uint32_t	st_gen;		/* file generation number */
+	int32_t		st_lspare;
+	netbsd32_int64_t st_qspare[2];
 };
 
 typedef netbsd32_pointer_t netbsd32_stat43p_t;
@@ -535,44 +535,36 @@ struct netbsd32_stat13 {
 	struct netbsd32_timespec st_atimespec;/* time of last access */
 	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
 	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
-	off_t	  st_size;		/* file size, in bytes */
-	blkcnt_t  st_blocks;		/* blocks allocated for file */
+	netbsd32_int64	  st_size;		/* file size, in bytes */
+	netbsd32_uint64  st_blocks;		/* blocks allocated for file */
 	blksize_t st_blksize;		/* optimal blocksize for I/O */
 	uint32_t  st_flags;		/* user defined flags for file */
 	uint32_t  st_gen;		/* file generation number */
 	uint32_t  st_spare;		/* file generation number */
 	struct	  netbsd32_timespec st_birthtimespec;
 	uint32_t  st_spare2;
-} 
-#ifdef __x86_64__
-__packed
-#endif
-;
+};
 
 typedef netbsd32_pointer_t netbsd32_statp_t;
 struct netbsd32_stat {
-	dev_t	  st_dev;		/* inode's device */
-	mode_t	  st_mode;		/* inode protection mode */
-	ino_t	  st_ino;		/* inode's number */
-	nlink_t	  st_nlink;		/* number of hard links */
-	uid_t	  st_uid;		/* user ID of the file's owner */
-	gid_t	  st_gid;		/* group ID of the file's group */
-	dev_t	  st_rdev;		/* device type */
+	dev_t		st_dev;		/* inode's device */
+	mode_t		st_mode;	/* inode protection mode */
+	netbsd32_uint64	st_ino;		/* inode's number */
+	nlink_t		st_nlink;	/* number of hard links */
+	uid_t		st_uid;		/* user ID of the file's owner */
+	gid_t		st_gid;		/* group ID of the file's group */
+	dev_t		st_rdev;	/* device type */
 	struct netbsd32_timespec st_atimespec;/* time of last access */
 	struct netbsd32_timespec st_mtimespec;/* time of last data modification */
 	struct netbsd32_timespec st_ctimespec;/* time of last file status change */
 	struct netbsd32_timespec st_birthtimespec; /* time of creation */
-	off_t	  st_size;		/* file size, in bytes */
-	blkcnt_t  st_blocks;		/* blocks allocated for file */
-	blksize_t st_blksize;		/* optimal blocksize for I/O */
-	uint32_t  st_flags;		/* user defined flags for file */
-	uint32_t  st_gen;		/* file generation number */
-	uint32_t  st_spare[2];
-}
-#ifdef __x86_64__
-__packed
-#endif
-;
+	netbsd32_int64	st_size;	/* file size, in bytes */
+	netbsd32_uint64 st_blocks;	/* blocks allocated for file */
+	blksize_t	st_blksize;	/* optimal blocksize for I/O */
+	uint32_t	st_flags;	/* user defined flags for file */
+	uint32_t	st_gen;		/* file generation number */
+	uint32_t	st_spare[2];
+};
 
 /* from <sys/statvfs.h> */
 typedef netbsd32_pointer_t netbsd32_statvfsp_t;
@@ -673,9 +665,9 @@ struct netbsd32_kevent {
 	uint32_t		filter;
 	uint32_t		flags;
 	uint32_t		fflags;
-	int64_t			data;
+	netbsd32_int64		data;
 	netbsd32_intptr_t	udata;
-} __packed;
+};
 
 #if 0
 int	netbsd32_kevent(struct lwp *, void *, register_t *);
