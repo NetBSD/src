@@ -839,11 +839,10 @@ typedef void (regcache_read_ftype) (struct regcache *regcache, int regnum,
 				    void *buf);
 typedef void (regcache_write_ftype) (struct regcache *regcache, int regnum,
 				     const void *buf);
-
 static void
 regcache_xfer_part (struct regcache *regcache, int regnum,
 		    int offset, int len, void *in, const void *out,
-		    void (*read) (struct regcache *regcache, int regnum,
+		    void (*xread) (struct regcache *regcache, int regnum,
 				  gdb_byte *buf),
 		    void (*write) (struct regcache *regcache, int regnum,
 				   const gdb_byte *buf))
@@ -860,8 +859,8 @@ regcache_xfer_part (struct regcache *regcache, int regnum,
       || offset > 0
       || offset + len < descr->sizeof_register[regnum])
     {
-      gdb_assert (read != NULL);
-      read (regcache, regnum, reg);
+      gdb_assert (xread != NULL);
+      xread (regcache, regnum, reg);
     }
   /* ... modify ... */
   if (in != NULL)
