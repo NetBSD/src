@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.13 2007/11/12 15:07:34 jmmv Exp $	*/
+/*	$NetBSD: md.h,v 1.14 2008/02/02 04:20:02 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,10 +49,31 @@
 #include "mbr.h"
 
 /* constants and defines */
+#define FAT12_BOOT_SIZE	(2 * 1024 * 1024)	/* 2MB boot partition */
+#define MIN_FAT12_BOOT	(1 * 1024 * 1024)	/* 1MB minimum */
 
+#define PART_ROOT	PART_A
+#define PART_SWAP	PART_B
+#define PART_BSD	PART_C
+#define PART_RAW	PART_D
+#define PART_BOOT_FAT12	PART_E
+#define PART_USR	PART_F
+#define PART_FIRST_FREE	PART_G
+
+/* We want the boot MSDOS partition mounted on /boot */
+#define USE_NEWFS_MSDOS
+#define PART_BOOT_FAT12_PI_FLAGS	(PIF_NEWFS|PIF_MOUNT)
+#define PART_BOOT_FAT12_PI_MOUNT	"/msdos"
+
+/* default partition size */
+#define DEFSWAPRAM	32	/* Assume at least this RAM for swap calc */
+#define DEFSWAPSIZE	128	/* Default swap size */
+#define DEFROOTSIZE	64	/* Default root size, if created */
+#define DEFVARSIZE	64	/* Default /var size, if created */
+#define DEFUSRSIZE	256	/* Default /usr size, if created */
 
 /* Megs required for a full X installation. */
-#define XNEEDMB 50
+#define XNEEDMB 100
 
 
 /*
@@ -60,8 +81,8 @@
  *  or upgrade. The standard sets are:
  *      base etc comp games man misc tests text xbase xcomp xetc xfont xserver
  */
-
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define MD_SETS_SELECTED	SET_KERNEL_1, SET_SYSTEM, SET_X11_NOSERVERS
 
 /*
  * Machine-specific command to write a new label to a disk.
@@ -73,10 +94,3 @@
  * hand-edited disklabel will NOT be written by MI code.
  */
 #define DISKLABEL_CMD "disklabel -w -r"
-
-
-/*
- *  prototypes for MD code.
- */
-
-
