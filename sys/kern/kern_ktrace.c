@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.136 2008/02/02 20:42:18 elad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.137 2008/02/02 21:04:41 elad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.136 2008/02/02 20:42:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.137 2008/02/02 21:04:41 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1306,8 +1306,9 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 			ktradref(p);
 		}
 		p->p_traceflag |= facs;
-		if (kauth_authorize_generic(curl->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL) == 0)
+		if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KTRACE,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_KTRACE_PERSISTENT), NULL,
+		    NULL) == 0)
 			p->p_traceflag |= KTRFAC_PERSISTENT;
 	} else {
 		/* KTROP_CLEAR */
