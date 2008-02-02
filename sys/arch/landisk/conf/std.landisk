@@ -1,12 +1,10 @@
-# $NetBSD: std.landisk,v 1.1 2006/09/01 21:26:18 uwe Exp $
+# $NetBSD: std.landisk,v 1.2 2008/02/02 03:10:06 uwe Exp $
 #
 # standard, required NetBSD/landisk 'options'
 
 machine	landisk sh3
-include		"conf/std"	# MI standard options
-
-options 	EXEC_SCRIPT	# exec #! scripts
-options 	EXEC_ELF32	# exec ELF32
+include		"conf/std"			# MI standard options
+include		"arch/sh3/conf/std.sh3el"	# arch standard options
 
 # CPU support
 options 	SH4
@@ -15,5 +13,3 @@ options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_ROM_SIZE=0x00080000         # 512KB
 options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_RAM_SIZE=0x04000000         # 64MB
-
-makeoptions	ENDIAN="-EL"
