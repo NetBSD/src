@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.31 2008/02/01 04:52:35 tls Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.32 2008/02/02 02:39:00 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.31 2008/02/01 04:52:35 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.32 2008/02/02 02:39:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -227,9 +227,15 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 		case 0:
 			break;
 		case CRYPTO_MD5_HMAC:
-			thash = &auth_hash_hmac_md5_96;
+			thash = &auth_hash_hmac_md5;
 			break;
 		case CRYPTO_SHA1_HMAC:
+			thash = &auth_hash_hmac_sha1;
+			break;
+		case CRYPTO_MD5_HMAC_96:
+			thash = &auth_hash_hmac_md5_96;
+			break;
+		case CRYPTO_SHA1_HMAC_96:
 			thash = &auth_hash_hmac_sha1_96;
 			break;
 		case CRYPTO_SHA2_HMAC:

@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.10 2008/02/01 04:52:35 tls Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.11 2008/02/02 02:39:00 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -99,7 +99,10 @@
 #define CRYPTO_NULL_HMAC	16
 #define CRYPTO_NULL_CBC		17
 #define CRYPTO_DEFLATE_COMP	18 /* Deflate compression algorithm */
-#define CRYPTO_ALGORITHM_MAX	18 /* Keep updated - see below */
+#define CRYPTO_MD5_HMAC_96	19 
+#define CRYPTO_SHA1_HMAC_96	20
+#define CRYPTO_RIPEMD160_HMAC_96	21
+#define CRYPTO_ALGORITHM_MAX	22 /* Keep updated - see below */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
