@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.11 2006/08/11 13:35:54 hubertf Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.12 2008/02/02 04:51:52 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,12 +43,6 @@
 message md_hello
 {If you booted from a floppy, you may now remove the disk.
 
-}
-
-message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk or part of the disk.
-Which would you like to do?
 }
 
 message dobootblks

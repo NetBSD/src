@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:44 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.5 2008/02/02 04:51:41 itohy Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/02/19 07:38:45 wdk Exp */
 
@@ -45,12 +45,6 @@
 message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.
 
-}
-
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac czy chcesz
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-Ktora instalacje chcesz zrobic?
 }
 
 message dobootblks
