@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.6 2007/08/01 14:20:40 jmmv Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.7 2008/02/02 04:51:50 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,12 +48,6 @@ enfernen.
 
 message Keyboard_type {Tastaturschema}
 message kb_default {de}
-
-message fullpart
-{NetBSD wird nun auf die Festplatte %s installiert. Möchten Sie die ganze
-oder nur einen Teil dieser Festplatte für NetBSD verwenden?
-
-}
 
 message badreadbb
 {Kann den Bootblock des Filecores nicht lesen

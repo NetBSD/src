@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.4 2006/08/11 13:35:54 hubertf Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.5 2008/02/02 04:51:52 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -43,12 +43,6 @@
 message md_hello
 {Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
 enfernen.
-
-}
-
-message fullpart
-{NetBSD wird nun auf die Festplatte %s installiert. Möchten Sie die ganze
-oder nur einen Teil dieser Festplatte für NetBSD verwenden?
 
 }
 
