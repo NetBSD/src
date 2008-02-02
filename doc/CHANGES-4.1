@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.13 2008/02/02 03:34:57 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.14 2008/02/02 17:25:25 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -218,4 +218,22 @@ sys/arch/atari/dev/wdc_mb.c			1.29-1.30
           http://mail-index.netbsd.org/source-changes/2004/05/25/0048.html
         Problem reported by Alan Hourihane in PR port-atari/37464.
 	[tsutsui, ticket #1013]
+
+usr.sbin/postinstall/postinstall		1.56 via patch
+
+	Update URLs after website reorganization in the motd check. PR#37070.
+	[jnemeth, ticket #1022]
+
+share/examples/puffs/ssshfs/ssshfs.c		patch
+
+	Fix symlink creation, from Dieter Rolants in PR#37549
+	[pooka, ticket #1023]
+
+sbin/newfs/mkfs.c				1.104
+sbin/newfs/mount_mfs.8				1.15
+
+	PR/37503 - De Zeurkous -- inaccurate description of -s option
+	PR/37155 - Marcelo Schmidt -- specifying too large of a size
+	causes segvs
+	[jnemeth, ticket #1024]
 
