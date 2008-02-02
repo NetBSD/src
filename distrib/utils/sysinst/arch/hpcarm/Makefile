@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2005/12/30 11:40:23 rjs Exp $
+#	$NetBSD: Makefile,v 1.2 2008/02/02 04:24:13 itohy Exp $
 #
 # Makefile for hpcarm
 #
 
-MENUS_MD=       menus.md.${SYSINSTLANG} menus.mbr
-MSG_MD=         msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}
+MENUS_MD=	menus.md.${SYSINSTLANG} menus.mbr
+MSG_MD=		msg.md.${SYSINSTLANG} msg.mbr.${SYSINSTLANG}
 
 .include "../../Makefile.inc"
