@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/01/26 04:56:45 simonb Exp $
+#	$NetBSD: Makefile,v 1.4 2008/02/02 18:18:14 uwe Exp $
 #
 # To use this, copy / link the cpu_in_cksum.S from the arch subdirectory
 # and copy assym.h from the build directory of a kernel.
@@ -9,7 +9,7 @@ NOMAN=	# defined
 PROG=	in_cksum
 SRCS=	in_cksum.c portable.c cpu_in_cksum.S
 WARNS=	3
-AFLAGS=	-g
+AFLAGS=	-g -D_LOCORE
 
 CPPFLAGS.portable.c=	-Dcpu_in_cksum=portable_cpu_in_cksum
 CLEANFILES+=	portable.c
