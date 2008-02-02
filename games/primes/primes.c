@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.14 2008/02/02 17:45:05 matt Exp $	*/
+/*	$NetBSD: primes.c,v 1.15 2008/02/02 18:15:14 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.14 2008/02/02 17:45:05 matt Exp $");
+__RCSID("$NetBSD: primes.c,v 1.15 2008/02/02 18:15:14 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,23 +103,26 @@ extern const ubig *pr_limit;		/* largest prime in the prime array */
 extern const char pattern[];
 extern const int pattern_size;	/* length of pattern array */
 
+int	dflag;
+
 int	main(int, char *[]);
 void	primes(ubig, ubig);
 ubig	read_num_buf(void);
 void	usage(void) __dead;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	ubig start;		/* where to start generating */
 	ubig stop;		/* don't generate at or above this value */
 	int ch;
 	char *p;
 
-	while ((ch = getopt(argc, argv, "")) != -1)
+	while ((ch = getopt(argc, argv, "d")) != -1)
 		switch (ch) {
+		case 'd':
+			dflag++;
+			break;
 		case '?':
 		default:
 			usage();
@@ -186,7 +189,7 @@ main(argc, argv)
  *	This routine returns a number n, where 0 <= n && n <= BIG.
  */
 ubig
-read_num_buf()
+read_num_buf(void)
 {
 	ubig val;
 	char *p, buf[100];		/* > max number of digits. */
@@ -214,11 +217,12 @@ read_num_buf()
 
 /*
  * primes - sieve and print primes from start up to and but not including stop
+ *
+ *	start	where to start generating
+ *	stop	don't generate at or above this value
  */
 void
-primes(start, stop)
-	ubig start;	/* where to start generating */
-	ubig stop;	/* don't generate at or above this value */
+primes(ubig start, ubig stop)
 {
 	char *q;		/* sieve spot */
 	ubig factor;		/* index and factor */
@@ -226,6 +230,7 @@ primes(start, stop)
 	const ubig *p;		/* prime table pointer */
 	ubig fact_lim;		/* highest prime for current block */
 	ubig mod;		/* temp storage for mod */
+	ubig prev = 0;
 
 	/*
 	 * A number of systems can not convert double values into unsigned
@@ -260,8 +265,14 @@ primes(start, stop)
 		for (p = &prime[0], factor = prime[0];
 		    factor < stop && p <= pr_limit; factor = *(++p)) {
 			if (factor >= start) {
-				printf("%lu\n", (unsigned long) factor);
+				printf("%lu", (unsigned long) factor);
+				if (dflag) {
+					printf(" (%lu)",
+					    (unsigned long) factor - prev);
+				}
+				putchar('\n');
 			}
+			prev = factor;
 		}
 		/* return early if we are done */
 		if (p <= pr_limit) {
@@ -323,15 +334,21 @@ primes(start, stop)
 		 */
 		for (q = table; q < tab_lim; ++q, start+=2) {
 			if (*q) {
-				printf("%lu\n", (unsigned long) start);
+				printf("%lu", (unsigned long) start);
+				if (dflag) {
+					printf(" (%lu)",
+					    (unsigned long) start - prev);
+					prev = start;
+				}
+				putchar('\n');
 			}
 		}
 	}
 }
 
 void
-usage()
+usage(void)
 {
-	(void)fprintf(stderr, "usage: primes [start [stop]]\n");
+	(void)fprintf(stderr, "usage: primes [-d] [start [stop]]\n");
 	exit(1);
 }
