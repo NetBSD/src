@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.4 2008/02/02 04:51:41 itohy Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.5 2008/02/02 05:34:02 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* pmax machine dependent messages, french */
+/* mipsco machine dependent messages, french */
 
 
 message md_hello

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.6 2003/06/11 21:35:41 dsl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.7 2008/02/02 05:33:59 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,5 +36,5 @@
  *
  */
 
-/* Menu definitions for sysinst. i386 version, machine dependent. */
+/* Menu definitions for sysinst. hp300 version, machine dependent. */
 

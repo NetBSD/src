@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.9 2003/07/07 21:26:35 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.10 2008/02/02 05:34:01 itohy Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.10 2001/07/26 22:47:34 wiz Exp */
 
@@ -38,7 +38,7 @@
  *
  */
 
-/* MD Message catalog -- Polish, i386 version */
+/* MD Message catalog -- Polish, mac68k version */
 
 message md_hello
 {

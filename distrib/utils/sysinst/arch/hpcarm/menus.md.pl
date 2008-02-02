@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.1 2005/12/30 11:40:23 rjs Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.2 2008/02/02 05:33:59 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,5 +36,5 @@
  *
  */
 
-/* Menu definitions for sysinst. hpcmips version, machine dependent. */
+/* Menu definitions for sysinst. hpcarm version, machine dependent. */
 
