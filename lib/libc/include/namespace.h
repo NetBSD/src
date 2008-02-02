@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.129 2007/06/03 17:38:07 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.130 2008/02/02 22:06:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -201,6 +201,7 @@
 #define closelog		_closelog
 #define closelog_r		_closelog_r
 #define confstr			_confstr
+#define csetexpandtc		_csetexpandtc
 #define ctermid			_ctermid
 #define ctime_r			_ctime_r
 #define daemon			_daemon
