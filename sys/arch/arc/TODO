@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.26 2008/02/02 15:39:49 tsutsui Exp $
+$NetBSD: TODO,v 1.27 2008/02/02 15:47:48 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
@@ -41,22 +41,20 @@ XXX some entries might be obsolete.
 	Know why (enable linear mode). Need S3 info.
 
 
-    o	repair DESKstation support
+    o	repair DescStation support
 	-   requires bounce buffer bus_dma for Tyne
 		XXX - too small bounce buffer size (128KB)
 
     o	Olivetti M700 support
 
     o	NEC Express5800/230 R10000 PCI (NEC-J95) support
-	(needs MI R10000 support)
+	(needs info about interrupt, jazzio device address etc.)
 
     o	SNI RM200PCI/RM300/RM400/RM600 support
+	(Linux/MIPS seems to have some info)
 
 
     o	parse ARC BIOS configuration information and use it
-
-    o	increase MAXPHYS to 64KB
-	(XXX why is it limited to 32KB?)
 
     o	fix kernel start address
 	(maybe requires bootloader support)
@@ -74,9 +72,6 @@ XXX some entries might be obsolete.
     o	test and merge soren's clean up about proc0.p_addr.
 
     o	redesign interrupt handler framework.
-	i/o bus devices should have sane IPL, but currently doesn't.
-
-    o	make CLKF_INTR() work.
 
     o	it is better to always disable the MIPS3 internal timer interrupts
 	(i.e. MIPS_INT_MASK_5) if it is not needed for the system.
@@ -105,6 +100,8 @@ XXX some entries might be obsolete.
 
 
 (following entries might be MI MIPS items)
+
+    o	make CLKF_INTR() work.
 
     o	Move the RO and WIRED attribute from the pte to the pv table.
 	This saves four instructions in the tlb miss handler.
