@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.6 2008/02/01 19:10:31 tls Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.7 2008/02/02 02:39:00 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.6 2008/02/01 19:10:31 tls Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.7 2008/02/02 02:39:00 tls Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -197,6 +197,22 @@ static const struct swcr_auth_hash swcr_auth_hash_null = {
 	null_init, null_update, null_final
 };
 
+static const struct swcr_auth_hash swcr_auth_hash_hmac_md5 = {
+	&auth_hash_hmac_md5,
+	(void (*) (void *)) MD5Init, MD5Update_int,
+	(void (*) (u_int8_t *, void *)) MD5Final
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1 = {
+	&auth_hash_hmac_sha1,
+	SHA1Init_int, SHA1Update_int, SHA1Final_int
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160 = {
+	&auth_hash_hmac_ripemd_160,
+	(void (*)(void *)) RMD160Init, RMD160Update_int,
+	(void (*)(u_int8_t *, void *)) RMD160Final
+};
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5_96 = {
 	&auth_hash_hmac_md5_96,
 	(void (*) (void *)) MD5Init, MD5Update_int,
