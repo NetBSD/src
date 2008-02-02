@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.21 2008/02/01 20:01:06 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.22 2008/02/02 21:04:41 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.21 2008/02/01 20:01:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.22 2008/02/02 21:04:41 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -246,6 +246,15 @@ secmodel_example_process_cb(kauth_cred_t cred, kauth_action_t action,
 	result = KAUTH_RESULT_DENY;
 
 	switch (action) {
+	case KAUTH_PROCESS_KTRACE:
+		switch ((u_long)arg1) {
+		case KAUTH_REQ_PROCESS_KTRACE_PERSISTENT:
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
 	case KAUTH_PROCESS_PROCFS:
 	case KAUTH_PROCESS_CANSEE:
 	case KAUTH_PROCESS_SIGNAL:

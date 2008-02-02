@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.49 2008/02/02 20:42:19 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.50 2008/02/02 21:04:41 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.49 2008/02/02 20:42:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.50 2008/02/02 21:04:41 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -480,9 +480,15 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_KTRACE:
+	case KAUTH_PROCESS_KTRACE: {
+		enum kauth_process_req req;
+
+		req = (enum kauth_process_req)(unsigned long)arg1;
+
 		if (isroot) {
 			result = KAUTH_RESULT_ALLOW;
+			break;
+		} else if (req == KAUTH_REQ_PROCESS_KTRACE_PERSISTENT) {
 			break;
 		}
 
@@ -502,6 +508,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 		result = KAUTH_RESULT_DENY;
 		break;
+		}
 
 	case KAUTH_PROCESS_PROCFS: {
 		enum kauth_process_req req = (enum kauth_process_req)arg2;
