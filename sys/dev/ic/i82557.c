@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.100 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: i82557.c,v 1.100.12.1 2008/02/02 23:16:39 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.100 2006/11/16 01:32:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.100.12.1 2008/02/02 23:16:39 riz Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -189,7 +189,7 @@ int	fxp_init(struct ifnet *);
 void	fxp_stop(struct ifnet *, int);
 
 void	fxp_txintr(struct fxp_softc *);
-void	fxp_rxintr(struct fxp_softc *);
+int	fxp_rxintr(struct fxp_softc *);
 
 int	fxp_rx_hwcksum(struct mbuf *, const struct fxp_rfa *);
 
@@ -916,7 +916,7 @@ fxp_start(struct ifnet *ifp)
 			break;
 		m = NULL;
 
-		if (sc->sc_txpending == FXP_NTXCB) {
+		if (sc->sc_txpending == FXP_NTXCB - 1) {
 			FXP_EVCNT_INCR(&sc->sc_ev_txstall);
 			break;
 		}
@@ -1067,7 +1067,7 @@ fxp_start(struct ifnet *ifp)
 #endif
 	}
 
-	if (sc->sc_txpending == FXP_NTXCB) {
+	if (sc->sc_txpending == FXP_NTXCB - 1) {
 		/* No more slots; notify upper layer. */
 		ifp->if_flags |= IFF_OACTIVE;
 	}
@@ -1084,9 +1084,23 @@ fxp_start(struct ifnet *ifp)
 		 * Cause the chip to interrupt and suspend command
 		 * processing once the last packet we've enqueued
 		 * has been transmitted.
+		 *
+		 * To avoid a race between updating status bits
+		 * by the fxp chip and clearing command bits
+		 * by this function on machines which don't have
+		 * atomic methods to clear/set bits in memory
+		 * smaller than 32bits (both cb_status and cb_command
+		 * members are uint16_t and in the same 32bit word),
+		 * we have to prepare a dummy TX descriptor which has
+		 * NOP command and just causes a TX completion interrupt.
 		 */
-		FXP_CDTX(sc, sc->sc_txlast)->txd_txcb.cb_command |=
-		    htole16(FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
+		sc->sc_txpending++;
+		sc->sc_txlast = FXP_NEXTTX(sc->sc_txlast);
+		txd = FXP_CDTX(sc, sc->sc_txlast);
+		/* BIG_ENDIAN: no need to swap to store 0 */
+		txd->txd_txcb.cb_status = 0;
+		txd->txd_txcb.cb_command = htole16(FXP_CB_COMMAND_NOP |
+		    FXP_CB_COMMAND_I | FXP_CB_COMMAND_S);
 		FXP_CDTXSYNC(sc, sc->sc_txlast,
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
@@ -1121,7 +1135,7 @@ fxp_intr(void *arg)
 	struct fxp_softc *sc = arg;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	bus_dmamap_t rxmap;
-	int claimed = 0;
+	int claimed = 0, rnr;
 	u_int8_t statack;
 
 	if (!device_is_active(&sc->sc_dev) || sc->sc_enabled == 0)
@@ -1152,20 +1166,12 @@ fxp_intr(void *arg)
 		 * condition exists, get whatever packets we can and
 		 * re-start the receiver.
 		 */
-		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR)) {
+		rnr = (statack & (FXP_SCB_STATACK_RNR | FXP_SCB_STATACK_SWI)) ?
+		    1 : 0;
+		if (statack & (FXP_SCB_STATACK_FR | FXP_SCB_STATACK_RNR |
+		    FXP_SCB_STATACK_SWI)) {
 			FXP_EVCNT_INCR(&sc->sc_ev_rxintr);
-			fxp_rxintr(sc);
-		}
-
-		if (statack & FXP_SCB_STATACK_RNR) {
-			fxp_scb_wait(sc);
-			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_ABORT);
-			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
-			fxp_scb_wait(sc);
-			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
-			    rxmap->dm_segs[0].ds_addr +
-			    RFA_ALIGNMENT_FUDGE);
-			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
+			rnr |= fxp_rxintr(sc);
 		}
 
 		/*
@@ -1187,6 +1193,17 @@ fxp_intr(void *arg)
 				if (sc->sc_flags & FXPF_WANTINIT)
 					(void) fxp_init(ifp);
 			}
+		}
+
+		if (rnr) {
+			fxp_scb_wait(sc);
+			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_ABORT);
+			rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
+			fxp_scb_wait(sc);
+			CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
+			    rxmap->dm_segs[0].ds_addr +
+			    RFA_ALIGNMENT_FUDGE);
+			fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
 		}
 	}
 
@@ -1217,6 +1234,11 @@ fxp_txintr(struct fxp_softc *sc)
 
 		FXP_CDTXSYNC(sc, i,
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+
+		/* skip dummy NOP TX descriptor */
+		if ((le16toh(txd->txd_txcb.cb_command) & FXP_CB_COMMAND_CMD)
+		    == FXP_CB_COMMAND_NOP)
+			continue;
 
 		txstat = le16toh(txd->txd_txcb.cb_status);
 
@@ -1301,7 +1323,7 @@ fxp_rx_hwcksum(struct mbuf *m, const struct fxp_rfa *rfa)
 /*
  * Handle receive interrupts.
  */
-void
+int
 fxp_rxintr(struct fxp_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1309,7 +1331,10 @@ fxp_rxintr(struct fxp_softc *sc)
 	struct mbuf *m, *m0;
 	bus_dmamap_t rxmap;
 	struct fxp_rfa *rfa;
+	int rnr;
 	u_int16_t len, rxstat;
+
+	rnr = 0;
 
 	for (;;) {
 		m = sc->sc_rxq.ifq_head;
@@ -1321,13 +1346,16 @@ fxp_rxintr(struct fxp_softc *sc)
 
 		rxstat = le16toh(rfa->rfa_status);
 
+		if ((rxstat & FXP_RFA_STATUS_RNR) != 0)
+			rnr = 1;
+
 		if ((rxstat & FXP_RFA_STATUS_C) == 0) {
 			/*
 			 * We have processed all of the
 			 * receive buffers.
 			 */
 			FXP_RFASYNC(sc, m, BUS_DMASYNC_PREREAD);
-			return;
+			return rnr;
 		}
 
 		IF_DEQUEUE(&sc->sc_rxq, m);
@@ -1923,11 +1951,13 @@ fxp_init(struct ifnet *ifp)
 	/*
 	 * Initialize receiver buffer area - RFA.
 	 */
+#if 0	/* initialization will be done by FXP_SCB_INTRCNTL_REQUEST_SWI later */
 	rxmap = M_GETCTX(sc->sc_rxq.ifq_head, bus_dmamap_t);
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL,
 	    rxmap->dm_segs[0].ds_addr + RFA_ALIGNMENT_FUDGE);
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_RU_START);
+#endif
 
 	if (sc->sc_flags & FXPF_MII) {
 		/*
@@ -1942,6 +1972,16 @@ fxp_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
+	/*
+	 * Request a software generated interrupt that will be used to 
+	 * (re)start the RU processing.  If we direct the chip to start
+	 * receiving from the start of queue now, instead of letting the
+	 * interrupt handler first process all received packets, we run
+	 * the risk of having it overwrite mbuf clusters while they are
+	 * being processed or after they have been returned to the pool.
+	 */
+	CSR_WRITE_1(sc, FXP_CSR_SCB_INTRCNTL, FXP_SCB_INTRCNTL_REQUEST_SWI);
+ 
 	/*
 	 * Start the one second timer.
 	 */
