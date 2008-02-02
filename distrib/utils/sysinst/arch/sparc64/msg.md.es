@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2008/02/02 04:51:54 itohy Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.4 2008/02/02 05:34:03 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,7 +37,7 @@
  *
  */
 
-/* sparc machine dependent messages, english */
+/* sparc64 machine dependent messages, english */
 
 
 message md_hello

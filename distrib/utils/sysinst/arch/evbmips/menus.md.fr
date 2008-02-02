@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.1 2006/03/30 15:45:42 shige Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.2 2008/02/02 05:33:57 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,5 +36,5 @@
  *
  */
 
-/* Menu definitions for sysinst. bebox version, machine dependent. */
+/* Menu definitions for sysinst. evbmips version, machine dependent. */
 
