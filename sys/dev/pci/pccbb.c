@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.164 2008/02/01 21:13:44 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.165 2008/02/02 00:31:25 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.164 2008/02/01 21:13:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.165 2008/02/02 00:31:25 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -159,6 +159,7 @@ static cardbusreg_t pccbb_conf_read(cardbus_chipset_tag_t, cardbustag_t, int);
 static void pccbb_conf_write(cardbus_chipset_tag_t, cardbustag_t, int,
     cardbusreg_t);
 static void pccbb_chipinit(struct pccbb_softc *);
+static void pccbb_intrinit(struct pccbb_softc *);
 
 STATIC int pccbb_pcmcia_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
     struct pcmcia_mem_handle *);
@@ -546,7 +547,8 @@ pccbbdetach(device_t self, int flags)
 
 	/* CSC Interrupt: turn off card detect and power cycle interrupts */
 	sockmask = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
-	sockmask &= ~(CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER);
+	sockmask &= ~(CB_SOCKET_MASK_CSTS | CB_SOCKET_MASK_CD |
+		      CB_SOCKET_MASK_POWER);
 	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, sockmask);
 	/* reset interrupt */
 	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
@@ -596,8 +598,6 @@ pccbb_pci_callback(device_t self)
 {
 	struct pccbb_softc *sc = device_private(self);
 	pci_chipset_tag_t pc = sc->sc_pc;
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
 	bus_addr_t sockbase;
 	struct cbslot_attach_args cba;
 	struct pcmciabus_attach_args paa;
@@ -638,36 +638,13 @@ pccbb_pci_callback(device_t self)
 		sc->sc_flags |= CBB_MEMHMAPPED;
 	}
 
+	/* clear data structure for child device interrupt handlers */
+	LIST_INIT(&sc->sc_pil);
+
 	/* bus bridge initialization */
 	pccbb_chipinit(sc);
 
-	/* clear data structure for child device interrupt handlers */
-	LIST_INIT(&sc->sc_pil);
 	sc->sc_pil_intr_enable = 1;
-
-	/* Map and establish the interrupt. */
-	if (pci_intr_map(&sc->sc_pa, &ih)) {
-		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih);
-
-	/*
-	 * XXX pccbbintr should be called under the priority lower
-	 * than any other hard interupts.
-	 */
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
-
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s\n", intrstr);
-		else
-			aprint_error("\n");
-		return;
-	}
-
-	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	{
 		u_int32_t sockstat;
@@ -725,6 +702,8 @@ pccbb_pci_callback(device_t self)
 	caa.caa_16_attach = &paa;
 	caa.caa_ph = &sc->sc_pcmcia_h;
 
+	pccbb_intrinit(sc);
+
 	if (NULL != (csc = (void *)config_found(self, &caa, cbbprint))) {
 		DPRINTF(("%s: found cardslot\n", __func__));
 		sc->sc_csc = csc;
@@ -757,7 +736,7 @@ pccbb_chipinit(struct pccbb_softc *sc)
 	bus_space_tag_t bmt = sc->sc_base_memt;
 	bus_space_handle_t bmh = sc->sc_base_memh;
 	pcireg_t bcr, bhlc, cbctl, csr, lscp, mfunc, mrburst, slotctl, sockctl,
-	    sockmask, sysctrl;
+	    sysctrl;
 
 	/*
 	 * Set PCI command reg.
@@ -932,18 +911,52 @@ pccbb_chipinit(struct pccbb_softc *sc)
 
 	/* turn off power */
 	pccbb_power(sc, CARDBUS_VCC_0V | CARDBUS_VPP_0V);
+}
+
+static void
+pccbb_intrinit(struct pccbb_softc *sc)
+{
+	pcireg_t sockmask;
+	const char *intrstr = NULL;
+	pci_intr_handle_t ih;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	bus_space_tag_t bmt = sc->sc_base_memt;
+	bus_space_handle_t bmh = sc->sc_base_memh;
+
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(&sc->sc_pa, &ih)) {
+		aprint_error_dev(&sc->sc_dev, "couldn't map interrupt\n");
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+
+	/*
+	 * XXX pccbbintr should be called under the priority lower
+	 * than any other hard interupts.
+	 */
+	KASSERT(sc->sc_ih == NULL);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, pccbbintr, sc);
+
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(&sc->sc_dev, "couldn't establish interrupt");
+		if (intrstr != NULL)
+			aprint_error(" at %s\n", intrstr);
+		else
+			aprint_error("\n");
+		return;
+	}
+
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* CSC Interrupt: Card detect and power cycle interrupts on */
 	sockmask = bus_space_read_4(bmt, bmh, CB_SOCKET_MASK);
-	sockmask |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
+	sockmask |= CB_SOCKET_MASK_CSTS | CB_SOCKET_MASK_CD |
+	    CB_SOCKET_MASK_POWER;
 	bus_space_write_4(bmt, bmh, CB_SOCKET_MASK, sockmask);
 	/* reset interrupt */
 	bus_space_write_4(bmt, bmh, CB_SOCKET_EVENT,
 	    bus_space_read_4(bmt, bmh, CB_SOCKET_EVENT));
 }
-
-
-
 
 /*
  * STATIC void pccbb_pcmcia_attach_setup(struct pccbb_softc *sc,
@@ -1048,6 +1061,9 @@ pccbbintr(void *arg)
 	bus_space_tag_t memt = sc->sc_base_memt;
 	bus_space_handle_t memh = sc->sc_base_memh;
 	struct pcic_handle *ph = &sc->sc_pcmcia_h;
+
+	if (!device_is_active(&sc->sc_dev))
+		return 0;
 
 	sockevent = bus_space_read_4(memt, memh, CB_SOCKET_EVENT);
 	bus_space_write_4(memt, memh, CB_SOCKET_EVENT, sockevent);
@@ -3309,6 +3325,20 @@ pccbb_suspend(device_t dv)
 	bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
 	/* XXX joerg Disable power to the socket? */
 
+	/* XXX flush PCI write */
+	bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
+
+	/* reset interrupt */
+	bus_space_write_4(base_memt, base_memh, CB_SOCKET_EVENT,
+	    bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT));
+	/* XXX flush PCI write */
+	bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
+
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+
 	return true;
 }
 
@@ -3321,6 +3351,7 @@ pccbb_resume(device_t dv)
 	pcireg_t reg;
 
 	pccbb_chipinit(sc);
+	pccbb_intrinit(sc);
 	/* setup memory and io space window for CB */
 	pccbb_winset(0x1000, sc, sc->sc_memt);
 	pccbb_winset(0x04, sc, sc->sc_iot);
@@ -3328,7 +3359,7 @@ pccbb_resume(device_t dv)
 	/* CSC Interrupt: Card detect interrupt on */
 	reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_MASK);
 	/* Card detect intr is turned on. */
-	reg |= CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
+	reg |= CB_SOCKET_MASK_CSTS | CB_SOCKET_MASK_CD | CB_SOCKET_MASK_POWER;
 	bus_space_write_4(base_memt, base_memh, CB_SOCKET_MASK, reg);
 	/* reset interrupt */
 	reg = bus_space_read_4(base_memt, base_memh, CB_SOCKET_EVENT);
