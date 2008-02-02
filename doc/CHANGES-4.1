@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.17 2008/02/02 23:16:24 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.18 2008/02/02 23:24:05 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -263,4 +263,14 @@ sys/dev/ic/i82557var.h				1.36
 	Pull several fixes from OpenBSD's fxp.c, fixing PR#30560 as
 	well as random pool corruption.
 	[tsutsui, ticket #1028]
+
+usr.sbin/ndiscvt/ndiscvt.8			1.6
+
+	PR/37604 - Danilo Vidovic -- we do have a ndis(4) man page
+	[jnemeth, ticket #1029]
+
+sys/arch/sparc64/sparc64/autoconf.c		1.147
+
+	Fix unusued variable warning (depending on options).
+	[martin, ticket #1030]
 
