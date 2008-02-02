@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.97 2008/01/15 12:09:24 hubertf Exp $ */
+/*	$NetBSD: disks.c,v 1.98 2008/02/02 04:15:27 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -358,6 +358,9 @@ make_filesystems(void)
 			fsname = "lfs";
 			break;
 		case FS_MSDOS:
+#ifdef USE_NEWFS_MSDOS
+			asprintf(&newfs, "/sbin/newfs_msdos");
+#endif
 			mnt_opts = "-tmsdos";
 			fsname = "msdos";
 			break;
@@ -370,6 +373,23 @@ make_filesystems(void)
 #endif
 		}
 		if (lbl->pi_flags & PIF_NEWFS && newfs != NULL) {
+#ifdef USE_NEWFS_MSDOS
+			if (lbl->pi_fstype == FS_MSDOS) {
+			        /* newfs only if mount fails */
+			        if (run_program(RUN_SILENT | RUN_ERROR_OK,
+				    "mount -rt msdos /dev/%s%c /mnt2",
+				    diskdev, 'a' + ptn) != 0)
+					error = run_program(
+					    RUN_DISPLAY | RUN_PROGRESS,
+					    "%s /dev/r%s%c",
+					    newfs, diskdev, 'a' + ptn);
+				else {
+			        	run_program(RUN_SILENT | RUN_ERROR_OK,
+					    "umount /mnt2");
+					error = 0;
+				}
+			} else
+#endif
 			error = run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "%s /dev/r%s%c", newfs, diskdev, 'a' + ptn);
 		} else {
