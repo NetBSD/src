@@ -1,0 +1,16 @@
+#	$NetBSD: RAMDISK,v 1.1 2008/02/02 09:19:44 tsutsui Exp $
+#
+#	memory disk based configuration file
+#
+
+include		"arch/cobalt/conf/GENERIC"
+
+# Enable the hooks used for initializing the root memory-disk.
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT		# force root on memory disk
+options 	MEMORY_DISK_SERVER=0		# no userspace md(4) support
+options 	MEMORY_DISK_ROOT_SIZE=5120	# size of memory disk, in blocks
+
+makeoptions	COPTS="-Os -mmemcpy"	# generates smaller code than -O2, -O1
+
+pseudo-device	md	1
