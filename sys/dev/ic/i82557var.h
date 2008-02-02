@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557var.h,v 1.35 2005/12/11 12:21:26 christos Exp $	*/
+/*	$NetBSD: i82557var.h,v 1.35.58.1 2008/02/02 23:16:39 riz Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001 The NetBSD Foundation, Inc.
@@ -318,7 +318,8 @@ do {									\
 	__rfa->size = htole16(FXP_RXBUFSIZE((sc), (m)));		\
 	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->rfa_status = 0;						\
-	__rfa->rfa_control = htole16(FXP_RFA_CONTROL_EL);		\
+	__rfa->rfa_control =						\
+	    htole16(FXP_RFA_CONTROL_EL | FXP_RFA_CONTROL_S);		\
 	/* BIG_ENDIAN: no need to swap to store 0 */			\
 	__rfa->actual_size = 0;						\
 									\
@@ -341,7 +342,8 @@ do {									\
 		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);	\
 		memcpy((void *)&__p_rfa->link_addr, &__v,		\
 		    sizeof(__v));					\
-		__p_rfa->rfa_control &= htole16(~FXP_RFA_CONTROL_EL);	\
+		__p_rfa->rfa_control &= htole16(~(FXP_RFA_CONTROL_EL|	\
+		    FXP_RFA_CONTROL_S));				\
 		FXP_RFASYNC((sc), __p_m,				\
 		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);		\
 	}								\
