@@ -41,7 +41,7 @@
 struct user_reg
 {
   const char *name;
-  struct value *(*read) (struct frame_info * frame);
+  struct value *(*xread) (struct frame_info * frame);
   struct user_reg *next;
 };
 
@@ -59,14 +59,14 @@ struct gdb_user_regs
 
 static void
 append_user_reg (struct gdb_user_regs *regs, const char *name,
-		 user_reg_read_ftype *read, struct user_reg *reg)
+		 user_reg_read_ftype *xread, struct user_reg *reg)
 {
   /* The caller is responsible for allocating memory needed to store
      the register.  By doing this, the function can operate on a
      register list stored in the common heap or a specific obstack.  */
   gdb_assert (reg != NULL);
   reg->name = name;
-  reg->read = read;
+  reg->xread = xread;
   reg->next = NULL;
   (*regs->last) = reg;
   regs->last = &(*regs->last)->next;
@@ -77,9 +77,9 @@ append_user_reg (struct gdb_user_regs *regs, const char *name,
 static struct gdb_user_regs builtin_user_regs = { NULL, &builtin_user_regs.first };
 
 void
-user_reg_add_builtin (const char *name, user_reg_read_ftype *read)
+user_reg_add_builtin (const char *name, user_reg_read_ftype *xread)
 {
-  append_user_reg (&builtin_user_regs, name, read,
+  append_user_reg (&builtin_user_regs, name, xread,
 		   XMALLOC (struct user_reg));
 }
 
@@ -95,14 +95,14 @@ user_regs_init (struct gdbarch *gdbarch)
   struct gdb_user_regs *regs = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct gdb_user_regs);
   regs->last = &regs->first;
   for (reg = builtin_user_regs.first; reg != NULL; reg = reg->next)
-    append_user_reg (regs, reg->name, reg->read,
+    append_user_reg (regs, reg->name, reg->xread,
 		     GDBARCH_OBSTACK_ZALLOC (gdbarch, struct user_reg));
   return regs;
 }
 
 void
 user_reg_add (struct gdbarch *gdbarch, const char *name,
-		 user_reg_read_ftype *read)
+		 user_reg_read_ftype *xread)
 {
   struct gdb_user_regs *regs = gdbarch_data (gdbarch, user_regs_data);
   if (regs == NULL)
@@ -112,7 +112,7 @@ user_reg_add (struct gdbarch *gdbarch, const char *name,
       regs = user_regs_init (gdbarch);
       deprecated_set_gdbarch_data (gdbarch, user_regs_data, regs);
     }
-  append_user_reg (regs, name, read,
+  append_user_reg (regs, name, xread,
 		   GDBARCH_OBSTACK_ZALLOC (gdbarch, struct user_reg));
 }
 
@@ -199,7 +199,7 @@ value_of_user_reg (int regnum, struct frame_info *frame)
 		 + gdbarch_num_pseudo_regs (gdbarch));
   struct user_reg *reg = usernum_to_user_reg (gdbarch, regnum - maxregs);
   gdb_assert (reg != NULL);
-  return reg->read (frame);
+  return reg->xread (frame);
 }
 
 extern initialize_file_ftype _initialize_user_regs; /* -Wmissing-prototypes */
