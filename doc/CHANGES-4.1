@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.12 2008/02/01 14:57:46 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.13 2008/02/02 03:34:57 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -201,4 +201,21 @@ sys/fs/tmpfs/tmpfs_vnops.c			1.43
 
 	Fix a race condition in rename.
 	[pooka, ticket #1010]
+
+distrib/sets/lists/etc/mi			1.186
+etc/Makefile					1.338
+etc/login.conf					1.1-1.2
+
+	Add a default login.conf.
+	[elad, ticket #1012]
+
+sys/arch/atari/dev/wdc_mb.c			1.29-1.30
+        Apply missed following MI wdc changes to atari's mainbus wdc backend:
+        - make bus space handles an array for each command register
+          http://mail-index.netbsd.org/source-changes/2003/11/27/0036.html
+          (note we no longer have to specify stride for wdc after this change)
+        - add the notion of "shadow register"
+          http://mail-index.netbsd.org/source-changes/2004/05/25/0048.html
+        Problem reported by Alan Hourihane in PR port-atari/37464.
+	[tsutsui, ticket #1013]
 
