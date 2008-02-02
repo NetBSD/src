@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.2 2008/01/21 19:21:06 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.3 2008/02/02 23:00:19 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -14,4 +14,10 @@ xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
 
 	Apply security fix for CVE-2008-0006.
 	[tron, ticket #1047]
+
+sys/arch/sun3/sun3/obmem.c			1.24
+
+	Pass correct size to allocate struct obmem_softc. Fixes an
+	occasional panic on my 3/80.
+	[tsutsui, ticket #1025]
 
