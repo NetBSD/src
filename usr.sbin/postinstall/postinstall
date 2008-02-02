@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.31.2.8 2007/11/26 21:24:43 xtraeme Exp $
+# $NetBSD: postinstall,v 1.31.2.9 2008/02/02 17:15:03 riz Exp $
 #
 # Copyright (c) 2002-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -695,9 +695,10 @@ do_motd()
 {
 	[ -n "$1" ] || err 3 "USAGE: do_motd  fix|check"
 
-	if grep 'http://www.NetBSD.org/Misc/send-pr.html' ${DEST_DIR}/etc/motd \
-	    >/dev/null 2>&1
-	then
+	if grep -i 'http://www.NetBSD.org/Misc/send-pr.html' ${DEST_DIR}/etc/motd \
+	    >/dev/null 2>&1 || \
+	    grep -i 'http://www.NetBSD.org/support/send-pr.html' ${DEST_DIR}/etc/motd \
+	    >/dev/null 2>&1; then
 		tmp1=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
 		tmp2=$(mktemp /tmp/postinstall.motd.XXXXXXXX)
 		sed '1,2d' <${SRC_DIR}/etc/motd >${tmp1}
