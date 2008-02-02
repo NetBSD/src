@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.7 2008/01/04 21:17:46 ad Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.8 2008/02/02 02:39:00 tls Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.7 2008/01/04 21:17:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.8 2008/02/02 02:39:00 tls Exp $");
 
 #include "opt_viapadlock.h"
 
@@ -87,8 +87,11 @@ via_padlock_attach(void)
 	    via_padlock_crypto_process, vp_sc);
 
 	REGISTER(CRYPTO_AES_CBC);
+	REGISTER(CRYPTO_MD5_HMAC_96);
 	REGISTER(CRYPTO_MD5_HMAC);
+	REGISTER(CRYPTO_SHA1_HMAC_96);
 	REGISTER(CRYPTO_SHA1_HMAC);
+	REGISTER(CRYPTO_RIPEMD160_HMAC_96);
 	REGISTER(CRYPTO_RIPEMD160_HMAC);
 	REGISTER(CRYPTO_SHA2_HMAC);
 
@@ -185,12 +188,21 @@ via_padlock_crypto_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 
 		/* Use hashing implementations from the cryptosoft code. */
 		case CRYPTO_MD5_HMAC:
+			axf = &swcr_auth_hash_hmac_md5;
+			goto authcommon;
+		case CRYPTO_MD5_HMAC_96:
 			axf = &swcr_auth_hash_hmac_md5_96;
 			goto authcommon;
 		case CRYPTO_SHA1_HMAC:
+			axf = &swcr_auth_hash_hmac_sha1;
+			goto authcommon;
+		case CRYPTO_SHA1_HMAC_96:
 			axf = &swcr_auth_hash_hmac_sha1_96;
 			goto authcommon;
 		case CRYPTO_RIPEMD160_HMAC:
+			axf = &swcr_auth_hash_hmac_ripemd_160;
+			goto authcommon;
+		case CRYPTO_RIPEMD160_HMAC_96:
 			axf = &swcr_auth_hash_hmac_ripemd_160_96;
 			goto authcommon;
 		case CRYPTO_SHA2_HMAC:
