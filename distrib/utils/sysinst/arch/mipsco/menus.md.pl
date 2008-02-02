@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.4 2003/06/11 21:35:44 dsl Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.5 2008/02/02 05:34:01 itohy Exp $	*/
 /* Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:20:59 thorpej Exp */
 
@@ -39,5 +39,5 @@
  *
  */
 
-/* pmax machine dependent menus, Polish */
+/* mipsco machine dependent menus, Polish */
 

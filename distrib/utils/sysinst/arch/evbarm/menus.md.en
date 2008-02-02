@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.en,v 1.5 2003/06/11 21:35:40 dsl Exp $	*/
+/*	$NetBSD: menus.md.en,v 1.6 2008/02/02 05:33:56 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,5 +37,5 @@
  *
  */
 
-/* arm32 machine dependent menus, english */
+/* evbarm machine dependent menus, english */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.11 2003/07/07 12:30:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.12 2008/02/02 05:34:01 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- french, i386 version */
+/* MD Message catalog -- french, hpcmips version */
 
 message md_hello
 {Si vous avez démarré sur une disquette, vous pouvez maintenant la retirer.

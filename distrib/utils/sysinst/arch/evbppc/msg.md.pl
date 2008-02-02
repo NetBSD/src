@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.8 2006/02/24 22:13:16 dsl Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.9 2008/02/02 05:33:59 itohy Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.1 2001/10/24 19:43:40 briggs Exp */
 
@@ -38,7 +38,7 @@
  *
  */
 
-/* MD Message catalog -- Polish, sandpoint version */
+/* MD Message catalog -- Polish, evbppc version */
 
 message md_hello
 {Jesli uruchomiles komputer z dyskietki, mozesz ja teraz wyciagnac.

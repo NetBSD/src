@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.fr,v 1.4 2003/06/11 21:35:44 dsl Exp $	*/
+/*	$NetBSD: menus.md.fr,v 1.5 2008/02/02 05:34:01 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,5 +36,5 @@
  *
  */
 
-/* pmax machine dependent menus, french */
+/* mipsco machine dependent menus, french */
 

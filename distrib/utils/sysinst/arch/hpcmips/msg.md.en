@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.14 2003/07/07 12:30:24 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.15 2008/02/02 05:34:00 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- English, i386 version */
+/* MD Message catalog -- English, hpcmips version */
 
 message md_hello
 {If you booted from a floppy, you may now remove the disk.

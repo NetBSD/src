@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.md.pl,v 1.1 2006/03/30 15:45:42 shige Exp $	*/
+/*	$NetBSD: menus.md.pl,v 1.2 2008/02/02 05:33:58 itohy Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: menus.md.en,v 1.2 2001/11/29 23:21:01 thorpej Exp 	*/
 
@@ -38,5 +38,5 @@
  *
  */
 
-/* Menu definitions for sysinst. sandpoint version, machine dependent. */
+/* Menu definitions for sysinst. evbmips version, machine dependent. */
 

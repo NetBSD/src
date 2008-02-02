@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.6 2008/02/02 04:51:36 itohy Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.7 2008/02/02 05:33:56 itohy Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:11:21 thorpej Exp */
 
@@ -39,7 +39,7 @@
  *
  */
 
-/* arm32 machine dependent messages, Polish */
+/* acorn32 machine dependent messages, Polish */
 
 
 message md_hello

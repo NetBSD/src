@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2005/12/30 11:40:23 rjs Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2008/02/02 05:34:00 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- Spanish, i386 version */
+/* MD Message catalog -- Spanish, hpcarm version */
 
 message md_hello
 {Si ha iniciado desde disquette, ahora deberia retirar el disco.
