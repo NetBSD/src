@@ -1,4 +1,4 @@
-/*	$NetBSD: gsp_ass.h,v 1.10 2006/08/26 18:15:37 christos Exp $	*/
+/*	$NetBSD: gsp_ass.h,v 1.11 2008/02/02 17:16:14 christos Exp $	*/
 /*
  * GSP assembler - definitions
  *
@@ -178,12 +178,6 @@ extern char line[], *lineptr;
 #else
 #ifdef __GNUC__
 #define alloca __builtin_alloca
-#endif
-#endif
-
-#ifndef BSD
-#ifndef amiga
-#define bcopy(s, d, l) memcpy(d, s, l)
 #endif
 #endif
 
