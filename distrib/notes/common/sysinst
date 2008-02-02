@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.86 2008/02/02 08:06:25 itohy Exp $
+.\"	$NetBSD: sysinst,v 1.87 2008/02/02 16:56:46 itohy Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -429,7 +429,7 @@ or
 After language selection, the main menu will be displayed.
 .\}\}
 .(disp
-.ne 10
+.if t .ne 10
 . cs \n(.f 22
 .\" )   - appease vi showmatch
   .***********************************************.
