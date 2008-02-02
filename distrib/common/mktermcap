@@ -1,0 +1,7 @@
+#!/bin/sh
+
+for t in wsvt25m vt100 vt220
+do
+	getent termcap -rp $t
+	echo
+done
