@@ -1,3 +1,59 @@
+2008-01-28  Jason Merrill  <jason@redhat.com>
+
+	PR c++/35007
+	* class.c (build_base_path): Fix !want_pointer case.
+
+2008-01-27  Jason Merrill  <jason@redhat.com>
+
+	PR c++/27177
+	* class.c (build_base_path): Fix previous change.
+
+	PR c++/27177
+	* class.c (build_base_path): Don't mess with virtual access if
+	skip_evaluation.
+	* call.c (standard_conversion): Don't check whether source type
+	is complete.
+
+	PR c++/33959
+	* pt.c (tsubst_aggr_type): Make sure our context is complete.
+
+2007-10-26  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/33744
+	* parser.c (cp_parser_parenthesized_expression_list): Set
+	greater_than_is_operator_p to true in between the parens.
+
+2007-08-31  Paolo Carlini  <pcarlini@suse.de>
+
+	PR c++/32113
+	* search.c (lookup_member): Check the name argument for
+	error_mark_node.
+
+2007-08-24  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/31941
+	* error.c (resolve_virtual_fun_from_obj_type_ref): Handle
+	TARGET_VTABLE_USES_DESCRIPTORS targets properly.
+
+2007-08-20  Jakub Jelinek  <jakub@redhat.com>
+
+	PR c++/32992
+	* typeck.c (check_return_expr): Don't NRV optimize vars in
+	anonymous unions.
+	* decl.c (finish_function): Comment fix.
+
+2007-08-18  Paolo Carlini  <pcarlini@suse.de>
+
+	PR c++/32112
+	* error.c (dump_decl): Deal with UNBOUND_CLASS_TEMPLATE.
+	* cxx-pretty-print.c (pp_cxx_unqualified_id): Likewise.
+
+2007-08-10  Paolo Carlini  <pcarlini@suse.de>
+
+	PR c++/17763
+	* error.c (dump_expr): Consistently use the *_cxx_*
+	variants of the pretty-print functions.
+
 2007-06-20  Dirk Mueller  <dmueller@suse.de>
 
 	PR c++/31809
