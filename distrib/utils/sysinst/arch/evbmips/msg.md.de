@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.1 2006/03/30 15:45:42 shige Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.2 2008/02/02 05:33:58 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,7 @@
  *
  */
 
-/* MD Message catalog -- German, bebox version */
+/* MD Message catalog -- German, evbmips version */
 
 message md_hello
 {Wenn Sie von einer Diskette gebootet haben, können Sie diese jetzt
