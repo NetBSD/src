@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.6 2005/02/19 17:00:39 dsl Exp $
+#	$NetBSD: Makefile,v 1.7 2008/02/02 04:19:51 itohy Exp $
 #
-# Makefile for bebox
+# Makefile for sandpoint
 #
 
 MENUS_MD=       menus.md.${SYSINSTLANG} menus.mbr
