@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.4 2008/02/02 23:05:53 riz Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.5 2008/02/02 23:16:57 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -26,4 +26,19 @@ sys/arch/cobalt/cobalt/machdep.c		1.91
 	In icu_intr_establish(), don't panic if the specified irq
 	is already in use and just return NULL instead.
 	[tsutsui, ticket #1026]
+
+common/dist/zlib/inflate.c			1.4
+
+	Disable a sanity check output buffer != NULL in _STANDALONE case.
+	Some kernels are loaded at address 0x0 by bootloaders and
+	output buffer address could be zero in such case.
+	[tsutsui, ticket #1027]
+
+sys/dev/ic/i82557.c				1.105
+sys/dev/ic/i82557reg.h				1.19
+sys/dev/ic/i82557var.h				1.36
+
+	Pull several fixes from OpenBSD's fxp.c, fixing PR#30560 as
+	well as random pool corruption.
+	[tsutsui, ticket #1028]
 
