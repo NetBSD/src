@@ -1,4 +1,4 @@
-/*	$NetBSD: scsictl.c,v 1.29 2007/01/22 20:56:46 bouyer Exp $	*/
+/*	$NetBSD: scsictl.c,v 1.30 2008/02/02 17:07:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsictl.c,v 1.29 2007/01/22 20:56:46 bouyer Exp $");
+__RCSID("$NetBSD: scsictl.c,v 1.30 2008/02/02 17:07:04 christos Exp $");
 #endif
 
 
@@ -627,7 +627,7 @@ device_format(int argc, char *argv[])
 				    req.retsts);
 				break;
 			}
-			memcpy(&sense, req.sense, SENSEBUFLEN);
+			memcpy(&sense, req.sense, sizeof(sense));
 			if (sense.sks.sks_bytes[0] & SSD_SKSV) {
 				j = (sense.sks.sks_bytes[1] << 8) |
 				    (sense.sks.sks_bytes[2]);
