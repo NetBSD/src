@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.98 2008/02/02 04:15:27 tsutsui Exp $ */
+/*	$NetBSD: disks.c,v 1.99 2008/02/02 09:26:45 tsutsui Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -369,6 +369,13 @@ make_filesystems(void)
 			asprintf(&newfs, "/sbin/newfs_sysvbfs");
 			mnt_opts = "-tsysvbfs";
 			fsname = "sysvbfs";
+			break;
+#endif
+#ifdef USE_EXT2FS
+		case FS_EX2FS:
+			asprintf(&newfs, "/sbin/newfs_ext2fs");
+			mnt_opts = "-text2fs";
+			fsname = "ext2fs";
 			break;
 #endif
 		}
