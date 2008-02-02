@@ -1,4 +1,4 @@
-/* 	$NetBSD: config.c,v 1.6 2007/11/16 08:01:37 xtraeme Exp $	*/
+/* 	$NetBSD: config.c,v 1.7 2008/02/02 01:44:04 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: config.c,v 1.6 2007/11/16 08:01:37 xtraeme Exp $");
+__RCSID("$NetBSD: config.c,v 1.7 2008/02/02 01:44:04 xtraeme Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -103,7 +103,7 @@ config_dict_add_prop(const char *key, char *value)
 	if (!sensordict) {
 		sensordict = prop_dictionary_create();
 		if (!sensordict)
-			err(EXIT_FAILURE, "cfdict");
+			err(EXIT_FAILURE, "sensordict");
 	}
 
 	if (!prop_dictionary_set_cstring(sensordict, key, value))
@@ -198,11 +198,9 @@ config_dict_adddev_prop(const char *key, const char *value, int line)
 
 	free(strval);
 
-	if (!refreshdict) {
-		refreshdict = prop_dictionary_create();
-		if (!refreshdict)
-			err(EXIT_FAILURE, "prop_dict_create refresh");
-	}
+	refreshdict = prop_dictionary_create();
+	if (!refreshdict)
+		err(EXIT_FAILURE, "prop_dict_create refresh");
 
 	d = prop_dictionary_create();
 	if (!d)
@@ -374,6 +372,11 @@ config_devblock_add(const char *key, prop_dictionary_t kdict)
 	if (!prop_dictionary_set(cfdict, key, db->array))
 		err(EXIT_FAILURE, "prop_dictionary_set db->array");
 
+	/*
+	 * refreshdict must be NULLed to avoid false positives in
+	 * next matches.
+	 */
+	refreshdict = NULL;
 }
 
 /*
