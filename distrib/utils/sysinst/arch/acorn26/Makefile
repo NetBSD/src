@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.5 2005/02/19 17:00:38 dsl Exp $
+#	$NetBSD: Makefile,v 1.6 2008/02/02 04:19:51 itohy Exp $
 #
-# Makefile for acorn32
+# Makefile for acorn26
 #
 
 MD_OPTIONS=	AOUT2ELF
