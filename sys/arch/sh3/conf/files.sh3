@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.38 2008/02/01 16:37:30 tsutsui Exp $
+#	$NetBSD: files.sh3,v 1.39 2008/02/02 02:19:42 uwe Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -35,6 +35,8 @@ file	arch/sh3/sh3/devreg.c		sh3 & sh4
 file	arch/sh3/sh3/interrupt.c
 file	dev/cninit.c
 file	dev/cons.c
+
+file	arch/sh3/sh3/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 
 file	arch/sh3/sh3/procfs_machdep.c	procfs
 
