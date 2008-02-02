@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.8 2008/02/02 13:09:47 itohy Exp $ */
+/* $NetBSD: hp300.c,v 1.9 2008/02/02 13:37:13 itohy Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.8 2008/02/02 13:09:47 itohy Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.9 2008/02/02 13:37:13 itohy Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -117,8 +117,8 @@ hp300_setboot(ib_params *params)
 		}
 		/* And a quick validation - must be a big-endian label */
 		secsize = be32toh(label->d_secsize);
-		if (label->d_magic != be32toh(DISKMAGIC) ||
-		    label->d_magic2 != be32toh(DISKMAGIC) ||
+		if (label->d_magic != htobe32(DISKMAGIC) ||
+		    label->d_magic2 != htobe32(DISKMAGIC) ||
 		    secsize == 0 || secsize & (secsize - 1) ||
 		    be16toh(label->d_npartitions) > MAXMAXPARTITIONS) {
 			warnx("Invalid disklabel in %s", params->filesystem);
