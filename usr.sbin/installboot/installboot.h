@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.h,v 1.33 2007/02/15 22:23:11 dsl Exp $	*/
+/*	$NetBSD: installboot.h,v 1.34 2008/02/02 17:01:03 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -162,6 +162,8 @@ int		ffs_findstage2(ib_params *, uint32_t *, ib_block *);
 int		raid_match(ib_params *);
 int		raw_match(ib_params *);
 int		raw_findstage2(ib_params *, uint32_t *, ib_block *);
+int		ext2fs_match(ib_params *);
+int		ext2fs_findstage2(ib_params *, uint32_t *, ib_block *);
 
 	/* machines.c */
 extern struct ib_mach ib_mach_alpha;
