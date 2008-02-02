@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.2 2007/12/02 17:36:57 jmcneill Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.3 2008/02/02 04:11:02 sekiya Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -43,6 +43,9 @@
 #define		CRMFB_DOTCLOCK_CLKRUN_SHIFT	20
 #define CRMFB_VT_XY		0x00010000
 #define		CRMFB_VT_XY_FREEZE_SHIFT	31
+#define	CRMFB_VT_FLAGS		0x00010018
+#define		CRMFB_VT_FLAGS_SYNC_LOW_MSB	5
+#define		CRMFB_VT_FLAGS_SYNC_LOW_LSB	5
 #define CRMFB_VT_INTR01		0x00010020
 #define		CRMFB_VT_INTR01_EN		0xffffffff
 #define CRMFB_VT_INTR23		0x00010024
