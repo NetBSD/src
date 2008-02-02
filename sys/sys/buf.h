@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.102 2008/01/02 11:49:07 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.103 2008/02/02 16:51:34 hannken Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -201,13 +201,13 @@ struct buf {
  */
 #define	BO_DELWRI	0x00000080	/* Delay I/O until buffer reused. */
 #define	BO_DONE		0x00000200	/* I/O completed. */
-#define	BO_COWDONE	0x00000400	/* Copy-on-write already done. */
 
 /*
  * These flags are kept in b_flags (owned by buffer holder).
  */
 #define	B_WRITE		0x00000000	/* Write buffer (pseudo flag). */
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
+#define	B_COWDONE	0x00000400	/* Copy-on-write already done. */
 #define	B_GATHERED	0x00001000	/* LFS: already in a segment. */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.185 2008/01/07 16:12:55 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.186 2008/02/02 16:51:34 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.185 2008/01/07 16:12:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.186 2008/02/02 16:51:34 hannken Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1510,7 +1510,7 @@ biodone2(buf_t *bp)
 	/* Note that the transfer is done. */
 	if (ISSET(bp->b_oflags, BO_DONE))
 		panic("biodone2 already");
-	CLR(bp->b_oflags, BO_COWDONE);
+	CLR(bp->b_flags, B_COWDONE);
 	SET(bp->b_oflags, BO_DONE);
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
 
