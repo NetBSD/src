@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.8 2003/06/12 10:51:39 dsl Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.9 2008/02/02 04:20:02 tsutsui Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,12 +39,53 @@
 /* MD Message catalog -- English, arc version */
 
 message md_hello
-{If you booted from a floppy, you may now remove the disk.
+{Make sure you have a backup of your disk if needed since
+sysinst on this port is still experimental.
 
 }
 
 message dobad144
 {Installing the bad block table ...
+}
+
+message dobootblks
+{Installing boot blocks on %s....
+}
+
+message pickdisk
+{Choose disk: }
+
+message partabovechs
+{The NetBSD part of the disk lies outside of the range that the BIOS on
+your machine can address. Booting from it may not be possible. Are you
+sure you that you want to do this?
+
+(Answering 'no' will take you back to the partition edit menu.)}
+
+message nobootpart
+{There is no FAT12 MS-DOS partition in the MBR partition table.}
+
+message boottoosmall
+{The MS-DOS FAT12 partition to install the native bootloader is too small.
+It needs to be at least 1MB in size, however a size of at least 2MB is
+reccomended.}
+
+message nobootpartdisklabel
+{There is no boot partition in the disklabel.  The boot partition should 
+match the boot partition you set up in the MBR partition table.}
+
+message copybootloader
+{Copying bootloader into the MS-DOS FAT12 partition on %s...
+}
+
+message howtoboot
+{The installation is almost complete. Note the installer doesn't set
+ARC BIOS environments for the BIOS to load NetBSD's bootloader by default.
+To boot NetBSD, you need to specify the following boot command on
+'Run a program' prompt of the ARC BIOS menu.
+
+scsi()disk()rdisk()partition(1)boot scsi()disk()rdisk()partition(2)netbsd
+
 }
 
 message set_kernel_1
