@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2008/02/02 09:07:09 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2008/02/02 09:18:00 tsutsui Exp $
 
 .include <bsd.own.mk>
-.include ""${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+.include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 BOOT=	${DESTDIR}/usr/mdec/boot
 
