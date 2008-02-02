@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.2 2003/07/26 17:06:32 salo Exp $
+# $NetBSD: dot.profile,v 1.3 2008/02/02 04:23:06 tsutsui Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -35,7 +35,7 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=vt100
+TERM=wsvt25
 export TERM
 HOME=/
 export HOME
@@ -71,9 +71,7 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 		read _forceloop
 		case "$_forceloop" in
 			i*|I*)
-			#	/sysinst
-				echo 'Sorry, sysinst is not ready on this port.'
-				/bin/sh
+				/sysinst
 				;;
 
 			s*|S*)
