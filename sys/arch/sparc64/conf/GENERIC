@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.97 2008/01/05 20:38:31 jdc Exp $
+# $NetBSD: GENERIC,v 1.98 2008/02/02 13:42:43 tron Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.97 $"
+#ident 		"GENERIC-$Revision: 1.98 $"
 
 maxusers	64
 
@@ -515,6 +515,7 @@ wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 # MII/PHY support
 acphy*	at mii? phy ?			# Altima AC101 and AMD Am79c874 PHYs
 bmtphy* at mii? phy ?			# Broadcom BCM5201 and BCM5202 PHYs
+brgphy* at mii? phy ?			# Broadcom BCM5400-family PHYs
 ciphy*	at mii? phy ?			# Cicada CS8201 Gig-E PHYs
 dmphy*	at mii? phy ?			# Davicom DM9101 PHYs
 exphy*	at mii? phy ?			# 3Com internal PHYs
