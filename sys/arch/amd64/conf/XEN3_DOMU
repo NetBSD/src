@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.4 2008/01/07 08:30:03 martti Exp $
+# $NetBSD: XEN3_DOMU,v 1.5 2008/02/02 17:23:44 joerg Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -161,7 +161,7 @@ xbd*		at xenbus?		# Xen virtual block device
 
 xencons*	at hypervisor?		# Xen virtual console
 
-include	"arch/i386/conf/GENERIC.local"
+include	"arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
 
