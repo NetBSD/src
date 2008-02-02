@@ -1,4 +1,4 @@
-/*	$NetBSD: getcap.c,v 1.47 2006/07/04 03:53:54 jnemeth Exp $	*/
+/*	$NetBSD: getcap.c,v 1.48 2008/02/02 20:56:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)getcap.c	8.3 (Berkeley) 3/25/94";
 #else
-__RCSID("$NetBSD: getcap.c,v 1.47 2006/07/04 03:53:54 jnemeth Exp $");
+__RCSID("$NetBSD: getcap.c,v 1.48 2008/02/02 20:56:46 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -75,6 +75,7 @@ __weak_alias(cgetnum,_cgetnum)
 __weak_alias(cgetset,_cgetset)
 __weak_alias(cgetstr,_cgetstr)
 __weak_alias(cgetustr,_cgetustr)
+__weak_alias(csetexpandtc,_csetexpandtc)
 #endif
 
 #define	BFRAG		1024
@@ -90,6 +91,7 @@ __weak_alias(cgetustr,_cgetustr)
 static size_t	 topreclen;	/* toprec length */
 static char	*toprec;	/* Additional record specified by cgetset() */
 static int	 gottoprec;	/* Flag indicating retrieval of toprecord */
+static int	 expandtc = 1;	/* flag to expand tc= or not */
 
 #ifndef SMALL
 static int	cdbget(DB *, char **, const char *);
@@ -225,6 +227,12 @@ cgetent(char **buf, const char * const *db_array, const char *name)
 	return getent(buf, &dummy, db_array, -1, name, 0, NULL);
 }
 
+void
+csetexpandtc(int etc)
+{
+	expandtc = etc;
+}
+
 /*
  * Getent implements the functions of cgetent.  If fd is non-negative,
  * *db_array has already been opened and fd is the open file descriptor.  We
@@ -317,7 +325,8 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 		} else {
 #ifndef SMALL
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
-			if ((capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
+			if (expandtc &&
+			    (capdbp = dbopen(pbuf, O_RDONLY, 0, DB_HASH, 0))
 			     != NULL) {
 				free(record);
 				retval = cdbget(capdbp, &record, name);
@@ -504,7 +513,9 @@ getent(char **cap, size_t *len, const char * const *db_array, int fd,
 	 * Got the capability record, but now we have to expand all tc=name
 	 * references in it ...
 	 */
-tc_exp:	{
+tc_exp:
+	tc_not_resolved = 0;
+	if (expandtc) {
 		char *newicap, *s;
 		size_t ilen, newilen;
 		int diff, iret, tclen;
@@ -519,7 +530,6 @@ tc_exp:	{
 		 *	scanned for tc=name constructs.
 		 */
 		scan = record;
-		tc_not_resolved = 0;
 		for (;;) {
 			if ((tc = cgetcap(scan, "tc", '=')) == NULL)
 				break;

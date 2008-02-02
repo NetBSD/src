@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.80 2007/12/24 17:26:09 perry Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.81 2008/02/02 20:56:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -257,6 +257,7 @@ int	 cgetnum(char *, const char *, long *);
 int	 cgetset(const char *);
 int	 cgetstr(char *, const char *, char **);
 int	 cgetustr(char *, const char *, char **);
+void	 csetexpandtc(int);
 
 int	 daemon(int, int);
 __aconst char *devname(dev_t, mode_t);
