@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.56 2008/01/25 21:12:11 joerg Exp $
+#	$NetBSD: files.amd64,v 1.57 2008/02/02 23:23:17 joerg Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -32,8 +32,8 @@ defflag eisa.h EISA
 
 file	arch/amd64/amd64/autoconf.c
 file	arch/amd64/amd64/busfunc.S
-file	arch/amd64/amd64/cpu_in_cksum.S
-file	arch/amd64/amd64/cpufunc.S		(inet | inet6) & cpu_in_cksum
+file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
+file	arch/amd64/amd64/cpufunc.S
 file	arch/amd64/amd64/db_disasm.c		ddb
 file	arch/amd64/amd64/db_interface.c	ddb
 file	arch/amd64/amd64/db_memrw.c		ddb | kgdb
