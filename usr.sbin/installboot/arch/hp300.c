@@ -1,4 +1,4 @@
-/* $NetBSD: hp300.c,v 1.7 2006/02/18 10:08:07 dsl Exp $ */
+/* $NetBSD: hp300.c,v 1.8 2008/02/02 13:09:47 itohy Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: hp300.c,v 1.7 2006/02/18 10:08:07 dsl Exp $");
+__RCSID("$NetBSD: hp300.c,v 1.8 2008/02/02 13:09:47 itohy Exp $");
 #endif /* !__lint */
 
 /* We need the target disklabel.h, not the hosts one..... */
@@ -120,12 +120,12 @@ hp300_setboot(ib_params *params)
 		if (label->d_magic != be32toh(DISKMAGIC) ||
 		    label->d_magic2 != be32toh(DISKMAGIC) ||
 		    secsize == 0 || secsize & (secsize - 1) ||
-		    be32toh(label->d_npartitions) > MAXMAXPARTITIONS) {
+		    be16toh(label->d_npartitions) > MAXMAXPARTITIONS) {
 			warnx("Invalid disklabel in %s", params->filesystem);
 			goto done;
 		}
 
-		i = be32toh(label->d_npartitions);
+		i = be16toh(label->d_npartitions);
 		for (boot = label->d_partitions; ; boot++) {
 			if (--i < 0) {
 				warnx("No BOOT partition");
