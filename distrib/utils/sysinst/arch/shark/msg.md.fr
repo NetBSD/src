@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.8 2007/08/01 14:20:40 jmmv Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.9 2008/02/02 04:51:52 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,13 +47,6 @@ message md_hello
 
 message Keyboard_type {Type de clavier}
 message kb_default {fr}
-
-message fullpart
-{Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
-choisir si vous voulez installer NetBSD sur la totalité du disque ou seulement
-sur une partie de celui-ci.
-Que désirez vous faire ?
-}
 
 message badreadbb
 {Impossible de lire le contenu du secteur de démarrage

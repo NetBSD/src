@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.fr,v 1.1 2006/01/09 10:03:51 tsutsui Exp $	*/
+/*	$NetBSD: msg.md.fr,v 1.2 2008/02/02 04:51:37 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,13 +42,6 @@
 message md_hello
 {Si vous avez d,Ai(Bmarr,Ai(B sur une disquette, vous pouvez maintenant la retirer.
 
-}
-
-message fullpart
-{Nous allons maintenant installer NetBSD sur votre disque %s. Vous devez
-choisir si vous voulez installer NetBSD sur la totalit,Ai(B du disque ou seulement
-sur une partie de celui-ci.
-Que d,Ai(Bsirez vous faire ?
 }
 
 message dobootblks

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.4 2007/08/01 14:20:40 jmmv Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5 2008/02/02 04:51:51 itohy Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -47,12 +47,6 @@ message md_hello
 
 message Keyboard_type {Tipo de teclado}
 message kb_default {es}
-
-message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
-entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaría hacer?
-}
 
 message badreadbb
 {No se puede leer bloque de arranque filecore
