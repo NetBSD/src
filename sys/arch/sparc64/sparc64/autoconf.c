@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.135 2006/11/16 01:32:39 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.135.2.1 2008/02/02 23:23:24 riz Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.135 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.135.2.1 2008/02/02 23:23:24 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -244,7 +244,9 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 	void *bi;
 	long bmagic;
 
+#if NKSYMS || defined(DDB) || defined(LKM)
 	struct btinfo_symtab *bi_sym;
+#endif
 	struct btinfo_count *bi_count;
 	struct btinfo_kernend *bi_kend;
 	struct btinfo_tlb *bi_tlb;
