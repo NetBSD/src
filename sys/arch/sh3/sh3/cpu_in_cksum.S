@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.10 2006/04/11 23:45:13 uwe Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.1 2008/02/02 02:11:19 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
