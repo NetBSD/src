@@ -1,4 +1,4 @@
-/*	$NetBSD: primes.c,v 1.13 2007/12/15 19:44:42 perry Exp $	*/
+/*	$NetBSD: primes.c,v 1.14 2008/02/02 17:45:05 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char sccsid[] = "@(#)primes.c	8.5 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: primes.c,v 1.13 2007/12/15 19:44:42 perry Exp $");
+__RCSID("$NetBSD: primes.c,v 1.14 2008/02/02 17:45:05 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -312,7 +312,7 @@ primes(start, stop)
 			} else {
 				q = &table[mod ? factor-(mod/2) : 0];
 			}
-			/* sive for our current factor */
+			/* sieve for our current factor */
 			for ( ; q < tab_lim; q += factor) {
 				*q = '\0'; /* sieve out a spot */
 			}
