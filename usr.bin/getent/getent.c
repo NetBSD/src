@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.10 2008/02/01 22:39:21 christos Exp $	*/
+/*	$NetBSD: getent.c,v 1.11 2008/02/02 20:57:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.10 2008/02/01 22:39:21 christos Exp $");
+__RCSID("$NetBSD: getent.c,v 1.11 2008/02/02 20:57:20 christos Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -490,31 +490,111 @@ capprint(const char *cap)
 	else
 		(void)printf("%s\n", cap);
 }
-		
+
+static void
+prettyprint(char *b)
+{
+#define TERMWIDTH 65
+	int did = 0;
+	size_t len;
+	char *s, c;
+
+	for (;;) {
+		len = strlen(b);
+		if (len <= TERMWIDTH) {
+done:
+			if (did)
+				printf("\t:");
+			printf("%s\n", b);
+			return;
+		}
+		for (s = b + TERMWIDTH; s > b && *s != ':'; s--)
+			continue;
+		if (*s++ != ':')
+			goto done;
+		c = *s;
+		*s = '\0';
+		if (did)
+			printf("\t:");
+		did++;
+		printf("%s\\\n", b);
+		*s = c;
+		b = s;
+	}
+}
+
+static void
+handleone(const char * const *db_array, char *b, int recurse, int pretty,
+    int level)
+{
+	char *tc;
+
+	if (level && pretty)
+		printf("\n");
+	if (pretty)
+		prettyprint(b);
+	else
+		printf("%s\n", b);
+	if (!recurse || cgetstr(b, "tc", &tc) <= 0)
+		return;
+
+	b = mygetent(db_array, tc);
+	free(tc);
+
+	if (b == NULL)
+		return;
+
+	handleone(db_array, b, recurse, pretty, ++level);
+	free(b);
+}
+
 static int
 handlecap(const char *db, int argc, char *argv[])
 {
 	static const char sfx[] = "=#:";
 	const char *db_array[] = { db, NULL };
 	char	*b, *cap;
-	int	i, j, rv;
+	int	i, j, rv, c;
+	int	expand = 1, recurse = 0, pretty = 0;
 
 	assert(argc > 1);
 	assert(argv != NULL);
 
+	argc--;
+	argv++;
+	while ((c = getopt(argc, argv, "pnr")) != -1)
+		switch (c) {
+		case 'n':
+			expand = 0;
+			break;
+		case 'r':
+			expand = 0;
+			recurse = 1;
+			break;
+		case 'p':
+			pretty = 1;
+			break;
+		default:
+			usage();
+			break;
+		}
+
+	argc -= optind;
+	argv += optind;
+	csetexpandtc(expand);
 	rv = RV_OK;
-	if (argc == 2) {
+	if (argc == 0) {
 		for (b = mygetone(db_array, 1); b; b = mygetone(db_array, 0)) {
-			(void)printf("%s\n", b);
+			handleone(db_array, b, recurse, pretty, 0);
 			free(b);
 		}
 	} else {
-		if ((b = mygetent(db_array, argv[2])) == NULL)
+		if ((b = mygetent(db_array, argv[0])) == NULL)
 			return RV_NOTFOUND;
-		if (argc == 3)
-			(void)printf("%s\n", b);
+		if (argc == 1)
+			handleone(db_array, b, recurse, pretty, 0);
 		else {
-			for (i = 3; i < argc; i++) {
+			for (i = 2; i < argc; i++) {
 				for (j = 0; j < sizeof(sfx) - 1; j++) {
 					cap = cgetcap(b, argv[i], sfx[j]);
 					if (cap) {
