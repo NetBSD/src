@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.13 2007/10/17 19:57:05 garbled Exp $	*/
+/*	$NetBSD: mace.c,v 1.14 2008/02/02 08:58:20 sekiya Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.13 2007/10/17 19:57:05 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.14 2008/02/02 08:58:20 sekiya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,47 +143,6 @@ mace_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(sc->iot, ma->ma_addr, 0,
 	    BUS_SPACE_MAP_LINEAR, &sc->ioh))
 		panic("mace_attach: could not allocate memory\n");
-
-#if 0
-	/*
-	 * There's something deeply wrong with the alloc() routine -- it
-	 * returns a pointer to memory that is used by the kernel i/o
-	 * buffers.  Disable for now.
-	 */
-
-	if ((bus_dmamem_alloc(sc->dmat, 32768, PAGE_SIZE, 32768,
-	    &sc->seg, 1, &sc->nsegs, BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to allocate DMA memory\n");
-		return;
-	}
-
-	if ((bus_dmamem_map(sc->dmat, &sc->seg, sc->nsegs, 32768,
-	    (void **)&sc->isa_ringbuffer, BUS_DMA_NOWAIT | BUS_DMA_COHERENT))
-	    != 0) {
-		printf(": unable to map control data\n");
-		return;
-	}
-
-	if ((bus_dmamap_create(sc->dmat, 32768, 1, 32768, 0,
-	    BUS_DMA_NOWAIT, &sc->map)) != 0) {
-		printf(": unable to create DMA map for control data\n");
-		return;
-	}
-
-	if ((scratch = bus_dmamap_load(sc->dmat, sc->map, sc->isa_ringbuffer,
-	    32768, NULL, BUS_DMA_NOWAIT)) != 0) {
-		printf(": unable to load DMA map for control data %i\n",
-		    scratch);
-	}
-
-	memset(sc->isa_ringbuffer, 0, 32768);
-
-	bus_space_write_8(sc->iot, sc->ioh, MACE_ISA_RINGBASE,
-	    MIPS_KSEG1_TO_PHYS(sc->isa_ringbuffer) & 0xffff8000);
-
-	aprint_normal(" isa ringbuffer 0x%x size 32k",
-	    MIPS_KSEG1_TO_PHYS((unsigned long)sc->isa_ringbuffer));
-#endif
 
 	aprint_normal("\n");
 
@@ -324,7 +283,7 @@ mace_intr_disestablish(void *cookie)
 	if (intr == -1)
 		panic("mace: lost maceintrtab");
 
-	/* do not do a unmask, when irq is being shared. */
+	/* do not do an unmask when irq is shared. */
 	for (i = 0; i < MACE_NINTR; i++)
 		if (&maceintrtab[i].func != NULL && maceintrtab[i].irq == irq)
 			break;
@@ -353,10 +312,6 @@ mace_intr(int irqs)
 				maceintrtab[i].evcnt.ev_count++;
 	        	}
 		}
-#if 0
-		mips3_sd((u_int64_t *)MIPS_PHYS_TO_KSEG1(MACE_BASE
-		    + MACE_ISA_INT_STATUS), isa_mask);
-#endif
 		irqs &= ~(1 << 4);
 	}
 
