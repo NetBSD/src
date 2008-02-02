@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.14 2008/02/02 17:25:25 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.15 2008/02/02 22:59:30 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -236,4 +236,10 @@ sbin/newfs/mount_mfs.8				1.15
 	PR/37155 - Marcelo Schmidt -- specifying too large of a size
 	causes segvs
 	[jnemeth, ticket #1024]
+
+sys/arch/sun3/sun3/obmem.c			1.24
+
+	Pass correct size to allocate struct obmem_softc. Fixes an
+	occasional panic on my 3/80.
+	[tsutsui, ticket #1025]
 
