@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.126 2008/01/02 11:48:36 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.127 2008/02/02 10:40:50 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.126 2008/01/02 11:48:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.127 2008/02/02 10:40:50 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,6 +847,7 @@ ccdbuffer(struct ccd_softc *cs, struct buf *bp, daddr_t bn, void *addr,
 	cbp->cb_buf.b_blkno = cbn + cboff;
 	cbp->cb_buf.b_data = addr;
 	cbp->cb_buf.b_vp = ci->ci_vp;
+	cbp->cb_buf.b_objlock = &ci->ci_vp->v_interlock;
 	if (cs->sc_ileave == 0)
 		cbc = dbtob((u_int64_t)(ci->ci_size - cbn));
 	else
