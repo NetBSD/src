@@ -1,11 +1,7 @@
-$NetBSD: TODO,v 1.25 2007/03/04 09:09:10 tsutsui Exp $
+$NetBSD: TODO,v 1.26 2008/02/02 15:39:49 tsutsui Exp $
 
 To do list (in some particular order)
 XXX some entries might be obsolete.
-
-    o	sysinst
-	maybe MD fdisk partitioning support is required to load files
-	from FAT partition on ARC BIOS prompt.
 
     o	install notes
 
