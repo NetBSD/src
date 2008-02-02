@@ -1,4 +1,4 @@
-/*	$NetBSD: ssshfs.c,v 1.9 2006/12/01 12:50:52 pooka Exp $	*/
+/*	$NetBSD: ssshfs.c,v 1.9.2.1 2008/02/02 17:21:39 riz Exp $	*/
 
 /*
  * Copyright (c) 2006  Antti Kantee.  All Rights Reserved.
@@ -34,6 +34,7 @@
  * (sante sshfs?  severed (dreams) sshfs?  saucy sshfs?  sauerkraut sshfs?)
  */
 
+#include <sys/cdefs.h>
 #include <sys/types.h>
 
 #include <assert.h>
@@ -571,25 +572,16 @@ ssshfs_symlink(struct puffs_usermount *pu, void *opc, void **newnode,
 	const char *link_target)
 {
 	struct ssshnode *ssd = opc, *newssn;
-	char buf[MAXPATHLEN+1];
 	Attrib *a;
 	int rv;
 
 	if (sftp_proto_version(sftpc) < 3)
 		return EOPNOTSUPP;
 
-	if (*link_target == '/') {
-		strcpy(buf, link_target);
-	} else {
-		strcpy(buf, ssd->name);
-		strcat(buf, "/");
-		strcat(buf, link_target);
-	}
-
 	newssn = makenewnode(ssd, pcn->pcn_name, NULL);
 	puffs_setvattr(&newssn->va, va);
 	a = vattrtoAttrib(va);
-	if ((rv = do_symlink(sftpc, newssn->name, buf)) != 0)
+	if ((rv = do_symlink(sftpc, __UNCONST(link_target), newssn->name)) != 0)
 		return EIO;
 
 	ssd->dcache |= DCACHE_CHANGED;
