@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.7 2007/08/01 14:20:40 jmmv Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.8 2008/02/02 04:51:52 itohy Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:02:54 thorpej Exp */
 
@@ -49,12 +49,6 @@ message md_hello
 
 message Keyboard_type {Keyboard type}
 message kb_default {pl}
-
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac czy chcesz
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-Ktora instalacje chcesz zrobic?
-}
 
 message badreadbb
 {Nie moge przeczytac bootbloku filecore
