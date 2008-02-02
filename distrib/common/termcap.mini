@@ -1,0 +1,49 @@
+wsvt25m|NetBSD wscons in 25 line DEC VT220 mode with Meta:km:\
+	:tc=wsvt25:
+
+wsvt25|NetBSD wscons in 25 line DEC VT220 mode:Co#8:pa#64:it#8:ut:\
+	:co#80:li#25:vb@:if@:NC#2:k1=\E[11~:k2=\E[12~:k3=\E[13~:k4=\E[14~:\
+	:k5=\E[15~:k;=\E[21~:AB=\E[4%dm:AF=\E[3%dm:op=\E[m:is=\E[!p:\
+	:ti=\E)0:te=\E)B:ac=``aaffggjjkkllmmnnqqttuuvvwwxxyyzz{{}}~~:\
+	:@7=\E[8~:kh=\E[7~:kH=\E[8~:rs=\Ec:tc=vt220-8:
+
+vt220-8|dec vt220 8 bit terminal:am:bs:mi:ms:xn:xo:co#80:it#8:\
+	:li#24:AL=\E[%dL:DC=\E[%dP:DL=\E[%dM:DO=\E[%dB:IC=\E[%d@:LE=\E[%dD:\
+	:RI=\E[%dC:UP=\E[%dA:ae=^O:al=\E[L:as=^N:bl=^G:cd=\E[J:ce=\E[K:\
+	:cl=\E[H\E[J:cm=\E[%i%d;%dH:cr=^M:cs=\E[%i%d;%dr:ct=\E[3g:dc=\E[P:\
+	:dl=\E[M:do=^J:ec=\E[%dX:ei=\E[4l:ho=\E[H:\
+	:if=/usr/share/tabset/vt100:im=\E[4h:is=\E[?7h\E[>\E[?1h\E F\E[?4l:\
+	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:k6=\E[17~:k7=\E[18~:k8=\E[19~:\
+	:k9=\E[20~:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=^H:kd=\E[B:kh=\E[H:\
+	:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:me=\E[m:mr=\E[7m:\
+	:nd=\E[C:nw=\EE:rc=\E8:sc=\E7:se=\E[27m:sf=\ED:so=\E[7m:sr=\EM:\
+	:st=\EH:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:vb=\E[?5h\E[?5l:\
+	:ve=\E[?25h:vi=\E[?25l:
+
+vt100|vt100-am|dec vt100 (w/advanced video):am:bs:ms:xn:xo:co#80:\
+	:it#8:li#24:vt#3:@8=\EOM:DO=\E[%dB:K1=\EOq:K2=\EOr:K3=\EOs:K4=\EOp:\
+	:K5=\EOn:LE=\E[%dD:RA=\E[?7l:RI=\E[%dC:SA=\E[?7h:UP=\E[%dA:\
+	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:ae=\E(B:\
+	:as=\E(0:bl=^G:cb=\E[1K:cd=\E[J:ce=\E[K:cl=\E[H\E[J:cm=\E[%i%d;%dH:\
+	:cr=^M:cs=\E[%i%d;%dr:ct=\E[3g:do=^J:eA=\E(B:ho=\E[H:k0=\EOy:\
+	:k1=\EOP:k2=\EOQ:k3=\EOR:k4=\EOS:k5=\EOt:k6=\EOu:k7=\EOv:k8=\EOl:\
+	:k9=\EOw:k;=\EOx:kb=^H:kd=\EOB:ke=\E[?1l\E>:kl=\EOD:kr=\EOC:\
+	:ks=\E[?1h\E=:ku=\EOA:le=^H:mb=\E[5m:md=\E[1m:me=\E[m\017:mr=\E[7m:\
+	:nd=\E[C:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:sc=\E7:\
+	:se=\E[m:sf=^J:so=\E[7m:sr=\EM:st=\EH:ta=^I:ue=\E[m:up=\E[A:\
+	:us=\E[4m:
+
+vt220|vt200|DEC VT220 in vt100 emulation mode:am:bs:mi:pt:xn:xo:\
+	:co#80:li#24:vt#3:@7=\E[4~:RA=\E[?7l:SA=\E[?7h:\
+	:ac=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~:ae=\E(B:\
+	:al=\E[L:as=\E(0:bl=^G:cd=\E[J:ce=\E[K:cl=\E[H\E[2J:cm=\E[%i%d;%dH:\
+	:cr=^M:cs=\E[%i%d;%dr:dc=\E[P:dl=\E[M:do=\E[B:ei=\E[4l:ho=\E[H:\
+	:if=/usr/share/tabset/vt100:im=\E[4h:is=\E[1;24r\E[24;1H:k1=\EOP:\
+	:k2=\EOQ:k3=\EOR:k4=\EOS:k5=\E[17~:k6=\E[18~:k7=\E[19~:k8=\E[20~:\
+	:k9=\E[21~:k;=\E[29~:kD=\E[3~:kI=\E[2~:kN=\E[6~:kP=\E[5~:kb=^H:\
+	:kd=\E[B:kh=\E[1~:kl=\E[D:kr=\E[C:ku=\E[A:le=^H:mb=\E[5m:md=\E[1m:\
+	:me=\E[m:mr=\E[7m:nd=\E[C:nl=^J:\
+	:r2=\E>\E[?3l\E[?4l\E[?5l\E[?7h\E[?8h:rc=\E8:\
+	:rf=/usr/share/tabset/vt100:sc=\E7:se=\E[27m:sf=20\ED:so=\E[7m:\
+	:sr=14\EM:ta=^I:ue=\E[24m:up=\E[A:us=\E[4m:ve=\E[?25h:vi=\E[?25l:
+
