@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.91 2007/12/31 15:32:00 ad Exp $
+# $NetBSD: GENERIC,v 1.92 2008/02/02 17:54:16 uwe Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mmeye/conf/std.mmeye"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.91 $"
+#ident 		"GENERIC-$Revision: 1.92 $"
 
 maxusers	16		# estimated number of users
 
@@ -75,7 +75,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables
-options 	EXEC_ELF32	# 32-bit ELF executables
 
 # File systems
 file-system 	FFS		# UFS

@@ -1,4 +1,4 @@
-#	$NetBSD: MMEYE,v 1.36 2006/09/27 21:42:05 manu Exp $
+#	$NetBSD: MMEYE,v 1.37 2008/02/02 17:54:17 uwe Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -50,7 +50,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# COFF executables
-options 	EXEC_ELF32	# 32-bit ELF executables
 
 # File systems
 file-system 	FFS		# UFS
