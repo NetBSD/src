@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl.h,v 1.11 2005/12/11 12:20:19 christos Exp $	*/
+/*	$NetBSD: linux_fcntl.h,v 1.12 2008/02/02 21:54:01 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct linux_flock64 {
 	off_t	    l_len;
 	linux_pid_t l_pid;
 };
+
 #if defined(__i386__)
 #include <compat/linux/arch/i386/linux_fcntl.h>
 #elif defined(__m68k__)
@@ -82,5 +83,72 @@ struct linux_flock64 {
 #else
 #error Undefined linux_fcntl.h machine type.
 #endif
+
+/*
+ * We have to have 4 copies of the code that converts linux fcntl() file
+ * locking to native form because there are 4 layouts for the structures.
+ * To avoid replicating code, these defines are used.
+ *
+ * The next two functions take care of converting the flock
+ * structure back and forth between Linux and NetBSD format.
+ * The only difference in the structures is the order and size of
+ * the fields, and the 'whence' value.
+ */
+
+#define conv_linux_flock(LINUX, FLOCK) \
+static void \
+bsd_to_##LINUX##_##FLOCK(struct LINUX##_##FLOCK *lfp, const struct flock *bfp) \
+	copy_flock(lfp, LINUX_F, bfp, F) \
+\
+static void \
+LINUX##_to_bsd_##FLOCK(struct flock *bfp, const struct LINUX##_##FLOCK *lfp) \
+	copy_flock(bfp, F, lfp, LINUX_F)
+
+#define copy_flock(dst, dst_f, src, src_f) { \
+	dst->l_start = src->l_start; \
+	dst->l_len = src->l_len; \
+	dst->l_pid = src->l_pid; \
+	dst->l_whence = src->l_whence; \
+	switch (src->l_type) { \
+	case src_f##_RDLCK: \
+		dst->l_type = dst_f##_RDLCK; \
+		break; \
+	case src_f##_UNLCK: \
+		dst->l_type = dst_f##_UNLCK; \
+		break; \
+	case src_f##_WRLCK: \
+		dst->l_type = dst_f##_WRLCK; \
+		break; \
+	} \
+    }
+
+/*
+ * These two defines do the work within the sys_fcntl() switch statement.
+ */
+
+#define do_linux_getlk(fd, cmd, arg, LINUX, FLOCK) do { \
+	struct LINUX##_##FLOCK lfl; \
+	struct flock bfl; \
+	int fl_error; \
+	if ((fl_error = copyin(arg, &lfl, sizeof lfl))) \
+		return fl_error; \
+	LINUX##_to_bsd_##FLOCK(&bfl, &lfl); \
+	fl_error = do_fcntl_lock(l, fd, F_GETLK, &bfl); \
+	if (fl_error) \
+		return fl_error; \
+	bsd_to_##LINUX##_##FLOCK(&lfl, &bfl); \
+	return copyout(&lfl, arg, sizeof lfl); \
+    } while (0)
+
+#define do_linux_setlk(fd, cmd, arg, LINUX, FLOCK, setlk) do { \
+	struct LINUX##_##FLOCK lfl; \
+	struct flock bfl; \
+	int fl_error; \
+	if ((fl_error = copyin(arg, &lfl, sizeof lfl))) \
+		return fl_error; \
+	LINUX##_to_bsd_##FLOCK(&bfl, &lfl); \
+	return do_fcntl_lock(l, fd, cmd == setlk ? F_SETLK : F_SETLKW, &bfl); \
+    } while (0)
+
 
 #endif /* !_LINUX_FCNTL_H */
