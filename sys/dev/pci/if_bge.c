@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.142 2008/01/19 22:10:18 dyoung Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.143 2008/02/02 12:12:09 tron Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.142 2008/01/19 22:10:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.143 2008/02/02 12:12:09 tron Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2412,7 +2412,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	const struct bge_product *bp;
 	const struct bge_revision *br;
-	pci_chipset_tag_t	pc = sc->sc_pc;
+	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	bus_dma_segment_t	seg;
@@ -2442,6 +2442,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Map control/status registers.
 	 */
 	DPRINTFN(5, ("Map control/status regs\n"));
+	pc = sc->sc_pc;
 	command = pci_conf_read(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, command);
