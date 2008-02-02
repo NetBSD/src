@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2007/07/24 10:49:24 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2008/02/02 14:07:39 tsutsui Exp $
 #
 #	etc.cobalt/Makefile.inc -- cobalt-specific etc Makefile targets
 #
@@ -7,3 +7,5 @@
 # to update the release documentation in distrib/notes/common/contents
 
 KERNEL_SETS=		GENERIC INSTALL
+
+BUILD_KERNELS=		RAMDISK
