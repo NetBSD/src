@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.51 2007/12/22 11:38:55 dsl Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.52 2008/02/02 20:42:18 elad Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -255,7 +255,8 @@ struct ktr_saupcall {
 /*
  * trace flags (also in p_traceflags)
  */
-#define KTRFAC_ROOT	0x80000000	/* root set this trace */
+#define KTRFAC_PERSISTENT	0x80000000	/* persistent trace across sugid
+						   exec (exclusive) */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
 #define	KTRFAC_VER_MASK	0x0f000000	/* record version mask */

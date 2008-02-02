@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.48 2008/02/01 20:01:06 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.49 2008/02/02 20:42:19 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.48 2008/02/01 20:01:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.49 2008/02/02 20:42:19 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -486,7 +486,8 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 		}
 
-		if ((p->p_traceflag & KTRFAC_ROOT) || (p->p_flag & PK_SUGID)) {
+		if ((p->p_traceflag & KTRFAC_PERSISTENT) ||
+		    (p->p_flag & PK_SUGID)) {
 			result = KAUTH_RESULT_DENY;
 			break;
 		}
