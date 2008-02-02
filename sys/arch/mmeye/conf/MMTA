@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.36 2006/09/22 09:32:26 uwe Exp $
+#	$NetBSD: MMTA,v 1.37 2008/02/02 17:54:17 uwe Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -57,7 +57,6 @@ options 	COMPAT_MMEYE_OLDLABEL	# old mmeye's disklabel support
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
-options 	EXEC_ELF32	# 32-bit ELF executables (SVR4, Linux)
 options 	EXEC_COFF	# 32-bit COFF executables (sh-compiler)
 
 # File systems
