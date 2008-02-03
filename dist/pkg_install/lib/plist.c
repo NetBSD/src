@@ -1,4 +1,4 @@
-/*	$NetBSD: plist.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $	*/
+/*	$NetBSD: plist.c,v 1.1.1.3 2008/02/03 21:21:36 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: plist.c,v 1.24 1997/10/08 07:48:15 charnier Exp";
 #else
-__RCSID("$NetBSD: plist.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $");
+__RCSID("$NetBSD: plist.c,v 1.1.1.3 2008/02/03 21:21:36 joerg Exp $");
 #endif
 #endif
 
@@ -35,6 +35,35 @@ __RCSID("$NetBSD: plist.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $");
  *
  */
 
+/*-
+ * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #include "lib.h"
 #if HAVE_ERRNO_H
 #include <errno.h>
@@ -48,7 +77,7 @@ __RCSID("$NetBSD: plist.c,v 1.1.1.2 2007/08/03 13:58:21 joerg Exp $");
 
 /* This struct defines a plist command type */
 typedef struct cmd_t {
-	char   *c_s;		/* string to recognise */
+	const char   *c_s;		/* string to recognise */
 	pl_ent_t c_type;	/* type of command */
 	int     c_argc;		/* # of arguments */
 	int     c_subst;	/* can substitute real prefix */
@@ -239,30 +268,90 @@ free_plist(package_t *pkg)
  * For an ASCII string denoting a plist command, return its code and
  * optionally its argument(s)
  */
-int
-plist_cmd(unsigned char *s, char **arg)
+static int
+plist_cmd(const char *s, char **arg)
 {
 	const cmd_t *cmdp;
-	/* 20 == fudge for max cmd len */
-	unsigned char cmd[MaxPathSize + 20];
-	unsigned char *cp;
-	unsigned char *sp;
+	const char *cp, *sp;
+	char *sp2;
 
-	(void) strlcpy(cmd, s, sizeof(cmd));
-	str_lowercase(cmd);
-	for (cp = cmd, sp = s; *cp; cp++, sp++) {
-		if (isspace(*cp)) {
-			for (*cp = '\0'; isspace(*sp); sp++) {
-			}
+	for (cmdp = cmdv; cmdp->c_s; ++cmdp) {
+		for (sp = s, cp = cmdp->c_s; *sp && *cp; ++cp, ++sp)
+			if (tolower((unsigned char)*sp) != *cp)
+				break;
+		if (*cp == '\0')
 			break;
-		}
 	}
-	if (arg) {
-		*arg = sp;
-	}
-	for (cmdp = cmdv; cmdp->c_s && strcmp(cmdp->c_s, cmd) != 0; cmdp++) {
+
+	if (cmdp->c_s == NULL || arg == NULL)
+		return cmdp->c_type;
+
+	while (isspace((unsigned char)*sp))
+		++sp;
+	*arg = strdup(sp);
+	if (*arg == NULL)
+		err(2, "strdup failed");
+	if (*sp) {
+		sp2 = *arg + strlen(*arg) - 1;
+		/*
+		 * The earlier loop ensured that at least one non-whitespace
+		 * is in the string.
+		 */
+		while (isspace((unsigned char)*sp2))
+			--sp2;
+		sp2[1] = '\0';
 	}
 	return cmdp->c_type;
+}
+
+/*
+ * Parse a packaging list from a memory buffer.
+ */
+void
+parse_plist(package_t *pkg, const char *buf)
+{
+	int cmd;
+	char *line, *cp;
+	const char *eol, *next;
+	size_t len;
+
+	for (; *buf; buf = next) {
+		/* Until add_plist can deal with trailing whitespace. */
+		if ((eol = strchr(buf, '\n')) != NULL) {
+			next = eol + 1;
+			len = eol - buf;
+		} else {
+			len = strlen(buf);
+			next = buf + len;
+		}
+
+		while (len && isspace((unsigned char)buf[len - 1]))
+			--len;
+
+		if (len == 0)
+			continue;
+
+		line = malloc(len + 1);
+		if (line == NULL)
+			err(2, "malloc failed");
+		memcpy(line, buf, len);
+		line[len] = '\0';
+
+		if (*(cp = line) == CMD_CHAR) {
+			if ((cmd = plist_cmd(line + 1, &cp)) == FAIL) {
+				warnx("Unrecognised PLIST command `%s'", line);
+				continue;
+			}
+			if (*cp == '\0') {
+				free(cp);
+				cp = NULL;
+			}
+		} else {
+			cmd = PLIST_FILE;
+		}
+		add_plist(pkg, cmd, cp);
+		free(cp);
+	}
 }
 
 /*
@@ -275,6 +364,7 @@ read_plist(package_t *pkg, FILE * fp)
 	char   *cp;
 	int     cmd;
 	int     len;
+	int	free_cp;
 
 	while (fgets(pline, MaxPathSize, fp) != (char *) NULL) {
 		for (len = strlen(pline); len &&
@@ -284,18 +374,23 @@ read_plist(package_t *pkg, FILE * fp)
 		if (len == 0) {
 			continue;
 		}
+		free_cp = 0;
 		if (*(cp = pline) == CMD_CHAR) {
 			if ((cmd = plist_cmd(pline + 1, &cp)) == FAIL) {
 				warnx("Unrecognised PLIST command `%s'", pline);
 				continue;
 			}
 			if (*cp == '\0') {
+				free(cp);
 				cp = NULL;
 			}
+			free_cp = 1;
 		} else {
 			cmd = PLIST_FILE;
 		}
 		add_plist(pkg, cmd, cp);
+		if (free_cp)
+			free(cp);
 	}
 }
 

@@ -1,11 +1,11 @@
-/*	$NetBSD: var.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $	*/
+/*	$NetBSD: var.c,v 1.1.1.3 2008/02/03 21:21:37 joerg Exp $	*/
 
 /*-
- * Copyright (c) 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Dieter Baron, Thomas Klausner, and Johnny Lam.
+ * by Dieter Baron, Thomas Klausner, Johnny Lam, and Joerg Sonnenberger.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +40,7 @@
 #include <sys/cdefs.h>
 #endif
 #ifndef lint
-__RCSID("$NetBSD: var.c,v 1.1.1.2 2007/08/14 22:59:51 joerg Exp $");
+__RCSID("$NetBSD: var.c,v 1.1.1.3 2008/02/03 21:21:37 joerg Exp $");
 #endif
 
 #if HAVE_SYS_STAT_H
@@ -65,34 +65,29 @@ static void var_print(FILE *, const char *, const char *);
  * Copy the specified varibales from the file fname to stdout.
  */
 int
-var_copy_list(const char *fname, const char **variables)
+var_copy_list(const char *buf, const char **variables)
 {
-	FILE   *fp;
-	char   *line;
-	size_t  len;
-	const char *p;
+	const char *eol, *next, *p;
+	size_t len;
 	int i;
 
-	fp = fopen(fname, "r");
-	if (!fp) {
-		if (errno != ENOENT)
-			warn("var_copy_list: can't open '%s' for reading",
-			     fname);
-		return -1;
-	}
+	for (; *buf; buf = next) {
+		if ((eol = strchr(buf, '\n')) != NULL) {
+			next = eol + 1;
+			len = eol - buf;
+		} else {
+			next = eol;
+			len = strlen(buf);
+		}
 
-	while ((line = fgetln(fp, &len)) != (char *) NULL) {
-		if (line[len - 1] == '\n')
-			--len;
 		for (i=0; variables[i]; i++) {
-			if ((p=var_cmp(line, len, variables[i],
+			if ((p=var_cmp(buf, len, variables[i],
 				       strlen(variables[i]))) != NULL) {
-				printf("%.*s\n", (int)len, line);
+				printf("%.*s\n", (int)len, buf);
 				break;
 			}
 		}
 	}
-	(void) fclose(fp);
 	return 0;
 }
 
@@ -143,6 +138,48 @@ var_get(const char *fname, const char *variable)
 		valuelen += thislen;
 	}
 	(void) fclose(fp);
+	return value;
+}
+
+/*
+ * Print the value of variable from the memory buffer to stdout.
+ */
+char *
+var_get_memory(const char *buf, const char *variable)
+{
+	const char *eol, *next, *data;
+	size_t len, varlen, thislen, valuelen;
+	char *value;
+
+	varlen = strlen(variable);
+	if (varlen == 0)
+		return NULL;
+
+	value = NULL;
+	valuelen = 0;
+
+	for (; *buf; buf = next) {
+		if ((eol = strchr(buf, '\n')) != NULL) {
+			next = eol + 1;
+			len = eol - buf;
+		} else {
+			next = eol;
+			len = strlen(buf);
+		}
+		if ((data = var_cmp(buf, len, variable, varlen)) == NULL)
+			continue;
+
+		thislen = buf + len - data;
+		if (value) {
+			value = realloc(value, valuelen+thislen+2);
+			value[valuelen++] = '\n';
+		}
+		else {
+			value = malloc(thislen+1);
+		}
+		sprintf(value + valuelen, "%.*s", (int)thislen, data);
+		valuelen += thislen;
+	}
 	return value;
 }
 
