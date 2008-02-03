@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.1.2,v 1.1.2.16 2008/01/21 19:08:28 bouyer Exp $
+#	$NetBSD: CHANGES-3.1.2,v 1.1.2.17 2008/02/03 18:32:01 riz Exp $
 
 A complete list of changes from the NetBSD 3.1.1 release to the NetBSD 3.1.2
 release:
@@ -178,4 +178,14 @@ xsrc/xfree/xc/lib/font/bitmap/pcfread.c		1.3
 
 	Apply security fix for CVE-2008-0006.
 	[tron, ticket #1896]
+
+games/larn/bill.c				1.9
+games/larn/header.h				1.18 via patch
+games/larn/main.c				1.21
+games/larn/scores.c				1.16
+
+	Since games are (now) setgid, not setuid, it is no longer necessary to
+	manipulate the effective uid, only the effective gid.
+	Use mkstemp to make the temporary files used when you win.
+	[dholland, ticket #1899]
 
