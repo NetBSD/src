@@ -1,4 +1,4 @@
-/* $NetBSD: header.h,v 1.18 2008/02/03 03:45:55 dholland Exp $	 */
+/* $NetBSD: header.h,v 1.19 2008/02/03 19:29:50 dholland Exp $	 */
 
 /* header.h		Larn is copyrighted 1986 by Noah Morgan. */
 
@@ -331,7 +331,7 @@ struct sphere {
 
 #ifndef NODEFS
 extern char     VERSION, SUBVERSION;
-extern u_char   alpha[], beenhere[], boldon, cheat, ckpflag;
+extern u_char   beenhere[], boldon, cheat, ckpflag;
 extern const char *class[];
 extern u_char   course[];
 extern char     diagfile[], helpfile[], ckpfile[], larnlevels[],
@@ -371,7 +371,7 @@ extern struct cel *cell;
 extern struct monst monster[];
 extern struct sphere *spheres;
 extern struct _itm itm[];
-extern int      rmst, maxitm, lasttime;
+extern int      rmst, lasttime;
 
 /* macro to create scroll #'s with probability of occurrence */
 #define newscroll() (scprob[rund(81)])

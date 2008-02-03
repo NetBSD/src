@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.12 2008/01/28 05:38:54 dholland Exp $	 */
+/*	$NetBSD: store.c,v 1.13 2008/02/03 19:29:50 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.12 2008/01/28 05:38:54 dholland Exp $");
+__RCSID("$NetBSD: store.c,v 1.13 2008/02/03 19:29:50 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -51,8 +51,10 @@ static void otradhead(void);
 
 static int      dndcount = 0, dnditm = 0;
 
+/* number of items in the dnd inventory table	 */
+#define MAXITM 83
+
 /* this is the data for the stuff in the dnd store	 */
-int             maxitm = 83;	/* number of items in the dnd inventory table	 */
 struct _itm     itm[90] = {
 	/*
 	 * cost 		iven name		iven arg   how gp
@@ -278,13 +280,13 @@ dndstore()
 			return;
 		} else if (i == ' ') {
 			cl_dn(1, 4);
-			if ((dnditm += 26) >= maxitm)
+			if ((dnditm += 26) >= MAXITM)
 				dnditm = 0;
 			dnd_hed();
 		} else {	/* buy something */
 			lprc(i);/* echo the byte */
 			i += dnditm - 'a';
-			if (i >= maxitm)
+			if (i >= MAXITM)
 				outofstock();
 			else if (itm[i].qty <= 0)
 				outofstock();
@@ -320,7 +322,7 @@ dnditem(i)
 	int    i;
 {
 	int    j, k;
-	if (i >= maxitm)
+	if (i >= MAXITM)
 		return;
 	cursor((j = (i & 1) * 40 + 1), (k = ((i % 26) >> 1) + 5));
 	if (itm[i].qty == 0) {
@@ -794,7 +796,7 @@ otradepost()
 			} else if (iven[isub] == 0)
 				lprintf("\nYou don't have item %c!", isub + 'a');
 			else {
-				for (j = 0; j < maxitm; j++)
+				for (j = 0; j < MAXITM; j++)
 					if ((itm[j].obj == iven[isub]) || (iven[isub] == ODIAMOND) || (iven[isub] == ORUBY) || (iven[isub] == OEMERALD) || (iven[isub] == OSAPPHIRE)) {
 						srcount = 0;
 						show3(isub);	/* show what the item
@@ -827,10 +829,10 @@ otradepost()
 							iven[isub] = 0;
 						} else
 							lprcat("no thanks.\n");
-						j = maxitm + 100;	/* get out of the inner
+						j = MAXITM + 100;	/* get out of the inner
 									 * loop */
 					}
-				if (j <= maxitm + 2)
+				if (j <= MAXITM + 2)
 					lprcat("\nSo sorry, but we are not authorized to accept that item.");
 			}
 		}
