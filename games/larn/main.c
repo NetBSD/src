@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.16 2001/02/05 00:57:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.16.8.1 2008/02/03 18:29:05 riz Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.16 2001/02/05 00:57:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.16.8.1 2008/02/03 18:29:05 riz Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -20,7 +20,7 @@ int             srcount = 0;	/* line counter for showstr()	 */
 int             dropflag = 0;	/* if 1 then don't lookforobject() next round */
 int             rmst = 80;	/* random monster creation counter		 */
 int             userid;		/* the players login user id number */
-uid_t           uid, euid;	/* used for security */
+gid_t           gid, egid;	/* used for security */
 u_char          nowelcome = 0, nomove = 0;	/* if (nomove) then don't
 						 * count next iteration as a
 						 * move */
@@ -63,9 +63,9 @@ main(argc, argv)
 	struct passwd  *pwe;
 
 	i = 0;
-	euid = geteuid();
-	uid = getuid();
-	seteuid(uid);		/* give up "games" if we have it */
+	egid = getegid();
+	gid = getgid();
+	setegid(gid);		/* give up "games" if we have it */
 	/*
 	 *	first task is to identify the player
 	 */
