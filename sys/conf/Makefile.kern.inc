@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.107 2008/01/17 20:14:49 joerg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.108 2008/02/03 06:46:29 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -374,6 +374,13 @@ ${_cfile:T:R}.ln: ${_cfile}
 lint: ${LOBJS}
 	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${LOBJS}
 .endif
+
+# Attempt to do a syntax-only compile of the entire kernel as one entity.
+# Alas, bugs in the GCC C frontend prevent this from completely effective
+# but information can be gleaned from the output.
+syntax-only: ${CFILES} ${MD_CFILES}
+	${CC} -fsyntax-only -combine ${CFLAGS} ${CPPFLAGS} \
+		${CFILES} ${MD_CFILES}
 
 # List of kernel images that will be installed into the root file system.
 # Some platforms may need to install more than one (e.g. a netbsd.aout file
