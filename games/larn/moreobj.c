@@ -1,4 +1,4 @@
-/*	$NetBSD: moreobj.c,v 1.8 2008/01/28 05:38:54 dholland Exp $	*/
+/*	$NetBSD: moreobj.c,v 1.9 2008/02/03 21:24:58 dholland Exp $	*/
 
 /*
  * moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -9,7 +9,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moreobj.c,v 1.8 2008/01/28 05:38:54 dholland Exp $");
+__RCSID("$NetBSD: moreobj.c,v 1.9 2008/02/03 21:24:58 dholland Exp $");
 #endif				/* not lint */
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,11 +35,11 @@ oaltar()
 	iopts();
 	while (1) {
 		while (1)
-			switch (lgetchar()) {
+			switch (ttgetch()) {
 			case 'p':
 				lprcat(" pray\nDo you (m) give money or (j) just pray? ");
 				while (1)
-					switch (lgetchar()) {
+					switch (ttgetch()) {
 					case 'j':
 						if (rnd(100) < 75)
 							lprcat("\nnothing happens");
@@ -153,7 +153,7 @@ othrone(arg)
 	iopts();
 	while (1) {
 		while (1)
-			switch (lgetchar()) {
+			switch (ttgetch()) {
 			case 'p':
 				lprcat(" pry off");
 				k = rnd(101);
@@ -203,7 +203,7 @@ odeadthrone()
 	iopts();
 	while (1) {
 		while (1)
-			switch (lgetchar()) {
+			switch (ttgetch()) {
 			case 's':
 				lprcat(" sit down");
 				k = rnd(101);
@@ -238,7 +238,7 @@ ochest()
 	iopts();
 	while (1) {
 		while (1)
-			switch (lgetchar()) {
+			switch (ttgetch()) {
 			case 'o':
 				lprcat(" open it");
 				k = rnd(101);
@@ -307,7 +307,7 @@ ofountain()
 	lprcat("\nDo you (d) drink, (w) wash yourself");
 	iopts();
 	while (1)
-		switch (lgetchar()) {
+		switch (ttgetch()) {
 		case 'd':
 			lprcat("drink");
 			if (rnd(1501) < 2) {

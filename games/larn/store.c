@@ -1,4 +1,4 @@
-/*	$NetBSD: store.c,v 1.13 2008/02/03 19:29:50 dholland Exp $	 */
+/*	$NetBSD: store.c,v 1.14 2008/02/03 21:24:59 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char     sccsid[] = "@(#)store.c	5.4 (Berkeley) 5/13/91";
 #else
-__RCSID("$NetBSD: store.c,v 1.13 2008/02/03 19:29:50 dholland Exp $");
+__RCSID("$NetBSD: store.c,v 1.14 2008/02/03 21:24:59 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -251,7 +251,7 @@ dndstore()
 		lflush();
 		i = 0;
 		while (i != '\33')
-			i = lgetchar();
+			i = ttgetch();
 		drawscreen();
 		nosignal = 0;	/* enable signals */
 		return;
@@ -269,7 +269,7 @@ dndstore()
 		lprcat(" to leave]? ");
 		i = 0;
 		while ((i < 'a' || i > 'z') && (i != ' ') && (i != '\33') && (i != 12))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 12) {
 			clear();
 			dnd_2hed();
@@ -404,7 +404,7 @@ oschool()
 		yrepcount = 0;
 		i = 0;
 		while ((i < 'a' || i > 'h') && (i != '\33') && (i != 12))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 12) {
 			sch_hed();
 			continue;
@@ -543,7 +543,7 @@ banktitle(const char *str)
 		lflush();
 		i = 0;
 		while (i != '\33')
-			i = lgetchar();
+			i = ttgetch();
 		drawscreen();
 		nosignal = 0;	/* enable signals */
 		return;
@@ -624,7 +624,7 @@ obanksub()
 		yrepcount = 0;
 		i = 0;
 		while (i != 'd' && i != 'w' && i != 's' && i != '\33')
-			i = lgetchar();
+			i = ttgetch();
 		switch (i) {
 		case 'd':
 			lprcat("deposit\nHow much? ");
@@ -662,7 +662,7 @@ obanksub()
 			lprcat("\nWhich stone would you like to sell? ");
 			i = 0;
 			while ((i < 'a' || i > 'z') && i != '*')
-				i = lgetchar();
+				i = ttgetch();
 			if (i == '*')
 				for (i = 0; i < 26; i++) {
 					if (gemvalue[i]) {
@@ -768,7 +768,7 @@ otradepost()
 		lprcat("] ? ");
 		i = 0;
 		while (i > 'z' || (i < 'a' && i != '*' && i != '\33' && i != '.'))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == '\33') {
 			setscroll();
 			recalc();
@@ -872,7 +872,7 @@ olrs()
 		yrepcount = 0;
 		i = 0;
 		while (i != 'p' && i != '\33')
-			i = lgetchar();
+			i = ttgetch();
 		switch (i) {
 		case 'p':
 			lprcat("pay taxes\nHow much? ");
