@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.159 2007/12/03 15:34:24 ad Exp $	 */
+/* $NetBSD: machdep.c,v 1.160 2008/02/03 08:36:41 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.159 2007/12/03 15:34:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.160 2008/02/03 08:36:41 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -518,8 +518,7 @@ process_set_pc(l, addr)
 }
 
 int
-process_sstep(l, sstep)
-	struct lwp    *l;
+process_sstep(struct lwp *l, int sstep)
 {
 	void	       *ptr;
 	struct trapframe *tf;
