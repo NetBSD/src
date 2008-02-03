@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2007/10/18 17:43:02 he Exp $
+#	$NetBSD: Makefile,v 1.5 2008/02/03 23:48:09 mrg Exp $
 #
 #	$eterna: Makefile,v 1.26 2005/09/27 20:09:20 mrg Exp $
 
@@ -17,13 +17,22 @@ MAN=	httpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
 
+LDADD=	-lcrypt
+DPADD=	${LIBCRYPT}
+
 WARNS=	3
 
-CRYPTOLIBS=	-lcrypto -lssl -lcrypt
-CRYPTODEPS=	${LIBCRYPTO} ${LIBSSL} ${LIBCRYPT}
+.include <bsd.own.mk>
 
-# if not defining -DNO_SSL_SUPPORT
-LDADD=	-lssl -lcrypto -lcrypt
-DPADD=	${LIBSSL} ${LIBCRYPTO} ${LIBCRYPT}
+.if ${MKCRYPTO} != "no"
+
+LDADD+=	-lssl -lcrypto
+DPADD+=	${LIBSSL} ${LIBCRYPTO}
+
+.else
+
+COPTS+=	-DNO_SSL_SUPPORT
+
+.endif
 
 .include <bsd.prog.mk>
