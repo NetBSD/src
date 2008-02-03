@@ -1,16 +1,26 @@
-/* $NetBSD: create.c,v 1.9 2008/01/28 05:38:53 dholland Exp $	 */
+/* $NetBSD: create.c,v 1.10 2008/02/03 19:20:40 dholland Exp $	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: create.c,v 1.9 2008/01/28 05:38:53 dholland Exp $");
+__RCSID("$NetBSD: create.c,v 1.10 2008/02/03 19:20:40 dholland Exp $");
 #endif				/* not lint */
 
 #include "header.h"
 #include "extern.h"
 #include <unistd.h>
+
+static void makemaze(int);
+static int cannedlevel(int);
+static void treasureroom(int);
+static void troom(int, int, int, int, int, int);
+static void makeobject(int);
+static void fillmroom(int, int, int);
+static void froom(int, int, int);
 static void fillroom(int, int);
+static void sethp(int);
+static void checkgen(void);
 
 /*
 	makeplayer()
@@ -103,7 +113,8 @@ chgn:	checkgen();		/* wipe out any genocided monsters */
 	subroutine to make the caverns for a given level.  only walls are made.
  */
 static int      mx, mxl, mxh, my, myl, myh, tmp2;
-void
+
+static void
 makemaze(k)
 	int             k;
 {
@@ -228,7 +239,7 @@ eat(xx, yy)
  *		~	eye of larn		!	cure dianthroritis
  *		-	random object
  */
-int
+static int
 cannedlevel(k)
 	int             k;
 {
@@ -305,7 +316,7 @@ cannedlevel(k)
 	level 10's treasure room has the eye in it and demon lords
 	level V3 has potion of cure dianthroritis and demon prince
  */
-void
+static void
 treasureroom(lv)
 	int             lv;
 {
@@ -328,7 +339,7 @@ treasureroom(lv)
  *	room is filled with objects and monsters
  *	the coordinate given is that of the upper left corner of the room
  */
-void
+static void
 troom(lv, xsize, ysize, tx, ty, glyph)
 	int             lv, xsize, ysize, tx, ty, glyph;
 {
@@ -386,7 +397,7 @@ troom(lv, xsize, ysize, tx, ty, glyph)
 	***********
 	subroutine to create the objects in the maze for the given level
  */
-void
+static void
 makeobject(j)
 	int             j;
 {
@@ -480,7 +491,7 @@ makeobject(j)
 	subroutine to fill in a number of objects of the same kind
  */
 
-void
+static void
 fillmroom(n, what, arg)
 	int             n, arg;
 	char            what;
@@ -489,7 +500,8 @@ fillmroom(n, what, arg)
 	for (i = 0; i < n; i++)
 		fillroom(what, arg);
 }
-void
+
+static void
 froom(int n, int theitem, int arg)
 {
 	if (rnd(151) < n)
@@ -561,7 +573,7 @@ fillmonst(what)
 	must be done when entering a new level
 	if sethp(1) then wipe out old monsters else leave them there
  */
-void
+static void
 sethp(flg)
 	int             flg;
 {
@@ -587,8 +599,8 @@ sethp(flg)
 /*
  *	Function to destroy all genocided monsters on the present level
  */
-void
-checkgen()
+static void
+checkgen(void)
 {
 	int             x, y;
 	for (y = 0; y < MAXY; y++)
