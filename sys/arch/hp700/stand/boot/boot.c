@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.8 2007/03/04 05:59:52 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.9 2008/02/03 12:09:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -76,13 +76,17 @@
 
 #include <arch/hp700/stand/common/dev_hppa.h>
 
+#include "bootinfo.h"
+
 /*
  * Boot program... bits in `howto' determine whether boot stops to
  * ask for system name.	 Boot device is derived from ROM provided
  * information.
  */
 
-char line[100];
+#define	MAXLEN	100
+
+char line[MAXLEN];
 char devname_buffer[16];
 
 extern	u_int opendev;
@@ -110,7 +114,7 @@ void exec_hp700(char *, u_long, int);
 int tgets(char *);
 void _rtt(void);
 
-typedef void (*startfuncp)(int, int, int, int, int, int, void *)
+typedef void (*startfuncp)(int, int, int, int, int, void *)
     __attribute__ ((noreturn));
 
 int howto;
@@ -130,7 +134,7 @@ int
 main(void)
 {
 	int currname = 0;
-	char *filename, filename_buffer[100];
+	char *filename, filename_buffer[MAXLEN];
 
 	printf("\n");
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);  
@@ -138,6 +142,11 @@ main(void)
 	printf(">> Enter \"reset\" to reset system.\n");
 
 	for (;;) {
+		size_t size;
+
+		/* reset bootinfo structure */
+		bi_init();
+
 		name = names[currname++];
 		if (currname == NUMNAMES)
 			currname = 0;
@@ -155,6 +164,18 @@ main(void)
 			strcat(filename_buffer, name);
 			filename = filename_buffer;
 		}
+
+		size = sizeof(struct btinfo_common) + strlen(name) + 1;
+	        /* Impose limit (somewhat arbitrary) */
+		if (size < BOOTINFO_MAXSIZE / 2) {
+			union {
+				struct btinfo_kernelfile bi_file;
+				char x[size];
+			} U;
+			strcpy(U.bi_file.name, name);
+			BI_ADD(&U.bi_file, BTINFO_KERNELFILE, size);
+		}
+
 		exec_hp700(filename, 0, howto);
 		printf("boot: %s\n", strerror(errno));
 	}
@@ -211,15 +232,9 @@ exec_hp700(char *file, u_long loadaddr, int boot_howto)
 	extern int debug;
 	int i;
 #endif
-	size_t ac = BOOTARG_LEN;
-	void *av = (void *)BOOTARG_OFF;
-#define	BOOTARG_APIVER 2
+	struct btinfo_symtab bi_syms;
 	u_long marks[MARK_MAX];
 	int fd;
-
-#ifdef notyet
-	makebootargs(av, &ac);
-#endif
 
 	marks[MARK_START] = loadaddr;
 #ifdef EXEC_DEBUG
@@ -233,13 +248,6 @@ exec_hp700(char *file, u_long loadaddr, int boot_howto)
 	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
 	    marks[MARK_ENTRY], marks[MARK_NSYM],
 	    marks[MARK_SYM], marks[MARK_END]);
-
-#if 0
-	bt = (struct btinfo_magic *)lowram;
-        bt->common.type = BTINFO_MAGIC;
-        bt->magic1 = BOOTINFO_MAGIC1;
-        bt->magic2 = BOOTINFO_MAGIC2;
-#endif
 
 #ifdef EXEC_DEBUG
 	if (debug) {
@@ -256,12 +264,18 @@ exec_hp700(char *file, u_long loadaddr, int boot_howto)
 	}
 #endif
 
+	bi_syms.nsym = marks[MARK_NSYM];
+	bi_syms.ssym = marks[MARK_SYM];
+	bi_syms.esym = marks[MARK_END];
+	BI_ADD(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
+
 	fcacheall();
 
 	__asm("mtctl %r0, %cr17");
 	__asm("mtctl %r0, %cr17");
+
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)(marks[MARK_ENTRY])) ((int)pdc, boot_howto, bootdev, marks[MARK_END],
-				       BOOTARG_APIVER, ac, av);
+	(*(startfuncp)(marks[MARK_ENTRY])) ((int)pdc, boot_howto, bootdev,
+	     marks[MARK_END], BOOTARG_APIVER, &bootinfo);
 	/* not reached */
 }
