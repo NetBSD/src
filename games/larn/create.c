@@ -1,10 +1,10 @@
-/* $NetBSD: create.c,v 1.10 2008/02/03 19:20:40 dholland Exp $	 */
+/* $NetBSD: create.c,v 1.11 2008/02/03 19:29:50 dholland Exp $	 */
 
 /* create.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: create.c,v 1.10 2008/02/03 19:20:40 dholland Exp $");
+__RCSID("$NetBSD: create.c,v 1.11 2008/02/03 19:29:50 dholland Exp $");
 #endif				/* not lint */
 
 #include "header.h"
@@ -80,30 +80,31 @@ newcavelevel(x)
 		savelevel();	/* put the level back into storage	 */
 	level = x;		/* get the new level and put in working
 				 * storage */
-	if (beenhere[x] == 0)
-		for (i = 0; i < MAXY; i++)
-			for (j = 0; j < MAXX; j++)
-				know[j][i] = mitem[j][i] = 0;
-	else {
+	if (beenhere[x]) {
 		getlevel();
 		sethp(0);
-		goto chgn;
+		checkgen();
+		return;
 	}
+
+	/* fill in new level */
+	for (i = 0; i < MAXY; i++)
+		for (j = 0; j < MAXX; j++)
+			know[j][i] = mitem[j][i] = 0;
 	makemaze(x);
 	makeobject(x);
 	beenhere[x] = 1;
 	sethp(1);
+	checkgen();		/* wipe out any genocided monsters */
 
 #if WIZID
 	if (wizard || x == 0)
 #else
 	if (x == 0)
 #endif
-
 		for (j = 0; j < MAXY; j++)
 			for (i = 0; i < MAXX; i++)
 				know[i][j] = 1;
-chgn:	checkgen();		/* wipe out any genocided monsters */
 }
 
 /*

@@ -1,9 +1,9 @@
-/*	$NetBSD: savelev.c,v 1.5 2008/01/28 05:38:54 dholland Exp $	*/
+/*	$NetBSD: savelev.c,v 1.6 2008/02/03 19:29:50 dholland Exp $	*/
 
 /* savelev.c		 Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: savelev.c,v 1.5 2008/01/28 05:38:54 dholland Exp $");
+__RCSID("$NetBSD: savelev.c,v 1.6 2008/02/03 19:29:50 dholland Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -32,7 +32,8 @@ savelevel()
 		pcel->hitp = *phitp++;
 		pcel->item = *pitem++;
 		pcel->know = *pknow++;
-		pcel++->iarg = *piarg++;
+		pcel->iarg = *piarg++;
+		pcel++;
 	}
 }
 
@@ -60,6 +61,7 @@ getlevel()
 		*phitp++ = pcel->hitp;
 		*pitem++ = pcel->item;
 		*pknow++ = pcel->know;
-		*piarg++ = pcel++->iarg;
+		*piarg++ = pcel->iarg;
+		pcel++;
 	}
 }
