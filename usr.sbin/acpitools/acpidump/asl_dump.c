@@ -1,4 +1,4 @@
-/*	$NetBSD: asl_dump.c,v 1.3 2008/02/03 03:40:52 christos Exp $	*/
+/*	$NetBSD: asl_dump.c,v 1.4 2008/02/03 09:25:49 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.7 2002/03/02 15:05:26 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: asl_dump.c,v 1.3 2008/02/03 03:40:52 christos Exp $");
+__RCSID("$NetBSD: asl_dump.c,v 1.4 2008/02/03 09:25:49 dogcow Exp $");
 
 #include <sys/param.h>
 
@@ -45,6 +45,8 @@ __RCSID("$NetBSD: asl_dump.c,v 1.3 2008/02/03 03:40:52 christos Exp $");
 
 #ifdef DEBUG
 #define ASSERT(a) assert(a)
+#else
+#define ASSERT(a) ;
 #endif
 
 struct aml_environ	asl_env;
