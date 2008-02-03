@@ -1,4 +1,4 @@
-/*	$NetBSD: asl_dump.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
+/*	$NetBSD: asl_dump.c,v 1.3 2008/02/03 03:40:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
@@ -30,7 +30,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.7 2002/03/02 15:05:26 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: asl_dump.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
+__RCSID("$NetBSD: asl_dump.c,v 1.3 2008/02/03 03:40:52 christos Exp $");
 
 #include <sys/param.h>
 
@@ -42,6 +42,10 @@ __RCSID("$NetBSD: asl_dump.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
 #include "acpidump.h"
 
 #include "aml/aml_env.h"
+
+#ifdef DEBUG
+#define ASSERT(a) assert(a)
+#endif
 
 struct aml_environ	asl_env;
 int			rflag;
@@ -235,7 +239,7 @@ asl_dump_defscope(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 	ASL_LEAVE_SCOPE(oname);
 	*dpp = dp;
 }
@@ -690,7 +694,7 @@ asl_dump_defmethod(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 	ASL_LEAVE_SCOPE(oname);
 	*dpp = dp;
 }
@@ -824,7 +828,7 @@ asl_dump_deffield(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	*dpp = dp;
 }
@@ -859,7 +863,7 @@ asl_dump_defindexfield(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	*dpp = dp;
 }
@@ -896,7 +900,7 @@ asl_dump_defbankfield(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	*dpp = dp;
 }
@@ -923,7 +927,7 @@ asl_dump_defdevice(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	ASL_LEAVE_SCOPE(oname);
 	*dpp = dp;
@@ -957,7 +961,7 @@ asl_dump_defprocessor(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	ASL_LEAVE_SCOPE(oname);
 	*dpp = dp;
@@ -989,7 +993,7 @@ asl_dump_defpowerres(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	ASL_LEAVE_SCOPE(oname);
 	*dpp = dp;
@@ -1017,7 +1021,7 @@ asl_dump_defthermalzone(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	ASL_LEAVE_SCOPE(oname);
 	*dpp = dp;
@@ -1043,7 +1047,7 @@ asl_dump_defif(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	*dpp = dp;
 }
@@ -1066,7 +1070,7 @@ asl_dump_defelse(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	*dpp = dp;
 }
@@ -1091,7 +1095,7 @@ asl_dump_defwhile(u_int8_t **dpp, int indent)
 	print_indent(indent);
 	printf("}");
 
-	assert(dp == end);
+	ASSERT(dp == end);
 
 	*dpp = dp;
 }
