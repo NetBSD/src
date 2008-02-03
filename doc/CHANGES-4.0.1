@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.6 2008/02/03 00:24:07 riz Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.7 2008/02/03 18:13:55 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -47,4 +47,14 @@ dist/nawk/lex.c					1.8
 	Bring back the fix in revision 1.6, apparently accidentally lost 
 	during last merge, to allow escape of a newline in string literals.
 	[christos, ticket #1034]
+
+games/larn/bill.c				1.9
+games/larn/header.h				1.18 via patch
+games/larn/main.c				1.21
+games/larn/scores.c				1.16 via patch
+
+	Since games are (now) setgid, not setuid, it is no longer necessary to
+	manipulate the effective uid, only the effective gid.
+	Use mkstemp to make the temporary files used when you win.
+	[dholland, ticket #1067]
 
