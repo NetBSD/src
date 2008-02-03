@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.890 2008/02/03 10:57:11 drochner Exp $
+#	$NetBSD: files,v 1.891 2008/02/03 13:25:57 martin Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -53,6 +53,8 @@ defflag	opt_config.h		INCLUDE_CONFIG_FILE INCLUDE_JUST_CONFIG
 defparam opt_dump.h		DUMP_ON_PANIC
 
 defflag	opt_callout.h		CALLWHEEL_STATS
+
+defflag				CPU_IN_CKSUM
 
 defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
