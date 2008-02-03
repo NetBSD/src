@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.18 2008/02/02 23:24:05 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.19 2008/02/03 00:29:09 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -273,4 +273,23 @@ sys/arch/sparc64/sparc64/autoconf.c		1.147
 
 	Fix unusued variable warning (depending on options).
 	[martin, ticket #1030]
+
+dist/nawk/lex.c					1.8
+
+	Bring back the fix in revision 1.6, apparently accidentally lost 
+	during last merge, to allow escape of a newline in string literals.
+	[christos, ticket #1034]
+
+usr.bin/systat/extern.h				1.38
+usr.bin/systat/keyboard.c			1.24
+usr.bin/systat/main.c				1.41
+
+	don't call curses from a signal handler!
+	[christos, ticket #1031]
+
+sys/net/bpf_filter.c				1.34
+
+	PR/37663: Guy Harris: bpf_validate rejects valid programs that use the
+	multiply instruction
+	[christos, ticket #1032]
 
