@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.12 2004/02/13 11:36:08 wiz Exp $	*/
+/*	$NetBSD: scores.c,v 1.12.16.1 2008/02/03 18:12:27 riz Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.12 2004/02/13 11:36:08 wiz Exp $");
+__RCSID("$NetBSD: scores.c,v 1.12.16.1 2008/02/03 18:12:27 riz Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -112,9 +112,11 @@ readboard()
 {
 	int             i;
 
-	seteuid(euid);
+	if (gid != egid)
+		setegid(egid);
 	i = lopen(scorefile);
-	seteuid(uid);
+	if (gid != egid)
+		setegid(gid);
 	if (i < 0) {
 		lprcat("Can't read scoreboard\n");
 		lflush();
@@ -138,9 +140,11 @@ writeboard()
 	int             i;
 
 	set_score_output();
-	seteuid(euid);
+	if (gid != egid)
+		setegid(egid);
 	i = lcreat(scorefile);
-	seteuid(uid);
+	if (gid != egid)
+		setegid(gid);
 	if (i < 0) {
 		lprcat("Can't write scoreboard\n");
 		lflush();
@@ -168,9 +172,11 @@ makeboard()
 	}
 	if (writeboard())
 		return (-1);
-	seteuid(euid);
+	if (gid != egid)
+		setegid(egid);
 	chmod(scorefile, 0660);
-	seteuid(uid);
+	if (gid != egid)
+		setegid(gid);
 	return (0);
 }
 
@@ -643,7 +649,8 @@ invalid:
 	set_score_output();
 	if ((wizard == 0) && (c[GOLD] > 0)) {	/* wizards can't score		 */
 #ifndef NOLOG
-		seteuid(euid);
+		if (gid != egid)
+			setegid(egid);
 		if (lappend(logfile) < 0) {	/* append to file */
 			if (lcreat(logfile) < 0) {	/* and can't create new
 							 * log file */
@@ -654,11 +661,14 @@ invalid:
 				lflush();
 				exit(0);
 			}
-			seteuid(euid);
+			if (gid != egid)
+				setegid(egid);
 			chmod(logfile, 0660);
-			seteuid(uid);
+			if (gid != egid)
+				setegid(gid);
 		}
-		seteuid(uid);
+		if (gid != egid)
+			setegid(gid);
 		strcpy(logg.who, loginname);
 		logg.score = c[GOLD];
 		logg.diff = c[HARDGAME];
