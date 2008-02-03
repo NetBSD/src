@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.9 2008/01/28 05:38:53 dholland Exp $	*/
+/*	$NetBSD: global.c,v 1.10 2008/02/03 20:11:05 dholland Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -23,7 +23,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.9 2008/01/28 05:38:53 dholland Exp $");
+__RCSID("$NetBSD: global.c,v 1.10 2008/02/03 20:11:05 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -791,31 +791,6 @@ adjustcvalues(int theitem, int arg)
 	};
 	if (flag)
 		bottomline();
-}
-
-/*
-	function to read a string from token input "string"
-	returns a pointer to the string
- */
-void
-gettokstr(str)
-	char  *str;
-{
-	int    i, j;
-	i = 50;
-	while ((lgetchar() != '"') && (--i > 0));
-	i = 36;
-	while (--i > 0) {
-		if ((j = lgetchar()) != '"')
-			*str++ = j;
-		else
-			i = 0;
-	}
-	*str = 0;
-	i = 50;
-	if (j != '"')
-		/* if end due to too long, then find closing quote */
-		while ((lgetchar() != '"') && (--i > 0));
 }
 
 /*
