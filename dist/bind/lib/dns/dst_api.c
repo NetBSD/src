@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.1.1.2 2007/01/27 21:06:43 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.2 2008/02/03 04:07:34 mrg Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
@@ -112,6 +112,7 @@ static isc_result_t	addsuffix(char *filename, unsigned int len,
 			return (_r);		\
 	} while (0);				\
 
+#ifdef OPENSSL
 static void *
 default_memalloc(void *arg, size_t size) {
         UNUSED(arg);
@@ -125,6 +126,7 @@ default_memfree(void *arg, void *ptr) {
         UNUSED(arg);
         free(ptr);
 }
+#endif
 
 isc_result_t
 dst_lib_init(isc_mem_t *mctx, isc_entropy_t *ectx, unsigned int eflags) {
