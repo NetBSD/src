@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.152 2007/10/25 13:03:05 yamt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.153 2008/02/03 08:37:41 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2007/10/25 13:03:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2008/02/03 08:37:41 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -90,7 +90,7 @@ vaddr_t istack;
  * Page 3: unused
  * Page 4: unused
  */
-long	scratch;
+uintptr_t scratch;
 #define SCRATCHPAGES	4
 
 
