@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.36 2007/12/03 15:34:24 ad Exp $
+#	$NetBSD: genassym.cf,v 1.37 2008/02/03 08:35:33 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -147,6 +147,3 @@ define	MTX_FLAGS	offsetof(struct kmutex, mtx_flags)
 ifdef	MUTEX_COUNT_BIAS
 define	MTX_COUNT_BIAS	MUTEX_COUNT_BIAS
 endif
-
-define	RW_OWNER	offsetof(struct krwlock, rw_owner)
-define	RW_LOCK		offsetof(struct krwlock, rw_lock)
