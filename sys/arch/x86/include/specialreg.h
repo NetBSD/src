@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.22 2007/12/21 14:57:22 drochner Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.23 2008/02/03 06:19:06 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -176,6 +176,7 @@
  */
 
 #define	CPUID2_SSE3	0x00000001	/* Streaming SIMD Extensions 3 */
+#define	CPUID2_DTES64	0x00000004	/* 64-bit Debug Trace */
 #define	CPUID2_MONITOR	0x00000008	/* MONITOR/MWAIT instructions */
 #define	CPUID2_DS_CPL	0x00000010	/* CPL Qualified Debug Store */
 #define	CPUID2_VMX	0x00000020	/* Virtual Machine Extensions */
@@ -188,9 +189,14 @@
 #define	CPUID2_xTPR	0x00004000	/* Task Priority Messages disabled? */
 #define	CPUID2_PDCM	0x00008000	/* Perf/Debug Capability MSR */
 #define	CPUID2_DCA	0x00040000	/* Direct Cache Access */
+#define	CPUID2_SSE41	0x00080000	/* Streaming SIMD Extensions 4.1 */
+#define	CPUID2_SSE42	0x00100000	/* Streaming SIMD Extensions 4.2 */
+#define	CPUID2_X2APIC	0x00200000	/* xAPIC Extensions */
+#define	CPUID2_POPCNT	0x00800000	
 
-#define CPUID2_FLAGS "\20\1SSE3\4MONITOR\5DS-CPL\6VMX\7SMX\10EST\11TM2" \
-			"\12SSSE3\13CID\16CX16\17xTPR\20PDCM\23DCA"
+#define CPUID2_FLAGS "\20\1SSE3\3DTES64\4MONITOR\5DS-CPL\6VMX\7SMX\10EST" \
+			"\11TM2\12SSSE3\13CID\16CX16\17xTPR\20PDCM\23DCA" \
+			"\24SSE41\25SSE42\26X2APIC\30POPCNT"
 
 #define CPUID2FAMILY(cpuid)	(((cpuid) >> 8) & 0xf)
 #define CPUID2MODEL(cpuid)	(((cpuid) >> 4) & 0xf)
