@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/02/03 12:09:41 skrll Exp $
+#	$NetBSD: Makefile,v 1.6 2008/02/03 19:58:34 skrll Exp $
 
 #	$OpenBSD: Makefile,v 1.10 2000/05/31 19:56:51 mickey Exp $
 
@@ -16,7 +16,5 @@ CPPFLAGS+=	-D__daddr_t=int32_t
 CPPFLAGS+=	-DBOOTARG_APIVER=3
 CPPFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 WARNS=	2
-
-DBG=		-g
 
 .include "../Makefile.buildboot"
