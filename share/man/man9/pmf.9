@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.4 2008/02/03 16:56:42 uwe Exp $
+.\" $NetBSD: pmf.9,v 1.5 2008/02/03 17:18:18 uwe Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -106,19 +106,30 @@ may make use of the following data type:
 A device driver can register as a listener for specific events, or inject
 events into the message queue.
 The following message types are defined:
-.Bd -literal
-        PMFE_DISPLAY_ON
-	PMFE_DISPLAY_REDUCED
-	PMFE_DISPLAY_STANDBY
-	PMFE_DISPLAY_SUSPEND
-	PMFE_DISPLAY_OFF
-	PMFE_DISPLAY_BRIGHTNESS_UP
-	PMFE_DISPLAY_BRIGHTNESS_DOWN
-	PMFE_AUDIO_VOLUME_DOWN
-	PMFE_AUDIO_VOLUME_TOGGLE
-	PMFE_CHASSIS_LID_CLOSE
-	PMFE_CHASSIS_LID_OPEN
-.Ed
+.Bl -item -compact -offset indent
+.It
+.Dv PMFE_DISPLAY_ON
+.It
+.Dv PMFE_DISPLAY_REDUCED
+.It
+.Dv PMFE_DISPLAY_STANDBY
+.It
+.Dv PMFE_DISPLAY_SUSPEND
+.It
+.Dv PMFE_DISPLAY_OFF
+.It
+.Dv PMFE_DISPLAY_BRIGHTNESS_UP
+.It
+.Dv PMFE_DISPLAY_BRIGHTNESS_DOWN
+.It
+.Dv PMFE_AUDIO_VOLUME_DOWN
+.It
+.Dv PMFE_AUDIO_VOLUME_TOGGLE
+.It
+.Dv PMFE_CHASSIS_LID_CLOSE
+.It
+.Dv PMFE_CHASSIS_LID_OPEN
+.El
 .El
 .Sh FUNCTIONS
 .Bl -tag -width compact
