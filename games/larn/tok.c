@@ -1,9 +1,9 @@
-/*	$NetBSD: tok.c,v 1.7 2008/01/28 05:38:54 dholland Exp $	*/
+/*	$NetBSD: tok.c,v 1.8 2008/02/03 20:01:24 dholland Exp $	*/
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tok.c,v 1.7 2008/01/28 05:38:54 dholland Exp $");
+__RCSID("$NetBSD: tok.c,v 1.8 2008/02/03 20:01:24 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -16,7 +16,7 @@ __RCSID("$NetBSD: tok.c,v 1.7 2008/01/28 05:38:54 dholland Exp $");
 #include "extern.h"
 
 static char     lastok = 0;
-int             yrepcount = 0, dayplay = 0;
+int             yrepcount = 0;
 #ifndef FLUSHNO
 #define FLUSHNO 5
 #endif	/* FLUSHNO */
@@ -65,22 +65,6 @@ yylex()
 					exit();
 				}
 #endif
-
-
-#ifdef TIMECHECK
-				if (dayplay == 0)
-					if (playable()) {
-						cursor(1, 19);
-						lprcat("\nSorry, but it is now time for work.  Your game has been saved.\n");
-						beep();
-						lflush();
-						savegame(savefilename);
-						wizard = nomove = 1;
-						sleep(4);
-						died(-257);
-					}
-#endif	/* TIMECHECK */
-
 			}
 		do {		/* if keyboard input buffer is too big, flush
 				 * some of it */
@@ -249,8 +233,9 @@ readopts()
 				if ((i = lgetw()) == 0)
 					break;
 				strlcpy(psname, i, PSNAMESIZE);
-			} else if (strcmp(i, "play-day-play") == 0)
-				dayplay = 1;
+			} else if (strcmp(i, "play-day-play") == 0) {
+				/* bypass time restrictions: ignored */
+			}
 			break;
 
 		case 's':
