@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.386 2008/01/09 11:25:58 simonb Exp $
+.\"	$NetBSD: main,v 1.387 2008/02/03 02:35:43 itohy Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1708,7 +1708,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .Pp
 .
 .
-.Bl -column xxx "Jun-ichiro itojun Hagino" Mt sommerfeld@NetBSD.org Sy playstation2
+.Bl -column xxx "Jun-ichiro itojun Hagino" ".Mt sommerfeld@NetBSD.org" ".Sy playstation2"
 .
 .br_ne 1i
 .It Em "The NetBSD core group:"
@@ -1778,6 +1778,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Tohru Nishimura                Ta Mt             nisimura Ta Sy sandpoint
 .It Ta Wayne Knowles                  Ta Mt                  wdk Ta Sy mipsco
 .It Ta Wolfgang Solfrank              Ta Mt                   ws Ta Sy ofppc
+.It Ta Ta Ta
 .
 .br_ne 1i
 .It Em "The NetBSD \*V Release Engineering team:"
