@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.16 2008/02/03 03:45:55 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.17 2008/02/03 20:41:53 dholland Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.16 2008/02/03 03:45:55 dholland Exp $");
+__RCSID("$NetBSD: scores.c,v 1.17 2008/02/03 20:41:53 dholland Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -817,7 +817,7 @@ getplid(nam)
 	lflush();		/* flush any pending I/O */
 	snprintf(name, sizeof(name), "%s\n", nam);/* append a \n to name */
 	if (lopen(playerids) < 0) {	/* no file, make it */
-		if ((fd7 = creat(playerids, 0666)) < 0)
+		if ((fd7 = creat(playerids, 0664)) < 0)
 			return (-1);	/* can't make it */
 		close(fd7);
 		goto addone;	/* now append new playerid record to file */
