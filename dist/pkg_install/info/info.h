@@ -1,6 +1,35 @@
-/* $NetBSD: info.h,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $ */
+/* $NetBSD: info.h,v 1.1.1.4 2008/02/03 21:21:33 joerg Exp $ */
 
 /* from FreeBSD Id: info.h,v 1.10 1997/02/22 16:09:40 peter Exp */
+
+/*-
+ * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -24,6 +53,24 @@
 
 #ifndef _INST_INFO_H_INCLUDE
 #define _INST_INFO_H_INCLUDE
+
+struct pkg_meta {
+	char *meta_contents;
+	char *meta_comment;
+	char *meta_desc;
+	char *meta_mtree;
+	char *meta_build_version;
+	char *meta_build_info;
+	char *meta_size_pkg;
+	char *meta_size_all;
+	char *meta_required_by;
+	char *meta_display;
+	char *meta_install;
+	char *meta_deinstall;
+	char *meta_preserve;
+	char *meta_views;
+	char *meta_installed_info;
+};
 
 #ifndef MAXINDEXSIZE
 #define MAXINDEXSIZE 60
@@ -73,14 +120,14 @@ extern lpkg_head_t pkgs;
 int CheckForPkg(const char *);
 int CheckForBestPkg(const char *);
 
-extern void show_file(const char *, const char *, const char *, Boolean);
-extern void show_var(const char *, const char *, const char *);
-extern void show_plist(const char *, package_t *, pl_ent_t);
-extern void show_files(const char *, package_t *);
-extern void show_depends(const char *, package_t *);
-extern void show_bld_depends(const char *, package_t *);
-extern void show_index(const char *, const char *, const char *);
-extern void show_summary(package_t *, const char *);
+void	show_file(const char *, const char *, Boolean);
+void	show_var(const char *, const char *);
+void	show_plist(const char *, package_t *, pl_ent_t);
+void	show_files(const char *, package_t *);
+void	show_depends(const char *, package_t *);
+void	show_bld_depends(const char *, package_t *);
+void	show_index(const char *, const char *);
+void	show_summary(struct pkg_meta *, package_t *, const char *);
 
 int     pkg_perform(lpkg_head_t *);
 

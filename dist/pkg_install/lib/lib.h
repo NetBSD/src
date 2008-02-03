@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.6 2007/12/24 00:03:06 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.7 2008/02/03 21:21:35 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -312,6 +312,7 @@ int	pipe_to_system_end(pipe_to_system_t *);
 /* variables file handling */
 
 char   *var_get(const char *, const char *);
+char   *var_get_memory(const char *, const char *);
 int	var_set(const char *, const char *, const char *);
 int     var_copy_list(const char *, const char **);
 
@@ -391,8 +392,8 @@ void    add_plist_top(package_t *, pl_ent_t, const char *);
 void    delete_plist(package_t *, Boolean, pl_ent_t, char *);
 void    write_plist(package_t *, FILE *, char *);
 void	stringify_plist(package_t *, char **, size_t *, char *);
+void	parse_plist(package_t *, const char *);
 void    read_plist(package_t *, FILE *);
-int     plist_cmd(unsigned char *, char **);
 int     delete_package(Boolean, Boolean, package_t *, Boolean);
 
 /* Package Database */
