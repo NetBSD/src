@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.73 2007/03/04 19:21:55 christos Exp $	*/
+/*	$NetBSD: locore.c,v 1.74 2008/02/03 08:37:41 matt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.73 2007/03/04 19:21:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.74 2008/02/03 08:37:41 matt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -97,7 +97,7 @@ extern struct cpu_dep ka680_calls;
 void
 _start(struct rpb *prpb)
 {
-	extern void *scratch;
+	extern uintptr_t scratch;
 	struct pte *pt;
 
 	mtpr(AST_NO, PR_ASTLVL); /* Turn off ASTs */
@@ -338,7 +338,7 @@ _start(struct rpb *prpb)
 	pt = kvtopte((u_int)lwp0.l_addr + REDZONEADDR);
 	pt->pg_v = 0;
 
-	((struct pcb *)proc0paddr)->framep = scratch;
+	((struct pcb *)proc0paddr)->framep = (void *)scratch;
 
 	/*
 	 * Change mode down to userspace is done by faking a stack
