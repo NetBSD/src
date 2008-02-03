@@ -1,4 +1,4 @@
-/*	$NetBSD: bill.c,v 1.7 2003/08/07 09:37:22 agc Exp $	 */
+/*	$NetBSD: bill.c,v 1.7.26.1 2008/02/03 18:13:34 riz Exp $	 */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)bill.c	5.2 (Berkeley) 5/28/91";
 #else
-__RCSID("$NetBSD: bill.c,v 1.7 2003/08/07 09:37:22 agc Exp $");
+__RCSID("$NetBSD: bill.c,v 1.7.26.1 2008/02/03 18:13:34 riz Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: bill.c,v 1.7 2003/08/07 09:37:22 agc Exp $");
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <paths.h>
 #include "header.h"
 #include "extern.h"
 
@@ -130,10 +131,9 @@ mailbill()
 	if (fork() == 0) {
 		resetscroll();
 		cp = mail;
-		snprintf(fname, sizeof(fname), "/tmp/#%dlarnmail", getpid());
+		snprintf(fname, sizeof(fname), "%slarnmail.XXXXXX", _PATH_TMP);
 		for (i = 0; i < 6; i++) {
-			if ((fd = open(fname, O_WRONLY | O_TRUNC | O_CREAT,
-				       0666)) == -1)
+			if ((fd = mkstemp(fname)) == -1)
 				exit(0);
 			while (*cp != NULL) {
 				if (*cp[0] == '1') {
