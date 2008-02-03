@@ -1,4 +1,4 @@
-/* $NetBSD: sgmap.h,v 1.4 2000/11/16 19:25:40 matt Exp $ */
+/* $NetBSD: sgmap.h,v 1.5 2008/02/03 08:39:48 matt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -37,8 +37,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_VAX_COMMON_SGMAPVAR_H
-#define	_VAX_COMMON_SGMAPVAR_H
+#ifndef	_VAX_SGMAP_H
+#define	_VAX_SGMAP_H
 
 #include <sys/extent.h>
 #include <machine/bus.h>
@@ -62,26 +62,26 @@ struct vax_sgmap {
 	unsigned int aps_flags;		/* flags */
 };
 
-void	vax_sgmap_init __P((bus_dma_tag_t, struct vax_sgmap *,
-	    const char *, bus_addr_t, bus_size_t, struct pte *, bus_size_t));
+void	vax_sgmap_dmatag_init(bus_dma_tag_t, void *, size_t);
 
-int	vax_sgmap_alloc __P((bus_dmamap_t, bus_size_t,
-	    struct vax_sgmap *, int));
-void	vax_sgmap_free __P((bus_dmamap_t, struct vax_sgmap *));
+void	vax_sgmap_init(bus_dma_tag_t, struct vax_sgmap *, const char *,
+	    bus_addr_t, bus_size_t, struct pte *, bus_size_t);
 
-int     vax_sgmap_load __P((bus_dma_tag_t, bus_dmamap_t, void *, 
-	    bus_size_t, struct proc *, int, struct vax_sgmap *));
+int	vax_sgmap_alloc(bus_dmamap_t, bus_size_t, struct vax_sgmap *, int);
+void	vax_sgmap_free(bus_dmamap_t, struct vax_sgmap *);
 
-int	vax_sgmap_load_mbuf __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int, struct vax_sgmap *));
+int     vax_sgmap_load(bus_dma_tag_t, bus_dmamap_t, void *, bus_size_t,
+	    struct proc *, int, struct vax_sgmap *);
+
+int	vax_sgmap_load_mbuf(bus_dma_tag_t, bus_dmamap_t, struct mbuf *, int,
+	    struct vax_sgmap *);
    
-int     vax_sgmap_load_uio __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int, struct vax_sgmap *));
+int     vax_sgmap_load_uio(bus_dma_tag_t, bus_dmamap_t, struct uio *, int,
+	    struct vax_sgmap *);
          
-int	vax_sgmap_load_raw __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int, struct vax_sgmap *));
+int	vax_sgmap_load_raw(bus_dma_tag_t, bus_dmamap_t, bus_dma_segment_t *,
+	    int, bus_size_t, int, struct vax_sgmap *);
 
-void	vax_sgmap_unload __P(( bus_dma_tag_t, bus_dmamap_t, 
-	    struct vax_sgmap *));
+void	vax_sgmap_unload(bus_dma_tag_t, bus_dmamap_t, struct vax_sgmap *);
 
-#endif	/* _VAX_COMMON_SGMAPVAR_H */
+#endif	/* _VAX_SGMAP_H */
