@@ -1,4 +1,4 @@
-.\"	$NetBSD: services_mkdb.8,v 1.4 2006/07/30 00:24:40 wiz Exp $
+.\"	$NetBSD: services_mkdb.8,v 1.4.4.1 2008/02/03 19:56:11 riz Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 8, 1999
+.Dd May 20, 2007
 .Dt SERVICES_MKDB 8
 .Os
 .Sh NAME
@@ -53,7 +53,7 @@ If no file is specified, then
 .Pa /etc/services
 is used.
 The database is installed into
-.Pa /etc/services.db .
+.Pa /var/db/services.db .
 The file must be in the correct format (see
 .Xr services 5 ) .
 .Pp
@@ -70,9 +70,9 @@ The databases are used by the C library services routines (see
 exits zero on success, non-zero on failure.
 .Sh FILES
 .Bl -tag -width 24n -compact
-.It Pa /etc/services.db
+.It Pa /var/db/services.db
 The current services database.
-.It Pa /etc/services.db.tmp
+.It Pa /var/db/services.db.tmp
 A temporary file.
 .It Pa /etc/services
 The current services file.
