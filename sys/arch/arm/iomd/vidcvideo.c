@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.31 2007/03/04 05:59:38 christos Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.32 2008/02/03 19:38:29 chris Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.31 2007/03/04 05:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.32 2008/02/03 19:38:29 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -828,7 +828,7 @@ static void vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	src = ri->ri_bits + srcrow * ri->ri_font->fontheight * ri->ri_stride;
 	dst = ri->ri_bits + dstrow * ri->ri_font->fontheight * ri->ri_stride;
 
-	memcpy(dst, src, size);
+	memmove(dst, src, size);
 }
 
 
