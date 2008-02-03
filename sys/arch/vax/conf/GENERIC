@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.160 2007/12/31 15:32:07 ad Exp $
+# $NetBSD: GENERIC,v 1.161 2008/02/03 08:45:40 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.160 $"
+#ident 		"GENERIC-$Revision: 1.161 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -47,7 +47,7 @@ options 	VAX53		# VAX 4000/10[058], MicroVAX 3100/m96
 maxusers	8
 
 # Kernel compiled-in symbolic debugger & system call tracer
-#makeoptions	DEBUG="-g"
+makeoptions	DEBUG="-g"
 options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 options 	KTRACE
@@ -150,7 +150,7 @@ options 	COMPAT_15
 options 	COMPAT_16
 options 	COMPAT_20
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
-#options 	COMPAT_ULTRIX
+options 	COMPAT_ULTRIX
 options 	COMPAT_IBCS2	# DEC SVR.3 compatilibity
 #options 	NO_INSN_EMULATE	# CPU does not lack some hardware instructions.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
@@ -204,6 +204,11 @@ smg0		at vsbus0 csr 0x200f0000 # Small monochrome display ctlr.
 #clr0		at vsbus0 csr 0x30000000 # 4- or 8-bitplans color graphics
 lcspx0		at vsbus0 csr 0x38000000 # Low Cost SPX on VS4000/90.
 #lcg0		at vsbus0 csr 0x21801000 # VS4000/60 (or VLC) graphics
+tc0		at vsbus0 csr 0x36000000 # VS4000/60 or 90 TC adapter
+tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
+asc*		at tcds? chip ?		 # PMAZB/C
+asc*		at tc? slot ? offset ?	 # PMAZ 
+fta*		at tc? slot ? offset ?	 # TC FDDI controller
 
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 rd*		at hdc0 drive?		# RD5x disks
@@ -267,8 +272,7 @@ rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
 
 # SCSI devices
-scsibus*	at asc?
-scsibus*	at si?
+scsibus*	at scsi?
 
 sd*		at scsibus? target? lun?
 st*		at scsibus? target? lun?
