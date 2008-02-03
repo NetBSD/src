@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.21 2008/02/03 18:14:20 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.22 2008/02/03 19:14:11 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -315,4 +315,15 @@ games/larn/scores.c				1.16 via patch
 	manipulate the effective uid, only the effective gid.
 	Use mkstemp to make the temporary files used when you win.
 	[dholland, ticket #1067]
+
+sys/dev/audio.c					1.233
+
+	Don't enter an infinite loop in audio_read() when the sc->sc_rustream
+	buffer is full.  Fixes kern/34659.
+	[gson, ticket #1054]
+
+sys/dev/usb/uhub.c				1.94
+
+	Speed up uhub attachment considerably.
+	[jmcneill, ticket #1056]
 
