@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.52 2007/03/04 19:21:56 christos Exp $ */
+/*	$NetBSD: vsbus.c,v 1.53 2008/02/03 08:41:22 matt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.52 2007/03/04 19:21:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.53 2008/02/03 08:41:22 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -222,7 +222,7 @@ vsbus_search(parent, cf, ldesc, aux)
 	va.va_paddr = cf->cf_loc[VSBUSCF_CSR];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
 	va.va_dmat = &sc->sc_dmatag;
-	va.va_iot = &vax_mem_bus_space;
+	va.va_memt = &vax_mem_bus_space;
 
 	*sc->sc_intmsk = 0;
 	*sc->sc_intclr = 0xff;
