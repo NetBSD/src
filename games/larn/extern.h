@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.7 2008/01/28 05:38:53 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.8 2008/02/03 19:20:41 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -37,17 +37,8 @@ void mailbill(void);
 /* create.c */
 void makeplayer(void);
 void newcavelevel(int);
-void makemaze(int);
 void eat(int, int);
-int cannedlevel(int);
-void treasureroom(int);
-void troom(int, int, int, int, int, int);
-void makeobject(int);
-void fillmroom(int, int, int);
-void froom(int, int, int);
 int fillmonst(int);
-void sethp(int);
-void checkgen(void);
 
 /* data.c */
 
@@ -57,9 +48,6 @@ int dcount(int);
 void diagdrawscreen(void);
 int savegame(char *);
 void restoregame(char *);
-void greedy(void);
-void fsorry(void);
-void fcheat(void);
 
 /* display.c */
 void bottomline(void);
@@ -68,9 +56,6 @@ void bottomspell(void);
 void bottomdo(void);
 void bot_linex(void);
 void bottomgold(void);
-void bot_hpx(void);
-void bot_spellx(void);
-void botside(void);
 void draws(int, int, int, int);
 void drawscreen(void);
 void showcell(int, int);
@@ -78,7 +63,6 @@ void show1cell(int, int);
 void showplayer(void);
 int moveplayer(int);
 void seemagic(int);
-void seepage(void);
 
 /* fortune.c */
 const char *fortune(void);
@@ -122,7 +106,6 @@ int rund(int);
 void help(void);
 void welcome(void);
 void retcont(void);
-int openhelp(void);
 
 /* io.c */
 void setupvt100(void);
@@ -155,7 +138,6 @@ void standout(const char *);
 void set_score_output(void);
 void lflush(void);
 int xputchar(int);
-void flush_buf(void);
 char *tmcapcnv(char *, char *);
 void beep(void);
 
@@ -184,13 +166,11 @@ void dropobj(void);
 void readscr(void);
 void eatcookie(void);
 void quaff(void);
-int whatitem(const char *);
 unsigned long readnum(long);
 void szero(char *);
 
 /* monster.c */
 void createmonster(int);
-int cgood(int, int, int, int);
 void createitem(int, int);
 void cast(void);
 void speldamage(int);
@@ -208,11 +188,9 @@ void dirpoly(int);
 void hitmonster(int, int);
 int hitm(int, int, int);
 void hitplayer(int, int);
-void dropsomething(int);
 void dropgold(int);
 void something(int);
 int newobject(int, int *);
-int spattack(int, int, int);
 void checkloss(int);
 int annihilate(void);
 int newsphere(int, int, int, int);

@@ -1,9 +1,9 @@
-/*	$NetBSD: diag.c,v 1.11 2008/01/28 05:38:53 dholland Exp $	*/
+/*	$NetBSD: diag.c,v 1.12 2008/02/03 19:20:41 dholland Exp $	*/
 
 /* diag.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: diag.c,v 1.11 2008/01/28 05:38:53 dholland Exp $");
+__RCSID("$NetBSD: diag.c,v 1.12 2008/02/03 19:20:41 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -14,7 +14,13 @@ __RCSID("$NetBSD: diag.c,v 1.11 2008/01/28 05:38:53 dholland Exp $");
 #include <unistd.h>
 #include "header.h"
 #include "extern.h"
+
+static void greedy(void);
+static void fsorry(void);
+static void fcheat(void);
+
 static struct tms cputime;
+
 /*
 	***************************
 	DIAG -- dungeon diagnostics
@@ -353,8 +359,8 @@ restoregame(fname)
 /*
 	subroutine to not allow greedy cheaters
  */
-void
-greedy()
+static void
+greedy(void)
 {
 #if WIZID
 	if (wizard)
@@ -375,8 +381,8 @@ greedy()
 	subroutine to not allow altered save files and terminate the attempted
 	restart
  */
-void
-fsorry()
+static void
+fsorry(void)
 {
 	lprcat("\nSorry, but your savefile has been altered.\n");
 	lprcat("However, seeing as I am a good sport, I will let you play.\n");
@@ -388,8 +394,8 @@ fsorry()
 /*
 	subroutine to not allow game if save file can't be deleted
  */
-void
-fcheat()
+static void
+fcheat(void)
 {
 #if WIZID
 	if (wizard)

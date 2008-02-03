@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.20 2008/01/28 05:48:57 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.21 2008/02/03 19:20:41 dholland Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.20 2008/01/28 05:48:57 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.21 2008/02/03 19:20:41 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -125,6 +125,8 @@ typedef char   *va_list;
 #define va_end(plist)
 #define va_arg(plist,mode) ((mode *)(plist += sizeof(mode)))[-1]
 #endif	/* NOVARARGS */
+
+static void flush_buf(void);
 
 #define LINBUFSIZE 128	/* size of the lgetw() and lgetl() buffer */
 int             io_outfd; /* output file numbers */
@@ -966,7 +968,7 @@ xputchar(int ch)
 /*
  * flush_buf()			Flush buffer with decoded output.
  */
-void
+static void
 flush_buf()
 {
 	if (vindex)

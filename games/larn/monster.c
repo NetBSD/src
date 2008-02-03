@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.13 2008/01/28 05:38:54 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.14 2008/02/03 19:20:42 dholland Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,7 +100,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.13 2008/01/28 05:38:54 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.14 2008/02/03 19:20:42 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
@@ -114,7 +114,11 @@ struct isave {			/* used for altar reality */
 	short           arg;	/* the type of item or hitpoints of monster */
 };
 
+static int cgood(int, int, int, int);
 static int dirsub(int *, int *);
+static void dropsomething(int);
+static int spattack(int, int, int);
+
 /*
  * createmonster(monstno)	Function to create a monster next to the player
  * 	int monstno;
@@ -168,7 +172,7 @@ createmonster(mon)
  * 		  if monst==TRUE check for no monster at this location
  * This routine will return FALSE if at a wall or the dungeon exit on level 1
  */
-int 
+static int 
 cgood(int x, int y, int theitem, int monst)
 {
 #define itm __lose
@@ -1283,7 +1287,7 @@ hitplayer(x, y)
  * Enter with the monster number
  * Returns nothing of value.
  */
-void
+static void
 dropsomething(monst)
 	int             monst;
 {
@@ -1499,7 +1503,7 @@ static char     rustarm[ARMORTYPES][2] = {
 	{ OPLATEARMOR, -9}
 };
 static char     spsel[] = {1, 2, 3, 5, 6, 8, 9, 11, 13, 14};
-int
+static int
 spattack(x, xx, yy)
 	int             x, xx, yy;
 {

@@ -1,16 +1,21 @@
-/*	$NetBSD: display.c,v 1.7 2008/01/28 05:38:53 dholland Exp $	*/
+/*	$NetBSD: display.c,v 1.8 2008/02/03 19:20:41 dholland Exp $	*/
 
 /* display.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: display.c,v 1.7 2008/01/28 05:38:53 dholland Exp $");
+__RCSID("$NetBSD: display.c,v 1.8 2008/02/03 19:20:41 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
 #include "extern.h"
+
 #define makecode(_a,_b,_c) (((_a)<<16) + ((_b)<<8) + (_c))
 
+static void bot_hpx(void);
+static void bot_spellx(void);
+static void botside(void);
 static void botsub(int, const char *);
+static void seepage(void);
 
 static int      minx, maxx, miny, maxy, k, m;
 static char     bot1f = 0, bot2f = 0, bot3f = 0;
@@ -147,8 +152,8 @@ bottomgold()
 	special routine to update hp and level fields on bottom lines
 	called in monster.c hitplayer() and spattack()
  */
-void
-bot_hpx()
+static void
+bot_hpx(void)
 {
 	if (c[EXPERIENCE] != cbak[EXPERIENCE]) {
 		recalc();
@@ -160,8 +165,8 @@ bot_hpx()
 /*
 	special routine to update number of spells called from regen()
  */
-void
-bot_spellx()
+static void
+bot_spellx(void)
 {
 	botsub(makecode(SPELLS, 9, 18), "%2ld");
 }
@@ -194,8 +199,8 @@ static struct bot_side_def {
 	{ WTW, "Wall-Walk" }
 };
 
-void
-botside()
+static void
+botside(void)
 {
 	int    i, idx;
 	for (i = 0; i < 17; i++) {
@@ -612,8 +617,8 @@ seemagic(arg)
 /*
  *	subroutine to paginate the seemagic function
  */
-void
-seepage()
+static void
+seepage(void)
 {
 	if (++count == 3) {
 		lincount++;

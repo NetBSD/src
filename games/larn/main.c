@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.21 2008/02/03 03:45:55 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2008/02/03 19:20:42 dholland Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.21 2008/02/03 03:45:55 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2008/02/03 19:20:42 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -14,6 +14,8 @@ __RCSID("$NetBSD: main.c,v 1.21 2008/02/03 03:45:55 dholland Exp $");
 #include <string.h>
 #include "header.h"
 #include "extern.h"
+
+static int whatitem(const char *);
 
 static char     copyright[] = "\nLarn is copyrighted 1986 by Noah Morgan.\n";
 int             srcount = 0;	/* line counter for showstr()	 */
@@ -1267,7 +1269,7 @@ quaff()
 /*
 	function to ask what player wants to do
  */
-int
+static int
 whatitem(const char *str)
 {
 	int             i;

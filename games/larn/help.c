@@ -1,15 +1,18 @@
-/*	$NetBSD: help.c,v 1.5 2001/02/05 00:57:33 christos Exp $	*/
+/*	$NetBSD: help.c,v 1.6 2008/02/03 19:20:41 dholland Exp $	*/
 
 /* help.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: help.c,v 1.5 2001/02/05 00:57:33 christos Exp $");
+__RCSID("$NetBSD: help.c,v 1.6 2008/02/03 19:20:41 dholland Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
 
 #include "header.h"
 #include "extern.h"
+
+static int openhelp(void);
+
 /*
  *	help function to display the help info
  *
@@ -109,8 +112,8 @@ retcont()
 /*
  *	routine to open the help file and return the first character - '0'
  */
-int
-openhelp()
+static int
+openhelp(void)
 {
 	if (lopen(helpfile) < 0) {
 		lprintf("Can't open help file \"%s\" ", helpfile);
