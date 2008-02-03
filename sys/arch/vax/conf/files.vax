@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.106 2008/01/25 21:12:13 joerg Exp $
+#	$NetBSD: files.vax,v 1.107 2008/02/03 08:45:40 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -106,6 +106,12 @@ include "dev/mscp/files.mscp"
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
 
+# TurboCHANNEL bus support and device drivers
+include "dev/tc/files.tc"
+
+attach	tc at vsbus with tcbus
+file	arch/vax/vsa/tc_vsbus.c		tcbus
+
 attach	uba at ibus with uba_ibus
 file	arch/vax/uba/uba_ibus.c		uba_ibus
 attach	uba at sbi with uba_sbi
@@ -191,7 +197,7 @@ attach	le at vsbus with le_vsbus:	le24
 file	arch/vax/if/if_le_vsbus.c	le_vsbus
 
 # builtin NCR53C95 SCSI Controlller on VAXstation 4000 VLC/60/9x
-device	asc: scsi, ncr53c9x
+#device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
 
