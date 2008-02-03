@@ -1,4 +1,4 @@
-#	$NetBSD: std.sparc64,v 1.16 2006/10/09 06:20:05 tsutsui Exp $
+#	$NetBSD: std.sparc64,v 1.17 2008/02/03 13:27:12 martin Exp $
 
 #
 # Mandatory NetBSD/sparc64 kernel options when building either 32-bit or
@@ -13,3 +13,5 @@ makeoptions	LP64="yes"
 
 options 	EXEC_SCRIPT	# execve(2) support for scripts
 options 	EXEC_ELF64	# 64-bit NetBSD and SunOS 5 bins
+
+options		CPU_IN_CKSUM	# use optimized checksum method
