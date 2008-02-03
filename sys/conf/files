@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.889 2008/01/28 14:31:15 dholland Exp $
+#	$NetBSD: files,v 1.890 2008/02/03 10:57:11 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1069,17 +1069,20 @@ define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 
 defparam USB_MEM_RESERVE
 
-device	uhci: usbus
+define	usbroothub
+file	dev/usb/usbroothub_subr.c	usbroothub
+
+device	uhci: usbus, usbroothub
 file	dev/usb/uhci.c			uhci			needs-flag
 
 # OHCI USB controller
 #
-device	ohci: usbus
+device	ohci: usbus, usbroothub
 file	dev/usb/ohci.c			ohci			needs-flag
 
 # EHCI USB controller
 #
-device	ehci: usbus
+device	ehci: usbus, usbroothub
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
