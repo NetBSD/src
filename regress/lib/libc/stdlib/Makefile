@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.2 2007/01/18 16:29:21 ginsbach Exp $
+#	$NetBSD: Makefile,v 1.3 2008/02/03 22:56:13 christos Exp $
 
-SUBDIR+= getopt getopt_long
+SUBDIR+= getopt getopt_long posix_memalign
 
 .include <bsd.subdir.mk>
