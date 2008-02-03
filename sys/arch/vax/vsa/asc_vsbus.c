@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.35 2007/03/04 19:21:56 christos Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.36 2008/02/03 08:41:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.35 2007/03/04 19:21:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.36 2008/02/03 08:41:22 matt Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -198,7 +198,7 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	sc->sc_glue = &asc_vsbus_glue;
 
-	asc->sc_bst = va->va_iot;
+	asc->sc_bst = va->va_memt;
 	asc->sc_dmat = va->va_dmat;
 
 	error = bus_space_map(asc->sc_bst, va->va_paddr - ASC_REG_NCR,
