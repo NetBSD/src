@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.20 2008/02/03 18:03:48 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.21 2008/02/03 18:14:20 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -305,4 +305,14 @@ sbin/fdisk/fdisk.c				1.107
 	Don't print drive serial number if -S (setting shell variables)
 	is specified.
 	[tsutsui, ticket #1053]
+
+games/larn/bill.c				1.9
+games/larn/header.h				1.18 via patch
+games/larn/main.c				1.21
+games/larn/scores.c				1.16 via patch
+
+	Since games are (now) setgid, not setuid, it is no longer necessary to
+	manipulate the effective uid, only the effective gid.
+	Use mkstemp to make the temporary files used when you win.
+	[dholland, ticket #1067]
 
