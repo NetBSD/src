@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.51 2007/12/12 17:56:10 macallan Exp $	*/
+/*	$NetBSD: malloc.c,v 1.52 2008/02/03 22:56:53 christos Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -90,7 +90,7 @@ void utrace(struct ut *, int);
 #include <sys/cdefs.h>
 #include "extern.h"
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.51 2007/12/12 17:56:10 macallan Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.52 2008/02/03 22:56:53 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 int utrace(const char *, void *, size_t);
 
@@ -1128,13 +1128,14 @@ ifree(void *ptr)
     return;
 }
 
+static int malloc_active; /* Recusion flag for public interface. */
+static unsigned malloc_started; /* Set when initialization has been done */
+
 static void *
 pubrealloc(void *ptr, size_t size, const char *func)
 {
     void *r;
     int err = 0;
-    static int malloc_active; /* Recusion flag for public interface. */
-    static unsigned malloc_started; /* Set when initialization has been done */
 
     /*
      * If a thread is inside our code with a functional lock held, and then
@@ -1210,16 +1211,21 @@ posix_memalign(void **memptr, size_t alignment, size_t size)
     int err;
     void *result;
 
+    if (!malloc_started) {
+	    malloc_init();
+	    malloc_started = 1;
+    }
     /* Make sure that alignment is a large enough power of 2. */
-    if (((alignment - 1) & alignment) != 0 || alignment < sizeof(void *))
+    if (((alignment - 1) & alignment) != 0 || alignment < sizeof(void *) ||
+	alignment > malloc_pagesize)
 	    return EINVAL;
 
     /* 
-     * (size & alignment) is enough to assure the requested alignment, since
+     * (size | alignment) is enough to assure the requested alignment, since
      * the allocator always allocates power-of-two blocks.
      */
     err = errno; /* Protect errno against changes in pubrealloc(). */
-    result = pubrealloc(NULL, (size & alignment), " in posix_memalign()");
+    result = pubrealloc(NULL, (size | alignment), " in posix_memalign()");
     errno = err;
 
     if (result == NULL)
