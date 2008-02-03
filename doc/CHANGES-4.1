@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.19 2008/02/03 00:29:09 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.20 2008/02/03 18:03:48 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -292,4 +292,17 @@ sys/net/bpf_filter.c				1.34
 	PR/37663: Guy Harris: bpf_validate rejects valid programs that use the
 	multiply instruction
 	[christos, ticket #1032]
+
+sbin/fdisk/fdisk.c				1.114
+
+	Add a sanity check to avoid possible division by zero, and
+	adjust sector numbers _after_ "Sanity check the data against all
+	zeroes".  PR#37656
+	[tsutsui, ticket #1052]
+
+sbin/fdisk/fdisk.c				1.107
+
+	Don't print drive serial number if -S (setting shell variables)
+	is specified.
+	[tsutsui, ticket #1053]
 
