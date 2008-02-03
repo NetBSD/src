@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.10 2008/02/03 20:11:05 dholland Exp $	*/
+/*	$NetBSD: global.c,v 1.11 2008/02/03 21:24:58 dholland Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -23,7 +23,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.10 2008/02/03 20:11:05 dholland Exp $");
+__RCSID("$NetBSD: global.c,v 1.11 2008/02/03 21:24:58 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -432,7 +432,7 @@ quit()
 	strcpy(lastmonst, "");
 	lprcat("\n\nDo you really want to quit?");
 	while (1) {
-		i = lgetchar();
+		i = ttgetch();
 		if (i == 'y') {
 			died(300);
 			return;
@@ -463,7 +463,7 @@ more()
 	lprcat("\n  --- press ");
 	standout("space");
 	lprcat(" to continue --- ");
-	while (lgetchar() != ' ');
+	while (ttgetch() != ' ');
 }
 
 /*
@@ -830,7 +830,7 @@ getyn()
 	int    i;
 	i = 0;
 	while (i != 'y' && i != 'n' && i != '\33')
-		i = lgetchar();
+		i = ttgetch();
 	return (i);
 }
 
