@@ -1,10 +1,10 @@
-/*	$NetBSD: object.c,v 1.12 2008/01/28 05:38:54 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.13 2008/02/03 21:24:59 dholland Exp $	*/
 
 /* object.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: object.c,v 1.12 2008/01/28 05:38:54 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.13 2008/02/03 21:24:59 dholland Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
@@ -149,7 +149,7 @@ lookforobject()
 		lprcat("\nDo you (g) go inside, or (i) stay here? ");
 		i = 0;
 		while ((i != 'g') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 'g') {
 			oschool();	/* the college of larn	 */
 		} else
@@ -174,7 +174,7 @@ lookforobject()
 		lprcat("\nDo you (g) go inside, or (i) stay here? ");
 		j = 0;
 		while ((j != 'g') && (j != 'i') && (j != '\33'))
-			j = lgetchar();
+			j = ttgetch();
 		if (j == 'g') {
 			if (i == OBANK)
 				obank();
@@ -197,7 +197,7 @@ lookforobject()
 		lprcat("\nDo you (g) go inside, or (i) stay here? ");
 		i = 0;
 		while ((i != 'g') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 'g')
 			dndstore();	/* the dnd adventurers store  */
 		else
@@ -220,7 +220,7 @@ lookforobject()
 		iopts();
 		i = 0;
 		while ((i != 'c') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if ((i == '\33') || (i == 'i')) {
 			ignore();
 			break;
@@ -239,7 +239,7 @@ lookforobject()
 		iopts();
 		i = 0;
 		while ((i != 'o') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if ((i == '\33') || (i == 'i')) {
 			ignore();
 			playerx = lastpx;
@@ -290,7 +290,7 @@ lookforobject()
 		iopts();
 		i = 0;
 		while ((i != 'g') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 'g') {
 			newcavelevel(1);
 			playerx = 33;
@@ -310,7 +310,7 @@ lookforobject()
 		iopts();
 		i = 0;
 		while ((i != 'c') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if ((i == '\33') || (i == 'i')) {
 			ignore();
 			break;
@@ -350,7 +350,7 @@ lookforobject()
 		iopts();
 		i = 0;
 		while ((i != 'c') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if ((i == '\33') || (i == 'i')) {
 			ignore();
 			break;
@@ -446,7 +446,7 @@ lookforobject()
 		lprcat("\nDo you (g) go inside, or (i) stay here? ");
 		i = 0;
 		while ((i != 'g') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 'g')
 			otradepost();
 		else
@@ -460,7 +460,7 @@ lookforobject()
 		lprcat("\nDo you (g) go inside, or (i) stay here? ");
 		i = 0;
 		while ((i != 'g') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 'g')
 			ohome();
 		else
@@ -481,7 +481,7 @@ lookforobject()
 		lprcat("\nDo you (g) go inside, or (i) stay here? ");
 		i = 0;
 		while ((i != 'g') && (i != 'i') && (i != '\33'))
-			i = lgetchar();
+			i = ttgetch();
 		if (i == 'g')
 			olrs();	/* the larn revenue service */
 		else
@@ -524,7 +524,7 @@ finditem(int theitem)
 	iopts();
 	i = 0;
 	while (i != 't' && i != 'i' && i != '\33')
-		i = lgetchar();
+		i = ttgetch();
 	if (i == 't') {
 		lprcat("take");
 		if (take(theitem, tmp) == 0)
@@ -557,7 +557,7 @@ ostairs(dir)
 	lprcat("or (f) kick stairs? ");
 
 	while (1)
-		switch (lgetchar()) {
+		switch (ttgetch()) {
 		case '\33':
 		case 's':
 		case 'i':
@@ -662,7 +662,7 @@ opotion(pot)
 	lprcat("\nDo you (d) drink it, (t) take it");
 	iopts();
 	while (1)
-		switch (lgetchar()) {
+		switch (ttgetch()) {
 		case '\33':
 		case 'i':
 			ignore();
@@ -878,7 +878,7 @@ oscroll(typ)
 	lprcat("(t) take it");
 	iopts();
 	while (1)
-		switch (lgetchar()) {
+		switch (ttgetch()) {
 		case '\33':
 		case 'i':
 			ignore();
@@ -1172,7 +1172,7 @@ obook()
 	lprcat("(t) take it");
 	iopts();
 	while (1)
-		switch (lgetchar()) {
+		switch (ttgetch()) {
 		case '\33':
 		case 'i':
 			ignore();
@@ -1223,7 +1223,7 @@ ocookie(void)
 	lprcat("\nDo you (e) eat it, (t) take it");
 	iopts();
 	while (1)
-		switch (lgetchar()) {
+		switch (ttgetch()) {
 		case '\33':
 		case 'i':
 			ignore();
@@ -1323,9 +1323,9 @@ ohome()
 		lprcat(" to continue, ");
 		standout("escape");
 		lprcat(" to leave ----- ");
-		i = lgetchar();
+		i = ttgetch();
 		while (i != '\33' && i != '\n')
-			i = lgetchar();
+			i = ttgetch();
 		if (i == '\33') {
 			drawscreen();
 			nosignal = 0;	/* enable signals */
