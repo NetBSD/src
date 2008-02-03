@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.116 2008/01/25 21:12:13 joerg Exp $
+#	$NetBSD: files.sparc64,v 1.117 2008/02/03 13:27:12 martin Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -168,6 +168,8 @@ file	arch/sparc64/dev/pld_wdog.c		pldwdog
 file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
 file	dev/sun/disksubr.c 
+
+file	arch/sparc64/sparc64/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
