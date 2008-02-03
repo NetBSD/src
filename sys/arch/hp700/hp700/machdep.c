@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.44 2008/01/24 12:50:35 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.45 2008/02/03 12:09:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2008/01/24 12:50:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2008/02/03 12:09:40 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2008/01/24 12:50:35 skrll Exp $");
 #include <machine/reg.h>
 #include <machine/cpufunc.h>
 #include <machine/autoconf.h>
+#include <machine/bootinfo.h>
 #include <machine/kcore.h>
 
 #ifdef	KGDB
@@ -217,6 +218,12 @@ int (*cpu_hpt_init)(vaddr_t, vsize_t);
 
 dev_t	bootdev;
 int	totalphysmem, physmem, esym;
+
+/*
+ * The our copy of the bootinfo struct passed to us by the boot loader
+ */
+struct bootinfo bootinfo;
+
 /*
  * XXX note that 0x12000 is the old kernel text start
  * address.  Memory below this is assumed to belong
@@ -417,7 +424,7 @@ const struct hppa_cpu_info hppa_cpu_pa8600 = {
 extern kmutex_t vmmap_lock;
 
 void
-hppa_init(paddr_t start)
+hppa_init(paddr_t start, void *bi)
 {
 	vaddr_t vstart, vend;
 	int error;
@@ -427,10 +434,15 @@ hppa_init(paddr_t start)
 	const char *model;
 	struct btlb_slot *btlb_slot;
 	int btlb_slot_i;
+	struct btinfo_symtab *bi_sym;
 
 #ifdef KGDB
 	boothowto |= RB_KDB;	/* go to kgdb early if compiled in. */
 #endif
+
+	/* Copy bootinfo */
+	if (bi != NULL)
+		memcpy(&bootinfo, bi, sizeof(struct bootinfo));
 
 	pdc_init();	/* init PDC iface, so we can call em easy */
 
@@ -810,8 +822,12 @@ do {									\
 	}
 #endif /* NCOM > 0 */
 #endif /* KGDB */
+
 #if NKSYMS || defined(DDB) || defined(LKM)
-	{
+	if ((bi_sym = lookup_bootinfo(BTINFO_SYMTAB)) != NULL)
+                ksyms_init(bi_sym->nsym, (int *)bi_sym->ssym,
+                    (int *)bi_sym->esym);
+        else {
 		extern int end;
 
 		ksyms_init(esym - (int)&end, &end, (int*)esym);
@@ -1716,6 +1732,35 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 /*
  * machine dependent system variables.
  */
+static int
+sysctl_machdep_boot(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct btinfo_kernelfile *bi_file;
+	const char *cp = NULL;
+
+	switch (node.sysctl_num) {
+	case CPU_BOOTED_KERNEL:
+		if ((bi_file = lookup_bootinfo(BTINFO_KERNELFILE)) != NULL)
+			cp = bi_file->name;
+		if (cp != NULL && cp[0] == '\0')
+			cp = "netbsd";
+		break;
+	default:
+		return (EINVAL);
+	}
+
+	if (cp == NULL || cp[0] == '\0')
+		return (ENOENT);
+
+	node.sysctl_data = __UNCONST(cp);
+	node.sysctl_size = strlen(cp) + 1;
+	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+}
+
+/*
+ * machine dependent system variables.
+ */
 SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 {
 
@@ -1730,6 +1775,35 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "booted_kernel", NULL,
+		       sysctl_machdep_boot, 0, NULL, 0,
+		       CTL_MACHDEP, CPU_BOOTED_KERNEL, CTL_EOL);
+}
+
+/*
+ * Given the type of a bootinfo entry, looks for a matching item inside
+ * the bootinfo structure.  If found, returns a pointer to it (which must
+ * then be casted to the appropriate bootinfo_* type); otherwise, returns
+ * NULL.
+ */
+void *
+lookup_bootinfo(int type)
+{
+	struct btinfo_common *bic;
+	int i;
+
+	bic = (struct btinfo_common *)(&bootinfo.bi_data[0]);
+	for (i = 0; i < bootinfo.bi_nentries; i++)
+		if (bic->type == type)
+			return bic;
+		else
+			bic = (struct btinfo_common *)
+			    ((uint8_t *)bic + bic->len);
+
+	return NULL;
 }
 
 /*
