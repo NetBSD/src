@@ -1,4 +1,4 @@
-/*	$NetBSD: algor_p4032_intr.c,v 1.17 2008/01/10 14:57:34 tsutsui Exp $	*/
+/*	$NetBSD: algor_p4032_intr.c,v 1.18 2008/02/03 05:31:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.17 2008/01/10 14:57:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: algor_p4032_intr.c,v 1.18 2008/02/03 05:31:17 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -298,7 +298,7 @@ algor_p4032_cal_timer(bus_space_tag_t st, bus_space_handle_t sh)
 	REGVAL(P4032_IRR0) = IRR0_RTC;
 
 	/* Run the loop an extra time to prime the cache. */
-	for (cps = 0, i = 0; i < 4; i++) {
+	for (i = 0; i < 4; i++) {
 		led_display('h', 'z', '0' + i, ' ');
 
 		/* Enable the interrupt. */
