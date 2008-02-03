@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.8 2008/02/03 19:20:41 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.9 2008/02/03 20:11:04 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -95,7 +95,6 @@ int stealsomething(void);
 int emptyhanded(void);
 void creategem(void);
 void adjustcvalues(int, int);
-void gettokstr(char *);
 int getpassword(void);
 int getyn(void);
 int packweight(void);

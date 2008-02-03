@@ -1,9 +1,9 @@
-/*	$NetBSD: tok.c,v 1.8 2008/02/03 20:01:24 dholland Exp $	*/
+/*	$NetBSD: tok.c,v 1.9 2008/02/03 20:11:05 dholland Exp $	*/
 
 /* tok.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: tok.c,v 1.8 2008/02/03 20:01:24 dholland Exp $");
+__RCSID("$NetBSD: tok.c,v 1.9 2008/02/03 20:11:05 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -12,6 +12,7 @@ __RCSID("$NetBSD: tok.c,v 1.8 2008/02/03 20:01:24 dholland Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <ctype.h>
 #include "header.h"
 #include "extern.h"
 

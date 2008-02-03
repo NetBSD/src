@@ -1,4 +1,4 @@
-/*	$NetBSD: monster.c,v 1.14 2008/02/03 19:20:42 dholland Exp $	*/
+/*	$NetBSD: monster.c,v 1.15 2008/02/03 20:11:05 dholland Exp $	*/
 
 /*
  * monster.c	Larn is copyrighted 1986 by Noah Morgan.
@@ -100,11 +100,12 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: monster.c,v 1.14 2008/02/03 19:20:42 dholland Exp $");
+__RCSID("$NetBSD: monster.c,v 1.15 2008/02/03 20:11:05 dholland Exp $");
 #endif				/* not lint */
 
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include "header.h"
 #include "extern.h"
 
