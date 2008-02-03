@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.5 2008/02/02 23:16:57 riz Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.6 2008/02/03 00:24:07 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -41,4 +41,10 @@ sys/dev/ic/i82557var.h				1.36
 	Pull several fixes from OpenBSD's fxp.c, fixing PR#30560 as
 	well as random pool corruption.
 	[tsutsui, ticket #1028]
+
+dist/nawk/lex.c					1.8
+
+	Bring back the fix in revision 1.6, apparently accidentally lost 
+	during last merge, to allow escape of a newline in string literals.
+	[christos, ticket #1034]
 
