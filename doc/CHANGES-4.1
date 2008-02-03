@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.22 2008/02/03 19:14:11 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.23 2008/02/03 19:58:06 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -326,4 +326,10 @@ sys/dev/usb/uhub.c				1.94
 
 	Speed up uhub attachment considerably.
 	[jmcneill, ticket #1056]
+
+usr.sbin/services_mkdb/services_mkdb.8		1.6 via patch
+
+	Update pathnames to the services and netgroups databases after
+	their move to /var/db.
+	[jnemeth, ticket #1033]
 
