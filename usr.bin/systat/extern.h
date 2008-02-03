@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.36 2005/02/26 22:12:33 dsl Exp $	*/
+/*	$NetBSD: extern.h,v 1.36.12.1 2008/02/03 00:26:53 riz Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -171,7 +171,7 @@ WINDOW	*openpigs(void);
 WINDOW	*openswap(void);
 WINDOW	*opentcp(void);
 void	 ps_user(char *);
-void	 redraw(int);
+void	 redraw(void);
 void	 showbufcache(void);
 void	 showdf(void);
 void	 showicmp(void);
