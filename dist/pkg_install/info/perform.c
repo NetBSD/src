@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.4 2008/02/03 21:21:33 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -10,13 +10,45 @@
 #if HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
 #endif
+#if HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
 #ifndef lint
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.4 2008/02/03 21:21:33 joerg Exp $");
 #endif
 #endif
+
+/*-
+ * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE
+ * COPYRIGHT HOLDERS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT
+ * OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 
 /*
  * FreeBSD install - a package for the installation and maintainance
@@ -48,8 +80,15 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
 #include <sys/stat.h>
 #endif
 
+#ifndef BOOTSTRAP
+#include <archive.h>
+#include <archive_entry.h>
+#endif
 #if HAVE_ERR_H
 #include <err.h>
+#endif
+#if HAVE_ERRNO_H
+#include <errno.h>
 #endif
 #if HAVE_SIGNAL_H
 #include <signal.h>
@@ -60,117 +99,242 @@ __RCSID("$NetBSD: perform.c,v 1.1.1.3 2007/08/14 22:59:51 joerg Exp $");
 #if HAVE_CTYPE_H
 #include <ctype.h>
 #endif
+#include <stddef.h>
 
-static char *Home;
+#define	LOAD_CONTENTS		(1 << 0)
+#define	LOAD_COMMENT		(1 << 1)
+#define	LOAD_DESC		(1 << 2)
+#define	LOAD_INSTALL		(1 << 3)
+#define	LOAD_DEINSTALL		(1 << 4)
+#define	LOAD_DISPLAY		(1 << 5)
+#define	LOAD_MTREE		(1 << 6)
+#define	LOAD_BUILD_VERSION	(1 << 7)
+#define	LOAD_BUILD_INFO		(1 << 8)
+#define	LOAD_SIZE_PKG		(1 << 9)
+#define	LOAD_SIZE_ALL		(1 << 10)
+#define	LOAD_PRESERVE		(1 << 11)
+#define	LOAD_VIEWS		(1 << 12)
+#define	LOAD_REQUIRED_BY	(1 << 13)
+#define	LOAD_INSTALLED_INFO	(1 << 14)
+
+static const struct pkg_meta_desc {
+	size_t entry_offset;
+	const char *entry_filename;
+	int entry_mask;
+} pkg_meta_descriptors[] = {
+	{ offsetof(struct pkg_meta, meta_contents), CONTENTS_FNAME ,
+	    LOAD_CONTENTS},
+	{ offsetof(struct pkg_meta, meta_comment), COMMENT_FNAME,
+	    LOAD_COMMENT },
+	{ offsetof(struct pkg_meta, meta_desc), DESC_FNAME,
+	    LOAD_DESC },
+	{ offsetof(struct pkg_meta, meta_install), INSTALL_FNAME,
+	    LOAD_INSTALL },
+	{ offsetof(struct pkg_meta, meta_deinstall), DEINSTALL_FNAME,
+	    LOAD_DEINSTALL },
+	{ offsetof(struct pkg_meta, meta_display), DISPLAY_FNAME,
+	    LOAD_DISPLAY },
+	{ offsetof(struct pkg_meta, meta_mtree), MTREE_FNAME,
+	    LOAD_MTREE },
+	{ offsetof(struct pkg_meta, meta_build_version), BUILD_VERSION_FNAME,
+	    LOAD_BUILD_VERSION },
+	{ offsetof(struct pkg_meta, meta_build_info), BUILD_INFO_FNAME,
+	    LOAD_BUILD_INFO },
+	{ offsetof(struct pkg_meta, meta_size_pkg), SIZE_PKG_FNAME,
+	    LOAD_SIZE_PKG },
+	{ offsetof(struct pkg_meta, meta_size_all), SIZE_ALL_FNAME,
+	    LOAD_SIZE_ALL },
+	{ offsetof(struct pkg_meta, meta_preserve), PRESERVE_FNAME,
+	    LOAD_PRESERVE },
+	{ offsetof(struct pkg_meta, meta_views), VIEWS_FNAME,
+	    LOAD_VIEWS },
+	{ offsetof(struct pkg_meta, meta_required_by), REQUIRED_BY_FNAME,
+	    LOAD_REQUIRED_BY },
+	{ offsetof(struct pkg_meta, meta_installed_info), INSTALLED_INFO_FNAME,
+	    LOAD_INSTALLED_INFO },
+	{ 0, NULL, 0 },
+};
+
+static int desired_meta_data;
+
+static void
+free_pkg_meta(struct pkg_meta *meta)
+{
+	const struct pkg_meta_desc *descr;
+
+	for (descr = pkg_meta_descriptors; descr->entry_filename; ++descr)
+		free(*(char **)((char *)meta + descr->entry_offset));
+
+	free(meta);
+}
+
+static struct pkg_meta *
+read_meta_data_from_fd(int fd)
+{
+#ifdef BOOTSTRAP
+	err(2, "binary packages not supported during bootstrap");
+	return NULL;
+#else
+	struct archive *archive;
+	struct pkg_meta *meta;
+	struct archive_entry *entry;
+	const char *fname;
+	const struct pkg_meta_desc *descr, *last_descr;
+	char **target;
+	int64_t size;
+	int r;
+
+	archive = archive_read_new();
+	archive_read_support_compression_all(archive);
+	archive_read_support_format_all(archive);
+	if (archive_read_open_fd(archive, fd, 1024))
+		err(2, "cannot open archive: %s", archive_error_string(archive));
+
+	if ((meta = malloc(sizeof(*meta))) == NULL)
+		err(2, "cannot allocate meta data header");
+
+	memset(meta, 0, sizeof(*meta));
+
+	last_descr = 0;
+	while ((r = archive_read_next_header(archive, &entry)) == ARCHIVE_OK) {
+		fname = archive_entry_pathname(entry);
+
+		for (descr = pkg_meta_descriptors; descr->entry_filename;
+		     ++descr) {
+			if (strcmp(descr->entry_filename, fname) == 0)
+				break;
+		}
+		if (descr->entry_filename == NULL)
+			break;
+
+		target = (char **)((char *)meta + descr->entry_offset);
+		if (*target)
+			errx(2, "duplicate entry, package corrupt");
+		if (descr < last_descr)
+			warnx("misordered package, continuing");
+		else
+			last_descr = descr;
+
+		if ((descr->entry_mask & desired_meta_data) == 0) {
+			if (archive_read_data_skip(archive))
+				errx(2, "cannot read package meta data");
+			continue;
+		}
+
+		size = archive_entry_size(entry);
+		if (size > SSIZE_MAX - 1)
+			errx(2, "package meta data too large to process");
+		if ((*target = malloc(size + 1)) == NULL)
+			err(2, "cannot allocate meta data");
+		if (archive_read_data(archive, *target, size) != size)
+			errx(2, "cannot read package meta data");
+		(*target)[size] = '\0';
+	}
+
+	return meta;
+#endif
+}
+
+static struct pkg_meta *
+read_meta_data_from_pkgdb(const char *pkg)
+{
+	struct pkg_meta *meta;
+	const struct pkg_meta_desc *descr;
+	char **target;
+	char *fname;
+	int fd;
+	struct stat st;
+
+	if ((meta = malloc(sizeof(*meta))) == NULL)
+		err(2, "cannot allocate meta data header");
+
+	memset(meta, 0, sizeof(*meta));
+
+	for (descr = pkg_meta_descriptors; descr->entry_filename; ++descr) {
+		if ((descr->entry_mask & desired_meta_data) == 0)
+			continue;
+
+		fname = pkgdb_pkg_file(pkg, descr->entry_filename);
+		fd = open(fname, O_RDONLY, 0);
+		free(fname);
+		if (fd == -1) {
+			if (errno == ENOENT)
+				continue;
+			err(2, "cannot read meta data file %s",
+			    descr->entry_filename);
+		}	
+		target = (char **)((char *)meta + descr->entry_offset);
+
+		if (fstat(fd, &st) == -1)
+			err(2, "cannot stat meta data");
+		if ((st.st_mode & S_IFMT) != S_IFREG)
+			errx(1, "meta data is not regular file");
+		if (st.st_size > SSIZE_MAX - 1)
+			err(2, "meta data file too large to process");
+		if ((*target = malloc(st.st_size + 1)) == NULL)
+			err(2, "cannot allocate meta data");
+		if (read(fd, *target, st.st_size) != st.st_size)
+			err(2, "cannot read meta data");
+		(*target)[st.st_size] = '\0';
+		close(fd);
+	}
+
+	return meta;
+}
 
 static lfile_head_t files;
+
+static void
+fetch_child(int fd, const char *url)
+{
+	close(STDOUT_FILENO);
+	if (dup2(fd, STDOUT_FILENO) == -1) {
+		static const char err_msg[] =
+		    "cannot redirect stdout of FTP process\n";
+		write(STDERR_FILENO, err_msg, sizeof(err_msg) - 1);
+		_exit(255);
+	}
+	close(fd);
+	execlp(FTP_CMD, FTP_CMD, "-V", "-o", "-", url, (char *)NULL);
+	_exit(255);
+}
 
 static int
 pkg_do(const char *pkg)
 {
-	Boolean installed = FALSE, isTMP = FALSE;
+	struct pkg_meta *meta;
 	char    log_dir[MaxPathSize];
-	char    fname[MaxPathSize];
-	struct stat sb;
-	char   *cp = NULL;
 	int     code = 0;
-	lfile_t	*lfp;
-	int	result;
-	char   *binpkgfile = NULL;
+	const char   *binpkgfile = NULL;
 
 	if (IS_URL(pkg)) {
-		if ((cp = fileGetURL(pkg)) != NULL) {
-			strlcpy(fname, cp, sizeof(fname));
-			isTMP = TRUE;
+		pid_t child;
+		int fd[2], status;
+
+		if (pipe(fd) == -1)
+			err(EXIT_FAILURE, "cannot create input pipes");
+		if (Verbose)
+			fprintf(stderr, "ftp -V -o - %s\n", pkg);
+		child = vfork();
+		if (child == -1)
+			err(EXIT_FAILURE, "cannot fork FTP process");
+		if (child == 0) {
+			close(fd[0]);
+			fetch_child(fd[1], pkg);
 		}
+		close(fd[1]);
+		meta = read_meta_data_from_fd(fd[0]);
+		kill(child, SIGTERM);
+		close(fd[0]);
+		waitpid(child, &status, 0);
 	} else if (fexists(pkg) && isfile(pkg)) {
-		int     len;
+		int	pkg_fd;
 
-		if (*pkg != '/') {
-			if (!getcwd(fname, MaxPathSize)) {
-				cleanup(0);
-				err(EXIT_FAILURE, "fatal error during execution: getcwd");
-			}
-			len = strlen(fname);
-			(void) snprintf(&fname[len], sizeof(fname) - len, "/%s", pkg);
-		} else {
-			strlcpy(fname, pkg, sizeof(fname));
-		}
-		cp = fname;
-		binpkgfile = fname;
-	}
-
-	if (cp) {
-		if (IS_URL(pkg)) {
-			/* file is already unpacked by fileGetURL() */
-			strcpy(PlayPen, cp);
-		} else {
-			if (IS_URL(cp)) {
-				/* only a package name was given, and it was expanded to a
-				 * full URL by fileFindByPath. Now extract...
-				 */
-				char *cp2;
-
-				binpkgfile = NULL;
-
-				if ((cp2 = fileGetURL(cp)) != NULL) {
-					strlcpy(fname, cp2, sizeof(fname));
-					isTMP = TRUE;
-					
-					strcpy(PlayPen, cp2);
-				}
-			} else {
-				/*
-				 * Apply a crude heuristic to see how much space the package will
-				 * take up once it's unpacked.  I've noticed that most packages
-				 * compress an average of 75%, but we're only unpacking the + files
-				 * needed so be very optimistic.
-				 */
-
-				/* Determine which +-files to unpack - not all may be present! */
-				LFILE_ADD(&files, lfp, CONTENTS_FNAME);
-				LFILE_ADD(&files, lfp, COMMENT_FNAME);
-				LFILE_ADD(&files, lfp, DESC_FNAME);
-				if (Flags & SHOW_MTREE)
-					LFILE_ADD(&files, lfp, MTREE_FNAME);
-				if (Flags & SHOW_BUILD_VERSION)
-					LFILE_ADD(&files, lfp, BUILD_VERSION_FNAME);
-				if (Flags & (SHOW_BUILD_INFO|SHOW_SUMMARY|SHOW_BI_VAR))
-					LFILE_ADD(&files, lfp, BUILD_INFO_FNAME);
-				if (Flags & (SHOW_PKG_SIZE|SHOW_SUMMARY))
-					LFILE_ADD(&files, lfp, SIZE_PKG_FNAME);
-				if (Flags & SHOW_ALL_SIZE)
-					LFILE_ADD(&files, lfp, SIZE_ALL_FNAME);
-#if 0
-				if (Flags & SHOW_REQBY)
-					LFILE_ADD(&files, lfp, REQUIRED_BY_FNAME);
-				if (Flags & SHOW_DISPLAY)
-					LFILE_ADD(&files, lfp, DISPLAY_FNAME);
-				if (Flags & SHOW_INSTALL)
-					LFILE_ADD(&files, lfp, INSTALL_FNAME);
-				if (Flags & SHOW_DEINSTALL)
-					LFILE_ADD(&files, lfp, DEINSTALL_FNAME);
-				/* PRESERVE_FNAME? */
-#endif				
-
-				if (stat(fname, &sb) == FAIL) {
-					warnx("can't stat package file '%s'", fname);
-					code = 1;
-					goto bail;
-				}
-				Home = make_playpen(PlayPen, PlayPenSize, sb.st_size / 2);
-				result = unpack(fname, &files);
-				while ((lfp = TAILQ_FIRST(&files)) != NULL) {
-					TAILQ_REMOVE(&files, lfp, lf_link);
-					free(lfp);
-				}
-				if (result) {
-					warnx("error during unpacking, no info for '%s' available", pkg);
-					code = 1;
-					goto bail;
-				}
-			}
-		}
+		if ((pkg_fd = open(pkg, O_RDONLY, 0)) == -1)
+			err(EXIT_FAILURE, "cannot open package %s", pkg);
+		meta = read_meta_data_from_fd(pkg_fd);
+		close(pkg_fd);
+		binpkgfile = pkg;
 	} else {
 		/*
 	         * It's not an uninstalled package, try and find it among the
@@ -190,11 +354,7 @@ pkg_do(const char *pkg)
 				errx(EXIT_FAILURE, "Error during search in pkgdb for %s", pkg);
 			}
 		}
-		if (chdir(log_dir) == FAIL) {
-			warnx("can't change directory to '%s'!", log_dir);
-			return 1;
-		}
-		installed = TRUE;
+		meta = read_meta_data_from_pkgdb(pkg);
 	}
 
 	/*
@@ -205,41 +365,32 @@ pkg_do(const char *pkg)
 		char    tmp[MaxPathSize];
 
 		(void) snprintf(tmp, sizeof(tmp), "%-19s ", pkg);
-		show_index(pkg, tmp, COMMENT_FNAME);
+		show_index(meta->meta_comment, tmp);
 	} else if (Flags & SHOW_BI_VAR) {
 		if (strcspn(BuildInfoVariable, "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 		    == strlen(BuildInfoVariable))
-			show_var(pkg, INSTALLED_INFO_FNAME, BuildInfoVariable);
+			show_var(meta->meta_installed_info, BuildInfoVariable);
 		else
-			show_var(pkg, BUILD_INFO_FNAME, BuildInfoVariable);
+			show_var(meta->meta_build_info, BuildInfoVariable);
 	} else {
-		FILE   *fp;
 		package_t plist;
 		
 		/* Read the contents list */
 		plist.head = plist.tail = NULL;
-		fp = fopen(CONTENTS_FNAME, "r");
-		if (!fp) {
-			warn("unable to open %s file", CONTENTS_FNAME);
-			code = 1;
-			goto bail;
-		}
-		/* If we have a prefix, add it now */
-		read_plist(&plist, fp);
-		fclose(fp);
+		parse_plist(&plist, meta->meta_contents);
 
 		/* Start showing the package contents */
 		if (!Quiet && !(Flags & SHOW_SUMMARY)) {
 			printf("%sInformation for %s:\n\n", InfoPrefix, pkg);
-			if (fexists(PRESERVE_FNAME)) {
+			if (meta->meta_preserve) {
 				printf("*** PACKAGE MAY NOT BE DELETED ***\n");
 			}
 		}
 		if (Flags & SHOW_SUMMARY) {
-			show_summary(&plist, binpkgfile);
+			show_summary(meta, &plist, binpkgfile);
 		}
 		if (Flags & SHOW_COMMENT) {
-			show_file(pkg, "Comment:\n", COMMENT_FNAME, TRUE);
+			show_file(meta->meta_comment, "Comment:\n", TRUE);
 		}
 		if (Flags & SHOW_DEPENDS) {
 			show_depends("Requires:\n", &plist);
@@ -247,30 +398,29 @@ pkg_do(const char *pkg)
 		if (Flags & SHOW_BLD_DEPENDS) {
 			show_bld_depends("Built using:\n", &plist);
 		}
-		if ((Flags & SHOW_REQBY) && !isemptyfile(REQUIRED_BY_FNAME)) {
-			show_file(pkg, "Required by:\n",
-				  REQUIRED_BY_FNAME, TRUE);
+		if ((Flags & SHOW_REQBY) && meta->meta_required_by) {
+			show_file(meta->meta_required_by, "Required by:\n", TRUE);
 		}
 		if (Flags & SHOW_DESC) {
-			show_file(pkg, "Description:\n", DESC_FNAME, TRUE);
+			show_file(meta->meta_desc, "Description:\n", TRUE);
 		}
-		if ((Flags & SHOW_DISPLAY) && fexists(DISPLAY_FNAME)) {
-			show_file(pkg, "Install notice:\n",
-				  DISPLAY_FNAME, TRUE);
+		if ((Flags & SHOW_DISPLAY) && meta->meta_display) {
+			show_file(meta->meta_display, "Install notice:\n",
+				  TRUE);
 		}
 		if (Flags & SHOW_PLIST) {
 			show_plist("Packing list:\n", &plist, PLIST_SHOW_ALL);
 		}
-		if ((Flags & SHOW_INSTALL) && fexists(INSTALL_FNAME)) {
-			show_file(pkg, "Install script:\n",
-				  INSTALL_FNAME, TRUE);
+		if ((Flags & SHOW_INSTALL) && meta->meta_install) {
+			show_file(meta->meta_install, "Install script:\n",
+				  TRUE);
 		}
-		if ((Flags & SHOW_DEINSTALL) && fexists(DEINSTALL_FNAME)) {
-			show_file(pkg, "De-Install script:\n",
-				  DEINSTALL_FNAME, TRUE);
+		if ((Flags & SHOW_DEINSTALL) && meta->meta_deinstall) {
+			show_file(meta->meta_deinstall, "De-Install script:\n",
+				  TRUE);
 		}
-		if ((Flags & SHOW_MTREE) && fexists(MTREE_FNAME)) {
-			show_file(pkg, "mtree file:\n", MTREE_FNAME, TRUE);
+		if ((Flags & SHOW_MTREE) && meta->meta_mtree) {
+			show_file(meta->meta_mtree, "mtree file:\n", TRUE);
 		}
 		if (Flags & SHOW_PREFIX) {
 			show_plist("Prefix(s):\n", &plist, PLIST_CWD);
@@ -278,41 +428,37 @@ pkg_do(const char *pkg)
 		if (Flags & SHOW_FILES) {
 			show_files("Files:\n", &plist);
 		}
-		if ((Flags & SHOW_BUILD_VERSION) && fexists(BUILD_VERSION_FNAME)) {
-			show_file(pkg, "Build version:\n",
-				  BUILD_VERSION_FNAME, TRUE);
+		if ((Flags & SHOW_BUILD_VERSION) && meta->meta_build_version) {
+			show_file(meta->meta_build_version, "Build version:\n",
+				  TRUE);
 		}
 		if (Flags & SHOW_BUILD_INFO) {
-			if (fexists(BUILD_INFO_FNAME)) {
-				show_file(pkg, "Build information:\n",
-					  BUILD_INFO_FNAME,
-					  !fexists(INSTALLED_INFO_FNAME));
+			if (meta->meta_build_info) {
+				show_file(meta->meta_build_info, "Build information:\n",
+					  TRUE);
 			}
-			if (fexists(INSTALLED_INFO_FNAME)) {
-				show_file(pkg, "Installed information:\n",
-					  INSTALLED_INFO_FNAME, TRUE);
+			if (meta->meta_installed_info) {
+				show_file(meta->meta_installed_info, "Installed information:\n",
+					  TRUE);
 			}
 		}
-		if ((Flags & SHOW_PKG_SIZE) && fexists(SIZE_PKG_FNAME)) {
-			show_file(pkg, "Size of this package in bytes: ",
-				  SIZE_PKG_FNAME, TRUE);
+		if ((Flags & SHOW_PKG_SIZE) && meta->meta_size_pkg) {
+			show_file(meta->meta_size_pkg, "Size of this package in bytes: ",
+				  TRUE);
 		}
-		if ((Flags & SHOW_ALL_SIZE) && fexists(SIZE_ALL_FNAME)) {
-			show_file(pkg, "Size in bytes including required pkgs: ",
-				  SIZE_ALL_FNAME, TRUE);
+		if ((Flags & SHOW_ALL_SIZE) && meta->meta_size_all) {
+			show_file(meta->meta_size_all, "Size in bytes including required pkgs: ",
+				  TRUE);
 		}
 		if (!Quiet && !(Flags & SHOW_SUMMARY)) {
-			if (fexists(PRESERVE_FNAME)) {
+			if (meta->meta_preserve) {
 				printf("*** PACKAGE MAY NOT BE DELETED ***\n\n");
 			}
 			puts(InfoPrefix);
 		}
 		free_plist(&plist);
 	}
-bail:
-	leave_playpen(Home);
-	if (isTMP)
-		unlink(fname);
+	free_pkg_meta(meta);
 	return code;
 }
 
@@ -411,7 +557,6 @@ CheckForBestPkg(const char *pkgname)
 void
 cleanup(int sig)
 {
-	leave_playpen(Home);
 	exit(1);
 }
 
@@ -435,6 +580,35 @@ pkg_perform(lpkg_head_t *pkghead)
 
 	TAILQ_INIT(&files);
 
+	desired_meta_data = 0;
+	if ((Flags & (SHOW_INDEX | SHOW_BI_VAR)) == 0)
+		desired_meta_data |= LOAD_PRESERVE;
+	if ((Flags & (SHOW_INDEX | SHOW_BI_VAR)) == 0)
+		desired_meta_data |= LOAD_CONTENTS;
+	if (Flags & (SHOW_COMMENT | SHOW_INDEX | SHOW_SUMMARY))
+		desired_meta_data |= LOAD_COMMENT;
+	if (Flags & (SHOW_BI_VAR | SHOW_BUILD_INFO | SHOW_SUMMARY))
+		desired_meta_data |= LOAD_BUILD_INFO | LOAD_INSTALLED_INFO;
+	if (Flags & (SHOW_SUMMARY | SHOW_PKG_SIZE))
+		desired_meta_data |= LOAD_SIZE_PKG;
+	if (Flags & SHOW_ALL_SIZE)
+		desired_meta_data |= LOAD_SIZE_ALL;
+	if (Flags & (SHOW_SUMMARY | SHOW_DESC))
+		desired_meta_data |= LOAD_DESC;
+	if (Flags & SHOW_REQBY)
+		desired_meta_data |= LOAD_REQUIRED_BY;
+	if (Flags & SHOW_DISPLAY)
+		desired_meta_data |= LOAD_DISPLAY;
+	if (Flags & SHOW_INSTALL)
+		desired_meta_data |= LOAD_INSTALL;
+	if (Flags & SHOW_DEINSTALL)
+		desired_meta_data |= LOAD_DEINSTALL;
+	if (Flags & SHOW_MTREE)
+		desired_meta_data |= LOAD_MTREE;
+	if (Flags & SHOW_BUILD_VERSION)
+		desired_meta_data |= LOAD_BUILD_VERSION;
+
+
 	if (Which != WHICH_LIST) {
 		if (File2Pkg) {
 			/* Show all files with the package they belong to */
@@ -454,6 +628,5 @@ pkg_perform(lpkg_head_t *pkghead)
 			free_lpkg(lpp);
 		}
 	}
-	ftp_stop();
 	return err_cnt;
 }
