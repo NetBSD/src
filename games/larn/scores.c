@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.15 2008/01/28 05:38:54 dholland Exp $	*/
+/*	$NetBSD: scores.c,v 1.16 2008/02/03 03:45:55 dholland Exp $	*/
 
 /*
  * scores.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -26,7 +26,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scores.c,v 1.15 2008/01/28 05:38:54 dholland Exp $");
+__RCSID("$NetBSD: scores.c,v 1.16 2008/02/03 03:45:55 dholland Exp $");
 #endif				/* not lint */
 #include <sys/types.h>
 #include <sys/times.h>
@@ -112,11 +112,11 @@ readboard()
 {
 	int             i;
 
-	if (uid != euid)
-		seteuid(euid);
+	if (gid != egid)
+		setegid(egid);
 	i = lopen(scorefile);
-	if (uid != euid)
-		seteuid(uid);
+	if (gid != egid)
+		setegid(gid);
 	if (i < 0) {
 		lprcat("Can't read scoreboard\n");
 		lflush();
@@ -140,11 +140,11 @@ writeboard()
 	int             i;
 
 	set_score_output();
-	if (uid != euid)
-		seteuid(euid);
+	if (gid != egid)
+		setegid(egid);
 	i = lcreat(scorefile);
-	if (uid != euid)
-		seteuid(uid);
+	if (gid != egid)
+		setegid(gid);
 	if (i < 0) {
 		lprcat("Can't write scoreboard\n");
 		lflush();
@@ -173,11 +173,11 @@ makeboard()
 	}
 	if (writeboard())
 		return (-1);
-	if (uid != euid)
-		seteuid(euid);
+	if (gid != egid)
+		setegid(egid);
 	chmod(scorefile, 0660);
-	if (uid != euid)
-		seteuid(uid);
+	if (gid != egid)
+		setegid(gid);
 	return (0);
 }
 
@@ -652,8 +652,8 @@ invalid:
 	set_score_output();
 	if ((wizard == 0) && (c[GOLD] > 0)) {	/* wizards can't score		 */
 #ifndef NOLOG
-		if (uid != euid)
-			seteuid(euid);
+		if (gid != egid)
+			setegid(egid);
 		if (lappend(logfile) < 0) {	/* append to file */
 			if (lcreat(logfile) < 0) {	/* and can't create new
 							 * log file */
@@ -664,14 +664,14 @@ invalid:
 				lflush();
 				exit(0);
 			}
-			if (uid != euid)
-				seteuid(euid);
+			if (gid != egid)
+				setegid(egid);
 			chmod(logfile, 0660);
-			if (uid != euid)
-				seteuid(uid);
+			if (gid != egid)
+				setegid(gid);
 		}
-		if (uid != euid)
-			seteuid(uid);
+		if (gid != egid)
+			setegid(gid);
 		strcpy(logg.who, loginname);
 		logg.score = c[GOLD];
 		logg.diff = c[HARDGAME];
