@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.9 2008/02/03 20:11:04 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.10 2008/02/03 21:24:58 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -109,7 +109,7 @@ void retcont(void);
 /* io.c */
 void setupvt100(void);
 void clearvt100(void);
-int lgetchar(void);
+int ttgetch(void);
 void scbr(void);
 void sncbr(void);
 void newgame(void);
@@ -136,7 +136,6 @@ void cl_dn(int, int);
 void standout(const char *);
 void set_score_output(void);
 void lflush(void);
-int xputchar(int);
 char *tmcapcnv(char *, char *);
 void beep(void);
 

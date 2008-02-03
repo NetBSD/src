@@ -1,4 +1,4 @@
-/*	$NetBSD: io.c,v 1.22 2008/02/03 20:11:05 dholland Exp $	*/
+/*	$NetBSD: io.c,v 1.23 2008/02/03 21:24:58 dholland Exp $	*/
 
 /*
  * io.c			 Larn is copyrighted 1986 by Noah Morgan.
@@ -7,7 +7,7 @@
  * 
  * setupvt100() 	Subroutine to set up terminal in correct mode for game
  * clearvt100()  	Subroutine to clean up terminal when the game is over
- * lgetchar() 		Routine to read in one character from the terminal
+ * ttgetch() 		Routine to read in one character from the terminal
  * scbr()			Function to set cbreak -echo for the terminal
  * sncbr()			Function to set -cbreak echo for the terminal
  * newgame() 		Subroutine to save the initial time and seed rnd()
@@ -51,7 +51,7 @@
  * from [x,1] to current line. cl_dn(x,y)
  * lear screen from [1,y] to end of display. standout(str)
  * rint the string in standout mode. set_score_output()
- * alled when output should be literally printed. * xputchar(ch)
+ * alled when output should be literally printed. * ttputch(ch)
  * rint one character in decoded output buffer. * flush_buf()
  * lush buffer with decoded output. * init_term()
  * erminal initialization -- setup termcap info *	char *tmcapcnv(sd,ss)
@@ -62,7 +62,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: io.c,v 1.22 2008/02/03 20:11:05 dholland Exp $");
+__RCSID("$NetBSD: io.c,v 1.23 2008/02/03 21:24:58 dholland Exp $");
 #endif /* not lint */
 
 #include "header.h"
@@ -127,6 +127,7 @@ typedef char   *va_list;
 #define va_arg(plist,mode) ((mode *)(plist += sizeof(mode)))[-1]
 #endif	/* NOVARARGS */
 
+static int ttputch(int ch);
 static void flush_buf(void);
 
 #define LINBUFSIZE 128	/* size of the lgetw() and lgetl() buffer */
@@ -164,10 +165,10 @@ clearvt100()
 }
 
 /*
- *	lgetchar() 	Routine to read in one character from the terminal
+ *	ttgetch() 	Routine to read in one character from the terminal
  */
 int
-lgetchar()
+ttgetch()
 {
 	char            byt;
 #ifdef EXTRA
@@ -834,29 +835,29 @@ lflush()
 		}
 		for (str = lpbuf; str < lpnt; str++) {
 			if (*str >= 32) {
-				xputchar(*str);
+				ttputch(*str);
 				curx++;
 			} else
 				switch (*str) {
 				case CLEAR:
-					tputs(CL, 0, xputchar);
+					tputs(CL, 0, ttputch);
 					curx = cury = 0;
 					break;
 
 				case CL_LINE:
-					tputs(CE, 0, xputchar);
+					tputs(CE, 0, ttputch);
 					break;
 
 				case CL_DOWN:
-					tputs(CD, 0, xputchar);
+					tputs(CD, 0, ttputch);
 					break;
 
 				case ST_START:
-					tputs(SO, 0, xputchar);
+					tputs(SO, 0, ttputch);
 					break;
 
 				case ST_END:
-					tputs(SE, 0, xputchar);
+					tputs(SE, 0, ttputch);
 					break;
 
 				case CURSOR:
@@ -864,7 +865,7 @@ lflush()
 					cury = *++str - 1;
 					if (t_goto(info, CM, curx, cury,
 						   tgoto_buf, 255) == 0)
-						tputs(tgoto_buf, 0, xputchar);
+						tputs(tgoto_buf, 0, ttputch);
 					break;
 
 				case '\n':
@@ -881,8 +882,8 @@ lflush()
 								   255) == 0)
 								tputs(tgoto_buf,
 								      0,
-								      xputchar);
-							tputs(CE, 0, xputchar);
+								      ttputch);
+							tputs(CE, 0, ttputch);
 
 							if (--scrline < 19)
 								scrline = 23;
@@ -892,8 +893,8 @@ lflush()
 								   255) == 0)
 								tputs(tgoto_buf,
 								      0,
-								      xputchar);
-							tputs(CE, 0, xputchar);
+								      ttputch);
+							tputs(CE, 0, ttputch);
 						} else {
 							if (t_goto(info, CM, 0,
 								   19,
@@ -901,29 +902,29 @@ lflush()
 								   255) == 0)
 								tputs(tgoto_buf,
 								      0,
-								      xputchar);
-							tputs(DL, 0, xputchar);
+								      ttputch);
+							tputs(DL, 0, ttputch);
 							if (t_goto(info, CM, 0,
 								   23,
 								   tgoto_buf,
 								   255) == 0)
 								tputs(tgoto_buf,
 								      0,
-								      xputchar);
+								      ttputch);
 							/*
 							 * tputs (AL, 0,
-							 * xputchar);
+							 * ttputch);
 							 */
 						}
 					} else {
-						xputchar('\n');
+						ttputch('\n');
 						cury++;
 					}
 					curx = 0;
 					break;
 
 				default:
-					xputchar(*str);
+					ttputch(*str);
 					curx++;
 				};
 		}
@@ -955,10 +956,10 @@ lflush()
 #ifndef VT100
 static int      vindex = 0;
 /*
- * xputchar(ch)		Print one character in decoded output buffer.
+ * ttputch(ch)		Print one character in decoded output buffer.
  */
-int 
-xputchar(int ch)
+static int 
+ttputch(int ch)
 {
 	outbuf[vindex++] = ch;
 	if (vindex >= BUFBIG)

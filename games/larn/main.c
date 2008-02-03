@@ -1,9 +1,9 @@
-/*	$NetBSD: main.c,v 1.22 2008/02/03 19:20:42 dholland Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2008/02/03 21:24:58 dholland Exp $	*/
 
 /* main.c		 */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.22 2008/02/03 19:20:42 dholland Exp $");
+__RCSID("$NetBSD: main.c,v 1.23 2008/02/03 21:24:58 dholland Exp $");
 #endif				/* not lint */
 
 #include <sys/types.h>
@@ -1277,7 +1277,7 @@ whatitem(const char *str)
 	lprintf("\nWhat do you want to %s [* for all] ? ", str);
 	i = 0;
 	while (i > 'z' || (i < 'a' && i != '*' && i != '\33' && i != '.'))
-		i = lgetchar();
+		i = ttgetch();
 	if (i == '\33')
 		lprcat(" aborted");
 	return (i);
@@ -1294,7 +1294,7 @@ readnum(mx)
 	int    i;
 	unsigned long amt = 0;
 	sncbr();
-	if ((i = lgetchar()) == '*')
+	if ((i = ttgetch()) == '*')
 		amt = mx;	/* allow him to say * for all gold */
 	else
 		while (i != '\n') {
@@ -1305,7 +1305,7 @@ readnum(mx)
 			}
 			if ((i <= '9') && (i >= '0') && (amt < 99999999))
 				amt = amt * 10 + i - '0';
-			i = lgetchar();
+			i = ttgetch();
 		}
 	scbr();
 	return (amt);

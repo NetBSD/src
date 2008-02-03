@@ -1,9 +1,9 @@
-/*	$NetBSD: help.c,v 1.6 2008/02/03 19:20:41 dholland Exp $	*/
+/*	$NetBSD: help.c,v 1.7 2008/02/03 21:24:58 dholland Exp $	*/
 
 /* help.c		Larn is copyrighted 1986 by Noah Morgan. */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: help.c,v 1.6 2008/02/03 19:20:41 dholland Exp $");
+__RCSID("$NetBSD: help.c,v 1.7 2008/02/03 21:24:58 dholland Exp $");
 #endif /* not lint */
 
 #include <unistd.h>
@@ -54,7 +54,7 @@ help()
 			lprcat(" for more help ---- ");
 			i = 0;
 			while ((i != ' ') && (i != '\n') && (i != '\33'))
-				i = lgetchar();
+				i = ttgetch();
 			if ((i == '\n') || (i == '\33')) {
 				lrclose();
 				setscroll();
@@ -105,7 +105,7 @@ retcont()
 	lprcat("Press ");
 	standout("return");
 	lprcat(" to continue: ");
-	while (lgetchar() != '\n');
+	while (ttgetch() != '\n');
 	setscroll();
 }
 
