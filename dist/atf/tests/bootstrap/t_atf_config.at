@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,9 @@ dnl
 AT_SETUP([atf-config: querying of build-time variables])
 AT_TESTED(atf-config)
 
-all_vars="atf_confdir atf_libexecdir atf_pkgdatadir atf_shell atf_workdir"
-all_vars_no=5
+all_vars="atf_arch atf_confdir atf_libexecdir atf_machine atf_pkgdatadir \
+          atf_shell atf_workdir"
+all_vars_no=7
 
 dnl List all variables.
 AT_CHECK([atf-config], [0], [stdout], [])

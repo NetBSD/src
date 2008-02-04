@@ -43,7 +43,7 @@ create_helpers()
     cp $(atf_get_srcdir)/h_fail tp4
 
     cat >tp5 <<EOF
-#! /bin/sh
+#! $(atf-config -t atf_shell)
 echo foo
 EOF
     chmod +x tp5
@@ -73,7 +73,7 @@ run_helpers()
 {
     mkdir etc
     cat >etc/atf-run.hooks <<EOF
-#! /bin/sh
+#! $(atf-config -t atf_shell)
 
 info_start_hook()
 {

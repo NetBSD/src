@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -224,6 +224,20 @@ fork_mangle_fds_body()
     eval "exec ${resfd}>res"
 }
 
+atf_test_case fork_stop
+fork_stop_head()
+{
+    atf_set "descr" "Helper test case for the t_fork test program"
+}
+fork_stop_body()
+{
+    echo ${$} >$(atf_config_get pidfile)
+    echo "Wrote pid file"
+    echo "Waiting for done file"
+    while ! test -f $(atf_config_get donefile); do sleep 1; done
+    echo "Exiting"
+}
+
 atf_test_case fork_umask
 fork_umask_head()
 {
@@ -258,6 +272,17 @@ ident_2_body()
     atf_check_equal '$(atf_get ident)' ident_2
 }
 
+atf_test_case require_arch
+require_arch_head()
+{
+    atf_set "descr" "Helper test case for the t_meta_data test program"
+    atf_set "require.arch" "$(atf_config_get arch)"
+}
+require_arch_body()
+{
+    :
+}
+
 atf_test_case require_config
 require_config_head()
 {
@@ -268,6 +293,17 @@ require_config_body()
 {
     echo "var1: $(atf_config_get var1)"
     echo "var2: $(atf_config_get var2)"
+}
+
+atf_test_case require_machine
+require_machine_head()
+{
+    atf_set "descr" "Helper test case for the t_meta_data test program"
+    atf_set "require.machine" "$(atf_config_get machine)"
+}
+require_machine_body()
+{
+    :
 }
 
 atf_test_case require_progs_body
@@ -335,6 +371,28 @@ require_user_unprivileged2_head()
 require_user_unprivileged2_body()
 {
     :
+}
+
+atf_test_case timeout
+timeout_head()
+{
+    atf_set "descr" "Helper test case for the t_meta_data test program"
+    atf_set "timeout" $(atf_config_get timeout 0)
+}
+timeout_body()
+{
+    sleep $(atf_config_get sleep)
+}
+
+atf_test_case timeout2
+timeout2_head()
+{
+    atf_set "descr" "Helper test case for the t_meta_data test program"
+    atf_set "timeout2" $(atf_config_get timeout2 0)
+}
+timeout2_body()
+{
+    sleep $(atf_config_get sleep2)
 }
 
 # -------------------------------------------------------------------------
@@ -413,18 +471,23 @@ atf_init_test_cases()
 
     # Add helper tests for t_fork.
     atf_add_test_case fork_mangle_fds
+    atf_add_test_case fork_stop
     atf_add_test_case fork_umask
 
     # Add helper tests for t_meta_data.
     atf_add_test_case ident_1
     atf_add_test_case ident_2
+    atf_add_test_case require_arch
     atf_add_test_case require_config
+    atf_add_test_case require_machine
     atf_add_test_case require_progs_body
     atf_add_test_case require_progs_head
     atf_add_test_case require_user_root
     atf_add_test_case require_user_root2
     atf_add_test_case require_user_unprivileged
     atf_add_test_case require_user_unprivileged2
+    atf_add_test_case timeout
+    atf_add_test_case timeout2
 
     # Add helper tests for t_srcdir.
     atf_add_test_case srcdir_exists

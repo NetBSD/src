@@ -94,16 +94,6 @@ public:
     const char* what(void) const throw();
 };
 
-class usage_error : public std::runtime_error {
-    char m_text[4096];
-
-public:
-    usage_error(const char* fmt, ...) throw();
-    ~usage_error(void) throw();
-
-    const char* what(void) const throw();
-};
-
 } // namespace atf
 
 #endif // !defined(_ATF_EXCEPTIONS_HPP_)

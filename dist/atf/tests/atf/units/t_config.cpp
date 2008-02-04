@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -77,92 +77,153 @@ ATF_TEST_CASE_BODY(get)
 {
     // Unset all known environment variables and make sure the built-in
     // values do not match the bogus value we will use for testing.
+    unset_env_var("ATF_ARCH");
     unset_env_var("ATF_CONFDIR");
     unset_env_var("ATF_LIBEXECDIR");
+    unset_env_var("ATF_MACHINE");
     unset_env_var("ATF_PKGDATADIR");
     unset_env_var("ATF_SHELL");
     unset_env_var("ATF_WORKDIR");
     atf::config::__reinit();
+    ATF_CHECK(atf::config::get("atf_arch") != "env-value");
     ATF_CHECK(atf::config::get("atf_confdir") != "env-value");
     ATF_CHECK(atf::config::get("atf_libexecdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_machine") != "env-value");
     ATF_CHECK(atf::config::get("atf_pkgdatadir") != "env-value");
     ATF_CHECK(atf::config::get("atf_shell") != "env-value");
     ATF_CHECK(atf::config::get("atf_workdir") != "env-value");
 
     // Make sure empty values in the environment are not considered.
+    set_env_var("ATF_ARCH", "");
     set_env_var("ATF_CONFDIR", "");
     set_env_var("ATF_LIBEXECDIR", "");
+    set_env_var("ATF_MACHINE", "");
     set_env_var("ATF_PKGDATADIR", "");
     set_env_var("ATF_SHELL", "");
     set_env_var("ATF_WORKDIR", "");
     atf::config::__reinit();
+    ATF_CHECK(!atf::config::get("atf_arch").empty());
     ATF_CHECK(!atf::config::get("atf_confdir").empty());
     ATF_CHECK(!atf::config::get("atf_libexecdir").empty());
+    ATF_CHECK(!atf::config::get("atf_machine").empty());
     ATF_CHECK(!atf::config::get("atf_pkgdatadir").empty());
     ATF_CHECK(!atf::config::get("atf_shell").empty());
     ATF_CHECK(!atf::config::get("atf_workdir").empty());
 
-    // Check if the ATF_CONFDIR variable is recognized.
-    set_env_var  ("ATF_CONFDIR", "env-value");
+    // Check if the ATF_ARCH variable is recognized.
+    set_env_var  ("ATF_ARCH", "env-value");
     unset_env_var("ATF_LIBEXECDIR");
+    unset_env_var("ATF_MACHINE");
     unset_env_var("ATF_PKGDATADIR");
     unset_env_var("ATF_SHELL");
     unset_env_var("ATF_WORKDIR");
     atf::config::__reinit();
+    ATF_CHECK_EQUAL(atf::config::get("atf_arch"), "env-value");
+    ATF_CHECK(atf::config::get("atf_confdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_libexecdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_machine") != "env-value");
+    ATF_CHECK(atf::config::get("atf_pkgdatadir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_shell") != "env-value");
+    ATF_CHECK(atf::config::get("atf_workdir") != "env-value");
+
+    // Check if the ATF_CONFDIR variable is recognized.
+    unset_env_var("ATF_ARCH");
+    set_env_var  ("ATF_CONFDIR", "env-value");
+    unset_env_var("ATF_LIBEXECDIR");
+    unset_env_var("ATF_MACHINE");
+    unset_env_var("ATF_PKGDATADIR");
+    unset_env_var("ATF_SHELL");
+    unset_env_var("ATF_WORKDIR");
+    atf::config::__reinit();
+    ATF_CHECK(atf::config::get("atf_arch") != "env-value");
     ATF_CHECK_EQUAL(atf::config::get("atf_confdir"), "env-value");
     ATF_CHECK(atf::config::get("atf_libexecdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_machine") != "env-value");
     ATF_CHECK(atf::config::get("atf_pkgdatadir") != "env-value");
     ATF_CHECK(atf::config::get("atf_shell") != "env-value");
     ATF_CHECK(atf::config::get("atf_workdir") != "env-value");
 
     // Check if the ATF_LIBEXECDIR variable is recognized.
+    unset_env_var("ATF_ARCH");
     unset_env_var("ATF_CONFDIR");
     set_env_var  ("ATF_LIBEXECDIR", "env-value");
+    unset_env_var("ATF_MACHINE");
     unset_env_var("ATF_PKGDATADIR");
     unset_env_var("ATF_SHELL");
     unset_env_var("ATF_WORKDIR");
     atf::config::__reinit();
+    ATF_CHECK(atf::config::get("atf_arch") != "env-value");
     ATF_CHECK(atf::config::get("atf_confdir") != "env-value");
     ATF_CHECK_EQUAL(atf::config::get("atf_libexecdir"), "env-value");
+    ATF_CHECK(atf::config::get("atf_machine") != "env-value");
+    ATF_CHECK(atf::config::get("atf_pkgdatadir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_shell") != "env-value");
+    ATF_CHECK(atf::config::get("atf_workdir") != "env-value");
+
+    // Check if the ATF_MACHINE variable is recognized.
+    unset_env_var("ATF_ARCH");
+    unset_env_var("ATF_CONFDIR");
+    unset_env_var("ATF_LIBEXECDIR");
+    set_env_var  ("ATF_MACHINE", "env-value");
+    unset_env_var("ATF_PKGDATADIR");
+    unset_env_var("ATF_SHELL");
+    unset_env_var("ATF_WORKDIR");
+    atf::config::__reinit();
+    ATF_CHECK(atf::config::get("atf_arch") != "env-value");
+    ATF_CHECK(atf::config::get("atf_confdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_libexecdir") != "env-value");
+    ATF_CHECK_EQUAL(atf::config::get("atf_machine"), "env-value");
     ATF_CHECK(atf::config::get("atf_pkgdatadir") != "env-value");
     ATF_CHECK(atf::config::get("atf_shell") != "env-value");
     ATF_CHECK(atf::config::get("atf_workdir") != "env-value");
 
     // Check if the ATF_PKGDATADIR variable is recognized.
+    unset_env_var("ATF_ARCH");
     unset_env_var("ATF_CONFDIR");
     unset_env_var("ATF_LIBEXECDIR");
+    unset_env_var("ATF_MACHINE");
     set_env_var  ("ATF_PKGDATADIR", "env-value");
     unset_env_var("ATF_SHELL");
     unset_env_var("ATF_WORKDIR");
     atf::config::__reinit();
+    ATF_CHECK(atf::config::get("atf_arch") != "env-value");
     ATF_CHECK(atf::config::get("atf_confdir") != "env-value");
     ATF_CHECK(atf::config::get("atf_libexecdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_machine") != "env-value");
     ATF_CHECK_EQUAL(atf::config::get("atf_pkgdatadir"), "env-value");
     ATF_CHECK(atf::config::get("atf_shell") != "env-value");
     ATF_CHECK(atf::config::get("atf_workdir") != "env-value");
 
     // Check if the ATF_SHELL variable is recognized.
+    unset_env_var("ATF_ARCH");
     unset_env_var("ATF_CONFDIR");
     unset_env_var("ATF_LIBEXECDIR");
+    unset_env_var("ATF_MACHINE");
     unset_env_var("ATF_PKGDATADIR");
     set_env_var  ("ATF_SHELL", "env-value");
     unset_env_var("ATF_WORKDIR");
     atf::config::__reinit();
+    ATF_CHECK(atf::config::get("atf_arch") != "env-value");
     ATF_CHECK(atf::config::get("atf_confdir") != "env-value");
     ATF_CHECK(atf::config::get("atf_libexecdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_machine") != "env-value");
     ATF_CHECK(atf::config::get("atf_pkgdatadir") != "env-value");
     ATF_CHECK_EQUAL(atf::config::get("atf_shell"), "env-value");
     ATF_CHECK(atf::config::get("atf_workdir") != "env-value");
 
     // Check if the ATF_WORKDIR variable is recognized.
+    unset_env_var("ATF_ARCH");
     unset_env_var("ATF_CONFDIR");
     unset_env_var("ATF_LIBEXECDIR");
+    unset_env_var("ATF_MACHINE");
     unset_env_var("ATF_PKGDATADIR");
     unset_env_var("ATF_SHELL");
     set_env_var  ("ATF_WORKDIR", "env-value");
     atf::config::__reinit();
+    ATF_CHECK(atf::config::get("atf_arch") != "env-value");
     ATF_CHECK(atf::config::get("atf_confdir") != "env-value");
     ATF_CHECK(atf::config::get("atf_libexecdir") != "env-value");
+    ATF_CHECK(atf::config::get("atf_machine") != "env-value");
     ATF_CHECK(atf::config::get("atf_pkgdatadir") != "env-value");
     ATF_CHECK(atf::config::get("atf_shell") != "env-value");
     ATF_CHECK_EQUAL(atf::config::get("atf_workdir"), "env-value");
@@ -179,9 +240,11 @@ ATF_TEST_CASE_BODY(get_all)
 
     // Check that the valid variables, and only those, are returned.
     std::map< std::string, std::string > vars = atf::config::get_all();
-    ATF_CHECK_EQUAL(vars.size(), 5);
+    ATF_CHECK_EQUAL(vars.size(), 7);
+    ATF_CHECK(vars.find("atf_arch") != vars.end());
     ATF_CHECK(vars.find("atf_confdir") != vars.end());
     ATF_CHECK(vars.find("atf_libexecdir") != vars.end());
+    ATF_CHECK(vars.find("atf_machine") != vars.end());
     ATF_CHECK(vars.find("atf_pkgdatadir") != vars.end());
     ATF_CHECK(vars.find("atf_shell") != vars.end());
     ATF_CHECK(vars.find("atf_workdir") != vars.end());
@@ -197,15 +260,19 @@ ATF_TEST_CASE_BODY(has)
     atf::config::__reinit();
 
     // Check for all the variables that must exist.
+    ATF_CHECK(atf::config::has("atf_arch"));
     ATF_CHECK(atf::config::has("atf_confdir"));
     ATF_CHECK(atf::config::has("atf_libexecdir"));
+    ATF_CHECK(atf::config::has("atf_machine"));
     ATF_CHECK(atf::config::has("atf_pkgdatadir"));
     ATF_CHECK(atf::config::has("atf_shell"));
     ATF_CHECK(atf::config::has("atf_workdir"));
 
     // Same as above, but using uppercase (which is incorrect).
+    ATF_CHECK(!atf::config::has("ATF_ARCH"));
     ATF_CHECK(!atf::config::has("ATF_CONFDIR"));
     ATF_CHECK(!atf::config::has("ATF_LIBEXECDIR"));
+    ATF_CHECK(!atf::config::has("ATF_MACHINE"));
     ATF_CHECK(!atf::config::has("ATF_PKGDATADIR"));
     ATF_CHECK(!atf::config::has("ATF_SHELL"));
     ATF_CHECK(!atf::config::has("ATF_WORKDIR"));

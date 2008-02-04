@@ -38,7 +38,7 @@
 
 #include "atf/application.hpp"
 
-class h_app_empty : public atf::application {
+class h_app_empty : public atf::application::app {
     static const char* m_description;
 
 public:
@@ -52,7 +52,7 @@ const char* h_app_empty::m_description =
     "on its own and redefines no methods.";
 
 h_app_empty::h_app_empty(void) :
-    application(m_description, "h_app_empty(1)")
+    app(m_description, "h_app_empty(1)", "atf(7)")
 {
 }
 

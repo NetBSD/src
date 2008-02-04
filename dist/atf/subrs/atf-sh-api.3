@@ -1,0 +1,298 @@
+.\"
+.\" Automated Testing Framework (atf)
+.\"
+.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 5, 2008
+.Dt ATF-SH-API 3
+.Os
+.Sh NAME
+.Nm atf_add_test_case ,
+.Nm atf_check ,
+.Nm atf_check_equal ,
+.Nm atf_config_get ,
+.Nm atf_config_has ,
+.Nm atf_fail ,
+.Nm atf_get ,
+.Nm atf_get_srcdir ,
+.Nm atf_pass ,
+.Nm atf_require_prog ,
+.Nm atf_set ,
+.Nm atf_skip
+.Nd POSIX shell API to write ATF-based test programs
+.Sh SYNOPSIS
+.Fn atf_add_test_case "name"
+.Fn atf_check "command"
+.Fn atf_check_equal "expr1" "expr2"
+.Fn atf_config_get "var_name"
+.Fn atf_config_has "var_name"
+.Fn atf_fail "reason"
+.Fn atf_get "var_name"
+.Fn atf_get_srcdir
+.Fn atf_pass
+.Fn atf_require_prog "prog_name"
+.Fn atf_set "var_name" "value"
+.Fn atf_skip "reason"
+.Sh DESCRIPTION
+ATF
+provides a simple but powerful interface to easily write test programs in
+the POSIX shell language.
+These are extremely helpful given that they are trivial to write due to the
+language simplicity and the great deal of available external tools, so they
+are often ideal to test other applications at the user level.
+.Pp
+Test programs written using this library must be preprocessed by the
+.Xr atf-compile 1
+tool, which includes some boilerplate code and generates the final
+(installable) test program.
+.Pp
+Shell-based test programs always follow this template:
+.Bd -literal -offset indent
+atf_test_case tc1
+tc1_head() {
+    ... first test case's header ...
+}
+tc1_body() {
+    ... first test case's body ...
+}
+
+atf_test_case tc2
+tc2_head() {
+    ... second test case's header ...
+}
+tc2_body() {
+    ... second test case's body ...
+}
+tc2_cleanup() {
+    ... second test case's cleanup ...
+}
+
+.Ns ... additional test cases ...
+
+atf_init_test_cases() {
+    atf_add_test_case tc1
+    atf_add_test_case tc2
+    ... add additional test cases ...
+}
+.Ed
+.Ss Definition of test cases
+Test cases have an identifier and are composed of three different parts:
+the header, the body and an optional cleanup routine, all of which are
+described in
+.Xr atf-test-case 8 .
+To define test cases, one can use the
+.Fn atf_test_case
+function, which takes a single parameter specifiying the test case's
+name and instructs the library to set things up to accept it as a valid
+test case.
+It is important to note that it
+.Em does not
+set the test case up for execution when the program is run.
+In order to do so, a later registration is needed through the
+.Fn atf_add_test_case
+function detailed in
+.Sx Program initialization .
+.Pp
+Later on, one must define the three parts of the body by providing two
+or three functions (remember that the cleanup routine is optional).
+These functions are named after the test case's identifier, and are
+.Fn <id>_head ,
+.Fn <id>_body
+and
+.Fn <id>_cleanup.
+None of these take parameters when executed.
+.Ss Program initialization
+The test program must define an
+.Fn atf_init_test_cases
+function, which is in charge of registering the test cases that will be
+executed at run time by using the
+.Fn atf_add_test_case
+function, which takes the name of a test case as its single parameter.
+This main function should not do anything else, except maybe sourcing
+auxiliary source files that define extra variables and functions.
+.Ss Configuration variables
+The test case has read-only access to the current configuration variables
+through the
+.Fn atf_config_has
+and
+.Fn atf_config_get
+methods.
+The former takes a single parameter specifying a variable name and returns
+a boolean indicating whether the variable is defined or not.
+The latter can take one or two parameters.
+If it takes only one, it specifies the variable from which to get the
+value, and this variable must be defined.
+If it takes two, the second one specifies a default value to be returned
+if the variable is not available.
+.Ss Access to the source directory
+It is possible to get the path to the test case's source directory from
+anywhere in the test program by using the
+.Fn atf_get_srcdir
+function.
+It is interesting to note that this can be used inside
+.Fn atf_init_test_cases
+to silently include additional helper files from the source directory.
+.Ss Requiring programs
+Aside from the
+.Va require.progs
+meta-data variable available in the header only, one can also check for
+additional programs in the test case's body by using the
+.Fn atf_require_prog
+function, which takes the base name or full path of a single binary.
+Relative paths are forbidden.
+If it is not found, the test case will be automatically skipped.
+.Ss Test case finalization
+The test case finalizes either when the body reaches its end, at which
+point the test is assumed to have
+.Em passed ,
+or at any explicit call to
+.Fn atf_pass ,
+.Fn atf_fail
+or
+.Fn atf_skip .
+These three functions terminate the execution of the test case immediately.
+The cleanup routine will be processed afterwards in a completely automated
+way, regardless of the test case's termination reason.
+.Pp
+.Fn atf_pass
+does not take any parameters.
+.Fn atf_fail
+and
+.Fn atf_skip
+take a single string parameter that describes why the test case failed or
+was skipped, respectively.
+It is very important to provide a clear error message in both cases so that
+the user can quickly know why the test did not pass.
+.Ss Helper functions for common checks
+.Fn atf_check cmd expcode expout experr
+.Pp
+This function takes four parameters: the command to execute, the expected
+numerical exit code, the expected behavior of stdout and the expected
+behavior of stderr.
+.Sq expout
+can be one of the following:
+.Bl -tag .width expoutXXXX
+.It expout
+What the command writes to the stdout channel must match exactly what is
+found in the
+.Pa expout
+file.
+.It ignore
+The test does not check what the command writes to the stdout channel.
+.It null
+The command must not write anything to the stdout channel.
+.It stdout
+What the command writes to the stdout channel is written to a
+.Pa stdout
+file, available for further inspection.
+.El
+.Pp
+Similarly,
+.Sq experr
+can be one of
+.Sq experr ,
+.Sq ignore ,
+.Sq null or
+.Sq stderr ,
+all of which follow the same semantics of their corresponding counterparts
+for the stdout case.
+.Pp
+It is important to note that when a failure is detected, this function will
+print as much information as possible to be able to identify the cause of
+the failure.
+For example, if the stdout does not match with the expected contents, a
+diff will be printed.
+.Pp
+.Fn atf_check_equal expr1 expr2
+.Pp
+This function takes two expressions, evaluates them and, if their
+results differ, aborts the test case with an appropriate failure message.
+.Sh EXAMPLES
+The following shows a complete test program with a single test case that
+validates the addition operator:
+.Bd -literal -offset indent
+atf_test_case addition
+addition_head() {
+    atf_set "descr" "Sample tests for the addition operator"
+}
+addition_body() {
+    atf_check_equal $((0 + 0)) 0
+    atf_check_equal $((0 + 1)) 1
+    atf_check_equal $((1 + 0)) 0
+
+    atf_check_equal $((1 + 1)) 2
+
+    atf_check_equal $((100 + 200)) 300
+}
+
+atf_init_test_cases() {
+    atf_add_test_case addition
+}
+.Ed
+.Pp
+This other example shows how to include a file with extra helper functions
+in the test program:
+.Bd -literal -offset indent
+.Ns ... definition of test cases ...
+
+atf_init_test_cases() {
+    . $(atf_get_srcdir)/helper_functions.sh
+
+    atf_add_test_case foo1
+    atf_add_test_case foo2
+}
+.Ed
+.Pp
+This example demonstrates the use of the very useful
+.Fn atf_check
+function:
+.Bd -literal -offset indent
+# Check for silent output
+atf_check 'true' 0 null null
+
+# Check for silent output and failure
+atf_check 'false' 1 null null
+
+# Check for known stdout and silent stderr
+echo foo >expout
+atf_check 'echo foo' 0 expout null
+
+# Generate a file for later inspection
+atf_check 'ls' 0 stdout null
+grep foo ls || atf_fail "foo file not found in listing"
+.Ed
+.Sh SEE ALSO
+.Xr atf-compile 1 ,
+.Xr atf-test-program 1 ,
+.Xr atf 7 ,
+.Xr atf-test-case 8

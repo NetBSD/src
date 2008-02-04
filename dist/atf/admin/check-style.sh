@@ -98,10 +98,13 @@ find_sources() {
               -name "*.awk" -o \
               -name "*.cpp" -o \
               -name "*.hpp" -o \
+              -name "*.m4" -o \
               -name "*.sh" \
            \) -a \( \
               \! -path "*autom4te*" -a \
-              -type f \
+              -type f -a \
+              \! -name "aclocal.m4" \
+              \! -name "*.so.*" \
            \)
 }
 
