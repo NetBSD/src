@@ -74,9 +74,9 @@ extern int dot_symbols;
 #define INVALID_64BIT "-m%s not supported in this configuration"
 #define INVALID_32BIT INVALID_64BIT
 
-#ifndef MASK_PROFILE_KERNEL	// XXXHRH
-#define MASK_PROFILE_KERNEL 0	// XXXHRH
-#endif				// XXXHRH
+#ifndef MASK_PROFILE_KERNEL	/* XXXHRH */
+#define MASK_PROFILE_KERNEL 0	/* XXXHRH */
+#endif				/* XXXHRH */
 
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
