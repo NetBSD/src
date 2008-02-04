@@ -1,4 +1,4 @@
-/* $NetBSD: ar5315.c,v 1.3.8.3 2007/09/03 14:27:54 yamt Exp $ */
+/* $NetBSD: ar5315.c,v 1.3.8.4 2008/02/04 09:22:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.3.8.3 2007/09/03 14:27:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.3.8.4 2008/02/04 09:22:11 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.3.8.3 2007/09/03 14:27:54 yamt Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 
 #include <mips/cache.h>
 #include <mips/locore.h>
@@ -65,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: ar5315.c,v 1.3.8.3 2007/09/03 14:27:54 yamt Exp $");
 
 #include <net/if.h>
 #include <net/if_ether.h>
+
+#include <prop/proplib.h>
 
 #include <contrib/dev/ath/ah_soc.h>	/* XXX really doesn't belong in hal */
 

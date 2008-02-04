@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.2.4.4 2008/01/21 09:47:43 yamt Exp $	*/
+/*	$NetBSD: locks.c,v 1.2.4.5 2008/02/04 09:24:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -94,8 +94,7 @@ int
 mutex_owned(kmutex_t *mtx)
 {
 
-	/* XXX */
-	return 1;
+	return rumpuser_mutex_held(mtx->kmtx_mtx);
 }
 
 /* reader/writer locks */
@@ -147,8 +146,21 @@ int
 rw_write_held(krwlock_t *rw)
 {
 
-	/* XXX: always held for now */
-	return 1;
+	return rumpuser_rw_wrheld(rw->krw_pthlock);
+}
+
+int
+rw_read_held(krwlock_t *rw)
+{
+
+	return rumpuser_rw_rdheld(rw->krw_pthlock);
+}
+
+int
+rw_lock_held(krwlock_t *rw)
+{
+
+	return rumpuser_rw_held(rw->krw_pthlock);
 }
 
 /* curriculum vitaes */
@@ -190,17 +202,20 @@ cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
 	extern int hz;
 
-	KASSERT(hz == 100);
-	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	if (ticks == 0) {
+		cv_wait(cv, mtx);
+		return 0;
+	} else {
+		KASSERT(hz == 100);
+		return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	}
 }
 
 int
 cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
-	extern int hz;
 
-	KASSERT(hz == 100);
-	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	return cv_timedwait(cv, mtx, ticks);
 }
 
 void

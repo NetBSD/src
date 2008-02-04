@@ -1,4 +1,4 @@
-/* $NetBSD: thinkpad_acpi.c,v 1.10.2.2 2008/01/21 09:42:34 yamt Exp $ */
+/* $NetBSD: thinkpad_acpi.c,v 1.10.2.3 2008/02/04 09:23:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.10.2.2 2008/01/21 09:42:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: thinkpad_acpi.c,v 1.10.2.3 2008/02/04 09:23:19 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -122,6 +122,7 @@ static void	thinkpad_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 
 static void	thinkpad_wireless_toggle(thinkpad_softc_t *);
 
+static bool	thinkpad_resume(device_t);
 static void	thinkpad_brightness_up(device_t);
 static void	thinkpad_brightness_down(device_t);
 static uint8_t	thinkpad_brightness_read(thinkpad_softc_t *sc);
@@ -260,7 +261,7 @@ thinkpad_attach(device_t parent, device_t self, void *opaque)
 	thinkpad_temp_init(sc);
 
 fail:
-	if (!pmf_device_register(self, NULL, NULL))
+	if (!pmf_device_register(self, NULL, thinkpad_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	if (!pmf_event_register(self, PMFE_DISPLAY_BRIGHTNESS_UP,
 	    thinkpad_brightness_up, true))
@@ -555,4 +556,22 @@ thinkpad_cmos(thinkpad_softc_t *sc, uint8_t cmd)
 	if (ACPI_FAILURE(rv))
 		aprint_error_dev(sc->sc_dev, "couldn't evalute CMOS: %s\n",
 		    AcpiFormatException(rv));
+}
+
+static bool
+thinkpad_resume(device_t dv)
+{
+	ACPI_STATUS rv;
+	ACPI_HANDLE pubs;
+
+	rv = AcpiGetHandle(NULL, "\\_SB.PCI0.LPC.EC.PUBS", &pubs);
+	if (ACPI_FAILURE(rv))
+		return true;	/* not fatal */
+
+	rv = AcpiEvaluateObject(pubs, "_ON", NULL, NULL);
+	if (ACPI_FAILURE(rv))
+		aprint_error_dev(dv, "failed to execute PUBS._ON: %s\n",
+		    AcpiFormatException(rv));
+
+	return true;
 }

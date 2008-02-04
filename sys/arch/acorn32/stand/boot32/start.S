@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.1 2002/12/28 23:57:37 reinoud Exp $	*/
+/*	$NetBSD: start.S,v 1.1.20.1 2008/02/04 09:21:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Reinoud Zandijk
@@ -37,7 +37,6 @@ ENTRY(relocate_code)
 	/*
 		- r0 pointer to configuration structure
 		- r1 pointer to physical restart point
-		- r2 pointer to relocation table (P)
 		- r3 pointer to physical new L1 page address (P)
 		- r4 kernel entry point
 	*/
@@ -73,6 +72,18 @@ ENTRY(relocate_code)
 	cmp	r2, r1
 	moveq	r14, #0							/* mark v3				*/
 
+	/* flush everything out before we turn off the MMU */
+
+	/* flush ID cache											*/
+	mov	r0, #0
+	cmp	r14, #0
+	mcreq	15, 0, r0, c7, c0, 0					/* flush v3 ID cache			*/
+	mcrne	15, 0, r0, c7, c7, 0					/* flush v4 ID cache			*/
+	mcrne	15, 0, r0, c7, c10, 4					/* drain WB (v4)			*/
+
+	/* flush TLB												*/
+	mcr	15, 0, r0, c5, c0, 0					/* flush TLB for v3 and v4		*/
+
 	/* switch off MMU, IDcache and WB and branch to physical code space					*/
 	cmp	r14, #0
 	mrcne	15, 0, r0, c1, c0, 0					/* read processor control register if v4*/
@@ -87,28 +98,36 @@ ENTRY(relocate_code)
 	
 relocate_code_physical_restart:
 	/* we are running in physical flat 1:1 space now */
-	mov	r5, r10							/* r5 = is start of relocation table	*/
-	ldr	r6, [r5], #4						/* r4 = number of relocated pages	*/
+
+	/* make the screen border red */
+	mov	r4, #0x03400000
+	mov	r0, #0x40000000
+	orr	r0, r0, #0xff
+	str	r0, [r4]
+	
+	adr	r5, relocate_table_start
+	ldr	r6, [r5], #4						/* r6 = number of relocated pages	*/
+
 loop_relocate_pages:
 	ldr	r2, [r5], #4						/* r2 = from address			*/
 	ldr	r3, [r5], #4						/* r3 = to address			*/
 	ldr	r7, [r5], #4						/* r7 = number of bytes to travel	*/
-	mov	r1, #0							/* r1 = offset in page			*/
 	/* its slow ... we dont know anything about alignment here 						*/
 loop_one_page:
-	ldrb	r0, [r2, r1]
-	strb	r0, [r3, r1]
-	add	r1, r1, #1
-	cmp	r1, r7							/* all bytes copied?			*/
-	bne	loop_one_page
+	ldr	r0, [r2], #4
+	str	r0, [r3], #4
+	subs	r7, r7, #4
+	bgt	loop_one_page
+
 	subs	r6, r6, #1
 	bne	loop_relocate_pages
 
+	/* make the screen border go green */
+	mov	r0, #0x40000000
+	orr	r0, r0, #0xff00
+	str	r0, [r4]
+	
 	/* OK! all is relocated... now switch over to the new L1 pages						*/
-	/* disable SA110 clock switching (WHY?)									*/
-	mov	r0, #0
-	cmp	r14, #0
-	mcrne	15, 0, r0, c15, c2, 2
 
 	/* flush ID cache											*/
 	mov	r0, #0
@@ -136,12 +155,21 @@ loop_one_page:
 	mov	r0, r0							/* flat					*/
 	/* not flat anymore but we just continue								*/
 
+	/* make the screen border go blue */
+	mov	r0, #0x40000000
+	orr	r0, r0, #0xff0000
+	str	r0, [r4]
+	
 	/* call the kernel!											*/
 	mov	r0, r8							/* saved configuration structure	*/
 	mov	pc, r12							/* entry point ..... bye bye!		*/
 
 relocate_code_end:
 	b	relocate_code_end
+
+relocate_table_start:
+	/* relocation table is copied here, so it must be kept small */
+
 
 /* ----------------------------------------------------------------------- */
 
@@ -154,7 +182,7 @@ ENTRY(start_kernel)
 		- r0 relocation code page (V)
 		- r1 relocation pv offset
 		- r2 configuration structure
-		- r3 relocation table (P)
+		- r3 relocation table (V)
 		- r4 L1 page descriptor (P)
 		- r5 kernel entry point
 	*/
@@ -168,7 +196,7 @@ ENTRY(start_kernel)
 
 	/* relocate the relocation routine to the given page */
 	adr	r6, relocate_code
-	ldr	r7, Lnbpp
+	mov	r7, #relocate_table_start - relocate_code	/* get length to copy */
 	mov	r8, r0
 relocate_code_loop:
 	ldr	r9, [r6], #4
@@ -176,6 +204,22 @@ relocate_code_loop:
 	subs	r7, r7, #4
 	bne	relocate_code_loop
 
+	/* now relocate the relocate table onto the same page */
+
+	/* next we need to copy the table over */
+	ldr	r6, [r3], #4					/* r6 has number of threes to copy */
+	str	r6, [r8], #4
+
+relocate_table_loop:
+	ldr	r9, [r3], #4
+	str	r9, [r8], #4
+	ldr	r9, [r3], #4
+	str	r9, [r8], #4
+	ldr	r9, [r3], #4
+	str	r9, [r8], #4
+	subs	r6, r6, #1
+	bne	relocate_table_loop
+	
 	/* we messed up the data cache : lets read a 64 or 128 kb <-- GROSS */
 	mov	r7, #128*1024
 	mov	r6, #0x8000						/* start of RISCOS application area	*/
@@ -202,7 +246,7 @@ flush_ID_cache_try:
 	add	r1, r0, r1						/* get physical address			*/
 	add	r1, r1, r7						/* add offset				*/
 	mov	r0, r2							/* put configuration structure in r0	*/
-	mov	r2, r3							/* relocation table			*/
+	mov	r2, r3
 	mov	r3, r4							/* L1 page discriptor			*/
 	mov	r4, r5							/* kernel entry point			*/
 
@@ -210,9 +254,4 @@ flush_ID_cache_try:
 
 emergency_exit:
 	ldmdb	fp, {r4-r9, fp, sp, pc}
-
-Lnbpp:
-	.word	nbpp
-Lvideomem_start_ro:
-	.word	videomem_start_ro
 

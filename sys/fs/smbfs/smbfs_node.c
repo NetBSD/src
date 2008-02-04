@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_node.c,v 1.24.2.6 2008/01/21 09:45:53 yamt Exp $	*/
+/*	$NetBSD: smbfs_node.c,v 1.24.2.7 2008/02/04 09:24:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24.2.6 2008/01/21 09:45:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24.2.7 2008/02/04 09:24:01 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_node.c,v 1.24.2.6 2008/01/21 09:45:53 yamt Exp
 #include <fs/smbfs/smbfs_subr.h>
 
 #define	SMBFS_NOHASH(smp, hval)	(&(smp)->sm_hash[(hval) & (smp)->sm_hashlen])
-#define	smbfs_hash_lock(smp)	lockmgr(&smp->sm_hashlock, LK_EXCLUSIVE, NULL)
-#define	smbfs_hash_unlock(smp)	lockmgr(&smp->sm_hashlock, LK_RELEASE, NULL)
 
 MALLOC_JUSTDEFINE(M_SMBNODENAME, "SMBFS nname", "SMBFS node name");
 
@@ -126,8 +124,7 @@ smbfs_node_alloc(struct mount *mp, struct vnode *dvp,
 #endif
 	hashval = smbfs_hash(name, nmlen);
 retry:
-	smbfs_hash_lock(smp);
-loop:
+	mutex_enter(&smp->sm_hashlock);
 	nhpp = SMBFS_NOHASH(smp, hashval);
 	LIST_FOREACH(np, nhpp, n_hash) {
 		if (np->n_parent != dvp
@@ -136,13 +133,14 @@ loop:
 			continue;
 		vp = SMBTOV(np);
 		mutex_enter(&(vp)->v_interlock);
-		smbfs_hash_unlock(smp);
+		mutex_exit(&smp->sm_hashlock);
 		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK) != 0)
 			goto retry;
 		*vpp = vp;
 		return (0);
 	}
-	smbfs_hash_unlock(smp);
+	mutex_exit(&smp->sm_hashlock);
+
 	/*
 	 * If we don't have node attributes, then it is an explicit lookup
 	 * for an existing vnode.
@@ -158,6 +156,35 @@ loop:
 		pool_put(&smbfs_node_pool, np);
 		return error;
 	}
+
+	if (dvp) {
+		np->n_parent = dvp;
+		if (/*vp->v_type == VDIR &&*/ (dvp->v_vflag & VV_ROOT) == 0) {
+			vref(dvp);
+			np->n_flag |= NREFPARENT;
+		}
+	}
+
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+
+	mutex_enter(&smp->sm_hashlock);
+	/*
+	 * Check if the vnode wasn't added while we were in getnewvnode/
+	 * malloc.
+	 */
+	LIST_FOREACH(np2, nhpp, n_hash) {
+		if (np2->n_parent != dvp
+		    || np2->n_nmlen != nmlen
+		    || memcmp(name, np2->n_name, nmlen) != 0)
+			continue;
+		mutex_exit(&smp->sm_hashlock);
+		pool_put(&smbfs_node_pool, np);
+		ungetnewvnode(vp);
+		if ((np->n_flag & NREFPARENT) != 0)
+			vrele(dvp);
+		goto retry;
+	}
+
 	vp->v_type = fap->fa_attr & SMB_FA_DIR ? VDIR : VREG;
 	vp->v_data = np;
 	genfs_node_init(vp, &smbfs_genfsops);
@@ -172,35 +199,11 @@ loop:
 	/* new file vnode has to have a parent */
 	KASSERT(vp->v_type != VREG || dvp != NULL);
 
-	if (dvp) {
-		np->n_parent = dvp;
-		if (/*vp->v_type == VDIR &&*/ (dvp->v_vflag & VV_ROOT) == 0) {
-			vref(dvp);
-			np->n_flag |= NREFPARENT;
-		}
-	}
-
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-
-	smbfs_hash_lock(smp);
-	/*
-	 * Check if the vnode wasn't added while we were in getnewvnode/
-	 * malloc.
-	 */
-	LIST_FOREACH(np2, nhpp, n_hash) {
-		if (np2->n_parent != dvp
-		    || np2->n_nmlen != nmlen
-		    || memcmp(name, np2->n_name, nmlen) != 0)
-			continue;
-		vput(vp); /* XXX ungetnewvnode/free! */
-		goto loop;
-	}
-
 	/* Not on hash list, add it now */
 	LIST_INSERT_HEAD(nhpp, np, n_hash);
-	smbfs_hash_unlock(smp);
-
 	uvm_vnp_setsize(vp, np->n_size);
+	mutex_exit(&smp->sm_hashlock);
+
 	*vpp = vp;
 	return 0;
 }
@@ -244,7 +247,7 @@ smbfs_reclaim(v)
 
 	KASSERT((np->n_flag & NOPEN) == 0);
 
-	smbfs_hash_lock(smp);
+	mutex_enter(&smp->sm_hashlock);
 
 	dvp = (np->n_parent && (np->n_flag & NREFPARENT)) ?
 	    np->n_parent : NULL;
@@ -258,7 +261,7 @@ smbfs_reclaim(v)
 	}
 	genfs_node_destroy(vp);
 	vp->v_data = NULL;
-	smbfs_hash_unlock(smp);
+	mutex_exit(&smp->sm_hashlock);
 	if (np->n_name)
 		smbfs_name_free(np->n_name);
 	pool_put(&smbfs_node_pool, np);

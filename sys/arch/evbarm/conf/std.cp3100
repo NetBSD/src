@@ -1,9 +1,10 @@
-# $NetBSD: std.cp3100,v 1.1.8.2 2006/12/30 20:45:49 yamt Exp $
+# $NetBSD: std.cp3100,v 1.1.8.3 2008/02/04 09:21:48 yamt Exp $
 #
 # Standard NetBSD/evbarm options for CP3100
 
 machine	evbarm arm
 include		"conf/std"      # MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 # Pull in CP3100 config definitions.
 include "arch/evbarm/conf/files.cp3100"

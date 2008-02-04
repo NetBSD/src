@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.80.2.6 2007/11/15 11:43:31 yamt Exp $ */
+/*	$NetBSD: db_interface.c,v 1.80.2.7 2008/02/04 09:22:34 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80.2.6 2007/11/15 11:43:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.80.2.7 2008/02/04 09:22:34 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -285,7 +285,6 @@ void db_dump_itsb(db_expr_t, bool, db_expr_t, const char *);
 void db_pmap_kernel(db_expr_t, bool, db_expr_t, const char *);
 void db_pload_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_pmap_cmd(db_expr_t, bool, db_expr_t, const char *);
-/* void db_lock_cmd(db_expr_t, bool, db_expr_t, const char *); */
 void db_traptrace(db_expr_t, bool, db_expr_t, const char *);
 void db_watch(db_expr_t, bool, db_expr_t, const char *);
 void db_pm_extract(db_expr_t, bool, db_expr_t, const char *);
@@ -735,31 +734,6 @@ db_pmap_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		}
 	}
 }
-
-
-#if 0
-void
-db_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
-{
-#if 0
-	struct lock *l;
-
-	if (!have_addr) {
-		db_printf("What lock address?\n");
-		return;
-	}
-
-	l = (struct lock *)addr;
-	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
-	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
-	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,
-	    l->lk_sharecount, l->lk_exclusivecount, l->lk_wmesg,
-	    l->lk_recurselevel);
-#else
-	db_printf("locks unsupported\n");
-#endif
-}
-#endif
 
 #define TSBENTS (512 << tsbsize)
 extern pte_t *tsb_dmmu, *tsb_immu;
@@ -1231,9 +1205,6 @@ const struct db_command db_machine_command_table[] = {
 	  "[/f] [address]",
 	  "   address:\tdisplay the mapping for this virtual address\n"
 	  "   /f:\tif no address is given, display a full dump of the pmap") },
-#if 0
-	{ DDB_ADD_CMD("lock",	db_lock_cmd,	0,	NULL,NULL,NULL) },
-#endif
 	{ DDB_ADD_CMD("lwp",	db_lwp_cmd,	0,
 	  "Display a struct lwp",
 	  "[address]",

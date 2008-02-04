@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.10.2.6 2008/01/21 09:45:43 yamt Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.10.2.7 2008/02/04 09:23:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.6 2008/01/21 09:45:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.10.2.7 2008/02/04 09:23:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ cd9660_ihashins(ip)
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	mutex_exit(&cd9660_ihash_lock);
 
-	lockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE, &ip->i_vnode->v_interlock);
+	vlockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE);
 }
 
 /*

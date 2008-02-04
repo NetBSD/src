@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.4.7 2008/01/21 09:35:16 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.4.8 2008/02/04 09:21:40 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -242,6 +242,43 @@ NENTRY(rw_exit)
 
 3:	jmp	_C_LABEL(rw_vector_exit)
 
+/*
+ * int	rw_tryenter(krwlock_t *rwl, krw_t op);
+ *
+ * Try to acquire one hold on a RW lock.
+ */
+NENTRY(rw_tryenter)
+	cmpl	$RW_READER, %esi
+	jne	2f
+
+	/*
+	 * Reader: this is the most common case.
+	 */
+1:	movq	RW_OWNER(%rdi), %rax
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+	leaq	RW_READ_INCR(%rax), %rdx 
+	jnz	3f
+	LOCK(8)
+	cmpxchgq %rdx, RW_OWNER(%rdi)
+	movl	$0, %eax
+	setz	%al
+	ret
+
+	/*
+	 * Writer: if the compare-and-set fails, don't bother retrying.
+	 */
+2:	movq	CPUVAR(CURLWP), %rcx
+	xorq	%rax, %rax
+	orq	$RW_WRITE_LOCKED, %rcx
+	LOCK(9)
+	cmpxchgq %rcx, RW_OWNER(%rdi)
+	movl	$0, %eax
+	setz	%al
+	ret
+
+3:	xorl	%eax, %eax
+	ret
+
 #endif	/* LOCKDEBUG */
 
 /*
@@ -285,7 +322,8 @@ NENTRY(__cpu_simple_lock_try)
 #ifndef LOCKDEBUG
 LABEL(x86_lockpatch)
 	.quad	.Lpatch1, .Lpatch2, .Lpatch3, .Lpatch4
-	.quad	.Lpatch5, .Lpatch6, .Lpatch7
+	.quad	.Lpatch5, .Lpatch6, .Lpatch7, .Lpatch8
+	.quad	.Lpatch9
 #ifdef FULL
 	.quad	.Lpatch11
 #endif

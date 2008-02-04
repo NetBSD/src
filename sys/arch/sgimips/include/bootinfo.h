@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.3 2004/03/24 17:06:58 drochner Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.3.16.1 2008/02/04 09:22:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -30,15 +30,16 @@
 #define _SGIMIPS_BOOTINFO_H_
 
 #define	BOOTINFO_MAGIC		0x20011121
+#define	BOOTINFO_SIZE		1024
 
 struct btinfo_common {
-	struct btinfo_common *next;
-	int type;
-};
-
+	size_t next;	/* offset of next item, or zero if end of data */
+	int type;	/* type of bootinfo item */
+#define BTINFO_NONE	0
 #define BTINFO_MAGIC	1
 #define BTINFO_BOOTPATH 2
 #define BTINFO_SYMTAB	3
+};
 
 struct btinfo_magic {
 	struct btinfo_common common;

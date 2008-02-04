@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.4.6.6 2008/01/21 09:47:45 yamt Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.4.6.7 2008/02/04 09:24:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -83,6 +83,7 @@ void rumpuser_mutex_enter(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
+int  rumpuser_mutex_held(struct rumpuser_mtx *);
 
 struct rumpuser_rw;
 
@@ -91,6 +92,9 @@ void rumpuser_rw_enter(struct rumpuser_rw *, int);
 int  rumpuser_rw_tryenter(struct rumpuser_rw *, int);
 void rumpuser_rw_exit(struct rumpuser_rw *);
 void rumpuser_rw_destroy(struct rumpuser_rw *);
+int  rumpuser_rw_held(struct rumpuser_rw *);
+int  rumpuser_rw_rdheld(struct rumpuser_rw *);
+int  rumpuser_rw_wrheld(struct rumpuser_rw *);
 
 struct rumpuser_cv;
 

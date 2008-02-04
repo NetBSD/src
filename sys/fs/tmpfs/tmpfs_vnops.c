@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.24.6.8 2008/01/21 09:45:55 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.24.6.9 2008/02/04 09:24:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.24.6.8 2008/01/21 09:45:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.24.6.9 2008/02/04 09:24:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -109,7 +109,6 @@ const struct vnodeopv_entry_desc tmpfs_vnodeop_entries[] = {
 	{ &vop_pathconf_desc,		tmpfs_pathconf },
 	{ &vop_islocked_desc,		tmpfs_islocked },
 	{ &vop_advlock_desc,		tmpfs_advlock },
-	{ &vop_lease_desc,		tmpfs_lease },
 	{ &vop_bwrite_desc,		tmpfs_bwrite },
 	{ &vop_getpages_desc,		tmpfs_getpages },
 	{ &vop_putpages_desc,		tmpfs_putpages },
@@ -942,18 +941,6 @@ tmpfs_rename(void *v)
 		 * node on the end of the target's node list. */
 		de2 = tmpfs_dir_lookup(tdnode, tcnp);
 		KASSERT(de2 != NULL);
-/* XXXREMOVEME */
-		if (de2 == de) {
-			panic("tmpfs_rename: to self 1");
-		}
-		if (de2->td_node == de->td_node) {
-			panic("tmpfs_rename: to self 2");
-		}
-		if (de2->td_node != tnode) {
-			panic("tmpfs_rename: found wrong entry [%s]",
-			    tcnp->cn_nameptr);
-		}
-/* XXXREMOVEME */
 		KASSERT(de2->td_node == tnode);
 		tmpfs_dir_detach(tdvp, de2);
 
@@ -1311,11 +1298,8 @@ tmpfs_print(void *v)
 	    ", status 0x%x\n",
 	    node->tn_mode, node->tn_uid, node->tn_gid,
 	    (uintmax_t)node->tn_size, node->tn_status);
-
 	if (vp->v_type == VFIFO)
 		fifo_printinfo(vp);
-	lockmgr_printinfo(&vp->v_lock);
-
 	printf("\n");
 
 	return 0;

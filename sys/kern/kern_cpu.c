@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.6.4.6 2008/01/21 09:46:02 yamt Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.6.4.7 2008/02/04 09:24:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.6.4.6 2008/01/21 09:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.6.4.7 2008/02/04 09:24:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,11 +158,12 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	mutex_enter(&cpu_lock);
 	switch (cmd) {
 	case IOC_CPU_SETSTATE:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		cs = data;
+		error = kauth_authorize_system(l->l_cred,
+		    KAUTH_SYSTEM_CPU, KAUTH_REQ_SYSTEM_CPU_SETSTATE, cs, NULL,
+		    NULL);
 		if (error != 0)
 			break;
-		cs = data;
 		if ((ci = cpu_lookup(cs->cs_id)) == NULL) {
 			error = ESRCH;
 			break;

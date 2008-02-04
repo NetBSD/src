@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_usrreq.c,v 1.13.4.5 2008/01/21 09:47:11 yamt Exp $	 */
+/*	$NetBSD: ddp_usrreq.c,v 1.13.4.6 2008/02/04 09:24:38 yamt Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.5 2008/01/21 09:47:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_usrreq.c,v 1.13.4.6 2008/02/04 09:24:38 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 
@@ -403,9 +403,7 @@ at_pcbconnect(ddp, addr, l)
 		sockaddr_at_init(&u.dsta, &sat->sat_addr, 0);
 		if (hintnet)
 			u.dsta.sat_addr.s_net = hintnet;
-		rtcache_setdst(ro, &u.dst);
-
-		rt = rtcache_init(ro);
+		rt = rtcache_lookup(ro, &u.dst);
 	}
 	/*
          * Make sure any route that we have has a valid interface.

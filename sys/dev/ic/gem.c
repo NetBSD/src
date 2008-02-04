@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.40.2.5 2008/01/21 09:42:59 yamt Exp $ */
+/*	$NetBSD: gem.c,v 1.40.2.6 2008/02/04 09:23:24 yamt Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.40.2.5 2008/01/21 09:42:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.40.2.6 2008/02/04 09:23:24 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -416,9 +416,16 @@ gem_attach(sc, enaddr)
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	sc->sc_if_flags = ifp->if_flags;
-	/* The GEM hardware supports basic TCP checksum offloading only. */
-	ifp->if_capabilities |=
-	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx;
+	/*
+	 * The GEM hardware supports basic TCP checksum offloading only.
+	 * Several (all?) revisions (Sun rev. 01 and Apple rev. 00 and 80)
+	 * have bugs in the receive checksum, so don't enable it for now.
+	if ((GEM_IS_SUN(sc) && sc->sc_chiprev != 1) ||
+	    (GEM_IS_APPLE(sc) &&
+	    (sc->sc_chiprev != 0 && sc->sc_chiprev != 0x80)))
+		ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Rx;
+	*/
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx;
 	ifp->if_start = gem_start;
 	ifp->if_ioctl = gem_ioctl;
 	ifp->if_watchdog = gem_watchdog;
@@ -1561,21 +1568,19 @@ gem_tint(sc)
 	struct gem_txsoft *txs;
 	int txlast;
 	int progress = 0;
+	u_int32_t v;
 
 	DPRINTF(sc, ("%s: gem_tint\n", sc->sc_dev.dv_xname));
 
-	/*
-	 * Unload collision counters
-	 */
-	ifp->if_collisions +=
-		bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
-		bus_space_read_4(t, mac, GEM_MAC_FIRST_COLL_CNT) +
-		bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
-		bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
+	/* Unload collision counters ... */
+	v = bus_space_read_4(t, mac, GEM_MAC_EXCESS_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_LATE_COLL_CNT);
+	ifp->if_collisions += v +
+	    bus_space_read_4(t, mac, GEM_MAC_NORM_COLL_CNT) +
+	    bus_space_read_4(t, mac, GEM_MAC_FIRST_COLL_CNT);
+	ifp->if_oerrors += v;
 
-	/*
-	 * then clear the hardware counters.
-	 */
+	/* ... then clear the hardware counters. */
 	bus_space_write_4(t, mac, GEM_MAC_NORM_COLL_CNT, 0);
 	bus_space_write_4(t, mac, GEM_MAC_FIRST_COLL_CNT, 0);
 	bus_space_write_4(t, mac, GEM_MAC_EXCESS_COLL_CNT, 0);
@@ -1795,8 +1800,8 @@ gem_rint(sc)
 			if (sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) {
 				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN -
 					 ETHER_VLAN_ENCAP_LEN;
-				eh = (struct ether_header *) mtod(m, void *) +
-					ETHER_VLAN_ENCAP_LEN;
+				eh = (struct ether_header *) (mtod(m, char *) +
+					ETHER_VLAN_ENCAP_LEN);
 			} else {
 				pktlen = m->m_pkthdr.len - ETHER_HDR_LEN;
 				eh = mtod(m, struct ether_header *);
@@ -1910,6 +1915,19 @@ swcsum:
 
 	DPRINTF(sc, ("gem_rint: done sc->rxptr %d, complete %d\n",
 		sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
+
+	/* Read error counters ... */
+	ifp->if_ierrors +=
+	    bus_space_read_4(t, h, GEM_MAC_RX_LEN_ERR_CNT) +
+	    bus_space_read_4(t, h, GEM_MAC_RX_ALIGN_ERR) +
+	    bus_space_read_4(t, h, GEM_MAC_RX_CRC_ERR_CNT) +
+	    bus_space_read_4(t, h, GEM_MAC_RX_CODE_VIOL);
+
+	/* ... then clear the hardware counters. */
+	bus_space_write_4(t, h, GEM_MAC_RX_LEN_ERR_CNT, 0);
+	bus_space_write_4(t, h, GEM_MAC_RX_ALIGN_ERR, 0);
+	bus_space_write_4(t, h, GEM_MAC_RX_CRC_ERR_CNT, 0);
+	bus_space_write_4(t, h, GEM_MAC_RX_CODE_VIOL, 0);
 
 	return (1);
 }
@@ -2133,9 +2151,6 @@ gem_intr(v)
 	}
 	if (status & GEM_INTR_RX_MAC) {
 		int rxstat = bus_space_read_4(t, h, GEM_MAC_RX_STATUS);
-		if (rxstat & ~GEM_MAC_RX_DONE)
-			printf("%s: MAC rx fault, status %x\n",
-			    sc->sc_dev.dv_xname, rxstat);
 		/*
 		 * At least with GEM_SUN_GEM and some GEM_SUN_ERI
 		 * revisions GEM_MAC_RX_OVERFLOW happen often due to a
@@ -2146,7 +2161,7 @@ gem_intr(v)
 			ifp->if_ierrors++;
 			gem_reset_rxdma(sc);
 		} else if (rxstat & ~(GEM_MAC_RX_DONE | GEM_MAC_RX_FRAME_CNT))
-			printf("%s: MAC rx fault, status %x\n",
+			printf("%s: MAC rx fault, status 0x%02x\n",
 			    sc->sc_dev.dv_xname, rxstat);
 	}
 	if (status & GEM_INTR_PCS) {

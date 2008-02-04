@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2.4.4 2007/12/07 17:26:32 yamt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.2.4.5 2008/02/04 09:22:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -126,36 +126,42 @@ NENTRY(mutex_spin_exit, 0)
 
 #endif /* LOCKDEBUG */
 
+	.section	.bss
+	.p2align	2
+	.lcomm		casdata,256
 /*
- *	bool _rw_cas(krwlock_t *rw, uintptr_t old, uintptr_t new);
- *	{
- *		bool rv = false;
- *		int cnt = 4;
- *		while (rw->rw_owner == old && --cnt != 0) {
- *			if (__cpu_simple_try_lock(&rw->rw_lock)) {
- *				if (old == rw->rw_owner) {
- *					rw->rw_owner = new;
- *					rv = true;
- *				}
- *				__cpu_simple_unlock(&rw->rw_lock);
- *				break;
- *			}
- *		}
- *		return rv;
- *	}
+ *	
  */
-NENTRY(_rw_cas, 0)
-	clrl	%r0			/* rv = false */
-	movl	$4, %r3			/* cnt = 4 */
-	movq	4(%ap), %r1		/* cache rw, old */
-1:	decl	%r3			/* --cnt */
-	beql	2f			/* if cnt == 0, return */
-	cmpl	(%r1), %r2		/* rw->rw_owner == old? */
-	bneq	2f			/*    nope, return */
-	bbssi	$0, RW_LOCK(%r1), 1b	/* get lock, loop if failure */
-	cmpl	(%r1), %r2		/* rw->rw_owner still == old? */
+NENTRY(_atomic_cas_32, 0)
+	movq	4(%ap), %r1		/* cache ptr, old */
+	movl	(%r1), %r0		/* get value */
+	cmpl	%r0, %r2		/* does it equal old? */
+	bneq	4f			/*    nope, return */
+	/*
+	 * Lock everyone out on this cpu.
+	 */
+	mfpr	$PR_IPL, %r5		/* save IPL */
+	mtpr	$IPL_HIGH, $PR_IPL	/* block everything */
+#ifdef MULTIPROCESSOR
+	extzv	$2,$11,%r1,%r4		/* gets bits 2-12 */
+1:	bbssi	%r4,cashash,1b		/* is this pos in the hash table set */
+#endif
+	movl	(%r1), %r0		/* get value again */
+	cmpl	%r0, %r2		/* does it still equal old? */
 	bneq	2f			/*    nope, return */
 	movl	12(%ap),(%r1)		/* update rw->rw_owner with new */
-	incl	%r0			/* indicate success */
-	clrb	RW_LOCK(%r1)		/* release lock */
-2:	ret				/* return */
+2:
+#ifdef MULTIPROCESSOR
+	bbcci	%r4,cashash,3f		/* clear this pos in the hash table */
+3:
+#endif
+	mtpr	%r5, $PR_IPL		/* restore IPL */
+4:
+	ret				/* return */
+STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
+STRONG_ALIAS(atomic_cas_32,_atomic_cas_32)

@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_subr2.c,v 1.4.8.5 2008/01/21 09:46:33 yamt Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.4.8.6 2008/02/04 09:24:23 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.8.5 2008/01/21 09:46:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.8.6 2008/02/04 09:24:23 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -96,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.8.5 2008/01/21 09:46:33 yamt Exp $
 #include <sys/vnode.h>
 #include <sys/proc.h>
 #include <sys/kthread.h>
+#include <sys/atomic.h>
 
 #include <miscfs/syncfs/syncfs.h>
 #include <miscfs/specfs/specdev.h>
@@ -127,7 +128,7 @@ kmutex_t mountlist_lock;
 kmutex_t mntid_lock;
 kmutex_t mntvnode_lock;
 kmutex_t vnode_free_list_lock;
-kmutex_t spechash_lock;
+kmutex_t specfs_lock;
 kmutex_t vfs_list_lock;
 
 struct mntlist mountlist =			/* mounted filesystem list */
@@ -158,7 +159,7 @@ vntblinit(void)
 	mutex_init(&mntid_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&mntvnode_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&spechash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&specfs_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&vfs_list_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	mount_specificdata_domain = specificdata_domain_create();
@@ -191,16 +192,22 @@ vfs_getvfs(fsid_t *fsid)
 }
 
 /*
- * Free a mount structure.
+ * Drop a reference to a mount structure, freeing if the last reference.
  */
 void
 vfs_destroy(struct mount *mp)
 {
 
+	if (atomic_dec_uint_nv(&mp->mnt_refcnt) > 0) {
+		return;
+	}
 	specificdata_fini(mount_specificdata_domain, &mp->mnt_specdataref);
-	mutex_destroy(&mp->mnt_mutex);
-	lockdestroy(&mp->mnt_lock);
-	free(mp, M_MOUNT);
+	rw_destroy(&mp->mnt_lock);
+	if (mp->mnt_op != NULL) {
+		vfs_delref(mp->mnt_op);
+	}
+	mutex_destroy(&mp->mnt_renamelock);
+	kmem_free(mp, sizeof(*mp));
 }
 
 /*
@@ -678,9 +685,11 @@ const char vnode_flagbits[] = VNODE_FLAGBITS;
 void
 vprint(const char *label, struct vnode *vp)
 {
+	struct vnlock *vl;
 	char bf[96];
 	int flag;
 
+	vl = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
 	flag = vp->v_iflag | vp->v_vflag | vp->v_uflag;
 	bitmask_snprintf(flag, vnode_flagbits, bf, sizeof(bf));
 
@@ -688,11 +697,11 @@ vprint(const char *label, struct vnode *vp)
 		printf("%s: ", label);
 	printf("vnode @ %p, flags (%s)\n\ttag %s(%d), type %s(%d), "
 	    "usecount %d, writecount %d, holdcount %d\n"
-	    "\tfreelisthd %p, mount %p, data %p\n", vp, bf,
-	    ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
+	    "\tfreelisthd %p, mount %p, data %p lock %p recursecnt %d\n",
+	    vp, bf, ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	    ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt,
-	    vp->v_freelisthd, vp->v_mount, vp->v_data);
+	    vp->v_freelisthd, vp->v_mount, vp->v_data, vl, vl->vl_recursecnt);
 	if (vp->v_data != NULL) {
 		printf("\t");
 		VOP_PRINT(vp);
@@ -714,7 +723,7 @@ printlockedvnodes(void)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -724,7 +733,7 @@ printlockedvnodes(void)
 		}
 		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	}
 	mutex_exit(&mountlist_lock);
 }
@@ -1252,25 +1261,8 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	bitmask_snprintf(mp->mnt_iflag, __IMNT_FLAG_BITS, sbuf, sizeof(sbuf));
 	(*pr)("iflag = %s\n", sbuf);
 
-	/* XXX use lockmgr_printinfo */
-	if (mp->mnt_lock.lk_sharecount)
-		(*pr)(" lock type %s: SHARED (count %d)", mp->mnt_lock.lk_wmesg,
-		    mp->mnt_lock.lk_sharecount);
-	else if (mp->mnt_lock.lk_flags & LK_HAVE_EXCL) {
-		(*pr)(" lock type %s: EXCL (count %d) by ",
-		    mp->mnt_lock.lk_wmesg, mp->mnt_lock.lk_exclusivecount);
-		(*pr)("pid %d.%d", mp->mnt_lock.lk_lockholder,
-		    mp->mnt_lock.lk_locklwp);
-	} else
-		(*pr)(" not locked");
-	if (mp->mnt_lock.lk_waitcount > 0)
-		(*pr)(" with %d pending", mp->mnt_lock.lk_waitcount);
-
-	(*pr)("\n");
-
-	if (mp->mnt_unmounter) {
-		(*pr)("unmounter pid = %d ",mp->mnt_unmounter->l_proc);
-	}
+	(*pr)("refcnt = %d lock @ %p writer = %p\n", mp->mnt_refcnt,
+	    &mp->mnt_lock, mp->mnt_writer);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);
@@ -1309,7 +1301,6 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		int cnt = 0;
 		struct vnode *vp;
 		(*pr)("locked vnodes =");
-		/* XXX would take mountlist lock, except ddb may not have context */
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (VOP_ISLOCKED(vp)) {
 				if ((++cnt % 6) == 0) {
@@ -1326,7 +1317,6 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 		int cnt = 0;
 		struct vnode *vp;
 		(*pr)("all vnodes =");
-		/* XXX would take mountlist lock, except ddb may not have context */
 		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
 			if (!TAILQ_NEXT(vp, v_mntvnodes)) {
 				(*pr)(" %p", vp);

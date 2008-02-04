@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.2.6.5 2008/01/21 09:40:08 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.2.6.6 2008/02/04 09:22:49 yamt Exp $	*/
 
 /*
  *
@@ -106,6 +106,14 @@
 
 #define ptp_va2o(va, lvl)	(pl_i(va, (lvl)+1) * PAGE_SIZE)
 
+/* size of a PDP: usually one page, exept for PAE */
+#ifdef PAE
+#define PDP_SIZE 4
+#else
+#define PDP_SIZE 1
+#endif
+
+
 #if defined(_KERNEL)
 /*
  * pmap data structures: see pmap.c for details of locking.
@@ -139,7 +147,11 @@ struct pmap {
 #define	pm_lock	pm_obj[0].vmobjlock
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
+#ifdef PAE
+	paddr_t pm_pdirpa[PDP_SIZE];
+#else
 	paddr_t pm_pdirpa;		/* PA of PD (read-only after create) */
+#endif
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
 	struct pmap_statistics pm_stats;  /* pmap stats (lck by object lock) */
@@ -159,6 +171,15 @@ struct pmap {
 
 /* pm_flags */
 #define	PMF_USER_LDT	0x01	/* pmap has user-set LDT */
+
+/* macro to access pm_pdirpa */
+#ifdef PAE
+#define pmap_pdirpa(pmap, index) \
+	((pmap)->pm_pdirpa[l2tol3(index)] + l2tol2(index) * sizeof(pd_entry_t))
+#else
+#define pmap_pdirpa(pmap, index) \
+	((pmap)->pm_pdirpa + (index) * sizeof(pd_entry_t))
+#endif
 
 /*
  * global kernel variables
@@ -337,7 +358,7 @@ void	sse2_copy_page(void *, void *);
 
 #define XPTE_MASK	L1_FRAME
 /* XPTE_SHIFT = L1_SHIFT - log2(sizeof(pt_entry_t)) */
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(PAE)
 #define XPTE_SHIFT	9
 #else
 #define XPTE_SHIFT	10
@@ -373,7 +394,7 @@ xpmap_update (pt_entry_t *pte, pt_entry_t npte)
 {
         int s = splvm();
 
-        xpq_queue_pte_update((pt_entry_t *) xpmap_ptetomach(pte), npte);
+        xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
         xpq_flush_queue();
         splx(s);
 }

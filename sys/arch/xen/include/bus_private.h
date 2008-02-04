@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_private.h,v 1.1.6.3 2007/12/07 17:27:09 yamt Exp $	*/
+/*	$NetBSD: bus_private.h,v 1.1.6.4 2008/02/04 09:22:55 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,6 +27,7 @@
  */
 
 #include <uvm/uvm_extern.h>
+#include "opt_xen.h"
 
 #define	_BUS_PHYS_TO_BUS(pa)	((bus_addr_t)xpmap_ptom(pa))
 #define	_BUS_BUS_TO_PHYS(ba)	((paddr_t)xpmap_mtop(ba))

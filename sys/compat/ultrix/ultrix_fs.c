@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.31.2.6 2008/01/21 09:42:15 yamt Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.31.2.7 2008/02/04 09:23:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.31.2.6 2008/01/21 09:42:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.31.2.7 2008/02/04 09:23:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 	mutex_enter(&mountlist_lock);
 	for (count = 0, mp = mountlist.cqh_first;
 	    mp != (void*)&mountlist && count < maxcount; mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 			nmp = mp->mnt_list.cqe_next;
 			continue;
 		}
@@ -280,15 +280,17 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 			    strcmp(path, sp->f_mntonname) == 0) {
 				make_ultrix_mntent(sp, &tem);
 				if ((error = copyout((void *)&tem, sfsp,
-						     sizeof(tem))) != 0)
+				    sizeof(tem))) != 0) {
+					vfs_unbusy(mp, false);
 					goto bad;
+				}
 				sfsp++;
 				count++;
 			}
 		}
 		mutex_enter(&mountlist_lock);
 		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	}
 	mutex_exit(&mountlist_lock);
 

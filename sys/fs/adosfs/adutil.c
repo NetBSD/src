@@ -1,4 +1,4 @@
-/*	$NetBSD: adutil.c,v 1.3.4.2 2008/01/21 09:45:43 yamt Exp $	*/
+/*	$NetBSD: adutil.c,v 1.3.4.3 2008/02/04 09:23:42 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.3.4.2 2008/01/21 09:45:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adutil.c,v 1.3.4.3 2008/02/04 09:23:42 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -91,7 +91,7 @@ adosfs_ainshash(amp, ap)
 	struct adosfsmount *amp;
 	struct anode *ap;
 {
-	lockmgr(&ap->vp->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&ap->vp->v_lock, LK_EXCLUSIVE);
 
 	simple_lock(&adosfs_hashlock);
 	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ap->block)], ap, link);

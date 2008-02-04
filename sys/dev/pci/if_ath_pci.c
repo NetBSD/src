@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.10.2.4 2008/01/21 09:43:51 yamt Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.10.2.5 2008/02/04 09:23:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.10.2.4 2008/01/21 09:43:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.10.2.5 2008/02/04 09:23:29 yamt Exp $");
 #endif
 
 /*
@@ -121,26 +121,6 @@ ath_pci_resume(device_t dv)
 {
 	struct ath_pci_softc *sc = device_private(dv);
 
-	/* Insofar as I understand what the PCI retry timeout is
-	 * (it does not appear to be documented in any PCI standard,
-	 * and we don't have any Atheros documentation), disabling
-	 * it on resume does not seem to be justified.
-	 *
-	 * Taking a guess, the DMA engine counts down from the
-	 * retry timeout to 0 while it retries a delayed PCI
-	 * transaction.  When it reaches 0, it ceases retrying.
-	 * A PCI master is *never* supposed to stop retrying a
-	 * delayed transaction, though.
-	 *
-	 * Incidentally, while I am hopeful that pci_disable_retry()
-	 * does disable retries, because that would help to explain
-	 * some ath(4) lossage, I suspect that writing 0 to the
-	 * register does not disable *retries*, but it disables
-	 * the timeout.  That is, the device will *never* timeout.
-	 */
-#if 0
-	pci_disable_retry(sc->sc_pc, sc->sc_pcitag);
-#endif
 	ath_resume(&sc->sc_sc);
 
 	return true;
@@ -166,10 +146,6 @@ ath_pci_setup(struct ath_pci_softc *sc)
 		aprint_error("couldn't enable bus mastering\n");
 		return 0;
 	}
-
-#if 0
-	pci_disable_retry(sc->sc_pc, sc->sc_pcitag);
-#endif
 
 	/*
 	 * XXX Both this comment and code are replicated in

@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.58.4.3 2008/01/21 09:46:16 yamt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.58.4.4 2008/02/04 09:24:15 yamt Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -351,6 +351,7 @@ function parseline() {
 	f++
 
 	argc=0;
+	argalign=0;
 	if (f == end) {
 		if ($f != "void")
 			parserr($f, "argument definition")
@@ -389,6 +390,13 @@ function parseline() {
 		}
 		if (argtype[argc] == "")
 			parserr($f, "argument definition")
+		if (argtype[argc] == "off_t") {
+			if ((argalign % 2) != 0 &&
+			    funcname != "sys_posix_fadvise") # XXX for now
+				parserr($f, "a padding argument")
+		} else {
+			argalign++;
+		}
 		argname[argc]=$f;
 		f += 2;			# skip name, and any comma
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.8.2.3 2007/12/07 17:26:32 yamt Exp $   */
+/*	$NetBSD: intvec.S,v 1.8.2.4 2008/02/04 09:22:44 yamt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -130,12 +130,12 @@ _C_LABEL(rpb):
 	NOVEC;				# Unused, 94
 	NOVEC;				# Unused, 98
 	NOVEC;				# Unused, 9C
-	INTVEC(softclock,ISTACK)	# Software clock interrupt (IPL 08)
+	NOVEC;				# Unused, A0
 	NOVEC;				# Unused, A4 (IPL 09)
 	NOVEC;				# Unused, A8 (IPL 10)
 	NOVEC;				# Unused, AC (IPL 11)
-	INTVEC(softnet, ISTACK)		# Software network interrupt (IPL 12)
-	INTVEC(softserial, ISTACK)	# Software serial interrupt (IPL 13)
+	NOVEC;				# Unused, B0
+	NOVEC;				# Unused, B4
 	NOVEC;				# Unused, B8 (IPL 14)
 	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC (IPL 15)
 	INTVEC(hardclock,ISTACK)	# Interval Timer

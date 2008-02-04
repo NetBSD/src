@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.20.2.6 2008/01/21 09:43:06 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.20.2.7 2008/02/04 09:23:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.20.2.6 2008/01/21 09:43:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.20.2.7 2008/02/04 09:23:25 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -682,7 +682,7 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < RE_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
 		    round_page(IP_MAXPACKET),
-		    RE_TX_DESC_CNT(sc) - RE_NTXDESC_RSVD, RE_TDESC_CMD_FRAGLEN,
+		    RE_TX_DESC_CNT(sc), RE_TDESC_CMD_FRAGLEN,
 		    0, 0, &sc->re_ldata.re_txq[i].txq_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
@@ -1473,7 +1473,7 @@ re_start(struct ifnet *ifp)
 			break;
 
 		if (sc->re_ldata.re_txq_free == 0 ||
-		    sc->re_ldata.re_tx_free <= RE_NTXDESC_RSVD) {
+		    sc->re_ldata.re_tx_free == 0) {
 			/* no more free slots left */
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1535,7 +1535,7 @@ re_start(struct ifnet *ifp)
 			nsegs++;
 		}
 
-		if (nsegs > sc->re_ldata.re_tx_free - RE_NTXDESC_RSVD) {
+		if (nsegs > sc->re_ldata.re_tx_free) {
 			/*
 			 * Not enough free descriptors to transmit this packet.
 			 */

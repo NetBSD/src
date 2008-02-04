@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.3.8.3 2008/01/21 09:40:33 yamt Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.3.8.4 2008/02/04 09:22:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.8.3 2008/01/21 09:40:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.3.8.4 2008/02/04 09:22:56 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -124,7 +124,7 @@ static char XBUF[256];
 
 volatile shared_info_t *HYPERVISOR_shared_info;
 union start_info_union start_info_union;
-paddr_t *xpmap_phys_to_machine_mapping;
+unsigned long *xpmap_phys_to_machine_mapping;
 
 void xen_failsafe_handler(void);
 
@@ -186,8 +186,8 @@ xpq_flush_queue()
 
 	XENPRINTK2(("flush queue %p entries %d\n", xpq_queue, xpq_idx));
 	for (i = 0; i < xpq_idx; i++)
-		XENPRINTK2(("%d: %p %08x\n", i, (u_int)xpq_queue[i].ptr,
-		    (u_int)xpq_queue[i].val));
+		XENPRINTK2(("%d: %p %08" PRIx64 "\n", i,
+		    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val));
 	if (xpq_idx != 0 &&
 	    HYPERVISOR_mmu_update_self(xpq_queue, xpq_idx, &ok) < 0) {
 		printf("xpq_flush_queue: %d entries \n", xpq_idx);
@@ -212,7 +212,8 @@ xpq_increment_idx(void)
 void
 xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 {
-	XENPRINTK2(("xpq_queue_machphys_update ma=%p pa=%p\n", (void *)ma, (void *)pa));
+	XENPRINTK2(("xpq_queue_machphys_update ma=0x%" PRIx64 " pa=0x%" PRIx64
+	    "\n", (int64_t)ma, (int64_t)pa));
 	xpq_queue[xpq_idx].ptr = ma | MMU_MACHPHYS_UPDATE;
 	xpq_queue[xpq_idx].val = (pa - XPMAP_OFFSET) >> PAGE_SHIFT;
 	xpq_increment_idx();
@@ -222,23 +223,10 @@ xpq_queue_machphys_update(paddr_t ma, paddr_t pa)
 }
 
 void
-xpq_queue_pde_update(pd_entry_t *ptr, pd_entry_t val)
+xpq_queue_pte_update(paddr_t ptr, pt_entry_t val)
 {
 
-	KASSERT(((paddr_t)ptr & 3) == 0);
-	xpq_queue[xpq_idx].ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
-	xpq_queue[xpq_idx].val = val;
-	xpq_increment_idx();
-#ifdef XENDEBUG_SYNC
-	xpq_flush_queue();
-#endif
-}
-
-void
-xpq_queue_pte_update(pt_entry_t *ptr, pt_entry_t val)
-{
-
-	KASSERT(((paddr_t)ptr & 3) == 0);
+	KASSERT((ptr & 3) == 0);
 	xpq_queue[xpq_idx].ptr = (paddr_t)ptr | MMU_NORMAL_PT_UPDATE;
 	xpq_queue[xpq_idx].val = val;
 	xpq_increment_idx();
@@ -254,7 +242,8 @@ xpq_queue_pt_switch(paddr_t pa)
 	struct mmuext_op op;
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_pt_switch: %p %p\n", (void *)pa, (void *)pa));
+	XENPRINTK2(("xpq_queue_pt_switch: 0x%" PRIx64 " 0x%" PRIx64 "\n",
+	    (int64_t)pa, (int64_t)pa));
 	op.cmd = MMUEXT_NEW_BASEPTR;
 	op.arg1.mfn = pa >> PAGE_SHIFT;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
@@ -267,10 +256,11 @@ xpq_queue_pin_table(paddr_t pa)
 	struct mmuext_op op;
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_pin_table: %p %p\n", (void *)pa, (void *)pa));
+	XENPRINTK2(("xpq_queue_pin_table: 0x%" PRIx64 " 0x%" PRIx64 "\n",
+	    (int64_t)pa, (int64_t)pa));
 	op.arg1.mfn = pa >> PAGE_SHIFT;
 
-#ifdef __x86_64__
+#if defined(__x86_64__)
 	op.cmd = MMUEXT_PIN_L4_TABLE;
 #else
 	op.cmd = MMUEXT_PIN_L2_TABLE;
@@ -279,13 +269,31 @@ xpq_queue_pin_table(paddr_t pa)
 		panic("xpq_queue_pin_table");
 }
 
+#ifdef PAE
+static void
+xpq_queue_pin_l3_table(paddr_t pa)
+{
+	struct mmuext_op op;
+	xpq_flush_queue();
+
+	XENPRINTK2(("xpq_queue_pin_l2_table: 0x%" PRIx64 " 0x%" PRIx64 "\n",
+	    (int64_t)pa, (int64_t)pa));
+	op.arg1.mfn = pa >> PAGE_SHIFT;
+
+	op.cmd = MMUEXT_PIN_L3_TABLE;
+	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
+		panic("xpq_queue_pin_table");
+}
+#endif
+
 void
 xpq_queue_unpin_table(paddr_t pa)
 {
 	struct mmuext_op op;
 	xpq_flush_queue();
 
-	XENPRINTK2(("xpq_queue_unpin_table: %p %p\n", (void *)pa, (void *)pa));
+	XENPRINTK2(("xpq_queue_unpin_table: 0x%" PRIx64 " 0x%" PRIx64 "\n",
+	    (int64_t)pa, (int64_t)pa));
 	op.arg1.mfn = pa >> PAGE_SHIFT;
 	op.cmd = MMUEXT_UNPIN_TABLE;
 	if (HYPERVISOR_mmuext_op(&op, 1, NULL, DOMID_SELF) < 0)
@@ -347,13 +355,13 @@ xpq_queue_invlpg(vaddr_t va)
 }
 
 int
-xpq_update_foreign(pt_entry_t *ptr, pt_entry_t val, int dom)
+xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 {
 	mmu_update_t op;
 	int ok;
 	xpq_flush_queue();
 
-	op.ptr = (paddr_t)ptr;
+	op.ptr = ptr;
 	op.val = val;
 	if (HYPERVISOR_mmu_update(&op, 1, &ok, dom) < 0)
 		return EFAULT;
@@ -435,13 +443,13 @@ xpq_queue_invlpg(vaddr_t va)
 }
 
 int
-xpq_update_foreign(pt_entry_t *ptr, pt_entry_t val, int dom)
+xpq_update_foreign(paddr_t ptr, pt_entry_t val, int dom)
 {
 	mmu_update_t xpq_up[3];
 
 	xpq_up[0].ptr = MMU_EXTENDED_COMMAND;
 	xpq_up[0].val = MMUEXT_SET_FOREIGNDOM | (dom << 16);
-	xpq_up[1].ptr = (paddr_t)ptr;
+	xpq_up[1].ptr = ptr;
 	xpq_up[1].val = val;
 	if (HYPERVISOR_mmu_update_self(xpq_up, 2, NULL) < 0)
 		return EFAULT;
@@ -457,17 +465,17 @@ xpq_debug_dump()
 
 	XENPRINTK2(("idx: %d\n", xpq_idx));
 	for (i = 0; i < xpq_idx; i++) {
-		sprintf(XBUF, "%x %08x ", (u_int)xpq_queue[i].ptr,
-		    (u_int)xpq_queue[i].val);
+		sprintf(XBUF, "%" PRIx64 " %08" PRIx64,
+		    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%x %08x ",
-			    (u_int)xpq_queue[i].ptr, (u_int)xpq_queue[i].val);
+			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64,
+			    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%x %08x ",
-			    (u_int)xpq_queue[i].ptr, (u_int)xpq_queue[i].val);
+			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64, 
+			    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
 		if (++i < xpq_idx)
-			sprintf(XBUF + strlen(XBUF), "%x %08x ",
-			    (u_int)xpq_queue[i].ptr, (u_int)xpq_queue[i].val);
+			sprintf(XBUF + strlen(XBUF), "%" PRIx64 " %08" PRIx64,
+			    (u_int64_t)xpq_queue[i].ptr, (u_int64_t)xpq_queue[i].val);
 		XENPRINTK2(("%d: %s\n", xpq_idx, XBUF));
 	}
 }
@@ -499,15 +507,27 @@ vaddr_t xen_pmap_bootstrap (void);
  * Function to get rid of Xen bootstrap tables
  */
 
+/* How many PDP do we need: */
+#ifdef PAE
+/*
+ * For PAE, we consider a single contigous L2 "superpage" of 4 pages,
+ * all of them mapped by the L3 page. We also need a shadow page
+ * for L3[3].
+ */
+static const int l2_4_count = 6;
+#else
+static const int l2_4_count = PTP_LEVELS - 1;
+#endif
+
 vaddr_t
 xen_pmap_bootstrap()
 {
 	int count, oldcount;
 	long mapsize;
-	const int l2_4_count = PTP_LEVELS - 1;
 	vaddr_t bootstrap_tables, init_tables;
 
-	xpmap_phys_to_machine_mapping = (paddr_t *) xen_start_info.mfn_list;
+	xpmap_phys_to_machine_mapping =
+	    (unsigned long *)xen_start_info.mfn_list;
 	init_tables = xen_start_info.pt_base;
 	__PRINTK(("xen_arch_pmap_bootstrap init_tables=0x%lx\n", init_tables));
 
@@ -614,8 +634,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 {
 	pd_entry_t *pdtpe, *pde, *pte;
 	pd_entry_t *cur_pgd, *bt_pgd;
-	paddr_t addr, page;
-	vaddr_t avail, text_end, map_end;
+	paddr_t addr;
+	vaddr_t page, avail, text_end, map_end;
 	int i;
 	extern char __data_start;
 
@@ -626,14 +646,14 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	 * size of R/W area after kernel text:
 	 *  xencons_interface (if present)
 	 *  xenstore_interface (if present)
-	 *  table pages (new_count + (PTP_LEVELS - 1) entries)
+	 *  table pages (new_count + l2_4_count entries)
 	 * extra mappings (only when final is true):
 	 *  UAREA
 	 *  dummy user PGD (x86_64 only)/gdt page (i386 only)
 	 *  HYPERVISOR_shared_info
 	 *  ISA I/O mem (if needed)
 	 */
-	map_end = new_pgd + ((new_count + PTP_LEVELS - 1) * NBPG);
+	map_end = new_pgd + ((new_count + l2_4_count) * NBPG);
 	if (final) {
 		map_end += (UPAGES + 1) * NBPG;
 		HYPERVISOR_shared_info = (shared_info_t *)map_end;
@@ -676,12 +696,13 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	memset (pdtpe, 0, PAGE_SIZE);
 	avail += PAGE_SIZE;
 
-	addr = ((paddr_t) pdtpe) - KERNBASE;
+	addr = ((u_long) pdtpe) - KERNBASE;
 	bt_pgd[pl4_pi(KERNTEXTOFF)] =
 	    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
 
-	__PRINTK(("L3 va 0x%lx pa 0x%lx entry 0x%lx -> L4[0x%x]\n",
-	    pdtpe, addr, bt_pgd[pl4_pi(KERNTEXTOFF)], pl4_pi(KERNTEXTOFF)));
+	__PRINTK(("L3 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64 " -> L4[0x%x]\n",
+	    pdtpe, (u_int64_t)addr, (u_int64_t)bt_pgd[pl4_pi(KERNTEXTOFF)],
+	    pl4_pi(KERNTEXTOFF)));
 #else
 	pdtpe = bt_pgd;
 #endif /* PTP_LEVELS > 3 */
@@ -692,19 +713,47 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	memset(pde, 0, PAGE_SIZE);
 	avail += PAGE_SIZE;
 
-	addr = ((paddr_t) pde) - KERNBASE;
+	addr = ((u_long) pde) - KERNBASE;
 	pdtpe[pl3_pi(KERNTEXTOFF)] =
-	    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
-	__PRINTK(("L2 va 0x%lx pa 0x%lx entry 0x%lx -> L3[0x%x]\n",
-	    pde, addr, pdtpe[pl3_pi(KERNTEXTOFF)], pl3_pi(KERNTEXTOFF)));
-#else
+	    xpmap_ptom_masked(addr) | PG_k | PG_V | PG_RW;
+	__PRINTK(("L2 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64 " -> L3[0x%x]\n",
+	    pde, (int64_t)addr, (int64_t)pdtpe[pl3_pi(KERNTEXTOFF)],
+	    pl3_pi(KERNTEXTOFF)));
+#elif defined(PAE)
+	/* our PAE-style level 2: 5 contigous pages (4 L2 + 1 shadow) */
+	pde = (pd_entry_t *) avail;
+	memset(pde, 0, PAGE_SIZE * 5);
+	avail += PAGE_SIZE * 5;
+	addr = ((u_long) pde) - KERNBASE;
+	/*
+	 * enter L2 pages in the L3.
+	 * The real L2 kernel PD will be the last one (so that
+	 * pde[L2_SLOT_KERN] always point to the shadow).
+	 */
+	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
+		/*
+		 * Xen doens't want R/W mappings in L3 entries, it'll add it
+		 * itself.
+		 */
+		pdtpe[i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+		__PRINTK(("L2 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64
+		    " -> L3[0x%x]\n", (vaddr_t)pde + PAGE_SIZE * i,
+		    (int64_t)addr, (int64_t)pdtpe[i], i));
+	}
+	addr += PAGE_SIZE;
+	pdtpe[3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+	__PRINTK(("L2 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64
+	    " -> L3[0x%x]\n", (vaddr_t)pde + PAGE_SIZE * 4,
+	    (int64_t)addr, (int64_t)pdtpe[3], 3));
+
+#else /* PAE */
 	pde = bt_pgd;
-#endif /* PTP_LEVELS > 3 */
+#endif /* PTP_LEVELS > 2 */
 
 	/* Level 1 */
 	page = KERNTEXTOFF;
 	for (i = 0; i < new_count; i ++) {
-		paddr_t cur_page = page;
+		vaddr_t cur_page = page;
 
 		pte = (pd_entry_t *) avail;
 		avail += PAGE_SIZE;
@@ -721,27 +770,27 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 			if (page == (vaddr_t)HYPERVISOR_shared_info) {
 				pte[pl1_pi(page)] = xen_start_info.shared_info;
 				__PRINTK(("HYPERVISOR_shared_info "
-				    "va 0x%lx pte 0x%lx\n",
-				    HYPERVISOR_shared_info, pte[pl1_pi(page)]));
+				    "va 0x%lx pte 0x%" PRIx64 "\n",
+				    HYPERVISOR_shared_info, (int64_t)pte[pl1_pi(page)]));
 			}
 #ifdef XEN3
 			if (xpmap_ptom_masked(page - KERNBASE) ==
 			    (xen_start_info.console_mfn << PAGE_SHIFT)) {
 				xencons_interface = (void *)page;
-				pte[pl1_pi(page)] =
-				    (xen_start_info.console_mfn << PAGE_SHIFT);
+				pte[pl1_pi(page)] = xen_start_info.console_mfn;
+				pte[pl1_pi(page)] <<= PAGE_SHIFT;
 				__PRINTK(("xencons_interface "
-				    "va 0x%lx pte 0x%lx\n",
-				    xencons_interface, pte[pl1_pi(page)]));
+				    "va 0x%lx pte 0x%" PRIx64 "\n",
+				    xencons_interface, (int64_t)pte[pl1_pi(page)]));
 			}
 			if (xpmap_ptom_masked(page - KERNBASE) ==
 			    (xen_start_info.store_mfn << PAGE_SHIFT)) {
 				xenstore_interface = (void *)page;
-				pte[pl1_pi(page)] =
-				    (xen_start_info.store_mfn << PAGE_SHIFT);
+				pte[pl1_pi(page)] = xen_start_info.store_mfn;
+				pte[pl1_pi(page)] <<= PAGE_SHIFT;
 				__PRINTK(("xenstore_interface "
-				    "va 0x%lx pte 0x%lx\n",
-				    xenstore_interface, pte[pl1_pi(page)]));
+				    "va 0x%lx pte 0x%" PRIx64 "\n",
+				    xenstore_interface, (int64_t)pte[pl1_pi(page)]));
 			}
 #endif /* XEN3 */
 #ifdef DOM0OPS
@@ -760,39 +809,95 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				/* map old page tables RO */
 				pte[pl1_pi(page)] |= 0;
 			} else if (page >= new_pgd &&
-			    page < new_pgd + ((new_count + PTP_LEVELS - 1) * PAGE_SIZE)) {
+			    page < new_pgd + ((new_count + l2_4_count) * PAGE_SIZE)) {
 				/* map new page tables RO */
 				pte[pl1_pi(page)] |= 0;
 			} else {
 				/* map page RW */
 				pte[pl1_pi(page)] |= PG_RW;
 			}
-			if (page  == old_pgd || page >= new_pgd)
+				
+			if ((page  >= old_pgd && page < old_pgd + (old_count * PAGE_SIZE)) || page >= new_pgd)
 				__PRINTK(("va 0x%lx pa 0x%lx "
-				    "entry 0x%lx -> L1[0x%x]\n",
+				    "entry 0x%" PRIx64 " -> L1[0x%x]\n",
 				    page, page - KERNBASE,
-				    pte[pl1_pi(page)], pl1_pi(page)));
+				    (int64_t)pte[pl1_pi(page)], pl1_pi(page)));
 			page += PAGE_SIZE;
 		}
 
-		addr = ((paddr_t) pte) - KERNBASE;
+		addr = ((u_long) pte) - KERNBASE;
 		pde[pl2_pi(cur_page)] =
 		    xpmap_ptom_masked(addr) | PG_k | PG_RW | PG_V;
-		__PRINTK(("L1 va 0x%lx pa 0x%lx entry 0x%lx -> L2[0x%x]\n",
-		    pte, addr, pde[pl2_pi(cur_page)], pl2_pi(cur_page)));
+		__PRINTK(("L1 va 0x%lx pa 0x%" PRIx64 " entry 0x%" PRIx64
+		    " -> L2[0x%x]\n", pte, (int64_t)addr,
+		    (int64_t)pde[pl2_pi(cur_page)], pl2_pi(cur_page)));
 		/* Mark readonly */
 		xen_bt_set_readonly((vaddr_t) pte);
 	}
 
 	/* Install recursive page tables mapping */
+#ifdef PAE
+	/*
+	 * we need a shadow page for the kernel's L2 page
+	 * The real L2 kernel PD will be the last one (so that
+	 * pde[L2_SLOT_KERN] always point to the shadow.
+	 */
+	memcpy(&pde[L2_SLOT_KERN + NPDPG], &pde[L2_SLOT_KERN], PAGE_SIZE);
+	pmap_kl2pd = &pde[L2_SLOT_KERN + NPDPG];
+	pmap_kl2paddr = (u_long)pmap_kl2pd - KERNBASE;
+
+	/*
+	 * We don't enter a recursive entry from the L3 PD. Instead,
+	 * we enter the first 4 L2 pages, which includes the kernel's L2
+	 * shadow. But we have to entrer the shadow after switching
+	 * %cr3, or Xen will refcount some PTE with the wrong type.
+	 */
+	addr = (u_long)pde - KERNBASE;
+	for (i = 0; i < 3; i++, addr += PAGE_SIZE) {
+		pde[PDIR_SLOT_PTE + i] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+		__PRINTK(("pde[%d] va 0x%lx pa 0x%lx entry 0x%" PRIx64 "\n",
+		    (int)(PDIR_SLOT_PTE + i), pde + PAGE_SIZE * i, (long)addr,
+		    (int64_t)pde[PDIR_SLOT_PTE + i]));
+	}
+#if 0
+	addr += PAGE_SIZE; /* point to shadow L2 */
+	pde[PDIR_SLOT_PTE + 3] = xpmap_ptom_masked(addr) | PG_k | PG_V;
+	__PRINTK(("pde[%d] va 0x%lx pa 0x%lx entry 0x%" PRIx64 "\n",
+	    (int)(PDIR_SLOT_PTE + 3), pde + PAGE_SIZE * 4, (long)addr,
+	    (int64_t)pde[PDIR_SLOT_PTE + 3]));
+#endif
+	/* Mark tables RO, and pin the kenrel's shadow as L2 */
+	addr = (u_long)pde - KERNBASE;
+	for (i = 0; i < 5; i++, addr += PAGE_SIZE) {
+		xen_bt_set_readonly(((vaddr_t)pde) + PAGE_SIZE * i);
+		if (i == 2 || i == 3)
+			continue;
+#if 0
+		__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", i, (int64_t)addr));
+		xpq_queue_pin_table(xpmap_ptom_masked(addr));
+#endif
+	}
+	if (final) {
+		addr = (u_long)pde - KERNBASE + 3 * PAGE_SIZE;
+		__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", 2, (int64_t)addr));
+		xpq_queue_pin_table(xpmap_ptom_masked(addr));
+	}
+#if 0
+	addr = (u_long)pde - KERNBASE + 2 * PAGE_SIZE;
+	__PRINTK(("pin L2 %d addr 0x%" PRIx64 "\n", 2, (int64_t)addr));
+	xpq_queue_pin_table(xpmap_ptom_masked(addr));
+#endif
+#else /* PAE */
+	/* recursive entry in higher-level PD */
 	bt_pgd[PDIR_SLOT_PTE] =
 	    xpmap_ptom_masked(new_pgd - KERNBASE) | PG_k | PG_V;
-	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] va 0x%lx pa 0x%lx entry 0x%lx\n",
-	    new_pgd, new_pgd - KERNBASE, bt_pgd[PDIR_SLOT_PTE]));
-
+	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] va 0x%lx pa 0x%" PRIx64
+	    " entry 0x%" PRIx64 "\n", new_pgd, (int64_t)new_pgd - KERNBASE,
+	    (int64_t)bt_pgd[PDIR_SLOT_PTE]));
 	/* Mark tables RO */
 	xen_bt_set_readonly((vaddr_t) pde);
-#if PTP_LEVELS > 2
+#endif
+#if PTP_LEVELS > 2 || defined(PAE)
 	xen_bt_set_readonly((vaddr_t) pdtpe);
 #endif
 #if PTP_LEVELS > 3
@@ -800,16 +905,37 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 #endif
 	/* Pin the PGD */
 	__PRINTK(("pin PDG\n"));
+#ifdef PAE
+	xpq_queue_pin_l3_table(xpmap_ptom_masked(new_pgd - KERNBASE));
+#else
 	xpq_queue_pin_table(xpmap_ptom_masked(new_pgd - KERNBASE));
+#endif
 #ifdef __i386__
 	/* Save phys. addr of PDP, for libkvm. */
-	PDPpaddr = new_pgd;
-#endif
+	PDPpaddr = (long)pde;
+#ifdef PAE
+	/* also save the address of the L3 page */
+	pmap_l3pd = pdtpe;
+	pmap_l3paddr = (new_pgd - KERNBASE);
+#endif /* PAE */
+#endif /* i386 */
 	/* Switch to new tables */
 	__PRINTK(("switch to PDG\n"));
 	xpq_queue_pt_switch(xpmap_ptom_masked(new_pgd - KERNBASE));
-	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry 0x%lx\n",
-	    bt_pgd[PDIR_SLOT_PTE]));
+	__PRINTK(("bt_pgd[PDIR_SLOT_PTE] now entry 0x%" PRIx64 "\n",
+	    (int64_t)bt_pgd[PDIR_SLOT_PTE]));
+#ifdef PAE
+	if (final) {
+		/* now enter kernel's PTE mappings */
+		addr =  (u_long)pde - KERNBASE + PAGE_SIZE * 3;
+		xpq_queue_pte_update(
+		    xpmap_ptom(((vaddr_t)&pde[PDIR_SLOT_PTE + 3]) - KERNBASE), 
+		    xpmap_ptom_masked(addr) | PG_k | PG_V);
+		xpq_flush_queue();
+	}
+#endif
+
+
 
 	/* Now we can safely reclaim space taken by old tables */
 	
@@ -820,15 +946,15 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 	page = old_pgd;
 	addr = (paddr_t) pde[pl2_pi(page)] & PG_FRAME;
 	addr = xpmap_mtop(addr);
-	pte = (pd_entry_t *) (addr + KERNBASE);
+	pte = (pd_entry_t *) ((u_long)addr + KERNBASE);
 	pte += pl1_pi(page);
-	__PRINTK(("*pde 0x%lx addr 0x%lx pte 0x%lx\n",
-	    pde[pl2_pi(page)], addr, pte));
+	__PRINTK(("*pde 0x%" PRIx64 " addr 0x%" PRIx64 " pte 0x%lx\n",
+	    (int64_t)pde[pl2_pi(page)], (int64_t)addr, (long)pte));
 	while (page < old_pgd + (old_count * PAGE_SIZE) && page < map_end) {
-		addr = xpmap_ptom(((paddr_t) pte) - KERNBASE);
-		XENPRINTK(("addr 0x%lx pte 0x%lx *pte 0x%lx\n",
-		   addr, pte, *pte));
-		xpq_queue_pte_update((pt_entry_t *) addr, *pte | PG_RW);
+		addr = xpmap_ptom(((u_long) pte) - KERNBASE);
+		XENPRINTK(("addr 0x%" PRIx64 " pte 0x%lx *pte 0x%" PRIx64 "\n",
+		   (int64_t)addr, (long)pte, (int64_t)*pte));
+		xpq_queue_pte_update(addr, *pte | PG_RW);
 		page += PAGE_SIZE;
 		/* 
 		 * Our ptes are contiguous

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.86.2.7 2008/01/21 09:48:05 yamt Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.86.2.8 2008/02/04 09:25:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86.2.7 2008/01/21 09:48:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86.2.8 2008/02/04 09:25:02 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.86.2.7 2008/01/21 09:48:05 yamt 
 #include <sys/conf.h>
 #include <sys/kauth.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/ufs/quota.h>
@@ -141,6 +142,8 @@ struct vfsops ext2fs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	ext2fs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -219,8 +222,7 @@ ext2fs_mountroot(void)
 	}
 
 	if ((error = ext2fs_mountfs(rootvp, mp)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -238,7 +240,7 @@ ext2fs_mountroot(void)
 		    sizeof(fs->e2fs.e2fs_fsmnt) - 1, 0);
 	}
 	(void)ext2fs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	setrootfstime((time_t)fs->e2fs.e2fs_wtime);
 	return (0);
 }
@@ -338,19 +340,6 @@ ext2fs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (!update) {
 		int xflags;
 
-		/*
-		 * Disallow multiple mounts of the same device.
-		 * Disallow mounting of a device that is currently in use
-		 * (except for root, which might share swap device for
-		 * miniroot).
-		 */
-		error = vfs_mountedon(devvp);
-		if (error)
-			goto fail;
-		if (vcount(devvp) > 1 && devvp != rootvp) {
-			error = EBUSY;
-			goto fail;
-		}
 		if (mp->mnt_flag & MNT_RDONLY)
 			xflags = FREAD;
 		else

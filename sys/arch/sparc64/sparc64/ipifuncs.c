@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1.18.4 2008/01/21 09:39:33 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.1.18.5 2008/02/04 09:22:35 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.18.4 2008/01/21 09:39:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.18.5 2008/02/04 09:22:35 yamt Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/simplelock.h>
 
 #include <machine/db_machdep.h>
 

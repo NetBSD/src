@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14.16.2 2008/01/21 09:37:55 yamt Exp $	*/
+/*	$NetBSD: boot.c,v 1.14.16.3 2008/02/04 09:22:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -107,7 +107,11 @@ char bootfile[128];
 int boothowto;
 int debug;
 
-static char *kernels[] = { "/netbsd.ofppc", "/netbsd", "/netbsd.gz", NULL };
+static char *kernels[] = { "/netbsd.ofppc", "/netbsd",
+			   "/netbsd.gz", "onetbsd", NULL };
+static char *kernels64[] = { "/netbsd.ofppc64", "/netbsd64", "/netbsd64.gz",
+			     "onetbsd64", "/netbsd.ofppc", "/netbsd",
+			     "/netbsd.gz", "onetbsd", NULL };
 
 static void
 prom2boot(char *dev)
@@ -189,7 +193,7 @@ main(void)
 {
 	extern char bootprog_name[], bootprog_rev[],
 		    bootprog_maker[], bootprog_date[];
-	int chosen, options;
+	int chosen, options, cpu, cpunode, j, is64=0;
 	char bootline[512];		/* Should check size? */
 	char *cp;
 	u_long marks[MARK_MAX];
@@ -210,6 +214,14 @@ main(void)
 		OF_exit();
 	}
 
+	/* lets see if we can guess the 64bittedness */
+	if (OF_getprop(chosen, "cpu", &cpu, sizeof cpu) ==  sizeof(cpu)) {
+		cpunode = OF_instance_to_package(cpu);
+		if (OF_getprop(cpunode, "64-bit", &j, sizeof j) >= 0) {
+			is64 = 1;
+		}
+	}
+
 	prom2boot(bootdev);
 	parseargs(bootline, &boothowto);
 	DPRINTF("bootline=%s\n", bootline);
@@ -227,13 +239,22 @@ main(void)
 			kernels[0] = bootline;
 			kernels[1] = NULL;
 		}
+		if (!bootline[0] && is64) {
+			for (i = 0; kernels64[i]; i++) {
+				DPRINTF("Trying %s\n", kernels64[i]);
 
-		for (i = 0; kernels[i]; i++) {
-			DPRINTF("Trying %s\n", kernels[i]);
+				marks[MARK_START] = 0;
+				if (loadfile(kernels64[i], marks, LOAD_KERNEL) >= 0)
+					goto loaded;
+			}
+		} else {
+			for (i = 0; kernels[i]; i++) {
+				DPRINTF("Trying %s\n", kernels[i]);
 
-			marks[MARK_START] = 0;
-			if (loadfile(kernels[i], marks, LOAD_KERNEL) >= 0)
-				goto loaded;
+				marks[MARK_START] = 0;
+				if (loadfile(kernels[i], marks, LOAD_KERNEL) >= 0)
+					goto loaded;
+			}
 		}
 
 		boothowto |= RB_ASKNAME;

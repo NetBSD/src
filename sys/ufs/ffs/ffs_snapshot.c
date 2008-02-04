@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.17.2.7 2008/01/21 09:48:07 yamt Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.17.2.8 2008/02/04 09:25:03 yamt Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17.2.7 2008/01/21 09:48:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.17.2.8 2008/02/04 09:25:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -128,7 +128,7 @@ static inline void idb_assign(struct inode *, void *, int, ufs2_daddr_t);
 
 struct snap_info {
 	kmutex_t si_lock;			/* Lock this snapinfo */
-	struct lock si_vnlock;			/* Snapshot vnode common lock */
+	struct vnlock si_vnlock;		/* Snapshot vnode common lock */
 	TAILQ_HEAD(inodelst, inode) si_snapshots; /* List of active snapshots */
 	daddr_t *si_snapblklist;		/* Snapshot block hints list */
 	uint32_t si_gen;			/* Incremented on change */
@@ -164,8 +164,9 @@ si_mount_dtor(void *arg)
 
 	KASSERT(TAILQ_EMPTY(&si->si_snapshots));
 	mutex_destroy(&si->si_lock);
+	rw_destroy(&si->si_vnlock.vl_lock);
 	KASSERT(si->si_snapblklist == NULL);
-	free(si, M_MOUNT);
+	kmem_free(si, sizeof(*si));
 }
 
 static struct snap_info *
@@ -174,18 +175,21 @@ si_mount_init(struct mount *mp)
 	struct snap_info *new;
 
 	mutex_enter(&si_mount_init_lock);
-
 	if ((new = mount_getspecific(mp, si_mount_data_key)) != NULL) {
 		mutex_exit(&si_mount_init_lock);
 		return new;
 	}
-
-	new = malloc(sizeof(*new), M_MOUNT, M_WAITOK);
-	TAILQ_INIT(&new->si_snapshots);
-	mutex_init(&new->si_lock, MUTEX_DEFAULT, IPL_NONE);
-	new->si_gen = 0;
-	new->si_snapblklist = NULL;
-	mount_setspecific(mp, si_mount_data_key, new);
+	new = kmem_alloc(sizeof(*new), KM_SLEEP);
+	if (new != NULL) {
+		TAILQ_INIT(&new->si_snapshots);
+		mutex_init(&new->si_lock, MUTEX_DEFAULT, IPL_NONE);
+		rw_init(&new->si_vnlock.vl_lock);
+		new->si_vnlock.vl_canrecurse = 1;
+		new->si_vnlock.vl_recursecnt = 0;
+		new->si_gen = 0;
+		new->si_snapblklist = NULL;
+		mount_setspecific(mp, si_mount_data_key, new);
+	}
 	mutex_exit(&si_mount_init_lock);
 	return new;
 }
@@ -224,8 +228,12 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	struct snap_info *si;
 
 	ns = UFS_FSNEEDSWAP(fs);
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
+	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL) {
 		si = si_mount_init(mp);
+		if (si == NULL)
+			return ENOMEM;
+	}
+
 	/*
 	 * Need to serialize access to snapshot code per filesystem.
 	 */
@@ -437,7 +445,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	 * and vclean() can be called indirectly
 	 */
 	for (xvp = TAILQ_FIRST(&mp->mnt_vnodelist); xvp; xvp = vunmark(mvp)) {
-		vmark(mvp, vp);
+		vmark(mvp, xvp);
 		/*
 		 * Make sure this vnode wasn't reclaimed in getnewvnode().
 		 * Start over if it has (it won't be on the list anymore).
@@ -447,6 +455,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		VI_LOCK(xvp);
 		if ((xvp->v_iflag & VI_XLOCK) ||
 		    xvp->v_usecount == 0 || xvp->v_type == VNON ||
+		    VTOI(xvp) == NULL ||
 		    (VTOI(xvp)->i_flags & SF_SNAPSHOT)) {
 			VI_UNLOCK(xvp);
 			continue;
@@ -507,31 +516,21 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 	MNT_IUNLOCK(mp);
 	vnfree(mvp);
 	/*
-	 * If there already exist snapshots on this filesystem, grab a
-	 * reference to their shared lock. If this is the first snapshot
-	 * on this filesystem, we need to allocate a lock for the snapshots
-	 * to share. In either case, acquire the snapshot lock and give
-	 * up our original private lock.
+	 * Acquire the snapshot lock and give up our original private lock.
 	 */
-	mutex_enter(&si->si_lock);
-	if ((xp = TAILQ_FIRST(&si->si_snapshots)) != NULL) {
-		VI_LOCK(vp);
-		vp->v_vnlock = ITOV(xp)->v_vnlock;
-	} else {
-		lockinit(&si->si_vnlock, PVFS, "snaplk", 0, LK_CANRECURSE);
-		VI_LOCK(vp);
-		vp->v_vnlock = &si->si_vnlock;
-	}
-	mutex_exit(&si->si_lock);
+	VI_LOCK(vp);
+	vp->v_vnlock = &si->si_vnlock;
 	vn_lock(vp, LK_INTERLOCK | LK_EXCLUSIVE | LK_RETRY);
-	lockmgr(&vp->v_lock, LK_RELEASE, NULL);
+	vlockmgr(&vp->v_lock, LK_RELEASE);
 	/*
 	 * If this is the first snapshot on this filesystem, then we need
 	 * to allocate the space for the list of preallocated snapshot blocks.
 	 * This list will be refined below, but this preliminary one will
 	 * keep us out of deadlock until the full one is ready.
 	 */
-	if (xp == NULL) {
+	mutex_enter(&si->si_lock);
+	if ((xp = TAILQ_FIRST(&si->si_snapshots)) == NULL) {
+		mutex_exit(&si->si_lock);
 		snapblklist = malloc(
 		    snaplistsize * sizeof(ufs2_daddr_t), M_UFSMNT, M_WAITOK);
 		blkp = &snapblklist[1];
@@ -552,8 +551,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp,
 		if (si->si_snapblklist != NULL)
 			panic("ffs_snapshot: non-empty list");
 		si->si_snapblklist = snapblklist;
-	} else
-		mutex_enter(&si->si_lock);
+	}
 	/*
 	 * Record snapshot inode. Since this is the newest snapshot,
 	 * it must be placed at the end of the list.
@@ -1427,7 +1425,7 @@ ffs_snapremove(struct vnode *vp)
 	struct vnode *devvp = ip->i_devvp;
 	struct fs *fs = ip->i_fs;
 	struct mount *mp = devvp->v_specmountpoint;
-	struct lock *lkp;
+	struct vnlock *lkp;
 	struct buf *ibp;
 	struct snap_info *si;
 	ufs2_daddr_t numblks, blkno, dblk;
@@ -1445,13 +1443,13 @@ ffs_snapremove(struct vnode *vp)
 	 */
 	if (ip->i_nextsnap.tqe_prev != 0) {
 		mutex_enter(&si->si_lock);
-		lockmgr(&vp->v_lock, LK_EXCLUSIVE, NULL);
+		vlockmgr(&vp->v_lock, LK_EXCLUSIVE);
 		TAILQ_REMOVE(&si->si_snapshots, ip, i_nextsnap);
 		ip->i_nextsnap.tqe_prev = 0;
-		VI_LOCK(vp);
 		lkp = vp->v_vnlock;
+		KASSERT(lkp == &si->si_vnlock);
 		vp->v_vnlock = &vp->v_lock;
-		lockmgr(lkp, LK_RELEASE | LK_INTERLOCK, VI_MTX(vp));
+		vlockmgr(lkp, LK_RELEASE);
 		if (TAILQ_FIRST(&si->si_snapshots) != 0) {
 			/* Roll back the list of preallocated blocks. */
 			xp = TAILQ_LAST(&si->si_snapshots, inodelst);
@@ -1460,8 +1458,6 @@ ffs_snapremove(struct vnode *vp)
 			si->si_snapblklist = 0;
 			si->si_gen++;
 			mutex_exit(&si->si_lock);
-			lockmgr(lkp, LK_DRAIN, NULL);
-			lockmgr(lkp, LK_RELEASE, NULL);
 			fscow_disestablish(mp, ffs_copyonwrite, devvp);
 			mutex_enter(&si->si_lock);
 		}
@@ -1558,12 +1554,12 @@ retry:
 	TAILQ_FOREACH(ip, &si->si_snapshots, i_nextsnap) {
 		vp = ITOV(ip);
 		if (snapshot_locked == 0) {
-			mutex_exit(&si->si_lock);
-			if (VOP_LOCK(vp, LK_EXCLUSIVE | LK_SLEEPFAIL) != 0) {
+			if (VOP_LOCK(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
+				mutex_exit(&si->si_lock);
+				kpause("snaplock", false, 1, NULL);
 				mutex_enter(&si->si_lock);
 				goto retry;
 			}
-			mutex_enter(&si->si_lock);
 			snapshot_locked = 1;
 			if (gen != si->si_gen)
 				goto retry;
@@ -1727,8 +1723,11 @@ ffs_snapshot_mount(struct mount *mp)
 	if (UFS_MPISAPPLEUFS(VFSTOUFS(mp)))
 		return;
 
-	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL)
+	if ((si = mount_getspecific(mp, si_mount_data_key)) == NULL) {
 		si = si_mount_init(mp);
+		if (si == NULL)
+			return;
+	}
 	ns = UFS_FSNEEDSWAP(fs);
 	/*
 	 * XXX The following needs to be set before ffs_truncate or
@@ -1799,23 +1798,13 @@ ffs_snapshot_mount(struct mount *mp)
 		ip->i_snapblklist = &snapblklist[0];
 
 		/*
-		 * If there already exist snapshots on this filesystem, grab a
-		 * reference to their shared lock. If this is the first snapshot
-		 * on this filesystem, we need to allocate a lock for the
-		 * snapshots to share. In either case, acquire the snapshot
-		 * lock and give up our original private lock.
+		 * Acquire the snapshot lock and give up our original
+		 * private lock.
 		 */
-		if ((xp = TAILQ_FIRST(&si->si_snapshots)) != NULL) {
-			VI_LOCK(vp);
-			vp->v_vnlock = ITOV(xp)->v_vnlock;
-		} else {
-			lockinit(&si->si_vnlock, PVFS, "snaplk",
-			    0, LK_CANRECURSE);
-			VI_LOCK(vp);
-			vp->v_vnlock = &si->si_vnlock;
-		}
+		VI_LOCK(vp);
+		vp->v_vnlock = &si->si_vnlock;
 		vn_lock(vp, LK_INTERLOCK | LK_EXCLUSIVE | LK_RETRY);
-		lockmgr(&vp->v_lock, LK_RELEASE, NULL);
+		vlockmgr(&vp->v_lock, LK_RELEASE);
 		/*
 		 * Link it onto the active snapshot list.
 		 */
@@ -1950,12 +1939,12 @@ retry:
 		if (bp->b_vp == vp)
 			continue;
 		if (snapshot_locked == 0) {
-			mutex_exit(&si->si_lock);
-			if (VOP_LOCK(vp, LK_EXCLUSIVE | LK_SLEEPFAIL) != 0) {
+			if (VOP_LOCK(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
+				mutex_exit(&si->si_lock);
+				kpause("snaplock", false, 1, NULL);
 				mutex_enter(&si->si_lock);
 				goto retry;
 			}
-			mutex_enter(&si->si_lock);
 			snapshot_locked = 1;
 			if (gen != si->si_gen)
 				goto retry;

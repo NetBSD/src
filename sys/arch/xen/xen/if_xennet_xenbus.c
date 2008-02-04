@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.10.4.7 2007/12/07 17:27:21 yamt Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.10.4.8 2008/02/04 09:22:57 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.4.7 2007/12/07 17:27:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.4.8 2008/02/04 09:22:57 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -183,7 +183,7 @@ struct xennet_xenbus_softc {
 
 /* too big to be on stack */
 static multicall_entry_t rx_mcl[NET_RX_RING_SIZE+1];
-static paddr_t xennet_pages[NET_RX_RING_SIZE];
+static u_long xennet_pages[NET_RX_RING_SIZE];
 
 static int  xennet_xenbus_match(struct device *, struct cfdata *, void *);
 static void xennet_xenbus_attach(struct device *, struct device *, void *);
@@ -610,12 +610,13 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 			ma = xengnt_revoke_transfer(rxreq->rxreq_gntref);
 			rxreq->rxreq_gntref = GRANT_INVALID_REF;
 			if (ma == 0) {
+				u_long pfn;
 				struct xen_memory_reservation xenres;
 				/*
 				 * transfer not complete, we lost the page.
 				 * Get one from hypervisor
 				 */
-				xenres.extent_start = &ma;
+				xenres.extent_start = &pfn;
 				xenres.nr_extents = 1;
 				xenres.extent_order = 0;
 				xenres.address_bits = 31;
@@ -625,6 +626,7 @@ xennet_free_rx_buffer(struct xennet_xenbus_softc *sc)
 					panic("xennet_free_rx_buffer: "
 					    "can't get memory back");
 				}
+				ma = pfn;
 				KASSERT(ma != 0);
 			}
 			pa = rxreq->rxreq_pa;

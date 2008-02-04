@@ -1,4 +1,4 @@
-/*	$NetBSD: p2k.c,v 1.19.4.6 2008/01/21 09:47:39 yamt Exp $	*/
+/*	$NetBSD: p2k.c,v 1.19.4.7 2008/02/04 09:24:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -25,6 +25,21 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ */
+
+/*
+ * puffs 2k, i.e. puffs 2 kernel.  Converts the puffs protocol to
+ * the kernel vfs protocol and vice versa.
+ *
+ * A word about reference counting: puffs in the kernel is the king of
+ * reference counting.  We must maintain a vnode alive and kicking
+ * until the kernel tells us to reclaim it.  Therefore we make sure
+ * we never accidentally lose a vnode.  Before calling operations which
+ * decrease the refcount we always bump the refcount up to compensate.
+ * Come inactive, if the file system thinks that the vnode should be
+ * put out of its misery, it will set the recycle flag.  We use this
+ * to tell the kernel to reclaim the vnode.  Only in reclaim do we
+ * really nuke the last reference.
  */
 
 #define __VFSOPS_EXPOSE
@@ -113,8 +128,9 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	struct puffs_ops *pops;
 	struct puffs_usermount *pu;
 	struct puffs_node *pn_root;
+	struct vnode *rvp;
 	struct ukfs *ukfs;
-	extern int puffs_usethreads;
+	extern int puffs_fakecc;
 	int rv, sverrno;
 
 	rv = -1;
@@ -171,15 +187,16 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	if (pu == NULL)
 		goto out;
 
-	pn_root = puffs_pn_new(pu, ukfs_getrvp(ukfs));
+	rvp = ukfs_getrvp(ukfs);
+	pn_root = puffs_pn_new(pu, rvp);
 	puffs_setroot(pu, pn_root);
 	puffs_setfhsize(pu, 0, PUFFS_FHFLAG_PASSTHROUGH);
 	puffs_setstacksize(pu, PUFFS_STACKSIZE_MIN);
-	puffs_usethreads = 1;
+	puffs_fakecc = 1;
 
 	puffs_set_prepost(pu, makelwp, clearlwp);
 
-	if ((rv = puffs_mount(pu, mountpath, mntflags, ukfs_getrvp(ukfs)))== -1)
+	if ((rv = puffs_mount(pu, mountpath, mntflags, rvp))== -1)
 		goto out;
 	rv = puffs_mainloop(pu);
 
@@ -194,6 +211,12 @@ p2k_run_fs(const char *vfsname, const char *devpath, const char *mountpath,
 	return rv;
 }
 
+/* XXX: vn_lock() */
+#define VLE(a) RUMP_VOP_LOCK(a, LK_EXCLUSIVE)
+#define VLS(a) RUMP_VOP_LOCK(a, LK_SHARED)
+#define VUL(a) RUMP_VOP_UNLOCK(a, 0);
+#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
+
 int
 p2k_fs_statvfs(struct puffs_usermount *pu, struct statvfs *sbp)
 {
@@ -206,12 +229,42 @@ int
 p2k_fs_unmount(struct puffs_usermount *pu, int flags)
 {
 	struct mount *mp = puffs_getspecific(pu);
+	struct puffs_node *pn_root = puffs_getroot(pu);
+	struct vnode *rvp = pn_root->pn_data, *rvp2;
+	int rv;
 
-	return VFS_UNMOUNT(mp, flags);
+	/*
+	 * We recycle the root node already here (god knows how
+	 * many references it has due to lookup).  This is good
+	 * because VFS_UNMOUNT would do it anyway.  But it is
+	 * very bad if VFS_UNMOUNT fails for a reason or another
+	 * (puffs guards against busy fs, but there might be other
+	 * reasons).
+	 *
+	 * Theoretically we're going south, sinking fast & dying
+	 * out here because the old vnode will be freed and we are
+	 * unlikely to get a vnode at the same address.  But try
+	 * anyway.
+	 *
+	 * XXX: reallyfixmesomeday.  either introduce VFS_ROOT to
+	 * puffs (blah) or check the cookie in every routine
+	 * against the root cookie, which might change (blah2).
+	 */
+	rump_vp_recycle_nokidding(rvp);
+	rv = VFS_UNMOUNT(mp, flags);
+	if (rv) {
+		int rv2;
+
+		rv2 = VFS_ROOT(mp, &rvp2);
+		assert(rv2 == 0 && rvp == rvp2);
+		VUL(rvp);
+	}
+	return rv;
 }
 
 int
-p2k_fs_sync(struct puffs_usermount *pu, int waitfor, const struct puffs_cred *pcr)
+p2k_fs_sync(struct puffs_usermount *pu, int waitfor,
+	const struct puffs_cred *pcr)
 {
 	struct mount *mp = puffs_getspecific(pu);
 	kauth_cred_t cred;
@@ -251,22 +304,17 @@ p2k_fs_fhtonode(struct puffs_usermount *pu, void *fid, size_t fidsize,
 }
 
 int
-p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid, size_t *fidsize)
+p2k_fs_nodetofh(struct puffs_usermount *pu, void *cookie, void *fid,
+	size_t *fidsize)
 {
 	struct vnode *vp = cookie;
 
 	return VFS_VPTOFH(vp, fid, fidsize);
 }
 
-/* don't need vn_lock(), since we don't have VXLOCK */
-#define VLE(a) RUMP_VOP_LOCK(a, LK_EXCLUSIVE)
-#define VLS(a) RUMP_VOP_LOCK(a, LK_SHARED)
-#define VUL(a) RUMP_VOP_UNLOCK(a, 0);
-#define AUL(a) assert(RUMP_VOP_ISLOCKED(a) == 0)
-
 int
-p2k_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn)
+p2k_node_lookup(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn)
 {
 	struct componentname *cn;
 	struct vnode *vp;
@@ -297,8 +345,9 @@ p2k_node_lookup(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni
 }
 
 int
-p2k_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
-	const struct puffs_cn *pcn, const struct vattr *vap)
+p2k_node_create(struct puffs_usermount *pu, void *opc,
+	struct puffs_newinfo *pni, const struct puffs_cn *pcn,
+	const struct vattr *vap)
 {
 	struct componentname *cn;
 	struct vnode *vp;
@@ -306,6 +355,7 @@ p2k_node_create(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni
 
 	cn = makecn(pcn);
 	VLE(opc);
+	rump_vp_incref(opc);
 	rv = RUMP_VOP_CREATE(opc, &vp, cn, __UNCONST(vap));
 	AUL(opc);
 	freecn(cn, 0);
@@ -327,6 +377,7 @@ p2k_node_mknod(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 
 	cn = makecn(pcn);
 	VLE(opc);
+	rump_vp_incref(opc);
 	rv = RUMP_VOP_MKNOD(opc, &vp, cn, __UNCONST(vap));
 	AUL(opc);
 	freecn(cn, 0);
@@ -419,8 +470,8 @@ p2k_node_setattr(struct puffs_usermount *pu, void *opc, const struct vattr *vap,
 }
 
 int
-p2k_node_fsync(struct puffs_usermount *pu, void *opc, const struct puffs_cred *pcr,
-	int flags, off_t offlo, off_t offhi)
+p2k_node_fsync(struct puffs_usermount *pu, void *opc,
+	const struct puffs_cred *pcr, int flags, off_t offlo, off_t offhi)
 {
 	kauth_cred_t cred;
 	int rv;
@@ -473,7 +524,9 @@ p2k_node_remove(struct puffs_usermount *pu, void *opc, void *targ,
 
 	cn = makecn(pcn);
 	VLE(opc);
+	rump_vp_incref(opc);
 	VLE(targ);
+	rump_vp_incref(targ);
 	rv = RUMP_VOP_REMOVE(opc, targ, cn);
 	AUL(opc);
 	AUL(targ);
@@ -491,6 +544,7 @@ p2k_node_link(struct puffs_usermount *pu, void *opc, void *targ,
 
 	cn = makecn(pcn);
 	VLE(opc);
+	rump_vp_incref(opc);
 	rv = RUMP_VOP_LINK(opc, targ, cn);
 	freecn(cn, 0);
 
@@ -507,9 +561,14 @@ p2k_node_rename(struct puffs_usermount *pu, void *src_dir, void *src,
 
 	cn_src = makecn(pcn_src);
 	cn_targ = makecn(pcn_targ);
+	rump_vp_incref(src_dir);
+	rump_vp_incref(src);
 	VLE(targ_dir);
-	if (targ)
+	rump_vp_incref(targ_dir);
+	if (targ) {
 		VLE(targ);
+		rump_vp_incref(targ);
+	}
 	rv = RUMP_VOP_RENAME(src_dir, src, cn_src, targ_dir, targ, cn_targ);
 	AUL(targ_dir);
 	if (targ)
@@ -530,6 +589,7 @@ p2k_node_mkdir(struct puffs_usermount *pu, void *opc, struct puffs_newinfo *pni,
 
 	cn = makecn(pcn);
 	VLE(opc);
+	rump_vp_incref(opc);
 	rv = RUMP_VOP_MKDIR(opc, &vp, cn, __UNCONST(vap));
 	AUL(opc);
 	freecn(cn, 0);
@@ -550,7 +610,9 @@ p2k_node_rmdir(struct puffs_usermount *pu, void *opc, void *targ,
 
 	cn = makecn(pcn);
 	VLE(opc);
+	rump_vp_incref(opc);
 	VLE(targ);
+	rump_vp_incref(targ);
 	rv = RUMP_VOP_RMDIR(opc, targ, cn);
 	AUL(targ);
 	AUL(opc);
@@ -570,6 +632,7 @@ p2k_node_symlink(struct puffs_usermount *pu, void *opc,
 
 	cn = makecn(pcn_src);
 	VLE(opc);
+	rump_vp_incref(opc);
 	rv = RUMP_VOP_SYMLINK(opc, &vp, cn,
 	    __UNCONST(vap), __UNCONST(link_target));
 	AUL(opc);
@@ -676,16 +739,6 @@ p2k_node_write(struct puffs_usermount *pu, void *opc,
 }
 
 int
-p2k_node_reclaim(struct puffs_usermount *pu, void *opc)
-{
-
-	rump_recyclenode(opc);
-	rump_putnode(opc);
-
-	return 0;
-}
-
-int
 p2k_node_inactive(struct puffs_usermount *pu, void *opc)
 {
 	struct vnode *vp = opc;
@@ -696,8 +749,16 @@ p2k_node_inactive(struct puffs_usermount *pu, void *opc)
 	(void) RUMP_VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES);
 	VLE(vp);
 	rv = RUMP_VOP_INACTIVE(vp, &recycle);
-	if (vp->v_usecount == 0)
+	if (recycle)
 		puffs_setback(puffs_cc_getcc(pu), PUFFS_SETBACK_NOREF_N1);
 
 	return rv;
+}
+
+int
+p2k_node_reclaim(struct puffs_usermount *pu, void *opc)
+{
+
+	rump_vp_recycle_nokidding(opc);
+	return 0;
 }

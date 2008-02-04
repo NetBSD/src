@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.95.12.6 2008/01/21 09:39:29 yamt Exp $
+#	$NetBSD: files.sparc64,v 1.95.12.7 2008/02/04 09:22:32 yamt Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -169,6 +169,8 @@ file	dev/cons.c
 file	arch/sparc64/dev/consinit.c
 file	dev/sun/disksubr.c 
 
+file	arch/sparc64/sparc64/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
+
 file	arch/sparc/fpu/fpu.c
 file	arch/sparc/fpu/fpu_add.c
 file	arch/sparc/fpu/fpu_compare.c
@@ -183,8 +185,6 @@ file	arch/sparc/sparc/promlib.c
 file	arch/sparc64/sparc64/autoconf.c
 file	arch/sparc64/sparc64/clock.c
 file	arch/sparc64/sparc64/emul.c
-file	arch/sparc64/sparc64/in_cksum.S
-file	arch/sparc64/sparc64/in4_cksum.c	inet
 file	arch/sparc64/sparc64/intr.c
 file	arch/sparc64/sparc64/kgdb_machdep.c	kgdb
 file	arch/sparc64/sparc64/kobj_machdep.c	modular

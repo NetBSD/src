@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.19.12.4 2008/01/21 09:35:04 yamt Exp $	*/
+/*	$NetBSD: boot32.c,v 1.19.12.5 2008/02/04 09:21:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -83,7 +83,6 @@ int	 first_mapped_PODRAM_page_index;/* offset in RISC OS blob	*/
 
 struct page_info *mem_pages_info;	/* {nr, virt, phys}*		*/
 struct page_info *free_relocation_page;	/* points to the page_info chain*/
-struct page_info *relocate_table_pages;	/* points to seq. relocate info */
 struct page_info *relocate_code_page;	/* points to the copied code	*/
 struct page_info *bconfig_page;		/* page for passing on settings	*/
 
@@ -119,8 +118,6 @@ u_long	 firstpage, lastpage, totalpages; /* RISC OS pagecounters	*/
 /* RISC OS memory		*/
 char	*memory_image, *bottom_memory, *top_memory;
 
-u_long	 videomem_start_ro;		/* for debugging mainly		*/
-
 /* kernel info */
 u_long	 marks[MARK_MAX];		/* loader mark pointers 	*/
 u_long	 kernel_physical_start;		/* where does it get relocated	*/
@@ -146,6 +143,7 @@ int	 page_info_cmp(const void *a, const void *);
 void	 add_initvectors(void);
 void	 create_configuration(int argc, char **argv, int start_args);
 void	 prepare_and_check_relocation_system(void);
+void	 compact_relocations(void);
 void	 twirl(void);
 int	 vdu_var(int);
 void	 process_args(int argc, char **argv, int *howto, char *file,
@@ -158,7 +156,7 @@ extern void start_kernel(
 		int relocate_code_page,
 		int relocation_pv_offset,
 		int configuration_structure_in_flat_physical_space,
-		int physical_address_of_relocation_tables,
+		int virtual_address_relocation_table,
 		int physical_address_of_new_L1_pages,
 		int kernel_entry_point
 		);	/* asm */
@@ -232,104 +230,55 @@ init_datastructures(void)
 		panic("Can't alloc my initial page tables");
 }
 
-
 void
-prepare_and_check_relocation_system(void)
+compact_relocations(void)
 {
-	int     relocate_size, relocate_pages;
-	int     bank, pages, found;
-	u_long  dst, src, base, destination, extend;
-	u_long *reloc_entry, last_src, length;
+	u_long *reloc_entry, current_length, length;
+	u_long  src, destination, current_src, current_destination;
+	u_long *current_entry;
 
-	/* set the number of relocation entries in the 1st word */
-	*reloc_instruction_table = reloc_entries;
+	current_entry = reloc_entry = reloc_instruction_table + 1;
 
-	/*
-	 * The relocate information needs to be in one sequential physical
-	 * space in order to be able to access it as one stream when the MMU
-	 * is switched off later.
-	 */
-	relocate_size = (reloc_tablesize + nbpp-1) & ~(nbpp-1);  /* round up */
-	printf("\nPreparing for booting %s ... ", booted_file);
-	relocate_pages = relocate_size / nbpp;
-
-	relocate_table_pages = free_relocation_page;
-	pages = 0;
-	while (pages < relocate_pages) {
-		src = (u_long)reloc_instruction_table + pages*nbpp;
-		dst = relocate_table_pages[pages].logical;
-		memcpy((void *)dst, (void *)src, nbpp);
-
-		if (pages < relocate_pages - 1) {
-			/* check if next page is sequential physically */
-			if (relocate_table_pages[pages+1].physical -
-			    relocate_table_pages[pages].physical != nbpp) {
-				/*
-				 * Non contigunous relocate area ->
-				 * try again
-				 */
-				printf("*");
-				relocate_table_pages += pages;
-				pages = 0;
-				continue;	/* while */
-			}
-		}
-		pages++;
-	}
-	free_relocation_page = relocate_table_pages + pages;
-
-	/* copy the relocation code into this page in start_kernel */
-	relocate_code_page = free_relocation_page++;
-
-	/*
-	 * All relocations are pages allocated in one big strict increasing
-	 * physical DRAM address sequence. When the MMU is switched off all
-	 * code and data is in this increasing order but not at the right
-	 * place. This is where the relocation code kicks in; relocation is
-	 * done in flat physical memory without MMU.
-	 */
-
-	printf("shift and check ... ");
-	reloc_entry = reloc_instruction_table + 1;
-	last_src = -1;
+	/* prime the loop */
+	current_src		= reloc_entry[0];
+	current_destination	= reloc_entry[1];
+	current_length		= reloc_entry[2];
+	
+	reloc_entry += 3;
 	while (reloc_entry < reloc_pos) {
 		src         = reloc_entry[0];
 		destination = reloc_entry[1];
 		length      = reloc_entry[2];
 
-		/* paranoia check */
-		if ((long) (src - last_src) <= 0)
-			printf("relocation sequence challenged -- "
-			    "booting might fail ");
-		last_src = src;
-
-		/* check if its gonna be relocated into (PO)DRAM ! */
-		extend = destination + length;
-		found = 0;
-		for (bank = 0; (bank < dram_blocks) && !found; bank++) {
-			base   = DRAM_addr[bank];
-			found = (destination >= base) &&
-			    (extend <= base + DRAM_pages[bank]*nbpp);
+		if (src == (current_src + current_length) &&
+		    destination == (current_destination + current_length)) {
+			/* can merge */
+			current_length += length;
+		} else {
+			/* nothing else to do, so save the length */
+			current_entry[2] = current_length;
+			/* fill in next entry */
+			current_entry += 3;
+			current_src = current_entry[0] = src;
+			current_destination = current_entry[1] = destination;
+			current_length = length;
 		}
-		for (bank = 0; (bank < podram_blocks) && !found; bank++) {
-			base = PODRAM_addr[bank];
-			found = (destination >= base) &&
-			    (extend <= base + PODRAM_pages[bank]*nbpp);
-		}
-		if (!found || (extend > top_physdram)) {
-			panic("Internal error: relocating range "
-			    "[%lx +%lx => %lx] outside (PO)DRAM banks!",
-			    src, length, destination);
-		}
-
 		reloc_entry += 3;
 	}
-	if (reloc_entry != reloc_pos)
-		panic("Relocation instruction table is corrupted");
+	/* save last length */
+	current_entry[2] = current_length;
+	current_entry += 3;
 
-	printf("OK!\n");
+	/* workout new count of entries */
+	length = current_entry - (reloc_instruction_table + 1);
+	printf("Compacted relocations from %d entries to %ld\n",
+		       reloc_entries, length/3);
+
+	/* update table to reflect new size */
+	reloc_entries = length/3;
+	reloc_instruction_table[0] = length/3;
+	reloc_pos = current_entry;
 }
-
 
 void
 get_memory_configuration(void)
@@ -374,7 +323,7 @@ get_memory_configuration(void)
 			case  0:
 				break;
 			case osmemory_TYPE_DRAM:
-				if (phys_page < PODRAM_START) {
+				if ((phys_page * nbpp)< PODRAM_START) {
 					DRAM_addr[dram_blocks]  =
 					    phys_page * nbpp;
 					DRAM_pages[dram_blocks] =
@@ -506,8 +455,6 @@ get_memory_configuration(void)
 		panic("Top is not not aligned on a Mb; "
 		    "remove very small DIMMS?");
 
-	videomem_start_ro = vdu_var(os_VDUVAR_DISPLAY_START);
-
 	/* pretty print the individual page types */
 	for (count = 0; count < rom_blocks; count++) {
 		printf("Found ROM  (%d)", count);
@@ -605,6 +552,7 @@ get_memory_map(void)
 		printf("-0x%x]  ", phys_addr + nbpp -1);
 	}
 	printf("\n\n");
+
 	if (first_mapped_PODRAM_page_index < 0 && PODRAM_addr[0])
 		panic("Found no (S)DRAM mapped in the bootloader");
 	if (first_mapped_DRAM_page_index < 0)
@@ -801,8 +749,8 @@ create_configuration(int argc, char **argv, int start_args)
 		bconfig->dram[i].flags   = PHYSMEM_TYPE_GENERIC;
 	}
 	for (; i < dram_blocks + podram_blocks; i++) {
-		bconfig->dram[i].address = PODRAM_addr[i];
-		bconfig->dram[i].pages   = PODRAM_pages[i];
+		bconfig->dram[i].address = PODRAM_addr[i-dram_blocks];
+		bconfig->dram[i].pages   = PODRAM_pages[i-dram_blocks];
 		bconfig->dram[i].flags   = PHYSMEM_TYPE_PROCESSOR_ONLY;
 	}
 	for (i = 0; i < vram_blocks; i++) {
@@ -862,7 +810,7 @@ main(int argc, char **argv)
 	kernel_free_vm_start = (marks[MARK_END] + nbpp-1) & ~(nbpp-1);
 
 	/* we seem to be forced to clear the marks[] ? */
-	bzero(marks, sizeof(marks[MARK_MAX]));
+	bzero(marks, sizeof(marks));
 
 	/* really load it ! */
 	ret = loadfile(booted_file, marks, LOAD_KERNEL);
@@ -879,9 +827,20 @@ main(int argc, char **argv)
 	 * done relocating and creating information, now update and
 	 * check the relocation mechanism
 	 */
-	prepare_and_check_relocation_system();
+	compact_relocations();
+
+	/*
+	 * grab a page to copy the bootstrap code into
+	 */
+	relocate_code_page = free_relocation_page++;
 	
-	printf("\nStarting at 0x%lx\n", marks[MARK_ENTRY]);
+	printf("\nStarting at 0x%lx, p@0x%lx\n", marks[MARK_ENTRY], kernel_physical_start);
+	printf("%ld entries, first one is 0x%lx->0x%lx for %lx bytes\n",
+			reloc_instruction_table[0],
+			reloc_instruction_table[1],
+			reloc_instruction_table[2],
+			reloc_instruction_table[3]);
+
 	printf("Will boot in a few secs due to relocation....\n"
 	    "bye bye from RISC OS!");
 
@@ -896,8 +855,8 @@ main(int argc, char **argv)
 		/* r1 relocation pv offset	*/
 		relocate_code_page->physical-relocate_code_page->logical,
 		/* r2 configuration structure	*/ bconfig_new_phys,
-		/* r3 relocation table (P)	*/
-		relocate_table_pages->physical,	/* one piece! */
+		/* r3 relocation table (l)	*/ 
+		(int)reloc_instruction_table,	/* one piece! */
 		/* r4 L1 page descriptor (P)	*/ new_L1_pages_phys,
 		/* r5 kernel entry point	*/ marks[MARK_ENTRY]
 	);
@@ -1006,6 +965,15 @@ get_relocated_page(u_long destination, int size)
 		panic("\n\nToo many relocations! What are you loading ??");
 
 	/* record the relocation */
+	if (free_relocation_page->physical & 0x3)
+		panic("\n\nphysical address is not aligned!");
+
+	if (destination & 0x3)
+		panic("\n\ndestination address is not aligned!");
+
+	if (size & 0x3)
+		panic("\n\nsize is not aligned!");
+
 	*reloc_pos++ = free_relocation_page->physical;
 	*reloc_pos++ = destination;
 	*reloc_pos++ = size;

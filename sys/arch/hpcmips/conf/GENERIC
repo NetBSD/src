@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.168.2.4 2008/01/21 09:36:36 yamt Exp $
+# $NetBSD: GENERIC,v 1.168.2.5 2008/02/04 09:21:57 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,11 +24,11 @@ include		"arch/hpcmips/conf/std.hpcmips.tx39"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.168.2.4 $"
+#ident 		"GENERIC-$Revision: 1.168.2.5 $"
 
 maxusers	16
 
-makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
+makeoptions	CPUFLAGS="-mips2 -mdivide-breaks"	# CPU codegen options
 options 	VR4102			# NEC VR4102
 options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
@@ -452,7 +452,12 @@ ucbio*		at ucb?
 # interrupt-mode don't work. use polling mode.
 tc5165buf*	at txcsbus1 iocs 1 iocsbase 0 iocssize 0x100 iocswidth 16
 hpckbd*		at tc5165buf?
-#wsmouse*	at ucbtp? mux 0
+wsmouse*	at ucbtp? mux 0
+
+#
+# Fujitsu PenCentra 200
+#
+txcsbus3	at tx39biu? platform FUJITSU_PENCENTRA_200
 
 # TC6358TB(Plum2)
 #  register space: CS3,

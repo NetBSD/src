@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.3.4.3 2008/01/21 09:46:25 yamt Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.3.4.4 2008/02/04 09:24:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3.4.3 2008/01/21 09:46:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3.4.4 2008/02/04 09:24:18 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -52,6 +52,51 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3.4.3 2008/01/21 09:46:25 yamt Exp $
 #include <sys/unistd.h>
 
 /*
+ * Convert user priority or the in-kernel priority or convert the current
+ * priority to the appropriate range according to the policy change.
+ */
+static pri_t
+convert_pri(lwp_t *l, int policy, pri_t pri)
+{
+	int delta = 0;
+
+	if (policy == SCHED_NONE)
+		policy = l->l_class;
+
+	switch (policy) {
+	case SCHED_OTHER:
+		delta = PRI_USER;
+		break;
+	case SCHED_FIFO:
+	case SCHED_RR:
+		delta = PRI_USER_RT;
+		break;
+	default:
+		panic("upri_to_kpri");
+	}
+
+	if (pri != PRI_NONE) {
+		/* Convert user priority to the in-kernel */
+		KASSERT(pri >= SCHED_PRI_MIN && pri <= SCHED_PRI_MAX);
+		return pri + delta;
+	}
+	if (l->l_class == policy)
+		return l->l_priority;
+
+	/* Change the current priority to the appropriate range */
+	if (l->l_class == SCHED_OTHER) {
+		KASSERT(policy == SCHED_FIFO || policy == SCHED_RR);
+		return l->l_priority + delta;
+	}
+	if (policy == SCHED_OTHER) {
+		KASSERT(l->l_class == SCHED_FIFO || l->l_class == SCHED_RR);
+		return l->l_priority - delta;
+	}
+	KASSERT(l->l_class != SCHED_OTHER && policy != SCHED_OTHER);
+	return l->l_class;
+}
+
+/*
  * Set scheduling parameters.
  */
 int
@@ -66,105 +111,88 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 	struct sched_param *sp;
 	struct proc *p;
 	struct lwp *t;
-	pid_t pid;
 	lwpid_t lid;
 	u_int lcnt;
+	int policy;
 	pri_t pri;
 	int error;
 
 	/* Available only for super-user */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
-		return EACCES;
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, NULL, NULL))
+		return EPERM;
 
 	/* Get the parameters from the user-space */
 	sp = kmem_zalloc(sizeof(struct sched_param), KM_SLEEP);
 	error = copyin(SCARG(uap, params), sp, sizeof(struct sched_param));
-	if (error)
-		goto error;
-
-	/*
-	 * Validate scheduling class and priority.
-	 * Convert the user priority to the in-kernel value.
-	 */
+	if (error) {
+		kmem_free(sp, sizeof(struct sched_param));
+		return error;
+	}
 	pri = sp->sched_priority;
-	if (pri != PRI_NONE && (pri < SCHED_PRI_MIN || pri > SCHED_PRI_MAX)) {
-		error = EINVAL;
-		goto error;
-	}
-	switch (sp->sched_class) {
-	case SCHED_OTHER:
-		if (pri == PRI_NONE)
-			pri = PRI_USER;
-		else
-			pri += PRI_USER;
-		break;
-	case SCHED_RR:
-	case SCHED_FIFO:
-		if (pri == PRI_NONE)
-			pri = PRI_USER_RT;
-		else
-			pri += PRI_USER_RT;
-		break;
-	case SCHED_NONE:
-		break;
-	default:
-		error = EINVAL;
-		goto error;
-	}
+	policy = sp->sched_class;
+	kmem_free(sp, sizeof(struct sched_param));
 
-	/* Find the process */
-	pid = SCARG(uap, pid);
-	p = p_find(pid, PFIND_UNLOCK_FAIL);
-	if (p == NULL) {
-		error = ESRCH;
-		goto error;
-	}
-	mutex_enter(&p->p_smutex);
-	mutex_exit(&proclist_lock);
+	/* If no parameters specified, just return (this should not happen) */
+	if (pri == PRI_NONE && policy == SCHED_NONE)
+		return 0;
 
-	/* Disallow modification of system processes */
-	if (p->p_flag & PK_SYSTEM) {
-		mutex_exit(&p->p_smutex);
-		error = EACCES;
-		goto error;
+	/* Validate scheduling class */
+	if (policy != SCHED_NONE && (policy < SCHED_OTHER || policy > SCHED_RR))
+		return EINVAL;
+
+	/* Validate priority */
+	if (pri != PRI_NONE && (pri < SCHED_PRI_MIN || pri > SCHED_PRI_MAX))
+		return EINVAL;
+
+	if (SCARG(uap, pid) != 0) {
+		/* Find the process */
+		p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL);
+		if (p == NULL)
+			return ESRCH;
+		mutex_enter(&p->p_smutex);
+		mutex_exit(&proclist_lock);
+		/* Disallow modification of system processes */
+		if (p->p_flag & PK_SYSTEM) {
+			mutex_exit(&p->p_smutex);
+			return EPERM;
+		}
+	} else {
+		/* Use the calling process */
+		p = l->l_proc;
+		mutex_enter(&p->p_smutex);
 	}
 
 	/* Find the LWP(s) */
 	lcnt = 0;
 	lid = SCARG(uap, lid);
 	LIST_FOREACH(t, &p->p_lwps, l_sibling) {
-		bool chpri;
+		pri_t kpri;
 
 		if (lid && lid != t->l_lid)
 			continue;
+		KASSERT(pri != PRI_NONE || policy != SCHED_NONE);
+		lwp_lock(t);
+
+		/*
+		 * Note that, priority may need to be changed to get into
+		 * the correct priority range of the new scheduling class.
+		 */
+		kpri = convert_pri(t, policy, pri);
 
 		/* Set the scheduling class */
-		lwp_lock(t);
-		if (sp->sched_class != SCHED_NONE) {
-			/*
-			 * Priority must be changed to get into the correct
-			 * priority range of the new scheduling class.
-			 */
-			chpri = (t->l_class != sp->sched_class);
-			t->l_class = sp->sched_class;
-		} else
-			chpri = false;
+		if (policy != SCHED_NONE)
+			t->l_class = policy;
 
 		/* Change the priority */
-		if (sp->sched_priority != PRI_NONE || chpri)
-			lwp_changepri(t, pri);
+		if (t->l_priority != kpri)
+			lwp_changepri(t, kpri);
 
 		lwp_unlock(t);
 		lcnt++;
 	}
 	mutex_exit(&p->p_smutex);
-	if (lcnt != 0)
-		*retval = lcnt;
-	else
-		error = ESRCH;
-error:
-	kmem_free(sp, sizeof(struct sched_param));
-	return error;
+	return (lcnt == 0) ? ESRCH : error;
 }
 
 /*
@@ -181,12 +209,30 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	} */
 	struct sched_param *sp;
 	struct lwp *t;
+	lwpid_t lid;
 	int error;
+
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL, NULL, NULL))
+		return EPERM;
 
 	sp = kmem_zalloc(sizeof(struct sched_param), KM_SLEEP);
 
-	/* Locks the LWP */
-	t = lwp_find2(SCARG(uap, pid), SCARG(uap, lid));
+	/* If not specified, use the first LWP */
+	lid = SCARG(uap, lid) == 0 ? 1 : SCARG(uap, lid);
+
+	if (SCARG(uap, pid) != 0) {
+		/* Locks the LWP */
+		t = lwp_find2(SCARG(uap, pid), lid);
+	} else {
+		struct proc *p = l->l_proc;
+		/* Use the calling process */
+		mutex_enter(&p->p_smutex);
+		t = lwp_find(p, lid);
+		if (t != NULL)
+			lwp_lock(t);
+		mutex_exit(&p->p_smutex);
+	}
 	if (t == NULL) {
 		kmem_free(sp, sizeof(struct sched_param));
 		return ESRCH;
@@ -232,8 +278,10 @@ sys__sched_setaffinity(struct lwp *l,
 	int error;
 
 	/* Available only for super-user */
-	if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER, NULL))
-		return EACCES;
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    l->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY), NULL,
+	    NULL))
+		return EPERM;
 
 	if (SCARG(uap, size) <= 0)
 		return EINVAL;
@@ -255,19 +303,25 @@ sys__sched_setaffinity(struct lwp *l,
 		cpuset = NULL; 
 	}
 
-	/* Find the process */
-	p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL);
-	if (p == NULL) {
-		error = ESRCH;
-		goto error;
+	if (SCARG(uap, pid) != 0) {
+		/* Find the process */
+		p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL);
+		if (p == NULL) {
+			error = ESRCH;
+			goto error;
+		}
+		mutex_enter(&p->p_smutex);
+		mutex_exit(&proclist_lock);
+	} else {
+		/* Use the calling process */
+		p = l->l_proc;
+		mutex_enter(&p->p_smutex);
 	}
-	mutex_enter(&p->p_smutex);
-	mutex_exit(&proclist_lock);
 
 	/* Disallow modification of system processes */
 	if (p->p_flag & PK_SYSTEM) {
 		mutex_exit(&p->p_smutex);
-		error = EACCES;
+		error = EPERM;
 		goto error;
 	}
 
@@ -294,8 +348,6 @@ sys__sched_setaffinity(struct lwp *l,
 	mutex_exit(&p->p_smutex);
 	if (lcnt == 0)
 		error = ESRCH;
-	else
-		*retval = lcnt;
 error:
 	if (cpuset != NULL)
 		kmem_free(cpuset, sizeof(cpuset_t));
@@ -317,15 +369,34 @@ sys__sched_getaffinity(struct lwp *l,
 	} */
 	struct lwp *t;
 	void *cpuset;
+	lwpid_t lid;
 	int error;
 
 	if (SCARG(uap, size) <= 0)
 		return EINVAL;
 
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    l->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY), NULL,
+	    NULL))
+		return EPERM;
+
 	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
 
-	/* Locks the LWP */
-	t = lwp_find2(SCARG(uap, pid), SCARG(uap, lid));
+	/* If not specified, use the first LWP */
+	lid = SCARG(uap, lid) == 0 ? 1 : SCARG(uap, lid);
+
+	if (SCARG(uap, pid) != 0) {
+		/* Locks the LWP */
+		t = lwp_find2(SCARG(uap, pid), lid);
+	} else {
+		struct proc *p = l->l_proc;
+		/* Use the calling process */
+		mutex_enter(&p->p_smutex);
+		t = lwp_find(p, lid);
+		if (t != NULL)
+			lwp_lock(t);
+		mutex_exit(&p->p_smutex);
+	}
 	if (t == NULL) {
 		kmem_free(cpuset, sizeof(cpuset_t));
 		return ESRCH;

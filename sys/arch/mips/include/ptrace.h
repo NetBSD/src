@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.10 2003/08/07 16:28:28 agc Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.10.16.1 2008/02/04 09:22:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,13 @@
 
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
+
+#define PT_MACHDEP_STRINGS \
+	"(unused)", \
+	"PT_GETREGS", \
+	"PT_SETREGS", \
+	"PT_GETFPREGS", \
+	"PT_SETFPREGS",
 
 /*
  * Glue for gdb: map NetBSD register names to legacy ptrace register names

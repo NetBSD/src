@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_rumpglue.c,v 1.1.6.2 2008/01/21 09:47:40 yamt Exp $	*/
+/*	$NetBSD: puffs_rumpglue.c,v 1.1.6.3 2008/02/04 09:24:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.1.6.2 2008/01/21 09:47:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.1.6.3 2008/02/04 09:24:49 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -44,14 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_rumpglue.c,v 1.1.6.2 2008/01/21 09:47:40 yamt 
 #include "rumpuser.h"
 
 #include "puffs_rumpglue.h"
-
-int
-dounmount(struct mount *mp, int flags, struct lwp *l)
-{
-
-	VFS_UNMOUNT(mp, MNT_FORCE);
-	panic("control fd is dead");
-}
 
 void putterattach(void); /* XXX: from autoconf */
 dev_type_open(puttercdopen);

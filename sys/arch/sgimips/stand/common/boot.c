@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2005/06/03 18:55:12 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.11.2.1 2008/02/04 09:22:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -114,6 +114,8 @@ int             main(int, char **);
 struct btinfo_symtab bi_syms;
 struct btinfo_bootpath bi_bpath;
 
+static uint8_t bootinfo[BOOTINFO_SIZE];
+
 /*
  * This gets arguments from the ARCS monitor, calls ARCS routines to open
  * and load the program to boot, then transfers execution to the new program.
@@ -146,7 +148,7 @@ main(int argc, char **argv)
 	memset(marks, 0, sizeof marks);
 
 	/* initialise bootinfo structure early */
-	bi_init();
+	bi_init(bootinfo);
 
 	/* Parse arguments, if present.  */
 
@@ -237,23 +239,21 @@ main(int argc, char **argv)
 	}
 
 finish:
-#if 0
-	strncpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
-	bi_add(&bi_bpath, BTINFO_BOOTPATH);
+	strlcpy(bi_bpath.bootpath, kernel, BTINFO_BOOTPATH_LEN);
+	bi_add(&bi_bpath, BTINFO_BOOTPATH, sizeof(bi_bpath));
 
 	bi_syms.nsym = marks[MARK_NSYM];
 	bi_syms.ssym = marks[MARK_SYM];
 	bi_syms.esym = marks[MARK_END];
-	bi_add(&bi_syms, BTINFO_SYMTAB);
-#endif
-	entry = (void *) marks[MARK_ENTRY];
+	bi_add(&bi_syms, BTINFO_SYMTAB, sizeof(bi_syms));
+	entry = (void *)marks[MARK_ENTRY];
 
 	if (debug) {
 		printf("Starting at %p\n\n", entry);
 		printf("nsym 0x%lx ssym 0x%lx esym 0x%lx\n", marks[MARK_NSYM],
 		       marks[MARK_SYM], marks[MARK_END]);
 	}
-	(*entry) (argc, argv, 0 /* BOOTINFO_MAGIC */, NULL);
+	(*entry)(argc, argv, BOOTINFO_MAGIC, bootinfo);
 
 	printf("Kernel returned!  Halting...\n");
 	return (0);

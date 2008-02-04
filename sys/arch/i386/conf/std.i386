@@ -1,4 +1,4 @@
-# $NetBSD: std.i386,v 1.24.18.1 2006/06/21 14:52:10 yamt Exp $
+# $NetBSD: std.i386,v 1.24.18.2 2008/02/04 09:22:04 yamt Exp $
 #
 # standard, required NetBSD/i386 'options'
 
@@ -9,7 +9,7 @@ options 	EXEC_AOUT	# exec a.out binaries
 options 	EXEC_ELF32	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 
-options 	INET6_MD_CKSUM	# machine-dependant code for in6_cksum
+options 	CPU_IN_CKSUM
 #options 	CRYPTO_MD_DES_ENC	# machine-dependant code for DES
 #options 	CRYPTO_MD_DES_CBC	# machine-dependant DES CBC code
 #options 	CRYPTO_MD_BF_ENC	# machine-dependant code for BF_encrypt

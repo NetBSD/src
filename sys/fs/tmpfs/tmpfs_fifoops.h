@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_fifoops.h,v 1.4.18.2 2006/06/21 15:09:36 yamt Exp $	*/
+/*	$NetBSD: tmpfs_fifoops.h,v 1.4.18.3 2008/02/04 09:24:02 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -92,7 +92,6 @@ int	tmpfs_fifo_write	(void *);
 #define	tmpfs_fifo_pathconf	fifo_pathconf
 #define	tmpfs_fifo_islocked	tmpfs_islocked
 #define	tmpfs_fifo_advlock	fifo_advlock
-#define	tmpfs_fifo_lease	tmpfs_lease
 #define	tmpfs_fifo_bwrite	tmpfs_bwrite
 #define	tmpfs_fifo_getpages	genfs_badop
 #define	tmpfs_fifo_putpages	fifo_putpages

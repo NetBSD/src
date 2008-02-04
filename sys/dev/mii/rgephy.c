@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.6.2.3 2008/01/21 09:43:29 yamt Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.6.2.4 2008/02/04 09:23:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.6.2.3 2008/01/21 09:43:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.6.2.4 2008/02/04 09:23:26 yamt Exp $");
 
 
 /*
@@ -533,6 +533,7 @@ rgephy_reset(struct mii_softc *sc)
 		PHY_WRITE(sc, 0x1F, 0x0002);
 		PHY_WRITE(sc, 0x01, 0x90D0);
 		PHY_WRITE(sc, 0x1F, 0x0000);
+		PHY_WRITE(sc, 0x0e, 0x0000);
 	}
 
 	/* Reset capabilities */

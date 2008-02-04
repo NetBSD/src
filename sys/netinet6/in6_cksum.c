@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.16.16.3 2008/01/21 09:47:21 yamt Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.16.16.4 2008/02/04 09:24:41 yamt Exp $	*/
 /*	$KAME: in6_cksum.c,v 1.9 2000/09/09 15:33:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.16.16.3 2008/01/21 09:47:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.16.16.4 2008/02/04 09:24:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -94,9 +94,7 @@ int
 in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 {
 	u_int16_t *w;
-	int sum = 0;
-	int mlen = 0;
-	int byte_swapped = 0;
+	uint32_t sum = 0;
 	struct ip6_hdr *ip6;
 	struct in6_addr in6;
 	union {
@@ -107,14 +105,6 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 			u_int8_t	ph_nxt;
 		} ph __packed;
 	} uph;
-	union {
-		u_int8_t	c[2];
-		u_int16_t	s;
-	} s_util;
-	union {
-		u_int16_t s[2];
-		u_int32_t l;
-	} l_util;
 
 	/* sanity check */
 	if (m->m_pkthdr.len < off + len) {
@@ -159,153 +149,5 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len)
 	sum += uph.phs[2];  sum += uph.phs[3];
 
  skip_phdr:
-	/*
-	 * Secondly calculate a summary of the first mbuf excluding offset.
-	 */
-	while (m != NULL && off > 0) {
-		if (m->m_len <= off)
-			off -= m->m_len;
-		else
-			break;
-		m = m->m_next;
-	}
-	w = (u_int16_t *)(mtod(m, u_char *) + off);
-	mlen = m->m_len - off;
-	if (len < mlen)
-		mlen = len;
-	len -= mlen;
-	/*
-	 * Force to even boundary.
-	 */
-	if ((1 & (long) w) && (mlen > 0)) {
-		REDUCE;
-		sum <<= 8;
-		s_util.c[0] = *(u_char *)w;
-		w = (u_int16_t *)((char *)w + 1);
-		mlen--;
-		byte_swapped = 1;
-	}
-	/*
-	 * Unroll the loop to make overhead from
-	 * branches &c small.
-	 */
-	while ((mlen -= 32) >= 0) {
-		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
-		sum += w[4]; sum += w[5]; sum += w[6]; sum += w[7];
-		sum += w[8]; sum += w[9]; sum += w[10]; sum += w[11];
-		sum += w[12]; sum += w[13]; sum += w[14]; sum += w[15];
-		w += 16;
-	}
-	mlen += 32;
-	while ((mlen -= 8) >= 0) {
-		sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
-		w += 4;
-	}
-	mlen += 8;
-	if (mlen == 0 && byte_swapped == 0)
-		goto next;
-	REDUCE;
-	while ((mlen -= 2) >= 0) {
-		sum += *w++;
-	}
-	if (byte_swapped) {
-		REDUCE;
-		sum <<= 8;
-		byte_swapped = 0;
-		if (mlen == -1) {
-			s_util.c[1] = *(char *)w;
-			sum += s_util.s;
-			mlen = 0;
-		} else
-			mlen = -1;
-	} else if (mlen == -1)
-		s_util.c[0] = *(char *)w;
- next:
-	m = m->m_next;
-
-	/*
-	 * Lastly calculate a summary of the rest of mbufs.
-	 */
-
-	for (;m && len; m = m->m_next) {
-		if (m->m_len == 0)
-			continue;
-		w = mtod(m, u_int16_t *);
-		if (mlen == -1) {
-			/*
-			 * The first byte of this mbuf is the continuation
-			 * of a word spanning between this mbuf and the
-			 * last mbuf.
-			 *
-			 * s_util.c[0] is already saved when scanning previous
-			 * mbuf.
-			 */
-			s_util.c[1] = *(char *)w;
-			sum += s_util.s;
-			w = (u_int16_t *)((char *)w + 1);
-			mlen = m->m_len - 1;
-			len--;
-		} else
-			mlen = m->m_len;
-		if (len < mlen)
-			mlen = len;
-		len -= mlen;
-		/*
-		 * Force to even boundary.
-		 */
-		if ((1 & (long) w) && (mlen > 0)) {
-			REDUCE;
-			sum <<= 8;
-			s_util.c[0] = *(u_char *)w;
-			w = (u_int16_t *)((char *)w + 1);
-			mlen--;
-			byte_swapped = 1;
-		}
-		/*
-		 * Unroll the loop to make overhead from
-		 * branches &c small.
-		 */
-		while ((mlen -= 32) >= 0) {
-			sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
-			sum += w[4]; sum += w[5]; sum += w[6]; sum += w[7];
-			sum += w[8]; sum += w[9]; sum += w[10]; sum += w[11];
-			sum += w[12]; sum += w[13]; sum += w[14]; sum += w[15];
-			w += 16;
-		}
-		mlen += 32;
-		while ((mlen -= 8) >= 0) {
-			sum += w[0]; sum += w[1]; sum += w[2]; sum += w[3];
-			w += 4;
-		}
-		mlen += 8;
-		if (mlen == 0 && byte_swapped == 0)
-			continue;
-		REDUCE;
-		while ((mlen -= 2) >= 0) {
-			sum += *w++;
-		}
-		if (byte_swapped) {
-			REDUCE;
-			sum <<= 8;
-			byte_swapped = 0;
-			if (mlen == -1) {
-				s_util.c[1] = *(char *)w;
-				sum += s_util.s;
-				mlen = 0;
-			} else
-				mlen = -1;
-		} else if (mlen == -1)
-			s_util.c[0] = *(char *)w;
-	}
-	if (len)
-		panic("in6_cksum: out of data");
-	if (mlen == -1) {
-		/* The last mbuf has odd # of bytes. Follow the
-		   standard (the odd byte may be shifted left by 8 bits
-		   or not as determined by endian-ness of the machine) */
-		s_util.c[1] = 0;
-		sum += s_util.s;
-	}
-	REDUCE;
-	return (~sum & 0xffff);
+	return cpu_in_cksum(m, len, off, sum);
 }

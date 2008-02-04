@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.68.2.4 2007/10/27 11:35:39 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.68.2.5 2008/02/04 09:24:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68.2.4 2007/10/27 11:35:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.68.2.5 2008/02/04 09:24:21 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -431,7 +431,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (l && kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+		if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
 			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
@@ -456,8 +456,7 @@ sbrelease(struct sockbuf *sb, struct socket *so)
 {
 
 	sbflush(sb);
-	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0,
-	    RLIM_INFINITY);
+	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0, RLIM_INFINITY);
 	sb->sb_mbmax = 0;
 }
 

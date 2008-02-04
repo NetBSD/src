@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.21.2.7 2008/01/21 09:47:58 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.21.2.8 2008/02/04 09:25:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -100,6 +100,32 @@ struct sched_param {
 #define	SCHED_RR	2
 
 #if defined(_NETBSD_SOURCE)
+
+/* XXX: Size of the CPU set bitmap */
+#define	CPUSET_SHIFT	5
+#define	CPUSET_MASK	31
+#if MAXCPUS > 32
+#define	CPUSET_SIZE	(MAXCPUS >> CPUSET_SHIFT)
+#else
+#define	CPUSET_SIZE	1
+#endif
+
+/* Bitmap of the CPUs */
+typedef struct {
+	uint32_t	bits[CPUSET_SIZE];
+} cpuset_t;
+
+#define	CPU_ZERO(c)	\
+	(memset(c, 0, sizeof(cpuset_t)))
+
+#define	CPU_ISSET(i, c)	\
+	((1 << (i & CPUSET_MASK)) & (c)->bits[i >> CPUSET_SHIFT])
+
+#define	CPU_SET(i, c)	\
+	((c)->bits[i >> CPUSET_SHIFT] |= 1 << (i & CPUSET_MASK))
+
+#define	CPU_CLR(i, c)	\
+	((c)->bits[i >> CPUSET_SHIFT] &= ~(1 << (i & CPUSET_MASK)))
 
 int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
 int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_softint.c,v 1.3.4.5 2008/01/21 09:46:12 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.3.4.6 2008/02/04 09:24:15 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -93,9 +93,8 @@
  *	The kernel does not allow software interrupts to use facilities
  *	or perform actions that may block for a significant amount of
  *	time.  This means that it's not valid for a software interrupt
- *	to: sleep on condition variables, use the lockmgr() facility,
- *	or wait for resources to become available (for example,
- *	memory).
+ *	to sleep on condition variables	or wait for resources to become
+ *	available (for example,	memory).
  *
  * Per-CPU operation
  *
@@ -184,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.3.4.5 2008/01/21 09:46:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.3.4.6 2008/02/04 09:24:15 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>

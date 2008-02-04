@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.2.4.9 2008/01/21 09:41:38 yamt Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.2.4.10 2008/02/04 09:23:09 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.2.4.9 2008/01/21 09:41:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.2.4.10 2008/02/04 09:23:09 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,3 +483,50 @@ linux32_sys_setfsgid(struct lwp *l, const struct linux32_sys_setfsgid_args *uap,
 
 	return linux_sys_setfsgid(l, &ua, retval);
 }
+
+/*
+ * pread(2).
+ */
+int
+linux32_sys_pread(struct lwp *l,
+    const struct linux32_sys_pread_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(void *) buf;
+		syscallarg(netbsd32_size_t) nbyte;
+		syscallarg(int32_t) offset;
+	} */
+	struct sys_pread_args pra;
+
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, offset);
+
+	return sys_pread(l, &pra, retval);
+}
+
+/*
+ * pwrite(2).
+ */
+int
+linux32_sys_pwrite(struct lwp *l,
+    const struct linux32_sys_pwrite_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(void *) buf;
+		syscallarg(netbsd32_size_t) nbyte;
+		syscallarg(int32_t) offset;
+	} */
+	struct sys_pwrite_args pra;
+
+	SCARG(&pra, fd) = SCARG(uap, fd);
+	SCARG(&pra, buf) = SCARG(uap, buf);
+	SCARG(&pra, nbyte) = SCARG(uap, nbyte);
+	SCARG(&pra, offset) = SCARG(uap, offset);
+
+	return sys_pwrite(l, &pra, retval);
+}
+

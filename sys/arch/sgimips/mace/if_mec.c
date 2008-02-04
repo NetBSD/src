@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.6.2.4 2008/01/21 09:39:14 yamt Exp $ */
+/* $NetBSD: if_mec.c,v 1.6.2.5 2008/02/04 09:22:26 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.6.2.4 2008/01/21 09:39:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.6.2.5 2008/02/04 09:22:26 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -377,7 +377,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	struct mec_softc *sc = (void *)self;
 	struct mace_attach_args *maa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-	uint32_t command;
+	uint64_t address, command;
 	const char *macaddr;
 	struct mii_softc *child;
 	bus_dma_segment_t seg;
@@ -454,13 +454,21 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	}
 	enaddr_aton(macaddr, sc->sc_enaddr);
 
+	/* set the Ethernet address */
+	address = 0;
+	for (i = 0; i < ETHER_ADDR_LEN; i++) {
+		address = address << 8;
+		address |= sc->sc_enaddr[i];
+	}
+	bus_space_write_8(sc->sc_st, sc->sc_sh, MEC_STATION, address);
+
 	/* reset device */
 	mec_reset(sc);
 
 	command = bus_space_read_8(sc->sc_st, sc->sc_sh, MEC_MAC_CONTROL);
 
-	printf(": MAC-110 Ethernet, rev %d\n",
-	    (command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT);
+	printf(": MAC-110 Ethernet, rev %u\n",
+	    (u_int)((command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT));
 
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
@@ -737,8 +745,10 @@ mec_reset(struct mec_softc *sc)
 {
 	bus_space_tag_t st = sc->sc_st;
 	bus_space_handle_t sh = sc->sc_sh;
-	uint64_t address, control;
-	int i;
+	uint64_t control;
+
+	/* stop DMA first */
+	bus_space_write_8(st, sh, MEC_DMA_CONTROL, 0);
 
 	/* reset chip */
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, MEC_MAC_CORE_RESET);
@@ -746,19 +756,12 @@ mec_reset(struct mec_softc *sc)
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, 0);
 	delay(1000);
 
-	/* set Ethernet address */
-	address = 0;
-	for (i = 0; i < ETHER_ADDR_LEN; i++) {
-		address = address << 8;
-		address += sc->sc_enaddr[i];
-	}
-	bus_space_write_8(st, sh, MEC_STATION, address);
-
 	/* Default to 100/half and let auto-negotiation work its magic */
 	control = MEC_MAC_SPEED_SELECT | MEC_MAC_FILTER_MATCHMULTI |
 	    MEC_MAC_IPG_DEFAULT;
 
 	bus_space_write_8(st, sh, MEC_MAC_CONTROL, control);
+	/* stop DMA again for sanity */
 	bus_space_write_8(st, sh, MEC_DMA_CONTROL, 0);
 
 	DPRINTF(MEC_DEBUG_RESET, ("mec: control now %llx\n",
@@ -1447,4 +1450,6 @@ mec_shutdown(void *arg)
 	struct mec_softc *sc = arg;
 
 	mec_stop(&sc->sc_ethercom.ec_if, 1);
+	/* make sure to stop DMA etc. */
+	mec_reset(sc);
 }

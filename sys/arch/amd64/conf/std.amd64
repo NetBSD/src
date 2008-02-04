@@ -1,10 +1,11 @@
-# $NetBSD: std.amd64,v 1.1.18.1 2006/06/21 14:48:25 yamt Exp $
+# $NetBSD: std.amd64,v 1.1.18.2 2008/02/04 09:21:42 yamt Exp $
 #
 # standard, required NetBSD/amd64 'options'
 
 machine amd64 x86
 include		"conf/std"	# MI standard options
 
+options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR

@@ -1,4 +1,4 @@
-#	$NetBSD: files.opencrypto,v 1.15.4.2 2006/12/30 20:50:54 yamt Exp $
+#	$NetBSD: files.opencrypto,v 1.15.4.3 2008/02/04 09:24:48 yamt Exp $
 #
 #
 
@@ -23,3 +23,5 @@ file	opencrypto/deflate.c		swcrypto	# wrapper around zlib
 # (and thus crypto hardware accelerators).
 defpseudo crypto: opencrypto
 file	opencrypto/cryptodev.c		crypto
+
+defflag opt_ocf.h	CRYPTO_DEBUG CRYPTO_TIMING

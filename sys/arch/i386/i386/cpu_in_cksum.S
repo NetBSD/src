@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.2.16.3 2008/01/21 09:37:00 yamt Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.2.2.2 2008/02/04 09:22:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -66,10 +66,8 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.S,v 1.2.16.3 2008/01/21 09:37:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.2.2.2 2008/02/04 09:22:05 yamt Exp $");
 
-#include "opt_inet.h"
-	
 #include "assym.h"
 
 /* LINTSTUB: include <sys/types.h> */
@@ -80,31 +78,17 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.S,v 1.2.16.3 2008/01/21 09:37:00 yamt Exp $
 /*
  * Checksum routine for Internet Protocol family headers.
  *
- * in_cksum(m, len)
+ * int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum);
  *
  * Registers used:
- * %eax = sum
+ * %eax = sum (entry: initial_sum)
  * %ebx = m->m_data
- * %cl = rotation count to unswap
+ * %ecx = off (initially)
+ * %cl = rotation count to unswap (later)
  * %edx = m->m_len
  * %ebp = m
  * %esi = len
  */
-
-#define	GETDATAPTR \
-	testl	$M_EXT_LAZY, M_FLAGS(%ebp)	; \
-	jz	99f				; \
-	pushl	%eax				; \
-	pushl	%ecx				; \
-	pushl	%edx				; \
-	pushl	%ebp				; \
-	call	_C_LABEL(m_mapin)		; \
-	addl	$4, %esp			; \
-	popl	%edx				; \
-	popl	%ecx				; \
-	popl	%eax				; \
-99:						  \
-	movl	M_DATA(%ebp), %ebx	/* %ebx = m_data */
 
 #define	SWAP \
 	roll	$8, %eax	; \
@@ -139,123 +123,34 @@ __KERNEL_RCSID(0, "$NetBSD: in_cksum.S,v 1.2.16.3 2008/01/21 09:37:00 yamt Exp $
 	addw	%dx, %ax	; \
 	adcw	$0, %ax
 
-
-/*
- * XXX KAME handles link-local scopes in a way which causes us great pain.
- * we need to special-case link-local addresses and not include the scope id
- * as part of the transport-layer pseudoheader.
- * Both ff02::/16 and fe80::/10 get this treatment.
- *
- * so, big-endian, this would be:	
- * (s6_addr32[0] & 0xffc00000) == 0xfe800000
- * (s6_addr32[0] & 0xff0f) == 0xff020000
- * since we're little-endian,
- * (s6_addr32[0] & 0x0000c0ff) == 0x000080fe
- * (s6_addr32[0] & 0x00000fff) == 0x000002ff
- */
-	
-#define ADD6SCOPE(n) \
-	movw	n(%ebx), %cx	; \
-	addl	%ecx,%eax	; \
-	andl	$0xc0ff,%ecx	; \
-	cmpl	$0x80fe,%ecx	; \
-	je	1f		; \
-	movw	n(%ebx), %cx	; \
-	andl	$0xfff,%ecx	; \
-	cmpl	$0x2ff,%ecx	; \
-	je	1f		; \
-	movw	n+2(%ebx),%cx	; \
-	addl	%ecx,%eax	; \
-1:
-	
-#if defined(INET6) && defined(INET6_MD_CKSUM)
-/* LINTSTUB: Func: int in6_cksum(struct mbuf *m, u_int8_t nxt, u_int32_t off, u_int32_t len) */
-ENTRY(in6_cksum)
-	pushl	%ebp
-	pushl	%ebx
-	pushl	%esi
-
-	movl	16(%esp), %ebp
-	movzbl	20(%esp), %eax		/* sum = nxt */
-	movl	24(%esp), %edx		/* %edx = off */
-	movl	28(%esp), %esi		/* %esi = len */
-	testl	%eax, %eax
-	jz	.Lmbuf_loop_0		/* skip if nxt == 0 */
-	GETDATAPTR
-	addl	%esi, %eax		/* sum += len */
-	shll	$8, %eax		/* sum = htons(sum) */
-	xorl	%ecx,%ecx		
-	ADD6SCOPE(IP6_SRC)
-	ADD6SCOPE(IP6_DST)
-	ADD(IP6_SRC+4)			/* sum += ip6->ip6_src */
-	ADC(IP6_SRC+8)			/* sum += ip6->ip6_src */
-	ADC(IP6_SRC+12)			/* sum += ip6->ip6_src */
-	ADC(IP6_DST+4)			/* sum += ip6->ip_dst */
-	ADC(IP6_DST+8)			/* sum += ip6->ip_dst */
-	ADC(IP6_DST+12)			/* sum += ip6->ip_dst */
-	
-	MOP
-#ifdef INET
-	jmp	.Lmbuf_loop_0
-#endif
-#endif
-
-#ifdef INET
-/* LINTSTUB: Func: int in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len) */
-ENTRY(in4_cksum)
-	pushl	%ebp
-	pushl	%ebx
-	pushl	%esi
-
-	movl	16(%esp), %ebp
-	movzbl	20(%esp), %eax		/* sum = nxt */
-	movl	24(%esp), %edx		/* %edx = off */
-	movl	28(%esp), %esi		/* %esi = len */
-	testl	%eax, %eax
-	jz	.Lmbuf_loop_0		/* skip if nxt == 0 */
-	GETDATAPTR
-	addl	%esi, %eax		/* sum += len */
-	shll	$8, %eax		/* sum = htons(sum) */
-
-	ADD(IP_SRC)			/* sum += ip->ip_src */
-	ADC(IP_DST)			/* sum += ip->ip_dst */
-	MOP
-#endif
-.Lmbuf_loop_0:
-	testl	%ebp, %ebp
-	jz	.Lout_of_mbufs
-
-	GETDATAPTR
-	movl	M_LEN(%ebp), %ecx	/* %ecx = m_len */
-	movl	M_NEXT(%ebp), %ebp
-
-	subl	%ecx, %edx		/* %edx = off - m_len */
-	jnb	.Lmbuf_loop_0
-
-	addl	%edx, %ebx		/* %ebx = m_data + off - m_len */
-	negl	%edx			/* %edx = m_len - off */
-	addl	%ecx, %ebx		/* %ebx = m_data + off */
-	xorb	%cl, %cl
-
-	/*
-	 * The len == 0 case is handled really inefficiently, by going through
-	 * the whole short_mbuf path once to get back to mbuf_loop_1 -- but
-	 * this case never happens in practice, so it's sufficient that it
-	 * doesn't explode.
-	 */
-	jmp	.Lin4_entry
-
-
-/* LINTSTUB: Func: int in_cksum(struct mbuf *m, int len) */
-ENTRY(in_cksum)
+/* LINTSTUB: Func: int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum) */
+ENTRY(cpu_in_cksum)
 	pushl	%ebp
 	pushl	%ebx
 	pushl	%esi
 
 	movl	16(%esp), %ebp
 	movl	20(%esp), %esi
-	xorl	%eax, %eax
+	movl	24(%esp), %ecx
+	movl	28(%esp), %eax
+	REDUCE
+
+.Lmbuf_preloop:
+	/* No more data to process? */
+	testl	%ebp, %ebp
+	jz	.Lout_of_mbufs
+	movl	M_LEN(%ebp), %edx
+	cmpl	%edx, %ecx
+	jbe	1f
+	subl	%edx, %ecx
+	movl	M_NEXT(%ebp), %ebp
+	jmp	.Lmbuf_preloop
+1:
+	movl	M_DATA(%ebp), %ebx
+	subl	%ecx, %edx
+	addl	%ecx, %ebx
 	xorb	%cl, %cl
+	jmp	.Lmbuf_load_data
 
 .Lmbuf_loop_1:
 	testl	%esi, %esi
@@ -265,8 +160,9 @@ ENTRY(in_cksum)
 	testl	%ebp, %ebp
 	jz	.Lout_of_mbufs
 
-	GETDATAPTR
+	movl	M_DATA(%ebp), %ebx
 	movl	M_LEN(%ebp), %edx
+.Lmbuf_load_data:
 	movl	M_NEXT(%ebp), %ebp
 
 .Lin4_entry:

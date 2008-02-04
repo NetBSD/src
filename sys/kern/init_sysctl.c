@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.46.2.8 2008/01/21 09:45:59 yamt Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.46.2.9 2008/02/04 09:24:07 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.8 2008/01/21 09:45:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.46.2.9 2008/02/04 09:24:07 yamt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -1310,19 +1310,30 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 	 */
 	mutex_enter(&filelist_lock);
 	for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
+	    	np = LIST_NEXT(fp, f_list);
+	    	mutex_enter(&fp->f_lock);
+	    	if (fp->f_count == 0) {
+		    	mutex_exit(&fp->f_lock);
+	    		continue;
+		}
+		/*
+		 * XXX Need to prevent that from being an alternative way
+		 * XXX to getting process information.
+		 */
 		if (kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
-		    	np = LIST_NEXT(fp, f_list);
+		    	mutex_exit(&fp->f_lock);
 			continue;
 		}
 		if (buflen < sizeof(struct file)) {
 			*oldlenp = where - start;
-			mutex_exit(&filelist_lock);
+		    	mutex_exit(&fp->f_lock);
 			error = ENOMEM;
 			break;
 		}
 		memcpy(&fbuf, fp, sizeof(fbuf));
 		LIST_INSERT_AFTER(fp, dp, f_list);
+	    	mutex_exit(&fp->f_lock);
 		mutex_exit(&filelist_lock);
 		error = dcopyout(l, &fbuf, where, sizeof(fbuf));
 		if (error) {
@@ -1911,7 +1922,7 @@ static int
 sysctl_kern_file2(SYSCTLFN_ARGS)
 {
 	struct proc *p;
-	struct file *fp;
+	struct file *fp, *tp, *np;
 	struct filedesc *fd;
 	struct kinfo_file kf;
 	char *dp;
@@ -1946,38 +1957,55 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 		if (arg != 0)
 			return (EINVAL);
 		sysctl_unlock();
+		/*
+		 * allocate dummy file descriptor to make position in list
+		 */
+		if ((tp = fgetdummy()) == NULL) {
+		 	sysctl_relock();
+			return ENOMEM;
+		}
 		mutex_enter(&filelist_lock);
-		LIST_FOREACH(fp, &filehead, f_list) {
-			if (kauth_authorize_generic(l->l_cred,
-			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0)
-				continue;
+		for (fp = LIST_FIRST(&filehead); fp != NULL; fp = np) {
+			np = LIST_NEXT(fp, f_list);
 			mutex_enter(&fp->f_lock);
 			if (fp->f_count == 0) {
 				mutex_exit(&fp->f_lock);
 				continue;
 			}
-			FILE_USE(fp);
+			/*
+			 * XXX Need to prevent that from being an alternative
+			 * XXX way for getting process information.
+			 */
+			if (kauth_authorize_generic(l->l_cred,
+			    KAUTH_GENERIC_CANSEE, fp->f_cred) != 0) {
+				mutex_exit(&fp->f_lock);
+				continue;
+			}
 			if (len >= elem_size && elem_count > 0) {
 				fill_file(&kf, fp, NULL, 0);
+				LIST_INSERT_AFTER(fp, tp, f_list);
+				mutex_exit(&fp->f_lock);
+				mutex_exit(&filelist_lock);
 				error = dcopyout(l, &kf, dp, out_size);
+				mutex_enter(&filelist_lock);
+				np = LIST_NEXT(tp, f_list);
+				LIST_REMOVE(tp, f_list);
 				if (error) {
-					mutex_enter(&filelist_lock);
-					FILE_UNUSE(fp, NULL);
 					break;
 				}
 				dp += elem_size;
 				len -= elem_size;
+			} else {
+				mutex_exit(&fp->f_lock);
 			}
 			if (elem_count > 0) {
 				needed += elem_size;
 				if (elem_count != INT_MAX)
 					elem_count--;
 			}
-			/* XXXAD can't work?? */
-			mutex_enter(&filelist_lock);
-			FILE_UNUSE(fp, NULL);
 		}
 		mutex_exit(&filelist_lock);
+		fputdummy(tp);
 		sysctl_relock();
 		break;
 	case KERN_FILE_BYPID:
@@ -1998,7 +2026,9 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 			mutex_enter(&p->p_mutex);
 			error = kauth_authorize_process(l->l_cred,
-			    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+			    KAUTH_PROCESS_CANSEE, p,
+			    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_OPENFILES),
+			    NULL, NULL);
 			mutex_exit(&p->p_mutex);
 			if (error != 0) {
 				continue;
@@ -2012,6 +2042,7 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 			}
 			mutex_exit(&proclist_lock);
 
+			/* XXX Do we need to check permission per file? */
 			fd = p->p_fd;
 			rw_enter(&fd->fd_lock, RW_READER);
 			for (i = 0; i < fd->fd_nfiles; i++) {
@@ -2168,7 +2199,8 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 
 		mutex_enter(&p->p_mutex);
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+		    KAUTH_PROCESS_CANSEE, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (error != 0) {
 			mutex_exit(&p->p_mutex);
 			continue;
@@ -2258,12 +2290,16 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				error = dcopyout(l, p, &dp->kp_proc,
 				    sizeof(struct proc));
 				mutex_enter(&proclist_lock);
-				if (error)
+				if (error) {
+					rw_exit(&p->p_reflock);
 					goto cleanup;
+				}
 				error = dcopyout(l, eproc, &dp->kp_eproc,
 				    sizeof(*eproc));
-				if (error)
+				if (error) {
+					rw_exit(&p->p_reflock);
 					goto cleanup;
+				}
 				dp++;
 				buflen -= sizeof(struct kinfo_proc);
 			} else {
@@ -2282,8 +2318,10 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 				error = dcopyout(l, kproc2, dp2,
 				    min(sizeof(*kproc2), elem_size));
 				mutex_enter(&proclist_lock);
-				if (error)
+				if (error) {
+					rw_exit(&p->p_reflock);
 					goto cleanup;
+				}
 				dp2 += elem_size;
 				buflen -= elem_size;
 				elem_count--;
@@ -2381,26 +2419,19 @@ sysctl_kern_proc_args(SYSCTLFN_ARGS)
 		goto out_locked;
 	}
 	mutex_enter(&p->p_mutex);
-	error = kauth_authorize_process(l->l_cred,
-	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL);
+
+	/* Check permission. */
+	if (type == KERN_PROC_ARGV || type == KERN_PROC_NARGV)
+		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ARGS), NULL, NULL);
+	else if (type == KERN_PROC_ENV || type == KERN_PROC_NENV)
+		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENV), NULL, NULL);
+	else
+		error = EINVAL; /* XXXGCC */
 	if (error) {
 		mutex_exit(&p->p_mutex);
 		goto out_locked;
-	}
-
-	/* only root or same user change look at the environment */
-	if (type == KERN_PROC_ENV || type == KERN_PROC_NENV) {
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
-			if (kauth_cred_getuid(l->l_cred) !=
-			    kauth_cred_getuid(p->p_cred) ||
-			    kauth_cred_getuid(l->l_cred) !=
-			    kauth_cred_getsvuid(p->p_cred)) {
-				error = EPERM;
-				mutex_exit(&p->p_mutex);
-				goto out_locked;
-			}
-		}
 	}
 
 	if (oldp == NULL) {

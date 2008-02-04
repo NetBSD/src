@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.7.2.4 2008/01/21 09:44:14 yamt Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.7.2.5 2008/02/04 09:23:32 yamt Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.127 2003/06/04 14:04:58 jason Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.7.2.4 2008/01/21 09:44:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.7.2.5 2008/02/04 09:23:32 yamt Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -399,9 +399,9 @@ ubsec_attach(struct device *parent, struct device *self, void *aux)
 	    ubsec_newsession, ubsec_freesession, ubsec_process, sc);
 	crypto_register(sc->sc_cid, CRYPTO_DES_CBC, 0, 0,
 	    ubsec_newsession, ubsec_freesession, ubsec_process, sc);
-	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC, 0, 0,
+	crypto_register(sc->sc_cid, CRYPTO_MD5_HMAC_96, 0, 0,
 	    ubsec_newsession, ubsec_freesession, ubsec_process, sc);
-	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC, 0, 0,
+	crypto_register(sc->sc_cid, CRYPTO_SHA1_HMAC_96, 0, 0,
 	    ubsec_newsession, ubsec_freesession, ubsec_process, sc);
 
 	/*
@@ -765,8 +765,8 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 		return (EINVAL);
 
 	for (c = cri; c != NULL; c = c->cri_next) {
-		if (c->cri_alg == CRYPTO_MD5_HMAC ||
-		    c->cri_alg == CRYPTO_SHA1_HMAC) {
+		if (c->cri_alg == CRYPTO_MD5_HMAC_96 ||
+		    c->cri_alg == CRYPTO_SHA1_HMAC_96) {
 			if (macini)
 				return (EINVAL);
 			macini = c;
@@ -844,7 +844,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 		for (i = 0; i < macini->cri_klen / 8; i++)
 			macini->cri_key[i] ^= HMAC_IPAD_VAL;
 
-		if (macini->cri_alg == CRYPTO_MD5_HMAC) {
+		if (macini->cri_alg == CRYPTO_MD5_HMAC_96) {
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, macini->cri_key,
 			    macini->cri_klen / 8);
@@ -865,7 +865,7 @@ ubsec_newsession(void *arg, u_int32_t *sidp, struct cryptoini *cri)
 		for (i = 0; i < macini->cri_klen / 8; i++)
 			macini->cri_key[i] ^= (HMAC_IPAD_VAL ^ HMAC_OPAD_VAL);
 
-		if (macini->cri_alg == CRYPTO_MD5_HMAC) {
+		if (macini->cri_alg == CRYPTO_MD5_HMAC_96) {
 			MD5Init(&md5ctx);
 			MD5Update(&md5ctx, macini->cri_key,
 			    macini->cri_klen / 8);
@@ -1008,8 +1008,8 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	crd2 = crd1->crd_next;
 
 	if (crd2 == NULL) {
-		if (crd1->crd_alg == CRYPTO_MD5_HMAC ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC) {
+		if (crd1->crd_alg == CRYPTO_MD5_HMAC_96 ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC_96) {
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
@@ -1022,8 +1022,8 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			goto errout;
 		}
 	} else {
-		if ((crd1->crd_alg == CRYPTO_MD5_HMAC ||
-		    crd1->crd_alg == CRYPTO_SHA1_HMAC) &&
+		if ((crd1->crd_alg == CRYPTO_MD5_HMAC_96 ||
+		    crd1->crd_alg == CRYPTO_SHA1_HMAC_96) &&
 		    (crd2->crd_alg == CRYPTO_DES_CBC ||
 			crd2->crd_alg == CRYPTO_3DES_CBC) &&
 		    ((crd2->crd_flags & CRD_F_ENCRYPT) == 0)) {
@@ -1031,8 +1031,8 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 			enccrd = crd2;
 		} else if ((crd1->crd_alg == CRYPTO_DES_CBC ||
 		    crd1->crd_alg == CRYPTO_3DES_CBC) &&
-		    (crd2->crd_alg == CRYPTO_MD5_HMAC ||
-			crd2->crd_alg == CRYPTO_SHA1_HMAC) &&
+		    (crd2->crd_alg == CRYPTO_MD5_HMAC_96 ||
+			crd2->crd_alg == CRYPTO_SHA1_HMAC_96) &&
 		    (crd1->crd_flags & CRD_F_ENCRYPT)) {
 			enccrd = crd1;
 			maccrd = crd2;
@@ -1097,7 +1097,7 @@ ubsec_process(void *arg, struct cryptop *crp, int hint)
 	if (maccrd) {
 		macoffset = maccrd->crd_skip;
 
-		if (maccrd->crd_alg == CRYPTO_MD5_HMAC)
+		if (maccrd->crd_alg == CRYPTO_MD5_HMAC_96)
 			ctx.pc_flags |= htole16(UBS_PKTCTX_AUTH_MD5);
 		else
 			ctx.pc_flags |= htole16(UBS_PKTCTX_AUTH_SHA1);
@@ -1540,8 +1540,8 @@ ubsec_callback(struct ubsec_softc *sc, struct ubsec_q *q)
 	}
 
 	for (crd = crp->crp_desc; crd; crd = crd->crd_next) {
-		if (crd->crd_alg != CRYPTO_MD5_HMAC &&
-		    crd->crd_alg != CRYPTO_SHA1_HMAC)
+		if (crd->crd_alg != CRYPTO_MD5_HMAC_96 &&
+		    crd->crd_alg != CRYPTO_SHA1_HMAC_96)
 			continue;
 		if (crp->crp_flags & CRYPTO_F_IMBUF)
 			m_copyback((struct mbuf *)crp->crp_buf,

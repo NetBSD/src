@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.15.4.7 2008/01/21 09:45:43 yamt Exp $	*/
+/*	$NetBSD: advnops.c,v 1.15.4.8 2008/02/04 09:23:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.15.4.7 2008/01/21 09:45:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.15.4.8 2008/02/04 09:23:43 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -83,7 +83,6 @@ int	adosfs_pathconf	__P((void *));
 
 #define adosfs_close 	genfs_nullop
 #define adosfs_fsync 	genfs_nullop
-#define	adosfs_lease_check	genfs_lease_check
 #define adosfs_seek 	genfs_seek
 
 #define adosfs_advlock 	genfs_einval
@@ -110,7 +109,6 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
 	{ &vop_read_desc, adosfs_read },		/* read */
 	{ &vop_write_desc, adosfs_write },		/* write */
-	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
 	{ &vop_fcntl_desc, adosfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */

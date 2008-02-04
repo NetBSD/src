@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2800_clk.c,v 1.7.2.3 2008/01/21 09:35:47 yamt Exp $ */
+/* $NetBSD: s3c2800_clk.c,v 1.7.2.4 2008/02/04 09:21:46 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -34,7 +34,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.7.2.3 2008/01/21 09:35:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_clk.c,v 1.7.2.4 2008/02/04 09:21:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,9 +204,17 @@ setstatclockrate(int newhz)
 static int
 hardintr(void *arg)
 {
-	atomic_add_32(&s3c2800_base, timer4_reload_value);
+	atomic_add_32(&s3c2800_base, timer0_reload_value);
 
 	hardclock((struct clockframe *)arg);
+
+	return 1;
+}
+
+static int
+statintr(void *arg)
+{
+	statclock((struct clockframe *)arg);
 
 	return 1;
 }

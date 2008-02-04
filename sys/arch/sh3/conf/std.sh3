@@ -1,0 +1,8 @@
+# $NetBSD: std.sh3,v 1.5.24.1 2008/02/04 09:22:28 yamt Exp $
+#
+# standard, required NetBSD/sh3 'options'
+
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_SCRIPT	# exec #! scripts
+
+options 	CPU_IN_CKSUM	# use assembler version of cpu_in_cksum()

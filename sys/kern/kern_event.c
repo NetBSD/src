@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.23.2.7 2008/01/21 09:46:02 yamt Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.23.2.8 2008/02/04 09:24:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23.2.7 2008/01/21 09:46:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.23.2.8 2008/02/04 09:24:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -382,9 +382,8 @@ filt_procattach(struct knote *kn)
 	 * Fail if it's not owned by you, or the last exec gave us
 	 * setuid/setgid privs (unless you're root).
 	 */
-	if ((kauth_cred_getuid(p->p_cred) != kauth_cred_getuid(curl->l_cred) ||
-	    (p->p_flag & PK_SUGID)) && kauth_authorize_generic(curl->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL) != 0)
+	if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KEVENT_FILTER,
+	    p, NULL, NULL, NULL) != 0)
 		return (EACCES);
 
 	kn->kn_ptr.p_proc = p;

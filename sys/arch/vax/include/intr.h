@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.16.2.5 2007/12/07 17:26:31 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.16.2.6 2008/02/04 09:22:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -50,7 +50,7 @@
 #define IPL_SOFTDDB	0x0f	/* used by DDB on VAX */
 #define IPL_SOFTSERIAL	0x0d	/* soft serial */
 #define IPL_SOFTNET	0x0c	/* soft network */
-#define IPL_SOFTBIO	0x08
+#define IPL_SOFTBIO	0x0b	/* soft bio */
 #define IPL_SOFTCLOCK	0x08
 #define IPL_NONE	0x00
 

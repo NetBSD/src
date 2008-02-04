@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.60.16.4 2008/01/21 09:39:59 yamt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.60.16.5 2008/02/04 09:22:41 yamt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -155,6 +155,7 @@ extern	struct pmap kernel_pmap_store;
  * Real nice (fast) routines to get the virtual address of a physical page
  * (and vice versa).
  */
+#define	PMAP_VTOPHYS(va)	((va) & ~KERNBASE)
 #define PMAP_MAP_POOLPAGE(pa)	((pa) | KERNBASE)
 #define PMAP_UNMAP_POOLPAGE(va) ((va) & ~KERNBASE)
 

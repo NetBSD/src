@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.h,v 1.21.12.1 2006/06/21 15:10:25 yamt Exp $	*/
+/*	$NetBSD: fifo.h,v 1.21.12.2 2008/02/04 09:24:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -44,7 +44,6 @@ int	fifo_close(void *);
 #define fifo_setattr	genfs_ebadf
 int	fifo_read(void *);
 int	fifo_write(void *);
-#define fifo_lease_check genfs_nullop
 int	fifo_ioctl(void *);
 int	fifo_poll(void *);
 int	fifo_kqfilter(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.234.2.7 2008/01/21 09:42:57 yamt Exp $	*/
+/*	$NetBSD: com.c,v 1.234.2.8 2008/02/04 09:23:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234.2.7 2008/01/21 09:42:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.234.2.8 2008/02/04 09:23:23 yamt Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -599,6 +599,9 @@ com_detach(struct device *self, int flags)
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
 
+        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		return EBUSY;
+
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
 
@@ -632,6 +635,9 @@ com_detach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+
+	/* Destroy the lock. */
+	mutex_destroy(&sc->sc_lock);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.41.2.5 2008/01/21 09:40:40 yamt Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.41.2.6 2008/02/04 09:22:59 yamt Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.41.2.5 2008/01/21 09:40:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.41.2.6 2008/02/04 09:22:59 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_pathconf_desc, coda_vop_error },	/* pathconf */
     { &vop_advlock_desc, coda_vop_nop },	/* advlock */
     { &vop_bwrite_desc, coda_vop_error },	/* bwrite */
-    { &vop_lease_desc, coda_vop_nop },		/* lease */
     { &vop_seek_desc, genfs_seek },		/* seek */
     { &vop_poll_desc, genfs_poll },		/* poll */
     { &vop_getpages_desc, coda_getpages },	/* getpages */
@@ -164,7 +163,7 @@ coda_vop_error(void *anon) {
     return EIO;
 }
 
-/* A generic do-nothing.  For lease_check, advlock */
+/* A generic do-nothing. */
 int
 coda_vop_nop(void *anon) {
     struct vnodeop_desc **desc = (struct vnodeop_desc **)anon;
@@ -1778,6 +1777,7 @@ coda_lock(void *v)
     struct vop_lock_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
+    int flags  = ap->a_flags;
 /* upcall decl */
 /* locals */
 
@@ -1788,7 +1788,12 @@ coda_lock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock));
+    if ((flags & LK_INTERLOCK) != 0) {
+    	mutex_exit(&vp->v_interlock);
+    	flags &= ~LK_INTERLOCK;
+    }
+
+    return (vlockmgr(&vp->v_lock, flags));
 }
 
 int
@@ -1807,7 +1812,7 @@ coda_unlock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock));
+    return (vlockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE));
 }
 
 int
@@ -1817,7 +1822,7 @@ coda_islocked(void *v)
     struct vop_islocked_args *ap = v;
     ENTRY;
 
-    return (lockstatus(&ap->a_vp->v_lock));
+    return (vlockstatus(&ap->a_vp->v_lock));
 }
 
 /*

@@ -2,7 +2,7 @@
 # Distribution kernel (TOSHIBA TX3912 based model) kernel config file
 
 #
-#	$NetBSD: TX3912,v 1.57.6.2 2006/12/30 20:46:03 yamt Exp $
+#	$NetBSD: TX3912,v 1.57.6.3 2008/02/04 09:21:58 yamt Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -11,7 +11,7 @@ include		"arch/hpcmips/conf/std.hpcmips"
 maxusers	16
 
 include		"arch/hpcmips/conf/std.hpcmips.tx39"
-makeoptions	CPUFLAGS="-mips2"	# CPU codegen options
+makeoptions	CPUFLAGS="-march=r3900"	# CPU codegen options
 options 	TX391X			# Product TMPR3912
 
 options 	TX39_DEBUG
@@ -47,6 +47,9 @@ options 	PPP_DEFLATE	# Deflate compression support for PPP
 options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 
 options 	COMPAT_43
+options 	COMPAT_16
+options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	SCSIVERBOSE	# human readable SCSI error messages

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.13.4.5 2008/01/21 09:41:03 yamt Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.13.4.6 2008/02/04 09:23:01 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.13.4.5 2008/01/21 09:41:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.13.4.6 2008/02/04 09:23:01 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -331,8 +331,6 @@ irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *r
 			nvp->v_writecount++;
 
 		nvp->v_type = VCHR;
-		nvp->v_specinfo = (void *)malloc(sizeof(struct specinfo),
-		    M_VNODE, M_WAITOK|M_ZERO);
 		nvp->v_rdev = vp->v_rdev;
 		nvp->v_specmountpoint = vp->v_specmountpoint;
 

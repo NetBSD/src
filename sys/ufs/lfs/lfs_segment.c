@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.164.2.6 2008/01/21 09:48:12 yamt Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.164.2.7 2008/02/04 09:25:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.164.2.6 2008/01/21 09:48:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.164.2.7 2008/02/04 09:25:05 yamt Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2776,7 +2776,8 @@ lfs_vunref(struct vnode *vp)
 	}
 
 	/* does not call inactive */
-	vrele(vp);	/* XXXAD fix later */
+	mutex_enter(&vp->v_interlock);
+	vrelel(vp, VRELEL_NOINACTIVE);
 }
 
 /*
@@ -2794,7 +2795,8 @@ lfs_vunref_head(struct vnode *vp)
 	ASSERT_SEGLOCK(VTOI(vp)->i_lfs);
 
 	/* does not call inactive, inserts non-held vnode at head of freelist */
-	vrele(vp);	/* XXXAD fix later */
+	mutex_enter(&vp->v_interlock);
+	vrelel(vp, VRELEL_NOINACTIVE | VRELEL_ONHEAD);
 }
 
 

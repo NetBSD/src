@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.29.6.8 2008/01/21 09:46:06 yamt Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.29.6.9 2008/02/04 09:24:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.29.6.8 2008/01/21 09:46:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.29.6.9 2008/02/04 09:24:13 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -862,6 +862,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	struct proc *p = l->l_proc;
 	ksiginfoq_t kq;
 
+	KASSERT(l != curlwp);
+
 	/*
 	 * If this was not the last LWP in the process, then adjust
 	 * counters and unlock.
@@ -916,7 +918,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 
 	/*
 	 * Free the LWP's turnstile and the LWP structure itself unless the
-	 * caller wants to recycle them.  Also, free the scheduler specific data.
+	 * caller wants to recycle them.  Also, free the scheduler specific
+	 * data.
 	 *
 	 * We can't return turnstile0 to the pool (it didn't come from it),
 	 * so if it comes up just drop it quietly and move on.
@@ -934,6 +937,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 #ifndef __NO_CPU_LWP_FREE
 	cpu_lwp_free2(l);
 #endif
+	KASSERT((l->l_flag & LW_INMEM) != 0);
 	uvm_lwp_exit(l);
 	KASSERT(SLIST_EMPTY(&l->l_pi_lenders));
 	KASSERT(l->l_inheritedprio == -1);

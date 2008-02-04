@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.61.2.7 2008/01/21 09:46:01 yamt Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.61.2.8 2008/02/04 09:24:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61.2.7 2008/01/21 09:46:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.61.2.8 2008/02/04 09:24:08 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,8 +364,8 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 	}
 
 	if (acct_dkwatcher == NULL) {
-		error = kthread_create(PRI_NONE, 0, NULL, acctwatch, NULL,
-		    &acct_dkwatcher, "acctwatch");
+		error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
+		    acctwatch, NULL, &acct_dkwatcher, "acctwatch");
 		if (error != 0)
 			acct_stop();
 	}
@@ -465,7 +465,6 @@ acct_process(struct lwp *l)
 	/*
 	 * Now, just write the accounting information to the file.
 	 */
-	VOP_LEASE(acct_vp, l->l_cred, LEASE_WRITE);
 	error = vn_rdwr(UIO_WRITE, acct_vp, (void *)&acct,
 	    sizeof(acct), (off_t)0, UIO_SYSSPACE, IO_APPEND|IO_UNIT,
 	    acct_cred, NULL, NULL);

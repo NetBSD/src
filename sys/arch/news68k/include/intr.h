@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9.16.5 2007/12/07 17:25:42 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.9.16.6 2008/02/04 09:22:17 yamt Exp $	*/
 
 /*
  *
@@ -52,6 +52,8 @@
 #define	IPL_SCHED	6
 #define	IPL_HIGH	6
 #define	NIPL		7
+
+extern int idepth;
 
 typedef int ipl_t;
 typedef struct {

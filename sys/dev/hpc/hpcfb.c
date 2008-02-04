@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcfb.c,v 1.32.2.6 2008/01/21 09:42:48 yamt Exp $	*/
+/*	$NetBSD: hpcfb.c,v 1.32.2.7 2008/02/04 09:23:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.32.2.6 2008/01/21 09:42:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcfb.c,v 1.32.2.7 2008/02/04 09:23:21 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hpcfb.h"
@@ -163,7 +163,6 @@ struct hpcfb_softc {
 	int sc_polling;
 	int sc_mapping;
 	struct proc *sc_thread;
-	struct lock sc_lock;
 	void *sc_wantedscreen;
 	void (*sc_switchcb)(void *, int, int);
 	void *sc_switchcbarg;

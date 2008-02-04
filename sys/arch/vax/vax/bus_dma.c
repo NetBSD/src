@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.23.2.2 2007/09/03 14:30:51 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.23.2.3 2008/02/04 09:22:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23.2.2 2007/09/03 14:30:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.23.2.3 2008/02/04 09:22:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,8 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	int flags;
 {
 	vaddr_t lastaddr = 0;
-	int seg, error, first;
+	int seg, error;
+	bool first;
 	struct mbuf *m;
 
 #ifdef DEBUG_DMA
@@ -237,15 +238,44 @@ _bus_dmamap_load_mbuf(t, map, m0, flags)
 	if (m0->m_pkthdr.len > map->_dm_size)
 		return (EINVAL);
 
-	first = 1;
+	first = true;
 	seg = 0;
 	error = 0;
-	for (m = m0; m != NULL && error == 0; m = m->m_next) {
+	for (m = m0; m != NULL && error == 0; m = m->m_next, first = false) {
 		if (m->m_len == 0)
 			continue;
+#if 0
+		switch (m->m_flags & (M_EXT|M_CLUSTER)) {
+#if 0
+		case M_EXT|M_CLUSTER:
+			KASSERT(m->m_ext.ext_paddr != M_PADDR_INVALID);
+			lastaddr = m->m_ext.ext_paddr
+			    + (m->m_data - m->m_ext.ext_buf);
+#endif
+#if 1
+    have_addr:
+#endif
+			if (!first && ++seg >= map->_dm_segcnt) {
+				error = EFBIG;
+				continue;
+			}
+			map->dm_segs[seg].ds_addr = lastaddr;
+			map->dm_segs[seg].ds_len = m->m_len;
+			lastaddr += m->m_len;
+			continue;
+#if 1
+		case 0:
+			KASSERT(m->m_paddr != M_PADDR_INVALID);
+			lastaddr = m->m_paddr + M_BUFOFFSET(m)
+			    + (m->m_data - M_BUFADDR(m));
+			goto have_addr;
+#endif
+		default:
+			break;
+		}
+#endif
 		error = _bus_dmamap_load_buffer(t, map, m->m_data, m->m_len,
 		    vmspace_kernel(), flags, &lastaddr, &seg, first);
-		first = 0;
 	}
 	if (error == 0) {
 		map->dm_mapsize = m0->m_pkthdr.len;
@@ -268,7 +298,8 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	int flags;
 {
 	vaddr_t lastaddr = 0;
-	int seg, i, error, first;
+	int seg, i, error;
+	bool first;
 	bus_size_t minlen, resid;
 	struct iovec *iov;
 	void *addr;
@@ -283,7 +314,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
 
-	first = 1;
+	first = true;
 	seg = 0;
 	error = 0;
 	for (i = 0; i < uio->uio_iovcnt && resid != 0 && error == 0; i++) {
@@ -296,7 +327,7 @@ _bus_dmamap_load_uio(t, map, uio, flags)
 
 		error = _bus_dmamap_load_buffer(t, map, addr, minlen,
 		    uio->uio_vmspace, flags, &lastaddr, &seg, first);
-		first = 0;
+		first = false;
 
 		resid -= minlen;
 	}
@@ -573,7 +604,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 	int flags;
 	vaddr_t *lastaddrp;
 	int *segp;
-	int first;
+	bool first;
 {
 	bus_size_t sgsize;
 	bus_addr_t curaddr, lastaddr, baddr, bmask;
@@ -629,7 +660,7 @@ _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags, lastaddrp, segp, first)
 		if (first) {
 			map->dm_segs[seg].ds_addr = curaddr;
 			map->dm_segs[seg].ds_len = sgsize;
-			first = 0;
+			first = false;
 		} else {
 			if (curaddr == lastaddr &&
 			    (map->dm_segs[seg].ds_len + sgsize) <=

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.22.6.4 2008/01/21 09:38:21 yamt Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.22.6.5 2008/02/04 09:22:21 yamt Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.22.6.4 2008/01/21 09:38:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.22.6.5 2008/02/04 09:22:21 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1012,7 +1012,6 @@ static int
 emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct emac_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();

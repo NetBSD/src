@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.148.2.8 2008/01/21 09:46:03 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.148.2.9 2008/02/04 09:24:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148.2.8 2008/01/21 09:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.148.2.9 2008/02/04 09:24:11 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -307,9 +307,6 @@ exit1(struct lwp *l, int rv)
 	p->p_xstat = rv;
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
-
-	/* Collect child u-areas. */
-	uvm_uarea_drain(false);
 
 	/*
 	 * Free the VM resources we're still holding on to.
@@ -1001,11 +998,6 @@ proc_free(struct proc *p, struct rusage *ru)
 	rw_destroy(&p->p_reflock);
 
 	proc_free_mem(p);
-
-	/*
-	 * Collect child u-areas.
-	 */
-	uvm_uarea_drain(false);
 }
 
 /*

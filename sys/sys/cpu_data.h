@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.3.12.7 2008/01/21 09:47:47 yamt Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.3.12.8 2008/02/04 09:24:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -88,9 +88,6 @@ struct cpu_data {
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	u_int		cpu_softints;		/* pending (slow) softints */
-	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
-	u_int		cpu_uarea_cnt;		/* count of free uareas */
-	vaddr_t		cpu_uarea_list;		/* free uareas */
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 };
 

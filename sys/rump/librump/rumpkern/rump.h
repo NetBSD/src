@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.15.2.5 2008/01/21 09:47:44 yamt Exp $	*/
+/*	$NetBSD: rump.h,v 1.15.2.6 2008/02/04 09:24:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -65,9 +65,6 @@ void			rump_freecn(struct componentname *, int);
 #define RUMPCN_ISLOOKUP 0x01
 #define RUMPCN_FREECRED 0x02
 
-void	rump_putnode(struct vnode *);
-int	rump_recyclenode(struct vnode *);
-
 void 	rump_getvninfo(struct vnode *, enum vtype *, off_t * /*XXX*/, dev_t *);
 
 int	rump_fakeblk_register(const char *);
@@ -86,6 +83,8 @@ void		rump_vattr_free(struct vattr *);
 void		rump_vp_incref(struct vnode *);
 int		rump_vp_getref(struct vnode *);
 void		rump_vp_decref(struct vnode *);
+void		rump_vp_recycle_nokidding(struct vnode *);
+void		rump_vp_rele(struct vnode *);
 
 enum rump_uiorw { RUMPUIO_READ, RUMPUIO_WRITE };
 struct uio	*rump_uio_setup(void *, size_t, off_t, enum rump_uiorw);
@@ -102,7 +101,7 @@ void	rump_vp_interlock(struct vnode *);
 kauth_cred_t	rump_cred_create(uid_t, gid_t, size_t, gid_t *);
 void		rump_cred_destroy(kauth_cred_t);
 
-#define RUMPCRED_SUSER	NULL
+#define RUMPCRED_SUSER	((void *)-1)
 #define WizardMode	RUMPCRED_SUSER /* COMPAT_NETHACK */
 
 int	rump_vfs_unmount(struct mount *, int);

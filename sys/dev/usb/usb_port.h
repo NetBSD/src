@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.66.4.4 2007/12/07 17:31:40 yamt Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.66.4.5 2008/02/04 09:23:40 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -126,8 +126,6 @@ typedef struct callout usb_callout_t;
 #define usb_callout_destroy(h)	callout_destroy((&h))
 #define	usb_callout(h, t, f, d)	callout_reset(&(h), (t), (f), (d))
 #define	usb_uncallout(h, f, d)	callout_stop(&(h))
-
-#define usb_lockmgr lockmgr
 
 #define usb_kthread_create1		kthread_create
 #define usb_kthread_create(f, a)	((f)(a))
@@ -280,8 +278,6 @@ typedef struct proc *usb_proc_ptr;
 
 #define usb_kthread_create1	kthread_create
 #define usb_kthread_create	kthread_create_deferred
-
-#define usb_lockmgr(lk, mode, ptr) lockmgr(lk, mode, ptr, curproc)
 
 #define	config_pending_incr()
 #define	config_pending_decr()

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.80.12.5 2008/01/21 09:36:55 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.80.12.6 2008/02/04 09:22:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.80.12.5 2008/01/21 09:36:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.80.12.6 2008/02/04 09:22:04 yamt Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -125,7 +125,6 @@ cpu_configure(void)
 #endif
 
 #if NIOAPIC > 0
-	lapic_set_lvt();
 	ioapic_enable();
 #endif
 	/* resync cr0 after FPU configuration */

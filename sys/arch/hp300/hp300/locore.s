@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.135.2.3 2008/01/21 09:36:29 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.135.2.4 2008/02/04 09:21:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1071,6 +1071,7 @@ ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
 
 ENTRY_NOPROFILE(lev6intr)	/* level 6: clock */
 	INTERRUPT_SAVEREG
+	addql	#1,_C_LABEL(idepth)	| entering interrupt
 	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| read clock status
 Lclkagain:
@@ -1132,6 +1133,7 @@ Lrecheck:
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 	movb	%a0@(CLKSR),%d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
+	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 

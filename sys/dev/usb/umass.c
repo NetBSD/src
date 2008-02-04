@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.119.2.3 2008/01/21 09:44:47 yamt Exp $	*/
+/*	$NetBSD: umass.c,v 1.119.2.4 2008/02/04 09:23:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.119.2.3 2008/01/21 09:44:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.119.2.4 2008/02/04 09:23:40 yamt Exp $");
 
 #include "atapibus.h"
 #include "scsibus.h"
@@ -262,7 +262,7 @@ USB_MATCH(umass)
 	const struct umass_quirk *quirk;
 
 	quirk = umass_lookup(uaa->vendor, uaa->product);
-	if (quirk != NULL)
+	if (quirk != NULL && quirk->uq_match != UMASS_QUIRK_USE_DEFAULTMATCH)
 		return (quirk->uq_match);
 
 	if (uaa->class != UICLASS_MASS)

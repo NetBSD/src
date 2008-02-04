@@ -1,4 +1,4 @@
-# $NetBSD: std.xen,v 1.2.8.2 2007/12/07 17:24:03 yamt Exp $
+# $NetBSD: std.xen,v 1.2.8.3 2008/02/04 09:21:42 yamt Exp $
 # NetBSD: std.i386,v 1.24 2003/02/26 21:33:36 fvdl Exp 
 #
 # standard, required NetBSD/i386 'options'
@@ -9,6 +9,7 @@ include		"conf/std"	# MI standard options
 options 	XEN	#Xen support
 options 	XEN3	#Xen 3.x support
 
+options 	CPU_IN_CKSUM
 options 	EXEC_ELF64	# exec ELF binaries
 options 	EXEC_SCRIPT	# exec #! scripts
 options 	MTRR

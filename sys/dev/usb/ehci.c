@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.104.2.7 2008/01/21 09:44:41 yamt Exp $ */
+/*	$NetBSD: ehci.c,v 1.104.2.8 2008/02/04 09:23:36 yamt Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.104.2.7 2008/01/21 09:44:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.104.2.8 2008/02/04 09:23:36 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -87,6 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.104.2.7 2008/01/21 09:44:41 yamt Exp $");
 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
+#include <dev/usb/usbroothub_subr.h>
 
 #ifdef EHCI_DEBUG
 #define DPRINTF(x)	do { if (ehcidebug) printf x; } while(0)
@@ -186,7 +187,6 @@ Static void		ehci_device_isoc_done(usbd_xfer_handle);
 Static void		ehci_device_clear_toggle(usbd_pipe_handle pipe);
 Static void		ehci_noop(usbd_pipe_handle pipe);
 
-Static int		ehci_str(usb_string_descriptor_t *, int, const char *);
 Static void		ehci_pcd(ehci_softc_t *, usbd_xfer_handle);
 Static void		ehci_disown(ehci_softc_t *, int, int);
 
@@ -930,6 +930,8 @@ ehci_detach(struct ehci_softc *sc, int flags)
 	/* XXX free other data structures XXX */
 	mutex_destroy(&sc->sc_doorbell_lock);
 
+	EOWRITE4(sc, EHCI_CONFIGFLAG, 0);
+
 	return (rv);
 }
 
@@ -975,7 +977,7 @@ ehci_suspend(device_t dv)
 	sc->sc_bus.use_polling++;
 
 	for (i = 1; i <= sc->sc_noport; i++) {
-		cmd = EOREAD4(sc, EHCI_PORTSC(i));
+		cmd = EOREAD4(sc, EHCI_PORTSC(i)) & ~EHCI_PS_CLEAR;
 		if ((cmd & EHCI_PS_PO) == 0 && (cmd & EHCI_PS_PE) == EHCI_PS_PE)
 			EOWRITE4(sc, EHCI_PORTSC(i), cmd | EHCI_PS_SUSP);
 	}
@@ -1018,25 +1020,22 @@ bool
 ehci_resume(device_t dv)
 {
 	ehci_softc_t *sc = (ehci_softc_t *)dv;
-	int i, s;
 	uint32_t cmd, hcr;
-
-	s = splhardusb();
-
-	sc->sc_bus.use_polling++;
+	int i;
 
 	/* restore things in case the bios sucks */
 	EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);
 	EOWRITE4(sc, EHCI_PERIODICLISTBASE, DMAADDR(&sc->sc_fldma, 0));
 	EOWRITE4(sc, EHCI_ASYNCLISTADDR,
 	    sc->sc_async_head->physaddr | EHCI_LINK_QH);
-	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
+
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs & ~EHCI_INTR_PCIE);
 
 	EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
 
 	hcr = 0;
 	for (i = 1; i <= sc->sc_noport; i++) {
-		cmd = EOREAD4(sc, EHCI_PORTSC(i));
+		cmd = EOREAD4(sc, EHCI_PORTSC(i)) & ~EHCI_PS_CLEAR;
 		if ((cmd & EHCI_PS_PO) == 0 &&
 		    (cmd & EHCI_PS_SUSP) == EHCI_PS_SUSP) {
 			EOWRITE4(sc, EHCI_PORTSC(i), cmd | EHCI_PS_FPR);
@@ -1048,7 +1047,7 @@ ehci_resume(device_t dv)
 		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
 
 		for (i = 1; i <= sc->sc_noport; i++) {
-			cmd = EOREAD4(sc, EHCI_PORTSC(i));
+			cmd = EOREAD4(sc, EHCI_PORTSC(i)) & ~EHCI_PS_CLEAR;
 			if ((cmd & EHCI_PS_PO) == 0 &&
 			    (cmd & EHCI_PS_SUSP) == EHCI_PS_SUSP)
 				EOWRITE4(sc, EHCI_PORTSC(i),
@@ -1057,6 +1056,7 @@ ehci_resume(device_t dv)
 	}
 
 	EOWRITE4(sc, EHCI_USBCMD, sc->sc_cmd);
+	EOWRITE4(sc, EHCI_USBINTR, sc->sc_eintrs);
 
 	for (i = 0; i < 100; i++) {
 		hcr = EOREAD4(sc, EHCI_USBSTS) & EHCI_STS_HCH;
@@ -1067,12 +1067,6 @@ ehci_resume(device_t dv)
 	}
 	if (hcr == EHCI_STS_HCH)
 		printf("%s: config timeout\n", USBDEVNAME(sc->sc_bus.bdev));
-
-	usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
-
-	sc->sc_bus.use_polling--;
-
-	splx(s);
 
 	return true;
 }
@@ -1635,23 +1629,6 @@ Static const usb_hub_descriptor_t ehci_hubd = {
 	{""},
 };
 
-Static int
-ehci_str(usb_string_descriptor_t *p, int l, const char *s)
-{
-	int i;
-
-	if (l == 0)
-		return (0);
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1)
-		return (1);
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return (2*i+2);
-}
-
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
@@ -1770,24 +1747,21 @@ ehci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ehci_endpd, l);
 			break;
 		case UDESC_STRING:
-			*(u_int8_t *)buf = 0;
-			totlen = 1;
+#define sd ((usb_string_descriptor_t *)buf)
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				if (len > 0)
-					*(u_int8_t *)buf = 4;
-				if (len >=  4) {
-		USETW(((usb_string_descriptor_t *)buf)->bString[0], 0x0409);
-					totlen = 4;
-				}
+				totlen = usb_makelangtbl(sd, len);
 				break;
 			case 1: /* Vendor */
-				totlen = ehci_str(buf, len, sc->sc_vendor);
+				totlen = usb_makestrdesc(sd, len,
+							 sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = ehci_str(buf, len, "EHCI root hub");
+				totlen = usb_makestrdesc(sd, len,
+							 "EHCI root hub");
 				break;
 			}
+#undef sd
 			break;
 		default:
 			err = USBD_IOERROR;

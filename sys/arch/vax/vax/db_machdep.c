@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.39.2.4 2007/10/27 11:28:50 yamt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.39.2.5 2008/02/04 09:22:43 yamt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39.2.4 2007/10/27 11:28:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39.2.5 2008/02/04 09:22:43 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -227,7 +227,7 @@ kdb_trap(struct trapframe *frame)
 #endif
 }
 
-extern char *traptypes[];
+extern const char * const traptypes[];
 extern int no_traps;
 
 /*
@@ -318,7 +318,8 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
 	db_expr_t	diff;
 	db_sym_t	sym;
 	const char	*symname;
-	extern int	sret, etext;
+	extern int	sret;
+	extern unsigned int etext;
 
 	(*pr)("Stack traceback : \n");
 	if (IN_USERLAND(fp)) {
@@ -419,7 +420,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 	const char	*modif;		/* pointer to flag modifier 't' */
 	void		(*pr) __P((const char *, ...)); /* Print function */
 {
-	extern vaddr_t	proc0paddr;
+	extern struct user *proc0paddr;
 	struct lwp	*l = curlwp;
 	struct proc	*p = l->l_proc;
 	struct user	*uarea;
@@ -493,7 +494,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		}
 	}
 	if (p == NULL) {
-		uarea = (struct user *)proc0paddr;
+		uarea = proc0paddr;
 		curpid = 0;
 	} else {
 		uarea = l->l_addr;

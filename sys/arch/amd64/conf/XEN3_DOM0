@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.4.2.3 2008/01/21 09:35:22 yamt Exp $
+# $NetBSD: XEN3_DOM0,v 1.4.2.4 2008/02/04 09:21:41 yamt Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -666,7 +666,7 @@ btsco* at bthub?
 hifn*	at pci? dev ? function ?	# Hifn 7755/7811/795x
 ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
-include	"arch/i386/conf/GENERIC.local"
+include	"arch/amd64/conf/GENERIC.local"
 
 # Pseudo-Devices
 

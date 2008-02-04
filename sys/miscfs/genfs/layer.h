@@ -1,4 +1,4 @@
-/*	$NetBSD: layer.h,v 1.6.12.2 2007/10/27 11:35:54 yamt Exp $	*/
+/*	$NetBSD: layer.h,v 1.6.12.3 2008/02/04 09:24:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -125,21 +125,21 @@ struct layer_node {
  */
 #define	LAYERFS_UPPERLOCK(v, f, r)	do { \
 	if ((v)->v_vnlock == NULL) \
-		r = lockmgr(&(v)->v_lock, (f), &(v)->v_interlock); \
+		r = vlockmgr(&(v)->v_lock, (f)); \
 	else \
 		r = 0; \
 	} while (0)
 
 #define	LAYERFS_UPPERUNLOCK(v, f, r)	do { \
 	if ((v)->v_vnlock == NULL) \
-	    r = lockmgr(&(v)->v_lock, (f) | LK_RELEASE, &(v)->v_interlock); \
+	    r = vlockmgr(&(v)->v_lock, (f) | LK_RELEASE); \
 	else \
 		r = 0; \
 	} while (0)
 
 #define	LAYERFS_UPPERISLOCKED(v, r)	do { \
 	if ((v)->v_vnlock == NULL) \
-		r = lockstatus(&(v)->v_lock); \
+		r = vlockstatus(&(v)->v_lock); \
 	else \
 		r = -1; \
 	} while (0)

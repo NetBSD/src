@@ -1,4 +1,4 @@
-/*	$NetBSD: ppmtochrpicon.c,v 1.3 2003/07/15 02:54:50 lukem Exp $	*/
+/*	$NetBSD: ppmtochrpicon.c,v 1.3.16.1 2008/02/04 09:22:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ppmtochrpicon.c,v 1.3 2003/07/15 02:54:50 lukem Exp $");
+__RCSID("$NetBSD: ppmtochrpicon.c,v 1.3.16.1 2008/02/04 09:22:25 yamt Exp $");
 
 #include <stdlib.h>
 
@@ -118,7 +118,7 @@ CHRPI_writeicon(FILE *fp, pixel **pixels, CHRPI_spec img)
 void
 CHRPI_putheader(FILE *fp, CHRPI_spec img)
 {
-    fprintf(fp, "<ICON SIZE=%d,%d COLOR-SPACE=%d,%d,%d>\n<BITMAP>\n",
+    fprintf(fp, "<icon size=%d,%d color-space=%d,%d,%d>\n<bitmap>\n",
             img->height, img->width,
             img->rbits, img->gbits, img->bbits);
 }
@@ -126,7 +126,7 @@ CHRPI_putheader(FILE *fp, CHRPI_spec img)
 void
 CHRPI_putfooter(FILE *fp, CHRPI_spec img)
 {
-    fprintf(fp, "</BITMAP>\n</ICON>\n");
+    fprintf(fp, "</bitmap>\n</icon>\n");
 }
     
 
@@ -154,9 +154,11 @@ CHRPI_putbitmap(FILE *fp, pixel** pixels, CHRPI_spec img)
             /* write the byte in hex */
             fputc(hex_digits[(pixbyte>>4) & 0x0f], fp);
             fputc(hex_digits[(pixbyte & 0x0f)], fp);
+	    fputc(' ', fp);
             pP++;
+	    if ((col+1)%16 == 0)
+        	fputc('\n', fp);
         }
 
-        fputc('\n', fp);
     }
 }

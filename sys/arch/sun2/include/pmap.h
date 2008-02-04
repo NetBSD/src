@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.15 2005/01/22 15:36:09 chs Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15.8.1 2008/02/04 09:22:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 
 #ifndef	_MACHINE_PMAP_H
 #define	_MACHINE_PMAP_H
+
+#include <sys/simplelock.h>
 
 /*
  * NB:  The details of struct pmap are exposed ONLY when

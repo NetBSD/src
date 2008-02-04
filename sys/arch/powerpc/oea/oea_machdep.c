@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.22.2.7 2008/01/21 09:38:23 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.22.2.8 2008/02/04 09:22:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.7 2008/01/21 09:38:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.8 2008/02/04 09:22:23 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -413,7 +413,7 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 }
 
 
-#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 void
 oea_iobat_add(paddr_t pa, register_t len)
 {
@@ -637,7 +637,7 @@ oea_batinit(paddr_t pa, ...)
 		}
 	}
 }
-#endif /* (PPC_OEA) && !(PPC_OEA64) && !(PPC_OEA64_BRIDGE) */
+#endif /* PPC_OEA || PPC_OEA64_BRIDGE */
 
 void
 oea_install_extint(void (*handler)(void))

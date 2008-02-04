@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205.2.6 2008/01/21 09:39:33 yamt Exp $	*/
+/*	$NetBSD: locore.s,v 1.205.2.7 2008/02/04 09:22:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3898,11 +3898,11 @@ ENTRY(sparc64_ipi_flush_all)
 	.text
 	.align 32
 1:	rd	%pc, %l0
-	ldx	[%l0 + (4f-1b)], %l1
+	LDULNG	[%l0 + (4f-1b)], %l1
 	add	%l0, (6f-1b), %l2
 	clr	%l3
 2:	cmp	%l3, %l1
-	be	%xcc, 3f
+	be	CCCR, 3f
 	 nop
 	ldx	[%l2 + TTE_VPN], %l4
 	ldx	[%l2 + TTE_DATA], %l5
@@ -3918,8 +3918,8 @@ ENTRY(sparc64_ipi_flush_all)
 	add	%l3, 1, %l3
 	ba	%xcc, 2b
 	 nop
-3:	ldx	[%l0 + (5f-1b)], %l1
-	ldx	[%l0 + (7f-1b)], %g2	! Load cpu_info address.
+3:	LDULNG	[%l0 + (5f-1b)], %l1
+	LDULNG	[%l0 + (7f-1b)], %g2	! Load cpu_info address.
 	jmpl	%l1, %g0
 	 nop
 
@@ -3927,6 +3927,7 @@ ENTRY(sparc64_ipi_flush_all)
 4:	ULONG	0x0
 5:	ULONG	0x0
 7:	ULONG	0x0
+	_ALIGN
 6:
 
 #define DATA(name) \

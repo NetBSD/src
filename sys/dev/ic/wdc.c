@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.224.2.6 2008/01/21 09:43:11 yamt Exp $ */
+/*	$NetBSD: wdc.c,v 1.224.2.7 2008/02/04 09:23:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.224.2.6 2008/01/21 09:43:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.224.2.7 2008/02/04 09:23:25 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -838,12 +838,8 @@ wdcdetach(device_t self, int flags)
 		if ((error = config_detach(chp->atabus, flags)) != 0)
 			return error;
 	}
-	if (adapt->adapt_refcnt != 0) {
-#ifdef DIAGNOSTIC
-		printf("wdcdetach: refcnt should be 0 here??\n");
-#endif
-		(void) (*adapt->adapt_enable)(&atac->atac_dev, 0);
-	}
+	if (adapt->adapt_refcnt != 0)
+		return EBUSY;
 	return 0;
 }
 

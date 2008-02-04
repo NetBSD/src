@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.29.2.2 2008/01/21 09:39:42 yamt Exp $	*/
+/*	$NetBSD: clock.c,v 1.29.2.3 2008/02/04 09:22:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29.2.2 2008/01/21 09:39:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.29.2.3 2008/02/04 09:22:38 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,6 +418,8 @@ clock_intr(struct clockframe cf)
 {
 	extern char _Idle[];	/* locore.s */
 
+	idepth++;
+
 #ifdef	SUN3_470
 	if (intersil_va) {
 		/* Read the clock interrupt register. */
@@ -445,4 +447,6 @@ clock_intr(struct clockframe cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
+
+	idepth--;
 }

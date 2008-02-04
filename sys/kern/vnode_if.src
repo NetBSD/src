@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.44.4.5 2008/01/21 09:46:35 yamt Exp $
+#	$NetBSD: vnode_if.src,v 1.44.4.6 2008/02/04 09:24:26 yamt Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -451,15 +451,6 @@ vop_advlock {
 	IN int op;
 	IN struct flock *fl;
 	IN int flags;
-};
-
-# 
-#% lease      vp      = = =
-# 
-vop_lease {
-	IN struct vnode *vp;
-	IN kauth_cred_t cred;
-	IN int flag;
 };
 
 #

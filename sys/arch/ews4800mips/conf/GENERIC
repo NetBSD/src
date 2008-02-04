@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.9.6.6 2008/01/21 09:36:21 yamt Exp $
+# $NetBSD: GENERIC,v 1.9.6.7 2008/02/04 09:21:51 yamt Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,12 +25,14 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.9.6.6 $"
+#ident		"GENERIC-$Revision: 1.9.6.7 $"
 
 maxusers	16
 
 #options 	MIPS1			# R2000/R3000
 options 	MIPS3			# R4000/R4400
+
+makeoptions	CPUFLAGS="-march=r4400 -mabi=32" # optimize for R4400
 
 # MIPS3 on-chip timer interrupt is not used on EWS4800,
 # but the external timer interrupt line is connected to CPU INT5.

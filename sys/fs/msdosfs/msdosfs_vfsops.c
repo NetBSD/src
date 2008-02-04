@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.24.2.7 2008/01/21 09:45:47 yamt Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.24.2.8 2008/02/04 09:23:46 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24.2.7 2008/01/21 09:45:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24.2.8 2008/02/04 09:23:46 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.24.2.7 2008/01/21 09:45:47 yamt
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h> /* XXX */	/* defines v_rdev */
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -132,6 +133,8 @@ struct vfsops msdosfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	msdosfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -209,15 +212,14 @@ msdosfs_mountroot()
 	args.dirmask = 0777;
 
 	if ((error = msdosfs_mountfs(rootvp, mp, l, &args)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		return (error);
 	}
 
 	if ((error = update_mp(mp, &args)) != 0) {
 		(void)msdosfs_unmount(mp, 0);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		vrele(rootvp);
 		return (error);
@@ -227,7 +229,7 @@ msdosfs_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	mutex_exit(&mountlist_lock);
 	(void)msdosfs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return (0);
 }
 
@@ -370,22 +372,6 @@ msdosfs_mount(mp, path, data, data_len)
 	if ((mp->mnt_flag & MNT_UPDATE) == 0) {
 		int xflags;
 
-		/*
-		 * Disallow multiple mounts of the same device.
-		 * Disallow mounting of a device that is currently in use
-		 * (except for root, which might share swap device for
-		 * miniroot).
-		 */
-		error = vfs_mountedon(devvp);
-		if (error) {
-			DPRINTF(("vfs_mountedon %d\n", error));
-			goto fail;
-		}
-		if (vcount(devvp) > 1 && devvp != rootvp) {
-			DPRINTF(("vcount %d\n", error));
-			error = EBUSY;
-			goto fail;
-		}
 		if (mp->mnt_flag & MNT_RDONLY)
 			xflags = FREAD;
 		else

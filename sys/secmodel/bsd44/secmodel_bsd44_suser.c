@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.23.2.5 2008/01/21 09:47:45 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.23.2.6 2008/02/04 09:24:56 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.5 2008/01/21 09:47:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.6 2008/02/04 09:24:56 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,6 +156,20 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
+	case KAUTH_SYSTEM_CPU:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_CPU_SETSTATE:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+
 	case KAUTH_SYSTEM_MOUNT:
 		switch (req) {
 		case KAUTH_REQ_SYSTEM_MOUNT_GET:
@@ -234,6 +248,33 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		break;
+
+	case KAUTH_SYSTEM_PSET: {
+		psetid_t id;
+
+		id = (psetid_t)(unsigned long)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_PSET_ASSIGN:
+		case KAUTH_REQ_SYSTEM_PSET_BIND:
+			if (isroot || id == PS_QUERY)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_SYSTEM_PSET_CREATE:
+		case KAUTH_REQ_SYSTEM_PSET_DESTROY:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			break;
+		}
+
+		break;
+		}
 
 	case KAUTH_SYSTEM_TIME:
 		switch (req) {
@@ -394,7 +435,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	p = arg0;
 
 	switch (action) {
-	case KAUTH_PROCESS_CANSIGNAL: {
+	case KAUTH_PROCESS_SIGNAL: {
 		int signum;
 
 		signum = (int)(unsigned long)arg1;
@@ -405,20 +446,54 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_CANSEE:
-		if (!secmodel_bsd44_curtain)
-			result = KAUTH_RESULT_ALLOW;
-		else if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
-			result = KAUTH_RESULT_ALLOW;
-		break;
+	case KAUTH_PROCESS_CANSEE: {
+		unsigned long req;
 
-	case KAUTH_PROCESS_CANKTRACE:
-		if (isroot) {
-			result = KAUTH_RESULT_ALLOW;
+		req = (unsigned long)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
+		case KAUTH_REQ_PROCESS_CANSEE_ENTRY:
+		case KAUTH_REQ_PROCESS_CANSEE_OPENFILES:
+			if (!secmodel_bsd44_curtain)
+				result = KAUTH_RESULT_ALLOW;
+			else if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
+				result = KAUTH_RESULT_ALLOW;
+			break;
+
+		case KAUTH_REQ_PROCESS_CANSEE_ENV:
+			if (!isroot &&
+			    (kauth_cred_getuid(cred) !=
+			     kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(cred) !=
+			     kauth_cred_getsvuid(p->p_cred)))
+				result = KAUTH_RESULT_DENY;
+			else
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
 			break;
 		}
 
-		if ((p->p_traceflag & KTRFAC_ROOT) || (p->p_flag & PK_SUGID)) {
+		break;
+		}
+
+	case KAUTH_PROCESS_KTRACE: {
+		enum kauth_process_req req;
+
+		req = (enum kauth_process_req)(unsigned long)arg1;
+
+		if (isroot) {
+			result = KAUTH_RESULT_ALLOW;
+			break;
+		} else if (req == KAUTH_REQ_PROCESS_KTRACE_PERSISTENT) {
+			break;
+		}
+
+		if ((p->p_traceflag & KTRFAC_PERSISTENT) ||
+		    (p->p_flag & PK_SUGID)) {
 			result = KAUTH_RESULT_DENY;
 			break;
 		}
@@ -433,8 +508,9 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 
 		result = KAUTH_RESULT_DENY;
 		break;
+		}
 
-	case KAUTH_PROCESS_CANPROCFS: {
+	case KAUTH_PROCESS_PROCFS: {
 		enum kauth_process_req req = (enum kauth_process_req)arg2;
 		struct pfsnode *pfs = arg1;
 
@@ -443,7 +519,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 			break;
 		}
 
-		if (req == KAUTH_REQ_PROCESS_CANPROCFS_CTL) {
+		if (req == KAUTH_REQ_PROCESS_PROCFS_CTL) {
 			result = KAUTH_RESULT_DENY;
 			break;
 		}
@@ -467,7 +543,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_CANPTRACE: {
+	case KAUTH_PROCESS_PTRACE: {
 		switch ((u_long)arg1) {
 		case PT_TRACE_ME:
 		case PT_ATTACH:
@@ -555,6 +631,17 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
+	case KAUTH_PROCESS_KEVENT_FILTER:
+		if ((kauth_cred_getuid(p->p_cred) !=
+		     kauth_cred_getuid(cred) ||
+		     ISSET(p->p_flag, PK_SUGID)) &&
+		    !isroot)
+			result = KAUTH_RESULT_DENY;
+		else
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
 	case KAUTH_PROCESS_NICE:
 		if (isroot) {
 			result = KAUTH_RESULT_ALLOW;
@@ -575,26 +662,84 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_PROCESS_RLIMIT: {
-		struct rlimit *new_rlimit;
-		u_long which;
+		unsigned long req;
 
-		if (isroot) {
+		req = (unsigned long)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_PROCESS_RLIMIT_SET: {
+			struct rlimit *new_rlimit;
+			u_long which;
+
+			if (isroot) {
+				result = KAUTH_RESULT_ALLOW;
+				break;
+			}
+
+			if ((p != curlwp->l_proc) &&
+			    (proc_uidmatch(cred, p->p_cred) != 0)) {
+				result = KAUTH_RESULT_DENY;
+				break;
+			}
+
+			new_rlimit = arg2;
+			which = (u_long)arg3;
+
+			if (new_rlimit->rlim_max <=
+			    p->p_rlimit[which].rlim_max)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+			}
+
+		case KAUTH_REQ_PROCESS_RLIMIT_GET:
 			result = KAUTH_RESULT_ALLOW;
+			break;
+
+		default:
 			break;
 		}
 
-		if ((p != curlwp->l_proc) &&
-		    (proc_uidmatch(cred, p->p_cred) != 0)) {
-			result = KAUTH_RESULT_DENY;
+		break;
+	}
+
+	case KAUTH_PROCESS_SCHEDULER: {
+		unsigned long req;
+
+		req = (unsigned long)arg1;
+
+		switch (req) {
+		case KAUTH_REQ_PROCESS_SCHEDULER_GET:
+		case KAUTH_REQ_PROCESS_SCHEDULER_SET:
+		case KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM:
+		case KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM:
+			if (isroot ||
+			    (kauth_cred_getuid(cred) ==
+			     kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_geteuid(cred) ==
+			     kauth_cred_getuid(p->p_cred) ||
+			    kauth_cred_getuid(cred) ==
+			     kauth_cred_geteuid(p->p_cred) ||
+			    kauth_cred_geteuid(cred) ==
+			     kauth_cred_geteuid(p->p_cred)))
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY:
+			result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		case KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
 			break;
 		}
-
-		new_rlimit = arg1;
-		which = (u_long)arg2;
-
-		if (new_rlimit->rlim_max <=
-		    p->p_rlimit[which].rlim_max)
-			result = KAUTH_RESULT_ALLOW;
 
 		break;
 		}
@@ -875,6 +1020,12 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 
 	case KAUTH_DEVICE_TTY_PRIVSET:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_DEVICE_TTY_STI:
 		if (isroot)
 			result = KAUTH_RESULT_ALLOW;
 

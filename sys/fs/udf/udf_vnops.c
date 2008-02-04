@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.6.4.8 2008/01/21 09:45:56 yamt Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.6.4.9 2008/02/04 09:24:04 yamt Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.6.4.8 2008/01/21 09:45:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.6.4.9 2008/02/04 09:24:04 yamt Exp $");
 #endif /* not lint */
 
 
@@ -1216,7 +1216,6 @@ const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_setattr_desc, udf_setattr },	/* setattr */	/* TODO */
 	{ &vop_read_desc, udf_read },		/* read */
 	{ &vop_write_desc, udf_write },		/* write */	/* WRITE */
-	{ &vop_lease_desc, genfs_lease_check },	/* lease */	/* TODO? */
 	{ &vop_fcntl_desc, genfs_fcntl },	/* fcntl */	/* TODO? */
 	{ &vop_ioctl_desc, genfs_enoioctl },	/* ioctl */	/* TODO? */
 	{ &vop_poll_desc, genfs_poll },		/* poll */	/* TODO/OK? */

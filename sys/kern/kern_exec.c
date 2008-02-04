@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.201.2.8 2008/01/21 09:46:03 yamt Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.201.2.9 2008/02/04 09:24:10 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.8 2008/01/21 09:46:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.201.2.9 2008/02/04 09:24:10 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -870,12 +870,11 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		l->l_cred = kauth_cred_copy(l->l_cred);
 #ifdef KTRACE
 		/*
-		 * If process is being ktraced, turn off - unless
-		 * root set it.
+		 * If the persistent trace flag isn't set, turn off.
 		 */
 		if (p->p_tracep) {
 			mutex_enter(&ktrace_lock);
-			if (!(p->p_traceflag & KTRFAC_ROOT))
+			if (!(p->p_traceflag & KTRFAC_PERSISTENT))
 				ktrderef(p);
 			mutex_exit(&ktrace_lock);
 		}

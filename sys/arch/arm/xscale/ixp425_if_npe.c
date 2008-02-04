@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.2.4.4 2008/01/21 09:35:52 yamt Exp $	*/
+/*	$NetBSD: ixp425_if_npe.c,v 1.2.4.5 2008/02/04 09:21:46 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.2.4.4 2008/01/21 09:35:52 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.2.4.5 2008/02/04 09:21:46 yamt Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1262,7 +1262,6 @@ static int
 npeioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct npe_softc *sc = ifp->if_softc;
- 	struct ifreq *ifr = (struct ifreq *)data;	
 	int s, error = 0;
 
 	s = splnet();

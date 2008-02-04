@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.83.2.6 2008/01/21 09:48:10 yamt Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.83.2.7 2008/02/04 09:25:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.83.2.6 2008/01/21 09:48:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.83.2.7 2008/02/04 09:25:04 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -351,10 +351,6 @@ lfs_vcreate(struct mount *mp, ino_t ino, struct vnode *vp)
 	LIST_INIT(&ip->i_lfs_segdhd);
 #ifdef QUOTA
 	ufsquota_init(ip);
-#endif
-#ifdef DEBUG
-	if (ino == LFS_IFILE_INUM)
-		vp->v_vnlock->lk_wmesg = "inlock";
 #endif
 }
 
