@@ -1,9 +1,8 @@
-/* $NetBSD: user.c,v 1.117 2006/11/02 21:42:08 pavel Exp $ */
+/* $NetBSD: user.c,v 1.118 2008/02/04 01:28:20 hubertf Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
  * Copyright (c) 2005 Liam J. Foy.  All rights reserved.
- * Copyright (c) 2005 Hubert Feyrer <hubert@feyrer.de>. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.117 2006/11/02 21:42:08 pavel Exp $");
+__RCSID("$NetBSD: user.c,v 1.118 2008/02/04 01:28:20 hubertf Exp $");
 #endif
 
 #include <sys/types.h>
