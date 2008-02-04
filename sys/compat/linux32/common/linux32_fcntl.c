@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.5 2008/02/02 21:54:01 dsl Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.6 2008/02/04 22:23:43 dsl Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.5 2008/02/02 21:54:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.6 2008/02/04 22:23:43 dsl Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -95,8 +95,19 @@ linux32_sys_open(struct lwp *l, const struct linux32_sys_open_args *uap, registe
 	return linux_sys_open(l, &ua, retval);
 }
 
+/*
+ * The linux support for 64bit file offsets introduced both an fcntl64()
+ * function and LINUX_F_SETLK64 (et al), however the fcntl64() function
+ * can still be passed LINUX_F_GETLK (etc).
+ * In practice this means that the two functions are identical!
+ *
+ * We have to intercept both sets of locking primitives because the
+ * structure layout of the 64bit version differs from that on amd64 due
+ * to extra padding because the alignment constraint for int64_t differs.
+ */
+
 int
-linux32_sys_fcntl64(struct lwp *l, const struct linux32_sys_fcntl64_args *uap, register_t *retval)
+linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, register_t *retval)
 {
 	/* {
 		syscallcarg(int) fd;
@@ -114,29 +125,6 @@ linux32_sys_fcntl64(struct lwp *l, const struct linux32_sys_fcntl64_args *uap, r
 	case LINUX_F_SETLKW64:
 		do_linux_setlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
 		    linux32, flock64, LINUX_F_SETLK64);
-	default:
-		break;
-	}
-
-	NETBSD32TO64_UAP(fd);
-	SCARG(&ua, cmd) = cmd;
-	NETBSD32TOP_UAP(arg, void);
-
-	return linux_sys_fcntl(l, &ua, retval);
-}
-
-int
-linux32_sys_fcntl(struct lwp *l, const struct linux32_sys_fcntl_args *uap, register_t *retval)
-{
-	/* {
-		syscallcarg(int) fd;
-                syscallarg(int) cmd;
-		syscallarg(netbsd32_voidp) arg;
-	} */
-	struct linux_sys_fcntl_args ua;
-	int cmd =  SCARG(uap, cmd);
-
-	switch (cmd) {
 	case LINUX_F_GETLK:
 		do_linux_getlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
 		    linux32, flock);
