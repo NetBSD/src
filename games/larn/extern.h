@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.10 2008/02/03 21:24:58 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.11 2008/02/04 01:07:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -76,9 +76,7 @@ void losehp(int);
 void losemhp(int);
 void raisehp(int);
 void raisemhp(int);
-void raisespells(int);
 void raisemspells(int);
-void losespells(int);
 void losemspells(int);
 int makemonst(int);
 void positionplayer(void);
