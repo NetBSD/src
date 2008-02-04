@@ -1,4 +1,4 @@
-/*	$NetBSD: getent.c,v 1.11 2008/02/02 20:57:20 christos Exp $	*/
+/*	$NetBSD: getent.c,v 1.12 2008/02/04 15:30:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004-2006 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getent.c,v 1.11 2008/02/02 20:57:20 christos Exp $");
+__RCSID("$NetBSD: getent.c,v 1.12 2008/02/04 15:30:45 christos Exp $");
 #endif /* not lint */
 
 #include <sys/socket.h>
@@ -73,6 +73,7 @@ __RCSID("$NetBSD: getent.c,v 1.11 2008/02/02 20:57:20 christos Exp $");
 static int	usage(void) __attribute__((__noreturn__));
 static int	parsenum(const char *, unsigned long *);
 static int	disktab(int, char *[]);
+static int	gettytab(int, char *[]);
 static int	ethers(int, char *[]);
 static int	group(int, char *[]);
 static int	hosts(int, char *[]);
@@ -98,6 +99,7 @@ static struct getentdb {
 } databases[] = {
 	{	"disktab",	disktab,	},
 	{	"ethers",	ethers,		},
+	{	"gettytab",	gettytab,	},
 	{	"group",	group,		},
 	{	"hosts",	hosts,		},
 	{	"networks",	networks,	},
@@ -609,6 +611,16 @@ handlecap(const char *db, int argc, char *argv[])
 		free(b);
 	}
 	return rv;
+}
+
+		/*
+		 * gettytab
+		 */
+
+static int
+gettytab(int argc, char *argv[])
+{
+	return handlecap(_PATH_GETTYTAB, argc, argv);
 }
 
 		/*
