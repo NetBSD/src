@@ -7,3 +7,5 @@ tp: t_atf_compile
 tp: t_atf_cleanup
 tp: t_atf_run
 tp: t_atf_report
+tp: t_atf_exec
+tp: t_atf_killpg

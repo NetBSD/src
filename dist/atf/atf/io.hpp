@@ -41,6 +41,8 @@
 #include <ostream>
 #include <streambuf>
 
+#include <atf/utils.hpp>
+
 namespace atf {
 namespace io {
 
@@ -257,7 +259,7 @@ private:
 //! the on-disk file and the in-memory buffers.
 //!
 class systembuf :
-    public std::streambuf
+    public std::streambuf, utils::noncopyable
 {
 public:
     typedef int handle_type;
@@ -278,9 +280,6 @@ public:
     //!
     explicit systembuf(handle_type h, std::size_t bufsize = 8192);
     ~systembuf(void);
-
-    systembuf(const systembuf&);
-    systembuf& operator=(const systembuf&);
 
 private:
     //!
@@ -456,7 +455,7 @@ public:
 //! until the writer generates some data.
 //!
 class pistream :
-    public std::istream
+    public std::istream, utils::noncopyable
 {
     //!
     //! \brief The file handle managed by this stream.
@@ -467,9 +466,6 @@ class pistream :
     //! \brief The systembuf object used to manage this stream's data.
     //!
     systembuf m_systembuf;
-
-    pistream(const pistream&);
-    pistream& operator=(const pistream&);
 
 public:
     //!
@@ -531,7 +527,7 @@ public:
 //! until the reader consumes some data, leaving some new room.
 //!
 class postream :
-    public std::ostream
+    public std::ostream, utils::noncopyable
 {
     //!
     //! \brief The file handle managed by this stream.
@@ -542,9 +538,6 @@ class postream :
     //! \brief The systembuf object used to manage this stream's data.
     //!
     systembuf m_systembuf;
-
-    postream(const postream&);
-    postream& operator=(const postream&);
 
 public:
     //!

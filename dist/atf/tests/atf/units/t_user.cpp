@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,9 +35,13 @@
 //
 
 extern "C" {
+#include <sys/param.h>
 #include <sys/types.h>
 #include <unistd.h>
 }
+
+#include <iostream>
+#include <set>
 
 #include "atf/exceptions.hpp"
 #include "atf/macros.hpp"
@@ -46,6 +50,56 @@ extern "C" {
 // ------------------------------------------------------------------------
 // Test cases for the free functions.
 // ------------------------------------------------------------------------
+
+ATF_TEST_CASE(euid);
+ATF_TEST_CASE_HEAD(euid)
+{
+    set("descr", "Tests the euid function");
+}
+ATF_TEST_CASE_BODY(euid)
+{
+    using atf::user::euid;
+
+    ATF_CHECK_EQUAL(euid(), ::geteuid());
+}
+
+ATF_TEST_CASE(is_member_of_group);
+ATF_TEST_CASE_HEAD(is_member_of_group)
+{
+    set("descr", "Tests the is_member_of_group function");
+}
+ATF_TEST_CASE_BODY(is_member_of_group)
+{
+    using atf::user::is_member_of_group;
+
+    std::set< gid_t > groups;
+    gid_t maxgid = 0;
+    {
+        gid_t gids[NGROUPS_MAX];
+        int ngids = ::getgroups(NGROUPS_MAX, gids);
+        if (ngids == -1)
+            ATF_FAIL("Call to ::getgroups failed");
+        for (int i = 0; i < ngids; i++) {
+            groups.insert(gids[i]);
+            if (gids[i] > maxgid)
+                maxgid = gids[i];
+        }
+        std::cout << "User belongs to " << ngids << " groups" << std::endl;
+        std::cout << "Last GID is " << maxgid << std::endl;
+    }
+
+    for (gid_t g = 0; g <= maxgid; g++) {
+        if (groups.find(g) == groups.end()) {
+            std::cout << "Checking if user does not belong to group "
+                      << g << std::endl;
+            ATF_CHECK(!is_member_of_group(g));
+        } else {
+            std::cout << "Checking if user belongs to group "
+                      << g << std::endl;
+            ATF_CHECK(is_member_of_group(g));
+        }
+    }
+}
 
 ATF_TEST_CASE(is_root);
 ATF_TEST_CASE_HEAD(is_root)
@@ -86,6 +140,8 @@ ATF_TEST_CASE_BODY(is_unprivileged)
 ATF_INIT_TEST_CASES(tcs)
 {
     // Add the tests for the free functions.
+    ATF_ADD_TEST_CASE(tcs, euid);
+    ATF_ADD_TEST_CASE(tcs, is_member_of_group);
     ATF_ADD_TEST_CASE(tcs, is_root);
     ATF_ADD_TEST_CASE(tcs, is_unprivileged);
 }

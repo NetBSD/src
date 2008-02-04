@@ -566,7 +566,7 @@ public:
 // The "atf_report" class.
 // ------------------------------------------------------------------------
 
-class atf_report : public atf::application {
+class atf_report : public atf::application::app {
     static const char* m_description;
 
     typedef std::pair< std::string, atf::fs::path > fmt_path_pair;
@@ -586,7 +586,7 @@ const char* atf_report::m_description =
     "generates user-friendly reports in multiple different formats.";
 
 atf_report::atf_report(void) :
-    application(m_description, "atf-report(1)")
+    app(m_description, "atf-report(1)", "atf(7)")
 {
 }
 
@@ -617,6 +617,7 @@ atf_report::options_set
 atf_report::specific_options(void)
     const
 {
+    using atf::application::option;
     options_set opts;
     opts.insert(option('o', "fmt:path", "Adds a new output file; multiple "
                                         "ones can be specified, and a - "

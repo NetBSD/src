@@ -1,7 +1,7 @@
 .\"
 .\" Automated Testing Framework (atf)
 .\"
-.\" Copyright (c) 2007 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -33,7 +33,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 .\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 30, 2007
+.Dd January 15, 2008
 .Dt ATF-TEST-CASE 8
 .Os
 .Sh NAME
@@ -49,23 +49,32 @@ warrant its independent testing.
 Given this, test cases are very fine-grained, but they attempt to group
 similar smaller tests which are semantically related.
 .Pp
-A test case is defined by two components regardless of the language it is
-implemented in: a
+A test case is defined by three components regardless of the language it is
+implemented in: a header, a body and a cleanup routine.
+The
 .Em header
-and a
-.Em body .
-The header is, basically, a declarative piece of code that defines several
+is, basically, a declarative piece of code that defines several
 properties to describe what the test case does and how it behaves.
 In other words: it defines the test case's
 .Em meta-data ,
 further described in the
 .Sx Meta-data
 section.
-The body is the test case itself.
+The
+.Em body
+is the test case itself.
 It executes all actions needed to reproduce the test, and checks for
 failures.
 This body is only executed if the abstract conditions specified by the
 header are met.
+The
+.Em cleanup routine
+routine is a piece of code always executed after the body, regardless of
+the exit status of the test case.
+It can be used to undo side-effects of the test case.
+Note that almost all side-effects of a test case are automatically cleaned
+up by the library; this is explained in more detail in the rest of this
+document.
 .Pp
 It is extremely important to keep the separation between a test case's
 header and body well-defined, because the header is
@@ -114,7 +123,7 @@ The following list describes all meta-data properties interpreted
 internally by ATF.
 You are free to define new properties in your test cases and use them as
 you wish.
-.Bl -tag -width requireXconfigXX
+.Bl -tag -width requireXmachineXX
 .It descr
 Type: textual.
 Required.
@@ -128,6 +137,12 @@ Required.
 .Pp
 The test case's identifier.
 Must be unique inside the test program and should be short but descriptive.
+.It require.arch
+Type textual.
+Optional.
+Pp.
+A whitespace separated list of architectures that the test case can be run
+under without causing errors due to an architecture mismatch.
 .It require.config
 Type: textual.
 Optional.
@@ -136,6 +151,12 @@ A whitespace separated list of configuration variables that must be defined
 to execute the test case.
 If any of the required variables is not defined, the test case is
 .Em skipped .
+.It require.machine
+Type textual.
+Optional.
+Pp.
+A whitespace separated list of machine types that the test case can be run
+under without causing errors due to a machine type mismatch.
 .It require.progs
 Type: textual.
 Optional.
@@ -165,6 +186,20 @@ In the future, it is expected that the test case will attempt to gain the
 necessary privileges on its own before failing.
 At the very least, lowering the privileges from the super-user to an
 unprivileged user will be supported.
+.It timeout
+Type: integral.
+Required; defaults to
+.Sq 300 .
+Specifies the maximum amount of time the test case can run.
+This is particularly useful because some tests can stall either because they
+are incorrectly coded or because they trigger an anomalous behavior of the
+program.
+It is not acceptable for these tests to stall the whole execution of the
+test program.
+.Pp
+Can optionally be set to zero, in which case the test case has no run-time
+limit.
+This is discouraged.
 .El
 .Ss Environment
 Every time a test case is executed, several environment variables are

@@ -42,12 +42,6 @@
 
 #include "atf/exceptions.hpp"
 
-#if !defined(HAVE_VSNPRINTF_IN_STD)
-namespace std {
-using ::vsnprintf;
-}
-#endif // !defined(HAVE_VSNPRINTF_IN_STD)
-
 atf::system_error::system_error(const std::string& who,
                                 const std::string& message,
                                 int sys_err) :
@@ -84,27 +78,4 @@ atf::system_error::what(void)
     } catch (...) {
         return "Unable to format system_error message";
     }
-}
-
-atf::usage_error::usage_error(const char *fmt, ...)
-    throw() :
-    std::runtime_error("usage_error; message unformatted")
-{
-    va_list ap;
-
-    va_start(ap, fmt);
-    std::vsnprintf(m_text, sizeof(m_text), fmt, ap);
-    va_end(ap);
-}
-
-atf::usage_error::~usage_error(void)
-    throw()
-{
-}
-
-const char*
-atf::usage_error::what(void)
-    const throw()
-{
-    return m_text;
 }
