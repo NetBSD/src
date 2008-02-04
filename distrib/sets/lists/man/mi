@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1055 2008/02/04 02:13:37 mrg Exp $
+# $NetBSD: mi,v 1.1056 2008/02/04 20:33:11 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -52,7 +52,9 @@
 ./usr/share/man/cat1/atf-cleanup.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atf-compile.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atf-config.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-exec.0			man-atf-catman		.cat
 ./usr/share/man/cat1/atf-format.0		man-atf-catman		.cat
+./usr/share/man/cat1/atf-killpg.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atf-report.0		man-atf-catman		.cat
 ./usr/share/man/cat1/atf-run.0			man-atf-catman		.cat
 ./usr/share/man/cat1/atf-test-program.0		man-atf-catman		.cat
@@ -2574,7 +2576,9 @@
 ./usr/share/man/man1/atf-cleanup.1		man-atf-man		.man
 ./usr/share/man/man1/atf-compile.1		man-atf-man		.man
 ./usr/share/man/man1/atf-config.1		man-atf-man		.man
+./usr/share/man/man1/atf-exec.1			man-atf-man		.man
 ./usr/share/man/man1/atf-format.1		man-atf-man		.man
+./usr/share/man/man1/atf-killpg.1		man-atf-man		.man
 ./usr/share/man/man1/atf-report.1		man-atf-man		.man
 ./usr/share/man/man1/atf-run.1			man-atf-man		.man
 ./usr/share/man/man1/atf-test-program.1		man-atf-man		.man
