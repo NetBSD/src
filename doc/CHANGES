@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1012 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1013 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -411,3 +411,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		exposes an outputs.master mixer control that mirrors the
 		inputs.dac mixer control to make libossaudio happy.
 		[jmcneill 20080130]
+	atf: Import 0.4.  [jmmv 20080204]
