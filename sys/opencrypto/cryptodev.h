@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.6.4.3 2008/01/21 09:47:38 yamt Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.6.4.4 2008/02/04 09:24:47 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -99,7 +99,10 @@
 #define CRYPTO_NULL_HMAC	16
 #define CRYPTO_NULL_CBC		17
 #define CRYPTO_DEFLATE_COMP	18 /* Deflate compression algorithm */
-#define CRYPTO_ALGORITHM_MAX	18 /* Keep updated - see below */
+#define CRYPTO_MD5_HMAC_96	19 
+#define CRYPTO_SHA1_HMAC_96	20
+#define CRYPTO_RIPEMD160_HMAC_96	21
+#define CRYPTO_ALGORITHM_MAX	22 /* Keep updated - see below */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
@@ -279,6 +282,7 @@ struct cryptop {
 #define	CRYPTO_F_CBIMM		0x0010	/* Do callback immediately */
 #define	CRYPTO_F_DONE		0x0020	/* Operation completed */
 #define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
+#define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -288,6 +292,7 @@ struct cryptop {
 
 	void *		crp_mac;
 	struct timespec	crp_tstamp;	/* performance time stamp */
+	kcondvar_t	crp_cv;
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -312,6 +317,8 @@ struct cryptkop {
 	u_int32_t	krp_hid;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
 	int		(*krp_callback)(struct cryptkop *);
+	int		krp_flags;	/* same values as crp_flags */
+	kcondvar_t	krp_cv;
 };
 
 /* Crypto capabilities structure */
@@ -384,6 +391,8 @@ void	cuio_copyback(struct uio *, int, int, void *);
 int	cuio_apply(struct uio *, int, int,
 	    int (*f)(void *, void *, unsigned int), void *);
 
+extern	int crypto_ret_q_remove(struct cryptop *);
+extern	int crypto_ret_kq_remove(struct cryptkop *);
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
 
@@ -391,6 +400,17 @@ extern	int crypto_usercrypto;		/* userland may do crypto requests */
 extern	int crypto_userasymcrypto;	/* userland may do asym crypto reqs */
 extern	int crypto_devallowsoft;	/* only use hardware crypto */
 
+/*
+ * Asymmetric operations are allocated in cryptodev.c but can be
+ * freed in crypto.c.
+ */
+extern	struct pool	cryptkop_pool;
+
+/*
+ * Mutual exclusion and its unwelcome friends.
+ */
+
+extern	kmutex_t	crypto_mtx;
 
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).
@@ -413,17 +433,23 @@ struct	mbuf	*m_getptr(struct mbuf *, int, int *);
 struct uio;
 extern	void cuio_copydata(struct uio* uio, int off, int len, void *cp);
 extern	void cuio_copyback(struct uio* uio, int off, int len, void *cp);
-#ifdef __FreeBSD__
-extern struct iovec *cuio_getptr(struct uio *uio, int loc, int *off);
-#else
 extern int	cuio_getptr(struct uio *, int loc, int *off);
-#endif
 
-#ifdef __FreeBSD__	/* Standalone m_apply()/m_getptr() */
-extern  int m_apply(struct mbuf *m, int off, int len,
-                    int (*f)(void *, void *, unsigned int), void *fstate);
-extern  struct mbuf * m_getptr(struct mbuf *m, int loc, int *off);
-#endif	/* Standalone m_apply()/m_getptr() */
+#ifdef CRYPTO_DEBUG	/* yuck, netipsec defines these differently */
+#ifndef DPRINTF
+#define DPRINTF(a) uprintf a
+#endif
+#ifndef DCPRINTF
+#define DCPRINTF(a) printf a
+#endif
+#else
+#ifndef DPRINTF
+#define DPRINTF(a)
+#endif
+#ifndef DCPRINTF
+#define DCPRINTF(a)
+#endif
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CRYPTO_CRYPTO_H_ */

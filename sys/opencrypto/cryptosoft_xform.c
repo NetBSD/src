@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.1.22.4 2007/09/03 14:44:24 yamt Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.1.22.5 2008/02/04 09:24:47 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.1.22.4 2007/09/03 14:44:24 yamt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.1.22.5 2008/02/04 09:24:47 yamt Exp $");
 
 #include <crypto/blowfish/blowfish.h>
 #include <crypto/cast128/cast128.h>
@@ -197,6 +197,22 @@ static const struct swcr_auth_hash swcr_auth_hash_null = {
 	null_init, null_update, null_final
 };
 
+static const struct swcr_auth_hash swcr_auth_hash_hmac_md5 = {
+	&auth_hash_hmac_md5,
+	(void (*) (void *)) MD5Init, MD5Update_int,
+	(void (*) (u_int8_t *, void *)) MD5Final
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1 = {
+	&auth_hash_hmac_sha1,
+	SHA1Init_int, SHA1Update_int, SHA1Final_int
+};
+
+static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160 = {
+	&auth_hash_hmac_ripemd_160,
+	(void (*)(void *)) RMD160Init, RMD160Update_int,
+	(void (*)(u_int8_t *, void *)) RMD160Final
+};
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5_96 = {
 	&auth_hash_hmac_md5_96,
 	(void (*) (void *)) MD5Init, MD5Update_int,
@@ -310,9 +326,8 @@ des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 	int err;
 
 	MALLOC(p, des_key_schedule *, sizeof (des_key_schedule),
-		M_CRYPTO_DATA, M_NOWAIT);
+		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 	if (p != NULL) {
-		bzero(p, sizeof(des_key_schedule));
 		des_set_key((des_cblock *)__UNCONST(key), p[0]);
 		err = 0;
 	} else
@@ -354,9 +369,8 @@ des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 	int err;
 
 	MALLOC(p, des_key_schedule *, 3*sizeof (des_key_schedule),
-		M_CRYPTO_DATA, M_NOWAIT);
+		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 	if (p != NULL) {
-		bzero(p, 3*sizeof(des_key_schedule));
 		des_set_key((des_cblock *)__UNCONST(key +  0), p[0]);
 		des_set_key((des_cblock *)__UNCONST(key +  8), p[1]);
 		des_set_key((des_cblock *)__UNCONST(key + 16), p[2]);
@@ -379,22 +393,14 @@ static void
 blf_encrypt(void *key, u_int8_t *blk)
 {
 
-#if defined(__NetBSD__)
 	BF_ecb_encrypt(blk, blk, (BF_KEY *)key, 1);
-#else
-	blf_ecb_encrypt((blf_ctx *) key, blk, 8);
-#endif
 }
 
 static void
 blf_decrypt(void *key, u_int8_t *blk)
 {
 
-#if defined(__NetBSD__)
 	BF_ecb_encrypt(blk, blk, (BF_KEY *)key, 0);
-#else
-	blf_ecb_decrypt((blf_ctx *) key, blk, 8);
-#endif
 }
 
 static int
@@ -402,21 +408,10 @@ blf_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 {
 	int err;
 
-#if defined(__FreeBSD__) || defined(__NetBSD__)
-#define	BLF_SIZ	sizeof(BF_KEY)
-#else
-#define	BLF_SIZ	sizeof(blf_ctx)
-#endif
-
-	MALLOC(*sched, u_int8_t *, BLF_SIZ,
-		M_CRYPTO_DATA, M_NOWAIT);
+	MALLOC(*sched, u_int8_t *, sizeof(BF_KEY),
+		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 	if (*sched != NULL) {
-		bzero(*sched, BLF_SIZ);
-#if defined(__FreeBSD__) || defined(__NetBSD__)
 		BF_set_key((BF_KEY *) *sched, len, key);
-#else
-		blf_key((blf_ctx *)*sched, key, len);
-#endif
 		err = 0;
 	} else
 		err = ENOMEM;
@@ -426,7 +421,7 @@ blf_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 static void
 blf_zerokey(u_int8_t **sched)
 {
-	bzero(*sched, BLF_SIZ);
+	bzero(*sched, sizeof(BF_KEY));
 	FREE(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -449,9 +444,8 @@ cast5_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 	int err;
 
 	MALLOC(*sched, u_int8_t *, sizeof(cast128_key), M_CRYPTO_DATA,
-	       M_NOWAIT);
+	       M_NOWAIT|M_ZERO);
 	if (*sched != NULL) {
-		bzero(*sched, sizeof(cast128_key));
 		cast128_setkey((cast128_key *)*sched, key, len);
 		err = 0;
 	} else
@@ -489,15 +483,13 @@ skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 	 * Will this break a pdp-10, Cray-1, or GE-645 port?
 	 */
 	MALLOC(*sched, u_int8_t *, 10 * (sizeof(u_int8_t *) + 0x100),
-		M_CRYPTO_DATA, M_NOWAIT);
+		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 
 	if (*sched != NULL) {
 
 		u_int8_t** key_tables = (u_int8_t**) *sched;
 		u_int8_t* table = (u_int8_t*) &key_tables[10];
 		int k;
-
-		bzero(*sched, 10 * sizeof(u_int8_t *)+0x100);
 
 		for (k = 0; k < 10; k++) {
 			key_tables[k] = table;
@@ -537,9 +529,8 @@ rijndael128_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 	int err;
 
 	MALLOC(*sched, u_int8_t *, sizeof(rijndael_ctx), M_CRYPTO_DATA,
-	    M_WAITOK);
+	    M_NOWAIT|M_ZERO);
 	if (*sched != NULL) {
-		bzero(*sched, sizeof(rijndael_ctx));
 		rijndael_set_key((rijndael_ctx *) *sched, key, len * 8);
 		err = 0;
 	} else

@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.6.2.3 2007/09/03 14:43:48 yamt Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.6.2.4 2008/02/04 09:24:42 yamt Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.6.2.3 2007/09/03 14:43:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.6.2.4 2008/02/04 09:24:42 yamt Exp $");
 
 #include "opt_inet.h"
 #ifdef __FreeBSD__
@@ -231,6 +231,7 @@ esp_init(struct secasvar *sav, struct xformsw *xsp)
 	crie.cri_key = _KEYBUF(sav->key_enc);
 	/* XXX Rounds ? */
 
+	mutex_spin_enter(&crypto_mtx);
 	if (sav->tdb_authalgxform && sav->tdb_encalgxform) {
 		/* init both auth & enc */
 		crie.cri_next = &cria;
@@ -247,6 +248,7 @@ esp_init(struct secasvar *sav, struct xformsw *xsp)
 		DPRINTF(("esp_init: no encoding OR authentication xform!\n"));
 		error = EINVAL;
 	}
+	mutex_spin_exit(&crypto_mtx);
 	return error;
 }
 

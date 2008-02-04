@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.14.10.5 2007/12/07 17:24:44 yamt Exp $	*/
+/*	$NetBSD: intr.h,v 1.14.10.6 2008/02/04 09:21:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999 The NetBSD Foundation, Inc.
@@ -69,6 +69,7 @@
 #define	PSLTOIPL(x)	(((x) >> 8) & 0xf)
 #define	IPLTOPSL(x)	((((x) & 0xf) << 8) | PSL_S)
 
+extern int idepth;
 extern u_short hp300_ipl2psl[];
 
 typedef int ipl_t;

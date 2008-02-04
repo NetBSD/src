@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.9.6.5 2008/01/21 09:45:46 yamt Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.9.6.6 2008/02/04 09:23:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.9.6.5 2008/01/21 09:45:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.9.6.6 2008/02/04 09:23:45 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -128,6 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.9.6.5 2008/01/21 09:45:46 yamt Exp 
 #include <sys/kauth.h>
 #include <sys/stat.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <fs/hfs/hfs.h>
@@ -135,7 +136,7 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.9.6.5 2008/01/21 09:45:46 yamt Exp 
 
 MALLOC_JUSTDEFINE(M_HFSMNT, "hfs mount", "hfs mount structures");
 
-extern struct lock hfs_hashlock;
+extern kmutex_t hfs_hashlock;
 
 const struct vnodeopv_desc * const hfs_vnodeopv_descs[] = {
 	&hfs_vnodeop_opv_desc,
@@ -164,6 +165,8 @@ struct vfsops hfs_vfsops = {
 	NULL,				/* vfs_snapshot */
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	hfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -274,19 +277,6 @@ hfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (update) {
 		printf("HFS: live remounting not yet supported!\n");
 		error = EINVAL;
-		goto error;
-	}
-
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		goto error;
-	if (vcount(devvp) > 1 && devvp != rootvp) {
-		error = EBUSY;
 		goto error;
 	}
 
@@ -531,6 +521,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	if (fork != HFS_RSRCFORK)
 	    fork = HFS_DATAFORK;
 
+ retry:
 	/* Check if this vnode has already been allocated. If so, just return it. */
 	if ((*vpp = hfs_nhashget(dev, cnid, fork, LK_EXCLUSIVE)) != NULL)
 		return 0;
@@ -538,24 +529,22 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	/* Allocate a new vnode/inode. */
 	if ((error = getnewvnode(VT_HFS, mp, hfs_vnodeop_p, &vp)) != 0)
 		goto error;
+	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
+		M_WAITOK + M_ZERO);
 
 	/*
 	 * If someone beat us to it while sleeping in getnewvnode(),
 	 * push back the freshly allocated vnode we don't need, and return.
 	 */
+	mutex_enter(&hfs_hashlock);
+	if (hfs_nhashget(dev, cnid, fork, 0) != NULL) {
+		mutex_exit(&hfs_hashlock);
+		ungetnewvnode(vp);
+		FREE(hnode, M_TEMP);
+		goto retry;
+	}
 
-	do {
-		if ((*vpp = hfs_nhashget(dev, cnid, fork, LK_EXCLUSIVE))
-		    != NULL) {
-			ungetnewvnode(vp);
-			return 0;
-		}
-	} while (lockmgr(&hfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
-
-	vp->v_vflag |= VV_LOCKSWORK;
-	
-	MALLOC(hnode, struct hfsnode *, sizeof(struct hfsnode), M_TEMP,
-		M_WAITOK + M_ZERO);
+	vp->v_vflag |= VV_LOCKSWORK;	
 	vp->v_data = hnode;
 	genfs_node_init(vp, &hfs_genfsops);
 	
@@ -577,7 +566,7 @@ hfs_vget_internal(struct mount *mp, ino_t ino, uint8_t fork,
 	hnode->h_fork = fork;
 
 	hfs_nhashinsert(hnode);
-	lockmgr(&hfs_hashlock, LK_RELEASE, 0);
+	mutex_exit(&hfs_hashlock);
 
 
 	/*

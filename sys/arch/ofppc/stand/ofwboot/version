@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.5.36.2 2008/01/21 09:37:56 yamt Exp $
+$NetBSD: version,v 1.5.36.3 2008/02/04 09:22:20 yamt Exp $
 
 1.1:		Boot program for OpenFirmware; initial revision
 1.2:		Boot program rearrangement
@@ -8,3 +8,4 @@ $NetBSD: version,v 1.5.36.2 2008/01/21 09:37:56 yamt Exp $
 1.6:		Change how symbol table is conveyed to kernel
 1.7:		Support RAID partitions
 1.8:		Support IBM RS/6000, switch to stock libsa alloc
+1.9:		Add support for auto-detection of 64bit CPUs

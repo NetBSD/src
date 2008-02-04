@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6.2.5 2008/01/21 09:35:25 yamt Exp $	*/
+/*	$NetBSD: pmap.h,v 1.6.2.6 2008/02/04 09:21:42 yamt Exp $	*/
 
 /*
  *
@@ -281,7 +281,7 @@ static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), npte);
+	xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
 	splx(s);
 }
 
@@ -292,7 +292,7 @@ pmap_pte_cas(volatile pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
 	pt_entry_t opte = *ptep;
 
 	if (opte == o) {
-		xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(ptep)), n);
+		xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(ptep)), n);
 		xpq_flush_queue();
 	}
 	splx(s);
@@ -304,8 +304,7 @@ pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
 	pt_entry_t opte = *pte;
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
-	    npte);
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), npte);
 	xpq_flush_queue();
 	splx(s);
 	return opte;
@@ -315,8 +314,7 @@ static __inline void
 pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
-	    (*pte) | bits);
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), (*pte) | bits);
 	xpq_flush_queue();
 	splx(s);
 }
@@ -325,7 +323,7 @@ static __inline void
 pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {	
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    (*pte) & ~bits);
 	xpq_flush_queue();
 	splx(s);

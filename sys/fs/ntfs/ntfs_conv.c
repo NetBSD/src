@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_conv.c,v 1.5.4.1 2006/06/21 15:09:29 yamt Exp $	*/
+/*	$NetBSD: ntfs_conv.c,v 1.5.4.2 2008/02/04 09:23:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.5.4.1 2006/06/21 15:09:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.5.4.2 2008/02/04 09:23:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: ntfs_conv.c,v 1.5.4.1 2006/06/21 15:09:29 yamt Exp $
 #include <sys/file.h>
 #include <sys/malloc.h>
 #include <sys/lock.h>
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#endif
 
 #include <miscfs/specfs/specdev.h>
 

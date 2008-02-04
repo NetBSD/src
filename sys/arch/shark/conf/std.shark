@@ -1,9 +1,10 @@
-#	$NetBSD: std.shark,v 1.3.18.2 2007/09/03 14:29:46 yamt Exp $
+#	$NetBSD: std.shark,v 1.3.18.3 2008/02/04 09:22:30 yamt Exp $
 #
 # standard NetBSD/shark options
 
 machine	shark arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 options 	EXEC_AOUT
 options 	EXEC_ELF32

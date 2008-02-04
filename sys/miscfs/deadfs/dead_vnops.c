@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.35.12.5 2008/01/21 09:46:51 yamt Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.35.12.6 2008/02/04 09:24:27 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35.12.5 2008/01/21 09:46:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.35.12.6 2008/02/04 09:24:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ int	dead_open(void *);
 #define dead_close	genfs_nullop
 int	dead_read(void *);
 int	dead_write(void *);
-#define dead_lease_check genfs_nullop
 #define dead_fcntl	genfs_nullop
 int	dead_ioctl(void *);
 int	dead_poll(void *);
@@ -82,7 +81,6 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_close_desc, dead_close },		/* close */
 	{ &vop_read_desc, dead_read },			/* read */
 	{ &vop_write_desc, dead_write },		/* write */
-	{ &vop_lease_desc, dead_lease_check },		/* lease */
 	{ &vop_fcntl_desc, dead_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, dead_ioctl },		/* ioctl */
 	{ &vop_poll_desc, dead_poll },			/* poll */

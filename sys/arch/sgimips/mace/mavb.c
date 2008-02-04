@@ -1,4 +1,4 @@
-/* $NetBSD: mavb.c,v 1.3.14.2 2007/09/03 14:29:20 yamt Exp $ */
+/* $NetBSD: mavb.c,v 1.3.14.3 2008/02/04 09:22:27 yamt Exp $ */
 /* $OpenBSD: mavb.c,v 1.6 2005/04/15 13:05:14 mickey Exp $ */
 
 /*
@@ -108,6 +108,14 @@ const char *ad1843_input[] = {
 	AudioNmono		/* AD1843_MISC_SETTINGS */
 };
 
+#define MAVB_NFORMATS 2
+static const struct audio_format mavb_formats[MAVB_NFORMATS] = {
+	{ NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
+	  1, AUFMT_MONAURAL, 0, { 8000, 48000 } },
+	{ NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
+	  2, AUFMT_STEREO, 0, { 8000, 48000 } },
+};
+
 struct mavb_softc {
 	struct device sc_dev;
 	bus_space_tag_t sc_st;
@@ -133,37 +141,9 @@ struct mavb_softc {
 	u_int sc_play_format;
 
 	struct callout sc_volume_button_ch;
-};
 
-/* XXX mavb supports way more than this, but for now I'm going to be
- *     lazy and let auconv work its magic
- */
-#define MAVB_NENCODINGS 8
-static audio_encoding_t mavb_encoding[MAVB_NENCODINGS] = {
-	{ 0, AudioEulinear, AUDIO_ENCODING_ULINEAR, 8,
-	  AUDIO_ENCODINGFLAG_EMULATED },
-	{ 1, AudioEmulaw, AUDIO_ENCODING_ULAW, 8,
-	  AUDIO_ENCODINGFLAG_EMULATED },
-	{ 2, AudioEalaw, AUDIO_ENCODING_ALAW, 8,
-	  AUDIO_ENCODINGFLAG_EMULATED },
-	{ 3, AudioEslinear, AUDIO_ENCODING_SLINEAR, 8,
-	  AUDIO_ENCODINGFLAG_EMULATED },
-	{ 4, AudioEslinear_le, AUDIO_ENCODING_SLINEAR, 16,
-	  AUDIO_ENCODINGFLAG_EMULATED },
-	{ 5, AudioEulinear_le, AUDIO_ENCODING_ULINEAR, 16,
-	  AUDIO_ENCODINGFLAG_EMULATED },
-	{ 6, AudioEslinear_be, AUDIO_ENCODING_SLINEAR, 16,
-	  0 },
-	{ 7, AudioEulinear_be, AUDIO_ENCODING_ULINEAR, 16,
-	  AUDIO_ENCODINGFLAG_EMULATED },
-};
-
-#define MAVB_NFORMATS 3
-static const struct audio_format mavb_formats[MAVB_NFORMATS] = {
-	{ NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	  2, AUFMT_STEREO, 0, { 8000, 48000 } },
-	{ NULL, AUMODE_PLAY | AUMODE_RECORD, AUDIO_ENCODING_SLINEAR_BE, 16, 16,
-	  1, AUFMT_MONAURAL, 0, { 8000, 48000 } },
+	struct audio_format sc_formats[MAVB_NFORMATS];
+	struct audio_encoding_set *sc_encodings;
 };
 
 struct mavb_codecvar {
@@ -334,11 +314,9 @@ mavb_close(void *hdl)
 int
 mavb_query_encoding(void *hdl, struct audio_encoding *ae)
 {
-	if (ae->index < 0 || ae->index >= MAVB_NENCODINGS)
-		return (EINVAL);
-	*ae = mavb_encoding[ae->index];
+	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 
-	return (0);
+	return auconv_query_encoding(sc->sc_encodings, ae);
 }
 
 static int
@@ -407,8 +385,8 @@ mavb_set_params(void *hdl, int setmode, int usemode,
 
 		p = play;
 		fil = pfil;
-		if (auconv_set_converter(mavb_formats, MAVB_NFORMATS,
-		    AUMODE_PLAY, p, FALSE, fil) < 0)
+		if (auconv_set_converter(sc->sc_formats, MAVB_NFORMATS,
+		    AUMODE_PLAY, p, TRUE, fil) < 0)
 			return (EINVAL);
 
 		fil->append(fil, mavb_16to24, p);
@@ -1026,7 +1004,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 	bus_dma_segment_t seg;
 	u_int64_t control;
 	u_int16_t value;
-	int rseg;
+	int rseg, err;
 
 	sc->sc_st = maa->maa_st;
 	if (bus_space_subregion(sc->sc_st, maa->maa_sh, maa->maa_offset,
@@ -1138,6 +1116,15 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_play_rate = 48000;
 	sc->sc_play_format = AD1843_PCM8;
+
+	memcpy(sc->sc_formats, mavb_formats, sizeof(mavb_formats));
+	err = auconv_create_encodings(sc->sc_formats, MAVB_NFORMATS,
+	    &sc->sc_encodings);
+	if (err) {
+		printf("%s: couldn't create encodings: %d\n",
+		    device_xname(self), err);
+		return;
+	}
 
 	callout_init(&sc->sc_volume_button_ch, 0);
 

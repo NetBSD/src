@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.101.2.8 2008/01/21 09:46:20 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.101.2.9 2008/02/04 09:24:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.101.2.8 2008/01/21 09:46:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.101.2.9 2008/02/04 09:24:16 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -1442,7 +1442,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 
 #ifdef DIAGNOSTIC
 	if ((pp->pr_roflags & PR_NOALIGN) == 0 &&
-	    ((uintptr_t)cp & (pp->pr_alloc->pa_pagesz - 1)) != 0)
+	    ((uintptr_t)cp & (align - 1)) != 0)
 		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 #endif
 
@@ -2534,7 +2534,9 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			object = pcg->pcg_objects[--pcg->pcg_avail].pcgo_va;
 			if (pap != NULL)
 				*pap = pcg->pcg_objects[pcg->pcg_avail].pcgo_pa;
+#if defined(DIAGNOSTIC)
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = NULL;
+#endif /* defined(DIAGNOSTIC) */
 			KASSERT(pcg->pcg_avail <= pcg->pcg_size);
 			KASSERT(object != NULL);
 			cc->cc_hits++;

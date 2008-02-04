@@ -1,0 +1,8 @@
+# $NetBSD: std.sh3eb,v 1.1.2.2 2008/02/04 09:22:29 yamt Exp $
+#
+# standard, required NetBSD/sh3 'options' for big endian platforms
+
+include 	"arch/sh3/conf/std.sh3"	# endian-independent sh3 options
+
+makeoptions	ENDIAN="-EB"
+makeoptions	MACHINE_ARCH=sh3eb

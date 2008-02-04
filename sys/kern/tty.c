@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.173.2.8 2008/01/21 09:46:27 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.173.2.9 2008/02/04 09:24:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.8 2008/01/21 09:46:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.9 2008/02/04 09:24:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,8 +1094,8 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		mutex_spin_exit(&tty_lock);
 		break;
 	case TIOCSTI:			/* simulate terminal input */
-		if (kauth_authorize_generic(l->l_cred, KAUTH_GENERIC_ISSUSER,
-		    NULL) != 0) {
+		if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_STI,
+		    tp) != 0) {
 			if (!ISSET(flag, FREAD))
 				return (EPERM);
 			if (!isctty(p, tp))

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.12.2.6 2008/01/21 09:47:43 yamt Exp $	*/
+/*	$NetBSD: rump.c,v 1.12.2.7 2008/02/04 09:24:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -48,7 +48,7 @@ struct proc rump_proc;
 struct cwdinfo rump_cwdi;
 struct pstats rump_stats;
 struct plimit rump_limits;
-kauth_cred_t rump_cred;
+kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
 struct filedesc0 rump_filedesc0;
 
@@ -63,6 +63,7 @@ struct fakeblk {
 
 static LIST_HEAD(, fakeblk) fakeblks = LIST_HEAD_INITIALIZER(fakeblks);
 
+#ifndef RUMP_WITHOUT_THREADS
 static void
 rump_aiodone_worker(struct work *wk, void *dummy)
 {
@@ -71,6 +72,7 @@ rump_aiodone_worker(struct work *wk, void *dummy)
 	KASSERT(&bp->b_work == wk);
 	bp->b_iodone(bp);
 }
+#endif /* RUMP_WITHOUT_THREADS */
 
 int rump_inited;
 
@@ -100,6 +102,7 @@ rump_init()
 	l->l_cred = rump_cred;
 	l->l_proc = p;
 	l->l_lid = 1;
+	rw_init(&rump_cwdi.cwdi_lock);
 
 	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpvm_init();
@@ -115,15 +118,19 @@ rump_init()
 	filedesc_init();
 	selsysinit();
 
+	rumpvfs_init();
+
 	rump_sleepers_init();
 	rumpuser_thrinit();
 
 	rumpuser_mutex_recursive_init(&rump_giantlock.kmtx_mtx);
 
+#ifndef RUMP_WITHOUT_THREADS
 	/* aieeeedondest */
 	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
 	    rump_aiodone_worker, NULL, 0, 0, 0))
 		panic("aiodoned");
+#endif /* RUMP_WITHOUT_THREADS */
 
 	rumpuser_gethostname(hostname, MAXHOSTNAMELEN, &error);
 	hostnamelen = strlen(hostname);
@@ -143,6 +150,8 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mp->mnt_op = vfsops;
 	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
+	rw_init(&mp->mnt_lock);
+	mp->mnt_refcnt = 1;
 
 	mount_initspecific(mp);
 
@@ -179,6 +188,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	kauth_cred_t creds, struct lwp *l)
 {
 	struct componentname *cnp;
+	const char *cp = NULL;
 
 	cnp = kmem_zalloc(sizeof(struct componentname), KM_SLEEP);
 
@@ -189,6 +199,7 @@ rump_makecn(u_long nameiop, u_long flags, const char *name, size_t namelen,
 	strcpy(cnp->cn_pnbuf, name);
 	cnp->cn_nameptr = cnp->cn_pnbuf;
 	cnp->cn_namelen = namelen;
+	cnp->cn_hash = namei_hash(name, &cp);
 
 	cnp->cn_cred = creds;
 
@@ -209,13 +220,6 @@ rump_freecn(struct componentname *cnp, int flags)
 		PNBUF_PUT(cnp->cn_pnbuf);
 	}
 	kmem_free(cnp, sizeof(*cnp));
-}
-
-int
-rump_recyclenode(struct vnode *vp)
-{
-
-	return vrecycle(vp, NULL, curlwp);
 }
 
 static struct fakeblk *
@@ -284,7 +288,7 @@ rump_getvninfo(struct vnode *vp, enum vtype *vtype, voff_t *vsize, dev_t *vdev)
 
 	*vtype = vp->v_type;
 	*vsize = vp->v_size;
-	if (vp->v_specinfo)
+	if (vp->v_specnode)
 		*vdev = vp->v_rdev;
 	else
 		*vdev = 0;
@@ -350,7 +354,9 @@ void
 rump_vp_incref(struct vnode *vp)
 {
 
+	mutex_enter(&vp->v_interlock);
 	++vp->v_usecount;
+	mutex_exit(&vp->v_interlock);
 }
 
 int
@@ -364,7 +370,32 @@ void
 rump_vp_decref(struct vnode *vp)
 {
 
+	mutex_enter(&vp->v_interlock);
 	--vp->v_usecount;
+	mutex_exit(&vp->v_interlock);
+}
+
+/*
+ * Really really recycle with a cherry on top.  We should be
+ * extra-sure we can do this.  For example with p2k there is
+ * no problem, since puffs in the kernel takes care of refcounting
+ * for us.
+ */
+void
+rump_vp_recycle_nokidding(struct vnode *vp)
+{
+
+	mutex_enter(&vp->v_interlock);
+	vp->v_usecount = 1;
+	vclean(vp, DOCLOSE);
+	vrelel(vp, 0);
+}
+
+void
+rump_vp_rele(struct vnode *vp)
+{
+
+	vrele(vp);
 }
 
 struct uio *

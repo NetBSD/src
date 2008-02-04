@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_subr.c,v 1.2.14.5 2008/01/21 09:45:49 yamt Exp $	*/
+/*	$NetBSD: ptyfs_subr.c,v 1.2.14.6 2008/02/04 09:23:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.5 2008/01/21 09:45:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.6 2008/02/04 09:23:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: ptyfs_subr.c,v 1.2.14.5 2008/01/21 09:45:49 yamt Exp
 #include <fs/ptyfs/ptyfs.h>
 #include <miscfs/specfs/specdev.h>
 
-static struct lock ptyfs_hashlock;
+static kmutex_t ptyfs_hashlock;
 
 static LIST_HEAD(ptyfs_hashhead, ptyfsnode) *ptyfs_used_tbl, *ptyfs_free_tbl;
 static u_long ptyfs_used_mask, ptyfs_free_mask; /* size of hash table - 1 */
@@ -105,7 +105,7 @@ static void ptyfs_getinfo(struct ptyfsnode *, struct lwp *);
 static void ptyfs_hashins(struct ptyfsnode *);
 static void ptyfs_hashrem(struct ptyfsnode *);
 
-static struct vnode *ptyfs_used_get(ptyfstype, int, struct mount *);
+static struct vnode *ptyfs_used_get(ptyfstype, int, struct mount *, int);
 static struct ptyfsnode *ptyfs_free_get(ptyfstype, int, struct lwp *);
 
 static void ptyfs_rehash(kmutex_t *, struct ptyfs_hashhead **,
@@ -203,18 +203,23 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
     struct lwp *l)
 {
 	struct ptyfsnode *ptyfs;
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	int error;
 
-	do {
-		if ((*vpp = ptyfs_used_get(type, pty, mp)) != NULL)
-			return 0;
-	} while (lockmgr(&ptyfs_hashlock, LK_EXCLUSIVE|LK_SLEEPFAIL, 0));
+ retry:
+	if ((*vpp = ptyfs_used_get(type, pty, mp, LK_EXCLUSIVE)) != NULL)
+		return 0;
 
 	if ((error = getnewvnode(VT_PTYFS, mp, ptyfs_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
-		lockmgr(&ptyfs_hashlock, LK_RELEASE, NULL);
 		return error;
+	}
+
+	mutex_enter(&ptyfs_hashlock);
+	if (ptyfs_used_get(type, pty, mp, 0) != NULL) {
+		mutex_exit(&ptyfs_hashlock);
+		ungetnewvnode(vp);
+		goto retry;
 	}
 
 	vp->v_data = ptyfs = ptyfs_free_get(type, pty, l);
@@ -229,24 +234,7 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 	case PTYFSpts:	/* /pts/N = cxxxxxxxxx */
 	case PTYFSptc:	/* controlling side = cxxxxxxxxx */
 		vp->v_type = VCHR;
-		if ((nvp = checkalias(vp, PTYFS_MAKEDEV(ptyfs), mp)) != NULL) {
-			/*
-			 * Discard unneeded vnode, but save its inode.
-			 */
-			nvp->v_data = vp->v_data;
-			vp->v_data = NULL;
-			/* XXX spec_vnodeops has no locking, do it explicitly */
-			vp->v_vflag &= ~VV_LOCKSWORK;
-			VOP_UNLOCK(vp, 0);
-			vp->v_op = spec_vnodeop_p;
-			vgone(vp);
-			lockmgr(&nvp->v_lock, LK_EXCLUSIVE, &nvp->v_interlock);
-			/*
-			 * Reinitialize aliased inode.
-			 */
-			vp = nvp;
-			ptyfs->ptyfs_vnode = vp;
-		}
+		spec_node_init(vp, PTYFS_MAKEDEV(ptyfs));
 		break;
 	default:
 		panic("ptyfs_allocvp");
@@ -254,7 +242,7 @@ ptyfs_allocvp(struct mount *mp, struct vnode **vpp, ptyfstype type, int pty,
 
 	ptyfs_hashins(ptyfs);
 	uvm_vnp_setsize(vp, 0);
-	lockmgr(&ptyfs_hashlock, LK_RELEASE, NULL);
+	mutex_exit(&ptyfs_hashlock);
 
 	*vpp = vp;
 	return 0;
@@ -276,11 +264,11 @@ ptyfs_freevp(struct vnode *vp)
 void
 ptyfs_hashinit(void)
 {
-	lockinit(&ptyfs_hashlock, PINOD, "ptyfs_hashlock", 0, 0);
 	ptyfs_used_tbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
 	    M_WAITOK, &ptyfs_used_mask);
 	ptyfs_free_tbl = hashinit(desiredvnodes / 4, HASH_LIST, M_UFSMNT,
 	    M_WAITOK, &ptyfs_free_mask);
+	mutex_init(&ptyfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ptyfs_used_slock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ptyfs_free_slock, MUTEX_DEFAULT, IPL_NONE);
 }
@@ -288,8 +276,8 @@ ptyfs_hashinit(void)
 void
 ptyfs_hashreinit(void)
 {
-    ptyfs_rehash(&ptyfs_used_slock, &ptyfs_used_tbl, &ptyfs_used_mask);
-    ptyfs_rehash(&ptyfs_free_slock, &ptyfs_free_tbl, &ptyfs_free_mask);
+	ptyfs_rehash(&ptyfs_used_slock, &ptyfs_used_tbl, &ptyfs_used_mask);
+	ptyfs_rehash(&ptyfs_free_slock, &ptyfs_free_tbl, &ptyfs_free_mask);
 }
 
 static void
@@ -360,7 +348,7 @@ ptyfs_free_get(ptyfstype type, int pty, struct lwp *l)
 }
 
 struct vnode *
-ptyfs_used_get(ptyfstype type, int pty, struct mount *mp)
+ptyfs_used_get(ptyfstype type, int pty, struct mount *mp, int flags)
 {
 	struct ptyfs_hashhead *ppp;
 	struct ptyfsnode *pp;
@@ -373,10 +361,14 @@ loop:
 		vp = PTYFSTOV(pp);
 		if (pty == pp->ptyfs_pty && pp->ptyfs_type == type &&
 		    vp->v_mount == mp) {
-			mutex_enter(&vp->v_interlock);
-			mutex_exit(&ptyfs_used_slock);
-			if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
-				goto loop;
+		    	if (flags == 0) {
+				mutex_exit(&ptyfs_used_slock);
+			} else {
+				mutex_enter(&vp->v_interlock);
+				mutex_exit(&ptyfs_used_slock);
+				if (vget(vp, flags | LK_INTERLOCK))
+					goto loop;
+			}
 			return vp;
 		}
 	}
@@ -393,7 +385,7 @@ ptyfs_hashins(struct ptyfsnode *pp)
 	struct ptyfs_hashhead *ppp;
 
 	/* lock the ptyfsnode, then put it on the appropriate hash list */
-	lockmgr(&pp->ptyfs_vnode->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&pp->ptyfs_vnode->v_lock, LK_EXCLUSIVE);
 
 	mutex_enter(&ptyfs_used_slock);
 	ppp = &ptyfs_used_tbl[PTYHASH(pp->ptyfs_type, pp->ptyfs_pty,

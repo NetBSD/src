@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.6.4.5 2008/01/21 09:46:17 yamt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.6.4.6 2008/02/04 09:24:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -13,17 +13,17 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.4.5 2008/01/21 09:46:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.4.6 2008/02/04 09:24:15 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -134,7 +134,7 @@ typedef struct {
 #define	SL_BATCH	0x01
 
 /* Pool of the scheduler-specific structures for threads */
-static struct pool	sil_pool;
+static pool_cache_t	sil_pool;
 
 /*
  * Prototypes.
@@ -177,8 +177,8 @@ sched_rqinit(void)
 #endif
 
 	/* Pool of the scheduler-specific structures */
-	pool_init(&sil_pool, sizeof(sched_info_lwp_t), 0, 0, 0,
-	    "lwpsd", &pool_allocator_nointr, IPL_NONE);
+	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), 0, 0, 0,
+	    "lwpsd", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	/* Attach the primary CPU here */
 	sched_cpuattach(ci);
@@ -211,17 +211,13 @@ sched_cpuattach(struct cpu_info *ci)
 	void *rq_ptr;
 	u_int i, size;
 
-	/*
-	 * Allocate the run queue.
-	 * XXX: Estimate cache behaviour more..
-	 */
-	size = roundup(sizeof(runqueue_t), CACHE_LINE_SIZE) + CACHE_LINE_SIZE;
+	/* Allocate the run queue */
+	size = roundup2(sizeof(runqueue_t), CACHE_LINE_SIZE) + CACHE_LINE_SIZE;
 	rq_ptr = kmem_zalloc(size, KM_SLEEP);
 	if (rq_ptr == NULL) {
-		panic("scheduler: could not allocate the runqueue");
+		panic("sched_cpuattach: could not allocate the runqueue");
 	}
-	/* XXX: Save the original pointer for future.. */
-	ci_rq = (void *)(roundup((intptr_t)(rq_ptr), CACHE_LINE_SIZE));
+	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), CACHE_LINE_SIZE));
 
 	/* Initialize run queues */
 	mutex_init(&ci_rq->r_rq_mutex, MUTEX_DEFAULT, IPL_SCHED);
@@ -284,7 +280,7 @@ sched_lwp_fork(struct lwp *l1, struct lwp *l2)
 {
 
 	KASSERT(l2->l_sched_info == NULL);
-	l2->l_sched_info = pool_get(&sil_pool, PR_WAITOK);
+	l2->l_sched_info = pool_cache_get(sil_pool, PR_WAITOK);
 	memset(l2->l_sched_info, 0, sizeof(sched_info_lwp_t));
 }
 
@@ -293,7 +289,7 @@ sched_lwp_exit(struct lwp *l)
 {
 
 	KASSERT(l->l_sched_info != NULL);
-	pool_put(&sil_pool, l->l_sched_info);
+	pool_cache_put(sil_pool, l->l_sched_info);
 	l->l_sched_info = NULL;
 }
 

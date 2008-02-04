@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.4.6 2008/01/21 09:40:13 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.4.7 2008/02/04 09:22:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.6 2008/01/21 09:40:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.7 2008/02/04 09:22:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -129,6 +129,7 @@ static bool	cpu_resume(device_t);
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
+	bool sc_wasonline;
 };
 
 int mp_cpu_start(struct cpu_info *, paddr_t); 
@@ -369,6 +370,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		 * Enable local apic
 		 */
 		lapic_enable();
+		lapic_set_lvt();
 		lapic_calibrate_timer(ci);
 #endif
 #if NIOAPIC > 0
@@ -928,12 +930,16 @@ cpu_suspend(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, false);
-	mutex_exit(&cpu_lock);
+	sc->sc_wasonline = !(ci->ci_schedstate.spc_flags & SPCF_OFFLINE);
 
-	if (err)
-		return false;
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, false);
+		mutex_exit(&cpu_lock);
+	
+		if (err)
+			return false;
+	}
 
 	return true;
 }
@@ -943,7 +949,7 @@ cpu_resume(device_t dv)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
-	int err;
+	int err = 0;
 
 	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
@@ -952,9 +958,11 @@ cpu_resume(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, true);
-	mutex_exit(&cpu_lock);
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, true);
+		mutex_exit(&cpu_lock);
+	}
 
 	return err == 0;
 }

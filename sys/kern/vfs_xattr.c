@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_xattr.c,v 1.6.6.7 2008/01/21 09:46:34 yamt Exp $	*/
+/*	$NetBSD: vfs_xattr.c,v 1.6.6.8 2008/02/04 09:24:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.6.6.7 2008/01/21 09:46:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_xattr.c,v 1.6.6.8 2008/02/04 09:24:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,7 +218,6 @@ extattr_set_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	ssize_t cnt;
 	int error;
 
-	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	aiov.iov_base = __UNCONST(data);	/* XXXUNCONST kills const */
@@ -260,7 +259,6 @@ extattr_get_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 	size_t size, *sizep;
 	int error;
 
-	VOP_LEASE(vp, l->l_cred, LEASE_READ);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	/*
@@ -314,7 +312,6 @@ extattr_delete_vp(struct vnode *vp, int attrnamespace, const char *attrname,
 {
 	int error;
 
-	VOP_LEASE(vp, l->l_cred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	error = VOP_DELETEEXTATTR(vp, attrnamespace, attrname, l->l_cred);
@@ -341,7 +338,6 @@ extattr_list_vp(struct vnode *vp, int attrnamespace, void *data, size_t nbytes,
 	ssize_t cnt;
 	int error;
 
-	VOP_LEASE(vp, l->l_cred, LEASE_READ);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 
 	auiop = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.13.12.6 2008/01/21 09:36:32 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.13.12.7 2008/02/04 09:21:54 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.46 2001/09/20 18:33:03 mickey Exp $	*/
 
 /*
@@ -164,7 +164,11 @@ kernelmapped:
  */
 ENTRY_NOPROFILE(start,0)
 /*
- *	start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
+ *	bootapiver <= 2 
+ *		start(pdc, boothowto, bootdev, esym, bootapiver, argv, argc)
+ *
+ *	bootapiver == 3
+ *		start(pdc, boothowto, bootdev, esym, bootapiver, bootinfo)
  *
  *	pdc - PDC entry point
  *	boothowto - boot flags (see "reboot.h")
@@ -173,6 +177,7 @@ ENTRY_NOPROFILE(start,0)
  *	bootapiver - /boot API version
  *	argv - options block passed from /boot
  *	argc - the length of the block
+ *	bootinfo - pointer to a struct bootinfo.
  */
 
 	/*
@@ -187,7 +192,13 @@ ENTRY_NOPROFILE(start,0)
 	ldil	L%esym,%r1
 	stw	%arg3,R%esym(%r1)
 
-	/* Align arg3, which is the start of available memory */
+	/* bootinfo struct address for hppa_init, if bootapiver is > 2 */
+	ldw	HPPA_FRAME_ARG(4)(%sp), %arg0
+	ldw	HPPA_FRAME_ARG(5)(%sp), %arg1
+	comiclr,< 2, %arg0, %r0
+	copy	%r0, %arg1
+
+	/* Align arg3, which is the :qstart of available memory */
 	ldo	NBPG-1(%arg3), %arg3
 	dep	%r0, 31, PGSHIFT, %arg3
 

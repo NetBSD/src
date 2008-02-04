@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.5 2007/10/27 11:26:12 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.6 2008/02/04 09:21:55 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -238,7 +238,7 @@ kvtop(const void *va)
 extern int (*cpu_desidhash)(void);
 
 void	delay(u_int);
-void	hppa_init(paddr_t);
+void	hppa_init(paddr_t, void *);
 void	trap(int, struct trapframe *);
 void	hppa_ras(struct lwp *);
 int	spcopy(pa_space_t, const void *, pa_space_t, void *, size_t);
@@ -261,11 +261,13 @@ int	cpu_dump(void);
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
-#define	CPU_MAXID		2	/* number of valid machdep ids */
+#define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
+#define	CPU_MAXID		3	/* number of valid machdep ids */
 
 #define CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
+	{ "booted_kernel", CTLTYPE_STRING }, \
 }
 #endif
 

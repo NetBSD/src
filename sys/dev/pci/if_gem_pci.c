@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.19.4.4 2008/01/21 09:43:54 yamt Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.19.4.5 2008/02/04 09:23:30 yamt Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.19.4.4 2008/01/21 09:43:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.19.4.5 2008/02/04 09:23:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -194,8 +194,8 @@ gem_attach_pci(parent, self, aux)
 	aprint_naive(": Ethernet controller\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal(": %s (rev. 0x%02x)\n", devinfo,
-	    PCI_REVISION(pa->pa_class));
+	sc->sc_chiprev = PCI_REVISION(pa->pa_class);
+	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, sc->sc_chiprev);
 
 	/*
 	 * Some Sun GEMs/ERIs do have their intpin register bogusly set to 0,

@@ -37,7 +37,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxxvar.h,v 1.49.2.1 2006/06/21 15:02:52 yamt Exp $
+ * $Id: aic7xxxvar.h,v 1.49.2.2 2008/02/04 09:23:23 yamt Exp $
  *
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.h,v 1.44 2003/01/20 20:44:55 gibbs Exp $
  */
@@ -1202,8 +1202,6 @@ struct ahc_softc {
 	uint16_t		  user_tagenable;/* Tagged Queuing allowed */
 
 	struct ahc_pci_busdata 	  *bd;
-
-	void			  *shutdown_hook;
 };
 
 TAILQ_HEAD(ahc_softc_tailq, ahc_softc);

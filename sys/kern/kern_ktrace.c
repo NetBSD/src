@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.97.2.7 2008/01/21 09:46:05 yamt Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.97.2.8 2008/02/04 09:24:12 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.97.2.7 2008/01/21 09:46:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.97.2.8 2008/02/04 09:24:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1029,7 +1029,7 @@ ktrace_common(lwp_t *curl, int ops, int facs, int pid, struct file *fp)
 
 	curp = curl->l_proc;
 	descend = ops & KTRFLAG_DESCEND;
-	facs = facs & ~((unsigned) KTRFAC_ROOT);
+	facs = facs & ~((unsigned) KTRFAC_PERSISTENT);
 
 	(void)ktrenter(curl);
 
@@ -1306,9 +1306,10 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 			ktradref(p);
 		}
 		p->p_traceflag |= facs;
-		if (kauth_authorize_generic(curl->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL) == 0)
-			p->p_traceflag |= KTRFAC_ROOT;
+		if (kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_KTRACE,
+		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_KTRACE_PERSISTENT), NULL,
+		    NULL) == 0)
+			p->p_traceflag |= KTRFAC_PERSISTENT;
 	} else {
 		/* KTROP_CLEAR */
 		if (((p->p_traceflag &= ~facs) & KTRFAC_MASK) == 0) {
@@ -1510,9 +1511,9 @@ ktrace_thread(void *arg)
 /*
  * Return true if caller has permission to set the ktracing state
  * of target.  Essentially, the target can't possess any
- * more permissions than the caller.  KTRFAC_ROOT signifies that
- * root previously set the tracing status on the target process, and
- * so, only root may further change it.
+ * more permissions than the caller.  KTRFAC_PERSISTENT signifies that
+ * the tracing will persist on sugid processes during exec; it is only
+ * settable by a process with appropriate credentials.
  *
  * TODO: check groups.  use caller effective gid.
  */
@@ -1522,7 +1523,7 @@ ktrcanset(lwp_t *calll, struct proc *targetp)
 	KASSERT(mutex_owned(&targetp->p_mutex));
 	KASSERT(mutex_owned(&ktrace_lock));
 
-	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_CANKTRACE,
+	if (kauth_authorize_process(calll->l_cred, KAUTH_PROCESS_KTRACE,
 	    targetp, NULL, NULL, NULL) == 0)
 		return (1);
 

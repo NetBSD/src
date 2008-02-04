@@ -1,9 +1,10 @@
-#	$NetBSD: std.g42xxeb,v 1.1.10.1 2006/06/21 14:50:33 yamt Exp $
+#	$NetBSD: std.g42xxeb,v 1.1.10.2 2008/02/04 09:21:48 yamt Exp $
 #
 # standard NetBSD/evbarm for TWINTAIL (G4255EB) options
 
 machine	evbarm arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 # Pull in LUBBOCK config definitions.
 include "arch/evbarm/conf/files.g42xxeb"

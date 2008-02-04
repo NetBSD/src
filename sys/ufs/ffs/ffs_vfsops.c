@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.165.2.7 2008/01/21 09:48:08 yamt Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.165.2.8 2008/02/04 09:25:03 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.7 2008/01/21 09:48:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.8 2008/02/04 09:25:03 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -63,6 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.165.2.7 2008/01/21 09:48:08 yamt Ex
 #include <sys/kauth.h>
 #include <sys/fstrans.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/ufs/quota.h>
@@ -111,6 +112,8 @@ struct vfsops ffs_vfsops = {
 	ffs_snapshot,
 	ffs_extattrctl,
 	ffs_suspendctl,
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	ffs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -161,8 +164,7 @@ ffs_mountroot(void)
 		return (error);
 	}
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -174,7 +176,7 @@ ffs_mountroot(void)
 	memset(fs->fs_fsmnt, 0, sizeof(fs->fs_fsmnt));
 	(void)copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	setrootfstime((time_t)fs->fs_time);
 	return (0);
 }
@@ -299,19 +301,6 @@ ffs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (!update) {
 		int xflags;
 
-		/*
-		 * Disallow multiple mounts of the same device.
-		 * Disallow mounting of a device that is currently in use
-		 * (except for root, which might share swap device for
-		 * miniroot).
-		 */
-		error = vfs_mountedon(devvp);
-		if (error)
-			goto fail;
-		if (vcount(devvp) > 1 && devvp != rootvp) {
-			error = EBUSY;
-			goto fail;
-		}
 		if (mp->mnt_flag & MNT_RDONLY)
 			xflags = FREAD;
 		else
@@ -1191,13 +1180,8 @@ ffs_unmount(struct mount *mp, int mntflags)
 		flags |= FORCECLOSE;
 #ifdef UFS_EXTATTR
 	if (ump->um_fstype == UFS1) {
-		error = ufs_extattr_stop(mp, l);
-		if (error) {
-			if (error != EOPNOTSUPP)
-				printf("%s: ufs_extattr_stop returned %d\n",
-				    fs->fs_fsmnt, error);
-		} else
-			ufs_extattr_uepm_destroy(&ump->um_extattr);
+		ufs_extattr_stop(mp, l);
+		ufs_extattr_uepm_destroy(&ump->um_extattr);
 	}
 #endif /* UFS_EXTATTR */
 	if (mp->mnt_flag & MNT_SOFTDEP) {

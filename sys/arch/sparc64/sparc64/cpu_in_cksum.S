@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.5 2002/01/21 18:50:37 eeh Exp $ */
+/*	$NetBSD: cpu_in_cksum.S,v 1.1.2.2 2008/02/04 09:22:34 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 Eduardo Horvath
@@ -32,13 +32,52 @@
 #include "assym.h"
 #include <machine/asm.h>
 
+#ifdef __arch64__
+#define	LDPTR	ldx
+#else
+#define	LDPTR	lduw
+#endif
+
 /*
- * int in_cksum(struct mbuf *m, int len)
- * int in_cksum_internal(struct mbuf *m, int len, int offset, int sum)
+ * int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum);
  *
  * The only fields of the mbuf we really care about
  * is m_next and m_len and m_data.
+ */
+
+#define	IALIGN	.align	32
+
+	IALIGN
+ENTRY(cpu_in_cksum)
+
+/*
+ * Register args:
  *
+ *	%o0 -	mbuf
+ *	%o1 -	len
+ *	%o2 -	off
+ *	%o3 -	sum
+ *
+ *	// skip unnecessary part
+ *	while (m && off > 0) {
+ *		if (m->m_len > off)
+ *			break;
+ *		off -= m->m_len;
+ *		m = m->m_next;
+ *	}
+ */
+
+2:	brz,pn	%o0, 0f
+	brlez,pn %o1, 0f
+	lduw	[%o0 + M_LEN], %o5
+	cmp	%o2, %o5
+	blt,pt	%icc,0f
+	 nop
+	LDPTR	[%o0 + M_NEXT], %o0
+	ba 2b
+	 sub %o2,%o5,%o2
+
+/*
  *
  * Register usage:
  *
@@ -52,15 +91,7 @@
  *	%g4 -	temp
  *	%g5 -	temp
  */
-
-#define	IALIGN	.align	32
-
-	IALIGN
-ENTRY(in_cksum)
-	clr	%o3		! sum = 0;
-	clr	%o2
-_ENTRY(_C_LABEL(in_cksum_internal))
-	srl	%o3, 0, %o3	! Make sure this is a 32-bit value going in
+0:	srl	%o3, 0, %o3	! Make sure this is a 32-bit value going in
 	brz	%o0, Lfinish	! for (; m && len > 0; m->m_next) {
 	 clr	%g1		! swapped = 0;
 	brlez	%o1, Lfinish

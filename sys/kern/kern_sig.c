@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.207.2.7 2008/01/21 09:46:11 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.207.2.8 2008/02/04 09:24:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.7 2008/01/21 09:46:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.8 2008/02/04 09:24:14 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -164,7 +164,7 @@ signal_init(void)
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
-	callout_init(&proc_stop_ch, 0);
+	callout_init(&proc_stop_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
 }
 
@@ -806,8 +806,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 				continue;
 			mutex_enter(&p->p_mutex);
 			if (kauth_authorize_process(pc,
-			    KAUTH_PROCESS_CANSIGNAL, p,
-			    (void *)(uintptr_t)signo, NULL, NULL) == 0) {
+			    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signo), NULL,
+			    NULL) == 0) {
 				nfound++;
 				if (signo) {
 					mutex_enter(&proclist_mutex);
@@ -834,8 +834,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM)
 				continue;
 			mutex_enter(&p->p_mutex);
-			if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
-			    p, (void *)(uintptr_t)signo, NULL, NULL) == 0) {
+			if (kauth_authorize_process(pc, KAUTH_PROCESS_SIGNAL,
+			    p, KAUTH_ARG(signo), NULL, NULL) == 0) {
 				nfound++;
 				if (signo) {
 					mutex_enter(&proclist_mutex);
@@ -1053,8 +1053,10 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	 * If killing the process, make it run fast.
 	 */
 	if (__predict_false((prop & SA_KILL) != 0) &&
-	    action == SIG_DFL && l->l_priority > PUSER)
-		lwp_changepri(l, PUSER);
+	    action == SIG_DFL && l->l_priority < MAXPRI_USER) {
+		KASSERT(l->l_class == SCHED_OTHER);
+		lwp_changepri(l, MAXPRI_USER);
+	}
 
 	/*
 	 * If the LWP is running or on a run queue, then we win.  If it's

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.24.4.5 2008/01/21 09:46:53 yamt Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.24.4.6 2008/02/04 09:24:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -232,7 +232,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.24.4.5 2008/01/21 09:46:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.24.4.6 2008/02/04 09:24:31 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -610,6 +610,11 @@ layer_lock(v)
 	struct vnode *vp = ap->a_vp, *lowervp;
 	int	flags = ap->a_flags, error;
 
+	if (flags & LK_INTERLOCK) {
+		mutex_exit(&vp->v_interlock);
+		flags &= ~LK_INTERLOCK;
+	}
+
 	if (vp->v_vnlock != NULL) {
 		/*
 		 * The lower level has exported a struct lock to us. Use
@@ -619,7 +624,7 @@ layer_lock(v)
 		 * going away doesn't mean the struct lock below us is.
 		 * LK_EXCLUSIVE is fine.
 		 */
-		return (lockmgr(vp->v_vnlock, flags, &vp->v_interlock));
+		return (vlockmgr(vp->v_vnlock, flags));
 	} else {
 		/*
 		 * Ahh well. It would be nice if the fs we're over would
@@ -632,14 +637,10 @@ layer_lock(v)
 		 * first).
 		 */
 		lowervp = LAYERVPTOLOWERVP(vp);
-		if (flags & LK_INTERLOCK) {
-			mutex_exit(&vp->v_interlock);
-			flags &= ~LK_INTERLOCK;
-		}
 		error = VOP_LOCK(lowervp, flags);
 		if (error)
 			return (error);
-		if ((error = lockmgr(&vp->v_lock, flags, &vp->v_interlock))) {
+		if ((error = vlockmgr(&vp->v_lock, flags))) {
 			VOP_UNLOCK(lowervp, 0);
 		}
 		return (error);
@@ -660,17 +661,16 @@ layer_unlock(v)
 	struct vnode *vp = ap->a_vp;
 	int	flags = ap->a_flags;
 
+	if (flags & LK_INTERLOCK) {
+		mutex_exit(&vp->v_interlock);
+		flags &= ~LK_INTERLOCK;
+	}
+
 	if (vp->v_vnlock != NULL) {
-		return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
-			&vp->v_interlock));
+		return (vlockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE));
 	} else {
-		if (flags & LK_INTERLOCK) {
-			mutex_exit(&vp->v_interlock);
-			flags &= ~LK_INTERLOCK;
-		}
 		VOP_UNLOCK(LAYERVPTOLOWERVP(vp), flags);
-		return (lockmgr(&vp->v_lock, flags | LK_RELEASE,
-			&vp->v_interlock));
+		return (vlockmgr(&vp->v_lock, flags | LK_RELEASE));
 	}
 }
 
@@ -685,13 +685,13 @@ layer_islocked(v)
 	int lkstatus;
 
 	if (vp->v_vnlock != NULL)
-		return lockstatus(vp->v_vnlock);
+		return vlockstatus(vp->v_vnlock);
 
 	lkstatus = VOP_ISLOCKED(LAYERVPTOLOWERVP(vp));
 	if (lkstatus)
 		return lkstatus;
 
-	return lockstatus(&vp->v_lock);
+	return vlockstatus(&vp->v_lock);
 }
 
 /*

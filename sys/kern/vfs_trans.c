@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5.4.6 2008/01/21 09:46:34 yamt Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5.4.7 2008/02/04 09:24:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.4.6 2008/01/21 09:46:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.4.7 2008/02/04 09:24:24 yamt Exp $");
 
 /*
  * File system transaction operations.
@@ -534,7 +534,7 @@ fscow_run(struct buf *bp, bool data_valid)
 	struct fstrans_mount_info *fmi;
 	struct fscow_handler *hp;
 
-	if ((bp->b_oflags & BO_COWDONE))
+	if ((bp->b_flags & B_COWDONE))
 		goto done;
 	if (bp->b_vp == NULL)
 		goto done;
@@ -554,11 +554,8 @@ fscow_run(struct buf *bp, bool data_valid)
 	rw_exit(&fmi->fmi_cow_lock);
 
  done:
- 	if (error == 0) {
- 		mutex_enter(bp->b_objlock);
- 		bp->b_oflags |= BO_COWDONE;
- 		mutex_exit(bp->b_objlock);
- 	}
+ 	if (error == 0)
+ 		bp->b_flags |= B_COWDONE;
 
 	return error;
 }

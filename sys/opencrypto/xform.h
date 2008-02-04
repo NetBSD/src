@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.h,v 1.6.2.2 2006/12/30 20:50:54 yamt Exp $ */
+/*	$NetBSD: xform.h,v 1.6.2.3 2008/02/04 09:24:48 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.h,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
@@ -74,6 +74,9 @@ extern struct auth_hash auth_hash_md5;
 extern struct auth_hash auth_hash_sha1;
 extern struct auth_hash auth_hash_key_md5;
 extern struct auth_hash auth_hash_key_sha1;
+extern struct auth_hash auth_hash_hmac_md5;
+extern struct auth_hash auth_hash_hmac_sha1;
+extern struct auth_hash auth_hash_hmac_ripemd_160;
 extern struct auth_hash auth_hash_hmac_md5_96;
 extern struct auth_hash auth_hash_hmac_sha1_96;
 extern struct auth_hash auth_hash_hmac_ripemd_160_96;

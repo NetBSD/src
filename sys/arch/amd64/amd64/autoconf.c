@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.11.12.3 2008/01/21 09:35:13 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.11.12.4 2008/02/04 09:21:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.12.3 2008/01/21 09:35:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.11.12.4 2008/02/04 09:21:39 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -101,7 +101,6 @@ cpu_configure()
 #endif
 
 #if NIOAPIC > 0
-	lapic_set_lvt();
 	ioapic_enable();
 #endif
 

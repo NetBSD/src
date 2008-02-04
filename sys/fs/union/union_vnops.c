@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.11.4.7 2008/01/21 09:45:57 yamt Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.11.4.8 2008/02/04 09:24:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.11.4.7 2008/01/21 09:45:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.11.4.8 2008/02/04 09:24:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ int union_getattr(void *);
 int union_setattr(void *);
 int union_read(void *);
 int union_write(void *);
-int union_lease(void *);
 int union_ioctl(void *);
 int union_poll(void *);
 int union_revoke(void *);
@@ -155,7 +154,6 @@ const struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_setattr_desc, union_setattr },		/* setattr */
 	{ &vop_read_desc, union_read },			/* read */
 	{ &vop_write_desc, union_write },		/* write */
-	{ &vop_lease_desc, union_lease },		/* lease */
 	{ &vop_ioctl_desc, union_ioctl },		/* ioctl */
 	{ &vop_poll_desc, union_poll },			/* select */
 	{ &vop_revoke_desc, union_revoke },		/* revoke */
@@ -255,13 +253,11 @@ union_lookup1(udvp, dvpp, vpp, cnp)
 	 */
 	while (dvp != udvp && (dvp->v_type == VDIR) &&
 	       (mp = dvp->v_mountedhere)) {
-
-		if (vfs_busy(mp, 0, 0))
+		if (vfs_busy(mp, RW_READER, 0))
 			continue;
-
 		vput(dvp);
 		error = VFS_ROOT(mp, &tdvp);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		if (error) {
 			return (error);
 		}
@@ -1030,21 +1026,6 @@ union_write(v)
 	}
 
 	return (error);
-}
-
-int
-union_lease(v)
-	void *v;
-{
-	struct vop_lease_args /* {
-		struct vnode *a_vp;
-		kauth_cred_t a_cred;
-		int a_flag;
-	} */ *ap = v;
-	struct vnode *ovp = OTHERVP(ap->a_vp);
-
-	ap->a_vp = ovp;
-	return (VCALL(ovp, VOFFSET(vop_lease), ap));
 }
 
 int

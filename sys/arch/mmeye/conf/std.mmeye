@@ -1,16 +1,14 @@
-# $NetBSD: std.mmeye,v 1.8.28.1 2006/06/21 14:53:49 yamt Exp $
+# $NetBSD: std.mmeye,v 1.8.28.2 2008/02/04 09:22:16 yamt Exp $
 #
 # standard, required NetBSD/mmeye 'options'
 
 machine mmeye sh3
 include		"conf/std"	# MI standard options
+include		"arch/sh3/conf/std.sh3eb"	# arch standard options
 
 options 	IOM_ROM_BEGIN=0x00000000
 options 	IOM_RAM_SIZE=0x01000000		# 16MB
 options 	IOM_RAM_BEGIN=0x0c000000
 options 	IOM_ROM_SIZE=0x00200000		# 2MB
 
-options 	EXEC_SCRIPT			# exec #! scripts
-
-makeoptions	ENDIAN="-EB"
 makeoptions	DEFTEXTADDR="0x8c010000"

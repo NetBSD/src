@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.9.2.6 2008/01/21 09:47:41 yamt Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.9.2.7 2008/02/04 09:24:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -164,8 +164,7 @@ ukfs_ll_recycle(struct vnode *vp)
 	VLE(vp);
 	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0);
 	RUMP_VOP_INACTIVE(vp, &recycle);
-	rump_recyclenode(vp);
-	rump_putnode(vp);
+	rump_vp_recycle_nokidding(vp);
 }
 
 /*

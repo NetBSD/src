@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.131.2.4 2008/01/21 09:39:21 yamt Exp $
+#	$NetBSD: files.sparc,v 1.131.2.5 2008/02/04 09:22:30 yamt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -293,7 +293,6 @@ file	arch/sparc/fpu/fpu_subr.c
 file	arch/sparc/sparc/autoconf.c
 file	arch/sparc/sparc/cache.c
 file	arch/sparc/sparc/emul.c
-file	arch/sparc/sparc/in_cksum.c
 file	arch/sparc/sparc/intr.c
 file	arch/sparc/sparc/kgdb_machdep.c	kgdb
 file	arch/sparc/sparc/kobj_machdep.c		modular

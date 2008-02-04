@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_identcpu.c,v 1.2.4.2 2008/01/21 09:40:19 yamt Exp $	*/
+/*	$NetBSD: x86_identcpu.c,v 1.2.4.3 2008/02/04 09:22:53 yamt Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_identcpu.c,v 1.2.4.2 2008/01/21 09:40:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_identcpu.c,v 1.2.4.3 2008/02/04 09:22:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,9 @@ void
 identifycpu_cpuids(struct cpu_info *ci)
 {
 	const char *cpuname = device_xname(ci->ci_dev);
-	u_int smt_max = 1;
-	u_int core_max = 1;
+	u_int lp_max = 1;	/* logical processors per package */
+	u_int smt_max;		/* smt per core */
+	u_int core_max = 1;	/* core per package */
 	int smt_bits, core_bits;
 	uint32_t descs[4];
 
@@ -62,13 +63,15 @@ identifycpu_cpuids(struct cpu_info *ci)
 
 	if ((ci->ci_feature_flags & CPUID_HTT) != 0) {
 		x86_cpuid(1, descs);
-		smt_max = (descs[1] >> 16) & 0xff;
+		lp_max = (descs[1] >> 16) & 0xff;
 	}
 	x86_cpuid(0, descs);
 	if (descs[0] >= 4) {
 		x86_cpuid2(4, 0, descs);
 		core_max = (descs[0] >> 26) + 1;
 	}
+	KASSERT(lp_max >= core_max);
+	smt_max = lp_max / core_max;
 	aprint_debug("%s: core_max %u, smt_max %u\n", cpuname,
 	    core_max, smt_max);
 	smt_bits = ilog2(smt_max - 1) + 1;
@@ -81,7 +84,7 @@ identifycpu_cpuids(struct cpu_info *ci)
 	aprint_verbose("%s: Cluster/Package ID %u\n", cpuname,
 	    ci->ci_packageid);
 	if (core_bits) {
-		u_int core_mask = __BITS(0, core_bits - 1);
+		u_int core_mask = __BITS(smt_bits, smt_bits + core_bits - 1);
 
 		ci->ci_coreid =
 		    __SHIFTOUT(ci->ci_initapicid, core_mask);

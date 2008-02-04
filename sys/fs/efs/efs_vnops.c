@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.6.8.5 2008/01/21 09:45:44 yamt Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.6.8.6 2008/02/04 09:23:44 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6.8.5 2008/01/21 09:45:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.6.8.6 2008/02/04 09:23:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -820,7 +820,6 @@ const struct vnodeopv_entry_desc efs_vnodeop_entries[] = {
 							/* balloc */
 							/* vfree */
 							/* truncate */
-	{ &vop_lease_desc,	genfs_lease_check },	/* lease */
 							/* whiteout */
 	{ &vop_getpages_desc,	genfs_getpages	},	/* getpages */
 	{ &vop_putpages_desc,	genfs_putpages	},	/* putpages */

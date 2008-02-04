@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs.h,v 1.10.4.2 2006/12/30 20:50:01 yamt Exp $	*/
+/*	$NetBSD: smbfs.h,v 1.10.4.3 2008/02/04 09:24:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -79,10 +79,9 @@ struct smbmount {
 	int			sm_flags;
 	long			sm_nextino;
 	struct smb_share * 	sm_share;
-/*	struct simplelock	sm_npslock;*/
 	struct smbnode *	sm_npstack[SMBFS_MAXPATHCOMP];
 	int			sm_caseopt;
-	struct lock		sm_hashlock;
+	kmutex_t		sm_hashlock;
 	LIST_HEAD(smbnode_hashhead, smbnode) *sm_hash;
 	u_long			sm_hashlen;
 	int			sm_didrele;

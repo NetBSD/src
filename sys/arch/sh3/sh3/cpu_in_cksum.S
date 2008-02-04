@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.S,v 1.4.36.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.2.2.2 2008/02/04 09:22:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 SHIMIZU Ryo <ryo@misakimix.org>
@@ -31,6 +31,8 @@
 #include <machine/asm.h>
 #include "assym.h"
 
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.2.2.2 2008/02/04 09:22:30 yamt Exp $")
+
 
 #define	reg_tmp0		r0
 #define	reg_byte_swapped	r1
@@ -38,8 +40,9 @@
 #define	reg_tmp3		r3
 #define	reg_m			r4
 #define	reg_len			r5
-#define	reg_sum			r6
-#define	reg_w			r7
+#define	reg_off			r6
+#define	reg_w			r6	/* recycle */
+#define	reg_sum			r7
 
 
 #define	REDUCE	\
@@ -88,18 +91,38 @@
  * LINTSTUB: include <sys/param.h>
  * LINTSTUB: include <sys/mbuf.h>
  *
- * LINTSTUB: Func: int in_cksum(struct mbuf *m, int len);
+ * LINTSTUB: Func: int cpu_in_cksum(struct mbuf *m, int len, int off, uint32_t initial_sum);
  */
-ENTRY(in_cksum)
+ENTRY(cpu_in_cksum)
 	sts.l	pr,@-sp
 
-
-	mov	#0,reg_sum
-	mov	#0,reg_byte_swapped
-
-
-	tst	reg_len,reg_len
+	tst	reg_len, reg_len
 	bt/s	mbuf_loop_done
+	 mov	#0, reg_byte_swapped
+
+.L_mbuf_skip:
+	tst	reg_m, reg_m
+	bt	out_of_mbufs
+
+	mov.l	@(M_LEN, reg_m), reg_mlen
+	cmp/gt	reg_off, reg_mlen	/* mlen > off ? */
+	bt	.L_mbuf_found
+
+	!! while (off >= mlen)
+	mov.l	@(M_NEXT, reg_m), reg_m	! m = m->m_next
+	bra	.L_mbuf_skip
+	 sub	reg_mlen, reg_off	! off -= mlen
+
+
+.L_mbuf_found: !! if (mlen > off)
+	mov.l	@(M_DATA, reg_m), reg_tmp3
+	sub	reg_off, reg_mlen	! mlen -= off
+	bra	.L_mbuf_loop_enter
+	 add	reg_tmp3, reg_off	! w = m->m_data + off
+
+#undef	reg_off /* it is dead now and we recycle it for reg_w */
+
+
 mbuf_loop:
 	tst	reg_m,reg_m
 	bt	out_of_mbufs
@@ -110,6 +133,11 @@ mbuf_loop:
 	mov.l	@(M_DATA,reg_m),reg_w
 
 
+	!! Entry point for mbuf loop.  We jump here after we have
+	!! found the mbuf (reg_m) that contains data at the specified
+	!! offset.  reg_mlen and reg_w were adjusted to point at the
+	!! first interesting byte of data.
+.L_mbuf_loop_enter:
 	cmp/ge	reg_mlen,reg_len
 	bt	1f
 	mov	reg_len,reg_mlen

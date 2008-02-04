@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vnops.c,v 1.11.10.4 2007/12/07 17:31:55 yamt Exp $	*/
+/*	$NetBSD: filecore_vnops.c,v 1.11.10.5 2008/02/04 09:23:45 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11.10.4 2007/12/07 17:31:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vnops.c,v 1.11.10.5 2008/02/04 09:23:45 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -537,7 +537,6 @@ filecore_pathconf(v)
 #define	filecore_mknod	genfs_eopnotsupp
 #define	filecore_write	genfs_eopnotsupp
 #define	filecore_setattr	genfs_eopnotsupp
-#define	filecore_lease_check	genfs_lease_check
 #define	filecore_fcntl	genfs_fcntl
 #define	filecore_ioctl	genfs_enoioctl
 #define	filecore_fsync	genfs_nullop
@@ -565,7 +564,6 @@ const struct vnodeopv_entry_desc filecore_vnodeop_entries[] = {
 	{ &vop_setattr_desc, filecore_setattr },	/* setattr */
 	{ &vop_read_desc, filecore_read },		/* read */
 	{ &vop_write_desc, filecore_write },		/* write */
-	{ &vop_lease_desc, filecore_lease_check },	/* lease */
 	{ &vop_fcntl_desc, filecore_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, filecore_ioctl },		/* ioctl */
 	{ &vop_poll_desc, filecore_poll },		/* poll */

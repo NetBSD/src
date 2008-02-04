@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.1.16.5 2008/01/21 09:43:58 yamt Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.1.16.6 2008/02/04 09:23:31 yamt Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.11 2006/02/19 13:57:02 damien Exp $	*/
 
 /*-
@@ -85,6 +85,7 @@ struct nfe_softc {
 #define NFE_HW_VLAN		0x08
 #define NFE_USE_JUMBO		0x10
 #define NFE_CORRECT_MACADDR	0x20
+#define NFE_PWR_MGMT		0x40
 
 	uint32_t		rxtxctl;
 	uint8_t			mii_phyaddr;

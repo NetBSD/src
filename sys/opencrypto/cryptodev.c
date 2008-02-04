@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.12.12.4 2008/01/21 09:47:38 yamt Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.12.12.5 2008/02/04 09:24:47 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,12 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.4 2008/01/21 09:47:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.5 2008/02/04 09:24:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/pool.h>
 #include <sys/sysctl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
@@ -51,17 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.12.12.4 2008/01/21 09:47:38 yamt Exp
 #include <sys/device.h>
 #include <sys/kauth.h>
 
+#include "opt_ocf.h"
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/xform.h>
-
-#ifdef __NetBSD__
-  #define splcrypto splnet
-#endif
-#ifdef CRYPTO_DEBUG
-#define DPRINTF(a) uprintf a
-#else
-#define DPRINTF(a)
-#endif
 
 struct csession {
 	TAILQ_ENTRY(csession) next;
@@ -81,7 +74,7 @@ struct csession {
 	int		mackeylen;
 	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
 
-	struct iovec	iovec[IOV_MAX];
+	struct iovec	iovec[1];	/* user requests never have more */
 	struct uio	uio;
 	int		error;
 };
@@ -91,12 +84,14 @@ struct fcrypt {
 	int		sesn;
 };
 
+/* For our fixed-size allocations */
+struct pool fcrpl;
+struct pool csepl;
 
 /* Declaration of master device (fd-cloning/ctxt-allocating) entrypoints */
 static int	cryptoopen(dev_t dev, int flag, int mode, struct lwp *l);
 static int	cryptoread(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptowrite(dev_t dev, struct uio *uio, int ioflag);
-static int	cryptoioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l);
 static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
@@ -167,7 +162,29 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 	u_int32_t ses;
 	int error = 0;
 
-	switch (cmd) {
+	/* backwards compatibility */
+        struct file *criofp;
+	struct fcrypt *criofcr;
+	int criofd;
+
+        switch (cmd) {
+        case CRIOGET:   /* XXX deprecated, remove after 5.0 */
+                if ((error = falloc(l, &criofp, &criofd)) != 0)
+                        return error;
+                criofcr = pool_get(&fcrpl, PR_WAITOK);
+		mutex_spin_enter(&crypto_mtx);
+                TAILQ_INIT(&criofcr->csessions);
+                /*
+                 * Don't ever return session 0, to allow detection of
+                 * failed creation attempts with multi-create ioctl.
+                 */
+                criofcr->sesn = 1;
+		mutex_spin_exit(&crypto_mtx);
+                (void)fdclone(l, criofp, criofd, (FREAD|FWRITE),
+			      &cryptofops, criofcr);
+                *(u_int32_t *)data = criofd;
+		return error;
+                break;
 	case CIOCGSESSION:
 		sop = (struct session_op *)data;
 		switch (sop->cipher) {
@@ -206,9 +223,15 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 		case 0:
 			break;
 		case CRYPTO_MD5_HMAC:
-			thash = &auth_hash_hmac_md5_96;
+			thash = &auth_hash_hmac_md5;
 			break;
 		case CRYPTO_SHA1_HMAC:
+			thash = &auth_hash_hmac_sha1;
+			break;
+		case CRYPTO_MD5_HMAC_96:
+			thash = &auth_hash_hmac_md5_96;
+			break;
+		case CRYPTO_SHA1_HMAC_96:
 			thash = &auth_hash_hmac_sha1_96;
 			break;
 		case CRYPTO_SHA2_HMAC:
@@ -283,7 +306,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 					goto bail;
 			}
 		}
-
+		/* crypto_newsession requires that we hold the mutex. */
+		mutex_spin_enter(&crypto_mtx);
 		error = crypto_newsession(&sid, (txform ? &crie : &cria),
 			    crypto_devallowsoft);
 		if (error) {
@@ -305,6 +329,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 		sop->ses = cse->ses;
 
 bail:
+		mutex_spin_exit(&crypto_mtx);
 		if (error) {
 			if (crie.cri_key)
 				FREE(crie.cri_key, M_XDATA);
@@ -313,16 +338,20 @@ bail:
 		}
 		break;
 	case CIOCFSESSION:
+		mutex_spin_enter(&crypto_mtx);
 		ses = *(u_int32_t *)data;
 		cse = csefind(fcr, ses);
 		if (cse == NULL)
 			return (EINVAL);
 		csedelete(fcr, cse);
 		error = csefree(cse);
+		mutex_spin_exit(&crypto_mtx);
 		break;
 	case CIOCCRYPT:
+		mutex_spin_enter(&crypto_mtx);
 		cop = (struct crypt_op *)data;
 		cse = csefind(fcr, cop->ses);
+		mutex_spin_exit(&crypto_mtx);
 		if (cse == NULL) {
 			DPRINTF(("csefind failed\n"));
 			return (EINVAL);
@@ -347,7 +376,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 {
 	struct cryptop *crp = NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
-	int i, error, s;
+	int error;
 
 	if (cop->len > 256*1024-4)
 		return (E2BIG);
@@ -363,11 +392,10 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	cse->uio.uio_rw = UIO_WRITE;
 	cse->uio.uio_iov = cse->iovec;
 	UIO_SETUP_SYSSPACE(&cse->uio);
-	bzero(&cse->iovec, sizeof(cse->iovec));
+	memset(&cse->iovec, 0, sizeof(cse->iovec));
 	cse->uio.uio_iov[0].iov_len = cop->len;
 	cse->uio.uio_iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK);
-	for (i = 0; i < cse->uio.uio_iovcnt; i++)
-		cse->uio.uio_resid += cse->uio.uio_iov[0].iov_len;
+	cse->uio.uio_resid = cse->uio.uio_iov[0].iov_len;
 
 	crp = crypto_getreq((cse->txform != NULL) + (cse->thash != NULL));
 	if (crp == NULL) {
@@ -454,14 +482,33 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 		crp->crp_mac=cse->tmp_mac;
 	}
 
-	s = splcrypto();	/* NB: only needed with CRYPTO_F_CBIMM */
+	/*
+	 * XXX there was a comment here which said that we went to
+	 * XXX splcrypto() but needed to only if CRYPTO_F_CBIMM,
+	 * XXX disabled on NetBSD since 1.6O due to a race condition.
+	 * XXX But crypto_dispatch went to splcrypto() itself!  (And
+	 * XXX now takes the crypto_mtx mutex itself).  We do, however,
+	 * XXX need to hold the mutex across the call to cv_wait().
+	 * XXX     (should we arrange for crypto_dispatch to return to
+	 * XXX      us with it held?  it seems quite ugly to do so.)
+	 */
 	error = crypto_dispatch(crp);
-	if (error == 0 && (crp->crp_flags & CRYPTO_F_DONE) == 0)
-		error = tsleep(crp, PSOCK, "crydev", 0);
-	splx(s);
-	if (error) {
+	mutex_spin_enter(&crypto_mtx);
+	if (error != 0) {
+		DPRINTF(("cryptodev_op: not waiting, error.\n"));
+		mutex_spin_exit(&crypto_mtx);
 		goto bail;
 	}
+	while (!(crp->crp_flags & CRYPTO_F_DONE)) {
+		DPRINTF(("cryptodev_op: sleeping on cv %08x for crp %08x\n", \
+			(uint32_t)&crp->crp_cv, (uint32_t)crp));
+		cv_wait(&crp->crp_cv, &crypto_mtx);	/* XXX cv_wait_sig? */
+	}
+	if (crp->crp_flags & CRYPTO_F_ONRETQ) {
+		DPRINTF(("cryptodev_op: DONE, not woken by cryptoret.\n"));
+		(void)crypto_ret_q_remove(crp);
+	}
+	mutex_spin_exit(&crypto_mtx);
 
 	if (crp->crp_etype != 0) {
 		error = crp->crp_etype;
@@ -495,11 +542,20 @@ cryptodev_cb(void *op)
 {
 	struct cryptop *crp = (struct cryptop *) op;
 	struct csession *cse = (struct csession *)crp->crp_opaque;
+	int error = 0;
 
+	mutex_spin_enter(&crypto_mtx);
 	cse->error = crp->crp_etype;
-	if (crp->crp_etype == EAGAIN)
-		return crypto_dispatch(crp);
-	wakeup_one(crp);
+	if (crp->crp_etype == EAGAIN) {
+		/* always drop mutex to call dispatch routine */
+		mutex_spin_exit(&crypto_mtx);
+		error = crypto_dispatch(crp);
+		mutex_spin_enter(&crypto_mtx);
+	}
+	if (error != 0 || (crp->crp_flags & CRYPTO_F_DONE)) {
+		cv_signal(&crp->crp_cv);
+	}
+	mutex_spin_exit(&crypto_mtx);
 	return (0);
 }
 
@@ -508,7 +564,9 @@ cryptodevkey_cb(void *op)
 {
 	struct cryptkop *krp = (struct cryptkop *) op;
 
-	wakeup_one(krp);
+	mutex_spin_enter(&crypto_mtx);
+	cv_signal(&krp->krp_cv);
+	mutex_spin_exit(&crypto_mtx);
 	return (0);
 }
 
@@ -574,10 +632,11 @@ cryptodev_key(struct crypt_kop *kop)
 		return (EINVAL);
 	}
 
-	krp = (struct cryptkop *)malloc(sizeof *krp, M_XDATA, M_WAITOK);
+	krp = pool_get(&cryptkop_pool, PR_WAITOK);
 	if (!krp)
 		return (ENOMEM);
 	bzero(krp, sizeof *krp);
+	cv_init(&krp->krp_cv, "crykdev");
 	krp->krp_op = kop->crk_op;
 	krp->krp_status = kop->crk_status;
 	krp->krp_iparams = kop->crk_iparams;
@@ -600,10 +659,19 @@ cryptodev_key(struct crypt_kop *kop)
 	}
 
 	error = crypto_kdispatch(krp);
-	if (error == 0)
-		error = tsleep(krp, PSOCK, "crydev", 0);
-	if (error)
+	if (error != 0) {
 		goto fail;
+	}
+
+	mutex_spin_enter(&crypto_mtx);
+	while (!(krp->krp_flags & CRYPTO_F_DONE)) {
+		cv_wait(&krp->krp_cv, &crypto_mtx);	/* XXX cv_wait_sig? */
+	}
+	if (krp->krp_flags & CRYPTO_F_ONRETQ) {
+		DPRINTF(("cryptodev_key: DONE early, not via cryptoret.\n"));
+		(void)crypto_ret_kq_remove(krp);
+	}
+	mutex_spin_exit(&crypto_mtx);
 
 	if (krp->krp_status != 0) {
 		error = krp->krp_status;
@@ -626,7 +694,7 @@ fail:
 			if (krp->krp_param[i].crp_p)
 				FREE(krp->krp_param[i].crp_p, M_XDATA);
 		}
-		free(krp, M_XDATA);
+		pool_put(&cryptkop_pool, krp);
 	}
 	return (error);
 }
@@ -638,56 +706,62 @@ cryptof_close(struct file *fp, struct lwp *l)
 	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
 	struct csession *cse;
 
+	mutex_spin_enter(&crypto_mtx);
 	while ((cse = TAILQ_FIRST(&fcr->csessions))) {
 		TAILQ_REMOVE(&fcr->csessions, cse, next);
 		(void)csefree(cse);
 	}
-	FREE(fcr, M_XDATA);
-
-	/* close() stolen from sys/kern/kern_ktrace.c */
+	pool_put(&fcrpl, fcr);
 
 	fp->f_data = NULL;
-#if 0
-	FILE_UNUSE(fp, l);	/* release file */
-	fdrelease(l, fd); 	/* release fd table slot */
-#endif
+	mutex_spin_exit(&crypto_mtx);
 
 	return 0;
 }
 
+/* csefind: call with crypto_mtx held. */
 static struct csession *
 csefind(struct fcrypt *fcr, u_int ses)
 {
-	struct csession *cse;
+	struct csession *cse, *ret = NULL;
 
+	KASSERT(mutex_owned(&crypto_mtx));
 	TAILQ_FOREACH(cse, &fcr->csessions, next)
 		if (cse->ses == ses)
-			return (cse);
-	return (NULL);
+			ret = cse;
+	return (ret);
 }
 
+/* csedelete: call with crypto_mtx held. */
 static int
 csedelete(struct fcrypt *fcr, struct csession *cse_del)
 {
 	struct csession *cse;
+	int ret = 0;
 
+	KASSERT(mutex_owned(&crypto_mtx));
 	TAILQ_FOREACH(cse, &fcr->csessions, next) {
 		if (cse == cse_del) {
 			TAILQ_REMOVE(&fcr->csessions, cse, next);
-			return (1);
+			ret = 1;
 		}
 	}
-	return (0);
+	return (ret);
 }
 
+/* cseadd: call with crypto_mtx held. */
 static struct csession *
 cseadd(struct fcrypt *fcr, struct csession *cse)
 {
+	KASSERT(mutex_owned(&crypto_mtx));
+	/* don't let session ID wrap! */
+	if (fcr->sesn + 1 == 0) return NULL;
 	TAILQ_INSERT_TAIL(&fcr->csessions, cse, next);
 	cse->ses = fcr->sesn++;
 	return (cse);
 }
 
+/* csecreate: call with crypto_mtx held. */
 static struct csession *
 csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
     void *mackey, u_int64_t mackeylen, u_int32_t cipher, u_int32_t mac,
@@ -695,8 +769,8 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 {
 	struct csession *cse;
 
-	MALLOC(cse, struct csession *, sizeof(struct csession),
-	    M_XDATA, M_NOWAIT);
+	KASSERT(mutex_owned(&crypto_mtx));
+	cse = pool_get(&csepl, PR_NOWAIT);
 	if (cse == NULL)
 		return NULL;
 	cse->key = key;
@@ -708,21 +782,27 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 	cse->mac = mac;
 	cse->txform = txform;
 	cse->thash = thash;
-	cseadd(fcr, cse);
-	return (cse);
+	if (cseadd(fcr, cse))
+		return (cse);
+	else {
+		pool_put(&csepl, cse);
+		return NULL;
+	}
 }
 
+/* csefree: call with crypto_mtx held. */
 static int
 csefree(struct csession *cse)
 {
 	int error;
 
+	KASSERT(mutex_owned(&crypto_mtx));
 	error = crypto_freesession(cse->sid);
 	if (cse->key)
 		FREE(cse->key, M_XDATA);
 	if (cse->mackey)
 		FREE(cse->mackey, M_XDATA);
-	FREE(cse, M_XDATA);
+	pool_put(&csepl, cse);
 	return (error);
 }
 
@@ -730,9 +810,26 @@ static int
 cryptoopen(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
+	struct file *fp;
+        struct fcrypt *fcr;
+        int fd, error;
+
 	if (crypto_usercrypto == 0)
 		return (ENXIO);
-	return (0);
+
+	if ((error = falloc(l, &fp, &fd)) != 0)
+		return error;
+
+	fcr = pool_get(&fcrpl, PR_WAITOK);
+	mutex_spin_enter(&crypto_mtx);
+	TAILQ_INIT(&fcr->csessions);
+	/*
+	 * Don't ever return session 0, to allow detection of
+	 * failed creation attempts with multi-create ioctl.
+	 */
+	fcr->sesn = 1;
+	mutex_spin_exit(&crypto_mtx);
+	return fdclone(l, fp, fd, flag, &cryptofops, fcr);
 }
 
 static int
@@ -747,41 +844,6 @@ cryptowrite(dev_t dev, struct uio *uio, int ioflag)
 	return (EIO);
 }
 
-static int
-cryptoioctl(dev_t dev, u_long cmd, void *data, int flag,
-    struct lwp *l)
-{
-	struct file *f;
-	struct fcrypt *fcr;
-	int fd, error;
-
-	switch (cmd) {
-	case CRIOGET:
-		MALLOC(fcr, struct fcrypt *,
-		    sizeof(struct fcrypt), M_XDATA, M_WAITOK);
-		TAILQ_INIT(&fcr->csessions);
-		fcr->sesn = 0;
-
-		error = falloc(l, &f, &fd);
-		if (error) {
-			FREE(fcr, M_XDATA);
-			return (error);
-		}
-		f->f_flag = FREAD | FWRITE;
-		f->f_type = DTYPE_CRYPTO;
-		f->f_ops = &cryptofops;
-		f->f_data = (void *) fcr;
-		*(u_int32_t *)data = fd;
-		FILE_SET_MATURE(f);
-		FILE_UNUSE(f, l);
-		break;
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
-}
-
 int
 cryptoselect(dev_t dev, int rw, struct lwp *l)
 {
@@ -791,10 +853,10 @@ cryptoselect(dev_t dev, int rw, struct lwp *l)
 /*static*/
 struct cdevsw crypto_cdevsw = {
 	/* open */	cryptoopen,
-	/* close */	nullclose,
+	/* close */	noclose,
 	/* read */	cryptoread,
 	/* write */	cryptowrite,
-	/* ioctl */	cryptoioctl,
+	/* ioctl */	noioctl,
 	/* ttstop?*/	nostop,
 	/* ??*/		notty,
 	/* poll */	cryptoselect /*nopoll*/,
@@ -803,7 +865,6 @@ struct cdevsw crypto_cdevsw = {
 	/* type */	D_OTHER,
 };
 
-#ifdef __NetBSD__
 /*
  * Pseudo-device initialization routine for /dev/crypto
  */
@@ -812,7 +873,18 @@ void	cryptoattach(int);
 void
 cryptoattach(int num)
 {
+	pool_init(&fcrpl, sizeof(struct fcrypt), 0, 0, 0, "fcrpl",
+		  NULL, IPL_NET);	/* XXX IPL_NET ("splcrypto") */
+	pool_init(&csepl, sizeof(struct csession), 0, 0, 0, "csepl",
+		  NULL, IPL_NET);	/* XXX IPL_NET ("splcrypto") */
 
-	/* nothing to do */
+	/*
+	 * Preallocate space for 64 users, with 5 sessions each.
+	 * (consider that a TLS protocol session requires at least
+	 * 3DES, MD5, and SHA1 (both hashes are used in the PRF) for
+	 * the negotiation, plus HMAC_SHA1 for the actual SSL records,
+	 * consuming one session here for each algorithm.
+	 */
+	pool_prime(&fcrpl, 64);
+	pool_prime(&csepl, 64 * 5);
 }
-#endif /* __NetBSD__ */

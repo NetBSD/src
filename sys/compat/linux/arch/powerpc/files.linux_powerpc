@@ -1,4 +1,4 @@
-#	$NetBSD: files.linux_powerpc,v 1.5.12.1 2006/12/30 20:47:38 yamt Exp $
+#	$NetBSD: files.linux_powerpc,v 1.5.12.2 2008/02/04 09:23:04 yamt Exp $
 #
 # Config file description for powerpc-dependent Linux compat code.
 
@@ -17,3 +17,4 @@ file	compat/linux/common/linux_socketcall.c		compat_linux
 file	compat/linux/common/linux_llseek.c		compat_linux
 file	compat/linux/common/linux_olduname.c		compat_linux
 file	compat/linux/common/linux_file64.c		compat_linux
+file	compat/linux/common/linux_fcntl64.c		compat_linux

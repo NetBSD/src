@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.23.16.1 2007/02/26 09:10:46 yamt Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.23.16.2 2008/02/04 09:23:40 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
  *		      Nick Hibma <n_hibma@freebsd.org>
@@ -179,6 +179,8 @@ struct umass_softc {
 #define	UMASS_QUIRK_WRONG_CSWSIG	0x00000001
 #define	UMASS_QUIRK_WRONG_CSWTAG	0x00000002
 #define	UMASS_QUIRK_RBC_PAD_TO_12	0x00000004
+
+#define UMASS_QUIRK_USE_DEFAULTMATCH	-1
 
 	u_int32_t		sc_busquirks;
 

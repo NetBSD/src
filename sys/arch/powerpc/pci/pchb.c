@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.2.4.2 2007/10/27 11:27:55 yamt Exp $	*/
+/*	$NetBSD: pchb.c,v 1.2.4.3 2008/02/04 09:22:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.2.4.2 2007/10/27 11:27:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.2.4.3 2008/02/04 09:22:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -245,8 +245,10 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 #if NAGP > 0
 	struct agpbus_attach_args apa;
 #endif
-
-	printf("\n");
+	volatile unsigned char *python;
+	uint32_t v;
+	
+	aprint_normal("\n");
 
 	/*
 	 * All we do is print out a description.  Eventually, we
@@ -255,7 +257,7 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 	 */
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	printf("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	switch (PCI_VENDOR(pa->pa_id)) {
@@ -263,6 +265,13 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_IBM_82660:
 			ibm82660_print(pa, self);
+			break;
+		case PCI_PRODUCT_IBM_PYTHON:
+			python = mapiodev(0xfeff6000, 0x60);
+			v = 0x88b78e01; /* taken from linux */
+			out32rb(python+0x30, v);
+			v = in32rb(python+0x30);
+			aprint_debug("Reset python reg 30 to 0x%x\n", v);
 			break;
 		}
 		break;

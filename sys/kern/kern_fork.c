@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.122.2.8 2008/01/21 09:46:04 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.122.2.9 2008/02/04 09:24:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.8 2008/01/21 09:46:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.9 2008/02/04 09:24:11 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -233,7 +233,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (__predict_false(tnprocs >= maxproc))
 		error = -1;
 	else
-		error = kauth_authorize_process(p1->p_cred,
+		error = kauth_authorize_process(l1->l_cred,
 		    KAUTH_PROCESS_FORK, p1, KAUTH_ARG(tnprocs), NULL, NULL);
 
 	if (error) {

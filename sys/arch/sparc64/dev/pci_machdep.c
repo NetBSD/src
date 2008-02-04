@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.49.12.3 2007/09/03 14:30:15 yamt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.49.12.4 2008/02/04 09:22:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.49.12.3 2007/09/03 14:30:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.49.12.4 2008/02/04 09:22:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -554,5 +554,5 @@ pci_intr_disestablish(pci_chipset_tag_t pc, void *cookie)
 	DPRINTF(SPDB_INTR, ("pci_intr_disestablish: cookie %p\n", cookie));
 
 	/* XXX */
-	panic("can't disestablish PCI interrupts yet");
+	/* panic("can't disestablish PCI interrupts yet"); */
 }

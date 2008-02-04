@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.722.2.8 2008/01/21 09:42:18 yamt Exp $
+#	$NetBSD: files,v 1.722.2.9 2008/02/04 09:23:15 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -53,6 +53,8 @@ defflag	opt_config.h		INCLUDE_CONFIG_FILE INCLUDE_JUST_CONFIG
 defparam opt_dump.h		DUMP_ON_PANIC
 
 defflag	opt_callout.h		CALLWHEEL_STATS
+
+defflag				CPU_IN_CKSUM
 
 defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
@@ -1069,17 +1071,20 @@ define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 
 defparam USB_MEM_RESERVE
 
-device	uhci: usbus
+define	usbroothub
+file	dev/usb/usbroothub_subr.c	usbroothub
+
+device	uhci: usbus, usbroothub
 file	dev/usb/uhci.c			uhci			needs-flag
 
 # OHCI USB controller
 #
-device	ohci: usbus
+device	ohci: usbus, usbroothub
 file	dev/usb/ohci.c			ohci			needs-flag
 
 # EHCI USB controller
 #
-device	ehci: usbus
+device	ehci: usbus, usbroothub
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
@@ -1467,6 +1472,7 @@ file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
+file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm
@@ -1515,8 +1521,11 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
+file	netinet/in4_cksum.c		inet
+file	netinet/in_cksum.c		inet
 file	netinet/in_gif.c		gif & inet
 file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf

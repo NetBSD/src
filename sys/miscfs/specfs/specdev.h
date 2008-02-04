@@ -1,4 +1,37 @@
-/*	$NetBSD: specdev.h,v 1.26.12.3 2007/10/27 11:35:57 yamt Exp $	*/
+/*	$NetBSD: specdev.h,v 1.26.12.4 2008/02/04 09:24:35 yamt Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1990, 1993
@@ -30,35 +63,37 @@
  *
  *	@(#)specdev.h	8.6 (Berkeley) 5/21/95
  */
+
 #ifndef _MISCFS_SPECFS_SPECDEV_H_
 #define _MISCFS_SPECFS_SPECDEV_H_
 
-/*
- * This structure defines the information maintained about
- * special devices. It is allocated in checkalias and freed
- * in vgone.
- */
-struct spec_cow_entry {
-	SLIST_ENTRY(spec_cow_entry) ce_list;
-	int (*ce_func)(void *, struct buf *);
-	void *ce_cookie;
-};
+#include <sys/mutex.h>
+#include <sys/vnode.h>
 
-struct specinfo {
-	struct	vnode **si_hashchain;
-	struct	vnode *si_specnext;
-	struct	mount *si_mountpoint;
-	dev_t	si_rdev;
-	struct	lockf *si_lockf;
-};
+typedef struct specnode {
+	vnode_t		*sn_next;
+	struct specdev	*sn_dev;
+	u_int		sn_opencnt;
+	dev_t		sn_rdev;
+	bool		sn_gone;
+} specnode_t;
+
+typedef struct specdev {
+	struct mount	*sd_mountpoint;
+	struct lockf	*sd_lockf;
+	vnode_t		*sd_bdevvp;
+	u_int		sd_opencnt;
+	u_int		sd_refcnt;
+	dev_t		sd_rdev;
+} specdev_t;
+
 /*
  * Exported shorthand
  */
-#define v_rdev		v_specinfo->si_rdev
-#define v_hashchain	v_specinfo->si_hashchain
-#define v_specnext	v_specinfo->si_specnext
-#define v_speclockf	v_specinfo->si_lockf
-#define v_specmountpoint v_specinfo->si_mountpoint
+#define v_specnext	v_specnode->sn_next
+#define v_rdev		v_specnode->sn_rdev
+#define v_speclockf	v_specnode->sn_dev->sd_lockf
+#define v_specmountpoint v_specnode->sn_dev->sd_mountpoint
 
 /*
  * Special device management
@@ -70,7 +105,12 @@ struct specinfo {
 #define	SPECHASH(rdev)	(((unsigned)((rdev>>5)+(rdev)))%SPECHSZ)
 #endif
 
-extern	struct vnode *speclisth[SPECHSZ];
+extern vnode_t	*specfs_hash[SPECHSZ];
+extern kmutex_t	specfs_lock;
+
+void	spec_node_init(vnode_t *, dev_t);
+void	spec_node_destroy(vnode_t *);
+void	spec_node_revoke(vnode_t *);
 
 /*
  * Prototypes for special file operations on vnodes.
@@ -92,7 +132,6 @@ int	spec_close(void *);
 #define	spec_setattr	genfs_ebadf
 int	spec_read(void *);
 int	spec_write(void *);
-#define	spec_lease_check genfs_nullop
 #define spec_fcntl	genfs_fcntl
 int	spec_ioctl(void *);
 int	spec_poll(void *);

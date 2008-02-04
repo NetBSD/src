@@ -1,7 +1,8 @@
-# $NetBSD: std.acorn26,v 1.1.30.1 2006/06/21 14:47:47 yamt Exp $
+# $NetBSD: std.acorn26,v 1.1.30.2 2008/02/04 09:21:36 yamt Exp $
 
 # Standard NetBSD/acorn26 options
 
 machine acorn26 arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 

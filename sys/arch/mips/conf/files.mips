@@ -1,4 +1,4 @@
-#	$NetBSD: files.mips,v 1.51.8.3 2007/09/03 14:27:55 yamt Exp $
+#	$NetBSD: files.mips,v 1.51.8.4 2008/02/04 09:22:12 yamt Exp $
 #
 
 defflag	opt_cputype.h		NOFPU
@@ -52,8 +52,6 @@ file	arch/mips/mips/cache_r5k_subr.S		mips3 | mips4
 file	arch/mips/mips/cache_r5900.c		mips3 & mips3_5900
 file	arch/mips/mips/cache_r10k.c	(mips3|mips4) & enable_mips4_cache_r10k
 file	arch/mips/mips/cache_mipsNN.c		mips32 | mips64
-
-file	arch/mips/mips/in_cksum.c		inet
 
 file	arch/mips/mips/mips_fputrap.c		softfloat | !nofpu
 file	arch/mips/mips/mips_emul.c

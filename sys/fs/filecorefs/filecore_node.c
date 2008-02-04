@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_node.c,v 1.6.4.6 2008/01/21 09:45:45 yamt Exp $	*/
+/*	$NetBSD: filecore_node.c,v 1.6.4.7 2008/02/04 09:23:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.6.4.6 2008/01/21 09:45:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_node.c,v 1.6.4.7 2008/02/04 09:23:44 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ filecore_ihashins(ip)
 	simple_unlock(&filecore_ihash_slock);
 
 	vp = ip->i_vnode;
-	lockmgr(&vp->v_lock, LK_EXCLUSIVE, &vp->v_interlock);
+	vlockmgr(&vp->v_lock, LK_EXCLUSIVE);
 }
 
 /*
