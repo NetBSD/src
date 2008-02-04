@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.7 2008/02/03 18:13:55 riz Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.8 2008/02/04 20:53:18 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -57,4 +57,10 @@ games/larn/scores.c				1.16 via patch
 	manipulate the effective uid, only the effective gid.
 	Use mkstemp to make the temporary files used when you win.
 	[dholland, ticket #1067]
+
+sys/netipsec/ipsec_mbuf.c			1.10 via patch
+
+	Avoid a buffer overrun which could crash a FAST_IPSEC kernel.
+	PR#30124.
+	[seanb, ticket #1015]
 
