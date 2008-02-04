@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.7 2008/02/02 05:33:56 itohy Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.8 2008/02/04 08:42:41 chris Exp $	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/04/02 17:11:21 thorpej Exp */
 
@@ -70,11 +70,7 @@ message dobootblks
 message set_kernel_1
 {Kernel (GENERIC)}
 message set_kernel_2
-{Kernel (GENERIC_RPC_WSCONS)}
-message set_kernel_3
 {Kernel (GENERIC_NC)}
-message set_kernel_4
-{Kernel (GENERIC_NC_WSCONS)}
 
 message arm32fspart
 {Partycje NetBSD na dysku %s wygladaja teraz tak (Rozmiary i Przesuniecia w %s):
