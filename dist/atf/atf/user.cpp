@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,14 +37,40 @@
 #include "config.h"
 
 extern "C" {
+#include <sys/param.h>
 #include <sys/types.h>
 #include <unistd.h>
 }
 
+#include "atf/sanity.hpp"
 #include "atf/user.hpp"
 
 namespace impl = atf::user;
 #define IMPL_NAME "atf::user"
+
+uid_t
+impl::euid(void)
+{
+    return ::geteuid();
+}
+
+bool
+impl::is_member_of_group(gid_t gid)
+{
+    static gid_t groups[NGROUPS_MAX];
+    static int ngroups = -1;
+
+    if (ngroups == -1) {
+        ngroups = ::getgroups(NGROUPS_MAX, groups);
+        INV(ngroups >= 0);
+    }
+
+    bool found = false;
+    for (int i = 0; !found && i < ngroups; i++)
+        if (groups[i] == gid)
+            found = true;
+    return found;
+}
 
 bool
 impl::is_root(void)

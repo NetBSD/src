@@ -1,7 +1,7 @@
 dnl
 dnl Automated Testing Framework (atf)
 dnl
-dnl Copyright (c) 2007 The NetBSD Foundation, Inc.
+dnl Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 dnl All rights reserved.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -38,17 +38,19 @@ dnl -----------------------------------------------------------------------
 dnl Initialize the GNU build system.
 dnl -----------------------------------------------------------------------
 
-AC_INIT([Automated Testing Framework], [0.3], [atf-devel@NetBSD.org], [atf])
+AC_INIT([Automated Testing Framework], [0.4], [atf-devel@NetBSD.org], [atf])
 AC_PREREQ([2.60])
-AC_COPYRIGHT([Copyright (c) 2007 The NetBSD Foundation, Inc.])
+AC_COPYRIGHT([Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.])
 AC_DEFINE(PACKAGE_COPYRIGHT,
-          ["Copyright (c) 2007 The NetBSD Foundation, Inc."],
+          ["Copyright (c) 2007, 2008 The NetBSD Foundation, Inc."],
           [Define to the copyright string applicable to this package.])
 AC_CONFIG_AUX_DIR([admin])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([admin])
 AC_CONFIG_SRCDIR([atf.hpp])
 AC_CONFIG_TESTDIR([tests/bootstrap])
+
+AC_CANONICAL_TARGET
 
 AM_INIT_AUTOMAKE([1.9 check-news subdir-objects -Wall])
 
@@ -74,97 +76,31 @@ dnl -----------------------------------------------------------------------
 AC_LANG(C++)
 AC_PROG_CXX
 
-AC_MSG_CHECKING(whether basename takes a constant pointer)
-AC_COMPILE_IFELSE(
-    [#include <libgen.h>
-     int main(void) {
-         const char* s = "/foo/bar/";
-         (void)::basename(s);
-     }],
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_CONST_BASENAME], [1],
-              [Define to 1 if basename takes a constant pointer]),
-    AC_MSG_RESULT(no))
+ATF_DEVELOPER_MODE
 
-AC_MSG_CHECKING(whether dirname takes a constant pointer)
-AC_COMPILE_IFELSE(
-    [#include <libgen.h>
-     int main(void) {
-         const char* s = "/foo/bar/";
-         (void)::dirname(s);
-     }],
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_CONST_DIRNAME], [1],
-              [Define to 1 if dirname takes a constant pointer]),
-    AC_MSG_RESULT(no))
+ATF_MODULE_APPLICATION
+ATF_MODULE_ENV
+ATF_MODULE_FS
+ATF_MODULE_SANITY
 
-AC_CHECK_FUNCS([putenv setenv unsetenv])
+dnl -----------------------------------------------------------------------
+dnl Architecture and machine checks.
+dnl -----------------------------------------------------------------------
 
-AC_MSG_CHECKING(whether putenv is in std)
-AC_COMPILE_IFELSE(
-    [#include <cstdlib>
-     int main(void) {
-         std::putenv("a=b");
-         return 0;
-     }],
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_PUTENV_IN_STD], [1],
-              [Define to 1 if putenv is in std]),
-    AC_MSG_RESULT(no))
+machine=${target_cpu}
 
-AC_MSG_CHECKING(whether setenv is in std)
-AC_COMPILE_IFELSE(
-    [#include <cstdlib>
-     int main(void) {
-         std::setenv("a", "b");
-         return 0;
-     }],
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_SETENV_IN_STD], [1],
-              [Define to 1 if setenv is in std]),
-    AC_MSG_RESULT(no))
+case ${machine} in
+    i@<:@3-9@:>@86)
+        arch=i386
+        ;;
+    *)
+        arch=${machine}
+        ;;
+esac
 
-AC_MSG_CHECKING(whether snprintf is in std)
-AC_COMPILE_IFELSE(
-    [#include <cstdio>
-     int main(void) {
-         char buf;
-         std::snprintf(&buf, 1, "");
-         return 0;
-     }],
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_SNPRINTF_IN_STD], [1],
-              [Define to 1 if snprintf is in std]),
-    AC_MSG_RESULT(no))
-
-AC_MSG_CHECKING(whether unsetenv is in std)
-AC_COMPILE_IFELSE(
-    [#include <cstdlib>
-     int main(void) {
-         std::unsetenv("a");
-         return 0;
-     }],
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_UNSETENV_IN_STD], [1],
-              [Define to 1 if unsetenv is in std]),
-    AC_MSG_RESULT(no))
-
-AC_MSG_CHECKING(whether vsnprintf is in std)
-AC_COMPILE_IFELSE(
-    [#include <cstdarg>
-     #include <cstdio>
-     int main(void) {
-         va_list ap;
-         char* buf = NULL;
-         const char* fmt = NULL;
-         std::vsnprintf(buf, 0, fmt, ap);
-     }],
-    AC_MSG_RESULT(yes)
-    AC_DEFINE([HAVE_VSNPRINTF_IN_STD], [1],
-              [Define to 1 if vnsprintf is in std]),
-    AC_MSG_RESULT(no))
-
-AC_CHECK_FUNCS([unmount])
+AC_MSG_NOTICE([Machine type: ${machine}, architecture: ${arch}])
+AC_SUBST(atf_arch, ${arch})
+AC_SUBST(atf_machine, ${machine})
 
 dnl -----------------------------------------------------------------------
 dnl User-customizable variables.
@@ -214,6 +150,7 @@ fi
 AC_SUBST(atf_cssdir, \${datadir}/examples/atf)
 AC_SUBST(atf_dtddir, \${datadir}/xml/atf)
 AC_SUBST(atf_egdir, \${datadir}/examples/atf)
+AC_SUBST(atf_pkgconfigdir, \${libdir}/pkgconfig)
 AC_SUBST(atf_xsldir, \${datadir}/xsl/atf)
 
 dnl -----------------------------------------------------------------------
@@ -236,16 +173,6 @@ if test x"${ATF_SHELL}" = x""; then
     AC_MSG_ERROR([No POSIX shell interpreter found; maybe set ATF_SHELL?])
 fi
 
-AC_MSG_CHECKING([whether ${ATF_SHELL} supports trap -])
-output=`${ATF_SHELL} -c 'trap -- -' 2>&1`
-if test x"${output}" != x""; then
-    AC_SUBST([SH_TRAP_DASH], [no])
-    AC_MSG_RESULT([no])
-else
-    AC_SUBST([SH_TRAP_DASH], [yes])
-    AC_MSG_RESULT([yes])
-fi
-
 dnl -----------------------------------------------------------------------
 dnl Check for required tools.
 dnl -----------------------------------------------------------------------
@@ -253,75 +180,10 @@ dnl -----------------------------------------------------------------------
 AC_PATH_PROG([MTN], [mtn])
 
 dnl -----------------------------------------------------------------------
-dnl Set up the developer mode
-dnl -----------------------------------------------------------------------
-
-AC_ARG_ENABLE(developer,
-              AS_HELP_STRING(--enable-developer,
-                             [enable developer features]),,
-              [case ${PACKAGE_VERSION} in
-               0.*|*99*|*alpha*|*beta*)
-                   enable_developer=yes
-                   ;;
-               *)
-                   enable_developer=no
-                   ;;
-               esac])
-
-if test ${enable_developer} = yes; then
-    try_flags="-g \
-               -Wabi \
-               -Wall \
-               -Wcast-qual \
-               -Wctor-dtor-privacy \
-               -Werror \
-               -Wextra \
-               -Wno-deprecated \
-               -Wno-non-template-friend \
-               -Wno-pmf-conversions \
-               -Wno-sign-compare \
-               -Wno-unused-parameter \
-               -Wnon-virtual-dtor \
-               -Woverloaded-virtual \
-               -Wpointer-arith \
-               -Wredundant-decls \
-               -Wreorder \
-               -Wreturn-type \
-               -Wshadow \
-               -Wsign-promo \
-               -Wswitch \
-               -Wsynth \
-               -Wwrite-strings"
-    #
-    # The following flags should also be enabled but cannot be.  Reasons
-    # given below.
-    #
-    # -Wold-style-cast: Raises errors when using TIOCGWINSZ, at least under
-    #                   Mac OS X.  This is due to the way _IOR is defined.
-    #
-else
-    try_flags="-DNDEBUG"
-fi
-
-valid=""
-for f in ${try_flags}
-do
-    AC_MSG_CHECKING(whether ${CXX} supports ${f})
-    saved_cxxflags="${CXXFLAGS}"
-    CXXFLAGS="${CXXFLAGS} ${f}"
-    AC_COMPILE_IFELSE([int main(void) { return 0; }],
-                      AC_MSG_RESULT(yes)
-                      valid="${valid} ${f}",
-                      AC_MSG_RESULT(no))
-    CXXFLAGS="${saved_cxxflags}"
-done
-CXXFLAGS="${CXXFLAGS} ${valid}"
-
-dnl -----------------------------------------------------------------------
 dnl Finally, generate output.
 dnl -----------------------------------------------------------------------
 
-AC_OUTPUT([Makefile subrs/atf.config.subr])
+AC_OUTPUT([Makefile])
 
 if test ${enable_shared} = yes; then
     AC_MSG_WARN([Shared libraries with unstable ABIs/APIs have been enabled.])
