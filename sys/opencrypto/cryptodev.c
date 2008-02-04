@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.33 2008/02/04 00:35:34 tls Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.34 2008/02/04 14:46:27 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.33 2008/02/04 00:35:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.34 2008/02/04 14:46:27 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,26 +310,23 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 		mutex_spin_enter(&crypto_mtx);
 		error = crypto_newsession(&sid, (txform ? &crie : &cria),
 			    crypto_devallowsoft);
-		if (error) {
+		if (!error) {
+			cse = csecreate(fcr, sid, crie.cri_key, crie.cri_klen,
+			    cria.cri_key, cria.cri_klen, sop->cipher, sop->mac,
+			    txform, thash);
+			if (cse != NULL) {
+				sop->ses = cse->ses;
+			} else {
+				DPRINTF(("csecreate failed\n"));
+				crypto_freesession(sid);
+				error = EINVAL;
+			}
+		} else {
 		  	DPRINTF(("SIOCSESSION violates kernel parameters %d\n",
 			    error));
-			goto bail;
 		}
-
-		cse = csecreate(fcr, sid, crie.cri_key, crie.cri_klen,
-		    cria.cri_key, cria.cri_klen, sop->cipher, sop->mac, txform,
-		    thash);
-
-		if (cse == NULL) {
-			DPRINTF(("csecreate failed\n"));
-			crypto_freesession(sid);
-			error = EINVAL;
-			goto bail;
-		}
-		sop->ses = cse->ses;
-
-bail:
 		mutex_spin_exit(&crypto_mtx);
+bail:
 		if (error) {
 			if (crie.cri_key)
 				FREE(crie.cri_key, M_XDATA);
@@ -357,9 +354,11 @@ bail:
 			return (EINVAL);
 		}
 		error = cryptodev_op(cse, cop, l);
+		DPRINTF(("cryptodev_op error = %d\n", error));
 		break;
 	case CIOCKEY:
 		error = cryptodev_key((struct crypt_kop *)data);
+		DPRINTF(("cryptodev_key error = %d\n", error));
 		break;
 	case CIOCASYMFEAT:
 		error = crypto_getfeat((int *)data);
@@ -511,22 +510,28 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	mutex_spin_exit(&crypto_mtx);
 
 	if (crp->crp_etype != 0) {
+		DPRINTF(("cryptodev_op: crp_etype %d\n", crp->crp_etype));
 		error = crp->crp_etype;
 		goto bail;
 	}
 
 	if (cse->error) {
+		DPRINTF(("cryptodev_op: cse->error %d\n", cse->error));
 		error = cse->error;
 		goto bail;
 	}
 
 	if (cop->dst &&
-	    (error = copyout(cse->uio.uio_iov[0].iov_base, cop->dst, cop->len)))
+	    (error = copyout(cse->uio.uio_iov[0].iov_base, cop->dst, cop->len))) {
+		DPRINTF(("cryptodev_op: copyout error %d\n", error));
 		goto bail;
+	}
 
 	if (cop->mac &&
-	    (error = copyout(crp->crp_mac, cop->mac, cse->thash->authsize)))
+	    (error = copyout(crp->crp_mac, cop->mac, cse->thash->authsize))) {
+		DPRINTF(("cryptodev_op: mac copyout error %d\n", error));
 		goto bail;
+	}
 
 bail:
 	if (crp)
@@ -674,6 +679,7 @@ cryptodev_key(struct crypt_kop *kop)
 	mutex_spin_exit(&crypto_mtx);
 
 	if (krp->krp_status != 0) {
+		DPRINTF(("cryptodev_key: krp->krp_status 0x%08x\n", krp->krp_status));
 		error = krp->krp_status;
 		goto fail;
 	}
@@ -683,8 +689,10 @@ cryptodev_key(struct crypt_kop *kop)
 		if (size == 0)
 			continue;
 		error = copyout(krp->krp_param[i].crp_p, kop->crk_param[i].crp_p, size);
-		if (error)
+		if (error) {
+			DPRINTF(("cryptodev_key: copyout oparam %d failed, error=%d\n", i-krp->krp_iparams, error));
 			goto fail;
+		}
 	}
 
 fail:
@@ -696,6 +704,7 @@ fail:
 		}
 		pool_put(&cryptkop_pool, krp);
 	}
+	DPRINTF(("cryptodev_key: error=0x%08x\n", error));
 	return (error);
 }
 
@@ -782,6 +791,7 @@ csecreate(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
 	cse->mac = mac;
 	cse->txform = txform;
 	cse->thash = thash;
+	cse->error = 0;
 	if (cseadd(fcr, cse))
 		return (cse);
 	else {
