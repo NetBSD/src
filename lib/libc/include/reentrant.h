@@ -1,4 +1,4 @@
-/*	$NetBSD: reentrant.h,v 1.11 2007/11/27 20:58:26 ad Exp $	*/
+/*	$NetBSD: reentrant.h,v 1.12 2008/02/04 23:08:01 rtr Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2003 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@
 #ifdef _REENTRANT
 
 /*
- * Abtract thread interface for thread-safe libraries.  These routines
+ * Abstract thread interface for thread-safe libraries.  These routines
  * will use stubs in libc if the application is not linked against the
  * pthread library, and the real function in the pthread library if it
  * is.
