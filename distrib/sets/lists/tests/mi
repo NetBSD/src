@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.16 2008/01/03 20:48:02 jdc Exp $
+# $NetBSD: mi,v 1.17 2008/02/04 20:33:12 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -23,6 +23,7 @@
 ./usr/libdata/debug/usr/tests/atf/units/t_io.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_parser.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_sanity.debug			tests-atf-debug		debug
+./usr/libdata/debug/usr/tests/atf/units/t_signals.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_tests.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_text.debug			tests-atf-debug		debug
 ./usr/libdata/debug/usr/tests/atf/units/t_user.debug			tests-atf-debug		debug
@@ -47,6 +48,9 @@
 ./usr/tests/Atffile				tests-base-tests
 ./usr/tests/atf					tests-atf-tests
 ./usr/tests/atf/Atffile				tests-atf-tests
+./usr/tests/atf/data				tests-atf-tests
+./usr/tests/atf/data/Atffile			tests-atf-tests
+./usr/tests/atf/data/t_pkg_config		tests-atf-tests
 ./usr/tests/atf/formats				tests-atf-tests
 ./usr/tests/atf/formats/Atffile			tests-atf-tests
 ./usr/tests/atf/formats/d_atffile_1		tests-atf-tests
@@ -247,6 +251,8 @@
 ./usr/tests/atf/tools/t_atf_cleanup		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_compile		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_config		tests-atf-tests
+./usr/tests/atf/tools/t_atf_exec		tests-atf-tests
+./usr/tests/atf/tools/t_atf_killpg		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_report		tests-atf-tests
 ./usr/tests/atf/tools/t_atf_run			tests-atf-tests
 ./usr/tests/atf/units				tests-atf-tests
@@ -258,6 +264,7 @@
 ./usr/tests/atf/units/t_io			tests-atf-tests
 ./usr/tests/atf/units/t_parser			tests-atf-tests
 ./usr/tests/atf/units/t_sanity			tests-atf-tests
+./usr/tests/atf/units/t_signals			tests-atf-tests
 ./usr/tests/atf/units/t_tests			tests-atf-tests
 ./usr/tests/atf/units/t_text			tests-atf-tests
 ./usr/tests/atf/units/t_user			tests-atf-tests

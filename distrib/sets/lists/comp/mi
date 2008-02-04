@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1112 2008/01/27 01:30:18 christos Exp $
+#	$NetBSD: mi,v 1.1113 2008/02/04 20:33:11 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -121,6 +121,7 @@
 ./usr/include/atf/macros.hpp			comp-atf-include
 ./usr/include/atf/parser.hpp			comp-atf-include
 ./usr/include/atf/sanity.hpp			comp-atf-include
+./usr/include/atf/signals.hpp			comp-atf-include
 ./usr/include/atf/tests.hpp			comp-atf-include
 ./usr/include/atf/text.hpp			comp-atf-include
 ./usr/include/atf/ui.hpp			comp-atf-include
@@ -2278,6 +2279,8 @@
 ./usr/lib/liby_p.a				comp-c-proflib		profile
 ./usr/lib/libz.a				comp-c-lib
 ./usr/lib/libz_p.a				comp-c-proflib		profile
+./usr/lib/pkgconfig				comp-c-lib
+./usr/lib/pkgconfig/atf.pc			comp-atf-lib
 ./usr/libdata/debug/bin/cat.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chio.debug		comp-util-debug		debug
 ./usr/libdata/debug/bin/chmod.debug		comp-util-debug		debug
@@ -2793,7 +2796,9 @@
 ./usr/libdata/debug/usr/games/worms.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/wump.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/libexec/atf-cleanup.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/libexec/atf-exec.debug		comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atf-format.debug	comp-atf-debug		debug
+./usr/libdata/debug/usr/libexec/atf-killpg.debug	comp-atf-debug		debug
 ./usr/libdata/debug/usr/libexec/atrun.debug	comp-cron-debug		debug
 ./usr/libdata/debug/usr/libexec/cc1.debug	comp-c-debug		gcccmds,debug
 ./usr/libdata/debug/usr/libexec/cc1obj.debug	comp-objc-debug		gcccmds,debug
@@ -4286,6 +4291,8 @@
 ./usr/share/man/cat3/atoi.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atol.0			comp-c-catman		.cat
 ./usr/share/man/cat3/atoll.0			comp-c-catman		.cat
+./usr/share/man/cat3/atf-c++-api.0		comp-atf-catman		.cat
+./usr/share/man/cat3/atf-sh-api.0		comp-atf-catman		.cat
 ./usr/share/man/cat3/attr_get.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_off.0			comp-c-catman		.cat
 ./usr/share/man/cat3/attr_on.0			comp-c-catman		.cat
@@ -8892,6 +8899,8 @@
 ./usr/share/man/man3/atoi.3			comp-c-man		.man
 ./usr/share/man/man3/atol.3			comp-c-man		.man
 ./usr/share/man/man3/atoll.3			comp-c-man		.man
+./usr/share/man/man3/atf-c++-api.3		comp-atf-man		.man
+./usr/share/man/man3/atf-sh-api.3		comp-atf-man		.man
 ./usr/share/man/man3/attr_get.3			comp-c-man		.man
 ./usr/share/man/man3/attr_off.3			comp-c-man		.man
 ./usr/share/man/man3/attr_on.3			comp-c-man		.man
