@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.4 2008/02/02 05:33:56 itohy Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.5 2008/02/04 08:42:41 chris Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -70,11 +70,7 @@ message dobootblks
 message set_kernel_1
 {Nucleo (GENERIC)}
 message set_kernel_2
-{Nucleo (GENERIC_RPC_WSCONS)}
-message set_kernel_3 
 {Nucleo (GENERIC_NC)}
-message set_kernel_4
-{Nucleo (GENERIC_NC_WSCONS)}
 
 
 message arm32fspart
