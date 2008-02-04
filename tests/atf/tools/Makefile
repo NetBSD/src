@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2007/11/21 15:39:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2008/02/04 20:30:15 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,8 @@ TESTS_CXX+=	h_pass
 TESTS_SH=	t_atf_cleanup
 TESTS_SH+=	t_atf_compile
 TESTS_SH+=	t_atf_config
+TESTS_SH+=	t_atf_exec
+TESTS_SH+=	t_atf_killpg
 TESTS_SH+=	t_atf_report
 TESTS_SH+=	t_atf_run
 
