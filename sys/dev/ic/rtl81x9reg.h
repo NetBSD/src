@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.27 2007/03/21 12:17:31 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.28 2008/02/04 15:16:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -123,7 +123,7 @@
 /*
  * Registers specific to the 8169 gigE chip
  */
-#define RTK_GTXSTART		0x0038	/* 16 bits */
+#define RTK_GTXSTART		0x0038	/* 8 bits */
 #define RTK_TIMERINT_8169	0x0058	/* different offset than 8139 */
 #define RTK_PHYAR		0x0060
 #define RTK_TBICSR		0x0064
