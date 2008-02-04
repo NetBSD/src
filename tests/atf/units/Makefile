@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2007/11/21 15:39:34 jmmv Exp $
+# $NetBSD: Makefile,v 1.3 2008/02/04 20:30:15 jmmv Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,7 @@ TESTS_CXX+=	t_fs
 TESTS_CXX+=	t_io
 TESTS_CXX+=	t_parser
 TESTS_CXX+=	t_sanity
+TESTS_CXX+=	t_signals
 TESTS_CXX+=	t_tests
 TESTS_CXX+=	t_text
 TESTS_CXX+=	t_user
