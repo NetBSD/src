@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -54,6 +54,15 @@ init_variables(void)
 {
     PRE(m_variables.empty());
 
+    if (atf::env::has("ATF_ARCH")) {
+        const std::string& val = atf::env::get("ATF_ARCH");
+        if (!val.empty())
+            m_variables["atf_arch"] = val;
+        else
+            m_variables["atf_arch"] = ATF_ARCH;
+    } else
+        m_variables["atf_arch"] = ATF_ARCH;
+
     if (atf::env::has("ATF_CONFDIR")) {
         const std::string& val = atf::env::get("ATF_CONFDIR");
         if (!val.empty())
@@ -71,6 +80,15 @@ init_variables(void)
             m_variables["atf_libexecdir"] = ATF_LIBEXECDIR;
     } else
         m_variables["atf_libexecdir"] = ATF_LIBEXECDIR;
+
+    if (atf::env::has("ATF_MACHINE")) {
+        const std::string& val = atf::env::get("ATF_MACHINE");
+        if (!val.empty())
+            m_variables["atf_machine"] = val;
+        else
+            m_variables["atf_machine"] = ATF_MACHINE;
+    } else
+        m_variables["atf_machine"] = ATF_MACHINE;
 
     if (atf::env::has("ATF_PKGDATADIR")) {
         const std::string& val = atf::env::get("ATF_PKGDATADIR");

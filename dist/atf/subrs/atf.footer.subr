@@ -1,7 +1,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -46,8 +46,16 @@
 # ------------------------------------------------------------------------
 
 # Values of configuration variables obtained from atf-config.
+Atf_Arch=$(atf-config -t atf_arch)
 Atf_Cleanup=$(atf-config -t atf_libexecdir)/atf-cleanup
+Atf_Exec=$(atf-config -t atf_libexecdir)/atf-exec
 Atf_Format=$(atf-config -t atf_libexecdir)/atf-format
+Atf_Killpg=$(atf-config -t atf_libexecdir)/atf-killpg
+Atf_Machine=$(atf-config -t atf_machine)
+
+# List of configuration variables set through the command line.  Needed
+# during shortcut execution.
+Config_Vars=
 
 # List of blocked signals, to be processed when unblocked.
 Held_Signals=
@@ -421,6 +429,7 @@ _atf_config_set()
 {
     _var=$(_atf_normalize ${1}); shift
     eval __tc_config_var_${_var}=\"\${*}\"
+    Config_Vars="${Config_Vars} __tc_config_var_${_var}"
 }
 
 #
@@ -471,6 +480,25 @@ _atf_ensure_boolean()
         ;;
     *)
         _atf_error 128 "Invalid value for boolean variable \`${1}'"
+        ;;
+    esac
+}
+
+#
+# _atf_ensure_integral var
+#
+#   Ensures that the test case defined the variable 'var' to an integral
+#   value.
+#
+_atf_ensure_integral()
+{
+    _atf_ensure_not_empty ${1}
+
+    case $(atf_get ${1}) in
+    [0-9]*)
+        ;;
+    *)
+        _atf_error 128 "Invalid value for integral variable \`${1}'"
         ;;
     esac
 }
@@ -633,9 +661,11 @@ _atf_parse_head()
     Test_Case="${1}"
 
     atf_set ident "${1}"
+    atf_set timeout 300
     ${1}_head
     _atf_ensure_not_empty descr
     _atf_ensure_not_empty ident
+    _atf_ensure_integral timeout
     test $(atf_get ident) = "${1}" || \
         _atf_error 128 "Test case redefined ident"
 
@@ -665,6 +695,32 @@ _atf_run_body()
     unset TZ
 
     umask 0022
+
+    _arches=$(atf_get require.arch)
+    if [ -n "${_arches}" ]; then
+        found=no
+        for _a in ${_arches}; do
+            if [ ${_a} = ${Atf_Arch} ]; then
+                found=yes
+                break
+            fi
+        done
+        [ ${found} = yes ] || \
+            atf_skip "Requires one of the '${_arches}' architectures"
+    fi
+
+    _machines=$(atf_get require.machine)
+    if [ -n "${_machines}" ]; then
+        found=no
+        for _m in ${_machines}; do
+            if [ ${_m} = ${Atf_Machine} ]; then
+                found=yes
+                break
+            fi
+        done
+        [ ${found} = yes ] || \
+            atf_skip "Requires one of the '${_machines}' machine types"
+    fi
 
     _vars="$(atf_get require.config)"
     if [ -n "${_vars}" ]; then
@@ -698,16 +754,29 @@ _atf_run_body()
         ;;
     esac
 
-    # Restore all signals to their default behavior for the child process.
-    if [ ${SH_TRAP_DASH} = yes ]; then
-        trap -- -
-    else
-        # We don't have an easy way to reset all signals to their default
-        # behavior, so simply revert those that we modified.
-        trap SIGHUP SIGINT SIGTERM
-    fi
+    # Previous versions of this code reverted all signal handlers to their
+    # default behavior at this point.  We do not need to do this any more
+    # because this piece of code is run in a clean sub-shell (through the
+    # _atf_shortcut_exec call), i.e. a completely re-executed shell, and
+    # we have not messed with signal handlers at all until this point.
 
     ${1}_body
+}
+
+_atf_program_timeout()
+{
+    cat >${Work_Dir}/timeout.sh <<EOF
+#! /bin/sh
+_timeout=$(atf_get timeout)
+if [ \${_timeout} -gt 0 ]; then
+    sleep \${_timeout}
+    touch ${Work_Dir}/atf.timed.out
+    ${Atf_Killpg} $1 >/dev/null 2>&1
+fi
+EOF
+    chmod +x ${Work_Dir}/timeout.sh
+    ${Atf_Exec} -g ${Work_Dir}/timeout.sh >/dev/null 2>&1 &
+    echo $!
 }
 
 #
@@ -737,8 +806,16 @@ _atf_run_tc()
 
     Work_Dir=$(mktemp -d $(atf_config_get workdir)/atf.XXXXXX)
     if [ ${?} -eq 0 ]; then
-        ( cd ${Work_Dir} ; _atf_run_body ${1} ; atf_pass )
+        _atf_shortcut_exec ${1}; _body_pid=$!
+        _timeout_pid=$(_atf_program_timeout ${_body_pid})
+        wait ${_body_pid}
         _ret=$?
+        if [ -f ${Work_Dir}/atf.timed.out ]; then
+            ( atf_fail "Test case timed out after $(atf_get timeout) seconds" )
+            _ret=${?}
+        else
+            ${Atf_Killpg} ${_timeout_pid}
+        fi
         ( cd ${Work_Dir} ; ${1}_cleanup )
         if [ ${2} -gt 1 ]; then
             echo __atf_tc_separator__
@@ -799,6 +876,83 @@ _atf_run_tcs()
     done
 
     ${_ok}
+}
+
+#
+# _atf_shortcut_entry
+#
+#   Secondary entry point for the program.  This is only called internally
+#   to process a test case's body.  We must do a full re-exec of the script
+#   in order to change its process group by means of an external tool.
+#   Yes, this is ugly, but there is no other way to do it -- unless we
+#   modified the shell interpreter to provide a built-in for changing the
+#   process group of the current process...
+#
+#   Keep in sync with _atf_shortcut_exec.
+#
+_atf_shortcut_entry()
+{
+    # Set global program status.
+    _config_file=${_ATF_CONFIG_FILE}; unset _ATF_CONFIG_FILE
+    Results_Fd=${_ATF_RESULTS_FD}; unset _ATF_RESULTS_FD
+    Results_File=${_ATF_RESULTS_FILE}; unset _ATF_RESULTS_FILE
+    Source_Dir=${_ATF_SOURCE_DIR}; unset _ATF_SOURCE_DIR
+    Work_Dir=${_ATF_WORK_DIR}; unset _ATF_WORK_DIR
+
+    # Gather specific details of this re-exec.
+    _shortcut_tc=${_ATF_SHORTCUT}; unset _ATF_SHORTCUT
+
+    # Global initialization, as found in main.
+    if [ -f ${_config_file} ]; then
+        . ${_config_file}
+        rm ${_config_file}
+    fi
+    _atf_internal_set srcdir "${Source_Dir}"
+    atf_init_test_cases
+
+    # Test-case specific initialization, as found in _atf_run_tc.
+    _atf_parse_head ${_shortcut_tc}
+    _atf_internal_set srcdir "${Source_Dir}"
+
+    # Really run the test case's body.  This is the only part that
+    # should remain if we were really able to change the process group
+    # of a sub-shell.
+    cd ${Work_Dir}
+    _atf_run_body ${_shortcut_tc}
+    atf_pass
+}
+
+#
+# _atf_shortcut_exec tc
+#
+#   Re-executes the current script in a different process group in order
+#   to process the given test case's body.  $! is set to the child process
+#   on return.
+#
+#   Keep in sync with _atf_shortcut_entry.
+#
+_atf_shortcut_exec()
+{
+    # Save the value of the configuration variables set through -v.
+    # We must do this through a files as there is no other easy way to
+    # preserve spaces in them.  But this can bring raise problems...
+    if [ -n "${Config_Vars}" ]; then
+        _config_file=${Work_Dir}/atf.config.vars
+        for _var in ${Config_Vars}; do
+            _val=$(eval echo \${${_var}})
+            echo ${_var}=\'${_val}\' >>${_config_file}
+        done
+    fi
+
+    # Now do the real re-execution.
+    ${Atf_Exec} -g env \
+        _ATF_CONFIG_FILE=${_config_file} \
+        _ATF_RESULTS_FD=${Results_Fd} \
+        _ATF_RESULTS_FILE=${Results_File} \
+        _ATF_SHORTCUT=${1} \
+        _ATF_SOURCE_DIR=${Source_Dir} \
+        _ATF_WORK_DIR=${Work_Dir} \
+        ${Source_Dir}/${Prog_Name} &
 }
 
 #
@@ -910,6 +1064,12 @@ _atf_warning()
 #
 main()
 {
+    # Handle shortcut execution path as early as possible.
+    if [ ${_ATF_SHORTCUT-__unset__} != __unset__ ]; then
+        _atf_shortcut_entry
+        # NOTREACHED
+    fi
+
     # The test program's base directory where it will put temporary files.
     _atf_config_set workdir $(atf-config -t atf_workdir)
 

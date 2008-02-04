@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -109,6 +109,7 @@ class tc {
     std::string m_srcdir;
 
     void ensure_boolean(const std::string&);
+    void ensure_integral(const std::string&);
     void ensure_not_empty(const std::string&);
 
     tcr safe_run(void) const;

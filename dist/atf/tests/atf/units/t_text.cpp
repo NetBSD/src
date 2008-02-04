@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -252,6 +252,28 @@ ATF_TEST_CASE_BODY(to_string)
     ATF_CHECK_EQUAL(to_string("a"), "a");
     ATF_CHECK_EQUAL(to_string(5), "5");
 }
+#include <iostream>
+ATF_TEST_CASE(to_type);
+ATF_TEST_CASE_HEAD(to_type)
+{
+    set("descr", "Tests the to_type function");
+}
+ATF_TEST_CASE_BODY(to_type)
+{
+    using atf::text::to_type;
+
+    ATF_CHECK_EQUAL(to_type< int >("0"), 0);
+    ATF_CHECK_EQUAL(to_type< int >("1234"), 1234);
+    ATF_CHECK_THROW(to_type< int >("0 a"), std::runtime_error);
+    ATF_CHECK_THROW(to_type< int >("a"), std::runtime_error);
+
+    ATF_CHECK_EQUAL(to_type< float >("0.5"), 0.5);
+    ATF_CHECK_EQUAL(to_type< float >("1234.5"), 1234.5);
+    ATF_CHECK_THROW(to_type< float >("0.5 a"), std::runtime_error);
+    ATF_CHECK_THROW(to_type< float >("a"), std::runtime_error);
+
+    ATF_CHECK_EQUAL(to_type< std::string >("a"), "a");
+}
 
 ATF_INIT_TEST_CASES(tcs)
 {
@@ -260,4 +282,5 @@ ATF_INIT_TEST_CASES(tcs)
     ATF_ADD_TEST_CASE(tcs, split_delims);
     ATF_ADD_TEST_CASE(tcs, trim);
     ATF_ADD_TEST_CASE(tcs, to_string);
+    ATF_ADD_TEST_CASE(tcs, to_type);
 }

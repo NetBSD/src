@@ -2,7 +2,7 @@
 #
 # Automated Testing Framework (atf)
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -76,7 +76,6 @@ main()
     echo "#! ${Atf_Shell}" >${tfile}
     cat ${Atf_Pkgdatadir}/atf.init.subr >>${tfile}
     echo >>${tfile}
-    echo '. ${Atf_Pkgdatadir}/atf.config.subr' >>${tfile}
     echo '. ${Atf_Pkgdatadir}/atf.header.subr' >>${tfile}
     echo >>${tfile}
     cat ${sfiles} >>${tfile}

@@ -860,7 +860,7 @@ fi
 # List of tests.
 if $at_list_p; then
   cat <<_ATEOF
-Automated Testing Framework 0.3 test suite: bootstrap tests test groups:
+Automated Testing Framework 0.4 test suite: bootstrap tests test groups:
 
  NUM: FILE-NAME:LINE     TEST-GROUP-NAME
       KEYWORDS
@@ -884,7 +884,7 @@ _ATEOF
   exit 0
 fi
 if $at_version_p; then
-  echo "$as_me (Automated Testing Framework 0.3)"
+  echo "$as_me (Automated Testing Framework 0.4)"
   cat <<\_ACEOF
 
 Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006 Free Software
@@ -968,13 +968,13 @@ exec 5>>"$at_suite_log"
 # Banners and logs.
 cat <<\_ASBOX
 ## ------------------------------------------------------------ ##
-## Automated Testing Framework 0.3 test suite: bootstrap tests. ##
+## Automated Testing Framework 0.4 test suite: bootstrap tests. ##
 ## ------------------------------------------------------------ ##
 _ASBOX
 {
   cat <<\_ASBOX
 ## ------------------------------------------------------------ ##
-## Automated Testing Framework 0.3 test suite: bootstrap tests. ##
+## Automated Testing Framework 0.4 test suite: bootstrap tests. ##
 ## ------------------------------------------------------------ ##
 _ASBOX
   echo
@@ -2332,7 +2332,204 @@ $at_traceon
 
 
 $at_traceoff
-echo "$at_srcdir/t_application_opts_args.at:77: $({
+echo "$at_srcdir/t_application_opts_args.at:76: $({
+    old=$(pwd)
+    while test $(pwd) != '/' -a ! -e ./Makefile; do
+        cd ..
+    done
+    topdir=$(pwd)
+    cd ${old}
+    echo ${topdir}
+})/tests/bootstrap/h_app_opts_args -- -d"
+echo t_application_opts_args.at:76 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; $({
+    old=$(pwd)
+    while test $(pwd) != '/' -a ! -e ./Makefile; do
+        cd ..
+    done
+    topdir=$(pwd)
+    cd ${old}
+    echo ${topdir}
+})/tests/bootstrap/h_app_opts_args -- -d ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; $({
+    old=$(pwd)
+    while test $(pwd) != '/' -a ! -e ./Makefile; do
+        cd ..
+    done
+    topdir=$(pwd)
+    cd ${old}
+    echo ${topdir}
+})/tests/bootstrap/h_app_opts_args -- -d ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; tee stdout <"$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_application_opts_args.at:76: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_application_opts_args.at:77: grep -- '-d given' stdout"
+echo t_application_opts_args.at:77 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep -- '-d given' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep -- '-d given' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   1) ;;
+   *) echo "$at_srcdir/t_application_opts_args.at:77: exit code was $at_status, expected 1"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_application_opts_args.at:78: $({
+    old=$(pwd)
+    while test $(pwd) != '/' -a ! -e ./Makefile; do
+        cd ..
+    done
+    topdir=$(pwd)
+    cd ${old}
+    echo ${topdir}
+})/tests/bootstrap/h_app_opts_args arg -d"
+echo t_application_opts_args.at:78 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; $({
+    old=$(pwd)
+    while test $(pwd) != '/' -a ! -e ./Makefile; do
+        cd ..
+    done
+    topdir=$(pwd)
+    cd ${old}
+    echo ${topdir}
+})/tests/bootstrap/h_app_opts_args arg -d ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; $({
+    old=$(pwd)
+    while test $(pwd) != '/' -a ! -e ./Makefile; do
+        cd ..
+    done
+    topdir=$(pwd)
+    cd ${old}
+    echo ${topdir}
+})/tests/bootstrap/h_app_opts_args arg -d ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; tee stdout <"$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_application_opts_args.at:78: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_application_opts_args.at:79: grep -- '-d given' stdout"
+echo t_application_opts_args.at:79 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep -- '-d given' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep -- '-d given' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   1) ;;
+   *) echo "$at_srcdir/t_application_opts_args.at:79: exit code was $at_status, expected 1"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+$at_traceoff
+echo "$at_srcdir/t_application_opts_args.at:83: $({
     old=$(pwd)
     while test $(pwd) != '/' -a ! -e ./Makefile; do
         cd ..
@@ -2341,7 +2538,7 @@ echo "$at_srcdir/t_application_opts_args.at:77: $({
     cd ${old}
     echo ${topdir}
 })/tests/bootstrap/h_app_empty -h"
-echo t_application_opts_args.at:77 >"$at_check_line_file"
+echo t_application_opts_args.at:83 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -2380,7 +2577,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_application_opts_args.at:77: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_application_opts_args.at:83: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -2393,8 +2590,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_application_opts_args.at:78: grep '\\[options\\]\$' stdout"
-echo t_application_opts_args.at:78 >"$at_check_line_file"
+echo "$at_srcdir/t_application_opts_args.at:84: grep '\\[options\\]\$' stdout"
+echo t_application_opts_args.at:84 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -2421,7 +2618,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_application_opts_args.at:78: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_application_opts_args.at:84: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -2435,7 +2632,7 @@ $at_traceon
 
 
 $at_traceoff
-echo "$at_srcdir/t_application_opts_args.at:82: $({
+echo "$at_srcdir/t_application_opts_args.at:88: $({
     old=$(pwd)
     while test $(pwd) != '/' -a ! -e ./Makefile; do
         cd ..
@@ -2444,7 +2641,7 @@ echo "$at_srcdir/t_application_opts_args.at:82: $({
     cd ${old}
     echo ${topdir}
 })/tests/bootstrap/h_app_opts_args -h"
-echo t_application_opts_args.at:82 >"$at_check_line_file"
+echo t_application_opts_args.at:88 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -2483,7 +2680,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_application_opts_args.at:82: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_application_opts_args.at:88: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -2496,8 +2693,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_application_opts_args.at:83: grep '\\[options\\] <arg1> <arg2>' stdout"
-echo t_application_opts_args.at:83 >"$at_check_line_file"
+echo "$at_srcdir/t_application_opts_args.at:89: grep '\\[options\\] <arg1> <arg2>' stdout"
+echo t_application_opts_args.at:89 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -2520,7 +2717,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_application_opts_args.at:83: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_application_opts_args.at:89: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6353,12 +6550,13 @@ $at_traceon
 
 
 
-all_vars="atf_confdir atf_libexecdir atf_pkgdatadir atf_shell atf_workdir"
-all_vars_no=5
+all_vars="atf_arch atf_confdir atf_libexecdir atf_machine atf_pkgdatadir \
+          atf_shell atf_workdir"
+all_vars_no=7
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:44: atf-config"
-echo t_atf_config.at:44 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:45: atf-config"
+echo t_atf_config.at:45 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6381,7 +6579,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:44: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:45: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6394,8 +6592,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:45: test $(wc -l stdout | awk '{ print $1 }') = \${all_vars_no}"
-echo t_atf_config.at:45 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:46: test $(wc -l stdout | awk '{ print $1 }') = \${all_vars_no}"
+echo t_atf_config.at:46 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6418,7 +6616,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:45: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:46: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6432,8 +6630,8 @@ $at_traceon
 
 for v in ${all_vars}; do
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:47: grep \"\${v}\" stdout"
-echo t_atf_config.at:47 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:48: grep \"\${v}\" stdout"
+echo t_atf_config.at:48 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6456,7 +6654,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:47: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:48: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6472,8 +6670,8 @@ done
 
 for v in ${all_vars}; do
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:52: atf-config \${v}"
-echo t_atf_config.at:52 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:53: atf-config \${v}"
+echo t_atf_config.at:53 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6496,7 +6694,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:52: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:53: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6509,8 +6707,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:53: test $(wc -l stdout | awk '{ print $1 }') = 1"
-echo t_atf_config.at:53 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:54: test $(wc -l stdout | awk '{ print $1 }') = 1"
+echo t_atf_config.at:54 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6533,7 +6731,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:53: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:54: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6546,8 +6744,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:54: grep \"\${v}\" stdout"
-echo t_atf_config.at:54 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:55: grep \"\${v}\" stdout"
+echo t_atf_config.at:55 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6570,7 +6768,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:54: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:55: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6583,8 +6781,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:55: awk '{ print $3 }' stdout"
-echo t_atf_config.at:55 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:56: awk '{ print $3 }' stdout"
+echo t_atf_config.at:56 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6607,7 +6805,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:55: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:56: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6620,8 +6818,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:56: mv stdout expout"
-echo t_atf_config.at:56 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:57: mv stdout expout"
+echo t_atf_config.at:57 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6644,7 +6842,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:56: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:57: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6657,8 +6855,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:57: atf-config -t \${v}"
-echo t_atf_config.at:57 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:58: atf-config -t \${v}"
+echo t_atf_config.at:58 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6681,7 +6879,7 @@ $at_diff expout "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:57: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:58: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6696,8 +6894,8 @@ $at_traceon
 done
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:61: atf-config atf_libexecdir atf_pkgdatadir"
-echo t_atf_config.at:61 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:62: atf-config atf_libexecdir atf_pkgdatadir"
+echo t_atf_config.at:62 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6720,7 +6918,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:61: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:62: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6733,8 +6931,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:62: grep 'atf_libexecdir' stdout"
-echo t_atf_config.at:62 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:63: grep 'atf_libexecdir' stdout"
+echo t_atf_config.at:63 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6757,7 +6955,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:62: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:63: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6770,8 +6968,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:63: grep 'atf_pkgdatadir' stdout"
-echo t_atf_config.at:63 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:64: grep 'atf_pkgdatadir' stdout"
+echo t_atf_config.at:64 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6794,7 +6992,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:63: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:64: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6807,8 +7005,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:64: test $(wc -l stdout | awk '{ print $1 }') = 2"
-echo t_atf_config.at:64 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:65: test $(wc -l stdout | awk '{ print $1 }') = 2"
+echo t_atf_config.at:65 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6831,7 +7029,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:64: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:65: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6845,8 +7043,8 @@ $at_traceon
 
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:67: atf-config non_existent"
-echo t_atf_config.at:67 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:68: atf-config non_existent"
+echo t_atf_config.at:68 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6869,7 +7067,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    1) ;;
-   *) echo "$at_srcdir/t_atf_config.at:67: exit code was $at_status, expected 1"
+   *) echo "$at_srcdir/t_atf_config.at:68: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6882,8 +7080,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_config.at:68: grep 'Unknown variable.*non_existent' stderr"
-echo t_atf_config.at:68 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:69: grep 'Unknown variable.*non_existent' stderr"
+echo t_atf_config.at:69 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6906,7 +7104,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:68: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:69: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6921,8 +7119,8 @@ $at_traceon
 
 for v in ${all_vars}; do
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:72: atf-config \${v} non_existent"
-echo t_atf_config.at:72 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:73: atf-config \${v} non_existent"
+echo t_atf_config.at:73 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6945,7 +7143,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    1) ;;
-   *) echo "$at_srcdir/t_atf_config.at:72: exit code was $at_status, expected 1"
+   *) echo "$at_srcdir/t_atf_config.at:73: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6958,8 +7156,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:74: grep 'Unknown variable.*non_existent' stderr"
-echo t_atf_config.at:74 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:75: grep 'Unknown variable.*non_existent' stderr"
+echo t_atf_config.at:75 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -6982,7 +7180,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:74: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:75: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -6995,8 +7193,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:75: atf-config non_existent \${v}"
-echo t_atf_config.at:75 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:76: atf-config non_existent \${v}"
+echo t_atf_config.at:76 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7019,7 +7217,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    1) ;;
-   *) echo "$at_srcdir/t_atf_config.at:75: exit code was $at_status, expected 1"
+   *) echo "$at_srcdir/t_atf_config.at:76: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7032,8 +7230,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:77: grep 'Unknown variable.*non_existent' stderr"
-echo t_atf_config.at:77 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:78: grep 'Unknown variable.*non_existent' stderr"
+echo t_atf_config.at:78 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7056,7 +7254,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:77: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:78: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7073,8 +7271,8 @@ done
 for v in ${all_vars}; do
     V=$(echo ${v} | tr '[a-z]' '[A-Z]')
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:83: env \${V}=testval atf-config"
-echo t_atf_config.at:83 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:84: env \${V}=testval atf-config"
+echo t_atf_config.at:84 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7097,7 +7295,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:83: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:84: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7110,8 +7308,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:84: mv stdout all"
-echo t_atf_config.at:84 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:85: mv stdout all"
+echo t_atf_config.at:85 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7134,7 +7332,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:84: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:85: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7148,8 +7346,8 @@ $at_traceon
 
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:86: grep \"\${v}\" all"
-echo t_atf_config.at:86 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:87: grep \"\${v}\" all"
+echo t_atf_config.at:87 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7172,7 +7370,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:86: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:87: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7185,8 +7383,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:87: mv stdout affected"
-echo t_atf_config.at:87 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:88: mv stdout affected"
+echo t_atf_config.at:88 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7209,7 +7407,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:87: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:88: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7222,8 +7420,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:88: grep -v \"\${v}\" all"
-echo t_atf_config.at:88 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:89: grep -v \"\${v}\" all"
+echo t_atf_config.at:89 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7246,7 +7444,7 @@ echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:88: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:89: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7259,8 +7457,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:89: mv stdout unaffected"
-echo t_atf_config.at:89 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:90: mv stdout unaffected"
+echo t_atf_config.at:90 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7283,7 +7481,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:89: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:90: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7297,8 +7495,8 @@ $at_traceon
 
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:91: test $(wc -l affected | awk '{ print $1 }') = 1"
-echo t_atf_config.at:91 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:92: test $(wc -l affected | awk '{ print $1 }') = 1"
+echo t_atf_config.at:92 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7321,7 +7519,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:91: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:92: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7334,8 +7532,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:93: test $(wc -l unaffected | awk '{ print $1 }') = \$((\${all_vars_no} - 1))"
-echo t_atf_config.at:93 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:94: test $(wc -l unaffected | awk '{ print $1 }') = \$((\${all_vars_no} - 1))"
+echo t_atf_config.at:94 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7358,7 +7556,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:93: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:94: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7372,8 +7570,8 @@ $at_traceon
 
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:95: grep \"\${v} : testval\" affected"
-echo t_atf_config.at:95 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:96: grep \"\${v} : testval\" affected"
+echo t_atf_config.at:96 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7396,7 +7594,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_config.at:95: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_config.at:96: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7409,8 +7607,8 @@ fi
 $at_traceon
 
     $at_traceoff
-echo "$at_srcdir/t_atf_config.at:96: grep 'testval' unaffected"
-echo t_atf_config.at:96 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_config.at:97: grep 'testval' unaffected"
+echo t_atf_config.at:97 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7433,7 +7631,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    1) ;;
-   *) echo "$at_srcdir/t_atf_config.at:96: exit code was $at_status, expected 1"
+   *) echo "$at_srcdir/t_atf_config.at:97: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7471,8 +7669,8 @@ done
 
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:70: mkdir top"
-echo t_atf_run.at:70 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:74: mkdir top"
+echo t_atf_run.at:74 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7495,7 +7693,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:70: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:74: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7508,8 +7706,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:71: mkdir top/dir1"
-echo t_atf_run.at:71 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:75: mkdir top/dir1"
+echo t_atf_run.at:75 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7532,7 +7730,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:71: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:75: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7545,8 +7743,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:72: mkdir top/dir2"
-echo t_atf_run.at:72 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:76: mkdir top/dir2"
+echo t_atf_run.at:76 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7569,7 +7767,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:72: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:76: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -7609,8 +7807,8 @@ tp: test4
 tp: test5
 _ATEOF
 
-cat >top/test1 <<'_ATEOF'
-#! /bin/sh
+cat >top/test1 <<EOF
+#! $(atf-config -t atf_shell)
 echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
 echo "" >&9
 echo 'tcs-count: 1' >&9
@@ -7619,11 +7817,10 @@ echo ignore-me
 echo ignore-me >&2
 echo 'tc-end: tc_1, passed' >&9
 true
-_ATEOF
-
+EOF
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:98: chmod +x top/test1"
-echo t_atf_run.at:98 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:102: chmod +x top/test1"
+echo t_atf_run.at:102 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -7637,206 +7834,6 @@ if test -n "$at_trace_this"; then
     grep -v '^ *+' "$at_stder1" >"$at_stderr"
 else
     ( :; chmod +x top/test1 ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:98: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-cat >top/test2 <<'_ATEOF'
-#! /bin/sh
-echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
-echo "" >&9
-echo 'tcs-count: 1' >&9
-echo 'tc-start: tc_2' >&9
-echo ignore-me
-echo ignore-me >&2
-echo 'tc-end: tc_2, failed, No reason' >&9
-false
-_ATEOF
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:99: chmod +x top/test2"
-echo t_atf_run.at:99 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod +x top/test2 ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; chmod +x top/test2 ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:99: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-cat >top/dir1/test3 <<'_ATEOF'
-#! /bin/sh
-echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
-echo "" >&9
-echo 'tcs-count: 1' >&9
-echo 'tc-start: tc_3' >&9
-echo ignore-me
-echo ignore-me >&2
-echo 'tc-end: tc_3, passed' >&9
-true
-_ATEOF
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:100: chmod +x top/dir1/test3"
-echo t_atf_run.at:100 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod +x top/dir1/test3 ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; chmod +x top/dir1/test3 ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:100: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-cat >top/dir2/test4 <<'_ATEOF'
-#! /bin/sh
-echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
-echo "" >&9
-echo 'tcs-count: 1' >&9
-echo 'tc-start: tc_4' >&9
-echo ignore-me
-echo ignore-me >&2
-echo 'tc-end: tc_4, failed, No reason' >&9
-false
-_ATEOF
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:101: chmod +x top/dir2/test4"
-echo t_atf_run.at:101 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod +x top/dir2/test4 ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; chmod +x top/dir2/test4 ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:101: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-cat >top/dir2/test5 <<'_ATEOF'
-#! /bin/sh
-echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
-echo "" >&9
-echo 'tcs-count: 1' >&9
-echo 'tc-start: tc_5' >&9
-echo ignore-me
-echo ignore-me >&2
-echo 'tc-end: tc_5, passed' >&9
-true
-_ATEOF
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:102: chmod +x top/dir2/test5"
-echo t_atf_run.at:102 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod +x top/dir2/test5 ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; chmod +x top/dir2/test5 ) >"$at_stdout" 2>"$at_stderr"
     at_status=$?
 fi
 
@@ -7859,1388 +7856,20 @@ fi
 $at_traceon
 
 
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:104: cd top/dir1 && atf-run"
-echo t_atf_run.at:104 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; cd top/dir1 && atf-run ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; cd top/dir1 && atf-run ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; tee stdout <"$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:104: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:105: grep '^tc-end: tc_3, passed' stdout"
-echo t_atf_run.at:105 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:105: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:106: grep -i 'tc_[1245]' stdout"
-echo t_atf_run.at:106 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep -i 'tc_[1245]' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep -i 'tc_[1245]' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:106: exit code was $at_status, expected 1"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:107: grep 'tc-so:ignore-me' stdout"
-echo t_atf_run.at:107 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:107: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:108: grep 'tc-se:ignore-me' stdout"
-echo t_atf_run.at:108 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:108: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:110: cd top/dir2 && atf-run"
-echo t_atf_run.at:110 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; cd top/dir2 && atf-run ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; cd top/dir2 && atf-run ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-echo stderr:; tee stderr <"$at_stderr"
-echo stdout:; tee stdout <"$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:110: exit code was $at_status, expected 1"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:111: grep '^tc-end: tc_4, failed' stdout"
-echo t_atf_run.at:111 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:111: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:112: grep '^tc-end: tc_5, passed' stdout"
-echo t_atf_run.at:112 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:112: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:113: grep -i 'tc_[123]' stdout"
-echo t_atf_run.at:113 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep -i 'tc_[123]' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep -i 'tc_[123]' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:113: exit code was $at_status, expected 1"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:114: grep 'tc-so:ignore-me' stdout"
-echo t_atf_run.at:114 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:114: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:115: grep 'tc-se:ignore-me' stdout"
-echo t_atf_run.at:115 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:115: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:117: cd top && atf-run"
-echo t_atf_run.at:117 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; cd top && atf-run ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; cd top && atf-run ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-echo stderr:; tee stderr <"$at_stderr"
-echo stdout:; tee stdout <"$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:117: exit code was $at_status, expected 1"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:118: grep '^tc-end: tc_1, passed' stdout"
-echo t_atf_run.at:118 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:118: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:119: grep '^tc-end: tc_2, failed' stdout"
-echo t_atf_run.at:119 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:119: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:120: grep '^tc-end: tc_3, passed' stdout"
-echo t_atf_run.at:120 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:120: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:121: grep '^tc-end: tc_4, failed' stdout"
-echo t_atf_run.at:121 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:121: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:122: grep '^tc-end: tc_5, passed' stdout"
-echo t_atf_run.at:122 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:122: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:123: grep 'tc-so:ignore-me' stdout"
-echo t_atf_run.at:123 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:123: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:124: grep 'tc-se:ignore-me' stdout"
-echo t_atf_run.at:124 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:124: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-cat >top/Atffile <<'_ATEOF'
-Content-Type: application/X-atf-atffile; version="1"
-
-prop: test-suite = atf
-
-tp-glob: *
-_ATEOF
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:134: cd top && atf-run"
-echo t_atf_run.at:134 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; cd top && atf-run ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; cd top && atf-run ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-echo stderr:; tee stderr <"$at_stderr"
-echo stdout:; tee stdout <"$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:134: exit code was $at_status, expected 1"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:135: grep '^tc-end: tc_1, passed' stdout"
-echo t_atf_run.at:135 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:135: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:136: grep '^tc-end: tc_2, failed' stdout"
-echo t_atf_run.at:136 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:136: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:137: grep '^tc-end: tc_3, passed' stdout"
-echo t_atf_run.at:137 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:137: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:138: grep '^tc-end: tc_4, failed' stdout"
-echo t_atf_run.at:138 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:138: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:139: grep '^tc-end: tc_5, passed' stdout"
-echo t_atf_run.at:139 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:139: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:140: grep 'tc-so:ignore-me' stdout"
-echo t_atf_run.at:140 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:140: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:141: grep 'tc-se:ignore-me' stdout"
-echo t_atf_run.at:141 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:141: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-cat >top/Atffile <<'_ATEOF'
-Content-Type: application/X-atf-atffile; version="1"
-
-prop: test-suite = atf
-
-tp-glob: d*
-_ATEOF
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:151: cd top && atf-run"
-echo t_atf_run.at:151 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; cd top && atf-run ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; cd top && atf-run ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-echo stderr:; tee stderr <"$at_stderr"
-echo stdout:; tee stdout <"$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:151: exit code was $at_status, expected 1"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:152: grep '^tc-end: tc_3, passed' stdout"
-echo t_atf_run.at:152 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:152: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:153: grep '^tc-end: tc_4, failed' stdout"
-echo t_atf_run.at:153 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:153: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:154: grep '^tc-end: tc_5, passed' stdout"
-echo t_atf_run.at:154 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:154: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:155: grep 'tc-so:ignore-me' stdout"
-echo t_atf_run.at:155 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:155: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:156: grep 'tc-se:ignore-me' stdout"
-echo t_atf_run.at:156 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-echo stdout:; cat "$at_stdout"
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:156: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:161: rm -rf top"
-echo t_atf_run.at:161 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; rm -rf top ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; rm -rf top ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:161: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:162: mkdir top"
-echo t_atf_run.at:162 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; mkdir top ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; mkdir top ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:162: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-cat >top/test1 <<'_ATEOF'
-#! /bin/sh
-echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
-echo "" >&9
-echo 'tcs-count: 1' >&9
-echo 'tc-start: tc_1' >&9
-echo ignore-me
-echo ignore-me >&2
-echo 'tc-end: tc_1, passed' >&9
-true
-_ATEOF
-
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:163: chmod +x top/test1"
-echo t_atf_run.at:163 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod +x top/test1 ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; chmod +x top/test1 ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:163: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-
-cat >top/test2 <<'_ATEOF'
-#! /bin/sh
+cat >top/test2 <<EOF
+#! $(atf-config -t atf_shell)
 echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
 echo "" >&9
 echo 'tcs-count: 1' >&9
 echo 'tc-start: tc_2' >&9
 echo ignore-me
 echo ignore-me >&2
-echo 'tc-end: tc_2, passed' >&9
-true
-_ATEOF
-
+echo 'tc-end: tc_2, failed, No reason' >&9
+false
+EOF
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:164: chmod +x top/test2"
-echo t_atf_run.at:164 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:103: chmod +x top/test2"
+echo t_atf_run.at:103 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9263,7 +7892,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:164: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:103: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9276,8 +7905,8 @@ fi
 $at_traceon
 
 
-cat >top/test3 <<'_ATEOF'
-#! /bin/sh
+cat >top/dir1/test3 <<EOF
+#! $(atf-config -t atf_shell)
 echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
 echo "" >&9
 echo 'tcs-count: 1' >&9
@@ -9286,11 +7915,10 @@ echo ignore-me
 echo ignore-me >&2
 echo 'tc-end: tc_3, passed' >&9
 true
-_ATEOF
-
+EOF
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:165: chmod +x top/test3"
-echo t_atf_run.at:165 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:104: chmod +x top/dir1/test3"
+echo t_atf_run.at:104 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9298,12 +7926,12 @@ if test -n "$at_traceon"; then
 fi
 
 if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod +x top/test3 ) >"$at_stdout" 2>"$at_stder1"
+    ( $at_traceon; chmod +x top/dir1/test3 ) >"$at_stdout" 2>"$at_stder1"
     at_status=$?
     grep '^ *+' "$at_stder1" >&2
     grep -v '^ *+' "$at_stder1" >"$at_stderr"
 else
-    ( :; chmod +x top/test3 ) >"$at_stdout" 2>"$at_stderr"
+    ( :; chmod +x top/dir1/test3 ) >"$at_stdout" 2>"$at_stderr"
     at_status=$?
 fi
 
@@ -9313,7 +7941,7 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:165: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:104: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9326,58 +7954,69 @@ fi
 $at_traceon
 
 
-$at_traceoff
-echo "$at_srcdir/t_atf_run.at:166: chmod -x top/test3"
-echo t_atf_run.at:166 >"$at_check_line_file"
-
-at_trace_this=
-if test -n "$at_traceon"; then
-    at_trace_this=yes
-fi
-
-if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod -x top/test3 ) >"$at_stdout" 2>"$at_stder1"
-    at_status=$?
-    grep '^ *+' "$at_stder1" >&2
-    grep -v '^ *+' "$at_stder1" >"$at_stderr"
-else
-    ( :; chmod -x top/test3 ) >"$at_stdout" 2>"$at_stderr"
-    at_status=$?
-fi
-
-at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
-case $at_status in
-   77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:166: exit code was $at_status, expected 0"
-      at_failed=:;;
-esac
-if $at_failed; then
-
-
-  echo 1 > "$at_status_file"
-  exit 1
-fi
-
-$at_traceon
-
-cat >top/.test4 <<'_ATEOF'
-#! /bin/sh
+cat >top/dir2/test4 <<EOF
+#! $(atf-config -t atf_shell)
 echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
 echo "" >&9
 echo 'tcs-count: 1' >&9
 echo 'tc-start: tc_4' >&9
 echo ignore-me
 echo ignore-me >&2
-echo 'tc-end: tc_4, passed' >&9
+echo 'tc-end: tc_4, failed, No reason' >&9
+false
+EOF
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:105: chmod +x top/dir2/test4"
+echo t_atf_run.at:105 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; chmod +x top/dir2/test4 ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; chmod +x top/dir2/test4 ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:105: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+cat >top/dir2/test5 <<EOF
+#! $(atf-config -t atf_shell)
+echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
+echo "" >&9
+echo 'tcs-count: 1' >&9
+echo 'tc-start: tc_5' >&9
+echo ignore-me
+echo ignore-me >&2
+echo 'tc-end: tc_5, passed' >&9
 true
-_ATEOF
-
+EOF
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:167: chmod +x top/.test4"
-echo t_atf_run.at:167 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:106: chmod +x top/dir2/test5"
+echo t_atf_run.at:106 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9385,12 +8024,12 @@ if test -n "$at_traceon"; then
 fi
 
 if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod +x top/.test4 ) >"$at_stdout" 2>"$at_stder1"
+    ( $at_traceon; chmod +x top/dir2/test5 ) >"$at_stdout" 2>"$at_stder1"
     at_status=$?
     grep '^ *+' "$at_stder1" >&2
     grep -v '^ *+' "$at_stder1" >"$at_stderr"
 else
-    ( :; chmod +x top/.test4 ) >"$at_stdout" 2>"$at_stderr"
+    ( :; chmod +x top/dir2/test5 ) >"$at_stdout" 2>"$at_stderr"
     at_status=$?
 fi
 
@@ -9400,7 +8039,194 @@ $at_diff "$at_devnull" "$at_stdout" || at_failed=:
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:167: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:106: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:108: cd top/dir1 && atf-run"
+echo t_atf_run.at:108 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; cd top/dir1 && atf-run ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; cd top/dir1 && atf-run ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; tee stdout <"$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:108: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:109: grep '^tc-end: tc_3, passed' stdout"
+echo t_atf_run.at:109 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:109: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:110: grep -i 'tc_[1245]' stdout"
+echo t_atf_run.at:110 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep -i 'tc_[1245]' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep -i 'tc_[1245]' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   1) ;;
+   *) echo "$at_srcdir/t_atf_run.at:110: exit code was $at_status, expected 1"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:111: grep 'tc-so:ignore-me' stdout"
+echo t_atf_run.at:111 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:111: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:112: grep 'tc-se:ignore-me' stdout"
+echo t_atf_run.at:112 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:112: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9414,8 +8240,8 @@ $at_traceon
 
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:168: chmod -x top/.test4"
-echo t_atf_run.at:168 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:114: cd top/dir2 && atf-run"
+echo t_atf_run.at:114 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9423,22 +8249,22 @@ if test -n "$at_traceon"; then
 fi
 
 if test -n "$at_trace_this"; then
-    ( $at_traceon; chmod -x top/.test4 ) >"$at_stdout" 2>"$at_stder1"
+    ( $at_traceon; cd top/dir2 && atf-run ) >"$at_stdout" 2>"$at_stder1"
     at_status=$?
     grep '^ *+' "$at_stder1" >&2
     grep -v '^ *+' "$at_stder1" >"$at_stderr"
 else
-    ( :; chmod -x top/.test4 ) >"$at_stdout" 2>"$at_stderr"
+    ( :; cd top/dir2 && atf-run ) >"$at_stdout" 2>"$at_stderr"
     at_status=$?
 fi
 
 at_failed=false
-$at_diff "$at_devnull" "$at_stderr" || at_failed=:
-$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+echo stderr:; tee stderr <"$at_stderr"
+echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:168: exit code was $at_status, expected 0"
+   1) ;;
+   *) echo "$at_srcdir/t_atf_run.at:114: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9450,17 +8276,195 @@ fi
 
 $at_traceon
 
-cat >top/Atffile <<'_ATEOF'
-Content-Type: application/X-atf-atffile; version="1"
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:115: grep '^tc-end: tc_4, failed' stdout"
+echo t_atf_run.at:115 >"$at_check_line_file"
 
-prop: test-suite = atf
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
 
-tp-glob: *
-_ATEOF
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:115: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:176: cd top && atf-run"
-echo t_atf_run.at:176 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:116: grep '^tc-end: tc_5, passed' stdout"
+echo t_atf_run.at:116 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:116: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:117: grep -i 'tc_[123]' stdout"
+echo t_atf_run.at:117 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep -i 'tc_[123]' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep -i 'tc_[123]' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   1) ;;
+   *) echo "$at_srcdir/t_atf_run.at:117: exit code was $at_status, expected 1"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:118: grep 'tc-so:ignore-me' stdout"
+echo t_atf_run.at:118 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:118: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:119: grep 'tc-se:ignore-me' stdout"
+echo t_atf_run.at:119 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:119: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:121: cd top && atf-run"
+echo t_atf_run.at:121 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9482,8 +8486,8 @@ echo stderr:; tee stderr <"$at_stderr"
 echo stdout:; tee stdout <"$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
-   0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:176: exit code was $at_status, expected 0"
+   1) ;;
+   *) echo "$at_srcdir/t_atf_run.at:121: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9496,8 +8500,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:177: grep '^tc-end: tc_1, passed' stdout"
-echo t_atf_run.at:177 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:122: grep '^tc-end: tc_1, passed' stdout"
+echo t_atf_run.at:122 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9520,7 +8524,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:177: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:122: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9533,8 +8537,1193 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:178: grep '^tc-end: tc_2, passed' stdout"
-echo t_atf_run.at:178 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:123: grep '^tc-end: tc_2, failed' stdout"
+echo t_atf_run.at:123 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:123: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:124: grep '^tc-end: tc_3, passed' stdout"
+echo t_atf_run.at:124 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:124: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:125: grep '^tc-end: tc_4, failed' stdout"
+echo t_atf_run.at:125 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:125: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:126: grep '^tc-end: tc_5, passed' stdout"
+echo t_atf_run.at:126 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:126: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:127: grep 'tc-so:ignore-me' stdout"
+echo t_atf_run.at:127 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:127: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:128: grep 'tc-se:ignore-me' stdout"
+echo t_atf_run.at:128 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:128: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+cat >top/Atffile <<'_ATEOF'
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp-glob: *
+_ATEOF
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:138: cd top && atf-run"
+echo t_atf_run.at:138 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; cd top && atf-run ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; cd top && atf-run ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+echo stderr:; tee stderr <"$at_stderr"
+echo stdout:; tee stdout <"$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   1) ;;
+   *) echo "$at_srcdir/t_atf_run.at:138: exit code was $at_status, expected 1"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:139: grep '^tc-end: tc_1, passed' stdout"
+echo t_atf_run.at:139 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:139: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:140: grep '^tc-end: tc_2, failed' stdout"
+echo t_atf_run.at:140 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_2, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:140: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:141: grep '^tc-end: tc_3, passed' stdout"
+echo t_atf_run.at:141 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:141: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:142: grep '^tc-end: tc_4, failed' stdout"
+echo t_atf_run.at:142 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:142: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:143: grep '^tc-end: tc_5, passed' stdout"
+echo t_atf_run.at:143 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:143: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:144: grep 'tc-so:ignore-me' stdout"
+echo t_atf_run.at:144 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:144: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:145: grep 'tc-se:ignore-me' stdout"
+echo t_atf_run.at:145 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:145: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+cat >top/Atffile <<'_ATEOF'
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp-glob: d*
+_ATEOF
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:155: cd top && atf-run"
+echo t_atf_run.at:155 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; cd top && atf-run ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; cd top && atf-run ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+echo stderr:; tee stderr <"$at_stderr"
+echo stdout:; tee stdout <"$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   1) ;;
+   *) echo "$at_srcdir/t_atf_run.at:155: exit code was $at_status, expected 1"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:156: grep '^tc-end: tc_3, passed' stdout"
+echo t_atf_run.at:156 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_3, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:156: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:157: grep '^tc-end: tc_4, failed' stdout"
+echo t_atf_run.at:157 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_4, failed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:157: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:158: grep '^tc-end: tc_5, passed' stdout"
+echo t_atf_run.at:158 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_5, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:158: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:159: grep 'tc-so:ignore-me' stdout"
+echo t_atf_run.at:159 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-so:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:159: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:160: grep 'tc-se:ignore-me' stdout"
+echo t_atf_run.at:160 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep 'tc-se:ignore-me' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:160: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:165: rm -rf top"
+echo t_atf_run.at:165 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; rm -rf top ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; rm -rf top ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:165: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:166: mkdir top"
+echo t_atf_run.at:166 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; mkdir top ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; mkdir top ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:166: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+cat >top/test1 <<EOF
+#! $(atf-config -t atf_shell)
+echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
+echo "" >&9
+echo 'tcs-count: 1' >&9
+echo 'tc-start: tc_1' >&9
+echo ignore-me
+echo ignore-me >&2
+echo 'tc-end: tc_1, passed' >&9
+true
+EOF
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:167: chmod +x top/test1"
+echo t_atf_run.at:167 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; chmod +x top/test1 ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; chmod +x top/test1 ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:167: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+cat >top/test2 <<EOF
+#! $(atf-config -t atf_shell)
+echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
+echo "" >&9
+echo 'tcs-count: 1' >&9
+echo 'tc-start: tc_2' >&9
+echo ignore-me
+echo ignore-me >&2
+echo 'tc-end: tc_2, passed' >&9
+true
+EOF
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:168: chmod +x top/test2"
+echo t_atf_run.at:168 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; chmod +x top/test2 ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; chmod +x top/test2 ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:168: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+cat >top/test3 <<EOF
+#! $(atf-config -t atf_shell)
+echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
+echo "" >&9
+echo 'tcs-count: 1' >&9
+echo 'tc-start: tc_3' >&9
+echo ignore-me
+echo ignore-me >&2
+echo 'tc-end: tc_3, passed' >&9
+true
+EOF
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:169: chmod +x top/test3"
+echo t_atf_run.at:169 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; chmod +x top/test3 ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; chmod +x top/test3 ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:169: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:170: chmod -x top/test3"
+echo t_atf_run.at:170 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; chmod -x top/test3 ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; chmod -x top/test3 ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:170: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+cat >top/.test4 <<EOF
+#! $(atf-config -t atf_shell)
+echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
+echo "" >&9
+echo 'tcs-count: 1' >&9
+echo 'tc-start: tc_4' >&9
+echo ignore-me
+echo ignore-me >&2
+echo 'tc-end: tc_4, passed' >&9
+true
+EOF
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:171: chmod +x top/.test4"
+echo t_atf_run.at:171 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; chmod +x top/.test4 ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; chmod +x top/.test4 ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:171: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:172: chmod -x top/.test4"
+echo t_atf_run.at:172 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; chmod -x top/.test4 ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; chmod -x top/.test4 ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+$at_diff "$at_devnull" "$at_stdout" || at_failed=:
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:172: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+cat >top/Atffile <<'_ATEOF'
+Content-Type: application/X-atf-atffile; version="1"
+
+prop: test-suite = atf
+
+tp-glob: *
+_ATEOF
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:180: cd top && atf-run"
+echo t_atf_run.at:180 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; cd top && atf-run ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; cd top && atf-run ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+echo stderr:; tee stderr <"$at_stderr"
+echo stdout:; tee stdout <"$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:180: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:181: grep '^tc-end: tc_1, passed' stdout"
+echo t_atf_run.at:181 >"$at_check_line_file"
+
+at_trace_this=
+if test -n "$at_traceon"; then
+    at_trace_this=yes
+fi
+
+if test -n "$at_trace_this"; then
+    ( $at_traceon; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stder1"
+    at_status=$?
+    grep '^ *+' "$at_stder1" >&2
+    grep -v '^ *+' "$at_stder1" >"$at_stderr"
+else
+    ( :; grep '^tc-end: tc_1, passed' stdout ) >"$at_stdout" 2>"$at_stderr"
+    at_status=$?
+fi
+
+at_failed=false
+$at_diff "$at_devnull" "$at_stderr" || at_failed=:
+echo stdout:; cat "$at_stdout"
+case $at_status in
+   77) echo 77 > "$at_status_file"; exit 77;;
+   0) ;;
+   *) echo "$at_srcdir/t_atf_run.at:181: exit code was $at_status, expected 0"
+      at_failed=:;;
+esac
+if $at_failed; then
+
+
+  echo 1 > "$at_status_file"
+  exit 1
+fi
+
+$at_traceon
+
+$at_traceoff
+echo "$at_srcdir/t_atf_run.at:182: grep '^tc-end: tc_2, passed' stdout"
+echo t_atf_run.at:182 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9557,7 +9746,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    0) ;;
-   *) echo "$at_srcdir/t_atf_run.at:178: exit code was $at_status, expected 0"
+   *) echo "$at_srcdir/t_atf_run.at:182: exit code was $at_status, expected 0"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9570,8 +9759,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:179: grep -i 'tc_3' stdout"
-echo t_atf_run.at:179 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:183: grep -i 'tc_3' stdout"
+echo t_atf_run.at:183 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9594,7 +9783,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:179: exit code was $at_status, expected 1"
+   *) echo "$at_srcdir/t_atf_run.at:183: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -9607,8 +9796,8 @@ fi
 $at_traceon
 
 $at_traceoff
-echo "$at_srcdir/t_atf_run.at:180: grep -i 'tc_4' stdout"
-echo t_atf_run.at:180 >"$at_check_line_file"
+echo "$at_srcdir/t_atf_run.at:184: grep -i 'tc_4' stdout"
+echo t_atf_run.at:184 >"$at_check_line_file"
 
 at_trace_this=
 if test -n "$at_traceon"; then
@@ -9631,7 +9820,7 @@ echo stdout:; cat "$at_stdout"
 case $at_status in
    77) echo 77 > "$at_status_file"; exit 77;;
    1) ;;
-   *) echo "$at_srcdir/t_atf_run.at:180: exit code was $at_status, expected 1"
+   *) echo "$at_srcdir/t_atf_run.at:184: exit code was $at_status, expected 1"
       at_failed=:;;
 esac
 if $at_failed; then
@@ -13968,7 +14157,7 @@ _ASBOX
   echo "Please send \`${at_testdir+${at_testdir}/}$as_me.log' and all information you think might help:"
   echo
   echo "   To: <atf-devel@NetBSD.org>"
-  echo "   Subject: [Automated Testing Framework 0.3] $as_me:$at_fail_list${at_fail_list:+ failed${at_xpass_list:+,}}$at_xpass_list${at_xpass_list:+ passed unexpectedly}"
+  echo "   Subject: [Automated Testing Framework 0.4] $as_me:$at_fail_list${at_fail_list:+ failed${at_xpass_list:+,}}$at_xpass_list${at_xpass_list:+ passed unexpectedly}"
   echo
   if test $at_debug_p = false; then
     echo

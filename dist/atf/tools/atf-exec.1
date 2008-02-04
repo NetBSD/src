@@ -1,0 +1,76 @@
+.\"
+.\" Automated Testing Framework (atf)
+.\"
+.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 25, 2008
+.Dt ATF-EXEC 1
+.Os
+.Sh NAME
+.Nm atf-exec
+.Nd executes a command after modifying settings in its container process
+.Sh SYNOPSIS
+.Nm
+.Fl g
+.Ar command
+.Nm
+.Fl h
+.Sh DESCRIPTION
+.Nm
+is a wrapper that executes the given command after doing some additional
+tasks.
+These tasks involve modifying the properties of the process that will run
+the command that cannot be changed with regular system tools.
+.Pp
+In the first synopsis form,
+.Nm
+will execute the provided command after applying the changes requested by
+the options to its environment.
+If no additional options are given, the command is executed as if
+.Nm
+had not been used.
+.Pp
+In the second synopsis form,
+.Nm
+will print information about all supported options and their purpose.
+.Pp
+The following options are available:
+.Bl -tag -width XgXX
+.It Fl g
+Configures the process to become a new process group leader.
+.It Fl h
+Shows a short summary of all available options and their purpose.
+.El
+.Sh SEE ALSO
+.Xr atf-killpg 1 ,
+.Xr atf 7
