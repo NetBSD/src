@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.20 2007/11/12 15:07:33 jmmv Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.21 2008/02/04 01:54:56 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -945,6 +945,7 @@ message Password_cipher {Cifrado de las contraseñas}
 message DES {DES}
 message MD5 {MD5}
 message Blowfish_2_7_round {Blowfish 2^7 round}
+message SHA1 {SHA1}
 message do_not_change {no cambiar}
 message Device {Dispositivo}
 message File_system {Sistema de archivos}

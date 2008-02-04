@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.30 2006/09/29 19:41:07 dsl Exp $	*/
+/*	$NetBSD: menus.mi,v 1.31 2008/02/04 01:54:55 riz Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -300,10 +300,11 @@ menu fdok, title MSG_What_do_you_want_to_do;
 	option MSG_Set_finished, exit, action { *(int *)arg = SET_OK; };
 	option MSG_Abort_fetch, exit, action { *(int *)arg = SET_RETRY; };
 
-menu crypttype, title MSG_Password_cipher, y=16;
+menu crypttype, title MSG_Password_cipher, y=15;
 	option MSG_DES, exit, action { yesno = 1; };
 	option MSG_MD5, exit, action { yesno = 2; };
 	option MSG_Blowfish_2_7_round, exit, action { yesno = 3; };
+	option MSG_SHA1, exit, action { yesno = 4; };
 	option MSG_do_not_change, exit, action { yesno = 0; };
 
 menu fd_type, title MSG_fd_type, y=16;
