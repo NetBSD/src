@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.23 2008/02/04 00:35:34 tls Exp $ */
+/*	$NetBSD: crypto.c,v 1.24 2008/02/04 14:46:26 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.23 2008/02/04 00:35:34 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.24 2008/02/04 14:46:26 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -236,8 +236,8 @@ crypto_init0(void)
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
 	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
-	error = kthread_create(PRI_NONE, 0, NULL, (void (*)(void*))cryptoret,
-	    NULL, &cryptothread, "cryptoret");
+	error = kthread_create(PRI_NONE, 0, NULL,
+	    (void (*)(void*))cryptoret, NULL, &cryptothread, "cryptoret");
 	if (error) {
 		printf("crypto_init: cannot start cryptoret thread; error %d",
 			error);
@@ -660,14 +660,14 @@ crypto_unblock(u_int32_t driverid, int what)
 			needwakeup |= cap->cc_kqblocked;
 			cap->cc_kqblocked = 0;
 		}
-		if (needwakeup) {
-			mutex_spin_exit(&crypto_mtx);
-			setsoftcrypto(softintr_cookie);
-		}
 		err = 0;
-	} else
+		mutex_spin_exit(&crypto_mtx);
+		if (needwakeup)
+			setsoftcrypto(softintr_cookie);
+	} else {
 		err = EINVAL;
-	mutex_spin_exit(&crypto_mtx);
+		mutex_spin_exit(&crypto_mtx);
+	}
 
 	return err;
 }
@@ -711,6 +711,7 @@ crypto_dispatch(struct cryptop *crp)
 				crypto_drivers[hid].cc_qblocked = 1;
 				TAILQ_INSERT_HEAD(&crp_q, crp, crp_next);
 				cryptostats.cs_blocks++;
+				mutex_spin_exit(&crypto_mtx);
 			}
 			goto out_released;
 		} else {
@@ -772,6 +773,7 @@ crypto_kdispatch(struct cryptkop *krp)
 			crypto_drivers[krp->krp_hid].cc_kqblocked = 1;
 			TAILQ_INSERT_HEAD(&crp_kq, krp, krp_next);
 			cryptostats.cs_kblocks++;
+			mutex_spin_exit(&crypto_mtx);
 		}
 	} else {
 		/*
@@ -780,8 +782,8 @@ crypto_kdispatch(struct cryptkop *krp)
 		 */
 		TAILQ_INSERT_TAIL(&crp_kq, krp, krp_next);
 		result = 0;
+		mutex_spin_exit(&crypto_mtx);
 	}
-	mutex_spin_exit(&crypto_mtx);
 
 	return result;
 }
