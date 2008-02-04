@@ -1,9 +1,10 @@
-#	$NetBSD: std.hdl_g,v 1.1.14.3 2006/12/30 20:45:49 yamt Exp $
+#	$NetBSD: std.hdl_g,v 1.1.14.4 2008/02/04 09:21:49 yamt Exp $
 #
 # standard NetBSD/evbarm for I-O DATA HDL-G options
 
 machine		evbarm arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 # Pull in HDL-G config definitions.
 include		"arch/evbarm/conf/files.hdl_g"

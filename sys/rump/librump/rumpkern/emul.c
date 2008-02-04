@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11.4.5 2008/01/21 09:47:42 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.11.4.6 2008/02/04 09:24:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,16 +63,16 @@ struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
 struct vm_map *kernel_map;
-int physmem;
+int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
+int dovfsusermount = 1;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
 MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
@@ -85,6 +85,11 @@ u_long	bufmem;
 u_int	nbuf;
 
 const char *panicstr;
+const char ostype[] = "NetBSD";
+const char osrelease[] = "999"; /* paradroid 4evah */
+const char kernel_ident[] = "RUMP-ROAST";
+const char *domainname;
+int domainnamelen;
 
 const struct filterops seltrue_filtops;
 
@@ -123,6 +128,16 @@ uprintf(const char *fmt, ...)
 
 void
 printf_nolog(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_normal(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -347,6 +362,14 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
+#ifdef RUMP_WITHOUT_THREADS
+	/* XXX: fake it */
+	if (strcmp(fmt, "vrele") == 0)
+		return 0;
+	else
+		panic("threads not available, undef RUMP_WITHOUT_THREADS");
+#endif
+
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
 		panic("%s: bounded threads not supported", __func__);
@@ -464,4 +487,11 @@ kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
 		return error;
 
 	return 0;
+}
+
+void
+suspendsched()
+{
+
+	panic("%s: not implemented", __func__);
 }

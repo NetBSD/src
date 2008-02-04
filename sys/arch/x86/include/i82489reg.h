@@ -1,4 +1,4 @@
-/*	$NetBSD: i82489reg.h,v 1.1.18.1 2007/11/15 11:43:38 yamt Exp $	*/
+/*	$NetBSD: i82489reg.h,v 1.1.18.2 2008/02/04 09:22:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -99,8 +99,8 @@
 #	define LAPIC_DLSTAT_BUSY	0x00001000
 #	define LAPIC_DLSTAT_IDLE	0x00000000
 
-#	define LAPIC_LEVEL_MASK		0x00004000
-#	define LAPIC_LEVEL_ASSERT	0x00004000
+#	define LAPIC_LEVEL_MASK		0x00002000
+#	define LAPIC_LEVEL_ASSERT	0x00002000
 #	define LAPIC_LEVEL_DEASSERT	0x00000000
 
 #	define LAPIC_TRIGGER_MASK	0x00008000

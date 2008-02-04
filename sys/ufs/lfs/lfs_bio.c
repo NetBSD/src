@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_bio.c,v 1.86.2.5 2008/01/21 09:48:10 yamt Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.86.2.6 2008/02/04 09:25:04 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86.2.5 2008/01/21 09:48:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.86.2.6 2008/02/04 09:25:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -583,19 +583,19 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	if (only_onefs) {
 		KASSERT(fs != NULL);
-		if (vfs_busy(fs->lfs_ivnode->v_mount, LK_NOWAIT,
-			     &mountlist_lock))
+		if (vfs_trybusy(fs->lfs_ivnode->v_mount, RW_READER,
+		    &mountlist_lock))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount);
+		vfs_unbusy(fs->lfs_ivnode->v_mount, false);
 	} else {
 		locked_fakequeue_count = 0;
 		mutex_enter(&mountlist_lock);
 		for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 		     mp = nmp) {
-			if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+			if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 				DLOG((DLOG_FLUSH, "lfs_flush: fs vfs_busy\n"));
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
 				continue;
@@ -609,7 +609,7 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 			}
 			mutex_enter(&mountlist_lock);
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
-			vfs_unbusy(mp);
+			vfs_unbusy(mp, false);
 		}
 		mutex_exit(&mountlist_lock);
 	}

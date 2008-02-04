@@ -1,4 +1,4 @@
-/*	 $NetBSD: nfsnode.h,v 1.54.6.4 2007/09/03 14:44:22 yamt Exp $	*/
+/*	 $NetBSD: nfsnode.h,v 1.54.6.5 2008/02/04 09:24:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -250,7 +250,6 @@ int	nfs_getattr	__P((void *));
 int	nfs_setattr	__P((void *));
 int	nfs_read	__P((void *));
 int	nfs_write	__P((void *));
-#define	nfs_lease_check	genfs_nullop
 int	nfsspec_read	__P((void *));
 int	nfsspec_write	__P((void *));
 int	nfsfifo_read	__P((void *));

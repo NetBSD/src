@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.6.6.5 2008/01/21 09:47:44 yamt Exp $	*/
+/*	$NetBSD: specfs.c,v 1.6.6.6 2008/02/04 09:24:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,6 +35,7 @@
 #include <sys/disklabel.h>
 
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -240,6 +241,9 @@ rump_specstrategy(void *v)
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
 	if (bp->b_flags & B_ASYNC) {
+#ifdef RUMP_WITHOUT_THREADS
+		goto syncfallback;
+#else
 		struct rumpuser_aio *rua;
 
 		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
@@ -272,6 +276,7 @@ rump_specstrategy(void *v)
 		rua_head = (rua_head+1) % (N_AIOS-1);
 		rumpuser_cv_signal(&rua_cv);
 		rumpuser_mutex_exit(&rua_mtx);
+#endif /* !RUMP_WITHOUT_THREADS */
 	} else {
  syncfallback:
 		if (bp->b_flags & B_READ) {
@@ -301,4 +306,38 @@ rump_specsimpleul(void *v)
 	mutex_exit(&vp->v_interlock);
 
 	return 0;
+}
+
+void
+spec_node_init(struct vnode *nvp, dev_t nvp_rdev)
+{
+	specdev_t *sd;
+
+	sd = kmem_zalloc(sizeof(specdev_t), KM_SLEEP);
+	sd->sd_rdev = nvp_rdev;
+	sd->sd_refcnt = 1;
+	nvp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
+	nvp->v_specnode->sn_dev = sd;
+	nvp->v_rdev = nvp_rdev;
+}
+
+void
+spec_node_destroy(vnode_t *vp)
+{
+	specnode_t *sn;
+	specdev_t *sd;
+
+	sn = vp->v_specnode;
+	sd = sn->sn_dev;
+
+	KASSERT(sd->sd_refcnt == 1);
+	kmem_free(sd, sizeof(*sd));
+	kmem_free(sn, sizeof(*sn));
+}
+
+void
+spec_node_revoke(vnode_t *vp)
+{
+
+	panic("spec_node_revoke: should not be called");
 }

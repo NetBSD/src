@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.67.2.6 2007/12/07 17:35:22 yamt Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.67.2.7 2008/02/04 09:25:07 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67.2.6 2007/12/07 17:35:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67.2.7 2008/02/04 09:25:07 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67.2.6 2007/12/07 17:35:22 yamt Exp
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 
+#include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
 
 #include <ufs/ufs/quota.h>
@@ -104,6 +106,8 @@ struct vfsops mfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	mfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },
@@ -194,8 +198,7 @@ mfs_mountroot(void)
 	mfsp->mfs_shutdown = 0;
 	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(rootvp, mp, l)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		bufq_free(mfsp->mfs_buflist);
 		vfs_destroy(mp);
 		free(mfsp, M_MFSNODE);
@@ -209,7 +212,7 @@ mfs_mountroot(void)
 	fs = ump->um_fs;
 	(void) copystr(mp->mnt_stat.f_mntonname, fs->fs_fsmnt, MNAMELEN - 1, 0);
 	(void)ffs_statvfs(mp, &mp->mnt_stat);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return (0);
 }
 
@@ -313,8 +316,7 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	if (error)
 		return (error);
 	devvp->v_type = VBLK;
-	if (checkalias(devvp, makedev(255, mfs_minor), (struct mount *)0))
-		panic("mfs_mount: dup dev");
+	spec_node_init(devvp, makedev(255, mfs_minor));
 	mfs_minor++;
 	mfsp = (struct mfsnode *)malloc(sizeof *mfsp, M_MFSNODE, M_WAITOK);
 	devvp->v_data = mfsp;
@@ -384,7 +386,7 @@ mfs_start(struct mount *mp, int flags)
 			 * the mount point.  See dounmount() for details.
 			 */
 			mutex_enter(&syncer_mutex);
-			if (vfs_busy(mp, LK_NOWAIT, 0) != 0)
+			if (vfs_trybusy(mp, RW_WRITER, NULL) != 0)
 				mutex_exit(&syncer_mutex);
 			else if (dounmount(mp, 0, l) != 0) {
 				p = l->l_proc;

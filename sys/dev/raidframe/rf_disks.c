@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.58.2.4 2007/12/07 17:31:04 yamt Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.58.2.5 2008/02/04 09:23:34 yamt Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,7 +67,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.58.2.4 2007/12/07 17:31:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.58.2.5 2008/02/04 09:23:34 yamt Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -577,7 +577,6 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	char   *p;
 	struct vnode *vp;
 	struct vattr va;
-	struct lwp *l;
 	int     error;
 
 	p = rf_find_non_white(bf);
@@ -586,8 +585,6 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		p[strlen(p) - 1] = '\0';
 	}
 	(void) strcpy(diskPtr->devname, p);
-
-	l = raidPtr->engine_thread;
 
 	/* Let's start by claiming the component is fine and well... */
 	diskPtr->status = rf_ds_optimal;
@@ -602,7 +599,7 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 		return (0);
 	}
 
-	error = dk_lookup(diskPtr->devname, l, &vp, UIO_SYSSPACE);
+	error = dk_lookup(diskPtr->devname, curlwp, &vp, UIO_SYSSPACE);
 	if (error) {
 		printf("dk_lookup on device: %s failed!\n", diskPtr->devname);
 		if (error == ENXIO) {
@@ -614,9 +611,9 @@ rf_ConfigureDisk(RF_Raid_t *raidPtr, char *bf, RF_RaidDisk_t *diskPtr,
 	}
 	if (diskPtr->status == rf_ds_optimal) {
 
-		if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0) 
+		if ((error = VOP_GETATTR(vp, &va, curlwp->l_cred)) != 0) 
 			return (error);
-		if ((error = rf_getdisksize(vp, l, diskPtr)) != 0)
+		if ((error = rf_getdisksize(vp, curlwp, diskPtr)) != 0)
 			return (error);
 
 		raidPtr->raid_cinfo[col].ci_vp = vp;

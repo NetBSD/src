@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudiovar.h,v 1.10.4.2 2007/10/27 11:29:48 yamt Exp $	*/
+/*	$NetBSD: ossaudiovar.h,v 1.10.4.3 2008/02/04 09:23:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ struct oss_sys_ioctl_args {
 #define OSS_IOC_IN          0x40000000      /* copy in parameters */
 #define OSS_IOC_OUT         0x80000000      /* copy out parameters */
 #define OSS_IOC_INOUT       (OSS_IOC_IN | OSS_IOC_OUT)
-#define	_OSS_IOCTL(w,x,y,z) ((int)((w)|(((z)&OSS_IOCPARM_MASK)<<16)|((x)<<8)|(y)))
+#define	_OSS_IOCTL(w,x,y,z) ((uint)((w)|(((z)&OSS_IOCPARM_MASK)<<16)|((x)<<8)|(y)))
 #define _OSS_IO(x,y)        _OSS_IOCTL(OSS_IOC_VOID, x, y, 0)
 #define _OSS_IOR(x,y,t)     _OSS_IOCTL(OSS_IOC_OUT, x, y, sizeof(t))
 #define _OSS_IOW(x,y,t)     _OSS_IOCTL(OSS_IOC_IN, x, y, sizeof(t))

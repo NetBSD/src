@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.6.6.6 2008/01/21 09:36:54 yamt Exp $
+# $NetBSD: XBOX,v 1.6.6.7 2008/02/04 09:22:02 yamt Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -209,6 +209,10 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

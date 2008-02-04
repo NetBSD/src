@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.56.2.2 2007/09/03 14:30:11 yamt Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.56.2.3 2008/02/04 09:22:32 yamt Exp $
 
 #=========================================================================
 #
@@ -91,8 +91,6 @@ MD_SFILES=	${SPARC64}/sparc64/locore.s
 
 locore.o: ${SPARC64}/sparc64/locore.s assym.h
 	${NORMAL_S}
-
-in_cksum.o: assym.h
 
 ##
 ## (5) link settings

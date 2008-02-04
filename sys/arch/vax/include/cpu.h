@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.70.12.6 2008/01/21 09:39:59 yamt Exp $      */
+/*      $NetBSD: cpu.h,v 1.70.12.7 2008/02/04 09:22:40 yamt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -179,6 +179,13 @@ struct cpu_mp_softc {
 #define	cpu_lwp_free(l, f)	do { } while (/*CONSCOND*/0)
 #define	cpu_lwp_free2(l)	do { } while (/*CONSCOND*/0)
 #define	cpu_idle()		do { } while (/*CONSCOND*/0)
+static inline bool
+cpu_intr_p(void)
+{
+	register_t psl;
+	__asm("movpsl %0" : "=g"(psl));
+	return (psl & PSL_IS) != 0;
+}
 #if defined(MULTIPROCESSOR)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CI_MASTERCPU)
 
@@ -222,7 +229,7 @@ void	cpu_boot_secondary_processors(void);
 void	cpu_send_ipi(int, int);
 void	cpu_handle_ipi(void);
 #endif
-int	badaddr(void *, int);
+int	badaddr(volatile void *, int);
 void	dumpconf(void);
 void	dumpsys(void);
 void	swapconf(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs.c,v 1.2.8.2 2007/09/03 14:44:57 yamt Exp $	*/
+/*	$NetBSD: ntfs.c,v 1.2.8.3 2008/02/04 09:24:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -77,6 +77,8 @@ main(int argc, char *argv[])
 
 	memset(&args, 0, sizeof(args));
 	args.fspec = argv[0];
+	args.uid = getuid();
+	args.mode = 0777;
 	rv = p2k_run_fs(MOUNT_NTFS, argv[0], argv[1], mntflags,
 	    &args, sizeof(args), pflags);
 	if (rv)

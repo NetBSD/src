@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.3.4.1 2007/09/03 14:44:22 yamt Exp $ */
+/*	$NetBSD: criov.c,v 1.3.4.2 2008/02/04 09:24:46 yamt Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.3.4.1 2007/09/03 14:44:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.3.4.2 2008/02/04 09:24:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,37 +120,6 @@ cuio_copyback(uio, off, len, cp)
 /*
  * Return a pointer to iov/offset of location in iovec list.
  */
-#ifdef __FreeBSD__
-struct iovec *
-cuio_getptr(struct uio *uio, int loc, int *off)
-{
-	struct iovec *iov = uio->uio_iov;
-	int iol = uio->uio_iovcnt;
-
-	while (loc >= 0) {
-		/* Normal end of search */
-		if (loc < iov->iov_len) {
-	    		*off = loc;
-	    		return (iov);
-		}
-
-		loc -= iov->iov_len;
-		if (iol == 0) {
-			if (loc == 0) {
-				/* Point at the end of valid data */
-				*off = iov->iov_len;
-				return (iov);
-			} else
-				return (NULL);
-		} else {
-			iov++, iol--;
-		}
-    	}
-
-	return (NULL);
-}
-
-#else
 
 int
 cuio_getptr(struct uio *uio, int loc, int *off)
@@ -176,7 +145,6 @@ cuio_getptr(struct uio *uio, int loc, int *off)
 
 	return (-1);
 }
-#endif
 
 int
 cuio_apply(struct uio *uio, int off, int len,

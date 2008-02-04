@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.49.2.7 2008/01/21 09:45:53 yamt Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.49.2.8 2008/02/04 09:24:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.49.2.7 2008/01/21 09:45:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.49.2.8 2008/02/04 09:24:01 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.49.2.7 2008/01/21 09:45:53 yamt E
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <miscfs/genfs/genfs.h>
 
 
 #include <netsmb/smb.h>
@@ -128,6 +129,8 @@ struct vfsops smbfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	smbfs_vnodeopv_descs,
 	0,			/* vfs_refcount */
 	{ NULL, NULL },
@@ -177,7 +180,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = smb_dev2share(args->dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
-	smb_share_unlock(ssp, 0);	/* keep ref, but unlock */
+	smb_share_unlock(ssp);	/* keep ref, but unlock */
 	vcp = SSTOVC(ssp);
 	mp->mnt_stat.f_iosize = vcp->vc_txmax;
 	mp->mnt_stat.f_namemax =
@@ -190,7 +193,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST,
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
 
-	lockinit(&smp->sm_hashlock, PVFS, "smbfsh", 0, 0);
+	mutex_init(&smp->sm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	smp->sm_share = ssp;
 	smp->sm_root = NULL;
 	smp->sm_args = *args;
@@ -242,16 +245,12 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	} while (error == EBUSY && smp->sm_didrele != 0);
 
 	smb_makescred(&scred, l, l->l_cred);
-	smb_share_lock(smp->sm_share, 0);
+	smb_share_lock(smp->sm_share);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
 
 	free(smp->sm_hash, M_SMBFSHASH);
-#ifdef __NetBSD__
-	lockmgr(&smp->sm_hashlock, LK_DRAIN, NULL);
-#else
-	lockdestroy(&smp->sm_hashlock);
-#endif
+	mutex_destroy(&smp->sm_hashlock);
 	FREE(smp, M_SMBFSDATA);
 	return error;
 }

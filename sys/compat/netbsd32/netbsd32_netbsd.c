@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.90.2.8 2008/01/21 09:41:51 yamt Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.90.2.9 2008/02/04 09:23:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.8 2008/01/21 09:41:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.90.2.9 2008/02/04 09:23:11 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1295,17 +1295,13 @@ netbsd32_pread(struct lwp *l, const struct netbsd32_pread_args *uap, register_t 
 		syscallarg(off_t) offset;
 	} */
 	struct sys_pread_args ua;
-	ssize_t rt;
-	int error;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TOX_UAP(nbyte, size_t);
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
-	error = sys_pread(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_pread(l, &ua, retval);
 }
 
 int
@@ -1319,17 +1315,13 @@ netbsd32_pwrite(struct lwp *l, const struct netbsd32_pwrite_args *uap, register_
 		syscallarg(off_t) offset;
 	} */
 	struct sys_pwrite_args ua;
-	ssize_t rt;
-	int error;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, void);
 	NETBSD32TOX_UAP(nbyte, size_t);
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
-	error = sys_pwrite(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_pwrite(l, &ua, retval);
 }
 
 int
@@ -1406,14 +1398,10 @@ netbsd32_pathconf(struct lwp *l, const struct netbsd32_pathconf_args *uap, regis
 		syscallarg(int) name;
 	} */
 	struct sys_pathconf_args ua;
-	long rt;
-	int error;
 
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(name);
-	error = sys_pathconf(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_pathconf(l, &ua, retval);
 }
 
 int
@@ -1424,14 +1412,10 @@ netbsd32_fpathconf(struct lwp *l, const struct netbsd32_fpathconf_args *uap, reg
 		syscallarg(int) name;
 	} */
 	struct sys_fpathconf_args ua;
-	long rt;
-	int error;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(name);
-	error = sys_fpathconf(l, &ua, (register_t *)&rt);
-	*retval = rt;
-	return (error);
+	return sys_fpathconf(l, &ua, retval);
 }
 
 int
@@ -1546,17 +1530,28 @@ netbsd32_lseek(struct lwp *l, const struct netbsd32_lseek_args *uap, register_t 
 		syscallarg(int) whence;
 	} */
 	struct sys_lseek_args ua;
+	union {
+	    register_t retval64[2];
+	    register32_t retval32[4];
+	} newpos;
 	int rv;
 
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(pad);
 	NETBSD32TO64_UAP(offset);
 	NETBSD32TO64_UAP(whence);
-	rv = sys_lseek(l, &ua, retval);
-#ifdef NETBSD32_OFF_T_RETURN
-	if (rv == 0)
-		NETBSD32_OFF_T_RETURN(retval);
-#endif
+	rv = sys_lseek(l, &ua, newpos.retval64);
+
+	/*
+	 * We have to split the 64 bit value into 2 halves which will
+	 * end up in separate 32 bit registers.
+	 * This should DTRT on big and little-endian systems provided that
+	 * gcc's 'strict aliasing' tests don't decide that the retval32[]
+	 * entries can't have been assigned to, so need not be read!
+	 */
+	retval[0] = newpos.retval32[0];
+	retval[1] = newpos.retval32[1];
+
 	return rv;
 }
 
@@ -2501,6 +2496,38 @@ netbsd32_fremovexattr(struct lwp *l, const struct netbsd32_fremovexattr_args *ua
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(name, const char);
 	return sys_fremovexattr(l, &ua, retval);
+}
+
+#ifdef COMPAT_40
+int
+netbsd32_posix_fadvise(struct lwp *l, const struct netbsd32_posix_fadvise_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) len;
+		syscallarg(int) advice;
+	} */
+
+	return do_posix_fadvise(l, SCARG(uap, fd), SCARG(uap, offset),
+	    SCARG(uap, len), SCARG(uap, advice), retval);
+}
+#endif
+
+int
+netbsd32___posix_fadvise50(struct lwp *l,
+	const struct netbsd32___posix_fadvise50_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(int) pad;
+		syscallarg(off_t) offset;
+		syscallarg(off_t) len;
+		syscallarg(int) advice;
+	} */
+
+	return do_posix_fadvise(l, SCARG(uap, fd), SCARG(uap, offset),
+	    SCARG(uap, len), SCARG(uap, advice), retval);
 }
 
 /*

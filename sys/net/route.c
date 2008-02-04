@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.66.2.6 2008/01/21 09:47:07 yamt Exp $	*/
+/*	$NetBSD: route.c,v 1.66.2.7 2008/02/04 09:24:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 #include "opt_route.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.66.2.6 2008/01/21 09:47:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.66.2.7 2008/02/04 09:24:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -236,9 +236,7 @@ route_init(void)
 void
 rtflushall(int family)
 {
-	int s;
 	struct domain *dom;
-	struct route *ro;
 
 	if (rtcache_debug())
 		printf("%s: enter\n", __func__);
@@ -246,29 +244,22 @@ rtflushall(int family)
 	if ((dom = pffinddomain(family)) == NULL)
 		return;
 
-	s = splnet();
-	while ((ro = LIST_FIRST(&dom->dom_rtcache)) != NULL) {
-		KASSERT(ro->_ro_rt != NULL);
-		rtcache_clear(ro);
-	}
-	splx(s);
+	rtcache_invalidate(&dom->dom_rtcache);
 }
 
 void
 rtcache(struct route *ro)
 {
-	int s;
 	struct domain *dom;
 
 	KASSERT(ro->_ro_rt != NULL);
+	KASSERT(ro->ro_invalid == false);
 	KASSERT(rtcache_getdst(ro) != NULL);
 
 	if ((dom = pffinddomain(rtcache_getdst(ro)->sa_family)) == NULL)
 		return;
 
-	s = splnet();
 	LIST_INSERT_HEAD(&dom->dom_rtcache, ro, ro_rtcache_next);
-	splx(s);
 }
 
 /*
@@ -1161,10 +1152,10 @@ _rtcache_init(struct route *ro, int flag)
 
 	if (rtcache_getdst(ro) == NULL)
 		return NULL;
-	if ((ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag)) == NULL)
-		return NULL;
+	ro->ro_invalid = false;
+	if ((ro->_ro_rt = rtalloc1(rtcache_getdst(ro), flag)) != NULL)
+		rtcache(ro);
 
-	rtcache(ro);
 	return ro->_ro_rt;
 }
 
@@ -1201,23 +1192,38 @@ rtcache_copy(struct route *new_ro, const struct route *old_ro)
 	    rtcache_setdst(new_ro, rtcache_getdst(old_ro)) != 0)
 		return;
 
+	new_ro->ro_invalid = false;
 	if ((new_ro->_ro_rt = rt) != NULL)
 		rtcache(new_ro);
+}
+
+static struct dom_rtlist invalid_routes = LIST_HEAD_INITIALIZER(dom_rtlist);
+
+void
+rtcache_invalidate(struct dom_rtlist *rtlist)
+{
+	struct route *ro;
+
+	while ((ro = LIST_FIRST(rtlist)) != NULL) {
+		KASSERT(ro->_ro_rt != NULL);
+		ro->ro_invalid = true;
+		LIST_REMOVE(ro, ro_rtcache_next);
+		LIST_INSERT_HEAD(&invalid_routes, ro, ro_rtcache_next);
+	}
 }
 
 void
 rtcache_clear(struct route *ro)
 {
-	int s;
+	if (ro->_ro_rt == NULL)
+		return;
 
-	s = splnet();
-	if (ro->_ro_rt != NULL) {
-		KASSERT(rtcache_getdst(ro) != NULL);
-		RTFREE(ro->_ro_rt);
-		ro->_ro_rt = NULL;
-		LIST_REMOVE(ro, ro_rtcache_next);
-	}
-	splx(s);
+	KASSERT(rtcache_getdst(ro) != NULL);
+
+	LIST_REMOVE(ro, ro_rtcache_next);
+
+	RTFREE(ro->_ro_rt);
+	ro->_ro_rt = NULL;
 }
 
 struct rtentry *

@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.101.16.3 2007/02/26 09:08:39 yamt Exp $
+#	$NetBSD: files.vax,v 1.101.16.4 2008/02/04 09:22:39 yamt Exp $
 #
 # new style config file for vax architecture
 #
@@ -106,6 +106,12 @@ include "dev/mscp/files.mscp"
 # Unibus/Q22 bus definitions
 include "dev/qbus/files.uba"
 
+# TurboCHANNEL bus support and device drivers
+include "dev/tc/files.tc"
+
+attach	tc at vsbus with tcbus
+file	arch/vax/vsa/tc_vsbus.c		tcbus
+
 attach	uba at ibus with uba_ibus
 file	arch/vax/uba/uba_ibus.c		uba_ibus
 attach	uba at sbi with uba_sbi
@@ -191,7 +197,7 @@ attach	le at vsbus with le_vsbus:	le24
 file	arch/vax/if/if_le_vsbus.c	le_vsbus
 
 # builtin NCR53C95 SCSI Controlller on VAXstation 4000 VLC/60/9x
-device	asc: scsi, ncr53c9x
+#device	asc: scsi, ncr53c9x
 attach	asc at vsbus with asc_vsbus
 file	arch/vax/vsa/asc_vsbus.c	asc_vsbus
 
@@ -348,8 +354,6 @@ file	arch/vax/vax/syscall.c
 file	arch/vax/vax/vm_machdep.c
 file	arch/vax/vax/findcpu.c
 file	arch/vax/vax/autoconf.c
-file	arch/vax/vax/in_cksum.c		inet
-file	arch/vax/vax/in4_cksum.c	inet
 file	arch/vax/vax/ns_cksum.c		ns
 file	arch/vax/vax/disksubr.c		disk | tape
 file	arch/vax/vax/db_machdep.c	ddb

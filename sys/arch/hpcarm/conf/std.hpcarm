@@ -1,9 +1,10 @@
-#	$NetBSD: std.hpcarm,v 1.5.18.1 2006/06/21 14:51:44 yamt Exp $
+#	$NetBSD: std.hpcarm,v 1.5.18.2 2008/02/04 09:21:57 yamt Exp $
 #
 # standard NetBSD/hpcarm options
 
 machine	hpcarm arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 options 	EXEC_AOUT
 options 	EXEC_ELF32

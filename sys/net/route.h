@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.41.2.5 2008/01/21 09:47:08 yamt Exp $	*/
+/*	$NetBSD: route.h,v 1.41.2.6 2008/02/04 09:24:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,6 +39,10 @@
 #include <sys/types.h>
 #include <net/if.h>
 
+#ifndef _KERNEL
+#include <stdbool.h>
+#endif
+
 /*
  * Kernel resident routing tables.
  *
@@ -55,6 +59,7 @@ struct route {
 	struct	rtentry		*_ro_rt;
 	struct	sockaddr	*ro_sa;
 	LIST_ENTRY(route)	ro_rtcache_next;
+	bool			ro_invalid;
 };
 
 /*
@@ -292,6 +297,7 @@ extern	struct	rtstat	rtstat;
 extern	struct	radix_node_head *rt_tables[AF_MAX+1];
 
 struct socket;
+struct dom_rtlist;
 
 void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
@@ -368,6 +374,7 @@ struct rtentry *rtfindparent(struct radix_node_head *, struct route *);
 struct rtentry *rtcache_init(struct route *);
 struct rtentry *rtcache_init_noclone(struct route *);
 void	rtcache_copy(struct route *, const struct route *);
+void rtcache_invalidate(struct dom_rtlist *);
 
 struct rtentry *rtcache_lookup2(struct route *, const struct sockaddr *, int,
     int *);
@@ -410,6 +417,9 @@ static inline struct rtentry *
 rtcache_validate(const struct route *ro)
 {
 	struct rtentry *rt = ro->_ro_rt;
+
+	if (ro->ro_invalid)
+		return NULL;
 
 	if (rt != NULL && (rt->rt_flags & RTF_UP) != 0 && rt->rt_ifp != NULL)
 		return rt;

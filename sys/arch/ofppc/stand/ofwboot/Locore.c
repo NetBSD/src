@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.11.16.4 2008/01/21 09:37:54 yamt Exp $	*/
+/*	$NetBSD: Locore.c,v 1.11.16.5 2008/02/04 09:22:20 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -44,9 +44,11 @@ void startup(void *, int, int (*)(void *), char *, int)
 	__attribute__((__used__));
 static void setup(void);
 
-int stack[8192/4 + 4] __attribute__((__used__));
-char *heapspace;
-char altheap[0x20000];
+/* this pad gets the rodata laignment right, don't EVER fiddle it */
+char *pad __attribute__((__aligned__ (8))) = "pad";
+int stack[8192/4 + 4] __attribute__((__aligned__ (4), __used__));
+char *heapspace __attribute__((__aligned__ (4)));
+char altheap[0x20000] __attribute__((__aligned__ (4)));
 
 static int
 openfirmware(void *arg)
@@ -528,7 +530,7 @@ setup(void)
 	    sizeof(stdout))
 		OF_exit();
 
-	printf("Allocating 0x20000 bytes of ram for boot\n");
+	//printf("Allocating 0x20000 bytes of ram for boot\n");
 	heapspace = OF_claim(0, 0x20000, NBPG);
 	if (heapspace == (char *)-1) {
 		printf("WARNING: Failed to alloc ram, using bss\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.93.2.6 2008/01/21 09:44:08 yamt Exp $	*/
+/*	$NetBSD: pci.c,v 1.93.2.7 2008/02/04 09:23:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93.2.6 2008/01/21 09:44:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93.2.7 2008/02/04 09:23:32 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -725,7 +725,11 @@ pci_set_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state,
 		return EINVAL;
 	}
 	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
-	DELAY(1000);
+	if (state == PCI_PMCSR_STATE_D3 || value == PCI_PMCSR_STATE_D3)
+		DELAY(10000);
+	else if (state == PCI_PMCSR_STATE_D2 || value == PCI_PMCSR_STATE_D2)
+		DELAY(200);
+
 	return 0;
 }
 

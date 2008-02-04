@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.7.8.3 2007/12/07 17:26:05 yamt Exp $ */
+/* $NetBSD: crmfb.c,v 1.7.8.4 2008/02/04 09:22:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.7.8.3 2007/12/07 17:26:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.7.8.4 2008/02/04 09:22:25 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,6 +109,10 @@ int		crmfb_probe(void);
 
 #define KERNADDR(p)	((void *)((p).addr))
 #define DMAADDR(p)	((p).map->dm_segs[0].ds_addr)
+
+#define CRMFB_REG_MASK(msb, lsb) \
+	( (((uint32_t) 1 << ((msb)-(lsb)+1)) - 1) << (lsb) )
+
 
 struct crmfb_dma {
 	bus_dmamap_t		map;
@@ -706,6 +710,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 {
 	uint32_t d, h;
 	int i;
+	const char *wantsync;
 	
 	/* disable DMA */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_CONTROL);
@@ -802,6 +807,14 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_CONTROL);
 	d |= (1 << CRMFB_FRM_CONTROL_DMAEN_SHIFT);
 	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
+
+	/* turn off sync-on-green */
+
+	wantsync = ARCBIOS->GetEnvironmentVariable("SyncOnGreen");
+	if ( (wantsync != NULL) && (wantsync[0] == 'n') ) {
+		d = ( 1 << CRMFB_VT_FLAGS_SYNC_LOW_LSB) & CRMFB_REG_MASK(CRMFB_VT_FLAGS_SYNC_LOW_MSB, CRMFB_VT_FLAGS_SYNC_LOW_LSB);
+		crmfb_write_reg(sc, CRMFB_VT_FLAGS, d);
+	}
 
 	sc->sc_depth = depth;
 	return 0;

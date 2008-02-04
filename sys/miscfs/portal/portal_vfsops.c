@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.51.2.7 2008/01/21 09:46:55 yamt Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.51.2.8 2008/02/04 09:24:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51.2.7 2008/01/21 09:46:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51.2.8 2008/02/04 09:24:32 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.51.2.7 2008/01/21 09:46:55 yamt 
 #include <sys/dirent.h>
 #include <sys/un.h>
 #include <sys/kauth.h>
+
+#include <miscfs/genfs/genfs.h>
 
 #include <miscfs/portal/portal.h>
 
@@ -304,6 +306,8 @@ struct vfsops portal_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	portal_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

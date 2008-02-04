@@ -1,4 +1,4 @@
-/* $NetBSD: aiboost.c,v 1.13.2.6 2008/01/21 09:42:32 yamt Exp $ */
+/* $NetBSD: aiboost.c,v 1.13.2.7 2008/02/04 09:23:19 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.13.2.6 2008/01/21 09:42:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aiboost.c,v 1.13.2.7 2008/02/04 09:23:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,6 +111,7 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	ACPI_HANDLE *handl;
 	int i, maxsens, error = 0;
+	size_t len;
 
 	sc->sc_node = aa->aa_node;
 	handl = sc->sc_node->ad_handle;
@@ -135,8 +136,8 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: maxsens=%d\n", __func__, maxsens));
 
 	sc->sc_sme = sysmon_envsys_create();
-	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t) * maxsens,
-	    KM_NOSLEEP);
+	len = sizeof(envsys_data_t) * maxsens;
+	sc->sc_sensor = kmem_zalloc(len, KM_NOSLEEP);
 	if (!sc->sc_sensor)
 		goto bad2;
 
@@ -173,7 +174,7 @@ aiboost_acpi_attach(device_t parent, device_t self, void *aux)
 	return;
 
 bad:
-	kmem_free(sc->sc_sensor, sizeof(*sc->sc_sensor));
+	kmem_free(sc->sc_sensor, len);
 bad2:
 	sysmon_envsys_destroy(sc->sc_sme);
 	mutex_destroy(&sc->sc_mtx);
@@ -311,7 +312,7 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 	struct aiboost_comp *c = NULL;
 	int i;
 	const char *str = NULL;
-	size_t length;
+	size_t length, clen = 0;
 
 	status = acpi_eval_struct(h, name, &buf);
 	if (ACPI_FAILURE(status)) {
@@ -331,14 +332,14 @@ aiboost_getcomp(ACPI_HANDLE *h, const char *name, struct aiboost_comp **comp)
 		goto error;
 	}
 
-	c = kmem_zalloc(sizeof(struct aiboost_comp) +
-	    sizeof(struct aiboost_elem) * (elem->Integer.Value - 1),
-	    KM_NOSLEEP);
+	clen = sizeof(struct aiboost_comp) + sizeof(struct aiboost_elem) *
+	    (o->Package.Count - 1);
+	c = kmem_zalloc(clen, KM_NOSLEEP);
 	if (!c)
 		goto error;
 
 	*comp = c;
-	c->num = elem->Integer.Value;
+	c->num = o->Package.Count - 1;
 
 	for (i = 1; i < o->Package.Count; i++) {
 		elem = &o->Package.Elements[i];
@@ -405,7 +406,7 @@ error:
 	if (buf2.Pointer)
 		AcpiOsFree(buf2.Pointer);
 	if (c)
-		kmem_free(c, sizeof(*c));
+		kmem_free(c, clen);
 
 	return AE_BAD_DATA;
 }

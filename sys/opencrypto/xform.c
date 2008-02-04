@@ -1,4 +1,4 @@
-/*	$NetBSD: xform.c,v 1.14.2.1 2006/06/21 15:12:02 yamt Exp $ */
+/*	$NetBSD: xform.c,v 1.14.2.2 2008/02/04 09:24:48 yamt Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.14.2.1 2006/06/21 15:12:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform.c,v 1.14.2.2 2008/02/04 09:24:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -120,13 +120,28 @@ struct auth_hash auth_hash_null = {
 	0, 0, 12, sizeof(int)			/* NB: context isn't used */
 };
 
-struct auth_hash auth_hash_hmac_md5_96 = {
+struct auth_hash auth_hash_hmac_md5 = {
 	CRYPTO_MD5_HMAC, "HMAC-MD5",
+	16, 16, 16, sizeof(MD5_CTX)
+};
+
+struct auth_hash auth_hash_hmac_sha1 = {
+	CRYPTO_SHA1_HMAC, "HMAC-SHA1",
+	20, 20, 20, sizeof(SHA1_CTX)
+};
+
+struct auth_hash auth_hash_hmac_ripemd_160 = {
+	CRYPTO_RIPEMD160_HMAC, "HMAC-RIPEMD-160",
+	20, 20, 20, sizeof(RMD160_CTX)
+};
+
+struct auth_hash auth_hash_hmac_md5_96 = {
+	CRYPTO_MD5_HMAC, "HMAC-MD5-96",
 	16, 16, 12, sizeof(MD5_CTX)
 };
 
 struct auth_hash auth_hash_hmac_sha1_96 = {
-	CRYPTO_SHA1_HMAC, "HMAC-SHA1",
+	CRYPTO_SHA1_HMAC, "HMAC-SHA1-96",
 	20, 20, 12, sizeof(SHA1_CTX)
 };
 

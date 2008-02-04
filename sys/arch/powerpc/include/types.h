@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.24.16.4 2007/12/07 17:25:54 yamt Exp $	*/
+/*	$NetBSD: types.h,v 1.24.16.5 2008/02/04 09:22:22 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -44,16 +44,12 @@ typedef	unsigned long	paddr_t, vaddr_t;
 typedef	unsigned long	psize_t, vsize_t;
 #endif
 
-#ifdef _LP64
 /*
  * Because lwz etal don't sign extend, it's best to make registers unsigned.
  */
-typedef unsigned long	register_t;
-typedef unsigned int	register32_t;
-#else
-typedef unsigned long long	register64_t;
-typedef unsigned long	register_t;
-#endif
+typedef unsigned long register_t;
+typedef __uint64_t register64_t;
+typedef __uint32_t register32_t;
 
 #if defined(_KERNEL)
 typedef struct label_t {

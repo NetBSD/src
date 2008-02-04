@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.h,v 1.14.16.1 2007/09/03 14:30:50 yamt Exp $ */
+/*	$NetBSD: vsbus.h,v 1.14.16.2 2008/02/04 09:22:42 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@ struct	vsbus_attach_args {
 	u_char	va_maskno;		/* Interrupt vector in mask */
 	vaddr_t	va_dmaaddr;		/* DMA area address */
 	vsize_t	va_dmasize;		/* DMA area size */
-	bus_space_tag_t va_iot;
+	bus_space_tag_t va_memt;
 	bus_dma_tag_t va_dmat;
 };
 

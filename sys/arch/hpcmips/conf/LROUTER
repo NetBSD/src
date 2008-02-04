@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LROUTER,v 1.24.6.2 2006/12/30 20:46:03 yamt Exp $
+# 	$NetBSD: LROUTER,v 1.24.6.3 2008/02/04 09:21:57 yamt Exp $
 # 	From: NetBSD: MPC303,v 1.4 2001/11/21 11:28:09 uch Exp
 #
 # Kernel configuration file for LASER5 L-Router
@@ -95,6 +95,9 @@ options 	INET6		# IPV6
 
 # NetBSD backwards compatibility
 options 	COMPAT_43
+options 	COMPAT_16
+options 	COMPAT_20
+options 	COMPAT_30	# NetBSD 3.0 compatibility.
 options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	NFS_BOOT_DHCP

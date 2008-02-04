@@ -1,4 +1,4 @@
-/*	$NetBSD: mips3_clock.c,v 1.4.8.4 2008/01/21 09:37:33 yamt Exp $	*/
+/*	$NetBSD: mips3_clock.c,v 1.4.8.5 2008/02/04 09:22:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,7 +78,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.4.8.4 2008/01/21 09:37:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips3_clock.c,v 1.4.8.5 2008/02/04 09:22:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,9 +125,14 @@ mips3_delay(int n)
 
 		last = cur;
 
-		if (delta >= divisor_delay) {
-			usecs += delta / divisor_delay;
-			delta %= divisor_delay;
+		while (delta >= divisor_delay) {
+			/*
+			 * delta is not so larger than divisor_delay here,
+			 * and using DIV/DIVU ops could be much slower.
+			 * (though longer delay may be harmless)
+			 */
+			usecs++;
+			delta -= divisor_delay;
 		}
 	}
 }

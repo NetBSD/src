@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.16.2.8 2008/01/21 09:45:51 yamt Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.16.2.9 2008/02/04 09:24:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.16.2.8 2008/01/21 09:45:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.16.2.9 2008/02/04 09:24:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.16.2.8 2008/01/21 09:45:51 yamt E
 #include <sys/proc.h>
 
 #include <dev/putter/putter_sys.h>
+
+#include <miscfs/genfs/genfs.h>
 
 #include <fs/puffs/puffs_msgif.h>
 #include <fs/puffs/puffs_sys.h>
@@ -828,6 +830,8 @@ struct vfsops puffs_vfsops = {
 	puffs_vfsop_snapshot,		/* snapshot	*/
 	vfs_stdextattrctl,		/* extattrctl	*/
 	puffs_vfsop_suspendctl,		/* suspendctl	*/
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	puffs_vnodeopv_descs,		/* vnodeops	*/
 	0,				/* refcount	*/
 	{ NULL, NULL }

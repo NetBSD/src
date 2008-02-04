@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.89.2.3 2007/09/03 14:39:16 yamt Exp $        */
+/*      $NetBSD: ukbd.c,v 1.89.2.4 2008/02/04 09:23:39 yamt Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.89.2.3 2007/09/03 14:39:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.89.2.4 2008/02/04 09:23:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ struct ukbd_data {
  * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 0x80 represent EXTENDED keycodes.
  *
- * See http://www.microsoft.com/HWDEV/TECH/input/Scancode.asp
+ * See http://www.microsoft.com/whdc/device/input/Scancode.mspx
  */
 Static const u_int8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
@@ -120,7 +120,7 @@ Static const u_int8_t ukbd_trtab[256] = {
     0xcb, 0xd0, 0xc8, 0x45, 0xb5, 0x37, 0x4a, 0x4e, /* 50 - 57 */
     0x9c, 0x4f, 0x50, 0x51, 0x4b, 0x4c, 0x4d, 0x47, /* 58 - 5f */
     0x48, 0x49, 0x52, 0x53, 0x56, 0xdd,   NN, 0x59, /* 60 - 67 */
-    0x5d, 0x5e, 0x5f,   NN,   NN,   NN,   NN,   NN, /* 68 - 6f */
+    0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a,   NN, /* 68 - 6f */
       NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 70 - 77 */
       NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 78 - 7f */
       NN,   NN,   NN,   NN,   NN, 0x7e,   NN, 0x73, /* 80 - 87 */

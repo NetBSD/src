@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_securelevel.c,v 1.4.6.3 2008/01/21 09:47:46 yamt Exp $ */
+/* $NetBSD: secmodel_securelevel.c,v 1.4.6.4 2008/02/04 09:24:56 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.4.6.3 2008/01/21 09:47:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_securelevel.c,v 1.4.6.4 2008/02/04 09:24:56 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_insecure.h"
@@ -287,16 +287,16 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 	p = arg0;
 
 	switch (action) {
-	case KAUTH_PROCESS_CANPROCFS: {
+	case KAUTH_PROCESS_PROCFS: {
 		enum kauth_process_req req;
 
 		req = (enum kauth_process_req)arg2;
 		switch (req) {
-		case KAUTH_REQ_PROCESS_CANPROCFS_READ:
+		case KAUTH_REQ_PROCESS_PROCFS_READ:
 			break;
 
-		case KAUTH_REQ_PROCESS_CANPROCFS_RW:
-		case KAUTH_REQ_PROCESS_CANPROCFS_WRITE:
+		case KAUTH_REQ_PROCESS_PROCFS_RW:
+		case KAUTH_REQ_PROCESS_PROCFS_WRITE:
 			if ((p == initproc) && (securelevel > -1))
 				result = KAUTH_RESULT_DENY;
 
@@ -309,7 +309,7 @@ secmodel_securelevel_process_cb(kauth_cred_t cred,
 		break;
 		}
 
-	case KAUTH_PROCESS_CANPTRACE:
+	case KAUTH_PROCESS_PTRACE:
 		if ((p == initproc) && (securelevel >= 0))
 			result = KAUTH_RESULT_DENY;
 

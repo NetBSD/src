@@ -1,4 +1,4 @@
-/*	$NetBSD: auth.c,v 1.2.6.3 2008/01/21 09:47:41 yamt Exp $	*/
+/*	$NetBSD: auth.c,v 1.2.6.4 2008/02/04 09:24:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -90,6 +90,13 @@ kauth_authorize_system(kauth_cred_t cred, kauth_action_t op,
 
 	/* always allow */
 	return 0;
+}
+
+uid_t
+kauth_cred_getuid(kauth_cred_t cred)
+{
+
+	return kauth_cred_geteuid(cred);
 }
 
 uid_t

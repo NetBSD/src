@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.70 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.atari,v 1.70.2.1 2008/02/04 09:21:47 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -52,6 +52,8 @@ KERN_AS=	obj
 MD_OBJS=	locore.o ${FPSP}
 MD_CFILES=
 MD_SFILES=	${ATARI}/atari/locore.s
+
+copy.o copypage.o lock_stubs.o: assym.h
 
 locore.o: ${ATARI}/atari/locore.s assym.h
 	${NORMAL_S}

@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_ctl.c,v 1.28.4.5 2007/11/15 11:45:00 yamt Exp $	*/
+/*	$NetBSD: procfs_ctl.c,v 1.28.4.6 2008/02/04 09:24:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.5 2007/11/15 11:45:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_ctl.c,v 1.28.4.6 2008/02/04 09:24:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,8 +172,8 @@ procfs_control(curl, l, op, sig, pfs)
 		 *      (3) the security model prevents it.
 		 */
 		if ((error = kauth_authorize_process(curl->l_cred,
-		    KAUTH_PROCESS_CANPROCFS, p, pfs,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANPROCFS_CTL), NULL)) != 0)
+		    KAUTH_PROCESS_PROCFS, p, pfs,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_PROCFS_CTL), NULL)) != 0)
 		    	break;
 
 		break;

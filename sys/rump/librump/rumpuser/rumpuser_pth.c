@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_pth.c,v 1.4.4.4 2008/01/21 09:47:45 yamt Exp $	*/
+/*	$NetBSD: rumpuser_pth.c,v 1.4.4.5 2008/02/04 09:24:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -63,6 +63,7 @@ struct rumpuser_aio *rua_aios[N_AIOS];
 
 struct rumpuser_rw rumpspl;
 
+#ifndef RUMP_WITHOUT_THREADS
 static void *
 iothread(void *arg)
 {
@@ -90,11 +91,14 @@ iothread(void *arg)
 		NOFAIL(pthread_mutex_lock(&rua_mtx.pthmtx) == 0);
 	}
 }
+#endif /* RUMP_WITHOUT_THREADS */
 
 int
 rumpuser_thrinit()
 {
+#ifndef RUMP_WITHOUT_THREADS
 	pthread_t iothr;
+#endif
 
 	pthread_mutex_init(&rua_mtx.pthmtx, NULL);
 	pthread_cond_init(&rua_cv.pthcv, NULL);
@@ -103,7 +107,9 @@ rumpuser_thrinit()
 	pthread_key_create(&curlwpkey, NULL);
 	pthread_key_create(&isintr, NULL);
 
+#ifndef RUMP_WITHOUT_THREADS
 	pthread_create(&iothr, NULL, iothread, NULL);
+#endif
 
 	return 0;
 }
@@ -180,6 +186,13 @@ rumpuser_mutex_destroy(struct rumpuser_mtx *mtx)
 	free(mtx);
 }
 
+int
+rumpuser_mutex_held(struct rumpuser_mtx *mtx)
+{
+
+	return pthread_mutex_held_np(&mtx->pthmtx);
+}
+
 void
 rumpuser_rw_init(struct rumpuser_rw **rw)
 {
@@ -221,6 +234,27 @@ rumpuser_rw_destroy(struct rumpuser_rw *rw)
 
 	NOFAIL(pthread_rwlock_destroy(&rw->pthrw) == 0);
 	free(rw);
+}
+
+int
+rumpuser_rw_held(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_held_np(&rw->pthrw);
+}
+
+int
+rumpuser_rw_rdheld(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_rdheld_np(&rw->pthrw);
+}
+
+int
+rumpuser_rw_wrheld(struct rumpuser_rw *rw)
+{
+
+	return pthread_rwlock_wrheld_np(&rw->pthrw);
 }
 
 void

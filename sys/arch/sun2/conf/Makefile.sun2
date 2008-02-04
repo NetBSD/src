@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.17 2005/05/31 04:03:11 christos Exp $
+# $NetBSD: Makefile.sun2,v 1.17.2.1 2008/02/04 09:22:36 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -70,6 +70,7 @@ locore.o:   assym.h m68k/asm.h m68k/trap.h
 copy.o:     assym.h m68k/asm.h $S/sys/errno.h
 bcopy.o:    assym.h m68k/asm.h
 copypage.o: assym.h m68k/asm.h
+lock_stubs.o: assym.h
 
 # depend on CPU configuration
 db_machdep.o dvma.o machdep.o pmap.o sun2_startup.o vm_machdep.o: Makefile

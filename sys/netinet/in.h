@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.70.6.6 2008/01/21 09:47:13 yamt Exp $	*/
+/*	$NetBSD: in.h,v 1.70.6.7 2008/02/04 09:24:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -541,6 +541,7 @@ extern const struct sockaddr_in in_any;
 
 int	in_broadcast(struct in_addr, struct ifnet *);
 int	in_canforward(struct in_addr);
+int	cpu_in_cksum(struct mbuf *, int, int, uint32_t);
 int	in_cksum(struct mbuf *, int);
 int	in4_cksum(struct mbuf *, u_int8_t, int, int);
 void	in_delayed_cksum(struct mbuf *);

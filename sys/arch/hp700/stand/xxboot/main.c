@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.14.1 2006/06/21 14:51:37 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.1.14.2 2008/02/04 09:21:57 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003 ITOH Yasufumi.
@@ -265,8 +265,7 @@ ipl_main(interactive, sptop, psw)
 		}
 
 		/* boot partition must be below 2GB */
-		if (partoff + partsz >=
-		    (unsigned)((unsigned)2*1024*1024*1024 -1 + secsz) / secsz) {
+		if (partoff + partsz > ((unsigned)2*1024*1024*1024) / secsz) {
 			/* "boot partition exceeds 2GB boundary\r\n" */
 			print(str_warn_2GB);
 			goto select_partition;

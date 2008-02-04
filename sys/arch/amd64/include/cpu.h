@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.6.12.8 2008/01/21 09:35:23 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6.12.9 2008/02/04 09:21:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -336,7 +336,6 @@ void	xen_initclocks(void);
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(unsigned int);
-void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 #endif
 

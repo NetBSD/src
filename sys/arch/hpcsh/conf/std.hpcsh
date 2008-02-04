@@ -1,13 +1,11 @@
-# $NetBSD: std.hpcsh,v 1.5.4.1 2006/06/21 14:52:01 yamt Exp $
+# $NetBSD: std.hpcsh,v 1.5.4.2 2008/02/04 09:21:59 yamt Exp $
 #
 # standard, required NetBSD/hpcsh 'options'
 
 machine hpcsh sh3
-include		"conf/std"	# MI standard options
+include		"conf/std"			# MI standard options
+include		"arch/sh3/conf/std.sh3el"	# arch standard options
 
-options 	EXEC_SCRIPT	# exec #! scripts
 options 	IOM_RAM_BEGIN=0x0c000000
 
-makeoptions	ENDIAN="-EL"
 makeoptions	DEFTEXTADDR="0x8c001000"
-makeoptions	MACHINE_ARCH=sh3el

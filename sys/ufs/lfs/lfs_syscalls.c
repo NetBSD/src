@@ -1,7 +1,8 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.107.2.6 2008/01/21 09:48:13 yamt Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.107.2.7 2008/02/04 09:25:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
+ *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.107.2.6 2008/01/21 09:48:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.107.2.7 2008/02/04 09:25:05 yamt Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -254,7 +255,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	cnt = blkcnt;
 
-	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0)
+	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
 		return (error);
 
 	/*
@@ -505,7 +506,7 @@ lfs_markv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov,
 
 	lfs_segunlock(fs);
 
-	vfs_unbusy(mntp);
+	vfs_unbusy(mntp, false);
 	if (error)
 		return (error);
 	else if (do_again)
@@ -533,7 +534,7 @@ err3:
 	}
 
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp);
+	vfs_unbusy(mntp, false);
 #ifdef DIAGNOSTIC
 	if (numrefed != 0)
 		panic("lfs_markv: numrefed=%d", numrefed);
@@ -679,7 +680,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		return (ENOENT);
 
 	ump = VFSTOUFS(mntp);
-	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0)
+	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
 		return (error);
 
 	cnt = blkcnt;
@@ -819,7 +820,7 @@ lfs_bmapv(struct proc *p, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 		panic("lfs_bmapv: numrefed=%d", numrefed);
 #endif
 
-	vfs_unbusy(mntp);
+	vfs_unbusy(mntp, false);
 
 	return 0;
 }
@@ -857,13 +858,13 @@ sys_lfs_segclean(struct lwp *l, const struct sys_lfs_segclean_args *uap, registe
 	fs = VFSTOUFS(mntp)->um_lfs;
 	segnum = SCARG(uap, segment);
 
-	if ((error = vfs_busy(mntp, LK_NOWAIT, NULL)) != 0)
+	if ((error = vfs_trybusy(mntp, RW_READER, NULL)) != 0)
 		return (error);
 
 	lfs_seglock(fs, SEGM_PROT);
 	error = lfs_do_segclean(fs, segnum);
 	lfs_segunlock(fs);
-	vfs_unbusy(mntp);
+	vfs_unbusy(mntp, false);
 	return error;
 }
 
@@ -1133,7 +1134,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
-			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
+			vlockmgr(&vp->v_lock, LK_RELEASE);
 			lfs_vunref(vp);
 			*vpp = NULL;
 			return (error);
@@ -1156,7 +1157,7 @@ lfs_fastvget(struct mount *mp, ino_t ino, daddr_t daddr, struct vnode **vpp,
 			ufs_ihashrem(ip);
 
 			/* Unlock and discard unneeded inode. */
-			lockmgr(&vp->v_lock, LK_RELEASE, &vp->v_interlock);
+			vlockmgr(&vp->v_lock, LK_RELEASE);
 			lfs_vunref(vp);
 			brelse(bp, 0);
 			*vpp = NULL;

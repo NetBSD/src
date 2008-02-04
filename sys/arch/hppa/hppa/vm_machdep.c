@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.18.2.4 2008/01/21 09:36:45 yamt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.18.2.5 2008/02/04 09:22:00 yamt Exp $	*/
 
 /*	$OpenBSD: vm_machdep.c,v 1.25 2001/09/19 20:50:56 mickey Exp $	*/
 
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.4 2008/01/21 09:36:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.18.2.5 2008/02/04 09:22:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +147,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 
 	/* Now copy the parent PCB into the child. */
 	pcbp = &l2->l_addr->u_pcb;
-	bcopy(&l1->l_addr->u_pcb, pcbp, sizeof(*pcbp));
+	memcpy(pcbp, &l1->l_addr->u_pcb, sizeof(*pcbp));
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)&l1->l_addr->u_pcb,
 		sizeof(pcbp->pcb_fpregs));
 	/* reset any of the pending FPU exceptions from parent */
@@ -161,7 +161,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	sp += sizeof(struct trapframe);
 
 	/* copy the l1's trapframe to l2 */
-	bcopy(l1->l_md.md_regs, tf, sizeof(*tf));
+	memcpy(tf, l1->l_md.md_regs, sizeof(*tf));
 
 	/*
 	 * cpu_swapin() is supposed to fill out all the PAs

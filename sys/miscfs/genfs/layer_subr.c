@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_subr.c,v 1.15.16.4 2008/01/21 09:46:53 yamt Exp $	*/
+/*	$NetBSD: layer_subr.c,v 1.15.16.5 2008/02/04 09:24:30 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.15.16.4 2008/01/21 09:46:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_subr.c,v 1.15.16.5 2008/02/04 09:24:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,19 +150,36 @@ loop:
 	LIST_FOREACH(a, hd, layer_hash) {
 		if (a->layer_lowervp == lowervp && LAYERTOV(a)->v_mount == mp) {
 			vp = LAYERTOV(a);
-
-			/*
-			 * We must not let vget() try to lock the layer vp,
-			 * since the lower vp is already locked and locking the
-			 * layer vp will involve locking the lower vp (whether
-			 * or not they actually share a lock).  Instead, take
-			 * the layer vp's lock separately afterward, but only
-			 * if it does not share the lower vp's lock.
-			 */
 			mutex_enter(&vp->v_interlock);
+			/*
+			 * If we find a node being cleaned out, then
+			 * ignore it and continue.  A thread trying to
+			 * clean out the extant layer vnode needs to
+			 * acquire the shared lock (i.e. the lower
+			 * vnode's lock), which our caller already holds.
+			 * To allow the cleaning to succeed the current
+			 * thread must make progress.  So, for a brief
+			 * time more than one vnode in a layered file
+			 * system may refer to a single vnode in the
+			 * lower file system.
+			 */
+			if ((vp->v_iflag & VI_XLOCK) != 0) {
+				mutex_exit(&vp->v_interlock);
+				continue;
+			}
 			mutex_exit(&lmp->layerm_hashlock);
-			error = vget(vp, LK_INTERLOCK);
+			/*
+			 * We must not let vget() try to lock the layer
+			 * vp, since the lower vp is already locked and
+			 * locking the layer vp will involve locking
+			 * the lower vp (whether or not they actually
+			 * share a lock).  Instead, take the layer vp's
+			 * lock separately afterward, but only if it
+			 * does not share the lower vp's lock.
+			 */
+			error = vget(vp, LK_INTERLOCK | LK_NOWAIT);
 			if (error) {
+				kpause("layerfs", false, 1, NULL);
 				mutex_enter(&lmp->layerm_hashlock);
 				goto loop;
 			}
@@ -206,10 +223,7 @@ layer_node_alloc(mp, lowervp, vpp)
 		return ENOMEM;
 	}
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {
-		MALLOC(vp->v_specinfo, struct specinfo *,
-		    sizeof(struct specinfo), M_VNODE, M_WAITOK);
-		vp->v_hashchain = NULL;
-		vp->v_rdev = lowervp->v_rdev;
+		spec_node_init(vp, lowervp->v_rdev);
 	}
 
 	vp->v_data = xp;
@@ -231,7 +245,7 @@ layer_node_alloc(mp, lowervp, vpp)
 		/* free the substructures we've allocated. */
 		kmem_free(xp, lmp->layerm_size);
 		if (vp->v_type == VBLK || vp->v_type == VCHR)
-			FREE(vp->v_specinfo, M_VNODE);
+			spec_node_destroy(vp);
 
 		vp->v_type = VBAD;		/* node is discarded */
 		vp->v_op = dead_vnodeop_p;	/* so ops will still work */

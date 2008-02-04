@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60.2.4 2007/09/03 14:28:20 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60.2.5 2008/02/04 09:22:17 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.4 2007/09/03 14:28:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.5 2008/02/04 09:22:17 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60.2.4 2007/09/03 14:28:20 yamt Exp $"
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/pte.h>
+#include <machine/intr.h>
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
@@ -1006,24 +1007,27 @@ intrhand_lev3(void)
 {
 	int stat;
 
+	idepth++;
+
 	stat = *int_status;
 	intrcnt[3]++;
 	uvmexp.intrs++;
 #if 1
 	printf("level 3 interrupt: INT_STATUS = 0x%02x\n", stat);
 #endif
+
+	idepth--;
 }
+
+extern int leintr(int);
+extern int si_intr(int);
 
 void
 intrhand_lev4(void)
 {
 	int stat;
-#if NLE > 0
-	extern int leintr(int);
-#endif
-#if NSI > 0
-	extern int si_intr(int);
-#endif
+
+	idepth++;
 
 #define INTST_LANCE	0x04
 #define INTST_SCSI	0x80
@@ -1045,6 +1049,8 @@ intrhand_lev4(void)
 #if 0
 	printf("level 4 interrupt\n");
 #endif
+
+	idepth--;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.2.2.2 2008/01/21 09:36:58 yamt Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.2.2.3 2008/02/04 09:22:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.2.2.2 2008/01/21 09:36:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.2.2.3 2008/02/04 09:22:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,7 @@ struct pcb	dumppcb;
 uint32_t dumpmag = 0x8fca0101;	/* magic number */
 int 	dumpsize;		/* pages */
 long	dumplo; 		/* blocks */
-int	sparse_dump;
+int	sparse_dump = 1;
 
 /*
  * Module private.

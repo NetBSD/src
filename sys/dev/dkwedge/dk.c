@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.7.2.7 2008/01/21 09:42:42 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.7.2.8 2008/02/04 09:23:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7.2.7 2008/01/21 09:42:42 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7.2.8 2008/02/04 09:23:20 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -931,7 +931,9 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 				goto popen_fail;
 			}
 			/* VOP_OPEN() doesn't do this for us. */
+			mutex_enter(&vp->v_interlock);
 			vp->v_writecount++;
+			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
 			sc->sc_parent->dk_rawvp = vp;
 		}

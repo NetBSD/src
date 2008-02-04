@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.250.2.8 2008/01/21 09:46:32 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.250.2.9 2008/02/04 09:24:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,9 +82,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.8 2008/01/21 09:46:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.9 2008/02/04 09:24:23 yamt Exp $");
 
-#include "opt_inet.h"
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -260,6 +259,10 @@ try_nextlist:
 		/* We're about to dirty it. */
 		vp->v_iflag &= ~VI_CLEAN;
 		mutex_exit(&vp->v_interlock);
+		if (vp->v_type == VBLK || vp->v_type == VCHR) {
+			spec_node_destroy(vp);
+		}
+		vp->v_type = VNON;
 	} else {
 		/*
 		 * Don't return to freelist - the holder of the last
@@ -287,60 +290,101 @@ try_nextlist:
 }
 
 /*
- * Mark a mount point as busy. Used to synchronize access and to delay
- * unmounting. Interlock is not released on failure.
+ * Mark a mount point as busy, and gain a new reference to it.  Used to
+ * synchronize access and to delay unmounting.
+ *
+ * => Interlock is not released on failure.
+ * => If no interlock, the caller is expected to already hold a reference
+ *    on the mount.
+ * => If interlocked, the interlock must prevent the last reference to
+ *    the mount from disappearing.
  */
 int
-vfs_busy(struct mount *mp, int flags, kmutex_t *interlkp)
+vfs_busy(struct mount *mp, const krw_t op, kmutex_t *interlock)
 {
-	int lkflags;
 
-	while (mp->mnt_iflag & IMNT_UNMOUNT) {
-		int gone, n;
+	KASSERT(mp->mnt_refcnt > 0);
 
-		if (flags & LK_NOWAIT)
-			return (ENOENT);
-		if ((flags & LK_RECURSEFAIL) && mp->mnt_unmounter != NULL
-		    && mp->mnt_unmounter == curlwp)
-			return (EDEADLK);
-		if (interlkp)
-			mutex_exit(interlkp);
-		/*
-		 * Since all busy locks are shared except the exclusive
-		 * lock granted when unmounting, the only place that a
-		 * wakeup needs to be done is at the release of the
-		 * exclusive lock at the end of dounmount.
-		 */
-		mutex_enter(&mp->mnt_mutex);
-		mp->mnt_wcnt++;
-		mtsleep((void *)mp, PVFS, "vfs_busy", 0, &mp->mnt_mutex);
-		n = --mp->mnt_wcnt;
-		mutex_exit(&mp->mnt_mutex);
-		gone = mp->mnt_iflag & IMNT_GONE;
-
-		if (n == 0)
-			wakeup(&mp->mnt_wcnt);
-		if (interlkp)
-			mutex_enter(interlkp);
-		if (gone)
-			return (ENOENT);
+	atomic_inc_uint(&mp->mnt_refcnt);
+	if (interlock != NULL) {
+		mutex_exit(interlock);
 	}
-	lkflags = LK_SHARED;
-	if (interlkp)
-		lkflags |= LK_INTERLOCK;
-	if (lockmgr(&mp->mnt_lock, lkflags, interlkp))
-		panic("vfs_busy: unexpected lock failure");
-	return (0);
+	if (mp->mnt_writer == curlwp) {
+		mp->mnt_recursecnt++;
+	} else {
+		rw_enter(&mp->mnt_lock, op);
+		if (op == RW_WRITER) {
+			KASSERT(mp->mnt_writer == NULL);
+			mp->mnt_writer = curlwp;
+		}
+	}
+	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
+		vfs_unbusy(mp, false);
+		if (interlock != NULL) {
+			mutex_enter(interlock);
+		}
+		return ENOENT;
+	}
+
+	return 0;
 }
 
 /*
- * Free a busy filesystem.
+ * As vfs_busy(), but return immediatley if the mount cannot be
+ * locked without waiting.
  */
-void
-vfs_unbusy(struct mount *mp)
+int
+vfs_trybusy(struct mount *mp, krw_t op, kmutex_t *interlock)
 {
 
-	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL);
+	KASSERT(mp->mnt_refcnt > 0);
+
+	if (mp->mnt_writer == curlwp) {
+		mp->mnt_recursecnt++;
+	} else {
+		if (!rw_tryenter(&mp->mnt_lock, op)) {
+			return EBUSY;
+		}
+		if (op == RW_WRITER) {
+			KASSERT(mp->mnt_writer == NULL);
+			mp->mnt_writer = curlwp;
+		}
+	}
+	atomic_inc_uint(&mp->mnt_refcnt);
+	if ((mp->mnt_iflag & IMNT_GONE) != 0) {
+		vfs_unbusy(mp, false);
+		return ENOENT;
+	}
+	if (interlock != NULL) {
+		mutex_exit(interlock);
+	}
+	return 0;
+}
+
+/*
+ * Unlock a busy filesystem and drop reference to it.  If 'keepref' is
+ * true, unlock but preserve the reference.
+ */
+void
+vfs_unbusy(struct mount *mp, bool keepref)
+{
+
+	KASSERT(mp->mnt_refcnt > 0);
+
+	if (mp->mnt_writer == curlwp) {
+		KASSERT(rw_write_held(&mp->mnt_lock));
+		if (mp->mnt_recursecnt != 0) {
+			mp->mnt_recursecnt--;
+		} else {
+			mp->mnt_writer = NULL;
+			rw_exit(&mp->mnt_lock);
+		}
+	} else {
+		rw_exit(&mp->mnt_lock);
+	}
+	if (!keepref) {
+		vfs_destroy(mp);
+	}
 }
 
 /*
@@ -368,11 +412,13 @@ vfs_rootmountalloc(const char *fstypename, const char *devname,
 	vfsp->vfs_refcount++;
 	mutex_exit(&vfs_list_lock);
 
-	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
-	memset((char *)mp, 0, (u_long)sizeof(struct mount));
-	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	mutex_init(&mp->mnt_mutex, MUTEX_DEFAULT, IPL_NONE);
-	(void)vfs_busy(mp, LK_NOWAIT, 0);
+	mp = kmem_zalloc(sizeof(*mp), KM_SLEEP);
+	if (mp == NULL)
+		return ENOMEM;
+	mp->mnt_refcnt = 1;
+	rw_init(&mp->mnt_lock);
+	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
+	(void)vfs_busy(mp, RW_WRITER, NULL);
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	mp->mnt_op = vfsp;
 	mp->mnt_flag = MNT_RDONLY;
@@ -408,18 +454,16 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	int error = 0, tryalloc;
 
  try_again:
-	if (mp) {
+	if (mp != NULL) {
 		/*
-		 * Mark filesystem busy while we're creating a vnode.
-		 * If unmount is in progress, this will wait; if the
-		 * unmount succeeds (only if umount -f), this will
-		 * return an error.  If the unmount fails, we'll keep
-		 * going afterwards.
-		 * (This puts the per-mount vnode list logically under
-		 * the protection of the vfs_busy lock).
+		 * Mark filesystem busy while we're creating a
+		 * vnode.  If unmount is in progress, this will
+		 * wait; if the unmount succeeds (only if umount
+		 * -f), this will return an error.  If the
+		 * unmount fails, we'll keep going afterwards.
 		 */
-		error = vfs_busy(mp, LK_RECURSEFAIL, 0);
-		if (error && error != EDEADLK)
+		error = vfs_busy(mp, RW_READER, NULL);
+		if (error)
 			return error;
 	}
 
@@ -464,8 +508,9 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	if (vp == NULL) {
 		vp = getcleanvnode();
 		if (vp == NULL) {
-			if (mp && error != EDEADLK)
-				vfs_unbusy(mp);
+			if (mp != NULL) {
+				vfs_unbusy(mp, false);
+			}
 			if (tryalloc) {
 				printf("WARNING: unable to allocate new "
 				    "vnode, retrying...\n");
@@ -508,8 +553,7 @@ getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
 	if (mp != NULL) {
 		if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
 			vp->v_vflag |= VV_MPSAFE;
-		if (error != EDEADLK)
-			vfs_unbusy(mp);
+		vfs_unbusy(mp, true);
 	}
 
 	return (0);
@@ -530,7 +574,7 @@ ungetnewvnode(vnode_t *vp)
 
 	mutex_enter(&vp->v_interlock);
 	vp->v_iflag |= VI_CLEAN;
-	vrelel(vp, 0, 0);
+	vrelel(vp, 0);
 }
 
 /*
@@ -561,7 +605,7 @@ vnalloc(struct mount *mp)
 		vp->v_type = VBAD;
 		vp->v_iflag = VI_MARKER;
 	} else {
-		lockinit(&vp->v_lock, PVFS, "vnlock", 0, 0);
+		rw_init(&vp->v_lock.vl_lock);
 	}
 
 	return vp;
@@ -577,7 +621,7 @@ vnfree(vnode_t *vp)
 	KASSERT(vp->v_usecount == 0);
 
 	if ((vp->v_iflag & VI_MARKER) == 0) {
-		lockdestroy(&vp->v_lock);
+		rw_destroy(&vp->v_lock.vl_lock);
 		mutex_enter(&vnode_free_list_lock);
 		numvnodes--;
 		mutex_exit(&vnode_free_list_lock);
@@ -619,6 +663,7 @@ vremfree(vnode_t *vp)
 static void
 insmntque(vnode_t *vp, struct mount *mp)
 {
+	struct mount *omp;
 
 #ifdef DIAGNOSTIC
 	if ((mp != NULL) &&
@@ -633,14 +678,21 @@ insmntque(vnode_t *vp, struct mount *mp)
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
-	if (vp->v_mount != NULL)
+	if ((omp = vp->v_mount) != NULL)
 		TAILQ_REMOVE(&vp->v_mount->mnt_vnodelist, vp, v_mntvnodes);
 	/*
-	 * Insert into list of vnodes for the new mount point, if available.
+	 * Insert into list of vnodes for the new mount point, if
+	 * available.  The caller must take a reference on the mount
+	 * structure and donate to the vnode.
 	 */
 	if ((vp->v_mount = mp) != NULL)
 		TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
 	mutex_exit(&mntvnode_lock);
+
+	if (omp != NULL) {
+		/* Release reference to old mount. */
+		vfs_destroy(omp);
+	}
 }
 
 /*
@@ -691,109 +743,9 @@ getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
 	vp->v_type = type;
 	vp->v_vflag |= VV_MPSAFE;
 	uvm_vnp_setsize(vp, 0);
-	if ((nvp = checkalias(vp, dev, NULL)) != 0) {
-		vput(vp);
-		vp = nvp;
-	}
+	spec_node_init(vp, dev);
 	*vpp = vp;
 	return (0);
-}
-
-/*
- * Check to see if the new vnode represents a special device
- * for which we already have a vnode (either because of
- * bdevvp() or because of a different vnode representing
- * the same block device). If such an alias exists, deallocate
- * the existing contents and return the aliased vnode. The
- * caller is responsible for filling it with its new contents.
- */
-vnode_t *
-checkalias(vnode_t *nvp, dev_t nvp_rdev, struct mount *mp)
-{
-	vnode_t *vp;
-	vnode_t **vpp;
-
-	if (nvp->v_type != VBLK && nvp->v_type != VCHR)
-		return (NULL);
-
-	vpp = &speclisth[SPECHASH(nvp_rdev)];
-loop:
-	mutex_enter(&spechash_lock);
-	for (vp = *vpp; vp; vp = vp->v_specnext) {
-		if (vp->v_specinfo == NULL) {
-			vpanic(vp, "checkalias: no specinfo");
-		}
-		if (nvp_rdev != vp->v_rdev || nvp->v_type != vp->v_type)
-			continue;
-		/*
-		 * Alias, but not in use, so flush it out.
-		 */
-		mutex_enter(&vp->v_interlock);
-		mutex_exit(&spechash_lock);
-		if (vp->v_usecount == 0) {
-			vremfree(vp);
-			vp->v_usecount++;
-			vclean(vp, DOCLOSE);
-			vrelel(vp, 1, 1);
-			goto loop;
-		}
-		/*
-		 * What we're interested to know here is if someone else has
-		 * removed this vnode from the device hash list while we were
-		 * waiting.  This can only happen if vclean() did it, and
-		 * this requires the vnode to be locked.
-		 */
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK))
-			goto loop;
-		mutex_enter(&spechash_lock);
-		if (vp->v_specinfo == NULL) {
-			mutex_exit(&spechash_lock);
-			vput(vp);
-			goto loop;
-		}
-		break;
-	}
-	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
-		MALLOC(nvp->v_specinfo, struct specinfo *,
-			sizeof(struct specinfo), M_VNODE, M_NOWAIT);
-		/* XXX Erg. */
-		if (nvp->v_specinfo == NULL) {
-			mutex_exit(&spechash_lock);
-			uvm_wait("checkalias");
-			if (vp != NULL)
-				vput(vp);
-			goto loop;
-		}
-
-		nvp->v_rdev = nvp_rdev;
-		nvp->v_hashchain = vpp;
-		nvp->v_specnext = *vpp;
-		nvp->v_specmountpoint = NULL;
-		mutex_exit(&spechash_lock);
-		nvp->v_speclockf = NULL;
-
-		*vpp = nvp;
-		if (vp != NULL) {
-			/* XXX locking */
-			nvp->v_iflag |= VI_ALIASED;
-			vp->v_iflag |= VI_ALIASED;
-			vput(vp);
-		}
-		return (NULL);
-	}
-	mutex_exit(&spechash_lock);
-	VOP_UNLOCK(vp, 0);
-	mutex_enter(&vp->v_interlock);
-	vclean(vp, 0);
-	mutex_exit(&vp->v_interlock);
-	vp->v_op = nvp->v_op;
-	vp->v_tag = nvp->v_tag;
-	vp->v_vnlock = &vp->v_lock;
-	lockdestroy(vp->v_vnlock);
-	lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
-	nvp->v_type = VNON;
-	insmntque(vp, mp);
-	return (vp);
 }
 
 /*
@@ -833,11 +785,11 @@ vget(vnode_t *vp, int flags)
 	 */
 	if ((vp->v_iflag & (VI_XLOCK | VI_FREEING)) != 0) {
 		if ((flags & LK_NOWAIT) != 0) {
-			vrelel(vp, 0, 0);
+			vrelel(vp, 0);
 			return EBUSY;
 		}
 		vwait(vp, VI_XLOCK | VI_FREEING);
-		vrelel(vp, 0, 0);
+		vrelel(vp, 0);
 		return ENOENT;
 	}
 	if (flags & LK_TYPE_MASK) {
@@ -869,7 +821,7 @@ vput(vnode_t *vp)
  * routine and either return to freelist or free to the pool.
  */
 void
-vrelel(vnode_t *vp, int doinactive, int onhead)
+vrelel(vnode_t *vp, int flags)
 {
 	bool recycle, defer;
 	int error;
@@ -947,7 +899,6 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 			 */
 			KASSERT(mutex_owned(&vp->v_interlock));
 			KASSERT((vp->v_iflag & VI_INACTPEND) == 0);
-			KASSERT(vp->v_usecount == 1);
 			vp->v_iflag |= VI_INACTPEND;
 			mutex_enter(&vrele_lock);
 			TAILQ_INSERT_TAIL(&vrele_list, vp, v_freelist);
@@ -957,6 +908,13 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 			mutex_exit(&vp->v_interlock);
 			return;
 		}
+
+#ifdef DIAGNOSTIC
+		if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
+		    vp->v_specnode != NULL && vp->v_specnode->sn_opencnt != 0) {
+			vprint("vrelel: missing VOP_CLOSE()", vp);
+		}
+#endif
 
 		/*
 		 * The vnode can gain another reference while being
@@ -1021,6 +979,9 @@ vrelel(vnode_t *vp, int doinactive, int onhead)
 		KASSERT(vp->v_writecount == 0);
 		mutex_exit(&vp->v_interlock);
 		insmntque(vp, NULL);
+		if (vp->v_type == VBLK || vp->v_type == VCHR) {
+			spec_node_destroy(vp);
+		}
 		vnfree(vp);
 	} else {
 		/*
@@ -1047,7 +1008,7 @@ vrele(vnode_t *vp)
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
 
 	mutex_enter(&vp->v_interlock);
-	vrelel(vp, 1, 0);
+	vrelel(vp, 0);
 }
 
 static void
@@ -1077,7 +1038,7 @@ vrele_thread(void *cookie)
 			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		vrelel(vp, 1, 0);
+		vrelel(vp, 0);
 	}
 }
 
@@ -1223,26 +1184,34 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 			vremfree(vp);
 			vp->v_usecount++;
 			vclean(vp, DOCLOSE);
-			vrelel(vp, 1, 0);
+			vrelel(vp, 0);
 			mutex_enter(&mntvnode_lock);
 			continue;
 		}
 		/*
 		 * If FORCECLOSE is set, forcibly close the vnode.
 		 * For block or character devices, revert to an
-		 * anonymous device. For all other files, just kill them.
-		 * XXXAD what?
+		 * anonymous device.  For all other files, just
+		 * kill them.
 		 */
 		if (flags & FORCECLOSE) {
 			mutex_exit(&mntvnode_lock);
 			vp->v_usecount++;
 			if (vp->v_type != VBLK && vp->v_type != VCHR) {
 				vclean(vp, DOCLOSE);
+				vrelel(vp, 0);
 			} else {
 				vclean(vp, 0);
-				vp->v_op = spec_vnodeop_p;
+				vp->v_op = spec_vnodeop_p; /* XXXSMP */
+				mutex_exit(&vp->v_interlock);
+				/*
+				 * The vnode isn't clean, but still resides
+				 * on the mount list.  Remove it. XXX This
+				 * is a bit dodgy.
+				 */
+				insmntque(vp, NULL);
+				vrele(vp);
 			}
-			vrelel(vp, 1, 0);
 			mutex_enter(&mntvnode_lock);
 			continue;
 		}
@@ -1270,7 +1239,7 @@ vclean(vnode_t *vp, int flags)
 {
 	lwp_t *l = curlwp;
 	bool recycle, active;
-	struct specinfo *si;
+	int error;
 
 	KASSERT(mutex_owned(&vp->v_interlock));
 	KASSERT((vp->v_iflag & VI_MARKER) == 0);
@@ -1304,70 +1273,20 @@ vclean(vnode_t *vp, int flags)
 
 	/*
 	 * Clean out any cached data associated with the vnode.
-	 * If special device, remove it from special device alias list.
-	 * if it is on one.
-	 */
-	if (flags & DOCLOSE) {
-		int error;
-		vnode_t *vq, *vx;
-
-		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		if (error)
-			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
-		KASSERT(error == 0);
-		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-
-		/* XXXAD close should not happen on layered vnode */
-		if (active)
-			VOP_CLOSE(vp, FNONBLOCK, NOCRED);
-
-		if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
-		    vp->v_specinfo != NULL) {
-			mutex_enter(&spechash_lock);
-			if (vp->v_hashchain != NULL) {
-				if (*vp->v_hashchain == vp) {
-					*vp->v_hashchain = vp->v_specnext;
-				} else {
-					for (vq = *vp->v_hashchain; vq;
-					     vq = vq->v_specnext) {
-						if (vq->v_specnext != vp)
-							continue;
-						vq->v_specnext = vp->v_specnext;
-						break;
-					}
-					if (vq == NULL)
-						panic("missing bdev");
-				}
-				if (vp->v_iflag & VI_ALIASED) {
-					vx = NULL;
-					for (vq = *vp->v_hashchain; vq;
-					     vq = vq->v_specnext) {
-						if (vq->v_rdev != vp->v_rdev ||
-						    vq->v_type != vp->v_type)
-							continue;
-						if (vx)
-							break;
-						vx = vq;
-					}
-					if (vx == NULL)
-						panic("missing alias");
-					if (vq == NULL)
-						vx->v_iflag &= ~VI_ALIASED;
-					vp->v_iflag &= ~VI_ALIASED;
-				}
-			}
-			si = vp->v_specinfo;
-			vp->v_specinfo = NULL;
-			mutex_exit(&spechash_lock);
-			FREE(si, M_VNODE);
-		}
-	}
-
-	/*
 	 * If purging an active vnode, it must be closed and
 	 * deactivated before being reclaimed. Note that the
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
+	if (flags & DOCLOSE) {
+		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
+		if (error != 0)
+			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
+		KASSERT(error == 0);
+		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
+		if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
+			 spec_node_revoke(vp);
+		}
+	}
 	if (active) {
 		VOP_INACTIVE(vp, &recycle);
 	} else {
@@ -1397,8 +1316,10 @@ vclean(vnode_t *vp, int flags)
 	vp->v_vnlock = &vp->v_lock;
 	VN_KNOTE(vp, NOTE_REVOKE);
 	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
-	vp->v_iflag |= VI_CLEAN;
 	vp->v_vflag &= ~VV_LOCKSWORK;
+	if ((flags & DOCLOSE) != 0) {
+		vp->v_iflag |= VI_CLEAN;
+	}
 	cv_broadcast(&vp->v_cv);
 
 	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
@@ -1424,7 +1345,7 @@ vrecycle(vnode_t *vp, kmutex_t *inter_lkp, struct lwp *l)
 	vremfree(vp);
 	vp->v_usecount++;
 	vclean(vp, DOCLOSE);
-	vrelel(vp, 0, 0);
+	vrelel(vp, 0);
 	return (1);
 }
 
@@ -1438,7 +1359,7 @@ vgone(vnode_t *vp)
 
 	mutex_enter(&vp->v_interlock);
 	vclean(vp, DOCLOSE);
-	vrelel(vp, 0, 0);
+	vrelel(vp, 0);
 }
 
 /*
@@ -1450,15 +1371,15 @@ vfinddev(dev_t dev, enum vtype type, vnode_t **vpp)
 	vnode_t *vp;
 	int rc = 0;
 
-	mutex_enter(&spechash_lock);
-	for (vp = speclisth[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
+	mutex_enter(&specfs_lock);
+	for (vp = specfs_hash[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
 		if (dev != vp->v_rdev || type != vp->v_type)
 			continue;
 		*vpp = vp;
 		rc = 1;
 		break;
 	}
-	mutex_exit(&spechash_lock);
+	mutex_exit(&specfs_lock);
 	return (rc);
 }
 
@@ -1475,10 +1396,10 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 
 	vp = NULL;	/* XXX gcc */
 
-	mutex_enter(&spechash_lock);
+	mutex_enter(&specfs_lock);
 	for (mn = minl; mn <= minh; mn++) {
 		dev = makedev(maj, mn);
-		vpp = &speclisth[SPECHASH(dev)];
+		vpp = &specfs_hash[SPECHASH(dev)];
 		for (vp = *vpp; vp != NULL;) {
 			mutex_enter(&vp->v_interlock);
 			if ((vp->v_iflag & VI_CLEAN) != 0 ||
@@ -1487,16 +1408,16 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 				vp = vp->v_specnext;
 				continue;
 			}
-			mutex_exit(&spechash_lock);
+			mutex_exit(&specfs_lock);
 			if (vget(vp, LK_INTERLOCK) == 0) {
 				VOP_REVOKE(vp, REVOKEALL);
 				vrele(vp);
 			}
-			mutex_enter(&spechash_lock);
+			mutex_enter(&specfs_lock);
 			vp = *vpp;
 		}
 	}
-	mutex_exit(&spechash_lock);
+	mutex_exit(&specfs_lock);
 }
 
 /*
@@ -1505,40 +1426,19 @@ vdevgone(int maj, int minl, int minh, enum vtype type)
 int
 vcount(vnode_t *vp)
 {
-	vnode_t *vq, *vnext;
 	int count;
 
-loop:
-	mutex_enter(&spechash_lock);
+	mutex_enter(&specfs_lock);
 	mutex_enter(&vp->v_interlock);
-	if ((vp->v_iflag & VI_ALIASED) == 0) {
+	if (vp->v_specnode == NULL) {
 		count = vp->v_usecount - ((vp->v_iflag & VI_INACTPEND) != 0);
 		mutex_exit(&vp->v_interlock);
-		mutex_exit(&spechash_lock);
+		mutex_exit(&specfs_lock);
 		return (count);
 	}
 	mutex_exit(&vp->v_interlock);
-	for (count = 0, vq = *vp->v_hashchain; vq; vq = vnext) {
-		vnext = vq->v_specnext;
-		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
-			continue;
-		/*
-		 * Alias, but not in use, so flush it out.
-		 */
-	    	mutex_enter(&vq->v_interlock);
-		if (vq->v_usecount == 0 && vq != vp &&
-		    (vq->v_iflag & VI_XLOCK) == 0) {
-			mutex_exit(&spechash_lock);
-			vremfree(vq);
-			vq->v_usecount++;
-			vclean(vq, DOCLOSE);
-			vrelel(vq, 1, 0);
-			goto loop;
-		}
-		count += vq->v_usecount;
-	    	mutex_exit(&vq->v_interlock);
-	}
-	mutex_exit(&spechash_lock);
+	count = vp->v_specnode->sn_dev->sd_opencnt;
+	mutex_exit(&specfs_lock);
 	return (count);
 }
 
@@ -1565,8 +1465,8 @@ vrevoke(vnode_t *vp)
 		mutex_exit(&vp->v_interlock);
 	}
 
-	vpp = &speclisth[SPECHASH(dev)];
-	mutex_enter(&spechash_lock);
+	vpp = &specfs_hash[SPECHASH(dev)];
+	mutex_enter(&specfs_lock);
 	for (vq = *vpp; vq != NULL;) {
 		if ((vq->v_iflag & VI_CLEAN) != 0 ||
 		    vq->v_rdev != dev || vq->v_type != type) {
@@ -1574,16 +1474,17 @@ vrevoke(vnode_t *vp)
 			continue;
 		}
 		mutex_enter(&vq->v_interlock);
-		mutex_exit(&spechash_lock);
-		if (vq->v_usecount++ == 0) {
+		mutex_exit(&specfs_lock);
+		if (vq->v_usecount == 0) {
 			vremfree(vq);
 		}
+		vq->v_usecount++;
 		vclean(vq, DOCLOSE);
-		vrelel(vq, 1, 0);
-		mutex_enter(&spechash_lock);
+		vrelel(vq, 0);
+		mutex_enter(&specfs_lock);
 		vq = *vpp;
 	}
-	mutex_exit(&spechash_lock);
+	mutex_exit(&specfs_lock);
 }
 
 /*
@@ -1719,7 +1620,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 	mutex_enter(&mountlist_lock);
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -1764,7 +1665,7 @@ sysctl_kern_vnode(SYSCTLFN_ARGS)
 		mutex_exit(&mntvnode_lock);
 		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vnfree(mvp);
 	}
 	mutex_exit(&mountlist_lock);
@@ -1782,6 +1683,7 @@ vfs_scrubvnlist(struct mount *mp)
 {
 	vnode_t *vp, *nvp;
 
+ retry:
 	mutex_enter(&mntvnode_lock);
 	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
@@ -1789,6 +1691,10 @@ vfs_scrubvnlist(struct mount *mp)
 		if ((vp->v_iflag & VI_CLEAN) != 0) {
 			TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
 			vp->v_mount = NULL;
+			mutex_exit(&mntvnode_lock);
+			mutex_exit(&vp->v_interlock);
+			vfs_destroy(mp);
+			goto retry;
 		}
 		mutex_exit(&vp->v_interlock);
 	}
@@ -1808,19 +1714,17 @@ vfs_mountedon(vnode_t *vp)
 		return ENOTBLK;
 	if (vp->v_specmountpoint != NULL)
 		return (EBUSY);
-	if (vp->v_iflag & VI_ALIASED) {
-		mutex_enter(&spechash_lock);
-		for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
-			if (vq->v_rdev != vp->v_rdev ||
-			    vq->v_type != vp->v_type)
-				continue;
-			if (vq->v_specmountpoint != NULL) {
-				error = EBUSY;
-				break;
-			}
+	mutex_enter(&specfs_lock);
+	for (vq = specfs_hash[SPECHASH(vp->v_rdev)]; vq != NULL;
+	    vq = vq->v_specnext) {
+		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
+			continue;
+		if (vq->v_specmountpoint != NULL) {
+			error = EBUSY;
+			break;
 		}
-		mutex_exit(&spechash_lock);
 	}
+	mutex_exit(&specfs_lock);
 	return (error);
 }
 
@@ -1836,9 +1740,10 @@ vfs_unmountall(struct lwp *l)
 	int allerror, error;
 
 	printf("unmounting file systems...");
-	for (allerror = 0,
-	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
-		nmp = mp->mnt_list.cqe_prev;
+	for (allerror = 0, mp = CIRCLEQ_LAST(&mountlist);
+	     !CIRCLEQ_EMPTY(&mountlist);
+	     mp = nmp) {
+		nmp = CIRCLEQ_PREV(mp, mnt_list);
 #ifdef DEBUG
 		printf("\nunmounting %s (%s)...",
 		    mp->mnt_stat.f_mntonname, mp->mnt_stat.f_mntfromname);
@@ -1848,7 +1753,7 @@ vfs_unmountall(struct lwp *l)
 		 * mount point.  See dounmount() for details.
 		 */
 		mutex_enter(&syncer_mutex);
-		if (vfs_busy(mp, 0, 0)) {
+		if (vfs_busy(mp, RW_WRITER, NULL)) {
 			mutex_exit(&syncer_mutex);
 			continue;
 		}
@@ -1997,4 +1902,66 @@ done:
 		vrele(rootvp);
 	}
 	return (error);
+}
+
+/*
+ * Sham lock manager for vnodes.  This is a temporary measure.
+ */
+int
+vlockmgr(struct vnlock *vl, int flags)
+{
+
+	KASSERT((flags & ~(LK_CANRECURSE | LK_NOWAIT | LK_TYPE_MASK)) == 0);
+
+	switch (flags & LK_TYPE_MASK) {
+	case LK_SHARED:
+		if (rw_tryenter(&vl->vl_lock, RW_READER)) {
+			return 0;
+		}
+		if ((flags & LK_NOWAIT) != 0) {
+			return EBUSY;
+		}
+		rw_enter(&vl->vl_lock, RW_READER);
+		return 0;
+
+	case LK_EXCLUSIVE:
+		if (rw_tryenter(&vl->vl_lock, RW_WRITER)) {
+			return 0;
+		}
+		if ((vl->vl_canrecurse || (flags & LK_CANRECURSE) != 0) &&
+		    rw_write_held(&vl->vl_lock)) {
+			vl->vl_recursecnt++;
+			return 0;
+		}
+		if ((flags & LK_NOWAIT) != 0) {
+			return EBUSY;
+		}
+		rw_enter(&vl->vl_lock, RW_WRITER);
+		return 0;
+
+	case LK_RELEASE:
+		if (vl->vl_recursecnt != 0) {
+			KASSERT(rw_write_held(&vl->vl_lock));
+			vl->vl_recursecnt--;
+			return 0;
+		}
+		rw_exit(&vl->vl_lock);
+		return 0;
+
+	default:
+		panic("vlockmgr: flags %x", flags);
+	}
+}
+
+int
+vlockstatus(struct vnlock *vl)
+{
+
+	if (rw_write_held(&vl->vl_lock)) {
+		return LK_EXCLUSIVE;
+	}
+	if (rw_read_held(&vl->vl_lock)) {
+		return LK_SHARED;
+	}
+	return 0;
 }

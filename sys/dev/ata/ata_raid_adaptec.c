@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_adaptec.c,v 1.1.4.2 2007/12/07 17:29:38 yamt Exp $	*/
+/*	$NetBSD: ata_raid_adaptec.c,v 1.1.4.3 2008/02/04 09:23:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.1.4.2 2007/12/07 17:29:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_adaptec.c,v 1.1.4.3 2008/02/04 09:23:19 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -94,6 +94,7 @@ ata_raid_read_config_adaptec(struct wd_softc *sc)
 
 	error = ata_raid_config_block_rw(vp, ADP_LBA(sc), info,
 	    sizeof(*info), B_READ);
+	VOP_CLOSE(vp, FREAD, NOCRED);
 	vput(vp);
 	if (error) {
 		printf("%s: error %d reading Adaptec config block\n",
