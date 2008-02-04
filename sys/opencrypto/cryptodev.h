@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.11 2008/02/02 02:39:00 tls Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.12 2008/02/04 00:35:34 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -282,6 +282,7 @@ struct cryptop {
 #define	CRYPTO_F_CBIMM		0x0010	/* Do callback immediately */
 #define	CRYPTO_F_DONE		0x0020	/* Operation completed */
 #define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
+#define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -291,6 +292,7 @@ struct cryptop {
 
 	void *		crp_mac;
 	struct timespec	crp_tstamp;	/* performance time stamp */
+	kcondvar_t	crp_cv;
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -315,6 +317,8 @@ struct cryptkop {
 	u_int32_t	krp_hid;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
 	int		(*krp_callback)(struct cryptkop *);
+	int		krp_flags;	/* same values as crp_flags */
+	kcondvar_t	krp_cv;
 };
 
 /* Crypto capabilities structure */
@@ -387,6 +391,8 @@ void	cuio_copyback(struct uio *, int, int, void *);
 int	cuio_apply(struct uio *, int, int,
 	    int (*f)(void *, void *, unsigned int), void *);
 
+extern	int crypto_ret_q_remove(struct cryptop *);
+extern	int crypto_ret_kq_remove(struct cryptkop *);
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
 
@@ -394,6 +400,17 @@ extern	int crypto_usercrypto;		/* userland may do crypto requests */
 extern	int crypto_userasymcrypto;	/* userland may do asym crypto reqs */
 extern	int crypto_devallowsoft;	/* only use hardware crypto */
 
+/*
+ * Asymmetric operations are allocated in cryptodev.c but can be
+ * freed in crypto.c.
+ */
+extern	struct pool	cryptkop_pool;
+
+/*
+ * Mutual exclusion and its unwelcome friends.
+ */
+
+extern	kmutex_t	crypto_mtx;
 
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).
@@ -418,6 +435,21 @@ extern	void cuio_copydata(struct uio* uio, int off, int len, void *cp);
 extern	void cuio_copyback(struct uio* uio, int off, int len, void *cp);
 extern int	cuio_getptr(struct uio *, int loc, int *off);
 
+#ifdef CRYPTO_DEBUG	/* yuck, netipsec defines these differently */
+#ifndef DPRINTF
+#define DPRINTF(a) uprintf a
+#endif
+#ifndef DCPRINTF
+#define DCPRINTF(a) printf a
+#endif
+#else
+#ifndef DPRINTF
+#define DPRINTF(a)
+#endif
+#ifndef DCPRINTF
+#define DCPRINTF(a)
+#endif
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CRYPTO_CRYPTO_H_ */
