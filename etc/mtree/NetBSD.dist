@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.360 2008/01/22 01:21:04 lukem Exp $
+#	$NetBSD: NetBSD.dist,v 1.361 2008/02/04 20:31:07 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -311,6 +311,7 @@
 ./usr/include/uvm
 ./usr/lib
 ./usr/lib/i18n
+./usr/lib/pkgconfig
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
@@ -1087,6 +1088,7 @@
 ./usr/share/zoneinfo/US
 ./usr/tests
 ./usr/tests/atf
+./usr/tests/atf/data
 ./usr/tests/atf/formats
 ./usr/tests/atf/sh_interface
 ./usr/tests/atf/test_programs
