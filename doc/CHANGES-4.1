@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.24 2008/02/04 05:44:42 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.25 2008/02/04 20:52:27 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -337,4 +337,10 @@ sys/arch/ews4800mips/conf/RAMDISK		1.7
 
 	Disable agr(4) to shrink an install kernel.
 	[tsutsui, ticket #1055]
+
+sys/netipsec/ipsec_mbuf.c			1.10 via patch
+
+	Avoid a buffer overrun which could crash a FAST_IPSEC kernel.
+	PR#30124.
+	[seanb, ticket #1015]
 
