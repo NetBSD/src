@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.19 2008/02/02 04:46:29 tls Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.20 2008/02/04 00:35:34 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.19 2008/02/02 04:46:29 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.20 2008/02/04 00:35:34 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -33,6 +33,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.19 2008/02/02 04:46:29 tls Exp $");
 #include <sys/sysctl.h>
 #include <sys/errno.h>
 
+#include "opt_ocf.h"
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptosoft.h>
 #include <opencrypto/xform.h>
@@ -1008,6 +1009,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 	}
 
 done:
+	DPRINTF(("request %08x done\n", (uint32_t)crp));
 	crypto_done(crp);
 	return 0;
 }
