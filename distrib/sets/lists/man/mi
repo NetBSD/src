@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1054 2008/01/24 19:34:05 rmind Exp $
+# $NetBSD: mi,v 1.1055 2008/02/04 02:13:37 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2236,7 +2236,7 @@
 ./usr/share/man/cat8/nslookup.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/nsupdate.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/ntalkd.0			man-netutil-catman	.cat
-./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		.cat
+./usr/share/man/cat8/ntp-keygen.0		man-ntp-catman		crypto,.cat
 ./usr/share/man/cat8/ntpd.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdate.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntpdc.0			man-ntp-catman		.cat
@@ -4758,7 +4758,7 @@
 ./usr/share/man/man8/nslookup.8			man-netutil-man		.man
 ./usr/share/man/man8/nsupdate.8			man-netutil-man		.man
 ./usr/share/man/man8/ntalkd.8			man-netutil-man		.man
-./usr/share/man/man8/ntp-keygen.8		man-ntp-man		.man
+./usr/share/man/man8/ntp-keygen.8		man-ntp-man		crypto,.man
 ./usr/share/man/man8/ntpd.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdate.8			man-ntp-man		.man
 ./usr/share/man/man8/ntpdc.8			man-ntp-man		.man
