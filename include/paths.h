@@ -1,4 +1,4 @@
-/*	$NetBSD: paths.h,v 1.32 2008/02/01 22:40:01 christos Exp $	*/
+/*	$NetBSD: paths.h,v 1.33 2008/02/04 15:27:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,6 +70,7 @@
 #define	_PATH_FTPUSERS	"/etc/ftpusers"
 #define	_PATH_I18NMODULE "/usr/lib/i18n"
 #define	_PATH_ICONV	"/usr/share/i18n/iconv"
+#define	_PATH_GETTYTAB	"/etc/gettytab"
 #define	_PATH_KMEM	"/dev/kmem"
 #define	_PATH_KSYMS	"/dev/ksyms"
 #define	_PATH_KVMDB	"/var/db/kvm.db"
