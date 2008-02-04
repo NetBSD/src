@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.61 2008/01/02 11:48:30 ad Exp $	*/
+/*	$NetBSD: xd.c,v 1.62 2008/02/04 21:08:13 elad Exp $	*/
 
 /*
  *
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.61 2008/01/02 11:48:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.62 2008/02/04 21:08:13 elad Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -794,6 +794,42 @@ xddump(dev_t dev, daddr_t blkno, void *va, size_t sz)
 	 */
 }
 
+static enum kauth_device_req
+xd_getkauthreq(u_char cmd)
+{
+	enum kauth_device_req req;
+
+	switch (cmd) {
+	case XDCMD_WR:
+	case XDCMD_XWR:
+		req = KAUTH_REQ_DEVICE_PASSTHRU_WRITE;
+		break;
+
+	case XDCMD_RD:
+	case XDCMD_XRD:
+		req = KAUTH_REQ_DEVICE_PASSTHRU_READ;
+		break;
+
+	case XDCMD_RDP:
+		req = KAUTH_REQ_DEVICE_PASSTHRU_READCONF;
+		break;
+
+	case XDCMD_WRP:
+	case XDCMD_RST:
+		req = KAUTH_REQ_DEVICE_PASSTHRU_WRITECONF;
+		break;
+
+	case XDCMD_NOP:
+	case XDCMD_SK:
+	case XDCMD_TST:
+	default:
+		req = 0;
+		break;
+	}
+
+	return (req);
+}
+
 /*
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
@@ -871,12 +907,16 @@ xdioctl(dev_t dev, u_long command, void *addr, int flag, struct lwp *l)
 		}
 		return error;
 
-	case DIOSXDCMD:
+	case DIOSXDCMD: {
+		enum kauth_device_req req;
+
 		xio = (struct xd_iocmd *) addr;
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		req = xd_getkauthreq(xio->cmd);
+		if ((error = kauth_authorize_device_passthru(l->l_cred,
+		    dev, req, xio)) != 0)
 			return (error);
 		return (xdc_ioctlcmd(xd, dev, xio));
+		}
 
 	default:
 		return ENOTTY;
