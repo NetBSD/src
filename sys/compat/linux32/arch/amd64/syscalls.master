@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28 2008/02/02 22:57:05 dsl Exp $
+	$NetBSD: syscalls.master,v 1.29 2008/02/04 22:23:43 dsl Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -366,7 +366,10 @@
 		    netbsd32_size_t len, int behav); }
 220	STD	{ int linux32_sys_getdents64(int fd, \
 		    linux32_dirent64p_t dent, unsigned int count); }
-221	STD	{ int linux32_sys_fcntl64(int fd, \
+; fcntl64() - Exactly the same as fcntl()
+#define linux32_sys_fcntl64 linux32_sys_fcntl
+#define linux32_sys_fcntl64_args linux32_sys_fcntl_args
+221	NOARGS	{ int linux32_sys_fcntl64(int fd, \
 		    int cmd, netbsd32_voidp arg); }
 222	UNIMPL	/*	unused	*/
 223	UNIMPL	/*	unused	*/
