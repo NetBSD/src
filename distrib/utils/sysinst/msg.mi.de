@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.41 2007/11/12 15:07:33 jmmv Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.42 2008/02/04 01:54:55 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -865,12 +865,12 @@ message tz_back
 
 message choose_crypt
 {Bitte wählen Sie den gewünschten Ver-/Entschlüsselungsalgorithmus (Cipher)
-für Benutzerpassworte. NetBSD kann DES, MD5 oder Blowfish benutzen.
+für Benutzerpassworte. NetBSD kann DES, MD5, Blowfish oder SHA1 benutzen.
 
 Das traditionelle DES-System ist mit den meisten anderen UNIX-ähnlichen
 Betriebssystemen kompatibel, allerdings werden nur die ersten 8 Zeichen eines
-jeden Passworts berücksichtigt. Das MD5 und Blowfish System erlaubt längere
-Passwörter, was unter Umständen als sicherer interpretiert werden kann.
+jeden Passworts berücksichtigt. Das MD5, Blowfish und SHA1 System erlaubt
+längere Passwörter, was unter Umständen als sicherer interpretiert werden kann.
 
 Wenn Sie ein Netzwerk haben und planen, NIS zu nutzen, berücksichtigen
 Sie hier bitte auch die Möglichkeiten der anderen Maschinen im Netzwerk.
@@ -975,6 +975,7 @@ message Password_cipher {Passwort Verschlüsselungsverfahren}
 message DES {DES}
 message MD5 {MD5}
 message Blowfish_2_7_round {Blowfish mit 2^7 Wiederholungen}
+message SHA1 {SHA1}
 message do_not_change {Beibehalten}
 message Device {Gerät}
 message File_system {Dateisystem}

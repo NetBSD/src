@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.150 2008/01/28 02:47:12 rumble Exp $	*/
+/*	$NetBSD: util.c,v 1.151 2008/02/04 01:54:56 riz Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1183,6 +1183,15 @@ set_crypt_type(void)
 		    "default:\n"
 		    "  localcipher = blowfish,7\n"
 		    "  ypcipher = blowfish,7\n");
+		fclose(pwc);
+		break;
+	case 4:	/* sha1 */
+		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
+		pwc = fopen(fn, "w");
+		fprintf(pwc,
+		    "default:\n"
+		    "  localcipher = sha1\n"
+		    "  ypcipher = sha1\n");
 		fclose(pwc);
 		break;
 	}
