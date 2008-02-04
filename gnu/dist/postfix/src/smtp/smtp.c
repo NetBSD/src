@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.14 2007/08/02 08:05:26 heas Exp $	*/
+/*	$NetBSD: smtp.c,v 1.2 2008/02/04 02:21:30 mrg Exp $	*/
 
 /*++
 /* NAME
@@ -871,10 +871,14 @@ static void pre_init(char *unused_name, char **unused_argv)
 		 VAR_SMTP_SASL_ENABLE);
 #endif
 
+#ifdef USE_TLS
     if (*var_smtp_tls_level)
 	use_tls = tls_level_lookup(var_smtp_tls_level) > TLS_LEV_NONE;
     else
 	use_tls = var_smtp_enforce_tls || var_smtp_use_tls;
+#else
+    use_tls = 0;
+#endif
 
     /*
      * Initialize the TLS data before entering the chroot jail
