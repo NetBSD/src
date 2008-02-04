@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.13 2008/01/03 18:16:20 tron Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.14 2008/02/04 14:12:25 joerg Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.13 2008/01/03 18:16:20 tron Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.14 2008/02/04 14:12:25 joerg Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -189,9 +189,9 @@ mpt_pci_attach(struct device *parent, struct device *self, void *aux)
 	    (PCI_REVISION(pa->pa_class) < 0x08)) {
 		aprint_normal("%s: applying 1030 quirk\n",
 		    mpt->sc_dev.dv_xname);
-		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x6a);
-		reg &= 0x8f;
-		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x6a, reg);
+		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x68);
+		reg &= 0x8fffff;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, 0x68, reg);
 	}
 
 	/*
