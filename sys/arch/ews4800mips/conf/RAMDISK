@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.5 2006/10/02 03:28:30 chs Exp $
+# 	$NetBSD: RAMDISK,v 1.5.2.1 2008/02/04 05:39:50 riz Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -60,5 +60,6 @@ no pseudo-device	gre
 no pseudo-device	gif
 no pseudo-device	vlan
 no pseudo-device	bridge
+no pseudo-device	agr
 no pseudo-device	clockctl
 no pseudo-device	ksyms
