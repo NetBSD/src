@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.738 2008/01/15 03:37:12 rmind Exp $
+# $NetBSD: mi,v 1.739 2008/02/04 20:33:09 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -931,7 +931,9 @@
 ./usr/libdata/lint				base-c-usr
 ./usr/libexec					base-sys-usr
 ./usr/libexec/atf-cleanup			base-atf-bin
+./usr/libexec/atf-exec				base-atf-bin
 ./usr/libexec/atf-format			base-atf-bin
+./usr/libexec/atf-killpg			base-atf-bin
 ./usr/libexec/atrun				base-cron-bin
 ./usr/libexec/ching				base-games-usr
 ./usr/libexec/comsat				base-mail-bin
@@ -1340,7 +1342,7 @@
 ./usr/share					base-sys-share
 ./usr/share/atf					base-atf-share
 ./usr/share/atf/atf-run.hooks			base-atf-bin
-./usr/share/atf/atf.config.subr			base-atf-share
+./usr/share/atf/atf.config.subr			base-atf-share		obsolete
 ./usr/share/atf/atf.footer.subr			base-atf-share
 ./usr/share/atf/atf.header.subr			base-atf-share
 ./usr/share/atf/atf.init.subr			base-atf-share
