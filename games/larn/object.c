@@ -1,18 +1,16 @@
-/*	$NetBSD: object.c,v 1.13 2008/02/03 21:24:59 dholland Exp $	*/
+/*	$NetBSD: object.c,v 1.14 2008/02/04 01:07:01 dholland Exp $	*/
 
 /* object.c		Larn is copyrighted 1986 by Noah Morgan. */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: object.c,v 1.13 2008/02/03 21:24:59 dholland Exp $");
+__RCSID("$NetBSD: object.c,v 1.14 2008/02/04 01:07:01 dholland Exp $");
 #endif				/* not lint */
 #include "header.h"
 #include "extern.h"
 
 /*
-	***************
-	LOOK_FOR_OBJECT
-	***************
+	lookforobject
 
 	subroutine to look for an object and give the player his options
 	if an object was found.
@@ -22,7 +20,7 @@ lookforobject()
 {
 	int    i, j;
 	if (c[TIMESTOP])
-		return;		/* can't find objects is time is stopped	 */
+		return;		/* can't find objects if time is stopped	 */
 	i = item[playerx][playery];
 	if (i == 0)
 		return;
@@ -537,10 +535,6 @@ finditem(int theitem)
 
 
 /*
-	*******
-	OSTAIRS
-	*******
-
 	subroutine to process the stair cases
 	if dir > 0 the up else down
  */
@@ -608,10 +602,6 @@ ostairs(dir)
 
 
 /*
-	*********
-	OTELEPORTER
-	*********
-
 	subroutine to handle a teleport trap +/- 1 level maximum
  */
 void
@@ -649,10 +639,6 @@ oteleport(err)
 
 
 /*
-	*******
-	OPOTION
-	*******
-
 	function to process a potion
  */
 void
@@ -862,10 +848,6 @@ quaffpotion(pot)
 
 
 /*
-	*******
-	OSCROLL
-	*******
-
 	function to process a magic scroll
  */
 void
