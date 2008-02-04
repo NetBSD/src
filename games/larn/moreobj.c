@@ -1,4 +1,4 @@
-/*	$NetBSD: moreobj.c,v 1.9 2008/02/03 21:24:58 dholland Exp $	*/
+/*	$NetBSD: moreobj.c,v 1.10 2008/02/04 01:07:01 dholland Exp $	*/
 
 /*
  * moreobj.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -9,7 +9,7 @@
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: moreobj.c,v 1.9 2008/02/03 21:24:58 dholland Exp $");
+__RCSID("$NetBSD: moreobj.c,v 1.10 2008/02/04 01:07:01 dholland Exp $");
 #endif				/* not lint */
 #include <stdlib.h>
 #include <unistd.h>
@@ -20,10 +20,6 @@ static void ohear(void);
 static void fch(int, long *);
 
 /*
- *	******
- *	OALTAR
- *	******
- *
  *	subroutine to process an altar object
  */
 void
@@ -137,10 +133,6 @@ ohear()
 }
 
 /*
-	*******
-	OTHRONE
-	*******
-
 	subroutine to process a throne object
  */
 void
@@ -224,10 +216,6 @@ odeadthrone()
 }
 
 /*
-	******
-	OCHEST
-	******
-
 	subroutine to process a throne object
  */
 void
@@ -294,11 +282,8 @@ ochest()
 }
 
 /*
-	*********
-	OFOUNTAIN
-	*********
+	process a fountain object
  */
-
 void
 ofountain()
 {

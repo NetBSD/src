@@ -1,4 +1,4 @@
-/*	$NetBSD: global.c,v 1.11 2008/02/03 21:24:58 dholland Exp $	*/
+/*	$NetBSD: global.c,v 1.12 2008/02/04 01:07:01 dholland Exp $	*/
 
 /*
  * global.c 		Larn is copyrighted 1986 by Noah Morgan.
@@ -11,19 +11,17 @@
  * losemhp(x)		subroutine to remove max # hit points from the player
  * raisehp(x) 		subroutine to gain hit points
  * raisemhp(x)		subroutine to gain maximum hit points
- * losespells(x)	subroutine to lose spells
  * losemspells(x)	subroutine to lose maximum spells
- * raisespells(x)	subroutine to gain spells
  * raisemspells(x)	subroutine to gain maximum spells
- * recalc()		function to recalculate the armor class of the player
  * makemonst(lev)	function to return monster number for a randomly
  *			selected monster
  * positionplayer()	function to be sure player is not in a wall
+ * recalc()		function to recalculate the armor class of the player
  * quit()		subroutine to ask if the player really wants to quit
  */
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: global.c,v 1.11 2008/02/03 21:24:58 dholland Exp $");
+__RCSID("$NetBSD: global.c,v 1.12 2008/02/04 01:07:01 dholland Exp $");
 #endif /* not lint */
 
 #include <string.h>
@@ -37,9 +35,6 @@ extern char     sciv[SCORESIZE + 1][26][2];
 extern char    *password;
 
 /*
-	***********
-	RAISE LEVEL
-	***********
 	raiselevel()
 
 	subroutine to raise the player one level
@@ -54,9 +49,6 @@ raiselevel()
 }
 
 /*
-	***********
-	LOOSE LEVEL
-	***********
     loselevel()
 
 	subroutine to lower the players character level by one
@@ -69,9 +61,6 @@ loselevel()
 }
 
 /*
-	****************
-	RAISE EXPERIENCE
-	****************
 	raiseexperience(x)
 
 	subroutine to increase experience points
@@ -100,9 +89,6 @@ raiseexperience(x)
 }
 
 /*
-	****************
-	LOOSE EXPERIENCE
-	****************
 	loseexperience(x)
 
 	subroutine to lose experience points
@@ -134,9 +120,6 @@ loseexperience(x)
 }
 
 /*
-	********
-	LOOSE HP
-	********
 	losehp(x)
 	losemhp(x)
 
@@ -168,9 +151,6 @@ losemhp(x)
 }
 
 /*
-	********
-	RAISE HP
-	********
 	raisehp(x)
 	raisemhp(x)
 
@@ -193,22 +173,10 @@ raisemhp(x)
 }
 
 /*
-	************
-	RAISE SPELLS
-	************
-	raisespells(x)
 	raisemspells(x)
 
 	subroutine to gain maximum spells
  */
-void
-raisespells(x)
-	int    x;
-{
-	if ((c[SPELLS] += x) > c[SPELLMAX])
-		c[SPELLS] = c[SPELLMAX];
-}
-
 void
 raisemspells(x)
 	int    x;
@@ -218,22 +186,10 @@ raisemspells(x)
 }
 
 /*
-	************
-	LOOSE SPELLS
-	************
-	losespells(x)
 	losemspells(x)
 
 	subroutine to lose maximum spells
  */
-void
-losespells(x)
-	int    x;
-{
-	if ((c[SPELLS] -= x) < 0)
-		c[SPELLS] = 0;
-}
-
 void
 losemspells(x)
 	int    x;
@@ -809,7 +765,7 @@ getpassword()
 	lflush();
 	i = strlen(password);
 	for (j = 0; j < i; j++)
-		read(0, gpwp++, 1);
+		*gpwp++ = ttgetch();
 	gpwbuf[i] = 0;
 	sncbr();		/* system("stty echo -cbreak"); */
 	if (strcmp(gpwbuf, password) != 0) {
