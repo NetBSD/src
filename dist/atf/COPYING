@@ -1,12 +1,12 @@
-Automated Testing Framework (atf)
-Copyright (c) 2007 The NetBSD Foundation, Inc.
-All rights reserved.
+                     Automated Testing Framework (atf)
+                        The NetBSD Foundation, Inc.
+---------------------------------------------------------------------------
 
 
 License
 =======
 
-Copyright (c) 2007 The NetBSD Foundation, Inc.
+Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without
@@ -70,4 +70,5 @@ is put here just to clarify this fact.
   Author: Julio M. Merino Vidal <jmmv84@gmail.com>
 
 
--- EOF
+---------------------------------------------------------------------------
+                              End of document

@@ -1,6 +1,6 @@
-Automated Testing Framework (atf)
-Copyright (c) 2007 The NetBSD Foundation, Inc.
-All rights reserved.
+                     Automated Testing Framework (atf)
+                        The NetBSD Foundation, Inc.
+---------------------------------------------------------------------------
 
 
 Authors
@@ -17,4 +17,5 @@ Authors
   Summer of Code 2007 program.
 
 
--- EOF
+---------------------------------------------------------------------------
+                              End of document

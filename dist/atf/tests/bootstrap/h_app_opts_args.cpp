@@ -40,7 +40,7 @@
 #include "atf/application.hpp"
 #include "atf/sanity.hpp"
 
-class h_app_opts_args : public atf::application {
+class h_app_opts_args : public atf::application::app {
     static const char* m_description;
 
     std::string specific_args(void) const;
@@ -58,7 +58,7 @@ const char* h_app_opts_args::m_description =
     "methods to specify custom options and arguments.";
 
 h_app_opts_args::h_app_opts_args(void) :
-    application(m_description, "h_app_opts_args(1)")
+    app(m_description, "h_app_opts_args(1)", "atf(7)")
 {
 }
 
@@ -73,6 +73,7 @@ h_app_opts_args::options_set
 h_app_opts_args::specific_options(void)
     const
 {
+    using atf::application::option;
     options_set opts;
     opts.insert(option('d', "", "Debug mode"));
     opts.insert(option('v', "level", "Verbosity level"));

@@ -1,0 +1,297 @@
+.\"
+.\" Automated Testing Framework (atf)
+.\"
+.\" Copyright (c) 2008 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this
+.\"    software must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND
+.\" CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+.\" INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE LIABLE FOR ANY
+.\" DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+.\" GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+.\" IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+.\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+.\" IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 5, 2008
+.Dt ATF-C++-API 3
+.Os
+.Sh NAME
+.Nm ATF_ADD_TEST_CASE ,
+.Nm ATF_CHECK ,
+.Nm ATF_CHECK_EQUAL ,
+.Nm ATF_CHECK_THROW ,
+.Nm ATF_FAIL ,
+.Nm ATF_INIT_TEST_CASES ,
+.Nm ATF_PASS ,
+.Nm ATF_SKIP ,
+.Nm ATF_TEST_CASE ,
+.Nm ATF_TEST_CASE_BODY ,
+.Nm ATF_TEST_CASE_CLEANUP ,
+.Nm ATF_TEST_CASE_HEAD ,
+.Nm ATF_TEST_CASE_WITH_CLEANUP
+.Nd C++ API to write ATF-based test programs
+.Sh SYNOPSIS
+.In atf.hpp
+.Fn ATF_ADD_TEST_CASE "tcs" "name"
+.Fn ATF_CHECK "expression"
+.Fn ATF_CHECK_EQUAL "expression_1" "expression_2"
+.Fn ATF_CHECK_THROW "statement_1" "expected_exception"
+.Fn ATF_FAIL "reason"
+.Fn ATF_INIT_TEST_CASES "tcs"
+.Fn ATF_PASS
+.Fn ATF_SKIP "reason"
+.Fn ATF_TEST_CASE "name"
+.Fn ATF_TEST_CASE_BODY "name"
+.Fn ATF_TEST_CASE_CLEANUP "name"
+.Fn ATF_TEST_CASE_HEAD "name"
+.Fn ATF_TEST_CASE_WITH_CLEANUP "name"
+.Sh DESCRIPTION
+ATF provides a mostly-macro-based programming interface to implement test
+programs in C or C++.
+This interface is backed by a C++ implementation, but this fact is
+hidden from the developer as much as possible through the use of
+macros to simplify programming.
+However, the use of C++ is not hidden everywhere and while you can
+implement test cases without knowing anything at all about the object model
+underneath the provided calls, you might need some minimum notions of the
+language in very specific circumstances.
+.Pp
+C++-based test programs always follow this template:
+.Bd -literal -offset indent
+extern "C" {
+.Ns ... C-specific includes go here ...
+}
+
+.Ns ... C++-specific includes go here ...
+
+#include <atf.hpp>
+
+ATF_TEST_CASE(tc1);
+ATF_TEST_CASE_HEAD(tc1)
+{
+    ... first test case's header ...
+}
+ATF_TEST_CASE_BODY(tc1)
+{
+    ... first test case's body ...
+}
+
+ATF_TEST_CASE_WITH_CLEANUP(tc2);
+ATF_TEST_CASE_HEAD(tc2)
+{
+    ... second test case's header ...
+}
+ATF_TEST_CASE_BODY(tc2)
+{
+    ... second test case's body ...
+}
+ATF_TEST_CASE_CLEANUP(tc2)
+{
+    ... second test case's cleanup ...
+}
+
+.Ns ... additional test cases ...
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, tc1)
+    ATF_ADD_TEST_CASE(tcs, tc2)
+    ... add additional test cases ...
+}
+.Ed
+.Ss Definition of test cases
+Test cases have an identifier and are composed of three different parts:
+the header, the body and an optional cleanup routine, all of which are
+described in
+.Xr atf-test-case 8 .
+To define test cases, one can use the
+.Fn ATF_TEST_CASE
+or the
+.Fn ATF_TEST_CASE_WITH_CLEANUP
+macros, which take a single parameter specifiying the test case's
+name.
+The former does not allow the specification of a cleanup routine for the
+test case while the latter does.
+It is important to note that these
+.Em do not
+set the test case up for execution when the program is run.
+In order to do so, a later registration is needed through the
+.Fn ATF_ADD_TEST_CASE
+macro detailed in
+.Sx Program initialization .
+.Pp
+Later on, one must define the three parts of the body by means of three
+functions.
+Their headers are given by the
+.Fn ATF_TEST_CASE_HEAD ,
+.Fn ATF_TEST_CASE_BODY
+and
+.Fn ATF_TEST_CASE_CLEANUP
+macros, all of which take the test case's name.
+Following each of these, a block of code is expected, surrounded by the
+opening and closing brackets.
+.Ss Program initialization
+The library provides a way to easily define the test program's
+.Fn main
+function.
+You should never define one on your own, but rely on the
+library to do it for you.
+This is done by using the
+.Fn ATF_INIT_TEST_CASES
+macro, which is passed the name of the list that will hold the test cases.
+This name can be whatever you want as long as it is a valid variable value.
+.Pp
+After the macro, you are supposed to provide the body of a function, which
+should only use the
+.Fn ATF_ADD_TEST_CASE
+macro to register the test cases the test program will execute.
+The first parameter of this macro matches the name you provided in the
+former call.
+.Ss Header definitions
+The test case's header can define the meta-data by using the
+.Fn set
+method, which takes two parameters: the first one specifies the
+meta-data variable to be set and the second one specifies its value.
+Both of them are strings.
+.Ss Configuration variables
+The test case has read-only access to the current configuration variables
+by means of the
+.Ft vars_map
+.Fn config
+method, which can be called in any of the three parts of a test case.
+.Pp
+The
+.Ft vars_map
+type extends a string-to-string standard C++ map and adds some convenience
+functions to it.
+The
+.Fn has
+method takes the name of a configuration variable and returns a boolean
+indicating whether the map contains it or not.
+If the variable is present, there are several getters to retrieve its
+value.
+.Pp
+The first version of the
+.Fn get
+method takes the name of a variable and returns its value as a textual
+string.
+It assumes that the variable is present in the map and will crash your
+program if it is not.
+The second is an overloaded version of
+.Fn get
+that takes two parameters: the name of a variable and the default value for
+it.
+It returns the variable's value if it is defined, or the default value
+if not.
+.Pp
+Similarly, there are a couple of
+.Fn get_bool
+methods that mimic the previous ones but interpret the variable's textual
+value and return a boolean instead.
+.Ss Access to the source directory
+It is possible to get the path to the test case's source directory from any
+of its three components by using the
+.Fn get_srcdir
+method.
+.Ss Requiring programs
+Aside from the
+.Va require.progs
+meta-data variable available in the header only, one can also check for
+additional programs in the test case's body by using the
+.Fn require_prog
+function, which takes the base name or full path of a single binary.
+Relative paths are forbidden.
+If it is not found, the test case will be automatically skipped.
+.Ss Test case finalization
+The test case finalizes either when the body reaches its end, at which
+point the test is assumed to have
+.Em passed ,
+or at any explicit call to
+.Fn ATF_PASS ,
+.Fn ATF_FAIL
+or
+.Fn ATF_SKIP .
+These three macros terminate the execution of the test case immediately.
+The cleanup routine will be processed afterwards in a completely automated
+way, regardless of the test case's termination reason.
+.Pp
+.Fn ATF_PASS
+does not take any parameters.
+.Fn ATF_FAIL
+and
+.Fn ATF_SKIP
+take a single string that describes why the test case failed or
+was skipped, respectively.
+It is very important to provide a clear error message in both cases so that
+the user can quickly know why the test did not pass.
+.Ss Helper macros for common checks
+The library provides several macros that are very handy in multiple
+situations.
+These basically check some condition after executing a given statement or
+processing a given expression and, if the condition is not met, they
+automatically call
+.Fn ATF_FAIL
+with an appropriate error message.
+.Pp
+.Fn ATF_CHECK
+takes an expression and raises a failure if it evaluates to false.
+.Pp
+.Fn ATF_CHECK_EQUAL
+takes two expressions and raises a failure if the two do not evaluate to
+the same exact value.
+.Pp
+.Fn ATF_CHECK_THROW
+takes a statement and the name of an exception and raises a failure if
+the statement did not throw the specified exception.
+.Sh EXAMPLES
+The following shows a complete test program with a single test case that
+validates the addition operator:
+.Bd -literal -offset indent
+#include <atf.hpp>
+
+ATF_TEST_CASE(addition);
+ATF_TEST_CASE_HEAD(addition)
+{
+    set("descr", "Sample tests for the addition operator");
+}
+ATF_TEST_CASE_BODY(addition)
+{
+    ATF_CHECK_EQUAL(0 + 0, 0);
+    ATF_CHECK_EQUAL(0 + 1, 1);
+    ATF_CHECK_EQUAL(1 + 0, 1);
+
+    ATF_CHECK_EQUAL(1 + 1, 2);
+
+    ATF_CHECK_EQUAL(100 + 200, 300);
+}
+
+ATF_INIT_TEST_CASES(tcs)
+{
+    ATF_ADD_TEST_CASE(tcs, addition);
+}
+.Ed
+.Sh SEE ALSO
+.Xr atf-test-program 1 ,
+.Xr atf 7 ,
+.Xr atf-test-case 8
