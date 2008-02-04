@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.94 2008/02/03 17:14:35 tsutsui Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.95 2008/02/04 15:16:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.94 2008/02/03 17:14:35 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.95 2008/02/04 15:16:49 tsutsui Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1309,7 +1309,7 @@ re_txeof(struct rtk_softc *sc)
 			 * them out. This only seems to be required with
 			 * the PCIe devices.
 			 */
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 		}
 	} else
 		ifp->if_timer = 0;
@@ -1672,7 +1672,7 @@ re_start(struct ifnet *ifp)
 		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
 			CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
 		else
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 
 		/*
 		 * Use the countdown timer for interrupt moderation.
