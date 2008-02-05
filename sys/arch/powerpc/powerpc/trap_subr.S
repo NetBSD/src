@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.61 2008/02/05 18:10:49 garbled Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.62 2008/02/05 22:31:50 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -138,7 +138,7 @@
  * Save/restore MPC601 MQ register.
  * Note: oea_init() relies on this instruction sequence.
  */
-#if !defined(PPC_OEA64)
+#if defined(PPC_OEA601)
 #define	SAVE_MQ(tf,b)							\
 	mfspr	b,SPR_MQ;						\
 	streg	b,(FRAME_MQ+(2*SZREG))(tf);
@@ -264,7 +264,7 @@ _C_LABEL(dsitrap):
 	bla	disitrap
 _C_LABEL(dsisize) = .-_C_LABEL(dsitrap)
 
-#if !defined(PPC_OEA64)
+#if defined(PPC_OEA601)
 /*
  * Dedicated MPC601 version of the above.
  * Considers different BAT format and combined implementation
@@ -325,7 +325,7 @@ _C_LABEL(dsi601trap):
 	mtsprg1	%r1
 	bla	disitrap
 _C_LABEL(dsi601size) = .-_C_LABEL(dsi601trap)
-#endif /* !defined(PPC_OEA64) */
+#endif /* defined(PPC_OEA601) */
 
 /*
  * This one for the external interrupt handler.
