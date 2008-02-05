@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.25 2008/02/05 01:43:22 tls Exp $ */
+/*	$NetBSD: crypto.c,v 1.26 2008/02/05 12:26:13 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.25 2008/02/05 01:43:22 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.26 2008/02/05 12:26:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -1179,9 +1179,8 @@ cryptoret(void)
 	struct cryptop *crp;
 	struct cryptkop *krp;
 
+	mutex_spin_enter(&crypto_mtx);
 	for (;;) {
-		mutex_spin_enter(&crypto_mtx);
-
 		crp = TAILQ_FIRST(&crp_ret_q);
 		if (crp != NULL) {
 			TAILQ_REMOVE(&crp_ret_q, crp, crp_next);
@@ -1194,33 +1193,35 @@ cryptoret(void)
 		}
 
 		/* drop before calling any callbacks. */
-		mutex_spin_exit(&crypto_mtx);
-		if (crp != NULL || krp != NULL) {
-			if (crp != NULL) {
-#ifdef CRYPTO_TIMING
-				if (crypto_timing) {
-					/*
-					 * NB: We must copy the timestamp before
-					 * doing the callback as the cryptop is
-					 * likely to be reclaimed.
-					 */
-					struct timespec t = crp->crp_tstamp;
-					crypto_tstat(&cryptostats.cs_cb, &t);
-					crp->crp_callback(crp);
-					crypto_tstat(&cryptostats.cs_finis, &t);
-				} else
-#endif
-				{
-					crp->crp_callback(crp);
-				}
-			}
-			if (krp != NULL)
-				krp->krp_callback(krp);
-		} else {
-			mutex_spin_enter(&crypto_mtx);
-			cv_wait(&cryptoret_cv, &crypto_mtx);
-			mutex_spin_exit(&crypto_mtx);
+		if (crp == NULL && krp == NULL) {
 			cryptostats.cs_rets++;
+			cv_wait(&cryptoret_cv, &crypto_mtx);
+			continue;
 		}
+
+		mutex_spin_exit(&crypto_mtx);
+			
+		if (crp != NULL) {
+#ifdef CRYPTO_TIMING
+			if (crypto_timing) {
+				/*
+				 * NB: We must copy the timestamp before
+				 * doing the callback as the cryptop is
+				 * likely to be reclaimed.
+				 */
+				struct timespec t = crp->crp_tstamp;
+				crypto_tstat(&cryptostats.cs_cb, &t);
+				crp->crp_callback(crp);
+				crypto_tstat(&cryptostats.cs_finis, &t);
+			} else
+#endif
+			{
+				crp->crp_callback(crp);
+			}
+		}
+		if (krp != NULL)
+			krp->krp_callback(krp);
+
+		mutex_spin_enter(&crypto_mtx);
 	}
 }
