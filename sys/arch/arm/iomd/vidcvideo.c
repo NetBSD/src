@@ -1,4 +1,4 @@
-/* $NetBSD: vidcvideo.c,v 1.32 2008/02/03 19:38:29 chris Exp $ */
+/* $NetBSD: vidcvideo.c,v 1.33 2008/02/05 14:40:10 chris Exp $ */
 
 /*
  * Copyright (c) 2001 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.32 2008/02/03 19:38:29 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcvideo.c,v 1.33 2008/02/05 14:40:10 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,9 +100,10 @@ struct fb_devconfig {
 	vaddr_t	dc_videobase;		/* base of flat frame buffer */
 	int	dc_blanked;		/* currently has video disabled */
 	void   *dc_hwscroll_cookie;	/* cookie for hardware scroll */
+	void   *dc_ih;			/* interrupt handler for dc */
 
 	int	dc_curenb;		/* is cursor sprite enabled ?	*/
-	int	dc_changed;		/* need update of hardware	*/
+	int	_internal_dc_changed;	/* need update of hardware	*/
 	int	dc_writeback_delay;	/* Screenarea write back vsync counter */
 #define	WSDISPLAY_CMAP_DOLUT	0x20
 #define WSDISPLAY_VIDEO_ONOFF	0x40
@@ -163,6 +164,9 @@ static int	vidcvideo_alloc_screen(void *, const struct wsscreen_descr *,
 static void	vidcvideo_free_screen(void *, void *);
 static int	vidcvideo_show_screen(void *, void *, int,
 				     void (*) (void *, int, int), void *);
+
+static void	vidcvideo_queue_dc_change(struct fb_devconfig*, int);
+static int	flush_dc_changes_to_screen(struct fb_devconfig*);
 
 static const struct wsdisplay_accessops vidcvideo_accessops = {
 	vidcvideoioctl,
@@ -371,7 +375,7 @@ vidcvideo_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	/* set up interrupt flags */
-	dc->dc_changed |= WSDISPLAY_CMAP_DOLUT;
+	vidcvideo_queue_dc_change(dc, WSDISPLAY_CMAP_DOLUT);
 
 	/*
 	 * Set up a link in the rasops structure to our device config
@@ -380,7 +384,7 @@ vidcvideo_attach(struct device *parent, struct device *self, void *aux)
 	dc->rinfo.ri_hw = sc->sc_dc;
 
 	/* Establish an interrupt handler, and clear any pending interrupts */
-	intr_claim(IRQ_FLYBACK, IPL_TTY, "vblank", vidcvideointr, dc);
+	dc->dc_ih = intr_claim(IRQ_FLYBACK, IPL_TTY, "vblank", vidcvideointr, dc);
 
 	waa.console = (vidcvideo_is_console ? 1 : 0);
 	waa.scrdata = &vidcvideo_screenlist;
@@ -422,7 +426,7 @@ vidcvideoioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 	case WSDISPLAYIO_SVIDEO:
 		state = *(int *)data;
 		dc->dc_blanked = (state == WSDISPLAYIO_VIDEO_OFF);
-		dc->dc_changed |= WSDISPLAY_VIDEO_ONOFF;
+		vidcvideo_queue_dc_change(dc, WSDISPLAY_VIDEO_ONOFF);
 		/* done on video blank */
 		return 0;
 
@@ -437,7 +441,7 @@ vidcvideoioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 	case WSDISPLAYIO_SCURPOS:
 		set_curpos(sc, (struct wsdisplay_curpos *)data);
-		dc->dc_changed |= WSDISPLAY_CURSOR_DOPOS;
+		vidcvideo_queue_dc_change(dc, WSDISPLAY_CURSOR_DOPOS);
 		return 0;
 
 	case WSDISPLAYIO_GCURMAX:
@@ -548,11 +552,21 @@ static int
 vidcvideointr(void *arg)
 {
 	struct fb_devconfig *dc = arg;
+
+	return flush_dc_changes_to_screen(dc);
+}
+
+static int
+flush_dc_changes_to_screen(struct fb_devconfig *dc)
+{
 	int v, cleared = 0;
 
-	v = dc->dc_changed;
-	if (v == 0)
+	v = dc->_internal_dc_changed;
+
+	if (v == 0) {
+		disable_irq(IRQ_FLYBACK);
 		return 1;
+	}
 
 	if (v & WSDISPLAY_WB_COUNTER) {
 	    	dc->dc_writeback_delay--;
@@ -611,9 +625,33 @@ vidcvideointr(void *arg)
 		cleared |= WSDISPLAY_CURSOR_DOCUR;
 	}
 
-	dc->dc_changed ^= cleared;
+	dc->_internal_dc_changed ^= cleared;
+
+	if (dc->_internal_dc_changed == 0) {
+		disable_irq(IRQ_FLYBACK);
+	}
 
 	return 1;
+}
+
+
+static void vidcvideo_queue_dc_change(struct fb_devconfig *dc, int dc_change)
+{
+	dc->_internal_dc_changed |= dc_change;
+
+	if (current_spl_level == _SPL_HIGH) {
+		/* running in ddb or without interrupts */
+	    	dc->dc_writeback_delay = 1;
+		flush_dc_changes_to_screen(dc);
+	} else {
+		/*
+		 * running with interrupts so handle this in the next
+		 * vsync
+		 */ 
+		if (dc->dc_ih) {
+			enable_irq(IRQ_FLYBACK);
+		}
+	}
 }
 
 
@@ -691,7 +729,7 @@ set_cmap(struct vidcvideo_softc *sc, struct wsdisplay_cmap *p)
 	memcpy(&dc->dc_cmap.r[index], &cmap.r[index], count);
 	memcpy(&dc->dc_cmap.g[index], &cmap.g[index], count);
 	memcpy(&dc->dc_cmap.b[index], &cmap.b[index], count);
-	dc->dc_changed |= WSDISPLAY_CMAP_DOLUT;
+	vidcvideo_queue_dc_change(dc, WSDISPLAY_CMAP_DOLUT);
 	return 0;
 }
 
@@ -756,7 +794,7 @@ set_cursor(struct vidcvideo_softc *sc, struct wsdisplay_cursor *p)
 		memset(cc->cc_mask, 0, sizeof cc->cc_mask);
 		memcpy(cc->cc_mask, mask, icount);
 	}
-	dc->dc_changed |= v;
+	vidcvideo_queue_dc_change(dc, v);
 
 	return 0;
 #undef cc
@@ -796,6 +834,7 @@ static void vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	int height, offset, size;
 	int scrollup, scrolldown;
 	unsigned char *src, *dst;
+	struct fb_devconfig *dc = (struct fb_devconfig *) (ri->ri_hw);
 
 	/* All movements are done in multiples of character heigths */
 	height = ri->ri_font->fontheight * nrows;
@@ -829,6 +868,10 @@ static void vv_copyrows(void *id, int srcrow, int dstrow, int nrows)
 	dst = ri->ri_bits + dstrow * ri->ri_font->fontheight * ri->ri_stride;
 
 	memmove(dst, src, size);
+
+	/* delay the write back operation of the screen area */
+	dc->dc_writeback_delay = SCREEN_WRITE_BACK_DELAY;
+	vidcvideo_queue_dc_change(dc, WSDISPLAY_WB_COUNTER);
 }
 
 
@@ -837,6 +880,7 @@ static void vv_eraserows(void *id, int startrow, int nrows, long attr)
 	struct rasops_info *ri = id;
 	int height;
 	unsigned char *src;
+	struct fb_devconfig *dc = (struct fb_devconfig *) (ri->ri_hw);
 
 	/* we're braindead for now */
 	height = ri->ri_font->fontheight * nrows * ri->ri_stride;
@@ -844,6 +888,10 @@ static void vv_eraserows(void *id, int startrow, int nrows, long attr)
 	src = ri->ri_bits + startrow * ri->ri_font->fontheight * ri->ri_stride;
 
 	memset(src, 0, height);
+
+	/* delay the write back operation of the screen area */
+	dc->dc_writeback_delay = SCREEN_WRITE_BACK_DELAY;
+	vidcvideo_queue_dc_change(dc, WSDISPLAY_WB_COUNTER);
 }
 
 
@@ -852,10 +900,10 @@ static void vv_putchar(void *id, int row, int col, u_int uc, long attr)
     	struct rasops_info *ri = id;
 	struct fb_devconfig *dc = (struct fb_devconfig *) (ri->ri_hw);
 
-	/* delay the write back operation of the screen area */
-	dc->dc_writeback_delay = SCREEN_WRITE_BACK_DELAY;
-	dc->dc_changed |= WSDISPLAY_WB_COUNTER;
-
 	/* just delegate */
 	dc->orig_ri_ops.putchar(id, row, col, uc, attr);
+
+	/* delay the write back operation of the screen area */
+	dc->dc_writeback_delay = SCREEN_WRITE_BACK_DELAY;
+	vidcvideo_queue_dc_change(dc, WSDISPLAY_WB_COUNTER);
 }
