@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.48 2008/01/28 14:31:15 dholland Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.49 2008/02/05 15:18:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.48 2008/01/28 14:31:15 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.49 2008/02/05 15:18:36 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -391,6 +391,7 @@ adosfs_vget(mp, an, vpp)
 	ap->amp = amp;
 	ap->block = an;
 	ap->nwords = amp->nwords;
+	genfs_node_init(vp, &adosfs_genfsops);
 	adosfs_ainshash(amp, ap);
 
 	if ((error = bread(amp->devvp, an * amp->bsize / DEV_BSIZE,
@@ -571,7 +572,6 @@ adosfs_vget(mp, an, vpp)
 	ap->mtime.mins = adoswordn(bp, ap->nwords - 22);
 	ap->mtime.ticks = adoswordn(bp, ap->nwords - 21);
 
-	genfs_node_init(vp, &adosfs_genfsops);
 	*vpp = vp;
 	brelse(bp, 0);
 	uvm_vnp_setsize(vp, ap->fsize);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.130 2008/01/30 11:47:03 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.131 2008/02/05 15:21:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.130 2008/01/30 11:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.131 2008/02/05 15:21:19 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -981,6 +981,7 @@ retry:
 	ip->i_number = ino;
 	ip->i_e2fs_last_lblk = 0;
 	ip->i_e2fs_last_blk = 0;
+	genfs_node_init(vp, &ext2fs_genfsops);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -1036,7 +1037,6 @@ retry:
 	 * Finish inode initialization now that aliasing has been resolved.
 	 */
 
-	genfs_node_init(vp, &ext2fs_genfsops);
 	ip->i_devvp = ump->um_devvp;
 	VREF(ip->i_devvp);
 

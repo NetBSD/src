@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.48 2008/01/30 11:46:59 ad Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.49 2008/02/05 15:19:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.48 2008/01/30 11:46:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.49 2008/02/05 15:19:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -577,6 +577,7 @@ filecore_vget(mp, ino, vpp)
 	ip->i_number = ino;
 	ip->i_block = -1;
 	ip->i_parent = -2;
+	genfs_node_init(vp, &filecore_genfsops);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -657,7 +658,6 @@ filecore_vget(mp, ino, vpp)
 	 * XXX need generation number?
 	 */
 
-	genfs_node_init(vp, &filecore_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
 	*vpp = vp;
 	return (0);
