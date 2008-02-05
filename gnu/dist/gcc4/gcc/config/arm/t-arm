@@ -17,6 +17,8 @@ s-config s-conditions s-flags s-codes s-constants s-emit s-recog s-preds \
 
 $(srcdir)/config/arm/arm-tune.md: $(srcdir)/config/arm/gentune.sh \
 	$(srcdir)/config/arm/arm-cores.def
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_config_arm_arm-tune.md:
 	$(SHELL) $(srcdir)/config/arm/gentune.sh \
 		$(srcdir)/config/arm/arm-cores.def > \
 		$(srcdir)/config/arm/arm-tune.md
