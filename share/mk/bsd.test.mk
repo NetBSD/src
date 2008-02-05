@@ -1,5 +1,7 @@
-# $NetBSD: bsd.test.mk,v 1.3 2008/02/04 14:15:57 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.4 2008/02/05 17:50:47 drochner Exp $
 #
+
+.include <bsd.init.mk>
 
 TESTSBASE=	/usr/tests
 
