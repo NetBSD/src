@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.61 2008/02/05 18:10:46 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.62 2008/02/05 18:52:55 garbled Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -362,12 +362,15 @@ extern int cpu_altivec;
 #if defined(_KERNEL) || defined(_STANDALONE)
 #if !defined(CACHELINESIZE)
 #ifdef PPC_IBM403
-#define	CACHELINESIZE	16
+#define	CACHELINESIZE		16
+#define MAXCACHELINESIZE	16
 #else
 #if defined (PPC_OEA64_BRIDGE)
-#define	CACHELINESIZE	128
+#define	CACHELINESIZE		128
+#define MAXCACHELINESIZE	128
 #else
-#define	CACHELINESIZE	32
+#define	CACHELINESIZE		32
+#define MAXCACHELINESIZE	32
 #endif /* PPC_OEA64_BRIDGE */
 #endif
 #endif

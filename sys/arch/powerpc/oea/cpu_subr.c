@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.42 2008/02/05 18:10:47 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.43 2008/02/05 18:52:56 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.42 2008/02/05 18:10:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.43 2008/02/05 18:52:56 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -294,8 +294,8 @@ cpu_probe_cache(void)
 
 
 	/* Presently common across almost all implementations. */
-	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
-	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
+	curcpu()->ci_ci.dcache_line_size = 32;
+	curcpu()->ci_ci.icache_line_size = 32;
 
 
 	switch (vers) {
