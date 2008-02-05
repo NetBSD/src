@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.10 2008/02/02 04:38:37 sekiya Exp $ */
+/* $NetBSD: crmfb.c,v 1.11 2008/02/05 21:39:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.10 2008/02/02 04:38:37 sekiya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.11 2008/02/05 21:39:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.10 2008/02/02 04:38:37 sekiya Exp $");
 
 #include <arch/sgimips/dev/crmfbreg.h>
 
-#define CRMFB_SHADOWFB
+/* #define CRMFB_DEBUG */
 
 struct wsscreen_descr crmfb_defaultscreen = {
 	"default",
@@ -128,6 +128,7 @@ struct crmfb_softc {
 
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
+	bus_space_handle_t	sc_reh;
 
 	bus_dma_tag_t		sc_dmat;
 
@@ -137,9 +138,12 @@ struct crmfb_softc {
 	int			sc_width;
 	int			sc_height;
 	int			sc_depth;
+	int			sc_tiles_x, sc_tiles_y;
 	uint32_t		sc_fbsize;
-	uint8_t			*sc_shadowfb;
-
+	uint8_t			*sc_scratch;
+	struct rasops_info	sc_rasops;
+	int 			sc_cells;
+	int			sc_current_cell;
 	int			sc_wsmode;
 
 	/* cursor stuff */
@@ -161,10 +165,28 @@ static int	crmfb_set_curpos(struct crmfb_softc *, int, int);
 static int	crmfb_gcursor(struct crmfb_softc *, struct wsdisplay_cursor *);
 static int	crmfb_scursor(struct crmfb_softc *, struct wsdisplay_cursor *);
 static inline void	crmfb_write_reg(struct crmfb_softc *, int, uint32_t);
+static inline uint32_t	crmfb_read_reg(struct crmfb_softc *, int);
+static int	crmfb_wait_dma_idle(struct crmfb_softc *);
 
 /* setup video hw in given colour depth */
 static int	crmfb_setup_video(struct crmfb_softc *, int);
 static void	crmfb_setup_palette(struct crmfb_softc *);
+
+#ifdef CRMFB_DEBUG
+void crmfb_test_mte(struct crmfb_softc *);
+#endif
+
+static void crmfb_fill_rect(struct crmfb_softc *, int, int, int, int, uint32_t);
+static void crmfb_bitblt(struct crmfb_softc *, int, int, int, int, int, int,
+			 uint32_t);
+
+static void	crmfb_copycols(void *, int, int, int, int);
+static void	crmfb_erasecols(void *, int, int, int, long);
+static void	crmfb_copyrows(void *, int, int, int);
+static void	crmfb_eraserows(void *, int, int, long);
+//static void	crmfb_putchar(void *, int, int, u_int, long);
+static void	crmfb_cursor(void *, int, int, int);
+static void	crmfb_putchar(void *, int, int, u_int, long);
 
 CFATTACH_DECL(crmfb, sizeof(struct crmfb_softc),
     crmfb_match, crmfb_attach, NULL, NULL);
@@ -187,7 +209,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	unsigned long v;
 	long defattr;
 	const char *consdev;
-	int rv, i, tiles_x, tiles_y;
+	int rv, i;
 
 	sc = (struct crmfb_softc *)self;
 	ma = (struct mainbus_attach_args *)opaque;
@@ -201,6 +223,9 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_ioh);
 	if (rv)
 		panic("crmfb_attach: can't map I/O space");
+	rv = bus_space_map(sc->sc_iot, 0x15000000, 0x6000, 0, &sc->sc_reh);
+	if (rv)
+		panic("crmfb_attach: can't map rendering engine");
 
 	/* determine mode configured by firmware */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_VT_HCMAP);
@@ -230,11 +255,11 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	 * first determine how many tiles we need
 	 * in 32bit each tile is 128x128 pixels
 	 */
-	tiles_x = (sc->sc_width + 127) >> 7;
-	tiles_y = (sc->sc_height + 127) >> 7;
-	sc->sc_fbsize = 0x10000 * tiles_x * tiles_y;
-	printf("so we need %d x %d tiles -> %08x\n", tiles_x, tiles_y,
-	    sc->sc_fbsize);
+	sc->sc_tiles_x = (sc->sc_width + 127) >> 7;
+	sc->sc_tiles_y = (sc->sc_height + 127) >> 7;
+	sc->sc_fbsize = 0x10000 * sc->sc_tiles_x * sc->sc_tiles_y;
+	printf("so we need %d x %d tiles -> %08x\n", sc->sc_tiles_x,
+	    sc->sc_tiles_y, sc->sc_fbsize);
 
 	sc->sc_dmai.size = 256 * sizeof(uint16_t);
 	rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmai.size, 65536, 0,
@@ -257,7 +282,8 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	if (rv)
 		panic("crmfb_attach: can't load DMA map");
 
-	sc->sc_dma.size = sc->sc_fbsize;
+	/* allocate an extra tile for character drawing */
+	sc->sc_dma.size = sc->sc_fbsize + 0x10000;
 	rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dma.size, 65536, 0,
 	    sc->sc_dma.segs,
 	    sizeof(sc->sc_dma.segs) / sizeof(sc->sc_dma.segs[0]),
@@ -280,22 +306,15 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 
 	p = KERNADDR(sc->sc_dmai);
 	v = (unsigned long)DMAADDR(sc->sc_dma);
-	for (i = 0; i < (sc->sc_fbsize >> 16); i++) {
+	for (i = 0; i < (sc->sc_tiles_x * sc->sc_tiles_y); i++) {
 		p[i] = ((uint32_t)v >> 16) + i;
 	}
-
-	memset(KERNADDR(sc->sc_dma), 0x00, sc->sc_fbsize);
+	sc->sc_scratch = (char *)KERNADDR(sc->sc_dma) + sc->sc_fbsize;
 
 	printf("%s: allocated %d byte fb @ %p (%p)\n", sc->sc_dev.dv_xname,
 	    sc->sc_fbsize, KERNADDR(sc->sc_dmai), KERNADDR(sc->sc_dma));
 
-#ifdef CRMFB_SHADOWFB
-	/* setup shadow framebuffer */
-	sc->sc_shadowfb = malloc(sc->sc_fbsize, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_shadowfb == NULL)
-		aprint_error("%s: WARNING: couldn't allocate shadow fb\n",
-		    sc->sc_dev.dv_xname);
-#endif
+	sc->sc_current_cell = 0;
 
 	ri = &crmfb_console_screen.scr_ri;
 	memset(ri, 0, sizeof(struct rasops_info));
@@ -312,6 +331,8 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	crmfb_defaultscreen.modecookie = NULL;
 
 	crmfb_setup_video(sc, 8);
+	crmfb_fill_rect(sc, 0, 0, sc->sc_width, sc->sc_height, 0xf);
+
 	crmfb_setup_palette(sc);
 
 	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
@@ -331,6 +352,9 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_hot_x = 0;
 	sc->sc_hot_y = 0;
 
+#ifdef CRMFB_DEBUG
+	crmfb_test_mte(sc);
+#endif
 	return;
 }
 
@@ -485,7 +509,7 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	sc = (struct crmfb_softc *)c;
 	ri = &scr->scr_ri;
 
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 	ri->ri_depth = sc->sc_depth;
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
@@ -506,12 +530,7 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 		break;
 	}
 
-	if (sc->sc_shadowfb == NULL)
-		ri->ri_bits = KERNADDR(sc->sc_dma);
-	else {
-		ri->ri_bits = sc->sc_shadowfb;
-		ri->ri_hwbits = KERNADDR(sc->sc_dma);
-	}
+	ri->ri_bits = KERNADDR(sc->sc_dma);
 
 	if (existing)
 		ri->ri_flg |= RI_CLEAR;
@@ -521,6 +540,23 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 	    ri->ri_width / ri->ri_font->fontwidth);
 	ri->ri_hw = scr;
+
+	/* now make a fake rasops_info for drawing into the scratch tile */
+	memcpy(&sc->sc_rasops, ri, sizeof(struct rasops_info));
+	sc->sc_rasops.ri_width = 512;	/* assume we're always in 8bit here */
+	sc->sc_rasops.ri_stride = 512;
+	sc->sc_rasops.ri_height = 128;
+	sc->sc_rasops.ri_xorigin = 0;
+	sc->sc_rasops.ri_yorigin = 0;
+	sc->sc_rasops.ri_bits = sc->sc_scratch;
+	sc->sc_cells = 512 / ri->ri_font->fontwidth;
+
+	ri->ri_ops.cursor    = crmfb_cursor;
+	ri->ri_ops.copyrows  = crmfb_copyrows;
+	ri->ri_ops.eraserows = crmfb_eraserows;
+	ri->ri_ops.copycols  = crmfb_copycols;
+	ri->ri_ops.erasecols = crmfb_erasecols;
+	ri->ri_ops.putchar   = crmfb_putchar;
 
 	return;
 }
@@ -705,13 +741,41 @@ crmfb_write_reg(struct crmfb_softc *sc, int offset, uint32_t val)
 	wbflush();
 }
 
+static inline uint32_t
+crmfb_read_reg(struct crmfb_softc *sc, int offset)
+{
+
+	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, offset);
+}
+
+static int
+crmfb_wait_dma_idle(struct crmfb_softc *sc)
+{
+	int bail = 100000, idle;
+
+	do {
+		idle = ((bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		         CRMFB_OVR_CONTROL) & 1) == 0) &&
+		       ((bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		         CRMFB_FRM_CONTROL) & 1) == 0) &&
+		       ((bus_space_read_4(sc->sc_iot, sc->sc_ioh,
+		         CRMFB_DID_CONTROL) & 1) == 0);
+		if (!idle)
+			delay(10);
+		bail--;
+	} while ((!idle) && (bail > 0));
+	return idle;
+}
+
 static int
 crmfb_setup_video(struct crmfb_softc *sc, int depth)
 {
-	uint32_t d, h;
-	int i;
+	uint64_t reg;
+	uint32_t d, h, mode;
+	int i, bail, tile_width, tlbptr, j, tx, shift;
 	const char *wantsync;
-	
+	uint16_t v;
+
 	/* disable DMA */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_OVR_CONTROL);
 	d &= ~(1 << CRMFB_OVR_CONTROL_DMAEN_SHIFT);
@@ -724,6 +788,9 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	crmfb_write_reg(sc, CRMFB_DID_CONTROL, 0);
 	DELAY(50000);
 
+	if (!crmfb_wait_dma_idle(sc))
+		aprint_error("crmfb: crmfb_wait_dma_idle timed out\n");
+	
 	/* ensure that CRM starts drawing at the top left of the screen
 	 * when we re-enable DMA later
 	 */
@@ -733,7 +800,14 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK);
 	d &= ~(1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT);
 	crmfb_write_reg(sc, CRMFB_DOTCLOCK, d);
-	delay(1000);
+
+	/* wait for dotclock to turn off */
+	bail = 10000;
+	while ((bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_DOTCLOCK) &
+	    (1 << CRMFB_DOTCLOCK_CLKRUN_SHIFT)) && (bail > 0)) {
+		delay(10);
+		bail--;
+	}
 
 	/* reset FIFO */
 	d = bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_FRM_TILESIZE);
@@ -746,12 +820,15 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	switch (depth) {
 	case 8:
 		h = CRMFB_MODE_TYP_I8;
+		tile_width = 512;
 		break;
 	case 16:
 		h = CRMFB_MODE_TYP_ARGB5;
+		tile_width = 256;
 		break;
 	case 32:
 		h = CRMFB_MODE_TYP_RGB8;
+		tile_width = 128;
 		break;
 	default:
 		panic("Unsupported depth");
@@ -765,10 +842,17 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	/* setup tile pointer, but don't turn on DMA yet! */
 	h = DMAADDR(sc->sc_dmai);
 	d = (h >> 9) << CRMFB_FRM_CONTROL_TILEPTR_SHIFT;
+	printf("CRMFB_FRM_CONTROL %08x -> %08x", crmfb_read_reg(sc, CRMFB_FRM_CONTROL), d);
 	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
 
 	/* init framebuffer width and pixel size */
-	d = (1 << CRMFB_FRM_TILESIZE_WIDTH_SHIFT);
+	/*d = (1 << CRMFB_FRM_TILESIZE_WIDTH_SHIFT);*/
+
+	d = ((int)(sc->sc_width / tile_width)) << 
+	    CRMFB_FRM_TILESIZE_WIDTH_SHIFT;
+	if ((sc->sc_width & (tile_width - 1)) != 0)
+		d |= sc->sc_tiles_y;
+
 	switch (depth) {
 	case 8:
 		h = CRMFB_FRM_TILESIZE_DEPTH_8;
@@ -783,14 +867,17 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 		panic("Unsupported depth");
 	}
 	d |= (h << CRMFB_FRM_TILESIZE_DEPTH_SHIFT);
+	printf("CRMFB_FRM_TILESIZE %08x -> %08x", crmfb_read_reg(sc, CRMFB_FRM_TILESIZE), d);
 	crmfb_write_reg(sc, CRMFB_FRM_TILESIZE, d);
 
 	/* init framebuffer height, we use the trick that the Linux
 	 * driver uses to fool the CRM out of tiled mode and into
 	 * linear mode
 	 */
-	h = sc->sc_width * sc->sc_height / (512 / (depth >> 3));
+	/*h = sc->sc_width * sc->sc_height / (512 / (depth >> 3));*/
+	h = sc->sc_height;
 	d = h << CRMFB_FRM_PIXSIZE_HEIGHT_SHIFT;
+	printf("CRMFB_FRM_PIXSIZE %08x -> %08x", crmfb_read_reg(sc, CRMFB_FRM_PIXSIZE), d);
 	crmfb_write_reg(sc, CRMFB_FRM_PIXSIZE, d);
 
 	/* turn off firmware overlay and hardware cursor */
@@ -817,6 +904,76 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	}
 
 	sc->sc_depth = depth;
+
+	/* finally set up the drawing engine's TLB A */
+	v = (DMAADDR(sc->sc_dma) >> 16) & 0xffff;
+	tlbptr = 0;
+	tx = ((sc->sc_width + (tile_width - 1)) & ~(tile_width - 1)) / tile_width;
+	printf("tx: %d\n", tx);
+	for (i = 0; i < sc->sc_tiles_y; i++) {
+		reg = 0;
+		shift = 64;
+		for (j = 0; j < tx; j++) {
+			shift -= 16;
+			reg |= (((uint64_t)(v | 0x8000)) << shift);
+			if (shift == 0) {
+				shift = 64;
+				bus_space_write_8(sc->sc_iot, sc->sc_reh,
+				    CRIME_RE_TLB_A + tlbptr + (j & 0xffc) * 2, reg);
+				printf("%08x: %016llx\n", tlbptr + (j & 0xffc) * 2, reg);
+			}
+			v++;
+		}
+		if (shift != 64) {
+			bus_space_write_8(sc->sc_iot, sc->sc_reh,
+			    CRIME_RE_TLB_A + tlbptr + (j & 0xffc) * 2, reg);
+			printf("%08x: %016llx\n", tlbptr + (j & 0xffc) * 2, reg);
+		}
+		tlbptr += 32;
+	}
+
+	/* put the scratch page into the lower left of the fb */
+	reg = (((uint64_t)(DMAADDR(sc->sc_dma) + sc->sc_fbsize) | 0x80000000) &
+	    0xffff0000) << 32;
+	bus_space_write_8(sc->sc_iot, sc->sc_reh, CRIME_RE_TLB_A + 0x1e0, reg);
+
+	wbflush();
+
+	for (i = 0; i < 0x80; i += 8)
+		printf("%04x: %016llx\n", i, bus_space_read_8(sc->sc_iot, sc->sc_reh,
+			    CRIME_RE_TLB_A + i));
+
+	/* do some very basic engine setup */
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_CLIPMODE, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_WINOFFSET_SRC, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_WINOFFSET_DST, 0);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_PLANEMASK, 0xffffffff);
+
+	bus_space_write_8(sc->sc_iot, sc->sc_reh, 0x20, 0);
+	bus_space_write_8(sc->sc_iot, sc->sc_reh, 0x28, 0);
+	bus_space_write_8(sc->sc_iot, sc->sc_reh, 0x30, 0);
+	bus_space_write_8(sc->sc_iot, sc->sc_reh, 0x38, 0);
+	bus_space_write_8(sc->sc_iot, sc->sc_reh, 0x40, 0);
+	
+	switch (depth) {
+		case 8:
+			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_8 |
+			    DE_MODE_TYPE_CI | DE_MODE_PIXDEPTH_8;
+			break;
+		case 16:
+			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_16 |
+			    DE_MODE_TYPE_RGB | DE_MODE_PIXDEPTH_16;
+		case 32:
+			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
+			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32;
+		default:
+			panic("%s: unsuported colour depth %d\n", __func__,
+			    depth);
+	}
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_MODE_DST, mode);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_MODE_SRC, mode);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_XFER_STEP_X, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_XFER_STEP_Y, 1);
 	return 0;
 }
 
@@ -831,5 +988,265 @@ crmfb_setup_palette(struct crmfb_softc *sc)
 		sc->sc_cmap_red[i] = rasops_cmap[(i * 3) + 2];
 		sc->sc_cmap_green[i] = rasops_cmap[(i * 3) + 1];
 		sc->sc_cmap_blue[i] = rasops_cmap[(i * 3) + 0];
+	}
+}
+
+static inline void
+crmfb_wait_idle(struct crmfb_softc *sc)
+{
+	int i = 0;
+
+	do {
+		i++;
+		delay(1);
+	} while (((bus_space_read_4(sc->sc_iot, sc->sc_reh, CRIME_DE_STATUS) &
+		   CRIME_DE_IDLE) == 0) && (i < 100000000));
+	if (i >= 100000000)
+		aprint_error("crmfb_wait_idle() timed out\n");
+}
+
+static void
+crmfb_fill_rect(struct crmfb_softc *sc, int x, int y, int width, int height,
+    uint32_t colour)
+{
+	crmfb_wait_idle(sc);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_DRAWMODE,
+	    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_FG, colour);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_PRIMITIVE,
+		DE_PRIM_RECTANGLE | DE_PRIM_TB);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_X_VERTEX_0,
+	    (x << 16) | (y & 0xffff));
+	bus_space_write_4(sc->sc_iot, sc->sc_reh,
+	    CRIME_DE_X_VERTEX_1 | CRIME_DE_START,
+	    ((x + width - 1) << 16) | ((y + height - 1) & 0xffff));
+}
+
+static void
+crmfb_bitblt(struct crmfb_softc *sc, int xs, int ys, int xd, int yd,
+    int wi, int he, uint32_t rop)
+{
+	uint32_t prim = DE_PRIM_RECTANGLE;
+	int rxa, rya, rxe, rye, rxs, rys;
+	crmfb_wait_idle(sc);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_DRAWMODE,
+	    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK | DE_DRAWMODE_ROP |
+	    DE_DRAWMODE_XFER_EN);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_ROP, rop);
+	if (xs < xd) {
+		prim |= DE_PRIM_RL;
+		rxe = xd;
+		rxa = xd + wi - 1;
+		rxs = xs + wi - 1;
+	} else {
+		prim |= DE_PRIM_LR;
+		rxe = xd + wi - 1;
+		rxa = xd;
+		rxs = xs;
+	}
+	if (ys < yd) {
+		prim |= DE_PRIM_BT;
+		rye = yd;
+		rya = yd + he - 1;
+		rys = ys + he - 1;
+	} else {
+		prim |= DE_PRIM_TB;
+		rye = yd + he - 1;
+		rya = yd;
+		rys = ys;
+	}
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_PRIMITIVE, prim);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_XFER_ADDR_SRC,
+	    (rxs << 16) | (rys & 0xffff));
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_X_VERTEX_0,
+	    (rxa << 16) | (rya & 0xffff));
+	bus_space_write_4(sc->sc_iot, sc->sc_reh,
+	    CRIME_DE_X_VERTEX_1 | CRIME_DE_START,
+	    (rxe << 16) | (rye & 0xffff));
+}
+
+#ifdef CRMFB_DEBUG
+void
+crmfb_test_mte(struct crmfb_softc *sc)
+{
+	uint32_t status[10];
+	int i;
+
+	crmfb_fill_rect(sc, 1, 1, 100, 100, 1);
+	crmfb_fill_rect(sc, 102, 1, 100, 100, 2);
+	crmfb_fill_rect(sc, 203, 1, 100, 100, 3);
+	crmfb_fill_rect(sc, 1024, 1, 100, 100, 4);
+
+	crmfb_bitblt(sc, 10, 10, 400, 0, 300, 300, 12);
+	crmfb_wait_idle(sc);
+	printf("ROP: %08x\n", bus_space_read_4(sc->sc_iot, sc->sc_reh, CRIME_DE_ROP));
+#if 0
+	delay(4000000);
+
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_NULL, 0x0);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_BG, 0x05050505);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
+	    MTE_MODE_DST_ECC |
+	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
+	    0/*MTE_MODE_COPY*/);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_STRIDE, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_STRIDE, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC0, 0x00000000);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC1, 0x02000200);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST0, 0x03000000);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST1 | CRIME_DE_START, 0x02000200);
+	status[9] = bus_space_read_4(sc->sc_iot, sc->sc_reh, CRIME_DE_STATUS);
+#endif	
+#if 1
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
+	    MTE_MODE_DST_ECC |
+	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
+	    0/*MTE_MODE_COPY*/);
+#endif
+	delay(4000000);
+#if 0
+	printf("flush: %08x\n",
+	    bus_space_read_4(sc->sc_iot, sc->sc_reh, CRIME_DE_FLUSH));
+#endif
+
+	for (i = 0; i < 10; i++)
+		printf("%08x ", status[i]);
+	printf("\n");
+}
+#endif /* CRMFB_DEBUG */
+
+static void
+crmfb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t xs, xd, y, width, height;
+
+	xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
+	xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	crmfb_bitblt(scr->scr_cookie, xs, y, xd, y, width, height, 3);
+}
+
+static void
+crmfb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t x, y, width, height, bg;
+
+	x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
+	y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+	width = ri->ri_font->fontwidth * ncols;
+	height = ri->ri_font->fontheight;
+	bg = (uint32_t)ri->ri_devcmap[(fillattr >> 16) & 0xff];
+	crmfb_fill_rect(scr->scr_cookie, x, y, width, height, bg);
+}
+
+static void
+crmfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t x, ys, yd, width, height;
+
+	x = ri->ri_xorigin;
+	ys = ri->ri_yorigin + ri->ri_font->fontheight * srcrow;
+	yd = ri->ri_yorigin + ri->ri_font->fontheight * dstrow;
+	width = ri->ri_emuwidth;
+	height = ri->ri_font->fontheight * nrows;
+	crmfb_bitblt(scr->scr_cookie, x, ys, x, yd, width, height, 3);
+}
+
+static void
+crmfb_eraserows(void *cookie, int row, int nrows, long fillattr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	int32_t x, y, width, height, bg;
+
+	if ((row == 0) && (nrows == ri->ri_rows)) {
+		x = y = 0;
+		width = ri->ri_width;
+		height = ri->ri_height;
+	} else {
+		x = ri->ri_xorigin;
+		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+		width = ri->ri_emuwidth;
+		height = ri->ri_font->fontheight * nrows;
+	}
+	bg = (uint32_t)ri->ri_devcmap[(fillattr >> 16) & 0xff];
+	crmfb_fill_rect(scr->scr_cookie, x, y, width, height, bg);
+}
+
+static void
+crmfb_cursor(void *cookie, int on, int row, int col)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct crmfb_softc *sc = scr->scr_cookie;
+	int x, y, wi,he;
+
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+
+	if (ri->ri_flg & RI_CURSOR) {
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		crmfb_bitblt(sc, x, y, x, y, wi, he, 12);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	ri->ri_crow = row;
+	ri->ri_ccol = col;
+
+	if (on)
+	{
+		x = ri->ri_ccol * wi + ri->ri_xorigin;
+		y = ri->ri_crow * he + ri->ri_yorigin;
+		crmfb_bitblt(sc, x, y, x, y, wi, he, 12);
+		ri->ri_flg |= RI_CURSOR;
+	}
+}
+
+static void
+crmfb_putchar(void *cookie, int row, int col, u_int c, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct crmfb_softc *sc = scr->scr_cookie;
+	struct rasops_info *fri = &sc->sc_rasops;
+	int bg;
+	int x, y, wi, he, xs;
+
+	wi = ri->ri_font->fontwidth;
+	he = ri->ri_font->fontheight;
+
+	x = ri->ri_xorigin + col * wi;
+	y = ri->ri_yorigin + row * he;
+
+	bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xff];
+	if (c == 0x20) {
+		crmfb_fill_rect(sc, x, y, wi, he, bg);
+	} else {
+		/*
+		 * we rotate over all available character cells in the scratch
+		 * tile. The idea is to have more cells than there's room for
+		 * drawing commands in the engine's pipeline so we don't have
+		 * to wait for the engine until we're done drawing the 
+		 * character and ready to blit it into place
+		 */
+		fri->ri_ops.putchar(fri, 0, sc->sc_current_cell, c, attr);
+		xs = sc->sc_current_cell * wi;
+		sc->sc_current_cell++;
+		if (sc->sc_current_cell >= sc->sc_cells)
+			sc->sc_current_cell = 0;
+		crmfb_bitblt(sc, xs, 2048-128, x, y, wi, he, 3);
 	}
 }
