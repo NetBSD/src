@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.33 2007/10/17 19:56:47 garbled Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.34 2008/02/05 18:10:48 garbled Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -168,7 +168,7 @@ ENTRY(cpu_switchto)
 	cmpwi	%r30,0
 	beq	switchto_restore
 
-#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
 	li	%r10,0			/* USER_SR not needed */
@@ -217,7 +217,7 @@ switchto_restore:
 	ldreg	%r1,0(%r1)		/* get saved SP */
 	mr	%r2,%r12		/* get saved r2 */
 	mtcr	%r11			/* get saved cr */
-#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 	mtsr	USER_SR,%r10		/* get saved USER_SR */
 #endif
 	isync
@@ -290,7 +290,7 @@ _C_LABEL(cpu_lwp_bootstrap):
 	blrl				/* jump indirect to r31 */
 	b	trapexit
 
-#if defined(MULTIPROCESSOR) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
+#if defined(MULTIPROCESSOR) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 ENTRY(cpu_spinup_trampoline)
 	li	0,0
 	mtmsr	0
