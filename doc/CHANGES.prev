@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.77 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.78 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -8609,6 +8609,7 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	kernel: add jmide(4), a driver for the JMicron Technology JMB36x
 		PCIe to SATA II/PATA controllers. [bouyer 20070515]
 	aac(4): Compile and run on amd64. [briggs 20070525]
+	mips: Make ddb(4) backtrace on mips more usable.  [tsutsui 20070529]
 	amd64: The Enhanced Speedstep driver is now able to work on EM64T
 		CPUs running in 64bit mode. [xtraeme 20070603]
 	audio(4): New ioctl AUDIO_GETBUFINFO reduces system overhead for many
@@ -8622,6 +8623,8 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 	bind: import 9.4.1-P1 [christos 20070724]
 	mpt(4): Add support for newer SAS and similar devices. [tron 20070727]
 	postfix(1): Updated to 2.4.5 [heas 20070802]
+	cobalt: Add support for booting off raidframe RAID1 mirrors.
+		[tsutsui 20070803]
 	build.sh: Add iso-image-source option which does iso-image with
 		source sets. [jnemeth 20070830]
 	build.sh: Add iso-dir=directory option which when combined with
@@ -8631,3 +8634,4 @@ Changes from NetBSD 3.0 to NetBSD 4.0:
 		[jnemeth 20070901]
 	msk(4): Add support for Marvell 88CO55 gigabit ethernet, which 
 		is used by newer iMacs [manu 20071022]
+	cobalt: Add netboot support via tlp0 to bootloader.  [tsutsui 20071030]
