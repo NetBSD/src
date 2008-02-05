@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.37 2008/02/05 18:10:48 garbled Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.38 2008/02/05 18:52:56 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.37 2008/02/05 18:10:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.38 2008/02/05 18:52:56 garbled Exp $");
 
 #include "opt_altivec.h"
 
@@ -171,7 +171,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "cachelinesize", NULL,
-		       NULL, CACHELINESIZE, NULL, 0,
+		       NULL, curcpu()->ci_ci.dcache_line_size, NULL, 0,
 		       CTL_MACHDEP, CPU_CACHELINE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
