@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_union.c,v 1.19 2007/07/16 17:06:55 pooka Exp $	*/
+/*	$NetBSD: mount_union.c,v 1.20 2008/02/05 16:54:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.6 (Berkeley) 4/26/95";
 #else
-__RCSID("$NetBSD: mount_union.c,v 1.19 2007/07/16 17:06:55 pooka Exp $");
+__RCSID("$NetBSD: mount_union.c,v 1.20 2008/02/05 16:54:07 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ mount_union(int argc, char *argv[])
 
 	mntflags = 0;
 	args.mntflags = UNMNT_ABOVE;
-	while ((ch = getopt(argc, argv, "bo:r")) != -1)
+	while ((ch = getopt(argc, argv, "bo:")) != -1)
 		switch (ch) {
 		case 'b':
 			args.mntflags &= ~UNMNT_OPMASK;
@@ -100,10 +100,6 @@ mount_union(int argc, char *argv[])
 			if (mp == NULL)
 				err(1, "getmntopts");
 			freemntopts(mp);
-			break;
-		case 'r':
-			args.mntflags &= ~UNMNT_OPMASK;
-			args.mntflags |= UNMNT_REPLACE;
 			break;
 		case '?':
 		default:
