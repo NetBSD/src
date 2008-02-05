@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.76 2008/01/15 13:57:42 ad Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.77 2008/02/05 15:56:01 elad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.76 2008/01/15 13:57:42 ad Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.77 2008/02/05 15:56:01 elad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -162,8 +162,8 @@ struct miniproc {
  * 'struct uucred', or something) this will have to be updated again.
  */
 struct kvm_kauth_cred {
-	kmutex_t cr_lock;		/* lock on cr_refcnt */
 	u_int cr_refcnt;		/* reference count */
+	uint8_t cr_pad[CACHE_LINE_SIZE - sizeof(u_int)];
 	uid_t cr_uid;			/* user id */
 	uid_t cr_euid;			/* effective user id */
 	uid_t cr_svuid;			/* saved effective user id */
