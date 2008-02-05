@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.278 2008/02/04 23:56:14 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.279 2008/02/05 09:38:47 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.278 2008/02/04 23:56:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.279 2008/02/05 09:38:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -4086,7 +4086,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 						m->m_pkthdr.rcvif : NULL,
 						sc->sc_src.sa.sa_family);
 	sc->sc_win = win;
-	sc->sc_timebase = tcp_now;	/* see tcp_newtcpcb() */
+	sc->sc_timebase = tcp_now - 1;	/* see tcp_newtcpcb() */
 	sc->sc_timestamp = tb.ts_recent;
 	if ((tb.t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP)) ==
 	    (TF_REQ_TSTMP|TF_RCVD_TSTMP))
