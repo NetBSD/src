@@ -1,4 +1,4 @@
-;	$NetBSD: root.cache,v 1.12 2008/02/05 06:08:35 spz Exp $
+;	$NetBSD: root.cache,v 1.13 2008/02/05 09:19:06 tron Exp $
 ;
 ;       This file holds the information on root name servers needed to
 ;       initialize cache of Internet domain name servers
@@ -11,15 +11,14 @@
 ;           on server           FTP.INTERNIC.NET
 ;       -OR-                    RS.INTERNIC.NET
 ;
-;       last update:    Nov 01, 2007
-;       related version of root zone:   2007110100
-;
+;       last update:    Feb 04, 2008
+;       related version of root zone:   2008020400
 ;
 ; formerly NS.INTERNIC.NET
 ;
 .                        3600000  IN  NS    A.ROOT-SERVERS.NET.
 A.ROOT-SERVERS.NET.      3600000      A     198.41.0.4
-A.ROOT-SERVERS.NET.      3600000      AAAA  2001:503:ba3e::2:30
+A.ROOT-SERVERS.NET.      3600000      AAAA  2001:503:BA3E::2:30
 ;
 ; formerly NS1.ISI.EDU
 ;
@@ -67,7 +66,7 @@ I.ROOT-SERVERS.NET.      3600000      A     192.36.148.17
 ;
 .                        3600000      NS    J.ROOT-SERVERS.NET.
 J.ROOT-SERVERS.NET.      3600000      A     192.58.128.30
-J.ROOT-SERVERS.NET.      3600000      AAAA  2001:503:c27::2:30
+J.ROOT-SERVERS.NET.      3600000      AAAA  2001:503:C27::2:30
 ;
 ; operated by RIPE NCC
 ;
