@@ -63,9 +63,6 @@ chcesz to zrobic?
 message set_kernel_1
 {Kernel (GENERIC)}
 
-message set_kernel_2
-{Kernel (GENERIC_B64)}
-
 message nobootpart
 {There is no boot partition in the MBR partition table.}
 
