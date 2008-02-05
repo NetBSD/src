@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.60 2008/01/17 23:43:00 garbled Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.61 2008/02/05 18:10:49 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -55,11 +55,11 @@
 #define RESTORE_VRSAVE(tf,b)
 #endif
 
-#if defined (PPC_OEA)
-#define	RFI	rfi
-#elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#if defined (PPC_OEA64)
 #define	RFI	rfid
-#endif /* PPC_OEA */
+#else
+#define	RFI	rfi
+#endif /* PPC_OEA64 */
 
 #if defined(PPC_OEA64)
 /*
@@ -79,7 +79,7 @@
 	ldreg	t0,_C_LABEL(kernel_pmap_)+PM_STEG@l(t0);		\
 	mtasr	t0
 
-#elif defined(PPC_OEA)
+#else /* not OEA64 */
 
 /*
  * Restore segment registers from array.
@@ -132,52 +132,13 @@
 	ldreg	sr,4(pmap);	mtibatl 0,sr;				\
 	ldreg	sr,8(pmap);	mtibatu 1,sr;				\
 	ldreg	sr,12(pmap);	mtibatl 1,sr
-#elif defined (PPC_OEA64_BRIDGE)
-/*
- * Restore segment registers from array.
- */
-#define	RESTORE_SRS(pmap,sr)	mtsr	0,sr; \
-	ldreg	sr,4(pmap);	mtsr	1,sr; \
-	ldreg	sr,8(pmap);	mtsr	2,sr; \
-	ldreg	sr,12(pmap);	mtsr	3,sr; \
-	ldreg	sr,16(pmap);	mtsr	4,sr; \
-	ldreg	sr,20(pmap);	mtsr	5,sr; \
-	ldreg	sr,24(pmap);	mtsr	6,sr; \
-	ldreg	sr,28(pmap);	mtsr	7,sr; \
-	ldreg	sr,32(pmap);	mtsr	8,sr; \
-	ldreg	sr,36(pmap);	mtsr	9,sr; \
-	ldreg	sr,40(pmap);	mtsr	10,sr; \
-	ldreg	sr,44(pmap);	mtsr	11,sr; \
-	ldreg	sr,48(pmap);	mtsr	12,sr; \
-	ldreg	sr,52(pmap);	mtsr	13,sr; \
-	ldreg	sr,56(pmap);	mtsr	14,sr; \
-	ldreg	sr,60(pmap);	mtsr	15,sr; isync;
-
-/*
- * User SRs are loaded through a pointer to the current pmap.
- * Note: oea_init() relies on the 601 instruction sequence.
- */
-#define RESTORE_USER_SRS(pmap,sr)					\
-	GET_CPUINFO(pmap);						\
-	ldptr	pmap,CI_CURPM(pmap);					\
-	ldregu	sr,PM_SR(pmap);						\
-	RESTORE_SRS(pmap,sr);
-/*
- * Kernel SRs are loaded directly from kernel_pmap_.
- * Note: oea_init() relies on the 601 instruction sequence.
- */
-#define RESTORE_KERN_SRS(pmap,sr)					\
-	lis	pmap,_C_LABEL(kernel_pmap_)@ha;				\
-	ldregu	sr,_C_LABEL(kernel_pmap_)+PM_SR@l(pmap);		\
-	RESTORE_SRS(pmap,sr);
-
 #endif /* (PPC_OEA64) */
 
 /*
  * Save/restore MPC601 MQ register.
  * Note: oea_init() relies on this instruction sequence.
  */
-#if !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
+#if !defined(PPC_OEA64)
 #define	SAVE_MQ(tf,b)							\
 	mfspr	b,SPR_MQ;						\
 	streg	b,(FRAME_MQ+(2*SZREG))(tf);
@@ -195,6 +156,7 @@
  * (except ISI/DSI, ALI, the interrupts, and possibly the debugging
  * traps when using IPKDB).
  */
+
 /* LINTSTUB: Var: int trapcode[1], trapsize[1]; */
 	.text
 	.globl	_C_LABEL(trapcode),_C_LABEL(trapsize)
@@ -205,12 +167,6 @@ _C_LABEL(trapcode):
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* free r29 */
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1)	/* free r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1)	/* free r31 */
-#if defined (PPC_OEA64_BRIDGE)
-	mfmsr	%r28
-	clrldi  %r28,%r28,1
-	mtmsrd	%r28
-	isync
-#endif
 	mfsprg1	%r1			/* restore SP */
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
@@ -232,12 +188,6 @@ _C_LABEL(alitrap):
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1) /* save r29 */
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1) /* save r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1) /* save r31 */
-#if defined (PPC_OEA64_BRIDGE)
-	mfmsr	%r28
-	clrldi  %r28,%r28,1
-	mtmsrd	%r28
-	isync
-#endif
 	mfdar	%r30
 	mfdsisr	%r31
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_DAR)(%r1)	/* save dar */
@@ -265,12 +215,6 @@ _C_LABEL(dsitrap):
 	streg	%r29,(CI_DISISAVE+CPUSAVE_R29)(%r1)	/* save r29 */
 	streg	%r30,(CI_DISISAVE+CPUSAVE_R30)(%r1)	/* save r30 */
 	streg	%r31,(CI_DISISAVE+CPUSAVE_R31)(%r1)	/* save r31 */
-#if defined (PPC_OEA64_BRIDGE)
-	mfmsr	%r28
-	clrldi  %r28,%r28,1
-	mtmsrd	%r28
-	isync
-#endif
 	mfsprg1	%r1
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
@@ -278,11 +222,7 @@ _C_LABEL(dsitrap):
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
 	bt	17,1f			/* branch if PSL_PR is set */
-/* XXXSL: for the PPC64 bridge, we have skipped over the initialization
- * of battable, hence the supervisor valid bit should not be set
- * and we should end up following the code path into the page fault handler
- */
-#if defined (PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_OEA64)
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,7,25,28	/* get segment * 8 */
 
@@ -305,7 +245,7 @@ _C_LABEL(dsitrap):
 	mtdbatu	3,%r30
 	mtdbatl	3,%r31
 3:
-#endif /* PPC_OEA || PPC_OEA64  || PPC_OEA64_BRIDGE */
+#endif /* !PPC_OEA64 */
 
 	mfsprg2	%r30			/* restore XER */
 	mtxer	%r30
@@ -346,7 +286,6 @@ _C_LABEL(dsi601trap):
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
 	bt	17,1f			/* branch if PSL_PR is set */
-#if defined (PPC_OEA) && !defined(PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,12,20,28	/* get "segment" battable offset */
 
@@ -370,8 +309,6 @@ _C_LABEL(dsi601trap):
 	mtibatu	3,%r31
 	mtibatl	3,%r30
 3:
-#endif /* PPC_OEA && !PPC_OEA64  && !PPC_OEA64_BRIDGE */
-
 	mfsprg2	%r30			/* restore XER */
 	mtxer	%r30
 	mtcr	%r29			/* restore CR */
@@ -402,12 +339,6 @@ _C_LABEL(extint):
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* save r29 */
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1)	/* save r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1)	/* save r31 */
-#if defined (PPC_OEA64_BRIDGE)
-	mfmsr	%r28
-	clrldi  %r28,%r28,1
-	mtmsrd	%r28
-	isync
-#endif
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
@@ -433,12 +364,6 @@ _C_LABEL(decrint):
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1)	/* save r29 */
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1)	/* save r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1)	/* save r31 */
-#if defined (PPC_OEA64_BRIDGE)
-	mfmsr	%r28
-	clrldi  %r28,%r28,1
-	mtmsrd	%r28
-	isync
-#endif
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	mfxer	%r30			/* save XER */
@@ -658,12 +583,6 @@ _C_LABEL(tlbdsmsize) = .-_C_LABEL(tlbdsmiss)
 _C_LABEL(ddblow):
 	mtsprg1	%r1			/* save SP */
 	mtsprg2 %r29			/* save r29 */
-#if defined (PPC_OEA64_BRIDGE)
-	mfmsr	%r29
-	clrldi  %r29,%r29,1
-	mtmsrd	%r29
-	isync
-#endif
 	mfcr	%r29			/* save CR in r29 */
 	mfsrr1	%r1
 	mtcr	%r1
@@ -797,84 +716,6 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	SAVE_VRSAVE(%r1,%r6);						\
 	SAVE_MQ(%r1,%r7)
 
-#if defined (PPC_OEA64_BRIDGE)
-#define	FRAME_LEAVE(savearea)						\
-/* Now restore regs: */							\
-	ldreg	%r2,(FRAME_SRR0+(2*SZREG))(%r1);			\
-	ldreg	%r3,(FRAME_SRR1+(2*SZREG))(%r1);			\
-	ldreg	%r4,(FRAME_CTR+(2*SZREG))(%r1);				\
-	ldint	%r5,(FRAME_XER+(2*SZREG))(%r1);				\
-	ldreg	%r6,(FRAME_LR+(2*SZREG))(%r1);				\
-	RESTORE_MQ(%r1,%r8);						\
-	RESTORE_VRSAVE(%r1,%r9);					\
-	GET_CPUINFO(%r7);						\
-	streg	%r2,(savearea+CPUSAVE_SRR0)(%r7); /* save SRR0 */	\
-	streg	%r3,(savearea+CPUSAVE_SRR1)(%r7); /* save SRR1 */	\
-	ldint	%r7,(FRAME_CR+(2*SZREG))(%r1);				\
-	mtctr	%r4;							\
-	mtxer	%r5;							\
-	mtlr	%r6;							\
-	mtsprg1	%r7;			/* save cr */			\
-	ldreg	%r31,(FRAME_31+(2*SZREG))(%r1);	/* restore r31 */	\
-	ldreg	%r30,(FRAME_30+(2*SZREG))(%r1);	/* restore r30 */	\
-	ldreg	%r29,(FRAME_29+(2*SZREG))(%r1);	/* restore r29 */	\
-	ldreg	%r28,(FRAME_28+(2*SZREG))(%r1);	/* restore r28 */	\
-	ldreg	%r27,(FRAME_27+(2*SZREG))(%r1);	/* restore r27 */	\
-	ldreg	%r26,(FRAME_26+(2*SZREG))(%r1);	/* restore r26 */	\
-	ldreg	%r25,(FRAME_25+(2*SZREG))(%r1);	/* restore r25 */	\
-	ldreg	%r24,(FRAME_24+(2*SZREG))(%r1);	/* restore r24 */	\
-	ldreg	%r23,(FRAME_23+(2*SZREG))(%r1);	/* restore r23 */	\
-	ldreg	%r22,(FRAME_22+(2*SZREG))(%r1);	/* restore r22 */	\
-	ldreg	%r21,(FRAME_21+(2*SZREG))(%r1);	/* restore r21 */	\
-	ldreg	%r20,(FRAME_20+(2*SZREG))(%r1);	/* restore r20 */	\
-	ldreg	%r19,(FRAME_19+(2*SZREG))(%r1);	/* restore r19 */	\
-	ldreg	%r18,(FRAME_18+(2*SZREG))(%r1);	/* restore r18 */	\
-	ldreg	%r17,(FRAME_17+(2*SZREG))(%r1);	/* restore r17 */	\
-	ldreg	%r16,(FRAME_16+(2*SZREG))(%r1);	/* restore r16 */	\
-	ldreg	%r15,(FRAME_15+(2*SZREG))(%r1);	/* restore r15 */	\
-	ldreg	%r14,(FRAME_14+(2*SZREG))(%r1);	/* restore r14 */	\
-	ldreg	%r13,(FRAME_13+(2*SZREG))(%r1);	/* restore r13 */	\
-	ldreg	%r12,(FRAME_12+(2*SZREG))(%r1);	/* restore r12 */	\
-	ldreg	%r11,(FRAME_11+(2*SZREG))(%r1);	/* restore r11 */	\
-	ldreg	%r10,(FRAME_10+(2*SZREG))(%r1);	/* restore r10 */	\
-	ldreg	%r9,(FRAME_9+(2*SZREG))(%r1);	/* restore r9 */	\
-	ldreg	%r8,(FRAME_8+(2*SZREG))(%r1);	/* restore r8 */	\
-	ldreg	%r7,(FRAME_7+(2*SZREG))(%r1);	/* restore r7 */	\
-	ldreg	%r6,(FRAME_6+(2*SZREG))(%r1);	/* restore r6 */	\
-	ldreg	%r5,(FRAME_5+(2*SZREG))(%r1);	/* restore r5 */	\
-	ldreg	%r4,(FRAME_4+(2*SZREG))(%r1);	/* restore r4 */	\
-	ldreg	%r3,(FRAME_3+(2*SZREG))(%r1);	/* restore r3 */	\
-	ldreg	%r2,(FRAME_2+(2*SZREG))(%r1);	/* restore r2 */	\
-	ldreg	%r0,(FRAME_0+(2*SZREG))(%r1);	/* restore r0 */	\
-	ldreg	%r1,(FRAME_1+(2*SZREG))(%r1);	/* restore old sp in r1 */ \
-/* Can't touch %r1 from here on */					\
-	mtsprg2	%r2;			/* save r2 & r3 */		\
-	mtsprg3	%r3;							\
-/* Disable translation, machine check and recoverability: */		\
-	mfmsr	%r2;							\
-	andi.	%r2,%r2,~(PSL_DR|PSL_IR|PSL_ME|PSL_RI)@l;		\
-	mtmsr	%r2;							\
-	isync;								\
-/* Decide whether we return to user mode: */				\
-	GET_CPUINFO(%r2);						\
-	ldreg	%r3,(savearea+CPUSAVE_SRR1)(%r2);			\
-	mtcr	%r3;							\
-	bf	17,1f;			/* branch if PSL_PR is false */	\
-/* Restore user SRs */							\
-	RESTORE_USER_SRS(%r2,%r3);					\
-1:	mfsprg1	%r2;			/* restore cr */		\
-	mtcr	%r2;							\
-	GET_CPUINFO(%r2);						\
-	ldreg	%r3,(savearea+CPUSAVE_SRR0)(%r2);			\
-	mtsrr0	%r3;							\
-	ldreg	%r3,(savearea+CPUSAVE_SRR1)(%r2);			\
-	lis	%r2,0x1000;						\
-	rldicr  %r2,%r2,32,31;						\
-	or	%r3,%r3,%r2;						\
-	mtsrr1	%r3;							\
-	mfsprg2	%r2;			/* restore r2 & r3 */		\
-	mfsprg3	%r3
-#else
 #define	FRAME_LEAVE(savearea)						\
 /* Now restore regs: */							\
 	ldreg	%r2,(FRAME_SRR0+(2*SZREG))(%r1);			\
@@ -948,7 +789,6 @@ _C_LABEL(ipkdbsize) = .-_C_LABEL(ipkdblow)
 	mtsrr1	%r3;							\
 	mfsprg2	%r2;			/* restore r2 & r3 */		\
 	mfsprg3	%r3
-#endif /* PPC_OEA64_BRIDGE */
 
 /*
  * Preamble code for DSI/ISI traps
@@ -1066,12 +906,6 @@ _C_LABEL(sctrap):
 	streg	%r29,(CI_TEMPSAVE+CPUSAVE_R29)(%r1) /* save r20 */
 	streg	%r30,(CI_TEMPSAVE+CPUSAVE_R30)(%r1) /* save r30 */
 	streg	%r31,(CI_TEMPSAVE+CPUSAVE_R31)(%r1) /* save r31 */
-#if defined (PPC_OEA64_BRIDGE)
-	mfmsr	%r28
-	clrldi  %r28,%r28,1
-	mtmsrd	%r28
-	isync
-#endif
 	mflr	%r28			/* save LR */
 	mfcr	%r29			/* save CR */
 	bla	s_sctrap
@@ -1180,11 +1014,6 @@ intr_exit:
 	ldreg	%r8,IFRAME_R8(%r1)
 	ldreg	%r7,IFRAME_R7(%r1)
 	ldreg	%r6,IFRAME_SRR1(%r1)
-#if defined (PPC_OEA64_BRIDGE)
-	lis	%r5,0x1000
-	rldicr  %r5,%r5,32,31
-	or	%r6,%r6,%r5
-#endif
 	ldreg	%r5,IFRAME_SRR0(%r1)
 	ldreg	%r4,IFRAME_CTR(%r1)
 	ldint	%r3,IFRAME_XER(%r1)

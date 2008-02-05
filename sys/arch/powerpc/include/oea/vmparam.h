@@ -140,7 +140,7 @@
 	(((vsid) >> SR_VSID_SHFT) & VSID__KEYMASK)
 #define	VSID_TO_HASH(vsid) \
 	(((vsid) & SR_VSID) >> (SR_VSID_SHFT + VSID__HASHSHFT))
-#endif
+#endif /*0*/
 
 /*
  * Fixed segments
@@ -213,7 +213,6 @@
 
 LIST_HEAD(pvo_head, pvo_entry);
 
-#if __NetBSD_Version__ > 105180000
 #define	__HAVE_VM_PAGE_MD
 
 struct vm_page_md {
@@ -225,17 +224,6 @@ struct vm_page_md {
 	LIST_INIT(&(pg)->mdpage.mdpg_pvoh);	\
 	(pg)->mdpage.mdpg_attrs = 0;		\
 } while (/*CONSTCOND*/0)
-
-#else
-
-#define	__HAVE_PMAP_PHYSSEG
-
-struct pmap_physseg {
-	struct pvo_head *pvoh;
-	char *attrs;
-};
-
-#endif
 
 #endif	/* _LOCORE */
 

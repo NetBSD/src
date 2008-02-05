@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_B64,v 1.1 2008/01/17 23:42:57 garbled Exp $
+# $NetBSD: GENERIC_B64,v 1.2 2008/02/05 18:10:46 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc.bridge"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1 $"
+#ident 		"GENERIC-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -33,7 +33,7 @@ options 	PIC_I8259
 
 # various hacks due to bugs in Openfirmware implementation
 # this option wedges bridge64 machines
-#options 	FIRMWORKSBUGS
+options 	FIRMWORKSBUGS
 
 # Standard system options
 #options 	INSECURE	# disable kernel security checks

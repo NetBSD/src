@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.37 2007/10/18 21:12:54 garbled Exp $	*/
+/*	$NetBSD: locore.S,v 1.38 2008/02/05 18:10:46 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -65,6 +65,8 @@ GLOBAL(esym)
 	.long	0			/* end of symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
+GLOBAL(oeacpufeat)
+	.long	0			/* cpu features */
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
@@ -85,8 +87,17 @@ __start:
 
 	li	0,0
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
-	isync
 
+	bl	_C_LABEL(cpu_model_init)
+	lis	12,oeacpufeat@ha
+	lwz	12,oeacpufeat@l(12)
+	and.	12,12,OEACPU_64_BRIDGE	/* Compare against OEACPU_64_BRIDGE */
+	beq	2f			/* skip if this is a 32bit part */
+	clrldi	0,0,32			/* clear SF/ISF (high order bits) */
+	mtmsrd	0
+	mtspr	0x118,0			/* clear ASR[V] to enable segregs */
+2:
+	isync
 	/* compute end of kernel memory */
         lis	4,_C_LABEL(end)@ha
         addi	4,4,_C_LABEL(end)@l
@@ -102,6 +113,7 @@ __start:
 1:
 #endif
 
+
 	/*
 	 * Initialize cpu_info[0]
 	 */
@@ -113,7 +125,7 @@ __start:
 	bl	_C_LABEL(initppc)
 	bl	_C_LABEL(main)
 	b	_C_LABEL(OF_exit)
-
+	
 /*
  * Pull in common OFW code.
  */

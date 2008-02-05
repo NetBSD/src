@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.8 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: pte.h,v 1.9 2008/02/05 18:10:47 garbled Exp $	*/
 
 /*-
  * Copyright (C) 2003 Matt Thomas
@@ -41,7 +41,7 @@
  * Page Table Entries
  */
 #ifndef	_LOCORE
-#if defined (PPC_OEA64_BRIDGE)
+#if defined(PMAP_OEA64) || defined(PMAP_OEA64_BRIDGE)
 struct pte {
 	register64_t pte_hi;
 	register64_t pte_lo;
@@ -59,14 +59,14 @@ struct pteg {
 #endif	/* _LOCORE */
 
 /* High word: */
-#if defined (PPC_OEA64)
+#if defined (PMAP_OEA64)
 #define	PTE_VALID	0x00000001
 #define	PTE_HID		0x00000002
 #define	PTE_API		0x00000f80
 #define	PTE_API_SHFT	7
 #define	PTE_VSID_SHFT	12
 #define	PTE_VSID	(~0xfffL)
-#elif defined (PPC_OEA64_BRIDGE)
+#elif defined (PMAP_OEA64_BRIDGE)
 #define	PTE_VALID	0x00000001
 #define	PTE_HID		0x00000002
 #define	PTE_API		0x00000f80
@@ -81,14 +81,14 @@ struct pteg {
 #define	PTE_HID		0x00000040
 #define	PTE_API		0x0000003f
 #define	PTE_API_SHFT	0
-#endif	/* PPC_OEA64 */
+#endif	/* PMAP_OEA64 */
 
 
 /* Low word: */
-#if defined (PPC_OEA) || defined (PPC_OEA64)
-#define	PTE_RPGN	(~0xfffUL)
-#else
+#if defined (PMAP_OEA64_BRIDGE)
 #define	PTE_RPGN	(~0xfffULL)
+#else
+#define	PTE_RPGN	(~0xfffUL)
 #endif
 #define	PTE_RPGN_SHFT	12
 #define	PTE_REF		0x00000100
@@ -116,14 +116,14 @@ struct pteg {
 #define	ADDR_SR_SHFT	28
 #define	ADDR_PIDX	0x0ffff000
 #define	ADDR_PIDX_SHFT	12
-#if defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#if defined (PMAP_OEA64) || defined (PMAP_OEA64_BRIDGE)
 #define	ADDR_API_SHFT	23	/* API is 5 bits */
 #else
 #define	ADDR_API_SHFT	22	/* API is 6 bits */
-#endif /* PPC_OEA64 */
+#endif /* PMAP_OEA64 */
 #define	ADDR_POFF	0x00000fff
 
-#ifdef PPC_OEA64
+#ifdef PMAP_OEA64
 /*
  * Segment Table Element
  */
@@ -157,7 +157,7 @@ struct steg {
 #define	SR_VSID_WIDTH	STE_VSID_WIDTH	/* compatibility with PPC_OEA */
 
 #define	SR_KEY_LEN	9		/* 64 groups of 8 segment entries */
-#else	/* !defined(PPC_OEA64) */
+#else	/* !defined(PMAP_OEA64) */
 
 /*
  * Segment registers
@@ -170,7 +170,7 @@ struct steg {
 #define	SR_VSID_SHFT	0		/* Starts at LSB */
 #define	SR_VSID_WIDTH	24		/* Goes for 24 bits */
 
-#endif	/* PPC_OEA64 */
+#endif	/* PMAP_OEA64 */
 
 					/* Virtual segment ID */
 #define	SR_VSID		(((1L << SR_VSID_WIDTH) - 1) << SR_VSID_SHFT)

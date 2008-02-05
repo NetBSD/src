@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.12 2007/10/17 19:56:43 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.13 2008/02/05 18:10:47 garbled Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -43,6 +43,7 @@ include <machine/pcb.h>
 include <machine/pmap.h>
 
 include <powerpc/cpu.h>
+include <powerpc/oea/cpufeat.h>
 
 define	FRAMELEN	FRAMELEN
 define	FRAME_0		offsetof(struct trapframe, fixreg[0])
@@ -217,3 +218,11 @@ define	FB_R31		offsetof(struct faultbuf, fb_fixreg[18])
 define	CACHELINESIZE	CACHELINESIZE
 
 define	CPU_CI		offsetof(struct cpu_info, ci_ci)
+
+define	OEACPU_64	OEACPU_64
+define	OEACPU_64_BRIDGE	OEACPU_64_BRIDGE
+define	OEACPU_NOBAT	OEACPU_NOBAT
+define	OEACPU_HIGHBAT	OEACPU_HIGHBAT
+define	OEACPU_601	OEACPU_601
+define	OEACPU_HIGHSPRG	OEACPU_HIGHSPRG
+define	OEACPU_ALTIVEC	OEACPU_ALTIVEC

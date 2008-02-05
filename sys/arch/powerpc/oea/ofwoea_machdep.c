@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.9 2008/01/28 18:24:21 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.10 2008/02/05 18:10:47 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.9 2008/01/28 18:24:21 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.10 2008/02/05 18:10:47 garbled Exp $");
 
-
+#include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h" 
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.9 2008/01/28 18:24:21 garbled E
 #include <machine/autoconf.h>
 #include <powerpc/bus.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/cpufeat.h>
 #include <powerpc/ofw_bus.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
@@ -126,6 +127,7 @@ extern int chosen;
 extern uint32_t ticks_per_sec;
 extern uint32_t ns_per_tick;
 extern uint32_t ticks_per_intr;
+extern unsigned long oeacpufeat;
 
 static int save_ofmap(struct ofw_translations *, int);
 static void restore_ofmap(struct ofw_translations *, int);
@@ -135,15 +137,11 @@ void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 {
 	int ofmaplen, node;
-#if defined (PPC_OEA64_BRIDGE)
 	register_t scratch;
-#endif
 
-#if defined (PPC_OEA)
 	/* initialze bats */
-	ofwoea_batinit();
-#elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
-#endif /* PPC_OEA */
+	if ((oeacpufeat & OEACPU_NOBAT) == 0)
+		ofwoea_batinit();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* get info of kernel symbol table from bootloader */
@@ -185,22 +183,32 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	}
 
 	uvm_setpagesize();
+
+#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup64bridge();
+	else
+		pmap_setup32();
+#endif
 	pmap_bootstrap(startkernel, endkernel);
 
 #if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #if defined (PMAC_G5)
 	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
-	pmap_setup_segment0_map(0, 0xff800000, 0x3fc00000, 0x400000, 0x0);
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup_segment0_map(0, 0xff800000, 0x3fc00000, 0x400000,
+		    0x0);
 #elif defined (MAMBO)
 	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
-	pmap_setup_segment0_map(0, 0xf4000000, 0xf4000000, 0x1000, 0x0);
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup_segment0_map(0, 0xf4000000, 0xf4000000, 0x1000, 0x0);
 #endif /* PMAC_G5 */
+#endif /* PPC_OEA64 || PPC_OEA64_BRIDGE */
 
 	/* Now enable translation (and machine checks/recoverable interrupts) */
 	__asm __volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
-#endif /* PPC_OEA64 || PPC_OEA64_BRIDGE */
 
 	restore_ofmap(ofmap, ofmaplen);
 
@@ -279,7 +287,8 @@ restore_ofmap(struct ofw_translations *map, int len)
 	pmap_pinit(&ofw_pmap);
 
 #if defined(PPC_OEA64_BRIDGE)
-	ofw_pmap.pm_sr[0x0] = KERNELN_SEGMENT(0);
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		ofw_pmap.pm_sr[0x0] = KERNELN_SEGMENT(0);
 #endif
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 
@@ -356,7 +365,7 @@ noranges:
 void
 ofwoea_batinit(void)
 {
-#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#if defined (PPC_OEA)
         u_int16_t bitmap;
 	int node, i;
 
@@ -377,7 +386,7 @@ ofwoea_batinit(void)
 			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
 		}
 	}
-#endif /* OEA || BRIDGE */
+#endif /* OEA */
 }
 
 

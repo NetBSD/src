@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.110 2008/01/02 02:32:25 mrg Exp $
+# $NetBSD: GENERIC,v 1.111 2008/02/05 18:10:46 garbled Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,11 +22,12 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.110 $"
+#ident 		"GENERIC-$Revision: 1.111 $"
 
 maxusers	32
 
 options		PIC_OPENPIC
+options 	PIC_DISTOPENPIC
 options		PIC_I8259
 #options		PIC_PREPIVR
 

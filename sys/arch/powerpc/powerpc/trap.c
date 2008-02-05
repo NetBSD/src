@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.123 2008/01/02 11:48:27 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.124 2008/02/05 18:10:48 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.123 2008/01/02 11:48:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2008/02/05 18:10:48 garbled Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -144,7 +144,7 @@ trap(struct trapframe *frame)
 					    trunc_page(va), false)) {
 					return;
 				}
-#if defined(DIAGNOSTIC) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
+#if defined(DIAGNOSTIC) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 			} else if ((va >> ADDR_SR_SHFT) == USER_SR) {
 				printf("trap: kernel %s DSI trap @ %#lx by %#lx"
 				    " (DSISR %#x): USER_SR unset\n",
