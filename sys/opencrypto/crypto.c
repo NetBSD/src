@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.24 2008/02/04 14:46:26 tls Exp $ */
+/*	$NetBSD: crypto.c,v 1.25 2008/02/05 01:43:22 tls Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.24 2008/02/04 14:46:26 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.25 2008/02/05 01:43:22 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -236,7 +236,7 @@ crypto_init0(void)
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
 	softintr_cookie = register_swi(SWI_CRYPTO, cryptointr);
-	error = kthread_create(PRI_NONE, 0, NULL,
+	error = kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    (void (*)(void*))cryptoret, NULL, &cryptothread, "cryptoret");
 	if (error) {
 		printf("crypto_init: cannot start cryptoret thread; error %d",
