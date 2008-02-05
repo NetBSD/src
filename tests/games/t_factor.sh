@@ -1,6 +1,6 @@
-# $NetBSD: t_factor.sh,v 1.1 2007/11/12 15:19:46 jmmv Exp $
+# $NetBSD: t_factor.sh,v 1.2 2008/02/05 08:33:50 jmmv Exp $
 #
-# Copyright (c) 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -54,10 +54,6 @@ loop_head() {
 	atf_set "require.progs" "factor"
 }
 loop_body() {
-	# XXX Remove this warning once ATF is able to delimit a test case's
-	# execution time, and properly enable this feature.
-	echo "WARNING: These tests will loop endlessly with an old factor" \
-	     "program"
 	expect '99999999999991' '99999999999991: 7 13 769231 1428571'
 	expect '2147483647111311' '2147483647111311: 3 3 3 131 607148331103'
 }
