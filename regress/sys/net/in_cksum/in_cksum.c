@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.2 2008/01/27 16:49:13 chris Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3 2008/02/05 10:00:17 yamt Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.2 2008/01/27 16:49:13 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.3 2008/02/05 10:00:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -107,8 +107,6 @@ mbuf_len(struct mbuf *m)
 
 int	in_cksum_portable(struct mbuf *, int);
 int	in_cksum(struct mbuf *, int);
-
-uint64_t	rdtsc(void);
 
 int
 main(int argc, char **argv)
