@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_subr.c,v 1.19 2007/10/17 19:56:47 garbled Exp $	*/
+/*	$NetBSD: pmap_subr.c,v 1.20 2008/02/05 18:10:48 garbled Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.19 2007/10/17 19:56:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.20 2008/02/05 18:10:48 garbled Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_altivec.h"
@@ -49,7 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.19 2007/10/17 19:56:47 garbled Exp $
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
-#if defined(PPC_OEA) || (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+
+#if defined (PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #include <powerpc/oea/vmparam.h>
 #ifdef ALTIVEC
 #include <powerpc/altivec.h>
@@ -60,7 +61,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_subr.c,v 1.19 2007/10/17 19:56:47 garbled Exp $
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	__asm volatile("sync; mtmsr %0; isync" :: "r"(psl))
 
+#ifdef PMAP_EXCLUDE_DECLS
+const struct pmap_ops *pmapops;
+#endif
+
 #ifdef PMAPCOUNTERS
+#define	PMAPCOUNT(ev)	((pmap_evcnt_ ## ev).ev_count++)
+#define	PMAPCOUNT2(ev)	((ev).ev_count++)
+
 struct evcnt pmap_evcnt_zeroed_pages =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
 	"pages zeroed");
@@ -70,10 +78,187 @@ struct evcnt pmap_evcnt_copied_pages =
 struct evcnt pmap_evcnt_idlezeroed_pages =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap",
 	"pages idle zeroed");
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_zeroed_pages);
+EVCNT_ATTACH_STATIC(pmap_evcnt_copied_pages);
+EVCNT_ATTACH_STATIC(pmap_evcnt_idlezeroed_pages);
+
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
-extern struct evcnt pmap_evcnt_exec_uncached_zero_page;
-extern struct evcnt pmap_evcnt_exec_uncached_copy_page;
-#endif
+
+struct evcnt pmap_evcnt_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pages mapped");
+struct evcnt pmap_evcnt_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "pages unmapped");
+
+struct evcnt pmap_evcnt_kernel_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "kernel pages mapped");
+struct evcnt pmap_evcnt_kernel_unmappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_kernel_mappings,
+	    "pmap", "kernel pages unmapped");
+
+struct evcnt pmap_evcnt_mappings_replaced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "page mappings replaced");
+
+struct evcnt pmap_evcnt_exec_mappings =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages mapped");
+struct evcnt pmap_evcnt_exec_cached =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_mappings,
+	    "pmap", "exec pages cached");
+
+struct evcnt pmap_evcnt_exec_synced =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced");
+struct evcnt pmap_evcnt_exec_synced_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced (CM)");
+struct evcnt pmap_evcnt_exec_synced_pvo_remove =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages synced (PR)");
+
+struct evcnt pmap_evcnt_exec_uncached_page_protect =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (PP)");
+struct evcnt pmap_evcnt_exec_uncached_clear_modify =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CM)");
+struct evcnt pmap_evcnt_exec_uncached_zero_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (ZP)");
+struct evcnt pmap_evcnt_exec_uncached_copy_page =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (CP)");
+struct evcnt pmap_evcnt_exec_uncached_pvo_remove =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, &pmap_evcnt_exec_mappings,
+	    "pmap", "exec pages uncached (PR)");
+
+struct evcnt pmap_evcnt_updates =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "updates");
+struct evcnt pmap_evcnt_collects =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "collects");
+struct evcnt pmap_evcnt_copies =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "copies");
+
+struct evcnt pmap_evcnt_ptes_spilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes spilled from overflow");
+struct evcnt pmap_evcnt_ptes_unspilled =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes not spilled");
+struct evcnt pmap_evcnt_ptes_evicted =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes evicted");
+
+struct evcnt pmap_evcnt_ptes_primary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at primary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_secondary[8] = {
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[0]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[1]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[2]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[3]"),
+
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[4]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[5]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[6]"),
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes added at secondary[7]"),
+};
+struct evcnt pmap_evcnt_ptes_removed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes removed");
+struct evcnt pmap_evcnt_ptes_changed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "ptes changed");
+struct evcnt pmap_evcnt_pvos_reclaimed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pvos reclaimed");
+struct evcnt pmap_evcnt_pvos_failed =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL,
+	    "pmap", "pvo allocation failures");
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_mappings);
+EVCNT_ATTACH_STATIC(pmap_evcnt_mappings_replaced);
+EVCNT_ATTACH_STATIC(pmap_evcnt_unmappings);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_kernel_mappings);
+EVCNT_ATTACH_STATIC(pmap_evcnt_kernel_unmappings);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_mappings);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_cached);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced_clear_modify);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_synced_pvo_remove);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_page_protect);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_clear_modify);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_zero_page);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_copy_page);
+EVCNT_ATTACH_STATIC(pmap_evcnt_exec_uncached_pvo_remove);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_updates);
+EVCNT_ATTACH_STATIC(pmap_evcnt_collects);
+EVCNT_ATTACH_STATIC(pmap_evcnt_copies);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_spilled);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_unspilled);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_evicted);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_removed);
+EVCNT_ATTACH_STATIC(pmap_evcnt_ptes_changed);
+
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 0);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 1);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 2);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 3);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 4);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 5);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 6);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_primary, 7);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 0);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 1);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 2);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 3);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 4);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 5);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 6);
+EVCNT_ATTACH_STATIC2(pmap_evcnt_ptes_secondary, 7);
+
+EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_reclaimed);
+EVCNT_ATTACH_STATIC(pmap_evcnt_pvos_failed);
+#endif /* PPC_OEA || PPC_OEA64_BRIDGE */
+#else
+#define	PMAPCOUNT(ev)	((void) 0)
+#define	PMAPCOUNT2(ev)	((void) 0)
 #endif /* PMAPCOUNTERS */
 
 /*
@@ -118,15 +303,15 @@ pmap_zero_page(paddr_t pa)
 		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
 #ifdef PMAPCOUNTERS
 		if (pg->mdpage.mdpg_attrs & PTE_EXEC) {
-			pmap_evcnt_exec_uncached_zero_page.ev_count++;
+			PMAPCOUNT(exec_uncached_zero_page);
 		}
 #endif
 		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
 	}
 #endif
-#ifdef PMAPCOUNTERS
-	pmap_evcnt_zeroed_pages.ev_count++;
-#endif
+
+	PMAPCOUNT(zeroed_pages);
+
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
 		vzeropage(pa);
@@ -198,15 +383,15 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 		KDASSERT(LIST_EMPTY(&pg->mdpage.mdpg_pvoh));
 #ifdef PMAPCOUNTERS
 		if (pg->mdpage.mdpg_attrs & PTE_EXEC) {
-			pmap_evcnt_exec_uncached_copy_page.ev_count++;
+			PMAPCOUNT(exec_uncached_copy_page);
 		}
 #endif
 		pg->mdpage.mdpg_attrs &= ~PTE_EXEC;
 	}
 #endif
-#ifdef PMAPCOUNTERS
-	pmap_evcnt_copied_pages.ev_count++;
-#endif
+
+	PMAPCOUNT(copied_pages);
+
 #ifdef ALTIVEC
 	if (pmap_use_altivec) {
 		vcopypage(dst, src);
@@ -310,20 +495,18 @@ pmap_pageidlezero(paddr_t pa)
 {
 	register_t msr;
 	register_t *dp = (register_t *) pa;
+	struct cpu_info * const ci = curcpu();
 	bool rv = true;
-	struct cpu_info *ci = curcpu();
 	int i;
 
 #if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	if (pa < SEGMENT_LENGTH) {
 		for (i = 0; i < PAGE_SIZE / sizeof(dp[0]); i++) {
-			if (ci->ci_want_resched != 0)
+			if (ci->ci_want_resched)
 				return false;
 			*dp++ = 0;
 		}
-#ifdef PMAPCOUNTERS
-		pmap_evcnt_idlezeroed_pages.ev_count++;
-#endif
+		PMAPCOUNT(idlezeroed_pages);
 		return true;
 	}
 #endif
@@ -338,7 +521,7 @@ pmap_pageidlezero(paddr_t pa)
 	 * Zero the page until a process becomes runnable.
 	 */
 	for (i = 0; i < PAGE_SIZE / sizeof(dp[0]); i++) {
-		if (ci->ci_want_resched != 0) {
+		if (ci->ci_want_resched) {
 			rv = false;
 			break;
 		}
@@ -351,7 +534,7 @@ pmap_pageidlezero(paddr_t pa)
 	MTMSR(msr);
 #ifdef PMAPCOUNTERS
 	if (rv)
-		pmap_evcnt_idlezeroed_pages.ev_count++;
+		PMAPCOUNT(idlezeroed_pages);
 #endif
 	return rv;
 }

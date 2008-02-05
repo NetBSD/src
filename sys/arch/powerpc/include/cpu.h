@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2007/12/03 15:34:12 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 2008/02/05 18:10:46 garbled Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -343,7 +343,7 @@ void cpu_spinup_trampoline(void);
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, curcpu()->ci_astpending = 1)
 #define	cpu_signotify(l)	(curcpu()->ci_astpending = 1)	/* XXXSMP */
 
-#if defined(PPC_OEA) || defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_IBM4XX)
 void oea_init(void (*)(void));
 void oea_startup(const char *);
 void oea_dumpsys(void);
@@ -356,6 +356,8 @@ extern int cpu_altivec;
 #endif
 
 #endif /* _KERNEL */
+
+/* XXX The below breaks unified pmap on ppc32 */
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 #if !defined(CACHELINESIZE)
