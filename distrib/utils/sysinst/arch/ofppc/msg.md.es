@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2008/01/23 23:15:37 garbled Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2008/02/05 19:09:02 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -63,9 +63,6 @@ Puede que no sea posible iniciar desde ahi.
 
 message set_kernel_1
 {Núcleo (GENERIC)}
-
-message set_kernel_2
-{N\xfacleo (GENERIC_B64)}
 
 message nobootpart
 {There is no boot partition in the MBR partition table.}

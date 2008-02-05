@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2008/01/23 23:15:37 garbled Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2008/02/05 19:09:02 garbled Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,7 +89,6 @@
  * from floppy.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define SET_KERNEL_2_NAME	"kern-GENERIC_B64"
 #define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM, SET_X11_NOSERVERS
 
 /*
