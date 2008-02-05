@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.149 2008/02/02 20:21:55 skrll Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.150 2008/02/05 10:11:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.149 2008/02/02 20:21:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.150 2008/02/05 10:11:19 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -1442,7 +1442,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 
 #ifdef DIAGNOSTIC
 	if ((pp->pr_roflags & PR_NOALIGN) == 0 &&
-	    ((uintptr_t)cp & (align - 1)) != 0)
+	    ((uintptr_t)cp & (pp->pr_alloc->pa_pagesz - 1)) != 0)
 		panic("pool_prime_page: %s: unaligned page", pp->pr_wchan);
 #endif
 
