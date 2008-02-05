@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.36 2008/01/28 14:31:17 dholland Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.37 2008/02/05 15:02:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.36 2008/01/28 14:31:17 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.37 2008/02/05 15:02:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -138,12 +138,16 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	else
 		pages = args->ta_size_max / PAGE_SIZE +
 		    (args->ta_size_max % PAGE_SIZE == 0 ? 0 : 1);
+	if (pages > INT_MAX)
+		pages = INT_MAX;
 	KASSERT(pages > 0);
 
 	if (args->ta_nodes_max <= 3)
 		nodes = 3 + pages * PAGE_SIZE / 1024;
 	else
 		nodes = args->ta_nodes_max;
+	if (nodes > INT_MAX)
+		nodes = INT_MAX;
 	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
