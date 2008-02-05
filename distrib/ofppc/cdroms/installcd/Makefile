@@ -1,9 +1,8 @@
-#	$NetBSD: Makefile,v 1.3 2008/01/24 20:08:39 garbled Exp $
+#	$NetBSD: Makefile,v 1.4 2008/02/05 19:05:40 garbled Exp $
 
 CDBASE=		ofppccd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$MACHINE
 CDKERNELS+=	netbsd-INSTALL.gz netbsd
-CDKERNELS+=	netbsd-INSTALL_B64.gz netbsd64
 CDINSTKERNEL=	../../instkernel
 
 .include <bsd.kernobj.mk>	# For KERNSRCDIR
