@@ -1,7 +1,7 @@
-/*	$NetBSD: nfs_kq.c,v 1.18 2008/01/02 19:26:46 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.19 2008/02/05 14:19:53 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.18 2008/01/02 19:26:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.19 2008/02/05 14:19:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,8 +177,9 @@ filt_nfsdetach(struct knote *kn)
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 	struct kevq *ke;
 
-	/* XXXLUKEM lock the struct? */
+	mutex_enter(&vp->v_interlock);
 	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
+	mutex_exit(&vp->v_interlock);
 
 	/* Remove the vnode from watch list */
 	mutex_enter(&nfskevq_lock);
@@ -207,33 +208,59 @@ static int
 filt_nfsread(struct knote *kn, long hint)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	int rv;
 
 	/*
 	 * filesystem is gone, so set the EOF flag and schedule
 	 * the knote for deletion.
 	 */
-	if (hint == NOTE_REVOKE) {
+	switch (hint) {
+	case NOTE_REVOKE:
+		KASSERT(mutex_owned(&vp->v_interlock));
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
+	case 0:
+		mutex_enter(&vp->v_interlock);
+		kn->kn_data = vp->v_size - kn->kn_fp->f_offset != 0;
+		rv = (kn->kn_data != 0);
+		mutex_exit(&vp->v_interlock);
+		return rv;
+	default:
+		KASSERT(mutex_owned(&vp->v_interlock));
+		kn->kn_data = vp->v_size - kn->kn_fp->f_offset != 0;
+		return (kn->kn_data != 0);
 	}
-
-	/* XXXLUKEM lock the struct? */
-	kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
-        return (kn->kn_data != 0);
 }
 
 static int
 filt_nfsvnode(struct knote *kn, long hint)
 {
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	int fflags;
 
-	if (kn->kn_sfflags & hint)
-		kn->kn_fflags |= hint;
-	if (hint == NOTE_REVOKE) {
+	switch (hint) {
+	case NOTE_REVOKE:
+		KASSERT(mutex_owned(&vp->v_interlock));
 		kn->kn_flags |= EV_EOF;
+		if ((kn->kn_sfflags & hint) != 0)
+			kn->kn_fflags |= hint;
 		return (1);
+	case 0:
+		mutex_enter(&vp->v_interlock);
+		fflags = kn->kn_fflags;
+		mutex_exit(&vp->v_interlock);
+		break;
+	default:
+		KASSERT(mutex_owned(&vp->v_interlock));
+		if ((kn->kn_sfflags & hint) != 0)
+			kn->kn_fflags |= hint;
+		fflags = kn->kn_fflags;
+		break;
 	}
-	return (kn->kn_fflags != 0);
+
+	return (fflags != 0);
 }
+
 
 static const struct filterops nfsread_filtops =
 	{ 1, NULL, filt_nfsdetach, filt_nfsread };
@@ -267,8 +294,6 @@ nfs_kqfilter(void *v)
 		return (EINVAL);
 	}
 
-	kn->kn_hook = vp;
-
 	/*
 	 * Put the vnode to watched list.
 	 */
@@ -287,8 +312,10 @@ nfs_kqfilter(void *v)
 	if (!nfskq_thread) {
 		error = kthread_create(PRI_NONE, 0, NULL, nfs_kqpoll,
 		    NULL, &nfskq_thread, "nfskqpoll");
-		if (error)
-			goto out;
+		if (error) {
+			mutex_exit(&nfskevq_lock);
+			return error;
+		}
 	}
 
 	SLIST_FOREACH(ke, &kevlist, kev_link) {
@@ -312,14 +339,15 @@ nfs_kqfilter(void *v)
 		SLIST_INSERT_HEAD(&kevlist, ke, kev_link);
 	}
 
+	mutex_enter(&vp->v_interlock);
+	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
+	kn->kn_hook = vp;
+	mutex_enter(&vp->v_interlock);
+
 	/* kick the poller */
 	cv_signal(&nfskq_cv);
-
-	/* XXXLUKEM lock the struct? */
-	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
-
-    out:
 	mutex_exit(&nfskevq_lock);
+
 
 	return (error);
 }
