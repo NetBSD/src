@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2007/04/08 09:56:08 scw Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2008/02/05 02:41:15 mrg Exp $
 
 .if exists(${.CURDIR}/arch/${MACHINE_ARCH}.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/arch/${MACHINE_ARCH}.mk"
@@ -137,3 +137,15 @@ ${FAKEHEADERS}:
 	touch ${.TARGET}
 tm.h ${SRCS}: ${FAKEHEADERS}
 CLEANFILES+=	${FAKEHEADERS}
+
+.if ${MACHINE_ARCH} == "m68000"
+COPTS._divtc3.c+=	-O0
+COPTS._divdc3.c+=	-O0
+COPTS._divsc3.c+=	-O0
+COPTS._fixdfdi.c+=	-O0
+COPTS._fixsfdi.c+=	-O0
+COPTS._muldc3.c+=	-O0
+COPTS._mulsc3.c+=	-O0
+COPTS._muldi3.c+=	-O0
+COPTS.xfgnulib.c+=	-O0
+.endif
