@@ -1,7 +1,8 @@
-/* $NetBSD: crmfbreg.h,v 1.4 2008/02/05 21:39:25 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.5 2008/02/05 21:42:16 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ *               2008 Michael Lorenz <macallan@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
