@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.9 2007/02/05 18:26:01 apb Exp  */
 
 /* Generated automatically. */
-static const char configuration_arguments[] = "/usr/src/tools/gcc/../../gnu/dist/gcc4/configure --enable-long-long --disable-multilib --enable-threads --disable-symvers --build=x86_64-unknown-netbsd4.99.17 --host=powerpc64--netbsd --target=powerpc64--netbsd";
+static const char configuration_arguments[] = "/usr/src/tools/gcc/../../gnu/dist/gcc4/configure --enable-long-long --disable-multilib --enable-threads --disable-symvers --build=x86_64-unknown-netbsd4.99.52 --host=powerpc64--netbsd --target=powerpc64--netbsd --enable-__cxa_atexit";
 static const char thread_model[] = "posix";
 
 static const struct {
