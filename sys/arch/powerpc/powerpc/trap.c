@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.124 2008/02/05 18:10:48 garbled Exp $	*/
+/*	$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.124 2008/02/05 18:10:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.125 2008/02/05 18:52:56 garbled Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -670,11 +670,11 @@ fix_unaligned(struct lwp *l, struct trapframe *frame)
 			 * case when we are running with the cache disabled
 			 * for debugging.
 			 */
-			static char zeroes[CACHELINESIZE];
+			static char zeroes[MAXCACHELINESIZE];
 			int error;
 			error = copyout(zeroes,
-					(void *)(frame->dar & -CACHELINESIZE),
-					CACHELINESIZE);
+					(void *)(frame->dar & -curcpu()->ci_ci.dcache_line_size),
+					curcpu()->ci_ci.dcache_line_size);
 			if (error)
 				return -1;
 			return 0;
