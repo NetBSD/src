@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.21 2008/01/21 09:46:29 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.22 2008/02/05 09:47:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.21 2008/01/21 09:46:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.22 2008/02/05 09:47:28 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -146,8 +146,6 @@ struct mowner unknown_mowners[] = {
 struct mowner revoked_mowner = MOWNER_INIT("revoked", "");
 #endif
 
-#define	MEXT_LOCK(m)	mutex_enter(&(m)->m_ext.ext_lock)
-#define	MEXT_UNLOCK(m)	mutex_exit(&(m)->m_ext.ext_lock)
 #define	MEXT_ISEMBEDDED(m) ((m)->m_ext_ref == (m))
 
 #define	MCLADDREFERENCE(o, n)						\
@@ -1595,7 +1593,7 @@ m_mapin(struct mbuf *m)
 #if defined(__HAVE_LAZY_MBUF)
 	KASSERT((~m->m_flags & (M_EXT|M_EXT_PAGES|M_EXT_LAZY)) == 0);
 
-	MEXT_LOCK(m);
+	mutex_spin_enter(&m->m_ext.ext_lock);
 	if (m->m_ext.ext_flags & M_EXT_LAZY) {
 		vaddr_t buf = (vaddr_t)m->m_ext.ext_buf;
 		vsize_t size = (vsize_t)m->m_ext.ext_size;
@@ -1612,7 +1610,7 @@ m_mapin(struct mbuf *m)
 		pmap_update(pmap_kernel());
 		m->m_ext.ext_flags &= ~M_EXT_LAZY;
 	}
-	MEXT_UNLOCK(m);
+	mutex_spin_exit(&m->m_ext.ext_lock);
 
 	m->m_flags &= ~M_EXT_LAZY;
 	return m->m_data;
