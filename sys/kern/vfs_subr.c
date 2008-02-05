@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.332 2008/02/05 14:19:52 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.333 2008/02/05 15:13:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.332 2008/02/05 14:19:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.333 2008/02/05 15:13:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1468,12 +1468,14 @@ vrevoke(vnode_t *vp)
 	vpp = &specfs_hash[SPECHASH(dev)];
 	mutex_enter(&specfs_lock);
 	for (vq = *vpp; vq != NULL;) {
-		if ((vq->v_iflag & VI_CLEAN) != 0 ||
+		/* If clean or being cleaned, then ignore it. */
+		mutex_enter(&vq->v_interlock);
+		if ((vq->v_iflag & (VI_CLEAN | VI_XLOCK)) != 0 ||
 		    vq->v_rdev != dev || vq->v_type != type) {
+			mutex_exit(&vq->v_interlock);
 			vq = vq->v_specnext;
 			continue;
 		}
-		mutex_enter(&vq->v_interlock);
 		mutex_exit(&specfs_lock);
 		if (vq->v_usecount == 0) {
 			vremfree(vq);
