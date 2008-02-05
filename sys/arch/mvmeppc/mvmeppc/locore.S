@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.6 2005/12/11 12:18:20 christos Exp $	*/
+/*	$NetBSD: locore.S,v 1.7 2008/02/05 22:31:49 garbled Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,7 +68,10 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
+GLOBAL(oeacpufeat)
+	.long	0			/* cpu features */
 
+/* XXX All of this should die */
 GLOBAL(intrnames)
 	.asciz	"clock", "irq1", "irq2", "irq3"
 	.asciz	"irq4", "irq5", "irq6", "irq7"
