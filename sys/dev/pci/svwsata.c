@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.8 2007/10/24 23:08:07 xtraeme Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.9 2008/02/05 07:02:00 simonb Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.8 2007/10/24 23:08:07 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.9 2008/02/05 07:02:00 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,9 +126,10 @@ svwsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 	}
 
-	aprint_normal(": DMA");
+	aprint_verbose("%s: bus-master DMA support present",
+	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
 	svwsata_mapreg_dma(sc, pa);
-	aprint_normal("\n");
+	aprint_verbose("\n");
 
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_WIDEREGS;
 
