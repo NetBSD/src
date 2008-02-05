@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1013 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1014 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -326,6 +326,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		[bouyer 20071202]
 	arcmsr(4): Areca Technology Corporation SATA RAID controller driver,
 		ported from OpenBSD. [xtraeme 20071204]
+	fxp(4): Fix some TX timeout and RX pool corruption problems.
+		Mostly from OpenBSD. [tsutsui 20071208]
 	ofppc: Convert to shared powerpc major numbers. [garbled 20071210]
 	ofppc: Added support for the bplan/Genesi Pegasos II. [garbled 20071210]
 	sandpoint: Convert to shared powerpc major numbers. [nisimura 20071211]
@@ -336,6 +338,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
+	nfe(4): Handle a quirk of newer MCP6x chips on reading MAC address.
+		[tsutsui 20071217]
 	rs6000: New port of NetBSD to the MCA based IBM RS/6000 7006-41T.
 		[garbled 20071217]
 	openssh: Import 4.7. [christos 20071217]
@@ -387,12 +391,14 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 		Devon O'Dell, contributed to NetBSD by Coyote Point Systems.
 		[tls 20080110]
 	hppa: Added gdb support. [skrll 20080110]
+	auvia(4): Make this work on big endian machines. [tsutsui 20080114]
 	kernel: Implementation of processor-sets and affinity. [rmind 20080115]
 	libpthread: POSIX real-time extensions. [rmind 20080115]
 	schedctl(8): A new program to control scheduling of processes and
 		threads. [rmind 20080115]
 	bktr(4): Added amd64 support. [jmcneill 20080116]
 	ofppc: Add support for the IBM 7044-270. [garbled 20080117]
+	fdisk(8): Fix possible division by zero errors. [tsutsui 20080120]
 	kernel: All platforms have been converted to use timecounter.
 		[joerg 20080120]
 	usb: Add uhmodem(4) driver for Huawei E220 wireless modem.
@@ -405,10 +411,18 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	kernel: The interface for IP checksumming was changed to reduce
 		duplication and more general use. [joerg 20080125]
 	hostapd/wpa_supplicant: Upgrade to 0.6.2 [christos 20080126]
+	nfe(4): Wakeup some newer chips from powerdown mode.
+		From FreeBSD/Linux driver via OpenBSD. [tsutsui 20080126]
+	sgimips: Enable bootinfo passed from bootloader so that now kernel
+		symbol table and ksyms(4) are usable. [tsutsui 20080126]
+	hpcmips: Fix silent hangup problem on TX3922 machines.
+		From Risto Sainio. [tsutsui 20080126]
 	openpam: upgrade to 20071221 [christos 20080126]
 	azalia(4): Analog Devices AD1984 codec support has been improved
 		to support headphones and 4 channel playback, and now
 		exposes an outputs.master mixer control that mirrors the
 		inputs.dac mixer control to make libossaudio happy.
 		[jmcneill 20080130]
+	arc: Add sysinst support. [tsutsui 20080202]
+	cobalt: Add sysinst support. [tsutsui 20080202]
 	atf: Import 0.4.  [jmmv 20080204]
