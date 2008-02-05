@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.387 2008/02/03 02:35:43 itohy Exp $
+.\"	$NetBSD: main,v 1.388 2008/02/05 05:33:23 itohy Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2147,8 +2147,10 @@ the software that we have mentioned in this document:
 .vs 9
 .Ht <font size=-1>
 .(item -compact
+.nh
 .so ../common/legal.common -----------------------------------------------
 .so legal -----------------------------------------------
+.hy
 .item)
 .Ht </font>
 .ps
