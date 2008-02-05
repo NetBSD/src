@@ -1,4 +1,4 @@
-#	$NetBSD: std.prep,v 1.11 2006/05/10 17:28:41 garbled Exp $
+#	$NetBSD: std.prep,v 1.12 2008/02/05 22:31:50 garbled Exp $
 #
 # standard, required NetBSD/prep 'options'
 
@@ -6,6 +6,7 @@ machine		prep powerpc
 include		"conf/std"	# MI standard options
 
 options 	PPC_OEA
+options 	PPC_OEA601
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 
 options 	EXEC_SCRIPT	# exec #! scripts

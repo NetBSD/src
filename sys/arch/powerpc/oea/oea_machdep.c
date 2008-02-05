@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.39 2008/01/28 18:24:21 garbled Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.40 2008/02/05 22:31:49 garbled Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.39 2008/01/28 18:24:21 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.40 2008/02/05 22:31:49 garbled Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -107,12 +107,14 @@ paddr_t msgbuf_paddr;
 void
 oea_init(void (*handler)(void))
 {
-	extern int trapstart[], trapend[];
 	extern int trapcode[], trapsize[];
 	extern int sctrap[], scsize[];
 	extern int alitrap[], alisize[];
 	extern int dsitrap[], dsisize[];
+#ifdef PPC_OEA601
+	extern int trapstart[], trapend[];
 	extern int dsi601trap[], dsi601size[];
+#endif
 	extern int decrint[], decrsize[];
 	extern int tlbimiss[], tlbimsize[];
 	extern int tlbdlmiss[], tlbdlmsize[];
@@ -198,6 +200,7 @@ oea_init(void (*handler)(void))
 			memcpy((void *)EXC_ALI, alitrap, size);
 			break;
 		case EXC_DSI:
+#ifdef PPC_OEA601
 			if (cpuvers == MPC601) {
 				size = (size_t)dsi601size;
 				memcpy((void *)EXC_DSI, dsi601trap, size);
@@ -205,6 +208,10 @@ oea_init(void (*handler)(void))
 				size = (size_t)dsisize;
 				memcpy((void *)EXC_DSI, dsitrap, size);
 			}
+#else
+			size = (size_t)dsisize;
+			memcpy((void *)EXC_DSI, dsitrap, size);
+#endif /* PPC_OEA601 */
 			break;
 		case EXC_DECR:
 			size = (size_t)decrsize;
@@ -312,6 +319,7 @@ oea_init(void (*handler)(void))
 	}
 #endif
 
+#ifdef PPC_OEA601
 	/*
 	 * If we aren't on a MPC601 processor, we need to zap any of the
 	 * sequences we save/restore the MQ SPR into NOPs, and skip over the
@@ -359,16 +367,19 @@ oea_init(void (*handler)(void))
 				__syncicache(ip, sizeof(*ip));
 		}
 	}
+#endif /* PPC_OEA601 */
 
         /*
 	 * Configure a PSL user mask matching this processor.
  	 */
 	cpu_psluserset = PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_RI;
 	cpu_pslusermod = PSL_FP | PSL_FE0 | PSL_FE1 | PSL_LE | PSL_SE | PSL_BE;
+#ifdef PPC_OEA601
 	if (cpuvers == MPC601) {
 		cpu_psluserset &= PSL_601_MASK;
 		cpu_pslusermod &= PSL_601_MASK;
 	}
+#endif
 #ifdef ALTIVEC
 	if (cpu_altivec)
 		cpu_pslusermod |= PSL_VEC;
@@ -394,6 +405,7 @@ oea_init(void (*handler)(void))
 	KASSERT(curcpu() == ci);
 }
 
+#ifdef PPC_OEA601
 void
 mpc601_ioseg_add(paddr_t pa, register_t len)
 {
@@ -411,7 +423,7 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 	    ::	"r"(iosrtable[i]),
 		"r"(pa));
 }
-
+#endif /* PPC_OEA601 */
 
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 void
@@ -495,7 +507,6 @@ void
 oea_batinit(paddr_t pa, ...)
 {
 	struct mem_region *allmem, *availmem, *mp;
-	int i;
 	unsigned int cpuvers;
 	register_t msr = mfmsr();
 	va_list ap;
@@ -515,12 +526,15 @@ oea_batinit(paddr_t pa, ...)
 	 * supervisor/user mode.
 	 */
 	if ((msr & (PSL_IR|PSL_DR)) == 0) {
+#ifdef PPC_OEA601
 		if (cpuvers == MPC601) {
 			__asm volatile ("mtibatl 0,%0" :: "r"(0));
 			__asm volatile ("mtibatl 1,%0" :: "r"(0));
 			__asm volatile ("mtibatl 2,%0" :: "r"(0));
 			__asm volatile ("mtibatl 3,%0" :: "r"(0));
-		} else {
+		} else
+#endif /* PPC_OEA601 */
+		{
 			__asm volatile ("mtibatu 0,%0" :: "r"(0));
 			__asm volatile ("mtibatu 1,%0" :: "r"(0));
 			__asm volatile ("mtibatu 2,%0" :: "r"(0));
@@ -535,7 +549,10 @@ oea_batinit(paddr_t pa, ...)
 	/*
 	 * Set up BAT to map physical memory
 	 */
+#ifdef PPC_OEA601
 	if (cpuvers == MPC601) {
+		int i;
+		
 		/*
 		 * Set up battable to map the lowest 256 MB area.
 		 * Map the lowest 32 MB area via BAT[0-3];
@@ -559,7 +576,9 @@ oea_batinit(paddr_t pa, ...)
 		__asm volatile ("mtibatu 3,%1; mtibatl 3,%0"
 		    :: "r"(battable[0x01800000 >> 23].batl),
 		       "r"(battable[0x01800000 >> 23].batu));
-	} else {
+	} else
+#endif /* PPC_OEA601 */
+	{
 		/*
 		 * Set up BAT0 to only map the lowest 256 MB area
 		 */
@@ -584,13 +603,16 @@ oea_batinit(paddr_t pa, ...)
 	 * Add any I/O BATs specificed;
 	 * use I/O segments on the BAT-starved 601.
 	 */
+#ifdef PPC_OEA601
 	if (cpuvers == MPC601) {
 		while (pa != 0) {
 			register_t len = va_arg(ap, register_t);
 			mpc601_ioseg_add(pa, len);
 			pa = va_arg(ap, paddr_t);
 		}
-	} else {
+	} else
+#endif
+	{
 		while (pa != 0) {
 			register_t len = va_arg(ap, register_t);
 			oea_iobat_add(pa, len);
@@ -605,6 +627,7 @@ oea_batinit(paddr_t pa, ...)
 	 * This is here because mem_regions() call needs bat0 set up.
 	 */
 	mem_regions(&allmem, &availmem);
+#ifdef PPC_OEA601
 	if (cpuvers == MPC601) {
 		for (mp = allmem; mp->size; mp++) {
 			paddr_t paddr = mp->start & 0xff800000;
@@ -620,7 +643,9 @@ oea_batinit(paddr_t pa, ...)
 				paddr += (1 << 23);
 			} while (paddr < end);
 		}
-	} else {
+	} else
+#endif
+	{
 		for (mp = allmem; mp->size; mp++) {
 			paddr_t paddr = mp->start & 0xf0000000;
 			paddr_t end = mp->start + mp->size;

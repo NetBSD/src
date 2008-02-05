@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_machdep.c,v 1.19 2008/02/05 18:10:48 garbled Exp $	*/
+/*	$NetBSD: kgdb_machdep.c,v 1.20 2008/02/05 22:31:50 garbled Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.19 2008/02/05 18:10:48 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_machdep.c,v 1.20 2008/02/05 22:31:50 garbled Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,6 +78,7 @@ kgdb_acc(vaddr_t va, size_t len)
 
 #if !defined (PPC_OEA64) && !defined (PPC_IBM4XX)
 	/* Now check battable registers */
+#ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601) {
 		__asm volatile ("mfibatl %0,0" : "=r"(batl));
 		__asm volatile ("mfibatu %0,0" : "=r"(batu));
@@ -100,6 +101,7 @@ kgdb_acc(vaddr_t va, size_t len)
 				BAT601_VA_MATCH_P(batu,batl,va))
 			return 1;
 	} else {
+#endif /* PPC_OEA601 */
 		__asm volatile ("mfdbatu %0,0" : "=r"(batu));
 		if (BAT_VALID_P(batu,msr) &&
 				BAT_VA_MATCH_P(batu,va) &&
@@ -123,7 +125,9 @@ kgdb_acc(vaddr_t va, size_t len)
 				BAT_VA_MATCH_P(batu,va) &&
 				(batu & BAT_PP) != BAT_PP_NONE) {
 			return 1;
+#ifdef PPC_OEA601
 		}
+#endif
 	}
 #endif /* !defined (PPC_OEA64) && !defined (PPC_IBM4XX) */
 

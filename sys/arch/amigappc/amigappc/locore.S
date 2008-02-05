@@ -1,4 +1,4 @@
-/*      $NetBSD: locore.S,v 1.14 2005/12/11 12:16:36 christos Exp $   */
+/*      $NetBSD: locore.S,v 1.15 2008/02/05 22:31:48 garbled Exp $   */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -64,6 +64,8 @@
 	.data
 GLOBAL(proc0paddr)
 	.long	0
+GLOBAL(oeacpufeat)
+	.long	0				/* cpu features */
 GLOBAL(ssir)
 	.word	0
 GLOBAL(delaydivisor)
@@ -88,7 +90,6 @@ openfirmware_entry:
 	.long	0			/* openfirmware entry point */
 srsave:
 	.long	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-
 
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
