@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.110 2007/12/21 02:07:55 matt Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.111 2008/02/06 03:20:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.110 2007/12/21 02:07:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.111 2008/02/06 03:20:51 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1930,7 +1930,7 @@ encap_send(struct ip *ip, struct vif *vifp, struct mbuf *m)
 	if (len < IP_MINFRAGSIZE)
 		ip_copy->ip_id = 0;
 	else
-		ip_copy->ip_id = ip_newid();
+		ip_copy->ip_id = ip_newid(NULL);
 	ip_copy->ip_len = htons(len);
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
@@ -3297,7 +3297,7 @@ pim_register_send_rp(struct ip *ip, struct vif *vifp,
      if (mb_first->m_pkthdr.len < IP_MINFRAGSIZE)
 	ip_outer->ip_id = 0;
     else
-	ip_outer->ip_id = ip_newid();
+	ip_outer->ip_id = ip_newid(NULL);
     ip_outer->ip_len = htons(len + sizeof(pim_encap_iphdr) +
 			     sizeof(pim_encap_pimhdr));
     ip_outer->ip_src = viftable[vifi].v_lcl_addr;
