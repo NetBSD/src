@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.101 2007/12/16 21:25:59 elad Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.102 2008/02/06 21:57:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -94,6 +94,7 @@ struct socket {
 	short		so_options;	/* from socket call, see socket.h */
 	u_short		so_linger;	/* time to linger while closing */
 	short		so_state;	/* internal state flags SS_*, below */
+	int		so_nbio;	/* non-blocking I/O enabled */
 	void		*so_pcb;	/* protocol control block */
 	const struct protosw *so_proto;	/* protocol handle */
 /*
@@ -156,7 +157,6 @@ do {									\
 #define	SS_RCVATMARK		0x040	/* at mark on input */
 #define	SS_ISDISCONNECTED	0x800	/* socket disconnected from peer */
 
-#define	SS_NBIO			0x080	/* non-blocking ops */
 #define	SS_ASYNC		0x100	/* async i/o notify */
 #define	SS_ISCONFIRMING		0x200	/* deciding to accept connection req */
 #define	SS_MORETOCOME		0x400	/*
