@@ -1,4 +1,4 @@
-/*	$NetBSD: frame_regs.h,v 1.3 2008/01/05 12:08:51 dsl Exp $	*/
+/*	$NetBSD: frame_regs.h,v 1.4 2008/02/06 22:02:17 dsl Exp $	*/
 
 #ifndef _AMD64_FRAME_REGS_H_
 #define _AMD64_FRAME_REGS_H_
@@ -16,14 +16,15 @@
  * 2) src/lib/libc/arch/x86_64/gen/makecontext.c assumes that the first
  *    6 entries in the __greg_t array match the registers used to pass
  *    function arguments.
- * 3) PTHREAD_UCONTEXT_TO_REG (src/lib/libpthread/arch/?*?/pthread_md.h)
- *    assumes that something matches the __greg_t layout, but there
- *    are no (obvious) references.
+ * 3) The 'struct reg' from machine/reg.h has to match __greg_t.
+ *    Since they are both arrays and indexed with the same tokens this
+ *    shouldn't be a problem, but is rather confusing.
+ *    This assumption is made in a lot of places!
  * 4) There might be other code out there that relies on the ordering.
  *
  * The first entries below match the registers used for syscall arguments
- * (%rcx is destroyed by the syscall instruction, to the libc stubs copy
- * the value to %r10).
+ * (%rcx is destroyed by the syscall instruction, the libc system call
+ * stubs copy %rcx to %r10).
  * arg6-arg9 are copied from the user stack for system calls with more
  * than 6 args (SYS_MAXSYSARGS is 8, + 2 entries for SYS___SYSCALL).
  */
