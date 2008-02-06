@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.12 2008/01/27 01:38:33 dyoung Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.13 2008/02/06 20:24:17 drochner Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.12 2008/01/27 01:38:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.13 2008/02/06 20:24:17 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,45 +87,28 @@ pmdevbyname(int cmd, struct devpmargs *a)
 	}
 }
 
-struct listdevchild_arg {
-	int			la_error;
-	int			la_idx;
-	struct devlistargs	*la_l;
-};
-
-static bool
-listdevchild(device_t child, void *arg)
-{
-	struct listdevchild_arg *la = arg;
-	struct devlistargs *l = la->la_l;
-	int idx;
-	
-	idx = la->la_idx++;
-
-	aprint_debug_dev(child, "idx %d\n", idx);
-
-	if (l->l_childname == NULL || idx >= l->l_children)
-		return true;
-
-	la->la_error = copyoutstr(device_xname(child), l->l_childname[idx],
-	    sizeof(l->l_childname[idx]), NULL);
-
-	return la->la_error == 0;
-}
-
 static int
 listdevbyname(struct devlistargs *l)
 {
-	struct device *d;
-	struct listdevchild_arg la = {.la_idx = 0, .la_l = l, .la_error = 0};
+	device_t d, child;
+	int cnt = 0, idx, error;
 
 	if ((d = devbyname(l->l_devname)) == NULL)
 		return ENXIO;
 
-	if (!device_foreach_child(d, listdevchild, &la))
-		return la.la_error;
+	TAILQ_FOREACH(child, &alldevs, dv_list) {
+		if (device_parent(child) != d)
+			continue;
+		idx = cnt++;
+		if (l->l_childname == NULL || idx >= l->l_children)
+			continue;
+		error = copyoutstr(device_xname(child), l->l_childname[idx],
+				sizeof(l->l_childname[idx]), NULL);
+		if (error)
+			return error;
+	}
 
-	l->l_children = la.la_idx;
+	l->l_children = cnt;
 	return 0;
 }
 
