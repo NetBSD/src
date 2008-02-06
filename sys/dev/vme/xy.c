@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.77 2008/02/06 12:08:35 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.78 2008/02/06 12:13:47 elad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.77 2008/02/06 12:08:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.78 2008/02/06 12:13:47 elad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -925,24 +925,24 @@ xy_getkauthreq(u_char cmd)
 	case XYCMD_WTH:
 	case XYCMD_WFM:
 	case XYCMD_WRH:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_WRITE;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE;
 		break;
 
 	case XYCMD_RD:
 	case XYCMD_RTH:
 	case XYCMD_RDH:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_READ;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ;
 		break;
 
 	case XYCMD_RDS:
 	case XYCMD_MBD:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_READCONF;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF;
 		break;
 
 	case XYCMD_RST:
 	case XYCMD_SDS:
 	case XYCMD_MBL:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_WRITECONF;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF;
 		break;
 
 	case XYCMD_NOP:

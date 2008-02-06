@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.73 2008/02/04 21:08:13 elad Exp $	*/
+/*	$NetBSD: xd.c,v 1.74 2008/02/06 12:13:47 elad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.73 2008/02/04 21:08:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.74 2008/02/06 12:13:47 elad Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -1010,21 +1010,21 @@ xd_getkauthreq(u_char cmd)
 	switch (cmd) {
 	case XDCMD_WR:
 	case XDCMD_XWR:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_WRITE;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE;
 		break;
 
 	case XDCMD_RD:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_READ;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ;
 		break;
 
 	case XDCMD_RDP:
 	case XDCMD_XRD:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_READCONF;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF;
 		break;
 
 	case XDCMD_WRP:
 	case XDCMD_RST:
-		req = KAUTH_REQ_DEVICE_PASSTHRU_WRITECONF;
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF;
 		break;
 
 	case XDCMD_NOP:
