@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.123 2007/12/20 19:53:34 dyoung Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.124 2008/02/06 07:42:43 bjs Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.123 2007/12/20 19:53:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124 2008/02/06 07:42:43 bjs Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2083,7 +2083,7 @@ ipsec4_encapsulate(struct mbuf *m, struct secasvar *sav)
 		ipseclog((LOG_ERR, "IPv4 ipsec: size exceeds limit: "
 		    "leave ip_len as is (invalid packet)\n"));
 	}
-	ip->ip_id = ip_newid();
+	ip->ip_id = ip_newid(NULL);
 	bcopy(&((struct sockaddr_in *)&sav->sah->saidx.src)->sin_addr,
 		&ip->ip_src, sizeof(ip->ip_src));
 	bcopy(&((struct sockaddr_in *)&sav->sah->saidx.dst)->sin_addr,
