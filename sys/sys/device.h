@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.101 2007/12/16 23:24:21 drochner Exp $ */
+/* $NetBSD: device.h,v 1.102 2008/02/06 20:24:17 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -428,8 +428,6 @@ cfattach_t	device_cfattach(device_t);
 int		device_unit(device_t);
 const char	*device_xname(device_t);
 device_t	device_parent(device_t);
-bool		device_foreach_child(device_t, bool (*)(device_t, void *),
-		                     void *);
 bool		device_is_active(device_t);
 bool		device_is_enabled(device_t);
 bool		device_has_power(device_t);
