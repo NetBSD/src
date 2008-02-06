@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.60 2007/12/05 23:47:18 dyoung Exp $	*/
+/*	$NetBSD: in_var.h,v 1.61 2008/02/06 03:20:51 matt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -98,6 +98,7 @@ struct in_ifaddr {
 	LIST_HEAD(, in_multi) ia_multiaddrs; /* list of multicast addresses */
 	struct	in_multi *ia_allhosts;	/* multicast address record for
 					   the allhosts multicast group */
+	uint16_t ia_idsalt;		/* ip_id salt for this ia */
 };
 
 struct	in_aliasreq {
@@ -308,6 +309,46 @@ void	in_purgeaddr(struct ifaddr *);
 void	in_purgeif(struct ifnet *);
 void	ip_input(struct mbuf *);
 int	ipflow_fastforward(struct mbuf *);
+void	ip_initid(void);
+
+extern uint16_t	ip_id;
+static __inline uint16_t ip_newid(const struct in_ifaddr *);
+
+uint16_t ip_randomid(uint16_t);
+extern int ip_do_randomid;
+
+/*
+ * ip_newid_range: "allocate" num contiguous ip_ids.
+ *
+ * => return the first id.
+ */
+
+static __inline uint16_t
+ip_newid_range(const struct in_ifaddr *ia, unsigned int num)
+{
+	uint16_t id;
+
+	if (ip_do_randomid) {
+		/* XXX ignore num */
+		return ip_randomid(ia ? ia->ia_idsalt : 0);
+	}
+
+	/*
+	 * never allow an ip_id of 0. (detect wrap)
+	 */
+	if ((uint16_t)(ip_id + num) < ip_id)
+		ip_id = 1;
+	id = htons(ip_id);
+	ip_id += num;
+
+	return id;
+}
+
+static __inline uint16_t
+ip_newid(const struct in_ifaddr *ia)
+{
+	return ip_newid_range(ia, 1);
+}
 
 #ifdef SYSCTLFN_PROTO
 int	sysctl_inpcblist(SYSCTLFN_PROTO);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.191 2008/01/14 04:19:09 dyoung Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.191 2008/01/14 04:19:09 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.192 2008/02/06 03:20:51 matt Exp $");
 
 #include "opt_pfil_hooks.h"
 #include "opt_inet.h"
@@ -260,28 +260,7 @@ ip_output(struct mbuf *m0, ...)
 	if ((flags & (IP_FORWARDING|IP_RAWOUTPUT)) == 0) {
 		ip->ip_v = IPVERSION;
 		ip->ip_off = htons(0);
-		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
-			ip->ip_id = 0;
-		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
-			ip->ip_id = ip_newid();
-		} else {
-
-			/*
-			 * TSO capable interfaces (typically?) increment
-			 * ip_id for each segment.
-			 * "allocate" enough ids here to increase the chance
-			 * for them to be unique.
-			 *
-			 * note that the following calculation is not
-			 * needed to be precise.  wasting some ip_id is fine.
-			 */
-
-			unsigned int segsz = m->m_pkthdr.segsz;
-			unsigned int datasz = ntohs(ip->ip_len) - hlen;
-			unsigned int num = howmany(datasz, segsz);
-
-			ip->ip_id = ip_newid_range(num);
-		}
+		/* ip->ip_id filled in after we find out source ia */
 		ip->ip_hl = hlen >> 2;
 		ipstat.ips_localout++;
 	} else {
@@ -497,6 +476,30 @@ ip_output(struct mbuf *m0, ...)
 		m->m_flags &= ~M_BCAST;
 
 sendit:
+	if ((flags & (IP_FORWARDING|IP_NOIPNEWID)) == 0) {
+		if (m->m_pkthdr.len < IP_MINFRAGSIZE) {
+			ip->ip_id = 0;
+		} else if ((m->m_pkthdr.csum_flags & M_CSUM_TSOv4) == 0) {
+			ip->ip_id = ip_newid(ia);
+		} else {
+
+			/*
+			 * TSO capable interfaces (typically?) increment
+			 * ip_id for each segment.
+			 * "allocate" enough ids here to increase the chance
+			 * for them to be unique.
+			 *
+			 * note that the following calculation is not
+			 * needed to be precise.  wasting some ip_id is fine.
+			 */
+
+			unsigned int segsz = m->m_pkthdr.segsz;
+			unsigned int datasz = ntohs(ip->ip_len) - hlen;
+			unsigned int num = howmany(datasz, segsz);
+
+			ip->ip_id = ip_newid_range(ia, num);
+		}
+	}
 	/*
 	 * If we're doing Path MTU Discovery, we need to set DF unless
 	 * the route's MTU is locked.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_id.c,v 1.11 2006/08/30 18:54:19 christos Exp $	*/
+/*	$NetBSD: ip_id.c,v 1.12 2008/02/06 03:20:51 matt Exp $	*/
 /*	$OpenBSD: ip_id.c,v 1.6 2002/03/15 18:19:52 millert Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.11 2006/08/30 18:54:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.12 2008/02/06 03:20:51 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -61,135 +61,91 @@ __KERNEL_RCSID(0, "$NetBSD: ip_id.c,v 1.11 2006/08/30 18:54:19 christos Exp $");
 
 #include <net/if.h>
 #include <netinet/in.h>
-#include <netinet/ip_var.h>
+#include <netinet/in_var.h>
 
-#define RU_OUT  180		/* Time after wich will be reseeded */
-#define RU_MAX	30000		/* Uniq cycle, avoid blackjack prediction */
-#define RU_GEN	2		/* Starting generator */
-#define RU_N	32749		/* RU_N-1 = 2*2*3*2729 */
-#define RU_AGEN	7		/* determine ru_a as RU_AGEN^(2*rand) */
-#define RU_M	31104		/* RU_M = 2^7*3^5 - don't change */
+#define	IPID_MAXID	65535
+#define	IPID_NUMIDS	32768
 
-#define PFAC_N 3
-static const u_int16_t pfacts[PFAC_N] = {
-	2,
-	3,
-	2729
-};
+static struct ipid_state {
+	uint16_t ids_start_slot;
+	uint16_t ids_slots[IPID_MAXID];
+} idstate;
 
-static u_int16_t ru_x;
-static u_int16_t ru_seed, ru_seed2;
-static u_int16_t ru_a, ru_b;
-static u_int16_t ru_g;
-static u_int16_t ru_counter = 0;
-static u_int16_t ru_msb = 0;
-static long ru_reseed;
-static u_int32_t tmp;		/* Storage for unused random */
-
-static u_int16_t pmod(u_int16_t, u_int16_t, u_int16_t);
-static void ip_initid(void);
-
-/*
- * Do a fast modular exponation, returned value will be in the range
- * of 0 - (mod-1)
- */
-
-static u_int16_t
-pmod(u_int16_t gen, u_int16_t expo, u_int16_t mod)
+static inline uint32_t
+ipid_random(void)
 {
-	u_int16_t s, t, u;
-
-	s = 1;
-	t = gen;
-	u = expo;
-
-	while (u) {
-		if (u & 1)
-			s = (s * t) % mod;
-		u >>= 1;
-		t = (t * t) % mod;
-	}
-	return (s);
+	return arc4random();
 }
 
 /*
- * Initalizes the seed and chooses a suitable generator. Also toggles
+ * Initalizes the  
  * the msb flag. The msb flag is used to generate two distinct
  * cycles of random numbers and thus avoiding reuse of ids.
  *
  * This function is called from id_randomid() when needed, an
  * application does not have to worry about it.
  */
-static void
+void
 ip_initid(void)
 {
-	u_int16_t j, i;
-	int noprime = 1;
+	size_t i;
 
-	ru_x = ((tmp = arc4random()) & 0xFFFF) % RU_M;
-
-	/* 15 bits of random seed */
-	ru_seed = (tmp >> 16) & 0x7FFF;
-	ru_seed2 = arc4random() & 0x7FFF;
-
-	/* Determine the LCG we use */
-	ru_b = ((tmp = arc4random()) & 0xfffe) | 1;
-	ru_a = pmod(RU_AGEN, (tmp >> 16) & 0xfffe, RU_M);
-	while (ru_b % 3 == 0)
-		ru_b += 2;
-
-	j = (tmp = arc4random()) % RU_N;
-	tmp = tmp >> 16;
+	idstate.ids_start_slot = ipid_random();
+	for (i = 0; i < __arraycount(idstate.ids_slots); i++)
+		idstate.ids_slots[i] = i;
 
 	/*
-	 * Do a fast gcd(j,RU_N-1), so we can find a j with
-	 * gcd(j, RU_N-1) == 1, giving a new generator for
-	 * RU_GEN^j mod RU_N
+	 * Shuffle the array.
 	 */
-
-	while (noprime) {
-		for (i = 0; i < PFAC_N; i++)
-			if (j % pfacts[i] == 0)
-				break;
-
-		if (i >= PFAC_N)
-			noprime = 0;
-		else
-			j = (j + 1) % RU_N;
+	for (i = __arraycount(idstate.ids_slots); --i > 0;) {
+		size_t k = ipid_random() % (i + 1);
+		uint16_t t = idstate.ids_slots[i];
+		idstate.ids_slots[i] = idstate.ids_slots[k];
+		idstate.ids_slots[k] = t;
 	}
-
-	ru_g = pmod(RU_GEN, j, RU_N);
-	ru_counter = 0;
-
-	ru_reseed = time_second + RU_OUT;
-	ru_msb = ru_msb == 0x8000 ? 0 : 0x8000;
 }
 
-u_int16_t
-ip_randomid(void)
+uint16_t
+ip_randomid(uint16_t salt)
 {
-	int i, n;
+	uint32_t r, k, id;
 
-	if (ru_counter >= RU_MAX || time_second > ru_reseed)
-		ip_initid();
+	/*
+	 * We need a random number 
+	 */
+	r = ipid_random();
 
-#if 0
-	if (!tmp)
-		tmp = arc4random();
+	/*
+	 * We do a modified Fisher-Yates shuffle but only one position at a
+	 * time. Instead of the last entry, we swap with the first entry and
+	 * then advance the start of the window by 1.  The next time that 
+	 * swapped-out entry can be used is at least 32768 iterations in the
+	 * future.
+ 	 *
+	 * The easiest way to visual this is to imagine a card deck with 52
+	 * cards.  First thing we do is split that into two sets, each with
+	 * half of the cards; call them deck A and deck B.  Pick a card
+	 * randomly from deck A and remember it, then place it at the
+	 * bottom of deck B.  Then take the top card from deck B and add it
+	 * to deck A.  Pick another card randomly from deck A and ...
+	 */
+	k = (r & (IPID_NUMIDS-1)) + idstate.ids_start_slot;
+	if (k >= IPID_MAXID)
+		k -= IPID_MAXID;
 
-	/* Skip a random number of ids */
-	n = tmp & 0x3; tmp = tmp >> 2;
-	if (ru_counter + n >= RU_MAX)
-		ip_initid();
-#else
-	n = 0;
-#endif
+	id = idstate.ids_slots[k];
+	if (k != idstate.ids_start_slot) {
+		idstate.ids_slots[k] = idstate.ids_slots[idstate.ids_start_slot];
+		idstate.ids_slots[idstate.ids_start_slot] = id;
+	}
+	if (++idstate.ids_start_slot == IPID_MAXID)
+		idstate.ids_start_slot = 0;
+	/*
+	 * Add an optional salt to the id to further obscure it.
+	 */
+	id += salt;
+	if (id >= IPID_MAXID)
+		id -= IPID_MAXID;
 
-	for (i = 0; i <= n; i++)
-		/* Linear Congruential Generator */
-		ru_x = (ru_a * ru_x + ru_b) % RU_M;
-
-	ru_counter += i;
-
-	return (ru_seed ^ pmod(ru_g, ru_seed2 + ru_x, RU_N)) | ru_msb;
+	return (uint16_t) htons(id + 1);
 }
