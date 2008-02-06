@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.8 2007/11/12 18:42:00 ad Exp $	*/
+/*	$NetBSD: copy.S,v 1.9 2008/02/06 22:27:09 dsl Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -47,6 +47,21 @@
 	movq	CPUVAR(CURLWP), reg; \
 	movq	L_ADDR(reg), reg
 
+/*
+ * These are arranged so that the abnormal case is a forwards
+ * conditional branch - which will be predicted not-taken by
+ * both Intel and AMD processors.
+ */
+#define DEFERRED_SWITCH_CHECK \
+	CHECK_DEFERRED_SWITCH			; \
+	jnz	99f				; \
+    98:
+
+#define DEFERRED_SWITCH_CALL \
+    99:						; \
+	call	_C_LABEL(do_pmap_load)		; \
+	jmp	98b
+
 ENTRY(do_pmap_load)
 #if 1
 	pushq	%rbp
@@ -70,7 +85,16 @@ ENTRY(do_pmap_load)
  * Copy routines from and to userland, plus a few more. See the
  * section 9 manpages for info. Some cases can be optimized more.
  *
- * I wonder if it's worthwhile to make these use SSE2 registers.
+ * I wonder if it's worthwhile to make these use SSE2 registers?
+ * (dsl) Not from info I've read from the AMD guides.
+ *
+ * Also note that the setup time for 'rep movs' is horrid - especially on P4
+ * netburst - but on my AMD X2 it manages one copy (read+write) per clock
+ * which can be achieved with a code loop, but is probably impossible to beat.
+ * Howver the use of 'rep movsb' for the final bytes should be killed.
+ *
+ * Newer Intel cpus have a much lower setup time, and may (someday)
+ * be ably to do cache-line size copies....
  */
 
 /*
@@ -146,7 +170,7 @@ ENTRY(kcopy)
 	ret
 
 ENTRY(copyout)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	pushq	$0
 
 	xchgq	%rdi,%rsi
@@ -175,9 +199,10 @@ ENTRY(copyout)
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
 	ret
+	DEFERRED_SWITCH_CALL
 
 ENTRY(copyin)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	GET_CURPCB(%rax)
 	pushq	$0
 	leaq	_C_LABEL(copy_fault)(%rip),%r11
@@ -207,6 +232,7 @@ ENTRY(copyin)
 	popq	PCB_ONFAULT(%rdx)
 	xorl	%eax,%eax
 	ret
+	DEFERRED_SWITCH_CALL
 
 NENTRY(copy_efault)
 	movq	$EFAULT,%rax
@@ -355,7 +381,7 @@ ENTRY(copystr)
 7:	ret
 
 ENTRY(fuword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-4,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
@@ -365,9 +391,10 @@ ENTRY(fuword)
 	movl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
+	DEFERRED_SWITCH_CALL
 	
 ENTRY(fusword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
@@ -377,6 +404,7 @@ ENTRY(fusword)
 	movzwl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
+	DEFERRED_SWITCH_CALL
 	
 ENTRY(fuswintr)
 	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
@@ -392,7 +420,7 @@ ENTRY(fuswintr)
 	ret
 	
 ENTRY(fubyte)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-1,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
@@ -402,27 +430,10 @@ ENTRY(fubyte)
 	movzbl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
-
-/*
- * These are the same, but must reside at different addresses,
- * because trap.c checks for them.
- */
-ENTRY(fusuintrfailure)
-	movq	$0,PCB_ONFAULT(%rcx)
-	movl	$-1,%eax
-	ret
-
-ENTRY(fusufailure)
-	movq	$0,PCB_ONFAULT(%rcx)
-	movl	$-1,%eax
-	ret
-
-ENTRY(fusuaddrfault)
-	movl	$-1,%eax
-	ret
+	DEFERRED_SWITCH_CALL
 
 ENTRY(suword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-4,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
@@ -435,9 +446,10 @@ ENTRY(suword)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
+	DEFERRED_SWITCH_CALL
 	
 ENTRY(susword)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
@@ -450,6 +462,7 @@ ENTRY(susword)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
+	DEFERRED_SWITCH_CALL
 
 ENTRY(suswintr)
 	cmpq	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
@@ -467,7 +480,7 @@ ENTRY(suswintr)
 	ret
 
 ENTRY(subyte)
-	DO_DEFERRED_SWITCH
+	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-1,%r11
 	cmpq	%r11,%rdi
 	ja	_C_LABEL(fusuaddrfault)
@@ -479,4 +492,23 @@ ENTRY(subyte)
 	movb	%sil,(%rdi)
 	xorq	%rax,%rax
 	movq	%rax,PCB_ONFAULT(%rcx)
+	ret
+	DEFERRED_SWITCH_CALL
+
+/*
+ * These are the same, but must reside at different addresses,
+ * because trap.c checks for them.
+ */
+ENTRY(fusuintrfailure)
+	movq	$0,PCB_ONFAULT(%rcx)
+	movl	$-1,%eax
+	ret
+
+ENTRY(fusufailure)
+	movq	$0,PCB_ONFAULT(%rcx)
+	movl	$-1,%eax
+	ret
+
+ENTRY(fusuaddrfault)
+	movl	$-1,%eax
 	ret
