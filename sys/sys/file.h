@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.62 2008/01/05 18:52:16 dsl Exp $	*/
+/*	$NetBSD: file.h,v 1.63 2008/02/06 21:51:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,14 +54,18 @@ struct stat;
 struct knote;
 
 /*
- * Kernel descriptor table.
- * One entry for each open kernel vnode and socket.
+ * Kernel file descriptor.  One entry for each open kernel vnode and
+ * socket.
+ *
+ * Note that adjacent 'u_short' members within a single word must have
+ * the same locking convention, or must be non-volatile, as sub-word
+ * writes may not be atomic.  If possible, keep this structure smaller
+ * than CACHE_LINE_SIZE on 32-bit architectures.
  */
 struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	int		f_flag;		/* see fcntl.h */
-	int		f_iflags;	/* internal flags; FIF_* */
-	int		f_advice;	/* access pattern hint; UVM_ADV_* */
+	u_char		f_iflags;	/* internal flags; FIF_* */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
@@ -71,7 +75,8 @@ struct file {
 #define	DTYPE_MQUEUE	7		/* message queue */
 #define DTYPE_NAMES \
     "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue"
-	int		f_type;		/* descriptor type */
+	u_char		f_type;		/* descriptor type */
+	u_short		f_advice;	/* access pattern hint; UVM_ADV_* */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
 	int		f_usecount;	/* number active users */
