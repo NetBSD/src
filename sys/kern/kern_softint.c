@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.10 2008/01/29 18:06:14 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.11 2008/02/06 15:34:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.10 2008/01/29 18:06:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.11 2008/02/06 15:34:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -765,10 +765,10 @@ softint_dispatch(lwp_t *pinned, int s)
 	 * for it.
 	 */
 	if (timing)
-		bintime(&l->l_stime);
+		binuptime(&l->l_stime);
 	softint_execute(si, l, s);
 	if (timing) {
-		bintime(&now);
+		binuptime(&now);
 		updatertime(l, &now);
 		l->l_flag &= ~LW_TIMEINTR;
 	}
