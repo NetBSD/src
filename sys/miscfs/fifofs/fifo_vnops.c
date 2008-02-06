@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.60 2008/01/25 14:32:15 ad Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.61 2008/02/06 21:57:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.60 2008/01/25 14:32:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.61 2008/02/06 21:57:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.60 2008/01/25 14:32:15 ad Exp $");
 #include <sys/un.h>
 #include <sys/poll.h>
 #include <sys/event.h>
+#include <sys/atomic.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
@@ -258,7 +259,7 @@ fifo_read(void *v)
 	if (uio->uio_resid == 0)
 		return (0);
 	if (ap->a_ioflag & IO_NDELAY)
-		rso->so_state |= SS_NBIO;
+		rso->so_nbio = 1;
 	startresid = uio->uio_resid;
 	VOP_UNLOCK(ap->a_vp, 0);
 	error = (*rso->so_receive)(rso, (struct mbuf **)0, uio,
@@ -270,7 +271,7 @@ fifo_read(void *v)
 	if (uio->uio_resid == startresid)
 		rso->so_state &= ~SS_CANTRCVMORE;
 	if (ap->a_ioflag & IO_NDELAY) {
-		rso->so_state &= ~SS_NBIO;
+		rso->so_nbio = 0;
 		if (error == EWOULDBLOCK &&
 		    ap->a_vp->v_fifoinfo->fi_writers == 0)
 			error = 0;
@@ -300,13 +301,13 @@ fifo_write(void *v)
 		panic("fifo_write mode");
 #endif
 	if (ap->a_ioflag & IO_NDELAY)
-		wso->so_state |= SS_NBIO;
+		wso->so_nbio = 1;
 	VOP_UNLOCK(ap->a_vp, 0);
 	error = (*wso->so_send)(wso, (struct mbuf *)0, ap->a_uio, 0,
 	    (struct mbuf *)0, 0, curlwp /*XXX*/);
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
-		wso->so_state &= ~SS_NBIO;
+		wso->so_nbio = 0;
 	return (error);
 }
 
