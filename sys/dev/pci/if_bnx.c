@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.16 2007/12/31 22:52:14 dyoung Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.17 2008/02/06 16:50:38 joerg Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.16 2007/12/31 22:52:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.17 2008/02/06 16:50:38 joerg Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -2862,7 +2862,7 @@ bnx_chipinit(struct bnx_softc *sc)
 
 		nval = pci_conf_read(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD,
-		    nval & ~0x2);
+		    nval & ~0x20000);
 	}
 
 	/* Enable the RX_V2P and Context state machines before access. */
