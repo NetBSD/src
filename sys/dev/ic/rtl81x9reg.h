@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.28 2008/02/04 15:16:49 tsutsui Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.29 2008/02/06 22:51:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -552,5 +552,5 @@ struct re_stats {
 
 #define RE_IFQ_MAXLEN		512
 
-#define RE_JUMBO_FRAMELEN	9018
-#define RE_JUMBO_MTU		(RE_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
+#define RE_JUMBO_FRAMELEN	ETHER_MAX_LEN_JUMBO
+#define RE_JUMBO_MTU		ETHERMTU_JUMBO
