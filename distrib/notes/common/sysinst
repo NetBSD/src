@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.87 2008/02/02 16:56:46 itohy Exp $
+.\"	$NetBSD: sysinst,v 1.88 2008/02/06 01:57:31 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -85,7 +85,7 @@ covers many details for the sake of completeness.
 Do not let this discourage you; the install program is not hard
 to use.
 .
-.if !\n[acorn26]:\n[acorn32]\n[atari]:\n[ews4800mips]:\n[hp700]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
+.if !\n[acorn26]:\n[acorn32]:\n[atari]:\n[ews4800mips]:\n[hp700]:\n[mac68k]:\n[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k] \{\
 .It
 .To 2 "Possible hardware problems"
 .Em Possible hardware problems
@@ -99,7 +99,7 @@ Non-removable devices can be disabled with
 .Ic boot
 .Fl c
 to enter it).
-.\} \" !\n[acorn26]:\n[acorn32]\n[atari]:\n:[ews4800mips]:\n[hp700]:\n[mac68k]\:[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
+.\} \" !\n[acorn26]:\n[acorn32]:\n[atari]:\n[ews4800mips]:\n[hp700]:\n[mac68k]\:[macppc]:\n[mvme68k]:\n[news68k]:\n[newsmips]:\n[pmax]:\n[sgimips]:\n[sparc]:\n[sparc64]:\n[x68k]
 .if \n[mac68k] \{\
 .It
 .To 2 "Possible hardware-specific issues"
@@ -206,7 +206,7 @@ sysinst.fs image.
 See the "prepare" section about obtaining those.
 .\}
 .el One 1.44 MB 3.5" floppy.
-.\}\}\}\}\}
+.\}\}\}\}\}\}
 .\} \" !\n[pmax]:\n[sgimips]:\n[sparc64]
 .if \n[i386] \{\
 .It
