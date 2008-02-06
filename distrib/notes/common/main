@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.388 2008/02/05 05:33:23 itohy Exp $
+.\"	$NetBSD: main,v 1.389 2008/02/06 01:57:31 jnemeth Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,7 +57,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd December 15, 2007
+.Dd February 5, 2008
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -461,7 +461,7 @@ possible, it's likely that
 wouldn't exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 3.0 and 4.0 Releases
+.Ss Changes Between The NetBSD 4.0 and 5.0 Releases
 .Pp
 The
 .Nx
@@ -476,7 +476,7 @@ It is impossible to completely summarize more than a year of development that
 went into the
 .Nx
 \*V release.
-.\" {BEGIN from htdocs/releases/formal-4/NetBSD-4.0.xml#major-changes
+.\" {BEGIN from htdocs/releases/formal-5/NetBSD-5.0.xml#major-changes
 The complete list of changes can be found in the
 CHANGES:
 .Lk ftp://ftp.NetBSD.org/pub/NetBSD/NetBSD-4.0/CHANGES
@@ -569,7 +569,6 @@ Added support for AC'97 modems.
 .Xr auich 4 :
 added support to handle the AC'97 modem as audio device, enabled with the kernel option
 .Dq AUICH_ATTACH_MODEM
-
 .
 .It
 .Xr azalia 4 :
@@ -1035,7 +1034,7 @@ package.
 The evbsh5 port has been removed from NetBSD due to lack of interest, compounded by a lack of available SH5 hardware.
 .bullet)
 .
-.\" END from htdocs/releases/formal-4/NetBSD-4.0.xml#major-changes }
+.\" END from htdocs/releases/formal-5/NetBSD-5.0.xml#major-changes }
 .pso ../printwhatis
 .\} \" \n[FOR_RELEASE]
 .
@@ -1122,11 +1121,11 @@ The root directory of the
 .It Li CHANGES
 Changes between
 .Nx
-3.0 and branching 4.0.
-.It Li CHANGES-4.0
+4.0 and branching 5.0.
+.It Li CHANGES-5.0
 Changes since
 .Nx
-4.0 was branched.
+5.0 was branched.
 .It Li CHANGES.prev
 Changes in earlier
 .Nx
@@ -1336,7 +1335,8 @@ and thus all issues that are fixed by
 by default (see below) will be handled.
 .
 .Ss2 Issues affecting an upgrade from NetBSD 2.1 and older releases.
-See the section below on upgrading from NetBSD 3.x as well.
+See the sections below on upgrading from NetBSD 3.x and upgrading from
+NetBSD 4.x as well.
 .Pp
 It is
 .Sy very important
@@ -1405,6 +1405,7 @@ need to be created.
 .bullet)
 .
 .Ss2 Issues affecting an upgrade from NetBSD 3.x releases.
+See the section below on upgrading from NetBSD 4.x as well.
 .Pp
 The following issues can generally be resolved by running
 .Em postinstall
@@ -1511,18 +1512,71 @@ postinstall -s /path/to/etc.tgz fix sendmail
 .disp)
 .bullet)
 .
-.Ss "Issues with GDB 6.5"
-Some architectures (arm, i386, powerpc and sparc64) have switched to a newer
-gdb version (6.5) in this release.
-Unfortunately support for debugging programs using the SA (scheduler
-activation) based thread library, is incomplete in this gdb version.
-Furthermore kernel crashdumps can not be debugged due to a missing
-identification in the kernel binaries.
+.Ss2 Issues affecting an upgrade from NetBSD 4.x releases.
 .Pp
-Both issues have been addressed on the wrstuden-fixsa branch, but did not
-make it into the
+The following issues can generally be resolved by running
+.Em postinstall
+with the
+.Sy etc
+set :
+.(disp
+postinstall -s /path/to/etc.tgz check
+postinstall -s /path/to/etc.tgz fix
+.disp)
+.Pp
+Issues fixed by
+.Em postinstall :
+.(bullet -offset indent
+Various files in
+.Pa /etc
+need upgrading.
+These include:
+.(bullet -compact -offset indent
+.Pa /etc/defaults/*
+.It
+.Pa /etc/mtree/*
+.It
+.Pa /etc/daily
+.It
+.Pa /etc/weekly
+.It
+.Pa /etc/monthly
+.It
+.Pa /etc/security
+.It
+.Pa /etc/rc.subr
+.It
+.Pa /etc/rc
+.It
+.Pa /etc/rc.shutdown
+.It
+.Pa /etc/rc.d/*
+.It
+.Pa /etc/envsys.conf
+.bullet)
+.bullet)
+.
+.Pp
+The following issues need to be resolved manually:
+.
+.(bullet -offset indent
+The users
+.Sq _httpd
+and
+.Sq _timedc
+and the groups
+.Sq _httpd ,
+.Sq _timedc
+need to be created.
+.It
+A number of things have been removed from the
 .Nx
-release. Both will be fixed in the next patch release.
+\*V release
+including: the pc532 port.
+If you were using any of these,
+then please see the "Components removed from NetBSD" section near the
+beginning of this document.
+.bullet)
 .
 .Ss "Using online NetBSD documentation"
 .Pp
@@ -1801,6 +1855,9 @@ If you're one of them, and would like to be mentioned, tell us!)
 .
 .br_ne 2i
 .It Em "NetBSD Developers:"
+.\"
+.\" Please keep in alphabetical order
+.\"
 .It Ta Ta
 .It Ta Nathan Ahlstrom Ta Mt nra@NetBSD.org
 .It Ta Steve Allen Ta Mt wormey@NetBSD.org
@@ -1889,6 +1946,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Andreas Gustafsson Ta Mt gson@NetBSD.org
 .It Ta Ulrich Habel Ta Mt rhaen@NetBSD.org
 .It Ta Jun-ichiro itojun Hagino Ta Mt itojun@NetBSD.org
+.It Ta HAMAJIMA Katsuomi Ta Mt hamajima@NetBSD.org
 .It Ta Adam Hamsik Ta Mt haad@NetBSD.org
 .It Ta Juergen Hannken-Illjes Ta Mt hannken@NetBSD.org
 .It Ta Charles M. Hannum Ta Mt mycroft@NetBSD.org
@@ -1896,7 +1954,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Ross Harvey Ta Mt ross@NetBSD.org
 .It Ta Eric Haszlakiewicz Ta Mt erh@NetBSD.org
 .It Ta John Hawkinson Ta Mt jhawk@NetBSD.org
-.It Ta HAMAJIMA Katsuomi Ta Mt hamajima@NetBSD.org
 .It Ta HAYAKAWA Koichi Ta Mt haya@NetBSD.org
 .It Ta John Heasley Ta Mt heas@NetBSD.org
 .It Ta Geert Hendrickx Ta Mt ghen@NetBSD.org
@@ -1945,6 +2002,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Lubomir Kundrak Ta Mt lkundrak@NetBSD.org
 .It Ta Martti Kuparinen Ta Mt martti@NetBSD.org
 .It Ta Kentaro A. Kurahone Ta Mt kurahone@NetBSD.org
+.It Ta Arnaud Lacombe Ta Mt alc@NetBSD.org
 .It Ta Kevin Lahey Ta Mt kml@NetBSD.org
 .It Ta David Laight Ta Mt dsl@NetBSD.org
 .It Ta Johnny C. Lam Ta Mt jlam@NetBSD.org
@@ -1964,16 +2022,14 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Anders Magnusson Ta Mt ragge@NetBSD.org
 .It Ta MAEKAWA Masahide Ta Mt gehenna@NetBSD.org
 .It Ta David Maxwell Ta Mt david@NetBSD.org
-.It Ta Dan McMahill Ta Mt dmcmahill@NetBSD.org
 .It Ta Gregory McGarry Ta Mt gmcgarry@NetBSD.org
+.It Ta Dan McMahill Ta Mt dmcmahill@NetBSD.org
 .It Ta Jared D. McNeill Ta Mt jmcneill@NetBSD.org
 .It Ta Neil J. McRae Ta Mt neil@NetBSD.org
 .It Ta Perry Metzger Ta Mt perry@NetBSD.org
-.It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
-.It Ta Juan Romero Pardines Ta Mt xtraeme@NetBSD.org
-.It Ta Julio M. Merino Vidal Ta Mt jmmv@NetBSD.org
 .It Ta Minoura Makoto Ta Mt minoura@NetBSD.org
 .It Ta Luke Mewburn Ta Mt lukem@NetBSD.org
+.It Ta Simas Mockevicius Ta Mt symka@NetBSD.org
 .It Ta der Mouse Ta Mt mouse@NetBSD.org
 .It Ta Joseph Myers Ta Mt jsm@NetBSD.org
 .It Ta Ken Nakata Ta Mt kenn@NetBSD.org
@@ -1993,12 +2049,13 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Masaru Oki Ta Mt oki@NetBSD.org
 .It Ta Atsushi Onoe Ta Mt onoe@NetBSD.org
 .It Ta Greg Oster Ta Mt oster@NetBSD.org
+.It Ta Juan Romero Pardines Ta Mt xtraeme@NetBSD.org
+.It Ta Rui Paulo Ta Mt rpaulo@NetBSD.org
 .It Ta Jonathan Perkin Ta Mt sketch@NetBSD.org
 .It Ta Herb Peyerl Ta Mt hpeyerl@NetBSD.org
 .It Ta Matthias Pfaller Ta Mt matthias@NetBSD.org
 .It Ta Chris Pinnock Ta Mt cjep@NetBSD.org
 .It Ta Adrian Portelli Ta Mt adrianp@NetBSD.org
-.It Ta Rui Paulo Ta Mt rpaulo@NetBSD.org
 .It Ta Peter Postma Ta Mt peter@NetBSD.org
 .It Ta Dante Profeta Ta Mt dante@NetBSD.org
 .It Ta Chris Provenzano Ta Mt proven@NetBSD.org
@@ -2072,6 +2129,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Masao Uebayashi Ta Mt uebayasi@NetBSD.org
 .It Ta Shuichiro URATA Ta Mt ur@NetBSD.org
 .It Ta Valeriy E. Ushakov Ta Mt uwe@NetBSD.org
+.It Ta Julio M. Merino Vidal Ta Mt jmmv@NetBSD.org
 .It Ta Todd Vierling Ta Mt tv@NetBSD.org
 .It Ta Aymeric Vincent Ta Mt aymeric@NetBSD.org
 .It Ta Paul Vixie Ta Mt vixie@NetBSD.org
@@ -2085,11 +2143,10 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Nathan Williams Ta Mt nathanw@NetBSD.org
 .It Ta Rob Windsor Ta Mt windsor@NetBSD.org
 .It Ta Dan Winship Ta Mt danw@NetBSD.org
-.It Ta Arnaud Lacombe Ta Mt alc@NetBSD.org
 .It Ta Jim Wise Ta Mt jwise@NetBSD.org
 .It Ta Michael Wolfson Ta Mt mbw@NetBSD.org
-.It Ta Steve Woodford Ta Mt scw@NetBSD.org
 .It Ta Colin Wood Ta Mt ender@NetBSD.org
+.It Ta Steve Woodford Ta Mt scw@NetBSD.org
 .It Ta YAMAMOTO Takashi Ta Mt yamt@NetBSD.org
 .It Ta Yuji Yamano Ta Mt yyamano@NetBSD.org
 .It Ta Reinoud Zandijk Ta Mt reinoud@NetBSD.org
@@ -2108,29 +2165,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Waldi Ravens Ta Mt waldi@moacs.indiv.nl.net
 .
 .El
-.
-.Ss "Dedication"
-.Pp
-.
-.Nx
-4.0 is dedicated to the memory of Jun-Ichiro "itojun" Hagino,
-who died in October 2007.
-Itojun was a member of the KAME project,
-which provided IPv6 and IPsec support; he was also a member
-of the
-.Nx
-core team (the technical management for the project), and
-one of the Security Officers.
-Due to Itojun's efforts,
-.Nx
-was the
-first open source operating system with a production ready IPv6
-networking stack, which was included in the base system before many
-people knew what IPv6 was.
-We are grateful to have known and worked
-with Itojun, and we know that he will be missed.
-This release is
-therefore dedicated, with thanks, to his memory.
 .
 .Ss "Legal Mumbo-Jumbo"
 .Pp
