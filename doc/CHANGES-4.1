@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.25 2008/02/04 20:52:27 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.26 2008/02/06 05:10:02 riz Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -343,4 +343,10 @@ sys/netipsec/ipsec_mbuf.c			1.10 via patch
 	Avoid a buffer overrun which could crash a FAST_IPSEC kernel.
 	PR#30124.
 	[seanb, ticket #1015]
+
+sys/dev/usb/ukbd.c				1.96
+
+	Add support for function keys F16 to F19 as present on e.g. the new
+	Apple aluminum keyboard. PR#37788.
+	[tron, ticket #1060]
 
