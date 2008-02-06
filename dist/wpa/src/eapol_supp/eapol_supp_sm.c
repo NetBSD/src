@@ -670,7 +670,7 @@ static void eapol_sm_processKey(struct eapol_sm *sm)
 		   hdr->version, hdr->type, be_to_host16(hdr->length),
 		   key->type, rx_key_length, key->key_index);
 
-	eapol_sm_notify_lower_layer_success(sm);
+	eapol_sm_notify_lower_layer_success(sm, 1);
 	sign_key_len = IEEE8021X_SIGN_KEY_LEN;
 	encr_key_len = IEEE8021X_ENCR_KEY_LEN;
 	res = eapol_sm_get_key(sm, (u8 *) &keydata, sizeof(keydata));
@@ -1549,17 +1549,20 @@ void eapol_sm_request_reauth(struct eapol_sm *sm)
 /**
  * eapol_sm_notify_lower_layer_success - Notification of lower layer success
  * @sm: Pointer to EAPOL state machine allocated with eapol_sm_init()
+ * @in_eapol_sm: Whether the caller is already running inside EAPOL state
+ * machine loop (eapol_sm_step())
  *
  * Notify EAPOL (and EAP) state machines that a lower layer has detected a
  * successful authentication. This is used to recover from dropped EAP-Success
  * messages.
  */
-void eapol_sm_notify_lower_layer_success(struct eapol_sm *sm)
+void eapol_sm_notify_lower_layer_success(struct eapol_sm *sm, int in_eapol_sm)
 {
 	if (sm == NULL)
 		return;
 	eap_notify_lower_layer_success(sm->eap);
-	eapol_sm_step(sm);
+	if (!in_eapol_sm)
+		eapol_sm_step(sm);
 }
 
 

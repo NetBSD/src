@@ -1450,7 +1450,7 @@ int wpa_sm_rx_eapol(struct wpa_sm *sm, const u8 *src_addr,
 	}
 	wpa_eapol_key_dump(key);
 
-	eapol_sm_notify_lower_layer_success(sm->eapol);
+	eapol_sm_notify_lower_layer_success(sm->eapol, 0);
 	wpa_hexdump(MSG_MSGDUMP, "WPA: RX EAPOL-Key", tmp, len);
 	if (data_len < len) {
 		wpa_printf(MSG_DEBUG, "WPA: ignoring %lu bytes after the IEEE "
