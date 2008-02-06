@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.12 2008/02/05 21:42:16 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.13 2008/02/06 01:33:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.12 2008/02/05 21:42:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.13 2008/02/06 01:33:38 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,6 @@ static void	crmfb_copycols(void *, int, int, int, int);
 static void	crmfb_erasecols(void *, int, int, int, long);
 static void	crmfb_copyrows(void *, int, int, int);
 static void	crmfb_eraserows(void *, int, int, long);
-//static void	crmfb_putchar(void *, int, int, u_int, long);
 static void	crmfb_cursor(void *, int, int, int);
 static void	crmfb_putchar(void *, int, int, u_int, long);
 
@@ -843,7 +842,6 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	/* setup tile pointer, but don't turn on DMA yet! */
 	h = DMAADDR(sc->sc_dmai);
 	d = (h >> 9) << CRMFB_FRM_CONTROL_TILEPTR_SHIFT;
-	printf("CRMFB_FRM_CONTROL %08x -> %08x", crmfb_read_reg(sc, CRMFB_FRM_CONTROL), d);
 	crmfb_write_reg(sc, CRMFB_FRM_CONTROL, d);
 
 	/* init framebuffer width and pixel size */
@@ -868,7 +866,6 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 		panic("Unsupported depth");
 	}
 	d |= (h << CRMFB_FRM_TILESIZE_DEPTH_SHIFT);
-	printf("CRMFB_FRM_TILESIZE %08x -> %08x", crmfb_read_reg(sc, CRMFB_FRM_TILESIZE), d);
 	crmfb_write_reg(sc, CRMFB_FRM_TILESIZE, d);
 
 	/* init framebuffer height, we use the trick that the Linux
@@ -878,7 +875,6 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	/*h = sc->sc_width * sc->sc_height / (512 / (depth >> 3));*/
 	h = sc->sc_height;
 	d = h << CRMFB_FRM_PIXSIZE_HEIGHT_SHIFT;
-	printf("CRMFB_FRM_PIXSIZE %08x -> %08x", crmfb_read_reg(sc, CRMFB_FRM_PIXSIZE), d);
 	crmfb_write_reg(sc, CRMFB_FRM_PIXSIZE, d);
 
 	/* turn off firmware overlay and hardware cursor */
@@ -910,7 +906,6 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	v = (DMAADDR(sc->sc_dma) >> 16) & 0xffff;
 	tlbptr = 0;
 	tx = ((sc->sc_width + (tile_width - 1)) & ~(tile_width - 1)) / tile_width;
-	printf("tx: %d\n", tx);
 	for (i = 0; i < sc->sc_tiles_y; i++) {
 		reg = 0;
 		shift = 64;
@@ -921,14 +916,12 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 				shift = 64;
 				bus_space_write_8(sc->sc_iot, sc->sc_reh,
 				    CRIME_RE_TLB_A + tlbptr + (j & 0xffc) * 2, reg);
-				printf("%08x: %016llx\n", tlbptr + (j & 0xffc) * 2, reg);
 			}
 			v++;
 		}
 		if (shift != 64) {
 			bus_space_write_8(sc->sc_iot, sc->sc_reh,
 			    CRIME_RE_TLB_A + tlbptr + (j & 0xffc) * 2, reg);
-			printf("%08x: %016llx\n", tlbptr + (j & 0xffc) * 2, reg);
 		}
 		tlbptr += 32;
 	}
@@ -940,10 +933,11 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 
 	wbflush();
 
+#ifdef CRMFB_DEBUG
 	for (i = 0; i < 0x80; i += 8)
 		printf("%04x: %016llx\n", i, bus_space_read_8(sc->sc_iot, sc->sc_reh,
 			    CRIME_RE_TLB_A + i));
-
+#endif
 	/* do some very basic engine setup */
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_CLIPMODE, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_WINOFFSET_SRC, 0);
@@ -999,7 +993,6 @@ crmfb_wait_idle(struct crmfb_softc *sc)
 
 	do {
 		i++;
-		delay(1);
 	} while (((bus_space_read_4(sc->sc_iot, sc->sc_reh, CRIME_DE_STATUS) &
 		   CRIME_DE_IDLE) == 0) && (i < 100000000));
 	if (i >= 100000000)
