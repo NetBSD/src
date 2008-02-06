@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.45 2008/02/06 11:22:12 jmmv Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.46 2008/02/06 11:23:54 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.45 2008/02/06 11:22:12 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.46 2008/02/06 11:23:54 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -858,7 +858,7 @@ int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
 	int error;
-	u_int newpages, oldpages;
+	unsigned int newpages, oldpages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 	off_t oldsize;
