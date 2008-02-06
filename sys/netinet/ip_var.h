@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.83 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.84 2008/02/06 03:20:51 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -183,6 +183,7 @@ struct ipflow {
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
 #define	IP_RETURNMTU		0x4		/* pass back mtu on EMSGSIZE */
+#define	IP_NOIPNEWID		0x8		/* don't fill in ip_id */
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
@@ -256,46 +257,6 @@ struct	ipflow *ipflow_reap(int);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);
-
-extern uint16_t	ip_id;
-static __inline uint16_t ip_newid(void);
-
-u_int16_t ip_randomid(void);
-extern int ip_do_randomid;
-
-/*
- * ip_newid_range: "allocate" num contiguous ip_ids.
- *
- * => return the first id.
- */
-
-static __inline uint16_t
-ip_newid_range(unsigned int num)
-{
-	uint16_t id;
-
-	if (ip_do_randomid) {
-		/* XXX ignore num */
-		return ip_randomid();
-	}
-
-	/*
-	 * never allow an ip_id of 0. (detect wrap)
-	 */
-	if ((uint16_t)(ip_id + num) < ip_id)
-		ip_id = 1;
-	id = htons(ip_id);
-	ip_id += num;
-
-	return id;
-}
-
-static __inline uint16_t
-ip_newid(void)
-{
-
-	return ip_newid_range(1);
-}
 
 #endif  /* _KERNEL */
 
