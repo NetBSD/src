@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.76 2008/02/04 21:08:13 elad Exp $	*/
+/*	$NetBSD: xy.c,v 1.77 2008/02/06 12:08:35 elad Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.76 2008/02/04 21:08:13 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.77 2008/02/06 12:08:35 elad Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -939,7 +939,6 @@ xy_getkauthreq(u_char cmd)
 		req = KAUTH_REQ_DEVICE_PASSTHRU_READCONF;
 		break;
 
-	case XYCMD_WRP:
 	case XYCMD_RST:
 	case XYCMD_SDS:
 	case XYCMD_MBL:
@@ -1082,6 +1081,7 @@ xyioctl(dev, command, addr, flag, l)
 		    dev, req, xio)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
+		}
 
 	default:
 		return ENOTTY;
