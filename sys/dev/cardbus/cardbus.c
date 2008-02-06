@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.86 2008/01/03 23:15:43 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.87 2008/02/06 22:06:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.86 2008/01/03 23:15:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.87 2008/02/06 22:06:28 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -991,6 +991,8 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 	cardbus_function_tag_t cf = ct->ct_cf;
 
 	cardbusreg_t value, cap, now;
+
+	KASSERT((offset & 0x3) == 0);
 
 	cap = cap_reg >> PCI_PMCR_SHIFT;
 	value = cardbus_conf_read(cc, cf, tag, offset + PCI_PMCSR);
