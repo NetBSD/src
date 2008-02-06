@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.44 2008/01/24 17:32:54 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.45 2008/02/06 11:22:12 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.44 2008/01/24 17:32:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.45 2008/02/06 11:22:12 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -928,7 +928,7 @@ out:
  * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
- * If 'total' is true, the value returned is the total amount of memory 
+ * If 'total' is true, the value returned is the total amount of memory
  * pages configured for the system (either in use or free).
  * If it is FALSE, the value returned is the amount of free memory pages.
  *
