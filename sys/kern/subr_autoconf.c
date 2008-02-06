@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.129 2008/01/14 12:40:03 yamt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.130 2008/02/06 20:24:17 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.129 2008/01/14 12:40:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.130 2008/02/06 20:24:17 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1447,26 +1447,28 @@ config_detach(device_t dev, int flags)
 	return (0);
 }
 
-struct config_detach_arg {
-	int a_flags;
-	int a_error;
-};
-
-static bool
-config_detach_helper(device_t child, void *arg)
-{
-	struct config_detach_arg *a = arg;
-
-	return (a->a_error = config_detach(child, a->a_flags)) == 0;
-}
-
 int
 config_detach_children(device_t parent, int flags)
 {
-	struct config_detach_arg a = {.a_flags = flags, .a_error = 0};
+	device_t dv;
+	int progress, error = 0;
 
-	device_foreach_child(parent, config_detach_helper, &a);
-	return a.a_error;
+	/*
+	 * config_detach() can work recursively, thus it can
+	 * delete any number of devices from the linked list.
+	 * For that reason, start over after each hit.
+	 */
+	do {
+		progress = 0;
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			if (device_parent(dv) != parent)
+				continue;
+			progress++;
+			error = config_detach(dv, flags);
+			break;
+		}
+	} while (progress && !error);
+	return error;
 }
 
 int
@@ -1734,21 +1736,6 @@ device_parent(device_t dev)
 {
 
 	return (dev->dv_parent);
-}
-
-bool
-device_foreach_child(device_t parent, bool (*func)(device_t, void *), void *arg)
-{
-	device_t curdev, nextdev;
-
-	for (curdev = TAILQ_FIRST(&alldevs); curdev != NULL; curdev = nextdev) {
-		nextdev = TAILQ_NEXT(curdev, dv_list);
-		if (device_parent(curdev) != parent)
-			continue;
-		if (!(*func)(curdev, arg))
-			return false;
-	}
-	return true;
 }
 
 bool
