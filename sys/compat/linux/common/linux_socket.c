@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.85 2007/12/20 23:02:56 dsl Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.86 2008/02/06 21:57:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.85 2007/12/20 23:02:56 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.86 2008/02/06 21:57:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.85 2007/12/20 23:02:56 dsl Exp $"
 #include <sys/syslog.h>
 #include <sys/exec.h>
 #include <sys/kauth.h>
-
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
 
@@ -1229,7 +1228,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 	if (error == EISCONN) {
 		struct file *fp;
 		struct socket *so;
-		int s, state, prflags;
+		int s, state, prflags, nbio;
 
 		/* getsock() will use the descriptor for us */
 	    	if (getsock(l->l_proc->p_fd, SCARG(uap, s), &fp) != 0)
@@ -1238,6 +1237,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		s = splsoftnet();
 		so = (struct socket *)fp->f_data;
 		state = so->so_state;
+		nbio = so->so_nbio;
 		prflags = so->so_proto->pr_flags;
 		splx(s);
 		FILE_UNUSE(fp, l);
@@ -1246,7 +1246,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		 * non-blocking connect; however we don't have
 		 * a convenient place to keep that state..
 		 */
-		if ((state & SS_NBIO) && (state & SS_ISCONNECTED) &&
+		if (nbio && (state & SS_ISCONNECTED) &&
 		    (prflags & PR_CONNREQUIRED))
 			return 0;
 	}
