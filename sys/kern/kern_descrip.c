@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.171 2008/01/27 19:48:53 dsl Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.172 2008/02/06 21:51:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.171 2008/01/27 19:48:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.172 2008/02/06 21:51:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,16 +271,16 @@ filedesc_init(void)
 
 	mutex_init(&filelist_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	file_cache = pool_cache_init(sizeof(struct file), 0, 0, 0,
-	    "filepl", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
+	file_cache = pool_cache_init(sizeof(struct file), CACHE_LINE_SIZE, 0,
+	    0, "filepl", NULL, IPL_NONE, file_ctor, file_dtor, NULL);
 	KASSERT(file_cache != NULL);
 
 	cwdi_cache = pool_cache_init(sizeof(struct cwdinfo), 0, 0, 0,
 	    "cwdipl", NULL, IPL_NONE, cwdi_ctor, cwdi_dtor, NULL);
 	KASSERT(cwdi_cache != NULL);
 
-	filedesc0_cache = pool_cache_init(sizeof(struct filedesc0), 0, 0, 0,
-	    "fdescpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	filedesc0_cache = pool_cache_init(sizeof(struct filedesc0),
+	    CACHE_LINE_SIZE, 0, 0, "fdescpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(filedesc0_cache != NULL);
 }
 
@@ -1693,10 +1693,13 @@ do_posix_fadvise(struct lwp *l, int fd, off_t offset, off_t len, int advice,
 		KASSERT(POSIX_FADV_SEQUENTIAL == UVM_ADV_SEQUENTIAL);
 
 		/*
-		 * we ignore offset and size.
+		 * we ignore offset and size.  must lock the file to do
+		 * this, as f_advice is sub-word sized.
 		 */
 
-		fp->f_advice = advice;
+		mutex_enter(&fp->f_lock);
+		fp->f_advice = (u_char)advice;
+		mutex_exit(&fp->f_lock);
 		break;
 
 	case POSIX_FADV_WILLNEED:
