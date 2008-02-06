@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.40 2008/02/05 22:31:49 garbled Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.41 2008/02/06 03:15:06 garbled Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,8 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.40 2008/02/05 22:31:49 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.41 2008/02/06 03:15:06 garbled Exp $");
 
+#include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -111,8 +112,8 @@ oea_init(void (*handler)(void))
 	extern int sctrap[], scsize[];
 	extern int alitrap[], alisize[];
 	extern int dsitrap[], dsisize[];
-#ifdef PPC_OEA601
 	extern int trapstart[], trapend[];
+#ifdef PPC_OEA601
 	extern int dsi601trap[], dsi601size[];
 #endif
 	extern int decrint[], decrsize[];
@@ -319,7 +320,9 @@ oea_init(void (*handler)(void))
 	}
 #endif
 
-#ifdef PPC_OEA601
+	/* XXX It would seem like this code could be elided ifndef 601, but
+	 * doing so breaks my power3 machine.
+	 */
 	/*
 	 * If we aren't on a MPC601 processor, we need to zap any of the
 	 * sequences we save/restore the MQ SPR into NOPs, and skip over the
@@ -349,6 +352,7 @@ oea_init(void (*handler)(void))
 	 */
 	__syncicache((void *) trapstart,
 	    (uintptr_t) trapend - (uintptr_t) trapstart);
+#ifdef PPC_OEA601
 
 	/*
 	 * If we are on a MPC601 processor, we need to zap any tlbsync
