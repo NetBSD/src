@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.16 2008/01/05 12:53:54 dsl Exp $ */
+/*	$NetBSD: syscall.c,v 1.17 2008/02/06 22:12:40 dsl Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.16 2008/01/05 12:53:54 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.17 2008/02/06 22:12:40 dsl Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -311,7 +311,7 @@ syscall_fancy(register_t code, struct trapframe *tf, register_t pc)
 		goto bad;
 
 	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(code, code, NULL, args.i)) != 0) {
+	if ((error = trace_enter(code, args.i, callp->sy_narg)) != 0) {
 		KERNEL_UNLOCK_LAST(l);
 		goto out;
 	}
@@ -367,7 +367,7 @@ out:
 		break;
 	}
 
-	trace_exit(code, args.i, rval.o, error);
+	trace_exit(code, rval.o, error);
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);
