@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.15 2008/02/05 22:31:50 garbled Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.16 2008/02/06 03:15:07 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.15 2008/02/05 22:31:50 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.16 2008/02/06 03:15:07 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,8 +576,9 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 			*bshp = pa;
 			return (0);
 		}
-	} else {
+	} else
 #endif /* PPC_OEA601 */
+	{
 		/*
 		 * Let's try to BAT map this address if possible
 		 */
@@ -587,10 +588,9 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 			*bshp = pa;
 			return (0);
 		}
-#ifdef PPC_OEA601
 	}
-#endif /* PPC_OEA601 */
 #endif /* !defined (PPC_OEA64) && !defined(PPC_IBM4XX) */
+
 #ifndef PPC_IBM4XX
 	if (extent_flags == 0) {
 		extent_free(t->pbs_extent, bpa, size, EX_NOWAIT);
@@ -645,8 +645,9 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		} else {
 			pmap_extract(pmap_kernel(), va, &pa);
 		}
-	} else {
+	} else
 #endif /* PPC_OEA601 */
+	{
 		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, va) &&
 		    BAT_VA_MATCH_P(batu, va + size - 1)) {
@@ -655,9 +656,7 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 		} else { 
 			pmap_extract(pmap_kernel(), va, &pa);
 		}
-#ifdef PPC_OEA601
 	}
-#endif /* PPC_OEA601 */
 #else
 	pmap_extract(pmap_kernel(), va, &pa);
 #endif /* !defined (PPC_OEA64) && !defined (PPC_IBM4XX) */
@@ -715,17 +714,16 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 			*bshp = pa;
 			return (0);
 		}
-	} else {
+	} else
 #endif /* PPC_OEA601 */
+	{
 		register_t batu = battable[pa >> ADDR_SR_SHFT].batu;
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&
 		    BAT_VA_MATCH_P(batu, pa + size - 1)) {
 			*bshp = pa;
 			return (0);
 		}
-#ifdef PPC_OEA601
 	}
-#endif /* PPC_OEA601 */
 #endif /* !defined (PPC_OEA64) && !defined (PPC_IBM4XX) */
 	*bshp = (bus_space_handle_t) mapiodev(pa, size);
 	if (*bshp == 0) {
