@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.137 2008/02/02 21:04:41 elad Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.138 2008/02/06 22:12:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.137 2008/02/02 21:04:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.138 2008/02/06 22:12:41 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -539,38 +539,28 @@ ktealloc(struct ktrace_entry **ktep, void **bufp, lwp_t *l, int type,
 }
 
 void
-ktr_syscall(register_t code, register_t realcode,
-	    const struct sysent *callp, const register_t args[])
+ktr_syscall(register_t code, const register_t args[], int narg)
 {
 	lwp_t *l = curlwp;
 	struct proc *p = l->l_proc;
 	struct ktrace_entry *kte;
 	struct ktr_syscall *ktp;
 	register_t *argp;
-	int argsize;
 	size_t len;
 	u_int i;
 
 	if (!KTRPOINT(p, KTR_SYSCALL))
 		return;
 
-	if (callp == NULL)
-		callp = p->p_emul->e_sysent;
-
-	argsize = callp[code].sy_argsize;
-#ifdef _LP64
-	if (p->p_flag & PK_32)
-		argsize = argsize << 1;
-#endif
-	len = sizeof(struct ktr_syscall) + argsize;
+	len = sizeof(struct ktr_syscall) + narg * sizeof argp[0];
 
 	if (ktealloc(&kte, (void *)&ktp, l, KTR_SYSCALL, len))
 		return;
 
-	ktp->ktr_code = realcode;
-	ktp->ktr_argsize = argsize;
+	ktp->ktr_code = code;
+	ktp->ktr_argsize = narg * sizeof argp[0];
 	argp = (register_t *)(ktp + 1);
-	for (i = 0; i < (argsize / sizeof(*argp)); i++)
+	for (i = 0; i < narg; i++)
 		*argp++ = args[i];
 
 	ktraddentry(l, kte, KTA_WAITOK);

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.24 2008/01/25 12:48:05 skrll Exp $ */
+/*	$NetBSD: syscall.c,v 1.25 2008/02/06 22:12:40 dsl Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.24 2008/01/25 12:48:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.25 2008/02/06 22:12:40 dsl Exp $");
 
 #define NEW_FPSTATE
 
@@ -413,7 +413,7 @@ syscall_fancy(struct trapframe64 *tf, register_t code, register_t pc)
 	ap = &args;
 #endif
 	KERNEL_LOCK(1, l);
-	if ((error = trace_enter(code, code, NULL, ap->r)) != 0) {
+	if ((error = trace_enter(code, ap->r, callp->sy_narg)) != 0) {
 		KERNEL_UNLOCK_LAST(l);
 		goto out;
 	}
@@ -467,7 +467,7 @@ out:
 	}
 
 	if (ap)
-		trace_exit(code, ap->r, rval, error);
+		trace_exit(code, rval, error);
 
 	userret(l, pc, sticks);
 	share_fpu(l, tf);

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.49 2008/01/05 12:53:53 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.50 2008/02/06 22:12:39 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.49 2008/01/05 12:53:53 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.50 2008/02/06 22:12:39 dsl Exp $");
 
 #include "opt_vm86.h"
 
@@ -104,7 +104,7 @@ syscall(struct trapframe *frame)
 	if (!__predict_false(l->l_proc->p_trace_enabled)
 	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
 	    || (error = trace_enter(frame->tf_eax & (SYS_NSYSENT - 1),
-		    frame->tf_eax & (SYS_NSYSENT - 1), NULL, args)) == 0) {
+		    args, callp->sy_narg)) == 0) {
 		rval[0] = 0;
 		rval[1] = 0;
 
@@ -122,7 +122,7 @@ syscall(struct trapframe *frame)
 	if (__predict_false(l->l_proc->p_trace_enabled)
 	    && !__predict_false(callp->sy_flags & SYCALL_INDIRECT)) {
 		code = frame->tf_eax & (SYS_NSYSENT - 1);
-		trace_exit(code, args, rval, error);
+		trace_exit(code, rval, error);
 	}
 
 	if (__predict_true(error == 0)) {

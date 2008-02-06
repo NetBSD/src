@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.176 2008/01/18 01:22:18 joerg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.177 2008/02/06 22:12:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.176 2008/01/18 01:22:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.177 2008/02/06 22:12:42 dsl Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1356,18 +1356,15 @@ trace_is_enabled(struct proc *p)
  * Start trace of particular system call. If process is being traced,
  * this routine is called by MD syscall dispatch code just before
  * a system call is actually executed.
- * MD caller guarantees the passed 'code' is within the supported
- * system call number range for emulation the process runs under.
  */
 int
-trace_enter(register_t code, register_t realcode,
-    const struct sysent *callp, const register_t *args)
+trace_enter(register_t code, const register_t *args, int narg)
 {
 #ifdef SYSCALL_DEBUG
 	scdebug_call(code, args);
 #endif /* SYSCALL_DEBUG */
 
-	ktrsyscall(code, realcode, callp, args);
+	ktrsyscall(code, args, narg);
 
 #ifdef PTRACE
 	if ((curlwp->l_proc->p_slflag & (PSL_SYSCALL|PSL_TRACED)) ==
@@ -1385,8 +1382,7 @@ trace_enter(register_t code, register_t realcode,
  * system call number range for emulation the process runs under.
  */
 void
-trace_exit(register_t code, const register_t *args, 
-    register_t rval[], int error)
+trace_exit(register_t code, register_t rval[], int error)
 {
 #ifdef SYSCALL_DEBUG
 	scdebug_ret(code, error, rval);
