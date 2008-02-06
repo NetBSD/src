@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vnops.c,v 1.48 2008/01/31 13:13:20 ad Exp $	*/
+/*	$NetBSD: tmpfs_vnops.c,v 1.49 2008/02/06 11:22:12 jmmv Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.48 2008/01/31 13:13:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vnops.c,v 1.49 2008/02/06 11:22:12 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -1427,7 +1427,7 @@ tmpfs_getpages(void *v)
 	 * gotten pages is clean.  Otherwise uao_get (pointed to by
 	 * the pgo_get below) gets confused and does not return the
 	 * appropriate pages.
-	 * 
+	 *
 	 * XXX This shall be revisited when kern/32166 is addressed
 	 * because the loop to clean m[i] will most likely be redundant
 	 * as well as the PGO_ALLPAGES flag.
