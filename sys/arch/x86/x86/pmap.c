@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2008/01/31 09:57:27 wiz Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2008/02/07 14:37:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2008/01/31 09:57:27 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2008/02/07 14:37:40 yamt Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -325,13 +325,14 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2008/01/31 09:57:27 wiz Exp $");
  *   2. see if there is a cheap way to batch some updates.
  */
 
-vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
-int ptp_shifts[] = PTP_SHIFT_INITIALIZER;
+const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
+const int ptp_shifts[] = PTP_SHIFT_INITIALIZER;
+const long nkptpmax[] = NKPTPMAX_INITIALIZER;
+const long nbpd[] = NBPD_INITIALIZER;
+pd_entry_t * const normal_pdes[] = PDES_INITIALIZER;
+pd_entry_t * const alternate_pdes[] = APDES_INITIALIZER;
+
 long nkptp[] = NKPTP_INITIALIZER;
-long nkptpmax[] = NKPTPMAX_INITIALIZER;
-long nbpd[] = NBPD_INITIALIZER;
-pd_entry_t *normal_pdes[] = PDES_INITIALIZER;
-pd_entry_t *alternate_pdes[] = APDES_INITIALIZER;
 
 static kmutex_t pmaps_lock;
 
@@ -578,17 +579,18 @@ extern vaddr_t pentium_idt_vaddr;
  * local prototypes
  */
 
-static struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t, pd_entry_t **);
+static struct vm_page	*pmap_get_ptp(struct pmap *, vaddr_t,
+				      pd_entry_t * const *);
 static struct vm_page	*pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
 static void		 pmap_freepage(struct pmap *, struct vm_page *, int,
 				       struct vm_page **);
 static void		 pmap_free_ptp(struct pmap *, struct vm_page *,
-				       vaddr_t, pt_entry_t *, pd_entry_t **,
-				       struct vm_page **);
+				       vaddr_t, pt_entry_t *,
+				       pd_entry_t * const *, struct vm_page **);
 static bool		 pmap_is_curpmap(struct pmap *);
 static bool		 pmap_is_active(struct pmap *, struct cpu_info *, bool);
 static void		 pmap_map_ptes(struct pmap *, struct pmap **,
-				       pt_entry_t **, pd_entry_t ***);
+				       pt_entry_t **, pd_entry_t * const **);
 static void		 pmap_do_remove(struct pmap *, vaddr_t, vaddr_t, int);
 static bool		 pmap_remove_pte(struct pmap *, struct vm_page *,
 					 pt_entry_t *, vaddr_t, int,
@@ -601,11 +603,12 @@ static pt_entry_t	 pmap_remove_ptes(struct pmap *, struct vm_page *,
 
 static void		 pmap_unmap_ptes(struct pmap *, struct pmap *);
 static bool		 pmap_get_physpage(vaddr_t, int, paddr_t *);
-static int		 pmap_pdes_invalid(vaddr_t, pd_entry_t **,
+static int		 pmap_pdes_invalid(vaddr_t, pd_entry_t * const *,
 					   pd_entry_t *);
 #define	pmap_pdes_valid(va, pdes, lastpde)	\
 	(pmap_pdes_invalid((va), (pdes), (lastpde)) == 0)
-static void		 pmap_alloc_level(pd_entry_t **, vaddr_t, int, long *);
+static void		 pmap_alloc_level(pd_entry_t * const *, vaddr_t, int,
+					  long *);
 
 static bool		 pmap_reactivate(struct pmap *);
 
@@ -772,7 +775,7 @@ pmap_reference(struct pmap *pmap)
 
 static void
 pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2,
-    pd_entry_t **ptepp, pd_entry_t ***pdeppp)
+    pd_entry_t **ptepp, pd_entry_t * const **pdeppp)
 {
 	pd_entry_t opde, npde;
 	struct pmap *ourpmap;
@@ -1823,7 +1826,8 @@ pmap_free_empty_ptps(struct vm_page *empty_ptps)
 
 static void
 pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
-	      pt_entry_t *ptes, pd_entry_t **pdes, struct vm_page **empty_ptps)
+	      pt_entry_t *ptes, pd_entry_t * const *pdes,
+	      struct vm_page **empty_ptps)
 {
 	unsigned long index;
 	int level;
@@ -1876,7 +1880,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  */
 
 static struct vm_page *
-pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t **pdes)
+pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes)
 {
 	struct vm_page *ptp, *pptp;
 	int i;
@@ -2757,7 +2761,7 @@ pmap_deactivate(struct lwp *l)
  */
 
 static int
-pmap_pdes_invalid(vaddr_t va, pd_entry_t **pdes, pd_entry_t *lastpde)
+pmap_pdes_invalid(vaddr_t va, pd_entry_t * const *pdes, pd_entry_t *lastpde)
 {
 	int i;
 	unsigned long index;
@@ -2782,7 +2786,8 @@ bool
 pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 {
 	pt_entry_t *ptes, pte;
-	pd_entry_t pde, **pdes;
+	pd_entry_t pde;
+	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
@@ -2836,7 +2841,8 @@ pmap_extract_ma(pmap, va, pap)
 	paddr_t *pap;
 {
 	pt_entry_t *ptes, pte;
-	pd_entry_t pde, **pdes;
+	pd_entry_t pde;
+	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
  
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
@@ -3253,7 +3259,8 @@ static void
 pmap_do_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva, int flags)
 {
 	pt_entry_t *ptes, xpte = 0;
-	pd_entry_t **pdes, pde;
+	pd_entry_t pde;
+	pd_entry_t * const *pdes;
 	struct pv_entry *pv_tofree = NULL;
 	bool result;
 	paddr_t ptppa;
@@ -3541,7 +3548,7 @@ startover:
 		if (ptp != NULL) {
 			struct pmap *pmap2;
 			pt_entry_t *ptes;
-			pd_entry_t **pdes;
+			pd_entry_t * const *pdes;
 
 			KASSERT(pmap != pmap_kernel());
 
@@ -3722,7 +3729,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 {
 	pt_entry_t *ptes, *epte;
 	pt_entry_t *spte;
-	pd_entry_t **pdes;
+	pd_entry_t * const *pdes;
 	vaddr_t blockend, va;
 	pt_entry_t opte;
 	struct pmap *pmap2;
@@ -3809,7 +3816,7 @@ void
 pmap_unwire(struct pmap *pmap, vaddr_t va)
 {
 	pt_entry_t *ptes;
-	pd_entry_t **pdes;
+	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
@@ -3893,7 +3900,7 @@ pmap_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 #endif /* XEN */
 	pt_entry_t *ptes, opte, npte;
 	pt_entry_t *ptep;
-	pd_entry_t **pdes;
+	pd_entry_t * const *pdes;
 	struct vm_page *ptp, *pg;
 	struct pmap_page *new_pp;
 	struct pmap_page *old_pp;
@@ -4168,7 +4175,8 @@ pmap_get_physpage(vaddr_t va, int level, paddr_t *paddrp)
  * Used by pmap_growkernel.
  */
 static void
-pmap_alloc_level(pd_entry_t **pdes, vaddr_t kva, int lvl, long *needed_ptps)
+pmap_alloc_level(pd_entry_t * const *pdes, vaddr_t kva, int lvl,
+    long *needed_ptps)
 {
 	unsigned long i;
 	vaddr_t va;
@@ -4329,7 +4337,7 @@ void
 pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 {
 	pt_entry_t *ptes, *pte;
-	pd_entry_t **pdes;
+	pd_entry_t * const *pdes;
 	struct pmap *pmap2;
 	vaddr_t blkendva;
 
