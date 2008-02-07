@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.47 2007/11/28 23:23:11 degroote Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.48 2008/02/07 01:22:02 dyoung Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.47 2007/11/28 23:23:11 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.48 2008/02/07 01:22:02 dyoung Exp $");
 #endif
 
 /*
@@ -2940,11 +2940,11 @@ ieee80211_ioctl(struct ieee80211com *ic, u_long cmd, void *data)
 		break;
 	case SIOCSIFMTU:
 		ifr = (struct ifreq *)data;
-		if (!(IEEE80211_MTU_MIN <= ifr->ifr_mtu &&
-		    ifr->ifr_mtu <= IEEE80211_MTU_MAX))
+		if (ifr->ifr_mtu < IEEE80211_MTU_MIN &&
+		    ifr->ifr_mtu > IEEE80211_MTU_MAX)
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);

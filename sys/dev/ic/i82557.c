@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.110 2008/01/19 22:10:17 dyoung Exp $	*/
+/*	$NetBSD: i82557.c,v 1.111 2008/02/07 01:21:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.110 2008/01/19 22:10:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.111 2008/02/07 01:21:53 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2089,20 +2089,22 @@ fxp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				/*
-				 * Multicast list has changed; set the
-				 * hardware filter accordingly.
-				 */
-				if (sc->sc_txpending) {
-					sc->sc_flags |= FXPF_WANTINIT;
-					error = 0;
-				} else
-					error = fxp_init(ifp);
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			/*
+			 * Multicast list has changed; set the
+			 * hardware filter accordingly.
+			 */
+			if (sc->sc_txpending) {
+				sc->sc_flags |= FXPF_WANTINIT;
 			} else
-				error = 0;
+				error = fxp_init(ifp);
 		}
 		break;
 	}
