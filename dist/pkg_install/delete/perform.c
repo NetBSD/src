@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.5 2008/01/27 14:11:31 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.6 2008/02/07 23:42:16 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.15 1997/10/13 15:03:52 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.5 2008/01/27 14:11:31 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.6 2008/02/07 23:42:16 joerg Exp $");
 #endif
 #endif
 
@@ -839,19 +839,22 @@ pkg_do(char *pkg)
 		warnx("Oops - removed current working directory.  Oh, well.");
 	if (!Fake) {
 		/* Finally nuke the +-files and the pkgdb-dir (/var/db/pkg/foo) */
-		if (is_depoted_pkg) {
-			(void) remove_files(LogDir, "+*");
-			if (isemptydir(LogDir))
-				(void)rmdir(LogDir);
-			else
-				warnx("%s is not empty", LogDir);
-			return 0;
-		} else {
-			if (fexec(REMOVE_CMD, "-rf", LogDir, NULL)) {
-				warnx("couldn't remove log entry in %s, deinstall failed", LogDir);
-				if (!Force)
-					return 1;
+		(void) remove_files(LogDir, "+*");
+		if (isemptydir(LogDir))
+			(void)rmdir(LogDir);
+		else if (is_depoted_pkg)
+			warnx("%s is not empty", LogDir);
+		else if (Force) {
+			if (fexec(REMOVE_CMD, "-rf", LogDir, NULL) != 0) {
+				warnx("couldn't remove log entry in %s", LogDir);
+				return 1;
+			} else {
+				warnx("log entry forcefully removed in %s", LogDir);
+				return 0;
 			}
+		} else {
+			warnx("couldn't remove log entry in %s", LogDir);
+			return 1;
 		}
 	}
 	return 0;
