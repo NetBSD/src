@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.62 2008/02/05 22:31:50 garbled Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.63 2008/02/07 03:20:17 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -178,6 +178,7 @@ _C_LABEL(trapsize) = .-_C_LABEL(trapcode)
 
 /*
  * For ALI: has to save DSISR and DAR
+ * Also used as dsitrap for BATless cpus.
  */
 /* LINTSTUB: Var: int alicode[1], alisize[1]; */
 	.globl	_C_LABEL(alitrap),_C_LABEL(alisize)
@@ -222,7 +223,6 @@ _C_LABEL(dsitrap):
 	mfsrr1	%r31			/* test kernel mode */
 	mtcr	%r31
 	bt	17,1f			/* branch if PSL_PR is set */
-#if !defined(PPC_OEA64)
 	mfdar	%r31			/* get fault address */
 	rlwinm	%r31,%r31,7,25,28	/* get segment * 8 */
 
@@ -245,8 +245,6 @@ _C_LABEL(dsitrap):
 	mtdbatu	3,%r30
 	mtdbatl	3,%r31
 3:
-#endif /* !PPC_OEA64 */
-
 	mfsprg2	%r30			/* restore XER */
 	mtxer	%r30
 	mtcr	%r29			/* restore CR */

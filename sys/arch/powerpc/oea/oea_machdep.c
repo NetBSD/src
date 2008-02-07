@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.42 2008/02/07 01:17:51 matt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.43 2008/02/07 03:20:16 garbled Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.42 2008/02/07 01:17:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.43 2008/02/07 03:20:16 garbled Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.42 2008/02/07 01:17:51 matt Exp $"
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/sr_601.h>
+#include <powerpc/oea/cpufeat.h>
 #include <powerpc/trap.h>
 #include <powerpc/stdarg.h>
 #include <powerpc/spr.h>
@@ -96,6 +97,7 @@ struct vm_map *phys_map = NULL;
  * Global variables used here and there
  */
 extern struct user *proc0paddr;
+extern unsigned long oeacpufeat;
 
 static void trap0(void *);
 
@@ -206,10 +208,15 @@ oea_init(void (*handler)(void))
 				size = (size_t)dsi601size;
 				memcpy((void *)EXC_DSI, dsi601trap, size);
 				break;
-			}
+			} else
 #endif /* PPC_OEA601 */
-			size = (size_t)dsisize;
-			memcpy((void *)EXC_DSI, dsitrap, size);
+			if (oeacpufeat & OEACPU_NOBAT) {
+				size = (size_t)alisize;
+				memcpy((void *)EXC_DSI, alitrap, size);
+			} else {
+				size = (size_t)dsisize;
+				memcpy((void *)EXC_DSI, dsitrap, size);
+			}
 			break;
 		case EXC_DECR:
 			size = (size_t)decrsize;
