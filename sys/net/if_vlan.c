@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.55 2007/09/19 05:25:33 dyoung Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.56 2008/02/07 01:22:02 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.55 2007/09/19 05:25:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.56 2008/02/07 01:22:02 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -502,16 +502,14 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifv->ifv_p != NULL) {
-			if (ifr->ifr_mtu >
-			     (ifv->ifv_p->if_mtu - ifv->ifv_mtufudge) ||
-			    ifr->ifr_mtu <
-			     (ifv->ifv_mintu - ifv->ifv_mtufudge))
-				error = EINVAL;
-			else
-				ifp->if_mtu = ifr->ifr_mtu;
-		} else
+		if (ifv->ifv_p == NULL)
 			error = EINVAL;
+		else if (
+		    ifr->ifr_mtu > (ifv->ifv_p->if_mtu - ifv->ifv_mtufudge) ||
+		    ifr->ifr_mtu < (ifv->ifv_mintu - ifv->ifv_mtufudge))
+			error = EINVAL;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCSETVLAN:

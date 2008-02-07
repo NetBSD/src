@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.126 2007/10/19 12:00:44 ad Exp $	*/
+/*	$NetBSD: if_de.c,v 1.127 2008/02/07 01:21:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.126 2007/10/19 12:00:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.127 2008/02/07 01:21:55 dyoung Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -4859,11 +4859,13 @@ tulip_ifioctl(
 		error = EINVAL;
 		break;
 	    }
-	    ifp->if_mtu = ifr->ifr_mtu;
+	    if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET) {
 #ifdef BIG_PACKET
-	    tulip_reset(sc);
-	    tulip_init(sc);
+		    tulip_reset(sc);
+		    tulip_init(sc);
 #endif
+		    error = 0;
+	    }
 	    break;
 #endif /* SIOCSIFMTU */
 

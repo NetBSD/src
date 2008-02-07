@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.27 2008/01/26 14:13:06 tsutsui Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.28 2008/02/07 01:21:56 dyoung Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.27 2008/01/26 14:13:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.28 2008/02/07 01:21:56 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -584,8 +584,8 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    (!(sc->sc_flags & NFE_USE_JUMBO) &&
 		    ifr->ifr_mtu > ETHERMTU))
 			error = EINVAL;
-		else if (ifp->if_mtu != ifr->ifr_mtu)
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -607,11 +607,15 @@ nfe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		sc->sc_if_flags = ifp->if_flags;
 		break;
 	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				nfe_setmulti(sc);
-			error = 0;
-		}
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+		
+		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			nfe_setmulti(sc);
 		break;
 	}
 

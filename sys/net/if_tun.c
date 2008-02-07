@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.101 2008/01/04 21:18:16 ad Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.102 2008/02/07 01:22:02 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.101 2008/01/04 21:18:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.102 2008/02/07 01:22:02 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -424,6 +424,7 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int		error = 0, s;
 	struct tun_softc *tp = (struct tun_softc *)(ifp->if_softc);
+	struct ifreq *ifr = data;
 
 	s = splnet();
 	simple_lock(&tp->tun_lock);
@@ -440,20 +441,18 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFBRDADDR:
 		TUNDEBUG("%s: broadcast address set\n", ifp->if_xname);
 		break;
-	case SIOCSIFMTU: {
-		struct ifreq *ifr = (struct ifreq *) data;
+	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > TUNMTU || ifr->ifr_mtu < 576) {
-		    error = EINVAL;
-		    break;
+			error = EINVAL;
+			break;
 		}
 		TUNDEBUG("%s: interface mtu set\n", ifp->if_xname);
-		ifp->if_mtu = ifr->ifr_mtu;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
-	}
 	case SIOCADDMULTI:
-	case SIOCDELMULTI: {
-		struct ifreq *ifr = (struct ifreq *) data;
-		if (ifr == 0) {
+	case SIOCDELMULTI:
+		if (ifr == NULL) {
 	        	error = EAFNOSUPPORT;           /* XXX */
 			break;
 		}
@@ -471,7 +470,6 @@ tun_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		break;
-	}
 	case SIOCSIFFLAGS:
 		break;
 	default:

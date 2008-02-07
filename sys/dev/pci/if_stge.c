@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.40 2008/01/19 22:10:19 dyoung Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.41 2008/02/07 01:21:57 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.40 2008/01/19 22:10:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.41 2008/02/07 01:21:57 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1023,13 +1023,17 @@ stge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	error = ether_ioctl(ifp, cmd, data);
 	if (error == ENETRESET) {
-		/*
-		 * Multicast list has changed; set the hardware filter
-		 * accordingly.
-		 */
-		if (ifp->if_flags & IFF_RUNNING)
-			stge_set_filter(sc);
 		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			/*
+			 * Multicast list has changed; set the hardware filter
+			 * accordingly.
+			 */
+			stge_set_filter(sc);
+		}
 	}
 
 	/* Try to get more packets going. */

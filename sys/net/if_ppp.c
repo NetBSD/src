@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.120 2008/01/04 21:18:15 ad Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.121 2008/02/07 01:22:01 dyoung Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.120 2008/01/04 21:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.121 2008/02/07 01:22:01 dyoung Exp $");
 
 #include "ppp.h"
 
@@ -801,11 +801,10 @@ pppsioctl(struct ifnet *ifp, u_long cmd, void *data)
 	    KAUTH_NETWORK_INTERFACE, KAUTH_REQ_NETWORK_INTERFACE_SETPRIV,
 	    ifp, (void *)cmd, NULL) != 0))
 	    break;
-	sc->sc_if.if_mtu = ifr->ifr_mtu;
-	break;
-
+	/*FALLTHROUGH*/
     case SIOCGIFMTU:
-	ifr->ifr_mtu = sc->sc_if.if_mtu;
+	if ((error = ifioctl_common(&sc->sc_if, cmd, data)) == ENETRESET)
+		error = 0;
 	break;
 
     case SIOCADDMULTI:

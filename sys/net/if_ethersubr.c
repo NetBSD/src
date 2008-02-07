@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.160 2008/01/19 20:11:52 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.161 2008/02/07 01:22:00 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.160 2008/01/19 20:11:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.161 2008/02/07 01:22:00 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -1497,12 +1497,12 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > maxmtu)
 			error = EINVAL;
-		else {
-			ifp->if_mtu = ifr->ifr_mtu;
-
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
 			/* Make sure the device notices the MTU change. */
 			if (ifp->if_flags & IFF_UP)
 				error = (*ifp->if_init)(ifp);
+			else
+				error = 0;
 		}
 		break;
 	    }
@@ -1544,8 +1544,11 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media,
 			    cmd);
 		break;
+	case SIOCSIFCAP:
+		return ifioctl_common(ifp, cmd, data);
 	default:
 		error = ENOTTY;
+		break;
 	}
 
 	return (error);
