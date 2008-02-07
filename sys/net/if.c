@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.216 2008/02/07 04:44:21 xtraeme Exp $	*/
+/*	$NetBSD: if.c,v 1.217 2008/02/07 08:48:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.216 2008/02/07 04:44:21 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.217 2008/02/07 08:48:16 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -1507,7 +1507,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
-	int s, error = 0;
+	int error = 0;
 #if defined(COMPAT_OSOCK) || defined(COMPAT_OIFREQ)
 	u_long ocmd = cmd;
 #endif
@@ -1651,7 +1651,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			s = splnet();
+			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);
 		}
