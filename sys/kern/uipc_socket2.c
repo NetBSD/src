@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.88 2008/01/29 12:39:39 yamt Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.89 2008/02/07 12:14:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.88 2008/01/29 12:39:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.89 2008/02/07 12:14:43 ad Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -168,6 +168,7 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
 	so->so_state = head->so_state | SS_NOFDREF;
+	so->so_nbio = head->so_nbio;
 	so->so_proto = head->so_proto;
 	so->so_timeo = head->so_timeo;
 	so->so_pgid = head->so_pgid;
