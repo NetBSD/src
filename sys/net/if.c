@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.215 2008/02/07 01:21:59 dyoung Exp $	*/
+/*	$NetBSD: if.c,v 1.216 2008/02/07 04:44:21 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.215 2008/02/07 01:21:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.216 2008/02/07 04:44:21 xtraeme Exp $");
 
 #include "opt_inet.h"
 
@@ -129,7 +129,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.215 2008/02/07 01:21:59 dyoung Exp $");
 #include <net/if_types.h>
 #include <net/radix.h>
 #include <net/route.h>
-#include <net/neticp.h>
 #include <net/netisr.h>
 #ifdef NETATALK
 #include <netatalk/at_extern.h>
@@ -938,8 +937,6 @@ ifa_insert(struct ifnet *ifp, struct ifaddr *ifa)
 	ifa->ifa_ifp = ifp;
 	TAILQ_INSERT_TAIL(&ifp->if_addrlist, ifa, ifa_list);
 	IFAREF(ifa);
-	if (neticp_commpage != NULL)
-		neticp_commpage->ni_ifaddrs_gen++;
 }
 
 void
@@ -948,8 +945,6 @@ ifa_remove(struct ifnet *ifp, struct ifaddr *ifa)
 	KASSERT(ifa->ifa_ifp == ifp);
 	TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
 	IFAFREE(ifa);
-	if (neticp_commpage != NULL)
-		neticp_commpage->ni_ifaddrs_gen++;
 }
 
 static inline int
