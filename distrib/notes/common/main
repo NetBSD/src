@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.389 2008/02/06 01:57:31 jnemeth Exp $
+.\"	$NetBSD: main,v 1.390 2008/02/07 14:36:40 itohy Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1322,7 +1322,7 @@ Users upgrading from previous versions of
 may wish to bear the
 following problems and compatibility issues in mind when upgrading to
 .Nx
-\*V .
+\*V.
 .Pp
 N.B. when using
 .Ic sysinst
