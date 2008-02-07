@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.41 2008/02/06 03:15:06 garbled Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.42 2008/02/07 01:17:51 matt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.41 2008/02/06 03:15:06 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.42 2008/02/07 01:17:51 matt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -205,14 +205,11 @@ oea_init(void (*handler)(void))
 			if (cpuvers == MPC601) {
 				size = (size_t)dsi601size;
 				memcpy((void *)EXC_DSI, dsi601trap, size);
-			} else {
-				size = (size_t)dsisize;
-				memcpy((void *)EXC_DSI, dsitrap, size);
+				break;
 			}
-#else
+#endif /* PPC_OEA601 */
 			size = (size_t)dsisize;
 			memcpy((void *)EXC_DSI, dsitrap, size);
-#endif /* PPC_OEA601 */
 			break;
 		case EXC_DECR:
 			size = (size_t)decrsize;
@@ -237,12 +234,16 @@ oea_init(void (*handler)(void))
 			break;
 #if defined(DDB) || defined(IPKDB) || defined(KGDB)
 		case EXC_RUNMODETRC:
+#ifdef PPC_OEA601
 			if (cpuvers != MPC601) {
+#endif
 				size = (size_t)trapsize;
 				memcpy((void *)EXC_RUNMODETRC, trapcode, size);
 				break;
+#ifdef PPC_OEA601
 			}
 			/* FALLTHROUGH */
+#endif
 		case EXC_PGM:
 		case EXC_TRC:
 		case EXC_BPT:
