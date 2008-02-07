@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.39 2008/01/19 22:10:19 dyoung Exp $ */
+/* $NetBSD: if_vge.c,v 1.40 2008/02/07 01:21:58 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.39 2008/01/19 22:10:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.40 2008/02/07 01:21:58 dyoung Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -2029,7 +2029,8 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > VGE_JUMBO_MTU)
 			error = EINVAL;
-		ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {
@@ -2054,14 +2055,19 @@ vge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		sc->sc_if_flags = ifp->if_flags;
 		break;
 	default:
-		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				vge_setmulti(sc);
-			error = 0;
+			vge_setmulti(sc);
 		}
 		break;
 	}

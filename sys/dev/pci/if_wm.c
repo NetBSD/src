@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.153 2008/01/29 20:24:41 tls Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.154 2008/02/07 01:21:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.153 2008/01/29 20:24:41 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.154 2008/02/07 01:21:58 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2327,15 +2327,21 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				wm_set_filter(sc);
-			error = 0;
+			wm_set_filter(sc);
 		}
 		break;
 	}

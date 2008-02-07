@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.29 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.30 2008/02/07 01:21:59 dyoung Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.29 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.30 2008/02/07 01:21:59 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -880,8 +880,8 @@ upl_ioctl(struct ifnet *ifp, u_long command, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > UPL_BUFSZ)
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCSIFFLAGS:

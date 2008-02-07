@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.79 2007/11/07 00:23:19 ad Exp $ */
+/* $NetBSD: if_ti.c,v 1.80 2008/02/07 01:21:57 dyoung Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.79 2007/11/07 00:23:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.80 2008/02/07 01:21:57 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2745,11 +2745,11 @@ ti_ioctl(struct ifnet *ifp, u_long command, void *data)
 		error = ti_ether_ioctl(ifp, command, data);
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU_JUMBO)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		else {
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET){
 			ti_init(sc);
+			error = 0;
 		}
 		break;
 	case SIOCSIFFLAGS:
@@ -2782,20 +2782,22 @@ ti_ioctl(struct ifnet *ifp, u_long command, void *data)
 		sc->ti_if_flags = ifp->if_flags;
 		error = 0;
 		break;
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				ti_setmulti(sc);
-			error = 0;
-		}
-		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
 		break;
 	default:
-		error = EINVAL;
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command == SIOCSIFCAP)
+			ti_init(sc);
+		else if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			ti_setmulti(sc);
 		break;
 	}
 

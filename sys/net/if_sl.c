@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.109 2007/11/10 18:29:36 ad Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.110 2008/02/07 01:22:01 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.109 2007/11/10 18:29:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.110 2008/02/07 01:22:01 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -999,11 +999,10 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 		    error = EINVAL;
 		    break;
 		}
-		sc->sc_if.if_mtu = ifr->ifr_mtu;
-		break;
-
+		/*FALLTHROUGH*/
 	case SIOCGIFMTU:
-		ifr->ifr_mtu = sc->sc_if.if_mtu;
+		if ((error = ifioctl_common(&sc->sc_if, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCADDMULTI:

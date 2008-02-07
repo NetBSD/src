@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.66 2007/10/19 12:16:44 ad Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.67 2008/02/07 01:22:01 dyoung Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.66 2007/10/19 12:16:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.67 2008/02/07 01:22:01 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -413,7 +413,7 @@ int
 loioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifaddr *ifa;
-	struct ifreq *ifr;
+	struct ifreq *ifr = data;
 	int error = 0;
 
 	switch (cmd) {
@@ -429,18 +429,16 @@ loioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		ifr = (struct ifreq *)data;
 		if ((unsigned)ifr->ifr_mtu > LOMTU_MAX)
 			error = EINVAL;
-		else {
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
 			/* XXX update rt mtu for AF_ISO? */
-			ifp->if_mtu = ifr->ifr_mtu;
+			error = 0;
 		}
 		break;
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
 		if (ifr == NULL) {
 			error = EAFNOSUPPORT;		/* XXX */
 			break;

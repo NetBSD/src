@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.133 2008/01/22 16:25:16 dyoung Exp $	*/
+/*	$NetBSD: if.h,v 1.134 2008/02/07 01:21:59 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@
 
 #if defined(_NETBSD_SOURCE)
 
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/dlt.h>
@@ -836,6 +838,7 @@ void	if_up(struct ifnet *);
 int	ifconf(u_long, void *);
 void	ifinit(void);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
+int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
 
