@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.8 2007/10/17 19:56:10 garbled Exp $	*/
+/*	$NetBSD: cpu.c,v 1.9 2008/02/07 19:48:37 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.8 2007/10/17 19:56:10 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.9 2008/02/07 19:48:37 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,21 +103,91 @@ cpu_OFgetspeed(struct device *self, struct cpu_info *ci)
 			int l;
 
 			l = OF_getprop(node, "reg", &cpunum, sizeof(cpunum));
-			if (l == 4 && ci->ci_cpuid == cpunum) {
+			if (l == sizeof(uint32_t) && ci->ci_cpuid == cpunum) {
 				uint32_t cf;
 
 				l = OF_getprop(node, "clock-frequency",
 				    &cf, sizeof(cf));
-				if (l == 4)
+				if (l == sizeof(uint32_t))
 					ci->ci_khz = cf / 1000;
 				break;
 			}
 		}
 	}
 	if (ci->ci_khz)
-		aprint_normal("%s: %u.%02u MHz\n", self->dv_xname,
+		aprint_normal_dev(self, "%u.%02u MHz\n",
 		    ci->ci_khz / 1000, (ci->ci_khz / 10) % 100);
 }
+
+static void
+cpu_print_cache_config(uint32_t size, uint32_t line)
+{
+	char cbuf[7];
+
+	format_bytes(cbuf, sizeof(cbuf), size);
+	aprint_normal("%s %dB/line", cbuf, line);
+}
+
+static void
+cpu_OFprintcacheinfo(int node)
+{
+	int l;
+	uint32_t dcache=0, icache=0, dline=0, iline=0;
+
+	OF_getprop(node, "i-cache-size", &icache, sizeof(icache));
+	OF_getprop(node, "d-cache-size", &dcache, sizeof(dcache));
+	OF_getprop(node, "i-cache-line-size", &iline, sizeof(iline));
+	OF_getprop(node, "d-cache-line-size", &dline, sizeof(dline));
+	if (OF_getprop(node, "cache-unified", &l, sizeof(l)) != -1) {
+		aprint_normal("cache ");
+		cpu_print_cache_config(icache, iline);
+	} else {
+		aprint_normal("I-cache ");
+		cpu_print_cache_config(icache, iline);
+		aprint_normal(", D-cache ");
+		cpu_print_cache_config(dcache, dline);
+	}
+	aprint_normal("\n");
+}
+
+static void
+cpu_OFgetcache(struct device *self, struct cpu_info *ci)
+{
+	int node, cpu=-1;
+	char name[32];
+
+	node = OF_finddevice("/cpus");
+	if (node == -1)
+		return;
+
+	for (node = OF_child(node); node; node = OF_peer(node)) {
+		uint32_t cpunum;
+		int l;
+
+		l = OF_getprop(node, "reg", &cpunum, sizeof(cpunum));
+		if (l == sizeof(uint32_t) && ci->ci_cpuid == cpunum) {
+			cpu = node;
+			break;
+		}
+	}
+	if (cpu == -1)
+		return;
+	/* now we have cpu */
+	aprint_normal_dev(self, "L1 ");
+	cpu_OFprintcacheinfo(cpu);
+	for (node = OF_child(cpu); node; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) != -1) {
+			if (strcmp("l2-cache", name) == 0) {
+				aprint_normal_dev(self, "L2 ");
+				cpu_OFprintcacheinfo(node);
+			} else if (strcmp("l3-cache", name) == 0) {
+				aprint_normal_dev(self, "L3 ");
+				cpu_OFprintcacheinfo(node);
+			}
+		}
+	}
+}
+
 
 void
 cpu_attach(struct device *parent, struct device *self, void *aux)
@@ -132,6 +202,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 	if (ci->ci_khz == 0)
 		cpu_OFgetspeed(self, ci);
+
+	cpu_OFgetcache(self, ci);
 
 	if (id > 0)
 		return;
