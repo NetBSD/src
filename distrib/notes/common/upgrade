@@ -1,4 +1,4 @@
-.\"	$NetBSD: upgrade,v 1.23 2004/08/24 21:58:29 hubertf Exp $
+.\"	$NetBSD: upgrade,v 1.24 2008/02/07 14:36:40 itohy Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -35,7 +35,8 @@
 .
 .Pp
 The upgrade to
-.Nx \*V
+.Nx
+\*V
 is a binary upgrade; it can be quite difficult to update the system
 from an earlier version by recompiling from source, primarily due to
 interdependencies in the various components.
@@ -124,7 +125,8 @@ file systems are checked before unpacking the sets.
 .Pp
 After a new kernel has been copied to your hard disk, your
 machine is a complete
-.Nx \*V
+.Nx
+\*V
 system.
 However, that doesn't mean that you're finished with the upgrade process.
 You will probably want to update the set of device
