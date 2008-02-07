@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.115 2008/01/28 12:22:47 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.116 2008/02/07 12:21:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.115 2008/01/28 12:22:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.116 2008/02/07 12:21:24 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -344,8 +344,14 @@ void
 uvm_uarea_init(void)
 {
 
+	/*
+	 * specify PR_NOALIGN unless the alignment provided by
+	 * the backend (USPACE_ALIGN) is sufficient to provide
+	 * pool page size (UPSACE) alignment.
+	 */
+
 	uvm_uarea_cache = pool_cache_init(USPACE, USPACE_ALIGN, 0,
-#if USPACE_ALIGN == 0
+#if (USPACE_ALIGN == 0 && USPACE != PAGE_SIZE) || (USPACE_ALIGN % USPACE) != 0
 	    PR_NOALIGN |
 #endif
 	    PR_NOTOUCH,
