@@ -78,7 +78,7 @@ AC_CHECK_HEADERS([assert.h ctype.h dirent.h err.h errno.h fnctl.h \
 	pwd.h regex.h signal.h stdarg.h stdio.h stdlib.h string.h \
 	termcap.h termios.h time.h unistd.h vis.h])
 AC_CHECK_HEADERS([db1/db.h db_185.h db.h])
-AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/ioctl.h sys/mount.h sys/param.h \
+AC_CHECK_HEADERS([sys/cdefs.h sys/file.h sys/ioctl.h sys/param.h \
 	sys/poll.h sys/queue.h sys/resource.h sys/signal.h sys/stat.h \
 	sys/statvfs.h sys/time.h sys/types.h sys/utsname.h sys/vfs.h \
 	sys/wait.h])

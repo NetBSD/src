@@ -1,4 +1,4 @@
-/*	$NetBSD: pen.c,v 1.1.1.2 2007/11/03 14:14:13 joerg Exp $	*/
+/*	$NetBSD: pen.c,v 1.1.1.3 2008/02/07 23:42:17 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -11,7 +11,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: pen.c,v 1.25 1997/10/08 07:48:12 charnier Exp";
 #else
-__RCSID("$NetBSD: pen.c,v 1.1.1.2 2007/11/03 14:14:13 joerg Exp $");
+__RCSID("$NetBSD: pen.c,v 1.1.1.3 2008/02/07 23:42:17 joerg Exp $");
 #endif
 #endif
 
@@ -42,12 +42,6 @@ __RCSID("$NetBSD: pen.c,v 1.1.1.2 2007/11/03 14:14:13 joerg Exp $");
 #if HAVE_SYS_SIGNAL_H
 #include <sys/signal.h>
 #endif
-#if HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-#if HAVE_SYS_MOUNT_H
-#include <sys/mount.h>
-#endif
 
 /* For keeping track of where we are */
 static char Current[MaxPathSize];
@@ -56,37 +50,6 @@ static int CurrentSet;		/* rm -fr Current only if it's really set! */
                                 /* CurrentSet is set to 0 before strcpy()s
 				 * to prevent rm'ing of a partial string
 				 * when interrupted by ^C */
-
-#if 0
-/*
- * Backup Current and Previous into temp. strings that are later
- * restored & freed by restore_dirs
- * This is to make nested calls to make_playpen/leave_playpen work
- */
-void
-save_dirs(char **c, char **p)
-{
-	*c = strdup(Current);	/* XXX */
-	*p = strdup(Previous);
-}
-
-/*
- * Restore Current and Previous from temp strings that were created
- * by safe_dirs.
- * This is to make nested calls to make_playpen/leave_playpen work
- */
-void
-restore_dirs(char *c, char *p)
-{
-	CurrentSet = 0;		/* prevent from deleting */
-	strlcpy(Current, c, sizeof(Current));
-	CurrentSet = 1;		/* rm -fr Current is safe now */
-	free(c);
-	
-	strlcpy(Previous, p, sizeof(Previous));
-	free(p);
-}
-#endif
 
 char   *
 where_playpen(void)
