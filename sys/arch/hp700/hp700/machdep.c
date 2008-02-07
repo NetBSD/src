@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2008/02/03 12:09:40 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2008/02/07 12:25:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2008/02/03 12:09:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2008/02/07 12:25:42 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -220,7 +220,7 @@ dev_t	bootdev;
 int	totalphysmem, physmem, esym;
 
 /*
- * The our copy of the bootinfo struct passed to us by the boot loader
+ * Our copy of the bootinfo struct passed to us by the boot loader.
  */
 struct bootinfo bootinfo;
 
