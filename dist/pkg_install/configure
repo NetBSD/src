@@ -4818,8 +4818,7 @@ done
 
 
 
-
-for ac_header in sys/cdefs.h sys/file.h sys/ioctl.h sys/mount.h sys/param.h \
+for ac_header in sys/cdefs.h sys/file.h sys/ioctl.h sys/param.h \
 	sys/poll.h sys/queue.h sys/resource.h sys/signal.h sys/stat.h \
 	sys/statvfs.h sys/time.h sys/types.h sys/utsname.h sys/vfs.h \
 	sys/wait.h
