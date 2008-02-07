@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1014 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1015 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -426,3 +426,4 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	arc: Add sysinst support. [tsutsui 20080202]
 	cobalt: Add sysinst support. [tsutsui 20080202]
 	atf: Import 0.4.  [jmmv 20080204]
+	sgimips: Add hardware acceleration for crmfb [macallan 20080205]
