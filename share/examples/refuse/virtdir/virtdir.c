@@ -28,6 +28,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#define FUSE_USE_VERSION	26
+
 #include <fuse.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -173,7 +175,7 @@ virtdir_del(virtdir_t *tp, const char *name, size_t size)
 	if ((ep = virtdir_find(tp, name, size)) == NULL) {
 		return 0;
 	}
-	i = (int)(ep - tp->v) / sizeof(tp->v[0]);
+	i = (int)(ep - tp->v);
 	for (tp->c -= 1 ; i < tp->c ; i++) {
 		tp->v[i] = tp->v[i + 1];
 	}
