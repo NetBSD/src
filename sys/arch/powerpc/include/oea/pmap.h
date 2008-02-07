@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2008/02/05 18:10:47 garbled Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 2008/02/07 00:36:57 matt Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -132,9 +132,7 @@ pmap_remove_all(struct pmap *pmap)
 	/* Nothing. */
 }
 
-#if (defined(PPC_OEA) + defined(PPC_OEA64) + defined(PPC_OEA64_BRIDGE)) == 1
-/*nop*/
-#else
+#if (defined(PPC_OEA) + defined(PPC_OEA64) + defined(PPC_OEA64_BRIDGE)) != 1
 #define	PMAP_EXCLUDE_DECLS
 #endif
 
