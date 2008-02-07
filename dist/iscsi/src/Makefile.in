@@ -22,6 +22,7 @@ PTHREAD_LIBS= -lpthread
 GCC_CFLAGS= -Wall -Wstrict-prototypes -fno-strict-aliasing -fno-common -Wno-trigraphs
 COMMON_CFLAGS += -DCONFIG_ISCSI_DEBUG -D_FILE_OFFSET_BITS=64 -D_GNU_SOURCE
 COMMON_CFLAGS += -DHAVE_CONFIG_H
+COMMON_CFLAGS += -I${INCDIR}
 CFLAGS= @CFLAGS@ ${GCC_CFLAGS} ${COMMON_CFLAGS} -I${INCLUDE} ${PTHREAD_FLAGS}
 LIBS= @LIBS@
 
@@ -56,8 +57,8 @@ osd: osd-target.c osd.c $(USER_TARGET_OBJS)
 # Test harness (initiators)
 #
 
-iscsifs: iscsifs.o iscsi.o util.o initiator.o parameters.o conffile.o virtdir.o
-	$(CC) iscsifs.o iscsi.o util.o initiator.o parameters.o conffile.o virtdir.o -o iscsifs ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} ${LIBS} -lfuse
+iscsifs: iscsifs.o iscsi.o util.o initiator.o parameters.o conffile.o virtdir.o md5c.o md5hl.o
+	$(CC) iscsifs.o iscsi.o util.o initiator.o parameters.o md5c.o md5hl.o conffile.o virtdir.o -o iscsifs ${PTHREAD_LDFLAGS} ${PTHREAD_LIBS} -L${LIBDIR} -Wl,-R${LIBDIR} ${LIBS} -lfuse
 
 #
 # Dependencies
@@ -65,7 +66,7 @@ iscsifs: iscsifs.o iscsi.o util.o initiator.o parameters.o conffile.o virtdir.o
 
 osd_ops.o: $(INCLUDE)/iscsiutil.h $(INCLUDE)/osd.h $(INCLUDE)/osd_ops.h osd_ops.c
 util.o: util.c $(INCLUDE)/iscsiutil.h
-parameters.o: parameters.c $(INCLUDE)/parameters.h $(INCLUDE)/iscsiutil.h 
+parameters.o: parameters.c $(INCLUDE)/parameters.h $(INCLUDE)/iscsiutil.h md5c.o md5hl.o
 usocktest.o: usocktest.c $(INCLUDE)/iscsiutil.h
 disk.o: disk.c  $(INCLUDE)/device.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/iscsi.h
 osd.o: osd.c $(INCLUDE)/osd.h $(INCLUDE)/device.h $(INCLUDE)/iscsiutil.h $(INCLUDE)/iscsi.h
