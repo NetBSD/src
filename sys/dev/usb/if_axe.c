@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.22 2008/01/19 22:10:20 dyoung Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.23 2008/02/07 01:21:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.22 2008/01/19 22:10:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.23 2008/02/07 01:21:58 dyoung Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1155,10 +1155,10 @@ axe_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCSIFFLAGS:

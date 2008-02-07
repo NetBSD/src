@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.107 2007/12/25 18:33:45 perry Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.108 2008/02/07 01:22:01 dyoung Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.107 2007/12/25 18:33:45 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.108 2008/02/07 01:22:01 dyoung Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -1070,42 +1070,17 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		break;
 
-#ifdef SIOCSIFMTU
-#ifndef ifr_mtu
-#define ifr_mtu ifr_metric
-#endif
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < PPP_MINMRU ||
 		    ifr->ifr_mtu > sp->lcp.their_mru) {
 			error = EINVAL;
 			break;
 		}
-
-		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-#endif
-#ifdef SLIOCSETMTU
-	case SLIOCSETMTU:
-		if (*(short *)data < PPP_MINMRU ||
-		    *(short *)data > sp->lcp.their_mru)
-		{
-			error = EINVAL;
-			break;
-		}
-
-		ifp->if_mtu = *(short *)data;
-		break;
-#endif
-#ifdef SIOCGIFMTU
+		/*FALLTHROUGH*/
 	case SIOCGIFMTU:
-		ifr->ifr_mtu = ifp->if_mtu;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
-#endif
-#ifdef SLIOCGETMTU
-	case SLIOCGETMTU:
-		*(short *)data = ifp->if_mtu;
-		break;
-#endif
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		break;

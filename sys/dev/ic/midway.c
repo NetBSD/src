@@ -1,4 +1,4 @@
-/*	$NetBSD: midway.c,v 1.77 2007/10/19 11:59:56 ad Exp $	*/
+/*	$NetBSD: midway.c,v 1.78 2008/02/07 01:21:53 dyoung Exp $	*/
 /*	(sync'd to midway.c 1.68)	*/
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.77 2007/10/19 11:59:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midway.c,v 1.78 2008/02/07 01:21:53 dyoung Exp $");
 
 #include "opt_natm.h"
 
@@ -1261,10 +1261,12 @@ void *data;
 		break;
 	    }
 #endif
-	    ifp->if_mtu = ifr->ifr_mtu;
+	    if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET) {
+		error = 0;
 		/* XXXCDC: do we really need to reset on MTU size change? */
-	    en_reset(sc);
-	    en_init(sc);
+		en_reset(sc);
+		en_init(sc);
+	    }
 	    break;
 #endif /* SIOCSIFMTU */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.144 2008/02/04 21:44:35 mlelstv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.145 2008/02/07 01:21:55 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.144 2008/02/04 21:44:35 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.145 2008/02/07 01:21:55 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -4171,12 +4171,15 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		break;
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				bge_setmulti(sc);
-			error = 0;
-		}
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			bge_setmulti(sc);
 		break;
 	}
 

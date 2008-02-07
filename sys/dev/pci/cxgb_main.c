@@ -29,7 +29,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.10 2008/01/17 06:03:22 jklos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.11 2008/02/07 01:21:55 dyoung Exp $");
 #endif
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/dev/cxgb/cxgb_main.c,v 1.36 2007/09/11 23:49:27 kmacy Exp $");
@@ -2313,13 +2313,16 @@ static int
 cxgb_set_mtu(struct port_info *p, int mtu)
 {
     struct ifnet *ifp = p->ifp;
+    struct ifreq ifr;
     int error = 0;
+
+    ifr.ifr_mtu = mtu;
 
     if ((mtu < ETHERMIN) || (mtu > ETHER_MAX_LEN_JUMBO))
         error = EINVAL;
-    else if (ifp->if_mtu != mtu) {
+    else if ((error = ifioctl_common(ifp, SIOCSIFMTU, &ifr)) == ENETRESET) {
+        error = 0;
         PORT_LOCK(p);
-        ifp->if_mtu = mtu;
         if (ifp->if_drv_flags & IFF_DRV_RUNNING) {
             callout_stop(&p->adapter->cxgb_tick_ch);
             cxgb_stop_locked(p);
@@ -2397,27 +2400,19 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
         error = ifmedia_ioctl(ifp, ifr, &p->media, command);
 	printf("SIOCGIFMEDIA: error=%d\n", error);
         break;
+#ifdef __FreeBSD__
     case SIOCSIFCAP:
 	printf("SIOCSIFCAP:\n");
         PORT_LOCK(p);
-#ifdef __FreeBSD__
         mask = ifr->ifr_reqcap ^ ifp->if_capenable;
-#endif
-#ifdef __NetBSD__
-        mask = ifp->if_capenable;
-#endif
         if (mask & IFCAP_TXCSUM) {
             if (IFCAP_TXCSUM & ifp->if_capenable) {
                 ifp->if_capenable &= ~(IFCAP_TXCSUM|IFCAP_TSO4);
-#ifdef __FreeBSD__
                 ifp->if_hwassist &= ~(CSUM_TCP | CSUM_UDP
                     | CSUM_TSO);
-#endif
             } else {
                 ifp->if_capenable |= IFCAP_TXCSUM;
-#ifdef __FreeBSD__
                 ifp->if_hwassist |= (CSUM_TCP | CSUM_UDP);
-#endif
             }
         } else if (mask & IFCAP_RXCSUM) {
             if (IFCAP_RXCSUM & ifp->if_capenable) {
@@ -2429,14 +2424,10 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
         if (mask & IFCAP_TSO4) {
             if (IFCAP_TSO4 & ifp->if_capenable) {
                 ifp->if_capenable &= ~IFCAP_TSO4;
-#ifdef __FreeBSD__
                 ifp->if_hwassist &= ~CSUM_TSO;
-#endif
             } else if (IFCAP_TXCSUM & ifp->if_capenable) {
                 ifp->if_capenable |= IFCAP_TSO4;
-#ifdef __FreeBSD__
                 ifp->if_hwassist |= CSUM_TSO;
-#endif
             } else {
                 if (cxgb_debug)
                     printf("cxgb requires tx checksum offload"
@@ -2446,11 +2437,14 @@ cxgb_ioctl(struct ifnet *ifp, unsigned long command, void *data)
         }
         PORT_UNLOCK(p);
         break;
+#endif /* __FreeBSD__ */
     default:
 	printf("Dir = %x  Len = %x  Group = '%c'  Num = %x\n",
 		(unsigned int)(command&0xe0000000)>>28, (unsigned int)(command&0x1fff0000)>>16,
 		(unsigned int)(command&0xff00)>>8, (unsigned int)command&0xff);
-        error = ether_ioctl(ifp, command, data);
+        if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+		break;
+	error = 0;
         break;
     }
     return (error);

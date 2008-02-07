@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.62 2008/01/21 11:32:12 dyoung Exp $	*/
+/*	$NetBSD: hme.c,v 1.63 2008/02/07 01:21:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.62 2008/01/21 11:32:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.63 2008/02/07 01:21:53 dyoung Exp $");
 
 /* #define HMEDEBUG */
 
@@ -1483,22 +1483,21 @@ hme_ioctl(ifp, cmd, data)
 
 		break;
 
-	case SIOCADDMULTI:
-	case SIOCDELMULTI:
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+	default:
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				hme_setladrf(sc);
-			error = 0;
+			hme_setladrf(sc);
 		}
-		break;
-	default:
-		error = EINVAL;
 		break;
 	}
 

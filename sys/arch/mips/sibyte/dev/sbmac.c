@@ -1,4 +1,4 @@
-/* $NetBSD: sbmac.c,v 1.27 2008/01/19 22:10:15 dyoung Exp $ */
+/* $NetBSD: sbmac.c,v 1.28 2008/02/07 01:21:52 dyoung Exp $ */
 
 /*
  * Copyright 2000, 2001, 2004
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.27 2008/01/19 22:10:15 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbmac.c,v 1.28 2008/02/07 01:21:52 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -2027,12 +2027,11 @@ sbmac_ioctl(struct ifnet *ifp, u_long command, void *data)
 		error = sbmac_ether_ioctl(ifp, command, data);
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHER_MAX_LEN)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else {
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
 			/* XXX Program new MTU here */
-		}
+			error = 0;
 		break;
 	case SIOCSIFFLAGS:
 		if (ifp->if_flags & IFF_UP) {

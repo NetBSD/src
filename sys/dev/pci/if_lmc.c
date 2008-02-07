@@ -1,4 +1,4 @@
-/* $NetBSD: if_lmc.c,v 1.39 2008/01/10 08:50:52 dyoung Exp $ */
+/* $NetBSD: if_lmc.c,v 1.40 2008/02/07 01:21:56 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2002-2006 David Boggs. <boggs@boggs.palo-alto.ca.us>
@@ -142,7 +142,7 @@
 
 #if defined(__NetBSD__)
 # include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.39 2008/01/10 08:50:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_lmc.c,v 1.40 2008/02/07 01:21:56 dyoung Exp $");
 # include <sys/param.h>	/* OS version */
 /* -DLKM is passed on the compiler command line */
 # include "opt_inet.h"	/* INET6, INET */
@@ -3559,8 +3559,8 @@ rawip_ioctl(softc_t *sc, u_long cmd, void *data)
     case SIOCSIFMTU:
       if ((ifr->ifr_mtu < 72) || (ifr->ifr_mtu > 65535))
         error = EINVAL;
-      else
-        sc->ifp->if_mtu = ifr->ifr_mtu;
+      else if ((error = ifioctl_common(sc->ifp, cmd, data)) == ENETRESET)
+        error = 0;
       break;
     default:
       error = EINVAL;

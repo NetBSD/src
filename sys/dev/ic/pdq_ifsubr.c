@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq_ifsubr.c,v 1.50 2007/12/20 21:08:17 dyoung Exp $	*/
+/*	$NetBSD: pdq_ifsubr.c,v 1.51 2008/02/07 01:21:54 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.50 2007/12/20 21:08:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq_ifsubr.c,v 1.51 2008/02/07 01:21:54 dyoung Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -448,8 +448,8 @@ pdq_ifioctl(
 	}
 	case SIOCGIFADDR: {
 	    struct ifreq *ifr = (struct ifreq *)data;
-	    memcpy((void *) ((struct sockaddr *)&ifr->ifr_data)->sa_data,
-		(const void *) PDQ_LANADDR(sc), 6);
+	    error = ifreq_setaddr(cmd, ifr,
+	        (const struct sockaddr *)sc->sc_if.if_sadl);
 	    break;
 	}
 
@@ -484,7 +484,8 @@ pdq_ifioctl(
 		error = EINVAL;
 		break;
 	    }
-	    ifp->if_mtu = ifr->ifr_mtu;
+	    if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+		error = 0;
 	    break;
 	}
 #endif /* SIOCSIFMTU */
