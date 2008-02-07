@@ -1,4 +1,4 @@
-/*	$NetBSD: nslm7x.c,v 1.44 2007/11/16 08:00:14 xtraeme Exp $ */
+/*	$NetBSD: nslm7x.c,v 1.45 2008/02/07 20:35:44 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.44 2007/11/16 08:00:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nslm7x.c,v 1.45 2008/02/07 20:35:44 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1911,22 +1911,22 @@ lm_refresh_volt(struct lm_softc *sc, int n)
 	int data;
 
 	data = (*sc->lm_readreg)(sc, sc->lm_sensors[n].reg);
-	if (data == 0xff)
+	if (data == 0xff) {
 		sc->sensors[n].state = ENVSYS_SINVALID;
-
-	sc->sensors[n].flags = ENVSYS_FCHANGERFACT;
-	sc->sensors[n].value_cur = (data << 4);
-
-	if (sc->sensors[n].rfact) {
-		sc->sensors[n].value_cur *= sc->sensors[n].rfact;
-		sc->sensors[n].value_cur /= 10;
 	} else {
-		sc->sensors[n].value_cur *= sc->lm_sensors[n].rfact;
-		sc->sensors[n].value_cur /= 10;
-		sc->sensors[n].rfact = sc->lm_sensors[n].rfact;
+		sc->sensors[n].flags = ENVSYS_FCHANGERFACT;
+		sc->sensors[n].value_cur = (data << 4);
+		if (sc->sensors[n].rfact) {
+			sc->sensors[n].value_cur *= sc->sensors[n].rfact;
+			sc->sensors[n].value_cur /= 10;
+		} else {
+			sc->sensors[n].value_cur *= sc->lm_sensors[n].rfact;
+			sc->sensors[n].value_cur /= 10;
+			sc->sensors[n].rfact = sc->lm_sensors[n].rfact;
+		}
+		sc->sensors[n].state = ENVSYS_SVALID;
 	}
 
-	sc->sensors[n].state = ENVSYS_SVALID;
 	DPRINTF(("%s: volt[%d] data=0x%x value_cur=%d\n",
 	    __func__, n, data, sc->sensors[n].value_cur));
 }
