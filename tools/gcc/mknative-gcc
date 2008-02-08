@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-gcc,v 1.22 2006/06/25 03:06:15 mrg Exp $
+#	$NetBSD: mknative-gcc,v 1.23 2008/02/08 18:06:48 skrll Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/gnu/dist/gcc.
@@ -123,6 +123,9 @@ get_libobjc () {
 			getvars gcc/Makefile $_unwind
 		fi
 	} | write_mk gnu/lib/$_subdir/defs.mk
+
+	write_c gnu/lib/$_subdir/config.h \
+		<$_TMPDIR/$_PLATFORM/libobjc/config.h
 }
 
 ##### gnu/lib/libstdc++-v3 #####
