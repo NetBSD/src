@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.21 2007/12/09 03:33:29 ober Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.22 2008/02/08 16:53:34 kiyohara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2007/12/09 03:33:29 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.22 2008/02/08 16:53:34 kiyohara Exp $");
 
 #include <sys/param.h>
 #include <sys/extent.h>
@@ -60,7 +60,6 @@ int	mainbus_print (void *, const char *);
 union mainbus_attach_args {
 	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
-	/*struct pnpbus_attach_args mba_paa;*/
 };
 
 
@@ -121,8 +120,8 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	genppc_pct = malloc(sizeof(struct genppc_pci_chipset), M_DEVBUF,
 	    M_NOWAIT);
 	KASSERT(genppc_pct != NULL);
-	/*prep_pci_get_chipset_tag(genppc_pct);
-	 */
+	bebox_pci_get_chipset_tag(genppc_pct);
+
 	pbi = malloc(sizeof(struct genppc_pci_chipset_businfo),
 	    M_DEVBUF, M_NOWAIT);
 	KASSERT(pbi != NULL);
@@ -147,15 +146,6 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 	extent_destroy(memext);
 #endif /* PCI_NETBSD_CONFIGURE */
 #endif /* NPCI */
-
-/* scan pnpbus first */
-#if NPNPBUS > 0
-	mba.mba_paa.paa_iot = &genppc_isa_io_space_tag;
-	mba.mba_paa.paa_memt = &genppc_isa_mem_space_tag;
-	mba.mba_paa.paa_ic = &genppc_ict;
-	mba.mba_paa.paa_dmat = &isa_bus_dma_tag;
-	config_found_ia(self, "mainbus", &mba.mba_pba, mainbus_print);
-#endif /* NPNPBUS */
 
 #if NPCI > 0
 	bzero(&mba, sizeof(mba));

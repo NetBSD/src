@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2007/12/09 03:33:29 ober Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2008/02/08 16:53:34 kiyohara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2007/12/09 03:33:29 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2008/02/08 16:53:34 kiyohara Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2007/12/09 03:33:29 ober Exp $");
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/user.h>
+#include <sys/ksyms.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2007/12/09 03:33:29 ober Exp $");
 #include <machine/trap.h>
 
 #include <powerpc/oea/bat.h>
+#include <powerpc/pic/picvar.h> 
 
 #include <dev/cons.h>
 
@@ -108,15 +110,15 @@ struct mem_region physmemr[OFMEMREGIONS], availmemr[OFMEMREGIONS];
 char bootpath[256];
 paddr_t avail_end;			/* XXX temporary */
 struct pic_ops *isa_pic;
-void initppc(u_long, u_long, void *);
-void consinit(void);
-void ext_intr(void);
+int isa_pcmciamask = 0x8b28;		/* XXXX */
+extern int primary_pic;
+void initppc(u_long, u_long, u_int, void *);
 void setup_bebox_intr(void);
 
 extern void *startsym, *endsym;
 
 void
-initppc(u_long startkernel, u_long endkernel, void *btinfo)
+initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 {
 	/*
 	 * copy bootinfo
@@ -160,8 +162,7 @@ initppc(u_long startkernel, u_long endkernel, void *btinfo)
 	 * boothowto
 	 */
 	/*	boothowto = args; */
-	
-	setup_bebox_intr();
+	prep_initppc(startkernel, endkernel, args);
 }
 
 /*
@@ -176,23 +177,35 @@ cpu_startup()
 	bebox_mb_reg = (vaddr_t) mapiodev(BEBOX_INTR_REG, PAGE_SIZE);
 	if (!bebox_mb_reg)
 		panic("cpu_startup: no room for interrupt register");
-  
+
 	/*
 	 * Do common VM initialization
 	 */
 	oea_startup(NULL);
-  
+
+	pic_init();
+	isa_pic = setup_i8259();
+	setup_bebox_intr();
+	primary_pic = 1;
+
+	/*
+	 * set up i8259 as a cascade on BeInterruptController irq 26.
+	 */
+	intr_establish(16 + 26, IST_LEVEL, IPL_NONE, pic_handle_intr, isa_pic);
+
+	oea_install_extint(pic_ext_intr);
+
 	/*
 	 * Now that we have VM, malloc's are OK in bus_space.
 	 */
 	bus_space_mallocok();
-  
+
 	/*
 	 * Now allow hardware interrupts.
 	 */
 	{
 		int msr;
-    
+
 		splhigh();
 		__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0"
 		    : "=r"(msr) : "K"(PSL_EE));
@@ -242,8 +255,8 @@ consinit()
 #if (NPC > 0) || (NVGA > 0)
 	if (!strcmp(consinfo->devname, "vga")) {
 #if (NVGA > 0)
-		if (!vga_cnattach(&genppc_isa_io_space_tag, &genppc_isa_mem_space_tag,
-			-1, 1))
+		if (!vga_cnattach(&prep_io_space_tag, &prep_mem_space_tag,
+		    -1, 1))
 			goto dokbd;
 #endif
 #if (NPC > 0)
@@ -274,24 +287,6 @@ dokbd:
 #endif
 	panic("invalid console device %s", consinfo->devname);
 }
-
-#if (NPCKBC > 0) && (NPCKBD == 0)
-/*
- * glue code to support old console code with the
- * mi keyboard controller driver
- */
-int
-pckbport_machdep_cnattach(kbctag, kbcslot)
-	pckbport_tag_t kbctag;
-	pckbport_slot_t kbcslot;
-{
-#if (NPC > 0)
-	return (pcconskbd_cnattach(kbctag, kbcslot));
-#else
-	return (ENXIO);
-#endif
-}
-#endif
 
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
