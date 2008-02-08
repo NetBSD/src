@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.6 2008/01/01 12:51:09 yamt Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.7 2008/02/08 18:17:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -235,7 +235,10 @@ NENTRY(rdpmc)
 	ret
 
 NENTRY(breakpoint)
+	pushq	%rbp
+	movq	%rsp, %rbp
 	int	$0x03		/* paranoid, not 'int3' */
+	leave
 	ret
 
 NENTRY(x86_curcpu)
