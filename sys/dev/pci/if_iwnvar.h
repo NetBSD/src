@@ -30,11 +30,11 @@ struct iwn_rx_radiotap_header {
 
 #define IWN_RX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_TSFT) |				\
-	 (1 << IEEE80211_RADIOTAP_FLAGS) |				\
-	 (1 << IEEE80211_RADIOTAP_RATE) |				\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
-	 (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) |			\
-	 (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
+	    (1 << IEEE80211_RADIOTAP_FLAGS) |				\
+	    (1 << IEEE80211_RADIOTAP_RATE) |				\
+	    (1 << IEEE80211_RADIOTAP_CHANNEL) |				\
+	    (1 << IEEE80211_RADIOTAP_DBM_ANTSIGNAL) |			\
+	    (1 << IEEE80211_RADIOTAP_DBM_ANTNOISE))
 
 struct iwn_tx_radiotap_header {
 	struct ieee80211_radiotap_header wt_ihdr;
@@ -47,8 +47,8 @@ struct iwn_tx_radiotap_header {
 
 #define IWN_TX_RADIOTAP_PRESENT						\
 	((1 << IEEE80211_RADIOTAP_FLAGS) |				\
-	 (1 << IEEE80211_RADIOTAP_RATE) |				\
-	 (1 << IEEE80211_RADIOTAP_CHANNEL))
+	    (1 << IEEE80211_RADIOTAP_RATE) |				\
+	    (1 << IEEE80211_RADIOTAP_CHANNEL))
 
 struct iwn_dma_info {
 	bus_dma_tag_t		tag;
@@ -146,7 +146,7 @@ struct iwn_softc {
 	struct ethercom	 	sc_ec;
 	struct ieee80211com	sc_ic;
 	int			(*sc_newstate)(struct ieee80211com *,
-			enum ieee80211_state, int);
+	    enum ieee80211_state, int);
 
 	struct ieee80211_amrr	amrr;
 
