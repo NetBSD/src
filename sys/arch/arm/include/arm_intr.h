@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.7 2008/02/09 13:01:38 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.8 2008/02/09 17:35:33 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -130,14 +130,21 @@ arm_intr_splx(int newspl)
 {
     /* look for interrupts at the next ipl or higher */
     uint32_t iplvalue = (2 << newspl);
+    uint32_t oldirqstate;
 
-    /* Don't let the compiler re-order this code with preceding code */
-    __insn_barrier();
+    /*
+     * disable interrupts so that if one occurs between the compare
+     * and the set it will be processed
+     */
+    oldirqstate = disable_interrupts(I32_bit);
 
-    if (ipls_pending >= iplvalue)
+    if (ipls_pending < iplvalue)
+    	current_ipl_level = newspl;
+    else
         arm_intr_splx_lifter(newspl);
 
-    current_ipl_level = newspl;
+    restore_interrupts(oldirqstate);
+
     return;
 }
 
