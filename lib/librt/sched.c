@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.c,v 1.2 2008/01/26 17:55:30 rmind Exp $	*/
+/*	$NetBSD: sched.c,v 1.3 2008/02/09 17:07:54 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sched.c,v 1.2 2008/01/26 17:55:30 rmind Exp $");
+__RCSID("$NetBSD: sched.c,v 1.3 2008/02/09 17:07:54 yamt Exp $");
 
 #include <string.h>
 #include <unistd.h>
@@ -51,15 +51,14 @@ sched_setparam(pid_t pid, const struct sched_param *param)
 
 	memset(&sp, 0, sizeof(struct sched_param));
 	sp.sched_priority = param->sched_priority;
-	sp.sched_class = SCHED_NONE;
-	return _sched_setparam(pid, P_ALL_LWPS, &sp);
+	return _sched_setparam(pid, P_ALL_LWPS, SCHED_NONE, &sp);
 }
 
 int
 sched_getparam(pid_t pid, struct sched_param *param)
 {
 
-	return _sched_getparam(pid, P_ALL_LWPS, param);
+	return _sched_getparam(pid, P_ALL_LWPS, NULL, param);
 }
 
 int
@@ -68,15 +67,13 @@ sched_setscheduler(pid_t pid, int policy, const struct sched_param *param)
 	struct sched_param sp;
 	int ret, old_policy;
 
-	ret = _sched_getparam(pid, P_ALL_LWPS, &sp);
+	ret = _sched_getparam(pid, P_ALL_LWPS, &old_policy, &sp);
 	if (ret < 0)
 		return ret;
-	old_policy = sp.sched_class;
 
 	memset(&sp, 0, sizeof(struct sched_param));
 	sp.sched_priority = param->sched_priority;
-	sp.sched_class = policy;
-	ret = _sched_setparam(pid, P_ALL_LWPS, &sp);
+	ret = _sched_setparam(pid, P_ALL_LWPS, policy, &sp);
 	if (ret < 0)
 		return ret;
 
@@ -87,13 +84,13 @@ int
 sched_getscheduler(pid_t pid)
 {
 	struct sched_param sp;
-	int ret;
+	int ret, policy;
 
-	ret = _sched_getparam(pid, P_ALL_LWPS, &sp);
+	ret = _sched_getparam(pid, P_ALL_LWPS, &policy, &sp);
 	if (ret < 0)
 		return ret;
 
-	return sp.sched_class;
+	return policy;
 }
 
 /*
