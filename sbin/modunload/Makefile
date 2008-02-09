@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2008/01/16 12:34:58 ad Exp $
+#	$NetBSD: Makefile,v 1.10 2008/02/09 19:33:00 jmmv Exp $
 #
 # Makefile for modunload
 #
@@ -34,7 +34,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
-.if ("1" == "1")		# LKMs
+.include <bsd.own.mk>
+
+.if ${MKMODULAR} != "no"	# LKMs
 
 PROG=	modunload
 MAN=	modunload.8
