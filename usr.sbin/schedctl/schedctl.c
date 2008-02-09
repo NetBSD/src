@@ -1,4 +1,4 @@
-/*	$NetBSD: schedctl.c,v 1.2 2008/01/26 17:52:08 rmind Exp $	*/
+/*	$NetBSD: schedctl.c,v 1.3 2008/02/09 17:01:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: schedctl.c,v 1.2 2008/01/26 17:52:08 rmind Exp $");
+__RCSID("$NetBSD: schedctl.c,v 1.3 2008/02/09 17:01:51 yamt Exp $");
 #endif
 
 #include <stdio.h>
@@ -56,7 +56,7 @@ static const char *class_str[] = {
 	"SCHED_RR"
 };
 
-static void	sched_set(pid_t, lwpid_t, struct sched_param *, cpuset_t *);
+static void	sched_set(pid_t, lwpid_t, int, struct sched_param *, cpuset_t *);
 static void	thread_info(pid_t, lwpid_t);
 static cpuset_t	*makecpuset(char *);
 static char	*showcpuset(cpuset_t *);
@@ -71,7 +71,7 @@ main(int argc, char **argv)
 	struct kinfo_lwp *lwp_list, *lwp;
 	struct sched_param *sp;
 	cpuset_t *cpuset;
-	int i, count, ch;
+	int i, count, ch, policy;
 	pid_t pid;
 	lwpid_t lid;
 	bool set;
@@ -87,8 +87,8 @@ main(int argc, char **argv)
 		err(EXIT_FAILURE, "malloc");
 
 	memset(sp, 0, sizeof(struct sched_param));
-	sp->sched_class = SCHED_NONE;
 	sp->sched_priority = PRI_NONE;
+	policy = SCHED_NONE;
 
 	while ((ch = getopt(argc, argv, "A:C:P:p:t:")) != -1) {
 		switch (ch) {
@@ -111,9 +111,8 @@ main(int argc, char **argv)
 			break;
 		case 'C':
 			/* Scheduling class */
-			sp->sched_class = atoi(optarg);
-			if (sp->sched_class < SCHED_OTHER ||
-			    sp->sched_class > SCHED_RR) {
+			policy = atoi(optarg);
+			if (policy < SCHED_OTHER || policy > SCHED_RR) {
 				fprintf(stderr,
 				    "%s: invalid scheduling class\n",
 				    getprogname());
@@ -142,7 +141,7 @@ main(int argc, char **argv)
 		usage();
 
 	/* Set the scheduling information for thread/process */
-	sched_set(pid, lid, set ? sp : NULL, cpuset);
+	sched_set(pid, lid, policy, set ? sp : NULL, cpuset);
 
 	/* Show information about each thread */
 	kd = kvm_open(NULL, NULL, NULL, KVM_NO_FILES, "kvm_open");
@@ -164,13 +163,14 @@ main(int argc, char **argv)
 }
 
 static void
-sched_set(pid_t pid, lwpid_t lid, struct sched_param *sp, cpuset_t *cpuset)
+sched_set(pid_t pid, lwpid_t lid, int policy,
+    struct sched_param *sp, cpuset_t *cpuset)
 {
 	int error;
 
 	if (sp) {
 		/* Set the scheduling parameters for the thread */
-		error = _sched_setparam(pid, lid, sp);
+		error = _sched_setparam(pid, lid, policy, sp);
 		if (error < 0)
 			err(EXIT_FAILURE, "_sched_setparam");
 	}
@@ -189,13 +189,13 @@ thread_info(pid_t pid, lwpid_t lid)
 	struct sched_param sp;
 	cpuset_t *cpuset;
 	char *cpus;
-	int error;
+	int error, policy;
 
 	cpuset = malloc(sizeof(cpuset_t));
 	if (cpuset == NULL)
 		err(EXIT_FAILURE, "malloc");
 
-	error = _sched_getparam(pid, lid, &sp);
+	error = _sched_getparam(pid, lid, &policy, &sp);
 	if (error < 0)
 		err(EXIT_FAILURE, "_sched_getparam");
 
@@ -205,7 +205,7 @@ thread_info(pid_t pid, lwpid_t lid)
 
 	printf("  LID:              %d\n", lid);
 	printf("  Priority:         %d\n", sp.sched_priority);
-	printf("  Class:            %s\n", class_str[sp.sched_class]);
+	printf("  Class:            %s\n", class_str[policy]);
 
 	cpus = showcpuset(cpuset);
 	printf("  Affinity (CPUs):  %s\n", cpus);

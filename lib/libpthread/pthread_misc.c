@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.5 2008/01/26 17:55:30 rmind Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.6 2008/02/09 17:07:54 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.5 2008/01/26 17:55:30 rmind Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.6 2008/02/09 17:07:54 yamt Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -72,10 +72,9 @@ pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
-	if (_sched_getparam(getpid(), thread->pt_lid, param) < 0)
+	if (_sched_getparam(getpid(), thread->pt_lid, policy, param) < 0)
 		return errno;
 
-	*policy = param->sched_class;
 	return 0;
 }
 
@@ -89,8 +88,7 @@ pthread_setschedparam(pthread_t thread, int policy,
 		return ESRCH;
 
 	memcpy(&sp, param, sizeof(struct sched_param));
-	sp.sched_class = policy;
-	if (_sched_setparam(getpid(), thread->pt_lid, &sp) < 0)
+	if (_sched_setparam(getpid(), thread->pt_lid, policy, &sp) < 0)
 		return errno;
 
 	return 0;
@@ -130,9 +128,8 @@ pthread_setschedprio(pthread_t thread, int prio)
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
-	sp.sched_class = SCHED_NONE;
 	sp.sched_priority = prio;
-	if (_sched_setparam(getpid(), thread->pt_lid, &sp) < 0)
+	if (_sched_setparam(getpid(), thread->pt_lid, SCHED_NONE, &sp) < 0)
 		return errno;
 
 	return 0;
