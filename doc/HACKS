@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.95 2008/02/05 02:41:15 mrg Exp $
+# $NetBSD: HACKS,v 1.96 2008/02/09 02:37:21 mrg Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -506,65 +506,19 @@ port	sh3
 	kcah
 
 
-port	sun2
-
-	hack	gcc 3.3.2/mdsetimage
-	cdate	Tue Oct 28 18:43:05 EST 2003
-	who	fredette
-	file	gnu/usr.sbin/mdsetimage/Makefile : 1.15
-	descr
-		mdsetimage.c causes cc1 to barf for as-yet unknown reasons.
-		this hack uses -O0 to avoid the problem.
-	kcah
-
-	hack	gcc 3.3.2/installboot/ffs.c
-	cdate	Tue Oct 28 18:43:05 EST 2003
-	who	fredette
-	file	usr.sbin/installboot/Makefile : 1.26
-	descr
-		ffs.c causes cc1 to barf for as-yet unknown reasons.  this
-		hack uses -O0 to avoid the problem.
-	kcah
-
-	hack	gcc 4.1.1/fsck_ffs/pass1.c
-	cdate	Fri Jun 23 10:30:25 PDT 2006
-	who	mrg
-	file	sbin/fsck_ffs/Makefile : 1.30
-	file	sbin/fsdb/Makefile : 1.19
-	file	sbin/dump_lfs/Makefile : 1.9
-	file	usr.sbin/ndbootd/Makefile : 1.2
-	descr
-		pass1.c causes cc1 to barf for as-yet unknown reasons.  this
-		hack uses -O0 to avoid the problem. (these all seem to be the
-		same problem.)
-	kcah
-
-	hack	gcc 4.1.3/sun2
-	cdate	Fri Jun 23 10:30:25 PDT 2006
-	who	mrg
-	file	gnu/lib/libgcc4/Makefile.inc : 1.7
-	file	lib/libc/gdtoa/Makefile.inc : 1.7
-	file	lib/libm/Makefile : 1.80
-	descr
-		parts of libgcc, libgtoa and libm fail with sun2 gcc 4.1.3.
-		hack uses -O0 to avoid the problem.
-	kcah
-
-
 port	m68000
 
-	hack	gcc 3.3.2/gcc/ra-colorize.c
-	cdate	Wed Nov  5 11:03:13 EST 2003
+	hack	gcc4-m68000
+	cdate	Fri Feb  8 10:29:37 PST 2008
 	who	mrg
-	file	gnu/usr.bin/gcc3/backend/Makefile : 1.11
+	file	share/mk/sys.mk	: 1.94
+	file	rescue/Makefile	: 1.21
+	file	lib/libcurses/Makefile	: 1.54
 	descr
-		ra-colorize.c causes a whole spew of unreferenced .L* local
-		symbols.  using -O0 (or even -O2 reportedly) avoids the problem.
-		Note this has been fixed in 3.3.3 at least on m68k,
-		but it hasn't been confirmed on sun2/m68000.
-		(it's too slow even on emulator and unlikely to build
-		 toolchains on sun2 with its maximum 4MB RAM)
+		Many errors across the tree with optimisation.
+		This hack uses -O0 to avoid the problem.
 	kcah
+
 
 port	sparc64
 

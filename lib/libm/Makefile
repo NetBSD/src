@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.80 2008/02/05 02:41:15 mrg Exp $
+#  $NetBSD: Makefile,v 1.81 2008/02/09 02:37:21 mrg Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -242,19 +242,3 @@ MLINKS+=trunc.3 truncf.3
 .include "${.CURDIR}/gen/Makefile.inc"
 .include <bsd.lib.mk>
 .include <bsd.subdir.mk>
-
-# XXX Workaround 
-.if ${MACHINE_ARCH} == "m68000"
-.for f in \
-	e_asin e_asinf e_atanh e_atanhf e_hypot e_hypotf \
-	e_j0 e_j0f e_j1 e_j1f e_jn e_jnf e_lgammaf_r e_lgamma_r \
-	e_pow e_powf e_rem_pio2 e_rem_pio2f e_scalb e_scalbf \
-	k_rem_pio2 k_rem_pio2f k_tan k_tanf \
-	s_asinh s_asinhf s_atan s_atanf s_cos s_cosf s_erf s_erff \
-	s_sin s_sinf s_tanh s_tanhf s_round s_roundf k_standard \
-	cacos cacosf cacoshf cacosh casin casinf casinhf casinh \
-	catanh catanhf ccos ccosf conj conjf conjf cpow cpowf \
-	csqrt csqrtf
-COPTS.${f}.c=	-O0
-.endfor
-.endif

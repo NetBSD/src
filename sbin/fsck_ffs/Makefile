@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2006/08/26 22:03:47 christos Exp $
+#	$NetBSD: Makefile,v 1.34 2008/02/09 02:37:22 mrg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 4/27/95
 
 .include <bsd.own.mk>
@@ -24,10 +24,6 @@ DPADD+=${LIBUTIL}
 
 .if ${HAVE_GCC} == 4
 COPTS.ffs_appleufs.c+=	-Wno-pointer-sign
-.endif
-
-.if ${HAVE_GCC} == 4 && ${MACHINE_ARCH} == "m68000"
-COPTS.pass1.c+=	-O0
 .endif
 
 .if make(install)
