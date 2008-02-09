@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2008/02/05 02:41:15 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.8 2008/02/09 02:37:21 mrg Exp $
 
 # gdtoa sources
 .PATH: ${.CURDIR}/gdtoa
@@ -43,18 +43,4 @@ SRCS+=	_strtof.c _strtold.c
 # XXX no hexadecimal floating-point string conversion for VAX FP yet
 .if ${MACHINE_ARCH} != "vax"
 SRCS+=	strtord.c
-.endif
-
-# XXX Workaround 
-.if ${MACHINE_ARCH} == "m68000"
-COPTS.strtod.c=		-O0
-COPTS.dtoa.c=		-O0
-COPTS.gdtoa.c=		-O0
-COPTS.strtogd.c=	-O0
-COPTS.strtodg.c=	-O0
-COPTS.fixdfdi.c=	-O0
-COPTS.fixsfdi.c=	-O0
-COPTS.floatdisf.c=	-O0
-COPTS.floatdidf.c=	-O0
-COPTS.strfmon.c=	-O0
 .endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2004/01/03 14:04:27 lukem Exp $
+#	$NetBSD: Makefile,v 1.19 2008/02/09 02:37:21 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,11 +13,6 @@ PROG=		mdsetimage
 MAN=		mdsetimage.8
 
 CPPFLAGS+=	-I${BFDDIR} -I${DIST}/bfd -I${DIST}/binutils -I${DIST}/include
-
-# XXX GCC3/m68010 fails to compile mdsetimage.c
-.if ${MACHINE_ARCH} == "m68000"
-COPTS.mdsetimage.c=	-O0
-.endif
 
 .if !defined(HOSTPROG) && ${MKPICLIB} != "no"
 DPADD+=		${BFDDIR}/libbfd_pic.a
