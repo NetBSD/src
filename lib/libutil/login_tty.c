@@ -1,4 +1,4 @@
-/*	$NetBSD: login_tty.c,v 1.11 2003/08/07 16:44:59 agc Exp $	*/
+/*	$NetBSD: login_tty.c,v 1.12 2008/02/09 05:07:26 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)login_tty.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: login_tty.c,v 1.11 2003/08/07 16:44:59 agc Exp $");
+__RCSID("$NetBSD: login_tty.c,v 1.12 2008/02/09 05:07:26 dholland Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -55,10 +55,10 @@ login_tty(int fd)
 	(void) setsid();
 	if (ioctl(fd, TIOCSCTTY, (char *)NULL) == -1)
 		return (-1);
-	(void) dup2(fd, 0);
-	(void) dup2(fd, 1);
-	(void) dup2(fd, 2);
-	if (fd > STDERR_FILENO)
+	(void) dup2(fd, STDIN_FILENO);
+	(void) dup2(fd, STDOUT_FILENO);
+	(void) dup2(fd, STDERR_FILENO);
+	if (fd != STDIN_FILENO && fd != STDOUT_FILENO && fd != STDERR_FILENO)
 		(void) close(fd);
 	return (0);
 }
