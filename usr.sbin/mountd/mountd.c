@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.114 2008/01/19 23:01:35 dholland Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.115 2008/02/09 19:15:59 dholland Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -47,7 +47,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.114 2008/01/19 23:01:35 dholland Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.115 2008/02/09 19:15:59 dholland Exp $");
 #endif
 #endif				/* not lint */
 
@@ -2531,7 +2531,7 @@ check_options(line, lineno, dp)
 	}
 	if ((opt_flags & OP_ALLDIRS) && dp->dp_left) {
 		syslog(LOG_ERR,
-		    "\"%s\", line %ld: -alldir has multiple directories",
+		    "\"%s\", line %ld: -alldirs has multiple directories",
 		    line, (unsigned long)lineno);
 		return (1);
 	}
