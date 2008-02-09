@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.18 2007/12/28 13:49:25 yamt Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp $	*/
 
 /*-
  * Copyright (c)2006 YAMAMOTO Takashi,
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.18 2007/12/28 13:49:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.19 2008/02/09 12:56:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/callback.h>
@@ -55,12 +55,23 @@ static struct callback_entry kmem_kva_reclaim_entry;
 
 #if defined(DEBUG)
 static void *kmem_freecheck;
+#define	KMEM_POISON
+#define	KMEM_REDZONE
+#endif /* defined(DEBUG) */
+
+#if defined(KMEM_POISON)
 static void kmem_poison_fill(void *, size_t);
 static void kmem_poison_check(void *, size_t);
-#else /* defined(DEBUG) */
+#else /* defined(KMEM_POISON) */
 #define	kmem_poison_fill(p, sz)		/* nothing */
 #define	kmem_poison_check(p, sz)	/* nothing */
-#endif /* defined(DEBUG) */
+#endif /* defined(KMEM_POISON) */
+
+#if defined(KMEM_REDZONE)
+#define	REDZONE_SIZE	1
+#else /* defined(KMEM_REDZONE) */
+#define	REDZONE_SIZE	0
+#endif /* defined(KMEM_REDZONE) */
 
 static vmem_addr_t kmem_backend_alloc(vmem_t *, vmem_size_t, vmem_size_t *,
     vm_flag_t);
@@ -99,6 +110,7 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 {
 	void *p;
 
+	size += REDZONE_SIZE;
 	p = (void *)vmem_alloc(kmem_arena, size,
 	    kmf_to_vmf(kmflags) | VM_INSTANTFIT);
 	if (p != NULL) {
@@ -138,9 +150,10 @@ kmem_free(void *p, size_t size)
 
 	FREECHECK_IN(&kmem_freecheck, p);
 	LOCKDEBUG_MEM_CHECK(p, size);
-	kmem_poison_check((char *)p + size, kmem_roundup_size(size) - size);
+	kmem_poison_check((char *)p + size,
+	    kmem_roundup_size(size + REDZONE_SIZE) - size);
 	kmem_poison_fill(p, size);
-	vmem_free(kmem_arena, (vmem_addr_t)p, size);
+	vmem_free(kmem_arena, (vmem_addr_t)p, size + REDZONE_SIZE);
 }
 
 void
@@ -213,7 +226,7 @@ kmem_kva_reclaim_callback(struct callback_entry *ce, void *obj, void *arg)
 
 /* ---- debug */
 
-#if defined(DEBUG)
+#if defined(KMEM_POISON)
 
 #if defined(_LP64)
 #define	PRIME	0x9e37fffffffc0001UL
@@ -262,4 +275,4 @@ kmem_poison_check(void *p, size_t sz)
 	}
 }
 
-#endif /* defined(DEBUG) */
+#endif /* defined(KMEM_POISON) */
