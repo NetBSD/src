@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_irqhandler.c,v 1.1.2.6 2008/01/26 19:27:10 chris Exp $	*/
+/*	$NetBSD: arm_irqhandler.c,v 1.1.2.7 2008/02/09 13:01:38 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -66,7 +66,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.6 2008/01/26 19:27:10 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.7 2008/02/09 13:01:38 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -254,14 +254,15 @@ arm_intr_init(void)
 	}
 	TAILQ_INIT(&irq_pics_list);	/* groups list */
 	disable_interrupts(I32_bit|F32_bit);
-
 }
 
 void
 arm_intr_enable_irqs(void)
 {
-	enable_interrupts(I32_bit|F32_bit);
+	arm_intr_print_all_masks();
+	printf("enabling interrupts\n");
 	spl0();
+	enable_interrupts(I32_bit|F32_bit);
 }
 
 struct pic_softc *
@@ -270,6 +271,7 @@ arm_intr_register_pic(struct pic_softc *pic)
 	int i;
 	
 	/* grab all the memory we need */
+#if 0
 	pic->pic_intrlines = malloc(sizeof(struct intrline) * pic->pic_nirqs, M_DEVBUF,
 		       	M_NOWAIT);
 	if (pic->pic_intrlines == NULL)
@@ -277,6 +279,7 @@ arm_intr_register_pic(struct pic_softc *pic)
 		panic("No memory for irq queues for pic %s", pic->pic_name);
 		return NULL;
 	}
+#endif
 
 	/* initialise the structure */
 	pic->pic_intr_enabled = 0;
@@ -315,6 +318,9 @@ arm_intr_claim(struct pic_softc *pic, int irq, int type, int ipl, const char *na
 
 	if (irq < 0 || irq >= pic->pic_nirqs)
 		panic("arm_intr_establish: IRQ %d out of range", irq);
+
+	if (ipl == IPL_NONE)
+		panic("Can't use IPL_NONE for interrupt %s\n", name);
 
 	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
 	if (ih == NULL)
@@ -422,8 +428,9 @@ void
 arm_intr_print_all_masks()
 {
 	int ipl;
+	struct pic_softc *pic;
 
-	for (ipl = NIPL-1; ipl > 0; ipl--)
+	for (ipl = NIPL-1; ipl >= 0; ipl--)
 	{
 		struct intrline *il;
 		printf("%02d: ", ipl);
@@ -433,11 +440,18 @@ arm_intr_print_all_masks()
 				(il != NULL);
 				il = TAILQ_NEXT(il, il_ipl_list))
 		{
-		 	struct pic_softc *pic = il->il_pic;
+		 	pic = il->il_pic;
 			printf("%s (%s irq %d) ->", il->il_name,
 				       	pic->pic_name, il->il_irq);
 		}
 		printf("\n");
+	}
+
+	TAILQ_FOREACH(pic, &irq_pics_list, irq_pics_list)
+	{
+		printf("%s: enabled: 0x%0x, soft_enabled = 0x%08x\n", pic->pic_name,
+				pic->pic_intr_enabled, 
+				pic->pic_soft_enabled);
 	}
 }
 
@@ -453,7 +467,7 @@ arm_intr_print_pending_irq_details()
 
 	printf("ipls_pending: 0x%0x\n", ipls_pending);
 
-	for (ipl = NIPL-1; ipl > 0; ipl--)
+	for (ipl = NIPL-1; ipl >= 0; ipl--)
 	{
 		struct intrline *il;
 		printf("%02d: ", ipl);

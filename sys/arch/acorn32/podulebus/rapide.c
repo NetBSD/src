@@ -1,4 +1,4 @@
-/*	$NetBSD: rapide.c,v 1.25 2006/10/09 21:12:44 bjh21 Exp $	*/
+/*	$NetBSD: rapide.c,v 1.25.28.1 2008/02/09 13:01:39 chris Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.25 2006/10/09 21:12:44 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rapide.c,v 1.25.28.1 2008/02/09 13:01:39 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -203,7 +203,6 @@ rapide_attach(parent, self, aux)
 	struct rapide_channel *rcp;
 	struct ata_channel *cp;
 	struct wdc_regs *wdr;
-	irqhandler_t *ihp;
 
 	/* Note the podule number and validate */
 	if (pa->pa_podule_number == -1)
@@ -299,16 +298,16 @@ rapide_attach(parent, self, aux)
 		bus_space_write_1(iot, sc->sc_ctlioh, IRQ_MASK_REGISTER_OFFSET,
 		    sc->sc_intr_enable_mask);
 		/* XXX - Issue 1 cards will need to clear any pending interrupts */
-		ihp = &rcp->rc_ih;
-		ihp->ih_func = rapide_intr;
-		ihp->ih_arg = rcp;
-		ihp->ih_level = IPL_BIO;
-		ihp->ih_name = "rapide";
-		ihp->ih_maskaddr = pa->pa_podule->irq_addr;
-		ihp->ih_maskbits = rcp->rc_irqmask;
-		if (irq_claim(sc->sc_podule->interrupt, ihp))
-			panic("%s: Cannot claim interrupt %d",
-			    self->dv_xname, sc->sc_podule->interrupt);
+		rcp->rc_ih = intr_claim(sc->sc_podule->interrupt, IPL_BIO,
+				"rapide", rapide_intr, rcp);
+
+		if (rcp->rc_ih == NULL)
+			panic("%s: failed to establish interrupt", self->dv_xname);
+
+		/* XXX add this bits, podulebus should hide them! */
+		rcp->rc_ih->ih_maskaddr = pa->pa_podule->irq_addr;
+		rcp->rc_ih->ih_maskbits = rcp->rc_irqmask;
+
 		/* clear any pending interrupts and enable interrupts */
 		sc->sc_intr_enable_mask |= rcp->rc_irqmask;
 		bus_space_write_1(iot, sc->sc_ctlioh,
@@ -347,7 +346,7 @@ rapide_intr(arg)
 	void *arg;
 {
 	struct rapide_channel *rcp = arg;
-	irqhandler_t *ihp = &rcp->rc_ih;
+	irqhandler_t ihp = rcp->rc_ih;
 	volatile u_char *intraddr = (volatile u_char *)ihp->ih_maskaddr;
 
 	/* XXX - Issue 1 cards will need to clear the interrupt */

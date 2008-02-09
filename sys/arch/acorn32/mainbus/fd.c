@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.30.6.2 2008/01/20 16:04:17 chris Exp $	*/
+/*	$NetBSD: fd.c,v 1.30.6.3 2008/02/09 13:01:39 chris Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30.6.2 2008/01/20 16:04:17 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.30.6.3 2008/02/09 13:01:39 chris Exp $");
 
 #include "opt_ddb.h"
 
@@ -1563,7 +1563,7 @@ fdformat(dev, finfo, l)
 #if NMD > 0
 
 #include <dev/md.h>
-
+#if 0
 int load_memory_disc_from_floppy __P((struct md_conf *md, dev_t dev));
 
 int
@@ -1642,4 +1642,5 @@ load_memory_disc_from_floppy(md, dev)
 	return(0);
 }
 
+#endif
 #endif

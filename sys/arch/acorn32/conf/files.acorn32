@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.26.32.1 2008/01/20 16:04:13 chris Exp $
+#	$NetBSD: files.acorn32,v 1.26.32.2 2008/02/09 13:01:39 chris Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -173,9 +173,6 @@ file	arch/acorn32/acorn32/conf.c
 file	arch/arm/arm/disksubr.c			disk
 file	arch/arm/arm/disksubr_acorn.c		disk
 file	arch/arm/arm/disksubr_mbr.c		disk
-
-file	arch/arm/arm32/intr.c
-file	arch/arm/arm32/spl.S
 
 # RiscPC specific files
 file	arch/acorn32/acorn32/rpc_machdep.c	!rsbus

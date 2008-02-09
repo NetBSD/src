@@ -1,4 +1,4 @@
-#	$NetBSD: std.acorn32,v 1.4.50.1 2008/01/27 13:08:40 chris Exp $
+#	$NetBSD: std.acorn32,v 1.4.50.2 2008/02/09 13:01:39 chris Exp $
 #
 # standard NetBSD/arm32 options
 
@@ -16,3 +16,5 @@ options 	ARM32
 # Since the hardware is not capable of half-word loads/stores,
 # Acorn machines and alignment faults do not play nice together.
 options 	ARM32_DISABLE_ALIGNMENT_FAULTS
+
+options		ARM_INTR_IMPL="<arm/iomd/iomd_intr.h>"

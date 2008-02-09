@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.9.6.1 2008/01/01 15:39:50 chris Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.9.6.2 2008/02/09 13:01:39 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.6.1 2008/01/01 15:39:50 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.9.6.2 2008/02/09 13:01:39 chris Exp $");
 
 #include "opt_md.h"
 
@@ -174,19 +174,13 @@ cpu_configure()
 #if NPODULEBUS > 0
 	config_rootfound("podulebus", NULL);
 #endif	/* NPODULEBUS */
-
 #if defined(DEBUG)
 	/* Debugging information */
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
-	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_VM]);
-	printf("ipl_audio=%08x ipl_imp=%08x ipl_high=%08x ipl_serial=%08x\n",
-	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_HIGH],
-	    irqmasks[IPL_SERIAL]);
+	arm_intr_print_all_masks();
 #endif /* defined(DEBUG) */
 
 	/* Time to start taking interrupts so lets open the flood gates .... */
-	(void)spl0();
+	arm_intr_enable_irqs();
 }
 
 void

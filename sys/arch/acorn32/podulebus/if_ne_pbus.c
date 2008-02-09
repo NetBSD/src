@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pbus.c,v 1.13 2005/12/11 12:16:05 christos Exp $	*/
+/*	$NetBSD: if_ne_pbus.c,v 1.13.50.1 2008/02/09 13:01:39 chris Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.13 2005/12/11 12:16:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pbus.c,v 1.13.50.1 2008/02/09 13:01:39 chris Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -94,7 +94,7 @@ struct ne_pbus_softc {
 	int			sc_podule_number;
 	podule_t		*sc_podule;
 	struct bus_space	sc_tag;			/* Patched tag */
-	irqhandler_t		*sc_ih;			/* Interrupt handler */
+	irqhandler_t		sc_ih;			/* Interrupt handler */
 	struct evcnt		sc_intrcnt;		/* Interrupt count */
 	bus_space_handle_t	sc_extrah;		/* Bus handle for any
 							   extra registers */

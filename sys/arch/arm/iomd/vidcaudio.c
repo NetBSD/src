@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.45 2007/02/22 05:14:05 thorpej Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.45.22.1 2008/02/09 13:01:38 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.45 2007/02/22 05:14:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.45.22.1 2008/02/09 13:01:38 chris Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -241,12 +241,10 @@ vidcaudio_attach(struct device *parent, struct device *self, void *aux)
 		aprint_normal(": 8-bit internal DAC\n");
 
 	/* Install the irq handler for the DMA interrupt */
-	sc->sc_ih.ih_func = vidcaudio_intr;
-	sc->sc_ih.ih_arg = sc;
-	sc->sc_ih.ih_level = IPL_AUDIO;
-	sc->sc_ih.ih_name = self->dv_xname;
+	sc->sc_ih = intr_claim(sc->sc_dma_intr, IPL_AUDIO, self->dv_xname,
+			vidcaudio_intr, sc);
 
-	if (irq_claim(sc->sc_dma_intr, &sc->sc_ih) != 0) {
+	if (sc->sc_ih == NULL) {
 		aprint_error("%s: couldn't claim IRQ %d\n",
 		    self->dv_xname, sc->sc_dma_intr);
 		return;
@@ -290,18 +288,25 @@ vidcaudio_query_encoding(void *addr, struct audio_encoding *fp)
 	sc = addr;
 	switch (fp->index) {
 	case 0:
-		strcpy(fp->name, AudioEmulaw);
-		fp->encoding = AUDIO_ENCODING_ULAW;
-		fp->precision = 8;
-		fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
-		break;
-
-	case 1:
 		if (sc->sc_is16bit) {
 			strcpy(fp->name, AudioEslinear_le);
 			fp->encoding = AUDIO_ENCODING_SLINEAR_LE;
 			fp->precision = 16;
 			fp->flags = 0;
+		} else {
+			strcpy(fp->name, AudioEmulaw);
+			fp->encoding = AUDIO_ENCODING_ULAW;
+			fp->precision = 8;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
+		}
+		break;
+
+	case 1:
+		if (sc->sc_is16bit) {
+			strcpy(fp->name, AudioEmulaw);
+			fp->encoding = AUDIO_ENCODING_ULAW;
+			fp->precision = 8;
+			fp->flags = AUDIO_ENCODINGFLAG_EMULATED;
 			break;
 		}
 		/* FALLTHROUGH */
