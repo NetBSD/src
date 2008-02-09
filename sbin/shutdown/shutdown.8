@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.26 2003/08/07 10:04:39 agc Exp $
+.\"	$NetBSD: shutdown.8,v 1.27 2008/02/09 04:09:22 dholland Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)shutdown.8	8.2 (Berkeley) 4/27/95
 .\"
-.Dd October 18, 2002
+.Dd February 8, 2008
 .Dt SHUTDOWN 8
 .Os
 .Sh NAME
@@ -65,7 +65,8 @@ will pass the
 flag to
 .Xr reboot 8
 or
-.Xr halt 8 .
+.Xr halt 8
+to request a kernel core dump.
 If neither the
 .Fl h
 or
@@ -83,10 +84,8 @@ for the file systems
 checked on reboot.
 .It Fl h
 The system is halted at the specified
-.Ar time
-when
-.Nm
-execs
+.Ar time ,
+using
 .Xr halt 8 .
 .It Fl k
 Kick everybody off.
@@ -101,19 +100,15 @@ Prevent the normal
 before stopping.
 .It Fl p
 The system is powered down at the specified
-.Ar time
-when
-.Nm
-execs
+.Ar time ,
+using
 .Xr halt 8 .
 If the powerdown fails, or the system does not support software powerdown,
-the system will simply halt.
+the system will simply halt instead.
 .It Fl r
 The system is rebooted at the specified
-.Ar time
-when
-.Nm
-execs
+.Ar time ,
+using
 .Xr reboot 8 .
 .It Fl D
 Prevents
@@ -154,6 +149,7 @@ If
 is supplied as the only argument after the time, the warning message is read
 from the standard input.
 .El
+.Sh BEHAVIOR
 .Pp
 At intervals, becoming more frequent as apocalypse approaches
 and starting at ten hours before shutdown, warning messages are displayed
@@ -169,21 +165,29 @@ The file is removed just before
 .Nm
 exits.
 .Pp
-At shutdown time a message is written in the system log, containing the
-time of shutdown, who initiated the shutdown and the reason.
+At shutdown time, a message is written in the system log containing the
+time of shutdown, who initiated the shutdown, and the reason.
 Next a message is printed announcing the start of the system shutdown hooks.
 Then the shutdown hooks in
 .Pa /etc/rc.shutdown
-are run.
-And a message is printed indicating that they have completed.
-After a short delay a terminate
-signal is then sent to
+are run, and a message is printed indicating that they have completed.
+After a short delay,
+.Nm
+runs
+.Xr halt 8
+or
+.Xr reboot 8 ,
+or sends a terminate
+signal to
 .Xr init 8
-to bring the system down to single-user state (depending on above options).
+to bring the system down to single-user mode, depending on the choice
+of options.
+.Pp
 The time of the shutdown and the warning message are placed in
 .Pa /etc/nologin
-and should be used to inform the users about when the system will
-be back up and why it is going down (or anything else).
+and should be used to tell the users why the system is
+going down, when it will be back up, and to share any other pertinent
+information.
 .Sh FILES
 .Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/nologin
@@ -193,7 +197,9 @@ not to let anyone log in
 .It Pa /fastboot
 tells
 .Xr rc 8
-not to run fsck when rebooting
+not to run
+.Xr fsck 8
+when rebooting
 .It Pa /etc/rc.shutdown
 System shutdown commands
 .El
@@ -202,6 +208,8 @@ System shutdown commands
 .Xr wall 1 ,
 .Xr fastboot 8 ,
 .Xr halt 8 ,
+.Xr init 8 ,
+.Xr poweroff 8 ,
 .Xr reboot 8
 .Sh BACKWARD COMPATIBILITY
 The hours and minutes in the second time format may be separated by
