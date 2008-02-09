@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.6 2008/01/26 19:27:10 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.7 2008/02/09 13:01:38 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -183,9 +183,7 @@ void	_setsoftintr(int);
 #endif /* ! ARM_SPL_NOINLINE */
 
 /* public apis in arm_irqhandler.c*/
-typedef void *irqhandler_t;
-typedef struct irq_group *irqgroup_t;
-typedef void *irq_hardware_cookie_t;
+typedef struct intrhand *irqhandler_t;
 void arm_intr_init(void);
 void arm_intr_enable_irqs(void);
 
@@ -197,7 +195,7 @@ struct pic_ops {
 };
 
 struct pic_softc {
-	const struct pic_ops pic_ops;
+	struct pic_ops pic_ops;
 	
 	int pic_nirqs;			/* number of irq lines */
 	uint32_t pic_pre_assigned_irqs; /* irqs that have a pre-assigned use */
@@ -259,6 +257,9 @@ struct intrhand {
 	void *ih_arg;			/* arg for handler */
 	int ih_ipl;			/* IPL_* */
 	int ih_irq;			/* IRQ number */
+	/* XXX This should be hidden by podule bus! */
+	int ih_maskaddr;		/* podule mask address */
+	int ih_maskbits;		/* podule mask bits */
 };
 
 #define	IRQNAMESIZE	sizeof("abcdefghijklmnopqrstuvwxyz irq 31")

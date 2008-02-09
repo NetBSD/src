@@ -1,4 +1,4 @@
-/* 	$NetBSD: iomd_dma.c,v 1.10 2006/08/05 18:22:57 bjh21 Exp $	*/
+/* 	$NetBSD: iomd_dma.c,v 1.10.34.1 2008/02/09 13:01:38 chris Exp $	*/
 
 /*
  * Copyright (c) 1995 Scott Stevens
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_dma.c,v 1.10 2006/08/05 18:22:57 bjh21 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_dma.c,v 1.10.34.1 2008/02/09 13:01:38 chris Exp $");
 
 #define DMA_DEBUG
 #include <sys/param.h>
@@ -308,15 +308,14 @@ dma_init(int ch, int extp, int dmasize, int ipl)
 
 	printf("about to claim interrupt\n");
 
-	dp->dc_ih.ih_func = dma_intr;
-	dp->dc_ih.ih_arg = dp;
-	dp->dc_ih.ih_level = ipl;
-	dp->dc_ih.ih_name = "dma";
-	dp->dc_ih.ih_maskaddr = (u_int) IOMD_ADDRESS(IOMD_DMARQ);
-	dp->dc_ih.ih_maskbits = (1 << ch);
+	dp->dc_ih = intr_claim(IRQ_DMACH0 + ch, ipl, "dma", dma_intr, dp);
 
-	if (irq_claim(IRQ_DMACH0 + ch, &dp->dc_ih))
+	if (dp->dc_ih == NULL);
 		panic("Cannot install DMA IRQ handler");
+
+	dp->dc_ih->ih_maskaddr = (u_int) IOMD_ADDRESS(IOMD_DMARQ);
+	dp->dc_ih->ih_maskbits = (1 << ch);
+
 
 	return dp;
 }
