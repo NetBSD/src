@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_pivot_factory.c,v 1.5 2006/05/10 21:53:15 mrg Exp $	*/
+/*	$NetBSD: citrus_pivot_factory.c,v 1.6 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_pivot_factory.c,v 1.5 2006/05/10 21:53:15 mrg Exp $");
+__RCSID("$NetBSD: citrus_pivot_factory.c,v 1.6 2008/02/09 14:56:20 junyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -114,7 +114,7 @@ convert_line(struct src_head *sh, const char *line, size_t len)
 	struct src_entry *se;
 	const char *p;
 	char key1[LINE_MAX], key2[LINE_MAX], data[LINE_MAX];
-	u_int32_t val;
+	uint32_t val;
 
 	se = NULL; /* XXX gcc */
 

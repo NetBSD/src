@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_file.h,v 1.2 2003/06/30 17:54:13 christos Exp $	*/
+/*	$NetBSD: citrus_db_file.h,v 1.3 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -67,17 +67,17 @@
 #define _CITRUS_DB_HEADER_SIZE	16
 struct _citrus_db_header_x {
 	char		dhx_magic[_CITRUS_DB_MAGIC_SIZE];
-	u_int32_t	dhx_num_entries;
-	u_int32_t	dhx_entry_offset;
+	uint32_t	dhx_num_entries;
+	uint32_t	dhx_entry_offset;
 } __attribute__((__packed__));
 
 struct _citrus_db_entry_x {
-	u_int32_t	dex_hash_value;
-	u_int32_t	dex_next_offset;
-	u_int32_t	dex_key_offset;
-	u_int32_t	dex_key_size;
-	u_int32_t	dex_data_offset;
-	u_int32_t	dex_data_size;
+	uint32_t	dex_hash_value;
+	uint32_t	dex_next_offset;
+	uint32_t	dex_key_offset;
+	uint32_t	dex_key_size;
+	uint32_t	dex_data_offset;
+	uint32_t	dex_data_size;
 } __attribute__((__packed__));
 #define _CITRUS_DB_ENTRY_SIZE	24
 

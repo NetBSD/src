@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.c,v 1.7 2007/02/17 12:39:44 tnozaki Exp $	*/
+/*	$NetBSD: citrus_csmapper.c,v 1.8 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_csmapper.c,v 1.7 2007/02/17 12:39:44 tnozaki Exp $");
+__RCSID("$NetBSD: citrus_csmapper.c,v 1.8 2008/02/09 14:56:20 junyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -70,7 +70,7 @@ static struct _citrus_mapper_area *maparea = NULL;
 /* ---------------------------------------------------------------------- */
 
 static int
-get32(struct _region *r, u_int32_t *rval)
+get32(struct _region *r, uint32_t *rval)
 {
 	if (_region_size(r) != 4)
 		return EFTYPE;
@@ -108,7 +108,7 @@ find_best_pivot_pvdb(const char *src, const char *dst, char *pivot,
 	struct _citrus_db *db1, *db2, *db3;
 	char buf[LINE_MAX];
 	unsigned long norm;
-	u_int32_t val32;
+	uint32_t val32;
 
 	ret = _map_file(&fr, CS_PIVOT ".pvdb");
 	if (ret) {
@@ -340,7 +340,7 @@ quit:
 int
 _citrus_csmapper_open(struct _citrus_csmapper * __restrict * __restrict rcsm,
 		      const char * __restrict src, const char * __restrict dst,
-		      u_int32_t flags, unsigned long *rnorm)
+		      uint32_t flags, unsigned long *rnorm)
 {
 	int ret;
 	char buf1[PATH_MAX], buf2[PATH_MAX], key[PATH_MAX], pivot[PATH_MAX];

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_memstream.c,v 1.2 2004/01/02 21:49:35 itojun Exp $	*/
+/*	$NetBSD: citrus_memstream.c,v 1.3 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_memstream.c,v 1.2 2004/01/02 21:49:35 itojun Exp $");
+__RCSID("$NetBSD: citrus_memstream.c,v 1.3 2008/02/09 14:56:20 junyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,7 +47,7 @@ _citrus_memory_stream_getln(struct _citrus_memory_stream * __restrict ms,
 			    size_t * __restrict rlen)
 {
 	int i;
-	const u_int8_t *h, *p;
+	const uint8_t *h, *p;
 	size_t ret;
 
 	if (ms->ms_pos>=_region_size(&ms->ms_region))

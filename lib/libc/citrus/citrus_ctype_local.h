@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_local.h,v 1.2 2003/03/05 20:18:15 tshiozak Exp $	*/
+/*	$NetBSD: citrus_ctype_local.h,v 1.3 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -31,7 +31,7 @@
 #define _CITRUS_CTYPE_LOCAL_H_
 
 #define _CITRUS_CTYPE_GETOPS_FUNC_BASE(_n_)				\
-int _n_(_citrus_ctype_ops_rec_t *, size_t, u_int32_t)
+int _n_(_citrus_ctype_ops_rec_t *, size_t, uint32_t)
 #define _CITRUS_CTYPE_GETOPS_FUNC(_n_)					\
 _CITRUS_CTYPE_GETOPS_FUNC_BASE(_citrus_##_n_##_ctype_getops)
 
@@ -163,7 +163,7 @@ typedef int	(*_citrus_ctype_wctob_t)
  */
 #define _CITRUS_CTYPE_ABI_VERSION	0x00000002
 struct _citrus_ctype_ops_rec {
-	u_int32_t			co_abi_version;
+	uint32_t			co_abi_version;
 	/* version 0x00000001 */
 	_citrus_ctype_init_t		co_init;
 	_citrus_ctype_uninit_t		co_uninit;

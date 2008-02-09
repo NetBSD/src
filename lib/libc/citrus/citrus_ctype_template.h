@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_ctype_template.h,v 1.34 2007/11/26 15:31:30 tnozaki Exp $	*/
+/*	$NetBSD: citrus_ctype_template.h,v 1.35 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -372,7 +372,7 @@ do {									\
 
 int
 _FUNCNAME(ctype_getops)(_citrus_ctype_ops_rec_t *ops, size_t lenops,
-			u_int32_t expected_version)
+			uint32_t expected_version)
 {
 	if (expected_version<_CITRUS_CTYPE_ABI_VERSION || lenops<sizeof(*ops))
 		return (EINVAL);

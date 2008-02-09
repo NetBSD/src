@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv_local.h,v 1.2 2003/07/01 09:42:16 tshiozak Exp $	*/
+/*	$NetBSD: citrus_iconv_local.h,v 1.3 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -30,7 +30,7 @@
 #define _CITRUS_ICONV_LOCAL_H_
 
 #define _CITRUS_ICONV_GETOPS_FUNC_BASE(_n_)				\
-int _n_(struct _citrus_iconv_ops *, size_t, u_int32_t)
+int _n_(struct _citrus_iconv_ops *, size_t, uint32_t)
 #define _CITRUS_ICONV_GETOPS_FUNC(_n_)					\
 _CITRUS_ICONV_GETOPS_FUNC_BASE(_citrus_##_n_##_iconv_getops)
 
@@ -46,7 +46,7 @@ static int	_citrus_##_m_##_iconv_convert				\
 	(struct _citrus_iconv * __restrict,				\
 	 const char * __restrict * __restrict, size_t * __restrict,	\
 	 char * __restrict * __restrict, size_t * __restrict outbytes,	\
-	 u_int32_t, size_t * __restrict);				\
+	 uint32_t, size_t * __restrict);				\
 static int	_citrus_##_m_##_iconv_init_context			\
 	(struct _citrus_iconv *);					\
 static void	_citrus_##_m_##_iconv_uninit_context			\
@@ -73,13 +73,13 @@ typedef void	(*_citrus_iconv_uninit_shared_t)
 typedef int	(*_citrus_iconv_convert_t)
 	(struct _citrus_iconv * __restrict,
 	 const char *__restrict* __restrict, size_t * __restrict,
-	 char * __restrict * __restrict, size_t * __restrict, u_int32_t,
+	 char * __restrict * __restrict, size_t * __restrict, uint32_t,
 	 size_t * __restrict);
 typedef int	(*_citrus_iconv_init_context_t)(struct _citrus_iconv *);
 typedef void	(*_citrus_iconv_uninit_context_t)(struct _citrus_iconv *);
 
 struct _citrus_iconv_ops {
-	u_int32_t			io_abi_version;
+	uint32_t			io_abi_version;
 	_citrus_iconv_init_shared_t	io_init_shared;
 	_citrus_iconv_uninit_shared_t	io_uninit_shared;
 	_citrus_iconv_init_context_t	io_init_context;

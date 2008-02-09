@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_csmapper.h,v 1.1 2003/06/25 09:51:27 tshiozak Exp $	*/
+/*	$NetBSD: citrus_csmapper.h,v 1.2 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -41,7 +41,7 @@
 __BEGIN_DECLS
 int	_citrus_csmapper_open(struct _citrus_csmapper *__restrict *__restrict,
 			      const char *__restrict,
-			      const char *__restrict, u_int32_t,
+			      const char *__restrict, uint32_t,
 			      unsigned long *);
 __END_DECLS
 

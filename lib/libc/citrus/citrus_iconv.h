@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_iconv.h,v 1.4 2005/03/12 04:20:30 christos Exp $	*/
+/*	$NetBSD: citrus_iconv.h,v 1.5 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -54,7 +54,7 @@ _citrus_iconv_convert(struct _citrus_iconv * __restrict cv,
 		      const char * __restrict * __restrict in,
 		      size_t * __restrict inbytes,
 		      char * __restrict * __restrict out,
-		      size_t * __restrict outbytes, u_int32_t flags,
+		      size_t * __restrict outbytes, uint32_t flags,
 		      size_t * __restrict nresults)
 {
 

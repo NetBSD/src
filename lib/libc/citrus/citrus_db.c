@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db.c,v 1.4 2005/11/29 03:11:58 christos Exp $	*/
+/*	$NetBSD: citrus_db.c,v 1.5 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db.c,v 1.4 2005/11/29 03:11:58 christos Exp $");
+__RCSID("$NetBSD: citrus_db.c,v 1.5 2008/02/09 14:56:20 junyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -51,13 +51,13 @@ __RCSID("$NetBSD: citrus_db.c,v 1.4 2005/11/29 03:11:58 christos Exp $");
 struct _citrus_db {
 	/* private */
 	struct _region db_region;
-	u_int32_t (*db_hashfunc)(void *, struct _citrus_region *);
+	uint32_t (*db_hashfunc)(void *, struct _citrus_region *);
 	void *db_hashfunc_closure;
 };
 
 int
 _citrus_db_open(struct _citrus_db **rdb, struct _region *r, const char *magic,
-		u_int32_t (*hashfunc)(void *, struct _citrus_region *),
+		uint32_t (*hashfunc)(void *, struct _citrus_region *),
 		void *hashfunc_closure)
 {
 	struct _memstream ms;
@@ -100,7 +100,7 @@ int
 _citrus_db_lookup(struct _citrus_db *db, struct _citrus_region *key,
 		  struct _citrus_region *data, struct _citrus_db_locator *dl)
 {
-	u_int32_t hashval, num_entries;
+	uint32_t hashval, num_entries;
 	size_t offset;
 	struct _memstream ms;
 	struct _citrus_db_header_x *dhx;
@@ -196,7 +196,7 @@ _citrus_db_lookup_by_string(struct _citrus_db *db, const char *key,
 
 int
 _citrus_db_lookup8_by_string(struct _citrus_db *db, const char *key,
-			     u_int8_t *rval, struct _citrus_db_locator *dl)
+			     uint8_t *rval, struct _citrus_db_locator *dl)
 {
 	int ret;
 	struct _region r;
@@ -216,11 +216,11 @@ _citrus_db_lookup8_by_string(struct _citrus_db *db, const char *key,
 
 int
 _citrus_db_lookup16_by_string(struct _citrus_db *db, const char *key,
-			      u_int16_t *rval, struct _citrus_db_locator *dl)
+			      uint16_t *rval, struct _citrus_db_locator *dl)
 {
 	int ret;
 	struct _region r;
-	u_int16_t val;
+	uint16_t val;
 
 	ret = _citrus_db_lookup_by_string(db, key, &r, dl);
 	if (ret)
@@ -239,11 +239,11 @@ _citrus_db_lookup16_by_string(struct _citrus_db *db, const char *key,
 
 int
 _citrus_db_lookup32_by_string(struct _citrus_db *db, const char *key,
-			      u_int32_t *rval, struct _citrus_db_locator *dl)
+			      uint32_t *rval, struct _citrus_db_locator *dl)
 {
 	int ret;
 	struct _region r;
-	u_int32_t val;
+	uint32_t val;
 
 	ret = _citrus_db_lookup_by_string(db, key, &r, dl);
 	if (ret)
@@ -301,7 +301,7 @@ int
 _citrus_db_get_entry(struct _citrus_db *db, int idx,
 		     struct _region *key, struct _region *data)
 {
-	u_int32_t num_entries;
+	uint32_t num_entries;
 	size_t offset;
 	struct _memstream ms;
 	struct _citrus_db_header_x *dhx;
@@ -312,7 +312,7 @@ _citrus_db_get_entry(struct _citrus_db *db, int idx,
 	dhx = _memstream_getregion(&ms, NULL, sizeof(*dhx));
 	_DIAGASSERT(dhx);
 	num_entries = be32toh(dhx->dhx_num_entries);
-	if (idx < 0 || (u_int32_t)idx >= num_entries)
+	if (idx < 0 || (uint32_t)idx >= num_entries)
 		return EINVAL;
 
 	/* seek to the next entry */

@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.h,v 1.2 2006/08/21 20:30:52 tnozaki Exp $	*/
+/*	$NetBSD: citrus_db_factory.h,v 1.3 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -30,7 +30,7 @@
 #define _CITRUS_DB_FACTORY_H_
 
 struct _citrus_db_factory;
-typedef u_int32_t (*_citrus_db_hash_func_t)(void *, struct _citrus_region *);
+typedef uint32_t (*_citrus_db_hash_func_t)(void *, struct _citrus_region *);
 
 __BEGIN_DECLS
 int	_citrus_db_factory_create(struct _citrus_db_factory **,
@@ -43,11 +43,11 @@ int	_citrus_db_factory_add_by_string(struct _citrus_db_factory *,
 					 const char *,
 					 struct _citrus_region *, int);
 int	_citrus_db_factory_add8_by_string(struct _citrus_db_factory *,
-					  const char *, u_int8_t);
+					  const char *, uint8_t);
 int	_citrus_db_factory_add16_by_string(struct _citrus_db_factory *,
-					   const char *, u_int16_t);
+					   const char *, uint16_t);
 int	_citrus_db_factory_add32_by_string(struct _citrus_db_factory *,
-					  const char *, u_int32_t);
+					  const char *, uint32_t);
 int	_citrus_db_factory_add_string_by_string(struct _citrus_db_factory *,
 						const char *, const char *);
 size_t	_citrus_db_factory_calc_size(struct _citrus_db_factory *);

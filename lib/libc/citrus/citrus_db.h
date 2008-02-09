@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db.h,v 1.1 2003/06/25 09:51:29 tshiozak Exp $	*/
+/*	$NetBSD: citrus_db.h,v 1.2 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -31,14 +31,14 @@
 
 struct _citrus_db;
 struct _citrus_db_locator {
-	u_int32_t	dl_hashval;
+	uint32_t	dl_hashval;
 	size_t		dl_offset;
 };
 
 __BEGIN_DECLS
 int	_citrus_db_open(struct _citrus_db **, struct _citrus_region *,
 			const char *,
-			u_int32_t (*)(void *, struct _citrus_region *),
+			uint32_t (*)(void *, struct _citrus_region *),
 			void *);
 void	_citrus_db_close(struct _citrus_db *);
 int	_citrus_db_lookup(struct _citrus_db *, struct _citrus_region *,
@@ -48,13 +48,13 @@ int	_citrus_db_lookup_by_string(struct _citrus_db *, const char *,
 				    struct _citrus_region *,
 				    struct _citrus_db_locator *);
 int	_citrus_db_lookup8_by_string(struct _citrus_db *, const char *,
-				     u_int8_t *,
+				     uint8_t *,
 				     struct _citrus_db_locator *);
 int	_citrus_db_lookup16_by_string(struct _citrus_db *, const char *,
-				      u_int16_t *,
+				      uint16_t *,
 				      struct _citrus_db_locator *);
 int	_citrus_db_lookup32_by_string(struct _citrus_db *, const char *,
-				      u_int32_t *,
+				      uint32_t *,
 				      struct _citrus_db_locator *);
 int	_citrus_db_lookup_string_by_string(struct _citrus_db *, const char *,
 					   const char **,

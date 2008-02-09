@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_esdb.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $	*/
+/*	$NetBSD: citrus_esdb.c,v 1.5 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_esdb.c,v 1.4 2004/07/21 14:16:34 tshiozak Exp $");
+__RCSID("$NetBSD: citrus_esdb.c,v 1.5 2008/02/09 14:56:20 junyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -77,7 +77,7 @@ conv_esdb(struct _citrus_esdb *esdb, struct _region *fr)
 {
 	int ret;
 	struct _citrus_db *db;
-	u_int32_t version, num_charsets, csid, i, tmp;
+	uint32_t version, num_charsets, csid, i, tmp;
 	char buf[100];
 	const char *str;
 

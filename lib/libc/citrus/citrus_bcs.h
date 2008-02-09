@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_bcs.h,v 1.3 2005/05/14 17:55:42 tshiozak Exp $	*/
+/*	$NetBSD: citrus_bcs.h,v 1.4 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -38,7 +38,7 @@
  */
 
 #define _CITRUS_BCS_PRED(_name_, _cond_) \
-static __inline int _citrus_bcs_##_name_(u_int8_t c) { return (_cond_); }
+static __inline int _citrus_bcs_##_name_(uint8_t c) { return (_cond_); }
 
 /*
  * predicates.
@@ -62,14 +62,14 @@ _CITRUS_BCS_PRED(isxdigit,
  * transliterate between uppercase and lowercase.
  * Unlike transliterator defined in ctype.h, these do not accept EOF.
  */
-static __inline u_int8_t
-_citrus_bcs_toupper(u_int8_t c)
+static __inline uint8_t
+_citrus_bcs_toupper(uint8_t c)
 {
 	return (_citrus_bcs_islower(c) ? (c - 'a' + 'A') : c);
 }
 
-static __inline u_int8_t
-_citrus_bcs_tolower(u_int8_t c)
+static __inline uint8_t
+_citrus_bcs_tolower(uint8_t c)
 {
 	return (_citrus_bcs_isupper(c) ? (c - 'A' + 'a') : c);
 }
