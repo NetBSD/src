@@ -1,4 +1,4 @@
-/*	$netbsd: if_iwn.c,v 1.0 2007/09/07 20:02:54 ober Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.3 2008/02/09 19:14:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.2 2008/02/09 18:19:33 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.3 2008/02/09 19:14:53 skrll Exp $");
 
 
 /*
@@ -274,7 +274,7 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 
 	intrstr = pci_intr_string(sc->sc_pct, ih);
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwn_intr, sc);
-	    
+
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "could not establish interrupt"); 
 		if (intrstr != NULL)
@@ -283,7 +283,6 @@ iwn_attach(device_t parent __unused, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
-	
 
 	if (iwn_reset(sc) != 0) {
 		aprint_error_dev(self, "could not reset adapter\n");
@@ -697,7 +696,8 @@ iwn_alloc_rpool(struct iwn_softc *sc)
 	error = iwn_dma_contig_alloc(sc->sc_dmat, &ring->buf_dma, NULL,
 	    IWN_RBUF_COUNT * IWN_RBUF_SIZE, IWN_BUF_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not allocate Rx buffers DMA memory\n");
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate Rx buffers DMA memory\n");
 		return error;
 	}
 
@@ -735,7 +735,8 @@ iwn_alloc_rx_ring(struct iwn_softc *sc, struct iwn_rx_ring *ring)
 	    (void **)&ring->desc, IWN_RX_RING_COUNT * sizeof (struct iwn_rx_desc),
 	    IWN_RING_DMA_ALIGN, BUS_DMA_NOWAIT);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev, "could not allocate rx ring DMA memory\n");
+		aprint_error_dev(sc->sc_dev,
+		    "could not allocate rx ring DMA memory\n");
 		goto fail;
 	}
 
@@ -882,7 +883,6 @@ iwn_reset_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring)
 #ifdef IWN_DEBUG
 	if (ntries == 100 && iwn_debug > 1) {
 		aprint_error_dev(sc->sc_dev, "timeout resetting Tx ring %d\n", ring->qid);
-		    
 	}
 #endif
 	iwn_mem_unlock(sc);
@@ -906,7 +906,6 @@ iwn_free_tx_ring(struct iwn_softc *sc, struct iwn_tx_ring *ring)
 {
 	struct iwn_tx_data *data;
 	int i;
-
 
 	iwn_dma_contig_free(&ring->desc_dma);
 	iwn_dma_contig_free(&ring->cmd_dma);
