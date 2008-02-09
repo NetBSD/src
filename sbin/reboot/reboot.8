@@ -1,4 +1,4 @@
-.\"	$NetBSD: reboot.8,v 1.23 2007/06/03 22:39:47 uwe Exp $
+.\"	$NetBSD: reboot.8,v 1.24 2008/02/09 04:31:43 dholland Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)reboot.8	8.1 (Berkeley) 6/9/93
 .\"
-.Dd June 3, 2007
+.Dd February 8, 2008
 .Dt REBOOT 8
 .Os
 .Sh NAME
@@ -52,8 +52,11 @@ The
 and
 .Nm
 utilities flush the file system cache to disk, send all running processes
-a SIGTERM, wait for several seconds for them to die, send a SIGKILL to the
-survivors and, respectively, power down, halt or restart the system.
+a
+.Dv SIGTERM ,
+wait for up to 30 seconds for them to die, send a
+.Dv SIGKILL
+to the survivors and, respectively, power down, halt or restart the system.
 The action is logged, including entering a shutdown record into the login
 accounting file and sending a message via
 .Xr syslog 3 .
@@ -87,7 +90,7 @@ If there are any arguments passed to
 .Nm reboot
 they are concatenated with spaces and passed as
 .Fa bootstr
-to
+to the
 .Xr reboot 2
 system call.
 The string is passed to the firmware on platforms that support it.
@@ -101,6 +104,7 @@ users advance warning of their impending doom.
 .Xr syslog 3 ,
 .Xr utmp 5 ,
 .Xr boot 8 ,
+.Xr init 8 ,
 .Xr shutdown 8 ,
 .Xr sync 8
 .Sh HISTORY
@@ -130,7 +134,9 @@ can shutdown cleanly.  You should normally use
 .Xr shutdown 8
 unless you are running in single user mode.
 .Sh BUGS
-The single user shell will ignore the SIGTERM signal.
+The single user shell will ignore the
+.Dv SIGTERM
+signal.
 To avoid waiting for the timeout when
 rebooting or halting from the single user shell, you have to
 .Ic exec reboot
