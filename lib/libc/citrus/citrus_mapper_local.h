@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_mapper_local.h,v 1.1 2003/06/25 09:51:36 tshiozak Exp $	*/
+/*	$NetBSD: citrus_mapper_local.h,v 1.2 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -30,7 +30,7 @@
 #define _CITRUS_MAPPER_LOCAL_H_
 
 #define _CITRUS_MAPPER_GETOPS_FUNC_BASE(_n_)				\
-int _n_(struct _citrus_mapper_ops *, size_t, u_int32_t)
+int _n_(struct _citrus_mapper_ops *, size_t, uint32_t)
 #define _CITRUS_MAPPER_GETOPS_FUNC(_n_)					\
 _CITRUS_MAPPER_GETOPS_FUNC_BASE(_citrus_##_n_##_mapper_getops)
 
