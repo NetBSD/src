@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.739 2008/02/04 20:33:09 jmmv Exp $
+# $NetBSD: mi,v 1.740 2008/02/09 19:34:03 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -172,6 +172,7 @@
 ./sbin/mbrlabel					base-sysutil-root
 ./sbin/mknod					base-sysutil-root
 ./sbin/modload					base-sysutil-root
+./sbin/modstat					base-sysutil-root	modular
 ./sbin/modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
@@ -575,7 +576,7 @@
 ./usr/bin/mkfifo				base-util-bin
 ./usr/bin/mklocale				base-locale-bin
 ./usr/bin/mktemp				base-util-bin
-./usr/bin/modstat				base-util-bin
+./usr/bin/modstat				base-util-bin		!modular
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-tn3270-bin
 ./usr/bin/msgs					base-util-bin
