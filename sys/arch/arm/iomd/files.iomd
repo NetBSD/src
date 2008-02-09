@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.18 2006/08/19 13:34:15 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.18.32.1 2008/02/09 13:01:38 chris Exp $
 #
 # IOMD-specific configuration data
 #
@@ -9,10 +9,11 @@ attach	iomd at mainbus
 file	arch/arm/iomd/iomd.c			iomd		needs-flag
 file	arch/arm/iomd/iomd_io.c			iomd
 file	arch/arm/iomd/iomd_io_asm.S		iomd
-file	arch/arm/iomd/iomd_irq.S		iomd
 file	arch/arm/iomd/iomd_irqhandler.c		iomd
 file	arch/arm/iomd/iomd_fiq.S		iomd
 file	arch/arm/iomd/iomd_dma.c		iomd
+file	arch/arm/arm32/irq_dispatch.S		iomd
+file	arch/arm/arm/arm_irqhandler.c		iomd
 
 # I^2C bus (bit-banged through IOMD control register)
 device	iomdiic: i2cbus, i2c_bitbang

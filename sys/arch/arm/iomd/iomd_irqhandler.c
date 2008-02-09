@@ -1,4 +1,4 @@
-/*	$NetBSD: iomd_irqhandler.c,v 1.13.22.3 2008/01/20 16:04:02 chris Exp $	*/
+/*	$NetBSD: iomd_irqhandler.c,v 1.13.22.4 2008/02/09 13:01:38 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.13.22.3 2008/01/20 16:04:02 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.13.22.4 2008/02/09 13:01:38 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -55,20 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: iomd_irqhandler.c,v 1.13.22.3 2008/01/20 16:04:02 ch
 
 #include <machine/intr.h>
 #include <machine/cpu.h>
-#include <arm/arm32/katelib.h>
-
-irqhandler_t *irqhandlers[NIRQS];
-
-u_int current_mask;
-u_int actual_mask;
-u_int disabled_mask;
-u_int irqmasks[IPL_LEVELS];
-
-extern char *_intrnames;
-
-/* Prototypes */
-
-extern void set_spl_masks(void);
 
 /*
  * void irq_init(void)
@@ -76,15 +62,24 @@ extern void set_spl_masks(void);
  * Initialise the IRQ/FIQ sub system
  */
 
-void
-irq_init(void)
+static void iomd_set_irq_mask(uint32_t intr_enabled);
+static void iomd7500_set_irq_mask(uint32_t intr_enabled);
+static struct intrline pic_irqlines[NIRQS];
+
+static struct pic_softc iomd_pic =
 {
-	int loop;
+	.pic_ops.pic_set_irq_hardware_mask = iomd_set_irq_mask,
+	.pic_ops.pic_set_irq_hardware_type = NULL,
+	.pic_pre_assigned_irqs = 0,
+	.pic_nirqs = NIRQS,
+	.pic_name = "iomd",
+	.pic_intrlines = pic_irqlines
+};
 
-	/* Clear all the IRQ handlers and the irq block masks */
-	for (loop = 0; loop < NIRQS; ++loop)
-		irqhandlers[loop] = NULL;
 
+void
+iomd_irq_init(void)
+{
 	/* Clear the IRQ/FIQ masks in the IOMD */
 	IOMD_WRITE_BYTE(IOMD_IRQMSKA, 0x00);
 	IOMD_WRITE_BYTE(IOMD_IRQMSKB, 0x00);
@@ -96,322 +91,51 @@ irq_init(void)
 	case ARM7500FE_IOC_ID:
 		IOMD_WRITE_BYTE(IOMD_IRQMSKC, 0x00);
 		IOMD_WRITE_BYTE(IOMD_IRQMSKD, 0x00);
+		iomd_pic.pic_ops.pic_set_irq_hardware_mask = iomd7500_set_irq_mask;
 		break;
 	default:
-		printf("Unknown IOMD id (%d) found in irq_init()\n", IOMD_ID);
+		//printf("Unknown IOMD id (%d) found in irq_init()\n", IOMD_ID);
+		;
 	}
 
 	IOMD_WRITE_BYTE(IOMD_FIQMSK, 0x00);
 	IOMD_WRITE_BYTE(IOMD_DMAMSK, 0x00);
 
-	/*
-	 * Setup the irqmasks for the different Interrupt Priority Levels
-	 * We will start with no bits set and these will be updated as handlers
-	 * are installed at different IPL's.
-	 */
-	for (loop = 0; loop < IPL_LEVELS; ++loop)
-		irqmasks[loop] = 0;
-
-	current_mask = 0x00000000;
-	disabled_mask = 0x00000000;
-	actual_mask = 0x00000000;
-
-	set_spl_masks();
-
-	/* Enable IRQ's and FIQ's */
-	enable_interrupts(I32_bit | F32_bit); 
+	arm_intr_register_pic(&iomd_pic);
 }
 
 
-/*
- * int irq_claim(int irq, irqhandler_t *handler)
- *
- * Enable an IRQ and install a handler for it.
- */
-
-int
-irq_claim(int irq, irqhandler_t *handler)
+static void
+iomd_set_irq_mask(uint32_t intr_enabled)
 {
-	int level;
-	u_int oldirqstate;
-
-#ifdef DIAGNOSTIC
-	/* Sanity check */
-	if (handler == NULL)
-		panic("NULL interrupt handler");
-	if (handler->ih_func == NULL)
-		panic("Interrupt handler does not have a function");
-#endif	/* DIAGNOSTIC */
-
-	/*
-	 * IRQ_INSTRUCT indicates that we should get the irq number
-	 * from the irq structure
-	 */
-	if (irq == IRQ_INSTRUCT)
-		irq = handler->ih_num;
-    
-	/* Make sure the irq number is valid */
-	if (irq < 0 || irq >= NIRQS)
-		return -1;
-
-	/* Make sure the level is valid */
-	if (handler->ih_level < 0 || handler->ih_level >= IPL_LEVELS)
-    	        return -1;
-
-	oldirqstate = disable_interrupts(I32_bit);
-
-	/* Attach handler at top of chain */
-	handler->ih_next = irqhandlers[irq];
-	irqhandlers[irq] = handler;
-
-	/*
-	 * Reset the flags for this handler.
-	 * As the handler is now in the chain mark it as active.
-	 */
-	handler->ih_flags = 0 | IRQ_FLAG_ACTIVE;
-
-	/*
-	 * Record the interrupt number for accounting.
-	 * Done here as the accounting number may not be the same as the
-	 * IRQ number though for the moment they are
-	 */
-	handler->ih_num = irq;
-
-#ifdef IRQSTATS
-	/* Get the interrupt name from the head of the list */
-	if (handler->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, handler->ih_name,
-		    min(strlen(handler->ih_name), 13));
-	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
-	}
-#endif	/* IRQSTATS */
-
-	/*
-	 * Update the irq masks.
-	 * Find the lowest interrupt priority on the irq chain.
-	 * Interrupt is allowable at priorities lower than this.
-	 * If ih_level is out of range then don't bother to update
-	 * the masks.
-	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
-		irqhandler_t *ptr;
-
-		/*
-		 * Find the lowest interrupt priority on the irq chain.
-		 * Interrupt is allowable at priorities lower than this.
-		 */
-		ptr = irqhandlers[irq];
-		if (ptr) {
-			int max_level;
-
-			level = ptr->ih_level - 1;
-			max_level = ptr->ih_level - 1;
-			while (ptr) {
-				if (ptr->ih_level - 1 < level)
-					level = ptr->ih_level - 1;
-				else if (ptr->ih_level - 1 > max_level)
-					max_level = ptr->ih_level - 1;
-				ptr = ptr->ih_next;
-			}
-			/* Clear out any levels that we cannot now allow */
-			while (max_level >=0 && max_level > level) {
-				irqmasks[max_level] &= ~(1 << irq);
-				--max_level;
-			}
-			while (level >= 0) {
-				irqmasks[level] |= (1 << irq);
-				--level;
-			}
-		}
-
-#include "sl.h"
-#include "ppp.h"
-#if NSL > 0 || NPPP > 0
-		/* In the presence of SLIP or PPP, splimp > spltty. */
-		irqmasks[IPL_NET] &= irqmasks[IPL_TTY];
-#endif
-	}
-
-	enable_irq(irq);
-	set_spl_masks();
-	restore_interrupts(oldirqstate);
-
-	return 0;
+	IOMD_WRITE_BYTE(IOMD_IRQMSKA, intr_enabled & 0xff);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKB, (intr_enabled >> 8) & 0xff);
+	IOMD_WRITE_BYTE(IOMD_DMAMSK,  (intr_enabled >> 16) & 0xff);
 }
 
-
-/*
- * int irq_release(int irq, irqhandler_t *handler)
- *
- * Disable an IRQ and remove a handler for it.
- */
-
-int
-irq_release(int irq, irqhandler_t *handler)
+static void
+iomd7500_set_irq_mask(uint32_t intr_enabled)
 {
-	int level;
-	irqhandler_t *irqhand;
-	irqhandler_t **prehand;
-#ifdef IRQSTATS
-	extern char *_intrnames;
-#endif
-
-	/*
-	 * IRQ_INSTRUCT indicates that we should get the irq number
-	 * from the irq structure
-	 */
-	if (irq == IRQ_INSTRUCT)
-		irq = handler->ih_num;
-
-	/* Make sure the irq number is valid */
-	if (irq < 0 || irq >= NIRQS)
-		return(-1);
-
-	/* Locate the handler */
-	irqhand = irqhandlers[irq];
-	prehand = &irqhandlers[irq];
-    
-	while (irqhand && handler != irqhand) {
-		prehand = &irqhand->ih_next;
-		irqhand = irqhand->ih_next;
-	}
-
-	/* Remove the handler if located */
-	if (irqhand)
-		*prehand = irqhand->ih_next;
-	else
-		return -1;
-
-	/* Now the handler has been removed from the chain mark is as inactive */
-	irqhand->ih_flags &= ~IRQ_FLAG_ACTIVE;
-
-	/* Make sure the head of the handler list is active */
-	if (irqhandlers[irq])
-		irqhandlers[irq]->ih_flags |= IRQ_FLAG_ACTIVE;
-
-#ifdef IRQSTATS
-	/* Get the interrupt name from the head of the list */
-	if (irqhandlers[irq] && irqhandlers[irq]->ih_name) {
-		char *ptr = _intrnames + (irq * 14);
-		strcpy(ptr, "             ");
-		strncpy(ptr, irqhandlers[irq]->ih_name,
-		    min(strlen(irqhandlers[irq]->ih_name), 13));
-	} else {
-		char *ptr = _intrnames + (irq * 14);
-		sprintf(ptr, "irq %2d     ", irq);
-	}
-#endif	/* IRQSTATS */
-
-	/*
-	 * Update the irq masks.
-	 * If ih_level is out of range then don't bother to update
-	 * the masks.
-	 */
-	if (handler->ih_level >= 0 && handler->ih_level < IPL_LEVELS) {
-		irqhandler_t *ptr;
-
-		/* Clean the bit from all the masks */
-		for (level = 0; level < IPL_LEVELS; ++level)
-			irqmasks[level] &= ~(1 << irq);
-
-		/*
-		 * Find the lowest interrupt priority on the irq chain.
-		 * Interrupt is allowable at priorities lower than this.
-		 */
-		ptr = irqhandlers[irq];
-		if (ptr) {
-			level = ptr->ih_level - 1;
-			while (ptr) {
-				if (ptr->ih_level - 1 < level)
-					level = ptr->ih_level - 1;
-				ptr = ptr->ih_next;
-			}
-			while (level >= 0) {
-				irqmasks[level] |= (1 << irq);
-				--level;
-			}
-		}
-	}
-
-	/*
-	 * Disable the appropriate mask bit if there are no handlers left for
-	 * this IRQ.
-	 */
-	if (irqhandlers[irq] == NULL)
-		disable_irq(irq);
-
-	set_spl_masks();
-      
-	return 0;
+	IOMD_WRITE_BYTE(IOMD_IRQMSKA, intr_enabled & 0xff);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKB, (intr_enabled >> 8) & 0xff);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKC, (intr_enabled >> 16) & 0xff);
+	IOMD_WRITE_BYTE(IOMD_IRQMSKD, (intr_enabled >> 24) & 0xef);
+	IOMD_WRITE_BYTE(IOMD_DMAMSK,  (intr_enabled >> 27) & 0x10);
 }
-
 
 void *
 intr_claim(int irq, int level, const char *name, int (*ih_func)(void *),
     void *ih_arg)
 {
-	irqhandler_t *ih;
-
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (!ih)
-		panic("intr_claim(): Cannot malloc handler memory");
-
-	ih->ih_level = level;
-	ih->ih_name = name;
-	ih->ih_func = ih_func;
-	ih->ih_arg = ih_arg;
-	ih->ih_flags = 0;
-
-	if (irq_claim(irq, ih) != 0)
-		return NULL;
-	return ih;
+	return arm_intr_claim(&iomd_pic, irq, IST_LEVEL, level, name, ih_func, ih_arg);
 }
 
 
-int
+void
 intr_release(void *arg)
 {
-	irqhandler_t *ih = (irqhandler_t *)arg;
-
-	if (irq_release(ih->ih_num, ih) == 0) {
-		free(ih, M_DEVBUF);
-		return 0 ;
-	}
-	return 1;
+	arm_intr_disestablish(&iomd_pic, arg);
 }
-
-#if 0
-u_int
-disable_interrupts(u_int mask)
-{
-	u_int cpsr;
-
-	cpsr = SetCPSR(mask, mask);
-	return cpsr;
-}
-
-
-u_int
-restore_interrupts(u_int old_cpsr)
-{
-	int mask = I32_bit | F32_bit;
-
-	return SetCPSR(mask, old_cpsr & mask);
-}
-
-
-u_int
-enable_interrupts(u_int mask)
-{
-
-	return SetCPSR(mask, 0);
-}
-#endif
-
 /*
  * void disable_irq(int irq)
  *
@@ -421,12 +145,7 @@ enable_interrupts(u_int mask)
 void
 disable_irq(int irq)
 {
-	u_int oldirqstate; 
-
-	oldirqstate = disable_interrupts(I32_bit);
-	current_mask &= ~(1 << irq);
-	irq_setmasks();
-	restore_interrupts(oldirqstate);
+	arm_intr_soft_disable_irq(&iomd_pic, irq);
 }  
 
 
@@ -441,14 +160,57 @@ disable_irq(int irq)
 void
 enable_irq(int irq)
 {
-	u_int oldirqstate; 
-
-	oldirqstate = disable_interrupts(I32_bit);
-	current_mask |= (1 << irq);
-	irq_setmasks();
-	restore_interrupts(oldirqstate);
+	arm_intr_soft_enable_irq(&iomd_pic, irq);
 }  
 
+
+static uint32_t
+iomd_irq_status(void)
+{
+	uint32_t result = 0;
+	uint32_t tmp;
+
+
+	tmp = IOMD_READ_BYTE(IOMD_IRQRQA);
+	result |= tmp;
+	tmp = IOMD_READ_BYTE(IOMD_IRQRQB);
+	result |= tmp << 8;
+
+	switch (IOMD_ID) {
+	case RPC600_IOMD_ID:
+		/* XXX break DMA into seperate PIC */
+		tmp = IOMD_READ_BYTE(IOMD_DMARQ);
+		result |= tmp << 16;
+		break;
+	case ARM7500_IOC_ID:
+	case ARM7500FE_IOC_ID:
+		tmp = IOMD_READ_BYTE(IOMD_IRQRQC);
+		result |= tmp << 16;
+		tmp = IOMD_READ_BYTE(IOMD_IRQRQD);
+		result |= tmp << 24;
+		/* XXX break DMA into seperate PIC */
+		tmp = IOMD_READ_BYTE(IOMD_DMARQ);
+		result |= tmp << 27;
+		break;
+	}
+
+	/* clear iomd irqa bits */
+	IOMD_WRITE_BYTE(IOMD_IRQRQA, result & 0x7d);
+
+	return result;
+}
+
+void
+iomd_intr_dispatch(struct clockframe *frame)
+{
+	uint32_t hwpend;
+
+	hwpend = iomd_irq_status();
+
+	arm_intr_queue_irqs(&iomd_pic, hwpend);
+
+	arm_intr_process_pending_ipls(frame, current_ipl_level);
+}
 
 /*
  * void stray_irqhandler(u_int mask)
