@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.66.2.5 2008/02/09 13:01:39 chris Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.66.2.6 2008/02/09 13:12:05 chris Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.66.2.5 2008/02/09 13:01:39 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.66.2.6 2008/02/09 13:12:05 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -136,7 +136,6 @@ extern u_int32_t  iomd_base;
 extern struct bus_space iomd_bs_tag;
 
 paddr_t physical_start;
-paddr_t kernel_start;
 paddr_t physical_freestart;
 paddr_t physical_freeend;
 paddr_t physical_end;
@@ -235,6 +234,14 @@ cpu_reboot(int howto, char *bootstr)
 
 #ifdef DIAGNOSTIC
 	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
+
+	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
+	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
+	    irqmasks[IPL_VM]);
+	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
+	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
+
+	dump_spl_masks();
 #endif	/* DIAGNOSTIC */
 
 	/*
@@ -499,7 +506,7 @@ initarm(void *cookie)
 	 * note that this will stop working after we switch to the new
 	 * L1 Table
 	 */
-	memset((void *) (videomemory.vidm_vbase), 0x55, videomemory.vidm_size);
+	memset((void *) (videomemory.vidm_vbase), 0x55, 50*1024);
 	consinit();
 	printf("\n\n\n\n\n\n\n");
 #define VERBOSE_INIT_ARM
@@ -552,12 +559,12 @@ initarm(void *cookie)
 		}
 	};
 
+	/* Kinetics can only DMA from the Normal DRAM */
 	if (hasKinetic)
 	{
-		/* Kinetics can only DMA from the Normal DRAM */
 		dma_range_begin = 0xffffffff;
 		dma_range_end = 0;
-		for (loop = 0; loop < bootconfig.dramblocks; ++loop) {
+		for (loop = 0, physmem = 0; loop < bootconfig.dramblocks; ++loop) {
 			if (bootconfig.dram[loop].flags == PHYSMEM_TYPE_GENERIC) {
 				if (bootconfig.dram[loop].address < dma_range_begin)
 					dma_range_begin = bootconfig.dram[loop].address;
@@ -565,25 +572,34 @@ initarm(void *cookie)
 					bootconfig.dram[loop].pages * PAGE_SIZE;
 				if (memoryblock_end > dma_range_end)
 					dma_range_end = memoryblock_end;
+				physmem += bootconfig.dram[loop].pages;
 			}
 		}
-		dma_range_end   = (paddr_t) MIN(dma_range_end, 256*1024*1024);
+		dma_range_end   = (paddr_t) MIN(dma_range_end, 512*1024*1024);
 	} else {
-		/* everything else DMAs all the memory */
+		/* constants for now, but might be changed/configured */
 		dma_range_begin = (paddr_t) physical_start;
 		dma_range_end   = (paddr_t) MIN(physical_end, 512*1024*1024);
 	}
-
-	/* set the location of the kernel in physical memory */
+	
 	if (hasKinetic) {
-		kernel_start = kinetic_physical_start;
-	} else {
-		kernel_start = physical_start;
+		/* hack hack - throw away the slow dram */
+		for (loop = 0; loop < bootconfig.dramblocks; ++loop) {
+			if (bootconfig.dram[loop].flags == PHYSMEM_TYPE_GENERIC) {
+				/* non kinetic ram */
+				physmem -= bootconfig.dram[loop].pages;
+				bootconfig.drampages -=
+				    bootconfig.dram[loop].pages;
+			}
+		}
+		physical_start = kinetic_physical_start;
 	}
-	physical_freestart = kernel_start;
+      
+	physical_freestart = physical_start;
 	free_pages = bootconfig.drampages;
 	physical_freeend = physical_end;
  
+
 	/*
 	 * AHUM !! set this variable ... it was set up in the old 1st
 	 * stage bootloader
@@ -591,14 +607,15 @@ initarm(void *cookie)
 	kerneldatasize = bootconfig.kernsize + bootconfig.MDFsize;
 
 	/* Update the address of the first free page of physical memory */
+	/* XXX Assumption that the kernel and stuff is at the LOWEST physical memory address? XXX */
 	physical_freestart +=
-	    bootconfig.kernsize + bootconfig.scratchsize;
-	free_pages -= (bootconfig.kernsize + bootconfig.scratchsize) / PAGE_SIZE;
+	    bootconfig.kernsize + bootconfig.MDFsize + bootconfig.scratchsize;
+	free_pages -= (physical_freestart - physical_start) / PAGE_SIZE;
   
 	/* Define a macro to simplify memory allocation */
 #define	valloc_pages(var, np)						\
 	alloc_pages((var).pv_pa, (np));					\
-	(var).pv_va = KERNEL_BASE + (var).pv_pa - kernel_start;
+	(var).pv_va = KERNEL_BASE + (var).pv_pa - physical_start;
 
 #define alloc_pages(var, np)						\
 	(var) = physical_freestart;					\
@@ -662,7 +679,7 @@ initarm(void *cookie)
 	 * in recent versions of the pmap code. Due to the calls used there
 	 * we cannot allocate virtual memory during bootstrap.
 	 */
-	sa110_cc_base = (KERNEL_BASE + (physical_freestart - kernel_start)
+	sa110_cc_base = (KERNEL_BASE + (physical_freestart - physical_start)
 	    + (CPU_SA110_CACHE_CLEAN_SIZE - 1))
 	    & ~(CPU_SA110_CACHE_CLEAN_SIZE - 1);
 #endif	/* CPU_SA110 */
@@ -714,15 +731,15 @@ initarm(void *cookie)
 	if (N_GETMAGIC(kernexec[0]) == ZMAGIC) {
 #if defined(CPU_ARM6) || defined(CPU_ARM7)
 		logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
-		    kernel_start, kernexec->a_text,
+		    physical_start, kernexec->a_text,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 #else	/* CPU_ARM6 || CPU_ARM7 */
 		logical = pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
-		    kernel_start, kernexec->a_text,
+		    physical_start, kernexec->a_text,
 		    VM_PROT_READ, PTE_CACHE);
 #endif	/* CPU_ARM6 || CPU_ARM7 */
 		logical += pmap_map_chunk(l1pagetable,
-		    KERNEL_TEXT_BASE + logical, kernel_start + logical,
+		    KERNEL_TEXT_BASE + logical, physical_start + logical,
 		    kerneldatasize - kernexec->a_text,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	} else {	/* !ZMAGIC */
@@ -732,7 +749,7 @@ initarm(void *cookie)
 		 * read/write area's ...
 		 */
 		pmap_map_chunk(l1pagetable, KERNEL_TEXT_BASE,
-		    kernel_start, kerneldatasize,
+		    physical_start, kerneldatasize,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	};
 
@@ -804,6 +821,8 @@ initarm(void *cookie)
 	 * to them.  Once this is done we will be running with the
 	 * REAL kernel page tables.
 	 */
+
+	cpu_control(CPU_CONTROL_SYST_ENABLE | CPU_CONTROL_ROM_ENABLE, CPU_CONTROL_SYST_ENABLE);
 
 	/* be a client to all domains */
 	cpu_domains(0x55555555);
@@ -947,21 +966,16 @@ initarm(void *cookie)
 		paddr_t start = (paddr_t)bootconfig.dram[loop].address;
 		paddr_t end = start + (bootconfig.dram[loop].pages * PAGE_SIZE);
 
-		if (end > physical_freestart)
-		{
-			if (start < physical_freestart)
-				start = physical_freestart;
-			if (end > physical_freeend)
-				end = physical_freeend;
-		}
+		if (start < physical_freestart)
+			start = physical_freestart;
+		if (end > physical_freeend)
+			end = physical_freeend;
 
-		if (bootconfig.dram[loop].flags & PHYSMEM_TYPE_PROCESSOR_ONLY) {
-			uvm_page_physload(atop(start), atop(end),
-					atop(start), atop(end), VM_FREELIST_DEFAULT);
-		} else {
-			uvm_page_physload(atop(start), atop(end),
-					atop(start), atop(end), VM_FREELIST_RPCDMA);
-		}
+		/* XXX Consider DMA range intersection checking. */
+
+		if (!hasKinetic || bootconfig.dram[loop].flags & PHYSMEM_TYPE_PROCESSOR_ONLY)
+		uvm_page_physload(atop(start), atop(end),
+		    atop(start), atop(end), VM_FREELIST_DEFAULT);
 	}
 
 	/* Boot strap pmap telling it where the kernel page table is */
@@ -972,19 +986,15 @@ initarm(void *cookie)
 	    KERNEL_VM_BASE + KERNEL_VM_SIZE);
 	console_flush();
 
-	*vidc_base = 0x400000ff;
 	/* Setup the IRQ system */
 #ifdef VERBOSE_INIT_ARM
 	printf("irq ");
 #endif
 	console_flush();
-	arm_intr_init();
-	*vidc_base = 0x4000ff00;
-	iomd_irq_init();
+	irq_init();
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n\n");
 #endif
-	*vidc_base = 0x40ffffff;
 
 #if NVIDCVIDEO>0
 	consinit();		/* necessary ? */
@@ -1021,8 +1031,6 @@ initarm(void *cookie)
 	printf(" VRAM block 0  at %08x size %08x\n\r",
 	    bootconfig.vram[0].address,
 	    bootconfig.vram[0].pages * bootconfig.pagesize);
-	if (hasKinetic)
-		printf("%s", " Kinetic memory was detected\n\r");
 
 	/*
 	 * Get a handle on the I2C interface so we can read
