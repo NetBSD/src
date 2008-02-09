@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.49 2007/12/15 19:44:47 perry Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.50 2008/02/09 04:09:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.49 2007/12/15 19:44:47 perry Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.50 2008/02/09 04:09:22 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -118,7 +118,7 @@ main(int argc, char *argv[])
 	(void)setprogname(argv[0]);
 #ifndef DEBUG
 	if (geteuid())
-		errx(1, "NOT super-user");
+		errx(1, "%s: Not super-user", strerror(EPERM));
 #endif
 	while ((ch = getopt(argc, argv, "b:Ddfhknpr")) != -1)
 		switch (ch) {
@@ -163,13 +163,13 @@ main(int argc, char *argv[])
 		doreboot = 1;
 
 	if (dofast && nosync) {
-		warnx("incompatible switches -f and -n");
+		warnx("Incompatible options -f and -n");
 		usage();
 	}
 	if (dohalt && doreboot) {
 		const char *which_flag = dopowerdown ? "p" : "h";
 
-		warnx("incompatible switches -%s and -r", which_flag);
+		warnx("Incompatible options -%s and -r", which_flag);
 		usage();
 	}
 
@@ -346,9 +346,19 @@ timeout(int signo)
 static void
 die_you_gravy_sucking_pig_dog(void)
 {
+	const char *what;
 
-	syslog(LOG_NOTICE, "%s by %s: %s",
-	    doreboot ? "reboot" : dohalt ? "halt" : "shutdown", whom, mbuf);
+	if (doreboot) {
+		what = "reboot";
+	} else if (dohalt && dopowerdown) {
+		what = "poweroff";
+	} else if (dohalt) {
+		what = "halt";
+	} else {
+		what = "shutdown";
+	}
+
+	syslog(LOG_NOTICE, "%s by %s: %s", what, whom, mbuf);
 	(void)sleep(2);
 
 	(void)printf("\r\nSystem shutdown time has arrived\007\007\r\n");
@@ -387,8 +397,7 @@ die_you_gravy_sucking_pig_dog(void)
 #ifndef DEBUG
 		(void)execve(path, __UNCONST(args), NULL);
 		serrno = errno;
-		syslog(LOG_ERR, "%s: Can't exec `%s' (%m)", getprogname(),
-		    path);
+		syslog(LOG_ERR, "Can't exec `%s' (%m)", path);
 		errno = serrno;
 		warn("Can't exec `%s'", path);
 #else
