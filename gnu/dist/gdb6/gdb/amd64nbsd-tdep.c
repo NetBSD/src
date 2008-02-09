@@ -101,15 +101,40 @@ int amd64nbsd_r_reg_offset[] =
 };
 
 /* Kernel debuging support */
-
-#define amd64nbsd_tf_reg_offset amd64nbsd_r_reg_offset
+static const int amd64nbsd_tf_reg_offset[] =
+{
+  18 * 8,			/* %rax */
+  17 * 8,			/* %rbx */
+  10 * 8,			/* %rcx */
+  2 * 8,			/* %rdx */
+  1 * 8,			/* %rsi */
+  0 * 8,			/* %rdi */
+  16 * 8,			/* %rbp */
+  28 * 8,			/* %rsp */
+  4 * 8,			/* %r8 .. */
+  5 * 8,			
+  3 * 8,			
+  11 * 8,			
+  12 * 8,			
+  13 * 8,			
+  14 * 8,			
+  15 * 8,			/* ... %r15 */
+  25 * 8,			/* %rip */
+  27 * 8,			/* %eflags */
+  26 * 8,			/* %cs */
+  29 * 8,			/* %ss */
+  22 * 8,			/* %ds */
+  21 * 8,			/* %es */
+  20 * 8,			/* %fs */
+  19 * 8,			/* %gs */
+};
 
 static struct trad_frame_cache *
 amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
 {
   struct trad_frame_cache *cache;
   CORE_ADDR func, sp, addr;
-  ULONGEST cs;
+  ULONGEST cs, rip;
   char *name;
   int i;
 
@@ -123,18 +148,45 @@ amd64nbsd_trapframe_cache(struct frame_info *next_frame, void **this_cache)
   sp = frame_unwind_register_unsigned (next_frame, AMD64_RSP_REGNUM);
 
   find_pc_partial_function (func, &name, NULL, NULL);
+
+  /* There is an extra 'call' in the interrupt sequence - ignore the extra
+   * return address */
   if (name && strncmp (name, "Xintr", 5) == 0)
     addr = sp + 8;		/* It's an interrupt frame.  */
   else
     addr = sp;
 
   for (i = 0; i < ARRAY_SIZE (amd64nbsd_tf_reg_offset); i++)
-    if (amd64nbsd_tf_reg_offset[i] != -1)
-      trad_frame_set_reg_addr (cache, i, addr + amd64nbsd_tf_reg_offset[i]);
+    {
+      if (amd64nbsd_tf_reg_offset[i] != -1)
+        trad_frame_set_reg_addr (cache, i, addr + amd64nbsd_tf_reg_offset[i]);
 
-  /* Read %cs from trap frame.  */
-  addr += amd64nbsd_tf_reg_offset[AMD64_CS_REGNUM];
-  cs = read_memory_unsigned_integer (addr, 8); 
+      /* Read %cs and %rip when we have the addresses to hand */
+      if (i == AMD64_CS_REGNUM)
+        cs = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i], 8);
+      if (i == AMD64_RIP_REGNUM)
+        rip = read_memory_unsigned_integer (addr + amd64nbsd_tf_reg_offset[i], 8);
+    }
+
+  /* The trap frame layout was changed lf the %rip value is less than 2^16 it
+   * is almost certainly the %ss of the old format. */
+  if (rip < 2^16)
+    {
+
+      for (i = 0; i < ARRAY_SIZE (amd64nbsd_tf_reg_offset); i++)
+        {
+
+          if (amd64nbsd_tf_reg_offset[i] == -1)
+            continue;
+
+          trad_frame_set_reg_addr (cache, i, addr + amd64nbsd_r_reg_offset[i]);
+
+          /* Read %cs when we have the address to hand */
+          if (i == AMD64_CS_REGNUM)
+	    cs = read_memory_unsigned_integer (addr + amd64nbsd_r_reg_offset[i], 8);
+        }
+    }
+
   if ((cs & I386_SEL_RPL) == I386_SEL_UPL)
     {
       /* Trap from user space; terminate backtrace.  */
