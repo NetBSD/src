@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_iwnvar.h,v 1.2 2007/11/19 19:34:25 damien Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.3 2008/02/09 19:14:53 skrll Exp $	*/
+/*	OpenBSD: if_iwnvar.h,v 1.2 2007/11/19 19:34:25 damien Exp	*/
 
 /*-
  * Copyright (c) 2007
