@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_region.h,v 1.6 2005/05/14 17:55:42 tshiozak Exp $	*/
+/*	$NetBSD: citrus_region.h,v 1.7 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -69,27 +69,27 @@ _citrus_region_check(const struct _citrus_region *r, size_t ofs, size_t sz)
 static __inline void *
 _citrus_region_offset(const struct _citrus_region *r, size_t pos)
 {
-	return (void *)((u_int8_t *)r->r_head + pos);
+	return (void *)((uint8_t *)r->r_head + pos);
 }
 
-static __inline u_int8_t
+static __inline uint8_t
 _citrus_region_peek8(const struct _citrus_region *r, size_t pos)
 {
-	return *(u_int8_t *)_citrus_region_offset(r, pos);
+	return *(uint8_t *)_citrus_region_offset(r, pos);
 }
 
-static __inline u_int16_t
+static __inline uint16_t
 _citrus_region_peek16(const struct _citrus_region *r, size_t pos)
 {
-	u_int16_t val;
+	uint16_t val;
 	memcpy(&val, _citrus_region_offset(r, pos), (size_t)2);
 	return val;
 }
 
-static __inline u_int32_t
+static __inline uint32_t
 _citrus_region_peek32(const struct _citrus_region *r, size_t pos)
 {
-	u_int32_t val;
+	uint32_t val;
 	memcpy(&val, _citrus_region_offset(r, pos), (size_t)4);
 	return val;
 }

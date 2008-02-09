@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_db_factory.c,v 1.8 2004/01/02 21:49:35 itojun Exp $	*/
+/*	$NetBSD: citrus_db_factory.c,v 1.9 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_db_factory.c,v 1.8 2004/01/02 21:49:35 itojun Exp $");
+__RCSID("$NetBSD: citrus_db_factory.c,v 1.9 2008/02/09 14:56:20 junyoung Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: citrus_db_factory.c,v 1.8 2004/01/02 21:49:35 itojun Exp $");
 struct _citrus_db_factory_entry {
 	SIMPLEQ_ENTRY(_citrus_db_factory_entry)	de_entry;
 	struct _citrus_db_factory_entry *de_next;
-	u_int32_t de_hashvalue;
+	uint32_t de_hashvalue;
 	struct _region de_key;
 	int de_key_free;
 	struct _region de_data;
@@ -65,7 +65,7 @@ struct _citrus_db_factory {
 	SIMPLEQ_HEAD(, _citrus_db_factory_entry) df_entries;
 	size_t df_total_key_size;
 	size_t df_total_data_size;
-	u_int32_t (*df_hashfunc)(void *, struct _citrus_region *);
+	uint32_t (*df_hashfunc)(void *, struct _citrus_region *);
 	void *df_hashfunc_closure;
 };
 
@@ -157,10 +157,10 @@ _citrus_db_factory_add_by_string(struct _citrus_db_factory *df,
 
 int
 _citrus_db_factory_add8_by_string(struct _citrus_db_factory *df,
-				  const char *key, u_int8_t val)
+				  const char *key, uint8_t val)
 {
 	struct _region r;
-	u_int8_t *p;
+	uint8_t *p;
 
 	p = malloc(sizeof(*p));
 	if (p == NULL)
@@ -172,10 +172,10 @@ _citrus_db_factory_add8_by_string(struct _citrus_db_factory *df,
 
 int
 _citrus_db_factory_add16_by_string(struct _citrus_db_factory *df,
-				   const char *key, u_int16_t val)
+				   const char *key, uint16_t val)
 {
 	struct _region r;
-	u_int16_t *p;
+	uint16_t *p;
 
 	p = malloc(sizeof(*p));
 	if (p == NULL)
@@ -187,10 +187,10 @@ _citrus_db_factory_add16_by_string(struct _citrus_db_factory *df,
 
 int
 _citrus_db_factory_add32_by_string(struct _citrus_db_factory *df,
-				   const char *key, u_int32_t val)
+				   const char *key, uint32_t val)
 {
 	struct _region r;
-	u_int32_t *p;
+	uint32_t *p;
 
 	p = malloc(sizeof(*p));
 	if (p == NULL)
@@ -228,14 +228,14 @@ _citrus_db_factory_calc_size(struct _citrus_db_factory *df)
 }
 
 static __inline void
-put8(struct _region *r, size_t *rofs, u_int8_t val)
+put8(struct _region *r, size_t *rofs, uint8_t val)
 {
-	*(u_int8_t *)_region_offset(r, *rofs) = val;
+	*(uint8_t *)_region_offset(r, *rofs) = val;
 	*rofs += 1;
 }
 
 static __inline void
-put16(struct _region *r, size_t *rofs, u_int16_t val)
+put16(struct _region *r, size_t *rofs, uint16_t val)
 {
 	val = htons(val);
 	memcpy(_region_offset(r, *rofs), &val, 2);
@@ -243,7 +243,7 @@ put16(struct _region *r, size_t *rofs, u_int16_t val)
 }
 
 static __inline void
-put32(struct _region *r, size_t *rofs, u_int32_t val)
+put32(struct _region *r, size_t *rofs, uint32_t val)
 {
 	val = htonl(val);
 	memcpy(_region_offset(r, *rofs), &val, 4);
