@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1113 2008/02/04 20:33:11 jmmv Exp $
+#	$NetBSD: mi,v 1.1114 2008/02/09 19:34:03 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2347,6 +2347,7 @@
 ./usr/libdata/debug/sbin/mbrlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mknod.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/modload.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/modstat.debug		comp-sysutil-debug	modular,debug
 ./usr/libdata/debug/sbin/modunload.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_ados.debug	comp-adosfs-debug	debug
@@ -2580,7 +2581,7 @@
 ./usr/libdata/debug/usr/bin/mklocale.debug	comp-locale-debug	debug
 ./usr/libdata/debug/usr/bin/mkstr.debug		comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/mktemp.debug	comp-util-debug		debug
-./usr/libdata/debug/usr/bin/modstat.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/modstat.debug	comp-util-debug		!modular,debug
 ./usr/libdata/debug/usr/bin/mset.debug		comp-tn3270-debug	debug
 ./usr/libdata/debug/usr/bin/msgattrib.debug	comp-c-debug		debug
 ./usr/libdata/debug/usr/bin/msgc.debug		comp-c-debug		debug
