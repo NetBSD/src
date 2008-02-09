@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.66.2.7 2008/02/09 13:22:41 chris Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.66.2.8 2008/02/09 17:32:42 chris Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -54,7 +54,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.66.2.7 2008/02/09 13:22:41 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.66.2.8 2008/02/09 17:32:42 chris Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -235,14 +235,6 @@ cpu_reboot(int howto, char *bootstr)
 
 #ifdef DIAGNOSTIC
 	printf("boot: howto=%08x curlwp=%p\n", howto, curlwp);
-
-	printf("ipl_bio=%08x ipl_net=%08x ipl_tty=%08x ipl_vm=%08x\n",
-	    irqmasks[IPL_BIO], irqmasks[IPL_NET], irqmasks[IPL_TTY],
-	    irqmasks[IPL_VM]);
-	printf("ipl_audio=%08x ipl_clock=%08x ipl_none=%08x\n",
-	    irqmasks[IPL_AUDIO], irqmasks[IPL_CLOCK], irqmasks[IPL_NONE]);
-
-	dump_spl_masks();
 #endif	/* DIAGNOSTIC */
 
 	/*
@@ -985,7 +977,8 @@ initarm(void *cookie)
 	printf("irq ");
 #endif
 	console_flush();
-	irq_init();
+	arm_intr_init();
+	iomd_irq_init();
 #ifdef VERBOSE_INIT_ARM
 	printf("done.\n\n");
 #endif
