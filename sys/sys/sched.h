@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.46 2008/01/26 17:55:29 rmind Exp $	*/
+/*	$NetBSD: sched.h,v 1.47 2008/02/09 16:58:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -85,10 +85,7 @@
 #endif
 
 struct sched_param {
-	int	sched_class;
 	int	sched_priority;
-	int	_reserved1;
-	int	_reserved2;
 };
 
 /*
@@ -129,8 +126,8 @@ typedef struct {
 
 int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
 int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);
-int	_sched_getparam(pid_t, lwpid_t, struct sched_param *);
-int	_sched_setparam(pid_t, lwpid_t, const struct sched_param *);
+int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
+int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 
 /*
  * CPU states.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.9 2008/01/31 01:21:17 elad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.10 2008/02/09 16:58:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.9 2008/01/31 01:21:17 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.10 2008/02/09 16:58:01 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -106,9 +106,10 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 	/* {
 		syscallarg(pid_t) pid;
 		syscallarg(lwpid_t) lid;
+		syscallarg(int) policy;
 		syscallarg(const struct sched_param *) params;
 	} */
-	struct sched_param *sp;
+	struct sched_param param;
 	struct proc *p;
 	struct lwp *t;
 	lwpid_t lid;
@@ -117,21 +118,13 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 	pri_t pri;
 	int error;
 
-	/* Available only for super-user */
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, NULL, NULL))
-		return EPERM;
-
 	/* Get the parameters from the user-space */
-	sp = kmem_zalloc(sizeof(struct sched_param), KM_SLEEP);
-	error = copyin(SCARG(uap, params), sp, sizeof(struct sched_param));
+	error = copyin(SCARG(uap, params), &param, sizeof(param));
 	if (error) {
-		kmem_free(sp, sizeof(struct sched_param));
 		return error;
 	}
-	pri = sp->sched_priority;
-	policy = sp->sched_class;
-	kmem_free(sp, sizeof(struct sched_param));
+	pri = param.sched_priority;
+	policy = SCARG(uap, policy);
 
 	/* If no parameters specified, just return (this should not happen) */
 	if (pri == PRI_NONE && policy == SCHED_NONE)
@@ -161,6 +154,13 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		/* Use the calling process */
 		p = l->l_proc;
 		mutex_enter(&p->p_smutex);
+	}
+
+	/* Check the permission */
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER, p,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, NULL)) {
+		mutex_exit(&p->p_smutex);
+		return EPERM;
 	}
 
 	/* Find the LWP(s) */
@@ -205,18 +205,13 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	/* {
 		syscallarg(pid_t) pid;
 		syscallarg(lwpid_t) lid;
+		syscallarg(int *) policy;
 		syscallarg(struct sched_param *) params;
 	} */
-	struct sched_param *sp;
+	struct sched_param param;
 	struct lwp *t;
 	lwpid_t lid;
-	int error;
-
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL, NULL, NULL))
-		return EPERM;
-
-	sp = kmem_zalloc(sizeof(struct sched_param), KM_SLEEP);
+	int error, policy;
 
 	/* If not specified, use the first LWP */
 	lid = SCARG(uap, lid) == 0 ? 1 : SCARG(uap, lid);
@@ -234,24 +229,36 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 		mutex_exit(&p->p_smutex);
 	}
 	if (t == NULL) {
-		kmem_free(sp, sizeof(struct sched_param));
-		return ESRCH;
+		error = ESRCH;
+		goto error;
 	}
-	sp->sched_priority = t->l_priority;
-	sp->sched_class = t->l_class;
+
+	/* Check the permission */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    t->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM),
+	    NULL, NULL);
+	if (error != 0) {
+		lwp_unlock(t);
+		goto error;
+	}
+
+	param.sched_priority = t->l_priority;
+	policy = t->l_class;
 	lwp_unlock(t);
 
-	switch (sp->sched_class) {
+	switch (policy) {
 	case SCHED_OTHER:
-		sp->sched_priority -= PRI_USER;
+		param.sched_priority -= PRI_USER;
 		break;
 	case SCHED_RR:
 	case SCHED_FIFO:
-		sp->sched_priority -= PRI_USER_RT;
+		param.sched_priority -= PRI_USER_RT;
 		break;
 	}
-	error = copyout(sp, SCARG(uap, params), sizeof(struct sched_param));
-	kmem_free(sp, sizeof(struct sched_param));
+	error = copyout(&param, SCARG(uap, params), sizeof(param));
+	if (error == 0 && SCARG(uap, policy) != NULL)
+		error = copyout(&policy, SCARG(uap, policy), sizeof(int));
+error:
 	return error;
 }
 
@@ -276,15 +283,6 @@ sys__sched_setaffinity(struct lwp *l,
 	lwpid_t lid;
 	u_int lcnt;
 	int error;
-
-	/* Available only for super-user */
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    l->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY), NULL,
-	    NULL))
-		return EPERM;
-
-	if (SCARG(uap, size) <= 0)
-		return EINVAL;
 
 	/* Allocate the CPU set, and get it from userspace */
 	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
@@ -318,8 +316,17 @@ sys__sched_setaffinity(struct lwp *l,
 		mutex_enter(&p->p_smutex);
 	}
 
-	/* Disallow modification of system processes */
-	if (p->p_flag & PK_SYSTEM) {
+	/*
+	 * Check the permission.
+	 * Disallow modification of system processes.
+	 */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER, p,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY), NULL, NULL);
+	if (error != 0) {
+		mutex_exit(&p->p_smutex);
+		goto error;
+	}
+	if ((p->p_flag & PK_SYSTEM) != 0) {
 		mutex_exit(&p->p_smutex);
 		error = EPERM;
 		goto error;
@@ -374,12 +381,6 @@ sys__sched_getaffinity(struct lwp *l,
 
 	if (SCARG(uap, size) <= 0)
 		return EINVAL;
-
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    l->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY), NULL,
-	    NULL))
-		return EPERM;
-
 	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
 
 	/* If not specified, use the first LWP */
@@ -400,6 +401,14 @@ sys__sched_getaffinity(struct lwp *l,
 	if (t == NULL) {
 		kmem_free(cpuset, sizeof(cpuset_t));
 		return ESRCH;
+	}
+	/* Check the permission */
+	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
+	    t->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY),
+	    NULL, NULL)) {
+		lwp_unlock(t);
+		kmem_free(cpuset, sizeof(cpuset_t));
+		return EPERM;
 	}
 	if (t->l_flag & LW_AFFINITY)
 		memcpy(cpuset, &t->l_affinity, sizeof(cpuset_t));

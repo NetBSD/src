@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.187 2008/01/27 16:13:39 martin Exp $
+	$NetBSD: syscalls.master,v 1.188 2008/02/09 16:58:01 yamt Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -696,9 +696,9 @@
 
 ; Scheduling system calls.
 346	STD MPSAFE	{ int sys__sched_setparam(pid_t pid, lwpid_t lid, \
-			    const struct sched_param *params); }
+			    int policy, const struct sched_param *params); }
 347	STD MPSAFE	{ int sys__sched_getparam(pid_t pid, lwpid_t lid, \
-			    struct sched_param *params); }
+			    int *policy, struct sched_param *params); }
 348	STD MPSAFE	{ int sys__sched_setaffinity(pid_t pid, lwpid_t lid, \
 			    size_t size, void *cpuset); }
 349	STD MPSAFE	{ int sys__sched_getaffinity(pid_t pid, lwpid_t lid, \
