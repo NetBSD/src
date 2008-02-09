@@ -1,4 +1,5 @@
-/*	$OpenBSD: if_iwnreg.h,v 1.9 2007/11/27 20:59:40 damien Exp $	*/
+/*	$NetBSD: if_iwnreg.h,v 1.3 2008/02/09 19:14:53 skrll Exp $	*/
+/*	OpenBSD: if_iwnreg.h,v 1.9 2007/11/27 20:59:40 damien Exp	*/
 
 /*-
  * Copyright (c) 2007
