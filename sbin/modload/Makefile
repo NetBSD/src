@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.9 2008/01/16 12:34:58 ad Exp $
+#	$NetBSD: Makefile,v 1.10 2008/02/09 19:33:00 jmmv Exp $
 
-.if ("1" == "1")	# LKMS
+.include <bsd.own.mk>
+
+.if ${MKMODULAR} != "no"	# LKMS
 
 PROG=	modload
 SRCS=	modload.c
 MAN=	modload.8
-
-.include <bsd.own.mk> # for OBJECT_FMT
 
 .if (${OBJECT_FMT} == "ELF")
 SRCS+= elf.c
