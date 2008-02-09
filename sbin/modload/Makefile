@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile,v 1.10 2008/02/09 19:33:00 jmmv Exp $
+#	$NetBSD: Makefile,v 1.11 2008/02/09 22:32:38 jmmv Exp $
 
 .include <bsd.own.mk>
 
-.if ${MKMODULAR} != "no"	# LKMS
+.if ${MKMODULAR} == "no"	# LKMS
 
 PROG=	modload
 SRCS=	modload.c
