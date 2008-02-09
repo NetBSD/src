@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2006/11/09 20:07:15 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2008/02/09 01:03:38 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -34,7 +34,8 @@ GCCLIBXX=	${NETBSDSRCDIR}/gnu/lib/libstdc++-v3_4/arch/${MACHINE_ARCH}
 SRCS=		${G_OBJS:N[A-Z]*:Nlinking.lo:.lo=.c} ${G_OBJS:M[A-Z]*:.lo=.m} linking.m
 
 GCPPFLAGS=	${G_ALL_CFLAGS} ${G_INCLUDES}
-CPPFLAGS+=	-I. -I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
+CPPFLAGS+=	-I. -I${.CURDIR}/arch/${MACHINE_ARCH}
+CPPFLAGS+=	-I${GCCARCH} ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*}
 CPPFLAGS+=	-I${GCCLIBXX}
 
 BUILDSYMLINKS=	${.CURDIR}/../libstdc++-v3_4/arch/${MACHINE_ARCH} bits
