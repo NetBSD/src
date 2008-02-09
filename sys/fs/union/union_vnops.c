@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.28 2008/01/30 11:47:00 ad Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.29 2008/02/09 17:49:39 dholland Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.28 2008/01/30 11:47:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.29 2008/02/09 17:49:39 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1686,6 +1686,7 @@ start:
 			 * We MUST always use the order of: take upper
 			 * vp lock, manipulate union node flags, drop
 			 * upper vp lock.  This code must not be an
+			 * exception.
 			 */
 			error = vn_lock(un->un_uppervp, flags);
 			if (error)
