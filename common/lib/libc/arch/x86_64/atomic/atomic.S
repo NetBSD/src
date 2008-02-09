@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.7 2007/12/10 14:13:12 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.8 2008/02/09 13:42:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -228,18 +228,6 @@ NENTRY(_membar_producer)
 	ret
 END(membar_producer_end)
 
-NENTRY(_membar_enter)
-	/* A store is enough */
-	movq	$0, -8(%rsp)
-	ret
-END(membar_enter_end)
-
-NENTRY(_membar_exit)
-	/* A store is enough */
-	movq	$0, -8(%rsp)
-	ret
-END(membar_exit_end)
-
 NENTRY(_membar_sync)
 	LOCK(26)
 	addq	$0, -8(%rsp)
@@ -340,8 +328,8 @@ ALIAS(atomic_cas_ptr,_atomic_cas_64)
 
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
-ALIAS(membar_enter,_membar_enter)
-ALIAS(membar_exit,_membar_exit)
+ALIAS(membar_enter,_membar_consumer)
+ALIAS(membar_exit,_membar_producer)
 ALIAS(membar_sync,_membar_sync)
 
 STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
@@ -391,3 +379,6 @@ STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_64)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)
+
+STRONG_ALIAS(_membar_enter,_membar_consumer)
+STRONG_ALIAS(_membar_exit,_membar_producer)
