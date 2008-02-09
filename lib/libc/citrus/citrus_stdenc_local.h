@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc_local.h,v 1.3 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc_local.h,v 1.4 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -31,7 +31,7 @@
 #define _CITRUS_STDENC_LOCAL_H_
 
 #define _CITRUS_STDENC_GETOPS_FUNC_BASE(n)			\
-int n(struct _citrus_stdenc_ops *, size_t, u_int32_t)
+int n(struct _citrus_stdenc_ops *, size_t, uint32_t)
 #define _CITRUS_STDENC_GETOPS_FUNC(_e_)					\
 _CITRUS_STDENC_GETOPS_FUNC_BASE(_citrus_##_e_##_stdenc_getops)
 typedef _CITRUS_STDENC_GETOPS_FUNC_BASE((*_citrus_stdenc_getops_t));
@@ -118,7 +118,7 @@ typedef int	(*_citrus_stdenc_get_state_desc_t)
  */
 #define _CITRUS_STDENC_ABI_VERSION	0x00000002
 struct _citrus_stdenc_ops {
-	u_int32_t			eo_abi_version;
+	uint32_t			eo_abi_version;
 	/* version 0x00000001 */
 	_citrus_stdenc_init_t		eo_init;
 	_citrus_stdenc_uninit_t		eo_uninit;

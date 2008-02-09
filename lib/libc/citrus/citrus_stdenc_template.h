@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_stdenc_template.h,v 1.3 2005/10/29 18:02:04 tshiozak Exp $	*/
+/*	$NetBSD: citrus_stdenc_template.h,v 1.4 2008/02/09 14:56:20 junyoung Exp $	*/
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -50,7 +50,7 @@
 
 int
 _FUNCNAME(stdenc_getops)(struct _citrus_stdenc_ops *ops, size_t lenops,
-			 u_int32_t expected_version)
+			 uint32_t expected_version)
 {
 	if (expected_version<_CITRUS_STDENC_ABI_VERSION || lenops<sizeof(*ops))
 		return (EINVAL);
