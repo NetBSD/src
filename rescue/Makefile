@@ -1,10 +1,15 @@
-#	$NetBSD: Makefile,v 1.20 2008/01/09 11:26:06 simonb Exp $
+#	$NetBSD: Makefile,v 1.21 2008/02/09 02:37:21 mrg Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 WARNS=		1
+# XXX
+.if ${MACHINE_ARCH} != "m68000"
 DBG=		-Os
+.endif
+
+CRUNCHGEN_FLAGS=-d "${DBG}"
 
 RESCUEDIR=	/rescue
 CRUNCHBIN=	rescue
