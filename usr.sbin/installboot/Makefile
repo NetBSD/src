@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2008/02/02 17:01:03 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.39 2008/02/09 02:37:22 mrg Exp $
 #
 
 .include <bsd.own.mk>
@@ -44,11 +44,6 @@ WARNS?=	3
 UFSSRC=		${NETBSDSRCDIR}/sys/ufs
 CPPFLAGS+=	-I${.CURDIR} -I.
 .PATH:		${.CURDIR}/arch ${UFSSRC}/ffs ${UFSSRC}/ext2fs
-
-# XXX
-.if ${MACHINE_ARCH} == "m68000"
-COPTS.ffs.c=	-O0
-.endif
 
 .if !defined(HOSTPROGNAME)
 .if ${HAVE_GCC} == 4
