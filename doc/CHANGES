@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1016 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1017 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -396,6 +396,11 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	libpthread: POSIX real-time extensions. [rmind 20080115]
 	schedctl(8): A new program to control scheduling of processes and
 		threads. [rmind 20080115]
+	kernel: Added a new framework for kernel modules, enabled through the
+		MODULAR kernel option and used through the modctl(2) system
+		call.  [ad 20080116]
+	modules: Added new versions of modload(8), modstat(8) and modunload(8)
+		that use modctl(2).  Not built by default.  [ad 20080116]
 	bktr(4): Added amd64 support. [jmcneill 20080116]
 	ofppc: Add support for the IBM 7044-270. [garbled 20080117]
 	fdisk(8): Fix possible division by zero errors. [tsutsui 20080120]
