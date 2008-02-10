@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.17 2008/02/04 20:33:12 jmmv Exp $
+# $NetBSD: mi,v 1.18 2008/02/10 12:41:36 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -33,6 +33,8 @@
 ./usr/libdata/debug/usr/tests/fs/puffs/h_have_puffs.debug		tests-fs-debug		debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs					tests-fs-debug
 ./usr/libdata/debug/usr/tests/fs/tmpfs/h_tools.debug			tests-fs-debug		debug
+./usr/libdata/debug/usr/tests/modules					tests-sys-debug
+./usr/libdata/debug/usr/tests/modules/t_modctl.debug			tests-sys-debug		debug,modular
 ./usr/libdata/debug/usr/tests/net					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys					tests-net-debug
 ./usr/libdata/debug/usr/tests/net/sys/t_connect.debug			tests-net-debug		debug
@@ -312,6 +314,10 @@
 ./usr/tests/games				tests-games-tests
 ./usr/tests/games/Atffile			tests-games-tests
 ./usr/tests/games/t_factor			tests-games-tests
+./usr/tests/modules				tests-sys-tests
+./usr/tests/modules/Atffile			tests-sys-tests
+./usr/tests/modules/k_helper.o			tests-sys-tests		modular
+./usr/tests/modules/t_modctl			tests-sys-tests		modular
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests
 ./usr/tests/net/sys				tests-net-tests
