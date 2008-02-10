@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.103 2007/12/31 15:31:24 ad Exp $	*/
+/*	$NetBSD: print.c,v 1.104 2008/02/10 17:48:00 christos Exp $	*/
 
 /*
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-__RCSID("$NetBSD: print.c,v 1.103 2007/12/31 15:31:24 ad Exp $");
+__RCSID("$NetBSD: print.c,v 1.104 2008/02/10 17:48:00 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,8 @@ static void  intprintorsetwidth(VAR *, int, int);
 static void  strprintorsetwidth(VAR *, const char *, int);
 
 static time_t now;
+static int ncpu;
+static u_int64_t *cp_id;
 
 #define	min(a,b)	((a) <= (b) ? (a) : (b))
 
@@ -1004,6 +1006,50 @@ p_rssize(void *arg, VARENT *ve, int mode)	/* doesn't account for text */
 	k = arg;
 	v = ve->var;
 	intprintorsetwidth(v, pgtok(k->p_vm_rssize), mode);
+}
+
+void
+setncpu(void)
+{
+	int mib[2];
+	size_t size;
+
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	size = sizeof(ncpu);
+	if (sysctl(mib, 2, &ncpu, &size, NULL, 0) == -1) {
+		ncpu = 0;
+		return;
+	}
+	cp_id = malloc(sizeof(cp_id[0]) * ncpu);
+	if (cp_id == NULL)
+		err(1, NULL);
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_CP_ID;
+	size = sizeof(cp_id[0]) * ncpu;
+	if (sysctl(mib, 2, cp_id, &size, NULL, 0) == -1)
+		ncpu = 0;
+}
+
+static int
+get_cpunum(u_int64_t id)
+{
+	int i = 0;
+	for (i = 0; i < ncpu; i++)
+		if (id == cp_id[i])
+			return i;
+	return -1;
+}
+
+void
+cpuid(void *arg, VARENT *ve, int mode)
+{
+	struct kinfo_lwp *l;
+	VAR *v;
+
+	l = arg;
+	v = ve->var;
+	intprintorsetwidth(v, get_cpunum(l->l_cpuid), mode);
 }
 
 void

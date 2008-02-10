@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.31 2007/09/01 16:54:39 yamt Exp $	*/
+/*	$NetBSD: extern.h,v 1.32 2008/02/10 17:47:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -47,6 +47,7 @@ extern VARLIST displaylist;
 extern VARLIST sortlist;
 
 void	 command(void *, VARENT *, int);
+void	 cpuid(void *, VARENT *, int);
 void	 cputime(void *, VARENT *, int);
 int	 donlist(void);
 int	 donlist_sysctl(void);
@@ -82,6 +83,7 @@ void	 pvar(void *, VARENT *, int);
 void	 rgname(void *, VARENT *, int);
 void	 rssize(void *, VARENT *, int);
 void	 runame(void *, VARENT *, int);
+void	 setncpu(void);
 void	 showkey(void);
 void	 started(void *, VARENT *, int);
 void	 state(void *, VARENT *, int);
