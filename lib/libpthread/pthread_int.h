@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_int.h,v 1.65 2008/01/08 20:56:08 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.66 2008/02/10 18:50:54 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -51,6 +51,10 @@
 #include "pthread_queue.h"
 #include "pthread_md.h"
 
+/* Need to use libc-private names for atomic operations. */
+#include "../../common/lib/libc/atomic/atomic_op_namespace.h"
+
+#include <sys/atomic.h>
 #include <sys/tree.h>
 
 #include <lwp.h>
@@ -289,14 +293,6 @@ void	pthread__errorfunc(const char *, int, const char *, const char *)
 			   PTHREAD_HIDE;
 char	*pthread__getenv(const char *) PTHREAD_HIDE;
 void	pthread__cancelled(void) PTHREAD_HIDE;
-
-void	*pthread__atomic_cas_ptr(volatile void *, const void *, const void *) PTHREAD_HIDE;
-void	*pthread__atomic_swap_ptr(volatile void *, const void *) PTHREAD_HIDE;
-void	pthread__atomic_or_ulong(volatile unsigned long *, unsigned long) PTHREAD_HIDE;
-void	pthread__membar_full(void) PTHREAD_HIDE;
-void	pthread__membar_producer(void) PTHREAD_HIDE;
-void	pthread__membar_consumer(void) PTHREAD_HIDE;
-
 int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 
 #ifndef pthread__smt_pause

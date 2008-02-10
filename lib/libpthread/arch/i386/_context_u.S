@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.7 2007/11/13 17:20:09 ad Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.8 2008/02/10 18:50:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -100,31 +100,3 @@ STUB(_swapcontext_u_xmm)
 	movl	%eax, (UC_REGS + _REG_UESP * 4)(%ecx)
 	movl	8(%esp), %ecx
 	SETC
-
-STUB(pthread__atomic_swap_ptr)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	xchgl	%eax, (%ecx)
-	ret
-
-STUB(pthread__atomic_or_ulong)
-	movl	4(%esp), %ecx
-	movl	8(%esp), %eax
-	lock
-	orl	%eax, (%ecx)
-	ret
-
-STUB(pthread__membar_full)
-	lock
-	addl	$0, -4(%esp)
-	ret
-
-STUB(pthread__membar_producer)
-	/* A store is enough */
-	addl	$0, -4(%esp)
-	ret
-
-STUB(pthread__membar_consumer)
-	lock
-	addl	$0, -4(%esp)
-	ret

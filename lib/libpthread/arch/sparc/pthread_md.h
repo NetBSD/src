@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:17 perry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.5 2008/02/10 18:50:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -91,5 +91,8 @@ pthread__sp(void)
 	(uc)->uc_mcontext.__fpregs.__fpu_fsr = (freg)->fr_fsr;		\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
+
+/* Don't need additional memory barriers. */
+#define	PTHREAD__ATOMIC_IS_MEMBAR
 
 #endif /* _LIB_PTHREAD_SPARC_MD_H */

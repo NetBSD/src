@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.6 2008/02/09 17:07:54 yamt Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.7 2008/02/10 18:50:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.6 2008/02/09 17:07:54 yamt Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.7 2008/02/10 18:50:54 ad Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -173,13 +173,12 @@ pthread__sched_yield(void)
 
 	self = pthread__self();
 
-#ifdef PTHREAD__HAVE_ATOMIC
 	/* Memory barrier for unlocked mutex release. */
-	pthread__membar_producer();
-#endif
+	membar_producer();
 	self->pt_blocking++;
 	error = _sys_sched_yield();
 	self->pt_blocking--;
+	membar_sync();
 
 	return error;
 }
