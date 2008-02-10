@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.160 2008/01/16 09:37:08 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.161 2008/02/10 14:37:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,6 +82,7 @@ struct cpu_info {
 	 */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	int		ci_want_resched;
 	struct pmap_cpu *ci_pmap_cpu;	/* per-CPU pmap data */
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	int	ci_fpsaving;		/* save in progress */
@@ -93,11 +94,11 @@ struct cpu_info {
 	uint8_t ci_coreid;
 	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
 	/*
 	 * Private members.
 	 */
+	struct cc_microtime_state ci_cc __aligned(64);/* cc_microtime state */
 	struct evcnt ci_tlb_evcnt;	/* tlb shootdown counter */
 	struct pmap *ci_pmap;		/* current pmap */
 	int ci_need_tlbwait;		/* need to wait for TLB invalidations */
@@ -150,7 +151,6 @@ struct cpu_info {
  					/* proc-dependant init */
 	void (*ci_info)(struct cpu_info *);
 
-	int		ci_want_resched;
 	struct trapframe *ci_ddb_regs;
 
 	u_int ci_cflush_lsize;	/* CFLUSH insn line size */
