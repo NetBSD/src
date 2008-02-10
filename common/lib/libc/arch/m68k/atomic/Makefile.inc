@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2007/11/29 17:09:31 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2008/02/10 18:45:40 ad Exp $
 
 #
 # Note: The atomic operations here in these assembly files are atomic
@@ -9,9 +9,11 @@
 # others are merely single-instruction).
 #
 
-.if defined(LIB) && (${LIB} == "kern")
-
 SRCS+=	atomic_add.S atomic_and.S atomic_cas.S atomic_dec.S \
 	atomic_inc.S atomic_or.S atomic_swap.S membar_ops_nop.c
+
+.if defined(LIB) && (${LIB} == "c")
+
+SRCS+=	atomic_init_cas.c
 
 .endif

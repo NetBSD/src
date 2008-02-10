@@ -1,4 +1,4 @@
-/* 	$NetBSD: initfini.c,v 1.2 2007/11/13 15:33:55 ad Exp $	 */
+/* 	$NetBSD: initfini.c,v 1.3 2008/02/10 18:45:41 ad Exp $	 */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: initfini.c,v 1.2 2007/11/13 15:33:55 ad Exp $");
+__RCSID("$NetBSD: initfini.c,v 1.3 2008/02/10 18:45:41 ad Exp $");
 
 #ifdef _LIBC
 #include "namespace.h"
@@ -47,6 +47,7 @@ static void	__libc_init(void) __attribute__((__constructor__, __used__));
 
 void	__guard_setup(void);
 void	__libc_thr_init(void);
+void	__libc_atomic_init(void);
 
 /* LINTED used */
 static void
@@ -55,6 +56,9 @@ __libc_init(void)
 
 	/* For -fstack-protector */
 	__guard_setup();
+
+	/* Atomic operations */
+	__libc_atomic_init();
 
 	/* Threads */
 	__libc_thr_init();
