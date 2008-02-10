@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.1 2008/02/09 13:30:54 ad Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.2 2008/02/10 13:40:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.1 2008/02/09 13:30:54 ad Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.2 2008/02/10 13:40:31 ad Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -62,7 +62,7 @@ __RCSID("$NetBSD: atomic_init_testset.c,v 1.1 2008/02/09 13:30:54 ad Exp $");
 static __cpu_simple_lock_t atomic_locks[128] = { I128 };
 static uint32_t (*_atomic_cas_fn)(volatile uint32_t *, uint32_t, uint32_t);
 
-void	_libc_atomic_init(void) __attribute__ ((visibility("hidden")));
+void	__libc_atomic_init(void) __attribute__ ((visibility("hidden")));
 
 RAS_DECL(_atomic_cas);
 
@@ -107,7 +107,7 @@ _atomic_cas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 }
 
 void
-_libc_atomic_init(void)
+__libc_atomic_init(void)
 {
 	int ncpu, mib[2];
 	size_t len;
@@ -129,13 +129,23 @@ _libc_atomic_init(void)
 }
 
 #undef atomic_cas_32
-atomic_op_alias(atomic_cas_32,_atomic_cas_32)
 #undef atomic_cas_uint
+#undef atomic_cas_ulong
+#undef atomic_cas_ptr
+
+atomic_op_alias(atomic_cas_32,_atomic_cas_32)
 atomic_op_alias(atomic_cas_uint,_atomic_cas_32)
 __strong_alias(_atomic_cas_uint,_atomic_cas_32)
-#undef atomic_cas_ulong
 atomic_op_alias(atomic_cas_ulong,_atomic_cas_32)
 __strong_alias(_atomic_cas_ulong,_atomic_cas_32)
-#undef atomic_cas_ptr
 atomic_op_alias(atomic_cas_ptr,_atomic_cas_32)
 __strong_alias(_atomic_cas_ptr,_atomic_cas_32)
+
+atomic_op_alias(atomic_cas_32_ni,_atomic_cas_32)
+__strong_alias(_atomic_cas_32_ni,_atomic_cas_32)
+atomic_op_alias(atomic_cas_uint_ni,_atomic_cas_32)
+__strong_alias(_atomic_cas_uint_ni,_atomic_cas_32)
+atomic_op_alias(atomic_cas_ulong_ni,_atomic_cas_32)
+__strong_alias(_atomic_cas_ulong_ni,_atomic_cas_32)
+atomic_op_alias(atomic_cas_ptr_ni,_atomic_cas_32)
+__strong_alias(_atomic_cas_ptr_ni,_atomic_cas_32)
