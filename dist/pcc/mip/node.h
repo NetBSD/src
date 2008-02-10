@@ -1,4 +1,4 @@
-/*	$Id: node.h,v 1.1.1.1 2007/09/20 13:08:50 abs Exp $	*/
+/*	$Id: node.h,v 1.1.1.2 2008/02/10 20:05:05 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -113,7 +113,7 @@ typedef struct node {
 #define REG	6
 #define OREG	7
 #define TEMP	8
-#define	MOVE	9	/* Special reg-reg move node */
+#define XARG	9
 
 /*
  * Arithmetic nodes.
@@ -184,7 +184,7 @@ typedef struct node {
 #define STASG	50
 #define STARG	51
 #define FORCE	52
-/* #define INIT	53 */
+#define XASM	53
 #define	GOTO	54
 #define	RETURN	55
 #define STREF	56

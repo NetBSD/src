@@ -1,4 +1,4 @@
-/*	$Id: macdefs.h,v 1.1.1.1 2007/10/27 14:43:32 ragge Exp $	*/
+/*	$Id: macdefs.h,v 1.1.1.2 2008/02/10 20:04:55 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -126,8 +126,6 @@ typedef long long OFFSZ;
 
 #define BACKAUTO 		/* stack grows negatively for automatics */
 #define BACKTEMP 		/* stack grows negatively for temporaries */
-
-#define	MYP2TREE(p) myp2tree(p);
 
 #undef	FIELDOPS		/* no bit-field instructions */
 #define	RTOLBYTES		/* bytes are numbered right to left */
@@ -296,10 +294,6 @@ int COLORMAP(int c, int *r);
 #define FPREG	EBP	/* frame pointer */
 #define STKREG	ESP	/* stack pointer */
 
-#define MYREADER(p) myreader(p)
-#define MYCANON(p) mycanon(p)
-#define	MYOPTIM
-
 #define	SHSTR		(MAXSPECIAL+1)	/* short struct */
 #define	SFUNCALL	(MAXSPECIAL+2)	/* struct assign after function call */
 #define	SPCON		(MAXSPECIAL+3)	/* positive nonnamed constant */
@@ -310,3 +304,9 @@ int COLORMAP(int c, int *r);
 #define SMIXOR		(MAXSPECIAL+4)
 #define SMILWXOR	(MAXSPECIAL+5)
 #define SMIHWXOR	(MAXSPECIAL+6)
+
+/*
+ * i386-specific symbol table flags.
+ */
+#define	SSECTION	SLOCAL1
+#define	STLS		SLOCAL2

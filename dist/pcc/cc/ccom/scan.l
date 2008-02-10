@@ -1,5 +1,5 @@
 %{
-/*	$Id: scan.l,v 1.1.1.2 2007/10/27 14:43:38 ragge Exp $	*/
+/*	$Id: scan.l,v 1.1.1.3 2008/02/10 20:05:05 ragge Exp $	*/
 
 /*
  * Copyright (c) 2002 Anders Magnusson. All rights reserved.
@@ -48,7 +48,7 @@ IS			(u|U|l|L)*
 static NODE *cvtdig(int radix);
 static NODE *charcon(void);
 static void control(int);
-static int pragma(void);
+static void pragma(void);
 static NODE *floatcon(void);
 static NODE *fhexcon(void);
 int notype, parbal;
@@ -125,10 +125,10 @@ extern void yyset_lineno (int);
 			  notype=1; return(C_TYPE); }
 "sizeof"		{ return(C_SIZEOF); }
 "static"		{ yylval.intval = STATIC; return(C_CLASS); }
-"struct"		{ yylval.intval = INSTRUCT; notype=1; return(C_STRUCT); }
+"struct"		{ yylval.intval = STNAME; notype=1; return(C_STRUCT); }
 "switch"		{ return(C_SWITCH); }
 "typedef"		{ yylval.intval = TYPEDEF; return(C_CLASS); }
-"union"			{ yylval.intval = INUNION; notype=1; return(C_STRUCT); }
+"union"			{ yylval.intval = UNAME; notype=1; return(C_STRUCT); }
 "unsigned"		{ yylval.nodep = mkty((TWORD)UNSIGNED, 0, MKSUE(UNSIGNED));
 			  notype=1; return(C_TYPE); }
 "void"			{ yylval.nodep = mkty((TWORD)VOID, 0, MKSUE(VOID));
@@ -138,22 +138,22 @@ extern void yyset_lineno (int);
 			  return(C_QUALIFIER); }
 "while"			{ return(C_WHILE); }
 
-{L}({L}|{D})*		{ 	struct symtab *s;
-				int i;
+{L}({L}|{D})*	{ 	struct symtab *s;
+			int i = 0;
 
-				yylval.strp = addname(yytext);
+			yylval.strp = addname(yytext);
 #ifdef GCC_COMPAT
-				if ((i = gcc_keyword(yylval.strp,
-				    &yylval.nodep)) != 0)
-					return i;
+			if ((i = gcc_keyword(yylval.strp, &yylval.nodep)) > 0)
+				return i;
 #endif
-				if (!notype) {
-					s = lookup(yylval.strp, SNOCREAT);
-					if (s && s->sclass == TYPEDEF)
-						return notype=1, C_TYPENAME;
-				}
-				return(C_NAME);
+			if (i == 0) {
+				if (notype)
+					return(C_NAME);
+				s = lookup(yylval.strp, SNOCREAT);
+				return s && s->sclass == TYPEDEF ?
+				    notype=1, C_TYPENAME : C_NAME;
 			}
+		}
 
 0[xX]{H}+{IS}?		{ yylval.nodep = cvtdig(16); return(C_ICON); }
 0{D}+{IS}?		{ yylval.nodep = cvtdig(8); return(C_ICON); }
@@ -204,7 +204,7 @@ L?\"(\\.|[^\\"])*\"	{
 "!="			{ yylval.intval = NE; return(C_EQUOP); }
 ";"			{ notype = 0; return(';'); }
 ("{"|"<%")		{ notype = 0; return('{'); }
-("}"|"%>")		{ return('}'); }
+("}"|"%>")		{ if (rpole) notype = 1; return('}'); }
 ","			{ if (parbal) notype = 0; return(','); }
 ":"			{ return(':'); }
 "="			{ return('='); }
@@ -226,7 +226,7 @@ L?\"(\\.|[^\\"])*\"	{
 "^"			{ return('^'); }
 "|"			{ return('|'); }
 "?"			{ return('?'); }
-^#pragma[ \t].*		{ int rv; if ((rv = pragma())) return rv; }
+^#pragma[ \t].*		{ pragma(); }
 ^#ident[ \t].*		{ control(CPP_IDENT); }
 ^#line[ \t].*		{ control(CPP_LINE); }
 ^#.*			{ control(CPP_HASH); }
@@ -388,8 +388,7 @@ cvtdig(int radix)
 			ntype = UNSIGNED;
 	}
 	ntype = ctype(ntype);
-	p = block(ICON, NIL, NIL, ntype, 0, MKSUE(ntype));
-	p->n_lval = v;
+	p = xbcon(v, NULL, ntype);
 	ASGLVAL(p->n_slval, v);
 
 	return p;
@@ -447,6 +446,8 @@ control(int t)
 		lineno = val - 1;
 		while (*wr && *wr != '\"')
 			wr++;
+		if (*wr == 0)
+			return;
 		if (*wr++ != '\"')
 			goto bad;
 		eptr = wr;
@@ -466,51 +467,54 @@ bad:
 	werror("%s: illegal control", yytext);
 }
 
-static char *
-nextkw(char **ptr)
+/*
+ * split a pragma string in parts.
+ */
+static char **
+splitup(char *str)
 {
-	char *rc;
+	char *s, **ary;
+	int i;
 
-	while (**ptr == ' ' || **ptr == '\t')
-		(*ptr)++;
-	if (**ptr == 0)
-		return 0;
-	rc = *ptr;
-	while (**ptr && **ptr != ' ' && **ptr != '\t')
-		(*ptr)++;
-	if (**ptr != 0) {
-		**ptr = 0;
-		(*ptr)++;
-	}
-	return rc;
+	/* count ws. at least needed array size, add 2 to terminate */
+	for (i = 2, s = str; *s; s++)
+		if (*s == ' ' || *s == '\t')
+			i++;
+	ary = tmpalloc(sizeof(char *)*i);
+	for (i = 0, s = strtok(str, " \t"); s; s = strtok(NULL, " \t"))
+		ary[i++] = s;
+	ary[i] = NULL;
+	return ary;
 }
+
+int pragma_packed, pragma_aligned;
+char *pragma_renamed;
 
 /*
  * got a full pragma line.  Split it up here.
  */
-static int
+static void
 pragma()
 {
-	int rv;
-	char *c, *ptr = yytext;
+	char **ary;
 
-	rv = 0;
-	ptr += strlen("#pragma");
-	if ((c = nextkw(&ptr)) == NULL)
+	ary = splitup(yytext);
+	if (ary[1] == NULL)
 		goto bad;
-	if (strcmp(c, "packed") == 0) {
-		rv = PRAG_PACKED;
-	} else if (strcmp(c, "aligned") == 0) {
-		rv = PRAG_ALIGNED;
-	} else if (strcmp(c, "rename") == 0) {
-		if ((c = nextkw(&ptr)) == NULL)
-			goto bad;
-		/* XXX may loose memory if blevel > 0 */
-		yylval.strp = newstring(c, strlen(c));
-		rv = PRAG_RENAMED;
-	}
-bad:	
-	if (rv == 0)
-		werror("unknown pragma");
-	return rv;
+	if (strcmp(ary[1], "packed") == 0) {
+		pragma_packed = ary[2] ? atoi(ary[2]) : 1;
+	} else if (strcmp(ary[1], "aligned") == 0) {
+		pragma_aligned = ary[2] ? atoi(ary[2]) : 1;
+	} else if (strcmp(ary[1], "rename") == 0) {
+		pragma_renamed = newstring(ary[2], strlen(ary[2]));
+	} else if (mypragma(ary))
+		return;
+	else
+bad:		werror("unknown pragma");
+}
+
+void
+cunput(char c)
+{
+	unput(c);
 }

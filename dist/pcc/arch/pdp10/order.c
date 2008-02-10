@@ -1,4 +1,4 @@
-/*	$Id: order.c,v 1.1.1.1 2007/09/20 13:08:47 abs Exp $	*/
+/*	$Id: order.c,v 1.1.1.2 2008/02/10 20:04:59 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -31,38 +31,6 @@
 
 int canaddr(NODE *);
 
-/*
- * should the assignment op p be stored,
- * given that it lies as the right operand of o
- * (or the left, if o==UMUL)
- */
-void
-stoasg(NODE *p, int o)
-{
-	if (x2debug)
-		printf("stoasg(%p, %o)\n", p, o);
-}
-
-/* should we delay the INCR or DECR operation p */
-int
-deltest(NODE *p)
-{
-	TWORD ty = p->n_type;
-
-	return ty == PTR+CHAR || ty == PTR+UCHAR ||
-	    ty == PTR+SHORT || ty == PTR+USHORT;
-}
-
-/*
- * Check if p can be autoincremented.
- * Nothing can be autoincremented on PDP10.
- */
-int
-autoincr(NODE *p)
-{
-	return 0;
-}
-
 /* is it legal to make an OREG or NAME entry which has an
  * offset of off, (from a register of r), if the
  * resulting thing had type t */
@@ -74,8 +42,8 @@ notoff(TWORD t, int r, CONSZ off, char *cp)
 
 int radebug = 0;
 
-int
-offstar(NODE *p)
+void
+offstar(NODE *p, int shape)
 {
 	NODE *q;
 
@@ -86,25 +54,11 @@ offstar(NODE *p)
 		if( p->n_right->n_op == ICON ){
 			q = p->n_left;
 			if (q->n_op != REG)
-				geninsn(q, INTAREG|INAREG);
+				geninsn(q, INAREG);
 			p->n_su = -1;
-			return 1;
 		}
 	}
-	geninsn(p, INTAREG|INAREG);
-	return 0;
-}
-
-/*
- * Rewrite increment/decrement operation.
- */
-int
-setincr(NODE *p)
-{
-	if (x2debug)
-		printf("setincr(%p)\n", p);
-
-	return(0);
+	geninsn(p, INAREG);
 }
 
 /*
@@ -184,4 +138,65 @@ special(NODE *p, int shape)
 		break;
 	}
 	return 0;
+}
+
+/*
+ * Set evaluation order of a binary node if it differs from default.
+ */
+int
+setorder(NODE *p)
+{
+	return 0; /* nothing differs on x86 */
+}
+
+/*
+ * Special handling of some instruction register allocation.
+ */
+struct rspecial *
+nspecial(struct optab *q)
+{
+	return 0; /* XXX gcc */
+}
+
+/*
+ * Do the actual conversion of offstar-found OREGs into real OREGs.
+ */
+void
+myormake(NODE *p)
+{
+	if (x2debug)
+		printf("myormake(%p)\n", p);
+}
+
+/*
+ * set registers in calling conventions live.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[8], *s = r;
+
+	*s = -1;
+	if (p->n_op == UCALL || p->n_op == UFORTCALL || p->n_op == USTCALL ||
+	    p->n_op == FORTCALL)
+		return s;
+	for (p = p->n_right; p->n_op == CM; p = p->n_left) {
+		if (p->n_right->n_op == ASSIGN &&
+		    p->n_right->n_left->n_op == REG)
+			*s++ = p->n_right->n_left->n_rval;
+	}
+	if (p->n_op == ASSIGN &&
+	    p->n_left->n_op == REG)
+		*s++ = p->n_left->n_rval;
+	*s = -1;
+	return r;
+}
+
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
 }

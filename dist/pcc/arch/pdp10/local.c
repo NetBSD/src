@@ -1,4 +1,4 @@
-/*	$Id: local.c,v 1.1.1.1 2007/09/20 13:08:46 abs Exp $	*/
+/*	$Id: local.c,v 1.1.1.2 2008/02/10 20:04:59 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -37,7 +37,7 @@ static struct symtab *newfun(char *name, TWORD type);
 #define	PTRNORMAL	1
 #define	PTRCHAR		2
 #define	PTRSHORT	3
-static int ptype(TWORD t);
+static int xptype(TWORD t);
 
 NODE *
 clocal(NODE *p)
@@ -60,6 +60,13 @@ clocal(NODE *p)
 	register int m, ml;
 	int siz;
 
+#ifdef PCC_DEBUG
+	if (xdebug) {
+		printf("clocal: %p\n", p);
+		fwalk(p, eprint, 0);
+	}
+#endif
+
 	switch( o = p->n_op ){
 
 	case NAME:
@@ -69,6 +76,15 @@ clocal(NODE *p)
 		switch (q->sclass) {
 
 		case PARAM:
+			/* First 7 parameters are in registers */
+			/* XXX last may be double */
+			if (q->soffset/SZINT < 7) {
+				p->n_op = REG;
+				p->n_rval = q->soffset/SZINT;
+				break;
+			} else
+				q->soffset -= 7*SZINT;
+				
 		case AUTO:
 			/* fake up a structure reference */
 			if (q->stype == CHAR || q->stype == UCHAR ||
@@ -85,9 +101,6 @@ clocal(NODE *p)
 			if (q->slevel == 0)
 				break;
 			p->n_lval = 0;
-			p->n_sp = q;
-			if ((q->sflags & SLABEL) == 0)
-				cerror("STATIC");
 			break;
 
 		case REGISTER:
@@ -97,6 +110,14 @@ clocal(NODE *p)
 			break;
 
 			}
+		break;
+
+	case CALL:
+		/* avoid recursive calls */
+		r = tempnode(0, p->n_type, p->n_df, p->n_sue);
+		l = tempnode(regno(r), p->n_type, p->n_df, p->n_sue);
+		ecomp(buildtree(ASSIGN, r, p));
+		p = l;
 		break;
 
 	case PCONV:
@@ -166,19 +187,19 @@ rmpc:			l->n_type = p->n_type;
 			break;
 
 		/* Remove conversions to identical pointers */
-		switch (ptype(p->n_type)) {
+		switch (xptype(p->n_type)) {
 		case PTRNORMAL:
-			if (ptype(l->n_type) == PTRNORMAL)
+			if (xptype(l->n_type) == PTRNORMAL)
 				goto rmpc;
 			break;
 
 		case PTRSHORT:
-			if (ptype(l->n_type) == PTRSHORT)
+			if (xptype(l->n_type) == PTRSHORT)
 				goto rmpc;
 			break;
 
 		case PTRCHAR:
-			if (ptype(l->n_type) == PTRCHAR)
+			if (xptype(l->n_type) == PTRCHAR)
 				goto rmpc;
 			break;
 		}
@@ -189,7 +210,7 @@ rmpc:			l->n_type = p->n_type;
 		l = p->n_left;
 
 		if ((p->n_type & TMASK) == 0 && (l->n_type & TMASK) == 0 &&
-		    btdim[p->n_type] == btdim[l->n_type]) {
+		    btdims[p->n_type].suesize == btdims[l->n_type].suesize) {
 			if (p->n_type != FLOAT && p->n_type != DOUBLE &&
 			     l->n_type != FLOAT && l->n_type != DOUBLE) {
 				nfree(p);
@@ -212,11 +233,9 @@ rmpc:			l->n_type = p->n_type;
 			if (o != FCON)
 				break;
 			ml = ISUNSIGNED(m) ? UNSIGNED : INT; /* LONG? */
-			r = block(ICON, (NODE *)NULL, (NODE *)NULL, ml, 0, 0);
-			r->n_lval = ml == INT ?
-				(int) p->n_left->n_dcon :
-				(unsigned) p->n_left->n_dcon;
-			r->n_sp = NULL;
+			r = xbcon(ml == INT ? (int)p->n_left->n_dcon :
+			                      (unsigned)p->n_left->n_dcon,
+			          NULL, ml);
 			nfree(p->n_left);
 			p->n_left = r;
 			o = ICON;
@@ -249,8 +268,6 @@ rmpc:			l->n_type = p->n_type;
 			case UNSIGNED:
 				l->n_lval = val & 0777777777777LL;
 				break;
-			case ENUMTY:
-			case MOETY:
 			case INT:
 				l->n_lval = val & 0777777777777LL;
 				if (val & 0400000000000LL)
@@ -341,13 +358,19 @@ rmpc:			l->n_type = p->n_type;
 		/* Size block */
 		r = block(CM, l, bcon(siz), INT, 0, MKSUE(INT));
 
-		l = block(ICON, NIL, NIL, q->stype, 0, MKSUE(INT));
-		l->n_sp = q;
+		l = xbcon(0, q, q->stype);
 		p->n_left = l;
 		p->n_right = r;
 		p->n_op = CALL;
 		oop->n_left = p;
 		return oop;
+
+	case FORCE:
+		p->n_op = ASSIGN;
+		p->n_right = p->n_left;
+		p->n_left = block(REG, NIL, NIL, p->n_type, 0, MKSUE(INT));
+		p->n_left->n_rval = RETREG(p->n_type);
+		break;
 
 	}
 
@@ -365,31 +388,27 @@ myp2tree(NODE *p)
 	case UGT:
 	case UGE:
 		if (ISLONGLONG(p->n_left->n_type)) {
-			r = block(ICON, NIL, NIL, LONGLONG, 0, MKSUE(LONGLONG));
-			r->n_lval = 0x8000000000000000ULL; /* XXX */
-		} else {
-			r = block(ICON, NIL, NIL, INT, 0, MKSUE(INT));
-			r->n_lval = 0400000000000LL;
-		}
-		r->n_sp = NULL;
+			/* XXX */
+			r = xbcon(0x8000000000000000ULL, NULL, LONGLONG);
+		} else
+			r = xbcon(0400000000000LL, NULL, INT);
 		p->n_left = buildtree(ER, p->n_left, r);
 		if (ISUNSIGNED(p->n_left->n_type))
 			p->n_left->n_type = DEUNSIGN(p->n_left->n_type);
 
 		if (ISLONGLONG(p->n_right->n_type)) {
-			r = block(ICON, NIL, NIL, LONGLONG, 0, MKSUE(LONGLONG));
-			r->n_lval = 0x8000000000000000ULL; /* XXX */
-		} else {
-			r = block(ICON, NIL, NIL, INT, 0, MKSUE(INT));
-			r->n_lval = 0400000000000LL;
-		}
-		r->n_sp = NULL;
+			/* XXX */
+			r = xbcon(0x8000000000000000ULL, NULL, LONGLONG);
+		} else
+			r = xbcon(0400000000000LL, NULL, INT);
 		p->n_right = buildtree(ER, p->n_right, r);
 		if (ISUNSIGNED(p->n_right->n_type))
 			p->n_right->n_type = DEUNSIGN(p->n_right->n_type);
 
 		p->n_op -= (ULT-LT);
 		break;
+	case FCON:
+		cerror("fix float constants");
 	}
 }
 
@@ -439,7 +458,7 @@ cisreg(TWORD t)
 }
 
 int
-ptype(TWORD t)
+xptype(TWORD t)
 {
 	int tt = BTYPE(t);
 	int e, rv;
@@ -448,6 +467,7 @@ ptype(TWORD t)
 		cerror("not a pointer");
 
 	e = t & ~BTMASK;
+	rv = e;
 	while (e) {
 		rv = e;
 		if (DECREF(e) == 0)
@@ -465,7 +485,6 @@ ptype(TWORD t)
 	case DOUBLE:
 	case STRTY:
 	case UNIONTY:
-	case ENUMTY:
 	case UNSIGNED:
 	case ULONG:
 	case ULONGLONG:
@@ -537,7 +556,6 @@ offcon(OFFSZ off, TWORD t, union dimfun *d, struct suedef *sue)
 	case ULONG:
 	case STRTY:
 	case UNIONTY:
-	case ENUMTY:
 	case LONGLONG:
 	case ULONGLONG:
 	case FLOAT:
@@ -609,6 +627,7 @@ spalloc(NODE *t, NODE *p, OFFSZ off)
 	ecomp(buildtree(PLUSEQ, sp, p));
 }
 
+#if 0
 static int inwd;	/* current bit offsed in word */
 static CONSZ word;	/* word being built from fields */
 
@@ -706,6 +725,7 @@ vfdzero(int n)
 		word = inwd = 0;
 	}
 }
+#endif
 
 /* make a name look like an external name in the local machine */
 char *
@@ -719,19 +739,73 @@ exname(char *p)
 /*
  * map types which are not defined on the local machine
  */
-int
+TWORD
 ctype(TWORD type)
 {
 	switch (BTYPE(type)) {
 	case LONG:
 		MODTYPE(type,INT);
 		break;
-
 	case ULONG:
 		MODTYPE(type,UNSIGNED);
+		break;
+	case LDOUBLE:
+		MODTYPE(type,DOUBLE);
+		break;
 	}
 	return (type);
 }
+
+/*
+ * Print out a string of characters.
+ * Assume that the assembler understands C-style escape
+ * sequences.
+ */
+void
+instring(struct symtab *sp)
+{
+	char *s, *str;
+
+	defloc(sp);
+	str = sp->sname;
+
+	/* be kind to assemblers and avoid long strings */
+	printf("\t.ascii \"");
+	for (s = str; *s != 0; ) {
+		if (*s++ == '\\') {
+			(void)esccon(&s);
+		}
+		if (s - str > 60) {
+			fwrite(str, 1, s - str, stdout);
+			printf("\"\n\t.ascii \"");
+			str = s;
+		}
+	}
+	fwrite(str, 1, s - str, stdout);
+	printf("\\0\"\n");
+}
+
+/*		
+ * Print out a wide string by calling ninval().
+ */
+void
+inwstring(struct symtab *sp)
+{
+	char *s = sp->sname;
+	NODE *p;
+
+	defloc(sp);
+	p = bcon(0);
+	do {
+		if (*s++ == '\\')
+			p->n_lval = esccon(&s);
+		else
+			p->n_lval = (unsigned char)s[-1];
+		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
+	} while (s[-1] != 0);
+	nfree(p);
+}
+
 
 /* curid is a variable which is defined but
  * is not initialized (and not a function );
@@ -743,40 +817,78 @@ noinit()
 	return(EXTERN);
 }
 
-/* make a common declaration for id, if reasonable */
 void
-commdec(struct symtab *q)
+calldec(NODE *p, NODE *q) 
 {
-	int off;
-
-	off = tsize(q->stype, q->sdf, q->ssue);
-	off = (off+(SZINT-1))/SZINT;
-	printf("	.comm %s,0%o\n", exname(q->sname), off);
 }
 
-/* make a local common declaration for id, if reasonable */
 void
-lcommdec(struct symtab *q)
+extdec(struct symtab *q)
+{
+}
+
+/* make a common declaration for id, if reasonable */
+void
+defzero(struct symtab *sp)
 {
 	int off;
-
-	off = tsize(q->stype, q->sdf, q->ssue);
+ 
+	off = tsize(sp->stype, sp->sdf, sp->ssue);
 	off = (off+(SZINT-1))/SZINT;
-	if (q->slevel == 0)
-		printf("	.lcomm %s,0%o\n", exname(q->sname), off);
+	printf("        .%scomm ", sp->sclass == STATIC ? "l" : "");
+	if (sp->slevel == 0)
+		printf("%s,0%o\n", exname(sp->soname), off);
 	else
-		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
+		printf(LABFMT ",0%o\n", sp->soffset, off);
 }
 
 /*
- * Debugger code - ignore.
+ * set fsz bits in sequence to zero.
  */
 void
-prcstab(int a)
+zbits(OFFSZ off, int fsz)
+{
+	cerror("zbits");
+}
+
+/*
+ * Initialize a bitfield.
+ */
+void
+infld(CONSZ off, int fsz, CONSZ val)
+{
+//	if (idebug)
+//		printf("infld off %lld, fsz %d, val %lld inbits %d\n",
+//		    off, fsz, val, inbits);
+	cerror("infld");
+}
+
+/*
+ * print out a constant node, may be associated with a label.
+ * Do not free the node after use.
+ * off is bit offset from the beginning of the aggregate
+ * fsz is the number of bits this is referring to
+ */
+void
+ninval(CONSZ off, int fsz, NODE *p)
+{
+	cerror("ninval");
+}
+
+
+/*
+ * Give target the opportunity of handling pragmas.
+ */
+int
+mypragma(char **ary)
+{
+	return 0; }
+
+/*
+ * Called when a identifier has been declared, to give target last word.
+ */
+void
+fixdef(struct symtab *sp)
 {
 }
 
-void
-pfstab(char *a)
-{
-}

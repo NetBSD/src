@@ -1,4 +1,4 @@
-/*	$Id: regs.c,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
+/*	$Id: regs.c,v 1.1.1.3 2008/02/10 20:05:06 ragge Exp $	*/
 /*
  * Copyright (c) 2005 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -129,6 +129,7 @@ static REGW precolored, simplifyWorklist, freezeWorklist, spillWorklist,
 static REGW initial, *nblock;
 static void insnwalk(NODE *p);
 #ifdef PCC_DEBUG
+int use_regw;
 int nodnum = 100;
 #define	SETNUM(x)	(x)->nodnum = nodnum++
 #define	ASGNUM(x)	(x)->nodnum
@@ -162,12 +163,12 @@ static int *nsavregs, *ndontregs;
 static REGW *
 newblock(NODE *p)
 {
-	REGW *nb = &nblock[(int)p->n_lval];
+	REGW *nb = &nblock[regno(p)];
 	if (nb->link.q_forw == 0) {
 		DLIST_INSERT_AFTER(&initial, nb, link);
-		ASGNUM(nb) = p->n_lval;
+		ASGNUM(nb) = regno(p);
 		RDEBUG(("Adding longtime %d for tmp %d\n",
-		    nb->nodnum, (int)p->n_lval));
+		    nb->nodnum, regno(p)));
 	}
 	if (nb->r_class == 0)
 		nb->r_class = gclass(p->n_type);
@@ -210,6 +211,8 @@ nsucomp(NODE *p)
 		if (o == LTYPE ) {
 			if (p->n_op == TEMP)
 				p->n_regw = newblock(p);
+			else if (p->n_op == REG)
+				p->n_regw = &ablock[regno(p)];
 		} else
 			a = nsucomp(p->n_left);
 		if (o == BITYPE) {
@@ -366,9 +369,13 @@ trivially_colorable_p(int c, int *n)
 #endif
 
 	i = COLORMAP(c, r);
-if (i < 0 || i > 1)
-	comperr("trivially_colorable_p");
-//printf("trivially_colorable_p: n[1] %d n[2] %d n[3] %d n[4] %d class %d, triv %d\n", n[1], n[2], n[3], n[4], c, i);
+	if (i < 0 || i > 1)
+		comperr("trivially_colorable_p");
+#ifdef PCC_DEBUG
+	if (rdebug > 1)
+		printf("trivially_colorable_p: n[1] %d n[2] %d n[3] %d n[4] "
+		    "%d for class %d, triv %d\n", n[1], n[2], n[3], n[4], c, i);
+#endif
 	return i;
 }
 
@@ -435,21 +442,31 @@ static void
 LIVEADD(int x)
 {
 	RDEBUG(("Liveadd: %d\n", x));
-	if (x < tempmin || x >= tempmax)
+	if (x >= MAXREGS && (x < tempmin || x >= tempmax))
 		comperr("LIVEADD: out of range");
-	BITSET(live, (x-tempmin));
+	if (x < MAXREGS) {
+		BITSET(live, x);
+	} else
+		BITSET(live, (x-tempmin+MAXREGS));
 }
+
 static void
 LIVEDEL(int x)
 {
 	RDEBUG(("Livedel: %d\n", x));
-	if (x < tempmin || x >= tempmax)
+
+	if (x >= MAXREGS && (x < tempmin || x >= tempmax))
 		comperr("LIVEDEL: out of range");
-	BITCLEAR(live, (x-tempmin));
+	if (x < MAXREGS) {
+		BITCLEAR(live, x);
+	} else
+		BITCLEAR(live, (x-tempmin+MAXREGS));
 }
 #else
-#define LIVEADD(x) BITSET(live, (x-tempmin))
-#define LIVEDEL(x) BITCLEAR(live, (x-tempmin))
+#define LIVEADD(x) \
+	(x >= MAXREGS ? BITSET(live, (x-tempmin+MAXREGS)) : BITSET(live, x))
+#define LIVEDEL(x) \
+	(x >= MAXREGS ? BITCLEAR(live, (x-tempmin+MAXREGS)) : BITCLEAR(live, x))
 #endif
 
 static struct lives {
@@ -683,7 +700,6 @@ static void
 addalledges(REGW *e)
 {
 	int i, j, k;
-	int nbits = xbits;
 	struct lives *l;
 
 	RDEBUG(("addalledges for %d\n", e->nodnum));
@@ -696,14 +712,17 @@ addalledges(REGW *e)
 			AddEdge(e, &ablock[ndontregs[i]]);
 	}
 
-	/* First add to long-lived temps */
+	/* First add to long-lived temps and hard regs */
 	RDEBUG(("addalledges longlived "));
-	for (i = 0; i < nbits; i += NUMBITS) {
+	for (i = 0; i < xbits; i += NUMBITS) {
 		if ((k = live[i/NUMBITS]) == 0)
 			continue;
 		while (k) {
 			j = ffs(k)-1;
-			AddEdge(&nblock[i+j+tempmin], e);
+			if (i+j < MAXREGS)
+				AddEdge(&ablock[i+j], e);
+			else
+				AddEdge(&nblock[i+j+tempmin-MAXREGS], e);
 			RRDEBUG(("%d ", i+j+tempmin));
 			k &= ~(1 << j);
 		}
@@ -770,12 +789,8 @@ setlive(NODE *p, int set, REGW *rv)
 
 	switch (optype(p->n_op)) {
 	case LTYPE:
-		if (p->n_op == TEMP)
-			set ? LIVEADD((int)p->n_lval) : LIVEDEL((int)p->n_lval);
-#ifdef notyet
-		else if (p->n_op == REG)
-			...
-#endif
+		if (p->n_op == REG || p->n_op == TEMP)
+			set ? LIVEADD(regno(p)) : LIVEDEL(regno(p));
 		break;
 	case BITYPE:
 		setlive(p->n_right, set, rv);
@@ -830,8 +845,6 @@ addedge_r(NODE *p, REGW *w)
  * Moves to special regs are scheduled after the evaluation of both legs.
  */
 
-#define	ASGLEFT(p) (p->n_op == ASSIGN && p->n_left->n_op == TEMP)
-
 static void
 insnwalk(NODE *p)
 {
@@ -845,14 +858,16 @@ insnwalk(NODE *p)
 	rv = p->n_regw;
 
 	rrv = lrv = NULL;
-	if (ASGLEFT(p)) {
-		int v = p->n_left->n_lval;
-		LIVEDEL(v); /* remove assigned temp from live set */
-		addalledges(&nblock[v]);
+	if (p->n_op == ASSIGN &&
+	    (p->n_left->n_op == TEMP || p->n_left->n_op == REG)) {
+		lr = p->n_left->n_op == TEMP ? nblock : ablock;
+		i = regno(p->n_left);
+		LIVEDEL(i);	/* remove assigned temp from live set */
+		addalledges(&lr[i]);
 	}
 
 	/* Add edges for the result of this node */
-	if (rv && (q->visit & INREGS || o == TEMP))	
+	if (rv && (q->visit & INREGS || o == TEMP || o == REG))	
 		addalledges(rv);
 
 	/* special handling of CALL operators */
@@ -879,16 +894,24 @@ insnwalk(NODE *p)
 #if 1
 		static int ncl[] = { 0, NASL, NBSL, NCSL, NDSL };
 		static int ncr[] = { 0, NASR, NBSR, NCSR, NDSR };
-		
+		int j;
+
 		/* edges are already added */
-		if ((r = &p->n_regw[1+i])->r_class == -1)
+		if ((r = &p->n_regw[1+i])->r_class == -1) {
 			r = p->n_regw;
-		else
+		} else {
+			AddEdge(r, p->n_regw);
 			addalledges(r);
+		}
 		if (optype(o) != LTYPE && (q->needs & ncl[CLASS(r)]) == 0)
 			addedge_r(p->n_left, r);
 		if (optype(o) == BITYPE && (q->needs & ncr[CLASS(r)]) == 0)
 			addedge_r(p->n_right, r);
+		for (j = i + 1; j < n; j++) {
+			if (p->n_regw[j+1].r_class == -1)
+				continue;
+			AddEdge(r, &p->n_regw[j+1]);
+		}
 #else
 		if ((r = &p->n_regw[1+i])->r_class == -1)
 			continue;
@@ -937,15 +960,12 @@ insnwalk(NODE *p)
 		if (rr && rv)
 			moveadd(rr, rv);
 	} else if (callop(o)) {
-#ifdef notdef
-		/* calls needs special treatment */
-		for (i = 0; tempregs[i] >= 0; i++)
-			addalledges(&ablock[i]);
-		if (rv)
-			moveadd(rv, &ablock[RETREG(p->n_type)]);
-#endif
-		/* XXX - here must all live arg registers be added
-		 * for archs with arguments in registers */
+		int *c;
+
+		for (c = livecall(p); *c != -1; c++) {
+			addalledges(ablock + *c);
+			LIVEADD(*c);
+		}
 	} else if (q->rewrite & (RESC1|RESC2|RESC3)) {
 		if (lr && rr)
 			AddEdge(lr, rr);
@@ -963,7 +983,8 @@ insnwalk(NODE *p)
 
 	switch (optype(o)) {
 	case BITYPE:
-		if (ASGLEFT(p)) {
+		if (p->n_op == ASSIGN &&
+		    (p->n_left->n_op == TEMP || p->n_left->n_op == REG)) {
 			/* only go down right node */
 			insnwalk(p->n_right);
 		} else if (callop(o)) {
@@ -990,17 +1011,19 @@ insnwalk(NODE *p)
 	case LTYPE:
 		switch (o) {
 		case TEMP:
-			rr = &nblock[(int)p->n_lval];
+		case REG:
+			i = regno(p);
+			rr = (o == TEMP ? &nblock[i] :  &ablock[i]);
 			if (rv != rr) {
 				addalledges(rr);
 				moveadd(rv, rr);
 			}
-			LIVEADD((int)p->n_lval);
+			LIVEADD(i);
 			break;
-		case REG:
-		case OREG:
-			/* Liveness for regs??? */
-			break;
+
+		case OREG: /* XXX - not yet */
+			break; 
+
 		default:
 			break;
 		}
@@ -1009,6 +1032,7 @@ insnwalk(NODE *p)
 }
 
 static bittype **gen, **kill, **in, **out;
+//static int ntemp, emax;
 
 static void
 unionize(NODE *p, int bb)
@@ -1018,27 +1042,37 @@ unionize(NODE *p, int bb)
 	if ((o = p->n_op) == TEMP) {
 #ifdef notyet
 		for (i = 0; i < szty(p->n_type); i++) {
-			BITSET(gen[bb], ((int)p->n_lval - tempmin+i));
+			BITSET(gen[bb], (regno(p) - tempmin+i+MAXREGS));
 		}
 #else
 		i = 0;
-		BITSET(gen[bb], ((int)p->n_lval - tempmin+i));
+		BITSET(gen[bb], (regno(p) - tempmin+i+MAXREGS));
 #endif
+	} else if (o == REG) {
+		BITSET(gen[bb], regno(p));
 	}
-	if (asgop(o) && p->n_left->n_op == TEMP) {
-		int b = p->n_left->n_lval - tempmin;
+	if (asgop(o)) {
+		if (p->n_left->n_op == TEMP) {
+			int b = regno(p->n_left) - tempmin+MAXREGS;
 #ifdef notyet
-		for (i = 0; i < szty(p->n_type); i++) {
+			for (i = 0; i < szty(p->n_type); i++) {
+				BITCLEAR(gen[bb], (b+i));
+				BITSET(kill[bb], (b+i));
+			}
+#else
+			i = 0;
 			BITCLEAR(gen[bb], (b+i));
 			BITSET(kill[bb], (b+i));
-		}
-#else
-		i = 0;
-		BITCLEAR(gen[bb], (b+i));
-		BITSET(kill[bb], (b+i));
 #endif
-		unionize(p->n_right, bb);
-		return;
+			unionize(p->n_right, bb);
+			return;
+		} else if (p->n_left->n_op == REG) {
+			int b = regno(p->n_left);
+			BITCLEAR(gen[bb], b);
+			BITSET(kill[bb], b);
+			unionize(p->n_right, bb);
+			return;
+		}
 	}
 	ty = optype(o);
 	if (ty != LTYPE)
@@ -1073,27 +1107,29 @@ LivenessAnalysis(void)
 			if (ip == bb->first)
 				break;
 		}
-		memcpy(in[bbnum], gen[bbnum], BIT2BYTE(tempmax-tempmin));
+		memcpy(in[bbnum], gen[bbnum], BIT2BYTE(xbits));
 #ifdef PCC_DEBUG
+#define	PRTRG(x) printf("%d ", i < MAXREGS ? i : i + tempmin-MAXREGS)
 		if (rdebug) {
 			printf("basic block %d\ngen: ", bbnum);
-			for (i = 0; i < tempmax-tempmin; i++)
+			for (i = 0; i < xbits; i++)
 				if (TESTBIT(gen[bbnum], i))
-					printf("%d ", i+tempmin);
+					PRTRG(i);
 			printf("\nkill: ");
-			for (i = 0; i < tempmax-tempmin; i++)
+			for (i = 0; i < xbits; i++)
 				if (TESTBIT(kill[bbnum], i))
-					printf("%d ", i+tempmin);
+					PRTRG(i);
 			printf("\n");
 		}
 #endif
 	}
 }
 
-#define	SETCOPY(t,f,i,n) for (i = 0; i < n/NUMBITS; i++) t[i] = f[i]
-#define	SETSET(t,f,i,n) for (i = 0; i < n/NUMBITS; i++) t[i] |= f[i]
-#define	SETCLEAR(t,f,i,n) for (i = 0; i < n/NUMBITS; i++) t[i] &= ~f[i]
-#define	SETCMP(v,t,f,i,n) for (i = 0; i < n/NUMBITS; i++) \
+#define	RUP(x) (((x)+NUMBITS-1)/NUMBITS)
+#define	SETCOPY(t,f,i,n) for (i = 0; i < RUP(n); i++) t[i] = f[i]
+#define	SETSET(t,f,i,n) for (i = 0; i < RUP(n); i++) t[i] |= f[i]
+#define	SETCLEAR(t,f,i,n) for (i = 0; i < RUP(n); i++) t[i] &= ~f[i]
+#define	SETCMP(v,t,f,i,n) for (i = 0; i < RUP(n); i++) \
 	if (t[i] != f[i]) v = 1
 
 /*
@@ -1109,7 +1145,7 @@ Build(struct interpass *ipole)
 	struct cfgnode *cn;
 	extern int nbblocks;
 	bittype *saved;
-	int i, j, again, nbits;
+	int i, j, again;
 
 	if (xtemps == 0) {
 		/*
@@ -1127,25 +1163,25 @@ Build(struct interpass *ipole)
 	}
 
 	/* Just fetch space for the temporaries from stack */
-	nbits = xbits+(NUMBITS-1);
 	gen = alloca(nbblocks*sizeof(bittype*));
 	kill = alloca(nbblocks*sizeof(bittype*));
 	in = alloca(nbblocks*sizeof(bittype*));
 	out = alloca(nbblocks*sizeof(bittype*));
 	for (i = 0; i < nbblocks; i++) {
-		BITALLOC(gen[i],alloca,nbits);
-		BITALLOC(kill[i],alloca,nbits);
-		BITALLOC(in[i],alloca,nbits);
-		BITALLOC(out[i],alloca,nbits);
+		BITALLOC(gen[i],alloca,xbits);
+		BITALLOC(kill[i],alloca,xbits);
+		BITALLOC(in[i],alloca,xbits);
+		BITALLOC(out[i],alloca,xbits);
 	}
-	BITALLOC(saved,alloca,nbits);
+	BITALLOC(saved,alloca,xbits);
+
 	LivenessAnalysis();
 
 	/* register variable temporaries are live */
 	for (i = 0; i < NPERMREG-1; i++) {
 		if (nsavregs[i])
 			continue;
-		BITSET(out[nbblocks-1], i);
+		BITSET(out[nbblocks-1], (i+MAXREGS));
 		for (j = i+1; j < NPERMREG-1; j++) {
 			if (nsavregs[j])
 				continue;
@@ -1159,17 +1195,16 @@ Build(struct interpass *ipole)
 		/* XXX - loop should be in reversed execution-order */
 		DLIST_FOREACH_REVERSE(bb, &bblocks, bbelem) {
 			int i = bb->bbnum;
-			SETCOPY(saved, out[i], j, nbits);
+			SETCOPY(saved, out[i], j, xbits);
 			SLIST_FOREACH(cn, &bb->children, cfgelem) {
-				SETSET(out[i], in[cn->bblock->bbnum],
-				    j, nbits);
+				SETSET(out[i], in[cn->bblock->bbnum], j, xbits);
 			}
-			SETCMP(again, saved, out[i], j, nbits);
-			SETCOPY(saved, in[i], j, nbits);
-			SETCOPY(in[i], out[i], j, nbits);
-			SETCLEAR(in[i], kill[i], j, nbits);
-			SETSET(in[i], gen[i], j, nbits);
-			SETCMP(again, saved, in[i], j, nbits);
+			SETCMP(again, saved, out[i], j, xbits);
+			SETCOPY(saved, in[i], j, xbits);
+			SETCOPY(in[i], out[i], j, xbits);
+			SETCLEAR(in[i], kill[i], j, xbits);
+			SETSET(in[i], gen[i], j, xbits);
+			SETCMP(again, saved, in[i], j, xbits);
 		}
 	} while (again);
 
@@ -1177,13 +1212,13 @@ Build(struct interpass *ipole)
 	if (rdebug) {
 		DLIST_FOREACH(bb, &bblocks, bbelem) {
 			printf("basic block %d\nin: ", bb->bbnum);
-			for (i = 0; i < tempmax-tempmin; i++)
+			for (i = 0; i < xbits; i++)
 				if (TESTBIT(in[bb->bbnum], i))
-					printf("%d ", i+tempmin);
+					PRTRG(i);
 			printf("\nout: ");
-			for (i = 0; i < tempmax-tempmin; i++)
+			for (i = 0; i < xbits; i++)
 				if (TESTBIT(out[bb->bbnum], i))
-					printf("%d ", i+tempmin);
+					PRTRG(i);
 			printf("\n");
 		}
 	}
@@ -1192,9 +1227,9 @@ Build(struct interpass *ipole)
 	DLIST_FOREACH(bb, &bblocks, bbelem) {
 		RDEBUG(("liveadd bb %d\n", bb->bbnum));
 		i = bb->bbnum;
-		for (j = 0; j < (tempmax-tempmin); j += NUMBITS)
+		for (j = 0; j < xbits; j += NUMBITS)
 			live[j/NUMBITS] = 0;
-		SETCOPY(live, out[i], j, nbits);
+		SETCOPY(live, out[i], j, xbits);
 		for (ip = bb->last; ; ip = DLIST_PREV(ip, qelem)) {
 			if (ip->type == IP_NODE)
 				insnwalk(ip->ip_node);
@@ -1704,14 +1739,6 @@ SelectSpill(void)
 	FreezeMoves(w);
 }
 
-int gregn(REGW *);
-
-int
-gregn(REGW *w)
-{
-	return w->nodnum;
-}
-
 /*
  * Set class on long-lived temporaries based on its type.
  */
@@ -1723,7 +1750,7 @@ traclass(NODE *p)
 	if (p->n_op != TEMP)
 		return;
 
-	nb = &nblock[(int)p->n_lval];
+	nb = &nblock[regno(p)];
 	if (CLASS(nb) == 0)
 		CLASS(nb) = gclass(p->n_type);
 }
@@ -1752,8 +1779,8 @@ paint(NODE *p)
 	} else
 		p->n_reg = -1;
 	if (p->n_op == TEMP) {
-		REGW *nb = &nblock[(int)p->n_lval];
-		p->n_rval = COLOR(nb);
+		REGW *nb = &nblock[regno(p)];
+		regno(p) = COLOR(nb);
 		if (TCLASS(p->n_su) == 0)
 			SCLASS(p->n_su, CLASS(nb));
 		p->n_op = REG;
@@ -1840,7 +1867,7 @@ longtemp(NODE *p)
 		return;
 	/* XXX - should have a bitmask to find temps to convert */
 	DLIST_FOREACH(w, spole, link) {
-		if (w != &nblock[(int)p->n_lval])
+		if (w != &nblock[regno(p)])
 			continue;
 		if (w->r_class == 0) {
 			w->r_color = BITOOR(freetemp(szty(p->n_type)));
@@ -1971,13 +1998,14 @@ temparg(struct interpass *ipole, REGW *w)
 		if (ip->type == IP_ASM)
 			continue;
 		p = ip->ip_node;
-#ifdef PCC_DEBUG
+#ifdef notdef
+		/* register args may already have been put on stack */
 		if (p->n_op != ASSIGN || p->n_left->n_op != TEMP)
 			comperr("temparg");
 #endif
 		if (p->n_right->n_op != OREG)
 			continue; /* arg in register */
-		if (w != &nblock[(int)p->n_left->n_lval])
+		if (w != &nblock[regno(p->n_left)])
 			continue;
 		w->r_color = p->n_right->n_lval;
 		tfree(p);
@@ -2073,6 +2101,33 @@ RewriteProgram(struct interpass *ip)
 	return rwtyp;
 }
 
+#ifdef PCC_DEBUG
+/*
+ * Print TEMP/REG contents in a node.
+ */
+void
+prtreg(FILE *fp, NODE *p)
+{
+	int i, n = p->n_su == -1 ? 0 : ncnt(table[TBLIDX(p->n_su)].needs);
+
+	if (use_regw) {
+		fprintf(fp, "TEMP ");
+		if (p->n_regw != NULL) {
+			for (i = 0; i < n+1; i++)
+				fprintf(fp, "%d ", p->n_regw[i].nodnum);
+		} else
+			fprintf(fp, "<undef>");
+	} else {
+		fprintf(fp, "REG ");
+		if (p->n_reg != -1) {
+			for (i = 0; i < n+1; i++)
+				fprintf(fp, "%s ", rnames[DECRA(p->n_reg, i)]);
+		} else
+			fprintf(fp, "<undef>");
+	}
+}
+#endif
+
 #ifdef notyet
 /*
  * Assign instructions, calculate evaluation order and
@@ -2097,10 +2152,11 @@ ngenregs(struct interpass *ipole)
 	extern NODE *nodepole;
 	struct interpass_prolog *ipp, *epp;
 	struct interpass *ip;
-	int i, j, nbits = 0;
+	int i, j, tbits;
 	int uu[NPERMREG] = { -1 };
 	int xnsavregs[NPERMREG];
 	int beenhere = 0;
+	TWORD type;
 
 	DLIST_INIT(&lunused, link);
 	DLIST_INIT(&lused, link);
@@ -2135,16 +2191,16 @@ ngenregs(struct interpass *ipole)
 #ifdef PCC_DEBUG
 	nodnum = tempmax;
 #endif
-	nbits = xbits = tempmax - tempmin;
-	if (nbits) {
-		nblock = tmpalloc(nbits * sizeof(REGW));
+	tbits = tempmax - tempmin;	/* # of temporaries */
+	xbits = tbits + MAXREGS;	/* total size of live array */
+	if (tbits) {
+		nblock = tmpalloc(tbits * sizeof(REGW));
 
 		nblock -= tempmin;
-		live = tmpalloc(BIT2BYTE(nbits));
 		RDEBUG(("nblock %p num %d size %zu\n",
-		    nblock, nbits, (size_t)(nbits * sizeof(REGW))));
+		    nblock, tbits, (size_t)(tbits * sizeof(REGW))));
 	}
-
+	live = tmpalloc(BIT2BYTE(xbits));
 
 	/* Block for precolored nodes */
 	ablock = tmpalloc(sizeof(REGW)*MAXREGS);
@@ -2164,16 +2220,16 @@ ngenregs(struct interpass *ipole)
 
 recalc:
 onlyperm: /* XXX - should not have to redo all */
+	memset(edgehash, 0, sizeof(edgehash));
 
-	if (nbits) {
-		memset(nblock+tempmin, 0, nbits * sizeof(REGW));
-		memset(live, 0, BIT2BYTE(nbits));
-		memset(edgehash, 0, sizeof(edgehash));
+	if (tbits) {
+		memset(nblock+tempmin, 0, tbits * sizeof(REGW));
 #ifdef PCC_DEBUG
 		for (i = tempmin; i < tempmax; i++)
 			nblock[i].nodnum = i;
 #endif
 	}
+	memset(live, 0, BIT2BYTE(xbits));
 	RPRINTIP(ipole);
 	DLIST_INIT(&initial, link);
 	DLIST_FOREACH(ip, ipole, qelem) {
@@ -2190,7 +2246,9 @@ onlyperm: /* XXX - should not have to redo all */
 	RDEBUG(("nsucomp allocated %d temps (%d,%d)\n", 
 	    tempmax-tempmin, tempmin, tempmax));
 
+	use_regw = 1;
 	RPRINTIP(ipole);
+	use_regw = 0;
 	RDEBUG(("ngenregs: numtemps %d (%d, %d)\n", tempmax-tempmin,
 		    tempmin, tempmax));
 
@@ -2268,17 +2326,21 @@ onlyperm: /* XXX - should not have to redo all */
 			continue;
 
 		/* Generate reg-reg move nodes for save */
+		type = PERMTYPE(permregs[i]);
+#ifdef PCC_DEBUG
+		if (PERMTYPE(nblock[i+tempmin].r_color) != type)
+			comperr("permreg botch");
+#endif
 		p = mkbinode(ASSIGN,
-		    mklnode(REG, 0, nblock[i+tempmin].r_color, INT),
-		    mklnode(REG, 0, permregs[i], INT), INT);
+		    mklnode(REG, 0, nblock[i+tempmin].r_color, type),
+		    mklnode(REG, 0, permregs[i], type), type);
 		p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
 		p->n_left->n_su = p->n_right->n_su = 0;
 		geninsn(p, FOREFF);
 		ip = ipnode(p);
 		DLIST_INSERT_AFTER(ipole->qelem.q_forw, ip, qelem);
-			/* XXX not int */
-		p = mkbinode(ASSIGN, mklnode(REG, 0, permregs[i], INT),
-		    mklnode(REG, 0, nblock[i+tempmin].r_color, INT), INT);
+		p = mkbinode(ASSIGN, mklnode(REG, 0, permregs[i], type),
+		    mklnode(REG, 0, nblock[i+tempmin].r_color, type), type);
 		p->n_reg = p->n_left->n_reg = p->n_right->n_reg = -1;
 		p->n_left->n_su = p->n_right->n_su = 0;
 		geninsn(p, FOREFF);

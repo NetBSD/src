@@ -1,4 +1,4 @@
-/*	$OpenBSD$	*/
+/*	$OpenBSD: code.c,v 1.2 2007/11/22 15:06:43 stefan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -31,36 +31,47 @@
 
 # include "pass1.h"
 
+NODE *funarg(NODE *, int *);
+int argreg(TWORD, int *);
+
 /*
- * cause the alignment to become a multiple of n
- * never called for text segment.
+ * Define everything needed to print out some data (or text).
+ * This means segment, alignment, visibility, etc.
  */
 void
-defalign(int n)
+defloc(struct symtab *sp)
 {
-	n /= SZCHAR;
-	if (n == 1)
+	extern char *nextsect;
+	static char *loctbl[] = { "text", "data", "section .rodata" };
+	static int lastloc = -1;
+	TWORD t;
+	int s;
+
+	if (sp == NULL) {
+		lastloc = -1;
 		return;
-	printf("\t.align %d\n", n);
+	}
+	t = sp->stype;
+	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
+	if (nextsect) {
+		printf("\t.section %s\n", nextsect);
+		nextsect = NULL;
+		s = -1;
+	} else if (s != lastloc)
+		printf("\t.%s\n", loctbl[s]);
+	lastloc = s;
+	while (ISARY(t))
+		t = DECREF(t);
+	if (t > UCHAR)
+		printf("\t.align\t%d\n",
+		    t < INT ? 2 : t == FLOAT ? 4 : t > ULONG ? 8 : 4);
+	if (sp->sclass == EXTDEF)
+		printf("\t.export %s, data\n", sp->soname);
+	if (sp->slevel == 0)
+		printf("\t.label %s\n", sp->soname);
+	else
+		printf("\t.label\t" LABFMT "\n", sp->soffset);
 }
-
-/*
- * define the current location as the name p->sname
- * never called for text segment.
- */
-void
-defnam(struct symtab *p)
-{
-	char *c = p->sname;
-
-#ifdef GCC_COMPAT
-	c = gcc_findname(p);
-#endif
-	if (p->sclass == EXTDEF)
-		printf("\t.export %s, data\n", c);
-	printf("\t.label %s\n", c);
-}
-
 
 /*
  * code for the end of a function
@@ -92,20 +103,71 @@ efcode()
 	send_passt(IP_NODE, p);
 }
 
+int
+argreg(TWORD t, int *n)
+{
+	switch (t) {
+	case FLOAT:
+		return FR7L - 2 * (*n)++;
+	case DOUBLE:
+	case LDOUBLE:
+		*n += 2;
+		return FR6 - *n - 2;
+	case LONGLONG:
+	case ULONGLONG:
+		*n += 2;
+		return AD1 - (*n - 2) / 2;
+	default:
+		return ARG0 - (*n)++;
+	}
+}
+
 /*
  * code for the beginning of a function; 'a' is an array of
  * indices in symtab for the arguments; n is the number
  */
 void
-bfcode(struct symtab **a, int n)
+bfcode(struct symtab **a, int cnt)
 {
-	int i;
+	struct symtab *sp;
+	NODE *p, *q;
+	int i, n, sz;
 
-	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
-		return;
+	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
 	/* Function returns struct, adjust arg offset */
 	for (i = 0; i < n; i++)
 		a[i]->soffset += SZPOINT(INT);
+	}
+
+	/* recalculate the arg offset and create TEMP moves */
+	for (n = 0, i = 0; i < cnt; i++) {
+		sp = a[i];
+
+		sz = szty(sp->stype);
+		if (n % sz)
+			n++;	/* XXX LDOUBLE */
+
+		if (n < 4) {
+			p = tempnode(0, sp->stype, sp->sdf, sp->ssue);
+			/* TODO p->n_left->n_lval = -(32 + n * 4); */
+			q = block(REG, NIL, NIL, sp->stype, sp->sdf, sp->ssue);
+			q->n_rval = argreg(sp->stype, &n);
+			p = buildtree(ASSIGN, p, q);
+			sp->soffset = regno(p->n_left);
+			sp->sflags |= STNODE;
+			ecomp(p);
+		} else {
+			sp->soffset += SZINT * n;
+			if (xtemps) {
+				/* put stack args in temps if optimizing */
+				p = tempnode(0, sp->stype, sp->sdf, sp->ssue);
+				p = buildtree(ASSIGN, p, buildtree(NAME, 0, 0));
+				sp->soffset = regno(p->n_left);
+				sp->sflags |= STNODE;
+				ecomp(p);
+			}
+		}
+	}
 }
 
 
@@ -136,50 +198,6 @@ bjobcode(void)
 }
 
 /*
- * Print character t at position i in one string, until t == -1.
- * Locctr & label is already defined.
- */
-void
-bycode(int t, int i)
-{
-	static	int	lastoctal = 0;
-
-	/* put byte i+1 in a string */
-
-	if (t < 0) {
-		if (i != 0)
-			puts("\"");
-	} else {
-		if (i == 0)
-			printf("\t.ascii \"");
-		if (t == '\\' || t == '"') {
-			lastoctal = 0;
-			putchar('\\');
-			putchar(t);
-		} else if (t < 040 || t >= 0177) {
-			lastoctal++;
-			printf("\\%o",t);
-		} else if (lastoctal && '0' <= t && t <= '9') {
-			lastoctal = 0;
-			printf("\"\n\t.ascii \"%c", t);
-		} else {	
-			lastoctal = 0;
-			putchar(t);
-		}
-	}
-}
-
-/*
- * n integer words of zeros
- */
-void
-zecode(int n)
-{
-	printf("\t.block %d\n", n * (SZINT/SZCHAR));
-/*	inoff += n * SZINT; */
-}
-
-/*
  * return the alignment of field of type t
  */
 int
@@ -195,26 +213,57 @@ fldty(struct symtab *p)
 {
 }
 
-/* p points to an array of structures, each consisting
- * of a constant value and a label.
- * The first is >=0 if there is a default label;
- * its value is the label number
- * The entries p[1] to p[n] are the nontrivial cases
+/*
  * XXX - fix genswitch.
  */
-void
-genswitch(int num, struct swents **p, int n)
+int
+mygenswitch(int num, TWORD type, struct swents **p, int n)
+{
+	return 0;
+}
+
+NODE *
+funarg(NODE *p, int *n)
 {
 	NODE *r;
-	int i;
+	int sz;
 
-	/* simple switch code */
-	for (i = 1; i <= n; ++i) {
-		/* already in 1 */
-		r = tempnode(num, INT, 0, MKSUE(INT));
-		r = buildtree(NE, r, bcon(p[i]->sval));
-		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
+	if (p->n_op == CM) {
+		p->n_left = funarg(p->n_left, n);
+		p->n_right = funarg(p->n_right, n);
+		return p;
 	}
-	if (p[0]->slab > 0)
-		branch(p[0]->slab);
+
+	sz = szty(p->n_type);
+	if (*n % sz)
+		(*n)++;	/* XXX LDOUBLE */
+
+	if (*n >= 4) {
+		*n += sz;
+		r = block(OREG, NIL, NIL, p->n_type|PTR, 0,
+		    MKSUE(p->n_type|PTR));
+		r->n_rval = SP;
+		r->n_lval = -(32 + *n * 4);
+	} else {
+		r = block(REG, NIL, NIL, p->n_type, 0, 0);
+		r->n_lval = 0;
+		r->n_rval = argreg(p->n_type, n);
+	}
+	p = block(ASSIGN, r, p, p->n_type, 0, 0);
+	clocal(p);
+
+	return p;
+}
+
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ */
+NODE *
+funcode(NODE *p)
+{
+	int n = 0;
+
+	p->n_right = funarg(p->n_right, &n);
+	return p;
 }
