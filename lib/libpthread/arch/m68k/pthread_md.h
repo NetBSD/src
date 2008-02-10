@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.5 2008/02/10 18:50:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -98,5 +98,8 @@ pthread__sp(void)
 	(uc)->uc_mcontext.__fpregs.__fp_piaddr = (freg)->r_fpiar;      	\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 	} while (/*CONSTCOND*/0)
+
+/* m68k will not go SMP */
+#define	PTHREAD__ATOMIC_IS_MEMBAR
 
 #endif /* _LIB_PTHREAD_M68K_MD_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.3 2005/12/24 21:11:17 perry Exp $ */
+/*	$NetBSD: pthread_md.h,v 1.4 2008/02/10 18:50:55 ad Exp $ */
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -89,5 +89,8 @@ pthread__sp(void)
 #define PTHREAD_UCONTEXT_TO_FPREG(freg, uc)
 #define PTHREAD_FPREG_TO_UCONTEXT(uc, freg)
 #endif
+
+/* sh3 will not go SMP */
+#define	PTHREAD__ATOMIC_IS_MEMBAR
 
 #endif /* _LIB_PTHREAD_SH3_MD_H */
