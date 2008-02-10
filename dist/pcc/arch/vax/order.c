@@ -1,4 +1,4 @@
-/*	$Id: order.c,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
+/*	$Id: order.c,v 1.1.1.3 2008/02/10 20:05:01 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -344,11 +344,6 @@ comperr("offstar");
 	}
 
 int
-setincr( p ) NODE *p; {
-	return( 0 );  /* for the moment, don't bother */
-	}
-
-int
 setbin( p ) register NODE *p; {
 
 #if 0
@@ -593,4 +588,24 @@ setorder(NODE *p)
 void
 myormake(NODE *q)
 {
+}
+/*
+ * Set registers "live" at function calls (like arguments in registers).
+ * This is for liveness analysis of registers.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[1] = { -1 }; /* Terminate with -1 */
+
+	return &r[0];
+}
+
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
 }

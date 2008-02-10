@@ -1,4 +1,4 @@
-/*	$Id: macdefs.h,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
+/*	$Id: macdefs.h,v 1.1.1.3 2008/02/10 20:05:01 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -194,8 +194,6 @@ extern int maxargs;
 # define genfcall(a,b) gencall(a,b)
 
 # define NESTCALL
-
-# define MYREADER(p) myreader(p)
 
 /*
  * Register allocator stuff.

@@ -1,4 +1,4 @@
-/*	$Id: cgram.y,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $	*/
+/*	$Id: cgram.y,v 1.1.1.3 2008/02/10 20:05:02 ragge Exp $	*/
 
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -116,13 +116,7 @@
 %token	C_QUALIFIER
 %token	C_FUNSPEC
 %token	C_ASM
-
-/*
- * These tokens are only used for pragmas; let yacc handle syntax check.
- */
-%token	PRAG_PACKED
-%token	PRAG_ALIGNED
-%token	PRAG_RENAMED
+%token	NOMATCH
 
 /*
  * Precedence
@@ -153,10 +147,9 @@ static int fun_inline;	/* Reading an inline function */
 int oldstyle;	/* Current function being defined */
 int noretype;
 static struct symtab *xnf;
-#ifdef GCC_COMPAT
-char *renname; /* for renaming of variables */
-#endif
-
+extern int enummer, tvaloff;
+extern struct rstack *rpole;
+static int ctval;
 
 static NODE *bdty(int op, ...);
 static void fend(void);
@@ -168,10 +161,16 @@ static void swend(void);
 static void addcase(NODE *p);
 static void adddef(void);
 static void savebc(void);
-static void swstart(int);
-static NODE * structref(NODE *p, int f, char *name);
+static void swstart(int, TWORD);
+static void genswitch(int, TWORD, struct swents **, int);
+static NODE *structref(NODE *p, int f, char *name);
 static char *mkpstr(char *str);
 static struct symtab *clbrace(NODE *);
+static NODE *cmop(NODE *l, NODE *r);
+static NODE *xcmop(NODE *out, NODE *in, NODE *str);
+static void mkxasm(char *str, NODE *p);
+static NODE *xasmop(char *str, NODE *p);
+
 
 /*
  * State for saving current switch state (when nested switches).
@@ -198,7 +197,7 @@ struct savbc {
 %start ext_def_list
 
 %type <intval> con_e ifelprefix ifprefix whprefix forprefix doprefix switchpart
-		type_qualifier_list str_attr
+		type_qualifier_list
 %type <nodep> e .e term enum_dcl struct_dcl cast_type funct_idn declarator
 		direct_declarator elist type_specifier merge_attribs
 		parameter_declaration abstract_declarator initializer
@@ -206,14 +205,13 @@ struct savbc {
 		declaration_specifiers pointer direct_abstract_declarator
 		specifier_qualifier_list merge_specifiers nocon_e
 		identifier_list arg_param_list arg_declaration arg_dcl_list
-		designator_list designator
-%type <strp>	string wstring C_STRING C_WSTRING PRAG_RENAMED
-%type <rp>	enum_head str_head
-%type <symp>	xnfdeclarator clbrace
+		designator_list designator xasm oplist oper cnstr
+%type <strp>	string wstring C_STRING C_WSTRING
+%type <rp>	str_head
+%type <symp>	xnfdeclarator clbrace enum_head
 
 %type <intval> C_CLASS C_STRUCT C_RELOP C_DIVOP C_SHIFTOP
 		C_ANDAND C_OROR C_STROP C_INCOP C_UNOP C_ASOP C_EQUOP
-		PRAG_PACKED PRAG_ALIGNED
 
 %type <nodep>  C_TYPE C_QUALIFIER C_ICON C_FCON
 %type <strp>	C_NAME C_TYPENAME
@@ -337,35 +335,55 @@ type_qualifier_list:
 direct_declarator: C_NAME { $$ = bdty(NAME, $1); }
 		|  '(' declarator ')' { $$ = $2; }
 		|  direct_declarator '[' nocon_e ']' { 
+			$3 = optim($3);
+			if (blevel == 0 && !nncon($3))
+				uerror("array size not constant");
+			if (!ISINTEGER($3->n_type))
+				werror("array size is not an integer");
+			else if ($3->n_op == ICON && $3->n_lval < 0) {
+				uerror("array size must be non-negative");
+				$3->n_lval = 1;
+			}
 			$$ = block(LB, $1, $3, INT, 0, MKSUE(INT));
 		}
 		|  direct_declarator '[' ']' { $$ = bdty(LB, $1, 0); }
-		|  direct_declarator '(' notype parameter_type_list ')' {
+		|  direct_declarator '(' fundcl parameter_type_list ')' {
+			if (blevel-- > 1)
+				symclear(blevel);
 			$$ = bdty(CALL, $1, $4);
 		}
-		|  direct_declarator '(' notype identifier_list ')' { 
+		|  direct_declarator '(' fundcl identifier_list ')' { 
+			if (blevel-- > 1)
+				symclear(blevel);
 			$$ = bdty(CALL, $1, $4);
 			if (blevel != 0)
 				uerror("function declaration in bad context");
 			oldstyle = 1;
 		}
-		|  direct_declarator '(' ')' { $$ = bdty(UCALL, $1); }
+		|  direct_declarator '(' ')' {
+			ctval = tvaloff;
+			$$ = bdty(UCALL, $1);
+		}
 		;
 
-notype:		   { /* extern int notype, doproto; notype = 0; doproto=1; printf("notype\n"); */ }
+fundcl:		   { blevel++; argoff = ARGINIT; ctval = tvaloff; }
 		;
 
-identifier_list:   C_NAME { $$ = bdty(NAME, $1); $$->n_type = FARG; }
+identifier_list:   C_NAME {
+			$$ = mkty(FARG, NULL, MKSUE(INT));
+			$$->n_sp = lookup($1, 0);
+			defid($$, PARAM);
+		}
 		|  identifier_list ',' C_NAME { 
-			$$ = bdty(NAME, $3);
-			$$->n_type = FARG;
+			$$ = mkty(FARG, NULL, MKSUE(INT));
+			$$->n_sp = lookup($3, 0);
+			defid($$, PARAM);
 			$$ = block(CM, $1, $$, 0, 0, 0);
 		}
 		;
 
 /*
  * Returns as parameter_list, but can add an additional ELLIPSIS node.
- * Calls revert() to get the parameter list in the forward order.
  */
 parameter_type_list:
 		   parameter_list { $$ = $1; }
@@ -391,7 +409,14 @@ parameter_list:	   parameter_declaration { $$ = $1; }
  */
 parameter_declaration:
 		   declaration_specifiers declarator {
+			if ($1->n_lval == AUTO || $1->n_lval == TYPEDEF ||
+			    $1->n_lval == EXTERN || $1->n_lval == STATIC)
+				uerror("illegal parameter class");
 			$$ = tymerge($1, $2);
+			$$->n_sp = lookup((char *)$$->n_sp, 0); /* XXX */
+			if (ISFTN($$->n_type))
+				$$->n_type = INCREF($$->n_type);
+			defid($$, PARAM);
 			nfree($1);
 		}
 		|  declaration_specifiers abstract_declarator { 
@@ -421,14 +446,14 @@ direct_abstract_declarator:
 			$$ = bdty(LB, $1, $3);
 		}
 		|  '(' ')' { $$ = bdty(UCALL, bdty(NAME, NULL)); }
-		|  '(' notype parameter_type_list ')' {
-			$$ = bdty(CALL, bdty(NAME, NULL), $3);
+		|  '(' parameter_type_list ')' {
+			$$ = bdty(CALL, bdty(NAME, NULL), $2);
 		}
 		|  direct_abstract_declarator '(' ')' {
 			$$ = bdty(UCALL, $1);
 		}
-		|  direct_abstract_declarator '(' notype parameter_type_list ')' {
-			$$ = bdty(CALL, $1, $4);
+		|  direct_abstract_declarator '(' parameter_type_list ')' {
+			$$ = bdty(CALL, $1, $3);
 		}
 		;
 
@@ -454,17 +479,17 @@ arg_param_list:	   declarator { olddecl(tymerge($<nodep>0, $1)); }
 /*
  * Declarations in beginning of blocks.
  */
-declaration_list:  declaration
-		|  declaration_list declaration
+block_item_list:   block_item
+		|  block_item_list block_item
+		;
+
+block_item:	   declaration
+		|  statement
 		;
 
 /*
  * Here starts the old YACC code.
  */
-
-stmt_list:	   stmt_list statement
-		|  { bccode(); }
-		;
 
 /*
  * Variables are declared in init_declarator.
@@ -486,45 +511,42 @@ init_declarator_list:
 		|  init_declarator_list ',' { $<nodep>$ = $<nodep>0; } init_declarator
 		;
 
-enum_dcl:	   enum_head '{' moe_list optcomma '}' { $$ = dclstruct($1, 0); }
-		|  C_ENUM C_NAME {  $$ = rstruct($2,0);  }
-		|  C_ENUM C_TYPENAME {  $$ = rstruct($2,0);  }
+enum_dcl:	   enum_head '{' moe_list optcomma '}' { $$ = enumdcl($1); }
+		|  C_ENUM C_NAME {  $$ = enumref($2); }
 		;
 
-enum_head:	   C_ENUM {  $$ = bstruct(NULL,0); }
-		|  C_ENUM C_NAME {  $$ = bstruct($2,0); }
-		|  C_ENUM C_TYPENAME {  $$ = bstruct($2,0); }
+enum_head:	   C_ENUM { $$ = enumhd(NULL); }
+		|  C_ENUM C_NAME {  $$ = enumhd($2); }
 		;
 
 moe_list:	   moe
 		|  moe_list ',' moe
 		;
 
-moe:		   C_NAME {  moedef( $1 ); }
-		|  C_NAME '=' con_e {  strucoff = $3;  moedef( $1 ); }
+moe:		   C_NAME {  moedef($1); }
+		|  C_TYPENAME {  moedef($1); }
+		|  C_NAME '=' con_e { enummer = $3; moedef($1); }
+		|  C_TYPENAME '=' con_e { enummer = $3; moedef($1); }
 		;
 
-struct_dcl:	   str_head '{' struct_dcl_list '}' str_attr {
-			$$ = dclstruct($1, $5); 
+struct_dcl:	   str_head '{' struct_dcl_list '}' empty {
+			$$ = dclstruct($1); 
 		}
 		|  C_STRUCT C_NAME {  $$ = rstruct($2,$1); }
-		|  C_STRUCT C_TYPENAME {  $$ = rstruct($2,$1); }
 		|  str_head '{' '}' {
 #ifndef GCC_COMPAT
 			werror("gcc extension");
 #endif
-			$$ = dclstruct($1, 0); 
+			$$ = dclstruct($1); 
 		}
 		;
 
-str_attr:	   { $$ = 0; /* nothing */ }
-		|  PRAG_PACKED { $$ = PRAG_PACKED; }
-		|  PRAG_ALIGNED { $$ = PRAG_ALIGNED; }
+empty:		   { /* Get yacc read the next token before reducing */ }
+		|  NOMATCH
 		;
 
 str_head:	   C_STRUCT {  $$ = bstruct(NULL, $1);  }
 		|  C_STRUCT C_NAME {  $$ = bstruct($2,$1);  }
-		|  C_STRUCT C_TYPENAME {  $$ = bstruct($2,$1);  }
 		;
 
 struct_dcl_list:   struct_declaration
@@ -555,26 +577,21 @@ struct_declarator_list:
 
 struct_declarator: declarator {
 			tymerge($<nodep>0, $1);
-			$1->n_sp = getsymtab((char *)$1->n_sp, SMOSNAME); /* XXX */
-			defid($1, $<nodep>0->n_lval); 
+			soumemb($1, (char *)$1->n_sp,
+			    $<nodep>0->n_lval); /* XXX */
 			nfree($1);
 		}
 		|  ':' con_e {
-			if (!(instruct&INSTRUCT))
-				uerror( "field outside of structure" );
+			if (fldchk($2))
+				$2 = 1;
 			falloc(NULL, $2, -1, $<nodep>0);
 		}
 		|  declarator ':' con_e {
-			if (!(instruct&INSTRUCT))
-				uerror( "field outside of structure" );
-			if( $3<0 || $3 >= FIELD ){
-				uerror( "illegal field size" );
+			if (fldchk($3))
 				$3 = 1;
-			}
 			if ($1->n_op == NAME) {
 				tymerge($<nodep>0, $1);
-				$1->n_sp = getsymtab((char *)$1->n_sp,SMOSNAME);
-				defid($1, FIELD|$3);
+				soumemb($1, (char *)$1->n_sp, FIELD | $3);
 				nfree($1);
 			} else
 				uerror("illegal declarator");
@@ -590,13 +607,9 @@ xnfdeclarator:	   declarator { $$ = xnf = init_declarator($<nodep>0, $1, 1); }
  * Returns nothing.
  */
 init_declarator:   declarator { init_declarator($<nodep>0, $1, 0); }
-		|  declarator PRAG_RENAMED {
-			renname = $2; /* XXX ugly */
-			init_declarator($<nodep>0, $1, 0);
-		}
 		|  declarator C_ASM '(' string ')' {
 #ifdef GCC_COMPAT
-			renname = $4;
+			pragma_renamed = newstring($4, strlen($4));
 			init_declarator($<nodep>0, $1, 0);
 #else
 			werror("gcc extension");
@@ -631,8 +644,18 @@ designator_list:   designator { $$ = $1; }
 		|  designator_list designator { $$ = $2; $$->n_left = $1; }
 		;
 
-designator:	   '[' con_e ']' { $$ = bdty(LB, NULL, $2); }
-		|  C_STROP C_NAME { $$ = bdty(NAME, $2); }
+designator:	   '[' con_e ']' {
+			if ($2 < 0) {
+				uerror("designator must be non-negative");
+				$2 = 0;
+			}
+			$$ = bdty(LB, NULL, $2);
+		}
+		|  C_STROP C_NAME {
+			if ($1 != DOT)
+				uerror("invalid designator");
+			$$ = bdty(NAME, $2);
+		}
 		;
 
 optcomma	:	/* VOID */
@@ -644,7 +667,7 @@ ibrace:		   '{' {  ilbrace(); }
 
 /*	STATEMENTS	*/
 
-compoundstmt:	   begin declaration_list stmt_list '}' {  
+compoundstmt:	   begin block_item_list '}' {  
 #ifdef STABS
 			if (gflag && blevel > 2)
 				stabs_rbrac(blevel);
@@ -658,7 +681,7 @@ compoundstmt:	   begin declaration_list stmt_list '}' {
 			autooff = savctx->contlab;
 			savctx = savctx->next;
 		}
-		|  begin stmt_list '}' {
+		|  begin '}' {
 #ifdef STABS
 			if (gflag && blevel > 2)
 				stabs_rbrac(blevel);
@@ -692,10 +715,11 @@ begin:		  '{' {
 			bc->contlab = autooff;
 			bc->next = savctx;
 			savctx = bc;
+			bccode();
 		}
 		;
 
-statement:	   e ';' { ecomp( $1 ); }
+statement:	   e ';' { ecomp( $1 ); symclear(blevel); }
 		|  compoundstmt
 		|  ifprefix statement { plabel($1); reached = 1; }
 		|  ifelprefix statement {
@@ -781,7 +805,7 @@ statement:	   e ';' { ecomp( $1 ); }
 				ecomp(temp->n_right);
 			else
 				ecomp(buildtree(FORCE, temp->n_right, NIL));
-			nfree(temp->n_left);
+			tfree(temp->n_left);
 			nfree(temp);
 			branch(retlab);
 			reached = 0;
@@ -798,7 +822,25 @@ statement:	   e ';' { ecomp( $1 ); }
 		;
 
 asmstatement:	   C_ASM '(' string ')' { send_passt(IP_ASM, mkpstr($3)); }
+		|  C_ASM '(' string xasm ')' { mkxasm($3, $4); }
 		;
+
+xasm:		   ':' oplist { $$ = xcmop($2, NIL, NIL); }
+		|  ':' oplist ':' oplist { $$ = xcmop($2, $4, NIL); }
+		|  ':' oplist ':' oplist ':' cnstr { $$ = xcmop($2, $4, $6); }
+		;
+
+oplist:		   /* nothing */ { $$ = NIL; }
+		|  oper { $$ = $1; }
+		;
+
+oper:		   string '(' e ')' { $$ = xasmop($1, $3); }
+		|  oper ',' string '(' e ')' { $$ = cmop($1, xasmop($3, $5)); }
+		;
+
+cnstr:		   string { $$ = xasmop($1, bcon(0)); }
+		|  cnstr ',' string { $$ = cmop($1, xasmop($3, bcon(0))); }
+                ;
 
 label:		   C_NAME ':' { deflabel($1); reached = 1; }
 		|  C_CASE e ':' { addcase($2); reached = 1; }
@@ -860,39 +902,56 @@ forprefix:	  C_FOR  '('  .e  ';' .e  ';' {
 			else
 				flostat |= FLOOP;
 		}
+		|  C_FOR '(' incblev declaration .e ';' {
+			blevel--;
+			savebc();
+			contlab = getlab();
+			brklab = getlab();
+			plabel( $$ = getlab());
+			reached = 1;
+			if ($5)
+				cbranch(buildtree(NOT, $5, NIL), bcon(brklab));
+			else
+				flostat |= FLOOP;
+		}
 		;
+
+incblev:	   { blevel++; }
+		;
+
 switchpart:	   C_SWITCH  '('  e  ')' {
 			NODE *p;
 			int num;
+			TWORD t;
 
 			savebc();
 			brklab = getlab();
-			if ($3->n_type != INT) {
-				/* must cast to integer */
-				p = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
-				p = buildtree(CAST, p, $3);
-				$3 = p->n_right;
-				nfree(p->n_left);
-				nfree(p);
+			if (($3->n_type != BOOL && $3->n_type > ULONGLONG) ||
+			    $3->n_type < CHAR) {
+				uerror("switch expression must have integer "
+				       "type");
+				t = INT;
+			} else {
+				$3 = intprom($3);
+				t = $3->n_type;
 			}
-//			ecomp( buildtree( FORCE, $3, NIL ) );
-			p = tempnode(0, INT, 0, MKSUE(INT));
-			num = p->n_lval;
+			p = tempnode(0, t, 0, MKSUE(t));
+			num = regno(p);
 			ecomp(buildtree(ASSIGN, p, $3));
 			branch( $$ = getlab());
-			swstart(num);
+			swstart(num, t);
 			reached = 0;
 		}
 		;
 /*	EXPRESSIONS	*/
-con_e:		{ $<intval>$=instruct; instruct=0; } e %prec ',' {
-			$$ = icons( $2 );
-			instruct=$<intval>1;
+con_e:		{ $<rp>$ = rpole; rpole = NULL; } e %prec ',' {
+			$$ = icons($2);
+			rpole = $<rp>1;
 		}
 		;
 
-nocon_e:	{ $<intval>$=instruct; instruct=0; } e %prec ',' {
-			instruct=$<intval>1;
+nocon_e:	{ $<rp>$ = rpole; rpole = NULL; } e %prec ',' {
+			rpole = $<rp>1;
 			$$ = $2;
 		}
 		;
@@ -967,15 +1026,17 @@ term:		   term C_INCOP {  $$ = buildtree( $2, $1, bcon(1) ); }
 		}
 		|  C_SIZEOF term { $$ = doszof($2); }
 		|  '(' cast_type ')' term  %prec C_INCOP {
+			register NODE *q;
 			$$ = buildtree(CAST, $2, $4);
 			nfree($$->n_left);
+			q = $$->n_right;
 			nfree($$);
-			$$ = $$->n_right; /* XXX use after free */
+			$$ = q;
 		}
 		|  C_SIZEOF '(' cast_type ')'  %prec C_SIZEOF {
 			$$ = doszof($3);
 		}
-		| '(' cast_type ')' clbrace init_list '}' {
+		| '(' cast_type ')' clbrace init_list optcomma '}' {
 			endinit();
 			spname = $4;
 			$$ = buildtree(NAME, NIL, NIL);
@@ -990,27 +1051,16 @@ term:		   term C_INCOP {  $$ = buildtree( $2, $1, bcon(1) ); }
 		|  term C_STROP C_TYPENAME { $$ = structref($1, $2, $3); }
 		|  C_NAME {
 			spname = lookup($1, 0);
-			/* recognize identifiers in initializations */
-			if (blevel==0 && spname->stype == UNDEF) {
-				register NODE *q;
-				werror("undeclared initializer name %s",
-				    spname->sname);
-				q = block(NAME, NIL, NIL, INT, 0, MKSUE(INT));
-				q->n_sp = spname;
-				defid(q, EXTERN);
-				nfree(q);
-			}
 			if (spname->sflags & SINLINE)
-				inline_ref($1);
+				inline_ref(spname);
 			$$ = buildtree(NAME, NIL, NIL);
-			spname->suse = -lineno;
 			if (spname->sflags & SDYNARRAY)
 				$$ = buildtree(UMUL, $$, NIL);
 		}
 		|  C_ICON { $$ = $1; }
 		|  C_FCON { $$ = $1; }
-		|  string {  $$ = strend($1); /* get string contents */ }
-		|  wstring { $$ = wstrend($1); }
+		|  string {  $$ = strend(0, $1); /* get string contents */ }
+		|  wstring { $$ = strend('L', $1); }
 		|   '('  e  ')' { $$=$2; }
 		;
 
@@ -1063,10 +1113,9 @@ funct_idn:	   C_NAME  '(' {
 				nfree(q);
 			}
 			if (s->sflags & SINLINE)
-				inline_ref($1);
+				inline_ref(s);
 			spname = s;
 			$$ = buildtree(NAME, NIL, NIL);
-			s->suse = -lineno;
 		}
 		|  term  '(' 
 		;
@@ -1082,6 +1131,7 @@ static NODE *
 bdty(int op, ...)
 {
 	va_list ap;
+	int val;
 	register NODE *q;
 
 	va_start(ap, op);
@@ -1101,7 +1151,9 @@ bdty(int op, ...)
 
 	case LB:
 		q->n_left = va_arg(ap, NODE *);
-		q->n_right = bcon(va_arg(ap, int));
+		if ((val = va_arg(ap, int)) < 0)
+			uerror("array size must be non-negative");
+		q->n_right = bcon(val < 0 ? 1 : val);
 		break;
 
 	case NAME:
@@ -1144,6 +1196,7 @@ struct swdef {
 	struct swents *ents;	/* Linked sorted list of case entries */
 	int nents;		/* # of entries in list */
 	int num;		/* Node value will end up in */
+	TWORD type;		/* Type of switch expression */
 } *swpole;
 
 /*
@@ -1152,7 +1205,8 @@ struct swdef {
 static void
 addcase(NODE *p)
 {
-	struct swents *w, *sw = tmpalloc(sizeof(struct swents));
+	struct swents **put, *w, *sw = tmpalloc(sizeof(struct swents));
+	CONSZ val;
 
 	p = optim(p);  /* change enum to ints */
 	if (p->n_op != ICON || p->n_sp != NULL) {
@@ -1164,38 +1218,35 @@ addcase(NODE *p)
 		return;
 	}
 
+	val = p->n_lval;
+	p = makety(p, swpole->type, 0, 0, MKSUE(swpole->type));
+	if (p->n_op != ICON)
+		cerror("could not cast case value to type of switch "
+		       "expression");
+	if (p->n_lval != val)
+		werror("case expression truncated");
+
 	sw->sval = p->n_lval;
-	plabel( sw->slab = getlab());
-	w = swpole->ents;
-	if (swpole->ents == NULL) {
-		sw->next = NULL;
-		swpole->ents = sw;
-	} else if (swpole->ents->next == NULL) {
-		if (swpole->ents->sval == sw->sval) {
-			uerror("duplicate case in switch");
-		} else if (swpole->ents->sval < sw->sval) {
-			sw->next = NULL;
-			swpole->ents->next = sw;
-		} else {
-			sw->next = swpole->ents;
-			swpole->ents = sw;
-		}
-	} else {
-		while (w->next->next != NULL && w->next->sval < sw->sval) {
-			w = w->next;
-		}
-		if (w->next->sval == sw->sval) {
-			uerror("duplicate case in switch");
-		} else if (w->next->sval > sw->sval) {
-			sw->next = w->next;
-			w->next = sw;
-		} else {
-			sw->next = NULL;
-			w->next->next = sw;
-		}
-	}
-	swpole->nents++;
 	tfree(p);
+	put = &swpole->ents;
+	if (ISUNSIGNED(swpole->type)) {
+		for (w = swpole->ents;
+		     w != NULL && (U_CONSZ)w->sval < (U_CONSZ)sw->sval;
+		     w = w->next)
+			put = &w->next;
+	} else {
+		for (w = swpole->ents; w != NULL && w->sval < sw->sval;
+		     w = w->next)
+			put = &w->next;
+	}
+	if (w != NULL && w->sval == sw->sval) {
+		uerror("duplicate case in switch");
+		return;
+	}
+	plabel(sw->slab = getlab());
+	*put = sw;
+	sw->next = w;
+	swpole->nents++;
 }
 
 /*
@@ -1213,7 +1264,7 @@ adddef(void)
 }
 
 static void
-swstart(int num)
+swstart(int num, TWORD type)
 {
 	struct swdef *sw = tmpalloc(sizeof(struct swdef));
 
@@ -1221,6 +1272,7 @@ swstart(int num)
 	sw->ents = NULL;
 	sw->next = swpole;
 	sw->num = num;
+	sw->type = type;
 	swpole = sw;
 }
 
@@ -1243,9 +1295,41 @@ swend(void)
 		swp[i] = swpole->ents;
 		swpole->ents = swpole->ents->next;
 	}
-	genswitch(swpole->num, swp, swpole->nents);
+	genswitch(swpole->num, swpole->type, swp, swpole->nents);
 
 	swpole = swpole->next;
+}
+
+/*
+ * num: tempnode the value of the switch expression is in
+ * type: type of the switch expression
+ *
+ * p points to an array of structures, each consisting
+ * of a constant value and a label.
+ * The first is >=0 if there is a default label;
+ * its value is the label number
+ * The entries p[1] to p[n] are the nontrivial cases
+ * n is the number of case statements (length of list)
+ */
+static void
+genswitch(int num, TWORD type, struct swents **p, int n)
+{
+	NODE *r, *q;
+	int i;
+
+	if (mygenswitch(num, type, p, n))
+		return;
+
+	/* simple switch code */
+	for (i = 1; i <= n; ++i) {
+		/* already in 1 */
+		r = tempnode(num, type, 0, MKSUE(type));
+		q = xbcon(p[i]->sval, NULL, type);
+		r = buildtree(NE, r, clocal(q));
+		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
+	}
+	if (p[0]->slab > 0)
+		branch(p[0]->slab);
 }
 
 /*
@@ -1264,7 +1348,6 @@ init_declarator(NODE *tn, NODE *p, int assign)
 		typ->n_sp->sflags |= SINLINE;
 
 	if (ISFTN(typ->n_type) == 0) {
-		setloc1(DATA);
 		if (assign) {
 			defid(typ, class);
 			typ->n_sp->sflags |= SASG;
@@ -1292,8 +1375,12 @@ fundef(NODE *tp, NODE *p)
 	int class = tp->n_lval, oclass;
 	char *c;
 
-	setloc1(PROG);
-	/* Enter function args before they are clobbered in tymerge() */
+	if (p->n_op != CALL && p->n_op != UCALL) {
+		uerror("invalid function definition");
+		p = bdty(UCALL, p);
+	}
+
+	/* Save function args before they are clobbered in tymerge() */
 	/* Typecheck against prototype will be done in defid(). */
 	ftnarg(p);
 
@@ -1309,7 +1396,7 @@ fundef(NODE *tp, NODE *p)
 		/* Unreferenced, store it for (eventual) later use */
 		/* Ignore it if it not declared static */
 		s->sflags |= SINLINE;
-		inline_start(s->sname);
+		inline_start(s);
 	}
 	if (class == EXTERN)
 		class = SNULL; /* same result */
@@ -1317,13 +1404,10 @@ fundef(NODE *tp, NODE *p)
 	cftnsp = s;
 	defid(p, class);
 	prolab = getlab();
-	c = cftnsp->sname;
-#ifdef GCC_COMPAT
-	c = gcc_findname(cftnsp);
-#endif
+	c = cftnsp->soname;
 	send_passt(IP_PROLOG, -1, -1, c, cftnsp->stype,
-	    cftnsp->sclass == EXTDEF, prolab);
-	blevel = 1;
+	    cftnsp->sclass == EXTDEF, prolab, ctval);
+	blevel++;
 #ifdef STABS
 	if (gflag)
 		stabs_func(s);
@@ -1422,4 +1506,91 @@ clbrace(NODE *p)
 	tfree(p);
 	beginit(sp);
 	return sp;
+}
+
+/* Support for extended assembler a' la' gcc style follows below */
+
+static NODE *
+cmop(NODE *l, NODE *r)
+{
+	return block(CM, l, r, INT, 0, MKSUE(INT));
+}
+
+static NODE *
+voidcon(void)
+{
+	return block(ICON, NIL, NIL, STRTY, 0, MKSUE(VOID));
+}
+
+static NODE *
+xmrg(NODE *out, NODE *in)
+{
+	NODE *p = in;
+
+	if (p->n_op == XARG) {
+		in = cmop(out, p);
+	} else {
+		while (p->n_left->n_op == CM)
+			p = p->n_left;
+		p->n_left = cmop(out, p->n_left);
+	}
+	return in;
+}
+
+/*
+ * Put together in and out node lists in one list, and balance it with
+ * the constraints on the right side of a CM node.
+ */
+static NODE *
+xcmop(NODE *out, NODE *in, NODE *str)
+{
+	NODE *p, *q;
+
+	if (out) {
+		/* D out-list sanity check */
+		for (p = out; p->n_op == CM; p = p->n_left) {
+			q = p->n_right;
+			if (q->n_name[0] != '=')
+				uerror("output missing =");
+		}
+		if (p->n_name[0] != '=')
+			uerror("output missing =");
+		if (in == NIL)
+			p = out;
+		else
+			p = xmrg(out, in);
+	} else if (in) {
+		p = in;
+	} else
+		p = voidcon();
+
+	if (str == NIL)
+		str = voidcon();
+	return cmop(p, str);
+}
+
+/*
+ * Generate a XARG node based on a string and an expression.
+ */
+static NODE *
+xasmop(char *str, NODE *p)
+{
+
+	p = block(XARG, p, NIL, INT, 0, MKSUE(INT));
+	p->n_name = str;
+	return p;
+}
+
+/*
+ * Generate a XASM node based on a string and an expression.
+ */
+static void
+mkxasm(char *str, NODE *p)
+{
+	NODE *q;
+
+	q = block(XASM, p->n_left, p->n_right, INT, 0, MKSUE(INT));
+	q->n_name = str;
+	nfree(p);
+	ecomp(q);
 }

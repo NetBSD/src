@@ -1,13 +1,19 @@
-#	$Id: Makefile.in,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $
+#	$Id: Makefile.in,v 1.1.1.3 2008/02/10 20:05:02 ragge Exp $
 #
 # Makefile.in for ccom
 #
+VPATH=@srcdir@
+srcdir=@srcdir@
+top_srcdir=@top_srcdir@
+builddir=@builddir@
+top_builddir=@top_builddir@
 XFL=-DPCC_DEBUG -DGCC_COMPAT \
 	-Wall -Wmissing-prototypes -Wstrict-prototypes -Werror
 
 CC = @CC@
-CFLAGS = @CFLAGS@ $(XFL) -I. -I${MIPDIR} -I$(MDIR) -Dmach_${TARGMACH} \
-	-I../../os/${TARGOS} -Dos_${TARGOS}
+CC_FOR_BUILD = @CC_FOR_BUILD@
+CFLAGS = @CFLAGS@ ${XFL} -I${srcdir} -I${builddir}  -I${top_builddir} -I${MIPDIR} -I${MDIR} \
+	-Dmach_${TARGMACH} -I${top_srcdir}/os/${TARGOS} -Dos_${TARGOS}
 CPPFLAGS = @CPPFLAGS@
 LIBS = @LIBS@
 LDFLAGS = @LDFLAGS@
@@ -24,8 +30,8 @@ strip = @strip@
 INSTALL = @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 
-MDIR=../../arch/$(TARGMACH)
-MIPDIR=../../mip
+MDIR=$(top_srcdir)/arch/$(TARGMACH)
+MIPDIR=$(top_srcdir)/mip
 
 OBJS1=optim.o pftn.o scan.o trees.o cgram.o inline.o symtabs.o \
 	gcc_compat.o init.o local.o code.o stabs.o
@@ -34,7 +40,7 @@ OBJS2=match.o reader.o optim2.o regs.o local2.o order.o table.o
 
 OBJS=$(OBJS1) $(OBJS2) compat.o common.o main.o external.o
 
-DEST=ccom
+DEST=@BINPREFIX@ccom
 
 all: ${DEST}
 
@@ -71,6 +77,9 @@ optim2.o: $(MIPDIR)/optim2.c
 regs.o: $(MIPDIR)/regs.c
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/regs.c
 
+cgram.o: cgram.c
+	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -Wno-error -c -o $@ cgram.c
+
 common.o: $(MIPDIR)/common.c
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/common.c
 
@@ -78,9 +87,10 @@ compat.o: $(MIPDIR)/compat.c
 	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -c -o $@ $(MIPDIR)/compat.c
 
 external.h external.c: ${MIPDIR}/mkext.c $(MDIR)/table.c
-	$(CC) $(DEFS) $(CPPFLAGS) $(CFLAGS) -DMKEXT -o mkext ${MIPDIR}/mkext.c \
-	$(MDIR)/table.c ${MIPDIR}/common.c
+	$(CC_FOR_BUILD) $(DEFS) $(CPPFLAGS) $(CFLAGS) -DMKEXT -o mkext \
+	${MIPDIR}/mkext.c $(MDIR)/table.c ${MIPDIR}/common.c
 	./mkext
+	-rm -f mkext.o table.o common.o
 
 trees.c: pass2.h
 
@@ -107,10 +117,10 @@ install:
 		echo strip ${DESTDIR}${libexecdir}/${DEST} ;	\
 	fi
 	test -z "${DESTDIR}$(mandir)/man1" || mkdir -p "${DESTDIR}$(mandir)/man1"       
-	${INSTALL} ${DEST}.1 ${DESTDIR}${mandir}/man1/
+	${INSTALL} ccom.1 ${DESTDIR}${mandir}/man1/$(DEST).1
 
 clean:
-	/bin/rm -f $(OBJS) ccom scan.c cgram.[ch] mkext external.[ch]
+	/bin/rm -f $(OBJS) $(DEST) scan.c cgram.[ch] mkext external.[ch]
 
 distclean: clean
 	/bin/rm -f Makefile

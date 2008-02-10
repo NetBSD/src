@@ -1,4 +1,4 @@
-/*	$Id: local.c,v 1.1.1.1 2007/09/20 13:08:45 abs Exp $	*/
+/*	$Id: local.c,v 1.1.1.2 2008/02/10 20:04:56 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -277,7 +277,7 @@ ninval(NODE *p)
 			    q->sclass == ILABEL) {
 				printf("+" LABFMT, q->soffset);
 			} else
-				printf("+%s", exname(q->sname));
+				printf("+%s", exname(q->soname));
 		}
 		printf("\n");
 		break;
@@ -390,14 +390,11 @@ void
 commdec(struct symtab *q)
 {
 	int off;
-	char *c = q->sname;
+	char *c = q->soname;
 
 	off = tsize(q->stype, q->sdf, q->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
 
-#ifdef GCC_COMPAT
-	c = gcc_findname(q);
-#endif
 	printf("	PUBLIC %s\n", c);
 	/* XXX - NOROOT??? */
 	printf("	RSEG DATA16_Z:NEARDATA:SORT:NOROOT(1)\n");
@@ -415,11 +412,7 @@ lcommdec(struct symtab *q)
 	off = tsize(q->stype, q->sdf, q->ssue);
 	off = (off+(SZCHAR-1))/SZCHAR;
 	if (q->slevel == 0)
-#ifdef GCC_COMPAT
-		printf("	.lcomm %s,0%o\n", gcc_findname(q), off);
-#else
-		printf("	.lcomm %s,0%o\n", exname(q->sname), off);
-#endif
+		printf("	.lcomm %s,0%o\n", exname(q->soname), off);
 	else
 		printf("	.lcomm " LABFMT ",0%o\n", q->soffset, off);
 }
@@ -482,6 +475,37 @@ myp2tree(NODE *p)
 		} else
 			p->n_right->n_stalign = 0;
 		break;
+
+	case FCON:
+		/* Write float constants to memory */
+		setloc1(RDATA);
+		defalign(p->n_type == FLOAT ? ALFLOAT : p->n_type == DOUBLE ?
+		    ALDOUBLE : ALLDOUBLE );
+		deflab1(i = getlab()); 
+		ninval(0, btdims[p->n_type].suesize, p);
+		p->n_op = NAME;
+		p->n_lval = 0;	
+		p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
+		p->n_sp->sclass = ILABEL;
+		p->n_sp->soffset = i;
+		p->n_sp->sflags = 0;
+		break;
 	}
 
 }
+/*
+ * Give target the opportunity of handling pragmas.
+ */
+int
+mypragma(char **ary)
+{
+	return 0; }
+
+/*
+ * Called when a identifier has been declared, to give target last word.
+ */
+void
+fixdef(struct symtab *sp)
+{
+}
+

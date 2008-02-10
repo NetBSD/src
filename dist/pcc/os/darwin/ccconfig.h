@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.1 2007/10/27 14:43:40 ragge Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.2 2008/02/10 20:05:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,7 +32,7 @@
  */
 
 /* common cpp predefines */
-#define	CPPADD	{ "-D__Darwin__", NULL }
+#define	CPPADD	{ "-D__Darwin__", "-I" INCLUDEDIR "/pcc", NULL }
 #define	DYNLINKER { NULL }
 #define CRT0FILE "/usr/lib/crt1.o"
 #define STARTFILES { "-lcrt2.o", "-L/usr/lib/gcc/powerpc-apple-darwin8/4.0.1", NULL }
