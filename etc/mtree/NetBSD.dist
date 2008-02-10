@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist,v 1.361 2008/02/04 20:31:07 jmmv Exp $
+#	$NetBSD: NetBSD.dist,v 1.362 2008/02/10 12:41:06 jmmv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -338,6 +338,7 @@
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/puffs
 ./usr/libdata/debug/usr/tests/fs/tmpfs
+./usr/libdata/debug/usr/tests/modules
 ./usr/libdata/debug/usr/tests/net
 ./usr/libdata/debug/usr/tests/net/sys
 ./usr/libdata/debug/usr/tests/util
@@ -1098,6 +1099,7 @@
 ./usr/tests/fs/puffs
 ./usr/tests/fs/tmpfs
 ./usr/tests/games
+./usr/tests/modules
 ./usr/tests/net
 ./usr/tests/net/sys
 ./usr/tests/util
