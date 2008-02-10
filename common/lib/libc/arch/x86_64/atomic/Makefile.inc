@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.2 2007/11/28 01:33:48 ad Exp $
-
-.if defined(LIB) && (${LIB} == "kern")
+#	$NetBSD: Makefile.inc,v 1.3 2008/02/10 18:45:41 ad Exp $
 
 SRCS+=	atomic.S
+
+.if defined(LIB) && (${LIB} == "c")
+
+SRCS+=	atomic_init_cas.c
 
 .endif
