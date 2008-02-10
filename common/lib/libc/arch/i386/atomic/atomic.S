@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.8 2008/02/09 13:42:21 ad Exp $	*/
+/*	$NetBSD: atomic.S,v 1.9 2008/02/10 13:25:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -143,6 +143,14 @@ NENTRY(_atomic_cas_32)
 	movl	8(%esp), %eax
 	movl	12(%esp), %ecx
 	LOCK(12)
+	cmpxchgl %ecx, (%edx)
+	/* %eax now contains the old value */
+	ret
+
+NENTRY(_atomic_cas_32_ni)
+	movl	4(%esp), %edx
+	movl	8(%esp), %eax
+	movl	12(%esp), %ecx
 	cmpxchgl %ecx, (%edx)
 	/* %eax now contains the old value */
 	ret
@@ -299,7 +307,13 @@ ALIAS(atomic_cas_uint,_atomic_cas_32)
 ALIAS(atomic_cas_ulong,_atomic_cas_32)
 ALIAS(atomic_cas_ptr,_atomic_cas_32)
 
+ALIAS(atomic_cas_32_ni,_atomic_cas_32_ni)
+ALIAS(atomic_cas_uint_ni,_atomic_cas_32_ni)
+ALIAS(atomic_cas_ulong_ni,_atomic_cas_32_ni)
+ALIAS(atomic_cas_ptr_ni,_atomic_cas_32_ni)
+
 ALIAS(atomic_cas_64,_atomic_cas_64)
+ALIAS(atomic_cas_64_ni,_atomic_cas_64)
 
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
@@ -354,6 +368,10 @@ STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_32)
+
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32_ni)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32_ni)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_32_ni)
 
 STRONG_ALIAS(_membar_enter,_membar_consumer)
 STRONG_ALIAS(_membar_exit,_membar_producer)
