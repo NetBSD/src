@@ -92,6 +92,10 @@ typedef struct sti_t {
 	uint64_t                target;		/* cached target number, so we don't have an expensive pathname-based lookup */
 } sti_t;
 
+#ifndef __UNCONST
+#define __UNCONST(x)	(x)
+#endif
+
 /* read the capacity (maximum LBA and blocksize) from the target */
 int 
 read_capacity(uint64_t target, uint32_t lun, uint32_t *maxlba, uint32_t *blocklen)
