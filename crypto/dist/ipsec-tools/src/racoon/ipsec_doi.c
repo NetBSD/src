@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.32 2007/12/04 19:52:30 mgrooms Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.33 2008/02/10 12:11:08 spz Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -4313,6 +4313,11 @@ ipsecdoi_id2sockaddr(buf, saddr, prefixlen, ul_proto)
 				: id_b->port);		/* see sockaddr2id() */
 		memcpy(&((struct sockaddr_in6 *)saddr)->sin6_addr,
 			buf->v + sizeof(*id_b), sizeof(struct in6_addr));
+		((struct sockaddr_in6 *)saddr)->sin6_scope_id =
+			(IN6_IS_ADDR_LINKLOCAL(&((struct sockaddr_in6 *)saddr)->sin6_addr)
+				? ((struct sockaddr_in6 *)id_b)->sin6_scope_id
+				: 0);
+
 		break;
 #endif
 	default:
