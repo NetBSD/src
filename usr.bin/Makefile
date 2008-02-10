@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.161 2008/02/09 19:33:17 jmmv Exp $
+#	$NetBSD: Makefile,v 1.162 2008/02/10 08:21:25 jmmv Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -39,7 +39,7 @@ SUBDIR+= hesinfo
 SUBDIR+= compile_et kdestroy kgetcred kinit klist mk_cmds string2key
 .endif
 
-.if (${MKMODULAR} == "no")
+.if (!(${MKMODULAR} != "no"))
 SUBDIR+= modstat
 .endif
 
