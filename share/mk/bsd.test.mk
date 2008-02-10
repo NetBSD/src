@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.4 2008/02/05 17:50:47 drochner Exp $
+# $NetBSD: bsd.test.mk,v 1.5 2008/02/10 12:28:54 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -41,9 +41,11 @@ atf-compile-cookie: ${TOOL_ATF_COMPILE}
 atf-compile-cookie:
 .endif
 
+.if !defined(NOATFFILE)
 FILES+=			Atffile
 FILESDIR_Atffile=	${TESTSDIR}
 .include <bsd.files.mk>
+.endif
 
 .if !empty(SCRIPTS) || !empty(PROGS_CXX)
 .  include <bsd.prog.mk>
