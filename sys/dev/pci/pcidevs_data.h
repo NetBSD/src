@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.927 2008/02/05 18:22:32 ichiro Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.928 2008/02/10 10:59:44 ichiro Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.927 2008/02/05 18:22:09 ichiro Exp
+ *	NetBSD: pcidevs,v 1.928 2008/02/10 10:59:18 ichiro Exp
  */
 
 /*
@@ -8792,6 +8792,18 @@ static const struct pci_product pci_products[] = {
 	    "82965PM Integrated Graphics Device",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_MEI,
+	    "82965PM MEI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IDE,
+	    "82965PM IDE Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_KT,
+	    "82965PM Serial Interface",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
 	    "31244 Serial ATA Controller",
 	},
@@ -14008,4 +14020,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2903;
+const int pci_nproducts = 2906;
