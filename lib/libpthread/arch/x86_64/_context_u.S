@@ -1,4 +1,4 @@
-/*	$NetBSD: _context_u.S,v 1.9 2007/11/13 17:20:10 ad Exp $	*/
+/*	$NetBSD: _context_u.S,v 1.10 2008/02/10 18:50:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -137,29 +137,3 @@ STUB(_swapcontext_u)
 	movq	%rax, (UC_REGS + _REG_URSP * 8)(%rdi)
 	movq	%rsi, %rdi
 	SETC
-
-STUB(pthread__atomic_swap_ptr)
-	movq	%rsi, %rax
-	lock
-	xchgq	%rax, (%rdi)
-	ret
-
-STUB(pthread__atomic_or_ulong)
-	lock
-	orq	%rsi, (%rdi)
-	ret
-
-STUB(pthread__membar_full)
-	lock
-	addq	$0, -8(%rsp)
-	ret
-
-STUB(pthread__membar_producer)
-	/* A store is enough */
-	movq	$0, -8(%rsp)
-	ret
-
-STUB(pthread__membar_consumer)
-	lock
-	addq	$0, -8(%rsp)
-	ret

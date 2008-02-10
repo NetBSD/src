@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.49 2008/01/15 03:37:14 rmind Exp $
+#	$NetBSD: Makefile,v 1.50 2008/02/10 18:50:54 ad Exp $
 #
 
 WARNS=	4
@@ -54,9 +54,7 @@ SRCS+=	pthread_cond.c
 SRCS+=	pthread_lock.c 
 SRCS+=	pthread_misc.c
 SRCS+=	pthread_mutex.c
-SRCS+=	pthread_mutex2.c
 SRCS+=	pthread_rwlock.c
-SRCS+=	pthread_rwlock2.c
 SRCS+=	pthread_specific.c
 SRCS+=	pthread_spin.c
 SRCS+=	pthread_tsd.c
@@ -82,10 +80,10 @@ pthread_lock.po: pthread_lock.o
 	${_MKTARGET_CREATE}
 	cp pthread_lock.o pthread_lock.po
 
-COPTS.pthread_mutex2.c+=	-fomit-frame-pointer -falign-functions=32
-pthread_mutex2.po: pthread_mutex2.o
+COPTS.pthread_mutex.c+=	-fomit-frame-pointer -falign-functions=32
+pthread_mutex.po: pthread_mutex.o
 	${_MKTARGET_CREATE}
-	cp pthread_mutex2.o pthread_mutex2.po
+	cp pthread_mutex.o pthread_mutex.po
 
 COPTS.pthread.c += -Wno-stack-protector
 
