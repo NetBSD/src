@@ -1,4 +1,4 @@
-/*	$NetBSD: cc_microtime.h,v 1.4 2008/01/20 18:09:13 joerg Exp $	*/
+/*	$NetBSD: cc_microtime.h,v 1.5 2008/02/10 14:37:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@ struct cc_microtime_state {
 				      last calibration period */
 	volatile int64_t cc_denom; /* local TSC difference for
 				      last calibration period */
+	int64_t cc_pad[3];
 };
 
 #endif /* _SYS_CC_MICROTIME_H_ */
