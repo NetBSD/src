@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2008/02/09 22:32:38 jmmv Exp $
+#	$NetBSD: Makefile,v 1.12 2008/02/10 08:21:25 jmmv Exp $
 #
 # Makefile for modunload
 #
@@ -36,19 +36,17 @@
 
 .include <bsd.own.mk>
 
-.if ${MKMODULAR} == "no"	# LKMs
-
-PROG=	modunload
-MAN=	modunload.8
-
-.include <bsd.prog.mk>
-
-.else				# new module framework, remove copyright ^^
+.if ${MKMODULAR} != "no"	# new module framework, remove copyright ^^
 
 PROG=	modunload
 SRCS=	main.c
 MAN=	modunload.8
 
-.include <bsd.prog.mk>
+.else				# LKMS
+
+PROG=	modunload
+MAN=	modunload.8
 
 .endif
+
+.include <bsd.prog.mk>
