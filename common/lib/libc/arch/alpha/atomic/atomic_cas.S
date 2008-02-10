@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic_cas.S,v 1.2 2007/11/28 17:39:07 ad Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.3 2008/02/10 13:40:31 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,9 +50,15 @@ LEAF_NOPROFILE(_atomic_cas_32, 3)
 2:	RET
 3:	br	1b
 	END(_atomic_cas_32)
+
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+
+ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
 
 LEAF_NOPROFILE(_atomic_cas_64, 3)
 1:	mov	a2, t2
@@ -64,8 +70,16 @@ LEAF_NOPROFILE(_atomic_cas_64, 3)
 2:	RET
 3:	br	1b
 	END(_atomic_cas_64)
+
 ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ulong,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
 ATOMIC_OP_ALIAS(atomic_cas_ptr,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)
+
+ATOMIC_OP_ALIAS(atomic_cas_64_ni,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_64_ni,_atomic_cas_64)
+ATOMIC_OP_ALIAS(atomic_cas_ulong_ni,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_64)
+ATOMIC_OP_ALIAS(atomic_cas_ptr_ni,_atomic_cas_64)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_64)
