@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.11 2007/12/22 14:14:31 skrll Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.12 2008/02/10 13:32:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -91,6 +91,15 @@ STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
 STRONG_ALIAS(atomic_cas_uint,_lock_cas)
 STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
 STRONG_ALIAS(atomic_cas_ptr,_lock_cas)
+
+STRONG_ALIAS(_atomic_cas_ulong_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_ulong_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_32_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_32_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
 
 #ifndef LOCKDEBUG
 /*
