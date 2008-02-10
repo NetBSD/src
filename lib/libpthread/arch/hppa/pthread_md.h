@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.4 2007/09/24 12:19:39 skrll Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.5 2008/02/10 18:50:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -97,5 +97,8 @@ do {						       	       		\
 	    sizeof(struct fpreg));					\
 	(uc)->uc_flags = ((uc)->uc_flags | _UC_FPU) & ~_UC_USER;       	\
 } while (/*CONSTCOND*/0)
+
+/* Don't need additional memory barriers. */
+#define	PTHREAD__ATOMIC_IS_MEMBAR
 
 #endif /* !_LIB_PTHREAD_HPPA_MD_H */
