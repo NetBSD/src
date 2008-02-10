@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.3 2008/02/10 20:05:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -31,17 +31,35 @@
  * Various settings that controls how the C compiler works.
  */
 
+#ifndef LIBDIR
+#define LIBDIR "/usr/lib/"
+#endif
+
 /* common cpp predefines */
 #define	CPPADD	{ "-D__NetBSD__", "-D__ELF__", NULL, }
-#define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.elf_so", NULL }
-#define CRT0FILE "/usr/lib/crt0.o"
-#define STARTFILES { "/usr/lib/crti.o", "/usr/lib/crtbegin.o", NULL }
-#define	ENDFILES { "/usr/lib/crtend.o", "/usr/lib/crtn.o", NULL }
 
-#if defined(mach_i386)
+/* host-dependent */
+#define CRT0FILE LIBDIR "crt0.o"
+#define STARTFILES { LIBDIR "crti.o", LIBDIR "crtbegin.o", NULL }
+#define	ENDFILES { LIBDIR "crtend.o", LIBDIR "crtn.o", NULL }
+
+/* host-independent */
+#define	DYNLINKER { "-dynamic-linker", "/usr/libexec/ld.elf_so", NULL }
+
+#if defined(mach_arm)
+#define	CPPMDADD { "-D__arm__", NULL, }
+#elif defined(mach_i386)
 #define	CPPMDADD { "-D__i386__", NULL, }
+#elif defined(mach_mips)
+#define	CPPMDADD { "-D__mips__", NULL, }
+#elif defined(mach_pdp10)
+#define CPPMDADD { "-D__pdp10__", NULL, }
+#elif defined(mach_powerpc)
+#define	CPPMDADD { "-D__ppc__", NULL, }
 #elif defined(mach_vax)
 #define CPPMDADD { "-D__vax__", NULL, }
+#elif defined(mach_sparc64)
+#define CPPMDADD { "-D__sparc64__", NULL, }
 #else
 #error defines for arch missing
 #endif

@@ -1,5 +1,5 @@
 %{
-/*	$Id: scanner.l,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $   */
+/*	$Id: scanner.l,v 1.1.1.3 2008/02/10 20:05:02 ragge Exp $   */
 
 /*
  * Copyright (c) 2004 Anders Magnusson. All rights reserved.
@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "../../mip/compat.h"
 #include "cpp.h"
@@ -52,6 +53,7 @@ static void undefstmt(void);
 static void cpperror(void);
 static void elifstmt(void);
 static void storepb(void);
+static void badop(const char *);
 void  include(void);
 void  define(void);
 
@@ -108,6 +110,9 @@ int yylex_destroy  (void);
 #define unput(ch) unch(ch)
 #endif
 #define PRTOUT(x) if (YYSTATE || slow) return x; if (!flslvl) putstr((usch *)yytext);
+/* protection against recursion in #include */
+#define MAX_INCLEVEL	100
+static int inclevel;
 %}
 
 D	[0-9]
@@ -139,6 +144,8 @@ WS	[\t ]
 
 "\r"			{ ; /* Ignore CR's */ }
 
+<IFR>"++"		{ badop("++"); }
+<IFR>"--"		{ badop("--"); }
 <IFR>"=="		{ return EQ; }
 <IFR>"!="		{ return NE; }
 <IFR>"<="		{ return LE; }
@@ -174,7 +181,7 @@ WS	[\t ]
 [1-9][0-9]*		{ if (slow && !YYSTATE) return IDENT; scale = 10; goto num; }
 
 0[xX]{H}+{IS}?		{	scale = 16;
-			num:	if (YYSTATE) 
+			num:	if (YYSTATE == IFR) 
 					cvtdig(scale);
 				PRTOUT(NUMBER);
 			}
@@ -193,7 +200,14 @@ L?'(\\.|[^\\'])+'	{	if (YYSTATE) {
 {D}*"."{D}+({E})?{FS}?	{ PRTOUT(FPOINT); }
 {D}+"."{D}*({E})?{FS}?	{ PRTOUT(FPOINT); }
 
-^{WS}*#{WS}*		{ contr = 1; BEGIN CONTR; }
+^{WS}*#{WS}*		{	extern int inmac;
+
+				if (inmac)
+					error("preprocessor directive found "
+					    "while expanding macro");
+				contr = 1;
+				BEGIN CONTR;
+			}
 {WS}+			{ PRTOUT(WSPACE); }
 
 <CONTR>"ifndef"		{ contr = 0; ifndefstmt(); }
@@ -396,25 +410,30 @@ prinit(struct initar *it, struct includ *ic)
 /*
  * A new file included.
  * If ifiles == NULL, this is the first file and already opened (stdin).
- * Return 0 on success, -1 on failure to open file.
+ * Return 0 on success, -1 if file to be included is not found.
  */
 int
 pushfile(usch *file)
 {
 	extern struct initar *initar;
 	struct includ ibuf;
-	struct includ *old;
 	struct includ *ic;
 	int c, otrulvl;
 
 	ic = &ibuf;
-	old = ifiles;
+	ic->next = ifiles;
 
 	slow = 0;
 	if (file != NULL) {
-		if ((ic->infil = open((char *)file, O_RDONLY)) < 0)
+		if ((ic->infil = open((char *)file, O_RDONLY)) < 0) {
+			if (errno != ENOENT)
+				error("Cannot open '%s'. %s", file,
+						strerror(errno));
 			return -1;
+		}
 		ic->orgfn = ic->fname = file;
+		if (++inclevel > MAX_INCLEVEL)
+			error("Limit for nested includes exceeded");
 	} else {
 		ic->infil = 0;
 		ic->orgfn = ic->fname = (usch *)"<stdin>";
@@ -441,8 +460,9 @@ pushfile(usch *file)
 	if (otrulvl != trulvl || flslvl)
 		error("unterminated conditional");
 
-	ifiles = old;
+	ifiles = ic->next;
 	close(ic->infil);
+	inclevel--;
 	return 0;
 }
 
@@ -517,6 +537,8 @@ cvtdig(int rad)
 		y++;
 	yylval.node.op = *y == 'u' || *y == 'U' ? UNUMBER : NUMBER;
 	yylval.node.nd_uval = rv;
+	if ((rad == 8 || rad == 16) && yylval.node.nd_val < 0)
+		yylval.node.op = UNUMBER;
 	if (yylval.node.op == NUMBER && yylval.node.nd_val < 0)
 		/* too large for signed */
 		error("Constant \"%s\" is out of range", yytext);
@@ -571,10 +593,12 @@ chknl(void)
 {
 	int t;
 
+	slow = 1;
 	while ((t = yylex()) == WSPACE)
 		;
 	if (t != '\n')
-		error("newline expected, got %d", t);
+		error("newline expected, got \"%s\"", yytext);
+	slow = 0;
 }
 
 static void
@@ -603,6 +627,8 @@ elsestmt(void)
 static void
 ifdefstmt(void)		 
 { 
+	int t;
+
 	if (flslvl) {
 		/* just ignore the rest of the line */
 		while (input() != '\n')
@@ -613,7 +639,10 @@ ifdefstmt(void)
 		return;
 	}
 	slow = 1;
-	if (yylex() != WSPACE || yylex() != IDENT)
+	do
+		t = yylex();
+	while (t == WSPACE);
+	if (t != IDENT)
 		error("bad ifdef");
 	slow = 0;
 	if (flslvl == 0 && lookup((usch *)yytext, FIND) != 0)
@@ -626,8 +655,13 @@ ifdefstmt(void)
 static void
 ifndefstmt(void)	  
 { 
+	int t;
+
 	slow = 1;
-	if (yylex() != WSPACE || yylex() != IDENT)
+	do
+		t = yylex();
+	while (t == WSPACE);
+	if (t != IDENT)
 		error("bad ifndef");
 	slow = 0;
 	if (flslvl == 0 && lookup((usch *)yytext, FIND) == 0)
@@ -828,4 +862,10 @@ pragmastmt(void)
 	ifiles->lineno++;
 	prtline();
 	slow = 0;
+}
+
+static void
+badop(const char *op)
+{
+	error("invalid operator in preprocessor expression: %s", op);
 }

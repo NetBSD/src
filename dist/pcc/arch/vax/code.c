@@ -1,4 +1,4 @@
-/*	$Id: code.c,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
+/*	$Id: code.c,v 1.1.1.3 2008/02/10 20:05:01 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -158,12 +158,12 @@ aoend(){
 
 void
 defnam( p ) register struct symtab *p; {
-	/* define the current location as the name p->sname */
+	/* define the current location as the name p->soname */
 
 	if( p->sclass == EXTDEF ){
-		printf( "	.globl	%s\n", exname( p->sname ) );
+		printf( "	.globl	%s\n", exname( p->soname ) );
 		}
-	printf( "%s:\n", exname( p->sname ) );
+	printf( "%s:\n", exname( p->soname ) );
 
 	}
 
@@ -184,13 +184,6 @@ bycode( t, i ){
 		}
 	}
 
-void
-zecode( n ){
-	/* n integer words of zeros */
-	if( n <= 0 ) return;
-	printf( "	.space	%d\n", (SZINT/SZCHAR)*n );
-	}
-
 int
 fldal( t ) unsigned t; { /* return the alignment of field of type t */
 	uerror( "illegal field type" );
@@ -202,17 +195,13 @@ fldty( p ) struct symtab *p; { /* fix up type of field p */
 	;
 	}
 
-/* p points to an array of structures, each consisting
- * of a constant value and a label.
- * The first is >=0 if there is a default label;
- * its value is the label number
- * The entries p[1] to p[n] are the nontrivial cases
+/*
  * XXX - fix genswitch.
  */
-void
-genswitch(int num, struct swents **p, int n)
+int
+mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
-	cerror("genswitch");
+	return 0;
 }
 
 #ifdef notyet
@@ -328,3 +317,12 @@ walkheap(start, limit)
 	}
 }
 #endif
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ */
+NODE *
+funcode(NODE *p)
+{
+	return p;
+}

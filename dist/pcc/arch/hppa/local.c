@@ -1,4 +1,4 @@
-/*	$OpenBSD$	*/
+/*	$OpenBSD: local.c,v 1.2 2007/11/18 17:39:55 ragge Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Shalayeff
@@ -48,10 +48,10 @@
 NODE *
 clocal(NODE *p)
 {
-
 	register struct symtab *q;
 	register NODE *r, *l, *s;
 	register int o, m, rn;
+	char *ch, name[16];
 	TWORD t;
 
 #ifdef PCC_DEBUG
@@ -60,7 +60,7 @@ clocal(NODE *p)
 		fwalk(p, eprint, 0);
 	}
 #endif
-	switch( o = p->n_op ){
+	switch (o = p->n_op) {
 
 	case NAME:
 		if ((q = p->n_sp) == NULL)
@@ -76,11 +76,11 @@ clocal(NODE *p)
 				r->n_lval = 0;
 				switch (p->n_type) {
 				case FLOAT:
-					/* TODO */
+					r->n_rval = FR7L - rn;
 					break;
 				case DOUBLE:
 				case LDOUBLE:
-					/* TODO */
+					r->n_rval = FR6 - rn;
 					break;
 				case LONGLONG:
 				case ULONGLONG:
@@ -117,12 +117,10 @@ clocal(NODE *p)
 			l->n_lval = 0;
 			l->n_rval = R1;
 			l = block(ASSIGN, l, p, INT, 0, 0);
-			r = block(ICON, NIL, NIL, INT, 0, 0);
-			r->n_sp = p->n_sp;
-			r->n_lval = 0;
+			r = xbcon(0, p->n_sp, INT);
 			p = block(UMUL,
 			    block(PLUS, l, r, INT, 0, 0),
-			    NIL, p->n_type, p->n_df, MKSUE(p->n_type));
+			    NIL, p->n_type, p->n_df, p->n_sue);
 			break;
 		}
 		break;
@@ -131,38 +129,16 @@ clocal(NODE *p)
 		if (!ISFTN(p->n_left->n_type))
 			break;
 
-		t = p->n_type;
-		l = p->n_left;
-		nfree(p);
-		p = l;
 		l = block(REG, NIL, NIL, INT, 0, 0);
 		l->n_lval = 0;
 		l->n_rval = R1;
-		l = block(ASSIGN, l, p, INT, 0, 0);
-		r = block(ICON, NIL, NIL, INT, 0, 0);
-		r->n_sp = p->n_sp;
-		r->n_lval = 0;
-		p = block(PLUS, l, r, t, 0, 0);
+		l = block(ASSIGN, l, p->n_left, INT, 0, 0);
+		r = xbcon(0, p->n_left->n_sp, INT);
+		l = block(PLUS, l, r, p->n_type, p->n_df, p->n_sue);
+		nfree(p);
+		p = l;
 		break;
 
-	case STCALL:
-	case CALL:
-		/* Fix function call arguments. On x86, just add funarg */
-		for (r = p->n_right; r->n_op == CM; r = r->n_left) {
-			if (r->n_right->n_op != STARG &&
-			    r->n_right->n_op != FUNARG)
-				/* TODO put first four into regs */
-				r->n_right = block(FUNARG, r->n_right, NIL, 
-				    r->n_right->n_type, r->n_right->n_df,
-				    r->n_right->n_sue);
-		}
-		if (r->n_op != STARG && r->n_op != FUNARG) {
-			l = talloc();
-			*l = *r;
-			r->n_op = FUNARG; r->n_left = l; r->n_type = l->n_type;
-		}
-		break;
-		
 	case CBRANCH:
 		l = p->n_left;
 
@@ -280,8 +256,6 @@ clocal(NODE *p)
 			case UNSIGNED:
 				l->n_lval = val & 0xffffffff;
 				break;
-			case ENUMTY:
-			case MOETY:
 			case LONG:
 			case INT:
 				l->n_lval = (int)val;
@@ -307,7 +281,16 @@ clocal(NODE *p)
 			l->n_sue = MKSUE(m);
 			nfree(p);
 			return l;
+                } else if (l->n_op == FCON) {
+			l->n_lval = l->n_dcon;
+			l->n_sp = NULL;
+			l->n_op = ICON;
+			l->n_type = m;
+			l->n_sue = MKSUE(m);
+			nfree(p);
+			return clocal(l);
 		}
+
 		if (DEUNSIGN(p->n_type) == SHORT &&
 		    DEUNSIGN(l->n_type) == SHORT) {
 			nfree(p);
@@ -377,9 +360,25 @@ clocal(NODE *p)
 		break;
 
 	case ASSIGN:
+		r = p->n_right;
+		l = p->n_left;
+
+		/* rewrite ICON#0 into %r0 */
+		if (r->n_op == ICON && r->n_lval == 0 &&
+		    (l->n_op == REG || l->n_op == OREG)) {
+			r->n_op = REG;
+			r->n_rval = R0;
+		}
+
+		/* rewrite FCON#0 into %fr0 */
+		if (r->n_op == FCON && r->n_lval == 0 && l->n_op == REG) {
+			r->n_op = REG;
+			r->n_rval = r->n_type == FLOAT? FR0L : FR0;
+		}
+
 		if (p->n_left->n_op != FLD)
 			break;
-		l = p->n_left;
+
 		r = tempnode(0, l->n_type, l->n_df, l->n_sue);
 		p = block(COMOP,
 		    block(ASSIGN, r, l->n_left, l->n_type, l->n_df, l->n_sue),
@@ -391,6 +390,41 @@ clocal(NODE *p)
 		l->n_left = tcopy(r);
 		break;
 	}
+
+	/* second pass - rewrite long ops */
+	switch (o) {
+	case DIV:
+	case MOD:
+	case MUL:
+	case RS:
+	case LS:
+		if (!(p->n_type == LONGLONG || p->n_type == ULONGLONG) ||
+		    !((o == DIV || o == MOD || o == MUL) &&
+		      p->n_type < FLOAT))
+			break;
+		if (o == DIV && p->n_type == ULONGLONG) ch = "udiv";
+		else if (o == DIV) ch = "div";
+		else if (o == MUL) ch = "mul";
+		else if (o == MOD && p->n_type == ULONGLONG) ch = "umod";
+		else if (o == MOD) ch = "mod";
+		else if (o == RS && p->n_type == ULONGLONG) ch = "lshr";
+		else if (o == RS) ch = "ashr";
+		else if (o == LS) ch = "ashl";
+		else break;
+		snprintf(name, sizeof(name), "__%sdi3", ch);
+		p->n_right = block(CM, p->n_left, p->n_right, 0, 0, 0);
+		p->n_left = block(ADDROF,
+		    block(NAME, NIL, NIL, FTN, 0, MKSUE(INT)), NIL,
+		    PTR|FTN, 0, MKSUE(INT));
+		p->n_left->n_left->n_sp = lookup(addname(name), 0);
+		defid(p->n_left->n_left, EXTERN);
+		p->n_left = clocal(p->n_left);
+		calldec(p->n_left, p->n_right);
+		p->n_op = CALL;
+		funcode(p);
+		break;
+	}
+
 #ifdef PCC_DEBUG
 	if (xdebug) {
 		printf("clocal end: %p\n", p);
@@ -403,6 +437,29 @@ clocal(NODE *p)
 void
 myp2tree(NODE *p)
 {
+	int o = p->n_op, i;
+
+	if (o != FCON) 
+		return;
+
+	/* Write float constants to memory */
+	/* Should be volontary per architecture */
+ 
+#if 0
+	setloc1(RDATA);
+	defalign(p->n_type == FLOAT ? ALFLOAT : p->n_type == DOUBLE ?
+	    ALDOUBLE : ALLDOUBLE );
+	deflab1(i = getlab()); 
+#endif
+
+	ninval(0, btdims[p->n_type].suesize, p);
+	p->n_op = NAME;
+	p->n_lval = 0;	
+	p->n_sp = tmpalloc(sizeof(struct symtab_hdr));
+	p->n_sp->sclass = ILABEL;
+	p->n_sp->soffset = getlab();
+	p->n_sp->sflags = 0;
+
 }
 
 /*ARGSUSED*/
@@ -418,11 +475,12 @@ andable(NODE *p)
 void
 cendarg()
 {
+	/* TODO can use to generate sp/rp tree ops? */
 	autooff = AUTOINIT;
 }
 
 /*
- * Return 1 if a variable of type type is OK to put in register.
+ * Return 1 if a variable of type "t" is OK to put in register.
  */
 int
 cisreg(TWORD t)
@@ -511,24 +569,48 @@ indata(CONSZ val, int size)
  * sequences.  Location is already set.
  */
 void
-instring(char *str)
+instring(struct symtab *sp)
 {
-	char *s;
+	char *s, *str;
+
+	defloc(sp);
+	str = sp->sname;
 
 	/* be kind to assemblers and avoid long strings */
-	printf("\t.ascii \"");
+	printf("\t.ascii\t\"");
 	for (s = str; *s != 0; ) {
 		if (*s++ == '\\') {
 			(void)esccon(&s);
 		}
 		if (s - str > 64) {
 			fwrite(str, 1, s - str, stdout);
-			printf("\"\n\t.ascii \"");
+			printf("\"\n\t.ascii\t\"");
 			str = s;
 		}
 	}
 	fwrite(str, 1, s - str, stdout);
 	printf("\\0\"\n");
+}
+
+/*
+ * Print out a wide string by calling ninval().
+ */
+void
+inwstring(struct symtab *sp)
+{
+	char *s = sp->sname;
+	NODE *p;
+
+	defloc(sp);
+	p = bcon(0);
+	do { 
+		if (*s++ == '\\')
+			p->n_lval = esccon(&s);
+		else
+			p->n_lval = (unsigned char)s[-1];
+		ninval(0, (MKSUE(WCHAR_TYPE))->suesize, p);
+	} while (s[-1] != 0);
+	nfree(p);
 }
 
 static int inbits, inval;
@@ -631,7 +713,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 			    q->sclass == ILABEL) {
 				printf("+" LABFMT, q->soffset);
 			} else
-				printf("+%s", exname(q->sname));
+				printf("+%s", exname(q->soname));
 		}
 		printf("\n");
 		break;
@@ -645,6 +727,7 @@ ninval(CONSZ off, int fsz, NODE *p)
 		/* FALLTHROUGH */
 	case CHAR:
 	case UCHAR:
+		/* TODO make the upper layer give an .asciz */
 		printf("\t.byte %d\n", (int)p->n_lval & 0xff);
 		break;
 	case LDOUBLE:
@@ -689,71 +772,65 @@ ctype(TWORD type)
 }
 
 void
-calldec(NODE *p, NODE *q) 
+calldec(NODE *f, NODE *a) 
 {
-	printf("\t.call\n");
+	struct symtab *q;
+	if (f->n_op == UMUL && f->n_left->n_op == PLUS &&
+	    f->n_left->n_right->n_op == ICON)
+		q = f->n_left->n_right->n_sp;
+	else if (f->n_op == PLUS && f->n_right->n_op == ICON)
+		q = f->n_right->n_sp;
+	else {
+		fwalk(f, eprint, 0);
+		cerror("unknown function");
+		return;
+	}
+
+	printf("\t.import\t%s,code\n", exname(q->soname));
 }
 
 void
 extdec(struct symtab *q)
 {
-#ifdef GCC_COMPAT
-	printf("\t.import\t%s,data\n", gcc_findname(q));
-#else
-	printf("\t.import\t%s,data\n", exname(q->sname));
-#endif
+	printf("\t.import\t%s,data\n", exname(q->soname));
 }
 
 /* make a common declaration for id, if reasonable */
 void
-commdec(struct symtab *q)
+defzero(struct symtab *sp)
 {
 	int off;
 
-	off = tsize(q->stype, q->sdf, q->ssue);
-	off = (off+(SZCHAR-1))/SZCHAR;
-#ifdef GCC_COMPAT
-	printf("\t.label\t%s\n", gcc_findname(q));
-#else
-	printf("\t.label\t%s\n", exname(q->sname));
-#endif
-	printf("\t.comm\t%d\n", off);
+	off = tsize(sp->stype, sp->sdf, sp->ssue);
+	off = (off + (SZCHAR - 1)) / SZCHAR;
+	printf("\t.%scomm\t", sp->sclass == STATIC ? "l" : "");
+	if (sp->slevel == 0)
+		printf("%s,0%o\n", exname(sp->soname), off);
+	else
+		printf(LABFMT ",0%o\n", sp->soffset, off);
 }
 
-/* make a local common declaration for id, if reasonable */
-void
-lcommdec(struct symtab *q)
-{
-	int off;
+char *nextsect;
 
-	off = tsize(q->stype, q->sdf, q->ssue);
-	off = (off+(SZCHAR-1))/SZCHAR;
-	if (q->slevel == 0)
-#ifdef GCC_COMPAT
-		printf("\t.lcomm %s,0%o\n", gcc_findname(q), off);
-#else
-		printf("\t.lcomm %s,0%o\n", exname(q->sname), off);
-#endif
-	else
-		printf("\t.lcomm " LABFMT ",0%o\n", q->soffset, off);
+#define	SSECTION	010000
+
+/*
+ * Give target the opportunity of handling pragmas.
+ */
+int
+mypragma(char **ary)
+{
+	if (strcmp(ary[1], "section") || ary[2] == NULL)
+		return 0;
+	nextsect = newstring(ary[2], strlen(ary[2]));
+	return 1;
 }
 
 /*
- * print a (non-prog) label.
+ * Called when a identifier has been declared, to give target last word.
  */
 void
-deflab1(int label)
+fixdef(struct symtab *sp)
 {
-	printf("\t.label\t" LABFMT "\n", label);
 }
 
-static char *loctbl[] = { "text", "data", "section .rodata", "section .rodata" };
-
-void
-setloc1(int locc)
-{
-	if (locc == lastloc)
-		return;
-	lastloc = locc;
-	printf("\t.%s\n", loctbl[locc]);
-}

@@ -1,4 +1,4 @@
-/*	$Id: code.c,v 1.1.1.1 2007/09/20 13:08:45 abs Exp $	*/
+/*	$Id: code.c,v 1.1.1.2 2008/02/10 20:04:56 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -48,16 +48,13 @@ defalign(int n)
 }
 
 /*
- * define the current location as the name p->sname
+ * define the current location as the name p->soname
  */
 void
 defnam(struct symtab *p)
 {
-	char *c = p->sname;
+	char *c = p->soname;
 
-#ifdef GCC_COMPAT
-	c = gcc_findname(p);
-#endif
 	if (p->sclass == EXTDEF)
 		printf("	PUBLIC %s\n", c);
 	printf("%s:\n", c);
@@ -279,7 +276,7 @@ ejobcode(int flag )
 	for (w = sympole; w; w = w->next) {
 		if (w->sp->sclass != EXTERN)
 			continue;
-		printf("	EXTERN %s\n", w->sp->sname);
+		printf("	EXTERN %s\n", w->sp->soname);
 	}
 	
 	printf("	END\n");
@@ -320,16 +317,6 @@ bycode(int t, int i)
 }
 
 /*
- * n integer words of zeros
- */
-void
-zecode(int n)
-{
-	printf("	.zero %d\n", n * (SZINT/SZCHAR));
-	inoff += n * SZINT;
-}
-
-/*
  * return the alignment of field of type t
  */
 int
@@ -345,32 +332,20 @@ fldty(struct symtab *p)
 {
 }
 
-/* p points to an array of structures, each consisting
- * of a constant value and a label.
- * The first is >=0 if there is a default label;
- * its value is the label number
- * The entries p[1] to p[n] are the nontrivial cases
+/*
  * XXX - fix genswitch.
  */
-void
-genswitch(struct swents **p, int n)
+int
+mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
-    uerror("switch() statements unsopported");
-#if 0
-	int i;
-	char *s;
-
-	/* simple switch code */
-	for (i = 1; i <= n; ++i) {
-		/* already in 1 */
-		s = (isinlining ? permalloc(40) : tmpalloc(40));
-		sprintf(s, "	cmpl $%lld,%%eax", p[i]->sval);
-		send_passt(IP_ASM, s);
-		s = (isinlining ? permalloc(40) : tmpalloc(40));
-		sprintf(s, "	je " LABFMT, p[i]->slab);
-		send_passt(IP_ASM, s);
-	}
-	if (p[0]->slab > 0)
-		branch(p[0]->slab);
-#endif
+	return 0;
+}
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ */
+NODE *
+funcode(NODE *p)
+{
+	return p;
 }

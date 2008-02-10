@@ -1,4 +1,4 @@
-/*	$Id: manifest.h,v 1.1.1.2 2007/10/27 14:43:39 ragge Exp $	*/
+/*	$Id: manifest.h,v 1.1.1.3 2008/02/10 20:05:05 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -37,7 +37,8 @@
 #define	MANIFEST
 
 #include <stdio.h>
-#include "../config.h"
+#include <string.h>
+#include "config.h"
 #include "macdefs.h"
 #include "node.h"
 #include "compat.h"
@@ -76,8 +77,8 @@
 #define	LDOUBLE		14
 #define	STRTY		15
 #define	UNIONTY		16
-#define	ENUMTY		17
-#define	MOETY		18	/* member of enum */
+/* #define	ENUMTY		17 */
+/* #define	MOETY		18 */	/* member of enum */
 #define	VOID		19
 
 #define	MAXTYPES	19	/* highest type+1 to be used by lang code */
@@ -115,6 +116,7 @@
 #define UNSIGNABLE(x)	(((x)<=ULONGLONG&&(x)>=CHAR) && !ISUNSIGNED(x))
 #define ENUNSIGN(x)	((x)|1)
 #define DEUNSIGN(x)	((x)&~1)
+#define ISINTEGER(x)	(((x) >= CHAR && (x) <= ULONGLONG) || (x) == BOOL)
 #define ISPTR(x)	(((x)&TMASK)==PTR)
 #define ISFTN(x)	(((x)&TMASK)==FTN)	/* is x a function type? */
 #define ISARY(x)	(((x)&TMASK)==ARY)	/* is x an array type? */
@@ -168,13 +170,15 @@
 #define STRNG		3		/* (ro) string segment */
 
 
+#define	regno(p)	((p)->n_rval)	/* register number */
+
 /*
  * 
  */
 extern int bdebug, tdebug, edebug;
 extern int ddebug, xdebug, f2debug;
-extern int iTflag, oTflag;
-extern int vdebug, sflag, nflag, gflag;
+extern int iTflag, oTflag, kflag;
+extern int sflag, nflag, gflag;
 extern int Wstrict_prototypes, Wmissing_prototypes, Wimplicit_int,
 	Wimplicit_function_declaration;
 extern int xssaflag, xtailcallflag, xtemps, xdeljumps;
@@ -291,9 +295,6 @@ void send_passt(int type, ...);
 /*
  * External declarations, typedefs and the like
  */
-char	*hash(char *s);
-char	*savestr(char *cp);
-char	*tstr(char *cp);
 
 /* memory management stuff */
 void *permalloc(int size);
@@ -301,6 +302,9 @@ void *tmpcalloc(int size);
 void *tmpalloc(int size);
 void tmpfree(void);
 char *newstring(char *, int len);
+
+/* command-line processing */
+void mflags(char *);
 
 void tprint(FILE *, TWORD, TWORD);
 

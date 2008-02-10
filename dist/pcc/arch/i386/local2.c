@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.1 2007/10/27 14:43:32 ragge Exp $	*/
+/*	$Id: local2.c,v 1.1.1.2 2008/02/10 20:04:55 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -51,6 +51,7 @@ static TWORD ftype;
 static void
 prtprolog(struct interpass_prolog *ipp, int addto)
 {
+	static int lwnr;
 	int i, j;
 
 	printf("	pushl %%ebp\n");
@@ -61,6 +62,35 @@ prtprolog(struct interpass_prolog *ipp, int addto)
 		if (i & 1)
 			fprintf(stdout, "	movl %s,-%d(%s)\n",
 			    rnames[j], regoff[j], rnames[FPREG]);
+	if (kflag == 0)
+		return;
+	/* if ebx are not saved to stack, it must be moved into another reg */
+	/* check and emit the move before GOT stuff */
+	if ((ipp->ipp_regs & (1 << EBX)) == 0) {
+		struct interpass *ip = (struct interpass *)ipp;
+
+		ip = DLIST_PREV(ip, qelem);
+		ip = DLIST_PREV(ip, qelem);
+		ip = DLIST_PREV(ip, qelem);
+		if (ip->type != IP_NODE || ip->ip_node->n_op != ASSIGN ||
+		    ip->ip_node->n_left->n_op != REG)
+			comperr("prtprolog pic error");
+		ip = (struct interpass *)ipp;
+		ip = DLIST_NEXT(ip, qelem);
+		if (ip->type != IP_NODE || ip->ip_node->n_op != ASSIGN ||
+		    ip->ip_node->n_left->n_op != REG)
+			comperr("prtprolog pic error2");
+		printf("	movl %s,%s\n",
+		    rnames[ip->ip_node->n_right->n_rval],
+		    rnames[ip->ip_node->n_left->n_rval]);
+		tfree(ip->ip_node);
+		DLIST_REMOVE(ip, qelem);
+	}
+	printf("	call .LW%d\n", ++lwnr);
+	printf(".LW%d:\n", lwnr);
+	printf("	popl %%ebx\n");
+	printf("	addl $_GLOBAL_OFFSET_TABLE_+[.-.LW%d], %%ebx\n",
+	    lwnr);
 }
 
 /*
@@ -89,10 +119,12 @@ prologue(struct interpass_prolog *ipp)
 	int addto;
 
 	ftype = ipp->ipp_type;
+#if 0
 	if (ipp->ipp_vis)
 		printf("	.globl %s\n", ipp->ipp_name);
 	printf("	.align 4\n");
 	printf("%s:\n", ipp->ipp_name);
+#endif
 	/*
 	 * We here know what register to save and how much to 
 	 * add to the stack.
@@ -242,58 +274,64 @@ twollcomp(NODE *p)
 	deflab(s);
 }
 
-/*
- * Assign to a bitfield.
- * Clumsy at least, but what to do?
- */
-static void
-bfasg(NODE *p)
+int
+fldexpand(NODE *p, int cookie, char **cp)
 {
-	NODE *fn = p->n_left;
-	int shift = UPKFOFF(fn->n_rval);
-	int fsz = UPKFSZ(fn->n_rval);
-	int andval, tch = 0;
+	CONSZ val;
 
-	/* get instruction size */
-	switch (p->n_type) {
-	case CHAR: case UCHAR: tch = 'b'; break;
-	case SHORT: case USHORT: tch = 'w'; break;
-	case INT: case UNSIGNED: tch = 'l'; break;
-	default: comperr("bfasg");
+	if (p->n_op == ASSIGN)
+		p = p->n_left;
+	switch (**cp) {
+	case 'S':
+		printf("%d", UPKFSZ(p->n_rval));
+		break;
+	case 'H':
+		printf("%d", UPKFOFF(p->n_rval));
+		break;
+	case 'M':
+	case 'N':
+		val = (CONSZ)1 << UPKFSZ(p->n_rval);
+		--val;
+		val <<= UPKFOFF(p->n_rval);
+		printf("0x%llx", (**cp == 'M' ? val : ~val) & 0xffffffff);
+		break;
+	default:
+		comperr("fldexpand");
+	}
+	return 1;
+}
+
+static void
+bfext(NODE *p)
+{
+	int ch = 0, sz = 0;
+
+	if (ISUNSIGNED(p->n_right->n_type))
+		return;
+	switch (p->n_right->n_type) {
+	case CHAR:
+		ch = 'b';
+		sz = 8;
+		break;
+	case SHORT:
+		ch = 'w';
+		sz = 16;
+		break;
+	case INT:
+	case LONG:
+		ch = 'l';
+		sz = 32;
+		break;
+	default:
+		comperr("bfext");
 	}
 
-	/* put src into a temporary reg */
-	fprintf(stdout, "	mov%c ", tch);
-	adrput(stdout, getlr(p, 'R'));
-	fprintf(stdout, ",");
-	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, "\n");
-
-	/* AND away the bits from dest */
-	andval = ~(((1 << fsz) - 1) << shift);
-	fprintf(stdout, "	and%c $%d,", tch, andval);
-	adrput(stdout, fn->n_left);
-	fprintf(stdout, "\n");
-
-	/* AND away unwanted bits from src */
-	andval = ((1 << fsz) - 1);
-	fprintf(stdout, "	and%c $%d,", tch, andval);
-	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, "\n");
-
-	/* SHIFT left src number of bits */
-	if (shift) {
-		fprintf(stdout, "	sal%c $%d,", tch, shift);
-		adrput(stdout, getlr(p, '1'));
-		fprintf(stdout, "\n");
-	}
-
-	/* OR in src to dest */
-	fprintf(stdout, "	or%c ", tch);
-	adrput(stdout, getlr(p, '1'));
-	fprintf(stdout, ",");
-	adrput(stdout, fn->n_left);
-	fprintf(stdout, "\n");
+	sz -= UPKFSZ(p->n_left->n_rval);
+	printf("\tshl%c $%d,", ch, sz);
+	adrput(stdout, getlr(p, 'D'));
+	printf("\n\tsar%c $%d,", ch, sz);
+	adrput(stdout, getlr(p, 'D'));
+	printf("\n");
 }
 
 /*
@@ -431,8 +469,8 @@ zzzcode(NODE *p, int c)
 		twollcomp(p);
 		break;
 
-	case 'E': /* Assign to bitfield */
-		bfasg(p);
+	case 'E': /* Perform bitfield sign-extension */
+		bfext(p);
 		break;
 
 	case 'F': /* Structure argument */
@@ -709,6 +747,8 @@ adrput(FILE *io, NODE *p)
 
 	case OREG:
 		r = p->n_rval;
+		if (p->n_name[0])
+			printf("%s%s", p->n_name, p->n_lval ? "+" : "");
 		if (p->n_lval)
 			fprintf(io, "%d", (int)p->n_lval);
 		if (R2TEST(r)) {
@@ -718,12 +758,23 @@ adrput(FILE *io, NODE *p)
 			fprintf(io, "(%s)", rnames[p->n_rval]);
 		return;
 	case ICON:
+#ifdef PCC_DEBUG
+		/* Sanitycheck for PIC, to catch adressable constants */
+		if (kflag && p->n_name[0]) {
+			static int foo;
+
+			if (foo++ == 0) {
+				printf("\nfailing...\n");
+				fwalk(p, e2print, 0);
+				comperr("pass2 conput");
+			}
+		}
+#endif
 		/* addressable value of the constant */
 		fputc('$', io);
 		conput(io, p);
 		return;
 
-	case MOVE:
 	case REG:
 		switch (p->n_type) {
 		case LONGLONG:
@@ -1018,6 +1069,8 @@ lastcall(NODE *p)
 	for (p = p->n_right; p->n_op == CM; p = p->n_left)
 		size += argsiz(p->n_right);
 	size += argsiz(p);
+	if (kflag)
+		size -= 4;
 	op->n_qual = size; /* XXX */
 }
 
@@ -1053,4 +1106,12 @@ special(NODE *p, int shape)
 		return SRDIR;
 	}
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }

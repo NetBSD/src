@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.2 2007/10/27 14:43:32 ragge Exp $	*/
+/*	$Id: local2.c,v 1.1.1.3 2008/02/10 20:04:56 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -310,6 +310,12 @@ canaddr(NODE *p)
 	return(0);
 }
 
+int
+fldexpand(NODE *p, int cookie, char **cp)
+{
+	return 0;
+}
+
 /*
  * Does the bitfield shape match?
  */
@@ -422,7 +428,6 @@ adrput(FILE *io, NODE *p)
 		conput(io, p);
 		return;
 
-	case MOVE:
 	case REG:
 	    /*if (DEUNSIGN(p->n_type) == CHAR) {
 			fprintf(io, "R%c%c", p->n_rval < 2 ? '0' : '1',
@@ -460,6 +465,16 @@ cbgen(int o, int lab)
 	if (o < EQ || o > UGT)
 		comperr("bad conditional branch: %s", opst[o]);
 	printf("	%s " LABFMT "\n", ccbranches[o-EQ], lab);
+}
+
+void
+mycanon(NODE *p)
+{
+}
+
+void
+myoptim(struct interpass *ip)
+{
 }
 
 #if 0
@@ -629,4 +644,12 @@ lastcall(NODE *p)
         for (p = p->n_right; p->n_op == CM; p = p->n_left)
                 sizen += argsiz(p->n_right);
         sizen += argsiz(p);
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }

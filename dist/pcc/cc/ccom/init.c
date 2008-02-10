@@ -1,4 +1,4 @@
-/*	$Id: init.c,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $	*/
+/*	$Id: init.c,v 1.1.1.3 2008/02/10 20:05:02 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004, 2007 Anders Magnusson (ragge@ludd.ltu.se).
@@ -65,13 +65,13 @@
 #include <string.h>
 
 /*
- * Four machine-dependent routines may be called during initialization:
+ * The following machine-dependent routines may be called during
+ * initialization:
  * 
- * instring(char *str)	- Print out a string.
  * zbits(OFFSZ, int)	- sets int bits of zero at position OFFSZ.
  * infld(CONSZ off, int fsz, CONSZ val)
  *			- sets the bitfield val starting at off and size fsz.
- * inval(CONSZ off, int fsz, NODE *)
+ * ninval(CONSZ off, int fsz, NODE *)
  *			- prints an integer constant which may have
  *			  a label associated with it, located at off and
  *			  size fsz.
@@ -118,8 +118,8 @@ int idebug;
  */
 static struct instk {
 	struct	instk *in_prev; /* linked list */
-	struct	symtab **in_xp;	/* member in structure initializations */
-	struct	symtab *in_sym; /* stab index */
+	struct	symtab *in_lnk;	/* member in structure initializations */
+	struct	symtab *in_sym; /* symtab index */
 	union	dimfun *in_df;	/* dimenston of array */
 	TWORD	in_t;		/* type for this level */
 	int	in_n;		/* number of arrays seen so far */
@@ -231,7 +231,7 @@ beginit(struct symtab *sp)
 	curll = ll = getll(); /* at least first entry in list */
 
 	/* first element */
-	is->in_xp = ISSOU(sp->stype) ? sp->ssue->suelem : NULL;
+	is->in_lnk = ISSOU(sp->stype) ? sp->ssue->sylnk : NULL;
 	is->in_n = 0;
 	is->in_t = sp->stype;
 	is->in_sym = sp;
@@ -279,22 +279,22 @@ stkpush(void)
 	is->in_n = 0;
 	if (pstk == NULL) {
 		/* stack empty */
-		is->in_xp = ISSOU(sp->stype) ? sp->ssue->suelem : NULL;
+		is->in_lnk = ISSOU(sp->stype) ? sp->ssue->sylnk : NULL;
 		is->in_t = sp->stype;
 		is->in_sym = sp;
 		is->in_df = sp->sdf;
 	} else if (ISSOU(t)) {
-		sq = *pstk->in_xp;
+		sq = pstk->in_lnk;
 		if (sq == NULL) {
 			uerror("excess of initializing elements");
 		} else {
-			is->in_xp = ISSOU(sq->stype) ? sq->ssue->suelem : 0;
+			is->in_lnk = ISSOU(sq->stype) ? sq->ssue->sylnk : 0;
 			is->in_t = sq->stype;
 			is->in_sym = sq;
 			is->in_df = sq->sdf;
 		}
 	} else if (ISARY(t)) {
-		is->in_xp = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->suelem : 0;
+		is->in_lnk = ISSOU(DECREF(t)) ? pstk->in_sym->ssue->sylnk : 0;
 		is->in_t = DECREF(t);
 		is->in_sym = sp;
 		if (pstk->in_df->ddim && pstk->in_n >= pstk->in_df->ddim) {
@@ -329,9 +329,9 @@ stkpop(void)
 		printf("stkpop\n");
 #endif
 	for (; pstk; pstk = pstk->in_prev) {
-		if (pstk->in_t == STRTY && pstk->in_xp[0] != NULL) {
-			pstk->in_xp++;
-			if (*pstk->in_xp != NULL)
+		if (pstk->in_t == STRTY && pstk->in_lnk != NULL) {
+			pstk->in_lnk = pstk->in_lnk->snext;
+			if (pstk->in_lnk != NULL)
 				break;
 		}
 		if (ISSOU(pstk->in_t) && pstk->in_fl)
@@ -448,24 +448,6 @@ nsetval(CONSZ off, int fsz, NODE *p)
 }
 
 /*
- * Align data and set correct location.
- */
-static void
-setscl(struct symtab *sp)
-{
-	setloc1((sp->squal << TSHIFT) & CON ? RDATA : DATA);
-	defalign(talign(sp->stype, sp->ssue));
-	if (sp->sclass == EXTDEF ||
-	    (sp->sclass == STATIC && sp->slevel == 0)) {
-		defnam(sp);
-	} else {
-		if (sp->soffset == NOOFFSET)
-			cerror("setscl");
-		deflab1(sp->soffset);
-	}
-}
-
-/*
  * take care of generating a value for the initializer p
  * inoff has the current offset (last bit written)
  * in the current word being generated
@@ -490,9 +472,11 @@ scalinit(NODE *p)
 
 	p = optim(p);
 
+#ifdef notdef /* leave to the target to decide if useable */
 	if (csym->sclass != AUTO && p->n_op != ICON &&
 	    p->n_op != FCON && p->n_op != NAME)
 		cerror("scalinit not leaf");
+#endif
 
 	/* Out of elements? */
 	if (pstk == NULL) {
@@ -558,14 +542,13 @@ insbf(OFFSZ off, int fsz, int val)
 	spname = csym;
 	p = buildtree(ADDROF,
 	    buildtree(NAME, NIL, NIL), NIL);
-	r = block(ICON, NIL, NIL, typ, 0, MKSUE(typ));
 	sym.stype = typ;
 	sym.squal = 0;
 	sym.sdf = 0;
 	sym.ssue = MKSUE(typ);
 	sym.soffset = off;
 	sym.sclass = typ == INT ? FIELD | fsz : MOU;
-	r->n_sp = &sym;
+	r = xbcon(0, &sym, typ);
 	p = block(STREF, p, r, INT, 0, MKSUE(INT));
 	ecode(buildtree(ASSIGN, stref(p), bcon(val)));
 }
@@ -612,7 +595,7 @@ endinit(void)
 #endif
 
 	if (csym->sclass != AUTO)
-		setscl(csym);
+		defloc(csym);
 
 	/* Calculate total block size */
 	if (ISARY(csym->stype) && csym->sdf->ddim == 0) {
@@ -651,14 +634,13 @@ endinit(void)
 				p = buildtree(ADDROF,
 				    buildtree(NAME, NIL, NIL), NIL);
 				n = il->n;
-				r = block(ICON, NIL, NIL, INT, 0, MKSUE(INT));
 				sym.stype = n->n_type;
 				sym.squal = n->n_qual;
 				sym.sdf = n->n_df;
 				sym.ssue = n->n_sue;
 				sym.soffset = ll->begsz + il->off;
 				sym.sclass = fsz < 0 ? FIELD | -fsz : 0;
-				r->n_sp = &sym;
+				r = xbcon(0, &sym, INT);
 				p = block(STREF, p, r, INT, 0, MKSUE(INT));
 				ecode(buildtree(ASSIGN, stref(p), il->n));
 				if (fsz < 0)
@@ -673,7 +655,7 @@ endinit(void)
 					infld(il->off, fsz, il->n->n_lval);
 				} else
 					ninval(il->off, fsz, il->n);
-				nfree(il->n);
+				tfree(il->n);
 			}
 			lastoff = ll->begsz + il->off + fsz;
 		}
@@ -734,8 +716,9 @@ irbrace()
 		if (ISARY(pstk->in_t))
 			pstk->in_n = pstk->in_df->ddim;
 		else if (pstk->in_t == STRTY) {
-			while (pstk->in_xp[0] != NULL && pstk->in_xp[1] != NULL)
-				pstk->in_xp++;
+			while (pstk->in_lnk != NULL &&
+			    pstk->in_lnk->snext != NULL)
+				pstk->in_lnk = pstk->in_lnk->snext;
 		}
 		stkpop();
 		return;
@@ -769,11 +752,11 @@ mkstack(NODE *p)
 		break;
 
 	case NAME:
-		if (pstk->in_xp) {
-			for (; pstk->in_xp[0]; pstk->in_xp++)
-				if (pstk->in_xp[0]->sname == (char *)p->n_sp)
+		if (pstk->in_lnk) {
+			for (; pstk->in_lnk; pstk->in_lnk = pstk->in_lnk->snext)
+				if (pstk->in_lnk->sname == (char *)p->n_sp)
 					break;
-			if (pstk->in_xp[0] == NULL)
+			if (pstk->in_lnk == NULL)
 				uerror("member missing");
 		} else {
 			uerror("not a struct/union");
@@ -801,12 +784,12 @@ desinit(NODE *p)
 		pstk = pstk->in_prev; /* Empty stack */
 
 	if (ISSOU(pstk->in_t))
-		pstk->in_xp = pstk->in_sym->ssue->suelem;
+		pstk->in_lnk = pstk->in_sym->ssue->sylnk;
 
 	mkstack(p);	/* Setup for assignment */
 
 	/* pop one step if SOU, ilbrace will push */
-	if (op == NAME)
+	if (op == NAME || op == LB)
 		pstk = pstk->in_prev;
 
 #ifdef PCC_DEBUG
@@ -833,7 +816,7 @@ strcvt(NODE *p)
 			i = (unsigned char)s[-1];
 		asginit(bcon(i));
 	} 
-	nfree(p);
+	tfree(p);
 }
 
 /*
@@ -907,8 +890,8 @@ prtstk(struct instk *in)
 		if (in->in_fl) printf("{ ");
 		printf("soff=%d ", in->in_sym->soffset);
 		if (in->in_t == STRTY) {
-			if (in->in_xp && in->in_xp[0])
-				printf("curel %s ", in->in_xp[0]->sname);
+			if (in->in_lnk)
+				printf("curel %s ", in->in_lnk->sname);
 			else
 				printf("END struct");
 		}
@@ -945,11 +928,8 @@ simpleinit(struct symtab *sp, NODE *p)
 	case EXTDEF:
 		spname = sp;
 		p = optim(buildtree(ASSIGN, buildtree(NAME, NIL, NIL), p));
-		setscl(sp);
-		if (p->n_right->n_op != ICON && p->n_right->n_op != FCON)
-			uerror("initializer element is not a constant");
-		else
-			ninval(0, p->n_right->n_sue->suesize, p->n_right);
+		defloc(sp);
+		ninval(0, p->n_right->n_sue->suesize, p->n_right);
 		tfree(p);
 		break;
 

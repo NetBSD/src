@@ -1,4 +1,4 @@
-/*	$Id: cc.c,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
+/*	$Id: cc.c,v 1.1.1.3 2008/02/10 20:05:01 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -47,6 +47,8 @@
  *
  * This file should be rewritten readable.
  */
+#include "config.h"
+
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -61,7 +63,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "../../config.h"
 #include "ccconfig.h"
 /* C command */
 
@@ -71,7 +72,26 @@
 /*
  * Many specific definitions, should be declared elsewhere.
  */
-#define	STDINC	  "/usr/include/"
+
+#ifndef STDINC
+#define	STDINC	  	"/usr/include/"
+#endif
+
+#ifndef PREPROCESSOR
+#define PREPROCESSOR	"cpp"
+#endif
+
+#ifndef COMPILER
+#define COMPILER	"ccom";
+#endif
+
+#ifndef ASSEMBLER
+#define ASSEMBLER	"as"
+#endif
+
+#ifndef LINKER
+#define LINKER		"ld"
+#endif
 
 #define MAXFIL 10000
 #define MAXLIB 10000
@@ -85,7 +105,6 @@ int getsuf(char *);
 int main(int, char *[]);
 void error(char *, ...);
 void errorx(int, char *, ...);
-int nodup(char **, char *);
 int callsys(char [], char *[]);
 int cunlink(char *);
 void dexit(int);
@@ -97,6 +116,8 @@ char	*llist[MAXLIB];
 char	alist[20];
 char	*xlist[100];
 int	xnum;
+char	*mlist[100];
+int	nm;
 int	Cflag;
 int	dflag;
 int	pflag;
@@ -120,8 +141,10 @@ int	nostdinc, nostdlib;
 int	onlyas;
 int	pthreads;
 
-char	*pass0 = LIBEXECDIR "/ccom";
-char	*passp = LIBEXECDIR "/cpp";
+char	*passp = LIBEXECDIR "/" PREPROCESSOR;
+char	*pass0 = LIBEXECDIR "/" COMPILER;
+char	*as = ASSEMBLER;
+char	*ld = LINKER;
 char	*Bflag;
 char *cppadd[] = CPPADD;
 char *dynlinker[] = DYNLINKER;
@@ -204,6 +227,10 @@ main(int argc, char *argv[])
 
 			case 'k': /* generate PIC code */
 				kflag = F_pic;
+				break;
+
+			case 'm': /* target-dependent options */
+				mlist[nm++] = argv[i];
 				break;
 
 			case 'n': /* handle -n flags */
@@ -313,7 +340,13 @@ main(int argc, char *argv[])
 				}
 				t = setsuf(t, 'o');
 			}
-			if (nodup(llist, t)) {
+
+			/* Check for duplicate .o files. */
+			for (j = getsuf(t) == 'o' ? 0 : nl; j < nl; j++) {
+				if (strcmp(llist[j], t) == 0)
+					break;
+			}
+			if (j == nl) {
 				llist[nl++] = t;
 				if (nl >= MAXLIB) {
 					error("Too many object/library files");
@@ -331,17 +364,6 @@ main(int argc, char *argv[])
 		errorx(8, "-o given with -c || -E || -S and more than one file");
 	if (outfile && clist[0] && strcmp(outfile, clist[0]) == 0)
 		errorx(8, "output file will be clobbered");
-#if 0
-	for(i=0, j=0; i<nc; i++) {
-		if((c=getsuf(clist[i]))=='c' || c=='S') {
-			j++;
-			break;
-		}
-	}
-	if (j==0 && Eflag)
-		errorx(8, "no file to be preprocessed");
-#endif
-
 	if (gflag) Oflag = 0;
 #if 0
 	if (proflag)
@@ -350,7 +372,8 @@ main(int argc, char *argv[])
 	if(nc==0)
 		goto nocom;
 	if (pflag==0) {
-		tmp3 = gettmp();
+		if (!sflag)
+			tmp3 = gettmp();
 		tmp4 = gettmp();
 	}
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)	/* interrupt */
@@ -437,6 +460,8 @@ main(int argc, char *argv[])
 		}
 		for (j = 0; j < xnum; j++)
 			av[na++] = xlist[j];
+		for (j = 0; j < nm; j++)
+			av[na++] = mlist[j];
 		if (getsuf(clist[i])=='i')
 			av[na++] = clist[i];
 		else
@@ -448,9 +473,9 @@ main(int argc, char *argv[])
 			}
 		if(sflag) {
 			if (outfile)
-				assource = tmp3 = outfile;
+				tmp3 = outfile;
 			else
-				assource = tmp3 = setsuf(clist[i], 's');
+				tmp3 = setsuf(clist[i], 's');
 		}
 		av[na++] = tmp3;
 #if 0
@@ -474,7 +499,7 @@ main(int argc, char *argv[])
 		 */
 	assemble:
 		na = 0;
-		av[na++] = "as";
+		av[na++] = as;
 		if (vflag)
 			av[na++] = "-v";
 		if (kflag)
@@ -488,7 +513,7 @@ main(int argc, char *argv[])
 		if (dflag)
 			av[na++] = alist;
 		av[na++] = 0;
-		if (callsys("/bin/as", av)) {
+		if (callsys(as, av)) {
 			cflag++;
 			eflag++;
 			cunlink(tmp4);
@@ -506,7 +531,7 @@ main(int argc, char *argv[])
 nocom:
 	if (cflag==0 && nl!=0) {
 		j = 0;
-		av[j++] = "ld";
+		av[j++] = ld;
 		if (vflag)
 			av[j++] = "-v";
 		av[j++] = "-X";
@@ -549,7 +574,7 @@ nocom:
 				av[j++] = endfiles[i];
 		}
 		av[j++] = 0;
-		eflag |= callsys("/bin/ld", av);
+		eflag |= callsys(ld, av);
 		if (nc==1 && nxo==1 && eflag==0)
 			cunlink(setsuf(clist[0], 'o'));
 		else if (nc > 0 && eflag == 0) {
@@ -648,8 +673,8 @@ setsuf(char *s, char ch)
 int
 callsys(char f[], char *v[])
 {
-	int status;
-	pid_t t;
+	int t, status = 0;
+	pid_t p;
 	char *s;
 
 	if (vflag) {
@@ -659,7 +684,7 @@ callsys(char f[], char *v[])
 		fprintf(stderr, "\n");
 	}
 
-	if ((t=fork())==0) {
+	if ((p = fork()) == 0) {
 		if (Bflag) {
 			size_t len = strlen(Bflag) + 8;
 			char *a = malloc(len);
@@ -673,23 +698,24 @@ callsys(char f[], char *v[])
 				execv(a, v);
 			}
 		}
-		execv(f, v);
+		execvp(f, v);
 		if ((s = strrchr(f, '/')))
 			execvp(s+1, v);
-		printf("Can't find %s\n", f);
-		exit(100);
-	} else
-		if (t == -1) {
+		fprintf(stderr, "Can't find %s\n", f);
+		_exit(100);
+	} else {
+		if (p == -1) {
 			printf("Try again\n");
 			return(100);
 		}
-	while(t!=wait(&status));
-	if ((t=(status&0377)) != 0 && t!=14) {
-		if (t!=2)		/* interrupt */
-			errorx(8, "Fatal error in %s", f);
-		dexit(eflag);
 	}
-	return((status>>8) & 0377);
+	while (waitpid(p, &status, 0) == -1 && errno == EINTR)
+		;
+	if (WIFEXITED(status))
+		return (WEXITSTATUS(status));
+	if (WIFSIGNALED(status))
+		dexit(eflag);
+	errorx(8, "Fatal error in %s", f);
 }
 
 char *
@@ -701,26 +727,6 @@ copy(char *as)
 		errorx(8, "no space for file names");
 
 	return p;
-}
-
-int
-nodup(char **l, char *os)
-{
-	register char *t, *s;
-	register int c;
-
-	s = os;
-	if (getsuf(s) != 'o')
-		return(1);
-	while((t = *l++)) {
-		while((c = *s++))
-			if (c != *t++)
-				break;
-		if (*t=='\0' && c=='\0')
-			return(0);
-		s = os;
-	}
-	return(1);
 }
 
 int

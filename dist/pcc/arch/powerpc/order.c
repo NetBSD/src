@@ -1,4 +1,4 @@
-/*	$Id: order.c,v 1.1.1.1 2007/10/27 14:43:34 ragge Exp $	*/
+/*	$Id: order.c,v 1.1.1.2 2008/02/10 20:05:00 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -40,7 +40,7 @@ int canaddr(NODE *);
 int
 notoff(TWORD t, int r, CONSZ off, char *cp)
 {
-//	if (cp) return 1;
+	if (cp && cp[0]) return 1;
 	return !(off < 32768 && off > -32769);  /* YES */
 }
 
@@ -67,6 +67,7 @@ offstar(NODE *p, int shape)
 			/* Converted in ormake() */
 			return;
 		}
+		/* usually for arraying indexing: */
 		if (r->n_op == LS && r->n_right->n_op == ICON &&
 		    r->n_right->n_lval == 2 && p->n_op == PLUS) {
 			if (isreg(p->n_left) == 0)
@@ -85,15 +86,40 @@ offstar(NODE *p, int shape)
 void
 myormake(NODE *q)
 {
-#if 0
-	NODE *p;
+#if 1
+	NODE *p, *r;
 #endif
 
 	if (x2debug)
 		printf("myormake(%p)\n", q);
 
-#if 0
+#if 1	/* XXX remove this and add UMUL(SAREG) to table.c !!! */
 	p = q->n_left;
+	if (q->n_op != OREG && p->n_op == REG) {
+		q->n_op = OREG;
+		q->n_lval = 0;
+		q->n_rval = p->n_rval;
+		tfree(p);
+		return;
+	}
+#endif
+
+#if 1
+	/* usually for array indexing */
+        p = q->n_left;
+        if (p->n_op == PLUS && (r = p->n_right)->n_op == LS &&
+            r->n_right->n_op == ICON && r->n_right->n_lval == 2 &&
+            p->n_left->n_op == REG && r->n_left->n_op == REG) {
+		if (isreg(p->n_left) == 0)
+			(void)geninsn(p->n_left, INAREG);
+                q->n_op = OREG;
+                q->n_lval = 0;
+                q->n_rval = p->n_left->n_rval;
+                tfree(p);
+        }
+#endif
+
+#if 0
 	if ((p->n_op == PLUS || p->n_op == MINUS) && p->n_right->n_op == ICON) {
 		if (isreg(p->n_left) == 0)
 			(void)geninsn(p->n_left, INAREG);
@@ -107,6 +133,7 @@ myormake(NODE *q)
 		tfree(p);
 	}
 #endif
+	(void)geninsn(p, INAREG);
 }
 
 /*
@@ -121,18 +148,6 @@ shumul(NODE *p)
 
 	/* Turns currently anything into OREG on x86 */
 	return SOREG;
-}
-
-/*
- * Rewrite increment/decrement operation.
- */
-int
-setincr(NODE *p)
-{
-	if (x2debug)
-		printf("setincr(%p)\n", p);
-
-	return(0);
 }
 
 /*
@@ -176,6 +191,17 @@ nspecial(struct optab *q)
 		printf("nspecial: op=%d, visit=0x%x: %s", q->op, q->visit, q->cstring);
 
 	switch (q->op) {
+
+	case STASG:
+		{
+			static struct rspecial s[] = {
+				{ NEVER, R3 },
+				{ NRIGHT, R4 },
+				{ NEVER, R5 },
+				{ 0 } };
+			return s;
+		}
+		break;
 
 	case OPLTYPE:
 		{
@@ -231,7 +257,7 @@ nspecial(struct optab *q)
 		break;
 	}
 
-	comperr("nspecial entry %d", q - table);
+	comperr("nspecial entry %d: %s", q - table, q->cstring);
 	return 0; /* XXX gcc */
 }
 
@@ -242,4 +268,24 @@ int
 setorder(NODE *p)
 {
 	return 0; /* nothing differs on x86 */
+}
+/*
+ * Set registers "live" at function calls (like arguments in registers).
+ * This is for liveness analysis of registers.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[] = { R3, R4, R5, R6, R7, R8, R9, R10, -1 };
+
+	return &r[0];
+}
+
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
 }

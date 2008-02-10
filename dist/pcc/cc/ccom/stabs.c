@@ -1,4 +1,4 @@
-/*	$Id: stabs.c,v 1.1.1.2 2007/10/27 14:43:39 ragge Exp $	*/
+/*	$Id: stabs.c,v 1.1.1.3 2008/02/10 20:05:05 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -39,7 +39,6 @@
 #ifdef STABS
 
 #include <sys/types.h>
-#include <stab.h>
 #include <stdarg.h>
 #include <string.h>
 
@@ -50,6 +49,19 @@
 #ifndef STABLBL
 #error macdefs.h must define STABLBL
 #endif
+
+/* defines taken from BSD <stab.h> */
+#define N_GSYM          0x20    /* global symbol */
+#define N_FUN           0x24    /* procedure name */
+#define N_LCSYM         0x28    /* bss segment variable */
+#define N_RSYM          0x40    /* register variable */
+#define N_SLINE         0x44    /* text segment line number */
+#define N_SO            0x64    /* main source file name */
+#define N_LSYM          0x80    /* stack variable */
+#define N_SOL           0x84    /* included source file name */
+#define N_PSYM          0xa0    /* parameter variable */
+#define N_LBRAC         0xc0    /* left bracket */
+#define N_RBRAC         0xe0    /* right bracket */
 
 /*
  * Local type mapping
@@ -183,7 +195,11 @@ findtype(TWORD t, union dimfun *df, struct suedef *sue)
 void
 stabs_line(int line)
 {
+#ifdef STAB_LINE_ABSOLUTE
+	cprint(savestabs, ".stabn %d,0,%d," STABLBL, N_SLINE, line, stablbl);
+#else
 	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s", N_SLINE, line, stablbl, exname(curfun));
+#endif
 	cprint(1, STABLBL ":", stablbl++);
 }
 
@@ -193,8 +209,12 @@ stabs_line(int line)
 void
 stabs_lbrac(int blklvl)
 {
+#ifdef STAB_LINE_ABSOLUTE
+	cprint(savestabs, ".stabn %d,0,%d," STABLBL, N_LBRAC, blklvl, stablbl);
+#else
 	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s",
 	    N_LBRAC, blklvl, stablbl, exname(curfun));
+#endif
 	cprint(1, STABLBL ":", stablbl++);
 }
 
@@ -204,8 +224,13 @@ stabs_lbrac(int blklvl)
 void
 stabs_rbrac(int blklvl)
 {
+#ifdef STAB_LINE_ABSOLUTE
+	cprint(savestabs, ".stabn %d,0,%d," STABLBL "\n",
+	    N_RBRAC, blklvl, stablbl);
+#else
 	cprint(savestabs, ".stabn %d,0,%d," STABLBL "-%s\n",
 	    N_RBRAC, blklvl, stablbl, exname(curfun));
+#endif
 	cprint(1, STABLBL ":", stablbl++);
 }
 
@@ -232,10 +257,7 @@ stabs_func(struct symtab *s)
 {
 	char str[MAXPSTR];
 
-	curfun = s->sname;
-#ifdef GCC_COMPAT
-	curfun = gcc_findname(cftnsp);
-#endif
+	curfun = s->soname;
 	printtype(s, str, sizeof(str));
 	cprint(savestabs, ".stabs	\"%s:%c%s\",%d,0,%d,%s",
 	    curfun, s->sclass == STATIC ? 'f' : 'F', str,
@@ -288,6 +310,7 @@ stabs_newsym(struct symtab *s)
 {
 	char *sname;
 	char ostr[MAXPSTR];
+	int suesize;
 
 	if (ISFTN(s->stype))
 		return; /* functions are handled separate */
@@ -297,36 +320,38 @@ stabs_newsym(struct symtab *s)
 	    s->sclass == TYPEDEF || (s->sclass & FIELD))
 		return; /* XXX - fix structs */
 
-	sname = s->sname;
-#ifdef GCC_COMPAT
-	sname = gcc_findname(s);
-#endif
+	sname = s->soname;
+	suesize = BIT2BYTE(s->ssue->suesize);
+	if (suesize > 32767)
+		suesize = 32767;
+	else if (suesize < -32768)
+		suesize = -32768;
 
 	printtype(s, ostr, sizeof(ostr));
 	switch (s->sclass) {
 	case PARAM:
 		cprint(savestabs, ".stabs \"%s:p%s\",%d,0,%d,%d", sname, ostr,
-		    N_PSYM, BIT2BYTE(s->ssue->suesize), BIT2BYTE(s->soffset));
+		    N_PSYM, suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case AUTO:
 		cprint(savestabs, ".stabs \"%s:%s\",%d,0,%d,%d", sname, ostr,
-		    N_LSYM, BIT2BYTE(s->ssue->suesize), BIT2BYTE(s->soffset));
+		    N_LSYM, suesize, BIT2BYTE(s->soffset));
 		break;
 
 	case STATIC:
 		if (blevel)
 			cprint(savestabs, ".stabs \"%s:V%s\",%d,0,%d," LABFMT, sname, ostr,
-			    N_LCSYM, BIT2BYTE(s->ssue->suesize), s->soffset);
+			    N_LCSYM, suesize, s->soffset);
 		else
 			cprint(savestabs, ".stabs \"%s:S%s\",%d,0,%d,%s", sname, ostr,
-			    N_LCSYM, BIT2BYTE(s->ssue->suesize), exname(sname));
+			    N_LCSYM, suesize, exname(sname));
 		break;
 
 	case EXTERN:
 	case EXTDEF:
 		cprint(savestabs, ".stabs \"%s:G%s\",%d,0,%d,0", sname, ostr,
-		    N_GSYM, BIT2BYTE(s->ssue->suesize));
+		    N_GSYM, suesize);
 		break;
 
 	case REGISTER:

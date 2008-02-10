@@ -1,4 +1,4 @@
-/*	$Id: pass2.h,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
+/*	$Id: pass2.h,v 1.1.1.3 2008/02/10 20:05:06 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -229,17 +229,12 @@ extern	NODE
 
 void eoftn(struct interpass_prolog *);
 void prologue(struct interpass_prolog *);
-void setlocc(int locctr);
 void e2print(NODE *p, int down, int *a, int *b);
 void myoptim(struct interpass *);
 void cbgen(int op, int label);
-struct optab *nxtmatch(struct optab *);
-int chkmatch(NODE *, int, int, int);
 int match(NODE *p, int cookie);
-int nmatch(NODE *p, int what);
-#ifndef special
+int acceptable(struct optab *);
 int special(NODE *, int);
-#endif
 int setasg(NODE *, int);
 int setuni(NODE *, int);
 int sucomp(NODE *);
@@ -269,7 +264,8 @@ void lastcall(NODE *);
 void myreader(struct interpass *pole);
 int oregok(NODE *p, int sharp);
 void myormake(NODE *);
-
+int *livecall(NODE *);
+void prtreg(FILE *, NODE *);
 char *prcook(int);
 
 void conput(FILE *, NODE *);
@@ -297,8 +293,8 @@ int offset(NODE *p, int);
 
 extern	int lineno;
 extern	int fldshf, fldsz;
-extern	int lflag, x2debug, udebug, e2debug, odebug, mdebug;
-extern	int rdebug, radebug, t2debug, s2debug, b2debug, c2debug;
+extern	int lflag, x2debug, udebug, e2debug, odebug;
+extern	int rdebug, t2debug, s2debug, b2debug, c2debug;
 extern	int kflag;
 #ifdef FORT
 extern	int Oflag;
@@ -358,6 +354,9 @@ extern	char *opst[];	/* a vector containing names for ops */
 #define	TBREGS	0
 #endif
 #define	REGBIT(x) (1 << (x))
+#ifndef PERMTYPE
+#define	PERMTYPE(a)	(INT)
+#endif
 
 void emit(struct interpass *);
 void optimize(struct interpass *);
