@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
+/*	$Id: local2.c,v 1.1.1.3 2008/02/10 20:05:01 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -39,8 +39,6 @@
 
 static void prtype(NODE *n);
 static void acon(NODE *p);
-
-# define BITMASK(n) ((1L<<n)-1)
 
 /*
  * Print out the prolog assembler.
@@ -283,14 +281,10 @@ zzzcode( p, c ) register NODE *p; {
 		}
 
 	case 'C':	/* num words pushed on arg stack */
-		{
-			int pr = p->n_qual;
-
-			if (p->n_op == STCALL || p->n_op == USTCALL)
-				pr += 4;
-			printf("$%d", pr);
-			break;
-		}
+		if (p->n_op == STCALL || p->n_op == USTCALL)
+			p->n_qual++;
+		printf("$%d", p->n_qual);
+		break;
 
 	case 'D':	/* INCR and DECR */
 		zzzcode(p->n_left, 'A');
@@ -331,6 +325,19 @@ zzzcode( p, c ) register NODE *p; {
 		else printf("l");
 		return;
 		}
+
+	case 'J': /* jump or ret? */
+		{
+			extern struct interpass_prolog *epp;
+			struct interpass *ip =
+			    DLIST_PREV((struct interpass *)epp, qelem);
+			if (ip->type != IP_DEFLAB ||
+			    ip->ip_lbl != getlr(p, 'L')->n_lval)
+				expand(p, FOREFF, "jbr	LL");
+			else
+				printf("ret");
+		}
+		break;
 
 	case 'L':	/* type of left operand */
 	case 'R':	/* type of right operand */
@@ -532,6 +539,12 @@ shltype( o, p ) register NODE *p; {
 	return( o== REG || o == NAME || o == ICON || o == OREG || ( o==UMUL && shumul(p->n_left)) );
 	}
 #endif
+
+int
+fldexpand(NODE *p, int cookie, char **cp)
+{
+	return 0;
+}
 
 int
 flshape( p ) register NODE *p; {
@@ -919,8 +932,18 @@ myreader(struct interpass *ipole)
 	}
 }
 
+void
+mycanon(NODE *p)
+{
+}
+
+void
+myoptim(struct interpass *ip)
+{
+}
+
 /*
- * Return argument size in bytes.
+ * Return argument size in regs.
  */
 static int
 argsiz(NODE *p)
@@ -928,8 +951,8 @@ argsiz(NODE *p)
 	TWORD t = p->n_type;
 
 	if (t == STRTY || t == UNIONTY)
-		return p->n_stsize;
-	return szty(t) * (SZINT/SZCHAR);
+		return p->n_stsize/(SZINT/SZCHAR);
+	return szty(t);
 }
 
 /*
@@ -990,13 +1013,13 @@ COLORMAP(int c, int *r)
 int
 special(NODE *p, int shape)
 {
-	switch (shape) {
-	case SNCON:
-		if (p->n_name[0] != '\0')
-			return SRDIR;
-		break;
-	default:
-		comperr("special");
-	}
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }

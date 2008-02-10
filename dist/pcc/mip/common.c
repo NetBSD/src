@@ -1,4 +1,4 @@
-/*	$Id: common.c,v 1.1.1.2 2007/10/27 14:43:39 ragge Exp $	*/
+/*	$Id: common.c,v 1.1.1.3 2008/02/10 20:05:05 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -317,7 +317,6 @@ struct dopest {
 	{ REG, "REG", LTYPE, },
 	{ OREG, "OREG", LTYPE, },
 	{ TEMP, "TEMP", LTYPE, },
-	{ MOVE, "MOVE", UTYPE, },
 	{ ICON, "ICON", LTYPE, },
 	{ FCON, "FCON", LTYPE, },
 	{ CCODES, "CCODES", LTYPE, },
@@ -328,7 +327,8 @@ struct dopest {
 	{ UFORTCALL, "UFCALL", UTYPE|CALLFLG, },
 	{ COMPL, "~", UTYPE, },
 	{ FORCE, "FORCE", UTYPE, },
-/*	{ INIT, "INIT", UTYPE, }, */
+	{ XARG, "XARG", UTYPE, },
+	{ XASM, "XASM", BITYPE, },
 	{ SCONV, "SCONV", UTYPE, },
 	{ PCONV, "PCONV", UTYPE, },
 	{ PLUS, "+", BITYPE|FLOFLG|SIMPFLG|COMMFLG, },
@@ -475,7 +475,7 @@ permalloc(int size)
 {
 	void *rv;
 
-//printf("permalloc: allocpole %p allocleft %d size %d ", allocpole, allocleft, size);
+//fprintf(stderr, "permalloc: allocpole %p allocleft %d size %d ", allocpole, allocleft, size);
 	if (size > MEMCHUNKSZ)
 		cerror("permalloc");
 	if (size <= 0)
@@ -490,7 +490,7 @@ permalloc(int size)
 	}
 	size = ROUNDUP(size);
 	rv = &allocpole[MEMCHUNKSZ-allocleft];
-//printf("rv %p\n", rv);
+//fprintf(stderr, "rv %p\n", rv);
 	allocleft -= size;
 	permallocsize += size;
 	return rv;
@@ -526,7 +526,7 @@ tmpalloc(int size)
 	}
 	if (size <= 0)
 		cerror("tmpalloc2");
-//printf("tmpalloc: tmppole %p tmpleft %d size %d ", tmppole, tmpleft, size);
+//fprintf(stderr, "tmpalloc: tmppole %p tmpleft %d size %d ", tmppole, tmpleft, size);
 	size = ROUNDUP(size);
 	if (tmpleft < size) {
 		if ((tmppole = malloc(MEMCHUNKSZ)) == NULL)
@@ -537,7 +537,7 @@ tmpalloc(int size)
 		tmplink = tmppole;
 	}
 	rv = TMPOLE;
-//printf("rv %p\n", rv);
+//fprintf(stderr,"rv %p\n", rv);
 	tmpleft -= size;
 	tmpallocsize += size;
 	return rv;

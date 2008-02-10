@@ -1,4 +1,4 @@
-/*	$Id: optim.c,v 1.1.1.1 2007/09/20 13:08:48 abs Exp $	*/
+/*	$Id: optim.c,v 1.1.1.2 2008/02/10 20:05:02 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -42,8 +42,6 @@
 # define LCON(p) (p->n_left->n_op==ICON)
 # define LO(p) p->n_left->n_op
 # define LV(p) p->n_left->n_lval
-
-static int nncon(NODE *);
 
 int oflag = 0;
 
@@ -92,7 +90,7 @@ optim(NODE *p)
 	int i;
 	TWORD t;
 
-	if( (t=BTYPE(p->n_type))==ENUMTY || t==MOETY ) econvert(p);
+	t = BTYPE(p->n_type);
 	if( oflag ) return(p);
 
 	ty = coptype(p->n_op);

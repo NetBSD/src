@@ -1,4 +1,4 @@
-/*	$Id: code.c,v 1.1.1.1 2007/10/27 14:43:31 ragge Exp $	*/
+/*	$Id: code.c,v 1.1.1.2 2008/02/10 20:04:55 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,35 +30,49 @@
 # include "pass1.h"
 
 /*
- * cause the alignment to become a multiple of n
- * never called for text segment.
+ * Define everything needed to print out some data (or text).
+ * This means segment, alignment, visibility, etc.
  */
 void
-defalign(int n)
+defloc(struct symtab *sp)
 {
-	n /= SZCHAR;
-	if (n == 1)
+	extern char *nextsect;
+	static char *loctbl[] = { "text", "data", "section .rodata" };
+	static int lastloc = -1;
+	TWORD t;
+	int s;
+
+	if (sp == NULL) {
+		lastloc = -1;
 		return;
-	printf("	.align %d\n", n);
-}
-
-/*
- * define the current location as the name p->sname
- * never called for text segment.
- */
-void
-defnam(struct symtab *p)
-{
-	char *c = p->sname;
-
-#ifdef GCC_COMPAT
-	c = gcc_findname(p);
+	}
+	t = sp->stype;
+	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
+#ifdef TLS
+	if (sp->sflags & STLS) {
+		if (s != DATA)
+			cerror("non-data symbol in tls section");
+		nextsect = ".tdata";
+	}
 #endif
-	if (p->sclass == EXTDEF)
-		printf("	.globl %s\n", c);
-	printf("%s:\n", c);
+	if (nextsect) {
+		printf("	.section %s\n", nextsect);
+		nextsect = NULL;
+		s = -1;
+	} else if (s != lastloc)
+		printf("	.%s\n", loctbl[s]);
+	lastloc = s;
+	while (ISARY(t))
+		t = DECREF(t);
+	if (t > UCHAR)
+		printf("	.align %d\n", t > USHORT ? 4 : 2);
+	if (sp->sclass == EXTDEF)
+		printf("	.globl %s\n", sp->soname);
+	if (sp->slevel == 0)
+		printf("%s:\n", sp->soname);
+	else
+		printf(LABFMT ":\n", sp->soffset);
 }
-
 
 /*
  * code for the end of a function
@@ -67,27 +81,21 @@ defnam(struct symtab *p)
 void
 efcode()
 {
+	extern int gotnr;
 	NODE *p, *q;
-	int sz;
 
+	gotnr = 0;	/* new number for next fun */
 	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
 		return;
-	/* address of return struct is in eax */
-	/* create a call to memcpy() */
-	/* will get the result in eax */
-	p = block(REG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
-	p->n_rval = EAX;
-	q = block(OREG, NIL, NIL, CHAR+PTR, 0, MKSUE(CHAR+PTR));
+	/* Create struct assignment */
+	q = block(OREG, NIL, NIL, PTR+STRTY, 0, cftnsp->ssue);
 	q->n_rval = EBP;
 	q->n_lval = 8; /* return buffer offset */
-	p = block(CM, q, p, INT, 0, MKSUE(INT));
-	sz = (tsize(STRTY, cftnsp->sdf, cftnsp->ssue)+SZCHAR-1)/SZCHAR;
-	p = block(CM, p, bcon(sz), INT, 0, MKSUE(INT));
-	p->n_right->n_name = "";
-	p = block(CALL, bcon(0), p, CHAR+PTR, 0, MKSUE(CHAR+PTR));
-	p->n_left->n_name = "memcpy";
-	p = clocal(p);
-	send_passt(IP_NODE, p);
+	q = buildtree(UMUL, q, NIL);
+	p = block(REG, NIL, NIL, PTR+STRTY, 0, cftnsp->ssue);
+	p = buildtree(UMUL, p, NIL);
+	p = buildtree(ASSIGN, q, p);
+	ecomp(p);
 }
 
 /*
@@ -95,15 +103,40 @@ efcode()
  * indices in symtab for the arguments; n is the number
  */
 void
-bfcode(struct symtab **a, int n)
+bfcode(struct symtab **sp, int cnt)
 {
+	extern int gotnr;
+	NODE *n, *p;
 	int i;
 
-	if (cftnsp->stype != STRTY+FTN && cftnsp->stype != UNIONTY+FTN)
+	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
+		/* Function returns struct, adjust arg offset */
+		for (i = 0; i < cnt; i++) 
+			sp[i]->soffset += SZPOINT(INT);
+	}
+	if (kflag) {
+		/* Put ebx in temporary */
+		n = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+		n->n_rval = EBX;
+		p = tempnode(0, INT, 0, MKSUE(INT));
+		gotnr = regno(p);
+		ecomp(buildtree(ASSIGN, p, n));
+	}
+	if (xtemps == 0)
 		return;
-	/* Function returns struct, adjust arg offset */
-	for (i = 0; i < n; i++)
-		a[i]->soffset += SZPOINT(INT);
+
+	/* put arguments in temporaries */
+	for (i = 0; i < cnt; i++) {
+		if (sp[i]->stype == STRTY || sp[i]->stype == UNIONTY ||
+		    cisreg(sp[i]->stype) == 0)
+			continue;
+		spname = sp[i];
+		n = tempnode(0, sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
+		n = buildtree(ASSIGN, n, buildtree(NAME, 0, 0));
+		sp[i]->soffset = regno(n->n_left);
+		sp[i]->sflags |= STNODE;
+		ecomp(n);
+	}
 }
 
 
@@ -129,47 +162,44 @@ bjobcode()
 }
 
 /*
- * Print character t at position i in one string, until t == -1.
- * Locctr & label is already defined.
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ * Returns p.
  */
-void
-bycode(int t, int i)
+NODE *
+funcode(NODE *p)
 {
-	static	int	lastoctal = 0;
+	extern int gotnr;
+	NODE *r, *l;
 
-	/* put byte i+1 in a string */
-
-	if (t < 0) {
-		if (i != 0)
-			puts("\"");
-	} else {
-		if (i == 0)
-			printf("\t.ascii \"");
-		if (t == '\\' || t == '"') {
-			lastoctal = 0;
-			putchar('\\');
-			putchar(t);
-		} else if (t < 040 || t >= 0177) {
-			lastoctal++;
-			printf("\\%o",t);
-		} else if (lastoctal && '0' <= t && t <= '9') {
-			lastoctal = 0;
-			printf("\"\n\t.ascii \"%c", t);
-		} else {	
-			lastoctal = 0;
-			putchar(t);
-		}
+	/* Fix function call arguments. On x86, just add funarg */
+	for (r = p->n_right; r->n_op == CM; r = r->n_left) {
+		if (r->n_right->n_op != STARG)
+			r->n_right = block(FUNARG, r->n_right, NIL,
+			    r->n_right->n_type, r->n_right->n_df,
+			    r->n_right->n_sue);
 	}
-}
-
-/*
- * n integer words of zeros
- */
-void
-zecode(int n)
-{
-	printf("	.zero %d\n", n * (SZINT/SZCHAR));
-//	inoff += n * SZINT;
+	if (r->n_op != STARG) {
+		l = talloc();
+		*l = *r;
+		r->n_op = FUNARG;
+		r->n_left = l;
+		r->n_type = l->n_type;
+	}
+	if (kflag == 0)
+		return p;
+	/* Create an ASSIGN node for ebx */
+	l = block(REG, NIL, NIL, INT, 0, MKSUE(INT));
+	l->n_rval = EBX;
+	l = buildtree(ASSIGN, l, tempnode(gotnr, INT, 0, MKSUE(INT)));
+	if (p->n_right->n_op != CM) {
+		p->n_right = block(CM, l, p->n_right, INT, 0, MKSUE(INT));
+	} else {
+		for (r = p->n_right; r->n_left->n_op == CM; r = r->n_left)
+			;
+		r->n_left = block(CM, l, r->n_left, INT, 0, MKSUE(INT));
+	}
+	return p;
 }
 
 /*
@@ -188,26 +218,11 @@ fldty(struct symtab *p)
 {
 }
 
-/* p points to an array of structures, each consisting
- * of a constant value and a label.
- * The first is >=0 if there is a default label;
- * its value is the label number
- * The entries p[1] to p[n] are the nontrivial cases
+/*
  * XXX - fix genswitch.
  */
-void
-genswitch(int num, struct swents **p, int n)
+int
+mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
-	NODE *r;
-	int i;
-
-	/* simple switch code */
-	for (i = 1; i <= n; ++i) {
-		/* already in 1 */
-		r = tempnode(num, INT, 0, MKSUE(INT));
-		r = buildtree(NE, r, bcon(p[i]->sval));
-		cbranch(buildtree(NOT, r, NIL), bcon(p[i]->slab));
-	}
-	if (p[0]->slab > 0)
-		branch(p[0]->slab);
+	return 0;
 }

@@ -1,4 +1,4 @@
-/*      $Id: gcc_compat.c,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $     */
+/*      $Id: gcc_compat.c,v 1.1.1.3 2008/02/10 20:05:02 ragge Exp $     */
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -50,6 +50,7 @@ static struct kw {
 	{ "__const", NULL, 0 },
 	{ "__asm__", NULL, C_ASM },
 	{ "__inline__", NULL, C_FUNSPEC },
+	{ "__thread", NULL, 0 },
 	{ NULL, NULL, 0 },
 };
 
@@ -63,12 +64,15 @@ gcc_init()
 
 }
 
+#define	TS	"\n#pragma tls\n# %d\n"
+#define	TLLEN	sizeof(TS)+10
 /*
  * See if a string matches a gcc keyword.
  */
 int
 gcc_keyword(char *str, NODE **n)
 {
+	char tlbuf[TLLEN], *tw;
 	struct kw *kwp;
 	int i;
 
@@ -86,46 +90,14 @@ gcc_keyword(char *str, NODE **n)
 	case 3: /* __const */
 		*n = block(QUALIFIER, NIL, NIL, CON, 0, 0);
 		return C_QUALIFIER;
+	case 6: /* __thread */
+		snprintf(tlbuf, TLLEN, TS, lineno);
+		tw = &tlbuf[strlen(tlbuf)];
+		while (tw > tlbuf)
+			cunput(*--tw);
+		return -1;
 	}
 	cerror("gcc_keyword");
 	return 0;
-}
-
-static struct ren {
-	struct ren *next;
-	char *old, *new;
-} *renp;
-/*
- * Save a name for later renaming of a variable.
- */
-void
-gcc_rename(struct symtab *sp, char *newname)
-{
-	struct ren *ren = permalloc(sizeof(struct ren));
-
-	sp->sflags |= SRENAME;
-	ren->old = sp->sname;
-	ren->new = newstring(newname, strlen(newname)+1);
-	ren->next = renp;
-	renp = ren;
-}
-
-/*
- * Get a renamed variable.
- */
-char *
-gcc_findname(struct symtab *sp)
-{
-	struct ren *w;
-
-	if ((sp->sflags & SRENAME) == 0)
-		return sp->sname;
-
-	for (w = renp; w; w = w->next) {
-		if (w->old == sp->sname)
-			return w->new;
-	}
-	cerror("gcc_findname %s", sp->sname);
-	return NULL;
 }
 #endif

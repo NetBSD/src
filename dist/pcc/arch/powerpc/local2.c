@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.1 2007/10/27 14:43:34 ragge Exp $	*/
+/*	$Id: local2.c,v 1.1.1.2 2008/02/10 20:05:00 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -51,8 +51,10 @@ addstub(struct stub *list, char *name)
 			return;
 	}
 
-	s = malloc(sizeof(struct stub));
-	s->name = strdup(name);
+	if ((s = malloc(sizeof(struct stub))) == NULL)
+		cerror("addstub: malloc");
+	if ((s->name = strdup(name)) == NULL)
+		cerror("addstub: strdup");
 	DLIST_INSERT_BEFORE(list, s, link);
 }
 
@@ -81,11 +83,11 @@ prtprolog(struct interpass_prolog *ipp, int addto)
 	// get return address (not required for leaf function)
 	printf("	mflr %s\n", rnames[R0]);
 	// save registers R30 and R31
-	printf("	stmw %s, -8(%s)\n", rnames[R30], rnames[R1]);
+	printf("	stmw %s,-8(%s)\n", rnames[R30], rnames[R1]);
 	// save return address (not required for leaf function)
-	printf("	stw %s, 8(%s)\n", rnames[R0], rnames[R1]);
+	printf("	stw %s,8(%s)\n", rnames[R0], rnames[R1]);
 	// create the new stack frame
-	printf("	stwu %s, -%d(%s)\n", rnames[R1], addto, rnames[R1]);
+	printf("	stwu %s,-%d(%s)\n", rnames[R1], addto, rnames[R1]);
 
 	if (kflag) {
 		funcname = ipp->ipp_name;
@@ -165,10 +167,12 @@ prologue(struct interpass_prolog *ipp)
 #endif
 
 	ftype = ipp->ipp_type;
+#ifdef notdef
 	if (ipp->ipp_vis)
 		printf("	.globl %s\n", exname(ipp->ipp_name));
 	printf("	.align 2\n");
 	printf("%s:\n", exname(ipp->ipp_name));
+#endif
 	/*
 	 * We here know what register to save and how much to 
 	 * add to the stack.
@@ -193,7 +197,7 @@ eoftn(struct interpass_prolog *ipp)
 	/* return from function code */
 	for (i = ipp->ipp_regs, j = 0; i ; i >>= 1, j++) {
 		if (i & 1)
-			printf("	lwz %s, %d(%s)\n",
+			printf("\tlwz %s,%d(%s)\n",
 			    rnames[j], regoff[j], rnames[FPREG]);
 			
 	}
@@ -208,11 +212,11 @@ eoftn(struct interpass_prolog *ipp)
 		printf("	ret $4\n");
 	} else {
 		// unwind stack frame
-		printf("	lwz %s,0(%s)\n", rnames[R1], rnames[R1]);
-		printf("	lwz %s,8(%s)\n", rnames[R0], rnames[R1]);
-		printf("	mtlr %s\n", rnames[R0]);
-		printf("	lmw %s,-8(%s)\n", rnames[R30], rnames[R1]);
-		printf("	blr\n");
+		printf("\tlwz %s,0(%s)\n", rnames[R1], rnames[R1]);
+		printf("\tlwz %s,8(%s)\n", rnames[R0], rnames[R1]);
+		printf("\tmtlr %s\n", rnames[R0]);
+		printf("\tlmw %s,-8(%s)\n", rnames[R30], rnames[R1]);
+		printf("\tblr\n");
 	}
 }
 
@@ -253,7 +257,7 @@ hopcode(int f, int o)
  * Return type size in bytes.  Used by R2REGS, arg 2 to offset().
  */
 int
-tlen(p) NODE *p;
+tlen(NODE *p)
 {
 	switch(p->n_type) {
 		case CHAR:
@@ -322,10 +326,10 @@ twollcomp(NODE *p)
 	}
 	if (p->n_op >= ULE)
 		cb1 += 4, cb2 += 4;
-	expand(p, 0, "	cmpl UR,UL\n");
+	expand(p, 0, "\tcmplw UR,UL		; compare 64-bit values (upper)\n");
 	if (cb1) cbgen(cb1, s);
 	if (cb2) cbgen(cb2, e);
-	expand(p, 0, "	cmpl AR,AL\n");
+	expand(p, 0, "\tcmplw AR,AL		; (and lower)\n");
 	cbgen(p->n_op, e);
 	deflab(s);
 }
@@ -503,6 +507,7 @@ zzzcode(NODE *p, int c)
 	int pr, lr, s;
 	char *ch;
 #endif
+	char inst[50];
 
 	switch (c) {
 #if 0
@@ -599,66 +604,26 @@ zzzcode(NODE *p, int c)
 		break;
 #endif
 
-#if 0
 	case 'Q': /* emit struct assign */
-		/* XXX - optimize for small structs */
-		printf("\tpushl $%d\n", p->n_stsize);
-		expand(p, INAREG, "\tpushl AR\n");
-		expand(p, INAREG, "\tleal AL,%eax\n\tpushl %eax\n");
-		printf("\tcall memcpy\n");
-		printf("\taddl $12,%%esp\n");
-		break;
-#endif
-
-#if 0
-	case 'S': /* emit eventual move after cast from longlong */
-		pr = DECRA(p->n_reg, 0);
-		lr = p->n_left->n_rval;
-		switch (p->n_type) {
-		case CHAR:
-		case UCHAR:
-			if (rnames[pr][2] == 'l' && rnames[lr][2] == 'x' &&
-			    rnames[pr][1] == rnames[lr][1])
-				break;
-			if (rnames[lr][2] == 'x') {
-				printf("\tmovb %%%cl,%s\n",
-				    rnames[lr][1], rnames[pr]);
-				break;
-			}
-			/* Must go via stack */
-			s = BITOOR(freetemp(1));
-			printf("\tmovl %%e%ci,%d(%%ebp)\n", rnames[lr][1], s);
-			printf("\tmovb %d(%%ebp),%s\n", s, rnames[pr]);
-//			comperr("SCONV1 %s->%s", rnames[lr], rnames[pr]);
-			break;
-
-		case SHORT:
-		case USHORT:
-			if (rnames[lr][1] == rnames[pr][2] &&
-			    rnames[lr][2] == rnames[pr][3])
-				break;
-			printf("\tmovw %%%c%c,%%%s\n",
-			    rnames[lr][1], rnames[lr][2], rnames[pr]+2);
-			break;
-		case INT:
-		case UNSIGNED:
-			if (rnames[lr][1] == rnames[pr][2] &&
-			    rnames[lr][2] == rnames[pr][3])
-				break;
-			printf("\tmovl %%e%c%c,%s\n",
-				    rnames[lr][1], rnames[lr][2], rnames[pr]);
-			break;
-
-		default:
-			if (rnames[lr][1] == rnames[pr][2] &&
-			    rnames[lr][2] == rnames[pr][3])
-				break;
-			comperr("SCONV2 %s->%s", rnames[lr], rnames[pr]);
-			break;
+		if (p->n_stsize == 4) {
+			sprintf(inst, "\tlwz %s,0(AR)\n", rnames[R5]);
+			expand(p, INAREG, inst);
+			sprintf(inst, "\tstw %s,AL\n", rnames[R5]);
+			expand(p, INAREG, inst);
+			return;
 		}
+		
+		if ((p->n_stsize & ~0xffff) != 0) {
+			printf("\tlis %s,%d\n", rnames[R5], p->n_stsize & 0xffff);
+			printf("\taddis %s,%s,%d\n", rnames[R5], rnames[R5], (p->n_stsize >> 16) & 0xffff);
+		} else {
+			printf("\tli %s,%d\n", rnames[R5], p->n_stsize);
+		}
+		printf("\taddi %s,%s,%lld\n", rnames[R3], rnames[p->n_left->n_rval], p->n_left->n_lval);
+		printf("\tbl %s%s\n", exname("memcpy"),
+		    kflag ? "$stub" : "");
+		addstub(&stublist, exname("memcpy"));
 		break;
-
-#endif
 
 	default:
 		comperr("zzzcode %c", c);
@@ -682,6 +647,12 @@ canaddr(NODE *p)
 	    (o==UMUL && shumul(p->n_left)))
 		return(1);
 	return(0);
+}
+
+int
+fldexpand(NODE *p, int cookie, char **cp)
+{
+	return 0;
 }
 
 /*
@@ -751,24 +722,25 @@ conput(FILE *fp, NODE *p)
 	switch (p->n_op) {
 	case ICON:
 #if 0
-		printf("XXX type = %x\n", p->n_type);
+		if (p->n_sp)
+			printf(" [class=%d,level=%d] ", p->n_sp->sclass, p->n_sp->slevel);
 #endif
-		if (p->n_sp != NULL &&
-#if 0
-		   (p->n_sp->sclass != STATIC) &&
-#endif
-		   (p->n_sp->sclass != ILABEL))
-			s = exname(p->n_name);
-		else
+		if (p->n_sp == NULL || (p->n_sp->sclass == ILABEL ||
+		   (p->n_sp->sclass == STATIC && p->n_sp->slevel > 0)))
 			s = p->n_name;
+		else
+			s = exname(p->n_name);
 			
 		if (*s != '\0') {
 			if (kflag && p->n_sp && ISFTN(p->n_sp->stype)) {
-				fprintf(fp, "%s$stub", s);
-				addstub(&stublist, s);
-			} else if (kflag && p->n_sp) {
-//				printf("sclass=%x sflags=%x\n", p->n_sp->sclass, p->n_sp->sflags);
-				if (p->n_sp && (p->n_sp->sclass != STATIC && p->n_sp->sflags != SSTRING)) {
+				if (p->n_sp && p->n_sp->sclass == EXTERN) {
+					fprintf(fp, "%s$stub", s);
+					addstub(&stublist, s);
+				} else {
+					fprintf(fp, "%s", s);
+				}
+			} else if (kflag) {
+				if (p->n_sp && p->n_sp->sclass == EXTERN) {
 					fprintf(fp, "L%s$non_lazy_ptr", s);
 					addstub(&nlplist, s);
 				} else {
@@ -799,6 +771,25 @@ insput(NODE *p)
 }
 
 /*
+ * Print lower or upper name of 64-bit register.
+ */
+static void
+reg64name(int rval, int hi)
+{
+	int off = 3 * (hi != 0);
+
+#ifdef ELFABI
+	fputc('%', stdout);
+#endif
+
+	fprintf(stdout, "%c%c",
+		 rnames[rval][off],
+		 rnames[rval][off + 1]);
+	if (rnames[rval][off + 2])
+		fputc(rnames[rval][off + 2], stdout);
+}
+
+/*
  * Write out the upper address, like the upper register of a 2-register
  * reference, or the next memory location.
  */
@@ -809,11 +800,7 @@ upput(NODE *p, int size)
 	size /= SZCHAR;
 	switch (p->n_op) {
 	case REG:
-		fprintf(stdout, "%c%c",
-			 rnames[p->n_rval][3],
-			 rnames[p->n_rval][4]);
-		if (rnames[p->n_rval][5])
-			fputc(rnames[p->n_rval][5], stdout);
+		reg64name(p->n_rval, 1);
 		break;
 
 	case NAME:
@@ -843,15 +830,19 @@ adrput(FILE *io, NODE *p)
 
 	case NAME:
 		if (p->n_name[0] != '\0') {
-			if (kflag && p->n_sp && (p->n_sp->sclass == STATIC || p->n_sp->sflags != SSTRING)) {
+			if (kflag && p->n_sp && (p->n_sp->sclass == EXTERN || p->n_sp->sclass == EXTDEF)) {
 				fprintf(io, "L%s$non_lazy_ptr", exname(p->n_name));
 				addstub(&nlplist, exname(p->n_name));
 				fprintf(io, "-L%s$pb", exname(funcname));
-			} else if (kflag) {
+			} else if (kflag && p->n_sp && p->n_sp->sclass == STATIC && p->n_sp->slevel == 0) {
 				fprintf(io, "%s", exname(p->n_name));
 				fprintf(io, "-L%s$pb", exname(funcname));
-			} else
-				fputs(exname(p->n_name), io);
+			} else if (kflag && p->n_sp && (p->n_sp->sclass == ILABEL || (p->n_sp->sclass == STATIC && p->n_sp->sclass > 0))) {
+				fprintf(io, "%s", p->n_name);
+				fprintf(io, "-L%s$pb", exname(funcname));
+			} else {
+				fputs(p->n_name, io);
+			}
 			if (p->n_lval != 0)
 				fprintf(io, "+" CONFMT, p->n_lval);
 		} else
@@ -869,16 +860,11 @@ adrput(FILE *io, NODE *p)
 		conput(io, p);
 		return;
 
-	case MOVE:
 	case REG:
 		switch (p->n_type) {
 		case LONGLONG:
 		case ULONGLONG:
-			fprintf(stdout, "%c%c",
-				 rnames[p->n_rval][0],
-				 rnames[p->n_rval][1]);
-			if (rnames[p->n_rval][2])
-				fputc(rnames[p->n_rval][2], stdout);
+			reg64name(p->n_rval, 0);
 			break;
 		default:
 			fprintf(io, "%s", rnames[p->n_rval]);
@@ -920,7 +906,7 @@ cbgen(int o, int lab)
 {
 	if (o < EQ || o > UGT)
 		comperr("bad conditional branch: %s", opst[o]);
-	printf("	%s " LABFMT "\n", ccbranches[o-EQ], lab);
+	printf("\t%s " LABFMT "\n", ccbranches[o-EQ], lab);
 }
 
 static void
@@ -1041,62 +1027,44 @@ myoptim(struct interpass *ip)
 #endif
 }
 
-#if 0
-static char rl[] =
-  { EAX, EAX, EAX, EAX, EAX, EDX, EDX, EDX, EDX, ECX, ECX, ECX, EBX, EBX, ESI };
-static char rh[] =
-  { EDX, ECX, EBX, ESI, EDI, ECX, EBX, ESI, EDI, EBX, ESI, EDI, ESI, EDI, EDI };
-#endif
-
+/*
+ * Move data between registers.  While basic registers aren't a problem,
+ * we have to handle the special case of overlapping composite registers.
+ * It might just be easier to modify the register allocator so that
+ * moves between overlapping registers isn't possible.
+ */
 void
 rmove(int s, int d, TWORD t)
 {
-#if 0
-	int sl, sh, dl, dh;
-
 	switch (t) {
 	case LONGLONG:
 	case ULONGLONG:
-#if 1
-		sl = rl[s-EAXEDX];
-		sh = rh[s-EAXEDX];
-		dl = rl[d-EAXEDX];
-		dh = rh[d-EAXEDX];
-
-		/* sanity checks, remove when satisfied */
-		if (memcmp(rnames[s], rnames[sl]+1, 3) != 0 ||
-		    memcmp(rnames[s]+3, rnames[sh]+1, 3) != 0)
-			comperr("rmove source error");
-		if (memcmp(rnames[d], rnames[dl]+1, 3) != 0 ||
-		    memcmp(rnames[d]+3, rnames[dh]+1, 3) != 0)
-			comperr("rmove dest error");
-#define	SW(x,y) { int i = x; x = y; y = i; }
-		if (sl == dh || sh == dl) {
-			/* Swap if moving to itself */
-			SW(sl, sh);
-			SW(dl, dh);
+		if (s == d+1) {
+			/* dh = sl, copy low word first */
+			printf("\tmr ");
+			reg64name(d,0);
+			printf(",");
+			reg64name(s,0);
+			printf("\n");
+			printf("\tmr ");
+			reg64name(d,1);
+			printf(",");
+			reg64name(s,1);
+			printf("\n");
+		} else {
+			/* copy high word first */
+			printf("\tmr ");
+			reg64name(d,1);
+			printf(",");
+			reg64name(s,1);
+			printf("\n");
+			printf("\tmr ");
+			reg64name(d,0);
+			printf(",");
+			reg64name(s,0);
+			printf("\n");
 		}
-		if (sl != dl)
-			printf("	movl %s,%s\n", rnames[sl], rnames[dl]);
-		if (sh != dh)
-			printf("	movl %s,%s\n", rnames[sh], rnames[dh]);
-#else
-		if (memcmp(rnames[s], rnames[d], 3) != 0)
-			printf("	movl %%%c%c%c,%%%c%c%c\n",
-			    rnames[s][0],rnames[s][1],rnames[s][2],
-			    rnames[d][0],rnames[d][1],rnames[d][2]);
-		if (memcmp(&rnames[s][3], &rnames[d][3], 3) != 0)
-			printf("	movl %%%c%c%c,%%%c%c%c\n",
-			    rnames[s][3],rnames[s][4],rnames[s][5],
-			    rnames[d][3],rnames[d][4],rnames[d][5]);
-#endif
 		break;
-	case CHAR:
-	case UCHAR:
-		printf("	movb %s,%s\n", rnames[s], rnames[d]);
-		break;
-	case FLOAT:
-	case DOUBLE:
 	case LDOUBLE:
 #ifdef notdef
 		/* a=b()*c(); will generate this */
@@ -1104,45 +1072,52 @@ rmove(int s, int d, TWORD t)
 #endif
 		break;
 	default:
-		printf("	movl %s,%s\n", rnames[s], rnames[d]);
+		printf("\tmr %s,%s\n", rnames[d], rnames[s]);
 	}
-#endif
 }
 
 /*
  * For class c, find worst-case displacement of the number of
  * registers in the array r[] indexed by class.
+ *
+ * On PowerPC, we have:
+ *
+ * 32 32-bit registers (2 reserved)
+ * 16 64-bit pseudo registers
+ * 32 floating-point registers
  */
 int
 COLORMAP(int c, int *r)
 {
-	return 1;
-#if 0
-	int num;
+	int num = 0;
 
-	switch (c) {
-	case CLASSA:
-		num = r[CLASSB] > 4 ? 4 : r[CLASSB];
-		num += 2*r[CLASSC];
-		num += r[CLASSA];
-		return num < 6;
-	case CLASSB:
-		num = r[CLASSA];
-		num += 2*r[CLASSC];
-		num += r[CLASSB];
-		return num < 4;
-	case CLASSC:
-		num = r[CLASSA];
-		num += r[CLASSB] > 4 ? 4 : r[CLASSB];
-		num += 2*r[CLASSC];
-		return num < 5;
-	case CLASSD:
-		return r[CLASSD] < DREGCNT;
-	}
-	return 0; /* XXX gcc */
-#endif
+        switch (c) {
+        case CLASSA:
+                num += r[CLASSA];
+                num += 2*r[CLASSB];
+                return num < 30;
+        case CLASSB:
+                num += 2*r[CLASSB];
+                num += r[CLASSA];
+                return num < 16;
+        }
+        assert(0);
+        return 0; /* XXX gcc */
 }
 
+#ifdef ELFABI
+char *rnames[] = {
+	"%r0", "%r1", "%r2", "%r3","%r4","%r5", "%r6", "%r7", "%r8",
+	"%r9", "%r10", "%r11", "%r12", "%r13", "%r14", "%r15", "%r16",
+	"%r17", "%r18", "%r19", "%r20", "%r21", "%r22", "%r23", "%r24",
+	"%r25", "%r26", "%r27", "%r28", "%r29", "%r30", "%r31",
+	/* the order is flipped, because we are big endian */
+	"r4\0r3\0", "r5\0r4\0", "r6\0r5\0", "r7\0r6\0",
+	"r8\0r7\0", "r9\0r8\0", "r10r9\0", "r15r14", "r17r16",
+	"r19r18", "r21r20", "r23r22", "r25r24", "r27r26",
+	"r29r28", "r31r30",
+};
+#else
 char *rnames[] = {
 	"r0", "r1", "r2", "r3","r4","r5", "r6", "r7", "r8",
 	"r9", "r10", "r11", "r12", "r13", "r14", "r15", "r16",
@@ -1154,6 +1129,7 @@ char *rnames[] = {
 	"r19r18", "r21r20", "r23r22", "r25r24", "r27r26",
 	"r29r28", "r31r30",
 };
+#endif
 
 /*
  * Return a class suitable for a specific type.
@@ -1202,11 +1178,18 @@ special(NODE *p, int shape)
 		if (o == STCALL || o == USTCALL)
 			return SRREG;
 		break;
-#if 0
-	case SSYMBOL:
-		if (p->n_op == NAME && !kflag)
+	case SPCON:
+		if (o == ICON && p->n_name[0] == 0 && (p->n_lval & ~0xffff) == 0)
 			return SRDIR;
-#endif
+		break;
 	}
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }
