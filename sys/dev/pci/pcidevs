@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.927 2008/02/05 18:22:09 ichiro Exp $
+$NetBSD: pcidevs,v 1.928 2008/02/10 10:59:18 ichiro Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2480,6 +2480,9 @@ product INTEL 82Q33_IGD_1	0x29d3  82Q35 Integrated Graphics Device
 product INTEL 82965PM_HB	0x2a00  82965PM Host Bridge
 product INTEL 82965PM_IGD	0x2a02	82965PM Integrated Graphics Device
 product INTEL 82965PM_IGD_1	0x2a03	82965PM Integrated Graphics Device
+product INTEL 82965PM_MEI	0x2a04	82965PM MEI Controller
+product INTEL 82965PM_IDE	0x2a06	82965PM IDE Interface
+product INTEL 82965PM_KT	0x2a07	82965PM Serial Interface
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
