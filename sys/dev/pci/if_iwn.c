@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.3 2008/02/09 19:14:53 skrll Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.4 2008/02/10 10:33:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.3 2008/02/09 19:14:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.4 2008/02/10 10:33:10 skrll Exp $");
 
 
 /*
@@ -2577,8 +2577,8 @@ iwn_enable_tsf(struct iwn_softc *sc, struct ieee80211_node *ni)
 	mod = le64toh(tsf.tstamp) % val;
 	tsf.binitval = htole32((uint32_t)(val - mod));
 
-	DPRINTF(("TSF bintval=%u tstamp=%llu, init=%u\n",
-		ni->ni_intval, le64toh(tsf.tstamp), (uint32_t)(val - mod)));
+	DPRINTF(("TSF bintval=%u tstamp=%" PRIu64 ", init=%" PRIu64 "\n",
+	    ni->ni_intval, le64toh(tsf.tstamp), val - mod));
 
 	if (iwn_cmd(sc, IWN_CMD_TSF, &tsf, sizeof tsf, 1) != 0)
 		aprint_error_dev(sc->sc_dev, "could not enable TSF\n");
