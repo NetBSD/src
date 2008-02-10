@@ -1,8 +1,14 @@
-#	$NetBSD: Makefile,v 1.11 2008/02/09 22:32:38 jmmv Exp $
+#	$NetBSD: Makefile,v 1.12 2008/02/10 08:21:25 jmmv Exp $
 
 .include <bsd.own.mk>
 
-.if ${MKMODULAR} == "no"	# LKMS
+.if ${MKMODULAR} != "no"	# new module framework
+
+PROG=	modload
+SRCS=	main.c
+MAN=	modload.8
+
+.else				# LKMS
 
 PROG=	modload
 SRCS=	modload.c
@@ -15,14 +21,6 @@ SRCS+= a.out.c
 CFLAGS+=-DUSE_AOUT
 .endif
 
-.include <bsd.prog.mk>
-
-.else			# new module framework
-
-PROG=	modload
-SRCS=	main.c
-MAN=	modload.8
-
-.include <bsd.prog.mk>
-
 .endif
+
+.include <bsd.prog.mk>
