@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.31 2007/12/13 22:06:45 wiz Exp $
+.\" $NetBSD: veriexecctl.8,v 1.32 2008/02/10 19:32:23 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.31 2007/12/13 22:06:45 wiz Exp $
+.\"	$Id: veriexecctl.8,v 1.32 2008/02/10 19:32:23 elad Exp $
 .\"
-.Dd May 15, 2007
+.Dd February 10, 2008
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 subsystem
 .Sh SYNOPSIS
 .Nm
-.Op Fl ek
+.Op Fl ekv
 .Cm load Ar file
 .Nm
 .Cm delete Ar file | mount_point
@@ -212,6 +212,7 @@ default signatures file
 .El
 .Sh SEE ALSO
 .Xr veriexec 4 ,
+.Xr security 8 ,
 .Xr veriexecgen 8 ,
 .Xr veriexec 9
 .Sh HISTORY
