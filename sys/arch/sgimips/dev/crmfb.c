@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.13 2008/02/06 01:33:38 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.14 2008/02/10 16:01:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.13 2008/02/06 01:33:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.14 2008/02/10 16:01:30 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -242,13 +242,13 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 		sc->sc_depth = 32;
 
 	if (sc->sc_width == 0 || sc->sc_height == 0) {
-		printf("%s: device unusable if not setup by firmware\n",
+		aprint_error("%s: device unusable if not setup by firmware\n",
 		    sc->sc_dev.dv_xname);
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, 0 /* XXX */);
 		return;
 	}
 
-	printf("%s: initial resolution %dx%d\n",
+	aprint_normal("%s: initial resolution %dx%d\n",
 	    sc->sc_dev.dv_xname, sc->sc_width, sc->sc_height);
 
 	/*
@@ -258,7 +258,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_tiles_x = (sc->sc_width + 127) >> 7;
 	sc->sc_tiles_y = (sc->sc_height + 127) >> 7;
 	sc->sc_fbsize = 0x10000 * sc->sc_tiles_x * sc->sc_tiles_y;
-	printf("so we need %d x %d tiles -> %08x\n", sc->sc_tiles_x,
+	aprint_normal("so we need %d x %d tiles -> %08x\n", sc->sc_tiles_x,
 	    sc->sc_tiles_y, sc->sc_fbsize);
 
 	sc->sc_dmai.size = 256 * sizeof(uint16_t);
@@ -311,7 +311,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	}
 	sc->sc_scratch = (char *)KERNADDR(sc->sc_dma) + sc->sc_fbsize;
 
-	printf("%s: allocated %d byte fb @ %p (%p)\n", sc->sc_dev.dv_xname,
+	aprint_normal("%s: allocated %d byte fb @ %p (%p)\n", sc->sc_dev.dv_xname,
 	    sc->sc_fbsize, KERNADDR(sc->sc_dmai), KERNADDR(sc->sc_dma));
 
 	sc->sc_current_cell = 0;
@@ -331,9 +331,9 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	crmfb_defaultscreen.modecookie = NULL;
 
 	crmfb_setup_video(sc, 8);
-	crmfb_fill_rect(sc, 0, 0, sc->sc_width, sc->sc_height, 0xf);
-
 	crmfb_setup_palette(sc);
+	crmfb_fill_rect(sc, 0, 0, sc->sc_width, sc->sc_height,
+	    (defattr >> 16) & 0xff);
 
 	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
 	if (consdev != NULL && strcmp(consdev, "video()") == 0) {
@@ -481,6 +481,7 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 	vd = (struct vcons_data *)v;
 	sc = (struct crmfb_softc *)vd->cookie;
 
+	/* we probably shouldn't let anyone mmap the framebuffer */
 #if 1
 	if (offset >= 0 && offset < sc->sc_fbsize) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
@@ -488,14 +489,21 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 		return pa;
 	}
-#else
-	if (offset >= 0 && offset < sc->sc_fbsize) {
-		pa = bus_space_mmap(SGIMIPS_BUS_SPACE_NORMAL, sc->sc_fbh,
-		    offset, prot, SGIMIPS_BUS_SPACE_NORMAL);
-		printf("%s: %08llx -> %llx\n", __func__, offset, pa);
-		return pa;
-	}
 #endif
+	/*
+	 * here would the TLBs be but we don't want to show them to userland
+	 * so we return the page containing the status register 
+	 */
+	if ((offset >= 0x15000000) && (offset < 0x15002000))
+		return bus_space_mmap(sc->sc_iot, 0x15004000, 0, prot, 0);
+	/* now the actual engine registers */
+	if ((offset >= 0x15002000) && (offset < 0x15005000))
+		return bus_space_mmap(sc->sc_iot, offset, 0, prot, 0);
+	/* and now the scratch area */
+	if ((offset >= 0x15010000) && (offset < 0x15020000))
+		return bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
+		   sc->sc_dma.nsegs, offset - 0x15010000 + sc->sc_fbsize,
+		   prot, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	return -1;
 }
 
@@ -868,10 +876,6 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	d |= (h << CRMFB_FRM_TILESIZE_DEPTH_SHIFT);
 	crmfb_write_reg(sc, CRMFB_FRM_TILESIZE, d);
 
-	/* init framebuffer height, we use the trick that the Linux
-	 * driver uses to fool the CRM out of tiled mode and into
-	 * linear mode
-	 */
 	/*h = sc->sc_width * sc->sc_height / (512 / (depth >> 3));*/
 	h = sc->sc_height;
 	d = h << CRMFB_FRM_PIXSIZE_HEIGHT_SHIFT;
@@ -906,6 +910,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	v = (DMAADDR(sc->sc_dma) >> 16) & 0xffff;
 	tlbptr = 0;
 	tx = ((sc->sc_width + (tile_width - 1)) & ~(tile_width - 1)) / tile_width;
+
 	for (i = 0; i < sc->sc_tiles_y; i++) {
 		reg = 0;
 		shift = 64;
@@ -958,9 +963,11 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 		case 16:
 			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_16 |
 			    DE_MODE_TYPE_RGB | DE_MODE_PIXDEPTH_16;
+			break;
 		case 32:
 			mode = DE_MODE_TLB_A | DE_MODE_BUFDEPTH_32 |
 			    DE_MODE_TYPE_RGBA | DE_MODE_PIXDEPTH_32;
+			break;
 		default:
 			panic("%s: unsuported colour depth %d\n", __func__,
 			    depth);
