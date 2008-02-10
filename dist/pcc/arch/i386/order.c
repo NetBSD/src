@@ -1,4 +1,4 @@
-/*	$Id: order.c,v 1.1.1.1 2007/10/27 14:43:32 ragge Exp $	*/
+/*	$Id: order.c,v 1.1.1.2 2008/02/10 20:04:56 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -111,18 +111,6 @@ shumul(NODE *p)
 
 	/* Turns currently anything into OREG on x86 */
 	return SOREG;
-}
-
-/*
- * Rewrite increment/decrement operation.
- */
-int
-setincr(NODE *p)
-{
-	if (x2debug)
-		printf("setincr(%p)\n", p);
-
-	return(0);
 }
 
 /*
@@ -284,4 +272,31 @@ int
 setorder(NODE *p)
 {
 	return 0; /* nothing differs on x86 */
+}
+
+/*
+ * set registers in calling conventions live.
+ */
+int *
+livecall(NODE *p)
+{
+	static int r[] = { EAX, EBX, -1 };
+	int off = 1;
+
+#ifdef TLS
+	if (p->n_left->n_op == ICON &&
+	    strcmp(p->n_left->n_name, "___tls_get_addr@PLT") == 0)
+		off--;
+#endif
+
+	return kflag ? &r[off] : &r[2];
+}
+
+/*
+ * Signal whether the instruction is acceptable for this target.
+ */
+int
+acceptable(struct optab *op)
+{
+	return 1;
 }

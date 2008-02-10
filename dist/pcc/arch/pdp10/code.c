@@ -1,4 +1,4 @@
-/*	$Id: code.c,v 1.1.1.1 2007/09/20 13:08:46 abs Exp $	*/
+/*	$Id: code.c,v 1.1.1.2 2008/02/10 20:04:59 ragge Exp $	*/
 /*
  * Copyright (c) 2003 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -30,12 +30,37 @@
 # include "pass1.h"
 
 /*
- * cause the alignment to become a multiple of n
- * Nothing to do on PDP10.
+ * Define everything needed to print out some data (or text).
+ * This means segment, alignment, visibility, etc.
  */
 void
-defalign(int n)
+defloc(struct symtab *sp)
 {
+	char *nextsect = NULL;	/* notyet */
+	static char *loctbl[] = { "text", "data", "section .rodata" };
+	static int lastloc = -1;
+	TWORD t;
+	int s;
+
+	if (sp == NULL) {
+		lastloc = -1;
+		return;
+	}
+	t = sp->stype;
+	s = ISFTN(t) ? PROG : ISCON(cqual(t, sp->squal)) ? RDATA : DATA;
+	if (nextsect) {
+		printf("	.section %s\n", nextsect);
+		nextsect = NULL;
+		s = -1;
+	} else if (s != lastloc)
+		printf("	.%s\n", loctbl[s]);
+	lastloc = s;
+	if (sp->sclass == EXTDEF)
+		printf("	.globl %s\n", sp->soname);
+	if (sp->slevel == 0)
+		printf("%s:\n", sp->soname);
+	else
+		printf(LABFMT ":\n", sp->soffset);
 }
 
 /*
@@ -51,10 +76,41 @@ efcode()
  * indices in stab for the arguments; n is the number
  */
 void
-bfcode(struct symtab **a, int n)
+bfcode(struct symtab **sp, int cnt)
 {
-	send_passt(IP_LOCCTR, PROG);
-	defnam(cftnsp);
+	NODE *p, *q;
+	int i, n;
+
+	if (cftnsp->stype == STRTY+FTN || cftnsp->stype == UNIONTY+FTN) {
+		uerror("no struct return yet");
+	}
+	/* recalculate the arg offset and create TEMP moves */
+	for (n = 1, i = 0; i < cnt; i++) {
+		if (n < 8) {
+			p = tempnode(0, sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
+			spname = sp[i];
+			q = block(REG, NIL, NIL,
+			    sp[i]->stype, sp[i]->sdf, sp[i]->ssue);
+			q->n_rval = n;
+			p = buildtree(ASSIGN, p, q);
+			sp[i]->soffset = regno(p->n_left);
+			sp[i]->sflags |= STNODE;
+			ecomp(p);
+		} else {
+			sp[i]->soffset += SZINT * n;
+			if (xtemps) {
+				/* put stack args in temps if optimizing */
+				spname = sp[i];
+				p = tempnode(0, sp[i]->stype,
+				    sp[i]->sdf, sp[i]->ssue);
+				p = buildtree(ASSIGN, p, buildtree(NAME, 0, 0));
+				sp[i]->soffset = regno(p->n_left);
+				sp[i]->sflags |= STNODE;
+				ecomp(p);
+			}
+		}
+		n += szty(sp[i]->stype);
+	}
 }
 
 
@@ -67,6 +123,11 @@ bccode()
 	SETOFF(autooff, SZINT);
 }
 
+void
+bjobcode()
+{
+}
+
 /* called just before final exit */
 /* flag is 1 if errors, 0 if none */
 void
@@ -75,47 +136,67 @@ ejobcode(int flag )
 }
 
 /*
- * Print character t at position i in one string, until t == -1.
- * Locctr & label is already defined.
+ * Make a register node, helper for funcode.
  */
-void
-bycode(int t, int i)
+static NODE *
+mkreg(NODE *p, int n)
 {
-	static	int	lastoctal = 0;
+	NODE *r;
 
-	/* put byte i+1 in a string */
-
-	if (t < 0) {
-		if (i != 0)
-			puts("\"");
-	} else {
-		if (i == 0)
-			printf("\t.ascii \"");
-		if (t == '\\' || t == '"') {
-			lastoctal = 0;
-			putchar('\\');
-			putchar(t);
-		} else if (t < 040 || t >= 0177) {
-			lastoctal++;
-			printf("\\%o",t);
-		} else if (lastoctal && '0' <= t && t <= '9') {
-			lastoctal = 0;
-			printf("\"\n\t.ascii \"%c", t);
-		} else {	
-			lastoctal = 0;
-			putchar(t);
-		}
-	}
+	r = block(REG, NIL, NIL, p->n_type, p->n_df, p->n_sue);
+	if (szty(p->n_type) == 2)
+		n += 16;
+	r->n_rval = n;
+	return r;
 }
 
+static int regnum;
 /*
- * n integer words of zeros
+ * Move args to registers and emit expressions bottom-up.
  */
-void
-zecode(int n)
+static void
+fixargs(NODE *p)
 {
-	printf("	.block %d\n", n);
-	inoff += n * SZINT;
+	NODE *r;
+
+	if (p->n_op == CM) {
+		fixargs(p->n_left);
+		r = p->n_right;
+		if (r->n_op == STARG)
+			regnum = 9; /* end of register list */
+		else if (regnum + szty(r->n_type) > 8)
+			p->n_right = block(FUNARG, r, NIL, r->n_type,
+			    r->n_df, r->n_sue);
+		else
+			p->n_right = buildtree(ASSIGN, mkreg(r, regnum), r);
+	} else {
+		if (p->n_op == STARG) {
+			regnum = 9; /* end of register list */
+		} else {
+			r = talloc();
+			*r = *p;
+			r = buildtree(ASSIGN, mkreg(r, regnum), r);
+			*p = *r;
+			nfree(r);
+		}
+		r = p;
+	}
+	regnum += szty(r->n_type);
+}
+
+
+/*
+ * Called with a function call with arguments as argument.
+ * This is done early in buildtree() and only done once.
+ */
+NODE *
+funcode(NODE *p)
+{
+
+	regnum = 1;
+
+	fixargs(p->n_right);
+	return p;
 }
 
 /*
@@ -134,34 +215,11 @@ fldty(struct symtab *p)
 {
 }
 
-/* p points to an array of structures, each consisting
- * of a constant value and a label.
- * The first is >=0 if there is a default label;
- * its value is the label number
- * The entries p[1] to p[n] are the nontrivial cases
+/*
  * XXX - fix genswitch.
  */
-void
-genswitch(struct swents **p, int n)
+int
+mygenswitch(int num, TWORD type, struct swents **p, int n)
 {
-	int i;
-	char *s;
-
-	/* simple switch code */
-	for (i = 1; i <= n; ++i) {
-		/* already in 1 */
-		s = (isinlining ? permalloc(40) : tmpalloc(40));
-		if (p[i]->sval >= 0 && p[i]->sval <= 0777777)
-			sprintf(s, "	cain 1,0%llo", p[i]->sval);
-		else if (p[i]->sval < 0)
-			sprintf(s, "	camn 1,[ .long -0%llo ]", -p[i]->sval);
-		else
-			sprintf(s, "	camn 1,[ .long 0%llo ]", p[i]->sval);
-		send_passt(IP_ASM, s);
-		branch(p[i]->slab);
-	}
-	if (p[0]->slab > 0) {
-		send_passt(IP_DEFLAB, getlab()); /* XXX - fool optimizer */
-		branch(p[0]->slab);
-	}
+	return 0;
 }

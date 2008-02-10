@@ -1,4 +1,4 @@
-/*	$Id: ccconfig.h,v 1.1.1.2 2007/10/27 14:43:40 ragge Exp $	*/
+/*	$Id: ccconfig.h,v 1.1.1.3 2008/02/10 20:05:06 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -31,19 +31,37 @@
  * Various settings that controls how the C compiler works.
  */
 
+#ifndef LIBDIR
+#define LIBDIR "/usr/lib/"
+#endif
+
+/* XXX maybe configure could detect these? Or we should build our own? */
+#if defined(mach_i386)
+#define GCCLIBDIR LIBDIR "gcc/i586-suse-linux/4.1.0/"
+#elif defined(mach_powerpc)
+#define GCCLIBDIR LIBDIR "gcc/powerpc-unknown-linux/4.1.2/"
+#endif
+
 /* common cpp predefines */
 #define	CPPADD	{ "-D__linux__", "-D__ELF__", "-I" INCLUDEDIR "/pcc", NULL, }
+
 #define	DYNLINKER { "-dynamic-linker", "/lib/ld-linux.so.2", NULL }
-#define CRT0FILE "/usr/lib/crt1.o"
-#define STARTFILES { "/usr/lib/crti.o", "/usr/lib/gcc/i586-suse-linux/4.1.0/crtbegin.o", NULL }
+
+#define CRT0FILE LIBDIR "crt1.o"
 #define	LIBCLIBS { "-lc", "-lgcc_s", NULL }
-#define	ENDFILES { "/usr/lib/gcc/i586-suse-linux/4.1.0/crtend.o", "/usr/lib/crtn.o", NULL }
+
+#define STARTFILES { LIBDIR "crti.o", GCCLIBDIR "crtbegin.o", NULL }
+#define	ENDFILES { GCCLIBDIR "crtend.o", LIBDIR "crtn.o", NULL }
+
 #define STARTLABEL "_start"
 
 #if defined(mach_i386)
 #define	CPPMDADD { "-D__i386__", NULL, }
+#elif defined(mach_powerpc)
+#define	CPPMDADD { "-D__ppc__", NULL, }
 #else
 #error defines for arch missing
 #endif
 
 #define	STABS
+#define ELFABI

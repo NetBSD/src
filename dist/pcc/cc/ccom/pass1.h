@@ -1,4 +1,4 @@
-/*	$Id: pass1.h,v 1.1.1.2 2007/10/27 14:43:36 ragge Exp $	*/
+/*	$Id: pass1.h,v 1.1.1.3 2008/02/10 20:05:02 ragge Exp $	*/
 /*
  * Copyright(C) Caldera International Inc. 2001-2002. All rights reserved.
  *
@@ -35,6 +35,7 @@
 
 #include <sys/types.h>
 #include <stdarg.h>
+#include <stdint.h>
 
 #include "manifest.h"
 
@@ -88,14 +89,10 @@ extern	char *scnames(int);
 #define	SDYNARRAY	00200
 #define	SINLINE		00400
 #define	STNODE		01000
-#ifdef GCC_COMPAT
-#define	SRENAME		02000	/* Node is renamed */
-#endif
 #define	SASG		04000
-
-#ifndef FIXDEF
-#define FIXDEF(p)
-#endif
+#define	SLOCAL1		010000
+#define	SLOCAL2		020000
+#define	SLOCAL3		040000
 
 	/* alignment of initialized quantities */
 #ifndef AL_INIT
@@ -122,7 +119,7 @@ union dimfun {
  */
 struct suedef {
 	int	suesize;	/* Size of the struct */
-	struct	symtab **suelem;/* points to the list of elements */
+	struct	symtab *sylnk;	/* the list of elements */
 	int	suealign;	/* Alignment of this struct */
 };
 
@@ -134,8 +131,8 @@ union arglist {
 	union dimfun *df;
 	struct suedef *sue;
 };
-#define TNULL		INCREF(MOETY) /* pointer to MOETY -- impossible type */
-#define TELLIPSIS 	INCREF(INCREF(MOETY))
+#define TNULL		INCREF(FARG) /* pointer to FARG -- impossible type */
+#define TELLIPSIS 	INCREF(INCREF(FARG))
 
 /*
  * Symbol table definition.
@@ -152,12 +149,12 @@ struct symtab_hdr {
 
 struct	symtab {
 	struct	symtab_hdr hdr;
-	char	*sname;
+	char	*sname;		/* Symbol name */
+	char	*soname;	/* Written-out name */
 	TWORD	stype;		/* type word */
 	TWORD	squal;		/* qualifier word */
 	union	dimfun *sdf;	/* ptr to the dimension/prototype array */
 	struct	suedef *ssue;	/* ptr to the definition table */
-	int	suse;		/* line number of last use of the variable */
 };
 
 #define	snext	hdr.h_next
@@ -177,7 +174,7 @@ struct swents {			/* switch table */
 	CONSZ	sval;		/* case value */
 	int	slab;		/* associated label */
 };
-void genswitch(int, struct swents **, int);
+int mygenswitch(int, TWORD, struct swents **, int);
 
 extern	int blevel;
 extern	int instruct, got_type;
@@ -189,7 +186,6 @@ extern	char *ftitle;
 extern	struct symtab *cftnsp;
 extern	int autooff, maxautooff, argoff, strucoff;
 extern	int brkflag;
-extern	int lastloc;
 
 extern	OFFSZ inoff;
 
@@ -208,11 +204,9 @@ extern	int contlab;
 extern	int flostat;
 extern	int retlab;
 
-/*
- * Flags used in structures/unions
- */
-#define INSTRUCT	02
-#define INUNION		04
+/* pragma globals */
+extern int pragma_packed, pragma_aligned;
+extern char *pragma_renamed;
 
 /*
  * Flags used in the (elementary) flow analysis ...
@@ -231,13 +225,13 @@ extern	NODE
 	*buildtree(int, NODE *l, NODE *r),
 	*mkty(unsigned, union dimfun *, struct suedef *),
 	*rstruct(char *, int),
-	*dclstruct(struct rstack *, int),
-	*strend(char *),
-	*wstrend(char *),
+	*dclstruct(struct rstack *),
+	*strend(int gtype, char *),
 	*tymerge(NODE *typ, NODE *idp),
 	*stref(NODE *),
 	*offcon(OFFSZ, TWORD, union dimfun *, struct suedef *),
 	*bcon(int),
+	*xbcon(CONSZ, struct symtab *, TWORD),
 	*bpsize(NODE *),
 	*convert(NODE *, int),
 	*pconvert(NODE *),
@@ -251,25 +245,24 @@ extern	NODE
 	*optim(NODE *),
 	*clocal(NODE *),
 	*ccopy(NODE *),
-	*btsize(TWORD, union dimfun *, struct suedef *),
 	*tempnode(int, TWORD type, union dimfun *df, struct suedef *sue),
 	*doacall(NODE *f, NODE *a);
+NODE	*intprom(NODE *);
 OFFSZ	tsize(TWORD, union dimfun *, struct suedef *),
 	psize(NODE *);
 NODE *	typenode(NODE *new);
 void	spalloc(NODE *, NODE *, OFFSZ);
 char	*exname(char *);
+extern struct rstack *rpole;
 
 int oalloc(struct symtab *p, int *poff);
 void deflabel(char *);
-void deflab1(int);
-void setloc1(int);
 void gotolabel(char *);
 unsigned int esccon(char **sptr);
-void inline_start(char *name);
+void inline_start(struct symtab *sp);
 void inline_end(void);
 void inline_addarg(struct interpass *);
-void inline_ref(char *);
+void inline_ref(struct symtab *sp);
 void inline_prtout(void);
 void ftnarg(NODE *);
 struct rstack *bstruct(char *, int);
@@ -282,24 +275,22 @@ char *addstring(char *);
 char *addname(char *);
 char *newstring(char *, int len);
 void symclear(int level);
-void schedremove(struct symtab *p);
 struct symtab *hide(struct symtab *p);
+void soumemb(NODE *, char *, int);
 int talign(unsigned int, struct suedef *);
 void bfcode(struct symtab **, int);
 int chkftn(union arglist *, union arglist *);
 void branch(int);
 void cbranch(NODE *p, NODE *q);
 void extdec(struct symtab *);
-void commdec(struct symtab *);
-void lcommdec(struct symtab *);
+void defzero(struct symtab *);
 int falloc(struct symtab *p, int w, int new, NODE *pty);
 TWORD ctype(TWORD);  
 void ninval(CONSZ off, int fsz, NODE *);
 void infld(CONSZ off, int fsz, CONSZ);
 void zbits(CONSZ off, int fsz);
-void indata(CONSZ, int);
-void instring(char *);
-void defnam(struct symtab *);
+void instring(struct symtab *sp);
+void inwstring(struct symtab *sp);
 void plabel(int lab);
 void bjobcode(void);
 void ejobcode(int);
@@ -320,12 +311,23 @@ int cdope(int);
 void myp2tree(NODE *);
 void lcommprint(void);
 void lcommdel(struct symtab *);
+NODE *funcode(NODE *);
+struct symtab *enumhd(char *);
+NODE *enumdcl(struct symtab *);
+NODE *enumref(char *);
+CONSZ icons(NODE *);
+int mypragma(char **);
+void fixdef(struct symtab *);
+int cqual(TWORD t, TWORD q);
+void defloc(struct symtab *);
+int fldchk(int sz);
+int nncon(NODE *);
+void cunput(char c);
+
 
 #ifdef GCC_COMPAT
 void gcc_init(void);
 int gcc_keyword(char *, NODE **);
-void gcc_rename(struct symtab *sp, char *newname);
-char *gcc_findname(struct symtab *sp);
 #endif
 
 #ifdef STABS

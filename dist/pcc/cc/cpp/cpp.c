@@ -1,4 +1,4 @@
-/*	$Id: cpp.c,v 1.1.1.2 2007/10/27 14:43:35 ragge Exp $	*/
+/*	$Id: cpp.c,v 1.1.1.3 2008/02/10 20:05:01 ragge Exp $	*/
 
 /*
  * Copyright (c) 2004 Anders Magnusson (ragge@ludd.luth.se).
@@ -66,7 +66,7 @@
  * from V7 cpp, and at last ansi/c99 support.
  */
 
-#include "../../config.h"
+#include "config.h"
 
 #include <sys/wait.h>
 
@@ -84,7 +84,7 @@
 #include <alloca.h>
 #endif
 
-#include "../../mip/compat.h"
+#include "compat.h"
 #include "cpp.h"
 #include "y.tab.h"
 
@@ -106,7 +106,7 @@ int dflag;	/* debug printouts */
 
 int ofd;
 usch outbuf[CPPBUF];
-int obufp, istty;
+int obufp, istty, inmac;
 int Cflag, Mflag, dMflag;
 usch *Mfile;
 struct initar *initar;
@@ -268,6 +268,10 @@ main(int argc, char **argv)
 		nl = lookup((usch *)"__STDC__", ENTER);
 		savch(0); savch('1'); savch(OBJCT);
 		nl->value = stringbuf-1;
+
+		nl = lookup((usch *)"__STDC_VERSION__", ENTER);
+		savch(0); savstr((usch *)"199901L"); savch(OBJCT);
+		nl->value = stringbuf-1;
 	}
 
 	if (Mflag && !dMflag) {
@@ -424,7 +428,7 @@ line()
 		slow = 0;
 		return;
 	}
-	if (yylex() != STRING)
+	if (yylex() != STRING || yytext[0] == 'L')
 		goto bad;
 	c = strlen((char *)yytext);
 	if (llen < c) {
@@ -576,8 +580,8 @@ define()
 	if ((c = yylex()) == '(') {
 		narg = 0;
 		/* function-like macros, deal with identifiers */
+		c = definp();
 		for (;;) {
-			c = definp();
 			if (c == ')')
 				break;
 			if (c == ELLIPS) {
@@ -587,15 +591,22 @@ define()
 				break;
 			}
 			if (c == IDENT) {
+				/* make sure there is no arg of same name */
+				for (i = 0; i < narg; i++)
+					if (!strcmp((char *) args[i], yytext))
+						error("Duplicate macro "
+						  "parameter \"%s\"", yytext);
 				len = strlen(yytext);
 				args[narg] = alloca(len+1);
 				strlcpy((char *)args[narg], yytext, len+1);
 				narg++;
-				if ((c = definp()) == ',')
+				if ((c = definp()) == ',') {
+					if ((c = definp()) == ')')
+						goto bad;
 					continue;
+				}
 				if (c == ')')
 					break;
-				goto bad;
 			}
 			goto bad;
 		}
@@ -608,6 +619,10 @@ define()
 
 	while (c == WSPACE)
 		c = yylex();
+
+	/* replacement list cannot start with ## operator */
+	if (c == CONCAT)
+		goto bad;
 
 	/* parse replacement-list, substituting arguments */
 	savch('\0');
@@ -685,6 +700,9 @@ id:			savstr((usch *)yytext);
 	while (stringbuf > sbeg) {
 		if (stringbuf[-1] == ' ' || stringbuf[-1] == '\t')
 			stringbuf--;
+		/* replacement list cannot end with ## operator */
+		else if (stringbuf[-1] == CONC)
+			goto bad;
 		else
 			break;
 	}
@@ -786,7 +804,7 @@ static void
 pragoper(void)
 {
 	usch *opb;
-	int t;
+	int t, plev;
 
 	slow = 1;
 	putstr((usch *)"\n#pragma ");
@@ -797,27 +815,39 @@ pragoper(void)
 	if ((t = yylex()) == WSPACE)
 		t = yylex();
 	opb = stringbuf;
-	while (t != ')') {
+	for (plev = 0; ; t = yylex()) {
+		if (t == '(')
+			plev++;
+		if (t == ')')
+			plev--;
+		if (plev < 0)
+			break;
 		savstr((usch *)yytext);
-		t = yylex();
 	}
+
 	savch(0);
 	cunput(WARN);
 	unpstr(opb);
 	stringbuf = opb;
 	expmac(NULL);
+	cunput('\n');
 	while (stringbuf > opb)
 		cunput(*--stringbuf);
-	if ((t = yylex()) != STRING)
-		goto bad;
-	opb = (usch *)yytext;
-	if (*opb++ == 'L')
-		opb++;
-	while ((t = *opb++) != '\"') {
-		if (t == '\\' && (*opb == '\"' || *opb == '\\'))
-			t = *opb++;
-		putch(t);
+	while ((t = yylex()) != '\n') {
+		if (t == WSPACE)
+			continue;
+		if (t != STRING)
+			goto bad;
+		opb = (usch *)yytext;
+		if (*opb++ == 'L')
+			opb++;
+		while ((t = *opb++) != '\"') {
+			if (t == '\\' && (*opb == '\"' || *opb == '\\'))
+				t = *opb++;
+			putch(t);
+		}
 	}
+
 	putch('\n');
 	prtline();
 	return;
@@ -1093,6 +1123,7 @@ expdef(vp, rp, gotwarn)
 	 * read arguments and store them on heap.
 	 * will be removed just before return from this function.
 	 */
+	inmac = 1;
 	sptr = stringbuf;
 	for (i = 0; i < narg && c != ')'; i++) {
 		args[i] = stringbuf;
@@ -1140,10 +1171,13 @@ expdef(vp, rp, gotwarn)
 		
 	}
 	if (narg == 0 && ellips == 0)
-		c = yylex();
+		while ((c = yylex()) == WSPACE || c == '\n')
+			;
+
 	if (c != ')' || (i != narg && ellips == 0) || (i < narg && ellips == 1))
 		error("wrong arg count");
 
+	inmac = 0;
 	while (gotwarn--)
 		cunput(WARN);
 
