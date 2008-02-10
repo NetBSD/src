@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic_cas.S,v 1.3 2007/12/22 23:19:40 mrg Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.4 2008/02/10 13:40:31 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -44,17 +44,30 @@ ENTRY_NOPROFILE(_atomic_cas_32)
 	cas	[%o0], %o1, %o2
 	retl
 	 mov	%o2, %o0
+
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
 ATOMIC_OP_ALIAS(atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
+
+ATOMIC_OP_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)
+ATOMIC_OP_ALIAS(atomic_cas_uint_ni,_atomic_cas_32)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32)
 
 ENTRY_NOPROFILE(_atomic_cas_64)
 	casx	[%o0], %o1, %o2
 	retl
 	 mov	%o2, %o0
-ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 
+ATOMIC_OP_ALIAS(atomic_cas_64,_atomic_cas_64)
 ATOMIC_OP_ALIAS_SIZE(atomic_cas_ulong,_atomic_cas)
 STRONG_ALIAS_SIZE(_atomic_cas_ulong,_atomic_cas)
 ATOMIC_OP_ALIAS_SIZE(atomic_cas_ptr,_atomic_cas)
 STRONG_ALIAS_SIZE(_atomic_cas_ptr,_atomic_cas)
+
+ATOMIC_OP_ALIAS(atomic_cas_64_ni,_atomic_cas_64)
+STRONG_ALIAS_SIZE(_atomic_cas_64_ni,_atomic_cas)
+ATOMIC_OP_ALIAS_SIZE(atomic_cas_ulong_ni,_atomic_cas)
+STRONG_ALIAS_SIZE(_atomic_cas_ulong_ni,_atomic_cas)
+ATOMIC_OP_ALIAS_SIZE(atomic_cas_ptr_ni,_atomic_cas)
+STRONG_ALIAS_SIZE(_atomic_cas_ptr_ni,_atomic_cas)
