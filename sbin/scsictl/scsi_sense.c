@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_sense.c,v 1.6 2005/02/05 13:37:39 xtraeme Exp $	*/
+/*	$NetBSD: scsi_sense.c,v 1.7 2008/02/11 20:29:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -46,12 +46,11 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: scsi_sense.c,v 1.6 2005/02/05 13:37:39 xtraeme Exp $");
+__RCSID("$NetBSD: scsi_sense.c,v 1.7 2008/02/11 20:29:15 dyoung Exp $");
 #endif
 
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/scsiio.h>
 #include <stdio.h>
 #include <string.h>
@@ -59,7 +58,6 @@ __RCSID("$NetBSD: scsi_sense.c,v 1.6 2005/02/05 13:37:39 xtraeme Exp $");
 #include <dev/scsipi/scsipi_all.h>
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipiconf.h>
-#include <dev/scsipi/scsiconf.h>
 
 #include "extern.h"
 
