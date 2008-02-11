@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.11 2008/01/25 21:41:48 xtraeme Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.12 2008/02/11 08:23:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.11 2008/01/25 21:41:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.12 2008/02/11 08:23:48 xtraeme Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -246,6 +246,7 @@ ahci_attach(struct ahci_softc *sc)
 	    sc->sc_atac.atac_nchannels, sc->sc_ncmds,
 	    ahci_cap & ~(AHCI_CAP_NPMASK|AHCI_CAP_NCS));
 	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA;
+	sc->sc_atac.atac_cap |= sc->sc_atac_capflags;
 	sc->sc_atac.atac_pio_cap = 4;
 	sc->sc_atac.atac_dma_cap = 2;
 	sc->sc_atac.atac_udma_cap = 6;
