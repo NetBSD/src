@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.12 2006/11/16 01:32:51 christos Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.13 2008/02/11 21:43:46 dyoung Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -226,9 +226,9 @@ ahc_targetcmd_offset(struct ahc_softc *ahc, u_int index)
 }
 
 /******************************** Debugging ***********************************/
-static __inline char *ahc_name(struct ahc_softc *ahc);
+static inline const char *ahc_name(struct ahc_softc *ahc);
 
-static __inline char *
+static inline const char *
 ahc_name(struct ahc_softc *ahc)
 {
 	return (ahc->name);
