@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.65.2.7 2008/02/04 09:25:10 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.65.2.8 2008/02/11 15:00:10 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.65.2.7 2008/02/04 09:25:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.65.2.8 2008/02/11 15:00:10 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -533,10 +533,12 @@ swapcluster_flush(struct swapcluster *swc, bool now)
 	 * now start the pageout.
 	 */
 
-	uvmexp.pdpageouts++;
-	uvm_pageout_start(nused);
-	error = uvm_swap_put(slot, swc->swc_pages, nused, 0);
-	KASSERT(error == 0);
+	if (nused > 0) {
+		uvmexp.pdpageouts++;
+		uvm_pageout_start(nused);
+		error = uvm_swap_put(slot, swc->swc_pages, nused, 0);
+		KASSERT(error == 0);
+	}
 
 	/*
 	 * zero swslot to indicate that we are

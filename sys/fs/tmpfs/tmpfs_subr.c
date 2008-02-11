@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.21.4.9 2008/02/04 09:24:03 yamt Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.21.4.10 2008/02/11 14:59:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.21.4.9 2008/02/04 09:24:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.21.4.10 2008/02/11 14:59:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -858,7 +858,7 @@ int
 tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 {
 	int error;
-	u_int newpages, oldpages;
+	unsigned int newpages, oldpages;
 	struct tmpfs_mount *tmp;
 	struct tmpfs_node *node;
 	off_t oldsize;
@@ -928,7 +928,7 @@ out:
  * Returns information about the number of available memory pages,
  * including physical and virtual ones.
  *
- * If 'total' is true, the value returned is the total amount of memory 
+ * If 'total' is true, the value returned is the total amount of memory
  * pages configured for the system (either in use or free).
  * If it is FALSE, the value returned is the amount of free memory pages.
  *

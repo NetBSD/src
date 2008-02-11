@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.20.2.7 2008/02/04 09:23:25 yamt Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.20.2.8 2008/02/11 14:59:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.20.2.7 2008/02/04 09:23:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.20.2.8 2008/02/11 14:59:33 yamt Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1309,7 +1309,7 @@ re_txeof(struct rtk_softc *sc)
 			 * them out. This only seems to be required with
 			 * the PCIe devices.
 			 */
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 		}
 	} else
 		ifp->if_timer = 0;
@@ -1672,7 +1672,7 @@ re_start(struct ifnet *ifp)
 		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
 			CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
 		else
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 
 		/*
 		 * Use the countdown timer for interrupt moderation.
@@ -1900,17 +1900,23 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > RE_JUMBO_MTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				rtk_setmulti(sc);
-			error = 0;
-		}
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		else if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			rtk_setmulti(sc);
 		break;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ev64260_locore.S,v 1.7 2005/05/31 00:45:03 chs Exp $	*/
+/*	$NetBSD: ev64260_locore.S,v 1.7.2.1 2008/02/11 14:59:27 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -68,6 +68,8 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
+GLOBAL(oeacpufeat)
+	.long	0			/* cpu features */
 /*
  * File-scope for locore.S
  */

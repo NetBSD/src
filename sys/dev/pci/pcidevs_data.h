@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.725.2.8 2008/01/21 09:44:10 yamt Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.725.2.9 2008/02/11 14:59:39 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.926 2008/01/11 20:47:21 tnn Exp
+ *	NetBSD: pcidevs,v 1.928 2008/02/10 10:59:18 ichiro Exp
  */
 
 /*
@@ -8792,6 +8792,18 @@ static const struct pci_product pci_products[] = {
 	    "82965PM Integrated Graphics Device",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_MEI,
+	    "82965PM MEI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IDE,
+	    "82965PM IDE Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_KT,
+	    "82965PM Serial Interface",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
 	    "31244 Serial ATA Controller",
 	},
@@ -11584,6 +11596,38 @@ static const struct pci_product pci_products[] = {
 	    "5C552 PCI-CardBus bridge/Firewire",
 	},
 	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C592,
+	    "5C592 PCI-CardBus bridge/MS/SD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C593,
+	    "5C593 PCI-CardBus bridge/MS/SD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C821,
+	    "5C821 PCI-CardBus bridge/MS/SD/MMC/SC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C822,
+	    "5C822 PCI-CardBus bridge/MS/SD/MMC/SC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C832,
+	    "5C832 PCI-SD/MMC/MMC+/MS/xD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C843,
+	    "5C843 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C847,
+	    "5C847 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C853,
+	    "5C853 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/SC/Firewire",
+	},
+	{
 	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
 	    "N2",
 	},
@@ -13976,4 +14020,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2895;
+const int pci_nproducts = 2906;

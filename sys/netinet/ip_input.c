@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.218.2.8 2008/01/21 09:47:16 yamt Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.218.2.9 2008/02/11 15:00:04 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218.2.8 2008/01/21 09:47:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.218.2.9 2008/02/11 15:00:04 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -417,6 +417,7 @@ ip_init(void)
 	for (i = 0; i < IPREASS_NHASH; i++)
 	    	LIST_INIT(&ipq[i]);
 
+	ip_initid();
 	ip_id = time_second & 0xfffff;
 
 	ipintrq.ifq_maxlen = ipqmaxlen;

@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.3.6.7 2008/01/21 09:43:57 yamt Exp $ */
+/* $NetBSD: if_msk.c,v 1.3.6.8 2008/02/11 14:59:38 yamt Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.42 2007/01/17 02:43:02 krw Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.3.6.7 2008/01/21 09:43:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.3.6.8 2008/02/11 14:59:38 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -706,7 +706,8 @@ msk_ioctl(struct ifnet *ifp, u_long command, void *data)
 				error = EINVAL;
 		} else if (ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 	default:
 		DPRINTFN(2, ("msk_ioctl ETHER\n"));

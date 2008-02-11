@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.405.2.7 2008/01/21 09:44:50 yamt Exp $
+$NetBSD: usbdevs,v 1.405.2.8 2008/02/11 14:59:52 yamt Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -662,6 +662,7 @@ product ANCHOR EZUSB		0x2131	EZUSB
 product ANCHOR EZLINK		0x2720	EZLINK
 
 /* AnyDATA Inc. products */
+product ANYDATA A2502		0x6202	NTT DoCoMo A2502
 product ANYDATA ADU_E100H	0x6501	ADU-E100H
 
 /* AOX, Inc. products */

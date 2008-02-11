@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.15.2.7 2008/01/21 09:44:00 yamt Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.15.2.8 2008/02/11 14:59:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.15.2.7 2008/01/21 09:44:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.15.2.8 2008/02/11 14:59:39 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1047,14 +1047,16 @@ sk_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	default:
 	        DPRINTFN(2, ("sk_ioctl ETHER\n"));
-		error = ether_ioctl(ifp, command, data);
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
 
-		if ( error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				sk_setmulti(sc_if);
-				DPRINTFN(2, ("sk_ioctl setmulti called\n"));
-			}
-			error = 0;
+		error = 0;
+
+		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			sk_setmulti(sc_if);
+			DPRINTFN(2, ("sk_ioctl setmulti called\n"));
 		}
 		break;
 	}

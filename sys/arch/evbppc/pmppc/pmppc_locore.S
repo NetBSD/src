@@ -1,4 +1,4 @@
-/*	$NetBSD: pmppc_locore.S,v 1.2.4.2 2007/10/27 11:25:58 yamt Exp $	*/
+/*	$NetBSD: pmppc_locore.S,v 1.2.4.3 2008/02/11 14:59:27 yamt Exp $	*/
 /*	$OpenBSD: locore.S,v 1.4 1997/01/26 09:06:38 rahnds Exp $	*/
 
 /*
@@ -70,7 +70,8 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
-
+GLOBAL(oeacpufeat)
+	.long	0			/* cpu features */
 /*
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to
  * mark the start of kernel text.

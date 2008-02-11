@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.57.2.8 2008/01/21 09:47:02 yamt Exp $ */
+/*	$NetBSD: if_gre.c,v 1.57.2.9 2008/02/11 14:59:59 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57.2.8 2008/01/21 09:47:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.57.2.9 2008/02/11 14:59:59 yamt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -1333,10 +1333,10 @@ gre_ioctl(struct ifnet *ifp, const u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
-		ifp->if_mtu = ifr->ifr_mtu;
-		break;
+		/*FALLTHROUGH*/
 	case SIOCGIFMTU:
-		ifr->ifr_mtu = sc->sc_if.if_mtu;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

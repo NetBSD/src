@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_counter.h,v 1.2.18.2 2007/10/27 11:27:44 yamt Exp $	*/
+/*	$NetBSD: cpu_counter.h,v 1.2.18.3 2008/02/11 14:59:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -46,6 +46,7 @@ cpu_counter32(void)
 	uint32_t rv, rtcu, scratch;
 
 	__asm volatile (
+#ifdef PPC_OEA601
 	    "mfpvr	%0		\n"
 	    "srwi	%0,%0,16	\n"
 	    "cmpwi	%0,%3		\n"
@@ -59,6 +60,7 @@ cpu_counter32(void)
 	    "add	%1,%2,%0	\n"
 	    "b		2f		\n"
 	    "1:				\n"
+#endif /* PPC_OEA601 */
 #ifdef PPC_IBM403
 	    "mftblo	%1		\n"
 #else

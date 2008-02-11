@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.159.2.9 2008/02/04 09:24:36 yamt Exp $	*/
+/*	$NetBSD: if.c,v 1.159.2.10 2008/02/11 14:59:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.159.2.9 2008/02/04 09:24:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.159.2.10 2008/02/11 14:59:59 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -1359,14 +1359,17 @@ ifunit(const char *name)
 }
 
 /* common */
-static int
-ifioctl_common(u_long cmd, struct ifnet *ifp, struct ifreq *ifr,
-    struct ifcapreq *ifcr, struct ifdatareq *ifdr)
+int
+ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 {
 	int s;
+	struct ifreq *ifr;
+	struct ifcapreq *ifcr;
+	struct ifdatareq *ifdr;
 
 	switch (cmd) {
 	case SIOCSIFCAP:
+		ifcr = data;
 		if ((ifcr->ifcr_capenable & ~ifp->if_capabilities) != 0)
 			return EINVAL;
 
@@ -1412,8 +1415,11 @@ ifioctl_common(u_long cmd, struct ifnet *ifp, struct ifreq *ifr,
 		if (ifp->if_capenable & IFCAP_CSUM_UDPv6_Rx) {
 			ifp->if_csum_flags_rx |= M_CSUM_UDPv6;
 		}
-		return ENETRESET;
+		if (ifp->if_flags & IFF_UP)
+			return ENETRESET;
+		return 0;
 	case SIOCSIFFLAGS:
+		ifr = data;
 		if (ifp->if_flags & IFF_UP && (ifr->ifr_flags & IFF_UP) == 0) {
 			s = splnet();
 			if_down(ifp);
@@ -1428,35 +1434,43 @@ ifioctl_common(u_long cmd, struct ifnet *ifp, struct ifreq *ifr,
 			(ifr->ifr_flags &~ IFF_CANTCHANGE);
 		break;
 	case SIOCGIFFLAGS:
+		ifr = data;
 		ifr->ifr_flags = ifp->if_flags;
 		break;
 
 	case SIOCGIFMETRIC:
+		ifr = data;
 		ifr->ifr_metric = ifp->if_metric;
 		break;
 
 	case SIOCGIFMTU:
+		ifr = data;
 		ifr->ifr_mtu = ifp->if_mtu;
 		break;
 
 	case SIOCGIFDLT:
+		ifr = data;
 		ifr->ifr_dlt = ifp->if_dlt;
 		break;
 
 	case SIOCGIFCAP:
+		ifcr = data;
 		ifcr->ifcr_capabilities = ifp->if_capabilities;
 		ifcr->ifcr_capenable = ifp->if_capenable;
 		break;
 
 	case SIOCSIFMETRIC:
+		ifr = data;
 		ifp->if_metric = ifr->ifr_metric;
 		break;
 
 	case SIOCGIFDATA:
+		ifdr = data;
 		ifdr->ifdr_data = ifp->if_data;
 		break;
 
 	case SIOCZIFDATA:
+		ifdr = data;
 		ifdr->ifdr_data = ifp->if_data;
 		/*
 		 * Assumes that the volatile counters that can be
@@ -1465,6 +1479,18 @@ ifioctl_common(u_long cmd, struct ifnet *ifp, struct ifreq *ifr,
 		memset(&ifp->if_data.ifi_ipackets, 0, sizeof(ifp->if_data) -
 		    offsetof(struct if_data, ifi_ipackets));
 		break;
+	case SIOCSIFMTU:
+		ifr = data;
+		if (ifp->if_mtu == ifr->ifr_mtu)
+			break;
+		ifp->if_mtu = ifr->ifr_mtu;
+		/*
+		 * If the link MTU changed, do network layer specific procedure.
+		 */
+#ifdef INET6
+		nd6_setmtu(ifp);
+#endif
+		return ENETRESET;
 	default:
 		return EOPNOTSUPP;
 	}
@@ -1481,7 +1507,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
-	int s, error = 0;
+	int error = 0;
 #if defined(COMPAT_OSOCK) || defined(COMPAT_OIFREQ)
 	u_long ocmd = cmd;
 #endif
@@ -1574,55 +1600,11 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	switch (cmd) {
 
 	case SIOCSIFFLAGS:
-		ifioctl_common(cmd, ifp, ifr, NULL, NULL);
+		ifioctl_common(ifp, cmd, data);
 		if (ifp->if_ioctl)
 			(void)(*ifp->if_ioctl)(ifp, cmd, data);
 		break;
 
-	case SIOCSIFCAP:
-		if (ifp->if_ioctl == NULL)
-			return EOPNOTSUPP;
-
-		/* Must prevent race with packet reception here. */
-		s = splnet();
-		error = ifioctl_common(cmd, ifp, NULL, ifcr, NULL);
-		if (error != ENETRESET)
-			;
-		else if (ifp->if_flags & IFF_UP) {
-			struct ifreq ifrq;
-
-			ifrq.ifr_flags = ifp->if_flags;
-			/*
-			 * Only kick the interface if it's up.  If it's
-			 * not up now, it will notice the cap enables
-			 * when it is brought up later.
-			 */
-			(void)(*ifp->if_ioctl)(ifp, SIOCSIFFLAGS,
-			    (void *)&ifrq);
-			error = 0;
-		}
-		splx(s);
-
-		break;
-
-	case SIOCSIFMTU:
-	{
-		u_long oldmtu = ifp->if_mtu;
-
-		if (ifp->if_ioctl == NULL)
-			return EOPNOTSUPP;
-		error = (*ifp->if_ioctl)(ifp, cmd, data);
-
-		/*
-		 * If the link MTU changed, do network layer specific procedure.
-		 */
-		if (ifp->if_mtu != oldmtu) {
-#ifdef INET6
-			nd6_setmtu(ifp);
-#endif
-		}
-		break;
-	}
 	case SIOCSIFPHYADDR:
 	case SIOCDIFPHYADDR:
 #ifdef INET6
@@ -1643,13 +1625,15 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	case SIOCS80211POWER:
 	case SIOCS80211BSSID:
 	case SIOCS80211CHANNEL:
+	case SIOCSIFCAP:
+	case SIOCSIFMTU:
 		if (ifp->if_ioctl == NULL)
 			return EOPNOTSUPP;
 		error = (*ifp->if_ioctl)(ifp, cmd, data);
 		break;
 
 	default:
-		error = ifioctl_common(cmd, ifp, ifr, ifcr, ifdr);
+		error = ifioctl_common(ifp, cmd, data);
 		if (error != EOPNOTSUPP)
 			break;
 		if (so->so_proto == NULL)
@@ -1667,7 +1651,7 @@ ifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 	if (((oif_flags ^ ifp->if_flags) & IFF_UP) != 0) {
 #ifdef INET6
 		if ((ifp->if_flags & IFF_UP) != 0) {
-			s = splnet();
+			int s = splnet();
 			in6_if_up(ifp);
 			splx(s);
 		}

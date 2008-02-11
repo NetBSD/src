@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.h,v 1.157.2.9 2008/02/11 14:44:23 yamt Exp $ */
+/* $NetBSD: syscall.h,v 1.157.2.10 2008/02/11 15:00:09 yamt Exp $ */
 
 /*
  * System call numbers.
@@ -1018,10 +1018,10 @@
 /* syscall: "kevent" ret: "int" args: "int" "const struct kevent *" "size_t" "struct kevent *" "size_t" "const struct timespec *" */
 #define	SYS_kevent	345
 
-/* syscall: "_sched_setparam" ret: "int" args: "pid_t" "lwpid_t" "const struct sched_param *" */
+/* syscall: "_sched_setparam" ret: "int" args: "pid_t" "lwpid_t" "int" "const struct sched_param *" */
 #define	SYS__sched_setparam	346
 
-/* syscall: "_sched_getparam" ret: "int" args: "pid_t" "lwpid_t" "struct sched_param *" */
+/* syscall: "_sched_getparam" ret: "int" args: "pid_t" "lwpid_t" "int *" "struct sched_param *" */
 #define	SYS__sched_getparam	347
 
 /* syscall: "_sched_setaffinity" ret: "int" args: "pid_t" "lwpid_t" "size_t" "void *" */
