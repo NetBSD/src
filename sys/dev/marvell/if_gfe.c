@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.16.4.4 2008/01/21 09:43:22 yamt Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.16.4.5 2008/02/11 14:59:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16.4.4 2008/01/21 09:43:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.16.4.5 2008/02/11 14:59:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -485,7 +485,8 @@ gfe_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = EINVAL;
 			break;
 		}
-		ifp->if_mtu = ifr->ifr_mtu;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	default:

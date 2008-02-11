@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6.12.2 2007/09/03 14:26:27 yamt Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6.12.3 2008/02/11 14:59:27 yamt Exp $	*/
 
 /*	$OpenBSD: vmparam.h,v 1.17 2001/09/22 18:00:09 miod Exp $	*/
 
@@ -45,9 +45,6 @@
  */
 #define	USRSTACK	0x70000000		/* Start of user stack */
 #define	SYSCALLGATE	0xC0000000		/* syscall gateway page */
-
-/* Alignment requirement for a uspace. */
-#define	USPACE_ALIGN	PAGE_SIZE
 
 /*
  * Virtual memory related constants, all in bytes

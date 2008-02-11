@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.8.2.2 2007/09/03 14:28:59 yamt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.8.2.3 2008/02/11 14:59:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.2 2007/09/03 14:28:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.8.2.3 2008/02/11 14:59:29 yamt Exp $");
 
 #define DEBUG 1
 
@@ -74,13 +74,13 @@ invaldcache(vaddr_t va, bus_size_t sz)
 	KASSERT(sz != 0);
 
 	__asm volatile("eieio;");
-	off = (u_int)va & (CACHELINESIZE - 1);
+	off = (u_int)va & (curcpu()->ci_ci.dcache_line_size - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > 0) {
 		__asm volatile("dcbi 0, %0;" :: "r"(va));
-		va += CACHELINESIZE;
-		sz -= CACHELINESIZE;
+		va += curcpu()->ci_ci.dcache_line_size;
+		sz -= curcpu()->ci_ci.dcache_line_size;
 	}
 	__asm volatile("sync;");
 }
@@ -94,13 +94,13 @@ flushdcache(vaddr_t va, bus_size_t sz)
 	KASSERT(sz != 0);
 
 	__asm volatile("eieio;");
-	off = (u_int)va & (CACHELINESIZE - 1);
+	off = (u_int)va & (curcpu()->ci_ci.dcache_line_size - 1);
 	sz += off;
 	va -= off;
-	while ((int)sz > CACHELINESIZE) {
+	while ((int)sz > curcpu()->ci_ci.dcache_line_size) {
 		__asm volatile("dcbf 0, %0;" :: "r"(va));
-		va += CACHELINESIZE;
-		sz -= CACHELINESIZE;
+		va += curcpu()->ci_ci.dcache_line_size;
+		sz -= curcpu()->ci_ci.dcache_line_size;
 	}
 
 	/*
@@ -121,13 +121,13 @@ storedcache(vaddr_t va, bus_size_t sz)
 	KASSERT(sz != 0);
 
 	__asm volatile("eieio;");
-	off = (u_int)va & (CACHELINESIZE - 1);
+	off = (u_int)va & (curcpu()->ci_ci.dcache_line_size - 1);
 	sz += off;
 	va -= off;
 	while ((int)sz > 0) {
 		__asm volatile("dcbst 0, %0;" :: "r"(va));
-		va += CACHELINESIZE;
-		sz -= CACHELINESIZE;
+		va += curcpu()->ci_ci.dcache_line_size;
+		sz -= curcpu()->ci_ci.dcache_line_size;
 	}
 	__asm volatile("sync;");
 }
@@ -550,10 +550,10 @@ _bus_dmamap_sync(t, map, offset, len, ops)
 			if (len > dslen)
 				minlen = dslen;
 			va = map->dm_segs[i].ds_vaddr + offset;
-			if (va & (CACHELINESIZE-1))
+			if (va & (curcpu()->ci_ci.dcache_line_size-1))
 				storedcache(va, 1);
 			va += minlen;
-			if (va & (CACHELINESIZE-1))
+			if (va & (curcpu()->ci_ci.dcache_line_size-1))
 				storedcache(va, 1);
 			invaldcache(map->dm_segs[i].ds_vaddr + offset, minlen);
 			len -= minlen;

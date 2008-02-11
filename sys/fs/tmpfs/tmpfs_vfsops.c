@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.12.6.9 2008/02/04 09:24:03 yamt Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.12.6.10 2008/02/11 14:59:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.12.6.9 2008/02/04 09:24:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.12.6.10 2008/02/11 14:59:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -138,12 +138,16 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	else
 		pages = args->ta_size_max / PAGE_SIZE +
 		    (args->ta_size_max % PAGE_SIZE == 0 ? 0 : 1);
+	if (pages > INT_MAX)
+		pages = INT_MAX;
 	KASSERT(pages > 0);
 
 	if (args->ta_nodes_max <= 3)
 		nodes = 3 + pages * PAGE_SIZE / 1024;
 	else
 		nodes = args->ta_nodes_max;
+	if (nodes > INT_MAX)
+		nodes = INT_MAX;
 	KASSERT(nodes >= 3);
 
 	/* Allocate the tmpfs mount structure and fill it. */
@@ -271,7 +275,7 @@ tmpfs_root(struct mount *mp, struct vnode **vpp)
 
 static int
 tmpfs_vget(struct mount *mp, ino_t ino,
-    struct vnode **vpp) 
+    struct vnode **vpp)
 {
 
 	printf("tmpfs_vget called; need for it unknown yet\n");

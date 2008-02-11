@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_syscall.c,v 1.16.2.5 2008/01/21 09:35:08 yamt Exp $ */
+/* $NetBSD: osf1_syscall.c,v 1.16.2.6 2008/02/11 14:59:26 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16.2.5 2008/01/21 09:35:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_syscall.c,v 1.16.2.6 2008/02/11 14:59:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ osf1_syscall_fancy(struct lwp *l, u_int64_t code, struct trapframe *framep)
 	}
 	args += hidden;
 
-	if ((error = trace_enter(code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -320,7 +320,7 @@ out:
 
 	KERNEL_UNLOCK_LAST(l);
 
-	trace_exit(code, args, rval, error);
+	trace_exit(code, rval, error);
 
 	userret(l);
 }

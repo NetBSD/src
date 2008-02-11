@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9reg.h,v 1.12.2.4 2007/09/03 14:35:09 yamt Exp $	*/
+/*	$NetBSD: rtl81x9reg.h,v 1.12.2.5 2008/02/11 14:59:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -123,7 +123,7 @@
 /*
  * Registers specific to the 8169 gigE chip
  */
-#define RTK_GTXSTART		0x0038	/* 16 bits */
+#define RTK_GTXSTART		0x0038	/* 8 bits */
 #define RTK_TIMERINT_8169	0x0058	/* different offset than 8139 */
 #define RTK_PHYAR		0x0060
 #define RTK_TBICSR		0x0064
@@ -552,5 +552,5 @@ struct re_stats {
 
 #define RE_IFQ_MAXLEN		512
 
-#define RE_JUMBO_FRAMELEN	9018
-#define RE_JUMBO_MTU		(RE_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
+#define RE_JUMBO_FRAMELEN	ETHER_MAX_LEN_JUMBO
+#define RE_JUMBO_MTU		ETHERMTU_JUMBO

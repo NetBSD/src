@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.3.16.2 2007/09/03 14:27:48 yamt Exp $ */
+/* $NetBSD: if_admsw.c,v 1.3.16.3 2008/02/11 14:59:28 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.3.16.2 2007/09/03 14:27:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.3.16.3 2008/02/11 14:59:28 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -745,6 +745,10 @@ admsw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 	switch (cmd) {
+	case SIOCSIFCAP:
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET)
+			error = 0;
+		break;
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		port = (struct ethercom *)ifp - sc->sc_ethercom;	/* XXX */

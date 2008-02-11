@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_pool.c,v 1.4.18.7 2008/01/21 09:45:54 yamt Exp $	*/
+/*	$NetBSD: tmpfs_pool.c,v 1.4.18.8 2008/02/11 14:59:53 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.4.18.7 2008/01/21 09:45:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_pool.c,v 1.4.18.8 2008/02/11 14:59:53 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/pool.h>
@@ -156,7 +156,7 @@ tmpfs_pool_page_alloc(struct pool *pp, int flags)
 {
 	struct tmpfs_pool *tpp;
 	struct tmpfs_mount *tmp;
-	u_int pages;
+	unsigned int pages;
 	void *page;
 
 	tpp = (struct tmpfs_pool *)pp;

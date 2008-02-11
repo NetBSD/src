@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ade.c,v 1.23.12.5 2007/11/15 11:42:26 yamt Exp $	*/
+/*	$NetBSD: if_ade.c,v 1.23.12.6 2008/02/11 14:59:26 yamt Exp $	*/
 
 /*
  * NOTE: this version of if_de was modified for bounce buffers prior
@@ -81,7 +81,7 @@
 #define	LCLDMA 1
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.5 2007/11/15 11:42:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ade.c,v 1.23.12.6 2008/02/11 14:59:26 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -4033,11 +4033,13 @@ tulip_ifioctl(
 		error = EINVAL;
 		break;
 	    }
-	    ifp->if_mtu = ifr->ifr_mtu;
+	    if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET) {
 #ifdef BIG_PACKET
-	    tulip_reset(sc);
-	    tulip_init(sc);
+		tulip_reset(sc);
+		tulip_init(sc);
 #endif
+	    	error = 0;
+	    }
 	    break;
 #endif /* SIOCSIFMTU */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.4.8.6 2008/02/04 09:24:23 yamt Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.4.8.7 2008/02/11 14:59:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.8.6 2008/02/04 09:24:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.4.8.7 2008/02/11 14:59:59 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -1226,6 +1226,8 @@ vfs_vnode_print(struct vnode *vp, int full, void (*pr)(const char *, ...))
 	      ARRAY_PRINT(vp->v_tag, vnode_tags), vp->v_tag,
 	      ARRAY_PRINT(vp->v_type, vnode_types), vp->v_type,
 	      vp->v_mount, vp->v_mountedhere);
+
+	(*pr)("v_lock %p v_vnlock %p\n", &vp->v_lock, vp->v_vnlock);
 
 	if (full) {
 		struct buf *bp;

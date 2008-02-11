@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.1.4.2 2008/02/04 09:23:39 yamt Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.1.4.3 2008/02/11 14:59:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.1.4.2 2008/02/04 09:23:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.1.4.3 2008/02/11 14:59:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,10 @@ __KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.1.4.2 2008/02/04 09:23:39 yamt Exp $")
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/ubsavar.h>
 
+/* vendor specific bRequest */
+#define	UHMODEM_REGWRITE	0x20
+#define	UHMODEM_REGREAD		0x21
+#define UHMODEM_SETUP		0x22
 
 #define UHMODEMIBUFSIZE	4096
 #define UHMODEMOBUFSIZE	4096
@@ -124,13 +128,14 @@ Static int	uhmodemdebug = 0;
 
 Static int uhmodem_open(void *, int);
 Static  usbd_status e220_modechange_request(usbd_device_handle);
-Static	usbd_status e220_endpointhalt(usbd_device_handle);
+Static	usbd_status uhmodem_endpointhalt(struct ubsa_softc *, int);
+Static	usbd_status uhmodem_regwrite(usbd_device_handle, uint8_t *, size_t);
+Static	usbd_status uhmodem_regread(usbd_device_handle, uint8_t *, size_t);
+Static  usbd_status a2502_init(usbd_device_handle);
 #if 0
-Static  usbd_status e220_testreq(usbd_device_handle);
+Static	usbd_status uhmodem_regsetup(usbd_device_handle, uint16_t);
+Static  usbd_status e220_init(usbd_device_handle);
 #endif
-void e220_modechange_request_test(usbd_device_handle);
-
-#define UHMODEM_MAXCONN		2
 
 struct	uhmodem_softc {
 	struct ubsa_softc	sc_ubsa;	
@@ -147,11 +152,21 @@ struct	ucom_methods uhmodem_methods = {
 	NULL
 };
 
-Static const struct usb_devno uhmodem_devs[] = {
-	/* HUAWEI E220 / Emobile D0[12]HW */
-	{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 },
+struct uhmodem_type {
+	struct usb_devno	uhmodem_dev;
+	u_int16_t		uhmodem_coms;	/* number of serial interfaces on the device */
+	u_int16_t		uhmodem_flags;
+#define	E220	0x0001
+#define	A2502	0x0002
 };
-#define uhmodem_lookup(v, p) usb_lookup(uhmodem_devs, v, p)
+
+Static const struct uhmodem_type uhmodem_devs[] = {
+	/* HUAWEI E220 / Emobile D0[12]HW */
+	{{ USB_VENDOR_HUAWEI, USB_PRODUCT_HUAWEI_E220 }, 2,	E220},
+	/* ANYDATA / NTT DoCoMo A2502 */
+	{{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_A2502 }, 3,	A2502},
+};
+#define uhmodem_lookup(v, p) ((const struct uhmodem_type *)usb_lookup(uhmodem_devs, v, p))
 
 USB_DECLARE_DRIVER(uhmodem);
 
@@ -215,7 +230,8 @@ USB_ATTACH(uhmodem)
 
 	sc->sc_ubsa.sc_quadumts = 1;
 	sc->sc_ubsa.sc_config_index = 0;
-	sc->sc_ubsa.sc_numif = 2; /* E220 has 2coms */
+	sc->sc_ubsa.sc_numif = uhmodem_lookup(uaa->vendor, uaa->product)->uhmodem_coms;
+	sc->sc_ubsa.sc_devflags = uhmodem_lookup(uaa->vendor, uaa->product)->uhmodem_flags;
 
 	DPRINTF(("uhmodem attach: sc = %p\n", sc));
 
@@ -308,10 +324,10 @@ USB_ATTACH(uhmodem)
 			sprintf(comname, "modem");
 			break;
 		case 1:
-			sprintf(comname, "monitor");
+			sprintf(comname, "alt#1");
 			break;
 		case 2:
-			sprintf(comname, "unknown");
+			sprintf(comname, "alt#2");
 			break;
 		default:
 			sprintf(comname, "int#%d", i);
@@ -332,6 +348,13 @@ USB_ATTACH(uhmodem)
 	    		i, uca.bulkin, uca.bulkout, sc->sc_ubsa.sc_intr_number));
 		sc->sc_ubsa.sc_subdevs[i] = config_found_sm_loc(self, "ucombus", NULL,
 				 &uca, ucomprint, ucomsubmatch);
+
+		/* issue endpoint halt to each interface */
+		err = uhmodem_endpointhalt(&sc->sc_ubsa, i);
+		if (err) 
+			printf("%s: endpointhalt fail\n", __func__);
+		else
+			usbd_delay_ms(sc->sc_ubsa.sc_udev, 50);
 	} /* end of Interface loop */
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_ubsa.sc_udev,
@@ -405,19 +428,28 @@ uhmodem_open(void *addr, int portno)
 
 	DPRINTF(("%s: sc = %p\n", __func__, sc));
 
-	err = e220_endpointhalt(sc->sc_udev);
+	err = uhmodem_endpointhalt(sc, 0);
 	if (err) 
 		printf("%s: endpointhalt fail\n", __func__);
 	else
 		usbd_delay_ms(sc->sc_udev, 50);
-#if 0 /* currenly disable */
-	err = e220_testreq(sc->sc_udev);
-	if (err)
-		printf("%s: send testreq fail\n", __func__);
-	else
-		usbd_delay_ms(sc->sc_udev, 50);
-#endif
 
+	if (sc->sc_devflags & A2502) {
+		err = a2502_init(sc->sc_udev);
+		if (err)
+			printf("%s: a2502init fail\n", __func__);
+		else
+			usbd_delay_ms(sc->sc_udev, 50);
+	}
+#if 0 /* currently disabled */
+	if (sc->sc_devflags & E220) {
+		err = e220_init(sc->sc_udev);
+		if (err)
+			printf("%s: e220init fail\n", __func__);
+		else
+			usbd_delay_ms(sc->sc_udev, 50);
+	}
+#endif
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_intr_buf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 		/* XXX only iface# = 0 has intr line */
@@ -471,35 +503,136 @@ e220_modechange_request(usbd_device_handle dev)
 }
 
 Static  usbd_status 
-e220_endpointhalt(usbd_device_handle dev)
+uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
+{
+	usb_device_request_t req;
+	usb_endpoint_descriptor_t *ed;
+	usb_interface_descriptor_t *id;
+	usbd_status err;
+	int i;
+
+	/* Find the endpoints */
+	id = usbd_get_interface_descriptor(sc->sc_iface[iface]);
+
+	for (i = 0; i < id->bNumEndpoints; i++) {
+		ed = usbd_interface2endpoint_descriptor(sc->sc_iface[iface], i);
+		if (ed == NULL)	
+			return (EIO);
+
+		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
+			/* issue ENDPOINT_HALT request */
+			req.bmRequestType = UT_WRITE_ENDPOINT;
+			req.bRequest = UR_CLEAR_FEATURE;
+			USETW(req.wValue, UF_ENDPOINT_HALT);
+			USETW(req.wIndex, ed->bEndpointAddress);
+			USETW(req.wLength, 0);
+			err = usbd_do_request(sc->sc_udev, &req, 0);
+			if (err) {
+				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n", 
+					__func__, ed->bEndpointAddress));
+				return (EIO);
+			}
+
+		}
+	} /* end of Endpoint loop */
+
+	return (0);
+}
+
+Static usbd_status
+uhmodem_regwrite(usbd_device_handle dev, uint8_t *data, size_t len)
 {
 	usb_device_request_t req;
 	usbd_status err;
 
-	/* CLEAR feature / endpoint halt to modem i/o */
-	req.bmRequestType = UT_WRITE_ENDPOINT;
-	req.bRequest = UR_CLEAR_FEATURE;
-	USETW(req.wValue, UF_ENDPOINT_HALT);
-	USETW(req.wIndex, 0x0082); /* should get value from softc etc.*/
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = UHMODEM_REGWRITE;
+	USETW(req.wValue, 0x0000);
+	USETW(req.wIndex, 0x0000);
+	USETW(req.wLength, len);
+	err = usbd_do_request(dev, &req, data);
+	if (err) 
+		return err;
+
+	return 0;
+}
+
+Static usbd_status
+uhmodem_regread(usbd_device_handle dev, uint8_t *data, size_t len)
+{
+	usb_device_request_t req;
+	usbd_status err;
+
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = UHMODEM_REGREAD;
+	USETW(req.wValue, 0x0000);
+	USETW(req.wIndex, 0x0000);
+	USETW(req.wLength, len);
+	err = usbd_do_request(dev, &req, data);
+
+	if (err)
+		return err;
+
+	return 0;
+}
+
+#if 0
+Static usbd_status
+uhmodem_regsetup(usbd_device_handle dev, uint16_t cmd)
+{
+	usb_device_request_t req;
+	usbd_status err;
+
+	req.bmRequestType = UT_READ_CLASS_INTERFACE;
+	req.bRequest = UHMODEM_SETUP;
+	USETW(req.wValue, cmd);
+	USETW(req.wIndex, 0x0000);
 	USETW(req.wLength, 0);
 	err = usbd_do_request(dev, &req, 0);
-	if (err) {
-		DPRINTF(("%s: E220 request test ENDPOINT_HALT fail\n", __func__));
-		return (EIO);
+
+	if (err)
+		return err;
+
+	return 0;
+}
+#endif
+
+Static  usbd_status 
+a2502_init(usbd_device_handle dev)
+{
+	uint8_t data[8];
+	static uint8_t init_cmd[] = {0x00, 0xE1, 0x00, 0x00, 0x00, 0x00, 0x08};
+#ifdef UHMODEM_DEBUG
+	int i;
+#endif
+	if (uhmodem_regread(dev, data, 7)) {
+		DPRINTF(("%s: read fail\n", __func__));
+		return EIO;
 	}
-	req.bmRequestType = UT_WRITE_ENDPOINT;
-	req.bRequest = UR_CLEAR_FEATURE;
-	USETW(req.wValue, UF_ENDPOINT_HALT);
-	USETW(req.wIndex, 0x0002); /* should get value from softc etc.*/
-	USETW(req.wLength, 0);
-	err = usbd_do_request(dev, &req, 0);
-	if (err) {
-		DPRINTF(("%s: E220 request test ENDPOINT_HALT fail\n", __func__));
-		return (EIO);
+#ifdef UHMODEM_DEBUG
+	printf("%s: readdata: ", __func__);
+	for (i = 0; i < 7; i++)
+		printf("0x%x ", data[i]);
+#endif
+	if (uhmodem_regwrite(dev, init_cmd, sizeof(init_cmd)) ) {
+		DPRINTF(("%s: write fail\n", __func__));
+		return EIO;
 	}
 
-	return (0);
+	if (uhmodem_regread(dev, data, 7)) { 
+		DPRINTF(("%s: read fail\n", __func__));
+		return EIO;
+	}
+#ifdef UHMODEM_DEBUG
+	printf("%s: readdata: ", __func__);
+	printf(" => ");
+	for (i = 0; i < 7; i++)
+		printf("0x%x ", data[i]);
+	printf("\n");
+#endif
+	return 0;
 }
+
 
 #if 0
 /* 
@@ -508,14 +641,13 @@ e220_endpointhalt(usbd_device_handle dev)
  * disable this code when I get more information about it.
  */ 
 Static  usbd_status 
-e220_testreq(usbd_device_handle dev)
+e220_init(usbd_device_handle dev)
 {
 	uint8_t data[8];
 	usb_device_request_t req;
-	usbd_status err;
 	int i;
 
-	/* vendor specific unknown requres */
+	/* vendor specific unknown request */
 	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
 	req.bRequest = 0x02;
 	USETW(req.wValue, 0x0001);
@@ -523,66 +655,31 @@ e220_testreq(usbd_device_handle dev)
 	USETW(req.wLength, 2);
 	data[0] = 0x0;
 	data[1] = 0x0;
-	err = usbd_do_request(dev, &req, data);
-	if (err) 
+	if (usbd_do_request(dev, &req, data))
 		goto error;
 
 	/* vendor specific unknown sequence */
-#define E220_CLASS_SETUP	0x22
-#define	E220_CLASS_READ		0x21
-#define	E220_CLASS_WRITE	0x20
-
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = E220_CLASS_SETUP;	// 0x22
-	USETW(req.wValue, 0x0001);
-	USETW(req.wIndex, 0x0000);
-	USETW(req.wLength, 0);
-	err = usbd_do_request(dev, &req, 0);
-	if (err) 
+	if(uhmodem_regsetup(dev, 0x1)) 
 		goto error;
 
-	req.bmRequestType = UT_READ_CLASS_INTERFACE;
-	req.bRequest = E220_CLASS_READ;
-	USETW(req.wValue, 0x0000);
-	USETW(req.wIndex, 0x0000);
-	USETW(req.wLength, 7);
-	err = usbd_do_request(dev, &req, &data);
-	if (err) 
+	if (uhmodem_regread(dev, data, 7))
 		goto error;
 
 	data[1] = 0x8;
 	data[2] = 0x7;
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = E220_CLASS_WRITE;
-	USETW(req.wValue, 0x0000);
-	USETW(req.wIndex, 0x0000);
-	USETW(req.wLength, 7);
-	err = usbd_do_request(dev, &req, data);
-	if (err) 
+	if (uhmodem_regwrite(dev, data, sizeof(data)) )
 		goto error;
 
-	req.bmRequestType = UT_READ_CLASS_INTERFACE;
-	req.bRequest = E220_CLASS_READ;
-	USETW(req.wValue, 0x0000);
-	USETW(req.wIndex, 0x0000);
-	USETW(req.wLength, 7);
-	err = usbd_do_request(dev, &req, &data);
-	if (err) 
+	if (uhmodem_regread(dev, data, 7))
 		goto error;
-	printf("%s(0x21):", __func__);
+		/* XXX should verify the read data ? */
 
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = E220_CLASS_SETUP;	// 0x22
-	USETW(req.wValue, 0x0003);
-	USETW(req.wIndex, 0x0000); 
-	USETW(req.wLength, 0);
-	err = usbd_do_request(dev, &req, 0);
-	if (err) 
+	if (uhmodem_regsetup(dev, 0x3))
 		goto error;
 
 	return (0);
 error:
-	DPRINTF(("%s: E220 request test SETUP fail\n", __func__));
+	DPRINTF(("%s: E220 init request fail\n", __func__));
 	return (EIO);
 }
 #endif

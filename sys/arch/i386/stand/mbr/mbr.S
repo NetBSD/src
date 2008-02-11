@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.12.12.3 2008/02/04 09:22:09 yamt Exp $	*/
+/*	$NetBSD: mbr.S,v 1.12.12.4 2008/02/11 14:59:28 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -87,7 +87,7 @@
 
 #ifdef COM_PORT
 /* ASCII values for the keys */
-#define	KEY_ACTIVE	'\m'
+#define	KEY_ACTIVE	'\r'
 #define	KEY_DISK1	'a'
 #define	KEY_PTN1	'1'
 #else
@@ -143,7 +143,7 @@ ENTRY(start)
 	movw	$(bss_start - mbr), %cx
 	rep
 	movsb				/* relocate code */
-	mov	$(bss_end - bss_start + 1)/2, %cx
+	mov	$(bss_end - bss_start + 511)/512, %ch
 	rep
 	stosw				/* zero bss */
 	lret				/* Ensures %cs == 0 */
@@ -318,7 +318,7 @@ get_key:
 	cmpw	timeout, %dx		/* always wait for 1 tick... */
 	jbe	3b			/* 0xffff means never timeout */
 def_key:
-	mov	defkey - 1, %ax		/* timedout - get default key to %ah */
+	mov	defkey, %al		/* timedout - we need %ah to still be zero! */
 
 /*
  * We have a keycode, see what it means.

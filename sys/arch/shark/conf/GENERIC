@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.45.2.5 2008/01/21 09:39:18 yamt Exp $
+#	$NetBSD: GENERIC,v 1.45.2.6 2008/02/11 14:59:29 yamt Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.45.2.5 $"
+#ident		"GENERIC-$Revision: 1.45.2.6 $"
 
 # estimated number of users
 maxusers	32
@@ -277,6 +277,9 @@ midi*		at opl?
 
 # Joystick @OFW
 joy*		at ofisa?
+
+# Pull in optional local configuration
+include	"arch/shark/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter
