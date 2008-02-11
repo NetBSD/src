@@ -1,4 +1,4 @@
-/*	$NetBSD: iopio.h,v 1.4 2006/08/27 21:39:39 christos Exp $	*/
+/*	$NetBSD: iopio.h,v 1.5 2008/02/11 03:36:25 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
 struct iop_tidmap {
 	u_short	it_tid;
 	u_short	it_flags;
-	char	it_dvname[sizeof(((struct device *)NULL)->dv_xname)];
+	char	it_dvname[16];
 };
 #define	IT_CONFIGURED	0x02	/* target configured */
 
