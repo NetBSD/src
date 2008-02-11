@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.2 2007/05/31 21:26:48 bouyer Exp $	*/
+/*	$NetBSD: jmide.c,v 1.3 2008/02/11 08:23:48 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.2 2007/05/31 21:26:48 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.3 2008/02/11 08:23:48 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -449,6 +449,7 @@ static void
 jmahci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct jmahci_attach_args *jma = aux;
+	struct pci_attach_args *pa = jma->jma_pa;
 	struct ahci_softc *sc = (struct ahci_softc *)self;
 
 	aprint_naive(": AHCI disk controller\n");
@@ -457,6 +458,10 @@ jmahci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_ahcit = jma->jma_ahcit;
 	sc->sc_ahcih = jma->jma_ahcih;
 	sc->sc_dmat = jma->jma_pa->pa_dmat;
+
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+		sc->sc_atac_capflags = ATAC_CAP_RAID;
+
 	ahci_attach(sc);
 }
 #endif
