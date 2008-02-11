@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.9 2008/01/28 18:24:22 garbled Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.10 2008/02/11 17:32:18 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.9 2008/01/28 18:24:22 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.10 2008/02/11 17:32:18 garbled Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,6 +149,8 @@ foundic:
 			OF_getprop(node, "compatible", name, sizeof(name));
 			if (strcmp(name, "heathrow") == 0)
 				picnodes[nrofpics].type = PICNODE_TYPE_HEATHROW;
+			if (strcmp(name, "pnpPNP,0") == 0)
+				picnodes[nrofpics].type = PICNODE_TYPE_8259;
 			if (strcmp(name, "chrp,iic") == 0) {
 				picnodes[nrofpics].type = PICNODE_TYPE_8259;
 				if (irgot >= 9 * sizeof(uint32_t) &&
