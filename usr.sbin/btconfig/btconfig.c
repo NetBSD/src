@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.11 2008/02/11 11:23:46 plunky Exp $ */
+/* $NetBSD: btconfig.c,v 1.12 2008/02/11 11:26:15 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,7 +34,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.\n"
 	    "All rights reserved.\n");
-__RCSID("$NetBSD: btconfig.c,v 1.11 2008/02/11 11:23:46 plunky Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.12 2008/02/11 11:26:15 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -1015,10 +1015,6 @@ print_result(int num, struct result *r, int rssi)
 {
 	hci_remote_name_req_cp ncp;
 	hci_remote_name_req_compl_ep nep;
-#if 0
-	hci_read_remote_features_cp fcp;
-	hci_read_remote_features_compl_ep fep;
-#endif
 	struct hostent *hp;
 
 	printf("%3d: bdaddr %s",
@@ -1045,15 +1041,6 @@ print_result(int num, struct result *r, int rssi)
 
 	class = (r->uclass[2] << 16) | (r->uclass[1] << 8) | (r->uclass[0]);
 	print_class("   : ");
-
-#if 0
-	hci_req(HCI_CMD_READ_REMOTE_FEATURES,
-		HCI_EVENT_READ_REMOTE_FEATURES_COMPL,
-		&fcp, sizeof(fcp),
-		&fep, sizeof(fep));
-
-	print_features("   : features", fep.features);
-#endif
 
 	printf("   : page scan rep mode 0x%02x\n", r->page_scan_rep_mode);
 	printf("   : clock offset %d\n", le16toh(r->clock_offset));
