@@ -1,0 +1,169 @@
+# $OpenLDAP: pkg/openldap-guide/admin/security.sdf,v 1.16.2.6 2008/02/11 23:26:39 kurt Exp $
+# Copyright 1999-2008 The OpenLDAP Foundation, All Rights Reserved.
+# COPYING RESTRICTIONS APPLY, see COPYRIGHT.
+
+H1: Security Considerations
+
+OpenLDAP Software is designed to run in a wide variety of computing
+environments from tightly-controlled closed networks to the global
+Internet.  Hence, OpenLDAP Software supports many different security
+mechanisms.  This chapter describes these mechanisms and discusses
+security considerations for using OpenLDAP Software.
+
+H2: Network Security
+
+H3: Selective Listening
+
+By default, {{slapd}}(8) will listen on both the IPv4 and IPv6 "any"
+addresses.  It is often desirable to have {{slapd}} listen on select
+address/port pairs.  For example, listening only on the IPv4 address
+{{EX:127.0.0.1}} will disallow remote access to the directory server.
+E.g.:
+
+>	slapd -h ldap://127.0.0.1
+
+While the server can be configured to listen on a particular interface
+address, this doesn't necessarily restrict access to the server to
+only those networks accessible via that interface.   To selective
+restrict remote access, it is recommend that an {{SECT:IP Firewall}}
+be used to restrict access.
+
+See {{SECT:Command-line Options}} and {{slapd}}(8) for more
+information.
+
+
+H3: IP Firewall
+
+{{TERM:IP}} firewall capabilities of the server system can be used
+to restrict access based upon the client's IP address and/or network
+interface used to communicate with the client.
+
+Generally, {{slapd}}(8) listens on port 389/tcp for {{F:ldap://}}
+sessions and port 636/tcp for {{F:ldaps://}}) sessions.  {{slapd}}(8)
+may be configured to listen on other ports.
+
+As specifics of how to configure IP firewall are dependent on the
+particular kind of IP firewall used, no examples are provided here.
+See the document associated with your IP firewall.
+
+
+H3: TCP Wrappers
+
+{{slapd}}(8) supports {{TERM:TCP}} Wrappers.  TCP Wrappers provide
+a rule-based access control system for controlling TCP/IP access
+to the server.  For example, the {{host_options}}(5) rule:
+
+>	slapd: 10.0.0.0/255.0.0.0 127.0.0.1 : ALLOW
+>	slapd: ALL : DENY
+
+allows only incoming connections from the private network {{F:10.0.0.0}}
+and localhost ({{F:127.0.0.1}}) to access the directory service.
+Note that IP addresses are used as {{slapd}}(8) is not normally
+configured to perform reverse lookups.
+
+It is noted that TCP wrappers require the connection to be accepted.
+As significant processing is required just to deny a connection,
+it is generally advised that IP firewall protection be used instead
+of TCP wrappers.
+
+See {{hosts_access}}(5) for more information on TCP wrapper rules.
+
+
+H2: Data Integrity and Confidentiality Protection
+
+{{TERM[expand]TLS}} (TLS) can be used to provide data integrity and
+confidentiality protection.  OpenLDAP supports negotiation of
+{{TERM:TLS}} ({{TERM:SSL}}) via both StartTLS and {{F:ldaps://}}.
+See the {{SECT:Using TLS}} chapter for more information.  StartTLS
+is the standard track mechanism.
+
+A number of {{TERM[expand]SASL}} (SASL) mechanisms, such as
+{{TERM:DIGEST-MD5}} and {{TERM:GSSAPI}}, also provide data integrity
+and confidentiality protection.  See the {{SECT:Using SASL}} chapter
+for more information.
+
+
+H3: Security Strength Factors
+
+The server uses {{TERM[expand]SSF}}s (SSF) to indicate the relative
+strength of protection.  A SSF of zero (0) indicates no protections
+are in place.  A SSF of one (1) indicates integrity protection are
+in place.  A SSF greater than one (>1) roughly correlates to the
+effective encryption key length.  For example, {{TERM:DES}} is 56,
+{{TERM:3DES}} is 112, and {{TERM:AES}} 128, 192, or 256.
+
+A number of administrative controls rely on SSFs associated with
+TLS and SASL protection in place on an LDAP session.
+
+{{EX:security}} controls disallow operations when appropriate
+protections are not in place.  For example:
+
+>	security ssf=1 update_ssf=112
+
+requires integrity protection for all operations and encryption
+protection, 3DES equivalent, for update operations (e.g. add, delete,
+modify, etc.).  See {{slapd.conf}}(5) for details.
+
+For fine-grained control, SSFs may be used in access controls.
+See {{SECT:The access Configuration Directive}} section of the
+{{SECT:The slapd Configuration File}} for more information.
+
+
+H2: Authentication Methods
+
+H3: "simple" method
+
+The LDAP "simple" method has three modes of operation:
+
+* anonymous,
+* unauthenticated, and
+* user/password authenticated.
+
+Anonymous access is requested by providing no name and no password
+to the "simple" bind operation.  Unauthenticated access is requested
+by providing a name but no password.  Authenticated access is
+requested by providing a valid name and password.
+
+An anonymous bind results in an {{anonymous}} authorization
+association.  Anonymous bind mechanism is enabled by default, but
+can be disabled by specifying "{{EX:disallow bind_anon}}" in
+{{slapd.conf}}(5).  Note that disabling the anonymous bind mechanism
+does not prevent anonymous access to the directory.  To require
+authentication to access the directory, one should instead
+specify "{{EX:require authc}}".
+
+An unauthenticated bind also results in an {{anonymous}} authorization
+association.  Unauthenticated bind mechanism is disabled by default,
+but can be enabled by specifying "{{EX:allow bind_anon_cred}}" in
+{{slapd.conf}}(5).  As a number of LDAP applications mistakenly
+generate unauthenticated bind request when authenticated access was
+intended (that is, they do not ensure a password was provided),
+this mechanism should generally remain disabled.
+
+A successful user/password authenticated bind results in a user
+authorization identity, the provided name, being associated with
+the session.  User/password authenticated bind is enabled by default.
+However, as this mechanism itself offers no eavesdropping protection
+(e.g., the password is set in the clear), it is recommended that
+it be used only in tightly controlled systems or when the LDAP
+session is protected by other means (e.g., TLS, {{TERM:IPsec}}).
+Where the administrator relies on TLS to protect the password, it
+is recommended that unprotected authentication be disabled.  This
+is done using the {{EX:security}} directive's {{EX:simple_bind}}
+option, which provides fine grain control over the level of confidential
+protection to require for {{simple}} user/password authentication.
+E.g., using {{EX:security simple_bind=56}} would require {{simple}}
+binds to use encryption of DES equivalent or better.
+
+The user/password authenticated bind mechanism can be completely
+disabled by setting "{{EX:disallow bind_simple}}".
+
+Note:  An unsuccessful bind always results in the session having
+an {{anonymous}} authorization association.
+
+
+H3: SASL method
+
+The LDAP {{TERM:SASL}} method allows use of any SASL authentication
+mechanism.  The {{SECT:Using SASL}} discusses use of SASL.
+
