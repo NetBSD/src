@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.149 2008/01/15 21:02:27 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.150 2008/02/11 04:14:18 mrg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.149 2008/01/15 21:02:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.150 2008/02/11 04:14:18 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -287,8 +287,10 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 		bi = (void*)(u_long)(((uint32_t*)bootargs)[3]);
 		bmagic = (long)(((uint32_t*)bootargs)[0]);
 	} else {
-		printf("Bad bootinfo size.\n"
-				"This kernel requires NetBSD boot loader.\n");
+		printf("Bad bootinfo size.\n");
+die_old_boot_loader:
+		printf("This kernel requires NetBSD boot loader version 1.9 "
+		       "or newer\n");
 		panic("sparc64_init.");
 	}
 
@@ -297,9 +299,8 @@ bootstrap(void *o0, void *bootargs, void *bootsize, void *o3, void *ofw)
 
 	/* Read in the information provided by NetBSD boot loader */
 	if (SPARC_MACHINE_OPENFIRMWARE != bmagic) {
-		printf("No bootinfo information.\n"
-				"This kernel requires NetBSD boot loader.\n");
-		panic("sparc64_init.");
+		printf("No bootinfo information.\n");
+		goto die_old_boot_loader;
 	}
 
 	bootinfo = (void*)(u_long)((uint64_t*)bi)[1];
