@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.177 2008/02/06 22:12:42 dsl Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.178 2008/02/11 22:20:11 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.177 2008/02/06 22:12:42 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.178 2008/02/11 22:20:11 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -432,10 +432,8 @@ hook_proc_run(hook_list_t *list, struct proc *p)
 {
 	struct hook_desc *hd;
 
-	for (hd = LIST_FIRST(list); hd != NULL; hd = LIST_NEXT(hd, hk_list)) {
-		((void (*)(struct proc *, void *))*hd->hk_fn)(p,
-		    hd->hk_arg);
-	}
+	LIST_FOREACH(hd, list, hk_list)
+		((void (*)(struct proc *, void *))*hd->hk_fn)(p, hd->hk_arg);
 }
 
 /*
