@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsavar.h,v 1.2 2008/01/21 12:16:31 ichiro Exp $	*/
+/*	$NetBSD: ubsavar.h,v 1.3 2008/02/11 02:23:09 ichiro Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -142,6 +142,7 @@ struct	ubsa_softc {
 
 	u_char			sc_dying;	/* disconnecting */
 	u_char			sc_quadumts;
+	u_int16_t		sc_devflags;		
 };
 
 
