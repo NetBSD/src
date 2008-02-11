@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.106 2008/01/24 17:32:58 ad Exp $	*/
+/*	$NetBSD: pstat.c,v 1.107 2008/02/11 15:22:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.106 2008/01/24 17:32:58 ad Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.107 2008/02/11 15:22:43 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: pstat.c,v 1.106 2008/01/24 17:32:58 ad Exp $");
 #undef NFS
 #include <sys/uio.h>
 #include <miscfs/genfs/layer.h>
-#include <miscfs/union/union.h>
 #undef _KERNEL
 #include <sys/stat.h>
 #include <nfs/nfsproto.h>
@@ -174,8 +173,6 @@ void	ttyprt(struct tty *);
 void	ufs_header(void);
 int	ufs_print(struct vnode *, int);
 int	ext2fs_print(struct vnode *, int);
-void	union_header(void);
-int	union_print(struct vnode *, int);
 void	usage(void);
 void	vnode_header(void);
 int	vnode_print(struct vnode *, struct vnode *);
@@ -336,9 +333,6 @@ vnodemode(void)
 			    FSTYPE_IS(mp, MOUNT_UMAP)) {
 				layer_header();
 				vnode_fsprint = layer_print;
-			} else if (FSTYPE_IS(mp, MOUNT_UNION)) {
-				union_header();
-				vnode_fsprint = union_print;
 			} else
 				vnode_fsprint = NULL;
 			(void)printf("\n");
@@ -619,25 +613,6 @@ layer_print(struct vnode *vp, int ovflw)
 	return (0);
 }
 
-void
-union_header(void)
-{
-
-	(void)printf(" %*s %*s", PTRSTRWIDTH, "UPPER", PTRSTRWIDTH, "LOWER");
-}
-
-int
-union_print(struct vnode *vp, int ovflw)
-{
-	struct union_node unode, *up = &unode;
-
-	KGETRET(VTOUNION(vp), &unode, sizeof(unode), "vnode's unode");
-
-	PRWORD(ovflw, " %*lx", PTRSTRWIDTH + 1, 1, (long)up->un_uppervp);
-	PRWORD(ovflw, " %*lx", PTRSTRWIDTH + 1, 1, (long)up->un_lowervp);
-	return (0);
-}
-
 /*
  * Given a pointer to a mount structure in kernel space,
  * read it in and return a usable pointer to it.
@@ -887,7 +862,7 @@ filemode(void)
 	nfile = (len - sizeof(struct filelist)) / sizeof(struct file);
 
 	(void)printf("%d/%d open files\n", nfile, maxfile);
-	(void)printf("%*s%s%*s TYPE    FLG     CNT  MSG  %*s%s%*s USE IFLG OFFSET\n",
+	(void)printf("%*s%s%*s TYPE    FLG     CNT  MSG  %*s%s%*s IFLG OFFSET\n",
 	    (PTRSTRWIDTH - 4) / 2, "", " LOC", (PTRSTRWIDTH - 4) / 2, "",
 	    (PTRSTRWIDTH - 4) / 2, "", "DATA", (PTRSTRWIDTH - 4) / 2, "");
 	for (; (char *)fp < offset + len; addr = fp->f_list.le_next, fp++) {
@@ -901,7 +876,6 @@ filemode(void)
 		PRWORD(ovflw, " %*d", 5, 1, fp->f_count);
 		PRWORD(ovflw, " %*d", 5, 1, fp->f_msgcount);
 		PRWORD(ovflw, "  %*lx", PTRSTRWIDTH + 1, 2, (long)fp->f_data);
-		PRWORD(ovflw, " %*d", 5, 1, fp->f_usecount);
 		PRWORD(ovflw, " %*x", 5, 1, fp->f_iflags);
 		if (fp->f_offset < 0)
 			PRWORD(ovflw, "  %-*lld\n", PTRSTRWIDTH + 1, 2,
