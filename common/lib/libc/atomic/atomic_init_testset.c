@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.2 2008/02/10 13:40:31 ad Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.3 2008/02/11 23:48:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.2 2008/02/10 13:40:31 ad Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.3 2008/02/11 23:48:23 ad Exp $");
 
 #include "atomic_op_namespace.h"
 
@@ -73,7 +73,7 @@ _atomic_cas_up(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 
 	RAS_START(_atomic_cas);
 	ret = *ptr;
-	if (ret != old) {
+	if (__predict_false(ret != old)) {
 		return ret;
 	}
 	*ptr = new;
@@ -88,7 +88,7 @@ _atomic_cas_mp(volatile uint32_t *ptr, uint32_t old, uint32_t new)
 	__cpu_simple_lock_t *lock;
 	uint32_t ret;
 
-	lock = &atomic_locks[(uint32_t)ptr >> 3];
+	lock = &atomic_locks[((uint32_t)ptr >> 3) & 127];
 	__cpu_simple_lock(lock);
 	ret = *ptr;
 	if (__predict_true(ret == old)) {
