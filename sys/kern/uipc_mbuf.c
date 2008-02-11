@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.22 2008/02/05 09:47:28 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.23 2008/02/11 14:54:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.22 2008/02/05 09:47:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.23 2008/02/11 14:54:36 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1557,7 +1557,7 @@ m_ext_free(struct mbuf *m)
 		 * dropping the last reference
 		 */
 		if (!embedded) {
-			atomic_inc_uint(&m->m_ext.ext_refcnt); /* XXX */
+			m->m_ext.ext_refcnt++; /* XXX */
 			m_ext_free(m->m_ext_ref);
 			m->m_ext_ref = m;
 		} else if ((m->m_flags & M_EXT_CLUSTER) != 0) {
