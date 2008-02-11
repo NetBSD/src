@@ -1,4 +1,4 @@
-.\" $NetBSD: evcnt.9,v 1.16 2007/12/20 03:21:47 uebayasi Exp $
+.\" $NetBSD: evcnt.9,v 1.17 2008/02/11 03:49:13 dyoung Exp $
 .\"
 .\" Copyright (c) 2000 Christopher G. Demetriou
 .\" All rights reserved.
@@ -42,7 +42,7 @@
 .Nm evcnt_detach
 .Nd generic event counter framework
 .Sh SYNOPSIS
-.In sys/device.h
+.In sys/evcnt.h
 .Ft void
 .Fn evcnt_attach_dynamic "struct evcnt *ev" "int type" "const struct evcnt *parent" "const char *group" "const char *name"
 .Ft void
