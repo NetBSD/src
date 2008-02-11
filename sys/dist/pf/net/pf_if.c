@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_if.c,v 1.14 2007/12/11 11:08:20 lukem Exp $	*/
+/*	$NetBSD: pf_if.c,v 1.15 2008/02/11 22:11:27 dyoung Exp $	*/
 /*	$OpenBSD: pf_if.c,v 1.23 2004/12/22 17:17:55 dhartmei Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.14 2007/12/11 11:08:20 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_if.c,v 1.15 2008/02/11 22:11:27 dyoung Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -936,8 +936,7 @@ hook_disestablish(struct hook_desc_head *head, void *vhook)
 	struct hook_desc *hdp;
 
 #ifdef DIAGNOSTIC
-	for (hdp = TAILQ_FIRST(head); hdp != NULL;
-	    hdp = TAILQ_NEXT(hdp, hd_list))
+	TAILQ_FOREACH(hdp, head, hd_list)
                 if (hdp == vhook)
 			break;
 	if (hdp == NULL)
