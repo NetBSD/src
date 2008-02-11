@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_socket.c,v 1.1.2.7 2008/01/21 09:47:12 yamt Exp $	*/
+/*	$NetBSD: hci_socket.c,v 1.1.2.8 2008/02/11 15:00:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.1.2.7 2008/01/21 09:47:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_socket.c,v 1.1.2.8 2008/02/11 15:00:04 yamt Exp $");
 
 /* load symbolic names */
 #ifdef BLUETOOTH_DEBUG
@@ -326,6 +326,50 @@ static const struct {
 	  16, 0x10, -1 },
 	{ HCI_CMD_REJECT_SCO_CON_REQ,
 	  16, 0x20, -1 },
+	{ HCI_CMD_READ_EXTENDED_INQUIRY_RSP,
+	  17, 0x01, 0 },
+	{ HCI_CMD_WRITE_EXTENDED_INQUIRY_RSP,
+	  17, 0x02, -1 },
+	{ HCI_CMD_REFRESH_ENCRYPTION_KEY,
+	  17, 0x04, -1 },
+	{ HCI_CMD_SNIFF_SUBRATING,
+	  17, 0x10, -1 },
+	{ HCI_CMD_READ_SIMPLE_PAIRING_MODE,
+	  17, 0x20, 0 },
+	{ HCI_CMD_WRITE_SIMPLE_PAIRING_MODE,
+	  17, 0x40, -1 },
+	{ HCI_CMD_READ_LOCAL_OOB_DATA,
+	  17, 0x80, -1 },
+	{ HCI_CMD_READ_INQUIRY_RSP_XMIT_POWER,
+	  18, 0x01, 0 },
+	{ HCI_CMD_WRITE_INQUIRY_RSP_XMIT_POWER,
+	  18, 0x02, -1 },
+	{ HCI_CMD_READ_DEFAULT_ERRDATA_REPORTING,
+	  18, 0x04, 0 },
+	{ HCI_CMD_WRITE_DEFAULT_ERRDATA_REPORTING,
+	  18, 0x08, -1 },
+	{ HCI_CMD_IO_CAPABILITY_REP,
+	  18, 0x80, -1 },
+	{ HCI_CMD_USER_CONFIRM_REP,
+	  19, 0x01, -1 },
+	{ HCI_CMD_USER_CONFIRM_NEG_REP,
+	  19, 0x02, -1 },
+	{ HCI_CMD_USER_PASSKEY_REP,
+	  19, 0x04, -1 },
+	{ HCI_CMD_USER_PASSKEY_NEG_REP,
+	  19, 0x08, -1 },
+	{ HCI_CMD_OOB_DATA_REP,
+	  19, 0x10, -1 },
+	{ HCI_CMD_WRITE_SIMPLE_PAIRING_DEBUG_MODE,
+	  19, 0x20, -1 },
+	{ HCI_CMD_ENHANCED_FLUSH,
+	  19, 0x40, -1 },
+	{ HCI_CMD_OOB_DATA_NEG_REP,
+	  19, 0x80, -1 },
+	{ HCI_CMD_SEND_KEYPRESS_NOTIFICATION,
+	  20, 0x40, -1 },
+	{ HCI_CMD_IO_CAPABILITY_NEG_REP,
+	  20, 0x80, -1 },
 };
 
 /*
@@ -360,6 +404,8 @@ hci_security_check_event(uint8_t event)
 	switch (event) {
 	case HCI_EVENT_RETURN_LINK_KEYS:
 	case HCI_EVENT_LINK_KEY_NOTIFICATION:
+	case HCI_EVENT_USER_CONFIRM_REQ:
+	case HCI_EVENT_USER_PASSKEY_NOTIFICATION:
 	case HCI_EVENT_VENDOR:
 		return -1;	/* disallowed */
 	}

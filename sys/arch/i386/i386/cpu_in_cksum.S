@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_in_cksum.S,v 1.2.2.2 2008/02/04 09:22:05 yamt Exp $	*/
+/*	$NetBSD: cpu_in_cksum.S,v 1.2.2.3 2008/02/11 14:59:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.2.2.2 2008/02/04 09:22:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_in_cksum.S,v 1.2.2.3 2008/02/11 14:59:27 yamt Exp $");
 
 #include "assym.h"
 
@@ -164,8 +164,6 @@ ENTRY(cpu_in_cksum)
 	movl	M_LEN(%ebp), %edx
 .Lmbuf_load_data:
 	movl	M_NEXT(%ebp), %ebp
-
-.Lin4_entry:
 	cmpl	%esi, %edx
 	jbe	1f
 	movl	%esi, %edx

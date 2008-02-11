@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.250.2.9 2008/02/04 09:24:23 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.250.2.10 2008/02/11 14:59:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.9 2008/02/04 09:24:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.10 2008/02/11 14:59:58 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -1314,7 +1314,7 @@ vclean(vnode_t *vp, int flags)
 	vp->v_tag = VT_NON;
 	mutex_enter(&vp->v_interlock);
 	vp->v_vnlock = &vp->v_lock;
-	VN_KNOTE(vp, NOTE_REVOKE);
+	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~(VI_XLOCK | VI_FREEING);
 	vp->v_vflag &= ~VV_LOCKSWORK;
 	if ((flags & DOCLOSE) != 0) {
@@ -1468,12 +1468,14 @@ vrevoke(vnode_t *vp)
 	vpp = &specfs_hash[SPECHASH(dev)];
 	mutex_enter(&specfs_lock);
 	for (vq = *vpp; vq != NULL;) {
-		if ((vq->v_iflag & VI_CLEAN) != 0 ||
+		/* If clean or being cleaned, then ignore it. */
+		mutex_enter(&vq->v_interlock);
+		if ((vq->v_iflag & (VI_CLEAN | VI_XLOCK)) != 0 ||
 		    vq->v_rdev != dev || vq->v_type != type) {
+			mutex_exit(&vq->v_interlock);
 			vq = vq->v_specnext;
 			continue;
 		}
-		mutex_enter(&vq->v_interlock);
 		mutex_exit(&specfs_lock);
 		if (vq->v_usecount == 0) {
 			vremfree(vq);

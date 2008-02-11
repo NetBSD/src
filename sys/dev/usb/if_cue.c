@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.43.2.3 2007/09/03 14:39:02 yamt Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.43.2.4 2008/02/11 14:59:52 yamt Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43.2.3 2007/09/03 14:39:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.43.2.4 2008/02/11 14:59:52 yamt Exp $");
 
 #if defined(__NetBSD__)
 #include "opt_inet.h"
@@ -1183,10 +1183,10 @@ cue_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCSIFFLAGS:

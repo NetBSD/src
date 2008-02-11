@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.235.2.7 2008/01/21 09:43:50 yamt Exp $
+#	$NetBSD: files.pci,v 1.235.2.8 2008/02/11 14:59:38 yamt Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -857,6 +857,11 @@ file	dev/pci/if_iwi.c		iwi
 device	wpi: ifnet, arp, wlan, firmload
 attach	wpi at pci
 file	dev/pci/if_wpi.c		wpi
+
+# Intel PRO/Wireless 4965AGN Mini-PCI Adapter
+device	iwn: ifnet, arp, wlan, firmload
+attach	iwn at pci
+file	dev/pci/if_iwn.c		iwn
 
 # Workbit NinjaSCSI-32 controllers
 # device declaration in sys/conf/files

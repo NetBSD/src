@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.30.12.5 2007/10/27 11:36:00 yamt Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.30.12.6 2008/02/11 14:59:59 yamt Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.30.12.5 2007/10/27 11:36:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.30.12.6 2008/02/11 14:59:59 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -266,7 +266,8 @@ faithioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 #ifdef SIOCSIFMTU
 	case SIOCSIFMTU:
-		ifp->if_mtu = ifr->ifr_mtu;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 #endif
 

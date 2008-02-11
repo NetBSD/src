@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.5.12.7 2008/01/21 09:35:16 yamt Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.5.12.8 2008/02/11 14:59:26 yamt Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5.12.7 2008/01/21 09:35:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.5.12.8 2008/02/11 14:59:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ linux32_syscall(frame)
 	struct proc *p;
 	struct lwp *l;
 	int error;
-	size_t argsize;
+	size_t narg;
 	register32_t code, args[6];
 	register_t rval[2];
 	int i;
@@ -70,13 +70,13 @@ linux32_syscall(frame)
 	KERNEL_LOCK(1, l);
 
 	if (__predict_false(p->p_trace_enabled)) {
-		argsize = callp->sy_argsize;
-		if (__predict_false(argsize > sizeof args))
-			panic("impossible syscall argsize, code %d, size %zd",
-			    code, argsize);
-		for (i = 0; i < (argsize >> 2); i++)
+		narg = callp->sy_narg;
+		if (__predict_false(narg > __arraycount(args)))
+			panic("impossible syscall narg, code %d, narg %zd",
+			    code, narg);
+		for (i = 0; i < narg; i++)
 			args64[i] = args[i] & 0xffffffff;
-		if ((error = trace_enter(code, code, NULL, args64)) != 0)
+		if ((error = trace_enter(code, args64, narg)) != 0)
 			goto out;
 	}
 
@@ -110,6 +110,6 @@ out:
 	}
 
 	if (__predict_false(p->p_trace_enabled))
-		trace_exit(code, args64, rval, error);
+		trace_exit(code, rval, error);
 	userret(l);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: std.ofppc,v 1.10.16.2 2008/01/21 09:37:51 yamt Exp $
+#	$NetBSD: std.ofppc,v 1.10.16.3 2008/02/11 14:59:28 yamt Exp $
 #
 # standard, required NetBSD/ofppc 'options'
 
@@ -6,6 +6,7 @@ machine		ofppc powerpc
 include		"conf/std"	# MI standard options
 
 options 	PPC_OEA
+options 	PPC_OEA64_BRIDGE
 makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
 
 options 	EXEC_ELF32	# exec ELF binaries

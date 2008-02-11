@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.31.2.4 2008/01/21 09:37:01 yamt Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.31.2.5 2008/02/11 14:59:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31.2.4 2008/01/21 09:37:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.31.2.5 2008/02/11 14:59:27 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -111,11 +111,11 @@ linux_syscall(struct trapframe *frame)
 	KERNEL_LOCK(1, l);
 
 	if (__predict_false(l->l_proc->p_trace_enabled)) {
-		error = trace_enter(code, code, NULL, args);
+		error = trace_enter(code, args, callp->sy_narg);
 		if (__predict_true(error == 0)) {
 			error = (*callp->sy_call)(l, args, rval);
 			code = frame->tf_eax & (LINUX_SYS_NSYSENT - 1);
-			trace_exit(code, args, rval, error);
+			trace_exit(code, rval, error);
 		}
 	} else
 		error = (*callp->sy_call)(l, args, rval);

@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.727.2.8 2008/01/21 09:44:09 yamt Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.727.2.9 2008/02/11 14:59:39 yamt Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.926 2008/01/11 20:47:21 tnn Exp
+ *	NetBSD: pcidevs,v 1.928 2008/02/10 10:59:18 ichiro Exp
  */
 
 /*
@@ -2487,6 +2487,9 @@
 #define	PCI_PRODUCT_INTEL_82965PM_HB	0x2a00		/* 82965PM Host Bridge */
 #define	PCI_PRODUCT_INTEL_82965PM_IGD	0x2a02		/* 82965PM Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82965PM_IGD_1	0x2a03		/* 82965PM Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82965PM_MEI	0x2a04		/* 82965PM MEI Controller */
+#define	PCI_PRODUCT_INTEL_82965PM_IDE	0x2a06		/* 82965PM IDE Interface */
+#define	PCI_PRODUCT_INTEL_82965PM_KT	0x2a07		/* 82965PM Serial Interface */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
@@ -3329,6 +3332,14 @@
 #define	PCI_PRODUCT_RICOH_Rx5C478	0x0478		/* 5C478 PCI-CardBus bridge */
 #define	PCI_PRODUCT_RICOH_Rx5C551	0x0551		/* 5C551 PCI-CardBus bridge/Firewire */
 #define	PCI_PRODUCT_RICOH_Rx5C552	0x0552		/* 5C552 PCI-CardBus bridge/Firewire */
+#define	PCI_PRODUCT_RICOH_Rx5C592	0x0592		/* 5C592 PCI-CardBus bridge/MS/SD/Firewire */
+#define	PCI_PRODUCT_RICOH_Rx5C593	0x0593		/* 5C593 PCI-CardBus bridge/MS/SD/Firewire */
+#define	PCI_PRODUCT_RICOH_Rx5C821	0x0821		/* 5C821 PCI-CardBus bridge/MS/SD/MMC/SC */
+#define	PCI_PRODUCT_RICOH_Rx5C822	0x0822		/* 5C822 PCI-CardBus bridge/MS/SD/MMC/SC */
+#define	PCI_PRODUCT_RICOH_Rx5C832	0x0832		/* 5C832 PCI-SD/MMC/MMC+/MS/xD/Firewire */
+#define	PCI_PRODUCT_RICOH_Rx5C843	0x0843		/* 5C843 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire */
+#define	PCI_PRODUCT_RICOH_Rx5C847	0x0847		/* 5C847 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire */
+#define	PCI_PRODUCT_RICOH_Rx5C853	0x0853		/* 5C853 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/SC/Firewire */
 
 /* RISCom (SDL Communications?) products */
 #define	PCI_PRODUCT_RISCOM_N2	0x5568		/* N2 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.191.2.5 2008/01/21 09:47:18 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.191.2.6 2008/02/11 15:00:05 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191.2.5 2008/01/21 09:47:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191.2.6 2008/02/11 15:00:05 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1051,11 +1051,15 @@ tcp_newtcpcb(int family, void *aux)
 	/*
 	 * Initialize our timebase.  When we send timestamps, we take
 	 * the delta from tcp_now -- this means each connection always
-	 * gets a timebase of 0, which makes it, among other things,
+	 * gets a timebase of 1, which makes it, among other things,
 	 * more difficult to determine how long a system has been up,
 	 * and thus how many TCP sequence increments have occurred.
+	 *
+	 * We start with 1, because 0 doesn't work with linux, which
+	 * considers timestamp 0 in a SYN packet as a bug and disables
+	 * timestamps.
 	 */
-	tp->ts_timebase = tcp_now;
+	tp->ts_timebase = tcp_now - 1;
 	
 	tp->t_congctl = tcp_congctl_global;
 	tp->t_congctl->refcnt++;

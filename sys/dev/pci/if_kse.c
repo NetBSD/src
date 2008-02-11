@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.2.4.5 2007/12/07 17:30:25 yamt Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.2.4.6 2008/02/11 14:59:38 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.2.4.5 2007/12/07 17:30:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.2.4.6 2008/02/11 14:59:38 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -648,15 +648,21 @@ kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (cmd == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				kse_set_filter(sc);
-			error = 0;
+			kse_set_filter(sc);
 		}
 		break;
 	}

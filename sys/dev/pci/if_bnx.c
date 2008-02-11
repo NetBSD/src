@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.1.8.7 2008/01/21 09:43:53 yamt Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.1.8.8 2008/02/11 14:59:38 yamt Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.43 2007/01/30 03:21:10 krw Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.8.7 2008/01/21 09:43:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.1.8.8 2008/02/11 14:59:38 yamt Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -687,7 +687,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->bnx_mii.mii_media, 0, ether_mediachange,
 	    ether_mediastatus);
 	mii_attach(self, &sc->bnx_mii, 0xffffffff,
-	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	    MII_PHY_ANY, MII_OFFSET_ANY, MIIF_FORCEANEG);
 
 	if (LIST_EMPTY(&sc->bnx_mii.mii_phys)) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -2862,7 +2862,7 @@ bnx_chipinit(struct bnx_softc *sc)
 
 		nval = pci_conf_read(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD);
 		pci_conf_write(pa->pa_pc, pa->pa_tag, BNX_PCI_PCIX_CMD,
-		    nval & ~0x2);
+		    nval & ~0x20000);
 	}
 
 	/* Enable the RX_V2P and Context state machines before access. */
@@ -4342,14 +4342,16 @@ bnx_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error != ENETRESET)
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
 			break;
+
 		error = 0;
-		if (command == SIOCADDMULTI || command == SIOCDELMULTI) {
+
+		if (command != SIOCADDMULTI && command && SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/* reload packet filter if running */
-			if (ifp->if_flags & IFF_RUNNING)
-				bnx_set_rx_mode(sc);
+			bnx_set_rx_mode(sc);
 		}
 		break;
 	}

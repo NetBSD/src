@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.207.2.8 2008/02/04 09:24:14 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.207.2.9 2008/02/11 14:59:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.8 2008/02/04 09:24:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.9 2008/02/11 14:59:58 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -2187,7 +2187,9 @@ filt_sigattach(struct knote *kn)
 	kn->kn_ptr.p_proc = p;
 	kn->kn_flags |= EV_CLEAR;               /* automatically set */
 
+	mutex_enter(&p->p_smutex);
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }
@@ -2197,7 +2199,9 @@ filt_sigdetach(struct knote *kn)
 {
 	struct proc *p = kn->kn_ptr.p_proc;
 
+	mutex_enter(&p->p_smutex);
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+	mutex_exit(&p->p_smutex);
 }
 
 /*

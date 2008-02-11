@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.60.2.5 2008/01/21 09:47:05 yamt Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.60.2.6 2008/02/11 14:59:59 yamt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.60.2.5 2008/01/21 09:47:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.60.2.6 2008/02/11 14:59:59 yamt Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -853,6 +853,7 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct lwp *l = curlwp;	/* XXX */
 	struct pppoe_softc *sc = (struct pppoe_softc*)ifp;
+	struct ifreq *ifr = data;
 	int error = 0;
 
 	switch (cmd) {
@@ -942,8 +943,6 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 	}
 	break;
 	case SIOCSIFFLAGS:
-	{
-		struct ifreq *ifr = (struct ifreq*) data;
 		/*
 		 * Prevent running re-establishment timers overriding
 		 * administrators choice.
@@ -959,17 +958,12 @@ pppoe_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 			    sizeof(sc->sc_dest));
 		}
 		return sppp_ioctl(ifp, cmd, data);
-	}
 	case SIOCSIFMTU:
-	{
-		struct ifreq *ifr = (struct ifreq *)data;
-
 		if (ifr->ifr_mtu > (sc->sc_eth_if == NULL ?
 		    PPPOE_MAXMTU : (sc->sc_eth_if->if_mtu - PPPOE_OVERHEAD))) {
 			return EINVAL;
 		}
-		return sppp_ioctl(ifp, cmd, data);
-	}
+		/*FALLTHROUGH*/
 	default:
 		return sppp_ioctl(ifp, cmd, data);
 	}

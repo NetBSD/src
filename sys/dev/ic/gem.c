@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.40.2.6 2008/02/04 09:23:24 yamt Exp $ */
+/*	$NetBSD: gem.c,v 1.40.2.7 2008/02/11 14:59:33 yamt Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.40.2.6 2008/02/04 09:23:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.40.2.7 2008/02/11 14:59:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -2515,15 +2515,19 @@ gem_ioctl(ifp, cmd, data)
 #undef RESETIGN
 		/*FALLTHROUGH*/
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				gem_setladrf(sc);
-			error = 0;
+			gem_setladrf(sc);
 		}
 		break;
 	}

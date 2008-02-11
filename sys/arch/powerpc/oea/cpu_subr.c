@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.24.2.6 2008/01/21 09:38:23 yamt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.24.2.7 2008/02/11 14:59:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.24.2.6 2008/01/21 09:38:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.24.2.7 2008/02/11 14:59:29 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.24.2.6 2008/01/21 09:38:23 yamt Exp $
 #include <powerpc/oea/hid.h>
 #include <powerpc/oea/hid_601.h>
 #include <powerpc/spr.h>
+#include <powerpc/oea/cpufeat.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
@@ -233,6 +234,28 @@ int cpu_altivec;
 int cpu_psluserset, cpu_pslusermod;
 char cpu_model[80];
 
+/* This is to be called from locore.S, and nowhere else. */
+
+extern unsigned long oeacpufeat;
+
+void
+cpu_model_init(void)
+{
+	u_int pvr, vers;
+
+	pvr = mfpvr();
+	vers = pvr >> 16;
+
+	oeacpufeat = 0;
+	
+	if ((vers >= IBMRS64II && vers <= IBM970GX) || vers == MPC620 ||
+		vers == IBMCELL || vers == IBMPOWER6P5)
+		oeacpufeat |= OEACPU_64 | OEACPU_64_BRIDGE | OEACPU_NOBAT;
+	
+	if (vers == MPC601)
+		oeacpufeat |= OEACPU_601;
+}
+
 void
 cpu_fmttab_print(const struct fmttab *fmt, register_t data)
 {
@@ -271,8 +294,8 @@ cpu_probe_cache(void)
 
 
 	/* Presently common across almost all implementations. */
-	curcpu()->ci_ci.dcache_line_size = CACHELINESIZE;
-	curcpu()->ci_ci.icache_line_size = CACHELINESIZE;
+	curcpu()->ci_ci.dcache_line_size = 32;
+	curcpu()->ci_ci.icache_line_size = 32;
 
 
 	switch (vers) {

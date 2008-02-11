@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.92.2.7 2008/01/21 09:46:30 yamt Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.92.2.8 2008/02/11 14:59:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.92.2.7 2008/01/21 09:46:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.92.2.8 2008/02/11 14:59:58 yamt Exp $");
 
 #include "opt_pipe.h"
 
@@ -162,7 +162,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 		splx(s);
 		return (EINVAL);
 	}
-	if ((so->so_state & SS_NBIO) && so->so_qlen == 0) {
+	if (so->so_nbio && so->so_qlen == 0) {
 		splx(s);
 		return (EWOULDBLOCK);
 	}
@@ -287,7 +287,7 @@ do_sys_connect(struct lwp *l, int s, struct mbuf *nam)
 	error = soconnect(so, nam, l);
 	if (error)
 		goto bad;
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+	if (so->so_nbio && (so->so_state & SS_ISCONNECTING)) {
 		error = EINPROGRESS;
 		goto out;
 	}

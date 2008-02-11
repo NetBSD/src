@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.1.18.1 2006/06/21 14:52:58 yamt Exp $	*/
+/*	$NetBSD: locore.S,v 1.1.18.2 2008/02/11 14:59:28 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -66,7 +66,8 @@ GLOBAL(endsym)
 	.long	0			/* end symbol table */
 GLOBAL(proc0paddr)
 	.long	0			/* proc0 p_addr */
-
+GLOBAL(oeacpufeat)
+	.long	0			/* cpu features */
 /*
 	
  * This symbol is here for the benefit of kvm_mkdb, and is supposed to

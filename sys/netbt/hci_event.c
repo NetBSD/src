@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.1.2.8 2008/01/21 09:47:11 yamt Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.1.2.9 2008/02/11 15:00:04 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.1.2.8 2008/01/21 09:47:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.1.2.9 2008/02/11 15:00:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -102,23 +102,43 @@ static const char *hci_eventnames[] = {
 /* 0x20 */ "PAGE SCAN REP MODE CHANGE",
 /* 0x21 */ "FLOW SPECIFICATION COMPLETE",
 /* 0x22 */ "RSSI RESULT",
-/* 0x23 */ "READ REMOTE EXT FEATURES"
+/* 0x23 */ "READ REMOTE EXT FEATURES",
+/* 0x24 */ "UNKNOWN",
+/* 0x25 */ "UNKNOWN",
+/* 0x26 */ "UNKNOWN",
+/* 0x27 */ "UNKNOWN",
+/* 0x28 */ "UNKNOWN",
+/* 0x29 */ "UNKNOWN",
+/* 0x2a */ "UNKNOWN",
+/* 0x2b */ "UNKNOWN",
+/* 0x2c */ "SCO CON COMPLETE",
+/* 0x2d */ "SCO CON CHANGED",
+/* 0x2e */ "SNIFF SUBRATING",
+/* 0x2f */ "EXTENDED INQUIRY RESULT",
+/* 0x30 */ "ENCRYPTION KEY REFRESH",
+/* 0x31 */ "IO CAPABILITY REQUEST",
+/* 0x32 */ "IO CAPABILITY RESPONSE",
+/* 0x33 */ "USER CONFIRM REQUEST",
+/* 0x34 */ "USER PASSKEY REQUEST",
+/* 0x35 */ "REMOTE OOB DATA REQUEST",
+/* 0x36 */ "SIMPLE PAIRING COMPLETE",
+/* 0x37 */ "UNKNOWN",
+/* 0x38 */ "LINK SUPERVISION TIMEOUT CHANGED",
+/* 0x39 */ "ENHANCED FLUSH COMPLETE",
+/* 0x3a */ "UNKNOWN",
+/* 0x3b */ "USER PASSKEY NOTIFICATION",
+/* 0x3c */ "KEYPRESS NOTIFICATION",
+/* 0x3d */ "REMOTE HOST FEATURES NOTIFICATION",
 };
 
 static const char *
 hci_eventstr(unsigned int event)
 {
 
-	if (event < (sizeof(hci_eventnames) / sizeof(*hci_eventnames)))
+	if (event < __arraycount(hci_eventnames))
 		return hci_eventnames[event];
 
 	switch (event) {
-	case HCI_EVENT_SCO_CON_COMPL:	/* 0x2c */
-		return "SCO CON COMPLETE";
-
-	case HCI_EVENT_SCO_CON_CHANGED:	/* 0x2d */
-		return "SCO CON CHANGED";
-
 	case HCI_EVENT_BT_LOGO:		/* 0xfe */
 		return "BT_LOGO";
 
@@ -126,7 +146,7 @@ hci_eventstr(unsigned int event)
 		return "VENDOR";
 	}
 
-	return "UNRECOGNISED";
+	return "UNKNOWN";
 }
 #endif	/* BLUETOOTH_DEBUG */
 
@@ -202,37 +222,7 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 		hci_event_read_clock_offset_compl(unit, m);
 		break;
 
-	case HCI_EVENT_SCO_CON_COMPL:
-	case HCI_EVENT_INQUIRY_COMPL:
-	case HCI_EVENT_REMOTE_NAME_REQ_COMPL:
-	case HCI_EVENT_MASTER_LINK_KEY_COMPL:
-	case HCI_EVENT_READ_REMOTE_FEATURES_COMPL:
-	case HCI_EVENT_READ_REMOTE_VER_INFO_COMPL:
-	case HCI_EVENT_QOS_SETUP_COMPL:
-	case HCI_EVENT_HARDWARE_ERROR:
-	case HCI_EVENT_FLUSH_OCCUR:
-	case HCI_EVENT_ROLE_CHANGE:
-	case HCI_EVENT_MODE_CHANGE:
-	case HCI_EVENT_RETURN_LINK_KEYS:
-	case HCI_EVENT_PIN_CODE_REQ:
-	case HCI_EVENT_LINK_KEY_REQ:
-	case HCI_EVENT_LINK_KEY_NOTIFICATION:
-	case HCI_EVENT_LOOPBACK_COMMAND:
-	case HCI_EVENT_DATA_BUFFER_OVERFLOW:
-	case HCI_EVENT_MAX_SLOT_CHANGE:
-	case HCI_EVENT_CON_PKT_TYPE_CHANGED:
-	case HCI_EVENT_QOS_VIOLATION:
-	case HCI_EVENT_PAGE_SCAN_MODE_CHANGE:
-	case HCI_EVENT_PAGE_SCAN_REP_MODE_CHANGE:
-	case HCI_EVENT_FLOW_SPECIFICATION_COMPL:
-	case HCI_EVENT_READ_REMOTE_EXTENDED_FEATURES:
-	case HCI_EVENT_SCO_CON_CHANGED:
-	case HCI_EVENT_BT_LOGO:
-	case HCI_EVENT_VENDOR:
-		break;
-
 	default:
-		UNKNOWN(hdr.event);
 		break;
 	}
 

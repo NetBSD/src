@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.11.2.4 2008/02/04 09:22:46 yamt Exp $	   */
+/*	$NetBSD: subr.S,v 1.11.2.5 2008/02/11 14:59:32 yamt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -220,6 +220,7 @@ _C_LABEL(cmn_idsptch):
 	calls	$0,_C_LABEL(krnlock)
 #endif
 	movl	(%sp)+,%r0	# get pointer to idspvec
+	mtpr	$IPL_VM,$PR_IPL	# Make sure we are at IPL_VM
 	movl	8(%r0),%r1	# get evcnt pointer
 	beql	1f		# no ptr, skip increment
 	incl	EV_COUNT(%r1)	# increment low longword

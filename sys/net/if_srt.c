@@ -1,8 +1,8 @@
-/* $NetBSD: if_srt.c,v 1.2.2.5 2008/01/21 09:47:06 yamt Exp $ */
+/* $NetBSD: if_srt.c,v 1.2.2.6 2008/02/11 14:59:59 yamt Exp $ */
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.2.2.5 2008/01/21 09:47:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_srt.c,v 1.2.2.6 2008/02/11 14:59:59 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -134,7 +134,6 @@ static RT *find_rt(SOFTC *sc, int af, ...)
 static int srt_if_ioctl(struct ifnet *intf, u_long cmd, void *data)
 {
  struct ifaddr *ifa;
- struct ifreq *ifr;
  int s;
  int err;
 
@@ -160,12 +159,9 @@ static int srt_if_ioctl(struct ifnet *intf, u_long cmd, void *data)
        /* XXX do we need to do more here for either of these? */
        break;
     case SIOCSIFMTU:
-       ifr = (void *) data;
-       ((SOFTC *)intf->if_softc)->intf.if_mtu = ifr->ifr_mtu;
-       break;
     case SIOCGIFMTU:
-       ifr = (void *) data;
-       ifr->ifr_mtu = intf->if_mtu;
+       if ((err = ifioctl_common(intf, cmd, data)) == ENETRESET)
+             err = 0;
        break;
     default:
        err = EINVAL;

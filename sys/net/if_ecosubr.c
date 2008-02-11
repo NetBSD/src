@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.16.2.2 2007/09/03 14:42:03 yamt Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.16.2.3 2008/02/11 14:59:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.16.2.2 2007/09/03 14:42:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.16.2.3 2008/02/11 14:59:59 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -543,11 +543,12 @@ eco_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	case SIOCSIFMTU:
-		ifp->if_mtu = ifr->ifr_mtu;
-
-		/* Make sure the device notices the MTU change. */
-		if (ifp->if_flags & IFF_UP)
+		if ((error = ifioctl_common(ifp, command, data)) != ENETRESET)
+			break;
+		else if (ifp->if_flags & IFF_UP)
 			error = (*ifp->if_init)(ifp);
+		else
+			error = 0;
 		break;
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {

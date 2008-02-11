@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77.2.6 2008/01/21 09:38:00 yamt Exp $
+# $NetBSD: GENERIC,v 1.77.2.7 2008/02/11 14:59:28 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,11 +22,12 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77.2.6 $"
+#ident 		"GENERIC-$Revision: 1.77.2.7 $"
 
 maxusers	32
 
 options		PIC_OPENPIC
+options 	PIC_DISTOPENPIC
 options		PIC_I8259
 #options		PIC_PREPIVR
 

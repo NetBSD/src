@@ -27,7 +27,7 @@
  *	i4b_ipr.c - isdn4bsd IP over raw HDLC ISDN network driver
  *	---------------------------------------------------------
  *
- *	$Id: i4b_ipr.c,v 1.18.2.5 2007/10/27 11:36:15 yamt Exp $
+ *	$Id: i4b_ipr.c,v 1.18.2.6 2008/02/11 15:00:09 yamt Exp $
  *
  * $FreeBSD$
  *
@@ -59,7 +59,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.18.2.5 2007/10/27 11:36:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_ipr.c,v 1.18.2.6 2008/02/11 15:00:09 yamt Exp $");
 
 #include "irip.h"
 #include "opt_irip.h"
@@ -622,8 +622,8 @@ iripioctl(struct ifnet *ifp, u_long cmd, void *data)
 				error = EINVAL;
 			else if(ifr->ifr_mtu < I4BIPRMINMTU)
 				error = EINVAL;
-			else
-				ifp->if_mtu = ifr->ifr_mtu;
+			else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+				error = 0;
 			break;
 #endif /* __OPENBSD__ */
 

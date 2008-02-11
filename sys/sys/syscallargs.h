@@ -1,4 +1,4 @@
-/* $NetBSD: syscallargs.h,v 1.139.2.9 2008/02/11 14:44:23 yamt Exp $ */
+/* $NetBSD: syscallargs.h,v 1.139.2.10 2008/02/11 15:00:09 yamt Exp $ */
 
 /*
  * System call argument lists.
@@ -1805,6 +1805,7 @@ check_syscall_args(sys_kevent)
 struct sys__sched_setparam_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
+	syscallarg(int) policy;
 	syscallarg(const struct sched_param *) params;
 };
 check_syscall_args(sys__sched_setparam)
@@ -1812,6 +1813,7 @@ check_syscall_args(sys__sched_setparam)
 struct sys__sched_getparam_args {
 	syscallarg(pid_t) pid;
 	syscallarg(lwpid_t) lid;
+	syscallarg(int *) policy;
 	syscallarg(struct sched_param *) params;
 };
 check_syscall_args(sys__sched_getparam)

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.3.2.6 2008/01/21 09:44:14 yamt Exp $ */
+/* $NetBSD: piixpm.c,v 1.3.2.7 2008/02/11 14:59:40 yamt Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.3.2.6 2008/01/21 09:44:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.3.2.7 2008/02/11 14:59:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
+	aprint_normal("\n%s: %s (rev. 0x%02x)",
 		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
 	if (!pmf_device_register(self, piixpm_suspend, piixpm_resume))

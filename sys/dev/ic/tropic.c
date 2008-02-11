@@ -1,4 +1,4 @@
-/*	$NetBSD: tropic.c,v 1.25.2.3 2007/10/27 11:31:07 yamt Exp $	*/
+/*	$NetBSD: tropic.c,v 1.25.2.4 2008/02/11 14:59:33 yamt Exp $	*/
 
 /*
  * Ported to NetBSD by Onno van der Linden
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25.2.3 2007/10/27 11:31:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tropic.c,v 1.25.2.4 2008/02/11 14:59:33 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1608,8 +1608,8 @@ void *data;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > sc->sc_maxmtu)
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 #endif
 	default:

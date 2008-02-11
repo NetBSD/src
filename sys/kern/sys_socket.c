@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.43.4.2 2007/09/03 14:41:10 yamt Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.43.4.3 2008/02/11 14:59:58 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.43.4.2 2007/09/03 14:41:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.43.4.3 2008/02/11 14:59:58 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,16 +95,14 @@ soo_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
 	struct proc *p = l->l_proc;
 	int error = 0;
 
+	if (cmd == FIONBIO) {
+		so->so_nbio = *(int *)data;
+		return 0;
+	}
+
 	KERNEL_LOCK(1, curlwp);
 
 	switch (cmd) {
-
-	case FIONBIO:
-		if (*(int *)data)
-			so->so_state |= SS_NBIO;
-		else
-			so->so_state &= ~SS_NBIO;
-		break;
 
 	case FIOASYNC:
 		if (*(int *)data) {

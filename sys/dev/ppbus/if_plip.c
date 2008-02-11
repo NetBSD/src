@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.6.4.3 2007/10/27 11:33:56 yamt Exp $ */
+/* $NetBSD: if_plip.c,v 1.6.4.4 2008/02/11 14:59:52 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.6.4.3 2007/10/27 11:33:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.6.4.4 2008/02/11 14:59:52 yamt Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -432,11 +432,10 @@ lpioctl (struct ifnet *ifp, u_long cmd, void *data)
 		}
 		if(ptr)
 			free(ptr,M_DEVBUF);
-		sc->sc_if.if_mtu = ifr->ifr_mtu;
-		break;
-
+		/*FALLTHROUGH*/
 	case SIOCGIFMTU:
-		ifr->ifr_mtu = sc->sc_if.if_mtu;
+		if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCADDMULTI:

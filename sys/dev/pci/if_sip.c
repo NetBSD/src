@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.102.2.5 2008/01/21 09:43:59 yamt Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.102.2.6 2008/02/11 14:59:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.5 2008/01/21 09:43:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.102.2.6 2008/02/11 14:59:39 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1790,15 +1790,21 @@ sipcom_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		/* FALLTHROUGH */
 	ethioctl:
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-			    (*sc->sc_model->sip_variant->sipv_set_filter)(sc);
-			error = 0;
+			(*sc->sc_model->sip_variant->sipv_set_filter)(sc);
 		}
 		break;
 	}

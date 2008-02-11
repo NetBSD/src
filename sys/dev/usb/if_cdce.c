@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.7.2.3 2007/09/03 14:39:02 yamt Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.7.2.4 2008/02/11 14:59:52 yamt Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.7.2.3 2007/09/03 14:39:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.7.2.4 2008/02/11 14:59:52 yamt Exp $");
 #include "bpfilter.h"
 
 #include <sys/param.h>
@@ -466,10 +466,10 @@ cdce_ioctl(struct ifnet *ifp, u_long command, void *data)
 		break;
 
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ETHERMTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU)
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCSIFFLAGS:

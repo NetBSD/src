@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.4.7 2008/02/04 09:22:50 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.4.8 2008/02/11 14:59:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.7 2008/02/04 09:22:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.8 2008/02/11 14:59:32 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -149,7 +149,7 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
 #ifdef TRAPLOG
 struct tlog tlog_primary;
 #endif
-struct cpu_info cpu_info_primary = {
+struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
@@ -270,6 +270,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
+	uintptr_t ptr;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 #endif
@@ -280,7 +281,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		aprint_naive(": Application Processor\n");
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
+		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    M_DEVBUF, M_WAITOK);
+		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
+		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL) {

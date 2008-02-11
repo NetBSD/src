@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.12.16.3 2008/01/21 09:37:54 yamt Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.12.16.4 2008/02/11 14:59:28 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.16.3 2008/01/21 09:37:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.12.16.4 2008/02/11 14:59:28 yamt Exp $");
 
 #include "opt_interrupt.h"
 
@@ -211,7 +211,7 @@ mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 
-	for (i = 0; i < 2; i++) {
+	for (i = 0; i < CPU_MAXNUM; i++) {
 		ca.ca_name = "cpu";
 		ca.ca_reg = reg;
 		reg[0] = i;

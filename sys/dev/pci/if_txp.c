@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.12.2.4 2007/10/27 11:33:04 yamt Exp $ */
+/* $NetBSD: if_txp.c,v 1.12.2.5 2008/02/11 14:59:39 yamt Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.12.2.4 2007/10/27 11:33:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.12.2.5 2008/02/11 14:59:39 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -1300,14 +1300,19 @@ txp_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if ((error = ether_ioctl(ifp, command, data)) == ENETRESET) {
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware
 			 * filter accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				txp_set_filter(sc);
-			error = 0;
+			txp_set_filter(sc);
 		}
 		break;
 	case SIOCGIFMEDIA:
