@@ -1,4 +1,4 @@
-.\" $NetBSD: uhmodem.4,v 1.1 2008/01/21 11:36:48 ichiro Exp $
+.\" $NetBSD: uhmodem.4,v 1.2 2008/02/11 02:23:09 ichiro Exp $
 .\"
 .\" Copyright (c) 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -52,22 +52,23 @@ driver supports the following adapters:
 .It Huawei E220
 .It E-mobile D01HW
 .It E-mobile D02HW
+.It NTT DoCoMo a2502
 .El
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the Huawei 3G wireless modems.
-This type of device has multiple com devices and umass device that
-contains device related files (usually it is device driver for 
-windows OS). The
+driver provides support for the Huawei 3G wireless modems and its variants.
+This type of device has multiple com ports.
+And some modems have own storage to contain its device driver (for Windows).
+The
 .Nm
-driver enable to use all of these devices.
+driver can handle all of these functions on the device.
 .Pp
-When the device attached, it will attach two ucom devices.
+When the device attached, it will attach multiple ucom devices.
 The former one is main com device to use communication with your 
-network provider, and the latter is sub com device to monitor the
-conditon of data communication. These two com devices can be used 
-simultaneously. 
+network provider, and others are sub com device to monitor the
+condition of data communication and/or network status.
+These com devices can be used simultaneously.
 .Pp
 The device is accessed through the
 .Xr ucom 4
