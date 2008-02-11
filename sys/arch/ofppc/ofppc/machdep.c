@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.104 2008/01/17 23:42:58 garbled Exp $	*/
+/*	$NetBSD: machdep.c,v 1.105 2008/02/11 17:32:18 garbled Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.104 2008/01/17 23:42:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.105 2008/02/11 17:32:18 garbled Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -77,6 +77,8 @@ void ofppc_bootstrap_console(void);
 extern u_int l2cr_config;
 extern int machine_has_rtas;
 
+struct model_data modeldata;
+
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
 {
@@ -87,7 +89,30 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 void
 model_init(void)
 {
-	int qhandle, phandle;
+	int qhandle, phandle, j;
+
+	memset(&modeldata, 0, sizeof(struct model_data));
+	/* provide sane defaults */
+	for (j=0; j < MAX_PCI_BUSSES; j++) {
+		modeldata.pciiodata[j].start = 0x00008000;
+		modeldata.pciiodata[j].limit = 0x0000ffff;
+	}
+	modeldata.ranges_offset = 1;
+
+	if (strncmp(model_name, "FirePower,", 10) == 0) {
+		modeldata.ranges_offset = 0;
+	}
+	if (strcmp(model_name, "MOT,PowerStack_II_Pro4000") == 0) {
+		modeldata.ranges_offset = 0;
+	}
+
+	/* 7044-270 and 7044-170 */
+	if (strncmp(model_name, "IBM,7044", 8) == 0) {
+		for (j=0; j < MAX_PCI_BUSSES; j++) {
+			modeldata.pciiodata[j].start = 0x00fff000;
+			modeldata.pciiodata[j].limit = 0x00ffffff;
+		}
+	}
 
 	/* Pegasos1, Pegasos2 */
 	if (strncmp(model_name, "Pegasos", 7) == 0) {
@@ -97,6 +122,10 @@ model_init(void)
 		char buf[32];
 		int i;
 
+		modeldata.ranges_offset = 1;
+		modeldata.pciiodata[0].start = 0x00001400;
+		modeldata.pciiodata[0].limit = 0x0000ffff;
+		
 		/* the pegasos doesn't bother to set the L2 cache up*/
 		l2cr_config = L2CR_L2PE;
 		

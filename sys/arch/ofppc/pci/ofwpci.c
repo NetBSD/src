@@ -1,4 +1,4 @@
-/* $NetBSD: ofwpci.c,v 1.5 2008/01/17 23:42:58 garbled Exp $ */
+/* $NetBSD: ofwpci.c,v 1.6 2008/02/11 17:32:18 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.5 2008/01/17 23:42:58 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwpci.c,v 1.6 2008/02/11 17:32:18 garbled Exp $");
 
 #include "opt_pci.h"
 
@@ -70,6 +70,7 @@ CFATTACH_DECL(ofwpci, sizeof(struct ofwpci_softc),
     ofwpci_match, ofwpci_attach, NULL, NULL);
 
 extern struct genppc_pci_chipset *genppc_pct;
+extern struct model_data modeldata;
 
 static void
 ofwpci_get_chipset_tag(pci_chipset_tag_t pc)
@@ -204,10 +205,12 @@ ofwpci_attach(struct device *parent, struct device *self, void *aux)
 	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
 
 #ifdef PCI_NETBSD_CONFIGURE
-	ioext  = extent_create("pciio",  0x00fff000, 0x00ffffff, M_DEVBUF,
-	    NULL, 0, EX_NOWAIT);
-	memext = extent_create("pcimem", sc->sc_memt.pbs_base, sc->sc_memt.pbs_limit, M_DEVBUF,
-	    NULL, 0, EX_NOWAIT);
+	ioext  = extent_create("pciio",
+	    modeldata.pciiodata[device_unit(self)].start,
+	    modeldata.pciiodata[device_unit(self)].limit,
+	    M_DEVBUF, NULL, 0, EX_NOWAIT);
+	memext = extent_create("pcimem", sc->sc_memt.pbs_base,
+	    sc->sc_memt.pbs_limit-1, M_DEVBUF, NULL, 0, EX_NOWAIT);
 
 	if (pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINESIZE))
 		aprint_error("pci_configure_bus() failed\n");
