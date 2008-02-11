@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.107 2008/02/11 15:22:43 ad Exp $	*/
+/*	$NetBSD: pstat.c,v 1.108 2008/02/11 22:45:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.107 2008/02/11 15:22:43 ad Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.108 2008/02/11 22:45:03 dyoung Exp $");
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,6 @@ __RCSID("$NetBSD: pstat.c,v 1.107 2008/02/11 15:22:43 ad Exp $");
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/conf.h>
-#include <sys/device.h>
 
 #include <sys/sysctl.h>
 
