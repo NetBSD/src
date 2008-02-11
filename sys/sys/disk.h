@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.48 2008/01/31 18:30:55 dyoung Exp $	*/
+/*	$NetBSD: disk.h,v 1.49 2008/02/11 22:40:14 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -86,7 +86,9 @@
  * Disk device structures.
  */
 
+#ifdef _KERNEL
 #include <sys/device.h>
+#endif
 #include <sys/dkio.h>
 #include <sys/time.h>
 #include <sys/queue.h>
