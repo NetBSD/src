@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.67 2008/01/21 20:25:33 dyoung Exp $	*/
+/*	$NetBSD: route.h,v 1.68 2008/02/11 04:47:21 simonb Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@
 #include <sys/types.h>
 #include <net/if.h>
 
-#ifndef _KERNEL
+#if !(defined(_KERNEL) || defined(_STANDALONE))
 #include <stdbool.h>
 #endif
 
