@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.33 2008/02/11 22:32:48 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.34 2008/02/12 00:53:06 dyoung Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #ifndef _NET_IF_GRE_H_
 #define _NET_IF_GRE_H_
 
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
