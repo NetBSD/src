@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.20 2008/01/24 19:52:53 garbled Exp $	*/
+/*	$NetBSD: Locore.c,v 1.21 2008/02/12 04:27:46 garbled Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -560,3 +560,152 @@ getchar(void)
 			return -1;
 	return ch;
 }
+
+#ifdef OFWDUMP
+
+static int
+OF_peer(int phandle)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		int sibling;
+	} args = {
+		"peer",
+			1,
+			1,
+	};
+	
+	args.phandle = phandle;
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.sibling;
+}
+
+static int
+OF_child(int phandle)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		int child;
+	} args = {
+		"child",
+			1,
+			1,
+	};
+
+	args.phandle = phandle;
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.child;
+}
+
+int
+OF_nextprop(int handle, const char *prop, void *nextprop)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		const char *prop;
+		char *buf;
+		int flag;
+	} args = {
+		"nextprop",
+			3,
+			1,
+	};
+
+	args.phandle = handle;
+	args.prop = prop;
+	args.buf = nextprop;
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.flag;
+}
+
+static int
+OF_package_to_path(int phandle, char *buf, int buflen)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		char *buf;
+		int buflen;
+		int length;
+	} args = {
+		"package-to-path",
+			3,
+			1,
+	};
+
+	if (buflen > 4096)
+		return -1;
+	args.phandle = phandle;
+	args.buf = buf;
+	args.buflen = buflen;
+	if (openfirmware(&args) < 0)
+		return -1;
+	if (args.length > buflen)
+		args.length = buflen;
+	return args.length;
+}
+
+void
+dump_ofwtree(int node)
+{
+	int peer, child, namelen, dlen, i;
+	char namebuf[33], newnamebuf[33];
+	char path[256], data[256];
+
+	for (peer = node; peer; peer = OF_peer(peer)) {
+		printf("\nnode: 0x%x ", peer);
+		if (OF_package_to_path(peer, path, 512) >= 0)
+			printf("path=%s", path);
+		printf("\n");
+		namebuf[0] = '\0';
+		namelen = OF_nextprop(peer, namebuf, &newnamebuf);
+		while (namelen >= 0) {
+			/*printf("namelen == %d namebuf=%s new=%s\n", namelen,
+			  namebuf, newnamebuf);*/
+			//newnamebuf[namelen] = '\0';
+			strcpy(namebuf, newnamebuf);
+			printf("  %s :", newnamebuf);
+			dlen = OF_getprop(peer, newnamebuf, data, 256);
+			if (dlen > 0) {
+				if (data[0] < 0177)
+					printf(" %s\n", data);
+				else
+					printf("\n");
+				printf("    ");
+				for (i=0; i < dlen && i < 256; i++) {
+					if (data[i] < 0x10)
+						printf("0");
+					printf("%x", data[i]);
+					if ((i+1)%4 == 0)
+						printf(" ");
+					if ((i+1)%32 == 0)
+						printf("\n    ");
+				}
+			}
+			printf("\n");
+			namelen = OF_nextprop(peer, namebuf, &newnamebuf);
+			if (newnamebuf[0] == '\0' ||
+			    strcmp(namebuf, newnamebuf) == 0)
+				break;
+		}
+		child = OF_child(peer);
+		if (child > 0)
+			dump_ofwtree(child);
+	}
+}
+
+#endif /* OFWDUMP */
