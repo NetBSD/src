@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2008/01/09 19:34:44 garbled Exp $
+#	$NetBSD: Makefile,v 1.22 2008/02/12 04:27:46 garbled Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
@@ -6,6 +6,7 @@ PROG=		ofwboot
 SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c vers.c
 CFLAGS+=	-msoft-float -Wno-main -ffreestanding
 #CPPFLAGS+=	-g -DALLOC_TRACE -DDEBUG #-DOFW_DEBUG -DNETIF_DEBUG
+#CPPFLAGS+=	-DOFWDUMP
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-DHEAP_VARIABLE
 DBG=		-Os -mmultiple
