@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.32 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.33 2008/02/12 18:22:39 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,16 +35,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.32 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.33 2008/02/12 18:22:39 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/conf.h>
-#ifdef COMPAT_OLDBOOT
-#include <sys/reboot.h>
-#endif
 #include <sys/malloc.h>
 #include <sys/vnode.h>
 #include <sys/fcntl.h>
@@ -297,15 +294,6 @@ match_bootdisk(struct device *dv, struct btinfo_bootdisk *bid)
 	return (found);
 }
 
-#ifdef __x86_64__
-/* Old style bootdev never existed on amd64. */
-#undef COMPAT_OLDBOOT
-#endif
-
-#ifdef COMPAT_OLDBOOT
-uint32_t bootdev = 0;
-#endif
-
 /*
  * Attempt to find the device from which we were booted.  If we can do so,
  * and not instructed not to do so, change rootdev to correspond to the
@@ -318,10 +306,6 @@ findroot(void)
 	struct btinfo_bootdisk *bid;
 	struct btinfo_bootwedge *biw;
 	device_t dv;
-#ifdef COMPAT_OLDBOOT
-	const char *name;
-	int majdev, unit, part;
-#endif
 
 	if (booted_device)
 		return;
@@ -447,28 +431,6 @@ findroot(void)
 		if (booted_device)
 			return;
 	}
-
-#ifdef COMPAT_OLDBOOT
-#if 0
-	printf("findroot: howto %x bootdev %x\n", boothowto, bootdev);
-#endif
-	
-	if ((bootdev & B_MAGICMASK) != B_DEVMAGIC)
-		return;
-	
-	majdev = (bootdev >> B_TYPESHIFT) & B_TYPEMASK;
-	name = devsw_blk2name(majdev);
-	if (name == NULL)
-		return;
-	
-	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
-	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-
-	if ((dv = device_find_by_driver_unit(name, unit)) != NULL) {
-		booted_device = dv;
-		booted_partition = part;
-	}
-#endif /* COMPAT_OLDBOOT */
 }
 
 void
