@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1018 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1019 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -436,3 +436,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	modules: Added the MKMODULAR option to the build system to easily
 		enable the build of the new kernel modules framework.
 		[jmmv 20080209]
+	iwn(4): Added a driver for the Intel Pro/Wireless Lan 4965AGN          
+		Mini-PCI Adapter, ported from OpenBSD. [ober 2008-02-09]
