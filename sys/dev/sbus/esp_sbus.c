@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.38 2007/10/19 12:01:10 ad Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.39 2008/02/12 17:30:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.38 2007/10/19 12:01:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.39 2008/02/12 17:30:58 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,6 +161,7 @@ espattach_sbus(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
+	device_t dma_dev;
 	struct esp_softc *esc = (void *)self;
 	struct ncr53c9x_softc *sc = &esc->sc_ncr53c9x;
 	struct sbus_attach_args *sa = aux;
@@ -306,18 +307,11 @@ espattach_sbus(parent, self, aux)
 	 * if the sc->sc_esp field in it's softc is NULL, then tries to
 	 * find the matching esp driver.
 	 */
-	esc->sc_dma = (struct lsi64854_softc *)
-				getdevunit("dma", device_unit(&sc->sc_dev));
-
-	/*
-	 * and a back pointer to us, for DMA
-	 */
-	if (esc->sc_dma)
-		esc->sc_dma->sc_client = sc;
-	else {
-		printf("\n");
-		panic("espattach: no dma found");
-	}
+	dma_dev = device_find_by_driver_unit("dma", device_unit(self));
+	if (dma_dev == NULL)
+		panic("%s: no corresponding DMA device", device_xname(self));
+	esc->sc_dma = device_private(dma_dev);
+	esc->sc_dma->sc_client = sc;
 
 	/*
 	 * The `ESC' DMA chip must be reset before we can access
@@ -753,15 +747,17 @@ esp_init_ddb_cmds()
 void
 db_esp(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
+	device_t dv;
 	struct ncr53c9x_softc *sc;
 	struct ncr53c9x_ecb *ecb;
 	struct ncr53c9x_linfo *li;
 	int u, t, i;
 
 	for (u=0; u<10; u++) {
-		sc = (struct ncr53c9x_softc *)
-			getdevunit("esp", u);
-		if (!sc) continue;
+		dv = device_find_by_driver_unit("esp", u);
+		if (dv == NULL)
+			continue
+		sc = device_private(dv);
 
 		db_printf("esp%d: nexus %p phase %x prev %x dp %p dleft %lx ify %x\n",
 			  u, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,

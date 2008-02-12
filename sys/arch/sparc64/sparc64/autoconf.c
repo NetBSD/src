@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.150 2008/02/11 04:14:18 mrg Exp $ */
+/*	$NetBSD: autoconf.c,v 1.151 2008/02/12 17:30:58 joerg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.150 2008/02/11 04:14:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.151 2008/02/12 17:30:58 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -705,32 +705,6 @@ romgetcursoraddr(int **rowp, int **colp)
 	*rowp = (int *)(intptr_t)(row+4);
 	*colp = (int *)(intptr_t)(col+4);
 	return (row == 0UL || col == 0UL);
-}
-
-/*
- * find a device matching "name" and unit number
- */
-struct device *
-getdevunit(const char *name, int unit)
-{
-	struct device *dev = TAILQ_FIRST(&alldevs);
-	char num[10], fullname[16];
-	int lunit;
-
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(device_xname(dev), fullname) != 0) {
-		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
-			return NULL;
-	}
-	return dev;
 }
 
 /*

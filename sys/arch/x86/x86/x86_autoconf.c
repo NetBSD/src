@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.31 2007/11/26 19:01:26 pooka Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.32 2008/02/12 17:30:58 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.31 2007/11/26 19:01:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.32 2008/02/12 17:30:58 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -317,11 +317,10 @@ findroot(void)
 	struct btinfo_rootdevice *biv;
 	struct btinfo_bootdisk *bid;
 	struct btinfo_bootwedge *biw;
-	struct device *dv;
+	device_t dv;
 #ifdef COMPAT_OLDBOOT
 	const char *name;
 	int majdev, unit, part;
-	char bf[32];
 #endif
 
 	if (booted_device)
@@ -465,13 +464,9 @@ findroot(void)
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
 
-	snprintf(bf, sizeof(bf), "%s%d", name, unit);
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-		if (strcmp(bf, dv->dv_xname) == 0) {
-			booted_device = dv;
-			booted_partition = part;
-			return;
-		}
+	if ((dv = device_find_by_driver_unit(name, unit)) != NULL) {
+		booted_device = dv;
+		booted_partition = part;
 	}
 #endif /* COMPAT_OLDBOOT */
 }
