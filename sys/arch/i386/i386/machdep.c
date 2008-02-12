@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.625 2008/01/23 19:46:44 bouyer Exp $	*/
+/*	$NetBSD: machdep.c,v 1.626 2008/02/12 17:52:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.625 2008/01/23 19:46:44 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.626 2008/02/12 17:52:18 joerg Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -971,7 +971,6 @@ haltsys:
 #endif
 #if NACPI > 0
 		if (acpi_softc != NULL) {
-			delay(500000);
 			acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 			printf("WARNING: ACPI powerdown failed!\n");
 		}
