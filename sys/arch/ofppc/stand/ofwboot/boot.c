@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2008/01/24 19:52:53 garbled Exp $	*/
+/*	$NetBSD: boot.c,v 1.20 2008/02/12 04:27:46 garbled Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -107,6 +107,10 @@ char bootfile[128];
 int boothowto;
 int debug;
 
+#ifdef OFWDUMP
+void dump_ofwtree(int);
+#endif
+
 static char *kernels[] = { "/netbsd.ofppc", "/netbsd",
 			   "/netbsd.gz", "onetbsd", NULL };
 static char *kernels64[] = { "/netbsd.ofppc64", "/netbsd64", "/netbsd64.gz",
@@ -204,6 +208,10 @@ main(void)
 	printf(">> %s, Revision %s\n", bootprog_name, bootprog_rev);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
 
+#ifdef OFWDUMP
+	chosen = OF_finddevice("/");
+	dump_ofwtree(chosen);
+#endif
 	/*
 	 * Get the boot arguments from Openfirmware
 	 */
