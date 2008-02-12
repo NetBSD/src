@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.19 2008/02/05 14:19:53 ad Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.20 2008/02/12 08:55:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.19 2008/02/05 14:19:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.20 2008/02/12 08:55:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,7 +342,7 @@ nfs_kqfilter(void *v)
 	mutex_enter(&vp->v_interlock);
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
 	kn->kn_hook = vp;
-	mutex_enter(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	/* kick the poller */
 	cv_signal(&nfskq_cv);
