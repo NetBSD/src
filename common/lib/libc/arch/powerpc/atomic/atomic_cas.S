@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas.S,v 1.3 2008/02/10 13:40:31 ad Exp $	*/
+/*	$NetBSD: atomic_cas.S,v 1.4 2008/02/12 07:58:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -41,12 +41,12 @@
 	.text
 
 ENTRY_NOPROFILE(_atomic_cas_32)
-1:	lwarx	r10,0,r3
-	cmpw	r10,r4
+1:	lwarx	%r10,0,%r3
+	cmpw	%r10,%r4
 	bne-	2f
-	stwcx.	r5,0,r3
+	stwcx.	%r5,0,%r3
 	bne-	1b
-2:	mr	r3,r10
+2:	mr	%r3,%r10
 	blr
 
 ATOMIC_OP_ALIAS(atomic_cas_32,_atomic_cas_32)
