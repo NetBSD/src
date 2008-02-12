@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.1 2007/12/29 14:38:31 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.2 2008/02/12 17:30:58 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.1 2007/12/29 14:38:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2008/02/12 17:30:58 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -334,13 +334,9 @@ cpu_startup(void)
 void
 cpu_rootconf(void)
 {
-	device_t curdev, rdev = NULL;
+	device_t rdev;
 
-	TAILQ_FOREACH(curdev, &alldevs, dv_list)
-		if (strcmp(device_xname(curdev), "md0") == 0) {
-			rdev = curdev;
-			break;
-		}
+	rdev = device_find_by_xname("md0");
 
 	setroot(rdev, 0);
 }

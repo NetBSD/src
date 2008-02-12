@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.2 2008/01/02 19:26:45 yamt Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.3 2008/02/12 17:30:59 joerg Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,7 +39,7 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.2 2008/01/02 19:26:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.3 2008/02/12 17:30:59 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -145,10 +145,7 @@ tftproot_dhcpboot(bootdv)
 		goto out;
 	}
 
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list))
-		if (strcmp(dv->dv_xname, ifp->if_xname) == 0)
-			break;
+	dv = device_find_by_xname(ifp->if_xname);
 
 	if ((dv == NULL) || (device_class(dv) != DV_IFNET)) {
 		DPRINTF(("%s():%d cannot find device for interface %s\n",
