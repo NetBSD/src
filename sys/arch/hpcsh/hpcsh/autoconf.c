@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.20 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.21 2008/02/12 21:47:46 uwe Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2008/02/12 21:47:46 uwe Exp $");
 
 #include "opt_md.h"
 
@@ -175,9 +175,10 @@ get_device(char *name)
 		part = *cp - 'a';
 	else if (*cp != '\0' && *cp != ' ')
 		return;
+
 	if ((dv = device_find_by_driver_unit(devname, unit)) != NULL) {
 		booted_device = dv;
 		booted_partition = part;
 	}
 }
-#endif /* MEMORY_DISK_IS_ROOT */
+#endif /* !MEMORY_DISK_IS_ROOT */
