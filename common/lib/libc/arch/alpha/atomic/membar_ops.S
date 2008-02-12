@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.2 2007/11/28 17:39:08 ad Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.3 2008/02/12 07:35:04 matt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
 
 #include "atomic_op_asm.h"
 
-#if defined(_KERNEL)
-
 	.text
 
 /*
@@ -66,6 +64,8 @@ STRONG_ALIAS(_membar_exit,_membar_sync)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_sync)
 STRONG_ALIAS(_membar_consumer,_membar_sync)
 
+#ifdef _KERNEL
+
 LEAF_NOPROFILE(_membar_producer_mp, 0)
 	wmb
 	RET
@@ -77,7 +77,5 @@ LEAF_NOPROFILE(_membar_sync_mp, 0)
 	RET
 	END(_membar_sync_mp)
 EXPORT(_membar_sync_mp_end)
-
-#else /* _KERNEL */
 
 #endif /* _KERNEL */
