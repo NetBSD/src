@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.23 2008/02/12 13:02:24 joerg Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.24 2008/02/12 13:05:55 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.23 2008/02/12 13:02:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.24 2008/02/12 13:05:55 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -57,9 +57,9 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, uint32_t off, uint32_t len)
 	uint32_t sum;
 	uint16_t *w;
 
-	if (off < sizeof(struct ip6_hdr))
+	if (__predict_false(off < sizeof(struct ip6_hdr)))
 		panic("in6_cksum: offset too short for IPv6 header");
-	if (m->m_len < sizeof(struct ip6_hdr))
+	if (__predict_false(m->m_len < sizeof(struct ip6_hdr)))
 		panic("in6_cksum: mbuf too short for IPv6 header");
 
 	if (nxt == 0)
