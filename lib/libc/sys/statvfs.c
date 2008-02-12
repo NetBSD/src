@@ -1,4 +1,4 @@
-/*	$NetBSD: statvfs.c,v 1.4 2006/07/31 16:34:42 martin Exp $	*/
+/*	$NetBSD: statvfs.c,v 1.5 2008/02/12 19:36:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: statvfs.c,v 1.4 2006/07/31 16:34:42 martin Exp $");
+__RCSID("$NetBSD: statvfs.c,v 1.5 2008/02/12 19:36:06 drochner Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -47,7 +47,6 @@ __RCSID("$NetBSD: statvfs.c,v 1.4 2006/07/31 16:34:42 martin Exp $");
 #ifdef __weak_alias
 __weak_alias(statvfs,_statvfs)
 __weak_alias(fstatvfs,_fstatvfs)
-__weak_alias(fhstatvfs,_fhstatvfs)
 #endif
 
 int
