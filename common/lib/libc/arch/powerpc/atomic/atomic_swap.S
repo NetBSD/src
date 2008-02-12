@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.2 2007/11/28 21:39:50 ad Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.3 2008/02/12 07:58:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,10 +41,10 @@
 	.text
 
 ENTRY_NOPROFILE(_atomic_swap_32)
-1:	lwarx	r10,0,r3
-	stwcx.	r4,0,r3
+1:	lwarx	%r10,0,%r3
+	stwcx.	%r4,0,%r3
 	bne-	1b
-	mr	r3,r10
+	mr	%r3,%r10
 	blr
 ATOMIC_OP_ALIAS(atomic_swap_32,_atomic_swap_32)
 ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
