@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.102 2008/02/06 20:24:17 drochner Exp $ */
+/* $NetBSD: device.h,v 1.103 2008/02/12 17:30:59 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -442,6 +442,9 @@ void		device_active_deregister(device_t,
 				         void (*)(device_t, devactive_t));
 
 bool		device_is_a(device_t, const char *);
+
+device_t	device_find_by_xname(const char *);
+device_t	device_find_by_driver_unit(const char *, int);
 
 bool		device_pmf_is_registered(device_t);
 

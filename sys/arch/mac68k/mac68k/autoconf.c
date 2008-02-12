@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70 2007/12/05 12:31:27 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.71 2008/02/12 17:30:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70 2007/12/05 12:31:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.71 2008/02/12 17:30:58 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,8 @@ u_long	bootdev;
 static void
 findbootdev(void)
 {
-	struct device *dv;
+	device_t dv;
 	int major, unit, controller;
-	char buf[32];
 	const char *name;
 
 	booted_device = NULL;
@@ -150,14 +149,8 @@ findbootdev(void)
 		break;
 	}
 
-	sprintf(buf, "%s%d", name, unit);
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	    dv = TAILQ_NEXT(dv, dv_list)) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			booted_device = dv;
-			return;
-		}
-	}
+	if ((dv = device_find_by_driver_unit(name, unit)) != NULL)
+		booted_device = dv;
 }
 
 /*

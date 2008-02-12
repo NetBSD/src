@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.13 2008/02/06 20:24:17 drochner Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.14 2008/02/12 17:30:59 joerg Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.13 2008/02/06 20:24:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.14 2008/02/12 17:30:59 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,30 +48,17 @@ const struct cdevsw drvctl_cdevsw = {
 };
 
 void drvctlattach(int);
-static struct device *devbyname(const char *);
 
 #define MAXLOCATORS 100
 
 static int drvctl_command(struct lwp *, struct plistref *, u_long, int flag);
-
-static struct device *
-devbyname(const char *devname)
-{
-	struct device *d;
-
-	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		if (strcmp(devname, device_xname(d)) == 0)
-			break;
-	}
-	return d;
-}
 
 static int
 pmdevbyname(int cmd, struct devpmargs *a)
 {
 	struct device *d;
 
-	if ((d = devbyname(a->devname)) == NULL)
+	if ((d = device_find_by_xname(a->devname)) == NULL)
 		return ENXIO;
 
 	switch (cmd) {
@@ -93,7 +80,7 @@ listdevbyname(struct devlistargs *l)
 	device_t d, child;
 	int cnt = 0, idx, error;
 
-	if ((d = devbyname(l->l_devname)) == NULL)
+	if ((d = device_find_by_xname(l->l_devname)) == NULL)
 		return ENXIO;
 
 	TAILQ_FOREACH(child, &alldevs, dv_list) {
@@ -117,7 +104,7 @@ detachdevbyname(const char *devname)
 {
 	struct device *d;
 
-	if ((d = devbyname(devname)) == NULL)
+	if ((d = device_find_by_xname(devname)) == NULL)
 		return ENXIO;
 
 #ifndef XXXFULLRISK
@@ -150,7 +137,7 @@ rescanbus(const char *busname, const char *ifattr,
 	for (i = 0; i < numlocators;i++)
 		locs[i] = locators[i];
 
-	if ((d = devbyname(busname)) == NULL)
+	if ((d = device_find_by_xname(busname)) == NULL)
 		return ENXIO;
 
 	/*

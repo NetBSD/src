@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.178 2008/02/11 22:20:11 dyoung Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.179 2008/02/12 17:30:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.178 2008/02/11 22:20:11 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.179 2008/02/12 17:30:59 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -1124,7 +1124,6 @@ static struct device *
 finddevice(const char *name)
 {
 	const char *wname;
-	struct device *dv;
 #if defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
 #endif /* BOOT_FROM_MEMORY_HOOKS */
@@ -1139,11 +1138,7 @@ finddevice(const char *name)
 	}
 #endif /* BOOT_FROM_MEMORY_HOOKS */
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-		if (strcmp(dv->dv_xname, name) == 0)
-			break;
-	}
-	return dv;
+	return device_find_by_xname(name);
 }
 
 static struct device *

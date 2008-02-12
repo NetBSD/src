@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.21 2007/12/05 12:31:27 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.22 2008/02/12 17:30:58 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.21 2007/12/05 12:31:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2008/02/12 17:30:58 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,29 +188,14 @@ cpu_rootconf(void)
 static struct device *
 getdevunit(const char *name, int unit)
 {
-	struct device *dev = TAILQ_FIRST(&alldevs);
-	char num[10], fullname[16];
-	int lunit;
+	device_t dv;
 	int i;
 
 	for (i = 0; i < ndevice_equivs; i++)
 		if (device_equiv->alias && strcmp (name, device_equiv->alias) == 0)
 			name = device_equiv->real;
 
-	/* compute length of name and decimal expansion of unit number */
-	sprintf(num, "%d", unit);
-	lunit = strlen(num);
-	if (strlen(name) + lunit >= sizeof(fullname) - 1)
-		panic("config_attach: device name too long");
-
-	strcpy(fullname, name);
-	strcat(fullname, num);
-
-	while (strcmp(dev->dv_xname, fullname) != 0) {
-		if ((dev = TAILQ_NEXT(dev, dv_list)) == NULL)
-			return NULL;
-	}
-	return dev;
+	return device_find_by_driver_unit(name, unit);
 }
 
 /*

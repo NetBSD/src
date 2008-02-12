@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.130 2008/02/06 20:24:17 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.131 2008/02/12 17:30:59 joerg Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.130 2008/02/06 20:24:17 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.131 2008/02/12 17:30:59 joerg Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1800,6 +1800,40 @@ device_is_a(device_t dev, const char *dname)
 {
 
 	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
+}
+
+/*
+ * device_find_by_xname:
+ *
+ *	Returns the device of the given name or NULL if it doesn't exist.
+ */
+device_t
+device_find_by_xname(const char *name)
+{
+	device_t dv;
+
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		if (strcmp(device_xname(dv), name) == 0)
+			break;
+	}
+
+	return dv;
+}
+
+/*
+ * device_find_by_driver_unit:
+ *
+ *	Returns the device of the given driver name and unit or
+ *	NULL if it doesn't exist.
+ */
+device_t
+device_find_by_driver_unit(const char *name, int unit)
+{
+	struct cfdriver *cd;
+
+	if ((cd = config_cfdriver_lookup(name)) == NULL)
+		return NULL;
+	return device_lookup(cd, unit);
 }
 
 /*
