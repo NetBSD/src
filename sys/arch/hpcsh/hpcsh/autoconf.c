@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.19 2007/12/05 12:31:26 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.20 2008/02/12 17:30:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.19 2007/12/05 12:31:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.20 2008/02/12 17:30:57 joerg Exp $");
 
 #include "opt_md.h"
 
@@ -153,8 +153,8 @@ static void
 get_device(char *name)
 {
 	int unit, part;
-	char devname[16], buf[32], *cp;
-	struct device *dv;
+	char devname[16], *cp;
+	device_t dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)
 		name += 5;
@@ -175,14 +175,9 @@ get_device(char *name)
 		part = *cp - 'a';
 	else if (*cp != '\0' && *cp != ' ')
 		return;
-	sprintf(buf, "%s%d", devname, unit);
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	    dv = TAILQ_NEXT(dv, dv_list)) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			booted_device = dv;
-			booted_partition = part;
-			return;
-		}
+	if ((dv = device_find_by_driver_unit(devname, unit)) != NULL) {
+		booted_device = dv;
+		booted_partition = part;
 	}
 }
 #endif /* MEMORY_DISK_IS_ROOT */
