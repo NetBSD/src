@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_debugMem.c,v 1.18 2006/11/16 01:33:23 christos Exp $	*/
+/*	$NetBSD: rf_debugMem.c,v 1.19 2008/02/12 03:12:41 oster Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.18 2006/11/16 01:33:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_debugMem.c,v 1.19 2008/02/12 03:12:41 oster Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -118,7 +118,7 @@ int
 rf_ConfigureDebugMem(RF_ShutdownList_t **listp)
 {
 #if RF_DEBUG_MEM
-	int     i, rc;
+	int     i;
 
 	rf_mutex_init(&rf_debug_mem_mutex);
 	if (rf_memDebug) {
