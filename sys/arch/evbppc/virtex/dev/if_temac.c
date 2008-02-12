@@ -1,4 +1,4 @@
-/* 	$NetBSD: if_temac.c,v 1.3 2008/01/19 22:10:14 dyoung Exp $ */
+/* 	$NetBSD: if_temac.c,v 1.4 2008/02/12 18:03:43 dyoung Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.3 2008/01/19 22:10:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_temac.c,v 1.4 2008/02/12 18:03:43 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -895,8 +895,8 @@ temac_mii_tick(void *arg)
 	struct temac_softc 	*sc = (struct temac_softc *)arg;
 	int 			s;
 
-	if ((sc->sc_dev.dv_flags & DVF_ACTIVE) == 0)
-		return ;
+	if (!device_is_active(&sc->sc_dev))
+		return;
 
 	s = splnet();
 	mii_tick(&sc->sc_mii);
