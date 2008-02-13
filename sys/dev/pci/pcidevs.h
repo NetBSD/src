@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.929 2008/02/10 10:59:44 ichiro Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.930 2008/02/13 13:57:00 tron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.928 2008/02/10 10:59:18 ichiro Exp
+ *	NetBSD: pcidevs,v 1.929 2008/02/13 13:56:46 tron Exp
  */
 
 /*
@@ -2375,6 +2375,11 @@
 #define	PCI_PRODUCT_INTEL_82945P_IGD	0x2772		/* 82945G/P Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82955X_HB	0x2774		/* 82955X Host */
 #define	PCI_PRODUCT_INTEL_82955X_EXP	0x2775		/* 82955X PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_E7230_HB	0x2778		/* E7230 Host */
+#define	PCI_PRODUCT_INTEL_E7230_EXP	0x2779		/* E7230 PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82975X_EXP_2	0x277a		/* 82975X PCI Express Bridge */
+#define	PCI_PRODUCT_INTEL_82975X_HB	0x277c		/* 82975X Host */
+#define	PCI_PRODUCT_INTEL_82975X_EXP	0x277d		/* 82975X PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82915G_IGDC	0x2782		/* 82915G/GL IGD Companion */
 #define	PCI_PRODUCT_INTEL_82915GM_IGDC	0x2792		/* 82915GM/GMS IGD Companion */
 #define	PCI_PRODUCT_INTEL_82945GM_HB	0x27a0		/* 82945GM/PM/GMS Host Bridge */
@@ -2683,6 +2688,7 @@
 #define	PCI_PRODUCT_MATROX_MILLENNIUM2_AGP	0x051f		/* MGA Millennium II 2164WA-B AGP */
 #define	PCI_PRODUCT_MATROX_G200_PCI	0x0520		/* MGA G200 PCI */
 #define	PCI_PRODUCT_MATROX_G200_AGP	0x0521		/* MGA G200 AGP */
+#define	PCI_PRODUCT_MATROX_G200E_SE	0x0522		/* MGA G200e (ServerEngines) */
 #define	PCI_PRODUCT_MATROX_G400_AGP	0x0525		/* MGA G400 AGP */
 #define	PCI_PRODUCT_MATROX_IMPRESSION	0x0d10		/* MGA Impression */
 #define	PCI_PRODUCT_MATROX_G100_PCI	0x1000		/* MGA G100 PCI */
