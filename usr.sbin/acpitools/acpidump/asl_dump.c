@@ -1,8 +1,9 @@
-/*	$NetBSD: asl_dump.c,v 1.4 2008/02/03 09:25:49 dogcow Exp $	*/
+/*	$NetBSD: asl_dump.c,v 1.5 2008/02/13 11:47:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
+ * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,12 +31,15 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/asl_dump.c,v 1.7 2002/03/02 15:05:26 takawata Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: asl_dump.c,v 1.4 2008/02/03 09:25:49 dogcow Exp $");
+__RCSID("$NetBSD: asl_dump.c,v 1.5 2008/02/13 11:47:36 joerg Exp $");
 
 #include <sys/param.h>
+#include <sys/endian.h>
 
 #include <assert.h>
 #include <err.h>
+#include <inttypes.h>
+#include <stdbool.h>
 #include <stdio.h>
 
 #include <acpi_common.h>
@@ -89,11 +93,11 @@ print_nameseg(u_int8_t *dp)
 	if (dp[3] != '_')
 		printf("%c%c%c%c", dp[0], dp[1], dp[2], dp[3]);
 	else if (dp[2] != '_')
-		printf("%c%c%c_", dp[0], dp[1], dp[2]);
+		printf("%c%c%c", dp[0], dp[1], dp[2]);
 	else if (dp[1] != '_')
-		printf("%c%c__", dp[0], dp[1]);
+		printf("%c%c", dp[0], dp[1]);
 	else if (dp[0] != '_')
-		printf("%c___", dp[0]);
+		printf("%c", dp[0]);
 }
 
 static u_int8_t
@@ -112,24 +116,30 @@ static u_int16_t
 asl_dump_worddata(u_int8_t **dpp)
 {
 	u_int8_t	*dp;
-	u_int16_t	data;
 
 	dp = *dpp;
-	data = dp[0] + (dp[1] << 8);
 	*dpp = dp + 2;
-	return (data);
+	return le16dec(dp);
 }
 
 static u_int32_t
 asl_dump_dworddata(u_int8_t **dpp)
 {
 	u_int8_t	*dp;
-	u_int32_t	data;
 
 	dp = *dpp;
-	data = dp[0] + (dp[1] << 8) + (dp[2] << 16) + (dp[3] << 24);
 	*dpp = dp + 4;
-	return (data);
+	return le32dec(dp);
+}
+
+static u_int64_t
+asl_dump_qworddata(u_int8_t **dpp)
+{
+	u_int8_t	*dp;
+
+	dp = *dpp;
+	*dpp = dp + 8;
+	return le64dec(dp);
 }
 
 static u_int8_t *
@@ -634,7 +644,7 @@ asl_dump_defbuffer(u_int8_t **dpp, int indent)
 }
 
 static void
-asl_dump_defpackage(u_int8_t **dpp, int indent)
+asl_dump_defpackage(u_int8_t **dpp, int indent, bool variable)
 {
 	u_int8_t	*dp;
 	u_int8_t	*start;
@@ -645,9 +655,18 @@ asl_dump_defpackage(u_int8_t **dpp, int indent)
 	dp = *dpp;
 	start = dp;
 	pkglength = asl_dump_pkglength(&dp);
-	numelements = asl_dump_bytedata(&dp);
 	end = start + pkglength;
-	printf("Package(0x%x) {\n", numelements);
+
+	if (variable) {
+		printf("VarPackage(");
+		print_indent(indent + 1);
+		asl_dump_termobj(&dp, indent + 1);
+		printf(",) {\n");
+	} else {
+		numelements = asl_dump_bytedata(&dp);
+		printf("Package(0x%02" PRIx8 ") {\n", numelements);
+	}
+
 	while (dp < end) {
 		print_indent(indent + 1);
 		asl_dump_termobj(&dp, indent + 1);
@@ -1156,19 +1175,41 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		}
 		break;
 	case 0x0a:		/* BytePrefix */
-		printf("0x%x", asl_dump_bytedata(&dp));
+		printf("0x%02" PRIx8, asl_dump_bytedata(&dp));
 		break;
 	case 0x0b:		/* WordPrefix */
-		printf("0x%04x", asl_dump_worddata(&dp));
+		printf("0x%04" PRIx16, asl_dump_worddata(&dp));
 		break;
 	case 0x0c:		/* DWordPrefix */
-		printf("0x%08x", asl_dump_dworddata(&dp));
+		printf("0x%08" PRIx32, asl_dump_dworddata(&dp));
 		break;
 	case 0x0d:		/* StringPrefix */
-		printf("\"%s\"", (const char *) dp);
-		while (*dp)
-			dp++;
+		putchar('"');
+		while (*dp) {
+			switch (*dp) {
+			case '\\':
+				fputs("\\\\", stdout);
+				break;
+			case 'A'...'Z':
+			case 'a'...'z':
+			case '0'...'9':
+			case '.':
+			case '^':
+			case ',':
+			case ';':
+				putchar(*dp);
+				break;
+			default:
+				printf("\\x%02x", (int)(unsigned char)*dp);
+				break;
+			}
+			++dp;
+		}
+		putchar('"');
 		dp++;		/* NUL terminate */
+		break;
+	case 0x0e:		/* QWordPrefix */
+		printf("0x%016" PRIx64, asl_dump_qworddata(&dp));
 		break;
 	case 0x00:		/* ZeroOp */
 		printf("Zero");
@@ -1202,7 +1243,10 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		asl_dump_defbuffer(&dp, indent);
 		break;
 	case 0x12:		/* PackageOp */
-		asl_dump_defpackage(&dp, indent);
+		asl_dump_defpackage(&dp, indent, false);
+		break;
+	case 0x13:		/* VarPackageOp */
+		asl_dump_defpackage(&dp, indent, true);
 		break;
 	case 0x14:		/* MethodOp */
 		asl_dump_defmethod(&dp, indent);
@@ -1223,7 +1267,8 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 			break;
 		case 0x12:	/* CondRefOfOp */
 			printf("CondRefOf(");
-			asl_dump_termobj(&dp, indent);
+			print_namestring(asl_dump_namestring(&dp));
+			//asl_dump_termobj(&dp, indent);
 			printf(", ");
 			asl_dump_termobj(&dp, indent);
 			printf(")");
@@ -1494,6 +1539,23 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		asl_dump_termobj(&dp, indent);
 		printf(")");
 		break;
+	case 0x84:		/* ConcatenateResOp */
+		printf("ConcatenateRes(");
+		asl_dump_termobj(&dp, indent);
+		printf(", ");
+		asl_dump_termobj(&dp, indent);
+		printf(", ");
+		asl_dump_termobj(&dp, indent);
+		printf(")");
+		break;
+	case 0x85:		/* ModOp */
+		printf("Mod(");
+		asl_dump_termobj(&dp, indent);
+		printf(", ");
+		asl_dump_termobj(&dp, indent);
+		OPTARG();
+		printf(")");
+		break;
 	case 0x86:		/* NotifyOp */
 		printf("Notify(");
 		asl_dump_termobj(&dp, indent);
@@ -1570,6 +1632,16 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		asl_dump_termobj(&dp, indent);
 		printf(")");
 		break;
+	case 0x8f:		/* CreateQWordFieldOp */
+		printf("CreateQWordField(");
+		asl_dump_termobj(&dp, indent);
+		printf(", ");
+		asl_dump_termobj(&dp, indent);
+		printf(", ");
+		ASL_CREATE_LOCALNAMEOBJ(dp);
+		asl_dump_termobj(&dp, indent);
+		printf(")");
+		break;
 	case 0x90:
 		printf("LAnd(");
 		asl_dump_termobj(&dp, indent);
@@ -1609,6 +1681,57 @@ asl_dump_termobj(u_int8_t **dpp, int indent)
 		printf(", ");
 		asl_dump_termobj(&dp, indent);
 		printf(")");
+		break;
+	case 0x96:		/* ToBufferOp */
+		printf("ToBuffer(");
+		asl_dump_termobj(&dp, indent);
+		OPTARG();
+		printf(")");
+		break;
+	case 0x97:		/* ToDecimalStringOp */
+		printf("ToDecimalString(");
+		asl_dump_termobj(&dp, indent);
+		OPTARG();
+		printf(")");
+		break;
+	case 0x98:		/* ToHexStringOp */
+		printf("ToHexString(");
+		asl_dump_termobj(&dp, indent);
+		OPTARG();
+		printf(")");
+		break;
+	case 0x99:		/* ToIntegerOp */
+		printf("ToInteger(");
+		asl_dump_termobj(&dp, indent);
+		OPTARG();
+		printf(")");
+		break;
+	case 0x9c:		/* ToStringOp */
+		printf("ToString(");
+		asl_dump_termobj(&dp, indent);
+		printf(",");
+		asl_dump_termobj(&dp, indent);
+		OPTARG();
+		printf(")");
+		break;
+	case 0x9d:		/* CopyObjectOp */
+		printf("CopyObject");
+		/* asl_dump_termobj(&dp, indent); */
+		errx(1, "cannot decode opcode 0x9d");
+		break;
+	case 0x9e:		/* MidOp */
+		printf("Mid(");
+		asl_dump_termobj(&dp, indent);
+		printf(",");
+		asl_dump_termobj(&dp, indent);
+		printf(",");
+		asl_dump_termobj(&dp, indent);
+		printf(",");
+		asl_dump_termobj(&dp, indent);
+		printf(")");
+		break;
+	case 0x9f:		/* ContinueOp */
+		printf("Continue");
 		break;
 	case 0xa0:		/* IfOp */
 		asl_dump_defif(&dp, indent);
