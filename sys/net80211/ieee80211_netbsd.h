@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.13 2008/02/11 22:38:51 dyoung Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.14 2008/02/13 16:04:03 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -41,7 +41,7 @@ void if_printf(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
 #define	IEEE80211_LOCK_INIT_IMPL(_ic, _name, _member)	\
-	mutex_init(&(_ic)->_member, MUTEX_DRIVER, IPL_NET)
+	mutex_init(&(_ic)->_member, MUTEX_DEFAULT, IPL_NET)
 #define	IEEE80211_LOCK_IMPL(_ic, _member)		\
 	mutex_enter(&(_ic)->_member)
 #define IEEE80211_IS_LOCKED_IMPL(_ic, _member)          \
