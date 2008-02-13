@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.9 2008/02/10 13:32:15 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.10 2008/02/13 18:42:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -128,7 +128,7 @@ NENTRY(mutex_spin_exit, 0)
 
 	.section	.bss
 	.p2align	2
-	.lcomm		casdata,256
+	.lcomm		cashash,256
 /*
  *	
  */
