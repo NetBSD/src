@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add.S,v 1.3 2008/02/12 07:58:01 matt Exp $	*/
+/*	$NetBSD: atomic_add.S,v 1.4 2008/02/13 03:55:54 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ STRONG_ALIAS(_atomic_add_ptr,_atomic_add_32)
 
 ENTRY_NOPROFILE(_atomic_add_32_nv)
 1:	lwarx	%r10,0,%r3
-	add	%r10,r10,%r4
+	add	%r10,%r10,%r4
 	stwcx.	%r10,0,%r3
 	bne-	1b
 	mr	%r3,%r10
