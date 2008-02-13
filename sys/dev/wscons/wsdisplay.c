@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.115 2008/01/14 21:38:50 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.116 2008/02/13 19:01:35 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.115 2008/01/14 21:38:50 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.116 2008/02/13 19:01:35 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -744,7 +744,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	wsmux_set_display(mux, sc->sc_dev);
 #endif
 
-	mutex_init(&sc->sc_flagsmtx, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_flagsmtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_flagscv, "wssw");
 
 	sc->sc_accessops = accessops;
