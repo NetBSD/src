@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.582 2008/02/05 16:41:56 joerg Exp $
+#	$NetBSD: 3RDPARTY,v 1.583 2008/02/13 07:33:27 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -259,7 +259,7 @@ Only double-precision addressed at this time.
 
 Package:	file
 Version:	4.21
-Current Vers:	4.21
+Current Vers:	4.23
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:
@@ -454,7 +454,7 @@ among KAME/*BSD, *BSD-current and recent *BSD releases.
 
 Package:	less
 Version:	less394
-Current Vers:	less416
+Current Vers:	less418
 Maintainer:	Mark Nudleman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
