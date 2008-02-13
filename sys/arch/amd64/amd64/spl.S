@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.16 2008/01/10 20:14:11 ad Exp $	*/
+/*	$NetBSD: spl.S,v 1.17 2008/02/13 11:38:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -167,7 +167,7 @@ ENTRY(splraise)
 ENTRY(spllower)
 	cmpl	CPUVAR(ILEVEL), %edi
 	jae	1f
-	movl	CPUVAR(IUNMASK)(,%edi,4), %edx
+	movl	CPUVAR(IUNMASK)(,%rdi,4), %edx
 	pushf
 	cli
 	testl	CPUVAR(IPENDING), %edx
