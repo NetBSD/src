@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.3 2008/02/13 11:47:36 joerg Exp $	*/
+/*	$NetBSD: acpi.c,v 1.4 2008/02/13 18:59:18 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -31,7 +31,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.4 2001/10/22 17:25:25 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.3 2008/02/13 11:47:36 joerg Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.4 2008/02/13 18:59:18 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -126,7 +126,7 @@ acpi_handle_facp(struct FACPbody *facp)
 	acpi_print_facp(facp);
 	dsdp = (struct ACPIsdt *) acpi_map_sdt(facp->dsdt_ptr);
 	if (acpi_checksum(dsdp, dsdp->len))
-		errx(1, "DSDT is corrupt\n");
+		errx(1, "DSDT is corrupt");
 	acpi_handle_dsdt(dsdp);
 	aml_dump(dsdp);
 }
@@ -355,8 +355,10 @@ acpi_handle_rsdt(struct ACPIsdt *rsdp)
 	acpi_print_rsdt(rsdp);
 	for (i = 0; i < entries; i++) {
 		sdp = (struct ACPIsdt *) acpi_map_sdt(rsdp->body[i]);
-		if (acpi_checksum(sdp, sdp->len))
-			errx(1, "RSDT entry %d is corrupt\n", i);
+		if (acpi_checksum(sdp, sdp->len)) {
+			warnx("RSDT entry %d: bad checksum", i);
+			continue;
+		}
 		if (!memcmp(sdp->signature, "FACP", 4)) {
 			acpi_handle_facp((struct FACPbody *) sdp->body);
 		} else {
