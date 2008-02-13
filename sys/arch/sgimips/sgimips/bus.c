@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.52 2007/10/17 19:57:06 garbled Exp $	*/
+/*	$NetBSD: bus.c,v 1.53 2008/02/13 17:00:12 macallan Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.52 2007/10/17 19:57:06 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.53 2008/02/13 17:00:12 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1182,6 +1182,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * If we're only mapping 1 segment, use KSEG0 or KSEG1, to avoid
 	 * TLB thrashing.
 	 */
+
 	if (nsegs == 1) {
 		if (flags & BUS_DMA_COHERENT)
 			*kvap = (void *)MIPS_PHYS_TO_KSEG1(segs[0].ds_addr);
@@ -1205,11 +1206,15 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		    addr += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
-			pmap_enter(pmap_kernel(), va, addr,
+			pmap_enter(pmap_kernel(), va, 
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+			    (flags & BUS_DMA_COHERENT) ?
+			      addr | PMAP_NOCACHE : addr,
+#else
+			    addr,
+#endif
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    VM_PROT_READ | VM_PROT_WRITE | PMAP_WIRED);
-
-			/* XXX Do something about COHERENT here. */
 		}
 	}
 	pmap_update(pmap_kernel());
@@ -1278,4 +1283,21 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 
 	/* Page not found. */
 	return -1;
+}
+
+paddr_t
+bus_space_mmap(bus_space_tag_t space, bus_addr_t addr, off_t off,
+         int prot, int flags)
+{
+
+	if (flags & BUS_SPACE_MAP_CACHEABLE) {
+
+		return mips_btop(MIPS_KSEG0_TO_PHYS(addr) + off);
+	} else
+#if defined(_MIPS_PADDR_T_64BIT) || defined(_LP64)
+		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off)
+		    | PMAP_NOCACHE);
+#else
+		return mips_btop((MIPS_KSEG1_TO_PHYS(addr) + off));
+#endif
 }
