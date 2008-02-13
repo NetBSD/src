@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.195 2008/02/13 09:47:12 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.195 2008/02/13 09:47:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.196 2008/02/13 09:51:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -726,15 +726,16 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	if ((argp->flags & NFSMNT_NFSV3) == 0)
 #endif
 	{
-		/*
-		 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
-		 * will fill this in.
-		 */
-		nmp->nm_maxfilesize = 0xffffffffLL;
 		if (argp->fhsize != NFSX_V2FH) {
 			return EINVAL;
 		}
 	}
+
+	/*
+	 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
+	 * will overwrite this.
+	 */
+	nmp->nm_maxfilesize = 0xffffffffLL;
 
 	nmp->nm_timeo = NFS_TIMEO;
 	nmp->nm_retry = NFS_RETRANS;

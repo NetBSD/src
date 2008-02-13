@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.265 2008/01/25 14:32:16 ad Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.266 2008/02/13 09:51:37 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.265 2008/01/25 14:32:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.266 2008/02/13 09:51:37 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -629,6 +629,9 @@ nfs_setattr(v)
 	    (vp->v_mount->mnt_flag & MNT_RDONLY))
 		return (EROFS);
 	if (vap->va_size != VNOVAL) {
+		if (vap->va_size > VFSTONFS(vp->v_mount)->nm_maxfilesize) {
+			return EFBIG;
+		}
  		switch (vp->v_type) {
  		case VDIR:
  			return (EISDIR);
