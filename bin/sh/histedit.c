@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.40 2006/10/16 00:36:19 christos Exp $	*/
+/*	$NetBSD: histedit.c,v 1.41 2008/02/13 12:57:16 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.40 2006/10/16 00:36:19 christos Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.41 2008/02/13 12:57:16 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,7 @@ sethistsize(const char *hs)
 		   (histsize = atoi(hs)) < 0)
 			histsize = 100;
 		history(hist, &he, H_SETSIZE, histsize);
+		history(hist, &he, H_SETUNIQUE, 1);
 	}
 }
 
