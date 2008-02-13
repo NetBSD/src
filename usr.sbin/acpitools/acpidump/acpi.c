@@ -1,8 +1,9 @@
-/*	$NetBSD: acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $	*/
+/*	$NetBSD: acpi.c,v 1.3 2008/02/13 11:47:36 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1998 Doug Rabson
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
+ * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +31,7 @@
  *	$FreeBSD: src/usr.sbin/acpi/acpidump/acpi.c,v 1.4 2001/10/22 17:25:25 iwasaki Exp $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.2 2007/01/14 05:33:18 dogcow Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.3 2008/02/13 11:47:36 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -84,8 +85,9 @@ acpi_print_dsdt_definition(void)
 	(void)strlcpy(oemtblid, (const char *)dsdt_header.oemtblid,
 	    sizeof(oemtblid));
 
-	printf("DefinitionBlock (\"acpi_dsdt.aml\",	//Output filename\"DSDT\",		//Signature0x%x,		//DSDT Revision\"%s\",		//OEMID\"%s\",		//TABLE ID0x%x		//OEM Revision\n)\n",
-	dsdt_header.rev, oemid, oemtblid, dsdt_header.oemrev);
+	printf("DefinitionBlock (\"%s\", \"%s\", 0x%x, \"%s\", \"%s\", 0x%x)",
+	    "acpi_dst.aml", "DSDT", dsdt_header.rev, oemid, oemtblid,
+	    dsdt_header.oemrev);
 }
 
 static void
@@ -141,6 +143,10 @@ init_namespace(void)
 	newname->property = aml_alloc_object(aml_t_string, NULL);
 	newname->property->str.needfree = 0;
 	newname->property->str.string = __UNCONST("Microsoft Windows NT");
+
+	newname = aml_create_name(&env, (const unsigned char *)"\\_OSI");
+	newname->property = aml_alloc_object(aml_t_method, NULL);
+	newname->property->meth.argnum = 1;
 }
 
 /*
