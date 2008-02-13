@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcinfo.c,v 1.26 2006/05/24 16:04:03 christos Exp $	*/
+/*	$NetBSD: rpcinfo.c,v 1.27 2008/02/13 16:15:18 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -853,8 +853,8 @@ failed:
 					rs_tail->next = rs;
 					rs_tail = rs;
 				}
-				rs->prog = head->rpcb_map.r_prog;
-				rs->owner = head->rpcb_map.r_owner;
+				rs->prog = p->rpcb_map.r_prog;
+				rs->owner = p->rpcb_map.r_owner;
 				rs->nlist = NULL;
 				rs->vlist = NULL;
 			}
