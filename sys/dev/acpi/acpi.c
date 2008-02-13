@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.108 2007/12/16 21:10:34 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.109 2008/02/13 15:27:55 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.108 2007/12/16 21:10:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.109 2008/02/13 15:27:55 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -161,9 +161,9 @@ extern kmutex_t acpi_interrupt_list_mtx;
  * sysctl-related information
  */
 
-static int acpi_node = CTL_EOL;
 static uint64_t acpi_root_pointer;	/* found as hw.acpi.root */
 static int acpi_sleepstate = ACPI_STATE_S0;
+static char acpi_supported_states[3 * 6 + 1] = "";;
 
 /*
  * Prototypes.
@@ -176,6 +176,7 @@ static void		acpi_enable_fixed_events(struct acpi_softc *);
 
 static ACPI_TABLE_HEADER *acpi_map_rsdt(void);
 static void		acpi_unmap_rsdt(ACPI_TABLE_HEADER *);
+static int		is_available_state(struct acpi_softc *, int);
 
 /*
  * acpi_probe:
@@ -476,14 +477,13 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	acpi_build_tree(sc);
 
-	if (acpi_root_pointer != 0 && acpi_node != CTL_EOL) {
-		(void)sysctl_createv(NULL, 0, NULL, NULL,
-		    CTLFLAG_IMMEDIATE,
-		    CTLTYPE_QUAD, "root", NULL, NULL,
-		    acpi_root_pointer, NULL, 0,
-		    CTL_HW, acpi_node, CTL_CREATE, CTL_EOL);
-	}
-
+	sprintf(acpi_supported_states, "%s%s%s%s%s%s",
+	    is_available_state(sc, ACPI_STATE_S0) ? "S0 " : "",
+	    is_available_state(sc, ACPI_STATE_S1) ? "S1 " : "",
+	    is_available_state(sc, ACPI_STATE_S2) ? "S2 " : "",
+	    is_available_state(sc, ACPI_STATE_S3) ? "S3 " : "",
+	    is_available_state(sc, ACPI_STATE_S4) ? "S4 " : "",
+	    is_available_state(sc, ACPI_STATE_S5) ? "S5 " : "");
 
 	/*
 	 * Register a shutdown hook that disables certain ACPI
@@ -1369,7 +1369,16 @@ SYSCTL_SETUP(sysctl_acpi_setup, "sysctl hw.acpi subtree setup")
 	    CTL_HW, CTL_CREATE, CTL_EOL) != 0)
 		return;
 
-	acpi_node = node->sysctl_num;
+	sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READONLY,
+	    CTLTYPE_QUAD, "root",
+	    SYSCTL_DESCR("ACPI root pointer"),
+	    NULL, 0, &acpi_root_pointer, sizeof(acpi_root_pointer),
+	    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READONLY,
+	    CTLTYPE_STRING, "supported_states",
+	    SYSCTL_DESCR("Supported ACPI system states"),
+	    NULL, 0, acpi_supported_states, 0,
+	    CTL_HW, node->sysctl_num, CTL_CREATE, CTL_EOL);
 
 	/* ACPI sleepstate sysctl */
 	if (sysctl_createv(NULL, 0, NULL, &node,
