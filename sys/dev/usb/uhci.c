@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.213 2008/02/03 10:57:12 drochner Exp $	*/
+/*	$NetBSD: uhci.c,v 1.214 2008/02/13 00:52:44 smb Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.213 2008/02/03 10:57:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.214 2008/02/13 00:52:44 smb Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,6 +715,9 @@ uhci_resume(device_t dv)
 
 	cmd = UREAD2(sc, UHCI_CMD);
 	sc->sc_bus.use_polling++;
+	UWRITE2(sc, UHCI_INTR, 0);
+	uhci_globalreset(sc);
+	uhci_reset(sc);
 	if (cmd & UHCI_CMD_RS)
 		uhci_run(sc, 0);
 
@@ -726,9 +729,9 @@ uhci_resume(device_t dv)
 	UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force resume */
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 	UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
-	UHCICMD(sc, UHCI_CMD_MAXP);
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
 	    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
+	UHCICMD(sc, UHCI_CMD_MAXP);
 	uhci_run(sc, 1); /* and start traffic again */
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 	sc->sc_bus.use_polling--;
