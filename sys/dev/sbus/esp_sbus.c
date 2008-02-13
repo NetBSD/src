@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_sbus.c,v 1.39 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: esp_sbus.c,v 1.40 2008/02/13 02:11:42 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.39 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_sbus.c,v 1.40 2008/02/13 02:11:42 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -755,8 +755,7 @@ db_esp(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 
 	for (u=0; u<10; u++) {
 		dv = device_find_by_driver_unit("esp", u);
-		if (dv == NULL)
-			continue
+		if (dv == NULL) continue;
 		sc = device_private(dv);
 
 		db_printf("esp%d: nexus %p phase %x prev %x dp %p dleft %lx ify %x\n",
