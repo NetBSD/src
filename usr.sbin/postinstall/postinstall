@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.57 2008/02/13 12:52:14 tron Exp $
+# $NetBSD: postinstall,v 1.58 2008/02/13 12:55:56 tron Exp $
 #
 # Copyright (c) 2002-2006 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -454,6 +454,11 @@ obsolete_libs()
 	dir=$1
 
 	(
+
+	if [ ! -e "${DEST_DIR}/${dir}" ]
+	then
+		return 0
+	fi
 
 	cd "${DEST_DIR}/${dir}" || err 2 "can't cd to ${DEST_DIR}/${dir}"
 	echo lib*.so.* \
