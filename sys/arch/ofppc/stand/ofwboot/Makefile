@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/02/12 04:27:46 garbled Exp $
+#	$NetBSD: Makefile,v 1.23 2008/02/13 20:11:38 garbled Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
@@ -70,8 +70,8 @@ vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.X \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -s -N -T ${.CURDIR}/ldscript -Ttext ${RELOC} -Bstatic \
+	    -e ${ENTRY} -o ${PROG}.X ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	mv -f ${PROG}.X ${PROG}
 
 .include <bsd.prog.mk>
