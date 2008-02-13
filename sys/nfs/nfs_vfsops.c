@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.194 2008/01/30 11:47:03 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.195 2008/02/13 09:47:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.194 2008/01/30 11:47:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.195 2008/02/13 09:47:12 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -339,8 +339,7 @@ nfs_mountroot()
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
 	 * Side effect:  Finds and configures a network interface.
 	 */
-	nd = kmem_alloc(sizeof(*nd), KM_SLEEP);
-	memset(nd, 0, sizeof(*nd));
+	nd = kmem_zalloc(sizeof(*nd), KM_SLEEP);
 	error = nfs_boot_init(nd, l);
 	if (error) {
 		kmem_free(nd, sizeof(*nd));
