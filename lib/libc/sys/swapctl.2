@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.2,v 1.32 2005/05/29 21:12:27 christos Exp $
+.\"	$NetBSD: swapctl.2,v 1.33 2008/02/13 11:10:31 rillig Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -248,6 +248,10 @@ The major device number of
 .Fa arg
 is out of range (this indicates no device driver exists
 for the associated hardware).
+.It Bq Er ENXIO
+The block device specified by
+.Fa arg
+is not marked as a swap partition in the disklabel.
 .It Bq Er EIO
 An I/O error occurred while opening the swap device.
 .It Bq Er EFAULT
