@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.37 2008/02/03 08:35:33 matt Exp $
+#	$NetBSD: genassym.cf,v 1.38 2008/02/13 18:41:35 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -136,6 +136,7 @@ define	VAX_BTYP_49	VAX_BTYP_49
 define	IPL_HIGH	IPL_HIGH
 define	IPL_CLOCK	IPL_CLOCK
 define	IPL_NONE	IPL_NONE
+define	IPL_VM		IPL_VM
 
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
 
