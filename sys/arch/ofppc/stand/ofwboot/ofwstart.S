@@ -1,4 +1,4 @@
-/* $NetBSD: ofwstart.S,v 1.1 2008/01/09 19:34:45 garbled Exp $ */
+/* $NetBSD: ofwstart.S,v 1.2 2008/02/13 20:11:38 garbled Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ _entry:
 
 	# note descriptor
 	# real mode (-1) or virtual mode (0)
-	.long	0
+	.long	-1
 	# real-base
 	.long	-1
 	# real-size
