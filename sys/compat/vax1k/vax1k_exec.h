@@ -1,4 +1,4 @@
-/*	$NetBSD: vax1k_exec.h,v 1.5 2007/12/04 18:40:27 dsl Exp $	*/
+/*	$NetBSD: vax1k_exec.h,v 1.6 2008/02/13 17:41:09 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,5 +43,5 @@
 #define VAX1K_USRTEXT		VAX1K_LDPGSZ
 
 int	exec_vax1k_makecmds(struct lwp *, struct exec_package *);
-int	vax1k_map_readvn(struct lwp *, struct exec_vmcmd *);
+
 #endif /* _VAX1K_EXEC_H_ */
