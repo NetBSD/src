@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.20 2008/02/07 19:48:37 garbled Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.21 2008/02/13 21:12:32 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.20 2008/02/07 19:48:37 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.21 2008/02/13 21:12:32 garbled Exp $");
 
 #include "opt_interrupt.h"
 
@@ -127,7 +127,7 @@ init_openpic(int node)
 	while (len >= sizeof(ranges[0])) {
 		if ((rp->pci_hi & OFW_PCI_PHYS_HI_SPACEMASK) ==
 		    (aadr.phys_hi & OFW_PCI_PHYS_HI_SPACEMASK) &&
-		    (aadr.size_lo + aadr.phys_lo <= rp->size_lo)) {
+		    (aadr.size_lo + aadr.phys_lo <= (rp->size_lo+rp->host))) {
 			baseaddr = (unsigned char *)mapiodev(
 			    rp->host | aadr.phys_lo, aadr.size_lo);
 			aprint_normal("Found openpic at %08x\n",
@@ -135,7 +135,6 @@ init_openpic(int node)
 			setup_openpic(baseaddr, 0);
 			return TRUE;
 		}
-		/* XXX I think this is correct */
 		rp++;
 		len -= sizeof(ranges[0]);
 	}
