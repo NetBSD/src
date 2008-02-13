@@ -1,6 +1,6 @@
-# $NetBSD: t_mount.sh,v 1.1 2007/11/12 15:18:24 jmmv Exp $
+# $NetBSD: t_mount.sh,v 1.2 2008/02/13 14:58:42 jmmv Exp $
 #
-# Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
+# Copyright (c) 2005, 2006, 2007, 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -118,6 +118,22 @@ large_body() {
 	rmdir tmp
 }
 
+atf_test_case mntpt
+mntpt_head() {
+	atf_set "descr" "Tests that the error messages printed when the" \
+	                "mount point is invalid do not show the source" \
+	                "unused parameter"
+}
+mntpt_body() {
+	mount_tmpfs unused $(pwd)/mnt >out 2>&1
+	atf_check "grep unused out" 1 null null
+	atf_check "grep '$(pwd)/mnt' out" 0 ignore null
+
+	mount_tmpfs unused mnt >out 2>&1
+	atf_check "grep unused out" 1 null null
+	atf_check "grep mnt out" 0 ignore null
+}
+
 atf_init_test_cases() {
 	. $(atf_get_srcdir)/../h_funcs.subr
 	. $(atf_get_srcdir)/h_funcs.subr
@@ -127,4 +143,5 @@ atf_init_test_cases() {
 	atf_add_test_case attrs
 	atf_add_test_case negative
 	atf_add_test_case large
+	atf_add_test_case mntpt
 }
