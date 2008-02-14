@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.11 2008/02/11 17:32:18 garbled Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.12 2008/02/14 19:41:54 garbled Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.11 2008/02/11 17:32:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.12 2008/02/14 19:41:54 garbled Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -131,7 +131,6 @@ extern int chosen;
 extern uint32_t ticks_per_sec;
 extern uint32_t ns_per_tick;
 extern uint32_t ticks_per_intr;
-extern unsigned long oeacpufeat;
 
 static int save_ofmap(struct ofw_translations *, int);
 static void restore_ofmap(struct ofw_translations *, int);
