@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.33 2008/01/02 11:48:53 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.34 2008/02/14 14:26:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.33 2008/01/02 11:48:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.34 2008/02/14 14:26:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap, register_
 		lwp_unlock(l2);
 	} else {
 		l2->l_stat = LSSUSPENDED;
-		lwp_unlock_to(l2, &l2->l_cpu->ci_schedstate.spc_lwplock);
+		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_lwplock);
 	}
 	mutex_exit(&p->p_smutex);
 

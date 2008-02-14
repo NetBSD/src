@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.216 2008/01/15 03:37:11 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.217 2008/02/14 14:26:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.216 2008/01/15 03:37:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.217 2008/02/14 14:26:57 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -295,7 +295,7 @@ yield(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
-	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
 	if (l->l_class == SCHED_OTHER) {
@@ -320,7 +320,7 @@ preempt(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
-	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
 	l->l_nivcsw++;
@@ -423,7 +423,7 @@ mi_switch(lwp_t *l)
 	 */
 	KASSERT(l->l_stat != LSRUN);
 	if (l->l_stat == LSONPROC && (l->l_target_cpu || l != newl)) {
-		KASSERT(lwp_locked(l, &spc->spc_lwplock));
+		KASSERT(lwp_locked(l, spc->spc_lwplock));
 
 		tci = l->l_target_cpu;
 		if (__predict_false(tci != NULL)) {
@@ -473,7 +473,7 @@ mi_switch(lwp_t *l)
 			newl->l_stat = LSONPROC;
 			newl->l_cpu = ci;
 			newl->l_flag |= LW_RUNNING;
-			lwp_setlock(newl, &spc->spc_lwplock);
+			lwp_setlock(newl, spc->spc_lwplock);
 		} else {
 			newl = ci->ci_data.cpu_idlelwp;
 			newl->l_stat = LSONPROC;
@@ -518,7 +518,7 @@ mi_switch(lwp_t *l)
 			 * Drop spc_lwplock, if the current LWP has been moved
 			 * to the run queue (it is now locked by spc_mutex).
 			 */
-			mutex_spin_exit(&spc->spc_lwplock);
+			mutex_spin_exit(spc->spc_lwplock);
 		} else {
 			/*
 			 * Otherwise, drop the spc_mutex, we are done with the

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_cpu.c,v 1.20 2008/02/01 20:01:06 elad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.21 2008/02/14 14:26:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.20 2008/02/01 20:01:06 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.21 2008/02/14 14:26:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.20 2008/02/01 20:01:06 elad Exp $");
 #include <sys/kauth.h>
 #include <sys/xcall.h>
 #include <sys/pool.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -111,7 +112,9 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	ci->ci_index = ncpu;
 
-	mutex_init(&spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
+	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);
+	spc->spc_lwplock = kmem_alloc(CACHE_LINE_SIZE, KM_SLEEP);
+	mutex_init(spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
 	sched_cpuattach(ci);
 	uvm_cpu_attach(ci);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.12 2008/01/15 03:37:11 rmind Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.13 2008/02/14 14:26:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.12 2008/01/15 03:37:11 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.13 2008/02/14 14:26:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -478,14 +478,17 @@ sched_rqinit()
 
 	runqueue_init(&global_queue);
 	mutex_init(&runqueue_lock, MUTEX_DEFAULT, IPL_SCHED);
-	/* Initialize the lock pointer for lwp0 */
-	lwp0.l_mutex = &curcpu()->ci_schedstate.spc_lwplock;
 }
 
 void
 sched_cpuattach(struct cpu_info *ci)
 {
 	runqueue_t *rq;
+
+	if (lwp0.l_cpu == ci) {
+		/* Initialize the lock pointer for lwp0 */
+		lwp0.l_mutex = curcpu()->ci_schedstate.spc_lwplock;
+	}
 
 	ci->ci_schedstate.spc_mutex = &runqueue_lock;
 	rq = kmem_zalloc(sizeof(*rq), KM_SLEEP);
