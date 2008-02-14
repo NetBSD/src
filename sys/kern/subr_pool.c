@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.150 2008/02/05 10:11:19 skrll Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.151 2008/02/14 11:45:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.150 2008/02/05 10:11:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.151 2008/02/14 11:45:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -122,7 +122,7 @@ struct pool_item_header {
 	SPLAY_ENTRY(pool_item_header)
 				ph_node;	/* Off-page page headers */
 	void *			ph_page;	/* this page's address */
-	struct timeval		ph_time;	/* last referenced */
+	uint32_t		ph_time;	/* last referenced */
 	uint16_t		ph_nmissing;	/* # of chunks in use */
 	uint16_t		ph_off;		/* start offset in page */
 	union {
@@ -1300,8 +1300,11 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 			 * be idle for some period of time before it can
 			 * be reclaimed by the pagedaemon.  This minimizes
 			 * ping-pong'ing for memory.
+			 *
+			 * note for 64-bit time_t: truncating to 32-bit is not
+			 * a problem for our usage.
 			 */
-			getmicrotime(&ph->ph_time);
+			ph->ph_time = time_uptime;
 		}
 		pool_update_curpage(pp);
 	}
@@ -1453,7 +1456,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	LIST_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
-	getmicrotime(&ph->ph_time);
+	ph->ph_time = time_uptime;
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
@@ -1614,7 +1617,7 @@ pool_reclaim(struct pool *pp)
 {
 	struct pool_item_header *ph, *phnext;
 	struct pool_pagelist pq;
-	struct timeval curtime, diff;
+	uint32_t curtime;
 	bool klock;
 	int rv;
 
@@ -1651,7 +1654,7 @@ pool_reclaim(struct pool *pp)
 
 	LIST_INIT(&pq);
 
-	getmicrotime(&curtime);
+	curtime = time_uptime;
 
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = LIST_NEXT(ph, ph_pagelist);
@@ -1661,8 +1664,7 @@ pool_reclaim(struct pool *pp)
 			break;
 
 		KASSERT(ph->ph_nmissing == 0);
-		timersub(&curtime, &ph->ph_time, &diff);
-		if (diff.tv_sec < pool_inactive_time
+		if (curtime - ph->ph_time < pool_inactive_time
 		    && !pa_starved_p(pp->pr_alloc))
 			continue;
 
@@ -1803,10 +1805,8 @@ pool_print_pagelist(struct pool *pp, struct pool_pagelist *pl,
 #endif
 
 	LIST_FOREACH(ph, pl, ph_pagelist) {
-		(*pr)("\t\tpage %p, nmissing %d, time %lu,%lu\n",
-		    ph->ph_page, ph->ph_nmissing,
-		    (u_long)ph->ph_time.tv_sec,
-		    (u_long)ph->ph_time.tv_usec);
+		(*pr)("\t\tpage %p, nmissing %d, time %" PRIu32 "\n",
+		    ph->ph_page, ph->ph_nmissing, ph->ph_time);
 #ifdef DIAGNOSTIC
 		if (!(pp->pr_roflags & PR_NOTOUCH)) {
 			LIST_FOREACH(pi, &ph->ph_itemlist, pi_list) {
