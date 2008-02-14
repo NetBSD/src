@@ -64,7 +64,7 @@ struct tramp_frame
   {
     ULONGEST bytes;
     ULONGEST mask;
-  } insn[16];
+  } insn[48];
   /* Initialize a trad-frame cache corresponding to the tramp-frame.
      FUNC is the address of the instruction TRAMP[0] in memory.  */
   void (*init) (const struct tramp_frame *self,
