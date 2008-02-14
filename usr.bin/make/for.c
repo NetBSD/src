@@ -1,4 +1,4 @@
-/*	$NetBSD: for.c,v 1.26 2007/01/01 21:31:51 dsl Exp $	*/
+/*	$NetBSD: for.c,v 1.27 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, The Regents of the University of California.
@@ -30,14 +30,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: for.c,v 1.26 2007/01/01 21:31:51 dsl Exp $";
+static char rcsid[] = "$NetBSD: for.c,v 1.27 2008/02/14 22:11:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: for.c,v 1.26 2007/01/01 21:31:51 dsl Exp $");
+__RCSID("$NetBSD: for.c,v 1.27 2008/02/14 22:11:20 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -110,7 +110,7 @@ static void
 ForAddVar(const char *data, size_t len)
 {
 	Buffer buf;
-	int varlen;
+	size_t varlen;
 
 	buf = Buf_Init(0);
 	Buf_AddBytes(buf, len, (Byte *)UNCONST(data));
@@ -154,7 +154,7 @@ For_Eval(char *line)
 
     if (forLevel == 0) {
 	Buffer	    buf;
-	int	    varlen;
+	size_t	    varlen;
 	static const char instr[] = "in";
 
 	for (ptr++; *ptr && isspace((unsigned char) *ptr); ptr++)
@@ -197,7 +197,7 @@ For_Eval(char *line)
 	    wrd = ptr;
 	    while (*ptr && !isspace((unsigned char) *ptr))
 	        ptr++;
-	    ForAddVar(wrd, ptr - wrd);
+	    ForAddVar(wrd, (size_t)(ptr - wrd));
 	    while (*ptr && isspace((unsigned char) *ptr))
 		ptr++;
 	}
@@ -226,10 +226,10 @@ For_Eval(char *line)
 	sub = Var_Subst(NULL, ptr, VAR_GLOBAL, FALSE);
 
 #define ADDWORD() \
-	Buf_AddBytes(buf, ptr - wrd, (Byte *)wrd), \
+	(void)(Buf_AddBytes(buf, (size_t)(ptr - wrd), (Byte *)wrd), \
 	Buf_AddByte(buf, (Byte)'\0'), \
 	Lst_AtFront(accumFor.lst, Buf_GetAll(buf, &varlen)), \
-	Buf_Destroy(buf, FALSE)
+	Buf_Destroy(buf, FALSE))
 
 	for (ptr = sub; *ptr && isspace((unsigned char) *ptr); ptr++)
 	    continue;
@@ -310,7 +310,8 @@ For_Run(int lineno)
     For arg;
     LstNode ln;
     char **values;
-    int i, done = 0, len;
+    int i, done = 0;
+    size_t len;
     char *guy, *orig_guy, *old_guy;
 
     if (accumFor.buf == NULL || accumFor.vars == NULL || accumFor.lst == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.h,v 1.10 2003/08/07 11:14:48 agc Exp $	*/
+/*	$NetBSD: buf.h,v 1.11 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -85,8 +85,8 @@
 typedef char Byte;
 
 typedef struct Buffer {
-    int	    size; 	/* Current size of the buffer */
-    int     left;	/* Space left (== size - (inPtr - buffer)) */
+    size_t   size; 	/* Current size of the buffer */
+    size_t   left;	/* Space left (== size - (inPtr - buffer)) */
     Byte    *buffer;	/* The buffer itself */
     Byte    *inPtr;	/* Place to write to */
     Byte    *outPtr;	/* Place to read from */
@@ -94,18 +94,21 @@ typedef struct Buffer {
 
 /* Buf_AddByte adds a single byte to a buffer. */
 #define	Buf_AddByte(bp, byte) \
-	(void) (--(bp)->left <= 0 ? Buf_OvAddByte(bp, byte), 1 : \
+	/*LINTED*/ \
+	(void)(--(bp)->left == 0 ? Buf_OvAddByte(bp, byte), 1 : \
 		(*(bp)->inPtr++ = (byte), *(bp)->inPtr = 0), 1)
 
 #define BUF_ERROR 256
 
 void Buf_OvAddByte(Buffer, int);
-void Buf_AddBytes(Buffer, int, const Byte *);
-Byte *Buf_GetAll(Buffer, int *);
-void Buf_Discard(Buffer, int);
-int Buf_Size(Buffer);
-Buffer Buf_Init(int);
+void Buf_AddBytes(Buffer, size_t, const Byte *);
+Byte *Buf_GetAll(Buffer, size_t *);
+void Buf_Discard(Buffer, size_t);
+size_t Buf_Size(Buffer);
+Buffer Buf_Init(size_t);
 void Buf_Destroy(Buffer, Boolean);
+#ifdef notdef
 void Buf_ReplaceLastByte(Buffer, int);
+#endif
 
 #endif /* _BUF_H */
