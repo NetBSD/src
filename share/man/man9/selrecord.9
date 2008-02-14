@@ -1,4 +1,4 @@
-.\"     $NetBSD: selrecord.9,v 1.6 2005/12/20 19:53:15 rpaulo Exp $
+.\"     $NetBSD: selrecord.9,v 1.7 2008/02/14 17:25:51 ad Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -28,7 +28,7 @@
 .\" $FreeBSD: src/share/man/man9/selrecord.9,v 1.2 2002/05/30 13:29:17 ru Exp $
 .\"
 .\" FreeBSD: .Dd March 20, 2002
-.Dd December 20, 2005
+.Dd Febuary 14, 2008
 .Dt SELRECORD 9
 .Os
 .Sh NAME
@@ -59,37 +59,10 @@ object.
 .Fn selrecord
 records that the calling thread is interested in events related to a given
 object.
-If another thread is already waiting on the object a collision will be flagged
-in
-.Fa sip
-which will be later dealt with by
-.Fn selwakeup .
 .Pp
 .Fn selwakeup
 is called by the underlying object handling code in order to notify any waiting
 threads that an event of interest has occurred.
-If a collision has occurred,
-.Fn selwakeup
-will increment
-.Va nselcoll ,
-and wakeup all threads waiting on the global variable
-.Va selwait
-so that they can handle it.
-If the thread waiting on the object is not currently sleeping or the wait
-channel is not
-.Va selwait ,
-.Fn selwakeup
-will clear the
-.Dv L_SELECT
-flag which should be noted by
-.Xr select 2
-and
-.Xr poll 2
-when they wake up.
-.Pp
-.Fn selwakeup
-may acquire and release
-.Va sched_lock .
 .Pp
 .Fn selnotify
 calls
@@ -107,9 +80,3 @@ directly.
 .Xr poll 2 ,
 .Xr select 2 ,
 .Xr knote 9
-.Sh AUTHORS
-.An -nosplit
-This man page was written by
-.An Chad David Aq davidc@FreeBSD.org
-and
-.An Alfred Perlstein Aq alfred@FreeBSD.org .
