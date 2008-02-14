@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.146 2008/01/19 06:52:14 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.147 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.146 2008/01/19 06:52:14 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.147 2008/02/14 22:11:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.146 2008/01/19 06:52:14 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.147 2008/02/14 22:11:20 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -175,8 +175,8 @@ Boolean			varNoExportEnv;	/* -X flag */
 Boolean			doing_depend;	/* Set while reading .depend */
 static Boolean		jobsRunning;	/* TRUE if the jobs might be running */
 static const char *	tracefile;
-static char *		Check_Cwd_av(int, char **, int);
-static void		MainParseArgs(int, char **);
+static char *		Check_Cwd_av(size_t, char **, int);
+static void		MainParseArgs(size_t, char **);
 static int		ReadMakefile(ClientData, ClientData);
 static void		usage(void);
 
@@ -194,7 +194,7 @@ parse_debug_options(const char *argvalue)
 	const char *modules;
 	const char *mode;
 	char *fname;
-	int len;
+	size_t len;
 
 	for (modules = argvalue; *modules; ++modules) {
 		switch (*modules) {
@@ -278,7 +278,8 @@ parse_debug_options(const char *argvalue)
 			memcpy(fname, modules, len + 1);
 			/* Let the filename be modified by the pid */
 			if (strcmp(fname + len - 3, ".%d") == 0)
-				snprintf(fname + len - 2, 20, "%d", getpid());
+				snprintf(fname + len - 2, 20, "%ld", 
+				    (long)getpid());
 			debug_file = fopen(fname, mode);
 			if (!debug_file) {
 				fprintf(stderr, "Cannot open debug file %s\n",
@@ -313,7 +314,7 @@ parse_debug_options(const char *argvalue)
  *	given
  */
 static void
-MainParseArgs(int argc, char **argv)
+MainParseArgs(size_t argc, char **argv)
 {
 	char *p;
 	int c = '?';
@@ -575,7 +576,7 @@ void
 Main_ParseArgLine(char *line)
 {
 	char **argv;			/* Manufactured argument vector */
-	int argc;			/* Number of arguments in argv */
+	size_t argc;			/* Number of arguments in argv */
 	char *args;			/* Space used by the args */
 	char *buf, *p1;
 	char *argv0 = Var_Value(".MAKE", VAR_GLOBAL, &p1);
@@ -698,7 +699,7 @@ main(int argc, char **argv)
 	 * on each program execution.
 	 */
 	gettimeofday(&rightnow, NULL);
-	srandom(rightnow.tv_sec + rightnow.tv_usec);
+	srandom((unsigned long)rightnow.tv_sec + rightnow.tv_usec);
 	
 	if ((progname = strrchr(argv[0], '/')) != NULL)
 		progname++;
@@ -875,9 +876,9 @@ main(int argc, char **argv)
 	{
 	    char tmp[64];
 
-	    snprintf(tmp, sizeof(tmp), "%u", getpid());
+	    snprintf(tmp, sizeof(tmp), "%ld", (long)getpid());
 	    Var_Set(".MAKE.PID", tmp, VAR_GLOBAL, 0);
-	    snprintf(tmp, sizeof(tmp), "%u", getppid());
+	    snprintf(tmp, sizeof(tmp), "%ld", (long)getppid());
 	    Var_Set(".MAKE.PPID", tmp, VAR_GLOBAL, 0);
 	}
 	Job_SetPrefix();
@@ -893,7 +894,7 @@ main(int argc, char **argv)
 	Main_ParseArgLine(getenv("MAKE"));
 #endif
 
-	MainParseArgs(argc, argv);
+	MainParseArgs((size_t)argc, argv);
 
 	/*
 	 * Be compatible if user did not specify -j and did not explicitly
@@ -1154,6 +1155,7 @@ main(int argc, char **argv)
  *	lots
  */
 static int
+/*ARGSUSED*/
 ReadMakefile(ClientData p, ClientData q __unused)
 {
 	char *fname = p;		/* makefile to read */
@@ -1246,7 +1248,7 @@ found:
 static int  Check_Cwd_Off = 0;
 
 static char *
-Check_Cwd_av(int ac, char **av, int copy)
+Check_Cwd_av(size_t ac, char **av, int copy)
 {
     static char *make[4];
     static char *cur_dir = NULL;
@@ -1357,7 +1359,7 @@ Check_Cwd_Cmd(const char *cmd)
 {
     char *cp, *bp;
     char **av;
-    int ac;
+    size_t ac;
 
     if (Check_Cwd_Off)
 	return NULL;
@@ -1385,7 +1387,7 @@ void
 Check_Cwd(const char **argv)
 {
     char *cp;
-    int ac;
+    size_t ac;
     
     if (Check_Cwd_Off)
 	return;
@@ -1419,13 +1421,14 @@ Cmd_Exec(const char *cmd, const char **errnum)
 {
     const char	*args[4];   	/* Args for invoking the shell */
     int 	fds[2];	    	/* Pipe streams */
-    int 	cpid;	    	/* Child PID */
-    int 	pid;	    	/* PID from wait() */
+    pid_t 	cpid;	    	/* Child PID */
+    pid_t 	pid;	    	/* PID from wait() */
     char	*res;		/* result */
     int		status;		/* command exit status */
     Buffer	buf;		/* buffer to store the result */
     char	*cp;
-    int		cc;
+    ssize_t	cc;
+    size_t	len;
 
 
     *errnum = NULL;
@@ -1488,7 +1491,7 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	    char   result[BUFSIZ];
 	    cc = read(fds[0], result, sizeof(result));
 	    if (cc > 0)
-		Buf_AddBytes(buf, cc, (Byte *)result);
+		Buf_AddBytes(buf, (size_t)cc, (Byte *)result);
 	}
 	while (cc > 0 || (cc == -1 && errno == EINTR));
 
@@ -1503,10 +1506,10 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	while(((pid = waitpid(cpid, &status, 0)) != cpid) && (pid >= 0))
 	    continue;
 
-	res = (char *)Buf_GetAll(buf, &cc);
+	res = (char *)Buf_GetAll(buf, &len);
 	Buf_Destroy(buf, FALSE);
 
-	if (cc == 0)
+	if (len == 0)
 	    *errnum = "Couldn't read shell's output for \"%s\"";
 
 	if (status)
@@ -1799,13 +1802,14 @@ usage(void)
 }
 
 
+#ifdef notdef
 int
 PrintAddr(ClientData a, ClientData b)
 {
     printf("%lx ", (unsigned long) a);
     return b ? 0 : 0;
 }
-
+#endif
 
 
 void

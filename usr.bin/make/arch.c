@@ -1,4 +1,4 @@
-/*	$NetBSD: arch.c,v 1.53 2006/10/27 21:00:18 dsl Exp $	*/
+/*	$NetBSD: arch.c,v 1.54 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: arch.c,v 1.53 2006/10/27 21:00:18 dsl Exp $";
+static char rcsid[] = "$NetBSD: arch.c,v 1.54 2008/02/14 22:11:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: arch.c,v 1.53 2006/10/27 21:00:18 dsl Exp $");
+__RCSID("$NetBSD: arch.c,v 1.54 2008/02/14 22:11:20 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -257,7 +257,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 	     * Variable spec, so call the Var module to parse the puppy
 	     * so we can safely advance beyond it...
 	     */
-	    int 	length;
+	    size_t 	length;
 	    void	*freeIt;
 	    char	*result;
 
@@ -298,7 +298,7 @@ Arch_ParseArchive(char **linePtr, Lst nodeLst, GNode *ctxt)
 		 * Variable spec, so call the Var module to parse the puppy
 		 * so we can safely advance beyond it...
 		 */
-		int 	length;
+		size_t 	length;
 		void	*freeIt;
 		char	*result;
 
@@ -526,7 +526,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 {
 #define AR_MAX_NAME_LEN	    (sizeof(arh.ar_name)-1)
     FILE *	  arch;	      /* Stream to archive */
-    int		  size;       /* Size of archive member */
+    size_t	  size;       /* Size of archive member */
     char	  *cp;	      /* Useful character pointer */
     char	  magic[SARMAG];
     LstNode	  ln;	      /* Lst member containing archive descriptor */
@@ -617,7 +617,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
     Hash_InitTable(&ar->members, -1);
     memName[AR_MAX_NAME_LEN] = '\0';
 
-    while (fread((char *)&arh, sizeof(struct ar_hdr), 1, arch) == 1) {
+    while (fread(&arh, sizeof(struct ar_hdr), 1, arch) == 1) {
 	if (strncmp( arh.ar_fmag, ARFMAG, sizeof(arh.ar_fmag)) != 0) {
 	    /*
 	     * The header is bogus, so the archive is bad
@@ -632,7 +632,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	     * 'size' field of the header and round it up during the seek.
 	     */
 	    arh.ar_size[sizeof(arh.ar_size)-1] = '\0';
-	    size = (int)strtol(arh.ar_size, NULL, 10);
+	    size = (size_t)strtol(arh.ar_size, NULL, 10);
 
 	    (void)strncpy(memName, arh.ar_name, sizeof(arh.ar_name));
 	    for (cp = &memName[AR_MAX_NAME_LEN]; *cp == ' '; cp--) {
@@ -671,11 +671,11 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	    if (strncmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
 		isdigit((unsigned char)memName[sizeof(AR_EFMT1) - 1])) {
 
-		unsigned int elen = atoi(&memName[sizeof(AR_EFMT1)-1]);
+		long elen = atol(&memName[sizeof(AR_EFMT1)-1]);
 
 		if (elen > MAXPATHLEN)
 			goto badarch;
-		if (fread(memName, elen, 1, arch) != 1)
+		if (fread(memName, (size_t)elen, (size_t)1, arch) != 1)
 			goto badarch;
 		memName[elen] = '\0';
 		fseek(arch, -elen, SEEK_CUR);
@@ -689,7 +689,7 @@ ArchStatMember(char *archive, char *member, Boolean hash)
 	    Hash_SetValue(he, emalloc(sizeof(struct ar_hdr)));
 	    memcpy(Hash_GetValue(he), &arh, sizeof(struct ar_hdr));
 	}
-	fseek(arch, (size + 1) & ~1, SEEK_CUR);
+	fseek(arch, (long)((size + 1) & ~1), SEEK_CUR);
     }
 
     fclose(arch);
@@ -883,7 +883,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
 	tlen = sizeof(arhPtr->ar_name);
     }
 
-    while (fread((char *)arhPtr, sizeof(struct ar_hdr), 1, arch) == 1) {
+    while (fread(arhPtr, sizeof(struct ar_hdr), 1, arch) == 1) {
 	if (strncmp(arhPtr->ar_fmag, ARFMAG, sizeof(arhPtr->ar_fmag) ) != 0) {
 	     /*
 	      * The header is bogus, so the archive is bad
@@ -909,7 +909,7 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
 		 * the file at the actual member, rather than its header, but
 		 * not here...
 		 */
-		fseek(arch, -sizeof(struct ar_hdr), SEEK_CUR);
+		fseek(arch, -(long)sizeof(struct ar_hdr), SEEK_CUR);
 		return (arch);
 	    }
 	} else
@@ -922,27 +922,29 @@ ArchFindMember(char *archive, char *member, struct ar_hdr *arhPtr,
 					sizeof(AR_EFMT1) - 1) == 0 &&
 		isdigit((unsigned char)arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
 
-		unsigned int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
+		long elen = atol(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
 		char ename[MAXPATHLEN + 1];
 
 		if (elen > MAXPATHLEN) {
 			fclose(arch);
 			return NULL;
 		}
-		if (fread(ename, elen, 1, arch) != 1) {
+		if (fread(ename, (size_t)elen, (size_t)1, arch) != 1) {
 			fclose(arch);
 			return NULL;
 		}
 		ename[elen] = '\0';
 		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    fprintf(debug_file, "ArchFind: Extended format entry for %s\n", ename);
+		    (void)fprintf(debug_file,
+			"ArchFind: Extended format entry for %s\n", ename);
 		}
 		if (strncmp(ename, member, len) == 0) {
 			/* Found as extended name */
-			fseek(arch, -sizeof(struct ar_hdr) - elen, SEEK_CUR);
+			(void)fseek(arch, (long)(-sizeof(struct ar_hdr) - elen),
+			    SEEK_CUR);
 			return (arch);
 		}
-		fseek(arch, -elen, SEEK_CUR);
+		(void)fseek(arch, -elen, SEEK_CUR);
 		goto skip;
 	} else
 #endif
@@ -956,8 +958,8 @@ skip:
 	     * header and round it up during the seek.
 	     */
 	    arhPtr->ar_size[sizeof(arhPtr->ar_size)-1] = '\0';
-	    size = (int)strtol(arhPtr->ar_size, NULL, 10);
-	    fseek(arch, (size + 1) & ~1, SEEK_CUR);
+	    size = (size_t)strtol(arhPtr->ar_size, NULL, 10);
+	    (void)fseek(arch, (long)((size + 1) & ~1), SEEK_CUR);
 	}
     }
 
@@ -1001,11 +1003,11 @@ Arch_Touch(GNode *gn)
 	free(p1);
     if (p2)
 	free(p2);
-    snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
+    (void)snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long) now);
 
     if (arch != NULL) {
-	(void)fwrite((char *)&arh, sizeof(struct ar_hdr), 1, arch);
-	fclose(arch);
+	(void)fwrite(&arh, sizeof(struct ar_hdr), 1, arch);
+	(void)fclose(arch);
     }
 }
 
@@ -1029,6 +1031,7 @@ Arch_Touch(GNode *gn)
  */
 void
 #if !defined(RANLIBMAG)
+/*ARGSUSED*/
 Arch_TouchLib(GNode *gn __unused)
 #else
 Arch_TouchLib(GNode *gn)
@@ -1135,8 +1138,9 @@ Arch_MemMTime(GNode *gn)
 	    nameEnd = strchr(nameStart, ')');
 
 	    if ((pgn->flags & REMAKE) &&
-		strncmp(nameStart, gn->name, nameEnd - nameStart) == 0) {
-				     gn->mtime = Arch_MTime(pgn);
+		strncmp(nameStart, gn->name,
+		(size_t)(nameEnd - nameStart)) == 0) {
+		     gn->mtime = Arch_MTime(pgn);
 	    }
 	} else if (pgn->flags & REMAKE) {
 	    /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lstForEachFrom.c,v 1.13 2006/11/11 21:23:36 dsl Exp $	*/
+/*	$NetBSD: lstForEachFrom.c,v 1.14 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -33,14 +33,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.13 2006/11/11 21:23:36 dsl Exp $";
+static char rcsid[] = "$NetBSD: lstForEachFrom.c,v 1.14 2008/02/14 22:11:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: lstForEachFrom.c,v 1.13 2006/11/11 21:23:36 dsl Exp $");
+__RCSID("$NetBSD: lstForEachFrom.c,v 1.14 2008/02/14 22:11:20 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -115,7 +115,7 @@ Lst_ForEachFrom(Lst l, LstNode ln, int (*proc)(ClientData, ClientData),
 	}
 
 	if (tln->flags & LN_DELETED) {
-	    free((char *)tln);
+	    free(tln);
 	}
 	tln = next;
     } while (!result && !LstIsEmpty(list) && !done);

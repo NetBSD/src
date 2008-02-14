@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.143 2008/01/03 22:14:53 dsl Exp $	*/
+/*	$NetBSD: parse.c,v 1.144 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: parse.c,v 1.143 2008/01/03 22:14:53 dsl Exp $";
+static char rcsid[] = "$NetBSD: parse.c,v 1.144 2008/02/14 22:11:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: parse.c,v 1.143 2008/01/03 22:14:53 dsl Exp $");
+__RCSID("$NetBSD: parse.c,v 1.144 2008/02/14 22:11:20 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -156,13 +156,13 @@ static GNode	    *mainNode;	/* The main target to create. This is the
 				 * line in the first makefile */
 typedef struct IFile {
     const char      *fname;	    /* name of file */
-    int             lineno;	    /* line number in file */
+    size_t          lineno;	    /* line number in file */
     int             fd;		    /* the open file */
-    int             cond_depth;	    /* 'if' nesting when file opened */
+    size_t          cond_depth;	    /* 'if' nesting when file opened */
     char            *P_str;         /* point to base of string buffer */
     char            *P_ptr;         /* point to next char of string buffer */
     char            *P_end;         /* point to the end of string buffer */
-    int             P_buflen;       /* current size of file buffer */
+    size_t           P_buflen;       /* current size of file buffer */
 } IFile;
 
 #define IFILE_BUFLEN 0x8000
@@ -867,11 +867,10 @@ ParseDoDependency(char *line)
 		 * no errors in this, as they would have been discovered
 		 * in the initial Var_Subst and we wouldn't be here.
 		 */
-		int 	length;
+		size_t 	length;
 		void    *freeIt;
-		char	*result;
 
-		result = Var_Parse(cp, VAR_CMD, TRUE, &length, &freeIt);
+		Var_Parse(cp, VAR_CMD, TRUE, &length, &freeIt);
 		if (freeIt)
 		    free(freeIt);
 		cp += length-1;
@@ -1795,7 +1794,7 @@ Parse_include_file(char *file, Boolean isSystem, int silent)
 	    char *suff;
 	    Lst	suffPath = NILLST;
 
-	    if ((suff = strrchr(file, '.'))) {
+	    if ((suff = strrchr(file, '.')) != NULL) {
 		suffPath = Suff_GetPath(suff);
 		if (suffPath != NILLST) {
 		    fullname = Dir_FindFile(file, suffPath);
@@ -1909,7 +1908,7 @@ ParseSetParseFile(const char *filename)
 {
     char *slash;
     char *dirname;
-    int len;
+    size_t len;
 
     slash = strrchr(filename, '/');
     if (slash == NULL) {
@@ -1918,7 +1917,7 @@ ParseSetParseFile(const char *filename)
     } else {
 	len = slash - filename;
 	dirname = emalloc(len + 1);
-	memcpy(dirname, filename, len);
+	(void)memcpy(dirname, filename, len);
 	dirname[len] = 0;
 	Var_Set(".PARSEDIR", dirname, VAR_GLOBAL, 0);
 	Var_Set(".PARSEFILE", slash+1, VAR_GLOBAL, 0);
@@ -2129,7 +2128,7 @@ ParseEOF(void)
     }
 
     if (DEBUG(PARSE))
-	fprintf(debug_file, "ParseEOF: returning to file %s, line %d, fd %d\n",
+	fprintf(debug_file, "ParseEOF: returning to file %s, line %zu, fd %d\n",
 	    curFile->fname, curFile->lineno, curFile->fd);
 
     /* Restore the PARSEDIR/PARSEFILE variables */
@@ -2151,7 +2150,8 @@ ParseGetLine(int flags, int *length)
     char *escaped;
     char *comment;
     char *tp;
-    int len, dist;
+    ssize_t len;
+    int dist;
 
     /* Loop through blank lines and comment lines */
     for (;;) {
@@ -2175,7 +2175,7 @@ ParseGetLine(int flags, int *length)
 		/* Move existing data to (near) start of file buffer */
 		len = cf->P_end - cf->P_ptr;
 		tp = cf->P_str + 32;
-		memmove(tp, cf->P_ptr, len);
+		(void)memmove(tp, cf->P_ptr, (size_t)len);
 		dist = cf->P_ptr - tp;
 		/* Update all pointers to reflect moved data */
 		ptr -= dist;
@@ -2206,7 +2206,7 @@ ParseGetLine(int flags, int *length)
 		    len += IFILE_BUFLEN;
 		    cf->P_buflen += IFILE_BUFLEN;
 		}
-		len = read(cf->fd, tp, len);
+		len = read(cf->fd, tp, (size_t)len);
 		if (len <= 0) {
 		    if (len < 0) {
 			Parse_Error(PARSE_FATAL, "Makefile read error: %s",
@@ -2456,8 +2456,8 @@ Parse_File(const char *name, int fd)
     do {
 	for (; (line = ParseReadLine()) != NULL; ) {
 	    if (DEBUG(PARSE))
-		fprintf(debug_file, "ParseReadLine (%d): '%s'\n",
-			curFile->lineno, line);
+		(void)fprintf(debug_file, "ParseReadLine (%zu): '%s'\n",
+		    curFile->lineno, line);
 	    if (*line == '.') {
 		/*
 		 * Lines that begin with the special character are either

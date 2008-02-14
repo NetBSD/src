@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.69 2008/01/19 06:52:13 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.70 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.69 2008/01/19 06:52:13 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.70 2008/02/14 22:11:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.69 2008/01/19 06:52:13 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.70 2008/02/14 22:11:20 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -211,12 +211,12 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     volatile Boolean errCheck; 	/* Check errors */
     int 	  reason;   	/* Reason for child's death */
     int	    	  status;   	/* Description of child's death */
-    int	    	  cpid;	    	/* Child actually found */
-    ReturnStatus  retstat;    	/* Status of fork */
+    pid_t    	  cpid;	    	/* Child actually found */
+    pid_t	  retstat;    	/* Status of fork */
     LstNode 	  cmdNode;  	/* Node where current command is located */
     const char  ** volatile av;	/* Argument vector for thing to exec */
     char	** volatile mav;/* Copy of the argument vector for freeing */
-    int	    	  argc;	    	/* Number of arguments in av or 0 if not
+    size_t    	  argc;	    	/* Number of arguments in av or 0 if not
 				 * dynamically allocated */
     Boolean 	  local;    	/* TRUE if command should be executed
 				 * locally */
@@ -371,7 +371,7 @@ CompatRunCommand(ClientData cmdp, ClientData gnp)
     /*
      * The child is off and running. Now all we can do is wait...
      */
-    while (1) {
+    for (;;) {
 
 	while ((retstat = wait(&reason)) != cpid) {
 	    if (retstat == -1 && errno != EINTR) {
@@ -545,7 +545,7 @@ Compat_Make(ClientData gnp, ClientData pgnp)
 		Lst_ForEach(gn->commands, CompatRunCommand, gn);
 		curTarg = NILGNODE;
 	    } else {
-		Job_Touch(gn, gn->type & OP_SILENT);
+		Job_Touch(gn, (gn->type & OP_SILENT) != 0);
 	    }
 	} else {
 	    gn->made = ERROR;

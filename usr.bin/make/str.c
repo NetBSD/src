@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.26 2006/12/22 20:28:31 erh Exp $	*/
+/*	$NetBSD: str.c,v 1.27 2008/02/14 22:11:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: str.c,v 1.26 2006/12/22 20:28:31 erh Exp $";
+static char rcsid[] = "$NetBSD: str.c,v 1.27 2008/02/14 22:11:20 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
-__RCSID("$NetBSD: str.c,v 1.26 2006/12/22 20:28:31 erh Exp $");
+__RCSID("$NetBSD: str.c,v 1.27 2008/02/14 22:11:20 christos Exp $");
 #endif
 #endif				/* not lint */
 #endif
@@ -94,7 +94,7 @@ __RCSID("$NetBSD: str.c,v 1.26 2006/12/22 20:28:31 erh Exp $");
 char *
 str_concat(const char *s1, const char *s2, int flags)
 {
-	int len1, len2;
+	size_t len1, len2;
 	char *result;
 
 	/* get the length of both strings */
@@ -102,10 +102,10 @@ str_concat(const char *s1, const char *s2, int flags)
 	len2 = strlen(s2);
 
 	/* allocate length plus separator plus EOS */
-	result = emalloc((u_int)(len1 + len2 + 2));
+	result = emalloc(len1 + len2 + 2);
 
 	/* copy first string into place */
-	memcpy(result, s1, len1);
+	(void)memcpy(result, s1, len1);
 
 	/* add separator character */
 	if (flags & STR_ADDSPACE) {
@@ -117,7 +117,7 @@ str_concat(const char *s1, const char *s2, int flags)
 	}
 
 	/* copy second string plus EOS into place */
-	memcpy(result + len1, s2, len2 + 1);
+	(void)memcpy(result + len1, s2, len2 + 1);
 
 	return(result);
 }
@@ -138,13 +138,13 @@ str_concat(const char *s1, const char *s2, int flags)
  *      Number of words in *store_argc.
  */
 char **
-brk_string(const char *str, int *store_argc, Boolean expand, char **buffer)
+brk_string(const char *str, size_t *store_argc, Boolean expand, char **buffer)
 {
 	int argc, ch;
 	char inquote, *start, *t;
 	const char *p;
-	int len;
-	int argmax = 50, curlen = 0;
+	size_t len, curlen = 0;
+	size_t argmax = 50;
     	char **argv = emalloc((argmax + 1) * sizeof(char *));
 
 	/* skip leading space chars. */
@@ -419,7 +419,7 @@ thisCharOK:	++pattern;
  *-----------------------------------------------------------------------
  */
 char *
-Str_SYSVMatch(const char *word, const char *pattern, int *len)
+Str_SYSVMatch(const char *word, const char *pattern, size_t *len)
 {
     const char *p = pattern;
     const char *w = word;
@@ -476,13 +476,13 @@ Str_SYSVMatch(const char *word, const char *pattern, int *len)
  *-----------------------------------------------------------------------
  */
 void
-Str_SYSVSubst(Buffer buf, char *pat, char *src, int len)
+Str_SYSVSubst(Buffer buf, char *pat, char *src, size_t len)
 {
     char *m;
 
     if ((m = strchr(pat, '%')) != NULL) {
 	/* Copy the prefix */
-	Buf_AddBytes(buf, m - pat, (Byte *)pat);
+	Buf_AddBytes(buf, (size_t)(m - pat), (Byte *)pat);
 	/* skip the % */
 	pat = m + 1;
     }
