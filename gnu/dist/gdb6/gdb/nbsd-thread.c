@@ -386,7 +386,9 @@ nbsd_thread_fetch_registers (int regno)
 {
   td_thread_t *thread;
   gregset_t gregs;
+#ifdef HAVE_FPREGSET_T
   fpregset_t fpregs;
+#endif
   const struct regset *rs, *frs;
   int val;
   struct cleanup *old_chain;
@@ -404,12 +406,14 @@ nbsd_thread_fetch_registers (int regno)
       rs = gdbarch_regset_from_core_section(current_gdbarch, ".reg", 
 					    sizeof(gregset_t));
       rs->supply_regset(rs, current_regcache, regno, &gregs, sizeof(gregs));
+#ifdef HAVE_FPREGSET_T
       if ((val = p_td_thr_getregs (thread, 1, &fpregs)) == 0) {
 	frs = gdbarch_regset_from_core_section(current_gdbarch, ".reg2",
 					       sizeof(fpregset_t));
 	frs->supply_regset(frs, current_regcache, regno, &fpregs,
 			   sizeof(fpregs));
       }
+#endif
     }
   else
     {
@@ -431,8 +435,11 @@ nbsd_thread_store_registers (int regno)
 {
   td_thread_t *thread;
   gregset_t gregs;
+  const struct regset *rs;
+#ifdef HAVE_FPREGSET_T
   fpregset_t fpregs;
-  const struct regset *rs, *frs;
+  const struct regset *frs;
+#endif
   int val;
 
   if (nbsd_thread_active && IS_THREAD_P (inferior_ptid))
@@ -444,20 +451,24 @@ nbsd_thread_store_registers (int regno)
 
       rs = gdbarch_regset_from_core_section(current_gdbarch, ".reg",
 					    sizeof (gregset_t));
+      rs->collect_regset(rs, current_regcache, -1, &gregs, sizeof(gregs));
+#ifdef HAVE_FPREGSET_T
       frs = gdbarch_regset_from_core_section(current_gdbarch, ".reg2",
 				   sizeof (fpregset_t));
-      rs->collect_regset(rs, current_regcache, -1, &gregs, sizeof(gregs));
       frs->collect_regset(frs, current_regcache, -1, &fpregs,
 			  sizeof (fpregs));
+#endif
 
       val = p_td_thr_setregs (thread, 0, &gregs);
       if (val != 0)
 	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
 	      td_err_string (val));
+#ifdef HAVE_FPREGSET_T
       val = p_td_thr_setregs (thread, 1, &fpregs);
       if (val != 0)
 	error ("nbsd_thread_store_registers: td_thr_setregs: %s\n",
 	      td_err_string (val));
+#endif
     }
   else
     target_beneath.to_store_registers (regno);
@@ -1131,9 +1142,11 @@ nbsd_thread_proc_regsize (void *arg, int regset, size_t *size)
     case 0:
       *size = sizeof (gregset_t);
       break;
+#ifdef HAVE_FPREGSET_T
     case 1:
       *size = sizeof (fpregset_t);
       break;
+#endif
     default:
       return TD_ERR_INVAL;
     }
@@ -1173,11 +1186,13 @@ nbsd_thread_proc_getregs (void *arg, int regset, int lwp, void *buf)
 	  sizeof (gregset_t));
       rs->collect_regset(rs, current_regcache, -1, buf, sizeof (gregset_t));
       break;
+#ifdef HAVE_FPREGSET_T
     case 1:
       rs = gdbarch_regset_from_core_section(current_gdbarch, ".reg2", 
 	  sizeof (fpregset_t));
       rs->collect_regset(rs, current_regcache, -1, buf, sizeof (fpregset_t));
       break;
+#endif
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
     }
@@ -1208,6 +1223,7 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
 	rs->supply_regset(rs, current_regcache, -1, buf, sizeof(gregset_t));
       break;
     case 1:
+#ifdef HAVE_FPREGSET_T
       rs = gdbarch_regset_from_core_section(current_gdbarch, ".reg2",
 					    sizeof (fpregset_t));
       if (rs == NULL)
@@ -1215,6 +1231,7 @@ nbsd_thread_proc_setregs (void *arg, int regset, int lwp, void *buf)
       else
 	rs->supply_regset(rs, current_regcache, -1, buf, sizeof(fpregset_t));
       break;
+#endif
     default: /* XXX need to handle other reg sets: SSE, AltiVec, etc. */
       ret = TD_ERR_INVAL;
     }
