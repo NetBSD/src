@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.34 2007/12/14 00:58:37 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.35 2008/02/14 22:46:14 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.34 2007/12/14 00:58:37 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.35 2008/02/14 22:46:14 uwe Exp $")
 
 
 /*
@@ -457,7 +457,8 @@ NENTRY(sh_vector_interrupt)
 	mov.l	.Li_intfp, r8
 	mov.l	@r8, r8
 	cmp/hi	r8, r14		! r14 > intfp ?
-	bf	1f		! if (r14 <= intfp) already on intstack
+	bf/s	.Li_on_intstack	! if (r14 <= intfp) already on intstack
+	 movt	r10		! remember to avoid re-testing later
 
 	!! else - switch to the interrupt stack
 	mov.l	.Li_intsp, r9
@@ -467,7 +468,7 @@ NENTRY(sh_vector_interrupt)
 	stc.l	r6_bank, @-r9
 	mov	r9, r15
 	ldc	r8, r6_bank	! intfp
-1:
+.Li_on_intstack:
 
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)	! enable exceptions for P3 access
@@ -481,13 +482,15 @@ NENTRY(sh_vector_interrupt)
 	jsr	@r0			! intc_intr(ssr, spc, ssp)
 	 mov.l	r3, @r2
 
-	!! AST check should be run on lwp's stack, so that if
+	!! r10 reflects if we have switched to the interrupt stack on
+	!! entry.  If not - we are in a nested interrupt, so stay on
+	!! the interrupt stack, and we know we are returning to kernel
+	tst	r10, r10
+	bt	.Li_return_to_kernel
+
+	!! Switch to the lwp's stack to run the AST check, so that if
 	!! interrupted lwp is preemtped, it is later resumed on its
 	!! own stack, not on the intterupt stack
-	stc	r6_bank, r0
-	cmp/eq	r0, r8		! r6_bank == intfp?
-	bf	1f
-
 	mov	#0x10, r10
 	stc	sr, r11
 	swap.b	r10, r10
@@ -500,13 +503,13 @@ NENTRY(sh_vector_interrupt)
 	mov.l	@r15+, r15
 
 	ldc	r11, sr		! unblock exceptions
-1:
 
 	mov.l	@(TF_SSR, r14), r2
 	mov.l	.Li_PSL_MD, r1
 	tst	r1, r2			! tf->tf_ssr & PSL_MD == 0 ?
 	bt	.Li_return_to_user
 
+.Li_return_to_kernel:
 	!! Check for interrupted kernel RAS when returning to kernel
 	mov.l	@(TF_SPC, r14), r2
 	mov.l	.Li_ras_start, r3
