@@ -48,7 +48,7 @@ mipsnbsd_fetch_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
       
       mipsnbsd_supply_reg ((char *) &regs, regno);
@@ -61,7 +61,7 @@ mipsnbsd_fetch_inferior_registers (int regno)
       struct fpreg fpregs;
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       mipsnbsd_supply_fpreg ((char *) &fpregs, regno);
@@ -76,13 +76,13 @@ mipsnbsd_store_inferior_registers (int regno)
       struct reg regs;
 
       if (ptrace (PT_GETREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get registers"));
 
       mipsnbsd_fill_reg ((char *) &regs, regno);
 
       if (ptrace (PT_SETREGS, PIDGET (inferior_ptid), 
-		  (PTRACE_TYPE_ARG3) &regs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &regs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write registers"));
 
       if (regno != -1)
@@ -94,13 +94,13 @@ mipsnbsd_store_inferior_registers (int regno)
       struct fpreg fpregs; 
 
       if (ptrace (PT_GETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't get floating point status"));
 
       mipsnbsd_fill_fpreg ((char *) &fpregs, regno);
 
       if (ptrace (PT_SETFPREGS, PIDGET (inferior_ptid),
-		  (PTRACE_TYPE_ARG3) &fpregs, 0) == -1)
+		  (PTRACE_TYPE_ARG3) &fpregs, TIDGET (inferior_ptid)) == -1)
 	perror_with_name (_("Couldn't write floating point status"));
     }
 }
