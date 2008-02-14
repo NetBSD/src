@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.72 2008/01/19 06:52:15 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.73 2008/02/14 22:11:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -154,7 +154,7 @@ typedef struct GNode {
     char            *name;     	/* The target's name */
     char            *uname;    	/* The unexpanded name of a .USE node */
     char    	    *path;     	/* The full pathname of the file */
-    int             type;      	/* Its type (see the OP flags, below) */
+    unsigned int     type;      	/* Its type (see the OP flags, below) */
 
     int             flags;
 #define REMAKE		0x1    	/* this target needs to be (re)made */
@@ -210,7 +210,7 @@ typedef struct GNode {
 				 * Suff_FindDeps and opaque to everyone
 				 * but the Suff module) */
     const char	    *fname;	/* filename where the GNode got defined */
-    int		     lineno;	/* line number where the GNode got defined */
+    size_t	     lineno;	/* line number where the GNode got defined */
 } GNode;
 
 /*
@@ -460,7 +460,7 @@ Boolean Main_SetObjdir(const char *);
     } __d;				\
     __d.__cp = ptr, __d.__p; })
 #else
-#define UNCONST(ptr)	(void *)(ptr)
+#define UNCONST(ptr)	(void *)(intptr_t)(ptr)
 #endif
 
 #ifndef MIN
