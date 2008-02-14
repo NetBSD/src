@@ -887,7 +887,7 @@ nbsd_thread_examine_cmd (char *exp, int from_tty)
   else
     return;
 
-  if ((ret = p_td_map_pth2thr (main_ta, (pthread_t) addr, &th)) != 0)
+  if ((ret = p_td_map_pth2thr (main_ta, (pthread_t) (intptr_t)addr, &th)) != 0)
     error ("nbsd_thread_examine_command: td_map_pth2thr: %s",
 	   td_err_string (ret));
   
@@ -921,13 +921,13 @@ nbsd_thread_sync_cmd (char *exp, int from_tty)
   else
     return;
 
-  if ((ret = p_td_map_addr2sync (main_ta, (caddr_t)addr, &ts)) != 0)
+  if ((ret = p_td_map_addr2sync (main_ta, (void *)(intptr_t)addr, &ts)) != 0)
     error ("nbsd_thread_sync_cmd: td_map_addr2sync: %s", td_err_string (ret));
 
   if ((ret = p_td_sync_info (ts, &tsi)) != 0)
     error ("nbsd_thread_sync_cmd: td_sync_info: %s", td_err_string (ret));
 
-  printf_filtered ("%p: %s ", (void *)addr, syncnames[tsi.sync_type]);
+  printf_filtered ("%p: %s ", (void *)(intptr_t)addr, syncnames[tsi.sync_type]);
 
   if (tsi.sync_type == TD_SYNC_MUTEX)
     {
@@ -990,7 +990,7 @@ tsd_cb (pthread_key_t key, void (*destructor)(void *), void *ignore)
   printf_filtered ("Key %3d   ", key);
 
   printf_filtered ("Destructor");
-  print_address((CORE_ADDR)destructor, gdb_stdout);
+  print_address((CORE_ADDR)(intptr_t)destructor, gdb_stdout);
   printf_filtered ("\n");
   return 0;
 }
@@ -1085,7 +1085,7 @@ nbsd_thread_proc_read (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_read_memory ((CORE_ADDR)addr, buf, size);
+  val = target_read_memory ((CORE_ADDR)(intptr_t)addr, buf, size);
 
   if (val == 0)
     return 0;
@@ -1099,7 +1099,7 @@ nbsd_thread_proc_write (void *arg, caddr_t addr, void *buf, size_t size)
 {
   int val;
 
-  val = target_write_memory ((CORE_ADDR)addr, buf, size);
+  val = target_write_memory ((CORE_ADDR)(intptr_t)addr, buf, size);
 
   if (val == 0)
     return 0;
@@ -1117,7 +1117,7 @@ nbsd_thread_proc_lookup (void *arg, char *sym, caddr_t *addr)
   if (!ms)
     return TD_ERR_NOSYM;
 
-  *addr = (caddr_t) SYMBOL_VALUE_ADDRESS (ms);
+  *addr = (caddr_t)(intptr_t) SYMBOL_VALUE_ADDRESS (ms);
 
   return 0;
 
