@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.12 2008/02/12 17:30:57 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13 2008/02/14 00:25:39 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.12 2008/02/12 17:30:57 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13 2008/02/14 00:25:39 joerg Exp $");
 
 #include "opt_md.h"
 
@@ -80,7 +80,7 @@ static void
 get_device(char *name)
 {
 	int unit, part;
-	char devname[16] *cp;
+	char devname[16], *cp;
 	device_t dv;
 
 	if (strncmp(name, "/dev/", 5) == 0)
