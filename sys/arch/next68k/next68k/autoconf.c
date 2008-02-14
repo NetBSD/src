@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.22 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.23 2008/02/14 00:04:51 joerg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.22 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.23 2008/02/14 00:04:51 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -188,7 +188,6 @@ cpu_rootconf(void)
 static struct device *
 getdevunit(const char *name, int unit)
 {
-	device_t dv;
 	int i;
 
 	for (i = 0; i < ndevice_equivs; i++)
