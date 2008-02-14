@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread_types.h,v 1.8 2007/09/07 14:09:28 ad Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.9 2008/02/14 21:40:51 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,24 +96,16 @@ struct	__pthread_attr_st {
  */
 struct	__pthread_mutex_st {
 	unsigned int	ptm_magic;
-	pthread_spin_t	ptm_lock; 
-	pthread_spin_t	ptm_interlock;
+	unsigned int	ptm_errorcheck;
+	unsigned int	ptm_recursed;
+	pthread_t * volatile ptm_waiters;
 	volatile pthread_t ptm_owner;
-	pthread_queue_t	ptm_blocked;
-	void		*ptm_private;
 };
 
 #define	_PT_MUTEX_MAGIC	0x33330003
 #define	_PT_MUTEX_DEAD	0xDEAD0003
 
-#define _PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 			\
-				    __SIMPLELOCK_UNLOCKED,		\
-				    __SIMPLELOCK_UNLOCKED,		\
-				    NULL,				\
-				    {NULL, NULL},			\
-				    NULL				\
-				  }
-	
+#define _PTHREAD_MUTEX_INITIALIZER { _PT_MUTEX_MAGIC, 0, 0, NULL, NULL }
 
 struct	__pthread_mutexattr_st {
 	unsigned int	ptma_magic;
@@ -185,7 +177,7 @@ struct	__pthread_rwlock_st {
 	pthread_queue_t	ptr_rblocked;
 	pthread_queue_t	ptr_wblocked;
 	unsigned int	ptr_nreaders;
-	volatile pthread_t ptr_writer;
+	volatile pthread_t ptr_owner;
 	void	*ptr_private;
 };
 

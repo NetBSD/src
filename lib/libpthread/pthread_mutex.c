@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.44 2008/02/10 18:50:54 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.45 2008/02/14 21:40:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.44 2008/02/10 18:50:54 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.45 2008/02/14 21:40:51 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -51,14 +51,7 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.44 2008/02/10 18:50:54 ad Exp $");
 #include "pthread.h"
 #include "pthread_int.h"
 
-/*
- * Note that it's important to use the address of ptm_waiters as
- * the list head in order for the hint arguments to _lwp_park /
- * _lwp_unpark_all to match.
- */
 #define	pt_nextwaiter			pt_sleep.ptqe_next
-#define	ptm_waiters			ptm_blocked.ptqh_first
-#define	ptm_errorcheck			ptm_lock
 
 #define	MUTEX_WAITERS_BIT		((uintptr_t)0x01)
 #define	MUTEX_RECURSIVE_BIT		((uintptr_t)0x02)
@@ -68,9 +61,6 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.44 2008/02/10 18:50:54 ad Exp $");
 #define	MUTEX_HAS_WAITERS(x)		((uintptr_t)(x) & MUTEX_WAITERS_BIT)
 #define	MUTEX_RECURSIVE(x)		((uintptr_t)(x) & MUTEX_RECURSIVE_BIT)
 #define	MUTEX_OWNER(x)			((uintptr_t)(x) & MUTEX_THREAD)
-#define	MUTEX_GET_RECURSE(ptm)		((intptr_t)(ptm)->ptm_private)
-#define	MUTEX_SET_RECURSE(ptm, delta)	\
-    ((ptm)->ptm_private = (void *)((intptr_t)(ptm)->ptm_private + delta))
 
 #if __GNUC_PREREQ__(3, 0)
 #define	NOINLINE		__attribute ((noinline))
@@ -128,7 +118,7 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 
 	ptm->ptm_magic = _PT_MUTEX_MAGIC;
 	ptm->ptm_waiters = NULL;
-	ptm->ptm_private = NULL;
+	ptm->ptm_recursed = 0;
 
 	return 0;
 }
@@ -216,9 +206,9 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 	/* Recursive or errorcheck? */
 	if (MUTEX_OWNER(owner) == (uintptr_t)self) {
 		if (MUTEX_RECURSIVE(owner)) {
-			if (MUTEX_GET_RECURSE(ptm) == INT_MAX)
+			if (ptm->ptm_recursed == INT_MAX)
 				return EAGAIN;
-			MUTEX_SET_RECURSE(ptm, +1);
+			ptm->ptm_recursed++;
 			return 0;
 		}
 		if (ptm->ptm_errorcheck)
@@ -320,7 +310,8 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 		 */
 		while (self->pt_sleeponq) {
 			self->pt_blocking++;
-			(void)_lwp_park(NULL, 0, &ptm->ptm_waiters, NULL);
+			(void)_lwp_park(NULL, 0,
+			    __UNVOLATILE(&ptm->ptm_waiters), NULL);
 			self->pt_blocking--;
 			membar_sync();
 		}
@@ -343,9 +334,9 @@ pthread_mutex_trylock(pthread_mutex_t *ptm)
 	}
 
 	if (MUTEX_OWNER(val) == (uintptr_t)self && MUTEX_RECURSIVE(val)) {
-		if (MUTEX_GET_RECURSE(ptm) == INT_MAX)
+		if (ptm->ptm_recursed == INT_MAX)
 			return EAGAIN;
-		MUTEX_SET_RECURSE(ptm, +1);
+		ptm->ptm_recursed++;
 		return 0;
 	}
 
@@ -398,8 +389,8 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 		if (!weown) {
 			error = EPERM;
 			new = owner;
-		} else if (MUTEX_GET_RECURSE(ptm) != 0) {
-			MUTEX_SET_RECURSE(ptm, -1);
+		} else if (ptm->ptm_recursed) {
+			ptm->ptm_recursed--;
 			new = owner;
 		} else {
 			new = (pthread_t)MUTEX_RECURSIVE_BIT;
@@ -438,14 +429,15 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 		 */
 		if (self->pt_willpark && self->pt_unpark == 0) {
 			self->pt_unpark = self->pt_waiters[0];
-			self->pt_unparkhint = &ptm->ptm_waiters;
+			self->pt_unparkhint =
+			    __UNVOLATILE(&ptm->ptm_waiters);
 		} else {
 			(void)_lwp_unpark(self->pt_waiters[0],
-			    &ptm->ptm_waiters);
+			    __UNVOLATILE(&ptm->ptm_waiters));
 		}
 	} else {
 		(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
-		    &ptm->ptm_waiters);
+		    __UNVOLATILE(&ptm->ptm_waiters));
 	}
 	self->pt_nwaiters = 0;
 
@@ -495,11 +487,12 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 			 */
 			if (self->pt_willpark && self->pt_unpark == 0) {
 				self->pt_unpark = self->pt_waiters[0];
-				self->pt_unparkhint = &ptm->ptm_waiters;
+				self->pt_unparkhint =
+				    __UNVOLATILE(&ptm->ptm_waiters);
 				return;
 			}
 			rv = (ssize_t)_lwp_unpark(self->pt_waiters[0],
-			    &ptm->ptm_waiters);
+			    __UNVOLATILE(&ptm->ptm_waiters));
 			if (rv != 0 && errno != EALREADY && errno != EINTR &&
 			    errno != ESRCH) {
 				pthread__errorfunc(__FILE__, __LINE__,
@@ -508,7 +501,7 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 			return;
 		default:
 			rv = _lwp_unpark_all(self->pt_waiters, (size_t)n,
-			    &ptm->ptm_waiters);
+			    __UNVOLATILE(&ptm->ptm_waiters));
 			if (rv != 0 && errno != EINTR) {
 				pthread__errorfunc(__FILE__, __LINE__,
 				    __func__, "_lwp_unpark_all failed");
