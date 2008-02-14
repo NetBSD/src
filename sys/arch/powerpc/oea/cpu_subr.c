@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.43 2008/02/05 18:52:56 garbled Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.44 2008/02/14 19:41:54 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.43 2008/02/05 18:52:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.44 2008/02/14 19:41:54 garbled Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -235,8 +235,6 @@ int cpu_psluserset, cpu_pslusermod;
 char cpu_model[80];
 
 /* This is to be called from locore.S, and nowhere else. */
-
-extern unsigned long oeacpufeat;
 
 void
 cpu_model_init(void)
