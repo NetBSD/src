@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5.2.1 2007/02/11 13:30:38 tron Exp $
+#	$NetBSD: Makefile,v 1.5.2.1.2.1 2008/02/14 14:38:44 skrll Exp $
 
 .include "../Makefile.inc"
 
@@ -71,10 +71,6 @@ DPADD+=	${LIBOPCODESDIR}/libopcodes.a \
 
 LDADD+=		-lcurses -lintl -lm -lkvm
 DPADD+=		${LIBCURSES} ${LIBINTL} ${LIBM} ${LIBKVM}
-
-.if ${SRCS:Mnbsd-thread.c} != ""
-LDADD+=                -lpthread_dbg
-.endif
 
 .include <bsd.prog.mk>
 
