@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.20 2008/01/04 21:18:10 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.21 2008/02/14 14:26:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.20 2008/01/04 21:18:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.21 2008/02/14 14:26:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -136,7 +136,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 */
 	if (l->l_stat != LSSLEEP) {
 		KASSERT(l->l_stat == LSSTOP || l->l_stat == LSSUSPENDED);
-		lwp_setlock(l, &spc->spc_lwplock);
+		lwp_setlock(l, spc->spc_lwplock);
 		return 0;
 	}
 
@@ -147,7 +147,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	if ((l->l_flag & LW_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
-		lwp_setlock(l, &spc->spc_lwplock);
+		lwp_setlock(l, spc->spc_lwplock);
 		return 0;
 	}
 
