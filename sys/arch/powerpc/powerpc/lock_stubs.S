@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.2 2007/02/09 21:55:11 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.3 2008/02/14 19:41:54 garbled Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
 
+#define _NOREGNAMES
 #include <machine/asm.h>
 
 #include "assym.h"
@@ -58,17 +59,17 @@
  */
 ENTRY_NOPROFILE(_lock_cas)
 1:
-	lwarx	r10,0,r3
-	cmpw	r10,r4
+	lwarx	%r10,0,%r3
+	cmpw	%r10,%r4
 	bne-	2f
-	stwcx.	r5,0,r3
+	stwcx.	%r5,0,%r3
 	bne-	1b
 	SYNC
-	li	r3,1
+	li	%r3,1
 	blr
 2:
 	SYNC
-	li	r3,0
+	li	%r3,0
 	blr
 
 #if !defined(LOCKDEBUG)
@@ -76,13 +77,13 @@ ENTRY_NOPROFILE(_lock_cas)
  * void mutex_enter(kmutex_t *);
  */
 ENTRY_NOPROFILE(mutex_enter)
-	GET_CPUINFO(r8)
-	ldptr	r9,CI_CURLWP(r8)
+	GET_CPUINFO(%r8)
+	ldptr	%r9,CI_CURLWP(%r8)
 1:
-	lwarx	r10,0,r3
-	cmpwi	r10,0
+	lwarx	%r10,0,%r3
+	cmpwi	%r10,0
 	bne-	2f
-	stwcx.	r9,0,r3
+	stwcx.	%r9,0,%r3
 	bne-	1b
 	ISYNC
 	blr
@@ -93,15 +94,15 @@ ENTRY_NOPROFILE(mutex_enter)
  * void mutex_exit(kmutex_t *);
  */
 ENTRY_NOPROFILE(mutex_exit)
-	GET_CPUINFO(r8)
-	ldptr	r9,CI_CURLWP(r8)
+	GET_CPUINFO(%r8)
+	ldptr	%r9,CI_CURLWP(%r8)
 	SYNC
-	li	r7,0
+	li	%r7,0
 1:
-	lwarx	r10,0,r3
-	cmpw	r10,r9
+	lwarx	%r10,0,%r3
+	cmpw	%r10,%r9
 	bne-	2f
-	stwcx.	r7,0,r3
+	stwcx.	%r7,0,%r3
 	bne-	1b
 	blr
 2:
