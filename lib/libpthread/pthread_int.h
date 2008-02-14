@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.66 2008/02/10 18:50:54 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.67 2008/02/14 21:40:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -317,7 +317,5 @@ int	pthread__mutex_deferwake(pthread_t, pthread_mutex_t *) PTHREAD_HIDE;
 #define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
 #define	RW_COUNT(rw)		((rw)->rw_owner & RW_THREAD)
 #define	RW_FLAGS(rw)		((rw)->rw_owner & ~RW_THREAD)
-
-#define	ptr_owner		ptr_writer
 
 #endif /* _LIB_PTHREAD_INT_H */
