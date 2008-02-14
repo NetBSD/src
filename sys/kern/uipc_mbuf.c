@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.23 2008/02/11 14:54:36 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.24 2008/02/14 10:19:59 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.23 2008/02/11 14:54:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.24 2008/02/14 10:19:59 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1536,6 +1536,7 @@ m_ext_free(struct mbuf *m)
 {
 	bool embedded = MEXT_ISEMBEDDED(m);
 	bool dofree = true;
+	u_int refcnt;
 
 	KASSERT((m->m_flags & M_EXT) != 0);
 	KASSERT(MEXT_ISEMBEDDED(m->m_ext_ref));
@@ -1543,7 +1544,12 @@ m_ext_free(struct mbuf *m)
 	KASSERT((m->m_flags & M_EXT_CLUSTER) ==
 	    (m->m_ext_ref->m_flags & M_EXT_CLUSTER));
 
-	if (atomic_dec_uint_nv(&m->m_ext.ext_refcnt) > 0) {
+	if (__predict_true(m->m_ext.ext_refcnt == 1)) {
+		refcnt = m->m_ext.ext_refcnt = 0;
+	} else {
+		refcnt = atomic_dec_uint_nv(&m->m_ext.ext_refcnt);
+	}
+	if (refcnt > 0) {
 		if (embedded) {
 			/*
 			 * other mbuf's m_ext_ref still points to us.
