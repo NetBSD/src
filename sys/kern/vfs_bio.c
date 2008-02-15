@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.187 2008/02/15 13:30:56 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.188 2008/02/15 13:46:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.187 2008/02/15 13:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.188 2008/02/15 13:46:04 ad Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1141,7 +1141,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
  loop:
 	bp = incore(vp, blkno);
 	if (bp != NULL) {
-		err = bbusy(bp, ((slpflag & PCATCH) != 0), slptimeo);
+		err = bbusy(bp, ((slpflag & PCATCH) != 0), slptimeo, NULL);
 		if (err != 0) {
 			if (err == EPASSTHROUGH)
 				goto loop;
@@ -2031,7 +2031,7 @@ buf_destroy(buf_t *bp)
 }
 
 int
-bbusy(buf_t *bp, bool intr, int timo)
+bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 {
 	int error;
 
@@ -2042,6 +2042,8 @@ bbusy(buf_t *bp, bool intr, int timo)
 			return EDEADLK;
 		bp->b_cflags |= BC_WANTED;
 		bref(bp);
+		if (interlock != NULL)
+			mutex_exit(interlock);
 		if (intr) {
 			error = cv_timedwait_sig(&bp->b_busy, &bufcache_lock,
 			    timo);
@@ -2050,6 +2052,8 @@ bbusy(buf_t *bp, bool intr, int timo)
 			    timo);
 		}
 		brele(bp);
+		if (interlock != NULL)
+			mutex_enter(interlock);
 		if (error != 0)
 			return error;
 		return EPASSTHROUGH;
