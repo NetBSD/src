@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.136 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.137 2008/02/15 08:55:31 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.136 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.137 2008/02/15 08:55:31 dholland Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.136 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: job.c,v 1.137 2008/02/15 08:55:31 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1750,7 +1750,7 @@ JobDoOutput(Job *job, Boolean finish)
 {
     Boolean       gotNL = FALSE;  /* true if got a newline */
     Boolean       fbuf;  	  /* true if our buffer filled up */
-    int		  nr;	      	  /* number of bytes read */
+    size_t	  nr;	      	  /* number of bytes read */
     size_t	  i;	      	  /* auxiliary index into outBuf */
     size_t	  max;	      	  /* limit for i (end of current data) */
     ssize_t	  nRead;      	  /* (Temporary) number of bytes read */
@@ -1795,15 +1795,17 @@ end_loop:
      * TRUE.
      */
     max = job->curPos + nr;
-    for (i = job->curPos + nr - 1; i >= job->curPos; i--) {
-	if (job->outBuf[i] == '\n') {
-	    gotNL = TRUE;
-	    break;
-	} else if (job->outBuf[i] == '\0') {
-	    /*
-	     * Why?
-	     */
-	    job->outBuf[i] = ' ';
+    if (nr > 0) {
+	for (i = job->curPos + nr - 1; i >= job->curPos; i--) {
+	    if (job->outBuf[i] == '\n') {
+		gotNL = TRUE;
+		break;
+	    } else if (job->outBuf[i] == '\0') {
+		/*
+		 * Why?
+		 */
+	       job->outBuf[i] = ' ';
+	    }
 	}
     }
 
