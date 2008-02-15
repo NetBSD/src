@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.117 2008/02/15 13:30:56 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.118 2008/02/15 13:46:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.117 2008/02/15 13:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.118 2008/02/15 13:46:05 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -855,7 +855,7 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		error = bbusy(bp, catch, slptimeo);
+		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
 		if (error != 0) {
@@ -877,7 +877,7 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		error = bbusy(bp, catch, slptimeo);
+		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error == EPASSTHROUGH)
 			goto restart;
 		if (error != 0) {

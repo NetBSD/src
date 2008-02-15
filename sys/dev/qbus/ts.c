@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.22 2008/01/02 11:48:38 ad Exp $ */
+/*	$NetBSD: ts.c,v 1.23 2008/02/15 13:46:04 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.22 2008/01/02 11:48:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.23 2008/02/15 13:46:04 ad Exp $");
 
 #undef	TSDEBUG
 
@@ -336,7 +336,8 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 		 */
 		if (bp->b_bcount == 0 && (bp->b_oflags & BO_DONE))
 			break;
-		(void )bbusy(bp, false, 0);
+		if (bbusy(bp, false, 0, NULL) == 0)
+			break;
 		/* check MOT-flag !!! */
 	}
 	bp->b_flags = B_READ;

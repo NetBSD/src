@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.35 2008/01/02 11:48:31 ad Exp $ */
+/*	$NetBSD: ts.c,v 1.36 2008/02/15 13:46:04 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.35 2008/01/02 11:48:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.36 2008/02/15 13:46:04 ad Exp $");
 
 #define TS11_COMPAT	/* don't use extended features provided by TS05 */
 
@@ -376,7 +376,7 @@ tscommand (dev, cmd, count)
 
 	bp = &ts_cbuf[TS_UNIT(dev)];
 	mutex_enter(&bufcache_lock);
-	while (bbusy(bp) != 0)
+	while (bbusy(bp, false, 0, NULL) != 0)
 		;
 	mutex_exit(&bufcache_lock);
 	bp->b_flags |= B_READ;

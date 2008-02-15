@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.106 2008/01/12 00:34:10 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.107 2008/02/15 13:46:04 ad Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.106 2008/01/12 00:34:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.107 2008/02/15 13:46:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -5575,7 +5575,7 @@ getdirtybuf(bpp, waitfor)
 			break;
 		if (waitfor != MNT_WAIT)
 			return (0);
-		(void)bbusy(bp, false, 0);
+		(void)bbusy(bp, false, 0, NULL);
 	}
 	mutex_enter(bp->b_objlock);
 	if ((bp->b_oflags & BO_DELWRI) == 0) {

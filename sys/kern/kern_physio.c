@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.86 2008/01/02 11:48:51 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.87 2008/02/15 13:46:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.86 2008/01/02 11:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.87 2008/02/15 13:46:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ physio(void (*strategy)(struct buf *), struct buf *obp, dev_t dev, int flags,
 	if (obp != NULL) {
 		/* [raise the processor priority level to splbio;] */
 		mutex_enter(&bufcache_lock);
-		while (bbusy(obp, false, 0) == EPASSTHROUGH)
+		while (bbusy(obp, false, 0, NULL) == EPASSTHROUGH)
 			;
 		/* Mark it busy, so nobody else will use it. */
 		obp->b_cflags |= BC_DONTFREE;

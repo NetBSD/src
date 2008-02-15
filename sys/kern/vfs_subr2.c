@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr2.c,v 1.18 2008/02/05 13:32:09 ad Exp $	*/
+/*	$NetBSD: vfs_subr2.c,v 1.19 2008/02/15 13:46:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>  
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.18 2008/02/05 13:32:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr2.c,v 1.19 2008/02/15 13:46:04 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -319,7 +319,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 restart:
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		error = bbusy(bp, catch, slptimeo);
+		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;
@@ -331,7 +331,7 @@ restart:
 
 	for (bp = LIST_FIRST(&vp->v_cleanblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		error = bbusy(bp, catch, slptimeo);
+		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;
@@ -391,7 +391,7 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		error = bbusy(bp, catch, slptimeo);
+		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;
@@ -405,7 +405,7 @@ restart:
 		nbp = LIST_NEXT(bp, b_vnbufs);
 		if (bp->b_lblkno < lbn)
 			continue;
-		error = bbusy(bp, catch, slptimeo);
+		error = bbusy(bp, catch, slptimeo, NULL);
 		if (error != 0) {
 			if (error == EPASSTHROUGH)
 				goto restart;
