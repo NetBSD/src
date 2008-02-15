@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.108 2008/01/30 11:47:04 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.109 2008/02/15 13:30:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.108 2008/01/30 11:47:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.109 2008/02/15 13:30:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -455,7 +455,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	ASSERT_MAYBE_SEGLOCK(fs);
 	KASSERT(bp->b_cflags & BC_BUSY);
 	KASSERT(flags & BW_CLEAN || !LFS_IS_MALLOC_BUF(bp));
-	KASSERT(((bp->b_oflags | bp->b_cflags) & (BO_DELWRI|BC_LOCKED))
+	KASSERT(((bp->b_oflags | bp->b_flags) & (BO_DELWRI|B_LOCKED))
 	    != BO_DELWRI);
 
 	/*
@@ -482,7 +482,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * Set the delayed write flag and use reassignbuf to move the buffer
 	 * from the clean list to the dirty one.
 	 *
-	 * Set the BC_LOCKED flag and unlock the buffer, causing brelse to move
+	 * Set the B_LOCKED flag and unlock the buffer, causing brelse to move
 	 * the buffer onto the LOCKED free list.  This is necessary, otherwise
 	 * getnewbuf() would try to reclaim the buffers using bawrite, which
 	 * isn't going to work.
@@ -492,7 +492,7 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	 * enough space reserved so that there's room to write meta-data
 	 * blocks.
 	 */
-	if ((bp->b_cflags & BC_LOCKED) == 0) {
+	if ((bp->b_flags & B_LOCKED) == 0) {
 		fsb = fragstofsb(fs, numfrags(fs, bp->b_bcount));
 
 		ip = VTOI(vp);

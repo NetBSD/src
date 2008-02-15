@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.116 2008/01/02 11:49:11 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.117 2008/02/15 13:30:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.116 2008/01/02 11:49:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.117 2008/02/15 13:30:56 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -362,7 +362,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 			memset((char *)bp->b_data + offset, 0,
 			       (u_int)(size - offset));
 		allocbuf(bp, size, 1);
-		if ((bp->b_cflags & BC_LOCKED) != 0 && bp->b_iodone == NULL) {
+		if ((bp->b_flags & B_LOCKED) != 0 && bp->b_iodone == NULL) {
 			mutex_enter(&lfs_lock);
 			locked_queue_bytes -= obufsize - bp->b_bufsize;
 			mutex_exit(&lfs_lock);

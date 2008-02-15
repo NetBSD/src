@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.103 2008/02/02 16:51:34 hannken Exp $ */
+/*     $NetBSD: buf.h,v 1.104 2008/02/15 13:30:56 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -191,7 +191,6 @@ struct buf {
 #define	BC_BUSY		0x00000010	/* I/O in progress. */
 #define BC_SCANNED	0x00000020	/* Block already pushed during sync */
 #define	BC_INVAL	0x00002000	/* Does not contain valid info. */
-#define	BC_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	BC_NOCACHE	0x00008000	/* Do not cache block after use. */
 #define	BC_WANTED	0x00800000	/* Process wants this buffer. */
 #define	BC_VFLUSH	0x04000000	/* Buffer is being synced. */
@@ -209,6 +208,7 @@ struct buf {
 #define	B_ASYNC		0x00000004	/* Start I/O, do not wait. */
 #define	B_COWDONE	0x00000400	/* Copy-on-write already done. */
 #define	B_GATHERED	0x00001000	/* LFS: already in a segment. */
+#define	B_LOCKED	0x00004000	/* Locked in core (not reusable). */
 #define	B_PHYS		0x00040000	/* I/O to user memory. */
 #define	B_RAW		0x00080000	/* Set by physio for raw transfers. */
 #define	B_READ		0x00100000	/* Read buffer. */
