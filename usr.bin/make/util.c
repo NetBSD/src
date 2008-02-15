@@ -1,15 +1,15 @@
-/*	$NetBSD: util.c,v 1.43 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.44 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.43 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.44 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.43 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.44 2008/02/15 21:29:50 christos Exp $");
 #endif
 #endif
 
@@ -181,7 +181,7 @@ char    *sys_siglist[] = {
 #include <unistd.h>
 
 int
-killpg(pid_t pid, int sig)
+killpg(int pid, int sig)
 {
     return kill(-pid, sig);
 }

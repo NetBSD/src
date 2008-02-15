@@ -1,4 +1,4 @@
-/*	$NetBSD: targ.c,v 1.51 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: targ.c,v 1.52 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: targ.c,v 1.51 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: targ.c,v 1.52 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)targ.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: targ.c,v 1.51 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: targ.c,v 1.52 2008/02/15 21:29:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -511,7 +511,6 @@ Targ_SetMain(GNode *gn)
 }
 
 static int
-/*ARGSUSED*/
 TargPrintName(ClientData gnp, ClientData pflags __unused)
 {
     GNode *gn = (GNode *)gnp;
@@ -567,7 +566,7 @@ Targ_FmtTime(time_t tm)
  *-----------------------------------------------------------------------
  */
 void
-Targ_PrintType(unsigned int type)
+Targ_PrintType(int type)
 {
     int    tbit;
 
@@ -577,7 +576,7 @@ Targ_PrintType(unsigned int type)
     type &= ~OP_OPMASK;
 
     while (type) {
-	tbit = 1 << (ffs((int)type) - 1);
+	tbit = 1 << (ffs(type) - 1);
 	type &= ~tbit;
 
 	switch(tbit) {
@@ -717,7 +716,6 @@ Targ_PrintNode(ClientData gnp, ClientData passp)
  *-----------------------------------------------------------------------
  */
 static int
-/*ARGSUSED*/
 TargPrintOnlySrc(ClientData gnp, ClientData dummy __unused)
 {
     GNode   	  *gn = (GNode *)gnp;
@@ -791,7 +789,6 @@ Targ_PrintGraph(int pass)
  *-----------------------------------------------------------------------
  */
 static int
-/*ARGSUSED*/
 TargPropagateNode(ClientData gnp, ClientData junk __unused)
 {
     GNode	  *gn = (GNode *)gnp;

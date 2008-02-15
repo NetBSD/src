@@ -1,4 +1,4 @@
-/*	$NetBSD: suff.c,v 1.62 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: suff.c,v 1.63 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: suff.c,v 1.62 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: suff.c,v 1.63 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)suff.c	8.4 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: suff.c,v 1.62 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: suff.c,v 1.63 2008/02/15 21:29:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1412,7 +1412,7 @@ SuffFindCmds(Src *targ, Lst slst)
     LstNode 	  	ln; 	/* General-purpose list node */
     GNode		*t, 	/* Target GNode */
 	    	  	*s; 	/* Source GNode */
-    size_t   	  	prefLen;/* The length of the defined prefix */
+    int	    	  	prefLen;/* The length of the defined prefix */
     Suff    	  	*suff;	/* Suffix on matching beastie */
     Src	    	  	*ret;	/* Return value */
     char    	  	*cp;
@@ -1594,7 +1594,7 @@ SuffExpandChildren(LstNode cln, GNode *pgn)
 		     * to find the end so we can skip over it.
 		     */
 		    char	*junk;
-		    size_t 	len;
+		    int 	len;
 		    void	*freeIt;
 
 		    junk = Var_Parse(cp, pgn, TRUE, &len, &freeIt);
@@ -2067,7 +2067,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	ln = Lst_FindFrom(sufflist, ln, &sd, SuffSuffIsSuffixP);
 
 	if (ln != NILLNODE) {
-	    size_t    prefLen;	    /* Length of the prefix */
+	    int	    prefLen;	    /* Length of the prefix */
 
 	    /*
 	     * Allocate a Src structure to which things can be transformed
@@ -2089,7 +2089,7 @@ SuffFindNormalDeps(GNode *gn, Lst slst)
 	     */
 	    prefLen = (eoname - targ->suff->nameLen) - sopref;
 	    targ->pref = emalloc(prefLen + 1);
-	    (void)memcpy(targ->pref, sopref, prefLen);
+	    memcpy(targ->pref, sopref, prefLen);
 	    targ->pref[prefLen] = '\0';
 
 	    /*
@@ -2576,7 +2576,7 @@ Suff_End(void)
 
 static int SuffPrintName(ClientData s, ClientData dummy)
 {
-    (void)fprintf(debug_file, "%s ", ((Suff *)s)->name);
+    fprintf(debug_file, "%s ", ((Suff *)s)->name);
     return (dummy ? 0 : 0);
 }
 
@@ -2587,38 +2587,38 @@ SuffPrintSuff(ClientData sp, ClientData dummy)
     int	    flags;
     int	    flag;
 
-    (void)fprintf(debug_file, "# `%s' [%d] ", s->name, s->refCount);
+    fprintf(debug_file, "# `%s' [%d] ", s->name, s->refCount);
 
     flags = s->flags;
     if (flags) {
-	(void)fputs(" (", debug_file);
+	fputs(" (", debug_file);
 	while (flags) {
 	    flag = 1 << (ffs(flags) - 1);
 	    flags &= ~flag;
 	    switch (flag) {
 		case SUFF_NULL:
-		    (void)fprintf(debug_file, "NULL");
+		    fprintf(debug_file, "NULL");
 		    break;
 		case SUFF_INCLUDE:
-		    (void)fprintf(debug_file, "INCLUDE");
+		    fprintf(debug_file, "INCLUDE");
 		    break;
 		case SUFF_LIBRARY:
-		    (void)fprintf(debug_file, "LIBRARY");
+		    fprintf(debug_file, "LIBRARY");
 		    break;
 	    }
-	    (void)fputc(flags ? '|' : ')', debug_file);
+	    fputc(flags ? '|' : ')', debug_file);
 	}
     }
-    (void)fputc('\n', debug_file);
-    (void)fprintf(debug_file, "#\tTo: ");
+    fputc('\n', debug_file);
+    fprintf(debug_file, "#\tTo: ");
     Lst_ForEach(s->parents, SuffPrintName, NULL);
-    (void)fputc('\n', debug_file);
-    (void)fprintf(debug_file, "#\tFrom: ");
+    fputc('\n', debug_file);
+    fprintf(debug_file, "#\tFrom: ");
     Lst_ForEach(s->children, SuffPrintName, NULL);
-    (void)fputc('\n', debug_file);
-    (void)fprintf(debug_file, "#\tSearch Path: ");
+    fputc('\n', debug_file);
+    fprintf(debug_file, "#\tSearch Path: ");
     Dir_PrintPath(s->searchPath);
-    (void)fputc('\n', debug_file);
+    fputc('\n', debug_file);
     return (dummy ? 0 : 0);
 }
 
@@ -2627,20 +2627,20 @@ SuffPrintTrans(ClientData tp, ClientData dummy)
 {
     GNode   *t = (GNode *)tp;
 
-    (void)fprintf(debug_file, "%-16s: ", t->name);
+    fprintf(debug_file, "%-16s: ", t->name);
     Targ_PrintType(t->type);
-    (void)fputc('\n', debug_file);
+    fputc('\n', debug_file);
     Lst_ForEach(t->commands, Targ_PrintCmd, NULL);
-    (void)fputc('\n', debug_file);
+    fputc('\n', debug_file);
     return(dummy ? 0 : 0);
 }
 
 void
 Suff_PrintAll(void)
 {
-    (void)fprintf(debug_file, "#*** Suffixes:\n");
+    fprintf(debug_file, "#*** Suffixes:\n");
     Lst_ForEach(sufflist, SuffPrintSuff, NULL);
 
-    (void)fprintf(debug_file, "#*** Transformations:\n");
+    fprintf(debug_file, "#*** Transformations:\n");
     Lst_ForEach(transforms, SuffPrintTrans, NULL);
 }

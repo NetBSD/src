@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.36 2008/02/15 09:18:56 dholland Exp $	*/
+/*	$NetBSD: job.h,v 1.37 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -137,7 +137,7 @@ struct pollfd;
 
 #define JOB_BUFSIZE	1024
 typedef struct Job {
-    pid_t      	pid;	    /* The child's process ID */
+    int       	pid;	    /* The child's process ID */
     GNode    	*node;      /* The target the child is making */
     LstNode 	tailCmds;   /* The node of the first command to be
 			     * saved when the job has been run */
@@ -159,12 +159,12 @@ typedef struct Job {
 				 * commands */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
-    int	  	 jobPipe[2];	/* Pipe for reading output from job */
+    int	  	 jobPipe[2];	/* Pipe for readind output from job */
     struct pollfd *inPollfd;	/* pollfd associated with inPipe */
     char  	outBuf[JOB_BUFSIZE + 1];
 				/* Buffer for storing the output of the
 				 * job, line by line */
-    size_t  	curPos;	/* Current position in op_outBuf */
+    int   	curPos;	/* Current position in op_outBuf */
 } Job;
 
 #define inPipe jobPipe[0]

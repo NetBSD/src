@@ -1,4 +1,4 @@
-/*	$NetBSD: buf.c,v 1.20 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: buf.c,v 1.21 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: buf.c,v 1.20 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: buf.c,v 1.21 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: buf.c,v 1.20 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: buf.c,v 1.21 2008/02/15 21:29:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -104,7 +104,7 @@ __RCSID("$NetBSD: buf.c,v 1.20 2008/02/14 22:11:20 christos Exp $");
  */
 #define BufExpand(bp,nb) \
  	while (bp->left < (nb)+1) {\
-	    size_t newSize = (bp)->size * 2; \
+	    int newSize = (bp)->size * 2; \
 	    Byte  *newBuf = (Byte *)erealloc((bp)->buffer, newSize); \
 	    \
 	    (bp)->inPtr = newBuf + ((bp)->inPtr - (bp)->buffer); \
@@ -132,7 +132,7 @@ __RCSID("$NetBSD: buf.c,v 1.20 2008/02/14 22:11:20 christos Exp $");
 void
 Buf_OvAddByte(Buffer bp, int byte)
 {
-    size_t nbytes = 1;
+    int nbytes = 1;
     bp->left = 0;
     BufExpand(bp, nbytes);
 
@@ -159,12 +159,12 @@ Buf_OvAddByte(Buffer bp, int byte)
  *-----------------------------------------------------------------------
  */
 void
-Buf_AddBytes(Buffer bp, size_t numBytes, const Byte *bytesPtr)
+Buf_AddBytes(Buffer bp, int numBytes, const Byte *bytesPtr)
 {
 
     BufExpand(bp, numBytes);
 
-    (void)memcpy(bp->inPtr, bytesPtr, numBytes);
+    memcpy(bp->inPtr, bytesPtr, numBytes);
     bp->inPtr += numBytes;
     bp->left -= numBytes;
 
@@ -188,7 +188,7 @@ Buf_AddBytes(Buffer bp, size_t numBytes, const Byte *bytesPtr)
  *-----------------------------------------------------------------------
  */
 Byte *
-Buf_GetAll(Buffer bp, size_t *numBytesPtr)
+Buf_GetAll(Buffer bp, int *numBytesPtr)
 {
 
     if (numBytesPtr != NULL) {
@@ -212,7 +212,7 @@ Buf_GetAll(Buffer bp, size_t *numBytesPtr)
  *-----------------------------------------------------------------------
  */
 void
-Buf_Discard(Buffer bp, size_t numBytes)
+Buf_Discard(Buffer bp, int numBytes)
 {
 
     if (bp->inPtr - bp->outPtr <= numBytes) {
@@ -238,10 +238,10 @@ Buf_Discard(Buffer bp, size_t numBytes)
  *
  *-----------------------------------------------------------------------
  */
-size_t
+int
 Buf_Size(Buffer buf)
 {
-    return (size_t)(buf->inPtr - buf->outPtr);
+    return (buf->inPtr - buf->outPtr);
 }
 
 /*-
@@ -263,13 +263,13 @@ Buf_Size(Buffer buf)
  *-----------------------------------------------------------------------
  */
 Buffer
-Buf_Init(size_t size)
+Buf_Init(int size)
 {
     Buffer bp;	  	/* New Buffer */
 
     bp = emalloc(sizeof(*bp));
 
-    if (size == 0) {
+    if (size <= 0) {
 	size = BUF_DEF_SIZE;
     }
     bp->left = bp->size = size;
@@ -307,7 +307,6 @@ Buf_Destroy(Buffer buf, Boolean freeData)
     free(buf);
 }
 
-#ifdef notdef
 /*-
  *-----------------------------------------------------------------------
  * Buf_ReplaceLastByte --
@@ -334,4 +333,3 @@ Buf_ReplaceLastByte(Buffer buf, int byte)
     else
         *(buf->inPtr - 1) = byte;
 }
-#endif

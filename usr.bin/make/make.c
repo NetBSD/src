@@ -1,4 +1,4 @@
-/*	$NetBSD: make.c,v 1.75 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: make.c,v 1.76 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: make.c,v 1.75 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: make.c,v 1.76 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)make.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: make.c,v 1.75 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: make.c,v 1.76 2008/02/15 21:29:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -860,7 +860,6 @@ Make_Update(GNode *cgn)
  *-----------------------------------------------------------------------
  */
 static int
-/*ARGSUSED*/
 MakeUnmark(ClientData cgnp, ClientData pgnp __unused)
 {
     GNode	*cgn = (GNode *)cgnp;
@@ -995,7 +994,6 @@ Make_DoAllVar(GNode *gn)
  */
 
 static int
-/*ARGSUSED*/
 MakeCheckOrder(ClientData v_bn, ClientData ignore __unused)
 {
     GNode *bn = v_bn;

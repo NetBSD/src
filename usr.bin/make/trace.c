@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.c,v 1.8 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: trace.c,v 1.9 2008/02/15 21:29:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,11 +38,11 @@
 
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: trace.c,v 1.8 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: trace.c,v 1.9 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: trace.c,v 1.8 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: trace.c,v 1.9 2008/02/15 21:29:50 christos Exp $");
 #endif /* not lint */
 #endif
 
@@ -101,23 +101,23 @@ Trace_Log(TrEvent event, Job *job)
 	if (trfile == NULL)
 		return;
 
-	(void)gettimeofday(&rightnow, NULL);
+	gettimeofday(&rightnow, NULL);
 
-	(void)fprintf(trfile, "%ld.%06d %d %s %d %s",
+	fprintf(trfile, "%ld.%06d %d %s %d %s",
 	    rightnow.tv_sec, (int)rightnow.tv_usec,
 	    jobTokensRunning,
 	    evname[event], trpid, trwd);
 	if (job != NULL) {
-		(void)fprintf(trfile, " %s %ld %x %x", job->node->name,
-		    (long)job->pid, job->flags, job->node->type);
+		fprintf(trfile, " %s %d %x %x", job->node->name,
+		    job->pid, job->flags, job->node->type);
 	}
-	(void)fputc('\n', trfile);
-	(void)fflush(trfile);
+	fputc('\n', trfile);
+	fflush(trfile);
 }
 
 void
 Trace_End(void)
 {
 	if (trfile != NULL)
-		(void)fclose(trfile);
+		fclose(trfile);
 }
