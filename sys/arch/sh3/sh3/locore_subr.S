@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.38 2008/02/15 02:34:46 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.39 2008/02/15 03:16:10 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.38 2008/02/15 02:34:46 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.39 2008/02/15 03:16:10 uwe Exp $")
 
 
 /*
@@ -120,7 +120,7 @@ ENTRY(cpu_switchto)
 	ldc	r2,	r6_bank
 	mov	r3,	r15
 
-#ifdef SH4
+#if !defined(P1_STACK) && defined(SH4)
 	/* Wire u-area */
 	MOV	(switch_resume, r0)
 	jsr	@r0
