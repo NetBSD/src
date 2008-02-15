@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.40 2008/02/15 03:52:15 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.41 2008/02/15 04:03:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.40 2008/02/15 03:52:15 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.41 2008/02/15 04:03:17 uwe Exp $")
 
 
 /*
@@ -181,7 +181,6 @@ NENTRY(sh3_switch_resume)
 NENTRY(sh4_switch_resume)
 	add	#L_MD_UPTE, r4	/* l->l_md.md_upte */
 	mov	#UPAGES,r3
-	mov	#1,	r2
 	mov.l	@r4,	r0	/* if (l->l_md.md_upte[0].addr == 0) return; */
 	tst	r0,	r0
 	bt	2f
@@ -218,9 +217,8 @@ NENTRY(sh4_switch_resume)
 	mov.l	@r4+,	r0	/* addr */
 	mov.l	@r4+,	r1	/* data */
 	mov.l	r1,	@r0	/* *addr = data */
-	cmp/eq	r2,	r3
-	bf/s	1b
-	 add	#1,	r2
+	dt	r3
+	bf	1b
 
 	/* restore ASID */
 	mov.l	.L_4_PTEH, r0
