@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.39 2008/02/15 03:16:10 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.40 2008/02/15 03:52:15 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.39 2008/02/15 03:16:10 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.40 2008/02/15 03:52:15 uwe Exp $")
 
 
 /*
@@ -225,14 +225,11 @@ NENTRY(sh4_switch_resume)
 	/* restore ASID */
 	mov.l	.L_4_PTEH, r0
 	mov.l	r7,	@r0
-	mova	2f,	r0
-	jmp	@r0		/* run P1 */
-	 nop
-	.align	2
-2:	rts			/* mova target must be 4byte alignment */
-	 nop
-	.align	2
 
+2:	rts			! to the caller in P1
+	 nop
+
+	.align	2
 .L_4_PTEH:		.long	SH4_PTEH
 .L_4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
 .L_4_ITLB_AA:		.long	SH4_ITLB_AA
