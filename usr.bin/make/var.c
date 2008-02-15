@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.124 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.125 2008/02/15 02:37:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.124 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.125 2008/02/15 02:37:51 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.124 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.125 2008/02/15 02:37:51 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,14 +141,14 @@ __RCSID("$NetBSD: var.c,v 1.124 2008/02/14 22:11:20 christos Exp $");
  * to determine if there was an error in parsing -- easier than returning
  * a flag, as things outside this module don't give a hoot.
  */
-char 	var_Error[] = "";
+char 	var_Error[] = "*error*";
 
 /*
  * Similar to var_Error, but returned when the 'errnum' flag for Var_Parse is
  * set false. Why not just use a constant? Well, gcc likes to condense
  * identical string instances...
  */
-static char	varNoError[] = "";
+static char	varNoError[] = "*noerror*";
 
 /*
  * Internally, variables are contained in four different contexts.
@@ -3239,7 +3239,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, size_t *lengthPtr,
 				 * or braces */
     char	    startc=0;	/* Starting character when variable in parens
 				 * or braces */
-    int		    vlen;	/* Length of variable name */
+    size_t	    vlen;	/* Length of variable name */
     const char 	   *start;	/* Points to original start of str */
     char	   *nstr;	/* New string, used during expansion */
     Boolean 	    dynamic;	/* TRUE if the variable is local and we're
