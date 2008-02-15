@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.104 2008/02/15 13:30:56 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.105 2008/02/15 13:46:04 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -306,7 +306,7 @@ buf_t	*getiobuf(struct vnode *, bool);
 void	putiobuf(buf_t *);
 void	buf_init(buf_t *);
 void	buf_destroy(buf_t *);
-int	bbusy(buf_t *, bool, int);
+int	bbusy(buf_t *, bool, int, kmutex_t *);
 
 void	nestiobuf_iodone(buf_t *);
 void	nestiobuf_setup(buf_t *, buf_t *, int, size_t);
