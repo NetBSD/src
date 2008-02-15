@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.27 2008/01/27 19:07:21 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.28 2008/02/15 13:07:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,7 @@ int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
 int dovfsusermount = 1;
+int hardclock_ticks;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
