@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.48.12.5 2007/12/07 17:34:42 yamt Exp $	*/
+/*	$NetBSD: nfs.h,v 1.48.12.6 2008/02/15 10:40:08 yamt Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -338,6 +338,7 @@ struct nfsreq {
 /*
  * Queue head for nfsreq's
  */
+extern kmutex_t nfs_reqq_lock;
 extern TAILQ_HEAD(nfsreqhead, nfsreq) nfs_reqq;
 
 /* Flag values for r_flags */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.148.2.9 2008/02/04 09:24:45 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.148.2.10 2008/02/15 10:40:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.9 2008/02/04 09:24:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.10 2008/02/15 10:40:08 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -436,11 +436,8 @@ nfs_decode_args(nmp, argp, l)
 	struct nfs_args *argp;
 	struct lwp *l;
 {
-	int s;
 	int adjsock;
 	int maxio;
-
-	s = splsoftnet();
 
 	/*
 	 * Silently clear NFSMNT_NOCONN if it's a TCP mount, it makes
@@ -465,7 +462,6 @@ nfs_decode_args(nmp, argp, l)
 
 	/* Update flags. */
 	nmp->nm_flag = argp->flags;
-	splx(s);
 
 	if ((argp->flags & NFSMNT_TIMEO) && argp->timeo > 0) {
 		nmp->nm_timeo = (argp->timeo * NFS_HZ + 5) / 10;
@@ -630,6 +626,7 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return (EPROGMISMATCH);
 #endif
 	if (mp->mnt_flag & MNT_UPDATE) {
+#if 0
 		if (nmp == NULL)
 			return (EIO);
 		/*
@@ -640,6 +637,8 @@ nfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		    (nmp->nm_flag & (NFSMNT_NFSV3|NFSMNT_XLATECOOKIE));
 		nfs_decode_args(nmp, args, l);
 		return (0);
+#endif
+		return EOPNOTSUPP;
 	}
 	if (args->fhsize < 0 || args->fhsize > NFSX_V3FHMAX)
 		return (EINVAL);
@@ -803,6 +802,7 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	 * number == ROOTINO (2). So, just unlock, but no rele.
 	 */
 
+	(*vpp)->v_vflag |= VV_ROOT;
 	nmp->nm_vnode = *vpp;
 	VOP_UNLOCK(*vpp, 0);
 
@@ -918,7 +918,6 @@ nfs_root(mp, vpp)
 		return error;
 	if (vp->v_type == VNON)
 		vp->v_type = VDIR;
-	vp->v_vflag = VV_ROOT;
 	*vpp = vp;
 	return (0);
 }
