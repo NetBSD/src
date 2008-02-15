@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.33 2005/07/15 17:23:48 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.34 2008/02/15 17:26:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.33 2005/07/15 17:23:48 christos Exp $");
+__RCSID("$NetBSD: trap.c,v 1.34 2008/02/15 17:26:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -76,7 +76,7 @@ __RCSID("$NetBSD: trap.c,v 1.33 2005/07/15 17:23:48 christos Exp $");
 
 char *trap[NSIG+1];		/* trap handler commands */
 MKINIT char sigmode[NSIG];	/* current value of signal */
-char gotsig[NSIG];		/* indicates specified signal received */
+volatile char gotsig[NSIG];	/* indicates specified signal received */
 int pendingsigs;		/* indicates some signal received */
 
 static int getsigaction(int, sig_t *);
