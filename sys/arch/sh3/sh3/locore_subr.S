@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.41 2008/02/15 04:03:17 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.42 2008/02/15 04:11:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.41 2008/02/15 04:03:17 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.42 2008/02/15 04:11:08 uwe Exp $")
 
 
 /*
@@ -179,50 +179,50 @@ NENTRY(sh3_switch_resume)
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
-	add	#L_MD_UPTE, r4	/* l->l_md.md_upte */
-	mov	#UPAGES,r3
-	mov.l	@r4,	r0	/* if (l->l_md.md_upte[0].addr == 0) return; */
-	tst	r0,	r0
+	add	#L_MD_UPTE, r4	! l->l_md.md_upte
+	mov	#UPAGES, r3
+	mov.l	@r4, r0		! if (l->l_md.md_upte[0].addr == 0) return;
+	tst	r0, r0
 	bt	2f
 
 	/* Save old ASID and set ASID to zero */
-	xor	r0,	r0
+	mov	#0, r0
 	mov.l	.L_4_PTEH, r1
-	mov.l	@r1,	r7
-	mov.l	r0,	@r1
+	mov.l	@r1, r7
+	mov.l	r0, @r1
 
 	mov.l	.L_VPN_MASK, r6
 	mov.l	.L_4_UTLB_AA_A, r5
 
 	/* TLB address array must be accessed via P2. Setup jump address. */
-	mova	1f,	r0
+	mova	1f, r0
 	mov.l	.L_P2BASE, r1
-	or	r1,	r0
-	jmp	@r0		/* run P2 */
+	or	r1, r0
+	jmp	@r0		! run on P2
 	 nop
 
 	/* Probe VPN match TLB entry and invalidate it. */
-	.align	2		/* mova target must be 4byte alignment */
+	.align	2		! mova target must be 4byte aligned
 1:	mov.l	@(4, r4), r0
-	and	r6,	r0
-	mov.l	r0,	@r5	/* clear D, V */
+	and	r6, r0
+	mov.l	r0, @r5		! clear D, V
 
 	/* Wire u-area TLB entry */
 	/* Address array */
-	mov.l	@r4+,	r0	/* addr */
-	mov.l	@r4+,	r1	/* data */
-	mov.l	r1,	@r0	/* *addr = data */
+	mov.l	@r4+, r0	! addr
+	mov.l	@r4+, r1	! data
+	mov.l	r1, @r0		! *addr = data
 
 	/* Data array */
-	mov.l	@r4+,	r0	/* addr */
-	mov.l	@r4+,	r1	/* data */
-	mov.l	r1,	@r0	/* *addr = data */
+	mov.l	@r4+, r0	! addr
+	mov.l	@r4+, r1	! data
+	mov.l	r1, @r0		! *addr = data
 	dt	r3
 	bf	1b
 
 	/* restore ASID */
 	mov.l	.L_4_PTEH, r0
-	mov.l	r7,	@r0
+	mov.l	r7, @r0
 
 2:	rts			! to the caller in P1
 	 nop
@@ -230,7 +230,6 @@ NENTRY(sh4_switch_resume)
 	.align	2
 .L_4_PTEH:		.long	SH4_PTEH
 .L_4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
-.L_4_ITLB_AA:		.long	SH4_ITLB_AA
 .L_VPN_MASK:		.long	0xfffff000
 .L_P2BASE:		.long	0xa0000000
 	SET_ENTRY_SIZE(sh4_switch_resume)
