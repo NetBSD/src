@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.11 2008/01/03 02:38:23 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.12 2008/02/15 23:36:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -59,6 +59,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sched.h>
 
 #include "rumpuser.h"
 
@@ -286,6 +287,13 @@ rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN], int *error)
 		*error = 0;
 
 	return rv;
+}
+
+void
+rumpuser_yield(void)
+{
+
+	sched_yield();
 }
 
 #ifdef __linux__
