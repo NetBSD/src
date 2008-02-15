@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.37 2007/10/17 19:57:08 garbled Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.38 2008/02/15 02:34:46 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.37 2007/10/17 19:57:08 garbled Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.38 2008/02/15 02:34:46 uwe Exp $")
 
 
 /*
@@ -120,11 +120,13 @@ ENTRY(cpu_switchto)
 	ldc	r2,	r6_bank
 	mov	r3,	r15
 
+#ifdef SH4
 	/* Wire u-area */
 	MOV	(switch_resume, r0)
 	jsr	@r0
 	 mov	r4,	r8	/* save new lwp */
 	mov	r8,	r4
+#endif
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* Now OK to use kernel stack. */
 
@@ -152,29 +154,20 @@ ENTRY(cpu_switchto)
 
 	.align	2
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
+#ifdef SH4
 FUNC_SYMBOL(switch_resume)
+#endif
+	SET_ENTRY_SIZE(cpu_switchto)
 
 
 #ifdef SH3
 /*
  * LINTSTUB: Func: void sh3_switch_resume(struct lwp *l)
- *	Set current u-area PTE array to curupte.
- *	No need to flush any entries. it is depended on u-area mapping is
- *	wired, and its mapping never cause modified/reference fault.
- *	u-area TLB fault is only covered by TLB miss exception.
- *	When the situation that "VPN match but not Valid" occur, SH3 jump to
- *	"generic exception" handler instead of TLB miss exception.
- *	But NetBSD/sh3 code doesn't handle it. As the result, it causes
- *	hard reset. (never can access kernel stack).
+ *     We only need this dummy sh3 version if both SH3 and SH4 are defined.
  */
 NENTRY(sh3_switch_resume)
-	mov.l	.L_curupte, r1
-	add	#L_MD_UPTE, r4		/* l->l_md.md_upte */
 	rts
-	 mov.l	r4, @r1
-
-	.align	2
-.L_curupte:		.long	_C_LABEL(curupte)
+	 nop
 	SET_ENTRY_SIZE(sh3_switch_resume)
 #endif /* SH3 */
 
