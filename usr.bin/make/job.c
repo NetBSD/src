@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.137 2008/02/15 08:55:31 dholland Exp $	*/
+/*	$NetBSD: job.c,v 1.138 2008/02/15 20:08:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.137 2008/02/15 08:55:31 dholland Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.138 2008/02/15 20:08:11 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.137 2008/02/15 08:55:31 dholland Exp $");
+__RCSID("$NetBSD: job.c,v 1.138 2008/02/15 20:08:11 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1807,7 +1807,8 @@ end_loop:
 	       job->outBuf[i] = ' ';
 	    }
 	}
-    }
+    } else
+	i = job->curPos - 1;
 
     if (!gotNL) {
 	job->curPos += nr;
@@ -1851,7 +1852,7 @@ end_loop:
 		(void)fflush(stdout);
 	    }
 	}
-	if (i < max - 1) {
+	if (i + 1 < max) {
 	    /* shift the remaining characters down */
 	    (void)memcpy(job->outBuf, &job->outBuf[i + 1], max - (i + 1));
 	    job->curPos = max - (i + 1);
