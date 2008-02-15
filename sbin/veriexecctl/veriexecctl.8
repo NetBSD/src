@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.32 2008/02/10 19:32:23 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.33 2008/02/15 15:33:56 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.32 2008/02/10 19:32:23 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.33 2008/02/15 15:33:56 elad Exp $
 .\"
-.Dd February 10, 2008
+.Dd February 15, 2008
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ subsystem
 .Sh SYNOPSIS
 .Nm
 .Op Fl ekv
-.Cm load Ar file
+.Cm load Op file
 .Nm
 .Cm delete Ar file | mount_point
 .Nm
@@ -61,9 +61,11 @@ the
 file integrity subsystem.
 .Ss Commands
 .Bl -tag -width XXXX
-.It Cm load Ar file
+.It Cm load Op file
 Load the fingerprint entries contained in
-.Ar file .
+.Ar file ,
+if specified, or the default signatures file otherwise.
+.Pp
 This operation is only allowed in learning mode (strict level zero).
 .Pp
 The following flags are allowed with this command:
