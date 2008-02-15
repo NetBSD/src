@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.125 2008/02/15 02:37:51 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.126 2008/02/15 02:50:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.125 2008/02/15 02:37:51 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.126 2008/02/15 02:50:53 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.125 2008/02/15 02:37:51 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.126 2008/02/15 02:50:53 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -141,14 +141,14 @@ __RCSID("$NetBSD: var.c,v 1.125 2008/02/15 02:37:51 christos Exp $");
  * to determine if there was an error in parsing -- easier than returning
  * a flag, as things outside this module don't give a hoot.
  */
-char 	var_Error[] = "*error*";
+char 	var_Error[] = "";
 
 /*
  * Similar to var_Error, but returned when the 'errnum' flag for Var_Parse is
  * set false. Why not just use a constant? Well, gcc likes to condense
  * identical string instances...
  */
-static char	varNoError[] = "*noerror*";
+static char	varNoError[] = "";
 
 /*
  * Internally, variables are contained in four different contexts.
