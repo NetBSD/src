@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.147 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.148 2008/02/15 02:38:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.147 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.148 2008/02/15 02:38:07 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.147 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.148 2008/02/15 02:38:07 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -1519,10 +1519,10 @@ Cmd_Exec(const char *cmd, const char **errnum)
 	 * Null-terminate the result, convert newlines to spaces and
 	 * install it in the variable.
 	 */
-	res[cc] = '\0';
-	cp = &res[cc];
+	res[len] = '\0';
+	cp = &res[len];
 
-	if (cc > 0 && *--cp == '\n') {
+	if (len > 0 && *--cp == '\n') {
 	    /*
 	     * A final newline is just stripped
 	     */
