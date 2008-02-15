@@ -1,4 +1,4 @@
-/*	$NetBSD: nonints.h,v 1.47 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: nonints.h,v 1.48 2008/02/15 21:29:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -144,11 +144,11 @@ Lst Parse_MainName(void);
 
 /* str.c */
 char *str_concat(const char *, const char *, int);
-char **brk_string(const char *, size_t *, Boolean, char **);
+char **brk_string(const char *, int *, Boolean, char **);
 char *Str_FindSubstring(const char *, const char *);
 int Str_Match(const char *, const char *);
-char *Str_SYSVMatch(const char *, const char *, size_t *);
-void Str_SYSVSubst(Buffer, char *, char *, size_t);
+char *Str_SYSVMatch(const char *, const char *, int *len);
+void Str_SYSVSubst(Buffer, char *, char *, int);
 
 /* suff.c */
 void Suff_ClearSuffixes(void);
@@ -181,7 +181,7 @@ void Targ_SetMain(GNode *);
 int Targ_PrintCmd(ClientData, ClientData);
 int Targ_PrintNode(ClientData, ClientData);
 char *Targ_FmtTime(time_t);
-void Targ_PrintType(unsigned int);
+void Targ_PrintType(int);
 void Targ_PrintGraph(int);
 void Targ_Propagate(void);
 void Targ_Propagate_Wait(void);
@@ -192,7 +192,7 @@ void Var_Set(const char *, const char *, GNode *, int);
 void Var_Append(const char *, const char *, GNode *);
 Boolean Var_Exists(const char *, GNode *);
 char *Var_Value(const char *, GNode *, char **);
-char *Var_Parse(const char *, GNode *, Boolean, size_t *, void **);
+char *Var_Parse(const char *, GNode *, Boolean, int *, void **);
 char *Var_Subst(const char *, const char *, GNode *, Boolean);
 char *Var_GetTail(const char *);
 char *Var_GetHead(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.40 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: cond.c,v 1.41 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.40 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.41 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.40 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: cond.c,v 1.41 2008/02/15 21:29:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -154,7 +154,7 @@ static Token CondE(Boolean);
 
 static const struct If {
     const char	*form;	      /* Form of if */
-    size_t	formlen;      /* Length of form */
+    int		formlen;      /* Length of form */
     Boolean	doNot;	      /* TRUE if default function should be negated */
     Boolean	(*defProc)(int, char *); /* Default function to apply */
 } ifs[] = {
@@ -225,7 +225,7 @@ static int
 CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 {
     char	  *cp;
-    size_t	  argLen;
+    int	    	  argLen;
     Buffer	  buf;
 
     cp = *linePtr;
@@ -268,7 +268,7 @@ CondGetArg(char **linePtr, char **argPtr, const char *func, Boolean parens)
 	     * though perhaps we should...
 	     */
 	    char  	*cp2;
-	    size_t	len;
+	    int		len;
 	    void	*freeIt;
 
 	    cp2 = Var_Parse(cp, VAR_CMD, TRUE, &len, &freeIt);
@@ -554,7 +554,7 @@ CondGetString(Boolean doEval, Boolean *quoted, void **freeIt)
     Buffer buf;
     char *cp;
     char *str;
-    size_t len;
+    int	len;
     int qt;
     char *start;
 
@@ -903,8 +903,7 @@ error:
 		     * Use Var_Parse to parse the spec in parens and return
 		     * True if the resulting string is empty.
 		     */
-		    int	     did_warn;
-		    size_t   length;
+		    int	    did_warn, length;
 		    void    *freeIt;
 		    char    *val;
 
