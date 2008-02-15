@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.14 2003/08/07 09:05:31 agc Exp $	*/
+/*	$NetBSD: eval.h,v 1.15 2008/02/15 17:26:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
  *	@(#)eval.h	8.2 (Berkeley) 5/4/95
  */
 
-extern char *commandname;	/* currently executing command */
+extern const char *commandname;	/* currently executing command */
 extern int exitstatus;		/* exit status of last command */
 extern int back_exitstatus;	/* exit status of backquoted command */
 extern struct strlist *cmdenviron;  /* environment for builtin command */

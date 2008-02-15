@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.88 2006/10/16 00:36:19 christos Exp $	*/
+/*	$NetBSD: eval.c,v 1.89 2008/02/15 17:26:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.88 2006/10/16 00:36:19 christos Exp $");
+__RCSID("$NetBSD: eval.c,v 1.89 2008/02/15 17:26:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ MKINIT int loopnest;		/* current loop nesting level */
 int funcnest;			/* depth of function calls */
 
 
-char *commandname;
+const char *commandname;
 struct strlist *cmdenviron;
 int exitstatus;			/* exit status of last command */
 int back_exitstatus;		/* exit status of backquoted command */
@@ -682,7 +682,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	struct job * volatile jp;
 	struct jmploc jmploc;
 	struct jmploc *volatile savehandler = NULL;
-	char *volatile savecmdname;
+	const char *volatile savecmdname;
 	volatile struct shparam saveparam;
 	struct localvar *volatile savelocalvars;
 	volatile int e;

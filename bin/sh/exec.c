@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.40 2007/06/24 18:36:23 christos Exp $	*/
+/*	$NetBSD: exec.c,v 1.41 2008/02/15 17:26:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.40 2007/06/24 18:36:23 christos Exp $");
+__RCSID("$NetBSD: exec.c,v 1.41 2008/02/15 17:26:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ STATIC struct tblentry *cmdlookup(const char *, int);
 STATIC void delete_cmd_entry(void);
 
 
-extern char *const parsekwd[];
+extern const char *const parsekwd[];
 
 /*
  * Exec a program.  Never returns.  If you change this routine, you may
@@ -956,7 +956,7 @@ typecmd(int argc, char **argv)
 {
 	struct cmdentry entry;
 	struct tblentry *cmdp;
-	char * const *pp;
+	const char * const *pp;
 	struct alias *ap;
 	int err = 0;
 	char *arg;

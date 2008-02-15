@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.35 2007/12/18 07:25:00 dogcow Exp $	*/
+/*	$NetBSD: error.c,v 1.36 2008/02/15 17:26:06 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: error.c,v 1.35 2007/12/18 07:25:00 dogcow Exp $");
+__RCSID("$NetBSD: error.c,v 1.36 2008/02/15 17:26:06 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -68,7 +68,7 @@ struct jmploc *handler;
 int exception;
 volatile int suppressint;
 volatile int intpending;
-char *commandname;
+const char *commandname;
 
 
 static void exverror(int, const char *, va_list) __dead;
