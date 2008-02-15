@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.37 2007/12/24 13:54:59 phx Exp $
+#	$NetBSD: files.ofppc,v 1.38 2008/02/15 12:28:09 tsutsui Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -7,12 +7,6 @@
 maxpartitions 16
 
 maxusers 8 16 64
-
-# Platform support option headers
-#defflag	FIREPOWER_ES			# Firepower ES
-#defflag	FIREPOWER_MX			# Firepower MX
-#defflag	FIREPOWER_LX			# Firepower LX
-#defflag	TOTALIMPACT_BRIQ		# Total Impact briQ
 
 defflag	akbd.h NO_AKDB_DEVICE
 defflag adbkbd.h NO_ADBKBD_DEVICE
