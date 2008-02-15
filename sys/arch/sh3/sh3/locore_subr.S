@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.42 2008/02/15 04:11:08 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.43 2008/02/15 04:37:37 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.42 2008/02/15 04:11:08 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.43 2008/02/15 04:37:37 uwe Exp $")
 
 
 /*
@@ -187,9 +187,9 @@ NENTRY(sh4_switch_resume)
 
 	/* Save old ASID and set ASID to zero */
 	mov	#0, r0
-	mov.l	.L_4_PTEH, r1
-	mov.l	@r1, r7
-	mov.l	r0, @r1
+	mov.l	.L_4_PTEH, r2
+	mov.l	@r2, r7
+	mov.l	r0, @r2
 
 	mov.l	.L_VPN_MASK, r6
 	mov.l	.L_4_UTLB_AA_A, r5
@@ -221,8 +221,7 @@ NENTRY(sh4_switch_resume)
 	bf	1b
 
 	/* restore ASID */
-	mov.l	.L_4_PTEH, r0
-	mov.l	r7, @r0
+	mov.l	r7, @r2
 
 2:	rts			! to the caller in P1
 	 nop
