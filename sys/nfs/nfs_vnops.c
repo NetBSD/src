@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vnops.c,v 1.222.2.8 2008/02/04 09:24:45 yamt Exp $	*/
+/*	$NetBSD: nfs_vnops.c,v 1.222.2.9 2008/02/15 10:40:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.222.2.8 2008/02/04 09:24:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vnops.c,v 1.222.2.9 2008/02/15 10:40:08 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs.h"
@@ -1204,7 +1204,9 @@ nfs_readrpc(vp, uiop)
 	tsiz = uiop->uio_resid;
 	if (uiop->uio_offset + tsiz > nmp->nm_maxfilesize)
 		return (EFBIG);
+	mutex_enter(&nmp->nm_lock);
 	iostat_busy(nmp->nm_stats);
+	mutex_exit(&nmp->nm_lock);
 	byte_count = 0; /* count bytes actually transferred */
 	while (tsiz > 0) {
 		nfsstats.rpccnt[NFSPROC_READ]++;
@@ -1251,7 +1253,9 @@ nfs_readrpc(vp, uiop)
 			tsiz = 0;
 	}
 nfsmout:
+	mutex_enter(&nmp->nm_lock);
 	iostat_unbusy(nmp->nm_stats, byte_count, 1);
+	mutex_exit(&nmp->nm_lock);
 	return (error);
 }
 
@@ -1332,7 +1336,9 @@ nfs_writerpc(vp, uiop, iomode, pageprotected, stalewriteverfp)
 retry:
 	origresid = uiop->uio_resid;
 	KASSERT(origresid == uiop->uio_iov->iov_len);
+	mutex_enter(&nmp->nm_lock);
 	iostat_busy(nmp->nm_stats);
+	mutex_exit(&nmp->nm_lock);
 	byte_count = 0; /* count of bytes actually written */
 	while (tsiz > 0) {
 		uint32_t datalen; /* data bytes need to be allocated in mbuf */
@@ -1485,7 +1491,9 @@ retry:
 		}
 	}
 nfsmout:
+	mutex_enter(&nmp->nm_lock);
 	iostat_unbusy(nmp->nm_stats, byte_count, 0);
+	mutex_exit(&nmp->nm_lock);
 	if (pageprotected) {
 		/*
 		 * wait until mbufs go away.
