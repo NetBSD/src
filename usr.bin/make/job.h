@@ -1,4 +1,4 @@
-/*	$NetBSD: job.h,v 1.35 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: job.h,v 1.36 2008/02/15 09:18:56 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -159,7 +159,7 @@ typedef struct Job {
 				 * commands */
 #define JOB_TRACED	0x400	/* we've sent 'set -x' */
 
-    int	  	 jobPipe[2];	/* Pipe for readind output from job */
+    int	  	 jobPipe[2];	/* Pipe for reading output from job */
     struct pollfd *inPollfd;	/* pollfd associated with inPipe */
     char  	outBuf[JOB_BUFSIZE + 1];
 				/* Buffer for storing the output of the
