@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.28 2008/02/15 13:07:02 ad Exp $	*/
+/*	$NetBSD: emul.c,v 1.29 2008/02/15 23:36:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -495,4 +495,11 @@ suspendsched()
 {
 
 	panic("%s: not implemented", __func__);
+}
+
+void
+yield(void)
+{
+
+	rumpuser_yield();
 }
