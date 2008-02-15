@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.114.2.7 2008/01/21 09:47:34 yamt Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.114.2.8 2008/02/15 10:40:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.114.2.7 2008/01/21 09:47:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.114.2.8 2008/02/15 10:40:08 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -166,6 +166,7 @@ static const int proct[NFS_NPROCS] = {
 static const int nfs_backoff[8] = { 2, 4, 8, 16, 32, 64, 128, 256, };
 int nfsrtton = 0;
 struct nfsrtt nfsrtt;
+kmutex_t nfs_reqq_lock;
 struct nfsreqhead nfs_reqq;
 static callout_t nfs_timer_ch;
 static struct evcnt nfs_timer_ev;
@@ -199,6 +200,8 @@ nfs_connect(nmp, rep, l)
 	struct sockaddr_in6 *sin6;
 #endif
 	struct mbuf *m;
+
+	KERNEL_LOCK(1, NULL);
 
 	nmp->nm_so = (struct socket *)0;
 	saddr = mtod(nmp->nm_nam, struct sockaddr *);
@@ -352,10 +355,12 @@ nfs_connect(nmp, rep, l)
 	nmp->nm_cwnd = NFS_MAXCWND / 2;	    /* Initial send window */
 	nmp->nm_sent = 0;
 	nmp->nm_timeouts = 0;
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 
 bad:
 	nfs_disconnect(nmp);
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -386,6 +391,7 @@ nfs_reconnect(struct nfsreq *rep)
 	 * Loop through outstanding request list and fix up all requests
 	 * on old socket.
 	 */
+	mutex_enter(&nfs_reqq_lock);
 	TAILQ_FOREACH(rp, &nfs_reqq, r_chain) {
 		if (rp->r_nmp == nmp) {
 			if ((rp->r_flags & R_MUSTRESEND) == 0)
@@ -393,6 +399,7 @@ nfs_reconnect(struct nfsreq *rep)
 			rp->r_rexmit = 0;
 		}
 	}
+	mutex_exit(&nfs_reqq_lock);
 	return (0);
 }
 
@@ -406,6 +413,7 @@ nfs_disconnect(nmp)
 	struct socket *so;
 	int drain = 0;
 
+	KERNEL_LOCK(1, NULL);
 	if (nmp->nm_so) {
 		so = nmp->nm_so;
 		nmp->nm_so = (struct socket *)0;
@@ -429,6 +437,8 @@ nfs_disconnect(nmp)
 		}
 		soclose(so);
 	}
+	KERNEL_UNLOCK_ONE(NULL);
+
 #ifdef DIAGNOSTIC
 	if (drain && (nmp->nm_waiters > 0))
 		panic("nfs_disconnect: waiters left after drain?");
@@ -645,8 +655,10 @@ tryagain:
 			UIO_SETUP_SYSSPACE(&auio);
 			do {
 			   rcvflg = MSG_WAITALL;
+			   KERNEL_LOCK(1, NULL);
 			   error = (*so->so_receive)(so, (struct mbuf **)0, &auio,
 				(struct mbuf **)0, (struct mbuf **)0, &rcvflg);
+			   KERNEL_UNLOCK_ONE(NULL);
 			   if (error == EWOULDBLOCK && rep) {
 				if (rep->r_flags & R_SOFTTERM)
 					return (EINTR);
@@ -694,8 +706,10 @@ tryagain:
 			auio.uio_resid = len;
 			do {
 			    rcvflg = MSG_WAITALL;
+			    KERNEL_LOCK(1, NULL);
 			    error =  (*so->so_receive)(so, (struct mbuf **)0,
 				&auio, mp, (struct mbuf **)0, &rcvflg);
+			    KERNEL_UNLOCK_ONE(NULL);
 			} while (error == EWOULDBLOCK || error == EINTR ||
 				 error == ERESTART);
 			if (!error && auio.uio_resid > 0) {
@@ -719,8 +733,10 @@ tryagain:
 			/* not need to setup uio_vmspace */
 			do {
 			    rcvflg = 0;
+			    KERNEL_LOCK(1, NULL);
 			    error =  (*so->so_receive)(so, (struct mbuf **)0,
 				&auio, mp, &control, &rcvflg);
+			    KERNEL_UNLOCK_ONE(NULL);
 			    if (control)
 				m_freem(control);
 			    if (error == EWOULDBLOCK && rep) {
@@ -763,8 +779,10 @@ errout:
 		/* not need to setup uio_vmspace */
 		do {
 			rcvflg = 0;
+			KERNEL_LOCK(1, NULL);
 			error =  (*so->so_receive)(so, getnam, &auio, mp,
 				(struct mbuf **)0, &rcvflg);
+			KERNEL_UNLOCK_ONE(NULL);
 			if (error == EWOULDBLOCK &&
 			    (rep->r_flags & R_SOFTTERM))
 				return (EINTR);
@@ -872,6 +890,7 @@ nfsmout:
 		 * Loop through the request list to match up the reply
 		 * Iff no match, just drop the datagram
 		 */
+		mutex_enter(&nfs_reqq_lock);
 		TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 			if (rep->r_mrep == NULL && rxid == rep->r_xid) {
 				/* Found it.. */
@@ -935,6 +954,7 @@ nfsmout:
 				break;
 			}
 		}
+		mutex_exit(&nfs_reqq_lock);
 		nfs_rcvunlock(nmp);
 		/*
 		 * If not matched to a request, drop it.
@@ -982,7 +1002,7 @@ nfs_request(np, mrest, procnum, lwp, cred, mrp, mdp, dposp, rexmitp)
 	char nickv[RPCX_NICKVERF];
 	time_t waituntil;
 	char *dpos, *cp2;
-	int t1, s, error = 0, mrest_len, auth_len, auth_type;
+	int t1, error = 0, mrest_len, auth_len, auth_type;
 	int trylater_delay = NFS_TRYLATERDEL, failed_auth = 0;
 	int verf_len, verf_type;
 	u_int32_t xid;
@@ -1127,8 +1147,9 @@ tryagain:
 	 * Chain request into list of outstanding requests. Be sure
 	 * to put it LAST so timer finds oldest requests first.
 	 */
-	s = splsoftnet();
+	mutex_enter(&nfs_reqq_lock);
 	TAILQ_INSERT_TAIL(&nfs_reqq, rep, r_chain);
+
 	nfs_timer_start();
 
 	/*
@@ -1137,9 +1158,7 @@ tryagain:
 	 * do it now.
 	 */
 	if (nmp->nm_so && (nmp->nm_sotype != SOCK_DGRAM ||
-		(nmp->nm_flag & NFSMNT_DUMBTIMR) ||
-		nmp->nm_sent < nmp->nm_cwnd)) {
-		splx(s);
+	    (nmp->nm_flag & NFSMNT_DUMBTIMR) || nmp->nm_sent < nmp->nm_cwnd)) {
 		if (nmp->nm_soflags & PR_CONNREQUIRED)
 			error = nfs_sndlock(nmp, rep);
 		if (!error) {
@@ -1153,22 +1172,22 @@ tryagain:
 			rep->r_flags |= R_SENT;
 		}
 	} else {
-		splx(s);
 		rep->r_rtt = -1;
 	}
 
 	/*
 	 * Wait for the reply from our send or the timer's.
 	 */
-	if (!error || error == EPIPE)
+	if (!error || error == EPIPE) {
+		mutex_exit(&nfs_reqq_lock);
 		error = nfs_reply(rep, lwp);
+		mutex_enter(&nfs_reqq_lock);
+	}
 
 	/*
 	 * RPC done, unlink the request.
 	 */
-	s = splsoftnet();
 	TAILQ_REMOVE(&nfs_reqq, rep, r_chain);
-	splx(s);
 
 	/*
 	 * Decrement the outstanding request count.
@@ -1177,6 +1196,7 @@ tryagain:
 		rep->r_flags &= ~R_SENT;	/* paranoia */
 		nmp->nm_sent -= NFS_CWNDSCALE;
 	}
+	mutex_exit(&nfs_reqq_lock);
 
 	if (rexmitp != NULL) {
 		int rexmit;
@@ -1618,7 +1638,7 @@ nfs_timer(void *arg)
 	struct socket *so;
 	struct nfsmount *nmp;
 	int timeo;
-	int s, error;
+	int error;
 	bool more = false;
 #ifdef NFSSERVER
 	struct timeval tv;
@@ -1628,7 +1648,7 @@ nfs_timer(void *arg)
 
 	nfs_timer_ev.ev_count++;
 
-	s = splsoftnet();
+	mutex_enter(&nfs_reqq_lock);
 	TAILQ_FOREACH(rep, &nfs_reqq, r_chain) {
 		more = true;
 		nmp = rep->r_nmp;
@@ -1722,7 +1742,7 @@ nfs_timer(void *arg)
 			}
 		}
 	}
-	splx(s);
+	mutex_exit(&nfs_reqq_lock);
 
 #ifdef NFSSERVER
 	/*
@@ -1794,6 +1814,8 @@ nfs_sndlock(struct nfsmount *nmp, struct nfsreq *rep)
 	int timeo = 0;
 	bool catch = false;
 	int error = 0;
+
+	KASSERT(nmp == rep->r_nmp);
 
 	if (rep) {
 		l = rep->r_lwp;
