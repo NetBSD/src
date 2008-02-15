@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.54 2008/02/14 22:11:20 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.55 2008/02/15 21:29:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: dir.c,v 1.54 2008/02/14 22:11:20 christos Exp $";
+static char rcsid[] = "$NetBSD: dir.c,v 1.55 2008/02/15 21:29:50 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)dir.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.54 2008/02/14 22:11:20 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.55 2008/02/15 21:29:50 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -296,7 +296,7 @@ Dir_InitCur(const char *cdname)
 	 * Our build directory is not the same as our source directory.
 	 * Keep this one around too.
 	 */
-	if ((p = Dir_AddDir(NULL, cdname)) != NULL) {
+	if ((p = Dir_AddDir(NULL, cdname))) {
 	    p->refCount += 1;
 	    if (cur && cur != p) {
 		/*
@@ -592,7 +592,7 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 				 * right brace when this is 0, we've hit the
 				 * end of the clause. */
     char    	 *file;    	/* Current expansion */
-    size_t	  otherLen; 	/* The length of the other pieces of the
+    int	    	  otherLen; 	/* The length of the other pieces of the
 				 * expansion (chars before and after the
 				 * clause in 'word') */
     char    	 *cp2;	    	/* Pointer for checking for wildcards in
@@ -635,14 +635,14 @@ DirExpandCurly(const char *word, const char *brace, Lst path, Lst expansions)
 	/*
 	 * Allocate room for the combination and install the three pieces.
 	 */
-	file = emalloc((size_t)(otherLen + cp - start + 1));
+	file = emalloc(otherLen + cp - start + 1);
 	if (brace != word) {
-	    (void)strncpy(file, word, (size_t)(brace-word));
+	    strncpy(file, word, brace-word);
 	}
 	if (cp != start) {
-	    strncpy(&file[brace-word], start, (size_t)(cp-start));
+	    strncpy(&file[brace-word], start, cp-start);
 	}
-	(void)strcpy(&file[(brace-word)+(cp-start)], end);
+	strcpy(&file[(brace-word)+(cp-start)], end);
 
 	/*
 	 * See if the result has any wildcards in it. If we find one, call
@@ -860,7 +860,6 @@ Dir_Expand(const char *word, Lst path, Lst expansions)
  *-----------------------------------------------------------------------
  */
 static char *
-/*ARGSUSED*/
 DirLookup(Path *p, const char *name __unused, const char *cp, 
           Boolean hasSlash __unused)
 {
@@ -1003,7 +1002,6 @@ DirLookupAbs(Path *p, const char *name, const char *cp)
  *-----------------------------------------------------------------------
  */
 static char *
-/*ARGSUSED*/
 DirFindDot(Boolean hasSlash __unused, const char *name, const char *cp)
 {
 
@@ -1340,7 +1338,7 @@ Dir_FindFile(const char *name, Lst path)
  *-----------------------------------------------------------------------
  */
 int 
-Dir_FindHereOrAbove(char *here, char *search_path, char *result, size_t rlen) {
+Dir_FindHereOrAbove(char *here, char *search_path, char *result, int rlen) {
 
 	struct stat st;
 	char dirbase[MAXPATHLEN + 1], *db_end;
@@ -1351,10 +1349,10 @@ Dir_FindHereOrAbove(char *here, char *search_path, char *result, size_t rlen) {
 	db_end = dirbase + strlen(dirbase);
 
 	/* loop until we determine a result */
-	for (;;) {
+	while (1) {
 
 		/* try and stat(2) it ... */
-		(void)snprintf(try, sizeof(try), "%s/%s", dirbase, search_path);
+		snprintf(try, sizeof(try), "%s/%s", dirbase, search_path);
 		if (stat(try, &st) != -1) {
 			/*
 			 * success!  if we found a file, chop off
