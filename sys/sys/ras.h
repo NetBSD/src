@@ -1,4 +1,4 @@
-/*	$NetBSD: ras.h,v 1.9 2007/10/24 14:50:42 ad Exp $	*/
+/*	$NetBSD: ras.h,v 1.10 2008/02/15 09:50:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004, 2007 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@ extern void __CONCAT(name,_ras_start(void)), __CONCAT(name,_ras_end(void))
 			 ___STRING(name) "_ras_end:"			\
 	    ::: "memory")
 
-#define	RAS_ADDR(name)	(void *) __CONCAT(name,_ras_start)
+#define	RAS_ADDR(name)	((void *)(uintptr_t) __CONCAT(name,_ras_start))
 #define	RAS_SIZE(name)	((size_t)((uintptr_t) __CONCAT(name,_ras_end) -	\
 				  (uintptr_t) __CONCAT(name,_ras_start)))
 
