@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.50 2006/05/11 00:22:53 mrg Exp $	*/
+/*	$NetBSD: printjob.c,v 1.51 2008/02/16 07:33:25 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.50 2006/05/11 00:22:53 mrg Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.51 2008/02/16 07:33:25 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -1051,7 +1051,7 @@ scan_out(int scfd, char *scsp, int dlm)
 	int nchrs, j;
 	char outbuf[LINELEN+1], *sp, c, cc;
 	int d, scnhgt;
-	extern char scnkey[][HEIGHT];	/* in lpdchar.c */
+	extern const char scnkey[][HEIGHT];	/* in lpdchar.c */
 
 	for (scnhgt = 0; scnhgt++ < HEIGHT+DROP; ) {
 		strp = &outbuf[0];
