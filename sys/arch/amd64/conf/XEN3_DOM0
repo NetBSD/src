@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.8 2008/02/02 17:23:43 joerg Exp $
+# $NetBSD: XEN3_DOM0,v 1.9 2008/02/16 22:00:14 bouyer Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -171,9 +171,13 @@ options 	MPBIOS
 options 	MPDEBUG
 options 	MPVERBOSE
 options 	ACPIVERBOSE
+options 	ACPI_SCANPCI		# find PCI roots using ACPI
+options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing
+#options 	ACPI_ACTIVATE_DEV	# If set, activate inactive devices
+#options 	ACPICA_PEDANTIC		# force strict conformance to the Spec.
 
 ioapic*		at mainbus? apid ?
 
