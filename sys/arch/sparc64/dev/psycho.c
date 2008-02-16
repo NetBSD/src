@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.83 2007/12/30 12:54:23 jdc Exp $	*/
+/*	$NetBSD: psycho.c,v 1.84 2008/02/16 23:26:05 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Eduardo E. Horvath
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.83 2007/12/30 12:54:23 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.84 2008/02/16 23:26:05 jmcneill Exp $");
 
 #include "opt_ddb.h"
 
@@ -274,7 +274,7 @@ psycho_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_handle_t pci_ctl;
 	char *model = prom_getpropstring(ma->ma_node, "model");
 
-	printf("\n");
+	aprint_normal("\n");
 
 	sc->sc_node = ma->ma_node;
 	sc->sc_bustag = ma->ma_bustag;
@@ -376,7 +376,7 @@ found:
 	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
 		sc->sc_ign = PSYCHO_GCSR_IGN(csr) << 6;
 
-	printf("%s: impl %d, version %d: ign %x ",
+	aprint_normal_dev(self, "%s: impl %d, version %d: ign %x ",
 		model, PSYCHO_GCSR_IMPL(csr), PSYCHO_GCSR_VERS(csr),
 		sc->sc_ign);
 	/*
@@ -442,8 +442,8 @@ found:
 	pba.pba_bridgetag = NULL;
 	pp->pp_busmax = psycho_br[1];
 
-	printf("bus range %u to %u", psycho_br[0], psycho_br[1]);
-	printf("; PCI bus %d", psycho_br[0]);
+	aprint_normal("bus range %u to %u", psycho_br[0], psycho_br[1]);
+	aprint_normal("; PCI bus %d", psycho_br[0]);
 
 	pp->pp_pcictl = pci_ctl; 
 
@@ -469,7 +469,7 @@ found:
 		break;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* allocate extents for free bus space */
 	pp->pp_exmem = psycho_alloc_extent(pp, sc->sc_node, 0x02, "psycho mem");
