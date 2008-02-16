@@ -1,4 +1,4 @@
-/*	$NetBSD: cron.h,v 1.4 2005/03/16 02:53:55 xtraeme Exp $	*/
+/*	$NetBSD: cron.h,v 1.5 2008/02/16 07:26:00 matt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -88,7 +88,7 @@
 
 #define	CRON_TAB(u)	"%s/%s", SPOOL_DIR, u
 #define	REG		register
-#define	PPC_NULL	((char **)NULL)
+#define	PPC_NULL	((const char * const *)NULL)
 
 #ifndef MAXHOSTNAMELEN
 #define MAXHOSTNAMELEN 64
@@ -209,7 +209,7 @@ int		job_runqueue(void),
 		swap_uids(void),
 		load_env(char *, FILE *),
 		cron_pclose(FILE *),
-		strcmp_until(char *, char *, int),
+		strcmp_until(const char *, const char *, int),
 		allowed(char *),
 		strdtb(char *);
 
@@ -237,19 +237,19 @@ FILE		*cron_popen(char *, const char *);
 
 #ifdef MAIN_PROGRAM
 # if !defined(LINT) && !defined(lint)
-const char	*copyright[] = {
+const char	* const copyright[] = {
 		"@(#) Copyright 1988,1989,1990,1993,1994 by Paul Vixie",
 		"@(#) All rights reserved"
 	};
 # endif
 
-const char	*MonthNames[] = {
+const char	* const MonthNames[] = {
 		"Jan", "Feb", "Mar", "Apr", "May", "Jun",
 		"Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
 		NULL
 	};
 
-const char	*DowNames[] = {
+const char	* const DowNames[] = {
 		"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun",
 		NULL
 	};
@@ -260,20 +260,22 @@ time_t	TargetTime;
 
 # if DEBUGGING
 int	DebugFlags;
-const char	*DebugFlagNames[] = {	/* sync with #defines */
+const char	* const DebugFlagNames[] = {	/* sync with #defines */
 		"ext", "sch", "proc", "pars", "load", "misc", "test", "bit",
 		NULL		/* NULL must be last element */
 	};
 # endif /* DEBUGGING */
 #else /*MAIN_PROGRAM*/
-extern	char	*copyright[],
-		*MonthNames[],
-		*DowNames[],
-		*ProgramName;
+extern	const char
+		* const copyright[],
+		* const MonthNames[],
+		* const DowNames[];
+extern	char	*ProgramName;
 extern	int	LineNumber;
 extern	time_t	TargetTime;
 # if DEBUGGING
 extern	int	DebugFlags;
-extern	char	*DebugFlagNames[];
+extern	const char
+		* const DebugFlagNames[];
 # endif /* DEBUGGING */
 #endif /*MAIN_PROGRAM*/

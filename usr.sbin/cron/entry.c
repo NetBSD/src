@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.8 2005/03/16 02:53:55 xtraeme Exp $	*/
+/*	$NetBSD: entry.c,v 1.9 2008/02/16 07:26:00 matt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 2.12 1994/01/17 03:20:37 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.8 2005/03/16 02:53:55 xtraeme Exp $");
+__RCSID("$NetBSD: entry.c,v 1.9 2008/02/16 07:26:00 matt Exp $");
 #endif
 #endif
 
@@ -41,9 +41,9 @@ typedef	enum ecode {
 	e_cmd, e_timespec, e_username
 } ecode_e;
 
-static char	get_list(bitstr_t *, int, int, char *[], int, FILE *),
-		get_range(bitstr_t *, int, int, char *[], int, FILE *),
-		get_number(int *, int, char *[], int, FILE *);
+static char	get_list(bitstr_t *, int, int, const char * const [], int, FILE *),
+		get_range(bitstr_t *, int, int,  const char * const [], int, FILE *),
+		get_number(int *, int, const char * const [], int, FILE *);
 static int	set_element(bitstr_t *, int, int, int);
 
 static const char * const ecodes[] =
@@ -315,7 +315,7 @@ static char
 get_list(bitstr_t *bits,    /* one bit per flag, default=FALSE */
          int low,   /* bounds, impl. offset for bitstr */
          int high,  /* bounds, impl. offset for bitstr */
-         char *names[], /* NULL or *[] of names for these elements */
+         const char * const names[], /* NULL or *[] of names for these elements */
          int ch,    /* current character being processed */
          FILE *file /* file being read */)
 {
@@ -362,7 +362,7 @@ static char
 get_range(bitstr_t *bits,   /* one bit per flag, default=FALSE */
           int low,  /* bounds, impl. offset for bitstr */
           int high, /* bounds, impl. offset for bitstr */
-          char *names[],    /* NULL or names of elements */
+          const char * const names[],    /* NULL or names of elements */
           int ch,   /* current character being processed */
           FILE *file    /* file being read */)
 {
@@ -446,7 +446,7 @@ get_range(bitstr_t *bits,   /* one bit per flag, default=FALSE */
 static char
 get_number(int *numptr,  /* where does the result go? */
            int low, /* offset applied to result if symbolic enum used */
-           char *names[],   /* symbolic names, if any, for enums */
+           const char * const names[], /* symbolic names, if any, for enums */
            int ch,  /* current character */
            FILE *file   /* source */)
 {
