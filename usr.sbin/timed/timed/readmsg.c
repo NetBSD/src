@@ -1,4 +1,4 @@
-/*	$NetBSD: readmsg.c,v 1.21 2007/02/04 21:17:01 cbiere Exp $	*/
+/*	$NetBSD: readmsg.c,v 1.22 2008/02/16 07:30:15 matt Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -34,13 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)readmsg.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: readmsg.c,v 1.21 2007/02/04 21:17:01 cbiere Exp $");
+__RCSID("$NetBSD: readmsg.c,v 1.22 2008/02/16 07:30:15 matt Exp $");
 #endif
 #endif /* not lint */
 
 #include "globals.h"
 
-extern char *tsptype[];
+extern const char * const tsptype[];
 
 /*
  * LOOKAT checks if the message is of the requested type and comes from
