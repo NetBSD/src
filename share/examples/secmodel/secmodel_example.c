@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_example.c,v 1.22 2008/02/02 21:04:41 elad Exp $ */
+/* $NetBSD: secmodel_example.c,v 1.23 2008/02/16 16:39:34 elad Exp $ */
 
 /*
  * This file is placed in the public domain.
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.22 2008/02/02 21:04:41 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_example.c,v 1.23 2008/02/16 16:39:34 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -264,7 +264,12 @@ secmodel_example_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_KEVENT_FILTER:
 	case KAUTH_PROCESS_NICE:
 	case KAUTH_PROCESS_RLIMIT:
-	case KAUTH_PROCESS_SCHEDULER:
+	case KAUTH_PROCESS_SCHEDULER_GET:
+	case KAUTH_PROCESS_SCHEDULER_SET:
+	case KAUTH_PROCESS_SCHEDULER_GETAFFINITY:
+	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
+	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
+	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
 	case KAUTH_PROCESS_SETID:
 	case KAUTH_PROCESS_STOPFLAG:
 	default:
