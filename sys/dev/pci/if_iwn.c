@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.4 2008/02/10 10:33:10 skrll Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.5 2008/02/16 18:51:42 ober Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.4 2008/02/10 10:33:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.5 2008/02/16 18:51:42 ober Exp $");
 
 
 /*
@@ -1019,16 +1019,6 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 			aprint_error_dev(sc->sc_dev, "could not move to run state\n");
 			return error;
 		}
-
-#if 0
-		/* JAF - code has changed here. need to verify iwn_run handles this properly XXX added to iwn_run */
-		if (ic->ic_opmode != IEEE80211_M_STA) {
-			(void) iwn_auth(sc);    /* XXX */
-			iwn_setup_beacon(sc, ni);
-		}
-#endif
-
-
 		break;
 
 	case IEEE80211_S_INIT:
@@ -1918,7 +1908,6 @@ iwn_tx_data(struct iwn_softc *sc, struct mbuf *m0, struct ieee80211_node *ni,
 
 	wh = mtod(m0, struct ieee80211_frame *);
 	type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
-	/* JAF XXX two lines above were not in wpi. check we don't duplicate this */
 
 	if (IEEE80211_QOS_HAS_SEQ(wh)) {
 		hdrlen = sizeof (struct ieee80211_qosframe);
@@ -2160,7 +2149,6 @@ iwn_start(struct ifnet *ifp)
 				ifp->if_oerrors++;
 				continue;
 			}
-			/*JAF C266 */
 			/* classify mbuf so we can find which tx ring to use */
 			if (ieee80211_classify(ic, m0, ni) != 0) {
 				m_freem(m0);
@@ -3167,13 +3155,6 @@ iwn_run(struct iwn_softc *sc)
 		iwn_set_led(sc, IWN_LED_LINK, 5, 5);
 		return 0;
 	}
-
-#if 0	
-	if (ic->ic_opmode != IEEE80211_M_STA) {
-		(void) iwn_auth(sc);    /* XXX */
-		iwn_setup_beacon(sc, ni);
-	}
-#endif
 
 	iwn_enable_tsf(sc, ni);
 
