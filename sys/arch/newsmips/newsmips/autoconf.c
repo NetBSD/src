@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.31 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.32 2008/02/16 22:02:15 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2008/02/16 22:02:15 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,6 +184,7 @@ findroot(void)
 	 * XXX assumes only one controller exists.
 	 */
 	if ((dv = device_find_by_xname("scsibus0")) != NULL) {
+#if NSCSIBUS > 0
 		struct scsibus_softc *sdv = device_private(dv);
 		struct scsipi_periph *periph;
 
