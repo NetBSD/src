@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.15 2008/01/23 19:06:59 elad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.16 2008/02/16 16:39:35 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.15 2008/01/23 19:06:59 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.16 2008/02/16 16:39:35 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -89,12 +89,9 @@ freebsd_sys_sched_setparam(struct lwp *l, const struct freebsd_sys_sched_setpara
 	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
-	if (l->l_proc == p)
-		error = 0;
 	else
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, &lp);
+		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, NULL, NULL, NULL);
 	mutex_exit(&proclist_lock);
 
 	return error;
@@ -122,12 +119,9 @@ freebsd_sys_sched_getparam(struct lwp *l, const struct freebsd_sys_sched_getpara
 	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
-	if (l->l_proc == p)
-		error = 0;
 	else
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL, NULL);
+		    KAUTH_PROCESS_SCHEDULER_GETPARAM, p, NULL, NULL, NULL);
 	mutex_exit(&proclist_lock);
 
 	if (error)
@@ -163,13 +157,9 @@ freebsd_sys_sched_setscheduler(struct lwp *l, const struct freebsd_sys_sched_set
 	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
-	if (l->l_proc == p)
-		error = 0;
 	else
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SET),
-		    KAUTH_ARG(SCARG(uap, policy)), &lp);
+		    KAUTH_PROCESS_SCHEDULER_SET, p, NULL, NULL, NULL);
 	mutex_exit(&proclist_lock);
 
 	if (error)
@@ -202,12 +192,9 @@ freebsd_sys_sched_getscheduler(struct lwp *l, const struct freebsd_sys_sched_get
 	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
 	if (p == NULL)
 		error = ESRCH;
-	if (l->l_proc == p)
-		error = 0;
 	else
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER, p,
-		    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GET), NULL, NULL);
+		    KAUTH_PROCESS_SCHEDULER_GET, p, NULL, NULL, NULL);
 	mutex_exit(&proclist_lock);
 
 	if (error)

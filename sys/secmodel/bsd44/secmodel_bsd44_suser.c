@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.51 2008/02/12 12:05:27 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.52 2008/02/16 16:39:35 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.51 2008/02/12 12:05:27 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.52 2008/02/16 16:39:35 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -687,48 +687,35 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 
 		break;
-	}
+		}
 
-	case KAUTH_PROCESS_SCHEDULER: {
-		unsigned long req;
-
-		req = (unsigned long)arg1;
-
-		switch (req) {
-		case KAUTH_REQ_PROCESS_SCHEDULER_GET:
-		case KAUTH_REQ_PROCESS_SCHEDULER_SET:
-		case KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM:
-		case KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM:
-			if (isroot ||
-			    (kauth_cred_getuid(cred) ==
-			     kauth_cred_getuid(p->p_cred) ||
-			    kauth_cred_geteuid(cred) ==
-			     kauth_cred_getuid(p->p_cred) ||
-			    kauth_cred_getuid(cred) ==
-			     kauth_cred_geteuid(p->p_cred) ||
-			    kauth_cred_geteuid(cred) ==
-			     kauth_cred_geteuid(p->p_cred)))
-				result = KAUTH_RESULT_ALLOW;
-
-			break;
-
-		case KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY:
+	case KAUTH_PROCESS_SCHEDULER_GET:
+	case KAUTH_PROCESS_SCHEDULER_SET:
+	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
+	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
+		if (isroot ||
+		    (kauth_cred_getuid(cred) ==
+		     kauth_cred_getuid(p->p_cred) ||
+		    kauth_cred_geteuid(cred) ==
+		     kauth_cred_getuid(p->p_cred) ||
+		    kauth_cred_getuid(cred) ==
+		     kauth_cred_geteuid(p->p_cred) ||
+		    kauth_cred_geteuid(cred) ==
+		     kauth_cred_geteuid(p->p_cred)))
 			result = KAUTH_RESULT_ALLOW;
 
-			break;
+		break;
 
-		case KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY:
-			if (isroot)
-				result = KAUTH_RESULT_ALLOW;
-
-			break;
-
-		default:
-			break;
-		}
+	case KAUTH_PROCESS_SCHEDULER_GETAFFINITY:
+		result = KAUTH_RESULT_ALLOW;
 
 		break;
-		}
+
+	case KAUTH_PROCESS_SCHEDULER_SETAFFINITY:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+
+		break;
 
 	case KAUTH_PROCESS_SETID:
 		if (isroot)
