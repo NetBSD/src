@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap_2.S,v 1.2 2005/12/27 09:22:08 yamt Exp $ */
+/* $NetBSD: byte_swap_2.S,v 1.3 2008/02/16 17:37:13 apb Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -32,7 +32,7 @@
 /*
  * Byte-swap a 2-byte quantity.  (Convert 0x0123 to 0x2301.)
  *
- * Argument is an unsigned 2-byte integer (u_int16_t).
+ * Argument is an unsigned 2-byte integer (uint16_t).
  */
 #if defined(_KERNEL) || defined(_STANDALONE)
 #define	BSWAP16	bswap16
