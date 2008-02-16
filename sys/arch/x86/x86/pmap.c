@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2008/02/07 14:37:40 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2008/02/16 22:01:16 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2008/02/07 14:37:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2008/02/16 22:01:16 bouyer Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2615,13 +2615,17 @@ pmap_load(void)
 		 * user cr3
 		 */
 		int i, s;
-		pd_entry_t *pgd;
+		pd_entry_t *old_pgd, *new_pgd;
 		paddr_t addr;
 		s = splvm();
-		pgd  = pmap->pm_pdir;
+		new_pgd  = pmap->pm_pdir;
+		old_pgd = pmap_kernel()->pm_pdir;
 		addr = xpmap_ptom(pmap_pdirpa(pmap_kernel(), 0));
-		for (i = 0; i < PDIR_SLOT_PTE; i++, addr += sizeof(pd_entry_t))
-			xpq_queue_pte_update(addr, pgd[i]);
+		for (i = 0; i < PDIR_SLOT_PTE;
+		    i++, addr += sizeof(pd_entry_t)) {
+			if ((new_pgd[i] & PG_V) || (old_pgd[i] & PG_V))
+				xpq_queue_pte_update(addr, new_pgd[i]);
+		}
 		xpq_flush_queue(); /* XXXtlb */
 		tlbflush();
 		xen_set_user_pgd(pmap_pdirpa(pmap, 0));
