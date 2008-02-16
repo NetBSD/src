@@ -35,7 +35,7 @@
 #include <getarg.h>
 
 __RCSID("$Heimdal: make_cmds.c,v 1.7 2001/02/20 01:44:55 assar Exp $"
-        "$NetBSD: make_cmds.c,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $");
+        "$NetBSD: make_cmds.c,v 1.2 2008/02/16 18:29:39 matt Exp $");
 
 #include <roken.h>
 #include <err.h>
@@ -45,7 +45,7 @@ int numerror;
 extern FILE *yyin;
 FILE *c_file;
 
-extern void yyparse(void);
+extern int yyparse(void);
 
 #ifdef YYDEBUG
 extern int yydebug = 1;
