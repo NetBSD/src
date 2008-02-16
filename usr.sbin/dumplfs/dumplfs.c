@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.35 2007/05/04 14:13:56 joerg Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.36 2008/02/16 07:32:22 matt Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.35 2007/05/04 14:13:56 joerg Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.36 2008/02/16 07:32:22 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,7 +74,7 @@ static int	dump_sum(int, struct lfs *, SEGSUM *, int, daddr_t);
 static void	dump_super(struct lfs *);
 static void	usage(void);
 
-extern u_long	cksum(void *, size_t);
+extern uint32_t	cksum(void *, size_t);
 
 typedef struct seglist SEGLIST;
 struct seglist {
