@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.48 2006/12/18 20:07:32 christos Exp $	*/
+/*	$NetBSD: tape.c,v 1.49 2008/02/16 17:58:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.4 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.48 2006/12/18 20:07:32 christos Exp $");
+__RCSID("$NetBSD: tape.c,v 1.49 2008/02/16 17:58:01 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ extern	long blocksperfile;	/* number of blocks per output file */
 long	blocksthisvol;		/* number of blocks on current output file */
 extern	int ntrec;		/* blocking factor on tape */
 extern	int cartridge;
-extern	char *host;
+extern	const char *host;
 char	*nexttape;
 
 static	ssize_t atomic_read(int, char *, int);
