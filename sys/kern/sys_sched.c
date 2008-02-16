@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.10 2008/02/09 16:58:01 yamt Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.11 2008/02/16 16:39:34 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.10 2008/02/09 16:58:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.11 2008/02/16 16:39:34 elad Exp $");
 
 #include <sys/param.h>
 
@@ -157,8 +157,8 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 	}
 
 	/* Check the permission */
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER, p,
-	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, NULL)) {
+	if (kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, NULL, NULL, NULL)) {
 		mutex_exit(&p->p_smutex);
 		return EPERM;
 	}
@@ -234,9 +234,8 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	}
 
 	/* Check the permission */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    t->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM),
-	    NULL, NULL);
+	error = kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_GETPARAM, t->l_proc, NULL, NULL, NULL);
 	if (error != 0) {
 		lwp_unlock(t);
 		goto error;
@@ -320,8 +319,8 @@ sys__sched_setaffinity(struct lwp *l,
 	 * Check the permission.
 	 * Disallow modification of system processes.
 	 */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER, p,
-	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY), NULL, NULL);
+	error = kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_SETAFFINITY, p, NULL, NULL, NULL);
 	if (error != 0) {
 		mutex_exit(&p->p_smutex);
 		goto error;
@@ -403,9 +402,8 @@ sys__sched_getaffinity(struct lwp *l,
 		return ESRCH;
 	}
 	/* Check the permission */
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    t->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY),
-	    NULL, NULL)) {
+	if (kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_GETAFFINITY, t->l_proc, NULL, NULL, NULL)) {
 		lwp_unlock(t);
 		kmem_free(cpuset, sizeof(cpuset_t));
 		return EPERM;
