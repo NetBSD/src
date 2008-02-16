@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2006/05/11 09:08:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.28 2008/02/16 07:24:36 matt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -43,6 +43,7 @@ LDADD+=		${LIBAMU} -lrpcsvc
 DPADD+=		${LIBRPCSVC}
 YHEADER=	1
 CLEANFILES+=	build_version.h
+DPSRCS+=	build_version.h
 
 get_args.o get_args.d: build_version.h
 
