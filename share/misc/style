@@ -1,4 +1,4 @@
-/* $NetBSD: style,v 1.41 2007/09/20 18:27:17 plunky Exp $ */
+/* $NetBSD: style,v 1.42 2008/02/16 14:22:16 apb Exp $ */
 
 /*
  * The revision control tag appears first, with a blank line after it.
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2000\n\
 	The NetBSD Foundation, inc. All rights reserved.\n");
-__RCSID("$NetBSD: style,v 1.41 2007/09/20 18:27:17 plunky Exp $");
+__RCSID("$NetBSD: style,v 1.42 2008/02/16 14:22:16 apb Exp $");
 
 /*
  * VERY important single-line comments look like this.
@@ -395,7 +395,7 @@ dirinfo(const char *p, struct stat *sb, struct dirent *de, struct statfs *sf,
 	/*
 	 * To printf quantities that might be larger that "long", include
 	 * <inttypes.h>, cast quantities to intmax_t or uintmax_t and use
-	 * PRI?MAX constants, which may be found in <machine/int_fmtio.h>.
+	 * PRI?MAX constants.
 	 */
 	(void)printf("The size of %s is %" PRIdMAX " (%#" PRIxMAX ")\n", p,
 	    (intmax_t)sb->st_size, (uintmax_t)sb->st_size);
