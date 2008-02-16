@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.8 2006/10/26 01:33:08 mrg Exp $	*/
+/*	$NetBSD: edit.c,v 1.9 2008/02/16 07:20:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1984-2005  Mark Nudelman
@@ -26,7 +26,7 @@ extern int sigs;
 extern IFILE curr_ifile;
 extern IFILE old_ifile;
 extern struct scrpos initial_scrpos;
-extern void constant *ml_examine;
+extern void *constant ml_examine;
 #if SPACES_IN_FILENAMES
 extern char openquote;
 extern char closequote;
@@ -316,7 +316,7 @@ edit_ifile(ifile)
 		 * It looks like a bad file.  Don't try to open it.
 		 */
 		error("%s", &parg);
-		free(parg.p_string);
+		free((void *)parg.p_string);
 	    err1:
 		if (alt_filename != NULL)
 		{
@@ -346,7 +346,7 @@ edit_ifile(ifile)
 		 */
 		parg.p_string = errno_message(filename);
 		error("%s", &parg);
-		free(parg.p_string);
+		free((void *)parg.p_string);
 	    	goto err1;
 	} else 
 	{

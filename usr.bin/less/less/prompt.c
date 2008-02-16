@@ -1,4 +1,4 @@
-/*	$NetBSD: prompt.c,v 1.12 2006/10/26 01:33:08 mrg Exp $	*/
+/*	$NetBSD: prompt.c,v 1.13 2008/02/16 07:20:54 matt Exp $	*/
 
 /*
  * Copyright (C) 1984-2004  Mark Nudelman
@@ -55,7 +55,7 @@ static constant char h_proto[] =
 static constant char w_proto[] =
   "Waiting for data";
 
-public char *prproto[3];
+public char constant *prproto[3];
 public char constant *eqproto = e_proto;
 public char constant *hproto = h_proto;
 public char constant *wproto = w_proto;

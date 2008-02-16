@@ -40,10 +40,10 @@ extern int any_display;
 extern int less_is_more;
 extern char openquote;
 extern char closequote;
-extern char *prproto[];
-extern char *eqproto;
-extern char *hproto;
-extern char *wproto;
+extern char constant *prproto[];
+extern char constant *eqproto;
+extern char constant *hproto;
+extern char constant *wproto;
 extern IFILE curr_ifile;
 extern char version[];
 #if LOGFILE
@@ -281,7 +281,7 @@ opt__P(type, s)
 	int type;
 	register char *s;
 {
-	register char **proto;
+	register constant char **proto;
 	PARG parg;
 
 	switch (type)
@@ -301,7 +301,7 @@ opt__P(type, s)
 		case 'w':  proto = &wproto;		s++;	break;
 		default:   proto = &prproto[PR_SHORT];		break;
 		}
-		free(*proto);
+		free((void *)*proto);
 		*proto = save(s);
 		break;
 	case QUERY:
