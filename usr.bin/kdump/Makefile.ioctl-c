@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.18 2006/08/27 20:31:26 christos Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.19 2008/02/16 07:17:58 matt Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -16,5 +16,6 @@ ${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES}
 
 SRCS+=		${PROG}-ioctl.c
 CLEANFILES+=	${PROG}-ioctl.c
+DPSRCS+=	${PROG}-ioctl.c
 
 ${DEPFILES}: .PRECIOUS
