@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.209 2008/02/14 14:26:57 ad Exp $ */
+/*	$NetBSD: cpu.c,v 1.210 2008/02/16 18:17:36 he Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.209 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.210 2008/02/16 18:17:36 he Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -432,7 +432,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		lwp0.l_cpu = cpi;
 		cpi->ci_data.cpu_idlelwp->l_cpu = cpi;
 		cpi->ci_data.cpu_idlelwp->l_mutex =
-		    &cpi->ci_schedstate.spc_lwplock;
+		    cpi->ci_schedstate.spc_lwplock;
 #else
 		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;
