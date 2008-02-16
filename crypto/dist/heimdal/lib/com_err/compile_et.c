@@ -37,7 +37,7 @@
 
 #ifdef __RCSID
 __RCSID("$Heimdal: compile_et.c,v 1.16 2002/08/20 12:44:51 joda Exp $"
-        "$NetBSD: compile_et.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
+        "$NetBSD: compile_et.c,v 1.3 2008/02/16 18:29:39 matt Exp $");
 #endif
 
 #include <roken.h>
@@ -47,7 +47,7 @@ __RCSID("$Heimdal: compile_et.c,v 1.16 2002/08/20 12:44:51 joda Exp $"
 int numerror;
 extern FILE *yyin;
 
-extern void yyparse(void);
+extern int yyparse(void);
 
 long base;
 int number;
