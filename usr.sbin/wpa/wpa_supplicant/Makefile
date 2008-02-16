@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.6 2008/01/26 21:50:22 christos Exp $
+# $NetBSD: Makefile,v 1.7 2008/02/16 07:23:37 matt Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -33,7 +33,7 @@ SRCS+=	eap.c
 CPPFLAGS+= -DIEEE8021X_EAPOL
 
 .if !defined(NO_CRYPT) && !defined(NO_OPENSSL) && !defined(RELEASE_CRUNCH)
-CFLAGS+=-DEAP_TLS -DEAP_PEAP -DEAP_MSCHAPv2 -DEAP_LEAP -DEAP_PSK \
+CPPFLAGS+=-DEAP_TLS -DEAP_PEAP -DEAP_MSCHAPv2 -DEAP_LEAP -DEAP_PSK \
 	-DEAP_TLV -DEAP_TLS_FUNCS
 SRCS+=	aes_wrap.c chap.c crypto_openssl.c eap_leap.c eap_mschapv2.c \
 	eap_peap.c eap_psk.c eap_psk_common.c eap_tls.c eap_tls_common.c \
