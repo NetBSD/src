@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.27 2007/02/18 01:56:17 hubertf Exp $	*/
+/*	$NetBSD: iso.c,v 1.28 2008/02/16 07:16:02 matt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.27 2007/02/18 01:56:17 hubertf Exp $");
+__RCSID("$NetBSD: iso.c,v 1.28 2008/02/16 07:16:02 matt Exp $");
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ SOFTWARE.
 static void tprintstat __P((struct tp_stat *, int));
 static void isonetprint __P((struct sockaddr_iso *, int));
 static void hexprint __P((int, const char *, char *));
-extern void inetprint __P((struct in_addr *, int, char *));
+extern void inetprint __P((struct in_addr *, u_int16_t, const char *, int));
 
 /*
  *	Dump esis stats
@@ -327,7 +327,7 @@ tp_protopr(off, name)
 	u_long off;
 	char *name;
 {
-	extern char *tp_sstring[];	/* from sys/netiso/tp_astring.c */
+	extern const char * const tp_sstring[];	/* from sys/netiso/tp_astring.c */
 	struct tp_ref *tpr, *tpr_base;
 	struct tp_refinfo tpkerninfo;
 	int size;
@@ -382,8 +382,8 @@ tp_inproto(pcb)
 		printf("%8lx ", pcb);
 	printf("%-5.5s %6ld %6ld ", "tpip",
 	    sockb.so_rcv.sb_cc, sockb.so_snd.sb_cc);
-	inetprint(&inpcb.inp_laddr, inpcb.inp_lport, "tp");
-	inetprint(&inpcb.inp_faddr, inpcb.inp_fport, "tp");
+	inetprint(&inpcb.inp_laddr, inpcb.inp_lport, "tp", 1);
+	inetprint(&inpcb.inp_faddr, inpcb.inp_fport, "tp", 1);
 }
 
 /*
