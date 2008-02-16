@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.13 2006/05/21 19:26:43 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.14 2008/02/16 07:26:00 matt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 2.9 1994/01/15 20:43:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.13 2006/05/21 19:26:43 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.14 2008/02/16 07:26:00 matt Exp $");
 #endif
 #endif
 
@@ -60,7 +60,7 @@ static int		LogFD = ERR;
 
 
 int
-strcmp_until(char *left, char *right, int until)
+strcmp_until(const char *left, const char *right, int until)
 {
 	int	diff;
 
@@ -131,7 +131,7 @@ set_debug_flags(char *flags)
 	DebugFlags = 0;
 
 	while (*pc) {
-		char	**test;
+		const char	* const *test;
 		int	mask;
 
 		/* try to find debug flag name in our list.
