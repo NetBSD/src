@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.6 2008/02/17 00:51:15 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.7 2008/02/17 01:46:46 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -119,8 +119,8 @@
 #define CRIME_MTE_SRC1		0x3028	/* end */
 #define CRIME_MTE_DST0		0x3030	/* start */
 #define CRIME_MTE_DST1		0x3038	/* end */
-#define CRIME_MTE_SRC_STRIDE	0x3040
-#define CRIME_MTE_DST_STRIDE	0x3048
+#define CRIME_MTE_SRC_Y_STEP	0x3040
+#define CRIME_MTE_DST_Y_STEP	0x3048
 #define CRIME_MTE_NULL		0x3070
 #define CRIME_MTE_FLUSH		0x3078
 
