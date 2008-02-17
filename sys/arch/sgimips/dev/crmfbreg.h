@@ -1,4 +1,4 @@
-/* $NetBSD: crmfbreg.h,v 1.5 2008/02/05 21:42:16 macallan Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.6 2008/02/17 00:51:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -100,11 +100,13 @@
 /* two bit deep cursor image, zero is transparent */
 
 /* rendering engine registers */
+/* these TLBs define 16x16 tiles, 64kB each, upper 16 bit only */
 #define CRIME_RE_TLB_A		0x1000
 #define CRIME_RE_TLB_B		0x1200
 #define CRIME_RE_TLB_C		0x1400
 #define CRIME_RE_TEX		0x1600
 #define CRIME_RE_CLIP_IDS	0x16e0
+/* 32bit entries, 4kB page address >> 12 | 0x80000000 */
 #define CRIME_RE_LINEAR_A	0x1700
 #define CRIME_RE_LINEAR_B	0x1780
 
@@ -124,7 +126,7 @@
 
 /* CRIME_MTE_MODE */
 #define MTE_MODE_DST_ECC	0x00000001	/* enable ECC in DST */
-#define MTE_MODE_SRC_ECC	0x00000002	/* enable ESS in SRC */
+#define MTE_MODE_SRC_ECC	0x00000002	/* enable ECC in SRC */
 #define MTE_MODE_DST_BUF_MASK	0x0000001c
 	#define MTE_TLB_A	0
 	#define MTE_TLB_B	1
@@ -168,10 +170,11 @@
 #define CRIME_DE_GL_VERTEX_2_X	0x2090
 #define CRIME_DE_GL_VERTEX_2_Y	0x2094
 #define CRIME_DE_XFER_ADDR_SRC	0x20a0
+#define CRIME_DE_XFER_STRD_SRC	0x20a4
 #define CRIME_DE_XFER_STEP_X	0x20a8
 #define CRIME_DE_XFER_STEP_Y	0x20ac
-#define CRIME_DE_XFER_DST_ADDR	0x20b0
-#define CRIME_DE_XFER_DST_STRD	0x20b4
+#define CRIME_DE_XFER_ADDR_DST	0x20b0
+#define CRIME_DE_XFER_STRD_DST	0x20b4
 #define CRIME_DE_STIPPLE_MODE	0x20c0
 #define CRIME_DE_STIPPLE_PAT	0x20c4
 #define CRIME_DE_FG		0x20d0
