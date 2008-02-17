@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.29 2008/02/04 22:23:43 dsl Exp $
+	$NetBSD: syscalls.master,v 1.30 2008/02/17 21:49:17 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -307,10 +307,12 @@
 178	UNIMPL	rt_queueinfo
 179	STD	{ int linux32_sys_rt_sigsuspend(linux32_sigsetp_t unewset, \
 		    netbsd32_size_t sigsetsize); }
-180	STD	{ int linux32_sys_pread(int fd, char *buf, \
-		    netbsd32_size_t nbyte, int32_t offset); }
-181	STD	{ int linux32_sys_pwrite(int fd, char *buf, \
-		    netbsd32_size_t nbyte, int32_t offset); }
+180	STD	{ netbsd32_ssize_t linux32_sys_pread(int fd, \
+		    netbsd32_voidp buf, netbsd32_size_t nbyte, \
+		    linux32_off_t offset); }
+181	STD	{ netbsd32_ssize_t linux32_sys_pwrite(int fd, \
+		    const netbsd32_voidp buf, netbsd32_size_t nbyte, \
+		    linux32_off_t offset); }
 182	STD	{ int linux32_sys_chown16(const netbsd32_charp path, \
 		    linux32_uid16_t uid, linux32_gid16_t gid); }
 183	NOARGS	{ int netbsd32___getcwd(netbsd32_charp bufp, \
