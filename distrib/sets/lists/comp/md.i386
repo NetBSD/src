@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.103 2008/01/20 20:23:22 yamt Exp $
+# $NetBSD: md.i386,v 1.104 2008/02/17 16:23:12 bouyer Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -106,6 +106,9 @@
 ./usr/include/x86/specialreg.h			comp-c-include
 ./usr/include/x86/sysarch.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
+./usr/include/xen				comp-c-include
+./usr/include/xen/xenio.h			comp-c-include
+./usr/include/xen/xenio3.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-c-include		gcccmds
 ./usr/lib/libi386.a				comp-c-lib
 ./usr/lib/libi386_p.a				comp-c-proflib		profile
