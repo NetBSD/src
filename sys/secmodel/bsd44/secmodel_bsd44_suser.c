@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.52 2008/02/16 16:39:35 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.53 2008/02/17 19:22:36 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.52 2008/02/16 16:39:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.53 2008/02/17 19:22:36 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -692,17 +692,28 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_SCHEDULER_GET:
 	case KAUTH_PROCESS_SCHEDULER_SET:
 	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
-	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
-		if (isroot ||
-		    (kauth_cred_getuid(cred) ==
-		     kauth_cred_getuid(p->p_cred) ||
-		    kauth_cred_geteuid(cred) ==
-		     kauth_cred_getuid(p->p_cred) ||
-		    kauth_cred_getuid(cred) ==
-		     kauth_cred_geteuid(p->p_cred) ||
-		    kauth_cred_geteuid(cred) ==
-		     kauth_cred_geteuid(p->p_cred)))
+		if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
 			result = KAUTH_RESULT_ALLOW;
+
+		break;
+
+	case KAUTH_PROCESS_SCHEDULER_SETPARAM:
+		if (isroot)
+			result = KAUTH_RESULT_ALLOW;
+		else if (kauth_cred_uidmatch(cred, p->p_cred)) {
+			struct lwp *l;
+			int policy;
+			pri_t priority;
+
+			l = arg1;
+			policy = (int)(unsigned long)arg2;
+			priority = (pri_t)(unsigned long)arg3;
+
+			if ((policy == l->l_class ||
+			    (policy != SCHED_FIFO && policy != SCHED_RR)) &&
+			    priority <= l->l_priority)
+				result = KAUTH_RESULT_ALLOW;
+		}
 
 		break;
 
