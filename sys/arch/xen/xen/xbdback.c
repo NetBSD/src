@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback.c,v 1.29 2008/01/02 11:48:33 ad Exp $      */
+/*      $NetBSD: xbdback.c,v 1.30 2008/02/17 14:03:16 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xbdback.c,v 1.30 2008/02/17 14:03:16 bouyer Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

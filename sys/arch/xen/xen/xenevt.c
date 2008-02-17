@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.19 2008/01/11 20:00:54 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.20 2008/02/17 14:03:16 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.20 2008/02/17 14:03:16 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>

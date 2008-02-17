@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.3 2008/01/11 20:00:53 bouyer Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $	*/
 
 /*
  *
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.4 2008/02/17 14:03:16 bouyer Exp $");
 
 #include <sys/param.h>
 
