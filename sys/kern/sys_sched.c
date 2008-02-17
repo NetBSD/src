@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.11 2008/02/16 16:39:34 elad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.12 2008/02/17 19:22:35 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.11 2008/02/16 16:39:34 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.12 2008/02/17 19:22:35 elad Exp $");
 
 #include <sys/param.h>
 
@@ -59,9 +59,6 @@ static pri_t
 convert_pri(lwp_t *l, int policy, pri_t pri)
 {
 	int delta = 0;
-
-	if (policy == SCHED_NONE)
-		policy = l->l_class;
 
 	switch (policy) {
 	case SCHED_OTHER:
@@ -156,29 +153,35 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		mutex_enter(&p->p_smutex);
 	}
 
-	/* Check the permission */
-	if (kauth_authorize_process(l->l_cred,
-	    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, NULL, NULL, NULL)) {
-		mutex_exit(&p->p_smutex);
-		return EPERM;
-	}
-
 	/* Find the LWP(s) */
 	lcnt = 0;
 	lid = SCARG(uap, lid);
 	LIST_FOREACH(t, &p->p_lwps, l_sibling) {
 		pri_t kpri;
+		int lpolicy;
 
 		if (lid && lid != t->l_lid)
 			continue;
 		KASSERT(pri != PRI_NONE || policy != SCHED_NONE);
 		lwp_lock(t);
 
+		if (policy == SCHED_NONE)
+			lpolicy = l->l_class;
+		else
+			lpolicy = policy;
+
 		/*
 		 * Note that, priority may need to be changed to get into
 		 * the correct priority range of the new scheduling class.
 		 */
-		kpri = convert_pri(t, policy, pri);
+		kpri = convert_pri(t, lpolicy, pri);
+
+		/* Check the permission */
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, t, KAUTH_ARG(lpolicy),
+		    KAUTH_ARG(kpri));
+		if (error)
+			break;
 
 		/* Set the scheduling class */
 		if (policy != SCHED_NONE)
