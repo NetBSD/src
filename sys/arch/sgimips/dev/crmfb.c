@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.15 2008/02/17 00:51:15 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.16 2008/02/17 01:46:46 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.15 2008/02/17 00:51:15 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.16 2008/02/17 01:46:46 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -986,8 +986,8 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
 	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
 	    MTE_MODE_COPY);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_STRIDE, 1);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_STRIDE, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_Y_STEP, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_Y_STEP, 1);
 
 	return 0;
 }
@@ -1085,7 +1085,13 @@ crmfb_scroll(struct crmfb_softc *sc, int xs, int ys, int xd, int yd,
 {
 	int rxa, rya, rxe, rye, rxd, ryd, rxde, ryde;
 
+	rxa = xs;
+	rxe = xs + wi - 1;
+	rxd = xd;
+	rxde = xd + wi - 1;
+
 	crmfb_wait_idle(sc);
+
 	if (ys < yd) {
 		/* bottom to top */
 		/*
@@ -1096,28 +1102,20 @@ crmfb_scroll(struct crmfb_softc *sc, int xs, int ys, int xd, int yd,
 		rya = ys + he - 1;
 		ryd = yd + he - 1;
 		ryde = yd;
-		rxe = xs;
-		rxa = xs + wi - 1;
-		rxd = xd + wi - 1;
-		rxde = xd;
 		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_DST_STRIDE, -1);
+		    CRIME_MTE_DST_Y_STEP, -1);
 		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_SRC_STRIDE, -1);
+		    CRIME_MTE_SRC_Y_STEP, -1);
 	} else {
 		/* top to bottom */
 		rye = ys + he - 1;
 		rya = ys;
 		ryd = yd;
 		ryde = yd + he - 1;
-		rxe = xs + wi - 1;
-		rxa = xs;
-		rxd = xd;
-		rxde = xd + wi - 1;
 		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_DST_STRIDE, 1);
+		    CRIME_MTE_DST_Y_STEP, 1);
 		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_SRC_STRIDE, 1);
+		    CRIME_MTE_SRC_Y_STEP, 1);
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC0,
 	    (rxa << 16) | rya);
@@ -1288,12 +1286,7 @@ crmfb_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	width = ri->ri_emuwidth;
 	height = ri->ri_font->fontheight * nrows;
 
-	/* for now we can only use the MTE for scrolling up */
-	if (ys > yd) {
-		crmfb_scroll(scr->scr_cookie, x, ys, x, yd, width, height);
-	} else {
-		crmfb_bitblt(scr->scr_cookie, x, ys, x, yd, width, height, 3);
-	}
+	crmfb_scroll(scr->scr_cookie, x, ys, x, yd, width, height);
 }
 
 static void
