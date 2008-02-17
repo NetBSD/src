@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.30 2008/01/20 20:23:21 yamt Exp $
+# $NetBSD: md.amd64,v 1.31 2008/02/17 16:23:12 bouyer Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -154,6 +154,9 @@
 ./usr/include/x86/specialreg.h			comp-c-include
 ./usr/include/x86/sysarch.h			comp-c-include
 ./usr/include/x86/trap.h			comp-c-include
+./usr/include/xen				comp-c-include
+./usr/include/xen/xenio.h			comp-c-include
+./usr/include/xen/xenio3.h			comp-c-include
 ./usr/include/xmmintrin.h			comp-c-include		gcccmds
 ./usr/lib/libx86_64.a				comp-c-lib
 ./usr/lib/libx86_64_p.a				comp-c-piclib		profile
