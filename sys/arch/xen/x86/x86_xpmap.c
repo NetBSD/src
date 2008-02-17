@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_xpmap.c,v 1.6 2008/01/23 19:46:46 bouyer Exp $	*/
+/*	$NetBSD: x86_xpmap.c,v 1.7 2008/02/17 17:39:42 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Mathieu Ropert <mro@adviseo.fr>
@@ -79,7 +79,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.6 2008/01/23 19:46:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_xpmap.c,v 1.7 2008/02/17 17:39:42 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "opt_ddb.h"
@@ -676,6 +676,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 
 	__PRINTK(("xen_bootstrap_tables text_end 0x%lx map_end 0x%lx\n",
 	    text_end, map_end));
+	__PRINTK(("console 0x%lx ", xen_start_info.console_mfn));
+	__PRINTK(("xenstore 0x%lx\n", xen_start_info.store_mfn));
 
 	/* 
 	 * Create bootstrap page tables
@@ -774,8 +776,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				    HYPERVISOR_shared_info, (int64_t)pte[pl1_pi(page)]));
 			}
 #ifdef XEN3
-			if (xpmap_ptom_masked(page - KERNBASE) ==
-			    (xen_start_info.console_mfn << PAGE_SHIFT)) {
+			if ((xpmap_ptom_masked(page - KERNBASE) >> PAGE_SHIFT)
+			    == xen_start_info.console_mfn) {
 				xencons_interface = (void *)page;
 				pte[pl1_pi(page)] = xen_start_info.console_mfn;
 				pte[pl1_pi(page)] <<= PAGE_SHIFT;
@@ -783,8 +785,8 @@ xen_bootstrap_tables (vaddr_t old_pgd, vaddr_t new_pgd,
 				    "va 0x%lx pte 0x%" PRIx64 "\n",
 				    xencons_interface, (int64_t)pte[pl1_pi(page)]));
 			}
-			if (xpmap_ptom_masked(page - KERNBASE) ==
-			    (xen_start_info.store_mfn << PAGE_SHIFT)) {
+			if ((xpmap_ptom_masked(page - KERNBASE) >> PAGE_SHIFT)
+			    == xen_start_info.store_mfn) {
 				xenstore_interface = (void *)page;
 				pte[pl1_pi(page)] = xen_start_info.store_mfn;
 				pte[pl1_pi(page)] <<= PAGE_SHIFT;
