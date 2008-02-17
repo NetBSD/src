@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.16 2008/02/17 01:46:46 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.17 2008/02/17 02:09:05 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.16 2008/02/17 01:46:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.17 2008/02/17 02:09:05 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -335,7 +335,7 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	crmfb_setup_video(sc, 8);
 	crmfb_setup_palette(sc);
 	crmfb_fill_rect(sc, 0, 0, sc->sc_width, sc->sc_height,
-	    (defattr >> 16) & 0xff);
+	    ri->ri_devcmap[(defattr >> 16) & 0xff]);
 
 	consdev = ARCBIOS->GetEnvironmentVariable("ConsoleOut");
 	if (consdev != NULL && strcmp(consdev, "video()") == 0) {
@@ -1024,15 +1024,19 @@ crmfb_fill_rect(struct crmfb_softc *sc, int x, int y, int width, int height,
     uint32_t colour)
 {
 	crmfb_wait_idle(sc);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_DRAWMODE,
-	    DE_DRAWMODE_PLANEMASK | DE_DRAWMODE_BYTEMASK);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_FG, colour);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_PRIMITIVE,
-		DE_PRIM_RECTANGLE | DE_PRIM_TB);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_DE_X_VERTEX_0,
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
+	    MTE_MODE_DST_ECC |
+	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
+	    0);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_BG, colour);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_Y_STEP, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_Y_STEP, 1);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST0,
 	    (x << 16) | (y & 0xffff));
 	bus_space_write_4(sc->sc_iot, sc->sc_reh,
-	    CRIME_DE_X_VERTEX_1 | CRIME_DE_START,
+	    CRIME_MTE_DST1 | CRIME_DE_START,
 	    ((x + width - 1) << 16) | ((y + height - 1) & 0xffff));
 }
 
@@ -1092,12 +1096,15 @@ crmfb_scroll(struct crmfb_softc *sc, int xs, int ys, int xd, int yd,
 
 	crmfb_wait_idle(sc);
 
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
+	    MTE_MODE_DST_ECC |
+	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
+	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
+	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
+	    MTE_MODE_COPY);
+
 	if (ys < yd) {
 		/* bottom to top */
-		/*
-		 * XXX this doesn't work right, there must be another way to
-		 * control in which direction the MTE copies data
-		 */
 		rye = ys;
 		rya = ys + he - 1;
 		ryd = yd + he - 1;
@@ -1356,7 +1363,7 @@ crmfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 
-	bg = (u_char)ri->ri_devcmap[(attr >> 16) & 0xff];
+	bg = ri->ri_devcmap[(attr >> 16) & 0xff];
 	if (c == 0x20) {
 		crmfb_fill_rect(sc, x, y, wi, he, bg);
 	} else {
