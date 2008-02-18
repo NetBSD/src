@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.h,v 1.5 2007/07/14 13:30:44 ad Exp $	*/
+/*	$NetBSD: lockstat.h,v 1.5.14.1 2008/02/18 21:05:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ typedef struct lsdisable {
 #define	LB_ADAPTIVE_MUTEX	0x00000100
 #define	LB_SPIN_MUTEX		0x00000200
 #define	LB_RWLOCK		0x00000300
-#define	LB_LOCKMGR		0x00000400
+#define	LB___UNUSED		0x00000400
 #define	LB_KERNEL_LOCK		0x00000500
 #define	LB_MISC			0x00000600
 #define	LB_NLOCK		0x00000600
@@ -140,7 +140,7 @@ typedef struct lsbuf {
 } lsbuf_t;
 
 /*
- * Tracing stubs used by lock providers, e.g. lockmgr().
+ * Tracing stubs used by lock providers.
  */
 
 #if defined(_KERNEL) && defined(__HAVE_CPU_COUNTER) && NLOCKSTAT > 0

@@ -1,7 +1,7 @@
-/*	$NetBSD: smbfs_kq.c,v 1.15.14.1 2007/12/08 18:20:19 mjf Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.15.14.2 2008/02/18 21:06:40 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.15.14.1 2007/12/08 18:20:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.15.14.2 2008/02/18 21:06:40 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ struct kevq {
 static struct lwp *smbkql;		/* the kevent handler */
 static struct smb_cred smbkq_scred;
 
-static struct simplelock smbkq_lock = SIMPLELOCK_INITIALIZER;
+static kmutex_t smbkq_lock;
 					/* guard access to k*evlist */
 static SLIST_HEAD(, kevq) kevlist = SLIST_HEAD_INITIALIZER(kevlist);
 static SLIST_HEAD(, kevq) kplist = SLIST_HEAD_INITIALIZER(kplist);
@@ -138,7 +138,7 @@ smbfs_kqpoll(void *arg)
 
 	l = curlwp;
 
-	simple_lock(&smbkq_lock);
+	mutex_enter(&smbkq_lock);
 	for(;;) {
 		/* check all entries on poll list for changes */
 		SLIST_FOREACH(ke, &kplist, k_link) {
@@ -151,7 +151,7 @@ smbfs_kqpoll(void *arg)
 			 * for changes.
 			 */
 			ke->flags |= KEVQ_BUSY;
-			simple_unlock(&smbkq_lock);
+			mutex_exit(&smbkq_lock);
 
 			/* save v_size, smbfs_getattr() updates it */
 			osize = ke->vp->v_size;
@@ -159,7 +159,7 @@ smbfs_kqpoll(void *arg)
 			error = VOP_GETATTR(ke->vp, &attr, l->l_cred);
 			if (error) {
 				/* relock and proceed with next */
-				simple_lock(&smbkq_lock);
+				mutex_enter(&smbkq_lock);
 				continue;
 			}
 
@@ -187,7 +187,7 @@ smbfs_kqpoll(void *arg)
 				ke->onlink = attr.va_nlink;
 			}
 
-			simple_lock(&smbkq_lock);
+			mutex_enter(&smbkq_lock);
 			ke->flags &= ~KEVQ_BUSY;
 			if (ke->flags & KEVQ_WANT) {
 				ke->flags &= ~KEVQ_WANT;
@@ -206,7 +206,7 @@ smbfs_kqpoll(void *arg)
 
 		/* wait a while before checking for changes again */
 		if (SLIST_EMPTY(&kdnlist)) {
-			error = ltsleep(smbkql, PSOCK, "smbkqidl",
+			error = mtsleep(smbkql, PSOCK, "smbkqidl",
 				needwake ? (SMBFS_ATTRTIMO * hz / 2) : 0,
 				&smbkq_lock);
 		}
@@ -223,7 +223,7 @@ smbfs_kqpoll(void *arg)
 				splx(s);
 
 				/* drop lock while processing */
-				simple_unlock(&smbkq_lock);
+				mutex_exit(&smbkq_lock);
 
 				/*
 				 * Skip fetch if not yet setup.
@@ -254,11 +254,11 @@ smbfs_kqpoll(void *arg)
 				    smbfskq_dirnotify, ke);
 
 				/* reacquire the lock */
-				simple_lock(&smbkq_lock);
+				mutex_enter(&smbkq_lock);
 			}
 		}
 	}
-	simple_unlock(&smbkq_lock);
+	mutex_exit(&smbkq_lock);
 
 	kthread_exit(0);
 }
@@ -281,18 +281,20 @@ static void
 filt_smbfsdetach(struct knote *kn)
 {
 	struct kevq *ke = (struct kevq *)kn->kn_hook;
+	struct vnode *vp = ke->vp;
 	struct smb_rq *rq = NULL;
 
-	/* XXXLUKEM lock the struct? */
+	mutex_enter(&vp->v_interlock);
 	SLIST_REMOVE(&ke->vp->v_klist, kn, knote, kn_selnext);
+	mutex_exit(&vp->v_interlock);
 
 	/* Remove the vnode from watch list */
-	simple_lock(&smbkq_lock);
+	mutex_enter(&smbkq_lock);
 
 	/* the handler does something to it, wait */
 	while (ke->flags & KEVQ_BUSY) {
 		ke->flags |= KEVQ_WANT;
-		ltsleep(ke, PSOCK, "smbkqdw", 0, &smbkq_lock);
+		mtsleep(ke, PSOCK, "smbkqdw", 0, &smbkq_lock);
 	}
 
 	if (ke->usecount > 1) {
@@ -314,7 +316,7 @@ filt_smbfsdetach(struct knote *kn)
 	}
 	kevs--;
 
-	simple_unlock(&smbkq_lock);
+	mutex_exit(&smbkq_lock);
 
 	/* If there was request still pending, cancel it now */
 	if (rq) {
@@ -337,17 +339,24 @@ filt_smbfsread(struct knote *kn, long hint)
 {
 	struct kevq *ke = (struct kevq *)kn->kn_hook;
 	struct vnode *vp = ke->vp;
+	int rv;
 
-	/*
-	 * filesystem is gone, so set the EOF flag and schedule
-	 * the knote for deletion.
-	 */
 	if (hint == NOTE_REVOKE) {
+		/*
+		 * filesystem is gone, so set the EOF flag and schedule
+		 * the knote for deletion.
+		 */
+		KASSERT(mutex_owned(&vp->v_interlock));
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
 	}
 
 	/* There is no size info for directories */
+	if (hint == 0) {
+		mutex_enter(&vp->v_interlock);
+	} else {
+		KASSERT(mutex_owned(&vp->v_interlock));
+	}
 	if (vp->v_type == VDIR) {
 		/*
 		 * This is kind of hackish, since we need to
@@ -360,29 +369,50 @@ filt_smbfsread(struct knote *kn, long hint)
 		 */
 		if (hint & NOTE_WRITE) {
 			kn->kn_fflags |= NOTE_WRITE;
-			return (1 * sizeof(struct dirent));
+			rv = (1 * sizeof(struct dirent));
 		} else if (hint == 0 && (kn->kn_fflags & NOTE_WRITE)) {
 			kn->kn_fflags &= ~NOTE_WRITE;
-			return (1 * sizeof(struct dirent));
+			rv = (1 * sizeof(struct dirent));
 		} else
-			return (0);
+			rv = 0;
+	} else {
+		kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
+       		rv = (kn->kn_data != 0);
+	}
+	if (hint == 0) {
+		mutex_enter(&vp->v_interlock);
 	}
 
-	/* XXXLUKEM lock the struct? */
-	kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
-        return (kn->kn_data != 0);
+	return rv;
 }
 
 static int
 filt_smbfsvnode(struct knote *kn, long hint)
 {
+	struct kevq *ke = (struct kevq *)kn->kn_hook;
+	struct vnode *vp = ke->vp;
+	int fflags;
 
-	if (kn->kn_sfflags & hint)
-		kn->kn_fflags |= hint;
-	if (hint == NOTE_REVOKE) {
+	switch (hint) {
+	case NOTE_REVOKE:
+		KASSERT(mutex_owned(&vp->v_interlock));
 		kn->kn_flags |= EV_EOF;
+		if ((kn->kn_sfflags & hint) != 0)
+			kn->kn_fflags |= hint;
 		return (1);
+	case 0:
+		mutex_enter(&vp->v_interlock);
+		fflags = kn->kn_fflags;
+		mutex_exit(&vp->v_interlock);
+		break;
+	default:
+		KASSERT(mutex_owned(&vp->v_interlock));
+		if ((kn->kn_sfflags & hint) != 0)
+			kn->kn_fflags |= hint;
+		fflags = kn->kn_fflags;
+		break;
 	}
+
 	return (kn->kn_fflags != 0);
 }
 
@@ -406,6 +436,7 @@ smbfs_kqfilter(void *v)
 	struct lwp *l = curlwp;	/* XXX */
 	int dnot;
 	struct smb_vc *vcp = SSTOVC(VTOSMB(vp)->n_mount->sm_share);
+	static bool again;
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
@@ -437,7 +468,12 @@ smbfs_kqfilter(void *v)
 	(void) VOP_GETATTR(vp, &attr, l->l_cred);
 
 	/* ensure the handler is running */
+	/* XXX this is unreliable. */
+	if (!again) {
+		mutex_init(&smbkq_lock, MUTEX_DEFAULT, IPL_NONE);
+	}	
 	if (!smbkql) {
+		/* XXX very fishy */
 		error = kthread_create(PRI_NONE, 0, NULL, smbfs_kqpoll,
 		    NULL, &smbkql, "smbkq");
 		smb_makescred(&smbkq_scred, smbkql, smbkql->l_cred);
@@ -455,7 +491,7 @@ smbfs_kqfilter(void *v)
 	MALLOC(ken, struct kevq *, sizeof(struct kevq), M_KEVENT, M_WAITOK);
 
 	/* Check the list and insert new entry */
-	simple_lock(&smbkq_lock);
+	mutex_enter(&smbkq_lock);
 	SLIST_FOREACH(ke, &kevlist, kev_link) {
 		if (ke->vp == vp)
 			break;
@@ -499,11 +535,12 @@ smbfs_kqfilter(void *v)
 		wakeup(smbkql);
 	}
 
-	/* XXXLUKEM lock the struct? */
+	mutex_enter(&vp->v_interlock);
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
 	kn->kn_hook = ke;
+	mutex_exit(&vp->v_interlock);
 
-	simple_unlock(&smbkq_lock);
+	mutex_exit(&smbkq_lock);
 
 	return (0);
 }

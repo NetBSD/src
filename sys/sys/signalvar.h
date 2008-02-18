@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.69 2007/02/09 21:55:37 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.69.26.1 2008/02/18 21:07:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -35,7 +35,6 @@
 #define	_SYS_SIGNALVAR_H_
 
 #include <sys/siginfo.h>
-#include <sys/lock.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47.2.2 2007/12/27 00:43:20 mjf Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47.2.3 2008/02/18 21:05:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -59,7 +59,6 @@ struct cpu_info {
 	int	ci_mtx_count;
 	int	ci_mtx_oldspl;
 	int	ci_want_resched;
-	int	ci_idepth;
 };
 
 extern struct cpu_info cpu_info_store;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_process.c,v 1.130.2.2 2007/12/27 00:46:11 mjf Exp $	*/
+/*	$NetBSD: sys_process.c,v 1.130.2.3 2008/02/18 21:06:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.130.2.2 2007/12/27 00:46:11 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_process.c,v 1.130.2.3 2008/02/18 21:06:47 mjf Exp $");
 
 #include "opt_coredump.h"
 #include "opt_ptrace.h"
@@ -160,10 +160,10 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 			return (ESRCH);
 		}
 
-		/* XXX elad - this should be in pfind(). */
+		/* XXX-elad */
 		mutex_enter(&t->p_mutex);
 		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
-		    t, NULL, NULL, NULL);
+		    t, KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		if (error) {
 			mutex_exit(&proclist_lock);
 			mutex_exit(&t->p_mutex);
@@ -317,7 +317,7 @@ sys_ptrace(struct lwp *l, const struct sys_ptrace_args *uap, register_t *retval)
 
 	if (error == 0)
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANPTRACE, t, KAUTH_ARG(req),
+		    KAUTH_PROCESS_PTRACE, t, KAUTH_ARG(req),
 		    NULL, NULL);
 
 	if (error != 0) {
@@ -861,7 +861,7 @@ process_validfpregs(struct lwp *l)
 }
 #endif /* PTRACE */
 
-#if defined(KTRACE) || defined(PTRACE) || defined(SYSTRACE)
+#if defined(KTRACE) || defined(PTRACE)
 int
 process_domem(struct lwp *curl /*tracer*/,
     struct lwp *l /*traced*/,
@@ -905,12 +905,13 @@ process_domem(struct lwp *curl /*tracer*/,
 #endif
 	return (error);
 }
-#endif /* KTRACE || PTRACE || SYSTRACE */
+#endif /* KTRACE || PTRACE */
 
 #if defined(KTRACE) || defined(PTRACE)
 void
-process_stoptrace(struct lwp *l)
+process_stoptrace(void)
 {
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc, *pp;
 
 	/* XXXSMP proc_stop -> child_psignal -> kpsignal2 -> pool_get */ 

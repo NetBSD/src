@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.261 2007/10/22 01:43:39 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.261.2.1 2008/02/18 21:05:07 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3182,7 +3182,7 @@ softtrap:
 	sethi	%hi(EINTSTACK-INTSTACK), %g7
 	or	%g5, %lo(EINTSTACK-STKB), %g5
 	dec	%g7
-	sub	%g5, %g6, %g5
+	sub	%g5, %sp, %g5
 	sethi	%hi(CPCB), %g6
 	andncc	%g5, %g7, %g0
 	bnz,pt	%xcc, Lslowtrap_reenter
@@ -3898,11 +3898,11 @@ ENTRY(sparc64_ipi_flush_all)
 	.text
 	.align 32
 1:	rd	%pc, %l0
-	ldx	[%l0 + (4f-1b)], %l1
+	LDULNG	[%l0 + (4f-1b)], %l1
 	add	%l0, (6f-1b), %l2
 	clr	%l3
 2:	cmp	%l3, %l1
-	be	%xcc, 3f
+	be	CCCR, 3f
 	 nop
 	ldx	[%l2 + TTE_VPN], %l4
 	ldx	[%l2 + TTE_DATA], %l5
@@ -3918,8 +3918,8 @@ ENTRY(sparc64_ipi_flush_all)
 	add	%l3, 1, %l3
 	ba	%xcc, 2b
 	 nop
-3:	ldx	[%l0 + (5f-1b)], %l1
-	ldx	[%l0 + (7f-1b)], %g2	! Load cpu_info address.
+3:	LDULNG	[%l0 + (5f-1b)], %l1
+	LDULNG	[%l0 + (7f-1b)], %g2	! Load cpu_info address.
 	jmpl	%l1, %g0
 	 nop
 
@@ -3927,6 +3927,7 @@ ENTRY(sparc64_ipi_flush_all)
 4:	ULONG	0x0
 5:	ULONG	0x0
 7:	ULONG	0x0
+	_ALIGN
 6:
 
 #define DATA(name) \
@@ -4958,7 +4959,7 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	ld	[%l1 + CI_UPAID], %l3		! Load UPAID
 	cmp	%l3, %l2			! Does it match?
 	bne,a,pt	%icc, 0b		! no
-	 ld	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
+	 LDPTR	[%l1 + CI_NEXT], %l1		! Load next cpu_info pointer
 
 
 	/*
@@ -6721,6 +6722,7 @@ Lsw_noras:
  */
 ENTRY(snapshot)
 	rdpr	%pstate, %o1		! save psr
+	stx	%o7, [%o0 + PCB_PC]	! save pc
 	stx	%o6, [%o0 + PCB_SP]	! save sp
 	rdpr	%pil, %o2
 	sth	%o1, [%o0 + PCB_PSTATE]

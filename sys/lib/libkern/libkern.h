@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.71 2007/09/24 14:19:03 pooka Exp $	*/
+/*	$NetBSD: libkern.h,v 1.71.4.1 2008/02/18 21:06:59 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,15 +53,15 @@ LIBKERN_INLINE u_long ulmax __P((u_long, u_long)) __attribute__ ((unused));
 LIBKERN_INLINE u_long ulmin __P((u_long, u_long)) __attribute__ ((unused));
 LIBKERN_INLINE int abs __P((int)) __attribute__ ((unused));
 
-LIBKERN_INLINE int isspace __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isascii __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isupper __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int islower __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isalpha __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isdigit __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int isxdigit __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int toupper __P((int)) __attribute__((__unused__));
-LIBKERN_INLINE int tolower __P((int)) __attribute__((__unused__));
+LIBKERN_INLINE int isspace __P((int)) __unused;
+LIBKERN_INLINE int isascii __P((int)) __unused;
+LIBKERN_INLINE int isupper __P((int)) __unused;
+LIBKERN_INLINE int islower __P((int)) __unused;
+LIBKERN_INLINE int isalpha __P((int)) __unused;
+LIBKERN_INLINE int isdigit __P((int)) __unused;
+LIBKERN_INLINE int isxdigit __P((int)) __unused;
+LIBKERN_INLINE int toupper __P((int)) __unused;
+LIBKERN_INLINE int tolower __P((int)) __unused;
 
 #ifdef LIBKERN_BODY
 LIBKERN_INLINE int
@@ -235,6 +235,14 @@ tolower(int ch)
     ((size_t)(unsigned long)(&(((type *)0)->member)))
 #endif
 
+#define	MTPRNG_RLEN		624
+struct mtprng_state {
+	unsigned int mt_idx; 
+	uint32_t mt_elem[MTPRNG_RLEN];
+	uint32_t mt_count;
+	uint32_t mt_sparse[3];
+};
+
 /* Prototypes for non-quad routines. */
 /* XXX notyet #ifdef _STANDALONE */
 int	 bcmp __P((const void *, const void *, size_t));
@@ -307,6 +315,10 @@ char	*initstate __P((unsigned long, char *, size_t));
 char	*setstate __P((char *));
 #endif /* SMALL_RANDOM */
 long	 random __P((void));
+void	 mtprng_init32(struct mtprng_state *, uint32_t);
+void	 mtprng_initarray(struct mtprng_state *, const uint32_t *, size_t);
+uint32_t mtprng_rawrandom(struct mtprng_state *);
+uint32_t mtprng_random(struct mtprng_state *);
 int	 scanc __P((u_int, const u_char *, const u_char *, int));
 int	 skpc __P((int, size_t, u_char *));
 int	 strcasecmp __P((const char *, const char *));

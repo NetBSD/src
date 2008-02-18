@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.14.2.1 2007/11/19 00:47:02 mjf Exp $ */
+/*	$NetBSD: ipmi.c,v 1.14.2.2 2008/02/18 21:05:17 mjf Exp $ */
 /*
  * Copyright (c) 2006 Manuel Bouyer.
  *
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.14.2.1 2007/11/19 00:47:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.14.2.2 2008/02/18 21:05:17 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,13 +65,12 @@ __KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.14.2.1 2007/11/19 00:47:02 mjf Exp $");
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/callout.h>
-#include <sys/lock.h>
 #include <sys/envsys.h>
 #include <sys/malloc.h>
 #include <sys/kthread.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
-#include <machine/bus.h>
-#include <machine/intr.h>
 #include <x86/smbiosvar.h>
 
 #include <dev/isa/isareg.h>

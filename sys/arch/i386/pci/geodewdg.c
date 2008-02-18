@@ -1,4 +1,4 @@
-/*	$NetBSD: geodewdg.c,v 1.5 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: geodewdg.c,v 1.5.34.1 2008/02/18 21:04:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -76,7 +76,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.5 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: geodewdg.c,v 1.5.34.1 2008/02/18 21:04:41 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -273,5 +273,25 @@ geode_wdog_attach(struct device *parent, struct device *self,
 	attached = 1;
 }
 
+static int
+geode_wdog_detach(device_t self, int flags)
+{
+	int rc;
+	struct geode_wdog_softc *sc = device_private(self);
+
+	if ((rc = sysmon_wdog_unregister(&sc->sc_smw)) != 0) {
+		if (rc == ERESTART)
+			rc = EINTR;
+		return rc;
+	}
+
+	/* cancel any pending countdown */
+	geode_wdog_disable(sc);
+
+	attached = 0;
+
+	return 0;
+}
+
 CFATTACH_DECL(geodewdog, sizeof(struct geode_wdog_softc),
-	      geode_wdog_match, geode_wdog_attach, NULL, NULL);
+	      geode_wdog_match, geode_wdog_attach, geode_wdog_detach, NULL);

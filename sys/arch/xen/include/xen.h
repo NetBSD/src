@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.24.2.1 2007/12/08 18:18:21 mjf Exp $	*/
+/*	$NetBSD: xen.h,v 1.24.2.2 2008/02/18 21:05:20 mjf Exp $	*/
 
 /*
  *
@@ -27,10 +27,12 @@
 
 #ifndef _XEN_H
 #define _XEN_H
-
 #include "opt_xen.h"
 
+
 #ifndef _LOCORE
+
+#include <machine/cpufunc.h>
 
 struct xen_netinfo {
 	uint32_t xi_ifno;

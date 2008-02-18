@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.203.2.3 2007/12/27 00:46:02 mjf Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.203.2.4 2008/02/18 21:06:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.203.2.3 2007/12/27 00:46:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.203.2.4 2008/02/18 21:06:46 mjf Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.203.2.3 2007/12/27 00:46:02 mjf Exp
 #include <sys/intr.h>
 #include <sys/lwpctl.h>
 #include <sys/atomic.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -294,7 +295,7 @@ yield(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
-	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
 	if (l->l_class == SCHED_OTHER) {
@@ -319,7 +320,7 @@ preempt(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
-	KASSERT(lwp_locked(l, &l->l_cpu->ci_schedstate.spc_lwplock));
+	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
 	l->l_kpriority = false;
 	l->l_nivcsw++;
@@ -353,10 +354,10 @@ updatertime(lwp_t *l, const struct bintime *now)
 int
 mi_switch(lwp_t *l)
 {
+	struct cpu_info *ci, *tci = NULL;
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
 	int retval, oldspl;
-	struct cpu_info *ci;
 	struct bintime bt;
 	bool returning;
 
@@ -420,16 +421,41 @@ mi_switch(lwp_t *l)
 	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
-	mutex_spin_enter(spc->spc_mutex);
 	KASSERT(l->l_stat != LSRUN);
-	if (l->l_stat == LSONPROC && l != newl) {
-		KASSERT(lwp_locked(l, &spc->spc_lwplock));
+	if (l->l_stat == LSONPROC && (l->l_target_cpu || l != newl)) {
+		KASSERT(lwp_locked(l, spc->spc_lwplock));
+
+		tci = l->l_target_cpu;
+		if (__predict_false(tci != NULL)) {
+			/* Double-lock the runqueues */
+			spc_dlock(ci, tci);
+		} else {
+			/* Lock the runqueue */
+			spc_lock(ci);
+		}
+
 		if ((l->l_flag & LW_IDLE) == 0) {
 			l->l_stat = LSRUN;
-			lwp_setlock(l, spc->spc_mutex);
+			if (__predict_false(tci != NULL)) {
+				/* 
+				 * Set the new CPU, lock and unset the
+				 * l_target_cpu - thread will be enqueued
+				 * to the runqueue of target CPU.
+				 */
+				l->l_cpu = tci;
+				lwp_setlock(l, tci->ci_schedstate.spc_mutex);
+				l->l_target_cpu = NULL;
+			} else {
+				lwp_setlock(l, spc->spc_mutex);
+			}
 			sched_enqueue(l, true);
-		} else
+		} else {
+			KASSERT(tci == NULL);
 			l->l_stat = LSIDL;
+		}
+	} else {
+		/* Lock the runqueue */
+		spc_lock(ci);
 	}
 
 	/*
@@ -447,7 +473,7 @@ mi_switch(lwp_t *l)
 			newl->l_stat = LSONPROC;
 			newl->l_cpu = ci;
 			newl->l_flag |= LW_RUNNING;
-			lwp_setlock(newl, &spc->spc_lwplock);
+			lwp_setlock(newl, spc->spc_lwplock);
 		} else {
 			newl = ci->ci_data.cpu_idlelwp;
 			newl->l_stat = LSONPROC;
@@ -481,18 +507,25 @@ mi_switch(lwp_t *l)
 		struct lwp *prevlwp;
 
 		/* Release all locks, but leave the current LWP locked */
-		if (l->l_mutex == spc->spc_mutex) {
+		if (l->l_mutex == l->l_cpu->ci_schedstate.spc_mutex) {
+			/*
+			 * In case of migration, drop the local runqueue
+			 * lock, thread is on other runqueue now.
+			 */
+			if (__predict_false(tci != NULL))
+				spc_unlock(ci);
 			/*
 			 * Drop spc_lwplock, if the current LWP has been moved
 			 * to the run queue (it is now locked by spc_mutex).
 			 */
-			mutex_spin_exit(&spc->spc_lwplock);
+			mutex_spin_exit(spc->spc_lwplock);
 		} else {
 			/*
 			 * Otherwise, drop the spc_mutex, we are done with the
 			 * run queues.
 			 */
 			mutex_spin_exit(spc->spc_mutex);
+			KASSERT(tci == NULL);
 		}
 
 		/*
@@ -564,7 +597,8 @@ mi_switch(lwp_t *l)
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
-		mutex_spin_exit(spc->spc_mutex);
+		KASSERT(tci == NULL);
+		spc_unlock(ci);
 		lwp_unlock(l);
 		retval = 0;
 	}
@@ -929,7 +963,9 @@ sched_pstats(void *arg)
 		}
 		mutex_exit(&p->p_smutex);
 		if (sig) {
+			mutex_enter(&proclist_mutex);
 			psignal(p, sig);
+			mutex_exit(&proclist_mutex);
 		}
 	}
 	mutex_exit(&proclist_lock);
@@ -943,7 +979,7 @@ sched_init(void)
 {
 
 	cv_init(&lbolt, "lbolt");
-	callout_init(&sched_pstats_ch, 0);
+	callout_init(&sched_pstats_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&sched_pstats_ch, sched_pstats, NULL);
 	sched_setup();
 	sched_pstats(NULL);

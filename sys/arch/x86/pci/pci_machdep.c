@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.28 2007/10/17 19:58:15 garbled Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.28.2.1 2008/02/18 21:05:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2007/10/17 19:58:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28.2.1 2008/02/18 21:05:17 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -88,14 +88,14 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.28 2007/10/17 19:58:15 garbled Exp
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/device.h>
-#include <sys/lock.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/bus_private.h>
 
 #include <machine/pio.h>
+#include <machine/lock.h>
 
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
@@ -376,6 +376,7 @@ pci_conf_read( pci_chipset_tag_t pc, pcitag_t tag,
 	pcireg_t data;
 	int s;
 
+	KASSERT((reg & 0x3) == 0);
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;
@@ -428,6 +429,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 {
 	int s;
 
+	KASSERT((reg & 0x3) == 0);
 #if defined(__i386__) && defined(XBOX)
 	if (arch_i386_is_xbox) {
 		int bus, dev, fn;

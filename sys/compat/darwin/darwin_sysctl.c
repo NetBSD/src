@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_sysctl.c,v 1.53 2007/08/15 12:07:28 ad Exp $ */
+/*	$NetBSD: darwin_sysctl.c,v 1.53.8.1 2008/02/18 21:05:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.53 2007/08/15 12:07:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_sysctl.c,v 1.53.8.1 2008/02/18 21:05:23 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -317,24 +317,14 @@ darwin_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	ktrmib(name, SCARG(uap, namelen));
 
 	/*
-	 * wire old so that copyout() is less likely to fail?
-	 */
-	error = sysctl_lock(l, SCARG(uap, oldp), savelen);
-	if (error)
-		return (error);
-
-	/*
 	 * dispatch request into darwin sysctl tree
 	 */
+	sysctl_lock(SCARG(uap, newp) != NULL);
 	error = sysctl_dispatch(&name[0], SCARG(uap, namelen),
 				SCARG(uap, oldp), &oldlen,
 				SCARG(uap, newp), SCARG(uap, newlen),
 				&name[0], l, &darwin_sysctl_root);
-
-	/*
-	 * release the sysctl lock
-	 */
-	sysctl_unlock(l);
+	sysctl_unlock();
 
 	/*
 	 * reset caller's oldlen, even if we got an error

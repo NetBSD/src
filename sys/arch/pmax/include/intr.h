@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30.2.1 2007/12/08 18:17:35 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.30.2.2 2008/02/18 21:04:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef _PMAX_INTR_H_
 #define _PMAX_INTR_H_
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */

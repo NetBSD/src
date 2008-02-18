@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.26 2006/09/26 09:45:57 martin Exp $ */
+/*	$NetBSD: autoconf.h,v 1.26.34.1 2008/02/18 21:05:06 mjf Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -144,5 +144,4 @@ char	*clockfreq(long freq);
 /* Kernel initialization routine. */
 void	bootstrap(void *, void *, void *, void *, void *);
 
-struct device *getdevunit(const char *, int);
 int	romgetcursoraddr(int **, int **);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.207 2007/10/17 19:57:14 garbled Exp $ */
+/*	$NetBSD: cpu.c,v 1.207.2.1 2008/02/18 21:05:03 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.207 2007/10/17 19:57:14 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.207.2.1 2008/02/18 21:05:03 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.207 2007/10/17 19:57:14 garbled Exp $");
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/kernel.h>
 
 #include <uvm/uvm.h>
@@ -432,13 +432,7 @@ cpu_attach(struct cpu_softc *sc, int node, int mid)
 		lwp0.l_cpu = cpi;
 		cpi->ci_data.cpu_idlelwp->l_cpu = cpi;
 		cpi->ci_data.cpu_idlelwp->l_mutex =
-		    &cpi->ci_schedstate.spc_lwplock;
-#if defined(LOCKDEBUG)
-		/* XXX */
-		mutex_destroy(&cpuinfo.ci_schedstate.spc_lwplock);
-		mutex_init(&cpi->ci_schedstate.spc_lwplock, MUTEX_SPIN, IPL_SCHED);
-#endif
-
+		    cpi->ci_schedstate.spc_lwplock;
 #else
 		/* The `local' VA is global for uniprocessor. */
 		cpi = sc->sc_cpuinfo = (struct cpu_info *)CPUINFO_VA;

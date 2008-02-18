@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.32 2006/10/04 15:14:49 tsutsui Exp $	*/
+/*	$NetBSD: clock.c,v 1.32.34.1 2008/02/18 21:05:11 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32 2006/10/04 15:14:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.32.34.1 2008/02/18 21:05:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,8 +238,6 @@ oclock_attach(struct device *parent, struct device *self, void *aux)
 
 	printf("\n");
 
-	todr_attach(&sc->sc_handle);
-
 	/*
 	 * Can not hook up the ISR until cpu_initclocks()
 	 * because hardclock is not ready until then.
@@ -299,8 +297,6 @@ clock_attach(struct device *parent, struct device *self, void *aux)
 	mk48txx_attach(sc);
 
 	printf("\n");
-
-	todr_attach(&sc->sc_handle);
 }
 
 /*
@@ -422,6 +418,8 @@ clock_intr(struct clockframe cf)
 {
 	extern char _Idle[];	/* locore.s */
 
+	idepth++;
+
 #ifdef	SUN3_470
 	if (intersil_va) {
 		/* Read the clock interrupt register. */
@@ -449,4 +447,6 @@ clock_intr(struct clockframe cf)
 
 	/* Call common clock interrupt handler. */
 	hardclock(&cf);
+
+	idepth--;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2007/10/17 19:57:06 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21.2.1 2008/02/18 21:05:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Christopher Sekiya
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2007/10/17 19:57:06 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21.2.1 2008/02/18 21:05:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,7 +197,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 		goto ioerror;
 
 	/* Write sgimips label to first sector */
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_oflags &= ~(BO_DONE);
+	bp->b_flags &= ~(B_READ);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
@@ -209,7 +210,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, str
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
-	bp->b_flags &= ~(B_READ | B_DONE);
+	bp->b_oflags &= ~(BO_DONE);
+	bp->b_flags &= ~(B_READ);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

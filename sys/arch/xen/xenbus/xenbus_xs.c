@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.9.2.2 2007/12/27 00:43:32 mjf Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.9.2.3 2008/02/18 21:05:22 mjf Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.9.2.2 2007/12/27 00:43:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.9.2.3 2008/02/18 21:05:22 mjf Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.9.2.2 2007/12/27 00:43:32 mjf Exp $"
 #include <sys/proc.h>
 #include <sys/mutex.h>
 #include <sys/kthread.h>
+#include <sys/simplelock.h>
 
 #include <machine/stdarg.h>
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: com.c,v 1.265.2.2 2007/12/27 00:45:06 mjf Exp $	*/
+/*	$NetBSD: com.c,v 1.265.2.3 2008/02/18 21:05:40 mjf Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.265.2.2 2007/12/27 00:45:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.265.2.3 2008/02/18 21:05:40 mjf Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -227,14 +227,6 @@ static int comconsattached;
 static int comconsrate;
 static tcflag_t comconscflag;
 static struct cnm_state com_cnm_state;
-
-#ifndef __HAVE_TIMECOUNTER
-static int ppscap =
-	PPS_TSFMT_TSPEC |
-	PPS_CAPTUREASSERT |
-	PPS_CAPTURECLEAR |
-	PPS_OFFSETASSERT | PPS_OFFSETCLEAR;
-#endif /* !__HAVE_TIMECOUNTER */
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -607,6 +599,9 @@ com_detach(struct device *self, int flags)
 	struct com_softc *sc = (struct com_softc *)self;
 	int maj, mn;
 
+        if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		return EBUSY;
+
 	/* locate the major number */
 	maj = cdevsw_lookup_major(&com_cdevsw);
 
@@ -641,6 +636,9 @@ com_detach(struct device *self, int flags)
 	rnd_detach_source(&sc->rnd_source);
 #endif
 
+	/* Destroy the lock. */
+	mutex_destroy(&sc->sc_lock);
+
 	return (0);
 }
 
@@ -650,7 +648,6 @@ com_activate(struct device *self, enum devact act)
 	struct com_softc *sc = (struct com_softc *)self;
 	int rv = 0;
 
-	mutex_spin_enter(&sc->sc_lock);
 	switch (act) {
 	case DVACT_ACTIVATE:
 		rv = EOPNOTSUPP;
@@ -669,7 +666,6 @@ com_activate(struct device *self, enum devact act)
 		break;
 	}
 
-	mutex_spin_exit(&sc->sc_lock);
 	return (rv);
 }
 
@@ -686,12 +682,6 @@ com_shutdown(struct com_softc *sc)
 
 	/* Clear any break condition set with TIOCSBRK. */
 	com_break(sc, 0);
-
-#ifndef __HAVE_TIMECOUNTER
-	/* Turn off PPS capture on last close. */
-	sc->sc_ppsmask = 0;
-	sc->ppsparam.mode = 0;
-#endif /* !__HAVE_TIMECOUNTER */
 
 	/*
 	 * Hang up if necessary.  Wait a bit, so the other side has time to
@@ -719,6 +709,8 @@ com_shutdown(struct com_softc *sc)
 
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 
+	mutex_spin_exit(&sc->sc_lock);
+
 	if (sc->disable) {
 #ifdef DIAGNOSTIC
 		if (!sc->enabled)
@@ -727,7 +719,6 @@ com_shutdown(struct com_softc *sc)
 		(*sc->disable)(sc);
 		sc->enabled = 0;
 	}
-	mutex_spin_exit(&sc->sc_lock);
 }
 
 int
@@ -769,18 +760,19 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 		tp->t_dev = dev;
 
-		mutex_spin_enter(&sc->sc_lock);
 
 		if (sc->enable) {
 			if ((*sc->enable)(sc)) {
-				mutex_spin_exit(&sc->sc_lock);
 				splx(s);
 				printf("%s: device enable failed\n",
 				       sc->sc_dev.dv_xname);
 				return (EIO);
 			}
+			mutex_spin_enter(&sc->sc_lock);
 			sc->enabled = 1;
 			com_config(sc);
+		} else {
+			mutex_spin_enter(&sc->sc_lock);
 		}
 
 		/* Turn on interrupts. */
@@ -793,14 +785,9 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		sc->sc_msr = CSR_READ_1(&sc->sc_regs, COM_REG_MSR);
 
 		/* Clear PPS capture state on first open. */
-#ifdef __HAVE_TIMECOUNTER
 		memset(&sc->sc_pps_state, 0, sizeof(sc->sc_pps_state));
 		sc->sc_pps_state.ppscap = PPS_CAPTUREASSERT | PPS_CAPTURECLEAR;
 		pps_init(&sc->sc_pps_state);
-#else /* !__HAVE_TIMECOUNTER */
-		sc->sc_ppsmask = 0;
-		sc->ppsparam.mode = 0;
-#endif /* !__HAVE_TIMECOUNTER */
 
 		mutex_spin_exit(&sc->sc_lock);
 
@@ -1023,7 +1010,6 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		*(int *)data = com_to_tiocm(sc);
 		break;
 
-#ifdef __HAVE_TIMECOUNTER
 	case PPS_IOC_CREATE:
 	case PPS_IOC_DESTROY:
 	case PPS_IOC_GETPARAMS:
@@ -1035,103 +1021,8 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #endif
 		error = pps_ioctl(cmd, data, &sc->sc_pps_state);
 		break;
-#else /* !__HAVE_TIMECOUNTER */
-	case PPS_IOC_CREATE:
-		break;
-
-	case PPS_IOC_DESTROY:
-		break;
-
-	case PPS_IOC_GETPARAMS: {
-		pps_params_t *pp;
-		pp = (pps_params_t *)data;
-		*pp = sc->ppsparam;
-		break;
-	}
-
-	case PPS_IOC_SETPARAMS: {
-	  	pps_params_t *pp;
-		int mode;
-		pp = (pps_params_t *)data;
-		if (pp->mode & ~ppscap) {
-			error = EINVAL;
-			break;
-		}
-		sc->ppsparam = *pp;
-	 	/*
-		 * Compute msr masks from user-specified timestamp state.
-		 */
-		mode = sc->ppsparam.mode;
-		switch (mode & PPS_CAPTUREBOTH) {
-		case 0:
-			sc->sc_ppsmask = 0;
-			break;
-
-		case PPS_CAPTUREASSERT:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = MSR_DCD;
-			sc->sc_ppsclear = -1;
-			break;
-
-		case PPS_CAPTURECLEAR:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = -1;
-			sc->sc_ppsclear = 0;
-			break;
-
-		case PPS_CAPTUREBOTH:
-			sc->sc_ppsmask = MSR_DCD;
-			sc->sc_ppsassert = MSR_DCD;
-			sc->sc_ppsclear = 0;
-			break;
-
-		default:
-			error = EINVAL;
-			break;
-		}
-		break;
-	}
-
-	case PPS_IOC_GETCAP:
-		*(int*)data = ppscap;
-		break;
-
-	case PPS_IOC_FETCH: {
-		pps_info_t *pi;
-		pi = (pps_info_t *)data;
-		*pi = sc->ppsinfo;
-		break;
-	}
-
-#ifdef PPS_SYNC
-	case PPS_IOC_KCBIND: {
-		int edge = (*(int *)data) & PPS_CAPTUREBOTH;
-
-		if (edge == 0) {
-			/*
-			 * remove binding for this source; ignore
-			 * the request if this is not the current
-			 * hardpps source
-			 */
-			if (pps_kc_hardpps_source == sc) {
-				pps_kc_hardpps_source = NULL;
-				pps_kc_hardpps_mode = 0;
-			}
-		} else {
-			/*
-			 * bind hardpps to this source, replacing any
-			 * previously specified source or edges
-			 */
-			pps_kc_hardpps_source = sc;
-			pps_kc_hardpps_mode = edge;
-		}
-		break;
-	}
-#endif /* PPS_SYNC */
-#endif /* !__HAVE_TIMECOUNTER */
 
 	case TIOCDCDTIMESTAMP:	/* XXX old, overloaded  API used by xntpd v3 */
-#ifdef __HAVE_TIMECOUNTER
 #ifndef PPS_TRAILING_EDGE
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->sc_pps_state.ppsinfo.assert_timestamp);
@@ -1139,25 +1030,6 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
 		    &sc->sc_pps_state.ppsinfo.clear_timestamp);
 #endif
-#else /* !__HAVE_TIMECOUNTER */
-		/*
-		 * Some GPS clocks models use the falling rather than
-		 * rising edge as the on-the-second signal.
-		 * The old API has no way to specify PPS polarity.
-		 */
-		sc->sc_ppsmask = MSR_DCD;
-#ifndef PPS_TRAILING_EDGE
-		sc->sc_ppsassert = MSR_DCD;
-		sc->sc_ppsclear = -1;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
-		    &sc->ppsinfo.assert_timestamp);
-#else
-		sc->sc_ppsassert = -1;
-		sc->sc_ppsclear = 0;
-		TIMESPEC_TO_TIMEVAL((struct timeval *)data,
-		    &sc->ppsinfo.clear_timestamp);
-#endif
-#endif /* !__HAVE_TIMECOUNTER */
 		break;
 
 	default:
@@ -2014,7 +1886,6 @@ again:	do {
 		msr = CSR_READ_1(regsp, COM_REG_MSR);
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
-#ifdef __HAVE_TIMECOUNTER
 		if ((sc->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) &&
 		    (delta & MSR_DCD)) {
 			pps_capture(&sc->sc_pps_state);
@@ -2023,55 +1894,6 @@ again:	do {
 			    PPS_CAPTUREASSERT :
 			    PPS_CAPTURECLEAR);
 		}
-#else /* !__HAVE_TIMECOUNTER */
-		/*
-		 * Pulse-per-second (PSS) signals on edge of DCD?
-		 * Process these even if line discipline is ignoring DCD.
-		 */
-		if (delta & sc->sc_ppsmask) {
-			struct timeval tv;
-		    	if ((msr & sc->sc_ppsmask) == sc->sc_ppsassert) {
-				/* XXX nanotime() */
-				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv,
-				    &sc->ppsinfo.assert_timestamp);
-				if (sc->ppsparam.mode & PPS_OFFSETASSERT) {
-					timespecadd(&sc->ppsinfo.assert_timestamp,
-					    &sc->ppsparam.assert_offset,
-						    &sc->ppsinfo.assert_timestamp);
-				}
-
-#ifdef PPS_SYNC
-				if (pps_kc_hardpps_source == sc &&
-				    pps_kc_hardpps_mode & PPS_CAPTUREASSERT) {
-					hardpps(&tv, tv.tv_usec);
-				}
-#endif
-				sc->ppsinfo.assert_sequence++;
-				sc->ppsinfo.current_mode = sc->ppsparam.mode;
-
-			} else if ((msr & sc->sc_ppsmask) == sc->sc_ppsclear) {
-				/* XXX nanotime() */
-				microtime(&tv);
-				TIMEVAL_TO_TIMESPEC(&tv,
-				    &sc->ppsinfo.clear_timestamp);
-				if (sc->ppsparam.mode & PPS_OFFSETCLEAR) {
-					timespecadd(&sc->ppsinfo.clear_timestamp,
-					    &sc->ppsparam.clear_offset,
-					    &sc->ppsinfo.clear_timestamp);
-				}
-
-#ifdef PPS_SYNC
-				if (pps_kc_hardpps_source == sc &&
-				    pps_kc_hardpps_mode & PPS_CAPTURECLEAR) {
-					hardpps(&tv, tv.tv_usec);
-				}
-#endif
-				sc->ppsinfo.clear_sequence++;
-				sc->ppsinfo.current_mode = sc->ppsparam.mode;
-			}
-		}
-#endif /* !__HAVE_TIMECOUNTER */
 
 		/*
 		 * Process normal status changes

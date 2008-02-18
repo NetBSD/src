@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.h,v 1.8.2.2 2007/12/08 18:21:27 mjf Exp $	*/
+/*	$NetBSD: rumpuser.h,v 1.8.2.3 2008/02/18 21:07:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 
 int rumpuser_stat(const char *, struct stat *, int *);
 int rumpuser_lstat(const char *, struct stat *, int *);
+int rumpuser_usleep(unsigned long, int *);
 
 #define rumpuser_malloc(a,b) _rumpuser_malloc(a,b,__func__,__LINE__);
 #define rumpuser_realloc(a,b,c) _rumpuser_realloc(a,b,c,__func__,__LINE__);
@@ -49,8 +50,12 @@ int rumpuser_ioctl(int, u_long, void *, int *);
 int rumpuser_close(int, int *);
 int rumpuser_fsync(int, int *);
 
-void rumpuser_read(int, void *, size_t, off_t, void *);
-void rumpuser_write(int, const void *, size_t, off_t, void *);
+ssize_t rumpuser_read(int, void *, size_t, int *);
+ssize_t rumpuser_pread(int, void *, size_t, off_t, int *);
+ssize_t rumpuser_write(int, const void *, size_t, int *);
+ssize_t rumpuser_pwrite(int, const void *, size_t, off_t, int *);
+void rumpuser_read_bio(int, void *, size_t, off_t, void *);
+void rumpuser_write_bio(int, const void *, size_t, off_t, void *);
 
 int rumpuser_gettimeofday(struct timeval *, int *);
 
@@ -61,6 +66,8 @@ uint64_t rumpuser_bswap64(uint64_t);
 int rumpuser_gethostname(char *, size_t, int *);
 
 char *rumpuser_realpath(const char *, char *, int *);
+
+void rumpuser_yield(void);
 
 /* rumpuser_pth */
 
@@ -78,6 +85,7 @@ void rumpuser_mutex_enter(struct rumpuser_mtx *);
 int  rumpuser_mutex_tryenter(struct rumpuser_mtx *);
 void rumpuser_mutex_exit(struct rumpuser_mtx *);
 void rumpuser_mutex_destroy(struct rumpuser_mtx *);
+int  rumpuser_mutex_held(struct rumpuser_mtx *);
 
 struct rumpuser_rw;
 
@@ -86,6 +94,9 @@ void rumpuser_rw_enter(struct rumpuser_rw *, int);
 int  rumpuser_rw_tryenter(struct rumpuser_rw *, int);
 void rumpuser_rw_exit(struct rumpuser_rw *);
 void rumpuser_rw_destroy(struct rumpuser_rw *);
+int  rumpuser_rw_held(struct rumpuser_rw *);
+int  rumpuser_rw_rdheld(struct rumpuser_rw *);
+int  rumpuser_rw_wrheld(struct rumpuser_rw *);
 
 struct rumpuser_cv;
 

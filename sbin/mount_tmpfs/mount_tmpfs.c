@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_tmpfs.c,v 1.18.6.1 2007/12/27 00:47:01 mjf Exp $	*/
+/*	$NetBSD: mount_tmpfs.c,v 1.18.6.2 2008/02/18 21:04:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_tmpfs.c,v 1.18.6.1 2007/12/27 00:47:01 mjf Exp $");
+__RCSID("$NetBSD: mount_tmpfs.c,v 1.18.6.2 2008/02/18 21:04:17 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -152,10 +152,10 @@ mount_tmpfs(int argc, char *argv[])
 		usage();
 
 	if (realpath(argv[1], canon_dir) == NULL)
-		err(EXIT_FAILURE, "realpath %s", argv[0]);
+		err(EXIT_FAILURE, "realpath %s", argv[1]);
 
 	if (strncmp(argv[1], canon_dir, MAXPATHLEN) != 0) {
-		warnx("\"%s\" is a relative path", argv[0]);
+		warnx("\"%s\" is a relative path", argv[1]);
 		warnx("using \"%s\" instead", canon_dir);
 	}
 

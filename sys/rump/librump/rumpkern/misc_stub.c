@@ -1,4 +1,4 @@
-/*	$NetBSD: misc_stub.c,v 1.3 2007/08/14 13:54:15 pooka Exp $	*/
+/*	$NetBSD: misc_stub.c,v 1.3.16.1 2008/02/18 21:07:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -32,6 +32,15 @@
 #include <sys/sched.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
+#include <sys/module.h>
+
+#ifdef __sparc__
+ /* 
+  * XXX Least common denominator - smallest sparc pagesize.
+  * Could just be declared, pooka says rump doesn't use ioctl.
+  */
+int nbpg = 4096;
+#endif
 
 void
 preempt()
@@ -77,4 +86,28 @@ sysctl_query(SYSCTLFN_ARGS)
 {
 
 	return ENOSYS;
+}
+
+void
+sysctl_lock(bool write)
+{
+
+}
+
+void
+sysctl_relock(void)
+{
+
+}
+
+void
+sysctl_unlock(void)
+{
+
+}
+
+void
+module_init_class(modclass_t mc)
+{
+
 }

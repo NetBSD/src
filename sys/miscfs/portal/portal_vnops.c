@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vnops.c,v 1.75.4.1 2007/12/08 18:21:02 mjf Exp $	*/
+/*	$NetBSD: portal_vnops.c,v 1.75.4.2 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.75.4.1 2007/12/08 18:21:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vnops.c,v 1.75.4.2 2008/02/18 21:07:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ int	portal_reclaim(void *);
 int	portal_print(void *);
 #define	portal_islocked	genfs_islocked
 int	portal_pathconf(void *);
-#define	portal_advlock	genfs_badop
+#define	portal_advlock	genfs_eopnotsupp
 #define	portal_bwrite	genfs_eopnotsupp
 #define	portal_putpages	genfs_null_putpages
 

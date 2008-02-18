@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_subr.c,v 1.81.4.1 2007/11/19 00:49:03 mjf Exp $	*/
+/*	$NetBSD: procfs_subr.c,v 1.81.4.2 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -109,7 +109,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.81.4.1 2007/11/19 00:49:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_subr.c,v 1.81.4.2 2008/02/18 21:07:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -368,10 +368,10 @@ procfs_rw(v)
 	 * Do not allow init to be modified while in secure mode; it
 	 * could be duped into changing the security level.
 	 */
-#define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_CANPROCFS_READ : \
-		 KAUTH_REQ_PROCESS_CANPROCFS_WRITE)
+#define	M2K(m)	((m) == UIO_READ ? KAUTH_REQ_PROCESS_PROCFS_READ : \
+		 KAUTH_REQ_PROCESS_PROCFS_WRITE)
 	mutex_enter(&p->p_mutex);
-	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_CANPROCFS,
+	error = kauth_authorize_process(curl->l_cred, KAUTH_PROCESS_PROCFS,
 	    p, pfs, KAUTH_ARG(M2K(uio->uio_rw)), NULL);
 	mutex_exit(&p->p_mutex);
 	if (error) {
@@ -619,7 +619,7 @@ loop:
 		    	if (flags == 0) {
 				mutex_exit(&pfs_ihash_lock);
 			} else {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				mutex_exit(&pfs_ihash_lock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;
@@ -641,7 +641,7 @@ procfs_hashins(pp)
 	struct pfs_hashhead *ppp;
 
 	/* lock the pfsnode, then put it on the appropriate hash list */
-	lockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&pp->pfs_vnode->v_lock, LK_EXCLUSIVE);
 
 	mutex_enter(&pfs_ihash_lock);
 	ppp = &pfs_hashtbl[PFSPIDHASH(pp->pfs_pid)];
@@ -679,17 +679,17 @@ procfs_revoke_vnodes(p, arg)
 	for (pfs = LIST_FIRST(ppp); pfs; pfs = pnext) {
 		vp = PFSTOV(pfs);
 		pnext = LIST_NEXT(pfs, pfs_hash);
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (vp->v_usecount > 0 && pfs->pfs_pid == p->p_pid &&
 		    vp->v_mount == mp) {
 		    	vp->v_usecount++;
-		    	simple_unlock(&vp->v_interlock);
+		    	mutex_exit(&vp->v_interlock);
 			mutex_exit(&pfs_ihash_lock);
 			VOP_REVOKE(vp, REVOKEALL);
 			vrele(vp);
 			mutex_enter(&pfs_ihash_lock);
 		} else {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		}
 	}
 	mutex_exit(&pfs_ihash_lock);

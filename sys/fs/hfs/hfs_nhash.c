@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_nhash.c,v 1.2 2007/03/06 11:28:47 dillo Exp $	*/
+/*	$NetBSD: hfs_nhash.c,v 1.2.26.1 2008/02/18 21:06:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: hfs_nhash.c,v 1.2.26.1 2008/02/18 21:06:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +83,8 @@ LIST_HEAD(nhashhead, hfsnode) *nhashtbl;
 u_long	nhash;		/* size of hash table - 1 */
 #define HNOHASH(device, cnid, fork)	(((device) + (cnid) + (fork)) & nhash)
 
-struct lock hfs_hashlock;
-struct simplelock hfs_nhash_slock;
-
+kmutex_t hfs_hashlock;
+kmutex_t hfs_nhash_lock;
 
 /*
  * Initialize hfsnode hash table.
@@ -92,10 +93,10 @@ void
 hfs_nhashinit(void)
 {
 
-	lockinit(&hfs_hashlock, PINOD, "hfs_hashlock", 0, 0);
 	nhashtbl =
 	    hashinit(desiredvnodes, HASH_LIST, M_HFSMNT, M_WAITOK, &nhash);
-	simple_lock_init(&hfs_nhash_slock);
+	mutex_init(&hfs_nhash_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&hfs_hashlock, MUTEX_DEFAULT, IPL_NONE);
 }
 
 /*
@@ -106,6 +107,8 @@ hfs_nhashdone(void)
 {
 
 	hashdone(nhashtbl, M_HFSMNT);
+	mutex_destroy(&hfs_nhash_lock);
+	mutex_destroy(&hfs_hashlock);
 }
 
 /*
@@ -120,19 +123,23 @@ hfs_nhashget(dev_t dev, hfs_cnid_t cnid, uint8_t fork, int flags)
 	struct vnode *vp;
 
 loop:
-	simple_lock(&hfs_nhash_slock);
+	mutex_enter(&hfs_nhash_lock);
 	hpp = &nhashtbl[HNOHASH(dev, cnid, fork)];
 	LIST_FOREACH(hp, hpp, h_hash) {
 		if (cnid == hp->h_rec.cnid && dev == hp->h_dev) {
 			vp = HTOV(hp);
-			simple_lock(&vp->v_interlock);
-			simple_unlock(&hfs_nhash_slock);
-			if (vget(vp, flags | LK_INTERLOCK))
-				goto loop;
+			if (flags == 0) {
+				mutex_exit(&hfs_nhash_lock);
+			} else {
+				mutex_enter(&vp->v_interlock);
+				mutex_exit(&hfs_nhash_lock);
+				if (vget(vp, flags | LK_INTERLOCK))
+					goto loop;
+			}
 			return vp;
 		}
 	}
-	simple_unlock(&hfs_nhash_slock);
+	mutex_exit(&hfs_nhash_lock);
 	return NULL;
 }
 
@@ -145,12 +152,12 @@ hfs_nhashinsert(struct hfsnode *hp)
 	struct nhashhead *hpp;
 
 	/* lock the inode, then put it on the appropriate hash list */
-	lockmgr(&hp->h_vnode->v_lock, LK_EXCLUSIVE, NULL);
+	vlockmgr(&hp->h_vnode->v_lock, LK_EXCLUSIVE);
 
-	simple_lock(&hfs_nhash_slock);
+	mutex_enter(&hfs_nhash_lock);
 	hpp = &nhashtbl[HNOHASH(hp->h_dev, hp->h_rec.cnid, hp->h_fork)];
 	LIST_INSERT_HEAD(hpp, hp, h_hash);
-	simple_unlock(&hfs_nhash_slock);
+	mutex_exit(&hfs_nhash_lock);
 }
 
 /*
@@ -160,7 +167,7 @@ void
 hfs_nhashremove(struct hfsnode *hp)
 {
 
-	simple_lock(&hfs_nhash_slock);
+	mutex_enter(&hfs_nhash_lock);
 	LIST_REMOVE(hp, h_hash);
-	simple_unlock(&hfs_nhash_slock);
+	mutex_exit(&hfs_nhash_lock);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.12.4.2 2007/12/27 00:45:51 mjf Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.12.4.3 2008/02/18 21:06:44 mjf Exp $ */
 
 /*
  * Copyright (c) 2006 Reinoud Zandijk
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.12.4.2 2007/12/27 00:45:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.12.4.3 2008/02/18 21:06:44 mjf Exp $");
 #endif /* not lint */
 
 
@@ -85,9 +85,6 @@ udf_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("udf_inactive(): pushing active", vp);
-
 	VOP_UNLOCK(vp, 0);
 
 	DPRINTF(LOCKING, ("udf_inactive called for node %p\n", VTOI(vp)));
@@ -112,7 +109,7 @@ udf_reclaim(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct udf_node *node = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("udf_reclaim(): pushing active", vp);
 
 	/* purge old data from namei */
@@ -842,11 +839,11 @@ udf_close(void *v)
 	DPRINTF(CALL, ("udf_close called\n"));
 	udf_node = udf_node;	/* shut up gcc */
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 		if (vp->v_usecount > 1) {
 			/* TODO update times */
 		}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return 0;
 }
@@ -1219,7 +1216,6 @@ const struct vnodeopv_entry_desc udf_vnodeop_entries[] = {
 	{ &vop_setattr_desc, udf_setattr },	/* setattr */	/* TODO */
 	{ &vop_read_desc, udf_read },		/* read */
 	{ &vop_write_desc, udf_write },		/* write */	/* WRITE */
-	{ &vop_lease_desc, genfs_lease_check },	/* lease */	/* TODO? */
 	{ &vop_fcntl_desc, genfs_fcntl },	/* fcntl */	/* TODO? */
 	{ &vop_ioctl_desc, genfs_enoioctl },	/* ioctl */	/* TODO? */
 	{ &vop_poll_desc, genfs_poll },		/* poll */	/* TODO/OK? */

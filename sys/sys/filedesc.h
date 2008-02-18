@@ -1,4 +1,4 @@
-/*	$NetBSD: filedesc.h,v 1.41.4.1 2007/12/08 18:21:31 mjf Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.41.4.2 2008/02/18 21:07:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -163,11 +163,14 @@ int	vnode_to_path(char *, size_t, struct vnode *, struct lwp *,
 
 int	closef(struct file *, struct lwp *);
 int	getsock(struct filedesc *, int, struct file **);
+struct file *fgetdummy(void);
+void	fputdummy(struct file *);
 
 struct stat;
 int	do_sys_fstat(struct lwp *, int, struct stat *);
 struct flock;
 int	do_fcntl_lock(struct lwp *, int, int, struct flock *);
+int	do_posix_fadvise(struct lwp *, int, off_t, off_t, int, register_t *);
 
 extern kmutex_t filelist_lock;
 

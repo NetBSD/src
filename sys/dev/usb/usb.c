@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.101.2.2 2007/12/27 00:45:33 mjf Exp $	*/
+/*	$NetBSD: usb.c,v 1.101.2.3 2008/02/18 21:06:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.101.2.2 2007/12/27 00:45:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.101.2.3 2008/02/18 21:06:26 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -157,7 +157,16 @@ Static void usb_copy_old_devinfo(struct usb_device_info_old *, const struct usb_
 
 Static const char *usbrev_str[] = USBREV_STR;
 
-USB_DECLARE_DRIVER(usb);
+static int usb_match(device_t, struct cfdata *, void *);
+static void usb_attach(device_t, device_t, void *);
+static int usb_detach(device_t, int);
+static int usb_activate(device_t, enum devact);
+static void usb_childdet(device_t, device_t);
+
+extern struct cfdriver usb_cd;
+
+CFATTACH_DECL2(usb, sizeof(struct usb_softc),
+    usb_match, usb_attach, usb_detach, usb_activate, NULL, usb_childdet);
 
 USB_MATCH(usb)
 {
@@ -888,9 +897,9 @@ usb_schedsoftintr(usbd_bus_handle bus)
 }
 
 int
-usb_activate(device_ptr_t self, enum devact act)
+usb_activate(device_t self, enum devact act)
 {
-	struct usb_softc *sc = (struct usb_softc *)self;
+	struct usb_softc *sc = device_private(self);
 	usbd_device_handle dev = sc->sc_port.device;
 	int i, rv = 0;
 
@@ -909,14 +918,36 @@ usb_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-int
-usb_detach(device_ptr_t self, int flags)
+void
+usb_childdet(device_t self, device_t child)
 {
-	struct usb_softc *sc = (struct usb_softc *)self;
+	int i, last = -1;
+	struct usb_softc *sc = device_private(self);
+	struct usbd_device *dev;
+
+	if ((dev = sc->sc_port.device) == NULL || dev->subdevs == NULL)
+		return;
+
+	for (i = 0; dev->subdevs[i] != NULL; i++)
+		last = i;
+
+	for (i = 0; dev->subdevs[i] != NULL; i++) {
+		if (dev->subdevs[i] == child) {
+			dev->subdevs[i] = dev->subdevs[last];
+			dev->subdevs[last] = NULL;
+		}
+	}
+}
+
+int
+usb_detach(device_t self, int flags)
+{
+	struct usb_softc *sc = device_private(self);
 	struct usb_event *ue;
 
 	DPRINTF(("usb_detach: start\n"));
 
+	pmf_device_deregister(self);
 	/* Kill off event thread. */
 	while (sc->sc_event_thread != NULL) {
 		wakeup(&sc->sc_bus->needs_explore);

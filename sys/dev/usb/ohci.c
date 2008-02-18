@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.184 2007/10/19 12:01:21 ad Exp $	*/
+/*	$NetBSD: ohci.c,v 1.184.2.1 2008/02/18 21:06:25 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.184 2007/10/19 12:01:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.184.2.1 2008/02/18 21:06:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.184 2007/10/19 12:01:21 ad Exp $");
 
 #include <dev/usb/ohcireg.h>
 #include <dev/usb/ohcivar.h>
+#include <dev/usb/usbroothub_subr.h>
 
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
@@ -203,8 +204,6 @@ Static void		ohci_device_isoc_done(usbd_xfer_handle);
 
 Static usbd_status	ohci_device_setintr(ohci_softc_t *sc,
 			    struct ohci_pipe *pipe, int ival);
-
-Static int		ohci_str(usb_string_descriptor_t *, int, const char *);
 
 Static void		ohci_timeout(void *);
 Static void		ohci_timeout_task(void *);
@@ -2352,23 +2351,6 @@ Static const usb_hub_descriptor_t ohci_hubd = {
 	.bDescriptorType = UDESC_HUB,
 };
 
-Static int
-ohci_str(usb_string_descriptor_t *p, int l, const char *s)
-{
-	int i;
-
-	if (l == 0)
-		return (0);
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1)
-		return (1);
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return (2*i+2);
-}
-
 /*
  * Simulate a hardware hub by handling all the necessary requests.
  */
@@ -2468,24 +2450,21 @@ ohci_root_ctrl_start(usbd_xfer_handle xfer)
 			memcpy(buf, &ohci_endpd, l);
 			break;
 		case UDESC_STRING:
-			*(u_int8_t *)buf = 0;
-			totlen = 1;
+#define sd ((usb_string_descriptor_t *)buf)
 			switch (value & 0xff) {
 			case 0: /* Language table */
-				if (len > 0)
-					*(u_int8_t *)buf = 4;
-				if (len >=  4) {
-		USETW(((usb_string_descriptor_t *)buf)->bString[0], 0x0409);
-					totlen = 4;
-				}
+				totlen = usb_makelangtbl(sd, len);
 				break;
 			case 1: /* Vendor */
-				totlen = ohci_str(buf, len, sc->sc_vendor);
+				totlen = usb_makestrdesc(sd, len,
+							 sc->sc_vendor);
 				break;
 			case 2: /* Product */
-				totlen = ohci_str(buf, len, "OHCI root hub");
+				totlen = usb_makestrdesc(sd, len,
+							 "OHCI root hub");
 				break;
 			}
+#undef sd
 			break;
 		default:
 			err = USBD_IOERROR;

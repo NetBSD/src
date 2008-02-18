@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.12 2007/10/17 19:52:56 garbled Exp $ */
+/* $NetBSD: mcclock.c,v 1.12.2.1 2008/02/18 21:04:19 mjf Exp $ */
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.12 2007/10/17 19:52:56 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.12.2.1 2008/02/18 21:04:19 mjf Exp $");
 
 #include "opt_clock_compat_osf1.h"
 
@@ -82,17 +82,19 @@ mcclock_attach(struct mc146818_softc *sc)
 
 	mcclock_set_pcc_freq(sc);
 
-	todr_attach(&sc->sc_handle);
 	clockattach(mcclock_init, (void *)sc);
 }
+
+#define NLOOP	4
 
 static void
 mcclock_set_pcc_freq(struct mc146818_softc *sc)
 {
 	struct cpu_info *ci;
 	uint64_t freq;
-	uint32_t pcc_start, pcc_count;
+	uint32_t ctrdiff[NLOOP], pcc_start, pcc_end;
 	uint8_t reg_a;
+	int i;
 
 	/* save REG_A */
 	reg_a = (*sc->sc_mcread)(sc, MC_REGA);
@@ -100,21 +102,25 @@ mcclock_set_pcc_freq(struct mc146818_softc *sc)
 	/* set interval 16Hz to measure pcc */
 	(*sc->sc_mcwrite)(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_16_Hz);
 
-	/* clear interrupt flags */
-	(void)(*sc->sc_mcread)(sc, MC_REGC);
+	/* Run the loop an extra time to prime the cache. */
+	for (i = 0; i < NLOOP; i++) {
+		/* clear interrupt flags */
+		(void)(*sc->sc_mcread)(sc, MC_REGC);
 
-	/* wait till the periodic interupt flag is set */
-	while (((*sc->sc_mcread)(sc, MC_REGC) & MC_REGC_PF) == 0)
-		;
-	pcc_start = cpu_counter32();
+		/* wait till the periodic interupt flag is set */
+		while (((*sc->sc_mcread)(sc, MC_REGC) & MC_REGC_PF) == 0)
+			;
+		pcc_start = cpu_counter32();
 
-	/* wait till the periodic interupt flag is set again */
-	while (((*sc->sc_mcread)(sc, MC_REGC) & MC_REGC_PF) == 0)
-		;
+		/* wait till the periodic interupt flag is set again */
+		while (((*sc->sc_mcread)(sc, MC_REGC) & MC_REGC_PF) == 0)
+			;
+		pcc_end = cpu_counter32();
 
-	pcc_count = cpu_counter32() - pcc_start;
+		ctrdiff[i] = pcc_end - pcc_start;
+	}
 
-	freq = pcc_count * 16;
+	freq = ((ctrdiff[NLOOP - 2] + ctrdiff[NLOOP - 1]) / 2) * 16 /* Hz */;
 
 	/* restore REG_A */
 	(*sc->sc_mcwrite)(sc, MC_REGA, reg_a);

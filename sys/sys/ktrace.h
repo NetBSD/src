@@ -1,4 +1,4 @@
-/*	$NetBSD: ktrace.h,v 1.50 2007/08/27 13:33:45 dsl Exp $	*/
+/*	$NetBSD: ktrace.h,v 1.50.8.1 2008/02/18 21:07:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -255,7 +255,8 @@ struct ktr_saupcall {
 /*
  * trace flags (also in p_traceflags)
  */
-#define KTRFAC_ROOT	0x80000000	/* root set this trace */
+#define KTRFAC_PERSISTENT	0x80000000	/* persistent trace across sugid
+						   exec (exclusive) */
 #define KTRFAC_INHERIT	0x40000000	/* pass trace flags to children */
 #define KTRFAC_TRC_EMUL	0x10000000	/* ktrace KTR_EMUL before next trace */
 #define	KTRFAC_VER_MASK	0x0f000000	/* record version mask */
@@ -296,8 +297,7 @@ void ktr_mibio(int, enum uio_rw, const void *, size_t, int);
 void ktr_namei(const char *, size_t);
 void ktr_namei2(const char *, size_t, const char *, size_t);
 void ktr_psig(int, sig_t, const sigset_t *, const ksiginfo_t *);
-void ktr_syscall(register_t, register_t, const struct sysent *,
-    register_t []);
+void ktr_syscall(register_t, const register_t [], int);
 void ktr_sysret(register_t, int, register_t *);
 void ktr_kuser(const char *, void *, size_t);
 void ktr_mmsg(const void *, size_t);
@@ -369,10 +369,10 @@ ktrpsig(int a, sig_t b, const sigset_t *c, const ksiginfo_t * d)
 }
 
 static inline void
-ktrsyscall(register_t a, register_t b, const struct sysent *c, register_t d[])
+ktrsyscall(register_t code, const register_t args[], int narg)
 {
 	if (__predict_false(ktrace_on))
-		ktr_syscall(a, b, c, d);
+		ktr_syscall(code, args, narg);
 }
 
 static inline void

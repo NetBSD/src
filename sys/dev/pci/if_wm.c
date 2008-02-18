@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.148 2007/10/30 07:49:40 simonb Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.148.2.1 2008/02/18 21:05:57 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.148 2007/10/30 07:49:40 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.148.2.1 2008/02/18 21:05:57 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -767,6 +767,10 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
 	  "Intel i82572EI 1000baseT Ethernet",
 	  WM_T_82572,		WMP_F_1000T },
+
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
+	  "Intel® PRO/1000 PT Quad Port Server Adapter",
+	  WM_T_82571,		WMP_F_1000T, },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_FIBER,
 	  "Intel i82572EI 1000baseX Ethernet",
@@ -2379,15 +2383,21 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-			if (ifp->if_flags & IFF_RUNNING)
-				wm_set_filter(sc);
-			error = 0;
+			wm_set_filter(sc);
 		}
 		break;
 	}
@@ -3247,8 +3257,26 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
 
 	if (sc->sc_type >= WM_T_82543) {
-		/* Set up the interrupt throttling register (units of 256ns) */
-		sc->sc_itr = 1000000000 / (7000 * 256);
+		/*
+		 * Set up the interrupt throttling register (units of 256ns)
+		 * Note that a footnote in Intel's documentation says this
+		 * ticker runs at 1/4 the rate when the chip is in 100Mbit
+		 * or 10Mbit mode.  Empirically, it appears to be the case
+		 * that that is also true for the 1024ns units of the other
+		 * interrupt-related timer registers -- so, really, we ought
+		 * to divide this value by 4 when the link speed is low.
+		 *
+		 * XXX implement this division at link speed change!
+		 */
+
+		 /*
+		  * For N interrupts/sec, set this value to:
+		  * 1000000000 / (N * 256).  Note that we set the
+		  * absolute and packet timer values to this value
+		  * divided by 4 to get "simple timer" behavior.
+		  */
+
+		sc->sc_itr = 1500;		/* 2604 ints/sec */
 		CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
@@ -3271,7 +3299,8 @@ wm_init(struct ifnet *ifp)
 	CSR_WRITE(sc, WMREG_TCTL, sc->sc_tctl);
 
 	/* Set the media. */
-	(void) (*sc->sc_mii.mii_media.ifm_change)(ifp);
+	if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
+		goto out;
 
 	/*
 	 * Set up the receive control register; we actually program
@@ -4352,6 +4381,7 @@ wm_gmii_mediainit(struct wm_softc *sc)
 
 	wm_gmii_reset(sc);
 
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, wm_gmii_mediachange,
 	    wm_gmii_mediastatus);
 
@@ -4374,9 +4404,8 @@ wm_gmii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
+	ether_mediastatus(ifp, ifmr);
+	ifmr->ifm_active = (ifmr->ifm_active & ~IFM_ETH_FMASK) |
 			   sc->sc_flowflags;
 }
 
@@ -4390,39 +4419,43 @@ wm_gmii_mediachange(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	int rc;
 
-	if (ifp->if_flags & IFF_UP) {
-		sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
-		sc->sc_ctrl |= CTRL_SLU;
-		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
-		    || (sc->sc_type > WM_T_82543)) {
-			sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
-		} else {
-			sc->sc_ctrl &= ~CTRL_ASDE;
-			sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
-			if (ife->ifm_media & IFM_FDX)
-				sc->sc_ctrl |= CTRL_FD;
-			switch(IFM_SUBTYPE(ife->ifm_media)) {
-			case IFM_10_T:
-				sc->sc_ctrl |= CTRL_SPEED_10;
-				break;
-			case IFM_100_TX:
-				sc->sc_ctrl |= CTRL_SPEED_100;
-				break;
-			case IFM_1000_T:
-				sc->sc_ctrl |= CTRL_SPEED_1000;
-				break;
-			default:
-				panic("wm_gmii_mediachange: bad media 0x%x",
-				    ife->ifm_media);
-			}
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+
+	sc->sc_ctrl &= ~(CTRL_SPEED_MASK | CTRL_FD);
+	sc->sc_ctrl |= CTRL_SLU;
+	if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
+	    || (sc->sc_type > WM_T_82543)) {
+		sc->sc_ctrl &= ~(CTRL_FRCSPD | CTRL_FRCFDX);
+	} else {
+		sc->sc_ctrl &= ~CTRL_ASDE;
+		sc->sc_ctrl |= CTRL_FRCSPD | CTRL_FRCFDX;
+		if (ife->ifm_media & IFM_FDX)
+			sc->sc_ctrl |= CTRL_FD;
+		switch(IFM_SUBTYPE(ife->ifm_media)) {
+		case IFM_10_T:
+			sc->sc_ctrl |= CTRL_SPEED_10;
+			break;
+		case IFM_100_TX:
+			sc->sc_ctrl |= CTRL_SPEED_100;
+			break;
+		case IFM_1000_T:
+			sc->sc_ctrl |= CTRL_SPEED_1000;
+			break;
+		default:
+			panic("wm_gmii_mediachange: bad media 0x%x",
+			    ife->ifm_media);
 		}
-		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
-		if (sc->sc_type <= WM_T_82543)
-			wm_gmii_reset(sc);
-		mii_mediachg(&sc->sc_mii);
 	}
-	return (0);
+	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+	if (sc->sc_type <= WM_T_82543)
+		wm_gmii_reset(sc);
+
+	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 #define	MDI_IO		CTRL_SWDPIN(2)

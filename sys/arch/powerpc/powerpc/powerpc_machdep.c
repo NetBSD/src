@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.35.2.1 2007/12/08 18:17:41 mjf Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.35.2.2 2008/02/18 21:04:59 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.35.2.1 2007/12/08 18:17:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.35.2.2 2008/02/18 21:04:59 mjf Exp $");
 
 #include "opt_altivec.h"
 
@@ -50,7 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.35.2.1 2007/12/08 18:17:41 mjf
 
 int cpu_timebase;
 int cpu_printfataltraps;
-#if defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE)
+#if !defined(PPC_IBM4XX)
 extern int powersave;
 #endif
 
@@ -118,7 +118,7 @@ sysctl_machdep_cacheinfo(SYSCTLFN_ARGS)
 	return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 }
 
-#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#if !defined (PPC_IBM4XX)
 static int
 sysctl_machdep_powersave(SYSCTLFN_ARGS)
 {
@@ -171,7 +171,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
 		       CTLTYPE_INT, "cachelinesize", NULL,
-		       NULL, CACHELINESIZE, NULL, 0,
+		       NULL, curcpu()->ci_ci.dcache_line_size, NULL, 0,
 		       CTL_MACHDEP, CPU_CACHELINE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
@@ -189,7 +189,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "cacheinfo", NULL,
 		       sysctl_machdep_cacheinfo, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_CACHEINFO, CTL_EOL);
-#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+#if !defined (PPC_IBM4XX)
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "powersave", NULL,

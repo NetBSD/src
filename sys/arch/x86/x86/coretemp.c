@@ -1,4 +1,4 @@
-/* $NetBSD: coretemp.c,v 1.1.4.3 2007/12/27 00:43:26 mjf Exp $ */
+/* $NetBSD: coretemp.c,v 1.1.4.4 2008/02/18 21:05:17 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -36,17 +36,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.4.3 2007/12/27 00:43:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coretemp.c,v 1.1.4.4 2008/02/18 21:05:17 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
 #include <sys/xcall.h>
+#include <sys/cpu.h>
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <machine/cpu.h>
 #include <machine/cpuvar.h>
 #include <machine/specialreg.h>
+#include <machine/cpufunc.h>
 
 struct coretemp_softc {
 	struct cpu_info		*sc_ci;
@@ -75,7 +76,7 @@ coretemp_register(struct cpu_info *ci)
 	if ((regs[0] & 0x1) != 1)
 		return;
 
-	sc = kmem_zalloc(sizeof(*sc), KM_NOSLEEP);
+	sc = kmem_zalloc(sizeof(struct coretemp_softc), KM_NOSLEEP);
 	if (!sc)
 		return;
 
@@ -99,8 +100,7 @@ coretemp_register(struct cpu_info *ci)
 		if (msr < 0x39) {
 			aprint_debug("%s: not supported (Intel errata AE18), "
 			    "try updating your BIOS\n", sc->sc_dvname);
-			kmem_free(sc, sizeof(*sc));
-			return;
+			goto bad;
 		}
 	}
 
@@ -132,7 +132,7 @@ coretemp_register(struct cpu_info *ci)
 	sc->sc_sme = sysmon_envsys_create();
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
-		return;
+		goto bad;
 	}
 
 	/*
@@ -146,8 +146,13 @@ coretemp_register(struct cpu_info *ci)
 		aprint_error("%s: unable to register with sysmon\n",
 		    sc->sc_dvname);
 		sysmon_envsys_destroy(sc->sc_sme);
-		kmem_free(sc, sizeof(*sc));
+		goto bad;
 	}
+
+	return;
+
+bad:
+	kmem_free(sc, sizeof(struct coretemp_softc));
 }
 
 static void
@@ -156,15 +161,8 @@ coretemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	struct coretemp_softc *sc = sme->sme_cookie;
 	uint64_t where;
 
-	/*
-	 * No need to cross-call if we are running on the same CPU.
-	 */
-	if (curcpu() != sc->sc_ci) {
-		where = xc_unicast(0, coretemp_refresh_xcall,
-		    sc, edata, sc->sc_ci);
-		xc_wait(where);
-	} else
-		coretemp_refresh_xcall(sc, edata);
+	where = xc_unicast(0, coretemp_refresh_xcall, sc, edata, sc->sc_ci);
+	xc_wait(where);
 }
 
 static void

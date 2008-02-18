@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vnops.c,v 1.4.10.2 2007/12/27 00:45:45 mjf Exp $	*/
+/*	$NetBSD: hfs_vnops.c,v 1.4.10.3 2008/02/18 21:06:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4.10.2 2007/12/27 00:45:45 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vnops.c,v 1.4.10.3 2008/02/18 21:06:39 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -159,7 +159,6 @@ const struct vnodeopv_entry_desc hfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
 	{ &vop_read_desc, hfs_vop_read },		/* read */
 	{ &vop_write_desc, genfs_eopnotsupp },		/* write */
-	{ &vop_lease_desc, genfs_eopnotsupp },		/* lease */
 	{ &vop_ioctl_desc, genfs_eopnotsupp },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, genfs_eopnotsupp },		/* poll */
@@ -214,7 +213,6 @@ const struct vnodeopv_entry_desc hfs_specop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
 	{ &vop_read_desc, spec_read },			/* read */
 	{ &vop_write_desc, spec_write },		/* write */
-	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -271,7 +269,6 @@ const struct vnodeopv_entry_desc hfs_fifoop_entries[] = {
 	{ &vop_setattr_desc, hfs_vop_setattr },	/* setattr */
 	{ &vop_read_desc, fifo_read },			/* read */
 	{ &vop_write_desc, fifo_write },		/* write */
-	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, genfs_fcntl },		/* fcntl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
@@ -484,7 +481,6 @@ hfs_vop_open(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -509,7 +505,6 @@ hfs_vop_close(void *v)
 		struct vnode *a_vp;
 		int a_fflag;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct hfsnode *hn = VTOH(ap->a_vp);
 #endif
@@ -529,7 +524,6 @@ hfs_vop_access(void *v)
 		struct vnode *a_vp;
 		int a_mode;
 		kauth_cred_t a_cred;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vattr va;
 	int error;
@@ -568,7 +562,6 @@ hfs_vop_getattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		struct ucred	*a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vnode	*vp;
 	struct hfsnode	*hp;
@@ -660,7 +653,6 @@ hfs_vop_setattr(void *v)
 		struct vnode	*a_vp;
 		struct vattr	*a_vap;
 		kauth_cred_t	a_cred;
-		struct lwp	*a_l;
 	} */ *ap = v;
 	struct vattr	*vap;
 	struct vnode	*vp;
@@ -1000,7 +992,6 @@ hfs_vop_reclaim(void *v)
 {
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-		struct lwp *a_l;
 	} */ *ap = v;
 	struct vnode *vp;
 	struct hfsnode *hp;
@@ -1050,7 +1041,6 @@ hfs_vop_print(void *v)
 	hp = VTOH(vp);
 
 	printf("dummy = %X\n", (unsigned)hp->dummy);
-	lockmgr_printinfo(&vp->v_lock);
 	printf("\n");
 
 	return 0;

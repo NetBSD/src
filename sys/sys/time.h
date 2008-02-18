@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.57 2007/03/04 06:03:42 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.57.22.1 2008/02/18 21:07:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -74,7 +74,7 @@ struct timezone {
 };
 
 /* Operations on timevals. */
-#define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0
+#define	timerclear(tvp)		(tvp)->tv_sec = (tvp)->tv_usec = 0L
 #define	timerisset(tvp)		((tvp)->tv_sec || (tvp)->tv_usec)
 #define	timercmp(tvp, uvp, cmp)						\
 	(((tvp)->tv_sec == (uvp)->tv_sec) ?				\
@@ -192,8 +192,8 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 #endif /* _KERNEL */
 
 /* Operations on timespecs. */
-#define	timespecclear(tsp)		(tsp)->tv_sec = (tsp)->tv_nsec = 0
-#define	timespecisset(tsp)		((tsp)->tv_sec || (tsp)->tv_nsec)
+#define	timespecclear(tsp)	(tsp)->tv_sec = (time_t)((tsp)->tv_nsec = 0L)
+#define	timespecisset(tsp)	((tsp)->tv_sec || (tsp)->tv_nsec)
 #define	timespeccmp(tsp, usp, cmp)					\
 	(((tsp)->tv_sec == (usp)->tv_sec) ?				\
 	    ((tsp)->tv_nsec cmp (usp)->tv_nsec) :			\

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.274 2007/10/17 19:57:15 garbled Exp $ */
+/*	$NetBSD: machdep.c,v 1.274.2.1 2008/02/18 21:05:03 mjf Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2007/10/17 19:57:15 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274.2.1 2008/02/18 21:05:03 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2007/10/17 19:57:15 garbled Exp $"
 #include <sys/syscallargs.h>
 #include <sys/exec.h>
 #include <sys/ucontext.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm.h>		/* we use uvm.kernel_object */
 

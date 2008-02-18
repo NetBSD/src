@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback.c,v 1.26.2.2 2007/12/08 18:18:30 mjf Exp $      */
+/*      $NetBSD: xennetback.c,v 1.26.2.3 2008/02/18 21:05:21 mjf Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xennetback.c,v 1.26.2.3 2008/02/18 21:05:21 mjf Exp $");
 
 #include "opt_xen.h"
 
@@ -392,7 +395,7 @@ xnetback_ctrlif_rx(ctrl_msg_t *msg, unsigned long id)
 		if (error) {
 			pmap_remove(pmap_kernel(), ring_rxaddr,
 			    ring_rxaddr + PAGE_SIZE);
-			pmap_update();
+			pmap_update(pmap_kernel());
 fail_1:
 			uvm_km_free(kernel_map, ring_rxaddr, PAGE_SIZE,
 			    UVM_KMF_VAONLY);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.36 2007/10/25 19:32:15 plunky Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.36.2.1 2008/02/18 21:06:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.36 2007/10/25 19:32:15 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.36.2.1 2008/02/18 21:06:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -196,7 +196,14 @@ static const struct uvisor_type uvisor_devs[] = {
 };
 #define uvisor_lookup(v, p) ((const struct uvisor_type *)usb_lookup(uvisor_devs, v, p))
 
-USB_DECLARE_DRIVER(uvisor);
+int uvisor_match(device_t, struct cfdata *, void *);
+void uvisor_attach(device_t, device_t, void *);
+void uvisor_childdet(device_t, device_t);
+int uvisor_detach(device_t, int);
+int uvisor_activate(device_t, enum devact);
+extern struct cfdriver uvisor_cd;
+CFATTACH_DECL2(uvisor, sizeof(struct uvisor_softc), uvisor_match,
+    uvisor_attach, uvisor_detach, uvisor_activate, NULL, uvisor_childdet);
 
 USB_MATCH(uvisor)
 {
@@ -391,20 +398,32 @@ uvisor_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-int
-uvisor_detach(device_ptr_t self, int flags)
+void
+uvisor_childdet(device_t self, device_t child)
 {
-	struct uvisor_softc *sc = (struct uvisor_softc *)self;
+	int i;
+	struct uvisor_softc *sc = device_private(self);
+
+	for (i = 0; i < sc->sc_numcon; i++) {
+		if (sc->sc_subdevs[i] == child)
+			break;
+	}
+	KASSERT(i < sc->sc_numcon);
+	sc->sc_subdevs[i] = NULL;
+}
+
+int
+uvisor_detach(device_t self, int flags)
+{
+	struct uvisor_softc *sc = device_private(self);
 	int rv = 0;
 	int i;
 
 	DPRINTF(("uvisor_detach: sc=%p flags=%d\n", sc, flags));
 	sc->sc_dying = 1;
 	for (i = 0; i < sc->sc_numcon; i++) {
-		if (sc->sc_subdevs[i] != NULL) {
+		if (sc->sc_subdevs[i] != NULL)
 			rv |= config_detach(sc->sc_subdevs[i], flags);
-			sc->sc_subdevs[i] = NULL;
-		}
 	}
 
 	if (sc->sc_udev)

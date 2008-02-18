@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.141 2007/10/17 19:54:24 garbled Exp $	*/
+/*	$NetBSD: locore.s,v 1.141.2.1 2008/02/18 21:04:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -1071,16 +1071,15 @@ ENTRY_NOPROFILE(intrhand)	/* levels 1 through 5 */
 
 ENTRY_NOPROFILE(lev6intr)	/* level 6: clock */
 	INTERRUPT_SAVEREG
+	addql	#1,_C_LABEL(idepth)	| entering interrupt
 	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| read clock status
 Lclkagain:
 	btst	#0,%d0			| clear timer1 int immediately to
 	jeq	Lnotim1			|  minimize chance of losing another
 	movpw	%a0@(CLKMSB1),%d1	|  due to statintr processing delay
-/* #ifdef __HAVE_TIMECOUNTER */		| XXX can't include <machine/types.h>
 	movl	_C_LABEL(clkint),%d1	| clkcounter += clkint
 	addl	%d1,_C_LABEL(clkcounter)
-/* #endif */
 Lnotim1:
 	btst	#2,%d0			| timer3 interrupt?
 	jeq	Lnotim3			| no, skip statclock
@@ -1134,6 +1133,7 @@ Lrecheck:
 	addql	#1,_C_LABEL(uvmexp)+UVMEXP_INTRS | chalk up another interrupt
 	movb	%a0@(CLKSR),%d0		| see if anything happened
 	jmi	Lclkagain		|  while we were in hardclock/statintr
+	subql	#1,_C_LABEL(idepth)	| exiting from interrupt
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)		| all done
 

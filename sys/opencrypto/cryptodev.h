@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.8 2007/03/04 06:03:40 christos Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.8.22.1 2008/02/18 21:07:18 mjf Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -99,7 +99,10 @@
 #define CRYPTO_NULL_HMAC	16
 #define CRYPTO_NULL_CBC		17
 #define CRYPTO_DEFLATE_COMP	18 /* Deflate compression algorithm */
-#define CRYPTO_ALGORITHM_MAX	18 /* Keep updated - see below */
+#define CRYPTO_MD5_HMAC_96	19 
+#define CRYPTO_SHA1_HMAC_96	20
+#define CRYPTO_RIPEMD160_HMAC_96	21
+#define CRYPTO_ALGORITHM_MAX	22 /* Keep updated - see below */
 
 /* Algorithm flags */
 #define	CRYPTO_ALG_FLAG_SUPPORTED	0x01 /* Algorithm is supported */
@@ -155,13 +158,25 @@ struct crypt_kop {
 #define CRK_DSA_SIGN		2
 #define CRK_DSA_VERIFY		3
 #define CRK_DH_COMPUTE_KEY	4
-#define CRK_ALGORITHM_MAX	4 /* Keep updated - see below */
+#define CRK_MOD_ADD		5
+#define CRK_MOD_ADDINV		6
+#define CRK_MOD_SUB		7
+#define CRK_MOD_MULT		8
+#define CRK_MOD_MULTINV		9
+#define CRK_MOD			10
+#define CRK_ALGORITHM_MAX	10 /* Keep updated - see below */
 
 #define CRF_MOD_EXP		(1 << CRK_MOD_EXP)
 #define CRF_MOD_EXP_CRT		(1 << CRK_MOD_EXP_CRT)
 #define CRF_DSA_SIGN		(1 << CRK_DSA_SIGN)
 #define CRF_DSA_VERIFY		(1 << CRK_DSA_VERIFY)
 #define CRF_DH_COMPUTE_KEY	(1 << CRK_DH_COMPUTE_KEY)
+#define CRF_MOD_ADD		(1 << CRK_MOD_ADD)
+#define CRF_MOD_ADDINV		(1 << CRK_MOD_ADDINV)
+#define CRF_MOD_SUB		(1 << CRK_MOD_SUB)
+#define CRF_MOD_MULT		(1 << CRK_MOD_MULT)
+#define CRF_MOD_MULTINV		(1 << CRK_MOD_MULTINV)
+#define CRF_MOD			(1 << CRK_MOD)
 
 /*
  * done against open of /dev/crypto, to get a cloned descriptor.
@@ -267,6 +282,7 @@ struct cryptop {
 #define	CRYPTO_F_CBIMM		0x0010	/* Do callback immediately */
 #define	CRYPTO_F_DONE		0x0020	/* Operation completed */
 #define	CRYPTO_F_CBIFSYNC	0x0040	/* Do CBIMM if op is synchronous */
+#define	CRYPTO_F_ONRETQ		0x0080	/* Request is on return queue */
 
 	void *		crp_buf;	/* Data to be processed */
 	void *		crp_opaque;	/* Opaque pointer, passed along */
@@ -276,6 +292,7 @@ struct cryptop {
 
 	void *		crp_mac;
 	struct timespec	crp_tstamp;	/* performance time stamp */
+	kcondvar_t	crp_cv;
 };
 
 #define CRYPTO_BUF_CONTIG	0x0
@@ -300,6 +317,8 @@ struct cryptkop {
 	u_int32_t	krp_hid;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
 	int		(*krp_callback)(struct cryptkop *);
+	int		krp_flags;	/* same values as crp_flags */
+	kcondvar_t	krp_cv;
 };
 
 /* Crypto capabilities structure */
@@ -372,6 +391,8 @@ void	cuio_copyback(struct uio *, int, int, void *);
 int	cuio_apply(struct uio *, int, int,
 	    int (*f)(void *, void *, unsigned int), void *);
 
+extern	int crypto_ret_q_remove(struct cryptop *);
+extern	int crypto_ret_kq_remove(struct cryptkop *);
 extern	void crypto_freereq(struct cryptop *crp);
 extern	struct cryptop *crypto_getreq(int num);
 
@@ -379,6 +400,17 @@ extern	int crypto_usercrypto;		/* userland may do crypto requests */
 extern	int crypto_userasymcrypto;	/* userland may do asym crypto reqs */
 extern	int crypto_devallowsoft;	/* only use hardware crypto */
 
+/*
+ * Asymmetric operations are allocated in cryptodev.c but can be
+ * freed in crypto.c.
+ */
+extern	struct pool	cryptkop_pool;
+
+/*
+ * Mutual exclusion and its unwelcome friends.
+ */
+
+extern	kmutex_t	crypto_mtx;
 
 /*
  * initialize the crypto framework subsystem (not the pseudo-device).
@@ -401,17 +433,23 @@ struct	mbuf	*m_getptr(struct mbuf *, int, int *);
 struct uio;
 extern	void cuio_copydata(struct uio* uio, int off, int len, void *cp);
 extern	void cuio_copyback(struct uio* uio, int off, int len, void *cp);
-#ifdef __FreeBSD__
-extern struct iovec *cuio_getptr(struct uio *uio, int loc, int *off);
-#else
 extern int	cuio_getptr(struct uio *, int loc, int *off);
-#endif
 
-#ifdef __FreeBSD__	/* Standalone m_apply()/m_getptr() */
-extern  int m_apply(struct mbuf *m, int off, int len,
-                    int (*f)(void *, void *, unsigned int), void *fstate);
-extern  struct mbuf * m_getptr(struct mbuf *m, int loc, int *off);
-#endif	/* Standalone m_apply()/m_getptr() */
+#ifdef CRYPTO_DEBUG	/* yuck, netipsec defines these differently */
+#ifndef DPRINTF
+#define DPRINTF(a) uprintf a
+#endif
+#ifndef DCPRINTF
+#define DCPRINTF(a) printf a
+#endif
+#else
+#ifndef DPRINTF
+#define DPRINTF(a)
+#endif
+#ifndef DCPRINTF
+#define DCPRINTF(a)
+#endif
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CRYPTO_CRYPTO_H_ */

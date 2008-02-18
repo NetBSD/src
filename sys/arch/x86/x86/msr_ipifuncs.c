@@ -1,4 +1,4 @@
-/* $NetBSD: msr_ipifuncs.c,v 1.11 2007/10/17 19:58:17 garbled Exp $ */
+/* $NetBSD: msr_ipifuncs.c,v 1.11.2.1 2008/02/18 21:05:17 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -34,18 +34,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.11 2007/10/17 19:58:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msr_ipifuncs.c,v 1.11.2.1 2008/02/18 21:05:17 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/mutex.h>
-#include <sys/lock.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <x86/cpu_msr.h>
 
 #include <machine/cpu.h>
 #include <machine/intrdefs.h>
+#include <machine/cpufunc.h>
 
 static kmutex_t msr_mtx;
 static volatile uint64_t msr_setvalue, msr_setmask;

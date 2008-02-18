@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.21 2007/10/17 19:55:46 garbled Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.21.2.1 2008/02/18 21:04:46 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21 2007/10/17 19:55:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.21.2.1 2008/02/18 21:04:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,8 @@ writedisklabel(dev, strat, lp, clp)
 		goto ioerror;
 
 	/* Write MIPS RISC/os label to first sector */
-	bp->b_flags &= ~(B_READ|B_DONE);
+	bp->b_flags &= ~(B_READ);
+	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	if ((error = biowait(bp)) != 0)
@@ -238,7 +239,8 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_blkno = LABELSECTOR;
 	bp->b_bcount = lp->d_secsize;
 	bp->b_cylinder = bp->b_blkno / lp->d_secpercyl;
-	bp->b_flags &= ~(B_READ | B_DONE);
+	bp->b_flags &= ~(B_READ);
+	bp->b_oflags &= ~(BO_DONE);
 	bp->b_flags |= B_WRITE;
 	(*strat)(bp);
 	error = biowait(bp);

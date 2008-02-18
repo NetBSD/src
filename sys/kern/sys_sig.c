@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.8 2007/07/09 21:10:56 ad Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.8.14.1 2008/02/18 21:06:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.8 2007/07/09 21:10:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.8.14.1 2008/02/18 21:06:47 mjf Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -279,7 +279,7 @@ sys_kill(struct lwp *l, void *v, register_t *retval)
 			return (ESRCH);
 		mutex_enter(&p->p_mutex);
 		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_CANSIGNAL, p, (void *)(uintptr_t)signum,
+		    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signum),
 		    NULL, NULL);
 		if (!error && signum) {
 			mutex_enter(&proclist_mutex);
@@ -670,9 +670,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 	/*
 	 * Allocate a ksi up front.  We can't sleep with the mutex held.
 	 */
-	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_alloc() -> pool_get()  */
 	ksi = ksiginfo_alloc(p, NULL, PR_WAITOK);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 	if (ksi == NULL)
 		return (ENOMEM);
 
@@ -750,9 +748,7 @@ __sigtimedwait1(struct lwp *l, void *v, register_t *retval,
 		error = (*put_info)(&ksi->ksi_info, SCARG(uap, info),
 		    sizeof(ksi->ksi_info));
 
-	KERNEL_LOCK(1, l);	/* XXXSMP ksiginfo_free() -> pool_put()  */	
 	ksiginfo_free(ksi);
-	KERNEL_UNLOCK_ONE(l);	/* XXXSMP */
 
 	return error;
 }

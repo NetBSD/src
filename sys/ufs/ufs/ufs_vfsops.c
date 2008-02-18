@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.34.14.1 2007/12/08 18:21:43 mjf Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.34.14.2 2008/02/18 21:07:32 mjf Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.34.14.1 2007/12/08 18:21:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.34.14.2 2008/02/18 21:07:32 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -66,7 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.34.14.1 2007/12/08 18:21:43 mjf Exp
 /* how many times ufs_init() was called */
 static int ufs_initcount = 0;
 
-struct pool ufs_direct_pool;
+pool_cache_t ufs_direct_cache;
 
 /*
  * Make a filesystem operational.
@@ -133,8 +133,9 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 	type = cmds & SUBCMDMASK;
 	if ((u_int)type >= MAXQUOTAS)
 		return (EINVAL);
-	if (vfs_busy(mp, LK_NOWAIT, 0))
-		return (0);
+	error = vfs_trybusy(mp, RW_READER, NULL);
+	if (error != 0)
+		return (error);
 
 	switch (cmd) {
 
@@ -165,7 +166,7 @@ ufs_quotactl(struct mount *mp, int cmds, uid_t uid, void *arg)
 	default:
 		error = EINVAL;
 	}
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return (error);
 #endif
 }
@@ -204,8 +205,8 @@ ufs_init(void)
 	if (ufs_initcount++ > 0)
 		return;
 
-	pool_init(&ufs_direct_pool, sizeof(struct direct), 0, 0, 0, "ufsdirpl",
-	    &pool_allocator_nointr, IPL_NONE);
+	ufs_direct_cache = pool_cache_init(sizeof(struct direct), 0, 0, 0,
+	    "ufsdir", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	ufs_ihashinit();
 #ifdef QUOTA
@@ -241,7 +242,7 @@ ufs_done(void)
 #ifdef QUOTA
 	dqdone();
 #endif
-	pool_destroy(&ufs_direct_pool);
+	pool_cache_destroy(ufs_direct_cache);
 #ifdef UFS_DIRHASH
 	ufsdirhash_done();
 #endif

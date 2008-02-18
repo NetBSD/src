@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.23.2.2 2007/12/27 00:45:13 mjf Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.23.2.3 2008/02/18 21:05:55 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,13 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.23.2.2 2007/12/27 00:45:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.23.2.3 2008/02/18 21:05:55 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/lock.h>
 #include <sys/proc.h>
 #include <sys/agpio.h>
 #include <sys/device.h>
@@ -264,8 +263,11 @@ agp_intel_init(struct agp_softc *sc)
 		break;
 
 	default:
-		pci_conf_write(sc->as_pc, sc->as_tag,
-			AGP_INTEL_ERRSTS, 0x70);
+		{
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS - 1);
+		reg |= 0x7000;
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS - 1, reg);
+		}
 	}
 
 	return (0);

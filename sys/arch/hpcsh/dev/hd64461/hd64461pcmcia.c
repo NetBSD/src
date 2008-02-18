@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.38 2007/10/17 19:54:30 garbled Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.38.2.1 2008/02/18 21:04:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.38 2007/10/17 19:54:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.38.2.1 2008/02/18 21:04:34 mjf Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -260,15 +260,18 @@ hd64461pcmcia_attach(struct device *parent, struct device *self, void *aux)
 
 	sc->sc_module_id = ha->ha_module_id;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
 #ifdef HD64461PCMCIA_DEBUG
 	hd64461pcmcia_info(sc);
 #endif
 	/* Channel 0/1 common CSC event queue */
 	SIMPLEQ_INIT (&sc->sc_event_head);
-	error = kthread_create(PRI_NONE, 0, NULL, hd64461pcmcia_event_thread,
-	    sc, &sc->sc_event_thread, "%s", sc->sc_dev.dv_xname);
+	error = kthread_create(PRI_NONE, 0, NULL,
+			       hd64461pcmcia_event_thread, sc,
+			       &sc->sc_event_thread,
+			       "%s", device_xname(self));
 	KASSERT(error == 0);
 
 #if !defined(HD64461PCMCIA_REORDER_ATTACH)
@@ -1050,17 +1053,25 @@ memory_window_32(enum controller_channel channel, enum memory_window_32 window)
 STATIC void
 hd64461_set_bus_width(enum controller_channel channel, int width)
 {
-	uint16_t r16;
+	unsigned int area, buswidth;
+	uint16_t bcr2;
 
-	r16 = _reg_read_2(SH3_BCR2);
-	if (channel == CHANNEL_0) {
-		r16 &= ~((1 << 13)|(1 << 12));
-		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 12 : 13);
-	} else {
-		r16 &= ~((1 << 11)|(1 << 10));
-		r16 |= 1 << (width == PCMCIA_WIDTH_IO8 ? 10 : 11);
-	}
-	_reg_write_2(SH3_BCR2, r16);
+	if (channel == CHANNEL_0)
+		area = BCR2_AREA6_SHIFT;
+	else
+		area = BCR2_AREA5_SHIFT;
+
+	if (width == PCMCIA_WIDTH_IO8)
+		buswidth = BCR2_AREA_WIDTH_8;
+	else
+		buswidth = BCR2_AREA_WIDTH_16;
+
+	bcr2 = _reg_read_2(SH3_BCR2);
+
+	bcr2 &= ~(BCR2_AREA_WIDTH_MASK << area);
+	bcr2 |= buswidth << area;
+
+	_reg_write_2(SH3_BCR2, bcr2);
 }
 
 STATIC void

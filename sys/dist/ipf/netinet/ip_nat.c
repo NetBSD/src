@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.33 2007/10/02 06:15:12 martti Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.33.4.1 2008/02/18 21:06:35 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995-2003 by Darren Reed.
@@ -116,8 +116,13 @@ extern struct ifnet vpnif;
 #define	SOCKADDR_IN	struct sockaddr_in
 
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.33.4.1 2008/02/18 21:06:35 mjf Exp $");
+#else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.33 2007/10/02 06:15:12 martti Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.33.4.1 2008/02/18 21:06:35 mjf Exp $";
+#endif
 #endif
 
 
@@ -5051,9 +5056,9 @@ static int nat_getnext(t, itp)
 ipftoken_t *t;
 ipfgeniter_t *itp;
 {
-	hostmap_t *hm, *nexthm = NULL, zerohm;
-	ipnat_t *ipn, *nextipnat = NULL, zeroipn;
-	nat_t *nat, *nextnat = NULL, zeronat;
+	hostmap_t *hm = NULL, *nexthm = NULL, zerohm;
+	ipnat_t *ipn = NULL, *nextipnat = NULL, zeroipn;
+	nat_t *nat = NULL, *nextnat = NULL, zeronat;
 	int error = 0, count;
 	char *dst;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.90.2.2 2007/12/27 00:45:32 mjf Exp $	*/
+/*	$NetBSD: uhub.c,v 1.90.2.3 2008/02/18 21:06:26 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.90.2.2 2007/12/27 00:45:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.90.2.3 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,29 +105,14 @@ Static void uhub_intr(usbd_xfer_handle, usbd_private_handle,usbd_status);
  * Every other driver only connects to hubs
  */
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-USB_DECLARE_DRIVER(uhub);
-#elif defined(__FreeBSD__)
-USB_DECLARE_DRIVER_INIT(uhub,
-			DEVMETHOD(bus_child_detached, uhub_child_detached));
-
-/* Create the driver instance for the hub connected to usb case. */
-devclass_t uhubroot_devclass;
-
-Static device_method_t uhubroot_methods[] = {
-	DEVMETHOD(device_probe, uhub_match),
-	DEVMETHOD(device_attach, uhub_attach),
-
-	/* detach is not allowed for a root hub */
-	{0,0}
-};
-
-Static	driver_t uhubroot_driver = {
-	"uhub",
-	uhubroot_methods,
-	sizeof(struct uhub_softc)
-};
-#endif
+int uhub_match(device_t, struct cfdata *, void *);
+void uhub_attach(device_t, device_t, void *);
+void uhub_childdet(device_t, device_t);
+int uhub_detach(device_t, int);
+int uhub_activate(device_t, enum devact);
+extern struct cfdriver uhub_cd;
+CFATTACH_DECL2(uhub, sizeof(struct uhub_softc), uhub_match,
+    uhub_attach, uhub_detach, uhub_activate, NULL, uhub_childdet);
 
 USB_MATCH(uhub)
 {
@@ -350,9 +335,11 @@ USB_ATTACH(uhub)
 			       USBDEVNAME(sc->sc_dev), port,
 			       usbd_errstr(err));
 		DPRINTF(("usb_init_port: turn on port %d power\n", port));
-		/* Wait for stable power. */
-		usbd_delay_ms(dev, pwrdly);
 	}
+
+	/* Wait for stable power if we are not a root hub */
+	if (dev->powersrc->parent != NULL)
+		usbd_delay_ms(dev, pwrdly);
 
 	/* The usual exploration will finish the setup. */
 
@@ -598,6 +585,7 @@ USB_DETACH(uhub)
 	if (hub == NULL)		/* Must be partially working */
 		return (0);
 
+	pmf_device_deregister(self);
 	usbd_abort_pipe(sc->sc_ipipe);
 	usbd_close_pipe(sc->sc_ipipe);
 
@@ -623,36 +611,35 @@ USB_DETACH(uhub)
 	return (0);
 }
 
-#if defined(__FreeBSD__)
 /* Called when a device has been detached from it */
-Static void
-uhub_child_detached(device_t self, device_t child)
+void
+uhub_childdet(device_t self, device_t child)
 {
-       struct uhub_softc *sc = device_get_softc(self);
-       usbd_device_handle devhub = sc->sc_hub;
-       usbd_device_handle dev;
-       int nports;
-       int port;
-       int i;
+	struct uhub_softc *sc = device_private(self);
+	usbd_device_handle devhub = sc->sc_hub;
+	usbd_device_handle dev;
+	int nports;
+	int port;
+	int i;
 
-       if (!devhub->hub)
-               /* should never happen; children are only created after init */
-               panic("hub not fully initialised, but child deleted?");
+	if (!devhub->hub)
+		/* should never happen; children are only created after init */
+		panic("hub not fully initialised, but child deleted?");
 
-       nports = devhub->hub->hubdesc.bNbrPorts;
-       for (port = 0; port < nports; port++) {
-               dev = devhub->hub->ports[port].device;
-               if (dev && dev->subdevs) {
-                       for (i = 0; dev->subdevs[i]; i++) {
-                               if (dev->subdevs[i] == child) {
-                                       dev->subdevs[i] = NULL;
-                                       return;
-                               }
-                       }
-               }
-       }
+	nports = devhub->hub->hubdesc.bNbrPorts;
+	for (port = 0; port < nports; port++) {
+		dev = devhub->hub->ports[port].device;
+		if (dev == NULL || dev->subdevs == NULL)
+			continue;
+		for (i = 0; dev->subdevs[i]; i++) {
+			if (dev->subdevs[i] == child) {
+				dev->subdevs[i] = NULL;
+				return;
+			}
+		}
+	}
+	KASSERT(false);
 }
-#endif
 
 
 /*

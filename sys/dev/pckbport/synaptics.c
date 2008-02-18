@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.16 2007/10/19 12:01:03 ad Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.16.2.1 2008/02/18 21:06:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,6 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.16.2.1 2008/02/18 21:06:20 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,7 +314,8 @@ pms_synaptics_resume(void *vsc)
 	cmd[0] = PMS_RESET;
 	res = pckbport_poll_cmd(psc->sc_kbctag, psc->sc_kbcslot, cmd, 1, 2,
 	    resp, 1);
-	printf("%s: pms_synaptics_resume: reset on resume %d 0x%02x 0x%02x\n",
+	aprint_debug(
+	    "%s: pms_synaptics_resume: reset on resume %d 0x%02x 0x%02x\n",
 	    psc->sc_dev.dv_xname, res, resp[0], resp[1]);
 }
 
@@ -755,7 +757,8 @@ pms_synaptics_input(void *vsc, int data)
 	if (psc->inputstate > 0) {
 		timersub(&psc->current, &psc->last, &diff);
 		if (diff.tv_sec > 0 || diff.tv_usec >= 40000) {
-			printf("%s: pms_input: unusual delay (%ld.%06ld s), "
+			aprint_debug(
+			    "%s: pms_input: unusual delay (%ld.%06ld s), "
 			    "scheduling reset\n", psc->sc_dev.dv_xname,
 			    (long)diff.tv_sec, (long)diff.tv_usec);
 			psc->inputstate = 0;

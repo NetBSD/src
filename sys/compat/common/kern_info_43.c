@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.29 2007/03/04 06:01:13 christos Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.29.22.1 2008/02/18 21:05:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.29 2007/03/04 06:01:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.29.22.1 2008/02/18 21:05:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,9 @@ compat_43_sys_getdtablesize(struct lwp *l, void *v, register_t *retval)
 {
 	struct proc *p = l->l_proc;
 
+	mutex_enter(&p->p_mutex);
 	*retval = min((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
+	mutex_exit(&p->p_mutex);
 	return (0);
 }
 
@@ -283,16 +285,14 @@ compat_43_sys_getkerninfo(struct lwp *l, void *v, register_t *retval)
 int
 compat_43_sys_sethostid(struct lwp *l, void *v, register_t *retval)
 {
-	struct compat_43_sys_sethostid_args /* {
-		syscallarg(int32_t) hostid;
-	} */ *uap = v;
-	int error;
+	long uhostid;
+	int name[2];
 
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		return (error);
-	hostid = SCARG(uap, hostid);
-	return (0);
+	uhostid = SCARG(uap, hostid);
+	name[0] = CTL_KERN;
+	name[1] = KERN_HOSTID;
+
+	return (old_sysctl(&name[0], 2, 0, 0, &uhostid, sizeof(long), l));
 }
 
 

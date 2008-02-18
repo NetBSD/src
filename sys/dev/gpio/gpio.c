@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.12 2007/03/04 06:01:46 christos Exp $ */
+/* $NetBSD: gpio.c,v 1.12.22.1 2008/02/18 21:05:37 mjf Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.12 2007/03/04 06:01:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.12.22.1 2008/02/18 21:05:37 mjf Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -47,11 +47,12 @@ struct gpio_softc {
 	int sc_dying;
 };
 
-int	gpio_match(struct device *, struct cfdata *, void *);
-void	gpio_attach(struct device *, struct device *, void *);
-int	gpio_detach(struct device *, int);
-int	gpio_activate(struct device *, enum devact);
-int	gpio_search(struct device *, struct cfdata *, const int *, void *);
+int	gpio_match(device_t, struct cfdata *, void *);
+void	gpio_attach(device_t, device_t, void *);
+bool	gpio_resume(device_t);
+int	gpio_detach(device_t, int);
+int	gpio_activate(device_t, enum devact);
+int	gpio_search(device_t, struct cfdata *, const int *, void *);
 int	gpio_print(void *, const char *);
 
 CFATTACH_DECL(gpio, sizeof(struct gpio_softc),
@@ -69,15 +70,14 @@ const struct cdevsw gpio_cdevsw = {
 extern struct cfdriver gpio_cd;
 
 int
-gpio_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+gpio_match(device_t parent, struct cfdata *cf, void *aux)
 {
 
 	return (1);
 }
 
 void
-gpio_attach(struct device *parent, struct device *self, void *aux)
+gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpio_softc *sc = device_private(self);
 	struct gpiobus_attach_args *gba = aux;
@@ -96,7 +96,7 @@ gpio_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-gpio_detach(struct device *self, int flags)
+gpio_detach(device_t self, int flags)
 {
 #if 0
 	int maj, mn;
@@ -115,7 +115,7 @@ gpio_detach(struct device *self, int flags)
 }
 
 int
-gpio_activate(struct device *self, enum devact act)
+gpio_activate(device_t self, enum devact act)
 {
 	struct gpio_softc *sc = device_private(self);
 
@@ -131,7 +131,7 @@ gpio_activate(struct device *self, enum devact act)
 }
 
 int
-gpio_search(struct device *parent, struct cfdata *cf,
+gpio_search(device_t parent, struct cfdata *cf,
     const int *ldesc, void *aux)
 {
 	struct gpio_attach_args ga;

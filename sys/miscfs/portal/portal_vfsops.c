@@ -1,4 +1,4 @@
-/*	$NetBSD: portal_vfsops.c,v 1.67.4.1 2007/12/08 18:21:02 mjf Exp $	*/
+/*	$NetBSD: portal_vfsops.c,v 1.67.4.2 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.67.4.1 2007/12/08 18:21:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.67.4.2 2008/02/18 21:07:00 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -65,6 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: portal_vfsops.c,v 1.67.4.1 2007/12/08 18:21:02 mjf E
 #include <sys/dirent.h>
 #include <sys/un.h>
 #include <sys/kauth.h>
+
+#include <miscfs/genfs/genfs.h>
 
 #include <miscfs/portal/portal.h>
 
@@ -179,11 +181,7 @@ portal_unmount(struct mount *mp, int mntflags)
 		return (error);
 
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
@@ -308,6 +306,8 @@ struct vfsops portal_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	portal_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.156 2007/10/08 16:18:04 ad Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.156.4.1 2008/02/18 21:07:01 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.156 2007/10/08 16:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.156.4.1 2008/02/18 21:07:01 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.156 2007/10/08 16:18:04 ad Exp $"
 #include <sys/kauth.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/netisr.h>
@@ -99,6 +100,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.156 2007/10/08 16:18:04 ad Exp $"
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+
+#include <net/if_media.h>
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 
 #if NARP == 0
 /*
@@ -1497,12 +1502,12 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > maxmtu)
 			error = EINVAL;
-		else {
-			ifp->if_mtu = ifr->ifr_mtu;
-
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
 			/* Make sure the device notices the MTU change. */
 			if (ifp->if_flags & IFF_UP)
 				error = (*ifp->if_init)(ifp);
+			else
+				error = 0;
 		}
 		break;
 	    }
@@ -1536,9 +1541,19 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		error = ether_delmulti(ifreq_getaddr(cmd, ifr), ec);
 		break;
-
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		if (ec->ec_mii == NULL)
+			error = ENOTTY;
+		else
+			error = ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media,
+			    cmd);
+		break;
+	case SIOCSIFCAP:
+		return ifioctl_common(ifp, cmd, data);
 	default:
 		error = ENOTTY;
+		break;
 	}
 
 	return (error);

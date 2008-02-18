@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.11.2.2 2007/12/27 00:45:32 mjf Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.11.2.3 2008/02/18 21:06:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.11.2.2 2007/12/27 00:45:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.11.2.3 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ struct ugensa_softc {
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
-	device_ptr_t		sc_subdev;
+	device_t		sc_subdev;
 	int			sc_numcon;
 
 	u_char			sc_dying;
@@ -97,12 +97,20 @@ static const struct usb_devno ugensa_devs[] = {
 	{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS },
 	{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K },
 	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD580 },
+	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MINI5725},
 	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_CDMA_MODEM },
 	{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }
 };
 #define ugensa_lookup(v, p) usb_lookup(ugensa_devs, v, p)
 
-USB_DECLARE_DRIVER(ugensa);
+int ugensa_match(device_t, struct cfdata *, void *);
+void ugensa_attach(device_t, device_t, void *);
+void ugensa_childdet(device_t, device_t);
+int ugensa_detach(device_t, int);
+int ugensa_activate(device_t, enum devact);
+extern struct cfdriver ugensa_cd;
+CFATTACH_DECL2(ugensa, sizeof(struct ugensa_softc), ugensa_match,
+    ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
 
 USB_MATCH(ugensa)
 {
@@ -205,6 +213,8 @@ USB_ATTACH(ugensa)
 	sc->sc_subdev = config_found_sm_loc(self, "ucombus", NULL, &uca,
 					    ucomprint, ucomsubmatch);
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	USB_ATTACH_SUCCESS_RETURN;
 
 bad:
@@ -213,10 +223,19 @@ bad:
 	USB_ATTACH_ERROR_RETURN;
 }
 
-int
-ugensa_activate(device_ptr_t self, enum devact act)
+void
+ugensa_childdet(device_t self, device_t child)
 {
-	struct ugensa_softc *sc = (struct ugensa_softc *)self;
+	struct ugensa_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
+}
+
+int
+ugensa_activate(device_t self, enum devact act)
+{
+	struct ugensa_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -241,6 +260,7 @@ USB_DETACH(ugensa)
 	DPRINTF(("ugensa_detach: sc=%p flags=%d\n", sc, flags));
 
 	sc->sc_dying = 1;
+	pmf_device_deregister(self);
 
 	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);

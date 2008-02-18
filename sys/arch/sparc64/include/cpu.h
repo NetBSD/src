@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.67 2007/10/17 19:57:29 garbled Exp $ */
+/*	$NetBSD: cpu.h,v 1.67.2.1 2008/02/18 21:05:06 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -203,13 +203,13 @@ void	cpu_boot_secondary_processors(void);
 
 /*
  * Call a function on other cpus:
- *	multicast - send to everyone in the cpuset_t
+ *	multicast - send to everyone in the sparc64_cpuset_t
  *	broadcast - send to to all cpus but ourselves
  *	send - send to just this cpu
  */
 typedef void (* ipifunc_t)(void *);
 
-void	sparc64_multicast_ipi (cpuset_t, ipifunc_t);
+void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t);
 void	sparc64_broadcast_ipi (ipifunc_t);
 void	sparc64_send_ipi (int, ipifunc_t);
 #endif
@@ -269,6 +269,10 @@ void setsoftnet(void);
 struct intrhand {
 	int			(*ih_fun)(void *);
 	void			*ih_arg;
+	/* if we have to take the biglock, we interpose a wrapper
+	 * and need to save the original function and arg */
+	int			(*ih_realfun)(void *);
+	void			*ih_realarg;
 	short			ih_number;	/* interrupt number */
 						/* the H/W provides */
 	char			ih_pil;		/* interrupt priority */

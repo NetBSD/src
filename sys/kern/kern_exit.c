@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.190.2.3 2007/12/27 00:45:58 mjf Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.190.2.4 2008/02/18 21:06:45 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,11 +74,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.190.2.3 2007/12/27 00:45:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.190.2.4 2008/02/18 21:06:45 mjf Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
-#include "opt_systrace.h"
 #include "opt_sysv.h"
 
 #include <sys/param.h>
@@ -109,7 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.190.2.3 2007/12/27 00:45:58 mjf Exp 
 #include <sys/sched.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
-#include <sys/systrace.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>
@@ -175,6 +173,7 @@ sys_exit(struct lwp *l, const struct sys_exit_args *uap, register_t *retval)
 	struct proc *p = l->l_proc;
 
 	/* Don't call exit1() multiple times in the same process. */
+	KERNEL_LOCK(1, NULL);
 	mutex_enter(&p->p_smutex);
 	if (p->p_sflag & PS_WEXIT) {
 		mutex_exit(&p->p_smutex);
@@ -298,9 +297,6 @@ exit1(struct lwp *l, int rv)
 		mutex_exit(&ktrace_lock);
 	}
 #endif
-#ifdef SYSTRACE
-	systrace_sys_exit(p);
-#endif
 
 	/*
 	 * If emulation has process exit hook, call it now.
@@ -311,9 +307,6 @@ exit1(struct lwp *l, int rv)
 	p->p_xstat = rv;
 	if (p->p_emul->e_proc_exit)
 		(*p->p_emul->e_proc_exit)(p);
-
-	/* Collect child u-areas. */
-	uvm_uarea_drain(false);
 
 	/*
 	 * Free the VM resources we're still holding on to.
@@ -380,15 +373,11 @@ exit1(struct lwp *l, int rv)
 				tp->t_pgrp = NULL;
 				tp->t_session = NULL;
 				mutex_spin_exit(&tty_lock);
-				SESSRELE(sp);
 				mutex_exit(&proclist_lock);
 				(void) ttywait(tp);
 				mutex_enter(&proclist_lock);
 
-				/*
-				 * The tty could have been revoked
-				 * if we blocked.
-				 */
+				/* The tty could have been revoked. */
 				vprevoke = sp->s_ttyvp;
 			} else
 				mutex_spin_exit(&tty_lock);
@@ -403,9 +392,12 @@ exit1(struct lwp *l, int rv)
 		sp->s_leader = NULL;
 
 		if (vprevoke != NULL || vprele != NULL) {
-			mutex_exit(&proclist_lock);
-			if (vprevoke != NULL)
+			if (vprevoke != NULL) {
+				SESSRELE(sp);
+				mutex_exit(&proclist_lock);
 				VOP_REVOKE(vprevoke, REVOKEALL);
+			} else
+				mutex_exit(&proclist_lock);
 			if (vprele != NULL)
 				vrele(vprele);
 			mutex_enter(&proclist_lock);
@@ -426,6 +418,8 @@ exit1(struct lwp *l, int rv)
 	 * Notify interested parties of our demise.
 	 */
 	KNOTE(&p->p_klist, NOTE_EXIT);
+
+
 
 #if PERFCTRS
 	/*
@@ -682,9 +676,10 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 	struct proc	*child;
 	int		error;
 
+	KERNEL_LOCK(1, NULL);		/* XXXSMP */
 	mutex_enter(&proclist_lock);
-
 	error = find_stopped_child(l->l_proc, *pid, options, &child, status);
+	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 
 	if (child == NULL) {
 		mutex_exit(&proclist_lock);
@@ -700,9 +695,7 @@ do_sys_wait(struct lwp *l, int *pid, int *status, int options,
 		if (options & WNOWAIT)
 			mutex_exit(&proclist_lock);
 		else {
-			KERNEL_LOCK(1, l);		/* XXXSMP */
 			proc_free(child, ru);
-			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 		}
 	} else {
 		/* Child state must have been SSTOP. */
@@ -910,7 +903,9 @@ proc_free(struct proc *p, struct rusage *ru)
 				kpsignal(parent, &ksi, NULL);
 				mutex_exit(&proclist_mutex);
 			}
+			KERNEL_LOCK(1, NULL);		/* XXXSMP */
 			cv_broadcast(&parent->p_waitcv);
+			KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 			mutex_exit(&proclist_lock);
 			return;
 		}
@@ -994,7 +989,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	if (p->p_textvp)
 		vrele(p->p_textvp);
 
-	mutex_destroy(&p->p_raslock);
+	mutex_destroy(&p->p_auxlock);
 	mutex_destroy(&p->p_mutex);
 	mutex_destroy(&p->p_stmutex);
 	mutex_destroy(&p->p_smutex);
@@ -1002,12 +997,7 @@ proc_free(struct proc *p, struct rusage *ru)
 	cv_destroy(&p->p_lwpcv);
 	rw_destroy(&p->p_reflock);
 
-	pool_put(&proc_pool, p);
-
-	/*
-	 * Collect child u-areas.
-	 */
-	uvm_uarea_drain(false);
+	proc_free_mem(p);
 }
 
 /*

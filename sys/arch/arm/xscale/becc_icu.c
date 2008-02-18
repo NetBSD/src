@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_icu.c,v 1.7 2006/11/24 21:20:05 wiz Exp $	*/
+/*	$NetBSD: becc_icu.c,v 1.7.36.1 2008/02/18 21:04:24 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.7 2006/11/24 21:20:05 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_icu.c,v 1.7.36.1 2008/02/18 21:04:24 mjf Exp $");
 
 #ifndef EVBARM_SPL_NOINLINE
 #define	EVBARM_SPL_NOINLINE
@@ -299,6 +299,7 @@ _splraise(int ipl)
 	return (becc_splraise(ipl));
 }
 
+#ifdef __HAVE_FAST_SOFTINTS
 void
 _setsoftintr(int si)
 {
@@ -306,11 +307,11 @@ _setsoftintr(int si)
 	becc_setsoftintr(si);
 }
 
-static const int si_to_ipl[SI_NQUEUES] = {
-	IPL_SOFT,		/* SI_SOFT */
-	IPL_SOFTCLOCK,		/* SI_SOFTCLOCK */
-	IPL_SOFTNET,		/* SI_SOFTNET */
-	IPL_SOFTSERIAL,		/* SI_SOFTSERIAL */
+static const int si_to_ipl[] = {
+	[SI_SOFTBIO]	= IPL_SOFTBIO,
+	[SI_SOFTCLOCK]	= IPL_SOFTCLOCK,
+	[SI_SOFTNET]	= IPL_SOFTNET,	
+	[SI_SOFTSERIAL]	= IPL_SOFTSERIAL,
 };               
 
 int
@@ -350,6 +351,7 @@ becc_softint(void *arg)
 
 	return 1;
 }
+#endif
 
 /*
  * becc_icu_init:

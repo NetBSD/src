@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.114.22.1 2007/12/08 18:19:53 mjf Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.114.22.2 2008/02/18 21:06:20 mjf Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.114.22.1 2007/12/08 18:19:53 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.114.22.2 2008/02/18 21:06:20 mjf Exp $");
 
 #include "opt_raid_diagnostic.h"
 
@@ -148,7 +148,7 @@ RF_DECLARE_MUTEX(rf_printf_mutex)	/* debug only:  avoids interleaved
 
 static int configureCount = 0;	/* number of active configurations */
 static int isconfigged = 0;	/* is basic raidframe (non per-array)
-				 * stuff configged */
+				 * stuff configured */
 RF_DECLARE_LKMGR_STATIC_MUTEX(configureMutex)	/* used to lock the configuration
 					 * stuff */
 static RF_ShutdownList_t *globalShutdown;	/* non array-specific
@@ -801,7 +801,7 @@ rf_ResumeNewRequests(RF_Raid_t *raidPtr)
 
 #if RF_DEBUG_QUIESCE
 	if (rf_quiesceDebug)
-		printf("Resuming new reqs\n");
+		printf("raid%d: Resuming new requests\n", raidPtr->raidid);
 #endif
 
 	RF_LOCK_MUTEX(raidPtr->access_suspend_mutex);

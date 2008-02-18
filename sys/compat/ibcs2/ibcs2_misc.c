@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $	*/
+/*	$NetBSD: ibcs2_misc.c,v 1.94.14.1 2008/02/18 21:05:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94 2007/07/17 20:34:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_misc.c,v 1.94.14.1 2008/02/18 21:05:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1190,14 +1190,15 @@ ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
 #define SCO_AD_GETBMAJ      0
 #define SCO_AD_GETCMAJ      1
 
-	/* XXX: is this the right place for this call? */
-	if ((error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		return (error);
 
 	switch(SCARG(uap, cmd)) {
 	case SCO_A_REBOOT:
 	case SCO_A_SHUTDOWN:
+		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_REBOOT,
+		    0, NULL, NULL, NULL);
+		if (error)
+			return (error);
+
 		switch(SCARG(uap, func)) {
 		case SCO_AD_HALT:
 		case SCO_AD_PWRDOWN:
@@ -1211,9 +1212,17 @@ ibcs2_sys_uadmin(struct lwp *l, void *v, register_t *retval)
 	case SCO_A_REMOUNT:
 	case SCO_A_CLOCK:
 	case SCO_A_SETCONFIG:
-		return 0;
 	case SCO_A_GETDEV:
-		return EINVAL;	/* XXX - TODO */
+		/* XXX Use proper kauth(9) requests when updating this. */
+		error = kauth_authorize_generic(l->l_cred,
+		    KAUTH_GENERIC_ISSUSER, NULL);
+		if (error)
+			return (error);
+
+		if (SCARG(uap, cmd) != SCO_A_GETDEV)
+			return 0;
+		else
+			return EINVAL;	/* XXX - TODO */
 	}
 	return EINVAL;
 }

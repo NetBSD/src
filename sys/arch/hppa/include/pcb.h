@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.4 2007/04/07 08:35:52 skrll Exp $	*/
+/*	$NetBSD: pcb.h,v 1.4.20.1 2008/02/18 21:04:36 mjf Exp $	*/
 
 /*	$OpenBSD: pcb.h,v 1.6 2000/01/12 07:24:35 mickey Exp $	*/
 
@@ -41,15 +41,16 @@
 
 struct pcb {
 	u_int64_t	pcb_fpregs[HPPA_NFPREGS+1];
-						/* not in the trapframe */
-	u_int		pcb_onfault;		/* SW copy fault handler */
-	pa_space_t	pcb_space;		/* copy pmap_space, for asm's sake */
-	vaddr_t		pcb_uva;		/* KVA for U-area */
-	u_int		pcb_ksp;		/* kernel sp for ctxsw */
+					/* not in the trapframe */
+	u_int		pcb_onfault;	/* SW copy fault handler */
+	pa_space_t	pcb_space;	/* copy pmap_space, for asm's sake */
+	vaddr_t		pcb_uva;	/* KVA for U-area */
+	u_int		pcb_ksp;	/* kernel sp for ctxsw */
 };
 
 struct md_coredump {
 	struct reg md_reg;
+	struct fpreg md_fpreg;
 }; 
 
 

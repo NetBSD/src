@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.17.2.2 2007/12/27 00:45:12 mjf Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.17.2.3 2008/02/18 21:05:51 mjf Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.17.2.2 2007/12/27 00:45:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.17.2.3 2008/02/18 21:05:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,9 +151,6 @@ rlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 
 	int rv;
-
-	if (!device_is_active(&sc->mii_dev))
-		return ENXIO;
 
 	/*
 	 * Can't isolate the RTL8139 phy, so it has to be the only one.

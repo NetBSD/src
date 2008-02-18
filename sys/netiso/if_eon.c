@@ -1,4 +1,4 @@
-/*	$NetBSD: if_eon.c,v 1.61.2.2 2007/12/27 00:46:34 mjf Exp $	*/
+/*	$NetBSD: if_eon.c,v 1.61.2.3 2008/02/18 21:07:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -67,7 +67,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.61.2.2 2007/12/27 00:46:34 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eon.c,v 1.61.2.3 2008/02/18 21:07:13 mjf Exp $");
 
 #include "opt_eon.h"
 
@@ -220,9 +220,8 @@ eoniphdr(struct eon_iphdr *hdr, const void *loc, struct route *ro, int class)
 	(void)memcpy(&addr, loc, sizeof(addr));
 	sockaddr_in_init(&u.dst4, &addr, 0);
 	rtcache_setdst(ro, &u.dst);
-	rtcache_init(ro);
 
-	if ((rt = rtcache_getrt(ro)) != NULL)
+	if ((rt = rtcache_init(ro)) != NULL)
 		rt->rt_use++;
 	hdr->ei_ip.ip_dst = u.dst4.sin_addr;
 	hdr->ei_ip.ip_p = IPPROTO_EON;
@@ -303,7 +302,7 @@ eonrtrequest(int cmd, struct rtentry *rt, struct rt_addrinfo *info)
 	}
 	el->el_flags |= RTF_UP;
 	eoniphdr(&el->el_ei, ipaddrloc, &el->el_iproute, EON_NORMAL_ADDR);
-	if ((nrt = rtcache_getrt(&el->el_iproute)) != NULL)
+	if ((nrt = rtcache_validate(&el->el_iproute)) != NULL)
 		rt->rt_rmx.rmx_mtu = nrt->rt_rmx.rmx_mtu - sizeof(el->el_ei);
 }
 

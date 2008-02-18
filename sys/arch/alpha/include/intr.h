@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.61.2.1 2007/12/08 18:16:19 mjf Exp $ */
+/* $NetBSD: intr.h,v 1.61.2.2 2008/02/18 21:04:19 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001, 2002 The NetBSD Foundation, Inc.
@@ -67,9 +67,7 @@
 #ifndef _ALPHA_INTR_H_
 #define _ALPHA_INTR_H_
 
-#include <sys/device.h>
-#include <sys/simplelock.h>
-#include <sys/queue.h>
+#include <sys/evcnt.h>
 
 #include <machine/atomic.h>
 

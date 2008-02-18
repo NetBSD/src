@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_usema.c,v 1.21.14.2 2007/12/27 00:43:50 mjf Exp $ */
+/*	$NetBSD: irix_usema.c,v 1.21.14.3 2008/02/18 21:05:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.14.2 2007/12/27 00:43:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.14.3 2008/02/18 21:05:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: irix_usema.c,v 1.21.14.2 2007/12/27 00:43:50 mjf Exp
 #include <sys/mount.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/simplelock.h>
 #include <sys/malloc.h>
 #include <sys/poll.h>
 #include <sys/queue.h>
@@ -107,7 +108,7 @@ struct vfsops irix_usema_dummy_vfsops = {
 	"usema_dummy", 0,
 	NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
 	NULL, NULL, irix_usema_dummy_vfs_init, NULL, NULL, NULL, NULL, NULL,
-	NULL,
+	NULL, NULL, NULL,
 	irix_usema_vnodeopv_descs,
 };
 void irix_usema_dummy_vfs_init(void) { return; } /* Do nothing */
@@ -134,7 +135,6 @@ const struct vnodeopv_entry_desc irix_usema_vnodeop_entries[] = {
 	{ &vop_fcntl_desc, irix_usema_fcntl },
 	{ &vop_poll_desc, irix_usema_poll },
 	{ &vop_abortop_desc, genfs_abortop },
-	{ &vop_lease_desc, genfs_nullop },
 	{ &vop_lock_desc, genfs_lock },
 	{ &vop_unlock_desc, genfs_unlock },
 	{ &vop_islocked_desc, genfs_islocked },
