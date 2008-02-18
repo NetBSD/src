@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.35.8.3 2008/02/18 21:05:31 mjf Exp $
+# $NetBSD: majors,v 1.35.8.4 2008/02/18 22:07:02 mjf Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -31,6 +31,7 @@ device-major	putter		char 178		putter
 device-major	srt		char 179		srt
 device-major	drm		char 180		drmbase
 device-major	bio		char 181		bio
+device-major	dctl		char 182		dctl
 device-major	twa		char 187		twa
 device-major	cpuctl		char 188
 device-major	pad		char 189		pad

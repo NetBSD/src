@@ -1,7 +1,7 @@
-/* 	$NetBSD: devfsd.h,v 1.1.2.1 2007/12/08 22:05:04 mjf Exp $ */
+/* 	$NetBSD: devfsd.h,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -36,8 +36,12 @@
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/param.h>
+#include <sys/ioctl.h>
+#include <sys/condvar.h>
+#include <sys/statvfs.h>
 
 #include <prop/proplib.h>
+#include <dev/dctl/dctlio.h>
 
 /*       
  * A rule can be broken into two parts:
@@ -59,11 +63,10 @@ struct devfs_rule {
         const char	*r_name;           /* rule name */
 	SLIST_ENTRY(devfs_rule) r_next;	/* next rule in list */
 
-	/* 
-	 * This is used by the devfs_dev structure to keep track of which
-	 * rules have been applied to a device.
-	 */
-	SLIST_ENTRY(devfs_rule) r_dev_next;
+	TAILQ_HEAD(,rule2dev) r_pairing;
+
+	/* which devfs mount this rule should be applied to */
+	const char	r_mntpath[_VFS_MNAMELEN];
 
         /*                                  
          * How to match.
@@ -77,10 +80,10 @@ struct devfs_rule {
         /*
          * Attributes to set.
          */
-        const char      *r_filename;    /* filename to use */
+        char      	*r_filename;    /* filename to use */
         mode_t          r_mode;         
-        uid_t           r_owner;	/* owner */
-        gid_t           r_group;
+        uid_t           r_uid;		/* owner */
+        gid_t           r_gid;
         int             r_flags; 	/* see below */
 };
 
@@ -89,41 +92,73 @@ struct devfs_rule {
                                                  * userland */
 #define DEVFS_RULE_ATTR_UNSET	0xdeadbeef	/* attribute is not set */
 
+#define ATTR_ISSET(x) (x != DEVFS_RULE_ATTR_UNSET)
+
 SLIST_HEAD(rlist_head, devfs_rule) rule_list;
 
-int rule_parsefile(const char *);
-int rule_writefile(const char *);
-int rule_init(void);
+struct devfs_node {
+	SLIST_ENTRY(devfs_node) n_next;
+	struct dctl_specnode_attr n_attr;
+	struct dctl_node_cookie n_cookie; /* cookie to uniquely identify node */
+};
 
-/*       
- * This is the devfsd daemon's internal representation of a device. This
- * data structure is used to create a device special file for this device.
+/*
+ * This structure is our understanding of a device that is connected
+ * to the system. Each device has a unique cookie that allows dctl(4)
+ * to understand what device we're talking about when we request some
+ * action for a device.
  *
- * We also keep some extra information such as whether or not the device
- * is the boot device.
- */     
-
-struct devfs_dev {
-	device_t	d_dev;
-	SLIST_ENTRY(devfs_dev) d_next;	/* next device in list */
-	char 		d_filename[MAXPATHLEN];	/* filename to use */
-	mode_t		d_mode;
-        uid_t           d_owner;
-        gid_t           d_group;
-        int             d_flags;
-
-	/* 
-	 * We maintain a list of rules that have been applied to this device.
-	 */
-	SLIST_HEAD(, devfs_rule) d_rule_head;
+ * Because there can be multiple devfs mounts on the system we need to
+ * keep track of all the different special nodes in use for this device.
+ * We keep a list of all device special nodes for this device in the 
+ * 'd_node_head' member.
+ */
+struct devfs_dev {      
+	intptr_t 		d_cookie;	/* cookie for this device */
+	char			d_kname[16];	/* device driver name */
+	SLIST_ENTRY(devfs_dev) 	d_next;  	/* next device in list */
+	SLIST_HEAD(, devfs_node) d_node_head; 	/* nodes for this device */
+	TAILQ_HEAD(, rule2dev) d_pairing;
 };
 
 SLIST_HEAD(dlist_head, devfs_dev) dev_list;
 
-int 	dev_init(void);
-const char *device_xname(device_t);
-struct devfs_dev *dev_create(device_t, int);
-void	dev_apply_rule(struct devfs_dev *, struct devfs_rule *);
-void	dev_destroy(struct devfs_dev *);
+/*
+ * This is allows us to pair up devices with rules that have
+ * been applied to that it and also pair up rules with devices. 
+ * This is a many-to-many relationship.
+ */
+struct rule2dev {
+	TAILQ_ENTRY(rule2dev) r_next_rule;
+	TAILQ_ENTRY(rule2dev) r_next_dev;
+	struct devfs_rule *r_rule;
+	struct devfs_dev *r_dev;
+};
+
+struct devfs_mount {
+	char m_pathname[_VFS_MNAMELEN];
+	int32_t m_id;
+	int m_visibility;
+	SLIST_ENTRY(devfs_mount) m_next;
+};
+SLIST_HEAD(mlist_head, devfs_mount) mount_list;
+
+int rule_parsefile(const char *);
+int rule_writefile(const char *);
+int rule_init(void);
+int rule_rebuild_attr(struct devfs_dev *);
+
+int dev_init(void);
+struct devfs_dev *dev_create(struct dctl_kerndev *, intptr_t);
+void dev_apply_rule(struct devfs_dev *, struct devfs_rule *);
+void dev_apply_rule_node(struct devfs_node *, struct devfs_mount *,
+	struct devfs_rule *);
+void dev_destroy(struct devfs_dev *);
+struct devfs_dev *dev_lookup(struct dctl_node_cookie);
+int dev_add_node(struct devfs_dev *, struct devfs_mount *);
+
+struct devfs_mount *mount_create(int32_t, const char *, int);
+struct devfs_mount *mount_lookup(int32_t);
+void mount_destroy(struct devfs_mount *);
 
 #endif	/* _DEVFSD_H_ */

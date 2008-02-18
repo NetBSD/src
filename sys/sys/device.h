@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.98.4.1 2008/02/18 21:07:23 mjf Exp $ */
+/* $NetBSD: device.h,v 1.98.4.2 2008/02/18 22:07:03 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -111,6 +111,7 @@ typedef struct device *device_t;
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
+	TAILQ_ENTRY(device) dv_dlist;	/* entry on devfs list of devices */
 	cfdata_t	dv_cfdata;	/* config data that found us
 					   (NULL if pseudo-device) */
 	cfdriver_t	dv_cfdriver;	/* our cfdriver */

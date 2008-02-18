@@ -1,6 +1,11 @@
-#	$NetBSD: files.devfs,v 1.1.2.1 2007/11/19 00:34:33 mjf Exp $
+#	$NetBSD: files.devfs,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $
 
 deffs	fs_devfs.h			DEVFS
 
+file	fs/devfs/devfs_comm.c		devfs
+file	fs/devfs/devfs_fifoops.c	devfs
+file	fs/devfs/devfs_pool.c		devfs
+file	fs/devfs/devfs_specops.c	devfs
+file	fs/devfs/devfs_subr.c		devfs
 file	fs/devfs/devfs_vfsops.c		devfs
 file	fs/devfs/devfs_vnops.c		devfs
