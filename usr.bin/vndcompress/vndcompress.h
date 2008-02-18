@@ -1,4 +1,4 @@
-/* $Id: vndcompress.h,v 1.1.1.1 2005/07/25 12:17:59 hubertf Exp $ */
+/* $Id: vndcompress.h,v 1.2 2008/02/18 03:34:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr
@@ -66,12 +66,17 @@ void vnduncompress(const char *, const char *);
 #define DEF_BLOCKSIZE 128*ATOMBLOCK
 
 /*
- * Convert a 64-bit value between network and local byte order
+ * SWAPPER: Convert a 64-bit value between network and local byte order
+ * SWAPPER32: Convert a 32-bit value between network and local byte order
  */
 #if (_BYTE_ORDER == _BIG_ENDIAN)
 #define SWAPPER(arg) (arg)
+#define SWAPPER32(arg) (arg)
+#define SWAPPER16(arg) (arg)
 #else
 #define SWAPPER(arg) bswap64(arg)
+#define SWAPPER32(arg) bswap32(arg)
+#define SWAPPER16(arg) bswap16(arg)
 #endif
 
 struct cloop_header {
