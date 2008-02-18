@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1056 2008/02/04 20:33:11 jmmv Exp $
+# $NetBSD: mi,v 1.1057 2008/02/18 10:37:20 elad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1782,6 +1782,7 @@
 ./usr/share/man/cat5/utmpx.0			man-sys-catman		.cat
 ./usr/share/man/cat5/uuencode.0			man-util-catman		.cat
 ./usr/share/man/cat5/uuencode.format.0		man-obsolete		obsolete
+./usr/share/man/cat5/veriexec.0			man-sys-catman		.cat
 ./usr/share/man/cat5/vgrindefs.0		man-groff-catman	.cat
 ./usr/share/man/cat5/virtual.0			man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/weekly.conf.0		man-sys-catman		.cat
@@ -2510,6 +2511,7 @@
 ./usr/share/man/cat8/vax/format.0		man-sys-catman		.cat
 ./usr/share/man/cat8/vax/installboot.0		man-obsolete		obsolete
 ./usr/share/man/cat8/vax/makedev.0		man-obsolete		obsolete
+./usr/share/man/cat8/veriexec.0			man-sys-catman		.cat
 ./usr/share/man/cat8/veriexecctl.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/veriexecgen.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/verifiedexec_load.0	man-obsolete		obsolete
@@ -4306,6 +4308,7 @@
 ./usr/share/man/man5/utmpx.5			man-sys-man		.man
 ./usr/share/man/man5/uuencode.5			man-util-man		.man
 ./usr/share/man/man5/uuencode.format.5		man-obsolete		obsolete
+./usr/share/man/man5/veriexec.5			man-sys-man		.man
 ./usr/share/man/man5/vgrindefs.5		man-groff-man		.man
 ./usr/share/man/man5/virtual.5			man-postfix-man		postfix,.man
 ./usr/share/man/man5/weekly.conf.5		man-sys-man		.man
@@ -5034,6 +5037,7 @@
 ./usr/share/man/man8/vax/format.8		man-sys-man		.man
 ./usr/share/man/man8/vax/installboot.8		man-obsolete		obsolete
 ./usr/share/man/man8/vax/makedev.8		man-obsolete		obsolete
+./usr/share/man/man8/veriexec.8			man-sys-man		.man
 ./usr/share/man/man8/veriexecctl.8		man-sysutil-man		.man
 ./usr/share/man/man8/veriexecgen.8			man-sysutil-man		.man
 ./usr/share/man/man8/verifiedexec_load.8	man-obsolete		obsolete
