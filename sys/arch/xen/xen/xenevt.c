@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.15.2.1 2007/12/08 18:18:29 mjf Exp $      */
+/*      $NetBSD: xenevt.c,v 1.15.2.2 2008/02/18 21:05:21 mjf Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -30,6 +30,9 @@
  *
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.15.2.2 2008/02/18 21:05:21 mjf Exp $");
+
 #include "opt_xen.h"
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -43,6 +46,8 @@
 #include <sys/proc.h>
 #include <sys/conf.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -417,7 +422,7 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
     kauth_cred_t cred, int flags)
 {
 	struct xenevt_d *d = fp->f_data;
-	u_int16_t chans[NR_EVENT_CHANNELS];
+	u_int16_t *chans;
 	int i, nentries, error;
 
 	if (uio->uio_resid == 0)
@@ -425,15 +430,20 @@ xenevt_fwrite(struct file *fp, off_t *offp, struct uio *uio,
 	nentries = uio->uio_resid / sizeof(u_int16_t);
 	if (nentries > NR_EVENT_CHANNELS)
 		return EMSGSIZE;
+	chans = kmem_alloc(nentries * sizeof(u_int16_t), KM_SLEEP);
+	if (chans == NULL)
+		return ENOMEM;
 	error = uiomove(chans, uio->uio_resid, uio);
 	if (error)
-		return error;
+		goto out;
 	for (i = 0; i < nentries; i++) {
 		if (chans[i] < NR_EVENT_CHANNELS &&
 		    devevent[chans[i]] == d) {
 			hypervisor_unmask_event(chans[i]);
 		}
 	}
+out:
+	kmem_free(chans, nentries * sizeof(u_int16_t));
 	return 0;
 }
 

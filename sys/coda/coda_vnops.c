@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.62.12.2 2007/12/27 00:43:33 mjf Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.62.12.3 2008/02/18 21:05:22 mjf Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.62.12.2 2007/12/27 00:43:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.62.12.3 2008/02/18 21:05:22 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,6 @@ const struct vnodeopv_entry_desc coda_vnodeop_entries[] = {
     { &vop_pathconf_desc, coda_vop_error },	/* pathconf */
     { &vop_advlock_desc, coda_vop_nop },	/* advlock */
     { &vop_bwrite_desc, coda_vop_error },	/* bwrite */
-    { &vop_lease_desc, coda_vop_nop },		/* lease */
     { &vop_seek_desc, genfs_seek },		/* seek */
     { &vop_poll_desc, genfs_poll },		/* poll */
     { &vop_getpages_desc, coda_getpages },	/* getpages */
@@ -164,7 +163,7 @@ coda_vop_error(void *anon) {
     return EIO;
 }
 
-/* A generic do-nothing.  For lease_check, advlock */
+/* A generic do-nothing. */
 int
 coda_vop_nop(void *anon) {
     struct vnodeop_desc **desc = (struct vnodeop_desc **)anon;
@@ -825,7 +824,7 @@ coda_inactive(void *v)
     struct vop_inactive_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
-    kauth_cred_t cred __attribute__((unused)) = NULL;
+    kauth_cred_t cred __unused = NULL;
 
     /* We don't need to send inactive to venus - DCS */
     MARK_ENTRY(CODA_INACTIVE_STATS);
@@ -872,7 +871,7 @@ coda_inactive(void *v)
 	    printf("coda_inactive: %p ovp != NULL\n", vp);
 	}
 	VOP_UNLOCK(vp, 0);
-	vgone(vp);
+	*ap->a_recycle = true;
     }
 
     MARK_INT_SAT(CODA_INACTIVE_STATS);
@@ -1700,11 +1699,11 @@ coda_bmap(void *v)
     /* XXX on the global proc */
 /* true args */
     struct vop_bmap_args *ap = v;
-    struct vnode *vp __attribute__((unused)) = ap->a_vp;	/* file's vnode */
-    daddr_t bn __attribute__((unused)) = ap->a_bn;	/* fs block number */
+    struct vnode *vp __unused = ap->a_vp;	/* file's vnode */
+    daddr_t bn __unused = ap->a_bn;	/* fs block number */
     struct vnode **vpp = ap->a_vpp;			/* RETURN vp of device */
-    daddr_t *bnp __attribute__((unused)) = ap->a_bnp;	/* RETURN device block number */
-    struct lwp *l __attribute__((unused)) = curlwp;
+    daddr_t *bnp __unused = ap->a_bnp;	/* RETURN device block number */
+    struct lwp *l __unused = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -1725,8 +1724,8 @@ coda_strategy(void *v)
 {
 /* true args */
     struct vop_strategy_args *ap = v;
-    struct buf *bp __attribute__((unused)) = ap->a_bp;
-    struct lwp *l __attribute__((unused)) = curlwp;
+    struct buf *bp __unused = ap->a_bp;
+    struct lwp *l __unused = curlwp;
 /* upcall decl */
 /* locals */
 
@@ -1778,6 +1777,7 @@ coda_lock(void *v)
     struct vop_lock_args *ap = v;
     struct vnode *vp = ap->a_vp;
     struct cnode *cp = VTOC(vp);
+    int flags  = ap->a_flags;
 /* upcall decl */
 /* locals */
 
@@ -1788,7 +1788,12 @@ coda_lock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (lockmgr(&vp->v_lock, ap->a_flags, &vp->v_interlock));
+    if ((flags & LK_INTERLOCK) != 0) {
+    	mutex_exit(&vp->v_interlock);
+    	flags &= ~LK_INTERLOCK;
+    }
+
+    return (vlockmgr(&vp->v_lock, flags));
 }
 
 int
@@ -1807,7 +1812,7 @@ coda_unlock(void *v)
 		  coda_f2s(&cp->c_fid)));
     }
 
-    return (lockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE, &vp->v_interlock));
+    return (vlockmgr(&vp->v_lock, ap->a_flags | LK_RELEASE));
 }
 
 int
@@ -1817,7 +1822,7 @@ coda_islocked(void *v)
     struct vop_islocked_args *ap = v;
     ENTRY;
 
-    return (lockstatus(&ap->a_vp->v_lock));
+    return (vlockstatus(&ap->a_vp->v_lock));
 }
 
 /*
@@ -2002,7 +2007,7 @@ coda_getpages(void *v)
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
 		printf("coda_getpages: control object %p\n", vp);
-		simple_unlock(&vp->v_uobj.vmobjlock);
+		mutex_exit(&vp->v_uobj.vmobjlock);
 		return(EINVAL);
 	}
 
@@ -2017,7 +2022,7 @@ coda_getpages(void *v)
 	waslocked = VOP_ISLOCKED(vp);
 
 	/* Drop the vmobject lock. */
-	simple_unlock(&vp->v_uobj.vmobjlock);
+	mutex_exit(&vp->v_uobj.vmobjlock);
 
 	/* Get container file if not already present. */
 	if (cp->c_ovp == NULL) {
@@ -2065,7 +2070,7 @@ coda_getpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call getpages on it. */
-	simple_lock(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 
 	/* If we opened the vnode, we must close it. */
@@ -2106,7 +2111,7 @@ coda_putpages(void *v)
 	int error;
 
 	/* Drop the vmobject lock. */
-	simple_unlock(&vp->v_uobj.vmobjlock);
+	mutex_exit(&vp->v_uobj.vmobjlock);
 
 	/* Check for control object. */
 	if (IS_CTL_VP(vp)) {
@@ -2127,7 +2132,7 @@ coda_putpages(void *v)
 	ap->a_vp = cp->c_ovp;
 
 	/* Get the lock on the container vnode, and call putpages on it. */
-	simple_lock(&ap->a_vp->v_uobj.vmobjlock);
+	mutex_enter(&ap->a_vp->v_uobj.vmobjlock);
 	error = VCALL(ap->a_vp, VOFFSET(vop_putpages), ap);
 
 	return error;

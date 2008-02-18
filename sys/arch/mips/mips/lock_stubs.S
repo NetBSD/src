@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.5.2.1 2007/12/08 18:17:23 mjf Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.5.2.2 2008/02/18 21:04:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -109,9 +109,17 @@ STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_ulong)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_ulong)
 
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_ulong_ni,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_ulong)
+
 #if defined(__mips_n32) || defined(_LP64)
 STRONG_ALIAS(_atomic_cas_64,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_64,_atomic_cas_ulong)
+
+STRONG_ALIAS(_atomic_cas_64_ni,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_64_ni,_atomic_cas_ulong)
 #endif
 
 /*
@@ -136,6 +144,11 @@ END(_atomic_cas_uint)
 STRONG_ALIAS(_atomic_cas_32,_atomic_cas_uint)
 STRONG_ALIAS(atomic_cas_32,_atomic_cas_uint)
 STRONG_ALIAS(atomic_cas_uint,_atomic_cas_uint)
+
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_uint)
+STRONG_ALIAS(atomic_cas_32_ni,_atomic_cas_uint)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_uint)
+STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_uint)
 
 #ifndef LOCKDEBUG
 
@@ -286,6 +299,15 @@ STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_uint,_atomic_cas_ulong)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_ulong)
 STRONG_ALIAS(atomic_cas_ptr,_atomic_cas_ulong)
+
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_ulong_ni,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_32_ni,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_uint_ni,_atomic_cas_ulong)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_ulong)
+STRONG_ALIAS(atomic_cas_ptr_ni,_atomic_cas_ulong)
 
 #ifndef LOCKDEBUG
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2006/09/05 19:44:44 riz Exp $	*/
+/*	$NetBSD: extern.h,v 1.11.10.1 2008/02/18 21:04:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -33,7 +33,7 @@
 
 struct dlfs;
 
-u_long  lfs_sb_cksum(struct dlfs *);
+uint32_t lfs_sb_cksum(struct dlfs *);
 void	fatal(const char *fmt, ...)
      __attribute__((__format__(__printf__,1,2)));
 u_int	lfs_log2(u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.1.4.2 2007/12/08 18:21:27 mjf Exp $	*/
+/*	$NetBSD: locks.c,v 1.1.4.3 2008/02/18 21:07:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -57,6 +57,13 @@ mutex_enter(kmutex_t *mtx)
 	rumpuser_mutex_enter(mtx->kmtx_mtx);
 }
 
+void
+mutex_spin_enter(kmutex_t *mtx)
+{
+
+	mutex_enter(mtx);
+}
+
 int
 mutex_tryenter(kmutex_t *mtx)
 {
@@ -76,12 +83,18 @@ mutex_exit(kmutex_t *mtx)
 	rumpuser_mutex_exit(mtx->kmtx_mtx);
 }
 
+void
+mutex_spin_exit(kmutex_t *mtx)
+{
+
+	mutex_exit(mtx);
+}
+
 int
 mutex_owned(kmutex_t *mtx)
 {
 
-	/* XXX */
-	return 1;
+	return rumpuser_mutex_held(mtx->kmtx_mtx);
 }
 
 /* reader/writer locks */
@@ -129,6 +142,27 @@ rw_tryupgrade(krwlock_t *rw)
 	return 0;
 }
 
+int
+rw_write_held(krwlock_t *rw)
+{
+
+	return rumpuser_rw_wrheld(rw->krw_pthlock);
+}
+
+int
+rw_read_held(krwlock_t *rw)
+{
+
+	return rumpuser_rw_rdheld(rw->krw_pthlock);
+}
+
+int
+rw_lock_held(krwlock_t *rw)
+{
+
+	return rumpuser_rw_held(rw->krw_pthlock);
+}
+
 /* curriculum vitaes */
 
 /* forgive me for I have sinned */
@@ -156,12 +190,32 @@ cv_wait(kcondvar_t *cv, kmutex_t *mtx)
 }
 
 int
+cv_wait_sig(kcondvar_t *cv, kmutex_t *mtx)
+{
+
+	rumpuser_cv_wait(RUMPCV(cv), mtx->kmtx_mtx);
+	return 0;
+}
+
+int
 cv_timedwait(kcondvar_t *cv, kmutex_t *mtx, int ticks)
 {
 	extern int hz;
 
-	KASSERT(hz == 100);
-	return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	if (ticks == 0) {
+		cv_wait(cv, mtx);
+		return 0;
+	} else {
+		KASSERT(hz == 100);
+		return rumpuser_cv_timedwait(RUMPCV(cv), mtx->kmtx_mtx, ticks);
+	}
+}
+
+int
+cv_timedwait_sig(kcondvar_t *cv, kmutex_t *mtx, int ticks)
+{
+
+	return cv_timedwait(cv, mtx, ticks);
 }
 
 void

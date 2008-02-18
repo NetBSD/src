@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hsvar.h,v 1.2 2007/08/15 03:53:10 kiyohara Exp $	*/
+/*	$NetBSD: sl811hsvar.h,v 1.2.8.1 2008/02/18 21:05:41 mjf Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -14,7 +14,7 @@
  */
 
 #include <sys/gcq.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include "opt_slhci.h"
 
 #define SC_DEV(sc)	(&((sc)->sc_bus.bdev))

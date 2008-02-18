@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.104.4.3 2007/12/27 00:45:20 mjf Exp $	*/
+/*	$NetBSD: pci.c,v 1.104.4.4 2008/02/18 21:05:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.104.4.3 2007/12/27 00:45:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.104.4.4 2008/02/18 21:05:58 mjf Exp $");
 
 #include "opt_pci.h"
 
@@ -725,7 +725,11 @@ pci_set_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state,
 		return EINVAL;
 	}
 	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
-	DELAY(1000);
+	if (state == PCI_PMCSR_STATE_D3 || value == PCI_PMCSR_STATE_D3)
+		DELAY(10000);
+	else if (state == PCI_PMCSR_STATE_D2 || value == PCI_PMCSR_STATE_D2)
+		DELAY(200);
+
 	return 0;
 }
 
@@ -790,9 +794,42 @@ pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag,
 	return 0;
 }
 
+/* I have disabled this code for now. --dyoung
+ *
+ * Insofar as I understand what the PCI retry timeout is [1],
+ * I see no justification for any driver to disable when it
+ * attaches/resumes a device.
+ *
+ * A PCI bus bridge may tell a bus master to retry its transaction
+ * at a later time if the resources to complete the transaction
+ * are not immediately available.  Taking a guess, PCI bus masters
+ * that implement a PCI retry timeout register count down from the
+ * retry timeout to 0 while it retries a delayed PCI transaction.
+ * When it reaches 0, it stops retrying.  A PCI master is *never*
+ * supposed to stop retrying a delayed transaction, though.
+ *
+ * Incidentally, I initially suspected that writing 0 to the register
+ * would not disable *retries*, but would disable the timeout.
+ * That is, any device whose retry timeout was set to 0 would
+ * *never* timeout.  However, I found out, by using PCI debug
+ * facilities on the AMD Elan SC520, that if I write 0 to the retry
+ * timeout register on an ath(4) MiniPCI card, the card really does
+ * not retry transactions.
+ *
+ * Some uses of this register have mentioned "interference" with
+ * a CPU's "C3 sleep state."  It seems to me that if a bus master
+ * is properly put to sleep, it will neither initiate new transactions,
+ * nor retry delayed transactions, so disabling retries should not
+ * be necessary.
+ *
+ * [1] The timeout does not appear to be documented in any PCI
+ * standard, and we have no documentation of it for the devices by
+ * Atheros, and others, that supposedly implement it.
+ */
 void
 pci_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
 {
+#if 0
 	pcireg_t retry;
 
 	/*
@@ -802,6 +839,7 @@ pci_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
 	retry = pci_conf_read(pc, tag, PCI_RETRY_TIMEOUT_REG);
 	retry &= ~PCI_RETRY_TIMEOUT_REG_MASK;
 	pci_conf_write(pc, tag, PCI_RETRY_TIMEOUT_REG, retry);
+#endif
 }
 
 struct pci_child_power {

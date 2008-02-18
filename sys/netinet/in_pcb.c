@@ -1,4 +1,4 @@
-/*	$NetBSD: in_pcb.c,v 1.119 2007/08/21 08:34:33 dyoung Exp $	*/
+/*	$NetBSD: in_pcb.c,v 1.119.8.1 2008/02/18 21:07:08 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.119 2007/08/21 08:34:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_pcb.c,v 1.119.8.1 2008/02/18 21:07:08 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -645,8 +645,8 @@ in_pcbpurgeif(struct inpcbtable *table, struct ifnet *ifp)
 		ninp = (struct inpcb *)CIRCLEQ_NEXT(inp, inp_queue);
 		if (inp->inp_af != AF_INET)
 			continue;
-		if (inp->inp_route.ro_rt != NULL &&
-		    inp->inp_route.ro_rt->rt_ifp == ifp)
+		if ((rt = rtcache_validate(&inp->inp_route)) != NULL &&
+		    rt->rt_ifp == ifp)
 			in_rtchange(inp, 0);
 	}
 }
@@ -666,22 +666,23 @@ in_losing(struct inpcb *inp)
 	if (inp->inp_af != AF_INET)
 		return;
 
-	if ((rt = inp->inp_route.ro_rt) != NULL) {
-		memset(&info, 0, sizeof(info));
-		info.rti_info[RTAX_DST] = rtcache_getdst(&inp->inp_route);
-		info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
-		info.rti_info[RTAX_NETMASK] = rt_mask(rt);
-		rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
-		if (rt->rt_flags & RTF_DYNAMIC)
-			(void) rtrequest(RTM_DELETE, rt_getkey(rt),
-				rt->rt_gateway, rt_mask(rt), rt->rt_flags,
-				NULL);
-		/*
-		 * A new route can be allocated
-		 * the next time output is attempted.
-		 */
-		rtcache_free(&inp->inp_route);
-	}
+	if ((rt = rtcache_validate(&inp->inp_route)) == NULL)
+		return;
+
+	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_DST] = rtcache_getdst(&inp->inp_route);
+	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
+	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
+	rt_missmsg(RTM_LOSING, &info, rt->rt_flags, 0);
+	if (rt->rt_flags & RTF_DYNAMIC)
+		(void) rtrequest(RTM_DELETE, rt_getkey(rt),
+			rt->rt_gateway, rt_mask(rt), rt->rt_flags,
+			NULL);
+	/*
+	 * A new route can be allocated
+	 * the next time output is attempted.
+	 */
+	rtcache_free(&inp->inp_route);
 }
 
 /*
@@ -885,6 +886,7 @@ struct sockaddr_in *
 in_selectsrc(struct sockaddr_in *sin, struct route *ro,
     int soopts, struct ip_moptions *mopts, int *errorp)
 {
+	struct rtentry *rt = NULL;
 	struct in_ifaddr *ia = NULL;
 
 	/*
@@ -900,7 +902,7 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 		} u;
 
 		sockaddr_in_init(&u.dst4, &sin->sin_addr, 0);
-		(void)rtcache_lookup(ro, &u.dst);
+		rt = rtcache_lookup(ro, &u.dst);
 	}
 	/*
 	 * If we found a route, use the address
@@ -910,8 +912,8 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	 *
 	 * XXX Is this still true?  Do we care?
 	 */
-	if (ro->ro_rt != NULL && !(ro->ro_rt->rt_ifp->if_flags & IFF_LOOPBACK))
-		ia = ifatoia(ro->ro_rt->rt_ifa);
+	if (rt != NULL && (rt->rt_ifp->if_flags & IFF_LOOPBACK) == 0)
+		ia = ifatoia(rt->rt_ifa);
 	if (ia == NULL) {
 		u_int16_t fport = sin->sin_port;
 

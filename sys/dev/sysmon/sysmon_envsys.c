@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.71.2.2 2007/12/08 18:19:58 mjf Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.71.2.3 2008/02/18 21:06:25 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.71.2.2 2007/12/08 18:19:58 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.71.2.3 2008/02/18 21:06:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -520,6 +520,7 @@ sysmon_envsys_create(void)
 	sme = kmem_zalloc(sizeof(*sme), KM_SLEEP);
 	TAILQ_INIT(&sme->sme_sensors_list);
 	LIST_INIT(&sme->sme_events_list);
+	callout_init(&sme->sme_callout, CALLOUT_MPSAFE);
 
 	return sme;
 }
@@ -527,8 +528,8 @@ sysmon_envsys_create(void)
 /*
  * sysmon_envsys_destroy:
  *
- * 	+ Removes all sensors from the tail queue and frees the
- * 	  sysmon_envsys object.
+ * 	+ Removes all sensors from the tail queue, destroys the callout
+ * 	  and frees the sysmon_envsys object.
  */
 void
 sysmon_envsys_destroy(struct sysmon_envsys *sme)
@@ -541,7 +542,7 @@ sysmon_envsys_destroy(struct sysmon_envsys *sme)
 		edata = TAILQ_FIRST(&sme->sme_sensors_list);
 		TAILQ_REMOVE(&sme->sme_sensors_list, edata, sensors_head);
 	}
-
+	callout_destroy(&sme->sme_callout);
 	kmem_free(sme, sizeof(*sme));
 }
 
@@ -697,8 +698,7 @@ sysmon_envsys_register(struct sysmon_envsys *sme)
 	 * Iterate over all sensors and create a dictionary per sensor.
 	 * We must respect the order in which the sensors were added.
 	 */
-	for (edata = TAILQ_FIRST(&sme->sme_sensors_list); edata;
-	     edata = TAILQ_NEXT(edata, sensors_head)) {
+	TAILQ_FOREACH(edata, &sme->sme_sensors_list, sensors_head) {
 		dict = prop_dictionary_create();
 		if (!dict) {
 			error = ENOMEM;
@@ -926,16 +926,15 @@ sysmon_envsys_find(const char *name)
 	KASSERT(mutex_owned(&sme_mtx));
 
 again:
-	for (sme = LIST_FIRST(&sysmon_envsys_list); sme;
-	     sme = LIST_NEXT(sme, sme_list)) {
-			if (strcmp(sme->sme_name, name) == 0) {
-				if (sme->sme_flags & SME_FLAG_BUSY) {
-					cv_wait(&sme_cv, &sme_mtx);
-					goto again;
-				}
-				sme->sme_flags |= SME_FLAG_BUSY;
-				break;
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
+		if (strcmp(sme->sme_name, name) == 0) {
+			if (sme->sme_flags & SME_FLAG_BUSY) {
+				cv_wait(&sme_cv, &sme_mtx);
+				goto again;
 			}
+			sme->sme_flags |= SME_FLAG_BUSY;
+			break;
+		}
 	}
 	return sme;
 }
@@ -978,10 +977,14 @@ sysmon_envsys_find_40(u_int idx)
 
 	KASSERT(mutex_owned(&sme_mtx));
 
-	for (sme = LIST_FIRST(&sysmon_envsys_list); sme;
-	     sme = LIST_NEXT(sme, sme_list)) {
+again:
+	LIST_FOREACH(sme, &sysmon_envsys_list, sme_list) {
 		if (idx >= sme->sme_fsensor &&
 	    	    idx < (sme->sme_fsensor + sme->sme_nsensors)) {
+			if (sme->sme_flags & SME_FLAG_BUSY) {
+				cv_wait(&sme_cv, &sme_mtx);
+				goto again;
+			}
 			sme->sme_flags |= SME_FLAG_BUSY;
 			break;
 		}

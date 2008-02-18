@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.87.2.2 2007/12/27 00:43:04 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.87.2.3 2008/02/18 21:04:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87.2.2 2007/12/27 00:43:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87.2.3 2008/02/18 21:04:37 mjf Exp $");
 
 #include "opt_compat_oldboot.h"
 #include "opt_multiprocessor.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.87.2.2 2007/12/27 00:43:04 mjf Exp $"
 #include <machine/cpu.h>
 #include <machine/gdt.h>
 #include <machine/pcb.h>
+#include <machine/cpufunc.h>
 #include <x86/x86/tsc.h>
 
 #include "ioapic.h"
@@ -124,7 +125,6 @@ cpu_configure(void)
 #endif
 
 #if NIOAPIC > 0
-	lapic_set_lvt();
 	ioapic_enable();
 #endif
 	/* resync cr0 after FPU configuration */

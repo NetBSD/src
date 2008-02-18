@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vnops.c,v 1.92.4.1 2007/12/08 18:21:40 mjf Exp $	*/
+/*	$NetBSD: ffs_vnops.c,v 1.92.4.2 2008/02/18 21:07:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.92.4.1 2007/12/08 18:21:40 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.92.4.2 2008/02/18 21:07:28 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vnops.c,v 1.92.4.1 2007/12/08 18:21:40 mjf Exp $
 
 #include <uvm/uvm.h>
 
-static int ffs_full_fsync(void *);
-
 /* Global vfs data structures for ufs. */
 int (**ffs_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
@@ -81,7 +79,6 @@ const struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ffs_read },			/* read */
 	{ &vop_write_desc, ffs_write },			/* write */
-	{ &vop_lease_desc, ufs_lease_check },		/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, ufs_poll },			/* poll */
@@ -136,7 +133,6 @@ const struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsspec_read },		/* read */
 	{ &vop_write_desc, ufsspec_write },		/* write */
-	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, spec_poll },			/* poll */
@@ -191,7 +187,6 @@ const struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_setattr_desc, ufs_setattr },		/* setattr */
 	{ &vop_read_desc, ufsfifo_read },		/* read */
 	{ &vop_write_desc, ufsfifo_write },		/* write */
-	{ &vop_lease_desc, fifo_lease_check },		/* lease */
 	{ &vop_ioctl_desc, fifo_ioctl },		/* ioctl */
 	{ &vop_fcntl_desc, ufs_fcntl },			/* fcntl */
 	{ &vop_poll_desc, fifo_poll },			/* poll */
@@ -246,7 +241,7 @@ ffs_fsync(void *v)
 		struct lwp *a_l;
 	} */ *ap = v;
 	struct buf *bp;
-	int s, num, error, i;
+	int num, error, i;
 	struct indir ia[NIADDR + 1];
 	int bsize;
 	daddr_t blk_high;
@@ -260,7 +255,7 @@ ffs_fsync(void *v)
 	 */
 	if ((ap->a_offlo == 0 && ap->a_offhi == 0) || DOINGSOFTDEP(vp) ||
 	    (vp->v_type != VREG)) {
-		error = ffs_full_fsync(v);
+		error = ffs_full_fsync(vp, ap->a_flags);
 		goto out;
 	}
 
@@ -273,7 +268,7 @@ ffs_fsync(void *v)
 	 * First, flush all pages in range.
 	 */
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 	    round_page(ap->a_offhi), PGO_CLEANIT |
 	    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0));
@@ -285,40 +280,32 @@ ffs_fsync(void *v)
 	 * Then, flush indirect blocks.
 	 */
 
-	s = splbio();
 	if (blk_high >= NDADDR) {
 		error = ufs_getlbns(vp, blk_high, ia, &num);
-		if (error) {
-			splx(s);
+		if (error)
 			goto out;
-		}
+
+		mutex_enter(&bufcache_lock);
 		for (i = 0; i < num; i++) {
-			bp = incore(vp, ia[i].in_lbn);
-			if (bp != NULL) {
-				simple_lock(&bp->b_interlock);
-				if (!(bp->b_flags & B_BUSY) && (bp->b_flags & B_DELWRI)) {
-					bp->b_flags |= B_BUSY | B_VFLUSH;
-					simple_unlock(&bp->b_interlock);
-					splx(s);
-					bawrite(bp);
-					s = splbio();
-				} else {
-					simple_unlock(&bp->b_interlock);
-				}
-			}
+			if ((bp = incore(vp, ia[i].in_lbn)) == NULL)
+				continue;
+			if ((bp->b_cflags & BC_BUSY) != 0 ||
+			    (bp->b_oflags & BO_DELWRI) == 0)
+				continue;
+			bp->b_cflags |= BC_BUSY | BC_VFLUSH;
+			mutex_exit(&bufcache_lock);
+			bawrite(bp);
+			mutex_enter(&bufcache_lock);
 		}
+		mutex_exit(&bufcache_lock);
 	}
 
 	if (ap->a_flags & FSYNC_WAIT) {
-		simple_lock(&global_v_numoutput_slock);
-		while (vp->v_numoutput > 0) {
-			vp->v_iflag |= VI_BWAIT;
-			ltsleep(&vp->v_numoutput, PRIBIO + 1, "fsync_range", 0,
-				&global_v_numoutput_slock);
-		}
-		simple_unlock(&global_v_numoutput_slock);
+		mutex_enter(&vp->v_interlock);
+		while (vp->v_numoutput > 0)
+			cv_wait(&vp->v_cv, &vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 	}
-	splx(s);
 
 	error = ffs_update(vp, NULL, NULL,
 	    ((ap->a_flags & (FSYNC_WAIT | FSYNC_DATAONLY)) == FSYNC_WAIT)
@@ -339,27 +326,20 @@ out:
  * Synch an open file.
  */
 /* ARGSUSED */
-static int
-ffs_full_fsync(void *v)
+int
+ffs_full_fsync(struct vnode *vp, int flags)
 {
-	struct vop_fsync_args /* {
-		struct vnode *a_vp;
-		kauth_cred_t a_cred;
-		int a_flags;
-		off_t a_offlo;
-		off_t a_offhi;
-		struct lwp *a_l;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 	struct buf *bp, *nbp;
-	int s, error, passes, skipmeta, inodedeps_only, waitfor;
+	int error, passes, skipmeta, inodedeps_only, waitfor;
 
 	if (vp->v_type == VBLK &&
 	    vp->v_specmountpoint != NULL &&
 	    (vp->v_specmountpoint->mnt_flag & MNT_SOFTDEP))
 		softdep_fsync_mountdev(vp);
 
-	inodedeps_only = DOINGSOFTDEP(vp) && (ap->a_flags & FSYNC_RECLAIM)
+	mutex_enter(&vp->v_interlock);
+
+	inodedeps_only = DOINGSOFTDEP(vp) && (flags & FSYNC_RECLAIM)
 	    && UVM_OBJ_IS_CLEAN(&vp->v_uobj) && LIST_EMPTY(&vp->v_dirtyblkhd);
 
 	/*
@@ -367,79 +347,72 @@ ffs_full_fsync(void *v)
 	 */
 
 	if (vp->v_type == VREG || vp->v_type == VBLK) {
-		simple_lock(&vp->v_interlock);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES | PGO_CLEANIT |
-		    ((ap->a_flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
+		    ((flags & FSYNC_WAIT) ? PGO_SYNCIO : 0) |
 		    (fstrans_getstate(vp->v_mount) == FSTRANS_SUSPENDING ?
 			PGO_FREE : 0));
 		if (error) {
 			return error;
 		}
-	}
+	} else
+		mutex_exit(&vp->v_interlock);
 
 	passes = NIADDR + 1;
 	skipmeta = 0;
-	if (ap->a_flags & FSYNC_WAIT)
+	if (flags & FSYNC_WAIT)
 		skipmeta = 1;
-	s = splbio();
 
 loop:
-	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs)
-		bp->b_flags &= ~B_SCANNED;
+	mutex_enter(&bufcache_lock);
+	LIST_FOREACH(bp, &vp->v_dirtyblkhd, b_vnbufs) {
+		bp->b_cflags &= ~BC_SCANNED;
+	}
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
-		simple_lock(&bp->b_interlock);
-		if (bp->b_flags & (B_BUSY | B_SCANNED)) {
-			simple_unlock(&bp->b_interlock);
+		if (bp->b_cflags & (BC_BUSY | BC_SCANNED))
 			continue;
-		}
-		if ((bp->b_flags & B_DELWRI) == 0)
+		if ((bp->b_oflags & BO_DELWRI) == 0)
 			panic("ffs_fsync: not dirty");
-		if (skipmeta && bp->b_lblkno < 0) {
-			simple_unlock(&bp->b_interlock);
+		if (skipmeta && bp->b_lblkno < 0)
 			continue;
-		}
-		simple_unlock(&bp->b_interlock);
-		bp->b_flags |= B_BUSY | B_VFLUSH | B_SCANNED;
-		splx(s);
+		bp->b_cflags |= BC_BUSY | BC_VFLUSH | BC_SCANNED;
+		mutex_exit(&bufcache_lock);
 		/*
 		 * On our final pass through, do all I/O synchronously
 		 * so that we can find out if our flush is failing
 		 * because of write errors.
 		 */
-		if (passes > 0 || !(ap->a_flags & FSYNC_WAIT))
+		if (passes > 0 || !(flags & FSYNC_WAIT))
 			(void) bawrite(bp);
 		else if ((error = bwrite(bp)) != 0)
 			return (error);
-		s = splbio();
 		/*
-		 * Since we may have slept during the I/O, we need
+		 * Since we unlocked during the I/O, we need
 		 * to start from a known point.
 		 */
+		mutex_enter(&bufcache_lock);
 		nbp = LIST_FIRST(&vp->v_dirtyblkhd);
 	}
+	mutex_exit(&bufcache_lock);
 	if (skipmeta) {
 		skipmeta = 0;
 		goto loop;
 	}
-	if (ap->a_flags & FSYNC_WAIT) {
-		simple_lock(&global_v_numoutput_slock);
+
+	if (flags & FSYNC_WAIT) {
+		mutex_enter(&vp->v_interlock);
 		while (vp->v_numoutput) {
-			vp->v_iflag |= VI_BWAIT;
-			(void) ltsleep(&vp->v_numoutput, PRIBIO + 1,
-			    "ffsfsync", 0, &global_v_numoutput_slock);
+			cv_wait(&vp->v_cv, &vp->v_interlock);
 		}
-		simple_unlock(&global_v_numoutput_slock);
-		splx(s);
+		mutex_exit(&vp->v_interlock);
 
 		/*
 		 * Ensure that any filesystem metadata associated
 		 * with the vnode has been written.
 		 */
-		if ((error = softdep_sync_metadata(ap)) != 0)
+		if ((error = softdep_sync_metadata(vp)) != 0)
 			return (error);
 
-		s = splbio();
 		if (!LIST_EMPTY(&vp->v_dirtyblkhd)) {
 			/*
 			* Block devices associated with filesystems may
@@ -459,15 +432,14 @@ loop:
 #endif
 		}
 	}
-	splx(s);
 
 	if (inodedeps_only)
 		waitfor = 0;
 	else
-		waitfor = (ap->a_flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
+		waitfor = (flags & FSYNC_WAIT) ? UPDATE_WAIT : 0;
 	error = ffs_update(vp, NULL, NULL, waitfor);
 
-	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
+	if (error == 0 && flags & FSYNC_CACHE) {
 		int i = 0;
 		VOP_IOCTL(VTOI(vp)->i_devvp, DIOCCACHESYNC, &i, FWRITE,
 			curlwp->l_cred);
@@ -490,6 +462,7 @@ ffs_reclaim(void *v)
 	struct inode *ip = VTOI(vp);
 	struct mount *mp = vp->v_mount;
 	struct ufsmount *ump = ip->i_ump;
+	void *data;
 	int error;
 
 	fstrans_start(mp, FSTRANS_LAZY);
@@ -499,17 +472,24 @@ ffs_reclaim(void *v)
 	}
 	if (ip->i_din.ffs1_din != NULL) {
 		if (ump->um_fstype == UFS1)
-			pool_put(&ffs_dinode1_pool, ip->i_din.ffs1_din);
+			pool_cache_put(ffs_dinode1_cache, ip->i_din.ffs1_din);
 		else
-			pool_put(&ffs_dinode2_pool, ip->i_din.ffs2_din);
+			pool_cache_put(ffs_dinode2_cache, ip->i_din.ffs2_din);
 	}
+	/*
+	 * To interlock with ffs_sync().
+	 */
+	genfs_node_destroy(vp);
+	mutex_enter(&vp->v_interlock);
+	data = vp->v_data;
+	vp->v_data = NULL;
+	mutex_exit(&vp->v_interlock);
+
 	/*
 	 * XXX MFS ends up here, too, to free an inode.  Should we create
 	 * XXX a separate pool for MFS inodes?
 	 */
-	genfs_node_destroy(vp);
-	pool_put(&ffs_inode_pool, vp->v_data);
-	vp->v_data = NULL;
+	pool_cache_put(ffs_inode_cache, data);
 	fstrans_done(mp);
 	return (0);
 }
@@ -543,7 +523,7 @@ ffs_getpages(void *v)
 	     blkoff(fs, *ap->a_count << PAGE_SHIFT) != 0) &&
 	    DOINGSOFTDEP(ap->a_vp)) {
 		if ((ap->a_flags & PGO_LOCKED) == 0) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 		}
 		return EINVAL;
 	}
@@ -740,9 +720,14 @@ ffs_lock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
-	struct lock *lkp;
+	struct vnlock *lkp;
 	int flags = ap->a_flags;
 	int result;
+
+	if ((flags & LK_INTERLOCK) != 0) {
+		mutex_exit(&vp->v_interlock);
+		flags &= ~LK_INTERLOCK;
+	}
 
 	/*
 	 * Fake lock during file system suspension.
@@ -750,23 +735,12 @@ ffs_lock(void *v)
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((flags & LK_INTERLOCK) != 0)
-			simple_unlock(&vp->v_interlock);
 		return 0;
 	}
 
-	if ((flags & LK_TYPE_MASK) == LK_DRAIN)
-		return (lockmgr(vp->v_vnlock, flags, &vp->v_interlock));
-
-	KASSERT((flags & ~(LK_SHARED | LK_EXCLUSIVE | LK_SLEEPFAIL |
-	    LK_INTERLOCK | LK_NOWAIT | LK_SETRECURSE | LK_CANRECURSE)) == 0);
 	for (;;) {
-		if ((flags & LK_INTERLOCK) == 0) {
-			simple_lock(&vp->v_interlock);
-			flags |= LK_INTERLOCK;
-		}
 		lkp = vp->v_vnlock;
-		result = lockmgr(lkp, flags, &vp->v_interlock);
+		result = vlockmgr(lkp, flags);
 		if (lkp == vp->v_vnlock || result != 0)
 			return result;
 		/*
@@ -775,8 +749,7 @@ ffs_lock(void *v)
 		 * thread slept.  The lock currently held is not the right
 		 * lock.  Release it, and try to get the new lock.
 		 */
-		(void) lockmgr(lkp, LK_RELEASE, NULL);
-		flags &= ~LK_INTERLOCK;
+		(void) vlockmgr(lkp, LK_RELEASE);
 	}
 }
 
@@ -793,18 +766,17 @@ ffs_unlock(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
 
+	KASSERT(ap->a_flags == 0);
+
 	/*
 	 * Fake unlock during file system suspension.
 	 */
 	if ((vp->v_type == VREG || vp->v_type == VDIR) &&
 	    fstrans_is_owner(mp) &&
 	    fstrans_getstate(mp) == FSTRANS_SUSPENDING) {
-		if ((ap->a_flags & LK_INTERLOCK) != 0)
-			simple_unlock(&vp->v_interlock);
 		return 0;
 	}
-	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock));
+	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
 }
 
 /*
@@ -818,5 +790,5 @@ ffs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockstatus(vp->v_vnlock));
+	return (vlockstatus(vp->v_vnlock));
 }

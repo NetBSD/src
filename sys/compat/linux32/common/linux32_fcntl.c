@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_fcntl.c,v 1.2 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_fcntl.c,v 1.2.26.1 2008/02/18 21:05:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,41 +33,50 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.2 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_fcntl.c,v 1.2.26.1 2008/02/18 21:05:27 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/fstypes.h>
 #include <sys/signal.h>
-#include <sys/dirent.h>
-#include <sys/kernel.h>
 #include <sys/fcntl.h>
-#include <sys/select.h>
-#include <sys/proc.h>
-#include <sys/ucred.h>
-#include <sys/swap.h>
+#include <sys/filedesc.h>
 
 #include <machine/types.h>
 
 #include <sys/syscallargs.h>
 
 #include <compat/netbsd32/netbsd32.h>
-#include <compat/netbsd32/netbsd32_conv.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
-#include <compat/linux/common/linux_signal.h>
+#include <compat/linux/common/linux_fcntl.h>
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_misc.h>
-#include <compat/linux/common/linux_oldolduname.h>
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux32/common/linux32_types.h>
 #include <compat/linux32/common/linux32_signal.h>
 #include <compat/linux32/common/linux32_machdep.h>
-#include <compat/linux32/common/linux32_sysctl.h>
-#include <compat/linux32/common/linux32_socketcall.h>
 #include <compat/linux32/linux32_syscallargs.h>
+
+struct linux32_flock {
+	short       l_type;
+	short       l_whence;
+	int32_t     l_start;
+	int32_t     l_len;
+	linux_pid_t l_pid;
+};
+
+struct linux32_flock64 {
+	short           l_type;
+	short           l_whence;
+	netbsd32_int64	l_start;
+	netbsd32_int64	l_len;
+	linux_pid_t     l_pid;
+};
+
+conv_linux_flock(linux32, flock)
+conv_linux_flock(linux32, flock64)
 
 int
 linux32_sys_open(l, v, retval)
@@ -89,25 +98,16 @@ linux32_sys_open(l, v, retval)
 	return linux_sys_open(l, &ua, retval);
 }
 
-int
-linux32_sys_fcntl64(l, v, retval)
-	struct lwp *l;
-	void *v;
-	register_t *retval;
-{
-	struct linux32_sys_fcntl64_args /* {
-		syscallcarg(int) fd;
-                syscallarg(int) cmd;
-		syscallarg(netbsd32_voidp) arg; 
-	} */ *uap = v;
-	struct linux_sys_fcntl64_args ua;
-
-	NETBSD32TO64_UAP(fd);
-	NETBSD32TO64_UAP(cmd);
-	NETBSD32TOP_UAP(arg, void);
-
-	return linux_sys_fcntl64(l, &ua, retval);
-}
+/*
+ * The linux support for 64bit file offsets introduced both an fcntl64()
+ * function and LINUX_F_SETLK64 (et al), however the fcntl64() function
+ * can still be passed LINUX_F_GETLK (etc).
+ * In practice this means that the two functions are identical!
+ *
+ * We have to intercept both sets of locking primitives because the
+ * structure layout of the 64bit version differs from that on amd64 due
+ * to extra padding because the alignment constraint for int64_t differs.
+ */
 
 int
 linux32_sys_fcntl(l, v, retval)
@@ -121,9 +121,29 @@ linux32_sys_fcntl(l, v, retval)
 		syscallarg(netbsd32_voidp) arg; 
 	} */ *uap = v;
 	struct linux_sys_fcntl_args ua;
+	int cmd =  SCARG(uap, cmd);
+
+	switch (cmd) {
+	case LINUX_F_GETLK64:
+		do_linux_getlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
+		    linux32, flock64);
+	case LINUX_F_SETLK64:
+	case LINUX_F_SETLKW64:
+		do_linux_setlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
+		    linux32, flock64, LINUX_F_SETLK64);
+	case LINUX_F_GETLK:
+		do_linux_getlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
+		    linux32, flock);
+	case LINUX_F_SETLK:
+	case LINUX_F_SETLKW:
+		do_linux_setlk(SCARG(uap, fd), cmd, SCARG_P32(uap, arg),
+		    linux32, flock, LINUX_F_SETLK);
+	default:
+		break;
+	}
 
 	NETBSD32TO64_UAP(fd);
-	NETBSD32TO64_UAP(cmd);
+	SCARG(&ua, cmd) = cmd;
 	NETBSD32TOP_UAP(arg, void);
 
 	return linux_sys_fcntl(l, &ua, retval);

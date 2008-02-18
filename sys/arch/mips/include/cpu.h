@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.85.2.1 2007/12/08 18:17:22 mjf Exp $	*/
+/*	$NetBSD: cpu.h,v 1.85.2.2 2008/02/18 21:04:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -80,11 +80,11 @@ struct cpu_info {
  * DIV and DIVU are expensive on MIPS (eg 75 clocks on the R4000).  MULT
  * and MULTU are only 12 clocks on the same CPU.
  *
- * The strategy we use is to calculate the reciprical of cycles per MHz,
+ * The strategy we use is to calculate the reciprocal of cycles per MHz,
  * scaled by 1<<32.  Then we can simply issue a MULTU and pluck of the
  * HI register and have the results of the division.
  */
-#define	MIPS_SET_CI_RECIPRICAL(cpu)					\
+#define	MIPS_SET_CI_RECIPROCAL(cpu)					\
 do {									\
 	KASSERT((cpu)->ci_divisor_delay != 0);				\
 	(cpu)->ci_divisor_recip = 0x100000000ULL / (cpu)->ci_divisor_delay; \

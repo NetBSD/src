@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.36.4.2 2007/12/27 00:45:32 mjf Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.36.4.3 2008/02/18 21:06:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.36.4.2 2007/12/27 00:45:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.36.4.3 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,14 @@ Static void uhidev_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
 Static int uhidev_maxrepid(void *, int);
 Static int uhidevprint(void *, const char *);
 
-USB_DECLARE_DRIVER(uhidev);
+int uhidev_match(device_t, struct cfdata *, void *);
+void uhidev_attach(device_t, device_t, void *);
+void uhidev_childdet(device_t, device_t);
+int uhidev_detach(device_t, int);
+int uhidev_activate(device_t, enum devact);
+extern struct cfdriver uhidev_cd;
+CFATTACH_DECL2(uhidev, sizeof(struct uhidev_softc), uhidev_match,
+    uhidev_attach, uhidev_detach, uhidev_activate, NULL, uhidev_childdet);
 
 USB_MATCH(uhidev)
 {
@@ -256,7 +263,7 @@ USB_ATTACH(uhidev)
 	repsizes = malloc(nrepid * sizeof(*repsizes), M_TEMP, M_NOWAIT);
 	if (repsizes == NULL)
 		goto nomem;
-	sc->sc_subdevs = malloc(nrepid * sizeof(device_ptr_t),
+	sc->sc_subdevs = malloc(nrepid * sizeof(device_t),
 				M_USBDEV, M_NOWAIT | M_ZERO);
 	if (sc->sc_subdevs == NULL) {
 		free(repsizes, M_TEMP);
@@ -351,9 +358,9 @@ uhidevprint(void *aux, const char *pnp)
 }
 
 int
-uhidev_activate(device_ptr_t self, enum devact act)
+uhidev_activate(device_t self, enum devact act)
 {
-	struct uhidev_softc *sc = (struct uhidev_softc *)self;
+	struct uhidev_softc *sc = device_private(self);
 	int i, rv;
 
 	switch (act) {
@@ -373,6 +380,20 @@ uhidev_activate(device_ptr_t self, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+void
+uhidev_childdet(device_t self, device_t child)
+{
+	int i;
+	struct uhidev_softc *sc = device_private(self);
+
+	for (i = 0; i < sc->sc_nrepid; i++) {
+		if (&sc->sc_subdevs[i]->sc_dev == child)
+			break;
+	}
+	KASSERT(i < sc->sc_nrepid);
+	sc->sc_subdevs[i] = NULL;
 }
 
 USB_DETACH(uhidev)
@@ -396,7 +417,6 @@ USB_DETACH(uhidev)
 			rnd_detach_source(&sc->sc_subdevs[i]->rnd_source);
 #endif
 			rv |= config_detach(&sc->sc_subdevs[i]->sc_dev, flags);
-			sc->sc_subdevs[i] = NULL;
 		}
 	}
 

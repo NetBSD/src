@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.64 2007/10/17 19:57:27 garbled Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.64.2.1 2008/02/18 21:05:06 mjf Exp $
 
 #=========================================================================
 #
@@ -92,8 +92,6 @@ MD_SFILES=	${SPARC64}/sparc64/locore.s
 locore.o: ${SPARC64}/sparc64/locore.s assym.h
 	${NORMAL_S}
 
-in_cksum.o: assym.h
-
 ##
 ## (5) link settings
 ##
@@ -113,6 +111,8 @@ KERN_LDSCRIPT?= kern32.ldscript
 bwtwo.o cgsix.o cgthree.o cgtwo.o cons.o dma.o esp.o fb.o if_ie.o: Makefile
 ms.c obio.o zs.c autoconf.o clock.o cpu.o disksubr.o locore.o: Makefile
 machdep.o mem.o openprom.o pmap.o vm_machdep.o: Makefile
+
+cpu_in_cksum.o lock_stubs.o: assym.h
 
 ##
 ## (7) misc settings

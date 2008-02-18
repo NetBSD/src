@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.127.6.2 2007/12/27 00:46:27 mjf Exp $	*/
+/*	$NetBSD: if.h,v 1.127.6.3 2008/02/18 21:07:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -80,6 +80,8 @@
 
 #if defined(_NETBSD_SOURCE)
 
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/socket.h>
 #include <sys/queue.h>
 #include <net/dlt.h>
@@ -819,6 +821,7 @@ void    ether_input(struct ifnet *, struct mbuf *);
 
 int ifreq_setaddr(u_long, struct ifreq *, const struct sockaddr *);
 
+struct ifaddr *if_dl_create(const struct ifnet *, const struct sockaddr_dl **);
 void	if_set_sadl(struct ifnet *, const void *, u_char);
 void	if_alloc_sadl(struct ifnet *);
 void	if_free_sadl(struct ifnet *);
@@ -835,6 +838,7 @@ void	if_up(struct ifnet *);
 int	ifconf(u_long, void *);
 void	ifinit(void);
 int	ifioctl(struct socket *, u_long, void *, struct lwp *);
+int	ifioctl_common(struct ifnet *, u_long, void *);
 int	ifpromisc(struct ifnet *, int);
 struct	ifnet *ifunit(const char *);
 

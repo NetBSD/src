@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_cpu.c,v 1.12.2.3 2007/12/27 00:45:56 mjf Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.12.2.4 2008/02/18 21:06:45 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.12.2.3 2007/12/27 00:45:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.12.2.4 2008/02/18 21:06:45 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,10 +75,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.12.2.3 2007/12/27 00:45:56 mjf Exp $"
 #include <sys/cpu.h>
 #include <sys/cpuio.h>
 #include <sys/proc.h>
+#include <sys/percpu.h>
 #include <sys/kernel.h>
 #include <sys/kauth.h>
 #include <sys/xcall.h>
 #include <sys/pool.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -98,6 +100,7 @@ const struct cdevsw cpuctl_cdevsw = {
 kmutex_t cpu_lock;
 int	ncpu;
 int	ncpuonline;
+bool	mp_online;
 
 static struct cpu_info *cpu_infos[MAXCPUS];
 
@@ -109,7 +112,9 @@ mi_cpu_attach(struct cpu_info *ci)
 
 	ci->ci_index = ncpu;
 
-	mutex_init(&spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
+	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);
+	spc->spc_lwplock = kmem_alloc(CACHE_LINE_SIZE, KM_SLEEP);
+	mutex_init(spc->spc_lwplock, MUTEX_DEFAULT, IPL_SCHED);
 	sched_cpuattach(ci);
 	uvm_cpu_attach(ci);
 
@@ -124,6 +129,7 @@ mi_cpu_attach(struct cpu_info *ci)
 	else
 		ci->ci_data.cpu_onproc = ci->ci_data.cpu_idlelwp;
 
+	percpu_init_cpu(ci);
 	softint_init(ci);
 	xc_init_cpu(ci);
 	pool_cache_cpu_init(ci);
@@ -155,11 +161,12 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	mutex_enter(&cpu_lock);
 	switch (cmd) {
 	case IOC_CPU_SETSTATE:
-		error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL);
+		cs = data;
+		error = kauth_authorize_system(l->l_cred,
+		    KAUTH_SYSTEM_CPU, KAUTH_REQ_SYSTEM_CPU_SETSTATE, cs, NULL,
+		    NULL);
 		if (error != 0)
 			break;
-		cs = data;
 		if ((ci = cpu_lookup(cs->cs_id)) == NULL) {
 			error = ESRCH;
 			break;
@@ -281,19 +288,8 @@ cpu_xc_offline(struct cpu_info *ci)
 		lwp_unlock(l);
 	}
 
-	/*
-	 * Runqueues are locked with the global lock if pointers match,
-	 * thus hold only one.  Otherwise, double-lock the runqueues.
-	 */
-	if (spc->spc_mutex == mspc->spc_mutex) {
-		spc_lock(ci);
-	} else if (ci < mci) {
-		spc_lock(ci);
-		spc_lock(mci);
-	} else {
-		spc_lock(mci);
-		spc_lock(ci);
-	}
+	/* Double-lock the run-queues */
+	spc_dlock(ci, mci);
 
 	/* Handle LSRUN and LSIDL cases */
 	LIST_FOREACH(l, &alllwp, l_list) {
@@ -309,14 +305,12 @@ cpu_xc_offline(struct cpu_info *ci)
 			lwp_setlock(l, mspc->spc_mutex);
 		}
 	}
-	if (spc->spc_mutex == mspc->spc_mutex) {
-		spc_unlock(ci);
-	} else {
-		spc_unlock(ci);
-		spc_unlock(mci);
-	}
-
+	spc_dunlock(ci, mci);
 	mutex_exit(&proclist_lock);
+
+#ifdef __HAVE_MD_CPU_OFFLINE
+	cpu_offline_md();
+#endif
 }
 
 static void

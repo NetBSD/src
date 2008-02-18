@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.12.4.2 2007/12/08 18:21:26 mjf Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.12.4.3 2008/02/18 21:07:19 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -155,6 +155,7 @@ ukfs_release(struct ukfs *fs, int dounmount)
 void
 ukfs_ll_recycle(struct vnode *vp)
 {
+	bool recycle;
 
 	/* XXXXX */
 	if (vp == NULL || rump_vp_getref(vp))
@@ -162,9 +163,8 @@ ukfs_ll_recycle(struct vnode *vp)
 
 	VLE(vp);
 	RUMP_VOP_FSYNC(vp, NULL, 0, 0, 0);
-	RUMP_VOP_INACTIVE(vp);
-	rump_recyclenode(vp);
-	rump_putnode(vp);
+	RUMP_VOP_INACTIVE(vp, &recycle);
+	rump_vp_recycle_nokidding(vp);
 }
 
 /*

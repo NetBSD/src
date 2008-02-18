@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphy.c,v 1.3 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: ikphy.c,v 1.3.36.1 2008/02/18 21:05:51 mjf Exp $	*/
 
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
@@ -64,7 +64,7 @@ POSSIBILITY OF SUCH DAMAGE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.3 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ikphy.c,v 1.3.36.1 2008/02/18 21:05:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,9 +155,6 @@ ikphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	int reg;
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

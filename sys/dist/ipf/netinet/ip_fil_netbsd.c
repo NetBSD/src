@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.41 2007/09/17 06:25:23 martti Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.41.6.1 2008/02/18 21:06:35 mjf Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -6,6 +6,10 @@
  * See the IPFILTER.LICENCE file for details on licencing.
  */
 #if !defined(lint)
+#if defined(__NetBSD__)
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.41.6.1 2008/02/18 21:06:35 mjf Exp $");
+#else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.51 2007/05/31 12:27:35 darrenr Exp";
 #endif
@@ -1143,7 +1147,11 @@ frdest_t *fdp;
 		sockaddr_in_init(&u.dst4, &ip->ip_dst, 0);
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
-	rtcache_init(ro);
+	rt = rtcache_init(ro);
+	if ((ifp == NULL) && (rt != NULL))
+		ifp = rt->rt_ifp;
+
+	if ((rt == NULL) || (ifp == NULL)) {
 # else
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
@@ -1429,7 +1437,16 @@ frdest_t *fdp;
 	dst = &u.dst;
 	rtcache_setdst(ro, dst);
 
-	rtcache_init(ro);
+	rt = rtcache_init(ro);
+	if ((ifp == NULL) && (rt != NULL))
+		ifp = rt->rt_ifp;
+
+	if ((rt == NULL) || (ifp == NULL)) {
+		error = EHOSTUNREACH;
+		goto bad;
+	}
+
+	rt = fdp ? NULL : rt;
 # else
 	dst6 = (struct sockaddr_in6 *)&ro->ro_dst;
 	dst6->sin6_family = AF_INET6;
@@ -1532,8 +1549,8 @@ fr_info_t *fin;
 #if __NetBSD_Version__ >= 499001100
 	sockaddr_in_init(&u.dst4, &fin->fin_src, 0);
 	rtcache_setdst(&iproute, &u.dst);
-	rtcache_init(&iproute);
-	if (iproute.ro_rt == NULL)
+	rt = rtcache_init(&iproute);
+	if (rt == NULL)
 		rc = 0;
 	else
 		rc = (fin->fin_ifp == iproute.ro_rt->rt_ifp);

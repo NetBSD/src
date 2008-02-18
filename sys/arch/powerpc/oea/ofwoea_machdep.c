@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.4.4.2 2007/12/08 18:17:41 mjf Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.4.4.3 2008/02/18 21:04:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,9 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.4.2 2007/12/08 18:17:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.4.3 2008/02/18 21:04:58 mjf Exp $");
 
-
+#include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h" 
 #include "opt_kgdb.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.4.2 2007/12/08 18:17:41 mjf E
 #include <machine/autoconf.h>
 #include <powerpc/bus.h>
 #include <powerpc/oea/bat.h>
+#include <powerpc/oea/cpufeat.h>
 #include <powerpc/ofw_bus.h>
 #include <powerpc/ofw_cons.h>
 #include <powerpc/spr.h>
@@ -84,6 +85,10 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.4.2 2007/12/08 18:17:41 mjf E
 #endif
 
 #include "opt_ofwoea.h"
+
+#ifdef ofppc
+extern struct model_data modeldata;
+#endif
 
 #ifdef OFWOEA_DEBUG
 #define DPRINTF printf
@@ -134,16 +139,12 @@ static void set_timebase(void);
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	int ofmaplen, node;
-#if defined (PPC_OEA64_BRIDGE)
+	int ofmaplen, node, l;
 	register_t scratch;
-#endif
 
-#if defined (PPC_OEA)
 	/* initialze bats */
-	ofwoea_batinit();
-#elif defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
-#endif /* PPC_OEA */
+	if ((oeacpufeat & OEACPU_NOBAT) == 0)
+		ofwoea_batinit();
 
 #if NKSYMS || defined(DDB) || defined(LKM)
 	/* get info of kernel symbol table from bootloader */
@@ -158,7 +159,10 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	memset(model_name, 0, sizeof(model_name));
 	node = OF_finddevice("/");
 	if (node >= 0) {
-		OF_getprop(node, "model", model_name, sizeof(model_name));
+		l = OF_getprop(node, "model", model_name, sizeof(model_name));
+		if (l == -1)
+			OF_getprop(node, "name", model_name,
+			    sizeof(model_name));
 		model_init();
 	}
 
@@ -185,22 +189,32 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	}
 
 	uvm_setpagesize();
+
+#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup64bridge();
+	else
+		pmap_setup32();
+#endif
 	pmap_bootstrap(startkernel, endkernel);
 
 #if defined(PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
 #if defined (PMAC_G5)
 	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
-	pmap_setup_segment0_map(0, 0xff800000, 0x3fc00000, 0x400000, 0x0);
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup_segment0_map(0, 0xff800000, 0x3fc00000, 0x400000,
+		    0x0);
 #elif defined (MAMBO)
 	/* Mapin 1st 256MB segment 1:1, also map in mem needed to access OFW*/
-	pmap_setup_segment0_map(0, 0xf4000000, 0xf4000000, 0x1000, 0x0);
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup_segment0_map(0, 0xf4000000, 0xf4000000, 0x1000, 0x0);
 #endif /* PMAC_G5 */
+#endif /* PPC_OEA64 || PPC_OEA64_BRIDGE */
 
 	/* Now enable translation (and machine checks/recoverable interrupts) */
 	__asm __volatile ("sync; mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 	    : "=r"(scratch)
 	    : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
-#endif /* PPC_OEA64 || PPC_OEA64_BRIDGE */
 
 	restore_ofmap(ofmap, ofmaplen);
 
@@ -279,7 +293,8 @@ restore_ofmap(struct ofw_translations *map, int len)
 	pmap_pinit(&ofw_pmap);
 
 #if defined(PPC_OEA64_BRIDGE)
-	ofw_pmap.pm_sr[0x0] = KERNELN_SEGMENT(0);
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		ofw_pmap.pm_sr[0x0] = KERNELN_SEGMENT(0);
 #endif
 	ofw_pmap.pm_sr[KERNEL_SR] = KERNEL_SEGMENT;
 
@@ -356,19 +371,14 @@ noranges:
 void
 ofwoea_batinit(void)
 {
-#if 0
-	/* this is what macppc used to do */
-        oea_batinit(0x80000000, BAT_BL_256M, 0xf0000000, BAT_BL_256M,
-                    0x90000000, BAT_BL_256M, 0xa0000000, BAT_BL_256M,
-                                0xb0000000, BAT_BL_256M, 0);
-#else
+#if defined (PPC_OEA)
         u_int16_t bitmap;
 	int node, i;
 
 	node = OF_finddevice("/");
 	bitmap = ranges_bitmap(node, 0);
 	oea_batinit(0);
-
+	
 #ifdef macppc
 	/* XXX this is a macppc-specific hack */
 	bitmap = 0x8f00;
@@ -382,7 +392,7 @@ ofwoea_batinit(void)
 			DPRINTF("Batmapped 256M at 0x%x\n", 0x10000000 * i);
 		}
 	}
-#endif
+#endif /* OEA */
 }
 
 
@@ -428,6 +438,10 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 	if (OF_getprop(node, "#size-cells", &scells,
 	    sizeof(scells)) != sizeof(scells))
 		scells = 1;
+#ifdef ofppc
+	if (modeldata.ranges_offset == 0)
+		scells -= 1;
+#endif
 	if (type == RANGE_TYPE_ISA)
 		reclen = 6;
 	else
@@ -451,10 +465,13 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 		case RANGE_TYPE_FIRSTPCI:
 			for (i=0; i < len/(4*reclen); i++) {
 				DPRINTF("FOUND PCI RANGE\n");
-				regions[*cur].type = map[i*reclen] >> 24;
-				regions[*cur].addr = map[i*reclen + acells];
 				regions[*cur].size =
 				    map[i*reclen + acells + scells];
+				/* skip ranges of size==0 */
+				if (regions[*cur].size == 0)
+					continue;
+				regions[*cur].type = map[i*reclen] >> 24;
+				regions[*cur].addr = map[i*reclen + acells];
 				(*cur)++;
 			}
 			break;
@@ -593,6 +610,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		}
 		if (region.addr + region.size < list[range].addr) {
 			/* allocate a hole */
+			holes[nrofholes].type = iomem;
 			holes[nrofholes].addr = region.size + region.addr;
 			holes[nrofholes].size = list[range].addr -
 			    holes[nrofholes].addr - 1;
@@ -636,9 +654,14 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		if (error)
 			panic("ofwoea_bus_space_init: can't init tag %s", name);
 		for (i=0; i < nrofholes; i++) {
-			error =
-			    extent_alloc_region(tag->pbs_extent,
-				holes[i].addr, holes[i].size, EX_NOWAIT);
+			if (holes[i].type == RANGE_IO) {
+				error = extent_alloc_region(tag->pbs_extent,
+				    holes[i].addr - tag->pbs_offset,
+				    holes[i].size, EX_NOWAIT);
+			} else {
+				error = extent_alloc_region(tag->pbs_extent,
+				    holes[i].addr, holes[i].size, EX_NOWAIT);
+			}
 			if (error)
 				panic("ofwoea_bus_space_init: can't block out"
 				    " reserved space 0x%x-0x%x: error=%d",

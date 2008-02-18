@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.18.2.1 2007/11/19 00:49:22 mjf Exp $	*/
+/*	$NetBSD: emul.c,v 1.18.2.2 2008/02/18 21:07:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,10 +40,12 @@
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kthread.h>
 #include <sys/cpu.h>
 #include <sys/kmem.h>
+#include <sys/poll.h>
 
 #include <machine/stdarg.h>
 
@@ -52,11 +54,7 @@
 #include "rump_private.h"
 #include "rumpuser.h"
 
-#ifdef __HAVE_TIMECOUNTER
 time_t time_second = 1;
-#else
-volatile struct timeval time = { 1, 0 };
-#endif
 
 kmutex_t proclist_mutex;
 kmutex_t proclist_lock;
@@ -65,16 +63,18 @@ struct vnode *rootvp;
 struct device *root_device;
 dev_t rootdev;
 struct vm_map *kernel_map;
-int physmem;
+int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
+int dovfsusermount = 1;
+int hardclock_ticks;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
-MALLOC_DEFINE(M_VNODE, "vnodes", "Dynamically allocated vnodes");
+MALLOC_DEFINE(M_KEVENT, "kevent", "kevents/knotes");
 
 char hostname[MAXHOSTNAMELEN];
 size_t hostnamelen;
@@ -86,6 +86,13 @@ u_long	bufmem;
 u_int	nbuf;
 
 const char *panicstr;
+const char ostype[] = "NetBSD";
+const char osrelease[] = "999"; /* paradroid 4evah */
+const char kernel_ident[] = "RUMP-ROAST";
+const char *domainname;
+int domainnamelen;
+
+const struct filterops seltrue_filtops;
 
 void
 panic(const char *fmt, ...)
@@ -93,6 +100,7 @@ panic(const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
+	printf("panic: ");
 	vprintf(fmt, ap);
 	va_end(ap);
 	printf("\n");
@@ -121,6 +129,16 @@ uprintf(const char *fmt, ...)
 
 void
 printf_nolog(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+}
+
+void
+aprint_normal(const char *fmt, ...)
 {
 	va_list ap;
 
@@ -345,6 +363,14 @@ kthread_create(pri_t pri, int flags, struct cpu_info *ci,
 	struct lwp *l;
 	int rv;
 
+#ifdef RUMP_WITHOUT_THREADS
+	/* XXX: fake it */
+	if (strcmp(fmt, "vrele") == 0)
+		return 0;
+	else
+		panic("threads not available, undef RUMP_WITHOUT_THREADS");
+#endif
+
 	KASSERT(fmt != NULL);
 	if (ci != NULL)
 		panic("%s: bounded threads not supported", __func__);
@@ -388,4 +414,92 @@ callout_stop(callout_t *c)
 {
 
 	panic("%s: not implemented", __func__);
+}
+
+struct proc *
+p_find(pid_t pid, uint flags)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+struct pgrp *
+pg_find(pid_t pid, uint flags)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+kpgsignal(struct pgrp *pgrp, ksiginfo_t *ksi, void *data, int checkctty)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+pgid_in_session(struct proc *p, pid_t pg_id)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+sigispending(struct lwp *l, int signo)
+{
+
+	return 0;
+}
+
+void
+knote_fdclose(struct lwp *l, int fd)
+{
+
+	/* since we don't add knotes, we don't have to remove them */
+}
+
+int
+seltrue_kqfilter(dev_t dev, struct knote *kn)
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+int
+kpause(const char *wmesg, bool intr, int timeo, kmutex_t *mtx)
+{
+	extern int hz;
+	int rv, error;
+
+	if (mtx)
+		mutex_exit(mtx);
+	rv = rumpuser_usleep(timeo * (1000000 / hz), &error);
+	if (mtx)
+		mutex_enter(mtx);
+
+	if (rv)
+		return error;
+
+	return 0;
+}
+
+void
+suspendsched()
+{
+
+	panic("%s: not implemented", __func__);
+}
+
+void
+yield(void)
+{
+
+	rumpuser_yield();
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: xy.c,v 1.74 2007/10/19 12:01:23 ad Exp $	*/
+/*	$NetBSD: xy.c,v 1.74.2.1 2008/02/18 21:06:35 mjf Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.74 2007/10/19 12:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xy.c,v 1.74.2.1 2008/02/18 21:06:35 mjf Exp $");
 
 #undef XYC_DEBUG		/* full debug */
 #undef XYC_DIAG			/* extra sanity checks */
@@ -247,8 +247,8 @@ xydummystrat(bp)
 	if (bp->b_bcount != XYFM_BPS)
 		panic("xydummystrat");
 	bcopy(xy_labeldata, bp->b_data, XYFM_BPS);
-	bp->b_flags |= B_DONE;
-	bp->b_flags &= ~B_BUSY;
+	bp->b_oflags |= BO_DONE;
+	bp->b_cflags &= ~BC_BUSY;
 }
 
 int
@@ -915,6 +915,48 @@ xydump(dev, blkno, va, size)
 
 }
 
+static enum kauth_device_req
+xy_getkauthreq(u_char cmd)
+{
+	enum kauth_device_req req;
+
+	switch (cmd) {
+	case XYCMD_WR:
+	case XYCMD_WTH:
+	case XYCMD_WFM:
+	case XYCMD_WRH:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE;
+		break;
+
+	case XYCMD_RD:
+	case XYCMD_RTH:
+	case XYCMD_RDH:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ;
+		break;
+
+	case XYCMD_RDS:
+	case XYCMD_MBD:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF;
+		break;
+
+	case XYCMD_RST:
+	case XYCMD_SDS:
+	case XYCMD_MBL:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF;
+		break;
+
+	case XYCMD_NOP:
+	case XYCMD_SK:
+	case XYCMD_ST:
+	case XYCMD_R:
+	default:
+		req = 0;
+		break;
+	}
+
+	return (req);
+}
+
 /*
  * xyioctl: ioctls on XY drives.   based on ioctl's of other netbsd disks.
  */
@@ -1030,12 +1072,16 @@ xyioctl(dev, command, addr, flag, l)
 		}
 		return error;
 
-	case DIOSXDCMD:
+	case DIOSXDCMD: {
+		enum kauth_device_req req;
+
 		xio = (struct xd_iocmd *) addr;
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		req = xy_getkauthreq(xio->cmd);
+		if ((error = kauth_authorize_device_passthru(l->l_cred,
+		    dev, req, xio)) != 0)
 			return (error);
 		return (xyc_ioctlcmd(xy, dev, xio));
+		}
 
 	default:
 		return ENOTTY;

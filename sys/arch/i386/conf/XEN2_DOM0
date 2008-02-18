@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOM0,v 1.33.2.3 2007/12/27 00:43:03 mjf Exp $
+# $NetBSD: XEN2_DOM0,v 1.33.2.4 2008/02/18 21:04:37 mjf Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -17,7 +17,7 @@ options 	DOM0OPS
 # to a domU, at the expense of a higher memory usage by the network stack.
 #options 	MCLSHIFT=12
 
-makeoptions	CPUFLAGS="-march=i686"
+makeoptions 	CPUFLAGS="-march=i686"
 
 #options 	VM86		# virtual 8086 emulation
 #options 	USER_LDT	# user-settable LDT; used by WINE
@@ -33,7 +33,6 @@ options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
 options 	NTP		# NTP phase/frequency locked loop
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 options 	SYSVMSG		# System V-like message queues
 options 	SYSVSEM		# System V-like semaphores
@@ -59,7 +58,7 @@ options 	DDB_ONPANIC=1	# see also sysctl(8): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x2f8,KGDB_DEVRATE=57600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_NOMID	# NetBSD 0.8, 386BSD, and BSDI
@@ -519,6 +518,10 @@ ulpt*   at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem* at uhub? port ? configuration ?
 ucom*   at umodem?
+
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
 
 # USB Mass Storage
 umass*  at uhub? port ? configuration ? interface ?

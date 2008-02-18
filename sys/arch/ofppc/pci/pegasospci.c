@@ -1,4 +1,4 @@
-/* $NetBSD: pegasospci.c,v 1.4.2.3 2007/12/27 00:43:14 mjf Exp $ */
+/* $NetBSD: pegasospci.c,v 1.4.2.4 2008/02/18 21:04:53 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,14 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.4.2.3 2007/12/27 00:43:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pegasospci.c,v 1.4.2.4 2008/02/18 21:04:53 mjf Exp $");
+
+#include "opt_pci.h"
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/malloc.h>
+#include <sys/extent.h>
 #include <sys/systm.h>
 
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciconf.h>
 #include <dev/ofw/openfirm.h>
 #include <dev/ofw/ofw_pci.h>
 
@@ -62,8 +66,6 @@ struct pegasospci_softc {
 
 static void pegasospci_attach(struct device *, struct device *, void *);
 static int pegasospci_match(struct device *, struct cfdata *, void *);
-static void pegasospci_indirect_attach_hook(struct device *, struct device *,
-    struct pcibus_attach_args *);
 static pcireg_t pegasospci_indirect_conf_read(void *, pcitag_t, int);
 static void pegasospci_indirect_conf_write(void *, pcitag_t, int, pcireg_t);
 
@@ -135,6 +137,9 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	struct genppc_pci_chipset_businfo *pbi;
 	int isprim = 0, node = ca->ca_node;
 	uint32_t reg[2], busrange[2];
+#ifdef PCI_NETBSD_CONFIGURE
+	struct extent *ioext, *memext;
+#endif
 
 	aprint_normal("\n");
 
@@ -169,7 +174,8 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 			/* The Pegasos is very simple.  isa == pci */
 			genppc_isa_io_space_tag = sc->sc_iot;
 			genppc_isa_mem_space_tag = sc->sc_memt;
-			map_isa_ioregs(sc->sc_iot.pbs_offset);
+			map_isa_ioregs();
+			init_ofppc_interrupt();
 			ofppc_init_comcons(isa_node);
 		}
 	}
@@ -188,7 +194,6 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 		/* Pegasos2: primary PCI host (33MHz) @ 0x80000000 */
 		pc->pc_addr = mapiodev(PEGASOS2_PCI0_ADDR, 4);
 		pc->pc_data = mapiodev(PEGASOS2_PCI0_DATA, 4);
-		pc->pc_attach_hook = pegasospci_indirect_attach_hook;
 	} else {
 		/* Pegasos2: second PCI host (66MHz) @ 0xc0000000 */
 		pc->pc_addr = mapiodev(PEGASOS2_PCI1_ADDR, 4);
@@ -208,6 +213,21 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 
 	genofw_setup_pciintr_map((void *)pc, pbi, pc->pc_node);
 
+#ifdef PCI_NETBSD_CONFIGURE
+	if (isprim) {
+		ioext  = extent_create("pciio",  0x00001400, 0x0000ffff,
+		    M_DEVBUF, NULL, 0, EX_NOWAIT);
+		memext = extent_create("pcimem", sc->sc_memt.pbs_base,
+		    sc->sc_memt.pbs_limit-1, M_DEVBUF, NULL, 0, EX_NOWAIT);
+
+		if (pci_configure_bus(pc, ioext, memext, NULL, 0, CACHELINESIZE))
+			printf("pci_configure_bus() failed\n");
+
+		extent_destroy(ioext);
+		extent_destroy(memext);
+	}
+#endif /* PCI_NETBSD_CONFIGURE */
+
 	memset(&pba, 0, sizeof(pba));
 	pba.pba_memt = pc->pc_memt;
 	pba.pba_iot = pc->pc_iot;
@@ -219,40 +239,6 @@ pegasospci_attach(struct device *parent, struct device *self, void *aux)
 	pba.pba_flags = PCI_FLAGS_IO_ENABLED | PCI_FLAGS_MEM_ENABLED;
 
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
-}
-
-static void
-pegasospci_indirect_attach_hook(struct device *parent, struct device *self,
-    struct pcibus_attach_args *pba)
-{
-	pcitag_t tag;
-	pcireg_t reg;
-	pci_chipset_tag_t pc;
-
-	if (pba->pba_bus != 0)
-		return;
-
-	printf(": indirect configuration space access");
-
-	/*
-	 * SmartFirmware 1.2 only initializes the devices it will use,
-	 * i.e. ATA, USB, serial, network. Devices like Firewire or Audio
-	 * are lacking the IO/MEM-enable flags in the PCI command register,
-	 * although the interrupt assignments and BARs are correctly set up.
-	 */
-	pc = pba->pba_pc;
-
-	/* VT6306 IEEE 1394: device 1 */
-	tag = pci_make_tag(pc, pba->pba_bus, 1, 0);
-	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	reg |= PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE;
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
-
-	/* VT82C686A AC97: device 12, function 5 */
-	tag = pci_make_tag(pc, pba->pba_bus, 12, 5);
-	reg = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
-	reg |= PCI_COMMAND_IO_ENABLE;
-	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, reg);
 }
 
 static pcireg_t

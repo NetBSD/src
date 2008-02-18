@@ -1,4 +1,4 @@
-/*	$NetBSD: uvscom.c,v 1.20 2007/03/13 13:51:57 drochner Exp $	*/
+/*	$NetBSD: uvscom.c,v 1.20.18.1 2008/02/18 21:06:27 mjf Exp $	*/
 /*-
  * Copyright (c) 2001-2002, Shunsuke Akiyama <akiyama@jp.FreeBSD.org>.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.20 2007/03/13 13:51:57 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvscom.c,v 1.20.18.1 2008/02/18 21:06:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,31 +232,14 @@ static const struct usb_devno uvscom_devs [] = {
 };
 #define uvscom_lookup(v, p) usb_lookup(uvscom_devs, v, p)
 
-USB_DECLARE_DRIVER(uvscom);
-
-#ifdef __FreeBSD__
-Static device_probe_t uvscom_match;
-Static device_attach_t uvscom_attach;
-Static device_detach_t uvscom_detach;
-
-Static device_method_t uvscom_methods[] = {
-	/* Device interface */
-	DEVMETHOD(device_probe, uvscom_match),
-	DEVMETHOD(device_attach, uvscom_attach),
-	DEVMETHOD(device_detach, uvscom_detach),
-	{ 0, 0 }
-};
-
-Static driver_t uvscom_driver = {
-	"usio",
-	uvscom_methods,
-	sizeof (struct uvscom_softc)
-};
-
-DRIVER_MODULE(uvscom, uhub, uvscom_driver, ucom_devclass, usbd_driver_load, 0);
-MODULE_DEPEND(uvscom, ucom, UCOM_MINVER, UCOM_PREFVER, UCOM_MAXVER);
-MODULE_VERSION(uvscom, UVSCOM_MODVER);
-#endif
+int uvscom_match(device_t, struct cfdata *, void *);
+void uvscom_attach(device_t, device_t, void *);
+void uvscom_childdet(device_t, device_t);
+int uvscom_detach(device_t, int);
+int uvscom_activate(device_t, enum devact);
+extern struct cfdriver uvscom_cd;
+CFATTACH_DECL2(uvscom, sizeof(struct uvscom_softc), uvscom_match,
+    uvscom_attach, uvscom_detach, uvscom_activate, NULL, uvscom_childdet);
 
 USB_MATCH(uvscom)
 {
@@ -405,6 +388,15 @@ USB_ATTACH(uvscom)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+void
+uvscom_childdet(device_t self, device_t child)
+{
+	struct uvscom_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
+}
+
 USB_DETACH(uvscom)
 {
 	USB_DETACH_START(uvscom, sc);
@@ -422,10 +414,8 @@ USB_DETACH(uvscom)
 	}
 
 	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL) {
+	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
-		sc->sc_subdev = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -434,9 +424,9 @@ USB_DETACH(uvscom)
 }
 
 int
-uvscom_activate(device_ptr_t self, enum devact act)
+uvscom_activate(device_t self, enum devact act)
 {
-	struct uvscom_softc *sc = (struct uvscom_softc *)self;
+	struct uvscom_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {

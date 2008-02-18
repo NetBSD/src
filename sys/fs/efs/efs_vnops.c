@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_vnops.c,v 1.11.4.1 2007/12/08 18:20:13 mjf Exp $	*/
+/*	$NetBSD: efs_vnops.c,v 1.11.4.2 2008/02/18 21:06:35 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.11.4.1 2007/12/08 18:20:13 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_vnops.c,v 1.11.4.2 2008/02/18 21:06:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,13 +559,12 @@ efs_inactive(void *v)
 	struct vop_inactive_args /* {
 		const struct vnodeop_desc *a_desc;
 		struct vnode *a_vp;
+		bool *a_recycle
 	} */ *ap = v;
 	struct efs_inode *eip = EFS_VTOI(ap->a_vp);
 
+	*ap->a_recycle = (eip->ei_mode == 0);
 	VOP_UNLOCK(ap->a_vp, 0);
-
-	if (eip->ei_mode == 0)
-		vrecycle(ap->a_vp, NULL, curlwp);
 
 	return (0);
 }
@@ -821,7 +820,6 @@ const struct vnodeopv_entry_desc efs_vnodeop_entries[] = {
 							/* balloc */
 							/* vfree */
 							/* truncate */
-	{ &vop_lease_desc,	genfs_lease_check },	/* lease */
 							/* whiteout */
 	{ &vop_getpages_desc,	genfs_getpages	},	/* getpages */
 	{ &vop_putpages_desc,	genfs_putpages	},	/* putpages */

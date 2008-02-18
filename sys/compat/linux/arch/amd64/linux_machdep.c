@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.25 2007/10/19 18:52:10 njoly Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.25.2.1 2008/02/18 21:05:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25 2007/10/19 18:52:10 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.25.2.1 2008/02/18 21:05:23 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -454,7 +454,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mctx->__gregs[_REG_RDX] = lsigctx->rdx;
 	mctx->__gregs[_REG_RCX] = lsigctx->rcx;
 	mctx->__gregs[_REG_RIP] = lsigctx->rip;
-	mctx->__gregs[_REG_RFL] = lsigctx->eflags;
+	mctx->__gregs[_REG_RFLAGS] = lsigctx->eflags;
 	mctx->__gregs[_REG_CS] = lsigctx->cs;
 	mctx->__gregs[_REG_GS] = lsigctx->gs;
 	mctx->__gregs[_REG_FS] = lsigctx->fs;
@@ -462,7 +462,7 @@ linux_sys_rt_sigreturn(l, v, retval)
 	mctx->__gregs[_REG_TRAPNO] = lsigctx->trapno;
 	mctx->__gregs[_REG_ES] = tf->tf_es;
 	mctx->__gregs[_REG_DS] = tf->tf_ds;
-	mctx->__gregs[_REG_URSP] = lsigctx->rsp; /* XXX */
+	mctx->__gregs[_REG_RSP] = lsigctx->rsp; /* XXX */
 	mctx->__gregs[_REG_SS] = tf->tf_ss;
 
 	/*

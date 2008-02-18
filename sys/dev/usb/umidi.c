@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.32 2007/10/08 16:18:04 ad Exp $	*/
+/*	$NetBSD: umidi.c,v 1.32.4.1 2008/02/18 21:06:26 mjf Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.32 2007/10/08 16:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.32.4.1 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.32 2007/10/08 16:18:04 ad Exp $");
 #include <sys/proc.h>
 #include <sys/vnode.h>
 #include <sys/poll.h>
-#include <sys/lock.h>
 #include <sys/intr.h>
 
 #include <dev/usb/usb.h>
@@ -155,7 +154,14 @@ struct midi_hw_if_ext umidi_hw_if_mm = {
 	.compress = 1,
 };
 
-USB_DECLARE_DRIVER(umidi);
+int umidi_match(device_t, struct cfdata *, void *);
+void umidi_attach(device_t, device_t, void *);
+void umidi_childdet(device_t, device_t);
+int umidi_detach(device_t, int);
+int umidi_activate(device_t, enum devact);
+extern struct cfdriver umidi_cd;
+CFATTACH_DECL2(umidi, sizeof(struct umidi_softc), umidi_match,
+    umidi_attach, umidi_detach, umidi_activate, NULL, umidi_childdet);
 
 USB_MATCH(umidi)
 {
@@ -242,10 +248,26 @@ error:
 	USB_ATTACH_ERROR_RETURN;
 }
 
-int
-umidi_activate(device_ptr_t self, enum devact act)
+void
+umidi_childdet(device_t self, device_t child)
 {
-	struct umidi_softc *sc = (struct umidi_softc *)self;
+	int i;
+	struct umidi_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_mididevs != NULL);
+
+	for (i = 0; i < sc->sc_num_mididevs; i++) {
+		if (sc->sc_mididevs[i].mdev == child)
+			break;
+	}
+	KASSERT(i < sc->sc_num_mididevs);
+	sc->sc_mididevs[i].mdev = NULL;
+}
+
+int
+umidi_activate(device_t self, enum devact act)
+{
+	struct umidi_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -1158,7 +1180,7 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 	}
 	unbind_jacks_from_mididev(mididev);
 
-	if (mididev->mdev)
+	if (mididev->mdev != NULL)
 		config_detach(mididev->mdev, flags);
 	
 	if (NULL != mididev->label) {

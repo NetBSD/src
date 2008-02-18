@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.41 2007/09/09 01:09:02 xtraeme Exp $	*/
+/*	$NetBSD: piixide.c,v 1.41.6.1 2008/02/18 21:05:58 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.41 2007/09/09 01:09:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.41.6.1 2008/02/18 21:05:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -290,27 +290,23 @@ piixide_powerhook(int why, void *hdl)
 {
 	struct pciide_softc *sc = (struct pciide_softc *)hdl;
 
-	switch (why) {
-	case PWR_SUSPEND:
-	case PWR_STANDBY:
-		pci_conf_capture(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
-		sc->sc_idetim = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    PIIX_IDETIM);
-		sc->sc_udmatim = pci_conf_read(sc->sc_pc, sc->sc_tag,
-		    PIIX_UDMATIM);
-		break;
-	case PWR_RESUME:
-		pci_conf_restore(sc->sc_pc, sc->sc_tag, &sc->sc_pciconf);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
-		    sc->sc_idetim);
-		pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMATIM,
-		    sc->sc_udmatim);
-		break;
-	case PWR_SOFTSUSPEND:
-	case PWR_SOFTSTANDBY:
-	case PWR_SOFTRESUME:
-		break;
-	}
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_IDETIM,
+	    sc->sc_pm_reg[0]);
+	pci_conf_write(sc->sc_pc, sc->sc_tag, PIIX_UDMAREG,
+	    sc->sc_pm_reg[1]);
+
+	return true;
+}
+
+static bool
+piixide_suspend(device_t dv)
+{
+	struct pciide_softc *sc = device_private(dv);
+
+	sc->sc_pm_reg[0] = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PIIX_IDETIM);
+	sc->sc_pm_reg[1] = pci_conf_read(sc->sc_pc, sc->sc_tag,
+	    PIIX_UDMAREG);
 
 	return;
 }

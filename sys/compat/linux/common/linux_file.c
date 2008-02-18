@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.84.2.3 2007/12/27 00:44:07 mjf Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.84.2.4 2008/02/18 21:05:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.84.2.3 2007/12/27 00:44:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.84.2.4 2008/02/18 21:05:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,11 +77,11 @@ __KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.84.2.3 2007/12/27 00:44:07 mjf Exp 
 
 static int linux_to_bsd_ioflags(int);
 static int bsd_to_linux_ioflags(int);
-static void bsd_to_linux_flock(struct flock *, struct linux_flock *);
-static void linux_to_bsd_flock(struct linux_flock *, struct flock *);
 #ifndef __amd64__
 static void bsd_to_linux_stat(struct stat *, struct linux_stat *);
 #endif
+
+conv_linux_flock(linux, flock)
 
 /*
  * Some file-related calls are handled here. The usual flag conversion
@@ -210,54 +210,6 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t 
 }
 
 /*
- * The next two functions take care of converting the flock
- * structure back and forth between Linux and NetBSD format.
- * The only difference in the structures is the order of
- * the fields, and the 'whence' value.
- */
-static void
-bsd_to_linux_flock(struct flock *bfp, struct linux_flock *lfp)
-{
-
-	lfp->l_start = bfp->l_start;
-	lfp->l_len = bfp->l_len;
-	lfp->l_pid = bfp->l_pid;
-	lfp->l_whence = bfp->l_whence;
-	switch (bfp->l_type) {
-	case F_RDLCK:
-		lfp->l_type = LINUX_F_RDLCK;
-		break;
-	case F_UNLCK:
-		lfp->l_type = LINUX_F_UNLCK;
-		break;
-	case F_WRLCK:
-		lfp->l_type = LINUX_F_WRLCK;
-		break;
-	}
-}
-
-static void
-linux_to_bsd_flock(struct linux_flock *lfp, struct flock *bfp)
-{
-
-	bfp->l_start = lfp->l_start;
-	bfp->l_len = lfp->l_len;
-	bfp->l_pid = lfp->l_pid;
-	bfp->l_whence = lfp->l_whence;
-	switch (lfp->l_type) {
-	case LINUX_F_RDLCK:
-		bfp->l_type = F_RDLCK;
-		break;
-	case LINUX_F_UNLCK:
-		bfp->l_type = F_UNLCK;
-		break;
-	case LINUX_F_WRLCK:
-		bfp->l_type = F_WRLCK;
-		break;
-	}
-}
-
-/*
  * Most actions in the fcntl() call are straightforward; simply
  * pass control to the NetBSD system call. A few commands need
  * conversions after the actual system call has done its work,
@@ -275,8 +227,6 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 	int fd, cmd, error;
 	u_long val;
 	void *arg;
-	struct linux_flock lfl;
-	struct flock bfl;
 	struct sys_fcntl_args fca;
 	struct filedesc *fdp;
 	struct file *fp;
@@ -289,18 +239,22 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 
 	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, cmd);
-	arg = (void *) SCARG(uap, arg);
+	arg = SCARG(uap, arg);
 
 	switch (cmd) {
+
 	case LINUX_F_DUPFD:
 		cmd = F_DUPFD;
 		break;
+
 	case LINUX_F_GETFD:
 		cmd = F_GETFD;
 		break;
+
 	case LINUX_F_SETFD:
 		cmd = F_SETFD;
 		break;
+
 	case LINUX_F_GETFL:
 		SCARG(&fca, fd) = fd;
 		SCARG(&fca, cmd) = F_GETFL;
@@ -309,6 +263,7 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 			return error;
 		retval[0] = bsd_to_linux_ioflags(retval[0]);
 		return 0;
+
 	case LINUX_F_SETFL: {
 		struct file	*fp1 = NULL;
 
@@ -361,23 +316,13 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 
 		return (error);
 	    }
+
 	case LINUX_F_GETLK:
-		if ((error = copyin(arg, &lfl, sizeof lfl)))
-			return error;
-		linux_to_bsd_flock(&lfl, &bfl);
-		error = do_fcntl_lock(l, fd, F_GETLK, &bfl);
-		if (error)
-			return error;
-		bsd_to_linux_flock(&bfl, &lfl);
-		return copyout(&lfl, arg, sizeof lfl);
+		do_linux_getlk(fd, cmd, arg, linux, flock);
 
 	case LINUX_F_SETLK:
 	case LINUX_F_SETLKW:
-		cmd = (cmd == LINUX_F_SETLK ? F_SETLK : F_SETLKW);
-		if ((error = copyin(arg, &lfl, sizeof lfl)))
-			return error;
-		linux_to_bsd_flock(&lfl, &bfl);
-		return do_fcntl_lock(l, fd, cmd, &bfl);
+		do_linux_setlk(fd, cmd, arg, linux, flock, LINUX_F_SETLK);
 
 	case LINUX_F_SETOWN:
 	case LINUX_F_GETOWN:
@@ -622,66 +567,6 @@ linux_sys_mknod(struct lwp *l, const struct linux_sys_mknod_args *uap, register_
 		return sys_mknod(l, &bma, retval);
 	}
 }
-
-#if defined(__i386__) || defined(__m68k__) || \
-    defined(__arm__)
-int
-linux_sys_chown16(struct lwp *l, const struct linux_sys_chown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-	struct sys___posix_chown_args bca;
-
-	SCARG(&bca, path) = SCARG(uap, path);
-	SCARG(&bca, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bca, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_chown(l, &bca, retval);
-}
-
-int
-linux_sys_fchown16(struct lwp *l, const struct linux_sys_fchown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) fd;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-	struct sys___posix_fchown_args bfa;
-
-	SCARG(&bfa, fd) = SCARG(uap, fd);
-	SCARG(&bfa, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bfa, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_fchown(l, &bfa, retval);
-}
-
-int
-linux_sys_lchown16(struct lwp *l, const struct linux_sys_lchown16_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(char *) path;
-		syscallarg(int) uid;
-		syscallarg(int) gid;
-	} */
-	struct sys___posix_lchown_args bla;
-
-	SCARG(&bla, path) = SCARG(uap, path);
-	SCARG(&bla, uid) = ((linux_uid_t)SCARG(uap, uid) == (linux_uid_t)-1) ?
-		(uid_t)-1 : SCARG(uap, uid);
-	SCARG(&bla, gid) = ((linux_gid_t)SCARG(uap, gid) == (linux_gid_t)-1) ?
-		(gid_t)-1 : SCARG(uap, gid);
-
-	return sys___posix_lchown(l, &bla, retval);
-}
-#endif /* __i386__ || __m68k__ || __arm__ || __amd64__ */
 
 /*
  * This is just fsync() for now (just as it is in the Linux kernel)

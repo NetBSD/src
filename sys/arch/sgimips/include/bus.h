@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.25 2007/10/17 19:57:04 garbled Exp $	*/
+/*	$NetBSD: bus.h,v 1.25.2.1 2008/02/18 21:05:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -89,6 +89,8 @@ void	sgimips_bus_dma_init(void);
 
 int	bus_space_map(bus_space_tag_t, bus_addr_t, bus_size_t,
 	    int, bus_space_handle_t *);
+
+paddr_t	bus_space_mmap(bus_space_tag_t, bus_addr_t, off_t, int, int);
 
 /*
  *	void bus_space_unmap(bus_space_tag_t t,

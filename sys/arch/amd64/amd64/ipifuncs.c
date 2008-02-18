@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.12 2007/10/17 19:53:00 garbled Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.12.2.1 2008/02/18 21:04:20 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2007/10/17 19:53:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12.2.1 2008/02/18 21:04:20 mjf Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -80,6 +80,12 @@ void x86_64_reload_mtrr(struct cpu_info *);
 #define x86_64_reload_mtrr NULL
 #endif
 
+#if NACPI > 0
+void acpi_cpu_sleep(struct cpu_info *);
+#else
+#define	acpi_cpu_sleep NULL
+#endif
+
 void (*ipifunc[X86_NIPI])(struct cpu_info *) =
 {
 	x86_64_ipi_halt,
@@ -104,13 +110,13 @@ x86_64_ipi_halt(struct cpu_info *ci)
 void
 x86_64_ipi_flush_fpu(struct cpu_info *ci)
 {
-	fpusave_cpu(ci, 0);
+	fpusave_cpu(false);
 }
 
 void
 x86_64_ipi_synch_fpu(struct cpu_info *ci)
 {
-	fpusave_cpu(ci, 1);
+	fpusave_cpu(true);
 }
 
 #ifdef MTRR

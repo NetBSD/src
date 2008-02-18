@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.98 2007/09/24 18:47:57 joerg Exp $ */
+/* $NetBSD: device.h,v 1.98.4.1 2008/02/18 21:07:23 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -398,6 +398,40 @@ void		*device_private(device_t);
 prop_dictionary_t device_properties(device_t);
 
 bool		device_is_a(device_t, const char *);
+
+device_t	device_find_by_xname(const char *);
+device_t	device_find_by_driver_unit(const char *, int);
+
+bool		device_pmf_is_registered(device_t);
+
+bool		device_pmf_driver_suspend(device_t);
+bool		device_pmf_driver_resume(device_t);
+
+void		device_pmf_driver_register(device_t,
+		    bool (*)(device_t), bool (*)(device_t));
+void		device_pmf_driver_deregister(device_t);
+
+bool		device_pmf_driver_child_register(device_t);
+void		device_pmf_driver_set_child_register(device_t,
+		    bool (*)(device_t));
+
+void		*device_pmf_bus_private(device_t);
+bool		device_pmf_bus_suspend(device_t);
+bool		device_pmf_bus_resume(device_t);
+
+void		device_pmf_bus_register(device_t, void *,
+		    bool (*)(device_t), bool (*)(device_t),
+		    void (*)(device_t));
+void		device_pmf_bus_deregister(device_t);
+
+void		*device_pmf_class_private(device_t);
+bool		device_pmf_class_suspend(device_t);
+bool		device_pmf_class_resume(device_t);
+
+void		device_pmf_class_register(device_t, void *,
+		    bool (*)(device_t), bool (*)(device_t),
+		    void (*)(device_t));
+void		device_pmf_class_deregister(device_t);
 
 #endif /* _KERNEL */
 

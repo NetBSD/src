@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.271.2.2 2007/12/27 00:46:31 mjf Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.271.2.3 2008/02/18 21:07:08 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.271.2.2 2007/12/27 00:46:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.271.2.3 2008/02/18 21:07:08 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -268,7 +268,7 @@ nd6_hint(struct tcpcb *tp)
 	struct rtentry *rt;
 
 	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
-	    (rt = rtcache_getrt(&tp->t_in6pcb->in6p_route)) != NULL)
+	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL)
 		nd6_nud_hint(rt, NULL, 0);
 }
 #else
@@ -1697,26 +1697,15 @@ after_listen:
 
 		/*
 		 * If last ACK falls within this segment's sequence numbers,
-		 *  record the timestamp.
-		 * NOTE: 
-		 * 1) That the test incorporates suggestions from the latest
-		 *    proposal of the tcplw@cray.com list (Braden 1993/04/26).
-		 * 2) That updating only on newer timestamps interferes with
-		 *    our earlier PAWS tests, so this check should be solely
-		 *    predicated on the sequence space of this segment.
-		 * 3) That we modify the segment boundary check to be 
-		 *        Last.ACK.Sent <= SEG.SEQ + SEG.Len  
-		 *    instead of RFC1323's
-		 *        Last.ACK.Sent < SEG.SEQ + SEG.Len,
-		 *    This modified check allows us to overcome RFC1323's
-		 *    limitations as described in Stevens TCP/IP Illustrated
-		 *    Vol. 2 p.869. In such cases, we can still calculate the
-		 *    RTT correctly when RCV.NXT == Last.ACK.Sent.
+		 * record the timestamp.
+		 * NOTE that the test is modified according to the latest
+		 * proposal of the tcplw@cray.com list (Braden 1993/04/26).
+		 *
+		 * note that we already know
+		 *	TSTMP_GEQ(opti.ts_val, tp->ts_recent)
 		 */
 		if (opti.ts_present &&
-		    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
-		    SEQ_LEQ(tp->last_ack_sent, th->th_seq + tlen +
-		    ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
+		    SEQ_LEQ(th->th_seq, tp->last_ack_sent)) {
 			tp->ts_recent_age = tcp_now;
 			tp->ts_recent = opti.ts_val;
 		}
@@ -2176,12 +2165,26 @@ after_listen:
 
 	/*
 	 * If last ACK falls within this segment's sequence numbers,
-	 * and the timestamp is newer, record it.
+	 *  record the timestamp.
+	 * NOTE: 
+	 * 1) That the test incorporates suggestions from the latest
+	 *    proposal of the tcplw@cray.com list (Braden 1993/04/26).
+	 * 2) That updating only on newer timestamps interferes with
+	 *    our earlier PAWS tests, so this check should be solely
+	 *    predicated on the sequence space of this segment.
+	 * 3) That we modify the segment boundary check to be 
+	 *        Last.ACK.Sent <= SEG.SEQ + SEG.Len  
+	 *    instead of RFC1323's
+	 *        Last.ACK.Sent < SEG.SEQ + SEG.Len,
+	 *    This modified check allows us to overcome RFC1323's
+	 *    limitations as described in Stevens TCP/IP Illustrated
+	 *    Vol. 2 p.869. In such cases, we can still calculate the
+	 *    RTT correctly when RCV.NXT == Last.ACK.Sent.
 	 */
-	if (opti.ts_present && TSTMP_GEQ(opti.ts_val, tp->ts_recent) &&
+	if (opti.ts_present &&
 	    SEQ_LEQ(th->th_seq, tp->last_ack_sent) &&
-	    SEQ_LT(tp->last_ack_sent, th->th_seq + tlen +
-		   ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
+	    SEQ_LEQ(tp->last_ack_sent, th->th_seq + tlen +
+		    ((tiflags & (TH_SYN|TH_FIN)) != 0))) {
 		tp->ts_recent_age = tcp_now;
 		tp->ts_recent = opti.ts_val;
 	}
@@ -2318,8 +2321,7 @@ after_listen:
 				    th->th_ack != tp->snd_una)
 					tp->t_dupacks = 0;
 				else if (tp->t_partialacks < 0 &&
-					 ((!TCP_SACK_ENABLED(tp) &&
-					 ++tp->t_dupacks == tcprexmtthresh) ||
+					 (++tp->t_dupacks == tcprexmtthresh ||
 					 TCP_FACK_FASTRECOV(tp))) {
 					/*
 					 * Do the fast retransmit, and adjust
@@ -4084,7 +4086,7 @@ syn_cache_add(struct sockaddr *src, struct sockaddr *dst, struct tcphdr *th,
 						m->m_pkthdr.rcvif : NULL,
 						sc->sc_src.sa.sa_family);
 	sc->sc_win = win;
-	sc->sc_timebase = tcp_now;	/* see tcp_newtcpcb() */
+	sc->sc_timebase = tcp_now - 1;	/* see tcp_newtcpcb() */
 	sc->sc_timestamp = tb.ts_recent;
 	if ((tb.t_flags & (TF_REQ_TSTMP|TF_RCVD_TSTMP)) ==
 	    (TF_REQ_TSTMP|TF_RCVD_TSTMP))
@@ -4435,8 +4437,8 @@ syn_cache_respond(struct syn_cache *sc, struct mbuf *m)
 #ifdef INET6
 	case AF_INET6:
 		ip6->ip6_hlim = in6_selecthlim(NULL,
-				(rt = rtcache_getrt(ro)) != NULL ? rt->rt_ifp
-				                                 : NULL);
+				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
+				                                    : NULL);
 
 		error = ip6_output(m, NULL /*XXX*/, ro, 0, NULL, so, NULL);
 		break;

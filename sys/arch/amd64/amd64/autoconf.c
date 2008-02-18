@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2007/10/17 19:52:59 garbled Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.2.1 2008/02/18 21:04:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2007/10/17 19:52:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.2.1 2008/02/18 21:04:20 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -98,7 +98,6 @@ cpu_configure()
 #endif
 
 #if NIOAPIC > 0
-	lapic_set_lvt();
 	ioapic_enable();
 #endif
 

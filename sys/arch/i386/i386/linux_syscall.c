@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.39 2007/02/09 21:55:04 ad Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.39.30.1 2008/02/18 21:04:38 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.39 2007/02/09 21:55:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.39.30.1 2008/02/18 21:04:38 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -175,9 +175,15 @@ linux_syscall_fancy(frame)
 	size_t argsize;
 	register_t code, args[8], rval[2];
 
-	uvmexp.syscalls++;
-	l = curlwp;
-	LWP_CACHE_CREDS(l, l->l_proc);
+	if (__predict_false(l->l_proc->p_trace_enabled)) {
+		error = trace_enter(code, args, callp->sy_narg);
+		if (__predict_true(error == 0)) {
+			error = (*callp->sy_call)(l, args, rval);
+			code = frame->tf_eax & (LINUX_SYS_NSYSENT - 1);
+			trace_exit(code, rval, error);
+		}
+	} else
+		error = (*callp->sy_call)(l, args, rval);
 
 	code = frame->tf_eax;
 	callp = linux_sysent;

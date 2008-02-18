@@ -1,7 +1,8 @@
-/* $NetBSD: crmfbreg.h,v 1.1.20.1 2007/12/08 18:17:47 mjf Exp $ */
+/* $NetBSD: crmfbreg.h,v 1.1.20.2 2008/02/18 21:05:00 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
+ *               2008 Michael Lorenz <macallan@netbsd.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,6 +44,9 @@
 #define		CRMFB_DOTCLOCK_CLKRUN_SHIFT	20
 #define CRMFB_VT_XY		0x00010000
 #define		CRMFB_VT_XY_FREEZE_SHIFT	31
+#define	CRMFB_VT_FLAGS		0x00010018
+#define		CRMFB_VT_FLAGS_SYNC_LOW_MSB	5
+#define		CRMFB_VT_FLAGS_SYNC_LOW_LSB	5
 #define CRMFB_VT_INTR01		0x00010020
 #define		CRMFB_VT_INTR01_EN		0xffffffff
 #define CRMFB_VT_INTR23		0x00010024
@@ -96,11 +100,13 @@
 /* two bit deep cursor image, zero is transparent */
 
 /* rendering engine registers */
+/* these TLBs define 16x16 tiles, 64kB each, upper 16 bit only */
 #define CRIME_RE_TLB_A		0x1000
 #define CRIME_RE_TLB_B		0x1200
 #define CRIME_RE_TLB_C		0x1400
 #define CRIME_RE_TEX		0x1600
 #define CRIME_RE_CLIP_IDS	0x16e0
+/* 32bit entries, 4kB page address >> 12 | 0x80000000 */
 #define CRIME_RE_LINEAR_A	0x1700
 #define CRIME_RE_LINEAR_B	0x1780
 
@@ -109,13 +115,141 @@
 #define CRIME_MTE_BYTEMASK	0x3008
 #define CRIME_MTE_STIPPLEMASK	0x3010
 #define CRIME_MTE_BG		0x3018
-#define CROME_MTE_SOURCE0	0x3020
-#define CRIME_MTE_SOURCE1	0x3028
-#define CROME_MTE_DEST0		0x3030
-#define CRIME_MTE_DEST1		0x3038
-#define CRIME_MTE_SRC_STRIDE	0x3040
-#define CRIME_MTE_DST_STRIDE	0x3048
+#define CRIME_MTE_SRC0		0x3020	/* start */
+#define CRIME_MTE_SRC1		0x3028	/* end */
+#define CRIME_MTE_DST0		0x3030	/* start */
+#define CRIME_MTE_DST1		0x3038	/* end */
+#define CRIME_MTE_SRC_Y_STEP	0x3040
+#define CRIME_MTE_DST_Y_STEP	0x3048
 #define CRIME_MTE_NULL		0x3070
 #define CRIME_MTE_FLUSH		0x3078
+
+/* CRIME_MTE_MODE */
+#define MTE_MODE_DST_ECC	0x00000001	/* enable ECC in DST */
+#define MTE_MODE_SRC_ECC	0x00000002	/* enable ECC in SRC */
+#define MTE_MODE_DST_BUF_MASK	0x0000001c
+	#define MTE_TLB_A	0
+	#define MTE_TLB_B	1
+	#define MTE_TLB_C	2
+	#define MTE_TLB_TEX	3
+	#define MTE_TLB_LIN_A	4
+	#define MTE_TLB_LIN_B	5
+	#define MTE_TLB_CLIP	6
+	#define MTE_DST_TLB_SHIFT 2
+#define MTE_MODE_SRC_BUF_MASK	0x000000e0
+	#define MTE_SRC_TLB_SHIFT 5
+#define MTE_MODE_DEPTH_MASK	0x00000300
+	#define MTE_DEPTH_8	0
+	#define MTE_DEPTH_16	1
+	#define MTE_DEPTH_32	2
+	#define MTE_DEPTH_SHIFT 8
+#define MTE_MODE_STIPPLE	0x00000400
+#define MTE_MODE_COPY		0x00000800	/* 1 - copy, 0 - clear dst */
+
+/* drawing engine from 0x2000 */
+#define CRIME_DE_MODE_SRC	0x2000
+#define CRIME_DE_MODE_DST	0x2008
+#define CRIME_DE_CLIPMODE	0x2010
+#define CRIME_DE_DRAWMODE	0x2018
+#define CRIME_DE_SCRMASK0	0x2020
+#define CRIME_DE_SCRMASK1	0x2028
+#define CRIME_DE_SCRMASK2	0x2030
+#define CRIME_DE_SCRMASK3	0x2038
+#define CRIME_DE_SCRMASK4	0x2040
+#define CRIME_DE_SCISSOR	0x2048
+#define CRIME_DE_WINOFFSET_SRC	0x2050	/* x in upper, y in lower 16 bit */
+#define CRIME_DE_WINOFFSET_DST	0x2058
+#define CRIME_DE_PRIMITIVE	0x2060
+#define CRIME_DE_X_VERTEX_0	0x2070
+#define CRIME_DE_X_VERTEX_1	0x2074
+#define CRIME_DE_X_VERTEX_2	0x2078
+#define CRIME_DE_GL_VERTEX_0_X	0x2080
+#define CRIME_DE_GL_VERTEX_0_Y	0x2084
+#define CRIME_DE_GL_VERTEX_1_X	0x2088
+#define CRIME_DE_GL_VERTEX_1_Y	0x208c
+#define CRIME_DE_GL_VERTEX_2_X	0x2090
+#define CRIME_DE_GL_VERTEX_2_Y	0x2094
+#define CRIME_DE_XFER_ADDR_SRC	0x20a0
+#define CRIME_DE_XFER_STRD_SRC	0x20a4
+#define CRIME_DE_XFER_STEP_X	0x20a8
+#define CRIME_DE_XFER_STEP_Y	0x20ac
+#define CRIME_DE_XFER_ADDR_DST	0x20b0
+#define CRIME_DE_XFER_STRD_DST	0x20b4
+#define CRIME_DE_STIPPLE_MODE	0x20c0
+#define CRIME_DE_STIPPLE_PAT	0x20c4
+#define CRIME_DE_FG		0x20d0
+#define CRIME_DE_BG		0x20d8
+
+#define CRIME_DE_ROP		0x21b0
+#define CRIME_DE_PLANEMASK	0x21b8
+
+#define CRIME_DE_NULL		0x21f0
+#define CRIME_DE_FLUSH		0x21f8
+
+#define CRIME_DE_START		0x0800	/* OR this to a register address in
+					 * order to start a command */
+
+/* CRIME_DE_MODE_* */
+#define DE_MODE_TLB_A		0x00000000
+#define DE_MODE_TLB_B		0x00000400
+#define DE_MODE_TLB_C		0x00000800
+#define DE_MODE_LIN_A		0x00001000
+#define DE_MODE_LIN_B		0x00001400
+#define DE_MODE_BUFDEPTH_8	0x00000000
+#define DE_MODE_BUFDEPTH_16	0x00000100
+#define DE_MODE_BUFDEPTH_32	0x00000200
+#define DE_MODE_TYPE_CI		0x00000000
+#define DE_MODE_TYPE_RGB	0x00000010
+#define DE_MODE_TYPE_RGBA	0x00000020
+#define DE_MODE_TYPE_ABGR	0x00000030
+#define DE_MODE_TYPE_YCRCB	0x000000f0
+#define DE_MODE_PIXDEPTH_8	0x00000000
+#define DE_MODE_PIXDEPTH_16	0x00000004
+#define DE_MODE_PIXDEPTH_32	0x00000008
+#define DE_MODE_DOUBLE_PIX	0x00000002
+#define DE_MODE_DOUBLE_SELECT	0x00000001
+
+/* clip mode */
+#define DE_CLIPMODE_ENABLE	0x00000800
+
+/* draw mode */
+#define DE_DRAWMODE_NO_CONF	0x00800000	/* disable coherency testing */
+#define DE_DRAWMODE_X11		0x00000000
+#define DE_DRAWMODE_GL		0x00400000
+#define DE_DRAWMODE_XFER_EN	0x00200000
+#define DE_DRAWMODE_SCISSOR_EN	0x00100000
+#define DE_DRAWMODE_LINE_STIP	0x00080000
+#define DE_DRAWMODE_POLY_STIP	0x00040000
+#define DE_DRAWMODE_OPAQUE_STIP	0x00020000
+#define DE_DRAWMODE_SHADE	0x00010000	/* smooth shading enable */
+#define DE_DRAWMODE_TEXTURE	0x00008000
+#define DE_DRAWMODE_FOG		0x00004000
+#define DE_DRAWMODE_COVERAGE	0x00002000
+#define DE_DRAWMODE_LINE_AA	0x00001000
+#define DE_DRAWMODE_ALPHA_TEST	0x00000800
+#define DE_DRAWMODE_ALPHA_BLEND	0x00000400
+#define DE_DRAWMODE_ROP		0x00000200
+#define DE_DRAWMODE_DITHER	0x00000100
+#define DE_DRAWMODE_PLANEMASK	0x00000080
+#define DE_DRAWMODE_BYTEMASK	0x00000078
+#define DE_DRAWMODE_DEPTH_TEST	0x00000004
+#define DE_DRAWMODE_DEPTH_MASK	0x00000002
+#define DE_DRAWMODE_STENCIL	0x00000001
+
+/* primitive */
+#define DE_PRIM_POINT		0x00000000
+#define DE_PRIM_LINE		0x01000000
+#define DE_PRIM_TRIANGLE	0x02000000
+#define DE_PRIM_RECTANGLE	0x03000000
+#define DE_PRIM_LINE_SKIP_END	0x00040000
+#define DE_PRIM_LR		0x00000000	/* left to right */
+#define DE_PRIM_RL		0x00010000	/* right to left */
+#define DE_PRIM_BT		0x00000000	/* bottom to top */
+#define DE_PRIM_TB		0x00020000	/* top to bottom */
+#define DE_PRIM_LINE_WIDTH_MASK	0x0000ffff	/* in half pixels */
+
+/* status register */
+#define CRIME_DE_STATUS		0x4000
+#define CRIME_DE_IDLE		0x10000000
 
 #endif /* CRMFBREG_H */

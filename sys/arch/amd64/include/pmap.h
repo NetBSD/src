@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.14.2.1 2007/12/08 18:16:29 mjf Exp $	*/
+/*	$NetBSD: pmap.h,v 1.14.2.2 2008/02/18 21:04:21 mjf Exp $	*/
 
 /*
  *
@@ -208,7 +208,7 @@
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
-#define NKL2_KIMG_ENTRIES	8
+#define NKL2_KIMG_ENTRIES	10
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
@@ -257,6 +257,7 @@
 #define pmap_pa2pte(a)			(a)
 #define pmap_pte2pa(a)			((a) & PG_FRAME)
 #define pmap_pte_set(p, n)		do { *(p) = (n); } while (0)
+#define pmap_pte_cas(p, o, n)		atomic_cas_64((p), (o), (n))
 #define pmap_pte_testset(p, n)		\
     atomic_swap_ulong((volatile unsigned long *)p, n)
 #define pmap_pte_setbits(p, b)		\
@@ -280,8 +281,22 @@ static __inline void
 pmap_pte_set(pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(pte), npte);
+	xpq_queue_pte_update(xpmap_ptetomach(pte), npte);
 	splx(s);
+}
+
+static __inline pt_entry_t
+pmap_pte_cas(volatile pt_entry_t *ptep, pt_entry_t o, pt_entry_t n)
+{
+	int s = splvm();
+	pt_entry_t opte = *ptep;
+
+	if (opte == o) {
+		xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(ptep)), n);
+		xpq_flush_queue();
+	}
+	splx(s);
+	return opte;
 }
 
 static __inline pt_entry_t
@@ -289,8 +304,7 @@ pmap_pte_testset(volatile pt_entry_t *pte, pt_entry_t npte)
 {
 	int s = splvm();
 	pt_entry_t opte = *pte;
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
-	    npte);
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), npte);
 	xpq_flush_queue();
 	splx(s);
 	return opte;
@@ -300,8 +314,7 @@ static __inline void
 pmap_pte_setbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
-	    (*pte) | bits);
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)), (*pte) | bits);
 	xpq_flush_queue();
 	splx(s);
 }
@@ -310,7 +323,7 @@ static __inline void
 pmap_pte_clearbits(volatile pt_entry_t *pte, pt_entry_t bits)
 {	
 	int s = splvm();
-	xpq_queue_pte_update((pt_entry_t *)xpmap_ptetomach(__UNVOLATILE(pte)),
+	xpq_queue_pte_update(xpmap_ptetomach(__UNVOLATILE(pte)),
 	    (*pte) & ~bits);
 	xpq_flush_queue();
 	splx(s);

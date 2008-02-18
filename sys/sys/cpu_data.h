@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.13.4.1 2007/11/19 00:49:27 mjf Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.13.4.2 2008/02/18 21:07:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@ struct lwp;
 
 #include <sys/sched.h>	/* for schedstate_percpu */
 #include <sys/condvar.h>
+#include <sys/percpu_types.h>
 
 /*
  * MI per-cpu data
@@ -87,9 +88,7 @@ struct cpu_data {
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	u_int		cpu_softints;		/* pending (slow) softints */
-	kmutex_t	cpu_uarea_lock;		/* uarea alloc lock */
-	u_int		cpu_uarea_cnt;		/* count of free uareas */
-	vaddr_t		cpu_uarea_list;		/* free uareas */
+	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
 };
 
 /* compat definitions */

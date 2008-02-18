@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.18 2007/10/17 19:58:00 garbled Exp $	   */
+/*	$NetBSD: subr.S,v 1.18.2.1 2008/02/18 21:05:16 mjf Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -220,6 +220,7 @@ _C_LABEL(cmn_idsptch):
 	calls	$0,_C_LABEL(krnlock)
 #endif
 	movl	(%sp)+,%r0	# get pointer to idspvec
+	mtpr	$IPL_VM,$PR_IPL	# Make sure we are at IPL_VM
 	movl	8(%r0),%r1	# get evcnt pointer
 	beql	1f		# no ptr, skip increment
 	incl	EV_COUNT(%r1)	# increment low longword
@@ -480,8 +481,6 @@ ENTRY(fuswintr,0)
 	movl	%r1,%r0
 	ret
 
-#if defined(MULTIPROCESSOR) || defined(DEBUG) || defined(DIAGNOSTIC) || defined(LOCKDEBUG)
-
 JSBENTRY(Slock)
 1:	bbssi	$0,(%r1),1b
 	rsb
@@ -495,8 +494,6 @@ JSBENTRY(Slocktry)
 JSBENTRY(Sunlock)
 	bbcci	$0,(%r1),1f
 1:	rsb
-
-#endif
 
 #
 # data department

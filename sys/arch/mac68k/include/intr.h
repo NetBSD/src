@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.27.24.1 2007/12/08 18:17:18 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.27.24.2 2008/02/18 21:04:45 mjf Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -53,8 +53,6 @@ extern unsigned short mac68k_ipls[];
 #define	NIPL		8
 
 /* These spl calls are _not_ to be used by machine-independent code. */
-#define	splsoft()	splraise1()
-#define	spladb()	_splraise(mac68k_ipls[IPL_ADB])
 #define	splzs()		splserial()
 
 /*

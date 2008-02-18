@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.44 2006/10/26 20:02:30 hannken Exp $	*/
+/*	$NetBSD: dump.h,v 1.44.10.1 2008/02/18 21:04:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -194,7 +194,9 @@ int	mapdirs(ino_t, u_int64_t *);
 void	blksout32(int32_t *, int, ino_t);
 void	blksout64(int64_t *, int, ino_t);
 void	dumpino(union dinode *, ino_t);
+#ifndef RRESTORE
 void	dumpmap(char *, int, ino_t);
+#endif
 void	writeheader(ino_t);
 
 /* data block caching */

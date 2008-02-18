@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_sem.c,v 1.75.2.2 2007/12/27 00:46:14 mjf Exp $	*/
+/*	$NetBSD: sysv_sem.c,v 1.75.2.3 2008/02/18 21:06:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.75.2.2 2007/12/27 00:46:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_sem.c,v 1.75.2.3 2008/02/18 21:06:47 mjf Exp $");
 
 #define SYSVSEM
 
@@ -764,9 +764,7 @@ restart:
 	if (nsops <= SMALL_SOPS) {
 		sops = small_sops;
 	} else if (nsops <= seminfo.semopm) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
 		sops = kmem_alloc(nsops * sizeof(*sops), KM_SLEEP);
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
 	} else {
 		SEM_PRINTF(("too many sops (max=%d, nsops=%zd)\n",
 		    seminfo.semopm, nsops));
@@ -777,11 +775,8 @@ restart:
 	if (error) {
 		SEM_PRINTF(("error = %d from copyin(%p, %p, %zd)\n", error,
 		    SCARG(uap, sops), &sops, nsops * sizeof(sops[0])));
-		if (sops != small_sops) {
-			KERNEL_LOCK(1, l);		/* XXXSMP */
+		if (sops != small_sops)
 			kmem_free(sops, nsops * sizeof(*sops));
-			KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
-		}
 		return error;
 	}
 
@@ -1010,11 +1005,8 @@ done:
 
  out:
 	mutex_exit(&semlock);
-	if (sops != small_sops) {
-		KERNEL_LOCK(1, l);		/* XXXSMP */
+	if (sops != small_sops)
 		kmem_free(sops, nsops * sizeof(*sops));
-		KERNEL_UNLOCK_ONE(l);		/* XXXSMP */
-	}
 	return error;
 }
 

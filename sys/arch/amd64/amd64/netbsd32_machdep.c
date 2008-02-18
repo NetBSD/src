@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.44 2007/10/17 19:53:01 garbled Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.44.2.1 2008/02/18 21:04:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.44 2007/10/17 19:53:01 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.44.2.1 2008/02/18 21:04:20 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_coredump.h"
@@ -120,7 +120,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 
 	/* If we were using the FPU, forget about it. */
 	if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-		fpusave_lwp(l, 0);
+		fpusave_lwp(l, false);
 
 #if defined(USER_LDT) && 0
 	pmap_ldt_cleanup(p);
@@ -839,7 +839,7 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		 * If we were using the FPU, forget that we were.
 		 */
 		if (l->l_addr->u_pcb.pcb_fpcpu != NULL)
-			fpusave_lwp(l, 0);
+			fpusave_lwp(l, false);
 		memcpy(&l->l_addr->u_pcb.pcb_savefpu.fp_fxsave, &mcp->__fpregs,
 		    sizeof (mcp->__fpregs));
 		/* If not set already. */
@@ -893,7 +893,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	/* Save floating point register context, if any. */
 	if ((l->l_md.md_flags & MDP_USEDFPU) != 0) {
 		if (l->l_addr->u_pcb.pcb_fpcpu)
-			fpusave_lwp(l, 1);
+			fpusave_lwp(l, true);
 		memcpy(&mcp->__fpregs, &l->l_addr->u_pcb.pcb_savefpu.fp_fxsave,
 		    sizeof (mcp->__fpregs));
 		*flags |= _UC_FPU;

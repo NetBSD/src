@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.912.2.3 2007/12/27 00:45:23 mjf Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.912.2.4 2008/02/18 21:05:58 mjf Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.921 2007/12/24 17:03:20 hamajima Exp
+ *	NetBSD: pcidevs,v 1.929 2008/02/13 13:56:46 tron Exp
  */
 
 /*
@@ -3040,6 +3040,10 @@ static const struct pci_product pci_products[] = {
 	    "HP M110 G2 / ASR-2610SA",
 	},
 	{
+	    PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_SERVERAID,
+	    "ServeRAID 6/7 (marco)",
+	},
+	{
 	    PCI_VENDOR_ADDTRON, PCI_PRODUCT_ADDTRON_8139,
 	    "8139 Ethernet",
 	},
@@ -3654,6 +3658,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_K2_GMAC,
 	    "GMAC Ethernet",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_SHASTA_GMAC,
+	    "Shasta GMAC",
 	},
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_AGP,
@@ -6865,7 +6873,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID,
-	    "ServeRAID",
+	    "ServeRAID (copperhead)",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_GXT250P,
@@ -6957,7 +6965,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_SERVERAID4,
-	    "ServeRAID 4/5",
+	    "ServeRAID 4/5 (morpheus)",
 	},
 	{
 	    PCI_VENDOR_IBM, PCI_PRODUCT_IBM_440GP,
@@ -7466,6 +7474,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80K3LAN_SDS_SPT,
 	    "i80003 Gigabit Ethernet (SERDES)",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
+	    "i82571GB quad 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82801I_IGP_AMT,
@@ -8332,6 +8344,26 @@ static const struct pci_product pci_products[] = {
 	    "82955X PCI Express Bridge",
 	},
 	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7230_HB,
+	    "E7230 Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_E7230_EXP,
+	    "E7230 PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_EXP_2,
+	    "82975X PCI Express Bridge",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_HB,
+	    "82975X Host",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82975X_EXP,
+	    "82975X PCI Express Bridge",
+	},
+	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82915G_IGDC,
 	    "82915G/GL IGD Companion",
 	},
@@ -8778,6 +8810,18 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IGD_1,
 	    "82965PM Integrated Graphics Device",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_MEI,
+	    "82965PM MEI Controller",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_IDE,
+	    "82965PM IDE Interface",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82965PM_KT,
+	    "82965PM Serial Interface",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_31244,
@@ -9392,6 +9436,10 @@ static const struct pci_product pci_products[] = {
 	    "MGA G200 AGP",
 	},
 	{
+	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G200E_SE,
+	    "MGA G200e (ServerEngines)",
+	},
+	{
 	    PCI_VENDOR_MATROX, PCI_PRODUCT_MATROX_G400_AGP,
 	    "MGA G400 AGP",
 	},
@@ -9733,7 +9781,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030,
-	    "53c1030",
+	    "53c1020/53c1030",
 	},
 	{
 	    PCI_VENDOR_SYMBIOS, PCI_PRODUCT_SYMBIOS_1030R,
@@ -10805,7 +10853,7 @@ static const struct pci_product pci_products[] = {
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_PCI,
-	    "nForce MCP65 PCI Brige",
+	    "nForce MCP65 PCI Bridge",
 	},
 	{
 	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP65_HDA_1,
@@ -11570,6 +11618,38 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C552,
 	    "5C552 PCI-CardBus bridge/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C592,
+	    "5C592 PCI-CardBus bridge/MS/SD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C593,
+	    "5C593 PCI-CardBus bridge/MS/SD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C821,
+	    "5C821 PCI-CardBus bridge/MS/SD/MMC/SC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C822,
+	    "5C822 PCI-CardBus bridge/MS/SD/MMC/SC",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C832,
+	    "5C832 PCI-SD/MMC/MMC+/MS/xD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C843,
+	    "5C843 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C847,
+	    "5C847 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/Firewire",
+	},
+	{
+	    PCI_VENDOR_RICOH, PCI_PRODUCT_RICOH_Rx5C853,
+	    "5C853 PCI-CardBus bridge/SD/MMC/MMC+/MS/xD/SC/Firewire",
 	},
 	{
 	    PCI_VENDOR_RISCOM, PCI_PRODUCT_RISCOM_N2,
@@ -13964,4 +14044,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2892;
+const int pci_nproducts = 2912;

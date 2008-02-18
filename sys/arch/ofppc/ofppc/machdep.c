@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96.2.2 2007/12/08 18:17:33 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96.2.3 2008/02/18 21:04:53 mjf Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.2.2 2007/12/08 18:17:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.2.3 2008/02/18 21:04:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -55,9 +55,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96.2.2 2007/12/08 18:17:33 mjf Exp $")
 #include <machine/trap.h>
 #include <machine/bus.h>
 #include <machine/isa_machdep.h>
+#include <machine/spr.h>
 
 #include <powerpc/oea/bat.h>
 #include <powerpc/ofw_cons.h>
+#include <powerpc/rtas.h>
 
 #include "com.h"
 #if (NCOM > 0)
@@ -70,7 +72,12 @@ struct pmap ofw_pmap;
 char bootpath[256];
 
 void ofwppc_batinit(void);
-void	ofppc_bootstrap_console(void);
+void ofppc_bootstrap_console(void);
+
+extern u_int l2cr_config;
+extern int machine_has_rtas;
+
+struct model_data modeldata;
 
 void
 initppc(u_int startkernel, u_int endkernel, char *args)
@@ -82,7 +89,30 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 void
 model_init(void)
 {
-	int qhandle, phandle;
+	int qhandle, phandle, j;
+
+	memset(&modeldata, 0, sizeof(struct model_data));
+	/* provide sane defaults */
+	for (j=0; j < MAX_PCI_BUSSES; j++) {
+		modeldata.pciiodata[j].start = 0x00008000;
+		modeldata.pciiodata[j].limit = 0x0000ffff;
+	}
+	modeldata.ranges_offset = 1;
+
+	if (strncmp(model_name, "FirePower,", 10) == 0) {
+		modeldata.ranges_offset = 0;
+	}
+	if (strcmp(model_name, "MOT,PowerStack_II_Pro4000") == 0) {
+		modeldata.ranges_offset = 0;
+	}
+
+	/* 7044-270 and 7044-170 */
+	if (strncmp(model_name, "IBM,7044", 8) == 0) {
+		for (j=0; j < MAX_PCI_BUSSES; j++) {
+			modeldata.pciiodata[j].start = 0x00fff000;
+			modeldata.pciiodata[j].limit = 0x00ffffff;
+		}
+	}
 
 	/* Pegasos1, Pegasos2 */
 	if (strncmp(model_name, "Pegasos", 7) == 0) {
@@ -92,6 +122,13 @@ model_init(void)
 		char buf[32];
 		int i;
 
+		modeldata.ranges_offset = 1;
+		modeldata.pciiodata[0].start = 0x00001400;
+		modeldata.pciiodata[0].limit = 0x0000ffff;
+		
+		/* the pegasos doesn't bother to set the L2 cache up*/
+		l2cr_config = L2CR_L2PE;
+		
 		/* fix the device_type property of a graphics card */
 		for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
 			if (OF_getprop(qhandle, "name", buf, sizeof buf) > 0
@@ -154,6 +191,7 @@ void
 cpu_startup(void)
 {
 	oea_startup(model_name[0] ? model_name : NULL);
+	bus_space_mallocok();
 }
 
 
@@ -167,19 +205,19 @@ consinit(void)
 void
 dumpsys(void)
 {
-	printf("dumpsys: TBD\n");
+	aprint_normal("dumpsys: TBD\n");
 }
 
 /*
  * Halt or reboot the machine after syncing/dumping according to howto.
  */
-void rtas_reboot(void);
 
 void
 cpu_reboot(int howto, char *what)
 {
 	static int syncing;
 	static char str[256];
+	int junk;
 	char *ap = str, *ap1 = ap;
 
 	boothowto = howto;
@@ -191,19 +229,25 @@ cpu_reboot(int howto, char *what)
 	splhigh();
 	if (howto & RB_HALT) {
 		doshutdownhooks();
-		printf("halted\n\n");
+		aprint_normal("halted\n\n");
+		if ((howto & 0x800) && machine_has_rtas &&
+		    rtas_has_func(RTAS_FUNC_POWER_OFF))
+			rtas_call(RTAS_FUNC_POWER_OFF, 2, 1, 0, 0, &junk);
 		ppc_exit();
 	}
 	if (!cold && (howto & RB_DUMP))
 		oea_dumpsys();
 	doshutdownhooks();
-	printf("rebooting\n\n");
+	aprint_normal("rebooting\n\n");
 
-	rtas_reboot();
+	if (machine_has_rtas && rtas_has_func(RTAS_FUNC_SYSTEM_REBOOT)) {
+		rtas_call(RTAS_FUNC_SYSTEM_REBOOT, 0, 1, &junk);
+		for(;;);
+	}
 
 	if (what && *what) {
 		if (strlen(what) > sizeof str - 5)
-			printf("boot string too large, ignored\n");
+			aprint_normal("boot string too large, ignored\n");
 		else {
 			strcpy(str, what);
 			ap1 = ap = str + strlen(str);
@@ -234,6 +278,7 @@ ofppc_init_comcons(int isa_node)
 	uint32_t reg[2], comfreq;
 	uint8_t dll, dlm;
 	int speed, rate, err, com_node, child;
+	bus_space_handle_t comh;
 
 	/* if we have a serial cons, we have work to do */
 	memset(name, 0, sizeof(name));
@@ -273,11 +318,18 @@ ofppc_init_comcons(int isa_node)
 	if (comfreq == 0)
 		comfreq = COM_FREQ;
 
-	isa_outb(reg[1] + com_cfcr, LCR_DLAB);
-	dll = isa_inb(reg[1] + com_dlbl);
-	dlm = isa_inb(reg[1] + com_dlbh);
+	/* we need to BSM this, and then undo that before calling
+	 * comcnattach.
+	 */
+
+	if (bus_space_map(&genppc_isa_io_space_tag, reg[1], 8, 0, &comh) != 0)
+		panic("Can't map isa serial\n");
+
+	bus_space_write_1(&genppc_isa_io_space_tag, comh, com_cfcr, LCR_DLAB);
+	dll = bus_space_read_1(&genppc_isa_io_space_tag, comh, com_dlbl);
+	dlm = bus_space_read_1(&genppc_isa_io_space_tag, comh, com_dlbh);
 	rate = dll | (dlm << 8);
-	isa_outb(reg[1] + com_cfcr, LCR_8BITS);
+	bus_space_write_1(&genppc_isa_io_space_tag, comh, com_cfcr, LCR_8BITS);
 	speed = divrnd((comfreq / 16), rate);
 	err = speed - (speed + 150)/300 * 300;
 	speed -= err;
@@ -285,6 +337,8 @@ ofppc_init_comcons(int isa_node)
 		err = -err;
 	if (err > 50)
 		speed = 9600;
+
+	bus_space_unmap(&genppc_isa_io_space_tag, comh, 8);
 
 	/* Now we can attach the comcons */
 	aprint_verbose("Switching to COM console at speed %d", speed);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.72.4.1 2007/12/08 18:20:19 mjf Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.72.4.2 2008/02/18 21:06:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.72.4.1 2007/12/08 18:20:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.72.4.2 2008/02/18 21:06:40 mjf Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_quota.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.72.4.1 2007/12/08 18:20:19 mjf Ex
 #include <sys/stat.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+#include <miscfs/genfs/genfs.h>
 
 
 #include <netsmb/smb.h>
@@ -128,6 +129,8 @@ struct vfsops smbfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,	/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	smbfs_vnodeopv_descs,
 	0,			/* vfs_refcount */
 	{ NULL, NULL },
@@ -177,7 +180,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = smb_dev2share(args->dev_fd, SMBM_EXEC, &scred, &ssp);
 	if (error)
 		return error;
-	smb_share_unlock(ssp, 0);	/* keep ref, but unlock */
+	smb_share_unlock(ssp);	/* keep ref, but unlock */
 	vcp = SSTOVC(ssp);
 	mp->mnt_stat.f_iosize = vcp->vc_txmax;
 	mp->mnt_stat.f_namemax =
@@ -190,7 +193,7 @@ smbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	smp->sm_hash = hashinit(desiredvnodes, HASH_LIST,
 				M_SMBFSHASH, M_WAITOK, &smp->sm_hashlen);
 
-	lockinit(&smp->sm_hashlock, PVFS, "smbfsh", 0, 0);
+	mutex_init(&smp->sm_hashlock, MUTEX_DEFAULT, IPL_NONE);
 	smp->sm_share = ssp;
 	smp->sm_root = NULL;
 	smp->sm_args = *args;
@@ -242,16 +245,12 @@ smbfs_unmount(struct mount *mp, int mntflags)
 	} while (error == EBUSY && smp->sm_didrele != 0);
 
 	smb_makescred(&scred, l, l->l_cred);
-	smb_share_lock(smp->sm_share, 0);
+	smb_share_lock(smp->sm_share);
 	smb_share_put(smp->sm_share, &scred);
 	mp->mnt_data = NULL;
 
 	free(smp->sm_hash, M_SMBFSHASH);
-#ifdef __NetBSD__
-	lockmgr(&smp->sm_hashlock, LK_DRAIN, NULL);
-#else
-	lockdestroy(&smp->sm_hashlock);
-#endif
+	mutex_destroy(&smp->sm_hashlock);
 	FREE(smp, M_SMBFSDATA);
 	return error;
 }
@@ -394,46 +393,46 @@ smbfs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	struct vnode *vp, *nvp;
+	struct vnode *vp, *mvp;
 	struct smbnode *np;
 	int error, allerror = 0;
+
+	/* Allocate a marker vnode. */
+	if ((mvp = vnalloc(mp)) == NULL)
+		return ENOMEM;
 	/*
 	 * Force stale buffer cache information to be flushed.
 	 */
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 loop:
-	/*
-	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
-	 * and vclean() can be called indirectly
-	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = nvp) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+		vmark(mvp, vp);
 		/*
 		 * If the vnode that we are about to sync is no longer
 		 * associated with this mount point, start over.
 		 */
-		if (vp->v_mount != mp)
-			goto loop;
-		simple_lock(&vp->v_interlock);
-		nvp = TAILQ_NEXT(vp, v_mntvnodes);
-
+		if (vp->v_mount != mp || vismarker(vp))
+			continue;
+		mutex_enter(&vp->v_interlock);
 		np = VTOSMB(vp);
 		if (np == NULL) {
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-			
 		if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 		    LIST_EMPTY(&vp->v_dirtyblkhd) &&
-		     UVM_OBJ_IS_CLEAN(&vp->v_uobj)) {
-			simple_unlock(&vp->v_interlock);
+		     vp->v_uobj.uo_npages == 0) {
+			mutex_exit(&vp->v_interlock);
 			continue;
 		}
-		simple_unlock(&mntvnode_slock);
+		mutex_exit(&mntvnode_lock);
 		error = vget(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (error) {
-			simple_lock(&mntvnode_slock);
-			if (error == ENOENT)
+			mutex_enter(&mntvnode_lock);
+			if (error == ENOENT) {
+				(void)vunmark(mvp);
 				goto loop;
+			}
 			continue;
 		}
 		error = VOP_FSYNC(vp, cred,
@@ -441,9 +440,10 @@ loop:
 		if (error)
 			allerror = error;
 		vput(vp);
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
+	vnfree(mvp);
 	return (allerror);
 }
 

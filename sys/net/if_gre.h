@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.30.4.1 2007/12/08 18:21:06 mjf Exp $ */
+/*	$NetBSD: if_gre.h,v 1.30.4.2 2008/02/18 21:07:01 mjf Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _NET_IF_GRE_H_
 #define _NET_IF_GRE_H_
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -124,7 +124,7 @@ struct gre_h {
 	struct gre_sre[] routing Routing fileds (see below)
 				Present if (rt_pres == 1)
  */
-} __attribute__((__packed__));
+} __packed;
 
 #define GRE_CP		0x8000  /* Checksum Present */
 #define GRE_RP		0x4000  /* Routing Present */

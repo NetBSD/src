@@ -1,4 +1,4 @@
-/*	$NetBSD: ibcs2_machdep.c,v 1.8 2005/12/11 12:19:36 christos Exp $	*/
+/*	$NetBSD: ibcs2_machdep.c,v 1.8.56.1 2008/02/18 21:05:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.8 2005/12/11 12:19:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_machdep.c,v 1.8.56.1 2008/02/18 21:05:16 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ ibcs2_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 int
-ibcs2_sys_sysmachine(struct proc *l, void *v, register_t *retval)
+ibcs2_sys_sysmachine(struct lwp *l, void *v, register_t *retval)
 {
 	return EINVAL;
 }

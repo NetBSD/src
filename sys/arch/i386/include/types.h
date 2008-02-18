@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.52 2007/10/17 19:54:57 garbled Exp $	*/
+/*	$NetBSD: types.h,v 1.52.2.1 2008/02/18 21:04:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -34,6 +34,9 @@
 #ifndef	_MACHTYPES_H_
 #define	_MACHTYPES_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_xen.h"
+#endif
 #include <sys/cdefs.h>
 #include <sys/featuretest.h>
 #include <machine/int_types.h>
@@ -46,8 +49,13 @@ typedef struct label_t {
 
 /* NB: This should probably be if defined(_KERNEL) */
 #if defined(_NETBSD_SOURCE)
+#ifdef PAE
+typedef unsigned long long paddr_t;
+typedef unsigned long long psize_t;
+#else
 typedef unsigned long	paddr_t;
 typedef unsigned long	psize_t;
+#endif /* PAE */
 typedef unsigned long	vaddr_t;
 typedef unsigned long	vsize_t;
 #endif
@@ -69,12 +77,11 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 
 #define	__HAVE_DEVICE_REGISTER
 #define	__HAVE_CPU_COUNTER
+#define	__HAVE_MD_CPU_OFFLINE
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_MINIMAL_EMUL
 #define	__HAVE_OLD_DISKLABEL
-#define	__HAVE_CPU_MAXPROC
-#define	__HAVE_TIMECOUNTER
-#define	__HAVE_GENERIC_TODR
+#define	__HAVE_ATOMIC64_OPS
 
 #if defined(_KERNEL)
 #define __HAVE_RAS

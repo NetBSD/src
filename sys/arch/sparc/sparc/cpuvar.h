@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.72.2.1 2007/11/19 00:46:51 mjf Exp $ */
+/*	$NetBSD: cpuvar.h,v 1.72.2.2 2008/02/18 21:05:03 mjf Exp $ */
 
 /*
  *  Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -194,6 +194,7 @@ struct cpu_info {
 #else
 #define HASSUN4_MMU3L	(0)
 #endif
+	int		ci_idepth;		/* Interrupt depth */
 
 	/*
 	 * The following pointers point to processes that are somehow

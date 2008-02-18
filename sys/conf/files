@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.869.4.3 2007/12/27 00:44:42 mjf Exp $
+#	$NetBSD: files,v 1.869.4.4 2008/02/18 21:05:31 mjf Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -23,8 +23,8 @@ defflag				KMEMSTATS
 defflag				KTRACE
 defflag				MBUFTRACE
 defflag				PTRACE
-defflag				SYSTRACE
 defflag				COREDUMP
+defflag opt_modular.h		MODULAR
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -53,6 +53,8 @@ defflag	opt_config.h		INCLUDE_CONFIG_FILE INCLUDE_JUST_CONFIG
 defparam opt_dump.h		DUMP_ON_PANIC
 
 defflag	opt_callout.h		CALLWHEEL_STATS
+
+defflag				CPU_IN_CKSUM
 
 defflag opt_posix.h		P1003_1B_SEMAPHORE
 defflag	opt_sysv.h		SYSVMSG SYSVSEM	SYSVSHM
@@ -97,6 +99,12 @@ file kern/subr_syscall_stats.c	syscall_stats
 
 defparam opt_pax.h		PAX_MPROTECT
 				PAX_SEGVGUARD
+ 				PAX_ASLR
+ 				PAX_ASLR_DELTA_MMAP_LSB
+ 				PAX_ASLR_DELTA_MMAP_LEN
+ 				PAX_ASLR_DELTA_STACK_LSB
+ 				PAX_ASLR_DELTA_STACK_LEN
+ 				PAX_ASLR_DELTA_PROG_LEN
 
 defflag	opt_fileassoc.h		FILEASSOC
 
@@ -117,7 +125,6 @@ defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10
 defflag				COMPAT_OSSAUDIO
 defflag				COMPAT_FREEBSD: COMPAT_30
-defflag				COMPAT_HPUX
 defflag				COMPAT_IBCS2
 defflag				COMPAT_IRIX
 defflag				COMPAT_LINUX
@@ -1064,17 +1071,20 @@ define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 
 defparam USB_MEM_RESERVE
 
-device	uhci: usbus
+define	usbroothub
+file	dev/usb/usbroothub_subr.c	usbroothub
+
+device	uhci: usbus, usbroothub
 file	dev/usb/uhci.c			uhci			needs-flag
 
 # OHCI USB controller
 #
-device	ohci: usbus
+device	ohci: usbus, usbroothub
 file	dev/usb/ohci.c			ohci			needs-flag
 
 # EHCI USB controller
 #
-device	ehci: usbus
+device	ehci: usbus, usbroothub
 file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
@@ -1282,6 +1292,7 @@ include "secmodel/files.secmodel"
 #
 # kernel sources
 #
+file	conf/debugsyms.c
 file	dev/auconv.c			auconv | mulaw
 file	dev/audio.c			audio | midi | midibus	needs-flag
 file	dev/audiobell.c			audiobell
@@ -1352,6 +1363,7 @@ file	kern/kern_lock.c
 file	kern/kern_lwp.c
 file	kern/kern_malloc.c
 file	kern/kern_malloc_debug.c	malloc_debug
+file	kern/kern_module.c
 file	kern/kern_mutex.c
 file	kern/kern_fileassoc.c		fileassoc
 file	kern/kern_ntptime.c
@@ -1368,7 +1380,6 @@ file	kern/kern_sleepq.c
 file	kern/kern_softint.c
 file	kern/kern_stub.c
 file	kern/kern_subr.c
-file	kern/kern_systrace.c		systrace
 file	kern/kern_synch.c
 file	kern/kern_sysctl.c
 file	kern/kern_tc.c
@@ -1393,8 +1404,10 @@ file	kern/subr_evcnt.c
 file	kern/subr_extent.c
 file	kern/subr_hash.c
 file	kern/subr_kmem.c
+file	kern/subr_kobj.c
 file	kern/subr_lockdebug.c
 file	kern/subr_log.c
+file	kern/subr_percpu.c
 file	kern/subr_pool.c
 file	kern/subr_prf.c
 file	kern/subr_prf2.c
@@ -1410,11 +1423,13 @@ file	kern/subr_workqueue.c
 file	kern/subr_xcall.c
 file	kern/sys_aio.c
 file	kern/sys_generic.c
+file	kern/sys_module.c
 file	kern/sys_mqueue.c
 file	kern/sys_lwp.c
 file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_pmc.c
 file	kern/sys_process.c		ptrace | ktrace
+file	kern/sys_pset.c
 file	kern/sys_sig.c
 file	kern/sys_sched.c
 file	kern/sys_socket.c
@@ -1457,6 +1472,7 @@ file	kern/vnode_if.c
 file	miscfs/deadfs/dead_vnops.c
 file	miscfs/fifofs/fifo_vnops.c
 file	miscfs/genfs/genfs_io.c
+file	miscfs/genfs/genfs_vfsops.c
 file	miscfs/genfs/genfs_vnops.c
 file	miscfs/genfs/layer_subr.c	nullfs | overlay | umapfs | lkm
 file	miscfs/genfs/layer_vfsops.c	nullfs | overlay | umapfs | lkm
@@ -1505,8 +1521,11 @@ file	net/route.c
 file	net/rtsock.c
 file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | ipsec | opencrypto | vnd_compression
+file	netinet/cpu_in_cksum.c		(inet | inet6) & !cpu_in_cksum
 file	netinet/if_arp.c		arp | netatalk		needs-flag
 file	netinet/if_atm.c		atm
+file	netinet/in4_cksum.c		inet
+file	netinet/in_cksum.c		inet
 file	netinet/in_gif.c		gif & inet
 file	netinet/ip_carp.c		carp & (inet | inet6)	needs-flag
 file	netinet/ip_ecn.c		ipsec | fast_ipsec | gif | stf
@@ -1572,3 +1591,8 @@ include "dev/pad/files.pad"
 # Intel 386 Real Mode emulator
 #
 include "lib/libx86emu/files.x86emu"
+
+#
+# "tprof" profiler.
+#
+include	"dev/tprof/files.tprof"

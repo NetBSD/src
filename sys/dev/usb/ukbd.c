@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.95 2007/03/04 06:02:49 christos Exp $        */
+/*      $NetBSD: ukbd.c,v 1.95.22.1 2008/02/18 21:06:26 mjf Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.95 2007/03/04 06:02:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.95.22.1 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ struct ukbd_data {
  * Translate USB keycodes to US keyboard XT scancodes.
  * Scancodes >= 0x80 represent EXTENDED keycodes.
  *
- * See http://www.microsoft.com/HWDEV/TECH/input/Scancode.asp
+ * See http://www.microsoft.com/whdc/device/input/Scancode.mspx
  */
 Static const u_int8_t ukbd_trtab[256] = {
       NN,   NN,   NN,   NN, 0x1e, 0x30, 0x2e, 0x20, /* 00 - 07 */
@@ -120,7 +120,7 @@ Static const u_int8_t ukbd_trtab[256] = {
     0xcb, 0xd0, 0xc8, 0x45, 0xb5, 0x37, 0x4a, 0x4e, /* 50 - 57 */
     0x9c, 0x4f, 0x50, 0x51, 0x4b, 0x4c, 0x4d, 0x47, /* 58 - 5f */
     0x48, 0x49, 0x52, 0x53, 0x56, 0xdd,   NN, 0x59, /* 60 - 67 */
-    0x5d, 0x5e, 0x5f,   NN,   NN,   NN,   NN,   NN, /* 68 - 6f */
+    0x64, 0x65, 0x66, 0x67, 0x68, 0x69, 0x6a,   NN, /* 68 - 6f */
       NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 70 - 77 */
       NN,   NN,   NN,   NN,   NN,   NN,   NN,   NN, /* 78 - 7f */
       NN,   NN,   NN,   NN,   NN, 0x7e,   NN, 0x73, /* 80 - 87 */
@@ -174,7 +174,7 @@ struct ukbd_softc {
 	struct hid_location sc_scroloc;
 	int sc_leds;
 #if defined(__NetBSD__)
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 
 #if defined(WSDISPLAY_COMPAT_RAWKBD)
 	int sc_rawkbd;
@@ -275,11 +275,19 @@ const struct wskbd_mapdata ukbd_keymapdata = {
 };
 #endif
 
-USB_DECLARE_DRIVER(ukbd);
+static int ukbd_match(device_t, struct cfdata *, void *);
+static void ukbd_attach(device_t, device_t, void *);
+static int ukbd_detach(device_t, int);
+static int ukbd_activate(device_t, enum devact);
+static void ukbd_childdet(device_t, device_t);
+
+extern struct cfdriver ukbd_cd;
+
+CFATTACH_DECL2(ukbd, sizeof(struct ukbd_softc), ukbd_match, ukbd_attach,
+    ukbd_detach, ukbd_activate, NULL, ukbd_childdet);
 
 int
-ukbd_match(struct device *parent, struct cfdata *match,
-    void *aux)
+ukbd_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
 	int size;
@@ -294,9 +302,9 @@ ukbd_match(struct device *parent, struct cfdata *match,
 }
 
 void
-ukbd_attach(struct device *parent, struct device *self, void *aux)
+ukbd_attach(device_t parent, device_t self, void *aux)
 {
-	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+	struct ukbd_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
 	u_int32_t qflags;
 	const char *parseerr;
@@ -394,10 +402,20 @@ ukbd_enable(void *v, int on)
 	}
 }
 
-int
-ukbd_activate(device_ptr_t self, enum devact act)
+
+static void
+ukbd_childdet(device_t self, device_t child)
 {
-	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+	struct ukbd_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_wskbddev == child);
+	sc->sc_wskbddev = NULL;
+}
+
+int
+ukbd_activate(device_t self, enum devact act)
+{
+	struct ukbd_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -414,9 +432,9 @@ ukbd_activate(device_ptr_t self, enum devact act)
 }
 
 int
-ukbd_detach(struct device *self, int flags)
+ukbd_detach(device_t self, int flags)
 {
-	struct ukbd_softc *sc = (struct ukbd_softc *)self;
+	struct ukbd_softc *sc = device_private(self);
 	int rv = 0;
 
 	DPRINTF(("ukbd_detach: sc=%p flags=%d\n", sc, flags));

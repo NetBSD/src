@@ -1,0 +1,18 @@
+#	$NetBSD: std.rs6000,v 1.1.2.2 2008/02/18 21:04:59 mjf Exp $
+#
+# standard, required NetBSD/prep 'options'
+
+machine		rs6000 powerpc
+include		"conf/std"	# MI standard options
+
+#options 	POWER
+options		PPC_OEA
+options 	PPC_OEA601
+makeoptions	PPCDIR="oea"	# Tell Makefile.powerpc what dir to use
+
+options 	EXEC_SCRIPT	# exec #! scripts
+options 	EXEC_ELF32	# exec ELF binaries
+options 	EXEC_AOUT	# exec a.out binaries
+
+options 	INTSTK=0x2000
+options		PCKBCNOTEST	# 7043 and 7248 fail this test.

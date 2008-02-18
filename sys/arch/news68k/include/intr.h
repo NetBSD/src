@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.18.24.1 2007/12/08 18:17:29 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.18.24.2 2008/02/18 21:04:52 mjf Exp $	*/
 
 /*
  *
@@ -52,6 +52,8 @@
 #define	IPL_SCHED	6
 #define	IPL_HIGH	6
 #define	NIPL		7
+
+extern int idepth;
 
 typedef int ipl_t;
 typedef struct {

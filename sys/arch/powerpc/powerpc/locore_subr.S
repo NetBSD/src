@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.33 2007/10/17 19:56:47 garbled Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.33.2.1 2008/02/18 21:04:59 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -168,7 +168,7 @@ ENTRY(cpu_switchto)
 	cmpwi	%r30,0
 	beq	switchto_restore
 
-#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
 	li	%r10,0			/* USER_SR not needed */
@@ -217,7 +217,7 @@ switchto_restore:
 	ldreg	%r1,0(%r1)		/* get saved SP */
 	mr	%r2,%r12		/* get saved r2 */
 	mtcr	%r11			/* get saved cr */
-#if defined(PPC_OEA)  || defined (PPC_OEA64_BRIDGE)
+#if !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 	mtsr	USER_SR,%r10		/* get saved USER_SR */
 #endif
 	isync
@@ -290,14 +290,14 @@ _C_LABEL(cpu_lwp_bootstrap):
 	blrl				/* jump indirect to r31 */
 	b	trapexit
 
-#if defined(MULTIPROCESSOR) && (defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE))
+#if defined(MULTIPROCESSOR) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 ENTRY(cpu_spinup_trampoline)
-	li	0,0
-	mtmsr	0
+	li	%r0,0
+	mtmsr	%r0
 	isync
 
-	lis	3,_C_LABEL(cpu_hatch_stack)@ha
-	lwz	1,_C_LABEL(cpu_hatch_stack)@l(3)
+	lis	%r3,_C_LABEL(cpu_hatch_stack)@ha
+	lwz	%r1,_C_LABEL(cpu_hatch_stack)@l(%r3)
 
 	bl	_C_LABEL(cpu_hatch)
 	b	_C_LABEL(idle_loop)

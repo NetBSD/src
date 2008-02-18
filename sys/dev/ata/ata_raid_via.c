@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_via.c,v 1.1.26.1 2007/12/08 18:19:24 mjf Exp $	*/
+/*	$NetBSD: ata_raid_via.c,v 1.1.26.2 2008/02/18 21:05:36 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.1.26.1 2007/12/08 18:19:24 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_via.c,v 1.1.26.2 2008/02/18 21:05:36 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -143,6 +143,7 @@ ata_raid_read_config_via(struct wd_softc *sc)
 
 	error = ata_raid_config_block_rw(vp, VIA_LBA(sc), info,
 	    sizeof(*info), B_READ);
+	VOP_CLOSE(vp, FREAD, NOCRED);
 	vput(vp);
 	if (error) {
 		printf("%s: error %d reading VIA V-RAID config block\n",
@@ -152,9 +153,9 @@ ata_raid_read_config_via(struct wd_softc *sc)
 
 #ifdef ATA_RAID_DEBUG
 	ata_raid_via_print_info(info);
+	printf("MAGIC == 0x%02x\n", info->magic);
 #endif
 
-	printf("MAGIC == 0x%02x\n", info->magic);
 	/* Check the signature. */
 	if (info->magic != VIA_MAGIC) {
 		DPRINTF(("%s: VIA V-RAID signature check failed\n",

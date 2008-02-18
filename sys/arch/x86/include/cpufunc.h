@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.2.12.1 2007/11/19 00:46:58 mjf Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2.12.2 2008/02/18 21:05:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -97,7 +97,8 @@ void	fxrstor(void *);
 void	x86_monitor(const void *, uint32_t, uint32_t);
 void	x86_mwait(uint32_t, uint32_t);
 void	x86_ldmxcsr(void *);
-void	x86_cpuid(unsigned, unsigned *);
+#define	x86_cpuid(a,b)	x86_cpuid2((a),0,(b))
+void	x86_cpuid2(unsigned, unsigned, unsigned *);
 
 /* Use read_psl, write_psl when saving and restoring interrupt state. */
 void	x86_disable_intr(void);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_var.h,v 1.80 2007/10/02 20:35:04 dyoung Exp $	*/
+/*	$NetBSD: ip_var.h,v 1.80.4.1 2008/02/18 21:07:08 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,7 +46,7 @@ struct ipovly {
 	u_int16_t ih_len;		/* protocol length */
 	struct	  in_addr ih_src;	/* source internet address */
 	struct	  in_addr ih_dst;	/* destination internet address */
-} __attribute__((__packed__));
+} __packed;
 
 /*
  * Ip (reassembly or sequence) queue structures.
@@ -182,6 +182,7 @@ struct ipflow {
 #define	IP_FORWARDING		0x1		/* most of ip header exists */
 #define	IP_RAWOUTPUT		0x2		/* raw ip header exists */
 #define	IP_RETURNMTU		0x4		/* pass back mtu on EMSGSIZE */
+#define	IP_NOIPNEWID		0x8		/* don't fill in ip_id */
 #define	IP_ROUTETOIF		SO_DONTROUTE	/* bypass routing tables */
 #define	IP_ALLOWBROADCAST	SO_BROADCAST	/* can send broadcast packets */
 #define	IP_MTUDISC		0x0400		/* Path MTU Discovery; set DF */
@@ -255,41 +256,6 @@ struct	ipflow *ipflow_reap(int);
 void	ipflow_create(const struct route *, struct mbuf *);
 void	ipflow_slowtimo(void);
 int	ipflow_invalidate_all(int);
-
-extern uint16_t	ip_id;
-static __inline uint16_t ip_newid(void);
-
-u_int16_t ip_randomid(void);
-extern int ip_do_randomid;
-
-/*
- * ip_newid_range: "allocate" num contiguous ip_ids.
- *
- * => return the first id.
- */
-
-static __inline uint16_t
-ip_newid_range(unsigned int num)
-{
-	uint16_t id;
-
-	if (ip_do_randomid) {
-		/* XXX ignore num */
-		return ip_randomid();
-	}
-
-	id = htons(ip_id);
-	ip_id += num;
-
-	return id;
-}
-
-static __inline uint16_t
-ip_newid(void)
-{
-
-	return ip_newid_range(1);
-}
 
 #endif  /* _KERNEL */
 

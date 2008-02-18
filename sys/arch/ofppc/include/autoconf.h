@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7.2.2 2007/12/08 18:17:33 mjf Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.7.2.3 2008/02/18 21:04:53 mjf Exp $	*/
 
 #ifndef _OFPPC_AUTOCONF_H_
 #define _OFPPC_AUTOCONF_H_
@@ -17,6 +17,18 @@ struct confargs {
 	bus_space_tag_t	ca_tag;
 };
 
+struct pciio_info {
+	uint32_t	start;
+	uint32_t	limit;
+};
+
+/* to support machines with more than 4 busses, change the below */
+#define MAX_PCI_BUSSES		4
+struct model_data {
+	int			ranges_offset;
+	struct pciio_info	pciiodata[MAX_PCI_BUSSES];
+};
+
 extern int console_node;
 extern char model_name[64];
 
@@ -32,6 +44,7 @@ void cpu_initclocks(void);
 void decr_intr(struct clockframe *);
 void setstatclockrate(int);
 void init_interrupt(void);
+void init_ofppc_interrupt(void);
 void ofppc_init_comcons(int);
 void copy_disp_props(struct device *, int, prop_dictionary_t);
 

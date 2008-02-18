@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.46 2006/06/03 12:43:28 ragge Exp $	*/
+/*	$NetBSD: if_media.h,v 1.46.38.1 2008/02/18 21:07:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -122,6 +122,8 @@ struct ifmedia {
 /* Initialize an interface's struct if_media field. */
 void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
 
+int ifmedia_change(struct ifmedia *, struct ifnet *);
+
 /* Add one supported medium to a struct ifmedia. */
 void	ifmedia_add(struct ifmedia *, int, int, void *);
 
@@ -239,7 +241,7 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_FH	0x00040000	/* 2 GHz, GFSK mode */
 
 /*
- * Common Access Redundancy Protocol
+ * Common Address Redundancy Protocol
  */
 #define	IFM_CARP		0x000000c0
 

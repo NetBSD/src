@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.20.2.3 2007/12/27 00:43:06 mjf Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.20.2.4 2008/02/18 21:04:37 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20.2.3 2007/12/27 00:43:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.20.2.4 2008/02/18 21:04:37 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mtrr.h"
@@ -119,13 +119,13 @@ i386_ipi_halt(struct cpu_info *ci)
 void
 i386_ipi_flush_fpu(struct cpu_info *ci)
 {
-	npxsave_cpu(ci, 0);
+	npxsave_cpu(false);
 }
 
 void
 i386_ipi_synch_fpu(struct cpu_info *ci)
 {
-	npxsave_cpu(ci, 1);
+	npxsave_cpu(true);
 }
 #endif
 

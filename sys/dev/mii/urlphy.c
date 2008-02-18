@@ -1,4 +1,4 @@
-/*	$NetBSD: urlphy.c,v 1.18 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: urlphy.c,v 1.18.30.1 2008/02/18 21:05:51 mjf Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.18 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urlphy.c,v 1.18.30.1 2008/02/18 21:05:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,9 +140,6 @@ urlphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	int reg;
 
 	DPRINTF(("%s: %s: enter\n", sc->mii_dev.dv_xname, __FUNCTION__));
-
-	if (!device_is_active(&sc->mii_dev))
-		return (ENXIO);
 
 	switch (cmd) {
 	case MII_POLLSTAT:

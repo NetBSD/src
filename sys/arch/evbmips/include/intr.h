@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13.2.1 2007/12/08 18:16:51 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.13.2.2 2008/02/18 21:04:28 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,8 +39,6 @@
 #ifndef _EVBMIPS_INTR_H_
 #define	_EVBMIPS_INTR_H_
 
-#include <sys/device.h>
-#include <sys/lock.h>
 #include <sys/queue.h>
 
 #define	IPL_NONE	0	/* disable only this interrupt */

@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.243 2007/03/04 06:02:42 christos Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.243.22.1 2008/02/18 21:06:25 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.243 2007/03/04 06:02:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.243.22.1 2008/02/18 21:06:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.243 2007/03/04 06:02:42 christos Exp 
 #include <sys/fcntl.h>
 #include <sys/scsiio.h>
 #include <sys/queue.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsipi_all.h>

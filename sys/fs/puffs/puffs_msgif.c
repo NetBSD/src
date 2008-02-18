@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.51.2.2 2007/12/08 18:20:17 mjf Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.51.2.3 2008/02/18 21:06:39 mjf Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,9 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.51.2.2 2007/12/08 18:20:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.51.2.3 2008/02/18 21:06:39 mjf Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/fstrans.h>
 #include <sys/kmem.h>
 #include <sys/kthread.h>
@@ -276,12 +277,13 @@ puffs_msg_setdelta(struct puffs_msgpark *park, size_t delta)
 }
 
 void
-puffs_msg_setinfo(struct puffs_msgpark *park, int class, int type, void *cookie)
+puffs_msg_setinfo(struct puffs_msgpark *park, int class, int type,
+	puffs_cookie_t ck)
 {
 
 	park->park_preq->preq_opclass = PUFFSOP_OPCLASS(class);
 	park->park_preq->preq_optype = type;
-	park->park_preq->preq_cookie = cookie;
+	park->park_preq->preq_cookie = ck;
 }
 
 void
@@ -562,7 +564,7 @@ puffs_msg_sendresp(struct puffs_mount *pmp, struct puffs_req *origpreq, int rv)
 	struct puffs_msgpark *park;
 	struct puffs_req *preq;
 
-	puffs_msgmem_alloc(sizeof(struct puffs_req), &park, (void **)&preq, 1);
+	puffs_msgmem_alloc(sizeof(struct puffs_req), &park, (void *)&preq, 1);
 	puffs_msg_setfaf(park); /* XXXXXX: avoids reqid override */
 
 	memcpy(preq, origpreq, sizeof(struct puffs_req));
@@ -927,7 +929,7 @@ puffsop_flush(struct puffs_mount *pmp, struct puffs_flush *pf)
 			break;
 		}
 
-		simple_lock(&vp->v_uobj.vmobjlock);
+		mutex_enter(&vp->v_uobj.vmobjlock);
 		rv = VOP_PUTPAGES(vp, offlo, offhi, flags);
 		break;
 
@@ -981,7 +983,7 @@ puffs_msgif_close(void *this)
 {
 	struct puffs_mount *pmp = this;
 	struct mount *mp = PMPTOMP(pmp);
-	int gone, rv;
+	int rv;
 
 	mutex_enter(&pmp->pmp_lock);
 	puffs_mp_reference(pmp);
@@ -991,8 +993,6 @@ puffs_msgif_close(void *this)
 	 * The syncer might be jogging around in this file system
 	 * currently.  If we allow it to go to the userspace of no
 	 * return while trying to get the syncer lock, well ...
-	 * synclk: I feel happy, I feel fine.
-	 * lockmgr: You're not fooling anyone, you know.
 	 */
 	puffs_userdead(pmp);
 
@@ -1032,20 +1032,11 @@ puffs_msgif_close(void *this)
 	 * wait for syncer_mutex.  Otherwise the mointpoint can be
 	 * wiped out while we wait.
 	 */
-	simple_lock(&mp->mnt_slock);
-	mp->mnt_wcnt++;
-	simple_unlock(&mp->mnt_slock);
-
+	atomic_inc_uint((unsigned int*)&mp->mnt_refcnt);
 	mutex_enter(&syncer_mutex);
-
-	simple_lock(&mp->mnt_slock);
-	mp->mnt_wcnt--;
-	if (mp->mnt_wcnt == 0)
-		wakeup(&mp->mnt_wcnt);
-	gone = mp->mnt_iflag & IMNT_GONE;
-	simple_unlock(&mp->mnt_slock);
-	if (gone) {
+	if (mp->mnt_iflag & IMNT_GONE) {
 		mutex_exit(&syncer_mutex);
+		vfs_destroy(mp);
 		return 0;
 	}
 
@@ -1060,8 +1051,9 @@ puffs_msgif_close(void *this)
 	 * is already a goner.
 	 * XXX: skating on the thin ice of modern calling conventions ...
 	 */
-	if (vfs_busy(mp, 0, 0)) {
+	if (vfs_busy(mp, RW_WRITER, NULL)) {
 		mutex_exit(&syncer_mutex);
+		vfs_destroy(mp);
 		return 0;
 	}
 
@@ -1072,6 +1064,7 @@ puffs_msgif_close(void *this)
 	 */
 	rv = dounmount(mp, MNT_FORCE, curlwp);
 	KASSERT(rv == 0);
+	vfs_destroy(mp);
 
 	return 0;
 }

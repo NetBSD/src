@@ -1,4 +1,4 @@
-/*	$NetBSD: veriexecctl.c,v 1.30 2007/09/06 03:01:55 xtraeme Exp $	*/
+/*	$NetBSD: veriexecctl.c,v 1.30.2.1 2008/02/18 21:04:18 mjf Exp $	*/
 
 /*-
  * Copyright 2005 Elad Efrat <elad@NetBSD.org>
@@ -49,6 +49,7 @@
 #include "veriexecctl.h"
 
 #define	VERIEXEC_DEVICE	"/dev/veriexec"
+#define	VERIEXEC_DEFAULT_CONFIG	"/etc/signatures"
 
 #define	STATUS_STRING(status)	((status) == FINGERPRINT_NOTEVAL ?	\
 					     "not evaluated" :		\
@@ -69,7 +70,7 @@ usage(void)
 	const char *progname = getprogname();
 
 	(void)fprintf(stderr, "Usage:\n"
-	    "%s [-ekv] load <signature_file>\n"
+	    "%s [-ekv] load [signature_file]\n"
 	    "%s delete <file | mount_point>\n"
 	    "%s query <file>\n"
 	    "%s dump\n"
@@ -232,11 +233,17 @@ main(int argc, char **argv)
 	/*
 	 * Handle the different commands we can do.
 	 */
-	if (argc == 2 && strcasecmp(argv[0], "load") == 0) {
+	if (argc <= 2 && strcasecmp(argv[0], "load") == 0) {
 		extern FILE *yyin;
+		const char *file;
 		int lfd;
 
-		lfd = open(argv[1], O_RDONLY|O_EXLOCK, 0);
+		if (argc != 2)
+			file = VERIEXEC_DEFAULT_CONFIG;
+		else
+			file = argv[1];
+
+		lfd = open(file, O_RDONLY|O_EXLOCK, 0);
 		if (lfd == -1)
 			err(1, "Cannot open `%s'", argv[1]);
 
@@ -252,9 +259,6 @@ main(int argc, char **argv)
 		if (stat(argv[1], &sb) == -1)
 			err(1, "Can't stat `%s'", argv[1]);
 
-		dp = prop_dictionary_create();
-		dict_sets(dp, "file", argv[1]);
-
 		/*
 		 * If it's a regular file, remove it. If it's a directory,
 		 * remove the entire table. If it's neither, abort.
@@ -262,6 +266,9 @@ main(int argc, char **argv)
 		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
 			errx(1, "`%s' is not a regular file or directory.",
 			    argv[1]);
+
+		dp = prop_dictionary_create();
+		dict_sets(dp, "file", argv[1]);
 
 		if (prop_dictionary_send_ioctl(dp, gfd, VERIEXEC_DELETE) != 0)
 			err(1, "Error deleting `%s'", argv[1]);

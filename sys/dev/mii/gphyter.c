@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.19 2006/11/16 21:24:07 christos Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.19.30.1 2008/02/18 21:05:51 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.19 2006/11/16 21:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.19.30.1 2008/02/18 21:05:51 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,9 +101,10 @@ CFATTACH_DECL(gphyter, sizeof(struct mii_softc),
 
 static int	gphyter_service(struct mii_softc *, struct mii_data *, int);
 static void	gphyter_status(struct mii_softc *);
+static void	gphyter_reset(struct mii_softc *);
 
 static const struct mii_phy_funcs gphyter_funcs = {
-	gphyter_service, gphyter_status, mii_phy_reset,
+	gphyter_service, gphyter_status, gphyter_reset,
 };
 
 static const struct mii_phydesc gphyters[] = {
@@ -307,4 +308,37 @@ gphyter_status(struct mii_softc *sc)
 			    IFM_FDX | mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
+}
+
+void
+gphyter_reset(struct mii_softc *sc)
+{
+	int reg, i;
+
+	if (sc->mii_flags & MIIF_NOISOLATE)
+		reg = BMCR_RESET;
+	else
+		reg = BMCR_RESET | BMCR_ISO;
+	PHY_WRITE(sc, MII_BMCR, reg);
+
+	/*
+	 * It is best to allow a little time for the reset to settle
+	 * in before we start polling the BMCR again.  Notably, the
+	 * DP83840A manual states that there should be a 500us delay
+	 * between asserting software reset and attempting MII serial
+	 * operations.  Also, a DP83815 can get into a bad state on
+	 * cable removal and reinsertion if we do not delay here.
+	 */
+	delay(500);
+
+	/* Wait another 100ms for it to complete. */
+	for (i = 0; i < 100; i++) {
+		reg = PHY_READ(sc, MII_BMCR);
+		if ((reg & BMCR_RESET) == 0)
+			break;
+		delay(1000);
+	}
+
+	if (sc->mii_inst != 0 && ((sc->mii_flags & MIIF_NOISOLATE) == 0))
+		PHY_WRITE(sc, MII_BMCR, reg | BMCR_ISO);
 }

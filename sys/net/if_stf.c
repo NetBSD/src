@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.62 2007/10/19 12:16:45 ad Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.62.2.1 2008/02/18 21:07:01 mjf Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.62 2007/10/19 12:16:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.62.2.1 2008/02/18 21:07:01 mjf Exp $");
 
 #include "opt_inet.h"
 
@@ -678,10 +678,9 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct lwp		*l = curlwp;	/* XXX */
 	struct ifaddr		*ifa;
-	struct ifreq		*ifr;
+	struct ifreq		*ifr = data;
 	struct sockaddr_in6	*sin6;
 	int			error;
-	u_long			mtu;
 
 	error = 0;
 	switch (cmd) {
@@ -702,7 +701,6 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		ifr = (struct ifreq *)data;
 		if (ifr != NULL &&
 		    ifreq_getaddr(cmd, ifr)->sa_family == AF_INET6)
 			;
@@ -714,11 +712,10 @@ stf_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = kauth_authorize_generic(l->l_cred,
 		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
 			break;
-		ifr = (struct ifreq *)data;
-		mtu = ifr->ifr_mtu;
-		if (mtu < STF_MTU_MIN || mtu > STF_MTU_MAX)
+		if (ifr->ifr_mtu < STF_MTU_MIN || ifr->ifr_mtu > STF_MTU_MAX)
 			return EINVAL;
-		ifp->if_mtu = mtu;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
 	default:

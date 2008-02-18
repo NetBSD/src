@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.6 2007/10/19 12:00:50 ad Exp $ */
+/*      $NetBSD: if_xge.c,v 1.6.2.1 2008/02/18 21:05:58 mjf Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.6 2007/10/19 12:00:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.6.2.1 2008/02/18 21:05:58 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -80,7 +80,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.6 2007/10/19 12:00:50 ad Exp $");
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <sys/lock.h>
 #include <sys/proc.h>
 
 #include <dev/pci/if_xgereg.h>
@@ -841,12 +840,12 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	switch (cmd) {
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > XGE_MAX_MTU) {
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > XGE_MAX_MTU)
 			error = EINVAL;
-		} else {
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
 			PIF_WCSR(RMAC_MAX_PYLD_LEN,
 			    RMAC_PYLD_LEN(ifr->ifr_mtu));
-			ifp->if_mtu = ifr->ifr_mtu;
+			error = 0;
 		}
 		break;
 
@@ -856,10 +855,16 @@ xge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET){
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
 			/* Change multicast list */
 			xge_mcast_filter(sc);
-			error = 0;
 		}
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: irix_fcntl.c,v 1.17.26.2 2007/12/27 00:43:47 mjf Exp $ */
+/*	$NetBSD: irix_fcntl.c,v 1.17.26.3 2008/02/18 21:05:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17.26.2 2007/12/27 00:43:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_fcntl.c,v 1.17.26.3 2008/02/18 21:05:23 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -247,8 +247,10 @@ fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 		return EBADF;
 
 	vp = (struct vnode *)fp->f_data;
-	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO)
+	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		FILE_UNLOCK(fp);
 		return ESPIPE;
+	}
 
 	switch (whence) {
 	case SEEK_CUR:
@@ -269,6 +271,7 @@ fd_truncate(struct lwp *l, int fd, int whence, off_t start, register_t *retval)
 		return EINVAL;
 		break;
 	}
+	FILE_UNLOCK(fp);
 
 	SCARG(&ft, fd) = fd;
 	return sys_ftruncate(l, &ft, retval);
@@ -328,8 +331,6 @@ irix_sys_open(struct lwp *l, const struct irix_sys_open_args *uap, register_t *r
 			nvp->v_writecount++;
 
 		nvp->v_type = VCHR;
-		nvp->v_specinfo = (void *)malloc(sizeof(struct specinfo),
-		    M_VNODE, M_WAITOK|M_ZERO);
 		nvp->v_rdev = vp->v_rdev;
 		nvp->v_specmountpoint = vp->v_specmountpoint;
 

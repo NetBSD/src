@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sysctl.c,v 1.32 2007/10/19 18:52:12 njoly Exp $	*/
+/*	$NetBSD: linux_sysctl.c,v 1.32.2.1 2008/02/18 21:05:27 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.32 2007/10/19 18:52:12 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sysctl.c,v 1.32.2.1 2008/02/18 21:05:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,27 +152,17 @@ linux_sys___sysctl(struct lwp *l, void *v, register_t *retval)
 	if (error)
 		return (error);
 
-       ktrmib(name, ls.nlen);
-
-	/*
-	 * wire old so that copyout() is less likely to fail?
-	 */
-	error = sysctl_lock(l, ls.oldval, savelen);
-	if (error)
-		return (error);
+	ktrmib(name, ls.nlen);
 
 	/*
 	 * dispatch request into linux sysctl tree
 	 */
+	sysctl_lock(ls.newval != NULL);
 	error = sysctl_dispatch(&name[0], ls.nlen,
 				ls.oldval, &oldlen,
 				ls.newval, ls.newlen,
 				&name[0], l, &linux_sysctl_root);
-
-	/*
-	 * release the sysctl lock
-	 */
-	sysctl_unlock(l);
+	sysctl_unlock();
 
 	/*
 	 * reset caller's oldlen, even if we got an error

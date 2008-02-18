@@ -1,4 +1,4 @@
-/*	$NetBSD: specfs.c,v 1.11.2.1 2007/11/19 00:49:24 mjf Exp $	*/
+/*	$NetBSD: specfs.c,v 1.11.2.2 2008/02/18 21:07:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -35,6 +35,7 @@
 #include <sys/disklabel.h>
 
 #include <miscfs/genfs/genfs.h>
+#include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -46,6 +47,7 @@ static int rump_specopen(void *);
 static int rump_specioctl(void *);
 static int rump_specclose(void *);
 static int rump_specfsync(void *);
+static int rump_specbmap(void *);
 static int rump_specputpages(void *);
 static int rump_specstrategy(void *);
 static int rump_specsimpleul(void *);
@@ -60,6 +62,7 @@ const struct vnodeopv_entry_desc rumpspec_vnodeop_entries[] = {
 	{ &vop_close_desc, rump_specclose },		/* close */
 	{ &vop_ioctl_desc, rump_specioctl },		/* ioctl */
 	{ &vop_fsync_desc, rump_specfsync },		/* fsync */
+	{ &vop_bmap_desc, rump_specbmap },		/* bmap */
 	{ &vop_putpages_desc, rump_specputpages },	/* putpages */
 	{ &vop_strategy_desc, rump_specstrategy },	/* strategy */
 	{ &vop_getpages_desc, rump_specsimpleul },	/* getpages */
@@ -182,6 +185,27 @@ rump_specputpages(void *v)
 	return 0;
 }
 
+static int
+rump_specbmap(void *v)
+{
+	struct vop_bmap_args /* {
+		struct vnode *a_vp;
+		daddr_t a_bn;
+		struct vnode **a_vpp;
+		daddr_t *a_bnp;
+		int *a_runp;
+	} */ *ap = v;
+
+	if (ap->a_vpp != NULL)
+		*ap->a_vpp = ap->a_vp;
+	if (ap->a_bnp != NULL)
+		*ap->a_bnp = ap->a_bn;
+	if (ap->a_runp != NULL)
+		*ap->a_runp = (MAXBSIZE >> DEV_BSHIFT) -1;
+
+	return 0;
+}
+
 int
 rump_specstrategy(void *v)
 {
@@ -217,9 +241,12 @@ rump_specstrategy(void *v)
 	 * avoid unnecessary scheduling with the I/O thread.
 	 */
 	if (bp->b_flags & B_ASYNC) {
+#ifdef RUMP_WITHOUT_THREADS
+		goto syncfallback;
+#else
 		struct rumpuser_aio *rua;
 
-		rua = rumpuser_malloc(sizeof(struct rumpuser_aio), 0);
+		rua = kmem_alloc(sizeof(struct rumpuser_aio), KM_SLEEP);
 		rua->rua_fd = sp->rsp_fd;
 		rua->rua_data = bp->b_data;
 		rua->rua_dlen = bp->b_bcount;
@@ -239,7 +266,7 @@ rump_specstrategy(void *v)
 		 * so for now set N_AIOS high and FIXXXME some day.
 		 */
 		if ((rua_head+1) % N_AIOS == rua_tail) {
-			rumpuser_free(rua);
+			kmem_free(rua, sizeof(*rua));
 			rumpuser_mutex_exit(&rua_mtx);
 			goto syncfallback;
 		}
@@ -249,13 +276,14 @@ rump_specstrategy(void *v)
 		rua_head = (rua_head+1) % (N_AIOS-1);
 		rumpuser_cv_signal(&rua_cv);
 		rumpuser_mutex_exit(&rua_mtx);
+#endif /* !RUMP_WITHOUT_THREADS */
 	} else {
  syncfallback:
 		if (bp->b_flags & B_READ) {
-			rumpuser_read(sp->rsp_fd, bp->b_data,
+			rumpuser_read_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		} else {
-			rumpuser_write(sp->rsp_fd, bp->b_data,
+			rumpuser_write_bio(sp->rsp_fd, bp->b_data,
 			    bp->b_bcount, off, bp);
 		}
 		biowait(bp);
@@ -275,7 +303,41 @@ rump_specsimpleul(void *v)
 	KASSERT(offset != VDESC_NO_OFFSET);
 
 	vp = *VOPARG_OFFSETTO(struct vnode **, offset, ap);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return 0;
+}
+
+void
+spec_node_init(struct vnode *nvp, dev_t nvp_rdev)
+{
+	specdev_t *sd;
+
+	sd = kmem_zalloc(sizeof(specdev_t), KM_SLEEP);
+	sd->sd_rdev = nvp_rdev;
+	sd->sd_refcnt = 1;
+	nvp->v_specnode = kmem_alloc(sizeof(specnode_t), KM_SLEEP);
+	nvp->v_specnode->sn_dev = sd;
+	nvp->v_rdev = nvp_rdev;
+}
+
+void
+spec_node_destroy(vnode_t *vp)
+{
+	specnode_t *sn;
+	specdev_t *sd;
+
+	sn = vp->v_specnode;
+	sd = sn->sn_dev;
+
+	KASSERT(sd->sd_refcnt == 1);
+	kmem_free(sd, sizeof(*sd));
+	kmem_free(sn, sizeof(*sn));
+}
+
+void
+spec_node_revoke(vnode_t *vp)
+{
+
+	panic("spec_node_revoke: should not be called");
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: xbd.c,v 1.40.2.1 2007/12/08 18:18:27 mjf Exp $ */
+/* $NetBSD: xbd.c,v 1.40.2.2 2008/02/18 21:05:21 mjf Exp $ */
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.40.2.1 2007/12/08 18:18:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.40.2.2 2008/02/18 21:05:21 mjf Exp $");
 
 #include "xbd_hypervisor.h"
 #include "rnd.h"
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: xbd.c,v 1.40.2.1 2007/12/08 18:18:27 mjf Exp $");
 #include <sys/disklabel.h>
 #include <sys/fcntl.h>
 #include <sys/vnode.h>
-#include <sys/lock.h>
+#include <sys/simplelock.h>
 #include <sys/conf.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
