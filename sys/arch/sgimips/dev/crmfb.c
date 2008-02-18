@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.19 2008/02/18 19:04:49 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.20 2008/02/18 19:43:02 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.19 2008/02/18 19:04:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.20 2008/02/18 19:43:02 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1002,7 +1002,7 @@ crmfb_set_mte_direction(struct crmfb_softc *sc, int dir)
 
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_Y_STEP, dir);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_Y_STEP, dir);
-	sc->sc_mte_direction = 1;
+	sc->sc_mte_direction = dir;
 }
 
 static void
