@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.69 2008/01/15 10:35:33 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.70 2008/02/18 12:16:37 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -270,6 +270,10 @@ void setsoftnet(void);
 struct intrhand {
 	int			(*ih_fun)(void *);
 	void			*ih_arg;
+	/* if we have to take the biglock, we interpose a wrapper
+	 * and need to save the original function and arg */
+	int			(*ih_realfun)(void *);
+	void			*ih_realarg;
 	short			ih_number;	/* interrupt number */
 						/* the H/W provides */
 	char			ih_pil;		/* interrupt priority */
