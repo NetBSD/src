@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.59 2008/02/12 22:29:54 mlelstv Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.60 2008/02/18 05:24:24 dyoung Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.59 2008/02/12 22:29:54 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.60 2008/02/18 05:24:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,7 +230,14 @@ static const struct uplcom_type {
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
-USB_DECLARE_DRIVER(uplcom);
+int uplcom_match(device_t, struct cfdata *, void *);
+void uplcom_attach(device_t, device_t, void *);
+void uplcom_childdet(device_t, device_t);
+int uplcom_detach(device_t, int);
+int uplcom_activate(device_t, enum devact);
+extern struct cfdriver uplcom_cd;
+CFATTACH_DECL2(uplcom, sizeof(struct uplcom_softc), uplcom_match,
+    uplcom_attach, uplcom_detach, uplcom_activate, NULL, uplcom_childdet);
 
 USB_MATCH(uplcom)
 {
@@ -449,6 +456,15 @@ USB_ATTACH(uplcom)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+void
+uplcom_childdet(device_t self, device_t child)
+{
+	struct uplcom_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
+}
+
 USB_DETACH(uplcom)
 {
 	USB_DETACH_START(uplcom, sc);
@@ -464,10 +480,8 @@ USB_DETACH(uplcom)
         }
 
 	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL) {
+	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
-		sc->sc_subdev = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -476,9 +490,9 @@ USB_DETACH(uplcom)
 }
 
 int
-uplcom_activate(device_ptr_t self, enum devact act)
+uplcom_activate(device_t self, enum devact act)
 {
-	struct uplcom_softc *sc = (struct uplcom_softc *)self;
+	struct uplcom_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {

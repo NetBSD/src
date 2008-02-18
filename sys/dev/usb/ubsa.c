@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.20 2008/01/21 11:36:47 ichiro Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.21 2008/02/18 05:31:24 dyoung Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.20 2008/01/21 11:36:47 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.21 2008/02/18 05:31:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,16 @@ Static const struct usb_devno ubsa_devs[] = {
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
-USB_DECLARE_DRIVER(ubsa);
+int ubsa_match(device_t, struct cfdata *, void *);
+void ubsa_attach(device_t, device_t, void *);
+void ubsa_childdet(device_t, device_t);
+int ubsa_detach(device_t, int);
+int ubsa_activate(device_t, enum devact);
+
+extern struct cfdriver ubsa_cd;
+
+CFATTACH_DECL2(ubsa, sizeof(struct ubsa_softc),
+    ubsa_match, ubsa_attach, ubsa_detach, ubsa_activate, NULL, ubsa_childdet);
 
 USB_MATCH(ubsa)
 {
@@ -301,6 +310,21 @@ error:
 	USB_ATTACH_ERROR_RETURN;
 }
 
+
+void
+ubsa_childdet(device_t self, device_t child)
+{
+	int i;
+	struct ubsa_softc *sc = device_private(self);
+
+	for (i = 0; i < sc->sc_numif; i++) {
+		if (sc->sc_subdevs[i] == child)
+			break;
+	}
+	KASSERT(i < sc->sc_numif);
+		sc->sc_subdevs[i] = NULL;
+}
+
 USB_DETACH(ubsa)
 {
 	USB_DETACH_START(ubsa, sc);
@@ -319,10 +343,8 @@ USB_DETACH(ubsa)
 
 	sc->sc_dying = 1;
 	for (i = 0; i < sc->sc_numif; i++) {
-		if (sc->sc_subdevs[i] != NULL) {
+		if (sc->sc_subdevs[i] != NULL)
 			rv |= config_detach(sc->sc_subdevs[i], flags);
-			sc->sc_subdevs[i] = NULL;
-		}
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
@@ -334,7 +356,7 @@ USB_DETACH(ubsa)
 int
 ubsa_activate(device_ptr_t self, enum devact act)
 {
-	struct ubsa_softc *sc = (struct ubsa_softc *)self;
+	struct ubsa_softc *sc = device_private(self);
 	int rv = 0;
 	int i;
 

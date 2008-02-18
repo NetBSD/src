@@ -1,4 +1,4 @@
-/* $NetBSD: xboxcontroller.c,v 1.6 2007/10/19 12:01:23 ad Exp $ */
+/* $NetBSD: xboxcontroller.c,v 1.7 2008/02/18 05:24:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.6 2007/10/19 12:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xboxcontroller.c,v 1.7 2008/02/18 05:24:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,15 @@ static const struct wsmouse_accessops xboxcontroller_accessops = {
 	xboxcontroller_wsmouse_disable
 };
 
-USB_DECLARE_DRIVER(xboxcontroller);
+int xboxcontroller_match(device_t, struct cfdata *, void *);
+void xboxcontroller_attach(device_t, device_t, void *);
+void xboxcontroller_childdet(device_t, device_t);
+int xboxcontroller_detach(device_t, int);
+int xboxcontroller_activate(device_t, enum devact);
+extern struct cfdriver xboxcontroller_cd;
+CFATTACH_DECL2(xboxcontroller, sizeof(struct xboxcontroller_softc),
+    xboxcontroller_match, xboxcontroller_attach, xboxcontroller_detach,
+    xboxcontroller_activate, NULL, xboxcontroller_childdet);
 
 USB_MATCH(xboxcontroller)
 {
@@ -155,6 +163,15 @@ USB_ATTACH(xboxcontroller)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+void
+xboxcontroller_childdet(device_t self, device_t child)
+{
+	struct xboxcontroller_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_wsmousedev == child);
+	sc->sc_wsmousedev = NULL;
+}
+
 USB_DETACH(xboxcontroller)
 {
 	USB_DETACH_START(xboxcontroller, sc);
@@ -170,10 +187,8 @@ USB_DETACH(xboxcontroller)
 
 	sc->sc_dying = 1;
 
-	if (sc->sc_wsmousedev != NULL) {
+	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
-		sc->sc_wsmousedev = NULL;
-	}
 
 	return rv;
 }
@@ -181,10 +196,9 @@ USB_DETACH(xboxcontroller)
 int
 xboxcontroller_activate(device_ptr_t self, enum devact act)
 {
-	struct xboxcontroller_softc *sc;
+	struct xboxcontroller_softc *sc = device_private(self);
 	int rv;
 
-	sc = (struct xboxcontroller_softc *)self;
 	rv = 0;
 
 	switch (act) {

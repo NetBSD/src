@@ -1,4 +1,4 @@
-/*	$NetBSD: uep.c,v 1.9 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: uep.c,v 1.10 2008/02/18 05:31:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.9 2007/03/13 13:51:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uep.c,v 1.10 2008/02/18 05:31:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,14 @@ const struct wsmouse_accessops uep_accessops = {
 	uep_disable,
 };
 
-USB_DECLARE_DRIVER(uep);
+int uep_match(device_t, struct cfdata *, void *);
+void uep_attach(device_t, device_t, void *);
+void uep_childdet(device_t, device_t);
+int uep_detach(device_t, int);
+int uep_activate(device_t, enum devact);
+extern struct cfdriver uep_cd;
+CFATTACH_DECL2(uep, sizeof(struct uep_softc), uep_match, uep_attach,
+    uep_detach, uep_activate, NULL, uep_childdet);
 
 USB_MATCH(uep)
 {
@@ -233,10 +240,8 @@ USB_DETACH(uep)
 	/* save current calib as defaults */
 	default_calib = sc->sc_tpcalib.sc_saved;
 
-	if (sc->sc_wsmousedev != NULL) {
+	if (sc->sc_wsmousedev != NULL)
 		rv = config_detach(sc->sc_wsmousedev, flags);
-		sc->sc_wsmousedev = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -244,10 +249,19 @@ USB_DETACH(uep)
 	return rv;
 }
 
-int
-uep_activate(device_ptr_t self, enum devact act)
+void
+uep_childdet(device_t self, device_t child)
 {
-	struct uep_softc *sc = (struct uep_softc *)self;
+	struct uep_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_wsmousedev == child);
+	sc->sc_wsmousedev = NULL;
+}
+
+int
+uep_activate(device_t self, enum devact act)
+{
+	struct uep_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {

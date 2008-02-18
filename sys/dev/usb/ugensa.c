@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.14 2007/12/30 21:49:47 smb Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.15 2008/02/18 05:31:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.14 2007/12/30 21:49:47 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.15 2008/02/18 05:31:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ struct ugensa_softc {
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
-	device_ptr_t		sc_subdev;
+	device_t		sc_subdev;
 	int			sc_numcon;
 
 	u_char			sc_dying;
@@ -103,7 +103,14 @@ static const struct usb_devno ugensa_devs[] = {
 };
 #define ugensa_lookup(v, p) usb_lookup(ugensa_devs, v, p)
 
-USB_DECLARE_DRIVER(ugensa);
+int ugensa_match(device_t, struct cfdata *, void *);
+void ugensa_attach(device_t, device_t, void *);
+void ugensa_childdet(device_t, device_t);
+int ugensa_detach(device_t, int);
+int ugensa_activate(device_t, enum devact);
+extern struct cfdriver ugensa_cd;
+CFATTACH_DECL2(ugensa, sizeof(struct ugensa_softc), ugensa_match,
+    ugensa_attach, ugensa_detach, ugensa_activate, NULL, ugensa_childdet);
 
 USB_MATCH(ugensa)
 {
@@ -216,10 +223,19 @@ bad:
 	USB_ATTACH_ERROR_RETURN;
 }
 
-int
-ugensa_activate(device_ptr_t self, enum devact act)
+void
+ugensa_childdet(device_t self, device_t child)
 {
-	struct ugensa_softc *sc = (struct ugensa_softc *)self;
+	struct ugensa_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
+}
+
+int
+ugensa_activate(device_t self, enum devact act)
+{
+	struct ugensa_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {

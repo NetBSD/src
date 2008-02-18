@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.2 2008/02/18 05:31:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.1 2007/09/03 17:57:37 tshiozak Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.2 2008/02/18 05:31:24 dyoung Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -212,8 +212,22 @@ struct	ucom_methods uchcom_methods = {
 	.ucom_write		= NULL,
 };
 
-USB_DECLARE_DRIVER(uchcom);
+int uchcom_match(device_t, struct cfdata *, void *);
+void uchcom_attach(device_t, device_t, void *);
+void uchcom_childdet(device_t, device_t);
+int uchcom_detach(device_t, int);
+int uchcom_activate(device_t, enum devact);
 
+extern struct cfdriver uchcom_cd;
+
+CFATTACH_DECL2(uchcom,
+    sizeof(struct uchcom_softc),
+    uchcom_match,
+    uchcom_attach,
+    uchcom_detach,
+    uchcom_activate,
+    NULL,
+    uchcom_childdet);
 
 /* ----------------------------------------------------------------------
  * driver entry points
@@ -296,6 +310,15 @@ failed:
 	USB_ATTACH_ERROR_RETURN;
 }
 
+void
+uchcom_childdet(device_t self, device_t child)
+{
+	struct uchcom_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
+}
+
 USB_DETACH(uchcom)
 {
 	USB_DETACH_START(uchcom, sc);
@@ -307,10 +330,8 @@ USB_DETACH(uchcom)
 
 	sc->sc_dying = 1;
 
-	if (sc->sc_subdev != NULL) {
+	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
-		sc->sc_subdev = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
