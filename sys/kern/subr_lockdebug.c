@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.27 2008/02/18 16:02:41 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.28 2008/02/18 18:31:10 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.27 2008/02/18 16:02:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.28 2008/02/18 18:31:10 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.27 2008/02/18 16:02:41 ad Exp $
 #include <lib/libkern/rb.h>
 
 #include <machine/lock.h>
+
+unsigned int		ld_panic;
 
 #ifdef LOCKDEBUG
 
@@ -118,7 +120,6 @@ int			ld_freeptr;
 int			ld_recurse;
 bool			ld_nomore;
 lockdebug_t		*ld_table[LD_MAX_LOCKS / LD_BATCH];
-unsigned int		ld_panic;
 
 lockdebug_t		ld_prime[LD_BATCH];
 
