@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.20.34.1 2007/12/08 18:17:50 mjf Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.20.34.2 2008/02/18 21:05:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.34.1 2007/12/08 18:17:50 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.34.2 2008/02/18 21:05:01 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -630,11 +630,12 @@ tmu1_intr(void *arg)
 		
 	return (0);
 }
-#endif
+#endif /* __HAVE_FAST_SOFTINTS */
 
 bool
 cpu_intr_p(void)
 {
+	register vaddr_t sp __asm("r15");
 
-	return curcpu()->ci_idepth != 0;
+	return sp <= intsp;	/* are we on interrupt stack? */
 }

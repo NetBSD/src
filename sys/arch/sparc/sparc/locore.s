@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.240.2.2 2007/12/27 00:43:20 mjf Exp $	*/
+/*	$NetBSD: locore.s,v 1.240.2.3 2008/02/18 21:05:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2526,6 +2526,11 @@ softintr_common:
 	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
+	sethi	%hi(CPUINFO_VA), %o2
+	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	inc	%o3
+	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+
 #if defined(MULTIPROCESSOR)
 	/*
 	 * Grab the kernel lock for interrupt levels <= IPL_VM
@@ -2566,6 +2571,11 @@ softintr_common:
 	 nop
 0:
 #endif
+
+	sethi	%hi(CPUINFO_VA), %o2
+	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	dec	%o3
+	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
 
 	mov	%l7, %g1
 	wr	%l6, 0, %y
@@ -2714,6 +2724,11 @@ sparc_interrupt_common:
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
+	sethi	%hi(CPUINFO_VA), %o2
+	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	inc	%o3
+	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+
 #if defined(MULTIPROCESSOR)
 	/* Grab the kernel lock for interrupt levels =< IPL_VM */
 	cmp	%l3, IPL_VM
@@ -2763,6 +2778,11 @@ sparc_interrupt_common:
 	 nop
 0:
 #endif
+	sethi	%hi(CPUINFO_VA), %o2
+	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	dec	%o3
+	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+
 	mov	%l7, %g1
 	wr	%l6, 0, %y
 	ldd	[%sp + CCFSZ + 24], %g2

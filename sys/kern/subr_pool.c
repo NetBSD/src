@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.133.4.3 2007/12/27 00:46:08 mjf Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.133.4.4 2008/02/18 21:06:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.4.3 2007/12/27 00:46:08 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.4.4 2008/02/18 21:06:47 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -52,13 +52,13 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.4.3 2007/12/27 00:46:08 mjf Exp 
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/syslog.h>
 #include <sys/debug.h>
 #include <sys/lockdebug.h>
 #include <sys/xcall.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 
@@ -76,11 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.133.4.3 2007/12/27 00:46:08 mjf Exp 
  */
 
 /* List of all pools */
-LIST_HEAD(,pool) pool_head = LIST_HEAD_INITIALIZER(pool_head);
-
-/* List of all caches. */
-LIST_HEAD(,pool_cache) pool_cache_head =
-    LIST_HEAD_INITIALIZER(pool_cache_head);
+TAILQ_HEAD(,pool) pool_head = TAILQ_HEAD_INITIALIZER(pool_head);
 
 /* Private pool for page header structures */
 #define	PHPOOL_MAX	8
@@ -126,7 +122,7 @@ struct pool_item_header {
 	SPLAY_ENTRY(pool_item_header)
 				ph_node;	/* Off-page page headers */
 	void *			ph_page;	/* this page's address */
-	struct timeval		ph_time;	/* last referenced */
+	uint32_t		ph_time;	/* last referenced */
 	uint16_t		ph_nmissing;	/* # of chunks in use */
 	uint16_t		ph_off;		/* start offset in page */
 	union {
@@ -185,6 +181,13 @@ static struct pool pcg_normal_pool;
 static struct pool pcg_large_pool;
 static struct pool cache_pool;
 static struct pool cache_cpu_pool;
+
+/* List of all caches. */
+TAILQ_HEAD(,pool_cache) pool_cache_head =
+    TAILQ_HEAD_INITIALIZER(pool_cache_head);
+
+int pool_cache_disable;
+
 
 static pool_cache_cpu_t *pool_cache_put_slow(pool_cache_cpu_t *, int *,
 					     void *, paddr_t);
@@ -626,9 +629,7 @@ void
 pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
     const char *wchan, struct pool_allocator *palloc, int ipl)
 {
-#ifdef DEBUG
 	struct pool *pp1;
-#endif
 	size_t trysize, phsize;
 	int off, slack;
 
@@ -637,7 +638,7 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 	 * Check that the pool hasn't already been initialised and
 	 * added to the list of all pools.
 	 */
-	LIST_FOREACH(pp1, &pool_head, pr_poollist) {
+	TAILQ_FOREACH(pp1, &pool_head, pr_poollist) {
 		if (pp == pp1)
 			panic("pool_init: pool %s already initialised",
 			    wchan);
@@ -863,20 +864,26 @@ pool_init(struct pool *pp, size_t size, u_int align, u_int ioff, int flags,
 		    "pcglarge", &pool_allocator_meta, IPL_VM);
 	}
 
-	if (__predict_true(!cold)) {
-		/* Insert into the list of all pools. */
+	/* Insert into the list of all pools. */
+	if (__predict_true(!cold))
 		mutex_enter(&pool_head_lock);
-		LIST_INSERT_HEAD(&pool_head, pp, pr_poollist);
+	TAILQ_FOREACH(pp1, &pool_head, pr_poollist) {
+		if (strcmp(pp1->pr_wchan, pp->pr_wchan) > 0)
+			break;
+	}
+	if (pp1 == NULL)
+		TAILQ_INSERT_TAIL(&pool_head, pp, pr_poollist);
+	else
+		TAILQ_INSERT_BEFORE(pp1, pp, pr_poollist);
+	if (__predict_true(!cold))
 		mutex_exit(&pool_head_lock);
 
 		/* Insert this into the list of pools using this allocator. */
+	if (__predict_true(!cold))
 		mutex_enter(&palloc->pa_lock);
-		TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
+	TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
+	if (__predict_true(!cold))
 		mutex_exit(&palloc->pa_lock);
-	} else {
-		LIST_INSERT_HEAD(&pool_head, pp, pr_poollist);
-		TAILQ_INSERT_TAIL(&palloc->pa_list, pp, pr_alloc_list);
-	}
 
 	pool_reclaim_register(pp);
 }
@@ -894,7 +901,7 @@ pool_destroy(struct pool *pp)
 	mutex_enter(&pool_head_lock);
 	while (pp->pr_refcnt != 0)
 		cv_wait(&pool_busy, &pool_head_lock);
-	LIST_REMOVE(pp, pr_poollist);
+	TAILQ_REMOVE(&pool_head, pp, pr_poollist);
 	if (drainpp == pp)
 		drainpp = NULL;
 	mutex_exit(&pool_head_lock);
@@ -1293,8 +1300,11 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 			 * be idle for some period of time before it can
 			 * be reclaimed by the pagedaemon.  This minimizes
 			 * ping-pong'ing for memory.
+			 *
+			 * note for 64-bit time_t: truncating to 32-bit is not
+			 * a problem for our usage.
 			 */
-			getmicrotime(&ph->ph_time);
+			ph->ph_time = time_uptime;
 		}
 		pool_update_curpage(pp);
 	}
@@ -1446,7 +1456,7 @@ pool_prime_page(struct pool *pp, void *storage, struct pool_item_header *ph)
 	LIST_INIT(&ph->ph_itemlist);
 	ph->ph_page = storage;
 	ph->ph_nmissing = 0;
-	getmicrotime(&ph->ph_time);
+	ph->ph_time = time_uptime;
 	if ((pp->pr_roflags & PR_PHINPAGE) == 0)
 		SPLAY_INSERT(phtree, &pp->pr_phtree, ph);
 
@@ -1607,7 +1617,7 @@ pool_reclaim(struct pool *pp)
 {
 	struct pool_item_header *ph, *phnext;
 	struct pool_pagelist pq;
-	struct timeval curtime, diff;
+	uint32_t curtime;
 	bool klock;
 	int rv;
 
@@ -1644,7 +1654,7 @@ pool_reclaim(struct pool *pp)
 
 	LIST_INIT(&pq);
 
-	getmicrotime(&curtime);
+	curtime = time_uptime;
 
 	for (ph = LIST_FIRST(&pp->pr_emptypages); ph != NULL; ph = phnext) {
 		phnext = LIST_NEXT(ph, ph_pagelist);
@@ -1654,8 +1664,7 @@ pool_reclaim(struct pool *pp)
 			break;
 
 		KASSERT(ph->ph_nmissing == 0);
-		timersub(&curtime, &ph->ph_time, &diff);
-		if (diff.tv_sec < pool_inactive_time
+		if (curtime - ph->ph_time < pool_inactive_time
 		    && !pa_starved_p(pp->pr_alloc))
 			continue;
 
@@ -1701,7 +1710,7 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 {
 	struct pool *pp;
 
-	KASSERT(!LIST_EMPTY(&pool_head));
+	KASSERT(!TAILQ_EMPTY(&pool_head));
 
 	pp = NULL;
 
@@ -1709,11 +1718,11 @@ pool_drain_start(struct pool **ppp, uint64_t *wp)
 	mutex_enter(&pool_head_lock);
 	do {
 		if (drainpp == NULL) {
-			drainpp = LIST_FIRST(&pool_head);
+			drainpp = TAILQ_FIRST(&pool_head);
 		}
 		if (drainpp != NULL) {
 			pp = drainpp;
-			drainpp = LIST_NEXT(pp, pr_poollist);
+			drainpp = TAILQ_NEXT(pp, pr_poollist);
 		}
 		/*
 		 * Skip completely idle pools.  We depend on at least
@@ -1769,7 +1778,7 @@ pool_printall(const char *modif, void (*pr)(const char *, ...))
 {
 	struct pool *pp;
 
-	LIST_FOREACH(pp, &pool_head, pr_poollist) {
+	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
 		pool_printit(pp, modif, pr);
 	}
 }
@@ -1796,10 +1805,8 @@ pool_print_pagelist(struct pool *pp, struct pool_pagelist *pl,
 #endif
 
 	LIST_FOREACH(ph, pl, ph_pagelist) {
-		(*pr)("\t\tpage %p, nmissing %d, time %lu,%lu\n",
-		    ph->ph_page, ph->ph_nmissing,
-		    (u_long)ph->ph_time.tv_sec,
-		    (u_long)ph->ph_time.tv_usec);
+		(*pr)("\t\tpage %p, nmissing %d, time %" PRIu32 "\n",
+		    ph->ph_page, ph->ph_nmissing, ph->ph_time);
 #ifdef DIAGNOSTIC
 		if (!(pp->pr_roflags & PR_NOTOUCH)) {
 			LIST_FOREACH(pi, &ph->ph_itemlist, pi_list) {
@@ -2059,6 +2066,7 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
     void *arg)
 {
 	CPU_INFO_ITERATOR cii;
+	pool_cache_t pc1;
 	struct cpu_info *ci;
 	struct pool *pp;
 
@@ -2115,18 +2123,23 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 			pool_cache_cpu_init1(ci, pc);
 		}
 	}
-	
-	if (__predict_true(!cold)) {
-		mutex_enter(&pp->pr_lock);
-		pp->pr_cache = pc;
-		mutex_exit(&pp->pr_lock);
+
+	/* Add to list of all pools. */
+	if (__predict_true(!cold))
 		mutex_enter(&pool_head_lock);
-		LIST_INSERT_HEAD(&pool_cache_head, pc, pc_cachelist);
-		mutex_exit(&pool_head_lock);
-	} else {
-		pp->pr_cache = pc;
-		LIST_INSERT_HEAD(&pool_cache_head, pc, pc_cachelist);
+	TAILQ_FOREACH(pc1, &pool_cache_head, pc_cachelist) {
+		if (strcmp(pc1->pc_pool.pr_wchan, pc->pc_pool.pr_wchan) > 0)
+			break;
 	}
+	if (pc1 == NULL)
+		TAILQ_INSERT_TAIL(&pool_cache_head, pc, pc_cachelist);
+	else
+		TAILQ_INSERT_BEFORE(pc1, pc, pc_cachelist);
+	if (__predict_true(!cold))
+		mutex_exit(&pool_head_lock);
+
+	membar_sync();
+	pp->pr_cache = pc;
 }
 
 /*
@@ -2146,7 +2159,7 @@ pool_cache_destroy(pool_cache_t pc)
 	mutex_enter(&pool_head_lock);
 	while (pc->pc_refcnt != 0)
 		cv_wait(&pool_busy, &pool_head_lock);
-	LIST_REMOVE(pc, pc_cachelist);
+	TAILQ_REMOVE(&pool_cache_head, pc, pc_cachelist);
 	mutex_exit(&pool_head_lock);
 
 	/* First, invalidate the entire cache. */
@@ -2237,7 +2250,7 @@ pool_cache_cpu_init(struct cpu_info *ci)
 	pool_cache_t pc;
 
 	mutex_enter(&pool_head_lock);
-	LIST_FOREACH(pc, &pool_cache_head, pc_cachelist) {
+	TAILQ_FOREACH(pc, &pool_cache_head, pc_cachelist) {
 		pc->pc_refcnt++;
 		mutex_exit(&pool_head_lock);
 
@@ -2521,7 +2534,9 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			object = pcg->pcg_objects[--pcg->pcg_avail].pcgo_va;
 			if (pap != NULL)
 				*pap = pcg->pcg_objects[pcg->pcg_avail].pcgo_pa;
+#if defined(DIAGNOSTIC)
 			pcg->pcg_objects[pcg->pcg_avail].pcgo_va = NULL;
+#endif /* defined(DIAGNOSTIC) */
 			KASSERT(pcg->pcg_avail <= pcg->pcg_size);
 			KASSERT(object != NULL);
 			cc->cc_hits++;
@@ -2592,17 +2607,21 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 		/*
 		 * If there's a empty group, release our full
 		 * group back to the cache.  Install the empty
-		 * group as cc_current and return.
+		 * group and return.
 		 */
-		if ((cur = cc->cc_current) != NULL) {
-			KASSERT(cur->pcg_avail == pcg->pcg_size);
-			cur->pcg_next = pc->pc_fullgroups;
-			pc->pc_fullgroups = cur;
-			pc->pc_nfull++;
-		}
 		KASSERT(pcg->pcg_avail == 0);
-		cc->cc_current = pcg;
 		pc->pc_emptygroups = pcg->pcg_next;
+		if (cc->cc_previous == NULL) {
+			cc->cc_previous = pcg;
+		} else {
+			if ((cur = cc->cc_current) != NULL) {
+				KASSERT(cur->pcg_avail == pcg->pcg_size);
+				cur->pcg_next = pc->pc_fullgroups;
+				pc->pc_fullgroups = cur;
+				pc->pc_nfull++;
+			}
+			cc->cc_current = pcg;
+		}
 		pc->pc_hits++;
 		pc->pc_nempty--;
 		mutex_exit(&pc->pc_lock);
@@ -2623,7 +2642,9 @@ pool_cache_put_slow(pool_cache_cpu_t *cc, int *s, void *object, paddr_t pa)
 	 * object away.
 	 */
 	nobj = pc->pc_pcgsize;
-	if (nobj == PCG_NOBJECTS_LARGE) {
+	if (pool_cache_disable) {
+		pcg = NULL;
+	} else if (nobj == PCG_NOBJECTS_LARGE) {
 		pcg = pool_get(&pcg_large_pool, PR_NOWAIT);
 	} else {
 		pcg = pool_get(&pcg_normal_pool, PR_NOWAIT);
@@ -2979,7 +3000,7 @@ pool_whatis(uintptr_t addr, void (*pr)(const char *, ...))
 {
 	struct pool *pp;
 
-	LIST_FOREACH(pp, &pool_head, pr_poollist) {
+	TAILQ_FOREACH(pp, &pool_head, pr_poollist) {
 		struct pool_item_header *ph;
 		uintptr_t item;
 		bool allocated = true;

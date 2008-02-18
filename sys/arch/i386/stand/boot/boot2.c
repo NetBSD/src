@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.14.2.2 2007/12/27 00:43:11 mjf Exp $	*/
+/*	$NetBSD: boot2.c,v 1.14.2.3 2008/02/18 21:04:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -269,7 +269,7 @@ atoi(const char *in)
 }
 
 /*
- * This function parses a boot.cnf file in the root of the filesystem
+ * This function parses a boot.cfg file in the root of the filesystem
  * (if present) and populates the global boot configuration.
  * 
  * The file consists of a number of lines each terminated by \n
@@ -283,11 +283,12 @@ atoi(const char *in)
  * default: the default menu option to use if Return is pressed
  * consdev: the console device to use
  *
- * Example boot.cnf file:
+ * Example boot.cfg file:
  * banner=Welcome to NetBSD
  * banner=Please choose the boot type from the following menu
  * menu=Boot NetBSD:boot netbsd
  * menu=Boot into single user mode:boot netbsd -s
+ * menu=:boot hd1a:netbsd -cs
  * menu=Goto boot comand line:prompt
  * timeout=10
  * consdev=com0
@@ -300,7 +301,7 @@ parsebootconf(const char *conf)
 	int cmenu, cbanner, len;
 	int fd, err, off;
 	struct stat st;
-	char *value, *key;
+	char *key, *value, *v2;
 #ifdef SUPPORT_USTARFS
 	void *op_open;
 #endif
@@ -354,7 +355,7 @@ parsebootconf(const char *conf)
 	bc[off] = '\0';
 	
 	close(fd);
-	/* bc now contains the whole boot.cnf file */
+	/* bc now contains the whole boot.cfg file */
 	
 	cmenu = 0;
 	cbanner = 0;
@@ -375,15 +376,23 @@ parsebootconf(const char *conf)
 		*c = 0;
 		
 		if (!strncmp(key, "menu", 4)) {
+			/*
+			 * Parse "menu=<description>:<command>".  If the
+			 * description is empty ("menu=:<command>)",
+			 * then re-use the command as the description.
+			 * Note that the command may contain embedded
+			 * colons.
+			 */
 			if (cmenu >= MAXMENU)
 				continue;
 			bootconf.desc[cmenu] = value;
-			/* Look for : between description and command */
-			for (; *value && *value != ':'; value++)
+			for (v2=value; *v2 && *v2 != ':'; v2++)
 				continue;
-			if(*value) {
-				*value++ = 0;
-				bootconf.command[cmenu] = value;
+			if (*v2) {
+				*v2++ = 0;
+				bootconf.command[cmenu] = v2;
+				if (! *value)
+					bootconf.desc[cmenu] = v2;
 				cmenu++;
 			} else {
 				/* No delimiter means invalid line */
@@ -507,7 +516,7 @@ boot2(int biosdev, u_int biossector)
 	parsebootconf(BOOTCONF);
 
 	/*
-	 * If console set in boot.cnf, switch to it.
+	 * If console set in boot.cfg, switch to it.
 	 * This will print the banner, so we don't need to explicitly do it
 	 */
 	if (bootconf.consdev)
@@ -559,7 +568,7 @@ command_help(char *arg)
 {
 
 	printf("commands are:\n"
-	       "boot [xdNx:][filename] [-acdqsv]\n"
+	       "boot [xdNx:][filename] [-acdqsvxz]\n"
 	       "     (ex. \"hd0a:netbsd.old -s\"\n"
 	       "ls [path]\n"
 	       "dev xd[N[x]]:\n"

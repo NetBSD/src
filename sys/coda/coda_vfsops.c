@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.59.4.2 2007/12/27 00:43:32 mjf Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.59.4.3 2008/02/18 21:05:22 mjf Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.59.4.2 2007/12/27 00:43:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.59.4.3 2008/02/18 21:05:22 mjf Exp $");
 
 #ifdef	_LKM
 #define	NVCODA 4
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.59.4.2 2007/12/27 00:43:32 mjf Exp
 #include <coda/coda_opstats.h>
 /* for VN_RDEV */
 #include <miscfs/specfs/specdev.h>
+#include <miscfs/genfs/genfs.h>
 
 MALLOC_DEFINE(M_CODA, "coda", "Coda file system structures and tables");
 
@@ -121,6 +122,8 @@ struct vfsops coda_vfsops = {
     (int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
     vfs_stdextattrctl,
     (void *)eopnotsupp,	/* vfs_suspendctl */
+    genfs_renamelock_enter,
+    genfs_renamelock_exit,
     coda_vnodeopv_descs,
     0,			/* vfs_refcount */
     { NULL, NULL },	/* vfs_list */
@@ -203,7 +206,7 @@ coda_mount(struct mount *vfsp,	/* Allocated and initialized by mount(2) */
 	vrele(dvp);
 	return(ENXIO);
     }
-    dev = dvp->v_specinfo->si_rdev;
+    dev = dvp->v_rdev;
     vrele(dvp);
     cdev = cdevsw_lookup(dev);
     if (cdev == NULL) {

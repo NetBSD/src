@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.269.4.2 2007/12/27 00:45:27 mjf Exp $	*/
+/*	$NetBSD: cd.c,v 1.269.4.3 2008/02/18 21:06:25 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2003, 2004, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.269.4.2 2007/12/27 00:45:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd.c,v 1.269.4.3 2008/02/18 21:06:25 mjf Exp $");
 
 #include "rnd.h"
 
@@ -679,7 +679,7 @@ cdstrategy(struct buf *bp)
 			}
 
 			blkno = ((blkno * lp->d_secsize) / cd->params.blksize);
-			nbp = getiobuf_nowait();
+			nbp = getiobuf(false, NULL);
 			if (!nbp) {
 				/* No memory -- fail the iop. */
 				free(bounce, M_DEVBUF);
@@ -698,14 +698,12 @@ cdstrategy(struct buf *bp)
 			/* Set up the IOP to the bounce buffer. */
 			nbp->b_error = 0;
 			nbp->b_proc = bp->b_proc;
-			nbp->b_vp = NULLVP;
-
 			nbp->b_bcount = count;
 			nbp->b_bufsize = count;
-
 			nbp->b_rawblkno = blkno;
-
-			nbp->b_flags = bp->b_flags | B_READ | B_CALL;
+			nbp->b_flags = bp->b_flags | B_READ;
+			nbp->b_oflags = bp->b_oflags;
+			nbp->b_cflags = bp->b_cflags;
 			nbp->b_iodone = cdbounce;
 
 			/* store bounce state in b_private and use new buf */
@@ -970,7 +968,7 @@ cdbounce(struct buf *bp)
 			count = MAXPHYS;
 		}
 
-		nbp = getiobuf_nowait();
+		nbp = getiobuf(false, NULL);
 		if (!nbp) {
 			/* No memory -- fail the iop. */
 			bp->b_error = ENOMEM;
@@ -980,15 +978,13 @@ cdbounce(struct buf *bp)
 		/* Set up the IOP to the bounce buffer. */
 		nbp->b_error = 0;
 		nbp->b_proc = obp->b_proc;
-		nbp->b_vp = NULLVP;
-
 		nbp->b_bcount = count;
 		nbp->b_bufsize = count;
 		nbp->b_data = bp->b_data;
-
 		nbp->b_rawblkno = blkno;
-
-		nbp->b_flags = obp->b_flags | B_READ | B_CALL;
+		nbp->b_flags = obp->b_flags | B_READ;
+		nbp->b_oflags = obp->b_oflags;
+		nbp->b_cflags = obp->b_cflags;
 		nbp->b_iodone = cdbounce;
 
 		/* store bounce state in b_private and use new buf */

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_tftproot.c,v 1.1 2007/05/08 06:10:27 manu Exp $ */
+/*	$NetBSD: subr_tftproot.c,v 1.1.24.1 2008/02/18 21:06:47 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Emmanuel Dreyfus, all rights reserved.
@@ -39,13 +39,13 @@
 #include "opt_md.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.1 2007/05/08 06:10:27 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_tftproot.c,v 1.1.24.1 2008/02/18 21:06:47 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/mount.h>
 #include <sys/lwp.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/mbuf.h>
 #include <sys/timevar.h>
 #include <sys/socketvar.h>
@@ -145,10 +145,7 @@ tftproot_dhcpboot(bootdv)
 		goto out;
 	}
 
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list))
-		if (strcmp(dv->dv_xname, ifp->if_xname) == 0)
-			break;
+	dv = device_find_by_xname(ifp->if_xname);
 
 	if ((dv == NULL) || (device_class(dv) != DV_IFNET)) {
 		DPRINTF(("%s():%d cannot find device for interface %s\n",
@@ -160,8 +157,7 @@ tftproot_dhcpboot(bootdv)
 
 	l = curlwp; /* XXX */
 
-	nd = malloc(sizeof(*nd), M_NFSMNT, M_WAITOK);
-	bzero(nd, sizeof(nd));
+	nd = kmem_zalloc(sizeof(*nd), KM_SLEEP);
 	nd->nd_ifp = ifp;
 	nd->nd_nomount = 1;
 
@@ -197,7 +193,7 @@ tftproot_dhcpboot(bootdv)
 
 out:
 	if (nd)
-		free(nd, M_NFSMNT);
+		kmem_free(nd, sizeof(*nd));
 
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.5.6.2 2007/12/08 18:19:32 mjf Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.5.6.3 2008/02/18 21:05:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.5.6.2 2007/12/08 18:19:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.5.6.3 2008/02/18 21:05:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -234,6 +234,9 @@ ahci_attach(struct ahci_softc *sc)
 	case AHCI_VS_11:
 		aprint_normal("1.1");
 		break;
+	case AHCI_VS_12:
+		aprint_normal("1.2");
+		break;
 	default:
 		aprint_normal("0x%x", ahci_rev);
 		break;
@@ -243,6 +246,7 @@ ahci_attach(struct ahci_softc *sc)
 	    sc->sc_atac.atac_nchannels, sc->sc_ncmds,
 	    ahci_cap & ~(AHCI_CAP_NPMASK|AHCI_CAP_NCS));
 	sc->sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DMA | ATAC_CAP_UDMA;
+	sc->sc_atac.atac_cap |= sc->sc_atac_capflags;
 	sc->sc_atac.atac_pio_cap = 4;
 	sc->sc_atac.atac_dma_cap = 2;
 	sc->sc_atac.atac_udma_cap = 6;

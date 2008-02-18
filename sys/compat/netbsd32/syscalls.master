@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.61.8.3 2007/12/27 00:44:29 mjf Exp $
+	$NetBSD: syscalls.master,v 1.61.8.4 2008/02/18 21:05:28 mjf Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -642,7 +642,7 @@
 			    netbsd32_charp path, netbsd32_statp_t ub); }
 390     STD             { int netbsd32_sys___getdents30(int fd, \
 			    netbsd32_charp buf, netbsd32_size_t count); }
-391	NOARGS		{ int sys_posix_fadvise(int fd, off_t offset, \
+391	STD		{ int netbsd32_posix_fadvise(int fd, off_t offset, \
 			    off_t len, int advice); }
 392	COMPAT_30	{ int netbsd32_sys___fhstat30( \
 			    netbsd32_fhandlep_t fhp, \
@@ -658,3 +658,36 @@
 398	STD		{ int netbsd32___fhstat40(	\
 			    netbsd32_pointer_t fhp, netbsd32_size_t fh_size,\
 			    netbsd32_statp_t sb); }
+
+; Asynchronous I/O system calls
+399	UNIMPL	{ int sys_aio_cancel(int fildes, struct aiocb *aiocbp); }
+400	UNIMPL	{ int sys_aio_error(const struct aiocb *aiocbp); }
+401	UNIMPL	{ int sys_aio_fsync(int op, struct aiocb *aiocbp); }
+402	UNIMPL	{ int sys_aio_read(struct aiocb *aiocbp); }
+403	UNIMPL	{ int sys_aio_return(struct aiocb *aiocbp); }
+404	UNIMPL	{ int sys_aio_suspend(const struct aiocb *const *list, \
+			    int nent, const struct timespec *timeout); }
+405	UNIMPL	{ int sys_aio_write(struct aiocb *aiocbp); }
+406	UNIMPL	{ int sys_lio_listio(int mode, struct aiocb *const *list, \
+			    int nent, struct sigevent *sig); }
+
+407	UNIMPL
+408	UNIMPL
+409	UNIMPL
+
+410	UNIMPL		{ int sys___mount50(const char *type, \
+			    const char *path, int flags, void *data, \
+			    size_t data_len); }
+411	STD MPSAFE	{ netbsd32_voidp netbsd32_mremap( \
+			    netbsd32_voidp old_address, \
+			    netbsd32_size_t old_size, \
+			    netbsd32_voidp new_address, \
+			    netbsd32_size_t new_size, int flags); }
+
+412	UNIMPL
+413	UNIMPL
+414	UNIMPL
+415	UNIMPL
+
+416	STD MPSAFE	{ int netbsd32___posix_fadvise50(int fd, int pad, \
+			    off_t offset, off_t len, int advice); }

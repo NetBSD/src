@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.21.14.1 2008/02/18 21:05:56 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21 2007/04/17 21:50:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.21.14.1 2008/02/18 21:05:56 mjf Exp $");
 #endif
 
 /*
@@ -129,14 +129,9 @@ ath_disable_retry(pci_chipset_tag_t pc, pcitag_t tag)
 #if 0
 	pcireg_t retry;
 
-	/*
-	 * Disable retry timeout to keep PCI Tx retries from
-	 * interfering with ACPI C3 CPU state.
-	 */
-	retry = pci_conf_read(pc, tag, PCIR_RETRY_TIMEOUT_REG);
-	pci_conf_write(pc, tag, PCIR_RETRY_TIMEOUT_REG,
-	    retry & ~PCIR_RETRY_TIMEOUT_MASK);
-#endif
+	ath_resume(&sc->sc_sc);
+
+	return true;
 }
 
 static int
@@ -160,8 +155,6 @@ ath_pci_setup(struct pci_attach_args *pa)
 		aprint_error("couldn't enable bus mastering\n");
 		return 0;
 	}
-
-	ath_disable_retry(pc, pa->pa_tag);
 
 	/*
 	 * XXX Both this comment and code are replicated in

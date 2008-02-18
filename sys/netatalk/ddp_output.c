@@ -1,4 +1,4 @@
-/*	$NetBSD: ddp_output.c,v 1.11 2007/02/17 22:34:10 dyoung Exp $	 */
+/*	$NetBSD: ddp_output.c,v 1.11.24.1 2008/02/18 21:07:07 mjf Exp $	 */
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.11 2007/02/17 22:34:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ddp_output.c,v 1.11.24.1 2008/02/18 21:07:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,8 @@ ddp_route(struct mbuf *m, struct route *ro)
 	struct ifnet   *ifp = NULL;
 	u_short         net;
 
-	if (ro->ro_rt != NULL && (ifp = ro->ro_rt->rt_ifp) != NULL) {
-		net = satosat(ro->ro_rt->rt_gateway)->sat_addr.s_net;
+	if ((rt = rtcache_validate(ro)) != NULL) {
+		net = satosat(rt->rt_gateway)->sat_addr.s_net;
 		TAILQ_FOREACH(aa, &at_ifaddr, aa_list) {
 			if (aa->aa_ifp == ifp &&
 			    ntohs(net) >= ntohs(aa->aa_firstnet) &&

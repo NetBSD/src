@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.143.4.2 2007/12/27 00:46:20 mjf Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.143.4.3 2008/02/18 21:06:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.143.4.2 2007/12/27 00:46:20 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.143.4.3 2008/02/18 21:06:48 mjf Exp $");
 
 #include "fs_union.h"
 #include "veriexec.h"
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.143.4.2 2007/12/27 00:46:20 mjf Exp 
 #include <sys/syslog.h>
 #include <sys/fstrans.h>
 #include <sys/atomic.h>
+#include <sys/filedesc.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -141,7 +142,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			va.va_mode = cmode;
 			if (fmode & O_EXCL)
 				 va.va_vaflags |= VA_EXCLUSIVE;
-			VOP_LEASE(ndp->ni_dvp, cred, LEASE_WRITE);
 			error = VOP_CREATE(ndp->ni_dvp, &ndp->ni_vp,
 					   &ndp->ni_cnd, &va);
 			if (error)
@@ -183,7 +183,6 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	if (fmode & O_TRUNC) {
 		VOP_UNLOCK(vp, 0);			/* XXX */
 
-		VOP_LEASE(vp, cred, LEASE_WRITE);
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);	/* XXX */
 		VATTR_NULL(&va);
 		va.va_size = 0;
@@ -194,9 +193,9 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 	if ((error = VOP_OPEN(vp, fmode, cred)) != 0)
 		goto bad;
 	if (fmode & FWRITE) {
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		vp->v_writecount++;
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 	}
 
 bad:
@@ -255,7 +254,7 @@ void
 vn_markexec(struct vnode *vp)
 {
 
-	LOCK_ASSERT(simple_lock_held(&vp->v_interlock));
+	KASSERT(mutex_owned(&vp->v_interlock));
 
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
 		atomic_add_int(&uvmexp.filepages, -vp->v_uobj.uo_npages);
@@ -272,15 +271,15 @@ int
 vn_marktext(struct vnode *vp)
 {
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (vp->v_writecount != 0) {
 		KASSERT((vp->v_iflag & VI_TEXT) == 0);
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		return (ETXTBSY);
 	}
 	vp->v_iflag |= VI_TEXT;
 	vn_markexec(vp);
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 	return (0);
 }
 
@@ -294,7 +293,7 @@ vn_close(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l)
 {
 	int error;
 
-	simple_lock(&vp->v_interlock);
+	mutex_enter(&vp->v_interlock);
 	if (flags & FWRITE)
 		vp->v_writecount--;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
@@ -381,9 +380,9 @@ unionread:
 	auio.uio_offset = fp->f_offset;
 	error = VOP_READDIR(vp, &auio, fp->f_cred, &eofflag, cookies,
 		    ncookies);
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	fp->f_offset = auio.uio_offset;
-	mutex_exit(&fp->f_lock);
+	FILE_UNLOCK(fp);
 	VOP_UNLOCK(vp, 0);
 	if (error)
 		return (error);
@@ -405,10 +404,10 @@ unionread:
 		struct vnode *tvp = vp;
 		vp = vp->v_mount->mnt_vnodecovered;
 		VREF(vp);
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		fp->f_data = vp;
 		fp->f_offset = 0;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		vrele(tvp);
 		goto unionread;
 	}
@@ -426,8 +425,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	struct vnode *vp = (struct vnode *)fp->f_data;
 	int count, error, ioflag;
 
-	VOP_LEASE(vp, cred, LEASE_READ);
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	ioflag = IO_ADV_ENCODE(fp->f_advice);
 	if (fp->f_flag & FNONBLOCK)
 		ioflag |= IO_NDELAY;
@@ -437,7 +435,7 @@ vn_read(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
-	mutex_exit(&fp->f_lock);
+	FILE_UNLOCK(fp);
 	vn_lock(vp, LK_SHARED | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
@@ -456,9 +454,10 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct vnode *vp = (struct vnode *)fp->f_data;
-	int count, error, ioflag = IO_UNIT;
+	int count, error, ioflag;
 
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
+	ioflag = IO_ADV_ENCODE(fp->f_advice) | IO_UNIT;
 	if (vp->v_type == VREG && (fp->f_flag & O_APPEND))
 		ioflag |= IO_APPEND;
 	if (fp->f_flag & FNONBLOCK)
@@ -472,8 +471,7 @@ vn_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		ioflag |= IO_ALTSEMANTICS;
 	if (fp->f_flag & FDIRECT)
 		ioflag |= IO_DIRECT;
-	mutex_exit(&fp->f_lock);
-	VOP_LEASE(vp, cred, LEASE_WRITE);
+	FILE_UNLOCK(fp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	uio->uio_offset = *offset;
 	count = uio->uio_resid;
@@ -676,21 +674,20 @@ vn_lock(struct vnode *vp, int flags)
 	    || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
 	KASSERT((flags &
-	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_DRAIN|LK_NOWAIT|LK_RETRY|
-	    LK_SETRECURSE|LK_CANRECURSE))
+	    ~(LK_INTERLOCK|LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
+	    LK_CANRECURSE))
 	    == 0);
 
 	do {
 		if ((flags & LK_INTERLOCK) == 0)
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 		if (vp->v_iflag & VI_XLOCK) {
 			if (flags & LK_NOWAIT) {
-				simple_unlock(&vp->v_interlock);
+				mutex_exit(&vp->v_interlock);
 				return EBUSY;
 			}
-			vp->v_iflag |= VI_XWANT;
-			ltsleep(vp, PINOD | PNORELOCK,
-			    "vn_lock", 0, &vp->v_interlock);
+			vwait(vp, VI_XLOCK);
+			mutex_exit(&vp->v_interlock);
 			error = ENOENT;
 		} else {
 			error = VOP_LOCK(vp,
@@ -720,15 +717,12 @@ vn_closefile(struct file *fp, struct lwp *l)
 u_int
 vn_setrecurse(struct vnode *vp)
 {
-	struct lock *lkp = &vp->v_lock;
-	u_int retval;
+	struct vnlock *lkp;
 
-	simple_lock(&lkp->lk_interlock);
-	retval = lkp->lk_flags & LK_CANRECURSE;
-	lkp->lk_flags |= LK_CANRECURSE;
-	simple_unlock(&lkp->lk_interlock);
+	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
+	atomic_inc_uint(&lkp->vl_canrecurse);
 
-	return retval;
+	return 0;
 }
 
 /*
@@ -737,12 +731,10 @@ vn_setrecurse(struct vnode *vp)
 void
 vn_restorerecurse(struct vnode *vp, u_int flags)
 {
-	struct lock *lkp = &vp->v_lock;
+	struct vnlock *lkp;
 
-	simple_lock(&lkp->lk_interlock);
-	lkp->lk_flags &= ~LK_CANRECURSE;
-	lkp->lk_flags |= flags;
-	simple_unlock(&lkp->lk_interlock);
+	lkp = (vp->v_vnlock != NULL ? vp->v_vnlock : &vp->v_lock);
+	atomic_dec_uint(&lkp->vl_canrecurse);
 }
 
 /*
@@ -842,23 +834,23 @@ vn_ra_allocctx(struct vnode *vp)
 {
 	struct uvm_ractx *ra = NULL;
 
+	KASSERT(mutex_owned(&vp->v_interlock));
+
 	if (vp->v_type != VREG) {
 		return;
 	}
 	if (vp->v_ractx != NULL) {
 		return;
 	}
-	simple_lock(&vp->v_interlock);
 	if (vp->v_ractx == NULL) {
-		simple_unlock(&vp->v_interlock);
+		mutex_exit(&vp->v_interlock);
 		ra = uvm_ra_allocctx();
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		if (ra != NULL && vp->v_ractx == NULL) {
 			vp->v_ractx = ra;
 			ra = NULL;
 		}
 	}
-	simple_unlock(&vp->v_interlock);
 	if (ra != NULL) {
 		uvm_ra_freectx(ra);
 	}

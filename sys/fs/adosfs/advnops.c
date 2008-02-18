@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.25.4.1 2007/12/08 18:20:12 mjf Exp $	*/
+/*	$NetBSD: advnops.c,v 1.25.4.2 2008/02/18 21:06:35 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.25.4.1 2007/12/08 18:20:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.25.4.2 2008/02/18 21:06:35 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -83,7 +83,6 @@ int	adosfs_pathconf	__P((void *));
 
 #define adosfs_close 	genfs_nullop
 #define adosfs_fsync 	genfs_nullop
-#define	adosfs_lease_check	genfs_lease_check
 #define adosfs_seek 	genfs_seek
 
 #define adosfs_advlock 	genfs_einval
@@ -110,7 +109,6 @@ const struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
 	{ &vop_read_desc, adosfs_read },		/* read */
 	{ &vop_write_desc, adosfs_write },		/* write */
-	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
 	{ &vop_fcntl_desc, adosfs_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
 	{ &vop_poll_desc, adosfs_poll },		/* poll */
@@ -847,15 +845,15 @@ adosfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *sp = v;
 	struct vnode *vp = sp->a_vp;
-	struct lwp *l = curlwp;
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
 #endif
 	VOP_UNLOCK(vp, 0);
 	/* XXX this needs to check if file was deleted */
-	vrecycle(vp, NULL, l);
+	*sp->a_recycle = true;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");

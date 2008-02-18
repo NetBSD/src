@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.19.2.2 2007/12/27 00:43:37 mjf Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.19.2.3 2008/02/18 21:05:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.19.2.2 2007/12/27 00:43:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.19.2.3 2008/02/18 21:05:22 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
@@ -154,7 +154,6 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 		return error;
 
 	mp = nd.ni_vp->v_mount;
-	vrele(nd.ni_vp);
 
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = dostatvfs(mp, sbuf, l, 0, 1)) != 0)
@@ -162,6 +161,7 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 done:
+	vrele(nd.ni_vp);
 	free(sbuf, M_TEMP);
 	return error;
 }
@@ -223,7 +223,7 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 	count = 0;
 	for (mp = CIRCLEQ_FIRST(&mountlist); mp != (void *)&mountlist;
 	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 			nmp = CIRCLEQ_NEXT(mp, mnt_list);
 			continue;
 		}
@@ -232,12 +232,12 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 			if (error) {
 				mutex_enter(&mountlist_lock);
 				nmp = CIRCLEQ_NEXT(mp, mnt_list);
-				vfs_unbusy(mp);
+				vfs_unbusy(mp, false);
 				continue;
 			}
 			error = vfs2fs(sfsp, sbuf);
 			if (error) {
-				vfs_unbusy(mp);
+				vfs_unbusy(mp, false);
 				goto out;
 			}
 			sfsp++;
@@ -246,7 +246,7 @@ compat_20_sys_getfsstat(struct lwp *l, const struct compat_20_sys_getfsstat_args
 		count++;
 		mutex_enter(&mountlist_lock);
 		nmp = CIRCLEQ_NEXT(mp, mnt_list);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	}
 	mutex_exit(&mountlist_lock);
 	if (root == 0 && l->l_proc->p_cwdi->cwdi_rdir) {
@@ -297,12 +297,13 @@ compat_20_sys_fhstatfs(struct lwp *l, const struct compat_20_sys_fhstatfs_args *
 	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
 	mp = vp->v_mount;
-	vput(vp);
+	VOP_UNLOCK(vp, 0);
 	sbuf = malloc(sizeof(*sbuf), M_TEMP, M_WAITOK);
 	if ((error = VFS_STATVFS(mp, sbuf)) != 0)
 		goto out;
 	error = vfs2fs(SCARG(uap, buf), sbuf);
 out:
+	vrele(vp);
 	free(sbuf, M_TEMP);
 	return error;
 }

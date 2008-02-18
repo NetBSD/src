@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.122.2.2 2007/12/27 00:46:33 mjf Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.122.2.3 2008/02/18 21:07:13 mjf Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.122.2.2 2007/12/27 00:46:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.122.2.3 2008/02/18 21:07:13 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -731,7 +731,7 @@ skip_ipsec2:;
 		if (dst == NULL)
 			dst = satocsin6(rtcache_getdst(ro));
 		KASSERT(dst != NULL);
-	} else if (opt && rtcache_getrt(&opt->ip6po_nextroute) != NULL) {
+	} else if (opt && rtcache_validate(&opt->ip6po_nextroute) != NULL) {
 		/*
 		 * The nexthop is explicitly specified by the
 		 * application.  We assume the next hop is an IPv6
@@ -1412,9 +1412,10 @@ ip6_getpmtu(struct route *ro_pmtu, struct route *ro, struct ifnet *ifp,
 
 		/* The first hop and the final destination may differ. */
 		sockaddr_in6_init(&u.dst6, dst, 0, 0, 0);
-		rtcache_lookup(ro_pmtu, &u.dst);
-	}
-	if ((rt = rtcache_getrt(ro_pmtu)) != NULL) {
+		rt = rtcache_lookup(ro_pmtu, &u.dst);
+	} else
+		rt = rtcache_validate(ro_pmtu);
+	if (rt != NULL) {
 		u_int32_t ifmtu;
 
 		if (ifp == NULL)
@@ -2598,8 +2599,7 @@ ip6_setmoptions(int optname, struct ip6_moptions **im6op, struct mbuf *m)
 			sockaddr_in6_init(&u.dst6, &mreq->ipv6mr_multiaddr, 0,
 			    0, 0);
 			rtcache_setdst(&ro, &u.dst);
-			rtcache_init(&ro);
-			ifp = (rt = rtcache_getrt(&ro)) != NULL ? rt->rt_ifp
+			ifp = (rt = rtcache_init(&ro)) != NULL ? rt->rt_ifp
 			                                        : NULL;
 			rtcache_free(&ro);
 		} else {

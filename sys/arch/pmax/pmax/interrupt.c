@@ -1,7 +1,7 @@
-/*	$NetBSD: interrupt.c,v 1.12.30.1 2007/12/08 18:17:37 mjf Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12.30.2 2008/02/18 21:04:57 mjf Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.30.1 2007/12/08 18:17:37 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.30.2 2008/02/18 21:04:57 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.12.30.1 2007/12/08 18:17:37 mjf Exp 
 #include <machine/autoconf.h>
 #include <machine/sysconf.h>
 #include <machine/intr.h>
-
-u_int idepth;
 
 struct evcnt pmax_clock_evcnt =
     EVCNT_INITIALIZER(EVCNT_TYPE_INTR, NULL, "clock", "intr");
@@ -92,8 +90,10 @@ intr_init(void)
 void
 cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 {
+	struct cpu_info *ci;
 
-	idepth++;
+	ci = curcpu();
+	ci->ci_idepth++;
 	uvmexp.intrs++;
 
 	/* device interrupts */
@@ -111,7 +111,7 @@ cpu_intr(uint32_t status, uint32_t cause, uint32_t pc, uint32_t ipending)
 #endif
 	}
 
-	idepth--;
+	ci->ci_idepth--;
 
 #ifdef notyet
 	/* For __HAVE_FAST_SOFTINTS */

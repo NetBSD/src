@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.70.4.1 2007/12/08 18:20:59 mjf Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.70.4.2 2008/02/18 21:06:59 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.70.4.1 2007/12/08 18:20:59 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.70.4.2 2008/02/18 21:06:59 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.70.4.1 2007/12/08 18:20:59 mjf Ex
 #include <sys/malloc.h>
 #include <sys/kauth.h>
 
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/fdesc/fdesc.h>
 
 VFS_PROTOS(fdesc);
@@ -128,11 +129,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 		return (error);
 
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
@@ -281,6 +278,8 @@ struct vfsops fdesc_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	fdesc_vnodeopv_descs,
 	0,
 	{ NULL, NULL},

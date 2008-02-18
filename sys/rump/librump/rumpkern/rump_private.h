@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_private.h,v 1.4.2.1 2007/11/19 00:49:24 mjf Exp $	*/
+/*	$NetBSD: rump_private.h,v 1.4.2.2 2008/02/18 21:07:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,7 +68,7 @@ struct rump_specpriv {
 
 #define RUMP_UBC_MAGIC_WINDOW (void *)0x37
 
-void abort(void) __attribute__((__noreturn__));
+void abort(void) __dead;
 
 void	rump_putnode(struct vnode *);
 int	rump_recyclenode(struct vnode *);
@@ -78,6 +78,7 @@ int	rump_ubc_magic_uiomove(void *, size_t, struct uio *, int *,
 			       struct ubc_window *);
 
 void		rumpvm_init(void);
+void		rumpvfs_init(void);
 void		rump_sleepers_init(void);
 struct vm_page	*rumpvm_makepage(struct uvm_object *, voff_t);
 

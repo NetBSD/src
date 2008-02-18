@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.21.2.3 2007/12/27 00:46:03 mjf Exp $ */
+/* $NetBSD: kern_tc.c,v 1.21.2.4 2008/02/18 21:06:46 mjf Exp $ */
 
 /*-
  * ----------------------------------------------------------------------------
@@ -11,12 +11,11 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.21.2.3 2007/12/27 00:46:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.21.2.4 2008/02/18 21:06:46 mjf Exp $");
 
 #include "opt_ntp.h"
 
 #include <sys/param.h>
-#ifdef __HAVE_TIMECOUNTER	/* XXX */
 #include <sys/kernel.h>
 #include <sys/reboot.h>	/* XXX just to get AB_VERBOSE */
 #include <sys/sysctl.h>
@@ -100,6 +99,7 @@ static struct bintime timebasebin;
 static int timestepwarnings;
 
 extern kmutex_t time_lock;
+static kmutex_t tc_windup_lock;
 
 #ifdef __FreeBSD__
 SYSCTL_INT(_kern_timecounter, OID_AUTO, stepwarnings, CTLFLAG_RW,
@@ -235,18 +235,21 @@ SYSCTL_SETUP(sysctl_timecounter_setup, "sysctl timecounter setup")
 	}
 }
 
+#ifdef TC_COUNTERS
 #define	TC_STATS(name)							\
 static struct evcnt n##name =						\
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "timecounter", #name);	\
 EVCNT_ATTACH_STATIC(n##name)
-
 TC_STATS(binuptime);    TC_STATS(nanouptime);    TC_STATS(microuptime);
 TC_STATS(bintime);      TC_STATS(nanotime);      TC_STATS(microtime);
 TC_STATS(getbinuptime); TC_STATS(getnanouptime); TC_STATS(getmicrouptime);
 TC_STATS(getbintime);   TC_STATS(getnanotime);   TC_STATS(getmicrotime);
 TC_STATS(setclock);
-
+#define	TC_COUNT(var)	var.ev_count++
 #undef TC_STATS
+#else
+#define	TC_COUNT(var)	/* nothing */
+#endif	/* TC_COUNTERS */
 
 static void tc_windup(void);
 
@@ -276,7 +279,7 @@ binuptime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	nbinuptime.ev_count++;
+	TC_COUNT(nbinuptime);
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -290,7 +293,7 @@ nanouptime(struct timespec *tsp)
 {
 	struct bintime bt;
 
-	nnanouptime.ev_count++;
+	TC_COUNT(nnanouptime);
 	binuptime(&bt);
 	bintime2timespec(&bt, tsp);
 }
@@ -300,7 +303,7 @@ microuptime(struct timeval *tvp)
 {
 	struct bintime bt;
 
-	nmicrouptime.ev_count++;
+	TC_COUNT(nmicrouptime);
 	binuptime(&bt);
 	bintime2timeval(&bt, tvp);
 }
@@ -309,7 +312,7 @@ void
 bintime(struct bintime *bt)
 {
 
-	nbintime.ev_count++;
+	TC_COUNT(nbintime);
 	binuptime(bt);
 	bintime_add(bt, &timebasebin);
 }
@@ -319,7 +322,7 @@ nanotime(struct timespec *tsp)
 {
 	struct bintime bt;
 
-	nnanotime.ev_count++;
+	TC_COUNT(nnanotime);
 	bintime(&bt);
 	bintime2timespec(&bt, tsp);
 }
@@ -329,7 +332,7 @@ microtime(struct timeval *tvp)
 {
 	struct bintime bt;
 
-	nmicrotime.ev_count++;
+	TC_COUNT(nmicrotime);
 	bintime(&bt);
 	bintime2timeval(&bt, tvp);
 }
@@ -340,7 +343,7 @@ getbinuptime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	ngetbinuptime.ev_count++;
+	TC_COUNT(ngetbinuptime);
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -354,7 +357,7 @@ getnanouptime(struct timespec *tsp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetnanouptime.ev_count++;
+	TC_COUNT(ngetnanouptime);
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -368,7 +371,7 @@ getmicrouptime(struct timeval *tvp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetmicrouptime.ev_count++;
+	TC_COUNT(ngetmicrouptime);
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -382,7 +385,7 @@ getbintime(struct bintime *bt)
 	struct timehands *th;
 	u_int gen;
 
-	ngetbintime.ev_count++;
+	TC_COUNT(ngetbintime);
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -397,7 +400,7 @@ getnanotime(struct timespec *tsp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetnanotime.ev_count++;
+	TC_COUNT(ngetnanotime);
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -411,7 +414,7 @@ getmicrotime(struct timeval *tvp)
 	struct timehands *th;
 	u_int gen;
 
-	ngetmicrotime.ev_count++;
+	TC_COUNT(ngetmicrotime);
 	do {
 		th = timehands;
 		gen = th->th_generation;
@@ -426,7 +429,6 @@ void
 tc_init(struct timecounter *tc)
 {
 	u_int u;
-	int s;
 
 	u = tc->tc_frequency / tc->tc_counter_mask;
 	/* XXX: We need some margin here, 10% is a guess */
@@ -446,7 +448,7 @@ tc_init(struct timecounter *tc)
 	}
 
 	mutex_enter(&time_lock);
-	s = splsched();
+	mutex_spin_enter(&tc_windup_lock);
 	tc->tc_next = timecounters;
 	timecounters = tc;
 	/*
@@ -462,8 +464,53 @@ tc_init(struct timecounter *tc)
 		timecounter = tc;
 		tc_windup();
 	}
-	splx(s);
+	mutex_spin_exit(&tc_windup_lock);
 	mutex_exit(&time_lock);
+}
+
+/*
+ * Stop using a timecounter and remove it from the timecounters list.
+ */
+int
+tc_detach(struct timecounter *target)
+{
+	struct timecounter *best, *tc;
+	struct timecounter **tcp = NULL;
+	int rc = 0;
+
+	mutex_enter(&time_lock);
+	for (tcp = &timecounters, tc = timecounters;
+	     tc != NULL;
+	     tcp = &tc->tc_next, tc = tc->tc_next) {
+		if (tc == target)
+			break;
+	}
+	if (tc == NULL) {
+		rc = ESRCH;
+		goto out;
+	}
+	*tcp = tc->tc_next;
+
+	if (timecounter != target)
+		goto out;
+
+	for (best = tc = timecounters; tc != NULL; tc = tc->tc_next) {
+		if (tc->tc_quality > best->tc_quality)
+			best = tc;
+		else if (tc->tc_quality < best->tc_quality)
+			continue;
+		else if (tc->tc_frequency > best->tc_frequency)
+			best = tc;
+	}
+	mutex_spin_enter(&tc_windup_lock);
+	(void)best->tc_get_timecount(best);
+	(void)best->tc_get_timecount(best);
+	timecounter = best;
+	tc_windup();
+	mutex_spin_exit(&tc_windup_lock);
+out:
+	mutex_exit(&time_lock);
+	return rc;
 }
 
 /* Report the frequency of the current timecounter. */
@@ -477,7 +524,6 @@ tc_getfrequency(void)
 /*
  * Step our concept of UTC.  This is done by modifying our estimate of
  * when we booted.
- * XXX: not locked.
  */
 void
 tc_setclock(struct timespec *ts)
@@ -485,15 +531,16 @@ tc_setclock(struct timespec *ts)
 	struct timespec ts2;
 	struct bintime bt, bt2;
 
-	nsetclock.ev_count++;
+	mutex_spin_enter(&tc_windup_lock);
+	TC_COUNT(nsetclock);
 	binuptime(&bt2);
 	timespec2bintime(ts, &bt);
 	bintime_sub(&bt, &bt2);
 	bintime_add(&bt2, &timebasebin);
 	timebasebin = bt;
-
-	/* XXX fiddle all the little crinkly bits around the fiords... */
 	tc_windup();
+	mutex_spin_exit(&tc_windup_lock);
+
 	if (timestepwarnings) {
 		bintime2timespec(&bt2, &ts2);
 		log(LOG_INFO, "Time stepped from %jd.%09ld to %jd.%09ld\n",
@@ -516,6 +563,8 @@ tc_windup(void)
 	u_int delta, ncount, ogen;
 	int i, s_update;
 	time_t t;
+
+	KASSERT(mutex_owned(&tc_windup_lock));
 
 	s_update = 0;
 
@@ -836,13 +885,17 @@ tc_ticktock(void)
 	if (++count < tc_tick)
 		return;
 	count = 0;
+	mutex_spin_enter(&tc_windup_lock);
 	tc_windup();
+	mutex_spin_exit(&tc_windup_lock);
 }
 
 void
 inittimecounter(void)
 {
 	u_int p;
+
+	mutex_init(&tc_windup_lock, MUTEX_DEFAULT, IPL_SCHED);
 
 	/*
 	 * Set the initial timeout to
@@ -864,5 +917,3 @@ inittimecounter(void)
 	(void)timecounter->tc_get_timecount(timecounter);
 	(void)timecounter->tc_get_timecount(timecounter);
 }
-
-#endif /* __HAVE_TIMECOUNTER */

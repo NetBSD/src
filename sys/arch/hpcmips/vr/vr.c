@@ -1,4 +1,4 @@
-/*	$NetBSD: vr.c,v 1.48.26.1 2007/12/08 18:17:03 mjf Exp $	*/
+/*	$NetBSD: vr.c,v 1.48.26.2 2008/02/18 21:04:34 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48.26.1 2007/12/08 18:17:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48.26.2 2008/02/18 21:04:34 mjf Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -44,12 +44,13 @@ __KERNEL_RCSID(0, "$NetBSD: vr.c,v 1.48.26.1 2007/12/08 18:17:03 mjf Exp $");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/reboot.h>
+#include <sys/device.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <machine/sysconf.h>
 #include <machine/bootinfo.h>
-#include <machine/bus.h>
 #include <machine/bus_space_hpcmips.h>
 #include <machine/platid.h>
 #include <machine/platid_mask.h>

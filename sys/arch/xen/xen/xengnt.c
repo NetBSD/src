@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.4.2.1 2007/12/08 18:18:30 mjf Exp $      */
+/*      $NetBSD: xengnt.c,v 1.4.2.2 2008/02/18 21:05:21 mjf Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.4.2.2 2008/02/18 21:05:21 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

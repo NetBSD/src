@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.5.4.1 2007/12/08 18:20:14 mjf Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.5.4.2 2008/02/18 21:06:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */                                     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.5.4.1 2007/12/08 18:20:14 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.5.4.2 2008/02/18 21:06:39 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.5.4.1 2007/12/08 18:20:14 mjf Exp $")
 
 #include <fs/hfs/hfs.h>
 
+#include <miscfs/specfs/specdev.h>
+
 /*
  * Initialize the vnode associated with a new hfsnode.
  */
@@ -58,7 +60,6 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 {
 	struct hfsnode	*hp;
 	struct vnode	*vp;
-	struct vnode    *nvp;
 
 	vp = *vpp;
 	hp = VTOH(vp);
@@ -70,29 +71,8 @@ hfs_vinit(struct mount *mp, int (**specops)(void *), int (**fifoops)(void *),
 		case VCHR:
 		case VBLK:
 			vp->v_op = specops;
-			if ((nvp = checkalias(vp,
-					      HFS_CONVERT_RDEV(hp->h_rec.file.bsd.special.raw_device),
-					      mp)) != NULL) {
-			    /*
-			     * Discard unneeded vnode, but save its inode.
-			     */
-			    nvp->v_data = vp->v_data;
-			    vp->v_data = NULL;
-			    /* XXX spec_vnodeops has no locking,
-			       do it explicitly */
-			    vp->v_vflag &= ~VV_LOCKSWORK;
-			    VOP_UNLOCK(vp, 0);
-			    vp->v_op = specops;
-			    vrele(vp);
-			    vgone(vp);
-			    lockmgr(&nvp->v_lock, LK_EXCLUSIVE,
-				    &nvp->v_interlock);
-			    /*
-			     * Reinitialize aliased inode.
-			     */
-			    vp = nvp;
-			    hp->h_vnode = vp;
-			}
+			spec_node_init(vp,
+			    HFS_CONVERT_RDEV(hp->h_rec.file.bsd.special.raw_device));
 			break;
 		case VFIFO:
 			vp->v_op = fifoops;

@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.10.2.3 2007/12/27 00:42:51 mjf Exp $	*/
+/*	$NetBSD: spl.S,v 1.10.2.4 2008/02/18 21:04:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -118,7 +118,7 @@ IDTVEC(softintr)
 	call	_C_LABEL(softint_dispatch)/* run handlers */
 	movq	L_ADDR(%r15),%rcx
 	movq	PCB_RSP(%rcx),%rsp
-	movq	%r15,CPUVAR(CURLWP)
+	xchgq	%r15,CPUVAR(CURLWP)	/* must be globally visible */
 	popq	%r15			/* unwind switchframe */
 	addq	$(5 * 8),%rsp
 	cli
@@ -167,7 +167,7 @@ ENTRY(splraise)
 ENTRY(spllower)
 	cmpl	CPUVAR(ILEVEL), %edi
 	jae	1f
-	movl	CPUVAR(IUNMASK)(,%edi,4), %edx
+	movl	CPUVAR(IUNMASK)(,%rdi,4), %edx
 	pushf
 	cli
 	testl	CPUVAR(IPENDING), %edx

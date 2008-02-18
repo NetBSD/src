@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.1.12.3 2007/12/27 00:42:48 mjf Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.1.12.4 2008/02/18 21:04:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -235,7 +235,10 @@ NENTRY(rdpmc)
 	ret
 
 NENTRY(breakpoint)
+	pushq	%rbp
+	movq	%rsp, %rbp
 	int	$0x03		/* paranoid, not 'int3' */
+	leave
 	ret
 
 NENTRY(x86_curcpu)
@@ -335,9 +338,11 @@ NENTRY(x86_pause)
 	pause
 	ret
 
-NENTRY(x86_cpuid)
+NENTRY(x86_cpuid2)
 	movq	%rbx, %r8
 	movq	%rdi, %rax
+	movq	%rsi, %rcx
+	movq	%rdx, %rsi
 	cpuid
 	movl	%eax, 0(%rsi)
 	movl	%ebx, 4(%rsi)

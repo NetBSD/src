@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31.2.3 2007/12/27 00:42:54 mjf Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31.2.4 2008/02/18 21:04:20 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -75,6 +75,10 @@ struct cpu_info {
 	u_int ci_cpuid;
 	int ci_cpumask;			/* (1 << CPU ID) */
 	u_int ci_apicid;
+	uint8_t ci_initapicid;		/* our intitial APIC ID */
+	uint8_t ci_packageid;
+	uint8_t ci_coreid;
+	uint8_t ci_smtid;
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	struct cc_microtime_state ci_cc;/* cc_microtime state */
 
@@ -107,10 +111,10 @@ struct cpu_info {
 #define	ci_ilevel	ci_istate.ilevel
 
 	int		ci_idepth;
+	void *		ci_intrstack;
 	u_int32_t	ci_imask[NIPL];
 	u_int32_t	ci_iunmask[NIPL];
 
-	paddr_t 	ci_idle_pcb_paddr;
 	u_int		ci_flags;
 	u_int32_t	ci_ipis;
 
@@ -133,13 +137,10 @@ struct cpu_info {
 
 	char		*ci_gdt;
 
-	struct x86_64_tss	ci_doubleflt_tss;
-	struct x86_64_tss	ci_ddbipi_tss;
-
-	char *ci_doubleflt_stack;
-	char *ci_ddbipi_stack;
-
 	struct evcnt ci_ipi_events[X86_NIPI];
+
+	struct x86_64_tss ci_tss;	/* Per-cpu TSS; shared among LWPs */
+	int		ci_tss_sel;	/* TSS selector of this cpu */
 
 	/*
 	 * The following two are actually region_descriptors,
@@ -202,7 +203,7 @@ extern struct cpu_info *cpu_info_list;
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
-__inline static struct cpu_info * __attribute__((__unused__))
+__inline static struct cpu_info * __unused
 x86_curcpu(void)
 {
 	struct cpu_info *ci;
@@ -214,7 +215,7 @@ x86_curcpu(void)
 	return ci;
 }
 
-__inline static lwp_t * __attribute__((__unused__))
+__inline static lwp_t * __unused
 x86_curlwp(void)
 {
 	lwp_t *l;
@@ -309,7 +310,6 @@ void cpu_probe_features(struct cpu_info *);
 
 /* machdep.c */
 void	dumpconf(void);
-int	cpu_maxproc(void);
 void	cpu_reset(void);
 void	x86_64_proc0_tss_ldt_init(void);
 void	x86_64_init_pcb_tss_ldt(struct cpu_info *);
@@ -336,7 +336,6 @@ void	xen_initclocks(void);
 void	initrtclock(u_long);
 void	startrtclock(void);
 void	i8254_delay(unsigned int);
-void	i8254_microtime(struct timeval *);
 void	i8254_initclocks(void);
 #endif
 

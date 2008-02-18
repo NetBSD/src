@@ -1,4 +1,4 @@
-/*	$NetBSD: return.c,v 1.2 1996/05/17 19:51:02 chuck Exp $	*/
+/*	$NetBSD: return.c,v 1.2.152.1 2008/02/18 21:04:50 mjf Exp $	*/
 
 /*
  * bug routines -- assumes that the necessary sections of memory
@@ -12,10 +12,12 @@
 
 /* BUG - return to bug routine */
 __dead void
-_rtt()
+_rtt(void)
 {
+
 	MVMEPROM_CALL(MVMEPROM_EXIT);
-	printf("_rtt: exit failed.  spinning...");
-	while (1) ;
+	printf("%s: exit failed.  spinning...", __func__);
+	for (;;)
+		;
 	/*NOTREACHED*/
 }

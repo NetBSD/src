@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77.2.1 2007/12/08 18:17:03 mjf Exp $
+# $NetBSD: GENERIC,v 1.77.2.2 2008/02/18 21:04:34 mjf Exp $
 #
 # GENERIC machine description file
 #
@@ -66,7 +66,6 @@ options 	KLOADER
 				# (overrides tz info that hpcboot.exe passes)
 
 options 	KTRACE		# system call tracing via ktrace(1)
-#options 	SYSTRACE	# system call vetting via systrace(1)
 
 #options 	SYSVMSG		# System V-like message queues
 #options 	SYSVSEM		# System V-like semaphores
@@ -109,7 +108,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # Executable format options
 options 	EXEC_COFF	# 32-bit COFF executables
-options 	EXEC_ELF32	# 32-bit ELF executables
 
 # File systems
 file-system 	FFS		# UFS

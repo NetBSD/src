@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.107.2.1 2007/12/08 22:05:04 mjf Exp $
+#	$NetBSD: Makefile,v 1.107.2.2 2008/02/18 21:04:16 mjf Exp $
 #	@(#)Makefile	8.5 (Berkeley) 3/31/94
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -6,13 +6,17 @@
 
 .include <bsd.own.mk>
 
-SUBDIR=	amrctl apmlabel atactl badsect bim bioctl brconfig ccdconfig \
+SUBDIR=	amrctl apmlabel atactl badsect bioctl brconfig ccdconfig \
 	devfsd disklabel dkctl dkscan_bsdlabel dmesg \
 	drvctl edlabel fastboot fdisk fsck fsirand gpt ifconfig init ldconfig \
 	mbrlabel mknod modload modunload mount newbtconf nologin \
 	pdisk ping pppoectl raidctl reboot rcorder rndctl route routed \
 	savecore scan_ffs scsictl shutdown slattach svhlabel swapctl sysctl \
 	ttyflags umount veriexecctl wdogctl wsconsctl
+
+.if ${MKMODULAR} != "no"
+SUBDIR+= modstat
+.endif
 
 # support for various file systems
 SUBDIR+= newfs_ext2fs fsck_ext2fs

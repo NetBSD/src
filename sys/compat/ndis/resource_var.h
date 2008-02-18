@@ -165,7 +165,7 @@ struct cm_partial_resource_desc {
 			uint32_t		cprd_rsvd1;
 			uint32_t		cprd_rsvd2;
 		} cprd_devspec;
-	} u __attribute__((packed));
+	} u __packed;
 };
 
 typedef struct cm_partial_resource_desc cm_partial_resource_desc;

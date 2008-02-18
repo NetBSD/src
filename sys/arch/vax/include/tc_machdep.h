@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_machdep.h,v 1.1 2007/04/15 23:27:02 matt Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.1.26.1 2008/02/18 21:05:15 mjf Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -60,6 +60,8 @@
 #ifndef _VAX_TC_MACHDEP_H_
 #define _VAX_TC_MACHDEP_H_
 
+#include <machine/cpu.h>		/* for badaddr */
+
 typedef uint32_t	tc_addr_t;
 typedef uint32_t	tc_offset_t;
 
@@ -71,6 +73,7 @@ typedef uint32_t	tc_offset_t;
 
 #define	TC_DENSE_TO_SPARSE(addr)  (addr)
 #define	TC_PHYS_TO_UNCACHED(addr) (addr)
+#define	VAX_PHYS_TO_S0(addr)	  ((addr)|0x80000000)
 
 /*
  * Use the following macros to compare device names on a vax, as

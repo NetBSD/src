@@ -1,8 +1,5 @@
-#	$NetBSD: Makefile.landisk.inc,v 1.2 2007/01/13 22:53:54 freza Exp $
+#	$NetBSD: Makefile.landisk.inc,v 1.2.30.1 2008/02/18 21:04:42 mjf Exp $
 
-MACHINE_ARCH=sh3el
-
-TEXTADDR?=0x8c001000
 .if ${OBJECT_FMT} == "ELF"
 LINKFORMAT=	-N
 .endif

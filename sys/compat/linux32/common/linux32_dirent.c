@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_dirent.c,v 1.2 2007/02/09 21:55:21 ad Exp $ */
+/*	$NetBSD: linux32_dirent.c,v 1.2.26.1 2008/02/18 21:05:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.2 2007/02/09 21:55:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_dirent.c,v 1.2.26.1 2008/02/18 21:05:27 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -110,3 +110,24 @@ linux32_sys_getdents64(l, v, retval)
 	return linux_sys_getdents64(l, &ua, retval);
 }
 
+int
+linux32_sys_readdir(struct lwp *l, const struct linux32_sys_readdir_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(struct linux32_direntp_t) dent;
+		syscallarg(unsigned int) count;
+	} */
+	int error;
+	struct linux32_sys_getdents_args da;
+
+	SCARG(&da, fd) = SCARG(uap, fd);
+	SCARG(&da, dent) = SCARG(uap, dent);
+	SCARG(&da, count) = 1;
+
+	error = linux32_sys_getdents(l, &da, retval);
+	if (error == 0 && *retval > 1)
+		*retval = 1;
+
+	return error;
+}

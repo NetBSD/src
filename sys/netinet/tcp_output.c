@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_output.c,v 1.162 2007/09/02 03:12:23 dyoung Exp $	*/
+/*	$NetBSD: tcp_output.c,v 1.162.6.1 2008/02/18 21:07:08 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.162 2007/09/02 03:12:23 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_output.c,v 1.162.6.1 2008/02/18 21:07:08 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -637,9 +637,8 @@ tcp_output(struct tcpcb *tp)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_inpcb->inp_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
 #endif
-		  tp->t_inpcb->inp_route.ro_rt != NULL &&
-		  (tp->t_inpcb->inp_route.ro_rt->rt_ifp->if_capenable &
-		   IFCAP_TSOv4) != 0;
+		  (rt = rtcache_validate(&tp->t_inpcb->inp_route)) != NULL &&
+		  (rt->rt_ifp->if_capenable & IFCAP_TSOv4) != 0;
 #endif /* defined(INET) */
 #if defined(INET6)
 	has_tso6 = tp->t_in6pcb != NULL &&
@@ -647,9 +646,8 @@ tcp_output(struct tcpcb *tp)
 		  IPSEC_PCB_SKIP_IPSEC(tp->t_in6pcb->in6p_sp,
 		  		       IPSEC_DIR_OUTBOUND) &&
 #endif
-		  tp->t_in6pcb->in6p_route.ro_rt != NULL &&
-		  (tp->t_in6pcb->in6p_route.ro_rt->rt_ifp->if_capenable &
-		   IFCAP_TSOv6) != 0;
+		  (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL &&
+		  (rt->rt_ifp->if_capenable & IFCAP_TSOv6) != 0;
 #endif /* defined(INET6) */
 	has_tso = (has_tso4 || has_tso6) && !alwaysfrag;
 
@@ -1592,7 +1590,8 @@ timer:
 			 * be changed via Neighbor Discovery.
 			 */
 			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb,
-				ro->ro_rt ? ro->ro_rt->rt_ifp : NULL);
+				(rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
+				                                    : NULL);
 		}
 		/* ip6->ip6_flow = ??? */
 		/* ip6_plen will be filled in ip6_output(). */

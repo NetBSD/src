@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.104 2007/10/19 11:59:52 ad Exp $	*/
+/*	$NetBSD: i82557.c,v 1.104.2.1 2008/02/18 21:05:41 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.104 2007/10/19 11:59:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.104.2.1 2008/02/18 21:05:41 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -175,7 +175,6 @@ const u_int8_t fxp_cb_config_template[] = {
 };
 
 void	fxp_mii_initmedia(struct fxp_softc *);
-int	fxp_mii_mediachange(struct ifnet *);
 void	fxp_mii_mediastatus(struct ifnet *, struct ifmediareq *);
 
 void	fxp_80c24_initmedia(struct fxp_softc *);
@@ -499,7 +498,9 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	sc->sc_mii.mii_readreg = fxp_mdi_read;
 	sc->sc_mii.mii_writereg = fxp_mdi_write;
 	sc->sc_mii.mii_statchg = fxp_statchg;
-	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, fxp_mii_mediachange,
+
+	sc->sc_ethercom.ec_mii = &sc->sc_mii;
+	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, ether_mediachange,
 	    fxp_mii_mediastatus);
 
 	flags = MIIF_NOISOLATE;
@@ -510,7 +511,7 @@ fxp_mii_initmedia(struct fxp_softc *sc)
 	 */
 	mii_attach(&sc->sc_dev, &sc->sc_mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, flags);
-	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+	if (LIST_EMPTY(&sc->sc_mii.mii_phys)) {
 		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
 		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
 	} else
@@ -1403,7 +1404,7 @@ fxp_rxintr(struct fxp_softc *sc)
 #if NBPFILTER > 0
 		/*
 		 * Pass this up to any BPF listeners, but only
-		 * pass it up the stack it its for us.
+		 * pass it up the stack if it's for us.
 		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
@@ -1933,7 +1934,8 @@ fxp_init(struct ifnet *ifp)
 		/*
 		 * Set current media.
 		 */
-		mii_mediachg(&sc->sc_mii);
+		if ((error = mii_ifmedia_change(&sc->sc_mii)) != 0)
+			goto out;
 	}
 
 	/*
@@ -1963,19 +1965,6 @@ fxp_init(struct ifnet *ifp)
 }
 
 /*
- * Change media according to request.
- */
-int
-fxp_mii_mediachange(struct ifnet *ifp)
-{
-	struct fxp_softc *sc = ifp->if_softc;
-
-	if (ifp->if_flags & IFF_UP)
-		mii_mediachg(&sc->sc_mii);
-	return (0);
-}
-
-/*
  * Notify the world which media we're using.
  */
 void
@@ -1989,9 +1978,7 @@ fxp_mii_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 		return;
 	}
 
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+	ether_mediastatus(ifp, ifmr);
 
 	/*
 	 * XXX Flow control is always turned on if the chip supports
@@ -2130,20 +2117,22 @@ fxp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 
 	default:
-		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				/*
-				 * Multicast list has changed; set the
-				 * hardware filter accordingly.
-				 */
-				if (sc->sc_txpending) {
-					sc->sc_flags |= FXPF_WANTINIT;
-					error = 0;
-				} else
-					error = fxp_init(ifp);
+		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			/*
+			 * Multicast list has changed; set the
+			 * hardware filter accordingly.
+			 */
+			if (sc->sc_txpending) {
+				sc->sc_flags |= FXPF_WANTINIT;
 			} else
-				error = 0;
+				error = fxp_init(ifp);
 		}
 		break;
 	}

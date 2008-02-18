@@ -1,4 +1,4 @@
-/*	$NetBSD: umap_vfsops.c,v 1.71.4.2 2007/12/27 00:46:25 mjf Exp $	*/
+/*	$NetBSD: umap_vfsops.c,v 1.71.4.3 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.71.4.2 2007/12/27 00:46:25 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umap_vfsops.c,v 1.71.4.3 2008/02/18 21:07:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,18 +256,14 @@ umapfs_unmount(struct mount *mp, int mntflags)
 	vprint("alias root of lower", rtvp);
 #endif
 	/*
-	 * Release reference on underlying root vnode
-	 */
-	vrele(rtvp);
-	/*
-	 * And blow it away for future re-use
+	 * Blow it away for future re-use
 	 */
 	vgone(rtvp);
 	/*
 	 * Finally, throw away the umap_mount structure
 	 */
 	mutex_destroy(&amp->umapm_hashlock);
-	free(mp->mnt_data, M_UFSMNT);	/* XXX */
+	free(amp, M_UFSMNT);	/* XXX */
 	mp->mnt_data = 0;
 	return (0);
 }
@@ -320,6 +316,8 @@ struct vfsops umapfs_vfsops = {
 	layerfs_snapshot,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	layerfs_renamelock_enter,
+	layerfs_renamelock_exit,
 	umapfs_vnodeopv_descs,
 	0,				/* vfs_refcount */
 	{ NULL, NULL },

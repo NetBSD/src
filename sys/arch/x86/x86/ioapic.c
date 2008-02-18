@@ -1,4 +1,4 @@
-/* 	$NetBSD: ioapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $	*/
+/* 	$NetBSD: ioapic.c,v 1.25.2.4 2008/02/18 21:05:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.25.2.4 2008/02/18 21:05:17 mjf Exp $");
 
 #include "opt_ddb.h"
 
@@ -81,10 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $");
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/bus.h>
 #include <machine/isa_machdep.h> /* XXX intrhand */
 #include <machine/i82093reg.h>
 #include <machine/i82093var.h>
@@ -93,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: ioapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $");
 #include <machine/mpbiosvar.h>
 #include <machine/pio.h>
 #include <machine/pmap.h>
+#include <machine/lock.h>
 
 #include "acpi.h"
 #include "opt_mpbios.h"
@@ -478,7 +479,7 @@ ioapic_enable(void)
 void
 ioapic_reenable(void)
 {
-	int p;
+	int p, apic_id;
 	struct ioapic_softc *sc;
 
 	if (ioapics == NULL)
@@ -487,9 +488,12 @@ ioapic_reenable(void)
 	aprint_normal("%s reenabling\n", device_xname(&ioapics->sc_pic.pic_dev));
 
 	for (sc = ioapics; sc != NULL; sc = sc->sc_next) {
-		ioapic_write(sc,IOAPIC_ID,
-		    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
-		    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+		apic_id = (ioapic_read(sc,IOAPIC_ID)&IOAPIC_ID_MASK)>>IOAPIC_ID_SHIFT;
+		if (apic_id != sc->sc_pic.pic_apicid) {
+			ioapic_write(sc,IOAPIC_ID,
+			    (ioapic_read(sc,IOAPIC_ID)&~IOAPIC_ID_MASK)
+			    |(sc->sc_pic.pic_apicid<<IOAPIC_ID_SHIFT));
+		}
 
 		for (p = 0; p < sc->sc_apic_sz; p++) {
 			apic_set_redir(sc, p, sc->sc_pins[p].ip_vector,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.12.4.2 2007/12/27 00:46:39 mjf Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12.4.3 2008/02/18 21:07:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -55,6 +55,10 @@ void cpu_need_resched(struct cpu_info *, int);
 #define	CPU_INFO_ITERATOR		int
 #define	CPU_INFO_FOREACH(cii, ci)	\
     (void)cii, ci = curcpu(); ci != NULL; ci = NULL
+#endif
+
+#ifdef __HAVE_MD_CPU_OFFLINE
+void	cpu_offline_md(void);
 #endif
 
 lwp_t	*cpu_switchto(lwp_t *, lwp_t *, bool);

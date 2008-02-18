@@ -1,4 +1,4 @@
-#	$NetBSD: files.sh3,v 1.35 2007/10/17 19:57:06 garbled Exp $
+#	$NetBSD: files.sh3,v 1.35.2.1 2008/02/18 21:05:00 mjf Exp $
 #
 
 defflag	opt_cputype.h		SH3 SH4
@@ -10,9 +10,8 @@ file	arch/sh3/sh3/db_disasm.c	ddb
 file	arch/sh3/sh3/db_interface.c	ddb | kgdb
 file	arch/sh3/sh3/db_memrw.c		ddb | kgdb
 file	arch/sh3/sh3/db_trace.c		ddb
-file	arch/sh3/sh3/in_cksum.S		inet
-file	netinet/in4_cksum.c		inet
 file	arch/sh3/sh3/kgdb_machdep.c	kgdb
+file	arch/sh3/sh3/kobj_machdep.c	modular
 file	arch/sh3/sh3/exception.c
 file	arch/sh3/sh3/exception_vector.S
 file	arch/sh3/sh3/locore_c.c
@@ -36,6 +35,8 @@ file	arch/sh3/sh3/devreg.c		sh3 & sh4
 file	arch/sh3/sh3/interrupt.c
 file	dev/cninit.c
 file	dev/cons.c
+
+file	arch/sh3/sh3/cpu_in_cksum.S	(inet | inet6) & cpu_in_cksum
 
 file	arch/sh3/sh3/procfs_machdep.c	procfs
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.152.4.2 2007/12/27 00:44:32 mjf Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.152.4.3 2008/02/18 21:05:30 mjf Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.152.4.2 2007/12/27 00:44:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.152.4.3 2008/02/18 21:05:30 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfsserver.h"
@@ -911,7 +911,6 @@ sunos_sys_mknod(struct lwp *l, const struct sunos_sys_mknod_args *uap, register_
 int
 sunos_sys_sysconf(struct lwp *l, const struct sunos_sys_sysconf_args *uap, register_t *retval)
 {
-	extern int maxfiles;
 
 	switch(SCARG(uap, name)) {
 	case SUNOS_SC_ARG_MAX:

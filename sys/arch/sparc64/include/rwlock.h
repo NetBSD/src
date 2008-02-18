@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2.32.1 2007/12/08 18:17:58 mjf Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.32.2 2008/02/18 21:05:06 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _SPARC64_RWLOCK_H_
 #define	_SPARC64_RWLOCK_H_
+
+#include <machine/lock.h>
 
 struct krwlock {
 	volatile uintptr_t	rw_owner;

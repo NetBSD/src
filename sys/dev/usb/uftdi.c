@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.34 2007/10/25 19:32:15 plunky Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.34.2.1 2008/02/18 21:06:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.34 2007/10/25 19:32:15 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.34.2.1 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,14 @@ static const struct usb_devno uftdi_devs[] = {
 };
 #define uftdi_lookup(v, p) usb_lookup(uftdi_devs, v, p)
 
-USB_DECLARE_DRIVER(uftdi);
+int uftdi_match(device_t, struct cfdata *, void *);
+void uftdi_attach(device_t, device_t, void *);
+void uftdi_childdet(device_t, device_t);
+int uftdi_detach(device_t, int);
+int uftdi_activate(device_t, enum devact);
+extern struct cfdriver uftdi_cd;
+CFATTACH_DECL2(uftdi, sizeof(struct uftdi_softc), uftdi_match,
+    uftdi_attach, uftdi_detach, uftdi_activate, NULL, uftdi_childdet);
 
 USB_MATCH(uftdi)
 {
@@ -312,19 +319,32 @@ uftdi_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-int
-uftdi_detach(device_ptr_t self, int flags)
+void
+uftdi_childdet(device_t self, device_t child)
 {
-	struct uftdi_softc *sc = (struct uftdi_softc *)self;
+	int i;
+	struct uftdi_softc *sc = device_private(self);
+
+	for (i = 0; i < sc->sc_numports; i++) {
+		if (sc->sc_subdev[i] == child)
+			break;
+	}
+	KASSERT(i < sc->sc_numports);
+	sc->sc_subdev[i] = NULL;
+}
+
+int
+uftdi_detach(device_t self, int flags)
+{
+	struct uftdi_softc *sc = device_private(self);
 	int i;
 
 	DPRINTF(("uftdi_detach: sc=%p flags=%d\n", sc, flags));
 	sc->sc_dying = 1;
-	for (i=0; i < sc->sc_numports; i++)
-		if (sc->sc_subdev[i] != NULL) {
+	for (i=0; i < sc->sc_numports; i++) {
+		if (sc->sc_subdev[i] != NULL)
 			config_detach(sc->sc_subdev[i], flags);
-			sc->sc_subdev[i] = NULL;
-		}
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));

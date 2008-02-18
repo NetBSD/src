@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.218 2007/08/02 02:42:41 rmind Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.218.10.1 2008/02/18 21:07:08 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.218 2007/08/02 02:42:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.218.10.1 2008/02/18 21:07:08 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -837,8 +837,9 @@ tcp_respond(struct tcpcb *tp, struct mbuf *template, struct mbuf *m,
 		ip6->ip6_plen = htons(tlen);
 		if (tp && tp->t_in6pcb) {
 			struct ifnet *oifp;
-			ro = (struct route *)&tp->t_in6pcb->in6p_route;
-			oifp = ro->ro_rt ? ro->ro_rt->rt_ifp : NULL;
+			ro = &tp->t_in6pcb->in6p_route;
+			oifp = (rt = rtcache_validate(ro)) != NULL ? rt->rt_ifp
+			                                           : NULL;
 			ip6->ip6_hlim = in6_selecthlim(tp->t_in6pcb, oifp);
 		} else
 			ip6->ip6_hlim = ip6_defhlim;
@@ -1022,8 +1023,9 @@ tcp_newtcpcb(int family, void *aux)
 		struct in6pcb *in6p = (struct in6pcb *)aux;
 
 		in6p->in6p_ip6.ip6_hlim = in6_selecthlim(in6p,
-			in6p->in6p_route.ro_rt ? in6p->in6p_route.ro_rt->rt_ifp
-					       : NULL);
+			(rt = rtcache_validate(&in6p->in6p_route)) != NULL
+			    ? rt->rt_ifp
+			    : NULL);
 		in6p->in6p_ppcb = (void *)tp;
 
 		tp->t_in6pcb = in6p;
@@ -1043,11 +1045,15 @@ tcp_newtcpcb(int family, void *aux)
 	/*
 	 * Initialize our timebase.  When we send timestamps, we take
 	 * the delta from tcp_now -- this means each connection always
-	 * gets a timebase of 0, which makes it, among other things,
+	 * gets a timebase of 1, which makes it, among other things,
 	 * more difficult to determine how long a system has been up,
 	 * and thus how many TCP sequence increments have occurred.
+	 *
+	 * We start with 1, because 0 doesn't work with linux, which
+	 * considers timestamp 0 in a SYN packet as a bug and disables
+	 * timestamps.
 	 */
-	tp->ts_timebase = tcp_now;
+	tp->ts_timebase = tcp_now - 1;
 	
 	tp->t_congctl = tcp_congctl_global;
 	tp->t_congctl->refcnt++;
@@ -1171,7 +1177,7 @@ tcp_close(struct tcpcb *tp)
 	 * update anything that the user "locked".
 	 */
 	if (SEQ_LT(tp->iss + so->so_snd.sb_hiwat * 16, tp->snd_max) &&
-	    ro && (rt = ro->ro_rt) &&
+	    ro && (rt = rtcache_validate(ro)) != NULL &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr)) {
 		u_long i = 0;
 

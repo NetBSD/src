@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.18.2.2 2007/12/27 00:43:23 mjf Exp $	*/
+/*	$NetBSD: lock.h,v 1.18.2.3 2008/02/18 21:05:16 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006 The NetBSD Foundation, Inc.
@@ -79,18 +79,22 @@ int	__cpu_simple_lock_try(__cpu_simple_lock_t *);
 void	__cpu_simple_unlock(__cpu_simple_lock_t *);
 
 #define	SPINLOCK_SPIN_HOOK	/* nothing */
+
+#ifdef SPINLOCK_BACKOFF_HOOK
+#undef SPINLOCK_BACKOFF_HOOK
+#endif
 #define	SPINLOCK_BACKOFF_HOOK	x86_pause()
 
 #else
 
 static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
-	__attribute__((__unused__));
+	__unused;
 
 static __inline void
 __cpu_simple_lock_init(__cpu_simple_lock_t *lockp)

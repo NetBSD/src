@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.120.4.3 2007/12/27 00:46:07 mjf Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.120.4.4 2008/02/18 21:06:46 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.120.4.3 2007/12/27 00:46:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.120.4.4 2008/02/18 21:06:46 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -96,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.120.4.3 2007/12/27 00:46:07 mjf 
 
 #include <sys/buf.h>
 #include <sys/dirent.h>
-#include <sys/lock.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
@@ -400,8 +399,9 @@ configure(void)
 
 	cold = 0;	/* clocks are running, we're warm now! */
 
-#if defined(MULTIPROCESSOR)
 	/* Boot the secondary processors. */
+	mp_online = true;
+#if defined(MULTIPROCESSOR)
 	cpu_boot_secondary_processors();
 #endif
 
@@ -1447,26 +1447,28 @@ config_detach(device_t dev, int flags)
 	return (0);
 }
 
-struct config_detach_arg {
-	int a_flags;
-	int a_error;
-};
-
-static bool
-config_detach_helper(device_t child, void *arg)
-{
-	struct config_detach_arg *a = arg;
-
-	return (a->a_error = config_detach(child, a->a_flags)) == 0;
-}
-
 int
 config_detach_children(device_t parent, int flags)
 {
-	struct config_detach_arg a = {.a_flags = flags, .a_error = 0};
+	device_t dv;
+	int progress, error = 0;
 
-	device_foreach_child(parent, config_detach_helper, &a);
-	return a.a_error;
+	/*
+	 * config_detach() can work recursively, thus it can
+	 * delete any number of devices from the linked list.
+	 * For that reason, start over after each hit.
+	 */
+	do {
+		progress = 0;
+		TAILQ_FOREACH(dv, &alldevs, dv_list) {
+			if (device_parent(dv) != parent)
+				continue;
+			progress++;
+			error = config_detach(dv, flags);
+			break;
+		}
+	} while (progress && !error);
+	return error;
 }
 
 int
@@ -1737,20 +1739,6 @@ device_parent(device_t dev)
 }
 
 bool
-device_foreach_child(device_t parent, bool (*func)(device_t, void *), void *arg)
-{
-	device_t curdev;
-
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-		if (device_parent(curdev) != parent)
-			continue;
-		if (!(*func)(curdev, arg))
-			return false;
-	}
-	return true;
-}
-
-bool
 device_is_active(device_t dev)
 {
 	int active_flags;
@@ -1812,6 +1800,40 @@ device_is_a(device_t dev, const char *dname)
 {
 
 	return (strcmp(dev->dv_cfdriver->cd_name, dname) == 0);
+}
+
+/*
+ * device_find_by_xname:
+ *
+ *	Returns the device of the given name or NULL if it doesn't exist.
+ */
+device_t
+device_find_by_xname(const char *name)
+{
+	device_t dv;
+
+	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+		if (strcmp(device_xname(dv), name) == 0)
+			break;
+	}
+
+	return dv;
+}
+
+/*
+ * device_find_by_driver_unit:
+ *
+ *	Returns the device of the given driver name and unit or
+ *	NULL if it doesn't exist.
+ */
+device_t
+device_find_by_driver_unit(const char *name, int unit)
+{
+	struct cfdriver *cd;
+
+	if ((cd = config_cfdriver_lookup(name)) == NULL)
+		return NULL;
+	return device_lookup(cd, unit);
 }
 
 /*

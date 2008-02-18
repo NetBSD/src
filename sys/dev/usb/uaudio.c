@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.110 2007/03/13 13:51:54 drochner Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.110.18.1 2008/02/18 21:06:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.110 2007/03/13 13:51:54 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.110.18.1 2008/02/18 21:06:25 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,7 +362,17 @@ Static struct audio_device uaudio_device = {
 	"uaudio"
 };
 
-USB_DECLARE_DRIVER(uaudio);
+int uaudio_match(device_t, struct cfdata *, void *);
+void uaudio_attach(device_t, device_t, void *);
+int uaudio_detach(device_t, int);
+void uaudio_childdet(device_t, device_t);
+int uaudio_activate(device_t, enum devact);
+
+extern struct cfdriver uaudio_cd;
+
+CFATTACH_DECL2(uaudio, sizeof(struct uaudio_softc),
+    uaudio_match, uaudio_attach, uaudio_detach, uaudio_activate, NULL,
+    uaudio_childdet);
 
 USB_MATCH(uaudio)
 {
@@ -484,13 +494,21 @@ uaudio_activate(device_ptr_t self, enum devact act)
 	return rv;
 }
 
-int
-uaudio_detach(device_ptr_t self, int flags)
+void
+uaudio_childdet(device_t self, device_t child)
 {
-	struct uaudio_softc *sc;
+	struct uaudio_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_audiodev == child);
+	sc->sc_audiodev = NULL;
+}
+
+int
+uaudio_detach(device_t self, int flags)
+{
+	struct uaudio_softc *sc = device_private(self);
 	int rv;
 
-	sc = (struct uaudio_softc *)self;
 	rv = 0;
 	/* Wait for outstanding requests to complete. */
 	usbd_delay_ms(sc->sc_udev, UAUDIO_NCHANBUFS * UAUDIO_NFRAMES);

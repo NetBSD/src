@@ -1,4 +1,4 @@
-/*	$NetBSD: xd.c,v 1.71 2007/10/19 12:01:23 ad Exp $	*/
+/*	$NetBSD: xd.c,v 1.71.2.1 2008/02/18 21:06:35 mjf Exp $	*/
 
 /*
  *
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.71 2007/10/19 12:01:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xd.c,v 1.71.2.1 2008/02/18 21:06:35 mjf Exp $");
 
 #undef XDC_DEBUG		/* full debug */
 #define XDC_DIAG		/* extra sanity checks */
@@ -331,8 +331,8 @@ xddummystrat(bp)
 	if (bp->b_bcount != XDFM_BPS)
 		panic("xddummystrat");
 	bcopy(xd_labeldata, bp->b_data, XDFM_BPS);
-	bp->b_flags |= B_DONE;
-	bp->b_flags &= ~B_BUSY;
+	bp->b_oflags |= BO_DONE;
+	bp->b_cflags &= ~BC_BUSY;
 }
 
 int
@@ -1002,6 +1002,42 @@ xddump(dev, blkno, va, size)
 
 }
 
+static enum kauth_device_req
+xd_getkauthreq(u_char cmd)
+{
+	enum kauth_device_req req;
+
+	switch (cmd) {
+	case XDCMD_WR:
+	case XDCMD_XWR:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITE;
+		break;
+
+	case XDCMD_RD:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READ;
+		break;
+
+	case XDCMD_RDP:
+	case XDCMD_XRD:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_READCONF;
+		break;
+
+	case XDCMD_WRP:
+	case XDCMD_RST:
+		req = KAUTH_REQ_DEVICE_RAWIO_PASSTHRU_WRITECONF;
+		break;
+
+	case XDCMD_NOP:
+	case XDCMD_SK:
+	case XDCMD_TST:
+	default:
+		req = 0;
+		break;
+	}
+
+	return (req);
+}
+
 /*
  * xdioctl: ioctls on XD drives.   based on ioctl's of other netbsd disks.
  */
@@ -1118,12 +1154,16 @@ xdioctl(dev, command, addr, flag, l)
 		}
 		return error;
 
-	case DIOSXDCMD:
+	case DIOSXDCMD: {
+		enum kauth_device_req req;
+
 		xio = (struct xd_iocmd *) addr;
-		if ((error = kauth_authorize_generic(l->l_cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		req = xd_getkauthreq(xio->cmd);
+		if ((error = kauth_authorize_device_passthru(l->l_cred,
+		    dev, req, xio)) != 0)
 			return (error);
 		return (xdc_ioctlcmd(xd, dev, xio));
+		}
 
 	default:
 		return ENOTTY;

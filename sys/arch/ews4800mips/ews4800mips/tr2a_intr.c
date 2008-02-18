@@ -1,4 +1,4 @@
-/*	$NetBSD: tr2a_intr.c,v 1.8.2.1 2007/12/08 18:16:56 mjf Exp $	*/
+/*	$NetBSD: tr2a_intr.c,v 1.8.2.2 2008/02/18 21:04:29 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,13 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.8.2.1 2007/12/08 18:16:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tr2a_intr.c,v 1.8.2.2 2008/02/18 21:04:29 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/evcnt.h>
+#include <sys/intr.h>
 
-#include <machine/intr.h>
 #include <machine/locore.h>	/* mips3_cp0* */
 #include <machine/sbdvar.h>
 #define	_SBD_TR2A_PRIVATE

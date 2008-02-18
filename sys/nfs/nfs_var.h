@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.74.2.2 2007/12/27 00:46:37 mjf Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.74.2.3 2008/02/18 21:07:18 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -44,13 +44,8 @@
 #include <sys/mallocvar.h>
 #include <sys/pool.h>
 
-MALLOC_DECLARE(M_NFSREQ);
-MALLOC_DECLARE(M_NFSMNT);
-MALLOC_DECLARE(M_NFSUID);
 MALLOC_DECLARE(M_NFSD);
 MALLOC_DECLARE(M_NFSDIROFF);
-MALLOC_DECLARE(M_NFSBIGFH);
-MALLOC_DECLARE(M_NQLEASE);
 
 struct vnode;
 struct uio;

@@ -1,4 +1,4 @@
-/* 	$NetBSD: cpuvar.h,v 1.16.2.2 2007/12/27 00:43:22 mjf Exp $ */
+/* 	$NetBSD: cpuvar.h,v 1.16.2.3 2008/02/18 21:05:16 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000, 2007 The NetBSD Foundation, Inc.
@@ -110,7 +110,9 @@ int x86_ipi_init(int);
 void x86_errata(void);
 
 void identifycpu(struct cpu_info *);
+void identifycpu_cpuids(struct cpu_info *);
 void cpu_init(struct cpu_info *);
+void cpu_init_tss(struct cpu_info *);
 void cpu_init_first(void);
 
 #ifdef INTEL_CORETEMP

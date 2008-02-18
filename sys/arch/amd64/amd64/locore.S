@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.29.2.3 2007/12/27 00:42:50 mjf Exp $	*/
+/*	$NetBSD: locore.S,v 1.29.2.4 2008/02/18 21:04:20 mjf Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -904,22 +904,24 @@ ENTRY(cpu_switchto)
 	movq	PCB_RSP(%r14),%rsp
 	movq	PCB_RBP(%r14),%rbp
 
-	/* Set curlwp. */
-	movq	%r12,CPUVAR(CURLWP)
+	/*
+	 * Set curlwp.  This must be globally visible in order to permit
+	 * non-interlocked mutex release.
+	 */
+	movq	%r12,%rcx
+	xchgq	%rcx,CPUVAR(CURLWP)
 
 	/* Skip the rest if returning to a pinned LWP. */
 	testb	%dl,%dl
 	jnz	4f
 
-	/* Switch TSS. Reset "task busy" flag before loading. */
-#ifdef XEN
+	/* Switch ring0 stack */
+#ifndef XEN
+	movq	PCB_RSP0(%r14),%rax
+	movq	%rax,CPUVAR(RSP0)
+#else
 	movq	%r14, %rdi
 	callq	_C_LABEL(x86_64_switch_context);
-#else
-	movq    CPUVAR(GDT),%rax
-	movl	L_MD_TSS_SEL(%r12),%edx
-	andl	$~0x0200,4(%rax,%rdx, 1)
-	ltr	%dx
 #endif
 
 	/* Don't bother with the rest if switching to a system process. */

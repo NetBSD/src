@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.17.4.2 2007/12/27 00:45:49 mjf Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.17.4.3 2008/02/18 21:06:40 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.17.4.2 2007/12/27 00:45:49 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.17.4.3 2008/02/18 21:06:40 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -118,8 +118,7 @@ sysvbfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 			 */
 			if (devvp->v_type != VBLK)
 				error = ENOTBLK;
-			else if (bdevsw_lookup(devvp->v_specinfo->si_rdev) ==
-			    NULL)
+			else if (bdevsw_lookup(devvp->v_rdev) == NULL)
 				error = ENXIO;
 		} else {
 			/*
@@ -173,10 +172,6 @@ sysvbfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	struct partinfo dpart;
 	int error;
 
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return error;	/* Already mounted */
-	if (vcount(devvp) > 1)
-		return EBUSY;	/* Opened by other */
 	vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY);
 	error = vinvalbuf(devvp, V_SAVE, cred, l, 0, 0);
 	VOP_UNLOCK(devvp, 0);
@@ -307,11 +302,12 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 
 	DPRINTF("%s:\n", __func__);
 	error = 0;
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	for (bnode = LIST_FIRST(&bmp->bnode_head); bnode != NULL;
 	    bnode = LIST_NEXT(bnode, link)) {
-		simple_unlock(&mntvnode_slock);
 		v = bnode->vnode;
+	    	mutex_enter(&v->v_interlock);
+		mutex_exit(&mntvnode_lock);
 		err = vget(v, LK_EXCLUSIVE | LK_NOWAIT | LK_INTERLOCK);
 		if (err == 0) {
 			err = VOP_FSYNC(v, cred, FSYNC_WAIT, 0, 0);
@@ -319,9 +315,9 @@ sysvbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 		}
 		if (err != 0)
 			error = err;
-		simple_lock(&mntvnode_slock);
+		mutex_enter(&mntvnode_lock);
 	}
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 
 	return error;
 }
@@ -362,9 +358,9 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	vp->v_data = pool_get(&sysvbfs_node_pool, PR_WAITOK);
 	memset(vp->v_data, 0, sizeof(struct sysvbfs_node));
 	bnode = vp->v_data;
-	simple_lock(&mntvnode_slock);
+	mutex_enter(&mntvnode_lock);
 	LIST_INSERT_HEAD(&bmp->bnode_head, bnode, link);
-	simple_unlock(&mntvnode_slock);
+	mutex_exit(&mntvnode_lock);
 	bnode->vnode = vp;
 	bnode->bmp = bmp;
 	bnode->inode = inode;

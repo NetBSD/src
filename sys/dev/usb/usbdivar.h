@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.81 2007/07/09 21:01:25 ad Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.81.14.1 2008/02/18 21:06:26 mjf Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
 /*
@@ -154,7 +154,7 @@ struct usbd_device {
 	usb_config_descriptor_t *cdesc;	       /* full config descr */
 	const struct usbd_quirks     *quirks;  /* device quirks, always set */
 	struct usbd_hub	       *hub;           /* only if this is a hub */
-	device_ptr_t	       *subdevs;       /* sub-devices, 0 terminated */
+	device_t	       *subdevs;       /* sub-devices, 0 terminated */
 };
 
 struct usbd_interface {

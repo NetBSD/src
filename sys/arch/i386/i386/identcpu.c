@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.78.2.3 2007/12/27 00:43:06 mjf Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.78.2.4 2008/02/18 21:04:37 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.78.2.3 2007/12/27 00:43:06 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.78.2.4 2008/02/18 21:04:37 mjf Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -908,6 +908,8 @@ cpu_probe_base_features(struct cpu_info *ci)
 	uint32_t miscbytes;
 	uint32_t brand[12];
 
+	ci->ci_initapicid = 0;
+
 	if (ci->ci_cpuid_level < 0)
 		return;
 
@@ -944,6 +946,8 @@ cpu_probe_base_features(struct cpu_info *ci)
 	/* CLFLUSH line size is next 8 bits */
 	if (ci->ci_feature_flags & CPUID_CFLUSH)
 		ci->ci_cflush_lsize = ((miscbytes >> 8) & 0xff) << 3;
+
+	ci->ci_initapicid = (miscbytes >> 24) & 0xff;
 
 	if (ci->ci_cpuid_level < 2)
 		return;
@@ -1515,6 +1519,14 @@ identifycpu(struct cpu_info *ci)
 #endif
 #endif
 	}
+
+	/*
+	 * Everything past this point requires a Pentium or later.
+	 */
+	if (ci->ci_cpuid_level < 0)
+		return;
+
+	identifycpu_cpuids(ci);
 
 	/*
 	 * If we have FXSAVE/FXRESTOR, use them.

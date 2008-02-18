@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.89 2007/10/19 11:59:59 ad Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.89.2.1 2008/02/18 21:05:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,6 +33,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.89.2.1 2008/02/18 21:05:41 mjf Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -166,9 +167,6 @@ static void re_shutdown(void *);
 static int re_enable(struct rtk_softc *);
 static void re_disable(struct rtk_softc *);
 static void re_power(int, void *);
-
-static int re_ifmedia_upd(struct ifnet *);
-static void re_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static int re_gmii_readreg(struct device *, int, int);
 static void re_gmii_writereg(struct device *, int, int, int);
@@ -686,7 +684,7 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < RE_TX_QLEN; i++) {
 		error = bus_dmamap_create(sc->sc_dmat,
 		    round_page(IP_MAXPACKET),
-		    RE_TX_DESC_CNT(sc) - RE_NTXDESC_RSVD, RE_TDESC_CMD_FRAGLEN,
+		    RE_TX_DESC_CNT(sc), RE_TDESC_CMD_FRAGLEN,
 		    0, 0, &sc->re_ldata.re_txq[i].txq_dmamap);
 		if (error) {
 			aprint_error("%s: can't create DMA map for TX\n",
@@ -782,8 +780,9 @@ re_attach(struct rtk_softc *sc)
 	sc->mii.mii_readreg = re_miibus_readreg;
 	sc->mii.mii_writereg = re_miibus_writereg;
 	sc->mii.mii_statchg = re_miibus_statchg;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, re_ifmedia_upd,
-	    re_ifmedia_sts);
+	sc->ethercom.ec_mii = &sc->mii;
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(&sc->sc_dev, &sc->mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
 	ifmedia_set(&sc->mii.mii_media, IFM_ETHER | IFM_AUTO);
@@ -1370,7 +1369,7 @@ re_txeof(struct rtk_softc *sc)
 			 * them out. This only seems to be required with
 			 * the PCIe devices.
 			 */
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 		}
 	} else
 		ifp->if_timer = 0;
@@ -1457,6 +1456,9 @@ re_intr(void *arg)
 	struct ifnet		*ifp;
 	uint16_t		status;
 	int			handled = 0;
+
+	if (!device_has_power(&sc->sc_dev))
+		return 0;
 
 	ifp = &sc->ethercom.ec_if;
 
@@ -1545,7 +1547,7 @@ re_start(struct ifnet *ifp)
 			break;
 
 		if (sc->re_ldata.re_txq_free == 0 ||
-		    sc->re_ldata.re_tx_free <= RE_NTXDESC_RSVD) {
+		    sc->re_ldata.re_tx_free == 0) {
 			/* no more free slots left */
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -1607,7 +1609,7 @@ re_start(struct ifnet *ifp)
 			nsegs++;
 		}
 
-		if (nsegs > sc->re_ldata.re_tx_free - RE_NTXDESC_RSVD) {
+		if (nsegs > sc->re_ldata.re_tx_free) {
 			/*
 			 * Not enough free descriptors to transmit this packet.
 			 */
@@ -1744,7 +1746,7 @@ re_start(struct ifnet *ifp)
 		if ((sc->sc_quirk & RTKQ_8139CPLUS) != 0)
 			CSR_WRITE_1(sc, RTK_TXSTART, RTK_TXSTART_START);
 		else
-			CSR_WRITE_2(sc, RTK_GTXSTART, RTK_TXSTART_START);
+			CSR_WRITE_1(sc, RTK_GTXSTART, RTK_TXSTART_START);
 
 		/*
 		 * Use the countdown timer for interrupt moderation.
@@ -1961,34 +1963,6 @@ re_init(struct ifnet *ifp)
 	return error;
 }
 
-/*
- * Set media options.
- */
-static int
-re_ifmedia_upd(struct ifnet *ifp)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	return mii_mediachg(&sc->mii);
-}
-
-/*
- * Report current media status.
- */
-static void
-re_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct rtk_softc	*sc;
-
-	sc = ifp->if_softc;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_active = sc->mii.mii_media_active;
-	ifmr->ifm_status = sc->mii.mii_media_status;
-}
-
 static int
 re_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
@@ -2000,21 +1974,23 @@ re_ioctl(struct ifnet *ifp, u_long command, void *data)
 
 	switch (command) {
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > RE_JUMBO_MTU)
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > ETHERMTU_JUMBO)
 			error = EINVAL;
-		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->mii.mii_media, command);
+		else if ((error = ifioctl_common(ifp, command, data)) == ENETRESET)
+			error = 0;
 		break;
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				rtk_setmulti(sc);
-			error = 0;
-		}
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command == SIOCSIFCAP)
+			error = (*ifp->if_init)(ifp);
+		else if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			rtk_setmulti(sc);
 		break;
 	}
 

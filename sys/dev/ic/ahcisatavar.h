@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.1.26.1 2007/11/19 00:47:51 mjf Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.1.26.2 2008/02/18 21:05:40 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -55,6 +55,7 @@ struct ahci_softc {
 	bus_dma_tag_t sc_dmat; /* DMA memory mappings: */
 	void *sc_cmd_hdr; /* command tables and received FIS */
 	bus_dmamap_t sc_cmd_hdrd;
+	int sc_atac_capflags;
 
 	int sc_ncmds; /* number of command slots */
 	struct ata_channel *sc_chanarray[AHCI_MAX_PORTS];

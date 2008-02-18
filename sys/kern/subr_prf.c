@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.110.2.1 2007/11/19 00:48:51 mjf Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.110.2.2 2008/02/18 21:06:47 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.110.2.1 2007/11/19 00:48:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.110.2.2 2008/02/18 21:06:47 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.110.2.1 2007/11/19 00:48:51 mjf Exp $
 #include <sys/tprintf.h>
 #include <sys/syslog.h>
 #include <sys/malloc.h>
-#include <sys/lock.h>
 #include <sys/kprintf.h>
+#include <sys/atomic.h>
 
 #include <dev/cons.h>
 
@@ -78,9 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.110.2.1 2007/11/19 00:48:51 mjf Exp $
 #include <ipkdb/ipkdb.h>
 #endif
 
-#if defined(MULTIPROCESSOR)
 struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
-#endif /* MULTIPROCESSOR */
 
 /*
  * note that stdarg.h and the ansi style va_start macro is used for both
@@ -119,6 +117,7 @@ extern	struct tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
+struct cpu_info *paniccpu;	/* cpu that first paniced */
 long	panicstart, panicend;	/* position in the msgbuf of the start and
 				   end of the formatted panicstr. */
 int	doing_shutdown;	/* set to indicate shutdown in progress */
@@ -145,19 +144,6 @@ const char HEXDIGITS[] = "0123456789ABCDEF";
 /*
  * functions
  */
-
-/*
- * tablefull: warn that a system table is full
- */
-
-void
-tablefull(const char *tab, const char *hint)
-{
-	if (hint)
-		log(LOG_ERR, "%s: table is full - %s\n", tab, hint);
-	else
-		log(LOG_ERR, "%s: table is full\n", tab);
-}
 
 /*
  * twiddle: spin a little propellor on the console.
@@ -189,8 +175,36 @@ twiddle(void)
 void
 panic(const char *fmt, ...)
 {
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci, *oci;
 	int bootopt;
 	va_list ap;
+
+	/*
+	 * Disable preemption.  If already panicing on another CPU, sit
+	 * here and spin until the system is rebooted.  Allow the CPU that
+	 * first paniced to panic again.
+	 */
+	crit_enter();
+	ci = curcpu();
+	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
+	if (oci != NULL && oci != ci) {
+		/* Give interrupts a chance to try and prevent deadlock. */
+		spl0();
+		for (;;) {
+			DELAY(10);
+		}
+	}
+
+	/*
+	 * Convert the current thread to a bound thread and prevent all
+	 * CPUs from scheduling unbound jobs.  Do so without taking any
+	 * locks.
+	 */
+	curlwp->l_flag |= LW_BOUND;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_schedstate.spc_flags |= SPCF_OFFLINE;
+	}
 
 	bootopt = RB_AUTOBOOT;
 	if (dumponpanic)

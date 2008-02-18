@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.110.2.2 2007/12/27 00:44:43 mjf Exp $	*/
+/*	$NetBSD: db_command.c,v 1.110.2.3 2008/02/18 21:05:31 mjf Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.110.2.2 2007/12/27 00:44:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.110.2.3 2008/02/18 21:05:31 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1361,6 +1361,7 @@ db_sync_cmd(db_expr_t addr, bool have_addr,
 	 * called from cpu_reboot.
 	 */
 	db_recover = 0;
+	panicstr = "dump forced via kernel debugger";
 	cpu_reboot(RB_DUMP, NULL);
 }
 

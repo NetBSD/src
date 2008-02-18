@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.37 2007/10/17 19:57:08 garbled Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.37.2.1 2008/02/18 21:05:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.37 2007/10/17 19:57:08 garbled Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.37.2.1 2008/02/18 21:05:01 mjf Exp $")
 
 
 /*
@@ -120,11 +120,13 @@ ENTRY(cpu_switchto)
 	ldc	r2,	r6_bank
 	mov	r3,	r15
 
+#if !defined(P1_STACK) && defined(SH4)
 	/* Wire u-area */
 	MOV	(switch_resume, r0)
 	jsr	@r0
 	 mov	r4,	r8	/* save new lwp */
 	mov	r8,	r4
+#endif
 	__EXCEPTION_UNBLOCK(r0, r1)
 	/* Now OK to use kernel stack. */
 
@@ -152,29 +154,20 @@ ENTRY(cpu_switchto)
 
 	.align	2
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
+#ifdef SH4
 FUNC_SYMBOL(switch_resume)
+#endif
+	SET_ENTRY_SIZE(cpu_switchto)
 
 
 #ifdef SH3
 /*
  * LINTSTUB: Func: void sh3_switch_resume(struct lwp *l)
- *	Set current u-area PTE array to curupte.
- *	No need to flush any entries. it is depended on u-area mapping is
- *	wired, and its mapping never cause modified/reference fault.
- *	u-area TLB fault is only covered by TLB miss exception.
- *	When the situation that "VPN match but not Valid" occur, SH3 jump to
- *	"generic exception" handler instead of TLB miss exception.
- *	But NetBSD/sh3 code doesn't handle it. As the result, it causes
- *	hard reset. (never can access kernel stack).
+ *     We only need this dummy sh3 version if both SH3 and SH4 are defined.
  */
 NENTRY(sh3_switch_resume)
-	mov.l	.L_curupte, r1
-	add	#L_MD_UPTE, r4		/* l->l_md.md_upte */
 	rts
-	 mov.l	r4, @r1
-
-	.align	2
-.L_curupte:		.long	_C_LABEL(curupte)
+	 nop
 	SET_ENTRY_SIZE(sh3_switch_resume)
 #endif /* SH3 */
 
@@ -186,63 +179,56 @@ NENTRY(sh3_switch_resume)
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
-	add	#L_MD_UPTE, r4	/* l->l_md.md_upte */
-	mov	#UPAGES,r3
-	mov	#1,	r2
-	mov.l	@r4,	r0	/* if (l->l_md.md_upte[0].addr == 0) return; */
-	tst	r0,	r0
+	add	#L_MD_UPTE, r4	! l->l_md.md_upte
+	mov	#UPAGES, r3
+	mov.l	@r4, r0		! if (l->l_md.md_upte[0].addr == 0) return;
+	tst	r0, r0
 	bt	2f
 
 	/* Save old ASID and set ASID to zero */
-	xor	r0,	r0
-	mov.l	.L_4_PTEH, r1
-	mov.l	@r1,	r7
-	mov.l	r0,	@r1
+	mov	#0, r0
+	mov.l	.L_4_PTEH, r2
+	mov.l	@r2, r7
+	mov.l	r0, @r2
 
 	mov.l	.L_VPN_MASK, r6
 	mov.l	.L_4_UTLB_AA_A, r5
 
 	/* TLB address array must be accessed via P2. Setup jump address. */
-	mova	1f,	r0
+	mova	1f, r0
 	mov.l	.L_P2BASE, r1
-	or	r1,	r0
-	jmp	@r0		/* run P2 */
+	or	r1, r0
+	jmp	@r0		! run on P2
 	 nop
 
 	/* Probe VPN match TLB entry and invalidate it. */
-	.align	2		/* mova target must be 4byte alignment */
+	.align	2		! mova target must be 4byte aligned
 1:	mov.l	@(4, r4), r0
-	and	r6,	r0
-	mov.l	r0,	@r5	/* clear D, V */
+	and	r6, r0
+	mov.l	r0, @r5		! clear D, V
 
 	/* Wire u-area TLB entry */
 	/* Address array */
-	mov.l	@r4+,	r0	/* addr */
-	mov.l	@r4+,	r1	/* data */
-	mov.l	r1,	@r0	/* *addr = data */
+	mov.l	@r4+, r0	! addr
+	mov.l	@r4+, r1	! data
+	mov.l	r1, @r0		! *addr = data
 
 	/* Data array */
-	mov.l	@r4+,	r0	/* addr */
-	mov.l	@r4+,	r1	/* data */
-	mov.l	r1,	@r0	/* *addr = data */
-	cmp/eq	r2,	r3
-	bf/s	1b
-	 add	#1,	r2
+	mov.l	@r4+, r0	! addr
+	mov.l	@r4+, r1	! data
+	mov.l	r1, @r0		! *addr = data
+	dt	r3
+	bf	1b
 
 	/* restore ASID */
-	mov.l	.L_4_PTEH, r0
-	mov.l	r7,	@r0
-	mova	2f,	r0
-	jmp	@r0		/* run P1 */
-	 nop
-	.align	2
-2:	rts			/* mova target must be 4byte alignment */
-	 nop
-	.align	2
+	mov.l	r7, @r2
 
+2:	rts			! to the caller in P1
+	 nop
+
+	.align	2
 .L_4_PTEH:		.long	SH4_PTEH
 .L_4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
-.L_4_ITLB_AA:		.long	SH4_ITLB_AA
 .L_VPN_MASK:		.long	0xfffff000
 .L_P2BASE:		.long	0xa0000000
 	SET_ENTRY_SIZE(sh4_switch_resume)

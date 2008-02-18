@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.74.10.1 2007/12/08 18:21:03 mjf Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.74.10.2 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.74.10.1 2007/12/08 18:21:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.74.10.2 2008/02/18 21:07:00 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -96,6 +96,8 @@ __KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.74.10.1 2007/12/08 18:21:03 mjf 
 #include <sys/vnode.h>
 #include <sys/malloc.h>
 #include <sys/kauth.h>
+
+#include <miscfs/genfs/genfs.h>
 
 #include <miscfs/procfs/procfs.h>
 
@@ -161,6 +163,7 @@ procfs_mount(
 	else
 		pmnt->pmnt_flags = 0;
 
+	mp->mnt_iflag |= IMNT_MPSAFE;
 	return error;
 }
 
@@ -311,6 +314,8 @@ struct vfsops procfs_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	procfs_vnodeopv_descs,
 	0,
 	{ NULL, NULL },

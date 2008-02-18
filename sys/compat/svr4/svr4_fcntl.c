@@ -1,4 +1,4 @@
-/*	$NetBSD: svr4_fcntl.c,v 1.60.4.2 2007/12/27 00:44:33 mjf Exp $	 */
+/*	$NetBSD: svr4_fcntl.c,v 1.60.4.3 2008/02/18 21:05:31 mjf Exp $	 */
 
 /*-
  * Copyright (c) 1994, 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.60.4.2 2007/12/27 00:44:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_fcntl.c,v 1.60.4.3 2008/02/18 21:05:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,15 +226,13 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 	struct filedesc *fdp = l->l_proc->p_fd;
 	struct file *fp;
 	struct vnode *vp;
-	struct vattr vattr;
 	int error;
-	bool revoke;
 
 	if ((fp = fd_getfile(fdp, fd)) == NULL)
 		return EBADF;
 
 	if (fp->f_type != DTYPE_VNODE) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return EINVAL;
 	}
 
@@ -245,19 +243,7 @@ fd_revoke(struct lwp *l, int fd, register_t *retval)
 		goto out;
 	}
 
-	if ((error = VOP_GETATTR(vp, &vattr, l->l_cred)) != 0)
-		goto out;
-
-	if (kauth_cred_geteuid(l->l_cred) != vattr.va_uid &&
-	    (error = kauth_authorize_generic(l->l_cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
-		goto out;
-
-	simple_lock(&vp->v_interlock);
-	revoke = (vp->v_usecount > 1 || (vp->v_iflag & VI_ALIASED));
-	simple_unlock(&vp->v_interlock);
-	if (revoke)
-		VOP_REVOKE(vp, REVOKEALL);
+	error = dorevoke(vp, l->l_cred);
 out:
 	vrele(vp);
 	FILE_UNUSE(fp, l);
@@ -284,7 +270,7 @@ fd_truncate(struct lwp *l, int fd, struct flock *flp, register_t *retval)
 
 	vp = (struct vnode *)fp->f_data;
 	if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return ESPIPE;
 	}
 	FILE_USE(fp);

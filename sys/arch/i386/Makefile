@@ -1,11 +1,16 @@
-#	$NetBSD: Makefile,v 1.30 2007/10/17 19:54:41 garbled Exp $
+#	$NetBSD: Makefile,v 1.30.2.1 2008/02/18 21:04:36 mjf Exp $
 
 # Makefile for i386 tags file and boot blocks
 
 TI386=	${SYSDIR}/arch/i386/tags
-SI386=	${SYSDIR}/arch/i386/i386/*.[ch] ${SYSDIR}/arch/i386/include/*.h \
-	${SYSDIR}/arch/i386/eisa/*.[ch] ${SYSDIR}/arch/i386/isa/*.[ch] \
+SI386=	${SYSDIR}/arch/i386/acpi/*.[ch] \
+	${SYSDIR}/arch/i386/eisa/*.[ch] \
+	${SYSDIR}/arch/i386/i386/*.[ch] \
+	${SYSDIR}/arch/i386/include/*.h \
+	${SYSDIR}/arch/i386/isa/*.[ch] \
+	${SYSDIR}/arch/i386/mca/*.[ch] \
 	${SYSDIR}/arch/i386/pci/*.[ch] \
+	${SYSDIR}/arch/i386/pnpbios/*.[ch] \
 	${SYSDIR}/contrib/dev/ath/*.[ch] \
 	${SYSDIR}/contrib/dev/ath/netbsd/*.[ch] \
 	${SYSDIR}/contrib/dev/ath/public/*.[ch]
@@ -33,6 +38,6 @@ links:
 	    (cd $$i && rm -f tags; ln -s ../tags tags); done
 
 
-SUBDIR=	compile include stand ../x86/include
+SUBDIR=	compile include stand ../x86/include ../xen/include
 
 .include <bsd.subdir.mk>

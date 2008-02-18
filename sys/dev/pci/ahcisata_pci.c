@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.1.26.1 2008/02/18 21:05:55 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1 2007/05/12 11:04:59 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.1.26.1 2008/02/18 21:05:55 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -65,8 +65,9 @@ ahci_pci_match(struct device *parent, struct cfdata *match,
 	int ret = 0;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_MASS_STORAGE &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
-	    PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI) {
+	    ((PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA &&
+	     PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI) ||
+	     PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)) {
 		/* check if the chip is in ahci mode */
 		if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
@@ -115,5 +116,9 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: interrupting at %s\n", AHCINAME(sc),
 	    intrstr ? intrstr : "unknown interrupt");
 	sc->sc_dmat = pa->pa_dmat;
+
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+		sc->sc_atac_capflags = ATAC_CAP_RAID;
+
 	ahci_attach(sc);
 }

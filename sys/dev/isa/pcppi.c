@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.24 2007/10/19 12:00:22 ad Exp $ */
+/* $NetBSD: pcppi.c,v 1.24.2.1 2008/02/18 21:05:50 mjf Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.24 2007/10/19 12:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.24.2.1 2008/02/18 21:05:50 mjf Exp $");
 
 #include "attimer.h"
 
@@ -60,7 +60,7 @@ int	pcppi_match(struct device *, struct cfdata *, void *);
 void	pcppi_isa_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(pcppi, sizeof(struct pcppi_softc),
-    pcppi_match, pcppi_isa_attach, NULL, NULL);
+    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(void*);
@@ -159,7 +159,8 @@ pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
 
         sc->sc_iot = iot = ia->ia_iot;
 
-        if (bus_space_map(iot, IO_PPI, 1, 0, &sc->sc_ppi_ioh))
+        sc->sc_size = 1;
+        if (bus_space_map(iot, IO_PPI, sc->sc_size, 0, &sc->sc_ppi_ioh))
                 panic("pcppi_attach: couldn't map");
 
         printf("\n");
@@ -167,10 +168,33 @@ pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
         pcppi_attach(sc);
 }
 
+int
+pcppi_detach(device_t self, int flags)
+{
+	int rc;
+	struct pcppi_softc *sc = device_private(self);
+
+	if ((rc = config_detach_children(&sc->sc_dv, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+
+#if NPCKBD > 0
+	pckbd_unhook_bell(pcppi_pckbd_bell, sc);
+#endif
+	pcppi_bell_stop(sc);
+
+	callout_stop(&sc->sc_bell_ch);
+	callout_destroy(&sc->sc_bell_ch);
+	bus_space_unmap(sc->sc_iot, sc->sc_ppi_ioh, sc->sc_size);
+	return 0;
+}
+
 void
 pcppi_attach(struct pcppi_softc *sc)
 {
         struct pcppi_attach_args pa;
+	struct device *self = (struct device *)sc;
 
         callout_init(&sc->sc_bell_ch, 0);
 
@@ -181,8 +205,12 @@ pcppi_attach(struct pcppi_softc *sc)
 	pckbd_hookup_bell(pcppi_pckbd_bell, sc);
 #endif
 #if NATTIMER > 0
-	config_defer((struct device *)sc, pcppi_attach_speaker);
+	config_defer(&sc->sc_dv, pcppi_attach_speaker);
 #endif
+        if (!device_pmf_is_registered(self))
+		if (!pmf_device_register(self, NULL, NULL))
+			aprint_error_dev(self,
+			    "couldn't establish power handler\n"); 
 
 	pa.pa_cookie = sc;
 	config_search_loc(pcppisearch, &sc->sc_dv, "pcppi", NULL, &pa);

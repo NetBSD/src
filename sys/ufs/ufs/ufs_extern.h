@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.54.8.1 2007/12/08 18:21:43 mjf Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.54.8.2 2008/02/18 21:07:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,6 +34,8 @@
 #ifndef _UFS_UFS_EXTERN_H_
 #define _UFS_UFS_EXTERN_H_
 
+#include <sys/mutex.h>
+
 struct buf;
 struct componentname;
 struct direct;
@@ -53,7 +55,7 @@ struct uio;
 struct vattr;
 struct vnode;
 
-extern struct pool ufs_direct_pool;	/* memory pool for directs */
+extern pool_cache_t ufs_direct_cache;	/* memory pool for directs */
 
 __BEGIN_DECLS
 #define	ufs_abortop	genfs_abortop
@@ -67,7 +69,6 @@ int	ufs_inactive(void *);
 #define	ufs_fcntl	genfs_fcntl
 #define	ufs_ioctl	genfs_enoioctl
 #define	ufs_islocked	genfs_islocked
-#define	ufs_lease_check genfs_lease_check
 int	ufs_link(void *);
 #define	ufs_lock	genfs_lock
 int	ufs_lookup(void *);
@@ -185,5 +186,7 @@ void  softdep_change_linkcnt(struct inode *);
 void  softdep_releasefile(struct inode *);
 
 __END_DECLS
+
+extern kmutex_t ufs_ihash_lock;
 
 #endif /* !_UFS_UFS_EXTERN_H_ */

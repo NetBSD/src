@@ -1,4 +1,4 @@
-/*	$NetBSD: clnp_subr.c,v 1.29 2007/07/19 20:48:59 dyoung Exp $	*/
+/*	$NetBSD: clnp_subr.c,v 1.29.12.1 2008/02/18 21:07:13 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -59,7 +59,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.29 2007/07/19 20:48:59 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clnp_subr.c,v 1.29.12.1 2008/02/18 21:07:13 mjf Exp $");
 
 #include "opt_iso.h"
 
@@ -263,6 +263,7 @@ clnp_forward(
 	struct ifnet   *ifp;		/* ptr to outgoing interface */
 	struct iso_ifaddr *ia = 0;	/* ptr to iso name for ifp */
 	struct route route;		/* filled in by clnp_route */
+	struct rtentry *rt;
 	extern int      iso_systype;
 
 	clnp = mtod(m, struct clnp_fixed *);
@@ -346,7 +347,7 @@ clnp_forward(
 	 */
 	if ((iso_systype & SNPA_IS) && (inbound_shp) &&
 	    (ifp == inbound_shp->snh_ifp))
-		esis_rdoutput(inbound_shp, m, oidx, dst, route.ro_rt);
+		esis_rdoutput(inbound_shp, m, oidx, dst, rtcache_validate(&route));
 	/*
 	 *	If options are present, update them
 	 */
@@ -391,11 +392,13 @@ clnp_forward(
 	/*
 	 *	Dispatch the datagram if it is small enough, otherwise fragment
 	 */
-	if (len <= SN_MTU(ifp, route.ro_rt)) {
+	if ((rt = rtcache_validate(&route)) == NULL)
+		;
+	else if (len <= SN_MTU(ifp, rt)) {
 		iso_gen_csum(m, CLNP_CKSUM_OFF, (int) clnp->cnf_hdr_len);
-		(void) (*ifp->if_output) (ifp, m, next_hop, route.ro_rt);
+		(void) (*ifp->if_output) (ifp, m, next_hop, rt);
 	} else {
-		(void) clnp_fragment(ifp, m, next_hop, len, seg_off, /* flags */ 0, route.ro_rt);
+		(void) clnp_fragment(ifp, m, next_hop, len, seg_off, /* flags */ 0, rt);
 	}
 
 done:

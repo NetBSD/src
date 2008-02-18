@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.6 2005/12/11 12:19:06 christos Exp $ */
+/*	$NetBSD: ptrace.h,v 1.6.56.1 2008/02/18 21:05:03 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,3 +47,9 @@
 #define	PT_SETREGS	(PT_FIRSTMACH + 1)
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 2)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 3)
+
+#define PT_MACHDEP_STRINGS \
+	"PT_GETREGS", \
+	"PT_SETREGS", \
+	"PT_GETFPREGS", \
+	"PT_SETFPREGS",

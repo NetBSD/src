@@ -1,9 +1,10 @@
-#	$NetBSD: std.zaurus,v 1.2 2006/12/17 16:07:11 peter Exp $
+#	$NetBSD: std.zaurus,v 1.2.36.1 2008/02/18 21:05:22 mjf Exp $
 #
 # standard NetBSD/zaurus options
 
 machine	zaurus arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 options 	EXEC_AOUT
 options 	EXEC_ELF32

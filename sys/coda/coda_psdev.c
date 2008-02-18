@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.36.22.1 2007/12/08 18:18:32 mjf Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.36.22.2 2008/02/18 21:05:22 mjf Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.36.22.1 2007/12/08 18:18:32 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.36.22.2 2008/02/18 21:05:22 mjf Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -202,7 +202,7 @@ vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
      */
     mutex_enter(&syncer_mutex);
     VTOC(mi->mi_rootvp)->c_flags |= C_UNMOUNTING;
-    if (vfs_busy(mi->mi_vfsp, 0, 0)) {
+    if (vfs_busy(mi->mi_vfsp, RW_WRITER, NULL)) {
 	mutex_exit(&syncer_mutex);
 	return (EBUSY);
     }

@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.12 2007/03/13 13:51:55 drochner Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.12.18.1 2008/02/18 21:06:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.12 2007/03/13 13:51:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.12.18.1 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,14 @@ Static	void	udsbr_stop(struct udsbr_softc *sc);
 Static	void	udsbr_setfreq(struct udsbr_softc *sc, int freq);
 Static	int	udsbr_status(struct udsbr_softc *sc);
 
-USB_DECLARE_DRIVER(udsbr);
+int udsbr_match(device_t, struct cfdata *, void *);
+void udsbr_attach(device_t, device_t, void *);
+void udsbr_childdet(device_t, device_t);
+int udsbr_detach(device_t, int);
+int udsbr_activate(device_t, enum devact);
+extern struct cfdriver udsbr_cd;
+CFATTACH_DECL2(udsbr, sizeof(struct udsbr_softc), udsbr_match,
+    udsbr_attach, udsbr_detach, udsbr_activate, NULL, udsbr_childdet);
 
 USB_MATCH(udsbr)
 {
@@ -148,6 +155,11 @@ USB_ATTACH(udsbr)
 	sc->sc_child = radio_attach_mi(&udsbr_hw_if, sc, USBDEV(sc->sc_dev));
 
 	USB_ATTACH_SUCCESS_RETURN;
+}
+
+void
+udsbr_childdet(device_t self, device_t child)
+{
 }
 
 USB_DETACH(udsbr)

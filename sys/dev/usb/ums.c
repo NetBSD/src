@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.68.22.2 2007/12/27 00:45:33 mjf Exp $	*/
+/*	$NetBSD: ums.c,v 1.68.22.3 2008/02/18 21:06:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.68.22.2 2007/12/27 00:45:33 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.68.22.3 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ struct ums_softc {
 	int nbuttons;
 
 	u_int32_t sc_buttons;	/* mouse button status */
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 
 	char			sc_dying;
 };
@@ -126,7 +126,14 @@ const struct wsmouse_accessops ums_accessops = {
 	ums_disable,
 };
 
-USB_DECLARE_DRIVER(ums);
+int ums_match(device_t, struct cfdata *, void *);
+void ums_attach(device_t, device_t, void *);
+void ums_childdet(device_t, device_t);
+int ums_detach(device_t, int);
+int ums_activate(device_t, enum devact);
+extern struct cfdriver ums_cd;
+CFATTACH_DECL2(ums, sizeof(struct ums_softc), ums_match, ums_attach,
+    ums_detach, ums_activate, NULL, ums_childdet);
 
 int
 ums_match(struct device *parent, struct cfdata *match,
@@ -297,10 +304,19 @@ ums_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-int
-ums_detach(struct device *self, int flags)
+void
+ums_childdet(device_t self, device_t child)
 {
-	struct ums_softc *sc = (struct ums_softc *)self;
+	struct ums_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_wsmousedev == child);
+	sc->sc_wsmousedev = NULL;
+}
+
+int
+ums_detach(device_t self, int flags)
+{
+	struct ums_softc *sc = device_private(self);
 	int rv = 0;
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));

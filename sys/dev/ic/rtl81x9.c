@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.77.2.2 2007/12/27 00:45:07 mjf Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.77.2.3 2008/02/18 21:05:41 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.77.2.2 2007/12/27 00:45:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.77.2.3 2008/02/18 21:05:41 mjf Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -140,8 +140,6 @@ STATIC int rtk_init(struct ifnet *);
 STATIC void rtk_stop(struct ifnet *, int);
 
 STATIC void rtk_watchdog(struct ifnet *);
-STATIC int rtk_ifmedia_upd(struct ifnet *);
-STATIC void rtk_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 STATIC void rtk_eeprom_putbyte(struct rtk_softc *, int, int);
 STATIC void rtk_mii_sync(struct rtk_softc *);
@@ -734,8 +732,9 @@ rtk_attach(struct rtk_softc *sc)
 	sc->mii.mii_readreg = rtk_phy_readreg;
 	sc->mii.mii_writereg = rtk_phy_writereg;
 	sc->mii.mii_statchg = rtk_phy_statchg;
-	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, rtk_ifmedia_upd,
-	    rtk_ifmedia_sts);
+	sc->ethercom.ec_mii = &sc->mii;
+	ifmedia_init(&sc->mii.mii_media, IFM_IMASK, ether_mediachange,
+	    ether_mediastatus);
 	mii_attach(self, &sc->mii, 0xffffffff,
 	    MII_PHY_ANY, MII_OFFSET_ANY, 0);
 
@@ -1187,6 +1186,9 @@ rtk_intr(void *arg)
 	sc = arg;
 	ifp = &sc->ethercom.ec_if;
 
+	if (!device_has_power(&sc->sc_dev))
+		return 0;
+
 	/* Disable interrupts. */
 	CSR_WRITE_2(sc, RTK_IMR, 0x0000);
 
@@ -1434,7 +1436,8 @@ rtk_init(struct ifnet *ifp)
 	/*
 	 * Set current media.
 	 */
-	mii_mediachg(&sc->mii);
+	if ((error = ether_mediachange(ifp)) != 0)
+		goto out;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1450,64 +1453,24 @@ rtk_init(struct ifnet *ifp)
 	return error;
 }
 
-/*
- * Set media options.
- */
-STATIC int
-rtk_ifmedia_upd(struct ifnet *ifp)
-{
-	struct rtk_softc *sc;
-
-	sc = ifp->if_softc;
-
-	return mii_mediachg(&sc->mii);
-}
-
-/*
- * Report current media status.
- */
-STATIC void
-rtk_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct rtk_softc *sc;
-
-	sc = ifp->if_softc;
-
-	mii_pollstat(&sc->mii);
-	ifmr->ifm_status = sc->mii.mii_media_status;
-	ifmr->ifm_active = sc->mii.mii_media_active;
-}
-
 STATIC int
 rtk_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct rtk_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
-
-	switch (command) {
-	case SIOCGIFMEDIA:
-	case SIOCSIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->mii.mii_media, command);
-		break;
-
-	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING) {
-				/*
-				 * Multicast list has changed.  Set the
-				 * hardware filter accordingly.
-				 */
-				rtk_setmulti(sc);
-			}
-			error = 0;
+	error = ether_ioctl(ifp, command, data);
+	if (error == ENETRESET) {
+		if (ifp->if_flags & IFF_RUNNING) {
+			/*
+			 * Multicast list has changed.  Set the
+			 * hardware filter accordingly.
+			 */
+			rtk_setmulti(sc);
 		}
-		break;
+		error = 0;
 	}
-
 	splx(s);
 
 	return error;

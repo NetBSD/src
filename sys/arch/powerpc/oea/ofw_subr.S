@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.S,v 1.5 2007/10/17 19:56:43 garbled Exp $	*/
+/*	$NetBSD: ofw_subr.S,v 1.5.2.1 2008/02/18 21:04:58 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,39 +58,39 @@ GLOBAL(ofwreal_incharge)
  */
 ENTRY_NOPROFILE(ofwinit)
 #ifdef	FIRMWORKSBUGS
-	mfmsr	0
-	andi.	0,0,PSL_IR|PSL_DR
+	mfmsr	%r0
+	andi.	%r0,%r0,PSL_IR|PSL_DR
 	beq	1f
 
-	li	8,1
-	lis	9,ofwreal_incharge@ha
-	stw	8,ofwreal_incharge@l(9)
+	li	%r8,1
+	lis	%r9,ofwreal_incharge@ha
+	stw	%r8,ofwreal_incharge@l(9)
 
-	mflr	30
+	mflr	%r30
 	bl	_C_LABEL(ofwr_init)
-	mtlr	30
+	mtlr	%r30
 1:
 #endif
-	lis	8,openfirmware_entry@ha
-	stw	5,openfirmware_entry@l(8) /* save client interface handler*/
+	lis	%r8,openfirmware_entry@ha
+	stw	%r5,openfirmware_entry@l(%r8) /* save client interface handler*/
 
-	mfmsr	0
-	lis	9,ofmsr@ha
-	stwu	0,ofmsr@l(9)		/* save initial MSR value */
+	mfmsr	%r0
+	lis	%r9,ofmsr@ha
+	stwu	%r0,ofmsr@l(%r9)		/* save initial MSR value */
 
-        mfsprg  0,0			/* save SPRGs */
-       	stwu	0,4(9)
-        mfsprg  0,1
-       	stwu	0,4(9)
-        mfsprg  0,2
-       	stwu	0,4(9)
-        mfsprg  0,3
-       	stw	0,4(9)
+        mfsprg  %r0,0			/* save SPRGs */
+       	stwu	%r0,4(%r9)
+        mfsprg  %r0,1
+       	stwu	%r0,4(%r9)
+        mfsprg  %r0,2
+       	stwu	%r0,4(%r9)
+        mfsprg  %r0,3
+       	stw	%r0,4(%r9)
 
-	lis	8,OF_buffer@ha
-	addi	8,8,OF_buffer@l
-	lis	9,_C_LABEL(OF_buf)@ha
-	stw	8,_C_LABEL(OF_buf)@l(9)
+	lis	%r8,OF_buffer@ha
+	addi	%r8,%r8,OF_buffer@l
+	lis	%r9,_C_LABEL(OF_buf)@ha
+	stw	%r8,_C_LABEL(OF_buf)@l(%r9)
 
 	blr
 
@@ -99,99 +99,99 @@ ENTRY_NOPROFILE(ofwinit)
  */
 	.text
 ENTRY(openfirmware)
-	mflr	0			/* save return address */
-	stw	0,4(1)
-	stwu	1,-16(1)		/* setup stack frame */
+	mflr	%r0			/* save return address */
+	stw	%r0,4(%r1)
+	stwu	%r1,-16(%r1)		/* setup stack frame */
 
-	lis	4,openfirmware_entry@ha	/* get firmware entry point */
-	lwz	4,openfirmware_entry@l(4)
-	mtlr	4
+	lis	%r4,openfirmware_entry@ha	/* get firmware entry point */
+	lwz	%r4,openfirmware_entry@l(%r4)
+	mtlr	%r4
 
-	mfsprg	5,0			/* save current sprg0 (curcpu) */
-	lis	4,ofwsprg0save@ha
-	addi	4,4,ofwsprg0save@l
-	stw	5,0(4)
+	mfsprg	%r5,0			/* save current sprg0 (curcpu) */
+	lis	%r4,ofwsprg0save@ha
+	addi	%r4,%r4,ofwsprg0save@l
+	stw	%r5,0(%r4)
 
 #ifdef FIRMWORKSBUGS
-	lis	4,ofwreal_incharge@ha
-	lwz	4,ofwreal_incharge@l(4)
-	cmpwi	4,1
+	lis	%r4,ofwreal_incharge@ha
+	lwz	%r4,ofwreal_incharge@l(%r4)
+	cmpwi	%r4,1
 	bne	1f
 	blrl
+	b	4f
 1:
-#else
-	mfmsr	4			/* save msr */
-	stw	4,8(1)
+#endif
+	mfmsr	%r4			/* save msr */
+	stw	%r4,8(%r1)
 
-	li	0,0			/* clear battable translations */
-#if defined (PPC_OEA) && !defined (PPC_OEA64) && !defined (PPC_OEA64_BRIDGE)
-	mtdbatu	2,0
-	mtdbatu	3,0
-	mtibatu	2,0
-	mtibatu	3,0
+	li	%r0,0			/* clear battable translations */
+#if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
+	mtdbatu	2,%r0
+	mtdbatu	3,%r0
+	mtibatu	2,%r0
+	mtibatu	3,%r0
 #endif /* PPC_OEA */
 
-	lis	4,ofwsrsave@ha		/* save current SRs */
-	addi	4,4,ofwsrsave@l
-	li	5,0
-1:	mfsrin	0,5
-	stw	0,0(4)
-	addi	4,4,4
-	addis	5,5,0x10000000@h
-	cmpwi	5,0
+	lis	%r4,ofwsrsave@ha		/* save current SRs */
+	addi	%r4,%r4,ofwsrsave@l
+	li	%r5,0
+1:	mfsrin	%r0,%r5
+	stw	%r0,0(%r4)
+	addi	%r4,%r4,4
+	addis	%r5,%r5,0x10000000@h
+	cmpwi	%r5,0
 	bne	1b
 
-	lis	4,_C_LABEL(ofw_pmap)@ha	/* load OFW SR */
-	addi	4,4,_C_LABEL(ofw_pmap)@l
-	lwz	0,PM_KERNELSR(4)
-	cmpwi	0,0			/* pm_sr[KERNEL_SR] == 0? */
+	lis	%r4,_C_LABEL(ofw_pmap)@ha	/* load OFW SR */
+	addi	%r4,%r4,_C_LABEL(ofw_pmap)@l
+	lwz	%r0,PM_KERNELSR(%r4)
+	cmpwi	%r0,0			/* pm_sr[KERNEL_SR] == 0? */
 	beq	2f			/* then skip (not initialized yet) */
-	li	5,0
-1:	lwz	0,0(4)
-	mtsrin	0,5
-	addi	4,4,4
-	addis	5,5,0x10000000@h
-	cmpwi	5,0
+	li	%r5,0
+1:	lwz	%r0,0(%r4)
+	mtsrin	%r0,%r5
+	addi	%r4,%r4,4
+	addis	%r5,%r5,0x10000000@h
+	cmpwi	%r5,0
 	bne	1b
 2:
-	lis	4,ofmsr@ha		/* Open Firmware msr + sprg[0-3] */
-	lwzu	5,ofmsr+16@l(4)
-	mtsprg	3,5
-	lwzu	5,-4(4)
-	mtsprg	2,5
-	lwzu	5,-4(4)
-	mtsprg	1,5
-	lwzu	5,-4(4)
-	mtsprg	0,5
-	lwz	5,-4(4)
-	mtmsr	5
+	lis	%r4,ofmsr@ha		/* Open Firmware msr + sprg[0-3] */
+	lwzu	%r5,ofmsr+16@l(%r4)
+	mtsprg	3,%r5
+	lwzu	%r5,-4(%r4)
+	mtsprg	2,%r5
+	lwzu	%r5,-4(%r4)
+	mtsprg	1,%r5
+	lwzu	%r5,-4(%r4)
+	mtsprg	0,%r5
+	lwz	%r5,-4(%r4)
+	mtmsr	%r5
 	isync
 
 	blrl				/* call Open Firmware */
 
-	lis	4,ofwsrsave@ha		/* restore saved SRs */
-	addi	4,4,ofwsrsave@l
-	li	5,0
-1:	lwz	0,0(4)
-	mtsrin	0,5
-	addi	4,4,4
-	addis	5,5,0x10000000@h
-	cmpwi	5,0
+	lis	%r4,ofwsrsave@ha	/* restore saved SRs */
+	addi	%r4,%r4,ofwsrsave@l
+	li	%r5,0
+1:	lwz	%r0,0(%r4)
+	mtsrin	%r0,%r5
+	addi	%r4,%r4,4
+	addis	%r5,%r5,0x10000000@h
+	cmpwi	%r5,0
 	bne	1b
 
-	lwz	4,8(1)			/* restore msr */
-	mtmsr	4
+	lwz	%r4,8(%r1)		/* restore msr */
+	mtmsr	%r4
 	isync
-#endif /* FIRMWORKSBUGS */
+4:	
+	lis	%r4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
+	addi	%r4,%r4,ofwsprg0save@l
+	lwz	%r5,0(%r4)
+	mtsprg	0,%r5
 
-	lis	4,ofwsprg0save@ha	/* restore saved sprg0 (curcpu) */
-	addi	4,4,ofwsprg0save@l
-	lwz	5,0(4)
-	mtsprg	0,5
-
-	lwz	1,0(1)			/* and return */
-	lwz	0,4(1)
-	mtlr	0
+	lwz	%r1,0(%r1)		/* and return */
+	lwz	%r0,4(%r1)
+	mtlr	%r0
 	blr
 
 /*
@@ -228,38 +228,38 @@ ENTRY(openfirmware)
  */
 
 ENTRY(ofw_stack)
-	mfmsr	8			/* turn off interrupts */
-	andi.	0,8,~(PSL_EE|PSL_RI)@l
-	mtmsr	0
-	stw	8,4(1)			/* abuse return address slot */
+	mfmsr	%r8			/* turn off interrupts */
+	andi.	%r0,%r8,~(PSL_EE|PSL_RI)@l
+	mtmsr	%r0
+	stw	%r8,4(%r1)		/* abuse return address slot */
 
-	lwz	5,0(1)			/* get length of stack frame */
-	subf	5,1,5
+	lwz	%r5,0(%r1)		/* get length of stack frame */
+	subf	%r5,%r1,%r5
 
-	lis	7,firmstk+NBPG-8@ha
-	addi	7,7,firmstk+NBPG-8@l
-	lis	6,ofw_back@ha
-	addi	6,6,ofw_back@l
-	subf	4,5,7			/* make room for stack frame on
+	lis	%r7,firmstk+NBPG-8@ha
+	addi	%r7,%r7,firmstk+NBPG-8@l
+	lis	%r6,ofw_back@ha
+	addi	%r6,%r6,ofw_back@l
+	subf	%r4,%r5,%r7		/* make room for stack frame on
 					   new stack */
-	stw	6,-4(7)			/* setup return pointer */
-	stwu	1,-8(7)
+	stw	%r6,-4(%r7)		/* setup return pointer */
+	stwu	%r1,-8(%r7)
 
-	stw	7,-8(4)
+	stw	%r7,-8(%r4)
 
-	addi	3,1,8
-	addi	1,4,-8
-	subi	5,5,8
+	addi	%r3,%r1,8
+	addi	%r1,%r4,-8
+	subi	%r5,%r5,8
 
 	b	_C_LABEL(ofbcopy)	/* and copy it */
 
 ofw_back:
-	lwz	1,0(1)			/* get callers original stack pointer */
+	lwz	%r1,0(%r1)		/* get callers original stack pointer */
 
-	lwz	0,4(1)			/* get saved msr from abused slot */
-	mtmsr	0
+	lwz	%r0,4(%r1)		/* get saved msr from abused slot */
+	mtmsr	%r0
 
-	lwz	1,0(1)			/* return */
-	lwz	0,4(1)
-	mtlr	0
+	lwz	%r1,0(%r1)		/* return */
+	lwz	%r0,4(%r1)
+	mtlr	%r0
 	blr

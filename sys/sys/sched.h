@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.40.2.3 2007/12/27 00:46:42 mjf Exp $	*/
+/*	$NetBSD: sched.h,v 1.40.2.4 2008/02/18 21:07:23 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #define	_SYS_SCHED_H_
 
 #include <sys/featuretest.h>
+#include <sys/types.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_multiprocessor.h"
@@ -90,13 +91,43 @@ struct sched_param {
 /*
  * Scheduling policies required by IEEE Std 1003.1-2001
  */
-#define	SCHED_OTHER	0	/* Behavior can be FIFO or RR, or not */
+#define	SCHED_NONE	-1
+#define	SCHED_OTHER	0
 #define	SCHED_FIFO	1
 #define	SCHED_RR	2
 
-/* Other nonstandard policies: */
-
 #if defined(_NETBSD_SOURCE)
+
+/* XXX: Size of the CPU set bitmap */
+#define	CPUSET_SHIFT	5
+#define	CPUSET_MASK	31
+#if MAXCPUS > 32
+#define	CPUSET_SIZE	(MAXCPUS >> CPUSET_SHIFT)
+#else
+#define	CPUSET_SIZE	1
+#endif
+
+/* Bitmap of the CPUs */
+typedef struct {
+	uint32_t	bits[CPUSET_SIZE];
+} cpuset_t;
+
+#define	CPU_ZERO(c)	\
+	(memset(c, 0, sizeof(cpuset_t)))
+
+#define	CPU_ISSET(i, c)	\
+	((1 << (i & CPUSET_MASK)) & (c)->bits[i >> CPUSET_SHIFT])
+
+#define	CPU_SET(i, c)	\
+	((c)->bits[i >> CPUSET_SHIFT] |= 1 << (i & CPUSET_MASK))
+
+#define	CPU_CLR(i, c)	\
+	((c)->bits[i >> CPUSET_SHIFT] &= ~(1 << (i & CPUSET_MASK)))
+
+int	_sched_getaffinity(pid_t, lwpid_t, size_t, void *);
+int	_sched_setaffinity(pid_t, lwpid_t, size_t, void *);
+int	_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
+int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 
 /*
  * CPU states.
@@ -126,8 +157,9 @@ struct sched_param {
 struct schedstate_percpu {
 	/* First set of data is likely to be accessed by other CPUs. */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
-	kmutex_t	spc_lwplock;	/* (: general purpose lock for LWPs */
+	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
+	psetid_t	spc_psid;	/* (: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 
 	/* For the most part, this set of data is CPU-private. */
@@ -163,7 +195,7 @@ struct schedstate_percpu {
 #define	CLONE_VFORK		0x00004000	/* parent blocks until child
 						   exits */
 
-#endif /* !_POSIX_SOURCE && !_XOPEN_SOURCE && !_ANSI_SOURCE */
+#endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL
 

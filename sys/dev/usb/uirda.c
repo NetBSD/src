@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.25.14.1 2007/12/08 18:20:05 mjf Exp $	*/
+/*	$NetBSD: uirda.c,v 1.25.14.2 2008/02/18 21:06:26 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.25.14.1 2007/12/08 18:20:05 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.25.14.2 2008/02/18 21:06:26 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,14 @@ Static const struct usb_devno uirda_devs[] = {
 };
 #define uirda_lookup(v, p) (usb_lookup(uirda_devs, v, p))
 
-USB_DECLARE_DRIVER(uirda);
+int uirda_match(device_t, struct cfdata *, void *);
+void uirda_attach(device_t, device_t, void *);
+void uirda_childdet(device_t, device_t);
+int uirda_detach(device_t, int);
+int uirda_activate(device_t, enum devact);
+extern struct cfdriver uirda_cd;
+CFATTACH_DECL2(uirda, sizeof(struct uirda_softc), uirda_match,
+    uirda_attach, uirda_detach, uirda_activate, NULL, uirda_childdet);
 
 USB_MATCH(uirda)
 {
@@ -312,10 +319,8 @@ USB_DETACH(uirda)
 	}
 	splx(s);
 
-	if (sc->sc_child != NULL) {
+	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-		sc->sc_child = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -326,10 +331,19 @@ USB_DETACH(uirda)
 	return (rv);
 }
 
-int
-uirda_activate(device_ptr_t self, enum devact act)
+void
+uirda_childdet(device_t self, device_t child)
 {
-	struct uirda_softc *sc = (struct uirda_softc *)self;
+	struct uirda_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
+}
+
+int
+uirda_activate(device_t self, enum devact act)
+{
+	struct uirda_softc *sc = device_private(self);
 	int error = 0;
 
 	switch (act) {

@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.31.26.1 2007/12/08 18:18:26 mjf Exp $ */
+/* $NetBSD: hypervisor.c,v 1.31.26.2 2008/02/18 21:05:21 mjf Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -63,7 +63,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31.26.1 2007/12/08 18:18:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31.26.2 2008/02/18 21:05:21 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,7 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.31.26.1 2007/12/08 18:18:26 mjf Exp
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_madt.h>       
 #include <machine/mpconfig.h>
-#include <machine/mpacpi.h>       
+#include <xen/mpacpi.h>       
 #endif
 #ifdef MPBIOS
 #include <machine/mpbiosvar.h>       

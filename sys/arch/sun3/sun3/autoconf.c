@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.70.26.1 2007/12/08 18:18:01 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.70.26.2 2008/02/18 21:05:11 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70.26.1 2007/12/08 18:18:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.70.26.2 2008/02/18 21:05:11 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -163,7 +163,6 @@ bus_print(void *args, const char *name)
 /* This takes the args: name, ctlr, unit */
 typedef struct device * (*findfunc_t)(char *, int, int);
 
-static struct device * find_dev_byname(char *);
 static struct device * net_find (char *, int, int);
 #if NSCSIBUS > 0
 static struct device * scsi_find(char *, int, int);
@@ -250,10 +249,7 @@ cpu_rootconf(void)
 static struct device *
 net_find(char *name, int ctlr, int unit)
 {
-	char tname[16];
-
-	sprintf(tname, "%s%d", name, ctlr);
-	return find_dev_byname(tname);
+	return device_find_by_driver_unit(name, ctlr);
 }
 
 #if NSCSIBUS > 0
@@ -268,10 +264,8 @@ scsi_find(char *name, int ctlr, int unit)
 	struct scsibus_softc *sbsc;
 	struct scsipi_periph *periph;
 	int target, lun;
-	char tname[16];
 
-	sprintf(tname, "scsibus%d", ctlr);
-	scsibus = find_dev_byname(tname);
+	scsibus = device_find_by_driver_unit("scsibus", ctlr);
 	if (scsibus == NULL)
 		return NULL;
 
@@ -280,7 +274,7 @@ scsi_find(char *name, int ctlr, int unit)
 	lun = unit & 7;
 
 	/* Find the device at this target/LUN */
-	sbsc = (struct scsibus_softc *)scsibus;
+	sbsc = device_private(scsibus);
 	periph = scsipi_lookup_periph(sbsc->sc_channel, target, lun);
 	if (periph == NULL)
 		return NULL;
@@ -296,30 +290,7 @@ scsi_find(char *name, int ctlr, int unit)
 static struct device *
 xx_find(char *name, int ctlr, int unit)
 {
-	int diskunit;
-	char tname[16];
-
-	diskunit = (ctlr * 2) + unit;
-	sprintf(tname, "%s%d", name, diskunit);
-	return find_dev_byname(tname);
-}
-
-/*
- * Given a device name, find its struct device
- * XXX - Move this to some common file?
- */
-static struct device *
-find_dev_byname(char *name)
-{
-	struct device *dv;
-
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	    dv = TAILQ_NEXT(dv, dv_list)) {
-		if (!strcmp(dv->dv_xname, name)) {
-			return dv;
-		}
-	}
-	return NULL;
+	return device_find_by_driver_unit(name, ctlr * 2 + unit);
 }
 
 /*

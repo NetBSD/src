@@ -1,4 +1,4 @@
-/* $NetBSD: xbdvar.h,v 1.9 2006/05/05 19:25:26 jld Exp $ */
+/* $NetBSD: xbdvar.h,v 1.9.44.1 2008/02/18 21:05:20 mjf Exp $ */
 
 /*
  *
@@ -34,6 +34,8 @@
 
 #ifndef _XEN_XBDVAR_H_
 #define _XEN_XBDVAR_H_
+
+#include <sys/simplelock.h>
 
 struct xbd_softc {
 	struct device		sc_dev;		/* base device glue */

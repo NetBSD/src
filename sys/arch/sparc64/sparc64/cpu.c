@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.64 2007/10/17 19:57:30 garbled Exp $ */
+/*	$NetBSD: cpu.c,v 1.64.2.1 2008/02/18 21:05:06 mjf Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64 2007/10/17 19:57:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.64.2.1 2008/02/18 21:05:06 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ int ecache_min_line_size;
 int sparc_ncpus = 0;
 struct cpu_info *cpus = NULL;
 
-volatile cpuset_t cpus_active;/* set of active cpus */
+volatile sparc64_cpuset_t cpus_active;/* set of active cpus */
 struct cpu_bootargs *cpu_args;	/* allocated very early in pmap_bootstrap. */
 
 static struct cpu_info *alloc_cpuinfo(u_int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkclock_hb.c,v 1.4 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: mkclock_hb.c,v 1.4.56.1 2008/02/18 21:04:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.4 2005/12/11 12:18:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mkclock_hb.c,v 1.4.56.1 2008/02/18 21:04:53 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -94,6 +94,4 @@ mkclock_hb_attach(struct device *parent, struct device *self, void *aux)
 	mk48txx_attach(sc);
 
 	printf("\n");
-
-	todr_attach(&sc->sc_handle);
 }

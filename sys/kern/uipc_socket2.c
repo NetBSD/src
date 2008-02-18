@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.86 2007/09/25 14:04:07 ad Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.86.4.1 2008/02/18 21:06:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.86 2007/09/25 14:04:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.86.4.1 2008/02/18 21:06:48 mjf Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -168,6 +168,7 @@ sonewconn(struct socket *head, int connstatus)
 	so->so_options = head->so_options &~ SO_ACCEPTCONN;
 	so->so_linger = head->so_linger;
 	so->so_state = head->so_state | SS_NOFDREF;
+	so->so_nbio = head->so_nbio;
 	so->so_proto = head->so_proto;
 	so->so_timeo = head->so_timeo;
 	so->so_pgid = head->so_pgid;
@@ -431,7 +432,7 @@ sbreserve(struct sockbuf *sb, u_long cc, struct socket *so)
 	if (cc == 0 || cc > sb_max_adj)
 		return (0);
 	if (so) {
-		if (l && kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
+		if (kauth_cred_geteuid(l->l_cred) == so->so_uidinfo->ui_uid)
 			maxcc = l->l_proc->p_rlimit[RLIMIT_SBSIZE].rlim_cur;
 		else
 			maxcc = RLIM_INFINITY;
@@ -456,8 +457,7 @@ sbrelease(struct sockbuf *sb, struct socket *so)
 {
 
 	sbflush(sb);
-	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0,
-	    RLIM_INFINITY);
+	(void)chgsbsize(so->so_uidinfo, &sb->sb_hiwat, 0, RLIM_INFINITY);
 	sb->sb_mbmax = 0;
 }
 

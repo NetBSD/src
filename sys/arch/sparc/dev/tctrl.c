@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.43.2.1 2007/11/19 00:46:51 mjf Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.43.2.2 2008/02/18 21:05:03 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.43.2.1 2007/11/19 00:46:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.43.2.2 2008/02/18 21:05:03 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1451,18 +1451,15 @@ tctrl_event_thread(void *v)
 	int s;
 	
 	while (sd == NULL) {
-		for (dv = alldevs.tqh_first; dv; dv = dv->dv_list.tqe_next) {
-			if (strcmp(dv->dv_xname, "sd0") == 0) {
-			    	sd = (struct sd_softc *)dv;
-			}
-			if (le == NULL) {
-				if (strcmp(dv->dv_xname, "le0") == 0)
-					le = (struct lance_softc *)dv;
-			}
-		}
-		if (sd == NULL)
+		dv = device_find_by_xname("sd0");
+		if (dv != NULL)
+			sd = device_private(dv);
+		else
 			tsleep(&sc->sc_events, PWAIT, "probe_disk", hz);
 	}			
+	dv = device_find_by_xname("le0");
+	if (dv != NULL)
+		le = device_private(dv);
 	printf("found %s\n", sd->sc_dev.dv_xname);
 	rcount = sd->sc_dk.dk_stats->io_rxfer;
 	wcount = sd->sc_dk.dk_stats->io_wxfer;

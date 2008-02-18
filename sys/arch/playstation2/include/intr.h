@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.6.2.1 2007/12/08 18:17:34 mjf Exp $	*/
+/*	$NetBSD: intr.h,v 1.6.2.2 2008/02/18 21:04:57 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,9 +40,6 @@
 #define _PLAYSTATION2_INTR_H_
 #ifdef _KERNEL
 
-#include <sys/device.h>
-#include <sys/lock.h>
-#include <sys/queue.h>
 #include <mips/locore.h>
 
 /* Interrupt sharing types. */

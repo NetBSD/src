@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.60 2007/10/08 23:20:38 ad Exp $	*/
+/*	$NetBSD: file.h,v 1.60.4.1 2008/02/18 21:07:23 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -54,14 +54,18 @@ struct stat;
 struct knote;
 
 /*
- * Kernel descriptor table.
- * One entry for each open kernel vnode and socket.
+ * Kernel file descriptor.  One entry for each open kernel vnode and
+ * socket.
+ *
+ * Note that adjacent 'u_short' members within a single word must have
+ * the same locking convention, or must be non-volatile, as sub-word
+ * writes may not be atomic.  If possible, keep this structure smaller
+ * than CACHE_LINE_SIZE on 32-bit architectures.
  */
 struct file {
 	LIST_ENTRY(file) f_list;	/* list of active files */
 	int		f_flag;		/* see fcntl.h */
-	int		f_iflags;	/* internal flags; FIF_* */
-	int		f_advice;	/* access pattern hint; UVM_ADV_* */
+	u_char		f_iflags;	/* internal flags; FIF_* */
 #define	DTYPE_VNODE	1		/* file */
 #define	DTYPE_SOCKET	2		/* communications endpoint */
 #define	DTYPE_PIPE	3		/* pipe */
@@ -71,7 +75,8 @@ struct file {
 #define	DTYPE_MQUEUE	7		/* message queue */
 #define DTYPE_NAMES \
     "0", "file", "socket", "pipe", "kqueue", "misc", "crypto", "mqueue"
-	int		f_type;		/* descriptor type */
+	u_char		f_type;		/* descriptor type */
+	u_short		f_advice;	/* access pattern hint; UVM_ADV_* */
 	u_int		f_count;	/* reference count */
 	u_int		f_msgcount;	/* references from message queue */
 	int		f_usecount;	/* number active users */
@@ -120,22 +125,29 @@ do {									\
 
 /*
  * FILE_USE() must be called with the file lock held.
- * (Typical usage is: `fp = fd_getfile(..); FILE_USE(fp);'
  * and fd_getfile() returns the file locked)
+ * Typical usage is either:
+ *    fp = fd_getfile(..); FILE_USE(fp); ...; FILE_UNUSE(fp, l);
+ * or:
+ *    fp = fd_getfile(..); ...; FILE_UNLOCK(fp);
  */
+
+#define FILE_LOCK(fp) mutex_enter(&(fp)->f_lock)
+#define FILE_UNLOCK(fp) mutex_exit(&(fp)->f_lock)
+
 #define	FILE_USE(fp)							\
 do {									\
 	(fp)->f_usecount++;						\
 	FILE_USE_CHECK((fp), "f_usecount overflow");			\
-	mutex_exit(&(fp)->f_lock);					\
+	FILE_UNLOCK(fp);						\
 } while (/* CONSTCOND */ 0)
 
 #define	FILE_UNUSE_WLOCK(fp, l, havelock)				\
 do {									\
 	if (!(havelock))						\
-		mutex_enter(&(fp)->f_lock);				\
+		FILE_LOCK(fp);						\
 	if ((fp)->f_iflags & FIF_WANTCLOSE) {				\
-		mutex_exit(&(fp)->f_lock);				\
+		FILE_UNLOCK(fp);					\
 		/* Will drop usecount */				\
 		(void) closef((fp), (l));				\
 		break;							\
@@ -143,7 +155,7 @@ do {									\
 		(fp)->f_usecount--;					\
 		FILE_USE_CHECK((fp), "f_usecount underflow");		\
 	}								\
-	mutex_exit(&(fp)->f_lock);					\
+	FILE_UNLOCK(fp);						\
 } while (/* CONSTCOND */ 0)
 #define	FILE_UNUSE(fp, l)		FILE_UNUSE_WLOCK(fp, l, 0)
 #define	FILE_UNUSE_HAVELOCK(fp, l)	FILE_UNUSE_WLOCK(fp, l, 1)
@@ -156,8 +168,8 @@ do {									\
 
 LIST_HEAD(filelist, file);
 extern struct filelist	filehead;	/* head of list of open files */
-extern int		maxfiles;	/* kernel limit on # of open files */
-extern int		nfiles;		/* actual number of open files */
+extern u_int		maxfiles;	/* kernel limit on # of open files */
+extern u_int		nfiles;		/* actual number of open files */
 
 extern const struct fileops vnops;	/* vnode operations for files */
 

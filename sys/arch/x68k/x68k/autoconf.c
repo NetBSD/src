@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.53.2.1 2007/12/08 18:18:07 mjf Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.53.2.2 2008/02/18 21:05:16 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53.2.1 2007/12/08 18:18:07 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.53.2.2 2008/02/18 21:05:16 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "scsibus.h"
@@ -58,7 +58,6 @@ int mbmatch(struct device *, struct cfdata *, void *);
 int x68k_config_found(struct cfdata *, struct device *, void *, cfprint_t);
 
 static struct device *scsi_find(dev_t);
-static struct device *find_dev_byname(const char *);
 
 int x68k_realconfig;
 
@@ -153,7 +152,6 @@ findroot(void)
 {
 	int majdev, unit, part;
 	const char *name;
-	char buf[32];
 
 	if (booted_device)
 		return;
@@ -180,9 +178,7 @@ findroot(void)
 	part = B_PARTITION(bootdev);
 	unit = B_UNIT(bootdev);
 
-	sprintf(buf, "%s%d", name, unit);
-
-	if ((booted_device = find_dev_byname(buf)) != NULL)
+	if ((booted_device = device_find_by_driver_unit(name, unit)) != NULL)
 		booted_partition = part;
 }
 
@@ -242,7 +238,7 @@ scsi_find(dev_t bdev)
 		 */
 		printf("warning: scsi_find: can't get boot interface -- "
 		       "update boot loader\n");
-		scsibus = find_dev_byname("scsibus0");
+		scsibus = device_find_by_xname("scsibus0");
 #else
 		/* can't determine interface type */
 		return NULL;
@@ -271,22 +267,6 @@ scsi_find(dev_t bdev)
 #else
 	return NULL;
 #endif /* NSCSIBUS > 0 */
-}
-
-/*
- * Given a device name, find its struct device
- * XXX - Move this to some common file?
- */
-static struct device *
-find_dev_byname(const char *name)
-{
-	struct device *dv;
-
-	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list))
-		if (!strcmp(dv->dv_xname, name))
-			break;
-
-	return dv;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.10 2007/10/17 19:57:31 garbled Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.10.2.1 2008/02/18 21:05:07 mjf Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,13 +34,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10 2007/10/17 19:57:31 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.10.2.1 2008/02/18 21:05:07 mjf Exp $");
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/simplelock.h>
 
 #include <machine/db_machdep.h>
 
@@ -58,15 +59,15 @@ extern int db_active;
 #endif
 
 /* CPU sets containing halted, paused and resumed cpus */
-static volatile cpuset_t cpus_halted;
-static volatile cpuset_t cpus_paused;
-static volatile cpuset_t cpus_resumed;
+static volatile sparc64_cpuset_t cpus_halted;
+static volatile sparc64_cpuset_t cpus_paused;
+static volatile sparc64_cpuset_t cpus_resumed;
 
 volatile struct ipi_tlb_args ipi_tlb_args;
 
 /* IPI handlers. */
-static int	sparc64_ipi_wait(cpuset_t volatile *, cpuset_t);
-static void	sparc64_ipi_error(const char *, cpuset_t, cpuset_t);
+static int	sparc64_ipi_wait(sparc64_cpuset_t volatile *, sparc64_cpuset_t);
+static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 
 /*
  * This must be locked around all message transactions to ensure only
@@ -160,7 +161,7 @@ sparc64_ipi_init()
  * Send an IPI to all in the list but ourselves.
  */
 void
-sparc64_multicast_ipi(cpuset_t cpuset, ipifunc_t func)
+sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func)
 {
 	struct cpu_info *ci;
 
@@ -243,7 +244,7 @@ sparc64_send_ipi(int upaid, ipifunc_t func)
  * Wait for IPI operation to complete.
  */
 int
-sparc64_ipi_wait(cpuset_t volatile *cpus_watchset, cpuset_t cpus_mask)
+sparc64_ipi_wait(sparc64_cpuset_t volatile *cpus_watchset, sparc64_cpuset_t cpus_mask)
 {
 	int i;
 
@@ -262,7 +263,7 @@ sparc64_ipi_wait(cpuset_t volatile *cpus_watchset, cpuset_t cpus_mask)
 void
 mp_halt_cpus()
 {
-	cpuset_t cpumask, cpuset;
+	sparc64_cpuset_t cpumask, cpuset;
 
 	CPUSET_ASSIGN(cpuset, cpus_active);
 	CPUSET_DEL(cpuset, cpu_number());
@@ -287,7 +288,7 @@ mp_halt_cpus()
 void
 mp_pause_cpus()
 {
-	cpuset_t cpuset;
+	sparc64_cpuset_t cpuset;
 
 	CPUSET_ASSIGN(cpuset, cpus_active);
 	CPUSET_DEL(cpuset, cpu_number());
@@ -310,7 +311,7 @@ mp_pause_cpus()
 void
 mp_resume_cpus()
 {
-	cpuset_t cpuset;
+	sparc64_cpuset_t cpuset;
 
 	CPUSET_CLEAR(cpus_resumed);
 	CPUSET_ASSIGN(cpuset, cpus_paused);
@@ -323,7 +324,7 @@ mp_resume_cpus()
 }
 
 int
-mp_cpu_is_paused(cpuset_t cpunum)
+mp_cpu_is_paused(sparc64_cpuset_t cpunum)
 {
 
 	return CPUSET_HAS(cpus_paused, cpunum);
@@ -390,8 +391,8 @@ smp_tlb_flush_all()
  * Print an error message.
  */
 void
-sparc64_ipi_error(const char *s, cpuset_t cpus_succeeded,
-	cpuset_t cpus_expected)
+sparc64_ipi_error(const char *s, sparc64_cpuset_t cpus_succeeded,
+	sparc64_cpuset_t cpus_expected)
 {
 	int cpuid;
 

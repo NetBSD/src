@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.97.30.1 2007/12/08 18:17:54 mjf Exp $ */
+/*	$NetBSD: intr.c,v 1.97.30.2 2008/02/18 21:05:03 mjf Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.97.30.1 2007/12/08 18:17:54 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.97.30.2 2008/02/18 21:05:03 mjf Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_sparc_arch.h"
@@ -50,17 +50,16 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.97.30.1 2007/12/08 18:17:54 mjf Exp $");
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/cpu.h>
+#include <sys/intr.h>
+#include <sys/simplelock.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <dev/cons.h>
 
-#include <net/netisr.h>
-
-#include <machine/cpu.h>
 #include <machine/ctlreg.h>
 #include <machine/instr.h>
-#include <machine/intr.h>
 #include <machine/trap.h>
 #include <machine/promlib.h>
 
@@ -787,3 +786,10 @@ intr_unlock_kernel(void)
 	KERNEL_UNLOCK_ONE(NULL);
 }
 #endif
+
+bool
+cpu_intr_p(void)
+{
+
+	return curcpu()->ci_idepth != 0;
+}

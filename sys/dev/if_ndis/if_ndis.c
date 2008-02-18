@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/if_ndis/if_ndis.c,v 1.69.2.6 2005/03/31 04:24:36 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.15 2007/10/19 12:00:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ndis.c,v 1.15.2.1 2008/02/18 21:05:50 mjf Exp $");
 #endif
 
 #ifdef __FreeBSD__
@@ -2609,11 +2609,7 @@ ndis_ioctl(ifp, command, data)
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		if (sc->ndis_80211) {
-#ifdef __FreeBSD__		
-			error = ieee80211_ioctl(ifp, command, data);
-#else /* __NetBSD__ */
 			error = ieee80211_ioctl(&sc->ic, command, data);
-#endif
 			if (error == ENETRESET) {
 				ndis_setstate_80211(sc);
 				/*ndis_init(sc);*/
@@ -2623,19 +2619,10 @@ ndis_ioctl(ifp, command, data)
 			error = ifmedia_ioctl(ifp, ifr, &sc->ifmedia, command);
 		break;
 	case SIOCSIFCAP:
-/* TODO: Probrably more needs to be done for SIOCSIFCAP */	
-#ifdef __FreeBSD__
-		ifp->if_capenable = ifr->ifr_reqcap;
-/* 
- * TODO: I couldn't find any equivilent to ifreq.ifr_reqcap for NetBSD, I'm 
- * not sure if TODO  we need it or not 
- */
-		if (ifp->if_capenable & IFCAP_TXCSUM)
-			ifp->if_hwassist = sc->ndis_hwassist;
-		else
-			ifp->if_hwassist = 0;
-#endif			
-		ndis_set_offload(sc);
+		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET) {
+			ndis_set_offload(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFGENERIC:
 	case SIOCSIFGENERIC:

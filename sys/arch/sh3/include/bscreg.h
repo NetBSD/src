@@ -1,4 +1,4 @@
-/*	$NetBSD: bscreg.h,v 1.6 2005/12/11 12:18:58 christos Exp $	*/
+/*	$NetBSD: bscreg.h,v 1.6.56.1 2008/02/18 21:05:00 mjf Exp $	*/
 
 /*-
  * Copyright (C) 1999 SAITOH Masanobu.  All rights reserved.
@@ -63,6 +63,19 @@
 
 #define	BCR1_MASTER		(1 << 30)
 #define	BCR1_BREQEN		(1 << 19)
+
+
+#define BCR2_AREA_WIDTH_MASK	0x3
+#define BCR2_AREA_WIDTH_8	0x1
+#define BCR2_AREA_WIDTH_16	0x2
+#define BCR2_AREA_WIDTH_32	0x3
+
+#define BCR2_AREA1_SHIFT	2
+#define BCR2_AREA2_SHIFT	4
+#define BCR2_AREA3_SHIFT	6
+#define BCR2_AREA4_SHIFT	8
+#define BCR2_AREA5_SHIFT	10
+#define BCR2_AREA6_SHIFT	12
 
 #define	BCR2_PORTEN		(1 << 0)
 

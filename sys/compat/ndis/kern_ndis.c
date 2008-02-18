@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sys/compat/ndis/kern_ndis.c,v 1.60.2.5 2005/04/01 17:14:20 wpaul Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.12.2.1 2007/12/08 18:18:56 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ndis.c,v 1.12.2.2 2008/02/18 21:05:27 mjf Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1203,7 +1203,7 @@ ndis_create_sysctls(arg)
 		}
 
 		/* See if we already have a sysctl with this name */
-/* TODO: Is something like this nesicary in NetBSD?  I'm guessing this
+/* TODO: Is something like this necessary in NetBSD?  I'm guessing this
    TODO: is just checking if any of the information in the .inf file was
    TODO: already determined by FreeBSD's autoconfiguration which seems to
    TODO: add dev.XXX sysctl's beginning with %.  (NetBSD dosen't seem to do this).

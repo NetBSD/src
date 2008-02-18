@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.c,v 1.4 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: bootinfo.c,v 1.4.56.1 2008/02/18 21:04:53 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -77,4 +77,6 @@ bi_add(void *new, int type, int size)
 
 	bi = (struct btinfo_common *)bi_next;
 	bi->next = bi->type = 0;
+
+	bi_size += size;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.122.4.2 2007/12/27 00:46:17 mjf Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.122.4.3 2008/02/18 21:06:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.122.4.2 2007/12/27 00:46:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.122.4.3 2008/02/18 21:06:48 mjf Exp $");
 
 #include "opt_pipe.h"
 
@@ -162,7 +162,7 @@ do_sys_accept(struct lwp *l, int sock, struct mbuf **name, register_t *new_sock)
 		splx(s);
 		return (EINVAL);
 	}
-	if ((so->so_state & SS_NBIO) && so->so_qlen == 0) {
+	if (so->so_nbio && so->so_qlen == 0) {
 		splx(s);
 		return (EWOULDBLOCK);
 	}
@@ -287,7 +287,7 @@ do_sys_connect(struct lwp *l, int s, struct mbuf *nam)
 	error = soconnect(so, nam, l);
 	if (error)
 		goto bad;
-	if ((so->so_state & SS_NBIO) && (so->so_state & SS_ISCONNECTING)) {
+	if (so->so_nbio && (so->so_state & SS_ISCONNECTING)) {
 		error = EINPROGRESS;
 		goto out;
 	}
@@ -538,7 +538,9 @@ do_sys_sendmsg(struct lwp *l, int s, struct msghdr *mp, int flags,
 		MCLAIM(control, so->so_mowner);
 
 	len = auio.uio_resid;
+	KERNEL_LOCK(1, NULL);
 	error = (*so->so_send)(so, to, &auio, NULL, control, flags, l);
+	KERNEL_UNLOCK_ONE(NULL);
 	/* Protocol is responsible for freeing 'control' */
 	control = NULL;
 
@@ -816,8 +818,10 @@ do_sys_recvmsg(struct lwp *l, int s, struct msghdr *mp, struct mbuf **from,
 
 	len = auio.uio_resid;
 	mp->msg_flags &= MSG_USERFLAGS;
+	KERNEL_LOCK(1, NULL);
 	error = (*so->so_receive)(so, from, &auio, NULL, control,
 			  &mp->msg_flags);
+	KERNEL_UNLOCK_ONE(NULL);
 	len -= auio.uio_resid;
 	*retsize = len;
 	if (error != 0 && len != 0

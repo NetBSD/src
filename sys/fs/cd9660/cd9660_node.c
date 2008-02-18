@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_node.c,v 1.17.4.2 2007/12/27 00:45:43 mjf Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.17.4.3 2008/02/18 21:06:35 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.17.4.2 2007/12/27 00:45:43 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_node.c,v 1.17.4.3 2008/02/18 21:06:35 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,7 +154,7 @@ loop:
 			if (flags == 0) {
 				mutex_exit(&cd9660_ihash_lock);
 			} else {
-				simple_lock(&vp->v_interlock);
+				mutex_enter(&vp->v_interlock);
 				mutex_exit(&cd9660_ihash_lock);
 				if (vget(vp, flags | LK_INTERLOCK))
 					goto loop;
@@ -184,7 +184,7 @@ cd9660_ihashins(ip)
 	LIST_INSERT_HEAD(ipp, ip, i_hash);
 	mutex_exit(&cd9660_ihash_lock);
 
-	lockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE, &ip->i_vnode->v_interlock);
+	vlockmgr(&ip->i_vnode->v_lock, LK_EXCLUSIVE);
 }
 
 /*
@@ -209,22 +209,19 @@ cd9660_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
+		bool *a_recycle;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
 	int error = 0;
 
-	if (prtactive && vp->v_usecount != 0)
-		vprint("cd9660_inactive: pushing active", vp);
-
-	ip->i_flag = 0;
-	VOP_UNLOCK(vp, 0);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
-	if (ip->inode.iso_mode == 0)
-		vrecycle(vp, (struct simplelock *)0, curlwp);
+	ip->i_flag = 0;
+	*ap->a_recycle = (ip->inode.iso_mode == 0);
+	VOP_UNLOCK(vp, 0);
 	return error;
 }
 
@@ -242,7 +239,7 @@ cd9660_reclaim(v)
 	struct vnode *vp = ap->a_vp;
 	struct iso_node *ip = VTOI(vp);
 
-	if (prtactive && vp->v_usecount != 0)
+	if (prtactive && vp->v_usecount > 1)
 		vprint("cd9660_reclaim: pushing active", vp);
 	/*
 	 * Remove the inode from its hash chain.

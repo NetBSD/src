@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.25 2007/08/15 12:07:31 ad Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.25.8.1 2008/02/18 21:05:28 mjf Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.25 2007/08/15 12:07:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.25.8.1 2008/02/18 21:05:28 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -200,13 +200,7 @@ netbsd32___sysctl(l, v, retval)
 
 	ktrmib(name, SCARG(uap, namelen));
 
-	/*
-	 * wire old so that copyout() is less likely to fail?
-	 */
-	error = sysctl_lock(l, oldp, savelen);
-	if (error)
-		return (error);
-
+	sysctl_lock(newp != NULL);
 	pnode = &netbsd32_sysctl_root;
 	error = sysctl_locate(l, &name[0], SCARG(uap, namelen), &pnode, NULL);
 	pnode = (error == 0) ? &netbsd32_sysctl_root : NULL;
@@ -214,11 +208,7 @@ netbsd32___sysctl(l, v, retval)
 				oldp, &oldlen,
 				newp, SCARG(uap, newlen),
 				&name[0], l, pnode);
-
-	/*
-	 * release the sysctl lock
-	 */
-	sysctl_unlock(l);
+	sysctl_unlock();
 
 	/*
 	 * reset caller's oldlen, even if we got an error

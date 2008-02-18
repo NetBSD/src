@@ -1,0 +1,5 @@
+# $NetBSD: XEN3PAE_DOMU,v 1.2.4.2 2008/02/18 21:04:37 mjf Exp $
+
+include "arch/i386/conf/XEN3_DOMU"
+
+options 	 PAE

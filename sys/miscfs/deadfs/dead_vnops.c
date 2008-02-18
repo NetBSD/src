@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.45 2007/10/10 20:42:28 ad Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.45.4.1 2008/02/18 21:06:59 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.45 2007/10/10 20:42:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.45.4.1 2008/02/18 21:06:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,6 @@ int	dead_open(void *);
 #define dead_close	genfs_nullop
 int	dead_read(void *);
 int	dead_write(void *);
-#define dead_lease_check genfs_nullop
 #define dead_fcntl	genfs_nullop
 int	dead_ioctl(void *);
 int	dead_poll(void *);
@@ -82,7 +81,6 @@ const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_close_desc, dead_close },		/* close */
 	{ &vop_read_desc, dead_read },			/* read */
 	{ &vop_write_desc, dead_write },		/* write */
-	{ &vop_lease_desc, dead_lease_check },		/* lease */
 	{ &vop_fcntl_desc, dead_fcntl },		/* fcntl */
 	{ &vop_ioctl_desc, dead_ioctl },		/* ioctl */
 	{ &vop_poll_desc, dead_poll },			/* poll */
@@ -300,7 +298,7 @@ dead_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		simple_unlock(&ap->a_vp->v_interlock);
+		mutex_exit(&ap->a_vp->v_interlock);
 
 	return (EFAULT);
 }
@@ -317,13 +315,12 @@ chkvnlock(vp, interlock)
 	int locked = 0;
 
 	if (!interlock)
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 	while (vp->v_iflag & VI_XLOCK) {
-		vp->v_iflag |= VI_XWANT;
-		(void) tsleep(vp, PINOD, "deadchk", 0);
+		vwait(vp, VI_XLOCK);
 		locked = 1;
 	}
-	simple_unlock(&vp->v_interlock);
+	mutex_exit(&vp->v_interlock);
 
 	return (locked);
 }

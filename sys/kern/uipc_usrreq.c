@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.101.4.2 2007/12/27 00:46:17 mjf Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.101.4.3 2008/02/18 21:06:48 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.101.4.2 2007/12/27 00:46:17 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.101.4.3 2008/02/18 21:06:48 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -655,7 +655,6 @@ unp_bind(struct unpcb *unp, struct mbuf *nam, struct lwp *l)
 	VATTR_NULL(&vattr);
 	vattr.va_type = VSOCK;
 	vattr.va_mode = ACCESSPERMS & ~(p->p_cwdi->cwdi_cmask);
-	VOP_LEASE(nd.ni_dvp, l->l_cred, LEASE_WRITE);
 	error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 	if (error)
 		goto bad;
@@ -1006,7 +1005,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 		if ((fp = fd_getfile(fdescp, fd)) == NULL)
 			return (EBADF);
 		/* XXXSMP grab reference to file */
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 	}
 
 	/* Make sure we have room for the struct file pointers */
@@ -1040,7 +1039,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
 		fp = fdescp->fd_ofiles[*--fdp];
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 #ifdef DIAGNOSTIC
 		if (fp->f_iflags & FIF_WANTCLOSE)
 			panic("unp_internalize: file already closed");
@@ -1048,7 +1047,7 @@ unp_internalize(struct mbuf *control, struct lwp *l)
 		*--rp = fp;
 		fp->f_count++;
 		fp->f_msgcount++;
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		unp_rights++;
 	}
 	rw_exit(&fdescp->fd_lock);
@@ -1175,7 +1174,7 @@ unp_gc(void)
 	 */
 	do {
 		LIST_FOREACH(fp, &filehead, f_list) {
-		    	mutex_enter(&fp->f_lock);
+		    	FILE_LOCK(fp);
 		    	if (fp->f_flag & FDEFER) {
 				fp->f_flag &= ~FDEFER;
 				unp_defer--;
@@ -1187,7 +1186,7 @@ unp_gc(void)
 				if (fp->f_count == 0 ||
 				    (fp->f_flag & FMARK) ||
 				    fp->f_count == fp->f_msgcount) {
-				    	mutex_exit(&fp->f_lock);
+				    	FILE_UNLOCK(fp);
 					continue;
 				}
 			}
@@ -1197,7 +1196,7 @@ unp_gc(void)
 			    (so = (struct socket *)fp->f_data) == 0 ||
 			    so->so_proto->pr_domain != &unixdomain ||
 			    (so->so_proto->pr_flags&PR_RIGHTS) == 0) {
-			    	mutex_exit(&fp->f_lock);
+			    	FILE_UNLOCK(fp);
 				continue;
 			}
 #ifdef notdef
@@ -1216,7 +1215,7 @@ unp_gc(void)
 				goto restart;
 			}
 #endif
-		    	mutex_exit(&fp->f_lock);
+		    	FILE_UNLOCK(fp);
 
 			unp_scan(so->so_rcv.sb_mb, unp_mark, 0);
 			/*
@@ -1283,20 +1282,20 @@ unp_gc(void)
 	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
 		nextfp = LIST_NEXT(fp, f_list);
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		if (fp->f_count != 0 &&
 		    fp->f_count == fp->f_msgcount && !(fp->f_flag & FMARK)) {
 			*fpp++ = fp;
 			nunref++;
 			fp->f_count++;
 		}
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 	}
 	mutex_exit(&filelist_lock);
 
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		FILE_USE(fp);
 		if (fp->f_type == DTYPE_SOCKET)
 			sorflush((struct socket *)fp->f_data);
@@ -1304,7 +1303,7 @@ unp_gc(void)
 	}
 	for (i = nunref, fpp = extra_ref; --i >= 0; ++fpp) {
 		fp = *fpp;
-		mutex_enter(&fp->f_lock);
+		FILE_LOCK(fp);
 		FILE_USE(fp);
 		(void) closef(fp, (struct lwp *)0);
 	}
@@ -1362,9 +1361,9 @@ unp_mark(struct file *fp)
 		return;
 
 	/* If we're already deferred, don't screw up the defer count */
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	if (fp->f_flag & (FMARK | FDEFER)) {
-		mutex_exit(&fp->f_lock);
+		FILE_UNLOCK(fp);
 		return;
 	}
 
@@ -1382,7 +1381,7 @@ unp_mark(struct file *fp)
 	} else {
 		fp->f_flag |= FMARK;
 	}
-	mutex_exit(&fp->f_lock);
+	FILE_UNLOCK(fp);
 	return;
 }
 
@@ -1391,10 +1390,10 @@ unp_discard(struct file *fp)
 {
 	if (fp == NULL)
 		return;
-	mutex_enter(&fp->f_lock);
+	FILE_LOCK(fp);
 	fp->f_usecount++;	/* i.e. FILE_USE(fp) sans locking */
 	fp->f_msgcount--;
-	mutex_exit(&fp->f_lock);
+	FILE_UNLOCK(fp);
 	unp_rights--;
 	(void) closef(fp, (struct lwp *)0);
 }

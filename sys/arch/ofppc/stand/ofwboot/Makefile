@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.20 2007/10/17 19:56:13 garbled Exp $
+#	$NetBSD: Makefile,v 1.20.2.1 2008/02/18 21:04:54 mjf Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
 PROG=		ofwboot
-SRCS=		Locore.c alloc.c boot.c ofdev.c net.c netif_of.c vers.c
+SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c vers.c
 CFLAGS+=	-msoft-float -Wno-main -ffreestanding
-#CPPFLAGS+=	-DDEBUG -DNETIF_DEBUG
+#CPPFLAGS+=	-g -DALLOC_TRACE -DDEBUG #-DOFW_DEBUG -DNETIF_DEBUG
+#CPPFLAGS+=	-DOFWDUMP
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
+CPPFLAGS+=	-DHEAP_VARIABLE
 DBG=		-Os -mmultiple
 
 SRCS+=		ofwmagic.S
@@ -68,8 +70,8 @@ vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.X \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -s -N -T ${.CURDIR}/ldscript -Ttext ${RELOC} -Bstatic \
+	    -e ${ENTRY} -o ${PROG}.X ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	mv -f ${PROG}.X ${PROG}
 
 .include <bsd.prog.mk>

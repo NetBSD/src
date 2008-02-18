@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.117.4.2 2007/12/27 00:46:55 mjf Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.117.4.3 2008/02/18 21:07:33 mjf Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.117.4.2 2007/12/27 00:46:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.117.4.3 2008/02/18 21:07:33 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -231,7 +231,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap, register_t *retva
 		if (amap != NULL)
 			amap_lock(amap);
 		if (uobj != NULL)
-			simple_lock(&uobj->vmobjlock);
+			mutex_enter(&uobj->vmobjlock);
 
 		for (/* nothing */; start < lim; start += PAGE_SIZE, vec++) {
 			pgi = 0;
@@ -267,7 +267,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap, register_t *retva
 			(void) subyte(vec, pgi);
 		}
 		if (uobj != NULL)
-			simple_unlock(&uobj->vmobjlock);
+			mutex_exit(&uobj->vmobjlock);
 		if (amap != NULL)
 			amap_unlock(amap);
 	}
@@ -312,6 +312,9 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	struct vnode *vp;
 	void *handle;
 	int error;
+#ifdef PAX_ASLR
+	vaddr_t orig_addr;
+#endif /* PAX_ASLR */
 
 	/*
 	 * first, extract syscall args from the uap.
@@ -323,6 +326,10 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 	flags = SCARG(uap, flags);
 	fd = SCARG(uap, fd);
 	pos = SCARG(uap, pos);
+
+#ifdef PAX_ASLR
+	orig_addr = addr;
+#endif /* PAX_ASLR */
 
 	/*
 	 * Fixup the old deprecated MAP_COPY into MAP_PRIVATE, and
@@ -550,6 +557,10 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 #ifdef PAX_MPROTECT
 	pax_mprotect(l, &prot, &maxprot);
 #endif /* PAX_MPROTECT */
+
+#ifdef PAX_ASLR
+	pax_aslr(l, &addr, orig_addr, flags);
+#endif /* PAX_ASLR */
 
 	/*
 	 * now let kernel internal function uvm_mmap do the work.
@@ -1156,9 +1167,9 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 			 * then mark it as text.
 			 */
 			if (prot & PROT_EXEC) {
-				simple_lock(&uobj->vmobjlock);
+				mutex_enter(&vp->v_interlock);
 				vn_markexec(vp);
-				simple_unlock(&uobj->vmobjlock);
+				mutex_exit(&vp->v_interlock);
 			}
 		} else {
 			int i = maxprot;
@@ -1188,22 +1199,22 @@ uvm_mmap(map, addr, size, prot, maxprot, flags, handle, foff, locklimit)
 		 * with direct I/O.
 		 */
 
-		simple_lock(&vp->v_interlock);
+		mutex_enter(&vp->v_interlock);
 		needwritemap = (vp->v_iflag & VI_WRMAP) == 0 &&
 			(flags & MAP_SHARED) != 0 &&
 			(maxprot & VM_PROT_WRITE) != 0;
 		if ((vp->v_iflag & VI_MAPPED) == 0 || needwritemap) {
 			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_INTERLOCK);
-			simple_lock(&vp->v_interlock);
+			mutex_enter(&vp->v_interlock);
 			vp->v_iflag |= VI_MAPPED;
 			vp->v_vflag |= VV_MAPPED;
 			if (needwritemap) {
 				vp->v_iflag |= VI_WRMAP;
 			}
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 			VOP_UNLOCK(vp, 0);
 		} else
-			simple_unlock(&vp->v_interlock);
+			mutex_exit(&vp->v_interlock);
 	}
 
 	uvmflag = UVM_MAPFLAG(prot, maxprot,

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.17 2007/10/19 12:00:54 ad Exp $ */
+/* $NetBSD: piixpm.c,v 1.17.2.1 2008/02/18 21:05:58 mjf Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -20,6 +20,9 @@
 /*
  * Intel PIIX and compatible Power Management controller driver.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.17.2.1 2008/02/18 21:05:58 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -147,7 +150,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
+	aprint_normal("\n%s: %s (rev. 0x%02x)",
 		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
 	sc->sc_powerhook = powerhook_establish(sc->sc_dev.dv_xname,

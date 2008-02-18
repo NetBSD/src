@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_extern.h,v 1.22.36.1 2007/12/08 18:21:00 mjf Exp $	*/
+/*	$NetBSD: layer_extern.h,v 1.22.36.2 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -92,6 +92,8 @@ int	layerfs_fhtovp(struct mount *, struct fid *, struct vnode **);
 int	layerfs_vptofh(struct vnode *, struct fid *, size_t *);
 int	layerfs_snapshot(struct mount *, struct vnode *,
 			    struct timespec *);
+int	layerfs_renamelock_enter(struct mount *);
+void	layerfs_renamelock_exit(struct mount *);
 
 /* VOP routines */
 int	layer_bypass(void *);

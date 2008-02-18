@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.4 2007/10/17 19:56:47 garbled Exp $	*/
+/*	$NetBSD: clock.c,v 1.4.2.1 2008/02/18 21:04:59 mjf Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4 2007/10/17 19:56:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.4.2.1 2008/02/18 21:04:59 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,10 +76,12 @@ cpu_initclocks(void)
 
 	ticks_per_intr = ticks_per_sec / hz;
 	cpu_timebase = ticks_per_sec;
+#ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601)
 		__asm volatile 
 		    ("mfspr %0,%1" : "=r"(ci->ci_lasttb) : "n"(SPR_RTCL_R));
 	else
+#endif
 		__asm volatile ("mftb %0" : "=r"(ci->ci_lasttb));
 	__asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 	init_powerpc_tc();
@@ -140,12 +142,14 @@ decr_intr(struct clockframe *frame)
 		 * lasttb is used during microtime. Set it to the virtual
 		 * start of this tick interval.
 		 */
-		if ((mfpvr() >> 16) == MPC601) {
+#ifdef PPC_OEA601
+		if ((mfpvr() >> 16) == MPC601)
 			__asm volatile 
 			    ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
-		} else {
+		else
+#endif
 			__asm volatile ("mftb %0" : "=r"(tb));
-		}
+
 		ci->ci_lasttb = tb + ticks - ticks_per_intr;
 
 		/*
@@ -176,6 +180,7 @@ delay(unsigned int n)
 	u_quad_t tb;
 	u_long tbh, tbl, scratch;
 
+#ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601) {
 		u_int32_t rtc[2];
 
@@ -194,7 +199,9 @@ delay(unsigned int n)
 		    : "=&r"(scratch)
 		    : "r"(rtc[0]), "r"(rtc[1]), "n"(SPR_RTCU_R), "n"(SPR_RTCL_R)
 		    : "cr0");
-	} else {
+	} else
+#endif
+	{
 		tb = mftb();
 		tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 		tbh = tb >> 32;
@@ -214,9 +221,11 @@ get_powerpc_timecount(struct timecounter *tc)
 	
 	__asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
 		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+#ifdef PPC_OEA601
 	if ((mfpvr() >> 16) == MPC601)
 		__asm volatile ("mfspr %0,%1" : "=r"(tb) : "n"(SPR_RTCL_R));
 	else
+#endif
 		__asm volatile ("mftb %0" : "=r"(tb));
 	mtmsr(msr);
 
@@ -224,7 +233,7 @@ get_powerpc_timecount(struct timecounter *tc)
 }
 
 void
-init_powerpc_tc()
+init_powerpc_tc(void)
 {
 	/* from machdep initialization */
 	powerpc_timecounter.tc_frequency = ticks_per_sec;

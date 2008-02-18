@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.h,v 1.9.14.1 2007/12/08 18:18:44 mjf Exp $ */
+/*	$NetBSD: linux_machdep.h,v 1.9.14.2 2008/02/18 21:05:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -116,6 +116,7 @@ __END_DECLS
 #define LINUX_UNAME_ARCH MACHINE_ARCH
 #define LINUX_NPTL
 #define LINUX_LARGEFILE64
+#define LINUX_SHMCTL_FORCEIPC64
 
 /*
  * Used in ugly patch to fake device numbers.
@@ -125,6 +126,5 @@ __END_DECLS
 #define LINUX_PTS_MAJOR                3
 /* Major device numbers of VT device on both Linux and NetBSD. */
 #define LINUX_CONS_MAJOR       4
-
 
 #endif /* _AMD64_LINUX_MACHDEP_H */

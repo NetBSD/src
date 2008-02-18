@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.c,v 1.34 2007/05/17 00:32:01 christos Exp $	*/
+/*	$NetBSD: reboot.c,v 1.34.6.1 2008/02/18 21:04:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n"
 #if 0
 static char sccsid[] = "@(#)reboot.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: reboot.c,v 1.34 2007/05/17 00:32:01 christos Exp $");
+__RCSID("$NetBSD: reboot.c,v 1.34.6.1 2008/02/18 21:04:17 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ main(int argc, char *argv[])
 		 * single-user mode.
 		 */
 		if (errno != ESRCH) {
-			warn("SIGTERM processes");
+			warn("SIGTERM all processes");
 			goto restart;
 		}
 	}
@@ -216,6 +216,7 @@ main(int argc, char *argv[])
 		if (kill(-1, SIGKILL) == -1) {
 			if (errno == ESRCH)
 				break;
+			warn("SIGKILL all processes");
 			goto restart;
 		}
 		if (i > 5) {
@@ -226,6 +227,7 @@ main(int argc, char *argv[])
 	}
 
 	reboot(howto, bootstr);
+	warn("reboot()");
 	/* FALLTHROUGH */
 
 restart:

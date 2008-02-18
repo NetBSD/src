@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.123.4.3 2007/12/27 00:46:01 mjf Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.123.4.4 2008/02/18 21:06:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.3 2007/12/27 00:46:01 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.4 2008/02/18 21:06:46 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.123.4.3 2007/12/27 00:46:01 mjf 
 #include <sys/file.h>
 #include <sys/resourcevar.h>
 #include <sys/malloc.h>
+#include <sys/kmem.h>
 #include <sys/namei.h>
 #include <sys/pool.h>
 #include <sys/proc.h>
@@ -67,6 +68,19 @@ rlim_t maxsmap = MAXSSIZ;
 struct uihashhead *uihashtbl;
 u_long uihash;		/* size of hash table - 1 */
 kmutex_t uihashtbl_lock;
+
+static pool_cache_t plimit_cache;
+static pool_cache_t pstats_cache;
+
+void
+resource_init(void)
+{
+
+	plimit_cache = pool_cache_init(sizeof(struct plimit), 0, 0, 0,
+	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
+	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
+	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
+}
 
 /*
  * Resource controls and accounting.
@@ -280,7 +294,7 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 		return 0;
 
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
-	    p, limp, KAUTH_ARG(which), NULL);
+	    p, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_SET), limp, KAUTH_ARG(which));
 	if (error)
 		return (error);
 
@@ -524,7 +538,7 @@ lim_copy(struct plimit *lim)
 	char *corename;
 	size_t alen, len;
 
-	newlim = pool_get(&plimit_pool, PR_WAITOK);
+	newlim = pool_cache_get(plimit_cache, PR_WAITOK);
 	mutex_init(&newlim->pl_lock, MUTEX_DEFAULT, IPL_NONE);
 	newlim->pl_flags = 0;
 	newlim->pl_refcnt = 1;
@@ -622,7 +636,7 @@ limfree(struct plimit *lim)
 			free(lim->pl_corename, M_TEMP);
 		sv_lim = lim->pl_sv_limit;
 		mutex_destroy(&lim->pl_lock);
-		pool_put(&plimit_pool, lim);
+		pool_cache_put(plimit_cache, lim);
 	} while ((lim = sv_lim) != NULL);
 }
 
@@ -632,7 +646,7 @@ pstatscopy(struct pstats *ps)
 
 	struct pstats *newps;
 
-	newps = pool_get(&pstats_pool, PR_WAITOK);
+	newps = pool_cache_get(pstats_cache, PR_WAITOK);
 
 	memset(&newps->pstat_startzero, 0,
 	(unsigned) ((char *)&newps->pstat_endzero -
@@ -649,7 +663,7 @@ void
 pstatsfree(struct pstats *ps)
 {
 
-	pool_put(&pstats_pool, ps);
+	pool_cache_put(pstats_cache, ps);
 }
 
 /*
@@ -706,11 +720,19 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
-	/* XXX this should be in p_find() */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
-	    ptmp, NULL, NULL, NULL);
+	/* XXX-elad */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 	if (error)
 		return (error);
+
+	if (newp == NULL) {
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_CORENAME, ptmp,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_GET), NULL, NULL);
+		if (error)
+			return (error);
+	}
 
 	/*
 	 * let them modify a temporary copy of the core name
@@ -740,7 +762,7 @@ sysctl_proc_corename(SYSCTLFN_ARGS)
 		goto done;
 
 	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CORENAME,
-	    ptmp, cname, NULL, NULL);
+	    ptmp, KAUTH_ARG(KAUTH_REQ_PROCESS_CORENAME_SET), cname, NULL);
 	if (error)
 		return (error);
 
@@ -803,9 +825,9 @@ sysctl_proc_stop(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
-	/* XXX this should be in p_find() */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
-	    ptmp, NULL, NULL, NULL);
+	/* XXX-elad */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 	if (error)
 		return (error);
 
@@ -875,11 +897,20 @@ sysctl_proc_plimit(SYSCTLFN_ARGS)
 	if (error)
 		return (error);
 
-	/* XXX this should be in p_find() */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE,
-	    ptmp, NULL, NULL, NULL);
+	/* XXX-elad */
+	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_CANSEE, ptmp,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 	if (error)
 		return (error);
+
+	/* Check if we can view limits. */
+	if (newp == NULL) {
+		error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_RLIMIT,
+		    ptmp, KAUTH_ARG(KAUTH_REQ_PROCESS_RLIMIT_GET), &alim,
+		    KAUTH_ARG(which));
+		if (error)
+			return (error);
+	}
 
 	node = *rnode;
 	memcpy(&alim, &ptmp->p_rlimit[limitno], sizeof(alim));
@@ -1016,14 +1047,14 @@ again:
 			mutex_exit(&uihashtbl_lock);
 			if (newuip) {
 				mutex_destroy(&newuip->ui_lock);
-				free(newuip, M_PROC);
+				kmem_free(newuip, sizeof(*newuip));
 			}
 			return uip;
 		}
 	if (newuip == NULL) {
 		mutex_exit(&uihashtbl_lock);
 		/* Must not be called from interrupt context. */
-		newuip = malloc(sizeof(*uip), M_PROC, M_WAITOK | M_ZERO);
+		newuip = kmem_zalloc(sizeof(*newuip), KM_SLEEP);
 		/* XXX this could be IPL_SOFTNET */
 		mutex_init(&newuip->ui_lock, MUTEX_DEFAULT, IPL_VM);
 		goto again;

@@ -1,4 +1,4 @@
-# $NetBSD: XBOX,v 1.10.2.1 2007/11/19 00:46:23 mjf Exp $
+# $NetBSD: XBOX,v 1.10.2.2 2008/02/18 21:04:37 mjf Exp $
 #
 # XBOX -- A basic Microsoft XBox kernel config file.
 #
@@ -14,7 +14,7 @@ options 	MSGBUFSIZE=65536	# for PCI_CONFIG_DUMP space
 
 #options 	NFS_BOOT_RWSIZE=1024	# kue0 USB ethernet has issues here
 
-makeoptions	CPUFLAGS="-march=i686 -mtune=pentiumpro"
+makeoptions 	CPUFLAGS="-march=i686 -mtune=pentiumpro"
 
 options 	TIMER_FREQ=1125000
 options 	XBOX		# kernel support for xbox
@@ -36,7 +36,7 @@ options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600
-#makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions 	DEBUG="-g"	# compile full symbol table
 
 # Compatibility options
 options 	COMPAT_30	# NetBSD 3.0
@@ -72,8 +72,8 @@ options 	NFS_BOOT_DHCP
 #
 # builtin terminal emulations
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
-options		WSDISPLAY_COMPAT_RAWKBD
-options		WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_COMPAT_USL
 # customization of console and kernel output - see dev/wscons/wsdisplayvar.h
 options 	PCDISPLAY_SOFTCURSOR
 
@@ -209,6 +209,10 @@ ulpt*	at uhub? port ? configuration ? interface ?
 # USB Modem
 umodem*	at uhub? port ? configuration ?
 ucom*	at umodem?
+
+# Huawei E220 3G/HSDPA modem
+uhmodem* at uhub? port ? configuration ? interface ?
+ucom*	at uhmodem? portno ?
 
 # USB Mass Storage
 umass*	at uhub? port ? configuration ? interface ?

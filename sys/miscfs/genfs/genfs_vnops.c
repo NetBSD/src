@@ -1,4 +1,37 @@
-/*	$NetBSD: genfs_vnops.c,v 1.158.4.1 2007/12/08 18:21:00 mjf Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.158.4.2 2008/02/18 21:07:00 mjf Exp $	*/
+
+/*-
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the NetBSD
+ *	Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.158.4.1 2007/12/08 18:21:00 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.158.4.2 2008/02/18 21:07:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,56 +252,12 @@ genfs_revoke(void *v)
 		struct vnode *a_vp;
 		int a_flags;
 	} */ *ap = v;
-	struct vnode *vp, *vq;
-	struct lwp *l = curlwp;		/* XXX */
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
 		panic("genfs_revoke: not revokeall");
 #endif
-
-	vp = ap->a_vp;
-	simple_lock(&vp->v_interlock);
-
-	if (vp->v_iflag & VI_ALIASED) {
-		/*
-		 * If a vgone (or vclean) is already in progress,
-		 * wait until it is done and return.
-		 */
-		if (vp->v_iflag & VI_XLOCK) {
-			vp->v_iflag |= VI_XWANT;
-			ltsleep(vp, PINOD|PNORELOCK, "vop_revokeall", 0,
-				&vp->v_interlock);
-			return (0);
-		}
-		/*
-		 * Ensure that vp will not be vgone'd while we
-		 * are eliminating its aliases.
-		 */
-		vp->v_iflag |= VI_XLOCK;
-		simple_unlock(&vp->v_interlock);
-		while (vp->v_iflag & VI_ALIASED) {
-			simple_lock(&spechash_slock);
-			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
-				if (vq->v_rdev != vp->v_rdev ||
-				    vq->v_type != vp->v_type || vp == vq)
-					continue;
-				simple_unlock(&spechash_slock);
-				vgone(vq);
-				break;
-			}
-			if (vq == NULLVP)
-				simple_unlock(&spechash_slock);
-		}
-		/*
-		 * Remove the lock so that vgone below will
-		 * really eliminate the vnode after which time
-		 * vgone will awaken any sleepers.
-		 */
-		simple_lock(&vp->v_interlock);
-		vp->v_iflag &= ~VI_XLOCK;
-	}
-	vgonel(vp, l);
+	vrevoke(ap->a_vp);
 	return (0);
 }
 
@@ -283,8 +272,14 @@ genfs_lock(void *v)
 		int a_flags;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	int flags = ap->a_flags;
 
-	return (lockmgr(vp->v_vnlock, ap->a_flags, &vp->v_interlock));
+	if ((flags & LK_INTERLOCK) != 0) {
+		flags &= ~LK_INTERLOCK;
+		mutex_exit(&vp->v_interlock);
+	}
+
+	return (vlockmgr(vp->v_vnlock, flags));
 }
 
 /*
@@ -299,8 +294,9 @@ genfs_unlock(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockmgr(vp->v_vnlock, ap->a_flags | LK_RELEASE,
-	    &vp->v_interlock));
+	KASSERT(ap->a_flags == 0);
+
+	return (vlockmgr(vp->v_vnlock, LK_RELEASE));
 }
 
 /*
@@ -314,7 +310,7 @@ genfs_islocked(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	return (lockstatus(vp->v_vnlock));
+	return (vlockstatus(vp->v_vnlock));
 }
 
 /*
@@ -334,7 +330,7 @@ genfs_nolock(void *v)
 	 * the interlock here.
 	 */
 	if (ap->a_flags & LK_INTERLOCK)
-		simple_unlock(&ap->a_vp->v_interlock);
+		mutex_exit(&ap->a_vp->v_interlock);
 	return (0);
 }
 
@@ -347,16 +343,6 @@ genfs_nounlock(void *v)
 
 int
 genfs_noislocked(void *v)
-{
-
-	return (0);
-}
-
-/*
- * Local lease check.
- */
-int
-genfs_lease_check(void *v)
 {
 
 	return (0);
@@ -400,39 +386,65 @@ filt_genfsdetach(struct knote *kn)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
 
-	/* XXXLUKEM lock the struct? */
+	mutex_enter(&vp->v_interlock);
 	SLIST_REMOVE(&vp->v_klist, kn, knote, kn_selnext);
+	mutex_exit(&vp->v_interlock);
 }
 
 static int
 filt_genfsread(struct knote *kn, long hint)
 {
 	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	int rv;
 
 	/*
 	 * filesystem is gone, so set the EOF flag and schedule
 	 * the knote for deletion.
 	 */
-	if (hint == NOTE_REVOKE) {
+	switch (hint) {
+	case NOTE_REVOKE:
+		KASSERT(mutex_owned(&vp->v_interlock));
 		kn->kn_flags |= (EV_EOF | EV_ONESHOT);
 		return (1);
+	case 0:
+		mutex_enter(&vp->v_interlock);
+		kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
+		rv = (kn->kn_data != 0);
+		mutex_exit(&vp->v_interlock);
+		return rv;
+	default:
+		KASSERT(mutex_owned(&vp->v_interlock));
+		kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
+		return (kn->kn_data != 0);
 	}
-
-	/* XXXLUKEM lock the struct? */
-	kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
-        return (kn->kn_data != 0);
 }
 
 static int
 filt_genfsvnode(struct knote *kn, long hint)
 {
+	struct vnode *vp = (struct vnode *)kn->kn_hook;
+	int fflags;
 
-	if (kn->kn_sfflags & hint)
-		kn->kn_fflags |= hint;
-	if (hint == NOTE_REVOKE) {
+	switch (hint) {
+	case NOTE_REVOKE:
+		KASSERT(mutex_owned(&vp->v_interlock));
 		kn->kn_flags |= EV_EOF;
+		if ((kn->kn_sfflags & hint) != 0)
+			kn->kn_fflags |= hint;
 		return (1);
+	case 0:
+		mutex_enter(&vp->v_interlock);
+		fflags = kn->kn_fflags;
+		mutex_exit(&vp->v_interlock);
+		break;
+	default:
+		KASSERT(mutex_owned(&vp->v_interlock));
+		if ((kn->kn_sfflags & hint) != 0)
+			kn->kn_fflags |= hint;
+		fflags = kn->kn_fflags;
+		break;
 	}
+
 	return (kn->kn_fflags != 0);
 }
 
@@ -466,8 +478,9 @@ genfs_kqfilter(void *v)
 
 	kn->kn_hook = vp;
 
-	/* XXXLUKEM lock the struct? */
+	mutex_enter(&vp->v_interlock);
 	SLIST_INSERT_HEAD(&vp->v_klist, kn, kn_selnext);
+	mutex_exit(&vp->v_interlock);
 
 	return (0);
 }

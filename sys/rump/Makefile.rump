@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.5 2007/08/25 10:22:31 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.5.12.1 2008/02/18 21:07:18 mjf Exp $
 #
 
 .include <bsd.own.mk>
@@ -17,7 +17,7 @@ CPPFLAGS+=	-I${.CURDIR} -I.
 CFLAGS+=	-ffreestanding
 CPPFLAGS:=	-I${NETBSDSRCDIR}/sys/rump/include ${CPPFLAGS}
 CPPFLAGS+=	-D_KERNEL -DDIAGNOSTIC -I${NETBSDSRCDIR}/common/include
-CPPFLAGS+=	-D_RUMPKERNEL
+CPPFLAGS+=	-D_RUMPKERNEL -DDEBUG
 CPPFLAGS+=	-nostdinc -I${NETBSDSRCDIR}/sys
 .endif
 

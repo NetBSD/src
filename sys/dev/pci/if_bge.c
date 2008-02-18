@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.139.4.2 2007/12/27 00:45:15 mjf Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.139.4.3 2008/02/18 21:05:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.139.4.2 2007/12/27 00:45:15 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.139.4.3 2008/02/18 21:05:56 mjf Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2412,7 +2412,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	const struct bge_product *bp;
 	const struct bge_revision *br;
-	pci_chipset_tag_t	pc = sc->sc_pc;
+	pci_chipset_tag_t	pc;
 	pci_intr_handle_t	ih;
 	const char		*intrstr = NULL;
 	bus_dma_segment_t	seg;
@@ -2442,6 +2442,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Map control/status registers.
 	 */
 	DPRINTFN(5, ("Map control/status regs\n"));
+	pc = sc->sc_pc;
 	command = pci_conf_read(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
 	command |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
 	pci_conf_write(pc, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, command);
@@ -2710,7 +2711,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 			   MII_PHY_ANY, MII_OFFSET_ANY,
 			   MIIF_FORCEANEG|MIIF_DOPAUSE);
 
-		if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
+		if (LIST_EMPTY(&sc->bge_mii.mii_phys)) {
 			aprint_error_dev(sc->bge_dev, "no PHY found!\n");
 			ifmedia_add(&sc->bge_mii.mii_media,
 				    IFM_ETHER|IFM_MANUAL, 0, NULL);
@@ -3179,12 +3180,30 @@ bge_intr(void *xsc)
 	sc = xsc;
 	ifp = &sc->ethercom.ec_if;
 
-#ifdef notdef
-	/* Avoid this for now -- checking this register is expensive. */
-	/* Make sure this is really our interrupt. */
-	if (!(CSR_READ_4(sc, BGE_MISC_LOCAL_CTL) & BGE_MLC_INTR_STATE))
-		return (0);
-#endif
+	/* 
+	 * Ascertain whether the interrupt is from this bge device.
+	 * Do the cheap test first.
+	 */  
+	if ((sc->bge_rdata->bge_status_block.bge_status &
+	    BGE_STATFLAG_UPDATED) == 0) {
+		/*
+		 * Sometimes, the interrupt comes in before the
+		 * DMA update of the status block (performed prior
+		 * to the  interrupt itself) has completed.
+		 * In that case, do the (extremely expensive!)
+		 * PCI-config-space register read.
+		 */
+		uint32_t pcistate =
+		    pci_conf_read(sc->sc_pc, sc->sc_pcitag, BGE_PCI_PCISTATE);
+
+		if (pcistate & BGE_PCISTATE_INTR_STATE)
+			return (0);
+
+	}
+	/*
+	 *  If we reach here, then the interrupt is for us.
+	 */
+
 	/* Ack interrupt and stop others from occuring. */
 	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 1);
 
@@ -3218,8 +3237,10 @@ bge_intr(void *xsc)
 			    BRGPHY_INTRS);
 		}
 	} else {
-		if (sc->bge_rdata->bge_status_block.bge_status &
-		    BGE_STATFLAG_LINKSTATE_CHANGED) {
+		u_int32_t		status;
+
+		status = CSR_READ_4(sc, BGE_MAC_STS);
+		if (status & BGE_MACSTAT_LINK_CHANGED) {
 			sc->bge_link = 0;
 			callout_stop(&sc->bge_timeout);
 			bge_tick(sc);
@@ -3269,7 +3290,6 @@ bge_tick(void *xsc)
 {
 	struct bge_softc *sc = xsc;
 	struct mii_data *mii = &sc->bge_mii;
-	struct ifmedia *ifm = NULL;
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 	int s;
 
@@ -3283,7 +3303,6 @@ bge_tick(void *xsc)
 	}
 
 	if (sc->bge_tbi) {
-		ifm = &sc->bge_ifmedia;
 		if (CSR_READ_4(sc, BGE_MAC_STS) &
 		    BGE_MACSTAT_TBI_PCS_SYNCHED) {
 			sc->bge_link++;
@@ -3924,7 +3943,7 @@ bge_init(struct ifnet *ifp)
 {
 	struct bge_softc *sc = ifp->if_softc;
 	const u_int16_t *m;
-	int s, error;
+	int s, error = 0;
 
 	s = splnet();
 
@@ -3997,16 +4016,18 @@ bge_init(struct ifnet *ifp)
 	BGE_CLRBIT(sc, BGE_PCI_MISC_CTL, BGE_PCIMISCCTL_MASK_PCI_INTR);
 	CSR_WRITE_4(sc, BGE_MBX_IRQ0_LO, 0);
 
-	bge_ifmedia_upd(ifp);
+	if ((error = bge_ifmedia_upd(ifp)) != 0)
+		goto out;
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	splx(s);
-
 	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
 
-	return 0;
+out:
+	splx(s);
+
+	return error;
 }
 
 /*
@@ -4018,6 +4039,7 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	struct bge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->bge_mii;
 	struct ifmedia *ifm = &sc->bge_ifmedia;
+	int rc;
 
 	/* If this is a 1000baseX NIC, enable the TBI port. */
 	if (sc->bge_tbi) {
@@ -4043,9 +4065,9 @@ bge_ifmedia_upd(struct ifnet *ifp)
 	}
 
 	sc->bge_link = 0;
-	mii_mediachg(mii);
-
-	return(0);
+	if ((rc = mii_mediachg(mii)) == ENXIO)
+		return 0;
+	return rc;
 }
 
 /*
@@ -4149,12 +4171,15 @@ bge_ioctl(struct ifnet *ifp, u_long command, void *data)
 		}
 		break;
 	default:
-		error = ether_ioctl(ifp, command, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				bge_setmulti(sc);
-			error = 0;
-		}
+		if ((error = ether_ioctl(ifp, command, data)) != ENETRESET)
+			break;
+
+		error = 0;
+
+		if (command != SIOCADDMULTI && command != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING)
+			bge_setmulti(sc);
 		break;
 	}
 

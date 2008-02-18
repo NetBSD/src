@@ -1,9 +1,7 @@
-/*	$NetBSD: types.h,v 1.6 2007/10/17 19:55:46 garbled Exp $	*/
+/*	$NetBSD: types.h,v 1.6.2.1 2008/02/18 21:04:46 mjf Exp $	*/
 
 #include <mips/types.h>
 
 #define	__HAVE_BOOTINFO_H
-#define	__HAVE_TIMECOUNTER
-#define	__HAVE_GENERIC_TODR
 
 /* MIPS specific options */

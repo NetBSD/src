@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4.2.3 2007/12/27 00:43:26 mjf Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4.2.4 2008/02/18 21:05:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.2.3 2007/12/27 00:43:26 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.2.4 2008/02/18 21:05:17 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -129,6 +129,7 @@ static bool	cpu_resume(device_t);
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
+	bool sc_wasonline;
 };
 
 int mp_cpu_start(struct cpu_info *, paddr_t); 
@@ -148,7 +149,7 @@ CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
 #ifdef TRAPLOG
 struct tlog tlog_primary;
 #endif
-struct cpu_info cpu_info_primary = {
+struct cpu_info cpu_info_primary __aligned(CACHE_LINE_SIZE) = {
 	.ci_dev = 0,
 	.ci_self = &cpu_info_primary,
 	.ci_idepth = -1,
@@ -163,7 +164,7 @@ struct cpu_info *cpu_info_list = &cpu_info_primary;
 static void	cpu_set_tss_gates(struct cpu_info *);
 
 #ifdef i386
-static void	cpu_init_tss(struct i386tss *, void *, void *);
+static void	tss_init(struct i386tss *, void *, void *);
 #endif
 
 #ifdef MULTIPROCESSOR
@@ -269,6 +270,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	struct cpu_softc *sc = (void *) self;
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
+	uintptr_t ptr;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 #endif
@@ -279,7 +281,10 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (caa->cpu_role == CPU_ROLE_AP) {
 		aprint_naive(": Application Processor\n");
-		ci = malloc(sizeof(*ci), M_DEVBUF, M_WAITOK);
+		ptr = (uintptr_t)malloc(sizeof(*ci) + CACHE_LINE_SIZE - 1,
+		    M_DEVBUF, M_WAITOK);
+		ci = (struct cpu_info *)((ptr + CACHE_LINE_SIZE - 1) &
+		    ~(CACHE_LINE_SIZE - 1));
 		memset(ci, 0, sizeof(*ci));
 #if defined(MULTIPROCESSOR)
 		if (cpu_info[cpunum] != NULL) {
@@ -331,6 +336,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			return;
 		}
 #endif
+		cpu_init_tss(ci);
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
 	}
@@ -368,6 +374,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		 * Enable local apic
 		 */
 		lapic_enable();
+		lapic_set_lvt();
 		lapic_calibrate_timer(ci);
 #endif
 #if NIOAPIC > 0
@@ -657,6 +664,7 @@ cpu_hatch(void *v)
 	fpuinit(ci);
 #endif
 	lldt(GSYSSEL(GLDT_SEL, SEL_KPL));
+	ltr(ci->ci_tss_sel);
 
 	cpu_init(ci);
 	cpu_get_tsc_freq(ci);
@@ -732,7 +740,7 @@ cpu_copy_trampoline(void)
 
 #ifdef i386
 static void
-cpu_init_tss(struct i386tss *tss, void *stack, void *func)
+tss_init(struct i386tss *tss, void *stack, void *func)
 {
 	memset(tss, 0, sizeof *tss);
 	tss->tss_esp0 = tss->tss_esp = (int)((char *)stack + USPACE - 16);
@@ -764,7 +772,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 
 	ci->ci_doubleflt_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	cpu_init_tss(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
+	tss_init(&ci->ci_doubleflt_tss, ci->ci_doubleflt_stack,
 	    IDTVEC(tss_trap08));
 	setsegment(&sd, &ci->ci_doubleflt_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
@@ -782,8 +790,7 @@ cpu_set_tss_gates(struct cpu_info *ci)
 	 */
 	ci->ci_ddbipi_stack = (char *)uvm_km_alloc(kernel_map, USPACE, 0,
 	    UVM_KMF_WIRED);
-	cpu_init_tss(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack,
-	    Xintrddbipi);
+	tss_init(&ci->ci_ddbipi_tss, ci->ci_ddbipi_stack, Xintrddbipi);
 
 	setsegment(&sd, &ci->ci_ddbipi_tss, sizeof(struct i386tss) - 1,
 	    SDT_SYS386TSS, SEL_KPL, 0, 0);
@@ -898,6 +905,20 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 }
 #endif	/* __x86_64__ */
 
+void
+cpu_offline_md(void)
+{
+	int s;
+
+	s = splhigh();
+#ifdef __i386__
+	npxsave_cpu(true);
+#else
+	fpusave_cpu(true);
+#endif
+	splx(s);
+}
+
 /* XXX joerg restructure and restart CPUs individually */
 static bool
 cpu_suspend(device_t dv)
@@ -913,10 +934,18 @@ cpu_suspend(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, false);
-	mutex_exit(&cpu_lock);
-	return err == 0;
+	sc->sc_wasonline = !(ci->ci_schedstate.spc_flags & SPCF_OFFLINE);
+
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, false);
+		mutex_exit(&cpu_lock);
+	
+		if (err)
+			return false;
+	}
+
+	return true;
 }
 
 static bool
@@ -924,7 +953,7 @@ cpu_resume(device_t dv)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
-	int err;
+	int err = 0;
 
 	if (ci->ci_flags & CPUF_PRIMARY)
 		return true;
@@ -933,9 +962,11 @@ cpu_resume(device_t dv)
 	if ((ci->ci_flags & CPUF_PRESENT) == 0)
 		return true;
 
-	mutex_enter(&cpu_lock);
-	err = cpu_setonline(ci, true);
-	mutex_exit(&cpu_lock);
+	if (sc->sc_wasonline) {
+		mutex_enter(&cpu_lock);
+		err = cpu_setonline(ci, true);
+		mutex_exit(&cpu_lock);
+	}
 
 	return err == 0;
 }

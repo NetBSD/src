@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.3 2005/12/11 12:16:04 christos Exp $	*/
+/*	$NetBSD: frame.h,v 1.3.56.1 2008/02/18 21:04:18 mjf Exp $	*/
 
 /*
  * Copyright (c) 1999 Ben Harris.
@@ -96,7 +96,7 @@ struct switchframe {
 	register_t	sf_r10;
 	register_t	sf_r11; /* Frame pointer */
 	register_t	sf_r13; /* Stack pointer */
-	register_t	sf_r14; /* Return address */
+	register_t	sf_pc;  /* Return address */
 };
 
 /*

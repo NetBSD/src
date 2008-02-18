@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.71 2007/02/22 06:51:30 thorpej Exp $	   */
+/*	$NetBSD: pmap.h,v 1.71.28.1 2008/02/18 21:05:15 mjf Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -81,6 +81,8 @@
 #ifndef PMAP_H
 #define PMAP_H
 
+#include <sys/simplelock.h>
+
 #include <machine/pte.h>
 #include <machine/mtpr.h>
 #include <machine/pcb.h>
@@ -153,6 +155,7 @@ extern	struct pmap kernel_pmap_store;
  * Real nice (fast) routines to get the virtual address of a physical page
  * (and vice versa).
  */
+#define	PMAP_VTOPHYS(va)	((va) & ~KERNBASE)
 #define PMAP_MAP_POOLPAGE(pa)	((pa) | KERNBASE)
 #define PMAP_UNMAP_POOLPAGE(va) ((va) & ~KERNBASE)
 

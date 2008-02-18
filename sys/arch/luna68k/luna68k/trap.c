@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.49.2.1 2007/12/08 18:17:16 mjf Exp $ */
+/* $NetBSD: trap.c,v 1.49.2.2 2008/02/18 21:04:42 mjf Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,12 +78,11 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.1 2007/12/08 18:17:16 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49.2.2 2008/02/18 21:04:42 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_execfmt.h"
-#include "opt_compat_hpux.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -423,20 +422,7 @@ trap(fp, type, code, v)
 #endif
 
 	case T_ILLINST|T_USER:	/* illegal instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux) {
-			ksi.ksi_addr = (void *)HPUX_ILL_ILLINST_TRAP;
-			ksi.ksi_signo = SIGILL;
-			break;
-		}
-		/* fall through */
-#endif
 	case T_PRIVINST|T_USER:	/* privileged instruction fault */
-#ifdef COMPAT_HPUX
-		if (p->p_emul == &emul_hpux)
-			ksi.ksi_addr = (void *)HPUX_ILL_PRIV_TRAP;
-		else
-#endif
 		ksi.ksi_addr = (void *)(int)fp->f_format;
 				/* XXX was ILL_PRIVIN_FAULT */
 		ksi.ksi_signo = SIGILL;

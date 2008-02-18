@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.10.14.2 2007/12/27 00:44:46 mjf Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.10.14.3 2008/02/18 21:05:32 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -47,11 +47,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10.14.2 2007/12/27 00:44:46 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10.14.3 2008/02/18 21:05:32 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/lock.h>
 #include <sys/proc.h> 
 #include <sys/resourcevar.h>
 #include <sys/systm.h>
@@ -62,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.10.14.2 2007/12/27 00:44:46 mjf Exp $
 #include <sys/atomic.h>
 
 #include <dev/lockstat.h>
+
+#include <machine/lock.h>
 
 #ifndef __HAVE_CPU_COUNTER
 #error CPU counters not available

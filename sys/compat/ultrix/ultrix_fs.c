@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.42.2.2 2007/12/27 00:44:41 mjf Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.42.2.3 2008/02/18 21:05:31 mjf Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.42.2.2 2007/12/27 00:44:41 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.42.2.3 2008/02/18 21:05:31 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 	mutex_enter(&mountlist_lock);
 	for (count = 0, mp = mountlist.cqh_first;
 	    mp != (void*)&mountlist && count < maxcount; mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock)) {
+		if (vfs_trybusy(mp, RW_READER, &mountlist_lock)) {
 			nmp = mp->mnt_list.cqe_next;
 			continue;
 		}
@@ -280,15 +280,17 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 			    strcmp(path, sp->f_mntonname) == 0) {
 				make_ultrix_mntent(sp, &tem);
 				if ((error = copyout((void *)&tem, sfsp,
-						     sizeof(tem))) != 0)
+				    sizeof(tem))) != 0) {
+					vfs_unbusy(mp, false);
 					goto bad;
+				}
 				sfsp++;
 				count++;
 			}
 		}
 		mutex_enter(&mountlist_lock);
 		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	}
 	mutex_exit(&mountlist_lock);
 
@@ -300,7 +302,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 bad:
 	if (path)
 		FREE(path, M_TEMP);
-	return (error);
+	return error;
 }
 
 
@@ -372,9 +374,8 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		struct ultrix_nfs_args una;
 		struct nfs_args na;
 
-		if ((error = copyin(SCARG(uap, data), &una, sizeof una)) !=0) {
-			return (error);
-		}
+		if ((error = copyin(SCARG(uap, data), &una, sizeof(una))) != 0)
+			return error;
 #if 0
 		/*
 		 * This is the only syscall boundary the
@@ -383,7 +384,7 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		 */
 		if ((error = copyin(una.addr, &osa, sizeof osa)) != 0) {
 			printf("ultrix_mount: nfs copyin osa\n");
-			return (error);
+			return error;
 		}
 		sap->sin_family = (u_char)osa.sin_family;
 		sap->sin_len = sizeof(*sap);
@@ -437,5 +438,5 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		    &dummy);
 	}
 
-	return (EINVAL);
+	return EINVAL;
 }

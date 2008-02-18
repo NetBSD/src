@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.2.32.1 2007/12/08 18:17:23 mjf Exp $	*/
+/*	$NetBSD: mutex.h,v 1.2.32.2 2008/02/18 21:04:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -62,8 +62,8 @@ struct kmutex {
 #define	__HAVE_MUTEX_STUBS		1
 #define	__HAVE_SPIN_MUTEX_STUBS		1
 
-#define	MUTEX_RECEIVE(mtx)		mb_read()
-#define	MUTEX_GIVE(mtx)			mb_memory()
+#define	MUTEX_RECEIVE(mtx)		membar_enter()
+#define	MUTEX_GIVE(mtx)			membar_exit()
 
 #define	MUTEX_CAS(p, o, n)		\
     (_atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))

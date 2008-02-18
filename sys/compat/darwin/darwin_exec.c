@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_exec.c,v 1.51 2007/07/01 20:14:17 dsl Exp $ */
+/*	$NetBSD: darwin_exec.c,v 1.51.14.1 2008/02/18 21:05:23 mjf Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include "opt_compat_darwin.h" /* For COMPAT_DARWIN in mach_port.h */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.51 2007/07/01 20:14:17 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_exec.c,v 1.51.14.1 2008/02/18 21:05:23 mjf Exp $");
 
 #include "opt_syscall_debug.h"
 
@@ -219,7 +219,7 @@ exec_darwin_copyargs(l, pack, arginfo, stackp, argp)
 	*stackp = (char *)cpp;
 
 	/* We don't need this anymore */
-	free(pack->ep_emul_arg, M_EXEC);
+	free(pack->ep_emul_arg, M_TEMP);
 	pack->ep_emul_arg = NULL;
 
 	return 0;

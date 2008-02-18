@@ -1,4 +1,4 @@
-/*	$NetBSD: tape.c,v 1.59 2007/02/09 09:36:02 hannken Exp $	*/
+/*	$NetBSD: tape.c,v 1.59.6.1 2008/02/18 21:04:17 mjf Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.9 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: tape.c,v 1.59 2007/02/09 09:36:02 hannken Exp $");
+__RCSID("$NetBSD: tape.c,v 1.59.6.1 2008/02/18 21:04:17 mjf Exp $");
 #endif
 #endif /* not lint */
 
@@ -256,7 +256,7 @@ setup(void)
 	vprintf(stdout, "Verify tape and initialize maps\n");
 #ifdef RRESTORE
 	if (host)
-		mt = rmtopen(magtape, 0);
+		mt = rmtopen(magtape, 0, 0);
 	else
 #endif
 	if (pipein)
@@ -426,7 +426,7 @@ again:
 	}
 #ifdef RRESTORE
 	if (host)
-		mt = rmtopen(magtape, 0);
+		mt = rmtopen(magtape, 0, 0);
 	else
 #endif
 		mt = open(magtape, O_RDONLY, 0);

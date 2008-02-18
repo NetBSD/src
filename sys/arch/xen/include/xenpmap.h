@@ -1,4 +1,4 @@
-/*	$NetBSD: xenpmap.h,v 1.15.34.1 2007/12/08 18:18:22 mjf Exp $	*/
+/*	$NetBSD: xenpmap.h,v 1.15.34.2 2008/02/18 21:05:20 mjf Exp $	*/
 
 /*
  *
@@ -34,172 +34,22 @@
 
 #ifndef _XEN_XENPMAP_H_
 #define _XEN_XENPMAP_H_
+#include "opt_xen.h"
 
 #define	INVALID_P2M_ENTRY	(~0UL)
 
 void xpq_queue_machphys_update(paddr_t, paddr_t);
 void xpq_queue_invlpg(vaddr_t);
-void xpq_queue_pde_update(pd_entry_t *, pd_entry_t);
-void xpq_queue_pte_update(pt_entry_t *, pt_entry_t);
+void xpq_queue_pte_update(paddr_t, pt_entry_t);
 void xpq_queue_pt_switch(paddr_t);
 void xpq_flush_queue(void);
 void xpq_queue_set_ldt(vaddr_t, uint32_t);
 void xpq_queue_tlb_flush(void);
 void xpq_queue_pin_table(paddr_t);
 void xpq_queue_unpin_table(paddr_t);
-int  xpq_update_foreign(pt_entry_t *, pt_entry_t, int);
+int  xpq_update_foreign(paddr_t, pt_entry_t, int);
 
-extern paddr_t *xpmap_phys_to_machine_mapping;
-
-#ifndef XEN
-#define	PDE_GET(_pdp)						\
-	*(_pdp)
-#define PDE_SET(_pdp,_mapdp,_npde)				\
-	*(_mapdp) = (_npde)
-#define PDE_CLEAR(_pdp,_mapdp)					\
-	*(_mapdp) = 0
-#define PTE_SET(_ptp,_maptp,_npte)				\
-	*(_maptp) = (_npte)
-#define PTE_CLEAR(_ptp,_maptp)					\
-	*(_maptp) = 0
-#define PTE_ATOMIC_SET(_ptp,_maptp,_npte,_opte)			\
-	(_opte) = atomic_swap_ulong((volatile unsigned long *)(_maptp), (_npte))
-#define PTE_ATOMIC_CLEAR(_ptp,_maptp,_opte)			\
-	(_opte) = atomic_swap_ulong((volatile unsigned long *)((_maptp), 0)
-#define PDE_CLEARBITS(_pdp,_mapdp,_bits)			\
-	*(_mapdp) &= ~(_bits)
-#define PTE_ATOMIC_CLEARBITS(_ptp,_maptp,_bits)			\
-	atomic_and_ulong((volatile unsigned long *)(_maptp), ~(_bits))
-#define PTE_SETBITS(_ptp,_maptp,_bits)				\
-	*(_maptp) |= (_bits)
-#define PTE_ATOMIC_SETBITS(_ptp,_maptp,_bits)			\
-	atomic_or_ulong((volatile unsigned long *)(_maptp), (_bits))
-#else
-paddr_t *xpmap_phys_to_machine_mapping;
-
-#define	PDE_GET(_pdp)						\
-	(pmap_valid_entry(*(_pdp)) ? xpmap_mtop(*(_pdp)) : *(_pdp))
-#define PDE_SET(_pdp,_mapdp,_npde) do {				\
-	int _s = splvm();					\
-	xpq_queue_pde_update((_mapdp), xpmap_ptom((_npde)));	\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PDE_CLEAR(_pdp,_mapdp) do {				\
-	int _s = splvm();					\
-	xpq_queue_pde_update((_mapdp), 0);			\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define	PTE_GET(_ptp)						\
-	(pmap_valid_entry(*(_ptp)) ? xpmap_mtop(*(_ptp)) : *(_ptp))
-#define	PTE_GET_MA(_ptp)					\
-	*(_ptp)
-#define PTE_SET(_ptp,_maptp,_npte) do {				\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_maptp), xpmap_ptom((_npte)));	\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_SET_MA(_ptp,_maptp,_npte) do {			\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_maptp), (_npte));		\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_CLEAR(_ptp,_maptp) do {				\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_maptp), 0);			\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_ATOMIC_SET(_ptp,_maptp,_npte,_opte) do {		\
-	int _s;							\
-	(_opte) = PTE_GET(_ptp);				\
-	_s = splvm();						\
-	xpq_queue_pte_update((_maptp), xpmap_ptom((_npte)));	\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_ATOMIC_SET_MA(_ptp,_maptp,_npte,_opte) do {		\
-	int _s;							\
-	(_opte) = *(_ptp);					\
-	_s = splvm();						\
-	xpq_queue_pte_update((_maptp), (_npte));		\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_ATOMIC_CLEAR(_ptp,_maptp,_opte) do {		\
-	int _s;							\
-	(_opte) = PTE_GET(_ptp);				\
-	_s = splvm();						\
-	xpq_queue_pte_update((_maptp), 0);			\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_ATOMIC_CLEAR_MA(_ptp,_maptp,_opte) do {		\
-	int _s;							\
-	(_opte) = *(_ptp);					\
-	_s = splvm();						\
-	xpq_queue_pte_update((_maptp), 0);			\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PDE_CLEARBITS(_pdp,_mapdp,_bits) do {			\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_mapdp), *(_pdp) & ~((_bits) & ~PG_FRAME)); \
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_CLEARBITS(_ptp,_maptp,_bits) do {			\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_maptp), *(_ptp) & ~((_bits) & ~PG_FRAME)); \
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PDE_ATOMIC_CLEARBITS(_pdp,_mapdp,_bits) do {		\
-	int _s = splvm();					\
-	xpq_queue_pde_update((_mapdp), *(_pdp) & ~((_bits) & ~PG_FRAME)); \
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_ATOMIC_CLEARBITS(_ptp,_maptp,_bits) do {		\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_maptp), *(_ptp) & ~((_bits) & ~PG_FRAME)); \
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_SETBITS(_ptp,_maptp,_bits) do {			\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_maptp), *(_ptp) | ((_bits) & ~PG_FRAME)); \
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PDE_ATOMIC_SETBITS(_pdp,_mapdp,_bits) do {		\
-	int _s = splvm();					\
-	xpq_queue_pde_update((_mapdp), *(_pdp) | ((_bits) & ~PG_FRAME)); \
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PTE_ATOMIC_SETBITS(_ptp,_maptp,_bits) do {		\
-	int _s = splvm();					\
-	xpq_queue_pte_update((_maptp), *(_ptp) | ((_bits) & ~PG_FRAME)); \
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define PDE_COPY(_dpdp,_madpdp,_spdp) do {			\
-	int _s = splvm();					\
-	xpq_queue_pde_update((_madpdp), *(_spdp));		\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-#define	PTE_UPDATES_FLUSH() do {				\
-	int _s = splvm();					\
-	xpq_flush_queue();					\
-	splx(_s);						\
-} while (/*CONSTCOND*/0)
-
-#endif
+extern unsigned long *xpmap_phys_to_machine_mapping;
 
 /*   
  * On Xen-2, the start of the day virual memory starts at KERNTEXTOFF
@@ -232,23 +82,23 @@ xpmap_mtop_masked(paddr_t mpa)
 static __inline paddr_t
 xpmap_ptom(paddr_t ppa)
 {
-	return (xpmap_phys_to_machine_mapping[(ppa -
-	    XPMAP_OFFSET) >> PAGE_SHIFT] << PAGE_SHIFT)
+	return (((paddr_t)xpmap_phys_to_machine_mapping[(ppa -
+	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT)
 		| (ppa & ~PG_FRAME);
 }
 
 static __inline paddr_t
 xpmap_ptom_masked(paddr_t ppa)
 {
-	return (xpmap_phys_to_machine_mapping[(ppa -
-	    XPMAP_OFFSET) >> PAGE_SHIFT] << PAGE_SHIFT);
+	return (((paddr_t)xpmap_phys_to_machine_mapping[(ppa -
+	    XPMAP_OFFSET) >> PAGE_SHIFT]) << PAGE_SHIFT);
 }
 
 #ifdef XEN3
 static inline void
 MULTI_update_va_mapping(
 	multicall_entry_t *mcl, vaddr_t va,
-	paddr_t new_val, unsigned long flags)
+	pt_entry_t new_val, unsigned long flags)
 {
 	mcl->op = __HYPERVISOR_update_va_mapping;
 	mcl->args[0] = va;
@@ -256,8 +106,12 @@ MULTI_update_va_mapping(
 	mcl->args[1] = new_val;
 	mcl->args[2] = flags;
 #else
-	mcl->args[1] = new_val;
+	mcl->args[1] = (new_val & 0xffffffff);
+#ifdef PAE
+	mcl->args[2] = (new_val >> 32);
+#else
 	mcl->args[2] = 0;
+#endif
 	mcl->args[3] = flags;
 #endif
 }
@@ -265,7 +119,7 @@ MULTI_update_va_mapping(
 static inline void
 MULTI_update_va_mapping_otherdomain(
 	multicall_entry_t *mcl, vaddr_t va,
-	paddr_t new_val, unsigned long flags, domid_t domid)
+	pt_entry_t new_val, unsigned long flags, domid_t domid)
 {
 	mcl->op = __HYPERVISOR_update_va_mapping_otherdomain;
 	mcl->args[0] = va;
@@ -274,8 +128,12 @@ MULTI_update_va_mapping_otherdomain(
 	mcl->args[2] = flags;
 	mcl->args[3] = domid;
 #else
-	mcl->args[1] = new_val;   
+	mcl->args[1] = (new_val & 0xffffffff);
+#ifdef PAE
+	mcl->args[2] = (new_val >> 32);
+#else
 	mcl->args[2] = 0;
+#endif
 	mcl->args[3] = flags;
 	mcl->args[4] = domid;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.33.6.2 2007/12/27 00:46:28 mjf Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.33.6.3 2008/02/18 21:07:01 mjf Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.33.6.2 2007/12/27 00:46:28 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.33.6.3 2008/02/18 21:07:01 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.33.6.2 2007/12/27 00:46:28 mjf Exp $");
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
 #include <sys/mutex.h>
+#include <sys/simplelock.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.2 2007/10/17 19:56:46 garbled Exp $ */
+/*	$NetBSD: picvar.h,v 1.2.6.1 2008/02/18 21:04:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.2 2007/10/17 19:56:46 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.2.6.1 2008/02/18 21:04:58 mjf Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -68,6 +68,18 @@ struct intr_source {
 	char is_source[16];
 };
 
+#define OPENPIC_MAX_ISUS	4
+#define OPENPIC_FLAG_DIST	(1<<0)
+#define OPENPIC_FLAG_LE		(1<<1)
+
+struct openpic_ops {
+	struct pic_ops pic;
+	uint32_t flags;
+	int nrofisus;
+	volatile unsigned char **isu;
+	uint8_t *irq_per;
+};
+
 struct i8259_ops {
 	struct pic_ops pic;
 	uint32_t pending_events;
@@ -99,6 +111,7 @@ void pic_finish_setup(void);
 #define PIC_IVR_IBM	0
 #define PIC_IVR_MOT	1
 struct pic_ops *setup_openpic(void *, int);
+struct pic_ops *setup_distributed_openpic(void *, int, void **, int *);
 struct pic_ops *setup_prepivr(int);
 struct pic_ops *setup_i8259(void);
 
@@ -108,6 +121,12 @@ void i8259_enable_irq(struct pic_ops *, int, int);
 void i8259_disable_irq(struct pic_ops *, int);
 void i8259_ack_irq(struct pic_ops *, int);
 int i8259_get_irq(struct pic_ops *);
+
+/* openpic common decls */
+void opic_finish_setup(struct pic_ops *pic);
+void openpic_set_priority(int cpu, int pri);
+int opic_get_irq(struct pic_ops *pic, int mode);
+void opic_ack_irq(struct pic_ops *pic, int irq);
 
 /* IPI handler */
 int cpuintr(void *);

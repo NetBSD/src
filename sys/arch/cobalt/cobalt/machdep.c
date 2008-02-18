@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89.2.2 2007/12/27 00:42:57 mjf Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89.2.3 2008/02/18 21:04:25 mjf Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.2 2007/12/27 00:42:57 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89.2.3 2008/02/18 21:04:25 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -268,7 +268,7 @@ mach_init(unsigned int memsize, u_int bim, char *bip)
 	/* all models have Rm5200, which is CPU_MIPS_DOUBLE_COUNT */
 	curcpu()->ci_cycles_per_hz /= 2;
 	curcpu()->ci_divisor_delay /= 2;
-	MIPS_SET_CI_RECIPRICAL(curcpu());
+	MIPS_SET_CI_RECIPROCAL(curcpu());
 
 	physmem = btoc(memsize - MIPS_KSEG0_START);
 

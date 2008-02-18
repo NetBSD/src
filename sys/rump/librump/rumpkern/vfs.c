@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.17.4.2 2007/12/08 18:21:27 mjf Exp $	*/
+/*	$NetBSD: vfs.c,v 1.17.4.3 2008/02/18 21:07:22 mjf Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,13 +38,17 @@
 #include <sys/namei.h>
 #include <sys/queue.h>
 #include <sys/filedesc.h>
+#include <sys/syscallargs.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
 #include <miscfs/syncfs/syncfs.h>
+#include <miscfs/genfs/genfs.h>
 
 #include "rump_private.h"
 #include "rumpuser.h"
+
+static int rump_vop_lookup(void *);
 
 int (**dead_vnodeop_p)(void *);
 const struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
@@ -70,146 +74,38 @@ const struct vnodeopv_entry_desc fifo_vnodeop_entries[] = {
 const struct vnodeopv_desc fifo_vnodeop_opv_desc =
 	{ &fifo_vnodeop_p, fifo_vnodeop_entries };
 
+int (**rump_vnodeop_p)(void *);
+const struct vnodeopv_entry_desc rump_vnodeop_entries[] = {
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, rump_vop_lookup },
+	{ &vop_lock_desc, genfs_lock },
+	{ &vop_unlock_desc, genfs_unlock },
+	{ NULL, NULL }
+};
+const struct vnodeopv_desc rump_vnodeop_opv_desc =
+	{ &rump_vnodeop_p, rump_vnodeop_entries };
+const struct vnodeopv_desc * const rump_opv_descs[] = {
+	&rump_vnodeop_opv_desc,
+	NULL
+};
+
+vnode_t *specfs_hash[SPECHSZ];
+int (*mountroot)(void);
 
 int
-getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
-	struct vnode **vpp)
-{
-	struct vnode *vp;
-	struct uvm_object *uobj;
-
-	vp = rumpuser_malloc(sizeof(struct vnode), 0);
-	memset(vp, 0, sizeof(struct vnode));
-	vp->v_mount = mp;
-	vp->v_tag = tag;
-	vp->v_op = vops;
-	vp->v_vnlock = &vp->v_lock;
-	vp->v_usecount = 1;
-	simple_lock_init(&vp->v_interlock);
-	TAILQ_INSERT_TAIL(&mp->mnt_vnodelist, vp, v_mntvnodes);
-
-	uobj = &vp->v_uobj;
-	uobj->pgops = &uvm_vnodeops;
-	TAILQ_INIT(&uobj->memq);
-
-	*vpp = vp;
-
-	return 0;
-}
-
-void
-rump_putnode(struct vnode *vp)
+sys_sync(struct lwp *l, const void *v, register_t *rv)
 {
 
-	if (vp->v_specinfo)
-		rumpuser_free(vp->v_specinfo);
-	rumpuser_free(vp);
-}
-
-void
-ungetnewvnode(struct vnode *vp)
-{
-
-	rump_putnode(vp);
+	panic("%s: unimplemented", __func__);
 }
 
 int
-vflush(struct mount *mp, struct vnode *skipvp, int flags)
+dounmount(struct mount *mp, int flags, struct lwp *l)
 {
 
-	return 0;
+	VFS_UNMOUNT(mp, MNT_FORCE);
+	panic("control fd is dead");
 }
-
-void
-vref(struct vnode *vp)
-{
-
-}
-
-int
-vget(struct vnode *vp, int lockflag)
-{
-
-	if (lockflag & LK_TYPE_MASK)
-		vn_lock(vp, (lockflag&LK_TYPE_MASK) | (lockflag&LK_INTERLOCK));
-	if (lockflag & LK_INTERLOCK)
-		simple_unlock(&vp->v_interlock);
-
-	return 0;
-}
-
-void
-vrele(struct vnode *vp)
-{
-
-}
-
-void
-vrele2(struct vnode *vp, int onhead)
-{
-
-}
-
-void
-vput(struct vnode *vp)
-{
-
-	VOP_UNLOCK(vp, 0);
-}
-
-void
-vgone(struct vnode *vp)
-{
-
-	vgonel(vp, curlwp);
-}
-
-void
-vgonel(struct vnode *vp, struct lwp *l)
-{
-
-}
-
-void
-vholdl(struct vnode *vp)
-{
-
-}
-
-void
-holdrelel(struct vnode *vp)
-{
-
-}
-
-int
-vrecycle(struct vnode *vp, struct simplelock *inter_lkp, struct lwp *l)
-{
-	struct mount *mp = vp->v_mount;
-
-	if (vp->v_usecount == 1) {
-		vp->v_usecount = 0;
-		simple_lock(&vp->v_interlock);
-		if (inter_lkp)
-			simple_unlock(inter_lkp);
-		VOP_LOCK(vp, LK_EXCLUSIVE | LK_INTERLOCK);
-		vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		VOP_INACTIVE(vp);
-
-		VOP_RECLAIM(vp);
-		TAILQ_REMOVE(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	}
-
-	return 0;
-}
-
-int
-vcount(struct vnode *vp)
-{
-
-	return 1;
-}
-
 
 int
 vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
@@ -222,6 +118,42 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 }
 
 struct mount mnt_dummy;
+
+static struct vnode *
+rump_makevnode(const char *path, size_t size, enum vtype vt, dev_t rdev)
+{
+	struct vnode *vp;
+	struct rump_specpriv *sp;
+
+	vp = kmem_alloc(sizeof(struct vnode), KM_SLEEP);
+	vp->v_size = vp->v_writesize = size;
+	vp->v_type = vt;
+	if (vp->v_type != VBLK)
+		if (rump_fakeblk_find(path))
+			vp->v_type = VBLK;
+
+	if (vp->v_type != VBLK && vp->v_type != VDIR)
+		panic("rump_makevnode: only VBLK/VDIR vnodes supported");
+
+	if (vp->v_type == VBLK) {
+		spec_node_init(vp, rdev);
+		sp = kmem_alloc(sizeof(struct rump_specpriv), KM_SLEEP);
+		strcpy(sp->rsp_path, path);
+		vp->v_data = sp;
+		vp->v_op = spec_vnodeop_p;
+	} else {
+		vp->v_op = rump_vnodeop_p;
+	}
+	vp->v_mount = &mnt_dummy;
+	vp->v_vnlock = &vp->v_lock;
+	vp->v_usecount = 1;
+	mutex_init(&vp->v_interlock, MUTEX_DEFAULT, IPL_NONE);
+	memset(&vp->v_lock, 0, sizeof(vp->v_lock));
+	rw_init(&vp->v_lock.vl_lock);
+	cv_init(&vp->v_cv, "vnode");
+
+	return vp;
+}
 
 /* from libpuffs, but let's decouple this from that */
 static enum vtype
@@ -248,108 +180,39 @@ mode2vt(mode_t mode)
 	}
 }
 
-static struct vnode *
-makevnode(struct stat *sb, const char *path)
+/*
+ * Simple lookup for faking lookup of device entry for rump file systems 
+ */
+static int
+rump_vop_lookup(void *v)
 {
-	struct vnode *vp;
-	struct rump_specpriv *sp;
-
-	vp = rumpuser_malloc(sizeof(struct vnode), 0);
-	vp->v_size = vp->v_writesize = sb->st_size;
-	vp->v_type = mode2vt(sb->st_mode);
-	if (vp->v_type != VBLK)
-		if (rump_fakeblk_find(path))
-			vp->v_type = VBLK;
-
-	if (vp->v_type != VBLK)
-		panic("namei: only VBLK results supported currently");
-
-	vp->v_specinfo = rumpuser_malloc(sizeof(struct specinfo), 0);
-	vp->v_rdev = sb->st_dev;
-	sp = rumpuser_malloc(sizeof(struct rump_specpriv), 0);
-	strcpy(sp->rsp_path, path);
-	vp->v_data = sp;
-	vp->v_op = spec_vnodeop_p;
-	vp->v_mount = &mnt_dummy;
-	vp->v_vnlock = &vp->v_lock;
-	simple_lock_init(&vp->v_interlock);
-
-	return vp;
-}
-
-int
-namei(struct nameidata *ndp)
-{
-	struct componentname *cnp = &ndp->ni_cnd;
+	struct vop_lookup_args /* {
+		struct vnode *a_dvp;
+		struct vnode **a_vpp;
+		struct componentname *a_cnp;
+	}; */ *ap = v;
+	struct componentname *cnp = ap->a_cnp;
 	struct stat sb_node;
-	struct vnode *vp;
 	int rv, error;
 
-	if (cnp->cn_flags & LOCKPARENT)
-		panic("%s: LOCKPARENT not supported", __func__);
-
-	if ((cnp->cn_flags & HASBUF) == 0)
-		cnp->cn_pnbuf = PNBUF_GET();
-
-	error = copystr(ndp->ni_dirp, cnp->cn_pnbuf,
-	    MAXPATHLEN, &ndp->ni_pathlen);
-
-#if 0
-	/* uh, why did I put this here originally? */
-	if (!error && ndp->ni_pathlen == 1)
-		error = ENOENT;
-#endif
-
-	if (error) {
-		PNBUF_PUT(cnp->cn_pnbuf);
-		ndp->ni_vp = NULL;
-		return error;
-	}
+	/* we handle only some "non-special" cases */
+	KASSERT(cnp->cn_nameiop == LOOKUP);
+	KASSERT((cnp->cn_flags & ISDOTDOT) == 0);
+	KASSERT(cnp->cn_namelen != 0 && cnp->cn_pnbuf[0] != '.');
 
 	if (cnp->cn_flags & FOLLOW)
 		rv = rumpuser_stat(cnp->cn_pnbuf, &sb_node, &error);
 	else
 		rv = rumpuser_lstat(cnp->cn_pnbuf, &sb_node, &error);
-
-	if (rv == -1) {
-		PNBUF_PUT(cnp->cn_pnbuf);
-		return error;
-	}
-
-	vp = makevnode(&sb_node, cnp->cn_pnbuf);
-	if (cnp->cn_flags & LOCKLEAF)
-		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	ndp->ni_vp = vp;
-
-	return 0;
-}
-
-int
-relookup(struct vnode *dvp, struct vnode **vpp, struct componentname *cnp)
-{
-	int error;
-
-	error = VOP_LOOKUP(dvp, vpp, cnp);
-	if (error && error != EJUSTRETURN)
+	if (rv)
 		return error;
 
-	return 0;
-}
+	*ap->a_vpp = rump_makevnode(cnp->cn_pnbuf, sb_node.st_size,
+	    mode2vt(sb_node.st_mode), sb_node.st_rdev);
+	vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE);
+	cnp->cn_consume = strlen(cnp->cn_nameptr + cnp->cn_namelen);
+	cnp->cn_flags &= ~REQUIREDIR;
 
-/*
- * Ok, we can't actually do getcwd() for lvp, so just pretend we can.
- * Currently this is called only from set_statvfs_info().  If would be
- * nice if we could assert on that.
- */
-int
-getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
-	int limit, int flags, struct lwp *l)
-{
-
-	assert(rvp == rootvnode);
-
-	**bpp = '/';
-	(*bpp)--;
 	return 0;
 }
 
@@ -360,39 +223,6 @@ lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 	return 0;
 }
 
-int
-vfs_rootmountalloc(const char *fstypename, const char *devname,
-	struct mount **mpp)
-{
-
-	panic("%s: not supported", __func__);
-}
-
-int
-vfs_busy(struct mount *mp, int flags, kmutex_t *interlck)
-{
-
-	return 0;
-}
-
-void
-vfs_unbusy(struct mount *mp)
-{
-
-	return;
-}
-
-struct vnode *
-checkalias(struct vnode *nvp, dev_t nvp_rdev, struct mount *mp)
-{
-
-	/* Can this cause any funnies? */
-
-	nvp->v_specinfo = rumpuser_malloc(sizeof(struct specinfo), 0);
-	nvp->v_rdev = nvp_rdev;
-	return NULLVP;
-}
-
 void
 fifo_printinfo(struct vnode *vp)
 {
@@ -400,9 +230,10 @@ fifo_printinfo(struct vnode *vp)
 	return;
 }
 
-int
-vfs_mountedon(struct vnode *vp)
+void
+rumpvfs_init()
 {
 
-	return 0;
+	vfs_opv_init(rump_opv_descs);
+	rootvnode = rump_makevnode("/", 0, VDIR, -1);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.61 2007/10/17 19:57:09 garbled Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.61.2.1 2008/02/18 21:05:01 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61 2007/10/17 19:57:09 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.61.2.1 2008/02/18 21:05:01 mjf Exp $");
 
 #include "opt_kstack_debug.h"
 #include "opt_coredump.h"
@@ -223,12 +223,8 @@ sh3_setup_uarea(struct lwp *l)
 		sh_dcache_wbinv_range((vaddr_t)l->l_addr, USPACE);
 	spbase = P1ADDR(spbase);
 #else /* !P1_STACK */
-	/* Prepare u-area PTEs */
-#ifdef SH3
-	if (CPU_IS_SH3)
-		sh3_switch_setup(l);
-#endif
 #ifdef SH4
+	/* Prepare u-area PTEs */
 	if (CPU_IS_SH4)
 		sh4_switch_setup(l);
 #endif

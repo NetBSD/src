@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.43.4.2 2007/12/27 00:45:44 mjf Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.43.4.3 2008/02/18 21:06:39 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.43.4.2 2007/12/27 00:45:44 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.43.4.3 2008/02/18 21:06:39 mjf Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -77,6 +77,7 @@ __KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.43.4.2 2007/12/27 00:45:44 mjf
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/vnode.h>
+#include <miscfs/genfs/genfs.h>
 #include <miscfs/specfs/specdev.h>
 #include <sys/mount.h>
 #include <sys/buf.h>
@@ -126,6 +127,8 @@ struct vfsops filecore_vfsops = {
 	(int (*)(struct mount *, struct vnode *, struct timespec *)) eopnotsupp,
 	vfs_stdextattrctl,
 	(void *)eopnotsupp,		/* vfs_suspendctl */
+	genfs_renamelock_enter,
+	genfs_renamelock_exit,
 	filecore_vnodeopv_descs,
 	0,
 	{ NULL, NULL }
@@ -169,8 +172,7 @@ filecore_mountroot()
 
 	args.flags = FILECOREMNT_ROOT;
 	if ((error = filecore_mountfs(rootvp, mp, p, &args)) != 0) {
-		mp->mnt_op->vfs_refcount--;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		vfs_destroy(mp);
 		return (error);
 	}
@@ -178,7 +180,7 @@ filecore_mountroot()
 	CIRCLEQ_INSERT_TAIL(&mountlist, mp, mnt_list);
 	simple_unlock(&mountlist_slock);
 	(void)filecore_statvfs(mp, &mp->mnt_stat, p);
-	vfs_unbusy(mp);
+	vfs_unbusy(mp, false);
 	return (0);
 }
 #endif
@@ -285,7 +287,6 @@ filecore_mountfs(devvp, mp, l, argp)
 	dev_t dev = devvp->v_rdev;
 	int error = EINVAL;
 	int ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
-	extern struct vnode *rootvp;
 	struct filecore_disc_record *fcdr;
 	unsigned map;
 	unsigned log2secsize;
@@ -293,18 +294,7 @@ filecore_mountfs(devvp, mp, l, argp)
 	if (!ronly)
 		return EROFS;
 
-	/*
-	 * Disallow multiple mounts of the same device.
-	 * Disallow mounting of a device that is currently in use
-	 * (except for root, which might share swap device for miniroot).
-	 * Flush out any old buffers remaining from a previous use.
-	 */
-	if ((error = vfs_mountedon(devvp)) != 0)
-		return error;
-	if (vcount(devvp) > 1 && devvp != rootvp)
-		return EBUSY;
-	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0))
-	    != 0)
+	if ((error = vinvalbuf(devvp, V_SAVE, l->l_cred, l, 0, 0)) != 0)
 		return (error);
 
 	error = VOP_OPEN(devvp, ronly ? FREAD : FREAD|FWRITE, FSCRED);
@@ -587,6 +577,7 @@ filecore_vget(mp, ino, vpp)
 	ip->i_number = ino;
 	ip->i_block = -1;
 	ip->i_parent = -2;
+	genfs_node_init(vp, &filecore_genfsops);
 
 	/*
 	 * Put it onto its hash chain and lock it so that other requests for
@@ -667,7 +658,6 @@ filecore_vget(mp, ino, vpp)
 	 * XXX need generation number?
 	 */
 
-	genfs_node_init(vp, &filecore_genfsops);
 	uvm_vnp_setsize(vp, ip->i_size);
 	*vpp = vp;
 	return (0);

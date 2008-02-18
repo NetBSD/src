@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.74 2007/11/05 20:43:04 ad Exp $ */
+/*	$NetBSD: db_interface.c,v 1.74.2.1 2008/02/18 21:05:03 mjf Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2007/11/05 20:43:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74.2.1 2008/02/18 21:05:03 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.74 2007/11/05 20:43:04 ad Exp $")
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/simplelock.h>
 
 #include <dev/cons.h>
 
@@ -199,8 +200,6 @@ void kdb_kbd_trap(struct trapframe *);
 void db_prom_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_proc_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_dump_pcb(db_expr_t, bool, db_expr_t, const char *);
-void db_lock_cmd(db_expr_t, bool, db_expr_t, const char *);
-void db_simple_lock_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_uvmhistdump(db_expr_t, bool, db_expr_t, const char *);
 #ifdef MULTIPROCESSOR
 void db_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
@@ -449,46 +448,6 @@ db_page_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	    PHYS_TO_VM_PAGE(addr));
 }
 
-void
-db_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
-{
-	struct lock *l;
-
-	if (!have_addr) {
-		db_printf("What lock address?\n");
-		return;
-	}
-
-	l = (struct lock *)addr;
-	db_printf("interlock=%x flags=%x\n waitcount=%x sharecount=%x "
-	    "exclusivecount=%x\n wmesg=%s recurselevel=%x\n",
-	    l->lk_interlock.lock_data, l->lk_flags, l->lk_waitcount,
-	    l->lk_sharecount, l->lk_exclusivecount, l->lk_wmesg,
-	    l->lk_recurselevel);
-}
-
-void
-db_simple_lock_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
-		   const char *modif)
-{
-	struct simplelock *l;
-
-	if (!have_addr) {
-		db_printf("What lock address?\n");
-		return;
-	}
-
-	l = (struct simplelock *)addr;
-	db_printf("lock_data=%d", l->lock_data);
-#ifdef LOCKDEBUG
-	db_printf(" holder=%ld\n"
-	    " last locked=%s:%d\n last unlocked=%s:%d\n",
-	    l->lock_holder, l->lock_file, l->lock_line, l->unlock_file,
-	    l->unlock_line);
-#endif
-	db_printf("\n");
-}
-
 #if defined(MULTIPROCESSOR)
 extern void cpu_debug_dump(void); /* XXX */
 
@@ -546,8 +505,6 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("prom",	db_prom_cmd,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("proc",	db_proc_cmd,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("pcb",	db_dump_pcb,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("lock",	db_lock_cmd,	0,	NULL,NULL,NULL) },
-	{ DDB_ADD_CMD("slock",	db_simple_lock_cmd,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("page",	db_page_cmd,	0,	NULL,NULL,NULL) },
 	{ DDB_ADD_CMD("uvmdump",	db_uvmhistdump,	0,	NULL,NULL,NULL) },
 #ifdef MULTIPROCESSOR

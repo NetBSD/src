@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.16.2.1 2007/12/08 18:17:34 mjf Exp $	*/
+/*	$NetBSD: Locore.c,v 1.16.2.2 2008/02/18 21:04:54 mjf Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include "openfirm.h"
-
+#include <sys/param.h>
 #include <lib/libsa/stand.h>
 
 #include <machine/cpu.h>
@@ -40,48 +40,15 @@
 static int (*openfirmware_entry)(void *);
 static int openfirmware(void *);
 
-static void startup(void *, int, int (*)(void *), char *, int)
-		__attribute__((__used__));
+void startup(void *, int, int (*)(void *), char *, int)
+	__attribute__((__used__));
 static void setup(void);
 
-static int stack[8192/4 + 4] __attribute__((__used__));
-
-__asm(
-"	.text					\n"
-"	.globl	_start				\n"
-"_start:					\n"
-"	li	%r8,0				\n"
-"	li	%r9,0x100			\n"
-"	mtctr	%r9				\n"
-"1:						\n"
-"	dcbf	0,%r8				\n"
-"	icbi	0,%r8				\n"
-"	addi	%r8,%r8,0x20			\n"
-"	bdnz	1b				\n"
-"	sync					\n"
-"	isync					\n"
-"	lis	%r1,stack@ha			\n"
-"	addi	%r1,%r1,stack@l			\n"
-"	addi	%r1,%r1,8192			\n"
-"						\n"
-	/*
-	 * Make sure that .bss is zeroed
-	 */
-"						\n"
-"	li	%r0,0				\n"
-"	lis	%r8,_edata@ha			\n"
-"	addi	%r8,%r8,_edata@l		\n"
-"	lis	%r9,_end@ha			\n"
-"	addi	%r9,%r9,_end@l			\n"
-"						\n"
-"2:	cmpw	0,%r8,%r9			\n"
-"	bge	3f				\n"
-"	stw	%r0,0(%r8)			\n"
-"	addi	%r8,%r8,4			\n"
-"	b	2b				\n"
-"						\n"
-"3:	b	startup				\n"
-);
+/* this pad gets the rodata laignment right, don't EVER fiddle it */
+char *pad __attribute__((__aligned__ (8))) = "pad";
+int stack[8192/4 + 4] __attribute__((__aligned__ (4), __used__));
+char *heapspace __attribute__((__aligned__ (4)));
+char altheap[0x20000] __attribute__((__aligned__ (4)));
 
 static int
 openfirmware(void *arg)
@@ -95,7 +62,7 @@ openfirmware(void *arg)
 	return r;
 }
 
-static void
+void
 startup(void *vpd, int res, int (*openfirm)(void *), char *arg, int argl)
 {
 
@@ -402,6 +369,35 @@ OF_seek(int handle, u_quad_t pos)
 }
 
 void *
+OF_alloc_mem(u_int size)
+{
+	static struct {
+		char *name;
+		int nargs;
+		int nreturns;
+		u_int size;
+		void *baseaddr;
+	} args = {
+		"alloc-mem",
+		1,
+		1,
+	};
+#ifdef OFW_DEBUG
+	printf("alloc-mem %x -> ", size);
+#endif
+	if (openfirmware(&args) == -1) {
+#ifdef OFW_DEBUG
+		printf("lose\n");
+#endif
+		return (void *)-1;
+	}
+#ifdef OFW_DEBUG
+	printf("%p\n", args.baseaddr);
+#endif
+	return args.baseaddr;
+}
+
+void *
 OF_claim(void *virt, u_int size, u_int align)
 {
 	static struct {
@@ -510,7 +506,7 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 	/*
 	 * This is a REALLY dirty hack till the firmware gets this going
 	 */
-#if 1
+#if 0
 	OF_release(virt, size);
 #endif
 	entry(0, 0, openfirmware_entry, arg, len);
@@ -519,6 +515,7 @@ OF_chain(void *virt, u_int size, boot_entry_t entry, void *arg, u_int len)
 
 static int stdin;
 static int stdout;
+static int memory;
 
 static void
 setup(void)
@@ -532,6 +529,14 @@ setup(void)
 	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		OF_exit();
+
+	//printf("Allocating 0x20000 bytes of ram for boot\n");
+	heapspace = OF_claim(0, 0x20000, NBPG);
+	if (heapspace == (char *)-1) {
+		printf("WARNING: Failed to alloc ram, using bss\n");
+		setheap(&altheap, &altheap[0x20000]);
+	} else
+		setheap(heapspace, heapspace+0x20000);
 }
 
 void
@@ -555,3 +560,152 @@ getchar(void)
 			return -1;
 	return ch;
 }
+
+#ifdef OFWDUMP
+
+static int
+OF_peer(int phandle)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		int sibling;
+	} args = {
+		"peer",
+			1,
+			1,
+	};
+	
+	args.phandle = phandle;
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.sibling;
+}
+
+static int
+OF_child(int phandle)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		int child;
+	} args = {
+		"child",
+			1,
+			1,
+	};
+
+	args.phandle = phandle;
+	if (openfirmware(&args) == -1)
+		return 0;
+	return args.child;
+}
+
+int
+OF_nextprop(int handle, const char *prop, void *nextprop)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		const char *prop;
+		char *buf;
+		int flag;
+	} args = {
+		"nextprop",
+			3,
+			1,
+	};
+
+	args.phandle = handle;
+	args.prop = prop;
+	args.buf = nextprop;
+	if (openfirmware(&args) == -1)
+		return -1;
+	return args.flag;
+}
+
+static int
+OF_package_to_path(int phandle, char *buf, int buflen)
+{
+	static struct {
+		const char *name;
+		int nargs;
+		int nreturns;
+		int phandle;
+		char *buf;
+		int buflen;
+		int length;
+	} args = {
+		"package-to-path",
+			3,
+			1,
+	};
+
+	if (buflen > 4096)
+		return -1;
+	args.phandle = phandle;
+	args.buf = buf;
+	args.buflen = buflen;
+	if (openfirmware(&args) < 0)
+		return -1;
+	if (args.length > buflen)
+		args.length = buflen;
+	return args.length;
+}
+
+void
+dump_ofwtree(int node)
+{
+	int peer, child, namelen, dlen, i;
+	char namebuf[33], newnamebuf[33];
+	char path[256], data[256];
+
+	for (peer = node; peer; peer = OF_peer(peer)) {
+		printf("\nnode: 0x%x ", peer);
+		if (OF_package_to_path(peer, path, 512) >= 0)
+			printf("path=%s", path);
+		printf("\n");
+		namebuf[0] = '\0';
+		namelen = OF_nextprop(peer, namebuf, &newnamebuf);
+		while (namelen >= 0) {
+			/*printf("namelen == %d namebuf=%s new=%s\n", namelen,
+			  namebuf, newnamebuf);*/
+			//newnamebuf[namelen] = '\0';
+			strcpy(namebuf, newnamebuf);
+			printf("  %s :", newnamebuf);
+			dlen = OF_getprop(peer, newnamebuf, data, 256);
+			if (dlen > 0) {
+				if (data[0] < 0177)
+					printf(" %s\n", data);
+				else
+					printf("\n");
+				printf("    ");
+				for (i=0; i < dlen && i < 256; i++) {
+					if (data[i] < 0x10)
+						printf("0");
+					printf("%x", data[i]);
+					if ((i+1)%4 == 0)
+						printf(" ");
+					if ((i+1)%32 == 0)
+						printf("\n    ");
+				}
+			}
+			printf("\n");
+			namelen = OF_nextprop(peer, namebuf, &newnamebuf);
+			if (newnamebuf[0] == '\0' ||
+			    strcmp(namebuf, newnamebuf) == 0)
+				break;
+		}
+		child = OF_child(peer);
+		if (child > 0)
+			dump_ofwtree(child);
+	}
+}
+
+#endif /* OFWDUMP */

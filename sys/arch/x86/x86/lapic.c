@@ -1,4 +1,4 @@
-/* $NetBSD: lapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $ */
+/* $NetBSD: lapic.c,v 1.25.2.4 2008/02/18 21:05:17 mjf Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.25.2.4 2008/02/18 21:05:17 mjf Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.25.2.3 2007/12/27 00:43:27 mjf Exp $");
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 #include <x86/x86/tsc.h>
+#include <x86/i82093var.h>
 
 #include <machine/apicvar.h>
 #include <machine/i82489reg.h>
@@ -83,8 +84,6 @@ static void 	lapic_map(paddr_t);
 static void lapic_hwmask(struct pic *, int);
 static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
-
-extern char idt_allocmap[];
 
 struct pic local_pic = {
 	.pic_dev = {
@@ -149,7 +148,7 @@ lapic_set_lvt(void)
 	struct cpu_info *ci = curcpu();
 	int i;
 	struct mp_intr_map *mpi;
-	uint32_t lint0;
+	uint32_t lint0, lint1;
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
@@ -161,14 +160,22 @@ lapic_set_lvt(void)
 #endif
 
 	/*
-	 * Disable ExtINT by default when using I/O APICs.
-	 * XXX mp_nintr > 0 isn't quite the right test for this.
+	 * If an I/O APIC has been attached, assume that it is used instead of
+	 * the 8259A for interrupt delivery.  Otherwise request the LAPIC to
+	 * get external interrupts via LINT0 for the primary CPU.
 	 */
-	if (mp_nintr > 0) {
-		lint0 = i82489_readreg(LAPIC_LVINT0);
+	lint0 = LAPIC_DLMODE_EXTINT;
+	if (nioapics > 0 || !CPU_IS_PRIMARY(curcpu()))
 		lint0 |= LAPIC_LVT_MASKED;
-		i82489_writereg(LAPIC_LVINT0, lint0);
-	}
+	i82489_writereg(LAPIC_LVINT0, lint0);
+
+	/*
+	 * Non Maskable Interrupts are to be delivered to the primary CPU.
+	 */
+	lint1 = LAPIC_DLMODE_NMI;
+	if (!CPU_IS_PRIMARY(curcpu()))
+		lint1 |= LAPIC_LVT_MASKED;
+	i82489_writereg(LAPIC_LVINT1, lint1);
 
 	for (i = 0; i < mp_nintr; i++) {
 		mpi = &mp_intrs[i];
@@ -211,17 +218,17 @@ lapic_boot_init(paddr_t lapic_base)
 	lapic_map(lapic_base);
 
 #ifdef MULTIPROCESSOR
-	idt_allocmap[LAPIC_IPI_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_IPI_VECTOR);
 	idt_vec_set(LAPIC_IPI_VECTOR, Xintr_lapic_ipi);
-	idt_allocmap[LAPIC_TLB_MCAST_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TLB_MCAST_VECTOR);
 	idt_vec_set(LAPIC_TLB_MCAST_VECTOR, Xintr_lapic_tlb_mcast);
-	idt_allocmap[LAPIC_TLB_BCAST_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TLB_BCAST_VECTOR);
 	idt_vec_set(LAPIC_TLB_BCAST_VECTOR, Xintr_lapic_tlb_bcast);
 #endif
-	idt_allocmap[LAPIC_SPURIOUS_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_SPURIOUS_VECTOR);
 	idt_vec_set(LAPIC_SPURIOUS_VECTOR, Xintrspurious);
 
-	idt_allocmap[LAPIC_TIMER_VECTOR] = 1;
+	idt_vec_reserve(LAPIC_TIMER_VECTOR);
 	idt_vec_set(LAPIC_TIMER_VECTOR, Xintr_lapic_ltimer);
 }
 
@@ -348,23 +355,31 @@ lapic_clockintr(void *arg, struct intrframe *frame)
 				fdelta = -fdelta;
 
 			if (fdelta > last_factor[cid] / 10) {
-				printf("cpu%d: freq skew exceeds 10%%: delta %u, factor %u, last %u\n", cid, fdelta, tsc_delta / delta, last_factor[cid]);
+				printf("cpu%d: freq skew exceeds 10%%: delta %u, "
+				    "factor %u, last %u\n", cid, fdelta,
+				    tsc_delta / delta, last_factor[cid]);
 			}
 			factor = tsc_delta / delta;
 		}
 
 		if (ddelta > last_delta[cid] / 10) {
-			printf("cpu%d: tick delta exceeds 10%%: delta %u, last %u, tick %u, last %u, factor %u, last %u\n",
-			       cid, ddelta, last_delta[cid], c_count, last_count[cid], factor, last_factor[cid]);
+			printf("cpu%d: tick delta exceeds 10%%: delta %u, "
+			    "last %u, tick %u, last %u, factor %u, last %u\n",
+			    cid, ddelta, last_delta[cid], c_count,
+			    last_count[cid], factor, last_factor[cid]);
 		}
 
 		if (last_count[cid] > c_count) {
-			printf("cpu%d: tick wrapped/lost: delta %u, tick %u, last %u\n", cid, last_count[cid] - c_count, c_count, last_count[cid]);
+			printf("cpu%d: tick wrapped/lost: delta %u, tick %u, "
+			    "last %u\n", cid, last_count[cid] - c_count,
+			    c_count, last_count[cid]);
 		}
 
 		if (idelta > last_tscdelta[cid] / 10) {
-			printf("cpu%d: TSC delta exceeds 10%%: delta %u, last %u, tsc %u, factor %u, last %u\n", cid, idelta, last_tscdelta[cid], last_tsc[cid],
-				factor, last_factor[cid]);
+			printf("cpu%d: TSC delta exceeds 10%%: delta %u, "
+			    "last %u, tsc %u, factor %u, last %u\n", cid, idelta,
+			    last_tscdelta[cid], last_tsc[cid],
+			    factor, last_factor[cid]);
 		}
  
 		last_factor[cid]   = factor;
@@ -412,9 +427,9 @@ extern void (*initclock_func)(void); /* XXX put in header file */
 void
 lapic_calibrate_timer(struct cpu_info *ci)
 {
-	unsigned int starttick, tick1, tick2, endtick;
-	unsigned int startapic, apic1, apic2, endapic;
-	uint64_t dtick, dapic, tmp;
+	unsigned int seen, delta, initial_i8254, initial_lapic;
+	unsigned int cur_i8254, cur_lapic;
+	uint64_t tmp;
 	int i;
 	char tbuf[9];
 
@@ -428,37 +443,27 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
 	i82489_writereg (LAPIC_ICR_TIMER, 0x80000000);
 
-	starttick = gettick();
-	startapic = lapic_gettick();
+	x86_disable_intr();
 
-	for (i=0; i<hz; i++) {
-		i8254_delay(2);
-		do {
-			tick1 = gettick();
-			apic1 = lapic_gettick();
-		} while (tick1 < starttick);
-		i8254_delay(2);
-		do {
-			tick2 = gettick();
-			apic2 = lapic_gettick();
-		} while (tick2 > starttick);
+	initial_lapic = lapic_gettick();
+	initial_i8254 = gettick();
+
+	for (seen = 0; seen < TIMER_FREQ / 100; seen += delta) {
+		cur_i8254 = gettick();
+		if (cur_i8254 > initial_i8254)
+			delta = rtclock_tval - (cur_i8254 - initial_i8254);
+		else
+			delta = initial_i8254 - cur_i8254;
+		initial_i8254 = cur_i8254;
 	}
+	cur_lapic = lapic_gettick();
 
-	endtick = gettick();
-	endapic = lapic_gettick();
+	x86_enable_intr();
 
-	dtick = hz * rtclock_tval + (starttick-endtick);
-	dapic = startapic-endapic;
+	tmp = initial_lapic - cur_lapic;
+	lapic_per_second = (tmp * TIMER_FREQ + seen / 2) / seen;
 
-	/*
-	 * there are TIMER_FREQ ticks per second.
-	 * in dtick ticks, there are dapic bus clocks.
-	 */
-	tmp = (TIMER_FREQ * dapic) / dtick;
-
-	lapic_per_second = tmp;
-
-	humanize_number(tbuf, sizeof(tbuf), tmp, "Hz", 1000);
+	humanize_number(tbuf, sizeof(tbuf), lapic_per_second, "Hz", 1000);
 
 	aprint_verbose("%s: apic clock running at %s\n",
 	    ci->ci_dev->dv_xname, tbuf);

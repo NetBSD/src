@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.36 2007/08/30 02:17:35 dyoung Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.36.6.1 2008/02/18 21:07:01 mjf Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.36 2007/08/30 02:17:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.36.6.1 2008/02/18 21:07:01 mjf Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -768,10 +768,12 @@ ieee1394_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > IEEE1394MTU)
 			error = EINVAL;
-		else
-			ifp->if_mtu = ifr->ifr_mtu;
+		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
 
+	case SIOCSIFCAP:
+		return ifioctl_common(ifp, cmd, data);
 	default:
 		error = ENOTTY;
 		break;

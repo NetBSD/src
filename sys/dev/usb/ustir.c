@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.20.14.1 2007/12/08 18:20:09 mjf Exp $	*/
+/*	$NetBSD: ustir.c,v 1.20.14.2 2008/02/18 21:06:27 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.20.14.1 2007/12/08 18:20:09 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.20.14.2 2008/02/18 21:06:27 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,14 @@ ustir_dumpdata(u_int8_t const *data, size_t dlen, char const *desc)
 }
 #endif
 
-USB_DECLARE_DRIVER(ustir);
+int ustir_match(device_t, struct cfdata *, void *);
+void ustir_attach(device_t, device_t, void *);
+void ustir_childdet(device_t, device_t);
+int ustir_detach(device_t, int);
+int ustir_activate(device_t, enum devact);
+extern struct cfdriver ustir_cd;
+CFATTACH_DECL2(ustir, sizeof(struct ustir_softc), ustir_match,
+    ustir_attach, ustir_detach, ustir_activate, NULL, ustir_childdet);
 
 USB_MATCH(ustir)
 {
@@ -369,6 +376,15 @@ USB_ATTACH(ustir)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+void
+ustir_childdet(device_t self, device_t child)
+{
+	struct ustir_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
+}
+
 USB_DETACH(ustir)
 {
 	USB_DETACH_START(ustir, sc);
@@ -405,10 +421,8 @@ USB_DETACH(ustir)
 	}
 	splx(s);
 
-	if (sc->sc_child != NULL) {
+	if (sc->sc_child != NULL)
 		rv = config_detach(sc->sc_child, flags);
-		sc->sc_child = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -840,9 +854,9 @@ ustir_start_read(struct ustir_softc *sc)
 }
 
 Static int
-ustir_activate(device_ptr_t self, enum devact act)
+ustir_activate(device_t self, enum devact act)
 {
-	struct ustir_softc *sc = (struct ustir_softc *)self;
+	struct ustir_softc *sc = device_private(self);
 	int error = 0;
 
 	switch (act) {

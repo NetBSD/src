@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpivar.h,v 1.8.6.2 2007/12/27 00:45:19 mjf Exp $    */
+/*  $NetBSD: if_wpivar.h,v 1.8.6.3 2008/02/18 21:05:58 mjf Exp $    */
 
 /*-
  * Copyright (c) 2006
@@ -186,4 +186,6 @@ struct wpi_softc {
 #endif
 
 	bool		is_scanning;
+
+	struct sysctllog	*sc_sysctllog;
 };

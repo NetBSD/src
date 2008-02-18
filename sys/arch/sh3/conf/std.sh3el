@@ -1,0 +1,8 @@
+# $NetBSD: std.sh3el,v 1.1.4.2 2008/02/18 21:05:00 mjf Exp $
+#
+# standard, required NetBSD/sh3 'options' for little endian platforms
+
+include 	"arch/sh3/conf/std.sh3"	# endian-independent sh3 options
+
+makeoptions	ENDIAN="-EL"
+makeoptions	MACHINE_ARCH=sh3el

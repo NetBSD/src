@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_ioctl.c,v 1.7 2007/03/18 21:38:32 dsl Exp $ */
+/*	$NetBSD: linux32_ioctl.c,v 1.7.16.1 2008/02/18 21:05:27 mjf Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.7 2007/03/18 21:38:32 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.7.16.1 2008/02/18 21:05:27 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -53,6 +53,9 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_ioctl.c,v 1.7 2007/03/18 21:38:32 dsl Exp $"
 #include <compat/linux32/common/linux32_sysctl.h>
 #include <compat/linux32/linux32_syscallargs.h>
 
+#include <compat/ossaudio/ossaudio.h>
+#include <compat/ossaudio/ossaudiovar.h>
+
 extern int linux_ioctl_socket(struct lwp *, 
     struct linux_sys_ioctl_args *, register_t *);
 
@@ -66,7 +69,8 @@ linux32_sys_ioctl(l, v, retval)
 		syscallarg(int) fd;
 		syscallarg(netbsd32_u_long) com;
 		syscallarg(netbsd32_charp) data;
-	} */ *uap = v;
+	} */
+	struct oss_sys_ioctl_args ossuap;
 	int group;
 	int error;
 
@@ -80,6 +84,27 @@ linux32_sys_ioctl(l, v, retval)
 	switch(group) {
 	case 'T':
 		error = linux32_ioctl_termios(l, uap, retval);
+		break;
+	case 'M':
+	case 'Q':
+	case 'P':
+		SCARG(&ossuap, fd) = SCARG(uap, fd);
+		SCARG(&ossuap, com) = (u_long)SCARG(uap, com);
+		SCARG(&ossuap, data) = SCARG_P32(uap, data);
+		switch (group) {
+		case 'M':
+			error = oss_ioctl_mixer(l, &ossuap, retval);
+			break;
+		case 'Q':
+			error = oss_ioctl_sequencer(l, &ossuap, retval);
+			break;
+		case 'P':
+			error = oss_ioctl_audio(l, &ossuap, retval);
+			break;
+		default:
+			error = EINVAL; /* shutup gcc */
+			break;
+		}
 		break;
 	case 0x89: {
 		struct linux_sys_ioctl_args cup;

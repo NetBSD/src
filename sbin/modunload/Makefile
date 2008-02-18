@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2005/06/27 01:00:05 christos Exp $
+#	$NetBSD: Makefile,v 1.8.12.1 2008/02/18 21:04:17 mjf Exp $
 #
 # Makefile for modunload
 #
@@ -34,7 +34,19 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 
+.include <bsd.own.mk>
+
+.if ${MKMODULAR} != "no"	# new module framework, remove copyright ^^
+
+PROG=	modunload
+SRCS=	main.c
+MAN=	modunload.8
+
+.else				# LKMS
+
 PROG=	modunload
 MAN=	modunload.8
+
+.endif
 
 .include <bsd.prog.mk>

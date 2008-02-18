@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.249 2007/10/19 12:00:04 ad Exp $ */
+/*	$NetBSD: wdc.c,v 1.249.2.1 2008/02/18 21:05:41 mjf Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.249 2007/10/19 12:00:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.249.2.1 2008/02/18 21:05:41 mjf Exp $");
 
 #include "opt_ata.h"
 
@@ -777,9 +777,10 @@ wdcattach(struct ata_channel *chp)
 }
 
 int
-wdcactivate(struct device *self, enum devact act)
+wdcactivate(device_t self, enum devact act)
 {
-	struct atac_softc *atac = (struct atac_softc *) self;
+	struct atac_softc *atac = device_private(self);
+	struct ata_channel *chp;
 	int s, i, error = 0;
 
 	s = splbio();
@@ -790,8 +791,10 @@ wdcactivate(struct device *self, enum devact act)
 
 	case DVACT_DEACTIVATE:
 		for (i = 0; i < atac->atac_nchannels; i++) {
-			error =
-			    config_deactivate(atac->atac_channels[i]->atabus);
+			chp = atac->atac_channels[i];
+			if (chp->atabus == NULL)
+				continue;
+			error = config_deactivate(chp->atabus);
 			if (error)
 				break;
 		}
@@ -801,30 +804,43 @@ wdcactivate(struct device *self, enum devact act)
 	return (error);
 }
 
-int
-wdcdetach(struct device *self, int flags)
+void
+wdc_childdetached(device_t self, device_t child)
 {
-	struct atac_softc *atac = (struct atac_softc *) self;
+	struct atac_softc *atac = device_private(self);
+	struct ata_channel *chp;
+	int i;
+
+	for (i = 0; i < atac->atac_nchannels; i++) {
+		chp = atac->atac_channels[i];
+		if (child == chp->atabus) {
+			chp->atabus = NULL;
+			return;
+		}
+	}
+}
+
+int
+wdcdetach(device_t self, int flags)
+{
+	struct atac_softc *atac = device_private(self);
 	struct ata_channel *chp;
 	struct scsipi_adapter *adapt = &atac->atac_atapi_adapter._generic;
 	int i, error = 0;
 
 	for (i = 0; i < atac->atac_nchannels; i++) {
 		chp = atac->atac_channels[i];
+		if (chp->atabus == NULL)
+			continue;
 		ATADEBUG_PRINT(("wdcdetach: %s: detaching %s\n",
 		    atac->atac_dev.dv_xname, chp->atabus->dv_xname),
 		    DEBUG_DETACH);
-		error = config_detach(chp->atabus, flags);
-		if (error)
-			break;
+		if ((error = config_detach(chp->atabus, flags)) != 0)
+			return error;
 	}
-	if (adapt->adapt_refcnt != 0) {
-#ifdef DIAGNOSTIC
-		printf("wdcdetach: refcnt should be 0 here??\n");
-#endif
-		(void) (*adapt->adapt_enable)(&atac->atac_dev, 0);
-	}
-	return (error);
+	if (adapt->adapt_refcnt != 0)
+		return EBUSY;
+	return 0;
 }
 
 /* restart an interrupted I/O */

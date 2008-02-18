@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2005/06/27 02:03:28 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.14.12.1 2008/02/18 21:04:17 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -110,6 +110,6 @@ void		 xtrnull(char *, long);
 void		rmtclose(void);
 int		rmthost(const char *);
 int		rmtioctl(int, int);
-int		rmtopen(const char *, int);
-int		rmtread(const char *, int);
+int		rmtopen(const char *, int, int);
+int		rmtread(char *, int);
 int		rmtseek(int, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.98.4.3 2007/12/27 00:46:19 mjf Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.98.4.4 2008/02/18 21:06:48 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.98.4.3 2007/12/27 00:46:19 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.98.4.4 2008/02/18 21:06:48 mjf Exp $");
 
-#include "opt_systrace.h"
 #include "opt_magiclinks.h"
 
 #include <sys/param.h>
@@ -58,10 +57,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.98.4.3 2007/12/27 00:46:19 mjf Exp 
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-
-#ifdef SYSTRACE
-#include <sys/systrace.h>
-#endif
 
 #ifndef MAGICLINKS
 #define MAGICLINKS 0
@@ -322,11 +317,6 @@ namei(struct nameidata *ndp)
 		} else
 			ktrnamei(cnp->cn_pnbuf, ndp->ni_pathlen);
 	}
-
-#ifdef SYSTRACE
-	if (ISSET(l->l_proc->p_flag, PK_SYSTRACE))
-		systrace_namei(ndp);
-#endif
 
 	vn_lock(dp, LK_EXCLUSIVE | LK_RETRY);
 	/* Loop through symbolic links */
@@ -786,14 +776,14 @@ unionlookup:
 	 */
 	while (dp->v_type == VDIR && (mp = dp->v_mountedhere) &&
 	       (cnp->cn_flags & NOCROSSMOUNT) == 0) {
-		if (vfs_busy(mp, 0, 0))
+		if (vfs_busy(mp, RW_READER, 0))
 			continue;
 
 		KASSERT(ndp->ni_dvp != dp);
 		VOP_UNLOCK(ndp->ni_dvp, 0);
 		vput(dp);
 		error = VFS_ROOT(mp, &tdp);
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 		if (error) {
 			vn_lock(ndp->ni_dvp, LK_EXCLUSIVE | LK_RETRY);
 			goto bad;

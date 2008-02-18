@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.42 2007/10/19 12:00:43 ad Exp $ */
+/* $NetBSD: esa.c,v 1.42.2.1 2008/02/18 21:05:56 mjf Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.42 2007/10/19 12:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.42.2.1 2008/02/18 21:05:56 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1691,6 +1691,7 @@ esa_resume(struct esa_softc *sc)
 	bus_space_handle_t ioh;
 	int i, index;
 	uint8_t reset_state;
+	pcireg_t data;
 
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -1698,10 +1699,17 @@ esa_resume(struct esa_softc *sc)
 
 	delay(10000);
 
+	data = pci_conf_read(sc->sc_pct, sc->sc_tag, PCI_LEGACY_AUDIO_CTRL);
+	pci_conf_write(sc->sc_pct, sc->sc_tag, PCI_LEGACY_AUDIO_CTRL,
+	    data | DISABLE_LEGACY);
+
+	bus_space_write_4(iot, ioh, ESA_PCI_ACPI_CONTROL, ESA_PCI_ACPI_D0);
+
 	esa_config(sc);
 
 	reset_state = esa_assp_halt(sc);
 
+	esa_init_codec(sc);
 	esa_codec_reset(sc);
 
 	/* restore ASSP */
@@ -1721,7 +1729,11 @@ esa_resume(struct esa_softc *sc)
 	esa_enable_interrupts(sc);
 	esa_amp_enable(sc);
 
-	return 0;
+	/* Finally, power up AC97 codec */
+	delay(1000);
+	sc->codec_if->vtbl->restore_ports(sc->codec_if);
+
+	return true;
 }
 
 static uint32_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.135.8.3 2007/12/27 00:46:53 mjf Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.135.8.4 2008/02/18 21:07:32 mjf Exp $	*/
 
 /*
  *
@@ -498,6 +498,7 @@ struct vmspace {
 	void *	vm_daddr;	/* user virtual address of data XXX */
 	void *vm_maxsaddr;	/* user VA at max stack growth */
 	void *vm_minsaddr;	/* user VA at top of stack */
+	size_t vm_aslr_delta_mmap;	/* mmap() random delta for ASLR */
 };
 #define	VMSPACE_IS_KERNEL_P(vm)	VM_MAP_IS_KERNEL(&(vm)->vm_map)
 
@@ -589,7 +590,6 @@ void			uvm_kick_scheduler(void);
 void			uvm_swapin(struct lwp *);
 bool			uvm_uarea_alloc(vaddr_t *);
 void			uvm_uarea_free(vaddr_t, struct cpu_info *);
-void			uvm_uarea_drain(bool);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
 void			uvm_lwp_hold(struct lwp *);
@@ -695,6 +695,8 @@ void			uvm_aio_aiodone(struct buf *);
 void			uvm_pageout(void *);
 struct work;
 void			uvm_aiodone_worker(struct work *, void *);
+void			uvm_pageout_start(int);
+void			uvm_pageout_done(int);
 void			uvm_estimatepageable(int *, int *);
 
 /* uvm_pglist.c */

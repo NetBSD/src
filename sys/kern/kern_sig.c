@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.258.2.1 2007/12/08 18:20:31 mjf Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.258.2.2 2008/02/18 21:06:46 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.258.2.1 2007/12/08 18:20:31 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.258.2.2 2008/02/18 21:06:46 mjf Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -164,7 +164,7 @@ signal_init(void)
 
 	exechook_establish(ksiginfo_exechook, NULL);
 
-	callout_init(&proc_stop_ch, 0);
+	callout_init(&proc_stop_ch, CALLOUT_MPSAFE);
 	callout_setfunc(&proc_stop_ch, proc_stop_callout, NULL);
 }
 
@@ -730,7 +730,7 @@ getucontext(struct lwp *l, ucontext_t *ucp)
 	 * the main context stack.
 	 */
 	if ((l->l_sigstk.ss_flags & SS_ONSTACK) == 0) {
-		ucp->uc_stack.ss_sp = (void *)USRSTACK;
+		ucp->uc_stack.ss_sp = (void *)l->l_proc->p_stackbase;
 		ucp->uc_stack.ss_size = ctob(l->l_proc->p_vmspace->vm_ssize);
 		ucp->uc_stack.ss_flags = 0;	/* XXX, def. is Very Fishy */
 	} else {
@@ -806,8 +806,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 				continue;
 			mutex_enter(&p->p_mutex);
 			if (kauth_authorize_process(pc,
-			    KAUTH_PROCESS_CANSIGNAL, p,
-			    (void *)(uintptr_t)signo, NULL, NULL) == 0) {
+			    KAUTH_PROCESS_SIGNAL, p, KAUTH_ARG(signo), NULL,
+			    NULL) == 0) {
 				nfound++;
 				if (signo) {
 					mutex_enter(&proclist_mutex);
@@ -834,8 +834,8 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 			if (p->p_pid <= 1 || p->p_flag & PK_SYSTEM)
 				continue;
 			mutex_enter(&p->p_mutex);
-			if (kauth_authorize_process(pc, KAUTH_PROCESS_CANSIGNAL,
-			    p, (void *)(uintptr_t)signo, NULL, NULL) == 0) {
+			if (kauth_authorize_process(pc, KAUTH_PROCESS_SIGNAL,
+			    p, KAUTH_ARG(signo), NULL, NULL) == 0) {
 				nfound++;
 				if (signo) {
 					mutex_enter(&proclist_mutex);
@@ -1053,8 +1053,10 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	 * If killing the process, make it run fast.
 	 */
 	if (__predict_false((prop & SA_KILL) != 0) &&
-	    action == SIG_DFL && l->l_priority > PUSER)
-		lwp_changepri(l, PUSER);
+	    action == SIG_DFL && l->l_priority < MAXPRI_USER) {
+		KASSERT(l->l_class == SCHED_OTHER);
+		lwp_changepri(l, MAXPRI_USER);
+	}
 
 	/*
 	 * If the LWP is running or on a run queue, then we win.  If it's
@@ -2185,7 +2187,9 @@ filt_sigattach(struct knote *kn)
 	kn->kn_ptr.p_proc = p;
 	kn->kn_flags |= EV_CLEAR;               /* automatically set */
 
+	mutex_enter(&p->p_smutex);
 	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+	mutex_exit(&p->p_smutex);
 
 	return (0);
 }
@@ -2195,7 +2199,9 @@ filt_sigdetach(struct knote *kn)
 {
 	struct proc *p = kn->kn_ptr.p_proc;
 
+	mutex_enter(&p->p_smutex);
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+	mutex_exit(&p->p_smutex);
 }
 
 /*

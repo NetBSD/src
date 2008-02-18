@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.11 2007/10/18 15:28:32 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.11.2.1 2008/02/18 21:04:20 mjf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11 2007/10/18 15:28:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11.2.1 2008/02/18 21:04:20 mjf Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -89,9 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.11 2007/10/18 15:28:32 yamt Exp $");
 #include <sys/proc.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
-#ifdef LKM
-#include <sys/lkm.h>
-#endif
 #include <sys/kauth.h>
 
 #include <machine/cpu.h>
@@ -102,9 +99,8 @@ extern char *vmmap;            /* poor name! */
 void *zeropage;
 extern int start, end, __data_start;
 extern vaddr_t kern_end;
-#ifdef LKM
 extern vaddr_t lkm_start, lkm_end;
-#endif
+extern struct vm_map *lkm_map;
 
 dev_type_read(mmrw);
 dev_type_ioctl(mmioctl);
@@ -119,10 +115,7 @@ int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vaddr_t o, v;
 	register int c;
@@ -177,16 +170,12 @@ mmrw(dev, uio, flags)
 				if (v < (vaddr_t)&__data_start &&
 				    uio->uio_rw == UIO_WRITE)
 					return EFAULT;
-			}
-#ifdef LKM
-			else if (v >= lkm_start && v < lkm_end) {
+			} else if (v >= lkm_start && v < lkm_end) {
 				if (!uvm_map_checkprot(lkm_map, v, v + c,
 				    uio->uio_rw == UIO_READ ?
 				    VM_PROT_READ: VM_PROT_WRITE))
 					return EFAULT;
-			}
-#endif
-			else {
+			} else {
 				if (!uvm_kernacc((void *)v, c,
 				    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
 					return EFAULT;
@@ -226,10 +215,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this

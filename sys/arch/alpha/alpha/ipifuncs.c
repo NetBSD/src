@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.37 2007/10/17 19:52:55 garbled Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.37.2.1 2008/02/18 21:04:19 mjf Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.37 2007/10/17 19:52:55 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.37.2.1 2008/02/18 21:04:19 mjf Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -239,8 +239,6 @@ alpha_ipi_halt(struct cpu_info *ci, struct trapframe *framep)
 	 * secondary CPUs to halt, then we can drop back to the
 	 * console.
 	 */
-	printf("%s: waiting for secondary CPUs to halt...\n",
-	    ci->ci_softc->sc_dev.dv_xname);
 	alpha_mb();
 	for (;;) {
 		alpha_mb();

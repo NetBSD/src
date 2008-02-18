@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.14 2007/10/21 17:03:37 degroote Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.14.2.1 2008/02/18 21:05:41 mjf Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.14 2007/10/21 17:03:37 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.14.2.1 2008/02/18 21:05:41 mjf Exp $");
 
 #include "bpfilter.h"
 
@@ -2850,8 +2850,6 @@ rt2560_init(struct ifnet *ifp)
 	/* set basic rate set (will be updated later) */
 	RAL_WRITE(sc, RT2560_ARSP_PLCP_1, 0x153);
 
-	rt2560_set_txantenna(sc, 1);
-	rt2560_set_rxantenna(sc, 1);
 	rt2560_update_slot(ifp);
 	rt2560_update_plcp(sc);
 	rt2560_update_led(sc, 0, 0);
@@ -2863,6 +2861,9 @@ rt2560_init(struct ifnet *ifp)
 		rt2560_stop(sc);
 		return EIO;
 	}
+
+	rt2560_set_txantenna(sc, 1);
+	rt2560_set_rxantenna(sc, 1);
 
 	/* set default BSS channel */
 	ic->ic_bss->ni_chan = ic->ic_ibss_chan;

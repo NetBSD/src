@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.160.4.2 2007/12/08 18:21:03 mjf Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.160.4.3 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.160.4.2 2007/12/08 18:21:03 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.160.4.3 2008/02/18 21:07:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,12 +325,12 @@ procfs_open(v)
 	l1 = curlwp;				/* tracer */
 
 #define	M2K(m)	(((m) & FREAD) && ((m) & FWRITE) ? \
-		 KAUTH_REQ_PROCESS_CANPROCFS_RW : \
-		 (m) & FWRITE ? KAUTH_REQ_PROCESS_CANPROCFS_WRITE : \
-		 KAUTH_REQ_PROCESS_CANPROCFS_READ)
+		 KAUTH_REQ_PROCESS_PROCFS_RW : \
+		 (m) & FWRITE ? KAUTH_REQ_PROCESS_PROCFS_WRITE : \
+		 KAUTH_REQ_PROCESS_PROCFS_READ)
 
 	mutex_enter(&p2->p_mutex);
-	error = kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_CANPROCFS,
+	error = kauth_authorize_process(l1->l_cred, KAUTH_PROCESS_PROCFS,
 	    p2, pfs, KAUTH_ARG(M2K(ap->a_mode)), NULL);
 	mutex_exit(&p2->p_mutex);
 	if (error) {
@@ -424,16 +424,12 @@ procfs_inactive(v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct pfsnode *pfs = VTOPFS(vp);
-	bool recycle;
 
 	mutex_enter(&proclist_lock);
-	recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
+	*ap->a_recycle = (p_find(pfs->pfs_pid, PFIND_LOCKED) == NULL);
 	mutex_exit(&proclist_lock);
 
 	VOP_UNLOCK(vp, 0);
-
-	if (recycle)
-		vgone(vp);
 
 	return (0);
 }
@@ -679,7 +675,8 @@ procfs_getattr(v)
 	if (procp != NULL) {
 		mutex_enter(&procp->p_mutex);
 		error = kauth_authorize_process(kauth_cred_get(),
-		    KAUTH_PROCESS_CANSEE, procp, NULL, NULL, NULL);
+		    KAUTH_PROCESS_CANSEE, procp,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
 		mutex_exit(&procp->p_mutex);
 		if (error != 0) {
 		    	procfs_proc_unlock(procp);
@@ -1211,7 +1208,8 @@ procfs_root_readdir_callback(struct proc *p, void *arg)
 	}
 
 	if (kauth_authorize_process(kauth_cred_get(),
-	    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0)
+	    KAUTH_PROCESS_CANSEE, p,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL) != 0)
 		return 0;
 
 	memset(&d, 0, UIO_MX);
@@ -1345,8 +1343,11 @@ procfs_readdir(v)
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &p, ESRCH)) != 0)
 			return error;
 
+		/* XXX Should this be by file as well? */
 		if (kauth_authorize_process(kauth_cred_get(),
-		    KAUTH_PROCESS_CANSEE, p, NULL, NULL, NULL) != 0) {
+		    KAUTH_PROCESS_CANSEE, p,
+		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_OPENFILES), NULL,
+		    NULL) != 0) {
 		    	procfs_proc_unlock(p);
 			return ESRCH;
 		}

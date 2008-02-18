@@ -1,4 +1,4 @@
-/*	$NetBSD: sync_vnops.c,v 1.18.4.1 2007/12/08 18:21:04 mjf Exp $	*/
+/*	$NetBSD: sync_vnops.c,v 1.18.4.2 2008/02/18 21:07:00 mjf Exp $	*/
 
 /*
  * Copyright 1997 Marshall Kirk McKusick. All Rights Reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.18.4.1 2007/12/08 18:21:04 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sync_vnops.c,v 1.18.4.2 2008/02/18 21:07:00 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -97,7 +97,9 @@ vfs_allocate_syncvnode(mp)
 		}
 		next = start;
 	}
+	mutex_enter(&vp->v_interlock);
 	vn_syncer_add_to_worklist(vp, syncdelay > 0 ? next % syncdelay : 0);
+	mutex_exit(&vp->v_interlock);
 	mp->mnt_syncer = vp;
 	return (0);
 }
@@ -113,9 +115,10 @@ vfs_deallocate_syncvnode(mp)
 
 	vp = mp->mnt_syncer;
 	mp->mnt_syncer = NULL;
+	mutex_enter(&vp->v_interlock);
 	vn_syncer_remove_from_worklist(vp);
 	vp->v_writecount = 0;
-	vrele(vp);
+	mutex_exit(&vp->v_interlock);
 	vgone(vp);
 }
 
@@ -146,20 +149,22 @@ sync_fsync(v)
 	/*
 	 * Move ourselves to the back of the sync list.
 	 */
+	mutex_enter(&syncvp->v_interlock);
 	vn_syncer_add_to_worklist(syncvp, syncdelay);
+	mutex_exit(&syncvp->v_interlock);
 
 	/*
 	 * Walk the list of vnodes pushing all that are dirty and
 	 * not already on the sync list.
 	 */
 	mutex_enter(&mountlist_lock);
-	if (vfs_busy(mp, LK_NOWAIT, &mountlist_lock) == 0) {
+	if (vfs_trybusy(mp, RW_WRITER, &mountlist_lock) == 0) {
 		asyncflag = mp->mnt_flag & MNT_ASYNC;
 		mp->mnt_flag &= ~MNT_ASYNC;
 		VFS_SYNC(mp, MNT_LAZY, ap->a_cred);
 		if (asyncflag)
 			mp->mnt_flag |= MNT_ASYNC;
-		vfs_unbusy(mp);
+		vfs_unbusy(mp, false);
 	} else
 		mutex_exit(&mountlist_lock);
 	return (0);
@@ -196,14 +201,7 @@ int
 sync_print(v)
 	void *v;
 {
-	struct vop_print_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-	struct vnode *vp = ap->a_vp;
 
-	printf("syncer vnode");
-	if (vp->v_vnlock != NULL)
-		lockmgr_printinfo(vp->v_vnlock);
-	printf("\n");
+	printf("syncer vnode\n");
 	return (0);
 }

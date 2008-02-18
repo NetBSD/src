@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_irqhandler.c,v 1.16.2.1 2007/12/08 18:17:51 mjf Exp $	*/
+/*	$NetBSD: isa_irqhandler.c,v 1.16.2.2 2008/02/18 21:05:02 mjf Exp $	*/
 
 /*
  * Copyright 1997
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.16.2.1 2007/12/08 18:17:51 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.16.2.2 2008/02/18 21:05:02 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,6 @@ __KERNEL_RCSID(0, "$NetBSD: isa_irqhandler.c,v 1.16.2.1 2007/12/08 18:17:51 mjf 
 
 irqhandler_t *irqhandlers[NIRQS];
 
-int current_intr_depth;
 u_int current_mask;
 u_int actual_mask;
 u_int disabled_mask;
@@ -128,7 +127,6 @@ irq_init()
 	for (loop = 0; loop < IPL_LEVELS; ++loop)
 		irqmasks[loop] = 0;
 
-	current_intr_depth = 0;
 	current_mask = 0x00000000;
 	disabled_mask = 0x00000000;
 	actual_mask = 0x00000000;

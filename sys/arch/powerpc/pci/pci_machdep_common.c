@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbled Exp $ */
+/* $NetBSD: pci_machdep_common.c,v 1.2.6.1 2008/02/18 21:04:58 mjf Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.2.6.1 2008/02/18 21:04:58 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -70,11 +70,6 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep_common.c,v 1.2 2007/10/17 19:56:44 garbl
  * PCI doesn't have any special needs; just use the generic versions
  * of these functions.
  */
-/* 
- * XXX for now macppc needs its own pci_bus_dma_tag
- * this will go away once we use the common bus_space stuff
- */
-#ifndef macppc 
 struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	0,			/* _bounce_thresh */
 	_bus_dmamap_create,
@@ -91,7 +86,7 @@ struct powerpc_bus_dma_tag pci_bus_dma_tag = {
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap,
 };
-#endif
+
 int
 genppc_pci_bus_maxdevs(pci_chipset_tag_t pc, int busno)
 {
@@ -166,8 +161,8 @@ genppc_pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	int pin = pa->pa_intrpin;
 	int line = pa->pa_intrline;
 	
-#if DEBUG
-	printf("%s: pin: %d, line: %d\n", __FUNCTION__, pin, line);
+#ifdef DEBUG
+	printf("%s: pin: %d, line: %d\n", __func__, pin, line);
 #endif
 
 	if (pin == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.31 2007/10/19 12:00:43 ad Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.31.2.1 2008/02/18 21:05:56 mjf Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.31 2007/10/19 12:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.31.2.1 2008/02/18 21:05:56 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,9 +67,12 @@ extern int ehcidebug;
 #define DPRINTF(x)
 #endif
 
+static void ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
+				   pcitag_t tag);
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 			       pcitag_t tag);
-static void ehci_pci_powerhook(int, void *);
+static bool ehci_pci_suspend(device_t);
+static bool ehci_pci_resume(device_t);
 
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
@@ -225,6 +228,9 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	if (!pmf_device_register(self, ehci_pci_suspend, ehci_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
 				       usbctlprint);
@@ -247,9 +253,11 @@ ehci_pci_detach(device_ptr_t self, int flags)
 		sc->sc_ih = NULL;
 	}
 	if (sc->sc.sc_size) {
+		ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
 		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
 		sc->sc.sc_size = 0;
 	}
+
 	return (0);
 }
 
@@ -287,10 +295,39 @@ ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 #endif
 
 static void
+ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
+{
+	const char *devname = sc->sc_bus.bdev.dv_xname;
+	u_int32_t cparams, addr, cap;
+	pcireg_t legsup;
+	int maxcap = 10;
+
+	cparams = EREAD4(sc, EHCI_HCCPARAMS);
+	addr = EHCI_HCC_EECP(cparams);
+	while (addr != 0) {
+		cap = pci_conf_read(pc, tag, addr);
+		if (EHCI_CAP_GET_ID(cap) != EHCI_CAP_ID_LEGACY)
+			goto next;
+		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
+		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP,
+		    legsup & ~EHCI_LEG_HC_OS_OWNED);
+
+next:
+		if (--maxcap < 0) {
+			aprint_normal("%s: broken extended capabilities "
+				      "ignored\n", devname);
+			return;
+		}
+		addr = EHCI_CAP_GET_NEXT(cap);
+	}
+}
+
+static void
 ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 {
 	const char *devname = sc->sc_bus.bdev.dv_xname;
-	u_int32_t cparams, addr, cap, legsup;
+	u_int32_t cparams, addr, cap;
+	pcireg_t legsup;
 	int maxcap = 10;
 	int ms;
 
@@ -302,8 +339,36 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 	addr = EHCI_HCC_EECP(cparams);
 	while (addr != 0) {
 		cap = pci_conf_read(pc, tag, addr);
-		if (EHCI_CAP_GET_ID(cap) == EHCI_CAP_ID_LEGACY)
-			break;
+		if (EHCI_CAP_GET_ID(cap) != EHCI_CAP_ID_LEGACY)
+			goto next;
+		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
+		/* Ask BIOS to give up ownership */
+		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP,
+		    legsup | EHCI_LEG_HC_OS_OWNED);
+		if (legsup & EHCI_LEG_HC_BIOS_OWNED) {
+			for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
+				legsup = pci_conf_read(pc, tag,
+				    addr + PCI_EHCI_USBLEGSUP);
+				if (!(legsup & EHCI_LEG_HC_BIOS_OWNED))
+					break;
+				delay(1000);
+			}
+			if (ms == EHCI_MAX_BIOS_WAIT) {
+				aprint_normal("%s: BIOS refuses to give up "
+				    "ownership, using force\n", devname);
+				pci_conf_write(pc, tag,
+				    addr + PCI_EHCI_USBLEGSUP, 0);
+			} else
+				aprint_verbose("%s: BIOS has given up "
+				    "ownership\n", devname);
+		}
+
+		/* Disable SMIs */
+		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS,
+		    EHCI_LEG_EXT_SMI_BAR | EHCI_LEG_EXT_SMI_PCICMD |
+		    EHCI_LEG_EXT_SMI_OS_CHANGE);
+
+next:
 		if (--maxcap < 0) {
 			aprint_normal("%s: broken extended capabilities "
 				      "ignored\n", devname);
@@ -312,28 +377,17 @@ ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		addr = EHCI_CAP_GET_NEXT(cap);
 	}
 
-	/* If the USB legacy capability is not specified, we are done */
-	if (addr == 0)
-		return;
+}
 
-	legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
-	/* Ask BIOS to give up ownership */
-	legsup |= EHCI_LEG_HC_OS_OWNED;
-	pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, legsup);
-	for (ms = 0; ms < EHCI_MAX_BIOS_WAIT; ms++) {
-		legsup = pci_conf_read(pc, tag, addr + PCI_EHCI_USBLEGSUP);
-		if (!(legsup & EHCI_LEG_HC_BIOS_OWNED))
-			break;
-		delay(1000);
-	}
-	if (ms == EHCI_MAX_BIOS_WAIT) {
-		aprint_normal("%s: BIOS refuses to give up ownership, "
-			      "using force\n", devname);
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGSUP, 0);
-		pci_conf_write(pc, tag, addr + PCI_EHCI_USBLEGCTLSTS, 0);
-	} else {
-		aprint_verbose("%s: BIOS has given up ownership\n", devname);
-	}
+static bool
+ehci_pci_suspend(device_t dv)
+{
+	struct ehci_pci_softc *sc = device_private(dv);
+
+	ehci_suspend(dv);
+	ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
+
+	return true;
 }
 
 static void

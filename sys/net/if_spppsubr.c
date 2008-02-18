@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.106 2007/07/09 21:11:00 ad Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.106.14.1 2008/02/18 21:07:01 mjf Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.106 2007/07/09 21:11:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.106.14.1 2008/02/18 21:07:01 mjf Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -193,14 +193,14 @@ struct ppp_header {
 	u_int8_t address;
 	u_int8_t control;
 	u_int16_t protocol;
-} __attribute__((__packed__));
+} __packed;
 #define PPP_HEADER_LEN          sizeof (struct ppp_header)
 
 struct lcp_header {
 	u_int8_t type;
 	u_int8_t ident;
 	u_int16_t len;
-} __attribute__((__packed__));
+} __packed;
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
 
 struct cisco_packet {
@@ -210,7 +210,7 @@ struct cisco_packet {
 	u_int16_t rel;
 	u_int16_t time0;
 	u_int16_t time1;
-} __attribute__((__packed__));
+} __packed;
 #define CISCO_PACKET_LEN 18
 
 /*
@@ -1070,42 +1070,17 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 		break;
 
-#ifdef SIOCSIFMTU
-#ifndef ifr_mtu
-#define ifr_mtu ifr_metric
-#endif
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < PPP_MINMRU ||
 		    ifr->ifr_mtu > sp->lcp.their_mru) {
 			error = EINVAL;
 			break;
 		}
-
-		ifp->if_mtu = ifr->ifr_mtu;
-		break;
-#endif
-#ifdef SLIOCSETMTU
-	case SLIOCSETMTU:
-		if (*(short *)data < PPP_MINMRU ||
-		    *(short *)data > sp->lcp.their_mru)
-		{
-			error = EINVAL;
-			break;
-		}
-
-		ifp->if_mtu = *(short *)data;
-		break;
-#endif
-#ifdef SIOCGIFMTU
+		/*FALLTHROUGH*/
 	case SIOCGIFMTU:
-		ifr->ifr_mtu = ifp->if_mtu;
+		if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET)
+			error = 0;
 		break;
-#endif
-#ifdef SLIOCGETMTU
-	case SLIOCGETMTU:
-		*(short *)data = ifp->if_mtu;
-		break;
-#endif
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
 		break;
