@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.60 2005/12/11 12:18:17 christos Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.61 2008/02/18 14:11:48 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -81,6 +81,8 @@ TEXTADDR?=	8000
 
 # depend on CPU configuration
 locore.o pmap.o sys_machdep.o trap.o: Makefile
+
+copy.o copypage.o lock_stubs.o: assym.h
 
 ##
 ## (7) misc settings
