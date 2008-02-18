@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hp700,v 1.12 2007/12/30 08:56:59 skrll Exp $
+# $NetBSD: Makefile.hp700,v 1.13 2008/02/18 13:27:55 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -88,7 +88,7 @@ locore.o:   ${HPPA}/hppa/copy.S
 locore.o:   ${HPPA}/hppa/support.S
 locore.o:   ${HPPA}/hppa/sigcode.S
 copy.o:     assym.h hppa/asm.h $S/sys/errno.h
-bcopy.o:    assym.h hppa/asm.h
+bcopy.o spcopy.o:    assym.h hppa/asm.h
 copypage.o: assym.h hppa/asm.h
 
 # depend on CPU configuration
