@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.70 2008/02/18 12:16:37 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.71 2008/02/18 21:08:42 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -221,8 +221,6 @@ void	sparc64_send_ipi (int, ipifunc_t);
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
  */
-extern int intstack[];
-extern int eintstack[];
 struct clockframe {
 	struct trapframe64 t;
 };
