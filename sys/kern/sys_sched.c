@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.12 2008/02/17 19:22:35 elad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.13 2008/02/18 02:00:08 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.12 2008/02/17 19:22:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.13 2008/02/18 02:00:08 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -166,7 +166,7 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		lwp_lock(t);
 
 		if (policy == SCHED_NONE)
-			lpolicy = l->l_class;
+			lpolicy = t->l_class;
 		else
 			lpolicy = policy;
 
