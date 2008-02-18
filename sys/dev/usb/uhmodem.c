@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.2 2008/02/11 02:23:09 ichiro Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.3 2008/02/18 05:24:24 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.2 2008/02/11 02:23:09 ichiro Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.3 2008/02/18 05:24:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,7 +168,14 @@ Static const struct uhmodem_type uhmodem_devs[] = {
 };
 #define uhmodem_lookup(v, p) ((const struct uhmodem_type *)usb_lookup(uhmodem_devs, v, p))
 
-USB_DECLARE_DRIVER(uhmodem);
+int uhmodem_match(device_t, struct cfdata *, void *);
+void uhmodem_attach(device_t, device_t, void *);
+void uhmodem_childdet(device_t, device_t);
+int uhmodem_detach(device_t, int);
+int uhmodem_activate(device_t, enum devact);
+extern struct cfdriver uhmodem_cd;
+CFATTACH_DECL2(uhmodem, sizeof(struct uhmodem_softc), uhmodem_match,
+    uhmodem_attach, uhmodem_detach, uhmodem_activate, NULL, uhmodem_childdet);
 
 USB_MATCH(uhmodem)
 {
@@ -366,6 +373,20 @@ error:
 	USB_ATTACH_ERROR_RETURN;
 }
 
+void
+uhmodem_childdet(device_t self, device_t child)
+{
+	int i;
+	struct uhmodem_softc *sc = device_private(self);
+
+	for (i = 0; i < sc->sc_ubsa.sc_numif; i++) {
+		if (sc->sc_ubsa.sc_subdevs[i] == child)
+			break;
+	}
+	KASSERT(i < sc->sc_ubsa.sc_numif);
+	sc->sc_ubsa.sc_subdevs[i] = NULL;
+}
+
 USB_DETACH(uhmodem)
 {
 	USB_DETACH_START(uhmodem, sc);
@@ -383,10 +404,8 @@ USB_DETACH(uhmodem)
 
 	sc->sc_ubsa.sc_dying = 1;
 	for (i = 0; i < sc->sc_ubsa.sc_numif; i++) {
-		if (sc->sc_ubsa.sc_subdevs[i] != NULL) {
+		if (sc->sc_ubsa.sc_subdevs[i] != NULL)
 			rv |= config_detach(sc->sc_ubsa.sc_subdevs[i], flags);
-			sc->sc_ubsa.sc_subdevs[i] = NULL;
-		}
 	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_ubsa.sc_udev,
@@ -396,9 +415,9 @@ USB_DETACH(uhmodem)
 }
 
 int
-uhmodem_activate(device_ptr_t self, enum devact act)
+uhmodem_activate(device_t self, enum devact act)
 {
-	struct uhmodem_softc *sc = (struct uhmodem_softc *)self;
+	struct uhmodem_softc *sc = device_private(self);
 	int rv = 0;
 	int i;
 
