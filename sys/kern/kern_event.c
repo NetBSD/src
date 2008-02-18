@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.46 2008/01/23 15:04:39 elad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.47 2008/02/18 22:41:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.46 2008/01/23 15:04:39 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.47 2008/02/18 22:41:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1327,7 +1327,9 @@ knote_fdclose(struct lwp *l, int fd)
 
 	fdp = l->l_proc->p_fd;
 	list = &fdp->fd_knlist[fd];
+	KERNEL_LOCK(1, NULL);		/* not all users have locking */
 	knote_remove(l, list);
+	KERNEL_UNLOCK_ONE(NULL);
 }
 
 /*
