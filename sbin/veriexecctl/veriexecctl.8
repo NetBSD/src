@@ -1,4 +1,4 @@
-.\" $NetBSD: veriexecctl.8,v 1.33 2008/02/15 15:33:56 elad Exp $
+.\" $NetBSD: veriexecctl.8,v 1.34 2008/02/18 10:37:19 elad Exp $
 .\"
 .\" Copyright (c) 1999
 .\"	Brett Lymn - blymn@baea.com.au, brett_lymn@yahoo.com.au
@@ -29,9 +29,9 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$Id: veriexecctl.8,v 1.33 2008/02/15 15:33:56 elad Exp $
+.\"	$Id: veriexecctl.8,v 1.34 2008/02/18 10:37:19 elad Exp $
 .\"
-.Dd February 15, 2008
+.Dd February 18, 2008
 .Dt VERIEXECCTL 8
 .Os
 .Sh NAME
@@ -104,106 +104,6 @@ for information associated with
 Filename, mount, fingerprint, fingerprint algorithm, evaluation status,
 and entry type.
 .El
-.Ss Signatures
-.Em Veriexec
-loads entries to the in-kernel database from a file describing files to be
-monitored and the type of monitoring.
-This file is often referred to as the
-.Sq signatures
-file.
-It has a line based structure, where each line has several fields separated
-by white-space (space, tabs, etc.) taking the following form:
-.Pp
-.Dl path	type	fingerprint	flags
-.Pp
-The description for each field is as follows:
-.Bl -tag -width XXXX
-.It path
-The full path to the file.
-White-space characters can be escaped if prefixed with a
-.Sq \ .
-.It type
-Type of fingerprinting algorithm used for the file.
-.Pp
-Requires kernel support for the specified algorithm.
-List of fingerprinting algorithms supported by the kernel can be obtained by
-using the following command:
-.Bd -literal -offset indent
-# sysctl kern.veriexec.algorithms
-.Ed
-.It fingerprint
-The fingerprint for the file.
-Can (usually) be generated using the following command:
-.Bd -literal -offset indent
-% cksum -a \*[Lt]algorithm\*[Gt] \*[Lt]file\*[Gt]
-.Ed
-.It flags
-Optional listing of entry flags, separated by a comma.
-These may include:
-.Bl -tag -width XXXX
-.It direct
-Allow direct execution only.
-.Pp
-Execution of a program is said to be
-.Dq direct
-when the program is invoked by the user (either in a script, manually typing it,
-etc.) via the
-.Xr execve 2
-syscall.
-.It indirect
-Allow indirect execution only.
-.Pp
-Execution of a program is said to be
-.Dq indirect
-if it is invoked by the kernel to interpret a script
-.Pq Dq hash-bang .
-.It file
-Allow opening the file only, via the
-.Xr open 2
-syscall (no execution is allowed).
-.It untrusted
-Indicate that the file is located on untrusted storage and its fingerprint
-evaluation status should not be cached, but rather re-calculated each time
-it is accessed.
-.\"It also enabled per-page fingerprints for the file, causing pages it as
-.\"backing store to be verified for their integrity as well.
-.Pp
-Fingerprints for untrusted files will always be evaluated on load.
-.El
-.Pp
-To improve readaibility of the signatures file, the following aliases are
-provided:
-.Bl -tag -width XXXX
-.It program
-An alias for
-.Dq direct .
-.It interpreter
-An alias for
-.Dq indirect
-.It script
-An alias for both
-.Dq direct
-and
-.Dq file .
-.It library
-An alias for both
-.Dq file
-and
-.Dq indirect .
-.El
-.Pp
-If no flags are specified,
-.Dq direct
-is assumed.
-.El
-.Pp
-Comments begin with a
-.Sq \&#
-character and span to the end of the line.
-.Pp
-Automatic generation of the signatures file is possible using the
-.Xr veriexecgen 8
-program.
 .Sh FILES
 .Bl -tag -width /etc/signatures -compact
 .It Pa /dev/veriexec
@@ -214,9 +114,10 @@ default signatures file
 .El
 .Sh SEE ALSO
 .Xr veriexec 4 ,
+.Xr veriexec 5 ,
 .Xr security 8 ,
-.Xr veriexecgen 8 ,
-.Xr veriexec 9
+.Xr veriexec 8 ,
+.Xr veriexecgen 8
 .Sh HISTORY
 .Nm
 first appeared in
