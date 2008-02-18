@@ -1,4 +1,4 @@
-/*	$NetBSD: ahc_eisa.c,v 1.34 2007/10/19 11:59:41 ad Exp $	*/
+/*	$NetBSD: ahc_eisa.c,v 1.35 2008/02/18 06:17:27 dyoung Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.34 2007/10/19 11:59:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_eisa.c,v 1.35 2008/02/18 06:17:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -131,7 +131,7 @@ ahc_eisa_attach(struct device *parent, struct device *self, void *aux)
 		goto free_io;
 	}
 
-	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
+	ahc_set_name(ahc, device_xname(&ahc->sc_dev));
 	ahc->parent_dmat = ea->ea_dmat;
 	ahc->chip = AHC_AIC7770|AHC_EISA;
 	ahc->features = AHC_AIC7770_FE;
