@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.49 2008/02/18 13:23:34 joerg Exp $
+#	$NetBSD: Makefile.mips,v 1.50 2008/02/18 15:21:04 tsutsui Exp $
 
 # Makefile for NetBSD
 #
@@ -100,7 +100,7 @@ mips_machdep.o pmap.o: Makefile
 # various assembly files that depend on assym.h
 copy.o fp.o locore.o locore_mips1.o locore_mips3.o: assym.h
 lock_stubs.o mips32_subr.o mips3_subr.o mips5900_subr.o: assym.h
-mips64_subr.o mipsX_subr.o sigcode.o vr_idle.o: assym.h
+mips64_subr.o mipsX_subr.o sigcode.o: assym.h
 
 
 ##
