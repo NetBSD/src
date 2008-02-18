@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.18 2008/02/18 18:35:37 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.19 2008/02/18 19:04:49 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.18 2008/02/18 18:35:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.19 2008/02/18 19:04:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -994,7 +994,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	return 0;
 }
 
-ststic void
+static void
 crmfb_set_mte_direction(struct crmfb_softc *sc, int dir)
 {
 	if (dir == sc->sc_mte_direction)
