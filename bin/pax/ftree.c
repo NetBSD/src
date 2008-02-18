@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.36 2008/01/10 04:24:51 tls Exp $	*/
+/*	$NetBSD: ftree.c,v 1.37 2008/02/18 15:54:48 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.36 2008/01/10 04:24:51 tls Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.37 2008/02/18 15:54:48 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -348,6 +348,7 @@ ftree_arg(void)
 	if (ftsp != NULL) {
 		(void)fts_close(ftsp);
 		ftsp = NULL;
+		ftent = NULL;
 	}
 
 	/*
