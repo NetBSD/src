@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2008/02/12 19:53:46 joerg Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2008/02/18 14:59:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2008/02/12 19:53:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2008/02/18 14:59:52 joerg Exp $");
 
 #include "opt_kgdb.h"
 
@@ -391,10 +391,9 @@ scsi_find(char *name, int ctlr, int unit)
 	struct scsibus_softc *sbsc;
 	struct scsipi_periph *periph;
 	int target, lun;
-	char tname[16];
 
 	if ((scsibus = device_find_by_driver_unit("scsibus", ctlr)) == NULL)
-		return;
+		return NULL;
 
 	/* Compute SCSI target/LUN from PROM unit. */
 	target = prom_sd_target((unit >> 3) & 7);
