@@ -1,4 +1,4 @@
-/* $NetBSD: uslsa.c,v 1.4 2007/10/25 19:32:15 plunky Exp $ */
+/* $NetBSD: uslsa.c,v 1.5 2008/02/18 05:24:24 dyoung Exp $ */
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.4 2007/10/25 19:32:15 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uslsa.c,v 1.5 2008/02/18 05:24:24 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ struct uslsa_softc {
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
-	device_ptr_t		sc_subdev;	/* ucom device */
+	device_t		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;	/* disconnecting */
 
@@ -189,7 +189,14 @@ static const struct usb_devno uslsa_devs[] = {
 };
 #define uslsa_lookup(v, p) usb_lookup(uslsa_devs, v, p)
 
-USB_DECLARE_DRIVER(uslsa);
+int uslsa_match(device_t, struct cfdata *, void *);
+void uslsa_attach(device_t, device_t, void *);
+void uslsa_childdet(device_t, device_t);
+int uslsa_detach(device_t, int);
+int uslsa_activate(device_t, enum devact);
+extern struct cfdriver uslsa_cd;
+CFATTACH_DECL2(uslsa, sizeof(struct uslsa_softc), uslsa_match,
+    uslsa_attach, uslsa_detach, uslsa_activate, NULL, uslsa_childdet);
 
 USB_MATCH(uslsa)
 {
@@ -299,9 +306,9 @@ bad:
 }
 
 int
-uslsa_activate(device_ptr_t self, enum devact act)
+uslsa_activate(device_t self, enum devact act)
 {
-	struct uslsa_softc *sc = (struct uslsa_softc *) self;
+	struct uslsa_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -316,6 +323,15 @@ uslsa_activate(device_ptr_t self, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+void
+uslsa_childdet(device_t self, device_t child)
+{
+	struct uslsa_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
 }
 
 USB_DETACH(uslsa)
