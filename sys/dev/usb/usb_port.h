@@ -1,5 +1,5 @@
 /*	$OpenBSD: usb_port.h,v 1.18 2000/09/06 22:42:10 rahnds Exp $ */
-/*	$NetBSD: usb_port.h,v 1.78 2008/01/25 20:39:28 ad Exp $	*/
+/*	$NetBSD: usb_port.h,v 1.79 2008/02/18 05:24:24 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -139,10 +139,10 @@ typedef struct malloc_type *usb_malloc_type;
 
 #define	USB_DNAME(dname)	dname
 #define USB_DECLARE_DRIVER(dname)  \
-int __CONCAT(dname,_match)(struct device *, struct cfdata *, void *); \
-void __CONCAT(dname,_attach)(struct device *, struct device *, void *); \
-int __CONCAT(dname,_detach)(struct device *, int); \
-int __CONCAT(dname,_activate)(struct device *, enum devact); \
+int __CONCAT(dname,_match)(device_t, struct cfdata *, void *); \
+void __CONCAT(dname,_attach)(device_t, device_t, void *); \
+int __CONCAT(dname,_detach)(device_t, int); \
+int __CONCAT(dname,_activate)(device_t, enum devact); \
 \
 extern struct cfdriver __CONCAT(dname,_cd); \
 \
