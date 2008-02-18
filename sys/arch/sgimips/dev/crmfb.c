@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.17 2008/02/17 02:09:05 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.18 2008/02/18 18:35:37 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.17 2008/02/17 02:09:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.18 2008/02/18 18:35:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.17 2008/02/17 02:09:05 macallan Exp $");
 
 #include <arch/sgimips/dev/crmfbreg.h>
 
-//#define CRMFB_DEBUG
+/*#define CRMFB_DEBUG*/
 
 struct wsscreen_descr crmfb_defaultscreen = {
 	"default",
@@ -141,6 +141,7 @@ struct crmfb_softc {
 	int			sc_depth;
 	int			sc_tiles_x, sc_tiles_y;
 	uint32_t		sc_fbsize;
+	int			sc_mte_direction;
 	uint8_t			*sc_scratch;
 	struct rasops_info	sc_rasops;
 	int 			sc_cells;
@@ -986,10 +987,22 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 	    (MTE_TLB_A << MTE_SRC_TLB_SHIFT) |
 	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
 	    MTE_MODE_COPY);
+	sc->sc_mte_direction = 1;
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_Y_STEP, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_Y_STEP, 1);
 
 	return 0;
+}
+
+ststic void
+crmfb_set_mte_direction(struct crmfb_softc *sc, int dir)
+{
+	if (dir == sc->sc_mte_direction)
+		return;
+
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_Y_STEP, dir);
+	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_Y_STEP, dir);
+	sc->sc_mte_direction = 1;
 }
 
 static void
@@ -1024,6 +1037,7 @@ crmfb_fill_rect(struct crmfb_softc *sc, int x, int y, int width, int height,
     uint32_t colour)
 {
 	crmfb_wait_idle(sc);
+	crmfb_set_mte_direction(sc, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_MODE,
 	    MTE_MODE_DST_ECC |
 	    (MTE_TLB_A << MTE_DST_TLB_SHIFT) |
@@ -1031,8 +1045,6 @@ crmfb_fill_rect(struct crmfb_softc *sc, int x, int y, int width, int height,
 	    (MTE_DEPTH_8 << MTE_DEPTH_SHIFT) |
 	    0);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_BG, colour);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST_Y_STEP, 1);
-	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC_Y_STEP, 1);
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_DST0,
 	    (x << 16) | (y & 0xffff));
 	bus_space_write_4(sc->sc_iot, sc->sc_reh,
@@ -1109,20 +1121,14 @@ crmfb_scroll(struct crmfb_softc *sc, int xs, int ys, int xd, int yd,
 		rya = ys + he - 1;
 		ryd = yd + he - 1;
 		ryde = yd;
-		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_DST_Y_STEP, -1);
-		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_SRC_Y_STEP, -1);
+		crmfb_set_mte_direction(sc, -1);
 	} else {
 		/* top to bottom */
 		rye = ys + he - 1;
 		rya = ys;
 		ryd = yd;
 		ryde = yd + he - 1;
-		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_DST_Y_STEP, 1);
-		bus_space_write_4(sc->sc_iot, sc->sc_reh,
-		    CRIME_MTE_SRC_Y_STEP, 1);
+		crmfb_set_mte_direction(sc, 1);
 	}
 	bus_space_write_4(sc->sc_iot, sc->sc_reh, CRIME_MTE_SRC0,
 	    (rxa << 16) | rya);
