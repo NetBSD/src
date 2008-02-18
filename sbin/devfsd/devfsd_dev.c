@@ -1,7 +1,7 @@
-/* 	$NetBSD: devfsd_dev.c,v 1.1.2.1 2007/12/08 22:05:05 mjf Exp $ */
+/*      $NetBSD: devfsd_dev.c,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,31 +53,70 @@ dev_init(void)
 	return 0;
 }
 
-/*
- * Create a new devfsd device and fill it with default attributes.
- */
 struct devfs_dev *
-dev_create(device_t kernel_dev, int visibility)
+dev_create(struct dctl_kerndev *kerndev, intptr_t cookie)
 {
-	struct devfs_dev *dev;
+	struct devfs_dev *ddev;
 
-	if ((dev = (struct devfs_dev *)malloc(sizeof(dev))) == NULL)
+	if ((ddev = malloc(sizeof(*ddev))) == NULL) {
+		warn("could not alloc memory for dev\n");
 		return NULL;
+	}
+
+	ddev->d_cookie = cookie;
+
+	strlcpy(ddev->d_kname, kerndev->k_name, sizeof(ddev->d_kname));
+
+	SLIST_INIT(&ddev->d_node_head);
+	TAILQ_INIT(&ddev->d_pairing);
+
+	return ddev;
+}
+
+int
+dev_add_node(struct devfs_dev *dev, struct devfs_mount *dmp)
+{
+	size_t len;
+	struct devfs_node *dnode;
+	char *d_filename;
+
+	if ((dnode = malloc(sizeof(*dnode))) == NULL)
+		return -1;
 
 	/* Fill in default attributes */
-	dev->d_dev = kernel_dev; 
+	dnode->n_attr.d_mode = 0644;
+	dnode->n_attr.d_uid = 0;	/* root */
+	dnode->n_attr.d_gid = 0;	/* wheel */
+	dnode->n_attr.d_flags = dmp->m_visibility;
 
-	strlcpy(dev->d_filename, device_xname(kernel_dev), 
-	    sizeof(dev->d_filename));
+	/*
+	 * By default, we use the driver name for the node
+	 * (this may be overridden later with a rule).
+	 */
+	len = strlen(dev->d_kname) + 1;
+	d_filename = malloc(len);
+	strlcpy(d_filename, dev->d_kname, len);
 
-	dev->d_mode = 0644;
-	dev->d_owner = 0;	/* root */
-	dev->d_group = 0;	/* wheel */
-	dev->d_flags = visibility;
+	dnode->n_attr.d_component.in_pthcmp.d_filename = d_filename;
 
-	SLIST_INIT(&dev->d_rule_head);
+	dnode->n_cookie.sc_dev = (intptr_t) dev->d_cookie;
+	dnode->n_cookie.sc_mount = dmp->m_id;
 
-	return dev;
+	SLIST_INSERT_HEAD(&dev->d_node_head, dnode, n_next);
+
+	return 0;
+}
+
+int
+dev_del_node(struct devfs_dev *dev, struct devfs_mount *dmp)
+{
+	struct devfs_node *node;
+
+	SLIST_FOREACH(node, &dev->d_node_head, n_next) {
+		if (node->n_cookie.sc_mount != dmp->m_id)
+			continue;
+	}
+	return 0;
 }
 
 /*
@@ -88,6 +127,7 @@ dev_destroy(struct devfs_dev *dev)
 {
 	bool removed = false;
 	struct devfs_dev *tmp_dev;
+	struct devfs_node *node;
 
 	SLIST_FOREACH(tmp_dev, &dev_list, d_next) {
 		if (tmp_dev == dev) {
@@ -103,43 +143,95 @@ dev_destroy(struct devfs_dev *dev)
 		return;
 	}
 		
+	/* Free all nodes allocated for this device */
+	SLIST_FOREACH(node, &dev->d_node_head, n_next) {
+		SLIST_REMOVE(&dev->d_node_head, node, devfs_node, n_next);
+		free(node);
+	}
+
+	/*
+	 * TODO: Must remove this device from every rule's list of devices
+	 */
+
 	free(dev);
 }
 
 /*
  * We have already matched this rule against this device, so apply
- * the rule to the device node.
+ * the rule to the appropriate device nodes.
  */
 void
-dev_apply_rule(struct devfs_dev *d, struct devfs_rule *r)
+dev_apply_rule(struct devfs_dev *dd, struct devfs_rule *r)
 {
-	if (r->r_filename != NULL)
-		strlcpy(d->d_filename, r->r_filename, sizeof(d->d_filename));
+	struct rule2dev *rd;
+	struct devfs_node *node;
+	struct devfs_mount *dmp;
 
-	if (r->r_mode != DEVFS_RULE_ATTR_UNSET)
-		d->d_mode = r->r_mode;
+	if ((rd = malloc(sizeof(*rd))) == NULL) {
+		warn("could not allocate rule2dev structure");	
+		return;
+	}
 
-	if (r->r_owner != DEVFS_RULE_ATTR_UNSET)
-		d->d_owner = r->r_owner;
-
-	if (r->r_group != DEVFS_RULE_ATTR_UNSET)
-		d->d_group = r->r_group;
-
-	d->d_flags = r->r_flags;
+	SLIST_FOREACH(node, &dd->d_node_head, n_next) {
+		/* 
+		 * Check if this rule should be applied to nodes on
+		 * this node's mount path.
+		 */
+		dmp = mount_lookup(node->n_cookie.sc_mount);
+		dev_apply_rule_node(node, dmp, r);
+	}
 
 	/* 
-	 * Add this device to the list of devices this rule applies
-	 * to
+	 * Add this device to the rule's devices list and add this rule
+	 * to the device's rules list. See devfsd.h for more information.
+	 *
+	 * XXX: Adding the rules and devices to the appropriate lists is always
+	 * done, even if no nodes were actually matched, a new node may be
+	 * created for this device where this rule does apply.
 	 */
-	SLIST_INSERT_HEAD(&d->d_rule_head, r, r_dev_next);
+	rd->r_rule = r;
+	rd->r_dev = dd;
+	TAILQ_INSERT_TAIL(&dd->d_pairing, rd, r_next_rule);
+	TAILQ_INSERT_TAIL(&r->r_pairing, rd, r_next_dev);
 }
 
-/* 
- * XXX: this is a userland definition of device_xname and as such will break
- * if the kernel version of device_xname changes. 
+/*
+ * Apply a rule to a devfs node.
  */
-const char *
-device_xname(device_t d)
+void
+dev_apply_rule_node(struct devfs_node *node, struct devfs_mount *dmp, 
+	struct devfs_rule *r)
 {
-	return d->dv_xname;
+	if (strncmp(r->r_mntpath, 
+    	    dmp->m_pathname, sizeof(r->r_mntpath)) != 0)
+		return;
+
+	if (r->r_filename != NULL)
+		strlcpy(node->n_attr.d_component.out_pthcmp.d_pthcmp,
+		    r->r_filename, 
+		    sizeof(node->n_attr.d_component.out_pthcmp.d_pthcmp));
+
+	if (r->r_mode != DEVFS_RULE_ATTR_UNSET)
+		node->n_attr.d_mode = r->r_mode;
+
+	if (r->r_uid != DEVFS_RULE_ATTR_UNSET)
+		node->n_attr.d_uid = r->r_uid;
+
+	if (r->r_gid != DEVFS_RULE_ATTR_UNSET)
+		node->n_attr.d_gid = r->r_gid;
+
+	node->n_attr.d_flags = r->r_flags;
+}
+
+struct devfs_dev *
+dev_lookup(struct dctl_node_cookie c)
+{
+	struct devfs_dev *dev;
+
+	SLIST_FOREACH(dev, &dev_list, d_next) {
+		/* Found */
+		if (c.sc_dev == dev->d_cookie)
+			break;
+	}
+	return dev;
 }

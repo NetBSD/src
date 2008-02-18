@@ -1,4 +1,4 @@
-/* 	$NetBSD: pathnames.h,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $ */
+/* 	$NetBSD: dctlvar.h,v 1.1.2.1 2008/02/18 22:07:02 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <paths.h>
+#ifndef _DEV_DCTL_DCTLVAR_H_
+#define _DEV_DCTL_DCTLVAR_H_
 
-#define _PATH_CONFIG "/etc/devfsd.conf"
-#define _PATH_DCTL "/dev/dctl"
+#include <sys/device.h>
+#include <dev/dctl/dctlio.h>
+
+struct dctl_softc {
+	struct selinfo sc_rsel;
+	int	sc_flags;
+	int	sc_event_count;
+	lwp_t	*sc_thread;
+	kmutex_t sc_lock;
+	TAILQ_HEAD(,device)	sc_devlist;
+};
+
+#endif /* _DEV_DCTL_DCTLVAR_H_ */

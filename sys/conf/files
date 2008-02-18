@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.869.4.4 2008/02/18 21:05:31 mjf Exp $
+#	$NetBSD: files,v 1.869.4.5 2008/02/18 22:07:02 mjf Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1251,12 +1251,16 @@ defpseudo pud
 file	dev/pud/pud.c			pud
 file	dev/pud/pud_dev.c		pud
 
+defpseudo dctl
+file	dev/dctl/dctl.c			dctl
+
 #
 # File systems
 #
 include "coda/files.coda"
 include "fs/adosfs/files.adosfs"
 include "fs/cd9660/files.cd9660"
+include "fs/devfs/files.devfs"
 include "fs/efs/files.efs"
 include "fs/filecorefs/files.filecorefs"
 include "fs/hfs/files.hfs"

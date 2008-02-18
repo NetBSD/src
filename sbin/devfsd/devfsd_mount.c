@@ -1,4 +1,4 @@
-/* 	$NetBSD: pathnames.h,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $ */
+/* 	$NetBSD: devfsd_mount.c,v 1.1.2.1 2008/02/18 22:07:02 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,54 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <paths.h>
+#include <sys/queue.h>
+#include <sys/types.h>
 
-#define _PATH_CONFIG "/etc/devfsd.conf"
-#define _PATH_DCTL "/dev/dctl"
+#include <err.h>
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "devfsd.h"
+
+extern struct mlist_head  mount_list;
+
+/*
+ * Create a new devfs_mount structure and add it to the list
+ * of all mounts.
+ */
+struct devfs_mount *
+mount_create(int32_t cookie, const char *mountpath, int visibility)
+{
+	struct devfs_mount *dmp;
+
+	if ((dmp = malloc(sizeof(*dmp))) == NULL)
+		return NULL;
+
+	strlcpy(dmp->m_pathname, mountpath, sizeof(dmp->m_pathname));
+	dmp->m_id = cookie;
+	dmp->m_visibility = visibility;
+	SLIST_INSERT_HEAD(&mount_list, dmp, m_next);
+
+	return dmp;
+}
+
+struct devfs_mount *
+mount_lookup(int32_t cookie)
+{
+	struct devfs_mount *dmp;
+
+	SLIST_FOREACH(dmp, &mount_list, m_next) {
+		if (dmp->m_id == cookie)
+			break;
+	}
+	return dmp;
+}
+
+void
+mount_destroy(struct devfs_mount *dmp)
+{
+	SLIST_REMOVE(&mount_list, dmp, devfs_mount, m_next);
+	free(dmp);
+}

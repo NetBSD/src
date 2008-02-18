@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.166.4.4 2008/02/18 21:07:23 mjf Exp $	*/
+/*	$NetBSD: mount.h,v 1.166.4.5 2008/02/18 22:07:03 mjf Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -90,6 +90,7 @@
 #define MOUNT_HFS	"hfs"		/* Apple HFS+ Filesystem */
 #define MOUNT_EFS	"efs"		/* SGI's Extent Filesystem */
 #define MOUNT_ZFS	"zfs"		/* Sun ZFS */
+#define MOUNT_DEVFS	"devfs"		/* Device Filesystem */
 
 #ifndef _STANDALONE
 

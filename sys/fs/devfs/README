@@ -1,0 +1,8 @@
+
+How is devfs different from tmpfs?
+
+	- We don't support creating files (except through devfsd(8))
+	- We don't support creating directories
+	- We allow devfs mounts to have the concept of "visibility" whereby
+	  nodes created in the file system may or may not be visible to
+	  userland
