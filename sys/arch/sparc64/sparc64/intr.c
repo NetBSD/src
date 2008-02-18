@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.54 2007/12/03 15:34:23 ad Exp $ */
+/*	$NetBSD: intr.c,v 1.55 2008/02/18 12:16:37 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.54 2007/12/03 15:34:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55 2008/02/18 12:16:37 martin Exp $");
 
 #include "opt_ddb.h"
 #include "pcons.h"
@@ -193,6 +193,22 @@ intr_list_handler(void *arg)
 	return (claimed);
 }
 
+#ifdef MULTIPROCESSOR
+static int intr_biglock_wrapper(void *);
+
+static int
+intr_biglock_wrapper(void *vp)
+{
+	struct intrhand *ih = vp;
+	int ret;
+
+	KERNEL_LOCK(1, NULL);
+	ret = (*ih->ih_realfun)(ih->ih_realarg);
+	KERNEL_UNLOCK_ONE(NULL);
+
+	return ret;
+}
+#endif
 
 /*
  * Attach an interrupt handler to the vector chain for the given level.
@@ -201,10 +217,12 @@ intr_list_handler(void *arg)
 void
 intr_establish(int level, struct intrhand *ih)
 {
-	register struct intrhand **p, *q = NULL;
+	struct intrhand **p, *q = NULL;
+#ifdef MULTIPROCESSOR
+	bool mpsafe = (level != IPL_VM);
+#endif
 	int s;
 
-	s = splhigh();
 	/*
 	 * This is O(N^2) for long chains, but chains are never long
 	 * and we do want to preserve order.
@@ -213,6 +231,16 @@ intr_establish(int level, struct intrhand *ih)
 	ih->ih_pending = 0; /* XXXX caller should have done this before */
 	ih->ih_next = NULL;
 
+#ifdef MULTIPROCESSOR
+	if (!mpsafe) {
+		ih->ih_realarg = ih->ih_arg;
+		ih->ih_realfun = ih->ih_fun;
+		ih->ih_arg = ih;
+		ih->ih_fun = intr_biglock_wrapper;
+	}
+#endif
+
+	s = splhigh();
 	/*
 	 * Store in fast lookup table
 	 */
