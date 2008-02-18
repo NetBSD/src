@@ -1,4 +1,4 @@
-/* $Id: vndcompress.c,v 1.3 2005/07/27 09:29:02 he Exp $ */
+/* $Id: vndcompress.c,v 1.4 2008/02/18 03:34:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 2005 by Florian Stoehr <netbsd@wolfnode.de>
@@ -37,8 +37,6 @@
  * vndcompress program - Compress/decompress filesystem images to
  * the cloop2 format
  */
-#include <arpa/inet.h>
-
 #include <err.h>
 #include <fcntl.h>
 #include <stdarg.h>
@@ -136,8 +134,8 @@ vndcompress(const char *fs, const char *comp, uint32_t blocksize)
 	memcpy(clh.sh, cloop_sh, strlen(cloop_sh));
 
 	/* Remember the header is also in network format! */
-	clh.block_size = htonl(blocksize);
-	clh.num_blocks = htonl(total_blocks);
+	clh.block_size = SWAPPER32(blocksize);
+	clh.num_blocks = SWAPPER32(total_blocks);
 	
 	/* Prepare the offset table (unsigned 64-bit big endian offsets) */
 	offtable_size = (total_blocks + 1) * sizeof(uint64_t);
@@ -255,8 +253,8 @@ readheader(int fd, struct cloop_header *clh, off_t *dstart)
 		return NULL;
 		
 	/* Convert endianness */
-	clh->block_size = ntohl(clh->block_size);
-	clh->num_blocks = ntohl(clh->num_blocks);
+	clh->block_size = SWAPPER32(clh->block_size);
+	clh->num_blocks = SWAPPER32(clh->num_blocks);
 		
 	offtable_size = (clh->num_blocks + 1) * sizeof(uint64_t);
 	offt = (uint64_t *)malloc(offtable_size);
