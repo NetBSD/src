@@ -1,7 +1,7 @@
-/* 	$NetBSD: devfsd_rule.c,v 1.1.2.1 2007/12/08 22:05:05 mjf Exp $ */
+/* 	$NetBSD: devfsd_rule.c,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $ */
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -54,10 +54,20 @@
 
 extern struct rlist_head  rule_list;
 
-static int handle_match(const char *, const char *, struct devfs_rule *); 
-static int handle_attributes(const char *, const char *, struct devfs_rule *);
+struct attrs_handled {
+	int file_handled;
+	int m_handled;
+	int u_handled;
+	int g_handled;
+	int flags_handled;
+}; 
+
+static int handle_match(const char *, char *, struct devfs_rule *); 
+static int handle_attributes(const char *, char *, struct devfs_rule *);
 static int handle_dict(prop_dictionary_t, const char *, struct devfs_rule *);
 static prop_dictionary_t construct_rule(struct devfs_rule *);
+/*static void rule_store_attributes(struct devfs_rule *rule, 
+    struct dctl_specnode_attr *di, struct attrs_handled *ah, int store);*/
 
 int
 rule_init(void)
@@ -119,7 +129,7 @@ rule_parsefile(const char *filename)
 			return -1;
 		}
 
-		sr->r_mode = sr->r_owner = sr->r_group = DEVFS_RULE_ATTR_UNSET;
+		sr->r_mode = sr->r_uid = sr->r_gid = DEVFS_RULE_ATTR_UNSET;
 
 		rule = prop_dictionary_get_keysym(dict, obj1);
 		if (rule == NULL) {		
@@ -168,7 +178,8 @@ handle_dict(prop_dictionary_t d, const char *section, struct devfs_rule *sr)
 	prop_object_t obj;
 	prop_string_t key;
 	prop_object_t value;
-	const char *key_string, *value_string;
+	const char *key_string;
+	char *value_string;
 
 	if ((iter = prop_dictionary_iterator(d)) == NULL)
 		return -1;
@@ -177,7 +188,7 @@ handle_dict(prop_dictionary_t d, const char *section, struct devfs_rule *sr)
 		key = prop_dictionary_get_keysym(d, obj);
 		key_string = prop_dictionary_keysym_cstring_nocopy(obj);
 		value = prop_dictionary_get(d, key_string);
-		value_string = prop_string_cstring_nocopy(value);
+		value_string = prop_string_cstring(value);
 
 		if (!strncmp(section, "match", strlen("match")))
 			error = handle_match(key_string, value_string, sr);
@@ -199,7 +210,7 @@ handle_dict(prop_dictionary_t d, const char *section, struct devfs_rule *sr)
  * Handler function for match dictionaries. Step 4.
  */
 static int
-handle_match(const char *key, const char *value, struct devfs_rule *sr)
+handle_match(const char *key, char *value, struct devfs_rule *sr)
 {
 	if (!strncmp(key, "label", strlen("label"))) {
 		sr->r_label = value;
@@ -221,16 +232,16 @@ handle_match(const char *key, const char *value, struct devfs_rule *sr)
  * Handler function for attribute dictionaries. Step 4.
  */
 static int
-handle_attributes(const char *key, const char *value, struct devfs_rule *sr)
+handle_attributes(const char *key, char *value, struct devfs_rule *sr)
 {
 	if (!strncmp(key, "filename", strlen("filename"))) {
 		sr->r_filename = value;
 	} else if (!strncmp(key, "mode", strlen("mode"))) {
 		sr->r_mode = strtoul(value, (char **)NULL, 8);
-	} else if (!strncmp(key, "uid", strlen("owner"))) {
-		sr->r_owner = atoi(value);
-	} else if (!strncmp(key, "gid", strlen("group"))) {
-		sr->r_group = atoi(value);
+	} else if (!strncmp(key, "uid", strlen("uid"))) {
+		sr->r_uid = atoi(value);
+	} else if (!strncmp(key, "gid", strlen("gid"))) {
+		sr->r_gid = atoi(value);
 	} else if (!strncmp(key, "visibility", strlen("visibility"))) {
 		if (!strncmp(value, "visibile", strlen("visibile"))) {
 			sr->r_flags &= ~DEVFS_INVISIBLE;
@@ -337,7 +348,8 @@ construct_rule(struct devfs_rule *dr)
 	} else if (dr->r_drivername != NULL) {
 		tmp_string = 
 		    prop_string_create_cstring_nocopy(dr->r_drivername);
-		if (prop_dictionary_set(tmp1, "drivername", tmp_string) != true){
+		if (prop_dictionary_set(tmp1, "drivername", 
+		    tmp_string) != true) {
 			error = 1;
 			goto out;
 		}
@@ -373,8 +385,8 @@ construct_rule(struct devfs_rule *dr)
 		}
 	}
 
-	if (dr->r_owner != DEVFS_RULE_ATTR_UNSET) {
-		if (snprintf(buf, 11, "%u", dr->r_owner) > 10) {
+	if (dr->r_uid != DEVFS_RULE_ATTR_UNSET) {
+		if (snprintf(buf, 11, "%u", dr->r_uid) > 10) {
 			errx(1, "uid too large\n");
 			error = 1;
 			goto out;
@@ -389,8 +401,8 @@ construct_rule(struct devfs_rule *dr)
 		}
 	}
 
-	if (dr->r_group != DEVFS_RULE_ATTR_UNSET) {
-		if (snprintf(buf, 11, "%u", dr->r_group) > 10) {
+	if (dr->r_gid != DEVFS_RULE_ATTR_UNSET) {
+		if (snprintf(buf, 11, "%u", dr->r_gid) > 10) {
 			errx(1, "gid too large\n");
 			error = 1;
 			goto out;
@@ -411,3 +423,134 @@ construct_rule(struct devfs_rule *dr)
 out:
 	return (error) ? NULL : rule;
 }
+
+/*
+ * Rebuild the attributes section of a rule. If a rule already specified
+ * one of the attributes and that attribute has changed then replace the
+ * value of the attribute in that rule. If no rule currently exists to
+ * handle the leftover attributes of 'di' then we create a new rule that
+ * contains their values.
+ */
+int
+rule_rebuild_attr(struct devfs_dev *dev)
+{
+	/*
+	struct devfs_rule *rule, *new_rule;
+	struct dctl_specnode_attr *di = &dev->d_dev;
+	struct attrs_handled ah;
+	struct devfs_node *node;
+	struct rule2dev *rd;
+	char *mntpath;
+	struct devfs_mount *dmp;
+
+	ah.file_handled = (di->d_filename == NULL) ? 0 : 1;
+	ah.m_handled = ATTR_ISSET(di->d_mode);
+	ah.u_handled = ATTR_ISSET(di->d_uid);
+	ah.g_handled = ATTR_ISSET(di->d_gid);
+	ah.flags_handled = ATTR_ISSET(di->d_flags);
+	*/
+
+	/* existing rules */
+
+	/* 
+	 * TODO: Figure out how to update rules and deal with multiple
+	 * mount points. For example, if I chmod a special node in /priv_dev
+	 * do I want a rule creating for that mount only? Or for all mounts?
+	TAILQ_FOREACH(rd, &dev->d_pairing, r_next_rule) {
+		mntpath = rd->r_rule->r_mntpath;
+		
+		SLIST_FOREACH(node, &dev->d_node_head, n_next) {
+	 */
+			/*
+			 * Determine if this rule has been applied to
+			 * this node. The only reason that this rule _hasnt_
+			 * been applied to this node is if the rule is
+			 * associated with a specific mount point.
+			 */
+			/*
+			if (mntpath[0] != '\0') {
+				dmp = mount_lookup(node.n_cookie.sc_mount);
+				if (strcmp(mntpath, dmp->m_pathname) != 0)
+					continue;
+			}
+
+			rule_store_attributes(rule, &node.n_attr, &ah, 0);
+		}
+	}
+	*/
+
+	/* Now find all attributes that weren't taken care of */
+	/*
+	if (ah.file_handled != 0 || ah.m_handled != 0 || ah.u_handled != 0
+	    || ah.g_handled != 0 || ah.flags_handled != 0) {
+
+		new_rule = malloc(sizeof(*new_rule));
+		if (new_rule == NULL) {
+			warn("could not fully rebuild rule attributes\n");
+			return -1;
+		}
+		rule_store_attributes(new_rule, &node.n_attr, &ah, 1);
+	}
+	*/
+
+	return 0;
+}
+
+/*
+static void
+rule_store_attributes(struct devfs_rule *rule, struct dctl_specnode_attr *di, 
+    struct attrs_handled *ah, int store)
+{
+	int error = 0;
+
+	if (ah->file_handled != 0) {
+		size_t len = strlen(di->d_filename);
+
+		if (rule->r_filename != NULL || store) {
+			if (rule->r_filename != NULL)
+				free(rule->r_filename);
+
+			rule->r_filename = malloc(len + 1);
+
+			if (rule->r_filename == NULL) {
+				error = 1;
+				warn("cannot update filename attribute");
+			} else {
+				strncpy(rule->r_filename, di->d_filename, len);
+				rule->r_filename[len] = '\0';
+			}
+
+			if (!error)
+				ah->file_handled = 0;
+		}
+	}
+
+	if (ah->m_handled != 0) {
+		if (ATTR_ISSET(rule->r_mode) || store) {
+			rule->r_mode = di->d_mode;
+			ah->m_handled = 0;
+		}
+	}
+
+	if (ah->u_handled != 0) {
+		if (ATTR_ISSET(rule->r_uid) || store) {
+			rule->r_uid = di->d_uid;
+			ah->u_handled = 0;
+		}
+	}
+
+	if (ah->g_handled != 0) {
+		if (ATTR_ISSET(rule->r_gid) || store) {
+			rule->r_gid = di->d_gid;
+			ah->g_handled = 0;
+		}
+	}
+
+	if (ah->flags_handled != 0) {
+		if (ATTR_ISSET(rule->r_flags) || store) {
+			rule->r_flags = di->d_flags;
+			ah->flags_handled = 0;
+		}
+	}
+}
+*/

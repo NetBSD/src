@@ -1,4 +1,4 @@
-/* 	$NetBSD: pathnames.h,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $ */
+/* 	$NetBSD: dctl.h,v 1.1.2.1 2008/02/18 22:07:02 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,8 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _DEV_DCTL_DCTL_H_
+#define _DEV_DCTL_DCTL_H_
 
-#include <paths.h>
+int dctl_mount_msg(const char *, int32_t);
+int dctl_unmount_msg(int32_t);
+int dctl_attr_msg(int32_t , intptr_t, mode_t, uid_t, gid_t, int, char *);
+void dctl_device_gone(device_t);
 
-#define _PATH_CONFIG "/etc/devfsd.conf"
-#define _PATH_DCTL "/dev/dctl"
+#endif /* _DEV_DCTL_DCTL_H_ */

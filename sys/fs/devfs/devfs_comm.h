@@ -1,4 +1,4 @@
-/* 	$NetBSD: pathnames.h,v 1.1.2.2 2008/02/18 22:07:02 mjf Exp $ */
+/* 	$NetBSD: devfs_comm.h,v 1.1.2.1 2008/02/18 22:07:02 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <paths.h>
+#ifndef _FS_DEVFS_DEVFS_COMM_H_
+#define _FS_DEVFS_DEVFS_COMM_H_
 
-#define _PATH_CONFIG "/etc/devfsd.conf"
-#define _PATH_DCTL "/dev/dctl"
+int devfs_create_node(int32_t, const char *, intptr_t, uid_t, gid_t, 
+	mode_t, int);
+
+#endif /* _FS_DEVFS_DEVFS_COMM_H_ */
