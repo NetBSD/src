@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.14 2008/02/19 09:44:26 yamt Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.15 2008/02/19 19:38:18 drochner Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.14 2008/02/19 09:44:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.15 2008/02/19 19:38:18 drochner Exp $");
 
 #include <sys/param.h>
 
@@ -162,6 +162,7 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 
 		if (lid && lid != t->l_lid)
 			continue;
+		lcnt++;
 		KASSERT(pri != PRI_NONE || policy != SCHED_NONE);
 		lwp_lock(t);
 
@@ -194,7 +195,6 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 			lwp_changepri(t, kpri);
 
 		lwp_unlock(t);
-		lcnt++;
 	}
 	mutex_exit(&p->p_smutex);
 	return (lcnt == 0) ? ESRCH : error;
