@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.71 2008/01/04 21:18:18 ad Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.72 2008/02/19 12:21:14 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -99,19 +99,6 @@ typedef struct sigstore {
  */
 #define SIGACTION(p, sig)	(p->p_sigacts->sa_sigdesc[(sig)].sd_sigact)
 #define	SIGACTION_PS(ps, sig)	(ps->sa_sigdesc[(sig)].sd_sigact)
-
-/*
- * Clear all pending signal from an LWP.
- */
-#define CLRSIG(l) \
-	do { \
-		struct proc *p = l->l_proc; \
-		int _sg; \
-		mutex_enter(&p->p_smutex); \
-		while ((_sg = issignal(l)) > 0) \
-			sigget(l->l_sigpendset, NULL, _sg, NULL); \
-		mutex_exit(&p->p_smutex); \
-	} while (/*CONSTCOND*/0)
 
 /*
  * Signal properties and actions.
