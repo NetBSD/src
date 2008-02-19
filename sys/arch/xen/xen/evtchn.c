@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.30 2008/01/11 20:00:53 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.31 2008/02/19 13:25:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.30 2008/01/11 20:00:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.31 2008/02/19 13:25:53 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -449,10 +449,9 @@ int
 event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
     const char *evname)
 {
-	struct iplsource *ipls;
+	struct cpu_info *ci = &cpu_info_primary;
 	struct evtsource *evts;
 	struct intrhand *ih, **ihp;
-	struct cpu_info *ci;
 	int s;
 
 #ifdef IRQ_DEBUG
@@ -482,22 +481,12 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	ih->ih_evt_next = NULL;
 	ih->ih_ipl_next = NULL;
 
-	ci = &cpu_info_primary;
 	s = splhigh();
-	if (ci->ci_isources[level] == NULL) {
-		MALLOC(ipls, struct iplsource *, sizeof (struct iplsource),
-		    M_DEVBUF, M_WAITOK|M_ZERO);
-		if (ipls == NULL)
-			panic("can't allocate fixed interrupt source");
-		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
-		ipls->ipl_resume = xenev_stubs[level].ist_resume;
-		ipls->ipl_handlers = ih;
-		ci->ci_isources[level] = ipls;
-	} else {
-		ipls = ci->ci_isources[level];
-		ih->ih_ipl_next = ipls->ipl_handlers;
-		ipls->ipl_handlers = ih;
-	}
+
+	/* register handler for spllower() */
+	event_set_iplhandler(ih, level);
+
+	/* register handler for event channel */
 	if (evtsource[evtch] == NULL) {
 		MALLOC(evts, struct evtsource *, sizeof (struct evtsource),
 		    M_DEVBUF, M_WAITOK|M_ZERO);
@@ -534,6 +523,28 @@ event_set_handler(int evtch, int (*func)(void *), void *arg, int level,
 	splx(s);
 
 	return 0;
+}
+
+void
+event_set_iplhandler(struct intrhand *ih, int level)
+{
+	struct cpu_info *ci = &cpu_info_primary;
+	struct iplsource *ipls;
+
+	if (ci->ci_isources[level] == NULL) {
+		MALLOC(ipls, struct iplsource *, sizeof (struct iplsource),
+		    M_DEVBUF, M_WAITOK|M_ZERO);
+		if (ipls == NULL)
+			panic("can't allocate fixed interrupt source");
+		ipls->ipl_recurse = xenev_stubs[level].ist_recurse;
+		ipls->ipl_resume = xenev_stubs[level].ist_resume;
+		ipls->ipl_handlers = ih;
+		ci->ci_isources[level] = ipls;
+	} else {
+		ipls = ci->ci_isources[level];
+		ih->ih_ipl_next = ipls->ipl_handlers;
+		ipls->ipl_handlers = ih;
+	}
 }
 
 int

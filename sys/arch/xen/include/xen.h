@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.26 2008/01/11 20:00:41 bouyer Exp $	*/
+/*	$NetBSD: xen.h,v 1.27 2008/02/19 13:25:53 bouyer Exp $	*/
 
 /*
  *
@@ -62,6 +62,7 @@ void	xennetback_init(void);
 void	xen_shm_init(void);
 
 void	xenevt_event(int);
+void	xenevt_setipending(int, int);
 void	xenevt_notify(void);
 
 void	idle_block(void);
