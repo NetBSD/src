@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.12 2008/02/15 23:36:27 ad Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.13 2008/02/19 20:37:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -59,7 +59,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <sched.h>
 
 #include "rumpuser.h"
 
@@ -293,7 +292,6 @@ void
 rumpuser_yield(void)
 {
 
-	sched_yield();
 }
 
 #ifdef __linux__
