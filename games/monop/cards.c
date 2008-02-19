@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.15 2008/01/28 06:16:13 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.16 2008/02/19 09:30:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.15 2008/01/28 06:16:13 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.16 2008/02/19 09:30:26 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,8 +71,7 @@ init_decks()
 
 	if ((deckf=fopen(cardfile, "r")) == NULL) {
 file_err:
-		perror(cardfile);
-		exit(1);
+		err(1, "%s", cardfile);
 	}
 
 	/* read number of community chest cards... */
@@ -102,8 +101,7 @@ set_up(dp)
 		errx(1, "out of memory");
 	if (fread(dp->offsets, sizeof(off_t), dp->num_cards, deckf) !=
 	    (unsigned) dp->num_cards) {
-		perror(cardfile);
-		exit(1);
+		err(1, "%s", cardfile);
 	}
 	/* convert offsets from big-endian byte order */
 	for (i = 0; i < dp->num_cards; i++)
