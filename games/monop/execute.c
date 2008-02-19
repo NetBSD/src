@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.13 2008/02/19 09:30:26 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.14 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.13 2008/02/19 09:30:26 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.14 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static void show_move(void);
  */
 void
 execute(com_num)
-	int com_num; 
+	int com_num;
 {
 	new_play = FALSE;	/* new_play is true if fixing	*/
 	(*func[com_num])();
@@ -80,7 +80,7 @@ execute(com_num)
  *	This routine moves a piece around.
  */
 void
-do_move() 
+do_move()
 {
 	int r1, r2;
 	bool was_jail;
@@ -114,7 +114,7 @@ ret:
  */
 void
 move(rl)
-	int rl; 
+	int rl;
 {
 	int old_loc;
 
@@ -131,7 +131,7 @@ move(rl)
  *	This routine shows the results of a move
  */
 static void
-show_move() 
+show_move()
 {
 	SQUARE *sqp;
 
@@ -142,15 +142,20 @@ show_move()
 		printf("That is a safe place\n");
 		break;
 	  case CC:
-		cc(); break;
+		cc();
+		break;
 	  case CHANCE:
-		chance(); break;
+		chance();
+		break;
 	  case INC_TAX:
-		inc_tax(); break;
+		inc_tax();
+		break;
 	  case GOTO_J:
-		goto_jail(); break;
+		goto_jail();
+		break;
 	  case LUX_TAX:
-		lux_tax(); break;
+		lux_tax();
+		break;
 	  case PRPTY:
 	  case RR:
 	  case UTIL:
@@ -174,7 +179,7 @@ show_move()
  *	This routine saves the current game for use at a later date
  */
 void
-save() 
+save()
 {
 	char *sp;
 	int outf, num;
@@ -184,7 +189,7 @@ save()
 
 	printf("Which file do you wish to save it in? ");
 	sp = buf;
-	while ((*sp++=getchar()) != '\n')
+	while ((*sp++ = getchar()) != '\n')
 		continue;
 	*--sp = '\0';
 
@@ -196,7 +201,7 @@ save()
 	    && getyn("File exists.  Do you wish to overwrite? ") > 0)
 		return;
 
-	if ((outf=creat(buf, 0644)) < 0) {
+	if ((outf = creat(buf, 0644)) < 0) {
 		warn("%s", buf);
 		return;
 	}
@@ -221,12 +226,12 @@ save()
  *	This routine restores an old game from a file
  */
 void
-restore() 
+restore()
 {
 	char *sp;
 
 	printf("Which file do you wish to restore from? ");
-	for (sp = buf; (*sp=getchar()) != '\n'; sp++)
+	for (sp = buf; (*sp = getchar()) != '\n'; sp++)
 		continue;
 	*sp = '\0';
 	rest_f(buf);
@@ -238,7 +243,7 @@ restore()
  */
 int
 rest_f(file)
-	const char *file; 
+	const char *file;
 {
 	char *sp;
 	int inf, num;
@@ -246,7 +251,7 @@ rest_f(file)
 	char *start, *end;
 	STAT sbuf;
 
-	if ((inf=open(file, O_RDONLY)) < 0) {
+	if ((inf = open(file, O_RDONLY)) < 0) {
 		warn("%s", file);
 		return FALSE;
 	}
