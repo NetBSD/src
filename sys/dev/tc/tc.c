@@ -1,4 +1,4 @@
-/*	$NetBSD: tc.c,v 1.46 2007/04/12 21:35:08 matt Exp $	*/
+/*	$NetBSD: tc.c,v 1.47 2008/02/19 18:30:33 matt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,13 +28,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.46 2007/04/12 21:35:08 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tc.c,v 1.47 2008/02/19 18:30:33 matt Exp $");
 
 #include "opt_tcverbose.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+
+#include <machine/cpu.h>	/* for badaddr */
 
 #include <dev/tc/tcreg.h>
 #include <dev/tc/tcvar.h>
@@ -195,10 +197,11 @@ tcprint(void *aux, const char *pnp)
 }
 
 
-#define	NTC_ROMOFFS	2
-static const tc_offset_t tc_slot_romoffs[NTC_ROMOFFS] = {
+static const tc_offset_t tc_slot_romoffs[] = {
 	TC_SLOT_ROM,
+#ifndef __vax__
 	TC_SLOT_PROTOROM,
+#endif
 };
 
 int
@@ -207,7 +210,7 @@ tc_checkslot(tc_addr_t slotbase, char *namep)
 	struct tc_rommap *romp;
 	int i, j;
 
-	for (i = 0; i < NTC_ROMOFFS; i++) {
+	for (i = 0; i < __arraycount(tc_slot_romoffs); i++) {
 		romp = (struct tc_rommap *)
 		    (slotbase + tc_slot_romoffs[i]);
 
