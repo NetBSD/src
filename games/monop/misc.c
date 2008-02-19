@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15 2008/02/19 08:26:10 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.16 2008/02/19 09:34:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.15 2008/02/19 08:26:10 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2008/02/19 09:34:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,7 +134,7 @@ set_ownlist(pl)
 
 	op = play[pl].own_list;
 #ifdef DEBUG
-	printf("op [%d] = play[pl [%d] ].own_list;\n", op, pl);
+	printf("op [%p] = play[pl [%d] ].own_list;\n", op, pl);
 #endif
 	while (op) {
 #ifdef DEBUG
@@ -161,7 +161,7 @@ set_ownlist(pl)
 			    op = op->next) {
 #ifdef DEBUG
 				printf("iter: %d\n", num);
-				printf("op = %d, op->sqr = %d, "
+				printf("op = %p, op->sqr = %p, "
 				    "op->sqr->type = %d\n", op, op->sqr,
 				    op->sqr->type);
 #endif
@@ -189,13 +189,13 @@ set_ownlist(pl)
 #endif
 				op = op->next;
 #ifdef DEBUG
-				printf("[%d];\n", op);
+				printf("[%p];\n", op);
 #endif
 			}
 #ifdef DEBUG
-			printf("num = %d\n");
+			printf("num = %d\n", num);
 #endif
-			if (orig == 0) {
+			if (orig == NULL) {
 				printf("panic:  bad monopoly descriptor: "
 				    "orig = %p\n", orig);
 				printf("player # %d\n", pl+1);
@@ -204,7 +204,8 @@ set_ownlist(pl)
 				if (orig_op) {
 					printf("orig_op->sqr->type = %d (PRPTY)\n",
 					    orig_op->sqr->type);
-					printf("orig_op->next = %p\n", op->next);
+					printf("orig_op->next = %p\n",
+					    orig_op->next);
 					printf("orig_op->sqr->desc = %p\n",
 					    orig_op->sqr->desc);
 				}
