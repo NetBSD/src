@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.12 2008/01/28 06:16:13 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.13 2008/02/19 09:30:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.12 2008/01/28 06:16:13 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.13 2008/02/19 09:30:26 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -197,7 +197,7 @@ save()
 		return;
 
 	if ((outf=creat(buf, 0644)) < 0) {
-		perror(buf);
+		warn("%s", buf);
 		return;
 	}
 	printf("\"%s\" ", buf);
@@ -247,13 +247,12 @@ rest_f(file)
 	STAT sbuf;
 
 	if ((inf=open(file, O_RDONLY)) < 0) {
-		perror(file);
+		warn("%s", file);
 		return FALSE;
 	}
 	printf("\"%s\" ", file);
 	if (fstat(inf, &sbuf) < 0) {		/* get file stats	*/
-		perror(file);
-		exit(1);
+		err(1, "%s: fstat", file);
 	}
 	start = heapstart;
 	brk(end = start + sbuf.st_size);
