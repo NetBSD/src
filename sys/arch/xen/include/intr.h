@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.22 2008/01/11 20:00:34 bouyer Exp $	*/
+/*	$NetBSD: intr.h,v 1.23 2008/02/19 19:50:53 bouyer Exp $	*/
 /*	NetBSD intr.h,v 1.15 2004/10/31 10:39:34 yamt Exp	*/
 
 /*-
@@ -89,8 +89,8 @@ struct iplsource {
 	void *ipl_recurse;               /* entry for spllower */
 	void *ipl_resume;                /* entry for doreti */
 	struct lwp *ipl_lwp;
-	u_int32_t ipl_evt_mask1;	/* pending events for this IPL */
-	u_int32_t ipl_evt_mask2[NR_EVENT_CHANNELS];
+	u_long ipl_evt_mask1;	/* pending events for this IPL */
+	u_long ipl_evt_mask2[NR_EVENT_CHANNELS];
 };
 
 

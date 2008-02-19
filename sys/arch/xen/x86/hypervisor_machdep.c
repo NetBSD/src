@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.5 2008/02/19 13:25:53 bouyer Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.5 2008/02/19 13:25:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.6 2008/02/19 19:50:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ int stipending(void);
 int
 stipending()
 {
-	uint32_t l1;
+	unsigned long l1;
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
@@ -115,9 +115,9 @@ stipending()
 #else
 		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
 #endif
-		while ((l1i = ffs(l1)) != 0) {
+		while ((l1i = xen_ffs(l1)) != 0) {
 			l1i--;
-			l1 &= ~(1 << l1i);
+			l1 &= ~(1UL << l1i);
 
 			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
 			/*
@@ -126,11 +126,11 @@ stipending()
 			 */
 			xen_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
 			xen_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
-			while ((l2i = ffs(l2)) != 0) {
+			while ((l2i = xen_ffs(l2)) != 0) {
 				l2i--;
-				l2 &= ~(1 << l2i);
+				l2 &= ~(1UL << l2i);
 
-				port = (l1i << 5) + l2i;
+				port = (l1i << LONG_SHIFT) + l2i;
 				if (evtsource[port]) {
 					hypervisor_set_ipending(
 					    evtsource[port]->ev_imask,
@@ -165,7 +165,7 @@ stipending()
 void
 do_hypervisor_callback(struct intrframe *regs)
 {
-	uint32_t l1;
+	unsigned long l1;
 	unsigned long l2;
 	unsigned int l1i, l2i, port;
 	volatile shared_info_t *s = HYPERVISOR_shared_info;
@@ -193,9 +193,9 @@ do_hypervisor_callback(struct intrframe *regs)
 #else
 		l1 = xen_atomic_xchg(&s->evtchn_pending_sel, 0);
 #endif
-		while ((l1i = ffs(l1)) != 0) {
+		while ((l1i = xen_ffs(l1)) != 0) {
 			l1i--;
-			l1 &= ~(1 << l1i);
+			l1 &= ~(1UL << l1i);
 
 			l2 = s->evtchn_pending[l1i] & ~s->evtchn_mask[l1i];
 			/*
@@ -208,11 +208,11 @@ do_hypervisor_callback(struct intrframe *regs)
 			xen_atomic_setbits_l(&s->evtchn_mask[l1i], l2);
 			xen_atomic_clearbits_l(&s->evtchn_pending[l1i], l2);
 
-			while ((l2i = ffs(l2)) != 0) {
+			while ((l2i = xen_ffs(l2)) != 0) {
 				l2i--;
-				l2 &= ~(1 << l2i);
+				l2 &= ~(1UL << l2i);
 
-				port = (l1i << 5) + l2i;
+				port = (l1i << LONG_SHIFT) + l2i;
 #ifdef PORT_DEBUG
 				if (port == PORT_DEBUG)
 					printf("do_hypervisor_callback event %d\n", port);
@@ -266,9 +266,9 @@ hypervisor_unmask_event(unsigned int ev)
 	 */
 	if (xen_atomic_test_bit(&s->evtchn_pending[0], ev) && 
 #ifdef XEN3
-	    !xen_atomic_test_and_set_bit(&s->vcpu_info[0].evtchn_pending_sel, ev>>5)) {
+	    !xen_atomic_test_and_set_bit(&s->vcpu_info[0].evtchn_pending_sel, ev>>LONG_SHIFT)) {
 #else
-	    !xen_atomic_test_and_set_bit(&s->evtchn_pending_sel, ev>>5)) {
+	    !xen_atomic_test_and_set_bit(&s->evtchn_pending_sel, ev>>LONG_SHIFT)) {
 #endif
 		xen_atomic_set_bit(&s->vcpu_info[0].evtchn_upcall_pending, 0);
 		if (!s->vcpu_info[0].evtchn_upcall_mask)
@@ -303,7 +303,7 @@ hypervisor_clear_event(unsigned int ev)
 void
 hypervisor_enable_ipl(unsigned int ipl)
 {
-	u_int32_t l1, l2;
+	u_long l1, l2;
 	int l1i, l2i;
 	struct cpu_info *ci = curcpu();
 
@@ -315,18 +315,18 @@ hypervisor_enable_ipl(unsigned int ipl)
 
 	l1 = ci->ci_isources[ipl]->ipl_evt_mask1;
 	ci->ci_isources[ipl]->ipl_evt_mask1 = 0;
-	while ((l1i = ffs(l1)) != 0) {
+	while ((l1i = xen_ffs(l1)) != 0) {
 		l1i--;
-		l1 &= ~(1 << l1i);
+		l1 &= ~(1UL << l1i);
 		l2 = ci->ci_isources[ipl]->ipl_evt_mask2[l1i];
 		ci->ci_isources[ipl]->ipl_evt_mask2[l1i] = 0;
-		while ((l2i = ffs(l2)) != 0) {
+		while ((l2i = xen_ffs(l2)) != 0) {
 			int evtch;
 
 			l2i--;
-			l2 &= ~(1 << l2i);
+			l2 &= ~(1UL << l2i);
 
-			evtch = (l1i << 5) + l2i;
+			evtch = (l1i << LONG_SHIFT) + l2i;
 			hypervisor_enable_event(evtch);
 		}
 	}
@@ -349,6 +349,6 @@ hypervisor_set_ipending(u_int32_t iplmask, int l1, int l2)
 	ipl = ffs(iplmask);
 	KASSERT(ipl > 0);
 	ipl--;
-	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1 << l1;
-	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1 << l2;
+	ci->ci_isources[ipl]->ipl_evt_mask1 |= 1UL << l1;
+	ci->ci_isources[ipl]->ipl_evt_mask2[l1] |= 1UL << l2;
 }
