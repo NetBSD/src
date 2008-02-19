@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.267 2008/02/05 13:33:35 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.268 2008/02/19 12:20:02 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.267 2008/02/05 13:33:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.268 2008/02/19 12:20:02 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -1791,8 +1791,8 @@ postsig(int signo)
 	 * Set the new mask value and also defer further occurrences of this
 	 * signal.
 	 *
-	 * Special case: user has done a sigpause.  Here the current mask is
-	 * not of interest, but rather the mask from before the sigpause is
+	 * Special case: user has done a sigsuspend.  Here the current mask is
+	 * not of interest, but rather the mask from before the sigsuspen is
 	 * what we want restored after the signal processing is completed.
 	 */
 	if (l->l_sigrestore) {
