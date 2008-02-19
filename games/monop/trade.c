@@ -1,4 +1,4 @@
-/*	$NetBSD: trade.c,v 1.11 2008/02/19 09:45:02 dholland Exp $	*/
+/*	$NetBSD: trade.c,v 1.12 2008/02/19 10:48:47 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trade.c,v 1.11 2008/02/19 09:45:02 dholland Exp $");
+__RCSID("$NetBSD: trade.c,v 1.12 2008/02/19 10:48:47 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -310,7 +310,7 @@ resign()
 	for (i = player; i < num_play; i++) {
 		name_list[i] = name_list[i+1];
 		if (i + 1 < num_play)
-			play[i] =  play[i+1];
+			play[i] = play[i+1];
 	}
 	name_list[num_play--] = 0;
 	for (i = 0; i < N_SQRS; i++)
