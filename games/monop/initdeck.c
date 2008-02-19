@@ -1,4 +1,4 @@
-/*	$NetBSD: initdeck.c,v 1.15 2003/08/07 09:37:28 agc Exp $	*/
+/*	$NetBSD: initdeck.c,v 1.16 2008/02/19 08:07:51 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)initdeck.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: initdeck.c,v 1.15 2003/08/07 09:37:28 agc Exp $");
+__RCSID("$NetBSD: initdeck.c,v 1.16 2008/02/19 08:07:51 dholland Exp $");
 #endif
 #endif /* not lint */
 #endif /* __NetBSD__ */
@@ -257,7 +257,7 @@ putem()
 
 /*
  * fwrite_be_offt:
- *	Write out the off paramater as a 64 bit big endian number
+ *	Write out the off parameter as a 64 bit big endian number
  */
 
 static void
