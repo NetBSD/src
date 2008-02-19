@@ -1,4 +1,4 @@
-/*	$NetBSD: hypervisor_machdep.c,v 1.4 2007/12/20 23:46:11 ad Exp $	*/
+/*	$NetBSD: hypervisor_machdep.c,v 1.5 2008/02/19 13:25:53 bouyer Exp $	*/
 
 /*
  *
@@ -59,7 +59,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.4 2007/12/20 23:46:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor_machdep.c,v 1.5 2008/02/19 13:25:53 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,8 +141,10 @@ stipending()
 						ret = 1;
 				}
 #ifdef DOM0OPS
-				else
-					xenevt_event(port);
+				else  {
+					/* set pending event */
+					xenevt_setipending(l1i, l2i);
+				}
 #endif
 			}
 		}
@@ -218,8 +220,18 @@ do_hypervisor_callback(struct intrframe *regs)
 				if (evtsource[port])
 					call_evtchn_do_event(port, regs);
 #ifdef DOM0OPS
-				else
-					xenevt_event(port);
+				else  {
+					if (ci->ci_ilevel < IPL_HIGH) {
+						/* fast path */
+						int oipl = ci->ci_ilevel;
+						ci->ci_ilevel = IPL_HIGH;
+						xenevt_event(port);
+						ci->ci_ilevel = oipl;
+					} else {
+						/* set pending event */
+						xenevt_setipending(l1i, l2i);
+					}
+				}
 #endif
 			}
 		}
