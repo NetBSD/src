@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.21 2008/02/19 13:25:53 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.22 2008/02/19 19:50:53 bouyer Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.21 2008/02/19 13:25:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22 2008/02/19 19:50:53 bouyer Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -137,8 +137,13 @@ static void xenevt_donotify(struct xenevt_d *);
 static void xenevt_record(struct xenevt_d *, evtchn_port_t);
 
 /* pending events */
+#ifdef XEN3
 long xenevt_ev1;
 long xenevt_ev2[NR_EVENT_CHANNELS];
+#else
+u_int32_t xenevt_ev1;
+u_int32_t xenevt_ev2[NR_EVENT_CHANNELS];
+#endif
 static int xenevt_processevt(void *);
 
 /* called at boot time */
@@ -151,51 +156,51 @@ xenevtattach(int n)
 	devevent_sih = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))xenevt_notify, NULL);
 	memset(devevent, 0, sizeof(devevent));
-	 xenevt_ev1 = 0;
-	 memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
+	xenevt_ev1 = 0;
+	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 
-	 /* register a hanlder at splhigh, so that spllower() will call us */
-	 MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
+	/* register a hanlder at splhigh, so that spllower() will call us */
+	MALLOC(ih, struct intrhand *, sizeof (struct intrhand), M_DEVBUF,
 	     M_WAITOK|M_ZERO);
-	 if (ih == NULL)
-		 panic("can't allocate xenevt interrupt source");
-	 ih->ih_fun = xenevt_processevt;
-	 ih->ih_arg = NULL;
-	 ih->ih_ipl_next = NULL;
-	 s = splhigh();
-	 event_set_iplhandler(ih, IPL_HIGH);
-	 splx(s);
+	if (ih == NULL)
+		panic("can't allocate xenevt interrupt source");
+	ih->ih_fun = xenevt_processevt;
+	ih->ih_arg = NULL;
+	ih->ih_ipl_next = NULL;
+	s = splhigh();
+	event_set_iplhandler(ih, IPL_HIGH);
+	splx(s);
 }
 
 /* register pending event - always called with interrupt disabled */
 void
 xenevt_setipending(int l1, int l2)
 {
-	 xen_atomic_setbits_l(&xenevt_ev1, l1);
-	 xen_atomic_setbits_l(&xenevt_ev2[l1], l2);
-	 curcpu()->ci_ipending |= 1 << IPL_HIGH;
+	xenevt_ev1 |= 1UL << l1;
+	xenevt_ev2[l1] |= 1UL << l2;
+	curcpu()->ci_ipending |= 1 << IPL_HIGH;
 }
 
 /* process pending events */
 static int
 xenevt_processevt(void *v)
 {
-	 long l1, l2;
-	 int l1i, l2i;
-	 int port;
+	long l1, l2;
+	int l1i, l2i;
+	int port;
 
-	 l1 = xen_atomic_xchg(&xenevt_ev1, 0);
-	 while ((l1i = ffs(l1)) != 0) {
-		 l1i--;
-		 l1 &= ~(1 << l1i);
-		 l2 = xen_atomic_xchg(&xenevt_ev2[l1i], 0);
-		 while ((l2i = ffs(l2)) != 0) {
-			 l2i--;
-			 l2 &= ~(1 << l2i);
-			 port = (l1i << 5) + l2i;
-			 xenevt_event(port);
-		 }
-	 }
+	l1 = xen_atomic_xchg(&xenevt_ev1, 0);
+	while ((l1i = xen_ffs(l1)) != 0) {
+		l1i--;
+		l1 &= ~(1UL << l1i);
+		l2 = xen_atomic_xchg(&xenevt_ev2[l1i], 0);
+		while ((l2i = xen_ffs(l2)) != 0) {
+			l2i--;
+			l2 &= ~(1UL << l2i);
+			port = (l1i << LONG_SHIFT) + l2i;
+			xenevt_event(port);
+		}
+	}
 
 	return 0;
 }
