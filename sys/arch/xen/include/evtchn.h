@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.h,v 1.14 2007/12/12 22:16:32 bouyer Exp $	*/
+/*	$NetBSD: evtchn.h,v 1.15 2008/02/19 13:25:53 bouyer Exp $	*/
 
 /*
  *
@@ -44,6 +44,9 @@ unsigned int evtchn_do_event(int, struct intrframe *);
 void call_evtchn_do_event(int, struct intrframe *);
 int event_set_handler(int, int (*func)(void *), void *, int, const char *);
 int event_remove_handler(int, int (*func)(void *), void *);
+
+struct intrhand;
+void event_set_iplhandler(struct intrhand *, int);
 
 extern int debug_port;
 extern int xen_debug_handler(void *);
