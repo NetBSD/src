@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.14 2006/03/19 00:03:18 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.15 2008/02/19 08:26:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.14 2006/03/19 00:03:18 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.15 2008/02/19 08:26:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -130,7 +130,7 @@ set_ownlist(pl)
 	int num;		/* general counter		*/
 	MON *orig;		/* remember starting monop ptr	*/
 	OWN *op;		/* current owned prop		*/
-	OWN *orig_op;		/* origianl prop before loop	*/
+	OWN *orig_op;		/* original prop before loop	*/
 
 	op = play[pl].own_list;
 #ifdef DEBUG
