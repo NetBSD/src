@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.72 2008/02/19 12:21:14 yamt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.73 2008/02/19 12:24:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -156,9 +156,9 @@ int	sigaltstack1(struct lwp *, const struct sigaltstack *,
 	    struct sigaltstack *);
 int	sigismasked(struct lwp *, int);
 
-int	sigget(sigpend_t *, ksiginfo_t *, int, sigset_t *);
-void	sigclear(sigpend_t *, sigset_t *, ksiginfoq_t *);
-void	sigclearall(struct proc *, sigset_t *, ksiginfoq_t *);
+int	sigget(sigpend_t *, ksiginfo_t *, int, const sigset_t *);
+void	sigclear(sigpend_t *, const sigset_t *, ksiginfoq_t *);
+void	sigclearall(struct proc *, const sigset_t *, ksiginfoq_t *);
 
 void	kpsignal2(struct proc *, ksiginfo_t *);
 

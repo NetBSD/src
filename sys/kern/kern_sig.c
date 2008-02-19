@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.269 2008/02/19 12:22:44 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.270 2008/02/19 12:24:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.269 2008/02/19 12:22:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.270 2008/02/19 12:24:34 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -509,7 +509,7 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
  *	pending signal, or zero.
  */ 
 int
-sigget(sigpend_t *sp, ksiginfo_t *out, int signo, sigset_t *mask)
+sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 {
         ksiginfo_t *ksi;
 	sigset_t tset;
@@ -616,7 +616,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
  *	Clear all pending signals in the specified set.
  */
 void
-sigclear(sigpend_t *sp, sigset_t *mask, ksiginfoq_t *kq)
+sigclear(sigpend_t *sp, const sigset_t *mask, ksiginfoq_t *kq)
 {
 	ksiginfo_t *ksi, *next;
 
@@ -644,7 +644,7 @@ sigclear(sigpend_t *sp, sigset_t *mask, ksiginfoq_t *kq)
  *	its LWPs.
  */
 void
-sigclearall(struct proc *p, sigset_t *mask, ksiginfoq_t *kq)
+sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
 {
 	struct lwp *l;
 
