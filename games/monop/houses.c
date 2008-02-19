@@ -1,4 +1,4 @@
-/*	$NetBSD: houses.c,v 1.9 2006/03/19 00:19:31 christos Exp $	*/
+/*	$NetBSD: houses.c,v 1.10 2008/02/19 09:32:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: houses.c,v 1.9 2006/03/19 00:19:31 christos Exp $");
+__RCSID("$NetBSD: houses.c,v 1.10 2008/02/19 09:32:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -133,7 +133,7 @@ over:
 			temp[i] = 5;
 			continue;
 		}
-		(void)sprintf(cur_prop, "%s (%d): ",
+		(void)snprintf(cur_prop, sizeof(cur_prop), "%s (%d): ",
 			mp->sq[i]->name, pp->houses);
 		input[i] = get_int(cur_prop);
 		temp[i] = input[i] + pp->houses;
@@ -237,10 +237,11 @@ over:
 			continue;
 		}
 		if (pp->houses < 5)
-			(void)sprintf(cur_prop,"%s (%d): ",
+			(void)snprintf(cur_prop, sizeof(cur_prop), "%s (%d): ",
 				mp->sq[i]->name,pp->houses);
 		else
-			(void)sprintf(cur_prop,"%s (H): ",mp->sq[i]->name);
+			(void)snprintf(cur_prop, sizeof(cur_prop), "%s (H): ",
+				mp->sq[i]->name);
 		input[i] = get_int(cur_prop);
 		temp[i] = pp->houses - input[i];
 		if (temp[i] < 0) {

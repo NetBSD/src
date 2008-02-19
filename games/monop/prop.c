@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.12 2008/01/28 06:16:13 dholland Exp $	*/
+/*	$NetBSD: prop.c,v 1.13 2008/02/19 09:32:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.12 2008/01/28 06:16:13 dholland Exp $");
+__RCSID("$NetBSD: prop.c,v 1.13 2008/02/19 09:32:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,8 @@ bid()
 		i = (i + 1) % num_play;
 		if (in[i]) {
 			do {
-				(void)sprintf(buf, "%s: ", name_list[i]);
+				(void)snprintf(buf, sizeof(buf), "%s: ",
+				    name_list[i]);
 				cur_bid = get_int(buf);
 				if (cur_bid == 0) {
 					in[i] = FALSE;
