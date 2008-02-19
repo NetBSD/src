@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.115 2008/02/18 14:46:58 ad Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.116 2008/02/19 07:46:51 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.115 2008/02/18 14:46:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.116 2008/02/19 07:46:51 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.115 2008/02/18 14:46:58 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/kprintf.h>
 #include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
@@ -90,7 +91,6 @@ struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-#include <sys/cpu.h>
 #endif
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
