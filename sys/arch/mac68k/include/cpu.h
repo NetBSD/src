@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.90 2008/02/19 07:04:41 dogcow Exp $	*/
+/*	$NetBSD: cpu.h,v 1.91 2008/02/19 07:43:29 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -127,10 +127,6 @@ struct cpu_info {
 extern struct cpu_info cpu_info_store;
 
 #define	curcpu()			(&cpu_info_store)
-
-#define CPU_INFO_ITERATOR               int
-#define CPU_INFO_FOREACH(cii, ci)                                       \
-        cii = 0, ci = curcpu(); ci != NULL; ci = NULL
 
 /*
  * definitions of cpu-dependent requirements
