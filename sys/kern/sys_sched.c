@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.13 2008/02/18 02:00:08 yamt Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.14 2008/02/19 09:44:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.13 2008/02/18 02:00:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.14 2008/02/19 09:44:26 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -180,8 +180,10 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		error = kauth_authorize_process(l->l_cred,
 		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, t, KAUTH_ARG(lpolicy),
 		    KAUTH_ARG(kpri));
-		if (error)
+		if (error) {
+			lwp_unlock(t);
 			break;
+		}
 
 		/* Set the scheduling class */
 		if (policy != SCHED_NONE)
