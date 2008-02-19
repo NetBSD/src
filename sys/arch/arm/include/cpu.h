@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 2008/01/06 03:11:42 matt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50 2008/02/19 07:04:42 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -230,6 +230,10 @@ extern struct cpu_info cpu_info_store;
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
 #endif
+
+#define CPU_INFO_ITERATOR               int
+#define CPU_INFO_FOREACH(cii, ci)                                       \
+        cii = 0, ci = curcpu(); ci != NULL; ci = NULL
 
 #ifdef __PROG32
 void	cpu_proc_fork(struct proc *, struct proc *);
