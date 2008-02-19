@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.8 2008/02/19 10:46:21 dholland Exp $	*/
+/*	$NetBSD: spec.c,v 1.9 2008/02/19 10:47:40 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: spec.c,v 1.8 2008/02/19 10:46:21 dholland Exp $");
+__RCSID("$NetBSD: spec.c,v 1.9 2008/02/19 10:47:40 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ inc_tax()
 {
 	int worth, com_num;
 
-	com_num = getinp("Do you wish to lose 10%% of your total worth or "
+	com_num = getinp("Do you wish to lose 10% of your total worth or "
 	    "$200? ", perc);
 	worth = cur_p->money + prop_worth(cur_p);
 	printf("You were worth $%d", worth);
