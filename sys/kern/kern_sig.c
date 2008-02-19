@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.270 2008/02/19 12:24:34 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.271 2008/02/19 16:16:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.270 2008/02/19 12:24:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.271 2008/02/19 16:16:06 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -1412,7 +1412,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 
  deliver:
 	/*
-	 * Before we set L_PENDSIG on any LWP, ensure that the signal is
+	 * Before we set LW_PENDSIG on any LWP, ensure that the signal is
 	 * visible on the per process list (for sigispending()).  This
 	 * is unlikely to be needed in practice, but...
 	 */
