@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.11 2008/01/28 06:16:13 dholland Exp $	*/
+/*	$NetBSD: morg.c,v 1.12 2008/02/19 09:05:55 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.11 2008/01/28 06:16:13 dholland Exp $");
+__RCSID("$NetBSD: morg.c,v 1.12 2008/02/19 09:05:55 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,7 +83,6 @@ static void fix_ex(int);
 void
 mortgage()
 {
-#define prop __suk
 	int propnum;
 
 	for (;;) {
@@ -139,13 +138,13 @@ set_mlist()
  *	This routine actually mortgages the property.
  */
 static void
-m(prop)
-	int prop;
+m(propnum)
+	int propnum;
 {
 	int price;
 
-	price = board[prop].cost/2;
-	board[prop].desc->morg = TRUE;
+	price = board[propnum].cost/2;
+	board[propnum].desc->morg = TRUE;
 	printf("That got you $%d\n",price);
 	cur_p->money += price;
 }
@@ -158,7 +157,7 @@ m(prop)
 void
 unmortgage() 
 {
-	int prop;
+	int propnum;
 
 	for (;;) {
 		if (set_umlist() == 0) {
@@ -171,11 +170,11 @@ unmortgage()
 				unm(square[0]);
 			return;
 		}
-		prop = getinp("Which property do you want to unmortgage? ",
+		propnum = getinp("Which property do you want to unmortgage? ",
 		    names);
-		if (prop == num_good)
+		if (propnum == num_good)
 			return;
-		unm(square[prop]);
+		unm(square[propnum]);
 	}
 }
 
@@ -202,13 +201,13 @@ set_umlist()
  *	This routine actually unmortgages the property
  */
 static void
-unm(prop)
-	int prop; 
+unm(propnum)
+	int propnum;
 {
 	int price;
 
-	price = board[prop].cost/2;
-	board[prop].desc->morg = FALSE;
+	price = board[propnum].cost/2;
+	board[propnum].desc->morg = FALSE;
 	price += price/10;
 	printf("That cost you $%d\n",price);
 	cur_p->money -= price;
