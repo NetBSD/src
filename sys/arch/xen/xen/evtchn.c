@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.31 2008/02/19 13:25:53 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.32 2008/02/19 19:50:53 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.31 2008/02/19 13:25:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.32 2008/02/19 19:50:53 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -229,7 +229,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 		    evtch, evtsource[evtch]->ev_maxlevel, ilevel);
 #endif
 		hypervisor_set_ipending(evtsource[evtch]->ev_imask,
-		    evtch / 32, evtch % 32);
+		    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 		/* leave masked */
 		return 0;
 	}
@@ -251,7 +251,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 #endif
 			cli();
 			hypervisor_set_ipending(iplmask,
-			    evtch / 32, evtch % 32);
+			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
 			splx(ilevel);
 			return 0;
@@ -646,11 +646,11 @@ xen_debug_handler(void *arg)
 	    " evtchn_pending_sel 0x%lx\n",
 		upcall_pending, upcall_mask, pending_sel);
 	printf("evtchn_mask");
-	for (i = 0 ; i < 32; i++)
+	for (i = 0 ; i <= LONG_MASK; i++)
 		printf(" %lx", (u_long)evtchn_mask[i]);
 	printf("\n");
 	printf("evtchn_pending");
-	for (i = 0 ; i < 32; i++)
+	for (i = 0 ; i <= LONG_MASK; i++)
 		printf(" %lx", (u_long)evtchn_pending[i]);
 	printf("\n");
 	return 0;
