@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.16 2008/02/19 09:30:26 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.17 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.16 2008/02/19 09:30:26 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.17 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,7 +69,7 @@ init_decks()
 {
 	int32_t nc;
 
-	if ((deckf=fopen(cardfile, "r")) == NULL) {
+	if ((deckf = fopen(cardfile, "r")) == NULL) {
 file_err:
 		err(1, "%s", cardfile);
 	}
