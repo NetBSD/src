@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 2008/02/03 08:37:41 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.154 2008/02/19 22:18:03 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2008/02/03 08:37:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2008/02/19 22:18:03 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -400,6 +400,7 @@ pmap_bootstrap()
 	mtpr(pcb->SSP, PR_SSP);
 	memset((void *)pcb->SSP, 0,
 	    sizeof(struct cpu_info) + sizeof(struct device));
+	curcpu()->ci_curlwp = &lwp0;
 #ifdef MUTEX_COUNT_BIAS
 	curcpu()->ci_mtx_count = MUTEX_COUNT_BIAS;
 #endif
