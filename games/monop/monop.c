@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.16 2007/12/15 19:44:42 perry Exp $	*/
+/*	$NetBSD: monop.c,v 1.17 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.16 2007/12/15 19:44:42 perry Exp $");
+__RCSID("$NetBSD: monop.c,v 1.17 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ getplayers()
 
 blew_it:
 	for (;;) {
-		if ((num_play=get_int("How many players? ")) <= 0 ||
+		if ((num_play = get_int("How many players? ")) <= 0 ||
 		    num_play > MAX_PL)
 			printf("Sorry. Number must range from 1 to 9\n");
 		else
@@ -122,7 +122,7 @@ blew_it:
 	for (i = 0; i < num_play; i++) {
 over:
 		printf("Player %d's name: ", i + 1);
-		for (sp = buf; (*sp=getchar()) != '\n'; sp++)
+		for (sp = buf; (*sp = getchar()) != '\n'; sp++)
 			continue;
 		if (sp == buf)
 			goto over;
@@ -188,7 +188,7 @@ again:
  *	This routine initializes the monopoly structures.
  */
 static void
-init_monops() 
+init_monops()
 {
 	MON *mp;
 	int i;

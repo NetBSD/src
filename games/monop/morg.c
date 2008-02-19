@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.12 2008/02/19 09:05:55 dholland Exp $	*/
+/*	$NetBSD: morg.c,v 1.13 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.12 2008/02/19 09:05:55 dholland Exp $");
+__RCSID("$NetBSD: morg.c,v 1.13 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -155,7 +155,7 @@ m(propnum)
  * to be unmortgaged.
  */
 void
-unmortgage() 
+unmortgage()
 {
 	int propnum;
 
