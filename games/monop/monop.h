@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.12 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: monop.h,v 1.13 2008/02/19 09:25:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -124,7 +124,7 @@ struct plr_st {			/* player description structure		*/
 	short	loc;			/* location on board		*/
 	short	in_jail;		/* count of turns in jail	*/
 	int	money;			/* amount of money		*/
-	OWN	*own_list;		/* start of propery list	*/
+	OWN	*own_list;		/* start of property list	*/
 };
 
 typedef struct plr_st	PLAY;
