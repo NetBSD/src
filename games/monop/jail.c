@@ -1,4 +1,4 @@
-/*	$NetBSD: jail.c,v 1.6 2003/08/07 09:37:28 agc Exp $	*/
+/*	$NetBSD: jail.c,v 1.7 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)jail.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: jail.c,v 1.6 2003/08/07 09:37:28 agc Exp $");
+__RCSID("$NetBSD: jail.c,v 1.7 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,8 +112,7 @@ moveit:
 			return TRUE;
 		}
 		return FALSE;
-	}
-	else {
+	} else {
 		printf("Double roll gets you out.\n");
 		goto moveit;
 	}

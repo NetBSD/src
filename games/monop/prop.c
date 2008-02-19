@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.13 2008/02/19 09:32:34 dholland Exp $	*/
+/*	$NetBSD: prop.c,v 1.14 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.13 2008/02/19 09:32:34 dholland Exp $");
+__RCSID("$NetBSD: prop.c,v 1.14 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ void
 add_list(plr, head, op_sqr)
 	int plr;
 	OWN **head;
-	int op_sqr; 
+	int op_sqr;
 {
 	int val;
 	OWN *tp, *last_tp;

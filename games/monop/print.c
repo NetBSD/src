@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.8 2004/01/27 20:30:30 jsm Exp $	*/
+/*	$NetBSD: print.c,v 1.9 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.8 2004/01/27 20:30:30 jsm Exp $");
+__RCSID("$NetBSD: print.c,v 1.9 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,7 +48,7 @@ static void printmorg(const SQUARE *);
  *	This routine prints out the current board
  */
 void
-printboard() 
+printboard()
 {
 	int i;
 
@@ -64,7 +64,7 @@ printboard()
  *	This routine lists where each player is.
  */
 void
-where() 
+where()
 {
 	int i;
 

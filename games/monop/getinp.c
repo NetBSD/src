@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.15 2008/01/28 06:16:13 dholland Exp $	*/
+/*	$NetBSD: getinp.c,v 1.16 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getinp.c,v 1.15 2008/01/28 06:16:13 dholland Exp $");
+__RCSID("$NetBSD: getinp.c,v 1.16 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,7 +51,7 @@ static int comp(const char *);
 
 int
 getinp(prompt, lst)
-	const char *prompt, *const lst[]; 
+	const char *prompt, *const lst[];
 {
 	int i, n_match, match = 0;
 	char *sp;
@@ -59,7 +59,7 @@ getinp(prompt, lst)
 
 	for (;;) {
 		printf("%s", prompt);
-		for (sp = buf; (c=getchar()) != '\n'; ) {
+		for (sp = buf; (c = getchar()) != '\n'; ) {
 			if (c == -1)
 				return 0;
 			*sp = c;

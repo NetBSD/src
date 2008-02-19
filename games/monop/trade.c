@@ -1,4 +1,4 @@
-/*	$NetBSD: trade.c,v 1.10 2008/01/28 06:16:13 dholland Exp $	*/
+/*	$NetBSD: trade.c,v 1.11 2008/02/19 09:45:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trade.c,v 1.10 2008/01/28 06:16:13 dholland Exp $");
+__RCSID("$NetBSD: trade.c,v 1.11 2008/02/19 09:45:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ over:
  */
 static void
 get_list(struct_no, play_no)
-	int struct_no, play_no; 
+	int struct_no, play_no;
 {
 	int sn, pn;
 	PLAY *pp;
@@ -156,7 +156,7 @@ once_more:
  */
 static int
 set_list(the_list)
-	OWN *the_list; 
+	OWN *the_list;
 {
 	int i;
 	OWN *op;
@@ -216,7 +216,7 @@ do_trade()
  */
 static void
 move_em(from, to)
-	TRADE *from, *to; 
+	TRADE *from, *to;
 {
 	PLAY *pl_fr, *pl_to;
 	OWN *op;
