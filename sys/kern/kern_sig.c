@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.268 2008/02/19 12:20:02 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.269 2008/02/19 12:22:44 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.268 2008/02/19 12:20:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.269 2008/02/19 12:22:44 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -661,8 +661,8 @@ sigclearall(struct proc *p, sigset_t *mask, ksiginfoq_t *kq)
  * sigispending:
  *
  *	Return true if there are pending signals for the current LWP.  May
- *	be called unlocked provided that L_PENDSIG is set, and that the
- *	signal has been posted to the appopriate queue before L_PENDSIG is
+ *	be called unlocked provided that LW_PENDSIG is set, and that the
+ *	signal has been posted to the appopriate queue before LW_PENDSIG is
  *	set.
  */ 
 int
