@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.11 2008/02/04 01:07:01 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.12 2008/02/19 06:05:26 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas.  All rights reserved.
@@ -28,6 +28,17 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+/* action.c */
+void act_remove_gems(int);
+void act_sit_throne(int);
+void act_drink_fountain(void);
+void act_wash_fountain(void);
+void act_desecrate_altar(void);
+void act_donation_pray(void);
+void act_just_pray(void);
+void act_ignore_altar(void);
+void act_open_chest(int, int);
 
 /* bill.c */
 void mailbill(void);
