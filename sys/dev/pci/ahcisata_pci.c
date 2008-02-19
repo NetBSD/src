@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.3 2008/02/11 08:23:48 xtraeme Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.4 2008/02/19 10:37:56 jnemeth Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.3 2008/02/11 08:23:48 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.4 2008/02/19 10:37:56 jnemeth Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -86,7 +86,7 @@ ahci_pci_match(struct device *parent, struct cfdata *match,
 		if (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE)
 			ret = 3;
 		bus_space_unmap(regt, regh, size);
-		return (3);
+		return (ret);
 	}
 
 	return (ret);
