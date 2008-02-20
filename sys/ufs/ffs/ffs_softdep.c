@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.107 2008/02/15 13:46:04 ad Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.108 2008/02/20 17:13:29 matt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.107 2008/02/15 13:46:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.108 2008/02/20 17:13:29 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -93,7 +93,7 @@ MALLOC_JUSTDEFINE(M_NEWBLK, "newblk", "New block allocation");
 /*
  * Names of softdep types.
  */
-const char *softdep_typenames[] = {
+const char * const softdep_typenames[] = {
 	"invalid",
 	"pagedep",
 	"inodedep",
@@ -205,7 +205,7 @@ static	int softdep_process_worklist(struct mount *);
 static	void softdep_move_dependencies(struct buf *, struct buf *);
 static	int softdep_count_dependencies(struct buf *bp, int);
 
-static struct bio_ops bioops_softdep = {
+static const struct bio_ops bioops_softdep = {
 	softdep_disk_io_initiation,		/* io_start */
 	softdep_disk_write_complete,		/* io_complete */
 	softdep_deallocate_dependencies,	/* io_deallocate */
