@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.109 2008/02/15 13:30:56 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.110 2008/02/20 17:13:30 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.109 2008/02/15 13:30:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.110 2008/02/20 17:13:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -809,18 +809,6 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 }
 
 /*
- * Definitions for the buffer free lists.
- */
-#define BQUEUES		4		/* number of free buffer queues */
-
-#define BQ_LOCKED	0		/* super-blocks &c */
-#define BQ_LRU		1		/* lru, useful buffers */
-#define BQ_AGE		2		/* rubbish */
-#define BQ_EMPTY	3		/* buffer headers with no memory */
-
-extern TAILQ_HEAD(bqueues, buf) bufqueues[BQUEUES];
-
-/*
  * Count buffers on the "locked" queue, and compare it to a pro-forma count.
  * Don't count malloced buffers, since they don't detract from the total.
  */
@@ -832,7 +820,7 @@ lfs_countlocked(int *count, long *bytes, const char *msg)
 	long int size = 0L;
 
 	mutex_enter(&bufcache_lock);
-	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED], b_freelist) {
+	TAILQ_FOREACH(bp, &bufqueues[BQ_LOCKED].bq_queue, b_freelist) {
 		KASSERT(bp->b_iodone == NULL);
 		n++;
 		size += bp->b_bufsize;
