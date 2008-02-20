@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.116 2008/02/13 19:01:35 drochner Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.117 2008/02/20 22:33:18 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.116 2008/02/13 19:01:35 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.117 2008/02/20 22:33:18 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -131,6 +131,8 @@ struct wsdisplay_softc {
 
 	int sc_flags;
 #define SC_SWITCHPENDING 1
+#define SC_SWITCHERROR 2
+#define SC_XATTACHED 4 /* X server active */
 	kmutex_t sc_flagsmtx; /* for flags, might also be used for focus */
 	kcondvar_t sc_flagscv;
 
@@ -160,7 +162,6 @@ static int wsdisplay_emul_match(device_t , struct cfdata *, void *);
 static void wsdisplay_emul_attach(device_t, device_t, void *);
 static int wsdisplay_noemul_match(device_t, struct cfdata *, void *);
 static void wsdisplay_noemul_attach(device_t, device_t, void *);
-static bool wsdisplay_resume(device_t dv);
 static bool wsdisplay_suspend(device_t dv);
 
 CFATTACH_DECL_NEW(wsdisplay_emul, sizeof (struct wsdisplay_softc),
@@ -609,63 +610,93 @@ wsdisplay_swdone_cb(void *arg, int error, int waitok)
 
 	mutex_enter(&sc->sc_flagsmtx);
 	KASSERT(sc->sc_flags & SC_SWITCHPENDING);
+	if (error)
+		sc->sc_flags |= SC_SWITCHERROR;
 	sc->sc_flags &= ~SC_SWITCHPENDING;
 	cv_signal(&sc->sc_flagscv);
 	mutex_exit(&sc->sc_flagsmtx);
+}
+
+static int
+wsdisplay_dosync(struct wsdisplay_softc *sc, int attach)
+{
+	struct wsscreen *scr;
+	int (*op)(void *, int, void (*)(void *, int, int), void *);
+	int res;
+
+	scr = sc->sc_focus;
+	if (!scr || !scr->scr_syncops)
+		return 0; /* XXX check SCR_GRAPHICS? */
+
+	sc->sc_flags |= SC_SWITCHPENDING;
+	sc->sc_flags &= ~SC_SWITCHERROR;
+	if (attach)
+		op = scr->scr_syncops->attach;
+	else
+		op = scr->scr_syncops->detach;
+	res = (*op)(scr->scr_synccookie, 1, wsdisplay_swdone_cb, sc);
+	if (res == EAGAIN) {
+		/* wait for callback */
+		mutex_enter(&sc->sc_flagsmtx);
+		while (sc->sc_flags & SC_SWITCHPENDING)
+			cv_wait_sig(&sc->sc_flagscv, &sc->sc_flagsmtx);
+		mutex_exit(&sc->sc_flagsmtx);
+		if (sc->sc_flags & SC_SWITCHERROR)
+			return (EIO); /* XXX pass real error */
+	} else {
+		sc->sc_flags &= ~SC_SWITCHPENDING;
+		if (res)
+			return (res);
+	}
+	if (attach)
+		sc->sc_flags |= SC_XATTACHED;
+	else
+		sc->sc_flags &= ~SC_XATTACHED;
+	return 0;
+}
+
+int
+wsdisplay_handlex(int resume)
+{
+	int i, res;
+	device_t dv;
+
+	for (i = 0; i < wsdisplay_cd.cd_ndevs; i++) {
+		dv = wsdisplay_cd.cd_devs[i];
+		if (!dv)
+			continue;
+		res = wsdisplay_dosync(device_private(dv), resume);
+		if (res)
+			return (res);
+	}
+	return (0);
 }
 
 static bool
 wsdisplay_suspend(device_t dv)
 {
 	struct wsdisplay_softc *sc = device_private(dv);
-	struct wsscreen *scr;
-	int res;
-
-	scr = sc->sc_focus;
-	if (!scr || !scr->scr_syncops)
-		return true;
-
-	sc->sc_flags |= SC_SWITCHPENDING;
-	res = (*scr->scr_syncops->detach)(scr->scr_synccookie, 1,
-					  wsdisplay_swdone_cb, sc);
-	if (res != EAGAIN) {
-		sc->sc_flags &= ~SC_SWITCHPENDING;
-		return (res == 0);
+#ifdef DIAGNOSTIC
+	struct wsscreen *scr = sc->sc_focus;
+	if (sc->sc_flags & SC_XATTACHED) {
+		KASSERT(scr && scr->scr_syncops);
 	}
-
-	/* wait for callback */
-	mutex_enter(&sc->sc_flagsmtx);
-	while (sc->sc_flags & SC_SWITCHPENDING)
-		cv_wait_sig(&sc->sc_flagscv, &sc->sc_flagsmtx);
-	mutex_exit(&sc->sc_flagsmtx);
-	return true;
-}
-
-static bool
-wsdisplay_resume(device_t dv)
-{
-	struct wsdisplay_softc *sc = device_private(dv);
-	struct wsscreen *scr;
-	int res;
-
-	scr = sc->sc_focus;
-	if (!scr || !scr->scr_syncops)
-		return true;
-
-	sc->sc_flags |= SC_SWITCHPENDING;
-	res = (*scr->scr_syncops->attach)(scr->scr_synccookie, 1,
-					  wsdisplay_swdone_cb, sc);
-	if (res != EAGAIN) {
-		sc->sc_flags &= ~SC_SWITCHPENDING;
-		return (res == 0);
+#endif
+#if 1
+	/*
+	 * XXX X servers should have been detached earlier.
+	 * pmf currently ignores our return value and suspends the system
+	 * after device suspend failures. We try to avoid bigger damage
+	 * and try to detach the X server here. This is not safe because
+	 * other parts of the system which the X server deals with
+	 * might already be suspended.
+	 */
+	if (sc->sc_flags & SC_XATTACHED) {
+		printf("%s: emergency X server detach\n", device_xname(dv));
+		wsdisplay_dosync(sc, 0);
 	}
-
-	/* wait for callback */
-	mutex_enter(&sc->sc_flagsmtx);
-	while (sc->sc_flags & SC_SWITCHPENDING)
-		cv_wait_sig(&sc->sc_flagscv, &sc->sc_flagsmtx);
-	mutex_exit(&sc->sc_flagsmtx);
-	return true;
+#endif
+	return (!(sc->sc_flags & SC_XATTACHED));
 }
 
 /* Print function (for parent devices). */
@@ -768,7 +799,7 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 	if (i > start)
 		wsdisplay_addscreen_print(sc, start, i-start);
 
-	if (!pmf_device_register(sc->sc_dev, wsdisplay_suspend, wsdisplay_resume))
+	if (!pmf_device_register(sc->sc_dev, wsdisplay_suspend, NULL))
 		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
 }
 
@@ -1723,6 +1754,9 @@ wsdisplay_switch3(device_t dv, int error, int waitok)
 		return (wsdisplay_switch1(dv, 0, waitok));
 	}
 
+	if (scr->scr_syncops && !error)
+		sc->sc_flags |= SC_XATTACHED;
+
 	sc->sc_flags &= ~SC_SWITCHPENDING;
 
 	if (!error && (scr->scr_flags & SCR_WAITACTIVE))
@@ -1819,6 +1853,7 @@ wsdisplay_switch1(device_t dv, int error, int waitok)
 	if (no == WSDISPLAY_NULLSCREEN) {
 		sc->sc_flags &= ~SC_SWITCHPENDING;
 		if (!error) {
+			sc->sc_flags &= ~SC_XATTACHED;
 			sc->sc_focus = 0;
 		}
 		wakeup(sc);
@@ -1836,6 +1871,8 @@ wsdisplay_switch1(device_t dv, int error, int waitok)
 		sc->sc_flags &= ~SC_SWITCHPENDING;
 		return (error);
 	}
+
+	sc->sc_flags &= ~SC_XATTACHED;
 
 	error = (*sc->sc_accessops->show_screen)(sc->sc_accesscookie,
 						 scr->scr_dconf->emulcookie,
@@ -1891,6 +1928,8 @@ wsdisplay_switch(device_t dv, int no, int waitok)
 		sc->sc_oldscreen = sc->sc_focusidx;
 
 	if (scr->scr_syncops) {
+		if (!(sc->sc_flags & SC_XATTACHED)) /* nothing to do here */
+			return (wsdisplay_switch1(dv, 0, waitok));
 		res = (*scr->scr_syncops->detach)(scr->scr_synccookie, waitok,
 	  sc->sc_isconsole && wsdisplay_cons_pollmode ? 0 : wsdisplay_switch1_cb, dv);
 		if (res == EAGAIN) {
@@ -1947,6 +1986,8 @@ wsscreen_attach_sync(struct wsscreen *scr, const struct wscons_syncops *ops,
 	}
 	scr->scr_syncops = ops;
 	scr->scr_synccookie = cookie;
+	if (scr == scr->sc->sc_focus)
+		scr->sc->sc_flags |= SC_XATTACHED;
 	return (0);
 }
 
@@ -1956,6 +1997,8 @@ wsscreen_detach_sync(struct wsscreen *scr)
 	if (!scr->scr_syncops)
 		return (EINVAL);
 	scr->scr_syncops = 0;
+	if (scr == scr->sc->sc_focus)
+		scr->sc->sc_flags &= ~SC_XATTACHED;
 	return (0);
 }
 
