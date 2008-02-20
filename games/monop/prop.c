@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.14 2008/02/19 09:45:02 dholland Exp $	*/
+/*	$NetBSD: prop.c,v 1.15 2008/02/20 05:08:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.14 2008/02/19 09:45:02 dholland Exp $");
+__RCSID("$NetBSD: prop.c,v 1.15 2008/02/20 05:08:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -159,8 +159,7 @@ value(sqp)
 }
 
 /*
- *	This routine accepts bids for the current peice
- * of property.
+ * This routine accepts bids for the current piece of property.
  */
 void
 bid()
@@ -187,8 +186,7 @@ bid()
 					in[i] = FALSE;
 					if (--num_in == 0)
 						break;
-				}
-				else if (cur_bid <= cur_max) {
+				} else if (cur_bid <= cur_max) {
 					printf("You must bid higher than %d "
 					    "to stay in\n", cur_max);
 					printf("(bid of 0 drops you out)\n");
