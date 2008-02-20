@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.34 2008/01/04 11:28:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.35 2008/02/20 02:30:51 matt Exp $");
 
 #ifdef _KERNEL
 #include "opt_ddb.h"
@@ -106,11 +106,13 @@ struct symtab {
 	CIRCLEQ_ENTRY(symtab) sd_queue;
 	const char *sd_name;	/* Name of this table */
 	Elf_Sym *sd_symstart;	/* Address of symbol table */
+	Elf_Sym *sd_minsym;	/* symbol with minimum value */
+	Elf_Sym *sd_maxsym;	/* symbol with maximum value */
 	char *sd_strstart;	/* Address of corresponding string table */
+	int *sd_symnmoff;	/* Used when calculating the name offset */
 	int sd_usroffset;	/* Real address for userspace */
 	int sd_symsize;		/* Size in bytes of symbol table */
 	int sd_strsize;		/* Size of string table */
-	int *sd_symnmoff;	/* Used when calculating the name offset */
 };
 
 static CIRCLEQ_HEAD(, symtab) symtab_queue =
@@ -264,6 +266,12 @@ ptree_gen(char *off, struct symtab *tab)
 		if (ELF_ST_BIND(sym[i].st_info) != STB_GLOBAL)
 			continue;
 		ptree_add(tab->sd_strstart+sym[i].st_name, i);
+		if (tab->sd_minsym == NULL
+		    || sym[i].st_value < tab->sd_minsym->st_value)
+			tab->sd_minsym = &sym[i];
+		if (tab->sd_maxsym == NULL
+		    || sym[i].st_value > tab->sd_maxsym->st_value)
+			tab->sd_maxsym = &sym[i];
 	}
 }
 #endif /* USE_PTREE */
@@ -624,6 +632,10 @@ ksyms_getname(const char **mod, const char **sym, vaddr_t v, int f)
 		return ENOENT;
 
 	CIRCLEQ_FOREACH(st, &symtab_queue, sd_queue) {
+		if (st->sd_minsym != NULL && v < st->sd_minsym->st_value)
+			continue;
+		if (st->sd_maxsym != NULL && v > st->sd_maxsym->st_value)
+			continue;
 		sz = st->sd_symsize/sizeof(Elf_Sym);
 		for (i = 0; i < sz; i++) {
 			les = st->sd_symstart + i;
