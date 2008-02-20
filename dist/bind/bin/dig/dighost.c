@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.1.1.6 2007/03/30 19:15:55 ghen Exp $	*/
+/*	$NetBSD: dighost.c,v 1.2 2008/02/20 18:24:22 matt Exp $	*/
 
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
@@ -172,7 +172,7 @@ isc_entropy_t *entp = NULL;
 isc_mempool_t *commctx = NULL;
 isc_boolean_t debugging = ISC_FALSE;
 isc_boolean_t memdebugging = ISC_FALSE;
-char *progname = NULL;
+const char *progname = NULL;
 isc_mutex_t lookup_lock;
 dig_lookup_t *current_lookup = NULL;
 
