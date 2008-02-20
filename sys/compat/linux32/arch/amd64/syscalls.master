@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.30 2008/02/17 21:49:17 njoly Exp $
+	$NetBSD: syscalls.master,v 1.31 2008/02/20 21:49:56 njoly Exp $
 
 ; NetBSD i386 COMPAT_LINUX32 system call name/number "master" file.
 ; (See syscalls.conf to see what it is processed into.)
@@ -259,8 +259,10 @@
 147	NOARGS	{ pid_t netbsd32_getsid(pid_t pid); }
 148	STD	{ int linux32_sys_fdatasync(int fd); }
 149	STD	{ int linux32_sys___sysctl(linux32___sysctlp_t lsp); }
-150	UNIMPL	mlock
-151	UNIMPL	munlock
+150	NOARGS	{ int netbsd32_mlock(netbsd32_voidp addr, \
+		    netbsd32_size_t len); }
+151	NOARGS	{ int netbsd32_munlock(netbsd32_voidp addr, \
+		    netbsd32_size_t len); }
 152	NOARGS	{ int netbsd32_mlockall(int flags); }
 153	NOARGS	{ int sys_munlockall(void); }
 154	UNIMPL	sched_setparam
