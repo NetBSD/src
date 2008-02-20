@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.13 2008/02/19 09:25:21 dholland Exp $	*/
+/*	$NetBSD: monop.h,v 1.14 2008/02/20 04:10:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -66,11 +66,6 @@
 #define	lucky(str)	printf("%s%s\n",str,lucky_mes[roll(1,num_luck)-1])
 #define	printline()	printf("------------------------------\n")
 #define	sqnum(sqp)	(sqp - board)
-#define	swap(A1,A2)	if ((A1) != (A2)) { \
-					(A1) ^= (A2); \
-					(A2) ^= (A1); \
-					(A1) ^= (A2); \
-				}
 
 struct sqr_st {			/* structure for square			*/
 	const char	*name;		/* place name			*/
