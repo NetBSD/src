@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.16 2008/02/19 09:34:40 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.17 2008/02/20 04:10:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.16 2008/02/19 09:34:40 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.17 2008/02/20 04:10:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ get_int(prompt)
 
 	for (;;) {
 inter:
-		printf(prompt);
+		printf("%s", prompt);
 		num = 0;
 		for (sp = buf; (c=getchar()) != '\n'; *sp++ = c)
 			if (c == -1)	/* check for interrupted system call */
