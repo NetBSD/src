@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.22 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.23 2008/02/20 17:18:11 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -73,7 +73,7 @@ struct sockaddr_dl {
 	/* minimum work area, can be larger; contains both if name
 	 * and ll address
 	 */
-	int8_t	    sdl_data[12];
+	char	    sdl_data[12];
 };
 
 #define	satosdl(__sa)	((struct sockaddr_dl *)(__sa))
