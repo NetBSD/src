@@ -395,7 +395,7 @@ static enum gdb_osabi
 shnbsd_core_osabi_sniffer (bfd *abfd)
 {
   if (strcmp (bfd_get_target (abfd), "netbsd-core") == 0)
-    return GDB_OSABI_NETBSD_CORE;
+    return GDB_OSABI_NETBSD_AOUT;
 
   return GDB_OSABI_UNKNOWN;
 }
