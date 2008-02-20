@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 2008/02/19 22:18:03 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.155 2008/02/20 16:37:52 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2008/02/19 22:18:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2008/02/20 16:37:52 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -254,6 +254,7 @@ calc_kvmsize(vsize_t usrptsize)
 #ifndef PIPE_SOCKETPAIR
 	kvmsize += PIPE_DIRECT_CHUNK*10;
 #endif
+	kvmsize = (kvmsize + PAGE_SIZE + 1) & ~(PAGE_SIZE - 1);
 	return kvmsize;
 }
 

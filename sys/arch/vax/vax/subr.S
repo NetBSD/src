@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.20 2008/02/05 00:04:24 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.21 2008/02/20 16:37:52 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -47,6 +47,11 @@
 #endif
 
 #define JSBENTRY(x)	.globl x ; .align 2 ; x :
+#define SCBENTRY(name) \
+	.text			; \
+	.align 2		; \
+	.globl __CONCAT(X,name)	; \
+__CONCAT(X,name):
 
 		.text
 
@@ -123,8 +128,9 @@ to:	movw	$0xfff,_C_LABEL(panic)		# Save all regs in panic
 	addl3	$USPACE,_C_LABEL(proc0paddr),%r0	# Get kernel stack top
 	mtpr	%r0,$PR_KSP			# put in IPR KSP
 	movl	%r0,_C_LABEL(Sysmap)		# SPT start addr after KSP
-	movl	_C_LABEL(proc0paddr),%r0		# get PCB virtual address
-	movab	IFTRAP(%r0),4(%r0)		# Save trap address in ESP
+	movl	_C_LABEL(proc0paddr),%r0	# get PCB virtual address
+	mfpr	$PR_PCBB,PCB_PADDR(%r0)		# save PCB physical address
+	movab	IFTRAP(%r0),ESP(%r0)		# Save trap address in ESP
 	mtpr	4(%r0),$PR_ESP			# Put it in ESP also
 
 # Set some registers in known state
@@ -304,6 +310,80 @@ _C_LABEL(vax_mp_tramp):
 	rei
 #endif
 
+	.globl	softint_cleaup,softint_exit,softint_process
+softint_cleanup:
+	mfpr    $PR_SSP,%r1		/* get cpu_info */
+	incl    CI_MTX_COUNT(%r1)	/* increment mutex count */
+	clrl    L_CTXSWTCH(%r0)		/* clear l_ctxswtch of old lwp */
+softint_exit:
+	popr	$0x3			/* restore r0 and r1 */
+	rei				/* return from interrupt */
+
+softint_process:
+	/*
+	 * R6 contains pinned LWP
+	 * R7 contains ipl to dispatch with
+	 */
+	movq	%r6,-(%sp)		/* push old lwp and ipl onto stack */
+	calls	$2,_C_LABEL(softint_dispatch) /* dispatch it */
+
+	/* We can use any register because ldpctx will overwrite them */
+	mfpr	$PR_SSP,%r8		/* get cpu_info */
+	movl	%r6,CI_CURLWP(%r8)	/* update ci_curlwp */
+	movl	L_ADDR(%r6),%r3		/* Get pointer to new pcb. */
+
+	movab	softint_exit,PCB_PC(%r3)/* do a quick exit */
+#if 0
+	movl	KSP(%r3),%r0		/* get pinned lwp's KSP */ 
+	movq	(%r0)+,PCB_PC(%r3)	/* return to real PC & PSL */
+	movq	(%r0)+,PCB_R0(%r3)	/* restore saved r0 and r1 */
+	movl	%r0,KSP(%r3)		/* restore pinned KSP */
+#endif
+
+	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* restore PA of interrupted pcb */
+	ldpctx
+	rei
+
+
+softint_common:
+	mfpr	$PR_IPL,%r1
+	mtpr	$IPL_HIGH,$PR_IPL	/* we need to be at IPL_HIGH */
+	movpsl	-(%sp)			/* add cleanup hook */
+	pushab	softint_cleanup
+	svpctx
+
+	/* We can use any register because ldpctx will overwrite them */
+	mfpr	$PR_SSP,%r8		/* Get curcpu */
+	movl	CI_SOFTLWPS(%r8)[%r0],%r2 /* get softlwp to switch to */
+	movl	L_ADDR(%r2),%r3		/* Get pointer to its pcb. */
+	movl	CI_CURLWP(%r8),PCB_R6(%r3) /* move old lwp into new pcb */
+	movl	%r1,PCB_R7(%r3)		/* move IPL into new pcb */
+	movab	softint_process,PCB_PC(%r3) /* where we want to start running */
+	movl	%r2,CI_CURLWP(%r8)	/* update ci_curlwp */
+	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* set PA of new pcb */
+	ldpctx				/* load it */
+	rei				/* get off interrupt stack */
+
+SCBENTRY(softclock)
+	pushr	$0x3			/* save r0 and r1 */
+	movl	$SOFTINT_CLOCK,%r0
+	brb	softint_common
+
+SCBENTRY(softbio)
+	pushr	$0x3			/* save r0 and r1 */
+	movl	$SOFTINT_BIO,%r0
+	brb	softint_common
+
+SCBENTRY(softnet)
+	pushr	$0x3			/* save r0 and r1 */
+	movl	$SOFTINT_NET,%r0
+	brb	softint_common
+
+SCBENTRY(softserial)
+	pushr	$0x3			/* save r0 and r1 */
+	movl	$SOFTINT_SERIAL,%r0
+	brb	softint_common
+
 /*
  * Helper routine for cpu_lwp_fork.  It get invoked by Swtchto.
  * It let's the kernel know the lwp is alive and then calls func(arg)
@@ -331,15 +411,12 @@ JSBENTRY(Swtchto)
 	movl	%r1,CI_CURLWP(%r4)	# update ci_curlwp
 	movl	L_ADDR(%r1),%r3		# Get pointer to new pcb.
 	movl	%r0,PCB_R0(%r3)		# move r0 into new pcb (return value)
+#ifdef MULTIPROCESSOR
 	movl	%r4,SSP(%r3)		# Put curcpu into new PCB
-	addl3	%r3,$IFTRAP,%r4		# Save for copy* functions.
-	mtpr	%r4,$PR_ESP		# Use ESP as CPU-specific pointer
-	movl	%r4,ESP(%r3)		# Must save in PCB also.
+#endif
 
-	extzv	$9,$21,%r3,%r1		# extract offset of PCB
-	ashl	$9,*_C_LABEL(Sysmap)[%r1],%r4
-
-	mtpr	%r4,$PR_PCBB		# set PA of new pcb
+	mtpr	PCB_PADDR(%r3),$PR_PCBB	# set PA of new pcb
+	mtpr	$IPL_HIGH,$PR_IPL	/* we need to be at IPL_HIGH */
 	ldpctx				# load it
 	/* r0 already has previous lwp */
 	/* r1 already has this lwp */

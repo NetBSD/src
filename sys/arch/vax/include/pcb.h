@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.10 1996/02/02 18:08:26 mycroft Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11 2008/02/20 16:37:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -58,6 +58,7 @@ struct pcb {
 	/* Software registers, only used by kernel software */
 	void   *framep;		/* Pointer to syscall frame */
 	void   *iftrap;		/* Tells whether fault copy */
+	paddr_t pcb_paddr;	/* physical address of PCB */
 };
 
 #define	AST_MASK 0x07000000

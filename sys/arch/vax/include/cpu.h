@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.81 2008/02/03 08:31:09 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.82 2008/02/20 16:37:52 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -139,6 +139,9 @@ struct cpu_info {
 	 */
 	int ci_want_resched;		/* Should change process */
 	struct device *ci_dev;		/* device struct for this cpu */
+#if defined(__HAVE_FAST_SOFTINTS)
+	lwp_t *ci_softlwps[SOFTINT_COUNT];
+#endif
 #if defined(MULTIPROCESSOR)
 	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
 	vaddr_t ci_istack;		/* Interrupt stack location */

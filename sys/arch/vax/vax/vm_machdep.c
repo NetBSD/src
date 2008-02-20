@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.99 2007/12/22 08:59:02 dsl Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.100 2008/02/20 16:37:52 matt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.99 2007/12/22 08:59:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2008/02/20 16:37:52 matt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -147,10 +147,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb->FP = (uintptr_t)cf;
 	pcb->PC = (uintptr_t)cpu_lwp_bootstrap + 2;
 	pcb->PSL = PSL_HIGHIPL;
+	pcb->ESP = (uintptr_t)&pcb->iftrap;
+#ifndef MULTIPROCESSOR
+	pcb->SSP = (uintptr_t)curcpu();
+#endif
 	/* pcb->R[0] (oldlwp) set by Swtchto */
 	pcb->R[1] = (uintptr_t)l2;
 	pcb->R[2] = (uintptr_t)func;
 	pcb->R[3] = (uintptr_t)arg;
+	pcb->pcb_paddr = kvtophys(pcb);
 
 	/*
 	 * If specified, give the child a different stack.

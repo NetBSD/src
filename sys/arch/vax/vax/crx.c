@@ -1,4 +1,4 @@
-/*	$NetBSD: crx.c,v 1.11 2007/03/04 06:00:58 christos Exp $	*/
+/*	$NetBSD: crx.c,v 1.12 2008/02/20 16:37:52 matt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.11 2007/03/04 06:00:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crx.c,v 1.12 2008/02/20 16:37:52 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
@@ -158,7 +158,7 @@ crxrw(dev, uio, flags)
 	rs = &rx50state;
 
 	/* lock out others */
-	i = spl4();
+	i = splvm();
 	while (rs->rs_flags & RS_BUSY) {
 		rs->rs_flags |= RS_WANT;
 		(void) tsleep(&rx50state, PRIBIO, "crxbusy", 0);
@@ -206,7 +206,7 @@ crxrw(dev, uio, flags)
 #endif
 		rxaddr->rxgo = 0;	/* start it up */
 		ka820port_ptr->csr |= KA820PORT_RXIRQ;
-		i = spl4();
+		i = splvm();
 		while ((rs->rs_flags & RS_DONE) == 0) {
 #if	CRXDEBUG
 			printf("crx: sleeping on I/O\n");

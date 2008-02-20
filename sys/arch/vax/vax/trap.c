@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.110 2007/10/17 19:58:00 garbled Exp $     */
+/*	$NetBSD: trap.c,v 1.111 2008/02/20 16:37:52 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.110 2007/10/17 19:58:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2008/02/20 16:37:52 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -143,13 +143,13 @@ fram:
 #ifdef DDB
 		kdb_trap(frame);
 #endif
-		printf("Trap: type %x, code %x, pc %x, psl %x\n",
+		panic("trap: type %x, code %x, pc %x, psl %x",
 		    (u_int)frame->trap, (u_int)frame->code,
 		    (u_int)frame->pc, (u_int)frame->psl);
-		panic("trap");
 
 	case T_KSPNOTVAL:
-		panic("kernel stack invalid");
+		panic("kernel stack invalid %#x@%#x psl %#x)",
+		    mfpr(PR_KSP), (u_int)frame->pc, (u_int)frame->psl);
 
 	case T_TRANSFLT|T_USER:
 	case T_TRANSFLT:
