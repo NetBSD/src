@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.891 2008/02/03 13:25:57 martin Exp $
+#	$NetBSD: files,v 1.892 2008/02/20 21:43:36 drochner Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1045,6 +1045,11 @@ file	dev/ic/igsfb_subr.c		igsfb
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
 file	dev/ic/sti.c		sti & (sti_pci | sti_sgc | sti_phantom)
+
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have

@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.107 2008/02/03 08:45:40 matt Exp $
+#	$NetBSD: files.vax,v 1.108 2008/02/20 21:43:35 drochner Exp $
 #
 # new style config file for vax architecture
 #
@@ -92,10 +92,6 @@ file	arch/vax/mba/ht.c		ht needs-flag
 # Bus-independent support for DEC devices
 #
 include "dev/dec/files.dec"
-
-# wscons files.
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
 
 # Memory Disk for install floppy
 file	dev/md_root.c			memory_disk_hooks

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amiga,v 1.139 2007/10/17 19:53:14 garbled Exp $
+#	$NetBSD: files.amiga,v 1.140 2008/02/20 21:43:33 drochner Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
@@ -157,9 +157,6 @@ file	arch/amiga/dev/ite_cc.c		grfcc & ite
 device	amidisplaycc: wsemuldisplaydev
 attach	amidisplaycc at mainbus
 file	arch/amiga/dev/amidisplaycc.c	amidisplaycc needs-flag
-
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
 
 defpseudo	view
 file	arch/amiga/dev/view.c		view | grfcc needs-count
