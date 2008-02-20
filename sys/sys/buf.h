@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.105 2008/02/15 13:46:04 ad Exp $ */
+/*     $NetBSD: buf.h,v 1.106 2008/02/20 17:13:29 matt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007 The NetBSD Foundation, Inc.
@@ -263,8 +263,27 @@ do {									\
 #define	BPRIO_TIMENONCRITICAL	0
 #define	BPRIO_DEFAULT		BPRIO_TIMELIMITED
 
-extern	struct bio_ops *bioopsp;
+extern	const struct bio_ops *bioopsp;
 extern	u_int nbuf;		/* The number of buffer headers */
+
+/*
+ * Definitions for the buffer free lists.
+ */
+#define	BQUEUES		4		/* number of free buffer queues */
+
+#define	BQ_LOCKED	0		/* super-blocks &c */
+#define	BQ_LRU		1		/* lru, useful buffers */
+#define	BQ_AGE		2		/* rubbish */
+#define	BQ_EMPTY	3		/* buffer headers with no memory */
+
+struct bqueue {
+	TAILQ_HEAD(, buf) bq_queue;
+	uint64_t bq_bytes;
+	buf_t *bq_marker;
+};
+
+extern struct bqueue bufqueues[BQUEUES];
+extern struct simplelock bqueue_slock;
 
 __BEGIN_DECLS
 int	allocbuf(buf_t *, int, int);

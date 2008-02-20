@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.188 2008/02/15 13:46:04 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.189 2008/02/20 17:13:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.188 2008/02/15 13:46:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.189 2008/02/20 17:13:29 matt Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -188,22 +188,8 @@ static void brele(buf_t *);
 	(&bufhashtbl[(((long)(dvp) >> 8) + (int)(lbn)) & bufhash])
 LIST_HEAD(bufhashhdr, buf) *bufhashtbl, invalhash;
 u_long	bufhash;
-struct bio_ops *bioopsp;	/* I/O operation notification */
-
-/*
- * Definitions for the buffer free lists.
- */
-#define	BQUEUES		3		/* number of free buffer queues */
-
-#define	BQ_LOCKED	0		/* super-blocks &c */
-#define	BQ_LRU		1		/* lru, useful buffers */
-#define	BQ_AGE		2		/* rubbish */
-
-struct bqueue {
-	TAILQ_HEAD(, buf)	bq_queue;
-	uint64_t		bq_bytes;
-	buf_t			*bq_marker;
-} bufqueues[BQUEUES];
+struct bqueue bufqueues[BQUEUES];
+const struct bio_ops *bioopsp;	/* I/O operation notification */
 
 static kcondvar_t needbuffer_cv;
 
