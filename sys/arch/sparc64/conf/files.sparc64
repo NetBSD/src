@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.117 2008/02/03 13:27:12 martin Exp $
+#	$NetBSD: files.sparc64,v 1.118 2008/02/20 21:43:35 drochner Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -17,13 +17,6 @@ attach mainbus at root
 device pcons
 attach pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
-
-#
-# Raster Console support
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/wsfb/files.wsfb"
 
 include "dev/sun/files.sun"
 include "dev/i2o/files.i2o"

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.38 2008/02/15 12:28:09 tsutsui Exp $
+#	$NetBSD: files.ofppc,v 1.39 2008/02/20 21:43:35 drochner Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -57,16 +57,6 @@ include "dev/ata/files.ata"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
-
-#
-# Workstation Console support
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfb/files.wsfb"
 
 define mainbus {}
 device mainbus: mainbus

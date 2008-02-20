@@ -1,4 +1,4 @@
-#	$NetBSD: files.atheros,v 1.5 2006/09/08 23:39:27 gdamore Exp $
+#	$NetBSD: files.atheros,v 1.6 2008/02/20 21:43:33 drochner Exp $
 
 file	arch/evbmips/atheros/mach_intr.c
 
@@ -25,10 +25,6 @@ file	arch/evbmips/atheros/cpu.c		cpu
 device	wdog: sysmon_wdog
 attach	wdog at mainbus
 file	arch/evbmips/atheros/wdog.c		wdog
-
-# Machine-independent WS console drivers
-#include "dev/wsfont/files.wsfont"
-#include "dev/wscons/files.wscons"
 
 # Memory Disk
 file	dev/md_root.c				memory_disk_hooks

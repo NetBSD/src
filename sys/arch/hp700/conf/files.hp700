@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp700,v 1.17 2007/12/03 15:33:40 ad Exp $
+#	$NetBSD: files.hp700,v 1.18 2008/02/20 21:43:34 drochner Exp $
 #
 #	$OpenBSD: files.hp700,v 1.31 2001/06/26 02:41:25 mickey Exp $
 #
@@ -12,13 +12,6 @@ maxusers 2 8 64
 # Status LEDs
 defflag 			USELEDS
 defflag				POWER_SWITCH
-
-# 
-# "workstation console" routines
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/wsfb/files.wsfb"
 
 include "dev/pckbport/files.pckbport"
 

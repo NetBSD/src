@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.81 2008/01/31 13:46:33 jmmv Exp $
+#	$NetBSD: files.xen,v 1.82 2008/02/20 21:43:35 drochner Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -220,10 +220,6 @@ file	arch/xen/xen/xbd_xenbus.c	xbd_xenbus
 file	arch/xen/xen/xbd.c		xbd_hypervisor needs-flag
 
 # Non-Xen specific devices and options
-
-include	"dev/wscons/files.wscons"
-include	"dev/wsfont/files.wsfont"
-include "dev/wsfb/files.wsfb"
 
 include	"dev/pckbport/files.pckbport"
 

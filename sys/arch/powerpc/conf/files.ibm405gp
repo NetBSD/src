@@ -1,12 +1,9 @@
-#	$NetBSD: files.ibm405gp,v 1.7 2007/04/10 02:50:32 macallan Exp $
+#	$NetBSD: files.ibm405gp,v 1.8 2008/02/20 21:43:35 drochner Exp $
 #
 # IBM 405GPx specific configuration info
 
 # Machine-independent I2O drivers.
 include	"dev/i2o/files.i2o"
-
-# generic fb driver
-include "dev/wsfb/files.wsfb"
 
 # PCI bus support
 include	"dev/pci/files.pci"
