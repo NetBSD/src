@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.97 2007/12/20 19:53:31 dyoung Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.98 2008/02/20 17:05:53 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.97 2007/12/20 19:53:31 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98 2008/02/20 17:05:53 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -903,7 +903,7 @@ rt_ieee80211msg(struct ifnet *ifp, int what, void *data, size_t data_len)
 		n->m_len = data_len;
 		m->m_next = n;
 	} else if (data_len > 0) {
-		(void)memcpy(mtod(m, u_int8_t *) + m->m_len, data, data_len);
+		(void)memcpy(mtod(m, uint8_t *) + m->m_len, data, data_len);
 		m->m_len += data_len;
 	}
 	if (m->m_flags & M_PKTHDR)
