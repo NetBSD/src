@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.279 2008/02/05 09:38:47 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.280 2008/02/20 11:44:07 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.279 2008/02/05 09:38:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.280 2008/02/20 11:44:07 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -279,61 +279,67 @@ nd6_hint(struct tcpcb *tp)
 #endif
 
 /*
- * Macro to compute ACK transmission behavior.  Delay the ACK unless
+ * Compute ACK transmission behavior.  Delay the ACK unless
  * we have already delayed an ACK (must send an ACK every two segments).
  * We also ACK immediately if we received a PUSH and the ACK-on-PUSH
  * option is enabled.
  */
-#define	TCP_SETUP_ACK(tp, th) \
-do { \
-	if ((tp)->t_flags & TF_DELACK || \
-	    (tcp_ack_on_push && (th)->th_flags & TH_PUSH)) \
-		tp->t_flags |= TF_ACKNOW; \
-	else \
-		TCP_SET_DELACK(tp); \
-} while (/*CONSTCOND*/ 0)
+static void
+tcp_setup_ack(struct tcpcb *tp, const struct tcphdr *th)
+{
 
-#define ICMP_CHECK(tp, th, acked) \
-do { \
-	/* \
-	 * If we had a pending ICMP message that \
-	 * refers to data that have just been  \
-	 * acknowledged, disregard the recorded ICMP \
-	 * message. \
-	 */ \
-	if (((tp)->t_flags & TF_PMTUD_PEND) && \
-	    SEQ_GT((th)->th_ack, (tp)->t_pmtud_th_seq)) \
-		(tp)->t_flags &= ~TF_PMTUD_PEND; \
-\
-	/* \
-	 * Keep track of the largest chunk of data \
-	 * acknowledged since last PMTU update \
-	 */ \
-	if ((tp)->t_pmtud_mss_acked < (acked)) \
-		(tp)->t_pmtud_mss_acked = (acked); \
-} while (/*CONSTCOND*/ 0)
+	if (tp->t_flags & TF_DELACK ||
+	    (tcp_ack_on_push && th->th_flags & TH_PUSH))
+		tp->t_flags |= TF_ACKNOW;
+	else
+		TCP_SET_DELACK(tp);
+}
+
+static void
+icmp_check(struct tcpcb *tp, const struct tcphdr *th, int acked)
+{
+
+	/*
+	 * If we had a pending ICMP message that refers to data that have
+	 * just been acknowledged, disregard the recorded ICMP message.
+	 */
+	if ((tp->t_flags & TF_PMTUD_PEND) &&
+	    SEQ_GT(th->th_ack, tp->t_pmtud_th_seq))
+		tp->t_flags &= ~TF_PMTUD_PEND;
+
+	/*
+	 * Keep track of the largest chunk of data
+	 * acknowledged since last PMTU update
+	 */
+	if (tp->t_pmtud_mss_acked < acked)
+		tp->t_pmtud_mss_acked = acked;
+}
 
 /*
  * Convert TCP protocol fields to host order for easier processing.
  */
-#define	TCP_FIELDS_TO_HOST(th)						\
-do {									\
-	NTOHL((th)->th_seq);						\
-	NTOHL((th)->th_ack);						\
-	NTOHS((th)->th_win);						\
-	NTOHS((th)->th_urp);						\
-} while (/*CONSTCOND*/ 0)
+static void
+tcp_fields_to_host(struct tcphdr *th)
+{
+
+	NTOHL(th->th_seq);
+	NTOHL(th->th_ack);
+	NTOHS(th->th_win);
+	NTOHS(th->th_urp);
+}
 
 /*
  * ... and reverse the above.
  */
-#define	TCP_FIELDS_TO_NET(th)						\
-do {									\
-	HTONL((th)->th_seq);						\
-	HTONL((th)->th_ack);						\
-	HTONS((th)->th_win);						\
-	HTONS((th)->th_urp);						\
-} while (/*CONSTCOND*/ 0)
+static void
+tcp_fields_to_net(struct tcphdr *th)
+{
+
+	HTONL(th->th_seq);
+	HTONL(th->th_ack);
+	HTONS(th->th_win);
+	HTONS(th->th_urp);
+}
 
 #ifdef TCP_CSUM_COUNTERS
 #include <sys/device.h>
@@ -1216,7 +1222,7 @@ findpcb:
 			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				tcp4_log_refused(ip, th);
 			}
-			TCP_FIELDS_TO_HOST(th);
+			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC) || defined(FAST_IPSEC)
@@ -1259,7 +1265,7 @@ findpcb:
 			    (tiflags & (TH_RST|TH_ACK|TH_SYN)) == TH_SYN) {
 				tcp6_log_refused(ip6, th);
 			}
-			TCP_FIELDS_TO_HOST(th);
+			tcp_fields_to_host(th);
 			goto dropwithreset_ratelim;
 		}
 #if defined(IPSEC) || defined(FAST_IPSEC)
@@ -1293,7 +1299,7 @@ findpcb:
 	}
 #endif
 	if (tp == 0) {
-		TCP_FIELDS_TO_HOST(th);
+		tcp_fields_to_host(th);
 		goto dropwithreset_ratelim;
 	}
 	if (tp->t_state == TCPS_CLOSED)
@@ -1305,7 +1311,7 @@ findpcb:
 	if (tcp_input_checksum(af, m, th, toff, off, tlen))
 		goto badcsum;
 
-	TCP_FIELDS_TO_HOST(th);
+	tcp_fields_to_host(th);
 
 	/* Unscale the window into a 32-bit value. */
 	if ((tiflags & TH_SYN) == 0)
@@ -1736,7 +1742,7 @@ after_listen:
 				sbdrop(&so->so_snd, acked);
 				tp->t_lastoff -= acked;
 
-				ICMP_CHECK(tp, th, acked);
+				icmp_check(tp, th, acked);
 
 				tp->snd_una = th->th_ack;
 				tp->snd_fack = tp->snd_una;
@@ -1854,7 +1860,7 @@ after_listen:
 				sbappendstream(&so->so_rcv, m);
 			}
 			sorwakeup(so);
-			TCP_SETUP_ACK(tp, th);
+			tcp_setup_ack(tp, th);
 			if (tp->t_flags & TF_ACKNOW)
 				(void) tcp_output(tp);
 			if (tcp_saveti)
@@ -2141,7 +2147,7 @@ after_listen:
 			    tp->t_state == TCPS_TIME_WAIT &&
 			    SEQ_GT(th->th_seq, tp->rcv_nxt)) {
 				tp = tcp_close(tp);
-				TCP_FIELDS_TO_NET(th);
+				tcp_fields_to_net(th);
 				goto findpcb;
 			}
 			/*
@@ -2417,7 +2423,7 @@ after_listen:
 		}
 		sowwakeup(so);
 
-		ICMP_CHECK(tp, th, acked);
+		icmp_check(tp, th, acked);
 
 		tp->snd_una = th->th_ack;
 		if (SEQ_GT(tp->snd_una, tp->snd_fack))
@@ -2600,7 +2606,7 @@ dodata:							/* XXX */
 		if (th->th_seq == tp->rcv_nxt &&
 		    TAILQ_FIRST(&tp->segq) == NULL &&
 		    tp->t_state == TCPS_ESTABLISHED) {
-			TCP_SETUP_ACK(tp, th);
+			tcp_setup_ack(tp, th);
 			tp->rcv_nxt += tlen;
 			tiflags = th->th_flags & TH_FIN;
 			tcpstat.tcps_rcvpack++;
@@ -3091,9 +3097,9 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 	if (sigp) {
 		char sig[TCP_SIGLEN];
 
-		TCP_FIELDS_TO_NET(th);
+		tcp_fields_to_net(th);
 		if (tcp_signature(m, th, toff, sav, sig) < 0) {
-			TCP_FIELDS_TO_HOST(th);
+			tcp_fields_to_host(th);
 			if (sav == NULL)
 				return (-1);
 #ifdef FAST_IPSEC
@@ -3103,7 +3109,7 @@ tcp_dooptions(struct tcpcb *tp, const u_char *cp, int cnt,
 #endif
 			return (-1);
 		}
-		TCP_FIELDS_TO_HOST(th);
+		tcp_fields_to_host(th);
 
 		if (bcmp(sig, sigp, TCP_SIGLEN)) {
 			tcpstat.tcps_badsig++;
