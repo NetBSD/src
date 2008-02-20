@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.13 2008/02/19 09:45:02 dholland Exp $	*/
+/*	$NetBSD: morg.c,v 1.14 2008/02/20 05:08:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.13 2008/02/19 09:45:02 dholland Exp $");
+__RCSID("$NetBSD: morg.c,v 1.14 2008/02/20 05:08:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static const char	*names[MAX_PRP+2],
 
 static short	square[MAX_PRP+2];
 
-static int	num_good,got_houses;
+static int	num_good, got_houses;
 
 
 static int set_mlist(void);
