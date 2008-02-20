@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.60 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.61 2008/02/20 15:55:38 mlelstv Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.60 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.61 2008/02/20 15:55:38 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,7 +288,7 @@ USB_ATTACH(uplcom)
 		if (uplcom_devs[i].uplcom_dev.ud_vendor == uaa->vendor &&
 		    uplcom_devs[i].uplcom_dev.ud_product == uaa->product &&
 		    (uplcom_devs[i].release == uaa->release ||
-		    uplcom_devs[i].release == 1)) {
+		    uplcom_devs[i].release == -1)) {
 			sc->sc_type = uplcom_devs[i].chiptype;
 			break;
 		}
