@@ -1,4 +1,4 @@
-#	$NetBSD: files.bebox,v 1.51 2007/12/08 15:31:16 ober Exp $
+#	$NetBSD: files.bebox,v 1.52 2008/02/20 21:43:33 drochner Exp $
 #
 # First try for bebox specific configuration info
 #
@@ -57,9 +57,6 @@ file	arch/bebox/bebox/cpu.c
 
 file	arch/bebox/bebox/mainbus.c	mainbus|cpu needs-flag
 
-# generic fb driver
-include "dev/wsfb/files.wsfb"
-
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
@@ -114,9 +111,6 @@ file	arch/bebox/isa/lms.c		lms needs-flag
 device	mms
 attach	mms at isa
 file	arch/bebox/isa/mms.c		mms needs-flag
-
-include	"dev/wscons/files.wscons"
-include	"dev/wsfont/files.wsfont"
 
 #device	pfb: wsemuldisplaydev, wsrasteremulops
 #attach	pfb at pci

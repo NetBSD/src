@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.38 2007/12/03 15:34:06 ad Exp $
+# $NetBSD: files.next68k,v 1.39 2008/02/20 21:43:34 drochner Exp $
 
 # next68k-specific configuration info
 
@@ -67,8 +67,6 @@ file	dev/cons.c
 file	dev/cninit.c
 
 include "dev/scsipi/files.scsipi"
-
-include "dev/wscons/files.wscons"
 
 device	xe: arp, ether, ifnet
 attach	xe at intio: nextdma
