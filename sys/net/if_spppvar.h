@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.11 2005/12/10 23:21:38 elad Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.12 2008/02/20 17:05:53 matt Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -56,9 +56,9 @@ struct sipcp {
 #define IPV6CP_MYIFID_DYN   2	/* my ifid is dynamically assigned */
 #endif
 #define IPV6CP_MYIFID_SEEN  4	/* have seen his ifid already */
-	u_int32_t saved_hisaddr;/* if hisaddr (IPv4) is dynamic, save original one here, in network byte order */
-	u_int32_t req_hisaddr;	/* remote address requested */
-	u_int32_t req_myaddr;	/* local address requested */
+	uint32_t saved_hisaddr;/* if hisaddr (IPv4) is dynamic, save original one here, in network byte order */
+	uint32_t req_hisaddr;	/* remote address requested */
+	uint32_t req_myaddr;	/* local address requested */
 };
 
 struct sauth {
@@ -101,7 +101,7 @@ struct sppp {
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
 	int	pp_phase;	/* phase we're currently in */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
-	u_int32_t	dns_addrs[2];
+	uint32_t	dns_addrs[2];
 	int	state[IDX_COUNT];	/* state machine */
 	u_char  confid[IDX_COUNT];	/* id of last configuration request */
 	int	rst_counter[IDX_COUNT];	/* restart counter */

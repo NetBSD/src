@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.74 2007/12/20 21:08:21 dyoung Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.75 2008/02/20 17:05:53 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.74 2007/12/20 21:08:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.75 2008/02/20 17:05:53 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -209,7 +209,7 @@ static int
 fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
-	u_int16_t etype;
+	uint16_t etype;
 	int error = 0, hdrcmplt = 0;
 	uint8_t esrc[6], edst[6];
 	struct mbuf *m = m0;
@@ -499,7 +499,7 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		l->llc_control = LLC_UI;
 		l->llc_dsap = l->llc_ssap = LLC_SNAP_LSAP;
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] = l->llc_snap.org_code[2] = 0;
-		memcpy(&l->llc_snap.ether_type, &etype, sizeof(u_int16_t));
+		memcpy(&l->llc_snap.ether_type, &etype, sizeof(uint16_t));
 	}
 	/*
 	 * Add local net header.  If no space in first mbuf,
@@ -588,7 +588,7 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 #if defined(INET) || defined(INET6) || defined(NS) || defined(DECNET) || defined(IPX) || defined(NETATALK)
 	case LLC_SNAP_LSAP:
 	{
-		u_int16_t etype;
+		uint16_t etype;
 		if (l->llc_control != LLC_UI || l->llc_ssap != LLC_SNAP_LSAP)
 			goto dropanyway;
 
@@ -619,8 +619,8 @@ fddi_input(struct ifnet *ifp, struct mbuf *m)
 		m_adj(m, 8);
 #if NCARP > 0
 		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
-		    (carp_input(m, (u_int8_t *)&fh->fddi_shost,
-		    (u_int8_t *)&fh->fddi_dhost, l->llc_snap.ether_type) == 0))
+		    (carp_input(m, (uint8_t *)&fh->fddi_shost,
+		    (uint8_t *)&fh->fddi_dhost, l->llc_snap.ether_type) == 0))
 			return;
 #endif
 
