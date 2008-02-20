@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.17 2008/02/19 09:45:02 dholland Exp $	*/
+/*	$NetBSD: monop.c,v 1.18 2008/02/20 04:48:10 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,13 +39,14 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.17 2008/02/19 09:45:02 dholland Exp $");
+__RCSID("$NetBSD: monop.c,v 1.18 2008/02/20 04:48:10 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <signal.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 #include "monop.def"
 
@@ -67,7 +68,7 @@ main(ac, av)
 	/* Revoke setgid privileges */
 	setgid(getgid());
 
-	srand(getpid());
+	srandom(time(NULL));
 	heapstart = sbrk(0);
 	if (ac > 1) {
 		if (!rest_f(av[1]))
