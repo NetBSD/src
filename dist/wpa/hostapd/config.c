@@ -28,7 +28,7 @@
 
 #define MAX_STA_COUNT 2007
 
-extern struct wpa_driver_ops *hostapd_drivers[];
+extern const struct wpa_driver_ops * const hostapd_drivers[];
 
 
 static int hostapd_config_read_vlan_file(struct hostapd_bss_config *bss,
