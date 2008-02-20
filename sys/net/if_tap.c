@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.37 2008/01/04 21:18:15 ad Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.38 2008/02/20 17:05:53 matt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.37 2008/01/04 21:18:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38 2008/02/20 17:05:53 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -249,7 +249,7 @@ tap_attach(struct device *parent, struct device *self,
 	struct tap_softc *sc = (struct tap_softc *)self;
 	struct ifnet *ifp;
 	const struct sysctlnode *node;
-	u_int8_t enaddr[ETHER_ADDR_LEN] =
+	uint8_t enaddr[ETHER_ADDR_LEN] =
 	    { 0xf2, 0x0b, 0xa4, 0xff, 0xff, 0xff };
 	char enaddrstr[3 * ETHER_ADDR_LEN];
 	struct timeval tv;
@@ -263,7 +263,7 @@ tap_attach(struct device *parent, struct device *self,
 	 */
 	getmicrouptime(&tv);
 	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
-	memcpy(enaddr+3, (u_int8_t *)&ui, 3);
+	memcpy(enaddr+3, (uint8_t *)&ui, 3);
 
 	aprint_verbose("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
 	    ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));

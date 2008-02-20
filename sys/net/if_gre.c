@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.123 2008/02/07 01:22:00 dyoung Exp $ */
+/*	$NetBSD: if_gre.c,v 1.124 2008/02/20 17:05:53 matt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.123 2008/02/07 01:22:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.124 2008/02/20 17:05:53 matt Exp $");
 
 #include "opt_gre.h"
 #include "opt_inet.h"
@@ -348,7 +348,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
 #if NBPFILTER > 0
-	bpfattach(&sc->sc_if, DLT_NULL, sizeof(u_int32_t));
+	bpfattach(&sc->sc_if, DLT_NULL, sizeof(uint32_t));
 #endif
 	sc->sc_lwp = &lwp0;
 	sc->sc_state = GRE_S_IDLE;
@@ -861,8 +861,8 @@ static int
 gre_input(struct gre_softc *sc, struct mbuf *m, int hlen,
     const struct gre_h *gh)
 {
-	u_int16_t flags;
-	u_int32_t af;		/* af passed to BPF tap */
+	uint16_t flags;
+	uint32_t af;		/* af passed to BPF tap */
 	int isr, s;
 	struct ifqueue *ifq;
 
@@ -954,8 +954,8 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct gre_softc *sc = ifp->if_softc;
 	struct gre_h *gh;
 	struct ip *ip;
-	u_int8_t ip_tos = 0;
-	u_int16_t etype = 0;
+	uint8_t ip_tos = 0;
+	uint16_t etype = 0;
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING)) {
 		m_freem(m);

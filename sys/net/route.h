@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.68 2008/02/11 04:47:21 simonb Exp $	*/
+/*	$NetBSD: route.h,v 1.69 2008/02/20 17:05:53 matt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -127,12 +127,12 @@ rt_getkey(const struct rtentry *rt)
  * We should eventually move it to a compat file.
  */
 struct ortentry {
-	u_int32_t rt_hash;		/* to speed lookups */
+	uint32_t rt_hash;		/* to speed lookups */
 	struct	sockaddr rt_dst;	/* key */
 	struct	sockaddr rt_gateway;	/* value */
 	int16_t	rt_flags;		/* up/down?, host/net */
 	int16_t	rt_refcnt;		/* # held references */
-	u_int32_t rt_use;		/* raw # packets forwarded */
+	uint32_t rt_use;		/* raw # packets forwarded */
 	struct	ifnet *rt_ifp;		/* the answer: interface to use */
 };
 

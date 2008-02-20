@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.40 2007/10/19 12:16:44 ad Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.41 2008/02/20 17:05:52 matt Exp $       */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.40 2007/10/19 12:16:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.41 2008/02/20 17:05:52 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_gateway.h"
@@ -101,13 +101,13 @@ int
 atm_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
-	u_int16_t etype = 0;			/* if using LLC/SNAP */
+	uint16_t etype = 0;			/* if using LLC/SNAP */
 	int error = 0, sz;
 	struct atm_pseudohdr atmdst, *ad;
 	struct mbuf *m = m0;
 	struct rtentry *rt;
 	struct atmllc *atmllc;
-	u_int32_t atm_flags;
+	uint32_t atm_flags;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) != (IFF_UP|IFF_RUNNING))
@@ -237,7 +237,7 @@ atm_input(struct ifnet *ifp, struct atm_pseudohdr *ah, struct mbuf *m,
     void *rxhand)
 {
 	struct ifqueue *inq;
-	u_int16_t etype = ETHERTYPE_IP; /* default */
+	uint16_t etype = ETHERTYPE_IP; /* default */
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {

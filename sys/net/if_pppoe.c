@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.83 2008/02/07 01:22:01 dyoung Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.84 2008/02/20 17:05:53 matt Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.83 2008/02/07 01:22:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.84 2008/02/20 17:05:53 matt Exp $");
 
 #include "pppoe.h"
 #include "bpfilter.h"
@@ -72,15 +72,15 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.83 2008/02/07 01:22:01 dyoung Exp $")
 /* #define PPPOE_DEBUG 1 */
 
 struct pppoehdr {
-	u_int8_t vertype;
-	u_int8_t code;
-	u_int16_t session;
-	u_int16_t plen;
+	uint8_t vertype;
+	uint8_t code;
+	uint16_t session;
+	uint16_t plen;
 } __packed;
 
 struct pppoetag {
-	u_int16_t tag;
-	u_int16_t len;
+	uint16_t tag;
+	uint16_t len;
 } __packed;
 
 #define PPPOE_HEADERLEN	sizeof(struct pppoehdr)
@@ -136,14 +136,14 @@ struct pppoe_softc {
 
 	int sc_state;			/* discovery phase or session connected */
 	struct ether_addr sc_dest;	/* hardware address of concentrator */
-	u_int16_t sc_session;		/* PPPoE session id */
+	uint16_t sc_session;		/* PPPoE session id */
 
 	char *sc_service_name;		/* if != NULL: requested name of service */
 	char *sc_concentrator_name;	/* if != NULL: requested concentrator id */
-	u_int8_t *sc_ac_cookie;		/* content of AC cookie we must echo back */
+	uint8_t *sc_ac_cookie;		/* content of AC cookie we must echo back */
 	size_t sc_ac_cookie_len;	/* length of cookie data */
 #ifdef PPPOE_SERVER
-	u_int8_t *sc_hunique;		/* content of host unique we must echo back */
+	uint8_t *sc_hunique;		/* content of host unique we must echo back */
 	size_t sc_hunique_len;		/* length of host unique */
 #endif
 	callout_t sc_timeout;	/* timeout while not in session state */
@@ -187,14 +187,14 @@ static int pppoe_send_padr(struct pppoe_softc *);
 static int pppoe_send_pado(struct pppoe_softc *);
 static int pppoe_send_pads(struct pppoe_softc *);
 #endif
-static int pppoe_send_padt(struct ifnet *, u_int, const u_int8_t *);
+static int pppoe_send_padt(struct ifnet *, u_int, const uint8_t *);
 
 /* raw output */
 static int pppoe_output(struct pppoe_softc *, struct mbuf *);
 
 /* internal helper functions */
 static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct ifnet *);
-static struct pppoe_softc * pppoe_find_softc_by_hunique(u_int8_t *, size_t, struct ifnet *);
+static struct pppoe_softc * pppoe_find_softc_by_hunique(uint8_t *, size_t, struct ifnet *);
 static struct mbuf *pppoe_get_mbuf(size_t len);
 
 #ifdef PFIL_HOOKS
@@ -324,7 +324,7 @@ pppoe_find_softc_by_session(u_int session, struct ifnet *rcvif)
 /* Check host unique token passed and return appropriate softc pointer,
  * or NULL if token is bogus. */
 static struct pppoe_softc *
-pppoe_find_softc_by_hunique(u_int8_t *token, size_t len, struct ifnet *rcvif)
+pppoe_find_softc_by_hunique(uint8_t *token, size_t len, struct ifnet *rcvif)
 {
 	struct pppoe_softc *sc, *t;
 
@@ -400,15 +400,15 @@ pppoe_input(void)
 static void
 pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 {
-	u_int16_t tag, len;
-	u_int16_t session, plen;
+	uint16_t tag, len;
+	uint16_t session, plen;
 	struct pppoe_softc *sc;
 	const char *err_msg, *devname;
 	char *error;
-	u_int8_t *ac_cookie;
+	uint8_t *ac_cookie;
 	size_t ac_cookie_len;
 #ifdef PPPOE_SERVER
-	u_int8_t *hunique;
+	uint8_t *hunique;
 	size_t hunique_len;
 #endif
 	struct pppoehdr *ph;
@@ -514,7 +514,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 				break;
 			}
 #ifdef PPPOE_SERVER
-			hunique = mtod(n, u_int8_t *) + noff;
+			hunique = mtod(n, uint8_t *) + noff;
 			hunique_len = len;
 #endif
 			sc = pppoe_find_softc_by_hunique(mtod(n, char *) + noff,
@@ -730,11 +730,11 @@ pppoe_disc_input(struct mbuf *m)
 static void
 pppoe_data_input(struct mbuf *m)
 {
-	u_int16_t session, plen;
+	uint16_t session, plen;
 	struct pppoe_softc *sc;
 	struct pppoehdr *ph;
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
-	u_int8_t shost[ETHER_ADDR_LEN];
+	uint8_t shost[ETHER_ADDR_LEN];
 #endif
 
 	KASSERT(m->m_flags & M_PKTHDR);
@@ -822,7 +822,7 @@ pppoe_output(struct pppoe_softc *sc, struct mbuf *m)
 {
 	struct sockaddr dst;
 	struct ether_header *eh;
-	u_int16_t etype;
+	uint16_t etype;
 
 	if (sc->sc_eth_if == NULL) {
 		m_freem(m);
@@ -1004,7 +1004,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
 	int len, l1 = 0, l2 = 0; /* XXX: gcc */
-	u_int8_t *p;
+	uint8_t *p;
 
 	if (sc->sc_state >PPPOE_STATE_PADI_SENT)
 		panic("pppoe_send_padi in state %d", sc->sc_state);
@@ -1026,7 +1026,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 		return ENOBUFS;
 
 	/* fill in pkt */
-	p = mtod(m0, u_int8_t *);
+	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADI, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
 	if (sc->sc_service_name != NULL) {
@@ -1048,9 +1048,9 @@ pppoe_send_padi(struct pppoe_softc *sc)
 
 #ifdef PPPOE_DEBUG
 	p += sizeof sc;
-	if (p - mtod(m0, u_int8_t *) != len + PPPOE_HEADERLEN)
+	if (p - mtod(m0, uint8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padi: garbled output len, should be %ld, is %ld",
-		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t *)));
+		    (long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
 #endif
 
 	/* send pkt */
@@ -1188,7 +1188,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
 		if (sc->sc_sppp.pp_if.if_flags & IFF_DEBUG)
 			printf("%s: disconnecting\n",
 			    sc->sc_sppp.pp_if.if_xname);
-		err = pppoe_send_padt(sc->sc_eth_if, sc->sc_session, (const u_int8_t *)&sc->sc_dest);
+		err = pppoe_send_padt(sc->sc_eth_if, sc->sc_session, (const uint8_t *)&sc->sc_dest);
 	}
 
 	/* cleanup softc */
@@ -1237,7 +1237,7 @@ static int
 pppoe_send_padr(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
-	u_int8_t *p;
+	uint8_t *p;
 	size_t len, l1 = 0; /* XXX: gcc */
 
 	if (sc->sc_state != PPPOE_STATE_PADR_SENT)
@@ -1253,7 +1253,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (!m0)
 		return ENOBUFS;
-	p = mtod(m0, u_int8_t *);
+	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
 	if (sc->sc_service_name != NULL) {
@@ -1275,9 +1275,9 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 #ifdef PPPOE_DEBUG
 	p += sizeof sc;
-	if (p - mtod(m0, u_int8_t *) != len + PPPOE_HEADERLEN)
+	if (p - mtod(m0, uint8_t *) != len + PPPOE_HEADERLEN)
 		panic("pppoe_send_padr: garbled output len, should be %ld, is %ld",
-			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, u_int8_t *)));
+			(long)(len + PPPOE_HEADERLEN), (long)(p - mtod(m0, uint8_t *)));
 #endif
 
 	return pppoe_output(sc, m0);
@@ -1285,17 +1285,17 @@ pppoe_send_padr(struct pppoe_softc *sc)
 
 /* send a PADT packet */
 static int
-pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const u_int8_t *dest)
+pppoe_send_padt(struct ifnet *outgoing_if, u_int session, const uint8_t *dest)
 {
 	struct ether_header *eh;
 	struct sockaddr dst;
 	struct mbuf *m0;
-	u_int8_t *p;
+	uint8_t *p;
 
 	m0 = pppoe_get_mbuf(PPPOE_HEADERLEN);
 	if (!m0)
 		return EIO;
-	p = mtod(m0, u_int8_t *);
+	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
 
 	memset(&dst, 0, sizeof dst);
@@ -1313,7 +1313,7 @@ static int
 pppoe_send_pado(struct pppoe_softc *sc)
 {
 	struct mbuf *m0;
-	u_int8_t *p;
+	uint8_t *p;
 	size_t len;
 
 	if (sc->sc_state != PPPOE_STATE_PADO_SENT)
@@ -1328,7 +1328,7 @@ pppoe_send_pado(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (!m0)
 		return EIO;
-	p = mtod(m0, u_int8_t *);
+	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
 	PPPOE_ADD_16(p, sizeof(sc));
@@ -1345,7 +1345,7 @@ pppoe_send_pads(struct pppoe_softc *sc)
 {
 	struct bintime bt;
 	struct mbuf *m0;
-	u_int8_t *p;
+	uint8_t *p;
 	size_t len, l1 = 0;	/* XXX: gcc */
 
 	if (sc->sc_state != PPPOE_STATE_PADO_SENT)
@@ -1364,7 +1364,7 @@ pppoe_send_pads(struct pppoe_softc *sc)
 	m0 = pppoe_get_mbuf(len + PPPOE_HEADERLEN);
 	if (!m0)
 		return ENOBUFS;
-	p = mtod(m0, u_int8_t *);
+	p = mtod(m0, uint8_t *);
 	PPPOE_ADD_HEADER(p, PPPOE_CODE_PADS, sc->sc_session, len);
 	PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
 	if (sc->sc_service_name != NULL) {
@@ -1410,7 +1410,7 @@ pppoe_start(struct ifnet *ifp)
 {
 	struct pppoe_softc *sc = (void *)ifp;
 	struct mbuf *m;
-	u_int8_t *p;
+	uint8_t *p;
 	size_t len;
 
 	if (sppp_isempty(ifp))
@@ -1429,7 +1429,7 @@ pppoe_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
-		p = mtod(m, u_int8_t *);
+		p = mtod(m, uint8_t *);
 		PPPOE_ADD_HEADER(p, 0, sc->sc_session, len);
 
 #if NBPFILTER > 0

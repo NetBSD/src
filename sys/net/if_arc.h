@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arc.h,v 1.21 2007/12/25 23:31:26 he Exp $	*/
+/*	$NetBSD: if_arc.h,v 1.22 2008/02/20 17:05:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -40,7 +40,7 @@
  * don't know who uses this.
  */
 struct arc_addr {
-	u_int8_t  arc_addr_octet[1];
+	uint8_t  arc_addr_octet[1];
 } __packed;
 
 /*
@@ -48,22 +48,22 @@ struct arc_addr {
  * as given to interface code.
  */
 struct	arc_header {
-	u_int8_t  arc_shost;
-	u_int8_t  arc_dhost;
-	u_int8_t  arc_type;
+	uint8_t  arc_shost;
+	uint8_t  arc_dhost;
+	uint8_t  arc_type;
 	/*
 	 * only present for newstyle encoding with LL fragmentation.
 	 * Don't use sizeof(anything), use ARC_HDR{,NEW}LEN instead.
 	 */
-	u_int8_t  arc_flag;
-	u_int16_t arc_seqid;
+	uint8_t  arc_flag;
+	uint16_t arc_seqid;
 
 	/*
 	 * only present in exception packets (arc_flag == 0xff)
 	 */
-	u_int8_t  arc_type2;	/* same as arc_type */
-	u_int8_t  arc_flag2;	/* real flag value */
-	u_int16_t arc_seqid2;	/* real seqid value */
+	uint8_t  arc_type2;	/* same as arc_type */
+	uint8_t  arc_flag2;	/* real flag value */
+	uint16_t arc_seqid2;	/* real seqid value */
 } __packed;
 
 #define	ARC_ADDR_LEN		1
@@ -103,23 +103,23 @@ struct	arc_header {
 struct	arccom {
 	struct 	  ifnet ac_if;		/* network-visible interface */
 
-	u_int16_t ac_seqid;		/* seq. id used by PHDS encap. */
+	uint16_t ac_seqid;		/* seq. id used by PHDS encap. */
 
 	struct ac_frag {
-		u_int8_t  af_maxflag;	/* from first packet */
-		u_int8_t  af_lastseen;	/* last split flag seen */
-		u_int16_t af_seqid;
+		uint8_t  af_maxflag;	/* from first packet */
+		uint8_t  af_lastseen;	/* last split flag seen */
+		uint16_t af_seqid;
 		struct mbuf *af_packet;
 	} ac_fragtab[256];		/* indexed by sender ll address */
 
 };
 
 #ifdef _KERNEL
-extern u_int8_t arcbroadcastaddr;
+extern uint8_t arcbroadcastaddr;
 extern int arc_ipmtu;	/* XXX new ip only, no RFC 1051! */
 
-void	arc_ifattach(struct ifnet *, u_int8_t);
-char	*arc_sprintf(u_int8_t *);
+void	arc_ifattach(struct ifnet *, uint8_t);
+char	*arc_sprintf(uint8_t *);
 int	arc_isphds(uint8_t);
 #endif
 

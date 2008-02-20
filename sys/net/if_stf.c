@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.64 2008/02/07 01:22:02 dyoung Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.65 2008/02/20 17:05:53 matt Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.64 2008/02/07 01:22:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.65 2008/02/20 17:05:53 matt Exp $");
 
 #include "opt_inet.h"
 
@@ -336,7 +336,7 @@ stf_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	struct stf_softc *sc;
 	const struct sockaddr_in6 *dst6;
 	const struct in_addr *in4;
-	u_int8_t tos;
+	uint8_t tos;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
 	struct in6_ifaddr *ia6;
@@ -510,7 +510,7 @@ stf_checkaddr4(struct stf_softc *sc, const struct in_addr *in,
 #if 0
 			log(LOG_WARNING, "%s: packet from 0x%x dropped "
 			    "due to ingress filter\n", if_name(&sc->sc_if),
-			    (u_int32_t)ntohl(sin.sin_addr.s_addr));
+			    (uint32_t)ntohl(sin.sin_addr.s_addr));
 #endif
 			if (rt)
 				rtfree(rt);
@@ -566,7 +566,7 @@ in_stf_input(struct mbuf *m, ...)
 	struct stf_softc *sc;
 	struct ip *ip;
 	struct ip6_hdr *ip6;
-	u_int8_t otos, itos;
+	uint8_t otos, itos;
 	int s, isr;
 	struct ifqueue *ifq = NULL;
 	struct ifnet *ifp;
@@ -629,7 +629,7 @@ in_stf_input(struct mbuf *m, ...)
 	else
 		ip_ecn_egress(ECN_NOCARE, &otos, &itos);
 	ip6->ip6_flow &= ~htonl(0xff << 20);
-	ip6->ip6_flow |= htonl((u_int32_t)itos << 20);
+	ip6->ip6_flow |= htonl((uint32_t)itos << 20);
 
 	m->m_pkthdr.rcvif = ifp;
 

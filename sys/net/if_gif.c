@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.73 2008/02/07 01:22:00 dyoung Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.74 2008/02/20 17:05:53 matt Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.73 2008/02/07 01:22:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.74 2008/02/20 17:05:53 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_iso.h"
@@ -880,9 +880,9 @@ gif_delete_tunnel(struct ifnet *ifp)
 
 #ifdef ISO
 struct eonhdr {
-	u_int8_t version;
-	u_int8_t class;
-	u_int16_t cksum;
+	uint8_t version;
+	uint8_t class;
+	uint16_t cksum;
 };
 
 /*

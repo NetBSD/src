@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.26 2007/07/14 21:02:41 ad Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.27 2008/02/20 17:05:53 matt Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -99,7 +99,7 @@ struct ppp_softc {
 	void	(*sc_ctlp)(struct ppp_softc *); /* rcvd control pkt */
 	void	(*sc_relinq)(struct ppp_softc *); /* relinquish ifunit */
 	struct	callout sc_timo_ch;	/* timeout callout */
-	u_int16_t sc_mru;		/* max receive unit */
+	uint16_t sc_mru;		/* max receive unit */
 	pid_t	sc_xfer;		/* used in transferring unit */
 	struct	ifqueue sc_rawq;	/* received packets */
 	struct	ifqueue sc_inq;		/* queue of input packets for daemon */
@@ -131,18 +131,18 @@ struct ppp_softc {
 
 	/* Device-dependent part for async lines. */
 	ext_accm sc_asyncmap;		/* async control character map */
-	u_int32_t sc_rasyncmap;		/* receive async control char map */
+	uint32_t sc_rasyncmap;		/* receive async control char map */
 	struct	mbuf *sc_outm;		/* mbuf chain currently being output */
 	struct	mbuf *sc_m;		/* pointer to input mbuf chain */
 	struct	mbuf *sc_mc;		/* pointer to current input mbuf */
 	char	*sc_mp;			/* ptr to next char in input mbuf */
-	u_int16_t sc_ilen;		/* length of input packet so far */
-	u_int16_t sc_fcs;		/* FCS so far (input) */
-	u_int16_t sc_outfcs;		/* FCS so far for output packet */
-	u_int16_t sc_maxfastq;		/* Maximum number of packets that
+	uint16_t sc_ilen;		/* length of input packet so far */
+	uint16_t sc_fcs;		/* FCS so far (input) */
+	uint16_t sc_outfcs;		/* FCS so far for output packet */
+	uint16_t sc_maxfastq;		/* Maximum number of packets that
 					 * can be received back-to-back in
 					 * the high priority queue */
-	u_int8_t sc_nfastq;		/* Number of packets received
+	uint8_t sc_nfastq;		/* Number of packets received
 					 * back-to-back in the high priority
 					 * queue */
 	u_char sc_rawin_start;		/* current char start */

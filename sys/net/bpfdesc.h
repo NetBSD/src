@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfdesc.h,v 1.26 2007/07/09 21:10:59 ad Exp $	*/
+/*	$NetBSD: bpfdesc.h,v 1.27 2008/02/20 17:05:52 matt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -106,15 +106,15 @@ struct bpf_d {
  */
 struct bpf_d_ext {
 	int32_t		bde_bufsize;
-	u_int8_t	bde_promisc;
-	u_int8_t	bde_state;
-	u_int8_t	bde_immediate;
+	uint8_t		bde_promisc;
+	uint8_t		bde_state;
+	uint8_t		bde_immediate;
 	int32_t		bde_hdrcmplt;
 	int32_t		bde_seesent;
 	pid_t		bde_pid;
-	u_int64_t	bde_rcount;		/* number of packets received */
-	u_int64_t	bde_dcount;		/* number of packets dropped */
-	u_int64_t	bde_ccount;		/* number of packets captured */
+	uint64_t	bde_rcount;		/* number of packets received */
+	uint64_t	bde_dcount;		/* number of packets dropped */
+	uint64_t	bde_ccount;		/* number of packets captured */
 	char		bde_ifname[IFNAMSIZ];
 };
 

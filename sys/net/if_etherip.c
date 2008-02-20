@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.16 2007/12/20 21:08:21 dyoung Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.17 2008/02/20 17:05:53 matt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.16 2007/12/20 21:08:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.17 2008/02/20 17:05:53 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -201,7 +201,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	struct etherip_softc *sc = (struct etherip_softc *)self;
 	struct ifnet *ifp;
 	const struct sysctlnode *node;
-	u_int8_t enaddr[ETHER_ADDR_LEN] =
+	uint8_t enaddr[ETHER_ADDR_LEN] =
 		{ 0xf2, 0x0b, 0xa5, 0xff, 0xff, 0xff };
 	char enaddrstr[3 * ETHER_ADDR_LEN];
 	struct timeval tv;
@@ -219,7 +219,7 @@ etherip_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	getmicrouptime(&tv);
 	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
-	memcpy(enaddr+3, (u_int8_t *)&ui, 3);
+	memcpy(enaddr+3, (uint8_t *)&ui, 3);
 	
 	aprint_verbose("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 		       ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
