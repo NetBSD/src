@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.9 2008/02/19 09:45:02 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.10 2008/02/20 05:08:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.9 2008/02/19 09:45:02 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.10 2008/02/20 05:08:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -123,8 +123,7 @@ printsq(sqn, eoln)
 					printf("0 %4d", pp->rent[0] * 2);
 			else
 				printf("H %4d", pp->rent[5]);
-		}
-		else
+		} else
 			printf("  %4d", pp->rent[0]);
 		break;
 	  case UTIL:
