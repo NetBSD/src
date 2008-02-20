@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.4 2007/05/28 11:55:19 tls Exp $	*/
+/*	$NetBSD: privsep.c,v 1.5 2008/02/20 18:19:18 matt Exp $	*/
 /*	$OpenBSD: privsep.c,v 1.13 2004/12/22 09:21:02 otto Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ static int  set_snaplen(int snap);
 
 /* bpf filter expression common to parent and child */
 extern char *filter;
-extern char *errbuf;
+extern char errbuf[];
 extern char *filename;
 extern pcap_t *hpcap;
 
