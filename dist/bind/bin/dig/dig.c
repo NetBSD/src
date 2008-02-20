@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.c,v 1.13 2007/01/27 21:24:09 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.14 2008/02/20 18:23:50 matt Exp $	*/
 
 /*
  * Copyright (C) 2004-2006  Internet Systems Consortium, Inc. ("ISC")
@@ -73,7 +73,7 @@ static isc_boolean_t short_form = ISC_FALSE, printcmd = ISC_TRUE,
 	multiline = ISC_FALSE, nottl = ISC_FALSE, noclass = ISC_FALSE;
 
 /*% opcode text */
-static const char *opcodetext[] = {
+static const char * const opcodetext[] = {
 	"QUERY",
 	"IQUERY",
 	"STATUS",
@@ -93,7 +93,7 @@ static const char *opcodetext[] = {
 };
 
 /*% return code text */
-static const char *rcodetext[] = {
+static const char * const rcodetext[] = {
 	"NOERROR",
 	"FORMERR",
 	"SERVFAIL",
