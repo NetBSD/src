@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.10 2008/02/20 22:46:52 joerg Exp $	*/
+/*	$NetBSD: zopen.c,v 1.11 2008/02/20 23:16:05 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.10 2008/02/20 22:46:52 joerg Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.11 2008/02/20 23:16:05 joerg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -281,7 +281,7 @@ zwrite(void *cookie, const char *wbp, int num)
 	hsize_reg = hsize;
 	memset(htab, 0xff, hsize_reg);
 
-middle:	for (i = 0; count--;) {
+middle:	while (count--) {
 		c = *bp++;
 		in_count++;
 		fcode = (long)(((long)c << maxbits) + ent);
