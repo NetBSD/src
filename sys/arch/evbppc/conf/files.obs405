@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs405,v 1.18 2007/12/05 20:55:26 he Exp $
+#	$NetBSD: files.obs405,v 1.19 2008/02/20 21:43:34 drochner Exp $
 #
 # obs405-specific configuration info
 
@@ -21,13 +21,6 @@ include	"dev/scsipi/files.scsipi"
 
 # Machine-independent ATA drivers
 include	"dev/ata/files.ata"
-
-# Workstation Console
-include "dev/wscons/files.wscons"
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 #
 # Machine-independent CardBus drivers

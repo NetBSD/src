@@ -1,4 +1,4 @@
-#	$NetBSD: files.rs6000,v 1.1 2007/12/17 19:09:04 garbled Exp $
+#	$NetBSD: files.rs6000,v 1.2 2008/02/20 21:43:35 drochner Exp $
 #
 # rs6000-specific configuration info
 #
@@ -72,9 +72,5 @@ file	arch/rs6000/mca/ioplanar.c	ioplanar needs-flag
 
 attach	com at ioplanar with com_iop
 file	arch/rs6000/ioplanar/com_iop.c	com_iop needs-flag
-
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/rasops/files.rasops"
 
 include "arch/powerpc/conf/majors.powerpc"

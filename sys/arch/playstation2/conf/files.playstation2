@@ -1,4 +1,4 @@
-#	$NetBSD: files.playstation2,v 1.16 2006/09/14 16:07:00 gdamore Exp $
+#	$NetBSD: files.playstation2,v 1.17 2008/02/20 21:43:35 drochner Exp $
 
 maxpartitions 8
 
@@ -83,12 +83,6 @@ file	dev/cninit.c
 
 # Memory Disk for boot tape
 file dev/md_root.c				memory_disk_hooks
-
-#
-# Workstation Console
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
 
 include "dev/usb/files.usb"
 

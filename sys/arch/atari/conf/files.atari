@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.111 2007/12/03 15:33:22 ad Exp $
+#	$NetBSD: files.atari,v 1.112 2008/02/20 21:43:33 drochner Exp $
 
 maxpartitions 16
 
@@ -138,9 +138,6 @@ file	arch/atari/dev/ms.c		mouse needs-count
 # Machine-independent I2O drivers
 include "dev/i2o/files.i2o"
 
-# generic fb driver
-include "dev/wsfb/files.wsfb"
-
 #
 # PCI-devices
 #
@@ -246,9 +243,6 @@ include "compat/ossaudio/files.ossaudio"
 
 # network devices MII bus
 
-# Wscons related includes
 include	"dev/pckbport/files.pckbport"
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
 
 include "arch/atari/conf/majors.atari"

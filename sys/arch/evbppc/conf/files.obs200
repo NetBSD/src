@@ -1,4 +1,4 @@
-#	$NetBSD: files.obs200,v 1.6 2007/12/03 15:33:34 ad Exp $
+#	$NetBSD: files.obs200,v 1.7 2008/02/20 21:43:34 drochner Exp $
 #	Original Tag: files.obs405,v 1.9 2005/01/24 18:47:37 shige Exp
 #
 # obs200-specific configuration info
@@ -22,13 +22,6 @@ include	"dev/scsipi/files.scsipi"
 
 # Machine-independent ATA drivers
 include	"dev/ata/files.ata"
-
-# Workstation Console
-include "dev/wscons/files.wscons"
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 #
 # Machine-independent CardBus drivers

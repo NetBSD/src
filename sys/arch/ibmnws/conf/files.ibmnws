@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibmnws,v 1.11 2007/12/03 15:33:47 ad Exp $
+#	$NetBSD: files.ibmnws,v 1.12 2008/02/20 21:43:34 drochner Exp $
 #
 # ibmnws-specific configuration info
 #
@@ -56,11 +56,6 @@ file	arch/ibmnws/ibmnws/mainbus.c		mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/ibmnws/ibmnws/cpu.c		cpu
-
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/rasops/files.rasops"
-include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers

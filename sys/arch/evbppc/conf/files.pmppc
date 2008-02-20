@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmppc,v 1.3 2007/12/03 15:33:34 ad Exp $
+#	$NetBSD: files.pmppc,v 1.4 2008/02/20 21:43:34 drochner Exp $
 #
 #
 maxpartitions 16
@@ -53,9 +53,6 @@ file	arch/evbppc/pmppc/dev/flash.c			flash
 attach	cpc at mainbus with cpc_mainbus
 file	arch/evbppc/pmppc/dev/cpc_mainbus.c		cpc_mainbus
 
-# generic fb driver
-include "dev/wsfb/files.wsfb"
-
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
 include "dev/pci/files.agp"
@@ -66,8 +63,5 @@ file	arch/evbppc/pmppc/pci/pci_machdep.c		pci
 device	pchb: pcibus
 attach	pchb at pci
 file	arch/powerpc/pci/pchb.c				pchb
-
-include	"dev/wscons/files.wscons"
-include	"dev/wsfont/files.wsfont"
 
 include	"dev/usb/files.usb"

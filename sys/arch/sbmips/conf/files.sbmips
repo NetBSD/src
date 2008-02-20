@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.13 2008/01/08 14:38:47 simonb Exp $
+# $NetBSD: files.sbmips,v 1.14 2008/02/20 21:43:35 drochner Exp $
 
 maxpartitions 8
 
@@ -32,14 +32,6 @@ include "dev/ata/files.ata"
 
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
-
-# "Workstation Console" glue.
-include "dev/wscons/files.wscons"
-include "dev/wsfb/files.wsfb"
 
 # ISA Bus support
 include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.

@@ -1,4 +1,4 @@
-#	$NetBSD: files.ews4800mips,v 1.2 2006/09/09 00:14:27 gdamore Exp $
+#	$NetBSD: files.ews4800mips,v 1.3 2008/02/20 21:43:34 drochner Exp $
 
 maxpartitions 16
 
@@ -49,13 +49,6 @@ file arch/ews4800mips/ews4800mips/mainbus.c		mainbus
 device cpu
 attach cpu at mainbus
 file arch/ews4800mips/ews4800mips/cpu.c			cpu
-
-#
-# Workstation Console
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/rasops/files.rasops"
 
 #
 # Machine-independent SCSI drivers

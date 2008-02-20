@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcsh,v 1.50 2007/12/02 05:19:11 kiyohara Exp $
+#	$NetBSD: files.hpcsh,v 1.51 2008/02/20 21:43:34 drochner Exp $
 #
 maxpartitions 8
 
@@ -72,7 +72,6 @@ device	j6x0pwr
 attach	j6x0pwr at adc
 file	arch/hpcsh/dev/j6x0pwr.c		j6x0pwr
 
-include	"dev/wscons/files.wscons"
 include "dev/hpc/files.hpctp"
 
 device	j6x0tp: hpctpanel, wsmousedev, wskbddev
