@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.9 2007/02/07 14:20:58 hubertf Exp $	*/
+/*	$NetBSD: zopen.c,v 1.10 2008/02/20 22:46:52 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.9 2007/02/07 14:20:58 hubertf Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.10 2008/02/20 22:46:52 joerg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -199,7 +199,6 @@ struct s_zstate {
 #define	CLEAR	256		/* Table clear output code. */
 
 static int	cl_block(struct s_zstate *);
-static void	cl_hash(struct s_zstate *, count_int);
 static code_int	getcode(struct s_zstate *);
 static int	output(struct s_zstate *, code_int);
 static int	zclose(void *);
@@ -280,7 +279,7 @@ zwrite(void *cookie, const char *wbp, int num)
 	hshift = 8 - hshift;	/* Set hash code range bound. */
 
 	hsize_reg = hsize;
-	cl_hash(zs, (count_int)hsize_reg);	/* Clear hash table. */
+	memset(htab, 0xff, hsize_reg);
 
 middle:	for (i = 0; count--;) {
 		c = *bp++;
@@ -638,45 +637,13 @@ cl_block(struct s_zstate *zs)		/* Table clear for block compress. */
 		ratio = rat;
 	else {
 		ratio = 0;
-		cl_hash(zs, (count_int) hsize);
+		memset(htab, 0xff, hsize);
 		free_ent = FIRST;
 		clear_flg = 1;
 		if (output(zs, (code_int) CLEAR) == -1)
 			return (-1);
 	}
 	return (0);
-}
-
-static void
-cl_hash(struct s_zstate *zs, count_int cl_hsize)	/* Reset code table. */
-{
-	count_int *htab_p;
-	long i, m1;
-
-	m1 = -1;
-	htab_p = htab + cl_hsize;
-	i = cl_hsize - 16;
-	do {			/* Might use Sys V memset(3) here. */
-		*(htab_p - 16) = m1;
-		*(htab_p - 15) = m1;
-		*(htab_p - 14) = m1;
-		*(htab_p - 13) = m1;
-		*(htab_p - 12) = m1;
-		*(htab_p - 11) = m1;
-		*(htab_p - 10) = m1;
-		*(htab_p - 9) = m1;
-		*(htab_p - 8) = m1;
-		*(htab_p - 7) = m1;
-		*(htab_p - 6) = m1;
-		*(htab_p - 5) = m1;
-		*(htab_p - 4) = m1;
-		*(htab_p - 3) = m1;
-		*(htab_p - 2) = m1;
-		*(htab_p - 1) = m1;
-		htab_p -= 16;
-	} while ((i -= 16) >= 0);
-	for (i += 16; i > 0; i--)
-		*--htab_p = m1;
 }
 
 FILE *
