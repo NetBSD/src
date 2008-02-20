@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc-confgen.c,v 1.1.1.4 2007/01/27 21:05:04 christos Exp $	*/
+/*	$NetBSD: rndc-confgen.c,v 1.2 2008/02/20 18:21:39 matt Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005  Internet Systems Consortium, Inc. ("ISC")
@@ -64,7 +64,7 @@
 #define DEFAULT_PORT		953
 
 static char program[256];
-char *progname;
+const char *progname;
 
 isc_boolean_t verbose = ISC_FALSE;
 
