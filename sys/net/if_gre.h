@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.34 2008/02/12 00:53:06 dyoung Exp $ */
+/*	$NetBSD: if_gre.h,v 1.35 2008/02/20 17:05:53 matt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ struct gre_h {
  * should be routed over more than one tunnel hop by hop
  */
 struct gre_sre {
-	u_int16_t sre_family;	/* address family */
+	uint16_t sre_family;	/* address family */
 	u_char	sre_offset;	/* offset to first octet of active entry */
 	u_char	sre_length;	/* number of octets in the SRE.
 				   sre_lengthl==0 -> last entry. */

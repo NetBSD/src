@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.55 2008/01/19 23:17:47 dyoung Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.56 2008/02/20 17:05:52 matt Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.55 2008/01/19 23:17:47 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.56 2008/02/20 17:05:52 matt Exp $");
 
 #include "opt_bridge_ipf.h"
 #include "opt_inet.h"
@@ -1946,7 +1946,7 @@ bridge_ipf(void *arg, struct mbuf **mp, struct ifnet *ifp, int dir)
 	int snap, error;
 	struct ether_header *eh1, eh2;
 	struct llc llc1;
-	u_int16_t ether_type;
+	uint16_t ether_type;
 
 	snap = 0;
 	error = -1;	/* Default error if not error == 0 */
