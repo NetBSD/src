@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.38 2008/02/13 18:41:35 matt Exp $
+#	$NetBSD: genassym.cf,v 1.39 2008/02/20 16:37:52 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -54,6 +54,7 @@ define	L_ADDR		offsetof(struct lwp, l_addr)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_PROC		offsetof(struct lwp, l_proc)
+define	L_CTXSWTCH	offsetof(struct lwp, l_ctxswtch)
 
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)
@@ -65,7 +66,19 @@ define	P1LR		offsetof(struct pcb, P1LR)
 define	IFTRAP		offsetof(struct pcb, iftrap)
 define	ESP		offsetof(struct pcb, ESP)
 define	SSP		offsetof(struct pcb, SSP)
+define	KSP		offsetof(struct pcb, KSP)
 define	PCB_R0		offsetof(struct pcb, R[0])
+define	PCB_R6		offsetof(struct pcb, R[6])
+define	PCB_R7		offsetof(struct pcb, R[7])
+define	PCB_FP		offsetof(struct pcb, FP)
+define	PCB_PC		offsetof(struct pcb, PC)
+define	PCB_PSL		offsetof(struct pcb, PSL)
+define	PCB_PADDR	offsetof(struct pcb, pcb_paddr)
+
+define	SOFTINT_CLOCK	SOFTINT_CLOCK
+define	SOFTINT_BIO	SOFTINT_BIO
+define	SOFTINT_NET	SOFTINT_NET
+define	SOFTINT_SERIAL	SOFTINT_SERIAL
 
 define	MCHK		offsetof(struct cpu_dep, cpu_mchk)
 define	MEMERR		offsetof(struct cpu_dep, cpu_memerr)
@@ -81,6 +94,7 @@ define	UVME_SOFTS	offsetof(struct uvmexp, softs)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define	CI_SOFTLWPS	offsetof(struct cpu_info, ci_softlwps)
 
 # mtpr register numbers
 define	PR_KSP		PR_KSP
