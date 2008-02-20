@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.14 2008/01/31 03:30:36 christos Exp $   */
+/*	$NetBSD: intvec.S,v 1.15 2008/02/20 16:37:52 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -34,8 +34,6 @@
 #include "assym.h"
 #include <sys/cdefs.h>
 #include <net/netisr.h>
-
-#define	__HAVE_GENERIC_SOFT_INTERRUPTS	/* XXX - cannot include types.h! */
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -130,12 +128,12 @@ _C_LABEL(rpb):
 	NOVEC;				# Unused, 94
 	NOVEC;				# Unused, 98
 	NOVEC;				# Unused, 9C
-	NOVEC;				# Unused, A0
+	INTVEC(softclock, KSTACK);	# Software clock interupt, A0 (IPL 08)
 	NOVEC;				# Unused, A4 (IPL 09)
 	NOVEC;				# Unused, A8 (IPL 10)
-	NOVEC;				# Unused, AC (IPL 11)
-	NOVEC;				# Unused, B0
-	NOVEC;				# Unused, B4
+	INTVEC(softbio, KSTACK);	# Software bio interrupt, AC (IPL 11)
+	INTVEC(softnet, KSTACK);	# Software net interrupt, B0 (IPL 12)
+	INTVEC(softserial, KSTACK);	# Software serial interrupt, B4 (IPL 13)
 	NOVEC;				# Unused, B8 (IPL 14)
 	INTVEC(ddbtrap, ISTACK) 	# Kernel debugger trap, BC (IPL 15)
 	INTVEC(hardclock,ISTACK)	# Interval Timer
