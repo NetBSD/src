@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.179 2008/02/12 17:30:59 joerg Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.180 2008/02/20 15:08:14 njoly Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.179 2008/02/12 17:30:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.180 2008/02/20 15:08:14 njoly Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -156,7 +156,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 {
 	struct vmspace *vm = uio->uio_vmspace;
 	struct iovec *iov;
-	u_int cnt;
+	size_t cnt;
 	int error = 0;
 	char *cp = buf;
 
