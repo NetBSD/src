@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.35 2007/12/09 20:28:02 jmcneill Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.36 2008/02/20 11:26:03 markd Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.35 2007/12/09 20:28:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.36 2008/02/20 11:26:03 markd Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,9 @@ static const struct mii_phydesc brgphys[] = {
 	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5780,
 	  MII_STR_BROADCOM_BCM5780 },
 
+	{ MII_OUI_BROADCOM,		MII_MODEL_BROADCOM_BCM5708C,
+	  MII_STR_BROADCOM_BCM5708C },
+
 	{ MII_OUI_BROADCOM2,		MII_MODEL_BROADCOM2_BCM5755,
 	  MII_STR_BROADCOM2_BCM5755 },
 
@@ -271,6 +274,7 @@ brgphyattach(struct device *parent, struct device *self, void *aux)
 
 	case MII_MODEL_BROADCOM_BCM5714:
 	case MII_MODEL_BROADCOM_BCM5780:
+	case MII_MODEL_BROADCOM_BCM5708C:
 	case MII_MODEL_BROADCOM_BCM5750:
 	case MII_MODEL_BROADCOM_BCM5752:
 		sc->mii_funcs = &brgphy_5750_funcs;
