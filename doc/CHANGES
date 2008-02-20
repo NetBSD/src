@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1020 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1021 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -336,6 +336,8 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	acpi: Updated ACPI-CA to 20070320. [jmcneill 20071211]
 	kernel: Added a new power management framework, see pmf(9) for details.
 		[jmcneill,joerg 20071211]
+	ifconfig(8): Add 'list scan' to ifconfig, which list access point in
+	the neighbourhood [adegroot 20071216]
 	MAKEDEV(8): Use pax(1) in preference to mknod(8) to create device
 		nodes more efficiently; use mount_tmpfs(8) in preference to
 		mount_mfs(8) when creating a memory file system. [apb 20071215]
