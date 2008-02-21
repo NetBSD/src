@@ -1,4 +1,4 @@
-/*	$NetBSD: zopen.c,v 1.11 2008/02/20 23:16:05 joerg Exp $	*/
+/*	$NetBSD: zopen.c,v 1.12 2008/02/21 02:50:11 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1986, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)zopen.c	8.1 (Berkeley) 6/27/93";
 #else
-static char rcsid[] = "$NetBSD: zopen.c,v 1.11 2008/02/20 23:16:05 joerg Exp $";
+static char rcsid[] = "$NetBSD: zopen.c,v 1.12 2008/02/21 02:50:11 joerg Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -279,7 +279,7 @@ zwrite(void *cookie, const char *wbp, int num)
 	hshift = 8 - hshift;	/* Set hash code range bound. */
 
 	hsize_reg = hsize;
-	memset(htab, 0xff, hsize_reg);
+	memset(htab, 0xff, hsize_reg * sizeof(count_int));
 
 middle:	while (count--) {
 		c = *bp++;
@@ -637,7 +637,7 @@ cl_block(struct s_zstate *zs)		/* Table clear for block compress. */
 		ratio = rat;
 	else {
 		ratio = 0;
-		memset(htab, 0xff, hsize);
+		memset(htab, 0xff, hsize * sizeof(count_int));
 		free_ent = FIRST;
 		clear_flg = 1;
 		if (output(zs, (code_int) CLEAR) == -1)
