@@ -1,9 +1,5 @@
-#	$NetBSD: files.hpcfb,v 1.3 2006/10/09 10:33:42 peter Exp $
+#	$NetBSD: files.hpcfb,v 1.4 2008/02/21 19:52:00 uwe Exp $
 #	H/PC framebuffer interface for wsdisplay
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 define	hpcfbif {}
 device	hpcfb: wsemuldisplaydev, rasops1, rasops2, rasops4, rasops8, rasops15, rasops16
