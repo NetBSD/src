@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.239 2008/02/05 09:31:44 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.240 2008/02/21 11:09:39 keiichi Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -337,6 +337,19 @@ Notes:		http://www.kame.net
 		Used for "reference" purposes for early part of KAME
 		integration effort.  The branch is not actively used, as I
 		(itojun) use patch(1) and diff(1) for the KAME syncs.
+
+Branch:		keiichi-mipv6
+Description:	Developing Mobile IPv6 function
+Status:		Active
+Start Date:	21 Feb 2008
+End Date:	
+Base Tag:	keiichi-mipv6-base
+Maintainer:	Keiichi Shima <keiichi@netbsd.org>
+Scope:		sys, sbin, libc/net, distrib/sets, share/man/
+Notes:		http://www.mobileip.jp/
+		Work on developing Mobile IPv6/NEMO BS functions and
+		related MIPv6 based advanced functions on NetBSD.
+		Please consult keiichi for joining this activity.
 
 Branch:		kent-audio2
 Description:	In-kernel audio mixer
