@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.9 2005/12/11 12:18:25 christos Exp $	*/
+/*	$NetBSD: devopen.c,v 1.10 2008/02/21 14:30:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -53,7 +53,7 @@ void changedisk_hook(struct open_file *);
 struct devsw devsw[] = {
 	{ "dk", dkstrategy, dkopen, dkclose, noioctl }
 };
-int ndevs = sizeof(devsw) / sizeof(devsw[0]);
+int ndevs = __arraycount(devsw);
 
 struct fs_ops file_system_ufs = FS_OPS(ufs);
 struct fs_ops file_system_nfs = FS_OPS(nfs);
