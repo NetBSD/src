@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# $NetBSD: devfsd,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $
+#
+
+# BEFORE:  disks
+# PROVIDE: devs
+
+# The devfsd is configured VERY early, so that /dev can be populated
+# with device special nodes.
+
+$_rc_subr_loaded . /etc/rc.subr
+
+name="devfsd"
+rcvar=$name
+
+start_cmd="devfsd_start"
+stop_cmd="devfsd_stop"
+status_cmd="devfsd_status"
+
+extra_commands="status"
+
+devfsd_start()
+{
+	echo "Starting devfsd."
+	/sbin/devfsd ${devfsd_flags}
+}
+
+load_rc_config $name
+run_rc_command "$1"

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.103 2008/02/12 17:30:59 joerg Exp $ */
+/* $NetBSD: device.h,v 1.103.6.1 2008/02/21 20:44:55 mjf Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -123,6 +123,7 @@ typedef struct cfattach *cfattach_t;
 struct device {
 	devclass_t	dv_class;	/* this device's classification */
 	TAILQ_ENTRY(device) dv_list;	/* entry on list of all devices */
+	TAILQ_ENTRY(device) dv_dlist;	/* entry on devfs list of devices */
 	cfdata_t	dv_cfdata;	/* config data that found us
 					   (NULL if pseudo-device) */
 	cfdriver_t	dv_cfdriver;	/* our cfdriver */

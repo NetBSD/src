@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1115 2008/02/20 09:55:37 drochner Exp $
+#	$NetBSD: mi,v 1.1115.4.1 2008/02/21 20:44:54 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -195,6 +195,7 @@
 ./usr/include/dev/cgdvar.h			comp-c-include
 ./usr/include/dev/clock_subr.h			comp-obsolete		obsolete
 ./usr/include/dev/cons.h			comp-obsolete		obsolete
+./usr/include/dev/dctl/dctlio.h			comp-c-include
 ./usr/include/dev/dec/clockvar.h		comp-obsolete		obsolete
 ./usr/include/dev/dec/dec_boot.h		comp-c-include
 ./usr/include/dev/dec/lk201.h			comp-c-include

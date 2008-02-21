@@ -1,9 +1,10 @@
 #!/bin/sh
 #
-# $NetBSD: wdogctl,v 1.2 2004/08/13 18:08:03 mycroft Exp $
+# $NetBSD: wdogctl,v 1.2.26.1 2008/02/21 20:44:55 mjf Exp $
 #
 
 # BEFORE:  disks
+# REQUIRE: devs
 
 # The watchdog is configured VERY early, so that any problems that
 # occur during the bootstrap process are protected by the watchdog.
