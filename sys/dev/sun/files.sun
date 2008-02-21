@@ -1,4 +1,4 @@
-# $NetBSD: files.sun,v 1.13 2007/05/25 02:01:41 macallan Exp $
+# $NetBSD: files.sun,v 1.14 2008/02/21 13:44:17 martin Exp $
 #
 # Configuration file for devices found on Sun machines.
 #
@@ -56,9 +56,6 @@ file	dev/sun/ms.c			ms needs-flag
 #
 # Framebuffer drivers
 #
-
-# Raster operations for RASTERCONSOLE (this is here so dependencies work).
-include	"dev/rasops/files.rasops"
 
 # Brooktree DAC attribute
 define	bt_dac
