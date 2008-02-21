@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.28 2008/02/15 13:28:25 gson Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.29 2008/02/21 22:26:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.28 2008/02/15 13:28:25 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.29 2008/02/21 22:26:35 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,9 +264,9 @@ agp_intel_init(struct agp_softc *sc)
 
 	default:
 		{
-		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS - 1);
-		reg |= 0x7000;
-		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS - 1, reg);
+		reg = pci_conf_read(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS);
+		/* clear error bits (write-one-to-clear) - just write back */
+		pci_conf_write(sc->as_pc, sc->as_tag, AGP_INTEL_ERRSTS, reg);
 		}
 	}
 

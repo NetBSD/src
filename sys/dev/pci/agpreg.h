@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.17 2008/01/15 00:27:58 drochner Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.18 2008/02/21 22:26:35 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -59,7 +59,7 @@
 #define	AGP_INTEL_I8XX_ERRSTS	0xc8
 
 /* Common register */
-#define	AGP_INTEL_ERRSTS	0x91	/* Not i8XX */
+#define	AGP_INTEL_ERRSTS	0x90 /* bytes at 0x91 and 0x92, not i8XX */
 #define AGP_INTEL_AGPCMD	0xa8
 # define AGPCMD_SBA		(1U << 9)
 # define AGPCMD_AGPEN		(1U << 8)
