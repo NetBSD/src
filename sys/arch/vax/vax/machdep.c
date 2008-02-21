@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.161 2008/02/20 16:37:52 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.162 2008/02/21 03:52:47 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.161 2008/02/20 16:37:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2008/02/21 03:52:47 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -625,6 +625,7 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 
 	*machdep = ipl;
 
+	l->l_addr->u_pcb.PC = (uintptr_t)softint_process;
 #ifdef MULTIPROCESSOR
 	l->l_addr->u_pcb.SSP = (uintptr_t)l->l_cpu;
 #endif
