@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.231 2008/01/15 18:48:51 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.232 2008/02/21 17:12:58 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.231 2008/01/15 18:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.232 2008/02/21 17:12:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,8 +351,8 @@ static struct pmap_asn_info pmap_asn_info[ALPHA_MAXPROCS];
  *	  memory allocation *must* be blocked while this lock is
  *	  asserted.
  *
- *	* pvh_lock (per-vm_page) - This lock protects the PV list
- *	  for a specified managed page.
+ *	* pvh_lock (global hash) - These locks protects the PV lists
+ *	  for managed pages.
  *
  *	* pmap_all_pmaps_lock - This lock protects the global list of
  *	  all pmaps.  Note that a pm_lock must never be held while this
@@ -389,6 +389,19 @@ static kmutex_t pmap_growkernel_lock;
 #define	PMAP_MAP_TO_HEAD_UNLOCK()	rw_exit(&pmap_main_lock)
 #define	PMAP_HEAD_TO_MAP_LOCK()		rw_enter(&pmap_main_lock, RW_WRITER)
 #define	PMAP_HEAD_TO_MAP_UNLOCK()	rw_exit(&pmap_main_lock)
+
+struct {
+	kmutex_t lock;
+} __aligned(64) static pmap_pvh_locks[64] __aligned(64);
+
+static inline kmutex_t *
+pmap_pvh_lock(struct vm_page *pg)
+{
+
+	/* Cut bits 11-6 out of page address and use directly as offset. */
+	return (kmutex_t *)((uintptr_t)&pmap_pvh_locks +
+	    ((uintptr_t)pg & (63 << 6)));
+}
 
 #if defined(MULTIPROCESSOR)
 /*
@@ -925,6 +938,9 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 	 */
 	rw_init(&pmap_main_lock);
 	mutex_init(&pmap_all_pmaps_lock, MUTEX_DEFAULT, IPL_NONE);
+	for (i = 0; i < __arraycount(pmap_pvh_locks); i++) {
+		mutex_init(&pmap_pvh_locks[i].lock, MUTEX_DEFAULT, IPL_NONE);
+	}
 
 	/*
 	 * Initialize kernel pmap.  Note that all kernel mappings
@@ -1429,6 +1445,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	pv_entry_t pv, nextpv;
 	bool needkisync = false;
 	long cpu_id = cpu_number();
+	kmutex_t *lock;
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 #ifdef DEBUG
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
@@ -1448,7 +1465,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 	case VM_PROT_READ:
 		PMAP_HEAD_TO_MAP_LOCK();
-		mutex_enter(&pg->mdpage.pvh_lock);
+		lock = pmap_pvh_lock(pg);
+		mutex_enter(lock);
 		for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next) {
 			PMAP_LOCK(pv->pv_pmap);
 			if (*pv->pv_pte & (PG_KWE | PG_UWE)) {
@@ -1461,7 +1479,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			}
 			PMAP_UNLOCK(pv->pv_pmap);
 		}
-		mutex_exit(&pg->mdpage.pvh_lock);
+		mutex_exit(lock);
 		PMAP_HEAD_TO_MAP_UNLOCK();
 		PMAP_TLB_SHOOTNOW();
 		return;
@@ -1472,7 +1490,8 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	}
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	mutex_enter(&pg->mdpage.pvh_lock);
+	lock = pmap_pvh_lock(pg);
+	mutex_enter(lock);
 	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = nextpv) {
 		nextpv = pv->pv_next;
 		pmap = pv->pv_pmap;
@@ -1496,7 +1515,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	if (needkisync)
 		PMAP_SYNC_ISTREAM_KERNEL();
 
-	mutex_exit(&pg->mdpage.pvh_lock);
+	mutex_exit(lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 }
 
@@ -1601,6 +1620,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	bool wired;
 	long cpu_id = cpu_number();
 	int error = 0;
+	kmutex_t *lock;
 	PMAP_TLB_SHOOTDOWN_CPUSET_DECL
 
 #ifdef DEBUG
@@ -1819,13 +1839,14 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		if ((flags & VM_PROT_ALL) & ~prot)
 			panic("pmap_enter: access type exceeds prot");
 #endif
-		mutex_enter(&pg->mdpage.pvh_lock);
+		lock = pmap_pvh_lock(pg);
+		mutex_enter(lock);
 		if (flags & VM_PROT_WRITE)
 			pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
 		else if (flags & VM_PROT_ALL)
 			pg->mdpage.pvh_attrs |= PGA_REFERENCED;
 		attrs = pg->mdpage.pvh_attrs;
-		mutex_exit(&pg->mdpage.pvh_lock);
+		mutex_exit(lock);
 
 		/*
 		 * Set up referenced/modified emulation for new mapping.
@@ -2362,6 +2383,7 @@ pmap_clear_modify(struct vm_page *pg)
 {
 	bool rv = false;
 	long cpu_id = cpu_number();
+	kmutex_t *lock;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2369,7 +2391,8 @@ pmap_clear_modify(struct vm_page *pg)
 #endif
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	mutex_enter(&pg->mdpage.pvh_lock);
+	lock = pmap_pvh_lock(pg);
+	mutex_enter(lock);
 
 	if (pg->mdpage.pvh_attrs & PGA_MODIFIED) {
 		rv = true;
@@ -2377,7 +2400,7 @@ pmap_clear_modify(struct vm_page *pg)
 		pg->mdpage.pvh_attrs &= ~PGA_MODIFIED;
 	}
 
-	mutex_exit(&pg->mdpage.pvh_lock);
+	mutex_exit(lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	return (rv);
@@ -2393,6 +2416,7 @@ pmap_clear_reference(struct vm_page *pg)
 {
 	bool rv = false;
 	long cpu_id = cpu_number();
+	kmutex_t *lock;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2400,7 +2424,8 @@ pmap_clear_reference(struct vm_page *pg)
 #endif
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	mutex_enter(&pg->mdpage.pvh_lock);
+	lock = pmap_pvh_lock(pg);
+	mutex_enter(lock);
 
 	if (pg->mdpage.pvh_attrs & PGA_REFERENCED) {
 		rv = true;
@@ -2408,7 +2433,7 @@ pmap_clear_reference(struct vm_page *pg)
 		pg->mdpage.pvh_attrs &= ~PGA_REFERENCED;
 	}
 
-	mutex_exit(&pg->mdpage.pvh_lock);
+	mutex_exit(lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 
 	return (rv);
@@ -2667,6 +2692,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	bool didlock = false;
 	bool exec = false;
 	long cpu_id = cpu_number();
+	kmutex_t *lock;
 
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
@@ -2756,7 +2782,8 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	pg = PHYS_TO_VM_PAGE(pa);
 
 	PMAP_HEAD_TO_MAP_LOCK();
-	mutex_enter(&pg->mdpage.pvh_lock);
+	lock = pmap_pvh_lock(pg);
+	mutex_enter(lock);
 
 	if (type == ALPHA_MMCSR_FOW) {
 		pg->mdpage.pvh_attrs |= (PGA_REFERENCED|PGA_MODIFIED);
@@ -2770,7 +2797,7 @@ pmap_emulate_reference(struct lwp *l, vaddr_t v, int user, int type)
 	}
 	pmap_changebit(pg, 0, ~faultoff, cpu_id);
 
-	mutex_exit(&pg->mdpage.pvh_lock);
+	mutex_exit(lock);
 	PMAP_HEAD_TO_MAP_UNLOCK();
 	return (0);
 }
@@ -2786,10 +2813,12 @@ pmap_pv_dump(paddr_t pa)
 {
 	struct vm_page *pg;
 	pv_entry_t pv;
+	kmutex_t *lock;
 
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	mutex_enter(&pg->mdpage.pvh_lock);
+	lock = pmap_pvh_lock(pg);
+	mutex_enter(lock);
 
 	printf("pa 0x%lx (attrs = 0x%x):\n", pa, pg->mdpage.pvh_attrs);
 	for (pv = pg->mdpage.pvh_list; pv != NULL; pv = pv->pv_next)
@@ -2797,7 +2826,7 @@ pmap_pv_dump(paddr_t pa)
 		    pv->pv_pmap, pv->pv_va);
 	printf("\n");
 
-	mutex_exit(&pg->mdpage.pvh_lock);
+	mutex_exit(lock);
 }
 #endif
  
@@ -2844,6 +2873,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
     bool dolock)
 {
 	pv_entry_t newpv;
+	kmutex_t *lock;
 
 	/*
 	 * Allocate and fill in the new pv_entry.
@@ -2855,8 +2885,10 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
 	newpv->pv_pmap = pmap;
 	newpv->pv_pte = pte;
 
-	if (dolock)
-		mutex_enter(&pg->mdpage.pvh_lock);
+	if (dolock) {
+		lock = pmap_pvh_lock(pg);
+		mutex_enter(lock);
+	}
 
 #ifdef DEBUG
     {
@@ -2879,8 +2911,9 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t *pte,
 	newpv->pv_next = pg->mdpage.pvh_list;
 	pg->mdpage.pvh_list = newpv;
 
-	if (dolock)
-		mutex_exit(&pg->mdpage.pvh_lock);
+	if (dolock) {
+		mutex_exit(lock);
+	}
 
 	return 0;
 }
@@ -2894,9 +2927,14 @@ static void
 pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock)
 {
 	pv_entry_t pv, *pvp;
+	kmutex_t *lock;
 
-	if (dolock)
-		mutex_enter(&pg->mdpage.pvh_lock);
+	if (dolock) {
+		lock = pmap_pvh_lock(pg);
+		mutex_enter(lock);
+	} else {
+		lock = NULL; /* XXX stupid gcc */
+	}
 
 	/*
 	 * Find the entry to remove.
@@ -2913,8 +2951,9 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, bool dolock)
 
 	*pvp = pv->pv_next;
 
-	if (dolock)
-		mutex_exit(&pg->mdpage.pvh_lock);
+	if (dolock) {
+		mutex_exit(lock);
+	}
 
 	pmap_pv_free(pv);
 }
@@ -2959,6 +2998,9 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 {
 	struct vm_page *pg;
 	paddr_t pa;
+#ifdef DEBUG
+	kmutex_t *lock;
+#endif
 
 	/*
 	 * Don't ask for a zero'd page in the L1PT case -- we will
@@ -2971,13 +3013,14 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 		pa = VM_PAGE_TO_PHYS(pg);
 
 #ifdef DEBUG
-		mutex_enter(&pg->mdpage.pvh_lock);
+		lock = pmap_pvh_lock(pg);
+		mutex_enter(lock);
 		if (pg->wire_count != 0) {
 			printf("pmap_physpage_alloc: page 0x%lx has "
 			    "%d references\n", pa, pg->wire_count);
 			panic("pmap_physpage_alloc");
 		}
-		mutex_exit(&pg->mdpage.pvh_lock);
+		mutex_exit(lock);
 #endif
 		*pap = pa;
 		return (true);
@@ -2999,10 +3042,13 @@ pmap_physpage_free(paddr_t pa)
 		panic("pmap_physpage_free: bogus physical page address");
 
 #ifdef DEBUG
-	mutex_enter(&pg->mdpage.pvh_lock);
-	if (pg->wire_count != 0)
-		panic("pmap_physpage_free: page still has references");
-	mutex_exit(&pg->mdpage.pvh_lock);
+	{
+		kmutex_t *lock = pmap_pvh_lock(pg);
+		mutex_enter(lock);
+		if (pg->wire_count != 0)
+			panic("pmap_physpage_free: page still has references");
+		mutex_exit(lock);
+	}
 #endif
 
 	uvm_pagefree(pg);
@@ -3019,13 +3065,15 @@ pmap_physpage_addref(void *kva)
 	struct vm_page *pg;
 	paddr_t pa;
 	int rval;
+	kmutex_t *lock;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	mutex_enter(&pg->mdpage.pvh_lock);
+	lock = pmap_pvh_lock(pg);
+	mutex_enter(lock);
 	rval = ++pg->wire_count;
-	mutex_exit(&pg->mdpage.pvh_lock);
+	mutex_exit(lock);
 
 	return (rval);
 }
@@ -3041,11 +3089,13 @@ pmap_physpage_delref(void *kva)
 	struct vm_page *pg;
 	paddr_t pa;
 	int rval;
+	kmutex_t *lock;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	mutex_enter(&pg->mdpage.pvh_lock);
+	lock = pmap_pvh_lock(pg);
+	mutex_enter(lock);
 
 #ifdef DIAGNOSTIC
 	/*
@@ -3057,7 +3107,7 @@ pmap_physpage_delref(void *kva)
 
 	rval = --pg->wire_count;
 
-	mutex_exit(&pg->mdpage.pvh_lock);
+	mutex_exit(lock);
 
 	return (rval);
 }
