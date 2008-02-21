@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.740 2008/02/09 19:34:03 jmmv Exp $
+# $NetBSD: mi,v 1.740.6.1 2008/02/21 20:44:54 mjf Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -140,6 +140,7 @@
 ./sbin/ccdconfig				base-sysutil-root
 ./sbin/cgdconfig				base-sysutil-root	crypto
 ./sbin/clri					base-sysutil-root
+./sbin/devfsd					base-sysutil-root
 ./sbin/dhclient					base-dhclient-root
 ./sbin/dhclient-script				base-dhclient-root
 ./sbin/disklabel				base-sysutil-root
@@ -177,6 +178,7 @@
 ./sbin/mount					base-sysutil-root
 ./sbin/mount_ados				base-adosfs-root
 ./sbin/mount_cd9660				base-sysutil-root
+./sbin/mount_devfs				base-devfs-root
 ./sbin/mount_ext2fs				base-ext2fs-root
 ./sbin/mount_efs				base-efs-root
 ./sbin/mount_fdesc				base-miscfs-root
@@ -760,6 +762,7 @@
 ./usr/include/dev				base-c-usr
 ./usr/include/dev/apm				base-c-usr
 ./usr/include/dev/ata				base-c-usr
+./usr/include/dev/dctl				base-c-usr
 ./usr/include/dev/dec				base-c-usr
 ./usr/include/dev/dmover			base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
