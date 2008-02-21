@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.240 2008/02/21 11:09:39 keiichi Exp $
+#	$NetBSD: BRANCHES,v 1.241 2008/02/21 17:23:24 skrll Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -419,6 +419,18 @@ Base Tag:	mjf-ufs-trans-base
 Maintainer:	Matt Fleming <mjf@NetBSD.org>
 Scope:		kernel
 Notes:
+
+Branch:		nick-net80211-sync
+Description:	sync of net80211 with FreeBSD
+Status:		Active
+Start Date:	21 February 2008
+End Date:
+Base Tag:	nick-net80211-base
+Maintainer:	Nick Hudson <skrll@NetBSD.org>
+Scope:		sys/
+Notes:		Sync'ing net80211 with FreeBSD and drivers update. The branch is
+		currently only the kernel, but will likely extend to some userland
+		areas.
 
 Branch:	  	pkgviews
 Description:  	package views, enabling multiple conflicting packages to co-exist
