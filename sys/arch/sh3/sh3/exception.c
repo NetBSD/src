@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.45 2008/02/21 01:27:42 uwe Exp $	*/
+/*	$NetBSD: exception.c,v 1.46 2008/02/21 01:49:07 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.45 2008/02/21 01:27:42 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.46 2008/02/21 01:49:07 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -123,7 +123,7 @@ const char * const exp_type[] = {
 	"--",					/* 0x1c0 (external interrupt) */
 	"user break point trap",		/* 0x1e0 EXPEVT_BREAK */
 };
-const int exp_types = sizeof exp_type / sizeof exp_type[0];
+const int exp_types = __arraycount(exp_type);
 
 void general_exception(struct lwp *, struct trapframe *, uint32_t);
 void tlb_exception(struct lwp *, struct trapframe *, uint32_t);
