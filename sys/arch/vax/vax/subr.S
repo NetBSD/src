@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.21 2008/02/20 16:37:52 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.22 2008/02/21 03:52:47 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -310,12 +310,26 @@ _C_LABEL(vax_mp_tramp):
 	rei
 #endif
 
-	.globl	softint_cleaup,softint_exit,softint_process
+	.globl	softint_cleanup,softint_exit,softint_process
+	.type	softint_cleanup@function
+	.type	softint_exit@function
+	.type	softint_process@function
 softint_cleanup:
 	mfpr    $PR_SSP,%r1		/* get cpu_info */
 	incl    CI_MTX_COUNT(%r1)	/* increment mutex count */
 	clrl    L_CTXSWTCH(%r0)		/* clear l_ctxswtch of old lwp */
+	movl	L_ADDR(%r0),%r1		/* get PCB of softint LWP */
 softint_exit:
+	/*
+	 * Now restore the PCB since we have been interrupted or blocked so
+	 * we no idea what state it was last in
+	 */
+	movab	(USPACE-TRAPFRAMELEN-CALLSFRAMELEN)(%r1),%r0
+					/* calculate where KSP should be */
+	movl	%r0,KSP(%r1)		/* save it as SP */
+	movl	%r0,PCB_FP(%r1)		/* and as the FP too */
+	movab	CA_ARGNO(%r0),PCB_AP(%r1) /* update the AP as well */
+	movab	softint_process,PCB_PC(%r1) /* and where we will restart */
 	popr	$0x3			/* restore r0 and r1 */
 	rei				/* return from interrupt */
 
@@ -331,14 +345,9 @@ softint_process:
 	mfpr	$PR_SSP,%r8		/* get cpu_info */
 	movl	%r6,CI_CURLWP(%r8)	/* update ci_curlwp */
 	movl	L_ADDR(%r6),%r3		/* Get pointer to new pcb. */
+	movl	%r3,PCB_R1(%r3)		/* Make %r1 point to the pcb. */
 
 	movab	softint_exit,PCB_PC(%r3)/* do a quick exit */
-#if 0
-	movl	KSP(%r3),%r0		/* get pinned lwp's KSP */ 
-	movq	(%r0)+,PCB_PC(%r3)	/* return to real PC & PSL */
-	movq	(%r0)+,PCB_R0(%r3)	/* restore saved r0 and r1 */
-	movl	%r0,KSP(%r3)		/* restore pinned KSP */
-#endif
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* restore PA of interrupted pcb */
 	ldpctx
@@ -358,7 +367,6 @@ softint_common:
 	movl	L_ADDR(%r2),%r3		/* Get pointer to its pcb. */
 	movl	CI_CURLWP(%r8),PCB_R6(%r3) /* move old lwp into new pcb */
 	movl	%r1,PCB_R7(%r3)		/* move IPL into new pcb */
-	movab	softint_process,PCB_PC(%r3) /* where we want to start running */
 	movl	%r2,CI_CURLWP(%r8)	/* update ci_curlwp */
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* set PA of new pcb */
 	ldpctx				/* load it */

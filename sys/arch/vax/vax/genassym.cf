@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2008/02/20 16:37:52 matt Exp $
+#	$NetBSD: genassym.cf,v 1.40 2008/02/21 03:52:47 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -46,6 +46,7 @@ include	<machine/mtpr.h>
 include	<machine/pcb.h>
 include	<machine/sid.h>
 include <machine/signal.h>
+include	<machine/frame.h>
 include	<machine/trap.h>
 include	<machine/uvax.h>
 
@@ -68,8 +69,10 @@ define	ESP		offsetof(struct pcb, ESP)
 define	SSP		offsetof(struct pcb, SSP)
 define	KSP		offsetof(struct pcb, KSP)
 define	PCB_R0		offsetof(struct pcb, R[0])
+define	PCB_R1		offsetof(struct pcb, R[1])
 define	PCB_R6		offsetof(struct pcb, R[6])
 define	PCB_R7		offsetof(struct pcb, R[7])
+define	PCB_AP		offsetof(struct pcb, AP)
 define	PCB_FP		offsetof(struct pcb, FP)
 define	PCB_PC		offsetof(struct pcb, PC)
 define	PCB_PSL		offsetof(struct pcb, PSL)
@@ -132,6 +135,9 @@ define	T_ASTFLT	T_ASTFLT
 define	T_KDBTRAP	T_KDBTRAP
 
 define	USPACE		USPACE
+define	TRAPFRAMELEN	sizeof(struct trapframe)
+define	CALLSFRAMELEN	sizeof(struct callsframe)
+define	CA_ARGNO	offsetof(struct callsframe, ca_argno)
 
 define	ENAMETOOLONG	ENAMETOOLONG
 define	EFAULT		EFAULT
