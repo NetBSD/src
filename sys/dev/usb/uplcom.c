@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.61 2008/02/20 15:55:38 mlelstv Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.62 2008/02/21 04:38:43 rafal Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.61 2008/02/20 15:55:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.62 2008/02/21 04:38:43 rafal Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,8 @@ static const struct uplcom_type {
 	{ { USB_VENDOR_PROLIFIC2, USB_PRODUCT_PROLIFIC2_PL2303 },
 		-1, UPLCOM_TYPE_HX },
 	/* IOGEAR/ATENTRIPPLITE */
+	{ { USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
+		0x300, UPLCOM_TYPE_HX },
 	{ { USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
 		-1, UPLCOM_TYPE_0 },
 	/* ELECOM UC-SGT */
