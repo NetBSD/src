@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: ahc_pci.c,v 1.62 2008/01/28 16:08:38 macallan Exp $
+ * $Id: ahc_pci.c,v 1.63 2008/02/22 23:24:07 dyoung Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx_pci.c#57 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.62 2008/01/28 16:08:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahc_pci.c,v 1.63 2008/02/22 23:24:07 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -709,8 +709,8 @@ static void ahc_probe_ext_scbram(struct ahc_softc *ahc);
 
 static void ahc_pci_intr(struct ahc_softc *);
 
-static bool ahc_pci_suspend(struct device *);
-static bool ahc_pci_resume(struct device *);
+static bool ahc_pci_suspend(device_t PMF_FN_PROTO);
+static bool ahc_pci_resume(device_t PMF_FN_PROTO);
 
 static const struct ahc_pci_identity *
 ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
@@ -744,8 +744,7 @@ ahc_find_pci_device(pcireg_t id, pcireg_t subid, u_int func)
 }
 
 static int
-ahc_pci_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+ahc_pci_probe(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;
@@ -757,11 +756,11 @@ ahc_pci_probe(struct device *parent, struct cfdata *match,
 }
 
 static void
-ahc_pci_attach(struct device *parent, struct device *self, void *aux)
+ahc_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahc_pci_identity *entry;
-	struct		   ahc_softc *ahc = (void *)self;
+	struct		   ahc_softc *ahc = device_private(self);
 	pcireg_t	   command;
 	u_int		   our_id = 0;
 	u_int		   sxfrctl1;
@@ -785,7 +784,7 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 	struct ahc_pci_busdata *bd;
 	bool               override_ultra;
 
-	ahc_set_name(ahc, ahc->sc_dev.dv_xname);
+	ahc_set_name(ahc, device_xname(&ahc->sc_dev));
 	ahc->parent_dmat = pa->pa_dmat;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -957,8 +956,8 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
 	intrstr = pci_intr_string(pa->pa_pc, ih);
 	ahc->ih = pci_intr_establish(pa->pa_pc, ih, IPL_BIO, ahc_intr, ahc);
 	if (ahc->ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		       ahc->sc_dev.dv_xname);
+		aprint_error_dev(&ahc->sc_dev,
+		    "couldn't establish interrupt\n");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
@@ -1118,7 +1117,7 @@ ahc_pci_attach(struct device *parent, struct device *self, void *aux)
  */
 
 static bool
-ahc_pci_suspend(struct device *dev)
+ahc_pci_suspend(device_t dev PMF_FN_ARGS)
 {
 	struct ahc_softc *sc = device_private(dev);
 #if 0
@@ -1130,7 +1129,7 @@ ahc_pci_suspend(struct device *dev)
 }
 
 static bool
-ahc_pci_resume(struct device *dev)
+ahc_pci_resume(device_t dev PMF_FN_ARGS)
 {
 #if 0
 	struct ahc_softc *sc = device_private(dev);
@@ -1749,7 +1748,7 @@ ahc_aha29160C_setup(struct ahc_softc *ahc)
 static int
 ahc_raid_setup(struct ahc_softc *ahc)
 {
-	printf("%s: RAID functionality unsupported\n", ahc->sc_dev.dv_xname);
+	aprint_normal_dev(&ahc->sc_dev, "RAID functionality unsupported\n");
 	return (ENXIO);
 }
 
