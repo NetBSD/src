@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.5 2008/02/22 21:59:35 dyoung Exp $ */
+/* $NetBSD: pmf.h,v 1.6 2008/02/22 22:33:21 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -56,6 +56,7 @@ typedef enum {
 
 #define	PMF_FN_PROTO	/* , pmf_flags_t */
 #define	PMF_FN_ARGS	/* , pmf_flags_t flags */
+#define	PMF_FN_CALL	/* , flags */
 
 void	pmf_init(void);
 
