@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.108 2008/02/20 21:43:35 drochner Exp $
+#	$NetBSD: files.vax,v 1.109 2008/02/22 03:14:22 matt Exp $
 #
 # new style config file for vax architecture
 #
@@ -172,6 +172,9 @@ include "dev/scsipi/files.scsipi"
 device	si: scsi, ncr5380sbc
 attach	si at vsbus with si_vsbus
 file	arch/vax/vsa/ncr.c		si_vsbus
+
+include "dev/wscons/files.wscons"
+include "dev/wsfont/files.wsfont"
 
 # Monochrome framebuffer on VS3100.
 device	smg: wsemuldisplaydev
