@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,12 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,10 +25,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.13 2007/06/11 03:36:54 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.7 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.7.46.1 2008/02/22 16:50:25 skrll Exp $");
 #endif
 
 /*
@@ -62,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.7 2006/11/16 01:33:40 ch
 static	void *tkip_attach(struct ieee80211com *, struct ieee80211_key *);
 static	void tkip_detach(struct ieee80211_key *);
 static	int tkip_setkey(struct ieee80211_key *);
-static	int tkip_encap(struct ieee80211_key *, struct mbuf *m, u_int8_t keyid);
+static	int tkip_encap(struct ieee80211_key *, struct mbuf *m, uint8_t keyid);
 static	int tkip_enmic(struct ieee80211_key *, struct mbuf *, int);
 static	int tkip_decap(struct ieee80211_key *, struct mbuf *, int);
 static	int tkip_demic(struct ieee80211_key *, struct mbuf *, int);
@@ -111,19 +105,22 @@ static	int tkip_encrypt(struct tkip_ctx *, struct ieee80211_key *,
 static	int tkip_decrypt(struct tkip_ctx *, struct ieee80211_key *,
 		struct mbuf *, int hdr_len);
 
+/* number of references from net80211 layer */
+static	int nrefs = 0;
+
 static void *
 tkip_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct tkip_ctx *ctx;
 
-	MALLOC(ctx, struct tkip_ctx *, sizeof(struct tkip_ctx),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ctx = malloc(sizeof(struct tkip_ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
 	}
 
 	ctx->tc_ic = ic;
+	nrefs++;			/* NB: we assume caller locking */
 	return ctx;
 }
 
@@ -133,6 +130,8 @@ tkip_detach(struct ieee80211_key *k)
 	struct tkip_ctx *ctx = k->wk_private;
 
 	FREE(ctx, M_DEVBUF);
+	IASSERT(nrefs > 0, ("imbalanced attach/detach"));
+	nrefs--;			/* NB: we assume caller locking */
 }
 
 static int
@@ -155,11 +154,11 @@ tkip_setkey(struct ieee80211_key *k)
  * Add privacy headers and do any s/w encryption required.
  */
 static int
-tkip_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
+tkip_encap(struct ieee80211_key *k, struct mbuf *m, uint8_t keyid)
 {
 	struct tkip_ctx *ctx = k->wk_private;
 	struct ieee80211com *ic = ctx->tc_ic;
-	u_int8_t *ivp;
+	uint8_t *ivp;
 	int hdrlen;
 
 	/*
@@ -184,7 +183,7 @@ tkip_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
 	M_PREPEND(m, tkip.ic_header, M_NOWAIT);
 	if (m == NULL)
 		return 0;
-	ivp = mtod(m, u_int8_t *);
+	ivp = mtod(m, uint8_t *);
 	memmove(ivp, ivp + tkip.ic_header, hdrlen);
 	ivp += hdrlen;
 

@@ -1,6 +1,6 @@
 /*-
  * Copyright (c) 2004 Video54 Technologies, Inc.
- * Copyright (c) 2004-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2004-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -11,12 +11,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -32,10 +26,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_xauth.c,v 1.2 2004/12/31 22:42:38 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_xauth.c,v 1.3 2007/06/06 04:56:04 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_xauth.c,v 1.5 2006/02/27 01:08:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_xauth.c,v 1.5.62.1 2008/02/22 16:50:26 skrll Exp $");
 #endif
 
 /*

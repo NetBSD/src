@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,12 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,10 +25,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.5 2005/06/10 16:11:24 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_none.c,v 1.7 2007/06/11 03:36:54 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.7 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.7.46.1 2008/02/22 16:50:25 skrll Exp $");
 #endif
 
 /*
@@ -55,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_none.c,v 1.7 2006/11/16 01:33:40 ch
 static	void *none_attach(struct ieee80211com *, struct ieee80211_key *);
 static	void none_detach(struct ieee80211_key *);
 static	int none_setkey(struct ieee80211_key *);
-static	int none_encap(struct ieee80211_key *, struct mbuf *, u_int8_t);
+static	int none_encap(struct ieee80211_key *, struct mbuf *, uint8_t);
 static	int none_decap(struct ieee80211_key *, struct mbuf *, int);
 static	int none_enmic(struct ieee80211_key *, struct mbuf *, int);
 static	int none_demic(struct ieee80211_key *, struct mbuf *, int);
@@ -95,7 +89,7 @@ none_setkey(struct ieee80211_key *k)
 }
 
 static int
-none_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
+none_encap(struct ieee80211_key *k, struct mbuf *m, uint8_t keyid)
 {
 	struct ieee80211com *ic = k->wk_private;
 #ifdef IEEE80211_DEBUG
@@ -119,7 +113,7 @@ none_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 	struct ieee80211com *ic = k->wk_private;
 #ifdef IEEE80211_DEBUG
 	struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
-	const u_int8_t *ivp = (const u_int8_t *)&wh[1];
+	const uint8_t *ivp = (const uint8_t *)&wh[1];
 #endif
 
 	/*
