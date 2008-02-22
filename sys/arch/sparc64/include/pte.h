@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.18 2006/09/08 23:08:05 mrg Exp $ */
+/*	$NetBSD: pte.h,v 1.19 2008/02/22 10:55:00 martin Exp $ */
 
 /*
  * Copyright (c) 1996-1999 Eduardo Horvath
@@ -129,12 +129,6 @@ struct sun4u_tte {
 };
 #endif
 typedef struct sun4u_tte pte_t;
-
-/* TLB shootdown handler arguments. */
-struct ipi_tlb_args {
-	vaddr_t ita_vaddr;
-	int ita_ctx;
-};
 
 /* Assembly routines to flush TLB mappings */
 void sp_tlb_flush_pte(vaddr_t, int);
