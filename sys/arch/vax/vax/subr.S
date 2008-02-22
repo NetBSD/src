@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.22 2008/02/21 03:52:47 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.23 2008/02/22 03:18:40 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -320,16 +320,6 @@ softint_cleanup:
 	clrl    L_CTXSWTCH(%r0)		/* clear l_ctxswtch of old lwp */
 	movl	L_ADDR(%r0),%r1		/* get PCB of softint LWP */
 softint_exit:
-	/*
-	 * Now restore the PCB since we have been interrupted or blocked so
-	 * we no idea what state it was last in
-	 */
-	movab	(USPACE-TRAPFRAMELEN-CALLSFRAMELEN)(%r1),%r0
-					/* calculate where KSP should be */
-	movl	%r0,KSP(%r1)		/* save it as SP */
-	movl	%r0,PCB_FP(%r1)		/* and as the FP too */
-	movab	CA_ARGNO(%r0),PCB_AP(%r1) /* update the AP as well */
-	movab	softint_process,PCB_PC(%r1) /* and where we will restart */
 	popr	$0x3			/* restore r0 and r1 */
 	rei				/* return from interrupt */
 
@@ -343,10 +333,8 @@ softint_process:
 
 	/* We can use any register because ldpctx will overwrite them */
 	mfpr	$PR_SSP,%r8		/* get cpu_info */
-	movl	%r6,CI_CURLWP(%r8)	/* update ci_curlwp */
-	movl	L_ADDR(%r6),%r3		/* Get pointer to new pcb. */
-	movl	%r3,PCB_R1(%r3)		/* Make %r1 point to the pcb. */
-
+	movl	%r6,CI_CURLWP(%r8)	/* set curlwp */
+	movl	L_ADDR(%r6),%r3		/* get pcb */
 	movab	softint_exit,PCB_PC(%r3)/* do a quick exit */
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* restore PA of interrupted pcb */
@@ -368,6 +356,17 @@ softint_common:
 	movl	CI_CURLWP(%r8),PCB_R6(%r3) /* move old lwp into new pcb */
 	movl	%r1,PCB_R7(%r3)		/* move IPL into new pcb */
 	movl	%r2,CI_CURLWP(%r8)	/* update ci_curlwp */
+
+	/*
+	 * Now reset the PCB since we no idea what state it was last in
+	 */
+	movab	(USPACE-TRAPFRAMELEN-CALLSFRAMELEN)(%r3),%r0
+					/* calculate where KSP should be */
+	movl	%r0,KSP(%r3)		/* save it as SP */
+	movl	%r0,PCB_FP(%r3)		/* and as the FP too */
+	movab	CA_ARGNO(%r0),PCB_AP(%r3) /* update the AP as well */
+	movab	softint_process,PCB_PC(%r3) /* and where we will start */
+
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* set PA of new pcb */
 	ldpctx				/* load it */
 	rei				/* get off interrupt stack */
