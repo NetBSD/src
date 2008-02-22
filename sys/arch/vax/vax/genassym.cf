@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2008/02/21 03:52:47 matt Exp $
+#	$NetBSD: genassym.cf,v 1.41 2008/02/22 03:16:01 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -155,16 +155,17 @@ define	VAX_BTYP_49	VAX_BTYP_49
 
 define	IPL_HIGH	IPL_HIGH
 define	IPL_CLOCK	IPL_CLOCK
-define	IPL_NONE	IPL_NONE
+define	IPL_SCHED	IPL_SCHED
 define	IPL_VM		IPL_VM
+define	IPL_NONE	IPL_NONE
 
 define	VC_DIAGTIMM	offsetof(struct vs_cpu, vc_diagtimm)
 
 define	PSL_IS		PSL_IS
 
 define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
+define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
 define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
-define	MTX_FLAGS	offsetof(struct kmutex, mtx_flags)
 ifdef	MUTEX_COUNT_BIAS
 define	MTX_COUNT_BIAS	MUTEX_COUNT_BIAS
 endif
