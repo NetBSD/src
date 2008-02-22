@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.in,v 1.1.1.4 2007/12/24 00:03:06 joerg Exp $
+# $NetBSD: Makefile.in,v 1.1.1.5 2008/02/22 16:14:58 joerg Exp $
 
 srcdir=		@srcdir@
 
@@ -13,6 +13,8 @@ man7dir=	$(mandir)/man7
 tar=		@tar@
 ftp=		@ftp@
 
+BOOTSTRAP=	@bootstrap@
+
 RANLIB=		@RANLIB@
 AR=		@AR@
 CC=		@CC@
@@ -24,9 +26,14 @@ INSTALL=	@INSTALL@
 
 LIB=	libinstall.a
 
-OBJS=	automatic.o conflicts.o dewey.o fexec.o file.o ftpio.o global.o iterate.o \
-	lpkg.o opattern.o path.o pen.o pexec.o pkgdb.o plist.o \
-	str.o var.o version.o
+OBJS=	automatic.o conflicts.o decompress.o dewey.o fexec.o file.o \
+	ftpio.o global.o iterate.o lpkg.o opattern.o \
+	path.o pen.o pexec.o pkgdb.o plist.o \
+	str.o var.o version.o vulnerabilities-file.o
+
+.if !empty(BOOTSTRAP)
+CPPFLAGS+=	-DBOOTSTRAP
+.endif
 
 all: $(LIB)
 
