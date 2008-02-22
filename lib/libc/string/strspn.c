@@ -1,4 +1,4 @@
-/*	$NetBSD: strspn.c,v 1.12 2008/02/22 14:40:15 joerg Exp $	*/
+/*	$NetBSD: strspn.c,v 1.13 2008/02/22 19:25:59 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strspn.c,v 1.12 2008/02/22 14:40:15 joerg Exp $");
+__RCSID("$NetBSD: strspn.c,v 1.13 2008/02/22 19:25:59 joerg Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
@@ -46,10 +46,12 @@ strspn(const char *s, const char *charset)
 	memset(set, 0, sizeof(set));
 
 	for (; *charset != '\0'; ++charset)
-		set[(unsigned char)*charset >> 3] |= idx[*charset & 7];
+		set[(unsigned char)*charset >> 3] |=
+		    idx[(unsigned char)*charset & 7];
 
 	for (t = s; *t != '\0'; ++t) {
-		if ((set[(unsigned char)*s >> 3] & idx[*s & 7]) == 0)
+		if ((set[(unsigned char)*s >> 3] &
+		    idx[(unsigned char)*s & 7]) == 0)
 			break;
 	}
 	return t - s;
