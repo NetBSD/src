@@ -1,7 +1,7 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.14 2006/11/16 01:33:40 christos Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.14.46.1 2008/02/22 16:50:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
- * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -33,10 +27,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.16 2007/06/11 03:36:54 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.14 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.14.46.1 2008/02/22 16:50:25 skrll Exp $");
 #endif
 
 #include "opt_inet.h"
@@ -112,9 +106,8 @@ null_key_delete(struct ieee80211com *ic,
 	return 1;
 }
 static 	int
-null_key_set(struct ieee80211com *ic,
-    const struct ieee80211_key *k,
-    const u_int8_t mac[IEEE80211_ADDR_LEN])
+null_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
+	const uint8_t mac[IEEE80211_ADDR_LEN])
 {
 	return 1;
 }
@@ -155,7 +148,7 @@ dev_key_delete(struct ieee80211com *ic,
 
 static __inline int
 dev_key_set(struct ieee80211com *ic, const struct ieee80211_key *key,
-	const u_int8_t mac[IEEE80211_ADDR_LEN])
+	const uint8_t mac[IEEE80211_ADDR_LEN])
 {
 	return ic->ic_crypto.cs_key_set(ic, key, mac);
 }
@@ -491,7 +484,7 @@ ieee80211_crypto_delglobalkeys(struct ieee80211com *ic)
  */
 int
 ieee80211_crypto_setkey(struct ieee80211com *ic, struct ieee80211_key *key,
-		const u_int8_t macaddr[IEEE80211_ADDR_LEN])
+		const uint8_t macaddr[IEEE80211_ADDR_LEN])
 {
 	const struct ieee80211_cipher *cip = key->wk_cipher;
 
@@ -535,7 +528,7 @@ ieee80211_crypto_encap(struct ieee80211com *ic,
 	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
 	const struct ieee80211_cipher *cip;
-	u_int8_t keyid;
+	uint8_t keyid;
 
 	/*
 	 * Multicast traffic always uses the multicast key.
@@ -545,7 +538,7 @@ ieee80211_crypto_encap(struct ieee80211com *ic,
 	 */
 	wh = mtod(m, struct ieee80211_frame *);
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    ni->ni_ucastkey.wk_cipher == &ieee80211_cipher_none) {
+	    IEEE80211_KEY_UNDEFINED(&ni->ni_ucastkey)) {
 		if (ic->ic_def_txkey == IEEE80211_KEYIX_NONE) {
 			IEEE80211_DPRINTF(ic, IEEE80211_MSG_CRYPTO,
 			    "[%s] no default transmit key (%s) deftxkey %u\n",
@@ -579,7 +572,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	struct ieee80211_key *k;
 	struct ieee80211_frame *wh;
 	const struct ieee80211_cipher *cip;
-	u_int8_t keyid;
+	uint8_t keyid;
 
 	/* NB: this minimum size data frame could be bigger */
 	if (m->m_pkthdr.len < IEEE80211_WEP_MINLEN) {
@@ -599,7 +592,7 @@ ieee80211_crypto_decap(struct ieee80211com *ic,
 	wh = mtod(m, struct ieee80211_frame *);
 	m_copydata(m, hdrlen + IEEE80211_WEP_IVLEN, sizeof(keyid), &keyid);
 	if (IEEE80211_IS_MULTICAST(wh->i_addr1) ||
-	    ni->ni_ucastkey.wk_cipher == &ieee80211_cipher_none)
+	    IEEE80211_KEY_UNDEFINED(&ni->ni_ucastkey))
 		k = &ic->ic_nw_keys[keyid >> 6];
 	else
 		k = &ni->ni_ucastkey;
