@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.27 2008/02/22 20:48:02 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.28 2008/02/22 21:42:27 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -389,4 +389,56 @@ etc/namedb/root.cache				1.12, 1.13
 
 	Update to 2008020400 version
 	[ghen, ticket #1068]
+
+distrib/notes/common/sysinst			patch
+	fix hp700 addition
+	[skrll, ticket #1071]
+
+usr.bin/stat/stat.c				1.25
+
+	Fix a segfault when doing 'stat -f %R' on the stdin file handle,
+	instead fake the filename '(stdin)' like the %N format.
+	[mlelstv, ticket #1072]
+
+usr.sbin/postinstall/postinstall		1.57, 1.58
+
+	Don't fail the X11 check if "/usr/X11R6/lib" doesn't exist. This is
+	perfectly valid setup (e.g. no X11 or modular X11 from "pkgsrc").
+	Avoid error message in "obsolete" check if "/usr/X11R6/lib"
+	doesn't exist.
+	[tron, ticket #1073]
+
+sys/dev/pci/pcidevs				1.929
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data			regen
+
+	Import PCI ids for the Matrox MGA G200e and the Intel E7230 and 82975X
+	chipsets from OpenBSD.
+	[tron, ticket #1074]
+
+sys/arch/sh3/sh3/exception_vector.S		1.21 - 1.30
+sys/arch/sh3/sh3/genassym.cf			1.11 - 1.12
+sys/arch/sh3/sh3/pmap.c				1.63
+
+	Implement fast path TLB miss handling.  Walk the page table without
+	creating a trapframe, with exceptions disabled and using only BANK1
+	registers.  If a valid pte is found, load it and return.  Otherwise
+	create a trapframe and proceed to the full-blown C handler.
+	[uwe, ticket #1075]
+
+sys/kern/kern_malloc.c				1.117 via patch
+
+	malloc: fix freelist corruption.
+	[yamt, ticket #1076]
+
+sys/arch/amd64/include/acpi_func.h		1.3
+
+	Re-sync the (broken) amd64 ACPI Global Lock macros with their i386
+	counterparts.
+	[scw, ticket #1077]
+
+share/man/man4/ddb.4				1.110, 1.111 via patch
+
+	Add magic keyboard sequence for NetBSD-amd64.
+	[tron, ticket #1079]
 
