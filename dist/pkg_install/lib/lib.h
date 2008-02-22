@@ -1,4 +1,4 @@
-/* $NetBSD: lib.h,v 1.1.1.7 2008/02/03 21:21:35 joerg Exp $ */
+/* $NetBSD: lib.h,v 1.1.1.8 2008/02/22 16:14:58 joerg Exp $ */
 
 /* from FreeBSD Id: lib.h,v 1.25 1997/10/08 07:48:03 charnier Exp */
 
@@ -281,6 +281,13 @@ typedef struct {
 	void (*cleanup)(void);	/* called on non-zero child exit status */
 } pipe_to_system_t;
 
+struct pkg_vulnerabilities {
+	size_t	entries;
+	char	**vulnerability;
+	char	**classification;
+	char	**advisory;
+};
+
 /* If URLlength()>0, then there is a ftp:// or http:// in the string,
  * and this must be an URL. Hide this behind a more obvious name. */
 #define IS_URL(str)	(URLlength(str) > 0)
@@ -416,9 +423,19 @@ lpkg_t *alloc_lpkg(const char *);
 lpkg_t *find_on_queue(lpkg_head_t *, const char *);
 void    free_lpkg(lpkg_t *);
 
+/* Extract input if compressed to NUL terminated buffer (not counted) */
+int decompress_buffer(const char *, size_t, char **, size_t *);
+
+/* Parse NUL terminated inputed, argument is strlen of the input */
+struct pkg_vulnerabilities *parse_pkg_vulnerabilities(const char *, size_t, int);
+/* Read pkg_vulnerabilities from file */
+struct pkg_vulnerabilities *read_pkg_vulnerabilities(const char *, int, int);
+void free_pkg_vulnerabilities(struct pkg_vulnerabilities *);
+
 /* Externs */
 extern Boolean Verbose;
 extern Boolean Fake;
 extern Boolean Force;
+extern const char *gpg_cmd;
 
 #endif				/* _INST_LIB_LIB_H_ */
