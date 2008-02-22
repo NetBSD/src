@@ -1,4 +1,4 @@
-/*	$NetBSD: ppb.c,v 1.36 2007/12/09 20:28:13 jmcneill Exp $	*/
+/*	$NetBSD: ppb.c,v 1.37 2008/02/22 22:15:31 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.36 2007/12/09 20:28:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppb.c,v 1.37 2008/02/22 22:15:31 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,12 +51,11 @@ struct ppb_softc {
 	pcireg_t sc_pciconfext[48];
 };
 
-static bool		ppb_resume(device_t);
-static bool		ppb_suspend(device_t);
+static bool		ppb_resume(device_t PMF_FN_PROTO);
+static bool		ppb_suspend(device_t PMF_FN_PROTO);
 
 static int
-ppbmatch(struct device *parent, struct cfdata *match,
-    void *aux)
+ppbmatch(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -96,9 +95,9 @@ ppb_fix_pcix(device_t self)
 }
 
 static void
-ppbattach(struct device *parent, struct device *self, void *aux)
+ppbattach(device_t parent, device_t self, void *aux)
 {
-	struct ppb_softc *sc = (void *) self;
+	struct ppb_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	struct pcibus_attach_args pba;
@@ -116,8 +115,7 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	busdata = pci_conf_read(pc, pa->pa_tag, PPB_REG_BUSINFO);
 
 	if (PPB_BUSINFO_SECONDARY(busdata) == 0) {
-		aprint_normal("%s: not configured by system firmware\n",
-		    self->dv_xname);
+		aprint_normal_dev(self, "not configured by system firmware\n");
 		return;
 	}
 
@@ -158,8 +156,19 @@ ppbattach(struct device *parent, struct device *self, void *aux)
 	config_found_ia(self, "pcibus", &pba, pcibusprint);
 }
 
+static int
+ppbdetach(device_t self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+	pmf_device_deregister(self);
+	return 0;
+}
+
 static bool
-ppb_resume(device_t dv)
+ppb_resume(device_t dv PMF_FN_ARGS)
 {
 	struct ppb_softc *sc = device_private(dv);
 	int off;
@@ -178,7 +187,7 @@ ppb_resume(device_t dv)
 }
 
 static bool
-ppb_suspend(device_t dv)
+ppb_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct ppb_softc *sc = device_private(dv);
 	int off;
@@ -190,5 +199,11 @@ ppb_suspend(device_t dv)
 	return true;
 }
 
-CFATTACH_DECL(ppb, sizeof(struct ppb_softc),
-    ppbmatch, ppbattach, NULL, NULL);
+static void
+ppbchilddet(device_t self, device_t child)
+{
+	/* we keep no references to child devices, so do nothing */
+}
+
+CFATTACH_DECL2(ppb, sizeof(struct ppb_softc),
+    ppbmatch, ppbattach, ppbdetach, NULL, NULL, ppbchilddet);
