@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.26 2008/02/06 05:10:02 riz Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.27 2008/02/22 20:48:02 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -349,4 +349,44 @@ sys/dev/usb/ukbd.c				1.96
 	Add support for function keys F16 to F19 as present on e.g. the new
 	Apple aluminum keyboard. PR#37788.
 	[tron, ticket #1060]
+
+xsrc/xfree/xc/programs/Xserver/hw/xfree86/os-support/bsd/bsd_KbdMap.c 1.11
+	Add another translation table to make the modular kbd driver cope  
+	with our AT/PS2 pseudo XT scancodes. Tested on shark and sgimips
+	with an IBM  Model M
+	[macallan, ticket #1062]
+
+sys/arch/i386/stand/bootxx/Makefile.bootxx	1.30
+
+	Add EPIA_HACK so that boot loaders work on EDEN 5000 processors.
+	[sborrill, ticket #1064]
+
+sys/arch/hpcmips/conf/GENERIC			1.199
+sys/arch/hpcmips/conf/TX3912			1.68
+sys/arch/hpcmips/conf/TX3922			1.80
+sys/arch/hpcmips/tx/tx39power.c			1.18
+sys/arch/mips/mips/cache_tx39.c			1.6
+sys/arch/mips/mips/locore_mips1.S		1.64
+
+	Make GENERIC and TX3922 kernels boot on TX3922 based machines
+	[tsutsui, ticket #1065]
+
+sys/arch/hpcmips/conf/GENERIC			1.200
+sys/arch/hpcmips/conf/LROUTER			1.36
+sys/arch/hpcmips/conf/MPC303			1.48
+sys/arch/hpcmips/conf/TX3912			1.69
+sys/arch/hpcmips/conf/TX3922			1.81
+sys/arch/hpcmips/conf/TX3922			1.82
+sys/arch/hpcmips/conf/VR41XX			1.43
+
+	Add options COMPAT_16, COMPAT_20 and COMPAT_30 to non-GENERIC kernels.
+	Requested by Risto Sainio in PR port-hpcmips/37911.
+	Add a definition for Fujitsu PenCentra 200 and enable wsmouse at ucbtp.
+	Tested and requested by Risto Sainio.
+	[tsutsui, ticket #1066]
+
+etc/namedb/root.cache				1.12, 1.13
+
+	Update to 2008020400 version
+	[ghen, ticket #1068]
 
