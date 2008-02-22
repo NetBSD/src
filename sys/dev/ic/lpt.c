@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.72 2007/10/19 11:59:55 ad Exp $	*/
+/*	$NetBSD: lpt.c,v 1.73 2008/02/22 20:53:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.72 2007/10/19 11:59:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.73 2008/02/22 20:53:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,17 @@ lpt_attach_subr(sc)
 	sc->sc_sih = softint_establish(SOFTINT_SERIAL, lptsoftintr, sc);
 
 	sc->sc_dev_ok = 1;
+}
+
+int
+lpt_detach_subr(device_t self, int flags)
+{
+	struct lpt_softc *sc = device_private(self);
+
+	sc->sc_dev_ok = 0;
+	softint_disestablish(sc->sc_sih);
+	callout_destroy(&sc->sc_wakeup_ch);
+	return 0;
 }
 
 /*
