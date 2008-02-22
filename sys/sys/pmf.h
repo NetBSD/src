@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.4 2007/12/14 01:29:29 jmcneill Exp $ */
+/* $NetBSD: pmf.h,v 1.5 2008/02/22 21:59:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -53,6 +53,9 @@ typedef enum {
 	PMFE_CHASSIS_LID_CLOSE,
 	PMFE_CHASSIS_LID_OPEN
 } pmf_generic_event_t;
+
+#define	PMF_FN_PROTO	/* , pmf_flags_t */
+#define	PMF_FN_ARGS	/* , pmf_flags_t flags */
 
 void	pmf_init(void);
 
