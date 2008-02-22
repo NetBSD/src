@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.71 2008/02/18 21:08:42 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.72 2008/02/22 10:55:00 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,9 +210,9 @@ void	cpu_boot_secondary_processors(void);
  */
 typedef void (* ipifunc_t)(void *);
 
-void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t);
-void	sparc64_broadcast_ipi (ipifunc_t);
-void	sparc64_send_ipi (int, ipifunc_t);
+void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t, uint64_t);
+void	sparc64_broadcast_ipi (ipifunc_t, uint64_t);
+void	sparc64_send_ipi (int, ipifunc_t, uint64_t);
 #endif
 
 /*
