@@ -1,4 +1,4 @@
-/*	$NetBSD: perform.c,v 1.1.1.6 2008/02/22 16:14:58 joerg Exp $	*/
+/*	$NetBSD: perform.c,v 1.1.1.7 2008/02/22 22:16:37 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -17,7 +17,7 @@
 #if 0
 static const char *rcsid = "from FreeBSD Id: perform.c,v 1.23 1997/10/13 15:03:53 jkh Exp";
 #else
-__RCSID("$NetBSD: perform.c,v 1.1.1.6 2008/02/22 16:14:58 joerg Exp $");
+__RCSID("$NetBSD: perform.c,v 1.1.1.7 2008/02/22 22:16:37 joerg Exp $");
 #endif
 #endif
 
@@ -124,38 +124,39 @@ static const struct pkg_meta_desc {
 	size_t entry_offset;
 	const char *entry_filename;
 	int entry_mask;
+	int required_file;
 } pkg_meta_descriptors[] = {
 	{ offsetof(struct pkg_meta, meta_contents), CONTENTS_FNAME ,
-	    LOAD_CONTENTS},
+	    LOAD_CONTENTS, 1},
 	{ offsetof(struct pkg_meta, meta_comment), COMMENT_FNAME,
-	    LOAD_COMMENT },
+	    LOAD_COMMENT, 1 },
 	{ offsetof(struct pkg_meta, meta_desc), DESC_FNAME,
-	    LOAD_DESC },
+	    LOAD_DESC, 1 },
 	{ offsetof(struct pkg_meta, meta_install), INSTALL_FNAME,
-	    LOAD_INSTALL },
+	    LOAD_INSTALL, 0 },
 	{ offsetof(struct pkg_meta, meta_deinstall), DEINSTALL_FNAME,
-	    LOAD_DEINSTALL },
+	    LOAD_DEINSTALL, 0 },
 	{ offsetof(struct pkg_meta, meta_display), DISPLAY_FNAME,
-	    LOAD_DISPLAY },
+	    LOAD_DISPLAY, 0 },
 	{ offsetof(struct pkg_meta, meta_mtree), MTREE_FNAME,
-	    LOAD_MTREE },
+	    LOAD_MTREE, 0 },
 	{ offsetof(struct pkg_meta, meta_build_version), BUILD_VERSION_FNAME,
-	    LOAD_BUILD_VERSION },
+	    LOAD_BUILD_VERSION, 0 },
 	{ offsetof(struct pkg_meta, meta_build_info), BUILD_INFO_FNAME,
-	    LOAD_BUILD_INFO },
+	    LOAD_BUILD_INFO, 0 },
 	{ offsetof(struct pkg_meta, meta_size_pkg), SIZE_PKG_FNAME,
-	    LOAD_SIZE_PKG },
+	    LOAD_SIZE_PKG, 0 },
 	{ offsetof(struct pkg_meta, meta_size_all), SIZE_ALL_FNAME,
-	    LOAD_SIZE_ALL },
+	    LOAD_SIZE_ALL, 0 },
 	{ offsetof(struct pkg_meta, meta_preserve), PRESERVE_FNAME,
-	    LOAD_PRESERVE },
+	    LOAD_PRESERVE, 0 },
 	{ offsetof(struct pkg_meta, meta_views), VIEWS_FNAME,
-	    LOAD_VIEWS },
+	    LOAD_VIEWS, 0 },
 	{ offsetof(struct pkg_meta, meta_required_by), REQUIRED_BY_FNAME,
-	    LOAD_REQUIRED_BY },
+	    LOAD_REQUIRED_BY, 0 },
 	{ offsetof(struct pkg_meta, meta_installed_info), INSTALLED_INFO_FNAME,
-	    LOAD_INSTALLED_INFO },
-	{ 0, NULL, 0 },
+	    LOAD_INSTALLED_INFO, 0 },
+	{ 0, NULL, 0, 0 },
 };
 
 static int desired_meta_data;
@@ -185,7 +186,9 @@ read_meta_data_from_fd(int fd)
 	const struct pkg_meta_desc *descr, *last_descr;
 	char **target;
 	int64_t size;
-	int r;
+	int r, found_required;
+
+	found_required = 0;
 
 	archive = archive_read_new();
 	archive_read_support_compression_all(archive);
@@ -210,6 +213,9 @@ read_meta_data_from_fd(int fd)
 		if (descr->entry_filename == NULL)
 			break;
 
+		if (descr->required_file)
+			++found_required;
+
 		target = (char **)((char *)meta + descr->entry_offset);
 		if (*target)
 			errx(2, "duplicate entry, package corrupt");
@@ -232,6 +238,15 @@ read_meta_data_from_fd(int fd)
 		if (archive_read_data(archive, *target, size) != size)
 			errx(2, "cannot read package meta data");
 		(*target)[size] = '\0';
+	}
+
+	for (descr = pkg_meta_descriptors; descr->entry_filename; ++descr) {
+		if (descr->required_file)
+			--found_required;
+	}
+	if (found_required != 0) {
+		free_pkg_meta(meta);
+		return NULL;
 	}
 
 	archive_read_finish(archive);
@@ -362,11 +377,8 @@ pkg_do(const char *pkg)
 		meta = read_meta_data_from_pkgdb(pkg);
 	}
 
-	if (meta->meta_contents == NULL ||
-	    meta->meta_comment == NULL ||
-	    meta->meta_desc == NULL) {
+	if (meta == NULL) {
 		warnx("invalid package `%s' skipped", pkg);
-		free_pkg_meta(meta);
 		return 1;	
 	}
 
