@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.929 2008/02/13 13:57:00 tron Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.930 2008/02/22 14:49:46 tsutsui Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.929 2008/02/13 13:56:46 tron Exp
+ *	NetBSD: pcidevs,v 1.930 2008/02/22 14:48:50 tsutsui Exp
  */
 
 /*
@@ -9128,6 +9128,10 @@ static const struct pci_product pci_products[] = {
 	    "CBSCII NinjaSCSI-32Bi SCSI",
 	},
 	{
+	    PCI_VENDOR_IODATA, PCI_PRODUCT_IODATA_RSAPCI,
+	    "RSA-PCI 2-port serial",
+	},
+	{
 	    PCI_VENDOR_ITE, PCI_PRODUCT_ITE_IT8152,
 	    "IT8152 Host Bridge",
 	},
@@ -14044,4 +14048,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2912;
+const int pci_nproducts = 2913;
