@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp-proxy.c,v 1.10 2005/02/22 14:40:01 peter Exp $	*/
+/*     $NetBSD: ftp-proxy.c,v 1.10.2.1 2008/02/22 19:00:06 bouyer Exp $     */
 /*	$OpenBSD: ftp-proxy.c,v 1.37 2004/07/11 01:54:36 brad Exp $ */
 
 /*
@@ -147,8 +147,13 @@ char ClientName[NI_MAXHOST];
 char RealServerName[NI_MAXHOST];
 char OurName[NI_MAXHOST];
 
-char *User = "proxy";
-char *Group;
+#ifdef __NetBSD__
+const char *User = "_proxy";
+const char *Group = "_proxy";
+#else
+const char *User = "proxy";
+const char *Group;
+#endif
 
 extern int Debug_Level;
 extern int Use_Rdns;

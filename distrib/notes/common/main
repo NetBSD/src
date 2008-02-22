@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.278.2.36 2006/10/28 12:07:57 ghen Exp $
+.\"	$NetBSD: main,v 1.278.2.37 2008/02/22 19:00:06 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -984,8 +984,11 @@ The following issues need to be resolved manually:
 .(bullet -offset indent
 The user
 .Sq _pflogd
- and the groups
-.Sq _pflogd
+and
+.Sq _proxy
+and the groups
+.Sq _pflogd ,
+.Sq _proxy
 and
 .Sq authpf 
 need to be created.
