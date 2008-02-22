@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.60 2006/01/03 02:11:57 rumble Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.60.22.1 2008/02/22 20:36:51 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -988,7 +988,10 @@ LEAF_NOPROFILE(tx3900_cp0_config_read)
 END(tx3900_cp0_config_read)
 
 LEAF(mips1_wbflush)
+	.set push
+	.set mips2
 	sync	
+	.set pop
 	j	ra
 	nop
 END(mips1_wbflush)
