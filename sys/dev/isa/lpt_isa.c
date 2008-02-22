@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.64 2007/10/19 12:00:20 ad Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.65 2008/02/22 20:53:58 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.64 2007/10/19 12:00:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.65 2008/02/22 20:53:58 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,14 +87,16 @@ int lpt_isa_debug = 0;
 struct lpt_isa_softc {
 	struct lpt_softc sc_lpt;
 	int sc_irq;
+	isa_chipset_tag_t sc_ic;
 
 };
 
 int lpt_isa_probe(struct device *, struct cfdata *, void *);
-void lpt_isa_attach(struct device *, struct device *, void *);
+static void lpt_isa_attach(struct device *, struct device *, void *);
+static int lpt_isa_detach(device_t, int);
 
 CFATTACH_DECL(lpt_isa, sizeof(struct lpt_isa_softc),
-    lpt_isa_probe, lpt_isa_attach, NULL, NULL);
+    lpt_isa_probe, lpt_isa_attach, lpt_isa_detach, NULL);
 
 int lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
 	    bus_size_t, u_char, u_char);
@@ -240,7 +242,25 @@ lpt_isa_attach(struct device *parent, struct device *self, void *aux)
 
 	lpt_attach_subr(lsc);
 
+	sc->sc_ic = ia->ia_ic;
 	if (sc->sc_irq != -1)
-		lsc->sc_ih = isa_intr_establish(ia->ia_ic, sc->sc_irq,
+		lsc->sc_ih = isa_intr_establish(sc->sc_ic, sc->sc_irq,
 		    IST_EDGE, IPL_TTY, lptintr, lsc);
+}
+
+static int
+lpt_isa_detach(device_t self, int flags)
+{
+	int rc;
+	struct lpt_isa_softc *sc = device_private(self);
+	struct lpt_softc *lsc = &sc->sc_lpt;
+
+	if ((rc = lpt_detach_subr(self, flags)) != 0)
+		return rc;
+
+	if (sc->sc_irq != -1)
+		isa_intr_disestablish(sc->sc_ic, lsc->sc_ih);
+
+	bus_space_unmap(lsc->sc_iot, lsc->sc_ioh, LPT_NPORTS);
+	return 0;
 }
