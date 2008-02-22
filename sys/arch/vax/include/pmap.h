@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.73 2008/02/03 08:32:08 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.74 2008/02/22 08:46:48 matt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -94,15 +94,6 @@
 #define LTOHPN		(1 << LTOHPS)
 
 /*
- * Link struct if more than one process share pmap (like vfork).
- * This is rarely used.
- */
-struct pm_share {
-	struct pm_share	*ps_next;
-	struct pcb	*ps_pcb;
-};
-
-/*
  * Pmap structure
  *  pm_stack holds lowest allocated memory for the process stack.
  */
@@ -110,7 +101,7 @@ struct pm_share {
 typedef struct pmap {
 	struct pte	*pm_p1ap;	/* Base of alloced p1 pte space */
 	int		 pm_count;	/* reference count */
-	struct pm_share	*pm_share;	/* PCBs using this pmap */
+	struct pcb	*pm_pcbs;	/* PCBs using this pmap */
 	struct pte	*pm_p0br;	/* page 0 base register */
 	long		 pm_p0lr;	/* page 0 length register */
 	struct pte	*pm_p1br;	/* page 1 base register */
