@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11 2008/02/20 16:37:52 matt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.12 2008/02/22 08:46:48 matt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -59,6 +59,8 @@ struct pcb {
 	void   *framep;		/* Pointer to syscall frame */
 	void   *iftrap;		/* Tells whether fault copy */
 	paddr_t pcb_paddr;	/* physical address of PCB */
+	struct pmap *pcb_pm;	/* owning pmap */
+	struct pcb *pcb_pmnext;	/* next pcb that shares this pmap */
 };
 
 #define	AST_MASK 0x07000000
