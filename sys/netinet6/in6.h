@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.66 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: in6.h,v 1.66.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -276,6 +276,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IPV6_ADDR_SCOPE_GLOBAL		0x0e
 #else
 #define __IPV6_ADDR_SCOPE_NODELOCAL	0x01
+#define __IPV6_ADDR_SCOPE_INTFACELOCAL	0x01
 #define __IPV6_ADDR_SCOPE_LINKLOCAL	0x02
 #define __IPV6_ADDR_SCOPE_SITELOCAL	0x05
 #define __IPV6_ADDR_SCOPE_ORGLOCAL	0x08	/* just used in this file */
@@ -441,6 +442,7 @@ extern const struct in6_addr in6addr_linklocal_allrouters;
 #define IPV6_RTHDR_LOOSE     0 /* this hop need not be a neighbor. XXX old spec */
 #define IPV6_RTHDR_STRICT    1 /* this hop must be a neighbor. XXX old spec */
 #define IPV6_RTHDR_TYPE_0    0 /* IPv6 routing header type 0 */
+#define IPV6_RTHDR_TYPE_2    2 /* IPv6 routing header type 2 for Mobile IPv6 */
 
 /*
  * Defaults and limits for options

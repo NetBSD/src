@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.157 2008/01/13 10:45:19 msaitoh Exp $	*/
+/*	$NetBSD: key.c,v 1.157.2.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: key.c,v 1.310 2003/09/08 02:23:44 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.157 2008/01/13 10:45:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.157.2.1 2008/02/22 02:53:34 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -103,6 +103,15 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.157 2008/01/13 10:45:19 msaitoh Exp $");
 #if NRND > 0
 #include <sys/rnd.h>
 #endif
+
+#ifdef MOBILE_IPV6
+#include <netinet6/mip6.h>
+#include <netinet6/mip6_var.h>
+#include "mip.h"
+#if NMIP > 0
+#include <netinet/ip6mh.h>
+#endif /* NMIP > 0*/
+#endif /* MOBILE_IPV6 */
 
 #include <net/net_osdep.h>
 
@@ -474,6 +483,10 @@ static void key_sp_dead __P((struct secpolicy *));
 static void key_sp_unlink __P((struct secpolicy *));
 static struct mbuf *key_alloc_mbuf __P((int));
 struct callout key_timehandler_ch;
+#ifdef MOBILE_IPV6
+static struct mbuf *key_setmigrate(struct secpolicy *, struct sockaddr *,
+    struct sockaddr *, struct ipsecrequest *, u_int32_t, u_int32_t);
+#endif /* MOBILE_IPV6 */
 
 /* %%% IPsec policy management */
 /*
@@ -1791,7 +1804,11 @@ key_spdadd(so, m, mhp)
 		/*
 		 * port spec is not permitted for tunnel mode
 		 */
-		if (isr->saidx.mode == IPSEC_MODE_TUNNEL && src0 && dst0) {
+		if (isr->saidx.mode == IPSEC_MODE_TUNNEL && src0 && dst0
+#ifdef MOBILE_IPV6
+		    && (src0->sadb_address_proto != IPPROTO_MH)
+#endif /* MOBILE_IPV6 */
+			) {
 			sa = (struct sockaddr *)(src0 + 1);
 			switch (sa->sa_family) {
 			case AF_INET:
@@ -8495,3 +8512,426 @@ SYSCTL_SETUP(sysctl_net_key_setup, "sysctl net.key subtree setup")
 		       sysctl_net_key_dumpsp, 0, NULL, 0,
 		       CTL_NET, PF_KEY, KEYCTL_DUMPSP, CTL_EOL);
 }
+
+#ifdef MOBILE_IPV6
+#if NMIP > 0
+void
+key_mip6_update_mobile_node_ipsecdb(haddr, ocoa, ncoa, haaddr)
+	struct sockaddr_in6 *haddr;
+	struct sockaddr_in6 *ocoa;   /* not used.  may be NULL. */
+	struct sockaddr_in6 *ncoa;
+	struct sockaddr_in6 *haaddr;
+{
+	struct secpolicy *sp;
+	struct secpolicyindex *spidx;
+	struct ipsecrequest *isr;
+	struct secashead *sa;
+	struct secasindex *sahint;
+	struct mbuf *m;
+	struct sockaddr_in6 sin6;
+
+	LIST_FOREACH(sp, &sptree[IPSEC_DIR_INBOUND], chain) {
+		/* check if we have a valid spidx. */
+		if ((spidx = sp->spidx) == NULL)
+			continue;
+		/* check addresses. */
+		if (!IN6_ARE_ADDR_EQUAL(&sa6_any.sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->src)->sin6_addr))
+			continue;
+		if (!IN6_ARE_ADDR_EQUAL(&haddr->sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->dst)->sin6_addr))
+			continue;
+		/* check if the SP has a SA hint. */
+		isr = sp->req;
+		if (isr == NULL)
+			continue;
+		sahint = &isr->saidx;
+		if (sahint == NULL)
+			continue;
+
+		/* update SA entries from a home agent to a mobile node. */
+		LIST_FOREACH(sa, &sahtree, chain) {
+			if (!IN6_ARE_ADDR_EQUAL(&haaddr->sin6_addr,
+				&((struct sockaddr_in6 *)&sa->saidx.src)->sin6_addr))
+				continue;
+/* XXX don't check the old CoA.  instead, we use a uniqid.
+			if (!IN6_ARE_ADDR_EQUAL(&ocoa->sin6_addr,
+				&((struct sockaddr_in6 *)&sa->saidx.dst)->sin6_addr))
+				continue;
+*/
+			if (sa->saidx.mode != IPSEC_MODE_TUNNEL)
+				continue;
+			if (sa->saidx.reqid == 0)
+				continue;
+			if (sa->saidx.reqid != sahint->reqid)
+				continue;
+
+			/* found. */
+			*(struct sockaddr_in6 *)&(sa->saidx.dst) = *ncoa;
+
+			/* free a cached route for the destination of
+			   the SA to update. */
+			rtcache_free(&sa->sa_route);
+		}
+		/* update the tunnel endpoint of a mobile node side. */
+		sin6 = *(struct sockaddr_in6 *)(&sahint->dst);
+		*(struct sockaddr_in6 *)(&sahint->dst) = *ncoa;
+
+	if (mip6ctl_use_migrate) {
+		m = key_setmigrate(sp, (struct sockaddr *)haaddr,
+		    (struct sockaddr *)&sin6, isr, 0, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_mobile_node_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_MIGRATE in INBOUND processing.\n"));
+			continue;
+		}
+	} else {
+		/* announce the update. */
+		m = key_setdumpsp(sp, SADB_X_SPDUPDATE, 0, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_mobile_node_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_SPDUPDATE in INBOUND processing.\n"));
+			continue;
+		}
+	}
+		key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
+	}
+
+	/* update outbound data. */
+	LIST_FOREACH(sp, &sptree[IPSEC_DIR_OUTBOUND], chain) {
+		/* check if we have a valid spidx. */
+		if ((spidx = sp->spidx) == NULL)
+			continue;
+		/* check addresses. */
+		if (!IN6_ARE_ADDR_EQUAL(&haddr->sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->src)->sin6_addr))
+			continue;
+		if (!IN6_ARE_ADDR_EQUAL(&sa6_any.sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->dst)->sin6_addr))
+			continue;
+		/* check if the SP has a SA hint. */
+		isr = sp->req;
+		if (isr == NULL)
+			continue;
+		sahint = &isr->saidx;
+		if (sahint == NULL)
+			continue;
+
+		/* update SA entries from a mobile node to a home agent. */
+		LIST_FOREACH(sa, &sahtree, chain) {
+/* XXX don't check the old CoA.  instead, we use uniqid.
+			if (!IN6_ARE_ADDR_EQUAL(&ocoa->sin6_addr,
+				&((struct sockaddr_in6 *)&sa->saidx.src)->sin6_addr))
+				continue;
+*/
+			if (!IN6_ARE_ADDR_EQUAL(&haaddr->sin6_addr,
+				&((struct sockaddr_in6 *)&sa->saidx.dst)->sin6_addr))
+				continue;
+			if (sa->saidx.mode != IPSEC_MODE_TUNNEL)
+				continue;
+			if (sa->saidx.reqid == 0)
+				continue;
+			if (sa->saidx.reqid != sahint->reqid)
+				continue;
+
+			/* found. */
+			*(struct sockaddr_in6 *)&(sa->saidx.src) = *ncoa;
+		}
+		/* update the tunnel endpoint of a mobile node side. */
+		sin6 = *(struct sockaddr_in6 *)(&sahint->src);
+		*(struct sockaddr_in6 *)(&sahint->src) = *ncoa;
+
+	if (mip6ctl_use_migrate) {
+		m = key_setmigrate(sp, (struct sockaddr *)&sin6,
+		    (struct sockaddr *)haaddr, isr, 1, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_mobile_node_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_MIGRATE in OUTBOUND processing.\n"));
+			continue;
+		}
+	} else {
+		/* announce the update. */
+		m = key_setdumpsp(sp, SADB_X_SPDUPDATE, 1, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_mobile_node_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_SPDUPDATE in OUTBOUND processing.\n"));
+			continue;
+		}
+	}
+		key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
+	}
+}
+#endif /* NMIP > 0 */
+
+void
+key_mip6_update_home_agent_ipsecdb(haddr, ocoa, ncoa, haaddr)
+	struct sockaddr_in6 *haddr;
+	struct sockaddr_in6 *ocoa;
+	struct sockaddr_in6 *ncoa;
+	struct sockaddr_in6 *haaddr;
+{
+	struct secpolicy *sp;
+	struct secpolicyindex *spidx;
+	struct ipsecrequest *isr;
+	struct secashead *sa;
+	struct secasindex *sahint;
+	struct mbuf *m;
+	struct sockaddr_in6 sin6;
+
+	/* update outbound data. */
+	LIST_FOREACH(sp, &sptree[IPSEC_DIR_INBOUND], chain) {
+		/* check if we have a valid spidx. */
+		if ((spidx = sp->spidx) == NULL)
+			continue;
+		/* check addresses. */
+		if (!IN6_ARE_ADDR_EQUAL(&haddr->sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->src)->sin6_addr))
+			continue;
+		if (!IN6_ARE_ADDR_EQUAL(&sa6_any.sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->dst)->sin6_addr))
+			continue;
+		/* check if we have a SA hint. */
+		isr = sp->req;
+		if (isr == NULL)
+			continue;
+		sahint = &isr->saidx;
+		if (sahint == NULL)
+			continue;
+
+		/* update SA entries from a mobile node to a home agent. */
+		LIST_FOREACH(sa, &sahtree, chain) {
+/* XXX don't check the old CoA.  instead we use a uniqid.
+			if (!IN6_ARE_ADDR_EQUAL(&ocoa->sin6_addr,
+			    &((struct sockaddr_in6 *)&sa->saidx.src)->sin6_addr))
+				continue;
+*/
+			if (!IN6_ARE_ADDR_EQUAL(&haaddr->sin6_addr,
+				&((struct sockaddr_in6 *)&sa->saidx.dst)->sin6_addr))
+				continue;
+			if (sa->saidx.mode != IPSEC_MODE_TUNNEL)
+				continue;
+			if (sa->saidx.reqid == 0)
+				continue;
+			if (sa->saidx.reqid != sahint->reqid)
+				continue;
+
+			/* found. */
+			*(struct sockaddr_in6 *)&(sa->saidx.src) = *ncoa;
+		}
+		/* update a tunnel endpoint of a mobile node side. */
+		sin6 = *(struct sockaddr_in6 *)(&sahint->src);
+		*(struct sockaddr_in6 *)(&sahint->src) = *ncoa;
+
+	if (mip6ctl_use_migrate) {
+		m = key_setmigrate(sp, (struct sockaddr *)&sin6,
+		    (struct sockaddr *)haaddr, isr, 0, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_home_agent_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_MIGRATE in INBOUND processing.\n"));
+			continue;
+		}
+	} else {
+		/* announce the update */
+		m = key_setdumpsp(sp, SADB_X_SPDUPDATE, 0, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_home_agent_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_SPDUPDATE in INBOUND processing.\n"));
+			continue;
+		}
+	}
+		key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
+	}
+
+	/* update outbound data. */
+	LIST_FOREACH(sp, &sptree[IPSEC_DIR_OUTBOUND], chain) {
+		/* check if we have a valid spidx. */
+		if ((spidx = sp->spidx) == NULL)
+			continue;
+		/* check addresses. */
+		if (!IN6_ARE_ADDR_EQUAL(&sa6_any.sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->src)->sin6_addr))
+			continue;
+		if (!IN6_ARE_ADDR_EQUAL(&haddr->sin6_addr,
+			&((struct sockaddr_in6 *)&spidx->dst)->sin6_addr))
+			continue;
+		/* check if we have a SA hint. */
+		isr = sp->req;
+		if (isr == NULL)
+			continue;
+		sahint = &isr->saidx;
+		if (sahint == NULL)
+			continue;
+
+		/* update SA entries from a home agent to a mobile node. */
+		LIST_FOREACH(sa, &sahtree, chain) {
+			if (!IN6_ARE_ADDR_EQUAL(&haaddr->sin6_addr,
+				&((struct sockaddr_in6 *)&sa->saidx.src)->sin6_addr))
+				continue;
+/* XXX don't check the old CoA.  instead, we use a uniqid.
+			if (!IN6_ARE_ADDR_EQUAL(&ocoa->sin6_addr,
+				&((struct sockaddr_in6 *)&sa->saidx.dst)->sin6_addr))
+				continue;
+*/
+			if (sa->saidx.mode != IPSEC_MODE_TUNNEL)
+				continue;
+			if (sa->saidx.reqid == 0)
+				continue;
+			if (sa->saidx.reqid != sahint->reqid)
+			continue;
+
+			/* found. */
+			*(struct sockaddr_in6 *)&(sa->saidx.dst) = *ncoa;
+			/* free the cached route for the destination of
+			   the SA to update. */
+			rtcache_free(&sa->sa_route);
+		}
+		/* update a tunnel endpoint of a mobile node side. */
+		sin6 = *(struct sockaddr_in6 *)(&sahint->dst);
+		*(struct sockaddr_in6 *)(&sahint->dst) = *ncoa;
+	
+	if (mip6ctl_use_migrate) {
+		m = key_setmigrate(sp, (struct sockaddr *)haaddr,
+		    (struct sockaddr *)&sin6, isr, 1, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_home_agent_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_MIGRATE in INBOUND processing.\n"));
+			continue;
+		}
+	} else {
+		/* announce the update */
+		m = key_setdumpsp(sp, SADB_X_SPDUPDATE, 1, 0);
+		if (m == NULL) {
+			mip6log((LOG_ERR,
+			    "key_mip6_update_home_agent_ipsecdb: "
+			    "failed to allocate a mbuf for "
+			    "SADB_X_SPDUPDATE in OUTBOUND processing.\n"));
+			continue;
+		}
+	}
+		key_sendup_mbuf(NULL, m, KEY_SENDUP_REGISTERED);
+	}
+}
+
+static struct mbuf *
+key_setmigrate(sp, oldsrc, olddst, isr, seq, pid)
+	struct secpolicy *sp;
+	struct sockaddr *oldsrc;
+	struct sockaddr *olddst;
+	struct ipsecrequest *isr;
+	u_int32_t seq, pid;
+{
+	struct mbuf *result = NULL, *m;
+	struct sadb_x_policy *xpl;
+	int xpllen;
+	char *p;
+	struct sadb_x_ipsecrequest *xisr;
+	
+
+	m = key_setsadbmsg(SADB_X_MIGRATE, 0, SADB_SATYPE_UNSPEC, seq, pid,
+	    sp->refcnt);
+	if (m == NULL)
+		goto fail;
+	result = m;
+
+	if (sp->spidx) {
+		m = key_setsadbaddr(SADB_EXT_ADDRESS_SRC,
+		    (struct sockaddr *)&sp->spidx->src, sp->spidx->prefs,
+		    sp->spidx->ul_proto);
+		if (m == NULL)
+			goto fail;
+		m_cat(result, m);
+
+		m = key_setsadbaddr(SADB_EXT_ADDRESS_DST,
+		    (struct sockaddr *)&sp->spidx->dst, sp->spidx->prefd,
+		    sp->spidx->ul_proto);
+		if (m == NULL)
+			goto fail;
+		m_cat(result, m);
+	} else
+		goto fail;
+
+	xpllen = sizeof(struct sadb_x_policy)
+	    + PFKEY_ALIGN8(sizeof(struct sadb_x_ipsecrequest)
+		+ oldsrc->sa_len * 2) * 2;
+
+	m = key_alloc_mbuf(xpllen);
+	if (m == NULL)
+		goto fail;
+	xpl = mtod(m, struct sadb_x_policy *);
+	bzero(xpl, xpllen);
+	xpl->sadb_x_policy_len = PFKEY_UNIT64(xpllen);
+	xpl->sadb_x_policy_exttype = SADB_X_EXT_POLICY;
+	xpl->sadb_x_policy_type = sp->policy;
+	xpl->sadb_x_policy_dir = sp->dir;
+	xpl->sadb_x_policy_id = sp->id;
+	p = (char *)xpl + sizeof(struct sadb_x_policy);
+
+	xisr = (struct sadb_x_ipsecrequest *)p;
+	xisr->sadb_x_ipsecrequest_proto = isr->saidx.proto;
+	xisr->sadb_x_ipsecrequest_mode = isr->saidx.mode;
+	xisr->sadb_x_ipsecrequest_level = isr->level;
+	xisr->sadb_x_ipsecrequest_reqid = isr->saidx.reqid;
+	p += sizeof(struct sadb_x_ipsecrequest);
+	bcopy(oldsrc, p, oldsrc->sa_len);
+	p += oldsrc->sa_len;
+	bcopy(olddst, p, olddst->sa_len);
+	p += olddst->sa_len;
+
+	xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(
+	    sizeof(struct sadb_x_ipsecrequest) + oldsrc->sa_len
+	    + olddst->sa_len);
+
+	xisr = (struct sadb_x_ipsecrequest *)p;
+	xisr->sadb_x_ipsecrequest_proto = isr->saidx.proto;
+	xisr->sadb_x_ipsecrequest_mode = isr->saidx.mode;
+	xisr->sadb_x_ipsecrequest_level = isr->level;
+	xisr->sadb_x_ipsecrequest_reqid = isr->saidx.reqid;
+	p += sizeof(struct sadb_x_ipsecrequest);
+	bcopy(&isr->saidx.src, p, isr->saidx.src.ss_len);
+	p += isr->saidx.src.ss_len;
+	bcopy(&isr->saidx.dst, p, isr->saidx.dst.ss_len);
+	p += isr->saidx.dst.ss_len;
+
+	xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(
+	    sizeof(struct sadb_x_ipsecrequest) + isr->saidx.src.ss_len
+	    + isr->saidx.dst.ss_len);
+
+	m_cat(result, m);
+
+	if ((result->m_flags & M_PKTHDR) == 0)
+		goto fail;
+
+	if (result->m_len < sizeof(struct sadb_msg)) {
+		result = m_pullup(result, sizeof(struct sadb_msg));
+		if (result == NULL)
+			goto fail;
+	}
+
+	result->m_pkthdr.len = 0;
+	for (m = result; m; m = m->m_next)
+		result->m_pkthdr.len += m->m_len;
+
+	mtod(result, struct sadb_msg *)->sadb_msg_len =
+	    PFKEY_UNIT64(result->m_pkthdr.len);
+
+	return(result);
+
+ fail:
+	m_freem(result);
+	return (NULL);
+}
+#endif /* MOBILE_IPV6 */

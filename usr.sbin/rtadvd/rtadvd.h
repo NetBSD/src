@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.h,v 1.10 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: rtadvd.h,v 1.10.16.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: rtadvd.h,v 1.30 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ struct prefix {
 	long	pltimeexpire;	/* expiration of pltime; decrement case only */
 	u_int onlinkflg;	/* bool: AdvOnLinkFlag */
 	u_int autoconfflg;	/* bool: AdvAutonomousFlag */
+	u_int routeraddr;	/* bool: RouterAddress */
 	int prefixlen;
 	int origin;		/* from kernel or config */
 	struct in6_addr prefix;
@@ -122,6 +123,7 @@ struct	rainfo {
 	u_int	mininterval;	/* MinRtrAdvInterval */
 	int 	managedflg;	/* AdvManagedFlag */
 	int	otherflg;	/* AdvOtherConfigFlag */
+	int	haflg;		/* HAFlag */
 
 	int	rtpref;		/* router preference */
 	u_int32_t linkmtu;	/* AdvLinkMTU */
@@ -131,6 +133,9 @@ struct	rainfo {
 	struct prefix prefix;	/* AdvPrefixList(link head) */
 	int	pfxs;		/* number of prefixes */
 	long	clockskew;	/* used for consisitency check of lifetimes */
+
+	u_short	hapref;		/* Home Agent Preference */
+	u_short	hatime;		/* Home Agent Lifetime */
 
 #ifdef ROUTEINFO
 	struct rtinfo route;	/* route information option (link head) */
@@ -159,3 +164,4 @@ struct rainfo *if_indextorainfo __P((int));
 struct prefix *find_prefix __P((struct rainfo *, struct in6_addr *, int));
 
 extern struct in6_addr in6a_site_allrouters;
+extern int mobileip6;

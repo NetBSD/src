@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6.h,v 1.23 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: ip6.h,v 1.23.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: ip6.h,v 1.45 2003/06/05 04:46:38 keiichi Exp $	*/
 
 /*
@@ -162,6 +162,8 @@ struct ip6_dest {
 #define IP6OPT_RTALERT_ACTNET	2 	/* contains an Active Networks msg */
 #define IP6OPT_MINLEN		2
 
+#define IP6OPT_HOME_ADDRESS	0xc9	/* 11 0 01001 Mobile IPv6 RFC3775 */
+
 #define IP6OPT_TYPE(o)		((o) & 0xC0)
 #define IP6OPT_TYPE_SKIP	0x00
 #define IP6OPT_TYPE_DISCARD	0x40
@@ -220,6 +222,14 @@ struct ip6_opt_router {
 #endif /* LITTLE_ENDIAN */
 #endif
 
+/* Home Address Option */
+struct ip6_opt_home_address {
+	u_int8_t ip6oh_type;
+	u_int8_t ip6oh_len;
+	u_int8_t ip6oh_addr[16];	/* Home Address */
+	/* followed by sub-options */
+} __attribute__((__packed__));
+
 /* Routing header */
 struct ip6_rthdr {
 	u_int8_t  ip6r_nxt;	/* next header */
@@ -237,6 +247,16 @@ struct ip6_rthdr0 {
 	u_int8_t  ip6r0_segleft;	/* segments left */
 	u_int32_t ip6r0_reserved;	/* reserved field */
 } __packed;
+
+/* Type 2 Routing header for Mobile IPv6 */
+struct ip6_rthdr2 {
+	u_int8_t  ip6r2_nxt;		/* next header */
+	u_int8_t  ip6r2_len;		/* always 2 */
+	u_int8_t  ip6r2_type;		/* always 2 */
+	u_int8_t  ip6r2_segleft;	/* 0 or 1 */
+	u_int32_t  ip6r2_reserved;	/* reserved field */
+	/* followed by one struct in6_addr */
+} __attribute__((__packed__));
 
 /* Fragment header */
 struct ip6_frag {

@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.141 2007/12/04 10:27:33 dyoung Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.141.8.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.141 2007/12/04 10:27:33 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.141.8.1 2008/02/22 02:53:33 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1994,7 +1994,7 @@ icmp6_reflect(struct mbuf *m, size_t off)
 	if (IN6_IS_ADDR_MULTICAST(&origdst))
 		;
 	else if ((ip6a = ip6_getdstifaddr(m)) != NULL) {
-		if ((ip6a->ip6a_flags &
+		if ((ip6a->ip6a_src_flags &
 		     (IN6_IFF_ANYCAST|IN6_IFF_NOTREADY)) == 0)
 			src = &ip6a->ip6a_src;
 	} else {

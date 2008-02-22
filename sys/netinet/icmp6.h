@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.36 2007/12/25 18:33:46 perry Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.36.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -125,6 +125,11 @@ struct icmp6_hdr {
 #define ICMP6_FQDN_REPLY		140	/* FQDN reply */
 #define ICMP6_NI_QUERY			139	/* node information request */
 #define ICMP6_NI_REPLY			140	/* node information reply */
+
+#define MIP6_HA_DISCOVERY_REQUEST	144	/* home agent addr disc req */
+#define MIP6_HA_DISCOVERY_REPLY		145	/* home agent addr dis reply */
+#define MIP6_PREFIX_SOLICIT		146	/* mobile prefix sol */
+#define MIP6_PREFIX_ADVERT		147	/* mobile prefix adv */
 
 /* The definitions below are experimental. TBA */
 #define MLD_MTRACE_RESP			200	/* mtrace response(to sender) */
@@ -285,6 +290,70 @@ struct nd_redirect {		/* redirect */
 #define nd_rd_cksum		nd_rd_hdr.icmp6_cksum
 #define nd_rd_reserved		nd_rd_hdr.icmp6_data32[0]
 
+struct mip6_dhaad_req {		/* HA Address Discovery Request */
+	struct icmp6_hdr	mip6_dhreq_hdr;
+} __packed;
+
+#define mip6_dhreq_type		mip6_dhreq_hdr.icmp6_type
+#define mip6_dhreq_code		mip6_dhreq_hdr.icmp6_code
+#define mip6_dhreq_cksum	mip6_dhreq_hdr.icmp6_cksum
+#define mip6_dhreq_id		mip6_dhreq_hdr.icmp6_data16[0]
+#define mip6_dhreq_reserved	mip6_dhreq_hdr.icmp6_data16[1]
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define MIP6_DHREQ_FLAG_MR	0x8000
+#endif /* BIG_ENDIAN */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define MIP6_DHREQ_FLAG_MR	0x0080
+#endif /* LITTLE_ENDIAN */
+
+struct mip6_dhaad_rep {		/* HA Address Discovery Reply */
+	struct icmp6_hdr	mip6_dhrep_hdr;
+	/* could be followed by home agent addresses */
+} __packed;
+
+#define mip6_dhrep_type		mip6_dhrep_hdr.icmp6_type
+#define mip6_dhrep_code		mip6_dhrep_hdr.icmp6_code
+#define mip6_dhrep_cksum	mip6_dhrep_hdr.icmp6_cksum
+#define mip6_dhrep_id		mip6_dhrep_hdr.icmp6_data16[0]
+#define mip6_dhrep_reserved	mip6_dhrep_hdr.icmp6_data16[1]
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define MIP6_DHREP_FLAG_MR	0x8000
+#endif /* BIG_ENDIAN */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define MIP6_DHREP_FLAG_MR	0x0080
+#endif /* LITTLE_ENDIAN */
+
+struct mip6_prefix_solicit {	/* Mobile Prefix Solicitation */
+	struct icmp6_hdr	mip6_ps_hdr;
+} __packed;
+
+#define mip6_ps_type		mip6_ps_hdr.icmp6_type
+#define mip6_ps_code		mip6_ps_hdr.icmp6_code
+#define mip6_ps_cksum		mip6_ps_hdr.icmp6_cksum
+#define mip6_ps_id		mip6_ps_hdr.icmp6_data16[0]
+#define mip6_ps_reserved	mip6_ps_hdr.icmp6_data16[1]
+
+struct mip6_prefix_advert {	/* Mobile Prefix Advertisement */
+	struct icmp6_hdr	mip6_pa_hdr;
+	/* followed by options */
+} __packed;
+
+#define mip6_pa_type		mip6_pa_hdr.icmp6_type
+#define mip6_pa_code		mip6_pa_hdr.icmp6_code
+#define mip6_pa_cksum		mip6_pa_hdr.icmp6_cksum
+#define mip6_pa_id		mip6_pa_hdr.icmp6_data16[0]
+#define mip6_pa_flags_reserved	mip6_pa_hdr.icmp6_data16[1]
+#if BYTE_ORDER == BIG_ENDIAN
+#define MIP6_PA_FLAG_MANAGED	0x8000
+#define MIP6_PA_FLAG_OTHER	0x4000
+#endif /* BIG_ENDIAN */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define MIP6_PA_FLAG_MANAGED	0x0080
+#define MIP6_PA_FLAG_OTHER	0x0040
+#endif /* LITTLE_ENDIAN */
+
 struct nd_opt_hdr {		/* Neighbor discovery option header */
 	u_int8_t	nd_opt_type;
 	u_int8_t	nd_opt_len;
@@ -296,6 +365,9 @@ struct nd_opt_hdr {		/* Neighbor discovery option header */
 #define ND_OPT_PREFIX_INFORMATION	3
 #define ND_OPT_REDIRECTED_HEADER	4
 #define ND_OPT_MTU			5
+
+#define	ND_OPT_ADV_INTERVAL		6	/* RFC3775 */
+#define	ND_OPT_HA_INFORMATION		7	/* RFC3775 */
 
 struct nd_opt_prefix_info {	/* prefix information */
 	u_int8_t	nd_opt_pi_type;
@@ -310,6 +382,7 @@ struct nd_opt_prefix_info {	/* prefix information */
 
 #define ND_OPT_PI_FLAG_ONLINK		0x80
 #define ND_OPT_PI_FLAG_AUTO		0x40
+#define ND_OPT_PI_FLAG_ROUTER		0x20	/* RFC3775 */
 
 struct nd_opt_rd_hdr {		/* redirected header */
 	u_int8_t	nd_opt_rh_type;
@@ -325,6 +398,28 @@ struct nd_opt_mtu {		/* MTU option */
 	u_int16_t	nd_opt_mtu_reserved;
 	u_int32_t	nd_opt_mtu_mtu;
 } __packed;
+
+struct nd_opt_adv_interval {	/* Advertisement interval option */
+	u_int8_t	nd_opt_ai_type;
+	u_int8_t	nd_opt_ai_len;
+	u_int16_t	nd_opt_ai_reserved;
+	u_int32_t	nd_opt_ai_interval;
+} __packed;
+
+struct nd_opt_homeagent_info {	/* Home Agent info */
+	u_int8_t	nd_opt_hai_type;
+	u_int8_t	nd_opt_hai_len;
+	u_int16_t	nd_opt_hai_reserved;
+	u_int16_t	nd_opt_hai_preference;
+	u_int16_t	nd_opt_hai_lifetime;
+} __packed;
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define MIP6_HAINFO_FLAG_MR     0x8000
+#endif /* BIG_ENDIAN */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define MIP6_HAINFO_FLAG_MR     0x0080
+#endif /* LITTLE_ENDIAN */
 
 /*
  * icmp6 namelookup

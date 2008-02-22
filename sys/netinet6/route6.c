@@ -1,4 +1,4 @@
-/*	$NetBSD: route6.c,v 1.21 2007/10/29 16:54:43 dyoung Exp $	*/
+/*	$NetBSD: route6.c,v 1.21.12.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: route6.c,v 1.22 2000/12/03 00:54:00 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.21 2007/10/29 16:54:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.21.12.1 2008/02/22 02:53:34 keiichi Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -47,11 +47,21 @@ __KERNEL_RCSID(0, "$NetBSD: route6.c,v 1.21 2007/10/29 16:54:43 dyoung Exp $");
 #include <netinet6/ip6_var.h>
 #include <netinet6/scope6_var.h>
 
+#ifdef MOBILE_IPV6
+#include "mip.h"
+#include <netinet/ip6mh.h>
+#include <netinet6/mip6_var.h>
+#endif
+
 #include <netinet/icmp6.h>
 
 #if 0
 static int ip6_rthdr0(struct mbuf *, struct ip6_hdr *, struct ip6_rthdr0 *);
 #endif
+#if defined(MOBILE_IPV6) && NMIP > 0
+static int ip6_rthdr2 __P((struct mbuf *, struct ip6_hdr *,
+    struct ip6_rthdr2 *));
+#endif /* defined(MOBILE_IPV6) && NMIP > 0 */
 
 int
 route6_input(struct mbuf **mp, int *offp, int proto)
@@ -69,6 +79,18 @@ route6_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	switch (rh->ip6r_type) {
+#if defined(MOBILE_IPV6) && NMIP > 0
+	case IPV6_RTHDR_TYPE_2:
+		rhlen = (rh->ip6r_len + 1) << 3;
+		IP6_EXTHDR_GET(rh, struct ip6_rthdr *, m, off, rhlen);
+		if (rh == NULL) {
+			ip6stat.ip6s_tooshort++;
+			return IPPROTO_DONE;
+		}
+		if (ip6_rthdr2(m, ip6, (struct ip6_rthdr2 *)rh)) 
+			return(IPPROTO_DONE);
+		break;
+#endif /* defined(MOBILE_IPV6) && NMIP > 0 */
 #if 0
 	/*
 	 * See http://www.secdev.org/conf/IPv6_RH_security-csw07.pdf
@@ -221,3 +243,126 @@ ip6_rthdr0(struct mbuf *m, struct ip6_hdr *ip6,
 	return (-1);
 }
 #endif
+
+#if defined(MOBILE_IPV6) && NMIP > 0
+/* Type2 routing header processing */
+static int
+ip6_rthdr2(struct mbuf *m, struct ip6_hdr *ip6, struct ip6_rthdr2 *rh2)
+{
+	struct in6_addr *nextaddr, tmpaddr;
+	const struct ip6aux *ip6a;
+	struct in6_ifaddr *ia;
+	int  myhoa = 0;
+	int  mycoa = 0;
+
+	if (rh2->ip6r2_segleft == 0) {
+		nextaddr = (struct in6_addr *)(rh2 + 1);
+
+		if (IN6_IS_ADDR_MULTICAST(nextaddr) ||
+		    IN6_IS_ADDR_UNSPECIFIED(nextaddr) ||
+		    IN6_IS_ADDR_V4MAPPED(nextaddr) ||
+		    IN6_IS_ADDR_V4COMPAT(nextaddr)) {
+			ip6stat.ip6s_badoptions++;
+			goto bad;
+		}
+
+		if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
+		    IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst) ||
+		    IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst) ||
+		    IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
+			ip6stat.ip6s_badoptions++;
+			goto bad;
+		}
+
+		if ((ip6a = ip6_getdstifaddr(m)) == NULL)
+			goto bad;
+		if (in6_setzoneid(nextaddr, ip6a->ip6a_src_scope_id) != 0) {
+			ip6stat.ip6s_badscope++;
+			goto bad;
+		}
+
+		/*
+		 * check dst addr = hoa
+		 */
+		for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+			if (ia->ia6_flags & IN6_IFF_HOME) 
+				if (IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &ia->ia_addr.sin6_addr))
+					myhoa = 1;
+
+			if (IN6_ARE_ADDR_EQUAL(nextaddr, &ia->ia_addr.sin6_addr))
+					mycoa = 1;
+		} 
+
+		if (!myhoa || !mycoa) {
+			ip6stat.ip6s_badoptions++;
+			goto bad;
+		} 
+
+		return (0);
+	} 
+
+	if (rh2->ip6r2_segleft != 1) { 
+		ip6stat.ip6s_badoptions++;
+		goto bad;
+	}
+	
+	/* section 11.3.3 */
+	if (rh2->ip6r2_len != 2) {
+		ip6stat.ip6s_badoptions++;
+		goto bad;
+	}
+
+	rh2->ip6r2_segleft--;
+	nextaddr = (struct in6_addr *)(rh2 + 1);
+
+	/*
+	 * reject invalid addresses.  be proactive about malicious use of
+	 * IPv4 mapped/compat address.
+	 * XXX need more checks?
+	 */
+	if (IN6_IS_ADDR_MULTICAST(nextaddr) ||
+		IN6_IS_ADDR_UNSPECIFIED(nextaddr) ||
+		IN6_IS_ADDR_V4MAPPED(nextaddr) ||
+		IN6_IS_ADDR_V4COMPAT(nextaddr)) {
+		ip6stat.ip6s_badoptions++;
+		goto bad;
+	}
+
+	if (IN6_IS_ADDR_MULTICAST(&ip6->ip6_dst) ||
+		IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_dst) ||
+		IN6_IS_ADDR_V4MAPPED(&ip6->ip6_dst) ||
+		IN6_IS_ADDR_V4COMPAT(&ip6->ip6_dst)) {
+		ip6stat.ip6s_badoptions++;
+		goto bad;
+	}
+
+	/*
+	 * determine the scope zone of the next hop, based on the interface
+	 * of the current hop. [RFC4007, Section 9]
+	 * Then disambiguate the scope zone for the next hop (if necessary).
+	 */
+	if ((ip6a = ip6_getdstifaddr(m)) == NULL) 
+		goto bad;
+	if (in6_setzoneid(nextaddr, ip6a->ip6a_src_scope_id) != 0) {
+		ip6stat.ip6s_badscope++;
+		goto bad;
+	}
+
+	/*
+	 * Swap the IPv6 destination address and nextaddr. Forward the packet.
+	 */
+  	tmpaddr = *nextaddr;
+	*nextaddr = ip6->ip6_dst;
+	in6_clearscope(nextaddr); /* XXX */
+	ip6->ip6_dst = tmpaddr;
+
+  	ip6_forward(m, 1);
+
+	return (-1);			/* m would be freed in ip6_forward() */
+
+  bad:
+	m_freem(m);
+	return (-1);
+
+}
+#endif /* defined(MOBILE_IPV6) && NMIP > 0 */

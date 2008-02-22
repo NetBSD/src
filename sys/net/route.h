@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.69 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: route.h,v 1.69.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -205,6 +205,7 @@ struct rt_msghdr {
 #define	RTM_SETGATE	0x12	/* set prototype gateway for clones
 				 * (see example in arp_rtrequest).
 				 */
+#define	RTM_ADDRINFO	0x13	/* address status change notification */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */
@@ -303,6 +304,7 @@ void	 route_init(void);
 int	 route_output(struct mbuf *, ...);
 int	 route_usrreq(struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *, struct lwp *);
+void	 rt_addrinfomsg(struct ifaddr *);
 void	 rt_ifannouncemsg(struct ifnet *, int);
 void	 rt_ieee80211msg(struct ifnet *, int, void *, size_t);
 void	 rt_ifmsg(struct ifnet *);

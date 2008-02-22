@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.92 2007/12/16 13:49:22 degroote Exp $
+.\"	$NetBSD: ifconfig.8,v 1.92.2.1 2008/02/22 02:53:32 keiichi Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -612,6 +612,12 @@ interface.
 .It Cm vltime Ar n
 .Pq inet6 only
 Set valid lifetime for the address.
+.It Cm home
+.Pq inet6 only
+Set the Mobile IPv6 home address bit.
+.It Cm -home
+.Pq inet6 only
+Clear the Mobile IPv6 home address bit.
 .It Cm ip4csum
 Shorthand of
 .Dq ip4csum-tx ip4csum-rx

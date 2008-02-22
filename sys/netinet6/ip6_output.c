@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_output.c,v 1.126 2008/01/14 04:16:45 dyoung Exp $	*/
+/*	$NetBSD: ip6_output.c,v 1.126.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.126 2008/01/14 04:16:45 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.126.2.1 2008/02/22 02:53:33 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -103,13 +103,22 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_output.c,v 1.126 2008/01/14 04:16:45 dyoung Exp 
 #include <netkey/key.h>
 #endif /* IPSEC */
 
+#ifdef MOBILE_IPV6
+#include <net/mipsock.h>
+#include <netinet6/mip6.h>
+#include <netinet6/mip6_var.h>
+#include "mip.h"
+#if NMIP > 0
+#include <netinet/ip6mh.h>
+#endif /* NMIP > 0*/
+#endif /* MOBILE_IPV6 */
+
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #include <netipsec/ipsec6.h>
 #include <netipsec/key.h>
 #include <netipsec/xform.h>
 #endif
-
 
 #include <net/net_osdep.h>
 
@@ -122,6 +131,12 @@ struct ip6_exthdrs {
 	struct mbuf *ip6e_hbh;
 	struct mbuf *ip6e_dest1;
 	struct mbuf *ip6e_rthdr;
+#ifdef MOBILE_IPV6
+	struct mbuf *ip6e_rthdr2;
+#endif /* MOBILE_IPV6 */
+#if defined(MOBILE_IPV6) && NMIP > 0
+	struct mbuf *ip6e_hoa;
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 	struct mbuf *ip6e_dest2;
 };
 
@@ -173,7 +188,7 @@ ip6_output(
     struct ifnet **ifpp		/* XXX: just for statistics */
 )
 {
-	struct ip6_hdr *ip6, *mhip6;
+	struct ip6_hdr *ip6 = NULL, *mhip6;
 	struct ifnet *ifp, *origifp;
 	struct mbuf *m = m0;
 	int hlen, tlen, len, off;
@@ -199,10 +214,17 @@ ip6_output(
 
 	ip6 = mtod(m, struct ip6_hdr *);
 #endif /* IPSEC */
+#ifdef MOBILE_IPV6
+	struct mip6_bc_internal *mbc;
+#if NMIP > 0
+	struct mip6_bul_internal *mbul = NULL;
+#endif /* NMIP > 0 */
+#endif /* MOBILE_IPV6 */
 #ifdef FAST_IPSEC
 	struct secpolicy *sp = NULL;
 	int s;
 #endif
+
 
 	memset(&ip6route, 0, sizeof(ip6route));
 
@@ -241,12 +263,95 @@ ip6_output(
 		/* Hop-by-Hop options header */
 		MAKE_EXTHDR(opt->ip6po_hbh, &exthdrs.ip6e_hbh);
 		/* Destination options header(1st part) */
-		MAKE_EXTHDR(opt->ip6po_dest1, &exthdrs.ip6e_dest1);
+		if (opt->ip6po_rthdr
+#ifdef MOBILE_IPV6
+		    || opt->ip6po_rthdr2
+#endif /* MOBILE_IPV6 */
+			) {
+			/*
+			 * Destination options header(1st part)
+			 * This only makes sence with a routing header.
+			 * See Section 9.2 of RFC 3542.
+			 * Disabling this part just for MIP6 convenience is
+			 * a bad idea.  We need to think carefully about a
+			 * way to make the advanced API coexist with MIP6
+			 * options, which might automatically be inserted in
+			 * the kernel.
+			 */
+			MAKE_EXTHDR(opt->ip6po_dest1, &exthdrs.ip6e_dest1);
+		}
 		/* Routing header */
 		MAKE_EXTHDR(opt->ip6po_rthdr, &exthdrs.ip6e_rthdr);
+#ifdef MOBILE_IPV6
+		/* Type 2 Routing header */
+		MAKE_EXTHDR(opt->ip6po_rthdr2, &exthdrs.ip6e_rthdr2);
+#if NMIP > 0
+		/* Home Address Destination options header */
+		MAKE_EXTHDR(opt->ip6po_hoa, &exthdrs.ip6e_hoa);
+#endif /* NMIP > 0*/
+#endif /* MOBILE_IPV6 */
 		/* Destination options header(2nd part) */
 		MAKE_EXTHDR(opt->ip6po_dest2, &exthdrs.ip6e_dest2);
 	}
+
+#ifdef MOBILE_IPV6
+	/* Find binding cache entry */
+	/* XXX need policy to determine bid for MCOA*/
+	ip6 = mtod(m, struct ip6_hdr *); /* in case of !IPSEC */
+	mbc = mip6_bce_get(&ip6->ip6_dst, &ip6->ip6_src, NULL, 0);
+	/*
+	 * If a node has a corresponding binding cache, put a Type 2
+	 * Routing Header to directly deliver the packet.  Except, a
+	 * caller didn't specify a Type 2 Routing Header explicitly.
+	 */
+	if ((mbc != NULL) && (ip6->ip6_nxt != IPPROTO_MH) &&
+	    (exthdrs.ip6e_rthdr2 == NULL)) {
+		struct ip6_rthdr2 *rthdr2;
+
+		rthdr2 = mip6_create_rthdr2(&mbc->mbc_coa);
+		if (rthdr2 == NULL)
+			goto freehdrs;
+
+		MAKE_EXTHDR(rthdr2, &exthdrs.ip6e_rthdr2);
+		free(rthdr2, M_IP6OPT);
+	}
+#endif /* MOBILE_IPV6 */
+
+#if defined(MOBILE_IPV6) && NMIP > 0
+	/*
+	 * If a correspondent binding update list is found and its
+	 * status is BOUND, a packet is sent directly to the
+	 * destination with a Home Address Option.  Except a caller
+	 * didn't specify a Home Address Option explicitly.
+	 */
+	mbul = mip6_bul_get(&ip6->ip6_src, &ip6->ip6_dst, 0/* XXX */);
+	/*
+	 * Route Optimization: appending a HoA option.
+	 */
+	if ((mbul != NULL) && (exthdrs.ip6e_hoa == NULL)) {
+		u_int8_t *hoa_opt;
+
+		if (mbul->mbul_state & MIP6_BUL_STATE_NEEDTUNNEL)
+			goto skip_hoa;
+ 
+		if (ip6->ip6_nxt == IPPROTO_MH) {
+#if 0
+			m_copydata(m, sizeof(struct ip6_hdr),
+			    sizeof(struct ip6_mh), (void *)&mh);
+			if (mh.ip6mh_type != IP6_MH_TYPE_BU)
+#endif /* 0 */
+				goto skip_hoa;
+		}
+
+		hoa_opt = mip6_create_hoa_opt(&mbul->mbul_coa);
+		if (hoa_opt == NULL)
+			goto freehdrs;
+
+		MAKE_EXTHDR(hoa_opt, &exthdrs.ip6e_hoa);
+		free(hoa_opt, M_IP6OPT);
+	}
+ skip_hoa:
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 
 #ifdef IPSEC
 	if ((flags & IPV6_FORWARDING) != 0) {
@@ -314,16 +419,24 @@ ip6_output(
 	if (exthdrs.ip6e_hbh) optlen += exthdrs.ip6e_hbh->m_len;
 	if (exthdrs.ip6e_dest1) optlen += exthdrs.ip6e_dest1->m_len;
 	if (exthdrs.ip6e_rthdr) optlen += exthdrs.ip6e_rthdr->m_len;
+#ifdef MOBILE_IPV6
+	if (exthdrs.ip6e_rthdr2) optlen += exthdrs.ip6e_rthdr2->m_len;
+#if NMIP > 0
+	if (exthdrs.ip6e_hoa) optlen += exthdrs.ip6e_hoa->m_len;
+#endif /* NMIP > 0 */
+#endif /* MOBILE_IPV6 */
 	unfragpartlen = optlen + sizeof(struct ip6_hdr);
 	/* NOTE: we don't add AH/ESP length here. do that later. */
 	if (exthdrs.ip6e_dest2) optlen += exthdrs.ip6e_dest2->m_len;
 
 #ifdef FAST_IPSEC
 	/* Check the security policy (SP) for the packet */
-    
+
+#ifndef MOBILE_IPV6 /* XXX */
 	/* XXX For moment, we doesn't support packet with extented action */
 	if (optlen !=0)
 		goto freehdrs;
+#endif /* !MOBILE_IPV6 */
 
 	sp = ipsec6_check_policy(m,so,flags,&needipsec,&error);
 	if (error != 0) {
@@ -440,7 +553,20 @@ ip6_output(
 		    IPPROTO_DSTOPTS);
 		MAKE_CHAIN(exthdrs.ip6e_rthdr, mprev, nexthdrp,
 		    IPPROTO_ROUTING);
-
+#ifdef MOBILE_IPV6
+		/* a type 2 routing header for route optimization. */
+		MAKE_CHAIN(exthdrs.ip6e_rthdr2, mprev, nexthdrp,
+		    IPPROTO_ROUTING);
+#if NMIP > 0
+		/*
+		 * MIP6 homeaddress destination option must reside
+		 * after rthdr and before ah/esp/frag hdr.
+		 * this order is not recommended in the ipv6 spec of course.
+		 * result: IPv6 hbh dest1 rthdr ha dest2 payload.
+		 */
+		MAKE_CHAIN(exthdrs.ip6e_hoa, mprev, nexthdrp, IPPROTO_DSTOPTS);
+#endif /* NMIP > 0 */
+#endif /* MOBILE_IPV6 */
 		M_CSUM_DATA_IPv6_HL_SET(m->m_pkthdr.csum_data,
 		    sizeof(struct ip6_hdr) + optlen);
 
@@ -458,6 +584,9 @@ ip6_output(
 	    {
 		struct ip6_rthdr *rh = NULL;
 		int segleft_org = 0;
+#ifdef MOBILE_IPV6
+		int segleft2_org = 0;
+#endif /* MOBILE_IPV6 */
 		struct ipsec_output_state state;
 
 		if (exthdrs.ip6e_rthdr) {
@@ -465,6 +594,14 @@ ip6_output(
 			segleft_org = rh->ip6r_segleft;
 			rh->ip6r_segleft = 0;
 		}
+
+#ifdef MOBILE_IPV6
+		if (exthdrs.ip6e_rthdr2) {
+			rh = mtod(exthdrs.ip6e_rthdr2, struct ip6_rthdr *);
+			segleft2_org = rh->ip6r_segleft;
+			rh->ip6r_segleft = 0;
+		}
+#endif /* MOBILE_IPV6 */
 
 		bzero(&state, sizeof(state));
 		state.m = m;
@@ -496,55 +633,99 @@ ip6_output(
 			/* ah6_output doesn't modify mbuf chain */
 			rh->ip6r_segleft = segleft_org;
 		}
+#ifdef MOBILE_IPV6
+		if (exthdrs.ip6e_rthdr2) {
+			/* ah6_output doesn't modify mbuf chain */
+			rh->ip6r_segleft = segleft2_org;
+		}
+#endif /* MOBILE_IPV6 */
 	    }
 skip_ipsec2:;
 #endif
 	}
 
+#if defined(MOBILE_IPV6) && NMIP > 0
+	/* Swap HoA and CoA */
+	if (exthdrs.ip6e_hoa) {
+		struct ip6_opt_home_address *hoaopt = NULL;
+		struct in6_addr tmpaddr;
+
+		bzero(&tmpaddr, sizeof(tmpaddr));
+
+		hoaopt = mip6_search_hoa_in_destopt(mtod(exthdrs.ip6e_hoa, void *));
+		if (hoaopt == NULL)
+			goto freehdrs;
+
+		if (mip6_ifa_ifwithin6addr(&ip6->ip6_src) == NULL)
+			goto freehdrs;
+
+		ip6 = mtod(m, struct ip6_hdr *);
+		bcopy(&ip6->ip6_src, &tmpaddr, sizeof(ip6->ip6_src));
+		bcopy(hoaopt->ip6oh_addr,
+		    &ip6->ip6_src, sizeof(hoaopt->ip6oh_addr));
+		bcopy(&tmpaddr, hoaopt->ip6oh_addr, sizeof(tmpaddr));
+	}
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+
 	/*
 	 * If there is a routing header, replace destination address field
 	 * with the first hop of the routing header.
 	 */
-	if (exthdrs.ip6e_rthdr) {
-		struct ip6_rthdr *rh;
-		struct ip6_rthdr0 *rh0;
-		struct in6_addr *addr;
-		struct sockaddr_in6 sa;
+	{
+		struct ip6_rthdr *rh = NULL;
 
-		rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
-		    struct ip6_rthdr *));
-		finaldst = ip6->ip6_dst;
-		switch (rh->ip6r_type) {
-		case IPV6_RTHDR_TYPE_0:
-			 rh0 = (struct ip6_rthdr0 *)rh;
-			 addr = (struct in6_addr *)(rh0 + 1);
+		if (exthdrs.ip6e_rthdr)
+			rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr,
+			    struct ip6_rthdr *));
+#ifdef MOBILE_IPV6
+		else if (exthdrs.ip6e_rthdr2)
+			rh = (struct ip6_rthdr *)(mtod(exthdrs.ip6e_rthdr2,
+			    struct ip6_rthdr *));
+#endif /* MOBILE_IPV6 */
+		if (rh) {
+			struct ip6_rthdr0 *rh0;
+			struct in6_addr *addr;
+			struct sockaddr_in6 sa;
 
-			 /*
-			  * construct a sockaddr_in6 form of
-			  * the first hop.
-			  *
-			  * XXX: we may not have enough
-			  * information about its scope zone;
-			  * there is no standard API to pass
-			  * the information from the
-			  * application.
-			  */
-			 sockaddr_in6_init(&sa, addr, 0, 0, 0);
-			 if ((error = sa6_embedscope(&sa,
-			     ip6_use_defzone)) != 0) {
-				 goto bad;
-			 }
-			 ip6->ip6_dst = sa.sin6_addr;
-			 (void)memmove(&addr[0], &addr[1],
-			     sizeof(struct in6_addr) *
-			     (rh0->ip6r0_segleft - 1));
-			 addr[rh0->ip6r0_segleft - 1] = finaldst;
-			 /* XXX */
-			 in6_clearscope(addr + rh0->ip6r0_segleft - 1);
-			 break;
-		default:	/* is it possible? */
-			 error = EINVAL;
-			 goto bad;
+			finaldst = ip6->ip6_dst;
+			switch (rh->ip6r_type) {
+			case IPV6_RTHDR_TYPE_0:
+#ifdef MOBILE_IPV6
+			case IPV6_RTHDR_TYPE_2:
+#endif /* MOBILE_IPV6 */
+				rh0 = (struct ip6_rthdr0 *)rh;
+				addr = (struct in6_addr *)(rh0 + 1);
+
+				/*
+				 * construct a sockaddr_in6 form of
+				 * the first hop.
+				 *
+				 * XXX: we may not have enough
+				 * information about its scope zone;
+				 * there is no standard API to pass
+				 * the information from the
+				 * application.
+				 */
+				bzero(&sa, sizeof(sa));
+				sa.sin6_family = AF_INET6;
+				sa.sin6_len = sizeof(sa);
+				sa.sin6_addr = addr[0];
+				if ((error = sa6_embedscope(&sa,
+				    ip6_use_defzone)) != 0) {
+					goto bad;
+				}
+				ip6->ip6_dst = sa.sin6_addr;
+				(void)memmove(&addr[0], &addr[1],
+				    sizeof(struct in6_addr) *
+				    (rh0->ip6r0_segleft - 1));
+				addr[rh0->ip6r0_segleft - 1] = finaldst;
+				/* XXX */
+				in6_clearscope(addr + rh0->ip6r0_segleft - 1);
+				break;
+			default:	/* is it possible? */
+				error = EINVAL;
+				goto bad;
+			}
 		}
 	}
 
@@ -573,6 +754,13 @@ skip_ipsec2:;
 	ro_pmtu = ro;
 	if (opt && opt->ip6po_rthdr)
 		ro = &opt->ip6po_route;
+#ifdef MOBILE_IPV6
+	if (exthdrs.ip6e_rthdr2) {
+		ro = &ip6route;
+		bzero((void *)ro, sizeof(*ro));
+		ro_pmtu = ro;
+	}
+#endif /* MOBILE_IPV6 */
 
  	/*
 	 * if specified, try to fill in the traffic class field.
@@ -601,7 +789,11 @@ skip_ipsec2:;
 	}
 
 #ifdef IPSEC
-	if (needipsec && needipsectun) {
+	if (needipsec && needipsectun
+#if defined(MOBILE_IPV6) && NMIP > 0
+	    && !((opt && opt->ip6po_hoa) || exthdrs.ip6e_hoa)
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+		) {
 		struct ipsec_output_state state;
 
 		/*
@@ -1056,6 +1248,18 @@ skip_ipsec2:;
 		 * Change the next header field of the last header in the
 		 * unfragmentable part.
 		 */
+#ifdef MOBILE_IPV6
+#if NMIP > 0
+		if (exthdrs.ip6e_hoa) {
+			nextproto = *mtod(exthdrs.ip6e_hoa, u_char *);
+			*mtod(exthdrs.ip6e_hoa, u_char *) = IPPROTO_FRAGMENT;
+		} else
+#endif /* NMIP > 0 */
+		if (exthdrs.ip6e_rthdr2) {
+			nextproto = *mtod(exthdrs.ip6e_rthdr2, u_char *);
+			*mtod(exthdrs.ip6e_rthdr2, u_char *) = IPPROTO_FRAGMENT;
+		} else
+#endif /* MOBILE_IPV6 */
 		if (exthdrs.ip6e_rthdr) {
 			nextproto = *mtod(exthdrs.ip6e_rthdr, u_char *);
 			*mtod(exthdrs.ip6e_rthdr, u_char *) = IPPROTO_FRAGMENT;
@@ -1190,6 +1394,12 @@ freehdrs:
 	m_freem(exthdrs.ip6e_dest1);
 	m_freem(exthdrs.ip6e_rthdr);
 	m_freem(exthdrs.ip6e_dest2);
+#ifdef MOBILE_IPV6
+	m_freem(exthdrs.ip6e_rthdr2);
+#if NMIP > 0
+	m_freem(exthdrs.ip6e_hoa);
+#endif /* NMIP > 0 */
+#endif /* MOBILE_IPV6 */
 	/* FALLTHROUGH */
 bad:
 	m_freem(m);
@@ -2172,6 +2382,10 @@ ip6_pcbopts(struct ip6_pktopts **pktopt, struct mbuf *m, struct socket *so)
 #ifdef DIAGNOSTIC
 	    if (opt->ip6po_pktinfo || opt->ip6po_nexthop ||
 		opt->ip6po_hbh || opt->ip6po_dest1 || opt->ip6po_dest2 ||
+#if defined(MOBILE_IPV6) && NMIP > 0
+		opt->ip6po_hoa ||
+		opt->ip6po_rhinfo2.ip6po_rhi_rthdr ||
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 		opt->ip6po_rhinfo.ip6po_rhi_rthdr)
 		    printf("ip6_pcbopts: all specified options are cleared.\n");
 #endif
@@ -2370,10 +2584,21 @@ ip6_clearpktopts(struct ip6_pktopts *pktopt, int optname)
 		pktopt->ip6po_rhinfo.ip6po_rhi_rthdr = NULL;
 		rtcache_free(&pktopt->ip6po_route);
 	}
+#ifdef MOBILE_IPV6
+		if (pktopt->ip6po_rhinfo2.ip6po_rhi_rthdr)
+			free(pktopt->ip6po_rhinfo2.ip6po_rhi_rthdr, M_IP6OPT);
+		pktopt->ip6po_rhinfo2.ip6po_rhi_rthdr = NULL;
+		rtcache_free(&pktopt->ip6po_route2);
+#endif /* MOBILE_IPV6 */
 	if (optname == -1 || optname == IPV6_DSTOPTS) {
 		if (pktopt->ip6po_dest2)
 			free(pktopt->ip6po_dest2, M_IP6OPT);
 		pktopt->ip6po_dest2 = NULL;
+#if defined(MOBILE_IPV6) && NMIP > 0
+		if (pktopt->ip6po_hoa)
+			free(pktopt->ip6po_hoa, M_IP6OPT);
+		pktopt->ip6po_hoa = NULL;
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 	}
 }
 
@@ -3177,7 +3402,19 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 			newdest = &opt->ip6po_dest1;
 			break;
 		case IPV6_DSTOPTS:
+#if defined(MOBILE_IPV6) && NMIP > 0
+			/*
+			 * Check whether this destination option is
+			 * home address option.
+			 * If so, the option must be stored in ip6po_hoa
+			 */
+			if (mip6_search_hoa_in_destopt((u_int8_t *)dest) != NULL)
+				newdest = &opt->ip6po_hoa;
+			else
+				newdest = &opt->ip6po_dest2;
+#else
 			newdest = &opt->ip6po_dest2;
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 			break;
 		}
 
@@ -3220,15 +3457,35 @@ ip6_setpktopt(int optname, u_char *buf, int len, struct ip6_pktopts *opt,
 			if (rth->ip6r_len / 2 != rth->ip6r_segleft)
 				return (EINVAL);
 			break;
+#ifdef MOBILE_IPV6
+		case IPV6_RTHDR_TYPE_2:
+			if (rth->ip6r_len == 0) /* must contain one addr */
+				return (EINVAL);
+			if (rth->ip6r_len != 2) /* length must be 2 */
+				return (EINVAL);
+			if (rth->ip6r_segleft != 1)
+				return (EINVAL);
+			break;   
+#endif /* MOBILE_IPV6 */
 		default:
 			return (EINVAL);	/* not supported */
 		}
 		/* turn off the previous option */
 		ip6_clearpktopts(opt, IPV6_RTHDR);
-		opt->ip6po_rthdr = malloc(rthlen, M_IP6OPT, M_NOWAIT);
-		if (opt->ip6po_rthdr == NULL)
-			return (ENOBUFS);
-		memcpy(opt->ip6po_rthdr, rth, rthlen);
+		if (rth->ip6r_type == IPV6_RTHDR_TYPE_0) {
+			opt->ip6po_rthdr = malloc(rthlen, M_IP6OPT, M_NOWAIT);
+			if (opt->ip6po_rthdr == NULL)
+				return (ENOBUFS);
+			bcopy(rth, opt->ip6po_rthdr, rthlen);
+		}
+#ifdef MOBILE_IPV6
+		else if (rth->ip6r_type == IPV6_RTHDR_TYPE_2) {
+			opt->ip6po_rthdr2 = malloc(rthlen, M_IP6OPT, M_NOWAIT);
+			if (opt->ip6po_rthdr2 == NULL)
+				return (ENOBUFS);
+			bcopy(rth, opt->ip6po_rthdr2, rthlen);
+		}
+#endif /* MOBILE_IPV6 */
 		break;
 	}
 

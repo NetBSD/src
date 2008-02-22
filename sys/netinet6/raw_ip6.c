@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip6.c,v 1.91 2007/11/27 22:45:30 christos Exp $	*/
+/*	$NetBSD: raw_ip6.c,v 1.91.10.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: raw_ip6.c,v 1.82 2001/07/23 18:57:56 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.91 2007/11/27 22:45:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.91.10.1 2008/02/22 02:53:34 keiichi Exp $");
 
 #include "opt_ipsec.h"
 
@@ -93,6 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: raw_ip6.c,v 1.91 2007/11/27 22:45:30 christos Exp $"
 #include <netinet6/ip6protosw.h>
 #include <netinet6/scope6_var.h>
 #include <netinet6/raw_ip6.h>
+
+#ifdef MOBILE_IPV6
+#include <netinet/ip6mh.h>
+#endif /* MOBILE_IPV6 */
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -494,6 +498,9 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
 	ip6->ip6_hlim = in6_selecthlim(in6p, oifp);
 
 	if (so->so_proto->pr_protocol == IPPROTO_ICMPV6 ||
+#ifdef MOBILE_IPV6
+	    so->so_proto->pr_protocol == IPPROTO_MH ||
+#endif /* MOBILE_IPV6 */
 	    in6p->in6p_cksum != -1) {
 		int off;
 		u_int16_t sum;
@@ -501,6 +508,10 @@ rip6_output(struct mbuf *m, struct socket *so, struct sockaddr_in6 *dstsock,
 		/* compute checksum */
 		if (so->so_proto->pr_protocol == IPPROTO_ICMPV6)
 			off = offsetof(struct icmp6_hdr, icmp6_cksum);
+#ifdef MOBILE_IPV6
+		else if (so->so_proto->pr_protocol == IPPROTO_MH)
+			off = offsetof(struct ip6_mh, ip6mh_cksum);
+#endif /* MOBILE_IPV6 */
 		else
 			off = in6p->in6p_cksum;
 		if (plen < off + 1) {

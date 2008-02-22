@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.50 2007/08/30 02:17:38 dyoung Exp $	*/
+/*	$NetBSD: nd6.h,v 1.50.16.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -96,6 +96,7 @@ struct nd_ifinfo {
 #define ND6_IFF_IFDISABLED	0x8 /* IPv6 operation is disabled due to
 				     * DAD failure.  (XXX: not ND-specific)
 				     */
+#define ND6_IFF_DONT_SET_IFROUTE 0x10
 
 #ifdef _KERNEL
 #define ND_IFINFO(ifp) \

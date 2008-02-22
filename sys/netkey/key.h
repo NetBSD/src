@@ -1,4 +1,4 @@
-/*	$NetBSD: key.h,v 1.22 2007/03/04 06:03:34 christos Exp $	*/
+/*	$NetBSD: key.h,v 1.22.32.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: key.h,v 1.32 2003/09/07 05:25:20 itojun Exp $	*/
 
 /*
@@ -92,6 +92,13 @@ extern int key_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 u_int16_t key_portfromsaddr __P((struct sockaddr *));
 #define KEY_PORTFROMSADDR(saddr) key_portfromsaddr((struct sockaddr *)(saddr))
 #endif
+
+#ifdef MOBILE_IPV6
+void key_mip6_update_mobile_node_ipsecdb(struct sockaddr_in6 *,
+    struct sockaddr_in6 *, struct sockaddr_in6 *, struct sockaddr_in6 *);
+void key_mip6_update_home_agent_ipsecdb(struct sockaddr_in6 *,
+    struct sockaddr_in6 *, struct sockaddr_in6 *, struct sockaddr_in6 *);
+#endif /* MOBILE_IPV6 */
 
 #endif /* defined(_KERNEL) */
 #endif /* !_NETKEY_KEY_H_ */

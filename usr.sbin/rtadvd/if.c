@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.18 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: if.c,v 1.18.16.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include <net/if_dl.h>
 #include <netinet/in.h>
 #include <netinet/icmp6.h>
+#include <netinet6/in6_var.h>
 #include <unistd.h>
 #include <errno.h>
 #include <stdlib.h>
@@ -151,6 +152,32 @@ if_getmtu(char *name)
 #endif
 
 	return(mtu);
+}
+
+int
+if_getifaflag(char *name, struct in6_addr *addr)
+{
+	struct in6_ifreq ifr;
+	int s;
+
+	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+		syslog(LOG_ERR, "<%s> socket: %s", __func__,
+			strerror(errno));
+		return (0);
+	}
+
+	(void) memset(&ifr, 0, sizeof(ifr));
+	(void) strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	ifr.ifr_addr.sin6_family = AF_INET6;
+	ifr.ifr_addr.sin6_addr = *addr;
+	if (ioctl(s, SIOCGIFAFLAG_IN6, (caddr_t)&ifr) < 0) {
+		syslog(LOG_ERR, "<%s> ioctl:SIOCGIFAFLAG_IN6: failed for %s",
+			__func__, ifr.ifr_name);
+		close(s);
+		return (0);
+	}
+	close(s);
+	return (ifr.ifr_ifru.ifru_flags6);
 }
 
 /* give interface index and its old flags, then new flags returned */

@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.83 2008/01/25 21:12:14 joerg Exp $	*/
+/*	$NetBSD: in.h,v 1.83.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -103,6 +103,7 @@ typedef __sa_family_t	sa_family_t;
 #define	IPPROTO_IPCOMP		108		/* IP Payload Comp. Protocol */
 #define	IPPROTO_VRRP		112		/* VRRP RFC 2338 */
 #define	IPPROTO_CARP		112		/* Common Address Resolution Protocol */
+#define IPPROTO_MH		135		/* Mobility Header RFC3775 */
 #define	IPPROTO_RAW		255		/* raw IP packet */
 #define	IPPROTO_MAX		256
 

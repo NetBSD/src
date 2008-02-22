@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.25 2006/05/11 08:35:47 mrg Exp $	*/
+/*	$NetBSD: config.c,v 1.25.16.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -194,6 +194,8 @@ getconfig(intface)
 			}
 			val |= ND_RA_FLAG_RTPREF_LOW;
 		}
+		if (strchr(flagstr, 'a'))
+			val |= ND_RA_FLAG_HOME_AGENT;
 	} else {
 		MAYHAVE(val, "raflags", 0);
 	}
@@ -209,6 +211,8 @@ getconfig(intface)
 		       __func__, tmp->rtpref, intface);
 		exit(1);
 	}
+	if (mobileip6)
+		tmp->haflg = val & ND_RA_FLAG_HOME_AGENT;
 
 	MAYHAVE(val, "rltime", tmp->maxinterval * 3);
 	if (val && (val < tmp->maxinterval || val > MAXROUTERLIFETIME)) {
@@ -255,11 +259,28 @@ getconfig(intface)
 	}
 	tmp->retranstimer = (u_int32_t)val64;
 
-	if (agetnum("hapref") != -1 || agetnum("hatime") != -1) {
-		syslog(LOG_ERR,
-		       "<%s> mobile-ip6 configuration not supported",
-		       __func__);
-		exit(1);
+	if (mobileip6) {
+		MAYHAVE(val, "hapref", 0);
+		tmp->hapref = val;
+		MAYHAVE(val, "hatime", tmp->lifetime);
+		if (val <= 0) {
+			if (tmp->hapref != 0 || val < 0) {
+				syslog(LOG_ERR,
+					"<%s> home agent lifetime (%ld) "
+					"on %s invalid (must be greater "
+					"than 0)",
+					__func__, val, intface);
+				exit(1);
+			}
+		}
+		tmp->hatime = (u_int16_t)val;
+	} else {
+		if (agetnum("hapref") != -1 || agetnum("hatime") != -1) {
+			syslog(LOG_ERR,
+			       "<%s> mobile-ip6 configuration not supported",
+			       __func__);
+			exit(1);
+		}
 	}
 	/* prefix information */
 
@@ -333,12 +354,16 @@ getconfig(intface)
 				val |= ND_OPT_PI_FLAG_ONLINK;
 			if (strchr(flagstr, 'a'))
 				val |= ND_OPT_PI_FLAG_AUTO;
+			if (strchr(flagstr, 'r'))
+				val |= ND_OPT_PI_FLAG_ROUTER;
 		} else {
 			MAYHAVE(val, entbuf,
 			    (ND_OPT_PI_FLAG_ONLINK|ND_OPT_PI_FLAG_AUTO));
 		}
 		pfx->onlinkflg = val & ND_OPT_PI_FLAG_ONLINK;
 		pfx->autoconfflg = val & ND_OPT_PI_FLAG_AUTO;
+		if (mobileip6)
+			pfx->routeraddr = val & ND_OPT_PI_FLAG_ROUTER;
 
 		makeentry(entbuf, sizeof(entbuf), i, "vltime");
 		MAYHAVE(val64, entbuf, DEF_ADVVALIDLIFETIME);
@@ -615,6 +640,8 @@ get_prefix(struct rainfo *rai)
 
 	for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
 		int plen;
+		int ifa_flags = 0;
+		int routeraddr = 0;
 
 		if (strcmp(ifa->ifa_name, rai->ifname) != 0)
 			continue;
@@ -623,6 +650,11 @@ get_prefix(struct rainfo *rai)
 		a = &((struct sockaddr_in6 *)ifa->ifa_addr)->sin6_addr;
 		if (IN6_IS_ADDR_LINKLOCAL(a))
 			continue;
+		if (mobileip6) {
+			ifa_flags = if_getifaflag(ifa->ifa_name, a);
+			if ((ifa_flags & IN6_IFF_ANYCAST) == 0)
+				routeraddr = 1;
+		}
 		/* get prefix length */
 		m = (u_char *)&((struct sockaddr_in6 *)ifa->ifa_netmask)->sin6_addr;
 		lim = (u_char *)(ifa->ifa_netmask) + ifa->ifa_netmask->sa_len;
@@ -652,7 +684,7 @@ get_prefix(struct rainfo *rai)
 		/* set prefix, sweep bits outside of prefixlen */
 		pp->prefixlen = plen;
 		memcpy(&pp->prefix, a, sizeof(*a));
-		if (1)
+		if (routeraddr == 0)
 		{
 			p = (u_char *)&pp->prefix;
 			ep = (u_char *)(&pp->prefix + 1);
@@ -675,6 +707,7 @@ get_prefix(struct rainfo *rai)
 		pp->preflifetime = DEF_ADVPREFERREDLIFETIME;
 		pp->onlinkflg = 1;
 		pp->autoconfflg = 1;
+		pp->routeraddr = routeraddr;
 		pp->origin = PREFIX_FROM_KERNEL;
 		pp->rainfo = rai;
 
@@ -911,6 +944,8 @@ make_packet(struct rainfo *rainfo)
 	struct nd_opt_prefix_info *ndopt_pi;
 	struct nd_opt_mtu *ndopt_mtu;
 	struct prefix *pfx;
+	struct nd_opt_adv_interval *ndopt_advint;
+	struct nd_opt_homeagent_info *ndopt_hai;
 #ifdef ROUTEINFO
 	struct nd_opt_route_info *ndopt_rti;
 	struct rtinfo *rti;
@@ -932,6 +967,10 @@ make_packet(struct rainfo *rainfo)
 		packlen += sizeof(struct nd_opt_prefix_info) * rainfo->pfxs;
 	if (rainfo->linkmtu)
 		packlen += sizeof(struct nd_opt_mtu);
+	if (mobileip6 && rainfo->maxinterval)
+		packlen += sizeof(struct nd_opt_adv_interval);
+	if (mobileip6 && rainfo->hatime)
+		packlen += sizeof(struct nd_opt_homeagent_info);
 #ifdef ROUTEINFO
 	for (rti = rainfo->route.next; rti != &rainfo->route; rti = rti->next)
 		packlen += sizeof(struct nd_opt_route_info) + 
@@ -972,6 +1011,9 @@ make_packet(struct rainfo *rainfo)
 		rainfo->managedflg ? ND_RA_FLAG_MANAGED : 0;
 	ra->nd_ra_flags_reserved |=
 		rainfo->otherflg ? ND_RA_FLAG_OTHER : 0;
+	if (mobileip6)
+		ra->nd_ra_flags_reserved |=
+			rainfo->haflg ? ND_RA_FLAG_HOME_AGENT : 0;
 	ra->nd_ra_router_lifetime = htons(rainfo->lifetime);
 	ra->nd_ra_reachable = htonl(rainfo->reachabletime);
 	ra->nd_ra_retransmit = htonl(rainfo->retranstimer);
@@ -991,7 +1033,25 @@ make_packet(struct rainfo *rainfo)
 		buf += sizeof(struct nd_opt_mtu);
 	}
 
-	
+	if (mobileip6 && rainfo->maxinterval) {
+		ndopt_advint = (struct nd_opt_adv_interval *)buf;
+		ndopt_advint->nd_opt_ai_type = ND_OPT_ADV_INTERVAL;
+		ndopt_advint->nd_opt_ai_len = 1;
+		ndopt_advint->nd_opt_ai_reserved = 0;
+		ndopt_advint->nd_opt_ai_interval =
+			htonl(rainfo->maxinterval * 1000); /* in usec */
+		buf += sizeof(struct nd_opt_adv_interval);
+	}
+
+	if (mobileip6 && rainfo->hatime) {
+		ndopt_hai = (struct nd_opt_homeagent_info *)buf;
+		ndopt_hai->nd_opt_hai_type = ND_OPT_HA_INFORMATION;
+		ndopt_hai->nd_opt_hai_len = 1;
+		ndopt_hai->nd_opt_hai_reserved = 0;
+		ndopt_hai->nd_opt_hai_preference = htons(rainfo->hapref);
+		ndopt_hai->nd_opt_hai_lifetime = htons(rainfo->hatime);
+		buf += sizeof(struct nd_opt_homeagent_info);
+	}
 	
 	for (pfx = rainfo->prefix.next;
 	     pfx != &rainfo->prefix; pfx = pfx->next) {
@@ -1009,6 +1069,9 @@ make_packet(struct rainfo *rainfo)
 		if (pfx->autoconfflg)
 			ndopt_pi->nd_opt_pi_flags_reserved |=
 				ND_OPT_PI_FLAG_AUTO;
+		if (mobileip6 && pfx->routeraddr)
+			ndopt_pi->nd_opt_pi_flags_reserved |=
+				ND_OPT_PI_FLAG_ROUTER;
 		if (pfx->timer)
 			vltime = 0;
 		else {

@@ -1,0 +1,11 @@
+#	$Id: SHISA,v 1.1.2.1 2008/02/22 02:53:32 keiichi Exp $
+#
+#	SHISA
+#
+
+include 	"arch/i386/conf/GENERIC"
+
+options		IPSEC
+options		IPSEC_ESP
+options		MOBILE_IPV6
+pseudo-device	mip 1

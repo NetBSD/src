@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.181 2007/12/16 13:49:22 degroote Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.181.2.1 2008/02/22 02:53:32 keiichi Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-__RCSID("$NetBSD: ifconfig.c,v 1.181 2007/12/16 13:49:22 degroote Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.181.2.1 2008/02/22 02:53:32 keiichi Exp $");
 #endif
 #endif /* not lint */
 
@@ -260,6 +260,10 @@ const struct cmd {
 	{ "pltime",	NEXTARG,	0,		setia6pltime },
 	{ "vltime",	NEXTARG,	0,		setia6vltime },
 	{ "eui64",	0,		0,		setia6eui64 },
+	{ "home",       IN6_IFF_HOME,   0,              setia6flags },
+	{ "-home",      -IN6_IFF_HOME,  0,              setia6flags },
+	{ "deregistering",      IN6_IFF_DEREGISTERING,  0,      setia6flags },
+	{ "-deregistering",     -IN6_IFF_DEREGISTERING, 0,      setia6flags },
 #endif /*INET6*/
 #ifndef INET_ONLY
 	{ "range",	NEXTARG,	0,		setatrange },

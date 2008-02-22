@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1057 2008/02/18 10:37:20 elad Exp $
+# $NetBSD: mi,v 1.1057.4.1 2008/02/22 02:53:32 keiichi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1131,6 +1131,7 @@
 ./usr/share/man/cat4/mhzc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/midi.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mii.0			man-sys-catman		.cat
+./usr/share/man/cat4/mip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mixer.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mk48txx.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mlx.0			man-sys-catman		.cat
@@ -3657,6 +3658,7 @@
 ./usr/share/man/man4/mhzc.4			man-sys-man		.man
 ./usr/share/man/man4/midi.4			man-sys-man		.man
 ./usr/share/man/man4/mii.4			man-sys-man		.man
+./usr/share/man/man4/mip.4			man-sys-man		.man
 ./usr/share/man/man4/mixer.4			man-sys-man		.man
 ./usr/share/man/man4/mk48txx.4			man-sys-man		.man
 ./usr/share/man/man4/mlx.4			man-sys-man		.man

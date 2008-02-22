@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.7 2006/03/05 23:47:08 rpaulo Exp $	*/
+/*	$NetBSD: dump.c,v 1.7.16.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: dump.c,v 1.34 2004/06/14 05:35:59 itojun Exp $	*/
 
 /*
@@ -142,14 +142,16 @@ if_dump()
 		    "MinAdvInterval: %d\n", rai->lifetime, rai->maxinterval,
 		    rai->mininterval);
 		fprintf(fp, "  Flags: %s%s%s, ",
-		    rai->managedflg ? "M" : "", rai->otherflg ? "O" : "",
-		    "");
+			rai->managedflg ? "M" : "", rai->otherflg ? "O" : "",
+			rai->haflg ? "H" : "");
 		fprintf(fp, "Preference: %s, ",
 			rtpref_str[(rai->rtpref >> 3) & 0xff]);
 		fprintf(fp, "MTU: %d\n", rai->linkmtu);
 		fprintf(fp, "  ReachableTime: %d, RetransTimer: %d, "
 			"CurHopLimit: %d\n", rai->reachabletime,
 			rai->retranstimer, rai->hoplimit);
+		fprintf(fp, "  HAPreference: %d, HALifetime: %d\n",
+			rai->hapref, rai->hatime);
 		if (rai->clockskew)
 			fprintf(fp, "  Clock skew: %ldsec\n",
 			    rai->clockskew);
@@ -198,7 +200,7 @@ if_dump()
 			fprintf(fp, "flags: %s%s%s",
 				pfx->onlinkflg ? "L" : "",
 				pfx->autoconfflg ? "A" : "",
-				"");
+				pfx->routeraddr ? "R" : "");
 			if (pfx->timer) {
 				struct timeval *rest;
 

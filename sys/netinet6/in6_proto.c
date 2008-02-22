@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.79.16.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79.16.1 2008/02/22 02:53:33 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -131,6 +131,10 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.79 2007/09/19 04:33:44 dyoung Exp $"
 #if NETHERIP > 1
 #include <netinet6/ip6_etherip.h>
 #endif
+
+#ifdef MOBILE_IPV6
+#include <netinet6/mip6_var.h>
+#endif /* MOBILE_IPV6 */
 
 #include <netinet6/ip6protosw.h>
 
@@ -222,6 +226,17 @@ const struct ip6protosw inet6sw[] = {
 	.pr_flags = PR_ATOMIC|PR_ADDR,
 	.pr_input = frag6_input,
 },
+#ifdef MOBILE_IPV6
+{
+	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_MH,
+	.pr_flags = PR_ATOMIC|PR_ADDR|PR_LASTHDR,
+	.pr_input = mip6_input,
+	.pr_ctloutput = rip6_ctloutput,
+	.pr_usrreq = rip6_usrreq,
+},
+#endif /* MOBILE_IPV6 */
 #ifdef IPSEC
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
@@ -349,6 +364,24 @@ const struct ip6protosw inet6sw[] = {
 	.pr_init = rip6_init,
 },
 };
+
+POOL_INIT(sockaddr_in6_pool, sizeof(struct sockaddr_in6), 0, 0, 0,
+    "sockaddr_in6_pool", NULL, IPL_NET);
+
+#ifdef MOBILE_IPV6
+/* To receive tunneled packet on mobile node or home agent */
+struct ip6protosw mip6_tunnel_protosw =
+{
+	.pr_type = SOCK_RAW,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_IPV6,
+	.pr_flags = PR_ATOMIC|PR_ADDR,
+	.pr_input = mip6_tunnel_input,
+	.pr_output = rip6_output,
+	.pr_ctloutput = rip6_ctloutput,
+	.pr_usrreq = rip6_usrreq,
+};
+#endif /* MOBILE_IPV6 */
 
 static const struct sockaddr_in6 in6_any = {
 	  .sin6_len = sizeof(in6_any)

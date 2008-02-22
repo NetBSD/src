@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.457 2008/01/21 11:36:47 ichiro Exp $
+#	$NetBSD: Makefile,v 1.457.2.1 2008/02/22 02:53:32 keiichi Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 adbbt.4 adbkbd.4 adbms.4 \
@@ -109,7 +109,7 @@ MAN+=	lmtemp.4 spdmem.4
 MAN +=	m25p.4 tm121temp.4
 
 # IPv6/IPsec
-MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 stf.4
+MAN+=	faith.4 gif.4 inet6.4 icmp6.4 ip6.4 ipsec.4 mip.4 stf.4
 
 # ISDN devices
 MAN+=	daic.4 isdntrc.4 isdntel.4 isdnbchan.4 ippp.4 irip.4 isdnctl.4 isdn.4 \

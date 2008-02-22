@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.892 2008/02/20 21:43:36 drochner Exp $
+#	$NetBSD: files,v 1.892.2.1 2008/02/22 02:53:32 keiichi Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1209,6 +1209,7 @@ defpseudo stf:		ifnet
 defpseudo tap { }:	ifnet, ether, arp, bpf_filter
 defpseudo carp:		ifnet, ether, arp, bpf_filter
 defpseudo etherip { }:	ifnet, ether, arp, bpf_filter
+defpseudo mip:		ifnet
 
 defpseudo sequencer
 defpseudo clockctl
@@ -1505,6 +1506,7 @@ file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
 file	net/if_loop.c			loop			needs-flag
 file	net/if_media.c
+file	net/if_mip.c			mip			needs-count
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag
@@ -1516,6 +1518,7 @@ file	net/if_tap.c			tap			needs-flag
 file	net/if_tun.c			tun			needs-flag
 file	net/if_vlan.c			vlan			needs-flag
 file	net/if_pppoe.c			pppoe			needs-flag
+file	net/mipsock.c			mobile_ipv6
 file	net/pfil.c			pfil_hooks | ipfilter | pf
 file	net/ppp-deflate.c		ppp & ppp_deflate
 file	net/ppp_tty.c			ppp

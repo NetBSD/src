@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.139 2007/12/06 00:28:36 dyoung Exp $	*/
+/*	$NetBSD: in6.c,v 1.139.8.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.139 2007/12/06 00:28:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.139.8.1 2008/02/22 02:53:33 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_pfil_hooks.h"
@@ -97,6 +97,15 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.139 2007/12/06 00:28:36 dyoung Exp $");
 #include <netinet6/ip6_mroute.h>
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/scope6_var.h>
+
+#ifdef MOBILE_IPV6
+#include "mip.h"
+#include <netinet6/mip6.h>
+#include <netinet6/mip6_var.h>
+#if NMIP > 0
+#include <net/if_mip.h>
+#endif /* NMIP > 0 */
+#endif /* MOBILE_IPV6 */
 
 #include <net/net_osdep.h>
 
@@ -141,6 +150,14 @@ static int in6_lifaddr_ioctl(struct socket *, u_long, void *,
 static int in6_ifinit(struct ifnet *, struct in6_ifaddr *,
 	struct sockaddr_in6 *, int);
 static void in6_unlink_ifa(struct in6_ifaddr *, struct ifnet *);
+
+static int is_addr_home_address(const struct in6_ifaddr *);
+static int is_in6_iff_nodad_set_in_user_request(int);
+static int is_addr_home_address_assigned_on_home_interface(
+	const struct in6_ifaddr *,
+	const struct ifnet *);
+static void in6_mip6_bul_init(struct in6_ifaddr *);
+static void in6_mip6_bul_remove_all(struct in6_ifaddr *);
 
 /*
  * Subroutine for in6_ifaddloop() and in6_ifremloop().
@@ -604,7 +621,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
 		    (ifra->ifra_flags & IN6_IFF_DETACHED) != 0 ||
-		    (ifra->ifra_flags & IN6_IFF_NODAD) != 0 ||
+		    is_in6_iff_nodad_set_in_user_request(ifra->ifra_flags) ||
 		    (ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0) {
 			return EINVAL;
 		}
@@ -640,6 +657,13 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp,
 		    NULL);
 		if (pr0.ndpr_plen == 128) {
 			break;	/* we don't need to install a host route. */
+		} else if (is_addr_home_address_assigned_on_home_interface(ia,
+			ifp)) {
+			  /*
+			   * we don't need to install an interface
+			   * route for home addresses
+			   */
+			break;
 		}
 		pr0.ndpr_prefix = ifra->ifra_addr;
 		/* apply the mask for safety. */
@@ -918,6 +942,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 			return ENOBUFS;
 		bzero((void *)ia, sizeof(*ia));
 		LIST_INIT(&ia->ia6_memberships);
+		in6_mip6_bul_init(ia);
 		/* Initialize the address and masks, and put time stamp */
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
 		ia->ia_addr.sin6_family = AF_INET6;
@@ -1029,7 +1054,8 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 * source address.
 	 */
 	ia->ia6_flags &= ~IN6_IFF_DUPLICATED;	/* safety */
-	if (hostIsNew && in6if_do_dad(ifp)) 
+	if (hostIsNew && in6if_do_dad(ifp)
+	    && !is_addr_home_address(ia) /* XXX XXX XXX */)
 		ia->ia6_flags |= IN6_IFF_TENTATIVE;
 
 	/*
@@ -1343,6 +1369,8 @@ in6_purgeaddr(struct ifaddr *ifa)
 		LIST_REMOVE(imm, i6mm_chain);
 		in6_leavegroup(imm);
 	}
+
+	in6_mip6_bul_remove_all(ia);
 
 	in6_unlink_ifa(ia, ifp);
 }
@@ -2249,4 +2277,72 @@ in6_sin_2_v4mapsin6_in_sock(struct sockaddr **nam)
 	in6_sin_2_v4mapsin6(sin_p, sin6_p);
 	free(*nam, M_SONAME);
 	*nam = (struct sockaddr *)sin6_p;
+}
+
+
+int
+in6_mip6_is_mr(void)
+{
+#if defined(MOBILE_IPV6) && NMIP > 0
+	return (MIP6_IS_MR);
+#else
+	return (0);
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+}
+
+static int
+is_in6_iff_nodad_set_in_user_request(int flags)
+{
+#if defined(MOBILE_IPV6) && NMIP > 0
+	return (flags & IN6_IFF_NODAD);
+#else
+	/* ignore it, since the IN6_IFF_NODAD flag is not modifiable. */
+	return (0);
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+}
+
+static int
+is_addr_home_address_assigned_on_home_interface(const struct in6_ifaddr *ia,
+	const struct ifnet *ifp)
+{
+#if defined(MOBILE_IPV6) && NMIP > 0
+	return ((ia->ia6_flags & IN6_IFF_HOME)
+	    && (ifp->if_type == IFT_MOBILEIP));
+#else
+	return (0);
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+}
+
+static void
+in6_mip6_bul_init(struct in6_ifaddr *ia)
+{
+#if defined(MOBILE_IPV6) && NMIP > 0
+	LIST_INIT(&ia->ia6_mbul_list);
+#else
+	return;
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+}
+	
+static void
+in6_mip6_bul_remove_all(struct in6_ifaddr *ia)
+{
+#if defined(MOBILE_IPV6) && NMIP > 0
+	struct mip6_bul_internal *mbul;
+
+	while ((mbul = LIST_FIRST(&ia->ia6_mbul_list)) != NULL) {
+		mip6_bul_remove(mbul);
+	}
+#else
+	return;
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+}
+
+static int
+is_addr_home_address(const struct in6_ifaddr *ia)
+{
+#if defined(MOBILE_IPV6) && NMIP > 0
+	return ((ia->ia6_flags & IN6_IFF_HOME) != 0);
+#else
+	return (0);
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 }
