@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.77.2.4 2007/12/15 19:34:03 bouyer Exp $
+.\"	$NetBSD: sysinst,v 1.77.2.4.2.1 2008/02/22 21:21:26 bouyer Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -200,7 +200,7 @@ sysinst.fs image.
 See the "prepare" section about obtaining those.
 .\}
 .el One 1.44 MB 3.5" floppy.
-.\}\}\}\}\}
+.\}\}\}\}\}\}
 .\} \" !\n[pmax]:\n[sgimips]:\n[sparc64]
 .if \n[i386] \{\
 .It
