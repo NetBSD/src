@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.28 2008/01/30 12:30:01 he Exp $ */
+/* $NetBSD: pcppi.c,v 1.29 2008/02/22 23:26:11 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.28 2008/01/30 12:30:01 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.29 2008/02/22 23:26:11 dyoung Exp $");
 
 #include "attimer.h"
 
@@ -56,24 +56,24 @@ __KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.28 2008/01/30 12:30:01 he Exp $");
 void	pcppi_pckbd_bell(void *, u_int, u_int, u_int, int);
 #endif
 
-int	pcppi_match(struct device *, struct cfdata *, void *);
-void	pcppi_isa_attach(struct device *, struct device *, void *);
+int	pcppi_match(device_t, struct cfdata *, void *);
+void	pcppi_isa_attach(device_t, device_t, void *);
+void	pcppi_childdet(device_t, device_t);
 
-CFATTACH_DECL(pcppi, sizeof(struct pcppi_softc),
-    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL);
+CFATTACH_DECL2(pcppi, sizeof(struct pcppi_softc),
+    pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, NULL, pcppi_childdet);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(void*);
 
 #if NATTIMER > 0
-static void pcppi_attach_speaker(struct device *);
+static void pcppi_attach_speaker(device_t);
 #endif
 
 #define PCPPIPRI (PZERO - 1)
 
 int
-pcppi_match(struct device *parent, struct cfdata *match,
-    void *aux)
+pcppi_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ppi_ioh;
@@ -151,9 +151,9 @@ lose:
 }
 
 void
-pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
+pcppi_isa_attach(device_t parent, device_t self, void *aux)
 {
-        struct pcppi_softc *sc = (struct pcppi_softc *)self;
+        struct pcppi_softc *sc = device_private(self);
         struct isa_attach_args *ia = aux;
         bus_space_tag_t iot;
 
@@ -166,6 +166,15 @@ pcppi_isa_attach(struct device *parent, struct device *self, void *aux)
         printf("\n");
 
         pcppi_attach(sc);
+}
+
+void
+pcppi_childdet(device_t self, device_t child)
+{
+	struct pcppi_softc *sc = device_private(self);
+
+	KASSERT(&sc->sc_timer->sc_dev == child);
+	sc->sc_timer = NULL;
 }
 
 int
@@ -194,7 +203,7 @@ void
 pcppi_attach(struct pcppi_softc *sc)
 {
         struct pcppi_attach_args pa;
-	struct device *self = (struct device *)sc;
+	device_t self = &sc->sc_dv;
 
         callout_init(&sc->sc_bell_ch, 0);
 
@@ -228,23 +237,23 @@ pcppisearch(device_t parent, cfdata_t cf, const int *locs, void *aux)
 
 #if NATTIMER > 0
 static void
-pcppi_attach_speaker(struct device *self)
+pcppi_attach_speaker(device_t self)
 {
-	struct pcppi_softc *sc = (struct pcppi_softc *)self;
+	struct pcppi_softc *sc = device_private(self);
 
 	if ((sc->sc_timer = attimer_attach_speaker()) == NULL)
-		aprint_error("%s: could not find any available timer\n",
-		    sc->sc_dv.dv_xname);
-	else
-		aprint_normal("%s: attached to %s\n", sc->sc_dv.dv_xname,
-		    sc->sc_timer->sc_dev.dv_xname);
+		aprint_error_dev(self, "could not find any available timer\n");
+	else {
+		aprint_normal_dev(&sc->sc_timer->sc_dev, "attached to %s\n",
+		    device_xname(self));
+	}
 }
 #endif
 
 void
 pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 {
-	struct pcppi_softc *sc = self;
+	struct pcppi_softc *sc = device_private(self);
 	int s;
 
 	s = spltty(); /* ??? */
