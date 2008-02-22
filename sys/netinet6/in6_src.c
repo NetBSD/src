@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.40 2007/11/26 08:12:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.40.10.1 2008/02/22 02:53:33 keiichi Exp $");
 
 #include "opt_inet.h"
 
@@ -110,14 +110,14 @@ __KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.40 2007/11/26 08:12:33 yamt Exp $");
 
 #include <net/net_osdep.h>
 
-#ifdef MIP6
+#ifdef MOBILE_IPV6
 #include <netinet6/mip6.h>
 #include <netinet6/mip6_var.h>
 #include "mip.h"
 #if NMIP > 0
 #include <net/if_mip.h>
 #endif /* NMIP > 0 */
-#endif /* MIP6 */
+#endif /* MOBILE_IPV6 */
 
 #ifndef __OpenBSD__
 #include "loop.h"
@@ -198,9 +198,9 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 #ifdef notyet /* until introducing ND extensions and address selection */
 	int prefer_tempaddr;
 #endif
-#if defined(MIP6) && NMIP > 0
+#if defined(MOBILE_IPV6) && NMIP > 0
 	u_int8_t ip6po_usecoa = 0;
-#endif /* MIP6 && NMIP > 0 */
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 
 	dst = dstsock->sin6_addr; /* make a copy for local operation */
 	*errorp = 0;
@@ -280,7 +280,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	 * the outgoing interface and the destination address.
 	 */
 
-#if defined(MIP6) && NMIP > 0
+#if defined(MOBILE_IPV6) && NMIP > 0
 	/*
 	 * a caller can specify IP6PO_USECOA to not to use a home
 	 * address.  for example, the case that the neighbour
@@ -290,7 +290,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 	    (opts->ip6po_flags & IP6PO_USECOA) != 0) {
 		ip6po_usecoa = 1;
 	}
-#endif /* MIP6 && NMIP > 0 */
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 
 #ifdef DIAGNOSTIC
 	if (ifp == NULL)	/* this should not happen */
@@ -332,12 +332,12 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		if (!ip6_use_deprecated && IFA6_IS_DEPRECATED(ia))
 			continue;
 
-#if defined(MIP6) && NMIP > 0
+#if defined(MOBILE_IPV6) && NMIP > 0
 		/* avoid unusable home addresses. */
 		if ((ia->ia6_flags & IN6_IFF_HOME) &&
 		    !mip6_ifa6_is_addr_valid_hoa(ia))
 			continue;
-#endif /* MIP6 && NMIP > 0 */
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 
 		/* Rule 1: Prefer same address */
 		if (IN6_ARE_ADDR_EQUAL(&dst, &ia->ia_addr.sin6_addr)) {
@@ -372,7 +372,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			REPLACE(3);
 
 		/* Rule 4: Prefer home addresses */
-#if defined(MIP6) && NMIP > 0
+#if defined(MOBILE_IPV6) && NMIP > 0
 		if (!MIP6_IS_MN)
 			goto skip_rule4;
 
@@ -389,16 +389,16 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 		 * address and SA is not, then prefer SB.
 		 */
 		if (((ia_best->ia6_flags & IN6_IFF_HOME) != 0 &&
-			ia_best->ia_ifp->if_type != IFT_MIP)
+			ia_best->ia_ifp->if_type != IFT_MOBILEIP)
 		    &&
 		    ((ia->ia6_flags & IN6_IFF_HOME) != 0 &&
-			ia->ia_ifp->if_type == IFT_MIP))
+		        ia->ia_ifp->if_type == IFT_MOBILEIP))
 			NEXT(4);
 		if (((ia_best->ia6_flags & IN6_IFF_HOME) != 0 &&
-			ia_best->ia_ifp->if_type == IFT_MIP)
+			ia_best->ia_ifp->if_type == IFT_MOBILEIP)
 		    &&
 		    ((ia->ia6_flags & IN6_IFF_HOME) != 0 &&
-			ia->ia_ifp->if_type != IFT_MIP))
+		        ia->ia_ifp->if_type != IFT_MOBILEIP))
 			REPLACE(4);
 		if (ip6po_usecoa == 0) {
 			/*
@@ -439,7 +439,7 @@ in6_selectsrc(struct sockaddr_in6 *dstsock, struct ip6_pktopts *opts,
 			}
 		}			
 	skip_rule4:
-#endif /* MIP6 && NMIP > 0 */
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 
 		/* Rule 5: Prefer outgoing interface */
 		if (ia_best->ia_ifp == ifp && ia->ia_ifp != ifp)

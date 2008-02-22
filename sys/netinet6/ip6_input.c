@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.113 2007/12/04 10:27:34 dyoung Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.113.8.1 2008/02/22 02:53:33 keiichi Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.113 2007/12/04 10:27:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.113.8.1 2008/02/22 02:53:33 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -512,10 +512,38 @@ ip6_input(struct mbuf *m)
 	     */
 	    IN6_ARE_ADDR_EQUAL(&ip6->ip6_dst, &rt6_getkey(rt)->sin6_addr) &&
 #endif
-	    rt->rt_ifp->if_type == IFT_LOOP) {
+#ifdef MOBILE_IPV6
+	    ((rt->rt_flags & RTF_ANNOUNCE) ||
+	    rt->rt_ifp->if_type == IFT_LOOP)
+#else
+	    rt->rt_ifp->if_type == IFT_LOOP
+#endif /* MOBILE_IPV6 */
+	    ) {
 		struct in6_ifaddr *ia6 = (struct in6_ifaddr *)rt->rt_ifa;
 		if (ia6->ia6_flags & IN6_IFF_ANYCAST)
 			m->m_flags |= M_ANYCAST6;
+#ifdef MOBILE_IPV6
+		/* check unicast NS */
+		if ((rtcache_validate(&ip6_forward_rt)->rt_flags & RTF_ANNOUNCE) != 0) {
+			/* This route shows proxy nd. thus the packet was
+			 *  captured. this packet should be tunneled to
+			 * actual coa with tunneling unless this is NS.
+			 */
+			int nh, loff;
+			struct icmp6_hdr *icp;
+			loff = ip6_lasthdr(m, 0, IPPROTO_IPV6, &nh);
+			if (loff <  0 || nh != IPPROTO_ICMPV6)
+				goto mip6_forwarding;
+			IP6_EXTHDR_GET(icp, struct icmp6_hdr *, m, loff,
+			    sizeof(*icp));
+			if (icp == NULL) {
+				icmp6stat.icp6s_tooshort++;
+				return;
+			}
+			if (icp->icmp6_type != ND_NEIGHBOR_SOLICIT)
+				goto mip6_forwarding;
+		}
+#endif /* MOBILE_IPV6 */
 		/*
 		 * packets to a tentative, duplicated, or somehow invalid
 		 * address must not be accepted.
@@ -535,6 +563,10 @@ ip6_input(struct mbuf *m)
 			goto bad;
 		}
 	}
+
+#ifdef MOBILE_IPV6
+ mip6_forwarding:
+#endif /* MOBILE_IPV6 */
 
 	/*
 	 * FAITH (Firewall Aided Internet Translator)
@@ -815,6 +847,8 @@ ip6_input(struct mbuf *m)
 	}
 #endif /* FAST_IPSEC */
 
+		if (dest6_mip6_hao(m, off, nxt) < 0)
+			goto bad;
 
 		nxt = (*inet6sw[ip6_protox[nxt]].pr_input)(&m, &off, nxt);
 	}
@@ -836,9 +870,9 @@ ip6_setdstifaddr(struct mbuf *m, const struct in6_ifaddr *ia)
 		struct ip6aux *ip6a;
 
 		ip6a = (struct ip6aux *)(mtag + 1);
-		in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_scope_id);
+		in6_setscope(&ip6a->ip6a_src, ia->ia_ifp, &ip6a->ip6a_src_scope_id);
 		ip6a->ip6a_src = ia->ia_addr.sin6_addr;
-		ip6a->ip6a_flags = ia->ia6_flags;
+		ip6a->ip6a_src_flags = ia->ia6_flags;
 	}
 	return mtag;	/* NULL if failed to set */
 }

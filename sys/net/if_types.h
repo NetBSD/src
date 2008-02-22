@@ -1,4 +1,4 @@
-/*	$NetBSD: if_types.h,v 1.25 2006/05/18 09:05:51 liamjfoy Exp $	*/
+/*	$NetBSD: if_types.h,v 1.25.54.1 2008/02/22 02:53:33 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -261,6 +261,7 @@
 #define IFT_GIF		0xf0
 #define IFT_PVC		0xf1
 #define IFT_FAITH	0xf2
+#define IFT_MOBILEIP	0xf4		/* Mobile IPv6 home interface */
 #define IFT_PFLOG	0xf5		/* Packet filter logging */
 #define IFT_PFSYNC	0xf6		/* Packet filter state syncing */
 #define IFT_CARP	0xf8		/* Common Address Redundancy Protocol */

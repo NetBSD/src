@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.34 2007/01/16 17:32:04 hubertf Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.34.8.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ static char *dumpfilename = "/var/run/rtadvd.dump"; /* XXX: should be configurab
 static char *mcastif;
 int sock;
 int rtsock = -1;
+int mobileip6 = 0;
 int accept_rr = 0;
 int dflag = 0, sflag = 0;
 
@@ -91,6 +92,8 @@ struct rainfo *ralist = NULL;
 struct nd_optlist {
 	struct nd_optlist *next;
 	struct nd_opt_hdr *opt;
+	struct nd_opt_advinterval *adv;
+	struct nd_opt_homeagent_info *hai;
 };
 union nd_opts {
 	struct nd_opt_hdr *nd_opt_array[9];
@@ -110,16 +113,21 @@ union nd_opts {
 #define nd_opts_rh		nd_opt_each.rh
 #define nd_opts_mtu		nd_opt_each.mtu
 #define nd_opts_list		nd_opt_each.list
+#define nd_opts_adv		nd_opt_each.adv
+#define nd_opts_hai		nd_opt_each.hai
 
 #define NDOPT_FLAG_SRCLINKADDR 0x1
 #define NDOPT_FLAG_TGTLINKADDR 0x2
 #define NDOPT_FLAG_PREFIXINFO 0x4
 #define NDOPT_FLAG_RDHDR 0x8
 #define NDOPT_FLAG_MTU 0x10
+#define NDOPT_FLAG_ADV 0x20
+#define NDOPT_FLAG_HAI 0x40
 
 u_int32_t ndopt_flags[] = {
 	0, NDOPT_FLAG_SRCLINKADDR, NDOPT_FLAG_TGTLINKADDR,
 	NDOPT_FLAG_PREFIXINFO, NDOPT_FLAG_RDHDR, NDOPT_FLAG_MTU,
+	0, NDOPT_FLAG_ADV, NDOPT_FLAG_HAI
 };
 
 int main __P((int, char *[]));
@@ -153,7 +161,7 @@ main(argc, argv)
 	int fflag = 0, logopt;
 
 	/* get command line options and arguments */
-#define OPTIONS "c:dDfM:Rs"
+#define OPTIONS "c:dDfM:mRs"
 	while ((ch = getopt(argc, argv, OPTIONS)) != -1) {
 #undef OPTIONS
 		switch (ch) {
@@ -172,6 +180,9 @@ main(argc, argv)
 		case 'M':
 			mcastif = optarg;
 			break;
+		case 'm':
+			mobileip6 = 1;
+			break;
 		case 'R':
 			fprintf(stderr, "rtadvd: "
 				"the -R option is currently ignored.\n");
@@ -187,7 +198,7 @@ main(argc, argv)
 	argv += optind;
 	if (argc == 0) {
 		fprintf(stderr,
-			"usage: rtadvd [-DdfMRs] [-c configfile] "
+			"usage: rtadvd [-DdfMmRs] [-c configfile] "
 			"interface ...\n");
 		exit(1);
 	}
@@ -1225,7 +1236,7 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 			goto bad;
 		}
 
-		if (hdr->nd_opt_type > ND_OPT_MTU)
+		if (hdr->nd_opt_type > ND_OPT_HA_INFORMATION)
 		{
 			syslog(LOG_INFO, "<%s> unknown ND option(type %d)",
 			    __func__, hdr->nd_opt_type);
@@ -1254,6 +1265,8 @@ nd6_options(struct nd_opt_hdr *hdr, int limit,
 		switch (hdr->nd_opt_type) {
 		case ND_OPT_TARGET_LINKADDR:
 		case ND_OPT_REDIRECTED_HEADER:
+		case ND_OPT_ADV_INTERVAL:
+		case ND_OPT_HA_INFORMATION:
 			break;	/* we don't care about these options */
 		case ND_OPT_SOURCE_LINKADDR:
 		case ND_OPT_MTU:

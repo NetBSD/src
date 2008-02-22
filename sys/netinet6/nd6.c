@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.123 2007/12/04 10:27:34 dyoung Exp $	*/
+/*	$NetBSD: nd6.c,v 1.123.8.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.123 2007/12/04 10:27:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.123.8.1 2008/02/22 02:53:34 keiichi Exp $");
 
 #include "opt_ipsec.h"
 
@@ -65,6 +65,17 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.123 2007/12/04 10:27:34 dyoung Exp $");
 #include <netinet6/scope6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet/icmp6.h>
+
+#ifdef MOBILE_IPV6
+#include "mip.h"
+#include <netinet6/mip6.h>
+#include <netinet6/mip6_var.h>
+#if NMIP > 0
+#include <net/mipsock.h>
+#include <net/if_mip.h>
+#include <netinet/ip6mh.h>
+#endif /* NMIP > 0 */
+#endif /* MOBILE_IPV6 */
 
 #ifdef IPSEC
 #include <netinet6/ipsec.h>
@@ -757,7 +768,9 @@ nd6_purge(struct ifnet *ifp)
 	if (nd6_defifindex == ifp->if_index)
 		nd6_setdefaultiface(0);
 
-	if (!ip6_forwarding && ip6_accept_rtadv) { /* XXX: too restrictive? */
+
+	if ((!ip6_forwarding && ip6_accept_rtadv) || in6_mip6_is_mr()) {
+		/* XXX: too restrictive? */
 		/* refresh default router list */
 		defrouter_select();
 	}
@@ -888,6 +901,7 @@ int
 nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 {
 	struct nd_prefix *pr;
+	struct ifaddr *dstaddr;
 
 	/*
 	 * A link-local address is always a neighbor.
@@ -927,6 +941,14 @@ nd6_is_addr_neighbor(const struct sockaddr_in6 *addr, struct ifnet *ifp)
 		    &addr->sin6_addr, &pr->ndpr_mask))
 			return 1;
 	}
+
+	/*
+	 * If the address is assigned on the node of the other side of
+	 * a p2p interface, the address should be a neighbor.
+	 */
+	dstaddr = ifa_ifwithdstaddr((const struct sockaddr *)addr);
+	if ((dstaddr != NULL) && (dstaddr->ifa_ifp == ifp))
+		return (1);
 
 	/*
 	 * If the default router list is empty, all addresses are regarded
@@ -1860,7 +1882,8 @@ fail:
 	 * for those are not autoconfigured hosts, we explicitly avoid such
 	 * cases for safety.
 	 */
-	if (do_update && ln->ln_router && !ip6_forwarding && ip6_accept_rtadv)
+	if (do_update && ln->ln_router && 
+	    ((!ip6_forwarding && ip6_accept_rtadv) || in6_mip6_is_mr()))
 		defrouter_select();
 
 	return rt;
@@ -1902,6 +1925,63 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	struct sockaddr_in6 *gw6 = NULL;
 	struct llinfo_nd6 *ln = NULL;
 	int error = 0;
+#if defined(MOBILE_IPV6) && NMIP > 0
+	int presence;
+	struct ip6_hdr *ip6;
+	struct in6_ifaddr *src_ia6;
+	struct sockaddr_in6 sin6_src;
+	struct in6_addr in6_src, in6_dst;
+	struct mip6_bul_internal *bul, *cnbul;
+#endif /* MOBILE_IPV6 && NMIP > 0 */
+
+#if defined(MOBILE_IPV6) && NMIP > 0
+	ip6 = mtod(m0, struct ip6_hdr *);
+
+	bzero(&sin6_src, sizeof(struct sockaddr_in6));
+	sin6_src.sin6_len = sizeof(struct sockaddr_in6);
+	sin6_src.sin6_family = AF_INET6;
+	sin6_src.sin6_addr = ip6->ip6_src;
+
+	src_ia6 = (struct in6_ifaddr *)ifa_ifwithaddr(
+	    (struct sockaddr *)&sin6_src);
+
+	if (src_ia6 && ((src_ia6->ia6_flags & IN6_IFF_DEREGISTERING) == 0)) {
+		/* 
+		 * if R flag is set, skip kernel tunnel. 
+		 * packets are tunneled by gif 
+		 */
+		bul = mip6_bul_get_home_agent(&ip6->ip6_src);
+		if ((bul != NULL) && (bul->mbul_mip != NULL) && 
+		    (bul->mbul_flags & IP6_MH_BU_ROUTER) == 0) {
+			if (ip6->ip6_nxt == IPPROTO_MH)
+				goto dontstartrr;
+
+			if (mip6_get_ip6hdrinfo(m, &in6_src, 
+			    &in6_dst, NULL, NULL, 1 /* logical */, &presence)) {
+				mip6log((LOG_ERR, "nd6_output: "
+				    "failed to get logical source and "
+				    "destination addresses.\n"));
+				senderr(EIO); /* XXX ? */
+			}
+			if (IN6_IS_ADDR_MULTICAST(&in6_dst))
+				goto dontstartrr;
+			if (IN6_IS_ADDR_LINKLOCAL(&in6_dst))
+				goto dontstartrr;
+			cnbul = mip6_bul_get(&in6_src, &in6_dst, 0);
+			if (cnbul != NULL)
+				goto dontstartrr;
+
+			/* send a hint to start RR to this node. */
+			mip6_notify_rr_hint(&in6_src, &in6_dst);
+
+		dontstartrr:
+			/* send this packet via bi-directional tunnel. */
+			return ((*bul->mbul_mip->mip_if.if_output)(
+			    (struct ifnet *)bul->mbul_mip, m,
+			    (const struct sockaddr *)dst, rt));
+		}
+	}
+#endif /* MOBILE_IPV6 && NMIP > 0 */
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
