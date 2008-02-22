@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.13 2008/02/22 13:32:19 joerg Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.14 2008/02/22 14:40:15 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpbrk.c,v 1.13 2008/02/22 13:32:19 joerg Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.14 2008/02/22 14:40:15 joerg Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
@@ -45,10 +45,10 @@ strpbrk(const char *s, const char *charset)
 	memset(set, 0, sizeof(set));
 
 	for (; *charset != '\0'; ++charset)
-		set[*charset >> 3] |= idx[*charset & 7];
+		set[(unsigned char)*charset >> 3] |= idx[*charset & 7];
 
 	for (; *s != '\0'; ++s) {
-		if (set[*s >> 3] & idx[*s & 7])
+		if (set[(unsigned char)*s >> 3] & idx[*s & 7])
 			return __UNCONST(s);
 	}
 	return NULL;
