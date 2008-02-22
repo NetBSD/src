@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.4 2007/12/09 20:28:04 jmcneill Exp $ */
+/* $NetBSD: pad.c,v 1.5 2008/02/22 20:52:14 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.4 2007/12/09 20:28:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.5 2008/02/22 20:52:14 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.4 2007/12/09 20:28:04 jmcneill Exp $");
 #include <sys/condvar.h>
 #include <sys/select.h>
 #include <sys/audioio.h>
+#include <sys/vnode.h>
 
 #include <dev/audio_if.h>
 #include <dev/audiovar.h>
@@ -77,8 +78,10 @@ enum {
 	PAD_ENUM_LAST,
 };
 
-static int	pad_match(struct device *, struct cfdata *, void *);
-static void	pad_attach(struct device *, struct device *, void *);
+static int	pad_match(device_t, struct cfdata *, void *);
+static void	pad_attach(device_t, device_t, void *);
+static int	pad_detach(device_t, int);
+static void	pad_childdet(device_t, device_t);
 
 static int	pad_query_encoding(void *, struct audio_encoding *);
 static int	pad_set_params(void *, int, int,
@@ -142,7 +145,8 @@ const struct cdevsw pad_cdevsw = {
 	.d_flag = D_OTHER,
 };
 
-CFATTACH_DECL(pad, sizeof(pad_softc_t), pad_match, pad_attach, NULL, NULL);
+CFATTACH_DECL2(pad, sizeof(pad_softc_t), pad_match, pad_attach, pad_detach,
+    NULL, NULL, pad_childdet);
 
 void
 padattach(int n)
@@ -242,17 +246,24 @@ pad_get_block(pad_softc_t *sc, pad_block_t *pb, int blksize)
 }
 
 static int
-pad_match(struct device *parent, struct cfdata *data, void *opaque)
+pad_match(device_t parent, struct cfdata *data, void *opaque)
 {
 	return 1;
 }
 
 static void
-pad_attach(struct device *parent, struct device *self, void *opaque)
+pad_childdet(device_t self, device_t child)
 {
-	pad_softc_t *sc;
+	pad_softc_t *sc = device_private(self);
 
-	sc = (pad_softc_t *)self;
+	KASSERT(&sc->sc_audiodev->dev == child);
+	sc->sc_audiodev = NULL;
+}
+
+static void
+pad_attach(device_t parent, device_t self, void *opaque)
+{
+	pad_softc_t *sc = device_private(self);
 
 	aprint_normal_dev(self, "outputs: 44100Hz, 16-bit, stereo\n");
 
@@ -275,6 +286,29 @@ pad_attach(struct device *parent, struct device *self, void *opaque)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	return;
+}
+
+static int
+pad_detach(device_t self, int flags)
+{
+	pad_softc_t *sc = device_private(self);
+	int cmaj, mn, rc;
+
+	cmaj = cdevsw_lookup_major(&pad_cdevsw);
+	mn = device_unit(self);
+	vdevgone(cmaj, mn, mn, VCHR);
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+
+	mutex_destroy(&sc->sc_mutex);
+	cv_destroy(&sc->sc_condvar);
+
+	auconv_delete_encodings(sc->sc_encodings);
+
+	return 0;
 }
 
 int
