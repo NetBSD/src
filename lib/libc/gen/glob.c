@@ -1,4 +1,4 @@
-/*	$NetBSD: glob.c,v 1.21 2008/02/01 23:29:54 christos Exp $	*/
+/*	$NetBSD: glob.c,v 1.22 2008/02/22 18:33:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)glob.c	8.3 (Berkeley) 10/13/93";
 #else
-__RCSID("$NetBSD: glob.c,v 1.21 2008/02/01 23:29:54 christos Exp $");
+__RCSID("$NetBSD: glob.c,v 1.22 2008/02/22 18:33:51 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -61,6 +61,8 @@ __RCSID("$NetBSD: glob.c,v 1.21 2008/02/01 23:29:54 christos Exp $");
  *	expand {1,2}{a,b} to 1a 1b 2a 2b 
  * GLOB_PERIOD:
  *	allow metacharacters to match leading dots in filenames.
+ * GLOB_NO_DOTDIRS:
+ *	. and .. are hidden from wildcards, even if GLOB_PERIOD is set.
  * gl_matchc:
  *	Number of matches in the current invocation of glob.
  */
@@ -726,6 +728,14 @@ glob3(Char *pathbuf, Char *pathend, Char *pathlim, Char *pattern,
 		if ((pglob->gl_flags & GLOB_PERIOD) == 0)
 			if (dp->d_name[0] == DOT && *pattern != DOT)
 				continue;
+		/*
+		 * If GLOB_NO_DOTDIRS is set, . and .. vanish.
+		 */
+		if ((pglob->gl_flags & GLOB_NO_DOTDIRS) &&
+		    (dp->d_name[0] == DOT) &&
+		    ((dp->d_name[1] == EOS) ||
+		     ((dp->d_name[1] == DOT) && (dp->d_name[2] == EOS))))
+			continue;
 		/*
 		 * The resulting string contains EOS, so we can
 		 * use the pathlim character, if it is the nul
