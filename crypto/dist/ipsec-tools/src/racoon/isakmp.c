@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.29 2008/01/11 14:07:39 vanhu Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.30 2008/02/22 18:50:03 manu Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -2540,7 +2540,7 @@ isakmp_newcookie(place, remote, local)
 		break;
 #ifdef INET6
 	case AF_INET6:
-		alen = sizeof(struct in_addr);
+		alen = sizeof(struct in6_addr);
 		sa1 = (caddr_t)&((struct sockaddr_in6 *)remote)->sin6_addr;
 		sa2 = (caddr_t)&((struct sockaddr_in6 *)local)->sin6_addr;
 		break;
