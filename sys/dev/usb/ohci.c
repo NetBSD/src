@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.186 2008/02/03 10:57:12 drochner Exp $	*/
+/*	$NetBSD: ohci.c,v 1.187 2008/02/22 22:22:27 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.186 2008/02/03 10:57:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.187 2008/02/22 22:22:27 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,6 +378,15 @@ ohci_activate(device_ptr_t self, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+void
+ohci_childdet(device_t self, device_t child)
+{
+	struct ohci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
 }
 
 int
@@ -1013,7 +1022,7 @@ ohci_shutdown(void *v)
 }
 
 bool
-ohci_resume(device_t dv)
+ohci_resume(device_t dv PMF_FN_ARGS)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
@@ -1047,7 +1056,7 @@ ohci_resume(device_t dv)
 }
 
 bool
-ohci_suspend(device_t dv)
+ohci_suspend(device_t dv PMF_FN_ARGS)
 {
 	ohci_softc_t *sc = device_private(dv);
 	uint32_t ctl;
