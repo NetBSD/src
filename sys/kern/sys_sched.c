@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.16 2008/02/22 22:32:49 rmind Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.17 2008/02/22 23:10:12 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,13 +27,15 @@
  */
 
 /*
+ * System calls relating to the scheduler.
+ *
  * TODO:
  *  - Handle pthread_setschedprio() as defined by POSIX;
  *  - Handle sched_yield() case for SCHED_FIFO as defined by POSIX;
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.16 2008/02/22 22:32:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.17 2008/02/22 23:10:12 ad Exp $");
 
 #include <sys/param.h>
 
@@ -143,7 +145,7 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		mutex_enter(&p->p_smutex);
 		mutex_exit(&proclist_lock);
 		/* Disallow modification of system processes */
-		if (p->p_flag & PK_SYSTEM) {
+		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(&p->p_smutex);
 			return EPERM;
 		}
@@ -297,6 +299,12 @@ sys__sched_setaffinity(struct lwp *l,
 		}
 		mutex_enter(&p->p_smutex);
 		mutex_exit(&proclist_lock);
+		/* Disallow modification of system processes. */
+		if ((p->p_flag & PK_SYSTEM) != 0) {
+			mutex_exit(&p->p_smutex);
+			error = EPERM;
+			goto error;
+		}
 	} else {
 		/* Use the calling process */
 		p = l->l_proc;
@@ -305,17 +313,11 @@ sys__sched_setaffinity(struct lwp *l,
 
 	/*
 	 * Check the permission.
-	 * Disallow modification of system processes.
 	 */
 	error = kauth_authorize_process(l->l_cred,
 	    KAUTH_PROCESS_SCHEDULER_SETAFFINITY, p, NULL, NULL, NULL);
 	if (error != 0) {
 		mutex_exit(&p->p_smutex);
-		goto error;
-	}
-	if ((p->p_flag & PK_SYSTEM) != 0) {
-		mutex_exit(&p->p_smutex);
-		error = EPERM;
 		goto error;
 	}
 
