@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.34 2008/01/28 00:44:17 jmcneill Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.35 2008/02/22 23:07:12 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.34 2008/01/28 00:44:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.35 2008/02/22 23:07:12 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,8 @@ static void ehci_release_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 				   pcitag_t tag);
 static void ehci_get_ownership(ehci_softc_t *sc, pci_chipset_tag_t pc,
 			       pcitag_t tag);
-static bool ehci_pci_suspend(device_t);
-static bool ehci_pci_resume(device_t);
+static bool ehci_pci_suspend(device_t PMF_FN_PROTO);
+static bool ehci_pci_resume(device_t PMF_FN_PROTO);
 
 struct ehci_pci_softc {
 	ehci_softc_t		sc;
@@ -247,8 +247,9 @@ ehci_pci_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-CFATTACH_DECL(ehci_pci, sizeof(struct ehci_pci_softc),
-    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate);
+CFATTACH_DECL2(ehci_pci, sizeof(struct ehci_pci_softc),
+    ehci_pci_match, ehci_pci_attach, ehci_pci_detach, ehci_activate, NULL,
+    ehci_childdet);
 
 #ifdef EHCI_DEBUG
 static void
@@ -366,21 +367,21 @@ next:
 }
 
 static bool
-ehci_pci_suspend(device_t dv)
+ehci_pci_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct ehci_pci_softc *sc = device_private(dv);
 
-	ehci_suspend(dv);
+	ehci_suspend(dv PMF_FN_CALL);
 	ehci_release_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
 
 	return true;
 }
 
 static bool
-ehci_pci_resume(device_t dv)
+ehci_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct ehci_pci_softc *sc = device_private(dv);
 
 	ehci_get_ownership(&sc->sc, sc->sc_pc, sc->sc_tag);
-	return ehci_resume(dv);
+	return ehci_resume(dv PMF_FN_CALL);
 }
