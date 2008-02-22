@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,12 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,10 +25,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.7 2005/07/11 03:06:23 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_ccmp.c,v 1.10 2007/06/11 03:36:54 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.7 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_ccmp.c,v 1.7.46.1 2008/02/22 16:50:25 skrll Exp $");
 #endif
 
 /*
@@ -70,7 +64,7 @@ struct ccmp_ctx {
 static	void *ccmp_attach(struct ieee80211com *, struct ieee80211_key *);
 static	void ccmp_detach(struct ieee80211_key *);
 static	int ccmp_setkey(struct ieee80211_key *);
-static	int ccmp_encap(struct ieee80211_key *k, struct mbuf *, u_int8_t keyid);
+static	int ccmp_encap(struct ieee80211_key *k, struct mbuf *, uint8_t keyid);
 static	int ccmp_decap(struct ieee80211_key *, struct mbuf *, int);
 static	int ccmp_enmic(struct ieee80211_key *, struct mbuf *, int);
 static	int ccmp_demic(struct ieee80211_key *, struct mbuf *, int);
@@ -97,18 +91,21 @@ static	int ccmp_encrypt(struct ieee80211_key *, struct mbuf *, int hdrlen);
 static	int ccmp_decrypt(struct ieee80211_key *, u_int64_t pn,
 		struct mbuf *, int hdrlen);
 
+/* number of references from net80211 layer */
+static	int nrefs = 0;
+
 static void *
 ccmp_attach(struct ieee80211com *ic, struct ieee80211_key *k)
 {
 	struct ccmp_ctx *ctx;
 
-	MALLOC(ctx, struct ccmp_ctx *, sizeof(struct ccmp_ctx),
-		M_DEVBUF, M_NOWAIT | M_ZERO);
+	ctx = malloc(sizeof(struct ccmp_ctx), M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (ctx == NULL) {
 		ic->ic_stats.is_crypto_nomem++;
 		return NULL;
 	}
 	ctx->cc_ic = ic;
+	nrefs++;			/* NB: we assume caller locking */
 	return ctx;
 }
 
@@ -118,6 +115,8 @@ ccmp_detach(struct ieee80211_key *k)
 	struct ccmp_ctx *ctx = k->wk_private;
 
 	FREE(ctx, M_DEVBUF);
+	IASSERT(nrefs > 0, ("imbalanced attach/detach"));
+	nrefs--;			/* NB: we assume caller locking */
 }
 
 static int
@@ -140,11 +139,11 @@ ccmp_setkey(struct ieee80211_key *k)
  * Add privacy headers appropriate for the specified key.
  */
 static int
-ccmp_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
+ccmp_encap(struct ieee80211_key *k, struct mbuf *m, uint8_t keyid)
 {
 	struct ccmp_ctx *ctx = k->wk_private;
 	struct ieee80211com *ic = ctx->cc_ic;
-	u_int8_t *ivp;
+	uint8_t *ivp;
 	int hdrlen;
 
 	hdrlen = ieee80211_hdrspace(ic, mtod(m, void *));
@@ -155,7 +154,7 @@ ccmp_encap(struct ieee80211_key *k, struct mbuf *m, u_int8_t keyid)
 	M_PREPEND(m, ccmp.ic_header, M_NOWAIT);
 	if (m == NULL)
 		return 0;
-	ivp = mtod(m, u_int8_t *);
+	ivp = mtod(m, uint8_t *);
 	ovbcopy(ivp + ccmp.ic_header, ivp, hdrlen);
 	ivp += hdrlen;
 
@@ -251,7 +250,7 @@ ccmp_decap(struct ieee80211_key *k, struct mbuf *m, int hdrlen)
 	/*
 	 * Copy up 802.11 header and strip crypto bits.
 	 */
-	ovbcopy(mtod(m, void *), mtod(m, u_int8_t *) + ccmp.ic_header, hdrlen);
+	ovbcopy(mtod(m, void *), mtod(m, uint8_t *) + ccmp.ic_header, hdrlen);
 	m_adj(m, ccmp.ic_header);
 	m_adj(m, -ccmp.ic_trailer);
 
@@ -358,7 +357,7 @@ ccmp_init_blocks(rijndael_ctx *ctx, struct ieee80211_frame *wh,
 			b0[1] = aad[30];
 			aad[1] = 22 + IEEE80211_ADDR_LEN + 2;
 		} else {
-			*(u_int16_t *)&aad[30] = 0;
+			*(uint16_t *)&aad[30] = 0;
 			b0[1] = 0;
 			aad[1] = 22 + IEEE80211_ADDR_LEN;
 		}
@@ -371,12 +370,12 @@ ccmp_init_blocks(rijndael_ctx *ctx, struct ieee80211_frame *wh,
 			b0[1] = aad[24];
 			aad[1] = 22 + 2;
 		} else {
-			*(u_int16_t *)&aad[24] = 0;
+			*(uint16_t *)&aad[24] = 0;
 			b0[1] = 0;
 			aad[1] = 22;
 		}
-		*(u_int16_t *)&aad[26] = 0;
-		*(u_int32_t *)&aad[28] = 0;
+		*(uint16_t *)&aad[26] = 0;
+		*(uint32_t *)&aad[28] = 0;
 	}
 
 	/* Start with the first block and AAD */

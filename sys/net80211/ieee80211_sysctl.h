@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_sysctl.h,v 1.8 2007/12/25 18:33:46 perry Exp $ */
+/* $NetBSD: ieee80211_sysctl.h,v 1.8.4.1 2008/02/22 16:50:26 skrll Exp $ */
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
  *
@@ -113,8 +113,18 @@ enum ieee80211_node_walk_state {
 
 struct ieee80211_node_walk {
 	struct ieee80211com		*nw_ic;
+#if 0
 	struct ieee80211_node_table	*nw_nt;
 	struct ieee80211_node		*nw_ni;
+#endif
+	int				nw_error;
+	char 				*nw_dp;
+	size_t				nw_len;
+	size_t				nw_eltsize;
+	size_t				nw_out_size;
+	size_t				nw_needed;
+	u_int				nw_ifcount;
+	u_int				nw_nelt;
 	u_short				nw_ifindex;
 };
 #endif /* __NetBSD__ */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.net80211,v 1.2 2006/10/31 21:53:41 joerg Exp $
+#	$NetBSD: files.net80211,v 1.2.46.1 2008/02/22 16:50:25 skrll Exp $
 
 file	net80211/ieee80211.c			wlan
 file	net80211/ieee80211_acl.c		wlan
@@ -8,11 +8,18 @@ file	net80211/ieee80211_crypto_ccmp.c	wlan
 file	net80211/ieee80211_crypto_none.c	wlan
 file	net80211/ieee80211_crypto_tkip.c	wlan
 file	net80211/ieee80211_crypto_wep.c		wlan
+file	net80211/ieee80211_ht.c			wlan
 file	net80211/ieee80211_input.c		wlan
 file	net80211/ieee80211_ioctl.c		wlan
 file	net80211/ieee80211_netbsd.c		wlan
 file	net80211/ieee80211_node.c		wlan
 file	net80211/ieee80211_output.c		wlan
+file	net80211/ieee80211_power.c		wlan
 file	net80211/ieee80211_proto.c		wlan
+file	net80211/ieee80211_regdomain.c		wlan
 file	net80211/ieee80211_rssadapt.c		wlan
+file	net80211/ieee80211_scan.c		wlan
+file	net80211/ieee80211_scan_ap.c		wlan
+file	net80211/ieee80211_scan_sta.c		wlan
 file	net80211/ieee80211_xauth.c		wlan
+

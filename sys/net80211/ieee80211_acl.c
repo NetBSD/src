@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2004-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2004-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,12 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -31,10 +25,10 @@
 
 #include <sys/cdefs.h>
 #ifdef __FreeBSD__
-__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.4 2005/08/13 17:31:48 sam Exp $");
+__FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.6 2007/06/11 03:36:54 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.7 2006/11/16 01:33:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.7.46.1 2008/02/22 16:50:25 skrll Exp $");
 #endif
 
 /*
@@ -74,7 +68,7 @@ enum {
 struct acl {
 	TAILQ_ENTRY(acl)	acl_list;
 	LIST_ENTRY(acl)		acl_hash;
-	u_int8_t		acl_macaddr[IEEE80211_ADDR_LEN];
+	uint8_t			acl_macaddr[IEEE80211_ADDR_LEN];
 };
 struct aclstate {
 	acl_lock_t		as_lock;
@@ -87,7 +81,7 @@ struct aclstate {
 
 /* simple hash is enough for variation of macaddr */
 #define	ACL_HASH(addr)	\
-	(((const u_int8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % ACL_HASHSIZE)
+	(((const uint8_t *)(addr))[IEEE80211_ADDR_LEN - 1] % ACL_HASHSIZE)
 
 MALLOC_DEFINE(M_80211_ACL, "acl", "802.11 station acl");
 
@@ -98,8 +92,8 @@ acl_attach(struct ieee80211com *ic)
 {
 	struct aclstate *as;
 
-	MALLOC(as, struct aclstate *, sizeof(struct aclstate),
-		M_80211_ACL, M_NOWAIT | M_ZERO);
+	as = malloc(sizeof(struct aclstate), M_80211_ACL,
+	    M_NOWAIT | M_ZERO);
 	if (as == NULL)
 		return 0;
 	ACL_LOCK_INIT(as, "acl");
@@ -122,7 +116,7 @@ acl_detach(struct ieee80211com *ic)
 }
 
 static __inline struct acl *
-_find_acl(struct aclstate *as, const u_int8_t *macaddr)
+_find_acl(struct aclstate *as, const uint8_t *macaddr)
 {
 	struct acl *acl;
 	int hash;
@@ -147,7 +141,7 @@ _acl_free(struct aclstate *as, struct acl *acl)
 }
 
 static int
-acl_check(struct ieee80211com *ic, const u_int8_t mac[IEEE80211_ADDR_LEN])
+acl_check(struct ieee80211com *ic, const uint8_t mac[IEEE80211_ADDR_LEN])
 {
 	struct aclstate *as = ic->ic_as;
 
@@ -163,13 +157,13 @@ acl_check(struct ieee80211com *ic, const u_int8_t mac[IEEE80211_ADDR_LEN])
 }
 
 static int
-acl_add(struct ieee80211com *ic, const u_int8_t mac[IEEE80211_ADDR_LEN])
+acl_add(struct ieee80211com *ic, const uint8_t mac[IEEE80211_ADDR_LEN])
 {
 	struct aclstate *as = ic->ic_as;
 	struct acl *acl, *new;
 	int hash;
 
-	MALLOC(new, struct acl *, sizeof(struct acl), M_80211_ACL, M_NOWAIT | M_ZERO);
+	new = malloc(sizeof(struct acl), M_80211_ACL, M_NOWAIT | M_ZERO);
 	if (new == NULL) {
 		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ACL,
 			"ACL: add %s failed, no memory\n", ether_sprintf(mac));
@@ -201,7 +195,7 @@ acl_add(struct ieee80211com *ic, const u_int8_t mac[IEEE80211_ADDR_LEN])
 }
 
 static int
-acl_remove(struct ieee80211com *ic, const u_int8_t mac[IEEE80211_ADDR_LEN])
+acl_remove(struct ieee80211com *ic, const uint8_t mac[IEEE80211_ADDR_LEN])
 {
 	struct aclstate *as = ic->ic_as;
 	struct acl *acl;

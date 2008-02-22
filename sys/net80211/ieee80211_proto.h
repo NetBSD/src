@@ -1,7 +1,7 @@
-/*	$NetBSD: ieee80211_proto.h,v 1.16 2006/03/02 03:38:48 dyoung Exp $	*/
+/*	$NetBSD: ieee80211_proto.h,v 1.16.62.1 2008/02/22 16:50:25 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
- * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
+ * Copyright (c) 2002-2007 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,12 +12,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- *
- * Alternatively, this software may be distributed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/net80211/ieee80211_proto.h,v 1.16 2005/08/13 17:31:48 sam Exp $
+ * $FreeBSD: src/sys/net80211/ieee80211_proto.h,v 1.27 2007/11/02 05:22:25 sam Exp $
  */
 #ifndef _NET80211_IEEE80211_PROTO_H_
 #define _NET80211_IEEE80211_PROTO_H_
@@ -44,12 +38,25 @@ enum ieee80211_state {
 	IEEE80211_S_SCAN	= 1,	/* scanning */
 	IEEE80211_S_AUTH	= 2,	/* try to authenticate */
 	IEEE80211_S_ASSOC	= 3,	/* try to assoc */
-	IEEE80211_S_RUN		= 4,	/* associated */
+	IEEE80211_S_CAC		= 4,	/* doing channel availability check */
+	IEEE80211_S_RUN		= 5,	/* operational (e.g. associated) */
+	IEEE80211_S_CSA		= 6,	/* channel switch announce pending */
+	IEEE80211_S_SLEEP	= 7,	/* power save */
 };
-#define	IEEE80211_S_MAX		(IEEE80211_S_RUN+1)
+#define	IEEE80211_S_MAX		(IEEE80211_S_SLEEP+1)
 
 #define	IEEE80211_SEND_MGMT(_ic,_ni,_type,_arg) \
 	((*(_ic)->ic_send_mgmt)(_ic, _ni, _type, _arg))
+
+/*
+ * The formation of some management frames requires guidance to
+ * deal with legacy clients.  When the client is identified as
+ * "legacy 11b" this parameter can be passed in the arg param of a
+ * IEEE80211_SEND_MGMT call.
+ */
+#define	IEEE80211_SEND_LEGACY_11B	0x1	/* legacy 11b client */
+#define	IEEE80211_SEND_LEGACY_11	0x2	/* other legacy client */
+#define	IEEE80211_SEND_LEGACY		0x3	/* any legacy client */
 
 extern	const char *ieee80211_mgt_subtype_name[];
 extern	const char *ieee80211_phymode_name[];
@@ -59,27 +66,36 @@ void	ieee80211_proto_detach(struct ieee80211com *);
 
 struct ieee80211_node;
 int	ieee80211_input(struct ieee80211com *, struct mbuf *,
-		struct ieee80211_node *, int, u_int32_t);
+		struct ieee80211_node *, int, int, uint32_t);
+void	ieee80211_deliver_data(struct ieee80211com *,
+		struct ieee80211_node *, struct mbuf *);
+struct mbuf *ieee80211_decap1(struct mbuf *, int *);
 int	ieee80211_setup_rates(struct ieee80211_node *ni,
-		const u_int8_t *rates, const u_int8_t *xrates, int flags);
-void	ieee80211_saveie(u_int8_t **, const u_int8_t *);
+		const uint8_t *rates, const uint8_t *xrates, int flags);
+void	ieee80211_saveie(uint8_t **, const uint8_t *);
+void	ieee80211_saveath(struct ieee80211_node *, uint8_t *);
 void	ieee80211_recv_mgmt(struct ieee80211com *, struct mbuf *,
-		struct ieee80211_node *, int, int, u_int32_t);
+		struct ieee80211_node *, int, int, int, uint32_t);
+int	ieee80211_mgmt_output(struct ieee80211com *, struct ieee80211_node *,
+		struct mbuf *, int type);
+struct ieee80211_bpf_params;
+int	ieee80211_raw_xmit(struct ieee80211_node *, struct mbuf *,
+		const struct ieee80211_bpf_params *);
+int	ieee80211_output(struct ifnet *, struct mbuf *,
+		const struct sockaddr *, struct rtentry *);
 int	ieee80211_send_nulldata(struct ieee80211_node *);
-int	ieee80211_send_probereq(struct ieee80211_node *ni,
-		const u_int8_t sa[IEEE80211_ADDR_LEN],
-		const u_int8_t da[IEEE80211_ADDR_LEN],
-		const u_int8_t bssid[IEEE80211_ADDR_LEN],
-		const u_int8_t *ssid, size_t ssidlen,
-		const void *optie, size_t optielen);
 int	ieee80211_send_mgmt(struct ieee80211com *, struct ieee80211_node *,
 		int, int);
+int	ieee80211_send_probereq(struct ieee80211_node *ni,
+		const uint8_t sa[IEEE80211_ADDR_LEN],
+		const uint8_t da[IEEE80211_ADDR_LEN],
+		const uint8_t bssid[IEEE80211_ADDR_LEN],
+		const uint8_t *ssid, size_t ssidlen,
+		const void *optie, size_t optielen);
 int	ieee80211_classify(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *);
 struct mbuf *ieee80211_encap(struct ieee80211com *, struct mbuf *,
 		struct ieee80211_node *);
-void	ieee80211_pwrsave(struct ieee80211com *, struct ieee80211_node *, 
-		struct mbuf *);
 
 void	ieee80211_reset_erp(struct ieee80211com *);
 void	ieee80211_set_shortslottime(struct ieee80211com *, int onoff);
@@ -103,12 +119,12 @@ ieee80211_hdrsize(const void *data)
 	if ((wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) == IEEE80211_FC1_DIR_DSTODS)
 		size += IEEE80211_ADDR_LEN;
 	if (IEEE80211_QOS_HAS_SEQ(wh))
-		size += sizeof(u_int16_t);
+		size += sizeof(uint16_t);
 	return size;
 }
 
 /*
- * Return the size of the 802.11 header; handles any type of frame.
+ * Like ieee80211_hdrsize, but handles any type of frame.
  */
 static __inline int
 ieee80211_anyhdrsize(const void *data)
@@ -120,6 +136,8 @@ ieee80211_anyhdrsize(const void *data)
 		case IEEE80211_FC0_SUBTYPE_CTS:
 		case IEEE80211_FC0_SUBTYPE_ACK:
 			return sizeof(struct ieee80211_frame_ack);
+		case IEEE80211_FC0_SUBTYPE_BAR:
+			return sizeof(struct ieee80211_frame_bar);
 		}
 		return sizeof(struct ieee80211_frame_min);
 	} else
@@ -156,11 +174,11 @@ struct ieee80211_aclator {
 	int	(*iac_attach)(struct ieee80211com *);
 	void	(*iac_detach)(struct ieee80211com *);
 	int	(*iac_check)(struct ieee80211com *,
-			const u_int8_t mac[IEEE80211_ADDR_LEN]);
+			const uint8_t mac[IEEE80211_ADDR_LEN]);
 	int	(*iac_add)(struct ieee80211com *,
-			const u_int8_t mac[IEEE80211_ADDR_LEN]);
+			const uint8_t mac[IEEE80211_ADDR_LEN]);
 	int	(*iac_remove)(struct ieee80211com *,
-			const u_int8_t mac[IEEE80211_ADDR_LEN]);
+			const uint8_t mac[IEEE80211_ADDR_LEN]);
 	int	(*iac_flush)(struct ieee80211com *);
 	int	(*iac_setpolicy)(struct ieee80211com *, int);
 	int	(*iac_getpolicy)(struct ieee80211com *);
@@ -176,24 +194,27 @@ const struct ieee80211_aclator *ieee80211_aclator_get(const char *name);
 #define	IEEE80211_F_DOFRATE	0x00000002	/* use fixed rate */
 #define	IEEE80211_F_DONEGO	0x00000004	/* calc negotiated rate */
 #define	IEEE80211_F_DODEL	0x00000008	/* delete ignore rate */
-int	ieee80211_fix_rate(struct ieee80211_node *, int);
+#define	IEEE80211_F_DOBRS	0x00000010	/* check basic rate set */
+#define	IEEE80211_F_JOIN	0x00000020	/* sta joining our bss */
+int	ieee80211_fix_rate(struct ieee80211_node *,
+		struct ieee80211_rateset *, int);
 
 /*
  * WME/WMM support.
  */
 struct wmeParams {
-	u_int8_t	wmep_acm;
-	u_int8_t	wmep_aifsn;
-	u_int8_t	wmep_logcwmin;		/* log2(cwmin) */
-	u_int8_t	wmep_logcwmax;		/* log2(cwmax) */
-	u_int8_t	wmep_txopLimit;
-	u_int8_t	wmep_noackPolicy;	/* 0 (ack), 1 (no ack) */
+	uint8_t		wmep_acm;
+	uint8_t		wmep_aifsn;
+	uint8_t		wmep_logcwmin;		/* log2(cwmin) */
+	uint8_t		wmep_logcwmax;		/* log2(cwmax) */
+	uint8_t		wmep_txopLimit;
+	uint8_t		wmep_noackPolicy;	/* 0 (ack), 1 (no ack) */
 };
 #define	IEEE80211_TXOP_TO_US(_txop)	((_txop)<<5)
 #define	IEEE80211_US_TO_TXOP(_us)	((_us)>>5)
 
 struct chanAccParams {
-	u_int8_t	cap_info;		/* version of the current set */
+	uint8_t		cap_info;		/* version of the current set */
 	struct wmeParams cap_wmeParams[WME_NUM_AC];
 };
 
@@ -219,14 +240,19 @@ void	ieee80211_wme_updateparams_locked(struct ieee80211com *);
 
 #define	ieee80211_new_state(_ic, _nstate, _arg) \
 	(((_ic)->ic_newstate)((_ic), (_nstate), (_arg)))
-extern	int ieee80211_compute_duration(const struct ieee80211_frame_min *,
-		const struct ieee80211_key *, int,
-		uint32_t, int, int, struct ieee80211_duration *,
-		struct ieee80211_duration *, int *, int);
+int	ieee80211_init(struct ieee80211com *, int forcescan);
+void	ieee80211_dturbo_switch(struct ieee80211com *, int newflags);
 void	ieee80211_beacon_miss(struct ieee80211com *);
-void	ieee80211_print_essid(const u_int8_t *, int);
-void	ieee80211_dump_pkt(const u_int8_t *, int, int, int);
+void	ieee80211_print_essid(const uint8_t *, int);
+void	ieee80211_dump_pkt(struct ieee80211com *,
+		const uint8_t *, int, int, int);
 
+int	ieee80211_compute_duration(const struct ieee80211_frame_min *,
+    const struct ieee80211_key *, int, uint32_t, int, int,
+    struct ieee80211_duration *, struct ieee80211_duration *, int *, int);
+
+
+extern 	const char *ieee80211_opmode_name[];
 extern	const char *ieee80211_state_name[IEEE80211_S_MAX];
 extern	const char *ieee80211_wme_acnames[];
 
@@ -236,18 +262,48 @@ extern	const char *ieee80211_wme_acnames[];
  * can update the frame later w/ minimal overhead.
  */
 struct ieee80211_beacon_offsets {
-	u_int16_t	*bo_caps;	/* capabilities */
-	u_int8_t	*bo_tim;	/* start of atim/dtim */
-	u_int8_t	*bo_wme;	/* start of WME parameters */
-	u_int8_t	*bo_trailer;	/* start of fixed-size trailer */
-	u_int16_t	bo_tim_len;	/* atim/dtim length in bytes */
-	u_int16_t	bo_trailer_len;	/* trailer length in bytes */
+	uint8_t		bo_flags[4];	/* update/state flags */
+	uint16_t	*bo_caps;	/* capabilities */
+	uint8_t		*bo_cfp;	/* start of CFParms element */
+	uint8_t		*bo_tim;	/* start of atim/dtim */
+	uint8_t		*bo_wme;	/* start of WME parameters */
+	uint8_t		*bo_tim_trailer;/* start of fixed-size trailer */
+	uint16_t	bo_tim_len;	/* atim/dtim length in bytes */
+	uint16_t	bo_tim_trailer_len;/* tim trailer length in bytes */
+	uint8_t		*bo_erp;	/* start of ERP element */
+	uint8_t		*bo_htinfo;	/* start of HT info element */
+	uint8_t		*bo_appie;	/* start of AppIE element */
+	uint16_t	bo_appie_len;	/* AppIE length in bytes */
+	uint16_t	bo_csa_trailer_len;;
+	uint8_t		*bo_csa;	/* start of CSA element */
 };
-struct mbuf *ieee80211_beacon_alloc(struct ieee80211com *,
-		struct ieee80211_node *, struct ieee80211_beacon_offsets *);
-int	ieee80211_beacon_update(struct ieee80211com *,
-		struct ieee80211_node *, struct ieee80211_beacon_offsets *,
-		struct mbuf *, int broadcast);
+struct mbuf *ieee80211_beacon_alloc(struct ieee80211_node *,
+		struct ieee80211_beacon_offsets *);
+
+/*
+ * Beacon frame updates are signaled through calls to ic_update_beacon
+ * with one of the IEEE80211_BEACON_* tokens defined below.  For devices
+ * that construct beacon frames on the host this can trigger a rebuild
+ * or defer the processing.  For devices that offload beacon frame
+ * handling this callback can be used to signal a rebuild.  The bo_flags
+ * array in the ieee80211_beacon_offsets structure is intended to record
+ * deferred processing requirements; ieee80211_beacon_update uses the
+ * state to optimize work.  Since this structure is owned by the driver
+ * and not visible to the 802.11 layer drivers must supply an ic_update_beacon
+ * callback that marks the flag bits and schedules (as necessary) an update.
+ */
+enum {
+	IEEE80211_BEACON_CAPS	= 0,	/* capabilities */
+	IEEE80211_BEACON_TIM	= 1,	/* DTIM/ATIM */
+	IEEE80211_BEACON_WME	= 2,
+	IEEE80211_BEACON_ERP	= 3,	/* Extended Rate Phy */
+	IEEE80211_BEACON_HTINFO	= 4,	/* HT Information */
+	IEEE80211_BEACON_APPIE	= 5,	/* Application IE's */
+	IEEE80211_BEACON_CFP	= 6,	/* CFParms */
+	IEEE80211_BEACON_CSA	= 7,	/* Channel Switch Announcement */
+};
+int	ieee80211_beacon_update(struct ieee80211_node *,
+		struct ieee80211_beacon_offsets *, struct mbuf *, int mcast);
 
 /*
  * Notification methods called from the 802.11 state machine.

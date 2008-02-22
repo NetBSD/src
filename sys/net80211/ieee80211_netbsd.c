@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.16 2008/01/31 22:07:22 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.16.4.1 2008/02/22 16:50:25 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,7 +30,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_freebsd.c,v 1.8 2005/08/08 18:46:35 sam Exp $");
 #else
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.16 2008/01/31 22:07:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.16.4.1 2008/02/22 16:50:25 skrll Exp $");
 #endif
 
 /*
@@ -53,19 +53,14 @@ __KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.16 2008/01/31 22:07:22 christ
 #include <net/if_ether.h>
 #include <net/route.h>
 
-#include <net80211/ieee80211_netbsd.h>
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_sysctl.h>
+#include <net80211/ieee80211_netbsd.h>
 
 #define	LOGICALLY_EQUAL(x, y)	(!(x) == !(y))
 
 static void ieee80211_sysctl_fill_node(struct ieee80211_node *,
-    struct ieee80211_node_sysctl *, int, const struct ieee80211_channel *,
-    uint32_t);
-static struct ieee80211_node *ieee80211_node_walknext(
-    struct ieee80211_node_walk *);
-static struct ieee80211_node *ieee80211_node_walkfirst(
-    struct ieee80211_node_walk *, u_short);
+    struct ieee80211_node_sysctl *, int, const struct ieee80211_channel *);
 static int ieee80211_sysctl_node(SYSCTLFN_ARGS);
 
 #ifdef IEEE80211_DEBUG
@@ -90,7 +85,7 @@ ieee80211_init0(void)
 }
 
 void
-ieee80211_init(void)
+net80211_init(void)
 {
 	static ONCE_DECL(ieee80211_init_once);
 
@@ -252,86 +247,14 @@ ieee80211_sysctl_detach(struct ieee80211com *ic)
 	sysctl_teardown(&ic->ic_sysctllog);
 }
 
-/*
- * Pointers for testing:
- *
- *	If there are no interfaces, or else no 802.11 interfaces,
- *	ieee80211_node_walkfirst must return NULL.
- *
- *	If there is any single 802.11 interface, ieee80211_node_walkfirst
- *	must not return NULL.
- */	
-static struct ieee80211_node *
-ieee80211_node_walkfirst(struct ieee80211_node_walk *nw, u_short if_index)
-{
-	(void)memset(nw, 0, sizeof(*nw));
-
-	nw->nw_ifindex = if_index;
-
-	LIST_FOREACH(nw->nw_ic, &ieee80211com_head, ic_list) {
-		if (if_index != 0 && nw->nw_ic->ic_ifp->if_index != if_index)
-			continue;
-		if (!TAILQ_EMPTY(&nw->nw_ic->ic_sta.nt_node))
-			nw->nw_nt = &nw->nw_ic->ic_sta;
-		else if (!TAILQ_EMPTY(&nw->nw_ic->ic_scan.nt_node))
-			nw->nw_nt = &nw->nw_ic->ic_scan;
-		else if (nw->nw_ic->ic_bss == NULL)
-			continue;
-		break;
-	}
-
-	if (nw->nw_ic == NULL)
-		return NULL;
-
-	if (nw->nw_nt == NULL)
-		nw->nw_ni = nw->nw_ic->ic_bss;
-	else
-		nw->nw_ni = TAILQ_FIRST(&nw->nw_nt->nt_node);
-
-	return nw->nw_ni;
-}
-
-static struct ieee80211_node *
-ieee80211_node_walknext(struct ieee80211_node_walk *nw)
-{
-	if (nw->nw_nt != NULL)
-		nw->nw_ni = TAILQ_NEXT(nw->nw_ni, ni_list);
-	else
-		nw->nw_ni = NULL;
-
-	while (nw->nw_ni == NULL) {
-		if (nw->nw_nt == &nw->nw_ic->ic_sta) {
-			nw->nw_nt = &nw->nw_ic->ic_scan;
-			nw->nw_ni = TAILQ_FIRST(&nw->nw_nt->nt_node);
-			continue;
-		} else if (nw->nw_nt == &nw->nw_ic->ic_scan) {
-			nw->nw_nt = NULL;
-			nw->nw_ni = nw->nw_ic->ic_bss;
-			continue;
-		}
-		KASSERT(nw->nw_nt == NULL);
-		if (nw->nw_ifindex != 0)
-			return NULL;
-
-		nw->nw_ic = LIST_NEXT(nw->nw_ic, ic_list);
-		if (nw->nw_ic == NULL)
-			return NULL;
-
-		nw->nw_nt = &nw->nw_ic->ic_sta;
-		nw->nw_ni = TAILQ_FIRST(&nw->nw_nt->nt_node);
-	}
-
-	return nw->nw_ni;
-}
-
 static void
 ieee80211_sysctl_fill_node(struct ieee80211_node *ni,
     struct ieee80211_node_sysctl *ns, int ifindex,
-    const struct ieee80211_channel *chan0, uint32_t flags)
+    const struct ieee80211_channel *chan0)
 {
 	ns->ns_ifindex = ifindex;
 	ns->ns_capinfo = ni->ni_capinfo;
-	ns->ns_flags = flags;
+	ns->ns_flags |= IEEE80211_NODE_SYSCTL_F_STA;
 	(void)memcpy(ns->ns_macaddr, ni->ni_macaddr, sizeof(ns->ns_macaddr));
 	(void)memcpy(ns->ns_bssid, ni->ni_bssid, sizeof(ns->ns_bssid));
 	if (ni->ni_chan != IEEE80211_CHAN_ANYC) {
@@ -360,6 +283,84 @@ ieee80211_sysctl_fill_node(struct ieee80211_node *ni,
 	ns->ns_fails = ni->ni_fails;
 }
 
+static void
+sysctl_read_scan(void *arg, const struct ieee80211_scan_entry *se)
+{
+	struct ieee80211_node_sysctl ns;
+	struct ieee80211_node_walk *nw = arg;
+	struct ieee80211com *ic = nw->nw_ic;
+	int error, nr, nxr;
+
+	if (nw->nw_error != 0 || nw->nw_nelt <= 0)
+		return;
+
+	if (nw->nw_len >= nw->nw_eltsize) {
+		memset(&ns, 0, sizeof(ns));
+		ns.ns_ifindex = ic->ic_ifp->if_index;
+	        IEEE80211_ADDR_COPY(ns.ns_bssid, se->se_bssid);
+		ns.ns_capinfo = se->se_capinfo;
+		ns.ns_flags = IEEE80211_NODE_SYSCTL_F_SCAN;
+		ns.ns_freq = se->se_chan->ic_freq;
+		ns.ns_chanflags = se->se_chan->ic_flags;
+		ns.ns_chanidx = &ic->ic_channels[0] - se->se_chan; /* XXXNH */
+		ns.ns_rssi = se->se_rssi;
+		ns.ns_esslen = se->se_ssid[1];
+		(void)memcpy(ns.ns_essid, se->se_ssid+2, ns.ns_esslen);
+		ns.ns_erp = se->se_erp;
+		ns.ns_rstamp = se->se_rstamp;
+		nr = min(se->se_rates[1], IEEE80211_RATE_MAXSIZE);
+		memcpy(ns.ns_rates.rs_rates, se->se_rates+2, nr);
+		nxr = min(se->se_xrates[1], IEEE80211_RATE_MAXSIZE - nr);
+		memcpy(ns.ns_rates.rs_rates+nr, se->se_xrates+2, nxr);
+		ns.ns_rates.rs_nrates = nr + nxr;
+		ns.ns_intval = se->se_intval;
+		(void)memcpy(ns.ns_tstamp, &se->se_tstamp,
+		    sizeof(ns.ns_tstamp));
+		ns.ns_fhdwell = se->se_fhdwell;
+		ns.ns_fhindex = se->se_fhindex;
+
+		error = copyout(&ns, nw->nw_dp, nw->nw_out_size);
+		if (error) {
+			nw->nw_error = error;
+			return;
+		}
+		nw->nw_dp += nw->nw_eltsize;
+		nw->nw_len -= nw->nw_eltsize;
+	}
+
+	nw->nw_needed += nw->nw_eltsize;
+	if (nw->nw_nelt != INT_MAX)
+		nw->nw_nelt--;
+}
+		
+static void
+sysctl_read_sta(void *arg, struct ieee80211_node *ni)
+{
+	struct ieee80211_node_sysctl ns;
+	struct ieee80211_node_walk *nw = arg;
+	struct ieee80211com *ic = nw->nw_ic;
+	int error;
+
+	if (nw->nw_error != 0 || nw->nw_nelt <= 0)
+		return;
+
+	if (nw->nw_len >= nw->nw_eltsize) {
+		ieee80211_sysctl_fill_node(ni, &ns, ic->ic_ifp->if_index,
+		    &ic->ic_channels[0]);
+		error = copyout(&ns, nw->nw_dp, nw->nw_out_size);
+		if (error) {
+			nw->nw_error = error;
+			return;
+		}
+		nw->nw_dp += nw->nw_eltsize;
+		nw->nw_len -= nw->nw_eltsize;
+	}
+
+	nw->nw_needed += nw->nw_eltsize;
+	if (nw->nw_nelt != INT_MAX)
+		nw->nw_nelt--;
+}
+
 /* Between two examinations of the sysctl tree, I expect each
  * interface to add no more than 5 nodes.
  */
@@ -369,13 +370,8 @@ static int
 ieee80211_sysctl_node(SYSCTLFN_ARGS)
 {
 	struct ieee80211_node_walk nw;
-	struct ieee80211_node *ni;
-	struct ieee80211_node_sysctl ns;
-	char *dp;
-	u_int cur_ifindex, ifcount, ifindex, last_ifindex, op, arg, hdr_type;
-	uint32_t flags;
-	size_t len, needed, eltsize, out_size;
-	int error, s, saw_bss = 0, nelt;
+	u_int op, arg, hdr_type;
+	int s, nelt;
 
 	if (namelen == 1 && name[0] == CTL_QUERY)
 		return (sysctl_query(SYSCTLFN_CALL(rnode)));
@@ -384,75 +380,54 @@ ieee80211_sysctl_node(SYSCTLFN_ARGS)
 		return (EINVAL);
 
 	/* ifindex.op.arg.header-type.eltsize.nelt */
-	dp = oldp;
-	len = (oldp != NULL) ? *oldlenp : 0;
-	ifindex = name[IEEE80211_SYSCTL_NODENAME_IF];
+	nw.nw_dp = oldp;
+	nw.nw_len = (oldp != NULL) ? *oldlenp : 0;
+	nw.nw_ifindex = name[IEEE80211_SYSCTL_NODENAME_IF];
 	op = name[IEEE80211_SYSCTL_NODENAME_OP];
 	arg = name[IEEE80211_SYSCTL_NODENAME_ARG];
 	hdr_type = name[IEEE80211_SYSCTL_NODENAME_TYPE];
-	eltsize = name[IEEE80211_SYSCTL_NODENAME_ELTSIZE];
+	nw.nw_eltsize = name[IEEE80211_SYSCTL_NODENAME_ELTSIZE];
 	nelt = name[IEEE80211_SYSCTL_NODENAME_ELTCOUNT];
-	out_size = MIN(sizeof(ns), eltsize);
+	nw.nw_out_size = MIN(sizeof(struct ieee80211_node_sysctl), nw.nw_eltsize);
 
 	if (op != IEEE80211_SYSCTL_OP_ALL || arg != 0 ||
-	    hdr_type != IEEE80211_SYSCTL_T_NODE || eltsize < 1 || nelt < 0)
+	    hdr_type != IEEE80211_SYSCTL_T_NODE || nw.nw_eltsize < 1 ||
+	    nelt < 0)
 		return (EINVAL);
 
-	error = 0;
-	needed = 0;
-	ifcount = 0;
-	last_ifindex = 0;
+	nw.nw_nelt = nelt;
+	nw.nw_error = 0;
+	nw.nw_needed = 0;
+	nw.nw_ifcount = 0;
 
 	s = splnet();
-
-	for (ni = ieee80211_node_walkfirst(&nw, ifindex); ni != NULL;
-	     ni = ieee80211_node_walknext(&nw)) {
-		struct ieee80211com *ic;
-
-		ic = nw.nw_ic;
-		cur_ifindex = ic->ic_ifp->if_index;
-
-		if (cur_ifindex != last_ifindex) {
-			saw_bss = 0;
-			ifcount++;
-			last_ifindex = cur_ifindex;
-		}
-
-		if (nelt <= 0)
+        SLIST_FOREACH(nw.nw_ic, &ieee80211_list, ic_next) {
+		if (nw.nw_ifindex != nw.nw_ic->ic_ifp->if_index)
 			continue;
 
-		if (saw_bss && ni == ic->ic_bss)
-			continue;
-		else if (ni == ic->ic_bss) {
-			saw_bss = 1;
-			flags = IEEE80211_NODE_SYSCTL_F_BSS;
-		} else
-			flags = 0;
-		if (ni->ni_table == &ic->ic_scan)
-			flags |= IEEE80211_NODE_SYSCTL_F_SCAN;
-		else if (ni->ni_table == &ic->ic_sta)
-			flags |= IEEE80211_NODE_SYSCTL_F_STA;
-		if (len >= eltsize) {
-			ieee80211_sysctl_fill_node(ni, &ns, cur_ifindex,
-			    &ic->ic_channels[0], flags);
-			error = copyout(&ns, dp, out_size);
-			if (error)
-				goto cleanup;
-			dp += eltsize;
-			len -= eltsize;
-		}
-		needed += eltsize;
-		if (nelt != INT_MAX)
-			nelt--;
+		ieee80211_iterate_nodes(&nw.nw_ic->ic_sta, sysctl_read_sta,
+		    &nw);
+		if (nw.nw_error)
+			break;
+
+		ieee80211_scan_iterate(nw.nw_ic, sysctl_read_scan,
+		    &nw);
+		if (nw.nw_error)
+			break;
+
+		/* XXXNH flags */
+		if (nw.nw_ic->ic_bss != NULL)
+			sysctl_read_sta(&nw, nw.nw_ic->ic_bss);
+		if (nw.nw_error)
+			break;
 	}
-cleanup:
 	splx(s);
 
-	*oldlenp = needed;
+	*oldlenp = nw.nw_needed;
 	if (oldp == NULL)
-		*oldlenp += ifcount * IEEE80211_SYSCTL_NODE_GROWTH * eltsize;
+		*oldlenp += nw.nw_ifcount * IEEE80211_SYSCTL_NODE_GROWTH * nw.nw_eltsize;
 
-	return (error);
+	return (nw.nw_error);
 }
 
 /*
@@ -611,7 +586,7 @@ m_append(struct mbuf *m0, int len, const void *cpv)
  * can use this interface too.
  */
 struct mbuf *
-ieee80211_getmgtframe(u_int8_t **frm, u_int pktlen)
+ieee80211_getmgtframe(u_int8_t **frm, int headroom, u_int pktlen)
 {
 	struct mbuf *m;
 	u_int len;

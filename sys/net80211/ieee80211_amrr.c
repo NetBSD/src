@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_amrr.c,v 1.2 2007/12/11 12:40:10 lukem Exp $	*/
+/*	$NetBSD: ieee80211_amrr.c,v 1.2.6.1 2008/02/22 16:50:25 skrll Exp $	*/
 /*	$OpenBSD: ieee80211_amrr.c,v 1.1 2006/06/17 19:07:19 damien Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_amrr.c,v 1.2 2007/12/11 12:40:10 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_amrr.c,v 1.2.6.1 2008/02/22 16:50:25 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
