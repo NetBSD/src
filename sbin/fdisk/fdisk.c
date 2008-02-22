@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.88 2005/01/20 16:01:02 xtraeme Exp $ */
+/*	$NetBSD: fdisk.c,v 1.88.2.1 2008/02/22 18:55:12 bouyer Exp $ */
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.88 2005/01/20 16:01:02 xtraeme Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.88.2.1 2008/02/22 18:55:12 bouyer Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -1263,7 +1263,7 @@ intuit_translated_geometry(void)
 			a2 -= s2;
 			num = (uint64_t)h1 * a2 - (uint64_t)h2 * a1;
 			denom = (uint64_t)c2 * a1 - (uint64_t)c1 * a2;
-			if (denom != 0 && num % denom == 0) {
+			if (denom != 0 && num != 0 && num % denom == 0) {
 				xheads = num / denom;
 				xsectors = a1 / (c1 * xheads + h1);
 				break;
@@ -1273,8 +1273,10 @@ intuit_translated_geometry(void)
 			break;
 	}
 
-	if (xheads == -1)
+	if (xheads == -1) {
+		warnx("Cannot determine the number of heads");
 		return;
+	}
 
 	/* Estimate the number of cylinders. */
 	xcylinders = disklabel.d_secperunit / xheads / xsectors;
@@ -1326,15 +1328,20 @@ get_mapping(int i, uint *cylinder, uint *head, uint *sector,
 	if (i % 2 == 0) {
 		*cylinder = MBR_PCYL(part->mbrp_scyl, part->mbrp_ssect);
 		*head = part->mbrp_shd;
-		*sector = MBR_PSECT(part->mbrp_ssect) - 1;
+		*sector = MBR_PSECT(part->mbrp_ssect);
 		*absolute = le32toh(part->mbrp_start);
 	} else {
 		*cylinder = MBR_PCYL(part->mbrp_ecyl, part->mbrp_esect);
 		*head = part->mbrp_ehd;
-		*sector = MBR_PSECT(part->mbrp_esect) - 1;
+		*sector = MBR_PSECT(part->mbrp_esect);
 		*absolute = le32toh(part->mbrp_start)
 		    + le32toh(part->mbrp_size) - 1;
 	}
+	/* Sanity check the data against all zeroes */
+	if ((*cylinder == 0) && (*sector == 0) && (*head == 0))
+		return -1;
+	/* sector numbers in the MBR partition table start at 1 */
+	*sector = *sector - 1;
 	/* Sanity check the data against max values */
 	if ((((*cylinder * MAXHEAD) + *head) * MAXSECTOR + *sector) < *absolute)
 		/* cannot be a CHS mapping */
