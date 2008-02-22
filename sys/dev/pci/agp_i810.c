@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.48 2008/01/04 21:18:00 ad Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.49 2008/02/22 19:47:06 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.48 2008/01/04 21:18:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.49 2008/02/22 19:47:06 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,10 @@ struct agp_i810_softc {
 
 	u_int32_t pgtblctl;
 };
+
+/* XXX hack, see below */
+bus_addr_t agp_i810_vga_regbase;
+bus_space_handle_t agp_i810_vga_bsh;
 
 static u_int32_t agp_i810_get_aperture(struct agp_softc *);
 static int agp_i810_set_aperture(struct agp_softc *, u_int32_t);
@@ -192,6 +196,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	struct agp_i810_softc *isc;
 	struct agp_gatt *gatt;
 	int error, apbase;
+	bus_addr_t mmadr;
 	bus_size_t mmadrsize;
 
 	isc = malloc(sizeof *isc, M_AGP, M_NOWAIT|M_ZERO);
@@ -285,7 +290,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	if (isc->chiptype == CHIP_I915 || isc->chiptype == CHIP_G33) {
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I915_MMADR,
 		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
-		    NULL, &mmadrsize);
+		    &mmadr, &mmadrsize);
 		if (error != 0) {
 			aprint_error(": can't map mmadr registers\n");
 			agp_generic_detach(sc);
@@ -303,7 +308,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	} else if (isc->chiptype == CHIP_I965) {
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I965_MMADR,
 		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
-		    NULL, &mmadrsize);
+		    &mmadr, &mmadrsize);
 		if (error != 0) {
 			aprint_error(": can't map mmadr registers\n");
 			agp_generic_detach(sc);
@@ -312,7 +317,7 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	} else {
 		error = pci_mapreg_map(&isc->vga_pa, AGP_I810_MMADR,
 		    PCI_MAPREG_TYPE_MEM, 0, &isc->bst, &isc->bsh,
-		    NULL, &mmadrsize);
+		    &mmadr, &mmadrsize);
 		if (error != 0) {
 			aprint_error(": can't map mmadr registers\n");
 			agp_generic_detach(sc);
@@ -334,7 +339,28 @@ agp_i810_attach(struct device *parent, struct device *self, void *aux)
 	if (!pmf_device_register(self, NULL, agp_i810_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	/*
+	 * XXX horrible hack to allow drm code to use our mapping
+	 * of VGA chip registers
+	 */
+	agp_i810_vga_regbase = mmadr;
+	agp_i810_vga_bsh = isc->bsh;
+
 	return agp_i810_init(sc);
+}
+
+/*
+ * XXX horrible hack to allow drm code to use our mapping
+ * of VGA chip registers
+ */
+int
+agp_i810_borrow(bus_addr_t base, bus_space_handle_t *hdlp)
+{
+
+	if (!agp_i810_vga_regbase || base != agp_i810_vga_regbase)
+		return 0;
+	*hdlp = agp_i810_vga_bsh;
+	return 1;
 }
 
 static int agp_i810_init(struct agp_softc *sc)
@@ -502,14 +528,6 @@ static int agp_i810_init(struct agp_softc *sc)
 	 * Make sure the chipset can see everything.
 	 */
 	agp_flush_cache();
-
-#if 0
-	/*      
-	 * another device (drm) may need access to this region
-	 * we do not need it anymore
-	 */     
-	bus_space_unmap(isc->bst, isc->bsh, mmadrsize);
-#endif
 
 	return 0;
 }
