@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.c,v 1.124 2008/02/06 07:42:43 bjs Exp $	*/
+/*	$NetBSD: ipsec.c,v 1.124.2.1 2008/02/22 02:53:34 keiichi Exp $	*/
 /*	$KAME: ipsec.c,v 1.136 2002/05/19 00:36:39 itojun Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124 2008/02/06 07:42:43 bjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124.2.1 2008/02/22 02:53:34 keiichi Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -87,6 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: ipsec.c,v 1.124 2008/02/06 07:42:43 bjs Exp $");
 #include <netkey/key.h>
 #include <netkey/keydb.h>
 #include <netkey/key_debug.h>
+
+#ifdef MOBILE_IPV6
+#include "mip.h"
+#include <netinet/ip6mh.h>
+#include <netinet6/mip6.h>
+#include <netinet6/mip6_var.h>
+#endif /* MOBILE_IPV6 */
 
 #include <net/net_osdep.h>
 
@@ -1031,6 +1038,9 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 	int off, nxt;
 	struct tcphdr th;
 	struct udphdr uh;
+#ifdef MOBILE_IPV6
+	struct ip6_mh mh;
+#endif /* MOBILE_IPV6 */
 
 	/* sanity check */
 	if (m == NULL)
@@ -1070,6 +1080,16 @@ ipsec6_get_ulp(struct mbuf *m, struct secpolicyindex *spidx, int needport)
 		((struct sockaddr_in6 *)&spidx->src)->sin6_port = uh.uh_sport;
 		((struct sockaddr_in6 *)&spidx->dst)->sin6_port = uh.uh_dport;
 		break;
+#ifdef MOBILE_IPV6
+	case IPPROTO_MH:
+		spidx->ul_proto = nxt;
+		if (off + sizeof(struct ip6_mh) > m->m_pkthdr.len)
+			break;
+		m_copydata(m, off, sizeof(mh), (void *)&mh);
+		((struct sockaddr_in6 *)&spidx->src)->sin6_port =
+		    htons((u_int16_t)mh.ip6mh_type);
+		break;
+#endif /* MOBILE_IPV6 */
 	case IPPROTO_ICMPV6:
 	default:
 		/* XXX intermediate headers??? */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rtadvd.8,v 1.21 2006/03/05 23:47:08 rpaulo Exp $
+.\"	$NetBSD: rtadvd.8,v 1.21.16.1 2008/02/22 02:53:34 keiichi Exp $
 .\"	$KAME: rtadvd.8,v 1.24 2002/05/31 16:16:08 jinmei Exp $
 .\"
 .\" Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -36,7 +36,7 @@
 .Nd router advertisement daemon
 .Sh SYNOPSIS
 .Nm
-.Op Fl DdfMRs
+.Op Fl DdfMmRs
 .Op Fl c Ar configfile
 .Ar interface ...
 .Sh DESCRIPTION
@@ -135,10 +135,10 @@ line.
 This option has meaning only with the
 .Fl R
 option, which enables routing renumbering protocol support.
-.\".It Fl m
-.\"Enables mobile IPv6 support.
-.\"This changes the content of router advertisement option, as well as
-.\"permitted configuration directives.
+.It Fl m
+Enables mobile IPv6 support.
+This option introduces 'hapref' and 'hatime' configuration options for
+Mobile IPv6.
 .It Fl R
 Accept router renumbering requests.
 If you enable it, an

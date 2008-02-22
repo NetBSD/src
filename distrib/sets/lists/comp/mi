@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1115 2008/02/20 09:55:37 drochner Exp $
+#	$NetBSD: mi,v 1.1115.2.1 2008/02/22 02:53:32 keiichi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1337,6 +1337,7 @@
 ./usr/include/net/if_ieee80211.h		comp-obsolete		obsolete
 ./usr/include/net/if_llc.h			comp-c-include
 ./usr/include/net/if_media.h			comp-c-include
+./usr/include/net/if_mip.h			comp-c-include
 ./usr/include/net/if_pflog.h			comp-c-include
 ./usr/include/net/if_ppp.h			comp-c-include
 ./usr/include/net/if_pppoe.h			comp-c-include
@@ -1351,6 +1352,7 @@
 ./usr/include/net/if_tun.h			comp-c-include
 ./usr/include/net/if_types.h			comp-c-include
 ./usr/include/net/if_vlanvar.h			comp-c-include
+./usr/include/net/mipsock.h			comp-c-include
 ./usr/include/net/netisr.h			comp-c-include
 ./usr/include/net/pfil.h			comp-c-include
 ./usr/include/net/pfkeyv2.h			comp-c-include
@@ -1419,6 +1421,7 @@
 ./usr/include/netinet/in_var.h			comp-c-include
 ./usr/include/netinet/ip.h			comp-c-include
 ./usr/include/netinet/ip6.h			comp-c-include
+./usr/include/netinet/ip6mh.h			comp-c-include
 ./usr/include/netinet/ip_auth.h			comp-ipf-include	ipfilter
 ./usr/include/netinet/ip_carp.h			comp-c-include
 ./usr/include/netinet/ip_compat.h		comp-c-include
@@ -1465,6 +1468,8 @@
 ./usr/include/netinet6/ip6protosw.h		comp-c-include
 ./usr/include/netinet6/ipcomp.h			comp-c-include
 ./usr/include/netinet6/ipsec.h			comp-c-include
+./usr/include/netinet6/mip6.h			comp-c-include
+./usr/include/netinet6/mip6_var.h		comp-c-include
 ./usr/include/netinet6/mld6_var.h		comp-c-include
 ./usr/include/netinet6/nd6.h			comp-c-include
 ./usr/include/netinet6/pim6.h			comp-c-include

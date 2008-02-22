@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.98 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.98.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.98.2.1 2008/02/22 02:53:33 keiichi Exp $");
 
 #include "opt_inet.h"
 
@@ -772,6 +772,38 @@ rt_ifmsg(struct ifnet *ifp)
 	route_proto.sp_protocol = 0;
 	raw_input(m, &route_proto, &route_src, &route_dst);
 #endif
+}
+
+/*
+ * This routine is called to generate a message from the routing
+ * socket indicating that the status of a address has changed.
+ */
+void
+rt_addrinfomsg(struct ifaddr *ifa)
+{
+	struct ifnet *ifp = ifa->ifa_ifp;
+	struct ifa_msghdr ifam;
+	struct mbuf *m;
+	struct rt_addrinfo info;
+	struct sockaddr *sa;
+
+	if (route_cb.any_count == 0)
+		return;
+
+	bzero((void *)&info, sizeof(info));
+
+	ifaaddr = sa = ifa->ifa_addr;
+	bzero((void *)&ifam, sizeof(ifam));
+	ifam.ifam_index = ifp->if_index;
+	ifam.ifam_metric = ifa->ifa_metric;
+	ifam.ifam_flags = ifa->ifa_flags;
+	m = rt_msg1(RTM_ADDRINFO, &info, (void *)&ifam, sizeof(ifam));
+	if (m == NULL)
+		return;
+	mtod(m, struct ifa_msghdr *)->ifam_addrs = info.rti_addrs;
+
+	route_proto.sp_protocol = sa ? sa->sa_family : 0;
+	raw_input(m, &route_proto, &route_src, &route_dst);
 }
 
 /*

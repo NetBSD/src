@@ -1,10 +1,10 @@
-/*	$NetBSD: if.h,v 1.7.16.1 2008/02/22 02:53:34 keiichi Exp $	*/
-/*	$KAME: if.h,v 1.12 2003/09/21 07:17:03 itojun Exp $	*/
+/*	$NetBSD: if_mip.h,v 1.1.2.1 2008/02/22 02:53:33 keiichi Exp $	*/
+/*	$KAME: if_mip.h,v 1.3 2005/07/25 04:37:51 t-momose Exp $	*/
 
 /*
- * Copyright (C) 1995, 1996, 1997, 1998, and 1999 WIDE Project.
+ * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -16,7 +16,7 @@
  * 3. Neither the name of the project nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE PROJECT AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -30,29 +30,49 @@
  * SUCH DAMAGE.
  */
 
-#define RTADV_TYPE2BITMASK(type) (0x1 << type)
+#ifndef _NET_IF_MIP_H_
+#define _NET_IF_MIP_H_
 
-extern struct if_msghdr **iflist;
-extern size_t ifblock_size;
-extern char *ifblock;
+#define MIP_MTU 1280
 
-struct nd_opt_hdr;
-struct sockaddr_dl *if_nametosdl __P((char *));
-int if_getmtu __P((char *));
-int if_getifaflag __P((char *, struct in6_addr *));
-int if_getflags __P((int, int));
-int lladdropt_length __P((struct sockaddr_dl *));
-void lladdropt_fill __P((struct sockaddr_dl *, struct nd_opt_hdr *));
-char *get_next_msg __P((char *, char *, int, size_t *, int));
-struct in6_addr *get_addr __P((char *));
-int get_rtm_ifindex __P((char *));
-int get_ifm_ifindex __P((char *));
-int get_ifam_ifindex __P((char *));
-int get_ifm_flags __P((char *));
-int get_prefixlen __P((char *));
-int prefixlen __P((u_char *, u_char *));
-int rtmsg_type __P((char *));
-int ifmsg_type __P((char *));
-int rtmsg_len __P((char *));
-int ifmsg_len __P((char *));
-void init_iflist __P((void));
+struct mip_softc {
+	struct ifnet          mip_if;
+	LIST_ENTRY(mip_softc) mip_entry;
+#ifdef __APPLE__
+	u_long	mip_proto; /* dlil protocol attached */
+#endif
+};
+LIST_HEAD(mip_softc_list, mip_softc);
+
+struct bul6info {
+        struct in6_addr     bul_peeraddr;   /* peer addr of this BU */
+        struct in6_addr     bul_hoa;        /* HoA */
+        struct in6_addr     bul_coa;        /* CoA */
+        u_int16_t           bul_flags;      /* Flag Ack, LL, Key, Home flag */
+	u_int16_t           bul_ifindex;
+	u_int16_t           bul_bid;        /* Binding Unique Identifier */
+};
+
+struct if_bulreq {
+        char    ifbu_ifname[IFNAMSIZ];
+	int     ifbu_len;
+	int               ifbu_count;
+	struct bul6info   *ifbu_info;
+};
+
+
+#ifdef _KERNEL
+
+extern struct mip_softc_list mip_softc_list;
+
+int mip_ioctl(struct ifnet *, u_long, void *);
+int mip_output(struct ifnet *, struct mbuf *, const struct sockaddr *,
+    struct rtentry *rt);
+
+int mip_is_mip_softc(struct ifnet *);
+
+#endif /* _KERNEL*/
+
+#define	SIOCGBULIST	_IOWR('i', 134, struct if_bulreq) /* get BUL */
+
+#endif /* !_NET_IF_MIP_H_ */

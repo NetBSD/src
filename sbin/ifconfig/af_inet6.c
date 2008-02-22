@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.5 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.5.16.1 2008/02/22 02:53:32 keiichi Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.5 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.5.16.1 2008/02/22 02:53:32 keiichi Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -294,6 +294,10 @@ in6_alias(struct in6_ifreq *creq)
 			printf(" detached");
 		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEPRECATED)
 			printf(" deprecated");
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_HOME)
+			printf(" home");
+		if (ifr6.ifr_ifru.ifru_flags6 & IN6_IFF_DEREGISTERING)
+			printf(" deregistering");
 	}
 
 	if (scopeid)
