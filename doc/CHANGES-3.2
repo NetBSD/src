@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.123 2008/02/03 18:59:11 riz Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.124 2008/02/22 19:03:31 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3920,4 +3920,22 @@ games/larn/scores.c				1.16 via patch
 	manipulate the effective uid, only the effective gid.
 	Use mkstemp to make the temporary files used when you win.
 	[dholland, ticket #1899]
+
+sbin/fdisk/fdisk.c				1.100, 1.101, 1.114
+
+	- add sanity checks to avoid possible division by zero
+	- adjust sector numbers _after_ "Sanity check the data against
+	  all zeroes"
+	- Downgrade error getting heads to a warning
+	Should close PR bin/37656, PR/33522 and PR/33633
+	[tsutsui, ticket #1897]
+
+dist/pf/libexec/ftp-proxy/ftp-proxy.c		1.12 via patch
+etc/group					1.20
+etc/master.passwd				1.34, 1.35 via patch
+distrib/notes/common/main			patch
+
+	PR 30870: Add user ``_proxy'' and make pf's ftp-proxy use it.
+	Initial patch by rivo nurges, thanks!
+	[jnemeth, ticket #1898]
 
