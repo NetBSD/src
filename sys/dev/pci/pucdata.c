@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.52 2007/11/01 18:18:37 jnemeth Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.53 2008/02/22 14:51:38 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.52 2007/11/01 18:18:37 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.53 2008/02/22 14:51:38 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1269,6 +1269,16 @@ const struct puc_device_description puc_devices[] = {
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0a00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0c00, COM_FREQ * 8 },
 		{ PUC_PORT_TYPE_COM, 0x10, 0x0e00, COM_FREQ * 8 },
+	    },
+	},
+
+	/* I-O DATA RSA-PCI: 2S */
+	{   "I-O DATA RSA-PCI 2-port serial",
+	    {	0x10fc, 0x0007, 0, 0 },
+	    {	0xffff, 0xffff, 0, 0 },
+	    {
+		{ PUC_PORT_TYPE_COM, 0x14, 0x00, COM_FREQ },
+		{ PUC_PORT_TYPE_COM, 0x18, 0x00, COM_FREQ },
 	    },
 	},
 
