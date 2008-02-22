@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.214 2008/02/13 00:52:44 smb Exp $	*/
+/*	$NetBSD: uhci.c,v 1.215 2008/02/22 23:04:52 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.214 2008/02/13 00:52:44 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.215 2008/02/22 23:04:52 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,9 +554,9 @@ uhci_init(uhci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-uhci_activate(device_ptr_t self, enum devact act)
+uhci_activate(device_t self, enum devact act)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)self;
+	struct uhci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -570,6 +570,15 @@ uhci_activate(device_ptr_t self, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+void
+uhci_childdet(device_t self, device_t child)
+{
+	struct uhci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
 }
 
 int
@@ -705,7 +714,7 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
  * are almost suspended anyway.
  */
 bool
-uhci_resume(device_t dv)
+uhci_resume(device_t dv PMF_FN_ARGS)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
@@ -749,7 +758,7 @@ uhci_resume(device_t dv)
 }
 
 bool
-uhci_suspend(device_t dv)
+uhci_suspend(device_t dv PMF_FN_ARGS)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
