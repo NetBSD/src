@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.50 2007/12/09 20:12:54 martin Exp $
+#	$NetBSD: genassym.cf,v 1.51 2008/02/22 10:55:00 martin Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -292,10 +292,6 @@ define	DBR_OUT		offsetof(struct db_regs, dbr_out)
 define	DBR_LOCAL	offsetof(struct db_regs, dbr_local)
 define	DBR_IN		offsetof(struct db_regs, dbr_in)
 endif
-
-# TLB IPI handler arguments.
-define	ITA_VADDR	offsetof(struct ipi_tlb_args, ita_vaddr)
-define	ITA_CTX		offsetof(struct ipi_tlb_args, ita_ctx)
 
 # pte_t structure.
 define	TTE_VPN		offsetof(pte_t, tag)
