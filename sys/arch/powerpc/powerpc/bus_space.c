@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.17 2008/02/07 03:20:17 garbled Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.18 2008/02/23 19:50:41 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.17 2008/02/07 03:20:17 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.18 2008/02/23 19:50:41 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,8 +584,9 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
 		/*
 		 * Let's try to BAT map this address if possible
+		 * (note this assumes 1:1 VA:PA)
 		 */
-		register_t batu = battable[pa >> ADDR_SR_SHFT].batu;
+		register_t batu = battable[BAT_VA2IDX(pa)].batu;
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&
 		    BAT_VA_MATCH_P(batu, pa + size - 1)) {
 			*bshp = pa;
@@ -651,7 +652,7 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	} else
 #endif /* PPC_OEA601 */
 	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
-		register_t batu = battable[va >> ADDR_SR_SHFT].batu;
+		register_t batu = battable[BAT_VA2IDX(va)].batu;
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, va) &&
 		    BAT_VA_MATCH_P(batu, va + size - 1)) {
 			pa = va;
@@ -721,7 +722,7 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	} else
 #endif /* PPC_OEA601 */
 	if ((oeacpufeat & OEACPU_NOBAT) == 0) {
-		register_t batu = battable[pa >> ADDR_SR_SHFT].batu;
+		register_t batu = battable[BAT_VA2IDX(pa)].batu;
 		if (BAT_VALID_P(batu, 0) && BAT_VA_MATCH_P(batu, pa) &&
 		    BAT_VA_MATCH_P(batu, pa + size - 1)) {
 			*bshp = pa;
