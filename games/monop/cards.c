@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.19 2008/02/23 19:49:21 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.20 2008/02/23 19:54:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.19 2008/02/23 19:49:21 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.20 2008/02/23 19:54:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -240,15 +240,48 @@ printmes()
 
 /*
  *	This routine returns the players get-out-of-jail-free card
- * to a deck.
+ * to the bottom of a deck.  XXX currently does not return to the correct
+ * deck.
  */
 void
 ret_card(plr)
 	PLAY *plr;
 {
+	char type_maj;
+	int gojfpos, last_card;
+	int i;
+	DECK *dp;
+	off_t temp;
+
 	plr->num_gojf--;
 	if (CC_D.gojf_used)
-		CC_D.gojf_used = FALSE;
+		dp = &CC_D;
 	else
-		CH_D.gojf_used = FALSE;
+		dp = &CH_D;
+	dp->gojf_used = FALSE;
+
+	/* Put at bottom of deck (top_card - 1) and remove it from wherever else
+	 * it used to be.
+	 */
+	last_card = dp->top_card - 1;
+	if (last_card < 0)
+		last_card += dp->num_cards;
+	gojfpos = dp->top_card;
+	do {
+		gojfpos = (gojfpos + 1) % dp->num_cards;
+		fseek(deckf, dp->offsets[gojfpos], SEEK_SET);
+		type_maj = getc(deckf);
+	} while (type_maj != GOJF);
+	temp = dp->offsets[gojfpos];
+	/* Only one of the next two loops does anything */
+	for (i = gojfpos - 1; i > last_card; i--)
+		dp->offsets[i + 1] = dp->offsets[i];
+	for (i = gojfpos; i < last_card; i++)
+		dp->offsets[i] = dp->offsets[i + 1];
+	if (gojfpos > last_card) {
+		dp->offsets[dp->top_card] = temp;
+		dp->top_card++;
+		dp->top_card %= dp->num_cards;
+	} else
+		dp->offsets[last_card] = temp;
 }
