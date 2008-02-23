@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.14 2008/02/20 05:08:46 dholland Exp $	*/
+/*	$NetBSD: morg.c,v 1.15 2008/02/23 22:06:30 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.14 2008/02/20 05:08:46 dholland Exp $");
+__RCSID("$NetBSD: morg.c,v 1.15 2008/02/23 22:06:30 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,6 @@ static int set_mlist(void);
 static void m(int);
 static int set_umlist(void);
 static void unm(int);
-static void fix_ex(int);
 
 /*
  *	This routine is the command level response the mortgage command.
@@ -216,25 +215,16 @@ unm(propnum)
 
 /*
  *	This routine forces the indebted player to fix his
- * financial woes.
+ * financial woes.  It is fine to have $0 but not to be in debt.
  */
 void
 force_morg()
 {
 	told_em = fixing = TRUE;
-	while (cur_p->money <= 0)
-		fix_ex(getinp("How are you going to fix it up? ",morg_coms));
+	while (cur_p->money < 0) {
+		told_em = FALSE;
+		(*func[(getinp("How are you going to fix it up? ", morg_coms))])();
+		notify();
+	}
 	fixing = FALSE;
-}
-
-/*
- *	This routine is a special execute for the force_morg routine
- */
-static void
-fix_ex(com_num)
-	int com_num;
-{
-	told_em = FALSE;
-	(*func[com_num])();
-	notify();
 }
