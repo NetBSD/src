@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.3 2008/02/14 19:41:54 garbled Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.4 2008/02/23 19:56:10 matt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -54,21 +54,21 @@
 
 	.text
 
+#if __HAVE_MUTEX_STUBS
 /*
  * int _lock_cas(uintptr_t *ptr, uintptr_t old, uintptr_t new);
  */
 ENTRY_NOPROFILE(_lock_cas)
 1:
-	lwarx	%r10,0,%r3
+	lptrarx	%r10,0,%r3
 	cmpw	%r10,%r4
 	bne-	2f
-	stwcx.	%r5,0,%r3
+	stptrcx. %r5,0,%r3
 	bne-	1b
 	SYNC
 	li	%r3,1
 	blr
 2:
-	SYNC
 	li	%r3,0
 	blr
 
@@ -80,10 +80,10 @@ ENTRY_NOPROFILE(mutex_enter)
 	GET_CPUINFO(%r8)
 	ldptr	%r9,CI_CURLWP(%r8)
 1:
-	lwarx	%r10,0,%r3
+	lptrarx	%r10,0,%r3
 	cmpwi	%r10,0
 	bne-	2f
-	stwcx.	%r9,0,%r3
+	stptrcx. %r9,0,%r3
 	bne-	1b
 	ISYNC
 	blr
@@ -99,12 +99,113 @@ ENTRY_NOPROFILE(mutex_exit)
 	SYNC
 	li	%r7,0
 1:
-	lwarx	%r10,0,%r3
+	lptrarx	%r10,0,%r3
 	cmpw	%r10,%r9
 	bne-	2f
-	stwcx.	%r7,0,%r3
+	stptrcx. %r7,0,%r3
 	bne-	1b
 	blr
 2:
 	b	_C_LABEL(mutex_vector_exit)
+
+#endif	/* __HAVE_MUTEX_STUBS */
+
+/*
+ * void rw_enter(krwlock_t *krw, krw_t op);
+ */
+#if RW_READ_INCR != 16
+#error RW_READ_INCR != 16, clrrXi need fixing
+#endif
+#if RW_OWNER != 0
+#error RW_OWNER != 0, ldptr should be ldptru
+#endif
+
+#if __HAVE_RW_STUBS
+
+ENTRY_NOPROFILE(rw_enter)
+	cmpwi	%r3,RW_READER
+	bne-	1f
+
+	ldptr	%r9,RW_OWNER(%r3)
+	clrrptri %r9,%r9,4		/* clear low 4 bits */
+	addi	%r7,%r9,RW_READ_INCR
+	b	2f
+1:
+	li	%r9,0
+	GET_CPUINFO(%r8)
+	ldptr	%r7,CI_CURLWP(%r8)
+	ori	%r7,%r7,RW_WRITE_LOCKED
+
+2:	lptrarx	%r10,0,%r3
+	cmpw	%r10,%r9
+	bne-	3f
+	stptrcx. %r7,0,%r3
+	bne-	2b
+	ISYNC
+	blr
+
+3:	b	_C_LABEL(rw_vector_enter)
+
+/*
+ * bool rw_tryenter(krwlock_t *krw, krw_t op);
+ */
+ENTRY_NOPROFILE(rw_tryenter)
+	cmpwi	%r3,RW_READER
+	bne-	1f
+
+	ldptr	%r9,RW_OWNER(%r3)
+	clrrptri %r9,%r9,4		/* clear low 4 bits */
+	addi	%r7,%r9,RW_READ_INCR
+	b	2f
+
+1:	li	%r9,0
+	GET_CPUINFO(%r8)
+	ldptr	%r7,CI_CURLWP(%r8)
+	ori	%r7,%r7,RW_WRITE_LOCKED
+
+2:	lptrarx	%r10,0,%r3
+	cmpw	%r10,%r9
+	bne-	3f
+	stptrcx. %r7,0,%r3
+	bne-	2b
+
+	ISYNC
+	li	%r3,1
+	blr
+
+3:	li	%r3,0
+	blr
+
+/*
+ * void rw_exit(krwlock_t *krw, krw_t op);
+ */
+ENTRY_NOPROFILE(rw_exit)
+	ldptr	%r9,RW_OWNER(%r3)
+	SYNC
+	andi.	%r0,%r9,RW_WRITE_LOCKED
+	bne-	1f
+
+	clrrptri. %r9,%r9,4		/* clear low 4 bits */
+	beq-	3f			/* if 0, no reader, go slow */
+
+	addi	%r7,%r9,-RW_READ_INCR
+	b	2f
+1:
+	li	%r7,0
+	GET_CPUINFO(%r8)
+	ldptr	%r9,CI_CURLWP(%r8)
+	ori	%r9,%r9,RW_WRITE_LOCKED
+
+2:	lptrarx	%r10,0,%r3
+	cmpw	%r10,%r9
+	bne-	3f
+	stptrcx. %r7,0,%r3
+	bne-	2b
+
+	blr
+
+3:	b	_C_LABEL(rw_vector_exit)
+
+#endif	/* __HAVE_RW_STUBS */
+
 #endif	/* !LOCKDEBUG */
