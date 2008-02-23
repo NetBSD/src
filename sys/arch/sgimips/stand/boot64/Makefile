@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2008/02/23 05:43:27 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.5 2008/02/23 06:51:28 tsutsui Exp $
 
 PROG=	ip30boot
 
@@ -41,7 +41,7 @@ LOAD_ADDRESS_IP30?=	0xa800000020080000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "sgimips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c
