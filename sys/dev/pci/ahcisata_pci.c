@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.5 2008/02/19 10:38:28 jnemeth Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.6 2008/02/23 14:53:31 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.5 2008/02/19 10:38:28 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.6 2008/02/23 14:53:31 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -83,7 +83,10 @@ ahci_pci_match(struct device *parent, struct cfdata *match,
 		    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
 		    &regt, &regh, NULL, &size) != 0)
 			return 0;
-		if (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE)
+		if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_SATA
+		    && PCI_INTERFACE(pa->pa_class) == PCI_INTERFACE_SATA_AHCI)
+			ret = 3;
+		else if (bus_space_read_4(regt, regh, AHCI_GHC) & AHCI_GHC_AE)
 			ret = 3;
 		bus_space_unmap(regt, regh, size);
 		return ret;
@@ -131,8 +134,12 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	    intrstr ? intrstr : "unknown interrupt");
 	sc->sc_dmat = pa->pa_dmat;
 
-	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID)
+	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID) {
+		aprint_normal("%s: RAID mode\n", AHCINAME(sc));
 		sc->sc_atac_capflags = ATAC_CAP_RAID;
+	} else {
+		aprint_normal("%s: SATA mode\n", AHCINAME(sc));
+	}
 
 	ahci_attach(sc);
 
