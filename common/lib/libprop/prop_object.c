@@ -1,4 +1,4 @@
-/*	$NetBSD: prop_object.c,v 1.19 2008/01/05 01:15:02 ad Exp $	*/
+/*	$NetBSD: prop_object.c,v 1.20 2008/02/23 01:26:01 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -847,6 +847,7 @@ _prop_object_externalize_write_file(const char *fname, const char *xml,
 	char tname[PATH_MAX];
 	int fd;
 	int save_errno;
+	mode_t myumask;
 
 	if (len > SSIZE_MAX) {
 		errno = EFBIG;
@@ -856,28 +857,24 @@ _prop_object_externalize_write_file(const char *fname, const char *xml,
 	/*
 	 * Get the directory name where the file is to be written
 	 * and create the temporary file.
-	 *
-	 * We don't use mkstemp() because mkstemp() always creates the
-	 * file with mode 0600.  We do, however, use mktemp() safely.
 	 */
- again:
 	_prop_object_externalize_file_dirname(fname, tname);
 	if (strlcat(tname, "/.plistXXXXXX", sizeof(tname)) >= sizeof(tname)) {
 		errno = ENAMETOOLONG;
 		return (false);
 	}
-	if (mktemp(tname) == NULL)
+	if ((fd = mkstemp(tname)) == -1)
 		return (false);
-	if ((fd = open(tname, O_CREAT|O_RDWR|O_EXCL, 0666)) == -1) {
-		if (errno == EEXIST)
-			goto again;
-		return (false);
-	}
 
 	if (write(fd, xml, len) != (ssize_t)len)
 		goto bad;
 
 	if (fsync(fd) == -1)
+		goto bad;
+
+	myumask = umask(0);
+	(void)umask(myumask);
+	if (fchmod(fd, 0666 & ~myumask) == -1)
 		goto bad;
 
 	(void) close(fd);
