@@ -1,4 +1,4 @@
-/*	$NetBSD: houses.c,v 1.10 2008/02/19 09:32:34 dholland Exp $	*/
+/*	$NetBSD: houses.c,v 1.11 2008/02/23 20:18:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: houses.c,v 1.10 2008/02/19 09:32:34 dholland Exp $");
+__RCSID("$NetBSD: houses.c,v 1.11 2008/02/23 20:18:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -57,7 +57,7 @@ buy_houses()
 	int num_mon;
 	MON *mp;
 	OWN *op;
-	bool good,got_morg;
+	bool good, got_morg;
 	int i,p;
 
 over:
@@ -74,9 +74,9 @@ over:
 			got_morg = good = FALSE;
 			for (i = 0; i < mp->num_in; i++) {
 				if (op->sqr->desc->morg)
-					got_morg++;
+					got_morg = TRUE;
 				if (op->sqr->desc->houses != 5)
-					good++;
+					good = TRUE;
 				op = op->next;
 			}
 			if (!good || got_morg)
@@ -185,7 +185,7 @@ over:
 			good = 0;
 			do
 				if (!good && op->sqr->desc->houses != 0)
-					good++;
+					good = TRUE;
 			while (op->next && op->sqr->desc->mon_desc == mp
 			    && (op = op->next));
 			if (!good)
