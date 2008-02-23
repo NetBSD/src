@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.14 2008/02/20 04:10:34 dholland Exp $	*/
+/*	$NetBSD: monop.h,v 1.15 2008/02/23 21:07:52 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -48,6 +48,8 @@
 #define	N_SQRS	40	/* number of squares on board		*/
 #define	MAX_PL	9	/* maximum number of players		*/
 #define	MAX_PRP	(N_PROP+N_RR+N_UTIL) /* max # ownable property	*/
+#define	N_HOUSE	32	/* total number of houses available	*/
+#define	N_HOTEL	12	/* total number of hotels available	*/
 
 				/* square type numbers			*/
 #define	PRPTY	0	/* normal property			*/
