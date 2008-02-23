@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2005/12/11 12:18:58 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2008/02/23 05:43:27 tsutsui Exp $
 
 PROG=	ip30boot
 
@@ -79,6 +79,6 @@ LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 ip30boot: ${OBJS} ${LIBS}
 	${LD} -m elf64btsmip -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP30} \
-		${LDBUG} -e start -o ip30boot ${OBJS} ${LIBS}
+		${LDBUG} -e start -o ${.TARGET} ${OBJS} ${LIBS}
 
 .include <bsd.prog.mk>
