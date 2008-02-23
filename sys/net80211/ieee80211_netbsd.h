@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.14.4.1 2008/02/22 16:50:25 skrll Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.14.4.2 2008/02/23 13:00:59 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -30,47 +30,38 @@
 #ifndef _NET80211_IEEE80211_NETBSD_H_
 #define _NET80211_IEEE80211_NETBSD_H_
 
+#ifdef _KERNEL
 #define	IASSERT(__cond, __complaint)	 	\
 	do {				 	\
 		if (!(__cond))		 	\
 			panic __complaint ;	\
-	} while (0)
+	} while (/*CONSTCOND*/0)
 
 void if_printf(struct ifnet *, const char *, ...)
     __attribute__((__format__(__printf__,2,3)));
 
-struct ieee80211_lock {
-	int count;
-	int ipl;
-};
 #define	IEEE80211_LOCK_INIT_IMPL(_ic, _name, _member)	\
-	do {						\
-		(_ic)->_member.count = 0;		\
-	} while (0)
+	mutex_init(&(_ic)->_member, MUTEX_DEFAULT, IPL_NET)
 #define	IEEE80211_LOCK_IMPL(_ic, _member)		\
-	do {						\
-		int __s = splnet();			\
-		if ((_ic)->_member.count++ == 0)	\
-			(_ic)->_member.ipl = __s;	\
-	} while (0)
+	mutex_enter(&(_ic)->_member)
 #define IEEE80211_IS_LOCKED_IMPL(_ic, _member)          \
-        ((_ic)->_member.count != 0)
+        mutex_owned(&(_ic)->_member)
 #define	IEEE80211_UNLOCK_IMPL(_ic, _member)		\
-	do {						\
-		if (--(_ic)->_member.count == 0)	\
-			splx((_ic)->_member.ipl);	\
-	} while (0)
+	mutex_exit(&(_ic)->_member)
 #define	IEEE80211_LOCK_ASSERT_IMPL(_ic, _member)	\
-	IASSERT((_ic)->_member.count > 0,		\
-	    ("%s: IEEE80211_LOCK not held", __func__));
+	IASSERT(mutex_owned(&(_ic)->_member),		\
+	    ("%s: IEEE80211_LOCK not held", __func__))
+#define IEEE80211_LOCK_DESTROY_IMPL(_ic, _member)	\
+        mutex_destroy(&(_ic)->_member)
 
 /*
  * Common state locking definitions.
  */
-typedef struct ieee80211_lock ieee80211_com_lock_t;
+typedef kmutex_t ieee80211_com_lock_t;
 #define	IEEE80211_LOCK_INIT(_ic, _name) \
 	IEEE80211_LOCK_INIT_IMPL(_ic, _name, ic_comlock)
-#define	IEEE80211_LOCK_DESTROY(_ic)
+#define	IEEE80211_LOCK_DESTROY(_ic)			\
+	IEEE80211_LOCK_DESTROY_IMPL(_ic, ic_comlock)
 #define	IEEE80211_LOCK(_ic) \
 	IEEE80211_LOCK_IMPL(_ic, ic_comlock)
 #define	IEEE80211_UNLOCK(_ic)\
@@ -81,10 +72,11 @@ typedef struct ieee80211_lock ieee80211_com_lock_t;
 /*
  * Beacon locking definitions.
  */
-typedef struct ieee80211_lock ieee80211_beacon_lock_t;
+typedef kmutex_t ieee80211_beacon_lock_t;
 #define	IEEE80211_BEACON_LOCK_INIT(_ic, _name)		\
 	IEEE80211_LOCK_INIT_IMPL(_ic, _name, ic_beaconlock)
-#define	IEEE80211_BEACON_LOCK_DESTROY(_ic)
+#define	IEEE80211_BEACON_LOCK_DESTROY(_ic)		\
+	IEEE80211_LOCK_DESTROY_IMPL(_ic, ic_beaconlock)
 #define	IEEE80211_BEACON_LOCK(_ic)			\
 	IEEE80211_LOCK_IMPL(_ic, ic_beaconlock)
 #define	IEEE80211_BEACON_UNLOCK(_ic)			\
@@ -96,10 +88,11 @@ typedef struct ieee80211_lock ieee80211_beacon_lock_t;
  * Node locking definitions.
  * NB: MTX_DUPOK is because we don't generate per-interface strings.
  */
-typedef struct ieee80211_lock ieee80211_node_lock_t;
+typedef kmutex_t ieee80211_node_lock_t;
 #define	IEEE80211_NODE_LOCK_INIT(_nt, _name)		\
 	IEEE80211_LOCK_INIT_IMPL(_nt, _name, nt_nodelock)
-#define	IEEE80211_NODE_LOCK_DESTROY(_nt)
+#define	IEEE80211_NODE_LOCK_DESTROY(_nt)		\
+	IEEE80211_LOCK_DESTROY_IMPL(_nt, nt_nodelock)
 #define	IEEE80211_NODE_LOCK(_nt)			\
 	IEEE80211_LOCK_IMPL(_nt, nt_nodelock)
 #define IEEE80211_NODE_IS_LOCKED(_nt)                   \
@@ -112,24 +105,26 @@ typedef struct ieee80211_lock ieee80211_node_lock_t;
 /*
  * Node table scangen locking definitions.
  */
-typedef struct ieee80211_lock ieee80211_scan_lock_t;
+typedef kmutex_t ieee80211_scan_lock_t;
 #define	IEEE80211_SCAN_LOCK_INIT(_nt, _name)		\
 	IEEE80211_LOCK_INIT_IMPL(_nt, _name, nt_scanlock)
-#define	IEEE80211_SCAN_LOCK_DESTROY(_nt)
+#define	IEEE80211_SCAN_LOCK_DESTROY(_nt)		\
+	IEEE80211_LOCK_DESTROY_IMPL(_nt, nt_scanlock)
 #define	IEEE80211_SCAN_LOCK(_nt)			\
 	IEEE80211_LOCK_IMPL(_nt, nt_scanlock)
 #define	IEEE80211_SCAN_UNLOCK(_nt)			\
 	IEEE80211_UNLOCK_IMPL(_nt, nt_scanlock)
-#define	IEEE80211_SCAN_LOCK_ASSERT(_nt)		\
+#define	IEEE80211_SCAN_LOCK_ASSERT(_nt)			\
 	IEEE80211_LOCK_ASSERT_IMPL(_nt, nt_scanlock)
 
 /*
  * Scan table locking definitions.
  */
-typedef struct ieee80211_lock ieee80211_scantable_lock_t;
+typedef kmutex_t ieee80211_scantable_lock_t;
 #define	IEEE80211_SCANTABLE_LOCK_INIT(_st, _name)	\
 	IEEE80211_LOCK_INIT_IMPL(_st, _name, st_lock)
-#define	IEEE80211_SCANTABLE_LOCK_DESTROY(_st)
+#define	IEEE80211_SCANTABLE_LOCK_DESTROY(_st)		\
+	IEEE80211_LOCK_DESTROY_IMPL(_st, st_lock)
 #define	IEEE80211_SCANTABLE_LOCK(_st)			\
 	IEEE80211_LOCK_IMPL(_st, st_lock)
 #define	IEEE80211_SCANTABLE_UNLOCK(_st)			\
@@ -140,10 +135,11 @@ typedef struct ieee80211_lock ieee80211_scantable_lock_t;
 /*
  * Scan table scangen locking definitions.
  */
-typedef struct ieee80211_lock ieee80211_scangen_lock_t;
+typedef kmutex_t ieee80211_scangen_lock_t;
 #define	IEEE80211_SCANGEN_LOCK_INIT(_st, _name)		\
 	IEEE80211_LOCK_INIT_IMPL(_st, _name, st_scanlock)
-#define	IEEE80211_SCANGEN_LOCK_DESTROY(_st)
+#define	IEEE80211_SCANGEN_LOCK_DESTROY(_st)		\
+	IEEE80211_LOCK_DESTROY_IMPL(_st, st_scanlock)
 #define	IEEE80211_SCANGEN_LOCK(_st)			\
 	IEEE80211_LOCK_IMPL(_st, st_scanlock)
 #define	IEEE80211_SCANGEN_UNLOCK(_st)			\
@@ -206,10 +202,11 @@ typedef struct ieee80211_lock ieee80211_scangen_lock_t;
 /*
  * 802.1x MAC ACL database locking definitions.
  */
-typedef struct ieee80211_lock acl_lock_t;
+typedef kmutex_t acl_lock_t;
 #define	ACL_LOCK_INIT(_as, _name)	\
 	IEEE80211_LOCK_INIT_IMPL(_as, _name, as_lock)
-#define	ACL_LOCK_DESTROY(_as)
+#define	ACL_LOCK_DESTROY(_as)		\
+	IEEE80211_LOCK_DESTROY_IMPL(_as, as_lock)
 #define	ACL_LOCK(_as)			IEEE80211_LOCK_IMPL(_as, as_lock)
 #define	ACL_UNLOCK(_as)			IEEE80211_UNLOCK_IMPL(_as, as_lock)
 #define	ACL_LOCK_ASSERT(_as)		IEEE80211_LOCK_ASSERT_IMPL(_as, as_lock)
@@ -308,6 +305,7 @@ int	ieee80211_add_callback(struct mbuf *m,
 void	ieee80211_process_callback(struct ieee80211_node *, struct mbuf *, int);
 
 struct ieee80211com;
+#endif /* _KERNEL */
 
 /* XXX this stuff belongs elsewhere */
 /*
