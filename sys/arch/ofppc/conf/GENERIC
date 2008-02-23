@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.113 2008/02/15 12:28:09 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.114 2008/02/23 21:16:05 phx Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.113 $"
+#ident 		"GENERIC-$Revision: 1.114 $"
 
 maxusers	32
 
@@ -87,6 +87,7 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network file System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
+file-system 	ADOSFS		# AmigaDOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -223,8 +224,9 @@ siop*		at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 
 # SCSI bus support
-scsibus*	at siop?
-scsibus*	at esiop?
+scsibus* 	at siop?
+scsibus* 	at esiop?
+scsibus* 	at umass?
 
 # SCSI devices
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
