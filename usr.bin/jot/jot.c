@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.15 2006/06/13 03:22:00 christos Exp $	*/
+/*	$NetBSD: jot.c,v 1.16 2008/02/23 22:26:41 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.15 2006/06/13 03:22:00 christos Exp $");
+__RCSID("$NetBSD: jot.c,v 1.16 2008/02/23 22:26:41 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -89,24 +89,20 @@ static void	usage(void);
 int
 main(int argc, char *argv[])
 {
-	double	xd, yd;
-	long	id;
-	double	*x = &xd;
-	double	*y = &yd;
-	long	*i = &id;
+	double	x, y;
+	long	i;
 
 	getargs(argc, argv);
 	if (randomize) {
-		*x = (ender - begin) * (ender > begin ? 1 : -1);
+		x = (ender - begin) * (ender > begin ? 1 : -1);
 		srandom((unsigned long) s);
-		for (*i = 1; *i <= reps || infinity; (*i)++) {
-			*y = (double) random() / INT_MAX;
-			putdata(*y * *x + begin, reps - *i);
+		for (i = 1; i <= reps || infinity; i++) {
+			y = (double) random() / INT_MAX;
+			putdata(y * x + begin, reps - i);
 		}
-	}
-	else
-		for (*i = 1, *x = begin; *i <= reps || infinity; (*i)++, *x += s)
-			putdata(*x, reps - *i);
+	} else
+		for (i = 1, x = begin; i <= reps || infinity; i++, x += s)
+			putdata(x, reps - i);
 	if (!nofinalnl)
 		putchar('\n');
 	exit(0);
@@ -118,7 +114,7 @@ getargs(int argc, char *argv[])
 	unsigned int	mask = 0;
 	int		n = 0;
 
-	while (--argc && **++argv == '-' && !is_default(*argv))
+	while (--argc && **++argv == '-' && !is_default(*argv)) {
 		switch ((*argv)[1]) {
 		case 'r':
 			randomize = 1;
@@ -161,6 +157,7 @@ getargs(int argc, char *argv[])
 			warnx("unknown option `%s'", *argv);
 			usage();
 		}
+	}
 
 	switch (argc) {	/* examine args right to left, falling thru cases */
 	case 4:
@@ -201,7 +198,7 @@ getargs(int argc, char *argv[])
 		errx(1, "Too many arguments.  What do you mean by %s?", argv[4]);
 	}
 	getformat();
-	while (mask)	/* 4 bit mask has 1's where last 4 args were given */
+	while (mask) {	/* 4 bit mask has 1's where last 4 args were given */
 		switch (mask) {	/* fill in the 0's by default or computation */
 		case 001:
 			reps = REPS_DEF;
@@ -298,6 +295,7 @@ getargs(int argc, char *argv[])
 		default:
 			errx(1, "bad mask");
 		}
+	}
 	if (reps == 0)
 		infinity = 1;
 }
@@ -306,12 +304,11 @@ void
 putdata(double x, long notlast)
 {
 	long	d = x;
-	long	*dp = &d;
 
 	if (boring)				/* repeated word */
 		printf("%s", format);
 	else if (dox)				/* scalar */
-		printf(format, *dp);
+		printf(format, d);
 	else if (prec == 0)			/* integer */
 		printf(format, round(x));
 	else					/* real */
