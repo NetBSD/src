@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.154 2008/02/07 01:21:58 dyoung Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.155 2008/02/23 06:12:30 rafal Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.154 2008/02/07 01:21:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.155 2008/02/23 06:12:30 rafal Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1190,7 +1190,8 @@ wm_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, rseg, cdata_size,
-				    (void **)&sc->sc_control_data, 0)) != 0) {
+				    (void **)&sc->sc_control_data, 
+				    BUS_DMA_COHERENT)) != 0) {
 		aprint_error("%s: unable to map control data, error = %d\n",
 		    sc->sc_dev.dv_xname, error);
 		goto fail_1;
