@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.44 2008/02/23 16:48:03 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.45 2008/02/23 17:52:31 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.44 2008/02/23 16:48:03 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.45 2008/02/23 17:52:31 uwe Exp $")
 
 
 /*
@@ -106,19 +106,17 @@ ENTRY(cpu_switchto)
 	jsr	@r0
 	 mov	r4, r9		! preserve olwp
 
-	mov	r8, r4		! nlwp
-
 	!! restore new lwp's context from switchframe
-	mov.l	@(L_MD_PCB, r4), r1	! nlwp->l_md.md_pcb
+	mov.l	@(L_MD_PCB, r8), r10	! nlwp->l_md.md_pcb
 	!! no additional offset to nlwp->l_md.md_pcb->pcb_sf
 
 	!! setup nlwp's kernel stack first
-	mov.l	@(SF_R7_BANK, r1), r0	! kernel stack bottom
-	mov.l	@(SF_R6_BANK, r1), r2	! current trapframe
-	mov.l	@(SF_R15, r1), r3	! current kernel sp
+	mov.l	@(SF_R7_BANK, r10), r0	! kernel stack bottom
+	mov.l	@(SF_R6_BANK, r10), r2	! current trapframe
+	mov.l	@(SF_R15, r10), r3	! current kernel sp
 
 	!! while switching kernel stack, all exceptions must be disabled
-	__EXCEPTION_BLOCK(r1, r5)
+	__EXCEPTION_BLOCK(r1, r11)	! saves SR in r11
 	ldc	r0, r7_bank
 	ldc	r2, r6_bank
 	mov	r3, r15
@@ -127,17 +125,14 @@ ENTRY(cpu_switchto)
 	!! wire u-area in TLB
 	MOV	(switch_resume, r0)
 	jsr	@r0
-	 mov	r4, r8		! preserve nlwp
-	mov	r8, r4
+	 mov	r8, r4		! nlwp
 #endif
 	!! safe to use nlwp's kernel stack now
-	__EXCEPTION_UNBLOCK(r0, r1)
-
-	mov	r9, r2		! preserve olwp, we are about to clobber r9
+	ldc	r11, sr		! __EXCEPTION_UNBLOCK
 
 	!! finish restoring new lwp's context from switchframe
-	mov.l	@(L_MD_PCB, r4), r1	! nlwp->l_md.md_pcb
-	!! no additional offset to nlwp->l_md.md_pcb->pcb_sf
+	mov	r10, r1		! &nlwp->l_md.md_pcb->pcb_sf
+	mov	r9, r2		! preserve olwp, we are about to clobber r9
 	add	#4, r1		! r15 already restored
 	mov.l	@r1+, r14
 	mov.l	@r1+, r13
