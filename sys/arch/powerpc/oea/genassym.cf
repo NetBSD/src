@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.13 2008/02/05 18:10:47 garbled Exp $
+#	$NetBSD: genassym.cf,v 1.14 2008/02/23 19:34:53 matt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -33,8 +33,13 @@
 
 include "opt_ppcarch.h"
 
+quote #define __MUTEX_PRIVATE
+quote #define __RWLOCK_PRIVATE
+
 include <sys/param.h>
 include <sys/time.h>
+include <sys/mutex.h>
+include <sys/rwlock.h>
 include <sys/proc.h>
 
 include <uvm/uvm_extern.h>
@@ -226,3 +231,21 @@ define	OEACPU_HIGHBAT	OEACPU_HIGHBAT
 define	OEACPU_601	OEACPU_601
 define	OEACPU_HIGHSPRG	OEACPU_HIGHSPRG
 define	OEACPU_ALTIVEC	OEACPU_ALTIVEC
+
+ifdef	__HAVE_MUTEX_STUBS
+define	__HAVE_MUTEX_STUBS	__HAVE_MUTEX_STUBS
+endif
+ifdef	__HAVE_MUTEX_SPIN_STUBS
+define	__HAVE_MUTEX_SPIN_STUBS	__HAVE_MUTEX_SPIN_STUBS
+endif
+define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
+define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
+define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
+
+ifdef	__HAVE_RW_STUBS
+define	__HAVE_RW_STUBS	__HAVE_RW_STUBS
+endif
+define	RW_OWNER	offsetof(struct krwlock, rw_owner)
+define	RW_WRITE_LOCKED	RW_WRITE_LOCKED
+define	RW_READ_INCR	RW_READ_INCR
+define	RW_READER	RW_READER
