@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.c,v 1.46 2007/07/17 20:12:40 christos Exp $	*/
+/*	$NetBSD: fsck.c,v 1.47 2008/02/23 21:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Christos Zoulas. All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsck.c,v 1.46 2007/07/17 20:12:40 christos Exp $");
+__RCSID("$NetBSD: fsck.c,v 1.47 2008/02/23 21:41:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: fsck.c,v 1.46 2007/07/17 20:12:40 christos Exp $");
 
 #include "pathnames.h"
 #include "fsutil.h"
+#include "exitvalues.h"
 
 static enum { IN_LIST, NOT_IN_LIST } which = NOT_IN_LIST;
 
@@ -94,9 +95,10 @@ int
 main(int argc, char *argv[])
 {
 	struct fstab *fs;
-	int i, rval = 0;
+	int i, rval;
 	const char *vfstype = NULL;
 	char globopt[3];
+	int ret = FSCK_EXIT_OK;
 
 	globopt[0] = '-';
 	globopt[2] = '\0';
@@ -207,14 +209,17 @@ main(int argc, char *argv[])
 			spec = fs->fs_spec;
 			type = fs->fs_vfstype;
 			if (BADTYPE(fs->fs_type))
-				errx(1, "%s has unknown file system type.",
+				errx(FSCK_EXIT_CHECK_FAILED,
+				    "%s has unknown file system type.",
 				    spec);
 		}
 
-		rval |= checkfs(type, blockcheck(spec), *argv, NULL, NULL);
+		rval = checkfs(type, blockcheck(spec), *argv, NULL, NULL);
+		if (rval > ret) 
+			ret = rval;
 	}
 
-	return rval;
+	return ret;
 }
 
 
@@ -292,7 +297,7 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 		if (optbuf)
 			free(optbuf);
 		free(argv);
-		return (1);
+		return FSCK_EXIT_CHECK_FAILED;
 
 	case 0:					/* Child. */
 		if ((flags & CHECK_FORCE) == 0) {
@@ -310,14 +315,14 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 		"%s: file system is mounted read-write on %s; not checking\n",
 				    spec, mntpt);
 				if ((flags & CHECK_PREEN) && auxarg != NULL)
-					_exit(0);	/* fsck -p */
+					_exit(FSCK_EXIT_OK);	/* fsck -p */
 				else
-					_exit(1);	/* fsck [[-p] ...] */
+					_exit(FSCK_EXIT_CHECK_FAILED);	/* fsck [[-p] ...] */
 			}
 		}
 
 		if (flags & CHECK_DEBUG)
-			_exit(0);
+			_exit(FSCK_EXIT_OK);
 
 		/* Go find an executable. */
 		edir = edirs;
@@ -339,7 +344,7 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 			else
 				warn("exec %s", execname);
 		}
-		_exit(1);
+		_exit(FSCK_EXIT_CHECK_FAILED);
 		/* NOTREACHED */
 
 	default:				/* Parent. */
@@ -349,26 +354,26 @@ checkfs(const char *vfst, const char *spec, const char *mntpt, void *auxarg,
 
 		if (pidp) {
 			*pidp = pid;
-			return 0;
+			return FSCK_EXIT_OK;
 		}
 
 		if (waitpid(pid, &status, 0) < 0) {
 			warn("waitpid");
-			return (1);
+			return FSCK_EXIT_CHECK_FAILED;
 		}
 
 		if (WIFEXITED(status)) {
 			if (WEXITSTATUS(status) != 0)
-				return (WEXITSTATUS(status));
+				return WEXITSTATUS(status);
 		}
 		else if (WIFSIGNALED(status)) {
 			warnx("%s: %s", spec, strsignal(WTERMSIG(status)));
-			return (1);
+			return FSCK_EXIT_CHECK_FAILED;
 		}
 		break;
 	}
 
-	return (0);
+	return FSCK_EXIT_OK;
 }
 
 
@@ -557,5 +562,5 @@ usage(void)
 
 	(void)fprintf(stderr, "usage: %s %s [special|node]...\n",
 	    getprogname(), common);
-	exit(1);
+	exit(FSCK_EXIT_USAGE);
 }
