@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.45 2008/02/23 17:52:31 uwe Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.46 2008/02/23 22:30:46 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.45 2008/02/23 17:52:31 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.46 2008/02/23 22:30:46 uwe Exp $")
 
 
 /*
@@ -100,15 +100,28 @@ ENTRY(cpu_switchto)
 .L_saved:
 	!! free to use callee-save registers now
 
+	mov.l	.L_curlwp, r2
+	mov.l	.L_curpcb, r3
+	mov.l	@(L_MD_PCB, r5), r10	! nlwp->l_md.md_pcb
+	!tst	r6, r6			! "full" switch?
+	mov.l	r5, @r2			! curlwp = nlwp;
+	!bt/s	.L_prepare_switch
+	 mov.l	r10, @r3		! curpcb = nlwp->l_md.md_pcb;
+
+	!mov	r5, r8		! preserve nlwp
+	!bra	.L_restore_nlwp
+	! mov	r4, r9		! preserve olwp
+
+.L_prepare_switch:
 	!! arguments to cpu_switch_prepare are already in the right registers
 	mov.l	.L_cpu_switch_prepare, r0
 	mov	r5, r8		! preserve nlwp
 	jsr	@r0
 	 mov	r4, r9		! preserve olwp
 
+.L_restore_nlwp:
 	!! restore new lwp's context from switchframe
-	mov.l	@(L_MD_PCB, r8), r10	! nlwp->l_md.md_pcb
-	!! no additional offset to nlwp->l_md.md_pcb->pcb_sf
+	!! r10 is nlwp->l_md.md_pcb == &nlwp->l_md.md_pcb->pcb_sf
 
 	!! setup nlwp's kernel stack first
 	mov.l	@(SF_R7_BANK, r10), r0	! kernel stack bottom
@@ -149,6 +162,8 @@ ENTRY(cpu_switchto)
 	 mov	r2, r0		! return olwp
 
 	.align	2
+.L_curlwp:		.long	_C_LABEL(curlwp)
+.L_curpcb:		.long	_C_LABEL(curpcb)
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
 #ifdef SH4
 FUNC_SYMBOL(switch_resume)
