@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.45 2008/02/14 21:40:51 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.46 2008/02/23 15:15:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.45 2008/02/14 21:40:51 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.46 2008/02/23 15:15:57 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -322,7 +322,7 @@ int
 pthread_mutex_trylock(pthread_mutex_t *ptm)
 {
 	pthread_t self;
-	void *val;
+	void *val, *new, *next;
 
 	self = pthread__self();
 	val = atomic_cas_ptr(&ptm->ptm_owner, NULL, self);
@@ -333,11 +333,23 @@ pthread_mutex_trylock(pthread_mutex_t *ptm)
 		return 0;
 	}
 
-	if (MUTEX_OWNER(val) == (uintptr_t)self && MUTEX_RECURSIVE(val)) {
-		if (ptm->ptm_recursed == INT_MAX)
-			return EAGAIN;
-		ptm->ptm_recursed++;
-		return 0;
+	if (MUTEX_RECURSIVE(val)) {
+		if (MUTEX_OWNER(val) == 0) {
+			new = (void *)((uintptr_t)self | (uintptr_t)val);
+			next = atomic_cas_ptr(&ptm->ptm_owner, val, new);
+			if (__predict_true(next == val)) {
+#ifndef PTHREAD__ATOMIC_IS_MEMBAR
+				membar_enter();
+#endif
+				return 0;
+			}
+		}
+		if (MUTEX_OWNER(val) == (uintptr_t)self) {
+			if (ptm->ptm_recursed == INT_MAX)
+				return EAGAIN;
+			ptm->ptm_recursed++;
+			return 0;
+		}
 	}
 
 	return EBUSY;
