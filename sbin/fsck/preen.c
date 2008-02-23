@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.29 2006/08/26 21:54:05 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.30 2008/02/23 21:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: preen.c,v 1.29 2006/08/26 21:54:05 christos Exp $");
+__RCSID("$NetBSD: preen.c,v 1.30 2008/02/23 21:41:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: preen.c,v 1.29 2006/08/26 21:54:05 christos Exp $");
 #include <util.h>
 
 #include "fsutil.h"
+#include "exitvalues.h"
 
 struct partentry {
 	TAILQ_ENTRY(partentry)	 p_entries;
@@ -94,17 +95,17 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 	int ret, pid, retcode, passno, sumstatus, status;
 	void *auxarg;
 	const char *name;
-	int error = 0;
+	int error = FSCK_EXIT_OK;
 
 	TAILQ_INIT(&badh);
 	TAILQ_INIT(&diskh);
 
-	sumstatus = 0;
+	sumstatus = FSCK_EXIT_OK;
 
 	for (passno = 1; passno <= 2; passno++) {
 		if (setfsent() == 0) {
 			warnx("Can't open checklist file: %s", _PATH_FSTAB);
-			return (8);
+			return FSCK_EXIT_CHECK_FAILED;
 		}
 		while ((fs = getfsent()) != 0) {
 			if ((auxarg = (*docheck)(fs)) == NULL)
@@ -118,7 +119,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			    (passno == 1 && fs->fs_passno == 1)) {
 				if (name == NULL) {
 					if (flags & CHECK_PREEN)
-						return 8;
+						return FSCK_EXIT_CHECK_FAILED;
 					else
 						continue;
 				}
@@ -127,15 +128,15 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 
 				if (sumstatus) {
 					if ((flags & CHECK_NOFIX) == 0)
-						return (sumstatus);
-					else
-						error |= sumstatus;
+						return sumstatus;
+					else if (error < sumstatus)
+						error = sumstatus;
 				}
 			} else if (passno == 2 && fs->fs_passno > 1) {
 				if (name == NULL) {
 					(void) fprintf(stderr,
 					    "BAD DISK NAME %s\n", fs->fs_spec);
-					sumstatus |= 8;
+					sumstatus = FSCK_EXIT_CHECK_FAILED;
 					continue;
 				}
 				addpart(fs->fs_vfstype, name, fs->fs_file,
@@ -159,8 +160,8 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 			if ((ret = startdisk(nextdisk, checkit)) != 0) {
 				if ((flags & CHECK_NOFIX) == 0)
 					return ret;
-				else
-					error |= ret;
+				else if (error < ret)
+					error = ret;
 			}
 			nextdisk = TAILQ_NEXT(nextdisk, d_entries);
 		}
@@ -193,7 +194,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 				    "%s: %s (%s): EXITED WITH SIGNAL %d\n",
 				    p->p_type, p->p_devname, p->p_mntpt,
 				    WTERMSIG(status));
-				retcode = 8;
+				retcode = FSCK_EXIT_SIGNALLED;
 			}
 
 			TAILQ_REMOVE(&d->d_part, p, p_entries);
@@ -218,8 +219,8 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 					{
 						if ((flags & CHECK_NOFIX) == 0)
 							return ret;
-						else
-							error |= ret;
+						else if (error < ret)
+							error = ret;
 					}
 				}
 			} else if (nrun < maxrun && nrun < ndisks) {
@@ -236,8 +237,8 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 				{
 					if ((flags & CHECK_NOFIX) == 0)
 						return ret;
-					else
-						error |= ret;
+					else if (error < ret)
+						error = ret;
 				}
 			}
 		}
@@ -245,7 +246,7 @@ checkfstab(int flags, int maxrun, void *(*docheck)(struct fstab *),
 	if (sumstatus) {
 		p = TAILQ_FIRST(&badh);
 		if (p == NULL)
-			return (sumstatus);
+			return sumstatus;
 
 		(void) fprintf(stderr,
 			"THE FOLLOWING FILE SYSTEM%s HAD AN %s\n\t",

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.66 2007/07/16 17:06:52 pooka Exp $	*/
+/*	$NetBSD: main.c,v 1.67 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/14/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.66 2007/07/16 17:06:52 pooka Exp $");
+__RCSID("$NetBSD: main.c,v 1.67 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,9 +66,10 @@ __RCSID("$NetBSD: main.c,v 1.66 2007/07/16 17:06:52 pooka Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+#include "exitvalues.h"
 
-int	returntosingle;
 int	progress = 0;
+int	returntosingle = 0;
 
 static int	argtoi(int, const char *, const char *, int);
 static int	checkfilesys(const char *, char *, long, int);
@@ -79,7 +80,7 @@ main(int argc, char *argv[])
 {
 	struct rlimit r;
 	int ch;
-	int ret = 0;
+	int ret = FSCK_EXIT_OK;
 
 	if (getrlimit(RLIMIT_DATA, &r) == 0) {
 		r.rlim_cur = r.rlim_max;
@@ -116,7 +117,8 @@ main(int argc, char *argv[])
 			cvtlevel = argtoi('c', "conversion level", optarg, 10);
 			if (cvtlevel > 4) {
 				cvtlevel = 4;
-				warnx("Using maximum conversion level of %d\n",cvtlevel);
+				warnx("Using maximum conversion level of %d\n",
+				    cvtlevel);
 			}
 			break;
 		
@@ -135,7 +137,8 @@ main(int argc, char *argv[])
 		case 'm':
 			lfmode = argtoi('m', "mode", optarg, 8);
 			if (lfmode &~ 07777)
-				errx(EEXIT, "bad mode to -m: %o", lfmode);
+				errx(FSCK_EXIT_USAGE, "bad mode to -m: %o",
+				    lfmode);
 			printf("** lost+found creation mode %o\n", lfmode);
 			break;
 
@@ -192,15 +195,15 @@ main(int argc, char *argv[])
 
 		if (path == NULL)
 			pfatal("Can't check %s\n", *argv);
-		else
-			(void)checkfilesys(blockcheck(*argv), 0, 0L, 0);
+		else {
+			int nret = checkfilesys(blockcheck(*argv), 0, 0L, 0);
+			if (ret < nret)
+				ret = nret;
+		}			
 		argv++;
 	}
 
-	if (returntosingle)
-		ret = 2;
-
-	exit(ret);
+	return returntosingle ? FSCK_EXIT_UNRESOLVED : ret;
 }
 
 static int
@@ -211,7 +214,8 @@ argtoi(int flag, const char *req, const char *str, int base)
 
 	ret = (int)strtol(str, &cp, base);
 	if (cp == str || *cp)
-		errx(EEXIT, "-%c flag requires a %s", flag, req);
+		errx(FSCK_EXIT_USAGE, "-%c flag requires a %s",
+		    flag, req);
 	return (ret);
 }
 
@@ -257,7 +261,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 			pfatal("CAN'T CHECK FILE SYSTEM.");
 		/* fall through */
 	case -1:
-		return (0);
+		return FSCK_EXIT_OK;
 	}
 	/*
 	 * Cleared if any questions answered no. Used to decide if
@@ -418,7 +422,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		returntosingle = 1;
 	}
 	if (!fsmodified)
-		return (0);
+		return FSCK_EXIT_OK;
 	if (!preen)
 		pwarn("\n***** FILE SYSTEM WAS MODIFIED *****\n");
 	if (rerun)
@@ -432,23 +436,21 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		if (statvfs("/", &stfs_buf) == 0) {
 			long flags = stfs_buf.f_flag;
 			struct ufs_args args;
-			int ret;
 
 			if (flags & MNT_RDONLY) {
 				args.fspec = 0;
 				flags |= MNT_UPDATE | MNT_RELOAD;
-				ret = mount(MOUNT_FFS, "/", flags,
-				    &args, sizeof args);
-				if (ret == 0)
-					return(0);
+				if (mount(MOUNT_FFS, "/", flags,
+				    &args, sizeof args) == 0)
+					return FSCK_EXIT_OK;
 			}
 		}
 		if (!preen)
 			pwarn("\n***** REBOOT NOW *****\n");
 		sync();
-		return (4);
+		return FSCK_EXIT_ROOT_CHANGED;
 	}
-	return (0);
+	return FSCK_EXIT_OK;
 }
 
 static void
@@ -459,6 +461,6 @@ usage(void)
 	    "usage: %s [-adFfnPpqy] [-B be|le] [-b block] [-c level] [-m mode]"
 	    " filesystem ...\n",
 	    getprogname());
-	exit(1);
+	exit(FSCK_EXIT_USAGE);
 }
 
