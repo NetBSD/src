@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.88 2008/02/22 23:30:42 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.89 2008/02/23 00:30:56 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.88 2008/02/22 23:30:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.89 2008/02/23 00:30:56 dyoung Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1003,7 +1003,6 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 		return 0;
 	switch (state) {
 	case PCI_PMCSR_STATE_D0:
-		value |= PCI_PMCSR_STATE_D0;
 		break;
 	case PCI_PMCSR_STATE_D1:
 		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3) {
@@ -1014,7 +1013,6 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 			printf("D1 not supported\n");
 			return EOPNOTSUPP;
 		}
-		value |= PCI_PMCSR_STATE_D1;
 		break;
 	case PCI_PMCSR_STATE_D2:
 		if (now == PCI_PMCSR_STATE_D3) {
@@ -1025,15 +1023,13 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 			printf("D2 not supported\n");
 			return EOPNOTSUPP;
 		}
-		value |= PCI_PMCSR_STATE_D2;
 		break;
 	case PCI_PMCSR_STATE_D3:
-		value |= PCI_PMCSR_STATE_D3;
 		break;
 	default:
 		return EINVAL;
 	}
-
+	value |= state;
 	cardbus_conf_write(cc, cf, tag, offset + PCI_PMCSR, value);
 	if (state == PCI_PMCSR_STATE_D3 || now == PCI_PMCSR_STATE_D3)
 		DELAY(10000);
