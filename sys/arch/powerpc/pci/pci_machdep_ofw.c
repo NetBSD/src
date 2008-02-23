@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.10 2008/02/11 17:32:18 garbled Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.11 2008/02/23 21:11:22 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.10 2008/02/11 17:32:18 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.11 2008/02/23 21:11:22 phx Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -490,6 +490,11 @@ genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	 * Pegasos2 specific stuff.
 	 */
 	if (strncmp(model_name, "Pegasos2", 8) == 0) {
+
+		/* never reconfigure the MV64361 host bridge */
+		if (PCI_VENDOR(id) == PCI_VENDOR_MARVELL &&
+		    PCI_PRODUCT(id) == PCI_PRODUCT_MARVELL_GT64360)
+			return 0;
 
 		/* we want to leave viaide(4) alone */
 		if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH &&
