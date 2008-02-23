@@ -1,4 +1,4 @@
-/*	$NetBSD: deck.h,v 1.6 2003/08/07 09:37:27 agc Exp $	*/
+/*	$NetBSD: deck.h,v 1.7 2008/02/23 19:49:21 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -40,7 +40,7 @@
 
 struct dk_st {			/* deck description structure		*/
 	int	num_cards;		/* number of cards in deck	*/
-	int	last_card;		/* number of last card picked	*/
+	int	top_card;		/* number of last card picked	*/
 	bool	gojf_used;		/* set if gojf card out of deck	*/
 	off_t	*offsets;		/* offsets for start of cards	*/
 };
