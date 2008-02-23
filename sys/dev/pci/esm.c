@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.44 2007/12/09 20:28:07 jmcneill Exp $      */
+/*      $NetBSD: esm.c,v 1.45 2008/02/23 02:17:16 dyoung Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.44 2007/12/09 20:28:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.45 2008/02/23 02:17:16 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,11 +146,21 @@ static void		esmch_set_format(struct esm_chinfo *,
 static void		esmch_combine_input(struct esm_softc *,
 			    struct esm_chinfo *);
 
-static bool		esm_suspend(device_t);
-static bool		esm_resume(device_t);
+static bool		esm_suspend(device_t PMF_FN_PROTO);
+static bool		esm_resume(device_t PMF_FN_PROTO);
+static void		esm_childdet(device_t, device_t);
+static int		esm_match(device_t, struct cfdata *, void *);
+static void		esm_attach(device_t, device_t, void *);
+static int		esm_detach(device_t, int);
+static int		esm_intr(void *);
 
-CFATTACH_DECL(esm, sizeof(struct esm_softc),
-    esm_match, esm_attach, NULL, NULL);
+static void		esm_freemem(struct esm_softc *, struct esm_dma *);
+static int		esm_allocmem(struct esm_softc *, size_t, size_t,
+			             struct esm_dma *);
+
+
+CFATTACH_DECL2(esm, sizeof(struct esm_softc),
+    esm_match, esm_attach, esm_detach, NULL, NULL, esm_childdet);
 
 const struct audio_hw_if esm_hw_if = {
 	NULL,				/* open */
@@ -1401,7 +1411,7 @@ esm_get_props(void *sc)
  * Bus space.
  */
 
-int
+static int
 esm_intr(void *sc)
 {
 	struct esm_softc *ess;
@@ -1493,7 +1503,24 @@ esm_intr(void *sc)
 	return ret;
 }
 
-int
+static void
+esm_freemem(struct esm_softc *sc, struct esm_dma *p)
+{
+	if (p->size == 0)
+		return;
+
+	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
+
+	bus_dmamem_unmap(sc->dmat, p->addr, p->size);
+
+	bus_dmamap_destroy(sc->dmat, p->map);
+
+	bus_dmamap_unload(sc->dmat, p->map);
+
+	p->size = 0;
+}
+
+static int
 esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
     struct esm_dma *p)
 {
@@ -1530,11 +1557,12 @@ esm_allocmem(struct esm_softc *sc, size_t size, size_t align,
  free:
 	bus_dmamem_free(sc->dmat, p->segs, p->nsegs);
 
+	p->size = 0;
 	return error;
 }
 
-int
-esm_match(struct device *dev, struct cfdata *match, void *aux)
+static int
+esm_match(device_t dev, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1557,8 +1585,8 @@ esm_match(struct device *dev, struct cfdata *match, void *aux)
 	return 0;
 }
 
-void
-esm_attach(struct device *parent, struct device *self, void *aux)
+static void
+esm_attach(device_t parent, device_t self, void *aux)
 {
 	char devinfo[256];
 	struct esm_softc *ess;
@@ -1573,7 +1601,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 	uint16_t pcmbar;
 	int error;
 
-	ess = (struct esm_softc *)self;
+	ess = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	pc = pa->pa_pc;
 	tag = pa->pa_tag;
@@ -1590,7 +1618,7 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-	    &ess->st, &ess->sh, NULL, NULL)) {
+	    &ess->st, &ess->sh, NULL, &ess->sz)) {
 		aprint_error("%s: can't map i/o space\n", ess->sc_dev.dv_xname);
 		return;
 	}
@@ -1704,8 +1732,43 @@ esm_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
+static void
+esm_childdet(device_t self, device_t child)
+{
+	/* we hold no child references, so do nothing */
+}
+
+static int
+esm_detach(device_t self, int flags)
+{
+	int rc;
+	struct esm_softc *ess = device_private(self);
+
+	pmf_device_deregister(self);
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	/* free our DMA region */
+	esm_freemem(ess, &ess->sc_dma);
+
+	if (ess->codec_if != NULL)
+		ess->codec_if->vtbl->detach(ess->codec_if);
+
+	/* XXX Restore CONF_MAESTRO? */
+	/* XXX Restore legacy emulations? */
+	/* XXX Restore PCI config registers? */
+
+	if (ess->ih != NULL)
+		pci_intr_disestablish(ess->pc, ess->ih);
+
+	bus_space_unmap(ess->st, ess->sh, ess->sz);
+
+	return 0;
+}
+
 static bool
-esm_suspend(device_t dv)
+esm_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct esm_softc *ess = device_private(dv);
 	int x;
@@ -1728,7 +1791,7 @@ esm_suspend(device_t dv)
 }
 
 static bool
-esm_resume(device_t dv)
+esm_resume(device_t dv PMF_FN_ARGS)
 {
 	struct esm_softc *ess = device_private(dv);
 	int x;
