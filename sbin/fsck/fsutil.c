@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.16 2006/08/26 18:14:28 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.17 2008/02/23 21:41:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.16 2006/08/26 18:14:28 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.17 2008/02/23 21:41:47 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: fsutil.c,v 1.16 2006/08/26 18:14:28 christos Exp $");
 #include <sys/stat.h>
 
 #include "fsutil.h"
+#include "exitvalues.h"
 
 static const char *dev = NULL;
 static int hot = 0;
@@ -86,7 +87,7 @@ errexit(const char *fmt, ...)
 	va_start(ap, fmt);
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
-	exit(8);
+	exit(FSCK_EXIT_CHECK_FAILED);
 }
 
 void
@@ -114,7 +115,7 @@ vmsg(int fatal, const char *fmt, va_list ap)
 		(void) printf(
 		    "%s: UNEXPECTED INCONSISTENCY; RUN %s MANUALLY.\n",
 		    dev, getprogname());
-		exit(8);
+		exit(FSCK_EXIT_CHECK_FAILED);
 	}
 }
 
@@ -158,7 +159,7 @@ panic(const char *fmt, ...)
 	va_start(ap, fmt);
 	vmsg(1, fmt, ap);
 	va_end(ap);
-	exit(8);
+	exit(FSCK_EXIT_CHECK_FAILED);
 }
 
 const char *

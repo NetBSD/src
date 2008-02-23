@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.54 2007/02/08 21:36:58 drochner Exp $	*/
+/*	$NetBSD: utilities.c,v 1.55 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.6 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.54 2007/02/08 21:36:58 drochner Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.55 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,6 +59,7 @@ __RCSID("$NetBSD: utilities.c,v 1.54 2007/02/08 21:36:58 drochner Exp $");
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
+#include "exitvalues.h"
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
@@ -137,12 +138,12 @@ bufinit(void)
 	pbp = pdirbp = (struct bufarea *)0;
 	bufp = malloc((unsigned int)sblock->fs_bsize);
 	if (bufp == 0)
-		errx(EEXIT, "cannot allocate buffer pool");
+		errexit("cannot allocate buffer pool");
 	cgblk.b_un.b_buf = bufp;
 	initbarea(&cgblk);
 	bufp = malloc((unsigned int)APPLEUFS_LABEL_SIZE);
 	if (bufp == 0)
-		errx(EEXIT, "cannot allocate buffer pool");
+		errexit("cannot allocate buffer pool");
 	appleufsblk.b_un.b_buf = bufp;
 	initbarea(&appleufsblk);
 	bufhead.b_next = bufhead.b_prev = &bufhead;
@@ -160,7 +161,7 @@ bufinit(void)
 					free(bufp);
 				break;
 			}
-			errx(EEXIT, "cannot allocate buffer pool");
+			errexit("cannot allocate buffer pool");
 		}
 		bp->b_un.b_buf = bufp;
 		bp->b_prev = &bufhead;
@@ -187,7 +188,7 @@ getdatablk(daddr_t blkno, long size)
 		if ((bp->b_flags & B_INUSE) == 0)
 			break;
 	if (bp == &bufhead)
-		errx(EEXIT, "deadlocked buffer pool");
+		errexit("deadlocked buffer pool");
 	/* fall through */
 foundit:
 	getblk(bp, blkno, size);
@@ -256,7 +257,7 @@ rwerror(const char *mesg, daddr_t blk)
 		printf("\n");
 	pfatal("CANNOT %s: BLK %lld", mesg, (long long)blk);
 	if (reply("CONTINUE") == 0)
-		exit(EEXIT);
+		exit(FSCK_EXIT_CHECK_FAILED);
 }
 
 void
@@ -293,7 +294,7 @@ ckfini(void)
 		free((char *)bp);
 	}
 	if (bufhead.b_size != cnt)
-		errx(EEXIT, "Panic: lost %d buffers", bufhead.b_size - cnt);
+		errexit("Panic: lost %d buffers", bufhead.b_size - cnt);
 	pbp = pdirbp = (struct bufarea *)0;
 	if (markclean && (sblock->fs_clean & FS_ISCLEAN) == 0) {
 		/*
@@ -505,7 +506,7 @@ catch(int sig)
 		markclean = 0;
 		ckfini();
 	}
-	exit(12);
+	exit(FSCK_EXIT_SIGNALLED);
 }
 
 /*
@@ -573,7 +574,7 @@ dofix(struct inodesc *idesc, const char *msg)
 		return (0);
 
 	default:
-		errx(EEXIT, "UNKNOWN INODESC FIX MODE %d", idesc->id_fix);
+		errexit("UNKNOWN INODESC FIX MODE %d", idesc->id_fix);
 	}
 	/* NOTREACHED */
 	return (0);
@@ -605,7 +606,7 @@ inoinfo(ino_t inum)
 	int iloff;
 
 	if (inum > maxino)
-		errx(EEXIT, "inoinfo: inumber %llu out of range",
+		errexit("inoinfo: inumber %llu out of range",
 		    (unsigned long long)inum);
 	ilp = &inostathead[inum / sblock->fs_ipg];
 	iloff = inum % sblock->fs_ipg;
@@ -626,7 +627,7 @@ sb_oldfscompat_read(struct fs *fs, struct fs **fssave)
 		if (!*fssave)
 			*fssave = malloc(sizeof(struct fs));
 		if (!*fssave)
-			errx(EEXIT, "cannot allocate space for compat store");
+			errexit("cannot allocate space for compat store");
 		memmove(*fssave, fs, sizeof(struct fs));
 
 		if (debug)

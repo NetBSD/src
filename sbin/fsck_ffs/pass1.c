@@ -1,4 +1,4 @@
-/*	$NetBSD: pass1.c,v 1.43 2006/11/14 21:01:46 apb Exp $	*/
+/*	$NetBSD: pass1.c,v 1.44 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass1.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass1.c,v 1.43 2006/11/14 21:01:46 apb Exp $");
+__RCSID("$NetBSD: pass1.c,v 1.44 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ __RCSID("$NetBSD: pass1.c,v 1.43 2006/11/14 21:01:46 apb Exp $");
 #include "fsck.h"
 #include "extern.h"
 #include "fsutil.h"
+#include "exitvalues.h"
 
 static daddr_t badblk;
 static daddr_t dupblk;
@@ -154,7 +155,7 @@ pass1(void)
 		if (info == NULL) {
 			pfatal("cannot alloc %u bytes for inoinfo\n",
 			    (unsigned)(sizeof(struct inostat) * inosused));
-			exit(EEXIT);
+			exit(FSCK_EXIT_CHECK_FAILED);
 		}
 		inostathead[c].il_stat = info;
 		/*
@@ -190,7 +191,7 @@ pass1(void)
 		if (info == NULL) {
 			pfatal("cannot alloc %u bytes for inoinfo\n",
 			    (unsigned)(sizeof(struct inostat) * inosused));
-			exit(EEXIT);
+			exit(FSCK_EXIT_CHECK_FAILED);
 		}
 		memmove(info, inostathead[c].il_stat, inosused * sizeof(*info));
 		free(inostathead[c].il_stat);
@@ -288,7 +289,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			if (bread(fsreadfd, symbuf,
 			    fsbtodb(sblock, iswap32(DIP(dp, db[0]))),
 			    (long)secsize) != 0)
-				errx(EEXIT, "cannot read symlink");
+				errexit("cannot read symlink");
 			if (debug) {
 				symbuf[size] = 0;
 				printf("convert symlink %llu(%s) "
@@ -364,7 +365,7 @@ checkinode(ino_t inumber, struct inodesc *idesc)
 			pfatal("LINK COUNT TABLE OVERFLOW");
 			if (reply("CONTINUE") == 0) {
 				ckfini();
-				exit(EEXIT);
+				exit(FSCK_EXIT_CHECK_FAILED);
 			}
 		} else {
 			zlnp->zlncnt = inumber;
@@ -478,7 +479,7 @@ pass1check(struct inodesc *idesc)
 			else if (reply("CONTINUE") == 0) {
 				markclean = 0;
 				ckfini();
-				exit(EEXIT);
+				exit(FSCK_EXIT_CHECK_FAILED);
 			}
 			return (STOP);
 		}
@@ -499,7 +500,7 @@ pass1check(struct inodesc *idesc)
 				else if (reply("CONTINUE") == 0) {
 					markclean = 0;
 					ckfini();
-					exit(EEXIT);
+					exit(FSCK_EXIT_CHECK_FAILED);
 				}
 				return (STOP);
 			}
@@ -510,7 +511,7 @@ pass1check(struct inodesc *idesc)
 				if (reply("CONTINUE") == 0) {
 					markclean = 0;
 					ckfini();
-					exit(EEXIT);
+					exit(FSCK_EXIT_CHECK_FAILED);
 				}
 				return (STOP);
 			}

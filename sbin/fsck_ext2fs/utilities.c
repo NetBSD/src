@@ -1,4 +1,4 @@
-/*	$NetBSD: utilities.c,v 1.15 2007/02/08 21:36:58 drochner Exp $	*/
+/*	$NetBSD: utilities.c,v 1.16 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: utilities.c,v 1.15 2007/02/08 21:36:58 drochner Exp $");
+__RCSID("$NetBSD: utilities.c,v 1.16 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -83,6 +83,7 @@ __RCSID("$NetBSD: utilities.c,v 1.15 2007/02/08 21:36:58 drochner Exp $");
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
+#include "exitvalues.h"
 
 long	diskreads, totalreads;	/* Disk cache statistics */
 
@@ -466,7 +467,7 @@ void
 catch(int n)
 {
 	ckfini(0);
-	exit(12);
+	exit(FSCK_EXIT_SIGNALLED);
 }
 
 /*
