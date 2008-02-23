@@ -1,4 +1,4 @@
-/* $NetBSD: utilities.c,v 1.26 2006/11/09 19:36:36 christos Exp $	 */
+/* $NetBSD: utilities.c,v 1.27 2008/02/23 21:41:48 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -56,6 +56,7 @@
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
+#include "exitvalues.h"
 
 long diskreads, totalreads;	/* Disk cache statistics */
 
@@ -245,7 +246,7 @@ void
 catch(int n)
 {
 	ckfini(0);
-	exit(12);
+	exit(FSCK_EXIT_SIGNALLED);
 }
 /*
  * When preening, allow a single quit to signal

@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.81 2007/08/22 16:30:28 christos Exp $	*/
+/*	$NetBSD: setup.c,v 1.82 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.81 2007/08/22 16:30:28 christos Exp $");
+__RCSID("$NetBSD: setup.c,v 1.82 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,6 +62,7 @@ __RCSID("$NetBSD: setup.c,v 1.81 2007/08/22 16:30:28 christos Exp $");
 #include "extern.h"
 #include "fsutil.h"
 #include "partutil.h"
+#include "exitvalues.h"
 
 #define POWEROF2(num)	(((num) & ((num) - 1)) == 0)
 
@@ -126,7 +127,7 @@ setup(const char *dev)
 	altsblock = malloc(SBLOCKSIZE);
 	if (sblk.b_un.b_buf == NULL || asblk.b_un.b_buf == NULL ||
 		sblock == NULL || altsblock == NULL)
-		errx(EEXIT, "cannot allocate space for superblock");
+		errexit("Cannot allocate space for superblock");
 	if (!forceimage && getdiskinfo(dev, fsreadfd, NULL, &geo, &dkw) != -1)
 		dev_bsize = secsize = geo.dg_secsize;
 	else
@@ -404,7 +405,7 @@ setup(const char *dev)
 			pfatal("BAD SUMMARY INFORMATION");
 			if (reply("CONTINUE") == 0) {
 				markclean = 0;
-				exit(EEXIT);
+				exit(FSCK_EXIT_CHECK_FAILED);
 			}
 			asked++;
 		}
@@ -670,9 +671,11 @@ readsb(int listerr)
 	}
 	if (doswap) {
 		if (preen)
-			errx(EEXIT, "incompatible options -B and -p");
+			errx(FSCK_EXIT_USAGE,
+			    "Incompatible options -B and -p");
 		if (nflag)
-			errx(EEXIT, "incompatible options -B and -n");
+			errx(FSCK_EXIT_USAGE,
+			    "Incompatible options -B and -n");
 		if (endian == LITTLE_ENDIAN) {
 			if (!reply("CONVERT TO LITTLE ENDIAN"))
 				return 0;

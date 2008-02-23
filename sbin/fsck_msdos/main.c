@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2008/02/23 21:41:48 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -47,24 +47,27 @@ __RCSID("$NetBSD: main.c,v 1.18 2007/03/10 00:30:36 hubertf Exp $");
 
 #include "fsutil.h"
 #include "ext.h"
+#include "exitvalues.h"
 
 int alwaysno;		/* assume "no" for all questions */
 int alwaysyes;		/* assume "yes" for all questions */
 int preen;		/* set when preening */
 int rdonly;		/* device is opened read only (supersedes above) */
 
-static void usage(void);
+static void usage(void) __dead;
 
 static void
 usage(void)
 {
-	errexit("usage: fsck_msdos [-fnpy] filesystem ... \n");
+    	(void)fprintf(stderr, "Usage: %s [-fnpy] filesystem ... \n",
+	    getprogname());
+	exit(FSCK_EXIT_USAGE);
 }
 
 int
 main(int argc, char **argv)
 {
-	int ret = 0, erg;
+	int ret = FSCK_EXIT_OK, erg;
 	int ch;
 
 	while ((ch = getopt(argc, argv, "pPqynf")) != -1) {

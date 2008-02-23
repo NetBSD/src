@@ -1,4 +1,4 @@
-/*	$NetBSD: fsck.h,v 1.45 2006/04/21 15:00:49 skrll Exp $	*/
+/*	$NetBSD: fsck.h,v 1.46 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -314,8 +314,6 @@ struct	ufs2_dinode ufs2_zino;
 #define	KEEPON	0x04
 #define	ALTERED	0x08
 #define	FOUND	0x10
-
-#define	EEXIT	8		/* Standard error exit. */
 
 /* some inline functs to help the byte-swapping mess */
 static inline u_int16_t iswap16 (u_int16_t);

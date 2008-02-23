@@ -1,4 +1,4 @@
-/*	$NetBSD: pass4.c,v 1.23 2006/11/14 21:01:46 apb Exp $	*/
+/*	$NetBSD: pass4.c,v 1.24 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass4.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass4.c,v 1.23 2006/11/14 21:01:46 apb Exp $");
+__RCSID("$NetBSD: pass4.c,v 1.24 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,7 +122,7 @@ pass4(void)
 				break;
 
 			default:
-				errx(EEXIT, "BAD STATE %d FOR INODE I=%llu",
+				errexit("BAD STATE %d FOR INODE I=%llu",
 				    info->ino_state,
 				    (unsigned long long)inumber);
 			}

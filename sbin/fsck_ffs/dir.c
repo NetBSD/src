@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.49 2006/10/16 03:09:06 christos Exp $	*/
+/*	$NetBSD: dir.c,v 1.50 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: dir.c,v 1.49 2006/10/16 03:09:06 christos Exp $");
+__RCSID("$NetBSD: dir.c,v 1.50 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -161,7 +161,7 @@ dirscan(struct inodesc *idesc)
 #endif
 
 	if (idesc->id_type != DATA)
-		errx(EEXIT, "wrong type to dirscan %d", idesc->id_type);
+		errexit("wrong type to dirscan %d", idesc->id_type);
 	if (idesc->id_entryno == 0 &&
 	    (idesc->id_filesize & (dirblksiz - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, dirblksiz);

@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.58 2007/04/12 05:19:18 chs Exp $	*/
+/*	$NetBSD: inode.c,v 1.59 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.8 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.58 2007/04/12 05:19:18 chs Exp $");
+__RCSID("$NetBSD: inode.c,v 1.59 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -323,7 +323,7 @@ ginode(ino_t inumber)
 	int blkoff;
 
 	if (inumber < ROOTINO || inumber > maxino)
-		errx(EEXIT, "bad inode number %llu to ginode",
+		errexit("bad inode number %llu to ginode",
 		    (unsigned long long)inumber);
 	if (startinum == 0 ||
 	    inumber < startinum || inumber >= startinum + INOPB(sblock)) {
@@ -396,7 +396,7 @@ getnextinode(ino_t inumber)
 	union dinode *ret;
 
 	if (inumber != nextino++ || inumber > lastvalidinum)
-		errx(EEXIT, "bad inode number %llu to nextinode",
+		errexit("bad inode number %llu to nextinode",
 		    (unsigned long long)inumber);
 
 	if (inumber >= lastinum) {
@@ -430,7 +430,7 @@ setinodebuf(ino_t inum)
 {
 
 	if (inum % sblock->fs_ipg != 0)
-		errx(EEXIT, "bad inode number %llu to setinodebuf",
+		errexit("bad inode number %llu to setinodebuf",
 		    (unsigned long long)inum);
 
 	lastvalidinum = inum + sblock->fs_ipg - 1;
@@ -453,7 +453,7 @@ setinodebuf(ino_t inum)
 	}
 	if (inodebuf == NULL &&
 	    (inodebuf = malloc((unsigned)inobufsize)) == NULL)
-		errx(EEXIT, "Cannot allocate space for inode buffer");
+		errexit("Cannot allocate space for inode buffer");
 }
 
 void
@@ -513,7 +513,7 @@ cacheino(union dinode *dp, ino_t inumber)
 		ninpsort = (struct inoinfo **)realloc((char *)inpsort,
 		    (unsigned)(listmax + 100) * sizeof(struct inoinfo *));
 		if (inpsort == NULL)
-			errx(EEXIT, "cannot increase directory list");
+			errexit("cannot increase directory list");
 		inpsort = ninpsort;
 		listmax += 100;
 	}
@@ -533,7 +533,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	errx(EEXIT, "cannot find inode %llu", (unsigned long long)inumber);
+	errexit("cannot find inode %llu", (unsigned long long)inumber);
 	return ((struct inoinfo *)0);
 }
 
@@ -684,7 +684,7 @@ blkerror(ino_t ino, const char *type, daddr_t blk)
 		return;
 
 	default:
-		errx(EEXIT, "BAD STATE %d TO BLKERR", info->ino_state);
+		errexit("BAD STATE %d TO BLKERR", info->ino_state);
 		/* NOTREACHED */
 	}
 }

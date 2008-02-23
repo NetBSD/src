@@ -1,4 +1,4 @@
-/*	$NetBSD: preen.c,v 1.8 2006/06/05 16:56:24 christos Exp $	*/
+/*	$NetBSD: preen.c,v 1.9 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)preen.c	8.3 (Berkeley) 12/6/94";
 #else
-__RCSID("$NetBSD: preen.c,v 1.8 2006/06/05 16:56:24 christos Exp $");
+__RCSID("$NetBSD: preen.c,v 1.9 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,12 +108,12 @@ checkfstab(int preen, int maxrun, int (*docheck)(), int (*chkit)())
 	long auxdata;
 	char *name;
 
-	sumstatus = 0;
+	sumstatus = FSCK_EXIT_OK;
 	for (passno = 1; passno <= 2; passno++) {
 		if (setfsent() == 0) {
-			fprintf(stderr, "Can't open checklist file: %s\n",
+			(void)fprintf(stderr, "Can't open checklist file: %s\n",
 			    _PATH_FSTAB);
-			return (8);
+			return FSCK_EXIT_CHECK_FAILED;
 		}
 		while ((fsp = getfsent()) != 0) {
 			if ((auxdata = (*docheck)(fsp)) == 0)
@@ -122,21 +122,21 @@ checkfstab(int preen, int maxrun, int (*docheck)(), int (*chkit)())
 				if (name = blockcheck(fsp->fs_spec)) {
 					if (sumstatus = (*chkit)(name,
 					    fsp->fs_file, auxdata, 0))
-						return (sumstatus);
+						return sumstatus;
 				} else if (preen)
-					return (8);
+					return FSCK_EXIT_CHECK_FAILED;
 			} else if (passno == 2 && fsp->fs_passno > 1) {
 				if ((name = blockcheck(fsp->fs_spec)) == NULL) {
 					fprintf(stderr, "BAD DISK NAME %s\n",
 						fsp->fs_spec);
-					sumstatus |= 8;
+					sumstatus = FSCK_EXIT_CHECK_FAILED;
 					continue;
 				}
 				addpart(name, fsp->fs_file, auxdata);
 			}
 		}
 		if (preen == 0)
-			return (0);
+			return FSCK_EXIT_OK;
 	}
 	if (preen) {
 		if (maxrun == 0)
@@ -148,7 +148,7 @@ checkfstab(int preen, int maxrun, int (*docheck)(), int (*chkit)())
 			while (ret = startdisk(nextdisk, chkit) && nrun > 0)
 				sleep(10);
 			if (ret)
-				return (ret);
+				return ret;
 			nextdisk = nextdisk->next;
 		}
 		while ((pid = wait(&status)) != -1) {
@@ -167,10 +167,11 @@ checkfstab(int preen, int maxrun, int (*docheck)(), int (*chkit)())
 				printf("%s (%s): EXITED WITH SIGNAL %d\n",
 					dk->part->name, dk->part->fsname,
 					WTERMSIG(status));
-				retcode = 8;
+				retcode = FSCK_EXIT_SIGNALLED;
 			}
 			if (retcode != 0) {
-				sumstatus |= retcode;
+				if (sumstatus < retcode)
+					sumstatus = retcode;
 				*badnext = dk->part;
 				badnext = &dk->part->next;
 				dk->part = dk->part->next;
@@ -188,7 +189,7 @@ checkfstab(int preen, int maxrun, int (*docheck)(), int (*chkit)())
 					    nrun > 0)
 						sleep(10);
 					if (ret)
-						return (ret);
+						return ret;
 				}
 			} else if (nrun < maxrun && nrun < ndisks) {
 				for ( ;; ) {
@@ -202,22 +203,22 @@ checkfstab(int preen, int maxrun, int (*docheck)(), int (*chkit)())
 				    nrun > 0)
 					sleep(10);
 				if (ret)
-					return (ret);
+					return ret;
 			}
 		}
 	}
 	if (sumstatus) {
 		if (badlist == 0)
-			return (sumstatus);
+			return sumstatus;
 		fprintf(stderr, "THE FOLLOWING FILE SYSTEM%s HAD AN %s\n\t",
 			badlist->next ? "S" : "", "UNEXPECTED INCONSISTENCY:");
 		for (pt = badlist; pt; pt = pt->next)
 			fprintf(stderr, "%s (%s)%s", pt->name, pt->fsname,
 			    pt->next ? ", " : "\n");
-		return (sumstatus);
+		return sumstatus;
 	}
 	(void)endfsent();
-	return (0);
+	return FSCK_EXIT_OK;
 }
 
 struct disk *
@@ -242,12 +243,12 @@ finddisk(char *name)
 	}
 	if ((*dkp = (struct disk *)malloc(sizeof(struct disk))) == NULL) {
 		fprintf(stderr, "out of memory");
-		exit (8);
+		exit(FSCK_EXIT_CHECK_FAILED);
 	}
 	dk = *dkp;
 	if ((dk->name = malloc(len + 1)) == NULL) {
 		fprintf(stderr, "out of memory");
-		exit (8);
+		exit(FSCK_EXIT_CHECK_FAILED);
 	}
 	(void)strncpy(dk->name, name, len);
 	dk->name[len] = '\0';
@@ -271,16 +272,16 @@ addpart(char *name, char *fsname, long auxdata)
 		}
 	if ((*ppt = (struct part *)malloc(sizeof(struct part))) == NULL) {
 		fprintf(stderr, "out of memory");
-		exit (8);
+		exit(FSCK_EXIT_CHECK_FAILED);
 	}
 	pt = *ppt;
 	if ((pt->name = strdup(name)) == NULL) {
 		fprintf(stderr, "out of memory");
-		exit (8);
+		exit(FSCK_EXIT_CHECK_FAILED);
 	}
 	if ((pt->fsname = strdup(fsname)) == NULL) {
 		fprintf(stderr, "out of memory");
-		exit (8);
+		exit(FSCK_EXIT_CHECK_FAILED);
 	}
 	pt->next = NULL;
 	pt->auxdata = auxdata;
@@ -294,12 +295,12 @@ startdisk(struct disk *dk, int (*checkit)())
 	dk->pid = fork();
 	if (dk->pid < 0) {
 		perr("fork");
-		return (8);
+		return FSCK_EXIT_CHECK_FAILED;
 	}
 	if (dk->pid == 0)
 		exit((*checkit)(pt->name, pt->fsname, pt->auxdata, 1));
 	nrun++;
-	return (0);
+	return FSCK_EXIT_OK;
 }
 
 char *

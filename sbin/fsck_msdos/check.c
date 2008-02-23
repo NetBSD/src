@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.15 2007/03/10 00:30:36 hubertf Exp $	*/
+/*	$NetBSD: check.c,v 1.16 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: check.c,v 1.15 2007/03/10 00:30:36 hubertf Exp $");
+__RCSID("$NetBSD: check.c,v 1.16 2008/02/23 21:41:48 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: check.c,v 1.15 2007/03/10 00:30:36 hubertf Exp $");
 
 #include "ext.h"
 #include "fsutil.h"
+#include "exitvalues.h"
 
 int
 checkfilesys(const char *filename)
@@ -55,7 +56,7 @@ checkfilesys(const char *filename)
 	struct fatEntry *fat = NULL;
 	int i, finish_dosdirsection=0;
 	int mod = 0;
-	int ret = 8;
+	int ret = FSCK_EXIT_CHECK_FAILED;
 
 	rdonly = alwaysno;
 	if (!preen)
@@ -74,13 +75,13 @@ checkfilesys(const char *filename)
 
 	if (dosfs < 0) {
 		perr("Can't open `%s'", filename);
-		return 8;
+		return FSCK_EXIT_CHECK_FAILED;
 	}
 
 	if (readboot(dosfs, &boot) != FSOK) {
 		close(dosfs);
 		printf("\n");
-		return 8;
+		return FSCK_EXIT_CHECK_FAILED;
 	}
 
 	if (!preen)  {
@@ -93,7 +94,7 @@ checkfilesys(const char *filename)
 	mod |= readfat(dosfs, &boot, boot.ValidFat >= 0 ? boot.ValidFat : 0, &fat);
 	if (mod & FSFATAL) {
 		close(dosfs);
-		return 8;
+		return FSCK_EXIT_CHECK_FAILED;
 	}
 
 	if (boot.ValidFat < 0)
@@ -177,7 +178,7 @@ checkfilesys(const char *filename)
 	if (mod & (FSFATAL | FSERROR))
 		goto out;
 
-	ret = 0;
+	ret = FSCK_EXIT_OK;
 
     out:
 	if (finish_dosdirsection)

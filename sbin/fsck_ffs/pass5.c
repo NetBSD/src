@@ -1,4 +1,4 @@
-/*	$NetBSD: pass5.c,v 1.47 2006/11/14 21:01:46 apb Exp $	*/
+/*	$NetBSD: pass5.c,v 1.48 2008/02/23 21:41:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.9 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: pass5.c,v 1.47 2006/11/14 21:01:46 apb Exp $");
+__RCSID("$NetBSD: pass5.c,v 1.48 2008/02/23 21:41:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -112,7 +112,7 @@ pass5(void)
 					ncgsize = fragroundup(fs, CGSIZE(fs));
 					ncg = realloc(cgrp, ncgsize);
 					if (ncg == NULL)
-						errx(EEXIT,
+						errexit(
 						"cannot reallocate cg space");
 					cg = cgrp = ncg;
 					fs->fs_cgsize = ncgsize;
@@ -184,7 +184,7 @@ pass5(void)
 			break;
 
 		default:
-			errx(EEXIT, "UNKNOWN ROTATIONAL TABLE FORMAT %d",
+			errexit("UNKNOWN ROTATIONAL TABLE FORMAT %d",
 			    fs->fs_old_postblformat);
 		}
 	}
@@ -332,7 +332,7 @@ pass5(void)
 			default:
 				if (j < ROOTINO)
 					break;
-				errx(EEXIT, "BAD STATE %d FOR INODE I=%ld",
+				errexit("BAD STATE %d FOR INODE I=%ld",
 				    info->ino_state, (long)j);
 			}
 		}
