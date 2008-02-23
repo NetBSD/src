@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.18 2008/02/20 04:48:10 dholland Exp $	*/
+/*	$NetBSD: monop.c,v 1.19 2008/02/23 21:48:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.18 2008/02/20 04:48:10 dholland Exp $");
+__RCSID("$NetBSD: monop.c,v 1.19 2008/02/23 21:48:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -70,6 +70,9 @@ main(ac, av)
 
 	srandom(time(NULL));
 	heapstart = sbrk(0);
+	num_luck = sizeof lucky_mes / sizeof (char *);
+	init_decks();
+	init_monops();
 	if (ac > 1) {
 		if (!rest_f(av[1]))
 			restore();
@@ -77,10 +80,7 @@ main(ac, av)
 	else {
 		getplayers();
 		init_players();
-		init_monops();
 	}
-	num_luck = sizeof lucky_mes / sizeof (char *);
-	init_decks();
 	signal(SIGINT, do_quit);
 	for (;;) {
 		printf("\n%s (%d) (cash $%d) on %s\n", cur_p->name, player + 1,
@@ -105,15 +105,15 @@ do_quit(n)
 static void
 getplayers()
 {
-	char *sp;
 	int i, j;
 	char buf[257];
 
 blew_it:
 	for (;;) {
-		if ((num_play = get_int("How many players? ")) <= 0 ||
+		if ((num_play = get_int("How many players? ")) <= 1 ||
 		    num_play > MAX_PL)
-			printf("Sorry. Number must range from 1 to 9\n");
+			printf("Sorry. Number must range from 2 to %d\n",
+			    MAX_PL);
 		else
 			break;
 	}
@@ -121,28 +121,29 @@ blew_it:
 	if (play == NULL)
 		err(1, NULL);
 	for (i = 0; i < num_play; i++) {
-over:
-		printf("Player %d's name: ", i + 1);
-		for (sp = buf; (*sp = getchar()) != '\n'; sp++)
-			continue;
-		if (sp == buf)
-			goto over;
-		*sp++ = '\0';
-		name_list[i] = play[i].name = (char *)calloc(1, sp - buf);
+		do {
+			printf("Player %d's name: ", i + 1);
+			fgets(buf, sizeof(buf), stdin);
+			if (feof(stdin)) {
+				printf("End of file on stdin\n");
+				exit(0);
+			}
+			buf[strcspn(buf, "\n")] = '\0';
+		} while (strlen(buf) == 0);
+		name_list[i] = play[i].name = strdup(buf);
 		if (name_list[i] == NULL)
 			err(1, NULL);
-		strcpy(play[i].name, buf);
 		play[i].money = 1500;
 	}
 	name_list[i++] = "done";
 	name_list[i] = 0;
 	for (i = 0; i < num_play; i++)
-		for (j = i + 1; j < num_play; j++)
+		for (j = i + 1; j <= num_play; j++)
 			if (strcasecmp(name_list[i], name_list[j]) == 0) {
-				if (i != num_play - 1)
+				if (j != num_play)
 					printf("Hey!!! Some of those are "
 					    "IDENTICAL!!  Let's try that "
-					    "again....\n");
+					    "again...\n");
 				else
 					printf("\"done\" is a reserved word.  "
 					    "Please try again\n");
