@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.15 2007/10/17 19:57:07 garbled Exp $	*/
+/*	$NetBSD: locore.h,v 1.16 2008/02/23 17:49:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -166,8 +166,8 @@
 	swap.b	Rn,	Rn						;\
 	swap.w	Rn,	Rn	/* Rn = 0x10000000 */			;\
 	stc	sr,	Rm						;\
-	or	Rn,	Rm						;\
-	ldc	Rm,	sr	/* block exceptions */
+	or	Rm,	Rn						;\
+	ldc	Rn,	sr	/* block exceptions */
 
 #define	__EXCEPTION_UNBLOCK(Rn, Rm)					;\
 	mov	#0xef,	Rn	/* ~0x10 */				;\
