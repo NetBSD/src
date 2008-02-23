@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.12 2008/02/22 22:11:59 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.13 2008/02/23 14:27:21 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -82,4 +82,10 @@ sbin/veriexecctl/veriexecctl.8:			patch
 
 	reflect reality in the veriexecctl(8) man-page.
 	[elad, ticket #1080]
+
+sys/arch/acorn32/stand/boot32/boot32.c		1.31
+
+	Zero out the whole of the structure, not just the first 4 bytes.
+	Now a small kernel will boot up on my RISC-PC.
+	[chris, ticket #1063]
 
