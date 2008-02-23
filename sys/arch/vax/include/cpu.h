@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.82 2008/02/20 16:37:52 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.83 2008/02/23 05:48:13 matt Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -130,7 +130,6 @@ struct cpu_info {
 	 * Public members.
 	 */
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	struct lwp *ci_curlwp;		/* current owner of the processor */
 	int ci_mtx_oldspl;		/* saved spl */
 	int ci_mtx_count;		/* negative count of mutexes */
 
@@ -143,7 +142,7 @@ struct cpu_info {
 	lwp_t *ci_softlwps[SOFTINT_COUNT];
 #endif
 #if defined(MULTIPROCESSOR)
-	struct pcb *ci_pcb;		/* Idle PCB for this CPU */
+	struct lwp *ci_curlwp;		/* current lwp (for other cpus) */
 	vaddr_t ci_istack;		/* Interrupt stack location */
 	int ci_flags;			/* See below */
 	long ci_ipimsgs;		/* Sent IPI bits */
@@ -170,8 +169,8 @@ struct cpu_mp_softc {
 
 				/* XXX need to cache this in cpu_info */
 #define	ci_cpuid		ci_dev->dv_unit
-#define	curcpu()		((struct cpu_info *)mfpr(PR_SSP))
-#define	curlwp			(curcpu()->ci_curlwp)
+#define	curcpu()		(curlwp->l_cpu + 0)
+#define	curlwp			((struct lwp *)mfpr(PR_SSP))
 #define	cpu_number()		(curcpu()->ci_cpuid)
 #define	cpu_need_resched(ci, flags)		\
 	do {					\
@@ -224,6 +223,8 @@ extern char vax_mp_tramp;
 struct device;
 struct buf;
 struct pte;
+
+#include <sys/lwp.h>
 
 /* Some low-level prototypes */
 #if defined(MULTIPROCESSOR)

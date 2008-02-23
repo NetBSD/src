@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2008/02/22 03:16:01 matt Exp $
+#	$NetBSD: genassym.cf,v 1.42 2008/02/23 05:48:13 matt Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -31,6 +31,7 @@
 #
 
 quote #define __MUTEX_PRIVATE
+quote #define __RWLOCK_PRIVATE
 
 include	<sys/param.h>
 include	<sys/proc.h>
@@ -94,7 +95,9 @@ define	UVM_PAGE_IDLE_ZERO	offsetof(struct uvm, page_idle_zero)
 define	UVME_INTRS	offsetof(struct uvmexp, intrs)
 define	UVME_SOFTS	offsetof(struct uvmexp, softs)
 
+ifdef MULTIPROCESSOR
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
+endif
 define	CI_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CI_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define	CI_SOFTLWPS	offsetof(struct cpu_info, ci_softlwps)
@@ -169,3 +172,12 @@ define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
 ifdef	MUTEX_COUNT_BIAS
 define	MTX_COUNT_BIAS	MUTEX_COUNT_BIAS
 endif
+
+define	RW_OWNER	offsetof(struct krwlock, rw_owner)
+define	RW_HAS_WAITERS	RW_HAS_WAITERS
+define	RW_WRITE_LOCKED	RW_WRITE_LOCKED
+define	RW_WRITE_WANTED	RW_WRITE_WANTED
+define	RW_READ_INCR	RW_READ_INCR
+define	RW_THREAD	RW_THREAD
+define	RW_READER	RW_READER
+define	RW_WRITER	RW_WRITER

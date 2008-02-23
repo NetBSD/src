@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.162 2008/02/21 03:52:47 matt Exp $	 */
+/* $NetBSD: machdep.c,v 1.163 2008/02/23 05:48:14 matt Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.162 2008/02/21 03:52:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.163 2008/02/23 05:48:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -615,8 +615,6 @@ vax_unmap_physmem(addr, size)
 			 | (IPL_SOFTNET << (SOFTINT_NET * 5))		\
 			 | (IPL_SOFTSERIAL << (SOFTINT_SERIAL * 5)))
 
-extern const char softint_process[];
-
 void
 softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
@@ -624,11 +622,6 @@ softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 	l->l_cpu->ci_softlwps[level] = l;
 
 	*machdep = ipl;
-
-	l->l_addr->u_pcb.PC = (uintptr_t)softint_process;
-#ifdef MULTIPROCESSOR
-	l->l_addr->u_pcb.SSP = (uintptr_t)l->l_cpu;
-#endif
 }
 
 #include <dev/bi/bivar.h>

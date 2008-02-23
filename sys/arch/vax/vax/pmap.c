@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.156 2008/02/22 08:46:48 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.157 2008/02/23 05:48:14 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2008/02/22 08:46:48 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2008/02/23 05:48:14 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -259,6 +259,8 @@ calc_kvmsize(vsize_t usrptsize)
 	return kvmsize;
 }
 
+extern struct user *proc0paddr;
+
 /*
  * pmap_bootstrap().
  * Called as part of vm bootstrap, allocates internal pmap structures.
@@ -268,11 +270,11 @@ calc_kvmsize(vsize_t usrptsize)
 void
 pmap_bootstrap()
 {
+	struct pcb * const pcb = &proc0paddr->u_pcb;
+	struct pmap * const pmap = pmap_kernel();
+	struct cpu_info *ci;
 	extern unsigned int etext;
-	extern struct user *proc0paddr;
 	unsigned int sysptsize, i;
-	struct pcb *pcb = (struct pcb *)proc0paddr;
-	pmap_t pmap = pmap_kernel();
 	vsize_t kvmsize, usrptsize;
 
 	/* Set logical page size */
@@ -400,19 +402,19 @@ pmap_bootstrap()
 	mtpr(pcb->P1LR, PR_P1LR);
 	mtpr(pcb->P0LR, PR_P0LR);
 
-	/* cpu_info struct */
-	pcb->SSP = scratch;
+	/* initialize SSP to point curlwp (lwp0) */
+	pcb->SSP = (uintptr_t)&lwp0;
 	mtpr(pcb->SSP, PR_SSP);
-	memset((void *)pcb->SSP, 0,
-	    sizeof(struct cpu_info) + sizeof(struct device));
-	curcpu()->ci_curlwp = &lwp0;
-#ifdef MUTEX_COUNT_BIAS
-	curcpu()->ci_mtx_count = MUTEX_COUNT_BIAS;
-#endif
-	curcpu()->ci_dev = (void *)(pcb->SSP + sizeof(struct cpu_info));
+
+	/* cpu_info struct */
+	ci = (struct cpu_info *) scratch;
+	lwp0.l_cpu = ci;
+	memset(ci, 0, sizeof(struct cpu_info) + sizeof(struct device));
+	ci->ci_dev = (void *)(ci + 1);
 #if defined(MULTIPROCESSOR)
-	curcpu()->ci_flags = CI_MASTERCPU|CI_RUNNING;
-	SIMPLEQ_FIRST(&cpus) = curcpu();
+	ci->ci_curlwp = &lwp0;
+	ci->ci_flags = CI_MASTERCPU|CI_RUNNING;
+	SIMPLEQ_FIRST(&cpus) = ci;
 #endif
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
 	simple_lock_init(&pvtable_lock);
