@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.14 2008/02/23 05:35:20 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.15 2008/02/23 06:51:28 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
  * contain a zero.  We therefore start from one.
  */
 
-char           *kernelnames[] = {
+const char *kernelnames[] = {
 	"placekeeper",
 	"netbsd.sgimips",
 	"netbsd",
@@ -106,9 +106,9 @@ char           *kernelnames[] = {
 };
 
 extern const struct arcbios_fv *ARCBIOS;
-static int      debug = 0;
+static int debug = 0;
 
-int             main(int, char **);
+int main(int, char **);
 
 /* Storage must be static. */
 struct btinfo_symtab bi_syms;
@@ -140,8 +140,8 @@ main(int argc, char **argv)
 
 	/* print a banner */
 	printf("\n");
-	printf("NetBSD/sgimips " NETBSD_VERS " Bootstrap, Revision %s\n",
-	       bootprog_rev);
+	printf("%s " NETBSD_VERS " Bootstrap, Revision %s\n",
+	    bootprog_name, bootprog_rev);
 	printf("(%s, %s)\n", bootprog_maker, bootprog_date);
 	printf("\n");
 
@@ -151,7 +151,6 @@ main(int argc, char **argv)
 	bi_init(bootinfo);
 
 	/* Parse arguments, if present.  */
-
 	while ((ch = getopt(argc, argv, "v")) != -1) {
 		switch (ch) {
 		case 'v':
@@ -166,20 +165,19 @@ main(int argc, char **argv)
 	 * If argv[0] contains the string "cdrom(", we're probably doing an
 	 * install.  The bootpath will therefore be partition 0 of whatever
 	 * device we've booted from.  Derive the install kernel name from
-	 * the bootloader name ("ip32boot", "ip22boot", or "aoutboot").
+	 * the bootloader name ("ip3xboot", "ip2xboot", or "aoutboot").
 	 */
 
-	if (strstr(argv[0], "cdrom("))
-	{
+	if (strstr(argv[0], "cdrom(")) {
 		strcpy(bootfile, argv[0]);
 		i = (strrchr(bootfile, ')') - bootfile);
-		bootfile[i-1] = '0';
+		bootfile[i - 1] = '0';
 		if (strstr(bootfile, "ip3x"))
 			kernel = "ip3x";
 		else
 			kernel = "ip2x";
 		sprintf((strrchr(bootfile, ')') + 1), kernel);
-		if ( (loadfile(bootfile, marks, LOAD_KERNEL)) >= 0 )
+		if ((loadfile(bootfile, marks, LOAD_KERNEL)) >= 0)
 			goto finish;
 	}
 
@@ -187,7 +185,8 @@ main(int argc, char **argv)
 
 	if (bootpath == NULL) {
 		/* XXX need to actually do the fixup */
-		printf("\nPlease set the OSLoadPartition environment variable.\n");
+		printf("\nPlease set the OSLoadPartition "
+		    "environment variable.\n");
 		return 0;
 	}
 
@@ -231,7 +230,6 @@ main(int argc, char **argv)
 				break;
 			i++;
 		}
-
 	}
 
 	if (win < 0) {
@@ -257,5 +255,5 @@ finish:
 	(*entry)(argc, argv, BOOTINFO_MAGIC, bootinfo);
 
 	printf("Kernel returned!  Halting...\n");
-	return (0);
+	return 0;
 }
