@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.108 2008/02/03 06:46:29 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.109 2008/02/23 17:43:36 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -344,7 +344,9 @@ assym.d: assym.h
 	sed -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
 	rm -f assym.dep
 
-.depend: ${DEPS} assym.d
+DEPS+=	assym.d
+
+.depend: ${DEPS}
 	${_MKTARGET_CREATE}
 	echo "${.ALLSRC}" | ${MKDEP} -D
 .endif
