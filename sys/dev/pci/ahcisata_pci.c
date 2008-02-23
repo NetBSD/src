@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.6 2008/02/23 14:53:31 mlelstv Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.7 2008/02/23 16:25:35 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.6 2008/02/23 14:53:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.7 2008/02/23 16:25:35 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -135,10 +135,10 @@ ahci_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmat = pa->pa_dmat;
 
 	if (PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_MASS_STORAGE_RAID) {
-		aprint_normal("%s: RAID mode\n", AHCINAME(sc));
+		AHCIDEBUG_PRINT(("%s: RAID mode\n", AHCINAME(sc)), DEBUG_PROBE);
 		sc->sc_atac_capflags = ATAC_CAP_RAID;
 	} else {
-		aprint_normal("%s: SATA mode\n", AHCINAME(sc));
+		AHCIDEBUG_PRINT(("%s: SATA mode\n", AHCINAME(sc)), DEBUG_PROBE);
 	}
 
 	ahci_attach(sc);
