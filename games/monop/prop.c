@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.15 2008/02/20 05:08:46 dholland Exp $	*/
+/*	$NetBSD: prop.c,v 1.16 2008/02/23 22:17:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.15 2008/02/20 05:08:46 dholland Exp $");
+__RCSID("$NetBSD: prop.c,v 1.16 2008/02/23 22:17:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ bid()
 {
 	static bool in[MAX_PL];
 	int i, num_in, cur_max;
-	char buf[80];
+	char buf[257];
 	int cur_bid;
 
 	printf("\nSo it goes up for auction.  Type your bid after your name\n");
@@ -190,6 +190,10 @@ bid()
 					printf("You must bid higher than %d "
 					    "to stay in\n", cur_max);
 					printf("(bid of 0 drops you out)\n");
+				} else if (cur_bid > play[i].money) {
+					printf("You can't bid more than your cash ($%d)\n",
+					    play[i].money);
+					cur_bid = -1;
 				}
 			} while (cur_bid != 0 && cur_bid <= cur_max);
 			cur_max = (cur_bid ? cur_bid : cur_max);
