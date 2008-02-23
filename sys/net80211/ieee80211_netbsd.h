@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.h,v 1.14.4.2 2008/02/23 13:00:59 skrll Exp $ */
+/* $NetBSD: ieee80211_netbsd.h,v 1.14.4.3 2008/02/23 14:31:31 skrll Exp $ */
 /*-
  * Copyright (c) 2003-2005 Sam Leffler, Errno Consulting
  * All rights reserved.
@@ -347,6 +347,7 @@ struct ieee80211_michael_event {
 #define	RTM_IEEE80211_MICHAEL	107	/* Michael MIC failure detected */
 #define	RTM_IEEE80211_REJOIN	108	/* station re-associate (ap mode) */
 
+#ifdef _KERNEL
 #define	__offsetof	offsetof
 #define	ticks	hardclock_ticks
 #define	ovbcopy(__src, __dst, __n)	((void)memmove(__dst, __src, __n))
@@ -370,5 +371,6 @@ void	net80211_init(void);
 	static void name(void);					\
 	__link_set_add_text(ieee80211_funcs, name);		\
 	static void name(void)
+#endif /* _KERNEL */
 
 #endif /* !_NET80211_IEEE80211_NETBSD_H_ */
