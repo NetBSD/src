@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.35 2008/02/14 22:46:14 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.36 2008/02/23 18:00:22 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.35 2008/02/14 22:46:14 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.36 2008/02/23 18:00:22 uwe Exp $")
 
 
 /*
@@ -491,18 +491,10 @@ NENTRY(sh_vector_interrupt)
 	!! Switch to the lwp's stack to run the AST check, so that if
 	!! interrupted lwp is preemtped, it is later resumed on its
 	!! own stack, not on the intterupt stack
-	mov	#0x10, r10
-	stc	sr, r11
-	swap.b	r10, r10
-	mov	r11, r2
-	swap.w	r10, r10	! r10 = PSL_BL
-	or	r10, r2
-	ldc	r2, sr		! block exceptions
-
+	__EXCEPTION_BLOCK(r10, r11)	! saves SR in r11
 	ldc.l	@r15+, r6_bank
 	mov.l	@r15+, r15
-
-	ldc	r11, sr		! unblock exceptions
+	ldc	r11, sr			! __EXCEPTION_UNBLOCK
 
 	mov.l	@(TF_SSR, r14), r2
 	mov.l	.Li_PSL_MD, r1
