@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.29 2008/02/22 22:09:49 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.30 2008/02/23 14:25:05 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -462,4 +462,27 @@ sbin/veriexecctl/veriexecctl.8:			patch
 
 	reflect reality in the veriexecctl(8) man-page.
 	[elad, ticket #1080]
+
+share/man/man4/nfe.4				1.4
+sys/dev/pci/if_nfe.c				1.22, 1.23, 1.25, 1.27
+sys/dev/pci/if_nfereg.h				1.5, 1.6
+sys/dev/pci/if_nfevar.h				1.5, 1.6
+sys/dev/pci/pcidevs				1.914
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+
+	Add NVIDIA MCP7[37] devices, from OpenBSD.
+	Attach to NVIDIA MCP67/73 Ethernet controllers.
+	Handle a quirk of newer MCP6x chips on reading MAC address.
+	Fix from Richy Kim in PR kern/36576.
+	Wakeup some newer chips from powerdown mode.
+	via OpenBSD.
+	Tested by wiz@ in PR kern/37868.
+	[tsutsui, ticket #1061]
+
+sys/arch/acorn32/stand/boot32/boot32.c		1.31
+
+	Zero out the whole of the structure, not just the first 4 bytes.
+	Now a small kernel will boot up on my RISC-PC.
+	[chris, ticket #1063]
 
