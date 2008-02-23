@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.66 2007/10/19 11:59:50 ad Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.67 2008/02/23 02:26:53 dyoung Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.66 2007/10/19 11:59:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.67 2008/02/23 02:26:53 dyoung Exp $");
 
 #include "opt_ipkdb.h"
 #include "opt_inet.h"
@@ -892,8 +892,8 @@ dp8390_ioctl(ifp, cmd, data)
 		break;
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & IFF_UP) == 0 &&
-		    (ifp->if_flags & IFF_RUNNING) != 0) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
+		case IFF_RUNNING:
 			/*
 			 * If interface is marked down and it is running, then
 			 * stop it.
@@ -901,8 +901,8 @@ dp8390_ioctl(ifp, cmd, data)
 			dp8390_stop(sc);
 			ifp->if_flags &= ~IFF_RUNNING;
 			dp8390_disable(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0 &&
-		    (ifp->if_flags & IFF_RUNNING) == 0) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
@@ -910,13 +910,17 @@ dp8390_ioctl(ifp, cmd, data)
 			if ((error = dp8390_enable(sc)) != 0)
 				break;
 			dp8390_init(sc);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			break;
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect hardware registers.
 			 */
 			dp8390_stop(sc);
 			dp8390_init(sc);
+			break;
+		default:
+			break;
 		}
 		break;
 
@@ -947,7 +951,7 @@ dp8390_ioctl(ifp, cmd, data)
 		break;
 
 	default:
-		error = EINVAL;
+		error = ENODEV;
 		break;
 	}
 
