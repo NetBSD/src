@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.48 2008/02/13 09:25:24 skrll Exp $	*/
+/*	$NetBSD: if_media.h,v 1.48.4.1 2008/02/23 12:58:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -212,12 +212,13 @@ u_quad_t	ifmedia_baudrate(int);
  * IEEE 802.11 Wireless
  */
 #define	IFM_IEEE80211	0x00000080
+/* NB: 0,1,2 are auto, manual, none defined below */
 #define	IFM_IEEE80211_FH1	3	/* Frequency Hopping 1Mbps */
 #define	IFM_IEEE80211_FH2	4	/* Frequency Hopping 2Mbps */
-#define	IFM_IEEE80211_DS2	5	/* Direct Sequence 2Mbps */
-#define	IFM_IEEE80211_DS5	6	/* Direct Sequence 5Mbps*/
-#define	IFM_IEEE80211_DS11	7	/* Direct Sequence 11Mbps*/
-#define	IFM_IEEE80211_DS1	8	/* Direct Sequence 1Mbps */
+#define	IFM_IEEE80211_DS1	5	/* Direct Sequence 1Mbps */
+#define	IFM_IEEE80211_DS2	6	/* Direct Sequence 2Mbps */
+#define	IFM_IEEE80211_DS5	7	/* Direct Sequence 5.5Mbps */
+#define	IFM_IEEE80211_DS11	8	/* Direct Sequence 11Mbps */
 #define	IFM_IEEE80211_DS22	9	/* Direct Sequence 22Mbps */
 #define	IFM_IEEE80211_OFDM6	10	/* OFDM 6Mbps */
 #define	IFM_IEEE80211_OFDM9	11	/* OFDM 9Mbps */
@@ -228,17 +229,28 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_OFDM48	16	/* OFDM 48Mbps */
 #define	IFM_IEEE80211_OFDM54	17	/* OFDM 54Mbps */
 #define	IFM_IEEE80211_OFDM72	18	/* OFDM 72Mbps */
+#define	IFM_IEEE80211_DS354k	19	/* Direct Sequence 354Kbps */
+#define	IFM_IEEE80211_DS512k	20	/* Direct Sequence 512Kbps */
+#define	IFM_IEEE80211_OFDM3	21	/* OFDM 3Mbps */
+#define	IFM_IEEE80211_OFDM4	22	/* OFDM 4.5Mbps */
+#define	IFM_IEEE80211_OFDM27	23	/* OFDM 27Mbps */
+/* NB: not enough bits to express MCS fully */
+#define	IFM_IEEE80211_MCS	24	/* HT MCS rate */
 
 #define	IFM_IEEE80211_ADHOC	 0x00000100	/* Operate in Adhoc mode */
 #define	IFM_IEEE80211_HOSTAP	 0x00000200	/* Operate in Host AP mode */
-#define	IFM_IEEE80211_MONITOR	 0x00000400	/* Operate in Monitor mode */
-#define	IFM_IEEE80211_TURBO	 0x00000800	/* Operate in Turbo mode */
+#define	IFM_IEEE80211_IBSS	0x00000400	/* Operate in IBSS mode */
+#define	IFM_IEEE80211_IBSSMASTER 0x00000800	/* Operate as an IBSS master */
+#define	IFM_IEEE80211_TURBO	0x00001000	/* Operate in turbo mode */
+#define	IFM_IEEE80211_MONITOR	0x00002000	/* Operate in monitor mode */
 
 /* operating mode for multi-mode devices */
-#define	IFM_IEEE80211_11A	0x00010000	/* 5 GHz, OFDM mode */
+#define	IFM_IEEE80211_11A	0x00010000	/* 5Ghz, OFDM mode */
 #define	IFM_IEEE80211_11B	0x00020000	/* Direct Sequence mode */
-#define	IFM_IEEE80211_11G	0x00030000	/* 2 GHz, CCK mode */
-#define	IFM_IEEE80211_FH	0x00040000	/* 2 GHz, GFSK mode */
+#define	IFM_IEEE80211_11G	0x00030000	/* 2Ghz, CCK mode */
+#define	IFM_IEEE80211_FH	0x00040000	/* 2Ghz, GFSK mode */
+#define	IFM_IEEE80211_11NA	0x00050000	/* 5Ghz, HT mode */
+#define	IFM_IEEE80211_11NG	0x00060000	/* 2Ghz, HT mode */
 
 /*
  * Common Address Redundancy Protocol
