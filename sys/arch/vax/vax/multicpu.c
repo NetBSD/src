@@ -1,4 +1,4 @@
-/*	$NetBSD: multicpu.c,v 1.23 2007/10/17 19:57:59 garbled Exp $	*/
+/*	$NetBSD: multicpu.c,v 1.24 2008/02/23 05:48:14 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.23 2007/10/17 19:57:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multicpu.c,v 1.24 2008/02/23 05:48:14 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -155,10 +155,13 @@ cpu_send_ipi(int cpu, int type)
 }
 
 void
-cpu_handle_ipi()
+cpu_handle_ipi(void)
 {
-	struct cpu_info *ci = curcpu();
+	struct cpu_info * const ci = curcpu();
 	int bitno;
+	int s;
+
+	s = splhigh();
 
 	while ((bitno = ffs(ci->ci_ipimsgs))) {
 		bitno -= 1; /* ffs() starts from 1 */
@@ -190,4 +193,5 @@ cpu_handle_ipi()
 			panic("cpu_handle_ipi: bad bit %x", bitno);
 		}
 	}
+	splx(s);
 }

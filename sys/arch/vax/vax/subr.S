@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.23 2008/02/22 03:18:40 matt Exp $	   */
+/*	$NetBSD: subr.S,v 1.24 2008/02/23 05:48:14 matt Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -315,7 +315,7 @@ _C_LABEL(vax_mp_tramp):
 	.type	softint_exit@function
 	.type	softint_process@function
 softint_cleanup:
-	mfpr    $PR_SSP,%r1		/* get cpu_info */
+	movl    L_CPU(%r0),%r1		/* get cpu_info */
 	incl    CI_MTX_COUNT(%r1)	/* increment mutex count */
 	clrl    L_CTXSWTCH(%r0)		/* clear l_ctxswtch of old lwp */
 	movl	L_ADDR(%r0),%r1		/* get PCB of softint LWP */
@@ -332,13 +332,15 @@ softint_process:
 	calls	$2,_C_LABEL(softint_dispatch) /* dispatch it */
 
 	/* We can use any register because ldpctx will overwrite them */
-	mfpr	$PR_SSP,%r8		/* get cpu_info */
-	movl	%r6,CI_CURLWP(%r8)	/* set curlwp */
 	movl	L_ADDR(%r6),%r3		/* get pcb */
 	movab	softint_exit,PCB_PC(%r3)/* do a quick exit */
+#ifdef MULTIPROCESSOR
+	movl	L_CPU(%r6),%r8
+	movl	%r6,CI_CURLWP(%r8)
+#endif
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	/* restore PA of interrupted pcb */
-	ldpctx
+	ldpctx				/* implictily updates curlwp */
 	rei
 
 
@@ -350,12 +352,15 @@ softint_common:
 	svpctx
 
 	/* We can use any register because ldpctx will overwrite them */
-	mfpr	$PR_SSP,%r8		/* Get curcpu */
+	mfpr	$PR_SSP,%r6		/* Get curlwp */
+	movl	L_CPU(%r6),%r8		/* get cpu_info */
 	movl	CI_SOFTLWPS(%r8)[%r0],%r2 /* get softlwp to switch to */
 	movl	L_ADDR(%r2),%r3		/* Get pointer to its pcb. */
-	movl	CI_CURLWP(%r8),PCB_R6(%r3) /* move old lwp into new pcb */
+	movl	%r6,PCB_R6(%r3)		/* move old lwp into new pcb */
 	movl	%r1,PCB_R7(%r3)		/* move IPL into new pcb */
+#ifdef MULTIPROCESSOR
 	movl	%r2,CI_CURLWP(%r8)	/* update ci_curlwp */
+#endif
 
 	/*
 	 * Now reset the PCB since we no idea what state it was last in
@@ -414,12 +419,12 @@ JSBENTRY(Swtchto)
 
 	/* We can know use any register because ldpctx will overwrite them */
 	/* New LWP already in %r1 */
-	mfpr	$PR_SSP,%r4		# Get curcpu
-	movl	%r1,CI_CURLWP(%r4)	# update ci_curlwp
 	movl	L_ADDR(%r1),%r3		# Get pointer to new pcb.
 	movl	%r0,PCB_R0(%r3)		# move r0 into new pcb (return value)
 #ifdef MULTIPROCESSOR
-	movl	%r4,SSP(%r3)		# Put curcpu into new PCB
+	movl	L_CPU(%r0), %r8		/* get cpu_info of old lwp */
+	movl	%r8, L_CPU(%r1)		/* update cpu_info of new lwp */
+	movl	%r1,CI_CURLWP(%r8)	/* update ci_curlwp */
 #endif
 
 	mtpr	PCB_PADDR(%r3),$PR_PCBB	# set PA of new pcb
