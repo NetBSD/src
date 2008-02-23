@@ -1,4 +1,4 @@
-/*	$NetBSD: auvia.c,v 1.62 2008/01/14 06:32:10 tsutsui Exp $	*/
+/*	$NetBSD: auvia.c,v 1.63 2008/02/23 01:54:44 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.62 2008/01/14 06:32:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvia.c,v 1.63 2008/02/23 01:54:44 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,8 +86,10 @@ struct auvia_dma_op {
 #define AUVIA_DMAOP_COUNT(x)	((x)&0x00FFFFFF)
 };
 
-static int	auvia_match(struct device *, struct cfdata *, void *);
-static void	auvia_attach(struct device *, struct device *, void *);
+static int	auvia_match(device_t, struct cfdata *, void *);
+static void	auvia_attach(device_t, device_t, void *);
+static int	auvia_detach(device_t, int);
+static void	auvia_childdet(device_t, device_t);
 static int	auvia_open(void *, int);
 static void	auvia_close(void *);
 static int	auvia_query_encoding(void *, struct audio_encoding *);
@@ -118,7 +120,7 @@ static int	auvia_trigger_output(void *, void *, void *, int,
 static int	auvia_trigger_input(void *, void *, void *, int,
 				    void (*)(void *), void *,
 				    const audio_params_t *);
-static bool	auvia_resume(device_t);
+static bool	auvia_resume(device_t PMF_FN_PROTO);
 static int	auvia_intr(void *);
 
 static int	auvia_attach_codec(void *, struct ac97_codec_if *);
@@ -129,8 +131,8 @@ static int	auvia_waitready_codec(struct auvia_softc *);
 static int	auvia_waitvalid_codec(struct auvia_softc *);
 static void	auvia_spdif_event(void *, bool);
 
-CFATTACH_DECL(auvia, sizeof (struct auvia_softc),
-    auvia_match, auvia_attach, NULL, NULL);
+CFATTACH_DECL2(auvia, sizeof (struct auvia_softc),
+    auvia_match, auvia_attach, auvia_detach, NULL, NULL, auvia_childdet);
 
 /* VIA VT823xx revision number */
 #define VIA_REV_8233PRE	0x10
@@ -270,8 +272,7 @@ static const struct audio_format auvia_spdif_formats[AUVIA_SPDIF_NFORMATS] = {
 
 
 static int
-auvia_match(struct device *parent, struct cfdata *match,
-    void *aux)
+auvia_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -290,7 +291,40 @@ auvia_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-auvia_attach(struct device *parent, struct device *self, void *aux)
+auvia_childdet(device_t self, device_t child)
+{
+	/* we hold no child references, so do nothing */
+}
+
+static int
+auvia_detach(device_t self, int flags)
+{
+	int rc;
+	struct auvia_softc *sc = device_private(self);
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+
+	pmf_device_deregister(self);
+
+	auconv_delete_encodings(sc->sc_encodings);
+	auconv_delete_encodings(sc->sc_spdif_encodings);
+
+	if (sc->codec_if != NULL)
+		sc->codec_if->vtbl->detach(sc->codec_if);
+
+	/* XXX restore compatibility? */
+
+	if (sc->sc_ih != NULL)
+		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+
+	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
+
+	return 0;
+}
+
+static void
+auvia_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa;
 	struct auvia_softc *sc;
@@ -298,13 +332,12 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	pci_chipset_tag_t pc;
 	pcitag_t pt;
 	pci_intr_handle_t ih;
-	bus_size_t iosize;
 	pcireg_t pr;
 	int r;
 	const char *revnum;	/* VT823xx revision number */
 
 	pa = aux;
-	sc = (struct auvia_softc *)self;
+	sc = device_private(self);
 	intrstr = NULL;
 	pc = pa->pa_pc;
 	pt = pa->pa_tag;
@@ -320,7 +353,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 	}
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_IO, 0, &sc->sc_iot,
-		&sc->sc_ioh, NULL, &iosize)) {
+		&sc->sc_ioh, NULL, &sc->sc_iosize)) {
 		aprint_error(": can't map i/o space\n");
 		return;
 	}
@@ -375,7 +408,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 
 	if (pci_intr_map(pa, &ih)) {
 		aprint_error(": couldn't map interrupt\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
@@ -387,7 +420,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 
@@ -417,7 +450,7 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 		aprint_error("%s: can't attach codec (error 0x%X)\n",
 			sc->sc_dev.dv_xname, r);
 		pci_intr_disestablish(pc, sc->sc_ih);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 
@@ -442,14 +475,14 @@ auvia_attach(struct device *parent, struct device *self, void *aux)
 					 &sc->sc_encodings)) {
 		sc->codec_if->vtbl->detach(sc->codec_if);
 		pci_intr_disestablish(pc, sc->sc_ih);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 	if (0 != auconv_create_encodings(auvia_spdif_formats,
 	    AUVIA_SPDIF_NFORMATS, &sc->sc_spdif_encodings)) {
 		sc->codec_if->vtbl->detach(sc->codec_if);
 		pci_intr_disestablish(pc, sc->sc_ih);
-		bus_space_unmap(sc->sc_iot, sc->sc_ioh, iosize);
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_iosize);
 		return;
 	}
 
@@ -1112,7 +1145,7 @@ auvia_intr(void *arg)
 }
 
 static bool
-auvia_resume(device_t dv)
+auvia_resume(device_t dv PMF_FN_ARGS)
 {
 	struct auvia_softc *sc = device_private(dv);
 
