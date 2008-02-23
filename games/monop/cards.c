@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.17 2008/02/19 09:45:02 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.18 2008/02/23 19:09:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.17 2008/02/19 09:45:02 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.18 2008/02/23 19:09:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -236,4 +236,19 @@ printmes()
 		putchar(c);
 	printline();
 	fflush(stdout);
+}
+
+/*
+ *	This routine returns the players get-out-of-jail-free card
+ * to a deck.
+ */
+void
+ret_card(plr)
+	PLAY *plr;
+{
+	plr->num_gojf--;
+	if (CC_D.gojf_used)
+		CC_D.gojf_used = FALSE;
+	else
+		CH_D.gojf_used = FALSE;
 }
