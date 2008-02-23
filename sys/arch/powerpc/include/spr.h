@@ -1,4 +1,4 @@
-/*	$NetBSD: spr.h,v 1.43 2007/12/31 18:44:47 garbled Exp $	*/
+/*	$NetBSD: spr.h,v 1.44 2008/02/23 19:54:54 matt Exp $	*/
 
 #ifndef _POWERPC_SPR_H_
 #define	_POWERPC_SPR_H_
@@ -44,6 +44,7 @@
 #define	SPR_SDR1		0x019	/* .68 Page table base address register */
 #define	SPR_SRR0		0x01a	/* 468 Save/Restore Register 0 */
 #define	SPR_SRR1		0x01b	/* 468 Save/Restore Register 1 */
+#define	SPR_44XPID		0x030	/* 4.. 440 Process ID */
 #define SPR_EIE			0x050	/* ..8 Exception Interrupt ??? */
 #define SPR_EID			0x051	/* ..8 Exception Interrupt ??? */
 #define SPR_NRI			0x052	/* ..8 Exception Interrupt ??? */
@@ -256,6 +257,14 @@
 #define	SPR_PID			0x3b1	/* 4.. Process ID */
 #define	SPR_PMC5		0x3b1	/* .6. Performance Counter Register 5 */
 #define	SPR_PMC6		0x3b2	/* .6. Performance Counter Register 6 */
+#define	SPR_MMUCR		0x3b2	/* 4.. MMU Control Register */
+#define	  MMUCR_SW0A		  0x01000000 /* Store WithOut Allocate */
+#define	  MMUCR_U1TE		  0x00400000 /* U1 Transient Enable */
+#define	  MMUCR_U2SWOAE		  0x00200000 /* U2 SWOA Enab */
+#define	  MMUCR_DULXE		  0x00080000 /* Data Cache Unlock Exc. Ena. */
+#define	  MMUCR_IULXE		  0x00040000 /* Inst. Cache Unlock Exc. Ena. */
+#define	  MMUCR_STS		  0x00010000 /* Search Translation Space [TS] */
+#define	  MMUCR_STID		  0x000000ff /* Search Translation ID */
 #define	SPR_CCR0		0x3b3	/* 4.. Core Configuration Register 0 */
 #define	SPR_IAC3		0x3b4	/* 4.. Instruction Address Compare 3 */
 #define	SPR_IAC4		0x3b5	/* 4.. Instruction Address Compare 4 */
