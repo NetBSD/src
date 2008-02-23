@@ -1,4 +1,4 @@
-/*	$NetBSD: bat.h,v 1.9 2008/02/05 18:10:46 garbled Exp $	*/
+/*	$NetBSD: bat.h,v 1.10 2008/02/23 19:28:29 matt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ struct bat {
 #define	BAT_M		0x00000010	/* memory coherency enable */
 #define	BAT_G		0x00000008	/* guarded region (not on 601) */
 #define	BAT_X		0x00000004	/* eXtended physical page number (3) */
+#define	BAT_WIMG	0x00000078	/* WIMG mask */
 
 /*
  * BAT_XPN and BAT_X are only used when HID0[XAEN] == 1 and are used
@@ -124,6 +125,11 @@ struct bat {
 #define	BAT_BL_64M	0x000007fc
 #define	BAT_BL_128M	0x00000ffc
 #define	BAT_BL_256M	0x00001ffc
+/* Extended Block Lengths (7455+) */
+#define	BAT_BL_512M	0x00003ffc
+#define	BAT_BL_1G	0x00007ffc
+#define	BAT_BL_2G	0x0000fffc
+#define	BAT_BL_4G	0x0001fffc
 
 #define	BATU(va, len, v)						\
 	(((va) & BAT_EPI) | ((len) & BAT_BL) | ((v) & BAT_V))
