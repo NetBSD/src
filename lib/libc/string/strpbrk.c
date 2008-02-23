@@ -1,4 +1,4 @@
-/*	$NetBSD: strpbrk.c,v 1.15 2008/02/22 19:25:59 joerg Exp $	*/
+/*	$NetBSD: strpbrk.c,v 1.16 2008/02/23 15:18:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: strpbrk.c,v 1.15 2008/02/22 19:25:59 joerg Exp $");
+__RCSID("$NetBSD: strpbrk.c,v 1.16 2008/02/23 15:18:04 christos Exp $");
 
 #include <assert.h>
 #include <inttypes.h>
@@ -38,20 +38,18 @@ strpbrk(const char *s, const char *charset)
 {
 	static const size_t idx[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
 	uint8_t set[32];
+#define UC(a) ((unsigned int)(unsigned char)(a))
 
 	_DIAGASSERT(s != NULL);
 	_DIAGASSERT(charset != NULL);
 
-	memset(set, 0, sizeof(set));
+	(void)memset(set, 0, sizeof(set));
 
 	for (; *charset != '\0'; ++charset)
-		set[(unsigned char)*charset >> 3] |=
-		    idx[(unsigned char)*charset & 7];
+		set[UC(*charset) >> 3] |= idx[UC(*charset) & 7];
 
-	for (; *s != '\0'; ++s) {
-		if (set[(unsigned char)*s >> 3] &
-		    idx[(unsigned char)*s & 7])
+	for (; *s != '\0'; ++s)
+		if (set[UC(*s) >> 3] & idx[UC(*s) & 7])
 			return __UNCONST(s);
-	}
 	return NULL;
 }
