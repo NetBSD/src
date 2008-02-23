@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.16 2008/02/23 22:26:41 dsl Exp $	*/
+/*	$NetBSD: jot.c,v 1.17 2008/02/23 22:46:10 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.16 2008/02/23 22:26:41 dsl Exp $");
+__RCSID("$NetBSD: jot.c,v 1.17 2008/02/23 22:46:10 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 
 	getargs(argc, argv);
 	if (randomize) {
-		x = (ender - begin) * (ender > begin ? 1 : -1);
+		x = (ender + dox - begin) * (ender > begin ? 1 : -1);
 		srandom((unsigned long) s);
 		for (i = 1; i <= reps || infinity; i++) {
 			y = (double) random() / INT_MAX;
@@ -309,8 +309,6 @@ putdata(double x, long notlast)
 		printf("%s", format);
 	else if (dox)				/* scalar */
 		printf(format, d);
-	else if (prec == 0)			/* integer */
-		printf(format, round(x));
 	else					/* real */
 		printf(format, x);
 	if (notlast != 0)
@@ -358,8 +356,8 @@ getformat(void)
 		}
 	sz = sizeof(format) - strlen(format) - 1;
 	if (!*p) {
-		if (chardata) {
-			if (strlcpy(p, "%c", sz) >= sz)
+		if (chardata || prec == 0) {
+			if (snprintf(p, sz, "%%%s", chardata ? "c" : "ld") >= sz)
 				errx(1, "-w word too long");
 			dox = 1;
 		} else {
