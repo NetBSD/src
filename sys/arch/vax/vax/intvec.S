@@ -1,4 +1,4 @@
-/*	$NetBSD: intvec.S,v 1.15 2008/02/20 16:37:52 matt Exp $   */
+/*	$NetBSD: intvec.S,v 1.16 2008/02/23 05:48:14 matt Exp $   */
 
 /*
  * Copyright (c) 1994, 1997 Ludd, University of Lule}, Sweden.
@@ -266,8 +266,7 @@ SCBENTRY(syscall)			# Main system call
 	pushl	$T_SYSCALL
 	pushr	$0xfff
 	mfpr	$PR_USP, -(%sp)
-	mfpr    $PR_SSP, %r0
-	movl	CI_CURLWP(%r0), %r0
+	mfpr    $PR_SSP, %r0		/* SSP contains curlwp */
 	movl	L_PROC(%r0), %r0
 	pushl	%ap
 	pushl	%fp
