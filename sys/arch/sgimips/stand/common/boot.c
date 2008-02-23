@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.13 2008/01/26 14:35:24 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.14 2008/02/23 05:35:20 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -175,9 +175,10 @@ main(int argc, char **argv)
 		i = (strrchr(bootfile, ')') - bootfile);
 		bootfile[i-1] = '0';
 		if (strstr(bootfile, "ip3x"))
-			sprintf( (strrchr(bootfile, ')') + 1), "ip3x");
+			kernel = "ip3x";
 		else
-			sprintf( (strrchr(bootfile, ')') + 1), "ip2x");
+			kernel = "ip2x";
+		sprintf((strrchr(bootfile, ')') + 1), kernel);
 		if ( (loadfile(bootfile, marks, LOAD_KERNEL)) >= 0 )
 			goto finish;
 	}
