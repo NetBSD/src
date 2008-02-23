@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.17 2008/02/23 22:46:10 dsl Exp $	*/
+/*	$NetBSD: jot.c,v 1.18 2008/02/23 23:59:59 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.17 2008/02/23 22:46:10 dsl Exp $");
+__RCSID("$NetBSD: jot.c,v 1.18 2008/02/23 23:59:59 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -67,12 +67,12 @@ __RCSID("$NetBSD: jot.c,v 1.17 2008/02/23 22:46:10 dsl Exp $");
 
 double	begin;
 double	ender;
-double	s;
+double	step;
 long	reps;
 int	randomize;
 int	infinity;
 int	boring;
-int	prec;
+int	prec = -1;
 int	dox;
 int	chardata;
 int	nofinalnl;
@@ -95,13 +95,13 @@ main(int argc, char *argv[])
 	getargs(argc, argv);
 	if (randomize) {
 		x = (ender + dox - begin) * (ender > begin ? 1 : -1);
-		srandom((unsigned long) s);
+		srandom((unsigned long) step);
 		for (i = 1; i <= reps || infinity; i++) {
 			y = (double) random() / INT_MAX;
 			putdata(y * x + begin, reps - i);
 		}
 	} else
-		for (i = 1, x = begin; i <= reps || infinity; i++, x += s)
+		for (i = 1, x = begin; i <= reps || infinity; i++, x += step)
 			putdata(x, reps - i);
 	if (!nofinalnl)
 		putchar('\n');
@@ -150,7 +150,7 @@ getargs(int argc, char *argv[])
 				errx(1, "Need number after -p");
 			else
 				prec = atoi(*++argv);
-			if (prec <= 0)
+			if (prec < 0)
 				errx(1, "Bad precision value");
 			break;
 		default:
@@ -162,8 +162,8 @@ getargs(int argc, char *argv[])
 	switch (argc) {	/* examine args right to left, falling thru cases */
 	case 4:
 		if (!is_default(argv[3])) {
-			if (!sscanf(argv[3], "%lf", &s))
-				errx(1, "Bad s value:  %s", argv[3]);
+			if (!sscanf(argv[3], "%lf", &step))
+				errx(1, "Bad step value:  %s", argv[3]);
 			mask |= 01;
 		}
 	case 3:
@@ -171,7 +171,7 @@ getargs(int argc, char *argv[])
 			if (!sscanf(argv[2], "%lf", &ender))
 				ender = argv[2][strlen(argv[2])-1];
 			mask |= 02;
-			if (!prec)
+			if (prec < 0)
 				n = getprec(argv[2]);
 		}
 	case 2:
@@ -179,7 +179,7 @@ getargs(int argc, char *argv[])
 			if (!sscanf(argv[1], "%lf", &begin))
 				begin = argv[1][strlen(argv[1])-1];
 			mask |= 04;
-			if (!prec)
+			if (prec < 0)
 				prec = getprec(argv[1]);
 			if (n > prec)		/* maximum precision */
 				prec = n;
@@ -230,12 +230,12 @@ getargs(int argc, char *argv[])
 				mask = 0;
 				break;
 			}
-			if (s == 0.0) {
+			if (step == 0.0) {
 				reps = 0;
 				mask = 0;
 				break;
 			}
-			reps = (ender - begin + s) / s;
+			reps = (ender - begin + step) / step;
 			if (reps <= 0)
 				errx(1, "Impossible stepsize");
 			mask = 0;
@@ -249,7 +249,7 @@ getargs(int argc, char *argv[])
 			mask = 015;
 			break;
 		case 012:
-			s = (randomize ? time(NULL) * getpid() : STEP_DEF);
+			step = (randomize ? time(NULL) * getpid() : STEP_DEF);
 			mask = 013;
 			break;
 		case 013:
@@ -257,34 +257,34 @@ getargs(int argc, char *argv[])
 				begin = BEGIN_DEF;
 			else if (reps == 0)
 				errx(1, "Must specify begin if reps == 0");
-			begin = ender - reps * s + s;
+			begin = ender - reps * step + step;
 			mask = 0;
 			break;
 		case 014:
-			s = (randomize ? time(NULL) * getpid() : STEP_DEF);
+			step = (randomize ? time(NULL) * getpid() : STEP_DEF);
 			mask = 015;
 			break;
 		case 015:
 			if (randomize)
 				ender = ENDER_DEF;
 			else
-				ender = begin + reps * s - s;
+				ender = begin + reps * step - step;
 			mask = 0;
 			break;
 		case 016:
 			if (randomize)
-				s = time(NULL) * getpid();
+				step = time(NULL) * getpid();
 			else if (reps == 0)
 				errx(1, "Infinite sequences cannot be bounded");
 			else if (reps == 1)
-				s = 0.0;
+				step = 0.0;
 			else
-				s = (ender - begin) / (reps - 1);
+				step = (ender - begin) / (reps - 1);
 			mask = 0;
 			break;
 		case 017:		/* if reps given and implied, */
-			if (!randomize && s != 0.0) {
-				long t = (ender - begin + s) / s;
+			if (!randomize && step != 0.0) {
+				long t = (ender - begin + step) / step;
 				if (t <= 0)
 					errx(1, "Impossible stepsize");
 				if (t < reps)		/* take lesser */
@@ -298,6 +298,9 @@ getargs(int argc, char *argv[])
 	}
 	if (reps == 0)
 		infinity = 1;
+
+	if (prec == -1)
+		prec = 0;
 }
 
 void
@@ -319,7 +322,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-cnr] [-b word] [-p precision] "
-	    "[-s string] [-w word] [reps [begin [end [s]]]]\n", getprogname());
+	    "[-s string] [-w word] [reps [begin [end [step]]]]\n", getprogname());
 	exit(1);
 }
 
