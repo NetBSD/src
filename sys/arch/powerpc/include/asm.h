@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.25 2007/10/17 19:56:40 garbled Exp $	*/
+/*	$NetBSD: asm.h,v 1.26 2008/02/23 19:38:47 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -298,6 +298,18 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 #define	stregu	stwu		/* load PPC general register with udpate */
 #define	SZREG	4		/* 4 byte registers */
 
+#define	lptrarx	lwarx		/* load "C" pointer with reservation */
+#define	llongarx lwarx		/* load "C" long with reservation */
+#define	lregarx	lwarx		/* load PPC general register with reservation */
+
+#define	stptrcx  stwcx		/* store "C" pointer conditional */
+#define	stlongcx stwcx		/* store "C" long conditional */
+#define	stregcx  stwcx		/* store PPC general register conditional */
+
+#define	clrrptri  clrrwi	/* clear right "C" pointer immediate */
+#define	clrrlongi clrrwi	/* clear right "C" long immediate */
+#define	clrrregi  clrrwi	/* clear right PPC general register immediate */
+
 #else
 
 #define ldlong	ld		/* load "C" long */
@@ -316,6 +328,18 @@ y:	.quad	.y,.TOC.@tocbase,0;	\
 #define	lmw	lmd		/* load multiple PPC general registers */
 #define	stmw	stmd		/* store multiple PPC general registers */
 #define	SZREG	8		/* 8 byte registers */
+
+#define	lptrarx	ldarx		/* load "C" pointer with reservation */
+#define	llongarx ldarx		/* load "C" long with reservation */
+#define	lregarx	ldarx		/* load PPC general register with reservation */
+
+#define	stptrcx  stdcx		/* store "C" pointer conditional */
+#define	stlongcx stdcx		/* store "C" long conditional */
+#define	stregax  stdcx		/* store PPC general register conditional */
+
+#define	clrrptri  clrrdi	/* clear right "C" pointer immediate */
+#define	clrrlongi clrrdi	/* clear right "C" long immediate */
+#define	clrrregi  clrrdi	/* clear right PPC general register immediate */
 
 #endif
 
