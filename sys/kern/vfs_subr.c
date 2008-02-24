@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.334 2008/02/15 13:06:02 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.335 2008/02/24 23:16:24 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.334 2008/02/15 13:06:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.335 2008/02/24 23:16:24 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -330,7 +330,7 @@ vfs_busy(struct mount *mp, const krw_t op, kmutex_t *interlock)
 }
 
 /*
- * As vfs_busy(), but return immediatley if the mount cannot be
+ * As vfs_busy(), but return immediately if the mount cannot be
  * locked without waiting.
  */
 int
