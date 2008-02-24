@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.6 2008/01/26 19:27:10 chris Exp $	*/
+/*	$NetBSD: footbridge_irqhandler.c,v 1.17.24.7 2008/02/24 13:39:15 chris Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.6 2008/01/26 19:27:10 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.7 2008/02/24 13:39:15 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -61,12 +61,15 @@ __KERNEL_RCSID(0,"$NetBSD: footbridge_irqhandler.c,v 1.17.24.6 2008/01/26 19:27:
 extern void isa_intr_init(void);
 
 static void footbridge_set_irq_mask(uint32_t intr_enabled);
+static struct intrline pic_irqlines[FOOTBRIDGE_NIRQ];
+
 static struct pic_softc footbridge_pic =
 {
 	.pic_ops.pic_set_irq_hardware_mask = footbridge_set_irq_mask,
 	.pic_pre_assigned_irqs = 0,
 	.pic_nirqs = FOOTBRIDGE_NIRQ,
-	.pic_name = "footbridge"
+	.pic_name = "footbridge",
+	.pic_intrlines = pic_irqlines
 };
 
 static uint32_t footbridge_irq_status(void);
