@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_irqhandler.c,v 1.1.2.7 2008/02/09 13:01:38 chris Exp $	*/
+/*	$NetBSD: arm_irqhandler.c,v 1.1.2.8 2008/02/24 13:38:03 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -66,7 +66,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.7 2008/02/09 13:01:38 chris Exp $");
+__KERNEL_RCSID(0,"$NetBSD: arm_irqhandler.c,v 1.1.2.8 2008/02/24 13:38:03 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -500,7 +500,6 @@ static void
 arm_intr_run_handlers_for_ipl(int ipl_level, struct clockframe *frame)
 {
 	struct intrline *il;
-	int oldirqstate;
 
 	arm_iplq[ipl_level].ipl_ev.ev_count++;
 	
@@ -524,13 +523,13 @@ arm_intr_run_handlers_for_ipl(int ipl_level, struct clockframe *frame)
 		il->il_ev.ev_count++;
 		uvmexp.intrs++;
 		
-		oldirqstate = enable_interrupts(I32_bit);
+		enable_interrupts(I32_bit);
 		for (ih = TAILQ_FIRST(&il->il_handler_list);
 			((ih != NULL) && (intr_rc != 1));
 		     ih = TAILQ_NEXT(ih, ih_list)) {
 			intr_rc = (*ih->ih_func)(ih->ih_arg ? ih->ih_arg : frame);
 		}
-		restore_interrupts(oldirqstate);
+		disable_interrupts(I32_bit);
 
 		/* Re-enable this interrupt now that it has been handled */
 		arm_intr_enable_irq(il->il_pic, il->il_irq);
