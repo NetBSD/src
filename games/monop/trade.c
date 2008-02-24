@@ -1,4 +1,4 @@
-/*	$NetBSD: trade.c,v 1.14 2008/02/24 01:37:57 dholland Exp $	*/
+/*	$NetBSD: trade.c,v 1.15 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)trade.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: trade.c,v 1.14 2008/02/24 01:37:57 dholland Exp $");
+__RCSID("$NetBSD: trade.c,v 1.15 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 struct trd_st {			/* how much to give to other player	*/
 	int	trader;			/* trader number		*/

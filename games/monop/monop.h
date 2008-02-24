@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.15 2008/02/23 21:07:52 dholland Exp $	*/
+/*	$NetBSD: monop.h,v 1.16 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -129,10 +129,26 @@ typedef struct prp_st	PROP;
 typedef struct prp_st	RR_S;
 typedef struct prp_st	UTIL_S;
 
+extern bool	trading, spec, fixing, told_em;
 
-/* cards.c */
-void init_decks(void);
-void get_card(DECK *);
+extern const char	*const yncoms[], *const comlist[], *name_list[], *const lucky_mes[];
+
+extern int	num_play, player, num_doub, num_luck;
+
+extern void (*const func[])(void);
+
+extern MON	mon[N_MON];
+
+extern PLAY	*play, *cur_p;
+
+extern PROP	prop[N_PROP];
+
+extern RR_S	rr[N_RR];
+
+extern SQUARE	board[N_SQRS + 1];
+
+extern UTIL_S	util[2];
+
 
 /* execute.c */
 void execute(int);

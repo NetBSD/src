@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.10 2008/02/20 05:08:46 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.11 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.10 2008/02/20 05:08:46 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.11 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 static const char *header = "Name      Own      Price Mg # Rent";
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.20 2008/02/23 19:54:06 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.21 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.20 2008/02/23 19:54:06 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.21 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/endian.h>
-#include "monop.ext"
+#include "monop.h"
+#include "deck.h"
 #include "pathnames.h"
 
 /*

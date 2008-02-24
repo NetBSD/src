@@ -1,4 +1,4 @@
-/*	$NetBSD: jail.c,v 1.8 2008/02/23 19:09:00 dholland Exp $	*/
+/*	$NetBSD: jail.c,v 1.9 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)jail.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: jail.c,v 1.8 2008/02/23 19:09:00 dholland Exp $");
+__RCSID("$NetBSD: jail.c,v 1.9 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 /*
  *	This routine uses a get-out-of-jail-free card to get the

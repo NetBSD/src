@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.15 2008/02/23 22:06:30 dholland Exp $	*/
+/*	$NetBSD: morg.c,v 1.16 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.15 2008/02/23 22:06:30 dholland Exp $");
+__RCSID("$NetBSD: morg.c,v 1.16 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 /*
  *	These routines deal with mortgaging.
