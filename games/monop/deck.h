@@ -1,4 +1,4 @@
-/*	$NetBSD: deck.h,v 1.7 2008/02/23 19:49:21 dholland Exp $	*/
+/*	$NetBSD: deck.h,v 1.8 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -46,3 +46,10 @@ struct dk_st {			/* deck description structure		*/
 };
 
 typedef struct dk_st	DECK;
+
+extern DECK	deck[2];
+
+/* cards.c */
+void init_decks(void);
+void get_card(DECK *);
+

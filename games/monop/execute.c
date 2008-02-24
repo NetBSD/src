@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.16 2008/02/24 01:41:14 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.17 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,10 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.16 2008/02/24 01:41:14 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.17 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -48,6 +47,9 @@ __RCSID("$NetBSD: execute.c,v 1.16 2008/02/24 01:41:14 dholland Exp $");
 #include <sys/time.h>
 #include <time.h>
 #include <errno.h>
+
+#include "deck.h"
+#include "monop.h"
 
 #define MIN_FORMAT_VERSION 1
 #define CUR_FORMAT_VERSION 1

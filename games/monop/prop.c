@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.16 2008/02/23 22:17:02 dholland Exp $	*/
+/*	$NetBSD: prop.c,v 1.17 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.16 2008/02/23 22:17:02 dholland Exp $");
+__RCSID("$NetBSD: prop.c,v 1.17 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdlib.h>
-#include "monop.ext"
+
+#include "monop.h"
 
 static int value(SQUARE *);
 
