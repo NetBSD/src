@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-3.2,v 1.1.2.124 2008/02/22 19:03:31 bouyer Exp $
+#	$NetBSD: CHANGES-3.2,v 1.1.2.125 2008/02/24 13:25:37 bouyer Exp $
 
 A complete list of changes from the NetBSD 3.1 release to the NetBSD 3.2
 release:
@@ -3938,4 +3938,10 @@ distrib/notes/common/main			patch
 	PR 30870: Add user ``_proxy'' and make pf's ftp-proxy use it.
 	Initial patch by rivo nurges, thanks!
 	[jnemeth, ticket #1898]
+
+usr.bin/column/column.c				1.18
+
+	Fix memory allocations in column. Fixes SegFault reported by
+	Jeremy Reed on tech-misc.
+	[oster, ticket #1907]
 
