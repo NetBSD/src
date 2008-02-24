@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.17 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.18 2008/02/24 02:43:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.17 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.18 2008/02/24 02:43:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -297,9 +297,9 @@ save()
 		fprintf(outf, "    numcards %d\n", deck[i].num_cards);
 		fprintf(outf, "    topcard %d\n", deck[i].top_card);
 		fprintf(outf, "    gojf_used %d\n", deck[i].gojf_used);
-		fprintf(outf, "    offsets");
+		fprintf(outf, "    cards");
 		for (j = 0; j < deck[i].num_cards; j++)
-			fprintf(outf, " %ld", (long)(deck[i].offsets[j]));
+			fprintf(outf, " %d", deck[i].cards[j]);
 		fprintf(outf, "\n");
 		fprintf(outf, "}\n");
 	}
@@ -647,14 +647,19 @@ restore_deck_attr(const char *attribute, char *txt)
 			return -1;
 		}
 		dp->gojf_used = tmp;
-	} else if (!strcmp(attribute, "offsets")) {
+	} else if (!strcmp(attribute, "cards")) {
 		errno = 0;
 		s = txt;
 		for (j = 0; j<dp->num_cards; j++) {
-			dp->offsets[j] = strtol(s, &s, 10);
+			tmp = strtol(s, &s, 10);
+			if (tmp < 0 || tmp >= dp->num_cards) {
+				printf("cards: out of range value\n");
+				return -1;
+			}
+			dp->cards[j] = tmp;
 		}
 		if (errno) {
-			printf("offsets: invalid values\n");
+			printf("cards: invalid values\n");
 			return -1;
 		}
 	} else {
