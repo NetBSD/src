@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.30 2008/02/23 14:25:05 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.31 2008/02/24 12:48:12 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -485,4 +485,10 @@ sys/arch/acorn32/stand/boot32/boot32.c		1.31
 	Zero out the whole of the structure, not just the first 4 bytes.
 	Now a small kernel will boot up on my RISC-PC.
 	[chris, ticket #1063]
+
+sys/arch/vax/vax/syscall.c			1.10
+
+	Never ever trust the user.  Fix bug introduced in version 1.8 of  
+	trap.c by ragge nearly 13 years ago.
+	[matt, ticket #1090]
 
