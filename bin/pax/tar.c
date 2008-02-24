@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.65 2007/04/23 18:40:22 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.66 2008/02/24 20:42:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.65 2007/04/23 18:40:22 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.66 2008/02/24 20:42:46 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static void longlink(ARCHD *, int);
 static u_long tar_chksm(char *, int);
 static char *name_split(char *, int);
 static int ul_oct(u_long, char *, int, int);
-#if !defined(NET2_STAT) && !defined(_LP64)
+#if !defined(_LP64)
 static int ull_oct(unsigned long long, char *, int, int);
 #endif
 static int tar_gnutar_exclude_one(const char *, size_t);
@@ -261,7 +261,7 @@ ul_oct(u_long val, char *str, int len, int term)
 	return 0;
 }
 
-#if !defined(NET2_STAT) && !defined(_LP64)
+#if !defined(_LP64)
 /*
  * ull_oct()
  *	convert an unsigned long long to an octal string. one of many oddball

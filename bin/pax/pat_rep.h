@@ -1,4 +1,4 @@
-/*	$NetBSD: pat_rep.h,v 1.6 2007/05/04 21:19:36 christos Exp $	*/
+/*	$NetBSD: pat_rep.h,v 1.7 2008/02/24 20:42:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -35,21 +35,13 @@
  *	@(#)pat_rep.h	8.1 (Berkeley) 5/31/93
  */
 
-#ifdef NET2_REGEX
-#include <regexp.h>
-#else
 #include <regex.h>
-#endif
 /*
  * data structure for storing user supplied replacement strings (-s)
  */
 typedef struct replace {
 	char		*nstr;	/* the new string we will substitute with */
-#	ifdef NET2_REGEX
-	regexp		*rcmp;	/* compiled regular expression used to match */
-#	else
 	regex_t		rcmp;	/* compiled regular expression used to match */
-#	endif
 	int		flgs;	/* print conversions? global in operation?  */
 #define	PRNT		0x1
 #define	GLOB		0x2
