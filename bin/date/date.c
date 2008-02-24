@@ -1,4 +1,4 @@
-/* $NetBSD: date.c,v 1.50 2007/02/04 22:11:13 cbiere Exp $ */
+/* $NetBSD: date.c,v 1.51 2008/02/24 04:49:45 dholland Exp $ */
 
 /*
  * Copyright (c) 1985, 1987, 1988, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: date.c,v 1.50 2007/02/04 22:11:13 cbiere Exp $");
+__RCSID("$NetBSD: date.c,v 1.51 2008/02/24 04:49:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -103,7 +103,7 @@ main(int argc, char *argv[])
 			break;
 		case 'r':		/* user specified seconds */
 			rflag = 1;
-			tval = strtol(optarg, NULL, 0);
+			tval = strtoll(optarg, NULL, 0);
 			break;
 		case 'u':		/* do everything in UTC */
 			(void)putenv("TZ=UTC0");

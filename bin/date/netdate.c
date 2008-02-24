@@ -1,4 +1,4 @@
-/* $NetBSD: netdate.c,v 1.26 2007/02/04 22:21:53 cbiere Exp $ */
+/* $NetBSD: netdate.c,v 1.27 2008/02/24 04:49:45 dholland Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)netdate.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: netdate.c,v 1.26 2007/02/04 22:21:53 cbiere Exp $");
+__RCSID("$NetBSD: netdate.c,v 1.27 2008/02/24 04:49:45 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ netsettime(time_t tval)
 	strncpy(msg.tsp_name, hostname, sizeof(msg.tsp_name));
 	msg.tsp_name[sizeof(msg.tsp_name) - 1] = '\0';
 	msg.tsp_seq = htons((uint16_t)0);
-	msg.tsp_time.tv_sec = htonl((uint32_t)tval);
+	msg.tsp_time.tv_sec = htonl((uint32_t)tval); /* XXX: y2038 */
 	msg.tsp_time.tv_usec = htonl((uint32_t)0);
 	if (connect(s, (const struct sockaddr *)&dest, sizeof(dest)) < 0) {
 		warn("connect");
