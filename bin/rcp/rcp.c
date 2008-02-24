@@ -1,4 +1,4 @@
-/*	$NetBSD: rcp.c,v 1.44 2006/12/15 22:45:34 christos Exp $	*/
+/*	$NetBSD: rcp.c,v 1.45 2008/02/24 05:16:46 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1992, 1993\n\
 #if 0
 static char sccsid[] = "@(#)rcp.c	8.2 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: rcp.c,v 1.44 2006/12/15 22:45:34 christos Exp $");
+__RCSID("$NetBSD: rcp.c,v 1.45 2008/02/24 05:16:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -358,10 +358,10 @@ syserr:			run_err("%s: %s", name, strerror(errno));
 			 * Make it compatible with possible future
 			 * versions expecting microseconds.
 			 */
-			(void)snprintf(buf, sizeof(buf), "T%ld %ld %ld %ld\n",
-			    (long)stb.st_mtimespec.tv_sec,
+			(void)snprintf(buf, sizeof(buf), "T%lld %ld %lld %ld\n",
+			    (long long)stb.st_mtimespec.tv_sec,
 			    (long)stb.st_mtimespec.tv_nsec / 1000,
-			    (long)stb.st_atimespec.tv_sec,
+			    (long long)stb.st_atimespec.tv_sec,
 			    (long)stb.st_atimespec.tv_nsec / 1000);
 			(void)write(rem, buf, strlen(buf));
 			if (response() < 0)
@@ -424,10 +424,10 @@ rsource(char *name, struct stat *statp)
 	else
 		last++;
 	if (pflag) {
-		(void)snprintf(path, sizeof(path), "T%ld %ld %ld %ld\n",
-		    (long)statp->st_mtimespec.tv_sec,
+		(void)snprintf(path, sizeof(path), "T%lld %ld %lld %ld\n",
+		    (long long)statp->st_mtimespec.tv_sec,
 		    (long)statp->st_mtimespec.tv_nsec / 1000,
-		    (long)statp->st_atimespec.tv_sec,
+		    (long long)statp->st_atimespec.tv_sec,
 		    (long)statp->st_atimespec.tv_nsec / 1000);
 		(void)write(rem, path, strlen(path));
 		if (response() < 0) {
