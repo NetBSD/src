@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.9 2008/02/06 22:12:41 dsl Exp $     */
+/*	$NetBSD: syscall.c,v 1.10 2008/02/24 08:38:39 matt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.9 2008/02/06 22:12:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.10 2008/02/24 08:38:39 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -85,8 +85,8 @@ syscall_plain(struct trapframe *frame)
 	int nsys;
 	int err, rval[2], args[8];
 	struct trapframe *exptr;
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
 
 	TDB(("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
 	    syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
@@ -101,11 +101,10 @@ syscall_plain(struct trapframe *frame)
 	oticks = p->p_sticks;
 
 	if (frame->code == SYS___syscall) {
-		int g = *(int *)(frame->ap);
-
-		frame->code = *(int *)(frame->ap + 4);
+		err = copyin((char*)frame->ap + 4, &frame->code, sizeof(int));
+		if (err)
+			goto bad;
 		frame->ap += 8;
-		*(int *)(frame->ap) = g - 2;
 	}
 
 	if ((unsigned long) frame->code >= nsys)
