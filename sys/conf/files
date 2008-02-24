@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.892 2008/02/20 21:43:36 drochner Exp $
+#	$NetBSD: files,v 1.893 2008/02/24 05:29:31 isaki Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1094,7 +1094,7 @@ file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
-device	slhci: usbus
+device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # USB HID processing (as used by bluetooth and usb code)
