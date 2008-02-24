@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.63 2008/01/28 10:31:37 yamt Exp $
+#	$NetBSD: makesyscalls.sh,v 1.64 2008/02/24 12:51:42 martin Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -492,18 +492,25 @@ $2 == "STD" || $2 == "NODEF" || $2 == "NOARGS" || $2 == "INDIR" {
 	syscall++
 	next
 }
-$2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" {
+$2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	if ($2 == "OBSOL")
 		comment="obsolete"
 	else if ($2 == "EXCL")
 		comment="excluded"
+	else if ($2 == "IGNORED")
+		comment="ignored"
 	else
 		comment="unimplemented"
 	for (i = 3; i <= NF; i++)
 		comment=comment " " $i
 
+	if ($2 == "IGNORED")
+		sys_stub = "(sy_call_t *)nullop";
+	else
+		sys_stub = "sys_nosys";
+
 	printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = %s */\n", \
-	    sys_nosys, syscall, comment) > sysent
+	    sys_stub, syscall, comment) > sysent
 	printf("\t/* %3d */\t\"#%d (%s)\",\n", syscall, syscall, comment) \
 	    > sysnamesbottom
 	if ($2 != "UNIMPL")
