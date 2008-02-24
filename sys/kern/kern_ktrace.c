@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace.c,v 1.138 2008/02/06 22:12:41 dsl Exp $	*/
+/*	$NetBSD: kern_ktrace.c,v 1.139 2008/02/24 18:30:07 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.138 2008/02/06 22:12:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace.c,v 1.139 2008/02/24 18:30:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1316,6 +1316,8 @@ ktrops(lwp_t *curl, struct proc *p, int ops, int facs,
 	 */
 	if (KTRPOINT(p, KTR_EMUL))
 		p->p_traceflag |= KTRFAC_TRC_EMUL;
+
+	p->p_trace_enabled = trace_is_enabled(p);
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p->p_emul->e_syscall_intern)(p);
 #endif

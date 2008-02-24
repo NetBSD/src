@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.20 2008/02/06 22:12:41 dsl Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.21 2008/02/24 18:30:07 dsl Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.20 2008/02/06 22:12:41 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.21 2008/02/24 18:30:07 dsl Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -25,7 +25,6 @@ void
 linux32_syscall_intern(struct proc *p)
 {
 
-	p->p_trace_enabled = trace_is_enabled(p);
 	p->p_md.md_syscall = linux32_syscall;
 }
 
