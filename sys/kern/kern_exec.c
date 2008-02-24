@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.268 2008/02/02 20:42:18 elad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.269 2008/02/24 21:46:04 christos Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.268 2008/02/02 20:42:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.269 2008/02/24 21:46:04 christos Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -429,6 +429,27 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	size_t			pathbuflen;
 
 	p = l->l_proc;
+
+	/*
+	 * Check if we have exceeded our number of processes limit.
+	 * This is so that we handle the case where a root daemon
+	 * forked, ran setuid to become the desired user and is trying
+	 * to exec. The obvious place to do the reference counting check
+	 * is setuid(), but we don't do the reference counting check there
+	 * like other OS's do because then all the programs that use setuid()
+	 * must be modified to check the return code of setuid() and exit().
+	 * It is dangerous to make setuid() fail, because it fails open and
+	 * the program will continue to run as root. If we make it succeed
+	 * and return an error code, again we are not enforcing the limit.
+	 * The best place to enforce the limit is here, when the process tries
+	 * to execute a new image, because eventually the process will need
+	 * to call exec in order to do something useful.
+	 */
+			
+	if ((p->p_flag & PK_SUGID) &&
+	    chgproccnt(kauth_cred_getuid(p->p_cred), 0) >
+	    p->p_rlimit[RLIMIT_NPROC].rlim_cur)
+		return EAGAIN;
 
 	/*
 	 * Drain existing references and forbid new ones.  The process
