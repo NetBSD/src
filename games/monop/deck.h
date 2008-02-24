@@ -1,4 +1,4 @@
-/*	$NetBSD: deck.h,v 1.8 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: deck.h,v 1.9 2008/02/24 02:43:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -35,6 +35,8 @@
 
 #define	bool	char
 
+struct cardinfo; /* private to cards.c */
+
 #define	CC_D	deck[0]
 #define	CH_D	deck[1]
 
@@ -42,7 +44,8 @@ struct dk_st {			/* deck description structure		*/
 	int	num_cards;		/* number of cards in deck	*/
 	int	top_card;		/* number of last card picked	*/
 	bool	gojf_used;		/* set if gojf card out of deck	*/
-	off_t	*offsets;		/* offsets for start of cards	*/
+	int	*cards;			/* which cards (indexes info[]) */
+	const struct cardinfo *info;	/* the static card data */
 };
 
 typedef struct dk_st	DECK;

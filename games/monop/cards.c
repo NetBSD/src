@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.21 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.22 2008/02/24 02:43:18 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.21 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.22 2008/02/24 02:43:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -42,47 +42,160 @@ __RCSID("$NetBSD: cards.c,v 1.21 2008/02/24 01:57:34 dholland Exp $");
 #include <sys/endian.h>
 #include "monop.h"
 #include "deck.h"
-#include "pathnames.h"
 
 /*
  *	These routine deal with the card decks
  */
 
+static void set_up(DECK *);
+static void printmes(const char *text);
+
 #define	GOJF	'F'	/* char for get-out-of-jail-free cards	*/
 
-#ifndef DEV
-static const char	*cardfile	= _PATH_CARDS;
-#else
-static const char	*cardfile	= "cards.pck";
-#endif
+struct cardinfo {
+	const char *actioncode;
+	const char *text;
+};
 
-static FILE	*deckf;
+static const struct cardinfo cc_cards[] = {
+	{ "FF",
+		">> GET OUT OF JAIL FREE <<\n"
+		"Keep this card until needed or sold\n"
+	},
+	{ "++25",
+		"Receive for Services $25.\n"
+	},
+	{ "++200",
+		"Bank Error in Your Favor.\n"
+		"Collect $200.\n"
+	},
+	{ "++20",
+		"Income Tax Refund.\n"
+		"Collect $20.\n"
+	},
+	{ "--100",
+		"Pay Hospital $100\n"
+	},
+	{ "++100",
+		"Life Insurance Matures.\n"
+		"Collect $100\n"
+	},
+	{ "++45",
+		"From sale of Stock You get $45.\n"
+	},
+	{ "TX",
+		"You are Assessed for street repairs.\n"
+		"\t$40 per House\n"
+		"\t$115 per Hotel\n"
+	},
+	{ "++100",
+		"X-mas Fund Matures.\n"
+	  	"Collect $100.\n"
+	},
+	{ "++11",
+		"You have won Second Prize in a Beauty Contest\n"
+		"Collect $11\n"
+	},
+	{ "MF0",
+		"Advance to GO\n"
+		"(Collect $200)\n"
+	},
+	{ "++100",
+		"You inherit $100\n"
+	},
+	{ "--150",
+		"Pay School Tax of $150.\n"
+	},
+	{ "MJ",
+		"\t\t>> GO TO JAIL <<\n"
+	  	"Go Directly to Jail. Do not pass GO  Do not collect $200.\n"
+	},
+	{ "+A50",
+		"\t\t>> GRAND OPERA OPENING <<\n"
+		"Collect $50 from each player for opening night seats.\n"
+	},
+	{ "--50",
+		"Doctor's Fee:  Pay $50.\n"
+	}
+};
 
-static void set_up(DECK *);
-static void printmes(void);
+static const struct cardinfo ch_cards[] = {
+	{ "FF",
+		">> GET OUT OF JAIL FREE <<\n"
+		"Keep this card until needed or sold\n"
+	},
+	{ "MR",
+		"Advance to the nearest Railroad, and pay owner\n"
+		"Twice the rental to which he is otherwise entitled.\n"
+		"If Railroad is unowned you may buy it from the bank\n"
+	},
+	{ "MU",
+		"Advance to the nearest Utility.\n"
+		"If unowned, you may buy it from the bank.\n"
+		"If owned, throw dice and pay oner a total of ten times\n"
+		"the amount thrown.\n"
+	},
+	{ "MB3",
+		"Go Back 3 Spaces\n"
+	},
+	{ "MR",
+		"Advance to the nearest Railroad, and pay owner\n"
+		"Twice the rental to which he is otherwise entitled.\n"
+		"If Railroad is unowned you may buy it from the bank\n"
+	},
+	{ "MJ",
+		"    >> GO DIRECTLY TO JAIL <<\n"
+		"Do not pass GO, Do not Collect $200.\n"
+	},
+	{ "MF5",
+		"Take a Ride on the Reading.\n"
+		"If you pass GO, collect $200.\n"
+	},
+	{ "MF39",
+		"Take a Walk on the Board Walk.\n"
+		"    (Advance To Board Walk)\n"
+	},
+	{ "MF24",
+		"Advance to Illinois Ave.\n"
+	},
+	{ "MF0",
+		"Advance to Go\n"
+	},
+	{ "MF11",
+		"Advance to St. Charles Place.\n"
+		"If you pass GO, collect $200.\n"
+	},
+	{ "TX",
+		"Make general repairs on all of your Property.\n"
+		"For Each House pay $25.\n"
+		"For Each Hotel pay $100.\n"
+	},
+	{ "-A50",
+		"You have been elected Chairman of the Board.\n"
+		"Pay each player $50.\n"
+	},
+	{ "--15",
+		"Pay Poor Tax of $15\n"
+	},
+	{ "++50",
+		"Bank pays you Dividend of $50.\n"
+	},
+	{ "++150",
+		"Your Building and Loan Matures.\n"
+		"Collect $150.\n"
+	}
+};
 
 /*
- *	This routine initializes the decks from the data file,
- * which it opens.
+ * This routine initializes the decks from the data above.
  */
 void
 init_decks()
 {
-	int32_t nc;
-
-	if ((deckf = fopen(cardfile, "r")) == NULL) {
-file_err:
-		err(1, "%s", cardfile);
-	}
-
-	/* read number of community chest cards... */
-	if (fread(&nc, sizeof(nc), 1, deckf) != 1)
-		goto file_err;
-	CC_D.num_cards = be32toh(nc);
-	/* ... and number of community chest cards. */
-	if (fread(&nc, sizeof(nc), 1, deckf) != 1)
-		goto file_err;
-	CH_D.num_cards = be32toh(nc);
+	CC_D.info = cc_cards;
+	CC_D.num_cards = sizeof(cc_cards) / sizeof(cc_cards[0]);
+	CH_D.info = ch_cards;
+	CH_D.num_cards = sizeof(ch_cards) / sizeof(ch_cards[0]);
 	set_up(&CC_D);
 	set_up(&CH_D);
 }
@@ -97,26 +210,24 @@ set_up(dp)
 	int r1, r2;
 	int i;
 
-	dp->offsets = (off_t *) calloc(dp->num_cards, sizeof (off_t));
-	if (dp->offsets == NULL)
+	dp->cards = calloc(dp->num_cards, sizeof(dp->cards[0]));
+	if (dp->cards == NULL)
 		errx(1, "out of memory");
-	if (fread(dp->offsets, sizeof(off_t), dp->num_cards, deckf) !=
-	    (unsigned) dp->num_cards) {
-		err(1, "%s", cardfile);
-	}
-	/* convert offsets from big-endian byte order */
+
 	for (i = 0; i < dp->num_cards; i++)
-		BE64TOH(dp->offsets[i]);
+		dp->cards[i] = i;
+
 	dp->top_card = 0;
 	dp->gojf_used = FALSE;
+
 	for (i = 0; i < dp->num_cards; i++) {
-		off_t	temp;
+		int temp;
 
 		r1 = roll(1, dp->num_cards) - 1;
 		r2 = roll(1, dp->num_cards) - 1;
-		temp = dp->offsets[r2];
-		dp->offsets[r2] = dp->offsets[r1];
-		dp->offsets[r1] = temp;
+		temp = dp->cards[r2];
+		dp->cards[r2] = dp->cards[r1];
+		dp->cards[r1] = temp;
 	}
 }
 
@@ -131,15 +242,17 @@ get_card(dp)
 	int num;
 	int i, per_h, per_H, num_h, num_H;
 	OWN *op;
+	const struct cardinfo *thiscard;
 
 	do {
-		fseek(deckf, dp->offsets[dp->top_card], SEEK_SET);
+		thiscard = &dp->info[dp->top_card];
+		type_maj = thiscard->actioncode[0];
 		dp->top_card = ++(dp->top_card) % dp->num_cards;
-		type_maj = getc(deckf);
 	} while (dp->gojf_used && type_maj == GOJF);
-	type_min = getc(deckf);
-	num = ntohl(getw(deckf));
-	printmes();
+	type_min = thiscard->actioncode[1];
+	num = atoi(thiscard->actioncode+2);
+
+	printmes(thiscard->text);
 	switch (type_maj) {
 	  case '+':		/* get money		*/
 		if (type_min == 'A') {
@@ -227,14 +340,14 @@ get_card(dp)
  *	This routine prints out the message on the card
  */
 static void
-printmes()
+printmes(const char *text)
 {
-	char c;
+	int i;
 
 	printline();
 	fflush(stdout);
-	while ((c = getc(deckf)) != '\0')
-		putchar(c);
+	for (i = 0; text[i] != '\0'; i++)
+		putchar(text[i]);
 	printline();
 	fflush(stdout);
 }
@@ -270,19 +383,18 @@ ret_card(plr)
 	gojfpos = dp->top_card;
 	do {
 		gojfpos = (gojfpos + 1) % dp->num_cards;
-		fseek(deckf, dp->offsets[gojfpos], SEEK_SET);
-		type_maj = getc(deckf);
+		type_maj = dp->info[gojfpos].actioncode[0];
 	} while (type_maj != GOJF);
-	temp = dp->offsets[gojfpos];
+	temp = dp->cards[gojfpos];
 	/* Only one of the next two loops does anything */
 	for (i = gojfpos - 1; i > last_card; i--)
-		dp->offsets[i + 1] = dp->offsets[i];
+		dp->cards[i + 1] = dp->cards[i];
 	for (i = gojfpos; i < last_card; i++)
-		dp->offsets[i] = dp->offsets[i + 1];
+		dp->cards[i] = dp->cards[i + 1];
 	if (gojfpos > last_card) {
-		dp->offsets[dp->top_card] = temp;
+		dp->cards[dp->top_card] = temp;
 		dp->top_card++;
 		dp->top_card %= dp->num_cards;
 	} else
-		dp->offsets[last_card] = temp;
+		dp->cards[last_card] = temp;
 }
