@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.19 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: misc.c,v 1.20 2008/02/24 03:52:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,13 +34,14 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: misc.c,v 1.19 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: misc.c,v 1.20 2008/02/24 03:52:09 christos Exp $");
 #endif
 #endif /* not lint */
 
 #include <ctype.h>
 #include <limits.h>
 #include <signal.h>
+#include <errno.h>
 
 #include "monop.h"
 
