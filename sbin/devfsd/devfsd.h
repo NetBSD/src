@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.h,v 1.1.8.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfsd.h,v 1.1.8.2 2008/02/24 10:59:05 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 
 #include <sys/queue.h>
 #include <sys/types.h>
-#include <sys/device.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <sys/condvar.h>
@@ -156,6 +155,7 @@ void dev_apply_rule_node(struct devfs_node *, struct devfs_mount *,
 void dev_destroy(struct devfs_dev *);
 struct devfs_dev *dev_lookup(struct dctl_node_cookie);
 int dev_add_node(struct devfs_dev *, struct devfs_mount *);
+int dev_del_node(struct devfs_dev *, struct devfs_mount *);
 
 struct devfs_mount *mount_create(int32_t, const char *, int);
 struct devfs_mount *mount_lookup(int32_t);

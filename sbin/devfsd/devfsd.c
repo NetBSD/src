@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.c,v 1.1.8.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfsd.c,v 1.1.8.2 2008/02/24 10:59:05 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,6 @@
 #include <sys/types.h>
 #include <sys/event.h>
 #include <sys/time.h>
-#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 
