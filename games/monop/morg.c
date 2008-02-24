@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.17 2008/02/24 02:55:20 dholland Exp $	*/
+/*	$NetBSD: morg.c,v 1.18 2008/02/24 06:07:06 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.17 2008/02/24 02:55:20 dholland Exp $");
+__RCSID("$NetBSD: morg.c,v 1.18 2008/02/24 06:07:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,8 +201,7 @@ set_umlist()
  *	This routine actually unmortgages the property
  */
 static void
-unm(propnum)
-	int propnum;
+unm(int propnum)
 {
 	int price;
 
@@ -211,7 +210,7 @@ unm(propnum)
 	price += price/10;
 	printf("That cost you $%d\n",price);
 	cur_p->money -= price;
-	set_umlist();
+	(void)set_umlist();
 }
 
 /*
@@ -219,7 +218,7 @@ unm(propnum)
  * financial woes.  It is fine to have $0 but not to be in debt.
  */
 void
-force_morg()
+force_morg(void)
 {
 	told_em = fixing = TRUE;
 	while (cur_p->money < 0) {
