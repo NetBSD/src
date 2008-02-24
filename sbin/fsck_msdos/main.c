@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2008/02/24 00:59:03 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.19 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2008/02/24 00:59:03 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: main.c,v 1.19 2008/02/23 21:41:48 christos Exp $");
 #include <unistd.h>
 #include <errno.h>
 #include <stdarg.h>
+#include <signal.h>
 
 #include "fsutil.h"
 #include "ext.h"
@@ -62,6 +63,12 @@ usage(void)
     	(void)fprintf(stderr, "Usage: %s [-fnpy] filesystem ... \n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
+}
+
+static void
+catch(int n)
+{
+	exit(FSCK_EXIT_SIGNALLED);
 }
 
 int
@@ -108,6 +115,11 @@ main(int argc, char **argv)
 
 	if (!argc)
 		usage();
+
+	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
+		(void) signal(SIGINT, catch);
+	if (preen)
+		(void) signal(SIGQUIT, catch);
 
 	while (--argc >= 0) {
 		setcdevname(*argv, preen);
