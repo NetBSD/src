@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_machdep.c,v 1.6.50.4 2008/01/26 19:27:10 chris Exp $	*/
+/*	$NetBSD: isa_machdep.c,v 1.6.50.5 2008/02/24 13:39:15 chris Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.50.4 2008/01/26 19:27:10 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_machdep.c,v 1.6.50.5 2008/02/24 13:39:15 chris Exp $");
 
 #include "opt_irqstats.h"
 
@@ -119,13 +119,16 @@ uint32_t imen;
 
 static void isa_set_irq_mask(uint32_t intr_enabled);
 static void isa_set_irq_hardware_type(int irq, int type);
+static struct intrline pic_irqlines[ICU_LEN];
+
 static struct pic_softc isa_pic =
 {
 	.pic_ops.pic_set_irq_hardware_mask = isa_set_irq_mask,
 	.pic_ops.pic_set_irq_hardware_type = isa_set_irq_hardware_type,
 	.pic_nirqs = ICU_LEN,
 	.pic_pre_assigned_irqs = 0xefbf,
-	.pic_name = "isa"
+	.pic_name = "isa",
+	.pic_intrlines = pic_irqlines
 };
 
 
