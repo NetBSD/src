@@ -1,4 +1,4 @@
-/*	$NetBSD: cards.c,v 1.22 2008/02/24 02:43:18 dholland Exp $	*/
+/*	$NetBSD: cards.c,v 1.23 2008/02/24 03:56:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cards.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: cards.c,v 1.22 2008/02/24 02:43:18 dholland Exp $");
+__RCSID("$NetBSD: cards.c,v 1.23 2008/02/24 03:56:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -210,7 +210,7 @@ set_up(dp)
 	int r1, r2;
 	int i;
 
-	dp->cards = calloc(dp->num_cards, sizeof(dp->cards[0]));
+	dp->cards = calloc((size_t)dp->num_cards, sizeof(dp->cards[0]));
 	if (dp->cards == NULL)
 		errx(1, "out of memory");
 
@@ -365,7 +365,7 @@ ret_card(plr)
 	int gojfpos, last_card;
 	int i;
 	DECK *dp;
-	off_t temp;
+	int temp;
 
 	plr->num_gojf--;
 	if (CC_D.gojf_used)

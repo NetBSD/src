@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.21 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: monop.c,v 1.22 2008/02/24 03:56:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.21 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: monop.c,v 1.22 2008/02/24 03:56:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -230,7 +230,7 @@ main(ac, av)
 	/* Revoke setgid privileges */
 	setgid(getgid());
 
-	srandom(time(NULL));
+	srandom((unsigned long)time(NULL));
 	num_luck = sizeof lucky_mes / sizeof (char *);
 	init_decks();
 	init_monops();
@@ -278,7 +278,7 @@ blew_it:
 		else
 			break;
 	}
-	cur_p = play = (PLAY *) calloc(num_play, sizeof (PLAY));
+	cur_p = play = calloc((size_t)num_play, sizeof (PLAY));
 	if (play == NULL)
 		err(1, NULL);
 	for (i = 0; i < num_play; i++) {

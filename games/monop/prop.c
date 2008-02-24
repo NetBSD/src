@@ -1,4 +1,4 @@
-/*	$NetBSD: prop.c,v 1.17 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: prop.c,v 1.18 2008/02/24 03:56:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)prop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: prop.c,v 1.17 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: prop.c,v 1.18 2008/02/24 03:56:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -97,10 +97,7 @@ add_list(plr, head, op_sqr)
  *	This routine deletes property from the list.
  */
 void
-del_list(plr, head, op_sqr)
-	int plr;
-	OWN **head;
-	short op_sqr;
+del_list(int plr, OWN **head, short op_sqr)
 {
 	OWN *op, *last_op;
 
