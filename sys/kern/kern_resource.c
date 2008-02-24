@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.133 2008/02/24 21:44:51 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.132 2008/01/29 12:41:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.133 2008/02/24 21:44:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1076,9 +1076,6 @@ int
 chgproccnt(uid_t uid, int diff)
 {
 	struct uidinfo *uip;
-
-	if (diff == 0)
-		return 0;
 
 	uip = uid_find(uid);
 	mutex_enter(&uip->ui_lock);
