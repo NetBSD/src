@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.15 2008/02/24 01:30:56 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.16 2008/02/24 01:41:14 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.15 2008/02/24 01:30:56 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.16 2008/02/24 01:41:14 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -59,7 +59,6 @@ typedef	struct tm	TIME;
 static char	buf[257];
 
 static bool	new_play;	/* set if move on to new player		*/
-extern void 	*heapstart;
 
 static void show_move(void);
 
