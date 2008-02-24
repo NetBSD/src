@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.22 2008/02/24 03:56:49 christos Exp $	*/
+/*	$NetBSD: monop.c,v 1.23 2008/02/24 06:03:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.22 2008/02/24 03:56:49 christos Exp $");
+__RCSID("$NetBSD: monop.c,v 1.23 2008/02/24 06:03:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,7 +235,7 @@ main(ac, av)
 	init_decks();
 	init_monops();
 	if (ac > 1) {
-		if (!rest_f(av[1]))
+		if (rest_f(av[1]) < 0)
 			restore();
 	}
 	else {
