@@ -1,4 +1,4 @@
-/*	$NetBSD: morg.c,v 1.16 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: morg.c,v 1.17 2008/02/24 02:55:20 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)morg.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: morg.c,v 1.16 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: morg.c,v 1.17 2008/02/24 02:55:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ mortgage()
 			return;
 		}
 		if (num_good == 1) {
-			printf("Your only mortageable property is %s\n",
+			printf("Your only mortgageable property is %s\n",
 			    names[0]);
 			if (getyn("Do you want to mortgage it? ") == 0)
 				m(square[0]);
@@ -164,7 +164,8 @@ unmortgage()
 			return;
 		}
 		if (num_good == 1) {
-			printf("Your only mortaged property is %s\n",names[0]);
+			printf("Your only mortgaged property is %s\n",
+			    names[0]);
 			if (getyn("Do you want to unmortgage it? ") == 0)
 				unm(square[0]);
 			return;
