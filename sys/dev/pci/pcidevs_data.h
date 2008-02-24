@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.930 2008/02/22 14:49:46 tsutsui Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.931 2008/02/24 16:02:01 xtraeme Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.930 2008/02/22 14:48:50 tsutsui Exp
+ *	NetBSD: pcidevs,v 1.931 2008/02/24 16:01:46 xtraeme Exp
  */
 
 /*
@@ -6010,6 +6010,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_5,
 	    "PERC 5",
+	},
+	{
+	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_6,
+	    "PERC 6",
 	},
 	{
 	    PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI_2_SUB,
@@ -14048,4 +14052,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 2913;
+const int pci_nproducts = 2914;
