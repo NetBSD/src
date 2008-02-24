@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.48 2006/01/07 20:10:29 kleink Exp $	*/
+/*	$NetBSD: signal.h,v 1.49 2008/02/24 23:01:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -88,18 +88,26 @@ int	sigprocmask(int, const sigset_t * __restrict, sigset_t * __restrict)
 int	sigsuspend(const sigset_t *) __RENAME(__sigsuspend14);
 
 #if (defined(__GNUC__) && defined(__STDC__)) || defined(_SIGINLINE)
-#ifndef errno
+
+#ifndef __errno
 int *__errno(void);
-#define errno (*__errno())
+#define __errno __errno
 #endif
+
+/* the same as "errno" - but signal.h is not allowed to define that */
+#ifndef ___errno
+#define ___errno (*__errno())
+#endif
+
 #ifndef _SIGINLINE
 #define _SIGINLINE extern __inline
 #endif
+
 _SIGINLINE int
 sigaddset(sigset_t *set, int signo)
 {
 	if (signo <= 0 || signo >= _NSIG) {
-		errno = 22;			/* EINVAL */
+		___errno = 22;			/* EINVAL */
 		return (-1);
 	}
 	__sigaddset(set, signo);
@@ -110,7 +118,7 @@ _SIGINLINE int
 sigdelset(sigset_t *set, int signo)
 {
 	if (signo <= 0 || signo >= _NSIG) {
-		errno = 22;			/* EINVAL */
+		___errno = 22;			/* EINVAL */
 		return (-1);
 	}
 	__sigdelset(set, signo);
@@ -121,7 +129,7 @@ _SIGINLINE int
 sigismember(const sigset_t *set, int signo)
 {
 	if (signo <= 0 || signo >= _NSIG) {
-		errno = 22;			/* EINVAL */
+		___errno = 22;			/* EINVAL */
 		return (-1);
 	}
 	return (__sigismember(set, signo));
