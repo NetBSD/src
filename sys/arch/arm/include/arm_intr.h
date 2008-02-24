@@ -1,4 +1,4 @@
-/* 	$NetBSD: arm_intr.h,v 1.1.2.8 2008/02/09 17:35:33 chris Exp $	*/
+/* 	$NetBSD: arm_intr.h,v 1.1.2.9 2008/02/24 13:35:03 chris Exp $	*/
 
 /*
  * Copyright (c) 2007 Christopher Gilbert
@@ -128,24 +128,16 @@ extern void arm_intr_splx_lifter(int newspl);
 static inline void __attribute__((__unused__))
 arm_intr_splx(int newspl)
 {
-    /* look for interrupts at the next ipl or higher */
-    uint32_t iplvalue = (2 << newspl);
-    uint32_t oldirqstate;
+    	/* don't reorder assignment to ipl level */
+	__insn_barrier();
+	current_ipl_level = newspl;
+	__insn_barrier();
+    
+	/* look for interrupts at the next ipl or higher */
+	if (__predict_false(ipls_pending >= (2 << newspl)))
+		arm_intr_splx_lifter(newspl);
 
-    /*
-     * disable interrupts so that if one occurs between the compare
-     * and the set it will be processed
-     */
-    oldirqstate = disable_interrupts(I32_bit);
-
-    if (ipls_pending < iplvalue)
-    	current_ipl_level = newspl;
-    else
-        arm_intr_splx_lifter(newspl);
-
-    restore_interrupts(oldirqstate);
-
-    return;
+	return;
 }
 
 static inline int __attribute__((__unused__))
