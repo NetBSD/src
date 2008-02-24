@@ -1,4 +1,4 @@
-/* $NetBSD: wsmoused.c,v 1.21 2004/02/05 16:11:31 jmmv Exp $ */
+/* $NetBSD: wsmoused.c,v 1.22 2008/02/24 20:11:59 dholland Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\n"
 "The NetBSD Foundation, Inc.  All rights reserved.\n");
-__RCSID("$NetBSD: wsmoused.c,v 1.21 2004/02/05 16:11:31 jmmv Exp $");
+__RCSID("$NetBSD: wsmoused.c,v 1.22 2008/02/24 20:11:59 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/ioctl.h>
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: wsmoused.c,v 1.21 2004/02/05 16:11:31 jmmv Exp $");
 #include <dev/wscons/wsconsio.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <poll.h>
 #include <signal.h>
