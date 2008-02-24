@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2007/11/17 00:10:55 dogcow Exp $
+#	$NetBSD: Makefile,v 1.29 2008/02/24 01:41:14 dholland Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -12,10 +12,6 @@ CLEANFILES+=initdeck initdeck.lo cards.pck
 .if ${MKSHARE} != "no"
 FILES=cards.pck
 FILESDIR=/usr/share/games
-.endif
-
-.if (${MACHINE} != "sun2")
-SRCS+= malloc.c
 .endif
 
 realall: ${FILES}
