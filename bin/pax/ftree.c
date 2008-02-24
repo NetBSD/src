@@ -1,4 +1,4 @@
-/*	$NetBSD: ftree.c,v 1.37 2008/02/18 15:54:48 simonb Exp $	*/
+/*	$NetBSD: ftree.c,v 1.38 2008/02/24 20:42:46 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -78,7 +78,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: ftree.c,v 1.37 2008/02/18 15:54:48 simonb Exp $");
+__RCSID("$NetBSD: ftree.c,v 1.38 2008/02/24 20:42:46 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -129,11 +129,7 @@ static NODE *ftnode = NULL;		/* mtree(8) specfile; used by -M */
 
 static int ftree_arg(void);
 
-#ifdef NET2_FTS
-#define	FTS_ERRNO(x)	errno
-#else
 #define	FTS_ERRNO(x)	(x)->fts_errno
-#endif
 
 /*
  * ftree_start()
@@ -195,11 +191,7 @@ ftree_start()
 	else
 		ftsopts |= FTS_PHYSICAL;
 	if (Hflag)
-#ifdef NET2_FTS
-		tty_warn(0, "The -H flag is not supported on this version");
-#else
 		ftsopts |= FTS_COMFOLLOW;
-#endif
 	if (Xflag)
 		ftsopts |= FTS_XDEV;
 
@@ -621,11 +613,7 @@ next_file(ARCHD *arcn)
 			 * directory, not a created directory).
 			 */
 			if (!tflag || (get_atdir(
-#ifdef NET2_FTS
-			    ftent->fts_statb.st_dev, ftent->fts_statb.st_ino,
-#else
 			    ftent->fts_statp->st_dev, ftent->fts_statp->st_ino,
-#endif
 			    &mtime, &atime) < 0))
 				continue;
 			set_ftime(ftent->fts_path, mtime, atime, 1, 0);
@@ -663,11 +651,7 @@ next_file(ARCHD *arcn)
 		arcn->pad = 0;
 		arcn->ln_nlen = 0;
 		arcn->ln_name[0] = '\0';
-#ifdef NET2_FTS
-		arcn->sb = ftent->fts_statb;
-#else
 		arcn->sb = *(ftent->fts_statp);
-#endif
 
 		/*
 		 * file type based set up and copy into the arcn struct
