@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.40 2008/01/03 20:48:00 jdc Exp $
+# $NetBSD: mi,v 1.41 2008/02/24 02:46:40 dholland Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -114,7 +114,7 @@
 ./usr/share/games/boggle/dictindex		games-games-share	share
 ./usr/share/games/boggle/dictionary		games-games-share	share
 ./usr/share/games/boggle/helpfile		games-games-share	share
-./usr/share/games/cards.pck			games-games-share	share
+./usr/share/games/cards.pck			games-obsolete		obsolete
 ./usr/share/games/ching/hexagrams		games-games-share	share
 ./usr/share/games/ching/macros			games-games-share	share
 ./usr/share/games/cribbage.instr		games-games-share	share
