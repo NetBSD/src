@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.11 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: print.c,v 1.12 2008/02/24 03:56:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: print.c,v 1.11 2008/02/24 01:57:34 dholland Exp $");
+__RCSID("$NetBSD: print.c,v 1.12 2008/02/24 03:56:49 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,7 @@ where()
  *	This routine prints out an individual square
  */
 void
-printsq(sqn, eoln)
-	int sqn;
-	bool eoln;
+printsq(int sqn, bool eoln)
 {
 	int rnt;
 	PROP *pp;

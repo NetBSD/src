@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.18 2008/02/24 02:43:18 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.19 2008/02/24 03:56:48 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.18 2008/02/24 02:43:18 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.19 2008/02/24 03:56:48 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ static enum {
 	RI_NONE,
 	RI_PLAYER,
 	RI_DECK,
-	RI_SQUARE,
+	RI_SQUARE
 } restore_item;
 static int restore_itemnum;
 
@@ -525,7 +525,7 @@ restore_toplevel_attr(const char *attribute, char *txt)
 			printf("numplayers: multiple settings\n");
 			return -1;
 		}
-		play = calloc(num_play, sizeof(play[0]));
+		play = calloc((size_t)num_play, sizeof(play[0]));
 		if (play == NULL) {
 			err(1, "calloc");
 		}
