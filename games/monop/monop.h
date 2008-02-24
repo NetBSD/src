@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.h,v 1.16 2008/02/24 01:57:34 dholland Exp $	*/
+/*	$NetBSD: monop.h,v 1.17 2008/02/24 03:01:13 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -150,6 +150,9 @@ extern SQUARE	board[N_SQRS + 1];
 extern UTIL_S	util[2];
 
 
+/* cards.c */
+void ret_card(PLAY *);
+
 /* execute.c */
 void execute(int);
 void do_move(void);
@@ -167,7 +170,6 @@ void sell_houses(void);
 
 /* jail.c */
 void card(void);
-void ret_card(PLAY *);
 void pay(void);
 int move_jail(int, int );
 void printturn(void);
