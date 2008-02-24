@@ -1,4 +1,4 @@
-/*	$NetBSD: monop.c,v 1.20 2008/02/24 01:41:14 dholland Exp $	*/
+/*	$NetBSD: monop.c,v 1.21 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)monop.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: monop.c,v 1.20 2008/02/24 01:41:14 dholland Exp $");
+__RCSID("$NetBSD: monop.c,v 1.21 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -48,13 +48,176 @@ __RCSID("$NetBSD: monop.c,v 1.20 2008/02/24 01:41:14 dholland Exp $");
 #include <stdlib.h>
 #include <time.h>
 #include <unistd.h>
-#include "monop.def"
+#include "deck.h"
+#include "monop.h"
 
 int main(int, char *[]);
 static void getplayers(void);
 static void init_players(void);
 static void init_monops(void);
 static void do_quit(int);
+
+
+bool	fixing,			/* set if fixing up debt		*/
+	trading,		/* set if in process of trading		*/
+	told_em,		/* set if told user he's out of debt	*/
+	spec;			/* set if moving by card to RR or UTIL	*/
+
+const char	*name_list[MAX_PL+2],	/* list of players' names	*/
+	*const comlist[]	= {	/* list of normal commands 	*/
+	"quit",		/*  0 */	"print",	/*  1 */
+	"where",	/*  2 */	"own holdings",	/*  3 */
+	"holdings",	/*  4 */	"mortgage",	/*  5 */
+	"unmortgage",	/*  6 */	"buy houses",	/*  7 */
+	"sell houses",	/*  8 */	"card",		/*  9 */
+	"pay",		/* 10 */	"trade",	/* 11 */
+	"resign",	/* 12 */	"save",		/* 13 */
+	"restore",	/* 14 */	"roll",		/* 15 */
+	"",		/* 16 */
+	0
+	},
+	*const yncoms[]	= {	/* list of commands for yes/no answers	*/
+	"yes",		/*  0 */	"no",		/*  1 */
+	"quit",		/*  2 */	"print",	/*  3 */
+	"where",	/*  4 */	"own holdings",	/*  5 */
+	"holdings",	/*  6 */
+	0
+	},
+	*const lucky_mes[]	= {	/* "got lucky" messages		*/
+	"You lucky stiff",		"You got lucky",
+	"What a lucky person!",		"You must have a 4-leaf clover",
+	"My, my!  Aren't we lucky!",	"Luck smiles upon you",
+	"You got lucky this time",	"Lucky person!",
+	"Your karma must certainly be together",
+	"How beautifully Cosmic",	"Wow, you must be really with it"
+	/* "I want your autograph",	-- Save for later */
+	};
+
+int	player,			/* current player number		*/
+	num_play,		/* current number of players		*/
+	num_doub,		/* # of doubles current player rolled	*/
+				/* # of "got lucky" messages		*/
+	num_luck	= sizeof lucky_mes / sizeof (char *);
+
+/* list of command functions		*/
+void (*const func[])(void) = { /* array of function calls for commands */
+	quit,			/* quit game		|*  0 *|	*/
+	printboard,		/* print board		|*  1 *|	*/
+	where,			/* where players are	|*  2 *|	*/
+	list,			/* own holdings		|*  3 *|	*/
+	list_all,		/* holdings list	|*  4 *|	*/
+	mortgage,		/* mortgage property	|*  5 *|	*/
+	unmortgage,		/* unmortgage property	|*  6 *|	*/
+	buy_houses,		/* buy houses		|*  7 *|	*/
+	sell_houses,		/* sell houses		|*  8 *|	*/
+	card,			/* card for jail	|*  9 *|	*/
+	pay,			/* pay for jail		|* 10 *|	*/
+	trade,			/* trade		|* 11 *|	*/
+	resign,			/* resign		|* 12 *|	*/
+	save,			/* save game		|* 13 *|	*/
+	restore,		/* restore game		|* 14 *|	*/
+	do_move,		/* roll			|* 15 *|	*/
+	do_move			/* ""			|* 16 *|	*/
+	};
+
+DECK	deck[2];		/* Chance and Community Chest		*/
+
+PLAY	*play,			/* player structure array ("calloc"ed)	*/
+	*cur_p;			/* pointer to current player's struct	*/
+
+RR_S	rr[N_RR];		/* railroad descriptions		*/
+
+UTIL_S	util[2];		/* utility descriptions			*/
+
+#define MONINIT(num_in, h_cost, not_m, mon_n, sq1,sq2,sq3) \
+     {0,    -1, num_in, 0,      h_cost, not_m, mon_n, {sq1,sq2,sq3}, {0,0,0}}
+/* name  owner          num_own                                      sq */
+
+MON	mon[N_MON]	= {	/* monopoly descriptions		*/
+/*   num_in h_cost  not_m	mon_n	    sqnums */
+MONINIT(2,  1,	"Purple",	"PURPLE",   1,3, 0),
+MONINIT(3,  1,	"Lt. Blue",	"LT. BLUE", 6,8,9),
+MONINIT(3,  2,	"Violet",	"VIOLET",   11,13,14),
+MONINIT(3,  2,	"Orange",	"ORANGE",   16,18,19),
+MONINIT(3,  3,	"Red",		"RED",	    21,23,24),
+MONINIT(3,  3,	"Yellow",	"YELLOW",   26,27,29),
+MONINIT(3,  4,	"Green",	"GREEN",    31,32,34),
+MONINIT(2,  4,	"Dk. Blue",	"DK. BLUE", 37,39, 0),
+};
+#undef MONINIT
+
+PROP	prop[N_PROP]	= {	/* typical properties			*/
+/* morg	monop	square	houses	mon_desc	rent	*/
+{0,	0,	1,	0,	&mon[0],	{ 2, 10, 30,  90, 160, 250} },
+{0,	0,	3,	0,	&mon[0],	{ 4, 20, 60, 180, 320, 450} },
+{0,	0,	6,	0,	&mon[1],	{ 6, 30, 90, 270, 400, 550} },
+{0,	0,	7,	0,	&mon[1],	{ 6, 30, 90, 270, 400, 550} },
+{0,	0,	9,	0,	&mon[1],	{ 8, 40,100, 300, 450, 600} },
+{0,	0,	11,	0,	&mon[2],	{10, 50,150, 450, 625, 750} },
+{0,	0,	13,	0,	&mon[2],	{10, 50,150, 450, 625, 750} },
+{0,	0,	14,	0,	&mon[2],	{12, 60,180, 500, 700, 900} },
+{0,	0,	16,	0,	&mon[3],	{14, 70,200, 550, 750, 950} },
+{0,	0,	17,	0,	&mon[3],	{14, 70,200, 550, 750, 950} },
+{0,	0,	19,	0,	&mon[3],	{16, 80,220, 600, 800,1000} },
+{0,	0,	21,	0,	&mon[4],	{18, 90,250, 700, 875,1050} },
+{0,	0,	23,	0,	&mon[4],	{18, 90,250, 700, 875,1050} },
+{0,	0,	24,	0,	&mon[4],	{20,100,300, 750, 925,1100} },
+{0,	0,	26,	0,	&mon[5],	{22,110,330, 800, 975,1150} },
+{0,	0,	27,	0,	&mon[5],	{22,110,330, 800, 975,1150} },
+{0,	0,	29,	0,	&mon[5],	{24,120,360, 850,1025,1200} },
+{0,	0,	31,	0,	&mon[6],	{26,130,390, 900,1100,1275} },
+{0,	0,	32,	0,	&mon[6],	{26,130,390, 900,1100,1275} },
+{0,	0,	34,	0,	&mon[6],	{28,150,450,1000,1200,1400} },
+{0,	0,	37,	0,	&mon[7],	{35,175,500,1100,1300,1500} },
+{0,	0,	39,	0,	&mon[7],	{50,200,600,1400,1700,2000} }
+};
+
+SQUARE	board[N_SQRS+1]	= {	/* board itself (+1 for Jail)		*/
+/* name (COLOR)			owner	type	desc		cost	*/
+
+{"=== GO ===",			-1,	SAFE,	NULL,		0	},
+{"Mediterranean Ave. (P)",	-1,	PRPTY,	&prop[0],	60	},
+{"Community Chest i",		-1,	CC,	NULL,		0	},
+{"Baltic Ave. (P)",		-1,	PRPTY,	&prop[1],	60	},
+{"Income Tax",			-1,	INC_TAX, NULL,		0	},
+{"Reading RR",			-1,	RR,	&rr[0],		200	},
+{"Oriental Ave. (L)",		-1,	PRPTY,	&prop[2],	100	},
+{"Chance i",			-1,	CHANCE,	NULL,		0	},
+{"Vermont Ave. (L)",		-1,	PRPTY,	&prop[3],	100	},
+{"Connecticut Ave. (L)",	-1,	PRPTY,	&prop[4],	120	},
+{"Just Visiting",		-1,	SAFE,	NULL,		0	},
+{"St. Charles Pl. (V)",		-1,	PRPTY,	&prop[5],	140	},
+{"Electric Co.",		-1,	UTIL,	&util[0],	150	},
+{"States Ave. (V)",		-1,	PRPTY,	&prop[6],	140	},
+{"Virginia Ave. (V)",		-1,	PRPTY,	&prop[7],	160	},
+{"Pennsylvania RR",		-1,	RR,	&rr[1],		200	},
+{"St. James Pl. (O)",		-1,	PRPTY,	&prop[8],	180	},
+{"Community Chest ii",		-1,	CC,	NULL,		0	},
+{"Tennessee Ave. (O)",		-1,	PRPTY,	&prop[9],	180	},
+{"New York Ave. (O)",		-1,	PRPTY,	&prop[10],	200	},
+{"Free Parking",		-1,	SAFE,	NULL,		0	},
+{"Kentucky Ave. (R)",		-1,	PRPTY,	&prop[11],	220	},
+{"Chance ii",			-1,	CHANCE,	NULL,		0	},
+{"Indiana Ave. (R)",		-1,	PRPTY,	&prop[12],	220	},
+{"Illinois Ave. (R)",		-1,	PRPTY,	&prop[13],	240	},
+{"B&O RR",			-1,	RR,	&rr[2],		200	},
+{"Atlantic Ave. (Y)",		-1,	PRPTY,	&prop[14],	260	},
+{"Ventnor Ave. (Y)",		-1,	PRPTY,	&prop[15],	260	},
+{"Water Works",			-1,	UTIL,	&util[1],	150	},
+{"Marvin Gardens (Y)",		-1,	PRPTY,	&prop[16],	280	},
+{"GO TO JAIL",			-1,	GOTO_J,	NULL,		0	},
+{"Pacific Ave. (G)",		-1,	PRPTY,	&prop[17],	300	},
+{"N. Carolina Ave. (G)",	-1,	PRPTY,	&prop[18],	300	},
+{"Community Chest iii",		-1,	CC,	NULL,		0	},
+{"Pennsylvania Ave. (G)",	-1,	PRPTY,	&prop[19],	320	},
+{"Short Line RR",		-1,	RR,	&rr[3],		200	},
+{"Chance iii",			-1,	CHANCE,	NULL,		0	},
+{"Park Place (D)",		-1,	PRPTY,	&prop[20],	350	},
+{"Luxury Tax",			-1,	LUX_TAX, NULL,		0	},
+{"Boardwalk (D)",		-1,	PRPTY,	&prop[21],	400	},
+{"JAIL",			-1,	IN_JAIL, NULL,		0	}
+};
+
 
 /*
  *	This program implements a monopoly game

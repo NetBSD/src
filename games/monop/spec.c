@@ -1,4 +1,4 @@
-/*	$NetBSD: spec.c,v 1.9 2008/02/19 10:47:40 dholland Exp $	*/
+/*	$NetBSD: spec.c,v 1.10 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)spec.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: spec.c,v 1.9 2008/02/19 10:47:40 dholland Exp $");
+__RCSID("$NetBSD: spec.c,v 1.10 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
+#include "deck.h"
 
 static const char	*const perc[]	= {
 	"10%", "ten percent", "%", "$200", "200", 0
