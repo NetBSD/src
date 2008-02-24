@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.20 2008/02/24 06:03:35 dholland Exp $	*/
+/*	$NetBSD: execute.c,v 1.21 2008/02/24 06:12:49 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.20 2008/02/24 06:03:35 dholland Exp $");
+__RCSID("$NetBSD: execute.c,v 1.21 2008/02/24 06:12:49 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -362,6 +362,7 @@ rest_f(const char *file)
 	char xbuf[80];
 	STAT sbuf;
 	char readbuf[512];
+	int ret = 0;
 
 	inf = fopen(file, "r");
 	if (inf == NULL) {
@@ -389,11 +390,13 @@ rest_f(const char *file)
 		sp = strchr(readbuf, '\n');
 		if (sp == NULL) {
 			printf("file is corrupt: long lines.\n");
+			ret = -1;
 			break;
 		}
 		*sp = '\0';
 
 		if (restore_parseline(readbuf)) {
+			ret = -1;
 			break;
 		}
 	}
@@ -402,7 +405,15 @@ rest_f(const char *file)
 		warnx("%s: read error", file);
 	fclose(inf);
 
+	if (ret < 0)
+		return -1;
+
 	name_list[num_play] = "done";
+
+	if (play == NULL || cur_p == NULL || num_play < 2) {
+		printf("save file is incomplete.\n");
+		return -1;
+	}
 
 	/*
 	 * We could at this point crosscheck the following:
