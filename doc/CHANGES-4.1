@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.31 2008/02/24 12:48:12 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.32 2008/02/24 13:11:06 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -491,4 +491,10 @@ sys/arch/vax/vax/syscall.c			1.10
 	Never ever trust the user.  Fix bug introduced in version 1.8 of  
 	trap.c by ragge nearly 13 years ago.
 	[matt, ticket #1090]
+
+usr.bin/column/column.c				1.18
+
+	Fix memory allocations in column. Fixes SegFault reported by
+	Jeremy Reed on tech-misc.
+	[oster, ticket #1089]
 
