@@ -1,4 +1,4 @@
-.\"	$NetBSD: monop.6,v 1.18 2008/02/19 09:24:43 dholland Exp $
+.\"	$NetBSD: monop.6,v 1.19 2008/02/24 03:50:07 dholland Exp $
 .\"
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)monop.6	6.5 (Berkeley) 3/25/93
 .\"
-.Dd February 19, 2008
+.Dd February 23, 2008
 .Dt MONOP 6
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Sh DESCRIPTION
 .Nm
 is reminiscent of the Parker Brother's game Monopoly, and
-monitors a game between 1 to 9 users.
+monitors a game between 2 to 9 users.
 It is assumed that the rules of Monopoly are known.
 The game follows the standard rules, with the exception that,
 if a property goes up for auction and there are only two solvent players,
@@ -171,11 +171,6 @@ If you simply hit the
 .Aq RETURN
 key instead of a command, it is the same as typing
 .Ic roll .
-.El
-.Sh FILES
-.Bl -tag -width /usr/share/games/cards.pck -compact
-.It Pa /usr/share/games/cards.pck
-Chance and Community Chest cards
 .El
 .Sh AUTHORS
 .An Ken Arnold
