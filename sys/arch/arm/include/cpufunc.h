@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.42 2007/10/17 19:53:41 garbled Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.43 2008/02/24 14:00:04 chris Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -155,7 +155,6 @@ extern struct cpu_functions cpufuncs;
 extern u_int cputype;
 
 #define cpu_id()		cpufuncs.cf_id()
-#define	cpu_cpwait()		cpufuncs.cf_cpwait()
 
 #define cpu_control(c, e)	cpufuncs.cf_control(c, e)
 #define cpu_domains(d)		cpufuncs.cf_domains(d)
@@ -426,7 +425,9 @@ void	ixp12x0_setup		(char *);
 
 #if defined(CPU_XSCALE_80200) || defined(CPU_XSCALE_80321) || \
     defined(__CPU_XSCALE_PXA2XX) || defined(CPU_XSCALE_IXP425)
+
 void	xscale_cpwait		(void);
+#define	cpu_cpwait()		cpufuncs.cf_cpwait()
 
 void	xscale_cpu_sleep	(int);
 
@@ -469,16 +470,22 @@ void	xscale_setup		(char *);
 #define setttb		cpu_setttb
 #define drain_writebuf	cpu_drain_writebuf
 
+#ifndef cpu_cpwait
+#define	cpu_cpwait()
+#endif
+
 /*
  * Macros for manipulating CPU interrupts
  */
 #ifdef __PROG32
-static __inline u_int32_t __set_cpsr_c(u_int bic, u_int eor) __attribute__((__unused__));
+static __inline u_int32_t __set_cpsr_c(uint32_t bic, uint32_t eor) __attribute__((__unused__));
+static __inline u_int32_t disable_interrupts(uint32_t mask) __attribute__((__unused__));
+static __inline u_int32_t enable_interrupts(uint32_t mask) __attribute__((__unused__));
 
-static __inline u_int32_t
-__set_cpsr_c(u_int bic, u_int eor)
+static __inline uint32_t
+__set_cpsr_c(uint32_t bic, uint32_t eor)
 {
-	u_int32_t	tmp, ret;
+	uint32_t	tmp, ret;
 
 	__asm volatile(
 		"mrs     %0, cpsr\n"	/* Get the CPSR */
@@ -491,12 +498,39 @@ __set_cpsr_c(u_int bic, u_int eor)
 	return ret;
 }
 
-#define disable_interrupts(mask)					\
-	(__set_cpsr_c((mask) & (I32_bit | F32_bit), \
-		      (mask) & (I32_bit | F32_bit)))
+static __inline uint32_t
+disable_interrupts(uint32_t mask)
+{
+	uint32_t	tmp, ret;
+	mask &= (I32_bit | F32_bit);
 
-#define enable_interrupts(mask)						\
-	(__set_cpsr_c((mask) & (I32_bit | F32_bit), 0))
+	__asm volatile(
+		"mrs     %0, cpsr\n"	/* Get the CPSR */
+		"orr	 %1, %0, %2\n"	/* set bits */
+		"msr     cpsr_c, %1\n"	/* Set the control field of CPSR */
+	: "=&r" (ret), "=&r" (tmp)
+	: "r" (mask)
+	: "memory");
+
+	return ret;
+}
+
+static __inline uint32_t
+enable_interrupts(uint32_t mask)
+{
+	uint32_t	ret, tmp;
+	mask &= (I32_bit | F32_bit);
+
+	__asm volatile(
+		"mrs     %0, cpsr\n"	/* Get the CPSR */
+		"bic	 %1, %0, %2\n"	/* Clear bits */
+		"msr     cpsr_c, %1\n"	/* Set the control field of CPSR */
+	: "=&r" (ret), "=&r" (tmp)
+	: "r" (mask)
+	: "memory");
+
+	return ret;
+}
 
 #define restore_interrupts(old_cpsr)					\
 	(__set_cpsr_c((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
