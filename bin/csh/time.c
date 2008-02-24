@@ -1,4 +1,4 @@
-/* $NetBSD: time.c,v 1.16 2007/02/24 21:29:13 matt Exp $ */
+/* $NetBSD: time.c,v 1.17 2008/02/24 05:20:17 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)time.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: time.c,v 1.16 2007/02/24 21:29:13 matt Exp $");
+__RCSID("$NetBSD: time.c,v 1.17 2008/02/24 05:20:17 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -158,8 +158,8 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timeval *e,
 	    switch (*++cp) {
 	    case 'D':		/* (average) unshared data size */
 		(void)fprintf(fp, "%ld", t == 0 ? 0L :
-			(r1->ru_idrss + r1->ru_isrss -
-			 (r0->ru_idrss + r0->ru_isrss)) / t);
+			(long)((r1->ru_idrss + r1->ru_isrss -
+			 (r0->ru_idrss + r0->ru_isrss)) / t));
 		break;
 	    case 'E':		/* elapsed (wall-clock) time */
 		pcsecs(fp, (long) ms);
@@ -172,8 +172,8 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timeval *e,
 		break;
 	    case 'K':		/* (average) total data memory used  */
 		(void)fprintf(fp, "%ld", t == 0 ? 0L :
-			((r1->ru_ixrss + r1->ru_isrss + r1->ru_idrss) -
-			 (r0->ru_ixrss + r0->ru_idrss + r0->ru_isrss)) / t);
+			(long)(((r1->ru_ixrss + r1->ru_isrss + r1->ru_idrss) -
+			 (r0->ru_ixrss + r0->ru_idrss + r0->ru_isrss)) / t));
 		break;
 	    case 'M':		/* max. Resident Set Size */
 		(void)fprintf(fp, "%ld", r1->ru_maxrss / 2L);
@@ -204,7 +204,7 @@ prusage(FILE *fp, struct rusage *r0, struct rusage *r1, struct timeval *e,
 		break;
 	    case 'X':		/* (average) shared text size */
 		(void)fprintf(fp, "%ld", t == 0 ? 0L : 
-			       (r1->ru_ixrss - r0->ru_ixrss) / t);
+			       (long)((r1->ru_ixrss - r0->ru_ixrss) / t));
 		break;
 	    case 'c':		/* num. involuntary context switches */
 		(void)fprintf(fp, "%ld", r1->ru_nivcsw - r0->ru_nivcsw);
