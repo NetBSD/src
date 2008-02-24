@@ -1,4 +1,4 @@
-/*	$NetBSD: yppasswdd_mkpw.c,v 1.15 2006/05/25 03:17:43 christos Exp $	*/
+/*	$NetBSD: yppasswdd_mkpw.c,v 1.16 2008/02/24 21:10:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe <thorpej@NetBSD.org>
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.15 2006/05/25 03:17:43 christos Exp $");
+__RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.16 2008/02/24 21:10:02 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: yppasswdd_mkpw.c,v 1.15 2006/05/25 03:17:43 christos Exp $");
 #include <sys/wait.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <pwd.h>
