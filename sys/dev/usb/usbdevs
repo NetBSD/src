@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.494 2008/02/19 10:51:07 drochner Exp $
+$NetBSD: usbdevs,v 1.495 2008/02/24 20:22:06 rafal Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -350,6 +350,7 @@ vendor BECKHOFF		0x0978	Beckhoff
 vendor MINDSATWORK	0x097a	Minds At Work
 vendor POINTCHIPS	0x09a6	PointChips
 vendor INTERSIL		0x09aa	Intersil
+vendor TRIPPLITE2	0x09ae	Tripp Lite
 vendor ALTIUS		0x09b3	Altius Solutions
 vendor ARRIS		0x09c1	Arris Interactive
 vendor ACTIVCARD	0x09c3	ACTIVCARD
@@ -2184,6 +2185,7 @@ product TREK THUMBDRIVE_8MB	0x9988	ThumbDrive 8MB
 
 /* Tripp-Lite products */
 product TRIPPLITE U209		0x2008	U209 Serial adapter
+product TRIPPLITE2 UPS		0x1007	Tripp Lite UPS
 
 /* Trumpion products */
 product TRUMPION T33521		0x1003	USB/MP3 decoder
