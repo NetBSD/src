@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.28 2008/02/07 01:21:56 dyoung Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.29 2008/02/24 05:34:01 isaki Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.52 2006/03/02 09:04:00 jsg Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.28 2008/02/07 01:21:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.29 2008/02/24 05:34:01 isaki Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -179,7 +179,7 @@ const struct nfe_product {
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN1 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN2 },
 	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN3 },
-	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4 }
+	{ PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_MCP73_LAN4 },
 };
 
 int
