@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.18 2008/02/23 23:59:59 dsl Exp $	*/
+/*	$NetBSD: jot.c,v 1.19 2008/02/24 00:04:00 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.18 2008/02/23 23:59:59 dsl Exp $");
+__RCSID("$NetBSD: jot.c,v 1.19 2008/02/24 00:04:00 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -306,7 +306,7 @@ getargs(int argc, char *argv[])
 void
 putdata(double x, long notlast)
 {
-	long	d = x;
+	long	d = floor(x);
 
 	if (boring)				/* repeated word */
 		printf("%s", format);
