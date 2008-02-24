@@ -29,7 +29,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.4 2007/12/28 19:53:10 riz Exp $");
+__RCSID("$NetBSD: show.c,v 1.5 2008/02/24 18:38:10 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,6 +62,7 @@ static const char *
 friendly(uuid_t *t)
 {
 	static uuid_t efi_slice = GPT_ENT_TYPE_EFI;
+	static uuid_t bios_boot = GPT_ENT_TYPE_BIOS;
 	static uuid_t mslinux = GPT_ENT_TYPE_MS_BASIC_DATA;
 	static uuid_t freebsd = GPT_ENT_TYPE_FREEBSD;
 	static uuid_t hfs = GPT_ENT_TYPE_APPLE_HFS;
@@ -84,6 +85,8 @@ friendly(uuid_t *t)
 
 	if (uuid_equal(t, &efi_slice, NULL))
 		return ("EFI System");
+	if (uuid_equal(t, &bios_boot, NULL))
+		return ("BIOS Boot");
 	if (uuid_equal(t, &nb_swap, NULL))
 		return ("NetBSD swap");
 	if (uuid_equal(t, &nb_ufs, NULL))
