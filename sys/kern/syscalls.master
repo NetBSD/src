@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.189 2008/02/15 13:09:57 ad Exp $
+	$NetBSD: syscalls.master,v 1.190 2008/02/24 12:52:54 martin Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -7,7 +7,7 @@
 ;
 ; Fields: number type [type-dependent ...]
 ;	number	system call number, must be in order
-;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
+;	type	one of STD, OBSOL, UNIMPL, IGNORED, NODEF, NOARGS, or one of
 ;		the compatibility options defined in syscalls.conf.
 ;
 ; An optional field, MPSAFE, after the type field, indicates that
@@ -16,6 +16,7 @@
 ; types:
 ;	STD	always included
 ;	OBSOL	obsolete, not included in system
+;	IGNORED	syscall is a null op, but always succeeds
 ;	UNIMPL	unimplemented, not included in system
 ;	EXCL	implemented, but not included in system
 ;	NODEF	included, but don't define the syscall number
@@ -788,8 +789,7 @@
 388	STD MPSAFE	{ int sys___fstat30(int fd, struct stat *sb); }
 389	STD MPSAFE	{ int sys___lstat30(const char *path, struct stat *ub); }
 390	STD MPSAFE	{ int sys___getdents30(int fd, char *buf, size_t count); }
-391	COMPAT_40 MPSAFE	{ int sys_posix_fadvise(int fd, off_t offset, \
-			    off_t len, int advice); }
+391	IGNORED		old posix_fadvise
 392	COMPAT_30 MPSAFE	{ int sys___fhstat30(const struct compat_30_fhandle \
 			    *fhp, struct stat *sb); }
 393	STD		{ int sys___ntp_gettime30(struct ntptimeval *ntvp); }
