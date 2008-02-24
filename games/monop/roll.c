@@ -1,4 +1,4 @@
-/*	$NetBSD: roll.c,v 1.10 2008/02/20 04:48:10 dholland Exp $	*/
+/*	$NetBSD: roll.c,v 1.11 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,12 +34,13 @@
 #if 0
 static char sccsid[] = "@(#)roll.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: roll.c,v 1.10 2008/02/20 04:48:10 dholland Exp $");
+__RCSID("$NetBSD: roll.c,v 1.11 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
 #include <stdlib.h>
+
+#include "monop.h"
 
 /*
  *	This routine rolls ndie nside-sided dice.

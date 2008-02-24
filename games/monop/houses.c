@@ -1,4 +1,4 @@
-/*	$NetBSD: houses.c,v 1.12 2008/02/23 21:07:52 dholland Exp $	*/
+/*	$NetBSD: houses.c,v 1.13 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,11 +34,11 @@
 #if 0
 static char sccsid[] = "@(#)houses.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: houses.c,v 1.12 2008/02/23 21:07:52 dholland Exp $");
+__RCSID("$NetBSD: houses.c,v 1.13 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
-#include "monop.ext"
+#include "monop.h"
 
 static const char	*names[N_MON+2];
 static char	cur_prop[80];

@@ -1,4 +1,4 @@
-/*	$NetBSD: getinp.c,v 1.17 2008/02/23 20:12:15 dholland Exp $	*/
+/*	$NetBSD: getinp.c,v 1.18 2008/02/24 01:57:34 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,14 +34,15 @@
 #if 0
 static char sccsid[] = "@(#)getinp.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: getinp.c,v 1.17 2008/02/23 20:12:15 dholland Exp $");
+__RCSID("$NetBSD: getinp.c,v 1.18 2008/02/24 01:57:34 dholland Exp $");
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include "monop.ext"
+
+#include "monop.h"
 
 #define	LINE	70
 
