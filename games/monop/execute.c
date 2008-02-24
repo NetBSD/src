@@ -1,4 +1,4 @@
-/*	$NetBSD: execute.c,v 1.19 2008/02/24 03:56:48 christos Exp $	*/
+/*	$NetBSD: execute.c,v 1.20 2008/02/24 06:03:35 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)execute.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: execute.c,v 1.19 2008/02/24 03:56:48 christos Exp $");
+__RCSID("$NetBSD: execute.c,v 1.20 2008/02/24 06:03:35 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -333,27 +333,29 @@ save()
  *	This routine restores an old game from a file
  */
 void
-restore()
+restore(void)
 {
 	char *sp;
 
-	printf("Which file do you wish to restore from? ");
-	fgets(buf, sizeof(buf), stdin);
-	if (feof(stdin))
-		return;
-	sp = strchr(buf, '\n');
-	if (sp)
-		*sp = '\0';
-	rest_f(buf);
+	for (;;) {
+		printf("Which file do you wish to restore from? ");
+		fgets(buf, sizeof(buf), stdin);
+		if (feof(stdin))
+			return;
+		sp = strchr(buf, '\n');
+		if (sp)
+			*sp = '\0';
+		if (rest_f(buf) == 0)
+			break;
+	}
 }
 
 /*
- *	This does the actual restoring.  It returns TRUE if the
- * backup was successful, else false.
+ * This does the actual restoring.  It returns zero on success,
+ * and -1 on failure.
  */
 int
-rest_f(file)
-	const char *file;
+rest_f(const char *file)
 {
 	char *sp;
 	FILE *inf;
@@ -364,7 +366,7 @@ rest_f(file)
 	inf = fopen(file, "r");
 	if (inf == NULL) {
 		warn("%s", file);
-		return FALSE;
+		return -1;
 	}
 	printf("\"%s\" ", file);
 	if (fstat(fileno(inf), &sbuf) < 0) {
@@ -415,7 +417,7 @@ rest_f(file)
 		continue;
 	*sp = '\0';
 	printf("[%s]\n", xbuf);
-	return TRUE;
+	return 0;
 }
 
 /*
