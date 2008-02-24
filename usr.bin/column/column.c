@@ -1,4 +1,4 @@
-/*	$NetBSD: column.c,v 1.12.2.2 2006/08/06 11:47:08 tron Exp $	*/
+/*	$NetBSD: column.c,v 1.12.2.3 2008/02/24 13:25:06 bouyer Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)column.c	8.4 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: column.c,v 1.12.2.2 2006/08/06 11:47:08 tron Exp $");
+__RCSID("$NetBSD: column.c,v 1.12.2.3 2008/02/24 13:25:06 bouyer Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -226,10 +226,10 @@ maketbl(void)
 		    (cols[coloff] = strtok(p, separator)) != NULL;
 		    p = NULL)
 			if (++coloff == maxcols) {
-				ncols = erealloc(cols, maxcols +
-				    DEFCOLS * sizeof(char *));
-				nlens = erealloc(lens, maxcols +
-				    DEFCOLS * sizeof(int));
+				ncols = erealloc(cols, (maxcols +
+				    DEFCOLS) * sizeof(char *));
+				nlens = erealloc(lens, (maxcols +
+				    DEFCOLS) * sizeof(int));
 				cols = ncols;
 				lens = nlens;
 				(void)memset((char *)(void *)lens + maxcols *
