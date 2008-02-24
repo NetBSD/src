@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe1.c,v 1.4 2003/02/10 12:17:20 pk Exp $	*/
+/*	$NetBSD: pipe1.c,v 1.5 2008/02/24 21:37:47 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #include <poll.h>
 #include <sched.h>
 #include <signal.h>
-#include <sys/errno.h>
+#include <errno.h>
 #include <sys/wait.h>
 
 /*
