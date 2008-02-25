@@ -1,3 +1,14 @@
+2008-02-25  Emmanuel Dreyfus <manu@netbsd.org>
+	From Brian Haley <brian.haley@hp.com>
+	* src/racoon/ipsec_doi.c: Do check SPI size (it was not due to a typo)
+
+2008-02-22  Emmanuel Dreyfus <manu@netbsd.org>
+	From Brian Haley <brian.haley@hp.com>
+	* src/racoon/isakmp.c: Fix address length
+
+2008-02-10  S.P.Zeidler <spz@netbsd.org>
+	* src/racoon/ipsec_doi.c: fix NetBSD PR bin/37644 
+
 2008-01-11  Yvan Vanhullebus  <vanhu@netasq.com>
 	* src/racoon/handler.[ch]: added an 'established' arg to getph1byaddr()
 	From Krzysztof Oledzki <olel@ans.pl>:
