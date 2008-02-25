@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.184 2008/02/03 06:10:53 matt Exp $
+#	$NetBSD: build.sh,v 1.185 2008/02/25 11:14:31 apb Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1033,10 +1033,43 @@ validatemakeparams()
 		    [ "${MKUNPRIVED}" = "no" ] ; then
 			bomb "-U or -E must be set for build as an unprivileged user."
 		fi
-        fi
+	fi
 	if ${do_releasekernel} && [ -z "${RELEASEDIR}" ]; then
 		bomb "Must set RELEASEDIR with \`releasekernel=...'"
 	fi
+
+	# Install as non-root is a bad idea.
+	#
+	if ${do_install} && [ "$(id -u 2>/dev/null)" -ne 0 ] ; then
+		if ${do_expertmode}; then
+			warning "Will install as an unprivileged user."
+		else
+			bomb "-E must be set for install as an unprivileged user."
+		fi
+	fi
+
+	# If a previous build.sh run used -U (and therefore created a
+	# METALOG file), then most subsequent build.sh runs must also
+	# use -U.  If DESTDIR is about to be removed, then don't perform
+	# this check.
+	#
+	case "${do_removedirs} ${removedirs} " in
+	true*" ${DESTDIR} "*)
+		# DESTDIR is about to be removed
+		;;
+	*)
+		if ( ${do_build} || ${do_distribution} || ${do_release} || \
+		    ${do_install} ) && \
+		    [ -e "${DESTDIR}/METALOG" ] && \
+		    [ "${MKUNPRIVED}" = "no" ] ; then
+			if $do_expertmode; then
+				warning "A previous build.sh run specified -U."
+			else
+				bomb "A previous build.sh run specified -U; you must specify it again now."
+			fi
+		fi
+		;;
+	esac
 }
 
 
@@ -1091,7 +1124,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.184 2008/02/03 06:10:53 matt Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.185 2008/02/25 11:14:31 apb Exp $
 # with these arguments: ${_args}
 #
 
