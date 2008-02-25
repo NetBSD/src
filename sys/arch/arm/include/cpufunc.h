@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.43 2008/02/24 14:00:04 chris Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.44 2008/02/25 06:32:29 dogcow Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -46,6 +46,7 @@
 
 #include <sys/types.h>
 #include <arm/cpuconf.h>
+#include <arm/armreg.h>
 
 struct cpu_functions {
 
