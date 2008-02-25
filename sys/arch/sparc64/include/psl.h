@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.38 2007/12/11 08:59:57 martin Exp $ */
+/*	$NetBSD: psl.h,v 1.39 2008/02/25 09:51:38 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -179,8 +179,8 @@
 #define TSTATE_CCR		0xff00000000LL
 #define TSTATE_CCR_SHIFT	32
 
-#define PSRCC_TO_TSTATE(x)	(((int64_t)(x)&PSR_ICC)<<(TSTATE_CCR_SHIFT-19))
-#define TSTATECCR_TO_PSR(x)	(((x)&TSTATE_CCR)>>(TSTATE_CCR_SHIFT-19))
+#define PSRCC_TO_TSTATE(x)	(((int64_t)(x)&PSR_ICC)<<(TSTATE_CCR_SHIFT-20))
+#define TSTATECCR_TO_PSR(x)	(((x)&TSTATE_CCR)>>(TSTATE_CCR_SHIFT-20))
 
 /*
  * These are here to simplify life.
