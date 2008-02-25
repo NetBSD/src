@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.140 2008/02/19 14:21:56 yamt Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.141 2008/02/25 12:25:03 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.140 2008/02/19 14:21:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.141 2008/02/25 12:25:03 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -301,6 +301,7 @@ sys_nanosleep(struct lwp *l, const struct sys_nanosleep_args *uap,
 int
 nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
 {
+	struct timespec rmtstart;
 	int error, timo;
 
 	if (itimespecfix(rqt))
@@ -312,26 +313,31 @@ nanosleep1(struct lwp *l, struct timespec *rqt, struct timespec *rmt)
 	 */
 	if (timo == 0)
 		timo = 1;
-
-	if (rmt != NULL)
-		getnanouptime(rmt);
-
+	getnanouptime(&rmtstart);
+again:
 	error = kpause("nanoslp", true, timo, NULL);
+	if (rmt != NULL || error == 0) {
+		struct timespec rmtend;
+		struct timespec t0;
+		struct timespec *t;
+
+		getnanouptime(&rmtend);
+		t = (rmt != NULL) ? rmt : &t0;
+		timespecsub(&rmtend, &rmtstart, t);
+		timespecsub(rqt, t, t);
+		if (t->tv_sec < 0)
+			timespecclear(t);
+		if (error == 0) {
+			timo = tstohz(t);
+			if (timo > 0)
+				goto again;
+		}
+	}
+
 	if (error == ERESTART)
 		error = EINTR;
 	if (error == EWOULDBLOCK)
 		error = 0;
-
-	if (rmt != NULL) {
-		struct timespec rmtend;
-
-		getnanouptime(&rmtend);
-
-		timespecsub(&rmtend, rmt, rmt);
-		timespecsub(rqt, rmt, rmt);
-		if (rmt->tv_sec < 0)
-			timespecclear(rmt);
-	}
 
 	return error;
 }
