@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.20 2008/02/25 14:06:13 xtraeme Exp $	*/
+/*	$NetBSD: atexit.c,v 1.21 2008/02/25 14:15:10 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.20 2008/02/25 14:06:13 xtraeme Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.21 2008/02/25 14:15:10 xtraeme Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -120,6 +120,10 @@ atexit_handler_alloc(void *dso)
 	return (ah);
 }
 
+/*
+ * Initialize atexit_mutex with the PTHREAD_MUTEX_RECURSIVE attribute.
+ * Note that __cxa_finalize may generate calls to __cxa_atexit.
+ */
 void
 __libc_atexit_init(void)
 {
