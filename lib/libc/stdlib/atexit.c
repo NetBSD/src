@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.21 2008/02/25 14:15:10 xtraeme Exp $	*/
+/*	$NetBSD: atexit.c,v 1.22 2008/02/25 14:35:54 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.21 2008/02/25 14:15:10 xtraeme Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.22 2008/02/25 14:35:54 xtraeme Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -177,24 +177,12 @@ __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 void
 __cxa_finalize(void *dso)
 {
-	static thr_t owner;
 	static u_int call_depth;
 	struct atexit_handler *ah, *dead_handlers = NULL, **prevp;
 	void (*cxa_func)(void *);
 	void (*atexit_func)(void);
 
-	/*
-	 * We implement our own recursive mutex here because we need
-	 * to keep track of the call depth anyway, and it saves us
-	 * having to dynamically initialize the mutex.
-	 */
-	if (mutex_trylock(&atexit_mutex) == 0)
-		owner = thr_self();
-	else if (owner != thr_self()) {
-		mutex_lock(&atexit_mutex);
-		owner = thr_self();
-	}
-
+	mutex_lock(&atexit_mutex);
 	call_depth++;
 
 	/*
