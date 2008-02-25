@@ -1,4 +1,4 @@
-/* $NetBSD: mfivar.h,v 1.7 2008/02/25 10:46:02 xtraeme Exp $ */
+/* $NetBSD: mfivar.h,v 1.8 2008/02/25 21:22:33 xtraeme Exp $ */
 /* $OpenBSD: mfivar.h,v 1.28 2006/08/31 18:18:46 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -130,9 +130,6 @@ struct mfi_softc {
 		uint32_t	ld_present;
 		char		ld_dev[16];	/* device name sd? */
 	}			sc_ld[MFI_MAX_LD];
-
-	/* scsi ioctl from sd device */
-	int			(*sc_ioctl)(struct device *, u_long, void *);
 
 	/* firmware determined max, totals and other information*/
 	uint32_t		sc_max_cmds;
