@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_pci.c,v 1.14 2008/02/04 14:12:25 joerg Exp $	*/
+/*	$NetBSD: mpt_pci.c,v 1.15 2008/02/25 10:38:39 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.14 2008/02/04 14:12:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_pci.c,v 1.15 2008/02/25 10:38:39 xtraeme Exp $");
 
 #include <dev/ic/mpt.h>			/* pulls in all headers */
 
@@ -102,7 +102,6 @@ static const struct mpt_pci_product {
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1066E },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1068 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1068_2 },
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078 },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1068E },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1068E_2 },
 	{ 0,			0 }
