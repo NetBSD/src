@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.20 2007/03/04 06:00:51 christos Exp $ */
+/*	$NetBSD: process_machdep.c,v 1.21 2008/02/25 10:00:45 nakayama Exp $ */
 
 /*
  * Copyright (c) 1993 The Regents of the University of California.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.20 2007/03/04 06:00:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.21 2008/02/25 10:00:45 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,21 +207,20 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 	struct fpreg32		*regp = (struct fpreg32 *)regs;
 	int i;
 
+	if (l->l_md.md_fpstate)
+		statep = l->l_md.md_fpstate;
 #ifdef __arch64__
 	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy out fregs */
 		/* NOTE: struct fpreg == struct fpstate */
-		if (l->l_md.md_fpstate)
-			statep = l->l_md.md_fpstate;
 		memcpy(regs, statep, sizeof(struct fpreg64));
 		return 0;
 	}
 #endif
 	/* 32-bit mode -- copy out & convert 32-bit fregs */
-	if (l->l_md.md_fpstate)
-		statep = l->l_md.md_fpstate;
-	for (i=0; i<32; i++)
+	for (i = 0; i < 32; i++)
 		regp->fr_regs[i] = statep->fs_regs[i];
+	regp->fr_fsr = statep->fs_fsr;
 
 	return 0;
 }
@@ -229,29 +228,25 @@ process_read_fpregs(struct lwp *l, struct fpreg *regs)
 int
 process_write_fpregs(struct lwp *l, const struct fpreg *regs)
 {
-
-	extern struct fpstate64	initfpstate;
-	struct fpstate64	*statep = &initfpstate;
+	struct fpstate64	*statep;
 	const struct fpreg32	*regp = (const struct fpreg32 *)regs;
 	int i;
+
+	statep = l->l_md.md_fpstate;
+	if (statep == NULL)
+		return EINVAL;
 
 #ifdef __arch64__
 	if (!(curproc->p_flag & PK_32)) {
 		/* 64-bit mode -- copy in fregs */
-		if (l->l_md.md_fpstate == NULL)
-			return EINVAL;
-
 		/* NOTE: struct fpreg == struct fpstate */
-		memcpy(l->l_md.md_fpstate, regs, sizeof(struct fpreg64));
-		statep = l->l_md.md_fpstate;
+		memcpy(statep, regs, sizeof(struct fpreg64));
 		statep->fs_qsize = 0;
 		return 0;
 	}
 #endif
 	/* 32-bit mode -- copy in & convert 32-bit fregs */
-	if (l->l_md.md_fpstate)
-		statep = l->l_md.md_fpstate;
-	for (i=0; i<32; i++)
+	for (i = 0; i < 32; i++)
 		statep->fs_regs[i] = regp->fr_regs[i];
 	statep->fs_fsr = regp->fr_fsr;
 	statep->fs_qsize = 0;
