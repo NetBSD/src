@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_doi.c,v 1.23.4.7 2007/08/01 11:52:20 vanhu Exp $	*/
+/*	$NetBSD: ipsec_doi.c,v 1.23.4.8 2008/02/25 20:21:03 manu Exp $	*/
 
 /* Id: ipsec_doi.c,v 1.55 2006/08/17 09:20:41 vanhu Exp */
 
@@ -1062,10 +1062,10 @@ cmp_aproppair_i(a, b)
 			return -1;
 		}
 
-		if (p->prop->proto_id != r->prop->proto_id) {
+		if (p->prop->spi_size != r->prop->spi_size) {
 			plog(LLV_ERROR, LOCATION, NULL,
 				"invalid spi size: %d.\n",
-				p->prop->proto_id);
+				p->prop->spi_size);
 			return -1;
 		}
 
