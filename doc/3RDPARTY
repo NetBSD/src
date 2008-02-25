@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.583 2008/02/13 07:33:27 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.584 2008/02/25 12:22:34 tnn Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -199,13 +199,13 @@ I have merged all the changes already.
 
 Package:	db
 Version:	1.85
-Current Vers:	1.86/4.4.20
+Current Vers:	1.86/4.6.21
 Maintainer:	Keith Bostic <bostic@vangogh.cs.berkeley.edu>
-Archive Site:	http://www.sleepycat.com/download/index.shtml
-Home Page:	http://www.sleepycat.com/products/db.shtml
+Archive Site:	http://www.oracle.com/technology/software/products/berkeley-db/
+Home Page:	http://www.oracle.com/database/berkeley-db/
 Mailing List:
 Responsible:
-License:	BSD or specific SleepyCat license
+License:	BSD or Oracle Commercial License
 Notes:
 Note that we cannot use db 2.x for license reasons.
 Three bug fixes against 1.85 sent back to bostic.  Changes to
