@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1024 $>
+LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.1025 $>
 
 
 [Note: This file does not mention every change made to the NetBSD source tree.
@@ -447,3 +447,5 @@ Changes from NetBSD 4.0 to NetBSD 5.0:
 	monop(6): Save and restore format changed; compatibility with old
 		save files broken, but they were not usable anyway.
 		[dholland 20080223]
+	mfi(4): Added support for LSI SAS1078 and Dell PERC 6, from OpenBSD.
+		[xtraeme 20080225]

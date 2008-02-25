@@ -1,4 +1,4 @@
-/* $NetBSD: mfireg.h,v 1.2 2006/12/20 21:44:06 bouyer Exp $ */
+/* $NetBSD: mfireg.h,v 1.3 2008/02/25 10:46:02 xtraeme Exp $ */
 /* $OpenBSD: mfireg.h,v 1.24 2006/06/19 19:05:45 marco Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -24,6 +24,7 @@
 #define MFI_FRAME_SIZE				64
 #define MFI_SENSE_SIZE				128
 #define MFI_OSTS_INTR_VALID			0x00000002 /* valid interrupt */
+#define MFI_OSTS_PPC_INTR_VALID			0x80000000
 #define MFI_INVALID_CTX				0xffffffff
 #define MFI_ENABLE_INTR				0x01
 #define MFI_MAXFER				MAXPHYS	/* XXX bogus */
@@ -41,6 +42,8 @@
 #define MFI_OMSK				0x34 /* outbound inter mask */
 #define MFI_IQP					0x40 /* inbound queue port */
 #define MFI_OQP					0x44 /* outbound queue port */
+#define MFI_ODC					0xa0 /* outbound doorbell clr */
+#define MFI_OSP 				0xb0 /* outbound scratch pad */
 
 /* * firmware states */
 #define MFI_STATE_MASK				0xf0000000

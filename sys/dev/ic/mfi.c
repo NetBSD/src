@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.11 2007/11/16 08:00:14 xtraeme Exp $ */
+/* $NetBSD: mfi.c,v 1.12 2008/02/25 10:46:02 xtraeme Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.11 2007/11/16 08:00:14 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.12 2008/02/25 10:46:02 xtraeme Exp $");
 
 #include "bio.h"
 
@@ -80,7 +80,6 @@ int		mfi_get_info(struct mfi_softc *);
 uint32_t	mfi_read(struct mfi_softc *, bus_size_t);
 void		mfi_write(struct mfi_softc *, bus_size_t, uint32_t);
 int		mfi_poll(struct mfi_ccb *);
-int		mfi_despatch_cmd(struct mfi_ccb *);
 int		mfi_create_sgl(struct mfi_ccb *, int);
 
 /* commands */
@@ -104,6 +103,35 @@ int		mfi_bio_hs(struct mfi_softc *, int, int, void *);
 int		mfi_create_sensors(struct mfi_softc *);
 void		mfi_sensor_refresh(struct sysmon_envsys *, envsys_data_t *);
 #endif /* NBIO > 0 */
+
+uint32_t 	mfi_xscale_fw_state(struct mfi_softc *sc);
+void 		mfi_xscale_intr_ena(struct mfi_softc *sc);
+int 		mfi_xscale_intr(struct mfi_softc *sc);
+void 		mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+			  	 
+static const struct mfi_iop_ops mfi_iop_xscale = {
+	mfi_xscale_fw_state,
+	mfi_xscale_intr_ena,
+	mfi_xscale_intr,
+	mfi_xscale_post
+};
+ 	 
+uint32_t 	mfi_ppc_fw_state(struct mfi_softc *sc);
+void 		mfi_ppc_intr_ena(struct mfi_softc *sc);
+int 		mfi_ppc_intr(struct mfi_softc *sc);
+void 		mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb);
+		  	 
+static const struct mfi_iop_ops mfi_iop_ppc = {
+	mfi_ppc_fw_state,
+	mfi_ppc_intr_ena,
+	mfi_ppc_intr,
+	mfi_ppc_post
+};
+ 	 
+#define mfi_fw_state(_s) 	((_s)->sc_iop->mio_fw_state(_s))
+#define mfi_intr_enable(_s) 	((_s)->sc_iop->mio_intr_ena(_s))
+#define mfi_my_intr(_s) 	((_s)->sc_iop->mio_intr(_s))
+#define mfi_post(_s, _c) 	((_s)->sc_iop->mio_post((_s), (_c)))
 
 struct mfi_ccb *
 mfi_get_ccb(struct mfi_softc *sc)
@@ -304,7 +332,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 	int32_t			fw_state, cur_state;
 	int			max_wait, i;
 
-	fw_state = mfi_read(sc, MFI_OMSG0) & MFI_STATE_MASK;
+	fw_state = mfi_fw_state(sc) & MFI_STATE_MASK;
 
 	DNPRINTF(MFI_D_CMD, "%s: mfi_transition_firmware: %#x\n", DEVNAME(sc),
 	    fw_state);
@@ -341,7 +369,7 @@ mfi_transition_firmware(struct mfi_softc *sc)
 			return (1);
 		}
 		for (i = 0; i < (max_wait * 10); i++) {
-			fw_state = mfi_read(sc, MFI_OMSG0) & MFI_STATE_MASK;
+			fw_state = mfi_fw_state(sc) & MFI_STATE_MASK;
 			if (fw_state == cur_state)
 				DELAY(100000);
 			else
@@ -571,7 +599,7 @@ mfiminphys(struct buf *bp)
 }
 
 int
-mfi_attach(struct mfi_softc *sc)
+mfi_attach(struct mfi_softc *sc, enum mfi_iop iop)
 {
 	struct scsipi_adapter *adapt = &sc->sc_adapt;
 	struct scsipi_channel *chan = &sc->sc_chan;
@@ -580,12 +608,23 @@ mfi_attach(struct mfi_softc *sc)
 
 	DNPRINTF(MFI_D_MISC, "%s: mfi_attach\n", DEVNAME(sc));
 
+	switch (iop) {
+	case MFI_IOP_XSCALE:
+		sc->sc_iop = &mfi_iop_xscale;
+		break;
+	case MFI_IOP_PPC:
+		sc->sc_iop = &mfi_iop_ppc;
+		break;
+	default:
+		 panic("%s: unknown iop %d", DEVNAME(sc), iop);
+	}
+
 	if (mfi_transition_firmware(sc))
 		return (1);
 
 	TAILQ_INIT(&sc->sc_ccb_freeq);
 
-	status = mfi_read(sc, MFI_OMSG0);
+	status = mfi_fw_state(sc);
 	sc->sc_max_cmds = status & MFI_STATE_MAXCMD_MASK;
 	sc->sc_max_sgl = (status & MFI_STATE_MAXSGL_MASK) >> 16;
 	DNPRINTF(MFI_D_MISC, "%s: max commands: %u, max sgl: %u\n",
@@ -683,7 +722,7 @@ mfi_attach(struct mfi_softc *sc)
 	(void) config_found(&sc->sc_dev, &sc->sc_chan, scsiprint);
 
 	/* enable interrupts */
-	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
+	mfi_intr_enable(sc);
 
 #if NBIO > 0
 	if (bio_register(&sc->sc_dev, mfi_ioctl) != 0)
@@ -706,25 +745,6 @@ nopcq:
 }
 
 int
-mfi_despatch_cmd(struct mfi_ccb *ccb)
-{
-	struct mfi_softc *sc = ccb->ccb_sc;
-	DNPRINTF(MFI_D_CMD, "%s: mfi_despatch_cmd\n", DEVNAME(sc));
-
-	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
-	    ccb->ccb_pframe - MFIMEM_DVA(sc->sc_frames),
-	    sc->sc_frames_size, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_sense),
-	    ccb->ccb_psense - MFIMEM_DVA(sc->sc_sense),
-	    MFI_SENSE_SIZE, BUS_DMASYNC_PREREAD);
-
-	mfi_write(ccb->ccb_sc, MFI_IQP, htole32((ccb->ccb_pframe >> 3) |
-	    ccb->ccb_extra_frames));
-
-	return(0);
-}
-
-int
 mfi_poll(struct mfi_ccb *ccb)
 {
 	struct mfi_softc *sc = ccb->ccb_sc;
@@ -737,7 +757,7 @@ mfi_poll(struct mfi_ccb *ccb)
 	hdr->mfh_cmd_status = 0xff;
 	hdr->mfh_flags |= MFI_FRAME_DONT_POST_IN_REPLY_QUEUE;
 
-	mfi_despatch_cmd(ccb);
+	mfi_post(sc, ccb);
 	bus_dmamap_sync(sc->sc_dmat, MFIMEM_MAP(sc->sc_frames),
 	    ccb->ccb_pframe - MFIMEM_DVA(sc->sc_frames),
 	    sc->sc_frames_size, BUS_DMASYNC_POSTREAD);
@@ -781,14 +801,11 @@ mfi_intr(void *arg)
 	struct mfi_softc	*sc = arg;
 	struct mfi_prod_cons	*pcq;
 	struct mfi_ccb		*ccb;
-	uint32_t		status, producer, consumer, ctx;
+	uint32_t		producer, consumer, ctx;
 	int			claimed = 0;
 
-	status = mfi_read(sc, MFI_OSTS);
-	if ((status & MFI_OSTS_INTR_VALID) == 0)
-		return (claimed);
-	/* write status back to acknowledge interrupt */
-	mfi_write(sc, MFI_OSTS, status);
+	if (!mfi_my_intr(sc))
+		return 0;
 
 	pcq = MFIMEM_KVA(sc->sc_pcq);
 
@@ -1118,7 +1135,7 @@ mfi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req,
 		return;
 	}
 
-	mfi_despatch_cmd(ccb);
+	mfi_post(sc, ccb);
 
 	DNPRINTF(MFI_D_DMA, "%s: mfi_scsipi_request queued %d\n", DEVNAME(sc),
 	    ccb->ccb_dmamap->dm_nsegs);
@@ -1239,7 +1256,7 @@ mfi_mgmt(struct mfi_softc *sc, uint32_t opc, uint32_t dir, uint32_t len,
 		if (mfi_poll(ccb))
 			goto done;
 	} else {
-		mfi_despatch_cmd(ccb);
+		mfi_post(sc, ccb);
 
 		DNPRINTF(MFI_D_MISC, "%s: mfi_mgmt sleeping\n", DEVNAME(sc));
 		while (ccb->ccb_state != MFI_CCB_DONE)
@@ -1940,3 +1957,70 @@ mfi_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 }
 
 #endif /* NBIO > 0 */
+
+uint32_t
+mfi_xscale_fw_state(struct mfi_softc *sc)
+{
+	return mfi_read(sc, MFI_OMSG0);
+}
+ 	 
+void
+mfi_xscale_intr_ena(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_OMSK, MFI_ENABLE_INTR);
+}
+ 	 
+int
+mfi_xscale_intr(struct mfi_softc *sc)
+{
+	uint32_t status;
+
+	status = mfi_read(sc, MFI_OSTS);
+	if (!ISSET(status, MFI_OSTS_INTR_VALID))
+		return 0;
+
+	/* write status back to acknowledge interrupt */
+	mfi_write(sc, MFI_OSTS, status);
+	return 1;
+}
+ 	 
+void
+mfi_xscale_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	mfi_write(sc, MFI_IQP, (ccb->ccb_pframe >> 3) |
+	    ccb->ccb_extra_frames);
+}
+ 	 
+uint32_t
+mfi_ppc_fw_state(struct mfi_softc *sc)
+{
+	return mfi_read(sc, MFI_OSP);
+}
+ 	 
+void
+mfi_ppc_intr_ena(struct mfi_softc *sc)
+{
+	mfi_write(sc, MFI_ODC, 0xffffffff);
+	mfi_write(sc, MFI_OMSK, ~0x80000004);
+}
+ 	 
+int
+mfi_ppc_intr(struct mfi_softc *sc)
+{
+	uint32_t status;
+ 	 
+	status = mfi_read(sc, MFI_OSTS);
+	if (!ISSET(status, MFI_OSTS_PPC_INTR_VALID))
+		return 0;
+							  	 
+	/* write status back to acknowledge interrupt */
+	mfi_write(sc, MFI_ODC, status);
+	return 1;
+}
+ 	 
+void
+mfi_ppc_post(struct mfi_softc *sc, struct mfi_ccb *ccb)
+{
+	mfi_write(sc, MFI_IQP, 0x1 | ccb->ccb_pframe |
+	    (ccb->ccb_extra_frames << 1));
+}
