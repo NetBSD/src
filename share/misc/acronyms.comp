@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.82 2008/01/24 15:04:24 tnn Exp $
+$NetBSD: acronyms.comp,v 1.83 2008/02/25 12:20:42 elad Exp $
 
 3WHS	three-way handshake
 ABI	application binary interface
@@ -34,6 +34,7 @@ BAR	base address register
 BEDO	burst extended data output
 BER	basic encoding rules
 BER	bit error rate
+BFKL	big fscking kernel lock
 BGP	border gateway protocol
 BIOS	basic input/output system
 BLOB	binary large object
