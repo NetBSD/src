@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.109 2008/02/23 17:43:36 matt Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.110 2008/02/25 05:56:13 matt Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -59,6 +59,7 @@ INCLUDES?=	-I. ${EXTRA_INCLUDES} -I${S}/../common/include -I$S/arch \
 CPPFLAGS+=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -D_KERNEL_OPT
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
+COPTS+=		-std=gnu99
 DBG=		# might contain unwanted -Ofoo
 DEFWARNINGS?=	yes
 .if (${DEFWARNINGS} == "yes")
