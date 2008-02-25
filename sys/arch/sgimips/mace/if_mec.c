@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.17 2008/01/26 14:28:49 tsutsui Exp $ */
+/* $NetBSD: if_mec.c,v 1.18 2008/02/25 22:49:20 martin Exp $ */
 
 /*
  * Copyright (c) 2004 Izumi Tsutsui.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.17 2008/01/26 14:28:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.18 2008/02/25 22:49:20 martin Exp $");
 
 #include "opt_ddb.h"
 #include "bpfilter.h"
@@ -382,6 +382,7 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	struct mii_softc *child;
 	bus_dma_segment_t seg;
 	int i, err, rseg;
+	bool mac_is_fake;
 
 	sc->sc_st = maa->maa_st;
 	if (bus_space_subregion(sc->sc_st, maa->maa_sh,
@@ -452,7 +453,43 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 		printf(": unable to get MAC address!\n");
 		goto fail_4;
 	}
-	enaddr_aton(macaddr, sc->sc_enaddr);
+	/*
+	 * On some machines the DS2502 chip storing the serial number/
+	 * mac address is on the pci riser board - if this board is
+	 * missing, ARCBIOS will not know a good ethernet address (but
+	 * otherwise the machine will work fine).
+	 */
+	mac_is_fake = false;
+	if (strcmp(macaddr, "ff:ff:ff:ff:ff:ff") == 0) {
+		uint32_t ui = 0;
+		const char * netaddr =
+			ARCBIOS->GetEnvironmentVariable("netaddr");
+
+		/*
+		 * Create a MAC address by abusing the "netaddr" env var
+		 */
+		sc->sc_enaddr[0] = 0xf2;
+		sc->sc_enaddr[1] = 0x0b;
+		sc->sc_enaddr[2] = 0xa4;
+		if (netaddr) {
+			mac_is_fake = true;
+			while (*netaddr) {
+				int v = 0;
+				while (*netaddr && *netaddr != '.') {
+					if (*netaddr >= '0' && *netaddr <= '9')
+						v = v*10 + (*netaddr - '0');
+					netaddr++;
+				}
+				ui <<= 8;
+				ui |= v;
+				if (*netaddr == '.')
+					netaddr++;
+			}
+		}
+		memcpy(sc->sc_enaddr+3, ((uint8_t *)&ui)+1, 3);
+	}
+	if (!mac_is_fake)
+		enaddr_aton(macaddr, sc->sc_enaddr);
 
 	/* set the Ethernet address */
 	address = 0;
@@ -470,6 +507,10 @@ mec_attach(struct device *parent, struct device *self, void *aux)
 	printf(": MAC-110 Ethernet, rev %u\n",
 	    (u_int)((command & MEC_MAC_REVISION) >> MEC_MAC_REVISION_SHIFT));
 
+	if (mac_is_fake)
+		printf("%s: could not get ethernet address from firmware"
+		    " - generated one from the \"netaddr\" environment"
+		    " variable\n", sc->sc_dev.dv_xname);
 	printf("%s: Ethernet address %s\n", sc->sc_dev.dv_xname,
 	    ether_sprintf(sc->sc_enaddr));
 
