@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2006/10/18 02:18:27 uwe Exp $
+#	$NetBSD: Makefile,v 1.22 2008/02/26 21:46:38 rafal Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -22,6 +22,20 @@ evc3:
 	${HOST_SH} dspgen/gen_workspace.sh evc3 hpc_stand.vcw $(PROJECT_DIRS)
 	cd dspgen && ${MAKE} clean
 
+#
+# Generate project/work files for
+# "eMbedded Visual C++ 4.0"
+# (WCE300 binaries for SH3, SH4, ARMV4)
+#
+evc4:
+	cd dspgen && ${MAKE} evc4 || exit 1
+	for d in ${PROJECT_DIRS}; do					\
+		${HOST_SH} dspgen/config.sh evc4 $$d;			\
+	done
+	${HOST_SH} dspgen/gen_workspace.sh evc4 hpc_stand.vcw $(PROJECT_DIRS)
+	cd dspgen && ${MAKE} clean
+
+#
 #
 # Generate project/work files for
 # "Windows CE Toolkit for Visual C++ 6.0"
@@ -62,7 +76,7 @@ clean:
 	rm -f hpc_stand.dsw hpc_stand.ncb hpc_stand.opt
 	rm -f hpcboot/hpcboot.plg
 # compile directory
-	-rm -rf compile/ARMDebug compile/ARMRelease			\
+	-rm -rf compile/ARM*Debug compile/ARM*Release			\
 		compile/SH*Debug compile/SH*Release			\
 		compile/MIPSDebug compile/MIPSRelease
 	find . -name "hpcboot.exe" -print | xargs rm -f
