@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.23 2007/07/15 19:10:34 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_entry.h,v 1.24 2007/12/30 04:58:21 kientzle Exp $
  */
 
 #ifndef ARCHIVE_ENTRY_H_INCLUDED
@@ -36,7 +36,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
 
 /*
  * Description of an archive entry.
@@ -57,11 +56,30 @@ extern "C" {
 struct archive_entry;
 
 /*
- * File-type constants.  These are returned from archive_entry_filetype().
+ * File-type constants.  These are returned from archive_entry_filetype()
+ * and passed to archive_entry_set_filetype().
+ *
+ * These values match S_XXX defines on every platform I've checked,
+ * including Windows, AIX, Linux, Solaris, and BSD.  They're
+ * (re)defined here because platforms generally don't define the ones
+ * they don't support.  For example, Windows doesn't define S_IFLNK or
+ * S_IFBLK.  Instead of having a mass of conditional logic and system
+ * checks to define any S_XXX values that aren't supported locally,
+ * I've just defined a new set of such constants so that
+ * libarchive-based applications can manipulate and identify archive
+ * entries properly even if the hosting platform can't store them on
+ * disk.
+ *
+ * These values are also used directly within some portable formats,
+ * such as cpio.  If you find a platform that varies from these, the
+ * correct solution is to leave these alone and translate from these
+ * portable values to platform-native values when entries are read from
+ * or written to disk.
  */
 #define	AE_IFMT		0170000
 #define	AE_IFREG	0100000
 #define	AE_IFLNK	0120000
+#define	AE_IFSOCK	0140000
 #define	AE_IFCHR	0020000
 #define	AE_IFBLK	0060000
 #define	AE_IFDIR	0040000
@@ -90,7 +108,8 @@ dev_t			 archive_entry_devmajor(struct archive_entry *);
 dev_t			 archive_entry_devminor(struct archive_entry *);
 mode_t			 archive_entry_filetype(struct archive_entry *);
 void			 archive_entry_fflags(struct archive_entry *,
-			     unsigned long *set, unsigned long *clear);
+			    unsigned long * /* set */,
+			    unsigned long * /* clear */);
 const char		*archive_entry_fflags_text(struct archive_entry *);
 gid_t			 archive_entry_gid(struct archive_entry *);
 const char		*archive_entry_gname(struct archive_entry *);
@@ -108,6 +127,7 @@ dev_t			 archive_entry_rdev(struct archive_entry *);
 dev_t			 archive_entry_rdevmajor(struct archive_entry *);
 dev_t			 archive_entry_rdevminor(struct archive_entry *);
 int64_t			 archive_entry_size(struct archive_entry *);
+const char		*archive_entry_strmode(struct archive_entry *);
 const char		*archive_entry_symlink(struct archive_entry *);
 const wchar_t		*archive_entry_symlink_w(struct archive_entry *);
 uid_t			 archive_entry_uid(struct archive_entry *);
@@ -128,7 +148,7 @@ void	archive_entry_set_devmajor(struct archive_entry *, dev_t);
 void	archive_entry_set_devminor(struct archive_entry *, dev_t);
 void	archive_entry_set_filetype(struct archive_entry *, unsigned int);
 void	archive_entry_set_fflags(struct archive_entry *,
-	    unsigned long set, unsigned long clear);
+	    unsigned long /* set */, unsigned long /* clear */);
 /* Returns pointer to start of first invalid token, or NULL if none. */
 /* Note that all recognized tokens are processed, regardless. */
 const wchar_t *archive_entry_copy_fflags_text_w(struct archive_entry *,
@@ -142,12 +162,15 @@ void	archive_entry_copy_hardlink(struct archive_entry *, const char *);
 void	archive_entry_copy_hardlink_w(struct archive_entry *, const wchar_t *);
 void	archive_entry_set_ino(struct archive_entry *, unsigned long);
 void	archive_entry_set_link(struct archive_entry *, const char *);
+void	archive_entry_copy_link(struct archive_entry *, const char *);
+void	archive_entry_copy_link_w(struct archive_entry *, const wchar_t *);
 void	archive_entry_set_mode(struct archive_entry *, mode_t);
 void	archive_entry_set_mtime(struct archive_entry *, time_t, long);
 void	archive_entry_set_nlink(struct archive_entry *, unsigned int);
 void	archive_entry_set_pathname(struct archive_entry *, const char *);
 void	archive_entry_copy_pathname(struct archive_entry *, const char *);
 void	archive_entry_copy_pathname_w(struct archive_entry *, const wchar_t *);
+void	archive_entry_set_perm(struct archive_entry *, mode_t);
 void	archive_entry_set_rdev(struct archive_entry *, dev_t);
 void	archive_entry_set_rdevmajor(struct archive_entry *, dev_t);
 void	archive_entry_set_rdevminor(struct archive_entry *, dev_t);
@@ -179,6 +202,13 @@ void	archive_entry_copy_stat(struct archive_entry *, const struct stat *);
  *   = there are many different ACL text formats
  *   = would like to be able to read/convert archives containing ACLs
  *     on platforms that lack ACL libraries
+ *
+ *  This last point, in particular, forces me to implement a reasonably
+ *  complete set of ACL support routines.
+ *
+ *  TODO: Extend this to support NFSv4/NTFS permissions.  That should
+ *  allow full ACL support on Mac OS, in particular, which uses
+ *  POSIX.1e-style interfaces to manipulate NFSv4/NTFS permissions.
  */
 
 /*
@@ -213,21 +243,24 @@ void	archive_entry_copy_stat(struct archive_entry *, const struct stat *);
  */
 void	 archive_entry_acl_clear(struct archive_entry *);
 void	 archive_entry_acl_add_entry(struct archive_entry *,
-	     int type, int permset, int tag, int qual, const char *name);
+	    int /* type */, int /* permset */, int /* tag */,
+	    int /* qual */, const char * /* name */);
 void	 archive_entry_acl_add_entry_w(struct archive_entry *,
-	     int type, int permset, int tag, int qual, const wchar_t *name);
+	    int /* type */, int /* permset */, int /* tag */,
+	    int /* qual */, const wchar_t * /* name */);
 
 /*
  * To retrieve the ACL, first "reset", then repeatedly ask for the
  * "next" entry.  The want_type parameter allows you to request only
  * access entries or only default entries.
  */
-int	 archive_entry_acl_reset(struct archive_entry *, int want_type);
-int	 archive_entry_acl_next(struct archive_entry *, int want_type,
-	     int *type, int *permset, int *tag, int *qual, const char **name);
-int	 archive_entry_acl_next_w(struct archive_entry *, int want_type,
-	     int *type, int *permset, int *tag, int *qual,
-	     const wchar_t **name);
+int	 archive_entry_acl_reset(struct archive_entry *, int /* want_type */);
+int	 archive_entry_acl_next(struct archive_entry *, int /* want_type */,
+	    int * /* type */, int * /* permset */, int * /* tag */,
+	    int * /* qual */, const char ** /* name */);
+int	 archive_entry_acl_next_w(struct archive_entry *, int /* want_type */,
+	    int * /* type */, int * /* permset */, int * /* tag */,
+	    int * /* qual */, const wchar_t ** /* name */);
 
 /*
  * Construct a text-format ACL.  The flags argument is a bitmask that
@@ -242,10 +275,11 @@ int	 archive_entry_acl_next_w(struct archive_entry *, int want_type,
  */
 #define	ARCHIVE_ENTRY_ACL_STYLE_EXTRA_ID	1024
 #define	ARCHIVE_ENTRY_ACL_STYLE_MARK_DEFAULT	2048
-const wchar_t	*archive_entry_acl_text_w(struct archive_entry *, int flags);
+const wchar_t	*archive_entry_acl_text_w(struct archive_entry *,
+		    int /* flags */);
 
 /* Return a count of entries matching 'want_type' */
-int	 archive_entry_acl_count(struct archive_entry *, int want_type);
+int	 archive_entry_acl_count(struct archive_entry *, int /* want_type */);
 
 /*
  * Private ACL parser.  This is private because it handles some
@@ -256,14 +290,12 @@ int	 archive_entry_acl_count(struct archive_entry *, int want_type);
  * this interface are likely to be surprised when it changes.
  *
  * You were warned!
+ *
+ * TODO: Move this declaration out of the public header and into
+ * a private header.  Warnings above are silly.
  */
 int		 __archive_entry_acl_parse_w(struct archive_entry *,
-		     const wchar_t *, int type);
-
-
-#ifdef __cplusplus
-}
-#endif
+		    const wchar_t *, int /* type */);
 
 /*
  * extended attributes
@@ -271,7 +303,8 @@ int		 __archive_entry_acl_parse_w(struct archive_entry *,
 
 void	 archive_entry_xattr_clear(struct archive_entry *);
 void	 archive_entry_xattr_add_entry(struct archive_entry *,
-	     const char *name, const void *value, size_t size);
+	    const char * /* name */, const void * /* value */,
+	    size_t /* size */);
 
 /*
  * To retrieve the xattr list, first "reset", then repeatedly ask for the
@@ -281,7 +314,99 @@ void	 archive_entry_xattr_add_entry(struct archive_entry *,
 int	archive_entry_xattr_count(struct archive_entry *);
 int	archive_entry_xattr_reset(struct archive_entry *);
 int	archive_entry_xattr_next(struct archive_entry *,
-	     const char **name, const void **value, size_t *);
+	    const char ** /* name */, const void ** /* value */, size_t *);
 
+/*
+ * Utility to detect hardlinks.
+ *
+ * The 'struct archive_entry_linkresolver' is a cache of archive entries
+ * for files with multiple links.  Here's how to use it:
+ *   1. Create a lookup object with archive_entry_linkresolver_new()
+ *   2. Set the appropriate strategy.
+ *   3. Hand each archive_entry to archive_entry_linkify().
+ *      That function will return 0, 1, or 2 entries that should
+ *      be written.
+ *   4. Call archive_entry_linkify(resolver, NULL) until
+ *      no more entries are returned.
+ *   5. Call archive_entry_link_resolver_free(resolver) to free resources.
+ *
+ * The entries returned have their hardlink and size fields updated
+ * appropriately.  If an entry is passed in that does not refer to
+ * a file with multiple links, it is returned unchanged.  The intention
+ * is that you should be able to simply filter all entries through
+ * this machine.
+ *
+ * To make things more efficient, be sure that each entry has a valid
+ * nlinks value.  The hardlink cache uses this to track when all links
+ * have been found.  If the nlinks value is zero, it will keep every
+ * name in the cache indefinitely, which can use a lot of memory.
+ *
+ * Note that archive_entry_size() is reset to zero if the file
+ * body should not be written to the archive.  Pay attention!
+ */
+struct archive_entry_linkresolver;
+
+/*
+ * This machine supports three different strategies for marking
+ * hardlinks.  The names come from the best-known
+ * formats that rely on each strategy:
+ *
+ * "Old cpio" is the simplest, it always returns any entry unmodified.
+ *    As far as I know, only cpio formats use this.  Old cpio archives
+ *    store every link with the full body; the onus is on the dearchiver
+ *    to detect and properly link the files as they are restored.
+ * "tar" is also pretty simple; it caches a copy the first time it sees
+ *    any link.  Subsequent appearances are modified to be hardlink
+ *    references without any body to the first one.  Used by all tar
+ *    formats, although the newest tar formats permit the "old cpio" strategy
+ *    as well.  This strategy is very simple for the dearchiver,
+ *    and reasonably straightforward for the archiver.
+ * "new cpio" is trickier.  It stores the body only with the last
+ *    occurrence.  The complication is that we might not
+ *    see every link to a particular file in a single session, so
+ *    there's no easy way to know when we've seen the last occurrence.
+ *    The solution here is to queue one link until we see the next.
+ *    At the end of the session, you can enumerate any remaining
+ *    entries by calling archive_entry_linkify(NULL) and store those
+ *    bodies.  If you have a file with three links l1, l2, and l3,
+ *    you'll get the following behavior if you see all three links:
+ *           linkify(l1) => NULL   (the resolver stores l1 internally)
+ *           linkify(l2) => l1     (resolver stores l2, you write l1)
+ *           linkify(l3) => l2, l3 (all links seen, you can write both).
+ *    If you only see l1 and l2, you'll get this behavior:
+ *           linkify(l1) => NULL
+ *           linkify(l2) => l1
+ *           linkify(NULL) => l2   (at end, you retrieve remaining links)
+ *    As the name suggests, this strategy is used by newer cpio variants.
+ *    It's noticably more complex for the archiver, slightly more complex
+ *    for the dearchiver than the tar strategy, but makes it straightforward
+ *    to restore a file using any link by simply continuing to scan until
+ *    you see a link that is stored with a body.  In contrast, the tar
+ *    strategy requires you to rescan the archive from the beginning to
+ *    correctly extract an arbitrary link.
+ */
+#define ARCHIVE_ENTRY_LINKIFY_LIKE_TAR	0
+#define ARCHIVE_ENTRY_LINKIFY_LIKE_OLD_CPIO 1
+#define ARCHIVE_ENTRY_LINKIFY_LIKE_NEW_CPIO 2
+
+struct archive_entry_linkresolver *archive_entry_linkresolver_new(void);
+void archive_entry_linkresolver_set_strategy(
+	struct archive_entry_linkresolver *, int /* strategy */);
+void archive_entry_linkresolver_free(struct archive_entry_linkresolver *);
+void archive_entry_linkify(struct archive_entry_linkresolver *,
+    struct archive_entry **, struct archive_entry **);
+
+/*
+ * DEPRECATED: This will be removed in libarchive 3.0.  It was an
+ * early attempt at providing library-level hardlink recognition
+ * support, but it only handles the tar strategy and cannot easily
+ * be extended, so it's being replaced with the "linkify" function.
+ */
+const char *archive_entry_linkresolve(struct archive_entry_linkresolver *,
+    struct archive_entry *);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !ARCHIVE_ENTRY_H_INCLUDED */

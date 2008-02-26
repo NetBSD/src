@@ -28,7 +28,7 @@
 /* Don't compile this if we don't have zlib. */
 #if HAVE_ZLIB_H
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_gzip.c,v 1.14 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_compression_gzip.c,v 1.16 2008/02/21 03:21:50 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -106,6 +106,21 @@ archive_compressor_gzip_init(struct archive_write *a)
 			return (ret);
 	}
 
+	/*
+	 * The next check is a temporary workaround until the gzip
+	 * code can be overhauled some.  The code should not require
+	 * that compressed_buffer_size == bytes_per_block.  Removing
+	 * this assumption will allow us to compress larger chunks at
+	 * a time, which should improve overall performance
+	 * marginally.  As a minor side-effect, such a cleanup would
+	 * allow us to support truly arbitrary block sizes.
+	 */
+	if (a->bytes_per_block < 10) {
+		archive_set_error(&a->archive, EINVAL,
+		    "GZip compressor requires a minimum 10 byte block size");
+		return (ARCHIVE_FATAL);
+	}
+
 	state = (struct private_data *)malloc(sizeof(*state));
 	if (state == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
@@ -114,6 +129,10 @@ archive_compressor_gzip_init(struct archive_write *a)
 	}
 	memset(state, 0, sizeof(*state));
 
+	/*
+	 * See comment above.  We should set compressed_buffer_size to
+	 * max(bytes_per_block, 65536), but the code can't handle that yet.
+	 */
 	state->compressed_buffer_size = a->bytes_per_block;
 	state->compressed = (unsigned char *)malloc(state->compressed_buffer_size);
 	state->crc = crc32(0L, NULL, 0);
@@ -378,6 +397,10 @@ drive_compressor(struct archive_write *a, struct private_data *state, int finish
 			state->stream.avail_out = bytes_written;
 		}
 
+		/* If there's nothing to do, we're done. */
+		if (!finishing && state->stream.avail_in == 0)
+			return (ARCHIVE_OK);
+
 		ret = deflate(&(state->stream),
 		    finishing ? Z_FINISH : Z_NO_FLUSH );
 
@@ -396,7 +419,9 @@ drive_compressor(struct archive_write *a, struct private_data *state, int finish
 		default:
 			/* Any other return value indicates an error. */
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "GZip compression failed");
+			    "GZip compression failed:"
+			    " deflate() call returned status %d",
+			    ret);
 			return (ARCHIVE_FATAL);
 		}
 	}

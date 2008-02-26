@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_tar.c,v 1.2 2007/07/14 05:35:17 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_tar.c,v 1.3 2008/01/13 23:50:30 kientzle Exp $");
 
 /*
  * Each of these archives is a short archive with a single entry.  The
@@ -35,6 +35,52 @@ __FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_tar.c,v 1.2 2007/07
  * The naming here follows the tar file type flags.  E.g. '1' is a hardlink,
  * '2' is a symlink, '5' is a dir, etc.
  */
+
+/* Empty archive. */
+static unsigned char archiveEmpty[] = {
+	/* 512 zero bytes */
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0,
+	0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0, 0,0,0,0,0,0,0,0
+};
+
+static void verifyEmpty(void)
+{
+	struct archive_entry *ae;
+	struct archive *a;
+
+	assert((a = archive_read_new()) != NULL);
+	assertA(0 == archive_read_support_compression_all(a));
+	assertA(0 == archive_read_support_format_all(a));
+	assertA(0 == archive_read_open_memory(a, archiveEmpty, 512));
+	assertEqualIntA(a, ARCHIVE_EOF, archive_read_next_header(a, &ae));
+	assertEqualInt(archive_compression(a), ARCHIVE_COMPRESSION_NONE);
+	failure("512 zero bytes should be recognized as a tar archive.");
+	assertEqualInt(archive_format(a), ARCHIVE_FORMAT_TAR);
+
+	assert(0 == archive_read_close(a));
+#if ARCHIVE_API_VERSION > 1
+	assert(0 == archive_read_finish(a));
+#else
+	archive_read_finish(a);
+#endif
+}
 
 /* Single entry with a hardlink. */
 static unsigned char archive1[] = {
@@ -411,6 +457,7 @@ static void verify(unsigned char *d, size_t s,
 
 DEFINE_TEST(test_read_format_tar)
 {
+	verifyEmpty();
 	verify(archive1, sizeof(archive1), verify1,
 	    ARCHIVE_COMPRESSION_NONE, ARCHIVE_FORMAT_TAR_USTAR);
 	verify(archive2, sizeof(archive2), verify2,

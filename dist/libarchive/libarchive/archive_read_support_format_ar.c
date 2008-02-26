@@ -26,7 +26,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_ar.c,v 1.6 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_ar.c,v 1.8 2008/02/19 05:54:24 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -47,7 +47,6 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_ar.c,v 1.6 20
 #include "archive_read_private.h"
 
 struct ar {
-	int	 bid;
 	off_t	 entry_bytes_remaining;
 	off_t	 entry_offset;
 	off_t	 entry_padding;
@@ -103,7 +102,6 @@ archive_read_support_format_ar(struct archive *_a)
 		return (ARCHIVE_FATAL);
 	}
 	memset(ar, 0, sizeof(*ar));
-	ar->bid = -1;
 	ar->strtab = NULL;
 
 	r = __archive_read_register_format(a,
@@ -148,9 +146,6 @@ archive_read_format_ar_bid(struct archive_read *a)
 
 	ar = (struct ar *)(a->format->data);
 
-	if (ar->bid > 0)
-		return (ar->bid);
-
 	/*
 	 * Verify the 8-byte file signature.
 	 * TODO: Do we need to check more than this?
@@ -159,8 +154,7 @@ archive_read_format_ar_bid(struct archive_read *a)
 	if (bytes_read < 8)
 		return (-1);
 	if (strncmp((const char*)h, "!<arch>\n", 8) == 0) {
-		ar->bid = 64;
-		return (ar->bid);
+		return (64);
 	}
 	return (-1);
 }
@@ -274,8 +268,7 @@ archive_read_format_ar_read_header(struct archive_read *a,
 		/* This must come before any call to _read_ahead. */
 		ar_parse_common_header(ar, entry, h);
 		archive_entry_copy_pathname(entry, filename);
-		archive_entry_set_mode(entry,
-		    S_IFREG | (archive_entry_mode(entry) & 0777));
+		archive_entry_set_filetype(entry, AE_IFREG);
 		/* Get the size of the filename table. */
 		number = ar_atol10(h + AR_size_offset, AR_size_size);
 		if (number > SIZE_MAX) {
@@ -381,8 +374,7 @@ archive_read_format_ar_read_header(struct archive_read *a,
 		/* Parse the time, owner, mode, size fields. */
 		r = ar_parse_common_header(ar, entry, h);
 		/* Force the file type to a regular file. */
-		archive_entry_set_mode(entry,
-		    S_IFREG | (archive_entry_mode(entry) & 0777));
+		archive_entry_set_filetype(entry, AE_IFREG);
 		return (r);
 	}
 

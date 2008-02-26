@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_zip.c,v 1.2 2007/05/29 01:00:21 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_zip.c,v 1.3 2008/01/01 22:28:04 kientzle Exp $");
 
 static unsigned char archive[] = {
 'P','K',3,4,10,0,0,0,0,0,'Y','f',179,'6',0,0,0,0,0,0,0,0,0,0,0,0,4,0,21,0,
@@ -48,6 +48,9 @@ DEFINE_TEST(test_read_format_zip)
 	struct archive_entry *ae;
 	struct archive *a;
 	char *buff[128];
+	const void *pv;
+	size_t s;
+	off_t o;
 
 	assert((a = archive_read_new()) != NULL);
 	assertA(0 == archive_read_support_compression_all(a));
@@ -57,6 +60,9 @@ DEFINE_TEST(test_read_format_zip)
 	assertEqualString("dir/", archive_entry_pathname(ae));
 	assertEqualInt(1179604249, archive_entry_mtime(ae));
 	assertEqualInt(0, archive_entry_size(ae));
+	assertEqualIntA(a, ARCHIVE_EOF,
+	    archive_read_data_block(a, &pv, &s, &o));
+	assertEqualInt(s, 0);
 	assertA(0 == archive_read_next_header(a, &ae));
 	assertEqualString("file1", archive_entry_pathname(ae));
 	assertEqualInt(1179604289, archive_entry_mtime(ae));

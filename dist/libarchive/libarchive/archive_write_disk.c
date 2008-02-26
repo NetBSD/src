@@ -25,7 +25,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.13 2007/07/15 19:13:59 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.22 2008/02/19 05:39:35 kientzle Exp $");
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -44,6 +44,9 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.13 2007/07/15 19
 #endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_UTIME_H
+#include <sys/utime.h>
 #endif
 
 #ifdef HAVE_EXT2FS_EXT2_FS_H
@@ -88,6 +91,10 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_write_disk.c,v 1.13 2007/07/15 19
 #include "archive_string.h"
 #include "archive_entry.h"
 #include "archive_private.h"
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 struct fixup_entry {
 	struct fixup_entry	*next;
@@ -171,6 +178,8 @@ struct archive_write_disk {
 	int			 fd;
 	/* Current offset for writing data to the file. */
 	off_t			 offset;
+	/* Maximum size of file. */
+	off_t			 filesize;
 	/* Dir we were in before this restore; only for deep paths. */
 	int			 restore_pwd;
 	/* Mode we should use for this entry; affected by _PERM and umask. */
@@ -302,6 +311,7 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
 	a->offset = 0;
 	a->uid = a->user_uid;
 	a->mode = archive_entry_mode(a->entry);
+	a->filesize = archive_entry_size(a->entry);
 	archive_strcpy(&(a->_name_data), archive_entry_pathname(a->entry));
 	a->name = a->_name_data.s;
 	archive_clear_error(&a->archive);
@@ -421,6 +431,14 @@ _archive_write_header(struct archive *_a, struct archive_entry *entry)
 	/* We've created the object and are ready to pour data into it. */
 	if (ret == ARCHIVE_OK)
 		a->archive.state = ARCHIVE_STATE_DATA;
+	/*
+	 * If it's not open, tell our client not to try writing.
+	 * In particular, dirs, links, etc, don't get written to.
+	 */
+	if (a->fd < 0) {
+		archive_entry_set_size(entry, 0);
+		a->filesize = 0;
+	}
 done:
 	/* Restore the user's umask before returning. */
 	umask(a->user_umask);
@@ -445,11 +463,14 @@ _archive_write_data_block(struct archive *_a,
 {
 	struct archive_write_disk *a = (struct archive_write_disk *)_a;
 	ssize_t bytes_written = 0;
+	int r = ARCHIVE_OK;
 
 	__archive_check_magic(&a->archive, ARCHIVE_WRITE_DISK_MAGIC,
 	    ARCHIVE_STATE_DATA, "archive_write_disk_block");
-	if (a->fd < 0)
-		return (ARCHIVE_OK);
+	if (a->fd < 0) {
+		archive_set_error(&a->archive, 0, "File not open");
+		return (ARCHIVE_WARN);
+	}
 	archive_clear_error(&a->archive);
 
 	/* Seek if necessary to the specified offset. */
@@ -462,7 +483,13 @@ _archive_write_data_block(struct archive *_a,
 	}
 
 	/* Write the data. */
-	while (size > 0) {
+	while (size > 0 && a->offset < a->filesize) {
+		if ((off_t)(a->offset + size) > a->filesize) {
+			size = (size_t)(a->filesize - a->offset);
+			archive_set_error(&a->archive, errno,
+			    "Write request too large");
+			r = ARCHIVE_WARN;
+		}
 		bytes_written = write(a->fd, buff, size);
 		if (bytes_written < 0) {
 			archive_set_error(&a->archive, errno, "Write failed");
@@ -471,19 +498,26 @@ _archive_write_data_block(struct archive *_a,
 		size -= bytes_written;
 		a->offset += bytes_written;
 	}
-	return (ARCHIVE_OK);
+	return (r);
 }
 
 static ssize_t
 _archive_write_data(struct archive *_a, const void *buff, size_t size)
 {
 	struct archive_write_disk *a = (struct archive_write_disk *)_a;
+	off_t offset;
+	int r;
+
 	__archive_check_magic(&a->archive, ARCHIVE_WRITE_DISK_MAGIC,
 	    ARCHIVE_STATE_DATA, "archive_write_data");
 	if (a->fd < 0)
 		return (ARCHIVE_OK);
 
-	return (_archive_write_data_block(_a, buff, size, a->offset));
+	offset = a->offset;
+	r = _archive_write_data_block(_a, buff, size, a->offset);
+	if (r < ARCHIVE_OK)
+		return (r);
+	return (a->offset - offset);
 }
 
 static int
@@ -609,7 +643,9 @@ archive_write_disk_new(void)
 	a->archive.vtable = archive_write_disk_vtable();
 	a->lookup_uid = trivial_lookup_uid;
 	a->lookup_gid = trivial_lookup_gid;
+#ifdef HAVE_GETEUID
 	a->user_uid = geteuid();
+#endif /* HAVE_GETEUID */
 	if (archive_string_ensure(&a->path_safe, 512) == NULL) {
 		free(a);
 		return (NULL);
@@ -640,7 +676,7 @@ edit_deep_directories(struct archive_write_disk *a)
 		return;
 
 	/* Try to record our starting dir. */
-	a->restore_pwd = open(".", O_RDONLY);
+	a->restore_pwd = open(".", O_RDONLY | O_BINARY);
 	if (a->restore_pwd < 0)
 		return;
 
@@ -678,6 +714,14 @@ restore_entry(struct archive_write_disk *a)
 	int ret = ARCHIVE_OK, en;
 
 	if (a->flags & ARCHIVE_EXTRACT_UNLINK && !S_ISDIR(a->mode)) {
+		/*
+		 * TODO: Fix this.  Apparently, there are platforms
+		 * that still allow root to hose the entire filesystem
+		 * by unlinking a dir.  The S_ISDIR() test above
+		 * prevents us from using unlink() here if the new
+		 * object is a dir, but that doesn't mean the old
+		 * object isn't a dir.
+		 */
 		if (unlink(a->name) == 0) {
 			/* We removed it, we're done. */
 		} else if (errno == ENOENT) {
@@ -816,8 +860,20 @@ create_filesystem_object(struct archive_write_disk *a)
 	/* We identify hard/symlinks according to the link names. */
 	/* Since link(2) and symlink(2) don't handle modes, we're done here. */
 	linkname = archive_entry_hardlink(a->entry);
-	if (linkname != NULL)
-		return link(linkname, a->name) ? errno : 0;
+	if (linkname != NULL) {
+		r = link(linkname, a->name) ? errno : 0;
+		/*
+		 * New cpio and pax formats allow hardlink entries
+		 * to carry data, so we may have to open the file
+		 * for hardlink entries.
+		 */
+		if (r == 0 && a->filesize > 0) {
+			a->fd = open(a->name, O_WRONLY | O_TRUNC | O_BINARY);
+			if (a->fd < 0)
+				r = errno;
+		}
+		return (r);
+	}
 	linkname = archive_entry_symlink(a->entry);
 	if (linkname != NULL)
 		return symlink(linkname, a->name) ? errno : 0;
@@ -837,24 +893,38 @@ create_filesystem_object(struct archive_write_disk *a)
 	 */
 	mode = final_mode & 0777;
 
-	switch (a->mode & S_IFMT) {
+	switch (a->mode & AE_IFMT) {
 	default:
 		/* POSIX requires that we fall through here. */
 		/* FALLTHROUGH */
-	case S_IFREG:
+	case AE_IFREG:
 		a->fd = open(a->name,
-		    O_WRONLY | O_CREAT | O_EXCL, mode);
+		    O_WRONLY | O_CREAT | O_EXCL | O_BINARY, mode);
 		r = (a->fd < 0);
 		break;
-	case S_IFCHR:
+	case AE_IFCHR:
+#ifdef HAVE_MKNOD
+		/* Note: we use AE_IFCHR for the case label, and
+		 * S_IFCHR for the mknod() call.  This is correct.  */
 		r = mknod(a->name, mode | S_IFCHR,
 		    archive_entry_rdev(a->entry));
+#else
+		/* TODO: Find a better way to warn about our inability
+		 * to restore a char device node. */
+		return (EINVAL);
+#endif /* HAVE_MKNOD */
 		break;
-	case S_IFBLK:
+	case AE_IFBLK:
+#ifdef HAVE_MKNOD
 		r = mknod(a->name, mode | S_IFBLK,
 		    archive_entry_rdev(a->entry));
+#else
+		/* TODO: Find a better way to warn about our inability
+		 * to restore a block device node. */
+		return (EINVAL);
+#endif /* HAVE_MKNOD */
 		break;
-	case S_IFDIR:
+	case AE_IFDIR:
 		mode = (mode | MINIMUM_DIR_MODE) & MAXIMUM_DIR_MODE;
 		r = mkdir(a->name, mode);
 		if (r == 0) {
@@ -867,8 +937,14 @@ create_filesystem_object(struct archive_write_disk *a)
 			a->todo &= ~TODO_MODE;
 		}
 		break;
-	case S_IFIFO:
+	case AE_IFIFO:
+#ifdef HAVE_MKFIFO
 		r = mkfifo(a->name, mode);
+#else
+		/* TODO: Find a better way to warn about our inability
+		 * to restore a fifo. */
+		return (EINVAL);
+#endif /* HAVE_MKFIFO */
 		break;
 	}
 
@@ -1414,28 +1490,34 @@ set_ownership(struct archive_write_disk *a)
 	}
 
 #ifdef HAVE_FCHOWN
-	if (a->fd >= 0 && fchown(a->fd, a->uid, a->gid) == 0)
-		goto success;
+	/* If we have an fd, we can avoid a race. */
+	if (a->fd >= 0 && fchown(a->fd, a->uid, a->gid) == 0) {
+		/* We've set owner and know uid/gid are correct. */
+		a->todo &= ~(TODO_OWNER | TODO_SGID_CHECK | TODO_SUID_CHECK);
+		return (ARCHIVE_OK);
+	}
 #endif
 
+	/* We prefer lchown() but will use chown() if that's all we have. */
+	/* Of course, if we have neither, this will always fail. */
 #ifdef HAVE_LCHOWN
-	if (lchown(a->name, a->uid, a->gid) == 0)
-		goto success;
-#else
-	if (!S_ISLNK(a->mode) && chown(a->name, a->uid, a->gid) == 0)
-		goto success;
+	if (lchown(a->name, a->uid, a->gid) == 0) {
+		/* We've set owner and know uid/gid are correct. */
+		a->todo &= ~(TODO_OWNER | TODO_SGID_CHECK | TODO_SUID_CHECK);
+		return (ARCHIVE_OK);
+	}
+#elif HAVE_CHOWN
+	if (!S_ISLNK(a->mode) && chown(a->name, a->uid, a->gid) == 0) {
+		/* We've set owner and know uid/gid are correct. */
+		a->todo &= ~(TODO_OWNER | TODO_SGID_CHECK | TODO_SUID_CHECK);
+		return (ARCHIVE_OK);
+	}
 #endif
 
 	archive_set_error(&a->archive, errno,
 	    "Can't set user=%d/group=%d for %s", a->uid, a->gid,
 	    a->name);
 	return (ARCHIVE_WARN);
-success:
-	a->todo &= ~TODO_OWNER;
-	/* We know the user/group are correct now. */
-	a->todo &= ~TODO_SGID_CHECK;
-	a->todo &= ~TODO_SUID_CHECK;
-	return (ARCHIVE_OK);
 }
 
 #ifdef HAVE_UTIMES
@@ -1541,15 +1623,28 @@ set_mode(struct archive_write_disk *a, int mode)
 		}
 		if (a->pst->st_gid != a->gid) {
 			mode &= ~ S_ISGID;
-			archive_set_error(&a->archive, -1, "Can't restore SGID bit");
-			r = ARCHIVE_WARN;
+			if (a->flags & ARCHIVE_EXTRACT_OWNER) {
+				/*
+				 * This is only an error if you
+				 * requested owner restore.  If you
+				 * didn't, we'll try to restore
+				 * sgid/suid, but won't consider it a
+				 * problem if we can't.
+				 */
+				archive_set_error(&a->archive, -1,
+				    "Can't restore SGID bit");
+				r = ARCHIVE_WARN;
+			}
 		}
 		/* While we're here, double-check the UID. */
 		if (a->pst->st_uid != a->uid
 		    && (a->todo & TODO_SUID)) {
 			mode &= ~ S_ISUID;
-			archive_set_error(&a->archive, -1, "Can't restore SUID bit");
-			r = ARCHIVE_WARN;
+			if (a->flags & ARCHIVE_EXTRACT_OWNER) {
+				archive_set_error(&a->archive, -1,
+				    "Can't restore SUID bit");
+				r = ARCHIVE_WARN;
+			}
 		}
 		a->todo &= ~TODO_SGID_CHECK;
 		a->todo &= ~TODO_SUID_CHECK;
@@ -1561,8 +1656,11 @@ set_mode(struct archive_write_disk *a, int mode)
 		 */
 		if (a->user_uid != a->uid) {
 			mode &= ~ S_ISUID;
-			archive_set_error(&a->archive, -1, "Can't make file SUID");
-			r = ARCHIVE_WARN;
+			if (a->flags & ARCHIVE_EXTRACT_OWNER) {
+				archive_set_error(&a->archive, -1,
+				    "Can't make file SUID");
+				r = ARCHIVE_WARN;
+			}
 		}
 		a->todo &= ~TODO_SUID_CHECK;
 	}
@@ -1757,7 +1855,7 @@ set_fflags_platform(struct archive_write_disk *a, int fd, const char *name,
 
 	/* If we weren't given an fd, open it ourselves. */
 	if (myfd < 0)
-		myfd = open(name, O_RDONLY|O_NONBLOCK);
+		myfd = open(name, O_RDONLY | O_NONBLOCK | O_BINARY);
 	if (myfd < 0)
 		return (ARCHIVE_OK);
 

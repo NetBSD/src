@@ -25,7 +25,7 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_gzip.c,v 1.15 2007/05/29 01:00:19 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_gzip.c,v 1.16 2008/02/19 05:44:59 kientzle Exp $");
 
 
 #ifdef HAVE_ERRNO_H
@@ -146,7 +146,7 @@ init(struct archive_read *a, const void *buff, size_t n)
 	(void)buff;	/* UNUSED */
 	(void)n;	/* UNUSED */
 
-	archive_set_error(a, -1,
+	archive_set_error(&a->archive, -1,
 	    "This version of libarchive was compiled without gzip support");
 	return (ARCHIVE_FATAL);
 }

@@ -23,7 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_isorr_bz2.c,v 1.2 2007/05/29 01:00:21 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/test_read_format_isorr_bz2.c,v 1.3 2008/01/01 22:28:04 kientzle Exp $");
 
 /*
 Execute the following to rebuild the data for this program:
@@ -110,6 +110,9 @@ DEFINE_TEST(test_read_format_isorr_bz2)
 	assertEqualInt(1, archive_entry_ctime(ae));
 	assertEqualInt(0, archive_entry_stat(ae)->st_nlink);
 	assertEqualInt(0, archive_entry_uid(ae));
+	assertEqualIntA(a, ARCHIVE_EOF,
+	    archive_read_data_block(a, &p, &size, &offset));
+	assertEqualInt(size, 0);
 
 	/* A directory. */
 	assert(0 == archive_read_next_header(a, &ae));

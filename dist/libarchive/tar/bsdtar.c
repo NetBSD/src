@@ -24,7 +24,7 @@
  */
 
 #include "bsdtar_platform.h"
-__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.75 2007/05/29 05:39:10 kientzle Exp $");
+__FBSDID("$FreeBSD: src/usr.bin/tar/bsdtar.c,v 1.79 2008/01/22 07:23:44 kientzle Exp $");
 
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -151,6 +151,7 @@ enum {
 	OPTION_NO_SAME_PERMISSIONS,
 	OPTION_NULL,
 	OPTION_ONE_FILE_SYSTEM,
+	OPTION_POSIX,
 	OPTION_STRIP_COMPONENTS,
 	OPTION_TOTALS,
 	OPTION_USE_COMPRESS_PROGRAM,
@@ -202,6 +203,7 @@ static const struct option tar_longopts[] = {
 	{ "no-same-permissions",no_argument,	   NULL, OPTION_NO_SAME_PERMISSIONS },
 	{ "null",		no_argument,	   NULL, OPTION_NULL },
 	{ "one-file-system",	no_argument,	   NULL, OPTION_ONE_FILE_SYSTEM },
+	{ "posix",		no_argument,	   NULL, OPTION_POSIX },
 	{ "preserve-permissions", no_argument,     NULL, 'p' },
 	{ "read-full-blocks",	no_argument,	   NULL, 'B' },
 	{ "same-permissions",   no_argument,       NULL, 'p' },
@@ -389,19 +391,9 @@ main(int argc, char **argv)
 		case 'L': /* BSD convention */
 			bsdtar->symlink_mode = 'L';
 			break;
-	        case 'l': /* SUSv2 and GNU conflict badly here */
-			if (getenv("POSIXLY_CORRECT") != NULL) {
-				/* User has asked for POSIX/SUS behavior. */
-				bsdtar->option_warn_links = 1;
-			} else {
-				fprintf(stderr,
-"Error: -l has different behaviors in different tar programs.\n");
-				fprintf(stderr,
-"  For the GNU behavior, use --one-file-system instead.\n");
-				fprintf(stderr,
-"  For the POSIX behavior, use --check-links instead.\n");
-				usage(bsdtar);
-			}
+	        case 'l': /* SUSv2 and GNU tar beginning with 1.16 */
+			/* GNU tar 1.13  used -l for --one-file-system */
+			bsdtar->option_warn_links = 1;
 			break;
 		case 'm': /* SUSv2 */
 			bsdtar->extract_flags &= ~ARCHIVE_EXTRACT_TIME;
@@ -488,6 +480,9 @@ main(int argc, char **argv)
 			bsdtar->extract_flags |= ARCHIVE_EXTRACT_ACL;
 			bsdtar->extract_flags |= ARCHIVE_EXTRACT_XATTR;
 			bsdtar->extract_flags |= ARCHIVE_EXTRACT_FFLAGS;
+			break;
+		case OPTION_POSIX: /* GNU tar */
+			bsdtar->create_format = "pax";
 			break;
 		case 'r': /* SUSv2 */
 			set_mode(bsdtar, opt);
@@ -787,7 +782,9 @@ usage(struct bsdtar *bsdtar)
 static void
 version(void)
 {
-	printf("bsdtar %s - %s\n", PACKAGE_VERSION, archive_version());
+	printf("bsdtar %s - %s\n",
+	    BSDTAR_VERSION_STRING,
+	    archive_version());
 	exit(1);
 }
 

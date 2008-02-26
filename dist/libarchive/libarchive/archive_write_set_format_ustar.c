@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_ustar.c,v 1.24 2007/06/11 05:17:30 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_set_format_ustar.c,v 1.25 2007/12/30 04:58:22 kientzle Exp $");
 
 
 #ifdef HAVE_ERRNO_H
@@ -216,12 +216,15 @@ archive_write_ustar_header(struct archive_write *a, struct archive_entry *entry)
 		p = archive_entry_pathname(entry);
 		if (p[strlen(p) - 1] != '/') {
 			t = (char *)malloc(strlen(p) + 2);
-			if (t != NULL) {
-				strcpy(t, p);
-				strcat(t, "/");
-				archive_entry_copy_pathname(entry, t);
-				free(t);
+			if (t == NULL) {
+				archive_set_error(&a->archive, ENOMEM,
+				"Can't allocate ustar data");
+				return(ARCHIVE_FATAL);
 			}
+			strcpy(t, p);
+			strcat(t, "/");
+			archive_entry_copy_pathname(entry, t);
+			free(t);
 		}
 	}
 
