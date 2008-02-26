@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.626 2008/02/12 17:52:18 joerg Exp $	*/
+/*	$NetBSD: machdep.c,v 1.627 2008/02/26 18:24:28 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.626 2008/02/12 17:52:18 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.627 2008/02/26 18:24:28 xtraeme Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_ibcs2.h"
@@ -261,8 +261,6 @@ int	i386_fpu_fdivbug;
 int	i386_use_fxsave;
 int	i386_has_sse;
 int	i386_has_sse2;
-
-int	tmx86_has_longrun;
 
 vaddr_t	msgbuf_vaddr;
 struct {
@@ -618,55 +616,6 @@ cpu_init_tss(struct cpu_info *ci)
 #endif /* XEN */
 
 /*
- * sysctl helper routine for machdep.tm* nodes.
- */
-static int
-sysctl_machdep_tm_longrun(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	int io, error;
-
-	if (!tmx86_has_longrun)
-		return (EOPNOTSUPP);
-
-	node = *rnode;
-	node.sysctl_data = &io;
-
-	switch (rnode->sysctl_num) {
-	case CPU_TMLR_MODE:
-		io = (int)(crusoe_longrun = tmx86_get_longrun_mode());
-		break;
-	case CPU_TMLR_FREQUENCY:
-		tmx86_get_longrun_status_all();
-		io = crusoe_frequency;
-		break;
-	case CPU_TMLR_VOLTAGE:
-		tmx86_get_longrun_status_all();
-		io = crusoe_voltage;
-		break;
-	case CPU_TMLR_PERCENTAGE:
-		tmx86_get_longrun_status_all();
-		io = crusoe_percentage;
-		break;
-	default:
-		return (EOPNOTSUPP);
-	}
-
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error || newp == NULL)
-		return (error);
-
-	if (rnode->sysctl_num == CPU_TMLR_MODE) {
-		if (tmx86_set_longrun_mode(io))
-			crusoe_longrun = (u_int)io;
-		else
-			return (EINVAL);
-	}
-
-	return (0);
-}
-
-/*
  * sysctl helper routine for machdep.booted_kernel
  */
 static int
@@ -766,26 +715,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRING, "cpu_brand", NULL,
 		       NULL, 0, &cpu_brand_string, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "tm_longrun_mode", NULL,
-		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_MODE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "tm_longrun_frequency", NULL,
-		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_FREQUENCY, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "tm_longrun_voltage", NULL,
-		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_VOLTAGE, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
-		       CTLTYPE_INT, "tm_longrun_percentage", NULL,
-		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_PERCENTAGE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "sparse_dump", NULL,

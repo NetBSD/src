@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.161 2008/02/10 14:37:41 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.162 2008/02/26 18:24:28 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -383,15 +383,13 @@ void	dumpconf(void);
 void	cpu_reset(void);
 void	i386_proc0_tss_ldt_init(void);
 
-extern int tmx86_has_longrun;
-extern u_int crusoe_longrun;
-extern u_int crusoe_frequency;
-extern u_int crusoe_voltage; 
-extern u_int crusoe_percentage;
-extern u_int tmx86_set_longrun_mode(u_int);
-void tmx86_get_longrun_status_all(void);
-u_int tmx86_get_longrun_mode(void);
-void identifycpu(struct cpu_info *);
+/* longrun.c */
+u_int 	tmx86_get_longrun_mode(void);
+void 	tmx86_get_longrun_status(u_int *, u_int *, u_int *);
+void 	tmx86_init_longrun(void);
+
+/* identcpu.c */
+void 	identifycpu(struct cpu_info *);
 
 /* vm_machdep.c */
 void	cpu_proc_fork(struct proc *, struct proc *);
@@ -479,7 +477,7 @@ void x86_bus_space_mallocok(void);
 					 * 3: maximum frequency
 					 */
 #define CPU_TMLR_FREQUENCY	12 	/* int: current frequency */
-#define CPU_TMLR_VOLTAGE	13 	/* int: curret voltage */
+#define CPU_TMLR_VOLTAGE	13 	/* int: current voltage */
 #define CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
 #define	CPU_MAXID		15	/* number of valid machdep ids */
 

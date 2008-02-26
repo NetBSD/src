@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.87 2008/01/15 16:11:29 ad Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.88 2008/02/26 18:24:28 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.87 2008/01/15 16:11:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.88 2008/02/26 18:24:28 xtraeme Exp $");
 
 #include "opt_enhanced_speedstep.h"
 #include "opt_intel_odcm.h"
@@ -1097,132 +1097,11 @@ amd_family5_setup(struct cpu_info *ci)
 	}
 }
 
-/*
- * Transmeta Crusoe LongRun Support by Tamotsu Hattori.
- * Port from FreeBSD-current(August, 2001) to NetBSD by tshiozak.
- */
-
-#define	MSR_TMx86_LONGRUN		0x80868010
-#define	MSR_TMx86_LONGRUN_FLAGS		0x80868011
-
-#define	LONGRUN_MODE_MASK(x)		((x) & 0x0000007f)
-#define	LONGRUN_MODE_RESERVED(x)	((x) & 0xffffff80)
-#define	LONGRUN_MODE_WRITE(x, y)	(LONGRUN_MODE_RESERVED(x) | \
-					    LONGRUN_MODE_MASK(y))
-
-#define	LONGRUN_MODE_MINFREQUENCY	0x00
-#define	LONGRUN_MODE_ECONOMY		0x01
-#define	LONGRUN_MODE_PERFORMANCE	0x02
-#define	LONGRUN_MODE_MAXFREQUENCY	0x03
-#define	LONGRUN_MODE_UNKNOWN		0x04
-#define	LONGRUN_MODE_MAX		0x04
-
-union msrinfo {
-	uint64_t	msr;
-	uint32_t	regs[2];
-};
-
-uint32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
-	/*  MSR low, MSR high, flags bit0 */
-	{	  0,	  0,		0},	/* LONGRUN_MODE_MINFREQUENCY */
-	{	  0,	100,		0},	/* LONGRUN_MODE_ECONOMY */
-	{	  0,	100,		1},	/* LONGRUN_MODE_PERFORMANCE */
-	{	100,	100,		1},	/* LONGRUN_MODE_MAXFREQUENCY */
-};
-
-u_int
-tmx86_get_longrun_mode(void)
-{
-	u_long		eflags;
-	union msrinfo	msrinfo;
-	u_int		low, high, flags, mode;
-
-	eflags = x86_read_psl();
-	x86_disable_intr();
-
-	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
-	low = LONGRUN_MODE_MASK(msrinfo.regs[0]);
-	high = LONGRUN_MODE_MASK(msrinfo.regs[1]);
-	flags = rdmsr(MSR_TMx86_LONGRUN_FLAGS) & 0x01;
-
-	for (mode = 0; mode < LONGRUN_MODE_MAX; mode++) {
-		if (low   == longrun_modes[mode][0] &&
-		    high  == longrun_modes[mode][1] &&
-		    flags == longrun_modes[mode][2]) {
-			goto out;
-		}
-	}
-	mode = LONGRUN_MODE_UNKNOWN;
-out:
-	x86_write_psl(eflags);
-	return (mode);
-}
-
-static u_int
-tmx86_get_longrun_status(u_int *frequency, u_int *voltage, u_int *percentage)
-{
-	u_long eflags;
-	u_int descs[4];
-
-	eflags = x86_read_psl();
-	x86_disable_intr();
-
-	x86_cpuid(0x80860007, descs);
-	*frequency = descs[0];
-	*voltage = descs[1];
-	*percentage = descs[2];
-
-	x86_write_psl(eflags);
-	return (1);
-}
-
-u_int
-tmx86_set_longrun_mode(u_int mode)
-{
-	u_long		eflags;
-	union msrinfo	msrinfo;
-
-	if (mode >= LONGRUN_MODE_UNKNOWN) {
-		return (0);
-	}
-
-	eflags = x86_read_psl();
-	x86_disable_intr();
-
-	/* Write LongRun mode values to Model Specific Register. */
-	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN);
-	msrinfo.regs[0] = LONGRUN_MODE_WRITE(msrinfo.regs[0],
-	    longrun_modes[mode][0]);
-	msrinfo.regs[1] = LONGRUN_MODE_WRITE(msrinfo.regs[1],
-	    longrun_modes[mode][1]);
-	wrmsr(MSR_TMx86_LONGRUN, msrinfo.msr);
-
-	/* Write LongRun mode flags to Model Specific Register. */
-	msrinfo.msr = rdmsr(MSR_TMx86_LONGRUN_FLAGS);
-	msrinfo.regs[0] = (msrinfo.regs[0] & ~0x01) | longrun_modes[mode][2];
-	wrmsr(MSR_TMx86_LONGRUN_FLAGS, msrinfo.msr);
-
-	x86_write_psl(eflags);
-	return (1);
-}
-
-u_int crusoe_longrun;
-u_int crusoe_frequency;
-u_int crusoe_voltage;
-u_int crusoe_percentage;
-
-void
-tmx86_get_longrun_status_all(void)
-{
-
-	tmx86_get_longrun_status(&crusoe_frequency,
-	    &crusoe_voltage, &crusoe_percentage);
-}
-
 static void
 transmeta_cpu_info(struct cpu_info *ci)
 {
 	u_int descs[4], nreg;
+	u_int longrun, frequency, voltage, percentage;
 
 	x86_cpuid(0x80860000, descs);
 	nreg = descs[0];
@@ -1259,13 +1138,12 @@ transmeta_cpu_info(struct cpu_info *ci)
 	}
 
 	if (nreg >= 0x80860007) {
-		crusoe_longrun = tmx86_get_longrun_mode();
-		tmx86_get_longrun_status(&crusoe_frequency,
-		    &crusoe_voltage, &crusoe_percentage);
+		longrun = tmx86_get_longrun_mode();
+		tmx86_get_longrun_status(&frequency,
+		    &voltage, &percentage);
 		aprint_verbose("%s: LongRun mode: %d  <%dMHz %dmV %d%%>\n",
 		    ci->ci_dev->dv_xname,
-		    crusoe_longrun, crusoe_frequency, crusoe_voltage,
-		    crusoe_percentage);
+		    longrun, frequency, voltage, percentage);
 	}
 }
 
@@ -1276,7 +1154,7 @@ transmeta_cpu_setup(struct cpu_info *ci)
 
 	x86_cpuid(0x80860000, descs);
 	if (descs[0] >= 0x80860007)
-		tmx86_has_longrun = 1;
+		tmx86_init_longrun();
 }
 
 void
