@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.242 2008/02/21 20:35:50 mjf Exp $
+#	$NetBSD: BRANCHES,v 1.243 2008/02/26 23:39:14 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -689,7 +689,7 @@ Notes:
 
 Branch:		bouyer-xeni386
 Description:	switch xen on i386 to the x86 pmap and the xen/x86/x86_xpmap.c bootstrap, and add i386 PAE support
-Status:		Active
+Status:		Terminated
 Start Date:	10 Dec 2007
 End Date:	23 Jan 2008
 Base Tag:	bouyer-xeni386-base
