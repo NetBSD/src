@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.49 2008/02/22 19:47:06 drochner Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.50 2008/02/26 20:44:15 drochner Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.49 2008/02/22 19:47:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.50 2008/02/26 20:44:15 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,8 @@ struct agp_i810_softc {
 };
 
 /* XXX hack, see below */
-bus_addr_t agp_i810_vga_regbase;
-bus_space_handle_t agp_i810_vga_bsh;
+static bus_addr_t agp_i810_vga_regbase;
+static bus_space_handle_t agp_i810_vga_bsh;
 
 static u_int32_t agp_i810_get_aperture(struct agp_softc *);
 static int agp_i810_set_aperture(struct agp_softc *, u_int32_t);
@@ -847,8 +847,6 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 	 * to the GTT through the MMIO window.
 	 * Until the issue is solved, simply restore it.
 	 */
-
-#if 0
 	regval = bus_space_read_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL);
 	if (regval != (isc->gatt->ag_physical | 1)) {
 		printf("agp_i810_bind_memory: PGTBL_CTL is 0x%x - fixing\n",
@@ -856,8 +854,6 @@ agp_i810_bind_memory(struct agp_softc *sc, struct agp_memory *mem,
 		bus_space_write_4(isc->bst, isc->bsh, AGP_I810_PGTBL_CTL,
 				  isc->gatt->ag_physical | 1);
 	}
-#endif
-	regval = 0;
 
 	if (mem->am_type == 2) {
 		WRITEGTT(offset, mem->am_physical | 1);
