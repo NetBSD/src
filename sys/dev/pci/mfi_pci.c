@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.4 2008/02/25 10:46:02 xtraeme Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.5 2008/02/26 18:16:51 xtraeme Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.4 2008/02/25 10:46:02 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.5 2008/02/26 18:16:51 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,7 @@ static const struct mfi_pci_subtype mfi_1078_subtypes[] = {
 static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
 	{ PCI_VENDOR_DELL,	0x1f01, 	"Dell PERC 5/e" },
 	{ PCI_VENDOR_DELL, 	0x1f02, 	"Dell PERC 5/i" },
+	{ PCI_VENDOR_DELL, 	0x1f03, 	"Dell PERC 5/i integrated" },
 	{ 0, 			0, 		NULL }
 };
 
@@ -130,22 +131,6 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 	const char 		*subtype = NULL;
 	uint32_t		subsysid;
 
-	mpd = mfi_pci_find_device(pa);
-
-	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-	if (mpd->mpd_subtype != NULL) {
-		st = mpd->mpd_subtype;
-		while (st->st_vendor != 0) {
-			if (PCI_VENDOR(subsysid) == st->st_vendor &&
-			    PCI_PRODUCT(subsysid) == st->st_product) {
-				subtype = st->st_string;
-				break;
-			}
-			st++;
-		}
-		aprint_normal(", %s", subtype);
-	}
-
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFI_BAR);
 	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
 	if (pci_mapreg_map(pa, MFI_BAR, csr, 0,
@@ -172,7 +157,24 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	aprint_normal(": %s\n", intrstr);
+	mpd = mfi_pci_find_device(pa);
+
+	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	if (mpd->mpd_subtype != NULL) {
+		st = mpd->mpd_subtype;
+		while (st->st_vendor != 0) {
+			if (PCI_VENDOR(subsysid) == st->st_vendor &&
+			    PCI_PRODUCT(subsysid) == st->st_product) {
+				subtype = st->st_string;
+				break;
+			}
+			st++;
+		}
+		if (subtype)
+			aprint_normal(": %s\n", subtype);
+	}
+
+	aprint_normal("%s: interrupting at %s\n", DEVNAME(sc), intrstr);
 
 	if (mfi_attach(sc, mpd->mpd_iop)) {
 		aprint_error("%s: can't attach", DEVNAME(sc));
