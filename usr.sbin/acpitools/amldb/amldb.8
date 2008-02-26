@@ -1,4 +1,4 @@
-.\" $NetBSD: amldb.8,v 1.2 2007/01/14 12:30:24 wiz Exp $
+.\" $NetBSD: amldb.8,v 1.3 2008/02/26 04:50:02 lukem Exp $
 .\" ACPI (ACPI Package)
 .\"
 .\" Copyright (c) 2000 Takanori Watanabe <takawata@FreeBSD.org>
@@ -119,17 +119,20 @@ when it terminates.
 Each line of there files consists of the following
 fields, separated by tabs; region type, address, and value.
 Region types are specified as follows;
-.TS H
-box;
-c | l.
-value	region type
-=
-0	SystemMemory
-1	SystemIO
-2	PCI_Concig
-3	EmbeddedControl
-4	SMBus
-.TE
+.Bl -tag -width "Value" -compact -offset indent
+.It Sy Value
+.Sy Region type
+.It 0
+SystemMemory
+.It 1
+SystemIO
+.It 2
+PCI_Config
+.It 3
+EmbeddedControl
+.It 4
+SMBus
+.El
 .Pp
 Interactive commands are described below:
 .Bl -tag -width indent
