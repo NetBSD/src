@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.79 2008/01/21 00:27:24 rmind Exp $	*/
+/*	$NetBSD: types.h,v 1.80 2008/02/26 13:37:09 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -192,8 +192,6 @@ typedef	int32_t		swblk_t;	/* swap offset */
 typedef	__uid_t		uid_t;		/* user id */
 #define	uid_t		__uid_t
 #endif
-
-typedef	int32_t		dtime_t;	/* on-disk time_t */
 
 typedef int		mqd_t;
 
