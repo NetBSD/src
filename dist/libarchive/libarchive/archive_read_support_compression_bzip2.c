@@ -25,7 +25,7 @@
 
 #include "archive_platform.h"
 
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_bzip2.c,v 1.16 2007/05/29 01:00:18 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_compression_bzip2.c,v 1.17 2008/02/19 05:44:59 kientzle Exp $");
 
 #ifdef HAVE_ERRNO_H
 #include <errno.h>
@@ -145,7 +145,7 @@ init(struct archive_read *a, const void *buff, size_t n)
 	(void)buff;	/* UNUSED */
 	(void)n;	/* UNUSED */
 
-	archive_set_error(a, -1,
+	archive_set_error(&a->archive, -1,
 	    "This version of libarchive was compiled without bzip2 support");
 	return (ARCHIVE_FATAL);
 }

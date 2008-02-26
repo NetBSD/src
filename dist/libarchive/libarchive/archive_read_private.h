@@ -22,7 +22,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/lib/libarchive/archive_read_private.h,v 1.3 2007/05/29 01:00:18 kientzle Exp $
+ * $FreeBSD: src/lib/libarchive/archive_read_private.h,v 1.4 2008/01/03 17:54:26 des Exp $
  */
 
 #ifndef ARCHIVE_READ_PRIVATE_H_INCLUDED
@@ -172,5 +172,8 @@ struct decompressor_t
 	*__archive_read_register_compression(struct archive_read *a,
 	    int (*bid)(const void *, size_t),
 	    int (*init)(struct archive_read *, const void *, size_t));
+
+const void
+	*__archive_read_ahead(struct archive_read *, size_t);
 
 #endif
