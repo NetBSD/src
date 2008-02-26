@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1115 2008/02/20 09:55:37 drochner Exp $
+#	$NetBSD: mi,v 1.1116 2008/02/26 14:54:18 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6776,6 +6776,7 @@
 ./usr/share/man/cat3/zlib.0			comp-c-catman		.cat
 ./usr/share/man/cat5/config.0			comp-util-catman	.cat
 ./usr/share/man/cat5/config.samples.0		comp-util-catman	.cat
+./usr/share/man/cat5/cpio.0			comp-util-catman	.cat
 ./usr/share/man/cat5/cvs.0			comp-cvs-catman		cvs,.cat
 ./usr/share/man/cat5/libarchive-formats.0	comp-util-catman	.cat
 ./usr/share/man/cat5/mk.conf.0			comp-util-catman	.cat
@@ -11420,6 +11421,7 @@
 ./usr/share/man/man3/zlib.3			comp-c-man		.man
 ./usr/share/man/man5/config.5			comp-util-man		.man
 ./usr/share/man/man5/config.samples.5		comp-util-man		.man
+./usr/share/man/man5/cpio.5			comp-util-man		.man
 ./usr/share/man/man5/cvs.5			comp-cvs-man		cvs,.man
 ./usr/share/man/man5/libarchive-formats.5	comp-util-man		.man
 ./usr/share/man/man5/mk.conf.5			comp-util-man		.man

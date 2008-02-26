@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2007/08/06 12:31:16 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2008/02/26 14:54:18 joerg Exp $
 
 USE_FORT?=	yes # complex string handling
 
@@ -16,6 +16,9 @@ SRCS=		archive_check_magic.c \
 		archive_entry.c \
 		archive_entry_copy_stat.c \
 		archive_entry_stat.c \
+		archive_entry_link_resolver.c \
+		archive_entry_stat.c \
+		archive_entry_strmode.c \
 		archive_read.c \
 		archive_read_data_into_fd.c \
 		archive_read_extract.c \
@@ -34,6 +37,7 @@ SRCS=		archive_check_magic.c \
 		archive_read_support_format_cpio.c \
 		archive_read_support_format_empty.c \
 		archive_read_support_format_iso9660.c \
+		archive_read_support_format_mtree.c \
 		archive_read_support_format_tar.c \
 		archive_read_support_format_zip.c \
 		archive_string.c \
@@ -74,9 +78,11 @@ MAN=		archive_entry.3 \
 		archive_util.3 \
 		archive_write.3 \
 		archive_write_disk.3 \
+		cpio.5 \
 		libarchive.3 \
-		libarchive-formats.5 tar.5 \
-		libarchive_internals.3
+		libarchive_internals.3 \
+		libarchive-formats.5 \
+		tar.5
 
 MLINKS+=	archive_entry.3 archive_entry_acl_add_entry.3
 MLINKS+=	archive_entry.3 archive_entry_acl_add_entry_w.3
@@ -214,7 +220,7 @@ MLINKS+=	archive_write_disk.3 archive_write_disk_set_standard_lookup.3
 MLINKS+=	archive_write_disk.3 archive_write_disk_set_user_lookup.3
 MLINKS+=	libarchive.3 archive.3
 
-ARCHIVE_VERSION= 		2.2.6
+ARCHIVE_VERSION= 		2.4.13
 ARCHIVE_API_MAJOR=	${ARCHIVE_VERSION:C/([0-9]*).*/\1/}
 ARCHIVE_API_MINOR=	${ARCHIVE_VERSION:C/[0-9]*\.([0-9]*).*/\1/}
 ARCHIVE_API_REV=	${ARCHIVE_VERSION:C/[0-9]*\.[0-9]*\.([0-9]*).*/\1/}
@@ -240,10 +246,9 @@ ARCHIVE_VERSION_STAMP=	\
 # Note: NetBSD has inttypes.h, so enable that include in archive.h.in
 archive.h:	archive.h.in
 	sed -e 's/@ARCHIVE_VERSION@/${ARCHIVE_VERSION}/g' \
+	    -e 's/@LIBARCHIVE_VERSION_STRING@/${ARCHIVE_VERSION}/g' \
 	    -e 's/@SHLIB_MAJOR@/${ARCHIVE_API_MAJOR}/g' \
-	    -e 's/@ARCHIVE_API_MAJOR@/${ARCHIVE_API_MAJOR}/g' \
-	    -e 's/@ARCHIVE_API_MINOR@/${ARCHIVE_API_MINOR}/g' \
-	    -e 's/@ARCHIVE_VERSION_STAMP@/${ARCHIVE_VERSION_STAMP}/g' \
+	    -e 's/@LIBARCHIVE_VERSION@/${ARCHIVE_VERSION_STAMP}/g' \
 	    -e 's|@ARCHIVE_H_INCLUDE_INTTYPES_H@|#include <inttypes.h>  /* For int64_t */|g' \
 		< ${LIBARCHIVEDIR}/libarchive/archive.h.in > ${.TARGET}
 
