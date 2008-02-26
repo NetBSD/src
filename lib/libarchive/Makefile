@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2008/02/26 14:54:18 joerg Exp $
+#	$NetBSD: Makefile,v 1.4 2008/02/26 15:42:29 joerg Exp $
 
 USE_FORT?=	yes # complex string handling
 
@@ -8,6 +8,8 @@ LIBARCHIVEDIR=	${NETBSDSRCDIR}/dist/libarchive
 .PATH:		${LIBARCHIVEDIR}/libarchive
 
 LIB=		archive
+
+WARNS=		4
 
 LIBDPLIBS+=	bz2	${.CURDIR}/../libbz2 \
 		z	${.CURDIR}/../libz
