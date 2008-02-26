@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.31 2008/02/17 16:23:12 bouyer Exp $
+# $NetBSD: md.amd64,v 1.32 2008/02/26 10:55:49 drochner Exp $
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
 ./usr/include/amd64/aout_machdep.h		comp-c-include
@@ -70,6 +70,7 @@
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/mmintrin.h			comp-c-include		gcccmds
 ./usr/include/mm_malloc.h			comp-c-include		gcccmds,gcc=4
+./usr/include/pmmintrin.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/x64_64				comp-obsolete		obsolete
 ./usr/include/x64_64/ansi.h			comp-obsolete		obsolete
 ./usr/include/x64_64/aout_machdep.h		comp-obsolete		obsolete
