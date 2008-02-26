@@ -1,4 +1,4 @@
-# $NetBSD: gen_template.sh,v 1.2 2001/03/04 16:51:05 uch Exp $
+# $NetBSD: gen_template.sh,v 1.3 2008/02/26 21:46:38 rafal Exp $
 #
 # Copyright (c) 2001 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -58,8 +58,8 @@ case $vc_ver in
 "vc6")
     echo "Generate template for Visual C++ 6 Windows CE ToolKit"
     ;;
-"evc3")
-    echo "Generate template for Embeded Visual C++ 3"
+"evc3"|"evc4")
+    echo "Generate template for Embeded Visual C++ 3/4"
     ;;
 *)
     echo "Unsupported Visual C++ version."
@@ -251,6 +251,10 @@ done
 if [ -f asm_build.ARM.0 ]; then
     sed 's/%%% ASM %%%/armasm.exe/' asm_build.ARM.0 > asm_build.ARM
     rm -f asm_build.ARM.0
+fi
+if [ -f asm_build.ARMV4.0 ]; then
+    sed 's/%%% ASM %%%/armasm.exe/' asm_build.ARMV4.0 > asm_build.ARMV4
+    rm -f asm_build.ARMV4.0
 fi
 if [ -f asm_build.SH.0 ]; then
     sed 's/%%% ASM %%%/asmsh.exe/' asm_build.SH.0 > asm_build.SH
