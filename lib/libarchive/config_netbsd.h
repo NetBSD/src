@@ -1,6 +1,12 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+/* Version number of bsdcpio */
+#define BSDCPIO_VERSION_STRING "0.9.0"
+
+/* Version number of bsdtar */
+#define BSDTAR_VERSION_STRING "2.4.13"
+
 /* Define to 1 if you have the `acl_create_entry' function. */
 /* #undef HAVE_ACL_CREATE_ENTRY */
 
@@ -37,6 +43,9 @@
 /* Define to 1 if you have the `chflags' function. */
 #define HAVE_CHFLAGS 1
 
+/* Define to 1 if you have the `chown' function. */
+#define HAVE_CHOWN 1
+
 /* Define to 1 if you have the declaration of `INT64_MAX', and to 0 if you
    don't. */
 #define HAVE_DECL_INT64_MAX 1
@@ -44,6 +53,14 @@
 /* Define to 1 if you have the declaration of `INT64_MIN', and to 0 if you
    don't. */
 #define HAVE_DECL_INT64_MIN 1
+
+/* Define to 1 if you have the declaration of `optarg', and to 0 if you don't.
+   */
+#define HAVE_DECL_OPTARG 1
+
+/* Define to 1 if you have the declaration of `optind', and to 0 if you don't.
+   */
+#define HAVE_DECL_OPTIND 1
 
 /* Define to 1 if you have the declaration of `SIZE_MAX', and to 0 if you
    don't. */
@@ -119,6 +136,9 @@
 /* Define to 1 if you have the `futimes' function. */
 #define HAVE_FUTIMES 1
 
+/* Define to 1 if you have the `geteuid' function. */
+#define HAVE_GETEUID 1
+
 /* Define to 1 if you have the `getopt_long' function. */
 #define HAVE_GETOPT_LONG 1
 
@@ -127,6 +147,9 @@
 
 /* Define to 1 if you have the <grp.h> header file. */
 #define HAVE_GRP_H 1
+
+/* Define to 1 if the system has the type `intmax_t'. */
+#define HAVE_INTMAX_T 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
@@ -176,6 +199,9 @@
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
+/* Define to 1 if the system has the type `long long int'. */
+#define HAVE_LONG_LONG_INT 1
+
 /* Define to 1 if you have the `lsetxattr' function. */
 /* #undef HAVE_LSETXATTR */
 
@@ -201,6 +227,9 @@
 /* Define to 1 if you have the `mkfifo' function. */
 #define HAVE_MKFIFO 1
 
+/* Define to 1 if you have the `mknod' function. */
+#define HAVE_MKNOD 1
+
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 /* #undef HAVE_NDIR_H */
 
@@ -219,11 +248,11 @@
 /* Define to 1 if you have the <pwd.h> header file. */
 #define HAVE_PWD_H 1
 
-/* Define to 1 if you have the `reallocf' function. */
-/* #undef HAVE_REALLOCF */
-
 /* Define to 1 if you have the `select' function. */
 #define HAVE_SELECT 1
+
+/* Define to 1 if you have the `setenv' function. */
+#define HAVE_SETENV 1
 
 /* Define to 1 if you have the `setlocale' function. */
 #define HAVE_SETLOCALE 1
@@ -294,6 +323,9 @@
 /* Define to 1 if you have the <sys/param.h> header file. */
 #define HAVE_SYS_PARAM_H 1
 
+/* Define to 1 if you have the <sys/poll.h> header file. */
+#define HAVE_SYS_POLL_H 1
+
 /* Define to 1 if you have the <sys/select.h> header file. */
 #define HAVE_SYS_SELECT_H 1
 
@@ -306,6 +338,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #define HAVE_SYS_TYPES_H 1
 
+/* Define to 1 if you have the <sys/utime.h> header file. */
+/* #undef HAVE_SYS_UTIME_H */
+
 /* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
 #define HAVE_SYS_WAIT_H 1
 
@@ -315,14 +350,23 @@
 /* Define to 1 if you have the <time.h> header file. */
 #define HAVE_TIME_H 1
 
+/* Define to 1 if you have the `tzset' function. */
+#define HAVE_TZSET 1
+
 /* Define to 1 if the system has the type `uintmax_t'. */
 #define HAVE_UINTMAX_T 1
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #define HAVE_UNISTD_H 1
 
+/* Define to 1 if you have the `unsetenv' function. */
+#define HAVE_UNSETENV 1
+
 /* Define to 1 if the system has the type `unsigned long long'. */
 #define HAVE_UNSIGNED_LONG_LONG 1
+
+/* Define to 1 if the system has the type `unsigned long long int'. */
+#define HAVE_UNSIGNED_LONG_LONG_INT 1
 
 /* Define to 1 if you have the `utime' function. */
 #define HAVE_UTIME 1
@@ -354,6 +398,12 @@
 /* Define to 1 if you have the <zlib.h> header file. */
 #define HAVE_ZLIB_H 1
 
+/* Version number of libarchive as a single integer */
+#define LIBARCHIVE_VERSION "2004013"
+
+/* Version number of libarchive */
+#define LIBARCHIVE_VERSION_STRING "2.4.13"
+
 /* Define to 1 if `lstat' dereferences a symlink specified with a trailing
    slash. */
 #define LSTAT_FOLLOWS_SLASHED_SYMLINK 1
@@ -379,13 +429,13 @@
 #define PACKAGE_NAME "libarchive"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "libarchive 2.2.5"
+#define PACKAGE_STRING "libarchive 2.4.13"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "libarchive"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.2.5"
+#define PACKAGE_VERSION "2.4.13"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -397,7 +447,7 @@
 #define TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define VERSION "2.2.5"
+#define VERSION "2.4.13"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
@@ -408,6 +458,11 @@
 /* Define for large files, on AIX-style hosts. */
 /* #undef _LARGE_FILES */
 
+/* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef was allowed, the
+   #define below would cause a syntax error. */
+/* #undef _UINT64_T */
+
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */
 
@@ -417,16 +472,18 @@
 /* Define to `unsigned long' if <sys/types.h> does not define. */
 /* #undef id_t */
 
-/* Define int64_t to a valid signed 64-bit type, if necessary. */
+/* Define to the type of a signed integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
 /* #undef int64_t */
 
-/* Define to `int64_t' if <sys/types.h> does not define. */
+/* Define to the widest signed integer type if <stdint.h> and <inttypes.h> do
+   not define. */
 /* #undef intmax_t */
 
 /* Define to `int' if <sys/types.h> does not define. */
 /* #undef mode_t */
 
-/* Define to `int64_t' if <sys/types.h> does not define. */
+/* Define to `long long' if <sys/types.h> does not define. */
 /* #undef off_t */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
@@ -435,10 +492,12 @@
 /* Define to `int' if <sys/types.h> doesn't define. */
 /* #undef uid_t */
 
-/* Define uint64_t to an unsigned 64-bit type, if necessary. */
+/* Define to the type of an unsigned integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
 /* #undef uint64_t */
 
-/* Define to `uint64_t' if <sys/types.h> does not define. */
+/* Define to the widest unsigned integer type if <stdint.h> and <inttypes.h>
+   do not define. */
 /* #undef uintmax_t */
 
 /* Define to `unsigned int' if <sys/types.h> does not define. */
