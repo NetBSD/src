@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_all.c,v 1.9 2007/04/07 05:54:23 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_support_format_all.c,v 1.10 2007/12/30 04:58:21 kientzle Exp $");
 
 #include "archive.h"
 
@@ -35,6 +35,7 @@ archive_read_support_format_all(struct archive *a)
 	archive_read_support_format_cpio(a);
 	archive_read_support_format_empty(a);
 	archive_read_support_format_iso9660(a);
+	archive_read_support_format_mtree(a);
 	archive_read_support_format_tar(a);
 	archive_read_support_format_zip(a);
 	return (ARCHIVE_OK);

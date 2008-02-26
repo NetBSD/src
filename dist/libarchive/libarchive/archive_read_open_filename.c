@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_filename.c,v 1.20 2007/06/26 03:06:48 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_filename.c,v 1.21 2008/02/19 06:10:48 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -46,6 +46,10 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_read_open_filename.c,v 1.20 2007/
 #endif
 
 #include "archive.h"
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 struct read_file_data {
 	int	 fd;
@@ -113,7 +117,7 @@ file_open(struct archive *a, void *client_data)
 		return (ARCHIVE_FATAL);
 	}
 	if (mine->filename[0] != '\0')
-		mine->fd = open(mine->filename, O_RDONLY);
+		mine->fd = open(mine->filename, O_RDONLY | O_BINARY);
 	else
 		mine->fd = 0; /* Fake "open" for stdin. */
 	if (mine->fd < 0) {

@@ -24,7 +24,7 @@
  */
 
 #include "test.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/test/read_open_memory.c,v 1.1 2007/07/13 15:12:52 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/test/read_open_memory.c,v 1.2 2008/01/01 22:28:04 kientzle Exp $");
 
 #include <errno.h>
 #include <stdlib.h>
@@ -96,7 +96,7 @@ static ssize_t
 memory_read(struct archive *a, void *client_data, const void **buff)
 {
 	struct read_memory_data *mine = (struct read_memory_data *)client_data;
-	ssize_t size;
+	size_t size;
 
 	(void)a; /* UNUSED */
 	size = mine->end - mine->buffer;
