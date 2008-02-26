@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.104 2008/02/17 16:23:12 bouyer Exp $
+# $NetBSD: md.i386,v 1.105 2008/02/26 10:55:50 drochner Exp $
 ./usr/include/emmintrin.h			comp-c-include		gcccmds
 ./usr/include/i386				comp-c-include
 ./usr/include/i386/_G_config.h			comp-obsolete		obsolete
@@ -81,6 +81,7 @@
 ./usr/include/mmintrin.h			comp-c-include		gcccmds
 ./usr/include/mm_malloc.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/pmc.h				comp-c-include
+./usr/include/pmmintrin.h			comp-c-include		gcccmds,gcc=4
 ./usr/include/x86				comp-c-include
 ./usr/include/x86/aout_machdep.h		comp-c-include
 ./usr/include/x86/autoconf.h			comp-obsolete		obsolete
