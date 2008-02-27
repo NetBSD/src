@@ -1,4 +1,4 @@
-/*	$NetBSD: signal.h,v 1.63 2006/06/03 18:18:26 christos Exp $	*/
+/*	$NetBSD: signal.h,v 1.64 2008/02/27 22:18:41 hubertf Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -145,7 +145,7 @@ struct	sigaction {
 #if (defined(_XOPEN_SOURCE) && defined(_XOPEN_SOURCE_EXTENDED)) || \
     (_XOPEN_SOURCE - 0) >= 500 || defined(_NETBSD_SOURCE)
 #define SA_ONSTACK	0x0001	/* take signal on signal stack */
-#define SA_RESTART	0x0002	/* restart system on signal return */
+#define SA_RESTART	0x0002	/* restart system call on signal return */
 #define SA_RESETHAND	0x0004	/* reset to SIG_DFL when taking signal */
 #define SA_NODEFER	0x0010	/* don't mask the signal we're delivering */
 #endif /* _XOPEN_SOURCE_EXTENDED || XOPEN_SOURCE >= 500 || _NETBSD_SOURCE */
