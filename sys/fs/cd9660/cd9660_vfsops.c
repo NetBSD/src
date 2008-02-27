@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.56 2008/01/30 11:46:59 ad Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.57 2008/02/27 19:43:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.56 2008/01/30 11:46:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.57 2008/02/27 19:43:36 matt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -130,7 +130,7 @@ static int iso_mountfs(struct vnode *devvp, struct mount *mp,
 		struct lwp *l, struct iso_args *argp);
 
 int
-cd9660_mountroot()
+cd9660_mountroot(void)
 {
 	struct mount *mp;
 	struct lwp *l = curlwp;
@@ -166,11 +166,7 @@ cd9660_mountroot()
  * mount system call
  */
 int
-cd9660_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+cd9660_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
@@ -255,10 +251,7 @@ fail:
  * Make a mount point from a volume descriptor
  */
 static int
-iso_makemp(isomp, bp, ea_len)
-	struct iso_mnt *isomp;
-	struct buf *bp;
-	int *ea_len;
+iso_makemp(struct iso_mnt *isomp, struct buf *bp, int *ea_len)
 {
 	struct iso_primary_descriptor *pri;
 	int logical_block_size;
@@ -296,11 +289,8 @@ iso_makemp(isomp, bp, ea_len)
  * Common code for mount and mountroot
  */
 static int
-iso_mountfs(devvp, mp, l, argp)
-	struct vnode *devvp;
-	struct mount *mp;
-	struct lwp *l;
-	struct iso_args *argp;
+iso_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l,
+	struct iso_args *argp)
 {
 	struct iso_mnt *isomp = (struct iso_mnt *)0;
 	struct buf *bp = NULL, *pribp = NULL, *supbp = NULL;
@@ -515,9 +505,7 @@ cd9660_start(struct mount *mp, int flags)
  * unmount system call
  */
 int
-cd9660_unmount(mp, mntflags)
-	struct mount *mp;
-	int mntflags;
+cd9660_unmount(struct mount *mp, int mntflags)
 {
 	struct iso_mnt *isomp;
 	int error, flags = 0;
@@ -545,9 +533,7 @@ cd9660_unmount(mp, mntflags)
  * Return root of a filesystem
  */
 int
-cd9660_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+cd9660_root(struct mount *mp, struct vnode **vpp)
 {
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 	struct iso_directory_record *dp =
@@ -566,9 +552,7 @@ cd9660_root(mp, vpp)
  * Get file system statistics.
  */
 int
-cd9660_statvfs(
-    struct mount *mp,
-    struct statvfs *sbp)
+cd9660_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	struct iso_mnt *isomp;
 
@@ -593,12 +577,9 @@ cd9660_statvfs(
 
 /* ARGSUSED */
 int
-cd9660_sync(
-    struct mount *mp,
-    int waitfor,
-    kauth_cred_t cred)
+cd9660_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
 {
-	return (0);
+	return 0;
 }
 
 /*
@@ -620,10 +601,7 @@ struct ifid {
 
 /* ARGSUSED */
 int
-cd9660_fhtovp(mp, fhp, vpp)
-	struct mount *mp;
-	struct fid *fhp;
-	struct vnode **vpp;
+cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ifid ifh;
 	struct iso_node *ip;
@@ -654,10 +632,7 @@ cd9660_fhtovp(mp, fhp, vpp)
 }
 
 int
-cd9660_vget(mp, ino, vpp)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
+cd9660_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 {
 
 	/*
@@ -676,12 +651,8 @@ cd9660_vget(mp, ino, vpp)
 }
 
 int
-cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
-	struct mount *mp;
-	ino_t ino;
-	struct vnode **vpp;
-	int relocated;
-	struct iso_directory_record *isodir;
+cd9660_vget_internal(struct mount *mp, ino_t ino, struct vnode **vpp,
+	int relocated, struct iso_directory_record *isodir)
 {
 	struct iso_mnt *imp;
 	struct iso_node *ip;
@@ -883,10 +854,7 @@ cd9660_vget_internal(mp, ino, vpp, relocated, isodir)
  */
 /* ARGSUSED */
 int
-cd9660_vptofh(vp, fhp, fh_size)
-	struct vnode *vp;
-	struct fid *fhp;
-	size_t *fh_size;
+cd9660_vptofh(struct vnode *vp, struct fid *fhp, size_t *fh_size)
 {
 	struct iso_node *ip = VTOI(vp);
 	struct ifid ifh;

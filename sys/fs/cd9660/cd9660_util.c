@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_util.c,v 1.8 2006/12/08 22:04:56 enami Exp $	*/
+/*	$NetBSD: cd9660_util.c,v 1.9 2008/02/27 19:43:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.8 2006/12/08 22:04:56 enami Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_util.c,v 1.9 2008/02/27 19:43:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,11 +68,8 @@ int cd9660_utf8_joliet = 1;
  * Return number of bytes consumed
  */
 int
-isochar(isofn, isoend, joliet_level, c)
-	const u_char *isofn;
-	const u_char *isoend;
-	int joliet_level;
-	u_int16_t *c;
+isochar(const u_char *isofn, const u_char *isoend, int joliet_level,
+	u_int16_t *c)
 {
 	*c = isofn[0];
 	if (joliet_level == 0 || isofn + 1 == isoend) {
@@ -98,10 +95,8 @@ isochar(isofn, isoend, joliet_level, c)
  * Note: Version number plus ';' may be omitted.
  */
 int
-isofncmp(fn, fnlen, isofn, isolen, joliet_level)
-	const u_char *fn, *isofn;
-	size_t fnlen, isolen;
-	int joliet_level;
+isofncmp(const u_char *fn, size_t fnlen, const u_char *isofn, size_t isolen,
+	int joliet_level)
 {
 	int i, j;
 	u_int16_t fc, ic;
@@ -168,17 +163,11 @@ isofncmp(fn, fnlen, isofn, isolen, joliet_level)
  * translate a filename
  */
 void
-isofntrans(infn, infnlen, outfn, outfnlen, original, casetrans, assoc, joliet_level)
-	u_char *infn, *outfn;
-	int infnlen;
-	u_short *outfnlen;
-	int original;
-	int casetrans;
-	int assoc;
-	int joliet_level;
+isofntrans(const u_char *infn, int infnlen, u_char *outfn, u_short *outfnlen,
+	int original, int casetrans, int assoc, int joliet_level)
 {
 	int fnidx = 0;
-	u_char *infnend = infn + infnlen;
+	const u_char *infnend = infn + infnlen;
 	u_int16_t c;
 	int sz;
 

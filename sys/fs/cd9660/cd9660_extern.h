@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_extern.h,v 1.22 2007/07/31 21:14:17 pooka Exp $	*/
+/*	$NetBSD: cd9660_extern.h,v 1.23 2008/02/27 19:43:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -112,7 +112,7 @@ extern int (**cd9660_fifoop_p)(void *);
 
 int isochar(const u_char *, const u_char *, int, u_int16_t *);
 int isofncmp(const u_char *, size_t, const u_char *, size_t, int);
-void isofntrans(u_char *, int, u_char *, u_short *, int, int, int, int);
+void isofntrans(const u_char *, int, u_char *, u_short *, int, int, int, int);
 ino_t isodirino(struct iso_directory_record *, struct iso_mnt *);
 #endif /* _KERNEL */
 

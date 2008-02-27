@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vnops.c,v 1.32 2008/01/25 14:32:12 ad Exp $	*/
+/*	$NetBSD: cd9660_vnops.c,v 1.33 2008/02/27 19:43:36 matt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.32 2008/01/25 14:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vnops.c,v 1.33 2008/02/27 19:43:36 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,8 +90,7 @@ int	iso_shipdir(struct isoreaddir *);
  * super user is granted all permissions.
  */
 int
-cd9660_access(v)
-	void *v;
+cd9660_access(void *v)
 {
 	struct vop_access_args /* {
 		struct vnode *a_vp;
@@ -122,8 +121,7 @@ cd9660_access(v)
 }
 
 int
-cd9660_getattr(v)
-	void *v;
+cd9660_getattr(void *v)
 {
 	struct vop_getattr_args /* {
 		struct vnode *a_vp;
@@ -181,8 +179,7 @@ cd9660_getattr(v)
  * Vnode op for reading.
  */
 int
-cd9660_read(v)
-	void *v;
+cd9660_read(void *v)
 {
 	struct vop_read_args /* {
 		struct vnode *a_vp;
@@ -265,10 +262,7 @@ out:
 }
 
 int
-iso_uiodir(idp, dp, off)
-	struct isoreaddir *idp;
-	struct dirent *dp;
-	off_t off;
+iso_uiodir(struct isoreaddir *idp, struct dirent *dp, off_t off)
 {
 	int error;
 
@@ -297,8 +291,7 @@ iso_uiodir(idp, dp, off)
 }
 
 int
-iso_shipdir(idp)
-	struct isoreaddir *idp;
+iso_shipdir(struct isoreaddir *idp)
 {
 	struct dirent *dp;
 	int cl, sl, assoc;
@@ -354,8 +347,7 @@ iso_shipdir(idp)
  * Vnode op for readdir
  */
 int
-cd9660_readdir(v)
-	void *v;
+cd9660_readdir(void *v)
 {
 	struct vop_readdir_args /* {
 		struct vnode *a_vp;
@@ -558,9 +550,9 @@ cd9660_readdir(v)
 typedef struct iso_directory_record ISODIR;
 typedef struct iso_node             ISONODE;
 typedef struct iso_mnt              ISOMNT;
+
 int
-cd9660_readlink(v)
-	void *v;
+cd9660_readlink(void *v)
 {
 	struct vop_readlink_args /* {
 		struct vnode *a_vp;
@@ -653,8 +645,7 @@ cd9660_readlink(v)
 }
 
 int
-cd9660_link(v)
-	void *v;
+cd9660_link(void *v)
 {
 	struct vop_link_args /* {
 		struct vnode *a_dvp;
@@ -668,8 +659,7 @@ cd9660_link(v)
 }
 
 int
-cd9660_symlink(v)
-	void *v;
+cd9660_symlink(void *v)
 {
 	struct vop_symlink_args /* {
 		struct vnode *a_dvp;
@@ -689,8 +679,7 @@ cd9660_symlink(v)
  * then call the device strategy routine.
  */
 int
-cd9660_strategy(v)
-	void *v;
+cd9660_strategy(void *v)
 {
 	struct vop_strategy_args /* {
 		struct vnode *a_vp;
@@ -738,8 +727,7 @@ cd9660_print(void *v)
  * Return POSIX pathconf information applicable to cd9660 filesystems.
  */
 int
-cd9660_pathconf(v)
-	void *v;
+cd9660_pathconf(void *v)
 {
 	struct vop_pathconf_args /* {
 		struct vnode *a_vp;
@@ -784,8 +772,7 @@ cd9660_pathconf(v)
  * Allow changing the size for special files (and fifos).
  */
 int
-cd9660_setattr(v)
-	void *v;
+cd9660_setattr(void *v)
 {
 	struct vop_setattr_args /* {
 		struct vnodeop_desc *a_desc;
