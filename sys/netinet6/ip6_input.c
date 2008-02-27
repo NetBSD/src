@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.113 2007/12/04 10:27:34 dyoung Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.114 2008/02/27 19:40:56 matt Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.113 2007/12/04 10:27:34 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.114 2008/02/27 19:40:56 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -159,7 +159,7 @@ static struct mbuf *ip6_pullexthdr(struct mbuf *, size_t, int);
  * All protocols not implemented in kernel go to raw IP6 protocol handler.
  */
 void
-ip6_init()
+ip6_init(void)
 {
 	const struct ip6protosw *pr;
 	int i;
@@ -217,7 +217,7 @@ ip6_init2(void *dummy)
  * IP6 input interrupt handling. Just pass the packet to ip6_input.
  */
 void
-ip6intr()
+ip6intr(void)
 {
 	int s;
 	struct mbuf *m;
