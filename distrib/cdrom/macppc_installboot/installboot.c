@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.1 2006/09/17 03:56:03 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.2 2008/02/27 13:08:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2005 Izumi Tsutsui
@@ -119,7 +119,8 @@ main(int argc, char **argv)
 
 	bb = malloc(MACPPC_BOOT_BLOCK_MAX_SIZE);
 	if (bb == NULL)
-		err(1, "Allocating %ul bytes for bbinfo");
+		err(1, "Allocating %ul bytes for bbinfo",
+		    MACPPC_BOOT_BLOCK_MAX_SIZE);
 
 	memset(bb, 0, sizeof(bb));
 	rv = read(params->s1fd, bb, params->s1stat.st_size);
