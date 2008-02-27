@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.162 2008/02/26 18:24:28 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.163 2008/02/27 17:39:37 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -470,16 +470,7 @@ void x86_bus_space_mallocok(void);
 #define	CPU_OSFXSR		8	/* int: OS uses FXSAVE/FXRSTOR */
 #define	CPU_SSE			9	/* int: OS/CPU supports SSE */
 #define	CPU_SSE2		10	/* int: OS/CPU supports SSE2 */
-#define CPU_TMLR_MODE		11 	/* int: longrun mode
-					 * 0: minimum frequency
-					 * 1: economy
-					 * 2: performance
-					 * 3: maximum frequency
-					 */
-#define CPU_TMLR_FREQUENCY	12 	/* int: current frequency */
-#define CPU_TMLR_VOLTAGE	13 	/* int: current voltage */
-#define CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
-#define	CPU_MAXID		15	/* number of valid machdep ids */
+#define	CPU_MAXID		11	/* number of valid machdep ids */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
@@ -492,10 +483,6 @@ void x86_bus_space_mallocok(void);
 	{ "osfxsr", CTLTYPE_INT }, \
 	{ "sse", CTLTYPE_INT }, \
 	{ "sse2", CTLTYPE_INT }, \
-	{ "tm_longrun_mode", CTLTYPE_INT }, \
-	{ "tm_longrun_frequency", CTLTYPE_INT }, \
-	{ "tm_longrun_voltage", CTLTYPE_INT }, \
-	{ "tm_longrun_percentage", CTLTYPE_INT }, \
 }
 
 /*
