@@ -1,4 +1,4 @@
-/*	$NetBSD: longrun.c,v 1.1 2008/02/26 18:24:28 xtraeme Exp $	*/
+/*	$NetBSD: longrun.c,v 1.2 2008/02/27 17:39:37 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tamotsu Hattori.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: longrun.c,v 1.1 2008/02/26 18:24:28 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: longrun.c,v 1.2 2008/02/27 17:39:37 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ static u_int crusoe_longrun = 0;
 static u_int crusoe_frequency = 0;
 static u_int crusoe_voltage = 0;
 static u_int crusoe_percentage = 0;
+static int mode_target, freq_target, volt_target, percent_target;
 
 static const uint32_t longrun_modes[LONGRUN_MODE_MAX][3] = {
 	/*  MSR low, MSR high, flags bit0 */
@@ -91,32 +92,41 @@ static int sysctl_machdep_tm_longrun(SYSCTLFN_PROTO);
 void
 tmx86_init_longrun(void)
 {
+	const struct sysctlnode *mnode, *node;
+
 	/* create the sysctl machdep.tm_longrun_* nodes */
-        sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+        sysctl_createv(NULL, 0, NULL, &mnode, CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
-        sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+
+        sysctl_createv(NULL, 0, &mnode, &node, CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "tm_longrun_mode", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_MODE, CTL_EOL);
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTL_CREATE, CTL_EOL);
+
+	mode_target = node->sysctl_num;
+
+	sysctl_createv(NULL, 0, &mnode, &node, 0,
 		       CTLTYPE_INT, "tm_longrun_frequency", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_FREQUENCY, CTL_EOL);
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTL_CREATE, CTL_EOL);
+
+	freq_target = node->sysctl_num;
+
+	sysctl_createv(NULL, 0, &mnode, &node, 0,
 		       CTLTYPE_INT, "tm_longrun_voltage", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_VOLTAGE, CTL_EOL);
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+		       CTL_CREATE, CTL_EOL);
+
+	volt_target = node->sysctl_num;
+
+	sysctl_createv(NULL, 0, &mnode, &node, 0,
 		       CTLTYPE_INT, "tm_longrun_percentage", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
-		       CTL_MACHDEP, CPU_TMLR_PERCENTAGE, CTL_EOL);
+		       CTL_CREATE, CTL_EOL);
+
+	percent_target = node->sysctl_num;
 }
 
 u_int
@@ -193,7 +203,6 @@ tmx86_set_longrun_mode(u_int mode)
 	return 1;
 }
 
-
 static void
 tmx86_get_longrun_status_all(void)
 {
@@ -214,23 +223,18 @@ sysctl_machdep_tm_longrun(SYSCTLFN_ARGS)
 	node = *rnode;
 	node.sysctl_data = &io;
 
-	switch (rnode->sysctl_num) {
-	case CPU_TMLR_MODE:
+	if (rnode->sysctl_num == mode_target) {
 		io = (int)(crusoe_longrun = tmx86_get_longrun_mode());
-		break;
-	case CPU_TMLR_FREQUENCY:
+	} else if (rnode->sysctl_num == freq_target) {
 		tmx86_get_longrun_status_all();
 		io = crusoe_frequency;
-		break;
-	case CPU_TMLR_VOLTAGE:
+	} else if (rnode->sysctl_num == volt_target) {
 		tmx86_get_longrun_status_all();
 		io = crusoe_voltage;
-		break;
-	case CPU_TMLR_PERCENTAGE:
+	} else if (rnode->sysctl_num == percent_target) {
 		tmx86_get_longrun_status_all();
 		io = crusoe_percentage;
-		break;
-	default:
+	} else {
 		return EOPNOTSUPP;
 	}
 
@@ -238,7 +242,7 @@ sysctl_machdep_tm_longrun(SYSCTLFN_ARGS)
 	if (error || newp == NULL)
 		return error;
 
-	if (rnode->sysctl_num == CPU_TMLR_MODE) {
+	if (rnode->sysctl_num == mode_target) {
 		if (tmx86_set_longrun_mode(io))
 			crusoe_longrun = (u_int)io;
 		else
