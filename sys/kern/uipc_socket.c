@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.151 2008/02/06 21:57:54 ad Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.152 2008/02/27 19:55:59 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.151 2008/02/06 21:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.152 2008/02/27 19:55:59 matt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -280,7 +280,7 @@ sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 }
 
 static size_t
-sodopendfree()
+sodopendfree(void)
 {
 	size_t rv;
 
@@ -299,7 +299,7 @@ sodopendfree()
  */
 
 static size_t
-sodopendfreel()
+sodopendfreel(void)
 {
 	struct mbuf *m, *next;
 	size_t rv = 0;
