@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.100.2.25 2008/02/27 09:24:06 yamt Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.100.2.26 2008/02/27 09:29:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.25 2008/02/27 09:24:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.100.2.26 2008/02/27 09:29:48 yamt Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_ddb.h"
@@ -1571,7 +1571,6 @@ m_ext_free(struct mbuf *m)
 			    m->m_ext.ext_arg,
 			    m->m_ext.ext_buf, m->m_ext.ext_paddr);
 		} else if (m->m_ext.ext_free) {
-			mutex_destroy(&m->m_ext.ext_lock);
 			(*m->m_ext.ext_free)(m,
 			    m->m_ext.ext_buf, m->m_ext.ext_size,
 			    m->m_ext.ext_arg);
@@ -1584,9 +1583,6 @@ m_ext_free(struct mbuf *m)
 		}
 	}
 	if (dofree) {
-		if (embedded) {
-			mutex_destroy(&m->m_ext.ext_lock);
-		}
 		pool_cache_put(mb_cache, m);
 	}
 }
