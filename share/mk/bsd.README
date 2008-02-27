@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.200 2008/02/09 19:31:36 jmmv Exp $
+#	$NetBSD: bsd.README,v 1.201 2008/02/27 00:36:00 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -141,11 +141,12 @@ MKDYNAMICROOT	If "no", build programs in /bin and /sbin statically,
 		install the shared linker into /libexec.
 		Default: yes
 
-MKGCC		If "no", don't build gcc(1) or any of the gcc-related
+MKGCC		If "no", don't build gcc(1) or any of the GCC-related
 		libraries (libgcc, libobjc, libstdc++).
 		Default: yes
 
-MKGCCCMDS	If "no", don't build gcc(1).
+MKGCCCMDS	If "no", don't build gcc(1), but do build the GCC-related
+		libraries (libgcc, libobjc, libstdc++).
 		Default: yes
 
 MKGDB		If "no", don't build gdb(1).
@@ -334,7 +335,7 @@ USE_SKEY	If "no", disables building S/key authentication
 		support it.  If ${MKSKEY} is "no", USE_SKEY will
 		also be forced to "no".
 
-USE_SSP		If "no", disables gcc stack protection code, which
+USE_SSP		If "no", disables GCC stack protection code, which
 		detects stack overflows and aborts the program. This
 		imposes some performance penalty.
 		Default: no
