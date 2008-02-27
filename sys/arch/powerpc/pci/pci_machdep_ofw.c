@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.4.2.5 2008/02/04 09:22:24 yamt Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.4.2.6 2008/02/27 08:36:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.4.2.5 2008/02/04 09:22:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.4.2.6 2008/02/27 08:36:23 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -149,6 +149,8 @@ foundic:
 			OF_getprop(node, "compatible", name, sizeof(name));
 			if (strcmp(name, "heathrow") == 0)
 				picnodes[nrofpics].type = PICNODE_TYPE_HEATHROW;
+			if (strcmp(name, "pnpPNP,0") == 0)
+				picnodes[nrofpics].type = PICNODE_TYPE_8259;
 			if (strcmp(name, "chrp,iic") == 0) {
 				picnodes[nrofpics].type = PICNODE_TYPE_8259;
 				if (irgot >= 9 * sizeof(uint32_t) &&
@@ -488,6 +490,11 @@ genofw_pci_conf_hook(pci_chipset_tag_t pct, int bus, int dev, int func,
 	 * Pegasos2 specific stuff.
 	 */
 	if (strncmp(model_name, "Pegasos2", 8) == 0) {
+
+		/* never reconfigure the MV64361 host bridge */
+		if (PCI_VENDOR(id) == PCI_VENDOR_MARVELL &&
+		    PCI_PRODUCT(id) == PCI_PRODUCT_MARVELL_GT64360)
+			return 0;
 
 		/* we want to leave viaide(4) alone */
 		if (PCI_VENDOR(id) == PCI_VENDOR_VIATECH &&

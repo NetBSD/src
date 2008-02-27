@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.64.2.8 2008/01/21 09:37:26 yamt Exp $
+#	$NetBSD: files.macppc,v 1.64.2.9 2008/02/27 08:36:21 yamt Exp $
 #
 # macppc-specific configuration info
 
@@ -82,8 +82,6 @@ device cpu: sysmon_envsys
 attach cpu at mainbus
 file arch/macppc/macppc/cpu.c
 
-include "dev/wsfb/files.wsfb"
-
 # ISA stuff
 # we don't need it but some of the shared code needs isa.h
 include "dev/isa/files.isa"
@@ -114,9 +112,6 @@ device uni_n: uni_n
 attach uni_n at mainbus
 file arch/macppc/dev/uni-n.c			uni_n
 
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/rasops/files.rasops"
 include "dev/usb/files.usb"
 include "dev/bluetooth/files.bluetooth"
 

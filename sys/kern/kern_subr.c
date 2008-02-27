@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.117.2.8 2008/02/11 14:59:58 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.117.2.9 2008/02/27 08:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.8 2008/02/11 14:59:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.9 2008/02/27 08:36:55 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -156,7 +156,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 {
 	struct vmspace *vm = uio->uio_vmspace;
 	struct iovec *iov;
-	u_int cnt;
+	size_t cnt;
 	int error = 0;
 	char *cp = buf;
 
@@ -432,10 +432,8 @@ hook_proc_run(hook_list_t *list, struct proc *p)
 {
 	struct hook_desc *hd;
 
-	for (hd = LIST_FIRST(list); hd != NULL; hd = LIST_NEXT(hd, hk_list)) {
-		((void (*)(struct proc *, void *))*hd->hk_fn)(p,
-		    hd->hk_arg);
-	}
+	LIST_FOREACH(hd, list, hk_list)
+		((void (*)(struct proc *, void *))*hd->hk_fn)(p, hd->hk_arg);
 }
 
 /*
@@ -498,8 +496,6 @@ doshutdownhooks(void)
 		free(dp, M_DEVBUF);
 #endif
 	}
-
-	pmf_system_shutdown();
 }
 
 /*
@@ -1126,7 +1122,6 @@ static struct device *
 finddevice(const char *name)
 {
 	const char *wname;
-	struct device *dv;
 #if defined(BOOT_FROM_MEMORY_HOOKS)
 	int j;
 #endif /* BOOT_FROM_MEMORY_HOOKS */
@@ -1141,11 +1136,7 @@ finddevice(const char *name)
 	}
 #endif /* BOOT_FROM_MEMORY_HOOKS */
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
-		if (strcmp(dv->dv_xname, name) == 0)
-			break;
-	}
-	return dv;
+	return device_find_by_xname(name);
 }
 
 static struct device *

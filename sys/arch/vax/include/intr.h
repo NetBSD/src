@@ -1,4 +1,4 @@
-/* 	$NetBSD: intr.h,v 1.16.2.6 2008/02/04 09:22:40 yamt Exp $	*/
+/* 	$NetBSD: intr.h,v 1.16.2.7 2008/02/27 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Matt Thomas.
@@ -39,14 +39,12 @@
 
 /* Interrupt Priority Levels are not mutually exclusive. */
 
-/* Hardware interrupt levels are 16 (0x10) thru 31 (0x1f)
- */
+/* Hardware interrupt levels are 16 (0x10) thru 31 (0x1f) */
 #define IPL_HIGH	0x1f	/* high -- blocks all interrupts */
 #define IPL_SCHED	0x18	/* clock */
 #define IPL_VM		0x17	/* memory allocation */
 
-/* Software interrupt levels are 0 (0x00) thru 15 (0x0f)
- */
+/* Software interrupt levels are 0 (0x00) thru 15 (0x0f) */
 #define IPL_SOFTDDB	0x0f	/* used by DDB on VAX */
 #define IPL_SOFTSERIAL	0x0d	/* soft serial */
 #define IPL_SOFTNET	0x0c	/* soft network */
@@ -54,14 +52,11 @@
 #define IPL_SOFTCLOCK	0x08
 #define IPL_NONE	0x00
 
-/* vax weirdness
- */
+/* vax weirdness */
 #define IPL_UBA		IPL_VM	/* unibus adapters */
 #define IPL_CONSMEDIA	IPL_VM	/* console media */
 
-/* Misc
- */
-
+/* Misc */
 #define IPL_LEVELS	32
 
 #define IST_UNUSABLE	-1	/* interrupt cannot be used */
@@ -117,53 +112,30 @@ splraiseipl(ipl_cookie_t icookie)
 	return oldipl;
 }
 
-#define _setsirr(reg)	mtpr((reg), PR_SIRR)
 
 #define spl0()		_splset(IPL_NONE)		/* IPL00 */
 #define splddb()	splraiseipl(makeiplcookie(IPL_SOFTDDB)) /* IPL0F */
-#define splconsmedia()	splraiseipl(makeiplcookie(IPL_CONSMEDIA)) /* IPL14 */
+#define splconsmedia()	splraiseipl(makeiplcookie(IPL_CONSMEDIA)) /* IPL17 */
 
 #include <sys/spl.h>
 
 /* These are better to use when playing with VAX buses */
 #define	spluba()	splraiseipl(makeiplcookie(IPL_UBA)) /* IPL17 */
-#define spl4()		splx(0x14)
-#define spl5()		splx(0x15)
-#define spl6()		splx(0x16)
-#define spl7()		splx(0x17)
+#define spl7()		splvm()
 
 /* schedule software interrupts
  */
-#define setsoftddb()	_setsirr(IPL_SOFTDDB)
-#define setsoftserial()	_setsirr(IPL_SOFTSERIAL)
-#define setsoftnet()	_setsirr(IPL_SOFTNET)
+#define setsoftddb()	((void)mtpr(IPL_SOFTDDB, PR_SIRR))
 
 #if !defined(_LOCORE)
-LIST_HEAD(sh_head, softintr_handler);
 
-struct softintr_head {
-	int shd_ipl;
-	struct sh_head shd_intrs;
-};
-
-struct softintr_handler {
-	struct softintr_head *sh_head;
-	LIST_ENTRY(softintr_handler) sh_link;
-	void (*sh_func)(void *);
-	void *sh_arg;
-	int sh_pending;
-};
-
-extern void *softintr_establish(int, void (*)(void *), void *);
-extern void softintr_disestablish(void *);
-
-static __inline void
-softintr_schedule(void *arg)
+#if defined(__HAVE_FAST_SOFTINTS)
+static inline void
+softint_trigger(uintptr_t machdep)
 {
-	struct softintr_handler * const sh = arg;
-	sh->sh_pending = 1;
-	_setsirr(sh->sh_head->shd_ipl);
+	mtpr(machdep, PR_SIRR);
 }
-#endif /* _LOCORE */
+#endif /* __HAVE_FAST_SOFTINTS */
+#endif /* !_LOCORE */
 #endif /* _KERNEL */
 #endif	/* _VAX_INTR_H */

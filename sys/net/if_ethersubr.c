@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.126.2.7 2008/02/11 14:59:59 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.126.2.8 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126.2.7 2008/02/11 14:59:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126.2.8 2008/02/27 08:37:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -204,7 +204,7 @@ static int
 ether_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 	struct rtentry *rt0)
 {
-	u_int16_t etype = 0;
+	uint16_t etype = 0;
 	int error = 0, hdrcmplt = 0;
  	uint8_t esrc[6], edst[6];
 	struct mbuf *m = m0;
@@ -527,7 +527,7 @@ altq_etherclassify(struct ifaltq *ifq, struct mbuf *m,
     struct altq_pktattr *pktattr)
 {
 	struct ether_header *eh;
-	u_int16_t ether_type;
+	uint16_t ether_type;
 	int hlen, af, hdrsize;
 	void *hdr;
 
@@ -619,7 +619,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ethercom *ec = (struct ethercom *) ifp;
 	struct ifqueue *inq;
-	u_int16_t etype;
+	uint16_t etype;
 	struct ether_header *eh;
 #if defined (ISO) || defined (LLC) || defined(NETATALK)
 	struct llc *l;
@@ -710,8 +710,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			 * vlan
 			 */
 			m->m_flags &= ~M_PROMISC;
-			if (carp_input(m, (u_int8_t *)&eh->ether_shost,
-			    (u_int8_t *)&eh->ether_dhost, eh->ether_type) == 0)
+			if (carp_input(m, (uint8_t *)&eh->ether_shost,
+			    (uint8_t *)&eh->ether_dhost, eh->ether_type) == 0)
 				return;
 		}
 #endif /* NCARP > 0 */
@@ -1065,7 +1065,7 @@ ether_snprintf(char *buf, size_t len, const u_char *ap)
  * Perform common duties while attaching to interface list
  */
 void
-ether_ifattach(struct ifnet *ifp, const u_int8_t *lla)
+ether_ifattach(struct ifnet *ifp, const uint8_t *lla)
 {
 	struct ethercom *ec = (struct ethercom *)ifp;
 
@@ -1143,10 +1143,10 @@ ether_ifdetach(struct ifnet *ifp)
  * of the little-endian crc32 generator, which is faster
  * than the double-loop.
  */
-u_int32_t
-ether_crc32_le(const u_int8_t *buf, size_t len)
+uint32_t
+ether_crc32_le(const uint8_t *buf, size_t len)
 {
-	u_int32_t c, crc, carry;
+	uint32_t c, crc, carry;
 	size_t i, j;
 
 	crc = 0xffffffffU;	/* initial value */
@@ -1165,16 +1165,16 @@ ether_crc32_le(const u_int8_t *buf, size_t len)
 	return (crc);
 }
 #else
-u_int32_t
-ether_crc32_le(const u_int8_t *buf, size_t len)
+uint32_t
+ether_crc32_le(const uint8_t *buf, size_t len)
 {
-	static const u_int32_t crctab[] = {
+	static const uint32_t crctab[] = {
 		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
 		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
 		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
 		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
 	};
-	u_int32_t crc;
+	uint32_t crc;
 	size_t i;
 
 	crc = 0xffffffffU;	/* initial value */
@@ -1189,10 +1189,10 @@ ether_crc32_le(const u_int8_t *buf, size_t len)
 }
 #endif
 
-u_int32_t
-ether_crc32_be(const u_int8_t *buf, size_t len)
+uint32_t
+ether_crc32_be(const uint8_t *buf, size_t len)
 {
-	u_int32_t c, crc, carry;
+	uint32_t c, crc, carry;
 	size_t i, j;
 
 	crc = 0xffffffffU;	/* initial value */
@@ -1268,8 +1268,8 @@ ether_nonstatic_aton(u_char *dest, char *str)
  * addresses.
  */
 int
-ether_multiaddr(const struct sockaddr *sa, u_int8_t addrlo[ETHER_ADDR_LEN],
-    u_int8_t addrhi[ETHER_ADDR_LEN])
+ether_multiaddr(const struct sockaddr *sa, uint8_t addrlo[ETHER_ADDR_LEN],
+    uint8_t addrhi[ETHER_ADDR_LEN])
 {
 #ifdef INET
 	const struct sockaddr_in *sin;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.36.4.2 2008/01/21 09:44:44 yamt Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.36.4.3 2008/02/27 08:36:47 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcivar.h,v 1.13 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -153,7 +153,8 @@ usbd_status	ohci_init(ohci_softc_t *);
 int		ohci_intr(void *);
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int		ohci_detach(ohci_softc_t *, int);
-int		ohci_activate(device_ptr_t, enum devact);
+void		ohci_childdet(device_t, device_t);
+int		ohci_activate(device_t, enum devact);
 #endif
-bool		ohci_resume(device_t);
-bool		ohci_suspend(device_t);
+bool		ohci_resume(device_t PMF_FN_PROTO);
+bool		ohci_suspend(device_t PMF_FN_PROTO);

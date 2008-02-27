@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.95.2.9 2008/02/04 09:24:44 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.95.2.10 2008/02/27 08:37:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.9 2008/02/04 09:24:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.10 2008/02/27 08:37:04 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.9 2008/02/04 09:24:44 yamt Exp $
 /* Global vars */
 extern u_int32_t nfs_xdrneg1;
 extern u_int32_t nfs_false, nfs_true;
-extern enum vtype nv3tov_type[8];
+extern const enum vtype nv3tov_type[8];
 extern struct nfsstats nfsstats;
 extern const nfstype nfsv2_type[9];
 extern const nfstype nfsv3_type[9];

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.5.2.5 2008/02/04 09:24:19 yamt Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.5.2.6 2008/02/27 08:36:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.5.2.5 2008/02/04 09:24:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.5.2.6 2008/02/27 08:36:56 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_compat_netbsd.h"
@@ -557,7 +557,7 @@ sigsuspend1(struct lwp *l, const sigset_t *ss)
 
 	if (ss) {
 		/*
-		 * When returning from sigpause, we want
+		 * When returning from sigsuspend, we want
 		 * the old mask to be restored after the
 		 * signal handler has finished.  Thus, we
 		 * save it here and mark the sigctx structure

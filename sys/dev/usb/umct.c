@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.17.2.3 2007/09/03 14:39:17 yamt Exp $	*/
+/*	$NetBSD: umct.c,v 1.17.2.4 2008/02/27 08:36:47 yamt Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.17.2.3 2007/09/03 14:39:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.17.2.4 2008/02/27 08:36:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ struct	umct_softc {
 
 	u_char			sc_status;
 
-	device_ptr_t		sc_subdev;	/* ucom device */
+	device_t		sc_subdev;	/* ucom device */
 
 	u_char			sc_dying;	/* disconnecting */
 
@@ -154,7 +154,14 @@ static const struct usb_devno umct_devs[] = {
 };
 #define umct_lookup(v, p) usb_lookup(umct_devs, v, p)
 
-USB_DECLARE_DRIVER(umct);
+int umct_match(device_t, struct cfdata *, void *);
+void umct_attach(device_t, device_t, void *);
+void umct_childdet(device_t, device_t);
+int umct_detach(device_t, int);
+int umct_activate(device_t, enum devact);
+extern struct cfdriver umct_cd;
+CFATTACH_DECL2(umct, sizeof(struct umct_softc), umct_match,
+    umct_attach, umct_detach, umct_activate, NULL, umct_childdet);
 
 USB_MATCH(umct)
 {
@@ -305,6 +312,15 @@ USB_ATTACH(umct)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+void
+umct_childdet(device_t self, device_t child)
+{
+	struct umct_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
+}
+
 USB_DETACH(umct)
 {
 	USB_DETACH_START(umct, sc);
@@ -320,10 +336,8 @@ USB_DETACH(umct)
         }
 
 	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL) {
+	if (sc->sc_subdev != NULL)
 		rv = config_detach(sc->sc_subdev, flags);
-		sc->sc_subdev = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -332,9 +346,9 @@ USB_DETACH(umct)
 }
 
 int
-umct_activate(device_ptr_t self, enum devact act)
+umct_activate(device_t self, enum devact act)
 {
-	struct umct_softc *sc = (struct umct_softc *)self;
+	struct umct_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {

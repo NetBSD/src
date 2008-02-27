@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.99.2.7 2008/01/21 09:46:21 yamt Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.99.2.8 2008/02/27 08:36:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99.2.7 2008/01/21 09:46:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99.2.8 2008/02/27 08:36:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipkdb.h"
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prf.c,v 1.99.2.7 2008/01/21 09:46:21 yamt Exp $
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 #include <sys/kprintf.h>
+#include <sys/atomic.h>
+#include <sys/cpu.h>
 
 #include <dev/cons.h>
 
@@ -89,7 +91,6 @@ struct simplelock kprintf_slock = SIMPLELOCK_INITIALIZER;
 
 #ifdef KGDB
 #include <sys/kgdb.h>
-#include <sys/cpu.h>
 #endif
 #ifdef DDB
 #include <ddb/db_output.h>	/* db_printf, db_putchar prototypes */
@@ -116,6 +117,7 @@ extern	struct tty *constty;	/* pointer to console "window" tty */
 extern	int log_open;	/* subr_log: is /dev/klog open? */
 const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
+struct cpu_info *paniccpu;	/* cpu that first paniced */
 long	panicstart, panicend;	/* position in the msgbuf of the start and
 				   end of the formatted panicstr. */
 int	doing_shutdown;	/* set to indicate shutdown in progress */
@@ -173,8 +175,36 @@ twiddle(void)
 void
 panic(const char *fmt, ...)
 {
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci, *oci;
 	int bootopt;
 	va_list ap;
+
+	/*
+	 * Disable preemption.  If already panicing on another CPU, sit
+	 * here and spin until the system is rebooted.  Allow the CPU that
+	 * first paniced to panic again.
+	 */
+	crit_enter();
+	ci = curcpu();
+	oci = atomic_cas_ptr((void *)&paniccpu, NULL, ci);
+	if (oci != NULL && oci != ci) {
+		/* Give interrupts a chance to try and prevent deadlock. */
+		spl0();
+		for (;;) {
+			DELAY(10);
+		}
+	}
+
+	/*
+	 * Convert the current thread to a bound thread and prevent all
+	 * CPUs from scheduling unbound jobs.  Do so without taking any
+	 * locks.
+	 */
+	curlwp->l_flag |= LW_BOUND;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_schedstate.spc_flags |= SPCF_OFFLINE;
+	}
 
 	bootopt = RB_AUTOBOOT;
 	if (dumponpanic)

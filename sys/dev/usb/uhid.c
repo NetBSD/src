@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.64.2.5 2007/12/07 17:31:36 yamt Exp $	*/
+/*	$NetBSD: uhid.c,v 1.64.2.6 2008/02/27 08:36:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.64.2.5 2007/12/07 17:31:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.64.2.6 2008/02/27 08:36:47 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -162,6 +162,9 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 
 	printf(": input=%d, output=%d, feature=%d\n",
 	       sc->sc_isize, sc->sc_osize, sc->sc_fsize);
+
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	USB_ATTACH_SUCCESS_RETURN;
 }

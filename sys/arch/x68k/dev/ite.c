@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.40.2.5 2007/12/07 17:26:33 yamt Exp $	*/
+/*	$NetBSD: ite.c,v 1.40.2.6 2008/02/27 08:36:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40.2.5 2007/12/07 17:26:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40.2.6 2008/02/27 08:36:29 yamt Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -117,7 +117,6 @@ __KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.40.2.5 2007/12/07 17:26:33 yamt Exp $");
 void opm_bell(void);
 #endif
 
-#define SUBR_CNPROBE(min)	itesw[min].ite_cnprobe(min)
 #define SUBR_INIT(ip)		ip->isw->ite_init(ip)
 #define SUBR_DEINIT(ip)		ip->isw->ite_deinit(ip)
 #define SUBR_PUTC(ip,c,dy,dx,m)	ip->isw->ite_putc(ip,c,dy,dx,m)
@@ -161,7 +160,6 @@ struct itesw itesw[] = {
 	{0,	tv_init,	tv_deinit,	0,
 	 0,	0,		0}
 };
-int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
 
 /*
  * # of chars are output in a single itestart() call.
@@ -171,7 +169,6 @@ int	nitesw = sizeof(itesw) / sizeof(itesw[0]);
  */
 #define ITEBURST 64
 
-int	nite = NITE;
 struct	tty *ite_tty[NITE];
 struct	ite_softc *kbd_ite = NULL;
 struct  ite_softc con_itesoftc;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.39.2.6 2008/01/21 09:47:01 yamt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.39.2.7 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -62,16 +62,16 @@
  * this is only used by the ethers(3) functions.
  */
 struct ether_addr {
-	u_int8_t ether_addr_octet[ETHER_ADDR_LEN];
+	uint8_t ether_addr_octet[ETHER_ADDR_LEN];
 } __packed;
 
 /*
  * Structure of a 10Mb/s Ethernet header.
  */
-struct	ether_header {
-	u_int8_t  ether_dhost[ETHER_ADDR_LEN];
-	u_int8_t  ether_shost[ETHER_ADDR_LEN];
-	u_int16_t ether_type;
+struct ether_header {
+	uint8_t  ether_dhost[ETHER_ADDR_LEN];
+	uint8_t  ether_shost[ETHER_ADDR_LEN];
+	uint16_t ether_type;
 } __packed;
 
 #include <net/ethertypes.h>
@@ -113,14 +113,14 @@ struct	ether_header {
  */
 #define ETHER_MAP_IP_MULTICAST(ipaddr, enaddr)				\
 	/* const struct in_addr *ipaddr; */				\
-	/* u_int8_t enaddr[ETHER_ADDR_LEN]; */				\
+	/* uint8_t enaddr[ETHER_ADDR_LEN]; */				\
 do {									\
 	(enaddr)[0] = 0x01;						\
 	(enaddr)[1] = 0x00;						\
 	(enaddr)[2] = 0x5e;						\
-	(enaddr)[3] = ((const u_int8_t *)ipaddr)[1] & 0x7f;		\
-	(enaddr)[4] = ((const u_int8_t *)ipaddr)[2];			\
-	(enaddr)[5] = ((const u_int8_t *)ipaddr)[3];			\
+	(enaddr)[3] = ((const uint8_t *)ipaddr)[1] & 0x7f;		\
+	(enaddr)[4] = ((const uint8_t *)ipaddr)[2];			\
+	(enaddr)[5] = ((const uint8_t *)ipaddr)[3];			\
 } while (/*CONSTCOND*/0)
 /*
  * Macro to map an IP6 multicast address to an Ethernet multicast address.
@@ -129,7 +129,7 @@ do {									\
  */
 #define ETHER_MAP_IPV6_MULTICAST(ip6addr, enaddr)			\
 	/* struct in6_addr *ip6addr; */					\
-	/* u_int8_t enaddr[ETHER_ADDR_LEN]; */				\
+	/* uint8_t enaddr[ETHER_ADDR_LEN]; */				\
 {                                                                       \
 	(enaddr)[0] = 0x33;						\
 	(enaddr)[1] = 0x33;						\
@@ -180,7 +180,7 @@ extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
 int	ether_ioctl(struct ifnet *, u_long, void *);
 int	ether_addmulti(const struct sockaddr *, struct ethercom *);
 int	ether_delmulti(const struct sockaddr *, struct ethercom *);
-int	ether_multiaddr(const struct sockaddr *, u_int8_t[], u_int8_t[]);
+int	ether_multiaddr(const struct sockaddr *, uint8_t[], uint8_t[]);
 #endif /* _KERNEL */
 
 /*
@@ -190,8 +190,8 @@ int	ether_multiaddr(const struct sockaddr *, u_int8_t[], u_int8_t[]);
  * rooted in the interface's ethercom structure.
  */
 struct ether_multi {
-	u_int8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
-	u_int8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
+	uint8_t enm_addrlo[ETHER_ADDR_LEN]; /* low  or only address of range */
+	uint8_t enm_addrhi[ETHER_ADDR_LEN]; /* high or only address of range */
 	u_int	 enm_refcount;		/* no. claims to this addr/range */
 	LIST_ENTRY(ether_multi) enm_list;
 };
@@ -210,8 +210,8 @@ struct ether_multistep {
  * record is found, "enm" returns NULL.
  */
 #define ETHER_LOOKUP_MULTI(addrlo, addrhi, ec, enm)			\
-	/* u_int8_t addrlo[ETHER_ADDR_LEN]; */				\
-	/* u_int8_t addrhi[ETHER_ADDR_LEN]; */				\
+	/* uint8_t addrlo[ETHER_ADDR_LEN]; */				\
+	/* uint8_t addrhi[ETHER_ADDR_LEN]; */				\
 	/* struct ethercom *ec; */					\
 	/* struct ether_multi *enm; */					\
 {									\
@@ -279,16 +279,16 @@ struct ether_multistep {
 /* test if any VLAN is configured for this interface */
 #define VLAN_ATTACHED(ec)	((ec)->ec_nvlans > 0)
 
-void	ether_ifattach(struct ifnet *, const u_int8_t *);
+void	ether_ifattach(struct ifnet *, const uint8_t *);
 void	ether_ifdetach(struct ifnet *);
 int	ether_mediachange(struct ifnet *);
 void	ether_mediastatus(struct ifnet *, struct ifmediareq *);
 
-char	*ether_sprintf(const u_int8_t *);
-char	*ether_snprintf(char *, size_t, const u_int8_t *);
+char	*ether_sprintf(const uint8_t *);
+char	*ether_snprintf(char *, size_t, const uint8_t *);
 
-u_int32_t ether_crc32_le(const u_int8_t *, size_t);
-u_int32_t ether_crc32_be(const u_int8_t *, size_t);
+uint32_t ether_crc32_le(const uint8_t *, size_t);
+uint32_t ether_crc32_be(const uint8_t *, size_t);
 
 int	ether_nonstatic_aton(u_char *, char *);
 #else

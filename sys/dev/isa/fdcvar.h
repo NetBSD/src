@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcvar.h,v 1.6 2005/02/04 02:10:40 perry Exp $	*/
+/*	$NetBSD: fdcvar.h,v 1.6.6.1 2008/02/27 08:36:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,9 @@
  *	@(#)fd.c	7.4 (Berkeley) 5/25/91
  */
 
+#include <sys/mutex.h>
+#include <sys/condvar.h>
+
 /*
  * Floppy formatting facilities merged from FreeBSD fd.c driver:
  *	Id: fd.c,v 1.53 1995/03/12 22:40:56 joerg Exp
@@ -140,9 +143,14 @@ struct fdc_softc {
 	int sc_known;			/* direct configuration if non-zero */
 	int sc_present;			/* bitmap of available fds */
 	const struct fd_type *sc_knownfds[4];	/* drive info known fds */
+	kmutex_t sc_mtx;
+	kcondvar_t sc_cv;
+	int sc_probe;
 };
 
 int	out_fdc(bus_space_tag_t iot, bus_space_handle_t ioh, u_char x);
 
 void	fdcattach(struct fdc_softc *);
+void	fdc_childdet(device_t, device_t);
+int	fdcdetach(device_t self, int flags);
 int	fdcintr(void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.148.2.10 2008/02/15 10:40:08 yamt Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.148.2.11 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.10 2008/02/15 10:40:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.148.2.11 2008/02/27 08:37:05 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -339,8 +339,7 @@ nfs_mountroot()
 	 * Call nfs_boot_init() to fill in the nfs_diskless struct.
 	 * Side effect:  Finds and configures a network interface.
 	 */
-	nd = kmem_alloc(sizeof(*nd), KM_SLEEP);
-	memset(nd, 0, sizeof(*nd));
+	nd = kmem_zalloc(sizeof(*nd), KM_SLEEP);
 	error = nfs_boot_init(nd, l);
 	if (error) {
 		kmem_free(nd, sizeof(*nd));
@@ -726,15 +725,16 @@ mountnfs(argp, mp, nam, pth, hst, vpp, l)
 	if ((argp->flags & NFSMNT_NFSV3) == 0)
 #endif
 	{
-		/*
-		 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
-		 * will fill this in.
-		 */
-		nmp->nm_maxfilesize = 0xffffffffLL;
 		if (argp->fhsize != NFSX_V2FH) {
 			return EINVAL;
 		}
 	}
+
+	/*
+	 * V2 can only handle 32 bit filesizes. For v3, nfs_fsinfo
+	 * will overwrite this.
+	 */
+	nmp->nm_maxfilesize = 0xffffffffLL;
 
 	nmp->nm_timeo = NFS_TIMEO;
 	nmp->nm_retry = NFS_RETRANS;

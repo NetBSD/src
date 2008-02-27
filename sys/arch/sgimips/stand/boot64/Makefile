@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2005/01/14 08:17:49 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.10.1 2008/02/27 08:36:24 yamt Exp $
 
 PROG=	ip30boot
 
@@ -41,7 +41,7 @@ LOAD_ADDRESS_IP30?=	0xa800000020080000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "sgimips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c
@@ -79,6 +79,6 @@ LIBS=		${LIBSA} ${LIBZ} ${LIBSA} ${LIBKERN}
 
 ip30boot: ${OBJS} ${LIBS}
 	${LD} -m elf64btsmip -Map boot.map -x -Ttext ${LOAD_ADDRESS_IP30} \
-		${LDBUG} -e start -o ip30boot ${OBJS} ${LIBS}
+		${LDBUG} -e start -o ${.TARGET} ${OBJS} ${LIBS}
 
 .include <bsd.prog.mk>

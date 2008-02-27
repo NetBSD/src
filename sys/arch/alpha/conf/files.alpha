@@ -1,4 +1,4 @@
-# $NetBSD: files.alpha,v 1.167.12.6 2008/02/04 09:21:39 yamt Exp $
+# $NetBSD: files.alpha,v 1.167.12.7 2008/02/27 08:36:18 yamt Exp $
 #
 # alpha-specific configuration info
 
@@ -76,17 +76,6 @@ include "dev/ata/files.ata"
 
 # Memory Disk
 file	dev/md_root.c			memory_disk_hooks
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
-
-#
-# "Workstation Console" glue.
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfb/files.wsfb"
-
 
 #
 # TurboLaser Bus Support

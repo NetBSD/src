@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.250.2.10 2008/02/11 14:59:58 yamt Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.250.2.11 2008/02/27 08:36:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.10 2008/02/11 14:59:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.250.2.11 2008/02/27 08:36:56 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -330,7 +330,7 @@ vfs_busy(struct mount *mp, const krw_t op, kmutex_t *interlock)
 }
 
 /*
- * As vfs_busy(), but return immediatley if the mount cannot be
+ * As vfs_busy(), but return immediately if the mount cannot be
  * locked without waiting.
  */
 int
@@ -1127,11 +1127,25 @@ int busyprt = 0;	/* print out busy vnodes */
 struct ctldebug debug1 = { "busyprt", &busyprt };
 #endif
 
+static vnode_t *
+vflushnext(vnode_t *mvp, int *when)
+{
+
+	if (hardclock_ticks > *when) {
+		mutex_exit(&mntvnode_lock);
+		yield();
+		mutex_enter(&mntvnode_lock);
+		*when = hardclock_ticks + hz / 10;
+	}
+
+	return vunmark(mvp);
+}
+
 int
 vflush(struct mount *mp, vnode_t *skipvp, int flags)
 {
 	vnode_t *vp, *mvp;
-	int busy = 0;
+	int busy = 0, when = 0;
 
 	/* Allocate a marker vnode. */
 	if ((mvp = vnalloc(mp)) == NULL)
@@ -1142,7 +1156,8 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	 * NOTE: not using the TAILQ_FOREACH here since in this loop vgone()
 	 * and vclean() are called
 	 */
-	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp; vp = vunmark(mvp)) {
+	for (vp = TAILQ_FIRST(&mp->mnt_vnodelist); vp != NULL;
+	    vp = vflushnext(mvp, &when)) {
 		vmark(mvp, vp);
 		if (vp->v_mount != mp || vismarker(vp))
 			continue;

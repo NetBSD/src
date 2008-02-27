@@ -1,4 +1,4 @@
-/*      $NetBSD: xen_shm_machdep.c,v 1.2.8.2 2007/12/07 17:27:19 yamt Exp $      */
+/*      $NetBSD: xen_shm_machdep.c,v 1.2.8.3 2008/02/27 08:36:29 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -29,6 +29,10 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xen_shm_machdep.c,v 1.2.8.3 2008/02/27 08:36:29 yamt Exp $");
+
 
 #include <sys/types.h>
 #include <sys/param.h>

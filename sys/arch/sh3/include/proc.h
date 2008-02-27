@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7.16.3 2007/02/26 09:08:06 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.7.16.4 2008/02/27 08:36:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -68,7 +68,6 @@ struct mdproc {
 #ifdef _KERNEL
 #ifndef _LOCORE
 extern void sh_proc0_init(void);
-extern struct md_upte *curupte;	/* SH3 wired u-area hack */
 #endif /* _LOCORE */
 #endif /* _KERNEL */
 #endif /* !_SH3_PROC_H_ */

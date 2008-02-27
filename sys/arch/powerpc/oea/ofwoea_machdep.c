@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.4.2.7 2008/02/11 14:59:29 yamt Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.4.2.8 2008/02/27 08:36:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.2.7 2008/02/11 14:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.2.8 2008/02/27 08:36:23 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -86,6 +86,10 @@ __KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.4.2.7 2008/02/11 14:59:29 yamt 
 
 #include "opt_ofwoea.h"
 
+#ifdef ofppc
+extern struct model_data modeldata;
+#endif
+
 #ifdef OFWOEA_DEBUG
 #define DPRINTF printf
 #else
@@ -127,7 +131,6 @@ extern int chosen;
 extern uint32_t ticks_per_sec;
 extern uint32_t ns_per_tick;
 extern uint32_t ticks_per_intr;
-extern unsigned long oeacpufeat;
 
 static int save_ofmap(struct ofw_translations *, int);
 static void restore_ofmap(struct ofw_translations *, int);
@@ -136,7 +139,7 @@ static void set_timebase(void);
 void
 ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 {
-	int ofmaplen, node;
+	int ofmaplen, node, l;
 	register_t scratch;
 
 	/* initialze bats */
@@ -156,7 +159,10 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 	memset(model_name, 0, sizeof(model_name));
 	node = OF_finddevice("/");
 	if (node >= 0) {
-		OF_getprop(node, "model", model_name, sizeof(model_name));
+		l = OF_getprop(node, "model", model_name, sizeof(model_name));
+		if (l == -1)
+			OF_getprop(node, "name", model_name,
+			    sizeof(model_name));
 		model_init();
 	}
 
@@ -432,6 +438,10 @@ find_ranges(int base, rangemap_t *regions, int *cur, int type)
 	if (OF_getprop(node, "#size-cells", &scells,
 	    sizeof(scells)) != sizeof(scells))
 		scells = 1;
+#ifdef ofppc
+	if (modeldata.ranges_offset == 0)
+		scells -= 1;
+#endif
 	if (type == RANGE_TYPE_ISA)
 		reclen = 6;
 	else
@@ -600,6 +610,7 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		}
 		if (region.addr + region.size < list[range].addr) {
 			/* allocate a hole */
+			holes[nrofholes].type = iomem;
 			holes[nrofholes].addr = region.size + region.addr;
 			holes[nrofholes].size = list[range].addr -
 			    holes[nrofholes].addr - 1;
@@ -643,9 +654,14 @@ ofwoea_map_space(int rangetype, int iomem, int node,
 		if (error)
 			panic("ofwoea_bus_space_init: can't init tag %s", name);
 		for (i=0; i < nrofholes; i++) {
-			error =
-			    extent_alloc_region(tag->pbs_extent,
-				holes[i].addr, holes[i].size, EX_NOWAIT);
+			if (holes[i].type == RANGE_IO) {
+				error = extent_alloc_region(tag->pbs_extent,
+				    holes[i].addr - tag->pbs_offset,
+				    holes[i].size, EX_NOWAIT);
+			} else {
+				error = extent_alloc_region(tag->pbs_extent,
+				    holes[i].addr, holes[i].size, EX_NOWAIT);
+			}
 			if (error)
 				panic("ofwoea_bus_space_init: can't block out"
 				    " reserved space 0x%x-0x%x: error=%d",

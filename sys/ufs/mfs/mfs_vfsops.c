@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vfsops.c,v 1.67.2.7 2008/02/04 09:25:07 yamt Exp $	*/
+/*	$NetBSD: mfs_vfsops.c,v 1.67.2.8 2008/02/27 08:37:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1990, 1993, 1994
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67.2.7 2008/02/04 09:25:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vfsops.c,v 1.67.2.8 2008/02/27 08:37:09 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -315,6 +315,7 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = getnewvnode(VT_MFS, (struct mount *)0, mfs_vnodeop_p, &devvp);
 	if (error)
 		return (error);
+	devvp->v_vflag |= VV_MPSAFE;
 	devvp->v_type = VBLK;
 	spec_node_init(devvp, makedev(255, mfs_minor));
 	mfs_minor++;
@@ -325,6 +326,8 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mfsp->mfs_vnode = devvp;
 	mfsp->mfs_proc = p;
 	mfsp->mfs_shutdown = 0;
+	mutex_init(&mfsp->mfs_lock, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&mfsp->mfs_cv, "mfsidl");
 	bufq_alloc(&mfsp->mfs_buflist, "fcfs", 0);
 	if ((error = ffs_mountfs(devvp, mp, l)) != 0) {
 		mfsp->mfs_shutdown = 1;
@@ -343,8 +346,6 @@ mfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	/* XXX: cleanup on error */
 	return 0;
 }
-
-int	mfs_pri = PWAIT | PCATCH;		/* XXX prob. temp */
 
 /*
  * Used to grab the process and keep it in the kernel to service
@@ -368,10 +369,12 @@ mfs_start(struct mount *mp, int flags)
 	ksiginfoq_t kq;
 
 	base = mfsp->mfs_baseoff;
+	mutex_enter(&mfsp->mfs_lock);
 	while (mfsp->mfs_shutdown != 1) {
 		while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
+			mutex_exit(&mfsp->mfs_lock);
 			mfs_doio(bp, base);
-			wakeup((void *)bp);
+			mutex_enter(&mfsp->mfs_lock);
 		}
 		/*
 		 * If a non-ignored signal is received, try to unmount.
@@ -381,6 +384,7 @@ mfs_start(struct mount *mp, int flags)
 		 * will always return EINTR/ERESTART.
 		 */
 		if (sleepreturn != 0) {
+			mutex_exit(&mfsp->mfs_lock);
 			/*
 			 * XXX Freeze syncer.  Must do this before locking
 			 * the mount point.  See dounmount() for details.
@@ -397,12 +401,14 @@ mfs_start(struct mount *mp, int flags)
 				ksiginfo_queue_drain(&kq);
 			}
 			sleepreturn = 0;
+			mutex_enter(&mfsp->mfs_lock);
 			continue;
 		}
 
-		sleepreturn = tsleep(vp, mfs_pri, "mfsidl", 0);
+		sleepreturn = cv_wait_sig(&mfsp->mfs_cv, &mfsp->mfs_lock);
 	}
 	KASSERT(BUFQ_PEEK(mfsp->mfs_buflist) == NULL);
+	mutex_exit(&mfsp->mfs_lock);
 	bufq_free(mfsp->mfs_buflist);
 	return (sleepreturn);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.21.2.6 2008/01/21 09:39:16 yamt Exp $	*/
+/*	$NetBSD: exception.c,v 1.21.2.7 2008/02/27 08:36:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.21.2.6 2008/01/21 09:39:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.21.2.7 2008/02/27 08:36:24 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -123,7 +123,7 @@ const char * const exp_type[] = {
 	"--",					/* 0x1c0 (external interrupt) */
 	"user break point trap",		/* 0x1e0 EXPEVT_BREAK */
 };
-const int exp_types = sizeof exp_type / sizeof exp_type[0];
+const int exp_types = __arraycount(exp_type);
 
 void general_exception(struct lwp *, struct trapframe *, uint32_t);
 void tlb_exception(struct lwp *, struct trapframe *, uint32_t);
@@ -225,12 +225,6 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	return;
 
  do_panic:
-	if (expevt >> 5 < exp_types)
-		printf("fatal %s", exp_type[expevt >> 5]);
-	else
-		printf("EXPEVT 0x%03x", expevt);
-	printf(" in %s mode\n", expevt & EXP_USER ? "user" : "kernel");
-	printf(" spc %x ssr %x \n", tf->tf_spc, tf->tf_ssr);
 #ifdef DDB
 	if (kdb_trap(expevt, 0, tf))
 		return;
@@ -239,6 +233,12 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	if (kgdb_trap(EXPEVT_BREAK, tf))
 		return;
 #endif
+	if (expevt >> 5 < exp_types)
+		printf("fatal %s", exp_type[expevt >> 5]);
+	else
+		printf("EXPEVT 0x%03x", expevt);
+	printf(" in %s mode\n", expevt & EXP_USER ? "user" : "kernel");
+	printf(" spc %x ssr %x \n", tf->tf_spc, tf->tf_ssr);
 
 	panic("general_exception");
 	/* NOTREACHED */

@@ -1,4 +1,4 @@
-/*	$NetBSD: esp_obio.c,v 1.16.16.2 2007/09/03 14:29:56 yamt Exp $	*/
+/*	$NetBSD: esp_obio.c,v 1.16.16.3 2008/02/27 08:36:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.16.16.2 2007/09/03 14:29:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp_obio.c,v 1.16.16.3 2008/02/27 08:36:25 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -128,6 +128,7 @@ espmatch_obio(struct device *parent, struct cfdata *cf, void *aux)
 void
 espattach_obio(struct device *parent, struct device *self, void *aux)
 {
+	device_t dma_dev;
 	union obio_attach_args *uoba = aux;
 	struct obio4_attach_args *oba = &uoba->uoba_oba4;
 	struct esp_softc *esc = (void *)self;
@@ -140,20 +141,14 @@ espattach_obio(struct device *parent, struct device *self, void *aux)
 	sc->sc_freq = 24000000;
 
 	/*
-	 * Find the DMA by poking around the dma device structures
+	 * Find the DMA by poking around the dma device structures and
+	 * set the reverse pointer.
 	 */
-	esc->sc_dma = (struct lsi64854_softc *)
-			getdevunit("dma", device_unit(&sc->sc_dev));
-
-	/*
-	 * and a back pointer to us, for DMA
-	 */
-	if (esc->sc_dma)
-		esc->sc_dma->sc_client = sc;
-	else {
-		printf("\n");
-		panic("espattach: no dma found");
-	}
+	dma_dev = device_find_by_driver_unit("dma", device_unit(self));
+	if (dma_dev == NULL)
+		panic("%s: no corresponding DMA device", device_xname(self));
+	esc->sc_dma = device_private(dma_dev);
+	esc->sc_dma->sc_client = sc;
 
 	if (bus_space_map(oba->oba_bustag, oba->oba_paddr,
 			  16,	/* size (of ncr53c9xreg) */

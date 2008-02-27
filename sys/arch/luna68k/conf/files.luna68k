@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.16.12.2 2007/12/07 17:25:07 yamt Exp $
+#	$NetBSD: files.luna68k,v 1.16.12.3 2008/02/27 08:36:21 yamt Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -59,9 +59,6 @@ include "dev/scsipi/files.scsipi"
 
 # Memory Disk for boot tape
 file	dev/md_root.c			memory_disk_hooks
-
-# "Workstation Console" glue.
-include "dev/wscons/files.wscons"
 
 
 # Compatibility modules

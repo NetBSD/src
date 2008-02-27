@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc,v 1.131.2.5 2008/02/04 09:22:30 yamt Exp $
+#	$NetBSD: files.sparc,v 1.131.2.6 2008/02/27 08:36:25 yamt Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
 # sparc-specific configuration info
@@ -21,13 +21,6 @@ attach mainbus at root
 
 device msiiep {}
 attach msiiep at mainbus
-
-#
-# Raster Console / WS Console
-#
-include "dev/wscons/files.wscons"	# includes rcons as well
-include "dev/wsfont/files.wsfont"	# both rcons and wscons need it
-include "dev/wsfb/files.wsfb"
 
 include "dev/i2o/files.i2o"
 include "dev/pci/files.pci"
@@ -298,7 +291,6 @@ file	arch/sparc/sparc/kgdb_machdep.c	kgdb
 file	arch/sparc/sparc/kobj_machdep.c		modular
 # sparc/sparc/locore.s is handled specially in the makefile,
 # because it must come first in the "ld" command line.
-file	arch/sparc/sparc/lock_stubs.s
 file	arch/sparc/sparc/machdep.c
 file	arch/sparc/sparc/process_machdep.c
 file	arch/sparc/sparc/mem.c

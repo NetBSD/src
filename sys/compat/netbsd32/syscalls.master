@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.28.2.7 2008/02/04 09:23:14 yamt Exp $
+	$NetBSD: syscalls.master,v 1.28.2.8 2008/02/27 08:36:30 yamt Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -8,12 +8,13 @@
 ;
 ; Fields: number type [type-dependent ...]
 ;	number	system call number, must be in order
-;	type	one of STD, OBSOL, UNIMPL, NODEF, NOARGS, or one of
+;	type	one of STD, OBSOL, UNIMPL, IGNORED, NODEF, NOARGS, or one of
 ;		the compatibility options defined in syscalls.conf.
 ;
 ; types:
 ;	STD	always included
 ;	OBSOL	obsolete, not included in system
+;	IGNORED	syscall is a null op, but always succeeds
 ;	UNIMPL	unimplemented, not included in system
 ;	EXCL	implemented, but not included in system
 ;	NODEF	included, but don't define the syscall number
@@ -642,8 +643,7 @@
 			    netbsd32_charp path, netbsd32_statp_t ub); }
 390     STD             { int netbsd32_sys___getdents30(int fd, \
 			    netbsd32_charp buf, netbsd32_size_t count); }
-391	STD		{ int netbsd32_posix_fadvise(int fd, off_t offset, \
-			    off_t len, int advice); }
+391	IGNORED		old posix fadvise
 392	COMPAT_30	{ int netbsd32_sys___fhstat30( \
 			    netbsd32_fhandlep_t fhp, \
 			    netbsd32_statp_t sb); }

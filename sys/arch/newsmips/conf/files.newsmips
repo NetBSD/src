@@ -1,4 +1,4 @@
-#	$NetBSD: files.newsmips,v 1.24 2003/10/25 04:07:28 tsutsui Exp $
+#	$NetBSD: files.newsmips,v 1.24.16.1 2008/02/27 08:36:22 yamt Exp $
 
 # NEWSMIPS-specific configuration info
 
@@ -116,10 +116,6 @@ file arch/newsmips/apbus/spifi.c		spifi
 device dmac
 attach dmac at ap
 file arch/newsmips/apbus/dmac3.c		dmac
-
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/rasops/files.rasops"
 
 device xafb: wsemuldisplaydev, rasops8
 attach xafb at ap

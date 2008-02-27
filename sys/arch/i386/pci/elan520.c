@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.8.16.3 2008/01/21 09:37:10 yamt Exp $	*/
+/*	$NetBSD: elan520.c,v 1.8.16.4 2008/02/27 08:36:21 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.8.16.3 2008/01/21 09:37:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.8.16.4 2008/02/27 08:36:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.8.16.3 2008/01/21 09:37:10 yamt Exp $"
 #include <dev/sysmon/sysmonvar.h>
 
 #define	ELAN_IRQ	1
-#define	IDT_PROT_SIZE	PAGE_SIZE
+#define	PG0_PROT_SIZE	PAGE_SIZE
 
 struct elansc_softc {
 	struct device sc_dev;
@@ -96,7 +96,7 @@ struct elansc_softc {
 	void		*sc_sh;
 	uint8_t		sc_mpicmode;
 	uint8_t		sc_picicr;
-	int		sc_idtpar;
+	int		sc_pg0par;
 	int		sc_textpar;
 #if NGPIO > 0
 	/* GPIO interface */
@@ -107,7 +107,7 @@ struct elansc_softc {
 
 int elansc_wpvnmi = 1;
 int elansc_pcinmi = 1;
-int elansc_do_protect_idt = 0;
+int elansc_do_protect_pg0 = 1;
 
 #if NGPIO > 0
 static int	elansc_gpio_pin_read(void *, int);
@@ -584,18 +584,18 @@ elansc_protect_text(device_t self, struct elansc_softc *sc)
 }
 
 static int
-elansc_protect_idt(struct elansc_softc *sc)
+elansc_protect_pg0(device_t self, struct elansc_softc *sc)
 {
 	int i;
 	uint32_t par;
-	extern paddr_t idt_paddr;
+	const paddr_t pg0_paddr = 0;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
 
 	memt = sc->sc_memt;
 	memh = sc->sc_memh;
 
-	if (elansc_do_protect_idt == 0)
+	if (elansc_do_protect_pg0 == 0)
 		return -1;
 
 	if ((i = elansc_alloc_par(memt, memh)) == -1)
@@ -603,13 +603,12 @@ elansc_protect_idt(struct elansc_softc *sc)
 
 	par = bus_space_read_4(memt, memh, MMCR_PAR(i));
 
-	aprint_debug_dev(sc->sc_par, "protect IDT at paddr %p\n",
-	    (const void *)idt_paddr);
+	aprint_debug_dev(self, "protect page 0\n");
 
 	/* clear PG_SZ, attribute, target, size, address. */
 	par = MMCR_PAR_TARGET_SDRAM | MMCR_PAR_ATTR_NOWRITE;
-	par |= __SHIFTIN(IDT_PROT_SIZE / PAGE_SIZE - 1, MMCR_PAR_4KB_SZ);
-	par |= __SHIFTIN(idt_paddr / PAGE_SIZE, MMCR_PAR_4KB_ST_ADR);
+	par |= __SHIFTIN(PG0_PROT_SIZE / PAGE_SIZE - 1, MMCR_PAR_4KB_SZ);
+	par |= __SHIFTIN(pg0_paddr / PAGE_SIZE, MMCR_PAR_4KB_ST_ADR);
 	bus_space_write_4(memt, memh, MMCR_PAR(i), par);
 	return i;
 }
@@ -916,7 +915,7 @@ elanpar_attach(device_t parent, device_t self, void *aux)
 	elansc_print_1(self, sc, MMCR_WPVMAP);
 	elansc_print_all_par(self, sc->sc_memt, sc->sc_memh);
 
-	sc->sc_idtpar = elansc_protect_idt(sc);
+	sc->sc_pg0par = elansc_protect_pg0(self, sc);
 	sc->sc_textpar = elansc_protect_text(self, sc);
 
 	elanpar_intr_establish(self, sc);
@@ -964,9 +963,9 @@ elanpar_detach(device_t self, int flags)
 		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_textpar);
 		sc->sc_textpar = -1;
 	}
-	if (sc->sc_idtpar != -1) {
-		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_idtpar);
-		sc->sc_idtpar = -1;
+	if (sc->sc_pg0par != -1) {
+		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_pg0par);
+		sc->sc_pg0par = -1;
 	}
 
 	elanpar_intr_disestablish(sc);
@@ -981,9 +980,6 @@ elansc_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	uint16_t rev;
 	uint8_t cpuctl, picicr, ressta;
-#if 0
-	struct pci_conf_state pcf;
-#endif
 #if NGPIO > 0
 	struct gpiobus_attach_args gba;
 	int pin, reg, shift;

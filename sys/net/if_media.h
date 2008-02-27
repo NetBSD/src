@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.42.12.2 2008/01/21 09:47:05 yamt Exp $	*/
+/*	$NetBSD: if_media.h,v 1.42.12.3 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -241,7 +241,7 @@ u_quad_t	ifmedia_baudrate(int);
 #define	IFM_IEEE80211_FH	0x00040000	/* 2 GHz, GFSK mode */
 
 /*
- * Common Access Redundancy Protocol
+ * Common Address Redundancy Protocol
  */
 #define	IFM_CARP		0x000000c0
 

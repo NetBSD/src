@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.17.2.2 2007/09/03 14:39:27 yamt Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.17.2.3 2008/02/27 08:36:48 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.17.2.2 2007/09/03 14:39:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.17.2.3 2008/02/27 08:36:48 yamt Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -152,7 +152,15 @@ Static callback usscanner_data_cb;
 Static callback usscanner_sensecmd_cb;
 Static callback usscanner_sensedata_cb;
 
-USB_DECLARE_DRIVER(usscanner);
+int usscanner_match(device_t, struct cfdata *, void *);
+void usscanner_attach(device_t, device_t, void *);
+void usscanner_childdet(device_t, device_t);
+int usscanner_detach(device_t, int);
+int usscanner_activate(device_t, enum devact);
+extern struct cfdriver usscanner_cd;
+CFATTACH_DECL2(usscanner, sizeof(struct usscanner_softc),
+    usscanner_match, usscanner_attach, usscanner_detach, usscanner_activate,
+NULL, usscanner_childdet);
 
 USB_MATCH(usscanner)
 {
@@ -343,6 +351,15 @@ USB_ATTACH(usscanner)
 #endif
 }
 
+void
+usscanner_childdet(device_t self, device_t child)
+{
+	struct usscanner_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == NULL);
+	sc->sc_child = NULL;
+}
+
 USB_DETACH(usscanner)
 {
 	USB_DETACH_START(usscanner, sc);
@@ -403,9 +420,9 @@ usscanner_cleanup(struct usscanner_softc *sc)
 }
 
 int
-usscanner_activate(device_ptr_t self, enum devact act)
+usscanner_activate(device_t self, enum devact act)
 {
-	struct usscanner_softc *sc = (struct usscanner_softc *)self;
+	struct usscanner_softc *sc = device_private(self);
 
 	switch (act) {
 	case DVACT_ACTIVATE:

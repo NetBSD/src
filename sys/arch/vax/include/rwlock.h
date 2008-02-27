@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.2.4.4 2008/02/04 09:22:41 yamt Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.2.4.5 2008/02/27 08:36:26 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct krwlock {
 
 #include <sys/atomic.h>
 
+#define	__HAVE_RW_STUBS		1
 #define __HAVE_SIMPLE_RW_LOCKS	1
 
 #define RW_RECEIVE(rw)		/* nothing */

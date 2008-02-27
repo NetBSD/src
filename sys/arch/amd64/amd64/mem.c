@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.4.16.5 2008/01/21 09:35:18 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.4.16.6 2008/02/27 08:36:18 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4.16.5 2008/01/21 09:35:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.4.16.6 2008/02/27 08:36:18 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -115,10 +115,7 @@ int check_pa_acc(paddr_t, vm_prot_t);
 
 /*ARGSUSED*/
 int
-mmrw(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+mmrw(dev_t dev, struct uio *uio, int flags)
 {
 	register vaddr_t o, v;
 	register int c;
@@ -218,10 +215,7 @@ mmrw(dev, uio, flags)
 }
 
 paddr_t
-mmmmap(dev, off, prot)
-	dev_t dev;
-	off_t off;
-	int prot;
+mmmmap(dev_t dev, off_t off, int prot)
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.46.2.5 2008/02/11 15:00:00 yamt Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.46.2.6 2008/02/27 08:37:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.46.2.5 2008/02/11 15:00:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.46.2.6 2008/02/27 08:37:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -139,8 +139,8 @@ struct ifvlan {
 		int	ifvm_encaplen;	/* encapsulation length */
 		int	ifvm_mtufudge;	/* MTU fudged by this much */
 		int	ifvm_mintu;	/* min transmission unit */
-		u_int16_t ifvm_proto;	/* encapsulation ethertype */
-		u_int16_t ifvm_tag;	/* tag to apply on packets */
+		uint16_t ifvm_proto;	/* encapsulation ethertype */
+		uint16_t ifvm_tag;	/* tag to apply on packets */
 	} ifv_mib;
 	LIST_HEAD(__vlan_mchead, vlan_mc_entry) ifv_mc_listhead;
 	LIST_ENTRY(ifvlan) ifv_list;
@@ -584,7 +584,7 @@ vlan_ether_addmulti(struct ifvlan *ifv, struct ifreq *ifr)
 {
 	const struct sockaddr *sa = ifreq_getaddr(SIOCADDMULTI, ifr);
 	struct vlan_mc_entry *mc;
-	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	uint8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
 	if (sa->sa_len > sizeof(struct sockaddr_storage))
@@ -635,7 +635,7 @@ vlan_ether_delmulti(struct ifvlan *ifv, struct ifreq *ifr)
 	const struct sockaddr *sa = ifreq_getaddr(SIOCDELMULTI, ifr);
 	struct ether_multi *enm;
 	struct vlan_mc_entry *mc;
-	u_int8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
+	uint8_t addrlo[ETHER_ADDR_LEN], addrhi[ETHER_ADDR_LEN];
 	int error;
 
 	/*

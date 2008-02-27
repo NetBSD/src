@@ -1,4 +1,4 @@
-/*	$NetBSD: if_token.h,v 1.10.4.3 2008/01/21 09:47:07 yamt Exp $	*/
+/*	$NetBSD: if_token.h,v 1.10.4.4 2008/02/27 08:37:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -38,18 +38,18 @@
 
 /* Token Ring physical header */
 struct token_header {
-	u_int8_t  token_ac;			/* access control field */
-	u_int8_t  token_fc;			/* frame control field */
-	u_int8_t  token_dhost[ISO88025_ADDR_LEN];	/* dest. address */
-	u_int8_t  token_shost[ISO88025_ADDR_LEN];	/* source address */
+	uint8_t  token_ac;			/* access control field */
+	uint8_t  token_fc;			/* frame control field */
+	uint8_t  token_dhost[ISO88025_ADDR_LEN];	/* dest. address */
+	uint8_t  token_shost[ISO88025_ADDR_LEN];	/* source address */
 } __packed;
 
 #define TOKEN_MAX_BRIDGE 8
 
 /* Token Ring routing information field */
 struct token_rif {
-	u_int16_t tr_rcf;			/* route control field */
-	u_int16_t tr_rdf[TOKEN_MAX_BRIDGE];	/* route-designator fields */
+	uint16_t tr_rcf;			/* route control field */
+	uint16_t tr_rdf[TOKEN_MAX_BRIDGE];	/* route-designator fields */
 } __packed;
 
 /* standard values for address control and frame control field */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.6 2008/02/11 14:59:29 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.7 2008/02/27 08:36:23 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.6 2008/02/11 14:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.7 2008/02/27 08:36:23 yamt Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -203,6 +203,10 @@ static u_int mem_cnt, avail_cnt;
 #endif
 #if defined(DEBUG) || defined(PMAPCHECK)
 #define	pmap_pvo_verify		PMAPNAME(pvo_verify)
+#define pmapcheck		PMAPNAME(check)
+#endif
+#if defined(DEBUG) || defined(PMAPDEBUG)
+#define pmapdebug		PMAPNAME(debug)
 #endif
 #define pmap_steal_memory	PMAPNAME(steal_memory)
 #define pmap_bootstrap		PMAPNAME(bootstrap)
@@ -1604,9 +1608,9 @@ pmap_pvo_enter(pmap_t pm, struct pool *pl, struct pvo_head *pvo_head,
 			    ((pvo->pvo_pte.pte_lo ^ (pa|pte_lo)) &
 			    ~(PTE_REF|PTE_CHG)) == 0 &&
 			   va < VM_MIN_KERNEL_ADDRESS) {
-				printf("pmap_pvo_enter: pvo %p: dup %#" _PRIxpa "/%#" _PRIxpa "\n",
+				printf("pmap_pvo_enter: pvo %p: dup %#" _PRIxpte "/%#" _PRIxpa "\n",
 				    pvo, pvo->pvo_pte.pte_lo, pte_lo|pa);
-				printf("pmap_pvo_enter: pte_hi=%#" _PRIxpa " sr=%#" _PRIsr "\n",
+				printf("pmap_pvo_enter: pte_hi=%#" _PRIxpte " sr=%#" _PRIsr "\n",
 				    pvo->pvo_pte.pte_hi,
 				    pm->pm_sr[va >> ADDR_SR_SHFT]);
 				pmap_pte_print(pmap_pvo_to_pte(pvo, -1));

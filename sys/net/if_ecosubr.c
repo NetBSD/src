@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.16.2.3 2008/02/11 14:59:59 yamt Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.16.2.4 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.16.2.3 2008/02/11 14:59:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.16.2.4 2008/02/27 08:37:00 yamt Exp $");
 
 #include "bpfilter.h"
 #include "opt_inet.h"
@@ -96,7 +96,7 @@ struct eco_retryparms {
 };
 
 /* Default broadcast address */
-static const u_int8_t eco_broadcastaddr[] = { 0xff, 0xff };
+static const uint8_t eco_broadcastaddr[] = { 0xff, 0xff };
 
 static int eco_output(struct ifnet *, struct mbuf *, struct sockaddr *,
     struct rtentry *);
@@ -113,7 +113,7 @@ static void eco_retry_free(struct eco_retry *er);
 static void eco_retry(void *);
 
 void
-eco_ifattach(struct ifnet *ifp, const u_int8_t *lla)
+eco_ifattach(struct ifnet *ifp, const uint8_t *lla)
 {
 	struct ecocom *ec = (void *)ifp;
 
@@ -457,7 +457,7 @@ eco_input(struct ifnet *ifp, struct mbuf *m)
 				}
 			}
 			for (i = 0; i < m->m_len; i++)
-				printf(" %02x", mtod(m, u_int8_t *)[i]);
+				printf(" %02x", mtod(m, uint8_t *)[i]);
 			printf("\n");
 			goto drop;
 		}
@@ -720,7 +720,7 @@ eco_immediate(struct ifnet *ifp, struct mbuf *m)
 {
 	struct eco_header *eh, *reh;
 	struct mbuf *n;
-	static const u_int8_t machinepeek_data[] = { 42, 0, 0, 1 };
+	static const uint8_t machinepeek_data[] = { 42, 0, 0, 1 };
 
 	eh = mtod(m, struct eco_header *);
 	switch (eh->eco_control) {
@@ -807,7 +807,7 @@ eco_inputidle(struct ifnet *ifp)
  * Convert Econet address to printable (loggable) representation.
  */
 char *
-eco_sprintf(const u_int8_t *ea)
+eco_sprintf(const uint8_t *ea)
 {
 	static char buf[8];
 

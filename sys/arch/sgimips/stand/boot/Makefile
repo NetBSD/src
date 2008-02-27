@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10.2.1 2006/06/21 14:55:31 yamt Exp $
+#	$NetBSD: Makefile,v 1.10.2.2 2008/02/27 08:36:24 yamt Exp $
 
 PROG=	aoutboot
 
@@ -17,7 +17,7 @@ ${PROG}: ip2xboot ip3xboot
 
 # XXX Temporary hack to install the ELF version, too.
 FILES+=		ip2xboot ip3xboot
-CLEANFILES+=	ip2xboot ip3xboot
+CLEANFILES+=	ip2xboot ip2xboot.elf ip3xboot ip3xboot.elf
 
 CLEANFILES+=	boot.map
 
@@ -25,12 +25,12 @@ CLEANFILES+=	boot.map
 
 ip3xboot: ${OBJS} ${LIBS}
 	${LD} -Map boot.map -N -x -Ttext ${LOAD_ADDRESS_IP32} ${LDBUG} \
-	    -e start -o ip3xboot ${OBJS} ${LIBS}
-	@${STRIP} -s ip3xboot
-	@${SIZE} ip3xboot
+	    -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
+	@${SIZE} ${.TARGET}
 
 ip2xboot: ${OBJS} ${LIBS}
 	${LD} -Map boot.map -N -x -Ttext ${LOAD_ADDRESS} ${LDBUG} \
-	    -e start -o ip2xboot ${OBJS} ${LIBS}
-	@${STRIP} -s ip2xboot
-	@${SIZE} ip2xboot
+	    -e start -o ${.TARGET}.elf ${OBJS} ${LIBS}
+	@${STRIP} -s ${.TARGET}.elf -o ${.TARGET}
+	@${SIZE} ${.TARGET}

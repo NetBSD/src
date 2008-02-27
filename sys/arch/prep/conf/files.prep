@@ -1,4 +1,4 @@
-#	$NetBSD: files.prep,v 1.48.12.5 2007/12/07 17:25:59 yamt Exp $
+#	$NetBSD: files.prep,v 1.48.12.6 2008/02/27 08:36:23 yamt Exp $
 #
 # prep-specific configuration info
 #
@@ -64,11 +64,6 @@ file	arch/prep/prep/mainbus.c	mainbus
 device	cpu
 attach	cpu at mainbus
 file	arch/prep/prep/cpu.c		cpu
-
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/rasops/files.rasops"
-include "dev/wsfb/files.wsfb"
 
 #
 # PCI-only drivers

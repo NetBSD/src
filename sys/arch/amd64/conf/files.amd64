@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.16.2.8 2008/02/04 09:21:42 yamt Exp $
+#	$NetBSD: files.amd64,v 1.16.2.9 2008/02/27 08:36:18 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -91,8 +91,6 @@ device	mainbus: isabus, pcibus, bios32, acpibus, cpubus, ioapicbus, ipmibus
 attach	mainbus at root
 file	arch/amd64/amd64/mainbus.c		mainbus
 
-include "dev/wsfb/files.wsfb"
-
 #
 # PCI-only drivers
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
@@ -121,9 +119,6 @@ file	arch/x86/x86/tsc.c
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
 define	pckbcport { [irq = -1], [port = -1] }
-
-include	"dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
 
 include	"dev/pckbport/files.pckbport"
 

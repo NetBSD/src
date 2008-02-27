@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.207.2.9 2008/02/11 14:59:58 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.207.2.10 2008/02/27 08:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.9 2008/02/11 14:59:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.10 2008/02/27 08:36:55 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -509,7 +509,7 @@ ksiginfo_queue_drain0(ksiginfoq_t *kq)
  *	pending signal, or zero.
  */ 
 int
-sigget(sigpend_t *sp, ksiginfo_t *out, int signo, sigset_t *mask)
+sigget(sigpend_t *sp, ksiginfo_t *out, int signo, const sigset_t *mask)
 {
         ksiginfo_t *ksi;
 	sigset_t tset;
@@ -616,7 +616,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
  *	Clear all pending signals in the specified set.
  */
 void
-sigclear(sigpend_t *sp, sigset_t *mask, ksiginfoq_t *kq)
+sigclear(sigpend_t *sp, const sigset_t *mask, ksiginfoq_t *kq)
 {
 	ksiginfo_t *ksi, *next;
 
@@ -644,7 +644,7 @@ sigclear(sigpend_t *sp, sigset_t *mask, ksiginfoq_t *kq)
  *	its LWPs.
  */
 void
-sigclearall(struct proc *p, sigset_t *mask, ksiginfoq_t *kq)
+sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
 {
 	struct lwp *l;
 
@@ -661,8 +661,8 @@ sigclearall(struct proc *p, sigset_t *mask, ksiginfoq_t *kq)
  * sigispending:
  *
  *	Return true if there are pending signals for the current LWP.  May
- *	be called unlocked provided that L_PENDSIG is set, and that the
- *	signal has been posted to the appopriate queue before L_PENDSIG is
+ *	be called unlocked provided that LW_PENDSIG is set, and that the
+ *	signal has been posted to the appopriate queue before LW_PENDSIG is
  *	set.
  */ 
 int
@@ -1412,7 +1412,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 
  deliver:
 	/*
-	 * Before we set L_PENDSIG on any LWP, ensure that the signal is
+	 * Before we set LW_PENDSIG on any LWP, ensure that the signal is
 	 * visible on the per process list (for sigispending()).  This
 	 * is unlikely to be needed in practice, but...
 	 */
@@ -1444,12 +1444,60 @@ kpsendsig(struct lwp *l, const ksiginfo_t *ksi, const sigset_t *mask)
 }
 
 /*
+ * Stop any LWPs sleeping interruptably.
+ */
+static void
+proc_stop_lwps(struct proc *p)
+{
+	struct lwp *l;
+
+	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT((p->p_sflag & PS_STOPPING) != 0);
+
+	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
+		lwp_lock(l);
+		if (l->l_stat == LSSLEEP && (l->l_flag & LW_SINTR) != 0) {
+			l->l_stat = LSSTOP;
+			p->p_nrlwps--;
+		}
+		lwp_unlock(l);
+	}
+}
+
+/*
+ * Finish stopping of a process.  Mark it stopped and notify the parent.
+ *
+ * Drop p_smutex briefly if PS_NOTIFYSTOP is set and ppsig is true.
+ */
+static void
+proc_stop_done(struct proc *p, bool ppsig, int ppmask)
+{
+
+	KASSERT(mutex_owned(&proclist_mutex));
+	KASSERT(mutex_owned(&p->p_smutex));
+	KASSERT((p->p_sflag & PS_STOPPING) != 0);
+	KASSERT(p->p_nrlwps == 0 || (p->p_nrlwps == 1 && p == curproc));
+
+	p->p_sflag &= ~PS_STOPPING;
+	p->p_stat = SSTOP;
+	p->p_waited = 0;
+	p->p_pptr->p_nstopchild++;
+	if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
+		if (ppsig) {
+			/* child_psignal drops p_smutex briefly. */
+			child_psignal(p, ppmask);
+		}
+		cv_broadcast(&p->p_pptr->p_waitcv);
+	}
+}
+
+/*
  * Stop the current process and switch away when being stopped or traced.
  */
 void
 sigswitch(bool ppsig, int ppmask, int signo)
 {
-	struct lwp *l = curlwp, *l2;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 #ifdef MULTIPROCESSOR
 	int biglocks;
@@ -1465,35 +1513,9 @@ sigswitch(bool ppsig, int ppmask, int signo)
 	 * through issignal(), then stop other LWPs in the process too.
 	 */
 	if (p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0) {
-		/*
-		 * Set the stopping indicator and bring all sleeping LWPs
-		 * to a halt so they are included in p->p_nrlwps
-		 */
-		p->p_sflag |= (PS_STOPPING | PS_NOTIFYSTOP);
-		membar_producer();
-
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-			lwp_lock(l2);
-			if (l2->l_stat == LSSLEEP &&
-			    (l2->l_flag & LW_SINTR) != 0) {
-				l2->l_stat = LSSTOP;
-				p->p_nrlwps--;
-			}
-			lwp_unlock(l2);
-		}
-
-		/*
-		 * Have the remaining LWPs come to a halt, and trigger
-		 * proc_stop_callout() to ensure that they do.
-		 */
 		KASSERT(signo != 0);
+		proc_stop(p, 1, signo);
 		KASSERT(p->p_nrlwps > 0);
-
-		if (p->p_nrlwps > 1) {
-			LIST_FOREACH(l2, &p->p_lwps, l_sibling)
-				sigpost(l2, SIG_DFL, SA_STOP, signo);
-			callout_schedule(&proc_stop_ch, 1);
-		}
 	}
 
 	/*
@@ -1508,19 +1530,11 @@ sigswitch(bool ppsig, int ppmask, int signo)
 		}
 
 		if (p->p_nrlwps == 1 && (p->p_sflag & PS_STOPPING) != 0) {
-			p->p_sflag &= ~PS_STOPPING;
-			p->p_stat = SSTOP;
-			p->p_waited = 0;
-			p->p_pptr->p_nstopchild++;
-			if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
-				/*
-				 * Note that child_psignal() will drop
-				 * p->p_smutex briefly.
-				 */
-				if (ppsig)
-					child_psignal(p, ppmask);
-				cv_broadcast(&p->p_pptr->p_waitcv);
-			}
+			/*
+			 * Note that proc_stop_done() can drop
+			 * p->p_smutex briefly.
+			 */
+			proc_stop_done(p, ppsig, ppmask);
 		}
 
 		mutex_exit(&proclist_mutex);
@@ -1791,8 +1805,8 @@ postsig(int signo)
 	 * Set the new mask value and also defer further occurrences of this
 	 * signal.
 	 *
-	 * Special case: user has done a sigpause.  Here the current mask is
-	 * not of interest, but rather the mask from before the sigpause is
+	 * Special case: user has done a sigsuspend.  Here the current mask is
+	 * not of interest, but rather the mask from before the sigsuspen is
 	 * what we want restored after the signal processing is completed.
 	 */
 	if (l->l_sigrestore) {
@@ -1992,7 +2006,6 @@ proc_stop(struct proc *p, int notify, int signo)
 {
 	struct lwp *l;
 
-	KASSERT(mutex_owned(&proclist_mutex));
 	KASSERT(mutex_owned(&p->p_smutex));
 
 	/*
@@ -2001,37 +2014,22 @@ proc_stop(struct proc *p, int notify, int signo)
 	 * unlock between here and the p->p_nrlwps check below.
 	 */
 	p->p_sflag |= PS_STOPPING;
+	if (notify)
+		p->p_sflag |= PS_NOTIFYSTOP;
+	else
+		p->p_sflag &= ~PS_NOTIFYSTOP;
 	membar_producer();
 
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		lwp_lock(l);
-		if (l->l_stat == LSSLEEP && (l->l_flag & LW_SINTR) != 0) {
-			l->l_stat = LSSTOP;
-			p->p_nrlwps--;
-		}
-		lwp_unlock(l);
-	}
+	proc_stop_lwps(p);
 
 	/*
 	 * If there are no LWPs available to take the signal, then we
 	 * signal the parent process immediately.  Otherwise, the last
 	 * LWP to stop will take care of it.
 	 */
-	if (notify)
-		p->p_sflag |= PS_NOTIFYSTOP;
-	else
-		p->p_sflag &= ~PS_NOTIFYSTOP;
 
 	if (p->p_nrlwps == 0) {
-		p->p_sflag &= ~PS_STOPPING;
-		p->p_stat = SSTOP;
-		p->p_waited = 0;
-		p->p_pptr->p_nstopchild++;
-
-		if (notify) {
-			child_psignal(p, PS_NOCLDSTOP);
-			cv_broadcast(&p->p_pptr->p_waitcv);
-		}
+		proc_stop_done(p, true, PS_NOCLDSTOP);
 	} else {
 		/*
 		 * Have the remaining LWPs come to a halt, and trigger
@@ -2069,7 +2067,6 @@ proc_stop_callout(void *cookie)
 {
 	bool more, restart;
 	struct proc *p;
-	struct lwp *l;
 
 	(void)cookie;
 
@@ -2088,37 +2085,23 @@ proc_stop_callout(void *cookie)
 			}
 
 			/* Stop any LWPs sleeping interruptably. */
-			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-				lwp_lock(l);
-				if (l->l_stat == LSSLEEP &&
-				    (l->l_flag & LW_SINTR) != 0) {
-				    	l->l_stat = LSSTOP;
-				    	p->p_nrlwps--;
-				}
-				lwp_unlock(l);
-			}
-
+			proc_stop_lwps(p);
 			if (p->p_nrlwps == 0) {
 				/*
 				 * We brought the process to a halt.
 				 * Mark it as stopped and notify the
 				 * parent.
 				 */
-				p->p_sflag &= ~PS_STOPPING;
-				p->p_stat = SSTOP;
-				p->p_waited = 0;
-				p->p_pptr->p_nstopchild++;
 				if ((p->p_sflag & PS_NOTIFYSTOP) != 0) {
 					/*
-					 * Note that child_psignal() will
+					 * Note that proc_stop_done() will
 					 * drop p->p_smutex briefly.
 					 * Arrange to restart and check
 					 * all processes again.
 					 */
 					restart = true;
-					child_psignal(p, PS_NOCLDSTOP);
-					cv_broadcast(&p->p_pptr->p_waitcv);
 				}
+				proc_stop_done(p, true, PS_NOCLDSTOP);
 			} else
 				more = true;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.197.2.8 2008/02/04 09:23:17 yamt Exp $	*/
+/*	$NetBSD: audio.c,v 1.197.2.9 2008/02/27 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.197.2.8 2008/02/04 09:23:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.197.2.9 2008/02/27 08:36:31 yamt Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -102,7 +102,11 @@ int	audiodebug = AUDIO_DEBUG;
 #define SPECIFIED(x)	(x != ~0)
 #define SPECIFIED_CH(x)	(x != (u_char)~0)
 
+/* #define AUDIO_PM_IDLE */
+#ifdef AUDIO_PM_IDLE
 int	audio_idle_timeout = 30;
+#endif
+
 int	audio_blk_ms = AUDIO_BLK_MS;
 
 int	audiosetinfo(struct audio_softc *, struct audio_info *);
@@ -174,8 +178,10 @@ void	audioattach(struct device *, struct device *, void *);
 int	audiodetach(struct device *, int);
 int	audioactivate(struct device *, enum devact);
 
+#ifdef AUDIO_PM_IDLE
 static void	audio_idle(void *);
 static void	audio_activity(device_t, devactive_t);
+#endif
 
 static bool	audio_suspend(device_t dv);
 static bool	audio_resume(device_t dv);
@@ -484,13 +490,17 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		 sc->sc_inports.allports, sc->sc_inports.master,
 		 sc->sc_outports.allports, sc->sc_outports.master));
 
+#ifdef AUDIO_PM_IDLE
 	callout_init(&sc->sc_idle_counter, 0);
 	callout_setfunc(&sc->sc_idle_counter, audio_idle, self);
+#endif
 
 	if (!pmf_device_register(self, audio_suspend, audio_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+#ifdef AUDIO_PM_IDLE
 	if (!device_active_register(self, audio_activity))
 		aprint_error_dev(self, "couldn't register activity handler\n");
+#endif
 
 	if (!pmf_event_register(self, PMFE_AUDIO_VOLUME_DOWN,
 	    audio_volume_down, true))
@@ -502,7 +512,9 @@ audioattach(struct device *parent, struct device *self, void *aux)
 	    audio_volume_toggle, true))
 		aprint_error_dev(self, "couldn't add volume toggle handler\n");
 
+#ifdef AUDIO_PM_IDLE
 	callout_schedule(&sc->sc_idle_counter, audio_idle_timeout * hz);
+#endif
 }
 
 int
@@ -541,9 +553,11 @@ audiodetach(struct device *self, int flags)
 	pmf_event_deregister(self, PMFE_AUDIO_VOLUME_TOGGLE,
 	    audio_volume_toggle, true);
 
+#ifdef AUDIO_PM_IDLE
 	callout_stop(&sc->sc_idle_counter);
 
 	device_active_deregister(self, audio_activity);
+#endif
 
 	pmf_device_deregister(self);
 
@@ -582,7 +596,9 @@ audiodetach(struct device *self, int flags)
 		sc->sc_sih_wr = NULL;
 	}
 
+#ifdef AUDIO_PM_IDLE
 	callout_destroy(&sc->sc_idle_counter);
+#endif
 
 	return 0;
 }
@@ -1637,8 +1653,10 @@ audio_read(struct audio_softc *sc, struct uio *uio, int ioflag)
 	DPRINTFN(1,("audio_read: cc=%zu mode=%d\n",
 		    uio->uio_resid, sc->sc_mode));
 
+#ifdef AUDIO_PM_IDLE
 	if (device_is_active(&sc->dev) || sc->sc_idle)
 		device_active(&sc->dev, DVA_SYSTEM);
+#endif
 
 	error = 0;
 	/*
@@ -1934,8 +1952,10 @@ audio_write(struct audio_softc *sc, struct uio *uio, int ioflag)
 		return 0;
 	}
 
+#ifdef AUDIO_PM_IDLE
 	if (device_is_active(&sc->dev) || sc->sc_idle)
 		device_active(&sc->dev, DVA_SYSTEM);
+#endif
 
 	/*
 	 * If half-duplex and currently recording, throw away data.
@@ -3954,6 +3974,7 @@ audio_mixer_restore(struct audio_softc *sc)
 	return;
 }
 
+#ifdef AUDIO_PM_IDLE
 static void
 audio_idle(void *arg)
 {
@@ -3993,6 +4014,7 @@ audio_activity(device_t dv, devactive_t type)
 		pmf_device_resume(dv);
 	}
 }
+#endif
 
 static bool
 audio_suspend(device_t dv)
@@ -4007,7 +4029,9 @@ audio_suspend(device_t dv)
 		hwp->halt_output(sc->hw_hdl);
 	if (sc->sc_rbus == true)
 		hwp->halt_input(sc->hw_hdl);
+#ifdef AUDIO_PM_IDLE
 	callout_stop(&sc->sc_idle_counter);
+#endif
 	splx(s);
 
 	return true;

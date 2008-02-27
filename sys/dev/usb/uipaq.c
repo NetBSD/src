@@ -1,4 +1,4 @@
-/*	$NetBSD: uipaq.c,v 1.2.18.6 2008/01/21 09:44:47 yamt Exp $	*/
+/*	$NetBSD: uipaq.c,v 1.2.18.7 2008/02/27 08:36:47 yamt Exp $	*/
 /*	$OpenBSD: uipaq.c,v 1.1 2005/06/17 23:50:33 deraadt Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.2.18.6 2008/01/21 09:44:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipaq.c,v 1.2.18.7 2008/02/27 08:36:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,7 +88,7 @@ struct uipaq_softc {
 	usbd_device_handle	sc_udev;	/* device */
 	usbd_interface_handle	sc_iface;	/* interface */
 
-	device_ptr_t		sc_subdev;	/* ucom uses that */
+	device_t		sc_subdev;	/* ucom uses that */
 	u_int16_t		sc_lcr;		/* state for DTR/RTS */
 
 	u_int16_t		sc_flags;
@@ -133,7 +133,14 @@ static const struct uipaq_type uipaq_devs[] = {
 
 #define uipaq_lookup(v, p) ((const struct uipaq_type *)usb_lookup(uipaq_devs, v, p))
 
-USB_DECLARE_DRIVER(uipaq);
+int uipaq_match(device_t, struct cfdata *, void *);
+void uipaq_attach(device_t, device_t, void *);
+void uipaq_childdet(device_t, device_t);
+int uipaq_detach(device_t, int);
+int uipaq_activate(device_t, enum devact);
+extern struct cfdriver uipaq_cd;
+CFATTACH_DECL2(uipaq, sizeof(struct uipaq_softc), uipaq_match,
+    uipaq_attach, uipaq_detach, uipaq_activate, NULL, uipaq_childdet);
 
 USB_MATCH(uipaq)
 {
@@ -354,9 +361,9 @@ uipaq_set(void *addr, int portno, int reg, int onoff)
 
 
 int
-uipaq_activate(device_ptr_t self, enum devact act)
+uipaq_activate(device_t self, enum devact act)
 {
-	struct uipaq_softc *sc = (struct uipaq_softc *)self;
+	struct uipaq_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -373,18 +380,25 @@ uipaq_activate(device_ptr_t self, enum devact act)
 	return (rv);
 }
 
-int
-uipaq_detach(device_ptr_t self, int flags)
+void
+uipaq_childdet(device_t self, device_t child)
 {
-	struct uipaq_softc *sc = (struct uipaq_softc *)self;
+	struct uipaq_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
+}
+
+int
+uipaq_detach(device_t self, int flags)
+{
+	struct uipaq_softc *sc = device_private(self);
 	int rv = 0;
 
 	DPRINTF(("uipaq_detach: sc=%p flags=%d\n", sc, flags));
 	sc->sc_dying = 1;
-	if (sc->sc_subdev != NULL) {
+	if (sc->sc_subdev != NULL)
 		rv |= config_detach(sc->sc_subdev, flags);
-		sc->sc_subdev = NULL;
-	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 	    USBDEV(sc->sc_dev));

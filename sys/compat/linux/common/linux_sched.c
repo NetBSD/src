@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.19.2.6 2008/02/04 09:23:06 yamt Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.19.2.7 2008/02/27 08:36:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.19.2.6 2008/02/04 09:23:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.19.2.7 2008/02/27 08:36:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -167,10 +167,8 @@ linux_sys_sched_setparam(struct lwp *l, const struct linux_sys_sched_setparam_ar
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 
-		if (l->l_proc != p &&
-		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL,
-		    &lp) != 0)
+		if (kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, NULL, NULL, NULL) != 0)
 			return EPERM;
 	}
 
@@ -197,10 +195,8 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 
-		if (l->l_proc != p &&
-		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM), NULL,
-		    NULL) != 0)
+		if (kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER_GETPARAM, p, NULL, NULL, NULL) != 0)
 			return EPERM;
 	}
 
@@ -235,10 +231,8 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 
-		if (l->l_proc != p &&
-		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SET),
-		    KAUTH_ARG(SCARG(uap, policy)), &lp) != 0)
+		if (kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER_SET, p, NULL, NULL, NULL) != 0)
 			return EPERM;
 	}
 
@@ -269,10 +263,8 @@ linux_sys_sched_getscheduler(struct lwp *l, const struct linux_sys_sched_getsche
 		if ((p = pfind(SCARG(uap, pid))) == NULL)
 			return ESRCH;
 
-		if (l->l_proc != p &&
-		    kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-		    p, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GET), NULL,
-		    NULL) != 0)
+		if (kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER_GET, p, NULL, NULL, NULL) != 0)
 			return EPERM;
 	}
 

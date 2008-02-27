@@ -1,4 +1,4 @@
-#	$NetBSD: files.shark,v 1.9.10.4 2007/12/07 17:26:10 yamt Exp $
+#	$NetBSD: files.shark,v 1.9.10.5 2008/02/27 08:36:25 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -21,11 +21,6 @@ define todservice {}
 # ISA and mixed ISA+EISA or ISA+PCI drivers
 #
 include "dev/isa/files.isa"
-
-# Include WSCONS stuff
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 # Include pckbport stuff
 include "dev/pckbport/files.pckbport"

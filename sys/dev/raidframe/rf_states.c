@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.c,v 1.38.4.2 2007/09/03 14:38:23 yamt Exp $	*/
+/*	$NetBSD: rf_states.c,v 1.38.4.3 2008/02/27 08:36:46 yamt Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.38.4.2 2007/09/03 14:38:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_states.c,v 1.38.4.3 2008/02/27 08:36:46 yamt Exp $");
 
 #include <sys/errno.h>
 
@@ -497,7 +497,7 @@ rf_State_CreateDAG(RF_RaidAccessDesc_t *desc)
 	if (rf_printDAGsDebug) {
 		dagList = desc->dagList;
 		for (i = 0; i < desc->numStripes; i++) {
-			rf_PrintDAGList(dagList.dags);
+			rf_PrintDAGList(dagList->dags);
 			dagList = dagList->next;
 		}
 	}
