@@ -1,4 +1,4 @@
-/*	$NetBSD: iso.c,v 1.28 2008/02/16 07:16:02 matt Exp $	*/
+/*	$NetBSD: iso.c,v 1.29 2008/02/27 16:36:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)iso.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: iso.c,v 1.28 2008/02/16 07:16:02 matt Exp $");
+__RCSID("$NetBSD: iso.c,v 1.29 2008/02/27 16:36:54 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -557,7 +557,7 @@ struct	tp_stat tp_stat;
 void
 tp_stats(off, name)
 	u_long off;
-	caddr_t name;
+	char *name;
 {
 
 	if (off == 0) {
