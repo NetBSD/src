@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.164 2008/02/27 18:26:15 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.165 2008/02/27 20:18:56 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -470,7 +470,16 @@ void x86_bus_space_mallocok(void);
 #define	CPU_OSFXSR		8	/* int: OS uses FXSAVE/FXRSTOR */
 #define	CPU_SSE			9	/* int: OS/CPU supports SSE */
 #define	CPU_SSE2		10	/* int: OS/CPU supports SSE2 */
-#define	CPU_MAXID		11	/* number of valid machdep ids */
+#define	CPU_TMLR_MODE		11	/* int: longrun mode
+					 * 0: minimum frequency
+					 * 1: economy
+					 * 2: performance
+					 * 3: maximum frequency
+					 */
+#define	CPU_TMLR_FREQUENCY	12	/* int: current frequency */
+#define	CPU_TMLR_VOLTAGE	13	/* int: curret voltage */
+#define	CPU_TMLR_PERCENTAGE	14	/* int: current clock percentage */
+#define	CPU_MAXID		15	/* number of valid machdep ids */
 
 /*
  * Structure for CPU_DISKINFO sysctl call.
