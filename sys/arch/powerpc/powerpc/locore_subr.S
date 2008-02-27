@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.27.8.5 2008/02/11 14:59:29 yamt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.27.8.6 2008/02/27 08:36:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -292,12 +292,12 @@ _C_LABEL(cpu_lwp_bootstrap):
 
 #if defined(MULTIPROCESSOR) && !defined(PPC_OEA64) && !defined (PPC_IBM4XX)
 ENTRY(cpu_spinup_trampoline)
-	li	0,0
-	mtmsr	0
+	li	%r0,0
+	mtmsr	%r0
 	isync
 
-	lis	3,_C_LABEL(cpu_hatch_stack)@ha
-	lwz	1,_C_LABEL(cpu_hatch_stack)@l(3)
+	lis	%r3,_C_LABEL(cpu_hatch_stack)@ha
+	lwz	%r1,_C_LABEL(cpu_hatch_stack)@l(%r3)
 
 	bl	_C_LABEL(cpu_hatch)
 	b	_C_LABEL(idle_loop)

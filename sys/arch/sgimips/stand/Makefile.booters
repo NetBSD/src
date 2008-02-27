@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.booters,v 1.12 2003/11/17 09:32:58 sekiya Exp $
+# $NetBSD: Makefile.booters,v 1.12.16.1 2008/02/27 08:36:24 yamt Exp $
 
 .include <bsd.sys.mk>		# for HOST_SH
 
@@ -41,7 +41,7 @@ LOAD_ADDRESS_IP32?=	0x80002000
 .if exists(version)
 .PHONY: vers.c
 vers.c: ${.CURDIR}/version
-	${HOST_SH} ${S}/conf/newvers_stand.sh -N ${.CURDIR}/version "sgimips"
+	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "sgimips"
 
 SRCS+=	vers.c
 CLEANFILES+= vers.c

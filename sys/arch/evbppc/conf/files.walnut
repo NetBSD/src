@@ -1,4 +1,4 @@
-#	$NetBSD: files.walnut,v 1.7.12.4 2007/12/07 17:24:36 yamt Exp $
+#	$NetBSD: files.walnut,v 1.7.12.5 2008/02/27 08:36:19 yamt Exp $
 #
 # walnut-specific configuration info
 
@@ -19,14 +19,6 @@ include	"dev/scsipi/files.scsipi"
 
 # Machine-independent ATA drivers
 include	"dev/ata/files.ata"
-
-# Workstation Console
-include "dev/wscons/files.wscons"
-include "dev/wsfb/files.wsfb"
-
-# Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 # PCI bus support
 include	"dev/pci/files.pci"

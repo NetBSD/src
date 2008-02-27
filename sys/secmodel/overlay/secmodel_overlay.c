@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_overlay.c,v 1.4.2.3 2007/02/26 09:12:09 yamt Exp $ */
+/* $NetBSD: secmodel_overlay.c,v 1.4.2.4 2008/02/27 08:37:05 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.4.2.3 2007/02/26 09:12:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.4.2.4 2008/02/27 08:37:05 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -40,7 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_overlay.c,v 1.4.2.3 2007/02/26 09:12:09 yam
 
 #include <secmodel/bsd44/bsd44.h>
 #include <secmodel/bsd44/suser.h>
-#include <secmodel/bsd44/securelevel.h>
+
+#include <secmodel/securelevel/securelevel.h>
 
 /*
  * Fall-back settings.
@@ -93,27 +94,27 @@ secmodel_overlay_init(void)
 	kauth_listen_scope(OVERLAY_ISCOPE_SYSTEM,
 	    secmodel_bsd44_suser_system_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_SYSTEM,
-	    secmodel_bsd44_securelevel_system_cb, NULL);
+	    secmodel_securelevel_system_cb, NULL);
 
 	kauth_listen_scope(OVERLAY_ISCOPE_PROCESS,
 	    secmodel_bsd44_suser_process_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_PROCESS,
-	    secmodel_bsd44_securelevel_process_cb, NULL);
+	    secmodel_securelevel_process_cb, NULL);
 
 	kauth_listen_scope(OVERLAY_ISCOPE_NETWORK,
 	    secmodel_bsd44_suser_network_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_NETWORK,
-	    secmodel_bsd44_securelevel_network_cb, NULL);
+	    secmodel_securelevel_network_cb, NULL);
 
 	kauth_listen_scope(OVERLAY_ISCOPE_MACHDEP,
 	    secmodel_bsd44_suser_machdep_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_MACHDEP,
-	    secmodel_bsd44_securelevel_machdep_cb, NULL);
+	    secmodel_securelevel_machdep_cb, NULL);
 
 	kauth_listen_scope(OVERLAY_ISCOPE_DEVICE,
 	    secmodel_bsd44_suser_device_cb, NULL);
 	kauth_listen_scope(OVERLAY_ISCOPE_DEVICE,
-	    secmodel_bsd44_securelevel_device_cb, NULL);
+	    secmodel_securelevel_device_cb, NULL);
 
 	secmodel_bsd44_init();
 }
@@ -152,7 +153,7 @@ SYSCTL_SETUP(sysctl_security_overlay_setup,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "securelevel",
 		       SYSCTL_DESCR("System security level"),
-		       secmodel_bsd44_sysctl_securelevel, 0, NULL, 0,
+		       secmodel_securelevel_sysctl, 0, NULL, 0,
 		       CTL_CREATE, CTL_EOL);
 
 	sysctl_createv(clog, 0, &rnode, NULL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.49.2.5 2008/01/21 09:47:00 yamt Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.49.2.6 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.49.2.5 2008/01/21 09:47:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.49.2.6 2008/02/27 08:37:00 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -99,7 +99,7 @@ static struct mbuf *arc_defrag(struct ifnet *, struct mbuf *);
 ERROR: The arc_ipmtu is ARC_IPMTU, but must not exceed 60480.
 #endif
 int arc_ipmtu = ARC_IPMTU;
-u_int8_t  arcbroadcastaddr = 0;
+uint8_t  arcbroadcastaddr = 0;
 
 #define senderr(e) { error = (e); goto bad;}
 
@@ -123,7 +123,7 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	struct arc_header	*ah;
 	struct arphdr		*arph;
 	int			error, newencoding;
-	u_int8_t		atype, adst, myself;
+	uint8_t			atype, adst, myself;
 	int			tfrags, sflag, fsflag, rsflag;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
@@ -525,7 +525,7 @@ arc_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct arc_header *ah;
 	struct ifqueue *inq;
-	u_int8_t atype;
+	uint8_t atype;
 	int s;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {

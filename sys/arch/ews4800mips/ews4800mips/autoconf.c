@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1.18.5 2008/01/21 09:36:22 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.1.18.6 2008/02/27 08:36:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.18.5 2008/01/21 09:36:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1.18.6 2008/02/27 08:36:19 yamt Exp $");
 
 #include "opt_sbd.h"
 
@@ -63,7 +63,7 @@ cpu_configure(void)
 void
 cpu_rootconf(void)
 {
-	struct device *dv;
+	device_t dv;
 	char *p;
 	const char *bootdev_name, *netdev_name;
 	int unit, partition;
@@ -116,16 +116,9 @@ cpu_rootconf(void)
 			bootdev_name = 0;
 	}
 
-	dv = 0;
-	if (bootdev_name) {
-		for (dv = TAILQ_FIRST(&alldevs); dv;
-		    dv = TAILQ_NEXT(dv, dv_list)) {
-			if (strcmp(dv->dv_xname, bootdev_name) == 0) {
-				setroot(dv, partition);
-				break;
-			}
-		}
-	}
-	if (dv == 0)
+	if (bootdev_name &&
+	    (dv = device_find_by_xname(bootdev_name)) != NULL) {
+		setroot(dv, partition);
+	} else
 		setroot(0, 0);
 }

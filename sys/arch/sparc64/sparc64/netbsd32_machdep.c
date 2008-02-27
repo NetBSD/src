@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.49.2.5 2008/01/21 09:39:35 yamt Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.49.2.6 2008/02/27 08:36:25 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.5 2008/01/21 09:39:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.49.2.6 2008/02/27 08:36:25 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -651,8 +651,9 @@ netbsd32_process_read_fpregs(struct lwp *l, struct fpreg32 *regs)
 
 	if (l->l_md.md_fpstate)
 		statep = l->l_md.md_fpstate;
-	for (i=0; i<32; i++)
+	for (i = 0; i < 32; i++)
 		regs->fr_regs[i] = statep->fs_regs[i];
+	regs->fr_fsr = statep->fs_fsr;
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77.2.7 2008/02/11 14:59:28 yamt Exp $
+# $NetBSD: GENERIC,v 1.77.2.8 2008/02/27 08:36:22 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,14 +22,14 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77.2.7 $"
+#ident 		"GENERIC-$Revision: 1.77.2.8 $"
 
 maxusers	32
 
-options		PIC_OPENPIC
+options 	PIC_OPENPIC
 options 	PIC_DISTOPENPIC
-options		PIC_I8259
-#options		PIC_PREPIVR
+options 	PIC_I8259
+#options 	PIC_PREPIVR
 
 # various hacks due to bugs in Openfirmware implementation
 options 	FIRMWORKSBUGS
@@ -47,7 +47,7 @@ options 	P1003_1B_SEMAPHORE # p1003.1b semaphore support
 options 	LKM		# loadable kernel modules
 
 options 	USERCONF	# userconf(4) support
-#options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
+#options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
 # Diagnostic/debugging support options
@@ -56,7 +56,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 #options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
-options		DDB_VERBOSE_HELP
+options 	DDB_VERBOSE_HELP
 options 	TRAP_PANICWAIT
 
 makeoptions	DEBUG="-g"	# compile full symbol table
@@ -77,7 +77,7 @@ options 	COMPAT_43	# and 4.3BSD
 options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 #options 	COMPAT_LINUX	# Linux binary compatibility
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
-options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
+options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 # File systems
 file-system 	FFS		# UFS
@@ -87,6 +87,7 @@ file-system 	MFS		# memory file system
 file-system 	NFS		# Network file System client
 file-system 	CD9660		# ISO 9660 + Rock Ridge file system
 file-system 	MSDOSFS		# MS-DOS file system
+file-system 	ADOSFS		# AmigaDOS file system
 file-system 	FDESC		# /dev/fd
 file-system 	KERNFS		# /kern
 file-system 	NULLFS		# loopback file system
@@ -104,7 +105,7 @@ file-system	PTYFS		# /dev/pts/N support
 options 	QUOTA		# UFS quotas
 options 	FFS_EI		# FFS Endian Independent support
 options 	SOFTDEP		# FFS soft updates support
-#options	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
+#options 	UFS_DIRHASH	# UFS Large Directory Hashing - Experimental
 options 	NFSSERVER	# Network File System server
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
 #options 	EXT2FS_SYSTEM_FLAGS	# makes ext2fs file flags (append and
@@ -150,19 +151,19 @@ options 	NMBCLUSTERS=1024
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-options		MIIVERBOSE	# verbose PHY autoconfig messages
-options		PCIVERBOSE	# verbose PCI device autoconfig messages
-#options		PCI_CONFIG_DUMP	# verbosely dump PCI config space
-options		SCSIVERBOSE	# human readable SCSI error messages
-options		USBVERBOSE	# verbose USB device autoconfig messages
+options 	MIIVERBOSE	# verbose PHY autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+#options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+options 	SCSIVERBOSE	# human readable SCSI error messages
+options 	USBVERBOSE	# verbose USB device autoconfig messages
 
-options		WSEMUL_VT100
-options		WS_DEFAULT_FG=WSCOL_BLACK
-options		WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
-options		WS_KERNEL_FG=WSCOL_GREEN
-options		WS_KERNEL_BG=WSCOL_LIGHT_WHITE
-#options		FONT_GALLANT12x22
-options		FONT_BOLD8x16
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_BLACK
+options 	WS_DEFAULT_BG=WSCOL_LIGHT_WHITE
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_LIGHT_WHITE
+#options 	FONT_GALLANT12x22
+options 	FONT_BOLD8x16
 
 # Kernel root file system and dump configuration
 config		netbsd	root on ? type ?
@@ -223,8 +224,9 @@ siop*		at pci? dev ? function ?	# Symbios 53c8xx SCSI
 esiop*		at pci? dev ? function ?	# Symbios 53c875 SCSI and newer
 
 # SCSI bus support
-scsibus*	at siop?
-scsibus*	at esiop?
+scsibus* 	at siop?
+scsibus* 	at esiop?
+scsibus* 	at umass?
 
 # SCSI devices
 sd*		at scsibus? target ? lun ?	# SCSI disk drives
@@ -383,13 +385,13 @@ pseudo-device	ccd		4	# concatenated/striped disk devices
 pseudo-device	raid		8	# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 # Options to enable various other RAIDframe RAID types.
-# options	RF_INCLUDE_EVENODD=1
-# options	RF_INCLUDE_RAID5_RS=1
-# options	RF_INCLUDE_PARITYLOGGING=1
-# options	RF_INCLUDE_CHAINDECLUSTER=1
-# options	RF_INCLUDE_INTERDECLUSTER=1
-# options 	RF_INCLUDE_PARITY_DECLUSTERING=1
-# options	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
+#options 	RF_INCLUDE_EVENODD=1
+#options 	RF_INCLUDE_RAID5_RS=1
+#options 	RF_INCLUDE_PARITYLOGGING=1
+#options 	RF_INCLUDE_CHAINDECLUSTER=1
+#options 	RF_INCLUDE_INTERDECLUSTER=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING=1
+#options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss		4	# file system snapshot device
 pseudo-device	md		1	# memory disk device
 pseudo-device	loop			# network loopback
@@ -407,7 +409,7 @@ pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 pseudo-device	vlan			# IEEE 802.1q encapsulation
 pseudo-device	bridge			# simple inter-network bridging
-#options	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
+#options 	BRIDGE_IPF		# bridge uses IP/IPv6 pfil hooks too
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	rnd			# /dev/random and in-kernel generator
@@ -417,10 +419,6 @@ pseudo-device	ksyms			# /dev/ksyms
 pseudo-device	wsmux			# mouse and keyboard multiplexor
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
-
-options	FIREPOWER_ES			# Firepower ES
-options	FIREPOWER_MX			# Firepower MX
-options	FIREPOWER_LX			# Firepower LX
 
 # Veriexec
 #

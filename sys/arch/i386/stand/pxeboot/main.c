@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8.2.1 2006/06/21 14:52:44 yamt Exp $	*/
+/*	$NetBSD: main.c,v 1.8.2.2 2008/02/27 08:36:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -70,21 +70,6 @@ const struct bootblk_command commands[] = {
 	{ "consdev",	command_consdev },
 	{ NULL,		NULL },
 };
-
-#ifdef COMPAT_OLDBOOT
-int
-parsebootfile(const char *fname, char **fsname, char **devname,
-    int *unit, int *partition, const char **file)
-{
-	return (EINVAL);
-}
-
-int 
-biosdisk_gettype(struct open_file *f)
-{
-	return (0);
-}
-#endif
 
 static int 
 bootit(const char *filename, int howto)

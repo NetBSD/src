@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.14.12.3 2008/01/21 09:35:56 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.14.12.4 2008/02/27 08:36:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.12.3 2008/01/21 09:35:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.14.12.4 2008/02/27 08:36:18 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,8 +98,7 @@ void
 findroot(void)
 {
 	int unit, part;
-	struct device *dv;
-	char buf[32];
+	device_t dv;
 	const char *name;
 
 	if ((bootdev & B_MAGICMASK) != (u_long)B_DEVMAGIC)
@@ -111,15 +110,10 @@ findroot(void)
 	
 	part = (bootdev >> B_PARTITIONSHIFT) & B_PARTITIONMASK;
 	unit = (bootdev >> B_UNITSHIFT) & B_UNITMASK;
-	
-	sprintf(buf, "%s%d", name, unit);
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	     dv = TAILQ_NEXT(dv, dv_list)) {
-		if (strcmp(buf, dv->dv_xname) == 0) {
-			booted_device = dv;
-			booted_partition = part;
-			return;
-		}
+
+	if ((dv = device_find_by_driver_unit(name, unit)) != NULL) {
+		booted_device = dv;
+		booted_partition = part;
 	}
 }
 

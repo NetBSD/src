@@ -1,4 +1,4 @@
-/*	$NetBSD: scb.h,v 1.11 2000/07/10 09:14:34 ragge Exp $	*/
+/*	$NetBSD: scb.h,v 1.11.40.1 2008/02/27 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -131,10 +131,10 @@ extern	struct scb *scb;
 extern	struct ivec_dsp *scb_vec;
 extern	struct evcnt devipl_intrcnts[4];	/* IPL 2[0123] */
 
-extern	paddr_t scb_init (paddr_t);
-extern	int scb_vecref (int *, int *);
-extern	void scb_fake (int, int);
-extern	void scb_vecalloc (int, void(*)(void *), void *, int, struct evcnt *);
+paddr_t scb_init (paddr_t);
+int scb_vecref (int *, int *);
+void scb_fake (int, int);
+void scb_vecalloc (int, void(*)(void *), void *, int, struct evcnt *);
 #endif /* _KERNEL */
 
 #endif /* _VAX_SCB_H */

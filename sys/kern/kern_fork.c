@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.122.2.9 2008/02/04 09:24:11 yamt Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.122.2.10 2008/02/27 08:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.9 2008/02/04 09:24:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.122.2.10 2008/02/27 08:36:55 yamt Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -453,6 +453,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	mutex_exit(&proclist_lock);
 
+	p2->p_trace_enabled = trace_is_enabled(p2);
 #ifdef __HAVE_SYSCALL_INTERN
 	(*p2->p_emul->e_syscall_intern)(p2);
 #endif

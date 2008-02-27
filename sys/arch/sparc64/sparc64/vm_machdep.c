@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.60.2.5 2007/10/27 11:28:45 yamt Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.60.2.6 2008/02/27 08:36:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60.2.5 2007/10/27 11:28:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.60.2.6 2008/02/27 08:36:25 yamt Exp $");
 
 #include "opt_coredump.h"
 
@@ -313,7 +313,7 @@ save_and_clear_fpstate(struct lwp *l)
 			continue;
 		if (ci->ci_fplwp != l)
 			continue;
-		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_save_fpstate);
+		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_save_fpstate, 0);
 		break;
 	}
 #endif
@@ -352,7 +352,7 @@ cpu_lwp_free(l, proc)
 		if (l == ci->ci_fplwp) {
 			/* drop the fplwp from the other fpu */
 			sparc64_send_ipi(ci->ci_cpuid,
-			    sparc64_ipi_drop_fpstate);
+			    sparc64_ipi_drop_fpstate, 0);
 			break;
 		}
 	}

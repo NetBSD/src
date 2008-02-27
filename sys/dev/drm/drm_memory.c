@@ -1,4 +1,4 @@
-/* $NetBSD: drm_memory.c,v 1.3.14.4 2008/01/21 09:42:46 yamt Exp $ */
+/* $NetBSD: drm_memory.c,v 1.3.14.5 2008/02/27 08:36:33 yamt Exp $ */
 
 /* drm_memory.h -- Memory management wrappers for DRM -*- linux-c -*-
  * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
@@ -34,12 +34,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.3.14.4 2008/01/21 09:42:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.3.14.5 2008/02/27 08:36:33 yamt Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
 
 #include "drmP.h"
+
+#include "agp_i810.h"
+#if NAGP_I810 > 0 /* XXX hack to borrow agp's register mapping */
+#include <dev/pci/agpvar.h>
+#endif
 
 MALLOC_DEFINE(M_DRM, "drm", "DRM Data Structures");
 
@@ -106,6 +111,10 @@ void *drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
 					dev->pci_map_data[i].flags, &map->bsh)))
 			{
 				dev->pci_map_data[i].mapped--;
+#if NAGP_I810 > 0 /* XXX horrible kludge: agp might have mapped it */
+				if (agp_i810_borrow(map->offset, &map->bsh))
+					return bus_space_vaddr(map->bst, map->bsh);
+#endif
 				DRM_DEBUG("ioremap: failed to map (%d)\n",
 					  reason);
 				return NULL;

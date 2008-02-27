@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.88.2.5 2008/01/21 09:48:09 yamt Exp $	*/
+/*	$NetBSD: lfs.h,v 1.88.2.6 2008/02/27 08:37:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -194,19 +194,17 @@ typedef struct lfs_res_blk {
 #define IS_IFILE(bp)	(VTOI(bp->b_vp)->i_number == LFS_IFILE_INUM)
 
 # define LFS_LOCK_BUF(bp) do {						\
-	KASSERT(mutex_owned(&bufcache_lock));				\
-	if (((bp)->b_cflags & BC_LOCKED) == 0 && bp->b_iodone == NULL) {\
+	if (((bp)->b_flags & B_LOCKED) == 0 && bp->b_iodone == NULL) {	\
 		mutex_enter(&lfs_lock);					\
 		++locked_queue_count;					\
 		locked_queue_bytes += bp->b_bufsize;			\
 		mutex_exit(&lfs_lock);					\
 	}								\
-	(bp)->b_cflags |= BC_LOCKED;					\
+	(bp)->b_flags |= B_LOCKED;					\
 } while (0)
 
 # define LFS_UNLOCK_BUF(bp) do {					\
-	KASSERT(mutex_owned(&bufcache_lock));				\
-	if (((bp)->b_cflags & BC_LOCKED) != 0 && bp->b_iodone == NULL) {\
+	if (((bp)->b_flags & B_LOCKED) != 0 && bp->b_iodone == NULL) {	\
 		mutex_enter(&lfs_lock);					\
 		--locked_queue_count;					\
 		locked_queue_bytes -= bp->b_bufsize;			\
@@ -215,7 +213,7 @@ typedef struct lfs_res_blk {
 			wakeup(&locked_queue_count);			\
 		mutex_exit(&lfs_lock);					\
 	}								\
-	(bp)->b_cflags &= ~BC_LOCKED;					\
+	(bp)->b_flags &= ~B_LOCKED;					\
 } while (0)
 
 #ifdef _KERNEL

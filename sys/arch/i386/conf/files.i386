@@ -1,4 +1,4 @@
-#	$NetBSD: files.i386,v 1.269.2.9 2008/02/04 09:22:04 yamt Exp $
+#	$NetBSD: files.i386,v 1.269.2.10 2008/02/27 08:36:20 yamt Exp $
 #
 # new style config file for i386 architecture
 #
@@ -82,6 +82,7 @@ file	arch/i386/i386/kgdb_machdep.c	kgdb
 file	arch/i386/i386/kobj_machdep.c	modular
 file	arch/i386/i386/machdep.c
 file	arch/i386/i386/identcpu.c
+file 	arch/i386/i386/longrun.c
 file	arch/i386/i386/mem.c
 file	arch/i386/i386/mtrr_k6.c	mtrr
 file	arch/i386/i386/process_machdep.c
@@ -153,8 +154,6 @@ file	arch/i386/i386/mainbus.c	mainbus
 # XXX MUST BE INCLUDED BEFORE files.isa, as long as files.isa attaches
 # XXX devices to 'pci'.
 #
-include "dev/wsfb/files.wsfb"
-
 include	"dev/pci/files.pci"
 include "dev/pci/files.agp"
 file	arch/i386/pci/pcibios.c		pcibios
@@ -272,9 +271,6 @@ file	arch/i386/isa/lms.c		lms
 device	mms: wsmousedev
 attach	mms at isa
 file	arch/i386/isa/mms.c		mms
-
-include	"dev/wscons/files.wscons"
-include	"dev/wsfont/files.wsfont"
 
 include	"dev/pckbport/files.pckbport"
 
@@ -505,8 +501,6 @@ device	vesabios {}
 attach	vesabios at vesabiosbus
 file	arch/i386/bios/vesabios.c		vesabios needs-flag
 defflag	opt_vesabios.h	VESABIOSVERBOSE
-
-include	"dev/rasops/files.rasops"
 
 device	vesafb: displaydev, wsemuldisplaydev, vcons, rasops8, rasops16, rasops32, splash, bioscall
 attach	vesafb at vesabios

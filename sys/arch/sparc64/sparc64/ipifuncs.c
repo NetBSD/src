@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.1.18.5 2008/02/04 09:22:35 yamt Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.1.18.6 2008/02/27 08:36:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.18.5 2008/02/04 09:22:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.1.18.6 2008/02/27 08:36:25 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -63,19 +63,10 @@ static volatile sparc64_cpuset_t cpus_halted;
 static volatile sparc64_cpuset_t cpus_paused;
 static volatile sparc64_cpuset_t cpus_resumed;
 
-volatile struct ipi_tlb_args ipi_tlb_args;
-
 /* IPI handlers. */
 static int	sparc64_ipi_wait(sparc64_cpuset_t volatile *, sparc64_cpuset_t);
 static void	sparc64_ipi_error(const char *, sparc64_cpuset_t, sparc64_cpuset_t);
 
-/*
- * This must be locked around all message transactions to ensure only
- * one CPU is generating them.
- * XXX this is from sparc, but it isn't necessary here, but we'll do
- * XXX it anyway for now, just to keep some things known.
- */
-static struct simplelock sparc64_ipi_lock = SIMPLELOCK_INITIALIZER;
  
 /*
  * These are the "function" entry points in locore.s to handle IPI's.
@@ -161,7 +152,7 @@ sparc64_ipi_init()
  * Send an IPI to all in the list but ourselves.
  */
 void
-sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func)
+sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func, uint64_t arg1)
 {
 	struct cpu_info *ci;
 
@@ -172,7 +163,7 @@ sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func)
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (CPUSET_HAS(cpuset, ci->ci_index)) {
 			CPUSET_DEL(cpuset, ci->ci_index);
-			sparc64_send_ipi(ci->ci_cpuid, func);
+			sparc64_send_ipi(ci->ci_cpuid, func, arg1);
 		}
 	}
 }
@@ -181,37 +172,34 @@ sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func)
  * Broadcast an IPI to all but ourselves.
  */
 void
-sparc64_broadcast_ipi(ipifunc_t func)
+sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1)
 {
 
-	sparc64_multicast_ipi(CPUSET_EXCEPT(cpus_active, cpu_number()), func);
+	sparc64_multicast_ipi(CPUSET_EXCEPT(cpus_active, cpu_number()), func,
+		arg1);
 }
 
 /*
  * Send an interprocessor interrupt.
  */
 void
-sparc64_send_ipi(int upaid, ipifunc_t func)
+sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1)
 {
 	int i, ik;
-	uint64_t intr_number, intr_func, intr_arg;
+	uint64_t intr_func;
 
-	if (ldxa(0, ASR_IDSR) & IDSR_BUSY) {
-		__asm __volatile("ta 1; nop");
-	}
+	if (ldxa(0, ASR_IDSR) & IDSR_BUSY)
+		panic("recursive IPI?");
 
-	/* Setup interrupt data. */
-	intr_number = 0;
 	intr_func = (uint64_t)(u_long)func;
-	intr_arg = (uint64_t)(u_long)&ipi_tlb_args;
 
 	/* Schedule an interrupt. */
 	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
 		int s = intr_disable();
 
-		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, intr_number);
+		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, 0);
 		stxa(IDDR_1H, ASI_INTERRUPT_DISPATCH, intr_func);
-		stxa(IDDR_2H, ASI_INTERRUPT_DISPATCH, intr_arg);
+		stxa(IDDR_2H, ASI_INTERRUPT_DISPATCH, arg1);
 		stxa(IDCR(upaid), ASI_INTERRUPT_DISPATCH, 0);
 		membar_sync();
 
@@ -230,14 +218,12 @@ sparc64_send_ipi(int upaid, ipifunc_t func)
 			return;
 	}
 
-#if 0
-	if (db_active || panicstr != NULL)
-		printf("ipi_send: couldn't send ipi to module %u\n", upaid);
+	if (!db_active && panicstr == NULL)
+		panic("cpu%d: ipi_send: couldn't send ipi to UPAID %u", 
+			cpu_number(), upaid);
 	else
-		panic("ipi_send: couldn't send ipi");
-#else
-	__asm __volatile("ta 1; nop" : :);
-#endif
+		printf("\noops, can't send IPI from cpu%d to UPAID %u\n",
+			cpu_number(), upaid);
 }
 
 /*
@@ -273,13 +259,9 @@ mp_halt_cpus()
 	if (CPUSET_EMPTY(cpuset))
 		return;
 
-	simple_lock(&sparc64_ipi_lock);
-
-	sparc64_multicast_ipi(cpuset, sparc64_ipi_halt);
+	sparc64_multicast_ipi(cpuset, sparc64_ipi_halt, 0);
 	if (sparc64_ipi_wait(&cpus_halted, cpumask))
 		sparc64_ipi_error("halt", cpumask, cpus_halted);
-
-	simple_unlock(&sparc64_ipi_lock);
 }
 
 /*
@@ -296,13 +278,9 @@ mp_pause_cpus()
 	if (CPUSET_EMPTY(cpuset))
 		return;
 
-	simple_lock(&sparc64_ipi_lock);
-
-	sparc64_multicast_ipi(cpuset, sparc64_ipi_pause);
+	sparc64_multicast_ipi(cpuset, sparc64_ipi_pause, 0);
 	if (sparc64_ipi_wait(&cpus_paused, cpuset))
 		sparc64_ipi_error("pause", cpus_paused, cpuset);
-
-	simple_unlock(&sparc64_ipi_lock);
 }
 
 /*
@@ -339,15 +317,8 @@ smp_tlb_flush_pte(vaddr_t va, int ctx)
 	/* Flush our own TLB */
 	sp_tlb_flush_pte(va, ctx);
 
-	simple_lock(&sparc64_ipi_lock);
-
 	/* Flush others */
-	ipi_tlb_args.ita_vaddr = va;
-	ipi_tlb_args.ita_ctx = ctx;
-
-	sparc64_broadcast_ipi(sparc64_ipi_flush_pte);
-
-	simple_unlock(&sparc64_ipi_lock);
+	/* sparc64_broadcast_ipi(sparc64_ipi_flush_ctx, ctx); */
 }
 
 /*
@@ -359,15 +330,8 @@ smp_tlb_flush_ctx(int ctx)
 	/* Flush our own TLB */
 	sp_tlb_flush_ctx(ctx);
 
-	simple_lock(&sparc64_ipi_lock);
-
 	/* Flush others */
-	ipi_tlb_args.ita_vaddr = (vaddr_t)0;
-	ipi_tlb_args.ita_ctx = ctx;
-
-	sparc64_broadcast_ipi(sparc64_ipi_flush_ctx);
-
-	simple_unlock(&sparc64_ipi_lock);
+	sparc64_broadcast_ipi(sparc64_ipi_flush_ctx, ctx);
 }
 
 /*
@@ -379,12 +343,8 @@ smp_tlb_flush_all()
 	/* Flush our own TLB */
 	sp_tlb_flush_all();
 
-	simple_lock(&sparc64_ipi_lock);
-
 	/* Flush others */
-	sparc64_broadcast_ipi(sparc64_ipi_flush_all);
-
-	simple_unlock(&sparc64_ipi_lock);
+	sparc64_broadcast_ipi(sparc64_ipi_flush_all, 0);
 }
 
 /*

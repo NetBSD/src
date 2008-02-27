@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11.4.6 2008/02/04 09:24:51 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.11.4.7 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -68,6 +68,7 @@ int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
 int dovfsusermount = 1;
+int hardclock_ticks;
 
 MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
@@ -494,4 +495,11 @@ suspendsched()
 {
 
 	panic("%s: not implemented", __func__);
+}
+
+void
+yield(void)
+{
+
+	rumpuser_yield();
 }

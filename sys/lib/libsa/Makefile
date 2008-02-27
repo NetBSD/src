@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56.2.3 2008/01/21 09:46:37 yamt Exp $
+#	$NetBSD: Makefile,v 1.56.2.4 2008/02/27 08:37:00 yamt Exp $
 
 LIB=	sa
 NOPIC=	# defined
@@ -52,7 +52,7 @@ SRCS+=	cd9660.c
 SRCS+=	ustarfs.c
 SRCS+=	dosfs.c
 SRCS+=	ext2fs.c
-# for historic comparibility ufs == ffsv1
+# for historic compatibility ufs == ffsv1
 SRCS+=	ufs.c
 
 # only needed during build

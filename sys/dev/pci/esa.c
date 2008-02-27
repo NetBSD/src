@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.29.2.6 2008/02/04 09:23:28 yamt Exp $ */
+/* $NetBSD: esa.c,v 1.29.2.7 2008/02/27 08:36:35 yamt Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.29.2.6 2008/02/04 09:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.29.2.7 2008/02/27 08:36:35 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -99,9 +99,10 @@ static struct audio_device esa_device = {
 	"esa"
 };
 
-static int		esa_match(struct device *, struct cfdata *, void *);
-static void		esa_attach(struct device *, struct device *, void *);
-static int		esa_detach(struct device *, int);
+static int		esa_match(device_t, struct cfdata *, void *);
+static void		esa_attach(device_t, device_t, void *);
+static int		esa_detach(device_t, int);
+static void		esa_childdet(device_t, device_t);
 
 /* audio(9) functions */
 static int		esa_query_encoding(void *, struct audio_encoding *);
@@ -162,8 +163,8 @@ static void		esa_remove_list(struct esa_voice *, struct esa_list *,
 					int);
 
 /* power management */
-static bool		esa_suspend(device_t);
-static bool		esa_resume(device_t);
+static bool		esa_suspend(device_t PMF_FN_PROTO);
+static bool		esa_resume(device_t PMF_FN_PROTO);
 
 
 #define ESA_NENCODINGS 8
@@ -226,8 +227,8 @@ static const struct audio_hw_if esa_hw_if = {
 	NULL,	/* powerstate */
 };
 
-CFATTACH_DECL(esa, sizeof(struct esa_softc), esa_match, esa_attach,
-    esa_detach, NULL);
+CFATTACH_DECL2(esa, sizeof(struct esa_softc), esa_match, esa_attach,
+    esa_detach, NULL, NULL, esa_childdet);
 
 /*
  * audio(9) functions
@@ -970,7 +971,7 @@ esa_freemem(struct esa_softc *sc, struct esa_dma *p)
  */
 
 static int
-esa_match(struct device *dev, struct cfdata *match, void *aux)
+esa_match(device_t dev, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -989,7 +990,7 @@ esa_match(struct device *dev, struct cfdata *match, void *aux)
 }
 
 static void
-esa_attach(struct device *parent, struct device *self, void *aux)
+esa_attach(device_t parent, device_t self, void *aux)
 {
 	struct esa_softc *sc;
 	struct pci_attach_args *pa;
@@ -1129,7 +1130,7 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 		sc->adc1_list.indexmap[i] = -1;
 	}
 	for (i = 0; i < ESA_NUM_VOICES; i++) {
-		sc->voice[i].parent = (struct device *)sc;
+		sc->voice[i].parent = &sc->sc_dev;
 		sc->voice[i].index = i;
 		sc->sc_audiodev[i] =
 		    audio_attach_mi(&esa_hw_if, &sc->voice[i], &sc->sc_dev);
@@ -1141,13 +1142,28 @@ esa_attach(struct device *parent, struct device *self, void *aux)
 	return;
 }
 
+void
+esa_childdet(device_t self, device_t child)
+{
+	struct esa_softc *sc = device_private(self);
+	int i;
+
+	for (i = 0; i < ESA_NUM_VOICES; i++) {
+		if (sc->sc_audiodev[i] == child) {
+			sc->sc_audiodev[i] = NULL;
+			break;
+		}
+	}
+	KASSERT(i < ESA_NUM_VOICES);
+}
+
 static int
-esa_detach(struct device *self, int flags)
+esa_detach(device_t self, int flags)
 {
 	struct esa_softc *sc;
 	int i;
 
-	sc = (struct esa_softc *)self;
+	sc = device_private(self);
 	for (i = 0; i < ESA_NUM_VOICES; i++) {
 		if (sc->sc_audiodev[i] != NULL)
 			config_detach(sc->sc_audiodev[i], flags);
@@ -1634,7 +1650,7 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 }
 
 static bool
-esa_suspend(device_t dv)
+esa_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;
@@ -1662,7 +1678,7 @@ esa_suspend(device_t dv)
 }
 
 static bool
-esa_resume(device_t dv)
+esa_resume(device_t dv PMF_FN_ARGS)
 {
 	struct esa_softc *sc = device_private(dv);
 	bus_space_tag_t iot = sc->sc_iot;

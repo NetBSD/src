@@ -1,4 +1,4 @@
-/* $NetBSD: mfi_pci.c,v 1.2.6.3 2007/10/27 11:33:15 yamt Exp $ */
+/* $NetBSD: mfi_pci.c,v 1.2.6.4 2008/02/27 08:36:35 yamt Exp $ */
 /* $OpenBSD: mfi_pci.c,v 1.11 2006/08/06 04:40:08 brad Exp $ */
 /*
  * Copyright (c) 2006 Marco Peereboom <marco@peereboom.us>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.2.6.3 2007/10/27 11:33:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.2.6.4 2008/02/27 08:36:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,67 +40,81 @@ __KERNEL_RCSID(0, "$NetBSD: mfi_pci.c,v 1.2.6.3 2007/10/27 11:33:15 yamt Exp $")
 #define	MFI_BAR		0x10
 #define	MFI_PCI_MEMSIZE	0x2000 /* 8k */
 
-int	mfi_pci_find_device(void *);
+const struct mfi_pci_device *mfi_pci_find_device(struct pci_attach_args *);
 int	mfi_pci_match(struct device *, struct cfdata *, void *);
 void	mfi_pci_attach(struct device *, struct device *, void *);
 
 CFATTACH_DECL(mfi_pci, sizeof(struct mfi_softc),
     mfi_pci_match, mfi_pci_attach, NULL, NULL);
 
-struct	mfi_pci_device {
-	pcireg_t	mpd_vendor;
-	pcireg_t	mpd_product;
-	pcireg_t	mpd_subvendor;
-	pcireg_t	mpd_subproduct;
-	const char	*mpd_model;
-	uint32_t	mpd_flags;
+struct mfi_pci_subtype {
+	pcireg_t 	st_vendor;
+	pcireg_t 	st_product;
+	const char 	*st_string;
+};
+
+static const struct mfi_pci_subtype mfi_1078_subtypes[] = {
+	{ PCI_VENDOR_SYMBIOS, 	0x1006, 	"SAS 8888ELP" },
+	{ PCI_VENDOR_SYMBIOS, 	0x100a, 	"SAS 8708ELP" },
+	{ PCI_VENDOR_SYMBIOS, 	0x100f, 	"SAS 8708E" },
+	{ PCI_VENDOR_SYMBIOS, 	0x1012, 	"SAS 8704ELP" },
+	{ PCI_VENDOR_SYMBIOS, 	0x1013, 	"SAS 8708EM2" },
+	{ PCI_VENDOR_SYMBIOS, 	0x1016, 	"SAS 8880EM2" },
+	{ PCI_VENDOR_DELL, 	0x1f0a, 	"Dell PERC 6/e" },
+	{ PCI_VENDOR_DELL, 	0x1f0b, 	"Dell PERC 6/i" },
+	{ PCI_VENDOR_DELL, 	0x1f0c, 	"Dell PERC 6/i integrated" },
+	{ PCI_VENDOR_DELL, 	0x1f0d, 	"Dell CERC 6/i" },
+	{ PCI_VENDOR_DELL, 	0x1f11, 	"Dell CERC 6/i integrated" },
+	{ 0, 			0, 		NULL }
+};
+
+static const struct mfi_pci_subtype mfi_perc5_subtypes[] = {
+	{ PCI_VENDOR_DELL,	0x1f01, 	"Dell PERC 5/e" },
+	{ PCI_VENDOR_DELL, 	0x1f02, 	"Dell PERC 5/i" },
+	{ PCI_VENDOR_DELL, 	0x1f03, 	"Dell PERC 5/i integrated" },
+	{ 0, 			0, 		NULL }
 };
 
 static const
-struct  mfi_pci_device mfi_pci_devices[] = {
-	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_SAS,
-	  0,			0,		"",			0 },
+struct mfi_pci_device {
+	pcireg_t			mpd_vendor;
+	pcireg_t			mpd_product;
+	enum mfi_iop			mpd_iop;
+	const struct mfi_pci_subtype 	*mpd_subtype;
+} mfi_pci_devices[] = {
+	{ PCI_VENDOR_SYMBIOS, 	PCI_PRODUCT_SYMBIOS_MEGARAID_SAS,
+	  MFI_IOP_XSCALE, 	NULL },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID_VERDE_ZCR,
-	  0,			0,		"",			0 },
+	  MFI_IOP_XSCALE,	NULL },
+	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_SAS1078,
+	  MFI_IOP_PPC,		mfi_1078_subtypes },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_5,
-	  PCI_VENDOR_DELL,	0x1f01,		"Dell PERC 5/e",	0 },
-	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_5,
-	  PCI_VENDOR_DELL,	0x1f02,		"Dell PERC 5/i",	0 },
-	{ 0, 0, 
-	  0, 0, NULL, 0}
+	  MFI_IOP_XSCALE,	mfi_perc5_subtypes },
+	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_6,
+	  MFI_IOP_PPC, 		mfi_1078_subtypes },
 };
 
-int
-mfi_pci_find_device(void *aux) {
-	struct pci_attach_args	*pa = aux;
-	int			i;
+const struct mfi_pci_device *
+mfi_pci_find_device(struct pci_attach_args *pa)
+{
+	const struct mfi_pci_device *mpd;
+	int i;
 
-	for (i = 0; mfi_pci_devices[i].mpd_vendor; i++) {
-		if (mfi_pci_devices[i].mpd_vendor == PCI_VENDOR(pa->pa_id) &&
-		    mfi_pci_devices[i].mpd_product == PCI_PRODUCT(pa->pa_id)) {
-		    	DNPRINTF(MFI_D_MISC, "mfi_pci_find_device: %i\n", i);
-			return (i);
-		}
+	for (i = 0; i < __arraycount(mfi_pci_devices); i++) {
+		mpd = &mfi_pci_devices[i];
+
+		if (mpd->mpd_vendor == PCI_VENDOR(pa->pa_id) &&
+		    mpd->mpd_product == PCI_PRODUCT(pa->pa_id))
+			return mpd;
 	}
 
-	return (-1);
+	return NULL;
 }
 
 int
 mfi_pci_match(struct device *parent, struct cfdata *match, void *aux)
 {
-	int			i;
-
-	if ((i = mfi_pci_find_device(aux)) != -1) {
-		DNPRINTF(MFI_D_MISC,
-		    "mfi_pci_match: vendor: %04x  product: %04x\n",
-		    mfi_pci_devices[i].mpd_vendor,
-		    mfi_pci_devices[i].mpd_product);
-
-		return (1);
-	}
-
-	return (0);
+	return (mfi_pci_find_device(aux) != NULL) ? 1 : 0;
 }
 
 void
@@ -108,20 +122,14 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mfi_softc	*sc = (struct mfi_softc *)self;
 	struct pci_attach_args	*pa = aux;
+	const struct mfi_pci_device *mpd;
+	const struct mfi_pci_subtype *st;
 	const char		*intrstr;
 	pci_intr_handle_t	ih;
 	bus_size_t		size;
 	pcireg_t		csr;
-	uint32_t		subsysid, i;
-
-	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-	for (i = 0; mfi_pci_devices[i].mpd_vendor; i++)
-		if (mfi_pci_devices[i].mpd_subvendor == PCI_VENDOR(subsysid) &&
-		    mfi_pci_devices[i].mpd_subproduct == PCI_PRODUCT(subsysid)){
-				aprint_normal(", %s",
-				    mfi_pci_devices[i].mpd_model);
-				break;
-		}
+	const char 		*subtype = NULL;
+	uint32_t		subsysid;
 
 	csr = pci_mapreg_type(pa->pa_pc, pa->pa_tag, MFI_BAR);
 	csr |= PCI_MAPREG_MEM_TYPE_32BIT;
@@ -149,9 +157,26 @@ mfi_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	aprint_normal(": %s\n", intrstr);
+	mpd = mfi_pci_find_device(pa);
 
-	if (mfi_attach(sc)) {
+	subsysid = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
+	if (mpd->mpd_subtype != NULL) {
+		st = mpd->mpd_subtype;
+		while (st->st_vendor != 0) {
+			if (PCI_VENDOR(subsysid) == st->st_vendor &&
+			    PCI_PRODUCT(subsysid) == st->st_product) {
+				subtype = st->st_string;
+				break;
+			}
+			st++;
+		}
+		if (subtype)
+			aprint_normal(": %s\n", subtype);
+	}
+
+	aprint_normal("%s: interrupting at %s\n", DEVNAME(sc), intrstr);
+
+	if (mfi_attach(sc, mpd->mpd_iop)) {
 		aprint_error("%s: can't attach", DEVNAME(sc));
 		pci_intr_disestablish(pa->pa_pc, sc->sc_ih);
 		sc->sc_ih = NULL;

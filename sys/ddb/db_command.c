@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.79.2.8 2008/02/04 09:23:16 yamt Exp $	*/
+/*	$NetBSD: db_command.c,v 1.79.2.9 2008/02/27 08:36:31 yamt Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1991,1990 Carnegie Mellon University
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.79.2.8 2008/02/04 09:23:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.79.2.9 2008/02/27 08:36:31 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -350,7 +350,8 @@ static const struct db_command db_command_table[] = {
 	{ DDB_ADD_CMD("until",	db_trace_until_call_cmd,0,
 	    "Stop at the next call or return instruction.","[/p]",NULL) },
 	{ DDB_ADD_CMD("w",		db_write_cmd,		CS_MORE|CS_SET_DOT,
-	    "Set a watchpoint for a region. ","address[,size]",NULL) },
+	    "Write the expressions at succeeding locations.",
+	    "[/bhl] address expression [expression ...]",NULL) },
 	{ DDB_ADD_CMD("watch",	db_watchpoint_cmd,	CS_MORE,
 	    "Set a watchpoint for a region. ","address[,size]",NULL) },
 	{ DDB_ADD_CMD("whatis",	db_whatis_cmd, 0,

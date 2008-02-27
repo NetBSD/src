@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.6.6.5 2008/01/21 09:47:45 yamt Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.6.6.6 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -286,6 +286,12 @@ rumpuser_realpath(const char *path, char resolvedname[MAXPATHLEN], int *error)
 		*error = 0;
 
 	return rv;
+}
+
+void
+rumpuser_yield(void)
+{
+
 }
 
 #ifdef __linux__

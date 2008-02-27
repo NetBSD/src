@@ -1,4 +1,4 @@
-/*	$NetBSD: umodemvar.h,v 1.2.6.1 2007/09/03 14:39:19 yamt Exp $	*/
+/*	$NetBSD: umodemvar.h,v 1.2.6.2 2008/02/27 08:36:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ struct umodem_softc {
 	u_char			sc_msr;		/* Modem status register */
 };
 
+void umodem_common_childdet(struct umodem_softc *, device_t);
 int umodem_common_attach(device_ptr_t, struct umodem_softc *,
 			 struct usbif_attach_arg *, struct ucom_attach_args *);
 

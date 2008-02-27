@@ -1,4 +1,4 @@
-/*	$NetBSD: azalia.c,v 1.7.4.5 2008/01/21 09:43:39 yamt Exp $	*/
+/*	$NetBSD: azalia.c,v 1.7.4.6 2008/02/27 08:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.4.5 2008/01/21 09:43:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: azalia.c,v 1.7.4.6 2008/02/27 08:36:35 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -112,7 +112,7 @@ typedef struct {
 
 typedef struct azalia_t {
 	struct device dev;
-	struct device *audiodev;
+	device_t audiodev;
 
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
@@ -156,14 +156,15 @@ typedef struct azalia_t {
 
 
 /* prototypes */
-static int	azalia_pci_match(struct device *, struct cfdata *, void *);
-static void	azalia_pci_attach(struct device *, struct device *, void *);
-static int	azalia_pci_activate(struct device *, enum devact);
-static int	azalia_pci_detach(struct device *, int);
-static bool	azalia_pci_resume(device_t);
+static int	azalia_pci_match(device_t, struct cfdata *, void *);
+static void	azalia_pci_attach(device_t, device_t, void *);
+static int	azalia_pci_activate(device_t, enum devact);
+static int	azalia_pci_detach(device_t, int);
+static bool	azalia_pci_resume(device_t PMF_FN_PROTO);
+static void	azalia_childdet(device_t, device_t);
 static int	azalia_intr(void *);
 static int	azalia_attach(azalia_t *);
-static void	azalia_attach_intr(struct device *);
+static void	azalia_attach_intr(device_t);
 static int	azalia_init_corb(azalia_t *, int);
 static int	azalia_delete_corb(azalia_t *);
 static int	azalia_init_rirb(azalia_t *, int);
@@ -227,8 +228,9 @@ static int	azalia_trigger_input(void *, void *, void *, int,
 static int	azalia_params2fmt(const audio_params_t *, uint16_t *);
 
 /* variables */
-CFATTACH_DECL(azalia, sizeof(azalia_t),
-    azalia_pci_match, azalia_pci_attach, azalia_pci_detach, azalia_pci_activate);
+CFATTACH_DECL2(azalia, sizeof(azalia_t),
+    azalia_pci_match, azalia_pci_attach, azalia_pci_detach, azalia_pci_activate,
+    NULL, azalia_childdet);
 
 static const struct audio_hw_if azalia_hw_if = {
 	azalia_open,
@@ -283,8 +285,7 @@ static const char *pin_devices[16] = {
 #define PCIID_VT8237A		PCI_ID_CODE0(VIATECH, VT8237A_HDA)
 
 static int
-azalia_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+azalia_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -296,8 +297,7 @@ azalia_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-azalia_pci_attach(struct device *parent, struct device *self,
-    void *aux)
+azalia_pci_attach(device_t parent, device_t self, void *aux)
 {
 	azalia_t *sc;
 	struct pci_attach_args *pa;
@@ -307,7 +307,7 @@ azalia_pci_attach(struct device *parent, struct device *self,
 	const char *name;
 	const char *vendor;
 
-	sc = (azalia_t*)self;
+	sc = device_private(self);
 	pa = aux;
 
 	sc->dmat = pa->pa_dmat;
@@ -370,12 +370,12 @@ azalia_pci_attach(struct device *parent, struct device *self,
 }
 
 static int
-azalia_pci_activate(struct device *self, enum devact act)
+azalia_pci_activate(device_t self, enum devact act)
 {
 	azalia_t *sc;
 	int ret;
 
-	sc = (azalia_t*)self;
+	sc = device_private(self);
 	ret = 0;
 	switch (act) {
 	case DVACT_ACTIVATE:
@@ -388,18 +388,25 @@ azalia_pci_activate(struct device *self, enum devact act)
 	return EOPNOTSUPP;
 }
 
+static void
+azalia_childdet(device_t self, device_t child)
+{
+	azalia_t *az = device_private(self);
+
+	KASSERT(az->audiodev == child);
+	az->audiodev = NULL;
+}
+
 static int
-azalia_pci_detach(struct device *self, int flags)
+azalia_pci_detach(device_t self, int flags)
 {
 	azalia_t *az;
 	int i;
 
 	DPRINTF(("%s\n", __func__));
-	az = (azalia_t*)self;
-	if (az->audiodev != NULL) {
+	az = device_private(self);
+	if (az->audiodev != NULL)
 		config_detach(az->audiodev, flags);
-		az->audiodev = NULL;
-	}
 
 	DPRINTF(("%s: delete streams\n", __func__));
 	azalia_stream_delete(&az->rstream, az);
@@ -428,7 +435,7 @@ azalia_pci_detach(struct device *self, int flags)
 }
 
 static bool
-azalia_pci_resume(device_t dv)
+azalia_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	azalia_t *az = device_private(dv);
 	int s;
@@ -557,12 +564,12 @@ azalia_attach(azalia_t *az)
 }
 
 static void
-azalia_attach_intr(struct device *self)
+azalia_attach_intr(device_t self)
 {
 	azalia_t *az;
 	int err, i, c, reinit;
 
-	az = (azalia_t*)self;
+	az = device_private(self);
 	reinit = az->audiodev == NULL ? 0 : 1;
 
 	AZ_WRITE_2(az, STATESTS, HDA_STATESTS_SDIWAKE);

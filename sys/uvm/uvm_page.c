@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.106.2.7 2008/01/21 09:48:23 yamt Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.106.2.8 2008/02/27 08:37:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.106.2.7 2008/01/21 09:48:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.106.2.8 2008/02/27 08:37:09 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1305,6 +1305,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 		p++;
 	}
 	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
+	pmap_update(pmap_kernel());
 }
 #endif /* DEBUG */
 

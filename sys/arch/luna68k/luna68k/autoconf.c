@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.5.2.2 2007/12/07 17:25:08 yamt Exp $ */
+/* $NetBSD: autoconf.c,v 1.5.2.3 2008/02/27 08:36:21 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.2 2007/12/07 17:25:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.3 2008/02/27 08:36:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.2 2007/12/07 17:25:08 yamt Exp $"
 #include <machine/cpu.h>
 
 #include <luna68k/luna68k/isr.h>
-
-static struct device *find_dev_byname __P((const char *));
 
 /*
  * Determine mass storage and memory configuration for a machine.
@@ -90,26 +88,11 @@ cpu_rootconf()
 		}
 		cp++;
 	}
-	booted_device = find_dev_byname(devname);
+	booted_device = device_find_by_xname(devname);
 
 #endif
 	printf("boot device: %s\n",
 		(booted_device) ? booted_device->dv_xname : "<unknown>");
 
 	setroot(booted_device, 0); /* XXX partition 'a' XXX */
-}
-
-static struct device *
-find_dev_byname(name)
-	const char *name;
-{
-	struct device *dv;
-
-	for (dv = TAILQ_FIRST(&alldevs); dv != NULL;
-	    dv = TAILQ_NEXT(dv, dv_list)) {
-		if (!strcmp(dv->dv_xname, name)) {
-			return dv;
-		}
-	}
-	return NULL;
 }

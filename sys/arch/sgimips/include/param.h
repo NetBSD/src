@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5.16.1 2006/12/30 20:46:53 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.5.16.2 2008/02/27 08:36:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -71,6 +71,10 @@
 #ifndef	_SGIMIPS_PARAM_H_
 #define	_SGIMIPS_PARAM_H_
 
+#if !defined(MSGBUFSIZE)
+#define	MSGBUFSIZE	8192
+#endif
+
 #include <mips/mips_param.h>
 
 #define	_MACHINE_ARCH	mipseb
@@ -83,6 +87,7 @@
 #define	DEV_BSHIFT	9		/* log2(DEV_BSIZE) */
 #define BLKDEV_IOSIZE	2048
 #define	MAXPHYS		(64 * 1024)	/* Maximum raw I/O transfer size */
+
 
 /*
  * Constants related to network buffer management.

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.41.2.1 2006/06/21 14:56:11 yamt Exp $ */
+/*	$NetBSD: autoconf.h,v 1.41.2.2 2008/02/27 08:36:25 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -182,5 +182,4 @@ void	mountroot_hook_establish(void (*)(struct device *),
 				 struct device *);
 
 void	bootstrap(void);
-struct device *getdevunit(const char *, int);
 int	romgetcursoraddr(int **, int **);

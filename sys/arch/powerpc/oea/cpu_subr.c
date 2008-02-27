@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.24.2.7 2008/02/11 14:59:29 yamt Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.24.2.8 2008/02/27 08:36:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.24.2.7 2008/02/11 14:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.24.2.8 2008/02/27 08:36:23 yamt Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -236,8 +236,6 @@ char cpu_model[80];
 
 /* This is to be called from locore.S, and nowhere else. */
 
-extern unsigned long oeacpufeat;
-
 void
 cpu_model_init(void)
 {
@@ -252,8 +250,11 @@ cpu_model_init(void)
 		vers == IBMCELL || vers == IBMPOWER6P5)
 		oeacpufeat |= OEACPU_64 | OEACPU_64_BRIDGE | OEACPU_NOBAT;
 	
-	if (vers == MPC601)
+	else if (vers == MPC601)
 		oeacpufeat |= OEACPU_601;
+
+	else if (MPC745X_P(vers) && vers != MPC7450)
+		oeacpufeat |= OEACPU_XBSEN | OEACPU_HIGHBAT | OEACPU_HIGHSPRG;
 }
 
 void
@@ -484,12 +485,17 @@ cpu_setup(self, ci)
 		/* Enable the 7450 branch caches */
 		hid0 |= HID0_SGE | HID0_BTIC;
 		hid0 |= HID0_LRSTK | HID0_FOLD | HID0_BHT;
+		/* Enable more and larger BAT registers */
+		if (oeacpufeat & OEACPU_XBSEN)
+			hid0 |= HID0_XBSEN;
+		if (oeacpufeat & OEACPU_HIGHBAT)
+			hid0 |= HID0_HIGH_BAT_EN;
 		/* Disable BTIC on 7450 Rev 2.0 or earlier */
 		if (vers == MPC7450 && (pvr & 0xFFFF) <= 0x0200)
 			hid0 &= ~HID0_BTIC;
 		/* Select NAP mode. */
-		hid0 &= ~(HID0_HIGH_BAT_EN | HID0_SLEEP);
-		hid0 |= HID0_NAP | HID0_DPM /* | HID0_XBSEN */;
+		hid0 &= ~HID0_SLEEP;
+		hid0 |= HID0_NAP | HID0_DPM;
 		powersave = 1;
 		break;
 

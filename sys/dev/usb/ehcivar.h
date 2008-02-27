@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.19.2.4 2008/01/21 09:44:41 yamt Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.19.2.5 2008/02/27 08:36:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -159,6 +159,7 @@ typedef struct ehci_softc {
 usbd_status	ehci_init(ehci_softc_t *);
 int		ehci_intr(void *);
 int		ehci_detach(ehci_softc_t *, int);
-int		ehci_activate(device_ptr_t, enum devact);
-bool		ehci_suspend(device_t dv);
-bool		ehci_resume(device_t dv);
+int		ehci_activate(device_t, enum devact);
+void		ehci_childdet(device_t, device_t);
+bool		ehci_suspend(device_t PMF_FN_PROTO);
+bool		ehci_resume(device_t PMF_FN_PROTO);

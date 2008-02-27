@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.7.2.5 2008/01/21 09:44:43 yamt Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.7.2.6 2008/02/27 08:36:47 yamt Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 /*
  * Copyright (c) 2003
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.7.2.5 2008/01/21 09:44:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.7.2.6 2008/02/27 08:36:47 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -152,6 +152,8 @@ static const struct udav_type {
 	{{ USB_VENDOR_COREGA, USB_PRODUCT_COREGA_FETHER_USB_TXC }, 0},
 	/* ShanTou ST268 USB NIC */
 	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ST268_USB_NIC }, 0},
+	/* ShanTou ADM8515 */
+	{{ USB_VENDOR_SHANTOU, USB_PRODUCT_SHANTOU_ADM8515 }, 0},
 #if 0
 	/* DAVICOM DM9601 Generic? */
 	/*  XXX: The following ids was obtained from the data sheet. */
@@ -192,7 +194,7 @@ USB_ATTACH(udav)
 	usbd_devinfo_free(devinfop);
 
 	/* Move the device into the configured state. */
-	err = usbd_set_config_no(dev, UDAV_CONFIG_NO, 1);
+	err = usbd_set_config_no(dev, UDAV_CONFIG_NO, 1); /* idx 0 */
 	if (err) {
 		printf("%s: setting config no failed\n", devname);
 		goto bad;

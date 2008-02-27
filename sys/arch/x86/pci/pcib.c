@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.1.2.3 2008/01/21 09:40:12 yamt Exp $	*/
+/*	$NetBSD: pcib.c,v 1.1.2.4 2008/02/27 08:36:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.2.3 2008/01/21 09:40:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.1.2.4 2008/02/27 08:36:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -60,16 +60,18 @@ struct pcib_softc {
 	pcitag_t		sc_tag;
 };
 
-int	pcibmatch(struct device *, struct cfdata *, void *);
-void	pcibattach(struct device *, struct device *, void *);
+int	pcibmatch(device_t, struct cfdata *, void *);
+void	pcibattach(device_t, device_t, void *);
+int	pcibdetach(device_t, int);
+void	pcibchilddet(device_t, device_t);
 
-CFATTACH_DECL_NEW(pcib, sizeof(struct pcib_softc),
-    pcibmatch, pcibattach, NULL, NULL);
+CFATTACH_DECL2_NEW(pcib, sizeof(struct pcib_softc),
+    pcibmatch, pcibattach, pcibdetach, NULL, NULL, pcibchilddet);
 
-void	pcib_callback(struct device *);
+void	pcib_callback(device_t);
 
 int
-pcibmatch(struct device *parent, struct cfdata *match, void *aux)
+pcibmatch(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -190,7 +192,7 @@ pcibmatch(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pcibattach(struct device *parent, struct device *self, void *aux)
+pcibattach(device_t parent, device_t self, void *aux)
 {
 	struct pcib_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
@@ -204,7 +206,7 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	 * until all PCI devices have been attached.
 	 */
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("%s: %s (rev. 0x%02x)\n", self->dv_xname, devinfo,
+	aprint_normal_dev(self, "%s (rev. 0x%02x)\n", devinfo,
 	    PCI_REVISION(pa->pa_class));
 
 	sc->sc_pc = pa->pa_pc;
@@ -221,8 +223,25 @@ pcibattach(struct device *parent, struct device *self, void *aux)
 	config_defer(self, pcib_callback);
 }
 
+int
+pcibdetach(device_t self, int flags)
+{
+	int rc;
+
+	if ((rc = config_detach_children(self, flags)) != 0)
+		return rc;
+	pmf_device_deregister(self);
+	return 0;
+}
+
 void
-pcib_callback(struct device *self)
+pcibchilddet(device_t self, device_t child)
+{
+	/* we keep no references to children, so do nothing */
+}
+
+void
+pcib_callback(device_t self)
 {
 	struct isabus_attach_args iba;
 

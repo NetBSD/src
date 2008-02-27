@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.189.2.7 2008/02/04 09:23:38 yamt Exp $	*/
+/*	$NetBSD: uhci.c,v 1.189.2.8 2008/02/27 08:36:47 yamt Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.189.2.7 2008/02/04 09:23:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.189.2.8 2008/02/27 08:36:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,9 +554,9 @@ uhci_init(uhci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-uhci_activate(device_ptr_t self, enum devact act)
+uhci_activate(device_t self, enum devact act)
 {
-	struct uhci_softc *sc = (struct uhci_softc *)self;
+	struct uhci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -570,6 +570,15 @@ uhci_activate(device_ptr_t self, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+void
+uhci_childdet(device_t self, device_t child)
+{
+	struct uhci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
 }
 
 int
@@ -705,7 +714,7 @@ uhci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
  * are almost suspended anyway.
  */
 bool
-uhci_resume(device_t dv)
+uhci_resume(device_t dv PMF_FN_ARGS)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;
@@ -715,6 +724,9 @@ uhci_resume(device_t dv)
 
 	cmd = UREAD2(sc, UHCI_CMD);
 	sc->sc_bus.use_polling++;
+	UWRITE2(sc, UHCI_INTR, 0);
+	uhci_globalreset(sc);
+	uhci_reset(sc);
 	if (cmd & UHCI_CMD_RS)
 		uhci_run(sc, 0);
 
@@ -726,9 +738,9 @@ uhci_resume(device_t dv)
 	UHCICMD(sc, cmd | UHCI_CMD_FGR); /* force resume */
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
 	UHCICMD(sc, cmd & ~UHCI_CMD_EGSM); /* back to normal */
-	UHCICMD(sc, UHCI_CMD_MAXP);
 	UWRITE2(sc, UHCI_INTR, UHCI_INTR_TOCRCIE |
 	    UHCI_INTR_RIE | UHCI_INTR_IOCE | UHCI_INTR_SPIE);
+	UHCICMD(sc, UHCI_CMD_MAXP);
 	uhci_run(sc, 1); /* and start traffic again */
 	usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
 	sc->sc_bus.use_polling--;
@@ -746,7 +758,7 @@ uhci_resume(device_t dv)
 }
 
 bool
-uhci_suspend(device_t dv)
+uhci_suspend(device_t dv PMF_FN_ARGS)
 {
 	uhci_softc_t *sc = device_private(dv);
 	int cmd;

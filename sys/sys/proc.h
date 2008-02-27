@@ -1,7 +1,7 @@
-/*	$NetBSD: proc.h,v 1.201.2.8 2008/01/21 09:47:56 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.201.2.9 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -209,7 +209,8 @@ struct emul {
  * s:	p_smutex
  * t:	p_stmutex
  * p:	p_mutex
- * (:	unlocked, stable
+ * q:	mqlist_mtx
+ * ::	unlocked, stable
  */
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l, m: List of all processes */
@@ -224,18 +225,16 @@ struct proc {
       
 	/* Substructures: */
 	struct kauth_cred *p_cred;	/* p: Master copy of credentials */
-	struct filedesc	*p_fd;		/*    Ptr to open files structure */
-	struct cwdinfo	*p_cwdi;	/*    cdir/rdir/cmask info */
-	struct pstats	*p_stats;	/*    Accounting/stats (PROC ONLY) */
-	struct plimit	*p_limit;	/*    Process limits */
-	struct vmspace	*p_vmspace;	/*    Address space */
-	struct sigacts	*p_sigacts;	/*    Process sigactions */
+	struct filedesc	*p_fd;		/* :: Ptr to open files structure */
+	struct cwdinfo	*p_cwdi;	/* :: cdir/rdir/cmask info */
+	struct pstats	*p_stats;	/* :: Accounting/stats (PROC ONLY) */
+	struct plimit	*p_limit;	/* :: Process limits */
+	struct vmspace	*p_vmspace;	/* :: Address space */
+	struct sigacts	*p_sigacts;	/* :: Process sigactions */
 	struct aioproc	*p_aio;		/* p: Asynchronous I/O data */
-
-	u_int		p_mqueue_cnt;	/* (: Count of open mqueues */
-
+	u_int		p_mqueue_cnt;	/* q: Count of open mqueues */
 	specificdata_reference
-			p_specdataref;	/* subsystem proc-specific data */
+			p_specdataref;	/*    subsystem proc-specific data */
 
 	int		p_exitsig;	/* l: signal to send to parent on exit */
 	int		p_flag;		/* p: P_* flags */
@@ -244,10 +243,10 @@ struct proc {
 	int		p_lflag;	/* l: PL_* flags */
 	int		p_stflag;	/* t: PST_* flags */
 	char		p_stat;		/* s: S* process status. */
-	char		p_trace_enabled; /* Cached by some syscall_intern() */
-	char		p_pad1[2];
+	char		p_trace_enabled;/* s: cached by syscall_intern() */
+	char		p_pad1[2];	/*  unused */
 
-	pid_t		p_pid;		/* (: Process identifier. */
+	pid_t		p_pid;		/* :: Process identifier. */
 	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
 	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
@@ -270,10 +269,10 @@ struct proc {
 
 	/* scheduling */
 	void		*p_sched_info;	/* s: Scheduler-specific structure */
-	fixpt_t		p_estcpu;	/* t: Time averaged value of p_cpticks XXX belongs in p_startcopy section */
-	fixpt_t		p_estcpu_inherited;
+	fixpt_t		p_estcpu;	/* s: Time avg. value of p_cpticks */
+	fixpt_t		p_estcpu_inherited; /* s: cpu inherited from children */
 	unsigned int	p_forktime;
-	fixpt_t         p_pctcpu;       /* t: %cpu from dead LWPs */
+	fixpt_t         p_pctcpu;       /* s: %cpu from dead LWPs */
 
 	struct proc	*p_opptr;	/* l: save parent during ptrace. */
 	struct ptimers	*p_timers;	/*    Timers: real, virtual, profiling */
@@ -284,18 +283,17 @@ struct proc {
 
 	int		p_traceflag;	/* k: Kernel trace points */
 	void		*p_tracep;	/* k: Trace private data */
-	struct vnode 	*p_textvp;	/* (: Vnode of executable */
+	struct vnode 	*p_textvp;	/* :: Vnode of executable */
 
 	void	     (*p_userret)(void);/* p: return-to-user hook */
-	const struct emul *p_emul;	/*    Emulation information */
-	void		*p_emuldata;	/*    Per-process emulation data, or NULL.
-					 *    Malloc type M_EMULDATA */
-	const struct execsw *p_execsw;	/*    Exec package information */
-	struct klist	p_klist;	/*    Knotes attached to this process */
+	const struct emul *p_emul;	/* :: emulation information */
+	void		*p_emuldata;	/* :: per-proc emul data, or NULL */
+	const struct execsw *p_execsw;	/* :: exec package information */
+	struct klist	p_klist;	/* p: knotes attached to proc */
 
 	LIST_HEAD(, lwp) p_sigwaiters;	/* s: LWPs waiting for signals */
 	sigpend_t	p_sigpend;	/* s: pending signals */
-	struct lcproc	*p_lwpctl;	/* s: _lwp_ctl() information */
+	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 
 /*
  * End area that is zeroed on creation
@@ -314,11 +312,11 @@ struct proc {
 					/* p: basename of last exec file */
 	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
 
-	struct ps_strings *p_psstr;	/* (: address of process's ps_strings */
-	size_t 		p_psargv;	/* (: offset of ps_argvstr in above */
-	size_t 		p_psnargv;	/* (: offset of ps_nargvstr in above */
-	size_t 		p_psenv;	/* (: offset of ps_envstr in above */
-	size_t 		p_psnenv;	/* (: offset of ps_nenvstr in above */
+	struct ps_strings *p_psstr;	/* :: address of process's ps_strings */
+	size_t 		p_psargv;	/* :: offset of ps_argvstr in above */
+	size_t 		p_psnargv;	/* :: offset of ps_nargvstr in above */
+	size_t 		p_psenv;	/* :: offset of ps_envstr in above */
+	size_t 		p_psnenv;	/* :: offset of ps_nenvstr in above */
 
 /*
  * End area that is copied on creation
@@ -327,8 +325,8 @@ struct proc {
 
 	u_short		p_xstat;	/* s: Exit status for wait; also stop signal */
 	u_short		p_acflag;	/* p: Acc. flags; see struct lwp also */
-	struct mdproc	p_md;		/*    Any machine-dependent fields */
-	vaddr_t		p_stackbase;	/*    ASLR randomized stack base */
+	struct mdproc	p_md;		/* p: Any machine-dependent fields */
+	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
 };
 
 #define	p_rlimit	p_limit->pl_rlimit

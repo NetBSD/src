@@ -1,4 +1,4 @@
-/*	$NetBSD: vr_idle.S,v 1.8.16.3 2007/09/03 14:26:12 yamt Exp $	*/
+/*	$NetBSD: vr_idle.S,v 1.8.16.4 2008/02/27 08:36:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,12 +42,7 @@
  */
 
 #include <mips/asm.h>
-#include <mips/cpuregs.h>
 #include <hpcmips/vr/vr_asm.h>
-
-#include "opt_lockdebug.h"
-
-#include "assym.h"
 
 	.set	noreorder
 

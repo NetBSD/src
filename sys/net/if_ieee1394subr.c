@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.28.10.5 2008/02/11 14:59:59 yamt Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.28.10.6 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28.10.5 2008/02/11 14:59:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28.10.6 2008/02/27 08:37:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -87,13 +87,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.28.10.5 2008/02/11 14:59:59 ya
 
 static int  ieee1394_output(struct ifnet *, struct mbuf *,
 		const struct sockaddr *, struct rtentry *);
-static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *, u_int16_t);
+static struct mbuf *ieee1394_reass(struct ifnet *, struct mbuf *, uint16_t);
 
 static int
 ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
-	u_int16_t etype = 0;
+	uint16_t etype = 0;
 	struct mbuf *m;
 	int s, hdrlen, error = 0;
 	struct rtentry *rt;
@@ -295,7 +295,7 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 
 struct mbuf *
 ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
-    u_int16_t etype)
+    uint16_t etype)
 {
 	struct ieee1394com *ic = (struct ieee1394com *)ifp;
 	int totlen, fraglen, off;
@@ -365,10 +365,10 @@ ieee1394_fragment(struct ifnet *ifp, struct mbuf *m0, int maxsize,
 }
 
 void
-ieee1394_input(struct ifnet *ifp, struct mbuf *m, u_int16_t src)
+ieee1394_input(struct ifnet *ifp, struct mbuf *m, uint16_t src)
 {
 	struct ifqueue *inq;
-	u_int16_t etype;
+	uint16_t etype;
 	int s;
 	struct ieee1394_unfraghdr *iuh;
 
@@ -453,7 +453,7 @@ ieee1394_input(struct ifnet *ifp, struct mbuf *m, u_int16_t src)
 }
 
 static struct mbuf *
-ieee1394_reass(struct ifnet *ifp, struct mbuf *m0, u_int16_t src)
+ieee1394_reass(struct ifnet *ifp, struct mbuf *m0, uint16_t src)
 {
 	struct ieee1394com *ic = (struct ieee1394com *)ifp;
 	struct ieee1394_fraghdr *ifh;
@@ -461,8 +461,8 @@ ieee1394_reass(struct ifnet *ifp, struct mbuf *m0, u_int16_t src)
 	struct ieee1394_reassq *rq;
 	struct ieee1394_reass_pkt *rp, *trp, *nrp = NULL;
 	int len;
-	u_int16_t etype, off, ftype, size, dgl;
-	u_int32_t id;
+	uint16_t etype, off, ftype, size, dgl;
+	uint32_t id;
 
 	if (m0->m_len < sizeof(*ifh)) {
 		if ((m0 = m_pullup(m0, sizeof(*ifh))) == NULL)
@@ -665,7 +665,7 @@ ieee1394_watchdog(struct ifnet *ifp)
 }
 
 const char *
-ieee1394_sprintf(const u_int8_t *laddr)
+ieee1394_sprintf(const uint8_t *laddr)
 {
 	static char buf[3*8];
 

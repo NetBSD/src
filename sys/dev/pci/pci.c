@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.93.2.7 2008/02/04 09:23:32 yamt Exp $	*/
+/*	$NetBSD: pci.c,v 1.93.2.8 2008/02/27 08:36:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93.2.7 2008/02/04 09:23:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.93.2.8 2008/02/27 08:36:35 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -694,7 +694,6 @@ pci_set_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state,
 		return 0;
 	switch (state) {
 	case PCI_PMCSR_STATE_D0:
-		value |= PCI_PMCSR_STATE_D0;
 		break;
 	case PCI_PMCSR_STATE_D1:
 		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3) {
@@ -705,7 +704,6 @@ pci_set_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state,
 			printf("D1 not supported\n");
 			return EOPNOTSUPP;
 		}
-		value |= PCI_PMCSR_STATE_D1;
 		break;
 	case PCI_PMCSR_STATE_D2:
 		if (now == PCI_PMCSR_STATE_D3) {
@@ -716,18 +714,18 @@ pci_set_powerstate_int(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state,
 			printf("D2 not supported\n");
 			return EOPNOTSUPP;
 		}
-		value |= PCI_PMCSR_STATE_D2;
 		break;
 	case PCI_PMCSR_STATE_D3:
-		value |= PCI_PMCSR_STATE_D3;
 		break;
 	default:
 		return EINVAL;
 	}
+	value |= state;
 	pci_conf_write(pc, tag, offset + PCI_PMCSR, value);
-	if (state == PCI_PMCSR_STATE_D3 || value == PCI_PMCSR_STATE_D3)
+	/* delay according to pcipm1.2, ch. 5.6.1 */
+	if (state == PCI_PMCSR_STATE_D3 || now == PCI_PMCSR_STATE_D3)
 		DELAY(10000);
-	else if (state == PCI_PMCSR_STATE_D2 || value == PCI_PMCSR_STATE_D2)
+	else if (state == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D2)
 		DELAY(200);
 
 	return 0;
@@ -853,16 +851,27 @@ struct pci_child_power {
 };
 
 static bool
-pci_child_suspend(device_t dv)
+pci_child_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct pci_child_power *priv = device_pmf_bus_private(dv);
+	pcireg_t ocsr, csr;
 
 	pci_conf_capture(priv->p_pc, priv->p_tag, &priv->p_pciconf);
 
-	if (priv->p_has_pm &&
-	    PCI_CLASS(priv->p_class) != PCI_CLASS_DISPLAY &&
-	    pci_set_powerstate_int(priv->p_pc, priv->p_tag,
+	if (!priv->p_has_pm)
+		return true; /* ??? hopefully handled by ACPI */
+	if (PCI_CLASS(priv->p_class) == PCI_CLASS_DISPLAY)
+		return true; /* XXX */
+
+	/* disable decoding and busmastering, see pcipm1.2 ch. 8.2.1 */
+	ocsr = pci_conf_read(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG);
+	csr = ocsr & ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE
+		       | PCI_COMMAND_MASTER_ENABLE);
+	pci_conf_write(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG, csr);
+	if (pci_set_powerstate_int(priv->p_pc, priv->p_tag,
 	    PCI_PMCSR_STATE_D3, priv->p_pm_offset, priv->p_pm_cap)) {
+		pci_conf_write(priv->p_pc, priv->p_tag,
+			       PCI_COMMAND_STATUS_REG, ocsr);
 		aprint_error_dev(dv, "unsupported state, continuing.\n");
 		return false;
 	}
@@ -870,7 +879,7 @@ pci_child_suspend(device_t dv)
 }
 
 static bool
-pci_child_resume(device_t dv)
+pci_child_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pci_child_power *priv = device_pmf_bus_private(dv);
 

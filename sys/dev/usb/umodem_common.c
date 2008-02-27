@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem_common.c,v 1.5.2.4 2007/09/03 14:39:19 yamt Exp $	*/
+/*	$NetBSD: umodem_common.c,v 1.5.2.5 2008/02/27 08:36:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.5.2.4 2007/09/03 14:39:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem_common.c,v 1.5.2.5 2008/02/27 08:36:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -655,6 +655,13 @@ umodem_common_activate(struct umodem_softc *sc, enum devact act)
 		break;
 	}
 	return (rv);
+}
+
+void
+umodem_common_childdet(struct umodem_softc *sc, device_t child)
+{
+	KASSERT(sc->sc_subdev == child);
+	sc->sc_subdev = NULL;
 }
 
 int

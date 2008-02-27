@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.98 2005/05/31 04:03:11 christos Exp $
+# $NetBSD: Makefile.sun3,v 1.98.2.1 2008/02/27 08:36:26 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -71,6 +71,7 @@ locore.o:   assym.h m68k/asm.h m68k/trap.h
 copy.o:     assym.h m68k/asm.h $S/sys/errno.h
 bcopy.o:    assym.h m68k/asm.h
 copypage.o: assym.h m68k/asm.h
+lock_stubs.o: assym.h
 
 # depend on CPU configuration
 db_machdep.o dvma.o machdep.o pmap.o sun3_startup.o vm_machdep.o: Makefile

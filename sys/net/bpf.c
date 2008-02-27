@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.109.2.6 2008/01/21 09:46:59 yamt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.109.2.7 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.109.2.6 2008/01/21 09:46:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.109.2.7 2008/02/27 08:37:00 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -1310,7 +1310,7 @@ bpf_mtap(void *arg, struct mbuf *m)
  * try to free it or keep a pointer a to it).
  */
 void
-bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
+bpf_mtap_af(void *arg, uint32_t af, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1323,7 +1323,7 @@ bpf_mtap_af(void *arg, u_int32_t af, struct mbuf *m)
 }
 
 void
-bpf_mtap_et(void *arg, u_int16_t et, struct mbuf *m)
+bpf_mtap_et(void *arg, uint16_t et, struct mbuf *m)
 {
 	struct mbuf m0;
 
@@ -1332,10 +1332,10 @@ bpf_mtap_et(void *arg, u_int16_t et, struct mbuf *m)
 	m0.m_len = 14;
 	m0.m_data = m0.m_dat;
 
-	((u_int32_t *)m0.m_data)[0] = 0;
-	((u_int32_t *)m0.m_data)[1] = 0;
-	((u_int32_t *)m0.m_data)[2] = 0;
-	((u_int16_t *)m0.m_data)[6] = et;
+	((uint32_t *)m0.m_data)[0] = 0;
+	((uint32_t *)m0.m_data)[1] = 0;
+	((uint32_t *)m0.m_data)[2] = 0;
+	((uint16_t *)m0.m_data)[6] = et;
 
 	bpf_mtap(arg, &m0);
 }
