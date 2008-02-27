@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.115 2008/02/09 19:15:59 dholland Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.116 2008/02/27 16:41:11 ad Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,11 +32,6 @@
  * SUCH DAMAGE.
  */
 
-
-/*
- * XXX The ISO support can't possibly work..
- */
-
 #include <sys/cdefs.h>
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
@@ -47,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\n\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.115 2008/02/09 19:15:59 dholland Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.116 2008/02/27 16:41:11 ad Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,9 +59,6 @@ __RCSID("$NetBSD: mountd.c,v 1.115 2008/02/09 19:15:59 dholland Exp $");
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 #include <rpcsvc/mount.h>
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #include <nfs/nfs.h>
@@ -143,9 +135,6 @@ struct netmsk {
 union grouptypes {
 	struct addrinfo *gt_addrinfo;
 	struct netmsk   gt_net;
-#ifdef ISO
-	struct sockaddr_iso *gt_isoaddr;
-#endif
 };
 
 struct grouplist {
@@ -157,7 +146,6 @@ struct grouplist {
 #define	GT_NULL		0x0
 #define	GT_HOST		0x1
 #define	GT_NET		0x2
-#define	GT_ISO		0x4
 
 struct hostlist {
 	int             ht_flag;/* Uses DP_xx bits */
@@ -225,9 +213,6 @@ static int netpartcmp __P((struct sockaddr *, struct sockaddr *, int));
 static int sacmp __P((struct sockaddr *, struct sockaddr *));
 static int allones __P((struct sockaddr_storage *, int));
 static int countones __P((struct sockaddr *));
-#ifdef ISO
-static int get_isoaddr __P((const char *, size_t, char *, struct grouplist *));
-#endif
 static void bind_resv_port __P((int, sa_family_t, in_port_t));
 static void no_nfs(int);
 static struct exportlist *exphead;
@@ -252,7 +237,6 @@ static const int ninumeric = NI_NUMERICHOST;
 #define	OP_KERB		0x004
 #define	OP_MASK		0x008
 #define	OP_NET		0x010
-#define	OP_ISO		0x020
 #define	OP_ALLDIRS	0x040
 #define OP_NORESPORT	0x080
 #define OP_NORESMNT	0x100
@@ -1793,14 +1777,6 @@ do_opt(line, lineno, cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
 			opt_flags |= (OP_MAPALL | OP_NORESPORT);
 		} else if (cpoptarg && !strcmp(cpopt, "index")) {
 			ep->ex_indexfile = strdup(cpoptarg);
-#ifdef ISO
-		} else if (cpoptarg && !strcmp(cpopt, "iso")) {
-			if (get_isoaddr(line, lineno, cpoptarg, grp))
-				return (1);
-			*has_hostp = 1;
-			usedarg++;
-			opt_flags |= OP_ISO;
-#endif /* ISO */
 		} else {
 			syslog(LOG_ERR, 
 			    "\"%s\", line %ld: Bad opt %s",
@@ -1918,43 +1894,6 @@ get_ht()
 	return (hp);
 }
 
-#ifdef ISO
-/*
- * Translate an iso address.
- */
-static int
-get_isoaddr(line, lineno, cp, grp)
-	const char *line;
-	size_t lineno;
-	char *cp;
-	struct grouplist *grp;
-{
-	struct iso_addr *isop;
-	struct sockaddr_iso *isoaddr;
-
-	if (grp->gr_type != GT_NULL) {
-		syslog(LOG_ERR,
-		    "\"%s\", line %ld: Bad netgroup type for iso addr %s",
-		    line, (unsigned long)lineno, cp);
-		return (1);
-	}
-	if ((isop = iso_addr(cp)) == NULL) {
-		syslog(LOG_ERR,
-		    "\"%s\", line %ld: Bad iso addr %s",
-		    line, (unsigned long)lineno, cp);
-		return (1);
-	}
-	isoaddr = emalloc(sizeof(struct sockaddr_iso));
-	(void)memset(isoaddr, 0, sizeof(struct sockaddr_iso));
-	(void)memcpy(&isoaddr->siso_addr, isop, sizeof(struct iso_addr));
-	isoaddr->siso_len = sizeof(struct sockaddr_iso);
-	isoaddr->siso_family = AF_ISO;
-	grp->gr_type = GT_ISO;
-	grp->gr_ptr.gt_isoaddr = isoaddr;
-	return (0);
-}
-#endif				/* ISO */
-
 /*
  * Do the nfssvc syscall to push the export info into the kernel.
  */
@@ -2021,15 +1960,6 @@ do_nfssvc(line, lineno, ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 			export.ex_mask = (struct sockaddr *)&ss;
 			export.ex_masklen = ss.ss_len;
 			break;
-#ifdef ISO
-		case GT_ISO:
-			export.ex_addr =
-			    (struct sockaddr *) grp->gr_ptr.gt_isoaddr;
-			export.ex_addrlen =
-			    sizeof(struct sockaddr_iso);
-			export.ex_masklen = 0;
-			break;
-#endif				/* ISO */
 		default:
 			syslog(LOG_ERR, "\"%s\", line %ld: Bad netgroup type",
 			    line, (unsigned long)lineno);
@@ -2464,10 +2394,6 @@ free_grp(grp)
 		if (grp->gr_ptr.gt_net.nt_name)
 			free(grp->gr_ptr.gt_net.nt_name);
 	}
-#ifdef ISO
-	else if (grp->gr_type == GT_ISO)
-		free(grp->gr_ptr.gt_isoaddr);
-#endif
 	free(grp);
 }
 
@@ -2520,12 +2446,6 @@ check_options(line, lineno, dp)
 	if ((opt_flags & OP_MASK) && (opt_flags & OP_MASKLEN) != 0) {
 		syslog(LOG_ERR, "\"%s\", line %ld: /pref and -mask mutually"
 		    " exclusive",
-		    line, (unsigned long)lineno);
-		return (1);
-	}
-	if ((opt_flags & (OP_NET|OP_ISO)) == (OP_NET|OP_ISO)) {
-		syslog(LOG_ERR,
-		    "\"%s\", line %ld: -net and -iso mutually exclusive",
 		    line, (unsigned long)lineno);
 		return (1);
 	}
