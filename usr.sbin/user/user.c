@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.118 2008/02/04 01:28:20 hubertf Exp $ */
+/* $NetBSD: user.c,v 1.119 2008/02/27 19:12:56 reed Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999 \
 	        The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.118 2008/02/04 01:28:20 hubertf Exp $");
+__RCSID("$NetBSD: user.c,v 1.119 2008/02/27 19:12:56 reed Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1775,7 +1775,7 @@ usermgmt_usage(const char *prog)
 		    "usage: %s [-rSv] [-p preserve-value] user\n", prog);
 #ifdef EXTENSIONS
 	} else if (strcmp(prog, "userinfo") == 0) {
-		(void)fprintf(stderr, "usage: %s [-ev] user\n", prog);
+		(void)fprintf(stderr, "usage: %s [-e] user\n", prog);
 #endif
 	} else if (strcmp(prog, "groupadd") == 0) {
 		(void)fprintf(stderr, "usage: %s [-ov] [-g gid]"
@@ -2390,13 +2390,10 @@ userinfo(int argc, char **argv)
 
 	exists = 0;
 	buf[0] = '\0';
-	while ((i = getopt(argc, argv, "ev")) != -1) {
+	while ((i = getopt(argc, argv, "e")) != -1) {
 		switch(i) {
 		case 'e':
 			exists = 1;
-			break;
-		case 'v':
-			verbose = 1;
 			break;
 		default:
 			usermgmt_usage("userinfo");
