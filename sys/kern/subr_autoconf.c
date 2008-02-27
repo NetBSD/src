@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.131 2008/02/12 17:30:59 joerg Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.132 2008/02/27 19:59:05 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.131 2008/02/12 17:30:59 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.132 2008/02/27 19:59:05 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1128,10 +1128,16 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 		panic("config_devalloc: device name too long");
 
 	/* get memory for all device vars */
-	dev_private = malloc(ca->ca_devsize, M_DEVBUF,
-			     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
-	if (dev_private == NULL)
-		panic("config_devalloc: memory allocation for device softc failed");
+	KASSERT((ca->ca_flags & DVF_PRIV_ALLOC) || ca->ca_devsize >= sizeof(struct device));
+	if (ca->ca_devsize > 0) {
+		dev_private = malloc(ca->ca_devsize, M_DEVBUF,
+				     M_ZERO | (cold ? M_NOWAIT : M_WAITOK));
+		if (dev_private == NULL)
+			panic("config_devalloc: memory allocation for device softc failed");
+	} else {
+		KASSERT(ca->ca_flags & DVF_PRIV_ALLOC);
+		dev_private = NULL;
+	}
 
 	if ((ca->ca_flags & DVF_PRIV_ALLOC) != 0) {
 		dev = malloc(sizeof(struct device), M_DEVBUF, 
