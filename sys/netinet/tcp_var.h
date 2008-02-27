@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.151 2007/12/25 18:33:47 perry Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.152 2008/02/27 19:41:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -368,8 +368,7 @@ static __inline void tcp_reass_unlock (struct tcpcb *)
 	__unused;
 
 static __inline int
-tcp_reass_lock_try(tp)
-	struct tcpcb *tp;
+tcp_reass_lock_try(struct tcpcb *tp)
 {
 	int s;
 
@@ -388,8 +387,7 @@ tcp_reass_lock_try(tp)
 }
 
 static __inline void
-tcp_reass_unlock(tp)
-	struct tcpcb *tp;
+tcp_reass_unlock(struct tcpcb *tp)
 {
 	int s;
 

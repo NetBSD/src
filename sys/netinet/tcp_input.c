@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.280 2008/02/20 11:44:07 yamt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.281 2008/02/27 19:41:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.280 2008/02/20 11:44:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.281 2008/02/27 19:41:51 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -412,7 +412,7 @@ static POOL_INIT(tcpipqent_pool, sizeof(struct ipqent), 0, 0, 0, "tcpipqepl",
     NULL, IPL_VM);
 
 struct ipqent *
-tcpipqent_alloc()
+tcpipqent_alloc(void)
 {
 	struct ipqent *ipqe;
 	int s;
