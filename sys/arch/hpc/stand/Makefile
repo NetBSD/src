@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2008/02/26 21:46:38 rafal Exp $
+#	$NetBSD: Makefile,v 1.23 2008/02/27 03:45:58 uwe Exp $
 #
 
 .include <bsd.sys.mk>		# for HOST_SH
@@ -17,7 +17,7 @@ UUDECODE_FILES= binary/ARM/hpcboot.exe \
 evc3:
 	cd dspgen && ${MAKE} evc3 || exit 1
 	for d in ${PROJECT_DIRS}; do					\
-		${HOST_SH} dspgen/config.sh evc3 $$d;			\
+		${HOST_SH} dspgen/config.sh evc3 $$d || exit 1;		\
 	done
 	${HOST_SH} dspgen/gen_workspace.sh evc3 hpc_stand.vcw $(PROJECT_DIRS)
 	cd dspgen && ${MAKE} clean
@@ -30,7 +30,7 @@ evc3:
 evc4:
 	cd dspgen && ${MAKE} evc4 || exit 1
 	for d in ${PROJECT_DIRS}; do					\
-		${HOST_SH} dspgen/config.sh evc4 $$d;			\
+		${HOST_SH} dspgen/config.sh evc4 $$d || exit 1;		\
 	done
 	${HOST_SH} dspgen/gen_workspace.sh evc4 hpc_stand.vcw $(PROJECT_DIRS)
 	cd dspgen && ${MAKE} clean
@@ -43,7 +43,7 @@ evc4:
 vc6:
 	cd dspgen && ${MAKE} vc6 || exit 1
 	for d in ${PROJECT_DIRS}; do					\
-		${HOST_SH} dspgen/config.sh vc6 $$d;			\
+		${HOST_SH} dspgen/config.sh vc6 $$d || exit 1;		\
 	done
 	cd dspgen && ${MAKE} clean
 	${HOST_SH} dspgen/gen_workspace.sh vc6 hpc_stand.dsw $(PROJECT_DIRS)
@@ -56,7 +56,7 @@ vc6:
 vc5:
 	cd dspgen && ${MAKE} vc5 || exit 1
 	for d in ${PROJECT_DIRS}; do					\
-		${HOST_SH} dspgen/config.sh vc5 $$d;			\
+		${HOST_SH} dspgen/config.sh vc5 $$d || exit 1;		\
 	done
 	cd dspgen && ${MAKE} clean
 	${HOST_SH} dspgen/gen_workspace.sh vc5 hpc_stand.dsw $(PROJECT_DIRS)
