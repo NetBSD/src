@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.122 2008/01/30 00:43:47 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.123 2008/02/27 19:57:18 matt Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.122 2008/01/30 00:43:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.123 2008/02/27 19:57:18 matt Exp $");
 
 #include "opt_sysv.h"
 #include "opt_posix.h"
@@ -147,11 +147,7 @@ static const u_int sysctl_lwpprflagmap[] = {
 static int dcopyout(struct lwp *, const void *, void *, size_t);
 
 static int
-dcopyout(l, kaddr, uaddr, len)
-	struct lwp *l;
-	const void *kaddr;
-	void *uaddr;
-	size_t len;
+dcopyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 {
 	int error;
 
