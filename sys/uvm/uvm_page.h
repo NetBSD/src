@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.51 2008/02/27 14:23:33 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.52 2008/02/27 19:38:57 matt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -309,9 +309,7 @@ static int vm_physseg_find(paddr_t, int *);
  * vm_physseg_find: find vm_physseg structure that belongs to a PA
  */
 static __inline int
-vm_physseg_find(pframe, offp)
-	paddr_t pframe;
-	int	*offp;
+vm_physseg_find(paddr_t pframe, int *offp)
 {
 #if VM_PHYSSEG_MAX == 1
 
@@ -391,8 +389,7 @@ vm_physseg_find(pframe, offp)
  * back from an I/O mapping (ugh!).   used in some MD code as well.
  */
 static __inline struct vm_page *
-PHYS_TO_VM_PAGE(pa)
-	paddr_t pa;
+PHYS_TO_VM_PAGE(paddr_t pa)
 {
 	paddr_t pf = atop(pa);
 	int	off;
