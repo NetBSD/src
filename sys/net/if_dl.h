@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dl.h,v 1.16.2.2 2007/09/03 14:42:03 yamt Exp $	*/
+/*	$NetBSD: if_dl.h,v 1.16.2.3 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -63,13 +63,13 @@ typedef __sa_family_t	sa_family_t;
  * Structure of a Link-Level sockaddr:
  */
 struct sockaddr_dl {
-	u_char	    sdl_len;	/* Total length of sockaddr */
+	uint8_t	    sdl_len;	/* Total length of sockaddr */
 	sa_family_t sdl_family;	/* AF_LINK */
-	u_int16_t   sdl_index;	/* if != 0, system given index for interface */
-	u_char	    sdl_type;	/* interface type */
-	u_char	    sdl_nlen;	/* interface name length, no trailing 0 reqd. */
-	u_char	    sdl_alen;	/* link level address length */
-	u_char	    sdl_slen;	/* link layer selector length */
+	uint16_t   sdl_index;	/* if != 0, system given index for interface */
+	uint8_t	    sdl_type;	/* interface type */
+	uint8_t	    sdl_nlen;	/* interface name length, no trailing 0 reqd. */
+	uint8_t	    sdl_alen;	/* link level address length */
+	uint8_t	    sdl_slen;	/* link layer selector length */
 	/* minimum work area, can be larger; contains both if name
 	 * and ll address
 	 */

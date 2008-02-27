@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.4.2.7 2008/01/21 09:46:19 yamt Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.4.2.8 2008/02/27 08:36:56 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.4.2.7 2008/01/21 09:46:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.4.2.8 2008/02/27 08:36:56 yamt Exp $");
 
 #include "opt_ddb.h"
 
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.4.2.7 2008/01/21 09:46:19 yamt 
 #include <lib/libkern/rb.h>
 
 #include <machine/lock.h>
+
+unsigned int		ld_panic;
 
 #ifdef LOCKDEBUG
 
@@ -299,14 +301,14 @@ lockdebug_alloc(volatile void *lock, lockops_t *lo, uintptr_t initaddr)
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
 
-	if (lo == NULL || panicstr != NULL)
+	if (lo == NULL || panicstr != NULL || ld_panic)
 		return false;
 	if (ld_freeptr == 0)
 		lockdebug_init();
 
 	if ((ld = lockdebug_lookup1(lock, &lk)) != NULL) {
 		lockdebug_abort1(ld, lk, __func__, "already initialized", true);
-		/* NOTREACHED */
+		return false;
 	}
 
 	/*
@@ -384,7 +386,7 @@ lockdebug_free(volatile void *lock)
 	lockdebug_t *ld;
 	lockdebuglk_t *lk;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL || ld_panic)
 		return;
 
 	ld = lockdebug_lookup(lock, &lk);
@@ -393,9 +395,12 @@ lockdebug_free(volatile void *lock)
 		    "(ld_lock=%p)", lock, ld->ld_lock);
 		lockdebug_abort1(ld, lk, __func__, "lock record follows",
 		    true);
+		return;
 	}
-	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0)
+	if ((ld->ld_flags & LD_LOCKED) != 0 || ld->ld_shares != 0) {
 		lockdebug_abort1(ld, lk, __func__, "is locked", true);
+		return;
+	}
 	lockdebug_lock(&ld_tree_lk);
 	rb_tree_remove_node(&ld_rb_tree, __UNVOLATILE(&ld->ld_rb_node));
 	lockdebug_unlock(&ld_tree_lk);
@@ -472,7 +477,7 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 	(void)shared;
 	recurse = false;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL || ld_panic)
 		return;
 
 	if ((ld = lockdebug_lookup(lock, &lk)) == NULL)
@@ -487,10 +492,12 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 	}
 
 	if (cpu_intr_p()) {
-		if ((ld->ld_flags & LD_SLEEPER) != 0)
+		if ((ld->ld_flags & LD_SLEEPER) != 0) {
 			lockdebug_abort1(ld, lk, __func__,
 			    "acquiring sleep lock from interrupt context",
 			    true);
+			return;
+		}
 	}
 
 	if (shared)
@@ -498,9 +505,11 @@ lockdebug_wantlock(volatile void *lock, uintptr_t where, int shared)
 	else
 		ld->ld_exwant++;
 
-	if (recurse)
+	if (recurse) {
 		lockdebug_abort1(ld, lk, __func__, "locking against myself",
 		    true);
+		return;
+	}
 
 	lockdebug_unlock(lk);
 }
@@ -517,7 +526,7 @@ lockdebug_locked(volatile void *lock, uintptr_t where, int shared)
 	lockdebuglk_t *lk;
 	lockdebug_t *ld;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL || ld_panic)
 		return;
 
 	if ((ld = lockdebug_lookup(lock, &lk)) == NULL)
@@ -528,9 +537,11 @@ lockdebug_locked(volatile void *lock, uintptr_t where, int shared)
 		ld->ld_shares++;
 		ld->ld_shwant--;
 	} else {
-		if ((ld->ld_flags & LD_LOCKED) != 0)
+		if ((ld->ld_flags & LD_LOCKED) != 0) {
 			lockdebug_abort1(ld, lk, __func__,
 			    "already locked", true);
+			return;
+		}
 
 		ld->ld_flags |= LD_LOCKED;
 		ld->ld_locked = where;
@@ -562,39 +573,49 @@ lockdebug_unlocked(volatile void *lock, uintptr_t where, int shared)
 	lockdebuglk_t *lk;
 	lockdebug_t *ld;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL || ld_panic)
 		return;
 
 	if ((ld = lockdebug_lookup(lock, &lk)) == NULL)
 		return;
 
 	if (shared) {
-		if (l->l_shlocks == 0)
+		if (l->l_shlocks == 0) {
 			lockdebug_abort1(ld, lk, __func__,
 			    "no shared locks held by LWP", true);
-		if (ld->ld_shares == 0)
+			return;
+		}
+		if (ld->ld_shares == 0) {
 			lockdebug_abort1(ld, lk, __func__,
 			    "no shared holds on this lock", true);
+			return;
+		}
 		l->l_shlocks--;
 		ld->ld_shares--;
 	} else {
-		if ((ld->ld_flags & LD_LOCKED) == 0)
+		if ((ld->ld_flags & LD_LOCKED) == 0) {
 			lockdebug_abort1(ld, lk, __func__, "not locked",
 			    true);
+			return;
+		}
 
 		if ((ld->ld_flags & LD_SLEEPER) != 0) {
-			if (ld->ld_lwp != curlwp)
+			if (ld->ld_lwp != curlwp) {
 				lockdebug_abort1(ld, lk, __func__,
 				    "not held by current LWP", true);
+				return;
+			}
 			ld->ld_flags &= ~LD_LOCKED;
 			ld->ld_unlocked = where;
 			ld->ld_lwp = NULL;
 			curlwp->l_exlocks--;
 			TAILQ_REMOVE(&ld_sleepers, ld, ld_chain);
 		} else {
-			if (ld->ld_cpu != (uint16_t)cpu_number())
+			if (ld->ld_cpu != (uint16_t)cpu_number()) {
 				lockdebug_abort1(ld, lk, __func__,
 				    "not held by current CPU", true);
+				return;
+			}
 			ld->ld_flags &= ~LD_LOCKED;
 			ld->ld_unlocked = where;		
 			ld->ld_lwp = NULL;
@@ -620,7 +641,7 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 	uint16_t cpuno;
 	int s;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL || ld_panic)
 		return;
 
 	crit_enter();
@@ -631,15 +652,19 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 		s = lockdebug_lock_rd(&ld_spinner_lk);
 		TAILQ_FOREACH(ld, &ld_spinners, ld_chain) {
 			if (ld->ld_lock == spinlock) {
-				if (ld->ld_cpu != cpuno)
+				if (ld->ld_cpu != cpuno) {
 					lockdebug_abort1(ld, &ld_spinner_lk,
 					    __func__,
 					    "not held by current CPU", true);
+					return;
+				}
 				continue;
 			}
-			if (ld->ld_cpu == cpuno && (l->l_pflag & LP_INTR) == 0)
+			if (ld->ld_cpu == cpuno && (l->l_pflag & LP_INTR) == 0) {
 				lockdebug_abort1(ld, &ld_spinner_lk,
 				    __func__, "spin lock held", true);
+				return;
+			}
 		}
 		lockdebug_unlock_rd(&ld_spinner_lk, s);
 	}
@@ -648,9 +673,11 @@ lockdebug_barrier(volatile void *spinlock, int slplocks)
 		if (l->l_exlocks != 0) {
 			s = lockdebug_lock_rd(&ld_sleeper_lk);
 			TAILQ_FOREACH(ld, &ld_sleepers, ld_chain) {
-				if (ld->ld_lwp == l)
+				if (ld->ld_lwp == l) {
 					lockdebug_abort1(ld, &ld_sleeper_lk,
 					    __func__, "sleep lock held", true);
+					return;
+				}
 			}
 			lockdebug_unlock_rd(&ld_sleeper_lk, s);
 		}
@@ -675,7 +702,7 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 	lockdebuglk_t *lk;
 	int s;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL || ld_panic)
 		return;
 
 	s = lockdebug_lock_rd(&ld_tree_lk);
@@ -701,7 +728,6 @@ lockdebug_mem_check(const char *func, void *base, size_t sz)
 	lockdebug_lock(lk);
 	lockdebug_abort1(ld, lk, func,
 	    "allocation contains active lock", !cold);
-	return;
 }
 
 /*
@@ -740,14 +766,24 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...))
 }
 
 /*
- * lockdebug_dump:
+ * lockdebug_abort1:
  *
- *	Dump information about a known lock.
+ *	An error has been trapped - dump lock info and panic.
  */
 static void
 lockdebug_abort1(lockdebug_t *ld, lockdebuglk_t *lk, const char *func,
 		 const char *msg, bool dopanic)
 {
+
+	/*
+	 * Don't make the situation wose if the system is already going
+	 * down in flames.  Once a panic is triggered, lockdebug state
+	 * becomes stale and cannot be trusted.
+	 */
+	if (atomic_inc_uint_nv(&ld_panic) != 1) {
+		lockdebug_unlock(lk);
+		return;
+	}
 
 	printf_nolog("%s error: %s: %s\n\n", ld->ld_lockops->lo_name,
 	    func, msg);
@@ -804,15 +840,21 @@ lockdebug_abort(volatile void *lock, lockops_t *ops, const char *func,
 	}
 #endif	/* LOCKDEBUG */
 
-	printf_nolog("%s error: %s: %s\n\n"
-	    "lock address : %#018lx\n"
-	    "current cpu  : %18d\n"
-	    "current lwp  : %#018lx\n",
-	    ops->lo_name, func, msg, (long)lock, (int)cpu_number(),
-	    (long)curlwp);
+	/*
+	 * Complain first on the occurrance only.  Otherwise proceeed to
+	 * panic where we will `rendezvous' with other CPUs if the machine
+	 * is going down in flames.
+	 */
+	if (atomic_inc_uint_nv(&ld_panic) == 1) {
+		printf_nolog("%s error: %s: %s\n\n"
+		    "lock address : %#018lx\n"
+		    "current cpu  : %18d\n"
+		    "current lwp  : %#018lx\n",
+		    ops->lo_name, func, msg, (long)lock, (int)cpu_number(),
+		    (long)curlwp);
+		(*ops->lo_dump)(lock);
+		printf_nolog("\n");
+	}
 
-	(*ops->lo_dump)(lock);
-
-	printf_nolog("\n");
 	panic("lock error");
 }

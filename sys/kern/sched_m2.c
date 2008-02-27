@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.6.4.6 2008/02/04 09:24:15 yamt Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.6.4.7 2008/02/27 08:36:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.4.6 2008/02/04 09:24:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.6.4.7 2008/02/27 08:36:56 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -108,7 +108,6 @@ typedef struct {
 
 typedef struct {
 	/* Lock and bitmap */
-	kmutex_t	r_rq_mutex;
 	uint32_t	r_bitmap[PRI_COUNT >> BITMAP_SHIFT];
 	/* Counters */
 	u_int		r_count;	/* Count of the threads */
@@ -177,14 +176,12 @@ sched_rqinit(void)
 #endif
 
 	/* Pool of the scheduler-specific structures */
-	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), 0, 0, 0,
-	    "lwpsd", NULL, IPL_NONE, NULL, NULL, NULL);
+	sil_pool = pool_cache_init(sizeof(sched_info_lwp_t), CACHE_LINE_SIZE,
+	    0, 0, "lwpsd", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	/* Attach the primary CPU here */
 	sched_cpuattach(ci);
 
-	/* Initialize the scheduler structure of the primary LWP */
-	lwp0.l_mutex = &ci->ci_schedstate.spc_lwplock;
 	sched_lwp_fork(NULL, &lwp0);
 	sched_newts(&lwp0);
 }
@@ -211,6 +208,16 @@ sched_cpuattach(struct cpu_info *ci)
 	void *rq_ptr;
 	u_int i, size;
 
+	if (ci == lwp0.l_cpu) {
+		/* Initialize the scheduler structure of the primary LWP */
+		lwp0.l_mutex = ci->ci_schedstate.spc_lwplock;
+	}
+
+	if (ci->ci_schedstate.spc_mutex != NULL) {
+		/* Already initialized. */
+		return;
+	}
+
 	/* Allocate the run queue */
 	size = roundup2(sizeof(runqueue_t), CACHE_LINE_SIZE) + CACHE_LINE_SIZE;
 	rq_ptr = kmem_zalloc(size, KM_SLEEP);
@@ -220,7 +227,9 @@ sched_cpuattach(struct cpu_info *ci)
 	ci_rq = (void *)(roundup2((uintptr_t)(rq_ptr), CACHE_LINE_SIZE));
 
 	/* Initialize run queues */
-	mutex_init(&ci_rq->r_rq_mutex, MUTEX_DEFAULT, IPL_SCHED);
+	KASSERT(sizeof(kmutex_t) <= CACHE_LINE_SIZE);
+	ci->ci_schedstate.spc_mutex = kmem_alloc(CACHE_LINE_SIZE, KM_SLEEP);
+	mutex_init(ci->ci_schedstate.spc_mutex, MUTEX_DEFAULT, IPL_SCHED);
 	for (i = 0; i < PRI_RT_COUNT; i++)
 		TAILQ_INIT(&ci_rq->r_rt_queue[i].q_head);
 	for (i = 0; i < PRI_TS_COUNT; i++)
@@ -228,7 +237,6 @@ sched_cpuattach(struct cpu_info *ci)
 	ci_rq->r_highest_pri = 0;
 
 	ci->ci_schedstate.spc_sched_info = ci_rq;
-	ci->ci_schedstate.spc_mutex = &ci_rq->r_rq_mutex;
 }
 
 /* Pre-calculate the time-slices for the priorities */

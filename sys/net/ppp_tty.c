@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.38.2.6 2007/12/07 17:34:19 yamt Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.38.2.7 2008/02/27 08:37:01 yamt Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.38.2.6 2007/12/07 17:34:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.38.2.7 2008/02/27 08:37:01 yamt Exp $");
 
 #include "ppp.h"
 
@@ -156,7 +156,7 @@ struct linesw ppp_disc = {	/* XXX should be static */
 };
 
 static void	ppprcvframe(struct ppp_softc *sc, struct mbuf *m);
-static u_int16_t pppfcs(u_int16_t fcs, u_char *cp, int len);
+static uint16_t pppfcs(uint16_t fcs, const uint8_t *cp, int len);
 static void	pppsyncstart(struct ppp_softc *sc);
 static void	pppasyncstart(struct ppp_softc *);
 static void	pppasyncctlp(struct ppp_softc *);
@@ -610,7 +610,7 @@ bail:
 /*
  * FCS lookup table as calculated by genfcstab.
  */
-static const u_int16_t fcstab[256] = {
+static const uint16_t fcstab[256] = {
 	0x0000,	0x1189,	0x2312,	0x329b,	0x4624,	0x57ad,	0x6536,	0x74bf,
 	0x8c48,	0x9dc1,	0xaf5a,	0xbed3,	0xca6c,	0xdbe5,	0xe97e,	0xf8f7,
 	0x1081,	0x0108,	0x3393,	0x221a,	0x56a5,	0x472c,	0x75b7,	0x643e,
@@ -648,8 +648,8 @@ static const u_int16_t fcstab[256] = {
 /*
  * Calculate a new FCS given the current FCS and the new data.
  */
-static u_int16_t
-pppfcs(u_int16_t fcs, u_char *cp, int len)
+static uint16_t
+pppfcs(uint16_t fcs, const uint8_t *cp, int len)
 {
     while (len--)
 	fcs = PPP_FCS(fcs, *cp++);
@@ -741,7 +741,7 @@ pppasyncstart(struct ppp_softc *sc)
 	    }
 
 	    /* Calculate the FCS for the first mbuf's worth. */
-	    sc->sc_outfcs = pppfcs(PPP_INITFCS, mtod(m, u_char *), m->m_len);
+	    sc->sc_outfcs = pppfcs(PPP_INITFCS, mtod(m, uint8_t *), m->m_len);
 	}
 
 	for (;;) {
@@ -844,7 +844,7 @@ pppasyncstart(struct ppp_softc *sc)
 		/* Finished a packet */
 		break;
 	    }
-	    sc->sc_outfcs = pppfcs(sc->sc_outfcs, mtod(m, u_char *), m->m_len);
+	    sc->sc_outfcs = pppfcs(sc->sc_outfcs, mtod(m, uint8_t *), m->m_len);
 	}
 
 	/*

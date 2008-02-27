@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_softdep.c,v 1.66.2.8 2008/01/21 09:48:07 yamt Exp $	*/
+/*	$NetBSD: ffs_softdep.c,v 1.66.2.9 2008/02/27 08:37:06 yamt Exp $	*/
 
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.66.2.8 2008/01/21 09:48:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_softdep.c,v 1.66.2.9 2008/02/27 08:37:06 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -93,7 +93,7 @@ MALLOC_JUSTDEFINE(M_NEWBLK, "newblk", "New block allocation");
 /*
  * Names of softdep types.
  */
-const char *softdep_typenames[] = {
+const char * const softdep_typenames[] = {
 	"invalid",
 	"pagedep",
 	"inodedep",
@@ -205,7 +205,7 @@ static	int softdep_process_worklist(struct mount *);
 static	void softdep_move_dependencies(struct buf *, struct buf *);
 static	int softdep_count_dependencies(struct buf *bp, int);
 
-static struct bio_ops bioops_softdep = {
+static const struct bio_ops bioops_softdep = {
 	softdep_disk_io_initiation,		/* io_start */
 	softdep_disk_write_complete,		/* io_complete */
 	softdep_deallocate_dependencies,	/* io_deallocate */
@@ -5575,7 +5575,7 @@ getdirtybuf(bpp, waitfor)
 			break;
 		if (waitfor != MNT_WAIT)
 			return (0);
-		(void)bbusy(bp, false, 0);
+		(void)bbusy(bp, false, 0, NULL);
 	}
 	mutex_enter(bp->b_objlock);
 	if ((bp->b_oflags & BO_DELWRI) == 0) {

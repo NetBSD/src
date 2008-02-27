@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.22.12.4 2008/01/21 09:39:16 yamt Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.22.12.5 2008/02/27 08:36:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.22.12.4 2008/01/21 09:39:16 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.22.12.5 2008/02/27 08:36:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,8 @@ static int
 coff_find_section(struct lwp *l, struct vnode *vp, struct coff_filehdr *fp,
     struct coff_scnhdr *sh, int s_type)
 {
-	int i, pos, resid, siz, error;
+	int i, pos, error;
+	size_t siz, resid;
 
 	pos = COFF_HDR_SIZE;
 	for (i = 0; i < fp->f_nscns; i++, pos += sizeof(struct coff_scnhdr)) {
@@ -205,7 +206,7 @@ coff_find_section(struct lwp *l, struct vnode *vp, struct coff_filehdr *fp,
 		}
 		siz -= resid;
 		if (siz != sizeof(struct coff_scnhdr)) {
-			DPRINTF(("incomplete read: hdr %d ask=%d, rem=%d got %d\n",
+			DPRINTF(("incomplete read: hdr %d ask=%d, rem=%zu got %zu\n",
 			    s_type, sizeof(struct coff_scnhdr),
 			    resid, siz));
 			return ENOEXEC;
@@ -324,7 +325,7 @@ exec_coff_prep_zmagic(struct lwp *l, struct exec_package *epp,
 	/* load any shared libraries */
 	error = coff_find_section(l, epp->ep_vp, fp, &sh, COFF_STYP_SHLIB);
 	if (!error) {
-		int resid;
+		size_t resid;
 		struct coff_slhdr *slhdr;
 		char buf[128], *bufp;	/* FIXME */
 		int len = sh.s_size, path_index, entry_len;
@@ -373,7 +374,8 @@ exec_coff_prep_zmagic(struct lwp *l, struct exec_package *epp,
 int
 coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 {
-	int error, siz, resid;
+	int error;
+	size_t siz, resid;
 	int taddr, tsize, daddr, dsize, offset;
 	struct nameidata nd;
 	struct coff_filehdr fh, *fhp = &fh;
@@ -401,7 +403,7 @@ coff_load_shlib(struct lwp *l, char *path, struct exec_package *epp)
 	}
 	siz -= resid;
 	if (siz != sizeof(struct coff_filehdr)) {
-		DPRINTF(("coff_load_shlib: incomplete read: ask=%d, rem=%d got %d\n",
+		DPRINTF(("coff_load_shlib: incomplete read: ask=%d, rem=%zu got %zu\n",
 		    sizeof(struct coff_filehdr), resid, siz));
 		vrele(nd.ni_vp);
 		return ENOEXEC;

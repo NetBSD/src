@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34.2.8 2008/01/21 09:35:17 yamt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34.2.9 2008/02/27 08:36:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007
@@ -120,7 +120,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.8 2008/01/21 09:35:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.9 2008/02/27 08:36:18 yamt Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -667,7 +667,6 @@ haltsys:
         if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 #ifndef XEN
 #if NACPI > 0
-		delay(500000);
 		acpi_enter_sleep_state(acpi_softc, ACPI_STATE_S5);
 		printf("WARNING: powerdown failed!\n");
 #endif

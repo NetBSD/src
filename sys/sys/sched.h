@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.21.2.9 2008/02/11 15:00:09 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.21.2.10 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -157,7 +157,7 @@ int	_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
 struct schedstate_percpu {
 	/* First set of data is likely to be accessed by other CPUs. */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
-	kmutex_t	spc_lwplock;	/* (: general purpose lock for LWPs */
+	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
 	pri_t		spc_curpriority;/* m: usrpri of curlwp */
 	psetid_t	spc_psid;	/* (: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */

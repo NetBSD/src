@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.13.4.2 2007/12/07 17:25:43 yamt Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.13.4.3 2008/02/27 08:36:22 yamt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.4.2 2007/12/07 17:25:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.13.4.3 2008/02/27 08:36:22 yamt Exp $");
 
 #include "scsibus.h"
 
@@ -158,7 +158,7 @@ findroot(void)
 {
 #if NSCSIBUS > 0
 	int ctlr, unit, part, type;
-	struct device *dv;
+	device_t dv;
 
 	if (BOOTDEV_MAG(bootdev) != 5)	/* NEWS-OS's B_DEVMAGIC */
 		return;
@@ -174,19 +174,14 @@ findroot(void)
 	/*
 	 * XXX assumes only one controller exists.
 	 */
-	for (dv = TAILQ_FIRST(&alldevs); dv; dv = TAILQ_NEXT(dv, dv_list)) {
-		if (strcmp(dv->dv_xname, "scsibus0") == 0) {
-			struct scsibus_softc *sdv = (void *)dv;
-			struct scsipi_periph *periph;
+	if ((dv = device_find_by_xname("scsibus0")) != NULL) {
+		struct scsibus_softc *sdv = device_private(dv);
+		struct scsipi_periph *periph;
 
-			periph = scsipi_lookup_periph(sdv->sc_channel,
-			    ctlr, 0);
-			if (periph == NULL)
-				continue;
-
+		periph = scsipi_lookup_periph(sdv->sc_channel, ctlr, 0);
+		if (periph != NULL) {
 			booted_device = periph->periph_dev;
 			booted_partition = part;
-			return;
 		}
 	}
 #endif

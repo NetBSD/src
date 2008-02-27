@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_pci.c,v 1.28.2.3 2008/01/21 09:44:07 yamt Exp $	*/
+/*	$NetBSD: ohci_pci.c,v 1.28.2.4 2008/02/27 08:36:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.28.2.3 2008/01/21 09:44:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_pci.c,v 1.28.2.4 2008/02/27 08:36:35 yamt Exp $");
 
 #include "ehci.h"
 
@@ -190,5 +190,6 @@ ohci_pci_detach(device_ptr_t self, int flags)
 	return (0);
 }
 
-CFATTACH_DECL(ohci_pci, sizeof(struct ohci_pci_softc),
-    ohci_pci_match, ohci_pci_attach, ohci_pci_detach, ohci_activate);
+CFATTACH_DECL2(ohci_pci, sizeof(struct ohci_pci_softc),
+    ohci_pci_match, ohci_pci_attach, ohci_pci_detach, ohci_activate, NULL,
+    ohci_childdet);

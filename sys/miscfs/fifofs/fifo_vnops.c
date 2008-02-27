@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.51.4.4 2008/02/11 14:59:59 yamt Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.51.4.5 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993, 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.51.4.4 2008/02/11 14:59:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.51.4.5 2008/02/27 08:37:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,7 @@ fifo_open(void *v)
 	vp = ap->a_vp;
 	p = l->l_proc;
 
+	KERNEL_LOCK(1, NULL);
 	if ((fip = vp->v_fifoinfo) == NULL) {
 		MALLOC(fip, struct fifoinfo *, sizeof(*fip), M_VNODE, M_WAITOK);
 		vp->v_fifoinfo = fip;
@@ -160,7 +161,7 @@ fifo_open(void *v)
 		if (error != 0) {
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
-			return (error);
+			goto done;
 		}
 		fip->fi_readsock = rso;
 		error = socreate(AF_LOCAL, &wso, SOCK_STREAM, 0, l);
@@ -168,7 +169,7 @@ fifo_open(void *v)
 			(void)soclose(rso);
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
-			return (error);
+			goto done;
 		}
 		fip->fi_writesock = wso;
 		if ((error = unp_connect2(wso, rso, PRU_CONNECT2)) != 0) {
@@ -176,7 +177,7 @@ fifo_open(void *v)
 			(void)soclose(rso);
 			free(fip, M_VNODE);
 			vp->v_fifoinfo = NULL;
-			return (error);
+			goto done;
 		}
 		fip->fi_readers = fip->fi_writers = 0;
 		wso->so_state |= SS_CANTRCVMORE;
@@ -226,9 +227,12 @@ fifo_open(void *v)
 			}
 		}
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
  bad:
 	VOP_CLOSE(vp, ap->a_mode, ap->a_cred);
+ done:
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -258,6 +262,7 @@ fifo_read(void *v)
 #endif
 	if (uio->uio_resid == 0)
 		return (0);
+	KERNEL_LOCK(1, NULL);
 	if (ap->a_ioflag & IO_NDELAY)
 		rso->so_nbio = 1;
 	startresid = uio->uio_resid;
@@ -276,6 +281,7 @@ fifo_read(void *v)
 		    ap->a_vp->v_fifoinfo->fi_writers == 0)
 			error = 0;
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -300,6 +306,7 @@ fifo_write(void *v)
 	if (ap->a_uio->uio_rw != UIO_WRITE)
 		panic("fifo_write mode");
 #endif
+	KERNEL_LOCK(1, NULL);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_nbio = 1;
 	VOP_UNLOCK(ap->a_vp, 0);
@@ -308,6 +315,7 @@ fifo_write(void *v)
 	vn_lock(ap->a_vp, LK_EXCLUSIVE | LK_RETRY);
 	if (ap->a_ioflag & IO_NDELAY)
 		wso->so_nbio = 0;
+	KERNEL_UNLOCK_ONE(NULL);
 	return (error);
 }
 
@@ -428,6 +436,7 @@ fifo_close(void *v)
 	vp = ap->a_vp;
 	fip = vp->v_fifoinfo;
 	isrevoke = (ap->a_fflag & (FREAD | FWRITE | FNONBLOCK)) == FNONBLOCK;
+	KERNEL_LOCK(1, NULL);
 	if (isrevoke) {
 		if (fip->fi_readers != 0) {
 			fip->fi_readers = 0;
@@ -450,6 +459,7 @@ fifo_close(void *v)
 		FREE(fip, M_VNODE);
 		vp->v_fifoinfo = NULL;
 	}
+	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }
 

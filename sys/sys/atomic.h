@@ -1,7 +1,7 @@
-/*	$NetBSD: atomic.h,v 1.6.4.4 2008/02/11 15:00:09 yamt Exp $	*/
+/*	$NetBSD: atomic.h,v 1.6.4.5 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -97,7 +97,7 @@ void *		atomic_cas_ptr(volatile void *, void *, void *);
 uint64_t	atomic_cas_64(volatile uint64_t *, uint64_t, uint64_t);
 
 /*
- * Non interlocked atomic COMPARE-AND-SWAP
+ * Non-interlocked atomic COMPARE-AND-SWAP.
  */
 uint32_t	atomic_cas_32_ni(volatile uint32_t *, uint32_t, uint32_t);
 unsigned int	atomic_cas_uint_ni(volatile unsigned int *, unsigned int,

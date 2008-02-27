@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47.2.6 2008/01/21 09:39:30 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.47.2.7 2008/02/27 08:36:25 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -210,9 +210,9 @@ void	cpu_boot_secondary_processors(void);
  */
 typedef void (* ipifunc_t)(void *);
 
-void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t);
-void	sparc64_broadcast_ipi (ipifunc_t);
-void	sparc64_send_ipi (int, ipifunc_t);
+void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t, uint64_t);
+void	sparc64_broadcast_ipi (ipifunc_t, uint64_t);
+void	sparc64_send_ipi (int, ipifunc_t, uint64_t);
 #endif
 
 /*
@@ -221,8 +221,6 @@ void	sparc64_send_ipi (int, ipifunc_t);
  * as well for strayintr (see locore.s:interrupt and intr.c:strayintr).
  * Note that CLKF_INTR is valid only if CLKF_USERMODE is false.
  */
-extern int intstack[];
-extern int eintstack[];
 struct clockframe {
 	struct trapframe64 t;
 };
@@ -270,6 +268,10 @@ void setsoftnet(void);
 struct intrhand {
 	int			(*ih_fun)(void *);
 	void			*ih_arg;
+	/* if we have to take the biglock, we interpose a wrapper
+	 * and need to save the original function and arg */
+	int			(*ih_realfun)(void *);
+	void			*ih_realarg;
 	short			ih_number;	/* interrupt number */
 						/* the H/W provides */
 	char			ih_pil;		/* interrupt priority */

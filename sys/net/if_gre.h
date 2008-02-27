@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.h,v 1.14.4.7 2008/01/21 09:47:03 yamt Exp $ */
+/*	$NetBSD: if_gre.h,v 1.14.4.8 2008/02/27 08:37:00 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #ifndef _NET_IF_GRE_H_
 #define _NET_IF_GRE_H_
 
-#include <sys/device.h>
+#include <sys/evcnt.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
@@ -137,7 +137,7 @@ struct gre_h {
  * should be routed over more than one tunnel hop by hop
  */
 struct gre_sre {
-	u_int16_t sre_family;	/* address family */
+	uint16_t sre_family;	/* address family */
 	u_char	sre_offset;	/* offset to first octet of active entry */
 	u_char	sre_length;	/* number of octets in the SRE.
 				   sre_lengthl==0 -> last entry. */

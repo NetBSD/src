@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.3.4.5 2008/02/11 14:59:58 yamt Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.3.4.6 2008/02/27 08:36:56 yamt Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -13,27 +13,29 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 /*
+ * System calls relating to the scheduler.
+ *
  * TODO:
  *  - Handle pthread_setschedprio() as defined by POSIX;
  *  - Handle sched_yield() case for SCHED_FIFO as defined by POSIX;
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3.4.5 2008/02/11 14:59:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.3.4.6 2008/02/27 08:36:56 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -59,9 +61,6 @@ static pri_t
 convert_pri(lwp_t *l, int policy, pri_t pri)
 {
 	int delta = 0;
-
-	if (policy == SCHED_NONE)
-		policy = l->l_class;
 
 	switch (policy) {
 	case SCHED_OTHER:
@@ -146,7 +145,7 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		mutex_enter(&p->p_smutex);
 		mutex_exit(&proclist_lock);
 		/* Disallow modification of system processes */
-		if (p->p_flag & PK_SYSTEM) {
+		if ((p->p_flag & PK_SYSTEM) != 0) {
 			mutex_exit(&p->p_smutex);
 			return EPERM;
 		}
@@ -156,29 +155,38 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		mutex_enter(&p->p_smutex);
 	}
 
-	/* Check the permission */
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER, p,
-	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETPARAM), NULL, NULL)) {
-		mutex_exit(&p->p_smutex);
-		return EPERM;
-	}
-
 	/* Find the LWP(s) */
 	lcnt = 0;
 	lid = SCARG(uap, lid);
 	LIST_FOREACH(t, &p->p_lwps, l_sibling) {
 		pri_t kpri;
+		int lpolicy;
 
 		if (lid && lid != t->l_lid)
 			continue;
+		lcnt++;
 		KASSERT(pri != PRI_NONE || policy != SCHED_NONE);
 		lwp_lock(t);
+
+		if (policy == SCHED_NONE)
+			lpolicy = t->l_class;
+		else
+			lpolicy = policy;
 
 		/*
 		 * Note that, priority may need to be changed to get into
 		 * the correct priority range of the new scheduling class.
 		 */
-		kpri = convert_pri(t, policy, pri);
+		kpri = convert_pri(t, lpolicy, pri);
+
+		/* Check the permission */
+		error = kauth_authorize_process(l->l_cred,
+		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, t, KAUTH_ARG(lpolicy),
+		    KAUTH_ARG(kpri));
+		if (error) {
+			lwp_unlock(t);
+			break;
+		}
 
 		/* Set the scheduling class */
 		if (policy != SCHED_NONE)
@@ -189,7 +197,6 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 			lwp_changepri(t, kpri);
 
 		lwp_unlock(t);
-		lcnt++;
 	}
 	mutex_exit(&p->p_smutex);
 	return (lcnt == 0) ? ESRCH : error;
@@ -210,36 +217,19 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	} */
 	struct sched_param param;
 	struct lwp *t;
-	lwpid_t lid;
 	int error, policy;
 
-	/* If not specified, use the first LWP */
-	lid = SCARG(uap, lid) == 0 ? 1 : SCARG(uap, lid);
-
-	if (SCARG(uap, pid) != 0) {
-		/* Locks the LWP */
-		t = lwp_find2(SCARG(uap, pid), lid);
-	} else {
-		struct proc *p = l->l_proc;
-		/* Use the calling process */
-		mutex_enter(&p->p_smutex);
-		t = lwp_find(p, lid);
-		if (t != NULL)
-			lwp_lock(t);
-		mutex_exit(&p->p_smutex);
-	}
-	if (t == NULL) {
-		error = ESRCH;
-		goto error;
-	}
+	/* Locks the LWP */
+	t = lwp_find2(SCARG(uap, pid), SCARG(uap, lid));
+	if (t == NULL)
+		return ESRCH;
 
 	/* Check the permission */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    t->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETPARAM),
-	    NULL, NULL);
+	error = kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_GETPARAM, t->l_proc, NULL, NULL, NULL);
 	if (error != 0) {
 		lwp_unlock(t);
-		goto error;
+		return error;
 	}
 
 	param.sched_priority = t->l_priority;
@@ -258,7 +248,6 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 	error = copyout(&param, SCARG(uap, params), sizeof(param));
 	if (error == 0 && SCARG(uap, policy) != NULL)
 		error = copyout(&policy, SCARG(uap, policy), sizeof(int));
-error:
 	return error;
 }
 
@@ -310,6 +299,12 @@ sys__sched_setaffinity(struct lwp *l,
 		}
 		mutex_enter(&p->p_smutex);
 		mutex_exit(&proclist_lock);
+		/* Disallow modification of system processes. */
+		if ((p->p_flag & PK_SYSTEM) != 0) {
+			mutex_exit(&p->p_smutex);
+			error = EPERM;
+			goto error;
+		}
 	} else {
 		/* Use the calling process */
 		p = l->l_proc;
@@ -318,17 +313,11 @@ sys__sched_setaffinity(struct lwp *l,
 
 	/*
 	 * Check the permission.
-	 * Disallow modification of system processes.
 	 */
-	error = kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER, p,
-	    KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_SETAFFINITY), NULL, NULL);
+	error = kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_SETAFFINITY, p, NULL, NULL, NULL);
 	if (error != 0) {
 		mutex_exit(&p->p_smutex);
-		goto error;
-	}
-	if ((p->p_flag & PK_SYSTEM) != 0) {
-		mutex_exit(&p->p_smutex);
-		error = EPERM;
 		goto error;
 	}
 
@@ -376,36 +365,21 @@ sys__sched_getaffinity(struct lwp *l,
 	} */
 	struct lwp *t;
 	void *cpuset;
-	lwpid_t lid;
 	int error;
 
 	if (SCARG(uap, size) <= 0)
 		return EINVAL;
 	cpuset = kmem_zalloc(sizeof(cpuset_t), KM_SLEEP);
 
-	/* If not specified, use the first LWP */
-	lid = SCARG(uap, lid) == 0 ? 1 : SCARG(uap, lid);
-
-	if (SCARG(uap, pid) != 0) {
-		/* Locks the LWP */
-		t = lwp_find2(SCARG(uap, pid), lid);
-	} else {
-		struct proc *p = l->l_proc;
-		/* Use the calling process */
-		mutex_enter(&p->p_smutex);
-		t = lwp_find(p, lid);
-		if (t != NULL)
-			lwp_lock(t);
-		mutex_exit(&p->p_smutex);
-	}
+	/* Locks the LWP */
+	t = lwp_find2(SCARG(uap, pid), SCARG(uap, lid));
 	if (t == NULL) {
 		kmem_free(cpuset, sizeof(cpuset_t));
 		return ESRCH;
 	}
 	/* Check the permission */
-	if (kauth_authorize_process(l->l_cred, KAUTH_PROCESS_SCHEDULER,
-	    t->l_proc, KAUTH_ARG(KAUTH_REQ_PROCESS_SCHEDULER_GETAFFINITY),
-	    NULL, NULL)) {
+	if (kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_SCHEDULER_GETAFFINITY, t->l_proc, NULL, NULL, NULL)) {
 		lwp_unlock(t);
 		kmem_free(cpuset, sizeof(cpuset_t));
 		return EPERM;

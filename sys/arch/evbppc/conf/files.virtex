@@ -1,4 +1,4 @@
-#	$NetBSD: files.virtex,v 1.1.4.3 2007/12/07 17:24:36 yamt Exp $
+#	$NetBSD: files.virtex,v 1.1.4.4 2008/02/27 08:36:19 yamt Exp $
 #
 # Xilinx Virtex specific configuration
 
@@ -28,11 +28,6 @@ file	dev/md_root.c				memory_disk_hooks
 
 # FPU emulation
 include "arch/powerpc/fpu/files.fpu"
-
-# Workstation console and related
-include "dev/wscons/files.wscons"
-include "dev/wsfont/files.wsfont"
-include "dev/rasops/files.rasops"
 
 # MI drivers
 include "dev/pckbport/files.pckbport"

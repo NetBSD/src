@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.4 2004/03/19 08:07:22 jmc Exp $
+$NetBSD: README,v 1.4.16.1 2008/02/27 08:36:19 yamt Exp $
 
 How to use
 	'make all' uudecode all binaries.
@@ -16,6 +16,8 @@ How to compile
 		make vc5	# WindowsCE Embedded Toolkit for Visual C++ 5.0
 		make vc6	# WindowsCE Toolkit for Visual C++ 6.0
 		make evc3	# eMbedded Visual C++ 3.0
+		make evc4	# eMbedded Visual C++ 4.0 (only tested for
+				# ARM, not promoted to binary directory).
 
 	2. Open hpc_stand.dsw or hpc_stand.vcw from Visual Studio.
 

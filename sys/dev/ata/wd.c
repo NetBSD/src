@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.305.2.7 2008/01/21 09:42:38 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.305.2.8 2008/02/27 08:36:31 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.7 2008/01/21 09:42:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.8 2008/02/27 08:36:31 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -194,6 +194,7 @@ void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
+void  wd_shutdown(void *);
 
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
@@ -416,6 +417,10 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	disk_init(&wd->sc_dk, wd->sc_dev.dv_xname, &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
+	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
+	if (wd->sc_sdhook == NULL)
+		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
+			wd->sc_dev.dv_xname);
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
@@ -432,18 +437,9 @@ static bool
 wd_suspend(device_t dv)
 {
 	struct wd_softc *sc = device_private(dv);
-	/* For shutdown and panic processing, use polling. */
-	int modus = doing_shutdown ? AT_POLL : AT_WAIT;
 
-	wd_flushcache(sc, modus);
-	/*
-	 * Only put the disk into standby mode if this not a shutdown or
-	 * if this is an explicit halt -p.
-	 */
-	if (doing_shutdown == 0 ||
-	    (boothowto & RB_POWERDOWN) == RB_POWERDOWN)
-		wd_standby(sc, modus);
-
+	wd_flushcache(sc, AT_WAIT);
+	wd_standby(sc, AT_WAIT);
 	return true;
 }
 
@@ -508,6 +504,10 @@ wddetach(struct device *self, int flags)
 	}
 	sc->sc_bscount = 0;
 #endif
+
+	/* Get rid of the shutdown hook. */
+	if (sc->sc_sdhook != NULL)
+		shutdownhook_disestablish(sc->sc_sdhook);
 
 	pmf_device_deregister(self);
 
@@ -1946,6 +1946,16 @@ wd_flushcache(struct wd_softc *wd, int flags)
 		return EIO;
 	}
 	return 0;
+}
+
+void
+wd_shutdown(void *arg)
+{
+
+	struct wd_softc *wd = arg;
+	wd_flushcache(wd, AT_POLL);
+	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN)
+		wd_standby(wd, AT_POLL);
 }
 
 /*

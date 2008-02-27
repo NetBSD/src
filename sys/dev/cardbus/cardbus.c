@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.61.4.7 2008/02/11 14:59:33 yamt Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.61.4.8 2008/02/27 08:36:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.4.7 2008/02/11 14:59:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.4.8 2008/02/27 08:36:31 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -69,11 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.4.7 2008/02/11 14:59:33 yamt Exp $"
 #endif
 
 
-STATIC void cardbusattach(struct device *, struct device *, void *);
+STATIC void cardbusattach(device_t, device_t, void *);
 STATIC int cardbusdetach(device_t, int);
-STATIC int cardbusmatch(struct device *, struct cfdata *, void *);
-int cardbus_rescan(struct device *, const char *, const int *);
-void cardbus_childdetached(struct device *, struct device *);
+STATIC int cardbusmatch(device_t, struct cfdata *, void *);
+int cardbus_rescan(device_t, const char *, const int *);
+void cardbus_childdetached(device_t, device_t);
 static int cardbusprint(void *, const char *);
 
 typedef void (*tuple_decode_func)(u_int8_t*, int, void*);
@@ -103,7 +103,7 @@ struct cfdriver cardbus_cd = {
 
 
 STATIC int
-cardbusmatch(struct device *parent, struct cfdata *cf, void *aux)
+cardbusmatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct cbslot_attach_args *cba = aux;
 
@@ -117,7 +117,7 @@ cardbusmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 STATIC void
-cardbusattach(struct device *parent, struct device *self, void *aux)
+cardbusattach(device_t parent, device_t self, void *aux)
 {
 	struct cardbus_softc *sc = device_private(self);
 	struct cbslot_attach_args *cba = aux;
@@ -186,7 +186,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 	switch (cardbus_space) {
 	case CARDBUS_CIS_ASI_TUPLE:
 		DPRINTF(("%s: reading CIS data from configuration space\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(&sc->sc_dev)));
 		for (i = cis_ptr, j = 0; i < 0xff; i += 4) {
 			u_int32_t e = (*cf->cardbus_conf_read)(cc, tag, i);
 			tuples[j] = 0xff & e;
@@ -211,11 +211,11 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		if (cardbus_space == CARDBUS_CIS_ASI_ROM) {
 			reg = CARDBUS_ROM_REG;
 			DPRINTF(("%s: reading CIS data from ROM\n",
-			    sc->sc_dev.dv_xname));
+			    device_xname(&sc->sc_dev)));
 		} else {
 			reg = CARDBUS_CIS_ASI_BAR(cardbus_space);
 			DPRINTF(("%s: reading CIS data from BAR%d\n",
-			    sc->sc_dev.dv_xname, cardbus_space - 1));
+			    device_xname(&sc->sc_dev), cardbus_space - 1));
 		}
 
 		/*
@@ -226,8 +226,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 		if (Cardbus_mapreg_map(ca->ca_ct, reg,
 		    CARDBUS_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
 		    0, &bar_tag, &bar_memh, &bar_addr, &bar_size)) {
-			printf("%s: failed to map memory\n",
-			    sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev, "failed to map memory\n");
 			return (1);
 		}
 		aprint_debug_dev(&sc->sc_dev, "mapped %ju bytes at 0x%jx\n",
@@ -295,7 +294,7 @@ cardbus_read_tuples(struct cardbus_attach_args *ca, cardbusreg_t cis_ptr,
 
 #ifdef DIAGNOSTIC
 	default:
-		panic("%s: bad CIS space (%d)", sc->sc_dev.dv_xname,
+		panic("%s: bad CIS space (%d)", device_xname(&sc->sc_dev),
 		    cardbus_space);
 #endif
 	}
@@ -429,7 +428,7 @@ cardbus_attach_card(struct cardbus_softc *sc)
 }
 
 int
-cardbus_rescan(struct device *self, const char *ifattr,
+cardbus_rescan(device_t self, const char *ifattr,
     const int *locators)
 {
 	struct cardbus_softc *sc = device_private(self);
@@ -440,7 +439,7 @@ cardbus_rescan(struct device *self, const char *ifattr,
 	cardbusreg_t bhlc, icr, lattimer;
 	int cdstatus;
 	int function, nfunction;
-	struct device *csc;
+	device_t csc;
 	cardbus_devfunc_t ct;
 
 	cc = sc->sc_cc;
@@ -485,13 +484,14 @@ cardbus_rescan(struct device *self, const char *ifattr,
 				}
 			}
 		}
+		aprint_debug_dev(self, "id reg valid in %d iterations\n", i);
 		if (i == 5) {
 			return (EIO);
 		}
 	}
 
 	bhlc = cardbus_conf_read(cc, cf, tag, CARDBUS_BHLC_REG);
-	DPRINTF(("%s bhlc 0x%08x -> ", sc->sc_dev.dv_xname, bhlc));
+	DPRINTF(("%s bhlc 0x%08x -> ", device_xname(&sc->sc_dev), bhlc));
 	nfunction = CARDBUS_HDRTYPE_MULTIFN(bhlc) ? 8 : 1;
 
 	for (function = 0; function < nfunction; function++) {
@@ -691,14 +691,14 @@ cardbus_detach_card(struct cardbus_softc *sc)
 		if (!ct)
 			continue;
 
-		DPRINTF(("%s: detaching %s\n", sc->sc_dev.dv_xname,
-		    ct->ct_device->dv_xname));
+		DPRINTF(("%s: detaching %s\n", device_xname(&sc->sc_dev),
+		    device_xname(ct->ct_device)));
 		/* call device detach function */
 
 		if (config_detach(ct->ct_device, 0) != 0) {
-			printf("%s: cannot detach dev %s, function %d\n",
-			    sc->sc_dev.dv_xname, ct->ct_device->dv_xname,
-			    ct->ct_func);
+			aprint_error_dev(&sc->sc_dev,
+			    "cannot detach dev %s, function %d\n",
+			    device_xname(ct->ct_device), ct->ct_func);
 		}
 	}
 
@@ -708,7 +708,7 @@ cardbus_detach_card(struct cardbus_softc *sc)
 }
 
 void
-cardbus_childdetached(struct device *self, struct device *child)
+cardbus_childdetached(device_t self, device_t child)
 {
 	struct cardbus_softc *sc = device_private(self);
 	struct cardbus_devfunc *ct;
@@ -1003,7 +1003,6 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 		return 0;
 	switch (state) {
 	case PCI_PMCSR_STATE_D0:
-		value |= PCI_PMCSR_STATE_D0;
 		break;
 	case PCI_PMCSR_STATE_D1:
 		if (now == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D3) {
@@ -1014,7 +1013,6 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 			printf("D1 not supported\n");
 			return EOPNOTSUPP;
 		}
-		value |= PCI_PMCSR_STATE_D1;
 		break;
 	case PCI_PMCSR_STATE_D2:
 		if (now == PCI_PMCSR_STATE_D3) {
@@ -1025,17 +1023,18 @@ cardbus_set_powerstate_int(cardbus_devfunc_t ct, cardbustag_t tag,
 			printf("D2 not supported\n");
 			return EOPNOTSUPP;
 		}
-		value |= PCI_PMCSR_STATE_D2;
 		break;
 	case PCI_PMCSR_STATE_D3:
-		value |= PCI_PMCSR_STATE_D3;
 		break;
 	default:
 		return EINVAL;
 	}
-
+	value |= state;
 	cardbus_conf_write(cc, cf, tag, offset + PCI_PMCSR, value);
-	DELAY(1000);
+	if (state == PCI_PMCSR_STATE_D3 || now == PCI_PMCSR_STATE_D3)
+		DELAY(10000);
+	else if (state == PCI_PMCSR_STATE_D2 || now == PCI_PMCSR_STATE_D2)
+		DELAY(200);
 
 	return 0;
 }
@@ -1166,7 +1165,7 @@ struct cardbus_child_power {
 };
 
 static bool
-cardbus_child_suspend(device_t dv)
+cardbus_child_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
@@ -1186,7 +1185,7 @@ cardbus_child_suspend(device_t dv)
 }
 
 static bool
-cardbus_child_resume(device_t dv)
+cardbus_child_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 

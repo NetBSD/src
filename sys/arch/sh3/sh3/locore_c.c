@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_c.c,v 1.8.2.4 2007/10/27 11:28:32 yamt Exp $	*/
+/*	$NetBSD: locore_c.c,v 1.8.2.5 2008/02/27 08:36:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002, 2007 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.4 2007/10/27 11:28:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore_c.c,v 1.8.2.5 2008/02/27 08:36:24 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,9 +142,6 @@ cpu_switch_prepare(struct lwp *olwp, struct lwp *nlwp)
 {
 	struct proc *p = nlwp->l_proc;
 
-	curlwp = nlwp;
-	curpcb = nlwp->l_md.md_pcb;
-
 	/* Check for Restartable Atomic Sequences. */
 	if (p->p_raslist != NULL) {
 		void *pc;
@@ -171,35 +168,13 @@ cpu_idle(void)
 #ifndef P1_STACK
 #ifdef SH3
 /*
- * Prepare kernel stack PTE table.  TLB miss handler checks these.
+ * Nothing to do for sh3.
  */
 void
 sh3_switch_setup(struct lwp *l)
 {
-	struct md_upte *md_upte;
-	uint32_t vpn;
-	pt_entry_t *pte;
-	int i;
 
-	/*
-	 * md_upte has mapping for uarea pages in reverse order so
-	 * that mapping for the bottom of the stack (used more often)
-	 * is found on earlier iterations through md_upte in the tlb
-	 * miss handler.
-	 */
-	md_upte = &l->l_md.md_upte[UPAGES-1];
-	vpn = sh3_trunc_page(l->l_addr);
-
-	for (i = 0; i < UPAGES; ++i) {
-		pte = __pmap_kpte_lookup(vpn);
-		KDASSERT(pte && *pte != 0);
-
-		md_upte->addr = vpn;
-		md_upte->data = (*pte & PG_HW_BITS) | PG_D | PG_V;
-		--md_upte;
-
-		vpn += PAGE_SIZE;
-	}
+    return;
 }
 #endif /* SH3 */
 

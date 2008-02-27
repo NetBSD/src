@@ -1,4 +1,4 @@
-#	$NetBSD: files.iyonix,v 1.1.14.2 2007/12/07 17:25:06 yamt Exp $
+#	$NetBSD: files.iyonix,v 1.1.14.3 2008/02/27 08:36:21 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -8,12 +8,6 @@ maxusers	2 8 64
 
 # Maintain Interrupt statistics
 defflag			IRQSTATS
-
-# Include WSCONS stuff
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
-include "dev/wsfb/files.wsfb"
 
 #
 # Machine-independent ATA drivers

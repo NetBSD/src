@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.5.16.4 2007/09/03 14:30:55 yamt Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.5.16.5 2008/02/27 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.5.16.4 2007/09/03 14:30:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.5.16.5 2008/02/27 08:36:26 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -350,7 +350,8 @@ ka6400_startslave(struct device *dev, struct cpu_info *ci)
 	ka6400_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
 	ka6400_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka6400_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
-	ka6400_txrx(id, "D/I 10 %x\r", (int)ci->ci_pcb);	/* PCB for idle proc */
+	ka6400_txrx(id, "D/I 10 %x\r",			/* PCB for idle proc */
+	    (int)&ci->ci_data.cpu_idlelwp->l_addr->u_pcb);
 	ka6400_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka6400_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN)); /* Enable MM */
 	ka6400_txrx(id, "S %x\r", (int)&vax_mp_tramp); /* Start! */

@@ -1,4 +1,4 @@
-/* $NetBSD: asc_tcds.c,v 1.13.2.3 2007/10/27 11:34:23 yamt Exp $ */
+/* $NetBSD: asc_tcds.c,v 1.13.2.4 2008/02/27 08:36:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.13.2.3 2007/10/27 11:34:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_tcds.c,v 1.13.2.4 2008/02/27 08:36:47 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -447,6 +447,8 @@ tcds_dma_intr(struct ncr53c9x_softc *sc)
 			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG(pa);
 #elif defined(__mips__)
 			addr = (u_int32_t *)MIPS_PHYS_TO_KSEG1(pa);
+#elif defined(__vax__)
+			addr = (uint32_t *)VAX_PHYS_TO_S0(pa);
 #else
 #error TURBOchannel only exists on DECs, folks...
 #endif

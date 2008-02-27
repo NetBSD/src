@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.15.18.4 2008/01/21 09:46:05 yamt Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.15.18.5 2008/02/27 08:36:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.15.18.4 2008/01/21 09:46:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.15.18.5 2008/02/27 08:36:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,7 +128,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 		sched_enqueue(l, false);
 		lwp_unlock(l);
 	} else
-		lwp_unlock_to(l, &ci->ci_schedstate.spc_lwplock);
+		lwp_unlock_to(l, ci->ci_schedstate.spc_lwplock);
 
 	/*
 	 * The LWP is not created suspended or stopped and cannot be set

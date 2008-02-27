@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.84 2005/05/31 04:03:11 christos Exp $
+# 	$NetBSD: Makefile.sparc,v 1.84.2.1 2008/02/27 08:36:25 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -51,8 +51,7 @@ MD_SFILES=	${SPARC}/sparc/locore.s
 locore.o: ${SPARC}/sparc/locore.s assym.h
 	${NORMAL_S}
 
-amd7930intr.o: assym.h
-bsd_fdintr.o: assym.h
+amd7930intr.o bsd_fdintr.o lock_stubs.o: assym.h
 
 ##
 ## (5) link settings

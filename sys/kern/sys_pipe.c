@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.65.2.9 2008/02/04 09:24:17 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.65.2.10 2008/02/27 08:36:56 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.9 2008/02/04 09:24:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.65.2.10 2008/02/27 08:36:56 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,6 +775,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	if (pgs != NULL) {
 		pmap_kremove(wpipe->pipe_map.kva, blen);
+		pmap_update(pmap_kernel());
 		uvm_unloan(pgs, npages, UVM_LOAN_TOPAGE);
 	}
 	if (error || amountpipekva > maxpipekva)

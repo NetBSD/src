@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.6.2.5 2008/01/21 09:43:08 yamt Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.6.2.6 2008/02/27 08:36:34 yamt Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.5 2008/01/21 09:43:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.6 2008/02/27 08:36:34 yamt Exp $");
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
@@ -107,6 +107,7 @@ __KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.6.2.5 2008/01/21 09:43:08 yamt Exp $")
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usbdevs.h>
+#include <dev/usb/usbroothub_subr.h>
 
 #include <dev/ic/sl811hsreg.h>
 #include <dev/ic/sl811hsvar.h>
@@ -519,7 +520,6 @@ static int slhci_reserve_bustime(struct slhci_softc *, struct slhci_pipe *,
     int);
 static void slhci_insert(struct slhci_softc *);
 
-static int slhci_str(usb_string_descriptor_t *, unsigned int, const char *);
 static usbd_status slhci_clear_feature(struct slhci_softc *, unsigned int);
 static usbd_status slhci_set_feature(struct slhci_softc *, unsigned int);
 static void slhci_get_status(struct slhci_softc *, usb_port_status_t *);
@@ -3067,23 +3067,6 @@ static const usb_hub_descriptor_t slhci_hubd = {
 	{ 0x00 }		/* port power control mask */
 };
 
-static int
-slhci_str(usb_string_descriptor_t *p, unsigned int l, const char *s)
-{
-	int i;
-
-	if (l == 0)
-		return 0;
-	p->bLength = 2 * strlen(s) + 2;
-	if (l == 1) 
-		return 1;
-	p->bDescriptorType = UDESC_STRING;
-	l -= 2;
-	for (i = 0; s[i] && l > 1; i++, l -= 2)
-		USETW2(p->bString[i], 0, s[i]);
-	return 2 * i + 2;
-}
-
 static usbd_status
 slhci_clear_feature(struct slhci_softc *sc, unsigned int what)
 {
@@ -3420,12 +3403,12 @@ slhci_root(struct slhci_softc *sc, struct slhci_pipe *spipe, struct usbd_xfer
 				/* language table XXX */
 			} else if (value == ((UDESC_STRING<<8)|1)) {
 				/* Vendor */
-				actlen = slhci_str((usb_string_descriptor_t *)
+				actlen = usb_makestrdesc((usb_string_descriptor_t *)
 				    buf, len, "ScanLogic/Cypress");
 				error = USBD_NORMAL_COMPLETION;
 			} else if (value == ((UDESC_STRING<<8)|2)) {
 				/* Product */
-				actlen = slhci_str((usb_string_descriptor_t *)
+				actlen = usb_makestrdesc((usb_string_descriptor_t *)
 				    buf, len, "SL811HS/T root hub");
 				error = USBD_NORMAL_COMPLETION;
 			} else

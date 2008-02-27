@@ -1,4 +1,4 @@
-/*	$NetBSD: mfs_vnops.c,v 1.38.4.4 2008/01/21 09:48:15 yamt Exp $	*/
+/*	$NetBSD: mfs_vnops.c,v 1.38.4.5 2008/02/27 08:37:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.38.4.4 2008/01/21 09:48:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfs_vnops.c,v 1.38.4.5 2008/02/27 08:37:09 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,8 @@ const struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_abortop_desc, mfs_abortop },		/* abortop */
 	{ &vop_inactive_desc, mfs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, mfs_reclaim },		/* reclaim */
-	{ &vop_lock_desc, mfs_lock },			/* lock */
-	{ &vop_unlock_desc, mfs_unlock },		/* unlock */
+	{ &vop_lock_desc, genfs_nolock },		/* lock */
+	{ &vop_unlock_desc, genfs_nounlock },		/* unlock */
 	{ &vop_bmap_desc, mfs_bmap },			/* bmap */
 	{ &vop_strategy_desc, mfs_strategy },		/* strategy */
 	{ &vop_print_desc, mfs_print },			/* print */
@@ -137,7 +137,6 @@ mfs_strategy(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct buf *bp = ap->a_bp;
 	struct mfsnode *mfsp;
-	struct proc *p = curproc;		/* XXX */
 
 	if (vp->v_type != VBLK || vp->v_usecount == 0)
 		panic("mfs_strategy: bad dev");
@@ -153,7 +152,7 @@ mfs_strategy(void *v)
 			memcpy(base, bp->b_data, bp->b_bcount);
 		bp->b_resid = 0;
 		biodone(bp);
-	} else if (mfsp->mfs_proc == p) {
+	} else if (mfsp->mfs_proc == curproc) {
 		mfs_doio(bp, mfsp->mfs_baseoff);
 	} else if (doing_shutdown) {
 		/*
@@ -165,20 +164,21 @@ mfs_strategy(void *v)
 		bp->b_resid = 0;
 		biodone(bp);
 	} else {
+		mutex_enter(&mfsp->mfs_lock);
 		BUFQ_PUT(mfsp->mfs_buflist, bp);
-		wakeup((void *)vp);
+		cv_broadcast(&mfsp->mfs_cv);
+		mutex_exit(&mfsp->mfs_lock);
 	}
 	return (0);
 }
 
 /*
  * Memory file system I/O.
- *
- * Trivial on the HP since buffer has already been mapping into KVA space.
  */
 void
 mfs_doio(struct buf *bp, void *base)
 {
+
 	base = (char *)base + (bp->b_blkno << DEV_BSHIFT);
 	if (bp->b_flags & B_READ)
 		bp->b_error = copyin(base, bp->b_data, bp->b_bcount);
@@ -232,10 +232,13 @@ mfs_close(void *v)
 	/*
 	 * Finish any pending I/O requests.
 	 */
+	mutex_enter(&mfsp->mfs_lock);
 	while ((bp = BUFQ_GET(mfsp->mfs_buflist)) != NULL) {
+		mutex_exit(&mfsp->mfs_lock);
 		mfs_doio(bp, mfsp->mfs_baseoff);
-		wakeup((void *)bp);
+		mutex_enter(&mfsp->mfs_lock);
 	}
+	mutex_exit(&mfsp->mfs_lock);
 	/*
 	 * On last close of a memory filesystem
 	 * we must invalidate any in core blocks, so that
@@ -252,8 +255,10 @@ mfs_close(void *v)
 	/*
 	 * Send a request to the filesystem server to exit.
 	 */
+	mutex_enter(&mfsp->mfs_lock);
 	mfsp->mfs_shutdown = 1;
-	wakeup((void *)vp);
+	cv_broadcast(&mfsp->mfs_cv);
+	mutex_exit(&mfsp->mfs_lock);
 	return (0);
 }
 
@@ -287,6 +292,10 @@ mfs_reclaim(void *v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
+	struct mfsnode *mfsp = VTOMFS(vp);
+
+	cv_destroy(&mfsp->mfs_cv);
+	mutex_destroy(&mfsp->mfs_lock);
 
 	FREE(vp->v_data, M_MFSNODE);
 	vp->v_data = NULL;

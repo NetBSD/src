@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.24.16.3 2008/01/21 09:47:00 yamt Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.24.16.4 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -44,17 +44,17 @@
  * specified.  Field names used correspond to RFC 826.
  */
 struct	arphdr {
-	u_int16_t ar_hrd;	/* format of hardware address */
+	uint16_t ar_hrd;	/* format of hardware address */
 #define ARPHRD_ETHER 	1	/* ethernet hardware format */
 #define ARPHRD_IEEE802 	6	/* IEEE 802 hardware format */
 #define ARPHRD_ARCNET 	7	/* ethernet hardware format */
 #define ARPHRD_FRELAY 	15	/* frame relay hardware format */
 #define ARPHRD_STRIP 	23	/* Ricochet Starmode Radio hardware format */
 #define	ARPHRD_IEEE1394	24	/* IEEE 1394 (FireWire) hardware format */
-	u_int16_t ar_pro;	/* format of protocol address */
-	u_int8_t  ar_hln;	/* length of hardware address */
-	u_int8_t  ar_pln;	/* length of protocol address */
-	u_int16_t ar_op;	/* one of: */
+	uint16_t ar_pro;	/* format of protocol address */
+	uint8_t  ar_hln;	/* length of hardware address */
+	uint8_t  ar_pln;	/* length of protocol address */
+	uint16_t ar_op;		/* one of: */
 #define	ARPOP_REQUEST	1	/* request to resolve address */
 #define	ARPOP_REPLY	2	/* response to previous request */
 #define	ARPOP_REVREQUEST 3	/* request protocol address given hardware */
@@ -66,10 +66,10 @@ struct	arphdr {
  * according to the sizes above.
  */
 #ifdef COMMENT_ONLY
-	u_int8_t  ar_sha[];	/* sender hardware address */
-	u_int8_t  ar_spa[];	/* sender protocol address */
-	u_int8_t  ar_tha[];	/* target hardware address */
-	u_int8_t  ar_tpa[];	/* target protocol address */
+	uint8_t  ar_sha[];	/* sender hardware address */
+	uint8_t  ar_spa[];	/* sender protocol address */
+	uint8_t  ar_tha[];	/* target hardware address */
+	uint8_t  ar_tpa[];	/* target protocol address */
 #endif
 #define ar_sha(ap) (((char *)((ap)+1))+0)
 #define ar_spa(ap) (((char *)((ap)+1))+(ap)->ar_hln)

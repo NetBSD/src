@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.722.2.9 2008/02/04 09:23:15 yamt Exp $
+#	$NetBSD: files,v 1.722.2.10 2008/02/27 08:36:31 yamt Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -1046,6 +1046,11 @@ file	dev/ic/igsfb_subr.c		igsfb
 device	sti: wsemuldisplaydev
 file	dev/ic/sti.c		sti & (sti_pci | sti_sgc | sti_phantom)
 
+include "dev/wscons/files.wscons"
+include "dev/rasops/files.rasops"
+include "dev/wsfont/files.wsfont"
+include "dev/wsfb/files.wsfb"
+
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
 # devices which provide these attributes, and we'd like to avoid hairy
@@ -1089,7 +1094,7 @@ file	dev/usb/ehci.c			ehci			needs-flag
 
 # SL811HS/T USB controller
 defflag	opt_slhci.h	SLHCI_DEBUG SLHCI_TRY_LSVH SLHCI_PROFILE_TRANSFER
-device	slhci: usbus
+device	slhci: usbus, usbroothub
 file	dev/ic/sl811hs.c		slhci			needs-flag
 
 # USB HID processing (as used by bluetooth and usb code)

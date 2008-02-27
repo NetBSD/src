@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp-comp.h,v 1.11.4.1 2006/06/21 15:10:27 yamt Exp $	*/
+/*	$NetBSD: ppp-comp.h,v 1.11.4.2 2008/02/27 08:37:01 yamt Exp $	*/
 
 /*
  * ppp-comp.h - Definitions for doing PPP packet compression.
@@ -191,7 +191,7 @@ struct compressor {
 /*
  * This is not nice ... the alternative is a bitfield struct though.
  * And unfortunately, we cannot share the same bits for the option
- * names above since C and H are the same bit.  We could do a u_int32
+ * names above since C and H are the same bit.  We could do a uint32_t
  * but then we have to do a htonl() all the time and/or we still need
  * to know which octet is which.
  */

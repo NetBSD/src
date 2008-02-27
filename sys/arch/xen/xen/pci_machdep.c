@@ -1,4 +1,4 @@
-/*      $NetBSD: pci_machdep.c,v 1.4.4.2 2007/02/26 09:08:56 yamt Exp $      */
+/*      $NetBSD: pci_machdep.c,v 1.4.4.3 2008/02/27 08:36:29 yamt Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -29,6 +29,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4.4.3 2008/02/27 08:36:29 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

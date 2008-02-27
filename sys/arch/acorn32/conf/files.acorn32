@@ -1,4 +1,4 @@
-#	$NetBSD: files.acorn32,v 1.24.4.2 2008/01/21 09:35:02 yamt Exp $
+#	$NetBSD: files.acorn32,v 1.24.4.3 2008/02/27 08:36:17 yamt Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -52,11 +52,6 @@ file	arch/acorn32/mainbus/com_pioc.c		com_pioc
 
 # Memory disk driver
 file	arch/acorn32/dev/md_hooks.c		md & memory_disk_hooks
-
-# Include WSCONS stuff
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 # Include IOMD support
 include "arch/arm/iomd/files.iomd"

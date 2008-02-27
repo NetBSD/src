@@ -1,11 +1,8 @@
-/* $NetBSD: kern_auth.c,v 1.8.4.8 2007/12/07 17:32:37 yamt Exp $ */
+/* $NetBSD: kern_auth.c,v 1.8.4.9 2008/02/27 08:36:54 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.8.4.8 2007/12/07 17:32:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.8.4.9 2008/02/27 08:36:54 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>

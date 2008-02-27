@@ -1,4 +1,4 @@
-/*	$NetBSD: mfsnode.h,v 1.15.12.2 2007/09/03 14:46:58 yamt Exp $	*/
+/*	$NetBSD: mfsnode.h,v 1.15.12.3 2008/02/27 08:37:09 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -39,12 +39,14 @@
  */
 
 struct mfsnode {
-	struct	vnode *mfs_vnode;	/* vnode associated with this mfsnode */
-	void *	mfs_baseoff;		/* base of file system in memory */
+	struct vnode *mfs_vnode;	/* vnode associated with this mfsnode */
+	void 	*mfs_baseoff;		/* base of file system in memory */
 	long	mfs_size;		/* size of memory file system */
-	struct	proc *mfs_proc;		/* supporting process */
+	struct proc *mfs_proc;		/* supporting process */
 	int	mfs_shutdown;		/* shutdown this mfsnode */
 #if defined(_KERNEL)
+	kmutex_t mfs_lock;		/* lock on structure */
+	kcondvar_t mfs_cv;		/* notifier */
 	struct	bufq_state *mfs_buflist;/* list of I/O requests */
 #endif /* defined(_KERNEL) */
 };
@@ -77,8 +79,6 @@ struct mfsnode {
 #define	mfs_readdir	genfs_badop
 #define	mfs_readlink	genfs_badop
 #define	mfs_abortop	genfs_badop
-#define	mfs_lock	genfs_nolock
-#define	mfs_unlock	genfs_nounlock
 #define	mfs_islocked	genfs_noislocked
 #define	mfs_pathconf	genfs_badop
 #define	mfs_advlock	genfs_badop

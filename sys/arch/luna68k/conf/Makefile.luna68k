@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.17 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.luna68k,v 1.17.2.1 2008/02/27 08:36:21 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -63,6 +63,8 @@ TEXTADDR?=	0xc000
 
 # depend on CPU configuration
 machdep.c trap.o: Makefile
+
+copy.o copypage.o lock_stubs.o: assym.h
 
 ##
 ## (7) misc settings

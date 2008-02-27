@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.56.2.4 2008/01/21 09:47:58 yamt Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.56.2.5 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -101,19 +101,6 @@ typedef struct sigstore {
 #define	SIGACTION_PS(ps, sig)	(ps->sa_sigdesc[(sig)].sd_sigact)
 
 /*
- * Clear all pending signal from an LWP.
- */
-#define CLRSIG(l) \
-	do { \
-		struct proc *p = l->l_proc; \
-		int _sg; \
-		mutex_enter(&p->p_smutex); \
-		while ((_sg = issignal(l)) > 0) \
-			sigget(l->l_sigpendset, NULL, _sg, NULL); \
-		mutex_exit(&p->p_smutex); \
-	} while (/*CONSTCOND*/0)
-
-/*
  * Signal properties and actions.
  * The array below categorizes the signals and their default actions
  * according to the following properties:
@@ -169,9 +156,9 @@ int	sigaltstack1(struct lwp *, const struct sigaltstack *,
 	    struct sigaltstack *);
 int	sigismasked(struct lwp *, int);
 
-int	sigget(sigpend_t *, ksiginfo_t *, int, sigset_t *);
-void	sigclear(sigpend_t *, sigset_t *, ksiginfoq_t *);
-void	sigclearall(struct proc *, sigset_t *, ksiginfoq_t *);
+int	sigget(sigpend_t *, ksiginfo_t *, int, const sigset_t *);
+void	sigclear(sigpend_t *, const sigset_t *, ksiginfoq_t *);
+void	sigclearall(struct proc *, const sigset_t *, ksiginfoq_t *);
 
 void	kpsignal2(struct proc *, ksiginfo_t *);
 

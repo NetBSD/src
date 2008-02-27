@@ -1,4 +1,4 @@
-/*	$NetBSD: un.h,v 1.36.12.4 2007/09/03 14:46:42 yamt Exp $	*/
+/*	$NetBSD: un.h,v 1.36.12.5 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -103,7 +103,7 @@ void	unp_setpeeraddr (struct unpcb *, struct mbuf *);
 #if defined(_NETBSD_SOURCE)
 #define SUN_LEN(su) \
 	(sizeof(*(su)) - sizeof((su)->sun_path) + strlen((su)->sun_path))
-#endif /* !_XOPEN_SOURCE */
+#endif /* !_NetBSD_SOURCE */
 #endif /* _KERNEL */
 
 #endif /* !_SYS_UN_H_ */

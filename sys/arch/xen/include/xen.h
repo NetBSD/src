@@ -1,4 +1,4 @@
-/*	$NetBSD: xen.h,v 1.15.2.4 2008/01/21 09:40:26 yamt Exp $	*/
+/*	$NetBSD: xen.h,v 1.15.2.5 2008/02/27 08:36:29 yamt Exp $	*/
 
 /*
  *
@@ -62,6 +62,7 @@ void	xennetback_init(void);
 void	xen_shm_init(void);
 
 void	xenevt_event(int);
+void	xenevt_setipending(int, int);
 void	xenevt_notify(void);
 
 void	idle_block(void);
@@ -185,10 +186,22 @@ do {									\
 #define __LOCK_PREFIX "lock; "
 
 #ifdef XEN3
-#define XATOMIC_T long
-#else
+#define XATOMIC_T u_long
+#ifdef __x86_64__
+#define LONG_SHIFT 6
+#define LONG_MASK 63
+#else /* __x86_64__ */
+#define LONG_SHIFT 5
+#define LONG_MASK 31
+#endif /* __x86_64__ */
+#else /* XEN3 */
 #define XATOMIC_T uint32_t
-#endif
+#define LONG_SHIFT 5
+#define LONG_MASK 31
+#endif /* XEN3 */
+
+#define xen_ffs __builtin_ffsl
+
 static __inline XATOMIC_T
 xen_atomic_xchg(volatile XATOMIC_T *ptr, unsigned long val)
 {
@@ -278,8 +291,8 @@ xen_atomic_test_and_set_bit(volatile void *ptr, unsigned long bitno)
 static __inline int
 xen_constant_test_bit(const volatile void *ptr, unsigned long bitno)
 {
-	return ((1UL << (bitno & 31)) &
-	    (((const volatile XATOMIC_T *) ptr)[bitno >> 5])) != 0;
+	return ((1UL << (bitno & LONG_MASK)) &
+	    (((const volatile XATOMIC_T *) ptr)[bitno >> LONG_SHIFT])) != 0;
 }
 
 static __inline XATOMIC_T

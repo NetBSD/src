@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_fcntl64.c,v 1.2.2.2 2008/02/04 09:23:04 yamt Exp $	*/
+/*	$NetBSD: linux_fcntl64.c,v 1.2.2.3 2008/02/27 08:36:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,13 +41,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_fcntl64.c,v 1.2.2.2 2008/02/04 09:23:04 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_fcntl64.c,v 1.2.2.3 2008/02/27 08:36:30 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/fstypes.h>
 #include <sys/vfs_syscalls.h>
 #include <sys/conf.h>
 

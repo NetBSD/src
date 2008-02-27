@@ -1,4 +1,4 @@
-#	$NetBSD: files.hpcarm,v 1.51.2.4 2007/12/07 17:24:47 yamt Exp $
+#	$NetBSD: files.hpcarm,v 1.51.2.5 2008/02/27 08:36:20 yamt Exp $
 #
 # hpcarm specific configuration info
 #
@@ -24,9 +24,6 @@ file	arch/hpcarm/hpcarm/spl.S
 
 # HPCARM specific files
 file	arch/hpcarm/hpcarm/hpc_machdep.c
-
-# Workstation Console
-include "dev/wscons/files.wscons"
 
 # Include hpcarm/StrongARM config definitions.
 include "arch/arm/conf/files.sa11x0"

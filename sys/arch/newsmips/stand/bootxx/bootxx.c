@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.6 2003/11/21 19:44:53 tsutsui Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.6.16.1 2008/02/27 08:36:22 yamt Exp $	*/
 
 /*-
  * Copyright (C) 1999 Tsubai Masanari.  All rights reserved.
@@ -44,9 +44,8 @@ struct shared_bbinfo bbinfo = {
 #define DEFAULT_ENTRY_POINT	0xa0700000
 #endif
 
-void bootxx __P((u_int32_t, u_int32_t, uint32_t, u_int32_t, u_int32_t,
-    u_int32_t));
-void (*entry_point) __P((u_int32_t, u_int32_t, u_int32_t, u_int32_t, void *)) =
+void bootxx(uint32_t, uint32_t, uint32_t, uint32_t, uint32_t, uint32_t);
+void (*entry_point)(uint32_t, uint32_t, uint32_t, uint32_t, void *) =
     (void *)DEFAULT_ENTRY_POINT;
 
 #ifdef BOOTXX_DEBUG
@@ -60,8 +59,8 @@ struct apbus_sysinfo *_sip;
 int apbus = 0;
 
 void
-bootxx(a0, a1, a2, a3, a4, a5)
-	u_int32_t a0, a1, a2, a3, a4, a5;
+bootxx(uint32_t a0, uint32_t a1, uint32_t a2, uint32_t a3, uint32_t a4,
+    uint32_t a5)
 {
 	int fd, blk, bs;
 	int ctlr, unit, part, type;
@@ -145,8 +144,7 @@ bootxx(a0, a1, a2, a3, a4, a5)
 }
 
 void
-putchar(x)
-	int x;
+putchar(int x)
 {
 	char c = x;
 

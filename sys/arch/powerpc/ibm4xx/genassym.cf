@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10.8.1 2007/09/03 14:28:56 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.10.8.2 2008/02/27 08:36:23 yamt Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -30,6 +30,9 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+
+quote #define __MUTEX_PRIVATE
+quote #define __RWLOCK_PRIVATE
 
 include <sys/param.h>
 include <sys/time.h>
@@ -207,3 +210,21 @@ define	FB_R31		offsetof(struct faultbuf, fb_fixreg[18])
 define	CACHELINESIZE	CACHELINESIZE
 
 define	CPU_CI		offsetof(struct cpu_info, ci_ci)
+
+ifdef	__HAVE_MUTEX_STUBS
+define	__HAVE_MUTEX_STUBS	__HAVE_MUTEX_STUBS
+endif
+ifdef	__HAVE_MUTEX_SPIN_STUBS
+define	__HAVE_MUTEX_SPIN_STUBS	__HAVE_MUTEX_SPIN_STUBS
+endif
+define	MTX_OWNER	offsetof(struct kmutex, mtx_owner)
+define	MTX_LOCK	offsetof(struct kmutex, mtx_lock)
+define	MTX_IPL		offsetof(struct kmutex, mtx_ipl)
+
+ifdef	__HAVE_RW_STUBS
+define	__HAVE_RW_STUBS	__HAVE_RW_STUBS
+endif
+define	RW_OWNER	offsetof(struct krwlock, rw_owner)
+define	RW_WRITE_LOCKED	RW_WRITE_LOCKED
+define	RW_READ_INCR	RW_READ_INCR
+define	RW_READER	RW_READER

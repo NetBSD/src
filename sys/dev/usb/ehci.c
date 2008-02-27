@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.104.2.8 2008/02/04 09:23:36 yamt Exp $ */
+/*	$NetBSD: ehci.c,v 1.104.2.9 2008/02/27 08:36:47 yamt Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.104.2.8 2008/02/04 09:23:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.104.2.9 2008/02/27 08:36:47 yamt Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -909,6 +909,15 @@ ehci_poll(struct usbd_bus *bus)
 		ehci_intr1(sc);
 }
 
+void
+ehci_childdet(device_t self, device_t child)
+{
+	struct ehci_softc *sc = device_private(self);
+
+	KASSERT(sc->sc_child == child);
+	sc->sc_child = NULL;
+}
+
 int
 ehci_detach(struct ehci_softc *sc, int flags)
 {
@@ -937,9 +946,9 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 
 int
-ehci_activate(device_ptr_t self, enum devact act)
+ehci_activate(device_t self, enum devact act)
 {
-	struct ehci_softc *sc = (struct ehci_softc *)self;
+	struct ehci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
@@ -966,9 +975,9 @@ ehci_activate(device_ptr_t self, enum devact act)
  * bus glue needs to call out to it.
  */
 bool
-ehci_suspend(device_t dv)
+ehci_suspend(device_t dv PMF_FN_ARGS)
 {
-	ehci_softc_t *sc = (ehci_softc_t *)dv;
+	ehci_softc_t *sc = device_private(dv);
 	int i, s;
 	uint32_t cmd, hcr;
 
@@ -1017,11 +1026,11 @@ ehci_suspend(device_t dv)
 }
 
 bool
-ehci_resume(device_t dv)
+ehci_resume(device_t dv PMF_FN_ARGS)
 {
-	ehci_softc_t *sc = (ehci_softc_t *)dv;
-	uint32_t cmd, hcr;
+	ehci_softc_t *sc = device_private(dv);
 	int i;
+	uint32_t cmd, hcr;
 
 	/* restore things in case the bios sucks */
 	EOWRITE4(sc, EHCI_CTRLDSSEGMENT, 0);

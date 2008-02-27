@@ -1,4 +1,4 @@
-/*	$NetBSD: xenfunc.c,v 1.2.8.3 2008/01/21 09:40:33 yamt Exp $	*/
+/*	$NetBSD: xenfunc.c,v 1.2.8.4 2008/02/27 08:36:29 yamt Exp $	*/
 
 /*
  *
@@ -30,6 +30,9 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: xenfunc.c,v 1.2.8.4 2008/02/27 08:36:29 yamt Exp $");
 
 #include <sys/param.h>
 

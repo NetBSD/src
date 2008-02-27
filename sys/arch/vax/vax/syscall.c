@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.1.14.7 2008/02/11 14:59:32 yamt Exp $     */
+/*	$NetBSD: syscall.c,v 1.1.14.8 2008/02/27 08:36:26 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.14.7 2008/02/11 14:59:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.14.8 2008/02/27 08:36:26 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -59,83 +59,80 @@ __KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.1.14.7 2008/02/11 14:59:32 yamt Exp $"
 #include <machine/userret.h>
 
 #ifdef TRAPDEBUG
-volatile int startsysc = 0;
+int startsysc = 0;
 #define TDB(a) if (startsysc) printf a
 #else
 #define TDB(a)
 #endif
 
-void syscall_plain(struct trapframe *);
-void syscall_fancy(struct trapframe *);
+void syscall(struct trapframe *);
 
 void
 syscall_intern(struct proc *p)
 {
-	if (trace_is_enabled(p))
-		p->p_md.md_syscall = syscall_fancy;
-	else
-		p->p_md.md_syscall = syscall_plain;
+	p->p_trace_enabled = trace_is_enabled(p);
+	p->p_md.md_syscall = syscall;
 }
 
 void
-syscall_plain(struct trapframe *frame)
+syscall(struct trapframe *frame)
 {
-	const struct sysent *callp;
-	u_quad_t oticks;
-	int nsys;
-	int err, rval[2], args[8];
-	struct trapframe *exptr;
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
+	int error;
+	int rval[2];
+	int args[2+SYS_MAXSYSARGS]; /* add two for SYS___syscall + padding */
+	struct trapframe * const exptr = frame;
+	struct lwp * const l = curlwp;
+	struct proc * const p = l->l_proc;
+	const struct emul * const emul = p->p_emul;
+	const struct sysent *callp = emul->e_sysent;
+	const u_quad_t oticks = p->p_sticks;
 
 	TDB(("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
 	    syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
 	    p->p_pid,frame));
+
 	uvmexp.syscalls++;
  
  	LWP_CACHE_CREDS(l, p);
 
-	exptr = l->l_addr->u_pcb.framep = frame;
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
-	oticks = p->p_sticks;
+	l->l_addr->u_pcb.framep = frame;
 
-	if (frame->code == SYS___syscall) {
-		int g = *(int *)(frame->ap);
-
-		frame->code = *(int *)(frame->ap + 4);
-		frame->ap += 8;
-		*(int *)(frame->ap) = g - 2;
-	}
-
-	if ((unsigned long) frame->code >= nsys)
-		callp += p->p_emul->e_nosys;
+	if ((unsigned long) frame->code >= emul->e_nsysent)
+		callp += emul->e_nosys;
 	else
 		callp += frame->code;
 
 	rval[0] = 0;
 	rval[1] = frame->r1;
+
 	if (callp->sy_narg) {
-		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err)
+		error = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
+		if (error)
 			goto bad;
 	}
 
-	if ((callp->sy_flags & SYCALL_MPSAFE) != 0) {
-		err = (*callp->sy_call)(curlwp, args, rval);
-	} else {
-		KERNEL_LOCK(1, l);
-		err = (*callp->sy_call)(curlwp, args, rval);
-		KERNEL_UNLOCK_LAST(l);
+	/*
+	 * Only trace if tracing is enabled and the syscall isn't indirect
+	 * (SYS_syscall or SYS___syscall)
+	 */
+	if (__predict_true(!p->p_trace_enabled)
+	    || __predict_false(callp->sy_flags & SYCALL_INDIRECT)
+	    || (error = trace_enter(frame->code, args, callp->sy_narg)) == 0) {
+		if (__predict_true(callp->sy_flags & SYCALL_MPSAFE)) {
+			error = (*callp->sy_call)(curlwp, args, rval);
+		} else {
+			KERNEL_LOCK(1, l);
+			error = (*callp->sy_call)(curlwp, args, rval);
+			KERNEL_UNLOCK_LAST(l);
+		}
 	}
 
-	exptr = l->l_addr->u_pcb.framep;
-
+	KASSERT(exptr == l->l_addr->u_pcb.framep);
 	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
 	    "frame %p\n", syscallnames[exptr->code], exptr->pc, exptr->psl,
-	    exptr->sp, p->p_pid, err, rval[0], rval[1], exptr));
+	    exptr->sp, p->p_pid, error, rval[0], rval[1], exptr));
 bad:
-	switch (err) {
+	switch (error) {
 	case 0:
 		exptr->r1 = rval[1];
 		exptr->r0 = rval[0];
@@ -146,100 +143,19 @@ bad:
 		break;
 
 	case ERESTART:
+		/* assumes CHMK $n was used */
 		exptr->pc -= (exptr->code > 63 ? 4 : 2);
 		break;
 
 	default:
-		exptr->r0 = err;
+		exptr->r0 = error;
 		exptr->psl |= PSL_C;
 		break;
 	}
 
-	userret(l, frame, oticks);
-}
-
-void
-syscall_fancy(struct trapframe *frame)
-{
-	const struct sysent *callp;
-	u_quad_t oticks;
-	int nsys;
-	int err, rval[2], args[8];
-	struct trapframe *exptr;
-	struct lwp *l = curlwp;
-	struct proc *p = l->l_proc;
-
-	TDB(("trap syscall %s pc %lx, psl %lx, sp %lx, pid %d, frame %p\n",
-	    syscallnames[frame->code], frame->pc, frame->psl,frame->sp,
-	    p->p_pid,frame));
-	uvmexp.syscalls++;
- 
- 	LWP_CACHE_CREDS(l, p);
-
-	exptr = l->l_addr->u_pcb.framep = frame;
-	callp = p->p_emul->e_sysent;
-	nsys = p->p_emul->e_nsysent;
-	oticks = p->p_sticks;
-
-	if (frame->code == SYS___syscall) {
-		int g = *(int *)(frame->ap);
-
-		frame->code = *(int *)(frame->ap + 4);
-		frame->ap += 8;
-		*(int *)(frame->ap) = g - 2;
-	}
-
-	if ((unsigned long) frame->code >= nsys)
-		callp += p->p_emul->e_nosys;
-	else
-		callp += frame->code;
-
-	rval[0] = 0;
-	rval[1] = frame->r1;
-	if (callp->sy_narg) {
-		err = copyin((char*)frame->ap + 4, args, callp->sy_argsize);
-		if (err)
-			goto bad;
-	}
-
-	KERNEL_LOCK(1, l);
-	if ((err = trace_enter(frame->code, args, callp->sy_narg)) != 0)
-		goto out;
-
-	if ((callp->sy_flags & SYCALL_MPSAFE) == 0) {
-		err = (*callp->sy_call)(curlwp, args, rval);
- out:
- 		KERNEL_UNLOCK_LAST(l);
-	} else {
- 		KERNEL_UNLOCK_LAST(l);
-		err = (*callp->sy_call)(curlwp, args, rval);
-	}
-	exptr = l->l_addr->u_pcb.framep;
-	TDB(("return %s pc %lx, psl %lx, sp %lx, pid %d, err %d r0 %d, r1 %d, "
-	    "frame %p\n", syscallnames[exptr->code], exptr->pc, exptr->psl,
-	    exptr->sp, p->p_pid, err, rval[0], rval[1], exptr));
-bad:
-	switch (err) {
-	case 0:
-		exptr->r1 = rval[1];
-		exptr->r0 = rval[0];
-		exptr->psl &= ~PSL_C;
-		break;
-
-	case EJUSTRETURN:
-		break;
-
-	case ERESTART:
-		exptr->pc -= (exptr->code > 63 ? 4 : 2);
-		break;
-
-	default:
-		exptr->r0 = err;
-		exptr->psl |= PSL_C;
-		break;
-	}
-
-	trace_exit(frame->code, rval, err);
+	if (__predict_false(p->p_trace_enabled)
+	    && __predict_true(!(callp->sy_flags & SYCALL_INDIRECT)))
+		trace_exit(frame->code, rval, error);
 
 	userret(l, frame, oticks);
 }

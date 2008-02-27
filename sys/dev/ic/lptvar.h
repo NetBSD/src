@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.52.4.1 2007/10/27 11:30:50 yamt Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.52.4.2 2008/02/27 08:36:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -92,6 +92,7 @@ void lptwakeup(void *arg);
 int lptpushbytes(struct lpt_softc *);
 
 void lpt_attach_subr(struct lpt_softc *);
+int lpt_detach_subr(device_t, int);
 int lptintr(void *);
 
 #endif /* _LPT_VAR_H_ */

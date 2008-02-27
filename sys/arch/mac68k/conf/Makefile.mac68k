@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.87 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.mac68k,v 1.87.2.1 2008/02/27 08:36:21 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -65,6 +65,8 @@ TEXTADDR?=	0
 
 # depend on CPU configuration
 locore.o pmap.o trap.o: Makefile
+
+copy.o copypage.o lock_stubs.o macromasm.o: assym.h
 
 ##
 ## (7) misc settings

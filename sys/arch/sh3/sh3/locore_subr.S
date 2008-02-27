@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.20.16.3 2007/09/03 14:29:29 yamt Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.20.16.4 2008/02/27 08:36:24 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
-__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.20.16.3 2007/09/03 14:29:29 yamt Exp $")
+__KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.20.16.4 2008/02/27 08:36:24 yamt Exp $")
 
 
 /*
@@ -84,97 +84,101 @@ __KERNEL_RCSID(0, "$NetBSD: locore_subr.S,v 1.20.16.3 2007/09/03 14:29:29 yamt E
 	.text
 	.align 5	/* align cache line size (32B) */
 /*
- * LINTSTUB: Func: struct lwp *cpu_switchto(struct lwp *olwp, struct lwp *nlwp)
- *	Switch to the specified LWP.
+ * LINTSTUB: Func: lwp_t *cpu_switchto(lwp_t *olwp, lwp_t *nlwp, bool returning)
+ *	Switch from olwp to nlwp.
+ *	If returning is true, we do the fast softint dance
+ *	 and can skip user-space related activities (pmap, ras, etc...)
+ *	Return olwp (in the nlwp context).
  */
 ENTRY(cpu_switchto)
-	tst	r4, r4			/* olwp can be NULL */
+	tst	r4, r4			! olwp can be NULL
 	bt	.L_saved
 
-	/* Save old lwp's context to switchframe */
-	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
+	!! save old lwp's context to switchframe
+	mov.l	@(L_MD_PCB, r4), r1	! olwp->l_md.md_pcb
 	SAVEPCB(r1)
 .L_saved:
-	/* free to use callee-save registers now */
+	!! free to use callee-save registers now
 
-	/* old and new lwps are already in r4, r5 */
+	mov.l	.L_curlwp, r2
+	mov.l	.L_curpcb, r3
+	mov.l	@(L_MD_PCB, r5), r10	! nlwp->l_md.md_pcb
+	!tst	r6, r6			! "full" switch?
+	mov.l	r5, @r2			! curlwp = nlwp;
+	!bt/s	.L_prepare_switch
+	 mov.l	r10, @r3		! curpcb = nlwp->l_md.md_pcb;
+
+	!mov	r5, r8		! preserve nlwp
+	!bra	.L_restore_nlwp
+	! mov	r4, r9		! preserve olwp
+
+.L_prepare_switch:
+	!! arguments to cpu_switch_prepare are already in the right registers
 	mov.l	.L_cpu_switch_prepare, r0
-	mov	r5, r8		/* preserve nlwp */
+	mov	r5, r8		! preserve nlwp
 	jsr	@r0
-	 mov	r4, r9		/* preserve olwp */
+	 mov	r4, r9		! preserve olwp
 
-	mov	r8, r4		/* nlwp */
+.L_restore_nlwp:
+	!! restore new lwp's context from switchframe
+	!! r10 is nlwp->l_md.md_pcb == &nlwp->l_md.md_pcb->pcb_sf
 
-	/* Restore new lwp's context from switchframe */
-	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
-	/* no additional offset to l->l_md.md_pcb->pcb_sf */
+	!! setup nlwp's kernel stack first
+	mov.l	@(SF_R7_BANK, r10), r0	! kernel stack bottom
+	mov.l	@(SF_R6_BANK, r10), r2	! current trapframe
+	mov.l	@(SF_R15, r10), r3	! current kernel sp
 
-	/* Setup kernel stack first */
-	mov.l	@(SF_R7_BANK, r1), r0	/* stack top */
-	mov.l	@(SF_R6_BANK, r1), r2	/* current frame */
-	mov.l	@(SF_R15, r1), r3	/* current stack */
-	/* During kernel stack switching, all interrupts are disabled. */
-	__EXCEPTION_BLOCK(r1, r5)
-	/* switch to new kernel stack */
-	ldc	r0,	r7_bank
-	ldc	r2,	r6_bank
-	mov	r3,	r15
+	!! while switching kernel stack, all exceptions must be disabled
+	__EXCEPTION_BLOCK(r1, r11)	! saves SR in r11
+	ldc	r0, r7_bank
+	ldc	r2, r6_bank
+	mov	r3, r15
 
-	/* Wire u-area */
+#if !defined(P1_STACK) && defined(SH4)
+	!! wire u-area in TLB
 	MOV	(switch_resume, r0)
 	jsr	@r0
-	 mov	r4,	r8	/* save new lwp */
-	mov	r8,	r4
-	__EXCEPTION_UNBLOCK(r0, r1)
-	/* Now OK to use kernel stack. */
+	 mov	r8, r4		! nlwp
+#endif
+	!! safe to use nlwp's kernel stack now
+	ldc	r11, sr		! __EXCEPTION_UNBLOCK
 
-	mov	r9, r2		/* olwp */
-
-	/* Finish restoring new lwp's context from switchframe */
-	mov.l	@(L_MD_PCB, r4), r1	/* l->l_md.md_pcb */
-	/* no additional offset to l->l_md.md_pcb->pcb_sf */
-	add	#4,	r1		/* r15 already restored */
-	mov.l	@r1+,	r14
-	mov.l	@r1+,	r13
-	mov.l	@r1+,	r12
-	mov.l	@r1+,	r11
-	mov.l	@r1+,	r10
-	mov.l	@r1+,	r9
-	mov.l	@r1+,	r8
-	lds.l	@r1+,	pr
-	add	#4,	r1		/* r6_bank already restored */
-	ldc.l	@r1+,	sr
-					/* r7_bank already restored*/
-
-	/* r2 has the return value; stuff it into r0 now. */
+	!! finish restoring new lwp's context from switchframe
+	mov	r10, r1		! &nlwp->l_md.md_pcb->pcb_sf
+	mov	r9, r2		! preserve olwp, we are about to clobber r9
+	add	#4, r1		! r15 already restored
+	mov.l	@r1+, r14
+	mov.l	@r1+, r13
+	mov.l	@r1+, r12
+	mov.l	@r1+, r11
+	mov.l	@r1+, r10
+	mov.l	@r1+, r9
+	mov.l	@r1+, r8
+	lds.l	@r1+, pr
+	add	#4, r1		! r6_bank already restored
+	ldc.l	@r1+, sr
+				! r7_bank already restored
 	rts
-	 mov	r2, r0
+	 mov	r2, r0		! return olwp
 
 	.align	2
+.L_curlwp:		.long	_C_LABEL(curlwp)
+.L_curpcb:		.long	_C_LABEL(curpcb)
 .L_cpu_switch_prepare:	.long	_C_LABEL(cpu_switch_prepare)
+#ifdef SH4
 FUNC_SYMBOL(switch_resume)
+#endif
+	SET_ENTRY_SIZE(cpu_switchto)
 
 
 #ifdef SH3
 /*
  * LINTSTUB: Func: void sh3_switch_resume(struct lwp *l)
- *	Set current u-area PTE array to curupte.
- *	No need to flush any entries. it is depended on u-area mapping is
- *	wired, and its mapping never cause modified/reference fault.
- *	u-area TLB fault is only covered by TLB miss exception.
- *	When the situation that "VPN match but not Valid" occur, SH3 jump to
- *	"generic exception" handler instead of TLB miss exception.
- *	But NetBSD/sh3 code doesn't handle it. As the result, it causes
- *	hard reset. (never can access kernel stack).
+ *     We only need this dummy sh3 version if both SH3 and SH4 are defined.
  */
 NENTRY(sh3_switch_resume)
-	mov.l	.L_curupte, r1
-	add	#L_MD_UPTE, r4		/* l->l_md.md_upte */
 	rts
-	 mov.l	r4, @r1
-
-	.align	2
-.L_curupte:		.long	_C_LABEL(curupte)
+	 nop
 	SET_ENTRY_SIZE(sh3_switch_resume)
 #endif /* SH3 */
 
@@ -186,63 +190,56 @@ NENTRY(sh3_switch_resume)
  *	TLB multiple hit.
  */
 NENTRY(sh4_switch_resume)
-	add	#L_MD_UPTE, r4	/* l->l_md.md_upte */
-	mov	#UPAGES,r3
-	mov	#1,	r2
-	mov.l	@r4,	r0	/* if (l->l_md.md_upte[0].addr == 0) return; */
-	tst	r0,	r0
+	add	#L_MD_UPTE, r4	! l->l_md.md_upte
+	mov	#UPAGES, r3
+	mov.l	@r4, r0		! if (l->l_md.md_upte[0].addr == 0) return;
+	tst	r0, r0
 	bt	2f
 
 	/* Save old ASID and set ASID to zero */
-	xor	r0,	r0
-	mov.l	.L_4_PTEH, r1
-	mov.l	@r1,	r7
-	mov.l	r0,	@r1
+	mov	#0, r0
+	mov.l	.L_4_PTEH, r2
+	mov.l	@r2, r7
+	mov.l	r0, @r2
 
 	mov.l	.L_VPN_MASK, r6
 	mov.l	.L_4_UTLB_AA_A, r5
 
 	/* TLB address array must be accessed via P2. Setup jump address. */
-	mova	1f,	r0
+	mova	1f, r0
 	mov.l	.L_P2BASE, r1
-	or	r1,	r0
-	jmp	@r0		/* run P2 */
+	or	r1, r0
+	jmp	@r0		! run on P2
 	 nop
 
 	/* Probe VPN match TLB entry and invalidate it. */
-	.align	2		/* mova target must be 4byte alignment */
+	.align	2		! mova target must be 4byte aligned
 1:	mov.l	@(4, r4), r0
-	and	r6,	r0
-	mov.l	r0,	@r5	/* clear D, V */
+	and	r6, r0
+	mov.l	r0, @r5		! clear D, V
 
 	/* Wire u-area TLB entry */
 	/* Address array */
-	mov.l	@r4+,	r0	/* addr */
-	mov.l	@r4+,	r1	/* data */
-	mov.l	r1,	@r0	/* *addr = data */
+	mov.l	@r4+, r0	! addr
+	mov.l	@r4+, r1	! data
+	mov.l	r1, @r0		! *addr = data
 
 	/* Data array */
-	mov.l	@r4+,	r0	/* addr */
-	mov.l	@r4+,	r1	/* data */
-	mov.l	r1,	@r0	/* *addr = data */
-	cmp/eq	r2,	r3
-	bf/s	1b
-	 add	#1,	r2
+	mov.l	@r4+, r0	! addr
+	mov.l	@r4+, r1	! data
+	mov.l	r1, @r0		! *addr = data
+	dt	r3
+	bf	1b
 
 	/* restore ASID */
-	mov.l	.L_4_PTEH, r0
-	mov.l	r7,	@r0
-	mova	2f,	r0
-	jmp	@r0		/* run P1 */
-	 nop
-	.align	2
-2:	rts			/* mova target must be 4byte alignment */
-	 nop
-	.align	2
+	mov.l	r7, @r2
 
+2:	rts			! to the caller in P1
+	 nop
+
+	.align	2
 .L_4_PTEH:		.long	SH4_PTEH
 .L_4_UTLB_AA_A:		.long	(SH4_UTLB_AA | SH4_UTLB_A)
-.L_4_ITLB_AA:		.long	SH4_ITLB_AA
 .L_VPN_MASK:		.long	0xfffff000
 .L_P2BASE:		.long	0xa0000000
 	SET_ENTRY_SIZE(sh4_switch_resume)

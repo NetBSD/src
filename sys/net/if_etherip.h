@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.h,v 1.2.2.4 2007/10/27 11:35:59 yamt Exp $        */
+/*      $NetBSD: if_etherip.h,v 1.2.2.5 2008/02/27 08:37:00 yamt Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -54,8 +54,8 @@ struct etherip_softc {
 LIST_HEAD(, etherip_softc) etherip_softc_list;
 
 struct etherip_header {
-	u_int8_t eip_ver;       /* version/reserved */
-	u_int8_t eip_pad;       /* required padding byte */
+	uint8_t eip_ver;       /* version/reserved */
+	uint8_t eip_pad;       /* required padding byte */
 };
 
 #define ETHERIP_VER_VERS_MASK   0x0f

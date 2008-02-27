@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.16.2 2008/01/21 09:37:55 yamt Exp $
+#	$NetBSD: Makefile,v 1.17.16.3 2008/02/27 08:36:23 yamt Exp $
 
 S!=	cd ${.CURDIR}/../../../.. ; pwd
 
@@ -6,6 +6,7 @@ PROG=		ofwboot
 SRCS=		ofwstart.S Locore.c boot.c ofdev.c net.c netif_of.c vers.c
 CFLAGS+=	-msoft-float -Wno-main -ffreestanding
 #CPPFLAGS+=	-g -DALLOC_TRACE -DDEBUG #-DOFW_DEBUG -DNETIF_DEBUG
+#CPPFLAGS+=	-DOFWDUMP
 CPPFLAGS+=	-D_STANDALONE -DSUPPORT_DHCP -I${.CURDIR}
 CPPFLAGS+=	-DHEAP_VARIABLE
 DBG=		-Os -mmultiple
@@ -69,8 +70,8 @@ vers.c: version
 	${HOST_SH} ${S}/conf/newvers_stand.sh ${.CURDIR}/version "ofppc" ${NEWVERSWHAT}
 
 ${PROG}: ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
-	${LD} -s -N -Ttext ${RELOC} -Bstatic -e ${ENTRY} -o ${PROG}.X \
-	    ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
+	${LD} -s -N -T ${.CURDIR}/ldscript -Ttext ${RELOC} -Bstatic \
+	    -e ${ENTRY} -o ${PROG}.X ${OBJS} ${LIBSA} ${LIBZ} ${LIBKERN}
 	mv -f ${PROG}.X ${PROG}
 
 .include <bsd.prog.mk>

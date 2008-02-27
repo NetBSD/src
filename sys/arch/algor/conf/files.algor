@@ -1,4 +1,4 @@
-#	$NetBSD: files.algor,v 1.18.16.3 2007/09/03 14:22:09 yamt Exp $
+#	$NetBSD: files.algor,v 1.18.16.4 2008/02/27 08:36:17 yamt Exp $
 
 # Algorithmics evaluation board specific configuration info.
 
@@ -72,12 +72,6 @@ include "dev/scsipi/files.scsipi"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-
-#
-# Machine-independent WS console drivers
-#
-include "dev/wscons/files.wscons"
-include "dev/wsfb/files.wsfb"
 
 #
 # Machine-independent PC-style keyboard controller drivers

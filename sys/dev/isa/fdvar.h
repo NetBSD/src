@@ -1,4 +1,4 @@
-/* $NetBSD: fdvar.h,v 1.1.20.1 2006/06/21 15:04:21 yamt Exp $ */
+/* $NetBSD: fdvar.h,v 1.1.20.2 2008/02/27 08:36:34 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@ struct fd_softc {
 #define	FD_MOTOR_WAIT	0x04		/* motor coming up */
 	int sc_cylin;		/* where we think the head is */
 
-	void *sc_sdhook;	/* saved shutdown hook for drive. */
+	void *sc_roothook;	/* mountroot hook */
 
 	TAILQ_ENTRY(fd_softc) sc_drivechain;
 	int sc_ops;		/* I/O ops since last switch */

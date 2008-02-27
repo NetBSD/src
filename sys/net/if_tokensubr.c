@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.32.2.6 2008/01/21 09:47:07 yamt Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.32.2.7 2008/02/27 08:37:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.32.2.6 2008/01/21 09:47:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.32.2.7 2008/02/27 08:37:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -189,7 +189,7 @@ static int
 token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
     struct rtentry *rt0)
 {
-	u_int16_t etype;
+	uint16_t etype;
 	int error = 0;
 	u_char edst[ISO88025_ADDR_LEN];
 	struct mbuf *m = m0;
@@ -431,7 +431,7 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		l->llc_snap.org_code[0] = l->llc_snap.org_code[1] =
 		    l->llc_snap.org_code[2] = 0;
 		bcopy((void *) &etype, (void *) &l->llc_snap.ether_type,
-		    sizeof(u_int16_t));
+		    sizeof(uint16_t));
 	}
 
 	/*
@@ -512,13 +512,13 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		lan_hdr_len += (ntohs(trrif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 	}
 
-	l = (struct llc *)(mtod(m, u_int8_t *) + lan_hdr_len);
+	l = (struct llc *)(mtod(m, uint8_t *) + lan_hdr_len);
 
 	switch (l->llc_dsap) {
 #if defined(INET) || defined(NS) || defined(DECNET)
 	case LLC_SNAP_LSAP:
 	{
-		u_int16_t etype;
+		uint16_t etype;
 		if (l->llc_control != LLC_UI || l->llc_ssap != LLC_SNAP_LSAP)
 			goto dropanyway;
 		if (l->llc_snap.org_code[0] != 0 ||
@@ -529,8 +529,8 @@ token_input(struct ifnet *ifp, struct mbuf *m)
 		m_adj(m, lan_hdr_len + LLC_SNAPFRAMELEN);
 #if NCARP > 0
 		if (ifp->if_carp && ifp->if_type != IFT_CARP &&
-		    (carp_input(m, (u_int8_t *)&trh->token_shost,
-		    (u_int8_t *)&trh->token_dhost, l->llc_snap.ether_type) == 0))
+		    (carp_input(m, (uint8_t *)&trh->token_shost,
+		    (uint8_t *)&trh->token_dhost, l->llc_snap.ether_type) == 0))
 			return;
 #endif /* NCARP > 0 */
 

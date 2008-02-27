@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.60.2.6 2007/11/15 11:45:03 yamt Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.60.2.7 2008/02/27 08:37:01 yamt Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.60.2.6 2007/11/15 11:45:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.60.2.7 2008/02/27 08:37:01 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -1607,7 +1607,7 @@ strip_newpacket(struct strip_softc *sc, u_char *ptr, u_char *end)
 	 * of the decoded packet.  Decode start of IP header, get the
 	 * IP header length and decode that many bytes in total.
 	 */
-	packetlen = ((u_int16_t)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
+	packetlen = ((uint16_t)sc->sc_rxbuf[2] << 8) | sc->sc_rxbuf[3];
 
 #ifdef DIAGNOSTIC
 #if 0

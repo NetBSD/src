@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.22 2003/08/07 16:34:16 agc Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.22.16.1 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -50,7 +50,7 @@
 #define	NGROUPS_MAX		   16	/* max supplemental group id's */
 #define	UID_MAX		   2147483647U	/* max value for a uid_t (2^31-2) */
 #ifndef OPEN_MAX
-#define	OPEN_MAX		   64	/* max open files per process */
+#define	OPEN_MAX		  128	/* max open files per process */
 #endif
 #define	PATH_MAX		 1024	/* max bytes in pathname */
 #define	PIPE_BUF		  512	/* max bytes for atomic pipe writes */

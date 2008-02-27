@@ -1,4 +1,4 @@
-/*	$NetBSD: bsd-comp.c,v 1.12.16.2 2006/12/30 20:50:20 yamt Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.12.16.3 2008/02/27 08:37:00 yamt Exp $	*/
 /*	Id: bsd-comp.c,v 1.6 1996/08/28 06:31:58 paulus Exp 	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.12.16.2 2006/12/30 20:50:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bsd-comp.c,v 1.12.16.3 2008/02/27 08:37:00 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,7 @@ struct bsd_db {
     u_char  maxbits;
     u_char  debug;
     u_char  unit;
-    u_int16_t seqno;			/* sequence # of next packet */
+    uint16_t seqno;			/* sequence # of next packet */
     u_int   hdrlen;			/* header length to preallocate */
     u_int   mru;
     u_int   maxmaxcode;			/* largest valid code */
@@ -105,24 +105,24 @@ struct bsd_db {
     u_int   uncomp_bytes;		/* uncompressed bytes */
     u_int   comp_count;			/* compressed packets */
     u_int   comp_bytes;			/* compressed bytes */
-    u_int16_t *lens;			/* array of lengths of codes */
+    uint16_t *lens;			/* array of lengths of codes */
     struct bsd_dict {
 	union {				/* hash value */
-	    u_int32_t	fcode;
+	    uint32_t	fcode;
 	    struct {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		u_int16_t prefix;	/* preceding code */
+		uint16_t prefix;	/* preceding code */
 		u_char	suffix;		/* last character of new code */
 		u_char	pad;
 #else
 		u_char	pad;
 		u_char	suffix;		/* last character of new code */
-		u_int16_t prefix;	/* preceding code */
+		uint16_t prefix;	/* preceding code */
 #endif
 	    } hs;
 	} f;
-	u_int16_t codem1;		/* output of hash table -1 */
-	u_int16_t cptr;			/* map code to hash table entry */
+	uint16_t codem1;		/* output of hash table -1 */
+	uint16_t cptr;			/* map code to hash table entry */
     } dict[1];
 };
 
@@ -175,10 +175,10 @@ struct compressor ppp_bsd_compress = {
 #define MAXCODE(b)	((1 << (b)) - 1)
 #define BADCODEM1	MAXCODE(BSD_MAX_BITS)
 
-#define BSD_HASH(prefix,suffix,hshift)	((((u_int32_t)(suffix)) << (hshift)) \
-					 ^ (u_int32_t)(prefix))
-#define BSD_KEY(prefix,suffix)		((((u_int32_t)(suffix)) << 16) \
-					 + (u_int32_t)(prefix))
+#define BSD_HASH(prefix,suffix,hshift)	((((uint32_t)(suffix)) << (hshift)) \
+					 ^ (uint32_t)(prefix))
+#define BSD_KEY(prefix,suffix)		((((uint32_t)(suffix)) << 16) \
+					 + (uint32_t)(prefix))
 
 #define CHECK_GAP	10000		/* Ratio check interval */
 
@@ -460,7 +460,7 @@ bsd_compress(void *state,
     u_int max_ent = db->max_ent;
     u_int n_bits = db->n_bits;
     u_int bitno = 32;
-    u_int32_t accm = 0, fcode;
+    uint32_t accm = 0, fcode;
     struct bsd_dict *dictp;
     u_char c;
     int hval, disp, ent, ilen;
@@ -672,9 +672,9 @@ bsd_incomp(void *state, struct mbuf *dmsg)
     u_int max_ent = db->max_ent;
     u_int n_bits = db->n_bits;
     struct bsd_dict *dictp;
-    u_int32_t fcode;
+    uint32_t fcode;
     u_char c;
-    u_int32_t hval, disp;
+    uint32_t hval, disp;
     int slen, ilen;
     u_int bitno = 7;
     u_char *rptr;
@@ -797,7 +797,7 @@ bsd_decompress(void *state, struct mbuf *cmp, struct mbuf **dmpp)
 {
     struct bsd_db *db = (struct bsd_db *) state;
     u_int max_ent = db->max_ent;
-    u_int32_t accm = 0;
+    uint32_t accm = 0;
     u_int bitno = 32;		/* 1st valid bit in accm */
     u_int n_bits = db->n_bits;
     u_int tgtbitno = 32-n_bits;	/* bitno when we have a code */
@@ -1011,8 +1011,8 @@ bsd_decompress(void *state, struct mbuf *cmp, struct mbuf **dmpp)
 	 */
 	if (oldcode != CLEAR && max_ent < db->maxmaxcode) {
 	    struct bsd_dict *dictp2;
-	    u_int32_t fcode;
-	    u_int32_t hval, disp;
+	    uint32_t fcode;
+	    uint32_t hval, disp;
 
 	    fcode = BSD_KEY(oldcode,finchar);
 	    hval = BSD_HASH(oldcode,finchar,db->hshift);

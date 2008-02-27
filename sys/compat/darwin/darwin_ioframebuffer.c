@@ -1,4 +1,4 @@
-/*	$NetBSD: darwin_ioframebuffer.c,v 1.32.4.3 2008/01/21 09:40:47 yamt Exp $ */
+/*	$NetBSD: darwin_ioframebuffer.c,v 1.32.4.4 2008/02/27 08:36:30 yamt Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32.4.3 2008/01/21 09:40:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_ioframebuffer.c,v 1.32.4.4 2008/02/27 08:36:30 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -817,14 +817,10 @@ darwin_findscreen(dev, unit, screen)
 	int major, minor;
 
 	/* Find a wsdisplay */
-	TAILQ_FOREACH(dv, &alldevs, dv_list)
-		if (device_is_a(dv, "wsdisplay") &&
-		    device_unit(dv) == unit)
-			break;
-	if (dv == NULL)
+	if ((dv = device_find_by_driver_unit("wsdisplay", unit)) == NULL)
 		return ENODEV;
 
-	sc = (struct wsdisplay_softc *)dv;
+	sc = device_private(dv);
 
 	/* Derive the device number */
 	major = cdevsw_lookup_major(&wsdisplay_cdevsw);

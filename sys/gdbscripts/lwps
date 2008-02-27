@@ -1,0 +1,30 @@
+#	$NetBSD: lwps,v 1.1.8.2 2008/02/27 08:36:54 yamt Exp $
+
+define lwps
+	set $i = 0
+
+	while ($i < 2)
+		if ($i == 0)
+			set $p = allproc.lh_first
+		end
+		if ($p)
+			printf "\t     lwp   pid   lid     flag            wchan\n"
+		end
+		while ($p)
+			set $l = $p->p_lwps.lh_first
+			set $j = 0
+			while ($j < $p->p_nlwps)
+				printf "%16lx %5d %5d %8x %16lx", \
+					$l, $p->p_pid, $l->l_lid, $l->l_flag, $l->l_wchan
+				if ($l->l_wmesg)
+					printf " (%s)", (char *)$l->l_wmesg
+				end
+				set $l = $l->l_list.le_next
+				printf "\n"
+				set $j++
+			end
+			set $p = $p->p_list.le_next
+		end
+		set $i++
+	end
+end

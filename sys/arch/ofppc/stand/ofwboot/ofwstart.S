@@ -1,4 +1,4 @@
-/* $NetBSD: ofwstart.S,v 1.1.4.2 2008/01/21 09:37:56 yamt Exp $ */
+/* $NetBSD: ofwstart.S,v 1.1.4.3 2008/02/27 08:36:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ _entry:
 
 	# note descriptor
 	# real mode (-1) or virtual mode (0)
-	.long	0
+	.long	-1
 	# real-base
 	.long	-1
 	# real-size

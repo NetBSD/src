@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlanvar.h,v 1.5.4.1 2008/01/21 09:47:07 yamt Exp $	*/
+/*	$NetBSD: if_vlanvar.h,v 1.5.4.2 2008/02/27 08:37:01 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -71,11 +71,11 @@
 #define	_NET_IF_VLANVAR_H_
 
 struct ether_vlan_header {
-	u_int8_t	evl_dhost[ETHER_ADDR_LEN];
-	u_int8_t	evl_shost[ETHER_ADDR_LEN];
-	u_int16_t	evl_encap_proto;
-	u_int16_t	evl_tag;
-	u_int16_t	evl_proto;
+	uint8_t		evl_dhost[ETHER_ADDR_LEN];
+	uint8_t		evl_shost[ETHER_ADDR_LEN];
+	uint16_t	evl_encap_proto;
+	uint16_t	evl_tag;
+	uint16_t	evl_proto;
 } __packed;
 
 #define	EVL_VLANOFTAG(tag)	((tag) & 4095)

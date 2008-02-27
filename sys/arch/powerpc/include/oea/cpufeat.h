@@ -1,4 +1,4 @@
-/* $NetBSD: cpufeat.h,v 1.1.2.2 2008/02/11 14:59:28 yamt Exp $ */
+/* $NetBSD: cpufeat.h,v 1.1.2.3 2008/02/27 08:36:23 yamt Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,6 +35,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _POWERPC_OEA_OEAFEAT_H_
+
 /* Cpu features for OEA Cpus.
  * These are only features that affect early bootstrap, and decisions
  * that need to be made very early on, like what pmap to use, if bats are
@@ -50,5 +52,11 @@
 #define OEACPU_601		(1 << 4)
 #define OEACPU_HIGHSPRG		(1 << 5)
 #define OEACPU_ALTIVEC		(1 << 6)
+#define OEACPU_XBSEN		(1 << 7)	/* BATS > 256MB */
 
+#ifdef _KERNEL
 void cpu_model_init(void);
+extern unsigned long oeacpufeat;
+#endif
+
+#endif /* _POWERPC_OEA_OEAFEAT_H_ */

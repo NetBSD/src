@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38.2.4 2008/01/21 09:40:01 yamt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.38.2.5 2008/02/27 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38.2.4 2008/01/21 09:40:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38.2.5 2008/02/27 08:36:26 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,10 @@ compat_label(dev, strat, lp, osdep)
 	dec_disklabel *dlp;
 	struct buf *bp = NULL;
 	const char *msg = NULL;
-	uint8_t *dp = bp->b_data;
+	uint8_t *dp;
 
 	bp = geteblk((int)lp->d_secsize);
+	dp = bp->b_data;
 	bp->b_dev = dev;
 	bp->b_blkno = DEC_LABEL_SECTOR;
 	bp->b_bcount = lp->d_secsize;

@@ -1,4 +1,4 @@
-/*	$NetBSD: esmvar.h,v 1.12.10.2 2008/01/21 09:43:50 yamt Exp $	*/
+/*	$NetBSD: esmvar.h,v 1.12.10.3 2008/02/27 08:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -154,6 +154,7 @@ struct esm_softc {
 
 	bus_space_tag_t		st;
 	bus_space_handle_t	sh;
+	bus_size_t		sz;
 
 	pcitag_t		tag;
 	pci_chipset_tag_t	pc;
@@ -222,12 +223,5 @@ void	esm_free(void *, void *, struct malloc_type *);
 size_t	esm_round_buffersize(void *, int, size_t);
 paddr_t	esm_mappage(void *, void *, off_t, int);
 int	esm_get_props(void *);
-
-int	esm_match(struct device *, struct cfdata *, void *);
-void	esm_attach(struct device *, struct device *, void *);
-int	esm_intr(void *);
-
-int	esm_allocmem(struct esm_softc *, size_t, size_t,
-	    struct esm_dma *);
 
 enum esm_quirk_flags	esm_get_quirks(pcireg_t);

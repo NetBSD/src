@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.114.2.4 2008/02/04 09:23:22 yamt Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.114.2.5 2008/02/27 08:36:34 yamt Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.114.2.4 2008/02/04 09:23:22 yamt Exp $
+ * $Id: aic7xxx.c,v 1.114.2.5 2008/02/27 08:36:34 yamt Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.114.2.4 2008/02/04 09:23:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.114.2.5 2008/02/27 08:36:34 yamt Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -3900,10 +3900,8 @@ ahc_set_unit(struct ahc_softc *ahc, int unit)
 }
 
 void
-ahc_set_name(struct ahc_softc *ahc, char *name)
+ahc_set_name(struct ahc_softc *ahc, const char *name)
 {
-	if (ahc->name != NULL)
-		free(ahc->name, M_DEVBUF);
 	ahc->name = name;
 }
 

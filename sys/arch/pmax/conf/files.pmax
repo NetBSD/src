@@ -1,4 +1,4 @@
-#	$NetBSD: files.pmax,v 1.108.10.1 2006/12/30 20:46:42 yamt Exp $
+#	$NetBSD: files.pmax,v 1.108.10.2 2008/02/27 08:36:23 yamt Exp $
 # DECstation-specific configuration info
 
 # maxpartitions must be first item in files.${ARCH}.
@@ -52,13 +52,6 @@ device ibus { [addr = -1] }
 attach ibus at mainbus with ibus_pmax
 file	arch/pmax/ibus/ibus.c		ibus
 file	arch/pmax/ibus/ibus_pmax.c	ibus & (dec_3100|dec_5100)
-
-#
-# Workstation console glue
-#
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 #
 # TURBOchannel devices

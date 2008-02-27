@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.76.8.8 2008/02/11 15:00:00 yamt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.76.8.9 2008/02/27 08:37:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.8 2008/02/11 15:00:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.76.8.9 2008/02/27 08:37:01 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -215,7 +215,7 @@ tunattach0(struct tun_softc *tp)
 	if_attach(ifp);
 	if_alloc_sadl(ifp);
 #if NBPFILTER > 0
-	bpfattach(ifp, DLT_NULL, sizeof(u_int32_t));
+	bpfattach(ifp, DLT_NULL, sizeof(uint32_t));
 #endif
 }
 

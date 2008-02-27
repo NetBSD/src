@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.11.2.3 2008/01/21 09:37:15 yamt Exp $	*/
+/*	$NetBSD: boot2.c,v 1.11.2.4 2008/02/27 08:36:21 yamt Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -237,7 +237,7 @@ print_banner(void)
 #ifndef SMALL
 	int n;
 	if (bootconf.banner[0]) {
-		for (n = 0; bootconf.banner[n]; n++) 
+		for (n = 0; bootconf.banner[n] && n < MAXBANNER; n++) 
 			printf("%s\n", bootconf.banner[n]);
 	} else {
 #endif /* !SMALL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: auviavar.h,v 1.8.12.3 2008/01/21 09:43:38 yamt Exp $	*/
+/*	$NetBSD: auviavar.h,v 1.8.12.4 2008/02/27 08:36:35 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,6 +65,7 @@ struct auvia_softc {
 
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
+	bus_size_t sc_iosize;
 	bus_dma_tag_t sc_dmat;
 
 	struct ac97_host_if host_if;

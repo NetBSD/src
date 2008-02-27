@@ -1,15 +1,10 @@
-#	$NetBSD: files.zaurus,v 1.2.4.3 2007/09/03 14:31:41 yamt Exp $
+#	$NetBSD: files.zaurus,v 1.2.4.4 2008/02/27 08:36:30 yamt Exp $
 #
 # Sharp Zaurus specific configuration info
 #
 
 maxpartitions	16
 maxusers	2 8 64
-
-# Include WSCONS stuff
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 # Machine-independent SCSI drivers
 include "dev/scsipi/files.scsipi"

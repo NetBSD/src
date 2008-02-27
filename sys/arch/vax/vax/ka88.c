@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.6.16.3 2007/09/03 14:30:57 yamt Exp $	*/
+/*	$NetBSD: ka88.c,v 1.6.16.4 2008/02/27 08:36:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.6.16.3 2007/09/03 14:30:57 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.6.16.4 2008/02/27 08:36:26 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -374,7 +374,8 @@ ka88_startslave(struct device *dev, struct cpu_info *ci)
 	ka88_txrx(id, "D/I 4 %x\r", ci->ci_istack);	/* Interrupt stack */
 	ka88_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka88_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
-	ka88_txrx(id, "D/I 10 %x\r", (int)ci->ci_pcb);	/* PCB for idle proc */
+	ka88_txrx(id, "D/I 10 %x\r",			/* PCB for idle proc */
+	    (int)&ci->ci_data.cpu_idlelwp->l_addr->u_pcb);
 	ka88_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka88_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN)); /* Enable MM */
 	ka88_txrx(id, "S %x\r", (int)&vax_mp_tramp); /* Start! */

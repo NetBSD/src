@@ -1,4 +1,4 @@
-/*	$NetBSD: slcompress.h,v 1.15.4.1 2006/06/21 15:10:28 yamt Exp $	*/
+/*	$NetBSD: slcompress.h,v 1.15.4.2 2008/02/27 08:37:01 yamt Exp $	*/
 /*	Id: slcompress.h,v 1.4 1994/09/21 06:50:08 paulus Exp 	*/
 
 /*
@@ -118,7 +118,7 @@
  */
 struct cstate {
 	struct cstate *cs_next;	/* next most recently used cstate (xmit only) */
-	u_int16_t cs_hlen;	/* size of hdr (receive only) */
+	uint16_t cs_hlen;	/* size of hdr (receive only) */
 	u_char cs_id;		/* connection # associated with this state */
 	u_char cs_filler;
 	union {
@@ -139,7 +139,7 @@ struct slcompress {
 	struct cstate *last_cs;	/* most recently used tstate */
 	u_char last_recv;	/* last rcvd conn. id */
 	u_char last_xmit;	/* last sent conn. id */
-	u_int16_t flags;
+	uint16_t flags;
 #ifndef SL_NO_STATS
 	int sls_packets;	/* outbound packets */
 	int sls_compressed;	/* outbound compressed packets */

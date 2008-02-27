@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn26,v 1.5.2.2 2007/09/03 14:22:01 yamt Exp $
+#	$NetBSD: Makefile.acorn26,v 1.5.2.3 2008/02/27 08:36:17 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -54,6 +54,9 @@ locore.o: ${ACORN26}/acorn26/locore.S assym.h
 
 vectors.o: ${ARM}/arm/vectors.S assym.h
 	${NORMAL_S}
+
+bcopyinout.o copyinout.o copystr.o cpu_in_cksum.o fiq_subr.o: assym.h
+sigcode.o: assym.h
 
 ##
 ## (5) link settings

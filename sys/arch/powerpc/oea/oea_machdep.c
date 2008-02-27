@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.22.2.9 2008/02/11 14:59:29 yamt Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.22.2.10 2008/02/27 08:36:23 yamt Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.9 2008/02/11 14:59:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.22.2.10 2008/02/27 08:36:23 yamt Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -97,7 +97,6 @@ struct vm_map *phys_map = NULL;
  * Global variables used here and there
  */
 extern struct user *proc0paddr;
-extern unsigned long oeacpufeat;
 
 static void trap0(void *);
 

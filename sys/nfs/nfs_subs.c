@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.149.2.10 2008/02/15 10:40:08 yamt Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.149.2.11 2008/02/27 08:37:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.10 2008/02/15 10:40:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.149.2.11 2008/02/27 08:37:05 yamt Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -1762,6 +1762,9 @@ nfs_loadattrcache(vpp, fp, vaper, flags)
 		vap->va_flags = 0;
 		vap->va_gen = fxdr_unsigned(u_int32_t,fp->fa2_ctime.nfsv2_usec);
 		vap->va_filerev = 0;
+	}
+	if (vap->va_size > VFSTONFS(vp->v_mount)->nm_maxfilesize) {
+		return EFBIG;
 	}
 	if (vap->va_size != np->n_size) {
 		if ((np->n_flag & NMODIFIED) && vap->va_size < np->n_size) {

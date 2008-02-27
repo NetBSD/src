@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.10.4.3 2008/02/04 09:24:13 yamt Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.10.4.4 2008/02/27 08:36:55 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.10.4.3 2008/02/04 09:24:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.10.4.4 2008/02/27 08:36:55 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.10.4.3 2008/02/04 09:24:13 yamt Exp $
 #include <sys/syscallargs.h> /* for sys_sync */
 #include <sys/workqueue.h>
 #include <prop/proplib.h>
+
+/* XXX ugly special case, but for now the only client */
+#include "wsdisplay.h"
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsdisplayvar.h>
+#endif
 
 #ifdef PMF_DEBUG
 int pmf_debug_event;
@@ -214,6 +220,11 @@ pmf_system_resume(void)
 	}
 	aprint_debug(".\n");
 
+	KERNEL_UNLOCK_ONE(0);
+#if NWSDISPLAY > 0
+	if (rv)
+		wsdisplay_handlex(1);
+#endif
 	return rv;
 }
 
@@ -225,6 +236,11 @@ pmf_system_suspend(void)
 
 	if (!pmf_check_system_drivers())
 		return false;
+#if NWSDISPLAY > 0
+	if (wsdisplay_handlex(0))
+		return false;
+#endif
+	KERNEL_LOCK(1, 0);
 
 	/*
 	 * Flush buffers only if the shutdown didn't do so

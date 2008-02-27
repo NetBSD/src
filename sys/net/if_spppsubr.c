@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.85.2.6 2008/02/11 14:59:59 yamt Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.85.2.7 2008/02/27 08:37:00 yamt Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.6 2008/02/11 14:59:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.7 2008/02/27 08:37:00 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipx.h"
@@ -190,26 +190,26 @@ __KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.85.2.6 2008/02/11 14:59:59 yamt Ex
 #define STATE_OPENED	9
 
 struct ppp_header {
-	u_int8_t address;
-	u_int8_t control;
-	u_int16_t protocol;
+	uint8_t address;
+	uint8_t control;
+	uint16_t protocol;
 } __packed;
 #define PPP_HEADER_LEN          sizeof (struct ppp_header)
 
 struct lcp_header {
-	u_int8_t type;
-	u_int8_t ident;
-	u_int16_t len;
+	uint8_t type;
+	uint8_t ident;
+	uint16_t len;
 } __packed;
 #define LCP_HEADER_LEN          sizeof (struct lcp_header)
 
 struct cisco_packet {
-	u_int32_t type;
-	u_int32_t par1;
-	u_int32_t par2;
-	u_int16_t rel;
-	u_int16_t time0;
-	u_int16_t time1;
+	uint32_t type;
+	uint32_t par1;
+	uint32_t par2;
+	uint16_t rel;
+	uint16_t time0;
+	uint16_t time1;
 } __packed;
 #define CISCO_PACKET_LEN 18
 
@@ -362,7 +362,7 @@ static void sppp_chap_scr(struct sppp *sp);
 
 static const char *sppp_auth_type_name(u_short proto, u_char type);
 static const char *sppp_cp_type_name(u_char type);
-static const char *sppp_dotted_quad(u_int32_t addr);
+static const char *sppp_dotted_quad(uint32_t addr);
 static const char *sppp_ipcp_opt_name(u_char opt);
 #ifdef INET6
 static const char *sppp_ipv6cp_opt_name(u_char opt);
@@ -373,9 +373,9 @@ static const char *sppp_proto_name(u_short proto);
 static const char *sppp_state_name(int state);
 static int sppp_params(struct sppp *sp, int cmd, void *data);
 #ifdef INET
-static void sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst,
-			      u_int32_t *srcmask);
-static void sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr);
+static void sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst,
+			      uint32_t *srcmask);
+static void sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr);
 static void sppp_clear_ip_addrs(struct sppp *sp);
 #endif
 static void sppp_keepalive(void *dummy);
@@ -473,7 +473,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
 	struct ppp_header *h = NULL;
 	struct ifqueue *inq = 0;
-	u_int16_t protocol;
+	uint16_t protocol;
 	int s;
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
@@ -578,7 +578,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	switch (protocol) {
 	default:
 		if (sp->state[IDX_LCP] == STATE_OPENED) {
-			u_int16_t prot = htons(protocol);
+			uint16_t prot = htons(protocol);
 			sppp_cp_send(sp, PPP_LCP, PROTO_REJ,
 			    ++sp->pp_seq[IDX_LCP], m->m_pkthdr.len + 2,
 			    &prot);
@@ -682,7 +682,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	struct ppp_header *h = NULL;
 	struct ifqueue *ifq = NULL;		/* XXX */
 	int s, error = 0;
-	u_int16_t protocol;
+	uint16_t protocol;
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 
 	s = splnet();
@@ -740,7 +740,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * - we flag TCP packets with src ip 0 as an error
 		 */
 		if (ip && ip->ip_src.s_addr == INADDR_ANY) {
-			u_int8_t proto = ip->ip_p;
+			uint8_t proto = ip->ip_p;
 
 			m_freem(m);
 			splx(s);
@@ -868,7 +868,7 @@ nosupport:
 			splx(s);
 			return (ENOBUFS);
 		}
-		*mtod(m, u_int16_t *) = protocol;
+		*mtod(m, uint16_t *) = protocol;
 	} else {
 		h->protocol = protocol;
 	}
@@ -1142,7 +1142,7 @@ sppp_cisco_input(struct sppp *sp, struct mbuf *m)
 	STDDCL;
 	struct cisco_packet *h;
 #ifdef INET
-	u_int32_t me, mymask = 0;	/* XXX: GCC */
+	uint32_t me, mymask = 0;	/* XXX: GCC */
 #endif
 
 	if (m->m_pkthdr.len < CISCO_PACKET_LEN) {
@@ -1216,7 +1216,7 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 	struct ppp_header *h;
 	struct cisco_packet *ch;
 	struct mbuf *m;
-	u_int32_t t;
+	uint32_t t;
 
 	t = time_uptime * 1000;
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1286,8 +1286,8 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	m->m_pkthdr.rcvif = 0;
 
 	if (sp->pp_flags & PP_NOFRAMING) {
-		*mtod(m, u_int16_t *) = htons(proto);
-		lh = (struct lcp_header *)(mtod(m, u_int8_t *) + 2);
+		*mtod(m, uint16_t *) = htons(proto);
+		lh = (struct lcp_header *)(mtod(m, uint8_t *) + 2);
 	} else {
 		struct ppp_header *h;
 		h = mtod(m, struct ppp_header *);
@@ -1335,7 +1335,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	int printlen, len = m->m_pkthdr.len;
 	int rv;
 	u_char *p;
-	u_int32_t u32;
+	uint32_t u32;
 
 	if (len < 4) {
 		if (debug)
@@ -1607,7 +1607,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		int catastrophic;
 		const struct cp *upper;
 		int i;
-		u_int16_t proto;
+		uint16_t proto;
 
 		catastrophic = 0;
 		upper = NULL;
@@ -2109,7 +2109,7 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	STDDCL;
 	u_char *buf, *r, *p;
 	int origlen, rlen;
-	u_int32_t nmagic;
+	uint32_t nmagic;
 	u_short authproto;
 
 	len -= 4;
@@ -2216,8 +2216,8 @@ sppp_lcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 		switch (*p) {
 		case LCP_OPT_MAGIC:
 			/* Magic number -- extract. */
-			nmagic = (u_int32_t)p[2] << 24 |
-				(u_int32_t)p[3] << 16 | p[4] << 8 | p[5];
+			nmagic = (uint32_t)p[2] << 24 |
+				(uint32_t)p[3] << 16 | p[4] << 8 | p[5];
 			if (nmagic != sp->lcp.magic) {
 				if (debug)
 					addlog(" 0x%x", nmagic);
@@ -2425,7 +2425,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 {
 	STDDCL;
 	u_char *buf, *p;
-	u_int32_t magic;
+	uint32_t magic;
 
 	len -= 4;
 	buf = malloc (len, M_TEMP, M_NOWAIT);
@@ -2455,8 +2455,8 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 			/* Magic number -- renegotiate */
 			if ((sp->lcp.opts & (1 << LCP_OPT_MAGIC)) &&
 			    len >= 6 && p[1] == 6) {
-				magic = (u_int32_t)p[2] << 24 |
-					(u_int32_t)p[3] << 16 | p[4] << 8 | p[5];
+				magic = (uint32_t)p[2] << 24 |
+					(uint32_t)p[3] << 16 | p[4] << 8 | p[5];
 				/*
 				 * If the remote magic is our negated one,
 				 * this looks like a loopback problem.
@@ -2512,7 +2512,7 @@ sppp_lcp_tlu(struct sppp *sp)
 {
 	STDDCL;
 	int i;
-	u_int32_t mask;
+	uint32_t mask;
 
 	/* XXX ? */
 	if (! (ifp->if_flags & IFF_UP) &&
@@ -2574,7 +2574,7 @@ sppp_lcp_tld(struct sppp *sp)
 {
 	STDDCL;
 	int i;
-	u_int32_t mask;
+	uint32_t mask;
 
 	sp->pp_phase = SPPP_PHASE_TERMINATE;
 
@@ -2748,7 +2748,7 @@ static void
 sppp_ipcp_open(struct sppp *sp)
 {
 	STDDCL;
-	u_int32_t myaddr, hisaddr;
+	uint32_t myaddr, hisaddr;
 
 	sp->ipcp.flags &= ~(IPCP_HISADDR_SEEN|IPCP_MYADDR_SEEN|IPCP_MYADDR_DYN|IPCP_HISADDR_DYN);
 	sp->ipcp.req_myaddr = 0;
@@ -2834,7 +2834,7 @@ sppp_ipcp_RCR(struct sppp *sp, struct lcp_header *h, int len)
 	u_char *buf, *r, *p;
 	struct ifnet *ifp = &sp->pp_if;
 	int rlen, origlen, debug = ifp->if_flags & IFF_DEBUG;
-	u_int32_t hisaddr, desiredaddr;
+	uint32_t hisaddr, desiredaddr;
 
 	len -= 4;
 	origlen = len;
@@ -3071,7 +3071,7 @@ sppp_ipcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 	u_char *p;
 	struct ifnet *ifp = &sp->pp_if;
 	int debug = ifp->if_flags & IFF_DEBUG;
-	u_int32_t wantaddr;
+	uint32_t wantaddr;
 
 	len -= 4;
 
@@ -3151,7 +3151,7 @@ sppp_ipcp_tlu(struct sppp *sp)
 #ifdef INET
 	/* we are up. Set addresses and notify anyone interested */
 	STDDCL;
-	u_int32_t myaddr, hisaddr;
+	uint32_t myaddr, hisaddr;
 
 	sppp_get_ip_addrs(sp, &myaddr, &hisaddr, 0);
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) && (sp->ipcp.flags & IPCP_MYADDR_SEEN))
@@ -3198,7 +3198,7 @@ sppp_ipcp_scr(struct sppp *sp)
 {
 	char opt[6 /* compression */ + 6 /* address */ + 12 /* dns addresses */];
 #ifdef INET
-	u_int32_t ouraddr;
+	uint32_t ouraddr;
 #endif
 	int i = 0;
 
@@ -4269,7 +4269,7 @@ sppp_chap_tld(struct sppp *sp)
 static void
 sppp_chap_scr(struct sppp *sp)
 {
-	u_int32_t *ch;
+	uint32_t *ch;
 	u_char clen;
 
 	if (sp->myauth.name == NULL) {
@@ -4280,12 +4280,12 @@ sppp_chap_scr(struct sppp *sp)
 	}
 
 	/* Compute random challenge. */
-	ch = (u_int32_t *)sp->myauth.challenge;
+	ch = (uint32_t *)sp->myauth.challenge;
 	ch[0] = arc4random();
 	ch[1] = arc4random();
 	ch[2] = arc4random();
 	ch[3] = arc4random();
-	clen = 16;	/* 4 * sizeof(u_int32_t) */
+	clen = 16;	/* 4 * sizeof(uint32_t) */
 
 	sp->confid[IDX_CHAP] = ++sp->pp_seq[IDX_CHAP];
 
@@ -4671,9 +4671,9 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	m->m_pkthdr.rcvif = 0;
 
 	if (sp->pp_flags & PP_NOFRAMING) {
-		*mtod(m, u_int16_t *) = htons(cp->proto);
+		*mtod(m, uint16_t *) = htons(cp->proto);
 		pkthdrlen = 2;
-		lh = (struct lcp_header *)(mtod(m, u_int8_t *)+2);
+		lh = (struct lcp_header *)(mtod(m, uint8_t *)+2);
 	} else {
 		struct ppp_header *h;
 		h = mtod(m, struct ppp_header *);
@@ -4819,12 +4819,12 @@ sppp_keepalive(void *dummy)
  * Get both IP addresses.
  */
 static void
-sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst, u_int32_t *srcmask)
+sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcmask)
 {
 	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *sm;
-	u_int32_t ssrc, ddst;
+	uint32_t ssrc, ddst;
 
 	sm = NULL;
 	ssrc = ddst = 0;
@@ -4862,7 +4862,7 @@ sppp_get_ip_addrs(struct sppp *sp, u_int32_t *src, u_int32_t *dst, u_int32_t *sr
  * If an address is 0, leave it the way it is.
  */
 static void
-sppp_set_ip_addrs(struct sppp *sp, u_int32_t myaddr, u_int32_t hisaddr)
+sppp_set_ip_addrs(struct sppp *sp, uint32_t myaddr, uint32_t hisaddr)
 {
 	STDDCL;
 	struct ifaddr *ifa;
@@ -4928,7 +4928,7 @@ sppp_clear_ip_addrs(struct sppp *sp)
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 
-	u_int32_t remote;
+	uint32_t remote;
 	if (sp->ipcp.flags & IPCP_HISADDR_DYN)
 		remote = sp->ipcp.saved_hisaddr;
 	else
@@ -5334,7 +5334,7 @@ sppp_phase_network(struct sppp *sp)
 {
 	STDDCL;
 	int i;
-	u_int32_t mask;
+	uint32_t mask;
 
 	sp->pp_phase = SPPP_PHASE_NETWORK;
 
@@ -5519,7 +5519,7 @@ sppp_print_string(const char *p, u_short len)
 }
 
 static const char *
-sppp_dotted_quad(u_int32_t addr)
+sppp_dotted_quad(uint32_t addr)
 {
 	static char s[16];
 	snprintf(s, sizeof(s), "%d.%d.%d.%d",

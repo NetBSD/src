@@ -1,4 +1,4 @@
-/*	$NetBSD: mertwist.c,v 1.6.2.2 2008/02/04 09:24:27 yamt Exp $	*/
+/*	$NetBSD: mertwist.c,v 1.6.2.3 2008/02/27 08:37:00 yamt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -214,58 +214,16 @@ mtprng_rawrandom(struct mtprng_state *mt)
 
 /*
  * This is a non-standard routine which attempts to return a cryptographically
- * strong random number by collapsing 8 32bit values outputed by the twister
- * into one 32bit value.  The resulting is checked so that when concatenated
- * with the previous return value, that no sequence of 16 1's or 0's are
- * present.  If such a pattern is found, the value is discarded and and the
- * process is restarted.
+ * strong random number by collapsing 2 32bit values outputed by the twister
+ * into one 32bit value.  
  */
 uint32_t
 mtprng_random(struct mtprng_state *mt)
 {
-	uint32_t a, d;
-	size_t n;
+	uint32_t a;
 
-	/*
-	 * Grab 8 raw 32bit numbers and collapse them.
-	 */
-
-	for (;;) {
-		size_t b;
-		uint32_t mu, ml;
-		bool fail;
-		a = mtprng_rawrandom(mt);
-		for (n = 1; n < 8; n++) {
-			d = mtprng_rawrandom(mt);
-			a = (d ^ (1566083941UL * (a ^ (a >> 30)))) + n;
-		}
-		/*
-		 * The following loop looks for runs of 16 0's or 16 1's
-		 * between the current candidate and last one.  Since we
-		 * know which was the user will look at the bits we will
-		 * wraparound at both ends.
-		 */
-#define INC	2
-		for (b = 32 - 16, ml = 0xffff << b, mu = 0, fail = false;
-		     !fail && (b = b + INC) < 64;) {
-			if (ml & 0x80000000) {
-				KASSERT((mu & 0x80000000) == 0);
-				mu = (mu << INC) | ((1 << INC) - 1);
-				ml <<= INC;
-			} else if (mu & 0x80000000) {
-				KASSERT((ml & 0x80000000) == 0);
-				ml = (ml << INC) | ((1 << INC) - 1);
-				mu <<= INC;
-			} else {
-				mu <<= INC;
-				ml <<= INC;
-			}
-			fail = (((a & mu) == 0 && (mt->mt_last & ml) == 0)
-			    || ((a & mu) == mu && (mt->mt_last & ml) == ml));
-		} 
-		if (fail)
-			continue;
-		mt->mt_last = a;
-		return a;
-	}
+	mt->mt_count = (mt->mt_count + 13) & 31;
+	a = mtprng_rawrandom(mt);
+	a = (a << mt->mt_count) | (a >> (32 - mt->mt_count));
+	return a + mtprng_rawrandom(mt);
 }

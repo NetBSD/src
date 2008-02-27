@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hippi.h,v 1.7.4.3 2008/01/21 09:47:04 yamt Exp $	*/
+/*	$NetBSD: if_hippi.h,v 1.7.4.4 2008/02/27 08:37:00 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -43,22 +43,22 @@
 #include <net/if_ether.h>
 
 struct hippi_fp {
-	u_int8_t  fp_ulp;
-	u_int8_t  fp_flags;
+	uint8_t  fp_ulp;
+	uint8_t  fp_flags;
 #define HIPPI_FP_D1_PRESENT	0x80
 #define HIPPI_FP_D2_ON_BURST	0x40
-	u_int16_t fp_offsets;
+	uint16_t fp_offsets;
 #define HIPPI_FP_D2_MASK	0x07
-	u_int32_t fp_d2_len;
+	uint32_t fp_d2_len;
 } __packed;
 
 struct hippi_le {
-	u_int32_t le_dest_switch;
-	u_int32_t le_src_switch;
-	u_int16_t le_reserved;
-	u_int8_t  le_dest_addr[6];
-	u_int16_t le_local_admin;
-	u_int8_t  le_src_addr[6];
+	uint32_t le_dest_switch;
+	uint32_t le_src_switch;
+	uint16_t le_reserved;
+	uint8_t  le_dest_addr[6];
+	uint16_t le_local_admin;
+	uint8_t  le_src_addr[6];
 } __packed;
 
 struct hippi_header {

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461.c,v 1.13.16.1 2006/06/21 14:52:02 yamt Exp $	*/
+/*	$NetBSD: hd64461.c,v 1.13.16.2 2008/02/27 08:36:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.13.16.1 2006/06/21 14:52:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461.c,v 1.13.16.2 2008/02/27 08:36:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ hd64461_info(void)
 	/*
 	 * System
 	 */
-	printf("STBCR (System Control Register)\n");
+	printf("STBCR (Standby Control Register)\n");
 	r16 = hd64461_reg_read_2(HD64461_SYSSTBCR_REG16);
 #define DBG_BITMASK_PRINT(r, m)	dbg_bitmask_print(r, HD64461_SYSSTBCR_##m, #m)
 	DBG_BITMASK_PRINT(r16, CKIO_STBY);
