@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.112.2.18 2008/01/21 10:55:41 yamt Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.112.2.19 2008/02/27 09:24:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -148,13 +148,7 @@ struct mowner_user {
  * Macros for type conversion
  * mtod(m,t) -	convert mbuf pointer to data pointer of correct type
  */
-#if defined(__HAVE_LAZY_MBUF) || defined(DEBUG)
-#define	mtod(m, t)	\
-	((t)(__predict_true(((m)->m_flags & M_EXT_LAZY) == 0) \
-	? (m)->m_data : m_mapin(m)))
-#else /* defined(__HAVE_LAZY_MBUF) || defined(DEBUG) */
 #define	mtod(m, t)	((t)((m)->m_data))
-#endif /* defined(__HAVE_LAZY_MBUF) || defined(DEBUG) */
 
 /* header at beginning of each mbuf: */
 struct m_hdr {
@@ -367,7 +361,6 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 #define	M_EXT_PAGES	0x02000000	/* ext_pgs is valid */
 #define	M_EXT_ROMAP	0x04000000	/* ext mapping is r-o at MMU */
 #define	M_EXT_RW	0x08000000	/* ext storage is writable */
-#define	M_EXT_LAZY	0x10000000
 
 /* for source-level compatibility */
 #define	M_CLUSTER	M_EXT_CLUSTER
