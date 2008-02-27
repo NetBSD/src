@@ -1,4 +1,4 @@
-.\" $NetBSD: userinfo.8,v 1.14 2006/05/29 01:38:33 hubertf Exp $ */
+.\" $NetBSD: userinfo.8,v 1.15 2008/02/27 19:12:56 reed Exp $ */
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .Nd displays user information
 .Sh SYNOPSIS
 .Nm
-.Op Fl ev
+.Op Fl e
 .Ar user
 .Sh DESCRIPTION
 The
@@ -49,7 +49,7 @@ See
 .Xr user 8
 for more information.
 .Pp
-The following command line options are recognised:
+The following command line option is recognised:
 .Bl -tag -width Ds
 .It Fl e
 Return 0 if the user exists, and non-zero if the
@@ -58,8 +58,6 @@ No information is displayed.
 This form of the command is useful for
 scripts which need to check whether a particular user
 name or uid is already in use on the system.
-.It Fl v
-Perform any actions in a verbose manner.
 .El
 .Pp
 The
@@ -67,13 +65,8 @@ The
 argument may either be a user's name, or a uid.
 .Sh EXIT STATUS
 .Ex -std userinfo
-.Sh FILES
-.Bl -tag -width /etc/usermgmt.conf -compact
-.It Pa /etc/usermgmt.conf
-.El
 .Sh SEE ALSO
 .Xr passwd 5 ,
-.Xr usermgmt.conf 5 ,
 .Xr group 8 ,
 .Xr user 8 ,
 .Xr useradd 8 ,
