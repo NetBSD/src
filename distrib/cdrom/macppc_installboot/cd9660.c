@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.1 2006/09/17 03:56:03 tsutsui Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.2 2008/02/27 13:08:52 tsutsui Exp $	*/
 
 /*-
  * Copyright (C) 2005 Izumi Tsutsui
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.1 2006/09/17 03:56:03 tsutsui Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.2 2008/02/27 13:08:52 tsutsui Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -226,7 +226,7 @@ cd9660_findstage2(ib_params *params, uint32_t *maxblk, ib_block *blocks)
 		}
 	}
 
-	if (found = 0) {
+	if (found == 0) {
 		warnx("Can't find secondary bootstrap `%s' in filesystem `%s'",
 		    params->stage2, params->filesystem);
 		return 0;
