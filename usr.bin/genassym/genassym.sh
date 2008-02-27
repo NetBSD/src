@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: genassym.sh,v 1.2 2006/10/21 04:48:29 itohy Exp $
+#	$NetBSD: genassym.sh,v 1.3 2008/02/27 22:38:57 matt Exp $
 #
 # Copyright (c) 1997 Matthias Pfaller.
 # All rights reserved.
@@ -153,7 +153,7 @@ $0 ~ /^endif/ {
 	if (defining == 0) {
 		defining = 1;
 		printf("void f" FNR "(void);\n");
-		printf("void f" FNR "() {\n");
+		printf("void f" FNR "(void) {\n");
 		if (ccode)
 			call[FNR] = "f" FNR;
 		defining = 1;
