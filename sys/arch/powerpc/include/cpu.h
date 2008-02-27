@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.62 2008/02/05 18:52:55 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.63 2008/02/27 18:26:16 xtraeme Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -392,17 +392,5 @@ void __syncicache(void *, size_t);
 #define	CPU_BOOTED_DEVICE	9	/* string: device we booted from */
 #define	CPU_BOOTED_KERNEL	10	/* string: kernel we booted */
 #define	CPU_MAXID		11	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "cachelinesize", CTLTYPE_INT }, \
-	{ "timebase", CTLTYPE_INT }, \
-	{ "cputempature", CTLTYPE_INT }, \
-	{ "printfataltraps", CTLTYPE_INT }, \
-	{ "cacheinfo", CTLTYPE_STRUCT }, \
-	{ "altivec", CTLTYPE_INT }, \
-	{ "model", CTLTYPE_STRING }, \
-	{ "powersave", CTLTYPE_INT }, \
-}
 
 #endif	/* _POWERPC_CPU_H_ */

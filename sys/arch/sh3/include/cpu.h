@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.50 2008/01/07 05:00:12 uwe Exp $	*/
+/*	$NetBSD: cpu.h,v 1.51 2008/02/27 18:26:16 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -216,12 +216,6 @@ do {									\
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_LOADANDRESET	2	/* load kernel image and reset */
 #define	CPU_MAXID		3	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES {						\
-	{ 0, 0 },							\
-	{ "console_device",	CTLTYPE_STRUCT },			\
-	{ "load_and_reset",	CTLTYPE_INT },				\
-}
 
 #ifdef _KERNEL
 void sh_cpu_init(int, int);

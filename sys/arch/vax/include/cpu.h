@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.83 2008/02/23 05:48:13 matt Exp $      */
+/*      $NetBSD: cpu.h,v 1.84 2008/02/27 18:26:16 xtraeme Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -43,14 +43,6 @@
 #define	CPU_BOOTED_DEVICE	3
 #define	CPU_BOOTED_KERNEL	4
 #define CPU_MAXID		5
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "printfataltraps", CTLTYPE_INT }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "booted_device", CTLTYPE_STRING }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-}
 
 #ifdef _KERNEL
 

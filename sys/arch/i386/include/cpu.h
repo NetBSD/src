@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.163 2008/02/27 17:39:37 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.164 2008/02/27 18:26:15 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -471,19 +471,6 @@ void x86_bus_space_mallocok(void);
 #define	CPU_SSE			9	/* int: OS/CPU supports SSE */
 #define	CPU_SSE2		10	/* int: OS/CPU supports SSE2 */
 #define	CPU_MAXID		11	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "biosbasemem", CTLTYPE_INT }, \
-	{ "biosextmem", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "diskinfo", CTLTYPE_STRUCT }, \
-	{ "fpu_present", CTLTYPE_INT }, \
-	{ "osfxsr", CTLTYPE_INT }, \
-	{ "sse", CTLTYPE_INT }, \
-	{ "sse2", CTLTYPE_INT }, \
-}
 
 /*
  * Structure for CPU_DISKINFO sysctl call.

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.91 2008/02/19 07:43:29 dogcow Exp $	*/
+/*	$NetBSD: cpu.h,v 1.92 2008/02/27 18:26:16 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -180,11 +180,6 @@ extern int astpending;		/* need to trap before returning to user mode */
 
 #define CPU_CONSDEV	1
 #define CPU_MAXID	2
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 /* values for machineid --
  * 	These are equivalent to the MacOS Gestalt values. */

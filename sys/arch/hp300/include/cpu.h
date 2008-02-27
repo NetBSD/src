@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2008/01/28 16:21:20 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59 2008/02/27 18:26:15 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -177,11 +177,6 @@ extern int astpending;		/* need to trap before returning to user mode */
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 /*
  * The rest of this should probably be moved to <machine/hp300spu.h>,
