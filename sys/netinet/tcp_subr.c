@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.222 2008/02/05 09:38:48 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.223 2008/02/27 19:41:51 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.222 2008/02/05 09:38:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.223 2008/02/27 19:41:51 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1281,8 +1281,7 @@ tcp_close(struct tcpcb *tp)
 }
 
 int
-tcp_freeq(tp)
-	struct tcpcb *tp;
+tcp_freeq(struct tcpcb *tp)
 {
 	struct ipqent *qe;
 	int rv = 0;
