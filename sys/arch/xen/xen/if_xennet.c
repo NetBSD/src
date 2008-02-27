@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xennet.c,v 1.27.2.6 2008/02/27 09:24:06 yamt Exp $	*/
+/*	$NetBSD: if_xennet.c,v 1.27.2.7 2008/02/27 09:33:40 yamt Exp $	*/
 
 /*
  *
@@ -33,7 +33,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.27.2.6 2008/02/27 09:24:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet.c,v 1.27.2.7 2008/02/27 09:33:40 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_nfs_boot.h"
@@ -1078,7 +1078,7 @@ xennet_softstart(void *arg)
 				(m->m_data - M_BUFADDR(m));
 			break;
 		default:
-			if(__predict_false(
+			if (__predict_false(
 			    !pmap_extract(pmap_kernel(), (vaddr_t)m->m_data,
 			    &pa))) {
 				panic("xennet_start: no pa");
@@ -1086,7 +1086,7 @@ xennet_softstart(void *arg)
 			break;
 		}
 
-		if (m->m_pkthdr.len != m->m_len || pa == 0 ||
+		if (m->m_pkthdr.len != m->m_len ||
 		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PG_FRAME) {
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);

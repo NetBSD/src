@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.10.4.9 2008/02/27 09:24:06 yamt Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.10.4.10 2008/02/27 09:33:40 yamt Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.4.9 2008/02/27 09:24:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.10.4.10 2008/02/27 09:33:40 yamt Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -963,7 +963,7 @@ xennet_softstart(void *arg)
 			txflags = 0;
 		}
 
-		if (m->m_pkthdr.len != m->m_len || pa == 0 ||
+		if (m->m_pkthdr.len != m->m_len ||
 		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PG_FRAME) {
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
