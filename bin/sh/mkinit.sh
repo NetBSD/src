@@ -1,5 +1,5 @@
 #! /bin/sh
-#	$NetBSD: mkinit.sh,v 1.2 2004/06/15 23:09:54 dsl Exp $
+#	$NetBSD: mkinit.sh,v 1.3 2008/02/27 21:56:14 dsl Exp $
 
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -93,50 +93,23 @@ for src in $srcs; do
 			[ "$2" = "${2##*$openparen}" ] || continue
 			# and multiline definitions
 			[ "$line" = "${line%$backslash}" ] || continue
-			defines="${defines}#undef  $2${nl}${line}${nl}"
+			defines="${defines}#undef	$2${nl}${line}${nl}"
 			continue
 			;;
 		* ) continue;;
 		esac
 		# code for events
-		ev="${nl}      /* from $src: */${nl}      {${nl}"
+		ev="${nl}	/* from $src: */${nl}	{${nl}"
+		# Indent the text by an extra <tab>
 		while
 			read -r line
 			[ "$line" != "}" ]
 		do
-			# The C program indented by an extra 6 chars using
-			# tabs then spaces. I need to compare the output :-(
-			indent=6
-			while
-				l=${line#	}
-				[ "$l" != "$line" ]
-			do
-				indent=$(($indent + 8))
-				line="$l"
-			done
-			while
-				l=${line# }
-				[ "$l" != "$line" ]
-			do
-				indent=$(($indent + 1))
-				line="$l"
-			done
-			[ -z "$line" -o "$line" != "${line###}" ] && indent=0
-			while
-				[ $indent -ge 8 ]
-			do
-				ev="$ev	"
-				indent="$(($indent - 8))"
-			done
-			while
-				[ $indent -gt 0 ]
-			do
-				ev="$ev "
-				indent="$(($indent - 1))"
-			done
+			[ -n "$line" -a "$line" = "${line###}" ] &&
+				line="	$line"
 			ev="${ev}${line}${nl}"
 		done
-		ev="${ev}      }${nl}"
+		ev="${ev}	}${nl}"
 		eval event_$event=\"\$event_$event\$ev\"
 	done
 done
@@ -166,7 +139,8 @@ echo " * Initialization code."
 echo " */"
 echo
 echo "void"
-echo "init() {"
+echo "init(void)"
+echo "{"
 echo "${event_init%$nl}"
 echo "}"
 echo
@@ -178,7 +152,8 @@ echo " * interactive shell and control is returned to the main command loop."
 echo " */"
 echo
 echo "void"
-echo "reset() {"
+echo "reset(void)"
+echo "{"
 echo "${event_reset%$nl}"
 echo "}"
 echo
@@ -189,7 +164,8 @@ echo " * This routine is called to initialize the shell to run a shell procedure
 echo " */"
 echo
 echo "void"
-echo "initshellproc() {"
+echo "initshellproc(void)"
+echo "{"
 echo "${event_shellproc%$nl}"
 echo "}"
 
