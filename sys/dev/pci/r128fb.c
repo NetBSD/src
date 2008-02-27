@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.2 2007/11/23 20:12:54 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.3 2008/02/27 23:59:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.2 2007/11/23 20:12:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.3 2008/02/27 23:59:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,11 +411,12 @@ r128fb_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}
 
-#ifdef macppc
+#ifdef PCI_MAGIC_IO_RANGE
 	/* allow mapping of IO space */
-	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		pa = bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 #endif
