@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.244 2008/02/27 09:07:41 yamt Exp $
+#	$NetBSD: BRANCHES,v 1.245 2008/02/27 09:27:23 yamt Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -525,15 +525,8 @@ Notes:
 		- consider to remove other submaps.  eg. mb_map
 
 Branch:		yamt-lazymbuf
-Description:	implement and evaluate lazy mapping of mbuf external data pages
-		also, change the way to share mbuf external storage.
-		it's intended as the first step of larger changes.
-			1. support operations (esp. bus_dma load) on
-			   unmapped mbuf.
-			2. unify mbuf and buf.
-			   (or, at least some parts of them)
-			3. then it should be trivial to implement
-			   i/o coalescing, etc.
+Description:	change the way to share mbuf external storage so that
+		it can work without kernel_lock.
 Status:		Active
 Start Date:	Wed Jul  6 2005
 End Date:	
@@ -541,10 +534,6 @@ Base Tag:	yamt-lazymbuf-base12
 Maintainer:	YAMAMOTO Takashi <yamt@NetBSD.org>
 Scope:		src/sys  (src/common is tagged but not branched)
 Notes:		
-		i386		DONE
-		amd64		DONE
-		other ports should work as the trunk does.
-		(conditionalized by __HAVE_LAZY_MBUF macro)
 
 Branch:		reinoud-bufcleanup
 Description:	implement and evaluate struct buf usage cleanup strategies.
