@@ -1,4 +1,4 @@
-/*	$NetBSD: unix.c,v 1.27 2006/09/22 23:21:53 elad Exp $	*/
+/*	$NetBSD: unix.c,v 1.28 2008/02/27 16:36:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1988, 1993
@@ -34,13 +34,16 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: unix.c,v 1.27 2006/09/22 23:21:53 elad Exp $");
+__RCSID("$NetBSD: unix.c,v 1.28 2008/02/27 16:36:54 ad Exp $");
 #endif
 #endif /* not lint */
 
 /*
  * Display protocol blocks in the unix domain.
  */
+#define _KERNEL
+#include <sys/types.h>
+#undef _KERNEL
 #include <sys/param.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -66,7 +69,7 @@ struct proc;
 static	void unixdomainprhdr(void);
 static	void unixdomainpr0(u_long, u_long, u_long, u_long, u_long, u_long,
 			   u_long, u_long, u_long, struct sockaddr_un *, int);
-static	void unixdomainpr(struct socket *, caddr_t);
+static	void unixdomainpr(struct socket *, void *);
 
 static struct	file *file, *fileNFILE;
 static int	ns_nfiles;
@@ -102,7 +105,7 @@ unixdomainpr0(u_long so_pcb, u_long so_type, u_long rcvq, u_long sndq,
 static void
 unixdomainpr(so, soaddr)
 	struct socket *so;
-	caddr_t soaddr;
+	void *soaddr;
 {
 	struct unpcb unp, runp;
 	struct sockaddr_un sun, rsun;
