@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.5 2007/12/21 05:32:09 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.6 2008/02/27 23:59:37 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.5 2007/12/21 05:32:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.6 2008/02/27 23:59:37 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -266,11 +266,12 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * somewhere in a MD header and compile this code only if all are
 	 * present
 	 */
-#ifdef macppc
+#ifdef PCI_MAGIC_IO_RANGE
 	/* allow to map our IO space */
-	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		return bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, BUS_SPACE_MAP_LINEAR);	
 	}
 #endif
 
