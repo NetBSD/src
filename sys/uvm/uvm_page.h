@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.50 2008/01/02 11:49:19 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.51 2008/02/27 14:23:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -108,8 +108,8 @@
  * items (depending on who locked what).  some time, in BSD, the bit
  * fields were dumped and all the flags were lumped into one short.
  * that is fine for a single threaded uniprocessor OS, but bad if you
- * want to actual make use of locking (simple_lock's).  so, we've
- * separated things back out again.
+ * want to actual make use of locking.  so, we've separated things
+ * back out again.
  *
  * note the page structure has no lock of its own.
  */

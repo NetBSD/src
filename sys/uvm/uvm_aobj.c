@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.98 2008/02/27 13:46:20 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.99 2008/02/27 14:23:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.98 2008/02/27 13:46:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.99 2008/02/27 14:23:33 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -795,7 +795,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		nextpg = NULL;	/* Quell compiler warning */
 	}
 
-	/* locked: both page queues and uobj */
+	/* locked: uobj */
 	for (;;) {
 		if (by_list) {
 			pg = nextpg;
