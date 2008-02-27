@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.82 2007/11/16 17:51:51 dyoung Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.83 2008/02/27 19:40:56 matt Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.82 2007/11/16 17:51:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.83 2008/02/27 19:40:56 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -819,12 +819,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
  * - anycast advertisement delay rule (RFC2461 7.2.7, SHOULD)
  */
 void
-nd6_na_output(ifp, daddr6_0, taddr6, flags, tlladdr, sdl0)
-	struct ifnet *ifp;
-	const struct in6_addr *daddr6_0, *taddr6;
-	u_long flags;
-	int tlladdr;		/* 1 if include target link-layer address */
-	const struct sockaddr *sdl0;	/* sockaddr_dl (= proxy NA) or NULL */
+nd6_na_output(
+	struct ifnet *ifp,
+	const struct in6_addr *daddr6_0,
+	const struct in6_addr *taddr6,
+	u_long flags,
+	int tlladdr,		/* 1 if include target link-layer address */
+	const struct sockaddr *sdl0)	/* sockaddr_dl (= proxy NA) or NULL */
 {
 	struct mbuf *m;
 	struct ip6_hdr *ip6;
