@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.97 2008/01/18 10:48:23 yamt Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.98 2008/02/27 13:46:20 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.97 2008/01/18 10:48:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.98 2008/02/27 13:46:20 yamt Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -795,8 +795,6 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		nextpg = NULL;	/* Quell compiler warning */
 	}
 
-	mutex_enter(&uvm_pageqlock);
-
 	/* locked: both page queues and uobj */
 	for (;;) {
 		if (by_list) {
@@ -815,6 +813,28 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			if (pg == NULL)
 				continue;
 		}
+
+		/*
+		 * wait and try again if the page is busy.
+		 */
+
+		if (pg->flags & PG_BUSY) {
+			if (by_list) {
+				TAILQ_INSERT_BEFORE(pg, &curmp, listq);
+			}
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
+			    "uao_put", 0);
+			mutex_enter(&uobj->vmobjlock);
+			if (by_list) {
+				nextpg = TAILQ_NEXT(&curmp, listq);
+				TAILQ_REMOVE(&uobj->memq, &curmp,
+				    listq);
+			} else
+				curoff -= PAGE_SIZE;
+			continue;
+		}
+
 		switch (flags & (PGO_CLEANIT|PGO_FREE|PGO_DEACTIVATE)) {
 
 		/*
@@ -828,16 +848,15 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		case PGO_CLEANIT|PGO_DEACTIVATE:
 		case PGO_DEACTIVATE:
  deactivate_it:
+			mutex_enter(&uvm_pageqlock);
 			/* skip the page if it's wired */
-			if (pg->wire_count != 0)
-				continue;
-
-			/* ...and deactivate the page. */
-			uvm_pagedeactivate(pg);
-			continue;
+			if (pg->wire_count == 0) {
+				uvm_pagedeactivate(pg);
+			}
+			mutex_exit(&uvm_pageqlock);
+			break;
 
 		case PGO_FREE:
-
 			/*
 			 * If there are multiple references to
 			 * the object, just deactivate the page.
@@ -847,29 +866,10 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 				goto deactivate_it;
 
 			/*
-			 * wait and try again if the page is busy.
-			 * otherwise free the swap slot and the page.
+			 * free the swap slot and the page.
 			 */
 
 			pmap_page_protect(pg, VM_PROT_NONE);
-			if (pg->flags & PG_BUSY) {
-				if (by_list) {
-					TAILQ_INSERT_BEFORE(pg, &curmp, listq);
-				}
-				pg->flags |= PG_WANTED;
-				mutex_exit(&uvm_pageqlock);
-				UVM_UNLOCK_AND_WAIT(pg, &uobj->vmobjlock, 0,
-				    "uao_put", 0);
-				mutex_enter(&uobj->vmobjlock);
-				mutex_enter(&uvm_pageqlock);
-				if (by_list) {
-					nextpg = TAILQ_NEXT(&curmp, listq);
-					TAILQ_REMOVE(&uobj->memq, &curmp,
-					    listq);
-				} else
-					curoff -= PAGE_SIZE;
-				continue;
-			}
 
 			/*
 			 * freeing swapslot here is not strictly necessary.
@@ -878,11 +878,15 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			 */
 
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
+			mutex_enter(&uvm_pageqlock);
 			uvm_pagefree(pg);
-			continue;
+			mutex_exit(&uvm_pageqlock);
+			break;
+
+		default:
+			panic("%s: impossible", __func__);
 		}
 	}
-	mutex_exit(&uvm_pageqlock);
 	if (by_list) {
 		TAILQ_REMOVE(&uobj->memq, &endmp, listq);
 		uvm_lwp_rele(curlwp);
