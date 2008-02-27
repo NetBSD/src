@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2008/01/28 17:07:19 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2008/02/27 18:26:16 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -194,11 +194,6 @@ extern volatile u_char *ctrl_ast;
  */
 #define CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 #ifdef _KERNEL
 

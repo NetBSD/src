@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.51 2008/02/19 07:43:29 dogcow Exp $	*/
+/*	$NetBSD: cpu.h,v 1.52 2008/02/27 18:26:15 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -59,15 +59,6 @@
 #define	CPU_CONSDEV		4	/* struct: dev_t of our console */
 #define	CPU_POWERSAVE		5	/* int: use CPU powersave mode */
 #define	CPU_MAXID		6	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "debug", CTLTYPE_INT }, \
-	{ "booted_device", CTLTYPE_STRING }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "powersave", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 
