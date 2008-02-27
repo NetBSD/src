@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.21 2008/02/22 23:11:35 dyoung Exp $ */
+/* $NetBSD: lpt.c,v 1.22 2008/02/27 12:52:36 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.21 2008/02/22 23:11:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.22 2008/02/27 12:52:36 tsutsui Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -229,7 +229,7 @@ lpt_detach(device_t self, int flags)
 static int
 lpt_request_ppbus(struct lpt_softc * lpt, int how)
 {
-	device_t dev = &lpt->sc_dev;
+	device_t dev = &lpt->ppbus_dev.sc_dev;
 	int error;
 
 	error = ppbus_request_bus(device_parent(dev), dev, how, (hz));
@@ -248,7 +248,7 @@ lpt_request_ppbus(struct lpt_softc * lpt, int how)
 static int
 lpt_release_ppbus(struct lpt_softc * lpt, int how)
 {
-	device_t dev = &lpt->sc_dev;
+	device_t dev = &lpt->ppbus_dev.sc_dev;
 	int error;
 
 	if(lpt->sc_state & HAVEBUS) {
