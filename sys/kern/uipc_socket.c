@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.12 2008/02/11 14:59:58 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.13 2008/02/27 09:24:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.12 2008/02/11 14:59:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.13 2008/02/27 09:24:06 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -251,7 +251,7 @@ sokvafree(vaddr_t sva, vsize_t len)
 }
 
 static void
-sodoloanfree(struct vm_page **pgs, void *buf, size_t size, bool mapped)
+sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 {
 	vaddr_t sva, eva;
 	vsize_t len;
@@ -264,10 +264,8 @@ sodoloanfree(struct vm_page **pgs, void *buf, size_t size, bool mapped)
 	len = eva - sva;
 	npgs = len >> PAGE_SHIFT;
 
-	if (mapped) {
-		pmap_kremove(sva, len);
-		pmap_update(pmap_kernel());
-	}
+	pmap_kremove(sva, len);
+	pmap_update(pmap_kernel());
 	uvm_unloan(pgs, npgs, UVM_LOAN_TOPAGE);
 	sokvafree(sva, len);
 }
@@ -311,8 +309,7 @@ sodopendfreel()
 
 			rv += m->m_ext.ext_size;
 			sodoloanfree(m->m_ext.ext_pgs, m->m_ext.ext_buf,
-			    m->m_ext.ext_size,
-			    (m->m_ext.ext_flags & M_EXT_LAZY) == 0);
+			    m->m_ext.ext_size);
 			pool_cache_put(mb_cache, m);
 		}
 
@@ -350,10 +347,8 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 	vsize_t len;
 	vaddr_t lva;
 	int npgs, error;
-#if !defined(__HAVE_LAZY_MBUF)
 	vaddr_t va;
 	int i;
-#endif /* !defined(__HAVE_LAZY_MBUF) */
 
 	if (VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
 		return (0);
@@ -382,22 +377,15 @@ sosend_loan(struct socket *so, struct uio *uio, struct mbuf *m, long space)
 		return (0);
 	}
 
-#if !defined(__HAVE_LAZY_MBUF)
 	for (i = 0, va = lva; i < npgs; i++, va += PAGE_SIZE)
 		pmap_kenter_pa(va, VM_PAGE_TO_PHYS(m->m_ext.ext_pgs[i]),
 		    VM_PROT_READ);
 	pmap_update(pmap_kernel());
-#endif /* !defined(__HAVE_LAZY_MBUF) */
 
 	lva += (vaddr_t) iov->iov_base & PAGE_MASK;
 
 	MEXTADD(m, (void *) lva, space, M_MBUF, soloanfree, so);
 	m->m_flags |= M_EXT_PAGES | M_EXT_ROMAP;
-
-#if defined(__HAVE_LAZY_MBUF)
-	m->m_flags |= M_EXT_LAZY;
-	m->m_ext.ext_flags |= M_EXT_LAZY;
-#endif /* defined(__HAVE_LAZY_MBUF) */
 
 	uio->uio_resid -= space;
 	/* uio_offset not updated, not set/used for write(2) */
