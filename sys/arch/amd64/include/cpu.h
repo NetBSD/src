@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.44 2008/01/22 12:41:38 joerg Exp $	*/
+/*	$NetBSD: cpu.h,v 1.45 2008/02/27 18:26:15 xtraeme Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -370,17 +370,6 @@ void x86_bus_space_mallocok(void);
 #define CPU_DISKINFO		6	/* disk geometry information */
 #define CPU_FPU_PRESENT		7	/* FPU is present */
 #define	CPU_MAXID		8	/* number of valid machdep ids */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "biosbasemem", CTLTYPE_INT }, \
-	{ "biosextmem", CTLTYPE_INT }, \
-	{ "nkpde", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "diskinfo", CTLTYPE_STRUCT }, \
-	{ "fpu_present", CTLTYPE_INT }, \
-}
 
 
 /*
