@@ -1,8 +1,8 @@
-/*	$NetBSD: arcmsr.c,v 1.9 2008/01/02 23:48:05 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.10 2008/02/28 16:47:53 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
- * Copyright (c) 2007 Juan Romero Pardines <xtraeme@netbsd.org>
+ * Copyright (c) 2007, 2008 Juan Romero Pardines <xtraeme@netbsd.org>
  * Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.9 2008/01/02 23:48:05 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.10 2008/02/28 16:47:53 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -82,7 +82,7 @@ static struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
 static int 	arc_match(device_t, struct cfdata *, void *);
 static void 	arc_attach(device_t, device_t, void *);
 static int 	arc_detach(device_t, int);
-static void 	arc_shutdown(void *);
+static bool 	arc_shutdown(device_t, int);
 static int 	arc_intr(void *);
 static void	arc_minphys(struct buf *);
 
@@ -172,9 +172,8 @@ arc_attach(device_t parent, device_t self, void *aux)
 		goto unmap_pci;
 	}
 
-	sc->sc_shutdownhook = shutdownhook_establish(arc_shutdown, sc);
-	if (sc->sc_shutdownhook == NULL)
-		panic("unable to establish arc powerhook");
+	if (!pmf_device_register1(self, NULL, NULL, arc_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = self;
@@ -232,8 +231,6 @@ arc_detach(device_t self, int flags)
 {
 	struct arc_softc		*sc = device_private(self);
 
-	shutdownhook_disestablish(sc->sc_shutdownhook);
-
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
 		aprint_error("%s: timeout waiting to stop bg rebuild\n",
 		    device_xname(&sc->sc_dev));
@@ -245,10 +242,10 @@ arc_detach(device_t self, int flags)
 	return 0;
 }
 
-static void
-arc_shutdown(void *xsc)
+static bool
+arc_shutdown(device_t self, int how)
 {
-	struct arc_softc		*sc = xsc;
+	struct arc_softc		*sc = device_private(self);
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
 		aprint_error("%s: timeout waiting to stop bg rebuild\n",
@@ -257,6 +254,8 @@ arc_shutdown(void *xsc)
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
 		aprint_error("%s: timeout waiting to flush cache\n",
 		    device_xname(&sc->sc_dev));
+
+	return true;
 }
 
 static void
@@ -573,8 +572,10 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 		aprint_error(": unable to map interrupt [2]\n");
 		goto unmap;
 	}
-	aprint_normal(": interrupting at %s\n",
-	    pci_intr_string(pa->pa_pc, ih));
+	
+	aprint_normal("\n");
+	aprint_normal("%s: interrupting at %s\n",
+	    device_xname(&sc->sc_dev), pci_intr_string(pa->pa_pc, ih));
 
 	return 0;
 
@@ -819,7 +820,7 @@ arc_bio_alarm_state(struct arc_softc *sc, struct bioc_alarm *ba)
 	uint8_t			request;
 	int			error = 0;
 
-	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
+	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
 
 	request = ARC_FW_SYSINFO;
 	error = arc_msgbuf(sc, &request, sizeof(request),
@@ -1170,8 +1171,8 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 	int			maxraidset, nvols = 0, i;
 	int			error = 0;
 
-	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
-	raidinfo = kmem_zalloc(sizeof(struct arc_fw_raidinfo), KM_SLEEP);
+	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
+	raidinfo = kmem_zalloc(sizeof(*raidinfo), KM_SLEEP);
 
 	request[0] = ARC_FW_SYSINFO;
 	error = arc_msgbuf(sc, request, 1, sysinfo,
@@ -1211,7 +1212,7 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 	int			error = 0;
 	int			maxvols, nvols = 0, i;
 
-	sysinfo = kmem_zalloc(sizeof(struct arc_fw_sysinfo), KM_SLEEP);
+	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
 
 	request[0] = ARC_FW_SYSINFO;
 	error = arc_msgbuf(sc, request, 1, sysinfo,
@@ -1257,7 +1258,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	uint32_t		status;
 	int			error = 0;
 
-	volinfo = kmem_zalloc(sizeof(struct arc_fw_volinfo), KM_SLEEP);
+	volinfo = kmem_zalloc(sizeof(*volinfo), KM_SLEEP);
 
 	error = arc_bio_getvol(sc, bv->bv_volid, volinfo);
 	if (error != 0)
@@ -1336,7 +1337,7 @@ arc_bio_disk_novol(struct arc_softc *sc, struct bioc_disk *bd)
 	uint8_t			request[2];
 	int			error = 0;
 
-	diskinfo = kmem_zalloc(sizeof(struct arc_fw_diskinfo), KM_SLEEP);
+	diskinfo = kmem_zalloc(sizeof(*diskinfo), KM_SLEEP);
 
 	if (bd->bd_diskid > sc->sc_maxdisks) {
 		error = ENODEV;
@@ -1428,9 +1429,9 @@ arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 	struct arc_fw_diskinfo	*diskinfo;
 	int			error = 0;
 
-	volinfo = kmem_zalloc(sizeof(struct arc_fw_volinfo), KM_SLEEP);
-	raidinfo = kmem_zalloc(sizeof(struct arc_fw_raidinfo), KM_SLEEP);
-	diskinfo = kmem_zalloc(sizeof(struct arc_fw_diskinfo), KM_SLEEP);
+	volinfo = kmem_zalloc(sizeof(*volinfo), KM_SLEEP);
+	raidinfo = kmem_zalloc(sizeof(*raidinfo), KM_SLEEP);
+	diskinfo = kmem_zalloc(sizeof(*diskinfo), KM_SLEEP);
 
 	error = arc_bio_getvol(sc, bd->bd_volid, volinfo);
 	if (error != 0)
@@ -1666,8 +1667,8 @@ arc_create_sensors(void *arg)
 	struct arc_softc	*sc = arg;
 	struct bioc_inq		bi;
 	struct bioc_vol		bv;
-	int			i;
-	size_t			slen;
+	int			i, j;
+	size_t			slen, count = 0;
 
 	memset(&bi, 0, sizeof(bi));
 	if (arc_bio_inq(sc, &bi) != 0) {
@@ -1676,35 +1677,84 @@ arc_create_sensors(void *arg)
 		kthread_exit(0);
 	}
 
-	sc->sc_nsensors = bi.bi_novol;
-	/*
-	 * There's no point to continue if there are no drives connected...
-	 */
-	if (!sc->sc_nsensors)
+	/* There's no point to continue if there are no volumes */
+	if (!bi.bi_novol)
 		kthread_exit(0);
+
+	for (i = 0; i < bi.bi_novol; i++) {
+		memset(&bv, 0, sizeof(bv));
+		bv.bv_volid = i;
+		if (arc_bio_vol(sc, &bv) != 0)
+			kthread_exit(0);
+
+		/* Skip passthrough volumes */
+		if (bv.bv_level == BIOC_SVOL_PASSTHRU)
+			continue;
+
+		/* new volume found */
+		sc->sc_nsensors++;
+		/* new disk in a volume found */
+		sc->sc_nsensors+= bv.bv_nodisk;
+	}
 
 	sc->sc_sme = sysmon_envsys_create();
 	slen = sizeof(envsys_data_t) * sc->sc_nsensors;
 	sc->sc_sensors = kmem_zalloc(slen, KM_SLEEP);
 
-	for (i = 0; i < sc->sc_nsensors; i++) {
+	/* Attach sensors for volumes and disks */
+	for (i = 0; i < bi.bi_novol; i++) {
 		memset(&bv, 0, sizeof(bv));
 		bv.bv_volid = i;
 		if (arc_bio_vol(sc, &bv) != 0)
 			goto bad;
 
-		sc->sc_sensors[i].units = ENVSYS_DRIVE;
-		sc->sc_sensors[i].monitor = true;
-		sc->sc_sensors[i].flags = ENVSYS_FMONSTCHANGED;
-		snprintf(sc->sc_sensors[i].desc, sizeof(sc->sc_sensors[i].desc),
-		     "RAID volume %s", bv.bv_dev);
-		if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensors[i]))
+		sc->sc_sensors[count].units = ENVSYS_DRIVE;
+		sc->sc_sensors[count].monitor = true;
+		sc->sc_sensors[count].flags = ENVSYS_FMONSTCHANGED;
+
+		/* Skip passthrough volumes */		
+		if (bv.bv_level == BIOC_SVOL_PASSTHRU)
+			continue;
+
+		snprintf(sc->sc_sensors[count].desc,
+		    sizeof(sc->sc_sensors[count].desc),
+		    "RAID %d volume%d (%s)", bv.bv_level, i, bv.bv_dev);
+		sc->sc_sensors[count].value_max = i;
+
+		if (sysmon_envsys_sensor_attach(sc->sc_sme,
+		    &sc->sc_sensors[count]))
 			goto bad;
+
+		count++;
+
+		/* Attach disk sensors for this volume */
+		for (j = 0; j < bv.bv_nodisk; j++) {
+			sc->sc_sensors[count].units = ENVSYS_DRIVE;
+			sc->sc_sensors[count].monitor = true;
+			sc->sc_sensors[count].flags = ENVSYS_FMONSTCHANGED;
+
+			snprintf(sc->sc_sensors[count].desc,
+			    sizeof(sc->sc_sensors[count].desc),
+			    "disk%d volume%d (%s)", j, i, bv.bv_dev);
+			sc->sc_sensors[count].value_max = i;
+			sc->sc_sensors[count].value_avg = j + 10;
+
+			if (sysmon_envsys_sensor_attach(sc->sc_sme,
+			    &sc->sc_sensors[count]))
+				goto bad;
+
+			count++;
+		}
 	}
 
+	/* 
+	 * Register our envsys driver with the framework now that the
+	 * sensors were all attached.
+	 */
 	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = arc_refresh_sensors;
+
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_debug("%s: unable to register with sysmon\n",
 		    device_xname(&sc->sc_dev));
@@ -1723,9 +1773,14 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct arc_softc	*sc = sme->sme_cookie;
 	struct bioc_vol		bv;
+	struct bioc_disk	bd;
+
+	/* sanity check */
+	if (edata->units != ENVSYS_DRIVE)
+		return;
 
 	memset(&bv, 0, sizeof(bv));
-	bv.bv_volid = edata->sensor;
+	bv.bv_volid = edata->value_max;
 
 	if (arc_bio_vol(sc, &bv)) {
 		edata->value_cur = ENVSYS_DRIVE_EMPTY;
@@ -1733,6 +1788,37 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 		return;
 	}
 
+	/* Current sensor is handling a disk volume member */
+	if (edata->value_avg) {
+		memset(&bd, 0, sizeof(bd));
+		bd.bd_volid = edata->value_max;
+		bd.bd_diskid = edata->value_avg - 10;
+
+		if (arc_bio_disk_volume(sc, &bd)) {
+			edata->value_cur = ENVSYS_DRIVE_EMPTY;
+			edata->state = ENVSYS_SINVALID;
+			return;
+		}
+
+		switch (bd.bd_status) {
+		case BIOC_SDONLINE:
+			edata->value_cur = ENVSYS_DRIVE_ONLINE;
+			edata->state = ENVSYS_SVALID;
+			break;
+		case BIOC_SDOFFLINE:
+			edata->value_cur = ENVSYS_DRIVE_OFFLINE;
+			edata->state = ENVSYS_SCRITICAL;
+			break;
+		default:
+			edata->value_cur = ENVSYS_DRIVE_EMPTY;
+			edata->state = ENVSYS_SCRITICAL;
+			break;
+		}
+
+		return;
+	}
+
+	/* Current sensor is handling a volume */
 	switch (bv.bv_status) {
 	case BIOC_SVOFFLINE:
 		edata->value_cur = ENVSYS_DRIVE_FAIL;
@@ -1743,11 +1829,15 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SCRITICAL;
 		break;
 	case BIOC_SVBUILDING:
-		edata->value_cur = ENVSYS_DRIVE_REBUILD;
+		edata->value_cur = ENVSYS_DRIVE_BUILD;
 		edata->state = ENVSYS_SVALID;
 		break;
 	case BIOC_SVMIGRATING:
 		edata->value_cur = ENVSYS_DRIVE_MIGRATING;
+		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVCHECKING:
+		edata->value_cur = ENVSYS_DRIVE_CHECK;
 		edata->state = ENVSYS_SVALID;
 		break;
 	case BIOC_SVSCRUB:
@@ -1756,7 +1846,7 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SVALID;
 		break;
 	case BIOC_SVINVALID:
-		/* FALLTRHOUGH */
+		/* FALLTHROUGH */
 	default:
 		edata->value_cur = ENVSYS_DRIVE_EMPTY; /* unknown state */
 		edata->state = ENVSYS_SINVALID;
