@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.12 2008/02/20 22:52:55 drochner Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.13 2008/02/28 14:25:12 drochner Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.12 2008/02/20 22:52:55 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.13 2008/02/28 14:25:12 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -284,7 +284,7 @@ pmf_system_suspend(void)
 }
 
 void
-pmf_system_shutdown(void)
+pmf_system_shutdown(int how)
 {
 	int depth, maxdepth;
 	device_t curdev;
@@ -308,11 +308,17 @@ pmf_system_shutdown(void)
 
 			if (!device_pmf_is_registered(curdev))
 				continue;
-			if (!device_pmf_class_suspend(curdev)) {
+#if 0 /* needed? */
+			if (!device_pmf_class_shutdown(curdev, how)) {
 				aprint_debug("(failed)");
 				continue;
 			}
-			if (!device_pmf_driver_suspend(curdev)) {
+#endif
+			if (!device_pmf_driver_shutdown(curdev, how)) {
+				aprint_debug("(failed)");
+				continue;
+			}
+			if (!device_pmf_bus_shutdown(curdev, how)) {
 				aprint_debug("(failed)");
 				continue;
 			}
@@ -348,10 +354,11 @@ pmf_get_platform(const char *key)
 }
 
 bool
-pmf_device_register(device_t dev,
-    bool (*suspend)(device_t), bool (*resume)(device_t))
+pmf_device_register1(device_t dev,
+    bool (*suspend)(device_t), bool (*resume)(device_t),
+    bool (*shutdown)(device_t, int))
 {
-	device_pmf_driver_register(dev, suspend, resume);
+	device_pmf_driver_register(dev, suspend, resume, shutdown);
 
 	if (!device_pmf_driver_child_register(dev)) {
 		device_pmf_driver_deregister(dev);

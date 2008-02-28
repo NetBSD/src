@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.112 2008/02/23 00:27:53 dyoung Exp $	*/
+/*	$NetBSD: pci.c,v 1.113 2008/02/28 14:25:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.112 2008/02/23 00:27:53 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.113 2008/02/28 14:25:12 drochner Exp $");
 
 #include "opt_pci.h"
 
@@ -895,6 +895,19 @@ pci_child_resume(device_t dv PMF_FN_ARGS)
 	return true;
 }
 
+static bool
+pci_child_shutdown(device_t dv, int how)
+{
+	struct pci_child_power *priv = device_pmf_bus_private(dv);
+	pcireg_t csr;
+
+	/* disable busmastering */
+	csr = pci_conf_read(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG);
+	csr &= ~PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(priv->p_pc, priv->p_tag, PCI_COMMAND_STATUS_REG, csr);
+	return true;
+}
+
 static void
 pci_child_deregister(device_t dv)
 {
@@ -933,7 +946,7 @@ pci_child_register(device_t child)
 	}
 
 	device_pmf_bus_register(child, priv, pci_child_suspend,
-	    pci_child_resume, pci_child_deregister);
+	    pci_child_resume, pci_child_shutdown, pci_child_deregister);
 
 	return true;
 }

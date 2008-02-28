@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.89 2008/02/23 00:30:56 dyoung Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.90 2008/02/28 14:25:12 drochner Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.89 2008/02/23 00:30:56 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.90 2008/02/28 14:25:12 drochner Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1243,7 +1243,7 @@ cardbus_child_register(device_t child)
 	}
 
 	device_pmf_bus_register(child, priv, cardbus_child_suspend,
-	    cardbus_child_resume, cardbus_child_deregister);
+	    cardbus_child_resume, 0, cardbus_child_deregister);
 
 	return true;
 }
