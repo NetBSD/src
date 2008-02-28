@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_tables.c,v 1.4 2007/12/07 11:47:50 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_tables.c,v 1.5 2008/02/28 16:21:34 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.4 2007/12/07 11:47:50 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_tables.c,v 1.5 2008/02/28 16:21:34 xtraeme Exp $");
 
 #include <sys/types.h>
 
@@ -76,13 +76,16 @@ static const struct sme_description_table sme_drivestate_description[] = {
 	{ ENVSYS_DRIVE_READY,		-1, 	"ready" },
 	{ ENVSYS_DRIVE_POWERUP,		-1, 	"powering up" },
 	{ ENVSYS_DRIVE_ONLINE,		-1, 	"online" },
+	{ ENVSYS_DRIVE_OFFLINE, 	-1, 	"offline" },
 	{ ENVSYS_DRIVE_IDLE,		-1, 	"idle" },
 	{ ENVSYS_DRIVE_ACTIVE,		-1, 	"active" },
+	{ ENVSYS_DRIVE_BUILD,		-1,	"building" },
 	{ ENVSYS_DRIVE_REBUILD,		-1, 	"rebuilding" },
 	{ ENVSYS_DRIVE_POWERDOWN,	-1, 	"powering down" },
 	{ ENVSYS_DRIVE_FAIL,		-1, 	"failed" },
 	{ ENVSYS_DRIVE_PFAIL,		-1, 	"degraded" },
 	{ ENVSYS_DRIVE_MIGRATING,	-1,	"migrating" },
+	{ ENVSYS_DRIVE_CHECK,		-1,	"checking" },
 	{ -1,				-1, 	"unknown" }
 };
 
