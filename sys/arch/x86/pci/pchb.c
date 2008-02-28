@@ -1,4 +1,4 @@
-/*	$NetBSD: pchb.c,v 1.6 2008/01/03 04:50:19 dyoung Exp $ */
+/*	$NetBSD: pchb.c,v 1.7 2008/02/28 18:51:18 drochner Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2008/01/03 04:50:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.7 2008/02/28 18:51:18 drochner Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: pchb.c,v 1.6 2008/01/03 04:50:19 dyoung Exp $");
 #define PCISET_PCI_BUS_NUMBER(reg)	(((reg) >> 16) & 0xff)
 
 /* XXX should be in dev/ic/i82443reg.h */
-#define	I82443BX_SDRAMC_REG	0x76
+#define	I82443BX_SDRAMC_REG	0x74 /* upper 16 bits */
 
 /* XXX should be in dev/ic/i82424{reg.var}.h */
 #define I82424_CPU_BCTL_REG		0x53
@@ -218,12 +218,12 @@ pchbattach(struct device *parent, struct device *self, void *aux)
 				 */
 				bcreg = pci_conf_read(pa->pa_pc, pa->pa_tag,
 				    I82443BX_SDRAMC_REG);
-				if ((bcreg & 0x0300) != 0x0100) {
+				if ((bcreg & 0x03000000) != 0x01000000) {
 					aprint_verbose("%s: fixing "
 					    "Idle/Pipeline DRAM "
 					    "Leadoff Timing\n", self->dv_xname);
-					bcreg &= ~0x0300;
-					bcreg |=  0x0100;
+					bcreg &= ~0x03000000;
+					bcreg |=  0x01000000;
 					pci_conf_write(pa->pa_pc, pa->pa_tag,
 					    I82443BX_SDRAMC_REG, bcreg);
 				}
