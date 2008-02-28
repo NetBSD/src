@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.17 2008/02/22 23:10:12 ad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.18 2008/02/28 16:09:19 elad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.17 2008/02/22 23:10:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.18 2008/02/28 16:09:19 elad Exp $");
 
 #include <sys/param.h>
 
@@ -95,35 +95,19 @@ convert_pri(lwp_t *l, int policy, pri_t pri)
 	return l->l_class;
 }
 
-/*
- * Set scheduling parameters.
- */
 int
-sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
-    register_t *retval)
+do_sched_setparam(pid_t pid, lwpid_t lid, int policy,
+    const struct sched_param *params)
 {
-	/* {
-		syscallarg(pid_t) pid;
-		syscallarg(lwpid_t) lid;
-		syscallarg(int) policy;
-		syscallarg(const struct sched_param *) params;
-	} */
-	struct sched_param param;
 	struct proc *p;
 	struct lwp *t;
-	lwpid_t lid;
-	u_int lcnt;
-	int policy;
 	pri_t pri;
+	u_int lcnt;
 	int error;
 
-	/* Get the parameters from the user-space */
-	error = copyin(SCARG(uap, params), &param, sizeof(param));
-	if (error) {
-		return error;
-	}
-	pri = param.sched_priority;
-	policy = SCARG(uap, policy);
+	error = 0;
+
+	pri = params->sched_priority;
 
 	/* If no parameters specified, just return (this should not happen) */
 	if (pri == PRI_NONE && policy == SCHED_NONE)
@@ -137,9 +121,9 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 	if (pri != PRI_NONE && (pri < SCHED_PRI_MIN || pri > SCHED_PRI_MAX))
 		return EINVAL;
 
-	if (SCARG(uap, pid) != 0) {
+	if (pid != 0) {
 		/* Find the process */
-		p = p_find(SCARG(uap, pid), PFIND_UNLOCK_FAIL);
+		p = p_find(pid, PFIND_UNLOCK_FAIL);
 		if (p == NULL)
 			return ESRCH;
 		mutex_enter(&p->p_smutex);
@@ -151,13 +135,12 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		}
 	} else {
 		/* Use the calling process */
-		p = l->l_proc;
+		p = curlwp->l_proc;
 		mutex_enter(&p->p_smutex);
 	}
 
 	/* Find the LWP(s) */
 	lcnt = 0;
-	lid = SCARG(uap, lid);
 	LIST_FOREACH(t, &p->p_lwps, l_sibling) {
 		pri_t kpri;
 		int lpolicy;
@@ -180,7 +163,7 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 		kpri = convert_pri(t, lpolicy, pri);
 
 		/* Check the permission */
-		error = kauth_authorize_process(l->l_cred,
+		error = kauth_authorize_process(kauth_cred_get(),
 		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, t, KAUTH_ARG(lpolicy),
 		    KAUTH_ARG(kpri));
 		if (error) {
@@ -203,6 +186,81 @@ sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
 }
 
 /*
+ * Set scheduling parameters.
+ */
+int
+sys__sched_setparam(struct lwp *l, const struct sys__sched_setparam_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(pid_t) pid;
+		syscallarg(lwpid_t) lid;
+		syscallarg(int) policy;
+		syscallarg(const struct sched_param *) params;
+	} */
+	struct sched_param params;
+	int error;
+
+	/* Get the parameters from the user-space */
+	error = copyin(SCARG(uap, params), &params, sizeof(params));
+	if (error)
+		goto out;
+
+	error = do_sched_setparam(SCARG(uap, pid), SCARG(uap, lid),
+	    SCARG(uap, policy), &params);
+
+ out:
+	return (error);
+}
+
+int
+do_sched_getparam(pid_t pid, lwpid_t lid, int *policy,
+    struct sched_param *params)
+{
+	struct sched_param lparams;
+	struct lwp *t;
+	int error, lpolicy;
+
+	/* Locks the LWP */
+	t = lwp_find2(pid, lid);
+	if (t == NULL) {
+		error = ESRCH;
+		goto out;
+	}
+
+	/* Check the permission */
+	error = kauth_authorize_process(kauth_cred_get(),
+	    KAUTH_PROCESS_SCHEDULER_GETPARAM, t->l_proc, NULL, NULL, NULL);
+	if (error != 0) {
+		lwp_unlock(t);
+		goto out;
+	}
+
+	lparams.sched_priority = t->l_priority;
+	lpolicy = t->l_class;
+	lwp_unlock(t);
+
+	switch (lpolicy) {
+	case SCHED_OTHER:
+		lparams.sched_priority -= PRI_USER;
+		break;
+	case SCHED_RR:
+	case SCHED_FIFO:
+		lparams.sched_priority -= PRI_USER_RT;
+		break;
+	}
+
+	if (policy != NULL)
+		*policy = lpolicy;
+
+	if (params != NULL)
+		*params = lparams;
+
+ out:
+	return error;
+}
+
+/*
  * Get scheduling parameters.
  */
 int
@@ -215,40 +273,20 @@ sys__sched_getparam(struct lwp *l, const struct sys__sched_getparam_args *uap,
 		syscallarg(int *) policy;
 		syscallarg(struct sched_param *) params;
 	} */
-	struct sched_param param;
-	struct lwp *t;
+	struct sched_param params;
 	int error, policy;
 
-	/* Locks the LWP */
-	t = lwp_find2(SCARG(uap, pid), SCARG(uap, lid));
-	if (t == NULL)
-		return ESRCH;
+	error = do_sched_getparam(SCARG(uap, pid), SCARG(uap, lid), &policy,
+	    &params);
+	if (error)
+		goto out;
 
-	/* Check the permission */
-	error = kauth_authorize_process(l->l_cred,
-	    KAUTH_PROCESS_SCHEDULER_GETPARAM, t->l_proc, NULL, NULL, NULL);
-	if (error != 0) {
-		lwp_unlock(t);
-		return error;
-	}
-
-	param.sched_priority = t->l_priority;
-	policy = t->l_class;
-	lwp_unlock(t);
-
-	switch (policy) {
-	case SCHED_OTHER:
-		param.sched_priority -= PRI_USER;
-		break;
-	case SCHED_RR:
-	case SCHED_FIFO:
-		param.sched_priority -= PRI_USER_RT;
-		break;
-	}
-	error = copyout(&param, SCARG(uap, params), sizeof(param));
+	error = copyout(&params, SCARG(uap, params), sizeof(params));
 	if (error == 0 && SCARG(uap, policy) != NULL)
 		error = copyout(&policy, SCARG(uap, policy), sizeof(int));
-	return error;
+
+ out:
+	return (error);
 }
 
 /*

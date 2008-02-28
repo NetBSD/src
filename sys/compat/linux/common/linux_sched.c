@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.48 2008/02/16 16:39:35 elad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.49 2008/02/28 16:09:18 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.48 2008/02/16 16:39:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.49 2008/02/28 16:09:18 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -141,6 +141,121 @@ linux_sys_clone(struct lwp *l, const struct linux_sys_clone_args *uap, register_
 	return 0;
 }
 
+/*
+ * linux realtime priority
+ *
+ * - SCHED_RR and SCHED_FIFO tasks have priorities [1,99].
+ *
+ * - SCHED_OTHER tasks don't have realtime priorities.
+ *   in particular, sched_param::sched_priority is always 0.
+ */
+
+#define	LINUX_SCHED_RTPRIO_MIN	1
+#define	LINUX_SCHED_RTPRIO_MAX	99
+
+static int
+sched_linux2native(int linux_policy, struct linux_sched_param *linux_params,
+    int *native_policy, struct sched_param *native_params)
+{
+
+	switch (linux_policy) {
+	case LINUX_SCHED_OTHER:
+		if (native_policy != NULL) {
+			*native_policy = SCHED_OTHER;
+		}
+		break;
+
+	case LINUX_SCHED_FIFO:
+		if (native_policy != NULL) {
+			*native_policy = SCHED_FIFO;
+		}
+		break;
+
+	case LINUX_SCHED_RR:
+		if (native_policy != NULL) {
+			*native_policy = SCHED_RR;
+		}
+		break;
+
+	default:
+		return EINVAL;
+	}
+
+	if (linux_params != NULL) {
+		int prio = linux_params->sched_priority;
+	
+		KASSERT(native_params != NULL);
+
+		if (linux_policy == LINUX_SCHED_OTHER) {
+			if (prio != 0) {
+				return EINVAL;
+			}
+			native_params->sched_priority = PRI_NONE; /* XXX */
+		} else {
+			if (prio < LINUX_SCHED_RTPRIO_MIN ||
+			    prio > LINUX_SCHED_RTPRIO_MAX) {
+				return EINVAL;
+			}
+			native_params->sched_priority =
+			    (prio - LINUX_SCHED_RTPRIO_MIN)
+			    * (SCHED_PRI_MAX - SCHED_PRI_MIN)
+			    / (LINUX_SCHED_RTPRIO_MAX - LINUX_SCHED_RTPRIO_MIN)
+			    + SCHED_PRI_MIN;
+		}
+	}
+
+	return 0;
+}
+
+static int
+sched_native2linux(int native_policy, struct sched_param *native_params,
+    int *linux_policy, struct linux_sched_param *linux_params)
+{
+
+	switch (native_policy) {
+	case SCHED_OTHER:
+		if (linux_policy != NULL) {
+			*linux_policy = LINUX_SCHED_OTHER;
+		}
+		break;
+
+	case SCHED_FIFO:
+		if (linux_policy != NULL) {
+			*linux_policy = LINUX_SCHED_FIFO;
+		}
+		break;
+
+	case SCHED_RR:
+		if (linux_policy != NULL) {
+			*linux_policy = LINUX_SCHED_RR;
+		}
+		break;
+
+	default:
+		panic("%s: unknown policy %d\n", __func__, native_policy);
+	}
+
+	if (native_params != NULL) {
+		int prio = native_params->sched_priority;
+
+		KASSERT(prio >= SCHED_PRI_MIN);
+		KASSERT(prio <= SCHED_PRI_MAX);
+		KASSERT(linux_params != NULL);
+
+		if (native_policy == SCHED_OTHER) {
+			linux_params->sched_priority = 0;
+		} else {
+			linux_params->sched_priority =
+			    (prio - SCHED_PRI_MIN)
+			    * (LINUX_SCHED_RTPRIO_MAX - LINUX_SCHED_RTPRIO_MIN)
+			    / (SCHED_PRI_MAX - SCHED_PRI_MIN)
+			    + LINUX_SCHED_RTPRIO_MIN;
+		}
+	}
+
+	return 0;
+}
+
 int
 linux_sys_sched_setparam(struct lwp *l, const struct linux_sys_sched_setparam_args *uap, register_t *retval)
 {
@@ -148,31 +263,37 @@ linux_sys_sched_setparam(struct lwp *l, const struct linux_sys_sched_setparam_ar
 		syscallarg(linux_pid_t) pid;
 		syscallarg(const struct linux_sched_param *) sp;
 	} */
-	int error;
+	int error, policy;
 	struct linux_sched_param lp;
-	struct proc *p;
+	struct sched_param sp;
 
-/*
- * We only check for valid parameters and return afterwards.
- */
-
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
-		return EINVAL;
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL) {
+		error = EINVAL;
+		goto out;
+	}
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
-		return error;
+		goto out;
 
-	if (SCARG(uap, pid) != 0) {
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
+	/* We need the current policy in Linux terms. */
+	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, NULL);
+	if (error)
+		goto out;
+	error = sched_native2linux(policy, NULL, &policy, NULL);
+	if (error)
+		goto out;
 
-		if (kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, NULL, NULL, NULL) != 0)
-			return EPERM;
-	}
+	error = sched_linux2native(policy, &lp, &policy, &sp);
+	if (error)
+		goto out;
 
-	return 0;
+	error = do_sched_setparam(SCARG(uap, pid), 0, policy, &sp);
+	if (error)
+		goto out;
+
+ out:
+	return error;
 }
 
 int
@@ -182,26 +303,29 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 		syscallarg(linux_pid_t) pid;
 		syscallarg(struct linux_sched_param *) sp;
 	} */
-	struct proc *p;
 	struct linux_sched_param lp;
+	struct sched_param sp;
+	int error;
 
-/*
- * We only check for valid parameters and return a dummy priority afterwards.
- */
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
-		return EINVAL;
-
-	if (SCARG(uap, pid) != 0) {
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
-
-		if (kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_GETPARAM, p, NULL, NULL, NULL) != 0)
-			return EPERM;
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL) {
+		error = EINVAL;
+		goto out;
 	}
 
-	lp.sched_priority = 0;
-	return copyout(&lp, SCARG(uap, sp), sizeof(lp));
+	error = do_sched_getparam(SCARG(uap, pid), 0, NULL, &sp);
+	if (error)
+		goto out;
+
+	error = sched_native2linux(0, &sp, NULL, &lp);
+	if (error)
+		goto out;
+
+	error = copyout(&lp, SCARG(uap, sp), sizeof(lp));
+	if (error)
+		goto out;
+
+ out:
+	return error;
 }
 
 int
@@ -212,38 +336,29 @@ linux_sys_sched_setscheduler(struct lwp *l, const struct linux_sys_sched_setsche
 		syscallarg(int) policy;
 		syscallarg(cont struct linux_sched_scheduler *) sp;
 	} */
-	int error;
+	int error, policy;
 	struct linux_sched_param lp;
-	struct proc *p;
+	struct sched_param sp;
 
-/*
- * We only check for valid parameters and return afterwards.
- */
-
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
-		return EINVAL;
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL) {
+		error = EINVAL;
+		goto out;
+	}
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
-		return error;
+		goto out;
 
-	if (SCARG(uap, pid) != 0) {
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
+	error = sched_linux2native(SCARG(uap, policy), &lp, &policy, &sp);
+	if (error)
+		goto out;
 
-		if (kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_SET, p, NULL, NULL, NULL) != 0)
-			return EPERM;
-	}
+	error = do_sched_setparam(SCARG(uap, pid), 0, policy, &sp);
+	if (error)
+		goto out;
 
-	return 0;
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	if (SCARG(uap, policy) != LINUX_SCHED_OTHER || lp.sched_priority != 0)
-		return EINVAL;
-
-	return 0;
+ out:
+	return error;
 }
 
 int
@@ -252,27 +367,22 @@ linux_sys_sched_getscheduler(struct lwp *l, const struct linux_sys_sched_getsche
 	/* {
 		syscallarg(linux_pid_t) pid;
 	} */
-	struct proc *p;
+	int error, policy;
 
 	*retval = -1;
-/*
- * We only check for valid parameters and return afterwards.
- */
 
-	if (SCARG(uap, pid) != 0) {
-		if ((p = pfind(SCARG(uap, pid))) == NULL)
-			return ESRCH;
+	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, NULL);
+	if (error)
+		goto out;
 
-		if (kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_GET, p, NULL, NULL, NULL) != 0)
-			return EPERM;
-	}
+	error = sched_native2linux(policy, NULL, &policy, NULL);
+	if (error)
+		goto out;
 
-/*
- * We can't emulate anything put the default scheduling policy.
- */
-	*retval = LINUX_SCHED_OTHER;
-	return 0;
+	*retval = policy;
+
+ out:
+	return error;
 }
 
 int
