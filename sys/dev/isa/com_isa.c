@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.30 2007/12/14 03:36:55 dyoung Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.31 2008/02/28 00:20:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.30 2007/12/14 03:36:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.31 2008/02/28 00:20:04 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +101,8 @@ struct com_isa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int com_isa_probe(struct device *, struct cfdata *, void *);
-void com_isa_attach(struct device *, struct device *, void *);
+int com_isa_probe(device_t, struct cfdata *, void *);
+void com_isa_attach(device_t, device_t, void *);
 static int com_isa_detach(device_t, int);
 #ifdef COM_HAYESP
 int com_isa_isHAYESP(bus_space_handle_t, struct com_softc *);
@@ -113,8 +113,7 @@ CFATTACH_DECL(com_isa, sizeof(struct com_isa_softc),
     com_isa_probe, com_isa_attach, com_isa_detach, NULL);
 
 int
-com_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+com_isa_probe(device_t parent, struct cfdata *match, void *aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -163,10 +162,9 @@ com_isa_probe(struct device *parent, struct cfdata *match,
 }
 
 void
-com_isa_attach(struct device *parent, struct device *self,
-    void *aux)
+com_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_isa_softc *isc = (void *)self;
+	struct com_isa_softc *isc = device_private(self);
 	struct com_softc *sc = &isc->sc_com;
 	int iobase, irq;
 	bus_space_tag_t iot;
@@ -224,7 +222,7 @@ com_isa_attach(struct device *parent, struct device *self,
 }
 
 static int
-com_isa_detach(struct device *self, int flags)
+com_isa_detach(device_t self, int flags)
 {
 	pmf_device_deregister(self);
 
