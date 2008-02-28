@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.6 2008/02/22 22:33:21 dyoung Exp $ */
+/* $NetBSD: pmf.h,v 1.7 2008/02/28 14:25:12 drochner Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,11 +72,15 @@ const char	*pmf_get_platform(const char *);
 bool		pmf_system_resume(void);
 bool		pmf_system_bus_resume(void);
 bool		pmf_system_suspend(void);
-void		pmf_system_shutdown(void);
+void		pmf_system_shutdown(int);
 
-bool		pmf_device_register(device_t,
+bool		pmf_device_register1(device_t,
 		    bool (*)(device_t),
-		    bool (*)(device_t));
+		    bool (*)(device_t),
+		    bool (*)(device_t, int));
+/* compatibility */
+#define pmf_device_register(d, s, r) pmf_device_register1((d), (s), (r), 0)
+
 void		pmf_device_deregister(device_t);
 bool		pmf_device_suspend(device_t);
 bool		pmf_device_resume(device_t);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.181 2008/02/20 23:30:13 drochner Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.182 2008/02/28 14:25:12 drochner Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.181 2008/02/20 23:30:13 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.182 2008/02/28 14:25:12 drochner Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -496,6 +496,8 @@ doshutdownhooks(void)
 		free(dp, M_DEVBUF);
 #endif
 	}
+
+	pmf_system_shutdown(boothowto);
 }
 
 /*
