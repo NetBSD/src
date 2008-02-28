@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.27 2006/08/26 20:26:56 christos Exp $
+#	$NetBSD: OFWGENCFG,v 1.27.28.1 2008/02/28 21:47:56 rjs Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -111,7 +111,6 @@ options 	USERCONF	# userconf(4) support
 #options 	ARM700BUGTRACK	# track the ARM700 swi bug
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internally consistency checks
-#options 	IPKDB		# remote kernel debugging
 options 	DDB		# in-kernel debugger
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
@@ -132,6 +131,9 @@ ofnet*		at ofbus?
 ofcons*		at ofbus?
 ofrtc*		at ofbus?
 ofrom*		at ofbus?
+
+# Pull in optional local configuration
+include	"arch/shark/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter

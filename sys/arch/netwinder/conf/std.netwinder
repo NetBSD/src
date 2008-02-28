@@ -1,9 +1,10 @@
-#	$NetBSD: std.netwinder,v 1.14 2005/12/11 12:18:20 christos Exp $
+#	$NetBSD: std.netwinder,v 1.14.46.1 2008/02/28 21:47:55 rjs Exp $
 #
 # standard NetBSD/netwinder options
 
 machine	netwinder arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT

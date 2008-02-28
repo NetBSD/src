@@ -1,4 +1,4 @@
-/*	$NetBSD: initarm_common.c,v 1.5 2005/12/11 12:17:08 christos Exp $	*/
+/*	$NetBSD: initarm_common.c,v 1.5.46.1 2008/02/28 21:47:49 rjs Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.5 2005/12/11 12:17:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.5.46.1 2008/02/28 21:47:49 rjs Exp $");
 
 #include <sys/systm.h>
 #include <sys/param.h>
@@ -90,11 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: initarm_common.c,v 1.5 2005/12/11 12:17:08 christos 
 /* Define various stack sizes in pages */
 #define IRQ_STACK_SIZE	1
 #define ABT_STACK_SIZE	1
-#ifdef IPKDB
-#define UND_STACK_SIZE	2
-#else
 #define UND_STACK_SIZE	1
-#endif
 
 vm_offset_t msgbufphys;
 vm_offset_t physical_start;

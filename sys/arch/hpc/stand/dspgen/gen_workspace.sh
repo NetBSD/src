@@ -1,4 +1,4 @@
-# $NetBSD: gen_workspace.sh,v 1.2 2001/03/04 16:51:05 uch Exp $
+# $NetBSD: gen_workspace.sh,v 1.2.98.1 2008/02/28 21:47:53 rjs Exp $
 #
 # Copyright (c) 1999, 2000 Christopher G. Demetriou.  All rights reserved.
 #
@@ -51,7 +51,7 @@ case $vc_ver in
     echo "Microsoft Developer Studio Workspace File, Format Version 6.00"
     suffix=dsp
     ;;
-"evc3")
+"evc3"|"evc4")
     echo "Microsoft eMbedded Visual Tools Workspace File, Format Version 3.00"
     suffix=vcp
     ;;
