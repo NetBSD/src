@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.103 2008/02/12 17:30:59 joerg Exp $ */
+/* $NetBSD: device.h,v 1.104 2008/02/28 14:25:12 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -142,11 +142,13 @@ struct device {
 
 	bool		(*dv_driver_suspend)(device_t);
 	bool		(*dv_driver_resume)(device_t);
+	bool		(*dv_driver_shutdown)(device_t, int);
 	bool		(*dv_driver_child_register)(device_t);
 
 	void		*dv_bus_private;
 	bool		(*dv_bus_suspend)(device_t);
 	bool		(*dv_bus_resume)(device_t);
+	bool		(*dv_bus_shutdown)(device_t, int);
 	void		(*dv_bus_deregister)(device_t);
 
 	void		*dv_class_private;
@@ -450,9 +452,11 @@ bool		device_pmf_is_registered(device_t);
 
 bool		device_pmf_driver_suspend(device_t);
 bool		device_pmf_driver_resume(device_t);
+bool		device_pmf_driver_shutdown(device_t, int);
 
 void		device_pmf_driver_register(device_t,
-		    bool (*)(device_t), bool (*)(device_t));
+		    bool (*)(device_t), bool (*)(device_t),
+		    bool (*)(device_t, int));
 void		device_pmf_driver_deregister(device_t);
 
 bool		device_pmf_driver_child_register(device_t);
@@ -462,9 +466,11 @@ void		device_pmf_driver_set_child_register(device_t,
 void		*device_pmf_bus_private(device_t);
 bool		device_pmf_bus_suspend(device_t);
 bool		device_pmf_bus_resume(device_t);
+bool		device_pmf_bus_shutdown(device_t, int);
 
 void		device_pmf_bus_register(device_t, void *,
 		    bool (*)(device_t), bool (*)(device_t),
+		    bool (*)(device_t, int),
 		    void (*)(device_t));
 void		device_pmf_bus_deregister(device_t);
 
