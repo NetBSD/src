@@ -1,9 +1,10 @@
-#	$NetBSD: std.cats,v 1.7 2005/12/11 12:17:04 christos Exp $
+#	$NetBSD: std.cats,v 1.7.46.1 2008/02/28 21:47:47 rjs Exp $
 #
 # standard NetBSD/cats options
 
 machine	cats arm
 include		"conf/std"	# MI standard options
+include		"arch/arm/conf/std.arm"	# arch standard options
 
 options 	EXEC_AOUT
 options 	EXEC_SCRIPT

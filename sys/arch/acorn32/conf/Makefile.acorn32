@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.acorn32,v 1.20 2006/12/09 22:01:01 chs Exp $
+#	$NetBSD: Makefile.acorn32,v 1.20.20.1 2008/02/28 21:47:37 rjs Exp $
 
 # Makefile for NetBSD
 #
@@ -47,6 +47,10 @@ KERN_AS=	obj
 MD_OBJS=	locore.o
 MD_CFILES=
 MD_SFILES=	${ARM}/arm32/locore.S
+
+atomic.o bcopy_page.o bcopyinout.o copystr.o cpuswitch.o: assym.h
+cpu_in_cksum.o exception.o fiq_subr.o fusu.o iomd_irqhandler.o: assym.h
+iomd_irq.o sigcode.o spl.o vectors.o: assym.h
 
 locore.o: ${ARM}/arm32/locore.S assym.h
 	${NORMAL_S}
