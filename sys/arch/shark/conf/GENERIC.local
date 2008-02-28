@@ -1,0 +1,4 @@
+#	$NetBSD: GENERIC.local,v 1.1.12.2 2008/02/28 21:58:53 rjs Exp $
+#
+#	GENERIC.local -- local additions to the GENERIC configuration
+#
