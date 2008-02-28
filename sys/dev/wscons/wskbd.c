@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.113 2008/02/22 22:29:16 dyoung Exp $ */
+/* $NetBSD: wskbd.c,v 1.114 2008/02/28 16:54:48 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.113 2008/02/22 22:29:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.114 2008/02/28 16:54:48 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -579,9 +579,6 @@ wskbd_detach(device_t self, int flags)
 	struct wseventvar *evar;
 	int maj, mn;
 	int s;
-
-	if (sc->sc_isconsole)
-		return EBUSY;
 
 #if NWSMUX > 0
 	/* Tell parent mux we're leaving. */
