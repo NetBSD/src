@@ -1,4 +1,4 @@
-.\" $NetBSD: kauth.9,v 1.69 2008/02/28 16:09:18 elad Exp $
+.\" $NetBSD: kauth.9,v 1.70 2008/02/28 17:07:49 elad Exp $
 .\"
 .\" Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
 .\" All rights reserved.
@@ -596,6 +596,19 @@ is.
 .It Dv KAUTH_NETWORK_FORWSRCRT
 Checks whether status of forwarding of source-routed packets can be modified
 or not.
+.It Dv KAUTH_NETWORK_NFS
+Check is an NFS related operation is allowed.
+.Pp
+.Ar req
+can be any of the following:
+.Bl -tag
+.It Dv KAUTH_REQ_NETWORK_NFS_EXPORT
+Check if modifying the NFS export table is allowed.
+.It Dv KAUTH_REQ_NETWORK_NFS_SVC
+Check if access to the NFS
+.Xr nfssvc 2
+syscall is allowed.
+.El
 .It Dv KAUTH_NETWORK_ROUTE
 Checks if a routing-related request is allowed.
 .Pp
