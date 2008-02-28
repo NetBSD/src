@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.24 2007/12/01 17:00:41 ad Exp $ */
+/* $NetBSD: radeonfb.c,v 1.25 2008/02/28 00:21:38 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.24 2007/12/01 17:00:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.25 2008/02/28 00:21:38 macallan Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -1100,11 +1100,12 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 		    BUS_SPACE_MAP_LINEAR);
 	}
 
-#ifdef macppc
+#ifdef PCI_MAGIC_IO_RANGE
 	/* allow mapping of IO space */
-	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot, 
-		    0);	
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		pa = bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, 0);	
 		return pa;
 	}	
 #endif /* macppc */
