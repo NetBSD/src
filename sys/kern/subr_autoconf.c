@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.132 2008/02/27 19:59:05 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.133 2008/02/28 14:25:12 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.132 2008/02/27 19:59:05 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.133 2008/02/28 14:25:12 drochner Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1882,12 +1882,24 @@ device_pmf_driver_resume(device_t dev)
 	return true;
 }
 
+bool
+device_pmf_driver_shutdown(device_t dev, int how)
+{
+
+	if (*dev->dv_driver_shutdown != NULL &&
+	    !(*dev->dv_driver_shutdown)(dev, how))
+		return false;
+	return true;
+}
+
 void
 device_pmf_driver_register(device_t dev,
-    bool (*suspend)(device_t), bool (*resume)(device_t))
+    bool (*suspend)(device_t), bool (*resume)(device_t),
+    bool (*shutdown)(device_t, int))
 {
 	dev->dv_driver_suspend = suspend;
 	dev->dv_driver_resume = resume;
+	dev->dv_driver_shutdown = shutdown;
 	dev->dv_flags |= DVF_POWER_HANDLERS;
 }
 
@@ -1951,14 +1963,25 @@ device_pmf_bus_resume(device_t dev)
 	return true;
 }
 
+bool
+device_pmf_bus_shutdown(device_t dev, int how)
+{
+
+	if (*dev->dv_bus_shutdown != NULL &&
+	    !(*dev->dv_bus_shutdown)(dev, how))
+		return false;
+	return true;
+}
+
 void
 device_pmf_bus_register(device_t dev, void *priv,
     bool (*suspend)(device_t), bool (*resume)(device_t),
-    void (*deregister)(device_t))
+    bool (*shutdown)(device_t, int), void (*deregister)(device_t))
 {
 	dev->dv_bus_private = priv;
 	dev->dv_bus_resume = resume;
 	dev->dv_bus_suspend = suspend;
+	dev->dv_bus_shutdown = shutdown;
 	dev->dv_bus_deregister = deregister;
 }
 
