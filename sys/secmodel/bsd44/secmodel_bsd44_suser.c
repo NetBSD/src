@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.54 2008/02/27 21:59:26 elad Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.55 2008/02/28 16:09:19 elad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.54 2008/02/27 21:59:26 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.55 2008/02/28 16:09:19 elad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -689,8 +689,6 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_SCHEDULER_GET:
-	case KAUTH_PROCESS_SCHEDULER_SET:
 	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
 		if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
 			result = KAUTH_RESULT_ALLOW;
