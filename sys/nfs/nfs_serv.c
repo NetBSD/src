@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.135 2008/02/20 17:15:51 matt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.136 2008/02/28 17:07:49 elad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.135 2008/02/20 17:15:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.136 2008/02/28 17:07:49 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1481,8 +1481,8 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
-			    (error = kauth_authorize_generic(cred,
-			    KAUTH_GENERIC_ISSUSER, NULL))) {
+			    (error = kauth_authorize_system(cred,
+			    KAUTH_SYSTEM_MKNOD, 0, NULL, NULL, NULL))) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1668,8 +1668,8 @@ abort:
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	} else {
 		if (va.va_type != VFIFO &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))) {
+		    (error = kauth_authorize_system(cred,
+		    KAUTH_SYSTEM_MKNOD, 0, NULL, NULL, NULL))) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
