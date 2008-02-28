@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.73 2008/02/27 18:26:16 xtraeme Exp $ */
+/*	$NetBSD: cpu.h,v 1.74 2008/02/28 11:50:40 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -64,6 +64,7 @@
 
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/pte.h>
 #include <machine/intr.h>
 #include <machine/cpuset.h>
 #include <sparc64/sparc64/intreg.h>
@@ -128,6 +129,30 @@ struct cpu_info {
 	int			ci_want_resched;
 	int			ci_idepth;
 
+/*
+ * A context is simply a small number that differentiates multiple mappings
+ * of the same address.  Contexts on the spitfire are 13 bits, but could
+ * be as large as 17 bits.
+ *
+ * Each context is either free or attached to a pmap.
+ *
+ * The context table is an array of pointers to psegs.  Just dereference
+ * the right pointer and you get to the pmap segment tables.  These are
+ * physical addresses, of course.
+ *
+ */
+	int			ci_pmap_next_ctx;
+	paddr_t 		*ci_ctxbusy;
+	LIST_HEAD(, pmap) 	ci_pmap_ctxlist;
+	int			ci_numctx;
+
+	/*
+	 * The TSBs are per cpu too (since MMU context differs between
+	 * cpus). These are just caches for the TLBs.
+	 */
+	pte_t			*ci_tsb_dmmu;
+	pte_t			*ci_tsb_immu;
+
 	struct cpu_data		ci_data;	/* MI per-cpu data */
 
 	volatile void		*ci_ddb_regs;	/* DDB regs */
@@ -181,6 +206,11 @@ extern struct cpu_info *cpus;
 #define	cpu_swapout(p)	/* nothing */
 #define	cpu_wait(p)	/* nothing */
 void cpu_proc_fork(struct proc *, struct proc *);
+
+/* run on the cpu itself */
+void	cpu_pmap_init(struct cpu_info *);
+/* run upfront to prepare the cpu_info */
+void	cpu_pmap_prepare(struct cpu_info *, bool);
 
 #if defined(MULTIPROCESSOR)
 extern vaddr_t cpu_spinup_trampoline;
