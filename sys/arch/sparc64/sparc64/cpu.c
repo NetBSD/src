@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.66 2008/01/15 10:35:34 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.67 2008/02/28 11:50:40 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.66 2008/01/15 10:35:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2008/02/28 11:50:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,6 +363,7 @@ cpu_boot_secondary_processors()
 		if (ci->ci_cpuid == CPU_UPAID)
 			continue;
 
+		cpu_pmap_prepare(ci, false);
 		cpu_args->cb_node = ci->ci_node;
 		cpu_args->cb_cpuinfo = ci->ci_paddr;
 		membar_sync();
@@ -389,21 +390,17 @@ cpu_boot_secondary_processors()
 void
 cpu_hatch()
 {
-	extern void tickintr_establish(void);
 	char *v = (char*)CPUINFO_VA;
 	int i;
 
 	for (i = 0; i < 4*PAGE_SIZE; i += sizeof(long))
 		flush(v + i);
 
+	cpu_pmap_init(curcpu());
 	CPUSET_ADD(cpus_active, cpu_number());
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
 	spl0();
-
-#if 0
-	tickintr_establish();
-#endif
 }
 #endif /* MULTIPROCESSOR */

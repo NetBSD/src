@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 2007/03/04 06:00:50 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.39 2008/02/28 11:50:40 martin Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -112,11 +112,27 @@ struct pmap {
 	struct uvm_object pm_obj;
 #define pm_lock pm_obj.vmobjlock
 #define pm_refs pm_obj.uo_refs
-	LIST_ENTRY(pmap) pm_list;		/* pmap_ctxlist */
+#ifdef MULTIPROCESSOR
+	LIST_ENTRY(pmap) pm_list[CPUSET_MAXNUMCPU];	/* per cpu ctx used list */
+#else
+	LIST_ENTRY(pmap) pm_list;	/* single ctx used list */
+#endif
 
 	struct pmap_statistics pm_stats;
 
-	int pm_ctx;		/* Current context */
+#ifdef MULTIPROCESSOR
+	/*
+	 * We record the context used on any cpu here. If the context
+	 * is actually present in the TLB, it will be the plain context
+	 * number. If the context is allocated, but has been flushed
+	 * from the tlb, the number will be negative.
+	 * If this pmap has no context allocated on that cpu, the entry
+	 * will be 0.
+	 */
+	int pm_ctx[CPUSET_MAXNUMCPU];	/* Current context per cpu */
+#else
+	int pm_ctx;			/* Current context */
+#endif
 
 	/*
 	 * This contains 64-bit pointers to pages that contain

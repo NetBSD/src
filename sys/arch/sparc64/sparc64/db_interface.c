@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.106 2008/01/30 14:11:33 ad Exp $ */
+/*	$NetBSD: db_interface.c,v 1.107 2008/02/28 11:50:40 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.106 2008/01/30 14:11:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.107 2008/02/28 11:50:40 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -85,6 +85,12 @@ extern struct traptrace {
  * Helpers for ddb variables.
  */
 static uint64_t nil;
+
+#ifdef MULTIPROCESSOR
+#define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
+#else
+#define pmap_ctx(PM)	((PM)->pm_ctx)
+#endif
 
 static int
 db_sparc_charop(const struct db_variable *vp, db_expr_t *val, int opcode)
@@ -721,7 +727,7 @@ db_pmap_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		pm = (struct pmap*)addr;
 
 	db_printf("pmap %p: ctx %x refs %d physaddr %llx psegs %p\n",
-		pm, pm->pm_ctx, pm->pm_refs,
+		pm, pmap_ctx(pm), pm->pm_refs,
 		(unsigned long long)pm->pm_physaddr, pm->pm_segs);
 
 	if (full) {
@@ -746,7 +752,7 @@ db_dump_dtsb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 
 	db_printf("DTSB:\n");
-	db_dump_tsb_common(tsb_dmmu);
+	db_dump_tsb_common(curcpu()->ci_tsb_dmmu);
 }
 
 void
@@ -754,7 +760,7 @@ db_dump_itsb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 
 	db_printf("ITSB:\n");
-	db_dump_tsb_common(tsb_immu);
+	db_dump_tsb_common(curcpu()->ci_tsb_immu);
 }
 
 void
@@ -829,8 +835,8 @@ db_proc_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	}
 	db_printf("process %p:", p);
 	db_printf("pid:%d vmspace:%p pmap:%p ctx:%x\n",
-		  p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap, 
-		  p->p_vmspace->vm_map.pmap->pm_ctx);
+		  p->p_pid, p->p_vmspace, p->p_vmspace->vm_map.pmap,
+		  pmap_ctx(p->p_vmspace->vm_map.pmap));
 	db_printf("maxsaddr:%p ssiz:%dpg or %llxB\n",
 		  p->p_vmspace->vm_maxsaddr, p->p_vmspace->vm_ssize, 
 		  (unsigned long long)ctob(p->p_vmspace->vm_ssize));
@@ -852,7 +858,7 @@ db_ctx_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 			db_printf("process %p:", p);
 			db_printf("pid:%d pmap:%p ctx:%x\n",
 				p->p_pid, p->p_vmspace->vm_map.pmap,
-				p->p_vmspace->vm_map.pmap->pm_ctx);
+				pmap_ctx(p->p_vmspace->vm_map.pmap));
 			LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 				db_printf("\tlwp %p: lid:%d tf:%p fpstate %p "
 					"lastcall:%s\n",
@@ -911,6 +917,7 @@ void
 db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
 	struct proc *p, *pp;
+	int ctx;
 
 	if (!have_addr) {
 		db_printf("What PID do you want to map in?\n");
@@ -927,11 +934,25 @@ db_setpcb(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 			curlwp = p;
 			cpcb = (struct pcb*)p->p_addr;
 #endif
-			if (p->p_vmspace->vm_map.pmap->pm_ctx) {
-				switchtoctx(p->p_vmspace->vm_map.pmap->pm_ctx);
+			if (p->p_vmspace->vm_map.pmap == pmap_kernel()) {
+				db_printf("PID %ld has a kernel context.\n",
+				    addr);
 				return;
 			}
-			db_printf("PID %ld has a null context.\n", addr);
+			ctx = pmap_ctx(p->p_vmspace->vm_map.pmap);
+			if (ctx < 0) {
+				ctx = -ctx;
+				pmap_ctx(p->p_vmspace->vm_map.pmap) = ctx;
+			} else if (ctx == 0) {
+				pmap_activate_pmap(p->p_vmspace->vm_map.pmap);
+				ctx = pmap_ctx(p->p_vmspace->vm_map.pmap);
+			}
+			if (ctx > 0) {
+				switchtoctx(ctx);
+				return;
+			}
+			db_printf("could not activate pmap for PID %ld.\n",
+			    addr);
 			return;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.266 2008/01/26 11:43:36 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.267 2008/02/28 11:50:40 martin Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -1812,9 +1812,9 @@ dmmu_write_fault:
 	mov	TLB_TAG_ACCESS, %g3
 	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! Get fault addr from Tag Target
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(CPUINFO_VA+CI_CTXBUSY), %g4
 	or	%g6, %lo(0x1fff), %g6
-	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	LDPTR	[%g4 + %lo(CPUINFO_VA+CI_CTXBUSY)], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	and	%g3, %g6, %g6				! Isolate context
 
@@ -1944,9 +1944,9 @@ data_miss:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	sethi	%hi(0x1fff), %g6			! 8K context mask
 	ldxa	[%g3] ASI_DMMU, %g3			! from tag access register
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(CPUINFO_VA+CI_CTXBUSY), %g4
 	or	%g6, %lo(0x1fff), %g6
-	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	LDPTR	[%g4 + %lo(CPUINFO_VA+CI_CTXBUSY)], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	and	%g3, %g6, %g6				! Isolate context
 	
@@ -2252,8 +2252,8 @@ winfixspill:
 
 !	ba	0f					! DEBUG -- don't use phys addresses
 	 wr	%g0, ASI_NUCLEUS, %asi			! In case of problems finding PA
-	sethi	%hi(_C_LABEL(ctxbusy)), %g1
-	LDPTR	[%g1 + %lo(_C_LABEL(ctxbusy))], %g1	! Load start of ctxbusy
+	sethi	%hi(CPUINFO_VA+CI_CTXBUSY), %g1
+	LDPTR	[%g1 + %lo(CPUINFO_VA+CI_CTXBUSY)], %g1	! Load start of ctxbusy
 #ifdef DEBUG
 	srax	%g6, HOLESHIFT, %g7			! Check for valid address
 	brz,pt	%g7, 1f					! Should be zero or -1
@@ -2776,9 +2776,9 @@ instr_miss:
 	mov	TLB_TAG_ACCESS, %g3			! Get real fault page
 	sethi	%hi(0x1fff), %g7			! 8K context mask
 	ldxa	[%g3] ASI_IMMU, %g3			! from tag access register
-	sethi	%hi(_C_LABEL(ctxbusy)), %g4
+	sethi	%hi(CPUINFO_VA+CI_CTXBUSY), %g4
 	or	%g7, %lo(0x1fff), %g7
-	LDPTR	[%g4 + %lo(_C_LABEL(ctxbusy))], %g4
+	LDPTR	[%g4 + %lo(CPUINFO_VA+CI_CTXBUSY)], %g4
 	srax	%g3, HOLESHIFT, %g5			! Check for valid address
 	and	%g3, %g7, %g6				! Isolate context
 	sllx	%g6, 3, %g6				! Make it into an offset into ctxbusy
@@ -5041,13 +5041,13 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	/*
 	 * install our TSB pointers
 	 */
-	sethi	%hi(_C_LABEL(tsb_dmmu)), %l0
-	sethi	%hi(_C_LABEL(tsb_immu)), %l1
+	sethi	%hi(CPUINFO_VA+CI_TSB_DMMU), %l0
+	sethi	%hi(CPUINFO_VA+CI_TSB_IMMU), %l1
 	sethi	%hi(_C_LABEL(tsbsize)), %l2
 	sethi	%hi(0x1fff), %l3
 	sethi	%hi(TSB), %l4
-	LDPTR	[%l0 + %lo(_C_LABEL(tsb_dmmu))], %l0
-	LDPTR	[%l1 + %lo(_C_LABEL(tsb_immu))], %l1
+	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_TSB_DMMU)], %l0
+	LDPTR	[%l1 + %lo(CPUINFO_VA+CI_TSB_IMMU)], %l1
 	ld	[%l2 + %lo(_C_LABEL(tsbsize))], %l2
 	or	%l3, %lo(0x1fff), %l3
 	or	%l4, %lo(TSB), %l4
@@ -5174,13 +5174,13 @@ ENTRY(cpu_mp_startup)
 	/*
 	 * install our TSB pointers
 	 */
-	sethi	%hi(_C_LABEL(tsb_dmmu)), %l0
-	sethi	%hi(_C_LABEL(tsb_immu)), %l1
+	sethi	%hi(CPUINFO_VA+CI_TSB_DMMU), %l0
+	sethi	%hi(CPUINFO_VA+CI_TSB_IMMU), %l1
 	sethi	%hi(_C_LABEL(tsbsize)), %l2
 	sethi	%hi(0x1fff), %l3
 	sethi	%hi(TSB), %l4
-	LDPTR	[%l0 + %lo(_C_LABEL(tsb_dmmu))], %l0
-	LDPTR	[%l1 + %lo(_C_LABEL(tsb_immu))], %l1
+	LDPTR	[%l0 + %lo(CPUINFO_VA+CI_TSB_DMMU)], %l0
+	LDPTR	[%l1 + %lo(CPUINFO_VA+CI_TSB_IMMU)], %l1
 	ld	[%l2 + %lo(_C_LABEL(tsbsize))], %l2
 	or	%l3, %lo(0x1fff), %l3
 	or	%l4, %lo(TSB), %l4
@@ -10072,7 +10072,7 @@ ENTRY(restoretstate)
 	 wrpr	%o0, 0, %tl
 
 	/*
-	 * Switch to context in %o0
+	 * Switch to context in abs(%o0)
 	 */
 ENTRY(switchtoctx)
 #ifdef SPITFIRE
