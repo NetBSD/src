@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.111 2007/12/31 15:31:51 ad Exp $
+# $NetBSD: GENERIC,v 1.112 2008/02/28 17:01:51 tsutsui Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.111 $"
+#ident 		"GENERIC-$Revision: 1.112 $"
 
 maxusers	32
 
@@ -64,6 +64,7 @@ options 	COMPAT_43	# compatibility with 4.3BSD binaries
 options 	COMPAT_16	# NetBSD 1.6 binary compatibility
 options 	COMPAT_20	# NetBSD 2.0 binary compatibility
 options 	COMPAT_30	# NetBSD 3.0 compatibility.
+options 	COMPAT_40	# NetBSD 4.0 compatibility.
 #options 	EXEC_ECOFF	# exec ECOFF binaries
 #options 	COMPAT_ULTRIX	# binary compatibility with Ultrix
 #options 	TCP_COMPAT_42	# 4.2BSD TCP/IP bug compat. Not recommended.
