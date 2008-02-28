@@ -1,4 +1,4 @@
-# $NetBSD: files.acorn26,v 1.10.24.1 2007/12/26 22:24:31 rjs Exp $
+# $NetBSD: files.acorn26,v 1.10.24.2 2008/02/28 21:47:35 rjs Exp $
 
 # Copyright (c) 1997, 1998, 2000 Ben Harris
 # All rights reserved.
@@ -32,10 +32,6 @@ maxusers 2 8 64
 
 # Display current IPL in screen border
 defflag FLASHYTHING
-
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
 
 include "dev/ata/files.ata"
 include "dev/scsipi/files.scsipi"

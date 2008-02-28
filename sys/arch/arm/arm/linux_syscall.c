@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.18 2006/03/07 07:21:50 thorpej Exp $	*/
+/*	$NetBSD: linux_syscall.c,v 1.18.38.1 2008/02/28 21:47:39 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18 2006/03/07 07:21:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.18.38.1 2008/02/28 21:47:39 rjs Exp $");
 
 #include <sys/device.h>
 #include <sys/errno.h>
@@ -120,7 +120,6 @@ linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
 	int code, error;
-	u_int nargs;
 	register_t *args, rval[2];
 
 	code = insn & 0x00ffffff;
@@ -132,7 +131,6 @@ linux_syscall_plain(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 	/* Linux passes all arguments in order in registers, which is nice. */
 	args = &frame->tf_r0;
 	callp = p->p_emul->e_sysent + code;
-	nargs = callp->sy_argsize / sizeof(register_t);
 
 	rval[0] = 0;
 	rval[1] = 0;
@@ -167,7 +165,6 @@ linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 	const struct sysent *callp;
 	struct proc *p = l->l_proc;
 	int code, error;
-	u_int nargs;
 	register_t *args, rval[2];
 
 	code = insn & 0x00ffffff;
@@ -179,9 +176,8 @@ linux_syscall_fancy(trapframe_t *frame, struct lwp *l, u_int32_t insn)
 	/* Linux passes all arguments in order in registers, which is nice. */
 	args = &frame->tf_r0;
 	callp = p->p_emul->e_sysent + code;
-	nargs = callp->sy_argsize / sizeof(register_t);
 
-	if ((error = trace_enter(l, code, code, NULL, args)) != 0)
+	if ((error = trace_enter(code, args, callp->sy_narg)) != 0)
 		goto out;
 
 	rval[0] = 0;
@@ -208,7 +204,7 @@ out:
 		break;
 	}
 
-	trace_exit(l, code, args, rval, error);
+	trace_exit(code, rval, error);
 
 	userret(l);
 }
