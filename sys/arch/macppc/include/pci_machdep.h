@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.20 2008/02/27 23:56:58 macallan Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.21 2008/02/28 00:18:08 macallan Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -53,8 +53,5 @@ int	pcidev_to_ofdev(pci_chipset_tag_t, pcitag_t);
 void	macppc_pci_get_chipset_tag(pci_chipset_tag_t);
 
 #endif /* _KERNEL */
-
-/* at this offset we mmap() the PCI IO range in display drivers */
-#define PCI_MAGIC_IO_RANGE	0xf2000000
 
 #endif /* MACPPC_PCI_MACHDEP_H */
