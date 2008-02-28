@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.16 2008/02/16 16:39:35 elad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.17 2008/02/28 16:09:19 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.16 2008/02/16 16:39:35 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.17 2008/02/28 16:09:19 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -64,6 +64,79 @@ freebsd_sys_yield(struct lwp *l, const void *v, register_t *retval)
 	return 0;
 }
 
+/*
+ * XXX: Needs adjustment to do a proper conversion.
+ */
+static int
+sched_freebsd2native(int freebsd_policy,
+    struct freebsd_sched_param *freebsd_params, int *native_policy,
+    struct sched_param *native_params)
+{
+	int error;
+
+	error = 0;
+
+	switch (freebsd_policy) {
+	case FREEBSD_SCHED_OTHER:
+		*native_policy = SCHED_OTHER;
+		break;
+
+	case FREEBSD_SCHED_FIFO:
+		*native_policy = SCHED_FIFO;
+		break;
+        
+	case FREEBSD_SCHED_RR:
+		*native_policy = SCHED_RR;
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+ 
+	if (freebsd_params != NULL && native_params != NULL && !error) {
+		native_params = (struct sched_param *)freebsd_params;
+	}
+        
+	return (error)
+}
+
+/*
+ * XXX: Needs adjustment to do a proper conversion.
+ */
+static int
+sched_native2freebsd(int native_policy, struct sched_param *native_params,
+    int *freebsd_policy, struct freebsd_sched_param *freebsd_params)
+{
+	int error;
+
+	error = 0;
+
+	switch (native_policy) {
+	case SCHED_OTHER:
+		*freebsd_policy = FREEBSD_SCHED_OTHER;
+		break;
+
+	case SCHED_FIFO:
+		*freebsd_policy = FREEBSD_SCHED_FIFO;
+		break;
+        
+	case SCHED_RR:
+		*freebsd_policy = FREEBSD_SCHED_RR;
+		break;
+
+	default:
+		error = EINVAL;
+		break;
+	}
+ 
+	if (native_params != NULL && freebsd_params != NULL && !error) {
+		freebsd_params = (struct freebsd_sched_param *)native_params;
+	}
+        
+	return (error)
+}
+
 int
 freebsd_sys_sched_setparam(struct lwp *l, const struct freebsd_sys_sched_setparam_args *uap, register_t *retval)
 {
@@ -71,29 +144,36 @@ freebsd_sys_sched_setparam(struct lwp *l, const struct freebsd_sys_sched_setpara
 		syscallarg(pid_t) pid;
 		syscallarg(const struct freebsd_sched_param *) sp;
 	} */
-	int error;
+	int error, policy;
 	struct freebsd_sched_param lp;
-	struct proc *p;
+	struct sched_param sp;
 
-	/*
-	 * We only check for valid parameters and return afterwards.
-	 */
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
-		return EINVAL;
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL) {
+		error = EINVAL;
+		goto out;
+	}
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
-		return error;
+		goto out;
 
-	mutex_enter(&proclist_lock);
-	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-	if (p == NULL)
-		error = ESRCH;
-	else
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_SETPARAM, p, NULL, NULL, NULL);
-	mutex_exit(&proclist_lock);
+	/* We need the current policy in FreeBSD terms. */
+	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, NULL);
+	if (error)
+		goto out;
+	error = sched_native2freebsd(policy, NULL, &policy, NULL);
+	if (error)
+		goto out;
 
+	error = sched_freebsd2native(policy, &lp, &policy, &sp);
+	if (error)
+		goto out;
+
+	error = do_sched_setparam(SCARG(uap, pid), 0, policy, &sp);
+	if (error)
+		goto out;
+
+ out:
 	return error;
 }
 
@@ -105,30 +185,28 @@ freebsd_sys_sched_getparam(struct lwp *l, const struct freebsd_sys_sched_getpara
 		syscallarg(struct freebsd_sched_param *) sp;
 	} */
 	struct freebsd_sched_param lp;
+	struct sched_param sp;
 	int error;
-	struct proc *p;
 
-	/*
-	 * We only check for valid parameters and return a dummy
-	 * priority afterwards.
-	 */
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
-		return EINVAL;
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL) {
+		error = EINVAL;
+		goto out;
+	}
 
-	mutex_enter(&proclist_lock);
-	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-	if (p == NULL)
-		error = ESRCH;
-	else
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_GETPARAM, p, NULL, NULL, NULL);
-	mutex_exit(&proclist_lock);
-
+	error = do_sched_getparam(SCARG(uap, pid), 0, NULL, &sp);
 	if (error)
-		return error;
+		goto out;
 
-	lp.sched_priority = 0;
-	return copyout(&lp, SCARG(uap, sp), sizeof(lp));
+	error = sched_native2freebsd(0, &sp, NULL, &lp);
+	if (error)
+		goto out;
+
+	error = copyout(&lp, SCARG(uap, sp), sizeof(lp));
+	if (error)
+		goto out;
+
+ out:
+	return (error);
 }
 
 int
@@ -139,39 +217,29 @@ freebsd_sys_sched_setscheduler(struct lwp *l, const struct freebsd_sys_sched_set
 		syscallarg(int) policy;
 		syscallarg(cont struct freebsd_sched_scheduler *) sp;
 	} */
-	int error;
+	int error, policy;
 	struct freebsd_sched_param lp;
-	struct proc *p;
+	struct sched_param sp;
 
-	/*
-	 * We only check for valid parameters and return afterwards.
-	 */
-	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL)
-		return EINVAL;
+	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL) {
+ 		error = EINVAL;
+		goto out;
+	}
 
 	error = copyin(SCARG(uap, sp), &lp, sizeof(lp));
 	if (error)
-		return error;
+		goto out;
 
-	mutex_enter(&proclist_lock);
-	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-	if (p == NULL)
-		error = ESRCH;
-	else
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_SET, p, NULL, NULL, NULL);
-	mutex_exit(&proclist_lock);
-
+	error = sched_freebsd2native(SCARG(uap, policy), &lp, &policy, &sp);
 	if (error)
-		return error;
+		goto out;
 
-	/*
-	 * We can't emulate anything put the default scheduling policy.
-	 */
-	if (SCARG(uap, policy) != FREEBSD_SCHED_OTHER || lp.sched_priority != 0)
-		return EINVAL;
+	error = do_sched_setparam(SCARG(uap, pid), 0, policy, &sp);
+	if (error)
+		goto out;
 
-	return 0;
+ out:
+	return error;
 }
 
 int
@@ -180,31 +248,22 @@ freebsd_sys_sched_getscheduler(struct lwp *l, const struct freebsd_sys_sched_get
 	/* {
 		syscallarg(pid_t) pid;
 	} */
-	int error;
-	struct proc *p;
+	int error, policy;
 
 	*retval = -1;
 
-	/*
-	 * We only check for valid parameters and return afterwards.
-	 */
-	mutex_enter(&proclist_lock);
-	p = p_find(SCARG(uap, pid), PFIND_LOCKED | PFIND_UNLOCK_FAIL);
-	if (p == NULL)
-		error = ESRCH;
-	else
-		error = kauth_authorize_process(l->l_cred,
-		    KAUTH_PROCESS_SCHEDULER_GET, p, NULL, NULL, NULL);
-	mutex_exit(&proclist_lock);
-
+	error = do_sched_getparam(l, SCARG(uap, pid), 0, &policy, NULL);
 	if (error)
-		return error;
+		goto out;
 
-	/*
-	 * We can't emulate anything put the default scheduling policy.
-	 */
-	*retval = FREEBSD_SCHED_OTHER;
-	return 0;
+	error = sched_native2freebsd(policy, NULL, &policy, NULL);
+	if (error)
+		goto out;
+
+	*retval = policy;
+
+ out:
+	return error;
 }
 
 int
