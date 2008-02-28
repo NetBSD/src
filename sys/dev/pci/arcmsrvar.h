@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.8 2008/01/03 21:28:11 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.9 2008/02/28 16:47:53 xtraeme Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -420,8 +420,6 @@ struct arc_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	void			*sc_ih;
-
-	void			*sc_shutdownhook;
 
 	int			sc_req_count;
 	u_int			sc_maxdisks;
