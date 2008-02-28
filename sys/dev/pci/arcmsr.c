@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.10 2008/02/28 16:47:53 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.11 2008/02/28 21:08:45 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.10 2008/02/28 16:47:53 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.11 2008/02/28 21:08:45 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -173,7 +173,8 @@ arc_attach(device_t parent, device_t self, void *aux)
 	}
 
 	if (!pmf_device_register1(self, NULL, NULL, arc_shutdown))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+		panic("%s: couldn't establish shutdown handler\n",
+		    device_xname(self));
 
 	memset(adapt, 0, sizeof(*adapt));
 	adapt->adapt_dev = self;
