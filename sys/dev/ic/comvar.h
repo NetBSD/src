@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.59 2008/01/20 18:09:11 joerg Exp $	*/
+/*	$NetBSD: comvar.h,v 1.60 2008/02/29 07:02:05 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -211,7 +211,6 @@ struct com_softc {
 #if NRND > 0 && defined(RND_COM)
 	rndsource_element_t  rnd_source;
 #endif
-	void			*sc_powerhook;	/* power management hook */
 	kmutex_t		sc_lock;
 };
 
@@ -220,9 +219,10 @@ int comintr(void *);
 void com_attach_subr(struct com_softc *);
 int com_probe_subr(struct com_regs *);
 int com_detach(struct device *, int);
-bool com_resume(device_t);
+bool com_resume(device_t PMF_FN_PROTO);
 int com_activate(struct device *, enum devact);
-void com_cleanup(void *);
+bool com_cleanup(device_t, int);
+bool com_suspend(device_t PMF_FN_PROTO);
 
 #ifndef IPL_SERIAL
 #define	IPL_SERIAL	IPL_TTY

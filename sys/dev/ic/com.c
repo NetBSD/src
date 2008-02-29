@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.272 2008/01/28 18:12:29 dyoung Exp $	*/
+/*	$NetBSD: com.c,v 1.273 2008/02/29 07:02:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.272 2008/01/28 18:12:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.273 2008/02/29 07:02:05 dyoung Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -505,7 +505,7 @@ fifodone:
 		tp->t_dev = cn_tab->cn_dev = makedev(maj,
 						     device_unit(&sc->sc_dev));
 
-		aprint_normal("%s: console\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "console\n");
 	}
 
 #ifdef KGDB
@@ -635,6 +635,8 @@ com_detach(struct device *self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
+	mutex_destroy(&sc->sc_lock);
+	callout_destroy(&sc->sc_diag_callout);
 
 	/* Destroy the lock. */
 	mutex_destroy(&sc->sc_lock);
@@ -944,12 +946,17 @@ comtty(dev_t dev)
 int
 comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct com_softc *sc = device_lookup(&com_cd, COMUNIT(dev));
-	struct tty *tp = sc->sc_tty;
+	struct com_softc *sc;
+	struct tty *tp;
 	int error;
 
+	sc = device_lookup(&com_cd, COMUNIT(dev));
+	if (sc == NULL)
+		return ENXIO;
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
+
+	tp = sc->sc_tty;
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -2266,19 +2273,32 @@ com_is_console(bus_space_tag_t iot, bus_addr_t iobase, bus_space_handle_t *ioh)
  * have firmware which doesn't interact properly with a com device in
  * FIFO mode.
  */
-void
-com_cleanup(void *arg)
+bool
+com_cleanup(device_t self, int how)
 {
-	struct com_softc *sc = arg;
+	struct com_softc *sc = device_private(self);
 
 	if (ISSET(sc->sc_hwflags, COM_HW_FIFO))
 		CSR_WRITE_1(&sc->sc_regs, COM_REG_FIFO, 0);
+
+	return true;
 }
 
 bool
-com_resume(device_t dev)
+com_suspend(device_t self PMF_FN_ARGS)
 {
-	struct com_softc *sc = device_private(dev);
+	struct com_softc *sc = device_private(self);
+
+	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, 0);
+	(void)CSR_READ_1(&sc->sc_regs, COM_REG_IIR);
+
+	return true;
+}
+
+bool
+com_resume(device_t self PMF_FN_ARGS)
+{
+	struct com_softc *sc = device_private(self);
 
 	mutex_spin_enter(&sc->sc_lock);
 	com_loadchannelregs(sc);
