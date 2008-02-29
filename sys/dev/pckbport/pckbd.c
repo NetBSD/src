@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.20 2008/02/21 01:42:20 joerg Exp $ */
+/* $NetBSD: pckbd.c,v 1.21 2008/02/29 06:42:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.20 2008/02/21 01:42:20 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.21 2008/02/29 06:42:35 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ pckbd_is_console(pckbport_tag_t tag, pckbport_slot_t slot)
 }
 
 static bool
-pckbd_suspend(device_t dv)
+pckbd_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct pckbd_softc *sc = device_private(dv);
 	u_char cmd[1];
@@ -270,7 +270,7 @@ pckbd_suspend(device_t dv)
 }
 
 static bool
-pckbd_resume(device_t dv)
+pckbd_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pckbd_softc *sc = device_private(dv);
 	u_char cmd[1], resp[1];
