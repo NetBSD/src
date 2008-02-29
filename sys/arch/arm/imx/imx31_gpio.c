@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.1.2.3 2007/09/12 06:17:49 matt Exp $");
+__KERNEL_RCSID(0, "imx31_gpio.c,v 1.1.2.3 2007/09/12 06:17:49 matt Exp");
 
 #define _INTR_PRIVATE
 
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx31_gpio.c,v 1.1.2.3 2007/09/12 06:17:49 matt Exp 
 static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void gpio_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static int gpio_pic_find_pending_irqs(struct pic_softc *);
-static void gpio_pic_establish_irq(struct pic_softc *, int, int, int);
+static void gpio_pic_establish_irq(struct pic_softc *, struct intrsource *);
 
 const struct pic_ops gpio_pic_ops = {
 	.pic_block_irqs = gpio_pic_block_irqs,
@@ -171,11 +171,11 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	 (GPIO_ICR_EDGE_FALLING << (2*IST_EDGE_FALLING)))
 
 void
-gpio_pic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
+gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
-	KASSERT(irq < 32);
-	uint32_t irq_mask = __BIT(irq);
+	KASSERT(is->is_irq < 32);
+	uint32_t irq_mask = __BIT(is->is_irq);
 	uint32_t v;
 	unsigned int icr_shift, icr_reg;
 	unsigned int gtype;
@@ -191,9 +191,9 @@ gpio_pic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
 	 * Convert the type to a gpio type and figure out which bits in what 
 	 * register we have to tweak.
 	 */
-	gtype = (GPIO_TYPEMAP >> (2 * type)) & 3;
-	icr_shift = (irq & 0x0f) << 1;
-	icr_reg = GPIO_ICR1 + ((irq & 0x10) >> 2);
+	gtype = (GPIO_TYPEMAP >> (2 * is->is_type)) & 3;
+	icr_shift = (is->is_irq & 0x0f) << 1;
+	icr_reg = GPIO_ICR1 + ((is->is_irq & 0x10) >> 2);
 
 	/*
 	 * Set the interrupt type.
