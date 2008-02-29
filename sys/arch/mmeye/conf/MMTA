@@ -1,4 +1,4 @@
-#	$NetBSD: MMTA,v 1.37 2008/02/02 17:54:17 uwe Exp $
+#	$NetBSD: MMTA,v 1.38 2008/02/29 14:42:32 jmmv Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -195,7 +195,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 
 # Pull in optional local configuration
-include	"arch/mmeye/conf/GENERIC.local"
+cinclude "arch/mmeye/conf/GENERIC.local"
 
 
 # Pseudo-Devices
