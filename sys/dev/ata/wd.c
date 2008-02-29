@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.358 2008/02/29 06:38:28 dyoung Exp $ */
+/*	$NetBSD: wd.c,v 1.359 2008/02/29 21:51:38 bouyer Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.358 2008/02/29 06:38:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.359 2008/02/29 21:51:38 bouyer Exp $");
 
 #include "opt_ata.h"
 
@@ -803,7 +803,7 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
-		if (wd->sc_wdc_bio.r_error & WDCE_IDNF &&
+		if ((wd->sc_wdc_bio.r_error & (WDCE_IDNF | WDCE_ABRT)) &&
 		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
 			nblks = wd->sc_wdc_bio.bcount /
 			    wd->sc_dk.dk_label->d_secsize;
