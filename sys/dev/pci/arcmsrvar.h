@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.9 2008/02/28 16:47:53 xtraeme Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.10 2008/02/29 17:45:04 xtraeme Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -422,7 +422,6 @@ struct arc_softc {
 	void			*sc_ih;
 
 	int			sc_req_count;
-	u_int			sc_maxdisks;
 
 	struct arc_dmamem	*sc_requests;
 	struct arc_ccb		*sc_ccbs;
@@ -437,6 +436,10 @@ struct arc_softc {
 	struct sysmon_envsys	*sc_sme;
 	envsys_data_t		*sc_sensors;
 	int			sc_nsensors;
+
+	size_t			sc_maxraidset;	/* max raid sets */
+	size_t 			sc_maxvolset;	/* max volume sets */
+	size_t 			sc_cchans;	/* connected channels */
 
 	struct device		*sc_scsibus_dv;
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.13 2008/02/29 12:56:03 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.14 2008/02/29 17:45:04 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.13 2008/02/29 12:56:03 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.14 2008/02/29 17:45:04 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -659,9 +659,6 @@ arc_query_firmware(struct arc_softc *sc)
 	    device_xname(&sc->sc_dev), htole32(fwinfo.sata_ports),
 	    htole32(fwinfo.sdram_size), string);
 
-	/* save the number of max disks for future use */
-	sc->sc_maxdisks = htole32(fwinfo.sata_ports);
-
 	if (htole32(fwinfo.request_len) != ARC_MAX_IOCMDLEN) {
 		aprint_error("%s: unexpected request frame size (%d != %d)\n",
 		    device_xname(&sc->sc_dev),
@@ -1169,7 +1166,7 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 	uint8_t			request[2];
 	struct arc_fw_sysinfo	*sysinfo;
 	struct arc_fw_raidinfo	*raidinfo;
-	int			maxraidset, nvols = 0, i;
+	int			nvols = 0, i;
 	int			error = 0;
 
 	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
@@ -1181,10 +1178,12 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 	if (error != 0)
 		goto out;
 
-	maxraidset = sysinfo->max_raid_set;
+	sc->sc_maxraidset = sysinfo->max_raid_set;
+	sc->sc_maxvolset = sysinfo->max_volume_set;
+	sc->sc_cchans = sysinfo->ide_channels;
 
 	request[0] = ARC_FW_RAIDINFO;
-	for (i = 0; i < maxraidset; i++) {
+	for (i = 0; i < sc->sc_maxraidset; i++) {
 		request[1] = i;
 		error = arc_msgbuf(sc, request, sizeof(request), raidinfo,
 		    sizeof(struct arc_fw_raidinfo));
@@ -1197,7 +1196,7 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 
 	strlcpy(bi->bi_dev, device_xname(&sc->sc_dev), sizeof(bi->bi_dev));
 	bi->bi_novol = nvols;
-	bi->bi_nodisk = sc->sc_maxdisks;
+	bi->bi_nodisk = sc->sc_cchans;
 
 out:
 	kmem_free(raidinfo, sizeof(*raidinfo));
@@ -1209,22 +1208,11 @@ static int
 arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 {
 	uint8_t			request[2];
-	struct arc_fw_sysinfo	*sysinfo;
 	int			error = 0;
-	int			maxvols, nvols = 0, i;
-
-	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
-
-	request[0] = ARC_FW_SYSINFO;
-	error = arc_msgbuf(sc, request, 1, sysinfo,
-	    sizeof(struct arc_fw_sysinfo));
-	if (error != 0)
-		goto out;
-
-	maxvols = sysinfo->max_volume_set;
+	int			nvols = 0, i;
 
 	request[0] = ARC_FW_VOLINFO;
-	for (i = 0; i < maxvols; i++) {
+	for (i = 0; i < sc->sc_maxvolset; i++) {
 		request[1] = i;
 		error = arc_msgbuf(sc, request, sizeof(request), volinfo,
 		    sizeof(struct arc_fw_volinfo));
@@ -1247,7 +1235,6 @@ arc_bio_getvol(struct arc_softc *sc, int vol, struct arc_fw_volinfo *volinfo)
 	}
 
 out:
-	kmem_free(sysinfo, sizeof(*sysinfo));
 	return error;
 }
 
@@ -1340,7 +1327,7 @@ arc_bio_disk_novol(struct arc_softc *sc, struct bioc_disk *bd)
 
 	diskinfo = kmem_zalloc(sizeof(*diskinfo), KM_SLEEP);
 
-	if (bd->bd_diskid > sc->sc_maxdisks) {
+	if (bd->bd_diskid >= sc->sc_cchans) {
 		error = ENODEV;
 		goto out;
 	}
@@ -1387,6 +1374,14 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 	case ARC_FW_DISK_UNUSED:
 		bd->bd_status = BIOC_SDUNUSED;
 		break;
+	case 0:
+		/* disk has been disconnected */
+		bd->bd_status = BIOC_SDOFFLINE;
+		bd->bd_channel = 1;
+		bd->bd_target = 0;
+		bd->bd_lun = 0;
+		strlcpy(bd->bd_vendor, "disk missing", sizeof(bd->bd_vendor));
+		break;
 	default:
 		printf("%s: unknown disk device_state: 0x%x\n", __func__,
 		    htole32(diskinfo->device_state));
@@ -1424,10 +1419,10 @@ arc_bio_disk_filldata(struct arc_softc *sc, struct bioc_disk *bd,
 static int
 arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 {
-	uint8_t			request[2];
 	struct arc_fw_raidinfo	*raidinfo;
 	struct arc_fw_volinfo	*volinfo;
 	struct arc_fw_diskinfo	*diskinfo;
+	uint8_t			request[2];
 	int			error = 0;
 
 	volinfo = kmem_zalloc(sizeof(*volinfo), KM_SLEEP);
@@ -1446,8 +1441,22 @@ arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 	if (error != 0)
 		goto out;
 
-	if (bd->bd_diskid > raidinfo->member_devices) {
+	if (bd->bd_diskid >= sc->sc_cchans ||
+	    bd->bd_diskid >= raidinfo->member_devices) {
 		error = ENODEV;
+		goto out;
+	}
+
+	if (raidinfo->device_array[bd->bd_diskid] == 0xff) {
+		/*
+		 * The disk has been disconnected, mark it offline
+		 * and put it on another bus.
+		 */
+		bd->bd_channel = 1;
+		bd->bd_target = 0;
+		bd->bd_lun = 0;
+		bd->bd_status = BIOC_SDOFFLINE;
+		strlcpy(bd->bd_vendor, "disk missing", sizeof(bd->bd_vendor));
 		goto out;
 	}
 
@@ -1796,8 +1805,8 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 		bd.bd_diskid = edata->value_avg - 10;
 
 		if (arc_bio_disk_volume(sc, &bd)) {
-			edata->value_cur = ENVSYS_DRIVE_EMPTY;
-			edata->state = ENVSYS_SINVALID;
+			edata->value_cur = ENVSYS_DRIVE_OFFLINE;
+			edata->state = ENVSYS_SCRITICAL;
 			return;
 		}
 
@@ -1811,7 +1820,7 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 			edata->state = ENVSYS_SCRITICAL;
 			break;
 		default:
-			edata->value_cur = ENVSYS_DRIVE_EMPTY;
+			edata->value_cur = ENVSYS_DRIVE_FAIL;
 			edata->state = ENVSYS_SCRITICAL;
 			break;
 		}
