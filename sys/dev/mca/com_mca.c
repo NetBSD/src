@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mca.c,v 1.18 2007/10/19 12:00:34 ad Exp $	*/
+/*	$NetBSD: com_mca.c,v 1.19 2008/02/29 07:02:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.18 2007/10/19 12:00:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mca.c,v 1.19 2008/02/29 07:02:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,12 +195,12 @@ com_mca_attach(struct device *parent, struct device *self,
         }
 
 	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
+	 * com_cleanup: shutdown hook for buggy BIOSs that don't
+	 * recognize the UART without a disabled FIFO.
 	 * XXX is this necessary on MCA ? --- jdolecek
 	 */
-	if (shutdownhook_establish(com_cleanup, sc) == NULL)
-		panic("com_mca_attach: could not establish shutdown hook");
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup))
+		aprint_error_dev(self, "could not establish shutdown hook\n");
 }
 
 /* map serial_X to iobase and irq */

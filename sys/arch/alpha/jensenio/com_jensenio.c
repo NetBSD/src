@@ -1,4 +1,4 @@
-/* $NetBSD: com_jensenio.c,v 1.7 2007/12/03 15:33:05 ad Exp $ */
+/* $NetBSD: com_jensenio.c,v 1.8 2008/02/29 07:02:04 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.7 2007/12/03 15:33:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_jensenio.c,v 1.8 2008/02/29 07:02:04 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,12 +123,10 @@ com_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	evcnt_attach_dynamic(&jsc->sc_ev_intr, EVCNT_TYPE_INTR,
 	    NULL, "vector", jsc->sc_vecstr);
 
-	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
-	 */
-	if (shutdownhook_establish(com_cleanup, sc) == NULL)
-		panic("com_jensenio_attach: could not establish shutdown hook");
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
+		aprint_error_dev(&sc->sc_dev,
+		    "could not establish shutdown hook");
+	}
 }
 
 void
