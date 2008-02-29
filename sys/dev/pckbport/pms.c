@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.23 2008/01/28 22:29:00 jmcneill Exp $ */
+/* $NetBSD: pms.c,v 1.24 2008/02/29 06:42:35 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.23 2008/01/28 22:29:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.24 2008/02/29 06:42:35 dyoung Exp $");
 
 #include "opt_pms.h"
 
@@ -86,8 +86,8 @@ int	pms_enable(void *);
 int	pms_ioctl(void *, u_long, void *, int, struct lwp *);
 void	pms_disable(void *);
 
-static bool	pms_suspend(device_t);
-static bool	pms_resume(device_t);
+static bool	pms_suspend(device_t PMF_FN_PROTO);
+static bool	pms_resume(device_t PMF_FN_PROTO);
 
 const struct wsmouse_accessops pms_accessops = {
 	pms_enable,
@@ -336,7 +336,7 @@ pms_disable(void *v)
 }
 
 static bool
-pms_suspend(device_t dv)
+pms_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct pms_softc *sc = device_private(dv);
 
@@ -347,7 +347,7 @@ pms_suspend(device_t dv)
 }
 
 static bool
-pms_resume(device_t dv)
+pms_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pms_softc *sc = device_private(dv);
 
