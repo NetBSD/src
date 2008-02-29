@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_comm.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfs_comm.c,v 1.1.6.2 2008/02/29 19:39:47 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.2 2008/02/29 19:39:47 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $
 #include <sys/systm.h>
 #include <machine/cpu.h>
 
+#include <fs/devfs/devfs.h>
 #include <fs/devfs/devfs_comm.h>
 #include <dev/dctl/dctl.h>
 
@@ -74,16 +75,13 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $
  */
 int
 devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie, 
-	uid_t uid, gid_t gid, mode_t mode, int flags)
+	uid_t uid, gid_t gid, mode_t mode, int flags, dev_t dev)
 {
 	int error;
 	struct proc *p = curlwp->l_proc;
 	struct device *dp;
 	struct mount *mp;
 	struct vnode *vp;
-#if 0
-	char *base, *dir;
-#endif
 	struct cwdinfo ci;
 	struct nameidata nd;
 	enum uio_seg seg = UIO_USERSPACE;
@@ -91,7 +89,7 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 
 	memset(&ci, 0, sizeof(ci));
 
-	/* XXX: Probably want our own scope here? KAUTH_DEVFS_MKNOD */
+	/* TODO: Probably want our own scope here? KAUTH_DEVFS_MKNOD */
 	if ((error = kauth_authorize_system(curlwp->l_cred, KAUTH_SYSTEM_MKNOD,
 	    0, NULL, NULL, NULL)) != 0)
 		return error;
@@ -101,22 +99,18 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 	 * is really on the system. If it is, then we have to lookup
 	 * the major and minor numbers.
 	 *
-	 * XXX: There's no reliable way to do this for the moment, at
+	 * TODO: There's no reliable way to do this for the moment, at
 	 *	least until I implement dynamic dev_ts.
 	 */
 	TAILQ_FOREACH(dp, &alldevs, dv_list) {
-		if ((intptr_t)dp == dcookie)
+		if ((intptr_t)dp == (intptr_t)dcookie)
 			break;
 	}
 
-	/*
 	if (dp == NULL) {
 		printf("device not on device list!\n");
 		return EINVAL;
 	}
-	*/
-
-	/* XXX: mising lookup for major/minor numbers */
 
 	/*
 	 * Lookup correct mount for this mcookie
@@ -132,35 +126,6 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 	if (mp == NULL)
 		return EINVAL;
 
-	/* 2) Make sure device isn't already on this mount point */
-
-#if 0
-	/* 3) split path into basename and directory */
-	dir = path;
-	if ((base = strrchr(path, '/')) != NULL) {
-		/* No basename specified */
-		if (*base == '\0')
-			return EINVAL;
-
-		*base++ = '\0';
-	}
-#endif
-
-	/*
-	 * HOWTO chroot:
-	 *
-	 *	- copy the cwd from the thread to a local variable
-	 *	- call VFS_ROOT on mount point which will vget the root
-	 *	  vnode
-	 *	- put it into the thread's cwd
-	 *	- Make the Calls
-	 *	- vrele() on root vnode
-	 *	- then put cwd back
-	 *
-	 * NOTE: Make sure string doesn't start with '/'
-	 *	 Better yet, make sure the thing we get back from namei
-	 *	 is on the right mount-point.
-	 */
 	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, seg, path);
 
 	ci = *p->p_cwdi;
@@ -168,6 +133,7 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 	if ((error = VFS_ROOT(mp, &vp)) != 0)
 		return error;
 
+	/* chroot */
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);	
 	p->p_cwdi->cwdi_cdir = vp;
 	p->p_cwdi->cwdi_rdir = vp;
@@ -181,9 +147,6 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 		vrele(vp);
 		return error;
 	}
-
-	/* XXX: do whatever cwd does minus path lookup */
-	/* XXX: may not want to use namei later (we do for now) */
 
 	if (nd.ni_vp != NULL) {
 		error = EEXIST;
@@ -203,37 +166,27 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 	vattr.va_mode = S_IFCHR | mode;
 	vattr.va_type = VCHR;
 
-	/* We only make a special node for zero(4) for now*/
-	vattr.va_rdev = makedev(2,12);
+	/* We're making a device special node for this dev_t */
+	vattr.va_rdev = dev;
 
-	/* 4) Figure out which mount we're looking at. Next
-	 *
-	 *  XXX: Use namei
-	 *	- Temporarily chroot to the root of the fs and do the
-	 *	  lookup that mknod(2) does.
-	 *
-	 * 	4a) if there's no directory path we're making a node in the
- 	 *	    root of the mount
+	/* 
+	 * TODO: We currently don't support creating nodes in anything
+	 * but the root directory. This will change eventually.
 	 */
-
-	/* 5) Set things up so we can call the tmpfs mknod call */
-
-	error = VOP_MKNOD(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
+	error = devfs_internal_mknod(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &vattr);
 
 	if (error == 0)
 		vput(nd.ni_vp); /* special device vnode */
 
-	vrele(vp);
-
 abort:
 	if (error != 0) {
 		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		if (nd.ni_dvp == vp)
+		if (nd.ni_dvp == vp) 
 			vrele(nd.ni_dvp);
 		else
 			vput(nd.ni_dvp);
-		if (vp)
-			vrele(vp);
+		vrele(nd.ni_vp);
+		VOP_UNLOCK(vp, 0);
 	}
 		
 	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);	
@@ -241,5 +194,25 @@ abort:
 	p->p_cwdi->cwdi_cdir = ci.cwdi_cdir;
 	rw_exit(&p->p_cwdi->cwdi_lock);
 
+	vrele(vp);
+
 	return error;
+}
+
+/*
+ * This is the function to make a device node in the devfs file system.
+ * It is NOT accessible through the vnode operations table because we
+ * do not want to allow arbitrary userland processes to create device 
+ * nodes. The only userland process that can create device nodes in a devfs
+ * is devfsd(8).
+ */
+int
+devfs_internal_mknod(struct vnode *dvp, struct vnode **vpp, 
+	struct componentname *cnp, struct vattr *vap)
+{
+	if (vap->va_type != VBLK && vap->va_type != VCHR &&
+	    vap->va_type != VFIFO)
+		return EINVAL;
+
+	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL);
 }
