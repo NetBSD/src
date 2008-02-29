@@ -1,4 +1,4 @@
-/* $NetBSD: sysmon_envsys_events.c,v 1.48 2008/02/02 02:02:38 xtraeme Exp $ */
+/* $NetBSD: sysmon_envsys_events.c,v 1.49 2008/02/29 14:34:49 xtraeme Exp $ */
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.48 2008/02/02 02:02:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys_events.c,v 1.49 2008/02/29 14:34:49 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -589,6 +589,12 @@ do {									\
 			see->see_evsent = see->see_edata->value_cur;
 			sysmon_penvsys_event(&see->see_pes, see->see_type);
 		}
+
+		/* 
+		 * There's no need to continue if it's a drive sensor.
+		 */
+		if (see->see_edata->units == ENVSYS_DRIVE)
+			break;
 
 		/*
 		 * Check if the system is running in low power and send the
