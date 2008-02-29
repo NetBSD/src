@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.23 2007/02/22 05:10:30 matt Exp $ */
+/*	$NetBSD: db_machdep.h,v 1.24 2008/02/29 20:27:07 martin Exp $ */
 
 /*
  * Mach Operating System
@@ -60,11 +60,9 @@ typedef struct {
 } db_regs_t;
 
 /* Current CPU register state */
-extern struct cpu_info	*ddb_cpuinfo;
-extern db_regs_t	*ddb_regp;
-#define	DDB_REGS	ddb_regp
-#define	DDB_TF		(&ddb_regp->db_tf)
-#define	DDB_FP		(&ddb_regp->db_fpstate)
+#define	DDB_REGS	((db_regs_t*)__UNVOLATILE(curcpu()->ci_ddb_regs))
+#define	DDB_TF		(&DDB_REGS->db_tf)
+#define	DDB_FP		(&DDB_REGS->db_fpstate)
 
 /* DDB commands not in db_interface.c */
 void	db_dump_ts(db_expr_t, bool, db_expr_t, const char *);
@@ -117,7 +115,7 @@ db_addr_t	db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs);
 
 /* see note in db_interface.c about reversed breakpoint addrs */
 #define next_instr_address(pc, bd) \
-	((bd) ? (pc) : ddb_regp->db_tf.tf_npc)
+	((bd) ? (pc) : DDB_REGS->db_tf.tf_npc)
 
 #define DB_MACHINE_COMMANDS
 

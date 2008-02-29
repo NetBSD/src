@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.107 2008/02/28 11:50:40 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.108 2008/02/29 20:27:07 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.107 2008/02/28 11:50:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.108 2008/02/29 20:27:07 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -67,9 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.107 2008/02/28 11:50:40 martin Ex
 
 #include "fb.h"
 
-/* pointer to the saved DDB registers */
-db_regs_t *ddb_regp;
-
 extern struct traptrace {
 	unsigned short tl:3,	/* Trap level */
 		ns:4,		/* PCB nsaved */
@@ -92,19 +89,21 @@ static uint64_t nil;
 #define pmap_ctx(PM)	((PM)->pm_ctx)
 #endif
 
+static void fill_ddb_regs_from_tf(struct trapframe64 *tf);
+static void ddb_restore_state(void);
+
 static int
 db_sparc_charop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 	char *regaddr =
-	    (char *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-	char *valaddr = (char *)val;
+	    (char *)(((uint8_t *)DDB_REGS) + (size_t)vp->valuep);
 
 	switch (opcode) {
-	case DB_VAR_SET:
-		*valaddr = *regaddr;
-		break;
 	case DB_VAR_GET:
-		*regaddr = *valaddr;
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
 		break;
 #ifdef DIAGNOSTIC
 	default:
@@ -121,15 +120,14 @@ static int
 db_sparc_shortop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 	short *regaddr =
-	    (short *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-	short *valaddr = (short *)val;
+	    (short *)(((uint8_t *)DDB_REGS) + (size_t)vp->valuep);
 
 	switch (opcode) {
-	case DB_VAR_SET:
-		*valaddr = *regaddr;
-		break;
 	case DB_VAR_GET:
-		*regaddr = *valaddr;
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
 		break;
 #ifdef DIAGNOSTIC
 	default:
@@ -146,15 +144,14 @@ static int
 db_sparc_intop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 	int *regaddr =
-	    (int *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
-	int *valaddr = (int *)val;
+	    (int *)(((uint8_t *)DDB_REGS) + (size_t)vp->valuep);
 
 	switch (opcode) {
-	case DB_VAR_SET:
-		*valaddr = *regaddr;
-		break;
 	case DB_VAR_GET:
-		*regaddr = *valaddr;
+		*val = *regaddr;
+		break;
+	case DB_VAR_SET:
+		*regaddr = *val;
 		break;
 #ifdef DIAGNOSTIC
 	default:
@@ -170,7 +167,7 @@ static int
 db_sparc_regop(const struct db_variable *vp, db_expr_t *val, int opcode)
 {
 	db_expr_t *regaddr =
-	    (db_expr_t *)(((uint8_t *)DDB_REGS) + ((size_t)vp->valuep));
+	    (db_expr_t *)(((uint8_t *)DDB_REGS) + (size_t)vp->valuep);
 
 	switch (opcode) {
 	case DB_VAR_GET:
@@ -301,9 +298,6 @@ void db_sir_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void db_dump_pmap(struct pmap *);
 static void db_print_trace_entry(struct traptrace *, int);
 
-/* struct cpu_info of CPU being investigated */
-struct cpu_info *ddb_cpuinfo;
-
 #ifdef MULTIPROCESSOR
 
 #define NOCPU -1
@@ -367,17 +361,80 @@ kdb_kbd_trap(struct trapframe64 *tf)
 	}
 }
 
+static void
+fill_ddb_regs_from_tf(struct trapframe64 *tf)
+{
+	extern int savetstate(struct trapstate *);
+
+#ifdef MULTIPROCESSOR
+	static db_regs_t ddbregs[CPUSET_MAXNUMCPU];
+
+	curcpu()->ci_ddb_regs = &ddbregs[cpu_number()];
+#else
+	static db_regs_t ddbregs;
+
+	curcpu()->ci_ddb_regs = &ddbregs;
+#endif
+
+	DDB_REGS->db_tf = *tf;
+	DDB_REGS->db_fr = *(struct frame64 *)
+		(uintptr_t)tf->tf_out[6];
+
+	if (fplwp) {
+		savefpstate(fplwp->l_md.md_fpstate);
+		DDB_REGS->db_fpstate = *fplwp->l_md.md_fpstate;
+		loadfpstate(fplwp->l_md.md_fpstate);
+	}
+	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
+/*	if (tf->tf_tstate & TSTATE_PRIV) { .. } */
+	
+#if 0
+	/* make sure this is not causing ddb problems. */
+	if (tf->tf_out[6] & 1) {
+		if ((unsigned)(tf->tf_out[6] + BIAS) > (unsigned)KERNBASE)
+			DDB_REGS->db_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
+		else
+			copyin((void *)(tf->tf_out[6] + BIAS), &DDB_REGS->db_fr, sizeof(struct frame64));
+	} else {
+		struct frame32 tfr;
+		int i;
+
+		/* First get a local copy of the frame32 */
+		if ((unsigned)(tf->tf_out[6]) > (unsigned)KERNBASE)
+			tfr = *(struct frame32 *)tf->tf_out[6];
+		else
+			copyin((void *)(tf->tf_out[6]), &tfr, sizeof(struct frame32));
+		/* Now copy each field from the 32-bit value to the 64-bit value */
+		for (i=0; i<8; i++)
+			DDB_REGS->db_fr.fr_local[i] = tfr.fr_local[i];
+		for (i=0; i<6; i++)
+			DDB_REGS->db_fr.fr_arg[i] = tfr.fr_arg[i];
+		DDB_REGS->db_fr.fr_fp = (long)tfr.fr_fp;
+		DDB_REGS->db_fr.fr_pc = tfr.fr_pc;
+	}
+#endif
+	DDB_REGS->db_tl = savetstate(&DDB_REGS->db_ts[0]);
+}
+
+static void
+ddb_restore_state()
+{
+	extern void restoretstate(int, struct trapstate *);
+
+	restoretstate(DDB_REGS->db_tl, &DDB_REGS->db_ts[0]);
+	if (fplwp) {	
+		*fplwp->l_md.md_fpstate = DDB_REGS->db_fpstate;
+		loadfpstate(fplwp->l_md.md_fpstate);
+	}
+}
+
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
 int
-kdb_trap(int type, register struct trapframe64 *tf)
+kdb_trap(int type, struct trapframe64 *tf)
 {
-	db_regs_t dbregs;
-	int s, tl;
-	struct trapstate *ts;
-	extern int savetstate(struct trapstate *);
-	extern void restoretstate(int, struct trapstate *);
+	int s;
 	extern int trap_trace_dis;
 	extern int doing_shutdown;
 
@@ -419,73 +476,22 @@ kdb_trap(int type, register struct trapframe64 *tf)
 #endif
 
 	/* Initialise local dbregs storage from trap frame */
-	dbregs.db_tf = *tf;
-	dbregs.db_fr = *(struct frame64 *)(uintptr_t)tf->tf_out[6];
-
-	/* Setup current CPU & reg pointers */
-	ddb_cpuinfo = curcpu();
-	curcpu()->ci_ddb_regs = ddb_regp = &dbregs;
-
-	ts = &ddb_regp->db_ts[0];
-
-	fplwp = NULL;
-	if (fplwp) {
-		savefpstate(fplwp->l_md.md_fpstate);
-		dbregs.db_fpstate = *fplwp->l_md.md_fpstate;
-		loadfpstate(fplwp->l_md.md_fpstate);
-	}
-	/* We should do a proper copyin and xlate 64-bit stack frames, but... */
-/*	if (tf->tf_tstate & TSTATE_PRIV) { .. } */
-	
-#if 0
-	/* make sure this is not causing ddb problems. */
-	if (tf->tf_out[6] & 1) {
-		if ((unsigned)(tf->tf_out[6] + BIAS) > (unsigned)KERNBASE)
-			dbregs.db_fr = *(struct frame64 *)(tf->tf_out[6] + BIAS);
-		else
-			copyin((void *)(tf->tf_out[6] + BIAS), &dbregs.db_fr, sizeof(struct frame64));
-	} else {
-		struct frame32 tfr;
-		
-		/* First get a local copy of the frame32 */
-		if ((unsigned)(tf->tf_out[6]) > (unsigned)KERNBASE)
-			tfr = *(struct frame32 *)tf->tf_out[6];
-		else
-			copyin((void *)(tf->tf_out[6]), &tfr, sizeof(struct frame32));
-		/* Now copy each field from the 32-bit value to the 64-bit value */
-		for (i=0; i<8; i++)
-			dbregs.db_fr.fr_local[i] = tfr.fr_local[i];
-		for (i=0; i<6; i++)
-			dbregs.db_fr.fr_arg[i] = tfr.fr_arg[i];
-		dbregs.db_fr.fr_fp = (long)tfr.fr_fp;
-		dbregs.db_fr.fr_pc = tfr.fr_pc;
-	}
-#endif
+	fill_ddb_regs_from_tf(tf);
 
 	s = splhigh();
 	db_active++;
 	cnpollc(TRUE);
 	/* Need to do spl stuff till cnpollc works */
-	tl = dbregs.db_tl = savetstate(ts);
 	db_dump_ts(0, 0, 0, 0);
 	db_trap(type, 0/*code*/);
-	restoretstate(tl,ts);
+	ddb_restore_state();
 	cnpollc(FALSE);
 	db_active--;
 
 	splx(s);
 
-	if (fplwp) {	
-		*fplwp->l_md.md_fpstate = dbregs.db_fpstate;
-		loadfpstate(fplwp->l_md.md_fpstate);
-	}
-#if 0
-	/* We will not alter the machine's running state until we get everything else working */
-	*(struct frame *)tf->tf_out[6] = dbregs.db_fr;
-#endif
-	*tf = dbregs.db_tf;
-	curcpu()->ci_ddb_regs = ddb_regp = 0;
-	ddb_cpuinfo = NULL;
+	*tf = DDB_REGS->db_tf;
+	curcpu()->ci_ddb_regs = NULL;
 
 	trap_trace_dis--;
 	doing_shutdown--;
@@ -1165,13 +1171,11 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 			return;
 		}
 	}
-	if (ci->ci_ddb_regs == 0) {
+	if (ci->ci_ddb_regs == NULL) {
 		db_printf("CPU %ld has no saved regs\n", addr);
 		return;
 	}
 	db_printf("using CPU %ld", addr);
-	ddb_regp = __UNVOLATILE(ci->ci_ddb_regs);
-	ddb_cpuinfo = ci;
 #endif
 }
 
@@ -1312,8 +1316,7 @@ db_branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
     union instr insn;
     db_addr_t npc;
 
-    KASSERT(ddb_regp); /* XXX */
-    npc = ddb_regp->db_tf.tf_npc;
+    npc = DDB_REGS->db_tf.tf_npc;
 
     insn.i_int = inst;
 
