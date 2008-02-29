@@ -207,8 +207,8 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 #endif
 
 	for (;;) {
-		pending_irqs = pic_find_pending_irqs_by_ipl(pic, ipl,
-		    *ipending);
+		pending_irqs = pic_find_pending_irqs_by_ipl(pic, *ipending,
+		    ipl);
 		if (pending_irqs == 0) {
 #if PIC_MAXSOURCES > 32
 			irq_count += 32;
