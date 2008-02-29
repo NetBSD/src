@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.14 2008/02/29 17:45:04 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.15 2008/02/29 18:15:41 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.14 2008/02/29 17:45:04 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.15 2008/02/29 18:15:41 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1164,23 +1164,26 @@ static int
 arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 {
 	uint8_t			request[2];
-	struct arc_fw_sysinfo	*sysinfo;
+	struct arc_fw_sysinfo	*sysinfo = NULL;
 	struct arc_fw_raidinfo	*raidinfo;
 	int			nvols = 0, i;
 	int			error = 0;
 
-	sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
 	raidinfo = kmem_zalloc(sizeof(*raidinfo), KM_SLEEP);
 
-	request[0] = ARC_FW_SYSINFO;
-	error = arc_msgbuf(sc, request, 1, sysinfo,
-	    sizeof(struct arc_fw_sysinfo));
-	if (error != 0)
-		goto out;
+	if (!sc->sc_maxraidset || !sc->sc_maxvolset || !sc->sc_cchans) {
+		sysinfo = kmem_zalloc(sizeof(*sysinfo), KM_SLEEP);
 
-	sc->sc_maxraidset = sysinfo->max_raid_set;
-	sc->sc_maxvolset = sysinfo->max_volume_set;
-	sc->sc_cchans = sysinfo->ide_channels;
+		request[0] = ARC_FW_SYSINFO;
+		error = arc_msgbuf(sc, request, 1, sysinfo,
+		    sizeof(struct arc_fw_sysinfo));
+		if (error != 0)
+			goto out;
+
+		sc->sc_maxraidset = sysinfo->max_raid_set;
+		sc->sc_maxvolset = sysinfo->max_volume_set;
+		sc->sc_cchans = sysinfo->ide_channels;
+	}
 
 	request[0] = ARC_FW_RAIDINFO;
 	for (i = 0; i < sc->sc_maxraidset; i++) {
@@ -1199,8 +1202,9 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 	bi->bi_nodisk = sc->sc_cchans;
 
 out:
+	if (sysinfo)
+		kmem_free(sysinfo, sizeof(*sysinfo));
 	kmem_free(raidinfo, sizeof(*raidinfo));
-	kmem_free(sysinfo, sizeof(*sysinfo));
 	return error;
 }
 
