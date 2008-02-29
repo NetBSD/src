@@ -395,6 +395,7 @@ pic_add(struct pic_softc *pic, int irqbase)
 	pic->pic_sources = &pic_sources[pic_sourcebase];
 	pic->pic_irqbase = irqbase;
 	pic_sourcebase += pic->pic_maxsources;
+	pic->pic_id = slot;
 	pic_list[slot] = pic;
 }
 
