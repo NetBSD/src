@@ -1,4 +1,4 @@
-/*	$NetBSD: autri.c,v 1.37 2008/01/27 01:56:02 jmcneill Exp $	*/
+/*	$NetBSD: autri.c,v 1.38 2008/02/29 06:13:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.37 2008/01/27 01:56:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autri.c,v 1.38 2008/02/29 06:13:39 dyoung Exp $");
 
 #include "midi.h"
 
@@ -97,7 +97,7 @@ static int	autri_write_codec(void *, uint8_t, uint16_t);
 static int	autri_reset_codec(void *);
 static enum ac97_host_flags	autri_flags_codec(void *);
 
-static bool autri_resume(device_t);
+static bool autri_resume(device_t PMF_FN_PROTO);
 static int  autri_init(void *);
 static struct autri_dma *autri_find_dma(struct autri_softc *, void *);
 static void autri_setup_channel(struct autri_softc *, int,
@@ -614,7 +614,7 @@ CFATTACH_DECL(autri, sizeof(struct autri_softc),
     autri_match, autri_attach, NULL, NULL);
 
 static bool
-autri_resume(device_t dv)
+autri_resume(device_t dv PMF_FN_ARGS)
 {
 	struct autri_softc *sc = device_private(dv);
 

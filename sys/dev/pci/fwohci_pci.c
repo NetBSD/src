@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci_pci.c,v 1.28 2007/12/09 20:28:08 jmcneill Exp $	*/
+/*	$NetBSD: fwohci_pci.c,v 1.29 2008/02/29 06:13:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.28 2007/12/09 20:28:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci_pci.c,v 1.29 2008/02/29 06:13:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,8 @@ struct fwohci_pci_softc {
 static int fwohci_pci_match(struct device *, struct cfdata *, void *);
 static void fwohci_pci_attach(struct device *, struct device *, void *);
 
-static bool fwohci_pci_suspend(device_t);
-static bool fwohci_pci_resume(device_t);
+static bool fwohci_pci_suspend(device_t PMF_FN_PROTO);
+static bool fwohci_pci_resume(device_t PMF_FN_PROTO);
 
 CFATTACH_DECL(fwohci_pci, sizeof(struct fwohci_pci_softc),
     fwohci_pci_match, fwohci_pci_attach, NULL, NULL);
@@ -165,7 +165,7 @@ fail:
 }
 
 static bool
-fwohci_pci_suspend(device_t dv)
+fwohci_pci_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct fwohci_pci_softc *psc = device_private(dv);
 	int s;
@@ -178,7 +178,7 @@ fwohci_pci_suspend(device_t dv)
 }
 
 static bool
-fwohci_pci_resume(device_t dv)
+fwohci_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct fwohci_pci_softc *psc = device_private(dv);
 	int s;

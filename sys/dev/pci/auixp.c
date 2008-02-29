@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.25 2007/12/09 20:28:05 jmcneill Exp $ */
+/* $NetBSD: auixp.c,v 1.26 2008/02/29 06:13:39 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.25 2007/12/09 20:28:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.26 2008/02/29 06:13:39 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -194,7 +194,7 @@ static void	auixp_program_dma_chain(struct auixp_softc *,
 static void	auixp_dma_update(struct auixp_softc *, struct auixp_dma *);
 static void	auixp_update_busbusy(struct auixp_softc *);
 
-static bool	auixp_resume(device_t);
+static bool	auixp_resume(device_t PMF_FN_PROTO);
 
 
 #ifdef DEBUG_AUIXP
@@ -1759,7 +1759,7 @@ auixp_init(struct auixp_softc *sc)
 }
 
 static bool
-auixp_resume(device_t dv)
+auixp_resume(device_t dv PMF_FN_ARGS)
 {
 	struct auixp_softc *sc = device_private(dv);
 
