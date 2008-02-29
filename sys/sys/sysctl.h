@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.173 2008/01/07 16:12:56 ad Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.174 2008/02/29 02:28:35 matt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -84,6 +84,7 @@ struct ctlname {
 #define	CTLTYPE_STRING	3	/* name describes a string */
 #define	CTLTYPE_QUAD	4	/* name describes a 64-bit number */
 #define	CTLTYPE_STRUCT	5	/* name describes a structure */
+#define	CTLTYPE_BOOL	6	/* name describes a bool */
 
 /*
  * Flags that apply to each node, governing access and other features
@@ -1246,6 +1247,7 @@ struct sysctlnode {
 		int32_t scu_alias;		/* node this node refers to */
 		int32_t scu_idata;		/* immediate "int" data */
 		u_quad_t scu_qdata;		/* immediate "u_quad_t" data */
+		bool scu_bdata;			/* immediate bool data */
 	} sysctl_un;
 	__sysc_pad(size_t) _sysctl_size;	/* size of instrumented data */
 	__sysc_pad(sysctlfn) _sysctl_func;	/* access helper function */
@@ -1275,6 +1277,7 @@ struct sysctlnode {
 #define sysctl_alias	sysctl_un.scu_alias
 #define sysctl_idata	sysctl_un.scu_idata
 #define sysctl_qdata	sysctl_un.scu_qdata
+#define sysctl_bdata	sysctl_un.scu_bdata
 
 /*
  * when requesting a description of a node (a set of nodes, actually),
