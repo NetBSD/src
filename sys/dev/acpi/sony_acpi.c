@@ -1,4 +1,4 @@
-/*	$NetBSD: sony_acpi.c,v 1.3 2008/01/06 19:42:03 christos Exp $	*/
+/*	$NetBSD: sony_acpi.c,v 1.4 2008/02/29 06:35:40 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.3 2008/01/06 19:42:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sony_acpi.c,v 1.4 2008/02/29 06:35:40 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ static ACPI_STATUS sony_acpi_eval_set_integer(ACPI_HANDLE, const char *,
     ACPI_INTEGER, ACPI_INTEGER *);
 static void	sony_acpi_quirk_setup(struct sony_acpi_softc *);
 static void	sony_acpi_notify_handler(ACPI_HANDLE, UINT32, void *);
-static bool	sony_acpi_suspend(device_t);
-static bool	sony_acpi_resume(device_t);
+static bool	sony_acpi_suspend(device_t PMF_FN_PROTO);
+static bool	sony_acpi_resume(device_t PMF_FN_PROTO);
 static void	sony_acpi_brightness_down(device_t);
 static void	sony_acpi_brightness_up(device_t);
 static ACPI_STATUS sony_acpi_find_pic(ACPI_HANDLE, UINT32, void *, void **);
@@ -395,7 +395,7 @@ sony_acpi_notify_handler(ACPI_HANDLE hdl, UINT32 notify, void *opaque)
 }
 
 static bool
-sony_acpi_suspend(device_t dv)
+sony_acpi_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct sony_acpi_softc *sc = device_private(dv);
 
@@ -405,7 +405,7 @@ sony_acpi_suspend(device_t dv)
 }
 
 static bool
-sony_acpi_resume(device_t dv)
+sony_acpi_resume(device_t dv PMF_FN_ARGS)
 {
 	struct sony_acpi_softc *sc = device_private(dv);
 
