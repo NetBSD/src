@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.12 2008/02/29 12:37:43 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.13 2008/02/29 12:56:03 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.12 2008/02/29 12:37:43 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.13 2008/02/29 12:56:03 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1840,6 +1840,10 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 	case BIOC_SVCHECKING:
 		edata->value_cur = ENVSYS_DRIVE_CHECK;
 		edata->state = ENVSYS_SVALID;
+		break;
+	case BIOC_SVREBUILD:
+		edata->value_cur = ENVSYS_DRIVE_REBUILD;
+		edata->state = ENVSYS_SCRITICAL;
 		break;
 	case BIOC_SVSCRUB:
 	case BIOC_SVONLINE:
