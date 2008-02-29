@@ -424,7 +424,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 		return NULL;
 	}
 
-	is = malloc(sizeof(*is), M_INTRSOURCE, M_ZERO);
+	is = malloc(sizeof(*is), M_INTRSOURCE, M_NOWAIT|M_ZERO);
 	if (is == NULL)
 		return NULL;
 

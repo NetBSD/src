@@ -225,6 +225,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	}
 	if (maybe_is != NULL) {
 		is = gpio->gpio_is;
+		KASSERT(is != NULL);
 		is->is_ipl = maybe_is->is_ipl;
 		(*is->is_pic->pic_ops->pic_establish_irq)(is->is_pic, is);
 	} 
@@ -382,6 +383,8 @@ gpio_attach(device_t parent, device_t self, void *aux)
 		    oa->obio_intrbase, oa->obio_intrbase + 31);
 		gpio->gpio_is = intr_establish(oa->obio_intr, 
 		    IPL_HIGH, IST_LEVEL, pic_handle_intr, &gpio->gpio_pic);
+		KASSERT(gpio->gpio_is != NULL);
+		aprint_normal(", intr %d", oa->obio_intr);
 	}
 	aprint_normal("\n");
 #if NGPIO > 0
