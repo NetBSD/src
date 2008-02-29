@@ -240,8 +240,8 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 			} else {
 				blocked_irqs &= ~__BIT(irq);
 			}
-			pending_irqs = pic_find_pending_irqs_by_ipl(pic, ipl,
-			    *ipending);
+			pending_irqs = pic_find_pending_irqs_by_ipl(pic,
+			    *ipending, ipl);
 		} while (pending_irqs);
 		if (blocked_irqs) {
 			*iblocked |= blocked_irqs;
