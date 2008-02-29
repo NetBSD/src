@@ -1,4 +1,4 @@
-/*	$NetBSD: spic.c,v 1.11 2007/12/17 19:51:10 christos Exp $	*/
+/*	$NetBSD: spic.c,v 1.12 2008/02/29 06:17:36 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.11 2007/12/17 19:51:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spic.c,v 1.12 2008/02/29 06:17:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -299,7 +299,7 @@ spic_attach(struct spic_softc *sc)
 }
 
 bool
-spic_suspend(device_t dev)
+spic_suspend(device_t dev PMF_FN_ARGS)
 {
 	struct spic_softc *sc = device_private(dev);
 
@@ -309,7 +309,7 @@ spic_suspend(device_t dev)
 }
 
 bool
-spic_resume(device_t dev)
+spic_resume(device_t dev PMF_FN_ARGS)
 {
 	struct spic_softc *sc = device_private(dev);
 
