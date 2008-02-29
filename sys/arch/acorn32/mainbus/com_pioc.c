@@ -1,4 +1,4 @@
-/*	$NetBSD: com_pioc.c,v 1.11 2006/07/13 22:56:00 gdamore Exp $	*/
+/*	$NetBSD: com_pioc.c,v 1.12 2008/02/29 07:02:04 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.11 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_pioc.c,v 1.12 2008/02/29 07:02:04 dyoung Exp $");
 
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -189,13 +189,10 @@ com_pioc_attach(parent, self, aux)
 		    comintr, sc);
 	}
 
-	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
-	 */
-	if (shutdownhook_establish(com_cleanup, sc) == NULL)
-		panic("%s: could not establish shutdown hook",
-		    sc->sc_dev.dv_xname);
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
+		aprint_error_dev(&sc->sc_dev,
+		    "could not establish shutdown hook");
+	}
 
 	/*
 	 * This is a patch for bugged revision 1-4 SMC FDC37C665

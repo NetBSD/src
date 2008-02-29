@@ -1,4 +1,4 @@
-/*	$NetBSD: com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $	*/
+/*	$NetBSD: com_obio.c,v 1.20 2008/02/29 07:02:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.19 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_obio.c,v 1.20 2008/02/29 07:02:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,11 +226,8 @@ com_obio_attach(struct device *parent, struct device *self, void *aux)
 		    osc->osc_com.sc_dev.dv_xname, "intr");
 	}
 
-	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
-	 */
-	if (shutdownhook_establish(com_cleanup, sc) == NULL) {
-		panic("com_obio_attach: could not establish shutdown hook");
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
+		aprint_error_dev(&sc->sc_dev,
+		    "could not establish shutdown hook");
 	}
 }

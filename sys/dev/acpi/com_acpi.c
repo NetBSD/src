@@ -1,4 +1,4 @@
-/* $NetBSD: com_acpi.c,v 1.25 2007/12/21 21:52:10 xtraeme Exp $ */
+/* $NetBSD: com_acpi.c,v 1.26 2008/02/29 07:02:05 dyoung Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.25 2007/12/21 21:52:10 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_acpi.c,v 1.26 2008/02/29 07:02:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ struct com_acpi_softc {
 };
 
 CFATTACH_DECL(com_acpi, sizeof(struct com_acpi_softc), com_acpi_match,
-    com_acpi_attach, NULL, NULL);
+    com_acpi_attach, NULL, com_activate);
 
 /*
  * Supported device IDs
