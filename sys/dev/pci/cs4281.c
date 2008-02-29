@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.36 2007/12/09 20:28:07 jmcneill Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.37 2008/02/29 06:13:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.36 2007/12/09 20:28:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.37 2008/02/29 06:13:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,8 @@ static void	 cs4281_set_adc_rate(struct cs428x_softc *, int);
 static int      cs4281_init(struct cs428x_softc *, int);
 
 /* Power Management */
-static bool cs4281_suspend(device_t);
-static bool cs4281_resume(device_t);
+static bool cs4281_suspend(device_t PMF_FN_PROTO);
+static bool cs4281_resume(device_t PMF_FN_PROTO);
 
 static const struct audio_hw_if cs4281_hw_if = {
 	NULL,			/* open */
@@ -722,7 +722,7 @@ cs4281_trigger_input(void *addr, void *start, void *end, int blksize,
 }
 
 static bool
-cs4281_suspend(device_t dv)
+cs4281_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 
@@ -749,7 +749,7 @@ cs4281_suspend(device_t dv)
 }
 
 static bool
-cs4281_resume(device_t dv)
+cs4281_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 

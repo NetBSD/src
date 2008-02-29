@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.36 2007/12/20 21:08:19 dyoung Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.37 2008/02/29 06:13:39 dyoung Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.36 2007/12/20 21:08:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.37 2008/02/29 06:13:39 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -94,7 +94,7 @@ static int	ipw_match(struct device *, struct cfdata *, void *);
 static void	ipw_attach(struct device *, struct device *, void *);
 static int	ipw_detach(struct device *, int);
 
-static bool	ipw_resume(device_t);
+static bool	ipw_resume(device_t PMF_FN_PROTO);
 
 static int	ipw_media_change(struct ifnet *);
 static void	ipw_media_status(struct ifnet *, struct ifmediareq *);
@@ -743,7 +743,7 @@ ipw_release(struct ipw_softc *sc)
 }
 
 static bool
-ipw_resume(device_t dv)
+ipw_resume(device_t dv PMF_FN_ARGS)
 {
 	struct ipw_softc *sc = device_private(dv);
 
