@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.49 2008/02/28 16:09:18 elad Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.50 2008/02/29 14:29:06 elad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.49 2008/02/28 16:09:18 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.50 2008/02/29 14:29:06 elad Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -305,18 +305,18 @@ linux_sys_sched_getparam(struct lwp *l, const struct linux_sys_sched_getparam_ar
 	} */
 	struct linux_sched_param lp;
 	struct sched_param sp;
-	int error;
+	int error, policy;
 
 	if (SCARG(uap, pid) < 0 || SCARG(uap, sp) == NULL) {
 		error = EINVAL;
 		goto out;
 	}
 
-	error = do_sched_getparam(SCARG(uap, pid), 0, NULL, &sp);
+	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, &sp);
 	if (error)
 		goto out;
 
-	error = sched_native2linux(0, &sp, NULL, &lp);
+	error = sched_native2linux(policy, &sp, NULL, &lp);
 	if (error)
 		goto out;
 
