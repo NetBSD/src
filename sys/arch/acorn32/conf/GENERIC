@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC,v 1.84 2008/01/19 13:11:10 chris Exp $
+# 	$NetBSD: GENERIC,v 1.85 2008/02/29 00:37:26 chris Exp $
 #
 #	GENERIC --- NetBSD/acorn32 complete configuration
 #
@@ -22,7 +22,7 @@ include		"arch/acorn32/conf/std.acorn32"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.84 $"
+#ident		"GENERIC-$Revision: 1.85 $"
 
 # estimated number of users
 maxusers	32
@@ -198,19 +198,11 @@ vidc0		at mainbus?
 #options 	WSEMUL_SUN
 options 	WSEMUL_VT100
 
-#options 	WSDISPLAY_COMPAT_RAWKBD
+options         WS_KERNEL_FG=WSCOL_GREEN
 
-#options 	FONT_BOLD8x16
-#options 	FONT_GALLANT12x22	# Very nice font
-#options 	FONT_LUCIDA16x29
-#options 	FONT_OMRON12x20		# looks funny
-#options 	FONT_QVSS8x15		# broken ?
-options 	FONT_SONY12x25		# looks like VT220 font
-options 	FONT_SONY8x16		# not tested
-#options 	FONT_VT220L8x8		# 8x8 font as in Arch. cons
-#options 	FONT_VT220L8x16		# 8x(2x8) font as in Arch. cons
-#options 	FONT_VT220L8x10		# not tested
-#options 	FONT_VT220L8x20		# not tested
+#options 	WSDISPLAY_COMPAT_RAWKBD
+options		WSDISPLAY_COMPAT_USL
+options		WSDISPLAY_SCROLLSUPPORT
 
 vidcvideo0	at vidc?		# wscons driver for VIDC
 wsdisplay*	at vidcvideo? console ?	# display itself

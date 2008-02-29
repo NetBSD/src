@@ -1,4 +1,4 @@
-#	$NetBSD: files.iomd,v 1.18 2006/08/19 13:34:15 bjh21 Exp $
+#	$NetBSD: files.iomd,v 1.19 2008/02/29 00:37:26 chris Exp $
 #
 # IOMD-specific configuration data
 #
@@ -46,7 +46,7 @@ file	arch/arm/iomd/console/consinit.c	vidc
 
 # VIDC video wscons device
 device	vidcvideo: rasops4, rasops8, rasops16, rasops32, wsemuldisplaydev,
-		   videomode
+		   videomode, vcons
 attach	vidcvideo at vidc
 file	arch/arm/iomd/vidc20config.c		vidcvideo	needs-flag
 file	arch/arm/iomd/vidcvideo.c		vidcvideo	needs-flag
