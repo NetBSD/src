@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.214 2008/01/12 19:27:27 ad Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.215 2008/02/29 02:28:35 matt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.214 2008/01/12 19:27:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.215 2008/02/29 02:28:35 matt Exp $");
 
 #include "opt_defcorename.h"
 #include "ksyms.h"
@@ -875,7 +875,7 @@ sysctl_create(SYSCTLFN_ARGS)
 	    (CTLFLAG_OWNDATA | CTLFLAG_IMMEDIATE))
 		return (EINVAL);
 	if ((flags & CTLFLAG_IMMEDIATE) &&
-	    type != CTLTYPE_INT && type != CTLTYPE_QUAD)
+	    type != CTLTYPE_INT && type != CTLTYPE_QUAD && type != CTLTYPE_BOOL)
 		return (EINVAL);
 
 	/*
@@ -966,6 +966,15 @@ sysctl_create(SYSCTLFN_ARGS)
 		if (sz != 0 && sz != sizeof(u_quad_t))
 			return (EINVAL);
 		sz = sizeof(u_quad_t);
+		break;
+	case CTLTYPE_BOOL:
+		/*
+		 * since an bool is an bool, if the size is not given or
+		 * is wrong, we can "intuit" it.
+		 */
+		if (sz != 0 && sz != sizeof(bool))
+			return (EINVAL);
+		sz = sizeof(bool);
 		break;
 	case CTLTYPE_STRUCT:
 		if (sz == 0) {
@@ -1161,6 +1170,9 @@ sysctl_create(SYSCTLFN_ARGS)
 		node->sysctl_alias = anum;
 	} else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
+		case CTLTYPE_BOOL:
+			node->sysctl_idata = nnode.sysctl_bdata;
+			break;
 		case CTLTYPE_INT:
 			node->sysctl_idata = nnode.sysctl_idata;
 			break;
@@ -1467,6 +1479,9 @@ sysctl_lookup(SYSCTLFN_ARGS)
 		 * because it's ours)
 		 */
 		switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
+		case CTLTYPE_BOOL:
+			d = __UNCONST(&rnode->sysctl_bdata);
+			break;
 		case CTLTYPE_INT:
 			d = __UNCONST(&rnode->sysctl_idata);
 			break;
@@ -1500,6 +1515,20 @@ sysctl_lookup(SYSCTLFN_ARGS)
 	 */
 	sz = rnode->sysctl_size;
 	switch (SYSCTL_TYPE(rnode->sysctl_flags)) {
+	case CTLTYPE_BOOL: {
+		u_char tmp;
+		/*
+		 * these data must be *exactly* the same size coming
+		 * in.  bool may only be true or false.
+		 */
+		if (newlen != sz)
+			return (EINVAL);
+		error = sysctl_copyin(l, newp, &tmp, sz);
+		if (error)
+			break;
+		*(bool *)d = tmp;
+		break;
+	}
 	case CTLTYPE_INT:
 	case CTLTYPE_QUAD:
 	case CTLTYPE_STRUCT:
@@ -1949,6 +1978,9 @@ sysctl_createv(struct sysctllog **log, int cflags,
 			nnode.sysctl_alias = qv;
 	} else if (flags & CTLFLAG_IMMEDIATE) {
 		switch (type) {
+		case CTLTYPE_BOOL:
+			nnode.sysctl_bdata = qv;
+			break;
 		case CTLTYPE_INT:
 			nnode.sysctl_idata = qv;
 			break;
