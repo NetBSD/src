@@ -1,4 +1,4 @@
-/* $NetBSD: com_sableio.c,v 1.5 2006/07/13 22:56:00 gdamore Exp $ */
+/* $NetBSD: com_sableio.c,v 1.6 2008/02/29 07:02:04 dyoung Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.5 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_sableio.c,v 1.6 2008/02/29 07:02:04 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,10 +125,8 @@ com_sableio_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
-	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
-	 */
-	if (shutdownhook_establish(com_cleanup, sc) == NULL)
-		panic("com_sableio_attach: could not establish shutdown hook");
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
+		aprint_error_dev(&sc->sc_dev,
+		    "could not establish shutdown hook");
+	}
 }
