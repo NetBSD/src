@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.10 2007/12/21 20:43:45 dsl Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.11 2008/02/29 12:34:23 yamt Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -127,11 +127,7 @@
 #define	CHECK_DEFERRED_SWITCH \
 	cmpq	$0, CPUVAR(WANT_PMAPLOAD)
 
-#define CHECK_ASTPENDING(reg)	cmpq	$0, reg				; \
-				je	99f				; \
-				cmpl	$0, L_MD_ASTPENDING(reg)	; \
-				99:
-
+#define CHECK_ASTPENDING(reg)	cmpl	$0, L_MD_ASTPENDING(reg)
 #define CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
 
 #ifdef XEN
