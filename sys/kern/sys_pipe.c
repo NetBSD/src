@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.96 2008/02/23 16:05:17 chris Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.97 2008/02/29 12:04:48 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.96 2008/02/23 16:05:17 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.97 2008/02/29 12:04:48 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -360,7 +360,9 @@ pipe_create(struct pipe **pipep, int allockva, struct pipe_mutex *mutex)
 	pipe->pipe_atime = pipe->pipe_ctime;
 	pipe->pipe_mtime = pipe->pipe_ctime;
 	pipe->pipe_lock = &mutex->pm_mutex;
-	cv_init(&pipe->pipe_cv, "pipe");
+	cv_init(&pipe->pipe_rcv, "piperd");
+	cv_init(&pipe->pipe_wcv, "pipewr");
+	cv_init(&pipe->pipe_draincv, "pipedrain");
 	cv_init(&pipe->pipe_lkcv, "pipelk");
 	selinit(&pipe->pipe_sel);
 
@@ -536,7 +538,7 @@ again:
 			rpipe->pipe_map.cnt -= size;
 			if (rpipe->pipe_map.cnt == 0) {
 				rpipe->pipe_state &= ~PIPE_DIRECTR;
-				cv_broadcast(&rpipe->pipe_cv);
+				cv_broadcast(&rpipe->pipe_wcv);
 			}
 			continue;
 		}
@@ -583,10 +585,10 @@ again:
 		/*
 		 * If the "write-side" is blocked, wake it up now.
 		 */
-		cv_broadcast(&rpipe->pipe_cv);
+		cv_broadcast(&rpipe->pipe_wcv);
 
 		/* Now wait until the pipe is filled */
-		error = cv_wait_sig(&rpipe->pipe_cv, lock);
+		error = cv_wait_sig(&rpipe->pipe_rcv, lock);
 		if (error != 0)
 			goto unlocked_error;
 		goto again;
@@ -598,8 +600,11 @@ again:
 
 unlocked_error:
 	--rpipe->pipe_busy;
-	if (rpipe->pipe_busy == 0 || bp->cnt < MINPIPESIZE) {
-		cv_broadcast(&rpipe->pipe_cv);
+	if (rpipe->pipe_busy == 0) {
+		cv_broadcast(&rpipe->pipe_draincv);
+	}
+	if (bp->cnt < MINPIPESIZE) {
+		cv_broadcast(&rpipe->pipe_wcv);
 	}
 
 	/*
@@ -748,8 +753,8 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 	pipeunlock(wpipe);
 
 	while (error == 0 && wpipe->pipe_buffer.cnt > 0) {
-		cv_broadcast(&wpipe->pipe_cv);
-		error = cv_wait_sig(&wpipe->pipe_cv, lock);
+		cv_broadcast(&wpipe->pipe_rcv);
+		error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
 	}
@@ -759,9 +764,9 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 
 	/* Wait until the reader is done */
 	while (error == 0 && (wpipe->pipe_state & PIPE_DIRECTR)) {
-		cv_broadcast(&wpipe->pipe_cv);
+		cv_broadcast(&wpipe->pipe_rcv);
 		pipeselwakeup(wpipe, wpipe, POLL_IN);
-		error = cv_wait_sig(&wpipe->pipe_cv, lock);
+		error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 		if (error == 0 && wpipe->pipe_state & PIPE_EOF)
 			error = EPIPE;
 	}
@@ -793,7 +798,7 @@ pipe_direct_write(struct file *fp, struct pipe *wpipe, struct uio *uio)
 		 */
 		if (wpipe->pipe_map.cnt == bcnt) {
 			wpipe->pipe_map.cnt = 0;
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_wcv);
 			return (error);
 		}
 
@@ -844,7 +849,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	if ((error = pipelock(wpipe, 1)) != 0) {
 		--wpipe->pipe_busy;
 		if (wpipe->pipe_busy == 0) {
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_draincv);
 		}
 		mutex_exit(lock);
 		return (error);
@@ -879,9 +884,9 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 		 * We break out if a signal occurs or the reader goes away.
 		 */
 		while (error == 0 && wpipe->pipe_state & PIPE_DIRECTW) {
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_rcv);
 			pipeunlock(wpipe);
-			error = cv_wait_sig(&wpipe->pipe_cv, lock);
+			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 			(void)pipelock(wpipe, 0);
 			if (wpipe->pipe_state & PIPE_EOF)
 				error = EPIPE;
@@ -988,7 +993,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			/*
 			 * If the "read-side" has been blocked, wake it up now.
 			 */
-			cv_broadcast(&wpipe->pipe_cv);
+			cv_broadcast(&wpipe->pipe_rcv);
 
 			/*
 			 * don't block on non-blocking I/O
@@ -1006,7 +1011,7 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 				pipeselwakeup(wpipe, wpipe, POLL_OUT);
 
 			pipeunlock(wpipe);
-			error = cv_wait_sig(&wpipe->pipe_cv, lock);
+			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
 			(void)pipelock(wpipe, 0);
 			if (error != 0)
 				break;
@@ -1022,8 +1027,11 @@ pipe_write(struct file *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	}
 
 	--wpipe->pipe_busy;
-	if (wpipe->pipe_busy == 0 || bp->cnt > 0) {
-		cv_broadcast(&wpipe->pipe_cv);
+	if (wpipe->pipe_busy == 0) {
+		cv_broadcast(&wpipe->pipe_draincv);
+	}
+	if (bp->cnt > 0) {
+		cv_broadcast(&wpipe->pipe_rcv);
 	}
 
 	/*
@@ -1267,8 +1275,8 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	pipe->pipe_state |= PIPE_EOF;
 	if (pipe->pipe_busy) {
 		while (pipe->pipe_busy) {
-			cv_broadcast(&pipe->pipe_cv);
-			cv_wait_sig(&pipe->pipe_cv, lock);
+			cv_broadcast(&pipe->pipe_wcv);
+			cv_wait_sig(&pipe->pipe_draincv, lock);
 		}
 	}
 
@@ -1278,7 +1286,7 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	if ((ppipe = pipe->pipe_peer) != NULL) {
 		pipeselwakeup(ppipe, ppipe, POLL_HUP);
 		ppipe->pipe_state |= PIPE_EOF;
-		cv_broadcast(&ppipe->pipe_cv);
+		cv_broadcast(&ppipe->pipe_rcv);
 		ppipe->pipe_peer = NULL;
 	}
 
@@ -1293,7 +1301,9 @@ pipeclose(struct file *fp, struct pipe *pipe)
 	 * free resources
 	 */
 	pipe_free_kmem(pipe);
-	cv_destroy(&pipe->pipe_cv);
+	cv_destroy(&pipe->pipe_rcv);
+	cv_destroy(&pipe->pipe_wcv);
+	cv_destroy(&pipe->pipe_draincv);
 	cv_destroy(&pipe->pipe_lkcv);
 	seldestroy(&pipe->pipe_sel);
 	pool_cache_put(pipe_cache, pipe);
