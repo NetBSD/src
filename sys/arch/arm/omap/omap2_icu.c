@@ -170,7 +170,7 @@ void
 omap2icu_attach(device_t parent, device_t self, void *aux)
 {
 	struct obio_attach_args * const oa = aux;
-	struct omap2icu_softc * const sc = device_private(self);
+	struct omap2icu_softc * const sc = &omap2icu_softc;
 	int error;
 
 	aprint_normal("\n");
