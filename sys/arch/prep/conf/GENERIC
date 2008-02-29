@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.140 2008/02/13 14:05:06 tsutsui Exp $
+# $NetBSD: GENERIC,v 1.141 2008/02/29 14:42:33 jmmv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.140 $"
+#ident		"GENERIC-$Revision: 1.141 $"
 
 maxusers	32
 
@@ -517,7 +517,7 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 #joy0	at isa? port 0x201
 
 # Pull in optional local configuration
-include "arch/prep/conf/GENERIC.local"
+cinclude "arch/prep/conf/GENERIC.local"
 
 # Pseudo-Devices
 

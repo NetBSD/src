@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.29 2008/02/09 22:18:11 jmmv Exp $
+#	$NetBSD: OFWGENCFG,v 1.30 2008/02/29 14:42:33 jmmv Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -133,7 +133,7 @@ ofrtc*		at ofbus?
 ofrom*		at ofbus?
 
 # Pull in optional local configuration
-include	"arch/shark/conf/GENERIC.local"
+cinclude "arch/shark/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter

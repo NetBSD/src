@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.77 2008/02/09 22:18:11 jmmv Exp $
+#	$NetBSD: GENERIC,v 1.78 2008/02/29 14:42:33 jmmv Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.77 $"
+#ident		"GENERIC-$Revision: 1.78 $"
 
 # estimated number of users
 maxusers	32
@@ -279,7 +279,7 @@ midi*		at opl?
 joy*		at ofisa?
 
 # Pull in optional local configuration
-include	"arch/shark/conf/GENERIC.local"
+cinclude "arch/shark/conf/GENERIC.local"
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter		# packet filter

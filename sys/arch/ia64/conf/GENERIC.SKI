@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.3 2006/09/10 21:07:20 cherry Exp $
+# $NetBSD: GENERIC.SKI,v 1.4 2008/02/29 14:42:32 jmmv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.3 $"
+#ident 		"GENERIC-$Revision: 1.4 $"
 
 maxusers	32		# estimated number of users
 
@@ -70,7 +70,7 @@ cpu* at mainbus?
 
 
 # Pull in optional local configuration
-include	"arch/ia64/conf/GENERIC.local"
+cinclude "arch/ia64/conf/GENERIC.local"
 
 # Console Devices
 #ssccons*	at mainbus0		# Ski console interface driver
