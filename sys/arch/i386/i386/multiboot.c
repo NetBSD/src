@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.12 2007/03/07 21:43:45 thorpej Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.13 2008/02/29 10:23:53 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.12 2007/03/07 21:43:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.13 2008/02/29 10:23:53 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ void
 multiboot_post_reloc(void)
 {
 	struct multiboot_info *mi;
-	
+
 	if (! Multiboot_Loader)
 		return;
 
