@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.21 2008/02/10 14:37:41 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.22 2008/02/29 06:27:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2008/02/10 14:37:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.22 2008/02/29 06:27:15 dyoung Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -123,8 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.21 2008/02/10 14:37:41 ad Exp $");
 int     cpu_match(struct device *, struct cfdata *, void *);
 void    cpu_attach(struct device *, struct device *, void *);
 
-static bool	cpu_suspend(device_t);
-static bool	cpu_resume(device_t);
+static bool	cpu_suspend(device_t PMF_FN_PROTO);
+static bool	cpu_resume(device_t PMF_FN_PROTO);
 
 struct cpu_softc {
 	struct device sc_dev;		/* device tree glue */
@@ -921,7 +921,7 @@ cpu_offline_md(void)
 
 /* XXX joerg restructure and restart CPUs individually */
 static bool
-cpu_suspend(device_t dv)
+cpu_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
@@ -949,7 +949,7 @@ cpu_suspend(device_t dv)
 }
 
 static bool
-cpu_resume(device_t dv)
+cpu_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
