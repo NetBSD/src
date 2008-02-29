@@ -1,4 +1,4 @@
-/*	$NetBSD: mkalias.c,v 1.14 2006/05/11 08:44:56 mrg Exp $ */
+/*	$NetBSD: mkalias.c,v 1.15 2008/02/29 03:00:47 lukem Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mkalias.c,v 1.14 2006/05/11 08:44:56 mrg Exp $");
+__RCSID("$NetBSD: mkalias.c,v 1.15 2008/02/29 03:00:47 lukem Exp $");
 #endif
 
 #include <sys/types.h>
@@ -43,7 +43,6 @@ __RCSID("$NetBSD: mkalias.c,v 1.14 2006/05/11 08:44:56 mrg Exp $");
 
 #include <ctype.h>
 #include <err.h>
-#include <fcntl.h>
 #include <netdb.h>
 #include <resolv.h>
 #include <stdio.h>
@@ -164,9 +163,8 @@ main(int argc, char *argv[])
 	datum	key, val;
 	char	*slash;
 	DBM	*new_db = NULL;
-	static	char mapname[] = "ypdbXXXXXXXXXX";
-	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN],
-		db_tempname[MAXPATHLEN];
+	static	const char template[] = "ypdbXXXXXX";
+	char	db_mapname[MAXPATHLEN], db_outfile[MAXPATHLEN];
 	int	status;
 	char	user[4096], host[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
 	char	datestr[11];
@@ -217,7 +215,7 @@ main(int argc, char *argv[])
 	if (optind < argc)
 		usage();
 	
-	db = ypdb_open(input, O_RDONLY, 0444);
+	db = ypdb_open(input);
 	if (db == NULL)
 		err(1, "Unable to open input database `%s'", input);
 
@@ -236,17 +234,14 @@ main(int argc, char *argv[])
 	
 		/* note: output is now directory where map goes ! */
 	
-		if (strlen(output) + strlen(mapname) + strlen(YPDB_SUFFIX) >
+		if (strlen(output) + strlen(template) + strlen(YPDB_SUFFIX) >
 		    (sizeof(db_mapname) - 1))
 			errx(1, "Directory name `%s' too long", output);
 	
-		snprintf(db_tempname, sizeof(db_tempname), "%s%s", output,
-			mapname);
-		mktemp(db_tempname);	/* OK */
-		snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
-			YPDB_SUFFIX);
+		snprintf(db_mapname, sizeof(db_mapname), "%s%s",
+		    output, template);
 	
-		new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
+		new_db = ypdb_mktemp(db_mapname);
 		if (new_db == NULL)
 			err(1, "Unable to open output database `%s'",
 			    db_outfile);
