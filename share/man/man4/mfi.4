@@ -1,4 +1,4 @@
-.\"	$NetBSD: mfi.4,v 1.6 2008/02/25 10:46:02 xtraeme Exp $
+.\"	$NetBSD: mfi.4,v 1.7 2008/02/29 20:56:33 xtraeme Exp $
 .\"	$OpenBSD: mfi.4,v 1.7 2006/09/01 09:58:09 jmc Exp $
 .\"
 .\" Written by Marco Peereboom <marco@peereboom.us>
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 25, 2008
+.Dd February 29, 2008
 .Dt MFI 4
 .Os
 .Sh NAME
@@ -65,12 +65,19 @@ using either SAS or SATA II drives.
 Although the controllers are actual RAID controllers,
 the driver makes them look just like SCSI controllers.
 All RAID configuration is done through the controllers' BIOSes.
+.Pp
+.Nm
+supports monitoring of the logical disks in the controller through the
+.Xr bioctl 8
+and
+.Xr envstat 8
+commands.
 .Sh EVENTS
 The
 .Nm
 driver is able to send events to
 .Xr powerd 8
-if a drive connected to the controller is not online. The
+if a logical drive in the controller is not online. The
 .Em state-changed
 event will be sent to the
 .Pa /etc/powerd/scripts/sensor_drive
@@ -78,9 +85,11 @@ script when such condition happens.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr pci 4 ,
-.Xr powerd 8 ,
 .Xr scsi 4 ,
-.Xr sd 4
+.Xr sd 4 ,
+.Xr bioctl 8 ,
+.Xr envstat 8 ,
+.Xr powerd 8
 .Sh HISTORY
 The
 .Nm
