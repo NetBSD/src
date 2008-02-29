@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_pci.c,v 1.38 2007/12/25 14:22:26 joerg Exp $	*/
+/*	$NetBSD: vga_pci.c,v 1.39 2008/02/29 06:13:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.38 2007/12/25 14:22:26 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_pci.c,v 1.39 2008/02/29 06:13:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,7 @@ struct vga_pci_softc {
 static int	vga_pci_match(struct device *, struct cfdata *, void *);
 static void	vga_pci_attach(struct device *, struct device *, void *);
 static int	vga_pci_lookup_quirks(struct pci_attach_args *);
-static bool	vga_pci_resume(device_t dv);
+static bool	vga_pci_resume(device_t dv PMF_FN_PROTO);
 
 CFATTACH_DECL(vga_pci, sizeof(struct vga_pci_softc),
     vga_pci_match, vga_pci_attach, NULL, NULL);
@@ -246,7 +246,7 @@ vga_pci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static bool
-vga_pci_resume(device_t dv)
+vga_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct vga_pci_softc *sc = device_private(dv);
 

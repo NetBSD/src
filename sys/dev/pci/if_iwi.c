@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.68 2007/12/09 20:28:09 jmcneill Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.69 2008/02/29 06:13:39 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.68 2007/12/09 20:28:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.69 2008/02/29 06:13:39 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -202,7 +202,7 @@ iwi_match(device_t parent, struct cfdata *match, void *aux)
 }
 
 static bool
-iwi_pci_resume(device_t dv)
+iwi_pci_resume(device_t dv PMF_FN_ARGS)
 {
 	struct iwi_softc *sc = device_private(dv);
 

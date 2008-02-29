@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4280.c,v 1.48 2007/12/09 20:28:07 jmcneill Exp $	*/
+/*	$NetBSD: cs4280.c,v 1.49 2008/02/29 06:13:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Tatoku Ogaito.  All rights reserved.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.48 2007/12/09 20:28:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4280.c,v 1.49 2008/02/29 06:13:39 dyoung Exp $");
 
 #include "midi.h"
 
@@ -110,8 +110,8 @@ static int cs4280_reset_codec(void *);
 #endif
 static enum ac97_host_flags cs4280_flags_codec(void *);
 
-static bool cs4280_resume(device_t);
-static bool cs4280_suspend(device_t);
+static bool cs4280_resume(device_t PMF_FN_PROTO);
+static bool cs4280_suspend(device_t PMF_FN_PROTO);
 
 /* Internal functions */
 static const struct cs4280_card_t * cs4280_identify_card(struct pci_attach_args *);
@@ -912,7 +912,7 @@ cs4280_trigger_input(void *addr, void *start, void *end, int blksize,
 }
 
 static bool
-cs4280_suspend(device_t dv)
+cs4280_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 
@@ -947,7 +947,7 @@ cs4280_suspend(device_t dv)
 }
 
 static bool
-cs4280_resume(device_t dv)
+cs4280_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cs428x_softc *sc = device_private(dv);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.165 2008/02/02 00:31:25 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.166 2008/02/29 06:13:39 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.165 2008/02/02 00:31:25 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.166 2008/02/29 06:13:39 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -219,8 +219,8 @@ void pccbb_winlist_show(struct pccbb_win_chain *);
 /* for config_defer */
 static void pccbb_pci_callback(device_t);
 
-static bool pccbb_suspend(device_t);
-static bool pccbb_resume(device_t);
+static bool pccbb_suspend(device_t PMF_FN_PROTO);
+static bool pccbb_resume(device_t PMF_FN_PROTO);
 
 #if defined SHOW_REGS
 static void cb_show_regs(pci_chipset_tag_t pc, pcitag_t tag,
@@ -3308,7 +3308,7 @@ pccbb_winset(bus_addr_t align, struct pccbb_softc *sc, bus_space_tag_t bst)
 #endif /* rbus */
 
 static bool
-pccbb_suspend(device_t dv)
+pccbb_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct pccbb_softc *sc = device_private(dv);
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */
@@ -3343,7 +3343,7 @@ pccbb_suspend(device_t dv)
 }
 
 static bool
-pccbb_resume(device_t dv)
+pccbb_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pccbb_softc *sc = device_private(dv);
 	bus_space_tag_t base_memt = sc->sc_base_memt;	/* socket regs memory */

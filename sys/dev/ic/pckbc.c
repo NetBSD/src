@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.40 2008/01/04 21:17:57 ad Exp $ */
+/* $NetBSD: pckbc.c,v 1.41 2008/02/29 06:17:36 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.40 2008/01/04 21:17:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.41 2008/02/29 06:17:36 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -715,7 +715,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 }
 
 bool
-pckbc_resume(device_t dv)
+pckbc_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pckbc_softc *sc = device_private(dv);
 	struct pckbc_internal *t;

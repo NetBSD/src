@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.127 2008/02/07 01:21:57 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.128 2008/02/29 06:13:39 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.127 2008/02/07 01:21:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.128 2008/02/29 06:13:39 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -613,7 +613,7 @@ static int	sipcom_match(struct device *, struct cfdata *, void *);
 static void	sipcom_attach(struct device *, struct device *, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
-static bool	sipcom_resume(device_t);
+static bool	sipcom_resume(device_t PMF_FN_PROTO);
 
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
@@ -965,7 +965,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 }
 
 static bool
-sipcom_resume(device_t self)
+sipcom_resume(device_t self PMF_FN_ARGS)
 {
 	struct sip_softc *sc = device_private(self);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.20 2008/02/05 06:52:26 simonb Exp $ */
+/* $NetBSD: piixpm.c,v 1.21 2008/02/29 06:13:39 dyoung Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.20 2008/02/05 06:52:26 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.21 2008/02/29 06:13:39 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,8 +82,8 @@ struct piixpm_softc {
 int	piixpm_match(struct device *, struct cfdata *, void *);
 void	piixpm_attach(struct device *, struct device *, void *);
 
-static bool	piixpm_suspend(device_t);
-static bool	piixpm_resume(device_t);
+static bool	piixpm_suspend(device_t PMF_FN_PROTO);
+static bool	piixpm_resume(device_t PMF_FN_PROTO);
 
 int	piixpm_i2c_acquire_bus(void *, int);
 void	piixpm_i2c_release_bus(void *, int);
@@ -240,7 +240,7 @@ nopowermanagement:
 }
 
 static bool
-piixpm_suspend(device_t dv)
+piixpm_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct piixpm_softc *sc = device_private(dv);
 
@@ -253,7 +253,7 @@ piixpm_suspend(device_t dv)
 }
 
 static bool
-piixpm_resume(device_t dv)
+piixpm_resume(device_t dv PMF_FN_ARGS)
 {
 	struct piixpm_softc *sc = device_private(dv);
 
