@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.217 2008/02/07 08:48:16 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.218 2008/02/29 21:23:55 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.217 2008/02/07 08:48:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.218 2008/02/29 21:23:55 dyoung Exp $");
 
 #include "opt_inet.h"
 
@@ -552,8 +552,7 @@ if_deactivate(struct ifnet *ifp)
 }
 
 void
-if_purgeaddrs(struct ifnet *ifp, int family,
-    void (*purgeaddr)(struct ifaddr *))
+if_purgeaddrs(struct ifnet *ifp, int family, void (*purgeaddr)(struct ifaddr *))
 {
 	struct ifaddr *ifa, *nifa;
 
@@ -1716,18 +1715,17 @@ ifconf(u_long cmd, void *data)
 		if (IFADDR_EMPTY(ifp)) {
 			/* Interface with no addresses - send zero sockaddr. */
 			memset(&ifr.ifr_addr, 0, sizeof(ifr.ifr_addr));
-			if (ifrp != NULL)
-			{
-				if (space >= sz) {
-					error = copyout(&ifr, ifrp, sz);
-					if (error != 0)
-						return (error);
-					ifrp++; space -= sz;
-				}
-			}
-			else
+			if (ifrp == NULL) {
 				space += sz;
-			continue;
+				continue;
+			}
+			if (space >= sz) {
+				error = copyout(&ifr, ifrp, sz);
+				if (error != 0)
+					return error;
+				ifrp++;
+				space -= sz;
+			}
 		}
 
 		IFADDR_FOREACH(ifa, ifp) {
@@ -1735,27 +1733,23 @@ ifconf(u_long cmd, void *data)
 			/* all sockaddrs must fit in sockaddr_storage */
 			KASSERT(sa->sa_len <= sizeof(ifr.ifr_ifru));
 
-			if (ifrp != NULL)
-			{
-				memcpy(&ifr.ifr_space, sa, sa->sa_len);
-				if (space >= sz) {
-					error = copyout(&ifr, ifrp, sz);
-					if (error != 0)
-						return (error);
-					ifrp++; space -= sz;
-				}
-			}
-			else
+			if (ifrp == NULL) {
 				space += sz;
+				continue;
+			}
+			memcpy(&ifr.ifr_space, sa, sa->sa_len);
+			if (space >= sz) {
+				error = copyout(&ifr, ifrp, sz);
+				if (error != 0)
+					return (error);
+				ifrp++; space -= sz;
+			}
 		}
 	}
-	if (ifrp != NULL)
-	{
+	if (ifrp != NULL) {
 		KASSERT(0 <= space && space <= ifc->ifc_len);
 		ifc->ifc_len -= space;
-	}
-	else
-	{
+	} else {
 		KASSERT(space >= 0);
 		ifc->ifc_len = space;
 	}
