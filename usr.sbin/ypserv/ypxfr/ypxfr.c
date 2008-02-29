@@ -1,4 +1,4 @@
-/*	$NetBSD: ypxfr.c,v 1.14 2006/03/22 19:54:13 bouyer Exp $	*/
+/*	$NetBSD: ypxfr.c,v 1.15 2008/02/29 03:00:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,9 +33,10 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypxfr.c,v 1.14 2006/03/22 19:54:13 bouyer Exp $");
+__RCSID("$NetBSD: ypxfr.c,v 1.15 2008/02/29 03:00:47 lukem Exp $");
 #endif
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -44,7 +45,6 @@ __RCSID("$NetBSD: ypxfr.c,v 1.14 2006/03/22 19:54:13 bouyer Exp $");
 #include <arpa/inet.h>
 
 #include <err.h>
-#include <fcntl.h>
 #include <netdb.h>
 #include <string.h>
 #include <stdio.h>
@@ -69,7 +69,7 @@ int	main(int, char *[]);
 int	get_local_ordernum(char *, char *, u_int *);
 int	get_remote_ordernum(CLIENT *, char *, char *, u_int, u_int *);
 void	get_map(CLIENT *, char *, char *, struct ypall_callback *);
-DBM	*create_db(char *, char *, char *);
+DBM	*create_db(char *, char *, char *, size_t);
 int	install_db(char *, char *, char *);
 int	unlink_db(char *, char *, char *);
 int	add_order(DBM *, u_int);
@@ -95,7 +95,7 @@ main(int argc, char **argv)
 	u_int ordernum, new_ordernum;
 	struct ypall_callback callback;
 	CLIENT *client;
-	char mapname[] = "ypdbXXXXXX";
+	char temp_map[MAXPATHLEN];
 	int status, xfr_status;
 	
 	status = YPPUSH_SUCC;
@@ -212,8 +212,7 @@ main(int argc, char **argv)
 
 	if (status == YPPUSH_SUCC) {
 		/* Create temporary db */
-		mktemp(mapname);
-		db = create_db(domain, map, mapname);
+		db = create_db(domain, map, temp_map, sizeof(temp_map));
 		if (db == NULL)
 			status = YPPUSH_DBM;
 
@@ -244,9 +243,9 @@ main(int argc, char **argv)
 
 		/* Rename db */
 		if (status > 0)
-			status = install_db(domain, map, mapname);
+			status = install_db(domain, map, temp_map);
 		else
-			status = unlink_db(domain, map, mapname);
+			status = unlink_db(domain, map, temp_map);
 	}
 	
  punt:
@@ -329,7 +328,7 @@ get_local_ordernum(char *domain, char *map, u_int *lordernum)
 	/* Open the map file. */
 	snprintf(map_path, sizeof(map_path), "%s/%s/%s",
 	    YP_DB_PATH, domain, map);
-	db = ypdb_open(map_path, O_RDONLY, 0444);
+	db = ypdb_open(map_path);
 	if (db == NULL) {
 		status = YPPUSH_DBM;
 		goto out;
@@ -385,29 +384,26 @@ get_map(CLIENT *client, char *domain, char *map,
 }
 
 DBM *
-create_db(char *domain, char *map, char *temp_map)
+create_db(char *domain, char *map, char *db_temp, size_t db_temp_len)
 {
-	char db_temp[255];
+	static const char template[] = "ypdbXXXXXX";
 	DBM *db;
 
-	snprintf(db_temp, sizeof(db_temp), "%s/%s/%s",
-	    YP_DB_PATH, domain, temp_map);
+	snprintf(db_temp, db_temp_len, "%s/%s/%s",
+	    YP_DB_PATH, domain, template);
 
-	db = ypdb_open(db_temp, O_RDWR|O_CREAT|O_EXCL, 0444);
+	db = ypdb_mktemp(db_temp);
 
 	return db;
 }
 
 int
-install_db(char *domain, char *map, char *temp_map)
+install_db(char *domain, char *map, char *db_temp)
 {
-	char db_name[255], db_temp[255];
+	char db_name[MAXPATHLEN];
 
 	snprintf(db_name, sizeof(db_name), "%s/%s/%s%s",
 	    YP_DB_PATH, domain, map, YPDB_SUFFIX);
-
-	snprintf(db_temp, sizeof(db_temp), "%s/%s/%s%s",
-	    YP_DB_PATH, domain, temp_map, YPDB_SUFFIX);
 
 	if (rename(db_temp, db_name)) {
 		warn("can't rename `%s' -> `%s'", db_temp, db_name);
@@ -418,12 +414,8 @@ install_db(char *domain, char *map, char *temp_map)
 }
 
 int
-unlink_db(char *domain, char *map, char *temp_map)
+unlink_db(char *domain, char *map, char *db_temp)
 {
-	char db_temp[255];
-
-	snprintf(db_temp, sizeof(db_temp), "%s/%s/%s%s",
-	    YP_DB_PATH, domain, temp_map, YPDB_SUFFIX);
 
 	if (unlink(db_temp)) {
 		warn("can't unlink `%s'", db_temp);

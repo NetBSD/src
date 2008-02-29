@@ -1,4 +1,4 @@
-/*	$NetBSD: makedbm.c,v 1.21 2005/06/20 00:08:35 lukem Exp $	*/
+/*	$NetBSD: makedbm.c,v 1.22 2008/02/29 03:00:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: makedbm.c,v 1.21 2005/06/20 00:08:35 lukem Exp $");
+__RCSID("$NetBSD: makedbm.c,v 1.22 2008/02/29 03:00:47 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -42,7 +42,6 @@ __RCSID("$NetBSD: makedbm.c,v 1.21 2005/06/20 00:08:35 lukem Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
-#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -202,7 +201,7 @@ list_database(char *database)
 	DBM *db;
 	datum key, val;
 
-	db = ypdb_open(database, O_RDONLY, 0444);
+	db = ypdb_open(database);
 	if (db == NULL)
 		err(1, "can't open database `%s'", database);
 
@@ -237,14 +236,12 @@ create_database(char *infile, char *database, char *yp_input_file,
 	size_t len;
 	char *p, *k, *v, *slash;
 	DBM *new_db;
-	static char mapname[] = "ypdbXXXXXX";
+	static const char template[] = "ypdbXXXXXX";
 	char db_mapname[MAXPATHLEN + 1], db_outfile[MAXPATHLEN + 1];
-	char db_tempname[MAXPATHLEN + 1];
 	char empty_str[] = "";
 
 	memset(db_mapname, 0, sizeof(db_mapname));
 	memset(db_outfile, 0, sizeof(db_outfile));
-	memset(db_tempname, 0, sizeof(db_tempname));
 
 	if (strcmp(infile, "-") == 0)
 		data_file = stdin;
@@ -267,19 +264,16 @@ create_database(char *infile, char *database, char *yp_input_file,
 
 	/* NOTE: database is now directory where map goes ! */
 
-	if (strlen(database) + strlen(mapname) + strlen(YPDB_SUFFIX) >
+	if (strlen(database) + strlen(template) + strlen(YPDB_SUFFIX) >
 	    (sizeof(db_mapname) - 1))
 		errx(1, "directory name `%s' too long", database);
 
-	snprintf(db_tempname, sizeof(db_tempname), "%s%s",
-	    database, mapname);
-	mktemp(db_tempname);	/* OK */
 	snprintf(db_mapname, sizeof(db_mapname), "%s%s",
-	    db_tempname, YPDB_SUFFIX);
+	    database, template);
 
-	new_db = ypdb_open(db_tempname, O_RDWR | O_CREAT | O_EXCL, 0644);
+	new_db = ypdb_mktemp(db_mapname);
 	if (new_db == NULL)
-		err(1, "can't create temp database `%s'", db_tempname);
+		err(1, "can't create temp database `%s'", db_mapname);
 
 	for (;
 	    (p = fparseln(data_file, &len, &line_no, NULL, FPARSELN_UNESCALL));
