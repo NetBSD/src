@@ -29,7 +29,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_icu.c,v 1.1.2.3 2008/01/28 18:29:07 matt Exp $");
+__KERNEL_RCSID(0, "omap2_icu.c,v 1.1.2.3 2008/01/28 18:29:07 matt Exp");
 
 #include <sys/param.h>
 #include <sys/evcnt.h>
@@ -58,7 +58,7 @@ static void omap2icu_attach(device_t, device_t, void *);
 
 static void omap2icu_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static void omap2icu_block_irqs(struct pic_softc *, size_t, uint32_t);
-static void omap2icu_establish_irq(struct pic_softc *, int, int, int);
+static void omap2icu_establish_irq(struct pic_softc *, struct intrsource *);
 #if 0
 static void omap2icu_source_name(struct pic_softc *, int, char *, size_t);
 #endif
@@ -117,30 +117,13 @@ omap2icu_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irq_mask)
  * Called with interrupts disabled
  */
 static int
-find_pending_irqs(struct omap2icu_softc *sc, int group, void *frame)
+find_pending_irqs(struct omap2icu_softc *sc, size_t group)
 {
-	struct intrsource ** const isbase = &sc->sc_pic.pic_sources[group * 32];
-	struct intrsource *is;
-	uint32_t pending;
-	int ipl_mask = 0;
-
-	pending = INTC_READ(sc, group, INTC_PENDING_IRQ);
+	uint32_t pending = INTC_READ(sc, group, INTC_PENDING_IRQ);
 
 	KASSERT((sc->sc_enabled_irqs[group] & pending) == pending);
-	KASSERT((sc->sc_pic.pic_pending_irqs[group] & pending) == 0);
 
-	while (pending != 0) {
-		int n = ffs(pending);
-		if (n-- == 0)
-			break;
-		is = isbase[n];
-		KASSERT(is != NULL);
-		pic_mark_pending_source(&sc->sc_pic, is);
-		pending &= ~__BIT(n);
-		ipl_mask |= __BIT(is->is_ipl);
-	};
-
-	return ipl_mask;
+	return pic_mark_pending_sources(&sc->sc_pic, group * 32, pending);
 }
 
 void
@@ -155,11 +138,11 @@ omap_irq_handler(void *frame)
 	uvmexp.intrs++;
 
 	if (sc->sc_enabled_irqs[0])
-		ipl_mask |= find_pending_irqs(sc, 0, frame);
+		ipl_mask |= find_pending_irqs(sc, 0);
 	if (sc->sc_enabled_irqs[1])
-		ipl_mask |= find_pending_irqs(sc, 1, frame);
+		ipl_mask |= find_pending_irqs(sc, 1);
 	if (sc->sc_enabled_irqs[2])
-		ipl_mask |= find_pending_irqs(sc, 2, frame);
+		ipl_mask |= find_pending_irqs(sc, 2);
 
 	/*
 	 * Record the pending_ipls and deliver them if we can.
@@ -169,15 +152,10 @@ omap_irq_handler(void *frame)
 }
 
 void
-omap2icu_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
+omap2icu_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
-	struct intrsource *is;
-
-	KASSERT(irq >= 0 && irq < 96);
-	KASSERT(type == IST_LEVEL);
-	is = pic->pic_sources[irq & 0x1f];
-
-	is->is_ipl = ipl;
+	KASSERT(is->is_irq < 96);
+	KASSERT(is->is_type == IST_LEVEL);
 }
 
 int

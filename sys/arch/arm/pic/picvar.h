@@ -13,6 +13,8 @@ struct intrsource;
 int	pic_handle_intr(void *);
 void	pic_mark_pending(struct pic_softc *pic, int irq);
 void	pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is);
+uint32_t pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
+	    uint32_t pending);
 void	*pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	    int (*func)(void *), void *arg);
 int	pic_alloc_irq(struct pic_softc *pic);
@@ -65,7 +67,7 @@ struct pic_ops {
 	void (*pic_block_irqs)(struct pic_softc *, size_t, uint32_t);
 	int (*pic_find_pending_irqs)(struct pic_softc *);
 
-	void (*pic_establish_irq)(struct pic_softc *, int, int, int);
+	void (*pic_establish_irq)(struct pic_softc *, struct intrsource *);
 	void (*pic_source_name)(struct pic_softc *, int, char *, size_t);
 };
 

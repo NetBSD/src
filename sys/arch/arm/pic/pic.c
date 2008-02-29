@@ -97,12 +97,11 @@ pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 {
 	const uint32_t ipl_mask = __BIT(is->is_ipl);
 
-	atomic_or_32(&pic->pic_pending_irqs[is->is_iplidx >> 5],
-	    __BIT(is->is_iplidx & 0x1f));
+	pic->pic_pending_irqs[is->is_irq >> 5] |= __BIT(is->is_irq & 0x1f);
 
-	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
-	atomic_or_32(&pic_pending_ipls, ipl_mask);
-	atomic_or_32(&pic_pending_pics, __BIT(pic->pic_id));
+	pic->pic_pending_ipls |= ipl_mask;
+	pic_pending_ipls |= ipl_mask;
+	pic_pending_pics |= __BIT(pic->pic_id);
 }
 
 void
@@ -114,6 +113,38 @@ pic_mark_pending(struct pic_softc *pic, int irq)
 	KASSERT(is != NULL);
 
 	pic_mark_pending_source(pic, is);
+}
+
+uint32_t
+pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
+	uint32_t pending)
+{
+	struct intrsource ** const isbase = &pic->pic_sources[irq_base];
+	struct intrsource *is;
+	uint32_t ipl_mask = 0;
+
+	KASSERT((irq_base & 31) == 0);
+	
+	(*pic->pic_ops->pic_block_irqs)(pic, irq_base, pending);
+
+        while (pending != 0) {
+		int n = ffs(pending);
+		if (n-- == 0)
+			break;
+		is = isbase[n];
+		KASSERT(is != NULL);
+
+		pic->pic_pending_irqs[is->is_irq >> 5] |=
+		     __BIT(is->is_irq & 0x1f);
+		pending &= ~__BIT(n);
+		ipl_mask |= __BIT(is->is_ipl);
+	}
+
+	pic->pic_pending_ipls |= ipl_mask;
+	pic_pending_ipls |= ipl_mask;
+	pic_pending_pics |= __BIT(pic->pic_id);
+
+	return ipl_mask;
 }
 
 uint32_t
@@ -450,6 +481,11 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 	off = pic_ipl_offset[ipl + 1] - 1;
 	is->is_iplidx = off - pic_ipl_offset[ipl];
 	pic__iplsources[off] = is;
+
+	(*pic->pic_ops->pic_establish_irq)(pic, is);
+
+	(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
+	    __BIT(is->is_irq & 0x1f));
 	
 	/* We're done. */
 	return is;

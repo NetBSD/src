@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.2.1 2008/01/28 18:29:07 matt Exp $");
+__KERNEL_RCSID(0, "omap2_gpio.c,v 1.1.2.1 2008/01/28 18:29:07 matt Exp");
 
 #define _INTR_PRIVATE
 
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap2_gpio.c,v 1.1.2.1 2008/01/28 18:29:07 matt Exp 
 static void gpio_pic_block_irqs(struct pic_softc *, size_t, uint32_t);
 static void gpio_pic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static int gpio_pic_find_pending_irqs(struct pic_softc *);
-static void gpio_pic_establish_irq(struct pic_softc *, int, int, int);
+static void gpio_pic_establish_irq(struct pic_softc *, struct intrsource *);
 
 const struct pic_ops gpio_pic_ops = {
 	.pic_block_irqs = gpio_pic_block_irqs,
@@ -160,26 +160,20 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	/*
 	 * Now find all the pending bits and mark them as pending.
 	 */
-	do {
-		int irq;
-		KASSERT(pending != 0);
-		irq = 31 - __builtin_clz(pending);
-		pending &= ~__BIT(irq);
-		pic_mark_pending(&gpio->gpio_pic, irq);
-	} while (pending != 0);
+	(void) pic_mark_pending_sources(&gpio->gpio_pic, 0, pending);
 
 	return 1;
 }
 
 void
-gpio_pic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
+gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct gpio_softc * const gpio = PIC_TO_SOFTC(pic);
-	KASSERT(irq < 32);
-	uint32_t irq_mask = __BIT(irq);
+	KASSERT(is->is_irq < 32);
+	uint32_t irq_mask = __BIT(is->is_irq);
 	uint32_t v;
 	unsigned int i;
-	struct intrsource *maybe_is, *is;
+	struct intrsource *maybe_is;
 
 	/*
 	 * Make sure the irq isn't enabled and not asserting.
@@ -196,7 +190,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
 	gpio->gpio_edge_falling_mask &= ~irq_mask;
 	gpio->gpio_level_hi_mask &= ~irq_mask;
 	gpio->gpio_level_lo_mask &= ~irq_mask;
-	switch (type) {
+	switch (is->is_type) {
 	case IST_LEVEL_LOW: gpio->gpio_level_lo_mask |= irq_mask; break;
 	case IST_LEVEL_HIGH: gpio->gpio_level_hi_mask |= irq_mask; break;
 	case IST_EDGE_FALLING: gpio->gpio_edge_falling_mask |= irq_mask; break;
@@ -231,8 +225,8 @@ gpio_pic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
 	}
 	if (maybe_is != NULL) {
 		is = gpio->gpio_is;
-		(*is->is_pic->pic_ops->pic_establish_irq)(is->is_pic, irq, 
-		    maybe_is->is_ipl, IST_LEVEL_LOW);
+		is->is_ipl = maybe_is->is_ipl;
+		(*is->is_pic->pic_ops->pic_establish_irq)(is->is_pic, is);
 	} 
 }
 
