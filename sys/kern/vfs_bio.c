@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.189 2008/02/20 17:13:29 matt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.190 2008/02/29 12:10:09 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.189 2008/02/20 17:13:29 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.190 2008/02/29 12:10:09 yamt Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -1937,7 +1937,7 @@ nestiobuf_iodone(buf_t *bp)
  * nestiobuf_setup: setup a "nested" buffer.
  *
  * => 'mbp' is a "master" buffer which is being divided into sub pieces.
- * => 'bp' should be a buffer allocated by getiobuf or getiobuf_nowait.
+ * => 'bp' should be a buffer allocated by getiobuf.
  * => 'offset' is a byte offset in the master buffer.
  * => 'size' is a size in bytes of this nested buffer.
  */
