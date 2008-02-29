@@ -1,4 +1,4 @@
-/*	$NetBSD: ypdb.c,v 1.10 2005/06/20 00:29:42 lukem Exp $	*/
+/*	$NetBSD: ypdb.c,v 1.11 2008/02/29 03:00:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypdb.c,v 1.10 2005/06/20 00:29:42 lukem Exp $");
+__RCSID("$NetBSD: ypdb.c,v 1.11 2008/02/29 03:00:47 lukem Exp $");
 #endif
 
 #include <sys/param.h>
@@ -47,31 +47,34 @@ __RCSID("$NetBSD: ypdb.c,v 1.10 2005/06/20 00:29:42 lukem Exp $");
 #include <db.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <rpcsvc/yp.h>
 
 #include "ypdb.h"
 
+static DBM	*_ypdb_dbopen(const char *, int, mode_t);
+
 /*
  * ypdb_open --
- *	dbopen(3) file with the flags & mode.
+ *	dbopen(3) file, read-only.
  *	First ensure that file has a suffix of YPDB_SUFFIX.
  *	Try opening as a DB_BTREE first, then DB_HASH.
  *
  * Returns:
- * 	*DBM on success
+ *	*DBM on success
  *	 NULL on failure
  */
 
 DBM *
-ypdb_open(const char *file, int flags, int mode)
+ypdb_open(const char *file)
 {
 	char path[MAXPATHLEN];
 	const char *cp, *suffix;
-	DBM *db;
-	BTREEINFO info;
 
 	cp = strrchr(file, '.');
 	if (cp != NULL && strcmp(cp, YPDB_SUFFIX) == 0)
@@ -83,6 +86,66 @@ ypdb_open(const char *file, int flags, int mode)
 		return (NULL);
 	}
 	snprintf(path, sizeof(path), "%s%s", file, suffix);
+	return _ypdb_dbopen(path, O_RDONLY, 0444);
+}
+
+/*
+ * ypdb_mktemp --
+ *	Create a temporary file using mkstemp(3) based on the
+ *	template provided in file.
+ *	dbopen(3) file, read-write, 0644 (modified by umask(2)).
+ *	Try opening as a DB_BTREE first, then DB_HASH.
+ *	file won't have YPDB_SUFFIX.
+ *
+ * Returns:
+ *	*DBM on success; file now exists.
+ *	 NULL on failure
+ */
+
+DBM *
+ypdb_mktemp(char *file)
+{
+	int fd = -1;
+	DBM *db = NULL;
+	mode_t myumask;
+	int save_errno;
+
+	if ((fd = mkstemp(file)) == -1)
+		return NULL;
+
+	myumask = umask(0);
+	(void)umask(myumask);
+	if (fchmod(fd, 0644 & ~myumask) == -1)
+		goto bad;
+
+	(void) close(fd);
+	fd = -1;
+
+	if ((db = _ypdb_dbopen(file, O_RDWR, 0644)) == NULL)
+		goto bad;
+
+	return db;
+
+ bad:
+	save_errno = errno;
+	if (fd != 1)
+		(void) close(fd);
+	(void) unlink(file);
+	errno = save_errno;
+	return NULL;
+}
+
+/*
+ * _ypdb_dbopen --
+ *	dbopen(3) path with the flags & mode.
+ *	Try opening as a DB_BTREE first, then DB_HASH.
+ */
+
+static DBM *
+_ypdb_dbopen(const char *path, int flags, mode_t mode)
+{
+	DBM *db;
+	BTREEINFO info;
 
 		/* try our btree format first */
 	info.flags = 0;
@@ -101,6 +164,11 @@ ypdb_open(const char *file, int flags, int mode)
 	db = (DBM *)dbopen(path, flags, mode, DB_HASH, NULL);
 	return (db);
 }
+
+/*
+ * ypdb_close --
+ *	Close the db
+ */
 
 void
 ypdb_close(DBM *db)

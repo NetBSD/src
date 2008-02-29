@@ -1,4 +1,4 @@
-/*	$NetBSD: ypserv_db.c,v 1.18 2006/10/15 01:10:00 christos Exp $	*/
+/*	$NetBSD: ypserv_db.c,v 1.19 2008/02/29 03:00:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypserv_db.c,v 1.18 2006/10/15 01:10:00 christos Exp $");
+__RCSID("$NetBSD: ypserv_db.c,v 1.19 2008/02/29 03:00:47 lukem Exp $");
 #endif
 
 /*
@@ -54,14 +54,12 @@ __RCSID("$NetBSD: ypserv_db.c,v 1.18 2006/10/15 01:10:00 christos Exp $");
 #include <arpa/nameser.h>
 
 #include <errno.h>
-#include <fcntl.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <netdb.h>
 #include <resolv.h>
 #include <syslog.h>
-#include <unistd.h>
 
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
@@ -363,7 +361,7 @@ ypdb_open_db(const char *domain, const char *map, u_int *status,
 #ifdef OPTIMIZE_DB
 retryopen:
 #endif /* OPTIMIZE_DB */
-	db = ypdb_open(map_path, O_RDONLY, 0444);
+	db = ypdb_open(map_path);
 #ifdef OPTIMIZE_DB
 	if (db == NULL) {
 #ifdef DEBUG
