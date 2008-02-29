@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.4 2007/09/12 06:19:45 matt Exp $");
+__KERNEL_RCSID(0, "imx31_icu.c,v 1.1.2.4 2007/09/12 06:19:45 matt Exp");
 
 #define _INTR_PRIVATE
  
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx31_icu.c,v 1.1.2.4 2007/09/12 06:19:45 matt Exp $
 
 static void avic_unblock_irqs(struct pic_softc *, size_t, uint32_t);
 static void avic_block_irqs(struct pic_softc *, size_t, uint32_t);
-static void avic_establish_irq(struct pic_softc *, int, int, int);
+static void avic_establish_irq(struct pic_softc *, struct intrsource *);
 static void avic_source_name(struct pic_softc *, int, char *, size_t);
 
 const struct pic_ops avic_pic_ops = {
@@ -128,24 +128,24 @@ avic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 }
 
 void
-avic_establish_irq(struct pic_softc *pic, int irq, int ipl, int type)
+avic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 {
 	struct avic_softc * const avic = (void *) pic;
 	bus_addr_t priority_reg;
 	int priority_shift;
 	uint32_t v;
 
-	KASSERT(irq < 64);
-	KASSERT(ipl < 16);
+	KASSERT(is->is_irq < 64);
+	KASSERT(is->is_ipl < 16);
 
-	priority_reg = IMX31_NIPRIORITY0 - (irq >> 3);
-	priority_shift = (irq & 7) * 4; 
+	priority_reg = IMX31_NIPRIORITY0 - (is->is_irq >> 3);
+	priority_shift = (is->is_irq & 7) * 4; 
 	v = INTC_READ(avic, priority_reg);
 	v &= ~(0x0f << priority_shift);
-	v |= SW_TO_HW_IPL(ipl) << priority_shift;
+	v |= SW_TO_HW_IPL(is->is_ipl) << priority_shift;
 	INTC_WRITE(avic, priority_reg, v);
 
-	KASSERT(type == IST_LEVEL);
+	KASSERT(is->is_type == IST_LEVEL);
 }
 
 static const char * const avic_intr_source_names[] = AVIC_INTR_SOURCE_NAMES;

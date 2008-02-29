@@ -1,4 +1,4 @@
-/*	$NetBSD: byte_swap.h,v 1.6.50.1 2007/08/28 16:55:50 matt Exp $	*/
+/*	$NetBSD: byte_swap.h,v 1.6.50.2 2008/02/29 22:29:39 matt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2002 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@ static __inline uint32_t
 __byte_swap_u32_variable(uint32_t v)
 {
 #ifdef _ARM_ARCH_6
-	__asm("rev\t%0, %1" : "=r"(v) : "r"(v));
+	__asm("rev\t%0, %1" : "=r" (v) : "0" (v));
 #else
 	uint32_t t1;
 
@@ -64,16 +64,21 @@ __byte_swap_u32_variable(uint32_t v)
 static __inline uint16_t
 __byte_swap_u16_variable(uint16_t v)
 {
+
 #ifdef _ARM_ARCH_6
-	__asm("rev16\t%0, %1" : "=r"(v) : "r"(v));
-#else
+	__asm("rev16\t%0, %1" : "=r" (v) : "0" (v));
+#elif !defined(__thumb__)
 	__asm volatile(
 		"mov	%0, %1, ror #8\n"
 		"orr	%0, %0, %0, lsr #16\n"
 		"bic	%0, %0, %0, lsl #16"
 	: "=r" (v)
 	: "0" (v));
+#else
+	v &= 0xffff;
+	v = (v >> 8) | (v << 8);
 #endif
+
 	return (v);
 }
 
