@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.20 2008/02/27 22:47:32 dsl Exp $	*/
+/*	$NetBSD: jot.c,v 1.21 2008/02/29 22:43:48 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.20 2008/02/27 22:47:32 dsl Exp $");
+__RCSID("$NetBSD: jot.c,v 1.21 2008/02/29 22:43:48 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -65,19 +65,18 @@ __RCSID("$NetBSD: jot.c,v 1.20 2008/02/27 22:47:32 dsl Exp $");
 
 #define	is_default(s)	(strcmp((s), "-") == 0)
 
-double	begin;
-double	ender;
-double	step;
-long	reps;
-int	randomize;
-int	infinity;
-int	boring;
-int	prec = -1;
-int	dox;
-int	chardata;
-int	nofinalnl;
-const char *sepstring = "\n";
-char	format[BUFSIZ];
+static double	begin = BEGIN_DEF;
+static double	ender = ENDER_DEF;
+static double	step = STEP_DEF;
+static long	reps = REPS_DEF;
+static int	randomize;
+static int	boring;
+static int	prec = -1;
+static int	dox;
+static int	chardata;
+static int	nofinalnl;
+static const char *sepstring = "\n";
+static char	format[BUFSIZ];
 
 static void	getargs(int, char *[]);
 static void	getformat(void);
@@ -95,12 +94,12 @@ main(int argc, char *argv[])
 	if (randomize) {
 		x = (ender + dox - begin) * (ender > begin ? 1 : -1);
 		srandom((unsigned long) step);
-		for (i = 1; i <= reps || infinity; i++) {
+		for (i = 1; i <= reps || reps == 0; i++) {
 			y = (double) random() / INT_MAX;
 			putdata(y * x + begin, reps - i);
 		}
 	} else {
-		for (i = 1, x = begin; i <= reps || infinity; i++, x += step)
+		for (i = 1, x = begin; i <= reps || reps == 0; i++, x += step)
 			putdata(x, reps - i);
 	}
 	if (!nofinalnl)
@@ -111,8 +110,13 @@ main(int argc, char *argv[])
 static void
 getargs(int argc, char *argv[])
 {
-	unsigned int	mask = 0;
-	int		n = 0;
+	unsigned int have = 0;
+#define BEGIN	1
+#define	STEP	2	/* seed if -r */
+#define REPS	4
+#define	ENDER	8
+	int n = 0;
+	long t;
 	char *ep;
 
 	for (;;) {
@@ -153,16 +157,17 @@ getargs(int argc, char *argv[])
 	switch (argc) {	/* examine args right to left, falling thru cases */
 	case 4:
 		if (!is_default(argv[3])) {
-			if (!sscanf(argv[3], "%lf", &step))
+			step = strtod(argv[3], &ep);
+			if (*ep != 0)
 				errx(EXIT_FAILURE, "Bad step value:  %s",
 				    argv[3]);
-			mask |= 01;
+			have |= STEP;
 		}
 	case 3:
 		if (!is_default(argv[2])) {
 			if (!sscanf(argv[2], "%lf", &ender))
 				ender = argv[2][strlen(argv[2])-1];
-			mask |= 02;
+			have |= ENDER;
 			if (prec < 0)
 				n = getprec(argv[2]);
 		}
@@ -170,7 +175,7 @@ getargs(int argc, char *argv[])
 		if (!is_default(argv[1])) {
 			if (!sscanf(argv[1], "%lf", &begin))
 				begin = argv[1][strlen(argv[1])-1];
-			mask |= 04;
+			have |= BEGIN;
 			if (prec < 0)
 				prec = getprec(argv[1]);
 			if (n > prec)		/* maximum precision */
@@ -178,10 +183,11 @@ getargs(int argc, char *argv[])
 		}
 	case 1:
 		if (!is_default(argv[0])) {
-			if (!sscanf(argv[0], "%ld", &reps))
+			reps = strtoul(argv[0], &ep, 0);
+			if (*ep != 0 || reps < 0)
 				errx(EXIT_FAILURE, "Bad reps value:  %s",
 				    argv[0]);
-			mask |= 010;
+			have |= REPS;
 		}
 		break;
 	case 0:
@@ -192,112 +198,75 @@ getargs(int argc, char *argv[])
 		    "Too many arguments.  What do you mean by %s?", argv[4]);
 	}
 	getformat();
-	while (mask) {	/* 4 bit mask has 1's where last 4 args were given */
-		switch (mask) {	/* fill in the 0's by default or computation */
-		case 001:
-			reps = REPS_DEF;
-			mask = 011;
-			break;
-		case 002:
-			reps = REPS_DEF;
-			mask = 012;
-			break;
-		case 003:
-			reps = REPS_DEF;
-			mask = 013;
-			break;
-		case 004:
-			reps = REPS_DEF;
-			mask = 014;
-			break;
-		case 005:
-			reps = REPS_DEF;
-			mask = 015;
-			break;
-		case 006:
-			reps = REPS_DEF;
-			mask = 016;
-			break;
-		case 007:
-			if (randomize) {
-				reps = REPS_DEF;
-				mask = 0;
-				break;
-			}
-			if (step == 0.0) {
-				reps = 0;
-				mask = 0;
-				break;
-			}
-			reps = (ender - begin + step) / step;
-			if (reps <= 0)
-				errx(EXIT_FAILURE, "Impossible stepsize");
-			mask = 0;
-			break;
-		case 010:
-			begin = BEGIN_DEF;
-			mask = 014;
-			break;
-		case 011:
-			begin = BEGIN_DEF;
-			mask = 015;
-			break;
-		case 012:
-			step = (randomize ? time(NULL) * getpid() : STEP_DEF);
-			mask = 013;
-			break;
-		case 013:
-			if (randomize)
-				begin = BEGIN_DEF;
-			else if (reps == 0)
-				errx(EXIT_FAILURE,
-				    "Must specify begin if reps == 0");
-			begin = ender - reps * step + step;
-			mask = 0;
-			break;
-		case 014:
-			step = (randomize ? time(NULL) * getpid() : STEP_DEF);
-			mask = 015;
-			break;
-		case 015:
-			if (randomize)
-				ender = ENDER_DEF;
-			else
-				ender = begin + reps * step - step;
-			mask = 0;
-			break;
-		case 016:
-			if (randomize)
-				step = time(NULL) * getpid();
-			else if (reps == 0)
-				errx(EXIT_FAILURE,
-				    "Infinite sequences cannot be bounded");
-			else if (reps == 1)
-				step = 0.0;
-			else
-				step = (ender - begin) / (reps - 1);
-			mask = 0;
-			break;
-		case 017:		/* if reps given and implied, */
-			if (!randomize && step != 0.0) {
-				long t = (ender - begin + step) / step;
-				if (t <= 0)
-					errx(EXIT_FAILURE,
-					    "Impossible stepsize");
-				if (t < reps)		/* take lesser */
-					reps = t;
-			}
-			mask = 0;
-			break;
-		default:
-			errx(EXIT_FAILURE, "bad mask");
-		}
-	}
-	if (reps == 0)
-		infinity = 1;
 
 	if (prec == -1)
 		prec = 0;
+
+	if (randomize) {
+		/* 'step' is the seed here, use pseudo-random default */
+		if (!(have & STEP))
+			step = time(NULL) * getpid();
+		/* Take the default values for everything else */
+		return;
+	}
+
+	/*
+	 * The loop we run uses begin/step/reps, so if we have been
+	 * given an end value (ender) we must use it to replace the
+	 * default values of the others.
+	 * We will assume a begin of 0 and step of 1 if necessary.
+	 */
+
+	switch (have) {
+
+	case ENDER | STEP:
+	case ENDER | STEP | BEGIN:
+		/* Calculate reps */
+		if (step == 0.0)
+			reps = 0;	/* ie infinite */
+		else {
+			reps = (ender - begin + step) / step;
+			if (reps <= 0)
+				errx(EXIT_FAILURE, "Impossible stepsize");
+		}
+		break;
+
+	case REPS | ENDER:
+	case REPS | ENDER | STEP:
+		/* Calculate begin */
+		if (reps == 0)
+			errx(EXIT_FAILURE,
+			    "Must specify begin if reps == 0");
+		begin = ender - reps * step + step;
+		break;
+
+	case REPS | BEGIN | ENDER:
+		/* Calculate step */
+		if (reps == 0)
+			errx(EXIT_FAILURE,
+			    "Infinite sequences cannot be bounded");
+		if (reps == 1)
+			step = 0.0;
+		else
+			step = (ender - begin) / (reps - 1);
+		break;
+
+	case REPS | BEGIN | ENDER | STEP:
+		/* reps given and implied - take smaller */
+		if (step == 0.0)
+			break;
+		t = (ender - begin + step) / step;
+		if (t <= 0)
+			errx(EXIT_FAILURE,
+			    "Impossible stepsize");
+		if (t < reps)
+			reps = t;
+		break;
+
+	default:
+		/* No values can be calculated, use defaults */
+		break;
+	}
 }
 
 static void
