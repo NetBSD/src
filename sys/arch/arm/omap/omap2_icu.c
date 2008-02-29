@@ -188,6 +188,8 @@ omap2icu_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	self->dv_private = sc;
+
+	pic_add(&sc->sc_pic, 0);
 }
 
 CFATTACH_DECL(omap2icu,
