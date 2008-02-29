@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.11 2008/02/28 21:08:45 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.12 2008/02/29 12:37:43 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.11 2008/02/28 21:08:45 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.12 2008/02/29 12:37:43 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1350,7 +1350,7 @@ arc_bio_disk_novol(struct arc_softc *sc, struct bioc_disk *bd)
 	error = arc_msgbuf(sc, request, sizeof(request),
 	    diskinfo, sizeof(struct arc_fw_diskinfo));
 	if (error != 0)
-		return error;
+		goto out;
 
 	/* skip disks with no capacity */
 	if (htole32(diskinfo->capacity) == 0 &&
