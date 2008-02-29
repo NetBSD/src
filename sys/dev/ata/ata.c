@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.96 2008/01/10 07:48:22 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.97 2008/02/29 06:38:28 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.96 2008/01/10 07:48:22 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.97 2008/02/29 06:38:28 dyoung Exp $");
 
 #include "opt_ata.h"
 
@@ -108,8 +108,8 @@ const struct cdevsw atabus_cdevsw = {
 extern struct cfdriver atabus_cd;
 
 static void atabus_childdetached(device_t, device_t);
-static bool atabus_resume(device_t);
-static bool atabus_suspend(device_t);
+static bool atabus_resume(device_t PMF_FN_PROTO);
+static bool atabus_suspend(device_t PMF_FN_PROTO);
 
 /*
  * atabusprint:
@@ -1518,7 +1518,7 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
 };
 
 static bool
-atabus_suspend(device_t dv)
+atabus_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
@@ -1529,7 +1529,7 @@ atabus_suspend(device_t dv)
 }
 
 static bool
-atabus_resume(device_t dv)
+atabus_resume(device_t dv PMF_FN_ARGS)
 {
 	struct atabus_softc *sc = device_private(dv);
 	struct ata_channel *chp = sc->sc_chan;
