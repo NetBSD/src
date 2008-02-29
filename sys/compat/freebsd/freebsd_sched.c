@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_sched.c,v 1.17 2008/02/28 16:09:19 elad Exp $	*/
+/*	$NetBSD: freebsd_sched.c,v 1.18 2008/02/29 08:41:51 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.17 2008/02/28 16:09:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_sched.c,v 1.18 2008/02/29 08:41:51 dogcow Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -98,7 +98,7 @@ sched_freebsd2native(int freebsd_policy,
 		native_params = (struct sched_param *)freebsd_params;
 	}
         
-	return (error)
+	return (error);
 }
 
 /*
@@ -134,7 +134,7 @@ sched_native2freebsd(int native_policy, struct sched_param *native_params,
 		freebsd_params = (struct freebsd_sched_param *)native_params;
 	}
         
-	return (error)
+	return (error);
 }
 
 int
@@ -252,7 +252,7 @@ freebsd_sys_sched_getscheduler(struct lwp *l, const struct freebsd_sys_sched_get
 
 	*retval = -1;
 
-	error = do_sched_getparam(l, SCARG(uap, pid), 0, &policy, NULL);
+	error = do_sched_getparam(SCARG(uap, pid), 0, &policy, NULL);
 	if (error)
 		goto out;
 
