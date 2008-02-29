@@ -1,7 +1,7 @@
-.\"	$NetBSD: arcmsr.4,v 1.4 2008/01/03 21:16:53 xtraeme Exp $
+.\"	$NetBSD: arcmsr.4,v 1.5 2008/02/29 20:56:33 xtraeme Exp $
 .\"	$OpenBSD: arc.4,v 1.10 2007/11/04 08:18:17 dlg Exp $
 .\"
-.\" Copyright (c) 2007 Juan Romero Pardines <xtraeme@netbsd.org>
+.\" Copyright (c) 2007, 2008 Juan Romero Pardines <xtraeme@netbsd.org>
 .\" Copyright (c) 2006 David Gwynne <dlg@openbsd.org>
 .\"
 .\" Permission to use, copy, modify, and distribute this software for any
@@ -16,7 +16,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd January 3, 2008
+.Dd February 29, 2008
 .Dt ARCMSR 4
 .Os
 .Sh NAME
@@ -86,14 +86,15 @@ ARC-1680x PCI Express 8 Port SAS RAID Controller
 ARC-1681 PCI-X 8 Port SAS RAID Controller
 .El
 .Pp
-These controllers can support RAID levels 0, 1, 1E, 3, 5, 6, and JBOD.
+These controllers support RAID levels 0, 1, 1E, 3, 5, 6, and JBOD
+using either SAS or SATA II drives.
 .Pp
 .Nm
-supports management of the controllers via the
-.Xr bio 4
-interface and the
+supports management and monitoring of the controller through the
 .Xr bioctl 8
-utility.
+and
+.Xr envstat 8
+commands.
 .Pp
 Please note, however, that to use some features that require special
 privileges, such as creating/removing hot-spares, pass-through disks
@@ -109,27 +110,37 @@ The
 driver will also report to the kernel log buffer any error that might
 appear when handling firmware commands, such as used by the
 .Xr bioctl 8
-utility.
-.Pp
+command.
+.Sh EVENTS
+The
+.Nm
+driver is able to send events to
+.Xr powerd 8
+if a volume or any drive connected to the volume is not online.
+The
+.Em state-changed
+event will be sent to the
+.Pa /etc/powerd/scripts/sensor_drive
+script when such condition happens.
 .Sh SEE ALSO
-.Xr bio 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr scsi 4 ,
-.Xr bioctl 8
+.Xr sd 4 ,
+.Xr bioctl 8 ,
+.Xr envstat 8 ,
+.Xr powerd 8
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
-.Ox 4.0 .
-It was ported to
-.Nx 4.0
-then.
+.Nx 5.0 .
 .Sh AUTHORS
 .An -nosplit
 The
 .Nm
-driver was written by
-.An David Gwynne Aq dlg@openbsd.org 
-and was extended by
-.An Juan Romero Pardines Aq xtraeme@netbsd.org .
+driver was originally written for
+.Ox
+by David Gwynne. It was ported to
+.Nx
+and extended by Juan Romero Pardines.
