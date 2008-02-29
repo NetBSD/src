@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.7 2008/01/02 23:45:06 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.8 2008/02/29 14:33:02 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.7 2008/01/02 23:45:06 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.8 2008/02/29 14:33:02 xtraeme Exp $");
 #endif
 
 #include <sys/types.h>
@@ -627,6 +627,8 @@ bio_setstate_consistency(int fd, int argc, char **argv)
 	if (argc > 2)
 		usage();
 
+	memset(&bs, 0, sizeof(bs));
+
 	if (strcmp(argv[0], "start") == 0)
 		bs.bs_status = BIOC_SSCHECKSTART_VOL;
 	else if (strcmp(argv[0], "stop") == 0)
@@ -634,8 +636,7 @@ bio_setstate_consistency(int fd, int argc, char **argv)
 	else
 		usage();
 
-	memset(&bs, 0, sizeof(bs));
-	bs.bs_volid = (unsigned int)strtoul(argv[2], &endptr, 10);
+	bs.bs_volid = (unsigned int)strtoul(argv[1], &endptr, 10);
 	if (*endptr != '\0')
 		errx(EXIT_FAILURE, "Invalid Volume ID value");
 
