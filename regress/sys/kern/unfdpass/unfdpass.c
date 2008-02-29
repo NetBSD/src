@@ -1,4 +1,4 @@
-/*	$NetBSD: unfdpass.c,v 1.8 2006/05/10 19:10:09 mrg Exp $	*/
+/*	$NetBSD: unfdpass.c,v 1.9 2008/02/29 16:28:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -208,6 +208,7 @@ main(argc, argv)
 	/*
 	 * Wait for the sender to connect.
 	 */
+	csunlen = sizeof(csun);
 	if ((sock = accept(listensock, (struct sockaddr *)&csun,
 	    &csunlen)) == -1)
 		err(1, "accept");
