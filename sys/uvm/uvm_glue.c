@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.117 2008/02/08 11:49:40 yamt Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.118 2008/02/29 12:08:04 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.117 2008/02/08 11:49:40 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.118 2008/02/29 12:08:04 yamt Exp $");
 
 #include "opt_coredump.h"
 #include "opt_kgdb.h"
@@ -384,10 +384,8 @@ uvm_uarea_free(vaddr_t uaddr, struct cpu_info *ci)
 }
 
 /*
- * uvm_exit: exit a virtual address space
+ * uvm_proc_exit: exit a virtual address space
  *
- * - the process passed to us is a dead (pre-zombie) process; we
- *   are running on a different context now (the reaper).
  * - borrow proc0's address space because freeing the vmspace
  *   of the dead process may block.
  */
