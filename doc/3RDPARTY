@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.584 2008/02/25 12:22:34 tnn Exp $
+#	$NetBSD: 3RDPARTY,v 1.585 2008/03/01 23:47:28 tnn Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -903,7 +903,7 @@ for import.
 
 Package:	wpa_supplicant/hostapd
 Version:	0.6.2
-Current Vers:	0.6.2
+Current Vers:	0.6.3
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://hostap.epitest.fi/releases/
 Home Page:	http://hostap.epitest.fi/wpa_supplicant/
