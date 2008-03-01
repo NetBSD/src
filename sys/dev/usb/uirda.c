@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.28 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: uirda.c,v 1.29 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.28 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.29 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,6 +280,8 @@ USB_ATTACH(uirda)
 
 	mutex_init(&sc->sc_wr_buf_lk, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_rd_buf_lk, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rd_sel);
+	selinit(&sc->sc_wr_sel);
 
 	ia.ia_type = IR_TYPE_IRFRAME;
 	ia.ia_methods = sc->sc_irm ? sc->sc_irm : &uirda_methods;
@@ -327,6 +329,8 @@ USB_DETACH(uirda)
 
 	mutex_destroy(&sc->sc_wr_buf_lk);
 	mutex_destroy(&sc->sc_rd_buf_lk);
+	seldestroy(&sc->sc_rd_sel);
+	seldestroy(&sc->sc_wr_sel);
 
 	return (rv);
 }
@@ -869,7 +873,7 @@ uirda_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 		    sc->sc_rd_err));
 	sc->sc_rd_count = size;
 	wakeup(&sc->sc_rd_count); /* XXX should use flag */
-	selnotify(&sc->sc_rd_sel, 0);
+	selnotify(&sc->sc_rd_sel, 0, 0);
 }
 
 usbd_status

@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.41 2007/12/05 17:19:50 pooka Exp $	*/
+/*	$NetBSD: qd.c,v 1.42 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.41 2007/12/05 17:19:50 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.42 2008/03/01 14:16:50 rmind Exp $");
 
 #include "opt_ddb.h"
 
@@ -522,6 +522,7 @@ qdcninit(cndev)
 	ldfont(unit);			/* load the console font */
 	ldcursor(unit, cons_cursor);	/* load default cursor map */
 	setup_input(unit);		/* init the DUART */
+	selinit(&qdrsel[unit]);
 
 	/* Set flag so probe knows */
 	qd0cninited = 1;
@@ -2111,7 +2112,7 @@ qddint(arg)
 		header->newest = header->oldest;
 		header->used = 0;
 
-		selnotify(&qdrsel[unit], 0);
+		selnotify(&qdrsel[unit], 0, 0);
 
 		if (dga->bytcnt_lo != 0) {
 			dga->bytcnt_lo = 0;
@@ -2126,7 +2127,7 @@ qddint(arg)
 	* wakeup "select" client.
 	*/
 	if (DMA_ISFULL(header)) {
-		selnotify(&qdrsel[unit], 0);
+		selnotify(&qdrsel[unit], 0, 0);
 	}
 
 	header->DMAreq[header->oldest].DMAdone |= REQUEST_DONE;
@@ -2142,7 +2143,7 @@ qddint(arg)
 	* if no more DMA pending, wake up "select" client and exit
 	*/
 	if (DMA_ISEMPTY(header)) {
-		selnotify(&qdrsel[unit], 0);
+		selnotify(&qdrsel[unit], 0, 0);
 		DMA_CLRACTIVE(header);  /* flag DMA done */
 		return;
 	}
@@ -2774,7 +2775,7 @@ GET_TBUTTON:
 		* do select wakeup
 		*/
 		if (do_wakeup) {
-			selnotify(&qdrsel[unit], 0);
+			selnotify(&qdrsel[unit], 0, 0);
 			do_wakeup = 0;
 		}
 	} else {

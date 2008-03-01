@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.111 2008/01/05 19:08:48 dsl Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.112 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.111 2008/01/05 19:08:48 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.112 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1126,7 +1126,7 @@ selrecord(lwp_t *selector, struct selinfo *sip)
  * Do a wakeup when a selectable event occurs.
  */
 void
-selwakeup(struct selinfo *sip)
+selnotify(struct selinfo *sip, int events, long knhint)
 {
 	lwp_t *l;
 
@@ -1161,13 +1161,7 @@ selwakeup(struct selinfo *sip)
 		l->l_selflag = SEL_RESET;
 	}
 	mutex_exit(&select_lock);
-}
 
-void
-selnotify(struct selinfo *sip, long knhint)
-{
-
-	selwakeup(sip);
 	KNOTE(&sip->sel_klist, knhint);
 }
 

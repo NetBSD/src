@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.59 2007/12/05 17:19:56 pooka Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.60 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.59 2007/12/05 17:19:56 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.60 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,7 +388,7 @@ USB_ATTACH(uscanner)
 	make_dev(&uscanner_cdevsw, USBDEVUNIT(sc->sc_dev),
 		UID_ROOT, GID_OPERATOR, 0644, "%s", USBDEVNAME(sc->sc_dev));
 #endif
-
+	selinit(&sc->sc_selq);
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
@@ -698,6 +698,7 @@ USB_DETACH(uscanner)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+	seldestroy(&sc->sc_selq);
 
 	return (0);
 }

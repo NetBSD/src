@@ -1,4 +1,4 @@
-/*	$NetBSD: satlink.c,v 1.35 2007/12/05 17:19:49 pooka Exp $	*/
+/*	$NetBSD: satlink.c,v 1.36 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.35 2007/12/05 17:19:49 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satlink.c,v 1.36 2008/03/01 14:16:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,6 +210,7 @@ satlinkattach(struct device *parent, struct device *self, void *aux)
 	    sc->sc_id.sid_serial);
 
 	callout_init(&sc->sc_ch, 0);
+	selinit(&sc->sc_selq);
 
 	sc->sc_bufsize = isa_dmamaxsize(sc->sc_ic, sc->sc_drq);
 
@@ -521,7 +522,7 @@ satlinktimeout(arg)
 	}
 
 	/* Wake up anyone blocked in poll... */
-	selnotify(&sc->sc_selq, 0);
+	selnotify(&sc->sc_selq, 0, 0);
 
  out:
 	callout_reset(&sc->sc_ch, SATLINK_TIMEOUT, satlinktimeout, sc);
