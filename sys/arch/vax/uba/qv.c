@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.18 2007/11/19 18:51:44 ad Exp $	*/
+/*	$NetBSD: qv.c,v 1.19 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.18 2007/11/19 18:51:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.19 2008/03/01 14:16:50 rmind Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -668,7 +668,7 @@ qvkint(qv)
 		vep->vse_key = key;
 		qp->itail = i;
 		if(qvrsel) {
-			selwakeup(qvrsel,0);
+			selnotify(qvrsel, 0, 0);
 			qvrsel = 0;
 		}
 	}
@@ -925,7 +925,7 @@ switches:if( om_switch != ( m_switch = (qvaddr->qv_csr & QV_MOUSE_ANY) >> 8 ) ) 
 	}
 	/* if we have proc waiting, and event has happened, wake him up */
 	if(qvrsel && (qp->ihead != qp->itail)) {
-		selwakeup(qvrsel,0);
+		selnotify(qvrsel, 0, 0);
 		qvrsel = 0;
 	}
 	/*

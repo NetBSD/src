@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.12 2007/03/04 05:59:18 christos Exp $ */
+/*	$NetBSD: event.c,v 1.13 2008/03/01 14:16:49 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.12 2007/03/04 05:59:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13 2008/03/01 14:16:49 rmind Exp $");
 
 /*
  * Internal `Firm_event' interface for the keyboard and mouse drivers.
@@ -70,8 +70,8 @@ ev_init(register struct evvar *ev)
 
 	ev->ev_get = ev->ev_put = 0;
 	ev->ev_q = malloc((u_long)EV_QSIZE * sizeof(struct firm_event),
-	    M_DEVBUF, M_WAITOK);
-	bzero((void *)ev->ev_q, EV_QSIZE * sizeof(struct firm_event));
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	selinit(&ev->ev_sel);
 }
 
 /*
@@ -81,6 +81,7 @@ void
 ev_fini(register struct evvar *ev)
 {
 
+	seldestroy(&ev->ev_sel);
 	free(ev->ev_q, M_DEVBUF);
 }
 

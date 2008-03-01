@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.78 2007/12/05 17:19:51 pooka Exp $	*/
+/*	$NetBSD: ch.c,v 1.79 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.78 2007/12/05 17:19:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.79 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,6 +199,8 @@ chattach(struct device *parent, struct device *self, void *aux)
 	struct ch_softc *sc = device_private(self);
 	struct scsipibus_attach_args *sa = aux;
 	struct scsipi_periph *periph = sa->sa_periph;
+
+	selinit(&sc->sc_selq);
 
 	/* Glue into the SCSI bus */
 	sc->sc_periph = periph;
@@ -572,7 +574,7 @@ ch_event(struct ch_softc *sc, u_int event)
 {
 
 	sc->sc_events |= event;
-	selnotify(&sc->sc_selq, 0);
+	selnotify(&sc->sc_selq, 0, 0);
 }
 
 static int

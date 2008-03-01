@@ -1,4 +1,4 @@
-/*      $NetBSD: opms.c,v 1.19 2007/03/04 06:00:43 christos Exp $        */
+/*      $NetBSD: opms.c,v 1.20 2008/03/01 14:16:49 rmind Exp $        */
 
 /*
  * Copyright 1997
@@ -91,7 +91,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.19 2007/03/04 06:00:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.20 2008/03/01 14:16:49 rmind Exp $");
 
 #include "opms.h"
 #if NOPMS > 1
@@ -373,7 +373,7 @@ opmsattach(parent, self, aux)
     sc->sc_ioh    = (bus_space_handle_t)ia->ia_aux;
     sc->sc_state  = PMS_INIT;
 
-    
+    selinit(&sc->sc_rsel);
     sc->sc_ih     = isa_intr_establish(ia->ia_ic, irq, IST_LEVEL, 
                                        IPL_TTY, opmsintr, sc);
     KERN_DEBUG(opmsdebug, KERN_DEBUG_INFO,
@@ -909,7 +909,7 @@ opmsintr(arg)
                             wakeup((void *)sc);
                         }
                         /* Wakeup any selects waiting */
-                        selwakeup(&sc->sc_rsel);
+                        selnotify(&sc->sc_rsel, 0, 0);
                     }
                 break;
                 default :

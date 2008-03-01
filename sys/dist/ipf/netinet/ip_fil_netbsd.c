@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.44 2008/01/14 17:17:19 dyoung Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.45 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (C) 1993-2003 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.44 2008/01/14 17:17:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.45 2008/03/01 14:16:51 rmind Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 2.55.2.51 2007/05/31 12:27:35 darrenr Exp";
@@ -305,6 +305,9 @@ ipfilterattach(int count)
 int ipfattach()
 {
 	int s;
+#if (__NetBSD_Version__ >= 499005500)
+	int i;
+#endif
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if defined(__NetBSD_Version__) && (__NetBSD_Version__ >= 105110000)
@@ -398,7 +401,12 @@ int ipfattach()
 # endif
 #endif
 
+#if (__NetBSD_Version__ >= 499005500)
+	for (i = 0; i < IPL_LOGSIZE; i++)
+		selinit(&ipfselwait[i]);
+#else
 	bzero((char *)ipfselwait, sizeof(ipfselwait));
+#endif
 	bzero((char *)frcache, sizeof(frcache));
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
@@ -435,6 +443,9 @@ pfil_error:
 int ipfdetach()
 {
 	int s;
+#if (__NetBSD_Version__ >= 499005500)
+	int i;
+#endif
 #if defined(NETBSD_PF) && (__NetBSD_Version__ >= 104200000)
 	int error = 0;
 # if __NetBSD_Version__ >= 105150000
@@ -505,6 +516,11 @@ int ipfdetach()
 	fr_deinitialise();
 
 	SPL_X(s);
+
+#if (__NetBSD_Version__ >= 499005500)
+	for (i = 0; i < IPL_LOGSIZE; i++)
+		seldestroy(&ipfselwait[i]);
+#endif
 	return 0;
 }
 

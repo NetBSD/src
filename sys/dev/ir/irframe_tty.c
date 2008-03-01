@@ -1,4 +1,4 @@
-/*	$NetBSD: irframe_tty.c,v 1.50 2007/12/15 00:39:28 perry Exp $	*/
+/*	$NetBSD: irframe_tty.c,v 1.51 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*
  * TODO
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.50 2007/12/15 00:39:28 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irframe_tty.c,v 1.51 2008/03/01 14:16:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -431,7 +431,7 @@ irt_frame(struct irframet_softc *sc, u_char *tbuf, u_int len)
 		DPRINTF(("%s: waking up reader\n", __func__));
 		wakeup(sc->sc_frames);
 	}
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, 0, 0);
 }
 
 void
@@ -550,6 +550,8 @@ irframet_open(void *h, int flag, int mode,
 		again = true;
 		callout_init(&sc->sc_timeout, 0);
 		mutex_init(&sc->sc_wr_lk, MUTEX_DEFAULT, IPL_NONE);
+		selinit(&sc->sc_rsel);
+		selinit(&sc->sc_wsel);
 	}
 
 	return (0);

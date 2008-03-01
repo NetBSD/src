@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.97 2008/02/29 12:04:48 yamt Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.98 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.97 2008/02/29 12:04:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.98 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,11 +425,6 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 {
 	int band;
 
-	selnotify(&selp->pipe_sel, NOTE_SUBMIT);
-
-	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
-		return;
-
 	switch (code) {
 	case POLL_IN:
 		band = POLLIN|POLLRDNORM;
@@ -452,6 +447,11 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 #endif
 		break;
 	}
+
+	selnotify(&selp->pipe_sel, band, NOTE_SUBMIT);
+
+	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
+		return;
 
 	fownsignal(sigp->pipe_pgid, SIGIO, code, band, selp);
 }

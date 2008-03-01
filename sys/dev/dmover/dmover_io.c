@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.29 2008/01/04 21:17:52 ad Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.30 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.29 2008/01/04 21:17:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.30 2008/03/01 14:16:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -387,7 +387,7 @@ dmio_read(struct file *fp, off_t *offp, struct uio *uio,
 			}
 			if (ds->ds_flags & DMIO_STATE_SEL) {
 				ds->ds_flags &= ~DMIO_STATE_SEL;
-				selwakeup(&ds->ds_selq);
+				selnotify(&ds->ds_selq, POLLIN | POLLRDNORM, 0);
 			}
 			break;
 		}
@@ -460,7 +460,7 @@ dmio_usrreq_done(struct dmover_request *dreq)
 		}
 		if (ds->ds_flags & DMIO_STATE_SEL) {
 			ds->ds_flags &= ~DMIO_STATE_SEL;
-			selwakeup(&ds->ds_selq);
+			selnotify(&ds->ds_selq, POLLOUT | POLLWRNORM, 0);
 		}
 	}
 	simple_unlock(&ds->ds_slock);

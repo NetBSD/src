@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.107 2007/12/30 22:03:01 ad Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.108 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.107 2007/12/30 22:03:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.108 2008/03/01 14:16:51 rmind Exp $");
 
 #include "opt_compat_sunos.h"
 #include "opt_ptm.h"
@@ -230,11 +230,12 @@ pty_check(int ptn)
 	 * in case it has been lengthened above.
 	 */
 	if (!pt_softc[ptn]) {
-		MALLOC(pti, struct pt_softc *, sizeof(struct pt_softc),
-			M_DEVBUF, M_WAITOK);
-		memset(pti, 0, sizeof(struct pt_softc));
+		pti = malloc(sizeof(struct pt_softc),
+		    M_DEVBUF, M_WAITOK | M_ZERO);
 
-	 	pti->pt_tty = ttymalloc();
+		selinit(&pti->pt_selr);
+		selinit(&pti->pt_selw);
+		pti->pt_tty = ttymalloc();
 
 		mutex_enter(&pt_softc_mutex);
 
@@ -242,13 +243,16 @@ pty_check(int ptn)
 		 * Check the entry again - it might have been
 		 * added while we were waiting for mutex.
 		 */
-		if (!pt_softc[ptn]) {
-			tty_attach(pti->pt_tty);
-			pt_softc[ptn] = pti;
-		} else {
+		if (pt_softc[ptn]) {
+			mutex_exit(&pt_softc_mutex);
 			ttyfree(pti->pt_tty);
+			seldestroy(&pti->pt_selr);
+			seldestroy(&pti->pt_selw);
 			free(pti, M_DEVBUF);
+			return (0);
 		}
+		tty_attach(pti->pt_tty);
+		pt_softc[ptn] = pti;
 
 		mutex_exit(&pt_softc_mutex);
 	}
@@ -482,7 +486,7 @@ ptsstart(tp)
 		pti->pt_send = TIOCPKT_START;
 	}
 
-	selnotify(&pti->pt_selr, NOTE_SUBMIT);
+	selnotify(&pti->pt_selr, 0, NOTE_SUBMIT);
 	cv_broadcast(&tp->t_outq.c_cvf);
 }
 
@@ -508,11 +512,11 @@ ptsstop(tp, flush)
 
 	/* change of perspective */
 	if (flush & FREAD) {
-		selnotify(&pti->pt_selw, NOTE_SUBMIT);
+		selnotify(&pti->pt_selw, 0, NOTE_SUBMIT);
 		cv_broadcast(&tp->t_rawq.c_cvf);
 	}
 	if (flush & FWRITE) {
-		selnotify(&pti->pt_selr, NOTE_SUBMIT);
+		selnotify(&pti->pt_selr, 0, NOTE_SUBMIT);
 		cv_broadcast(&tp->t_outq.c_cvf);
 	}
 }
@@ -526,11 +530,11 @@ ptcwakeup(tp, flag)
 
 	mutex_spin_enter(&tty_lock);
 	if (flag & FREAD) {
-		selnotify(&pti->pt_selr, NOTE_SUBMIT);
+		selnotify(&pti->pt_selr, 0, NOTE_SUBMIT);
 		cv_broadcast(&tp->t_outq.c_cvf);
 	}
 	if (flag & FWRITE) {
-		selnotify(&pti->pt_selw, NOTE_SUBMIT);
+		selnotify(&pti->pt_selw, 0, NOTE_SUBMIT);
 		cv_broadcast(&tp->t_rawq.c_cvf);
 	}
 	mutex_spin_exit(&tty_lock);

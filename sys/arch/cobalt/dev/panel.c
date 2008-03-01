@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.14 2007/10/17 19:54:08 garbled Exp $ */
+/* $NetBSD: panel.c,v 1.15 2008/03/01 14:16:49 rmind Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.14 2007/10/17 19:54:08 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.15 2008/03/01 14:16:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,7 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 	lcdkp_attach_subr(&sc->sc_kp);
 
 	callout_init(&sc->sc_callout, 0);
+	selinit(&sc->sc_selq);
 
 	printf("\n");
 }
@@ -193,7 +194,7 @@ panelclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct panel_softc *sc = device_lookup(&panel_cd, minor(dev));
 
-	selwakeup(&sc->sc_selq);
+	selnotify(&sc->sc_selq, 0, 0);
 	return 0;
 }
 
@@ -266,7 +267,7 @@ panel_soft(void *arg)
 	struct panel_softc *sc = arg;
 
 	if (lcdkp_scankey(&sc->sc_kp) != 0)
-		selwakeup(&sc->sc_selq);
+		selnotify(&sc->sc_selq, 0, 0);
 	else
 		callout_reset(&sc->sc_callout, PANEL_POLLRATE, panel_soft, sc);
 }

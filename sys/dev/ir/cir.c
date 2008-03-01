@@ -1,4 +1,4 @@
-/*	$NetBSD: cir.c,v 1.17 2007/03/04 06:02:09 christos Exp $	*/
+/*	$NetBSD: cir.c,v 1.18 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.17 2007/03/04 06:02:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cir.c,v 1.18 2008/03/01 14:16:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ cir_attach(struct device *parent, struct device *self, void *aux)
 	struct cir_softc *sc = device_private(self);
 	struct ir_attach_args *ia = aux;
 
+	selinit(&sc->sc_rdsel);
 	sc->sc_methods = ia->ia_methods;
 	sc->sc_handle = ia->ia_handle;
 
@@ -124,7 +125,7 @@ cir_activate(struct device *self, enum devact act)
 int
 cir_detach(struct device *self, int flags)
 {
-	/*struct cir_softc *sc = device_private(self);*/
+	struct cir_softc *sc = device_private(self);
 	int maj, mn;
 
 	/* locate the major number */
@@ -133,6 +134,8 @@ cir_detach(struct device *self, int flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = device_unit(self);
 	vdevgone(maj, mn, mn, VCHR);
+
+	seldestroy(&sc->sc_rdsel);
 
 	return (0);
 }

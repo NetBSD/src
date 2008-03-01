@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.281 2008/02/27 19:41:51 matt Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.282 2008/03/01 14:16:52 rmind Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.281 2008/02/27 19:41:51 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.282 2008/03/01 14:16:52 rmind Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1755,7 +1755,7 @@ after_listen:
 				 * retransmit timer, otherwise restart timer
 				 * using current (possibly backed-off) value.
 				 * If process is waiting for space,
-				 * wakeup/selwakeup/signal.  If data
+				 * wakeup/selnotify/signal.  If data
 				 * are ready to send, let tcp_output
 				 * decide between more output or persist.
 				 */

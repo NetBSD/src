@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.38 2008/01/30 11:46:59 ad Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.39 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.38 2008/01/30 11:46:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.39 2008/03/01 14:16:50 rmind Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -153,7 +153,7 @@ vc_nb_open(dev_t dev, int flag, int mode,
     if (VC_OPEN(vcp))
 	return(EBUSY);
 
-    memset(&(vcp->vc_selproc), 0, sizeof (struct selinfo));
+    selinit(&vcp->vc_selproc);
     INIT_QUEUE(vcp->vc_requests);
     INIT_QUEUE(vcp->vc_replys);
     MARK_VC_OPEN(vcp);
@@ -249,6 +249,7 @@ vc_nb_close(dev_t dev, int flag, int mode, struct lwp *l)
     if (err)
 	myprintf(("Error %d unmounting vfs in vcclose(%d)\n",
 	           err, minor(dev)));
+    seldestroy(&vcp->vc_selproc);
     return 0;
 }
 
@@ -590,7 +591,7 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 
 	/* Append msg to request queue and poke Venus. */
 	INSQUE(vmp->vm_chain, vcp->vc_requests);
-	selnotify(&(vcp->vc_selproc), 0);
+	selnotify(&(vcp->vc_selproc), 0, 0);
 
 	/* We can be interrupted while we wait for Venus to process
 	 * our request.  If the interrupt occurs before Venus has read
@@ -716,7 +717,7 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 
 		/* insert at head of queue! */
 		INSQUE(svmp->vm_chain, vcp->vc_requests);
-		selnotify(&(vcp->vc_selproc), 0);
+		selnotify(&(vcp->vc_selproc), 0, 0);
 	    }
 	}
 

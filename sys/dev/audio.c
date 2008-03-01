@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.234 2008/02/13 18:31:51 jmcneill Exp $	*/
+/*	$NetBSD: audio.c,v 1.235 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.234 2008/02/13 18:31:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.235 2008/03/01 14:16:50 rmind Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -490,6 +490,9 @@ audioattach(struct device *parent, struct device *self, void *aux)
 		 sc->sc_inports.allports, sc->sc_inports.master,
 		 sc->sc_outports.allports, sc->sc_outports.master));
 
+	selinit(&sc->sc_rsel);
+	selinit(&sc->sc_wsel);
+
 #ifdef AUDIO_PM_IDLE
 	callout_init(&sc->sc_idle_counter, 0);
 	callout_setfunc(&sc->sc_idle_counter, audio_idle, self);
@@ -599,6 +602,8 @@ audiodetach(struct device *self, int flags)
 #ifdef AUDIO_PM_IDLE
 	callout_destroy(&sc->sc_idle_counter);
 #endif
+	seldestroy(&sc->sc_rsel);
+	seldestroy(&sc->sc_wsel);
 
 	return 0;
 }
@@ -2598,7 +2603,7 @@ audio_softintr_rd(void *cookie)
 	struct proc *p;
 
 	audio_wakeup(&sc->sc_rchan);
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, 0, 0);
 	if (sc->sc_async_audio != NULL) {
 		DPRINTFN(3, ("audio_softintr_rd: sending SIGIO %p\n",
 		    sc->sc_async_audio));
@@ -2616,7 +2621,7 @@ audio_softintr_wr(void *cookie)
 	struct proc *p;
 
 	audio_wakeup(&sc->sc_wchan);
-	selnotify(&sc->sc_wsel, 0);
+	selnotify(&sc->sc_wsel, 0, 0);
 	if (sc->sc_async_audio != NULL) {
 		DPRINTFN(3, ("audio_softintr_wr: sending SIGIO %p\n",
 		    sc->sc_async_audio));

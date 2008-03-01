@@ -1,6 +1,6 @@
 /* $SourceForge: bktr_os.c,v 1.5 2003/03/11 23:11:25 thomasklausner Exp $ */
 
-/*	$NetBSD: bktr_os.c,v 1.49 2008/01/16 13:08:55 jmcneill Exp $	*/
+/*	$NetBSD: bktr_os.c,v 1.50 2008/03/01 14:16:50 rmind Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_os.c,v 1.20 2000/10/20 08:16:53 roger Exp$ */
 
 /*
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.49 2008/01/16 13:08:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bktr_os.c,v 1.50 2008/03/01 14:16:50 rmind Exp $");
 
 #ifdef __FreeBSD__
 #include "bktr.h"
@@ -517,6 +517,7 @@ bktr_detach(device_t dev)
 	    destroy_dev(bktr->bktrdev_alias);
 	}
 #endif
+	seldestroy(&bktr->vbi_select);
 
 	/*
 	 * Deallocate resources.

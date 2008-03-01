@@ -1,4 +1,4 @@
-/*	$NetBSD: hil.c,v 1.79 2007/12/31 13:38:49 ad Exp $	*/
+/*	$NetBSD: hil.c,v 1.80 2008/03/01 14:16:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.79 2007/12/31 13:38:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hil.c,v 1.80 2008/03/01 14:16:49 rmind Exp $");
 
 #include "ite.h"
 #include "rnd.h"
@@ -218,8 +218,10 @@ hilattach(struct device *parent, struct device *self, void *aux)
 		hilp->hl_queue[i].hq_procp = NULL;
 		hilp->hl_queue[i].hq_devmask = 0;
 	}
-	for (i = 0; i < NHILD; i++)
+	for (i = 0; i < NHILD; i++) {
+		selinit(&hilp->hl_device[i].hd_selr);
 		hilp->hl_device[i].hd_qmask = 0;
+	}
 	hilp->hl_device[HILLOOPDEV].hd_flags = (HIL_ALIVE|HIL_PSEUDO);
 
 	/*
@@ -998,9 +1000,9 @@ hilevent(struct hil_softc *hilp)
 	/*
 	 * Wake up anyone selecting on this device or the loop itself
 	 */
-	selnotify(&dptr->hd_selr, 0);
+	selnotify(&dptr->hd_selr, 0, 0);
 	dptr = &hilp->hl_device[HILLOOPDEV];
-	selnotify(&dptr->hd_selr, 0);
+	selnotify(&dptr->hd_selr, 0, 0);
 }
 
 #undef HQFULL
@@ -1038,7 +1040,7 @@ hpuxhilevent(struct hil_softc *hilp, struct hilloopdev *dptr)
 		dptr->hd_flags &= ~HIL_ASLEEP;
 		wakeup((void *)dptr);
 	}
-	selnotify(&dptr->hd_selr, 0);
+	selnotify(&dptr->hd_selr, 0, 0);
 }
 
 /*
