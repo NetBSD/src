@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.15 2008/02/29 18:15:41 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.16 2008/03/01 13:56:46 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.15 2008/02/29 18:15:41 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.16 2008/03/01 13:56:46 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1710,6 +1710,10 @@ arc_create_sensors(void *arg)
 		/* new disk in a volume found */
 		sc->sc_nsensors+= bv.bv_nodisk;
 	}
+
+	/* No valid volumes */
+	if (!sc->sc_nsensors)
+		kthread_exit(0);
 
 	sc->sc_sme = sysmon_envsys_create();
 	slen = sizeof(envsys_data_t) * sc->sc_nsensors;
