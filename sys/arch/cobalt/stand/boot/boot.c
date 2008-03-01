@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.10 2007/10/30 15:07:07 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.11 2008/03/01 17:45:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -83,6 +83,8 @@
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 
+#include <cobalt/dev/gtreg.h>
+
 #include "boot.h"
 #include "cons.h"
 #include "common.h"
@@ -104,6 +106,17 @@ char *kernelnames[] = {
 	NULL
 };
 
+u_int cobalt_id;
+static const char * const cobalt_model[] =
+{
+	[0]                  = "Unknown Cobalt",
+	[COBALT_ID_QUBE2700] = "Cobalt Qube 2700",
+	[COBALT_ID_RAQ]      = "Cobalt RaQ",
+	[COBALT_ID_QUBE2]    = "Cobalt Qube 2",
+	[COBALT_ID_RAQ2]     = "Cobalt RaQ 2"
+};
+#define COBALT_MODELS	__arraycount(cobalt_model)
+
 extern u_long end;		/* Boot loader code end address */
 void start(void);
 
@@ -114,6 +127,7 @@ static int get_bsdbootname(char **, char **, int *);
 static int parse_bootname(char *, int, char **, char **);
 static void prominit(unsigned int memsize);
 static void print_banner(unsigned int memsize);
+static u_int read_board_id(void);
 
 void cpu_reboot(void);
 
@@ -370,8 +384,35 @@ print_banner(unsigned int memsize)
 	printf(">> %s " NETBSD_VERS " Bootloader, Revision %s [@%p]\n",
 			bootprog_name, bootprog_rev, (void*)&start);
 	printf(">> (%s, %s)\n", bootprog_maker, bootprog_date);
+	printf(">> Model:\t\t%s\n", cobalt_model[cobalt_id]);
 	printf(">> Memory:\t\t%u k\n", (memsize - MIPS_KSEG0_START) / 1024);
 	printf(">> PROM boot string:\t%s\n", bootstring);
+}
+
+u_int
+read_board_id(void)
+{
+	volatile uint32_t *pcicfg_addr, *pcicfg_data;
+	uint32_t reg;
+	u_int id;
+
+#define PCIB_PCI_BUS		0
+#define PCIB_PCI_DEV		9
+#define PCIB_PCI_FUNC		0
+#define PCIB_BOARD_ID_REG	0x94
+#define COBALT_BOARD_ID(reg)	((reg & 0x000000f0) >> 4)
+#define GT_BASE			0x14000000
+
+	pcicfg_addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_ADDR);
+	pcicfg_data = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_DATA);
+
+	*pcicfg_addr = PCICFG_ENABLE |
+	    (PCIB_PCI_BUS << 16) | (PCIB_PCI_DEV << 11) | (PCIB_PCI_FUNC << 8) |
+	    PCIB_BOARD_ID_REG;
+	reg = *pcicfg_data;
+	*pcicfg_addr = 0;
+
+	return COBALT_BOARD_ID(reg);
 }
 
 /*
@@ -400,6 +441,7 @@ main(unsigned int memsize)
 	bi_flags.bi_flags = 0x0;
 	bi_addr = bi_init();
 
+	cobalt_id = read_board_id();
 	prominit(memsize);
 	if (cninit(&addr, &speed) != NULL)
 		bi_flags.bi_flags |= BI_SERIAL_CONSOLE;
