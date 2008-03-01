@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.34 2008/03/01 19:33:28 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.35 2008/03/01 21:07:40 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -504,4 +504,9 @@ lib/libc/locale/mbrlen.3			1.9
 
 	bin/38047 fix bad prototype for function mbrlen
 	[tnozaki, ticket #1093]
+
+share/man/man9/uiomove.9	               patch
+	Sync struct uio's documentation with reality in uiomove(9) to reflect
+	the removal of uio_segflg and uio_procp.
+	[elad, #1092]
 
