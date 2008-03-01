@@ -27,7 +27,7 @@
  *	i4b_i4bdrv.c - i4b userland interface driver
  *	--------------------------------------------
  *
- *	$Id: i4b_i4bdrv.c,v 1.33 2008/03/01 14:16:52 rmind Exp $
+ *	$Id: i4b_i4bdrv.c,v 1.34 2008/03/01 18:59:45 veego Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.33 2008/03/01 14:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_i4bdrv.c,v 1.34 2008/03/01 18:59:45 veego Exp $");
 
 #include "isdn.h"
 
@@ -242,7 +242,7 @@ isdnattach()
 #endif
 {
 	i4b_rdqueue.ifq_maxlen = IFQ_MAXLEN;
-	selinit(&select_rd_info)
+	selinit(&select_rd_info);
 
 #if defined(__FreeBSD__)
 #if __FreeBSD__ == 3
