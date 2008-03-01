@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.31 2007/12/05 17:19:51 pooka Exp $ */
+/*	$NetBSD: bpp.c,v 1.32 2008/03/01 14:16:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.31 2007/12/05 17:19:51 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.32 2008/03/01 14:16:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -160,6 +160,9 @@ bppattach(parent, self, aux)
 	struct lsi64854_softc *sc = &dsc->sc_lsi64854;
 	int burst, sbusburst;
 	int node;
+
+	selinit(&sc->sc_rsel);
+	selinit(&sc->sc_wsel);
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
@@ -613,7 +616,7 @@ bppintr(arg)
 		sc->sc_flags &= ~BPP_WANT;
 		wakeup(sc->sc_buf);
 	} else {
-		selnotify(&sc->sc_wsel, 0);
+		selnotify(&sc->sc_wsel, 0, 0);
 		if (sc->sc_asyncproc != NULL) {
 			mutex_enter(&proclist_mutex);
 			psignal(sc->sc_asyncproc, SIGIO);

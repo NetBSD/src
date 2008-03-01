@@ -27,7 +27,7 @@
  *	i4b_rbch.c - device driver for raw B channel data
  *	---------------------------------------------------
  *
- *	$Id: i4b_rbch.c,v 1.22 2007/12/05 17:20:02 pooka Exp $
+ *	$Id: i4b_rbch.c,v 1.23 2008/03/01 14:16:52 rmind Exp $
  *
  * $FreeBSD$
  *
@@ -36,7 +36,7 @@
  *---------------------------------------------------------------------------*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.22 2007/12/05 17:20:02 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i4b_rbch.c,v 1.23 2008/03/01 14:16:52 rmind Exp $");
 
 #include "isdnbchan.h"
 
@@ -351,6 +351,7 @@ isdnbchanattach()
 #endif
 #if defined(__NetBSD__) && __NetBSD_Version__ >= 104230000
 		callout_init(&rbch_softc[i].sc_callout, 0);
+		selinit(&rbch_softc[i].selp);
 #endif
 		rbch_softc[i].sc_fn = 1;
 #endif
@@ -1015,7 +1016,7 @@ rbch_connect(void *softc, void *cdp)
 		sc->sc_devstate |= ST_CONNECTED;
 		sc->sc_cd = cdp;
 		wakeup((void *)sc);
-		selwakeup(&sc->selp);
+		selnotify(&sc->selp, 0, 0);
 	}
 }
 
@@ -1060,7 +1061,7 @@ rbch_disconnect(void *softc, void *cdp)
 
 	splx(s);
 
-	selwakeup(&sc->selp);
+	selnotify(&sc->selp, 0, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1120,7 +1121,7 @@ rbch_rx_data_rdy(void *softc)
 	{
 		NDBGL4(L4_RBCHDBG, "(minor=%d) NO wakeup", sc->sc_unit);
 	}
-	selnotify(&sc->selp, 0);
+	selnotify(&sc->selp, 0, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1143,7 +1144,7 @@ rbch_tx_queue_empty(void *softc)
 	{
 		NDBGL4(L4_RBCHDBG, "(minor=%d) NO wakeup", sc->sc_unit);
 	}
-	selnotify(&sc->selp, 0);
+	selnotify(&sc->selp, 0, 0);
 }
 
 /*---------------------------------------------------------------------------*
@@ -1157,7 +1158,7 @@ rbch_activity(void *softc, int rxtx)
 
 	if (sc->sc_cd)
 		sc->sc_cd->last_active_time = SECOND;
-	selnotify(&sc->selp, 0);
+	selnotify(&sc->selp, 0, 0);
 }
 
 /*---------------------------------------------------------------------------*

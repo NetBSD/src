@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.47 2008/02/18 22:41:13 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.48 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.47 2008/02/18 22:41:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.48 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -628,6 +628,7 @@ sys_kqueue(struct lwp *l, const void *v, register_t *retval)
 	memset((char *)kq, 0, sizeof(struct kqueue));
 	simple_lock_init(&kq->kq_lock);
 	TAILQ_INIT(&kq->kq_head);
+	selinit(&kq->kq_sel);
 	fp->f_data = (void *)kq;	/* store the kqueue with the fp */
 	*retval = fd;
 	if (fdp->fd_knlistsize < 0)
@@ -1242,6 +1243,7 @@ kqueue_close(struct file *fp, struct lwp *l)
 			}
 		}
 	}
+	seldestroy(&kq->kq_sel);
 	pool_put(&kqueue_pool, kq);
 	fp->f_data = NULL;
 
@@ -1264,7 +1266,7 @@ kqueue_wakeup(struct kqueue *kq)
 	}
 
 	/* Notify select/poll and kevent. */
-	selnotify(&kq->kq_sel, 0);
+	selnotify(&kq->kq_sel, 0, 0);
 	simple_unlock(&kq->kq_lock);
 	splx(s);
 }

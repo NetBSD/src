@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.78 2008/02/12 19:37:51 drochner Exp $	*/
+/*	$NetBSD: uhid.c,v 1.79 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.78 2008/02/12 19:37:51 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.79 2008/03/01 14:16:51 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -150,6 +150,7 @@ uhid_attach(struct device *parent, struct device *self, void *aux)
 	int size, repid;
 	void *desc;
 
+	selinit(&sc->sc_rsel);
 	sc->sc_hdev.sc_intr = uhid_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
@@ -225,6 +226,7 @@ uhid_detach(struct device *self, int flags)
 			   sc->sc_hdev.sc_parent->sc_udev,
 			   USBDEV(sc->sc_hdev.sc_dev));
 #endif
+	seldestroy(&sc->sc_rsel);
 
 	return (0);
 }
@@ -252,7 +254,7 @@ uhid_intr(struct uhidev *addr, void *data, u_int len)
 		DPRINTFN(5, ("uhid_intr: waking %p\n", &sc->sc_q));
 		wakeup(&sc->sc_q);
 	}
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, 0, 0);
 	if (sc->sc_async != NULL) {
 		DPRINTFN(3, ("uhid_intr: sending SIGIO %p\n", sc->sc_async));
 		mutex_enter(&proclist_mutex);

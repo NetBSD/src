@@ -1,4 +1,4 @@
-/*	$NetBSD: opms.c,v 1.16 2007/03/04 05:59:33 christos Exp $	*/
+/*	$NetBSD: opms.c,v 1.17 2008/03/01 14:16:49 rmind Exp $	*/
 /*	$OpenBSD: pccons.c,v 1.22 1999/01/30 22:39:37 imp Exp $	*/
 /*	NetBSD: pms.c,v 1.21 1995/04/18 02:25:18 mycroft Exp	*/
 
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.16 2007/03/04 05:59:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opms.c,v 1.17 2008/03/01 14:16:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -198,6 +198,7 @@ opms_common_attach(struct opms_softc *sc, bus_space_tag_t opms_iot,
 {
 
 	kbd_context_init(opms_iot, config);
+	selinit(&sc->sc_rsel);
 
 	/* Other initialization was done by opmsprobe. */
 	sc->sc_state = 0;
@@ -418,7 +419,7 @@ opmsintr(void *arg)
 				sc->sc_state &= ~PMS_ASLP;
 				wakeup((void *)sc);
 			}
-			selnotify(&sc->sc_rsel, 0);
+			selnotify(&sc->sc_rsel, 0, 0);
 		}
 
 		break;

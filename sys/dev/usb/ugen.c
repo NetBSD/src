@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.96 2007/12/24 14:41:19 smb Exp $	*/
+/*	$NetBSD: ugen.c,v 1.97 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.96 2007/12/24 14:41:19 smb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.97 2008/03/01 14:16:51 rmind Exp $");
 
 #include "opt_ugen_bulk_ra_wb.h"
 #include "opt_compat_netbsd.h"
@@ -230,7 +230,7 @@ USB_ATTACH(ugen)
 	usbd_device_handle udev;
 	char *devinfop;
 	usbd_status err;
-	int conf;
+	int i, dir, conf;
 
 	devinfop = usbd_devinfo_alloc(uaa->device, 0);
 	USB_ATTACH_SETUP;
@@ -267,6 +267,14 @@ USB_ATTACH(ugen)
 		}
 	}
 #endif
+	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+		for (dir = OUT; dir <= IN; dir++) {
+			struct ugen_endpoint *sce;
+
+			sce = &sc->sc_endpoints[i][dir];
+			selinit(&sce->rsel);
+		}
+	}
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
@@ -1051,6 +1059,13 @@ USB_DETACH(ugen)
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
 
+	for (i = 0; i < USB_MAX_ENDPOINTS; i++) {
+		for (dir = OUT; dir <= IN; dir++) {
+			sce = &sc->sc_endpoints[i][dir];
+			seldestroy(&sce->rsel);
+		}
+	}
+
 	return (0);
 }
 
@@ -1087,7 +1102,7 @@ ugenintr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 		DPRINTFN(5, ("ugen_intr: waking %p\n", sce));
 		wakeup(sce);
 	}
-	selnotify(&sce->rsel, 0);
+	selnotify(&sce->rsel, 0, 0);
 }
 
 Static void
@@ -1146,7 +1161,7 @@ ugen_isoc_rintr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		DPRINTFN(5, ("ugen_isoc_rintr: waking %p\n", sce));
 		wakeup(sce);
 	}
-	selnotify(&sce->rsel, 0);
+	selnotify(&sce->rsel, 0, 0);
 }
 
 #ifdef UGEN_BULK_RA_WB
@@ -1214,7 +1229,7 @@ ugen_bulkra_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		DPRINTFN(5, ("ugen_bulkra_intr: waking %p\n", sce));
 		wakeup(sce);
 	}
-	selnotify(&sce->rsel, 0);
+	selnotify(&sce->rsel, 0, 0);
 }
 
 Static void
@@ -1279,7 +1294,7 @@ ugen_bulkwb_intr(usbd_xfer_handle xfer, usbd_private_handle addr,
 		DPRINTFN(5, ("ugen_bulkwb_intr: waking %p\n", sce));
 		wakeup(sce);
 	}
-	selnotify(&sce->rsel, 0);
+	selnotify(&sce->rsel, 0, 0);
 }
 #endif
 

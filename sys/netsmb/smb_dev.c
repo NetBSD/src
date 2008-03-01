@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.27 2008/01/30 14:08:01 ad Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.28 2008/03/01 14:16:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.27 2008/01/30 14:08:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.28 2008/03/01 14:16:52 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -208,7 +208,7 @@ nsmb_dev_open(dev_t dev, int oflags, int devtype,
 /*
 	STAILQ_INIT(&sdp->sd_rqlist);
 	STAILQ_INIT(&sdp->sd_rplist);
-	bzero(&sdp->sd_pollinfo, sizeof(struct selinfo));
+	selinit(&sdp->sd_pollinfo);
 */
 	s = splnet();
 	sdp->sd_level = -1;
@@ -249,6 +249,7 @@ nsmb_dev_close(dev_t dev, int flag, int fmt, struct lwp *l)
 /*
 	smb_flushq(&sdp->sd_rqlist);
 	smb_flushq(&sdp->sd_rplist);
+	seldestroy(&sdp->sd_pollinfo);
 */
 	smb_devtbl[minor(dev)] = NULL;
 	free(sdp, M_NSMBDEV);

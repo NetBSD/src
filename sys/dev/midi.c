@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.59 2007/12/16 19:01:35 christos Exp $	*/
+/*	$NetBSD: midi.c,v 1.60 2008/03/01 14:16:50 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.59 2007/12/16 19:01:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.60 2008/03/01 14:16:50 rmind Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -683,7 +683,7 @@ midi_softintr_rd(void *cookie)
 		mutex_exit(&proclist_mutex);
 	}
 	midi_wakeup(&sc->rchan);
-	selnotify(&sc->rsel, 0); /* filter will spin if locked */
+	selnotify(&sc->rsel, 0, 0); /* filter will spin if locked */
 }
 
 void
@@ -699,7 +699,7 @@ midi_softintr_wr(void *cookie)
 		mutex_exit(&proclist_mutex);
 	}
 	midi_wakeup(&sc->wchan);
-	selnotify(&sc->wsel, 0); /* filter will spin if locked */
+	selnotify(&sc->wsel, 0, 0); /* filter will spin if locked */
 }
 
 void

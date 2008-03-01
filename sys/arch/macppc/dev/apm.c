@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.18 2007/12/11 23:23:02 david Exp $	*/
+/*	$NetBSD: apm.c,v 1.19 2008/03/01 14:16:49 rmind Exp $	*/
 /*	$OpenBSD: apm.c,v 1.5 2002/06/07 07:13:59 miod Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.18 2007/12/11 23:23:02 david Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.19 2008/03/01 14:16:49 rmind Exp $");
 
 #include "apm.h"
 
@@ -194,6 +194,7 @@ apmattach(parent, self, aux)
 	sc->event_ptr = 0;
 	sc->event_count = 0;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rsel);
 }
 
 int
@@ -396,7 +397,7 @@ apm_record_event(sc, event_type)
 	sc->event_ptr %= APM_NEVENTS;
 	evp->type = event_type;
 	evp->index = ++apm_evindex;
-	selwakeup(&sc->sc_rsel);
+	selnotify(&sc->sc_rsel, 0, 0);
 	return (sc->sc_flags & SCFLAG_OWRITE) ? 0 : 1; /* user may handle */
 }
 #endif

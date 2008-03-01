@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.c,v 1.45 2008/02/12 17:30:58 joerg Exp $	*/
+/*	$NetBSD: tctrl.c,v 1.46 2008/03/01 14:16:49 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.45 2008/02/12 17:30:58 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tctrl.c,v 1.46 2008/03/01 14:16:49 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,6 +310,7 @@ tctrl_attach(struct device *parent, struct device *self, void *aux)
 		sc->sc_ext_pending = 0;
 
 	mutex_init(&sc->sc_requestlock, MUTEX_DEFAULT, IPL_NONE);
+	selinit(&sc->sc_rsel);
 
 	/* setup sensors and register the power button */
 	tctrl_sensor_setup(sc);
@@ -743,7 +744,7 @@ tctrl_apm_record_event(struct tctrl_softc *sc, u_int event_type)
 		sc->sc_event_ptr %= APM_NEVENTS;
 		evp->type = event_type;
 		evp->index = ++tctrl_apm_evindex;
-		selnotify(&sc->sc_rsel, 0);
+		selnotify(&sc->sc_rsel, 0, 0);
 		return(sc->sc_flags & TCTRL_APM_CTLOPEN) ? 0 : 1;
 	}
 	return(1);
