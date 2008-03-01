@@ -52,7 +52,7 @@ __KERNEL_RCSID(0, "pic.c,v 1.1.2.5 2007/11/06 19:21:35 matt Exp");
 MALLOC_DEFINE(M_INTRSOURCE, "intrsource", "interrupt source");
 
 static uint32_t
-	pic_find_pending_irqs_by_ipl(struct pic_softc *, uint32_t, int);
+	pic_find_pending_irqs_by_ipl(struct pic_softc *, size_t, uint32_t, int);
 static struct pic_softc *
 	pic_list_find_pic_by_pending_ipl(uint32_t);
 static void
@@ -148,7 +148,8 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 }
 
 uint32_t
-pic_find_pending_irqs_by_ipl(struct pic_softc *pic, uint32_t pending, int ipl)
+pic_find_pending_irqs_by_ipl(struct pic_softc *pic, size_t irq_base,
+	uint32_t pending, int ipl)
 {
 	uint32_t ipl_irq_mask = 0;
 	uint32_t irq_mask;
@@ -159,8 +160,8 @@ pic_find_pending_irqs_by_ipl(struct pic_softc *pic, uint32_t pending, int ipl)
 			return ipl_irq_mask;
 
 		irq_mask = __BIT(irq);
-		KASSERT(pic->pic_sources[irq] != NULL);
-		if (pic->pic_sources[irq]->is_ipl == ipl)
+		KASSERT(pic->pic_sources[irq_base + irq] != NULL);
+		if (pic->pic_sources[irq_base + irq]->is_ipl == ipl)
 			ipl_irq_mask |= irq_mask;
 
 		pending &= ~irq_mask;
@@ -207,8 +208,8 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 #endif
 
 	for (;;) {
-		pending_irqs = pic_find_pending_irqs_by_ipl(pic, *ipending,
-		    ipl);
+		pending_irqs = pic_find_pending_irqs_by_ipl(pic, irq_base,
+		    *ipending, ipl);
 		if (pending_irqs == 0) {
 #if PIC_MAXSOURCES > 32
 			irq_count += 32;
@@ -217,7 +218,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 			irq_base += 32;
 			ipending++;
 			iblocked++;
-			if (irq_base > pic->pic_maxsources) {
+			if (irq_base >= pic->pic_maxsources) {
 				ipending = pic->pic_pending_irqs;
 				iblocked = pic->pic_blocked_irqs;
 			}
@@ -241,7 +242,7 @@ pic_deliver_irqs(struct pic_softc *pic, int ipl, void *frame)
 				blocked_irqs &= ~__BIT(irq);
 			}
 			pending_irqs = pic_find_pending_irqs_by_ipl(pic,
-			    *ipending, ipl);
+			    irq_base, *ipending, ipl);
 		} while (pending_irqs);
 		if (blocked_irqs) {
 			*iblocked |= blocked_irqs;
