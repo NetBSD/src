@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.11 2008/03/01 17:45:11 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.12 2008/03/01 18:13:02 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -392,25 +392,17 @@ print_banner(unsigned int memsize)
 u_int
 read_board_id(void)
 {
-	volatile uint32_t *pcicfg_addr, *pcicfg_data;
-	uint32_t reg;
-	u_int id;
+	uint32_t tag, reg;
 
 #define PCIB_PCI_BUS		0
 #define PCIB_PCI_DEV		9
 #define PCIB_PCI_FUNC		0
 #define PCIB_BOARD_ID_REG	0x94
 #define COBALT_BOARD_ID(reg)	((reg & 0x000000f0) >> 4)
-#define GT_BASE			0x14000000
 
-	pcicfg_addr = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_ADDR);
-	pcicfg_data = (uint32_t *)MIPS_PHYS_TO_KSEG1(GT_BASE + GT_PCICFG_DATA);
-
-	*pcicfg_addr = PCICFG_ENABLE |
-	    (PCIB_PCI_BUS << 16) | (PCIB_PCI_DEV << 11) | (PCIB_PCI_FUNC << 8) |
-	    PCIB_BOARD_ID_REG;
-	reg = *pcicfg_data;
-	*pcicfg_addr = 0;
+	tag = (PCIB_PCI_BUS << 16) | (PCIB_PCI_DEV << 11) |
+	    (PCIB_PCI_FUNC << 8);
+	reg = pcicfgread(tag, PCIB_BOARD_ID_REG);
 
 	return COBALT_BOARD_ID(reg);
 }

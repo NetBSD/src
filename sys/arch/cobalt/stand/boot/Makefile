@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2008/03/01 17:45:11 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.14 2008/03/01 18:13:02 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -72,7 +72,7 @@ PROG=		boot
 # common sources
 SRCS+=		start.S boot.c devopen.c conf.c clock.c bootinfo.c
 SRCS+=		prf.c com.c cons.c ns16550.c pciide.c tgets.c wdc.c wd.c
-SRCS+=		cache.c nif_tlp.c tlp.c
+SRCS+=		cache.c pci.c nif_tlp.c tlp.c
 
 # XXX dev_net.c should really be in libsa, but it doesn't
 #     declare ip_convertaddr correctly.
