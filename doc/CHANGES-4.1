@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.33 2008/02/28 20:38:43 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.34 2008/03/01 19:33:28 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -492,4 +492,16 @@ usr.bin/column/column.c				1.18
 	Fix memory allocations in column. Fixes SegFault reported by
 	Jeremy Reed on tech-misc.
 	[oster, ticket #1089]
+
+etc/rc.d/amd					1.15
+
+	Don't try to shutdown amd(8) gracefully. It seems to cause problems
+	for more people than the old (also broken) behavior. This fixes
+	PR bin/36506 and PR bin/38103.
+	[tron, ticket #1091]
+
+lib/libc/locale/mbrlen.3			1.9
+
+	bin/38047 fix bad prototype for function mbrlen
+	[tnozaki, ticket #1093]
 
