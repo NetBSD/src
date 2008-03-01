@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.8 2008/02/29 14:33:02 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.9 2008/03/01 16:08:41 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.8 2008/02/29 14:33:02 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.9 2008/03/01 16:08:41 xtraeme Exp $");
 #endif
 
 #include <sys/types.h>
@@ -306,14 +306,18 @@ bio_show_volumes(struct biotmp *bt)
 		break;
 	default:
 		snprintf(rtype, sizeof(rtype), "RAID %u", bv.bv_level);
-		snprintf(stripe, sizeof(stripe), "%uK", bv.bv_stripe_size);
+		if (bv.bv_level == 1 || bv.bv_stripe_size == 0)
+			snprintf(stripe, sizeof(stripe), "N/A");
+		else
+			snprintf(stripe, sizeof(stripe), "%uK",
+			    bv.bv_stripe_size);
 		break;
 	}
 
 	humanize_number(size, 5, (int64_t)bv.bv_size, "", HN_AUTOSCALE,
 	    HN_B | HN_NOSPACE | HN_DECIMAL);
 
-	printf("%6s %-12s %4s %20s %12s %6s %s%s\n",
+	printf("%6s %-12s %4s %20s %8s %6s %s%s\n",
 	    bt->volname, status, size, tmp,
 	    rtype, stripe, percent, seconds);
 
@@ -467,11 +471,11 @@ bio_show_common(int fd, int argc, char **argv)
 	 * Common code to show only info about volumes and disks
 	 * associated to them.
 	 */
-	printf("%6s %-12s %4s %20s %12s %6s\n",
+	printf("%6s %-12s %4s %20s %8s %6s\n",
 	    "Volume", "Status", "Size", "Device/Label",
-	    "RAID Level", "Stripe");
+	    "Level", "Stripe");
 	printf("=============================================="
-	       "===================\n");
+	       "===============\n");
 
 	for (i = 0; i < bi.bi_novol; i++) {
 		biot->format = true;
