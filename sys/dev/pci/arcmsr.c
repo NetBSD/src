@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.16 2008/03/01 13:56:46 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.17 2008/03/01 16:33:29 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.16 2008/03/01 13:56:46 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.17 2008/03/01 16:33:29 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -959,6 +959,9 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		req_cvolset.cache = 1; /* always enabled */
 		req_cvolset.speed = 4; /* always max speed */
 
+		if (bc->bc_level == 1)
+			req_cvolset.quick_init = 1; /* foreground init */
+
 		error = arc_msgbuf(sc, &req_cvolset, sizeof(req_cvolset),
 		    reply, sizeof(reply));
 		if (error != 0)
@@ -970,6 +973,15 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 			    device_xname(&sc->sc_dev), bc->bc_volid);
 			return error;
 		}
+
+		/*
+		 * If we are creating a RAID 1 or RAID 1+0 volume,
+		 * the volume will be created immediately but it won't
+		 * be available until the initialization is done... so
+		 * don't bother attaching the sd(4) device.
+		 */
+		if (bc->bc_level == 1)
+			break;
 
 		/*
 		 * Do a rescan on the bus to attach the device associated
@@ -1281,6 +1293,11 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 	} else if (status & ARC_FW_VOL_STATUS_CHECKING) {
 		bv->bv_status = BIOC_SVCHECKING;
 		bv->bv_percent = htole32(volinfo->progress);
+	} else if (status & ARC_FW_VOL_STATUS_NEED_INIT) {
+		bv->bv_status = BIOC_SVOFFLINE;
+	} else {
+		printf("%s: volume %d status 0x%x\n",
+		    device_xname(&sc->sc_dev), bv->bv_volid, status);
 	}
 
 	blocks = (uint64_t)htole32(volinfo->capacity2) << 32;
@@ -1839,7 +1856,7 @@ arc_refresh_sensors(struct sysmon_envsys *sme, envsys_data_t *edata)
 	/* Current sensor is handling a volume */
 	switch (bv.bv_status) {
 	case BIOC_SVOFFLINE:
-		edata->value_cur = ENVSYS_DRIVE_FAIL;
+		edata->value_cur = ENVSYS_DRIVE_OFFLINE;
 		edata->state = ENVSYS_SCRITICAL;
 		break;
 	case BIOC_SVDEGRADED:
