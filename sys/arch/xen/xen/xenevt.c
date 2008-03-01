@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.23 2008/03/01 14:16:50 rmind Exp $      */
+/*      $NetBSD: xenevt.c,v 1.24 2008/03/01 18:32:48 rmind Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.23 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.24 2008/03/01 18:32:48 rmind Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -151,13 +151,11 @@ void
 xenevtattach(int n)
 {
 	struct intrhand *ih;
-	int i, s;
+	int s;
 
 	devevent_sih = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))xenevt_notify, NULL);
 	memset(devevent, 0, sizeof(devevent));
-	for (i = 0; i < NR_EVENT_CHANNELS; i++)
-		selinit(&devevent[i].sel);
 	xenevt_ev1 = 0;
 	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 
@@ -265,7 +263,7 @@ xenevt_donotify(struct xenevt_d *d)
 	s = splsoftserial();
 	simple_lock(&d->lock);
 	 
-	selnotify(&d->sel, 1);
+	selnotify(&d->sel, 0, 1);
 	wakeup(&d->ring_read);
 
 	simple_unlock(&d->lock);
@@ -308,6 +306,7 @@ xenevtopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 		d = malloc(sizeof(*d), M_DEVBUF, M_WAITOK | M_ZERO);
 		simple_lock_init(&d->lock);
+		selinit(&d->sel);
 		return fdclone(l, fp, fd, flags, &xenevt_fileops, d);
 #ifdef XEN3
 	case DEV_XSD:
@@ -390,6 +389,7 @@ xenevt_fclose(struct file *fp, struct lwp *l)
 #endif
 		}
 	}
+	seldestroy(&d->sel);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
 
