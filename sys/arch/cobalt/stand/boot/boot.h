@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.h,v 1.6 2007/10/30 15:07:07 tsutsui Exp $	*/
+/*	$NetBSD: boot.h,v 1.7 2008/03/01 17:45:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -44,6 +44,11 @@
 #define DEFKERNELNAME	kernelnames[0]
 
 extern char *kernelnames[];
+extern u_int cobalt_id;
+#define COBALT_ID_QUBE2700	3
+#define COBALT_ID_RAQ		4
+#define COBALT_ID_QUBE2		5
+#define COBALT_ID_RAQ2		6 
 
 /*
  * com
