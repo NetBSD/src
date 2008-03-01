@@ -117,9 +117,7 @@ gpio_pic_unblock_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	 * If this a level source, ack it now.  If it's still asserted
 	 * it'll come back.
 	 */
-	if (irq_mask & (gpio->gpio_level_lo_mask|gpio->gpio_level_hi_mask))
-		GPIO_WRITE(gpio, GPIO_IRQSTATUS1, irq_mask);
-	GPIO_WRITE(gpio, GPIO_IRQENABLE1, gpio->gpio_enable_mask);
+	GPIO_WRITE(gpio, GPIO_SETIRQENABLE1, gpio->gpio_enable_mask);
 }
 
 void
@@ -129,7 +127,14 @@ gpio_pic_block_irqs(struct pic_softc *pic, size_t irq_base, uint32_t irq_mask)
 	KASSERT(irq_base == 0);
 
 	gpio->gpio_enable_mask &= ~irq_mask;
-	GPIO_WRITE(gpio, GPIO_IRQENABLE1, gpio->gpio_enable_mask);
+	GPIO_WRITE(gpio, GPIO_CLEARIRQENABLE1, irq_mask);
+	/*
+	 * If any of the sources are edge triggered, ack them now so
+	 * we won't lose them.
+	 */
+	if (irq_mask & gpio->gpio_edge_mask)
+		GPIO_WRITE(gpio, GPIO_IRQSTATUS1,
+		    irq_mask & gpio->gpio_edge_mask);
 }
 
 int
@@ -143,19 +148,6 @@ gpio_pic_find_pending_irqs(struct pic_softc *pic)
 	pending = (v & gpio->gpio_enable_mask);
 	if (pending == 0)
 		return 0;
-
-	/*
-	 * Disable the pending interrupts.
-	 */
-	gpio->gpio_enable_mask &= ~pending;
-	GPIO_WRITE(gpio, GPIO_IRQENABLE1, gpio->gpio_enable_mask);
-
-	/*
-	 * If any of the sources are edge triggered, ack them now so
-	 * we won't lose them.
-	 */
-	if (v & gpio->gpio_edge_mask)
-		GPIO_WRITE(gpio, GPIO_IRQSTATUS1, v & gpio->gpio_edge_mask);
 
 	/*
 	 * Now find all the pending bits and mark them as pending.
@@ -172,8 +164,10 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	KASSERT(is->is_irq < 32);
 	uint32_t irq_mask = __BIT(is->is_irq);
 	uint32_t v;
+#if 0
 	unsigned int i;
 	struct intrsource *maybe_is;
+#endif
 
 	/*
 	 * Make sure the irq isn't enabled and not asserting.
@@ -216,7 +210,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 	v = GPIO_READ(gpio, GPIO_OE);
 	v |= irq_mask;
 	GPIO_WRITE(gpio, GPIO_OE, v); 
-
+#if 0
 	for (i = 0, maybe_is = NULL; i < 32; i++) {
 		if ((is = pic->pic_sources[i]) != NULL) {
 			if (maybe_is == NULL || is->is_ipl > maybe_is->is_ipl)
@@ -229,6 +223,7 @@ gpio_pic_establish_irq(struct pic_softc *pic, struct intrsource *is)
 		is->is_ipl = maybe_is->is_ipl;
 		(*is->is_pic->pic_ops->pic_establish_irq)(is->is_pic, is);
 	} 
+#endif
 }
 
 static int gpio_match(device_t, cfdata_t, void *);
