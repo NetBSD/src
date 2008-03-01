@@ -1,16 +1,15 @@
-# $NetBSD: INSTALL_XEN3_DOMU,v 1.9 2006/11/11 20:00:39 bouyer Exp $
+# $NetBSD: INSTALL_XEN3_DOMU,v 1.10 2008/03/01 15:09:14 joerg Exp $
+#
+#	INSTALL_XEN3_DOMU - Installation kernel for Xen 3/DomU.
+#
+#	This kernel is derived from XEN3_DOMU with additional memory disk
+#	options.
 
-include "arch/i386/conf/INSTALL_XEN2_DOMU"
+include	"arch/i386/conf/XEN3_DOMU"
 
-options 	XEN3	#Xen 3.x support
-options 	XEN_COMPAT_030001  #compatible with Xen3 before 3.0.2
-options 	MAXPHYS=32768   #xbd doesn't handle 64k transfers
+#ident 		"INSTALL-$Revision: 1.10 $"
 
-no cpu* at mainbus?
-no xennet* at hypervisor?
-no xbd* at hypervisor?
-
-vcpu*		at hypervisor?		# Xen virtual CPUs
-xenbus*		at hypervisor?		# Xen virtual bus
-xennet*		at xenbus?		# Xen virtual network interface
-xbd*		at xenbus?		# Xen virtual block device
+options 	MEMORY_DISK_HOOKS
+options 	MEMORY_DISK_IS_ROOT     # force root on memory disk
+options 	MEMORY_DISK_SERVER=0    # no userspace memory disk support
+options 	MEMORY_DISK_ROOT_SIZE=10000     # size of memory disk, in blocks
