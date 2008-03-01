@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.50 2008/01/09 11:26:15 simonb Exp $
+$NetBSD: README,v 1.51 2008/03/01 14:37:02 joerg Exp $
 
 acorn26:	Acorn ARM2- and ARM3-based machines (arm, 20000509)
 acorn32:	Acorn computers Ltd. ARM 6/7/SA based machines (arm, 20011118)
@@ -75,4 +75,3 @@ sun68k:		Sun Microsystems Motorola 680x0 CPU based platform files
 
 Single port cpu families
 alpha:		Digital Equipment Alpha processor
-m88k:		Motorola 88xxx CPU based platform files
