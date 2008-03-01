@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.30 2008/03/01 05:28:28 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.31 2008/03/01 05:37:33 tsutsui Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.30 $"
+#ident 		"INSTALL-$Revision: 1.31 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -211,17 +211,17 @@ com* 		at puc? port ?
 # a machine hang with some controllers.
 pciide* 	at pci? dev ? function ? flags 0x0000	# GENERIC pciide driver
 acardide*	at pci? dev ? function ?	# Acard IDE controllers
-aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
-artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
+#aceride* 	at pci? dev ? function ?	# Acer Lab IDE controllers
+#artsata*	at pci? dev ? function ?	# Intel i31244 SATA controller
 cmdide* 	at pci? dev ? function ?	# CMD tech IDE controllers
-cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
+#cypide* 	at pci? dev ? function ?	# Cypress IDE controllers
 hptide* 	at pci? dev ? function ?	# Triones/HighPoint IDE controllers
-optiide* 	at pci? dev ? function ?	# Opti IDE controllers
+#optiide* 	at pci? dev ? function ?	# Opti IDE controllers
 pdcide* 	at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* 	at pci? dev ? function ?	# Promise SATA150 controllers
 satalink*	at pci? dev ? function ?	# SiI SATALink controllers
-siside* 	at pci? dev ? function ?	# SiS IDE controllers
-slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
+#siside* 	at pci? dev ? function ?	# SiS IDE controllers
+#slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 
 # ATA bus
