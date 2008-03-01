@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.3 2007/10/31 13:30:46 tsutsui Exp $	*/
+/*	$NetBSD: tlp.c,v 1.4 2008/03/01 20:24:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -125,8 +125,8 @@ struct desc {
 #define NEXT_RXBUF(x)	(((x) + 1) & (NRXBUF - 1))
 
 struct local {
-	struct desc TxD;
-	struct desc RxD[NRXBUF];
+	struct desc txd;
+	struct desc rxd[NRXBUF];
 	uint8_t txstore[BUFSIZE];
 	uint8_t rxstore[NRXBUF][BUFSIZE];
 	uint32_t csr, omr;
@@ -152,15 +152,15 @@ tlp_init(void *cookie)
 {
 	uint32_t val;
 	struct local *l;
-	struct desc *TxD, *RxD;
+	struct desc *txd, *rxd;
 	uint8_t *en;
 	int i;
 
 	l = ALLOC(struct local, CACHELINESIZE);
 	memset(l, 0, sizeof(struct local));
 
-	DPRINTF(("tlp: l = %p, TxD = %p, RxD[0] = %p, RxD[1] = %p\n",
-	    l, &l->TxD, &l->RxD[0], &l->RxD[1]));
+	DPRINTF(("tlp: l = %p, txd = %p, rxd[0] = %p, rxd[1] = %p\n",
+	    l, &l->txd, &l->rxd[0], &l->rxd[1]));
 	DPRINTF(("tlp: txstore = %p, rxstore[0] = %p, rxstore[1] = %p\n",
 	    l->txstore, l->rxstore[0], l->rxstore[1]));
 
@@ -206,22 +206,22 @@ tlp_init(void *cookie)
 	DPRINTF(("tlp: MAC address %x:%x:%x:%x:%x:%x\n",
 	    en[0], en[1], en[2], en[3], en[4], en[5]));
 
-	RxD = &l->RxD[0];
+	rxd = &l->rxd[0];
 	for (i = 0; i < NRXBUF; i++) {
-		RxD[i].xd3 = htole32(VTOPHYS(&RxD[NEXT_RXBUF(i)]));
-		RxD[i].xd2 = htole32(VTOPHYS(l->rxstore[i]));
-		RxD[i].xd1 = htole32(R1_RCH|FRAMESIZE);
-		RxD[i].xd0 = htole32(R0_OWN);
+		rxd[i].xd3 = htole32(VTOPHYS(&rxd[NEXT_RXBUF(i)]));
+		rxd[i].xd2 = htole32(VTOPHYS(l->rxstore[i]));
+		rxd[i].xd1 = htole32(R1_RCH|FRAMESIZE);
+		rxd[i].xd0 = htole32(R0_OWN);
 	}
-	CSR_WRITE(l, TLP_RRBA, VTOPHYS(RxD));
+	CSR_WRITE(l, TLP_RRBA, VTOPHYS(rxd));
 
 	/* "setup packet" to have own station address */
-	TxD = &l->TxD;
-	TxD->xd3 = htole32(VTOPHYS(TxD));
-	TxD->xd2 = htole32(VTOPHYS(l->txstore));
-	TxD->xd1 = htole32(T1_SET | T1_TER);
-	TxD->xd0 = htole32(0);
-	CSR_WRITE(l, TLP_TRBA, VTOPHYS(TxD));
+	txd = &l->txd;
+	txd->xd3 = htole32(VTOPHYS(txd));
+	txd->xd2 = htole32(VTOPHYS(l->txstore));
+	txd->xd1 = htole32(T1_SET | T1_TER);
+	txd->xd0 = htole32(0);
+	CSR_WRITE(l, TLP_TRBA, VTOPHYS(txd));
 
 	memset(l->txstore, 0, FRAMESIZE);
 
@@ -253,31 +253,31 @@ int
 tlp_send(void *dev, char *buf, u_int len)
 {
 	struct local *l = dev;
-	struct desc *TxD;
+	struct desc *txd;
 	u_int loop;
 
 #if 1
 	wb(buf, len);
-	TxD = &l->TxD;
-	TxD->xd3 = htole32(VTOPHYS(TxD));
-	TxD->xd2 = htole32(VTOPHYS(buf));
-	TxD->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
+	txd = &l->txd;
+	txd->xd3 = htole32(VTOPHYS(txd));
+	txd->xd2 = htole32(VTOPHYS(buf));
+	txd->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
 #else
 	memcpy(l->txstore, buf, len);
 	wb(l->txstore, len);
-	TxD = &l->TxD;
-	TxD->xd3 = htole32(VTOPHYS(TxD));
-	TxD->xd2 = htole32(VTOPHYS(l->txstore));
-	TxD->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
+	txd = &l->txd;
+	txd->xd3 = htole32(VTOPHYS(txd));
+	txd->xd2 = htole32(VTOPHYS(l->txstore));
+	txd->xd1 = htole32(T1_FS | T1_LS | T1_TER | (len & T1_TBS_MASK));
 #endif
-	TxD->xd0 = htole32(T0_OWN);
-	wbinv(TxD, sizeof(struct desc));
+	txd->xd0 = htole32(T0_OWN);
+	wbinv(txd, sizeof(struct desc));
 	CSR_WRITE(l, TLP_TPD, TPD_POLL);
 	loop = 100;
 	do {
-		if ((le32toh(TxD->xd0) & T0_OWN) == 0)
+		if ((le32toh(txd->xd0) & T0_OWN) == 0)
 			goto done;
-		inv(TxD, sizeof(struct desc));
+		inv(txd, sizeof(struct desc));
 		DELAY(10);
 	} while (--loop > 0);
 	printf("xmit failed\n");
@@ -290,7 +290,7 @@ int
 tlp_recv(void *dev, char *buf, u_int maxlen, u_int timo)
 {
 	struct local *l = dev;
-	struct desc *RxD;
+	struct desc *rxd;
 	u_int bound, len;
 	uint32_t rxstat;
 	uint8_t *ptr;
@@ -298,10 +298,10 @@ tlp_recv(void *dev, char *buf, u_int maxlen, u_int timo)
 	bound = 1000 * timo;
 
   again:
-	RxD = &l->RxD[l->rx];
+	rxd = &l->rxd[l->rx];
 	do {
-		rxstat = le32toh(RxD->xd0);
-		inv(RxD, sizeof(struct desc));
+		rxstat = le32toh(rxd->xd0);
+		inv(rxd, sizeof(struct desc));
 		if ((rxstat & R0_OWN) == 0)
 			goto gotone;
 		DELAY(1000); /* 1 milli second */
@@ -311,8 +311,8 @@ tlp_recv(void *dev, char *buf, u_int maxlen, u_int timo)
 	return -1;
   gotone:
 	if (rxstat & R0_ES) {
-		RxD->xd0 = htole32(R0_OWN);
-		wbinv(RxD, sizeof(struct desc));
+		rxd->xd0 = htole32(R0_OWN);
+		wbinv(rxd, sizeof(struct desc));
 		l->rx = NEXT_RXBUF(l->rx);
 		CSR_WRITE(l, TLP_RPD, RPD_POLL);
 		goto again;
@@ -324,8 +324,8 @@ tlp_recv(void *dev, char *buf, u_int maxlen, u_int timo)
 	ptr = l->rxstore[l->rx];
 	memcpy(buf, ptr, len);
 	inv(ptr, FRAMESIZE);
-	RxD->xd0 = htole32(R0_OWN);
-	wbinv(RxD, sizeof(struct desc));
+	rxd->xd0 = htole32(R0_OWN);
+	wbinv(rxd, sizeof(struct desc));
 	l->rx = NEXT_RXBUF(l->rx);
 	CSR_WRITE(l, TLP_OMR, l->omr); /* necessary? */
 	return len;
