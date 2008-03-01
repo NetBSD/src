@@ -1,4 +1,4 @@
-/*	$NetBSD: apm.c,v 1.17 2008/01/04 21:17:50 ad Exp $ */
+/*	$NetBSD: apm.c,v 1.18 2008/03/01 14:16:50 rmind Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.17 2008/01/04 21:17:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apm.c,v 1.18 2008/03/01 14:16:50 rmind Exp $");
 
 #include "opt_apm.h"
 
@@ -398,7 +398,7 @@ apm_record_event(struct apm_softc *sc, u_int event_type)
 	sc->sc_event_ptr %= APM_NEVENTS;
 	evp->type = event_type;
 	evp->index = ++apm_evindex;
-	selnotify(&sc->sc_rsel, 0);
+	selnotify(&sc->sc_rsel, 0, 0);
 	return (sc->sc_flags & SCFLAG_OWRITE) ? 0 : 1; /* user may handle */
 }
 
@@ -665,6 +665,8 @@ apm_attach(struct apm_softc *sc)
 
 	/* Initial state is `resumed'. */
 	sc->sc_power_state = PWR_RESUME;
+	selinit(&sc->sc_rsel);
+	selinit(&sc->sc_xsel);
 
 	/* Do an initial check. */
 	apm_periodic_check(sc);

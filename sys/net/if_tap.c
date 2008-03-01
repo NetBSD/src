@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.38 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.39 2008/03/01 14:16:52 rmind Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.38 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.39 2008/03/01 14:16:52 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -456,7 +456,7 @@ tap_start(struct ifnet *ifp)
 	} else if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		ifp->if_flags |= IFF_OACTIVE;
 		wakeup(sc);
-		selnotify(&sc->sc_rsel, 1);
+		selnotify(&sc->sc_rsel, 0, 1);
 		if (sc->sc_flags & TAP_ASYNCIO)
 			fownsignal(sc->sc_pgid, SIGIO, POLL_IN,
 			    POLLIN|POLLRDNORM, NULL);
@@ -551,7 +551,7 @@ tap_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	wakeup(sc);
-	selnotify(&sc->sc_rsel, 1);
+	selnotify(&sc->sc_rsel, 0, 1);
 	if (sc->sc_flags & TAP_ASYNCIO)
 		fownsignal(sc->sc_pgid, SIGIO, POLL_HUP, 0, NULL);
 }

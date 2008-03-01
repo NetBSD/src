@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.22 2008/02/19 19:50:53 bouyer Exp $      */
+/*      $NetBSD: xenevt.c,v 1.23 2008/03/01 14:16:50 rmind Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.22 2008/02/19 19:50:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.23 2008/03/01 14:16:50 rmind Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -151,11 +151,13 @@ void
 xenevtattach(int n)
 {
 	struct intrhand *ih;
-	int s;
+	int i, s;
 
 	devevent_sih = softint_establish(SOFTINT_SERIAL,
 	    (void (*)(void *))xenevt_notify, NULL);
 	memset(devevent, 0, sizeof(devevent));
+	for (i = 0; i < NR_EVENT_CHANNELS; i++)
+		selinit(&devevent[i].sel);
 	xenevt_ev1 = 0;
 	memset(xenevt_ev2, 0, sizeof(xenevt_ev2));
 

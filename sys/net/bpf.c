@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.133 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: bpf.c,v 1.134 2008/03/01 14:16:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.133 2008/02/20 17:05:52 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.134 2008/03/01 14:16:52 rmind Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -403,6 +403,7 @@ bpfopen(dev_t dev, int flag, int mode, struct lwp *l)
 	d->bd_seesent = 1;
 	d->bd_pid = l->l_proc->p_pid;
 	callout_init(&d->bd_callout, 0);
+	selinit(&d->bd_sel);
 
 	mutex_enter(&bpf_mtx);
 	LIST_INSERT_HEAD(&bpf_list, d, bd_list);
@@ -439,6 +440,7 @@ bpf_close(struct file *fp, struct lwp *l)
 	LIST_REMOVE(d, bd_list);
 	mutex_exit(&bpf_mtx);
 	callout_destroy(&d->bd_callout);
+	seldestroy(&d->bd_sel);
 	free(d, M_DEVBUF);
 	fp->f_data = NULL;
 
@@ -566,7 +568,7 @@ bpf_wakeup(struct bpf_d *d)
 	if (d->bd_async)
 		fownsignal(d->bd_pgid, SIGIO, 0, 0, NULL);
 
-	selnotify(&d->bd_sel, 0);
+	selnotify(&d->bd_sel, 0, 0);
 }
 
 
@@ -1064,7 +1066,7 @@ bpf_ifname(struct ifnet *ifp, struct ifreq *ifr)
  * Return true iff the specific operation will not block indefinitely - with
  * the assumption that it is safe to positively acknowledge a request for the
  * ability to write to the BPF device.
- * Otherwise, return false but make a note that a selwakeup() must be done.
+ * Otherwise, return false but make a note that a selnotify() must be done.
  */
 static int
 bpf_poll(struct file *fp, int events, struct lwp *l)

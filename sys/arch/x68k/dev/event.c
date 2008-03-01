@@ -1,4 +1,4 @@
-/*	$NetBSD: event.c,v 1.12 2007/03/04 06:01:05 christos Exp $ */
+/*	$NetBSD: event.c,v 1.13 2008/03/01 14:16:50 rmind Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.12 2007/03/04 06:01:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: event.c,v 1.13 2008/03/01 14:16:50 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/fcntl.h>
@@ -68,8 +68,8 @@ ev_init(struct evvar *ev)
 
 	ev->ev_get = ev->ev_put = 0;
 	ev->ev_q = malloc((u_long)EV_QSIZE * sizeof(struct firm_event),
-	    M_DEVBUF, M_WAITOK);
-	memset((void *)ev->ev_q, 0, EV_QSIZE * sizeof(struct firm_event));
+	    M_DEVBUF, M_WAITOK|M_ZERO);
+	selinit(&ev->ev_sel);
 }
 
 /*
@@ -79,6 +79,7 @@ void
 ev_fini(struct evvar *ev)
 {
 
+	seldestroy(&ev->ev_sel);
 	free(ev->ev_q, M_DEVBUF);
 }
 

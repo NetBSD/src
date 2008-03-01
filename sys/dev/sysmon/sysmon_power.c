@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.36 2008/02/29 18:07:11 xtraeme Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.37 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.36 2008/02/29 18:07:11 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.37 2008/03/01 14:16:51 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -194,6 +194,7 @@ sysmon_power_init(void)
 {
 	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_power_event_queue_cv, "smpower");
+	selinit(&sysmon_power_event_queue_selinfo);
 }
 
 /*
@@ -363,7 +364,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
 		cv_broadcast(&sysmon_power_event_queue_cv);
 		mutex_exit(&sysmon_power_event_queue_mtx);
-		selnotify(&sysmon_power_event_queue_selinfo, 0);
+		selnotify(&sysmon_power_event_queue_selinfo, 0, 0);
 	}
 
 out:

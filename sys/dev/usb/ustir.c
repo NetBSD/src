@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.22 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: ustir.c,v 1.23 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.22 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.23 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -372,6 +372,8 @@ USB_ATTACH(ustir)
 	ia.ia_handle = sc;
 
 	sc->sc_child = config_found(self, &ia, ir_print);
+	selinit(&sc->sc_rd_sel);
+	selinit(&sc->sc_wr_sel);
 
 	USB_ATTACH_SUCCESS_RETURN;
 }
@@ -426,6 +428,9 @@ USB_DETACH(ustir)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_udev,
 			   USBDEV(sc->sc_dev));
+
+	seldestroy(&sc->sc_rd_sel);
+	seldestroy(&sc->sc_wr_sel);
 
 	return rv;
 }
@@ -582,7 +587,7 @@ deframe_rd_ur(struct ustir_softc *sc)
 		case FR_FRAMEOK:
 			sc->sc_ur_framelen = sc->sc_framestate.bufindex;
 			wakeup(&sc->sc_ur_framelen); /* XXX should use flag */
-			selnotify(&sc->sc_rd_sel, 0);
+			selnotify(&sc->sc_rd_sel, 0, 0);
 			return 1;
 		}
 	}
@@ -806,7 +811,7 @@ ustir_rd_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 
 		/* Wake up for possible output */
 		wakeup(&sc->sc_wr_buf);
-		selnotify(&sc->sc_wr_sel, 0);
+		selnotify(&sc->sc_wr_sel, 0, 0);
 	}
 }
 

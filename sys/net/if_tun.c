@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.103 2008/02/20 17:05:53 matt Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.104 2008/03/01 14:16:52 rmind Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.103 2008/02/20 17:05:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.104 2008/03/01 14:16:52 rmind Exp $");
 
 #include "opt_inet.h"
 
@@ -170,6 +170,8 @@ tun_clone_create(struct if_clone *ifc, int unit)
 
 		tp->tun_unit = unit;
 		simple_lock_init(&tp->tun_lock);
+		selinit(&tp->tun_rsel);
+		selinit(&tp->tun_wsel);
 	} else {
 		/* Revive tunnel instance; clear ifp part */
 		(void)memset(&tp->tun_if, 0, sizeof(struct ifnet));
@@ -247,7 +249,7 @@ tun_clone_destroy(struct ifnet *ifp)
 	if (tp->tun_flags & TUN_ASYNC && tp->tun_pgid)
 		fownsignal(tp->tun_pgid, SIGIO, POLL_HUP, 0, NULL);
 
-	selwakeup(&tp->tun_rsel);
+	selnotify(&tp->tun_rsel, 0, 0);
 
 	simple_unlock(&tp->tun_lock);
 	splx(s);
@@ -257,8 +259,11 @@ tun_clone_destroy(struct ifnet *ifp)
 #endif
 	if_detach(ifp);
 
-	if (!zombie)
+	if (!zombie) {
+		seldestroy(&tp->tun_rsel);
+		seldestroy(&tp->tun_wsel);
 		free(tp, M_DEVBUF);
+	}
 
 	return (0);
 }
@@ -320,6 +325,8 @@ tunclose(dev_t dev, int flag, int mode,
 	s = splnet();
 	if ((tp = tun_find_zunit(minor(dev))) != NULL) {
 		/* interface was "destroyed" before the close */
+		seldestroy(&tp->tun_rsel);
+		seldestroy(&tp->tun_wsel);
 		free(tp, M_DEVBUF);
 		goto out_nolock;
 	}
@@ -355,7 +362,7 @@ tunclose(dev_t dev, int flag, int mode,
 		}
 	}
 	tp->tun_pgid = 0;
-	selnotify(&tp->tun_rsel, 0);
+	selnotify(&tp->tun_rsel, 0, 0);
 
 	TUNDEBUG ("%s: closed\n", ifp->if_xname);
 	simple_unlock(&tp->tun_lock);
@@ -586,7 +593,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		fownsignal(tp->tun_pgid, SIGIO, POLL_IN, POLLIN|POLLRDNORM,
 		    NULL);
 
-	selnotify(&tp->tun_rsel, 0);
+	selnotify(&tp->tun_rsel, 0, 0);
 out:
 	simple_unlock(&tp->tun_lock);
 	splx(s);
@@ -972,7 +979,7 @@ tunstart(struct ifnet *ifp)
 			fownsignal(tp->tun_pgid, SIGIO, POLL_OUT,
 				POLLOUT|POLLWRNORM, NULL);
 
-		selwakeup(&tp->tun_rsel);
+		selnotify(&tp->tun_rsel, 0, 0);
 	}
 	simple_unlock(&tp->tun_lock);
 }

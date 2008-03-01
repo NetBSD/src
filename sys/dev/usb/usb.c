@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.106 2008/02/18 05:24:24 dyoung Exp $	*/
+/*	$NetBSD: usb.c,v 1.107 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.106 2008/02/18 05:24:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.107 2008/03/01 14:16:51 rmind Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -176,6 +176,7 @@ USB_MATCH(usb)
 
 USB_ATTACH(usb)
 {
+	static bool usb_selevent_init;	/* XXX */
 	struct usb_softc *sc = (struct usb_softc *)self;
 	usbd_device_handle dev;
 	usbd_status err;
@@ -183,6 +184,10 @@ USB_ATTACH(usb)
 	int speed;
 	struct usb_event *ue;
 
+	if (!usb_selevent_init) {
+		selinit(&usb_selevent);
+		usb_selevent_init = true;
+	}
 	DPRINTF(("usbd_attach\n"));
 
 	sc->sc_bus = aux;
@@ -872,7 +877,7 @@ usb_add_event(int type, struct usb_event *uep)
 	}
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
 	wakeup(&usb_events);
-	selnotify(&usb_selevent, 0);
+	selnotify(&usb_selevent, 0, 0);
 	if (usb_async_proc != NULL) {
 		mutex_enter(&proclist_mutex);
 		psignal(usb_async_proc, SIGIO);

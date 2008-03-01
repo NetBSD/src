@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.89 2008/02/07 12:14:43 ad Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.90 2008/03/01 14:16:51 rmind Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.89 2008/02/07 12:14:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.90 2008/03/01 14:16:51 rmind Exp $");
 
 #include "opt_mbuftrace.h"
 #include "opt_sb_max.h"
@@ -316,20 +316,21 @@ sb_lock(struct sockbuf *sb)
 void
 sowakeup(struct socket *so, struct sockbuf *sb, int code)
 {
-	selnotify(&sb->sb_sel, 0);
+	int band;
+
+	if (code == POLL_IN)
+		band = POLLIN|POLLRDNORM;
+	else
+		band = POLLOUT|POLLWRNORM;
+	selnotify(&sb->sb_sel, band, 0);
+
 	sb->sb_flags &= ~SB_SEL;
 	if (sb->sb_flags & SB_WAIT) {
 		sb->sb_flags &= ~SB_WAIT;
 		wakeup((void *)&sb->sb_cc);
 	}
-	if (sb->sb_flags & SB_ASYNC) {
-		int band;
-		if (code == POLL_IN)
-			band = POLLIN|POLLRDNORM;
-		else
-			band = POLLOUT|POLLWRNORM;
+	if (sb->sb_flags & SB_ASYNC)
 		fownsignal(so->so_pgid, SIGIO, code, band, so);
-	}
 	if (sb->sb_flags & SB_UPCALL)
 		(*so->so_upcall)(so, so->so_upcallarg, M_DONTWAIT);
 }

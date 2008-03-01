@@ -1,4 +1,4 @@
-/* $NetBSD: wsevent.c,v 1.24 2007/12/05 17:19:57 pooka Exp $ */
+/* $NetBSD: wsevent.c,v 1.25 2008/03/01 14:16:51 rmind Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.24 2007/12/05 17:19:57 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsevent.c,v 1.25 2008/03/01 14:16:51 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -158,6 +158,7 @@ wsevent_init(struct wseventvar *ev, struct proc *p)
 	ev->get = ev->put = 0;
 	ev->q = malloc((u_long)WSEVENT_QSIZE * sizeof(struct wscons_event),
 		       M_DEVBUF, M_WAITOK|M_ZERO);
+	selinit(&ev->sel);
 	ev->io = p;
 }
 
@@ -173,6 +174,7 @@ wsevent_fini(struct wseventvar *ev)
 #endif
 		return;
 	}
+	seldestroy(&ev->sel);
 	free(ev->q, M_DEVBUF);
 	ev->q = NULL;
 }
@@ -318,7 +320,7 @@ void
 wsevent_wakeup(struct wseventvar *ev)
 {
 
-	selnotify(&ev->sel, 0);
+	selnotify(&ev->sel, 0, 0);
 
 	if (ev->wanted) {
 		ev->wanted = 0;
