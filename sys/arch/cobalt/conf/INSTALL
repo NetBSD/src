@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.29 2008/02/28 17:01:51 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.30 2008/03/01 05:28:28 tsutsui Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.29 $"
+#ident 		"INSTALL-$Revision: 1.30 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -165,8 +165,8 @@ options 	PCI_NETBSD_CONFIGURE
 #ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 # PCI serial/parallel interfaces
-#puc* 		at pci? dev ? function ? 	# PCI "universal" comm. cards
-#com* 		at puc? port ?
+puc* 		at pci? dev ? function ? 	# PCI "universal" comm. cards
+com* 		at puc? port ?
 #lpt* 		at puc? port ?
 #cy* 		at pci? dev ? function ?	# Cyclades Cyclom-Y serial cards
 
