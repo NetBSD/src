@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.74 2008/02/28 11:50:40 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.75 2008/03/02 15:28:26 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,6 +70,7 @@
 #include <sparc64/sparc64/intreg.h>
 
 #include <sys/cpu_data.h>
+#include <sys/evcnt.h>
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel
  * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
@@ -123,6 +124,11 @@ struct cpu_info {
 	/* %tick and cpu frequency information */
 	u_long			ci_tick_increment;
 	uint64_t		ci_cpu_clockrate[2];
+
+	/* Interrupts */
+	struct intrhand		*ci_intrpending[16];
+	struct intrhand		*ci_intrlev0;
+	struct evcnt		ci_tick_evcnt;
 
 	int			ci_flags;
 	int			ci_want_ast;
@@ -317,6 +323,7 @@ struct timeval;
 int	tickintr(void *);	/* level 10 (tick) interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
+void	tickintr_establish(void);
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);

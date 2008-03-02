@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.55 2008/02/18 12:16:37 martin Exp $ */
+/*	$NetBSD: intr.c,v 1.56 2008/03/02 15:28:26 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,10 +41,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55 2008/02/18 12:16:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.56 2008/03/02 15:28:26 nakayama Exp $");
 
 #include "opt_ddb.h"
-#include "pcons.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55 2008/02/18 12:16:37 martin Exp $");
 struct intrhand *intrlev[MAXINTNUM];
 
 void	strayintr(const struct trapframe64 *, int);
-int	softintr(void *);
 int	intr_list_handler(void *);
 
 /*
@@ -114,57 +113,6 @@ strayintr(const struct trapframe64 *fp, int vectored)
 	Debugger();
 #endif
 }
-
-/*
- * Level 1 software interrupt (could also be Sbus level 1 interrupt).
- * Three possible reasons:
- *	Network software interrupt
- *	Soft clock interrupt
- */
-int
-softintr(void *fp)
-{
-#if NPCONS >0
-	extern void pcons_dopoll(void);
-
-	pcons_dopoll();
-#endif
-	return (1);
-}
-
-
-struct intrhand soft01intr = { .ih_fun = softintr, .ih_number = 1 };
-
-#if 0
-void 
-setsoftint() {
-	send_softint(-1, IPL_SOFTINT, &soft01intr);
-}
-#endif
-
-/*
- * Level 15 interrupts are special, and not vectored here.
- * Only `prewired' interrupts appear here; boot-time configured devices
- * are attached via intr_establish() below.
- */
-struct intrhand *intrhand[16] = {
-	NULL,			/*  0 = error */
-	&soft01intr,		/*  1 = software level 1 + Sbus */
-	NULL,	 		/*  2 = Sbus level 2 (4m: Sbus L1) */
-	NULL,			/*  3 = SCSI + DMA + Sbus level 3 (4m: L2,lpt)*/
-	NULL,			/*  4 = software level 4 (tty softint) (scsi) */
-	NULL,			/*  5 = Ethernet + Sbus level 4 (4m: Sbus L3) */
-	NULL,			/*  6 = software level 6 (not used) (4m: enet)*/
-	NULL,			/*  7 = video + Sbus level 5 */
-	NULL,			/*  8 = Sbus level 6 */
-	NULL,			/*  9 = Sbus level 7 */
-	NULL,			/* 10 = counter 0 = clock */
-	NULL,			/* 11 = floppy */
-	NULL,			/* 12 = zs hardware interrupt */
-	NULL,			/* 13 = audio chip */
-	NULL,			/* 14 = counter 1 = profiling timer */
-	NULL			/* 15 = async faults */
-};
 
 /*
  * PCI devices can share interrupts so we need to have
@@ -217,7 +165,7 @@ intr_biglock_wrapper(void *vp)
 void
 intr_establish(int level, struct intrhand *ih)
 {
-	struct intrhand **p, *q = NULL;
+	struct intrhand *q = NULL;
 #ifdef MULTIPROCESSOR
 	bool mpsafe = (level != IPL_VM);
 #endif
@@ -288,13 +236,6 @@ intr_establish(int level, struct intrhand *ih)
 #endif
 	} else
 		panic("intr_establish: bad intr number %x", ih->ih_number);
-
-	/* If it's not shared, stick it in the intrhand list for that level. */
-	if (q == NULL) {
-		for (p = &intrhand[level]; (q = *p) != NULL; p = &q->ih_next)
-			;
-		*p = ih;
-	}
 
 	splx(s);
 }
