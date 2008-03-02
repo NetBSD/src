@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.39 2008/02/25 09:51:38 nakayama Exp $ */
+/*	$NetBSD: psl.h,v 1.40 2008/03/02 15:07:02 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -202,8 +202,8 @@
 
 #define TSTATE_BITS "\20\14IG\13MG\12CLE\11TLE\10\7MM\6RED\5PEF\4AM\3PRIV\2IE\1AG"
 
-#define TSTATE_KERN	((TSTATE_KERN)<<TSTATE_PSTATE_SHIFT)
-#define TSTATE_USER	((TSTATE_USER)<<TSTATE_PSTATE_SHIFT)
+#define TSTATE_KERN	((PSTATE_KERN)<<TSTATE_PSTATE_SHIFT)
+#define TSTATE_USER	((PSTATE_USER)<<TSTATE_PSTATE_SHIFT)
 /*
  * SPARC V9 VER version register.
  *
