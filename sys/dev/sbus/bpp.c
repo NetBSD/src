@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.32 2008/03/01 14:16:50 rmind Exp $ */
+/*	$NetBSD: bpp.c,v 1.33 2008/03/02 15:54:58 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.32 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.33 2008/03/02 15:54:58 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -161,8 +161,8 @@ bppattach(parent, self, aux)
 	int burst, sbusburst;
 	int node;
 
-	selinit(&sc->sc_rsel);
-	selinit(&sc->sc_wsel);
+	selinit(&dsc->sc_rsel);
+	selinit(&dsc->sc_wsel);
 
 	sc->sc_bustag = sa->sa_bustag;
 	sc->sc_dmatag = sa->sa_dmatag;
