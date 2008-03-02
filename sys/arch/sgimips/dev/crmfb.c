@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.21 2008/03/01 16:56:39 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.22 2008/03/02 00:54:25 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.21 2008/03/01 16:56:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.22 2008/03/02 00:54:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,7 +488,7 @@ crmfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	/* we probably shouldn't let anyone mmap the framebuffer */
 #if 1
-	if (offset >= 0 && offset < sc->sc_fbsize) {
+	if (offset >= 0 && offset < (0x100000 * sc->sc_tiles_x)) {
 		pa = bus_dmamem_mmap(sc->sc_dmat, sc->sc_dma.segs,
 		    sc->sc_dma.nsegs, offset, prot,
 		    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
