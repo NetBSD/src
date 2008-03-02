@@ -1,4 +1,4 @@
-/* $NetBSD: drm_pci.c,v 1.7 2007/12/11 11:17:32 lukem Exp $ */
+/* $NetBSD: drm_pci.c,v 1.8 2008/03/02 07:12:15 bjs Exp $ */
 
 /*
  * Copyright 2003 Eric Anholt.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.7 2007/12/11 11:17:32 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_pci.c,v 1.8 2008/03/02 07:12:15 bjs Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_pci.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -35,7 +35,7 @@ drm_dma_handle_t *
 drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 {
 	drm_dma_handle_t *h;
-	int error, rseg;
+	int error, nsegs;
 
 
 	/* Need power-of-two alignment, so fail the allocation if it isn't. */
@@ -46,21 +46,21 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 	}
 
 	h = malloc(sizeof(drm_dma_handle_t), M_DRM, M_ZERO | M_NOWAIT);
-	if (!h)
+
+	if (h == NULL)
 		return NULL;
-	h->size = size;
 	if ((error = bus_dmamem_alloc(dev->pa.pa_dmat, size, align, 0,
-	    &h->seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    h->segs, 1, &nsegs, BUS_DMA_NOWAIT)) != 0) {
 		printf("drm: Unable to allocate DMA, error %d\n", error);
 		goto fail;
 	}
-	if ((error = bus_dmamem_map(dev->pa.pa_dmat, &h->seg, rseg, size, 
+	if ((error = bus_dmamem_map(dev->pa.pa_dmat, h->segs, nsegs, size, 
 	     &h->addr, BUS_DMA_NOWAIT | BUS_DMA_COHERENT)) != 0) {
 		printf("drm: Unable to map DMA, error %d\n", error);
 	     	goto free;
 	}
 	if ((error = bus_dmamap_create(dev->pa.pa_dmat, size, 1, size, 0,
-	     BUS_DMA_NOWAIT, &h->map)) != 0) {
+	     BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW, &h->map)) != 0) {
 		printf("drm: Unable to create DMA map, error %d\n", error);
 		goto unmap;
 	}
@@ -69,8 +69,9 @@ drm_pci_alloc(drm_device_t *dev, size_t size, size_t align, dma_addr_t maxaddr)
 		printf("drm: Unable to load DMA map, error %d\n", error);
 		goto destroy;
 	}
-	h->busaddr = h->seg.ds_addr;
+	h->busaddr = DRM_PCI_DMAADDR(h);
 	h->vaddr = h->addr;
+	h->size = size;
 
 	return h;
 
@@ -79,7 +80,7 @@ destroy:
 unmap:
 	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, size);
 free:
-	bus_dmamem_free(dev->pa.pa_dmat, h->addr, 1);
+	bus_dmamem_free(dev->pa.pa_dmat, h->segs, 1);
 fail:
 	free(h, M_DRM);
 	return NULL;
@@ -93,12 +94,12 @@ fail:
 void
 drm_pci_free(drm_device_t *dev, drm_dma_handle_t *h)
 {
-	if (!h)
+	if (h == NULL)
 		return;
 	bus_dmamap_unload(dev->pa.pa_dmat, h->map);
 	bus_dmamap_destroy(dev->pa.pa_dmat, h->map);
 	bus_dmamem_unmap(dev->pa.pa_dmat, h->addr, h->size);
-	bus_dmamem_free(dev->pa.pa_dmat, &h->seg, 1);
+	bus_dmamem_free(dev->pa.pa_dmat, h->segs, 1);
 
 	free(h, M_DRM);
 }
