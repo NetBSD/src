@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.18 2008/02/10 12:41:36 jmmv Exp $
+# $NetBSD: mi,v 1.19 2008/03/02 11:23:49 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -318,6 +318,7 @@
 ./usr/tests/modules/Atffile			tests-sys-tests
 ./usr/tests/modules/k_helper.o			tests-sys-tests		modular
 ./usr/tests/modules/t_modctl			tests-sys-tests		modular
+./usr/tests/modules/t_modlaod			tests-sys-tests		modular
 ./usr/tests/net					tests-net-tests
 ./usr/tests/net/Atffile				tests-net-tests
 ./usr/tests/net/sys				tests-net-tests
