@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.108 2008/02/29 20:27:07 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.109 2008/03/02 22:01:38 martin Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.108 2008/02/29 20:27:07 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.109 2008/03/02 22:01:38 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.108 2008/02/29 20:27:07 martin Ex
 #include <sys/user.h>
 #include <sys/reboot.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -89,8 +90,9 @@ static uint64_t nil;
 #define pmap_ctx(PM)	((PM)->pm_ctx)
 #endif
 
-static void fill_ddb_regs_from_tf(struct trapframe64 *tf);
-static void ddb_restore_state(void);
+void fill_ddb_regs_from_tf(struct trapframe64 *tf);
+void ddb_restore_state(void);
+bool ddb_running_on_this_cpu(void);
 
 static int
 db_sparc_charop(const struct db_variable *vp, db_expr_t *val, int opcode)
@@ -303,42 +305,40 @@ static void db_print_trace_entry(struct traptrace *, int);
 #define NOCPU -1
 
 static int db_suspend_others(void);
-static void db_resume_others(void);
 static void ddb_suspend(struct trapframe64 *);
+void db_resume_others(void);
 
-__cpu_simple_lock_t db_lock;
 int ddb_cpu = NOCPU;
+
+bool
+ddb_running_on_this_cpu(void)
+{
+	return ddb_cpu == cpu_number();
+}
 
 static int
 db_suspend_others(void)
 {
 	int cpu_me = cpu_number();
-	int win;
+	bool win;
 
 	if (cpus == NULL)
 		return 1;
 
-	__cpu_simple_lock(&db_lock);
-	if (ddb_cpu == NOCPU)
-		ddb_cpu = cpu_me;
-	win = (ddb_cpu == cpu_me);
-	__cpu_simple_unlock(&db_lock);
-
+	win = atomic_cas_32(&ddb_cpu, NOCPU, cpu_me) == (uint32_t)NOCPU;
 	if (win)
 		mp_pause_cpus();
 
 	return win;
 }
 
-static void
+void
 db_resume_others(void)
 {
+	int cpu_me = cpu_number();
 
-	mp_resume_cpus();
-
-	__cpu_simple_lock(&db_lock);
-	ddb_cpu = NOCPU;
-	__cpu_simple_unlock(&db_lock);
+	if (atomic_cas_32(&ddb_cpu, cpu_me, NOCPU) == cpu_me)
+		mp_resume_cpus();
 }
 
 static void
@@ -361,7 +361,7 @@ kdb_kbd_trap(struct trapframe64 *tf)
 	}
 }
 
-static void
+void
 fill_ddb_regs_from_tf(struct trapframe64 *tf)
 {
 	extern int savetstate(struct trapstate *);
@@ -416,7 +416,7 @@ fill_ddb_regs_from_tf(struct trapframe64 *tf)
 	DDB_REGS->db_tl = savetstate(&DDB_REGS->db_ts[0]);
 }
 
-static void
+void
 ddb_restore_state()
 {
 	extern void restoretstate(int, struct trapstate *);
@@ -445,8 +445,6 @@ kdb_trap(int type, struct trapframe64 *tf)
 #endif
 	switch (type) {
 	case T_BREAKPOINT:	/* breakpoint */
-		printf("cpu%d: kdb breakpoint at %llx\n", cpu_number(),
-		    (unsigned long long)tf->tf_pc);
 		break;
 	case -1:		/* keyboard interrupt */
 		printf("kdb tf=%p\n", tf);
@@ -1154,10 +1152,6 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 		return;
 	}
 #ifdef MULTIPROCESSOR
-	if ((addr < 0) || (addr >= sparc_ncpus)) {
-		db_printf("%ld: CPU out of range\n", addr);
-		return;
-	}
 	for (ci = cpus; ci != NULL; ci = ci->ci_next)
 		if (ci->ci_index == addr)
 			break;
@@ -1170,12 +1164,11 @@ db_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 			db_printf("CPU %ld not paused\n", addr);
 			return;
 		}
+		/* no locking needed - all other cpus are paused */
+		ddb_cpu = ci->ci_index;
+		mp_resume_cpu(ddb_cpu);
+		sparc64_do_pause();
 	}
-	if (ci->ci_ddb_regs == NULL) {
-		db_printf("CPU %ld has no saved regs\n", addr);
-		return;
-	}
-	db_printf("using CPU %ld", addr);
 #endif
 }
 
