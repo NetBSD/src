@@ -1,4 +1,4 @@
-.\"     $NetBSD: selrecord.9,v 1.8 2008/02/14 17:39:50 ad Exp $
+.\"     $NetBSD: select.9,v 1.1 2008/03/02 00:30:21 rmind Exp $
 .\"
 .\" Copyright (C) 2002 Chad David <davidc@acns.ab.ca>. All rights reserved.
 .\"
@@ -28,23 +28,36 @@
 .\" $FreeBSD: src/share/man/man9/selrecord.9,v 1.2 2002/05/30 13:29:17 ru Exp $
 .\"
 .\" FreeBSD: .Dd March 20, 2002
-.Dd Febuary 14, 2008
-.Dt SELRECORD 9
+.Dd March 2, 2008
+.Dt SELECT 9
 .Os
 .Sh NAME
+.Nm seldestroy ,
+.Nm selinit ,
 .Nm selrecord ,
-.Nm selwakeup
-.Nd record and wakeup select requests
+.Nm selnotify
+.Nd select and poll subsystem
 .Sh SYNOPSIS
 .In sys/param.h
 .In sys/select.h
 .Ft void
+.Fn seldestroy "struct selinfo *sip"
+.Ft void
+.Fn selinit "struct selinfo *sip"
+.Ft void
 .Fn selrecord "struct lwp *selector" "struct selinfo *sip"
 .Ft void
-.Fn selwakeup "struct selinfo *sip"
-.Ft void
-.Fn selnotify "struct selinfo *sip" "long knhint"
+.Fn selnotify "struct selinfo *sip" "int events" "long knhint"
 .Sh DESCRIPTION
+.Fn selinit
+and
+.Fn seldestroy
+functions must be used to initialize and destroy the
+.Va struct selinfo .
+The
+.Fn seldestroy
+function may block.
+.Pp
 .Fn selrecord
 and
 .Fn selwakeup
@@ -53,7 +66,7 @@ with the kernel implementation of
 .Xr select 2
 and
 .Xr poll 2 .
-Each object that can be polled contains a 
+Each object that can be polled contains a
 .Dv selinfo
 record.
 Device drivers provide locking for the
@@ -76,7 +89,7 @@ For non-MPSAFE drivers, the global
 .Dv kernel_lock
 is enough to provide atomicity.
 .Pp
-.Fn selwakeup
+.Fn selnotify
 is called by the underlying object handling code in order to notify any waiting
 threads that an event of interest has occurred.
 The same lock held across the poll method and call to 
@@ -86,21 +99,32 @@ must be held across the call to
 The lock prevents an event of interest being signalled while a thread is
 in the process of recording its interest.
 .Pp
+The
+.Fa events
+indicates which event happen.
+Zero may be used if unknow.
+.Pp
 .Fn selnotify
-calls
-.Fn selwakeup
-and then calls
+also calls
 .Fn KNOTE
-with
-.Va knhint .
-In most cases,
-.Fn selnotify
-should be used rather than using
-.Fn selwakeup
-directly.
-As with
-.Fn selwakeup
-the object's lock must be held.
+passing
+.Va knhint
+as an argument.
+.Sh CODE REFERENCES
+This section describes places within the
+.Nx
+source tree where actual code implementing select and poll
+subsystem can be found.
+All pathnames are relative to
+.Pa /usr/src .
+.Pp
+The core of the select and poll subsystem implementation is in
+.Pa sys/kern/sys_generic.c .
+Data structures and function prototypes are located in
+.Pa sys/sys/select.h ,
+.Pa sys/sys/poll.h
+and
+.Pa sys/sys/selinfo.h .
 .Sh SEE ALSO
 .Xr poll 2 ,
 .Xr select 2 ,
