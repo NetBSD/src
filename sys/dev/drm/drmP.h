@@ -1,4 +1,4 @@
-/* $NetBSD: drmP.h,v 1.14 2007/12/22 15:33:42 ad Exp $ */
+/* $NetBSD: drmP.h,v 1.15 2008/03/02 07:12:15 bjs Exp $ */
 
 /* drmP.h -- Private header for Direct Rendering Manager -*- linux-c -*-
  * Created: Mon Jan  4 10:05:05 1999 by faith@precisioninsight.com
@@ -601,10 +601,11 @@ typedef struct drm_dma_handle {
 	bus_addr_t busaddr;
 	bus_dma_tag_t dmat;
 	bus_dmamap_t map;
-	bus_dma_segment_t seg;
+	bus_dma_segment_t segs[1];
 	size_t size;
 	void *addr;
 } drm_dma_handle_t;
+#define DRM_PCI_DMAADDR(p)   ((p)->map->dm_segs[0].ds_addr)
 
 typedef struct drm_buf_entry {
 	int		  buf_size;
