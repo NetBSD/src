@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2008/01/16 12:34:58 ad Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2008/03/02 11:20:59 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,33 +35,62 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.1 2008/01/16 12:34:58 ad Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2008/03/02 11:20:59 jmmv Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
 
+#include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <err.h>
 
-int	main(int, char **);
+#include <prop/proplib.h>
+
+int		main(int, char **);
+static void	parse_bool_param(prop_dictionary_t, const char *,
+		    const char *);
+static void	parse_int_param(prop_dictionary_t, const char *,
+		    const char *);
+static void	parse_param(prop_dictionary_t, const char *,
+		    void (*)(prop_dictionary_t, const char *, const char *));
+static void	parse_string_param(prop_dictionary_t, const char *,
+		    const char *);
 static void	usage(void) __dead;
 
 int
 main(int argc, char **argv)
 {
-	modctl_t cmd;
+	modctl_load_t cmdargs;
+	prop_dictionary_t props;
+	char *propsstr;
 	int ch;
+	int flags;
 
-	cmd = MODCTL_LOAD;
+	flags = 0;
+	props = prop_dictionary_create();
 
-	while ((ch = getopt(argc, argv, "f")) != -1) {
+	while ((ch = getopt(argc, argv, "b:fi:s:")) != -1) {
 		switch (ch) {
-		case 'f':
-			cmd = MODCTL_FORCELOAD;
+		case 'b':
+			parse_param(props, optarg, parse_bool_param);
 			break;
+
+		case 'f':
+			flags |= MODCTL_LOAD_FORCE;
+			break;
+
+		case 'i':
+			parse_param(props, optarg, parse_int_param);
+			break;
+
+		case 's':
+			parse_param(props, optarg, parse_string_param);
+			break;
+
 		default:
 			usage();
 			/* NOTREACHED */
@@ -73,17 +102,107 @@ main(int argc, char **argv)
 	if (argc != 1)
 		usage();
 
-	if (modctl(cmd, argv[0])) {
+	propsstr = prop_dictionary_externalize(props);
+	if (propsstr == NULL)
+		errx(EXIT_FAILURE, "Failed to process properties");
+
+	cmdargs.ml_filename = argv[0];
+	cmdargs.ml_flags = flags;
+	cmdargs.ml_props = propsstr;
+	cmdargs.ml_propslen = strlen(propsstr);
+
+	if (modctl(MODCTL_LOAD, &cmdargs)) {
 		err(EXIT_FAILURE, NULL);
 	}
 
+	free(propsstr);
+	prop_object_release(props);
+
 	exit(EXIT_SUCCESS);
+}
+
+static
+void
+parse_bool_param(prop_dictionary_t props, const char *name,
+    const char *value)
+{
+	bool boolvalue;
+
+	assert(name != NULL);
+	assert(value != NULL);
+
+	if (strcasecmp(value, "1") == 0 ||
+	    strcasecmp(value, "true") == 0 ||
+	    strcasecmp(value, "yes") == 0)
+		boolvalue = true;
+	else if (strcasecmp(value, "0") == 0 ||
+	    strcasecmp(value, "false") == 0 ||
+	    strcasecmp(value, "no") == 0)
+		boolvalue = false;
+	else
+		errx(EXIT_FAILURE, "Invalid boolean value `%s'", value);
+
+	prop_dictionary_set(props, name, prop_bool_create(boolvalue));
+}
+
+static
+void
+parse_int_param(prop_dictionary_t props, const char *name,
+    const char *value)
+{
+	int64_t intvalue;
+
+	assert(name != NULL);
+	assert(value != NULL);
+
+	if (dehumanize_number(value, &intvalue) != 0)
+		err(EXIT_FAILURE, "Invalid integer value `%s'", value);
+
+	prop_dictionary_set(props, name,
+	    prop_number_create_integer(intvalue));
+}
+
+static
+void
+parse_param(prop_dictionary_t props, const char *origstr,
+    void (*fmt_handler)(prop_dictionary_t, const char *, const char *))
+{
+	char *name, *value;
+
+	name = strdup(origstr);
+
+	value = strchr(name, '=');
+	if (value == NULL) {
+		free(name);
+		errx(EXIT_FAILURE, "Invalid parameter `%s'", origstr);
+	}
+	*value++ = '\0';
+
+	fmt_handler(props, name, value);
+
+	free(name);
+}
+
+static
+void
+parse_string_param(prop_dictionary_t props, const char *name,
+    const char *value)
+{
+
+	assert(name != NULL);
+	assert(value != NULL);
+
+	prop_dictionary_set(props, name, prop_string_create_cstring(value));
 }
 
 static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-f] <module_name>\n", getprogname());
+	(void)fprintf(stderr,
+	    "Usage: %s [-b var=boolean] [-f] [-i var=integer] "
+	    "[-s var=string]\n"
+	    "       <module_name>\n",
+	    getprogname());
 	exit(EXIT_FAILURE);
 }
