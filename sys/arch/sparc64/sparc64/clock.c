@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.88 2007/10/17 19:57:30 garbled Exp $ */
+/*	$NetBSD: clock.c,v 1.89 2008/03/02 15:28:26 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.88 2007/10/17 19:57:30 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.89 2008/03/02 15:28:26 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -112,11 +112,9 @@ int timerok;
 int schedintr(void *);
 
 static struct intrhand level10 = { .ih_fun = clockintr };
-static struct intrhand level0 = { .ih_fun = tickintr };
 static struct intrhand level14 = { .ih_fun = statintr };
 static struct intrhand schedint = { .ih_fun = schedintr };
 
-void		tickintr_establish(void);
 static int	timermatch(struct device *, struct cfdata *, void *);
 static void	timerattach(struct device *, struct device *, void *);
 
@@ -262,21 +260,23 @@ stopcounter(struct timer_4u *creg)
 void
 tickintr_establish()
 {
-	static bool done = false;	/* only do this once */
+	struct intrhand *ih;
 
-	if (!done) {
-		done = true;
+	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT|M_ZERO);
+	KASSERT(ih != NULL);
 
-		level0.ih_clr = 0;
-		/* 
-		 * Establish a level 10 interrupt handler 
-		 *
-		 * We will have a conflict with the softint handler,
-		 * so we set the ih_number to 1.
-		 */
-		level0.ih_number = 1;
-		intr_establish(10, &level0);
+	ih->ih_fun = tickintr;
+	ih->ih_arg = 0;
+	ih->ih_clr = 0;
+	ih->ih_number = 1;
+	if (CPU_IS_PRIMARY(curcpu()))
+		intr_establish(10, ih);
+	else {
+		ih->ih_pil = 10;
+		ih->ih_pending = 0;
+		ih->ih_next = NULL;
 	}
+	curcpu()->ci_intrlev0 = ih;
 
 	/* set the next interrupt time */
 	curcpu()->ci_tick_increment = curcpu()->ci_cpu_clockrate[0] / hz;
@@ -476,6 +476,7 @@ tickintr(void *cap)
 	/* Reset the interrupt */
 	next_tick(curcpu()->ci_tick_increment);
 	splx(s);
+	curcpu()->ci_tick_evcnt.ev_count++;
 
 	return (1);
 }

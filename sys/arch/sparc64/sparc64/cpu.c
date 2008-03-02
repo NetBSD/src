@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.67 2008/02/28 11:50:40 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.68 2008/03/02 15:28:26 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2008/02/28 11:50:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2008/03/02 15:28:26 nakayama Exp $");
+
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,13 +152,16 @@ alloc_cpuinfo(u_int cpu_node)
 	cpi->ci_self = cpi;
 	cpi->ci_node = cpu_node;
 	cpi->ci_idepth = -1;
+	memset(cpi->ci_intrpending, -1, sizeof(cpi->ci_intrpending));
 
 	/*
 	 * Finally, add itself to the list of active cpus.
 	 */
 	for (ci = cpus; ci->ci_next != NULL; ci = ci->ci_next)
 		;
+#ifdef MULTIPROCESSOR
 	ci->ci_next = cpi;
+#endif
 	return (cpi);
 }
 
@@ -231,6 +236,8 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		mi_cpu_attach(ci);
 		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
 	}
+	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
+			     dev->dv_xname, "timer");
 #endif
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
@@ -401,6 +408,7 @@ cpu_hatch()
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
+	tickintr_establish();
 	spl0();
 }
 #endif /* MULTIPROCESSOR */

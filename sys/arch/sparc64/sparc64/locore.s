@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.268 2008/03/02 12:19:00 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.269 2008/03/02 15:28:26 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3595,16 +3595,14 @@ return_from_syscall:
  * and invokes the interrupt handler.
  */
 
-	.data
-	.globl	intrpending
-intrpending:
-	.space	16 * 8 * PTRSZ, -1
+/* intrpending array is now in per-CPU structure. */
 
 #ifdef DEBUG
 #define INTRDEBUG_VECTOR	0x1
 #define INTRDEBUG_LEVEL		0x2
 #define INTRDEBUG_FUNC		0x4
 #define INTRDEBUG_SPUR		0x8
+	.data
 	.globl	_C_LABEL(intrdebug)
 _C_LABEL(intrdebug):	.word 0x0
 /*
@@ -3672,9 +3670,9 @@ setup_sparcintr:
 	LDPTR	[%g5+IH_PEND], %g6	! Read pending flag
 	brnz,pn	%g6, ret_from_intr_vector ! Skip it if it's running
 	 ldub	[%g5+IH_PIL], %g6	! Read interrupt mask
-	sethi	%hi(intrpending), %g1
-	sll	%g6, PTRSHFT+3, %g3	! Find start of table for this IPL
-	or	%g1, %lo(intrpending), %g1
+	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %g1
+	sll	%g6, PTRSHFT, %g3	! Find start of table for this IPL
+	or	%g1, %lo(CPUINFO_VA+CI_INTRPENDING), %g1
 	 add	%g1, %g3, %g1
 1:
 	LDPTR	[%g1], %g3		! Load list head
@@ -4017,18 +4015,17 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	rd	SOFTINT, %g1
 	btst	1, %g1
 	bz,pt	%icc, 0f
-	 set	_C_LABEL(intrlev), %g3
+	 sethi	%hi(CPUINFO_VA+CI_INTRLEV0), %g3
 	wr	%g0, 1, CLEAR_SOFTINT
-	DLFLUSH(%g3, %g2)
 	ba,pt	%icc, setup_sparcintr
-	 LDPTR	[%g3 + PTRSZ], %g5	! intrlev[1] is reserved for %tick intr.
+	 LDPTR	[%g3 + %lo(CPUINFO_VA+CI_INTRLEV0)], %g5
 0:
 
 	! Increment the per-cpu interrupt level
-	set	CPUINFO_VA+CI_IDEPTH, %g1
-	ld	[%g1], %g2
+	sethi	%hi(CPUINFO_VA+CI_IDEPTH), %g1
+	ld	[%g1 + %lo(CPUINFO_VA+CI_IDEPTH)], %g2
 	inc	%g2
-	st	%g2, [%g1]
+	st	%g2, [%g1 + %lo(CPUINFO_VA+CI_IDEPTH)]
 
 #ifdef TRAPSTATS
 	sethi	%hi(_C_LABEL(kintrcnt)), %g1
@@ -4112,10 +4109,9 @@ ENTRY_NOPROFILE(sparc_interrupt)
 
 sparc_intr_retry:
 	wr	%l3, 0, CLEAR_SOFTINT	! (don't clear possible %tick IRQ)
-	sll	%l6, PTRSHFT+3, %l2
-	sethi	%hi(intrpending), %l4
-	or	%l4, %lo(intrpending), %l4
-	mov	8, %l7
+	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %l4
+	sll	%l6, PTRSHFT, %l2
+	or	%l4, %lo(CPUINFO_VA+CI_INTRPENDING), %l4
 	add	%l2, %l4, %l4
 
 1:
@@ -4128,8 +4124,9 @@ sparc_intr_retry:
 	CASPTR	[%l4] ASI_N, %l2, %l7	! Grab the entire list
 	cmp	%l7, %l2
 	bne,pn	%icc, 1b
-	 add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
+	 nop
 2:
+	add	%sp, CC64FSZ+STKB, %o2	! tf = %sp + CC64FSZ + STKB
 	LDPTR	[%l2 + IH_PEND], %l7	! save ih->ih_pending
 	membar	#LoadStore
 	STPTR	%g0, [%l2 + IH_PEND]	! Clear pending flag
@@ -4166,10 +4163,10 @@ intrcmplt:
 	 mov	1, %l5			! initialize intr count for next run
 
 	! Decrement this cpu's interrupt depth
-	set	CPUINFO_VA+CI_IDEPTH, %l4
-	ld	[%l4], %l5
+	sethi	%hi(CPUINFO_VA+CI_IDEPTH), %l4
+	ld	[%l4 + %lo(CPUINFO_VA+CI_IDEPTH)], %l5
 	dec	%l5
-	st	%l5, [%l4]
+	st	%l5, [%l4 + %lo(CPUINFO_VA+CI_IDEPTH)]
 
 #ifdef DEBUG
 	set	_C_LABEL(intrdebug), %o2
@@ -5121,6 +5118,10 @@ ENTRY_NOPROFILE(cpu_initialize)	/* for cosmetic reasons - nicer backtrace */
 	 *	%g2 = cpu_args
 	 */
 ENTRY(cpu_mp_startup)
+	mov	1, %o0
+	sllx	%o0, 63, %o0
+	wr	%o0, TICK_CMPR	! XXXXXXX clear and disable %tick_cmpr for now
+	wrpr	%g0, 0, %tick	! XXXXXXX clear %tick register as well
 	wrpr    %g0, 0, %cleanwin
 	wrpr	%g0, 0, %tl			! Make sure we're not in NUCLEUS mode
 	wrpr	%g0, WSTATE_KERN, %wstate
@@ -9528,10 +9529,11 @@ special_fp_store:
 
 	ldx	[%o0 + FS_FSR], %o4	! if (f->fs_fsr & QNE)
 	btst	%o2, %o4
-	add	%o0, FS_REGS, %o2
 	bnz	Lfp_storeq		!	goto storeq;
+	 nop
 Lfp_finish:
-	 btst	BLOCK_ALIGN, %o2	! Needs to be re-executed
+	add	%o0, FS_REGS, %o2
+	btst	BLOCK_ALIGN, %o2	! Needs to be re-executed
 	bnz,pn	%icc, 3f		! Check alignment
 	 st	%o3, [%o0 + FS_QSIZE]	! f->fs_qsize = qsize;
 	btst	FPRS_DL, %o5		! Lower FPU clean?
@@ -9631,7 +9633,7 @@ Lfp_storeq:
 	stx	%o4, [%o1 + %o3]	! q[qsize++] = fsr_qfront();
 	stx	%fsr, [%o0 + FS_FSR] 	! reread fsr
 	ldx	[%o0 + FS_FSR], %o4	! if fsr & QNE, loop
-	btst	%o5, %o4
+	btst	%o2, %o4
 	bnz	1b
 	 inc	8, %o3
 	b	Lfp_finish		! set qsize and finish storing fregs
@@ -9757,10 +9759,11 @@ ENTRY(send_softint)
 	andn	%g1, PSTATE_IE, %g2	! clear PSTATE.IE
 	wrpr	%g2, 0, %pstate
 
-	set	intrpending, %o3
+	sethi	%hi(CPUINFO_VA+CI_INTRPENDING), %o3
 	LDPTR	[%o2 + IH_PEND], %o5
+	or	%o3, %lo(CPUINFO_VA+CI_INTRPENDING), %o3
 	brnz	%o5, 1f
-	 sll	%o1, PTRSHFT+3, %o5	! Find start of table for this IPL
+	 sll	%o1, PTRSHFT, %o5	! Find start of table for this IPL
 	add	%o3, %o5, %o3
 2:
 	LDPTR	[%o3], %o5		! Load list head
