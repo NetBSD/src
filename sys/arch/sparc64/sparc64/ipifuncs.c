@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.13 2008/02/22 10:55:00 martin Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.14 2008/03/02 22:01:38 martin Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2008/02/22 10:55:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2008/03/02 22:01:38 martin Exp $");
 
 #include "opt_ddb.h"
 
@@ -55,7 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2008/02/22 10:55:00 martin Exp $")
 #define	sparc64_ipi_sleep()	delay(1000)
 
 #if defined(DDB) || defined(KGDB)
-extern int db_active;
+#ifdef DDB
+#include <ddb/db_command.h>
+#include <ddb/db_output.h>
+#endif
 #endif
 
 /* CPU sets containing halted, paused and resumed cpus */
@@ -91,47 +94,56 @@ sparc64_ipi_halt_thiscpu(void *arg)
 	return(1);
 }
 
+void
+sparc64_do_pause(void)
+{
+#if defined(DDB)
+	extern bool ddb_running_on_this_cpu(void);
+	extern void db_resume_others(void);
+#endif
+
+	CPUSET_ADD(cpus_paused, cpu_number());
+
+	do {
+		membar_sync();
+	} while(CPUSET_HAS(cpus_paused, cpu_number()));
+	membar_sync();
+	CPUSET_ADD(cpus_resumed, cpu_number());
+
+#if defined(DDB)
+	if (ddb_running_on_this_cpu()) {
+		db_command_loop();
+		db_resume_others();
+	}
+#endif
+}
+
 /*
  * Pause cpu.  This is called from locore.s after setting up a trapframe.
  */
 int
 sparc64_ipi_pause_thiscpu(void *arg)
 {
-	cpuid_t cpuid;
 	int s;
 #if defined(DDB)
-	struct trapframe64 *tf = arg;
-	volatile db_regs_t dbregs;
+	extern void fill_ddb_regs_from_tf(struct trapframe64 *tf);
+	extern void ddb_restore_state(void);
+	
+	if (arg)
+		fill_ddb_regs_from_tf(arg);
+#endif
 
-	if (tf) {
-		/* Initialise local dbregs storage from trap frame */
-		dbregs.db_tf = *tf;
-		dbregs.db_fr = *(struct frame64 *)(u_long)tf->tf_out[6];
+	s = intr_disable();
+	sparc64_do_pause();
 
-		curcpu()->ci_ddb_regs = &dbregs;
+#if defined(DDB)
+	if (arg) {
+		ddb_restore_state();
+		curcpu()->ci_ddb_regs = NULL;
 	}
 #endif
 
-	cpuid = cpu_number();
-	printf("cpu%ld paused.\n", cpuid);
-
-	s = intr_disable();
-	CPUSET_ADD(cpus_paused, cpuid);
-
-	do {
-		membar_sync();
-	} while(CPUSET_HAS(cpus_paused, cpuid));
-	membar_sync();
-
-	CPUSET_ADD(cpus_resumed, cpuid);
-
-#if defined(DDB)
-	if (tf)
-		curcpu()->ci_ddb_regs = NULL;
-#endif
-
 	intr_restore(s);
-	printf("cpu%ld resumed.\n", cpuid);
 	return (1);
 }
 
@@ -218,11 +230,8 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1)
 			return;
 	}
 
-	if (!db_active && panicstr == NULL)
+	if (panicstr == NULL)
 		panic("cpu%d: ipi_send: couldn't send ipi to UPAID %u", 
-			cpu_number(), upaid);
-	else
-		printf("\noops, can't send IPI from cpu%d to UPAID %u\n",
 			cpu_number(), upaid);
 }
 
@@ -281,6 +290,16 @@ mp_pause_cpus()
 	sparc64_multicast_ipi(cpuset, sparc64_ipi_pause, 0);
 	if (sparc64_ipi_wait(&cpus_paused, cpuset))
 		sparc64_ipi_error("pause", cpus_paused, cpuset);
+}
+
+/*
+ * Resume a single cpu
+ */
+void
+mp_resume_cpu(int cno)
+{
+	CPUSET_DEL(cpus_paused, cno);
+	membar_sync();
 }
 
 /*

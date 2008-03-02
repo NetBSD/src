@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.20 2008/01/15 10:35:33 martin Exp $ */
+/*	$NetBSD: intr.h,v 1.21 2008/03/02 22:01:38 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ void save_and_clear_fpstate(struct lwp *);
 void	sparc64_ipi_init (void);
 int	sparc64_ipi_halt_thiscpu (void *);
 int	sparc64_ipi_pause_thiscpu (void *);
+void	sparc64_do_pause(void);
 void	sparc64_ipi_drop_fpstate (void *);
 void	sparc64_ipi_save_fpstate (void *);
 void	sparc64_ipi_nop (void *);
@@ -67,6 +68,7 @@ void	mp_halt_cpus (void);
 void	mp_pause_cpus (void);
 void	mp_resume_cpus (void);
 int	mp_cpu_is_paused (sparc64_cpuset_t);
+void	mp_resume_cpu(int);
 #endif
 
 #endif /* _SPARC64_INTR_H_ */
