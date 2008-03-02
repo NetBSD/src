@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.9 2007/10/17 19:54:10 garbled Exp $	*/
+/*	$NetBSD: wdc.c,v 1.10 2008/03/02 06:17:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@ __wdcwait_reset(struct wdc_channel *chp, int drv_mask)
 static int
 wdcprobe(struct wdc_channel *chp)
 {
-	uint8_t st0, st1, sc, sn, cl, ch;
+	uint8_t st0, st1;
 	uint8_t ret_value = 0x03;
 	uint8_t drive;
 	int found;
@@ -227,7 +227,6 @@ wdc_read_block(struct wd_softc *sc, struct wdc_command *wd_c)
 int
 wdccommand(struct wd_softc *sc, struct wdc_command *wd_c)
 {
-	uint8_t err;
 	struct wdc_channel *chp = &sc->sc_channel;
 
 #if 0
@@ -264,7 +263,6 @@ wdccommand(struct wd_softc *sc, struct wdc_command *wd_c)
 int
 wdccommandext(struct wd_softc *wd, struct wdc_command *wd_c)
 {
-	uint8_t err;
 	struct wdc_channel *chp = &wd->sc_channel;
 
 	/* Select drive, head, and addressing mode. */

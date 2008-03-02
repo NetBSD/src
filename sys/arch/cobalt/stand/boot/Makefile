@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2008/03/01 18:13:02 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.15 2008/03/02 06:17:41 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -62,6 +62,10 @@ CPPFLAGS+=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
 
 # compiler flags for smallest code size
 CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+
+CFLAGS+=	-Wall -Werror
+CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes -Wpointer-arith
+CFLAGS+=	-Wno-pointer-sign
 
 NETBSD_VERS!=	${HOST_SH} ${S}/conf/osrelease.sh
 CPPFLAGS+=	-DNETBSD_VERS='"${NETBSD_VERS}"'
