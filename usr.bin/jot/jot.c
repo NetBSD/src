@@ -1,4 +1,4 @@
-/*	$NetBSD: jot.c,v 1.21 2008/02/29 22:43:48 dsl Exp $	*/
+/*	$NetBSD: jot.c,v 1.22 2008/03/02 21:33:42 dsl Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\n\
 #if 0
 static char sccsid[] = "@(#)jot.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: jot.c,v 1.21 2008/02/29 22:43:48 dsl Exp $");
+__RCSID("$NetBSD: jot.c,v 1.22 2008/03/02 21:33:42 dsl Exp $");
 #endif /* not lint */
 
 /*
@@ -87,19 +87,45 @@ static void	usage(void) __dead;
 int
 main(int argc, char *argv[])
 {
-	double	x, y;
+	double	x;
 	long	i;
 
 	getargs(argc, argv);
 	if (randomize) {
-		x = (ender + dox - begin) * (ender > begin ? 1 : -1);
-		srandom((unsigned long) step);
-		for (i = 1; i <= reps || reps == 0; i++) {
-			y = (double) random() / INT_MAX;
-			putdata(y * x + begin, reps - i);
+		x = ender - begin;
+		if (dox == 0)
+			/*
+			 * We are printing floating point, generate random
+			 * number that include both supplied limits.
+			 * Due to FP routing for display the low and high
+			 * values are likely to occur half as often as all
+			 * the others.
+			 */
+			x /= (1u << 31) - 1.0;
+		else {
+			/*
+			 * We are printing integers increase the range by
+			 * one but ensure we never generate it.
+			 * This makes all the integer values equally likely.
+			 */
+			if (ender > begin)
+				x += 1.0;
+			else
+				x -= 1.0;
+			x /= (1u << 31);
 		}
+		srandom((unsigned long) step);
+		for (i = 1; i <= reps || reps == 0; i++)
+			putdata(random() * x + begin, reps - i);
 	} else {
-		for (i = 1, x = begin; i <= reps || reps == 0; i++, x += step)
+		/*
+		 * If we are going to display as integer, add 0.5 here
+		 * and use floor(x) later to get sane rounding.
+		 */
+		x = begin;
+		if (dox)
+			x += 0.5;
+		for (i = 1; i <= reps || reps == 0; i++, x += step)
 			putdata(x, reps - i);
 	}
 	if (!nofinalnl)
@@ -272,12 +298,11 @@ getargs(int argc, char *argv[])
 static void
 putdata(double x, long notlast)
 {
-	long	d = floor(x);
 
 	if (boring)				/* repeated word */
 		printf("%s", format);
 	else if (dox)				/* scalar */
-		printf(format, d);
+		printf(format, (long)floor(x));
 	else					/* real */
 		printf(format, x);
 	if (notlast != 0)
