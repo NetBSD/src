@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.8 2008/01/19 18:20:39 rumble Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.9 2008/03/02 11:18:43 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.8 2008/01/19 18:20:39 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.9 2008/03/02 11:18:43 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,7 +73,8 @@ static modinfo_t module_dummy;
 __link_set_add_rodata(modules, module_dummy);
 
 static module_t	*module_lookup(const char *);
-static int	module_do_load(const char *, bool, bool, module_t **);
+static int	module_do_load(const char *, bool, int, prop_dictionary_t,
+		    module_t **);
 static int	module_do_unload(const char *);
 static void	module_error(const char *, ...);
 static int	module_do_builtin(const char *, module_t **);
@@ -142,7 +143,8 @@ module_init_class(modclass_t class)
 	 * list as we call module_do_load();
 	 */
 	while ((mod = TAILQ_FIRST(&module_bootlist)) != NULL) {
-		module_do_load(mod->mod_info->mi_name, false, false, NULL);
+		module_do_load(mod->mod_info->mi_name, false, 0,
+		    NULL, NULL);
 	}
 	mutex_exit(&module_lock);
 }
@@ -162,16 +164,15 @@ module_jettison(void)
 /*
  * module_load:
  *
- *	Load a single module from the file system.  If force is set,
- *	bypass the version check.
+ *	Load a single module from the file system.
  */
 int
-module_load(const char *filename, bool force)
+module_load(const char *filename, int flags, prop_dictionary_t props)
 {
 	int error;
 
 	mutex_enter(&module_lock);
-	error = module_do_load(filename, false, force, NULL);
+	error = module_do_load(filename, false, flags, props, NULL);
 	mutex_exit(&module_lock);
 
 	return error;
@@ -374,7 +375,8 @@ module_do_builtin(const char *name, module_t **modp)
  *	pushed by the boot loader.
  */
 static int
-module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
+module_do_load(const char *filename, bool isdep, int flags,
+    prop_dictionary_t props, module_t **modp)
 {
 	static TAILQ_HEAD(,module) pending = TAILQ_HEAD_INITIALIZER(pending);
 	static int depth;
@@ -545,7 +547,7 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 				module_error("self-dependency detected");
 				goto fail;
 			}
-			error = module_do_load(buf, true, force,
+			error = module_do_load(buf, true, flags, NULL,
 			    &mod->mod_required[mod->mod_nrequired++]);
 			if (error != 0 && error != EEXIST)
 				goto fail;
@@ -555,7 +557,7 @@ module_do_load(const char *filename, bool isdep, bool force, module_t **modp)
 	/*
 	 * We loaded all needed modules successfully: initialize.
 	 */
-	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, NULL);
+	error = (*mi->mi_modcmd)(MODULE_CMD_INIT, props);
 	if (error != 0) {
 		module_error("modctl function returned error %d", error);
 		goto fail;
