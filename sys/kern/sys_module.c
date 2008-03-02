@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.3 2008/01/17 22:30:54 rumble Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.4 2008/03/02 11:18:43 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.3 2008/01/17 22:30:54 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.4 2008/03/02 11:18:43 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,10 +47,64 @@ __KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.3 2008/01/17 22:30:54 rumble Exp $"
 #include <sys/kauth.h>
 #include <sys/kobj.h>
 #include <sys/kmem.h>
+#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/kauth.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+
+static
+int
+handle_modctl_load(void *arg)
+{
+	modctl_load_t *ml = (modctl_load_t *)arg;
+
+	char *path;
+	char *props;
+	int error;
+	prop_dictionary_t dict;
+	size_t propslen;
+
+	if ((ml->ml_props != NULL && ml->ml_propslen == 0) ||
+	    (ml->ml_props == NULL && ml->ml_propslen > 0)) {
+		error = EINVAL;
+		goto out1;
+	}
+
+	path = PNBUF_GET();
+	error = copyinstr(ml->ml_filename, path, MAXPATHLEN, NULL);
+	if (error != 0)
+		goto out2;
+
+	propslen = ml->ml_propslen + 1;
+	props = (char *)malloc(propslen, M_TEMP, M_WAITOK|M_CANFAIL);
+	if (props == NULL) {
+		error = ENOMEM;
+		goto out2;
+	}
+
+	error = copyinstr(ml->ml_props, props, propslen, NULL);
+	if (error != 0)
+		goto out3;
+
+	dict = prop_dictionary_internalize(props);
+	if (dict == NULL) {
+		error = EINVAL;
+		goto out3;
+	}
+
+	error = module_load(path, ml->ml_flags, dict);
+
+	prop_object_release(dict);
+
+out3:
+	free(props, M_TEMP);
+out2:
+	PNBUF_PUT(path);
+out1:
+
+	return error;
+}
 
 int
 sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
@@ -70,13 +124,11 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	struct iovec iov;
 	int error;
 	void *arg;
-	char *path;
 
 	arg = SCARG(uap, arg);
 
 	switch (SCARG(uap, cmd)) {
 	case MODCTL_LOAD:
-	case MODCTL_FORCELOAD:
 	case MODCTL_UNLOAD:
 		/* Authorize. */
 		error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_MODULE,
@@ -90,15 +142,8 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	}
 
 	switch (SCARG(uap, cmd)) {
-	case MODCTL_FORCELOAD:
 	case MODCTL_LOAD:
-		path = PNBUF_GET();
-		error = copyinstr(arg, path, MAXPATHLEN, NULL);
-		if (error == 0) {
-			error = module_load(path,
-			    SCARG(uap, cmd) == MODCTL_FORCELOAD);
-		}
-		PNBUF_PUT(path);
+		error = handle_modctl_load(arg);
 		break;
 
 	case MODCTL_UNLOAD:

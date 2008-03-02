@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.1 2008/01/16 12:34:54 ad Exp $	*/
+/*	$NetBSD: module.h,v 1.2 2008/03/02 11:18:43 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -92,6 +92,8 @@ typedef struct module {
 
 #include <sys/mutex.h>
 
+#include <prop/proplib.h>
+
 /*
  * Per-module linkage.  Loadable modules have a `link_set_modules' section
  * containing only one entry, pointing to the module's modinfo_t record.
@@ -121,7 +123,7 @@ void	module_init_class(modclass_t);
 int	module_prime(void *, size_t);
 void	module_jettison(void);
 
-int	module_load(const char *, bool);
+int	module_load(const char *, int, prop_dictionary_t);
 int	module_unload(const char *);
 int	module_hold(const char *);
 void	module_rele(const char *);
@@ -132,9 +134,18 @@ void	module_rele(const char *);
 
 #endif	/* _KERNEL */
 
+typedef struct modctl_load {
+	const char *ml_filename;
+
+#define MODCTL_LOAD_FORCE 1
+	int ml_flags;
+
+	const char *ml_props;
+	size_t ml_propslen;
+} modctl_load_t;
+
 typedef enum modctl {
-	MODCTL_LOAD,		/* char *filename */
-	MODCTL_FORCELOAD,	/* char *filename */
+	MODCTL_LOAD,		/* modctl_load_t *ml */
 	MODCTL_UNLOAD,		/* char *name */
 	MODCTL_STAT		/* struct iovec *buffer */
 } modctl_t;
