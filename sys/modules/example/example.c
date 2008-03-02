@@ -1,4 +1,4 @@
-/*	$NetBSD: example.c,v 1.1 2008/01/16 12:34:57 ad Exp $	*/
+/*	$NetBSD: example.c,v 1.2 2008/03/02 11:19:30 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,13 +34,33 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.1 2008/01/16 12:34:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: example.c,v 1.2 2008/03/02 11:19:30 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
 #include <sys/module.h>
 
 MODULE(MODULE_CLASS_MISC, example, NULL);
+
+static
+void
+handle_props(prop_dictionary_t props)
+{
+	prop_string_t str;
+
+	str = prop_dictionary_get(props, "msg");
+	if (str == NULL)
+		printf("The 'msg' property was not given.\n");
+	else if (prop_object_type(str) != PROP_TYPE_STRING)
+		printf("The 'msg' property is not a string.\n");
+	else {
+		const char *msg = prop_string_cstring_nocopy(str);
+		if (msg == NULL)
+			printf("Failed to process the 'msg' property.\n");
+		else
+			printf("The 'msg' property is: %s\n", msg);
+	}
+}
 
 static int
 example_modcmd(modcmd_t cmd, void *arg)
@@ -49,6 +69,7 @@ example_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		printf("Example module loaded.\n");
+		handle_props(arg);
 		break;
 
 	case MODULE_CMD_FINI:
