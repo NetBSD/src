@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.12 2008/03/01 18:13:02 tsutsui Exp $	*/
+/*	$NetBSD: boot.c,v 1.13 2008/03/02 06:17:41 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -429,6 +429,8 @@ main(unsigned int memsize)
 	try_bootp = 1;
 
 	/* Initialize boot info early */
+	dev = NULL;
+	kernel = NULL;
 	howto = 0x0;
 	bi_flags.bi_flags = 0x0;
 	bi_addr = bi_init();
