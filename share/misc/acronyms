@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.179 2008/01/31 11:45:16 tnn Exp $
+$NetBSD: acronyms,v 1.180 2008/03/02 17:42:08 plunky Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -168,6 +168,7 @@ NP	no problem
 NRFPT	not ready for prime time
 NRN	no reply necessary
 NSFW	not suitable for work
+NVM	never mind
 OIC	oh, I see
 OMG	oh, my god
 OMW	on my way
