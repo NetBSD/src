@@ -1,4 +1,4 @@
-// $NetBSD: t_modctl.cpp,v 1.2 2008/02/10 16:02:24 jmmv Exp $
+// $NetBSD: t_modctl.cpp,v 1.3 2008/03/02 11:22:10 jmmv Exp $
 //
 // Copyright (c) 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
@@ -35,14 +35,17 @@
 
 extern "C" {
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.cpp,v 1.2 2008/02/10 16:02:24 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.cpp,v 1.3 2008/03/02 11:22:10 jmmv Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
+
+#include <prop/proplib.h>
 }
 
 #include <cassert>
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 
@@ -136,6 +139,24 @@ get_modstat_info(const char *name, modstat_t *msdest)
 }
 
 /*
+ * Queries a sysctl property.
+ */
+static
+bool
+get_sysctl(const std::string& name, void *buf, const size_t len)
+{
+	size_t len2 = len;
+	std::cout << "Querying sysctl variable: " << name << std::endl;
+	int ret = ::sysctlbyname(name.c_str(), buf, &len2, NULL, 0);
+	if (ret == -1 && errno != ENOENT) {
+		std::cerr << "sysctlbyname(2) failed: "
+		    << std::strerror(errno) << std::endl;
+		ATF_FAIL("Failed to query " + name);
+	}
+	return ret != -1;
+}
+
+/*
  * Returns a boolean indicating if the k_helper module was loaded
  * successfully.  This implementation uses modctl(2)'s MODCTL_STAT
  * subcommand to do the check.
@@ -157,19 +178,10 @@ static
 bool
 k_helper_is_present_sysctl(void)
 {
-	size_t present, presentsize;
-	int ret;
+	size_t present;
 
-	presentsize = sizeof(present);
-	ret = ::sysctlbyname("vendor.k_helper.present", &present,
-	    &presentsize, NULL, 0);
-	if (ret == -1 && errno != ENOENT) {
-		int err = errno;
-		std::cerr << "sysctlbyname(2) failed: " << std::strerror(err)
-		    << std::endl;
-		ATF_FAIL("Failed to query module status");
-	}
-	return ret == 0;
+	return get_sysctl("vendor.k_helper.present", &present,
+	                  sizeof(present));
 }
 
 /*
@@ -211,13 +223,31 @@ k_helper_is_present(presence_check how)
  */
 static
 int
-load(const std::string& filename, bool fatal = true)
+load(const std::string& filename, prop_dictionary_t props = NULL,
+     bool fatal = true)
 {
 	int err;
+	char *propsstr;
+	modctl_load_t ml;
+
+	if (props == NULL) {
+		props = prop_dictionary_create();
+		propsstr = prop_dictionary_externalize(props);
+		ATF_CHECK(propsstr != NULL);
+		prop_object_release(props);
+	} else {
+		propsstr = prop_dictionary_externalize(props);
+		ATF_CHECK(propsstr != NULL);
+	}
+
+	ml.ml_filename = filename.c_str();
+	ml.ml_flags = 0;
+	ml.ml_props = propsstr;
+	ml.ml_propslen = strlen(propsstr);
 
 	std::cout << "Loading module " << filename << std::endl;
 	err = 0;
-	if (::modctl(MODCTL_LOAD, __UNCONST(filename.c_str())) == -1) {
+	if (::modctl(MODCTL_LOAD, &ml) == -1) {
 		err = errno;
 		std::cerr << "modctl(MODCTL_LOAD, " << filename
 		    << ") failed: " << std::strerror(err)
@@ -225,6 +255,9 @@ load(const std::string& filename, bool fatal = true)
 		if (fatal)
 			ATF_FAIL("Module load failed");
 	}
+
+	::free(propsstr);
+
 	return err;
 }
 
@@ -277,11 +310,11 @@ ATF_TEST_CASE_BODY(cmd_load)
 {
 	require_modular();
 
-	ATF_CHECK(load("", false) == ENOENT);
-	ATF_CHECK(load("non-existent.o", false) == ENOENT);
+	ATF_CHECK(load("", NULL, false) == ENOENT);
+	ATF_CHECK(load("non-existent.o", NULL, false) == ENOENT);
 
 	std::string longname(MAXPATHLEN, 'a');
-	ATF_CHECK(load(longname.c_str(), false) == ENAMETOOLONG);
+	ATF_CHECK(load(longname.c_str(), NULL, false) == ENAMETOOLONG);
 
 	ATF_CHECK(!k_helper_is_present(stat_check));
 	load(get_srcdir() + "/k_helper.o");
@@ -289,6 +322,75 @@ ATF_TEST_CASE_BODY(cmd_load)
 	ATF_CHECK(k_helper_is_present(stat_check));
 }
 ATF_TEST_CASE_CLEANUP(cmd_load)
+{
+	unload_cleanup("k_helper");
+}
+
+ATF_TEST_CASE_WITH_CLEANUP(cmd_load_props);
+ATF_TEST_CASE_HEAD(cmd_load_props)
+{
+	set("descr", "Tests for the MODCTL_LOAD command, providing extra "
+	    "load-time properties");
+	set("require.user", "root");
+}
+ATF_TEST_CASE_BODY(cmd_load_props)
+{
+	prop_dictionary_t props;
+
+	require_modular();
+
+	std::cout << "Loading module without properties" << std::endl;
+	props = prop_dictionary_create();
+	load(get_srcdir() + "/k_helper.o", props);
+	prop_object_release(props);
+	{
+		int ok;
+		ATF_CHECK(get_sysctl("vendor.k_helper.prop_str_ok",
+		                     &ok, sizeof(ok)));
+		ATF_CHECK(!ok);
+	}
+	unload("k_helper");
+
+	std::cout << "Loading module with a string property" << std::endl;
+	props = prop_dictionary_create();
+	prop_dictionary_set(props, "prop_str",
+	                    prop_string_create_cstring("1st string"));
+	load(get_srcdir() + "/k_helper.o", props);
+	prop_object_release(props);
+	{
+		int ok;
+		ATF_CHECK(get_sysctl("vendor.k_helper.prop_str_ok",
+		                     &ok, sizeof(ok)));
+		ATF_CHECK(ok);
+
+		char val[128];
+		ATF_CHECK(get_sysctl("vendor.k_helper.prop_str_val",
+		                     &val, sizeof(val)));
+		ATF_CHECK(std::strcmp(val, "1st string") == 0);
+	}
+	unload("k_helper");
+
+	std::cout << "Loading module with a different string property"
+	          << std::endl;
+	props = prop_dictionary_create();
+	prop_dictionary_set(props, "prop_str",
+	                    prop_string_create_cstring("2nd string"));
+	load(get_srcdir() + "/k_helper.o", props);
+	prop_object_release(props);
+	{
+		int ok;
+		ATF_CHECK(get_sysctl("vendor.k_helper.prop_str_ok",
+		                     &ok, sizeof(ok)));
+		ATF_CHECK(ok);
+
+		char val[128];
+		ATF_CHECK(get_sysctl("vendor.k_helper.prop_str_val",
+		                     &val, sizeof(val)));
+		ATF_CHECK(std::strcmp(val, "2nd string") == 0);
+	}
+	unload("k_helper");
+}
+ATF_TEST_CASE_CLEANUP(cmd_load_props)
 {
 	unload_cleanup("k_helper");
 }
@@ -359,6 +461,7 @@ ATF_INIT_TEST_CASES(tcs)
 	have_modular = check_modular();
 
 	ATF_ADD_TEST_CASE(tcs, cmd_load);
+	ATF_ADD_TEST_CASE(tcs, cmd_load_props);
 	ATF_ADD_TEST_CASE(tcs, cmd_stat);
 	ATF_ADD_TEST_CASE(tcs, cmd_unload);
 }
