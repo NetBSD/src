@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.267 2008/02/28 11:50:40 martin Exp $	*/
+/*	$NetBSD: locore.s,v 1.268 2008/03/02 12:19:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3650,11 +3650,6 @@ interrupt_vector:
 	ldxa	[%g1] ASI_IRDR, %g1	! Get IPI handler address
 	brz,pn  %g1, ret_from_intr_vector
 	 mov	IRDR_2H, %g2
-	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
-
-	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
-	membar	#Sync			! Should not be needed due to retry
-
 	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
 
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
