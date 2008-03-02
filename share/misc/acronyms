@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.180 2008/03/02 17:42:08 plunky Exp $
+$NetBSD: acronyms,v 1.181 2008/03/02 19:59:46 dholland Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -42,6 +42,7 @@ BS	bullshit
 BTDT	been there, done that
 BTTH	boot to the head
 BTW	by the way
+CFV	call for votes
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
@@ -193,6 +194,7 @@ PPL	pretty please
 PTV	parental tunnel vision
 QED	quod erat demonstrandum
 RFC	request for comments
+RFD	request for discussion
 RFE	request for enhancements
 RIP	rest in peace
 RL	real life
