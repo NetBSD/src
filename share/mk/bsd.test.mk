@@ -1,4 +1,4 @@
-# $NetBSD: bsd.test.mk,v 1.5 2008/02/10 12:28:54 jmmv Exp $
+# $NetBSD: bsd.test.mk,v 1.6 2008/03/02 11:31:42 jmmv Exp $
 #
 
 .include <bsd.init.mk>
@@ -34,11 +34,13 @@ ${_T}: ${TESTS_SH_SRC_${_T}} atf-compile-cookie
 .  endfor
 .endif
 
+CLEANFILES+= atf-compile-cookie
 .if ${USETOOLS} == "yes"
 atf-compile-cookie: ${TOOL_ATF_COMPILE}
 	touch atf-compile-cookie
 .else
 atf-compile-cookie:
+	test -f atf-compile-cookie || touch atf-compile-cookie
 .endif
 
 .if !defined(NOATFFILE)
