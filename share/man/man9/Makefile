@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.258 2007/12/09 20:37:42 jmcneill Exp $
+#       $NetBSD: Makefile,v 1.259 2008/03/02 00:30:21 rmind Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -503,9 +503,11 @@ MLINKS+=rwlock.9 rw.9 rwlock.9 rw_init.9 rwlock.9 rw_destroy.9 \
 	rwlock.9 rw_tryenter.9 rwlock.9 rw_tryupgrade.9 \
 	rwlock.9 rw_downgrade.9 rwlock.9 rw_read_held.9 \
 	rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9
-MAN+=	selrecord.9
-MLINKS+=selrecord.9 selwakeup.9 \
-	selrecord.9 selnotify.9
+MAN+=	select.9
+MLINKS+=select.9 selinit.9 \
+	select.9 seldestroy.9 \
+	select.9 selrecord.9 \
+	select.9 selnotify.9
 MLINKS+=setjmp.9 longjmp.9
 MLINKS+=shutdownhook_establish.9 shutdownhook_disestablish.9
 MLINKS+=signal.9 siginit.9 \

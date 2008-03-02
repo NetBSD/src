@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1116 2008/02/26 14:54:18 joerg Exp $
+#	$NetBSD: mi,v 1.1117 2008/03/02 00:30:21 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7640,9 +7640,12 @@
 ./usr/share/man/cat9/secmodel_bsd44.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_overlay.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/secmodel_securelevel.0	comp-sys-catman		.cat
+./usr/share/man/cat9/seldestroy.0		comp-sys-catman		.cat
+./usr/share/man/cat9/select.0			comp-sys-catman		.cat
+./usr/share/man/cat9/selinit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/selnotify.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/selrecord.0		comp-sys-catman		.cat
-./usr/share/man/cat9/selwakeup.0		comp-sys-catman		.cat
+./usr/share/man/cat9/selwakeup.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/sendsig.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/setdisklabel.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/setjmp.0			comp-sys-catman		.cat
@@ -12284,9 +12287,12 @@
 ./usr/share/man/man9/secmodel_bsd44.9		comp-sys-man		.man
 ./usr/share/man/man9/secmodel_overlay.9		comp-sys-man		.man
 ./usr/share/man/man9/secmodel_securelevel.9	comp-sys-man		.man
+./usr/share/man/man9/seldestroy.9		comp-sys-man		.man
+./usr/share/man/man9/select.9			comp-sys-man		.man
+./usr/share/man/man9/selinit.9			comp-sys-man		.man
 ./usr/share/man/man9/selnotify.9		comp-sys-man		.man
 ./usr/share/man/man9/selrecord.9		comp-sys-man		.man
-./usr/share/man/man9/selwakeup.9		comp-sys-man		.man
+./usr/share/man/man9/selwakeup.9		comp-obsolete		obsolete
 ./usr/share/man/man9/sendsig.9			comp-sys-man		.man
 ./usr/share/man/man9/setdisklabel.9		comp-sys-man		.man
 ./usr/share/man/man9/setjmp.9			comp-sys-man		.man
