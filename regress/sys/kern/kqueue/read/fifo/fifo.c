@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo.c,v 1.3 2006/09/29 14:18:25 christos Exp $	*/
+/*	$NetBSD: fifo.c,v 1.4 2008/03/02 12:51:59 lukem Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@ main(int argc, char **argv)
 {
 	int kq, n, fd, error = 0;
 	struct kevent event[1];
-	char buffer[128], name[128];
+	char buffer[128], name[MAXPATHLEN];
 	const char *dir = "/tmp";
 	
 	if (argc != 1 && argc != 2) {
@@ -66,17 +66,24 @@ main(int argc, char **argv)
 	if (argc == 2)
 		dir = argv[1];
 
-	sprintf(name, "%s/fifo.XXXXXX", dir);
-	if (mktemp(name) == NULL)
-		errx(1, "mktemp");
+	if (snprintf(name, sizeof(name), "%s/fifo.XXXXXX", dir) >= sizeof(name))
+		errx(1, "dir '%s' too long", dir);
 
+	if ((fd = mkstemp(name)) == -1)
+		err(1, "mkstemp %s", name);
+	if (close(fd) == -1)
+		err(1, "close %d (%s)", fd, name);
+
+	if (unlink(name) == -1)
+		err(1, "unlink %s", name);
+	    		/* We're not concerned about a potential race here */
 	if (mkfifo(name, 0644) < 0)
-		errx(1, "mkfifo");
+		err(1, "mkfifo %s", name);
 
 	printf("fifo: created fifo '%s'\n", name);
 
 	if ((fd = open(name, O_RDWR, 0644)) < 0)
-		errx(1, "open");
+		err(1, "open %s", name);
 
         kq = kqueue();
         if (kq < 0) {
