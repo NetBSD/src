@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.98 2007/12/21 18:22:43 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.99 2008/03/03 12:30:57 tsutsui Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.98 2007/12/21 18:22:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.99 2008/03/03 12:30:57 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.98 2007/12/21 18:22:43 dyoung Exp $");
 #include <sys/kernel.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <sys/device.h>
 
 #include <machine/endian.h>
 #include <sys/bus.h>
