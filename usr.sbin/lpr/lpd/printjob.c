@@ -1,4 +1,4 @@
-/*	$NetBSD: printjob.c,v 1.51 2008/02/16 07:33:25 matt Exp $	*/
+/*	$NetBSD: printjob.c,v 1.52 2008/03/03 05:07:43 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.7 (Berkeley) 5/10/95";
 #else
-__RCSID("$NetBSD: printjob.c,v 1.51 2008/02/16 07:33:25 matt Exp $");
+__RCSID("$NetBSD: printjob.c,v 1.52 2008/03/03 05:07:43 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -173,9 +173,6 @@ printjob(void)
 	signal(SIGQUIT, abortpr);
 	signal(SIGTERM, abortpr);
 
-	(void)mktemp(tempfile);		/* XXX */
-	(void)mktemp(tempremote);	/* XXX */
-
 	/*
 	 * uses short form file names
 	 */
@@ -205,6 +202,21 @@ printjob(void)
 		syslog(LOG_ERR, "%s: %s: %m", printer, LO);
 		exit(1);
 	}
+
+	/*
+	 * create the temp filenames.
+	 * XXX	arguably we should keep the fds open and fdopen(3) dup()s,
+	 * XXX	but we're in a protected directory so it shouldn't matter.
+	 */
+	if ((fd = mkstemp(tempfile)) != -1) {
+		(void)close(fd);
+		(void)unlink(tempfile);
+	}
+	if ((fd = mkstemp(tempremote)) != -1) {
+		(void)close(fd);
+		(void)unlink(tempremote);
+	}
+
 	/*
 	 * search the spool directory for work and sort by queue order.
 	 */
