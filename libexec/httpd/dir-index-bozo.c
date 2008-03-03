@@ -1,9 +1,9 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.3 2007/10/18 18:53:59 ad Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.4 2008/03/03 22:15:09 mrg Exp $	*/
 
-/*	$eterna: dir-index-bozo.c,v 1.7 2006/05/17 08:18:44 mrg Exp $	*/
+/*	$eterna: dir-index-bozo.c,v 1.10 2008/03/03 03:36:11 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,8 +69,6 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	char buf[MAXPATHLEN];
 	char spacebuf[48];
 	int l, i;
-
-	dp = NULL;	/* XXX */
 
 	if (!isindex || !Xflag)
 		return 0;
@@ -181,7 +179,7 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	closedir(dp);
 	bozoprintf("</pre>");
 	directory_hr();
-	bozoprintf("</body></html>\r\n");
+	bozoprintf("</body></html>\r\n\r\n");
 	bozoflush(stdout);
 	
 	return 1;
