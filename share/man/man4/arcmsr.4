@@ -1,4 +1,4 @@
-.\"	$NetBSD: arcmsr.4,v 1.6 2008/02/29 21:14:48 xtraeme Exp $
+.\"	$NetBSD: arcmsr.4,v 1.7 2008/03/03 15:35:22 xtraeme Exp $
 .\"	$OpenBSD: arc.4,v 1.10 2007/11/04 08:18:17 dlg Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines <xtraeme@netbsd.org>
@@ -16,7 +16,7 @@
 .\" TORTIOUS ACTION, ARISING OUT OF
 .\" PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd February 29, 2008
+.Dd March 3, 2008
 .Dt ARCMSR 4
 .Os
 .Sh NAME
@@ -104,6 +104,17 @@ disabled in the firmware; otherwise a
 error will be reported by
 .Xr bioctl 8 .
 .Pp
+When a RAID 1 or 1+0 volume is created, either through the
+.Xr bioctl 8
+command or controller's firmware, the volume won't be accessible until
+the initialization is done. A way to get access to the
+.Xr sd 4
+device that corresponds to that volume without rebooting, is to issue
+the following command (once the initialization is finished):
+.Bd -literal
+$ scsictl scsibus0 scan any any
+.Ed
+.Pp
 The
 .Nm
 driver will also report to the kernel log buffer any error that might
@@ -128,7 +139,8 @@ script when such condition happens.
 .Xr sd 4 ,
 .Xr bioctl 8 ,
 .Xr envstat 8 ,
-.Xr powerd 8
+.Xr powerd 8 ,
+.Xr scsictl 8
 .Sh HISTORY
 The
 .Nm
