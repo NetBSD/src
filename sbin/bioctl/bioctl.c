@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.9 2008/03/01 16:08:41 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.10 2008/03/03 14:55:39 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.9 2008/03/01 16:08:41 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.10 2008/03/03 14:55:39 xtraeme Exp $");
 #endif
 
 #include <sys/types.h>
@@ -236,9 +236,11 @@ static int
 bio_show_volumes(struct biotmp *bt)
 {
 	struct bioc_vol 	bv;
-	const char 		*status;
+	const char 		*status, *rtypestr, *stripestr;
 	char 			size[64], percent[16], seconds[20];
 	char 			rtype[16], stripe[16], tmp[32];
+
+	rtypestr = stripestr = NULL;
 
 	memset(&bv, 0, sizeof(bv));
 	bv.bv_cookie = bl.bl_cookie;
@@ -297,22 +299,32 @@ bio_show_volumes(struct biotmp *bt)
 
 	switch (bv.bv_level) {
 	case BIOC_SVOL_HOTSPARE:
-		snprintf(rtype, sizeof(rtype), "Hot spare");
-		snprintf(stripe, sizeof(stripe), "N/A");
+		rtypestr = "Hot spare";
+		stripestr = "N/A";
 		break;
 	case BIOC_SVOL_PASSTHRU:
-		snprintf(rtype, sizeof(rtype), "Pass through");
-		snprintf(stripe, sizeof(stripe), "N/A");
+		rtypestr = "Pass through";
+		stripestr = "N/A";
+		break;
+	case BIOC_SVOL_RAID01:
+		rtypestr = "RAID 0+1";
+		break;
+	case BIOC_SVOL_RAID10:
+		rtypestr = "RAID 1+0";
 		break;
 	default:
 		snprintf(rtype, sizeof(rtype), "RAID %u", bv.bv_level);
 		if (bv.bv_level == 1 || bv.bv_stripe_size == 0)
-			snprintf(stripe, sizeof(stripe), "N/A");
-		else
-			snprintf(stripe, sizeof(stripe), "%uK",
-			    bv.bv_stripe_size);
+			stripestr = "N/A";
 		break;
 	}
+
+	if (rtypestr)
+		snprintf(rtype, sizeof(rtype), rtypestr);
+	if (stripestr)
+		snprintf(stripe, sizeof(stripe), stripestr);
+	else
+		snprintf(stripe, sizeof(stripe), "%uK", bv.bv_stripe_size);
 
 	humanize_number(size, 5, (int64_t)bv.bv_size, "", HN_AUTOSCALE,
 	    HN_B | HN_NOSPACE | HN_DECIMAL);
@@ -681,10 +693,10 @@ bio_volops_create(int fd, int argc, char **argv)
 	struct bioc_inq 	bi;
 	struct bioc_disk	bd;
 	struct locator		location;
-	uint64_t 		total_disksize = 0, first_disksize = 0;
+	uint64_t 		total_size = 0, disksize = 0;
 	int64_t 		volsize = 0;
 	const char 		*errstr;
-	char 			*endptr, *stripe;
+	char 			*endptr, *stripe, levelstr[32];
 	char			*scsiname, *raid_level, size[64];
 	int			disk_first = 0, disk_end = 0;
 	int			i, nfreedisks = 0;
@@ -766,12 +778,16 @@ bio_volops_create(int fd, int argc, char **argv)
 
 		if (bd.bd_status == BIOC_SDUNUSED) {
 			if (i == 0)
-				first_disksize = bd.bd_size;
+				disksize = bd.bd_size;
 
-			total_disksize += bd.bd_size;
+			total_size += bd.bd_size;
 			nfreedisks++;
 		}
 	}
+
+	if (user_disks > nfreedisks)
+		errx(EXIT_FAILURE, "specified disks number is higher than "
+		    "available free disks");
 
 	/*
 	 * Basic checks to be sure we don't do something stupid.
@@ -782,41 +798,45 @@ bio_volops_create(int fd, int argc, char **argv)
 	switch (bc.bc_level) {
 	case 0:	/* RAID 0 requires at least one disk */
 		if (argc == 7) {
-			if (volsize > total_disksize)
+			if (volsize > (disksize * user_disks))
 				errx(EXIT_FAILURE, "volume size specified "
 				   "is larger than available on free disks");
 			bc.bc_size = (uint64_t)volsize;
 		} else
-			bc.bc_size = total_disksize;
+			bc.bc_size = disksize * user_disks;
 
 		break;
-	case 1:	/* RAID 1 requires two disks and size is total - 1 disk */
+	case 1:	/* RAID 1 requires two disks and size is total / 2 */
 		if (nfreedisks < 2 || user_disks < 2)
 			errx(EXIT_FAILURE, "2 disks are required at least for "
 			    "this RAID level");
 
+		/* RAID 1+0 requires three disks at least */
+		if (nfreedisks > 2 && user_disks > 2)
+			bc.bc_level = BIOC_SVOL_RAID10;
+
 		if (argc == 7) {
-			if (volsize > (total_disksize - first_disksize))
+			if (volsize > ((disksize * user_disks) / 2))
 				errx(EXIT_FAILURE, "volume size specified "
 				   "is larger than available on free disks");
 			bc.bc_size = (uint64_t)volsize;
 		} else
-			bc.bc_size = (total_disksize - first_disksize);
+			bc.bc_size = ((disksize * user_disks) / 2);
 
 		break;
-	case 3:	/* RAID 0+1/3/5 requires three disks and size is total - 1 disk */
+	case 3:	/* RAID 3/5 requires three disks and size is total - 1 disk */
 	case 5:
 		if (nfreedisks < 3 || user_disks < 3)
 			errx(EXIT_FAILURE, "3 disks are required at least for "
 			    "this RAID level");
 
 		if (argc == 7) {
-			if (volsize > (total_disksize - first_disksize))
+			if (volsize > (disksize * (user_disks - 1)))
 				errx(EXIT_FAILURE, "volume size specified "
 				    "is larger than available on free disks");
 			bc.bc_size = (uint64_t)volsize;
 		} else
-			bc.bc_size = (total_disksize - first_disksize);
+			bc.bc_size = (disksize * (user_disks - 1));
 
 		break;
 	case 6:	/* RAID 6 requires four disks and size is total - 2 disks */
@@ -825,12 +845,14 @@ bio_volops_create(int fd, int argc, char **argv)
 			    "this RAID level");
 
 		if (argc == 7) {
-			if (volsize > (total_disksize - (first_disksize * 2)))
+			if (volsize >
+			    ((disksize * user_disks) - (disksize * 2)))
 				err(EXIT_FAILURE, "volume size specified "
 				    "is larger than available on free disks");
 			bc.bc_size = (uint64_t)volsize;
 		} else
-			bc.bc_size = (total_disksize - (first_disksize * 2));
+			bc.bc_size =
+			    (((disksize * user_disks) - (disksize * 2)));
 
 		break;
 	default:
@@ -847,9 +869,14 @@ bio_volops_create(int fd, int argc, char **argv)
         humanize_number(size, 5, bc.bc_size, "", HN_AUTOSCALE,
 	    HN_B | HN_NOSPACE | HN_DECIMAL);
 
-	printf("Created volume %u size: %s stripe: %uK level: %u "
+	if (bc.bc_level == BIOC_SVOL_RAID10)
+		snprintf(levelstr, sizeof(levelstr), "1+0");
+	else
+		snprintf(levelstr, sizeof(levelstr), "%u", bc.bc_level);
+
+	printf("Created volume %u size: %s stripe: %uK level: %s "
 	    "SCSI location: %u:%u.%u\n", bc.bc_volid, size, bc.bc_stripe,
-	    bc.bc_level, bc.bc_channel, bc.bc_target, bc.bc_lun);
+	    levelstr, bc.bc_channel, bc.bc_target, bc.bc_lun);
 }
 
 #ifdef notyet
