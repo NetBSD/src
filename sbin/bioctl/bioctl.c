@@ -1,4 +1,4 @@
-/* $NetBSD: bioctl.c,v 1.10 2008/03/03 14:55:39 xtraeme Exp $ */
+/* $NetBSD: bioctl.c,v 1.11 2008/03/03 16:10:48 xtraeme Exp $ */
 /* $OpenBSD: bioctl.c,v 1.52 2007/03/20 15:26:06 jmc Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: bioctl.c,v 1.10 2008/03/03 14:55:39 xtraeme Exp $");
+__RCSID("$NetBSD: bioctl.c,v 1.11 2008/03/03 16:10:48 xtraeme Exp $");
 #endif
 
 #include <sys/types.h>
@@ -108,19 +108,19 @@ static struct command commands[] = {
 	  bio_alarm },
 	{ 
 	  "blink",
-	  "start | stop [channel:target[.lun]]",
+	  "start [channel:target[.lun]] | stop [channel:target[.lun]]",
 	  bio_setblink },
 	{
 	  "hotspare",
-	  "add | remove channel:target.lun",
+	  "add channel:target.lun | remove channel:target.lun",
 	  bio_setstate_hotspare },
 	{
 	  "passthru",
-	  "add DISKID | remove channel:target.lun",
+	  "add DISKID channel:target.lun | remove channel:target.lun",
 	  bio_setstate_passthru },
 	{
 	  "check",
-	  "start | stop VOLID",
+	  "start VOLID | stop VOLID",
 	  bio_setstate_consistency },
 	{
 	  "create",
