@@ -1,4 +1,4 @@
-.\" $NetBSD: pmf.9,v 1.5 2008/02/03 17:18:18 uwe Exp $
+.\" $NetBSD: pmf.9,v 1.6 2008/03/03 11:43:18 drochner Exp $
 .\"
 .\" Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
 .\" All rights reserved.
@@ -58,6 +58,7 @@
 .In sys/device.h
 .Ft bool
 .Fn pmf_device_register "device_t dev" "bool (*suspend)(device_t dev)" "bool (*resume)(device_t dev)"
+.Fn pmf_device_register1 "device_t dev" "bool (*suspend)(device_t dev)" "bool (*resume)(device_t dev)" "bool (*shutdown)(device_t dev, int how)"
 .Ft void
 .Fn pmf_device_deregister "device_t dev"
 .Ft bool
@@ -81,7 +82,7 @@
 .Ft bool
 .Fn pmf_system_resume "void"
 .Ft void
-.Fn pmf_system_shutdown "void"
+.Fn pmf_system_shutdown "int"
 .Ft bool
 .Fn pmf_event_register "device_t dev" "pmf_generic_event_t ev" "void (*handler)(device_t dev)" "bool global"
 .Ft void
@@ -145,6 +146,8 @@ resumed on a power transition. Bus and class-level power management
 will still be performed. Returns
 .Dv false
 if there was an error.
+.It Fn pmf_device_register1 "dev" "suspend" "resume" "shutdown"
+Like pmf_device_register, but additionally registers a shutdown handler.
 .It Fn pmf_device_deregister "dev"
 Deregister a device with the power management framework.
 .It Fn pmf_device_suspend "dev"
@@ -190,10 +193,14 @@ Resume all attached devices. Devices are resumed by traversing the
 autoconfiguration tree beginning with devices that do not have a parent.
 This function will fail if any attached drivers do not support the power
 management framework.
-.It Fn pmf_system_shutdown "void"
-As
-.Fn pmf_system_suspend ,
-but ignores the presence of attached drivers that do not support the
+.It Fn pmf_system_shutdown "int"
+Shutdown all attached devices. Devices are shut down by traversing the
+autoconfiguration tree beginning with the leaf nodes.
+The integer argument is passed to the driver shutdown functions.
+It should contain the reboot(2)
+.Dq howto
+argument.
+This function ignores the presence of attached drivers that do not support the
 power management framework.
 .It Fn pmf_event_register "dev" "ev" "handler" "global"
 Register the callback
