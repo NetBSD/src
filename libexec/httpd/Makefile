@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/02/03 23:48:09 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2008/03/03 03:10:53 mrg Exp $
 #
 #	$eterna: Makefile,v 1.26 2005/09/27 20:09:20 mrg Exp $
 
@@ -14,6 +14,7 @@
 COPTS+=	-DDO_HTPASSWD
 PROG=	httpd
 MAN=	httpd.8
+BUILDSYMLINKS+=bozohttpd.8 httpd.8
 SRCS=	bozohttpd.c ssl-bozo.c auth-bozo.c cgi-bozo.c daemon-bozo.c \
 	tilde-luzah-bozo.c dir-index-bozo.c content-bozo.c
 
