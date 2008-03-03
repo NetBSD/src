@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.10 2008/02/24 23:01:19 dholland Exp $	*/
+/*	$NetBSD: errno.h,v 1.11 2008/03/03 06:57:48 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -45,6 +45,7 @@
 
 __BEGIN_DECLS
 
+/* note: this appears in both errno.h and signal.h */
 #ifndef __errno
 int *__errno(void);
 #define __errno __errno
