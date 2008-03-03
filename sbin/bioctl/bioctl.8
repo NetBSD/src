@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioctl.8,v 1.12 2008/03/03 16:13:34 xtraeme Exp $
+.\"	$NetBSD: bioctl.8,v 1.13 2008/03/03 19:11:45 christos Exp $
 .\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines
@@ -119,7 +119,7 @@ undefined behaviour.
 The following command, executed from the command line, shows the status of
 the volumes and its logical disks on the RAID controller:
 .Bd -literal
-$ bioctl show arcmsr0
+$ bioctl arcmsr0 show
 Volume Status       Size         Device/Label   RAID Level Stripe
 =================================================================
      0 Building     468G  sd0 ARC-1210-VOL#00       RAID 6  128KB  0% done
