@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioctl.8,v 1.10 2008/02/02 03:21:47 xtraeme Exp $
+.\"	$NetBSD: bioctl.8,v 1.11 2008/03/03 16:10:48 xtraeme Exp $
 .\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines
@@ -25,7 +25,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd February 2, 2008
+.Dd March 3, 2008
 .Dt BIOCTL 8
 .Os
 .Sh NAME
@@ -64,16 +64,16 @@ or
 .Ar test
 argument may be specified to enable, disable, silence or test the
 RAID card's alarm.
-.It Ic blink Ar start | stop Op Ar channel:target.lun
+.It Ic blink Ar start channel:target.lun | stop channel:target.lun
 Instruct the device at
 .Ar channel:target.lun
 to start or cease blinking, if there's
 .Xr ses 4
 support in the enclosure.
-.It Ic hotspare Ar add | remove Ar channel:target.lun
+.It Ic hotspare Ar add channel:target.lun | remove channel:target.lun
 Create or remove a hot-spare drive at location
 .Ar channel:target.lun .
-.It Ic passthru Ar add DISKID | remove Ar channel:target.lun
+.It Ic passthru Ar add DISKID channel:target.lun | remove Ar channel:target.lun
 Create or remove a
 .Ar pass-through
 device. The
@@ -85,7 +85,7 @@ location.
 .Em NOTE :
 removing a pass-through device that has a mounted filesystem will lead to
 undefined behaviour.
-.It Ic check Ar start | stop VOLID
+.It Ic check Ar start VOLID | stop VOLID
 Start or stop consistency volume check in the volume with index
 .Ar VOLID .
 .Em NOTE :
@@ -133,11 +133,11 @@ To create a RAID 5 volume on the SCSI 15:0.0 location on the disks 0, 1, 2 and 3
 with stripe size of 64Kb on the first volume ID, using all available free space on
 the disks:
 .Pp
-.Dl $ bioctl arcmsr0 create volume 0 0-3 64 5 15:0.0
+.Dl $ bioctl arcmsr0 create volume 0 0-3 64 5 0:15.0
 .Pp
-To remove the volume 0 previously created at the SCSI 15:0.0 location:
+To remove the volume 0 previously created at the SCSI 0:15.0 location:
 .Pp
-.Dl $ bioctl arcmsr0 remove volume 0 15:0.0
+.Dl $ bioctl arcmsr0 remove volume 0 0:15.0
 .Pp
 .Sh SEE ALSO
 .Xr arcmsr 4 ,
