@@ -1,9 +1,9 @@
-/*	$NetBSD: cgi-bozo.c,v 1.6 2007/11/04 15:20:12 rtr Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.7 2008/03/03 22:15:09 mrg Exp $	*/
 
-/*	$eterna: cgi-bozo.c,v 1.13 2006/05/17 08:19:10 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -308,7 +308,7 @@ finish_cgi_output(http_req *request, int in, int nph)
 {
 	char	buf[WRSZ];
 	char	*str;
-	size_t	len;
+	ssize_t	len;
 	ssize_t rbytes;
 	SIMPLEQ_HEAD(, headers)	headers;
 	struct	headers *hdr;
@@ -317,10 +317,10 @@ finish_cgi_output(http_req *request, int in, int nph)
 	/* much of this code is like read_request()'s header loop. hmmm... */
 	SIMPLEQ_INIT(&headers);
 	write_header = nph == 0;
-	while (nph == 0 && (str = dgetln(in, (ssize_t *)&len, read)) != NULL) {
+	while (nph == 0 && (str = bozodgetln(in, &len, read)) != NULL) {
 		char * hdr_name, * hdr_value;
 
-		if (parse_header(str, (ssize_t)len, &hdr_name, &hdr_value))
+		if (parse_header(str, len, &hdr_name, &hdr_value))
 			break;
 
 		/*
@@ -365,6 +365,7 @@ finish_cgi_output(http_req *request, int in, int nph)
 			free(hdr->h_header);
 			free(hdr);
 		}
+		bozoprintf("\r\n");
 		bozoflush(stdout);
 	}
 
@@ -398,7 +399,7 @@ parse_header(const char * str, ssize_t len, char ** hdr_str, char ** hdr_val)
 	name = value = bozostrdup(str);
 
 	/* locate the ':' separator in the header/value */
-	name = strnsep(&value, ":", &len);
+	name = bozostrnsep(&value, ":", &len);
 
 	if (NULL == name || -1 == len) {
 		free(name);

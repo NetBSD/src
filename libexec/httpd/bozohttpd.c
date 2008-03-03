@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.5 2007/12/16 02:38:24 perry Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.6 2008/03/03 22:15:08 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.c,v 1.137 2006/05/17 08:37:36 mrg Exp $	*/
+/*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,6 +96,7 @@
  *
  *	- 14.5/14.16/14.35: we don't do ranges.  from section 14.35.2
  *	  `A server MAY ignore the Range header'.  but it might be nice.
+ *	  since 20080301 we support simple range headers.
  *
  *	- 14.9: we aren't a cache.
  *
@@ -110,7 +111,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20060517"
+#define SERVER_SOFTWARE		"bozohttpd/20080303"
 #endif
 #ifndef DIRECT_ACCESS_FILE
 #define DIRECT_ACCESS_FILE	".bzdirect"
@@ -374,6 +375,8 @@ main(int argc, char **argv)
 			break;
 #else /* NO_DAEMON_MODE */
 		case 'b':
+		case 'e':
+		case 'f':
 		case 'i':
 		case 'I':
 			error(1, "Daemon mode is not enabled");
@@ -425,8 +428,9 @@ main(int argc, char **argv)
 			uflag = 1;
 			break;
 #else
-		case 'u':
 		case 'p':
+		case 't':
+		case 'u':
 			error(1, "User support is not enabled");
 			/* NOTREACHED */
 #endif /* NO_USER_SUPPORT */
@@ -563,13 +567,13 @@ parse_request(char *in, char **method, char **url, char **proto)
 	*method = *url = *proto = NULL;		/* set them up */
 
 	len = (ssize_t)strlen(in);
-	val = strnsep(&in, " \t\n\r", &len);
+	val = bozostrnsep(&in, " \t\n\r", &len);
 	if (len < 1 || val == NULL)
 		return;
 	*method = val;
 	while (*in == ' ' || *in == '\t')
 		in++;
-	val = strnsep(&in, " \t\n\r", &len);
+	val = bozostrnsep(&in, " \t\n\r", &len);
 	if (len < 1) {
 		if (len == 0)
 			*url = val;
@@ -625,6 +629,8 @@ read_request(void)
 	memset(request, 0, sizeof *request);
 	request->hr_allow = request->hr_host = NULL;
 	request->hr_content_type = request->hr_content_length = NULL;
+	request->hr_range = NULL;
+	request->hr_last_byte_pos = -1;
 
 	slen = sizeof(ss);
 	if (getpeername(0, (struct sockaddr *)&ss, &slen) < 0)
@@ -668,7 +674,7 @@ read_request(void)
 	sigaction(SIGALRM, &sa, NULL);	/* XXX */
 
 	alarm(MAX_WAIT_TIME);
-	while ((str = dgetln(STDIN_FILENO, &len, bozoread)) != NULL) {
+	while ((str = bozodgetln(STDIN_FILENO, &len, bozoread)) != NULL) {
 		alarm(0);
 		if (alarmhit)
 			http_error(408, NULL, "request timed out");
@@ -709,14 +715,16 @@ read_request(void)
 			if (*str == '\0')
 				break;
 
-			val = strnsep(&str, ":", &len);
+			val = bozostrnsep(&str, ":", &len);
 			debug((DEBUG_EXPLODING,
-			    "read_req2: after strnsep: str ``%s'' val ``%s''",
+			    "read_req2: after bozostrnsep: str ``%s'' val ``%s''",
 			    str, val));
 			if (val == NULL || len == -1)
 				http_error(404, request, "no header");
 			while (*str == ' ' || *str == '\t')
 				len--, str++;
+			while (*val == ' ' || *val == '\t')
+				val++;
 
 			if (auth_check_headers(request, val, str, len))
 				goto next_header;
@@ -735,6 +743,8 @@ read_request(void)
 			else if (strcasecmp(hdr->h_header, "referrer") == 0 ||
 			         strcasecmp(hdr->h_header, "referer") == 0)
 				request->hr_referrer = hdr->h_value;
+			else if (strcasecmp(hdr->h_header, "range") == 0)
+				request->hr_range = hdr->h_value;
 
 			debug((DEBUG_FAT, "adding header %s: %s",
 			    hdr->h_header, hdr->h_value));
@@ -754,6 +764,34 @@ next_header:
 	/* HTTP/1.1 draft rev-06, 14.23 & 19.6.1.1 */
 	if (request->hr_proto == http_11 && request->hr_host == NULL)
 		http_error(400, request, "missing Host header");
+
+	if (request->hr_range != NULL) {
+		debug((DEBUG_FAT, "hr_range: %s", request->hr_range));
+		/* support only simple ranges %d- and %d-%d */
+		if (strchr(request->hr_range, ',') == NULL) {
+			const char *rstart, *dash;
+
+			rstart = strchr(request->hr_range, '=');
+			if (rstart != NULL) {
+				rstart++;
+				dash = strchr(rstart, '-');
+				if (dash != NULL && dash != rstart) {
+					dash++;
+					request->hr_have_range = 1;
+					request->hr_first_byte_pos =
+					    strtoll(rstart, NULL, 10);
+					if (request->hr_first_byte_pos < 0)
+						request->hr_first_byte_pos = 0;
+					if (*dash != '\0') {
+						request->hr_last_byte_pos =
+						    strtoll(dash, NULL, 10);
+						if (request->hr_last_byte_pos < 0)
+							request->hr_last_byte_pos = -1;
+					}
+				}
+			}
+		}
+	}
 
 	debug((DEBUG_FAT, "read_request returns url %s in request", request->hr_url));
 	return (request);
@@ -847,7 +885,23 @@ process_request(http_req *request)
 		/* NOTREACHED */
 	/* XXX RFC1945 10.9 If-Modified-Since (http code 304) */
 
-	bozoprintf("%s 200 OK\r\n", request->hr_proto);
+	/* validate requested range */
+	if (request->hr_last_byte_pos == -1 ||
+	    request->hr_last_byte_pos >= sb.st_size)
+		request->hr_last_byte_pos = sb.st_size - 1;
+	if (request->hr_have_range &&
+	    request->hr_first_byte_pos > request->hr_last_byte_pos) {
+		request->hr_have_range = 0;	/* punt */
+		request->hr_first_byte_pos = 0;
+		request->hr_last_byte_pos = sb.st_size - 1;
+	}
+	debug((DEBUG_FAT, "have_range %d first_pos %qd last_pos %qd",
+	    request->hr_have_range,
+	    request->hr_first_byte_pos, request->hr_last_byte_pos));
+	if (request->hr_have_range)
+		bozoprintf("%s 206 Partial Content\r\n", request->hr_proto);
+	else
+		bozoprintf("%s 200 OK\r\n", request->hr_proto);
 
 	if (request->hr_proto != http_09) {
 		type = content_type(request, file);
@@ -861,10 +915,12 @@ process_request(http_req *request)
 	if (request->hr_method != HTTP_HEAD) {
 		char *addr;
 		void *oaddr;
-		off_t sz = sb.st_size;
+		size_t mappedsz; 
+		size_t sz;
 
-		oaddr = addr = mmap(0, (size_t)sz, PROT_READ,
-		    MAP_SHARED, fd, 0);
+		sz = mappedsz = request->hr_last_byte_pos - request->hr_first_byte_pos + 1;
+		oaddr = addr = mmap(0, mappedsz, PROT_READ,
+		    MAP_SHARED, fd, request->hr_first_byte_pos);
 		if (addr == (char *)-1)
 			error(1, "mmap failed: %s", strerror(errno));
 
@@ -874,12 +930,14 @@ process_request(http_req *request)
 		while (sz > WRSZ) {
 			if (bozowrite(STDOUT_FILENO, addr, WRSZ) != WRSZ)
 				error(1, "write failed: %s", strerror(errno));
+			debug((DEBUG_OBESE, "wrote %d bytes", WRSZ));
 			sz -= WRSZ;
 			addr += WRSZ;
 		}
 		if (sz && bozowrite(STDOUT_FILENO, addr, sz) != sz)
 			error(1, "final write failed: %s", strerror(errno));
-		if (munmap(oaddr, (size_t)sb.st_size) < 0)
+		debug((DEBUG_OBESE, "wrote %d bytes", (int)sz));
+		if (munmap(oaddr, mappedsz) < 0)
 			warning("munmap failed");
 	}
 	/* If SSL enabled cleanup SSL structure. */
@@ -1260,8 +1318,11 @@ void
 print_header(http_req *request, struct stat *sbp, const char *type,
 	     const char *encoding)
 {
+	off_t len;
+
 	bozoprintf("Date: %s\r\n", http_date());
 	bozoprintf("Server: %s\r\n", server_software);
+	bozoprintf("Accept-Ranges: bytes\r\n");
 	if (sbp) {
 		char filedate[40];
 		struct	tm *tm;
@@ -1275,8 +1336,18 @@ print_header(http_req *request, struct stat *sbp, const char *type,
 		bozoprintf("Content-Type: %s\r\n", type);
 	if (encoding && *encoding)
 		bozoprintf("Content-Encoding: %s\r\n", encoding);
-	if (sbp)
-		bozoprintf("Content-Length: %qd\r\n", (long long)sbp->st_size);
+	if (sbp) {
+		if (request->hr_have_range) {
+			len = request->hr_last_byte_pos - request->hr_first_byte_pos +1;
+			bozoprintf("Content-Range: bytes %qd-%qd/%qd\r\n",
+			    (long long) request->hr_first_byte_pos,
+			    (long long) request->hr_last_byte_pos,
+			    (long long) sbp->st_size);
+		}
+		else
+			len = sbp->st_size;
+		bozoprintf("Content-Length: %qd\r\n", (long long)len);
+	}
 	if (request && request->hr_proto == http_11)
 		bozoprintf("Connection: close\r\n");
 	bozoflush(stdout);
@@ -1334,7 +1405,7 @@ escape_html(http_req *request)
 	tmp[j] = 0;
 
 	/*
-	 * XXX original "url" is a substring of an allocation, so we
+	 * original "url" is a substring of an allocation, so we
 	 * can't touch it.  so, ignore it and replace the request.
 	 */
 	request->hr_url = tmp;
@@ -1553,7 +1624,8 @@ http_error(int code, http_req *request, const char *msg)
 		error(1, "http_error() failed (short = %p, long = %p)",
 		    header, reason);
 
-	if (request && request->hr_serverport && strcmp(request->hr_serverport, "80") != 0)
+	if (request && request->hr_serverport &&
+	    strcmp(request->hr_serverport, "80") != 0)
 		snprintf(portbuf, sizeof(portbuf), ":%s", request->hr_serverport);
 	else
 		portbuf[0] = '\0';
@@ -1597,7 +1669,7 @@ static struct errors_map {
 } errors_map[] = {
 	{ 400,	"400 Bad Request",	"The request was not valid", },
 	{ 401,	"401 Unauthorized",	"No authorization", },
-	{ 403,	"403 Forbidden",	"Access to this item has been denied", },
+	{ 403,	"403 Forbidden",	"Access to this item has been denied",},
 	{ 404, 	"404 Not Found",	"This item has not been found", },
 	{ 408, 	"408 Request Timeout",	"This request took too long", },
 	{ 417,	"417 Expectation Failed","Expectations not available", },
@@ -1638,7 +1710,7 @@ http_errors_long(int code)
  * correctly passed in.
  */
 char *
-strnsep(char **strp, const char *delim, ssize_t	*lenp)
+bozostrnsep(char **strp, const char *delim, ssize_t	*lenp)
 {
 	char	*s;
 	const	char *spanp;
@@ -1672,7 +1744,7 @@ strnsep(char **strp, const char *delim, ssize_t	*lenp)
  * terminate the string.
  */
 char *
-dgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
+bozodgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
 {
 	static	char *buffer;
 	static	ssize_t buflen = 0;
@@ -1698,12 +1770,12 @@ dgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
 	 * the program
 	 */
 	for (; readfn(fd, &c, 1) == 1; ) {
-		debug((DEBUG_EXPLODING, "dgetln read %c", c));
+		debug((DEBUG_EXPLODING, "bozodgetln read %c", c));
 
 		if (len >= buflen - 1) {
 			buflen *= 2;
-			debug((DEBUG_EXPLODING,
-			    "dgetln: reallocating buffer to buflen %d", buflen));
+			debug((DEBUG_EXPLODING, "bozodgetln: "
+			    "reallocating buffer to buflen %zu", buflen));
 			nbuffer = realloc(buffer, buflen);
 			if (nbuffer == NULL) {
 				free(buffer);
@@ -1735,7 +1807,8 @@ dgetln(int fd, ssize_t *lenp, ssize_t (*readfn)(int, void *, size_t))
 
 	}
 	buffer[len] = '\0';
-	debug((DEBUG_OBESE, "dgetln returns: ``%s'' with len %d", buffer, len));
+	debug((DEBUG_OBESE, "bozodgetln returns: ``%s'' with len %d",
+	       buffer, len));
 	*lenp = len;
 	return (buffer);
 }
