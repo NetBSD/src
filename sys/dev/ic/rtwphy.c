@@ -1,4 +1,4 @@
-/* $NetBSD: rtwphy.c,v 1.13 2007/10/19 12:00:00 ad Exp $ */
+/* $NetBSD: rtwphy.c,v 1.14 2008/03/03 12:30:57 tsutsui Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -35,11 +35,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.13 2007/10/19 12:00:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtwphy.c,v 1.14 2008/03/03 12:30:57 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/types.h>
+#include <sys/device.h>
 
 #include <sys/bus.h>
 
