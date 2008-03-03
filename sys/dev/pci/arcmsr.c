@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.17 2008/03/01 16:33:29 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.18 2008/03/03 14:57:22 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.17 2008/03/01 16:33:29 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.18 2008/03/03 14:57:22 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -912,6 +912,9 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		case 1:
 			req_cvolset.raidlevel = bc->bc_level;
 			break;
+		case BIOC_SVOL_RAID10:
+			req_cvolset.raidlevel = 1;
+			break;
 		case 3:
 			req_cvolset.raidlevel = ARC_FW_VOL_RAIDLEVEL_3;
 			break;
@@ -959,7 +962,8 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		req_cvolset.cache = 1; /* always enabled */
 		req_cvolset.speed = 4; /* always max speed */
 
-		if (bc->bc_level == 1)
+		/* RAID 1 and 1+0 levels need foreground initialization */
+		if (bc->bc_level == 1 || bc->bc_level == BIOC_SVOL_RAID10)
 			req_cvolset.quick_init = 1; /* foreground init */
 
 		error = arc_msgbuf(sc, &req_cvolset, sizeof(req_cvolset),
@@ -980,7 +984,7 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		 * be available until the initialization is done... so
 		 * don't bother attaching the sd(4) device.
 		 */
-		if (bc->bc_level == 1)
+		if (bc->bc_level == 1 || bc->bc_level == BIOC_SVOL_RAID10)
 			break;
 
 		/*
@@ -1309,7 +1313,10 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 		bv->bv_level = 0;
 		break;
 	case ARC_FW_VOL_RAIDLEVEL_1:
-		bv->bv_level = 1;
+		if (volinfo->member_disks > 2)
+			bv->bv_level = BIOC_SVOL_RAID10;
+		else
+			bv->bv_level = 1;
 		break;
 	case ARC_FW_VOL_RAIDLEVEL_3:
 		bv->bv_level = 3;
@@ -1751,9 +1758,16 @@ arc_create_sensors(void *arg)
 		if (bv.bv_level == BIOC_SVOL_PASSTHRU)
 			continue;
 
-		snprintf(sc->sc_sensors[count].desc,
-		    sizeof(sc->sc_sensors[count].desc),
-		    "RAID %d volume%d (%s)", bv.bv_level, i, bv.bv_dev);
+		if (bv.bv_level == BIOC_SVOL_RAID10)
+			snprintf(sc->sc_sensors[count].desc,
+			    sizeof(sc->sc_sensors[count].desc),
+			    "RAID 1+0 volume%d (%s)", i, bv.bv_dev);
+		else
+			snprintf(sc->sc_sensors[count].desc,
+			    sizeof(sc->sc_sensors[count].desc),
+			    "RAID %d volume%d (%s)", bv.bv_level, i,
+			    bv.bv_dev);
+
 		sc->sc_sensors[count].value_max = i;
 
 		if (sysmon_envsys_sensor_attach(sc->sc_sme,
