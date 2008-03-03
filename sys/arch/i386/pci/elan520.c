@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.24 2008/02/29 06:25:08 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.25 2008/03/03 04:16:26 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.24 2008/02/29 06:25:08 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.25 2008/03/03 04:16:26 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -737,7 +737,7 @@ elanpar_suspend(device_t self PMF_FN_ARGS)
 {
 	struct elansc_softc *sc = device_private(device_parent(self));
 
-	elanpar_intr_disestablish(sc->sc_pih);
+	elanpar_intr_disestablish(sc);
 
 	return true;
 }
