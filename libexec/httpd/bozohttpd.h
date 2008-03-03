@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.h,v 1.4 2007/11/04 15:20:11 rtr Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.5 2008/03/03 22:15:08 mrg Exp $	*/
 
-/*	$eterna: bozohttpd.h,v 1.13 2006/05/17 08:19:10 mrg Exp $	*/
+/*	$eterna: bozohttpd.h,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,6 +33,7 @@
  */
 #include <sys/queue.h>
 #include <sys/stat.h>
+
 #include <stdio.h>
 
 /* headers */
@@ -61,6 +62,10 @@ typedef struct {
 	const char *hr_allow;
 	const char *hr_host;		/* HTTP/1.1 Host: */
 	const char *hr_referrer;
+	const char *hr_range;
+	int         hr_have_range;
+	off_t       hr_first_byte_pos;
+	off_t       hr_last_byte_pos;
 	const char *hr_remotehost;
 	const char *hr_remoteaddr;
 	const char *hr_serverport;
@@ -108,14 +113,15 @@ void	warning(const char *, ...)
 		__attribute__((__format__(__printf__, 1, 2)));
 void	error(int, const char *, ...)
 		__attribute__((__format__(__printf__, 2, 3)));
-void	http_error(int, http_req *, const char *);
+void	http_error(int, http_req *, const char *)
+		__attribute__((__noreturn__));
 
 void	check_special_files(http_req *, const char *);
 char	*http_date(void);
 void	print_header(http_req *, struct stat *, const char *, const char *);
 
-char	*dgetln(int, ssize_t *, ssize_t	(*)(int, void *, size_t));
-char	*strnsep(char **, const char *, ssize_t *);
+char	*bozodgetln(int, ssize_t *, ssize_t	(*)(int, void *, size_t));
+char	*bozostrnsep(char **, const char *, ssize_t *);
 
 void	*bozomalloc(size_t);
 void	*bozorealloc(void *, size_t);
@@ -200,8 +206,6 @@ extern	int	uflag;
 extern	const char *public_html;
 
 char *	user_transform(http_req *, int *);
-#else
-#define user_transform(a, b)			/* nothing */
 #endif /* NO_USER_SUPPORT */
 
 
