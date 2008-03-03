@@ -1,7 +1,7 @@
-/*	$eterna: dir-index-bozo.c,v 1.7 2006/05/17 08:18:44 mrg Exp $	*/
+/*	$eterna: dir-index-bozo.c,v 1.10 2008/03/03 03:36:11 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,13 @@
 	int	Xflag;		/* do directory indexing */
 	int	Hflag;		/* hide .* */
 
+static void
+directory_hr(void)
+{
+
+	bozoprintf("<hr noshade align=\"left\" width=\"80%%\">\r\n\r\n");
+}
+
 /*
  * output a directory index.  return 1 if it actually did something..
  */
@@ -60,8 +67,6 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	char buf[MAXPATHLEN];
 	char spacebuf[48];
 	int l, i;
-
-	dp = NULL;	/* XXX */
 
 	if (!isindex || !Xflag)
 		return 0;
@@ -109,7 +114,9 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	bozoprintf("Name                                     "
 	    "Last modified          "
 	    "Size\n");
-	bozoprintf("<hr noshade align=\"left\" width=\"80%%\">\r\n\r\n");
+	bozoprintf("</pre>");
+	directory_hr();
+	bozoprintf("<pre>");
 
 	while ((de = readdir(dp)) != NULL) {
 		int nostat = 0;
@@ -168,7 +175,9 @@ directory_index(http_req *request, const char *dirname, int isindex)
 	}
 
 	closedir(dp);
-	bozoprintf("</pre><hr></body></html>\r\n");
+	bozoprintf("</pre>");
+	directory_hr();
+	bozoprintf("</body></html>\r\n\r\n");
 	bozoflush(stdout);
 	
 	return 1;

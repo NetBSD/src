@@ -1,7 +1,7 @@
-/*	$eterna: tilde-luzah-bozo.c,v 1.4 2006/05/17 08:37:36 mrg Exp $	*/
+/*	$eterna: tilde-luzah-bozo.c,v 1.5 2008/03/03 03:36:12 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

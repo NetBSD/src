@@ -1,6 +1,6 @@
-#	$eterna: Makefile,v 1.11 2002/10/02 15:47:33 mrg Exp $
+#	$eterna: Makefile,v 1.12 2008/03/02 09:26:01 mrg Exp $
 
-SIMPLETESTS=	t1 t2 t3 t4 t5 t6
+SIMPLETESTS=	t1 t2 t3 t4 t5 t6 t7 t8 t9
 BOZOHTTPD?=	../bozohttpd
 
 all:

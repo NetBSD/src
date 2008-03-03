@@ -1,7 +1,7 @@
-/*	$eterna: cgi-bozo.c,v 1.13 2006/05/17 08:19:10 mrg Exp $	*/
+/*	$eterna: cgi-bozo.c,v 1.18 2008/03/03 03:36:11 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,8 +55,9 @@
 static	char	*cgibin;	/* cgi-bin directory */
 static	int	Cflag;		/* added a cgi handler, always process_cgi() */
 
-static	const char *content_cgihandler(http_req *, const char *);
-static	void	finish_cgi_output(http_req *request, int, int);
+static	const char *	content_cgihandler(http_req *, const char *);
+static	void		finish_cgi_output(http_req *request, int, int);
+static	int		parse_header(const char *, ssize_t, char **, char **);
 
 void
 set_cgibin(char *path)
@@ -179,8 +180,8 @@ process_cgi(http_req *request)
 	for (ix = 0; ix < envpsize; ix++)
 		envp[ix] = NULL;
 	curenvp = envp;
-	for (headp = SIMPLEQ_FIRST(&request->hr_headers); headp;
-	    headp = SIMPLEQ_NEXT(headp, h_next)) {
+
+	SIMPLEQ_FOREACH(headp, &request->hr_headers, h_next) {
 		const char *s2;
 		env = bozomalloc(6 + strlen(headp->h_header) + 1 +
 		    strlen(headp->h_value));
@@ -304,34 +305,21 @@ static void
 finish_cgi_output(http_req *request, int in, int nph)
 {
 	char	buf[WRSZ];
-	char	*str, *val;
-	size_t	len;
+	char	*str;
+	ssize_t	len;
 	ssize_t rbytes;
 	SIMPLEQ_HEAD(, headers)	headers;
 	struct	headers *hdr;
-	int	write_header, nheaders = 0, write_str = 0;
+	int	write_header, nheaders = 0;
 
 	/* much of this code is like read_request()'s header loop. hmmm... */
 	SIMPLEQ_INIT(&headers);
 	write_header = nph == 0;
-	while (nph == 0 && (str = dgetln(in, &len, read)) != NULL) {
-		str = bozostrdup(str);	/* we use this copy */
+	while (nph == 0 && (str = bozodgetln(in, &len, read)) != NULL) {
+		char * hdr_name, * hdr_value;
 
-		if (*str == '\0') {
-			write_str = 1;
+		if (parse_header(str, len, &hdr_name, &hdr_value))
 			break;
-		}
-
-		val = strnsep(&str, ":", &len);
-		debug((DEBUG_EXPLODING,
-		    "read_req2: after strnsep: str ``%s'' val ``%s''",
-		    str, val));
-		if (val == NULL || len == -1) {
-			write_str = 1;
-			break;
-		}
-		while (*str == ' ' || *str == '\t')
-			len--, str++;
 
 		/*
 		 * The CGI 1.{1,2} spec both say that if the cgi program
@@ -344,18 +332,19 @@ finish_cgi_output(http_req *request, int in, int nph)
 		 * `Status:' header if it is returning a `Location:' header.
 		 * For compatibility we are going with the CGI 1.1 behavior.
 		 */
-		if (strcasecmp(val, "status") == 0) {
+		if (strcasecmp(hdr_name, "status") == 0) {
 			debug((DEBUG_OBESE, "process_cgi:  writing HTTP header "
-					    "from status %s ..", str));
-			bozoprintf("%s %s\r\n", request->hr_proto, str);
+					    "from status %s ..", hdr_value));
+			bozoprintf("%s %s\r\n", request->hr_proto, hdr_value);
 			bozoflush(stdout);
 			write_header = 0;
+			free(hdr_name);
 			break;
 		}
 
 		hdr = bozomalloc(sizeof *hdr);
-		hdr->h_header = val;
-		hdr->h_value = str;
+		hdr->h_header = hdr_name;
+		hdr->h_value = hdr_value;
 		SIMPLEQ_INSERT_TAIL(&headers, hdr, h_next);
 		nheaders++;
 	}
@@ -369,11 +358,12 @@ finish_cgi_output(http_req *request, int in, int nph)
 	if (nheaders) {
 		debug((DEBUG_OBESE, "process_cgi:  writing delayed HTTP "
 				    "headers .."));
-		for (hdr = SIMPLEQ_FIRST(&headers); hdr;
-		    hdr = SIMPLEQ_NEXT(hdr, h_next)) {
-			bozoprintf("%s: %s\r\n", hdr->h_header,
-					 hdr->h_value);
+		SIMPLEQ_FOREACH(hdr, &headers, h_next) {
+			bozoprintf("%s: %s\r\n", hdr->h_header, hdr->h_value);
+			free(hdr->h_header);
+			free(hdr);
 		}
+		bozoprintf("\r\n");
 		bozoflush(stdout);
 	}
 
@@ -394,6 +384,35 @@ finish_cgi_output(http_req *request, int in, int nph)
 		}		
 	}
 }
+
+static int
+parse_header(const char * str, ssize_t len, char ** hdr_str, char ** hdr_val)
+{
+	char * name, * value;
+
+	/* if the string passed is zero-length bail out */
+	if (*str == '\0')
+		return -1;
+
+	name = value = bozostrdup(str);
+
+	/* locate the ':' separator in the header/value */
+	name = bozostrnsep(&value, ":", &len);
+
+	if (NULL == name || -1 == len) {
+		free(name);
+		return -1;
+	}
+
+	/* skip leading space/tab */
+	while (*value == ' ' || *value == '\t')
+		len--, value++;
+
+	*hdr_str = name;
+	*hdr_val = value;
+
+	return 0;
+} 
 
 /*
  * given the file name, return a CGI interpreter

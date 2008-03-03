@@ -1,5 +1,5 @@
-/*	$eterna: queue.h,v 1.3 2003/03/22 06:48:09 mrg Exp $	*/
-/* from: NetBSD: queue.h,v 1.31 2002/06/01 23:51:05 lukem Exp 	*/
+/*	$eterna: queue.h,v 1.4 2008/03/03 03:36:12 mrg Exp $	*/
+/* from: NetBSD: queue.h,v 1.45 2006/03/07 17:56:00 pooka Exp */
 
 /*
  * Copyright (c) 1991, 1993
@@ -62,6 +62,11 @@ struct {								\
 	*(head)->sqh_last = (elm);					\
 	(head)->sqh_last = &(elm)->field.sqe_next;			\
 } while (/*CONSTCOND*/0)
+
+#define	SIMPLEQ_FOREACH(var, head, field)				\
+	for ((var) = ((head)->sqh_first);				\
+		(var);							\
+		(var) = ((var)->field.sqe_next))
 
 /*
  * Simple queue access methods.

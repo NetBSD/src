@@ -1,7 +1,7 @@
-/*	$eterna: content-bozo.c,v 1.8 2006/05/17 08:19:10 mrg Exp $	*/
+/*	$eterna: content-bozo.c,v 1.9 2008/03/03 03:36:11 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2006 Matthew R. Green
+ * Copyright (c) 1997-2008 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

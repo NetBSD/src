@@ -1,4 +1,15 @@
-$eterna: CHANGES,v 1.52 2006/05/17 08:38:49 mrg Exp $
+$eterna: CHANGES,v 1.58 2008/03/03 03:37:10 mrg Exp $
+
+changes since bozohttpd 20060710:
+	o  fix some cgi header processing, from <thelsdj@gmail.com>
+	o  add simple Range: header processing, from <bad@bsd.de>
+	o  man page fixes, from NetBSD
+	o  clean up various parts, from NetBSD
+
+changes since bozohttpd 20060517:
+	o  prefix some function names with "bozo"
+	o  align directory indexing <hr> markers
+	o  clean up some code GCC4 grumbled about
 
 changes since bozohttpd 20050410:
 	o  don't allow "/.." or "../" files
