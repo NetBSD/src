@@ -1,4 +1,4 @@
-.\"	$NetBSD: bioctl.8,v 1.11 2008/03/03 16:10:48 xtraeme Exp $
+.\"	$NetBSD: bioctl.8,v 1.12 2008/03/03 16:13:34 xtraeme Exp $
 .\"	$OpenBSD: bioctl.8,v 1.43 2007/03/20 06:12:11 jmc Exp $
 .\"
 .\" Copyright (c) 2007, 2008 Juan Romero Pardines
@@ -129,7 +129,7 @@ Volume Status       Size         Device/Label   RAID Level Stripe
    0:3 Online       234G         0:3.0 noencl \*[Lt]WDC WD2500YS-01SHB1 20.06C06\*[Gt]
 .Ed
 .Pp
-To create a RAID 5 volume on the SCSI 15:0.0 location on the disks 0, 1, 2 and 3,
+To create a RAID 5 volume on the SCSI 0:15.0 location on the disks 0, 1, 2 and 3,
 with stripe size of 64Kb on the first volume ID, using all available free space on
 the disks:
 .Pp
