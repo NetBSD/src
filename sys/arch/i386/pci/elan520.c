@@ -1,4 +1,4 @@
-/*	$NetBSD: elan520.c,v 1.25 2008/03/03 04:16:26 dyoung Exp $	*/
+/*	$NetBSD: elan520.c,v 1.26 2008/03/04 22:07:05 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.25 2008/03/03 04:16:26 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elan520.c,v 1.26 2008/03/04 22:07:05 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,8 @@ static void elanpex_intr_establish(device_t, struct elansc_softc *);
 static void elanpar_intr_establish(device_t, struct elansc_softc *);
 static void elanpex_intr_disestablish(struct elansc_softc *);
 static void elanpar_intr_disestablish(struct elansc_softc *);
+static bool elanpar_shutdown(device_t, int);
+static bool elanpex_shutdown(device_t, int);
 
 static void
 elansc_childdetached(device_t self, device_t child)
@@ -821,13 +823,15 @@ elanpex_attach(device_t parent, device_t self, void *aux)
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_PARITY_ENABLE|PCI_COMMAND_SERR_ENABLE);
 
-	if (!pmf_device_register(self, elanpex_suspend, elanpex_resume))
+	if (!pmf_device_register1(self, elanpex_suspend, elanpex_resume,
+	                          elanpex_shutdown))
 		aprint_error_dev(self, "could not establish power hooks\n");
 }
 
-static void
-elanpex_intr_disestablish(struct elansc_softc *sc)
+static bool
+elanpex_shutdown(device_t self, int flags)
 {
+	struct elansc_softc *sc = device_private(device_parent(self));
 	uint8_t sysarbctl;
 	uint16_t pcihostmap, mstirq, tgtirq;
 
@@ -856,6 +860,14 @@ elanpex_intr_disestablish(struct elansc_softc *sc)
 	pcihostmap &= ~MMCR_PCIHOSTMAP_PCI_IRQ_MAP;
 	bus_space_write_2(sc->sc_memt, sc->sc_memh, MMCR_PCIHOSTMAP,
 	    pcihostmap);
+
+	return true;
+}
+
+static void
+elanpex_intr_disestablish(struct elansc_softc *sc)
+{
+	elanpex_shutdown(sc->sc_pex, 0);
 
 	if (elansc_pcinmi)
 		nmi_disestablish(sc->sc_eih);
@@ -904,6 +916,22 @@ elanpar_intr_establish(device_t self, struct elansc_softc *sc)
 	bus_space_write_1(sc->sc_memt, sc->sc_memh, MMCR_ADDDECCTL, adddecctl);
 }
 
+static bool
+elanpar_shutdown(device_t self, int flags)
+{
+	struct elansc_softc *sc = device_private(device_parent(self));
+
+	if (sc->sc_textpar != -1) {
+		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_textpar);
+		sc->sc_textpar = -1;
+	}
+	if (sc->sc_pg0par != -1) {
+		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_pg0par);
+		sc->sc_pg0par = -1;
+	}
+	return true;
+}
+
 static void
 elanpar_attach(device_t parent, device_t self, void *aux)
 {
@@ -922,7 +950,8 @@ elanpar_attach(device_t parent, device_t self, void *aux)
 
 	elansc_print_1(self, sc, MMCR_ADDDECCTL);
 
-	if (!pmf_device_register(self, elanpar_suspend, elanpar_resume))
+	if (!pmf_device_register1(self, elanpar_suspend, elanpar_resume,
+	                          elanpar_shutdown))
 		aprint_error_dev(self, "could not establish power hooks\n");
 }
 
@@ -959,14 +988,7 @@ elanpar_detach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	if (sc->sc_textpar != -1) {
-		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_textpar);
-		sc->sc_textpar = -1;
-	}
-	if (sc->sc_pg0par != -1) {
-		elansc_disable_par(sc->sc_memt, sc->sc_memh, sc->sc_pg0par);
-		sc->sc_pg0par = -1;
-	}
+	elanpar_shutdown(self, 0);
 
 	elanpar_intr_disestablish(sc);
 
