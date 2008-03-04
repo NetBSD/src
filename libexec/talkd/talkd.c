@@ -1,4 +1,4 @@
-/*	$NetBSD: talkd.c,v 1.18 2007/01/08 17:51:34 christos Exp $	*/
+/*	$NetBSD: talkd.c,v 1.19 2008/03/04 03:05:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\n\
 #if 0
 static char sccsid[] = "@(#)talkd.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: talkd.c,v 1.18 2007/01/08 17:51:34 christos Exp $");
+__RCSID("$NetBSD: talkd.c,v 1.19 2008/03/04 03:05:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ CTL_RESPONSE	response;
 int	sockt = STDIN_FILENO;
 int	debug = 0;
 int	logging = 0;
-long	lastmsgtime;
+time_t	lastmsgtime;
 
 char	hostname[MAXHOSTNAMELEN + 1];
 
