@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.22 2008/03/04 02:45:01 dholland Exp $	*/
+/*	$NetBSD: announce.c,v 1.23 2008/03/04 02:57:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.22 2008/03/04 02:45:01 dholland Exp $");
+__RCSID("$NetBSD: announce.c,v 1.23 2008/03/04 02:57:33 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -100,7 +100,6 @@ print_mesg(tty, request, remote_machine)
 {
 	struct timeval clock;
 	time_t clocktime;
-	struct timezone zone;
 	struct tm *localclock;
 	struct iovec iovec;
 	char line_buf[N_LINES][N_CHARS];
@@ -111,7 +110,7 @@ print_mesg(tty, request, remote_machine)
 
 	i = 0;
 	max_size = 0;
-	(void)gettimeofday(&clock, &zone);
+	(void)gettimeofday(&clock, NULL);
 	clocktime = clock.tv_sec;
 	localclock = localtime(&clocktime);
 	(void)snprintf(line_buf[i], N_CHARS, " ");
