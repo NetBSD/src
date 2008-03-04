@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.133 2008/02/28 14:25:12 drochner Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.134 2008/03/04 11:52:37 cube Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.133 2008/02/28 14:25:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.134 2008/03/04 11:52:37 cube Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1785,7 +1785,14 @@ void *
 device_private(device_t dev)
 {
 
-	return (dev->dv_private);
+	/*
+	 * The reason why device_private(NULL) is allowed is to simplify the
+	 * work of a lot of userspace request handlers (i.e., c/bdev
+	 * handlers) which grab cfdriver_t->cd_units[n].
+	 * It avoids having them test for it to be NULL and only then calling
+	 * device_private.
+	 */
+	return dev == NULL ? NULL : dev->dv_private;
 }
 
 prop_dictionary_t
