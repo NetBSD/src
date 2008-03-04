@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.21 2007/07/09 21:00:30 ad Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.22 2008/03/04 23:03:29 cube Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@ struct vnode;
  * A vnode disk's state information.
  */
 struct vnd_softc {
-	struct device    sc_dev;
+	device_t         sc_dev;
 	int		 sc_flags;	/* flags */
 	size_t		 sc_size;	/* size of vnd */
 	struct vnode	*sc_vp;		/* vnode */
