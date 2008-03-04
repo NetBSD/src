@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.78 2007/12/22 00:23:36 yamt Exp $ */
+/*	$NetBSD: df.c,v 1.79 2008/03/04 09:03:28 yamt Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.78 2007/12/22 00:23:36 yamt Exp $");
+__RCSID("$NetBSD: df.c,v 1.79 2008/03/04 09:03:28 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -329,7 +329,7 @@ void
 prthuman(struct statvfs *sfsp, int64_t used, int64_t bavail)
 {
 
-	prthumanval(sfsp->f_blocks * sfsp->f_frsize, "   ");
+	prthumanval(sfsp->f_blocks * sfsp->f_frsize, "  ");
 	prthumanval(used * sfsp->f_frsize, "    ");
 	prthumanval(bavail * sfsp->f_frsize, "    ");
 }
@@ -471,7 +471,7 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		return;
 	}
 
-	(void)printf("%-*.*s", maxwidth, maxwidth, sfsp->f_mntfromname);
+	(void)printf("%-*.*s ", maxwidth, maxwidth, sfsp->f_mntfromname);
 
 	if (hflag)
 		prthuman(sfsp, used, bavail);
