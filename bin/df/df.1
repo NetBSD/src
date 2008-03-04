@@ -1,4 +1,4 @@
-.\"	$NetBSD: df.1,v 1.42 2008/03/04 17:59:55 christos Exp $
+.\"	$NetBSD: df.1,v 1.43 2008/03/04 20:11:00 christos Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,11 +72,6 @@ Show all mount points,
 including those that were mounted with the
 .Dv MNT_IGNORE
 flag.
-.It Fl g
-The
-.Fl g
-option causes the numbers to be reported in gigabytes (1024*1024*1024
-bytes).
 .It Fl G
 Display all the fields of the structure(s) returned by
 .Xr statvfs 2 .
@@ -95,6 +90,11 @@ and
 .Fl m
 options, as well as any setting of
 .Ev BLOCKSIZE .
+.It Fl g
+The
+.Fl g
+option causes the numbers to be reported in gigabytes (1024*1024*1024
+bytes).
 .It Fl h
 "Human-readable" output.
 Use unit suffixes: Byte, Kilobyte, Megabyte,
