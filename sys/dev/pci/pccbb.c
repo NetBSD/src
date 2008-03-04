@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbb.c,v 1.166 2008/02/29 06:13:39 dyoung Exp $	*/
+/*	$NetBSD: pccbb.c,v 1.167 2008/03/04 22:15:16 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 and 2000
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.166 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pccbb.c,v 1.167 2008/03/04 22:15:16 dyoung Exp $");
 
 /*
 #define CBB_DEBUG
@@ -1062,7 +1062,7 @@ pccbbintr(void *arg)
 	bus_space_handle_t memh = sc->sc_base_memh;
 	struct pcic_handle *ph = &sc->sc_pcmcia_h;
 
-	if (!device_is_active(&sc->sc_dev))
+	if (!device_has_power(&sc->sc_dev))
 		return 0;
 
 	sockevent = bus_space_read_4(memt, memh, CB_SOCKET_EVENT);
