@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.6 2003/08/07 09:46:50 agc Exp $	*/
+/*	$NetBSD: table.c,v 1.7 2008/03/04 02:57:33 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.6 2003/08/07 09:46:50 agc Exp $");
+__RCSID("$NetBSD: table.c,v 1.7 2008/03/04 02:57:33 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,6 @@ __RCSID("$NetBSD: table.c,v 1.6 2003/08/07 09:46:50 agc Exp $");
 #define NIL ((TABLE_ENTRY *)0)
 
 struct	timeval tp;
-struct	timezone txp;
 
 typedef struct table_entry TABLE_ENTRY;
 
@@ -88,7 +87,7 @@ find_match(request)
 	TABLE_ENTRY *ptr;
 	time_t current_time;
 
-	gettimeofday(&tp, &txp);
+	gettimeofday(&tp, NULL);
 	current_time = tp.tv_sec;
 	if (debug)
 		print_request("find_match", request);
@@ -122,7 +121,7 @@ find_request(request)
 	TABLE_ENTRY *ptr;
 	time_t current_time;
 
-	gettimeofday(&tp, &txp);
+	gettimeofday(&tp, NULL);
 	current_time = tp.tv_sec;
 	/*
 	 * See if this is a repeated message, and check for
@@ -161,7 +160,7 @@ insert_table(request, response)
 	TABLE_ENTRY *ptr;
 	time_t current_time;
 
-	gettimeofday(&tp, &txp);
+	gettimeofday(&tp, NULL);
 	current_time = tp.tv_sec;
 	request->id_num = new_id();
 	response->id_num = htonl(request->id_num);
