@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.80 2008/03/04 17:59:55 christos Exp $ */
+/*	$NetBSD: df.c,v 1.81 2008/03/04 18:55:57 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.80 2008/03/04 17:59:55 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.81 2008/03/04 18:55:57 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,11 +96,11 @@ main(int argc, char *argv[])
 		case 'a':
 			aflag = 1;
 			break;
-		case 'G':
+		case 'g':
 			hflag = 0;
 			usize = 1024 * 1024 * 1024;
 			break;
-		case 'g':
+		case 'G':
 			gflag = 1;
 			break;
 		case 'h':
@@ -140,7 +140,7 @@ main(int argc, char *argv[])
 
 	if (gflag && (Pflag || iflag))
 		errx(EXIT_FAILURE,
-		    "only one of -g and -P or -i may be specified");
+		    "only one of -G and -P or -i may be specified");
 	if (Pflag && iflag)
 		errx(EXIT_FAILURE,
 		    "only one of -P and -i may be specified");
