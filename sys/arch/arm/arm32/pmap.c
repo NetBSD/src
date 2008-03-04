@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.164.12.9 2008/01/09 01:45:12 matt Exp $	*/
+/*	pmap.c,v 1.164.12.9 2008/01/09 01:45:12 matt Exp	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -218,7 +218,7 @@
 #include <machine/param.h>
 #include <arm/arm32/katelib.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.164.12.9 2008/01/09 01:45:12 matt Exp $");
+__KERNEL_RCSID(0, "pmap.c,v 1.164.12.9 2008/01/09 01:45:12 matt Exp");
 
 #ifdef PMAP_DEBUG
 
@@ -2295,6 +2295,7 @@ pmap_flush_page(struct vm_page *pg)
 	const vsize_t va_offset = pg->mdpage.pvh_attrs & arm_cache_prefer_mask;
 	const size_t pte_offset = va_offset >> PGSHIFT;
 	pt_entry_t * const ptep = &cdst_pte[pte_offset];
+	const pt_entry_t oldpte = *ptep;
 #if 0
 	vaddr_t mask;
 #endif
@@ -2323,9 +2324,10 @@ pmap_flush_page(struct vm_page *pg)
 	cpu_idcache_wbinv_range(cdstp + va_offset, PAGE_SIZE);
 
 	/*
-	 * Unmap the page.
+	 * Restore the page table entry since we might have interrupted
+	 * pmap_zero_page or pmap_copy_page which was already using this pte.
 	 */
-	*ptep = 0;
+	*ptep = oldpte;
 	PTE_SYNC(ptep);
 	pmap_tlb_flushID_SE(pmap_kernel(), cdstp + va_offset);
 #if 0
