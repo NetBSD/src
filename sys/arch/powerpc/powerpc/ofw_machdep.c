@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $	*/
+/*	$NetBSD: ofw_machdep.c,v 1.17 2008/03/04 08:12:12 mrg Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.16 2006/08/05 21:26:49 sanjayl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_machdep.c,v 1.17 2008/03/04 08:12:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -63,7 +63,7 @@ static struct mem_region OFmem[OFMEM_REGIONS + 1], OFavail[OFMEM_REGIONS + 3];
 void
 mem_regions(struct mem_region **memp, struct mem_region **availp)
 {
-	int phandle, i, cnt;
+	int phandle, i, cnt, regcnt;
 	struct mem_region_avail {
 		paddr_t start;
 		paddr_t size;
@@ -76,18 +76,18 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		goto error;
 
 	memset(OFmem, 0, sizeof OFmem);
-	cnt = OF_getprop(phandle, "reg",
+	regcnt = OF_getprop(phandle, "reg",
 		OFmem, sizeof OFmem[0] * OFMEM_REGIONS);
-	if (cnt <= 0)
+	if (regcnt <= 0)
 		goto error;
 
 	/* Remove zero sized entry in the returned data. */
-	cnt /= sizeof OFmem[0];
-	for (i = 0; i < cnt; )
+	regcnt /= sizeof OFmem[0];
+	for (i = 0; i < regcnt; )
 		if (OFmem[i].size == 0) {
 			memmove(&OFmem[i], &OFmem[i + 1],
-				(cnt - i) * sizeof OFmem[0]);
-			cnt--;
+				(regcnt - i) * sizeof OFmem[0]);
+			regcnt--;
 		} else
 			i++;
 
@@ -132,6 +132,59 @@ mem_regions(struct mem_region **memp, struct mem_region **availp)
 		} else
 			i++;
 	}
+#if 0
+	/*
+	 * If the last available set doesn't match the top
+	 * of ram, work around it and add an extra entry to
+	 * OFavail[] to account for this.
+	 */
+	if ((OFavail[cnt-1].start + OFavail[cnt-1].size) != 
+	    (OFmem[regcnt-1].start + OFmem[regcnt-1].size)) {
+		printf("WARNING: adjusting memory to match end:\n");
+		printf("WARNING: old final %08x:%08x\n",
+		       (uint)OFavail[cnt-1].start, (uint)OFavail[cnt-1].size);
+#if 0
+		OFavail[cnt].start =
+		    OFavail[cnt-1].start + OFavail[cnt-1].size;
+		OFavail[cnt].size =
+		    OFmem[regcnt-1].size - OFavail[cnt].start;
+		cnt++;
+#else
+#if 0
+	OFavail[cnt-1].start =   0x1e000000;
+	OFavail[cnt-1].size =    0x01000000;
+#else
+	//OFavail[cnt-1].start = 0x1e000000;
+	OFavail[cnt-1].size +=   0x00400000;
+//	cnt++;
+//	OFavail[cnt-1].start =   0x17000000;
+//	OFavail[cnt-1].size =    0x00400000;
+#endif
+#endif
+		printf("WARNING: second to final final %08x:%08x\n",
+		       (uint)OFavail[cnt-2].start, (uint)OFavail[cnt-2].size);
+		printf("WARNING: new final %08x:%08x\n",
+		       (uint)OFavail[cnt-1].start, (uint)OFavail[cnt-1].size);
+	}
+#endif
+if (0)
+{
+  int node;
+  int ok;
+  char name[32], newname[32];
+
+  node = OF_finddevice("/chosen/mmu");
+  if (node != -1) {
+   strcpy(name, "name");
+   while (1) {
+    ok = OF_nextprop(node, name, newname);
+    printf("name = %s, ok = %d\n", name, ok);
+    if (ok <= 0)
+     break;
+    printf("got name: %s\n", newname);
+   }
+  }
+}
 
 	*memp = OFmem;
 	*availp = OFavail;
