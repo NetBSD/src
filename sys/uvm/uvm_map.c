@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.251 2008/02/23 17:27:58 chris Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.252 2008/03/04 09:32:01 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.251 2008/02/23 17:27:58 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.252 2008/03/04 09:32:01 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -3409,7 +3409,7 @@ uvm_map_pageable(struct vm_map *map, vaddr_t start, vaddr_t end,
 		vm_map_unbusy(map);
 
 #ifdef DIAGNOSTIC
-		if (timestamp_save != map->timestamp)
+		if (timestamp_save + 1 != map->timestamp)
 			panic("uvm_map_pageable: stale map");
 #endif
 
@@ -3637,7 +3637,7 @@ uvm_map_pageable_all(struct vm_map *map, int flags, vsize_t limit)
 		vm_map_unbusy(map);
 
 #ifdef DIAGNOSTIC
-		if (timestamp_save != map->timestamp)
+		if (timestamp_save + 1 != map->timestamp)
 			panic("uvm_map_pageable_all: stale map");
 #endif
 
