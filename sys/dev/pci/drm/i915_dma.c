@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.4 2007/12/15 00:39:30 perry Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.5 2008/03/04 11:52:38 drochner Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.4 2007/12/15 00:39:30 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.5 2008/03/04 11:52:38 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/i915_dma.c,v 1.4 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -42,7 +42,8 @@ __FBSDID("$FreeBSD: src/sys/dev/drm/i915_dma.c,v 1.4 2006/09/07 23:04:47 anholt 
 #define IS_I965G(dev)  (dev->pci_device == 0x2972 || \
 			dev->pci_device == 0x2982 || \
 			dev->pci_device == 0x2992 || \
-			dev->pci_device == 0x29A2)
+			dev->pci_device == 0x29A2 || \
+			dev->pci_device == 0x2A02)
 
 
 /* Really want an OS-independent resettable timer.  Would like to have
@@ -513,9 +514,15 @@ static int i915_dispatch_batchbuffer(drm_device_t * dev,
 
 		if (dev_priv->use_mi_batchbuffer_start) {
 			BEGIN_LP_RING(2);
-			OUT_RING(MI_BATCH_BUFFER_START | (2 << 6));
-			OUT_RING(batch->start | MI_BATCH_NON_SECURE);
+			if (IS_I965G(dev)) {
+				OUT_RING(MI_BATCH_BUFFER_START | (2 << 6) | MI_BATCH_NON_SECURE_I965);
+				OUT_RING(batch->start);
+			} else {
+				OUT_RING(MI_BATCH_BUFFER_START | (2 << 6));
+				OUT_RING(batch->start | MI_BATCH_NON_SECURE);
+			}
 			ADVANCE_LP_RING();
+
 		} else {
 			BEGIN_LP_RING(4);
 			OUT_RING(MI_BATCH_BUFFER);
