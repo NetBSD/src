@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.7 2008/03/04 02:57:33 dholland Exp $	*/
+/*	$NetBSD: table.c,v 1.8 2008/03/04 03:05:00 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.7 2008/03/04 02:57:33 dholland Exp $");
+__RCSID("$NetBSD: table.c,v 1.8 2008/03/04 03:05:00 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -67,7 +67,7 @@ typedef struct table_entry TABLE_ENTRY;
 
 struct table_entry {
 	CTL_MSG request;
-	long	time;
+	time_t	time;
 	TABLE_ENTRY *next;
 	TABLE_ENTRY *last;
 };
