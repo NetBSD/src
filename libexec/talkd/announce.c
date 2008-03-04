@@ -1,4 +1,4 @@
-/*	$NetBSD: announce.c,v 1.21 2003/08/07 09:46:50 agc Exp $	*/
+/*	$NetBSD: announce.c,v 1.22 2008/03/04 02:45:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)announce.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: announce.c,v 1.21 2003/08/07 09:46:50 agc Exp $");
+__RCSID("$NetBSD: announce.c,v 1.22 2008/03/04 02:45:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ announce(request, remote_machine)
  * Build a block of characters containing the message.
  * It is sent blank filled and in a single block to
  * try to keep the message in one piece if the recipient
- * in in vi at the time
+ * is in vi at the time.
  */
 int
 print_mesg(tty, request, remote_machine)
