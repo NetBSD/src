@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.23 2008/02/29 07:02:05 dyoung Exp $ */
+/*	$NetBSD: com_supio.c,v 1.24 2008/03/04 13:17:35 he Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.23 2008/02/29 07:02:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.24 2008/03/04 13:17:35 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,7 +158,7 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	add_isr(&sc->sc_isr);
 
 	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(&sc->sc_com.sc_dev,
 		    "could not establish shutdown hook");
 	}
 }
