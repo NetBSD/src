@@ -1,4 +1,4 @@
-/* $NetBSD: drm_memory.c,v 1.6 2008/02/22 19:47:06 drochner Exp $ */
+/* $NetBSD: drm_memory.c,v 1.7 2008/03/04 11:52:38 drochner Exp $ */
 
 /* drm_memory.h -- Memory management wrappers for DRM -*- linux-c -*-
  * Created: Thu Feb  4 14:00:34 1999 by faith@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.6 2008/02/22 19:47:06 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.7 2008/03/04 11:52:38 drochner Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_memory.c,v 1.2 2005/11/28 23:13:52 anholt Exp $");
 */
@@ -93,8 +93,10 @@ void *drm_ioremap(drm_device_t *dev, drm_local_map_t *map)
 	int i, reg, reason;
 	for(i = 0; i<DRM_MAX_PCI_RESOURCE; i++) {
 		reg = PCI_MAPREG_START + i*4;
-		if (dev->pci_map_data[i].maptype == PCI_MAPREG_TYPE_MEM &&
-		    dev->pci_map_data[i].base == map->offset            &&
+		if ((dev->pci_map_data[i].maptype == PCI_MAPREG_TYPE_MEM ||
+		     dev->pci_map_data[i].maptype ==
+                      (PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT)) &&
+		    dev->pci_map_data[i].base == map->offset             &&
 		    dev->pci_map_data[i].size >= map->size)
 		{
 			map->bst = dev->pa.pa_memt;
