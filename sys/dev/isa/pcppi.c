@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.30 2008/03/04 16:35:19 cube Exp $ */
+/* $NetBSD: pcppi.c,v 1.31 2008/03/04 17:11:03 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.30 2008/03/04 16:35:19 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.31 2008/03/04 17:11:03 dyoung Exp $");
 
 #include "attimer.h"
 
@@ -172,10 +172,7 @@ pcppi_isa_attach(device_t parent, device_t self, void *aux)
 void
 pcppi_childdet(device_t self, device_t child)
 {
-	struct pcppi_softc *sc = device_private(self);
-
-	KASSERT(sc->sc_timer == child);
-	sc->sc_timer = NULL;
+	/* we hold no child references, so do nothing */
 }
 
 int
