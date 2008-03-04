@@ -1,8 +1,8 @@
-/*	$NetBSD: itesio_isa.c,v 1.12 2007/12/31 01:53:58 wiz Exp $ */
+/*	$NetBSD: itesio_isa.c,v 1.13 2008/03/04 11:31:16 xtraeme Exp $ */
 /*	Derived from $OpenBSD: it.c,v 1.19 2006/04/10 00:57:54 deraadt Exp $	*/
 
 /*
- * Copyright (c) 2006-2007 Juan Romero Pardines <juan@xtrarom.org>
+ * Copyright (c) 2006-2007 Juan Romero Pardines <xtraeme@netbsd.org>
  * Copyright (c) 2003 Julien Bordet <zejames@greyhats.org>
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.12 2007/12/31 01:53:58 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: itesio_isa.c,v 1.13 2008/03/04 11:31:16 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
