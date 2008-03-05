@@ -1,3 +1,10 @@
+2008-03-05  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/pfkey.c
+	  src/racoon/pfkey.h
+	  src/racoon/session.c: reload SPD on SIGHUP or adminport reload
+	* src/racoon/pfkey.c: better handling for pfkey socket read errors
+
 2008-02-25  Emmanuel Dreyfus <manu@netbsd.org>
 	From Brian Haley <brian.haley@hp.com>
 	* src/racoon/ipsec_doi.c: Do check SPI size (it was not due to a typo)

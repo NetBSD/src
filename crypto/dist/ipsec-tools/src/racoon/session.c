@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.9 2007/07/18 12:07:52 vanhu Exp $	*/
+/*	$NetBSD: session.c,v 1.10 2008/03/05 22:09:44 mgrooms Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -361,10 +361,8 @@ static void reload_conf(){
 	save_rmconf();
 	initrmconf();
 
-	/* Do a part of pfkey_init() ?
-	 * SPD reload ?
-	 */
-	
+	pfkey_reload();
+
 	save_params();
 	error = cfparse();
 	if (error != 0){
