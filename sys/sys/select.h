@@ -1,4 +1,4 @@
-/*	$NetBSD: select.h,v 1.31 2008/03/01 14:16:52 rmind Exp $	*/
+/*	$NetBSD: select.h,v 1.32 2008/03/05 18:09:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -53,6 +53,7 @@ void	selnotify(struct selinfo *, int, long);
 void	selsysinit(void);
 void	selinit(struct selinfo *);
 void	seldestroy(struct selinfo *);
+void	selclear(void);
 
 #else /* _KERNEL */
 
