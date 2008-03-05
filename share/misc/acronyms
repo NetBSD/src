@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.181 2008/03/02 19:59:46 dholland Exp $
+$NetBSD: acronyms,v 1.182 2008/03/05 21:37:55 plunky Exp $
 AFAIC	as far as I'm concerned
 AFAICR	as far as I can recall
 AFAICT	as far as I can tell
@@ -182,6 +182,7 @@ PDQ	pretty darn quick
 PEBKAC	problem exists between keyboard and chair
 PFO	please fuck off
 PFY	pimply faced youth
+PHB	pointy haired boss
 PITA	pain in the ass
 PKSP	pound keys and spew profanity
 PNG	persona non grata
