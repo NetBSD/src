@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.18 2008/03/03 14:57:22 xtraeme Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.19 2008/03/05 15:03:36 xtraeme Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.18 2008/03/03 14:57:22 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.19 2008/03/05 15:03:36 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -79,21 +79,21 @@ static struct arc_fw_hdr arc_fw_hdr = { 0x5e, 0x01, 0x61 };
 /*
  * autoconf(9) glue.
  */
-static int 	arc_match(device_t, struct cfdata *, void *);
+static int 	arc_match(device_t, cfdata_t, void *);
 static void 	arc_attach(device_t, device_t, void *);
 static int 	arc_detach(device_t, int);
 static bool 	arc_shutdown(device_t, int);
 static int 	arc_intr(void *);
 static void	arc_minphys(struct buf *);
 
-CFATTACH_DECL(arcmsr, sizeof(struct arc_softc),
+CFATTACH_DECL_NEW(arcmsr, sizeof(struct arc_softc),
 	arc_match, arc_attach, arc_detach, NULL);
 
 /*
  * bio(4) and sysmon_envsys(9) glue.
  */
 #if NBIO > 0
-static int 	arc_bioctl(struct device *, u_long, void *);
+static int 	arc_bioctl(device_t, u_long, void *);
 static int 	arc_bio_inq(struct arc_softc *, struct bioc_inq *);
 static int 	arc_bio_vol(struct arc_softc *, struct bioc_vol *);
 static int	arc_bio_disk_volume(struct arc_softc *, struct bioc_disk *);
@@ -112,7 +112,7 @@ static int	arc_fw_parse_status_code(struct arc_softc *, uint8_t *);
 #endif
 
 static int
-arc_match(device_t parent, struct cfdata *match, void *aux)
+arc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -152,22 +152,23 @@ arc_attach(device_t parent, device_t self, void *aux)
 	struct scsipi_adapter	*adapt = &sc->sc_adapter;
 	struct scsipi_channel	*chan = &sc->sc_chan;
 
+	sc->sc_dev = self;
 	sc->sc_talking = 0;
 	rw_init(&sc->sc_rwlock);
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_condvar, "arcdb");
 
-	if (arc_map_pci_resources(sc, pa) != 0) {
+	if (arc_map_pci_resources(self, pa) != 0) {
 		/* error message printed by arc_map_pci_resources */
 		return;
 	}
 
-	if (arc_query_firmware(sc) != 0) {
+	if (arc_query_firmware(self) != 0) {
 		/* error message printed by arc_query_firmware */
 		goto unmap_pci;
 	}
 
-	if (arc_alloc_ccbs(sc) != 0) {
+	if (arc_alloc_ccbs(self) != 0) {
 		/* error message printed by arc_alloc_ccbs */
 		goto unmap_pci;
 	}
@@ -190,7 +191,6 @@ arc_attach(device_t parent, device_t self, void *aux)
 	chan->chan_nluns = ARC_MAX_LUN;
 	chan->chan_ntargets = ARC_MAX_TARGET;
 	chan->chan_id = ARC_MAX_TARGET;
-	chan->chan_channel = 0;
 	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
 	/*
@@ -233,12 +233,10 @@ arc_detach(device_t self, int flags)
 	struct arc_softc		*sc = device_private(self);
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
-		aprint_error("%s: timeout waiting to stop bg rebuild\n",
-		    device_xname(&sc->sc_dev));
+		aprint_error_dev(self, "timeout waiting to stop bg rebuild\n"); 
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
-		aprint_error("%s: timeout waiting to flush cache\n",
-		    device_xname(&sc->sc_dev));
+		aprint_error_dev(self, "timeout waiting to flush cache\n");
 
 	return 0;
 }
@@ -249,12 +247,10 @@ arc_shutdown(device_t self, int how)
 	struct arc_softc		*sc = device_private(self);
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
-		aprint_error("%s: timeout waiting to stop bg rebuild\n",
-		    device_xname(&sc->sc_dev));
+		aprint_error_dev(self, "timeout waiting to stop bg rebuild\n");
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
-		aprint_error("%s: timeout waiting to flush cache\n",
-		    device_xname(&sc->sc_dev));
+		aprint_error_dev(self, "timeout waiting to flush cache\n");
 
 	return true;
 }
@@ -437,7 +433,7 @@ arc_load_xs(struct arc_ccb *ccb)
 	    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 	if (error != 0) {
 		aprint_error("%s: error %d loading dmamap\n",
-		    device_xname(&sc->sc_dev), error);
+		    device_xname(sc->sc_dev), error);
 		return 1;
 	}
 
@@ -546,8 +542,9 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 }
 
 int
-arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
+arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 {
+	struct arc_softc		*sc = device_private(self);
 	pcireg_t			memtype;
 	pci_intr_handle_t		ih;
 
@@ -575,8 +572,8 @@ arc_map_pci_resources(struct arc_softc *sc, struct pci_attach_args *pa)
 	}
 	
 	aprint_normal("\n");
-	aprint_normal("%s: interrupting at %s\n",
-	    device_xname(&sc->sc_dev), pci_intr_string(pa->pa_pc, ih));
+	aprint_normal_dev(self, "interrupting at %s\n",
+	    pci_intr_string(pa->pa_pc, ih));
 
 	return 0;
 
@@ -595,73 +592,65 @@ arc_unmap_pci_resources(struct arc_softc *sc)
 }
 
 int
-arc_query_firmware(struct arc_softc *sc)
+arc_query_firmware(device_t self)
 {
+	struct arc_softc 		*sc = device_private(self);
 	struct arc_msg_firmware_info	fwinfo;
 	char				string[81]; /* sizeof(vendor)*2+1 */
 
 	if (arc_wait_eq(sc, ARC_REG_OUTB_ADDR1, ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
 	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
-		aprint_debug("%s: timeout waiting for firmware ok\n",
-		    device_xname(&sc->sc_dev));
+		aprint_debug_dev(self, "timeout waiting for firmware ok\n");
 		return 1;
 	}
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_GET_CONFIG) != 0) {
-		aprint_debug("%s: timeout waiting for get config\n",
-		    device_xname(&sc->sc_dev));
+		aprint_debug_dev(self, "timeout waiting for get config\n");
 		return 1;
 	}
 
 	if (arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB) != 0) {
-		aprint_debug("%s: timeout waiting to start bg rebuild\n",
-		    device_xname(&sc->sc_dev));
+		aprint_debug_dev(self, "timeout waiting to start bg rebuild\n");
 		return 1;
 	}
 
 	arc_read_region(sc, ARC_REG_MSGBUF, &fwinfo, sizeof(fwinfo));
 
 	DNPRINTF(ARC_D_INIT, "%s: signature: 0x%08x\n",
-	    device_xname(&sc->sc_dev), htole32(fwinfo.signature));
+	    device_xname(self), htole32(fwinfo.signature));
 
 	if (htole32(fwinfo.signature) != ARC_FWINFO_SIGNATURE_GET_CONFIG) {
-		aprint_error("%s: invalid firmware info from iop\n",
-		    device_xname(&sc->sc_dev));
+		aprint_error_dev(self, "invalid firmware info from iop\n");
 		return 1;
 	}
 
 	DNPRINTF(ARC_D_INIT, "%s: request_len: %d\n",
-	    device_xname(&sc->sc_dev),
-	    htole32(fwinfo.request_len));
+	    device_xname(self), htole32(fwinfo.request_len));
 	DNPRINTF(ARC_D_INIT, "%s: queue_len: %d\n",
-	    device_xname(&sc->sc_dev),
-	    htole32(fwinfo.queue_len));
+	    device_xname(self), htole32(fwinfo.queue_len));
 	DNPRINTF(ARC_D_INIT, "%s: sdram_size: %d\n",
-	    device_xname(&sc->sc_dev),
-	    htole32(fwinfo.sdram_size));
+	    device_xname(self), htole32(fwinfo.sdram_size));
 	DNPRINTF(ARC_D_INIT, "%s: sata_ports: %d\n",
-	    device_xname(&sc->sc_dev),
-	    htole32(fwinfo.sata_ports));
+	    device_xname(self), htole32(fwinfo.sata_ports));
 
 	scsipi_strvis(string, 81, fwinfo.vendor, sizeof(fwinfo.vendor));
 	DNPRINTF(ARC_D_INIT, "%s: vendor: \"%s\"\n",
-	    device_xname(&sc->sc_dev), string);
+	    device_xname(self), string);
 
 	scsipi_strvis(string, 17, fwinfo.model, sizeof(fwinfo.model));
-	aprint_normal("%s: Areca %s Host Adapter RAID controller\n",
-	    device_xname(&sc->sc_dev), string);
+	aprint_normal_dev(self, "Areca %s Host Adapter RAID controller\n",
+	    string);
 
 	scsipi_strvis(string, 33, fwinfo.fw_version, sizeof(fwinfo.fw_version));
 	DNPRINTF(ARC_D_INIT, "%s: version: \"%s\"\n",
-	    device_xname(&sc->sc_dev), string);
+	    device_xname(self), string);
 
-	aprint_normal("%s: %d ports, %dMB SDRAM, firmware <%s>\n",
-	    device_xname(&sc->sc_dev), htole32(fwinfo.sata_ports),
-	    htole32(fwinfo.sdram_size), string);
+	aprint_normal_dev(self, "%d ports, %dMB SDRAM, firmware <%s>\n",
+	    htole32(fwinfo.sata_ports), htole32(fwinfo.sdram_size), string);
 
 	if (htole32(fwinfo.request_len) != ARC_MAX_IOCMDLEN) {
-		aprint_error("%s: unexpected request frame size (%d != %d)\n",
-		    device_xname(&sc->sc_dev),
+		aprint_error_dev(self,
+		    "unexpected request frame size (%d != %d)\n",
 		    htole32(fwinfo.request_len), ARC_MAX_IOCMDLEN);
 		return 1;
 	}
@@ -673,7 +662,7 @@ arc_query_firmware(struct arc_softc *sc)
 
 #if NBIO > 0
 static int
-arc_bioctl(struct device *self, u_long cmd, void *addr)
+arc_bioctl(device_t self, u_long cmd, void *addr)
 {
 	struct arc_softc *sc = device_private(self);
 	int error = 0;
@@ -721,51 +710,51 @@ arc_fw_parse_status_code(struct arc_softc *sc, uint8_t *reply)
 	switch (*reply) {
 	case ARC_FW_CMD_RAIDINVAL:
 		printf("%s: firmware error (invalid raid set)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EINVAL;
 	case ARC_FW_CMD_VOLINVAL:
 		printf("%s: firmware error (invalid volume set)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EINVAL;
 	case ARC_FW_CMD_NORAID:
 		printf("%s: firmware error (unexistent raid set)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return ENODEV;
 	case ARC_FW_CMD_NOVOLUME:
 		printf("%s: firmware error (unexistent volume set)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return ENODEV;
 	case ARC_FW_CMD_NOPHYSDRV:
 		printf("%s: firmware error (unexistent physical drive)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return ENODEV;
 	case ARC_FW_CMD_PARAM_ERR:
 		printf("%s: firmware error (parameter error)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EINVAL;
 	case ARC_FW_CMD_UNSUPPORTED:
 		printf("%s: firmware error (unsupported command)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EOPNOTSUPP;
 	case ARC_FW_CMD_DISKCFG_CHGD:
 		printf("%s: firmware error (disk configuration changed)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EINVAL;
 	case ARC_FW_CMD_PASS_INVAL:
 		printf("%s: firmware error (invalid password)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EINVAL;
 	case ARC_FW_CMD_NODISKSPACE:
 		printf("%s: firmware error (no disk space available)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EOPNOTSUPP;
 	case ARC_FW_CMD_CHECKSUM_ERR:
 		printf("%s: firmware error (checksum error)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EINVAL;
 	case ARC_FW_CMD_PASS_REQD:
 		printf("%s: firmware error (password required)\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		return EPERM;
 	case ARC_FW_CMD_OK:
 	default:
@@ -892,7 +881,7 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		error = arc_fw_parse_status_code(sc, &reply[0]);
 		if (error) {
 			printf("%s: create raidset%d failed\n",
-			    device_xname(&sc->sc_dev), bc->bc_volid);
+			    device_xname(sc->sc_dev), bc->bc_volid);
 			return error;
 		}
 
@@ -974,7 +963,7 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		error = arc_fw_parse_status_code(sc, &reply[0]);
 		if (error) {
 			printf("%s: create volumeset%d failed\n",
-			    device_xname(&sc->sc_dev), bc->bc_volid);
+			    device_xname(sc->sc_dev), bc->bc_volid);
 			return error;
 		}
 
@@ -1011,7 +1000,7 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		error = arc_fw_parse_status_code(sc, &reply[0]);
 		if (error) {
 			printf("%s: delete volumeset%d failed\n",
-			    device_xname(&sc->sc_dev), bc->bc_volid);
+			    device_xname(sc->sc_dev), bc->bc_volid);
 			return error;
 		}
 
@@ -1024,7 +1013,7 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		if (error)
 			printf("%s: couldn't detach sd device for volume %d "
 			    "at %u:%u.%u (error=%d)\n",
-			    device_xname(&sc->sc_dev), bc->bc_volid,
+			    device_xname(sc->sc_dev), bc->bc_volid,
 			    bc->bc_channel, bc->bc_target, bc->bc_lun, error);
 
 		/*
@@ -1041,7 +1030,7 @@ arc_bio_volops(struct arc_softc *sc, struct bioc_volops *bc)
 		error = arc_fw_parse_status_code(sc, &reply[0]);
 		if (error) {
 			printf("%s: delete raidset%d failed\n",
-			    device_xname(&sc->sc_dev), bc->bc_volid);
+			    device_xname(sc->sc_dev), bc->bc_volid);
 			return error;
 		}
 
@@ -1137,7 +1126,7 @@ arc_bio_setstate(struct arc_softc *sc, struct bioc_setstate *bs)
 		if (error)
 			printf("%s: couldn't detach sd device for the "
 			    "pass-through disk at %u:%u.%u (error=%d)\n",
-			    device_xname(&sc->sc_dev),
+			    device_xname(sc->sc_dev),
 			    bs->bs_channel, bs->bs_target, bs->bs_lun, error);
 
 		goto out;
@@ -1213,7 +1202,7 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 			nvols++;
 	}
 
-	strlcpy(bi->bi_dev, device_xname(&sc->sc_dev), sizeof(bi->bi_dev));
+	strlcpy(bi->bi_dev, device_xname(sc->sc_dev), sizeof(bi->bi_dev));
 	bi->bi_novol = nvols;
 	bi->bi_nodisk = sc->sc_cchans;
 
@@ -1301,7 +1290,7 @@ arc_bio_vol(struct arc_softc *sc, struct bioc_vol *bv)
 		bv->bv_status = BIOC_SVOFFLINE;
 	} else {
 		printf("%s: volume %d status 0x%x\n",
-		    device_xname(&sc->sc_dev), bv->bv_volid, status);
+		    device_xname(sc->sc_dev), bv->bv_volid, status);
 	}
 
 	blocks = (uint64_t)htole32(volinfo->capacity2) << 32;
@@ -1539,7 +1528,7 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	wbuf = rbuf = NULL;
 
 	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wbuflen: %d rbuflen: %d\n",
-	    device_xname(&sc->sc_dev), wbuflen, rbuflen);
+	    device_xname(sc->sc_dev), wbuflen, rbuflen);
 
 	wlen = sizeof(struct arc_fw_bufhdr) + wbuflen + 1; /* 1 for cksum */
 	wbuf = kmem_alloc(wlen, KM_SLEEP);
@@ -1548,7 +1537,7 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	rbuf = kmem_alloc(rlen, KM_SLEEP);
 
 	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wlen: %d rlen: %d\n",
-	    device_xname(&sc->sc_dev), wlen, rlen);
+	    device_xname(sc->sc_dev), wlen, rlen);
 
 	bufhdr = (struct arc_fw_bufhdr *)wbuf;
 	bufhdr->hdr = arc_fw_hdr;
@@ -1573,7 +1562,7 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 #ifdef ARC_DEBUG
 			if (arcdebug & ARC_D_DB) {
 				printf("%s: write %d:",
-				    device_xname(&sc->sc_dev), rwlen);
+				    device_xname(sc->sc_dev), rwlen);
 				for (i = 0; i < rwlen; i++)
 					printf(" 0x%02x", rwbuf[i]);
 				printf("\n");
@@ -1598,13 +1587,13 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 		arc_write(sc, ARC_REG_OUTB_DOORBELL, reg);
 
 		DNPRINTF(ARC_D_DB, "%s: reg: 0x%08x\n",
-		    device_xname(&sc->sc_dev), reg);
+		    device_xname(sc->sc_dev), reg);
 
 		if ((reg & ARC_REG_OUTB_DOORBELL_WRITE_OK) && rdone < rlen) {
 			rwlen = arc_read(sc, ARC_REG_IOC_RBUF_LEN);
 			if (rwlen > sizeof(rwbuf)) {
 				DNPRINTF(ARC_D_DB, "%s:  rwlen too big\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 				error = EIO;
 				goto out;
 			}
@@ -1617,11 +1606,11 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 
 #ifdef ARC_DEBUG
 			printf("%s:  len: %d+%d=%d/%d\n",
-			    device_xname(&sc->sc_dev),
+			    device_xname(sc->sc_dev),
 			    rwlen, rdone, rwlen + rdone, rlen);
 			if (arcdebug & ARC_D_DB) {
 				printf("%s: read:",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 				for (i = 0; i < rwlen; i++)
 					printf(" 0x%02x", rwbuf[i]);
 				printf("\n");
@@ -1630,7 +1619,7 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 
 			if ((rdone + rwlen) > rlen) {
 				DNPRINTF(ARC_D_DB, "%s:  rwbuf too big\n",
-				    device_xname(&sc->sc_dev));
+				    device_xname(sc->sc_dev));
 				error = EIO;
 				goto out;
 			}
@@ -1644,7 +1633,7 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	if (memcmp(&bufhdr->hdr, &arc_fw_hdr, sizeof(bufhdr->hdr)) != 0 ||
 	    bufhdr->len != htole16(rbuflen)) {
 		DNPRINTF(ARC_D_DB, "%s:  rbuf hdr is wrong\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		error = EIO;
 		goto out;
 	}
@@ -1653,7 +1642,7 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 
 	if (rbuf[rlen - 1] != arc_msg_cksum(rptr, rbuflen)) {
 		DNPRINTF(ARC_D_DB, "%s:  invalid cksum\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		error = EIO;
 		goto out;
 	}
@@ -1711,7 +1700,7 @@ arc_create_sensors(void *arg)
 	memset(&bi, 0, sizeof(bi));
 	if (arc_bio_inq(sc, &bi) != 0) {
 		aprint_error("%s: unable to query firmware for sensor info\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		kthread_exit(0);
 	}
 
@@ -1800,13 +1789,13 @@ arc_create_sensors(void *arg)
 	 * Register our envsys driver with the framework now that the
 	 * sensors were all attached.
 	 */
-	sc->sc_sme->sme_name = device_xname(&sc->sc_dev);
+	sc->sc_sme->sme_name = device_xname(sc->sc_dev);
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = arc_refresh_sensors;
 
 	if (sysmon_envsys_register(sc->sc_sme)) {
 		aprint_debug("%s: unable to register with sysmon\n",
-		    device_xname(&sc->sc_dev));
+		    device_xname(sc->sc_dev));
 		goto bad;
 	}
 	kthread_exit(0);
@@ -1918,7 +1907,7 @@ arc_read(struct arc_softc *sc, bus_size_t r)
 	v = bus_space_read_4(sc->sc_iot, sc->sc_ioh, r);
 
 	DNPRINTF(ARC_D_RW, "%s: arc_read 0x%lx 0x%08x\n",
-	    device_xname(&sc->sc_dev), r, v);
+	    device_xname(sc->sc_dev), r, v);
 
 	return v;
 }
@@ -1936,7 +1925,7 @@ void
 arc_write(struct arc_softc *sc, bus_size_t r, uint32_t v)
 {
 	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%lx 0x%08x\n",
-	    device_xname(&sc->sc_dev), r, v);
+	    device_xname(sc->sc_dev), r, v);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, r, v);
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, 4,
@@ -1959,7 +1948,7 @@ arc_wait_eq(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	int i;
 
 	DNPRINTF(ARC_D_RW, "%s: arc_wait_eq 0x%lx 0x%08x 0x%08x\n",
-	    device_xname(&sc->sc_dev), r, mask, target);
+	    device_xname(sc->sc_dev), r, mask, target);
 
 	for (i = 0; i < 10000; i++) {
 		if ((arc_read(sc, r) & mask) == target)
@@ -1977,7 +1966,7 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 	int i;
 
 	DNPRINTF(ARC_D_RW, "%s: arc_wait_ne 0x%lx 0x%08x 0x%08x\n",
-	    device_xname(&sc->sc_dev), r, mask, target);
+	    device_xname(sc->sc_dev), r, mask, target);
 
 	for (i = 0; i < 10000; i++) {
 		if ((arc_read(sc, r) & mask) != target)
@@ -2059,8 +2048,9 @@ arc_dmamem_free(struct arc_softc *sc, struct arc_dmamem *adm)
 }
 
 int
-arc_alloc_ccbs(struct arc_softc *sc)
+arc_alloc_ccbs(device_t self)
 {
+	struct arc_softc 	*sc = device_private(self);
 	struct arc_ccb		*ccb;
 	uint8_t			*cmd;
 	int			i;
@@ -2074,8 +2064,7 @@ arc_alloc_ccbs(struct arc_softc *sc)
 	sc->sc_requests = arc_dmamem_alloc(sc,
 	    ARC_MAX_IOCMDLEN * sc->sc_req_count);
 	if (sc->sc_requests == NULL) {
-		aprint_error("%s: unable to allocate ccb dmamem\n",
-		    device_xname(&sc->sc_dev));
+		aprint_error_dev(self, "unable to allocate ccb dmamem\n");
 		goto free_ccbs;
 	}
 	cmd = ARC_DMA_KVA(sc->sc_requests);
@@ -2085,8 +2074,8 @@ arc_alloc_ccbs(struct arc_softc *sc)
 
 		if (bus_dmamap_create(sc->sc_dmat, MAXPHYS, ARC_SGL_MAXLEN,
 		    MAXPHYS, 0, 0, &ccb->ccb_dmamap) != 0) {
-			aprint_error("%s: unable to create dmamap for ccb %d\n",
-			    device_xname(&sc->sc_dev), i);
+			aprint_error_dev(self,
+			    "unable to create dmamap for ccb %d\n", i);
 			goto free_maps;
 		}
 
