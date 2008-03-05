@@ -1,4 +1,4 @@
-/*	$NetBSD: cfparse.y,v 1.18.4.3 2007/08/01 11:52:19 vanhu Exp $	*/
+/*	$NetBSD: cfparse.y,v 1.18.4.4 2008/03/05 22:29:38 mgrooms Exp $	*/
 
 /* Id: cfparse.y,v 1.66 2006/08/22 18:17:17 manubsd Exp */
 
@@ -984,6 +984,7 @@ splitnet
 #ifdef ENABLE_HYBRID
 			struct isakmp_cfg_config *icc = &isakmp_cfg_config;
 			struct unity_network network;
+			memset(&network,0,sizeof(network));
 
 			if (inet_pton(AF_INET, $1->v, &network.addr4) != 1)
 				yyerror("bad IPv4 SPLIT address.");
