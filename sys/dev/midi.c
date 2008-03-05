@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.62 2008/03/05 00:45:40 tnn Exp $	*/
+/*	$NetBSD: midi.c,v 1.63 2008/03/05 10:48:48 cube Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.62 2008/03/05 00:45:40 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.63 2008/03/05 10:48:48 cube Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -166,6 +166,7 @@ midiattach(device_t parent, device_t self, void *aux)
 	}
 #endif
 
+	sc->dev = self;
 	sc->hw_if = hwp;
 	sc->hw_hdl = hdlp;
 	midi_attach(sc, parent);
