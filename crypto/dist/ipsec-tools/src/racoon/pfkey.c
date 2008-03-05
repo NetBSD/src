@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.18.4.4 2007/08/01 11:52:21 vanhu Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.18.4.5 2008/03/05 22:14:24 mgrooms Exp $	*/
 
-/* $Id: pfkey.c,v 1.18.4.4 2007/08/01 11:52:21 vanhu Exp $ */
+/* $Id: pfkey.c,v 1.18.4.5 2008/03/05 22:14:24 mgrooms Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -2814,7 +2814,7 @@ pk_recv(so, lenp)
 	struct sadb_msg buf, *newmsg;
 	int reallen;
 	int retry = 0;
-	
+
 	*lenp = -1;
 	do
 	{
@@ -2823,12 +2823,10 @@ pk_recv(so, lenp)
 	    retry++;
 	}
 	while (*lenp < 0 && errno == EAGAIN && retry < 3);
+
 	if (*lenp < 0)
-	{
-	    if ( errno == EAGAIN ) *lenp = 0; /* non-fatal */
- 	    return NULL;	/*fatal*/
-	}
-	
+		return NULL;	/*fatal*/
+
 	else if (*lenp < sizeof(buf))
 		return NULL;
 
