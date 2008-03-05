@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.18 2008/02/28 16:09:19 elad Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.19 2008/03/05 12:47:13 njoly Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.18 2008/02/28 16:09:19 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.19 2008/03/05 12:47:13 njoly Exp $");
 
 #include <sys/param.h>
 
@@ -483,7 +483,7 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_IMMEDIATE,
 		CTLTYPE_INT, "pri_max",
-		SYSCTL_DESCR("Minimal POSIX real-time priority"),
+		SYSCTL_DESCR("Maximal POSIX real-time priority"),
 		NULL, SCHED_PRI_MAX, NULL, 0,
 		CTL_CREATE, CTL_EOL);
 }
