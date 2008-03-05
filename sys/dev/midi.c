@@ -1,4 +1,4 @@
-/*	$NetBSD: midi.c,v 1.61 2008/03/04 21:56:11 cube Exp $	*/
+/*	$NetBSD: midi.c,v 1.62 2008/03/05 00:45:40 tnn Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.61 2008/03/04 21:56:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.62 2008/03/05 00:45:40 tnn Exp $");
 
 #include "midi.h"
 #include "sequencer.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: midi.c,v 1.61 2008/03/04 21:56:11 cube Exp $");
 #include <sys/conf.h>
 #include <sys/audioio.h>
 #include <sys/midiio.h>
+#include <sys/device.h>
 #include <sys/intr.h>
 
 #include <dev/audio_if.h>
