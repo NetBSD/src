@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.31 2008/03/04 17:11:03 dyoung Exp $ */
+/* $NetBSD: pcppi.c,v 1.32 2008/03/05 22:46:43 cube Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.31 2008/03/04 17:11:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.32 2008/03/05 22:46:43 cube Exp $");
 
 #include "attimer.h"
 
@@ -251,7 +251,7 @@ pcppi_attach_speaker(device_t self)
 void
 pcppi_bell(pcppi_tag_t self, int pitch, int period, int slp)
 {
-	struct pcppi_softc *sc = device_private(self);
+	struct pcppi_softc *sc = self;
 	int s;
 
 	s = spltty(); /* ??? */
