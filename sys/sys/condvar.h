@@ -1,7 +1,7 @@
-/*	$NetBSD: condvar.h,v 1.7 2007/11/06 00:25:48 ad Exp $	*/
+/*	$NetBSD: condvar.h,v 1.8 2008/03/05 17:05:21 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -50,7 +50,7 @@
  */
 typedef struct kcondvar {
 	const char	*cv_wmesg;	/* description for /bin/ps */
-	u_int		cv_waiters;	/* number of waiters */
+	int		cv_waiters;	/* number of waiters */
 } kcondvar_t;
 
 #ifdef _KERNEL
@@ -69,6 +69,7 @@ void	cv_broadcast(kcondvar_t *);
 void	cv_wakeup(kcondvar_t *);
 
 bool	cv_has_waiters(kcondvar_t *);
+bool	cv_is_valid(kcondvar_t *);
 
 /* The "lightning bolt", awoken once per second by the clock interrupt. */
 extern kcondvar_t lbolt;
