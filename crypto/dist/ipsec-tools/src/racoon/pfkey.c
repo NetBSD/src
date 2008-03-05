@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.25 2007/12/12 04:46:00 mgrooms Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.26 2008/03/05 22:09:44 mgrooms Exp $	*/
 
-/* $Id: pfkey.c,v 1.25 2007/12/12 04:46:00 mgrooms Exp $ */
+/* $Id: pfkey.c,v 1.26 2008/03/05 22:09:44 mgrooms Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -445,6 +445,21 @@ pfkey_init()
 		return -1;
 	}
 #endif
+	return 0;
+}
+
+int
+pfkey_reload()
+{
+	flushsp();
+
+	if (pfkey_send_spddump(lcconf->sock_pfkey) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"libipsec sending spddump failed: %s\n",
+			ipsec_strerror());
+		return -1;
+	}
+
 	return 0;
 }
 
@@ -2814,7 +2829,7 @@ pk_recv(so, lenp)
 	struct sadb_msg buf, *newmsg;
 	int reallen;
 	int retry = 0;
-	
+
 	*lenp = -1;
 	do
 	{
@@ -2823,12 +2838,10 @@ pk_recv(so, lenp)
 	    retry++;
 	}
 	while (*lenp < 0 && errno == EAGAIN && retry < 3);
+
 	if (*lenp < 0)
-	{
-	    if ( errno == EAGAIN ) *lenp = 0; /* non-fatal */
- 	    return NULL;	/*fatal*/
-	}
-	
+		return NULL;	/*fatal*/
+
 	else if (*lenp < sizeof(buf))
 		return NULL;
 
