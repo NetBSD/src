@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.136 2008/03/05 07:09:18 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.137 2008/03/05 15:37:55 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.136 2008/03/05 07:09:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.137 2008/03/05 15:37:55 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -2252,8 +2252,6 @@ deviter_init(deviter_t *di, deviter_flags_t flags)
 	device_t dv;
 	bool rw;
 
-	KASSERT(!rw || curlwp != NULL);
-
 	mutex_enter(&alldevs_mtx);
 	if ((flags & DEVITER_F_SHUTDOWN) != 0) {
 		flags |= DEVITER_F_RW;
@@ -2365,8 +2363,6 @@ void
 deviter_release(deviter_t *di)
 {
 	bool rw = (di->di_flags & DEVITER_F_RW) != 0;
-
-	KASSERT(!rw || alldevs_nwrite > 0);
 
 	mutex_enter(&alldevs_mtx);
 	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
