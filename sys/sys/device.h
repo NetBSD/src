@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.105 2008/03/05 04:54:24 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.106 2008/03/05 07:09:18 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -166,6 +166,24 @@ struct device {
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
 
 TAILQ_HEAD(devicelist, device);
+
+enum deviter_flags {
+	  DEVITER_F_RW =		0x1
+	, DEVITER_F_SHUTDOWN =		0x2
+	, DEVITER_F_LEAVES_FIRST =	0x4
+	, DEVITER_F_ROOT_FIRST =	0x8
+};
+
+typedef enum deviter_flags deviter_flags_t;
+
+struct deviter {
+	device_t	di_prev;
+	deviter_flags_t	di_flags;
+	int		di_curdepth;
+	int		di_maxdepth;
+};
+
+typedef struct deviter deviter_t;
 
 /*
  * Description of a locator, as part of interface attribute definitions.
@@ -436,6 +454,11 @@ bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
 prop_dictionary_t device_properties(device_t);
+
+device_t	deviter_first(deviter_t *, deviter_flags_t);
+void		deviter_init(deviter_t *, deviter_flags_t);
+device_t	deviter_next(deviter_t *);
+void		deviter_release(deviter_t *);
 
 bool		device_active(device_t, devactive_t);
 bool		device_active_register(device_t,
