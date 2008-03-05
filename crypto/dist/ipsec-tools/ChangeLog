@@ -1,4 +1,7 @@
 2008-03-05  Matthew Grooms
+	* src/racoon/cfparse.y: properly initialize the unity network struct
+
+2008-03-05  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/pfkey.c: better handling for pfkey socket read errors
 
