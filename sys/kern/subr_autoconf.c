@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.135 2008/03/05 04:54:24 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.136 2008/03/05 07:09:18 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.135 2008/03/05 04:54:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.136 2008/03/05 07:09:18 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -103,6 +103,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.135 2008/03/05 04:54:24 dyoung E
 #include <sys/fcntl.h>
 #include <sys/lockf.h>
 #include <sys/callout.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <sys/disk.h>
 
@@ -170,6 +172,9 @@ static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
 static void config_devunlink(device_t);
 
+static device_t deviter_next1(deviter_t *);
+static void deviter_reinit(deviter_t *);
+
 struct deferred_config {
 	TAILQ_ENTRY(deferred_config) dc_queue;
 	device_t dc_dev;
@@ -197,6 +202,11 @@ static int config_finalize_done;
 
 /* list of all devices */
 struct devicelist alldevs = TAILQ_HEAD_INITIALIZER(alldevs);
+kcondvar_t alldevs_cv;
+kmutex_t alldevs_mtx;
+static int alldevs_nread = 0;
+static int alldevs_nwrite = 0;
+static lwp_t *alldevs_writer = NULL;
 
 volatile int config_pending;		/* semaphore for mountroot */
 
@@ -326,6 +336,9 @@ config_init(void)
 
 	if (config_initialized)
 		return;
+
+	mutex_init(&alldevs_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&alldevs_cv, "alldevs");
 
 	/* allcfdrivers is statically initialized. */
 	for (i = 0; cfdriver_list_initial[i] != NULL; i++) {
@@ -709,12 +722,14 @@ rescan_with_cfdata(const struct cfdata *cf)
 {
 	device_t d;
 	const struct cfdata *cf1;
+	deviter_t di;
+  
 
 	/*
 	 * "alldevs" is likely longer than an LKM's cfdata, so make it
 	 * the outer loop.
 	 */
-	TAILQ_FOREACH(d, &alldevs, dv_list) {
+	for (d = deviter_first(&di, 0); d != NULL; d = deviter_next(&di)) {
 
 		if (!(d->dv_cfattach->ca_rescan))
 			continue;
@@ -728,6 +743,7 @@ rescan_with_cfdata(const struct cfdata *cf)
 				cf1->cf_pspec->cfp_iattr, cf1->cf_loc);
 		}
 	}
+	deviter_release(&di);
 }
 
 /*
@@ -773,20 +789,21 @@ int
 config_cfdata_detach(cfdata_t cf)
 {
 	device_t d;
-	int error;
+	int error = 0;
 	struct cftable *ct;
+	deviter_t di;
 
-again:
-	TAILQ_FOREACH(d, &alldevs, dv_list) {
-		if (dev_in_cfdata(d, cf)) {
-			error = config_detach(d, 0);
-			if (error) {
-				aprint_error("%s: unable to detach instance\n",
-					d->dv_xname);
-				return (error);
-			}
-			goto again;
-		}
+	for (d = deviter_first(&di, DEVITER_F_RW); d != NULL;
+	     d = deviter_next(&di)) {
+		if (!dev_in_cfdata(d, cf))
+			continue;
+		if ((error = config_detach(d, 0)) != 0)
+			break;
+	}
+	deviter_release(&di);
+	if (error) {
+		aprint_error_dev(d, "unable to detach instance\n");
+		return error;
 	}
 
 	TAILQ_FOREACH(ct, &allcftables, ct_list) {
@@ -1049,7 +1066,16 @@ config_devlink(device_t dev)
 		panic("config_attach: duplicate %s", dev->dv_xname);
 	cd->cd_devs[dev->dv_unit] = dev;
 
+	/* It is safe to add a device to the tail of the list while
+	 * readers are in the list, but not while a writer is in
+	 * the list.  Wait for any writer to complete.
+	 */
+	mutex_enter(&alldevs_mtx);
+	while (alldevs_nwrite != 0 && alldevs_writer != curlwp)
+		cv_wait(&alldevs_cv, &alldevs_mtx);
 	TAILQ_INSERT_TAIL(&alldevs, dev, dv_list);	/* link up */
+	cv_signal(&alldevs_cv);
+	mutex_exit(&alldevs_mtx);
 }
 
 static void
@@ -1364,6 +1390,17 @@ config_detach(device_t dev, int flags)
 	ca = dev->dv_cfattach;
 	KASSERT(ca != NULL);
 
+	KASSERT(curlwp != NULL);
+	mutex_enter(&alldevs_mtx);
+	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
+		;
+	else while (alldevs_nread != 0 ||
+	       (alldevs_nwrite != 0 && alldevs_writer != curlwp))
+		cv_wait(&alldevs_cv, &alldevs_mtx);
+	if (alldevs_nwrite++ == 0)
+		alldevs_writer = curlwp;
+	mutex_exit(&alldevs_mtx);
+
 	/*
 	 * Ensure the device is deactivated.  If the device doesn't
 	 * have an activation entry point, we allow DVF_ACTIVE to
@@ -1386,7 +1423,7 @@ config_detach(device_t dev, int flags)
 	}
 	if (rv != 0) {
 		if ((flags & DETACH_FORCE) == 0)
-			return (rv);
+			goto out;
 		else
 			panic("config_detach: forced detach of %s failed (%d)",
 			    dev->dv_xname, rv);
@@ -1446,34 +1483,34 @@ config_detach(device_t dev, int flags)
 	config_devunlink(dev);
 
 	if (dev->dv_cfdata != NULL && (flags & DETACH_QUIET) == 0)
-		aprint_normal("%s detached\n", dev->dv_xname);
+		aprint_normal_dev(dev, "detached\n");
 
 	config_devdealloc(dev);
 
-	return (0);
+out:
+	mutex_enter(&alldevs_mtx);
+	if (--alldevs_nwrite == 0)
+		alldevs_writer = NULL;
+	cv_signal(&alldevs_cv);
+	mutex_exit(&alldevs_mtx);
+	return rv;
 }
 
 int
 config_detach_children(device_t parent, int flags)
 {
 	device_t dv;
-	int progress, error = 0;
+	deviter_t di;
+	int error = 0;
 
-	/*
-	 * config_detach() can work recursively, thus it can
-	 * delete any number of devices from the linked list.
-	 * For that reason, start over after each hit.
-	 */
-	do {
-		progress = 0;
-		TAILQ_FOREACH(dv, &alldevs, dv_list) {
-			if (device_parent(dv) != parent)
-				continue;
-			progress++;
-			error = config_detach(dv, flags);
+	for (dv = deviter_first(&di, DEVITER_F_RW); dv != NULL;
+	     dv = deviter_next(&di)) {
+		if (device_parent(dv) != parent)
+			continue;
+		if ((error = config_detach(dv, flags)) != 0)
 			break;
-		}
-	} while (progress && !error);
+	}
+	deviter_release(&di);
 	return error;
 }
 
@@ -1824,11 +1861,13 @@ device_t
 device_find_by_xname(const char *name)
 {
 	device_t dv;
+	deviter_t di;
 
-	TAILQ_FOREACH(dv, &alldevs, dv_list) {
+	for (dv = deviter_first(&di, 0); dv != NULL; dv = deviter_next(&di)) {
 		if (strcmp(device_xname(dv), name) == 0)
 			break;
 	}
+	deviter_release(&di);
 
 	return dv;
 }
@@ -2149,4 +2188,198 @@ device_active_deregister(device_t dev, void (*handler)(device_t, devactive_t))
 	splx(s);
 
 	free(old_handlers, M_DEVBUF);
+}
+
+/*
+ * Device Iteration
+ *
+ * deviter_t: a device iterator.  Holds state for a "walk" visiting
+ *     each device_t's in the device tree.
+ *
+ * deviter_init(di, flags): initialize the device iterator `di'
+ *     to "walk" the device tree.  deviter_next(di) will return
+ *     the first device_t in the device tree, or NULL if there are
+ *     no devices.
+ *
+ *     `flags' is one or more of DEVITER_F_RW, indicating that the
+ *     caller intends to modify the device tree by calling
+ *     config_detach(9) on devices in the order that the iterator
+ *     returns them; DEVITER_F_ROOT_FIRST, asking for the devices
+ *     nearest the "root" of the device tree to be returned, first;
+ *     DEVITER_F_LEAVES_FIRST, asking for the devices furthest from
+ *     the root of the device tree, first; and DEVITER_F_SHUTDOWN,
+ *     indicating both that deviter_init() should not respect any
+ *     locks on the device tree, and that deviter_next(di) may run
+ *     in more than one LWP before the walk has finished.
+ *
+ *     Only one DEVITER_F_RW iterator may be in the device tree at
+ *     once.
+ *
+ *     DEVITER_F_SHUTDOWN implies DEVITER_F_RW.
+ *
+ *     Results are undefined if the flags DEVITER_F_ROOT_FIRST and
+ *     DEVITER_F_LEAVES_FIRST are used in combination.
+ *
+ * deviter_first(di, flags): initialize the device iterator `di'
+ *     and return the first device_t in the device tree, or NULL
+ *     if there are no devices.  The statement
+ *
+ *         dv = deviter_first(di);
+ *
+ *     is shorthand for
+ *
+ *         deviter_init(di);
+ *         dv = deviter_next(di);
+ *
+ * deviter_next(di): return the next device_t in the device tree,
+ *     or NULL if there are no more devices.  deviter_next(di)
+ *     is undefined if `di' was not initialized with deviter_init() or
+ *     deviter_first().
+ *
+ * deviter_release(di): stops iteration (subsequent calls to
+ *     deviter_next() will return NULL), releases any locks and
+ *     resources held by the device iterator.
+ *
+ * Device iteration does not return device_t's in any particular
+ * order.  An iterator will never return the same device_t twice.
+ * Device iteration is guaranteed to complete---i.e., if deviter_next(di)
+ * is called repeatedly on the same `di', it will eventually return
+ * NULL.  It is ok to attach/detach devices during device iteration.
+ */
+void
+deviter_init(deviter_t *di, deviter_flags_t flags)
+{
+	device_t dv;
+	bool rw;
+
+	KASSERT(!rw || curlwp != NULL);
+
+	mutex_enter(&alldevs_mtx);
+	if ((flags & DEVITER_F_SHUTDOWN) != 0) {
+		flags |= DEVITER_F_RW;
+		alldevs_nwrite++;
+		alldevs_writer = NULL;
+		alldevs_nread = 0;
+	} else {
+		rw = (flags & DEVITER_F_RW) != 0;
+
+		if (alldevs_nwrite > 0 && alldevs_writer == NULL)
+			;
+		else while ((alldevs_nwrite != 0 && alldevs_writer != curlwp) ||
+		       (rw && alldevs_nread != 0))
+			cv_wait(&alldevs_cv, &alldevs_mtx);
+
+		if (rw) {
+			if (alldevs_nwrite++ == 0)
+				alldevs_writer = curlwp;
+		} else
+			alldevs_nread++;
+	}
+	mutex_exit(&alldevs_mtx);
+
+	memset(di, 0, sizeof(*di));
+
+	di->di_flags = flags;
+
+	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
+	case DEVITER_F_LEAVES_FIRST:
+		TAILQ_FOREACH(dv, &alldevs, dv_list)
+			di->di_curdepth = MAX(di->di_curdepth, dv->dv_depth);
+		break;
+	case DEVITER_F_ROOT_FIRST:
+		TAILQ_FOREACH(dv, &alldevs, dv_list)
+			di->di_maxdepth = MAX(di->di_maxdepth, dv->dv_depth);
+		break;
+	default:
+		break;
+	}
+
+	deviter_reinit(di);
+}
+
+static void
+deviter_reinit(deviter_t *di)
+{
+	if ((di->di_flags & DEVITER_F_RW) != 0)
+		di->di_prev = TAILQ_LAST(&alldevs, devicelist);
+	else
+		di->di_prev = TAILQ_FIRST(&alldevs);
+}
+
+device_t
+deviter_first(deviter_t *di, deviter_flags_t flags)
+{
+	deviter_init(di, flags);
+	return deviter_next(di);
+}
+
+static device_t
+deviter_next1(deviter_t *di)
+{
+	device_t dv;
+
+	dv = di->di_prev;
+
+	if (dv == NULL)
+		;
+	else if ((di->di_flags & DEVITER_F_RW) != 0)
+		di->di_prev = TAILQ_PREV(dv, devicelist, dv_list);
+	else
+		di->di_prev = TAILQ_NEXT(dv, dv_list);
+
+	return dv;
+}
+
+device_t
+deviter_next(deviter_t *di)
+{
+	device_t dv = NULL;
+
+	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
+	case 0:
+		return deviter_next1(di);
+	case DEVITER_F_LEAVES_FIRST:
+		while (di->di_curdepth >= 0) {
+			if ((dv = deviter_next1(di)) == NULL) {
+				di->di_curdepth--;
+				deviter_reinit(di);
+			} else if (dv->dv_depth == di->di_curdepth)
+				break;
+		}
+		return dv;
+	case DEVITER_F_ROOT_FIRST:
+		while (di->di_curdepth <= di->di_maxdepth) {
+			if ((dv = deviter_next1(di)) == NULL) {
+				di->di_curdepth++;
+				deviter_reinit(di);
+			} else if (dv->dv_depth == di->di_curdepth)
+				break;
+		}
+		return dv;
+	default:
+		return NULL;
+	}
+}
+
+void
+deviter_release(deviter_t *di)
+{
+	bool rw = (di->di_flags & DEVITER_F_RW) != 0;
+
+	KASSERT(!rw || alldevs_nwrite > 0);
+
+	mutex_enter(&alldevs_mtx);
+	if (alldevs_nwrite > 0 && alldevs_writer == NULL)
+		--alldevs_nwrite;
+	else {
+
+		if (rw) {
+			if (--alldevs_nwrite == 0)
+				alldevs_writer = NULL;
+		} else
+			--alldevs_nread;
+
+		cv_signal(&alldevs_cv);
+	}
+	mutex_exit(&alldevs_mtx);
 }
