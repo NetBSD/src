@@ -1,4 +1,4 @@
-/* $NetBSD: pmf.h,v 1.7 2008/02/28 14:25:12 drochner Exp $ */
+/* $NetBSD: pmf.h,v 1.8 2008/03/05 04:54:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,6 +54,9 @@ typedef enum {
 	PMFE_CHASSIS_LID_OPEN
 } pmf_generic_event_t;
 
+#define	PMF_FN_PROTO1	void /* pmf_flags_t */
+#define	PMF_FN_ARGS1	void /* pmf_flags_t flags */
+
 #define	PMF_FN_PROTO	/* , pmf_flags_t */
 #define	PMF_FN_ARGS	/* , pmf_flags_t flags */
 #define	PMF_FN_CALL	/* , flags */
@@ -69,25 +72,26 @@ void	pmf_event_deregister(device_t, pmf_generic_event_t,
 bool		pmf_set_platform(const char *, const char *);
 const char	*pmf_get_platform(const char *);
 
-bool		pmf_system_resume(void);
-bool		pmf_system_bus_resume(void);
-bool		pmf_system_suspend(void);
+bool		pmf_system_resume(PMF_FN_PROTO1);
+bool		pmf_system_bus_resume(PMF_FN_PROTO1);
+bool		pmf_system_suspend(PMF_FN_PROTO1);
 void		pmf_system_shutdown(int);
 
 bool		pmf_device_register1(device_t,
-		    bool (*)(device_t),
-		    bool (*)(device_t),
+		    bool (*)(device_t PMF_FN_PROTO),
+		    bool (*)(device_t PMF_FN_PROTO),
 		    bool (*)(device_t, int));
 /* compatibility */
-#define pmf_device_register(d, s, r) pmf_device_register1((d), (s), (r), 0)
+#define pmf_device_register(__d, __s, __r) \
+	pmf_device_register1((__d), (__s), (__r), NULL)
 
 void		pmf_device_deregister(device_t);
-bool		pmf_device_suspend(device_t);
-bool		pmf_device_resume(device_t);
+bool		pmf_device_suspend(device_t PMF_FN_PROTO);
+bool		pmf_device_resume(device_t PMF_FN_PROTO);
 
-bool		pmf_device_recursive_suspend(device_t);
-bool		pmf_device_recursive_resume(device_t);
-bool		pmf_device_resume_subtree(device_t);
+bool		pmf_device_recursive_suspend(device_t PMF_FN_PROTO);
+bool		pmf_device_recursive_resume(device_t PMF_FN_PROTO);
+bool		pmf_device_resume_subtree(device_t PMF_FN_PROTO);
 
 struct ifnet;
 void		pmf_class_network_register(device_t, struct ifnet *);
