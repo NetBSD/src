@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_generic.c,v 1.112 2008/03/01 14:16:51 rmind Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.113 2008/03/05 18:09:58 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.112 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.113 2008/03/05 18:09:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.112 2008/03/01 14:16:51 rmind Exp 
 
 static int	selscan(lwp_t *, fd_mask *, fd_mask *, int, register_t *);
 static int	pollscan(lwp_t *, struct pollfd *, int, register_t *);
-static void	selclear(void);
 
 /* Global state for select()/poll(). */
 kmutex_t	select_lock;
@@ -1168,7 +1167,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 /*
  * Remove an LWP from all objects that it is waiting for.
  */
-static void
+void
 selclear(void)
 {
 	struct selinfo *sip;
