@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.13 2008/02/28 14:25:12 drochner Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.14 2008/03/05 04:54:24 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.13 2008/02/28 14:25:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.14 2008/03/05 04:54:24 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -355,10 +355,12 @@ pmf_get_platform(const char *key)
 
 bool
 pmf_device_register1(device_t dev,
-    bool (*suspend)(device_t), bool (*resume)(device_t),
+    bool (*suspend)(device_t PMF_FN_PROTO),
+    bool (*resume)(device_t PMF_FN_PROTO),
     bool (*shutdown)(device_t, int))
 {
-	device_pmf_driver_register(dev, suspend, resume, shutdown);
+	if (!device_pmf_driver_register(dev, suspend, resume, shutdown))
+		return false;
 
 	if (!device_pmf_driver_child_register(dev)) {
 		device_pmf_driver_deregister(dev);
@@ -482,7 +484,7 @@ pmf_class_network_suspend(device_t dev)
 }
 
 static bool
-pmf_class_network_resume(device_t dev)
+pmf_class_network_resume(device_t dev PMF_FN_ARGS)
 {
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
