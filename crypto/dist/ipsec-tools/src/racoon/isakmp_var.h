@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_var.h,v 1.7 2007/02/20 09:11:14 vanhu Exp $	*/
+/*	$NetBSD: isakmp_var.h,v 1.8 2008/03/06 00:34:11 mgrooms Exp $	*/
 
 /* Id: isakmp_var.h,v 1.12 2005/05/07 14:45:31 manubsd Exp */
 
@@ -62,8 +62,8 @@ struct isakmp_pl_ke;	/* XXX */
 struct isakmp_pl_nonce;	/* XXX */
 
 extern int isakmp_handler __P((int));
-extern int isakmp_ph1begin_i __P((struct remoteconf *, struct sockaddr *,
-	struct sockaddr *));
+extern struct ph1handle *isakmp_ph1begin_i __P((struct remoteconf *,
+	struct sockaddr *, struct sockaddr *));
 
 extern vchar_t *isakmp_parsewoh __P((int, struct isakmp_gen *, int));
 extern vchar_t *isakmp_parse __P((vchar_t *));

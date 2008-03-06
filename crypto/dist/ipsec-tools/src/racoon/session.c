@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.10 2008/03/05 22:09:44 mgrooms Exp $	*/
+/*	$NetBSD: session.c,v 1.11 2008/03/06 00:34:11 mgrooms Exp $	*/
 
 /*	$KAME: session.c,v 1.32 2003/09/24 02:01:17 jinmei Exp $	*/
 
@@ -192,6 +192,7 @@ session(void)
 		/* scheduling */
 		timeout = schedular();
 
+		nfds = evt_get_fdmask(nfds, &rfds);
 		error = select(nfds, &rfds, (fd_set *)0, (fd_set *)0, timeout);
 		if (error < 0) {
 			switch (errno) {
@@ -211,6 +212,7 @@ session(void)
 		    (FD_ISSET(lcconf->sock_admin, &rfds)))
 			admin_handler();
 #endif
+		evt_handle_fdmask(&rfds);
 
 		for (p = lcconf->myaddrs; p; p = p->next) {
 			if (!p->addr)
@@ -449,7 +451,7 @@ check_sigreq()
 		case SIGTERM:			
 			plog(LLV_INFO, LOCATION, NULL, 
 			    "caught signal %d\n", sig);
-			EVT_PUSH(NULL, NULL, EVTT_RACOON_QUIT, NULL);
+			evt_generic(EVT_RACOON_QUIT, NULL);
 			pfkey_send_flush(lcconf->sock_pfkey, 
 			    SADB_SATYPE_UNSPEC);
 #ifdef ENABLE_FASTQUIT
