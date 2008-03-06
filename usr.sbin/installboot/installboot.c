@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.28 2007/02/15 22:23:11 dsl Exp $	*/
+/*	$NetBSD: installboot.c,v 1.29 2008/03/06 21:05:27 dsl Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: installboot.c,v 1.28 2007/02/15 22:23:11 dsl Exp $");
+__RCSID("$NetBSD: installboot.c,v 1.29 2008/03/06 21:05:27 dsl Exp $");
 #endif	/* !__lint */
 
 #include <sys/ioctl.h>
@@ -195,13 +195,16 @@ main(int argc, char *argv[])
 
 	/* Check that options are supported by this system */
 	unsupported_flags = params->flags & ~params->machine->valid_flags;
-	unsupported_flags &= ~(IB_VERBOSE | IB_NOWRITE | IB_CLEAR | IB_EDIT);
+	unsupported_flags &= ~(IB_VERBOSE | IB_NOWRITE | IB_CLEAR | IB_EDIT
+				| IB_FORCE);
 	if (unsupported_flags != 0) {
 		int ndx;
 		for (ndx = 0; options[ndx].name != NULL; ndx++) {
-			if (unsupported_flags & options[ndx].flag)
+			if (unsupported_flags & options[ndx].flag) {
+				unsupported_flags &= ~options[ndx].flag;
 				warnx("`-o %s' is not supported for %s",
 				    options[ndx].name, params->machine->name);
+			}
 		}
 		if (unsupported_flags & IB_STAGE1START)
 			warnx("`-b bno' is not supported for %s",
@@ -209,6 +212,10 @@ main(int argc, char *argv[])
 		if (unsupported_flags & IB_STAGE2START)
 			warnx("`-B bno' is not supported for %s",
 			    params->machine->name);
+		unsupported_flags &= ~(IB_STAGE1START | IB_STAGE2START);
+		if (unsupported_flags != 0)
+			warnx("Unknown unsupported flag %#x (coding error!)",
+			    unsupported_flags);
 		exit(1);
 	}
 	/* and some illegal combinations */
