@@ -1,9 +1,10 @@
-/*	$NetBSD: racoonctl.c,v 1.8 2007/12/31 01:42:07 mgrooms Exp $	*/
+/*	$NetBSD: racoonctl.c,v 1.9 2008/03/06 00:34:11 mgrooms Exp $	*/
 
 /*	Id: racoonctl.c,v 1.11 2006/04/06 17:06:25 manubsd Exp */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
+ * Copyright (C) 2008 Timo Teras.
  * All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -135,26 +136,24 @@ struct cmd_tag {
 struct evtmsg {
 	int type;
 	char *msg;
-	enum { UNSPEC, ERROR, INFO } level;
 } evtmsg[] = {
-	{ EVTT_PHASE1_UP, "Phase 1 established", INFO },
-	{ EVTT_PHASE1_DOWN, "Phase 1 deleted", INFO },
-	{ EVTT_XAUTH_SUCCESS, "Xauth exchange passed", INFO },
-	{ EVTT_ISAKMP_CFG_DONE, "ISAKMP mode config done", INFO },
-	{ EVTT_PHASE2_UP, "Phase 2 established", INFO },
-	{ EVTT_PHASE2_DOWN, "Phase 2 deleted", INFO },
-	{ EVTT_DPD_TIMEOUT, "Peer not reachable anymore", ERROR },
-	{ EVTT_PEER_NO_RESPONSE, "Peer not responding", ERROR },
-	{ EVTT_PEER_DELETE, "Peer terminated security association", ERROR },
-	{ EVTT_RACOON_QUIT, "Raccon terminated", ERROR },
-	{ EVTT_OVERFLOW, "Event queue overflow", ERROR },
-	{ EVTT_XAUTH_FAILED, "Xauth exchange failed", ERROR },
-	{ EVTT_PEERPH1AUTH_FAILED, "Peer failed phase 1 authentication "
-	    "(certificate problem?)", ERROR },
-	{ EVTT_PEERPH1_NOPROP, "Peer failed phase 1 initiation "
-	    "(proposal problem?)", ERROR },
-	{ 0, NULL, UNSPEC },
-	{ EVTT_NO_ISAKMP_CFG, "No need for ISAKMP mode config ", INFO },
+	{ EVT_RACOON_QUIT,		"Racoon terminated" },
+
+	{ EVT_PHASE1_UP,		"Phase 1 established" },
+	{ EVT_PHASE1_DOWN,		"Phase 1 deleted" },
+	{ EVT_PHASE1_NO_RESPONSE,	"Phase 1 error: peer not responding" },
+	{ EVT_PHASE1_NO_PROPOSAL,	"Phase 1 error: no proposal chosen" },
+	{ EVT_PHASE1_AUTH_FAILED,
+	  "Phase 1 error: authentication failed (bad certificate?)" },
+	{ EVT_PHASE1_DPD_TIMEOUT,	"Phase 1 error: dead peer detected" },
+	{ EVT_PHASE1_MODE_CFG,		"Phase 1 mode configuration done" },
+	{ EVT_PHASE1_XAUTH_SUCCESS,	"Phase 1 Xauth succeeded" },
+	{ EVT_PHASE1_XAUTH_FAILED,	"Phase 1 Xauth failed" },
+
+	{ EVT_PHASE2_NO_PHASE1,		"Phase 2 error: no suitable phase 1" },
+	{ EVT_PHASE2_UP,		"Phase 2 established" },
+	{ EVT_PHASE2_DOWN,		"Phase 2 deleted" },
+	{ EVT_PHASE2_NO_RESPONSE,	"Phase 2 error: no response" },
 };
 
 static int get_proto __P((char *));
@@ -194,31 +193,13 @@ static char _addr1_[NI_MAXHOST], _addr2_[NI_MAXHOST];
 
 char *pname;
 int long_format = 0;
-
-#define EVTF_NONE		0x0000	/* Ignore any events */
-#define EVTF_LOOP		0x0001	/* Loop awaiting for new events */
-#define EVTF_CFG_STOP		0x0002	/* Stop after ISAKMP mode config */
-#define EVTF_CFG		0x0004	/* Print ISAKMP mode config info */
-#define EVTF_ALL		0x0008	/* Print any events */
-#define EVTF_PURGE		0x0010	/* Print all available events */
-#define EVTF_PH1DOWN_STOP	0x0020	/* Stop when phase 1 SA gets down */
-#define EVTF_PH1DOWN		0x0040	/* Print that phase 1 SA got down */
-#define EVTF_ERR		0x0080	/* Print any error */
-#define EVTF_ERR_STOP		0x0100	/* Stop on any error */
-
-int evt_filter = EVTF_NONE;
-time_t evt_start;
+int evt_quit_event = 0;
 
 void dump_isakmp_sa __P((char *, int));
 void dump_internal __P((char *, int));
 char *pindex_isakmp __P((isakmp_index *));
 void print_schedule __P((caddr_t, int));
-void print_evt __P((caddr_t, int));
-void print_cfg __P((caddr_t, int));
-void print_err __P((caddr_t, int));
-void print_ph1down __P((caddr_t, int));
-void print_ph1up __P((caddr_t, int));
-int evt_poll __P((void));
+void print_evt __P((struct evt_async *));
 char * fixed_addr __P((char *, char *, int));
 
 static void
@@ -313,52 +294,22 @@ main(ac, av)
 
 	vfree(combuf);
 
-	if (com_recv(&combuf) != 0)
-		goto bad;
-	if (handle_recv(combuf) != 0)
-		goto bad;
+	do {
+		if (com_recv(&combuf) != 0)
+			goto bad;
+		if (handle_recv(combuf) != 0)
+			goto bad;
+		vfree(combuf);
+	} while (evt_quit_event != 0);
 
-	vfree(combuf);
-
-	if (evt_filter != EVTF_NONE)
-		if (evt_poll() != 0)
-			goto bad;	
-	
+	close(so);
 	exit(0);
 
-    bad:
+bad:
+	close(so);
+	if (errno == EEXIST)
+		exit(0);
 	exit(1);
-}
-
-int
-evt_poll(void) {
-	struct timeval tv;
-	vchar_t *recvbuf;
-	vchar_t *sendbuf;
-
-	if ((sendbuf = f_getevt(0, NULL)) == NULL)
-		errx(1, "Cannot make combuf");
-
-
-	while (evt_filter & (EVTF_LOOP|EVTF_PURGE)) {
-		/* handle_recv closes the socket time, so open it each time */
-		com_init();
-
-		if (com_send(sendbuf) != 0)
-			errx(1, "Cannot send combuf");
-
-		if (com_recv(&recvbuf) == 0) {
-			handle_recv(recvbuf);
-			vfree(recvbuf);
-		}
-
-		tv.tv_sec = 0;
-		tv.tv_usec = 10;
-		(void)select(0, NULL, NULL, NULL, &tv);
-	}
-
-	vfree(sendbuf);
-	return 0;
 }
 
 /* %%% */
@@ -395,24 +346,30 @@ get_combuf(ac, av)
 }
 
 static vchar_t *
-f_reload(ac, av)
-	int ac;
-	char **av;
+make_request(u_int16_t cmd, u_int16_t proto, size_t len)
 {
 	vchar_t *buf;
 	struct admin_com *head;
 
-	buf = vmalloc(sizeof(*head));
+	buf = vmalloc(sizeof(struct admin_com) + len);
 	if (buf == NULL)
 		errx(1, "not enough core");
 
-	head = (struct admin_com *)buf->v;
+	head = (struct admin_com *) buf->v;
 	head->ac_len = buf->l;
-	head->ac_cmd = ADMIN_RELOAD_CONF;
-	head->ac_errno = 0;
-	head->ac_proto = 0;
+	head->ac_cmd = ADMIN_FLAG_VERSION | cmd;
+	head->ac_version = 1;
+	head->ac_proto = proto;
 
 	return buf;
+}
+
+static vchar_t *
+f_reload(ac, av)
+	int ac;
+	char **av;
+{
+	return make_request(ADMIN_RELOAD_CONF, 0, 0);
 }
 
 static vchar_t *
@@ -420,36 +377,11 @@ f_getevt(ac, av)
 	int ac;
 	char **av;
 {
-	vchar_t *buf;
-	struct admin_com *head;
-
-	/*
-	 * There are 3 ways of getting here
-	 * 1) racoonctl vc => evt_filter = (EVTF_LOOP|EVTF_CFG| ... )
-	 * 2) racoonctl es => evt_filter = EVTF_NONE
-	 * 3) racoonctl es -l => evt_filter = EVTF_LOOP
-	 * Catch the second case: show-event is here to purge all
-	 */
-	if (evt_filter == EVTF_NONE)
-		evt_filter = (EVTF_ALL|EVTF_PURGE);
-
-	if ((ac >= 1) && (strcmp(av[0], "-l") == 0))
-		evt_filter |= EVTF_LOOP;
-
-	if (ac >= 2)
+	evt_quit_event = -1;
+	if (ac >= 1)
 		errx(1, "too many arguments");
 
-	buf = vmalloc(sizeof(*head));
-	if (buf == NULL)
-		errx(1, "not enough core");
-
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l;
-	head->ac_cmd = ADMIN_SHOW_EVT;
-	head->ac_errno = 0;
-	head->ac_proto = 0;
-
-	return buf;
+	return make_request(ADMIN_SHOW_EVT, 0, 0);
 }
 
 static vchar_t *
@@ -457,20 +389,7 @@ f_getsched(ac, av)
 	int ac;
 	char **av;
 {
-	vchar_t *buf;
-	struct admin_com *head;
-
-	buf = vmalloc(sizeof(*head));
-	if (buf == NULL)
-		errx(1, "not enough core");
-
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l;
-	head->ac_cmd = ADMIN_SHOW_SCHED;
-	head->ac_errno = 0;
-	head->ac_proto = 0;
-
-	return buf;
+	return make_request(ADMIN_SHOW_SCHED, 0, 0);
 }
 
 static vchar_t *
@@ -478,8 +397,6 @@ f_getsa(ac, av)
 	int ac;
 	char **av;
 {
-	vchar_t *buf;
-	struct admin_com *head;
 	int proto;
 
 	/* need protocol */
@@ -489,17 +406,7 @@ f_getsa(ac, av)
 	if (proto == -1)
 		errx(1, "unknown protocol %s", *av);
 
-	buf = vmalloc(sizeof(*head));
-	if (buf == NULL)
-		errx(1, "not enough core");
-
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l;
-	head->ac_cmd = ADMIN_SHOW_SA;
-	head->ac_errno = 0;
-	head->ac_proto = proto;
-
-	return buf;
+	return make_request(ADMIN_SHOW_SA, proto, 0);
 }
 
 static vchar_t *
@@ -518,17 +425,7 @@ f_flushsa(ac, av)
 	if (proto == -1)
 		errx(1, "unknown protocol %s", *av);
 
-	buf = vmalloc(sizeof(*head));
-	if (buf == NULL)
-		errx(1, "not enough core");
-
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l;
-	head->ac_cmd = ADMIN_FLUSH_SA;
-	head->ac_errno = 0;
-	head->ac_proto = proto;
-
-	return buf;
+	return make_request(ADMIN_FLUSH_SA, proto, 0);
 }
 
 static vchar_t *
@@ -537,7 +434,6 @@ f_deletesa(ac, av)
 	char **av;
 {
 	vchar_t *buf, *index;
-	struct admin_com *head;
 	int proto;
 
 	/* need protocol */
@@ -567,17 +463,11 @@ f_deletesa(ac, av)
 		return NULL;
 	}
 
-	buf = vmalloc(sizeof(*head) + index->l);
+	buf = make_request(ADMIN_DELETE_SA, proto, index->l);
 	if (buf == NULL)
 		goto out;
 
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l + index->l;
-	head->ac_cmd = ADMIN_DELETE_SA;
-	head->ac_errno = 0;
-	head->ac_proto = proto;
-
-	memcpy(buf->v+sizeof(*head), index->v, index->l);
+	memcpy(buf->v + sizeof(struct admin_com), index->v, index->l);
 
 out:
 	if (index != NULL)
@@ -592,7 +482,6 @@ f_deleteallsadst(ac, av)
 	char **av;
 {
 	vchar_t *buf, *index;
-	struct admin_com *head;
 	int proto;
 
 	/* need protocol */
@@ -622,17 +511,11 @@ f_deleteallsadst(ac, av)
 		return NULL;
 	}
 
-	buf = vmalloc(sizeof(*head) + index->l);
+	buf = make_request(ADMIN_DELETE_ALL_SA_DST, proto, index->l);
 	if (buf == NULL)
 		goto out;
 
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l + index->l;
-	head->ac_cmd = ADMIN_DELETE_ALL_SA_DST;
-	head->ac_errno = 0;
-	head->ac_proto = proto;
-
-	memcpy(buf->v+sizeof(*head), index->v, index->l);
+	memcpy(buf->v+sizeof(struct admin_com), index->v, index->l);
 
 out:
 	if (index != NULL)
@@ -647,7 +530,6 @@ f_exchangesa(ac, av)
 	char **av;
 {
 	vchar_t *buf, *index;
-	struct admin_com *head;
 	int proto;
 	int cmd = ADMIN_ESTABLISH_SA;
 	size_t com_len = 0;
@@ -700,22 +582,17 @@ f_exchangesa(ac, av)
 		return NULL;
 	}
 
-	com_len += sizeof(*head) + index->l;
-	if ((buf = vmalloc(com_len)) == NULL)
+	com_len += index->l;
+	buf = make_request(cmd, proto, com_len);
+	if (buf == NULL)
 		errx(1, "Cannot allocate buffer");
 
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l;
-	head->ac_cmd = cmd;
-	head->ac_errno = 0;
-	head->ac_proto = proto;
-
-	memcpy(buf->v+sizeof(*head), index->v, index->l);
+	memcpy(buf->v+sizeof(struct admin_com), index->v, index->l);
 
 	if (id && key) {
 		char *data;
 		acp = (struct admin_com_psk *)
-		    (buf->v + sizeof(*head) + index->l);
+		    (buf->v + sizeof(struct admin_com) + index->l);
 
 		acp->id_type = IDTYPE_USERFQDN;
 		acp->id_len = strlen(id) + 1;
@@ -750,8 +627,7 @@ f_vpnc(ac, av)
 	if (ac < 1)
 		errx(1, "insufficient arguments");
 
-	evt_filter = (EVTF_LOOP|EVTF_CFG|EVTF_CFG_STOP|EVTF_ERR|EVTF_ERR_STOP);
-	time(&evt_start);
+	evt_quit_event = EVT_PHASE1_MODE_CFG;
 	
 	/* Optional -u identity */
 	if (strcmp(av[0], "-u") == 0) {
@@ -815,8 +691,7 @@ f_vpnd(ac, av)
 	if (ac > 1)
 		warnx("Extra arguments");
 
-	evt_filter = 
-	    (EVTF_PH1DOWN|EVTF_PH1DOWN_STOP|EVTF_LOOP|EVTF_ERR|EVTF_ERR_STOP);
+	evt_quit_event = EVT_PHASE1_DOWN;
 
 	nav[nac++] = isakmp;
 	nav[nac++] = inet;
@@ -833,7 +708,6 @@ f_logoutusr(ac, av)
 	char **av;
 {
 	vchar_t *buf;
-	struct admin_com *head;
 	char *user;
 
 	/* need username */
@@ -843,17 +717,11 @@ f_logoutusr(ac, av)
 	if ((user == NULL) || (strlen(user) > LOGINLEN))
 		errx(1, "bad login (too long?)");
 
-	buf = vmalloc(sizeof(*head) + strlen(user) + 1);
+	buf = make_request(ADMIN_LOGOUT_USER, 0, 0);
 	if (buf == NULL)
 		return NULL;
 
-	head = (struct admin_com *)buf->v;
-	head->ac_len = buf->l;
-	head->ac_cmd = ADMIN_LOGOUT_USER;
-	head->ac_errno = 0;
-	head->ac_proto = 0;
-
-	strncpy((char *)(head + 1), user, LOGINLEN);
+	strncpy(buf->v + sizeof(struct admin_com), user, LOGINLEN);
 
 	return buf;
 }
@@ -1336,84 +1204,32 @@ print_schedule(buf, len)
 
 
 void
-print_evt(buf, len)
-	caddr_t buf;
-	int len;
+print_evt(evtdump)
+	struct evt_async *evtdump;
 {
-	struct evtdump *evtdump = (struct evtdump *)buf;
 	int i;
 	char *srcstr;
 	char *dststr;
 	
-	for (i = 0; evtmsg[i].msg; i++)
-		if (evtmsg[i].type == evtdump->type)
-			break;				
-	
-	if (evtmsg[i].msg == NULL) 
-		printf("Event %d: ", evtdump->type);
+	for (i = 0; i < sizeof(evtmsg) / sizeof(evtmsg[0]); i++)
+		if (evtmsg[i].type == evtdump->ec_type)
+			break;
+
+	if (evtmsg[i].msg == NULL)
+		printf("Event %d: ", evtdump->ec_type);
 	else
 		printf("%s : ", evtmsg[i].msg);
 
-	if ((srcstr = saddr2str((struct sockaddr *)&evtdump->src)) == NULL)
+	if ((srcstr = saddr2str((struct sockaddr *)&evtdump->ec_ph1src)) == NULL)
 		printf("unknown");
-	else 
+	else
 		printf("%s", srcstr);
 	printf(" -> ");
-	if ((dststr = saddr2str((struct sockaddr *)&evtdump->dst)) == NULL)
+	if ((dststr = saddr2str((struct sockaddr *)&evtdump->ec_ph1dst)) == NULL)
 		printf("unknown");
-	else 
+	else
 		printf("%s", dststr);
 	printf("\n");
-
-	return;
-}
-
-void
-print_err(buf, len)
-	caddr_t buf;
-	int len;
-{
-	struct evtdump *evtdump = (struct evtdump *)buf;
-	int i;
-	
-	
-	for (i = 0; evtmsg[i].msg; i++)
-		if (evtmsg[i].type == evtdump->type)
-			break;				
-
-	if (evtmsg[i].level != ERROR)
-		return;
-	
-	if (evtmsg[i].msg == NULL) 
-		printf("Error: Event %d\n", evtdump->type);
-	else
-		printf("Error: %s\n", evtmsg[i].msg);
-
-	if (evt_filter & EVTF_ERR_STOP)
-		evt_filter &= ~EVTF_LOOP;
-
-	return;
-}
-
-/*
- * Print a message when phase 1 SA goes down
- */
-void
-print_ph1down(buf, len)
-	caddr_t buf;
-	int len;
-{
-	struct evtdump *evtdump = (struct evtdump *)buf;
-	
-	if (evtdump->type != EVTT_PHASE1_DOWN)
-		return;
-
-	printf("VPN connexion terminated\n");
-
-	if (evt_filter & EVTF_PH1DOWN_STOP)
-		evt_filter &= ~EVTF_LOOP;
-	
-	return;
 }
 
 /*
@@ -1424,15 +1240,14 @@ print_cfg(buf, len)
 	caddr_t buf;
 	int len;
 {
-	struct evtdump *evtdump = (struct evtdump *)buf;
+	struct evt_async *evtdump = (struct evt_async *)buf;
 	struct isakmp_data *attr;
 	char *banner = NULL;
 	struct in_addr addr4;
 	
 	memset(&addr4, 0, sizeof(addr4));
 
-	if (evtdump->type != EVTT_ISAKMP_CFG_DONE && 
-	    evtdump->type != EVTT_NO_ISAKMP_CFG)
+	if (evtdump->ec_type != EVT_PHASE1_MODE_CFG)
 		return;
 
 	len -= sizeof(*evtdump);
@@ -1485,12 +1300,12 @@ print_cfg(buf, len)
 			    (n + sizeof(*attr) + ntohs(attr->lorv));
 		}
 	}
-	
-	if (evtdump->type == EVTT_ISAKMP_CFG_DONE)
+
+	if (len > 0)
 		printf("Bound to address %s\n", inet_ntoa(addr4));
 	else
 		printf("VPN connexion established\n");
-	
+
 	if (banner) {
 		struct winsize win;
 		int col = 0;
@@ -1507,13 +1322,8 @@ print_cfg(buf, len)
 		printf("\n");
 		racoon_free(banner);
 	}
-	
-	if (evt_filter & EVTF_CFG_STOP)
-		evt_filter &= ~EVTF_LOOP;
-	
-	return;
 }
-	
+
 
 char *
 fixed_addr(addr, port, len)
@@ -1548,7 +1358,7 @@ static int
 handle_recv(combuf)
 	vchar_t *combuf;
 {
-        struct admin_com h, *com;
+        struct admin_com *com;
         caddr_t buf;
         int len;
 
@@ -1562,32 +1372,29 @@ handle_recv(combuf)
 		break;
 
 	case ADMIN_SHOW_EVT: {
-		struct evtdump *evtdump;
+		struct evt_async *ec;
 
-		/* We got no event */
-		if (len == 0) {
-			/* If we were purging the queue, it is now done */
-			if (evt_filter & EVTF_PURGE)
-				evt_filter &= ~EVTF_PURGE;
+		/* We got no event? */
+		if (len == 0)
 			break;
+
+		if (len < sizeof(struct evt_async))
+			errx(1, "Short buffer\n");
+
+		ec = (struct evt_async *) buf;
+		if (evt_quit_event <= 0)
+			print_evt(ec);
+		else if (evt_quit_event == ec->ec_type) {
+			switch (ec->ec_type) {
+			case EVT_PHASE1_MODE_CFG:
+				print_cfg(ec, len);
+				break;
+			default:
+				print_evt(ec);
+				break;
+			}
+			evt_quit_event = 0;
 		}
-
-		if (len < sizeof(struct evtdump))
-			errx(1, "Short buffer\n");		
-
-		/* Toss outdated events */
-		evtdump = (struct evtdump *)buf;
-		if (evtdump->timestamp < evt_start)
-			break;
-
-		if (evt_filter & EVTF_ALL)
-			print_evt(buf, len);
-		if (evt_filter & EVTF_ERR)
-			print_err(buf, len);
-		if (evt_filter & EVTF_CFG)
-			print_cfg(buf, len);
-		if (evt_filter & EVTF_PH1DOWN)
-			print_ph1down(buf, len);
 		break;
 	}
 
@@ -1644,10 +1451,8 @@ handle_recv(combuf)
 		break;
 	}
 
-	close(so);
 	return 0;
 
-    bad:
-	close(so);
+bad:
 	return -1;
 }
