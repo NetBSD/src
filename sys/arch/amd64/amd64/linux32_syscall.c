@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.21 2008/02/24 18:30:07 dsl Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.22 2008/03/06 15:16:47 njoly Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.21 2008/02/24 18:30:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.22 2008/03/06 15:16:47 njoly Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -16,7 +16,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.21 2008/02/24 18:30:07 dsl Exp
 #include <machine/psl.h>
 #include <machine/userret.h>
 
-#include <compat/linux32/arch/amd64/linux32_errno.h>
+#include <compat/linux32/linux32_syscall.h>
+#include <compat/linux32/common/linux32_errno.h>
 
 void linux32_syscall_intern(struct proc *);
 void linux32_syscall(struct trapframe *);
@@ -52,7 +53,7 @@ linux32_syscall(frame)
 
 	callp = p->p_emul->e_sysent;
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (LINUX32_SYS_NSYSENT - 1);
 	callp += code;
 
 	/*

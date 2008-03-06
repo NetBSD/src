@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_syscall.c,v 1.22 2008/02/24 18:30:07 dsl Exp $ */
+/*	$NetBSD: linux_syscall.c,v 1.23 2008/03/06 15:16:47 njoly Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.22 2008/02/24 18:30:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.23 2008/03/06 15:16:47 njoly Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_linux.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscall.c,v 1.22 2008/02/24 18:30:07 dsl Exp $
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_siginfo.h>
 #include <compat/linux/arch/amd64/linux_siginfo.h>
-#include <compat/linux/arch/amd64/linux_syscall.h>
 #include <compat/linux/arch/amd64/linux_machdep.h>
 
 void linux_syscall_intern(struct proc *);
@@ -100,7 +99,7 @@ linux_syscall(struct trapframe *frame)
 
 	callp = p->p_emul->e_sysent;
 
-	code &= (SYS_NSYSENT - 1);
+	code &= (LINUX_SYS_NSYSENT - 1);
 	callp += code;
 
 	/*
