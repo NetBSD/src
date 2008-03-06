@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.15 2008/03/06 00:34:11 mgrooms Exp $
+.\"	$NetBSD: racoonctl.8,v 1.16 2008/03/06 00:46:04 mgrooms Exp $
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -55,10 +55,11 @@ delete-sa
 .Nm
 establish-sa
 .Op Fl u Ar identity
+.Op Fl w
 .Ar saopts
 .Nm
 vpn-connect
-.Op Fl u identity
+.Op Fl u Ar identity
 .Ar vpn_gateway
 .Nm
 vpn-disconnect
@@ -103,6 +104,8 @@ is used to flush all SAs if no SA class is provided, or a class of SAs,
 either ISAKMP SAs, IPsec ESP SAs, IPsec AH SAs, or all IPsec SAs.
 .It Xo establish-sa
 .Oo Fl u Ar username
+.Oc
+.Oo Fl w
 .Oc Ar saopts
 .Xc
 Establish an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
@@ -113,6 +116,11 @@ can be used when establishing an ISAKMP SA while hybrid auth is in use.
 will prompt you for the password associated with
 .Ar username
 and these credentials will be used in the Xauth exchange.
+.Pp
+Specifying
+.Fl w
+will make racoonctl wait until the SA is actually established or
+an error occurs.
 .Pp
 .Ar saopts
 has the following format:

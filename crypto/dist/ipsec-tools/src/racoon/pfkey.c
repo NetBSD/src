@@ -1,6 +1,6 @@
-/*	$NetBSD: pfkey.c,v 1.26 2008/03/05 22:09:44 mgrooms Exp $	*/
+/*	$NetBSD: pfkey.c,v 1.27 2008/03/06 00:46:04 mgrooms Exp $	*/
 
-/* $Id: pfkey.c,v 1.26 2008/03/05 22:09:44 mgrooms Exp $ */
+/* $Id: pfkey.c,v 1.27 2008/03/06 00:46:04 mgrooms Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -92,6 +92,7 @@
 #include "algorithm.h"
 #include "sainfo.h"
 #include "admin.h"
+#include "evt.h"
 #include "privsep.h"
 #include "strnames.h"
 #include "backupsa.h"
@@ -1278,9 +1279,10 @@ pk_recvupdate(mhp)
 
 	/* turn off the timer for calling pfkey_timeover() */
 	SCHED_KILL(iph2->sce);
-	
+
 	/* update status */
 	iph2->status = PHASE2ST_ESTABLISHED;
+	evt_phase2(iph2, EVTT_PHASE2_UP, NULL);
 
 #ifdef ENABLE_STATS
 	gettimeofday(&iph2->end, NULL);
@@ -1651,7 +1653,6 @@ pk_recvacquire(mhp)
 	struct ph2handle *iph2[MAXNESTEDSA];
 	struct sockaddr *src, *dst;
 	int n;	/* # of phase 2 handler */
-	int remoteid=0;
 #ifdef HAVE_SECCTX
 	struct sadb_x_sec_ctx *m_sec_ctx;
 #endif /* HAVE_SECCTX */
@@ -1840,63 +1841,12 @@ pk_recvacquire(mhp)
 		return -1;
 	}
 
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"new acquire %s\n", spidx2str(&sp_out->spidx));
-
-	/* get sainfo */
-    {
-	vchar_t *idsrc, *iddst;
-
-	idsrc = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.src,
-				sp_out->spidx.prefs, sp_out->spidx.ul_proto);
-	if (idsrc == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to get ID for %s\n",
-			spidx2str(&sp_out->spidx));
+	if (isakmp_get_sainfo(iph2[n], sp_out, sp_in) < 0) {
 		delph2(iph2[n]);
 		return -1;
 	}
-	iddst = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.dst,
-				sp_out->spidx.prefd, sp_out->spidx.ul_proto);
-	if (iddst == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to get ID for %s\n",
-			spidx2str(&sp_out->spidx));
-		vfree(idsrc);
-		delph2(iph2[n]);
-		return -1;
-	}
-	{
-		struct remoteconf *conf;
-		conf = getrmconf(iph2[n]->dst);
-		if (conf != NULL)
-			remoteid=conf->ph1id;
-		else{
-			plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
-			remoteid=0;
-		}
-	}
-	iph2[n]->sainfo = getsainfo(idsrc, iddst, NULL, NULL, remoteid);
-	vfree(idsrc);
-	vfree(iddst);
-	if (iph2[n]->sainfo == NULL) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to get sainfo.\n");
-		delph2(iph2[n]);
-		return -1;
-		/* XXX should use the algorithm list from register message */
-	}
 
-	plog(LLV_DEBUG, LOCATION, NULL,
-		"selected sainfo: %s\n", sainfo2str(iph2[n]->sainfo));
-    }
 
-	if (set_proposal_from_policy(iph2[n], sp_out, sp_in) < 0) {
-		plog(LLV_ERROR, LOCATION, NULL,
-			"failed to create saprop.\n");
-		delph2(iph2[n]);
-		return -1;
-	}
 #ifdef HAVE_SECCTX
 	if (m_sec_ctx) {
 		set_secctx_in_proposal(iph2[n], spidx);

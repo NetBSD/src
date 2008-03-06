@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp.c,v 1.31 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: isakmp.c,v 1.32 2008/03/06 00:46:04 mgrooms Exp $	*/
 
 /* Id: isakmp.c,v 1.74 2006/05/07 21:32:59 manubsd Exp */
 
@@ -88,6 +88,9 @@
 #include "pfkey.h"
 #include "crypto_openssl.h"
 #include "policy.h"
+#include "algorithm.h"
+#include "proposal.h"
+#include "sainfo.h"
 #include "isakmp_ident.h"
 #include "isakmp_agg.h"
 #include "isakmp_base.h"
@@ -2280,6 +2283,71 @@ isakmp_post_acquire(iph2)
 
 	return 0;
 }
+
+int
+isakmp_get_sainfo(iph2, sp_out, sp_in)
+	struct ph2handle *iph2;
+	struct secpolicy *sp_out, *sp_in;
+{
+	int remoteid=0;
+
+	plog(LLV_DEBUG, LOCATION, NULL,
+		"new acquire %s\n", spidx2str(&sp_out->spidx));
+
+	/* get sainfo */
+	{
+		vchar_t *idsrc, *iddst;
+
+		idsrc = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.src,
+			sp_out->spidx.prefs, sp_out->spidx.ul_proto);
+		if (idsrc == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get ID for %s\n",
+				spidx2str(&sp_out->spidx));
+			return -1;
+		}
+		iddst = ipsecdoi_sockaddr2id((struct sockaddr *)&sp_out->spidx.dst,
+			sp_out->spidx.prefd, sp_out->spidx.ul_proto);
+		if (iddst == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get ID for %s\n",
+				spidx2str(&sp_out->spidx));
+			vfree(idsrc);
+			return -1;
+		}
+		{
+			struct remoteconf *conf;
+			conf = getrmconf(iph2->dst);
+			if (conf != NULL)
+				remoteid=conf->ph1id;
+			else{
+				plog(LLV_DEBUG, LOCATION, NULL, "Warning: no valid rmconf !\n");
+				remoteid=0;
+			}
+		}
+		iph2->sainfo = getsainfo(idsrc, iddst, NULL, NULL, remoteid);
+		vfree(idsrc);
+		vfree(iddst);
+		if (iph2->sainfo == NULL) {
+			plog(LLV_ERROR, LOCATION, NULL,
+				"failed to get sainfo.\n");
+			return -1;
+			/* XXX should use the algorithm list from register message */
+		}
+
+		plog(LLV_DEBUG, LOCATION, NULL,
+			"selected sainfo: %s\n", sainfo2str(iph2->sainfo));
+	}
+
+	if (set_proposal_from_policy(iph2, sp_out, sp_in) < 0) {
+		plog(LLV_ERROR, LOCATION, NULL,
+			"failed to create saprop.\n");
+		return -1;
+	}
+
+	return 0;
+}
+
 
 /*
  * receive GETSPI from kernel.

@@ -1,4 +1,4 @@
-/*	$NetBSD: admin.c,v 1.19 2008/03/06 00:34:11 mgrooms Exp $	*/
+/*	$NetBSD: admin.c,v 1.20 2008/03/06 00:46:04 mgrooms Exp $	*/
 
 /* Id: admin.c,v 1.25 2006/04/06 14:31:04 manubsd Exp */
 
@@ -76,6 +76,7 @@
 #include "evt.h"
 #include "pfkey.h"
 #include "ipsec_doi.h"
+#include "policy.h"
 #include "admin.h"
 #include "admin_var.h"
 #include "isakmp_inf.h"
@@ -387,14 +388,13 @@ admin_process(so2, combuf)
 	}
 	/* FALLTHROUGH */
 	case ADMIN_ESTABLISH_SA: {
+		struct admin_com_indexes *ndx;
 		struct sockaddr *dst;
 		struct sockaddr *src;
-		src = (struct sockaddr *)
-			&((struct admin_com_indexes *)
-			    ((caddr_t)com + sizeof(*com)))->src;
-		dst = (struct sockaddr *)
-			&((struct admin_com_indexes *)
-			    ((caddr_t)com + sizeof(*com)))->dst;
+
+		ndx = (struct admin_com_indexes *) ((caddr_t)com + sizeof(*com));
+		src = (struct sockaddr *) &ndx->src;
+		dst = (struct sockaddr *) &ndx->dst;
 
 		switch (com->ac_proto) {
 		case ADMIN_PROTO_ISAKMP: {
@@ -481,9 +481,105 @@ out1:
 			break;
 		}
 		case ADMIN_PROTO_AH:
-		case ADMIN_PROTO_ESP:
-			ac_errno = ENOTSUP;
+		case ADMIN_PROTO_ESP: {
+			struct ph2handle *iph2;
+			struct secpolicy *sp_out = NULL, *sp_in = NULL;
+			struct policyindex spidx;
+
+			ac_errno = -1;
+
+			/* got outbound policy */
+			memset(&spidx, 0, sizeof(spidx));
+			spidx.dir = IPSEC_DIR_OUTBOUND;
+			memcpy(&spidx.src, src, sizeof(spidx.src));
+			memcpy(&spidx.dst, dst, sizeof(spidx.dst));
+			spidx.prefs = ndx->prefs;
+			spidx.prefd = ndx->prefd;
+			spidx.ul_proto = ndx->ul_proto;
+
+			sp_out = getsp_r(&spidx);
+			if (sp_out) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"suitable outbound SP found: %s.\n",
+					spidx2str(&sp_out->spidx));
+			} else {
+				ac_errno = ENOENT;
+				plog(LLV_NOTIFY, LOCATION, NULL,
+					"no outbound policy found: %s\n",
+					spidx2str(&spidx));
+				break;
+			}
+
+			iph2 = getph2byid(src, dst, sp_out->id);
+			if (iph2 != NULL) {
+				event_list = &iph2->evt_listeners;
+				if (iph2->status == PHASE2ST_ESTABLISHED)
+					ac_errno = EEXIST;
+				else
+					ac_errno = 0;
+				break;
+			}
+
+			/* get inbound policy */
+			memset(&spidx, 0, sizeof(spidx));
+			spidx.dir = IPSEC_DIR_INBOUND;
+			memcpy(&spidx.src, dst, sizeof(spidx.src));
+			memcpy(&spidx.dst, src, sizeof(spidx.dst));
+			spidx.prefs = ndx->prefd;
+			spidx.prefd = ndx->prefs;
+			spidx.ul_proto = ndx->ul_proto;
+
+			sp_in = getsp_r(&spidx);
+			if (sp_in) {
+				plog(LLV_DEBUG, LOCATION, NULL,
+					"suitable inbound SP found: %s.\n",
+					spidx2str(&sp_in->spidx));
+			} else {
+				ac_errno = ENOENT;
+				plog(LLV_NOTIFY, LOCATION, NULL,
+					"no inbound policy found: %s\n",
+				spidx2str(&spidx));
+				break;
+			}
+
+			/* allocate a phase 2 */
+			iph2 = newph2();
+			if (iph2 == NULL) {
+				plog(LLV_ERROR, LOCATION, NULL,
+					"failed to allocate phase2 entry.\n");
+				break;
+			}
+			iph2->side = INITIATOR;
+			iph2->satype = admin2pfkey_proto(com->ac_proto);
+			iph2->spid = sp_out->id;
+			iph2->seq = pk_getseq();
+			iph2->status = PHASE2ST_STATUS2;
+
+			/* set end addresses of SA */
+			iph2->dst = dupsaddr(dst);
+			iph2->src = dupsaddr(src);
+			if (iph2->dst == NULL || iph2->src == NULL) {
+				delph2(iph2);
+				break;
+			}
+
+			if (isakmp_get_sainfo(iph2, sp_out, sp_in) < 0) {
+				delph2(iph2);
+				break;
+			}
+
+			insph2(iph2);
+			if (isakmp_post_acquire(iph2) < 0) {
+				unbindph12(iph2);
+				remph2(iph2);
+				delph2(iph2);
+				break;
+			}
+
+			event_list = &iph2->evt_listeners;
+			ac_errno = 0;
 			break;
+		}
 		default:
 			/* ignore */
 			ac_errno = ENOTSUP;
