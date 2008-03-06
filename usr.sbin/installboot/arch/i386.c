@@ -1,4 +1,4 @@
-/* $NetBSD: i386.c,v 1.28 2007/06/23 23:18:29 christos Exp $ */
+/* $NetBSD: i386.c,v 1.29 2008/03/06 21:27:41 dsl Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(__lint)
-__RCSID("$NetBSD: i386.c,v 1.28 2007/06/23 23:18:29 christos Exp $");
+__RCSID("$NetBSD: i386.c,v 1.29 2008/03/06 21:27:41 dsl Exp $");
 #endif /* !__lint */
 
 #include <sys/param.h>
@@ -405,13 +405,14 @@ i386_setboot(ib_params *params)
 	 * Specifying 'installboot -f' will delete the old BPB info.
 	 */
 	if (!(params->flags & IB_FORCE)) {
+		#define USE_F ", use -f (may invalidate filesystem)"
 		/*
 		 * For FAT compatibility, the pbr code starts 'jmp xx; nop'
 		 * followed by the BIOS Parameter Block (BPB).
 		 * The 2nd byte (jump offset) is the size of the nop + BPB.
 		 */
 		if (bootstrap.b[0] != 0xeb || bootstrap.b[2] != 0x90) {
-			warnx("No BPB in new bootstrap %02x:%02x:%02x, use -f",
+			warnx("No BPB in new bootstrap %02x:%02x:%02x" USE_F,
 				bootstrap.b[0], bootstrap.b[1], bootstrap.b[2]);
 			return 0;
 		}
@@ -423,7 +424,8 @@ i386_setboot(ib_params *params)
 			u = le16toh(bpb->bpbBytesPerSec)
 			    * le16toh(bpb->bpbResSectors);
 			if (u != 0 && u < params->s1stat.st_size) {
-				warnx("Insufficient reserved space before FAT (%u bytes available), use -f", u);
+				warnx("Insufficient reserved space before FAT "
+					"(%u bytes available)" USE_F, u);
 				return 0;
 			}
 			/* Check we have enough space for the old bpb */
@@ -431,7 +433,7 @@ i386_setboot(ib_params *params)
 				/* old BPB is larger, allow if extra zeros */
 				if (!is_zero(disk_buf.b + 2 + bootstrap.b[1],
 				    disk_buf.b[1] - bootstrap.b[1])) {
-					warnx("Old BPB too big, use -f");
+					warnx("Old BPB too big" USE_F);
 					    return 0;
 				}
 				u = bootstrap.b[1];
@@ -441,6 +443,7 @@ i386_setboot(ib_params *params)
 			}
 			memcpy(bootstrap.b + 2, disk_buf.b + 2, u);
 		}
+		#undef USE_F
 	}
 
 	/*
