@@ -1,3 +1,7 @@
+2008-03-06  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/oakley.c: Generates a log if cert validation has been
+	  disabled by configuration.
+
 2008-03-05  Matthew Grooms
 	* src/racoon/cfparse.y: properly initialize the unity network struct
 
