@@ -1,4 +1,4 @@
-/*	$NetBSD: isakmp_cfg.c,v 1.14 2007/10/19 03:37:19 manu Exp $	*/
+/*	$NetBSD: isakmp_cfg.c,v 1.15 2008/03/06 00:34:11 mgrooms Exp $	*/
 
 /* Id: isakmp_cfg.c,v 1.55 2006/08/22 18:17:17 manubsd Exp */
 
@@ -473,8 +473,7 @@ isakmp_cfg_reply(iph1, attrpl)
 			    "Cannot allocate memory: %s\n", strerror(errno));
 		} else {
 			memcpy(buf->v, attrpl + 1, buf->l);
-			EVT_PUSH(iph1->local, iph1->remote, 
-			    EVTT_ISAKMP_CFG_DONE, buf);
+			evt_phase1(iph1, EVT_PHASE1_MODE_CFG, buf);
 			vfree(buf);
 		}
 	}
