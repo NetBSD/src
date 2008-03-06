@@ -1,4 +1,8 @@
-i008-03-06  Emmanuel Dreyfus  <manu@netbsd.org>
+2008-03-06  Yvan Vanhullebus  <vanhu@netasq.com>
+	* src/racoon/oakley.c: Generates a log if cert validation has been
+	  disabled by configuration.
+
+2008-03-06  Emmanuel Dreyfus  <manu@netbsd.org>
 	From Cyrus Rahman <crahman@gmail.com>
 	* src/racoon/{privsep.c|session.c}: privilegied instance exit when
 	  unprivilegied one terminates. Save PID in real root, not in chroot
