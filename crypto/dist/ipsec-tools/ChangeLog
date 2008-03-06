@@ -1,3 +1,8 @@
+i008-03-06  Emmanuel Dreyfus  <manu@netbsd.org>
+	From Cyrus Rahman <crahman@gmail.com>
+	* src/racoon/{privsep.c|session.c}: privilegied instance exit when
+	  unprivilegied one terminates. Save PID in real root, not in chroot
+
 2008-03-05  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/admin.c
