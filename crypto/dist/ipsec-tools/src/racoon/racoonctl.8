@@ -1,4 +1,4 @@
-.\"	$NetBSD: racoonctl.8,v 1.14 2007/12/31 01:42:07 mgrooms Exp $
+.\"	$NetBSD: racoonctl.8,v 1.15 2008/03/06 00:34:11 mgrooms Exp $
 .\"
 .\" Id: racoonctl.8,v 1.6 2006/05/07 21:32:59 manubsd Exp
 .\"
@@ -65,7 +65,6 @@ vpn-disconnect
 .Ar vpn_gateway
 .Nm
 show-event
-.Op Fl l
 .Nm
 logout-user
 .Ar login
@@ -135,16 +134,9 @@ Delete an SA, either an ISAKMP SA, IPsec ESP SA, or IPsec AH SA.
 This is a particular case of the previous command.
 It will kill all SAs associated with
 .Ar vpn_gateway .
-.It show-event Op Fl l
-Dump all events reported by
-.Xr racoon 8 ,
-then quit.
-The
-.Fl l
-flag causes
-.Nm
-to not stop once all the events have been read, but rather to loop
-awaiting and reporting new events.
+.It show-event
+Listen for all events reported by
+.Xr racoon 8 .
 .It logout-user Ar login
 Delete all SA established on behalf of the Xauth user
 .Ar login .
