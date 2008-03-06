@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.14 2008/02/10 17:40:54 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.15 2008/03/06 20:56:26 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.14 2008/02/10 17:40:54 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.15 2008/03/06 20:56:26 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -62,6 +62,7 @@ static void hci_cmd_read_local_features(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_ver(struct hci_unit *, struct mbuf *);
 static void hci_cmd_read_local_commands(struct hci_unit *, struct mbuf *);
 static void hci_cmd_reset(struct hci_unit *, struct mbuf *);
+static void hci_cmd_create_con(struct hci_unit *unit, uint8_t status);
 
 #ifdef BLUETOOTH_DEBUG
 int bluetooth_debug;
@@ -244,25 +245,33 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 	m_copydata(m, 0, sizeof(ep), &ep);
 	m_adj(m, sizeof(ep));
 
+	ep.opcode = le16toh(ep.opcode);
+
 	DPRINTFN(1, "(%s) opcode (%03x|%04x) status = 0x%x num_cmd_pkts = %d\n",
 		device_xname(unit->hci_dev),
-		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
+		HCI_OGF(ep.opcode), HCI_OCF(ep.opcode),
 		ep.status,
 		ep.num_cmd_pkts);
-
-	if (ep.status > 0)
-		aprint_error_dev(unit->hci_dev,
-		    "CommandStatus opcode (%03x|%04x) failed (status=0x%02x)\n",
-		    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
-		    ep.status);
 
 	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
 
 	/*
 	 * post processing of pending commands
 	 */
-	switch(le16toh(ep.opcode)) {
+	switch(ep.opcode) {
+	case HCI_CMD_CREATE_CON:
+		hci_cmd_create_con(unit, ep.status);
+		break;
+
 	default:
+		if (ep.status == 0)
+			break;
+
+		aprint_error_dev(unit->hci_dev,
+		    "CommandStatus opcode (%03x|%04x) failed (status=0x%02x)\n",
+		    HCI_OGF(ep.opcode), HCI_OCF(ep.opcode),
+		    ep.status);
+
 		break;
 	}
 
@@ -1065,4 +1074,46 @@ hci_cmd_reset(struct hci_unit *unit, struct mbuf *m)
 
 	if (hci_send_cmd(unit, HCI_CMD_READ_LOCAL_VER, NULL, 0))
 		return;
+}
+
+/*
+ * process command_status event for create_con command
+ *
+ * a "Create Connection" command can sometimes fail to start for whatever
+ * reason and the command_status event returns failure but we get no
+ * indication of which connection failed (for instance in the case where
+ * we tried to open too many connections all at once) So, we keep a flag
+ * on the link to indicate pending status until the command_status event
+ * is returned to help us decide which needs to be failed.
+ *
+ * This code does assume that there will be only one command pending
+ * but I can't see this being a problem since I have unaware of any
+ * device that pipelines more than a single command.
+ */
+static void
+hci_cmd_create_con(struct hci_unit *unit, uint8_t status)
+{
+	struct hci_link *link;
+
+	TAILQ_FOREACH(link, &unit->hci_links, hl_next) {
+		if ((link->hl_flags & HCI_LINK_CREATE_CON) == 0)
+			continue;
+
+		link->hl_flags &= ~HCI_LINK_CREATE_CON;
+
+		switch(status) {
+		case 0x00:	/* success */
+			break;
+
+		case 0x0c:	/* "Command Disallowed" */
+			hci_link_free(link, EBUSY);
+			break;
+
+		default:	/* some other trouble */
+			hci_link_free(link, EPROTO);
+			break;
+		}
+
+		return;
+	}
 }
