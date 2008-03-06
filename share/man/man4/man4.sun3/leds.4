@@ -1,4 +1,4 @@
-.\"	$NetBSD: leds.4,v 1.10 2004/10/04 19:12:52 rumble Exp $
+.\"	$NetBSD: leds.4,v 1.11 2008/03/06 09:30:45 martin Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -95,7 +95,7 @@ The following example uses
 to display the repeating animation of a single lit LED scrolling from one end
 of the display to the other, using six clock ticks between each update.
 .Bd -ragged -offset indent
-# echo 5 8 254 253 250 247 239 223 191 127 |
+# echo 5 8 254 253 251 247 239 223 191 127 |
   awk '{ for (i=1;i\*[Le]NF;i++) printf("%c",$i+0); }' \*[Gt] /dev/leds
 .Ed
 .Sh ERRORS
