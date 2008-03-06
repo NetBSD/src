@@ -1,6 +1,15 @@
 2008-03-05  Matthew Grooms
 	From Timo Teras <timo.teras@iki.fi>:
 	* src/racoon/admin.c
+	  src/racoon/isakmp.c
+	  src/racoon/isakmp_var.h
+	  src/racoon/pfkey.c
+	  src/racoon/racoonctl.c
+	  src/racoon/racoonctl.8: establish IPsec SAs using the admin socket
+
+2008-03-05  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/admin.c
 	  src/racoon/admin.h
 	  src/racoon/evt.c
 	  src/racoon/evt.h
