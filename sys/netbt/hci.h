@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.22 2008/02/10 17:40:54 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.23 2008/03/06 20:56:26 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.22 2008/02/10 17:40:54 plunky Exp $
+ * $Id: hci.h,v 1.23 2008/03/06 20:56:26 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2424,6 +2424,7 @@ struct hci_link {
 #define HCI_LINK_AUTH		(1<<3)	/* link is authenticated */
 #define HCI_LINK_ENCRYPT	(1<<4)	/* link is encrypted */
 #define HCI_LINK_SECURE		(1<<5)	/* link is secured */
+#define HCI_LINK_CREATE_CON	(1<<6)	/* "Create Connection" pending */
 
 /*
  * Bluetooth Memo
