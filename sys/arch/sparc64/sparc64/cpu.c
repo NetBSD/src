@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.68 2008/03/02 15:28:26 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.69 2008/03/06 09:33:03 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2008/03/02 15:28:26 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2008/03/06 09:33:03 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -236,9 +236,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		mi_cpu_attach(ci);
 		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
 	}
+#endif
 	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
 			     dev->dv_xname, "timer");
-#endif
 
 	clk = prom_getpropint(node, "clock-frequency", 0);
 	if (clk == 0) {
