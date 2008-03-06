@@ -1,4 +1,25 @@
 2008-03-05  Matthew Grooms
+	From Timo Teras <timo.teras@iki.fi>:
+	* src/racoon/admin.c
+	  src/racoon/admin.h
+	  src/racoon/evt.c
+	  src/racoon/evt.h
+	  src/racoon/handler.c
+	  src/racoon/handler.h
+	  src/racoon/isakmp.c
+	  src/racoon/isakmp_agg.c
+	  src/racoon/isakmp_base.c
+	  src/racoon/isakmp_cfg.c
+	  src/racoon/isakmp_ident.c
+	  src/racoon/isakmp_inf.c
+	  src/racoon/isakmp_var.h
+	  src/racoon/isakmp_xauth.c
+	  src/racoon/racoonctl.8
+	  src/racoon/racoonctl.c
+	  src/racoon/session.c: refactor admin socket event protocol to be
+          less error prone.
+
+2008-03-05  Matthew Grooms
 	* src/racoon/cfparse.y: properly initialize the unity network struct
 
 2008-03-05  Matthew Grooms
