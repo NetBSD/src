@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.106 2008/03/05 07:09:18 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.107 2008/03/07 07:03:06 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -155,6 +155,8 @@ struct device {
 	bool		(*dv_class_suspend)(device_t PMF_FN_PROTO);
 	bool		(*dv_class_resume)(device_t PMF_FN_PROTO);
 	void		(*dv_class_deregister)(device_t);
+
+	void		*dv_pmf_private;
 };
 
 /* dv_flags */
@@ -491,6 +493,10 @@ void		*device_pmf_bus_private(device_t);
 bool		device_pmf_bus_suspend(device_t PMF_FN_PROTO);
 bool		device_pmf_bus_resume(device_t PMF_FN_PROTO);
 bool		device_pmf_bus_shutdown(device_t, int);
+
+void		*device_pmf_private(device_t);
+void		device_pmf_unlock(device_t PMF_FN_PROTO);
+bool		device_pmf_lock(device_t PMF_FN_PROTO);
 
 void		device_pmf_bus_register(device_t, void *,
 		    bool (*)(device_t PMF_FN_PROTO),
