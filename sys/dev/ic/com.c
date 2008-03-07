@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.274 2008/03/07 08:39:18 dyoung Exp $	*/
+/*	$NetBSD: com.c,v 1.275 2008/03/07 10:08:53 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.274 2008/03/07 08:39:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.275 2008/03/07 10:08:53 dyoung Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -635,7 +635,6 @@ com_detach(device_t self, int flags)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
-	mutex_destroy(&sc->sc_lock);
 	callout_destroy(&sc->sc_diag_callout);
 
 	/* Destroy the lock. */
