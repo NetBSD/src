@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2008/03/07 01:18:54 ad Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2008/03/07 02:18:34 ad Exp $
 
 .include <bsd.own.mk>
 
@@ -12,21 +12,23 @@ SPARC64DIR=	${.PARSEDIR}/../../sparc64/atomic
 
 .else
 
-.if defined(LIB)
+. if defined(LIB)
 
-. if (${LIB} == "kern" || ${LIB} == "c")
+.  if (${LIB} == "kern" || ${LIB} == "c")
 SRCS+=	atomic_add_32_cas.c atomic_add_32_nv_cas.c atomic_and_32_cas.c \
 	atomic_and_32_nv_cas.c atomic_dec_32_cas.c atomic_dec_32_nv_cas.c \
 	atomic_inc_32_cas.c atomic_inc_32_nv_cas.c atomic_or_32_cas.c \
 	atomic_or_32_nv_cas.c atomic_swap_32_cas.c membar_ops.S
-. endif
+.  endif
 
-. if (${LIB} == "kern")
+.  if (${LIB} == "kern")
 SRCS+=	atomic_cas.S
-. endif
+.  endif
 
-. if (${LIB} == "c")
+.  if (${LIB} == "c")
 SRCS+=	atomic_init_testset.c
+.  endif
+
 . endif
 
 .endif
