@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.46 2008/02/23 15:15:57 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.47 2008/03/07 22:23:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.46 2008/02/23 15:15:57 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.47 2008/03/07 22:23:57 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -221,7 +221,7 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 
 		/* If it has become free, try to acquire it again. */
 		if (MUTEX_OWNER(owner) == 0) {
-			for (; MUTEX_OWNER(owner) == 0; owner = next) {
+			do {
 				new = (void *)
 				    ((uintptr_t)self | (uintptr_t)owner);
 				next = atomic_cas_ptr(&ptm->ptm_owner, owner,
@@ -232,15 +232,15 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm)
 #endif
 					return 0;
 				}
-			}
+				owner = next;
+			} while (MUTEX_OWNER(owner) == 0);
 			/*
 			 * We have lost the race to acquire the mutex.
 			 * The new owner could be running on another
 			 * CPU, in which case we should spin and avoid
 			 * the overhead of blocking.
 			 */
-			if (!MUTEX_HAS_WAITERS(owner))
-				continue;
+			continue;
 		}
 
 		/*
