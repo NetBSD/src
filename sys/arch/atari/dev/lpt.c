@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.28 2007/10/17 19:53:47 garbled Exp $ */
+/*	$NetBSD: lpt.c,v 1.29 2008/03/07 17:15:51 cube Exp $ */
 
 /*
  * Copyright (c) 1996 Leo Weppelman
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.28 2007/10/17 19:53:47 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.29 2008/03/07 17:15:51 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,14 +85,14 @@ __KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.28 2007/10/17 19:53:47 garbled Exp $");
 #define	LPT_BSIZE	1024
 
 #if !defined(DEBUG) || !defined(notdef)
-#define lprintf		if (0) printf
+#define lprintf		if (0) aprint_error_dev
 #else
-#define lprintf		if (lptdebug) printf
+#define lprintf		if (lptdebug) aprint_error_dev
 int lptdebug = 1;
 #endif
 
 struct lpt_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	struct callout	sc_wakeup_ch;
 	size_t		sc_count;
 	struct buf	*sc_inbuf;
@@ -117,20 +117,20 @@ dev_type_close(lpclose);
 dev_type_write(lpwrite);
 dev_type_ioctl(lpioctl);
 
-static void lptwakeup __P((void *arg));
-static int pushbytes __P((struct lpt_softc *));
-static void lptpseudointr __P((struct lpt_softc *));
-int lptintr __P((struct lpt_softc *));
-int lpthwintr __P((struct lpt_softc *, int));
+static void lptwakeup (void *arg);
+static int pushbytes (struct lpt_softc *);
+static void lptpseudointr (struct lpt_softc *);
+int lptintr (struct lpt_softc *);
+int lpthwintr (struct lpt_softc *, int);
 
 
 /*
  * Autoconfig stuff
  */
-static void lpattach __P((struct device *, struct device *, void *));
-static int  lpmatch __P((struct device *, struct cfdata *, void *));
+static void lpattach (device_t, device_t, void *);
+static int  lpmatch (device_t, cfdata_t , void *);
 
-CFATTACH_DECL(lp, sizeof(struct lpt_softc),
+CFATTACH_DECL_NEW(lp, sizeof(struct lpt_softc),
     lpmatch, lpattach, NULL, NULL);
 
 extern struct cfdriver lp_cd;
@@ -142,10 +142,7 @@ const struct cdevsw lp_cdevsw = {
 
 /*ARGSUSED*/
 static	int
-lpmatch(pdp, cfp, auxp)
-struct	device	*pdp;
-struct	cfdata	*cfp;
-void		*auxp;
+lpmatch(device_t pdp, cfdata_t cfp, void *auxp)
 {
 	static int	lpt_matched = 0;
 
@@ -158,19 +155,18 @@ void		*auxp;
 
 /*ARGSUSED*/
 static void
-lpattach(pdp, dp, auxp)
-struct	device *pdp, *dp;
-void	*auxp;
+lpattach(device_t pdp, device_t dp, void *auxp)
 {
-	struct lpt_softc *sc = (void *)dp;
+	struct lpt_softc *sc = device_private(dp);
 
+	sc->sc_dev = dp;
 	sc->sc_state = 0;
 
-	if (intr_establish(0, USER_VEC, 0, (hw_ifun_t)lpthwintr, sc) == NULL)
-		printf("lptattach: Can't establish interrupt\n");
-	ym2149_strobe(1);
+	aprint_normal("\n");
 
-	printf("\n");
+	if (intr_establish(0, USER_VEC, 0, (hw_ifun_t)lpthwintr, sc) == NULL)
+		aprint_error_dev(dp, "Can't establish interrupt\n");
+	ym2149_strobe(1);
 
 	callout_init(&sc->sc_wakeup_ch, 0);
 }
@@ -179,10 +175,7 @@ void	*auxp;
  * Reset the printer, then wait until it's selected and not busy.
  */
 int
-lpopen(dev, flag, mode, l)
-	dev_t		dev;
-	int		flag, mode;
-	struct lwp	*l;
+lpopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int			unit = LPTUNIT(dev);
 	u_char			flags = LPTFLAGS(dev);
@@ -193,13 +186,13 @@ lpopen(dev, flag, mode, l)
 
 	if (unit >= lp_cd.cd_ndevs)
 		return ENXIO;
-	sc = lp_cd.cd_devs[unit];
+	sc = device_private(lp_cd.cd_devs[unit]);
 	if (!sc)
 		return ENXIO;
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		aprint_verbose_dev(sc->sc_dev, "stat=0x%x not zero\n",
 		    sc->sc_state);
 #endif
 
@@ -208,7 +201,7 @@ lpopen(dev, flag, mode, l)
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
-	lprintf("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname, flags);
+	lprintf(sc->sc_dev, "open: flags=0x%x\n", flags);
 
 	/* wait till ready (printer running diagnostics) */
 	for (spin = 0; NOT_READY(); spin += STEP) {
@@ -238,13 +231,12 @@ lpopen(dev, flag, mode, l)
 		splx(sps);
 	}
 
-	lprintf("%s: opened\n", sc->sc_dev.dv_xname);
+	lprintf(sc->sc_dev, "opened\n");
 	return 0;
 }
 
 void
-lptwakeup(arg)
-	void *arg;
+lptwakeup(void *arg)
 {
 	struct lpt_softc *sc = arg;
 
@@ -257,14 +249,10 @@ lptwakeup(arg)
  * Close the device, and free the local line buffer.
  */
 int
-lpclose(dev, flag, mode, l)
-	dev_t		dev;
-	int		flag;
-	int		mode;
-	struct lwp	*l;
+lpclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int		 unit = LPTUNIT(dev);
-	struct lpt_softc *sc = lp_cd.cd_devs[unit];
+	struct lpt_softc *sc = device_private(lp_cd.cd_devs[unit]);
 	int		 sps;
 
 	if (sc->sc_count)
@@ -282,13 +270,12 @@ lpclose(dev, flag, mode, l)
 	sc->sc_state = 0;
 	brelse(sc->sc_inbuf, 0);
 
-	lprintf("%s: closed\n", sc->sc_dev.dv_xname);
+	lprintf(sc->sc_dev, "closed\n");
 	return 0;
 }
 
 int
-pushbytes(sc)
-	struct lpt_softc *sc;
+pushbytes(struct lpt_softc *sc)
 {
 	int	error;
 
@@ -329,7 +316,7 @@ pushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				lprintf("%s: write %d\n", sc->sc_dev.dv_xname,
+				lprintf(sc->sc_dev, "write %d\n",
 				    sc->sc_count);
 				(void) lptpseudointr(sc);
 			}
@@ -346,12 +333,9 @@ pushbytes(sc)
  * chars moved to the output queue.
  */
 int
-lpwrite(dev, uio, flags)
-	dev_t		dev;
-	struct uio	*uio;
-	int		flags;
+lpwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct lpt_softc *sc = lp_cd.cd_devs[LPTUNIT(dev)];
+	struct lpt_softc *sc = device_private(lp_cd.cd_devs[LPTUNIT(dev)]);
 	size_t n;
 	int error = 0;
 
@@ -377,8 +361,7 @@ lpwrite(dev, uio, flags)
  * another char.
  */
 int
-lptintr(sc)
-struct lpt_softc *sc;
+lptintr(struct lpt_softc *sc)
 {
 	/* is printer online and ready for output */
 	if (NOT_READY())
@@ -404,8 +387,7 @@ struct lpt_softc *sc;
 }
 
 static void
-lptpseudointr(sc)
-struct lpt_softc *sc;
+lptpseudointr(struct lpt_softc *sc)
 {
 	int	s;
 
@@ -415,9 +397,7 @@ struct lpt_softc *sc;
 }
 
 int
-lpthwintr(sc, sr)
-struct lpt_softc *sc;
-int		  sr;
+lpthwintr(struct lpt_softc *sc, int sr)
 {
 	if (!BASEPRI(sr))
 		add_sicallback((si_farg)lptpseudointr, sc, 0);
@@ -426,12 +406,7 @@ int		  sr;
 }
 
 int
-lpioctl(dev, cmd, data, flag, l)
-	dev_t		dev;
-	u_long		cmd;
-	void *		data;
-	int		flag;
-	struct lwp	*l;
+lpioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error = 0;
 
