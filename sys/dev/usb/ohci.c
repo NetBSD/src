@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.187 2008/02/22 22:22:27 dyoung Exp $	*/
+/*	$NetBSD: ohci.c,v 1.188 2008/03/07 21:36:51 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.187 2008/02/22 22:22:27 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.188 2008/03/07 21:36:51 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,7 +137,6 @@ Static usbd_status	ohci_alloc_std_chain(struct ohci_pipe *,
 			    ohci_softc_t *, int, int, usbd_xfer_handle,
 			    ohci_soft_td_t *, ohci_soft_td_t **);
 
-Static void		ohci_shutdown(void *v);
 Static usbd_status	ohci_open(usbd_pipe_handle);
 Static void		ohci_poll(struct usbd_bus *);
 Static void		ohci_softintr(void *);
@@ -401,10 +400,6 @@ ohci_detach(struct ohci_softc *sc, int flags)
 		return (rv);
 
 	usb_uncallout(sc->sc_tmo_rhsc, ohci_rhsc_enable, sc);
-
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	shutdownhook_disestablish(sc->sc_shutdownhook);
-#endif
 
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
@@ -910,7 +905,6 @@ ohci_init(ohci_softc_t *sc)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	sc->sc_control = sc->sc_intre = 0;
-	sc->sc_shutdownhook = shutdownhook_establish(ohci_shutdown, sc);
 #endif
 
 	usb_callout_init(sc->sc_tmo_rhsc);
@@ -1012,13 +1006,14 @@ ohci_freex(struct usbd_bus *bus, usbd_xfer_handle xfer)
 /*
  * Shut down the controller when the system is going down.
  */
-void
-ohci_shutdown(void *v)
+bool
+ohci_shutdown(device_t self, int flags)
 {
-	ohci_softc_t *sc = v;
+	ohci_softc_t *sc = device_private(self);
 
 	DPRINTF(("ohci_shutdown: stopping the HC\n"));
 	OWRITE4(sc, OHCI_CONTROL, OHCI_HCFS_RESET);
+	return true;
 }
 
 bool
