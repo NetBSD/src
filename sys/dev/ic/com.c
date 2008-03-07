@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.273 2008/02/29 07:02:05 dyoung Exp $	*/
+/*	$NetBSD: com.c,v 1.274 2008/03/07 08:39:18 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.273 2008/02/29 07:02:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.274 2008/03/07 08:39:18 dyoung Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -594,9 +594,9 @@ com_config(struct com_softc *sc)
 }
 
 int
-com_detach(struct device *self, int flags)
+com_detach(device_t self, int flags)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	int maj, mn;
 
         if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
@@ -645,9 +645,9 @@ com_detach(struct device *self, int flags)
 }
 
 int
-com_activate(struct device *self, enum devact act)
+com_activate(device_t self, enum devact act)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
