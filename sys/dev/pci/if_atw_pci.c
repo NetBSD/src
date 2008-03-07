@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atw_pci.c,v 1.15 2007/10/19 12:00:44 ad Exp $	*/
+/*	$NetBSD: if_atw_pci.c,v 1.16 2008/03/07 22:05:47 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.15 2007/10/19 12:00:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atw_pci.c,v 1.16 2008/03/07 22:05:47 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,8 +95,8 @@ struct atw_pci_softc {
 	pcitag_t		psc_pcitag;	/* our PCI tag */
 };
 
-static int	atw_pci_match(struct device *, struct cfdata *, void *);
-static void	atw_pci_attach(struct device *, struct device *, void *);
+static int	atw_pci_match(device_t, struct cfdata *, void *);
+static void	atw_pci_attach(device_t, device_t, void *);
 
 CFATTACH_DECL(atw_pci, sizeof(struct atw_pci_softc),
     atw_pci_match, atw_pci_attach, NULL, NULL);
@@ -128,8 +128,7 @@ atw_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-atw_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+atw_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -167,9 +166,9 @@ atw_pci_disable(struct atw_softc *sc)
 }
 
 static void
-atw_pci_attach(struct device *parent, struct device *self, void *aux)
+atw_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct atw_pci_softc *psc = (void *) self;
+	struct atw_pci_softc *psc = device_private(self);
 	struct atw_softc *sc = &psc->psc_atw;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
