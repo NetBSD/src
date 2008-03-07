@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.132 2008/02/22 23:07:12 dyoung Exp $ */
+/*	$NetBSD: ehci.c,v 1.133 2008/03/07 22:32:52 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004,2005 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.132 2008/02/22 23:07:12 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.133 2008/03/07 22:32:52 dyoung Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -128,8 +128,6 @@ struct ehci_pipe {
 		/* XXX */
 	} u;
 };
-
-Static void		ehci_shutdown(void *);
 
 Static usbd_status	ehci_open(usbd_pipe_handle);
 Static void		ehci_poll(struct usbd_bus *);
@@ -414,8 +412,6 @@ ehci_init(ehci_softc_t *sc)
 	/* Set up the bus struct. */
 	sc->sc_bus.methods = &ehci_bus_methods;
 	sc->sc_bus.pipe_size = sizeof(struct ehci_pipe);
-
-	sc->sc_shutdownhook = shutdownhook_establish(ehci_shutdown, sc);
 
 	sc->sc_eintrs = EHCI_NORMAL_INTRS;
 
@@ -931,9 +927,6 @@ ehci_detach(struct ehci_softc *sc, int flags)
 
 	usb_uncallout(sc->sc_tmo_intrlist, ehci_intrlist_timeout, sc);
 
-	if (sc->sc_shutdownhook != NULL)
-		shutdownhook_disestablish(sc->sc_shutdownhook);
-
 	usb_delay_ms(&sc->sc_bus, 300); /* XXX let stray task complete */
 
 	/* XXX free other data structures XXX */
@@ -1083,14 +1076,15 @@ ehci_resume(device_t dv PMF_FN_ARGS)
 /*
  * Shut down the controller when the system is going down.
  */
-void
-ehci_shutdown(void *v)
+bool
+ehci_shutdown(device_t self, int flags)
 {
-	ehci_softc_t *sc = v;
+	ehci_softc_t *sc = device_private(self);
 
 	DPRINTF(("ehci_shutdown: stopping the HC\n"));
 	EOWRITE4(sc, EHCI_USBCMD, 0);	/* Halt controller */
 	EOWRITE4(sc, EHCI_USBCMD, EHCI_CMD_HCRESET);
+	return true;
 }
 
 usbd_status
