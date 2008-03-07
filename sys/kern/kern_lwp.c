@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lwp.c,v 1.94 2008/02/22 22:32:49 rmind Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.95 2008/03/07 18:06:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.94 2008/02/22 22:32:49 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.95 2008/03/07 18:06:04 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1687,6 +1687,7 @@ lwp_ctl_exit(void)
 
 	l = curlwp;
 	l->l_lwpctl = NULL;
+	l->l_lcpage = NULL;
 	p = l->l_proc;
 	lp = p->p_lwpctl;
 
