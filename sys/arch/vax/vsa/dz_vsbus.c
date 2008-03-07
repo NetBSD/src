@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.37 2006/03/12 17:14:42 matt Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.38 2008/03/07 15:58:33 christos Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.37 2006/03/12 17:14:42 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.38 2008/03/07 15:58:33 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -263,9 +263,13 @@ dzcnprobe(struct consdev *cndev)
 		break;
 
 	case VAX_BTYP_49:
-	case VAX_BTYP_53:
 		ioaddr = 0x25000000;
 		diagcons = (vax_confdata & 8 ? 3 : 0);
+		break;
+
+	case VAX_BTYP_53:
+		ioaddr = 0x25000000;
+		diagcons = 3;
 		break;
 
 	default:
