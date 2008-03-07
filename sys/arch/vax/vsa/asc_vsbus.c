@@ -1,4 +1,4 @@
-/*	$NetBSD: asc_vsbus.c,v 1.36 2008/02/03 08:41:22 matt Exp $	*/
+/*	$NetBSD: asc_vsbus.c,v 1.37 2008/03/07 16:02:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.36 2008/02/03 08:41:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc_vsbus.c,v 1.37 2008/03/07 16:02:43 christos Exp $");
 
 #include "locators.h"
 #include "opt_cputype.h"
@@ -249,8 +249,13 @@ asc_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	error = bus_dmamap_create(asc->sc_dmat, ASC_MAXXFERSIZE, 1, 
 	    ASC_MAXXFERSIZE, 0, BUS_DMA_NOWAIT, &asc->sc_dmamap);
 
-	/* SCSI ID is store in the clock NVRAM at magic address 0xbc */
-	sc->sc_id = (clk_page[0xbc/2] >> clk_tweak) & 7;
+#if defined(VAX46) || defined(VAX48) || defined(VAX49) || defined(VAXANY)
+	if(vax_boardtype != VAX_BTYP_53)
+		/* SCSI ID is store in the clock NVRAM at magic address 0xbc */
+		sc->sc_id = (clk_page[0xbc/2] >> clk_tweak) & 7;
+	else
+#endif
+		sc->sc_id = 6; /* XXX need to get this from VMB */
 	sc->sc_freq = ASC_FREQUENCY;
 
 	/* gimme MHz */
