@@ -130,6 +130,9 @@
 /* Define to 1 if you have the `fsetxattr' function. */
 /* #undef HAVE_FSETXATTR */
 
+/* Define to 1 if you have the `fstat' function. */
+#define HAVE_FSTAT 1
+
 /* Define to 1 if you have the `ftruncate' function. */
 #define HAVE_FTRUNCATE 1
 
