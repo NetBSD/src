@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.6 2008/03/03 22:15:08 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.7 2008/03/07 18:20:20 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.142 2008/03/03 03:36:11 mrg Exp $	*/
 
@@ -1450,12 +1450,12 @@ fix_url_percent(http_req *request)
 		buf[2] = '\0';
 		s++;
 		*t = (char)strtol(buf, NULL, 16);
-		debug((DEBUG_EXPLODING, "fu_%%: strtol put %c into *t", *t));
+		debug((DEBUG_EXPLODING, "fu_%%: strtol put '%c' into *t", *t));
 		if (*t++ == '\0')
 			http_error(400, request, "percent hack got a 0 back");
 
 		while (*s && *s != '%') {
-			if (s >= end)
+			if (end && s >= end)
 				break;
 			*t++ = *s++;
 		}
