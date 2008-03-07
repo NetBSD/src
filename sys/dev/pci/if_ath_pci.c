@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.28 2008/01/28 18:18:37 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.29 2008/03/07 22:17:03 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.28 2008/01/28 18:18:37 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.29 2008/03/07 22:17:03 dyoung Exp $");
 #endif
 
 /*
@@ -263,7 +263,8 @@ ath_pci_detach(struct device *self, int flags)
 
 	ath_detach(&psc->sc_sc);
 	pmf_device_deregister(self);
-	pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+	if (psc->sc_ih != NULL)
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 	bus_space_unmap(psc->sc_iot, psc->sc_ioh, psc->sc_mapsz);
 
 	ATH_LOCK_DESTROY(&psc->sc_sc);
