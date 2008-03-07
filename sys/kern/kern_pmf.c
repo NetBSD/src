@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.15 2008/03/05 07:09:18 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.16 2008/03/07 07:03:06 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.15 2008/03/05 07:09:18 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.16 2008/03/07 07:03:06 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -106,6 +106,9 @@ struct shutdown_state {
 
 static device_t shutdown_first(struct shutdown_state *);
 static device_t shutdown_next(struct shutdown_state *);
+
+static bool pmf_device_resume_locked(device_t PMF_FN_PROTO);
+static bool pmf_device_suspend_locked(device_t PMF_FN_PROTO);
 
 static void
 pmf_event_worker(struct work *wk, void *dummy)
@@ -375,9 +378,26 @@ pmf_device_deregister(device_t dev)
 bool
 pmf_device_suspend(device_t dev PMF_FN_ARGS)
 {
+	bool rc;
+
 	PMF_TRANSITION_PRINTF(("%s: suspend enter\n", device_xname(dev)));
 	if (!device_pmf_is_registered(dev))
 		return false;
+
+	if (!device_pmf_lock(dev PMF_FN_CALL))
+		return false;
+
+	rc = pmf_device_suspend_locked(dev PMF_FN_CALL);
+
+	device_pmf_unlock(dev PMF_FN_CALL);
+
+	PMF_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
+	return rc;
+}
+
+static bool
+pmf_device_suspend_locked(device_t dev PMF_FN_ARGS)
+{
 	PMF_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
 	if (!device_pmf_class_suspend(dev PMF_FN_CALL))
 		return false;
@@ -387,16 +407,33 @@ pmf_device_suspend(device_t dev PMF_FN_ARGS)
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus suspend\n", device_xname(dev)));
 	if (!device_pmf_bus_suspend(dev PMF_FN_CALL))
 		return false;
-	PMF_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
+
 	return true;
 }
 
 bool
 pmf_device_resume(device_t dev PMF_FN_ARGS)
 {
+	bool rc;
+
 	PMF_TRANSITION_PRINTF(("%s: resume enter\n", device_xname(dev)));
 	if (!device_pmf_is_registered(dev))
 		return false;
+
+	if (!device_pmf_lock(dev PMF_FN_CALL))
+		return false;
+
+	rc = pmf_device_resume_locked(dev PMF_FN_CALL);
+
+	device_pmf_unlock(dev PMF_FN_CALL);
+
+	PMF_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
+	return rc;
+}
+
+static bool
+pmf_device_resume_locked(device_t dev PMF_FN_ARGS)
+{
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus resume\n", device_xname(dev)));
 	if (!device_pmf_bus_resume(dev PMF_FN_CALL))
 		return false;
@@ -406,7 +443,6 @@ pmf_device_resume(device_t dev PMF_FN_ARGS)
 	PMF_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
 	if (!device_pmf_class_resume(dev PMF_FN_CALL))
 		return false;
-	PMF_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
 	return true;
 }
 

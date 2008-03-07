@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.138 2008/03/07 06:29:20 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.139 2008/03/07 07:03:06 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.138 2008/03/07 06:29:20 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.139 2008/03/07 07:03:06 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -127,6 +127,14 @@ extern struct splash_progress *splash_progress_state;
  * Autoconfiguration subroutines.
  */
 
+typedef struct pmf_private {
+	int		pp_nwait;
+	int		pp_nlock;
+	lwp_t		*pp_holder;
+	kmutex_t	pp_mtx;
+	kcondvar_t	pp_cv;
+} pmf_private_t;
+
 /*
  * ioconf.c exports exactly two names: cfdata and cfroots.  All system
  * devices and drivers are found via these tables.
@@ -172,6 +180,9 @@ static void config_makeroom(int, struct cfdriver *);
 static void config_devlink(device_t);
 static void config_devunlink(device_t);
 
+static void pmflock_debug(device_t, const char *, int);
+static void pmflock_debug_with_flags(device_t, const char *, int PMF_FN_PROTO);
+
 static device_t deviter_next1(deviter_t *);
 static void deviter_reinit(deviter_t *);
 
@@ -216,6 +227,8 @@ volatile int config_pending;		/* semaphore for mountroot */
 static int config_initialized;		/* config_init() has been called. */
 
 static int config_do_twiddle;
+
+MALLOC_DEFINE(M_PMFPRIV, "pmfpriv", "device pmf private storage");
 
 struct vnode *
 opendisk(struct device *dv)
@@ -1944,6 +1957,14 @@ device_pmf_driver_register(device_t dev,
     bool (*resume)(device_t PMF_FN_PROTO),
     bool (*shutdown)(device_t, int))
 {
+	pmf_private_t *pp;
+
+	if ((pp = malloc(sizeof(*pp), M_PMFPRIV, M_NOWAIT|M_ZERO)) == NULL)
+		return false;
+	mutex_init(&pp->pp_mtx, MUTEX_DEFAULT, IPL_NONE);
+	cv_init(&pp->pp_cv, "pmfsusp");
+	dev->dv_pmf_private = pp;
+
 	dev->dv_driver_suspend = suspend;
 	dev->dv_driver_resume = resume;
 	dev->dv_driver_shutdown = shutdown;
@@ -1951,12 +1972,43 @@ device_pmf_driver_register(device_t dev,
 	return true;
 }
 
+static const char *
+curlwp_name(void)
+{
+	if (curlwp->l_name != NULL)
+		return curlwp->l_name;
+	else
+		return curlwp->l_proc->p_comm;
+}
+
 void
 device_pmf_driver_deregister(device_t dev)
 {
+	pmf_private_t *pp = dev->dv_pmf_private;
+
 	dev->dv_driver_suspend = NULL;
 	dev->dv_driver_resume = NULL;
+
+	dev->dv_pmf_private = NULL;
+
+	mutex_enter(&pp->pp_mtx);
 	dev->dv_flags &= ~DVF_POWER_HANDLERS;
+	while (pp->pp_nlock > 0 || pp->pp_nwait > 0) {
+		/* Wake a thread that waits for the lock.  That
+		 * thread will fail to acquire the lock, and then
+		 * it will wake the next thread that waits for the
+		 * lock, or else it will wake us.
+		 */
+		cv_signal(&pp->pp_cv);
+		pmflock_debug(dev, __func__, __LINE__);
+		cv_wait(&pp->pp_cv, &pp->pp_mtx);
+		pmflock_debug(dev, __func__, __LINE__);
+	}
+	mutex_exit(&pp->pp_mtx);
+
+	cv_destroy(&pp->pp_cv);
+	mutex_destroy(&pp->pp_mtx);
+	free(pp, M_PMFPRIV);
 }
 
 bool
@@ -1974,6 +2026,86 @@ device_pmf_driver_set_child_register(device_t dev,
     bool (*child_register)(device_t))
 {
 	dev->dv_driver_child_register = child_register;
+}
+
+static void
+pmflock_debug(device_t dev, const char *func, int line)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	aprint_debug_dev(dev, "%s.%d, %s pp_nlock %d pp_nwait %d dv_flags %x\n",
+	    func, line, curlwp_name(), pp->pp_nlock, pp->pp_nwait,
+	    dev->dv_flags);
+}
+
+static void
+pmflock_debug_with_flags(device_t dev, const char *func, int line PMF_FN_ARGS)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	aprint_debug_dev(dev, "%s.%d, %s pp_nlock %d pp_nwait %d dv_flags %x "
+	    "flags " PMF_FLAGS_FMT "\n", func, line, curlwp_name(),
+	    pp->pp_nlock, pp->pp_nwait, dev->dv_flags PMF_FN_CALL);
+}
+
+static bool
+device_pmf_lock1(device_t dev PMF_FN_ARGS)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	while (pp->pp_nlock > 0 && pp->pp_holder != curlwp &&
+	       device_pmf_is_registered(dev)) {
+		pp->pp_nwait++;
+		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		cv_wait(&pp->pp_cv, &pp->pp_mtx);
+		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		pp->pp_nwait--;
+	}
+	if (!device_pmf_is_registered(dev)) {
+		pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+		/* We could not acquire the lock, but some other thread may
+		 * wait for it, also.  Wake that thread.
+		 */
+		cv_signal(&pp->pp_cv);
+		return false;
+	}
+	pp->pp_nlock++;
+	pp->pp_holder = curlwp;
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	return true;
+}
+
+bool
+device_pmf_lock(device_t dev PMF_FN_ARGS)
+{
+	bool rc;
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	mutex_enter(&pp->pp_mtx);
+	rc = device_pmf_lock1(dev PMF_FN_CALL);
+	mutex_exit(&pp->pp_mtx);
+
+	return rc;
+}
+
+void
+device_pmf_unlock(device_t dev PMF_FN_ARGS)
+{
+	pmf_private_t *pp = device_pmf_private(dev);
+
+	KASSERT(pp->pp_nlock > 0);
+	mutex_enter(&pp->pp_mtx);
+	if (--pp->pp_nlock == 0)
+		pp->pp_holder = NULL;
+	cv_signal(&pp->pp_cv);
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	mutex_exit(&pp->pp_mtx);
+}
+
+void *
+device_pmf_private(device_t dev)
+{
+	return dev->dv_pmf_private;
 }
 
 void *
