@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.137 2008/03/05 15:37:55 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.138 2008/03/07 06:29:20 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.137 2008/03/05 15:37:55 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.138 2008/03/07 06:29:20 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1218,7 +1218,7 @@ config_devdealloc(device_t dev)
 	if (dev->dv_locators)
 		free(dev->dv_locators, M_DEVBUF);
 
-	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0)
+	if ((dev->dv_flags & DVF_PRIV_ALLOC) != 0 && dev->dv_private != NULL)
 		free(dev->dv_private, M_DEVBUF);
 
 	free(dev, M_DEVBUF);
