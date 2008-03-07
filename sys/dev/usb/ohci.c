@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.188 2008/03/07 21:36:51 dyoung Exp $	*/
+/*	$NetBSD: ohci.c,v 1.189 2008/03/07 21:48:46 dyoung Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.188 2008/03/07 21:36:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.189 2008/03/07 21:48:46 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -361,9 +361,9 @@ Static const struct usbd_pipe_methods ohci_device_isoc_methods = {
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-ohci_activate(device_ptr_t self, enum devact act)
+ohci_activate(device_t self, enum devact act)
 {
-	struct ohci_softc *sc = (struct ohci_softc *)self;
+	struct ohci_softc *sc = device_private(self);
 	int rv = 0;
 
 	switch (act) {
