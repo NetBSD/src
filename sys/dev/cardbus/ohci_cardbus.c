@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_cardbus.c,v 1.24 2007/10/19 11:59:39 ad Exp $	*/
+/*	$NetBSD: ohci_cardbus.c,v 1.25 2008/03/07 21:36:51 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.24 2007/10/19 11:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_cardbus.c,v 1.25 2008/03/07 21:36:51 dyoung Exp $");
 
 #include "ehci_cardbus.h"
 
@@ -191,6 +191,10 @@ XXX	(ct->ct_cf->cardbus_mem_open)(cc, 0, iob, iob + 0x40);
 #if NEHCI_CARDBUS > 0
 	usb_cardbus_add(&sc->sc_cardbus, ca, &sc->sc.sc_bus);
 #endif
+
+	if (!pmf_device_register1(self, ohci_suspend, ohci_resume,
+	                          ohci_shutdown))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
