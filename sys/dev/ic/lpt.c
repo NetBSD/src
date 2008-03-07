@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt.c,v 1.73 2008/02/22 20:53:58 dyoung Exp $	*/
+/*	$NetBSD: lpt.c,v 1.74 2008/03/07 17:15:51 cube Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.73 2008/02/22 20:53:58 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.74 2008/03/07 17:15:51 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 	int spin;
 
-	sc = device_lookup(&lpt_cd, LPTUNIT(dev));
+	sc = device_private(device_lookup(&lpt_cd, LPTUNIT(dev)));
 	if (!sc || !sc->sc_dev_ok)
 		return ENXIO;
 
@@ -162,7 +162,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 #ifdef DIAGNOSTIC
 	if (sc->sc_state)
-		printf("%s: stat=0x%x not zero\n", sc->sc_dev.dv_xname,
+		aprint_verbose_dev(sc->sc_dev, "stat=0x%x not zero\n",
 		    sc->sc_state);
 #endif
 
@@ -171,7 +171,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	sc->sc_state = LPT_INIT;
 	sc->sc_flags = flags;
-	LPRINTF(("%s: open: flags=0x%x\n", sc->sc_dev.dv_xname,
+	LPRINTF(("%s: open: flags=0x%x\n", device_xname(sc->sc_dev),
 	    (unsigned)flags));
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
@@ -214,7 +214,7 @@ lptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if ((sc->sc_flags & LPT_NOINTR) == 0)
 		lptwakeup(sc);
 
-	LPRINTF(("%s: opened\n", sc->sc_dev.dv_xname));
+	LPRINTF(("%s: opened\n", device_xname(sc->sc_dev)));
 	return 0;
 }
 
@@ -232,13 +232,13 @@ lptnotready(status, sc)
 	if (sc->sc_state & LPT_OPEN) {
 		if (new & LPS_SELECT)
 			log(LOG_NOTICE,
-			    "%s: offline\n", sc->sc_dev.dv_xname);
+			    "%s: offline\n", device_xname(sc->sc_dev));
 		else if (new & LPS_NOPAPER)
 			log(LOG_NOTICE,
-			    "%s: out of paper\n", sc->sc_dev.dv_xname);
+			    "%s: out of paper\n", device_xname(sc->sc_dev));
 		else if (new & LPS_NERR)
 			log(LOG_NOTICE,
-			    "%s: output error\n", sc->sc_dev.dv_xname);
+			    "%s: output error\n", device_xname(sc->sc_dev));
 	}
 
 	return status;
@@ -265,7 +265,8 @@ int
 lptclose(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
-	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
+	struct lpt_softc *sc =
+	    device_private(device_lookup(&lpt_cd, LPTUNIT(dev)));
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
 
@@ -280,7 +281,7 @@ lptclose(dev_t dev, int flag, int mode,
 	bus_space_write_1(iot, ioh, lpt_control, LPC_NINIT);
 	free(sc->sc_inbuf, M_DEVBUF);
 
-	LPRINTF(("%s: closed\n", sc->sc_dev.dv_xname));
+	LPRINTF(("%s: closed\n", device_xname(sc->sc_dev)));
 	return 0;
 }
 
@@ -336,7 +337,8 @@ lptpushbytes(sc)
 		while (sc->sc_count > 0) {
 			/* if the printer is ready for a char, give it one */
 			if ((sc->sc_state & LPT_OBUSY) == 0) {
-				LPRINTF(("%s: write %lu\n", sc->sc_dev.dv_xname,
+				LPRINTF(("%s: write %lu\n",
+				    device_xname(sc->sc_dev),
 				    (u_long)sc->sc_count));
 				s = spllpt();
 				(void) lptintr(sc);
@@ -358,7 +360,8 @@ lptpushbytes(sc)
 int
 lptwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct lpt_softc *sc = device_lookup(&lpt_cd, LPTUNIT(dev));
+	struct lpt_softc *sc =
+	    device_private(device_lookup(&lpt_cd, LPTUNIT(dev)));
 	size_t n;
 	int error = 0;
 

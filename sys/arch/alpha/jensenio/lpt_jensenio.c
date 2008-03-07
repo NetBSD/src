@@ -1,4 +1,4 @@
-/* $NetBSD: lpt_jensenio.c,v 1.7 2007/10/17 19:52:59 garbled Exp $ */
+/* $NetBSD: lpt_jensenio.c,v 1.8 2008/03/07 17:15:51 cube Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.7 2007/10/17 19:52:59 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jensenio.c,v 1.8 2008/03/07 17:15:51 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,14 +74,14 @@ struct lpt_jensenio_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int	lpt_jensenio_match(struct device *, struct cfdata *, void *);
-void	lpt_jensenio_attach(struct device *, struct device *, void *);
+int	lpt_jensenio_match(device_t, cfdata_t , void *);
+void	lpt_jensenio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_jensenio, sizeof(struct lpt_jensenio_softc),
+CFATTACH_DECL_NEW(lpt_jensenio, sizeof(struct lpt_jensenio_softc),
     lpt_jensenio_match, lpt_jensenio_attach, NULL, NULL);
 
 int
-lpt_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
+lpt_jensenio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct jensenio_attach_args *ja = aux;
 
@@ -93,22 +93,24 @@ lpt_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-lpt_jensenio_attach(struct device *parent, struct device *self, void *aux)
+lpt_jensenio_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_jensenio_softc *jsc = (void *)self;
+	struct lpt_jensenio_softc *jsc = device_private(self);
 	struct lpt_softc *sc = &jsc->sc_lpt;
 	struct jensenio_attach_args *ja = aux;
 	const char *intrstr;
 
+	sc->sc_dev = self;
 	sc->sc_iot = ja->ja_iot;
 
 	if (bus_space_map(sc->sc_iot, ja->ja_ioaddr, LPT_NPORTS, 0,
 	    &sc->sc_ioh) != 0) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
-	printf("\n");
+	aprint_normal("\n");
+	aprint_naive("\n");
 
 	lpt_attach_subr(sc);
 
@@ -116,12 +118,11 @@ lpt_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	jsc->sc_ih = eisa_intr_establish(ja->ja_ec, ja->ja_irq[0],
 	    IST_EDGE, IPL_TTY, lptintr, sc);
 	if (jsc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 }
