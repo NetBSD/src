@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.39 2008/03/03 18:48:26 matt Exp $
+#	$NetBSD: Makefile.powerpc,v 1.40 2008/03/07 17:10:00 phx Exp $
 #
 # Makefile for NetBSD
 #
@@ -92,7 +92,7 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 # depend on CPU configuration
 locore.o machdep.o: Makefile
 
-lock_stubs.o memcmp.o memcpy.o memmove.o setfault.o: assym.h
+lock_stubs.o setfault.o: assym.h
 
 ##
 ## (7) misc settings
