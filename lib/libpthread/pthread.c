@@ -1,7 +1,7 @@
-/*	$NetBSD: pthread.c,v 1.96 2008/01/08 20:56:08 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.97 2008/03/08 13:23:13 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002, 2003, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.96 2008/01/08 20:56:08 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.97 2008/03/08 13:23:13 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -198,7 +198,9 @@ pthread__init(void)
 	PTQ_INSERT_HEAD(&pthread__allqueue, first, pt_allq);
 	RB_INSERT(__pthread__alltree, &pthread__alltree, first);
 
-	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl);
+	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl) != 0) {
+		err(1, "_lwp_ctl");
+	}
 
 	/* Start subsystems */
 	PTHREAD_MD_INIT
@@ -237,7 +239,9 @@ pthread__fork_callback(void)
 {
 
 	/* lwpctl state is not copied across fork. */
-	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl);
+	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &pthread__first->pt_lwpctl)) {
+		err(1, "_lwp_ctl");
+	}
 }
 
 static void
@@ -454,7 +458,9 @@ pthread__create_tramp(pthread_t self, void *(*start)(void *), void *arg)
 		pthread_mutex_unlock(&self->pt_lock);
 	}
 
-	(void)_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl);
+	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl)) {
+		err(1, "_lwp_ctl");
+	}
 
 	retval = (*start)(arg);
 
