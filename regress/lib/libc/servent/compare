@@ -1,8 +1,50 @@
 #!/bin/sh
-ORIG=$(sed -e 's/#.*$//' -e 's/[	 ]*//g' -e '/^$/d' $1 | sort | wc -l)
-NEW=$($2 | wc -l)
-if [ $ORIG != $NEW ]
-then
-	echo Exprected $ORIG entries found $NEW 1>&2
+# compare - compare output
+# usage: compare original-servent-file reader-program
+#
+# $NetBSD: compare,v 1.3 2008/03/08 23:32:38 dholland Exp $
+#
+
+REF=reference-output
+OBS=observed-output
+DIFFS=differences
+
+if [ $# != 2 ]; then
+    echo "$0: usage: $0 original-servent-file reader-program" 1>&2
+    exit 1
+fi
+if [ ! -f "$1" ]; then
+    echo "$0: $1 missing" 1>&2
+    exit 1
+fi
+if [ ! -x "$2" ]; then
+    echo "$0: $2 missing" 1>&2
+    exit 1
+fi
+
+# munge original to match output of the test program
+tr '\t' ' ' < "$1" | sed '
+    s/#.*$//
+    s/  */ /g
+    /^$/d
+
+    s/^/name=/
+    s/ \([0-9][0-9]*\)\//,port=\1,proto=/
+    s/$/ /
+    s/ /,aliases=/
+    s/ *$//
+    s/,/, /g
+' | sort > $REF
+
+# run test program
+$2 | sed 's/ *$//' | sort > $OBS
+
+diff $REF $OBS >$DIFFS 2>&1
+
+if [ -s $DIFFS ]; then
+	echo "servent: Observed output does not match reference output" 1>&2
+	echo "servent: Outputs left in `pwd`" 1>&2
 	exit 1
 fi
+rm -f $REF $OBS $DIFFS
+exit 0
