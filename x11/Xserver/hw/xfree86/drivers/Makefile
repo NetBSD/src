@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2007/12/19 17:33:55 macallan Exp $
+#	$NetBSD: Makefile,v 1.22 2008/03/08 10:38:59 phx Exp $
 
 SUBDIR=	ati atimisc chips fbdev glint imstt mga nv r128 radeon \
 	s3 s3virge savage sis tdfx trident wsfb
@@ -11,7 +11,7 @@ SUBDIR+=	vga
 SUBDIR+=	i740 i810 neomagic via vmware
 .endif
 
-.if ${MACHINE} != "macppc" && ${MACHINE} != "sgimips"
+.if ${MACHINE} != "macppc" && ${MACHINE} != "sgimips" && ${MACHINE} != "ofppc"
 SUBDIR+=	apm ark cirrus cyrix dummy i128 nsc \
 		rendition siliconmotion tga tseng vesa
 .endif
