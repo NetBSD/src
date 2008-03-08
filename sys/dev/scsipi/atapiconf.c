@@ -1,4 +1,4 @@
-/*	$NetBSD: atapiconf.c,v 1.75 2008/01/29 17:26:57 dyoung Exp $	*/
+/*	$NetBSD: atapiconf.c,v 1.76 2008/03/08 10:31:52 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.75 2008/01/29 17:26:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapiconf.c,v 1.76 2008/03/08 10:31:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,9 +241,7 @@ atapibusdetach(device_t self, int flags)
 		error = config_detach(periph->periph_dev, flags);
 		if (error)
 			return (error);
-
-		scsipi_remove_periph(chan, periph);
-		free(periph, M_DEVBUF);
+		KASSERT(scsipi_lookup_periph(chan, target, 0) == NULL);
 	}
 	return (0);
 }
