@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_boot.cpp,v 1.7 2005/12/11 12:17:28 christos Exp $	*/
+/*	$NetBSD: arm_boot.cpp,v 1.8 2008/03/08 02:26:03 rafal Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,6 +42,8 @@
 #include <memory.h>
 
 #include <arm/arm_arch.h>
+#include <arm/arm_sa1100.h>
+#include <arm/arm_pxa2x0.h>
 #include <arm/arm_boot.h>
 #include <arm/arm_console.h>
 
@@ -72,6 +74,8 @@ ARMBoot::setup()
 		args.architecture = ARCHITECTURE_ARM_SA1100;
 	else if (platid_match(&platid, &platid_mask_CPU_ARM_STRONGARM_SA1110))
 		args.architecture = ARCHITECTURE_ARM_SA1100;
+	else if (platid_match(&platid, &platid_mask_CPU_ARM_XSCALE_PXA250))
+		args.architecture = ARCHITECTURE_ARM_PXA250;
 	else
 		return FALSE;
 
@@ -86,8 +90,18 @@ ARMBoot::create()
 	BOOL(*lock_pages)(LPVOID, DWORD, PDWORD, int);
 	BOOL(*unlock_pages)(LPVOID, DWORD);
 
-	// Architercure dependent ops.
-	_arch = new ARMArchitecture(_cons, _mem);
+	// Architecture dependent ops.
+	switch (args.architecture) {
+	default:
+		DPRINTF((TEXT("Unsupported architecture.\n")));
+		return FALSE;
+	case ARCHITECTURE_ARM_SA1100:
+		_arch = new SA1100Architecture(_cons, _mem);
+		break;
+	case ARCHITECTURE_ARM_PXA250:
+		_arch = new PXA2X0Architecture(_cons, _mem);
+		break;
+	}
 	_arch->setDebug() = args.architectureDebug;
 
 	lock_pages = _arch->_load_LockPages();
@@ -118,8 +132,8 @@ ARMBoot::create()
 
 	// Console
 	if (args.console == CONSOLE_SERIAL) {
-		_cons = ARMConsole::Instance(_mem);
-		if (!_cons->init()) {
+		_cons = ARMConsole::Instance(_mem, args.architecture);
+		if (_cons == NULL || !_cons->init()) {
 			_cons = Console::Instance();
 			DPRINTF((TEXT("use LCD console instead.\n")));
 		}

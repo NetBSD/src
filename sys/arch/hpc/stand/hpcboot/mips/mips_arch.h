@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.4 2005/12/11 12:17:28 christos Exp $	*/
+/* -*-C++-*-	$NetBSD: mips_arch.h,v 1.5 2008/03/08 02:26:03 rafal Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ public:
 	BOOL setupLoader(void);
 	virtual void systemInfo(void);
 	virtual void cacheFlush(void) = 0;
-	void jump(paddr_t info, paddr_t pvce);
+	void jump(paddr_t info, paddr_t pvec);
 };
 
 #define	DI()								\
