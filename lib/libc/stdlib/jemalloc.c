@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.16 2007/12/04 17:43:51 christos Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.17 2008/03/08 13:17:13 ad Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.16 2007/12/04 17:43:51 christos Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.17 2008/03/08 13:17:13 ad Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -824,7 +824,6 @@ static void	*pages_map_align(void *addr, size_t size, int align);
 static void	pages_unmap(void *addr, size_t size);
 static void	*chunk_alloc(size_t size);
 static void	chunk_dealloc(void *chunk, size_t size);
-static arena_t	*choose_arena_hard(void);
 static void	arena_run_split(arena_t *arena, arena_run_t *run, size_t size);
 static arena_chunk_t *arena_chunk_alloc(arena_t *arena);
 static void	arena_chunk_dealloc(arena_t *arena, arena_chunk_t *chunk);
@@ -1523,66 +1522,45 @@ chunk_dealloc(void *chunk, size_t size)
  */
 
 /*
- * Choose an arena based on a per-thread value (fast-path code, calls slow-path
- * code if necessary).
+ * Choose an arena based on a per-thread and (optimistically) per-CPU value.
+ *
+ * We maintain at least one block of arenas.  Usually there are more.
+ * The blocks are $ncpu arenas in size.  Whole blocks are 'hashed'
+ * amongst threads.  To accomplish this, next_arena advances only in
+ * ncpu steps.
  */
 static inline arena_t *
 choose_arena(void)
 {
-	arena_t *ret;
+	unsigned i, curcpu;
+	arena_t **map;
+
+	map = get_arenas_map();
+	curcpu = thr_curcpu();
+	if (__predict_true(map != NULL && map[curcpu] != NULL))
+		return map[curcpu];
+
+	/* Initialize the current block of arenas and advance to next. */
+	malloc_mutex_lock(&arenas_mtx);
+	assert(next_arena % ncpus == 0);
+	assert(narenas % ncpus == 0);
+	map = &arenas[next_arena];
+	set_arenas_map(map);
+	for (i = 0; i < ncpus; i++) {
+		if (arenas[next_arena] == NULL)
+			arenas_extend(next_arena);
+		next_arena = (next_arena + 1) % narenas;
+	}
+	malloc_mutex_unlock(&arenas_mtx);
 
 	/*
-	 * We can only use TLS if this is a PIC library, since for the static
-	 * library version, libc's malloc is used by TLS allocation, which
-	 * introduces a bootstrapping issue.
+	 * If we were unable to allocate an arena above, then default to
+	 * the first arena, which is always present.
 	 */
-	if (__isthreaded == false) {
-	    /*
-	     * Avoid the overhead of TLS for single-threaded operation.  If the
-	     * app switches to threaded mode, the initial thread may end up
-	     * being assigned to some other arena, but this one-time switch
-	     * shouldn't cause significant issues.
-	     */
-	    return (arenas[0]);
-	}
-
-	ret = get_arenas_map();
-	if (ret == NULL)
-		ret = choose_arena_hard();
-
-	assert(ret != NULL);
-	return (ret);
-}
-
-/*
- * Choose an arena based on a per-thread value (slow-path code only, called
- * only by choose_arena()).
- */
-static arena_t *
-choose_arena_hard(void)
-{
-	arena_t *ret;
-
-	assert(__isthreaded);
-
-	/* Assign one of the arenas to this thread, in a round-robin fashion. */
-	malloc_mutex_lock(&arenas_mtx);
-	ret = arenas[next_arena];
-	if (ret == NULL)
-		ret = arenas_extend(next_arena);
-	if (ret == NULL) {
-		/*
-		 * Make sure that this function never returns NULL, so that
-		 * choose_arena() doesn't have to check for a NULL return
-		 * value.
-		 */
-		ret = arenas[0];
-	}
-	next_arena = (next_arena + 1) % narenas;
-	malloc_mutex_unlock(&arenas_mtx);
-	set_arenas_map(ret);
-
-	return (ret);
+	curcpu = thr_curcpu();
+	if (map[curcpu] != NULL)
+		return map[curcpu];
+	return arenas[0];
 }
 
 #ifndef lint
