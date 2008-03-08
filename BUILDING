@@ -454,13 +454,14 @@ BUILDING
      Additional make(1) targets are usable specifically from the top source
      level to facilitate building the entire NetBSD source tree.
 
-     build         Build the entire NetBSD system.  This orders portions of
-                   the source tree such that prerequisites will be built in
-                   the proper order.
+     build         Build the entire NetBSD system (except the kernel).  This
+                   orders portions of the source tree such that prerequisites
+                   will be built in the proper order.
 
      distribution  Do a ``make build'', and then install a full distribution
-                   into DESTDIR, including files in DESTDIR/dev, DESTDIR/etc,
-                   DESTDIR/root and DESTDIR/var.
+                   (which does not include a kernel) into DESTDIR, including
+                   files in DESTDIR/dev, DESTDIR/etc, DESTDIR/root and
+                   DESTDIR/var.
 
      buildworld    As per ``make distribution'', except that it ensures that
                    DESTDIR is not the root directory.
@@ -811,4 +812,4 @@ HISTORY
 BUGS
      A few platforms are not yet using this build system.
 
-NetBSD                         September 1, 2007                        NetBSD
+NetBSD                           March 8, 2008                          NetBSD
