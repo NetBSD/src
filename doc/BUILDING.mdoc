@@ -1,4 +1,4 @@
-.\"	$NetBSD: BUILDING.mdoc,v 1.54 2007/11/23 16:19:28 sborrill Exp $
+.\"	$NetBSD: BUILDING.mdoc,v 1.55 2008/03/08 14:48:57 reed Exp $
 .\"
 .\" Copyright (c) 2001-2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@
 .\" Toolchain prefix for commands
 .ds toolprefix nb
 .
-.Dd September 1, 2007
+.Dd March 8, 2008
 .Dt BUILDING 8
 .Os NetBSD
 .
@@ -834,14 +834,14 @@ source tree.
 .It Sy build
 Build the entire
 .Nx
-system.
+system (except the kernel).
 This orders portions of the source tree such that prerequisites
 will be built in the proper order.
 .
 .It Sy distribution
 Do a
 .Dq make build ,
-and then install a full distribution into
+and then install a full distribution (which does not include a kernel) into
 .Sy DESTDIR ,
 including files in
 .Sy DESTDIR Ns Pa /dev ,
