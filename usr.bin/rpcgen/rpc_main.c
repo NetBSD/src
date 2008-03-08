@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.31 2008/02/29 22:27:15 christos Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.32 2008/03/08 19:49:08 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.31 2008/02/29 22:27:15 christos Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.32 2008/03/08 19:49:08 christos Exp $");
 #endif
 #endif
 
@@ -533,9 +533,9 @@ h_output(infile, define, extend, outfile)
 	open_output(infile, outfilename);
 	add_warning();
 	if (outfilename || infile)
-	    guard = generate_guard(outfilename ? outfilename : infile);
+		guard = generate_guard(outfilename ? outfilename : infile);
 	else
-	    guard = "STDIN_";
+		guard = "STDIN_";
 
 	f_print(fout, "#ifndef _%s\n#define _%s\n\n", guard,
 	    guard);
