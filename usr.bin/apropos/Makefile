@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2002/09/19 11:29:54 lukem Exp $
+#	$NetBSD: Makefile,v 1.12 2008/03/08 15:48:27 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -10,5 +10,6 @@ SRCS=	apropos.c manconf.c
 
 .PATH:	${MDIST}
 CPPFLAGS+=-I${MDIST}
+WARNS=	4
 
 .include <bsd.prog.mk>
