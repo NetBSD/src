@@ -20,6 +20,8 @@
    Boston, MA 02110-1301, USA.  */
 
 #include "defs.h"
+#include "gdbcore.h"
+#include "regcache.h"
 #include "target.h"
 
 #include "gdb_assert.h"
@@ -30,6 +32,8 @@
 
 #include <machine/frame.h>
 #include <machine/pcb.h>
+
+#include "bsd-kvm.h"
 
 /* Mapping between the general-purpose registers in NetBSD/amd64
    `struct reg' format and GDB's register cache layout for
