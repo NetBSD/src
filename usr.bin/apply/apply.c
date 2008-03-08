@@ -1,4 +1,4 @@
-/*	$NetBSD: apply.c,v 1.16 2005/05/08 19:53:57 matt Exp $	*/
+/*	$NetBSD: apply.c,v 1.17 2008/03/08 03:35:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: apply.c,v 1.16 2005/05/08 19:53:57 matt Exp $");
+__RCSID("$NetBSD: apply.c,v 1.17 2008/03/08 03:35:53 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -52,23 +52,26 @@ __RCSID("$NetBSD: apply.c,v 1.16 2005/05/08 19:53:57 matt Exp $");
 #include <string.h>
 #include <unistd.h>
 
-void	usage(void);
-int	shell_system(const char *);
+static void	usage(void) __dead;
+static int	shell_system(const char *);
 
 int
 main(int argc, char *argv[])
 {
-	int ch, clen, debug, i, l, magic, n, nargs, rval;
+	size_t clen, l;
+	int ch, debug, i, magic, n, nargs, rval;
 	char *c, *cmd, *p, *q, *nc;
+
+	(void)setprogname(argv[0]);	/* for portability */
 
 	debug = 0;
 	magic = '%';		/* Default magic char is `%'. */
 	nargs = -1;
-	while ((ch = getopt(argc, argv, "a:d0123456789")) != -1)
+	while ((ch = getopt(argc, argv, "a:d0123456789")) != -1) {
 		switch (ch) {
 		case 'a':
 			if (optarg[1] != '\0')
-				errx(1,
+				errx(EXIT_FAILURE,
 				    "illegal magic character specification.");
 			magic = optarg[0];
 			break;
@@ -78,13 +81,14 @@ main(int argc, char *argv[])
 		case '0': case '1': case '2': case '3': case '4':
 		case '5': case '6': case '7': case '8': case '9':
 			if (nargs != -1)
-				errx(1,
+				errx(EXIT_FAILURE,
 				    "only one -# argument may be specified.");
 			nargs = optopt - '0';
 			break;
 		default:
 			usage();
 		}
+	}
 	argc -= optind;
 	argv += optind;
 
@@ -96,14 +100,14 @@ main(int argc, char *argv[])
 	 * Look for %digit references in the command, remembering the
 	 * largest one.
 	 */
-	for (n = 0, p = argv[0]; *p != '\0'; ++p)
+	for (n = 0, p = argv[0]; *p != '\0'; ++p) {
 		if (p[0] == magic && isdigit((unsigned char)p[1]) &&
 		    p[1] != '0') {
 			++p;
 			if (p[0] - '0' > n)
 				n = p[0] - '0';
 		}
-
+	}
 	/*
 	 * If there were any %digit references, then use those, otherwise
 	 * build a new command string with sufficient %digit references at
@@ -112,8 +116,8 @@ main(int argc, char *argv[])
 	 */
 	if ((cmd = malloc(sizeof("exec ") - 1 +
 	    strlen(argv[0]) + 9 * (sizeof(" %1") - 1) + 1)) == NULL)
-		err(1, "malloc");
-		
+		err(EXIT_FAILURE, "malloc");
+
 	if (n == 0) {
 		/* If nargs not set, default to a single argument. */
 		if (nargs == -1)
@@ -141,7 +145,7 @@ main(int argc, char *argv[])
 	 * for the normal case.
 	 */
 	if ((c = malloc(clen = 1024)) == NULL)
-		err(1, "malloc");
+		err(EXIT_FAILURE, "malloc");
 
 	/*
 	 * (argc) and (argv) are still offset by one to make it simpler to
@@ -158,18 +162,19 @@ main(int argc, char *argv[])
 		if (l > clen) {
 			nc = realloc(c, l);
 			if (nc == NULL)
-				err(1, "malloc");
+				err(EXIT_FAILURE, "malloc");
 			c = nc;
 			clen = l;
 		}
 
 		/* Expand command argv references. */
-		for (p = cmd, q = c; *p != '\0'; ++p)
+		for (p = cmd, q = c; *p != '\0'; ++p) {
 			if (p[0] == magic && isdigit((unsigned char)p[1]) &&
 			    p[1] != '0')
 				q += sprintf(q, "%s", argv[(++p)[0] - '0']);
 			else
 				*q++ = *p;
+		}
 
 		/* Terminate the command string. */
 		*q = '\0';
@@ -177,15 +182,15 @@ main(int argc, char *argv[])
 		/* Run the command. */
 		if (debug)
 			(void)printf("%s\n", c);
-		else
-			if (shell_system(c))
-				rval = 1;
+		else if (shell_system(c))
+			rval = 1;
 	}
 
 	if (argc != 1)
-		errx(1, "expecting additional argument%s after \"%s\"",
+		errx(EXIT_FAILURE,
+		    "expecting additional argument%s after \"%s\"",
 		    (nargs - argc) ? "s" : "", argv[argc - 1]);
-	exit(rval);
+	return rval;
 }
 
 /*
@@ -193,13 +198,13 @@ main(int argc, char *argv[])
  * 	Private version of system(3).  Use the user's SHELL environment
  *	variable as the shell to execute.
  */
-int
+static int
 shell_system(const char *command)
 {
 	static const char *name, *shell;
 	int status;
-	pid_t pid;
 	int omask;
+	pid_t pid;
 	sig_t intsave, quitsave;
 
 	if (shell == NULL) {
@@ -214,25 +219,30 @@ shell_system(const char *command)
 		return(1);
 
 	omask = sigblock(sigmask(SIGCHLD));
-	switch(pid = vfork()) {
+	switch (pid = vfork()) {
 	case -1:			/* error */
-		err(1, "vfork");
+		err(EXIT_FAILURE, "vfork");
+		/*NOTREACHED*/
 	case 0:				/* child */
 		(void)sigsetmask(omask);
-		execl(shell, name, "-c", command, NULL);
+		(void)execl(shell, name, "-c", command, NULL);
 		warn("%s", shell);
 		_exit(1);
+		/*NOTREACHED*/
+	default:			/* parent */
+		intsave = signal(SIGINT, SIG_IGN);
+		quitsave = signal(SIGQUIT, SIG_IGN);
+		pid = waitpid(pid, &status, 0);
+		(void)sigsetmask(omask);
+		(void)signal(SIGINT, intsave);
+		(void)signal(SIGQUIT, quitsave);
+		return pid == -1 ? -1 : status;
 	}
-	intsave = signal(SIGINT, SIG_IGN);
-	quitsave = signal(SIGQUIT, SIG_IGN);
-	pid = waitpid(pid, &status, 0);
-	(void)sigsetmask(omask);
-	(void)signal(SIGINT, intsave);
-	(void)signal(SIGQUIT, quitsave);
-	return(pid == -1 ? -1 : status);
+	/*NOTREACHED*/
 }
 
-void
+__dead
+static void
 usage(void)
 {
 
