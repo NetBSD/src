@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.12 2008/03/08 22:29:26 dholland Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.13 2008/03/08 22:41:03 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.12 2008/03/08 22:29:26 dholland Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.13 2008/03/08 22:41:03 dholland Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -282,8 +282,11 @@ getentry(struct utmpentry *e, struct utmp *up)
 
 	/*
 	 * e has just been calloc'd. We don't need to clear it or
-	 * append null-terminators. Use strncpy to _read_ up->ut_*
-	 * because they may not be terminated.
+	 * append null-terminators, because its length is strictly
+	 * greater than the source string. Use strncpy to _read_
+	 * up->ut_* because they may not be terminated. For this
+	 * reason we use the size of the _source_ as the length
+	 * argument.
 	 */
 	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
 	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
@@ -310,8 +313,11 @@ getentryx(struct utmpentry *e, struct utmpx *up)
 
 	/*
 	 * e has just been calloc'd. We don't need to clear it or
-	 * append null-terminators. Use strncpy to _read_ up->ut_*
-	 * because they may not be terminated.
+	 * append null-terminators, because its length is strictly
+	 * greater than the source string. Use strncpy to _read_
+	 * up->ut_* because they may not be terminated. For this
+	 * reason we use the size of the _source_ as the length
+	 * argument.
 	 */
 	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
 	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
