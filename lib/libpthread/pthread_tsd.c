@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.5 2008/03/07 22:27:07 ad Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.6 2008/03/08 13:22:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.5 2008/03/07 22:27:07 ad Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.6 2008/03/08 13:22:22 ad Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -85,7 +85,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	}
 
 	/* Got one. */
-	pthread__tsd_alloc[i] = __builtin_return_address(0);
+	pthread__tsd_alloc[i] = (void *)__builtin_return_address(0);
 	nextkey = (i + 1) % PTHREAD_KEYS_MAX;
 	pthread__tsd_destructors[i] = destructor;
 	pthread_mutex_unlock(&tsd_mutex);
