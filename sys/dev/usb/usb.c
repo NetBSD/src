@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.107 2008/03/01 14:16:51 rmind Exp $	*/
+/*	$NetBSD: usb.c,v 1.108 2008/03/08 18:46:18 ws Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.107 2008/03/01 14:16:51 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.108 2008/03/08 18:46:18 ws Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -517,10 +517,10 @@ usbread(dev_t dev, struct uio *uio, int flag)
 					;
 			}
 
-			error = uiomove((void *)ueo, uio->uio_resid, uio);
+			error = uiomove((void *)ueo, sizeof *ueo, uio);
 		} else
 #endif
-			error = uiomove((void *)ue, uio->uio_resid, uio);
+			error = uiomove((void *)ue, sizeof *ue, uio);
 	}
 	usb_free_event(ue);
 #ifdef COMPAT_30
@@ -633,6 +633,8 @@ usbioctl(dev_t devt, u_long cmd, void *data, int flag, struct lwp *l)
 			error = EIO;
 			goto ret;
 		}
+		if (len > ur->ucr_actlen)
+			len = ur->ucr_actlen;
 		if (len != 0) {
 			if (uio.uio_rw == UIO_READ) {
 				error = uiomove(ptr, len, &uio);
