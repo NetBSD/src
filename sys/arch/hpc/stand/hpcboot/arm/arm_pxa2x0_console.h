@@ -1,11 +1,11 @@
-/*	$NetBSD: arm_sa1100.h,v 1.4 2008/03/08 02:26:03 rafal Exp $	*/
+/* -*-C++-*-	$NetBSD: arm_pxa2x0_console.h,v 1.1 2008/03/08 02:26:03 rafal Exp $	*/
 
 /*-
- * Copyright (c) 2001 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by UCHIYAMA Yasushi.
+ * by Rafal K. Boni.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,13 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -36,22 +29,58 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPCBOOT_ARM_SA1100_H_
-#define	_HPCBOOT_ARM_SA1100_H_
+#ifndef _HPCBOOT_ARM_PXA2X0_CONSOLE_H_
+#define _HPCBOOT_ARM_PXA2X0_CONSOLE_H_
 
-class SA1100Architecture : public ARMArchitecture {
+#include <hpcboot.h>
+#include <memory.h>
+#include <arm/arm_console.h>
+
+class PXA2x0Console : public ARMConsole {
+	friend class ARMConsole;
+
 private:
-	// test routine for SA-1100 peripherals.
-	virtual void testFramebuffer(void);
-	virtual void testUART(void);
+	MemoryManager *&_mem;
+	vaddr_t _uart_base;
+
+private:
+	PXA2x0Console(MemoryManager *& mem) : _mem(mem), _uart_base(~0) { }
+	virtual ~PXA2x0Console() {
+		if (_uart_base != ~0)
+			_mem->unmapPhysicalPage(_uart_base);
+	}
+
+	void __tx_busy(void) {
+		uint8_t reg;
+		do
+			reg = VOLATILE_REF8(_uart_base + 0x14);
+		while (!(reg & 0x20));
+	}
+
+	void __clr_intr(void) {
+		uint8_t reg = VOLATILE_REF8(_uart_base + 0x08);
+	}
+
+	virtual void __putc(const char s) {
+		__tx_busy(); // wait until previous transmit done.
+		VOLATILE_REF8(_uart_base + 0x00) =
+		    static_cast <uint8_t>(0xff & s);
+		__tx_busy();  // wait until this transmit done.
+		__clr_intr(); // clear interrupt register
+	}
 
 public:
-	SA1100Architecture(Console *&, MemoryManager *&);
-	virtual ~SA1100Architecture(void);
+	virtual BOOL init(void) {
+		if (!SerialConsole::init())
+			return FALSE;
 
-	virtual BOOL init(void);
-	virtual BOOL setupLoader(void);
-	virtual void jump(paddr_t info, paddr_t pvec);
+		_uart_base =
+		    _mem->mapPhysicalPage(0x40100000, 0x100, PAGE_READWRITE);
+
+		if (_uart_base == ~0)
+			return FALSE;
+
+		return TRUE;
+	}
 };
-
-#endif // _HPCBOOT_ARM_SA1100_H_
+#endif //_HPCBOOT_ARM_PXA2X0_CONSOLE_H_

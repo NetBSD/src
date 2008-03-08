@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_sa1100.h,v 1.4 2008/03/08 02:26:03 rafal Exp $	*/
+/*	$NetBSD: arm_pxa2x0.h,v 1.1 2008/03/08 02:26:03 rafal Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -36,22 +36,22 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _HPCBOOT_ARM_SA1100_H_
-#define	_HPCBOOT_ARM_SA1100_H_
+#ifndef _HPCBOOT_ARM_PXA2X0_H_
+#define	_HPCBOOT_ARM_PXA2X0_H_
 
-class SA1100Architecture : public ARMArchitecture {
+class PXA2X0Architecture : public ARMArchitecture {
 private:
-	// test routine for SA-1100 peripherals.
+	// test routine for PXA 2x0 peripherals.
 	virtual void testFramebuffer(void);
 	virtual void testUART(void);
 
 public:
-	SA1100Architecture(Console *&, MemoryManager *&);
-	virtual ~SA1100Architecture(void);
+	PXA2X0Architecture(Console *&, MemoryManager *&);
+	virtual ~PXA2X0Architecture(void);
 
 	virtual BOOL init(void);
 	virtual BOOL setupLoader(void);
 	virtual void jump(paddr_t info, paddr_t pvec);
 };
 
-#endif // _HPCBOOT_ARM_SA1100_H_
+#endif // _HPCBOOT_ARM_PXA2X0_H_
