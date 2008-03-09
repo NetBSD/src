@@ -1,7 +1,7 @@
-/*	$NetBSD: conf.c,v 1.58 2006/12/17 20:04:09 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.59 2008/03/09 20:11:43 lukem Exp $	*/
 
 /*-
- * Copyright (c) 1997-2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: conf.c,v 1.58 2006/12/17 20:04:09 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.59 2008/03/09 20:11:43 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -895,15 +895,21 @@ count_users(void)
 	size_t	count;
 	pid_t  *pids, mypid;
 	struct stat sb;
+	struct flock fl;
 
 	(void)strlcpy(fn, _PATH_CLASSPIDS, sizeof(fn));
 	(void)strlcat(fn, curclass.classname, sizeof(fn));
 	pids = NULL;
 	connections = 1;
+	fl.l_start = 0;
+	fl.l_len = 0;
+	fl.l_pid = 0;
+	fl.l_type = F_WRLCK;
+	fl.l_whence = SEEK_SET;
 
 	if ((fd = open(fn, O_RDWR | O_CREAT, 0600)) == -1)
 		return;
-	if (lockf(fd, F_TLOCK, 0) == -1)
+	if (fcntl(fd, F_SETLK, &fl) == -1)
 		goto cleanup_count;
 	if (fstat(fd, &sb) == -1)
 		goto cleanup_count;
@@ -942,8 +948,8 @@ count_users(void)
 	(void)ftruncate(fd, count);
 
  cleanup_count:
-	if (lseek(fd, 0, SEEK_SET) != -1)
-		(void)lockf(fd, F_ULOCK, 0);
+	fl.l_type = F_UNLCK;
+	(void)fcntl(fd, F_SETLK, &fl);
 	close(fd);
 	REASSIGN(pids, NULL);
 }
