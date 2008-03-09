@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.16 2008/03/01 21:07:08 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.17 2008/03/09 11:10:11 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -111,4 +111,11 @@ share/man/man9/uiomove.9	               patch
 	Sync struct uio's documentation with reality in uiomove(9) to reflect
 	the removal of uio_segflg and uio_procp.
 	[elad, #1092]
+
+sbin/newfs/newfs.8				1.71
+
+	Fix small documentation bug as reported in PR#38192 :
+	FFS  -> FFSv1
+	UFS2 -> FFSv2
+	[reinoud, ticket #1099]
 
