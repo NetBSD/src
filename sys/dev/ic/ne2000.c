@@ -1,4 +1,4 @@
-/*	$NetBSD: ne2000.c,v 1.55 2007/10/19 11:59:57 ad Exp $	*/
+/*	$NetBSD: ne2000.c,v 1.56 2008/03/09 20:32:45 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.55 2007/10/19 11:59:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ne2000.c,v 1.56 2008/03/09 20:32:45 dholland Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -321,7 +321,7 @@ ne2000_detect(nict, nich, asict, asich)
 {
 	static u_int8_t test_pattern[32] = "THIS is A memory TEST pattern";
 	u_int8_t test_buffer[32], tmp;
-	int i, rv = 0;
+	int i, rv = NE2000_TYPE_UNKNOWN;
 
 	/* Reset the board. */
 #ifdef GWETHER
