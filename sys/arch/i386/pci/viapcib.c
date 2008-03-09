@@ -1,4 +1,4 @@
-/* $NetBSD: viapcib.c,v 1.7 2008/01/04 21:17:42 ad Exp $ */
+/* $NetBSD: viapcib.c,v 1.8 2008/03/09 17:14:51 joerg Exp $ */
 /* $FreeBSD: src/sys/pci/viapm.c,v 1.10 2005/05/29 04:42:29 nyan Exp $ */
 
 /*-
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.7 2008/01/04 21:17:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viapcib.c,v 1.8 2008/03/09 17:14:51 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -180,7 +180,7 @@ viapcib_attach(struct device *parent, struct device *self, void *opaque)
 	simple_lock_init(&sc->sc_lock);
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, SMB_HOST_CONFIG);
-	if ((val & 1) == 0) {
+	if ((val & 0x10000) == 0) {
 		printf(": SMBus is disabled\n");
 		addr = 0;
 		/* XXX We can enable the SMBus here by writing 1 to
@@ -204,7 +204,7 @@ viapcib_attach(struct device *parent, struct device *self, void *opaque)
 #endif /* !VIAPCIB_DEBUG */
 
 	val = pci_conf_read(pa->pa_pc, pa->pa_tag, SMB_REVISION);
-	sc->sc_revision = val;
+	sc->sc_revision = val >> 16;
 
 core_pcib:
 	pcibattach(parent, self, opaque);
