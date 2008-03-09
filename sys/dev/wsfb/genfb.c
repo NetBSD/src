@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.14 2008/03/09 20:32:30 phx Exp $ */
+/*	$NetBSD: genfb.c,v 1.15 2008/03/09 21:33:17 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.14 2008/03/09 20:32:30 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.15 2008/03/09 21:33:17 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,7 +151,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 
 	/* do not attach when we're not console */
 	if (!console) {
-		aprint_normal("%s: no console, unable to continue",
+		aprint_normal("%s: no console, unable to continue\n",
 		    sc->sc_dev.dv_xname);
 		return -1;
 	}
