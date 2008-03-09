@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2008/02/05 19:09:02 garbled Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2008/03/09 10:13:10 phx Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,7 +89,7 @@
  * from floppy.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
-#define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM, SET_X11_NOSERVERS
+#define MD_SETS_SELECTED SET_KERNEL_1, SET_SYSTEM, SET_X11
 
 /*
  * Machine-specific command to write a new label to a disk.
