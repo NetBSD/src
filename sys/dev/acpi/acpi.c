@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.109 2008/02/13 15:27:55 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.110 2008/03/09 19:09:00 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.109 2008/02/13 15:27:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.110 2008/03/09 19:09:00 jmcneill Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -168,7 +168,6 @@ static char acpi_supported_states[3 * 6 + 1] = "";;
 /*
  * Prototypes.
  */
-static void		acpi_shutdown(void *);
 static void		acpi_build_tree(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, UINT32, void *, void **);
 
@@ -485,32 +484,10 @@ acpi_attach(struct device *parent, struct device *self, void *aux)
 	    is_available_state(sc, ACPI_STATE_S4) ? "S4 " : "",
 	    is_available_state(sc, ACPI_STATE_S5) ? "S5 " : "");
 
-	/*
-	 * Register a shutdown hook that disables certain ACPI
-	 * events that might happen and confuse us while we're
-	 * trying to shut down.
-	 */
-	sc->sc_sdhook = shutdownhook_establish(acpi_shutdown, sc);
-	if (sc->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to register shutdown hook\n",
-		    sc->sc_dev.dv_xname);
-
 #ifdef ACPI_DEBUGGER
 	if (acpi_dbgr & ACPI_DBGR_RUNNING)
 		acpi_osd_debugger();
 #endif
-}
-
-/*
- * acpi_shutdown:
- *
- *	Shutdown hook for ACPI -- disable some events that
- *	might confuse us.
- */
-static void
-acpi_shutdown(void *arg)
-{
-	/* nothing */
 }
 
 #if 0
