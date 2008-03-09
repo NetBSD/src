@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.55 2008/03/09 19:15:01 jmcneill Exp $	*/
+/*	$NetBSD: ld.c,v 1.56 2008/03/09 19:18:25 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.55 2008/03/09 19:15:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.56 2008/03/09 19:18:25 jmcneill Exp $");
 
 #include "rnd.h"
 
@@ -248,6 +248,9 @@ ldenddetach(struct ld_softc *sc)
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->sc_rnd_source);
 #endif
+
+	/* Deregister with PMF */
+	pmf_device_deregister(&sc->sc_dv);
 
 	/*
 	 * XXX We can't really flush the cache here, beceause the
