@@ -1,4 +1,4 @@
-/*	$NetBSD: fmt.c,v 1.28 2007/12/15 19:44:50 perry Exp $	*/
+/*	$NetBSD: fmt.c,v 1.29 2008/03/09 17:26:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fmt.c	8.1 (Berkeley) 7/20/93";
 #endif
-__RCSID("$NetBSD: fmt.c,v 1.28 2007/12/15 19:44:50 perry Exp $");
+__RCSID("$NetBSD: fmt.c,v 1.29 2008/03/09 17:26:37 christos Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -157,8 +157,8 @@ main(int argc, char **argv)
 		oflush();
 		return 0;
 	}
-	while (argc--) {
-		if ((fi = fopen(*argv++, "r")) == NULL) {
+	for (;argc; argc--, argv++) {
+		if ((fi = fopen(*argv, "r")) == NULL) {
 			warn("Cannot open `%s'", *argv);
 			errs++;
 			continue;
