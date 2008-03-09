@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.78 2008/01/26 17:55:29 rmind Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.79 2008/03/09 15:39:14 rmind Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/pset.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/specificdata.h>
