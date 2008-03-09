@@ -2,7 +2,7 @@
 # compare - compare output
 # usage: compare original-servent-file reader-program
 #
-# $NetBSD: compare,v 1.3 2008/03/08 23:32:38 dholland Exp $
+# $NetBSD: compare,v 1.4 2008/03/09 01:31:07 dholland Exp $
 #
 
 REF=reference-output
@@ -22,18 +22,53 @@ if [ ! -x "$2" ]; then
     exit 1
 fi
 
-# munge original to match output of the test program
-tr '\t' ' ' < "$1" | sed '
-    s/#.*$//
-    s/  */ /g
-    /^$/d
+#
+# Munge original to:
+#  (1) match output format of the test program
+#  (2) fold all names for the same port/proto together
+#  (3) prune duplicates
+#
+tr '\t' ' ' < "$1" | awk '
+    function add(key, name,      i, n, ar) {
+	n = split(names[key], ar);
+	for (i=1; i<=n; i++) {
+	    if (name == ar[i]) {
+		return;
+	    }
+	}
+	delete ar;
+	names[key] = names[key] " " name;
+    }
 
-    s/^/name=/
-    s/ \([0-9][0-9]*\)\//,port=\1,proto=/
-    s/$/ /
-    s/ /,aliases=/
-    s/ *$//
-    s/,/, /g
+    {
+	sub("#.*", "", $0);
+	gsub("  *", " ", $0);
+	if (NF==0) {
+	    next;
+	}
+	add($2, $1, 0);
+	for (i=3; i<=NF; i++) {
+	    add($2, $i, 1);
+	}
+    }
+    END {
+	for (key in names) {
+	    portproto = key;
+	    sub("/", ", proto=", portproto);
+	    portproto = "port=" portproto;
+
+	    n = split(names[key], ar);
+	    printf "name=%s, %s, aliases=", ar[1], portproto;
+	    for (i=2; i<=n; i++) {
+		if (i>2) {
+		    printf " ";
+		}
+		printf "%s", ar[i];
+	    }
+	    printf "\n";
+	    delete ar;
+	}
+    }
 ' | sort > $REF
 
 # run test program
