@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.5.2.1 2008/02/04 05:39:50 riz Exp $
+# 	$NetBSD: RAMDISK,v 1.5.2.2 2008/03/09 10:56:14 bouyer Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -28,8 +28,15 @@ no options 	SYSVSHM
 no options 	P1003_1B_SEMAPHORE
 no options 	SYSCTL_INCLUDE_DESCR
 
+no options	COMPAT_13
+no options	COMPAT_14
+no options	COMPAT_15
+no options	COMPAT_16
+
 no file-system	EXT2FS
+no file-system	LFS
 no file-system	FDESC
+no file-system	KERNFS
 no file-system	NULLFS
 no file-system	OVERLAY
 no file-system	PORTAL
