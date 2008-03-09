@@ -1,8 +1,9 @@
-# $NetBSD: Makefile,v 1.2 2007/05/19 15:38:06 christos Exp $
+# $NetBSD: Makefile,v 1.3 2008/03/09 22:44:41 dholland Exp $
+
+NOMAN=# defined (must be above bsd.own.mk)
 
 .include <bsd.own.mk>
 
-MKMAN=no
 CPPFLAGS+=-DDEBUG_EXPAND
 PROG=expand
 .PATH.c: ${NETBSDSRCDIR}/libexec/ld.elf_so
