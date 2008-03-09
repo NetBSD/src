@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.6 2008/02/27 23:59:37 macallan Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.7 2008/03/09 20:32:30 phx Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.6 2008/02/27 23:59:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.7 2008/03/09 20:32:30 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,10 +162,11 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	ops.genfb_ioctl = pci_genfb_ioctl;
 	ops.genfb_mmap = pci_genfb_mmap;
 
-	genfb_attach(&sc->sc_gen, &ops);
+	if (genfb_attach(&sc->sc_gen, &ops) == 0) {
 
-	/* now try to attach a DRM */
-	config_found_ia(self, "drm", aux, pci_genfb_drm_print);	
+		/* now try to attach a DRM */
+		config_found_ia(self, "drm", aux, pci_genfb_drm_print);	
+	}
 }
 
 static int
