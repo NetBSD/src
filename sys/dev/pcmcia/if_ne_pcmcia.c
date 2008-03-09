@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.150 2007/10/19 12:01:04 ad Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.151 2008/03/09 20:32:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.150 2007/10/19 12:01:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.151 2008/03/09 20:32:45 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -711,7 +711,7 @@ found:
 	/*
 	 * Check for a Realtek 8019.
 	 */
-	if (nsc->sc_type == 0) {
+	if (nsc->sc_type == NE2000_TYPE_UNKNOWN) {
 		bus_space_write_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR,
 		    ED_CR_PAGE_0 | ED_CR_STP);
 		if (bus_space_read_1(dsc->sc_regt, dsc->sc_regh,
