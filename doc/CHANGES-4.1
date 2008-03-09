@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.1,v 1.1.2.35 2008/03/01 21:07:40 bouyer Exp $
+#	$NetBSD: CHANGES-4.1,v 1.1.2.36 2008/03/09 11:08:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.1
 release:
@@ -509,4 +509,39 @@ share/man/man9/uiomove.9	               patch
 	Sync struct uio's documentation with reality in uiomove(9) to reflect
 	the removal of uio_segflg and uio_procp.
 	[elad, #1092]
+
+sys/arch/ews4800mips/conf/RAMDISK		1.9
+
+	Disable more options and file-systems to shrink install kernel.
+	[tsutsui, ticket #1095]
+
+sys/arch/cobalt/pci/pci_machdep.c		1.25
+sys/arch/cobalt/stand/boot/cons.c		1.6
+
+	Properly map the primary tulip Ethernet interrupt line on Qube2700
+	cnscan() should return -1 (no input) if there is no console device,
+	fix boot on Qube2700 (which doesn't have serial console).
+	[tsutsui, ticket #1096]
+
+sys/dev/pci/pcidevs				1.930
+sys/dev/pci/pcidevs.h				regen
+sys/dev/pci/pcidevs_data.h			regen
+sys/dev/pci/pucdata.c				1.53
+
+	Support I-O DATA RSA-PCI 2 port serial board (in
+	16550A compatible mode)
+	[tsutsui, ticket #1097]
+
+sys/dev/mii/rlphy.c				1.13
+
+	Fix autonegotiation on 100BASE-TX on 8139C+ at boot time.
+	This may also fix PR kern/34109.
+	[tsutsui, ticket #1098]
+
+sbin/newfs/newfs.8				1.71
+
+	Fix small documentation bug as reported in PR#38192 :
+	FFS  -> FFSv1
+	UFS2 -> FFSv2
+	[reinoud, ticket #1099]
 
