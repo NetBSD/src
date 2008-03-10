@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2003/12/26 05:23:15 rtr Exp $
+#	$NetBSD: Makefile,v 1.2 2008/03/10 02:02:56 dholland Exp $
+
+NOMAN=# defined (must come before bsd.own.mk)
 
 .include <bsd.own.mk>
 
 PROG=	mmapr
-MKMAN=	no
 .PATH:	${X11SRCDIR.xc}/programs/Xserver/hw/xfree86/etc
 
 SRCS=	mmapr.c
