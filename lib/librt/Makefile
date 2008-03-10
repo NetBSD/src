@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2008/01/15 03:37:15 rmind Exp $
+#	$NetBSD: Makefile,v 1.6 2008/03/10 14:47:06 rmind Exp $
 #
 
 WARNS=	2
@@ -9,12 +9,22 @@ SRCS+=	sched.c
 
 MAN+=	aio_cancel.3 aio_error.3 aio_fsync.3 aio_read.3 aio_return.3 \
 	aio_suspend.3 aio_write.3 lio_listio.3 \
+	sched.3 \
 	sem_destroy.3 sem_getvalue.3 sem_init.3 sem_open.3 sem_post.3 \
 	sem_wait.3
 
 MLINKS+=	sem_open.3 sem_close.3
 MLINKS+=	sem_open.3 sem_unlink.3
 MLINKS+=	sem_wait.3 sem_trywait.3
+
+MLINKS+=	sched.3 sched_setparam.3
+MLINKS+=	sched.3 sched_getparam.3
+MLINKS+=	sched.3 sched_setscheduler.3
+MLINKS+=	sched.3 sched_getscheduler.3
+MLINKS+=	sched.3 sched_get_priority_max.3
+MLINKS+=	sched.3 sched_get_priority_min.3
+MLINKS+=	sched.3 sched_rr_get_interval.3
+MLINKS+=	sched.3 sched_yield.3
 
 .include <bsd.own.mk>
 
