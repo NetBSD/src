@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.50 2008/02/10 18:50:54 ad Exp $
+#	$NetBSD: Makefile,v 1.51 2008/03/10 14:47:06 rmind Exp $
 #
 
 WARNS=	4
@@ -115,8 +115,7 @@ MAN+=	pthread.3 \
 	pthread_setname_np.3 \
 	pthread_setspecific.3 pthread_sigmask.3 pthread_spin_destroy.3 \
 	pthread_spin_init.3 pthread_spin_lock.3 pthread_spin_unlock.3 \
-	pthread_suspend_np.3 pthread_testcancel.3 \
-	sched_yield.3
+	pthread_suspend_np.3 pthread_testcancel.3
 
 MLINKS+=	pthread_attr.3 pthread_attr_init.3
 MLINKS+=	pthread_attr.3 pthread_attr_destroy.3
