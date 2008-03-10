@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.26 2008/03/10 22:29:13 yamt Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.27 2008/03/10 22:34:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.26 2008/03/10 22:29:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.27 2008/03/10 22:34:40 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -101,8 +101,7 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, uint32_t off, uint32_t len)
 	}
 
 	sum += w[0];
-	if (!IN6_IS_SCOPE_LINKLOCAL(in6_src) &&
-	    !IN6_IS_ADDR_MC_INTFACELOCAL(in6_src))
+	if (!IN6_IS_SCOPE_EMBEDDABLE(in6_src))
 		sum += w[1];
 	sum += w[2];
 	sum += w[3];
@@ -112,8 +111,7 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, uint32_t off, uint32_t len)
 	sum += w[7];
 	w += 8;
 	sum += w[0];
-	if (!IN6_IS_SCOPE_LINKLOCAL(in6_dst) &&
-	    !IN6_IS_ADDR_MC_INTFACELOCAL(in6_dst))
+	if (!IN6_IS_SCOPE_EMBEDDABLE(in6_dst))
 		sum += w[1];
 	sum += w[2];
 	sum += w[3];
