@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.59 2008/01/08 20:56:22 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.60 2008/03/10 12:34:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -157,7 +157,7 @@ static __inline void
 bintime2timespec(const struct bintime *bt, struct timespec *ts)
 {
 
-	ts->tv_sec = (/* XXX NetBSD not SUS compliant - MUST FIX */time_t)bt->sec;
+	ts->tv_sec = bt->sec;
 	ts->tv_nsec =
 	    (long)(((uint64_t)1000000000 * (uint32_t)(bt->frac >> 32)) >> 32);
 }
