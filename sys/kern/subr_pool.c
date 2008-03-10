@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.152 2008/03/02 12:19:58 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.153 2008/03/10 22:20:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.152 2008/03/02 12:19:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.153 2008/03/10 22:20:14 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -3062,7 +3062,7 @@ found:
 					snprintf(cpucachestr,
 					    sizeof(cpucachestr),
 					    "cached by CPU %u",
-					    (u_int)ci->ci_cpuid);
+					    ci->ci_index);
 					goto print;
 				}
 			}
