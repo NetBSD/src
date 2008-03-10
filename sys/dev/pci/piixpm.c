@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.21 2008/02/29 06:13:39 dyoung Exp $ */
+/* $NetBSD: piixpm.c,v 1.22 2008/03/10 21:18:08 sketch Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.21 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.22 2008/03/10 21:18:08 sketch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof(devinfo));
-	aprint_normal("\n%s: %s (rev. 0x%02x)",
+	aprint_normal("\n%s: %s (rev. 0x%02x)\n",
 		      device_xname(self), devinfo, PCI_REVISION(pa->pa_class));
 
 	if (!pmf_device_register(self, piixpm_suspend, piixpm_resume))
@@ -157,7 +157,7 @@ piixpm_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, PIIX_SMB_HOSTC);
-	DPRINTF((": conf 0x%x", conf));
+	DPRINTF(("%s: conf 0x%x\n", sc->sc_dev.dv_xname, conf));
 
 	if ((PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL) ||
 	    (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_82371AB_PMC))
