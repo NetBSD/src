@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.502 2008/02/09 19:31:36 jmmv Exp $
+#	$NetBSD: bsd.own.mk,v 1.503 2008/03/10 01:18:29 dholland Exp $
 
 .if !defined(_BSD_OWN_MK_)
 _BSD_OWN_MK_=1
@@ -516,11 +516,14 @@ dependall:	.NOTMAIN realdepend .MAKE
 # Supported NO* options (if defined, MK* will be forced to "no",
 # regardless of user's mk.conf setting).
 #
+# Source makefiles should set NO*, and not MK*, and must do so before
+# including bsd.own.mk.
+#
 .for var in \
-	CRYPTO DOC HTML LINKLIB LINT MAN NLS OBJ PIC PICINSTALL PROFILE \
-	SHARE STATICLIB
-.if defined(NO${var})
-MK${var}:=	no
+	NOCRYPTO NODOC NOHTML NOLINKLIB NOLINT NOMAN NONLS NOOBJ NOPIC \
+	NOPICINSTALL NOPROFILE NOSHARE NOSTATICLIB
+.if defined(${var})
+MK${var:S/^NO//}:=	no
 .endif
 .endfor
 
