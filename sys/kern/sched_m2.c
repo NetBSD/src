@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.20 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.21 2008/03/10 22:20:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.20 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.21 2008/03/10 22:20:14 martin Exp $");
 
 #include <sys/param.h>
 
@@ -1045,7 +1045,7 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci_rq = ci->ci_schedstate.spc_sched_info;
 
-		(*pr)("Run-queue (CPU = %d):\n", ci->ci_cpuid);
+		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
 		(*pr)(" pid.lid = %d.%d, threads count = %u, "
 		    "avgcount = %u, highest pri = %d\n",
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
@@ -1066,12 +1066,12 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			sil = l->l_sched_info;
 			ci = l->l_cpu;
-			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %4u %11p %3d "
+			(*pr)(" | %5d %4u %4u 0x%8.8x %3s %4u %11p %3u "
 			    "%u ST=%d RT=%d %d\n",
 			    (int)l->l_lid, l->l_priority, lwp_eprio(l),
 			    l->l_flag, l->l_stat == LSRUN ? "RQ" :
 			    (l->l_stat == LSSLEEP ? "SQ" : "-"),
-			    sil->sl_timeslice, l, ci->ci_cpuid,
+			    sil->sl_timeslice, l, ci->ci_index,
 			    (u_int)(hardclock_ticks - sil->sl_lrtime),
 			    sil->sl_slpsum, sil->sl_rtsum, sil->sl_flags);
 		}
