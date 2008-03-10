@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_cksum.c,v 1.25 2008/03/09 22:05:50 yamt Exp $	*/
+/*	$NetBSD: in6_cksum.c,v 1.26 2008/03/10 22:29:13 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.25 2008/03/09 22:05:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_cksum.c,v 1.26 2008/03/10 22:29:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -58,6 +58,7 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, uint32_t off, uint32_t len)
 	const struct ip6_hdr *ip6;
 	uint32_t sum;
 	const uint16_t *w;
+	const char *cp;
 
 	if (__predict_false(off < sizeof(struct ip6_hdr)))
 		panic("in6_cksum: offset too short for IPv6 header");
@@ -86,8 +87,9 @@ in6_cksum(struct mbuf *m, u_int8_t nxt, uint32_t off, uint32_t len)
 #else
 	sum = (len & 0xffff) + ((len >> 16) & 0xffff) + nxt;
 #endif
-	ip6 = mtod(m, const struct ip6_hdr *);
-	w = (const uint16_t *)(const void *)&ip6->ip6_src;
+	cp = mtod(m, const char *);
+	w = (const uint16_t *)(cp + offsetof(struct ip6_hdr, ip6_src));
+	ip6 = (const void *)cp;
 	if (__predict_true((uintptr_t)w % 2 == 0)) {
 		in6_src = &ip6->ip6_src;
 		in6_dst = &ip6->ip6_dst;
