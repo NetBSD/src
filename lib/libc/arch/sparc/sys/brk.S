@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.13 2008/03/10 18:28:43 he Exp $	*/
+/*	$NetBSD: brk.S,v 1.14 2008/03/10 18:31:08 he Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)brk.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: brk.S,v 1.13 2008/03/10 18:28:43 he Exp $")
+	RCSID("$NetBSD: brk.S,v 1.14 2008/03/10 18:31:08 he Exp $")
 #endif
 #endif /* SYSLIBC_SCCS and not lint */
 
@@ -73,7 +73,7 @@ ENTRY(_brk)
 	mov	SYS_break, %g1
 	t	ST_SYSCALL
 	bcc,a	1f
-	  sethi %hi(CURBRK), %g1
+	 sethi %hi(CURBRK), %g1
 	ERROR()
 1:
 	retl				! success, return 0 & record new break
