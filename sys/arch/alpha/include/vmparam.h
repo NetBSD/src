@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.31 2008/02/21 17:12:58 ad Exp $ */
+/* $NetBSD: vmparam.h,v 1.32 2008/03/10 13:36:22 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -167,11 +167,13 @@
 struct vm_page_md {
 	struct pv_entry *pvh_list;		/* pv_entry list */
 	int pvh_attrs;				/* page attributes */
+	unsigned pvh_refcnt;
 };
 
 #define	VM_MDPAGE_INIT(pg)						\
 do {									\
 	(pg)->mdpage.pvh_list = NULL;					\
+	(pg)->mdpage.pvh_refcnt = 0;					\
 } while (/*CONSTCOND*/0)
 
 #endif	/* ! _ALPHA_VMPARAM_H_ */
