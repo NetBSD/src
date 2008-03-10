@@ -1,11 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2005/12/11 12:24:49 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2008/03/10 01:22:05 dholland Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/net
 
 CPPFLAGS+=-DDO_DEFLATE=1
-MKMAN=	no
 KMOD=	deflate
 SRCS=	lkminit_deflate.c ppp-deflate.c zlib.c
 
