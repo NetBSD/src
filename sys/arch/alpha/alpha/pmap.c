@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.233 2008/03/10 13:36:22 ad Exp $ */
+/* $NetBSD: pmap.c,v 1.234 2008/03/10 13:37:38 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.233 2008/03/10 13:36:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.234 2008/03/10 13:37:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -762,7 +762,7 @@ do {									\
  *	Increment or decrement a pmap statistic.
  */
 #define	PMAP_STAT_INCR(s, v)	atomic_add_ulong((unsigned long *)(&(s)), (v))
-#define	PMAP_STAT_DECR(s, v)	atomic_sub_ulong((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_DECR(s, v)	atomic_add_ulong((unsigned long *)(&(s)), -(v))
 
 /*
  * pmap_bootstrap:
