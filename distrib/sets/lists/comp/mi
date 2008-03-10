@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1117 2008/03/02 00:30:21 rmind Exp $
+#	$NetBSD: mi,v 1.1118 2008/03/10 14:47:06 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6154,6 +6154,14 @@
 ./usr/share/man/cat3/scandir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanw.0			comp-c-catman		.cat
+./usr/share/man/cat3/sched.0			comp-c-catman		.cat
+./usr/share/man/cat3/sched_setparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_getparam.0		comp-c-catman		.cat
+./usr/share/man/cat3/sched_setscheduler.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_getscheduler.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_get_priority_max.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_get_priority_min.0	comp-c-catman		.cat
+./usr/share/man/cat3/sched_rr_get_interval.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sched_yield.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scrl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scroll.0			comp-c-catman		.cat
@@ -10806,6 +10814,14 @@
 ./usr/share/man/man3/scandir.3			comp-c-man		.man
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
 ./usr/share/man/man3/scanw.3			comp-c-man		.man
+./usr/share/man/man3/sched.3			comp-c-man		.man
+./usr/share/man/man3/sched_setparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_getparam.3		comp-c-man		.man
+./usr/share/man/man3/sched_setscheduler.3	comp-c-man		.man
+./usr/share/man/man3/sched_getscheduler.3	comp-c-man		.man
+./usr/share/man/man3/sched_get_priority_max.3	comp-c-man		.man
+./usr/share/man/man3/sched_get_priority_min.3	comp-c-man		.man
+./usr/share/man/man3/sched_rr_get_interval.3	comp-c-man		.man
 ./usr/share/man/man3/sched_yield.3		comp-c-man		.man
 ./usr/share/man/man3/scrl.3			comp-c-man		.man
 ./usr/share/man/man3/scroll.3			comp-c-man		.man
