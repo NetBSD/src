@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1118 2008/03/10 14:47:06 rmind Exp $
+#	$NetBSD: mi,v 1.1119 2008/03/10 19:00:21 rmind Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5935,6 +5935,11 @@
 ./usr/share/man/cat3/prop_string_mutable.0	comp-c-catman		.cat
 ./usr/share/man/cat3/prop_string_size.0		comp-c-catman		.cat
 ./usr/share/man/cat3/proplib.0			comp-c-catman		.cat
+./usr/share/man/cat3/pset.0			comp-c-catman		.cat
+./usr/share/man/cat3/pset_create.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_assign.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_bind.0		comp-c-catman		.cat
+./usr/share/man/cat3/pset_destroy.0		comp-c-catman		.cat
 ./usr/share/man/cat3/psignal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_atfork.0		comp-c-catman		.cat
@@ -10595,6 +10600,11 @@
 ./usr/share/man/man3/prop_string_mutable.3	comp-c-man		.man
 ./usr/share/man/man3/prop_string_size.3		comp-c-man		.man
 ./usr/share/man/man3/proplib.3			comp-c-man		.man
+./usr/share/man/man3/pset.3			comp-c-man		.man
+./usr/share/man/man3/pset_create.3		comp-c-man		.man
+./usr/share/man/man3/pset_assign.3		comp-c-man		.man
+./usr/share/man/man3/pset_bind.3		comp-c-man		.man
+./usr/share/man/man3/pset_destroy.3		comp-c-man		.man
 ./usr/share/man/man3/psignal.3			comp-c-man		.man
 ./usr/share/man/man3/pthread.3			comp-c-man		.man
 ./usr/share/man/man3/pthread_atfork.3		comp-c-man		.man
