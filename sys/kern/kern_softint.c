@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.11 2008/02/06 15:34:36 yamt Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.12 2008/03/10 22:20:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -183,7 +183,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.11 2008/02/06 15:34:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.12 2008/03/10 22:20:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -254,16 +254,16 @@ softint_init_isr(softcpu_t *sc, const char *desc, pri_t pri, u_int level)
 
 	error = kthread_create(pri, KTHREAD_MPSAFE | KTHREAD_INTR |
 	    KTHREAD_IDLE, ci, softint_thread, si, &si->si_lwp,
-	    "soft%s/%d", desc, (int)ci->ci_cpuid);
+	    "soft%s/%u", desc, ci->ci_index);
 	if (error != 0)
 		panic("softint_init_isr: error %d", error);
 
-	snprintf(si->si_name, sizeof(si->si_name), "%s/%d", desc,
-	    (int)ci->ci_cpuid);
+	snprintf(si->si_name, sizeof(si->si_name), "%s/%u", desc,
+	    ci->ci_index);
 	evcnt_attach_dynamic(&si->si_evcnt, EVCNT_TYPE_INTR, NULL,
 	   "softint", si->si_name);
-	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%d",
-	    desc, (int)ci->ci_cpuid);
+	snprintf(si->si_name_block, sizeof(si->si_name_block), "%s block/%u",
+	    desc, ci->ci_index);
 	evcnt_attach_dynamic(&si->si_evcnt_block, EVCNT_TYPE_INTR, NULL,
 	   "softint", si->si_name_block);
 
