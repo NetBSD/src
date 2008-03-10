@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.64 2008/02/24 12:51:42 martin Exp $
+#	$NetBSD: makesyscalls.sh,v 1.65 2008/03/10 14:06:46 njoly Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -507,7 +507,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	if ($2 == "IGNORED")
 		sys_stub = "(sy_call_t *)nullop";
 	else
-		sys_stub = "sys_nosys";
+		sys_stub = sys_nosys;
 
 	printf("\t{ 0, 0, 0,\n\t    %s },\t\t\t/* %d = %s */\n", \
 	    sys_stub, syscall, comment) > sysent
