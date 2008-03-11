@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.390 2008/02/07 14:36:40 itohy Exp $
+.\"	$NetBSD: main,v 1.391 2008/03/11 19:19:14 tonnerre Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -2012,6 +2012,7 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Christian Limpach Ta Mt cl@NetBSD.org
 .It Ta Frank van der Linden Ta Mt fvdl@NetBSD.org
 .It Ta Joel Lindholm Ta Mt joel@NetBSD.org
+.It Ta Tonnerre Lombard Ta Mt tonnerre@NetBSD.org
 .It Ta Mike Long Ta Mt mikel@NetBSD.org
 .It Ta Michael Lorenz Ta Mt macallan@NetBSD.org
 .It Ta Warner Losh Ta Mt imp@NetBSD.org
