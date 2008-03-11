@@ -1,4 +1,4 @@
-/* $NetBSD: asm_2100.h,v 1.8 2007/05/24 22:12:03 mjacob Exp $ */
+/* $NetBSD: asm_2100.h,v 1.9 2008/03/11 05:33:30 mjacob Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.
@@ -8145,3 +8145,7 @@ static const uint16_t isp_2100_risc_code[] = {
 	0x0800, 0x1000, 0x2000, 0x4000, 0x8000, 0x687d
 };
 #endif
+#ifdef	ISP_2100_RISC_CODE
+#undef	ISP_2100_RISC_CODE
+#endif
+#define	ISP_2100_RISC_CODE (const uint16_t *) isp_2100_risc_code
