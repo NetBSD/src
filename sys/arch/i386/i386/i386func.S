@@ -1,4 +1,4 @@
-/*	$NetBSD: i386func.S,v 1.5 2008/03/10 22:04:06 ad Exp $	*/
+/*	$NetBSD: i386func.S,v 1.6 2008/03/11 00:40:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.5 2008/03/10 22:04:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.6 2008/03/11 00:40:38 ad Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -181,9 +181,7 @@ ENTRY(tsc_get_timecount)
 	orl	CC_DENOM+4(%edi), %eax	/*     cc_denom > 0xffffffff) */
 	jnz	2f			/*    return tsc_slow_timecount() */
 	rdtsc				/* cc = cpu_counter32(); */
-	movl	$0, %edx
-	subl	CC_CC(%edi), %eax	/* cc -= cc->cc_cc; */
-	adcl	$0, %edx		/* if (cc < 0) cc += 0x100000000; */
+	subl	CC_CC(%edi), %eax	/* cc -= cc->cc_cc; (can wrap) */
 	mull	CC_DELTA(%edi)		/* rcc = (cc * ci->ci_cc.cc_delta) */
 	divl	CC_DENOM(%edi)		/*     / ci->ci_cc.cc_denom */
 	addl	CC_VAL(%edi), %eax	/*     + ci->ci_cc.cc_val; */
