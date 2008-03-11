@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.139 2008/03/07 07:03:06 dyoung Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.140 2008/03/11 02:42:41 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.139 2008/03/07 07:03:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.140 2008/03/11 02:42:41 matt Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1139,7 +1139,7 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 
 	if ((ca->ca_flags & DVF_PRIV_ALLOC) == 0 &&
 	    ca->ca_devsize < sizeof(struct device))
-		panic("config_devalloc");
+		panic("config_devalloc: %s", cf->cf_atname);
 
 #ifndef __BROKEN_CONFIG_UNIT_USAGE
 	if (cf->cf_fstate == FSTATE_STAR) {
@@ -1740,6 +1740,25 @@ device_lookup(cfdriver_t cd, int unit)
 		return (NULL);
 	
 	return (cd->cd_devs[unit]);
+}
+
+/*
+ * device_lookup:
+ *
+ *	Look up a device instance for a given driver.
+ */
+void *
+device_lookup_private(cfdriver_t cd, int unit)
+{
+	device_t dv;
+
+	if (unit < 0 || unit >= cd->cd_ndevs)
+		return NULL;
+	
+	if ((dv = cd->cd_devs[unit]) == NULL)
+		return NULL;
+
+	return dv->dv_private;
 }
 
 /*
