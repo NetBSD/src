@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.35 2008/01/30 09:50:24 ad Exp $	*/
+/*	$NetBSD: vfs.c,v 1.36 2008/03/11 10:50:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -93,21 +93,6 @@ vnode_t *specfs_hash[SPECHSZ];
 int (*mountroot)(void);
 
 int
-sys_sync(struct lwp *l, const void *v, register_t *rv)
-{
-
-	panic("%s: unimplemented", __func__);
-}
-
-int
-dounmount(struct mount *mp, int flags, struct lwp *l)
-{
-
-	VFS_UNMOUNT(mp, MNT_FORCE);
-	panic("control fd is dead");
-}
-
-int
 vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 	int attrnamespace, const char *attrname)
 {
@@ -115,6 +100,20 @@ vfs_stdextattrctl(struct mount *mp, int cmt, struct vnode *vp,
 	if (vp != NULL)
 		VOP_UNLOCK(vp, 0);
 	return EOPNOTSUPP;
+}
+
+int
+vfs_allocate_syncvnode(struct mount *mp)
+{
+
+	panic("%s: unimplemented", __func__);
+}
+
+void
+vfs_deallocate_syncvnode(struct mount *mp)
+{
+
+	panic("%s: unimplemented", __func__);
 }
 
 struct mount mnt_dummy;
@@ -220,7 +219,7 @@ int
 lf_advlock(struct vop_advlock_args *ap, struct lockf **head, off_t size)
 {
 
-	return 0;
+	panic("%s: unimplemented", __func__);
 }
 
 void

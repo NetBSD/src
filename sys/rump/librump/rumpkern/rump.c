@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.35 2008/01/30 14:57:24 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.36 2008/03/11 10:50:16 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -38,6 +38,7 @@
 #include <sys/resourcevar.h>
 #include <sys/select.h>
 #include <sys/vnode.h>
+#include <sys/vfs_syscalls.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -51,6 +52,7 @@ struct plimit rump_limits;
 kauth_cred_t rump_cred = RUMPCRED_SUSER;
 struct cpu_info rump_cpu;
 struct filedesc0 rump_filedesc0;
+struct proclist allproc;
 
 kmutex_t rump_giantlock;
 
@@ -82,6 +84,7 @@ rump_init()
 	extern char hostname[];
 	extern size_t hostnamelen;
 	extern kmutex_t rump_atomic_lock;
+	char buf[256];
 	struct proc *p;
 	struct lwp *l;
 	int error;
@@ -90,6 +93,12 @@ rump_init()
 	if (rump_inited)
 		return;
 	rump_inited = 1;
+
+	if (rumpuser_getenv("RUMP_NVNODES", buf, sizeof(buf), &error) == 0) {
+		desiredvnodes = strtoul(buf, NULL, 10);
+	} else {
+		desiredvnodes = 1<<16;
+	}
 
 	l = &lwp0;
 	p = &rump_proc;
@@ -102,6 +111,9 @@ rump_init()
 	l->l_cred = rump_cred;
 	l->l_proc = p;
 	l->l_lid = 1;
+
+	LIST_INSERT_HEAD(&allproc, p, p_list);
+
 	rw_init(&rump_cwdi.cwdi_lock);
 
 	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -110,8 +122,8 @@ rump_init()
 	rump_limits.pl_rlimit[RLIMIT_FSIZE].rlim_cur = RLIM_INFINITY;
 	rump_limits.pl_rlimit[RLIMIT_NOFILE].rlim_cur = RLIM_INFINITY;
 
-	/* should be "enough" */
 	syncdelay = 0;
+	dovfsusermount = 1;
 
 	vfsinit();
 	bufinit();
@@ -151,6 +163,7 @@ rump_mnt_init(struct vfsops *vfsops, int mntflags)
 	mp->mnt_flag = mntflags;
 	TAILQ_INIT(&mp->mnt_vnodelist);
 	rw_init(&mp->mnt_lock);
+	mutex_init(&mp->mnt_renamelock, MUTEX_DEFAULT, IPL_NONE);
 	mp->mnt_refcnt = 1;
 
 	mount_initspecific(mp);
@@ -213,13 +226,59 @@ rump_freecn(struct componentname *cnp, int flags)
 	if (flags & RUMPCN_FREECRED)
 		rump_cred_destroy(cnp->cn_cred);
 
-	if (cnp->cn_flags & SAVENAME) {
-		if (flags & RUMPCN_ISLOOKUP || cnp->cn_flags & SAVESTART)
+	if ((flags & RUMPCN_HASNTBUF) == 0) {
+		if (cnp->cn_flags & SAVENAME) {
+			if (flags & RUMPCN_ISLOOKUP ||cnp->cn_flags & SAVESTART)
+				PNBUF_PUT(cnp->cn_pnbuf);
+		} else {
 			PNBUF_PUT(cnp->cn_pnbuf);
-	} else {
-		PNBUF_PUT(cnp->cn_pnbuf);
+		}
 	}
 	kmem_free(cnp, sizeof(*cnp));
+}
+
+/* hey baby, what's your namei? */
+int
+rump_namei(uint32_t op, uint32_t flags, const char *namep,
+	struct vnode **dvpp, struct vnode **vpp, struct componentname **cnpp)
+{
+	struct nameidata nd;
+	int rv;
+
+	NDINIT(&nd, op, flags, UIO_SYSSPACE, namep);
+	rv = namei(&nd);
+	if (rv)
+		return rv;
+
+	if (dvpp) {
+		KASSERT(flags & LOCKPARENT);
+		*dvpp = nd.ni_dvp;
+	} else {
+		KASSERT((flags & LOCKPARENT) == 0);
+	}
+
+	if (vpp) {
+		*vpp = nd.ni_vp;
+	} else {
+		if (nd.ni_vp) {
+			if (flags & LOCKLEAF)
+				vput(nd.ni_vp);
+			else
+				vrele(nd.ni_vp);
+		}
+	}
+
+	if (cnpp) {
+		struct componentname *cnp;
+
+		cnp = kmem_alloc(sizeof(*cnp), KM_SLEEP);
+		memcpy(cnp, &nd.ni_cnd, sizeof(*cnp));
+		*cnpp = cnp;
+	} else if (nd.ni_cnd.cn_flags & HASBUF) {
+		panic("%s: pathbuf mismatch", __func__);
+	}
+
+	return rv;
 }
 
 static struct fakeblk *
@@ -514,15 +573,12 @@ rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 	return 0;
 }
 
-/* XXX: statvfs is different from system to system */
-#if 0
 int
 rump_vfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 
 	return VFS_STATVFS(mp, sbp);
 }
-#endif
 
 int
 rump_vfs_sync(struct mount *mp, int wait, kauth_cred_t cred)
