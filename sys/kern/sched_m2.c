@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.21 2008/03/10 22:20:14 martin Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.22 2008/03/11 18:18:49 rmind Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.21 2008/03/10 22:20:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.22 2008/03/11 18:18:49 rmind Exp $");
 
 #include <sys/param.h>
 
@@ -474,18 +474,17 @@ void
 sched_wakeup(struct lwp *l)
 {
 	sched_info_lwp_t *sil = l->l_sched_info;
+	const u_int slptime = hardclock_ticks - sil->sl_slept;
 
 	/* Update sleep time delta */
-	sil->sl_slpsum += (l->l_slptime == 0) ?
-	    (hardclock_ticks - sil->sl_slept) : hz;
+	sil->sl_slpsum += (l->l_slptime == 0) ? slptime : hz;
 
 	/* If thread was sleeping a second or more - set a high priority */
-	if (l->l_slptime > 1 || (hardclock_ticks - sil->sl_slept) >= hz)
+	if (l->l_slptime > 1 || slptime >= hz)
 		l->l_priority = high_pri[l->l_priority];
 
 	/* Also, consider looking for a better CPU to wake up */
-	if ((l->l_flag & (LW_BOUND | LW_SYSTEM)) == 0)
-		l->l_cpu = sched_takecpu(l);
+	l->l_cpu = sched_takecpu(l);
 }
 
 void
@@ -511,11 +510,31 @@ sched_pstats_hook(struct lwp *l)
 	} else
 		sil->sl_flags &= ~SL_BATCH;
 
+	/*
+	 * If thread is CPU-bound and never sleeps, it would occupy the CPU.
+	 * In such case reset the value of last sleep, and check it later, if
+	 * it is still zero - perform the migration, unmark the batch flag.
+	 */
+	if (batch && (l->l_slptime + sil->sl_slpsum) == 0) {
+		if (l->l_stat != LSONPROC && sil->sl_slept == 0) {
+			struct cpu_info *ci = sched_takecpu(l);
+
+			if (l->l_cpu != ci)
+				l->l_target_cpu = ci;
+			sil->sl_flags &= ~SL_BATCH;
+		} else {
+			sil->sl_slept = 0;
+		}
+	}
+
 	/* Reset the time sums */
 	sil->sl_slpsum = 0;
 	sil->sl_rtsum = 0;
 
-	/* Estimate threads on time-sharing queue only */
+	/*
+	 * Estimate threads on time-sharing queue only, however,
+	 * exclude the highest priority for performance purposes.
+	 */
 	if (l->l_priority >= PRI_HIGHEST_TS)
 		return;
 	KASSERT(l->l_class == SCHED_OTHER);
@@ -553,7 +572,7 @@ lwp_cache_hot(const struct lwp *l)
 	if (l->l_slptime || sil->sl_lrtime == 0)
 		return false;
 
-	return (hardclock_ticks - sil->sl_lrtime < cacheht_time);
+	return (hardclock_ticks - sil->sl_lrtime <= cacheht_time);
 }
 
 /* Check if LWP can migrate to the chosen CPU */
@@ -659,7 +678,7 @@ sched_catchlwp(void)
 
 	/* Lockless check */
 	ci_rq = ci->ci_schedstate.spc_sched_info;
-	if (ci_rq->r_count < min_catch)
+	if (ci_rq->r_mcount < min_catch)
 		return NULL;
 
 	/*
@@ -680,7 +699,7 @@ sched_catchlwp(void)
 		}
 	}
 
-	if (ci_rq->r_count < min_catch) {
+	if (ci_rq->r_mcount < min_catch) {
 		spc_unlock(ci);
 		return NULL;
 	}
@@ -693,22 +712,22 @@ sched_catchlwp(void)
 		/* Check the first and next result from the queue */
 		if (l == NULL)
 			break;
+		KASSERT(l->l_stat == LSRUN);
+		KASSERT(l->l_flag & LW_INMEM);
 
 		/* Look for threads, whose are allowed to migrate */
-		if ((l->l_flag & LW_SYSTEM) || lwp_cache_hot(l) ||
+		if ((l->l_flag & LW_BOUND) || lwp_cache_hot(l) ||
 		    !sched_migratable(l, curci)) {
 			l = TAILQ_NEXT(l, l_runq);
 			continue;
 		}
-		/* Recheck if chosen thread is still on the runqueue */
-		if (l->l_stat == LSRUN && (l->l_flag & LW_INMEM)) {
-			sched_dequeue(l);
-			l->l_cpu = curci;
-			lwp_setlock(l, curci->ci_schedstate.spc_mutex);
-			sched_enqueue(l, false);
-			break;
-		}
-		l = TAILQ_NEXT(l, l_runq);
+
+		/* Grab the thread, and move to the local run queue */
+		sched_dequeue(l);
+		l->l_cpu = curci;
+		lwp_unlock_to(l, curci->ci_schedstate.spc_mutex);
+		sched_enqueue(l, false);
+		return l;
 	}
 	spc_unlock(ci);
 
