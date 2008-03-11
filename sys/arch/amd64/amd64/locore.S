@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39 2008/01/10 20:14:10 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.40 2008/03/11 02:24:43 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1045,6 +1045,7 @@ IDTVEC(syscall)
 #endif
 
 	movq	CPUVAR(CURLWP),%r14
+	incl	CPUVAR(NSYSCALL)	# count it atomically
 	movq	%rsp,L_MD_REGS(%r14)	# save pointer to frame
 	movq	L_PROC(%r14),%r15
 	andl	$~MDP_IRET,L_MD_FLAGS(%r14)

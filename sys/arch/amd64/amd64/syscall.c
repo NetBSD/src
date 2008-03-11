@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.38 2008/02/24 18:30:07 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.39 2008/03/11 02:24:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.38 2008/02/24 18:30:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.39 2008/03/11 02:24:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,6 @@ syscall(struct trapframe *frame)
 	p = l->l_proc;
 
 	code = frame->tf_rax & (SYS_NSYSENT - 1);
-	uvmexp.syscalls++;
 
 	LWP_CACHE_CREDS(l, p);
 
