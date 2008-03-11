@@ -1,4 +1,4 @@
-/*	$NetBSD: qsort.c,v 1.14 2005/12/24 21:11:16 perry Exp $	*/
+/*	$NetBSD: qsort.c,v 1.15 2008/03/11 18:04:59 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)qsort.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: qsort.c,v 1.14 2005/12/24 21:11:16 perry Exp $");
+__RCSID("$NetBSD: qsort.c,v 1.15 2008/03/11 18:04:59 rmind Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -68,11 +68,9 @@ static inline void	 swapfunc __P((char *, char *, size_t, int));
 	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
 static inline void
-swapfunc(a, b, n, swaptype)
-	char *a, *b;
-	size_t n;
-	int swaptype;
+swapfunc(char *a, char *b, size_t n, int swaptype)
 {
+
 	if (swaptype <= 1) 
 		swapcode(long, a, b, n)
 	else
@@ -90,23 +88,22 @@ swapfunc(a, b, n, swaptype)
 #define vecswap(a, b, n) if ((n) > 0) swapfunc((a), (b), (size_t)(n), swaptype)
 
 static inline char *
-med3(a, b, c, cmp)
-	char *a, *b, *c;
-	int (*cmp) __P((const void *, const void *));
+med3(char *a, char *b, char *c,
+    int (*cmp) __P((const void *, const void *)))
 {
+
 	return cmp(a, b) < 0 ?
 	       (cmp(b, c) < 0 ? b : (cmp(a, c) < 0 ? c : a ))
               :(cmp(b, c) > 0 ? b : (cmp(a, c) < 0 ? a : c ));
 }
 
 void
-qsort(a, n, es, cmp)
-	void *a;
-	size_t n, es;
-	int (*cmp) __P((const void *, const void *));
+qsort(void *a, size_t n, size_t es,
+    int (*cmp) __P((const void *, const void *)))
 {
 	char *pa, *pb, *pc, *pd, *pl, *pm, *pn;
-	int d, r, swaptype, swap_cnt;
+	size_t d, r;
+	int swaptype, swap_cnt, cmp_result;
 
 	_DIAGASSERT(a != NULL);
 	_DIAGASSERT(cmp != NULL);
@@ -137,16 +134,16 @@ loop:	SWAPINIT(a, es);
 
 	pc = pd = (char *) a + (n - 1) * es;
 	for (;;) {
-		while (pb <= pc && (r = cmp(pb, a)) <= 0) {
-			if (r == 0) {
+		while (pb <= pc && (cmp_result = cmp(pb, a)) <= 0) {
+			if (cmp_result == 0) {
 				swap_cnt = 1;
 				swap(pa, pb);
 				pa += es;
 			}
 			pb += es;
 		}
-		while (pb <= pc && (r = cmp(pc, a)) >= 0) {
-			if (r == 0) {
+		while (pb <= pc && (cmp_result = cmp(pc, a)) >= 0) {
+			if (cmp_result == 0) {
 				swap_cnt = 1;
 				swap(pc, pd);
 				pd -= es;
