@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.12 2008/03/11 23:19:03 dyoung Exp $ */
+/* $Id: if_ae.c,v 1.13 2008/03/11 23:58:06 dyoung Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.12 2008/03/11 23:19:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.13 2008/03/11 23:58:06 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1635,17 +1635,17 @@ ae_stop(struct ifnet *ifp, int disable)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (disable) {
-		ae_rxdrain(sc);
-		ae_disable(sc);
-	}
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	sc->sc_if_flags = ifp->if_flags;
 	ifp->if_timer = 0;
+
+	if (disable) {
+		ae_rxdrain(sc);
+		ae_disable(sc);
+	}
 
 	/*
 	 * Reset the chip (needed on some flavors to actually disable it).

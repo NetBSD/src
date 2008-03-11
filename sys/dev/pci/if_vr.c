@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.89 2008/01/19 22:10:19 dyoung Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.90 2008/03/11 23:58:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.89 2008/01/19 22:10:19 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.90 2008/03/11 23:58:06 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -1392,14 +1392,14 @@ vr_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		vr_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		vr_rxdrain(sc);
 }
 
 static int	vr_probe(struct device *, struct cfdata *, void *);
