@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.43 2008/01/20 11:28:12 jmmv Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.44 2008/03/11 23:58:06 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.43 2008/01/20 11:28:12 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.44 2008/03/11 23:58:06 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -1897,12 +1897,12 @@ pcn_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		pcn_rxdrain(sc);
-
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		pcn_rxdrain(sc);
 }
 
 /*

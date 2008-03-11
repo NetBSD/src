@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.41 2008/02/07 01:21:57 dyoung Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.42 2008/03/11 23:58:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.41 2008/02/07 01:21:57 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.42 2008/03/11 23:58:06 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1744,14 +1744,14 @@ stge_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		stge_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		stge_rxdrain(sc);
 }
 
 static int

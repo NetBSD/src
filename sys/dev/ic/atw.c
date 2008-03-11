@@ -1,4 +1,4 @@
-/*	$NetBSD: atw.c,v 1.135 2008/03/07 22:04:00 dyoung Exp $  */
+/*	$NetBSD: atw.c,v 1.136 2008/03/11 23:58:06 dyoung Exp $  */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.135 2008/03/07 22:04:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atw.c,v 1.136 2008/03/11 23:58:06 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2678,11 +2678,6 @@ atw_stop(struct ifnet *ifp, int disable)
 
 	atw_txdrain(sc);
 
-	if (disable) {
-		atw_rxdrain(sc);
-		atw_disable(sc);
-	}
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
@@ -2690,7 +2685,10 @@ atw_stop(struct ifnet *ifp, int disable)
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 
-	if (!disable)
+	if (disable) {
+		atw_rxdrain(sc);
+		atw_disable(sc);
+	} else
 		atw_reset(sc);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.158 2008/03/09 19:25:56 jmcneill Exp $	*/
+/*	$NetBSD: tulip.c,v 1.159 2008/03/11 23:58:06 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.158 2008/03/09 19:25:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.159 2008/03/11 23:58:06 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -2070,11 +2070,6 @@ tlp_stop(struct ifnet *ifp, int disable)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (disable) {
-		tlp_rxdrain(sc);
-		tlp_disable(sc);
-	}
-
 	sc->sc_flags &= ~(TULIPF_WANT_SETUP|TULIPF_DOING_SETUP);
 
 	/*
@@ -2088,6 +2083,11 @@ tlp_stop(struct ifnet *ifp, int disable)
 	 * Reset the chip (needed on some flavors to actually disable it).
 	 */
 	tlp_reset(sc);
+
+	if (disable) {
+		tlp_rxdrain(sc);
+		tlp_disable(sc);
+	}
 }
 
 #define	SROM_EMIT(sc, x)						\
