@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.70 2008/03/11 20:40:51 dyoung Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.71 2008/03/11 20:41:35 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.70 2008/03/11 20:40:51 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.71 2008/03/11 20:41:35 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -227,8 +227,6 @@ iwi_attach(device_t parent, device_t self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
-
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 
 	/* clear unit numbers allocated to IBSS */
 	sc->sc_unr = 0;
