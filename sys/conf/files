@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.893 2008/02/24 05:29:31 isaki Exp $
+#	$NetBSD: files,v 1.894 2008/03/11 05:24:38 mjacob Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
@@ -489,11 +489,12 @@ defflag	opt_isp.h		ISP_DISABLE_1020_SUPPORT
 				ISP_DISABLE_2100_SUPPORT
 				ISP_DISABLE_2200_SUPPORT
 				ISP_DISABLE_2300_SUPPORT
+				ISP_DISABLE_2322_SUPPORT
 				ISP_DISABLE_2400_SUPPORT
 				ISP_DISABLE_FW
 				ISP_TARGET_MODE
-				ISP_FW_CRASH_DUMP
 defparam opt_isp.h		ISP_LOGDEFAULT
+				ISP_VPORTS
 device	isp: scsi
 file	dev/ic/isp.c			isp
 file	dev/ic/isp_library.c		isp
