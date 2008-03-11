@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.7 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.8 2008/03/11 22:57:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -94,17 +94,15 @@ main(int argc, char *argv[])
 
 	rv = ukfs_remove(fs, "/lopinaa");
 	if (rv == -1)
-		warn("rv %d", rv);
+		warn("remove1 %d", rv);
 
-#if 0
 	rv = ukfs_remove(fs, "/etc/LUSIKKAPUOLI");
 	if (rv == -1)
-		warn("rv %d", rv);
-#endif
+		warn("remove2 %d", rv);
 
-	rv = ukfs_create(fs, "/lopinaa", 0555);
+    	rv = ukfs_create(fs, "/lopinaa", 0555 | S_IFREG);
 	if (rv == -1)
-		warn("rv %d", rv);
+		warn("create %d", rv);
 
 	rv = ukfs_link(fs, "/lopinaa", "/etc/LUSIKKAPUOLI");
 	if (rv == -1)

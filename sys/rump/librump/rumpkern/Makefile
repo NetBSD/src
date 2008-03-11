@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2008/03/11 10:50:16 pooka Exp $
+#	$NetBSD: Makefile,v 1.31 2008/03/11 22:57:26 pooka Exp $
 #
 
 .include <bsd.own.mk>
@@ -35,7 +35,7 @@ SRCS+=	subr_bufq.c bufq_disksort.c bufq_fcfs.c bufq_priocscan.c	\
 # src/lib/libkern
 SRCS+=	__assert.c scanc.c skpc.c
 
-SRCS+=	rumpvnode_if.c
+SRCS+=	rumpvnode_if.c rump_syscalls.c
 
 RUMPUSEROBJDIR != cd ${.CURDIR}/../rumpuser && ${PRINTOBJDIR}
 OBJS+=	${RUMPUSEROBJDIR}/rumpuser.o ${RUMPUSEROBJDIR}/rumpuser_pth.o
