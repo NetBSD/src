@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.19 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.20 2008/03/11 22:57:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -49,6 +49,7 @@
 #include <unistd.h>
 
 #include "rump.h"
+#include "rump_syscalls.h"
 #include "ukfs.h"
 
 #define UKFS_MODE_DEFAULT 0555
@@ -437,43 +438,30 @@ ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode, bool p)
 	}
 }
 
-static int
-doremove(struct ukfs *ukfs, const char *filename,
-	int (*do_fn)(struct vnode *, struct vnode *, struct componentname *))
+int
+ukfs_remove(struct ukfs *ukfs, const char *filename)
 {
-	struct componentname *cnp;
-	struct vnode *dvp = NULL, *vp = NULL;
 	int rv;
 
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_DELETE,
-	    NAMEI_LOCKPARENT | NAMEI_LOCKLEAF, filename, &dvp, &vp, &cnp);
-	if (rv)
-		goto out;
-
-	rv = do_fn(dvp, vp, cnp);
-	rump_freecn(cnp, RUMPCN_FREECRED | RUMPCN_HASNTBUF); /* XXX */
-
- out:
+	rump_sys_unlink(filename, &rv);
 	if (rv) {
 		errno = rv;
 		return -1;
 	}
-
 	return 0;
-}
-
-int
-ukfs_remove(struct ukfs *ukfs, const char *filename)
-{
-
-	return doremove(ukfs, filename, RUMP_VOP_REMOVE);
 }
 
 int
 ukfs_rmdir(struct ukfs *ukfs, const char *filename)
 {
+	int rv;
 
-	return doremove(ukfs, filename, RUMP_VOP_RMDIR);
+	rump_sys_rmdir(filename, &rv);
+	if (rv) {
+		errno = rv;
+		return -1;
+	}
+	return 0;
 }
 
 int
@@ -492,8 +480,7 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_CREATE, NAMEI_LOCKPARENT, f_create,
 	    &dvp, NULL, &cnp);
 	if (rv) {
-		VUL(dvp);
-		ukfs_ll_rele(dvp);
+		ukfs_ll_rele(vp);
 		goto out;
 	}
 
@@ -560,11 +547,15 @@ ukfs_readlink(struct ukfs *ukfs, const char *filename,
 	    (uint8_t *)linkbuf, buflen, RUMPUIO_READ, UKFS_READLINK);
 }
 
-/* XXX: need vfs_syscalls.h, but it's in the kernel headers */
-int do_sys_rename(const char *, const char *, enum uio_seg, int);
 int
 ukfs_rename(struct ukfs *ukfs, const char *from, const char *to)
 {
+	int rv;
 
-	return do_sys_rename(from, to, UIO_SYSSPACE, 0);
+	rump_sys_rename(from, to, &rv);
+	if (rv) {
+		errno = rv;
+		return -1;
+	}
+	return 0;
 }
