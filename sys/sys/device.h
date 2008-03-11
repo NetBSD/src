@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.107 2008/03/07 07:03:06 dyoung Exp $ */
+/* $NetBSD: device.h,v 1.108 2008/03/11 02:42:41 matt Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -439,6 +439,7 @@ int	config_finalize_register(device_t, int (*)(device_t));
 void	config_finalize(void);
 
 void		*device_lookup(cfdriver_t, int);
+void		*device_lookup_private(cfdriver_t, int);
 #ifdef __HAVE_DEVICE_REGISTER
 void		device_register(device_t, void *);
 #endif
