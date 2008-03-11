@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.5 2008/02/16 18:51:42 ober Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.6 2008/03/11 20:55:32 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.5 2008/02/16 18:51:42 ober Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.6 2008/03/11 20:55:32 dyoung Exp $");
 
 
 /*
@@ -3817,7 +3817,6 @@ iwn_resume(device_t dv)
 {
 	struct iwn_softc *sc = device_private(dv);
 
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 	(void)iwn_reset(sc);
 
 	return true;
