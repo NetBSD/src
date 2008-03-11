@@ -1,4 +1,4 @@
-/*	$NetBSD: ka610.c,v 1.6 2007/03/04 06:00:59 christos Exp $	*/
+/*	$NetBSD: ka610.c,v 1.7 2008/03/11 05:34:03 matt Exp $	*/
 /*
  * Copyright (c) 2001 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.6 2007/03/04 06:00:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.7 2008/03/11 05:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -44,41 +44,41 @@ __KERNEL_RCSID(0, "$NetBSD: ka610.c,v 1.6 2007/03/04 06:00:59 christos Exp $");
 #include <machine/clock.h>
 #include <machine/sid.h>
 
-static void ka610_conf(void);
+static void ka610_attach_cpu(device_t);
 static void ka610_memerr(void);
 static int ka610_mchk(void *);
 static void ka610_halt(void);
 static void ka610_reboot(int);
+
+static const char * const ka610_devs[] = { "cpu", "uba", NULL };
  
 /* 
  * Declaration of KA610-specific calls.
  */
-struct cpu_dep ka610_calls = {
-	NULL,
-	ka610_mchk,
-	ka610_memerr, 
-	ka610_conf,
-	generic_gettime,
-	generic_settime,
-	1,	 /* ~VUPS */
-	2,	/* SCB pages */
-	ka610_halt,
-	ka610_reboot,
-	NULL,
-	NULL,
-	CPU_RAISEIPL,
+const struct cpu_dep ka610_calls = {
+	.cpu_mchk	= ka610_mchk,
+	.cpu_memerr	= ka610_memerr, 
+	.cpu_gettime	= generic_gettime,
+	.cpu_settime	= generic_settime,
+	.cpu_vups	= 1,	 /* ~VUPS */
+	.cpu_scbsz	= 2,	/* SCB pages */
+	.cpu_halt	= ka610_halt,
+	.cpu_reboot	= ka610_reboot,
+	.cpu_devs	= ka610_devs,
+	.cpu_attach_cpu	= ka610_attach_cpu,
+	.cpu_flags	= CPU_RAISEIPL,
 };
 
 
 void
-ka610_conf()
+ka610_attach_cpu(device_t self)
 {
-	printf("cpu0: KA610, HW rev %d, ucode rev %d\n",
+	aprint_normal(": KA610, HW rev %d, ucode rev %d\n",
 	    vax_cpudata & 0xff, (vax_cpudata >> 8) & 0xff);
 }
 
 void
-ka610_memerr()
+ka610_memerr(void)
 {
 	printf("Memory err!\n");
 }
@@ -90,13 +90,13 @@ ka610_mchk(void *addr)
 	return 0;
 }
 
-static void
-ka610_halt()
+void
+ka610_halt(void)
 {
 	__asm("halt");
 }
 
-static void
+void
 ka610_reboot(int arg)
 {
 	__asm("halt");

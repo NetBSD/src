@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.42 2007/10/17 19:58:00 garbled Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.43 2008/03/11 05:34:03 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.42 2007/10/17 19:58:00 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.43 2008/03/11 05:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -165,11 +165,11 @@ struct hdc_attach_args {
 /*
  * prototypes for (almost) all the internal routines
  */
-static	int hdcmatch(struct device *, struct cfdata *, void *);
-static	void hdcattach(struct device *, struct device *, void *);
+static	int hdcmatch(device_t, cfdata_t, void *);
+static	void hdcattach(device_t, device_t, void *);
 static	int hdcprint(void *, const char *);
-static	int rdmatch(struct device *, struct cfdata *, void *);
-static	void rdattach(struct device *, struct device *, void *);
+static	int rdmatch(device_t, cfdata_t, void *);
+static	void rdattach(device_t, device_t, void *);
 static	void hdcintr(void *);
 static	int hdc_command(struct hdcsoftc *, int);
 static	void rd_readgeom(struct hdcsoftc *, struct rdsoftc *);
@@ -190,21 +190,36 @@ CFATTACH_DECL(hdc, sizeof(struct hdcsoftc),
 CFATTACH_DECL(rd, sizeof(struct rdsoftc),
     rdmatch, rdattach, NULL, NULL);
 
-dev_type_open(rdopen);
-dev_type_close(rdclose);
-dev_type_read(rdread);
-dev_type_write(rdwrite);
-dev_type_ioctl(rdioctl);
-dev_type_strategy(rdstrategy);
-dev_type_size(rdsize);
+static dev_type_open(rdopen);
+static dev_type_close(rdclose);
+static dev_type_read(rdread);
+static dev_type_write(rdwrite);
+static dev_type_ioctl(rdioctl);
+static dev_type_strategy(rdstrategy);
+static dev_type_size(rdpsize);
 
 const struct bdevsw rd_bdevsw = {
-	rdopen, rdclose, rdstrategy, rdioctl, nulldump, rdsize, D_DISK
+	.d_open = rdopen,
+	.d_close = rdclose,
+	.d_strategy = rdstrategy,
+	.d_ioctl = rdioctl,
+	.d_dump = nulldump,
+	.d_psize = rdpsize,
+	.d_flag = D_DISK
 };
 
 const struct cdevsw rd_cdevsw = {
-	rdopen, rdclose, rdread, rdwrite, rdioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
+	.d_open = rdopen,
+	.d_close = rdclose,
+	.d_read = rdread,
+	.d_write = rdwrite,
+	.d_ioctl = rdioctl,
+	.d_stop = nostop,
+	.d_tty = notty,
+	.d_poll = nopoll,
+	.d_mmap = nommap,
+	.d_kqfilter = nokqfilter,
+	.d_flag = D_DISK
 };
 
 /* At least 0.7 uS between register accesses */
@@ -224,10 +239,10 @@ static int u;
  *     is not yet allocated. Thus we do this in hdcattach()...
  */
 int
-hdcmatch(struct device *parent, struct cfdata *cf, void *aux)
+hdcmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
-	volatile char *hdc_csr = (char *)va->va_addr;
+	struct vsbus_attach_args * const va = aux;
+	volatile char * const hdc_csr = (volatile char *)va->va_addr;
 	int i;
 
 	u = 8; /* !!! - GCC */
@@ -257,7 +272,7 @@ hdcmatch(struct device *parent, struct cfdata *cf, void *aux)
 int
 hdcprint(void *aux, const char *name)
 {
-	struct hdc_attach_args *ha = aux;
+	struct hdc_attach_args * const ha = aux;
 
 	if (name)
 		aprint_normal ("RD?? at %s drive %d", name, ha->ha_drive);
@@ -268,20 +283,20 @@ hdcprint(void *aux, const char *name)
  * hdc_attach() probes for all possible devices
  */
 void 
-hdcattach(struct device *parent, struct device *self, void *aux)
+hdcattach(device_t parent, device_t self, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
-	struct hdcsoftc *sc = (void *)self;
+	struct vsbus_attach_args * const va = aux;
+	struct hdcsoftc * const sc = device_private(self);
 	struct hdc_attach_args ha;
 	int status, i;
 
-	printf ("\n");
+	aprint_normal("\n");
 	/*
 	 * Get interrupt vector, enable instrumentation.
 	 */
 	scb_vecalloc(va->va_cvec, hdcintr, sc, SCB_ISTACK, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
+	    device_xname(self), "intr");
 
 	sc->sc_regs = vax_map_physmem(va->va_paddr, 1);
 	sc->sc_dmabase = (void *)va->va_dmaaddr;
@@ -298,8 +313,7 @@ hdcattach(struct device *parent, struct device *self, void *aux)
 	DELAY(1000);
 	status = HDC_RSTAT;
 	if (status != (DKC_ST_DONE|DKC_TC_SUCCESS)) {
-		printf("%s: RESET failed,  status 0x%x\n",
-			sc->sc_dev.dv_xname, status);
+		aprint_error_dev(self, "RESET failed,  status 0x%x\n", status);
 		return;
 	}
 	bufq_alloc(&sc->sc_q, "disksort", BUFQ_SORT_CYLINDER);
@@ -323,12 +337,9 @@ hdcattach(struct device *parent, struct device *self, void *aux)
  * rdmatch() probes for the existence of a RD-type disk/floppy
  */
 int
-rdmatch(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+rdmatch(device_t parent, cfdata_t cf, void *aux)
 {
-	struct hdc_attach_args *ha = aux;
+	struct hdc_attach_args * const ha = aux;
 
 	if (cf->cf_loc[HDCCF_DRIVE] != HDCCF_DRIVE_DEFAULT &&
 	    cf->cf_loc[HDCCF_DRIVE] != ha->ha_drive)
@@ -341,11 +352,11 @@ rdmatch(parent, cf, aux)
 }
 
 void
-rdattach(struct device *parent, struct device *self, void *aux)
+rdattach(device_t parent, device_t self, void *aux)
 {
-	struct hdcsoftc *sc = (void*)parent;
-	struct rdsoftc *rd = (void*)self;
-	struct hdc_attach_args *ha = aux;
+	struct hdcsoftc * const sc = device_private(parent);
+	struct rdsoftc * const rd = device_private(self);
+	struct hdc_attach_args * const ha = aux;
 	struct disklabel *dl;
 	const char *msg;
 
@@ -353,7 +364,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&rd->sc_disk, rd->sc_dev.dv_xname, NULL);
+	disk_init(&rd->sc_disk, device_xname(&rd->sc_dev), NULL);
 	disk_attach(&rd->sc_disk);
 
 	/*
@@ -364,13 +375,14 @@ rdattach(struct device *parent, struct device *self, void *aux)
 	disk_printtype(rd->sc_drive, rd->sc_xbn.media_id);
 	dl = rd->sc_disk.dk_label;
 	rdmakelabel(dl, &rd->sc_xbn);
-	printf("%s", rd->sc_dev.dv_xname);
 	msg = readdisklabel(MAKEDISKDEV(cdevsw_lookup_major(&rd_cdevsw),
 					device_unit(&rd->sc_dev), RAW_PART),
 			    rdstrategy, dl, NULL);
 	if (msg)
-		printf(": %s", msg);
-	printf(": size %d sectors\n", dl->d_secperunit);
+		aprint_normal_dev(self, "%s: size %u sectors",
+		    msg, dl->d_secperunit);
+	else
+		aprint_normal_dev(self, "size %u sectors\n", dl->d_secperunit);
 #ifdef RDDEBUG
 	hdc_printgeom(&rd->sc_xbn);
 #endif
@@ -379,7 +391,7 @@ rdattach(struct device *parent, struct device *self, void *aux)
 void
 hdcintr(void *arg)
 {
-	struct hdcsoftc *sc = arg;
+	struct hdcsoftc * const sc = arg;
 	struct buf *bp;
 
 	sc->sc_status = HDC_RSTAT;
@@ -400,11 +412,11 @@ hdcintr(void *arg)
 			hdcstart(sc, bp);
 			return;
 		}
-		printf("%s: failed, status 0x%x\n",
-		    sc->sc_dev.dv_xname, sc->sc_status);
+		aprint_error_dev(&sc->sc_dev, "failed, status 0x%x\n",
+		    sc->sc_status);
 		hdc_readregs(sc);
 		for (i = 0; i < 10; i++)
-			printf("%i: %x\n", i, g[i]);
+			aprint_error("%i: %x\n", i, g[i]);
 		bp->b_error = ENXIO;
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
@@ -436,10 +448,9 @@ rdstrategy(struct buf *bp)
 	struct rdsoftc *rd;
 	struct hdcsoftc *sc;
 	struct disklabel *lp;
-	int unit, s;
+	int s;
 
-	unit = DISKUNIT(bp->b_dev);
-	if (unit > rd_cd.cd_ndevs || (rd = rd_cd.cd_devs[unit]) == NULL) {
+	if ((rd = device_lookup_private(&rd_cd, DISKUNIT(bp->b_dev))) == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -471,7 +482,7 @@ done:	biodone(bp);
 void
 hdc_qstart(void *arg)
 {
-	struct hdcsoftc *sc = arg;
+	struct hdcsoftc * const sc = arg;
 
 	inq = 0;
 
@@ -485,7 +496,7 @@ hdc_qstart(void *arg)
 void
 hdcstart(struct hdcsoftc *sc, struct buf *ob)
 {
-	struct hdc9224_UDCreg *p = &sc->sc_creg;
+	struct hdc9224_UDCreg * const p = &sc->sc_creg;
 	struct disklabel *lp;
 	struct rdsoftc *rd;
 	struct buf *bp;
@@ -494,7 +505,6 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 
 	if (sc->sc_active)
 		return; /* Already doing something */
-
 
 	if (ob == 0) {
 		bp = BUFQ_GET(sc->sc_q);
@@ -508,7 +518,7 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 	} else
 		bp = ob;
 
-	rd = rd_cd.cd_devs[DISKUNIT(bp->b_dev)];
+	rd = device_lookup_private(&rd_cd, DISKUNIT(bp->b_dev));
 	hdc_rdselect(sc, rd->sc_drive);
 	sc->sc_active = bp;
 
@@ -564,11 +574,11 @@ hdcstart(struct hdcsoftc *sc, struct buf *ob)
 void
 rd_readgeom(struct hdcsoftc *sc, struct rdsoftc *rd)
 {
-	struct hdc9224_UDCreg *p = &sc->sc_creg;
+	struct hdc9224_UDCreg * const p = &sc->sc_creg;
 
 	hdc_rdselect(sc, rd->sc_drive);		/* select drive right now */
 
-	bzero(p, sizeof(struct hdc9224_UDCreg));
+	memset(p, 0, sizeof(*p));
 
 	p->udc_scnt  = 1;
 	p->udc_rtcnt = UDC_RC_RTRYCNT;
@@ -608,19 +618,16 @@ hdc_printgeom(p)
  * Return the size of a partition, if known, or -1 if not.
  */
 int
-rdsize(dev_t dev)
+rdpsize(dev_t dev)
 {
-	struct rdsoftc *rd;
-	int unit = DISKUNIT(dev);
-	int size;
+	struct rdsoftc * const rd = device_lookup_private(&rd_cd, DISKUNIT(dev));
+	const int part = DISKPART(dev);
 
-	if (unit >= rd_cd.cd_ndevs || rd_cd.cd_devs[unit] == 0)
+	if (rd == NULL || part >= rd->sc_disk.dk_label->d_npartitions)
 		return -1;
-	rd = rd_cd.cd_devs[unit];
-	size = rd->sc_disk.dk_label->d_partitions[DISKPART(dev)].p_size *
-	    (rd->sc_disk.dk_label->d_secsize / DEV_BSIZE);
 
-	return (size);
+	return rd->sc_disk.dk_label->d_partitions[part].p_size *
+	    (rd->sc_disk.dk_label->d_secsize / DEV_BSIZE);
 }
 
 /*
@@ -629,18 +636,10 @@ rdsize(dev_t dev)
 int
 rdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct rdsoftc *rd;
-	int unit, part;
+	struct rdsoftc * const rd = device_lookup_private(&rd_cd, DISKUNIT(dev));
+	const int part = DISKPART(dev);
 
-	unit = DISKUNIT(dev);
-	if (unit >= rd_cd.cd_ndevs)
-		return ENXIO;
-	rd = rd_cd.cd_devs[unit];
-	if (rd == 0)
-		return ENXIO;
-
-	part = DISKPART(dev);
-	if (part >= rd->sc_disk.dk_label->d_npartitions)
+	if (rd == NULL || part >= rd->sc_disk.dk_label->d_npartitions)
 		return ENXIO;
 
 	switch (fmt) {
@@ -663,11 +662,8 @@ rdopen(dev_t dev, int flag, int fmt, struct lwp *l)
 int
 rdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	struct rdsoftc *rd;
-	int part;
-
-	rd = rd_cd.cd_devs[DISKUNIT(dev)];
-	part = DISKPART(dev);
+	struct rdsoftc * const rd = device_lookup_private(&rd_cd, DISKUNIT(dev));
+	const int part = DISKPART(dev);
 
 	switch (fmt) {
 	case S_IFCHR:
@@ -689,13 +685,13 @@ rdclose(dev_t dev, int flag, int fmt, struct lwp *l)
 int
 rdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct rdsoftc *rd = rd_cd.cd_devs[DISKUNIT(dev)];
-	struct disklabel *lp = rd->sc_disk.dk_label;
-	int err = 0;
+	struct rdsoftc * const rd = device_lookup_private(&rd_cd, DISKUNIT(dev));
+	struct disklabel * const lp = rd->sc_disk.dk_label;
+	int error = 0;
 
 	switch (cmd) {
 	case DIOCGDINFO:
-		bcopy(lp, addr, sizeof (struct disklabel));
+		*(struct disklabel *)addr = *lp;
 		break;
 
 	case DIOCGPART:
@@ -708,26 +704,25 @@ rdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	case DIOCSDINFO:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
-		else
-			err = (cmd == DIOCSDINFO ?
-			    setdisklabel(lp, (struct disklabel *)addr, 0, 0) :
-			    writedisklabel(dev, rdstrategy, lp, 0));
+		error = (cmd == DIOCSDINFO ?
+		    setdisklabel(lp, (struct disklabel *)addr, 0, 0) :
+		    writedisklabel(dev, rdstrategy, lp, 0));
 		break;
 
 	case DIOCGDEFLABEL:
-		bzero(lp, sizeof(struct disklabel));
+		memset(lp, 0, sizeof(*lp));
 		rdmakelabel(lp, &rd->sc_xbn);
 		break;
 
 	case DIOCWLABEL:
 		if ((flag & FWRITE) == 0)
-			err = EBADF;
+			error = EBADF;
 		break;
 
 	default:
-		err = ENOTTY;
+		error = ENOTTY;
 	}
-	return err;
+	return error;
 }
 
 /*
@@ -798,14 +793,14 @@ hdc_command(struct hdcsoftc *sc, int cmd)
 int
 hdc_rdselect(struct hdcsoftc *sc, int unit)
 {
-	struct hdc9224_UDCreg *p = &sc->sc_creg;
+	struct hdc9224_UDCreg * const p = &sc->sc_creg;
 	int error;
 
 	/*
 	 * bring "creg" in some known-to-work state and
 	 * select the drive with the DRIVE SELECT command.
 	 */
-	bzero(p, sizeof(struct hdc9224_UDCreg));
+	memset(p, 0, sizeof(*p));
 
 	p->udc_rtcnt = UDC_RC_HDD_READ;
 	p->udc_mode  = UDC_MD_HDD;
@@ -813,7 +808,7 @@ hdc_rdselect(struct hdcsoftc *sc, int unit)
 
 	error = hdc_command(sc, DKC_CMD_DRSEL_HDD | unit);
 
-	return (error);
+	return error;
 }
 
 void

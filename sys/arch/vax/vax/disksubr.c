@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.47 2008/02/22 15:57:53 matt Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.48 2008/03/11 05:34:03 matt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.47 2008/02/22 15:57:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.48 2008/03/11 05:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,11 +130,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
  * putting the partition info into a native NetBSD label
  */
 const char *
-compat_label(dev, strat, lp, osdep)
-	dev_t dev;
-	void (*strat)(struct buf *bp);
-	struct disklabel *lp;
-	struct cpu_disklabel *osdep;
+compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
+	struct cpu_disklabel *osdep)
 {
 	dec_disklabel *dlp;
 	struct buf *bp = NULL;
