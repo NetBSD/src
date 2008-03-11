@@ -1,4 +1,4 @@
-/*	$NetBSD: bi_xmi.c,v 1.6 2007/10/19 12:01:24 ad Exp $	*/
+/*	$NetBSD: bi_xmi.c,v 1.7 2008/03/11 05:34:02 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.6 2007/10/19 12:01:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bi_xmi.c,v 1.7 2008/03/11 05:34:02 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -69,12 +69,13 @@ bi_xmi_match(struct device *parent, struct cfdata *cf, void *aux)
 static void
 bi_xmi_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct bi_softc *sc = (void *)self;
+	struct bi_softc *sc = device_private(self);
 	struct xmi_attach_args *xa = aux;
 
 	/*
 	 * Fill in bus specific data.
 	 */
+	sc->sc_dev = self;
 	sc->sc_addr = (bus_addr_t)BI_BASE(xa->xa_nodenr, 0);
 	sc->sc_iot = xa->xa_iot; /* No special I/O handling */
 	sc->sc_dmat = xa->xa_dmat; /* No special DMA handling either */
@@ -83,5 +84,5 @@ bi_xmi_attach(struct device *parent, struct device *self, void *aux)
 	bi_attach(sc);
 }
 
-CFATTACH_DECL(bi_xmi, sizeof(struct bi_softc),
+CFATTACH_DECL_NEW(bi_xmi, sizeof(struct bi_softc),
     bi_xmi_match, bi_xmi_attach, NULL, NULL);

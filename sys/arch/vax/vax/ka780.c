@@ -1,4 +1,4 @@
-/*	$NetBSD: ka780.c,v 1.27 2007/03/04 06:01:01 christos Exp $ */
+/*	$NetBSD: ka780.c,v 1.28 2008/03/11 05:34:03 matt Exp $ */
 /*-
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.27 2007/03/04 06:01:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.28 2008/03/11 05:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,17 +53,19 @@ __KERNEL_RCSID(0, "$NetBSD: ka780.c,v 1.27 2007/03/04 06:01:01 christos Exp $");
 static	void ka780_memerr(void);
 static	int ka780_mchk(void *);
 static	void ka780_conf(void);
-static	int mem_sbi_match(struct device *, struct cfdata *, void *);
-static	void mem_sbi_attach(struct device *, struct device *, void *);
+static	void ka780_attach_cpu(device_t);
 static	int getsort(int type);
 
-CFATTACH_DECL(mem_sbi, sizeof(struct mem_softc),
+static	int mem_sbi_match(device_t, cfdata_t, void *);
+static	void mem_sbi_attach(device_t, device_t, void *);
+
+CFATTACH_DECL_NEW(mem_sbi, sizeof(struct mem_softc),
     mem_sbi_match, mem_sbi_attach, NULL, NULL);
 
 int	
-mem_sbi_match(struct device *parent, struct cfdata *cf, void *aux)
+mem_sbi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct sbi_attach_args * const sa = aux;
 
 	if (cf->cf_loc[SBICF_TR] != sa->sa_nexnum &&
 	    cf->cf_loc[SBICF_TR] != SBICF_TR_DEFAULT)
@@ -101,25 +103,27 @@ getsort(int type)
 	}
 }
 
+static const char * const ka780_devs[] = { "cpu", "sbi", NULL };
 
 /*
  * Declaration of 780-specific calls.
  */
-struct	cpu_dep ka780_calls = {
-	0,
-	ka780_mchk,
-	ka780_memerr,
-	ka780_conf,
-	generic_gettime,
-	generic_settime,
-	2,	/* ~VUPS */
-	5,	/* SCB pages */
+const struct cpu_dep ka780_calls = {
+	.cpu_mchk	= ka780_mchk,
+	.cpu_memerr	= ka780_memerr,
+	.cpu_conf	= ka780_conf,
+	.cpu_gettime	= generic_gettime,
+	.cpu_settime	= generic_settime,
+	.cpu_vups	= 2,	/* ~VUPS */
+	.cpu_scbsz	= 5,	/* SCB pages */
+	.cpu_devs	= ka780_devs,
+	.cpu_attach_cpu	= ka780_attach_cpu,
 };
 
 /*
  * Memory controller register usage varies per controller.
  */
-struct	mcr780 {
+struct mcr780 {
 	int	mc_reg[4];
 };
 
@@ -165,32 +169,31 @@ struct	mcr780 {
 
 /* enable crd interrrupts */
 void
-mem_sbi_attach(struct device *parent, struct device *self, void *aux)
+mem_sbi_attach(device_t parent, device_t self, void *aux)
 {
-	struct	sbi_attach_args *sa = (struct sbi_attach_args *)aux;
-	struct	mem_softc *sc = (void *)self;
-	struct mcr780 *mcr = (void *)sa->sa_ioh; /* XXX */
+	struct sbi_attach_args * const sa = (struct sbi_attach_args *)aux;
+	struct mem_softc * const sc = device_private(self);
+	struct mcr780 * const mcr = (void *)sa->sa_ioh; /* XXX */
 
+	sc->sc_dev = self;
 	sc->sc_memaddr = (void *)sa->sa_ioh; /* XXX */
 	sc->sc_memtype = getsort(sa->sa_type);
 	sc->sc_memnr = sa->sa_type;
 
-	printf(": ");
 	switch (sc->sc_memtype) {
-
 	case M780C:
-		printf("standard");
+		aprint_normal(": standard");
 		M780C_ENA(mcr);
 		break;
 
 	case M780EL:
-		printf("(el) ");
+		aprint_normal(": (el) ");
 		M780EL_ENA(mcr);
 		if (sc->sc_memnr != NEX_MEM64I && sc->sc_memnr != NEX_MEM256I)
 			break;
 
 	case M780EU:
-		printf("(eu)");
+		aprint_normal(": (eu)");
 		M780EU_ENA(mcr);
 		break;
 	}
@@ -199,25 +202,24 @@ mem_sbi_attach(struct device *parent, struct device *self, void *aux)
 
 /* log crd errors */
 void
-ka780_memerr()
+ka780_memerr(void)
 {
-	struct	mem_softc *sc;
+	struct mem_softc *sc;
 	struct mcr780 *mcr;
 	int m;
 
 	for (m = 0; m < mem_cd.cd_ndevs; m++) {
-		if (mem_cd.cd_devs[m] == 0)
+		sc = device_lookup_private(&mem_cd, m);
+		if (sc == NULL)
 			continue;
-
-		sc = (void *)mem_cd.cd_devs[m];
 		mcr = (struct mcr780 *)sc->sc_memaddr;
 		switch (sc->sc_memtype) {
 
 		case M780C:
 			if (M780C_ERR(mcr)) {
-				printf("%s: soft ecc addr %x syn %x\n",
-				    sc->sc_dev.dv_xname, M780C_ADDR(mcr),
-				    M780C_SYN(mcr));
+				aprint_error_dev(sc->sc_dev,
+				    "soft ecc addr %x syn %x\n",
+				    M780C_ADDR(mcr), M780C_SYN(mcr));
 #ifdef TRENDATA
 				memlog(m, mcr);
 #endif
@@ -227,9 +229,9 @@ ka780_memerr()
 
 		case M780EL:
 			if (M780EL_ERR(mcr)) {
-				printf("%s: soft ecc addr %x syn %x\n",
-				    sc->sc_dev.dv_xname, M780EL_ADDR(mcr),
-				    M780EL_SYN(mcr));
+				aprint_error_dev(sc->sc_dev,
+				    "soft ecc addr %x syn %x\n",
+				    M780EL_ADDR(mcr), M780EL_SYN(mcr));
 				M780EL_INH(mcr);
 			}
 			if (sc->sc_memnr != NEX_MEM64I &&
@@ -238,9 +240,9 @@ ka780_memerr()
 
 		case M780EU:
 			if (M780EU_ERR(mcr)) {
-				printf("%s: soft ecc addr %x syn %x\n",
-				    sc->sc_dev.dv_xname, M780EU_ADDR(mcr),
-				    M780EU_SYN(mcr));
+				aprint_error_dev(sc->sc_dev,
+				    "soft ecc addr %x syn %x\n",
+				    M780EU_ADDR(mcr), M780EU_SYN(mcr));
 				M780EU_INH(mcr);
 			}
 			break;
@@ -254,7 +256,7 @@ ka780_memerr()
  * Assumes all your memory is Trendata or the non-Trendata
  * memory never fails..
  */
-struct {
+const struct {
 	u_char	m_syndrome;
 	char	m_chip[4];
 } memlogtab[] = {
@@ -281,9 +283,9 @@ struct {
 int
 memlog(int m, struct mcr780 *mcr)
 {
-	register i;
+	int i;
 
-	for (i = 0; i < (sizeof (memlogtab) / sizeof (memlogtab[0])); i++)
+	for (i = 0; i < __arraycount(memlogtab); i++)
 		if ((u_char)(M780C_SYN(mcr)) == memlogtab[i].m_syndrome) {
 			printf (
 	"mcr%d: replace %s chip in %s bank of memory board %d (0-15)\n",
@@ -298,8 +300,9 @@ memlog(int m, struct mcr780 *mcr)
 }
 #endif /* TRENDATA */
 
-const char *mc780[]={"0","1","2","3","4","5","6","7","8","9","10","11","12","13",
-	"14","15"};
+const char mc780[][3] = {
+	"0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15"
+};
 
 struct mc780frame {
 	int	mc8_bcnt;		/* byte count == 0x28 */
@@ -320,9 +323,9 @@ struct mc780frame {
 int
 ka780_mchk(void *cmcf)
 {
-	register struct mc780frame *mcf = (struct mc780frame *)cmcf;
-	register int type = mcf->mc8_summary;
-	register int sbifs;
+	struct mc780frame * const mcf = (struct mc780frame *)cmcf;
+	int type = mcf->mc8_summary;
+	int sbifs;
 
 	printf("machine check %x: %s%s\n", type, mc780[type&0xf],
 	    (type&0xf0) ? " abort" : " fault"); 
@@ -349,19 +352,25 @@ struct ka78x {
 };
 
 void
-ka780_conf()
+ka780_conf(void)
 {
-	struct	ka78x *ka78 = (void *)&vax_cpudata;
-
 	/* Enable cache */
 	mtpr(0x200000, PR_SBIMT);
 
-	printf("cpu: %s, serial number %d(%d), hardware ECO level %d(%d)\n",
-	    &cpu_model[4], ka78->snr, ka78->plant, ka78->eco >> 4, ka78->eco);
+}
+
+void
+ka780_attach_cpu(device_t self)
+{
+	struct ka78x * const ka78 = (void *)&vax_cpudata;
+
+	aprint_normal("KA%s, serial number %d(%d), hardware ECO level %d(%d)\n",
+	    &cpu_model[8], ka78->snr, ka78->plant, ka78->eco >> 4, ka78->eco);
+	aprint_normal_dev(self, "4KB L1 cachen");
 	if (mfpr(PR_ACCS) & 255) {
-		printf("cpu: FPA present, enabling.\n");
+		aprint_normal(", FPA present\n");
 		mtpr(0x8000, PR_ACCS);
 	} else
-		printf("cpu: no FPA\n");
+		aprint_normal(", no FPA\n");
 
 }

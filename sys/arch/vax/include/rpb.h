@@ -1,4 +1,4 @@
-/*	$NetBSD: rpb.h,v 1.8 2002/12/01 21:21:45 matt Exp $ */
+/*	$NetBSD: rpb.h,v 1.9 2008/03/11 05:34:02 matt Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -41,8 +41,7 @@
 
 struct rpb {		/* size		description */
 	struct rpb *rpb_base;	/* 4  physical base address of block */
-	void	(*rpb_restart)/* 4  physical address of restart routine */
-			__P((void));
+	void  (*rpb_restart)(void);/* 4  physical address of restart routine */
 	long	rpb_chksum;/* 4  checksum of first 31 longwords of restart */
 	long	rpb_rstflg;	/* 4  Restart in progress flag */
 	long	rpb_haltpc;	/* 4  PC at HALT/restart */
