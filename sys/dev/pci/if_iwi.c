@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwi.c,v 1.69 2008/02/29 06:13:39 dyoung Exp $  */
+/*	$NetBSD: if_iwi.c,v 1.70 2008/03/11 20:40:51 dyoung Exp $  */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.69 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwi.c,v 1.70 2008/03/11 20:40:51 dyoung Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2200BG/2225BG/2915ABG driver
@@ -199,16 +199,6 @@ iwi_match(device_t parent, struct cfdata *match, void *aux)
 		return 1;
 
 	return 0;
-}
-
-static bool
-iwi_pci_resume(device_t dv PMF_FN_ARGS)
-{
-	struct iwi_softc *sc = device_private(dv);
-
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
-
-	return true;
 }
 
 /* Base Address Register */
@@ -437,7 +427,7 @@ iwi_attach(device_t parent, device_t self, void *aux)
 
 	iwi_sysctlattach(sc);	
 
-	if (!pmf_device_register(self, NULL, iwi_pci_resume))
+	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
