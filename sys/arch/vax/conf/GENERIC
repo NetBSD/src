@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.161 2008/02/03 08:45:40 matt Exp $
+# $NetBSD: GENERIC,v 1.162 2008/03/11 05:34:02 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.161 $"
+#ident 		"GENERIC-$Revision: 1.162 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -171,29 +171,32 @@ config		netbsd root on ? type ?
 
 mainbus0	at root
 
+cpu*		at mainbus0
+
 # All buses; from the beginning attached to mainbus.
-abus0		at mainbus0		# Master bus on VAX 8600
-sbi0		at mainbus0		# SBI, master bus on 11/780.
+sbi0		at mainbus0		# SBI, master bus on 11/780, 8600.
 cmi0		at mainbus0		# 11/750 internal bus.
 bi0		at mainbus0		# VAX 8200
 vsbus0		at mainbus0		# All VAXstations
-ibus0		at mainbus0		# All MicroVAX
-#nbi0		at mainbus0		# VAX 8800
-#xmi0		at mainbus0		# VAX 6000
+nmi0		at mainbus0		# VAX 8800
+xmi0		at mainbus0		# VAX 6000
+uba0		at mainbus0		# All MicroVAX
+ze0		at mainbus0		# KA48, KA49, KA53
+le0		at mainbus0		# LANCE ethernet (MV3400)
+#shac0		at mainbus0 		# DSSI controller
 
 # NMI (internal bus) on VAX 88xx-series.
-#cpu*		at nmi0 slot?		# 1-4 KA88 CPUs
-#mem*		at nmi0 slot?
-#bi*		at nmi0 slot?		# BI bus adapters
+cpu*		at nmi0 slot?		# 1-4 KA88 CPUs
+mem*		at nmi0 slot?
+bi*		at nmi0 slot?		# BI bus adapters
 
 # XMI on VAX 6000 (and higher)
-#cpu*		at xmi? node?		# 1-? VAX 6000 CPUs
-#mem*		at xmi? node?
-#bi*		at xmi? node?		# XMI-BI adapter
+cpu*		at xmi? node?		# 1-? VAX 6000 CPUs
+mem*		at xmi? node?
+bi*		at xmi? node?		# XMI-BI adapter
 
 # Vsbus, the virtual VAXstation bus, and possible devices.
 le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
-ze0		at vsbus0 csr 0x20008000 # SGEC ethernet
 dz0		at vsbus0 csr 0x200a0000 # DC-367 DZ-11 lookalike ctlr
 dz0		at vsbus0 csr 0x25000000 # VS4000/90 and 4000/10x serial line
 si0		at vsbus0 csr 0x200c0080 # VS2000/3100 SCSI-ctlr
@@ -214,11 +217,6 @@ hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
 rd*		at hdc0 drive?		# RD5x disks
 #ry*		at hdc0 drive?		# RX floppies
 
-# Ibus, the internal bus on most Microvaxen
-uba0		at ibus0 		# Qbus adapter
-ze0		at ibus0 		# SGEC on-board ethernet
-le0		at ibus0		# LANCE ethernet (MV3400)
-#shac0		at ibus0 		# DSSI controller
 
 # Devices connected at VAXBI
 cpu*		at bi? node?		# KA820/KA825 CPU
@@ -233,8 +231,6 @@ uba*		at cmi? tr?		# Unibus adapters
 mba*		at cmi? tr?		# Massbus adapters
 
 # SBI (VAX 11/780, VAX 8600)
-sbi*		at abus0		# VAX 8600 can have up to 4 SBI's.
-
 mem*		at sbi? tr?		# Memory subsystems
 uba*		at sbi? tr?		# Unibus adapters
 mba*		at sbi? tr?		# Massbus adapters
@@ -246,7 +242,7 @@ hp*		at mba? drive?		# RM/RP disk drives
 uda*		at uba?	csr 0172150	# UDA50/RQDX?
 uda*		at uba?	csr 0160334
 mtc*		at uba? csr 0174500	# Tape MSCP ctlr
-#ts0		at uba? csr 0172520	# TS11/TSV05 tape.
+ts0		at uba? csr 0172520	# TS11/TSV05 tape.
 #qd0		at uba? csr 0177400	# 4- or 8-bitplans color graphics
 #qv0		at uba? csr 0177400	# Monochrome graphics
 de*		at uba? csr 0174510	# DELUA/DEUNA

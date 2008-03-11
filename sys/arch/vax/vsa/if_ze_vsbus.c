@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze_vsbus.c,v 1.11 2005/12/11 12:19:37 christos Exp $ */
+/*      $NetBSD: if_ze_vsbus.c,v 1.12 2008/03/11 05:34:03 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.11 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.12 2008/03/11 05:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -67,8 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ze_vsbus.c,v 1.11 2005/12/11 12:19:37 christos Ex
 #define NISA_ROM        0x27800000
 #define	SGECVEC		0x108
 
-static	int	zematch(struct device *, struct cfdata *, void *);
-static	void	zeattach(struct device *, struct device *, void *);
+static	int	zematch(device_t, cfdata_t, void *);
+static	void	zeattach(device_t, device_t, void *);
 
 CFATTACH_DECL(ze_vsbus, sizeof(struct ze_softc),
     zematch, zeattach, NULL, NULL);
@@ -77,10 +77,7 @@ CFATTACH_DECL(ze_vsbus, sizeof(struct ze_softc),
  * Check for present SGEC.
  */
 int
-zematch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+zematch(struct device *parent, struct cfdata *cf, void *aux)
 {
 	/*
 	 * Should some more intelligent checking be done???
@@ -100,12 +97,10 @@ zematch(parent, cf, aux)
  * to accept packets.
  */
 void
-zeattach(parent, self, aux)
-	struct	device *parent, *self;
-	void	*aux;
+zeattach(device_t parent, device_t self, void *aux)
 {
-	struct ze_softc *sc = (struct ze_softc *)self;
-	struct vsbus_attach_args *va = aux;
+	struct ze_softc * const sc = device_private(self);
+	struct vsbus_attach_args * const va = aux;
 	extern struct vax_bus_dma_tag vax_bus_dma_tag;
 	int *ea, i;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.19 2008/03/01 14:16:50 rmind Exp $	*/
+/*	$NetBSD: qv.c,v 1.20 2008/03/11 05:34:02 matt Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.19 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.20 2008/03/11 05:34:02 matt Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -183,8 +183,8 @@ extern	struct pte QVmap[][512];
  * virtual console vputc.  consops is used to redirect the console
  * device to the qvss console.
  */
-extern (*v_putc)();
-extern struct cdevsw *consops;
+extern int (*v_putc)();
+extern const struct cdevsw *consops;
 /*
  * qv_def_scrn is used to select the appropriate tables. 0=15 inch 1=19 inch,
  * 2 = uVAXII.

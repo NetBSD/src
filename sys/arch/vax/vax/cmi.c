@@ -1,4 +1,4 @@
-/*	$NetBSD: cmi.c,v 1.10 2007/03/04 06:00:57 christos Exp $ */
+/*	$NetBSD: cmi.c,v 1.11 2008/03/11 05:34:03 matt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.10 2007/03/04 06:00:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.11 2008/03/11 05:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,18 +42,19 @@ __KERNEL_RCSID(0, "$NetBSD: cmi.c,v 1.10 2007/03/04 06:00:57 christos Exp $");
 #include <machine/cpu.h>
 #include <machine/sid.h>
 #include <machine/ka750.h>
+#include <machine/mainbus.h>
 
 static	int cmi_print(void *, const char *);
-static	int cmi_match(struct device *, struct cfdata *, void *);
-static	void cmi_attach(struct device *, struct device *, void*);
+static	int cmi_match(device_t, cfdata_t, void *);
+static	void cmi_attach(device_t, device_t, void*);
 
-CFATTACH_DECL(cmi, sizeof(struct device),
+CFATTACH_DECL_NEW(cmi, 0,
     cmi_match, cmi_attach, NULL, NULL);
 
 int
 cmi_print(void *aux, const char *name)
 {
-	struct sbi_attach_args *sa = (struct sbi_attach_args *)aux;
+	struct sbi_attach_args * const sa = aux;
 
 	if (name)
 		aprint_normal("unknown device 0x%x at %s", sa->sa_type, name);
@@ -64,19 +65,19 @@ cmi_print(void *aux, const char *name)
 
 
 int
-cmi_match(struct device *parent, struct cfdata *cf, void *aux)
+cmi_match(device_t parent, cfdata_t cf, void *aux)
 {
-	if (vax_bustype == VAX_CMIBUS)
-		return 1;
-	return 0;
+	struct mainbus_attach_args * const ma = aux;
+
+	return !strcmp("cmi", ma->ma_type);
 }
 
 void
-cmi_attach(struct device *parent, struct device *self, void *aux)
+cmi_attach(device_t parent, device_t self, void *aux)
 {
-	struct	sbi_attach_args sa;
+	struct sbi_attach_args sa;
 
-	printf("\n");
+	aprint_normal("\n");
 	/*
 	 * Probe for memory, can be in the first 4 slots.
 	 */

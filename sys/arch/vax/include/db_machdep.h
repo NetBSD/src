@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.h,v 1.14 2006/04/01 15:45:00 cherry Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.15 2008/03/11 05:34:02 matt Exp $	*/
 
 /* 
  * Mach Operating System
@@ -75,7 +75,7 @@ extern	db_regs_t	ddb_regs;	/* register state */
 #define DB_MACHINE_COMMANDS
 
 /* Prototypes */
-void	kdb_trap __P((struct trapframe *));
+void	kdb_trap(struct trapframe *);
 
 /*
  * We use a.out symbols in DDB (unless we are ELF then we use ELF symbols).

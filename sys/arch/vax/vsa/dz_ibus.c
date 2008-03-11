@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ibus.c,v 1.33 2005/12/11 12:19:37 christos Exp $ */
+/*	$NetBSD: dz_ibus.c,v 1.34 2008/03/11 05:34:03 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.33 2005/12/11 12:19:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.34 2008/03/11 05:34:03 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -63,8 +63,8 @@ __KERNEL_RCSID(0, "$NetBSD: dz_ibus.c,v 1.33 2005/12/11 12:19:37 christos Exp $"
 #define DZADDR	0x25000000
 #define DZVEC	0x154
 
-static	int	dz_ibus_match(struct device *, struct cfdata *, void *);
-static	void	dz_ibus_attach(struct device *, struct device *, void *);
+static	int	dz_ibus_match(device_t, cfdata_t, void *);
+static	void	dz_ibus_attach(device_t, device_t, void *);
 
 static	vaddr_t idz_regs; /* Used for console */
 
@@ -87,12 +87,9 @@ static volatile struct ss_dz {/* base address of DZ-controller: 0x200A0000 */
 cons_decl(idz);
 
 static int
-dz_ibus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+dz_ibus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct bp_conf *bp = aux;
+	struct bp_conf * const bp = aux;
 
 	if (strcmp(bp->type, "dz") == 0)
 		return 1;
@@ -100,11 +97,9 @@ dz_ibus_match(parent, cf, aux)
 }
 
 static void
-dz_ibus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+dz_ibus_attach(device_t parent, device_t self, void *aux)
 {
-	struct	dz_softc *sc = (void *)self;
+	struct dz_softc * const sc = device_private(self);
 	struct ss_dz *dzP;
 	int i, vec, br;
 
@@ -146,14 +141,14 @@ dz_ibus_attach(parent, self, aux)
 	scb_vecalloc(DZVEC, dzxint, sc, SCB_ISTACK, &sc->sc_tintrcnt);
 	scb_vecalloc(DZVEC - 4, dzrint, sc, SCB_ISTACK, &sc->sc_rintrcnt);
 
-	printf("\n%s: 4 lines", self->dv_xname);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "%s: 4 lines");
 
-	dzattach(sc, NULL, minor(cn_tab->cn_dev);
+	dzattach(sc, NULL, minor(cn_tab->cn_dev));
 }
 
 int
-idzcngetc(dev) 
-	dev_t dev;
+idzcngetc(dev_t dev)
 {
 	int c = 0, s;
 	int mino = minor(dev);
@@ -177,8 +172,7 @@ idzcngetc(dev)
 }
 
 void
-idzcnprobe(cndev)
-	struct	consdev *cndev;
+idzcnprobe(struct consdev *cndev)
 {
 	extern	vaddr_t iospace;
 	int diagcons;
@@ -200,8 +194,7 @@ idzcnprobe(cndev)
 }
 
 void
-idzcninit(cndev)
-	struct	consdev *cndev;
+idzcninit(struct consdev *cndev)
 {
 	idz = (void*)idz_regs;
 
@@ -212,9 +205,7 @@ idzcninit(cndev)
 
 
 void
-idzcnputc(dev,ch)
-	dev_t	dev;
-	int	ch;
+idzcnputc(dev_t dev, int ch)
 {
 	int timeout = 1<<15;		/* don't hang the machine! */
 	int mino = minor(dev);

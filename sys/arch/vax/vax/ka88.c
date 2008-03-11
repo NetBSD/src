@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.c,v 1.12 2008/02/23 05:48:14 matt Exp $	*/
+/*	$NetBSD: ka88.c,v 1.13 2008/03/11 05:34:03 matt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.12 2008/02/23 05:48:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.13 2008/03/11 05:34:03 matt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -49,17 +49,22 @@ __KERNEL_RCSID(0, "$NetBSD: ka88.c,v 1.12 2008/02/23 05:48:14 matt Exp $");
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/user.h>
+#include <sys/malloc.h>
+#include <sys/lwp.h>
 
-#include <machine/cpu.h>
 #include <machine/mtpr.h>
 #include <machine/nexus.h>
 #include <machine/clock.h>
 #include <machine/scb.h>
 #include <machine/bus.h>
 #include <machine/sid.h>
+#include <machine/pcb.h>
 #include <machine/rpb.h>
 #include <machine/ka88.h>
 
+#include <dev/cons.h>
 #include <vax/vax/gencons.h>
 
 #include "ioconf.h"
@@ -72,8 +77,27 @@ static void ka88_steal_pages(void);
 static int ka88_gettime(volatile struct timeval *);
 static void ka88_settime(volatile struct timeval *);
 static void ka88_badaddr(void);
+
+static long *ka88_mcl;
+static int mastercpu;
+
+static const char * const ka88_devs[] = { "nmi", NULL };
+
+const struct cpu_dep ka88_calls = {
+	.cpu_steal_pages = ka88_steal_pages,
+	.cpu_mchk	= ka88_mchk,
+	.cpu_memerr	= ka88_memerr,
+	.cpu_conf	= ka88_conf,
+	.cpu_gettime	= ka88_gettime,
+	.cpu_settime	= ka88_settime,
+	.cpu_vups	= 6,	/* ~VUPS */
+	.cpu_scbsz	= 64,	/* SCB pages */
+	.cpu_devs	= ka88_devs,
+	.cpu_badaddr	= ka88_badaddr,
+};
+
 #if defined(MULTIPROCESSOR)
-static void ka88_startslave(struct device *, struct cpu_info *);
+static void ka88_startslave(struct cpu_info *);
 static void ka88_txrx(int, const char *, int);
 static void ka88_sendstr(int, const char *);
 static void ka88_sergeant(int);
@@ -81,35 +105,12 @@ static int rxchar(void);
 static void ka88_putc(int);
 static void ka88_cnintr(void);
 cons_decl(gen);
-#endif
 
-static	long *ka88_mcl;
-static int mastercpu;
-
-struct	cpu_dep ka88_calls = {
-	ka88_steal_pages,
-	ka88_mchk,
-	ka88_memerr,
-	ka88_conf,
-	ka88_gettime,
-	ka88_settime,
-	6,	/* ~VUPS */
-	64,	/* SCB pages */
-	0,
-	0,
-	0,
-	0,
-	0,
-#if defined(MULTIPROCESSOR)
-	ka88_startslave,
-#endif
-	ka88_badaddr,
+const struct cpu_mp_dep ka88_mp_calls = {
+	.cpu_startslave = ka88_startslave,
+	.cpu_cnintr = ka88_cnintr,
 };
-
-struct ka88_softc {
-	struct device sc_dev;
-	int sc_slot;
-};
+#endif
 
 static void
 ka88_conf(void)
@@ -117,76 +118,89 @@ ka88_conf(void)
 	ka88_mcl = (void *)vax_map_physmem(0x3e000000, 1);
 	printf("Serial number %d, rev %d\n",
 	    mfpr(PR_SID) & 65535, (mfpr(PR_SID) >> 16) & 127);
+#ifdef MULTIPROCESSOR
+	mp_dep_call = &ka88_mp_calls;
+#endif
 }
 
 static int
-ka88_match(struct device *parent, struct cfdata *cf, void *aux)
+ka88_cpu_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct nmi_attach_args *na = aux;
+	struct nmi_attach_args * const na = aux;
 
 	if (cf->cf_loc[NMICF_SLOT] != NMICF_SLOT_DEFAULT &&
-	    cf->cf_loc[NMICF_SLOT] != na->slot)
+	    cf->cf_loc[NMICF_SLOT] != na->na_slot)
 		return 0;
-	if (na->slot >= 20)
+	if (na->na_slot >= 20)
 		return 1;
 	return 0;
 }
 
 static void
-ka88_attach(struct device *parent, struct device *self, void *aux)
+ka88_cpu_attach(device_t parent, device_t self, void *aux)
 {
-	struct ka88_softc *sc = (void *)self;
-	struct nmi_attach_args *na = aux;
-	char *ms, *lr;
+	struct cpu_info *ci;
+	struct nmi_attach_args * const na = aux;
+	const char *ms, *lr;
+	const bool master = (na->na_slot == mastercpu);
 
-	if (((ka88_confdata & KA88_LEFTPRIM) && (na->slot == 20)) ||
-	    ((ka88_confdata & KA88_LEFTPRIM) == 0 && (na->slot != 20)))
+	if (((ka88_confdata & KA88_LEFTPRIM) && master) ||
+	    ((ka88_confdata & KA88_LEFTPRIM) == 0 && !master))
 		lr = "left";
 	else
 		lr = "right";
-	ms = na->slot == 20 ? "master" : "slave";
+	ms = (master ? "master" : "slave");
 
-	printf(": ka88 (%s) (%s)\n", lr, ms);
-	sc->sc_slot = na->slot;
-	if (na->slot != mastercpu) {
+	aprint_normal(": KA88 %s %s\n", lr, ms);
+	if (!master) {
 #if defined(MULTIPROCESSOR)
-		sc->sc_ci = cpu_slavesetup(self);
 		v_putc = ka88_putc;	/* Need special console handling */
+		cpu_slavesetup(self, na->na_slot);
 #endif
 		return;
 	}
-	curcpu()->ci_dev = self;
+	ci = curcpu();
+	self->dv_private = ci;
+	ci->ci_dev = self;
+	ci->ci_cpuid = device_unit(self);
+	ci->ci_slotid = na->na_slot;
 }
 
-CFATTACH_DECL(cpu_nmi, sizeof(struct ka88_softc),
-    ka88_match, ka88_attach, NULL, NULL);
+CFATTACH_DECL_NEW(cpu_nmi, 0,
+    ka88_cpu_match, ka88_cpu_attach, NULL, NULL);
 
 struct mem_nmi_softc {
-	struct device sc_dev;
+	struct device *sc_dev;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
 
 static int
-ms88_match(struct device *parent, struct cfdata *cf, void *aux)
+ms88_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct nmi_attach_args *na = aux;
+	struct nmi_attach_args * const na = aux;
 
 	if (cf->cf_loc[NMICF_SLOT] != NMICF_SLOT_DEFAULT &&
-	    cf->cf_loc[NMICF_SLOT] != na->slot)
+	    cf->cf_loc[NMICF_SLOT] != na->na_slot)
 		return 0;
-	if (na->slot != 10)
+	if (na->na_slot != 10)
 		return 0;
 	return 1;
 }
 
 static void
-ms88_attach(struct device *parent, struct device *self, void *aux)
+ms88_attach(device_t parent, device_t self, void *aux)
 {
-	printf("\n");
+	struct nmi_attach_args * const na = aux;
+	struct mem_nmi_softc * const sc = device_private(self);
+
+	aprint_normal("\n");
+
+	sc->sc_dev = self;
+	sc->sc_iot = na->na_iot;
 }
 
-CFATTACH_DECL(mem_nmi, sizeof(struct mem_nmi_softc),
+CFATTACH_DECL_NEW(mem_nmi, sizeof(struct mem_nmi_softc),
     ms88_match, ms88_attach, NULL, NULL);
 
 static void
@@ -204,7 +218,7 @@ ka88_badaddr(void)
 }
 
 static void
-ka88_memerr()
+ka88_memerr(void)
 {
 	printf("ka88_memerr\n");
 }
@@ -342,9 +356,9 @@ ka88_steal_pages(void)
 }
 	
 
-#if defined(MULTIPROCESSOR) && 0
+#if defined(MULTIPROCESSOR)
 int
-rxchar()
+rxchar(void)
 {
 	int ret;
 
@@ -358,13 +372,12 @@ rxchar()
 }
 
 static void
-ka88_startslave(struct device *dev, struct cpu_info *ci)
+ka88_startslave(struct cpu_info *ci)
 {
-	struct ka88_softc *sc = (void *)dev;
-	int id = sc->sc_binid;
+	const int id = ci->ci_slotid;
 	int i;
 
-	expect = sc->sc_binid;
+	expect = id;
 	/* First empty queue */
 	for (i = 0; i < 10000; i++)
 		if (rxchar())
@@ -375,17 +388,16 @@ ka88_startslave(struct device *dev, struct cpu_info *ci)
 	ka88_txrx(id, "D/I C %x\r", mfpr(PR_SBR));	/* SBR */
 	ka88_txrx(id, "D/I D %x\r", mfpr(PR_SLR));	/* SLR */
 	ka88_txrx(id, "D/I 10 %x\r",			/* PCB for idle proc */
-	    (int)&ci->ci_data.cpu_idlelwp->l_addr->u_pcb);
+	    ci->ci_data.cpu_onproc->l_addr->u_pcb.pcb_paddr);
 	ka88_txrx(id, "D/I 11 %x\r", mfpr(PR_SCBB));	/* SCB */
 	ka88_txrx(id, "D/I 38 %x\r", mfpr(PR_MAPEN)); /* Enable MM */
 	ka88_txrx(id, "S %x\r", (int)&vax_mp_tramp); /* Start! */
 	expect = 0;
 	for (i = 0; i < 10000; i++)
-		if ((volatile)ci->ci_flags & CI_RUNNING)
+		if (ci->ci_flags & CI_RUNNING)
 			break;
 	if (i == 10000)
-		printf("%s: (ID %d) failed starting??!!??\n",
-		    dev->dv_xname, sc->sc_binid);
+		aprint_error_dev(ci->ci_dev, "(ID %d) failed starting!!\n", id);
 }
 
 void
@@ -401,7 +413,7 @@ ka88_txrx(int id, const char *fmt, int arg)
 void
 ka88_sendstr(int id, const char *buf)
 {
-	register u_int utchr; /* Ends up in R11 with PCC */
+	u_int utchr; /* Ends up in R11 with PCC */
 	int ch, i;
 
 	while (*buf) {
@@ -468,7 +480,7 @@ ka88_putc(int c)
  * Got character IPI.
  */
 void
-ka88_cnintr()
+ka88_cnintr(void)
 {
 	if (ch != 0)
 		gencnputc(0, ch);

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.12 2008/02/23 05:48:14 matt Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.13 2008/03/11 05:34:03 matt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 The NetBSD Foundation, Inc.
@@ -239,12 +239,12 @@ NENTRY(_do_cas, 0)
 	movl	(%r1), %r0		/* get value */
 	cmpl	%r0, %r2		/* does it equal old? */
 	bneq	4f			/*    nope, return */
+	extzv	$2,$11,%r1,%r4		/* gets bits 2-12 (our hash) */
 	/*
 	 * Lock everyone out on this cpu.
 	 */
 	mfpr	$PR_IPL, %r5		/* save IPL */
 	mtpr	$IPL_HIGH, $PR_IPL	/* block everything */
-	extzv	$2,$11,%r1,%r4		/* gets bits 2-12 */
 1:	bbssi	%r4,cashash,1b		/* is this pos in the hash table set */
 	movl	(%r1), %r0		/* get value again */
 	cmpl	%r0, %r2		/* does it still equal old? */

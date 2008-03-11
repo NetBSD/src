@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ni.c,v 1.33 2007/10/19 11:59:37 ad Exp $ */
+/*	$NetBSD: if_ni.c,v 1.34 2008/03/11 05:34:01 matt Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.33 2007/10/19 11:59:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ni.c,v 1.34 2008/03/11 05:34:01 matt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -140,8 +140,8 @@ struct	ni_softc {
 	u_int8_t	sc_enaddr[ETHER_ADDR_LEN];
 };
 
-static	int	nimatch(struct device *, struct cfdata *, void *);
-static	void	niattach(struct device *, struct device *, void *);
+static	int	nimatch(device_t, cfdata_t, void *);
+static	void	niattach(device_t, device_t, void *);
 static	void	niinit(struct ni_softc *);
 static	void	nistart(struct ifnet *);
 static	void	niintr(void *);
