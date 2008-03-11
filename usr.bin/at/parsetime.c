@@ -1,4 +1,4 @@
-/*	$NetBSD: parsetime.c,v 1.16 2008/03/11 01:04:18 christos Exp $	*/
+/*	$NetBSD: parsetime.c,v 1.17 2008/03/11 01:10:12 christos Exp $	*/
 
 /* 
  * parsetime.c - parse time for at(1)
@@ -114,6 +114,18 @@ struct {
 	{ "oct", OCT, 0 },
 	{ "nov", NOV, 0 },
 	{ "dec", DEC, 0 },
+	{ "january", JAN, 0 },
+	{ "february", FEB, 0 },
+	{ "march", MAR, 0 },
+	{ "april", APR, 0 },
+	{ "may", MAY, 0 },
+	{ "june", JUN, 0 },
+	{ "july", JUL, 0 },
+	{ "august", AUG, 0 },
+	{ "september", SEP, 0 },
+	{ "october", OCT, 0 },
+	{ "november", NOV, 0 },
+	{ "december", DEC, 0 },
 	{ "sunday", SUN, 0 },
 	{ "sun", SUN, 0 },
 	{ "monday", MON, 0 },
@@ -146,7 +158,7 @@ static int sc_tokplur;	/* scanner - is token plural? */
 #if 0
 static char rcsid[] = "$OpenBSD: parsetime.c,v 1.4 1997/03/01 23:40:10 millert Exp $";
 #else
-__RCSID("$NetBSD: parsetime.c,v 1.16 2008/03/11 01:04:18 christos Exp $");
+__RCSID("$NetBSD: parsetime.c,v 1.17 2008/03/11 01:10:12 christos Exp $");
 #endif
 #endif
 
