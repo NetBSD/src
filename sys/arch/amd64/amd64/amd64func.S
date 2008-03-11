@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64func.S,v 1.1 2008/03/10 22:03:40 ad Exp $	*/
+/*	$NetBSD: amd64func.S,v 1.2 2008/03/11 00:40:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -56,9 +56,7 @@ ENTRY(tsc_get_timecount)
 	orl	CC_DENOM+4(%rdi), %eax	/*     cc_denom > 0xffffffff) */
 	jnz	2f			/*    return tsc_slow_timecount() */
 	rdtsc				/* cc = cpu_counter32(); */
-	movl	$0, %edx
-	subl	CC_CC(%rdi), %eax	/* cc -= cc->cc_cc; */
-	adcl	$0, %edx		/* if (cc < 0) cc += 0x100000000; */
+	subl	CC_CC(%rdi), %eax	/* cc -= cc->cc_cc; (can wrap) */
 	mull	CC_DELTA(%rdi)		/* rcc = (cc * ci->ci_cc.cc_delta) */
 	divl	CC_DENOM(%rdi)		/*     / ci->ci_cc.cc_denom */
 	addl	CC_VAL(%rdi), %eax	/*     + ci->ci_cc.cc_val; */
