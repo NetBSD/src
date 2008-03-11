@@ -1,4 +1,4 @@
-/*  $NetBSD: if_wpi.c,v 1.36 2008/02/29 06:13:39 dyoung Exp $    */
+/*  $NetBSD: if_wpi.c,v 1.37 2008/03/11 20:45:04 dyoung Exp $    */
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.36 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.37 2008/03/11 20:45:04 dyoung Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -213,8 +213,6 @@ wpi_attach(device_t parent __unused, device_t self, void *aux)
 	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo, sizeof devinfo);
 	revision = PCI_REVISION(pa->pa_class);
 	aprint_normal(": %s (rev. 0x%02x)\n", devinfo, revision);
-
-	pci_disable_retry(pa->pa_pc, pa->pa_tag);
 
 	/* enable bus-mastering */
 	data = pci_conf_read(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG);
@@ -3130,7 +3128,6 @@ wpi_resume(device_t dv PMF_FN_ARGS)
 {
 	struct wpi_softc *sc = device_private(dv);
 
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 	(void)wpi_reset(sc);
 
 	return true;
