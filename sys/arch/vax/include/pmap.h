@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.74 2008/02/22 08:46:48 matt Exp $	   */
+/*	$NetBSD: pmap.h,v 1.75 2008/03/11 05:34:02 matt Exp $	   */
 
 /* 
  * Copyright (c) 1991 Regents of the University of California.
@@ -173,7 +173,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 
 	sva = PG_PFNUM(va);
 	if (va < 0x40000000) {
-		if (sva > (pmap->pm_p0lr & ~AST_MASK))
+		if (sva >= (pmap->pm_p0lr & ~AST_MASK))
 			goto fail;
 		pte = (int *)pmap->pm_p0br;
 	} else {
@@ -181,7 +181,11 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 			goto fail;
 		pte = (int *)pmap->pm_p1br;
 	}
-	if (kvtopte(&pte[sva])->pg_pfn && pte[sva]) {
+	/*
+	 * Since the PTE tables are sparsely allocated, make sure the page
+	 * table page actually exists before deferencing the pte itself.
+	 */
+	if (kvtopte(&pte[sva])->pg_v && (pte[sva] & PG_FRAME)) {
 		if (pap)
 			*pap = (pte[sva] & PG_FRAME) << VAX_PGSHIFT;
 		return (true);
@@ -289,7 +293,7 @@ pmap_remove_all(struct pmap *pmap)
 	    : "r0","r1","r2","r3","r4","r5");
 
 /* Prototypes */
-void	pmap_bootstrap __P((void));
-vaddr_t pmap_map __P((vaddr_t, vaddr_t, vaddr_t, int));
+void	pmap_bootstrap(void);
+vaddr_t pmap_map(vaddr_t, vaddr_t, vaddr_t, int);
 
 #endif /* PMAP_H */

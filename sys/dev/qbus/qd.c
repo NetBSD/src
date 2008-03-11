@@ -1,4 +1,4 @@
-/*	$NetBSD: qd.c,v 1.42 2008/03/01 14:16:50 rmind Exp $	*/
+/*	$NetBSD: qd.c,v 1.43 2008/03/11 05:34:01 matt Exp $	*/
 
 /*-
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.42 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qd.c,v 1.43 2008/03/11 05:34:01 matt Exp $");
 
 #include "opt_ddb.h"
 
@@ -234,8 +234,8 @@ int QDlast_DMAtype;		/* type of the last DMA operation */
  */
 #define TOY ((time.tv_sec * 100) + (time.tv_usec / 10000))
 
-void qd_attach(struct device *, struct device *, void *);
-static int qd_match(struct device *, struct cfdata *, void *);
+void qd_attach(device_t, device_t, void *);
+static int qd_match(device_t, cfdata_t, void *);
 
 static void qddint(void *);	/* DMA gate array intrpt service */
 static void qdaint(void *);	/* Dragon ADDER intrpt service */
@@ -550,8 +550,8 @@ CFATTACH_DECL(qd, sizeof(struct qd_softc),
  */
 static int
 qd_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
+	device_t parent;
+	cfdata_t match;
 	void *aux;
 {
 	struct qd_softc ssc;
@@ -729,7 +729,7 @@ qd_match(parent, match, aux)
 
 
 void qd_attach(parent, self, aux)
-	   struct device *parent, *self;
+	   device_t parent, *self;
 	   void *aux;
 {
 	struct uba_attach_args *ua = aux;
@@ -900,7 +900,7 @@ qdclose(dev, flag, mode, p)
 	qd = &qdmap[unit];
 
 	uh = (struct uba_softc *)
-	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
+	     device_parent((device_t )(qd_cd.cd_devs[unit]));
 
 
 	if ((minor_dev & 0x03) == 2) {
@@ -1103,7 +1103,7 @@ qdioctl(dev, cmd, datap, flags, p)
 	struct uba_softc *uh;
 
 	uh = (struct uba_softc *)
-	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
+	     device_parent((device_t )(qd_cd.cd_devs[unit]));
 
 	/*
 	* service graphic device ioctl commands
@@ -1719,7 +1719,7 @@ qd_strategy(bp)
 	unit = (minor(bp->b_dev) >> 2) & 0x07;
 
 	uh = (struct uba_softc *)
-	     device_parent((struct device *)(qd_cd.cd_devs[unit]));
+	     device_parent((device_t )(qd_cd.cd_devs[unit]));
 
 	/*
 	* init pointers
@@ -2051,7 +2051,7 @@ static void
 qddint(arg)
 	void *arg;
 {
-	struct device *dv = arg;
+	device_t dv = arg;
 	struct DMAreq_header *header;
 	struct DMAreq *request;
 	volatile struct dga *dga;
@@ -2229,7 +2229,7 @@ static void
 qdaint(arg)
 	void *arg;
 {
-	struct device *dv = arg;
+	device_t dv = arg;
 	volatile struct adder *adder;
 	struct color_buf *cbuf;
 	int i;
@@ -2316,7 +2316,7 @@ static void
 qdiint(arg)
 	void *arg;
 {
-	struct device *dv = arg;
+	device_t dv = arg;
 	struct _vs_event *event;
 	struct qdinput *eqh;
 	volatile struct dga *dga;
