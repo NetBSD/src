@@ -1,7 +1,7 @@
-/*	$NetBSD: linux32_syscall.c,v 1.22 2008/03/06 15:16:47 njoly Exp $ */
+/*	$NetBSD: linux32_syscall.c,v 1.23 2008/03/11 02:24:43 ad Exp $ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.22 2008/03/06 15:16:47 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_syscall.c,v 1.23 2008/03/11 02:24:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ linux32_syscall(frame)
 	p = l->l_proc;
 
 	code = frame->tf_rax;
-	uvmexp.syscalls++;
 
 	LWP_CACHE_CREDS(l, p);
 
