@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.118 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.119 2008/03/11 02:26:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.118 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.119 2008/03/11 02:26:47 ad Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -353,9 +353,9 @@ schedclock(struct lwp *l)
 	ci = l->l_cpu;
 
 	/* Accumulate syscall and context switch counts. */
-	atomic_add_int(&uvmexp.swtch, ci->ci_data.cpu_nswtch);
+	atomic_add_int((unsigned *)&uvmexp.swtch, ci->ci_data.cpu_nswtch);
 	ci->ci_data.cpu_nswtch = 0;
-	atomic_add_int(&uvmexp.syscalls, ci->ci_data.cpu_nsyscall);
+	atomic_add_int((unsigned *)&uvmexp.syscalls, ci->ci_data.cpu_nsyscall);
 	ci->ci_data.cpu_nsyscall = 0;
 
 	if ((l->l_flag & LW_IDLE) != 0)
