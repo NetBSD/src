@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.201 2008/02/27 00:36:00 lukem Exp $
+#	$NetBSD: bsd.README,v 1.202 2008/03/11 13:33:16 uwe Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the new (as of 1993) make "include" files
@@ -610,7 +610,7 @@ FILESGRP_<fn>	File group of the specific file <fn>.
 
 FILESMODE_<fn>	File mode of the specific file <fn>.
 
-FILESDIR_<fn>	The location to install the specific file <fn>>
+FILESDIR_<fn>	The location to install the specific file <fn>.
 
 FILESNAME_<fn>	Optional name to install <fn> as.
 
@@ -625,7 +625,8 @@ UUDECODE_FILES	List of files which are stored as <file>.uue in the source
 		The source files have a `.uue' suffix, the generated files do 
 		not.
 
-UUDECODE_FILES_RENAME_fn Rename the output from the decode to the provided name.
+UUDECODE_FILES_RENAME_<fn>
+		Rename the output from the decode to the provided name.
 		
 		*NOTE: These files are simply decoded, with no install or other
 		       rule applying implicitly except being added to the clean
