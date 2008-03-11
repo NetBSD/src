@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.51 2008/02/24 18:30:07 dsl Exp $	*/
+/*	$NetBSD: syscall.c,v 1.52 2008/03/11 02:24:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2008/02/24 18:30:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.52 2008/03/11 02:24:43 ad Exp $");
 
 #include "opt_vm86.h"
 
@@ -83,7 +83,6 @@ syscall(struct trapframe *frame)
 	int error;
 	register_t code, args[2 + SYS_MAXSYSARGS], rval[2];
 
-	uvmexp.syscalls++;
 	l = curlwp;
 	LWP_CACHE_CREDS(l, l->l_proc);
 

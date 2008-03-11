@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.217 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.218 2008/03/11 02:24:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.217 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.218 2008/03/11 02:24:43 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -547,8 +547,8 @@ mi_switch(lwp_t *l)
 		ci->ci_mtx_count--;
 		lwp_unlock(l);
 
-		/* Unlocked, but for statistics only. */
-		uvmexp.swtch++;
+		/* Count the context switch on this CPU. */
+		ci->ci_data.cpu_nswtch++;
 
 		/* Update status for lwpctl, if present. */
 		if (l->l_lwpctl != NULL)

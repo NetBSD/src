@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2008/03/10 22:03:40 ad Exp $
+#	$NetBSD: genassym.cf,v 1.25 2008/03/11 02:24:43 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -252,6 +252,7 @@ define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
 define	CPU_INFO_CC		offsetof(struct cpu_info, ci_cc)
+define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
