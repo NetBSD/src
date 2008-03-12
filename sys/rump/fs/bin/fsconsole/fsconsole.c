@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.10 2008/03/12 14:49:19 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.11 2008/03/12 21:37:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -111,19 +111,22 @@ main(int argc, char *argv[])
 	if (rv == -1)
 		warn("create %d", rv);
 
-	rv = ukfs_link(fs, "/lopinaa", "/etc/LUSIKKAPUOLI");
+	rv = ukfs_link(fs, "/jonkka/lopinaa", "/LUSIKKAPUOLI");
 	if (rv == -1)
 		warn("link rv %d", rv);
 
-	rv = ukfs_symlink(fs, "/mihis_haluat_menna_tanaan", "/jonneki/muualle");
+	rv = ukfs_symlink(fs, "/mihis_haluat_menna_tanaan", "/jonkka/muualle");
 	if (rv == -1)
 		warn("symlink %d", rv);
 
-	rv = ukfs_readlink(fs, "/mihis_haluat_menna_tanaan",
+	rv = ukfs_readlink(fs, "muualle",
 	    (char *)buf, sizeof(buf));
-	if (rv > 0)
+	if (rv > 0) {
 		buf[rv] = '\0';
-	printf("readlink rv %d result \"%s\"\n", rv, buf);
+		printf("readlink rv %d result \"%s\"\n", rv, buf);
+	} else {
+		printf("readlink fail: %s\n", strerror(errno));
+	}
 
 	off = 0;
 	rv = ukfs_getdents(fs, "/etc", &off, buf, sizeof(buf));
