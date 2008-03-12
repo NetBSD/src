@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.140 2008/03/11 02:42:41 matt Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.141 2008/03/12 18:02:22 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.140 2008/03/11 02:42:41 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.141 2008/03/12 18:02:22 dyoung Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -1952,6 +1952,8 @@ device_pmf_driver_resume(device_t dev PMF_FN_ARGS)
 		return true;
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) != 0)
 		return false;
+	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
+		return false;
 	if (*dev->dv_driver_resume != NULL &&
 	    !(*dev->dv_driver_resume)(dev PMF_FN_CALL))
 		return false;
@@ -2045,6 +2047,36 @@ device_pmf_driver_set_child_register(device_t dev,
     bool (*child_register)(device_t))
 {
 	dev->dv_driver_child_register = child_register;
+}
+
+void
+device_pmf_self_resume(device_t dev PMF_FN_ARGS)
+{
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+	if ((dev->dv_flags & DVF_SELF_SUSPENDED) != 0)
+		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+}
+
+bool
+device_is_self_suspended(device_t dev)
+{
+	return (dev->dv_flags & DVF_SELF_SUSPENDED) != 0;
+}
+
+void
+device_pmf_self_suspend(device_t dev PMF_FN_ARGS)
+{
+	bool self = (flags & PMF_F_SELF) != 0;
+
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
+
+	if (!self)
+		dev->dv_flags &= ~DVF_SELF_SUSPENDED;
+	else if (device_is_active(dev))
+		dev->dv_flags |= DVF_SELF_SUSPENDED;
+
+	pmflock_debug_with_flags(dev, __func__, __LINE__ PMF_FN_CALL);
 }
 
 static void
@@ -2154,6 +2186,8 @@ device_pmf_bus_resume(device_t dev PMF_FN_ARGS)
 {
 	if ((dev->dv_flags & DVF_BUS_SUSPENDED) == 0)
 		return true;
+	if ((flags & PMF_F_SELF) != 0 && !device_is_self_suspended(dev))
+		return false;
 	if (*dev->dv_bus_resume != NULL &&
 	    !(*dev->dv_bus_resume)(dev PMF_FN_CALL))
 		return false;

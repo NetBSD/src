@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.129 2008/03/11 22:26:14 dyoung Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.130 2008/03/12 18:02:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.129 2008/03/11 22:26:14 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.130 2008/03/12 18:02:21 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -614,6 +614,7 @@ static void	sipcom_attach(device_t, device_t, void *);
 static void	sipcom_do_detach(device_t, enum sip_attach_stage);
 static int	sipcom_detach(device_t, int);
 static bool	sipcom_resume(device_t PMF_FN_PROTO);
+static bool	sipcom_suspend(device_t PMF_FN_PROTO);
 
 int	gsip_copy_small = 0;
 int	sip_copy_small = 0;
@@ -970,6 +971,15 @@ sipcom_resume(device_t self PMF_FN_ARGS)
 	struct sip_softc *sc = device_private(self);
 
 	return sipcom_reset(sc);
+}
+
+static bool
+sipcom_suspend(device_t self PMF_FN_ARGS)
+{
+	struct sip_softc *sc = device_private(self);
+
+	sipcom_rxdrain(sc);
+	return true;
 }
 
 static void
@@ -1363,7 +1373,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	}
 #endif /* SIP_EVENT_COUNTERS */
 
-	if (!pmf_device_register(self, NULL, sipcom_resume))
+	if (!pmf_device_register(self, sipcom_suspend, sipcom_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 	else
 		pmf_class_network_register(self, ifp);
@@ -2551,13 +2561,13 @@ sipcom_init(struct ifnet *ifp)
 	struct sip_desc *sipd;
 	int i, error = 0;
 
-	if (!device_has_power(&sc->sc_dev))
-		return EBUSY;
-
-	/*
-	 * Cancel any pending I/O.
-	 */
-	sipcom_stop(ifp, 0);
+	if (device_is_active(&sc->sc_dev)) {
+		/*
+		 * Cancel any pending I/O.
+		 */
+		sipcom_stop(ifp, 0);
+	} else if (!pmf_device_resume_self(&sc->sc_dev))
+		return 0;
 
 	/*
 	 * Reset the chip to a known state.
@@ -2877,14 +2887,14 @@ sipcom_stop(struct ifnet *ifp, int disable)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 	}
 
-	if (disable)
-		sipcom_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		pmf_device_suspend_self(&sc->sc_dev);
 
 	if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 	    (cmdsts & CMDSTS_INTR) == 0 && sc->sc_txfree != sc->sc_ntxdesc)
