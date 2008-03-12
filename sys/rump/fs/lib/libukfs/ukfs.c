@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.22 2008/03/12 14:49:19 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.23 2008/03/12 21:37:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -41,6 +41,7 @@
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -213,11 +214,27 @@ int
 ukfs_ll_namei(struct ukfs *ukfs, uint32_t op, uint32_t flags, const char *name,
 	struct vnode **dvpp, struct vnode **vpp, struct componentname **cnpp)
 {
+	int rv;
 
-	/* XXX: rootvnode dance */
+	/* XXX: should pre/postcall, but can't due to locking issues */
+	rv = rump_namei(op, flags, name, dvpp, vpp, cnpp);
 
-	return rump_namei(op, flags, name, dvpp, vpp, cnpp);
+	return rv;
 }
+
+#define STDCALL(ukfs, thecall)						\
+do {									\
+	int rv = 0;							\
+									\
+	precall(ukfs);							\
+	thecall;							\
+	postcall(ukfs);							\
+	if (rv) {							\
+		errno = rv;						\
+		return -1;						\
+	}								\
+	return 0;							\
+} while (/*CONSTCOND*/0)
 
 int
 ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
@@ -249,41 +266,20 @@ ukfs_getdents(struct ukfs *ukfs, const char *dirname, off_t *off,
 	return bufsize - resid;
 }
 
-enum ukfs_rw {UKFS_READ, UKFS_WRITE, UKFS_READLINK};
-
-static ssize_t
-readwrite(struct ukfs *ukfs, const char *filename, off_t off,
-	uint8_t *buf, size_t bufsize, enum rump_uiorw rw, enum ukfs_rw ukrw)
+ssize_t
+ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
+	uint8_t *buf, size_t bufsize)
 {
-	struct uio *uio;
-	struct vnode *vp;
-	size_t resid;
-	int rv;
+	int fd, rv = 0, dummy;
+	ssize_t xfer;
 
 	precall(ukfs);
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, 0, filename,
-	    NULL, &vp, NULL);
+	fd = rump_sys_open(filename, O_RDONLY, 0, &rv);
 	if (rv)
 		goto out;
 
-	uio = rump_uio_setup(buf, bufsize, off, rw);
-	switch (ukrw) {
-	case UKFS_READ:
-		VLS(vp);
-		rv = RUMP_VOP_READ(vp, uio, 0, NULL);
-		break;
-	case UKFS_WRITE:
-		VLE(vp);
-		rv = RUMP_VOP_WRITE(vp, uio, 0, NULL);
-		break;
-	case UKFS_READLINK:
-		VLE(vp);
-		rv = RUMP_VOP_READLINK(vp, uio, NULL);
-		break;
-	}
-	VUL(vp);
-	ukfs_ll_rele(vp);
-	resid = rump_uio_free(uio);
+	xfer = rump_sys_read(fd, buf, bufsize, &rv);
+	rump_sys_close(fd, &dummy);
 
  out:
 	postcall(ukfs);
@@ -291,93 +287,23 @@ readwrite(struct ukfs *ukfs, const char *filename, off_t off,
 		errno = rv;
 		return -1;
 	}
-
-	return bufsize - resid;
-}
-
-ssize_t
-ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
-	uint8_t *buf, size_t bufsize)
-{
-	ssize_t rv;
-
-	rv = readwrite(ukfs, filename, off, buf, bufsize,
-	    RUMPUIO_READ, UKFS_READ);
-
-	return rv;
+	return xfer;
 }
 
 ssize_t
 ukfs_write(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
-
-	return readwrite(ukfs, filename, off, buf, bufsize,
-	    RUMPUIO_WRITE, UKFS_WRITE);
-}
-
-static int
-create(struct ukfs *ukfs, const char *filename, mode_t mode,
-	enum vtype vt, dev_t dev)
-{
-	struct componentname *cnp;
-	struct vnode *dvp = NULL, *vp = NULL;
-	struct vattr *vap;
-	int rv, flags;
-	int (*do_fn)(struct vnode *, struct vnode **,
-		     struct componentname *, struct vattr *);
+	int fd, rv = 0, dummy;
+	ssize_t xfer;
 
 	precall(ukfs);
-
-	flags = NAMEI_LOCKPARENT;
-	if (vt == VDIR) {
-		flags |= NAMEI_CREATEDIR;
-	}
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_CREATE, NAMEI_LOCKPARENT, filename,
-	    &dvp, &vp, &cnp);
-	if (rv) {
+	fd = rump_sys_open(filename, O_WRONLY, 0, &rv);
+	if (rv)
 		goto out;
-	}
 
-	if (vp) {
-		rv = EEXIST;
-		VUL(dvp);
-		ukfs_ll_rele(dvp);
-		ukfs_ll_rele(vp);
-		goto out;
-	}
-
-	switch (vt) {
-	case VDIR:
-		do_fn = RUMP_VOP_MKDIR;
-		break;
-	case VREG:
-	case VSOCK:
-		do_fn = RUMP_VOP_CREATE;
-		break;
-	case VBLK:
-	case VCHR:
-		do_fn = RUMP_VOP_MKNOD;
-		break;
-	default:
-		ukfs_ll_rele(dvp);
-		rv = EINVAL;
-		goto out;
-	}
-
-	vap = rump_vattr_init();
-	rump_vattr_settype(vap, vt);
-	rump_vattr_setmode(vap, mode);
-	rump_vattr_setrdev(vap, dev);
-
-	rv = do_fn(dvp, &vp, cnp, vap);
-	if (rv == 0) {
-		VUL(vp);
-		ukfs_ll_rele(vp);
-	}
-
-	rump_freecn(cnp, RUMPCN_FREECRED);
-	rump_vattr_free(vap);
+	xfer = rump_sys_write(fd, buf, bufsize, &rv);
+	rump_sys_close(fd, &dummy);
 
  out:
 	postcall(ukfs);
@@ -385,48 +311,31 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 		errno = rv;
 		return -1;
 	}
-
-	return 0;
+	return xfer;
 }
 
 int
 ukfs_create(struct ukfs *ukfs, const char *filename, mode_t mode)
 {
-	enum vtype vt;
+	int rv, fd, dummy;
 
-	switch (mode & S_IFMT) {
-	case S_IFREG:
-		vt = VREG;
-		break;
-	case S_IFSOCK:
-		vt = VSOCK;
-		break;
-	default:
-		errno = EINVAL;
+	precall(ukfs);
+	fd = rump_sys_open(filename, O_WRONLY | O_CREAT, mode, &rv);
+	rump_sys_close(fd, &dummy);
+
+	postcall(ukfs);
+	if (rv) {
+		errno = rv;
 		return -1;
 	}
-
-	return create(ukfs, filename, mode, vt, /*XXX*/(dev_t)-1);
+	return 0;
 }
 
 int
-ukfs_mknod(struct ukfs *ukfs, const char *filename, mode_t mode, dev_t dev)
+ukfs_mknod(struct ukfs *ukfs, const char *path, mode_t mode, dev_t dev)
 {
-	enum vtype vt;
 
-	switch (mode & S_IFMT) {
-	case S_IFBLK:
-		vt = VBLK;
-		break;
-	case S_IFCHR:
-		vt = VCHR;
-		break;
-	default:
-		errno = EINVAL;
-		return -1;
-	}
-
-	return create(ukfs, filename, mode, vt, dev);
+	STDCALL(ukfs, rump_sys_mknod(path, mode, dev, &rv));
 }
 
 static int
@@ -435,13 +344,6 @@ builddirs(struct ukfs *ukfs, const char *filename, mode_t mode)
 	char *f1, *f2;
 	int rv;
 
-	/* does it exist? */
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, 0, filename,
-	    NULL, NULL, NULL);
-	if (rv == 0)
-		return 0;
-
-	/* If we didn't find it, create dirs by path games */
 	f1 = f2 = strdup(filename);
 	if (!f1) {
 		errno = ENOMEM;
@@ -480,111 +382,60 @@ ukfs_mkdir(struct ukfs *ukfs, const char *filename, mode_t mode, bool p)
 	if (p) {
 		return builddirs(ukfs, filename, mode);
 	} else {
-		return create(ukfs, filename, mode, VDIR, (dev_t)-1);
+		STDCALL(ukfs, rump_sys_mkdir(filename, mode, &rv));
 	}
 }
 
 int
 ukfs_remove(struct ukfs *ukfs, const char *filename)
 {
-	int rv;
 
-	precall(ukfs);
-	rump_sys_unlink(filename, &rv);
-	postcall(ukfs);
-	if (rv) {
-		errno = rv;
-		return -1;
-	}
-	return 0;
+	STDCALL(ukfs, rump_sys_unlink(filename, &rv));
 }
 
 int
 ukfs_rmdir(struct ukfs *ukfs, const char *filename)
 {
-	int rv;
 
-	precall(ukfs);
-	rump_sys_rmdir(filename, &rv);
-	postcall(ukfs);
-	if (rv) {
-		errno = rv;
-		return -1;
-	}
-	return 0;
+	STDCALL(ukfs, rump_sys_rmdir(filename, &rv));
 }
 
 int
 ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 {
-	struct vnode *dvp = NULL, *vp = NULL;
-	struct componentname *cnp;
-	int rv;
 
-	precall(ukfs);
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, NAMEI_LOCKLEAF, filename,
-	    NULL, &vp, NULL);
-	if (rv)
-		goto out;
-	VUL(vp);
-
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_CREATE, NAMEI_LOCKPARENT, f_create,
-	    &dvp, NULL, &cnp);
-	if (rv) {
-		ukfs_ll_rele(vp);
-		goto out;
-	}
-
-	rv = RUMP_VOP_LINK(dvp, vp, cnp);
-	rump_freecn(cnp, RUMPCN_FREECRED);
-
- out:
-	postcall(ukfs);
-	if (rv) {
-		errno = rv;
-		return -1;
-	}
-
-	return 0;
+	STDCALL(ukfs, rump_sys_link(filename, f_create, &rv));
 }
 
 int
 ukfs_symlink(struct ukfs *ukfs, const char *filename, const char *linkname)
 {
-	int rv;
 
-	precall(ukfs);
-	rump_sys_symlink(filename, linkname, &rv);
-	postcall(ukfs);
-	if (rv) {
-		errno = rv;
-		return -1;
-	}
-	return 0;
+	STDCALL(ukfs, rump_sys_symlink(filename, linkname, &rv));
 }
 
 ssize_t
 ukfs_readlink(struct ukfs *ukfs, const char *filename,
 	char *linkbuf, size_t buflen)
 {
+	ssize_t rv;
+	int myerr = 0;
 
-	return readwrite(ukfs, filename, 0,
-	    (uint8_t *)linkbuf, buflen, RUMPUIO_READ, UKFS_READLINK);
+	precall(ukfs);
+	rv = rump_sys_readlink(filename, linkbuf, buflen, &myerr);
+	postcall(ukfs);
+	if (myerr) {
+		errno = rv;
+		return -1;
+	}
+	return rv;
 }
 
 int
 ukfs_rename(struct ukfs *ukfs, const char *from, const char *to)
 {
-	int rv;
 
-	precall(ukfs);
-	rump_sys_rename(from, to, &rv);
-	postcall(ukfs);
-	if (rv) {
-		errno = rv;
-		return -1;
-	}
-	return 0;
+	STDCALL(ukfs, rump_sys_rename(from, to, &rv));
 }
 
 int
