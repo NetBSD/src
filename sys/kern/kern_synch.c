@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.218 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.219 2008/03/12 11:00:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.218 2008/03/11 02:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.219 2008/03/12 11:00:43 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -591,8 +591,10 @@ mi_switch(lwp_t *l)
 		splx(oldspl);
 
 		/* Update status for lwpctl, if present. */
-		if (l->l_lwpctl != NULL)
+		if (l->l_lwpctl != NULL) {
 			l->l_lwpctl->lc_curcpu = (int)cpu_index(ci);
+			l->l_lwpctl->lc_pctr++;
+		}
 
 		retval = 1;
 	} else {
