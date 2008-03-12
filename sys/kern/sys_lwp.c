@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_lwp.c,v 1.35 2008/03/12 11:00:43 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.36 2008/03/12 11:05:01 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.35 2008/03/12 11:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.36 2008/03/12 11:05:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

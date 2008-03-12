@@ -1,7 +1,7 @@
-/*	$NetBSD: lwpctl.h,v 1.2 2008/03/12 11:00:43 ad Exp $	*/
+/*	$NetBSD: lwpctl.h,v 1.3 2008/03/12 11:05:01 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
