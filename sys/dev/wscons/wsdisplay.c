@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.118 2008/02/29 06:18:13 dyoung Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.119 2008/03/12 23:26:18 drochner Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.118 2008/02/29 06:18:13 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.119 2008/03/12 23:26:18 drochner Exp $");
 
 #include "opt_wsdisplay_compat.h"
 #include "opt_wsmsgattrs.h"
@@ -1817,9 +1817,10 @@ wsdisplay_switch2(device_t dv, int error, int waitok)
 #endif
 	/* keyboard map??? */
 
-	if (scr->scr_syncops) {
+	if (scr->scr_syncops &&
+	    !(sc->sc_isconsole && wsdisplay_cons_pollmode)) {
 		error = (*scr->scr_syncops->attach)(scr->scr_synccookie, waitok,
-	  sc->sc_isconsole && wsdisplay_cons_pollmode ? 0 : wsdisplay_switch3_cb, dv);
+						    wsdisplay_switch3_cb, dv);
 		if (error == EAGAIN) {
 			/* switch will be done asynchronously */
 			return (0);
@@ -1928,10 +1929,13 @@ wsdisplay_switch(device_t dv, int no, int waitok)
 		sc->sc_oldscreen = sc->sc_focusidx;
 
 	if (scr->scr_syncops) {
-		if (!(sc->sc_flags & SC_XATTACHED)) /* nothing to do here */
+		if (!(sc->sc_flags & SC_XATTACHED) ||
+		    (sc->sc_isconsole && wsdisplay_cons_pollmode)) {
+			/* nothing to do here */
 			return (wsdisplay_switch1(dv, 0, waitok));
+		}
 		res = (*scr->scr_syncops->detach)(scr->scr_synccookie, waitok,
-	  sc->sc_isconsole && wsdisplay_cons_pollmode ? 0 : wsdisplay_switch1_cb, dv);
+						  wsdisplay_switch1_cb, dv);
 		if (res == EAGAIN) {
 			/* switch will be done asynchronously */
 			return (0);
