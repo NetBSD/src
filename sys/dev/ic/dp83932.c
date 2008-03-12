@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.20 2008/01/19 22:20:10 dyoung Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.21 2008/03/12 18:13:15 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.20 2008/01/19 22:20:10 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.21 2008/03/12 18:13:15 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1090,14 +1090,14 @@ sonic_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		sonic_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		sonic_rxdrain(sc);
 }
 
 /*
