@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.34 2008/02/14 14:26:57 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.35 2008/03/12 11:00:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.34 2008/02/14 14:26:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.35 2008/03/12 11:00:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -824,7 +824,8 @@ sys__lwp_ctl(struct lwp *l, const struct sys__lwp_ctl_args *uap, register_t *ret
 	vaddr_t vaddr;
 
 	features = SCARG(uap, features);
-	if ((features & ~LWPCTL_FEATURE_CURCPU) != 0)
+	features &= ~(LWPCTL_FEATURE_CURCPU | LWPCTL_FEATURE_PCTR);
+	if (features != 0)
 		return ENODEV;
 	if ((error = lwp_ctl_alloc(&vaddr)) != 0)
 		return error;
