@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.25 2008/02/28 00:21:38 macallan Exp $ */
+/* $NetBSD: radeonfb.c,v 1.26 2008/03/12 18:11:38 phx Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.25 2008/02/28 00:21:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.26 2008/03/12 18:11:38 phx Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.25 2008/02/28 00:21:38 macallan Exp $
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciio.h>
 #include <dev/pci/radeonfbreg.h>
 #include <dev/pci/radeonfbvar.h>
 #include "opt_radeonfb.h"
@@ -1043,6 +1044,11 @@ radeonfb_ioctl(void *v, void *vs,
 			return radeonfb_set_backlight(dp, param->curval);
 		}
 		return EPASSTHROUGH;
+
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(sc->sc_pc, sc->sc_pt, cmd, d, flag, l));
 
 	default:
 		return EPASSTHROUGH;
