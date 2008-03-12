@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.h,v 1.8 2008/03/12 11:17:33 pooka Exp $	*/
+/*	$NetBSD: ukfs.h,v 1.9 2008/03/12 14:49:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -70,6 +70,8 @@ int		ukfs_rmdir(struct ukfs *, const char *);
 
 int		ukfs_link(struct ukfs *, const char *, const char *);
 int		ukfs_rename(struct ukfs *, const char *, const char *);
+
+int		ukfs_chdir(struct ukfs *, const char *);
 
 struct mount	*ukfs_getmp(struct ukfs *);
 struct vnode	*ukfs_getrvp(struct ukfs *);
