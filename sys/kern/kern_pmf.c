@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.16 2008/03/07 07:03:06 dyoung Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.17 2008/03/12 18:02:22 dyoung Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.16 2008/03/07 07:03:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.17 2008/03/12 18:02:22 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -376,6 +376,12 @@ pmf_device_deregister(device_t dev)
 }
 
 bool
+pmf_device_suspend_self(device_t dev)
+{
+	return pmf_device_suspend(dev, PMF_F_SELF);
+}
+
+bool
 pmf_device_suspend(device_t dev PMF_FN_ARGS)
 {
 	bool rc;
@@ -398,6 +404,8 @@ pmf_device_suspend(device_t dev PMF_FN_ARGS)
 static bool
 pmf_device_suspend_locked(device_t dev PMF_FN_ARGS)
 {
+	PMF_TRANSITION_PRINTF2(1, ("%s: self suspend\n", device_xname(dev)));
+	device_pmf_self_suspend(dev, flags);
 	PMF_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
 	if (!device_pmf_class_suspend(dev PMF_FN_CALL))
 		return false;
@@ -409,6 +417,12 @@ pmf_device_suspend_locked(device_t dev PMF_FN_ARGS)
 		return false;
 
 	return true;
+}
+
+bool
+pmf_device_resume_self(device_t dev)
+{
+	return pmf_device_resume(dev, PMF_F_SELF);
 }
 
 bool
@@ -443,6 +457,9 @@ pmf_device_resume_locked(device_t dev PMF_FN_ARGS)
 	PMF_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
 	if (!device_pmf_class_resume(dev PMF_FN_CALL))
 		return false;
+	PMF_TRANSITION_PRINTF2(1, ("%s: self resume\n", device_xname(dev)));
+	device_pmf_self_resume(dev, flags);
+
 	return true;
 }
 
@@ -519,7 +536,7 @@ pmf_class_network_suspend(device_t dev PMF_FN_ARGS)
 	int s;
 
 	s = splnet();
-	(*ifp->if_stop)(ifp, 1);
+	(*ifp->if_stop)(ifp, 0);
 	splx(s);
 
 	return true;
@@ -530,6 +547,9 @@ pmf_class_network_resume(device_t dev PMF_FN_ARGS)
 {
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
+
+	if ((flags & PMF_F_SELF) != 0)
+		return true;
 
 	s = splnet();
 	if (ifp->if_flags & IFF_UP) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ath_pci.c,v 1.29 2008/03/07 22:17:03 dyoung Exp $	*/
+/*	$NetBSD: if_ath_pci.c,v 1.30 2008/03/12 18:02:21 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath_pci.c,v 1.11 2005/01/18 18:08:16 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.29 2008/03/07 22:17:03 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ath_pci.c,v 1.30 2008/03/12 18:02:21 dyoung Exp $");
 #endif
 
 /*
@@ -84,6 +84,7 @@ struct ath_pci_softc {
 	struct ath_softc	sc_sc;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag; 
+	pci_intr_handle_t	sc_pih;
 	void			*sc_ih;		/* interrupt handler */
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
@@ -92,10 +93,10 @@ struct ath_pci_softc {
 
 #define	BS_BAR	0x10
 
-static void ath_pci_attach(struct device *, struct device *, void *);
-static int ath_pci_detach(struct device *, int);
-static int ath_pci_match(struct device *, struct cfdata *, void *);
-static int ath_pci_detach(struct device *, int);
+static void ath_pci_attach(device_t, device_t, void *);
+static int ath_pci_detach(device_t, int);
+static int ath_pci_match(device_t, struct cfdata *, void *);
+static int ath_pci_detach(device_t, int);
 
 CFATTACH_DECL(ath_pci,
     sizeof(struct ath_pci_softc),
@@ -105,7 +106,7 @@ CFATTACH_DECL(ath_pci,
     NULL);
 
 static int
-ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
+ath_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	const char* devname;
 	struct pci_attach_args *pa = aux;
@@ -117,10 +118,28 @@ ath_pci_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static bool
-ath_pci_resume(device_t dv)
+ath_pci_suspend(device_t self PMF_FN_ARGS)
 {
-	struct ath_pci_softc *sc = device_private(dv);
+	struct ath_pci_softc *sc = device_private(self);
 
+	ath_suspend(&sc->sc_sc);
+	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
+	sc->sc_ih = NULL;
+
+	return true;
+}
+
+static bool
+ath_pci_resume(device_t self PMF_FN_ARGS)
+{
+	struct ath_pci_softc *sc = device_private(self);
+
+	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_pih, IPL_NET, ath_intr,
+	    &sc->sc_sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't map interrupt\n");
+		return false;
+	}
 	ath_resume(&sc->sc_sc);
 
 	return true;
@@ -180,13 +199,12 @@ ath_pci_setup(struct ath_pci_softc *sc)
 }
 
 static void
-ath_pci_attach(struct device *parent, struct device *self, void *aux)
+ath_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
+	struct ath_pci_softc *psc = device_private(self);
 	struct ath_softc *sc = &psc->sc_sc;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
 	pcireg_t mem_type;
 	const char *intrstr = NULL;
 
@@ -215,37 +233,39 @@ ath_pci_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_st = HALTAG(psc->sc_iot);
 	sc->sc_sh = HALHANDLE(psc->sc_ioh);
 
-	sc->sc_invalid = 1;
-
 	/*
 	 * Arrange interrupt line.
 	 */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_map(pa, &psc->sc_pih)) {
 		aprint_error("couldn't map interrupt\n");
 		goto bad1;
 	}
 
-	intrstr = pci_intr_string(pc, ih); 
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, ath_intr, sc);
+	intrstr = pci_intr_string(pc, psc->sc_pih); 
+	psc->sc_ih = pci_intr_establish(pc, psc->sc_pih, IPL_NET, ath_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error("couldn't map interrupt\n");
 		goto bad2;
 	}
 
-	printf("\n");
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal("\n");
+	aprint_verbose_dev(self, "interrupting at %s\n", intrstr);
 
 	sc->sc_dmat = pa->pa_dmat;
 
 	ATH_LOCK_INIT(sc);
 
-	if (!pmf_device_register(self, NULL, ath_pci_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
+	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) != 0)
+		goto bad3;
 
-	if (ath_attach(PCI_PRODUCT(pa->pa_id), sc) == 0) { 
+	if (!pmf_device_register(self, ath_pci_suspend, ath_pci_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+	else {
 		pmf_class_network_register(self, &sc->sc_if);
-		return;
+		pmf_device_suspend_self(self);
 	}
+	return;
+bad3:
 	ATH_LOCK_DESTROY(sc);
 
 	pci_intr_disestablish(pc, psc->sc_ih);
@@ -257,9 +277,9 @@ bad:	/* XXX */
 }
 
 static int
-ath_pci_detach(struct device *self, int flags)
+ath_pci_detach(device_t self, int flags)
 {
-	struct ath_pci_softc *psc = (struct ath_pci_softc *)self;
+	struct ath_pci_softc *psc = device_private(self);
 
 	ath_detach(&psc->sc_sc);
 	pmf_device_deregister(self);
