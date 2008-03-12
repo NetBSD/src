@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.36 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.37 2008/03/12 11:17:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -235,4 +235,17 @@ rumpvfs_init()
 
 	vfs_opv_init(rump_opv_descs);
 	rootvnode = rump_makevnode("/", 0, VDIR, -1);
+}
+
+void
+rump_rvp_set(struct vnode *rvp)
+{
+	struct lwp *l = curlwp;
+
+	if (l->l_proc->p_cwdi->cwdi_rdir)
+		vrele(l->l_proc->p_cwdi->cwdi_rdir);
+
+	if (rvp)
+		vref(rvp);
+	l->l_proc->p_cwdi->cwdi_rdir = rvp;
 }
