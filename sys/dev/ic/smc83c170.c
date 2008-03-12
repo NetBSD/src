@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.71 2008/01/19 22:10:17 dyoung Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.72 2008/03/12 18:15:31 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.71 2008/01/19 22:10:17 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.72 2008/03/12 18:15:31 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -1144,14 +1144,14 @@ epic_stop(ifp, disable)
 		}
 	}
 
-	if (disable)
-		epic_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		epic_rxdrain(sc);
 }
 
 /*
