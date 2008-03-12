@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.8 2008/03/11 22:57:26 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.9 2008/03/12 11:17:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -57,7 +57,6 @@ main(int argc, char *argv[])
 #ifdef __NetBSD__
 	struct dirent *dent;
 #endif
-	char *p;
 	int rv;
 
 	ukfs_init();
@@ -108,10 +107,7 @@ main(int argc, char *argv[])
 	if (rv == -1)
 		warn("link rv %d", rv);
 
-	/* XXX */
-	p = strdup("jonnekin/aivan/muualle");
-	rv = ukfs_symlink(fs, "/mihis_haluat_menna_tanaan", p);
-	free(p);
+	rv = ukfs_symlink(fs, "/mihis_haluat_menna_tanaan", "/jonneki/muualle");
 	if (rv == -1)
 		warn("symlink %d", rv);
 
