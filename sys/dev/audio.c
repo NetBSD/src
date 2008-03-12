@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.236 2008/03/04 18:23:44 cube Exp $	*/
+/*	$NetBSD: audio.c,v 1.237 2008/03/12 18:02:21 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.236 2008/03/04 18:23:44 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.237 2008/03/12 18:02:21 dyoung Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -183,8 +183,8 @@ static void	audio_idle(void *);
 static void	audio_activity(device_t, devactive_t);
 #endif
 
-static bool	audio_suspend(device_t dv);
-static bool	audio_resume(device_t dv);
+static bool	audio_suspend(device_t dv PMF_FN_PROTO);
+static bool	audio_resume(device_t dv PMF_FN_PROTO);
 static void	audio_volume_down(device_t);
 static void	audio_volume_up(device_t);
 static void	audio_volume_toggle(device_t);
@@ -3993,11 +3993,11 @@ audio_idle(void *arg)
 	sc->sc_idle = true;
 
 	/* XXX joerg Make pmf_device_suspend handle children? */
-	if (!pmf_device_suspend(dv))
+	if (!pmf_device_suspend(dv, PMF_F_SELF))
 		return;
 
-	if (!pmf_device_suspend(sc->sc_dev))
-		pmf_device_resume(dv);
+	if (!pmf_device_suspend(sc->sc_dev, PMF_F_SELF))
+		pmf_device_resume(dv, PMF_F_SELF);
 }
 
 static void
@@ -4013,14 +4013,14 @@ audio_activity(device_t dv, devactive_t type)
 	sc->sc_idle = false;
 	if (!device_is_active(dv)) {
 		/* XXX joerg How to deal with a failing resume... */
-		pmf_device_resume(sc->sc_dev);
-		pmf_device_resume(dv);
+		pmf_device_resume(sc->sc_dev, PMF_F_SELF);
+		pmf_device_resume(dv, PMF_F_SELF);
 	}
 }
 #endif
 
 static bool
-audio_suspend(device_t dv)
+audio_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct audio_softc *sc = device_private(dv);
 	const struct audio_hw_if *hwp = sc->hw_if;
@@ -4041,7 +4041,7 @@ audio_suspend(device_t dv)
 }
 
 static bool
-audio_resume(device_t dv)
+audio_resume(device_t dv PMF_FN_ARGS)
 {
 	struct audio_softc *sc = device_private(dv);
 	int s;

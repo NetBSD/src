@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.108 2008/03/11 02:42:41 matt Exp $ */
+/* $NetBSD: device.h,v 1.109 2008/03/12 18:02:22 dyoung Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -166,6 +166,7 @@ struct device {
 #define	DVF_CLASS_SUSPENDED	0x0008	/* device class suspend was called */
 #define	DVF_DRIVER_SUSPENDED	0x0010	/* device driver suspend was called */
 #define	DVF_BUS_SUSPENDED	0x0020	/* device bus suspend was called */
+#define	DVF_SELF_SUSPENDED	0x0040	/* device suspended itself */
 
 TAILQ_HEAD(devicelist, device);
 
@@ -498,6 +499,11 @@ bool		device_pmf_bus_shutdown(device_t, int);
 void		*device_pmf_private(device_t);
 void		device_pmf_unlock(device_t PMF_FN_PROTO);
 bool		device_pmf_lock(device_t PMF_FN_PROTO);
+
+bool		device_is_self_suspended(device_t);
+void		device_pmf_self_suspend(device_t PMF_FN_PROTO);
+void		device_pmf_self_resume(device_t PMF_FN_PROTO);
+bool		device_pmf_self_wait(device_t PMF_FN_PROTO);
 
 void		device_pmf_bus_register(device_t, void *,
 		    bool (*)(device_t PMF_FN_PROTO),
