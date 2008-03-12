@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.36 2008/03/11 10:50:16 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.37 2008/03/12 11:17:34 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -114,8 +114,6 @@ rump_init()
 
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 
-	rw_init(&rump_cwdi.cwdi_lock);
-
 	mutex_init(&rump_atomic_lock, MUTEX_DEFAULT, IPL_NONE);
 	rumpvm_init();
 
@@ -148,6 +146,9 @@ rump_init()
 	hostnamelen = strlen(hostname);
 
 	sigemptyset(&sigcantmask);
+
+	rw_init(&rump_cwdi.cwdi_lock);
+	rump_cwdi.cwdi_cdir = rootvnode;
 
 	fdinit1(&rump_filedesc0);
 }
@@ -626,10 +627,11 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	struct lwp *l;
 	struct proc *p;
 
-	l = kmem_alloc(sizeof(struct lwp), KM_SLEEP);
-	p = kmem_alloc(sizeof(struct proc), KM_SLEEP);
+	l = kmem_zalloc(sizeof(struct lwp), KM_SLEEP);
+	p = kmem_zalloc(sizeof(struct proc), KM_SLEEP);
+	p->p_cwdi = cwdinit(&rump_proc);
+
 	p->p_stats = &rump_stats;
-	p->p_cwdi = &rump_cwdi;
 	p->p_limit = &rump_limits;
         p->p_pid = pid;
 	p->p_vmspace = &rump_vmspace;
@@ -649,8 +651,9 @@ rump_clear_curlwp()
 	struct lwp *l;
 
 	l = rumpuser_get_curlwp();
-	kmem_free(l->l_proc, sizeof(struct proc));
-	kmem_free(l, sizeof(struct lwp));
+	cwdfree(l->l_proc->p_cwdi);
+	kmem_free(l->l_proc, sizeof(*l->l_proc));
+	kmem_free(l, sizeof(*l));
 	rumpuser_set_curlwp(NULL);
 }
 

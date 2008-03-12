@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.20 2008/03/11 22:57:26 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.21 2008/03/12 11:17:33 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -40,9 +40,8 @@
 
 #include <assert.h>
 #include <err.h>
-#define _KERNEL
 #include <errno.h>
-#undef _KERNEL
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +55,8 @@
 
 struct ukfs {
 	struct mount *ukfs_mp;
+	pid_t ukfs_nextpid;
+	pthread_spinlock_t ukfs_spin;
 };
 
 struct mount *
@@ -77,6 +78,37 @@ ukfs_getrvp(struct ukfs *ukfs)
 	return rvp;
 }
 
+static pid_t
+nextpid(struct ukfs *ukfs)
+{
+	pid_t npid;
+
+	pthread_spin_lock(&ukfs->ukfs_spin);
+	npid = ukfs->ukfs_nextpid++;
+	pthread_spin_unlock(&ukfs->ukfs_spin);
+
+	return npid;
+}
+
+static void
+precall(struct ukfs *ukfs)
+{
+	struct vnode *rvp;
+
+	rump_setup_curlwp(nextpid(ukfs), 1, 1);
+	rvp = ukfs_getrvp(ukfs);
+	rump_rvp_set(rvp); /* takes ref */
+	ukfs_ll_rele(rvp);
+}
+
+static void
+postcall(struct ukfs *ukfs)
+{
+
+	rump_rvp_set(NULL);
+	rump_clear_curlwp();
+}
+
 int
 ukfs_init()
 {
@@ -90,7 +122,6 @@ struct ukfs *
 ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	int mntflags, void *arg, size_t alen)
 {
-	extern struct vnode *rootvnode; /* XXX */
 	struct ukfs *fs = NULL;
 	struct vfsops *vfsops;
 	struct mount *mp;
@@ -110,6 +141,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		goto out;
 	}
 	memset(fs, 0, sizeof(struct ukfs));
+	pthread_spin_init(&fs->ukfs_spin, PTHREAD_PROCESS_SHARED);
 
 	rump_fakeblk_register(devpath);
 	rv = rump_mnt_mount(mp, mountpath, arg, &alen);
@@ -119,12 +151,6 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 	}
 	fs->ukfs_mp = mp;
 	rump_fakeblk_deregister(devpath);
-
-	/*
-	 * XXX: this is not threadsafe handling with multiple ukfs in
-	 * the same process.  use cwdi?
-	 */
-	rootvnode = ukfs_getrvp(fs);
 
  out:
 	if (rv) {
@@ -154,6 +180,7 @@ ukfs_release(struct ukfs *fs, int dounmount)
 	rump_vfs_syncwait(fs->ukfs_mp);
 	rump_mnt_destroy(fs->ukfs_mp);
 
+	pthread_spin_destroy(&fs->ukfs_spin);
 	free(fs);
 }
 
@@ -222,6 +249,7 @@ readwrite(struct ukfs *ukfs, const char *filename, off_t off,
 	size_t resid;
 	int rv;
 
+	precall(ukfs);
 	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, 0, filename,
 	    NULL, &vp, NULL);
 	if (rv)
@@ -247,6 +275,7 @@ readwrite(struct ukfs *ukfs, const char *filename, off_t off,
 	resid = rump_uio_free(uio);
 
  out:
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;
@@ -259,9 +288,12 @@ ssize_t
 ukfs_read(struct ukfs *ukfs, const char *filename, off_t off,
 	uint8_t *buf, size_t bufsize)
 {
+	ssize_t rv;
 
-	return readwrite(ukfs, filename, off, buf, bufsize,
+	rv = readwrite(ukfs, filename, off, buf, bufsize,
 	    RUMPUIO_READ, UKFS_READ);
+
+	return rv;
 }
 
 ssize_t
@@ -283,6 +315,8 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 	int rv, flags;
 	int (*do_fn)(struct vnode *, struct vnode **,
 		     struct componentname *, struct vattr *);
+
+	precall(ukfs);
 
 	flags = NAMEI_LOCKPARENT;
 	if (vt == VDIR) {
@@ -335,6 +369,7 @@ create(struct ukfs *ukfs, const char *filename, mode_t mode,
 	rump_vattr_free(vap);
 
  out:
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;
@@ -443,7 +478,9 @@ ukfs_remove(struct ukfs *ukfs, const char *filename)
 {
 	int rv;
 
+	precall(ukfs);
 	rump_sys_unlink(filename, &rv);
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;
@@ -456,7 +493,9 @@ ukfs_rmdir(struct ukfs *ukfs, const char *filename)
 {
 	int rv;
 
+	precall(ukfs);
 	rump_sys_rmdir(filename, &rv);
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;
@@ -471,6 +510,7 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 	struct componentname *cnp;
 	int rv;
 
+	precall(ukfs);
 	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_LOOKUP, NAMEI_LOCKLEAF, filename,
 	    NULL, &vp, NULL);
 	if (rv)
@@ -486,6 +526,7 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 
 	rv = RUMP_VOP_LINK(dvp, vp, cnp);
 	rump_freecn(cnp, RUMPCN_FREECRED);
+	postcall(ukfs);
 
  out:
 	if (rv) {
@@ -497,44 +538,17 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 }
 
 int
-ukfs_symlink(struct ukfs *ukfs, const char *filename, char *linkname)
+ukfs_symlink(struct ukfs *ukfs, const char *filename, const char *linkname)
 {
-	struct componentname *cnp;
-	struct vnode *dvp = NULL, *vp = NULL;
-	struct vattr *vap;
 	int rv;
 
-	rv = ukfs_ll_namei(ukfs, RUMP_NAMEI_CREATE, NAMEI_LOCKPARENT, filename,
-	    &dvp, &vp, &cnp);
-	if (rv) {
-		goto out;
-	}
-
-	if (vp) {
-		VUL(dvp);
-		ukfs_ll_rele(dvp);
-		ukfs_ll_rele(vp);
-		goto out;
-	}
-
-	vap = rump_vattr_init();
-	rump_vattr_setmode(vap, UKFS_MODE_DEFAULT);
-	rump_vattr_settype(vap, VLNK);
-	rv = RUMP_VOP_SYMLINK(dvp, &vp, cnp, vap, linkname);
-	if (rv == 0) {
-		VUL(vp);
-		ukfs_ll_rele(vp);
-	}
-
-	rump_freecn(cnp, RUMPCN_FREECRED);
-	rump_vattr_free(vap);
-
- out:
+	precall(ukfs);
+	rump_sys_symlink(filename, linkname, &rv);
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;
 	}
-
 	return 0;
 }
 
@@ -552,7 +566,9 @@ ukfs_rename(struct ukfs *ukfs, const char *from, const char *to)
 {
 	int rv;
 
+	precall(ukfs);
 	rump_sys_rename(from, to, &rv);
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;
