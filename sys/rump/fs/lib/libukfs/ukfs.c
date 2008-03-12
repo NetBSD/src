@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.21 2008/03/12 11:17:33 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.22 2008/03/12 14:49:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -55,8 +55,10 @@
 
 struct ukfs {
 	struct mount *ukfs_mp;
-	pid_t ukfs_nextpid;
+
 	pthread_spinlock_t ukfs_spin;
+	pid_t ukfs_nextpid;
+	struct vnode *ukfs_cdir;
 };
 
 struct mount *
@@ -93,19 +95,25 @@ nextpid(struct ukfs *ukfs)
 static void
 precall(struct ukfs *ukfs)
 {
-	struct vnode *rvp;
+	struct vnode *rvp, *cvp;
 
 	rump_setup_curlwp(nextpid(ukfs), 1, 1);
 	rvp = ukfs_getrvp(ukfs);
-	rump_rvp_set(rvp); /* takes ref */
+	pthread_spin_lock(&ukfs->ukfs_spin);
+	cvp = ukfs->ukfs_cdir;
+	pthread_spin_unlock(&ukfs->ukfs_spin);
+	rump_rcvp_set(rvp, cvp); /* takes refs */
 	ukfs_ll_rele(rvp);
 }
 
 static void
 postcall(struct ukfs *ukfs)
 {
+	struct vnode *rvp;
 
-	rump_rvp_set(NULL);
+	rvp = ukfs_getrvp(ukfs);
+	rump_rcvp_set(NULL, rvp);
+	ukfs_ll_rele(rvp);
 	rump_clear_curlwp();
 }
 
@@ -150,6 +158,7 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		goto out;
 	}
 	fs->ukfs_mp = mp;
+	fs->ukfs_cdir = ukfs_getrvp(fs);
 	rump_fakeblk_deregister(devpath);
 
  out:
@@ -169,6 +178,8 @@ void
 ukfs_release(struct ukfs *fs, int dounmount)
 {
 	int rv;
+
+	ukfs_ll_rele(fs->ukfs_cdir);
 
 	if (dounmount) {
 		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL);
@@ -526,9 +537,9 @@ ukfs_link(struct ukfs *ukfs, const char *filename, const char *f_create)
 
 	rv = RUMP_VOP_LINK(dvp, vp, cnp);
 	rump_freecn(cnp, RUMPCN_FREECRED);
-	postcall(ukfs);
 
  out:
+	postcall(ukfs);
 	if (rv) {
 		errno = rv;
 		return -1;
@@ -569,6 +580,34 @@ ukfs_rename(struct ukfs *ukfs, const char *from, const char *to)
 	precall(ukfs);
 	rump_sys_rename(from, to, &rv);
 	postcall(ukfs);
+	if (rv) {
+		errno = rv;
+		return -1;
+	}
+	return 0;
+}
+
+int
+ukfs_chdir(struct ukfs *ukfs, const char *path)
+{
+	struct vnode *newvp, *oldvp;
+	int rv;
+
+	precall(ukfs);
+	rump_sys_chdir(path, &rv);
+	if (rv)
+		goto out;
+
+	newvp = rump_cdir_get();
+	pthread_spin_lock(&ukfs->ukfs_spin);
+	oldvp = ukfs->ukfs_cdir;
+	ukfs->ukfs_cdir = newvp;
+	pthread_spin_unlock(&ukfs->ukfs_spin);
+	if (oldvp)
+		ukfs_ll_rele(oldvp);
+	postcall(ukfs);
+
+ out:
 	if (rv) {
 		errno = rv;
 		return -1;

@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.9 2008/03/12 11:17:33 pooka Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.10 2008/03/12 14:49:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <dirent.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,11 +96,18 @@ main(int argc, char *argv[])
 	if (rv == -1)
 		warn("remove1 %d", rv);
 
+	rv = ukfs_mkdir(fs, "/jonkka", 0777, false);
+	if (rv == -1)
+		warn("mkdir %s", strerror(errno));
+	rv = ukfs_chdir(fs, "/jonkka");
+	if (rv == -1)
+		warn("chdir %s", strerror(errno));
+
 	rv = ukfs_remove(fs, "/etc/LUSIKKAPUOLI");
 	if (rv == -1)
 		warn("remove2 %d", rv);
 
-    	rv = ukfs_create(fs, "/lopinaa", 0555 | S_IFREG);
+    	rv = ukfs_create(fs, "lopinaa", 0555 | S_IFREG);
 	if (rv == -1)
 		warn("create %d", rv);
 

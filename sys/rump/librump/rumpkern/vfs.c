@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.37 2008/03/12 11:17:34 pooka Exp $	*/
+/*	$NetBSD: vfs.c,v 1.38 2008/03/12 14:49:19 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -238,14 +238,36 @@ rumpvfs_init()
 }
 
 void
-rump_rvp_set(struct vnode *rvp)
+rump_rcvp_set(struct vnode *rvp, struct vnode *cvp)
 {
 	struct lwp *l = curlwp;
+	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
 
-	if (l->l_proc->p_cwdi->cwdi_rdir)
-		vrele(l->l_proc->p_cwdi->cwdi_rdir);
+	KASSERT(cvp);
 
+	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+	if (cwdi->cwdi_rdir)
+		vrele(cwdi->cwdi_rdir);
 	if (rvp)
 		vref(rvp);
-	l->l_proc->p_cwdi->cwdi_rdir = rvp;
+	cwdi->cwdi_rdir = rvp;
+
+	vrele(cwdi->cwdi_cdir);
+	vref(cvp);
+	cwdi->cwdi_cdir = cvp;
+	rw_exit(&cwdi->cwdi_lock);
+}
+
+struct vnode *
+rump_cdir_get()
+{
+	struct vnode *vp;
+	struct cwdinfo *cwdi = curlwp->l_proc->p_cwdi;
+
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	vp = cwdi->cwdi_cdir;
+	rw_exit(&cwdi->cwdi_lock);
+	vref(vp);
+
+	return vp;
 }
