@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.10 2007/12/01 17:00:41 ad Exp $ */
+/* $NetBSD: unichromefb.c,v 1.11 2008/03/12 18:11:38 phx Exp $ */
 
 /*-
  * Copyright (c) 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.10 2007/12/01 17:00:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.11 2008/03/12 18:11:38 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.10 2007/12/01 17:00:41 ad Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/pci/pciio.h>
 
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wsconsio.h>
@@ -111,7 +112,7 @@ struct unichromefb_softc {
 
 	bus_space_tag_t		sc_memt;
 	bus_space_handle_t	sc_memh;
-	bus_space_handle_t	sc_apmemt;
+	bus_space_tag_t		sc_apmemt;
 	bus_space_handle_t	sc_apmemh;
 
 	struct pci_attach_args	sc_pa;
@@ -481,6 +482,12 @@ unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return ENODEV;
 	case WSDISPLAYIO_SPROGRESS:
 		return ENODEV;
+
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(sc->sc_pa.pa_pc, sc->sc_pa.pa_tag,
+		    cmd, data, flag, l));
 	}
 
 	return EPASSTHROUGH;
@@ -593,7 +600,7 @@ uni_wr_x(struct unichromefb_softc *sc, struct io_reg *tbl, int num)
 	for (i = 0; i < num; i++) {
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, tbl[i].port,
 		    tbl[i].index);
-		tmp = bus_space_read_1(sc->sc_iot, sc->sc_iot,
+		tmp = bus_space_read_1(sc->sc_iot, sc->sc_ioh,
 		    tbl[i].port + 1);
 		tmp = (tmp & (~tbl[i].mask)) | tbl[i].value;
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, tbl[i].index + 1,
