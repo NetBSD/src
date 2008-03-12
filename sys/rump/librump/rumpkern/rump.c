@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.37 2008/03/12 11:17:34 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.38 2008/03/12 21:37:15 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -639,6 +639,8 @@ rump_setup_curlwp(pid_t pid, lwpid_t lid, int set)
 	l->l_proc = p;
         l->l_lid = lid;
 
+	p->p_fd = fdinit(NULL);
+
 	if (set)
 		rumpuser_set_curlwp(l);
 
@@ -651,6 +653,7 @@ rump_clear_curlwp()
 	struct lwp *l;
 
 	l = rumpuser_get_curlwp();
+	fdfree(l);
 	cwdfree(l->l_proc->p_cwdi);
 	kmem_free(l->l_proc, sizeof(*l->l_proc));
 	kmem_free(l, sizeof(*l));
