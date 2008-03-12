@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.99 2008/03/03 12:30:57 tsutsui Exp $ */
+/* $NetBSD: rtw.c,v 1.100 2008/03/12 15:47:49 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.99 2008/03/03 12:30:57 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.100 2008/03/12 15:47:49 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -3437,6 +3437,7 @@ static void
 rtw_idle(struct rtw_regs *regs)
 {
 	int active;
+	uint8_t tppoll;
 
 	/* request stop DMA; wait for packets to stop transmitting. */
 
@@ -3444,9 +3445,11 @@ rtw_idle(struct rtw_regs *regs)
 	RTW_WBR(regs, RTW_TPPOLL, RTW_TPPOLL);
 
 	for (active = 0; active < 300 &&
-	     (RTW_READ8(regs, RTW_TPPOLL) & RTW_TPPOLL_ACTIVE) != 0; active++)
+	     (tppoll = RTW_READ8(regs, RTW_TPPOLL) & RTW_TPPOLL_ACTIVE) != 0;
+	     active++)
 		DELAY(10);
-	printf("%s: transmit DMA idle in %dus\n", __func__, active * 10);
+	printf("%s: transmit DMA idle in %dus, tppoll %02" PRIx8 "\n", __func__,
+	    active * 10, tppoll);
 }
 
 static void
