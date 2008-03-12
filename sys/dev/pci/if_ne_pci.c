@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pci.c,v 1.30 2007/10/19 12:00:47 ad Exp $	*/
+/*	$NetBSD: if_ne_pci.c,v 1.31 2008/03/12 14:31:11 cube Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.30 2007/10/19 12:00:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pci.c,v 1.31 2008/03/12 14:31:11 cube Exp $");
 
 #include "opt_ipkdb.h"
 
@@ -83,7 +83,7 @@ struct ne_pci_softc {
 static int	ne_pci_match(struct device *, struct cfdata *, void *);
 static void	ne_pci_attach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(ne_pci, sizeof(struct ne_pci_softc),
+CFATTACH_DECL_NEW(ne_pci, sizeof(struct ne_pci_softc),
     ne_pci_match, ne_pci_attach, NULL, NULL);
 
 #ifdef IPKDB_NE_PCI
@@ -193,7 +193,7 @@ ne_pci_match(struct device *parent, struct cfdata *match,
 static void
 ne_pci_attach(struct device *parent, struct device *self, void *aux)
 {
-	struct ne_pci_softc *psc = (struct ne_pci_softc *)self;
+	struct ne_pci_softc *psc = device_private(self);
 	struct ne2000_softc *nsc = &psc->sc_ne2000;
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	struct pci_attach_args *pa = aux;
@@ -213,6 +213,8 @@ ne_pci_attach(struct device *parent, struct device *self, void *aux)
 		panic("ne_pci_attach: impossible");
 	}
 
+	dsc->sc_dev = self;
+
 	printf(": %s Ethernet\n", npp->npp_name);
 
 #ifdef IPKDB_NE_PCI
@@ -224,14 +226,14 @@ ne_pci_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &nict, &nich, NULL, NULL)) {
-		printf("%s: can't map i/o space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(dsc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
 	asict = nict;
 	if (bus_space_subregion(nict, nich, NE2000_ASIC_OFFSET,
 	    NE2000_ASIC_NPORTS, &asich)) {
-		printf("%s: can't subregion i/o space\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(dsc->sc_dev, "can't subregion i/o space\n");
 		return;
 	}
 
@@ -263,20 +265,19 @@ ne_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("%s: couldn't map interrupt\n", dsc->sc_dev.dv_xname);
+		aprint_error_dev(dsc->sc_dev, "couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, dp8390_intr, dsc);
 	if (psc->sc_ih == NULL) {
-		printf("%s: couldn't establish interrupt",
-		    dsc->sc_dev.dv_xname);
+		aprint_error_dev(dsc->sc_dev, "couldn't establish interrupt");
 		if (intrstr != NULL)
-			printf(" at %s", intrstr);
-		printf("\n");
+			aprint_error(" at %s", intrstr);
+		aprint_error("\n");
 		return;
 	}
-	printf("%s: interrupting at %s\n", dsc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(dsc->sc_dev, "interrupting at %s\n", intrstr);
 }
 
 #ifdef IPKDB_NE_PCI
