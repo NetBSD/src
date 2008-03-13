@@ -1,4 +1,4 @@
-/*	$NetBSD: evtchn.c,v 1.32 2008/02/19 19:50:53 bouyer Exp $	*/
+/*	$NetBSD: evtchn.c,v 1.33 2008/03/13 22:04:57 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -64,7 +64,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.32 2008/02/19 19:50:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: evtchn.c,v 1.33 2008/03/13 22:04:57 bouyer Exp $");
 
 #include "opt_xen.h"
 #include "isa.h"
@@ -190,6 +190,8 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	int	(*ih_fun)(void *, void *);
 	extern struct uvmexp uvmexp;
 	u_int32_t iplmask;
+	int i;
+	u_int32_t iplbit;
 
 #ifdef DIAGNOSTIC
 	if (evtch >= NR_EVENT_CHANNELS) {
@@ -253,8 +255,7 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 			hypervisor_set_ipending(iplmask,
 			    evtch >> LONG_SHIFT, evtch & LONG_MASK);
 			/* leave masked */
-			splx(ilevel);
-			return 0;
+			goto splx;
 		}
 		iplmask &= ~IUNMASK(ci, ih->ih_level);
 		ci->ci_ilevel = ih->ih_level;
@@ -267,8 +268,36 @@ evtchn_do_event(int evtch, struct intrframe *regs)
 	x86_intunlock(regs);
 #endif
 	hypervisor_enable_event(evtch);
-	splx(ilevel);
-
+splx:
+	/*
+	 * C version of spllower(). ASTs will be checked when
+	 * hypevisor_callback() exits, so no need to check here.
+	 */
+	iplbit = 1 << (NIPL - 1);
+	i = (NIPL - 1);
+	while ((iplmask = (IUNMASK(ci, ilevel) & ci->ci_ipending)) != 0) {
+		if (iplbit == 0) {
+			/* another pending ipl went in while running a handler*/
+			iplbit = 1 << (NIPL - 1);
+			i = (NIPL - 1);
+		}
+		if (iplmask & iplbit) {
+			ci->ci_ipending &= ~iplbit;
+			KASSERT(i > ilevel);
+			ci->ci_ilevel = i;
+			for (ih = ci->ci_isources[i]->ipl_handlers; ih != NULL;
+			    ih = ih->ih_ipl_next) {
+				sti();
+				ih_fun = (void *)ih->ih_fun;
+				ih_fun(ih->ih_arg, regs);
+				cli();
+			}
+			hypervisor_enable_ipl(i);
+		}
+		i--;
+		iplbit >>= 1;
+	}
+	ci->ci_ilevel = ilevel;
 	return 0;
 }
 
