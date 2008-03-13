@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.7 2008/03/12 23:26:18 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.8 2008/03/13 17:40:24 drochner Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -239,5 +239,7 @@ ddb_vgapost()
 
 	if (ddb_vgapostp)
 		vga_post_call(ddb_vgapostp);
+	else
+		printf("ddb_vgapost: vga_post not initialized\n");
 }
 #endif
