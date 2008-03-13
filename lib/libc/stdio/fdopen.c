@@ -1,4 +1,4 @@
-/*	$NetBSD: fdopen.c,v 1.14 2003/08/07 16:43:22 agc Exp $	*/
+/*	$NetBSD: fdopen.c,v 1.15 2008/03/13 15:40:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fdopen.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fdopen.c,v 1.14 2003/08/07 16:43:22 agc Exp $");
+__RCSID("$NetBSD: fdopen.c,v 1.15 2008/03/13 15:40:00 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: fdopen.c,v 1.14 2003/08/07 16:43:22 agc Exp $");
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <limits.h>
 
 #include "reentrant.h"
 #include "local.h"
@@ -66,6 +67,18 @@ fdopen(fd, mode)
 	int flags, oflags, fdflags, tmp;
 
 	_DIAGASSERT(fd != -1);
+
+	/*
+	 * File descriptors are a full int, but _file is only a short.
+	 * If we get a valid file descriptor that is greater or equal to
+	 * USHRT_MAX, then the fd will get sign-extended into an
+	 * invalid file descriptor.  Handle this case by failing the
+	 * open. (We treat the short as unsigned, and special-case -1).
+	 */
+	if (fd >= USHRT_MAX) {
+		errno = EMFILE;
+		return NULL;
+	}
 
 	if ((flags = __sflags(mode, &oflags)) == 0)
 		return (NULL);
