@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.23 2008/03/12 21:37:15 pooka Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.24 2008/03/13 14:24:30 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -56,6 +56,7 @@
 
 struct ukfs {
 	struct mount *ukfs_mp;
+	struct vnode *ukfs_rvp;
 
 	pthread_spinlock_t ukfs_spin;
 	pid_t ukfs_nextpid;
@@ -73,10 +74,9 @@ struct vnode *
 ukfs_getrvp(struct ukfs *ukfs)
 {
 	struct vnode *rvp;
-	int rv;
 
-	rv = rump_vfs_root(ukfs->ukfs_mp, &rvp, 0);
-	assert(rv == 0);
+	rvp = ukfs->ukfs_rvp;
+	rump_vp_incref(rvp);
 
 	return rvp;
 }
@@ -159,8 +159,10 @@ ukfs_mount(const char *vfsname, const char *devpath, const char *mountpath,
 		goto out;
 	}
 	fs->ukfs_mp = mp;
-	fs->ukfs_cdir = ukfs_getrvp(fs);
 	rump_fakeblk_deregister(devpath);
+
+	rv = rump_vfs_root(fs->ukfs_mp, &fs->ukfs_rvp, 0);
+	fs->ukfs_cdir = ukfs_getrvp(fs);
 
  out:
 	if (rv) {
@@ -180,9 +182,9 @@ ukfs_release(struct ukfs *fs, int dounmount)
 {
 	int rv;
 
-	ukfs_ll_rele(fs->ukfs_cdir);
-
+	/* XXX: dounmount is the same as !is_p2k, yetch! */
 	if (dounmount) {
+		ukfs_ll_rele(fs->ukfs_cdir);
 		rv = rump_vfs_sync(fs->ukfs_mp, 1, NULL);
 		rump_vp_recycle_nokidding(ukfs_getrvp(fs));
 		rv |= rump_vfs_unmount(fs->ukfs_mp, 0);
@@ -216,8 +218,9 @@ ukfs_ll_namei(struct ukfs *ukfs, uint32_t op, uint32_t flags, const char *name,
 {
 	int rv;
 
-	/* XXX: should pre/postcall, but can't due to locking issues */
+	precall(ukfs);
 	rv = rump_namei(op, flags, name, dvpp, vpp, cnpp);
+	postcall(ukfs);
 
 	return rv;
 }
