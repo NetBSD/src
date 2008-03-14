@@ -1,4 +1,4 @@
-/* $NetBSD: com_aubus.c,v 1.4 2007/10/17 19:55:35 garbled Exp $ */
+/* $NetBSD: com_aubus.c,v 1.5 2008/03/14 15:09:10 cube Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.4 2007/10/17 19:55:35 garbled Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_aubus.c,v 1.5 2008/03/14 15:09:10 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,13 +58,13 @@ struct com_aubus_softc {
 	void *sc_ih;
 };
 
-static int	com_aubus_probe(struct device *, struct cfdata *, void *);
-static void	com_aubus_attach(struct device *, struct device *, void *);
+static int	com_aubus_probe(device_t, cfdata_t , void *);
+static void	com_aubus_attach(device_t, device_t, void *);
 static int	com_aubus_enable(struct com_softc *);
 static void	com_aubus_disable(struct com_softc *);
 static void	com_aubus_initmap(struct com_regs *);
 
-CFATTACH_DECL(com_aubus, sizeof(struct com_aubus_softc),
+CFATTACH_DECL_NEW(com_aubus, sizeof(struct com_aubus_softc),
     com_aubus_probe, com_aubus_attach, NULL, NULL);
 
 #define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
@@ -74,7 +74,7 @@ CFATTACH_DECL(com_aubus, sizeof(struct com_aubus_softc),
 #endif
 
 int
-com_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
+com_aubus_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct aubus_attach_args *aa = aux;
 
@@ -86,13 +86,14 @@ com_aubus_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-com_aubus_attach(struct device *parent, struct device *self, void *aux)
+com_aubus_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_aubus_softc *asc = (void *)self;
+	struct com_aubus_softc *asc = device_private(self);
 	struct com_softc *sc = &asc->sc_com;
 	struct aubus_attach_args *aa = aux;
 	int addr = aa->aa_addr;
-	
+
+	sc->sc_dev = self;
 	sc->sc_regs.cr_iot = aa->aa_st;
 	sc->sc_regs.cr_iobase = addr;
 	asc->sc_irq = aa->aa_irq[0];
@@ -100,7 +101,7 @@ com_aubus_attach(struct device *parent, struct device *self, void *aux)
 	if (com_is_console(aa->aa_st, addr, &sc->sc_regs.cr_ioh) == 0 &&
 	    bus_space_map(aa->aa_st, addr, AUCOM_NPORTS, 0,
 		&sc->sc_regs.cr_ioh) != 0) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 	com_aubus_initmap(&sc->sc_regs);
@@ -149,8 +150,8 @@ com_aubus_enable(struct com_softc *sc)
 	asc->sc_ih = au_intr_establish(asc->sc_irq, 0, IPL_SERIAL, IST_LEVEL,
 	    comintr, sc);
 	if (asc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish interrupt\n");
 		return (1);
 	}
 

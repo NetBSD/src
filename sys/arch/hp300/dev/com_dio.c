@@ -1,4 +1,4 @@
-/*	$NetBSD: com_dio.c,v 1.6 2007/12/03 15:33:38 ad Exp $	*/
+/*	$NetBSD: com_dio.c,v 1.7 2008/03/14 15:09:09 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.6 2007/12/03 15:33:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_dio.c,v 1.7 2008/03/14 15:09:09 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,10 +94,10 @@ struct com_dio_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-static int	com_dio_match(struct device *, struct cfdata *, void *);
-static void	com_dio_attach(struct device *, struct device *, void *);
+static int	com_dio_match(device_t, cfdata_t , void *);
+static void	com_dio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_dio, sizeof(struct com_dio_softc),
+CFATTACH_DECL_NEW(com_dio, sizeof(struct com_dio_softc),
     com_dio_match, com_dio_attach, NULL, NULL);
 
 static int com_dio_speed = TTYDEF_SPEED;
@@ -106,7 +106,7 @@ static struct bus_space_tag comcntag;
 #define CONMODE	((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB)) | CS8) /* 8N1 */
 
 static int
-com_dio_match(struct device *parent, struct cfdata *match, void *aux)
+com_dio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct dio_attach_args *da = aux;
 
@@ -122,15 +122,16 @@ com_dio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-com_dio_attach(struct device *parent, struct device *self, void *aux)
+com_dio_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_dio_softc *dsc = (void *)self;
+	struct com_dio_softc *dsc = device_private(self);
 	struct com_softc *sc = &dsc->sc_com;
 	bus_space_tag_t iot;
 	bus_space_handle_t iohdca, iohcom;
 	struct dio_attach_args *da = aux;
 	int isconsole;
 
+	sc->sc_dev = self;
 	isconsole = com_is_console(&comcntag, da->da_addr + DCA_COM_OFFSET,
 	    &iohcom);
 
@@ -146,7 +147,7 @@ com_dio_attach(struct device *parent, struct device *self, void *aux)
 	if (bus_space_map(iot, da->da_addr, DCA_SIZE, 0, &iohdca) ||
 	    bus_space_subregion(iot, iohdca, DCA_COM_OFFSET,
 	    COM_NPORTS << 1, &iohcom)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 
