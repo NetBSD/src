@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.211 2008/03/02 15:28:26 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.212 2008/03/14 15:40:02 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.211 2008/03/02 15:28:26 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2008/03/14 15:40:02 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -145,9 +145,12 @@ int tsbsize;		/* tsbents = 512 * 2^^tsbsize */
 
 struct pmap kernel_pmap_;
 
+static int ctx_alloc(struct pmap *);
 #ifdef MULTIPROCESSOR
+static void ctx_free(struct pmap *, struct cpu_info *);
 #define pmap_ctx(PM)	((PM)->pm_ctx[cpu_number()])
 #else
+static void ctx_free(struct pmap *);
 #define pmap_ctx(PM)	((PM)->pm_ctx)
 #endif
 
@@ -188,14 +191,41 @@ clrx(void *addr)
 	__asm volatile("clrx [%0]" : : "r" (addr) : "memory");
 }
 
+#ifdef MULTIPROCESSOR
+static void
+tsb_invalidate(vaddr_t va, pmap_t pm)
+{
+	struct cpu_info *ci;
+	int ctx;
+	bool kpm = (pm == pmap_kernel());
+	int i;
+	int64_t tag;
+
+	i = ptelookup_va(va);
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (!CPUSET_HAS(cpus_active, ci->ci_index))
+			continue;
+		ctx = pm->pm_ctx[ci->ci_index];
+		if (kpm || ctx > 0) {
+			tag = TSB_TAG(0, ctx, va);
+			if (ci->ci_tsb_dmmu[i].tag == tag) {
+				clrx(&ci->ci_tsb_dmmu[i].data);
+			}
+			if (ci->ci_tsb_immu[i].tag == tag) {
+				clrx(&ci->ci_tsb_immu[i].data);
+			}
+		}
+	}
+}
+#else
 static inline void
-tsb_invalidate(int ctx, vaddr_t va)
+tsb_invalidate(vaddr_t va, pmap_t pm)
 {
 	int i;
 	int64_t tag;
 
 	i = ptelookup_va(va);
-	tag = TSB_TAG(0, ctx, va);
+	tag = TSB_TAG(0, pmap_ctx(pm), va);
 	if (curcpu()->ci_tsb_dmmu[i].tag == tag) {
 		clrx(&curcpu()->ci_tsb_dmmu[i].data);
 	}
@@ -203,6 +233,7 @@ tsb_invalidate(int ctx, vaddr_t va)
 		clrx(&curcpu()->ci_tsb_immu[i].data);
 	}
 }
+#endif
 
 struct prom_map *prom_map;
 int prom_map_size;
@@ -1304,13 +1335,27 @@ void
 pmap_destroy(pm)
 	struct pmap *pm;
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+#endif
 	struct vm_page *pg, *nextpg;
 
 	if ((int)atomic_dec_uint_nv(&pm->pm_refs) > 0) {
 		return;
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));
+#ifdef MULTIPROCESSOR
+	ctx_free(pm, curcpu());
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci == curcpu() || !CPUSET_HAS(cpus_active, ci->ci_index))
+			continue;
+		mutex_enter(&pmap_lock);
+		ctx_free(pm, ci);
+		mutex_exit(&pmap_lock);
+	}
+#else
 	ctx_free(pm);
+#endif
 
 	/* we could be a little smarter and leave pages zeroed */
 	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
@@ -1444,10 +1489,6 @@ pmap_activate_pmap(struct pmap *pmap)
 
 	if (pmap_ctx(pmap) == 0) {
 		(void) ctx_alloc(pmap);
-#ifdef MULTIPROCESSOR
-	} else if (pmap_ctx(pmap) < 0) {
-		pmap_ctx(pmap) = -pmap_ctx(pmap);
-#endif
 	}
 	dmmu_set_secondary_context(pmap_ctx(pmap));
 }
@@ -1591,7 +1632,7 @@ pmap_kremove(va, size)
 		    (int)va_to_pte(va)));
 		REMOVE_STAT(removes);
 
-		tsb_invalidate(pmap_ctx(pm), va);
+		tsb_invalidate(va, pm);
 		REMOVE_STAT(tflushes);
 
 		/*
@@ -1599,7 +1640,7 @@ pmap_kremove(va, size)
 		 * unless it has a PTE.
 		 */
 
-		tlb_flush_pte(va, pmap_ctx(pm));
+		tlb_flush_pte(va, pm);
 	}
 	if (flush) {
 		REMOVE_STAT(flushes);
@@ -1822,7 +1863,7 @@ pmap_enter(pm, va, pa, prot, flags)
 		tte.tag = TSB_TAG(0, pmap_ctx(pm), va);
 		s = splhigh();
 		if (wasmapped && (pmap_ctx(pm) || pm == pmap_kernel())) {
-			tsb_invalidate(pmap_ctx(pm), va);
+			tsb_invalidate(va, pm);
 		}
 		if (flags & (VM_PROT_READ | VM_PROT_WRITE)) {
 			curcpu()->ci_tsb_dmmu[i].tag = tte.tag;
@@ -1842,13 +1883,20 @@ pmap_enter(pm, va, pa, prot, flags)
 		 */
 
 		KASSERT(pmap_ctx(pm)>=0);
-		tlb_flush_pte(va, pmap_ctx(pm));
+#ifdef MULTIPROCESSOR
+		if (wasmapped && (pmap_ctx(pm) || pm == pmap_kernel()))
+			tlb_flush_pte(va, pm);
+		else
+			sp_tlb_flush_pte(va, pmap_ctx(pm));
+#else
+		tlb_flush_pte(va, pm);
+#endif
 		splx(s);
 	} else if (wasmapped && (pmap_ctx(pm) || pm == pmap_kernel())) {
 		/* Force reload -- protections may be changed */
 		KASSERT(pmap_ctx(pm)>=0);
-		tsb_invalidate(pmap_ctx(pm), va);
-		tlb_flush_pte(va, pmap_ctx(pm));
+		tsb_invalidate(va, pm);
+		tlb_flush_pte(va, pm);
 	}
 
 	/* We will let the fast mmu miss interrupt load the new translation */
@@ -1860,13 +1908,27 @@ void
 pmap_remove_all(pm)
 	struct pmap *pm;
 {
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+#endif
 
 	if (pm == pmap_kernel()) {
 		return;
 	}
 	write_user_windows();
 	pm->pm_refs = 0;
+#ifdef MULTIPROCESSOR
+	ctx_free(pm, curcpu());
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (ci == curcpu() || !CPUSET_HAS(cpus_active, ci->ci_index))
+			continue;
+		mutex_enter(&pmap_lock);
+		ctx_free(pm, ci);
+		mutex_exit(&pmap_lock);
+	}
+#else
 	ctx_free(pm);
+#endif
 	REMOVE_STAT(flushes);
 	blast_dcache();
 }
@@ -1957,9 +2019,9 @@ pmap_remove(pm, va, endva)
 		 */
 
 		KASSERT(pmap_ctx(pm)>=0);
-		tsb_invalidate(pmap_ctx(pm), va);
+		tsb_invalidate(va, pm);
 		REMOVE_STAT(tflushes);
-		tlb_flush_pte(va, pmap_ctx(pm));
+		tlb_flush_pte(va, pm);
 	}
 	if (flush && pm->pm_refs) {
 		REMOVE_STAT(flushes);
@@ -2047,8 +2109,8 @@ pmap_protect(pm, sva, eva, prot)
 			continue;
 
 		KASSERT(pmap_ctx(pm)>=0);
-		tsb_invalidate(pmap_ctx(pm), sva);
-		tlb_flush_pte(sva, pmap_ctx(pm));
+		tsb_invalidate(sva, pm);
+		tlb_flush_pte(sva, pm);
 	}
 	pv_check();
 	mutex_exit(&pmap_lock);
@@ -2155,8 +2217,8 @@ pmap_kprotect(va, prot)
 	if (rv & 1)
 		panic("pmap_kprotect: pseg_set needs spare! rv=%d", rv);
 	KASSERT(pmap_ctx(pm)>=0);
-	tsb_invalidate(pmap_ctx(pm), va);
-	tlb_flush_pte(va, pmap_ctx(pm));
+	tsb_invalidate(va, pm);
+	tlb_flush_pte(va, pm);
 	mutex_exit(&pmap_lock);
 }
 
@@ -2421,8 +2483,8 @@ pmap_clear_modify(pg)
 				    " spare! rv=%d\n", rv);
 			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
 				KASSERT(pmap_ctx(pmap)>=0);
-				tsb_invalidate(pmap_ctx(pmap), va);
-				tlb_flush_pte(va, pmap_ctx(pmap));
+				tsb_invalidate(va, pmap);
+				tlb_flush_pte(va, pmap);
 			}
 			/* Then clear the mod bit in the pv */
 			if (pv->pv_va & PV_MOD)
@@ -2504,8 +2566,8 @@ pmap_clear_reference(pg)
 				    " spare! rv=%d\n", rv);
 			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
 				KASSERT(pmap_ctx(pmap)>=0);
-				tsb_invalidate(pmap_ctx(pmap), va);
-				tlb_flush_pte(va, pmap_ctx(pmap));
+				tsb_invalidate(va, pmap);
+				tlb_flush_pte(va, pmap);
 			}
 			if (pv->pv_va & PV_REF)
 				changed |= 1;
@@ -2736,8 +2798,8 @@ pmap_page_protect(pg, prot)
 					       rv);
 				if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
 					KASSERT(pmap_ctx(pmap)>=0);
-					tsb_invalidate(pmap_ctx(pmap), va);
-					tlb_flush_pte(va, pmap_ctx(pmap));
+					tsb_invalidate(va, pmap);
+					tlb_flush_pte(va, pmap);
 				}
 			}
 		}
@@ -2775,8 +2837,8 @@ pmap_page_protect(pg, prot)
 				     " spare! rv=%d\n", rv);
 			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
 				KASSERT(pmap_ctx(pmap)>=0);
-				tsb_invalidate(pmap_ctx(pmap), va);
-				tlb_flush_pte(va, pmap_ctx(pmap));
+				tsb_invalidate(va, pmap);
+				tlb_flush_pte(va, pmap);
 			}
 			if (pmap->pm_refs > 0) {
 				needflush = TRUE;
@@ -2819,8 +2881,8 @@ pmap_page_protect(pg, prot)
 				    " spare! rv=%d\n", rv);
 			if (pmap_ctx(pmap) || pmap == pmap_kernel()) {
 			    	KASSERT(pmap_ctx(pmap)>=0);
-				tsb_invalidate(pmap_ctx(pmap), va);
-				tlb_flush_pte(va, pmap_ctx(pmap));
+				tsb_invalidate(va, pmap);
+				tlb_flush_pte(va, pmap);
 			}
 			if (pmap->pm_refs > 0) {
 				needflush = TRUE;
@@ -2953,7 +3015,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 /*
  * Allocate a hardware context to the given pmap.
  */
-int
+static int
 ctx_alloc(struct pmap *pm)
 {
 	int i, ctx;
@@ -2969,9 +3031,17 @@ ctx_alloc(struct pmap *pm)
 	 */
 
 	if (ctx == curcpu()->ci_numctx) {
+		DPRINTF(PDB_CTX_ALLOC,
+			("ctx_alloc: cpu%d run out of contexts %d\n",
+			 cpu_number(), curcpu()->ci_numctx));
 		write_user_windows();
 		while (!LIST_EMPTY(&curcpu()->ci_pmap_ctxlist)) {
+#ifdef MULTIPROCESSOR
+			ctx_free(LIST_FIRST(&curcpu()->ci_pmap_ctxlist),
+				 curcpu());
+#else
 			ctx_free(LIST_FIRST(&curcpu()->ci_pmap_ctxlist));
+#endif
 		}
 		for (i = TSBENTS - 1; i >= 0; i--) {
 			if (TSB_TAG_CTX(curcpu()->ci_tsb_dmmu[i].tag) != 0) {
@@ -2981,7 +3051,7 @@ ctx_alloc(struct pmap *pm)
 				clrx(&curcpu()->ci_tsb_immu[i].data);
 			}
 		}
-		tlb_flush_all();
+		sp_tlb_flush_all();
 		ctx = 1;
 		curcpu()->ci_pmap_next_ctx = 2;
 	}
@@ -3002,7 +3072,37 @@ ctx_alloc(struct pmap *pm)
 /*
  * Give away a context.
  */
-void
+#ifdef MULTIPROCESSOR
+static void
+ctx_free(struct pmap *pm, struct cpu_info *ci)
+{
+	int oldctx;
+
+	oldctx = pm->pm_ctx[ci->ci_index];
+	if (oldctx == 0)
+		return;
+
+#ifdef DIAGNOSTIC
+	if (pm == pmap_kernel())
+		panic("ctx_free: freeing kernel context");
+	if (ci->ci_ctxbusy[oldctx] == 0)
+		printf("ctx_free: freeing free context %d\n", oldctx);
+	if (ci->ci_ctxbusy[oldctx] != pm->pm_physaddr) {
+		printf("ctx_free: freeing someone else's context\n "
+		       "ctxbusy[%d] = %p, pm(%p)->pm_ctx = %p\n",
+		       oldctx, (void *)(u_long)ci->ci_ctxbusy[oldctx], pm,
+		       (void *)(u_long)pm->pm_physaddr);
+		Debugger();
+	}
+#endif
+	/* We should verify it has not been stolen and reallocated... */
+	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: freeing ctx %d\n", oldctx));
+	ci->ci_ctxbusy[oldctx] = 0UL;
+	pm->pm_ctx[ci->ci_index] = 0;
+	LIST_REMOVE(pm, pm_list[ci->ci_index]);
+}
+#else
+static void
 ctx_free(struct pmap *pm)
 {
 	int oldctx;
@@ -3010,10 +3110,6 @@ ctx_free(struct pmap *pm)
 	oldctx = pmap_ctx(pm);
 	if (oldctx == 0)
 		return;
-#ifdef MULTIPROCESSOR
-	else if (oldctx < 0)
-		oldctx = -oldctx;
-#endif
 
 #ifdef DIAGNOSTIC
 	if (pm == pmap_kernel())
@@ -3032,14 +3128,9 @@ ctx_free(struct pmap *pm)
 	DPRINTF(PDB_CTX_ALLOC, ("ctx_free: freeing ctx %d\n", oldctx));
 	curcpu()->ci_ctxbusy[oldctx] = 0UL;
 	pmap_ctx(pm) = 0;
-	LIST_REMOVE(pm,
-#ifdef MULTIPROCESSOR
-		pm_list[cpu_number()]
-#else
-		pm_list
-#endif
-	);
+	LIST_REMOVE(pm, pm_list);
 }
+#endif
 
 /*
  * Enter the pmap and virtual address into the
@@ -3235,8 +3326,8 @@ pmap_page_cache(struct pmap *pm, paddr_t pa, int mode)
 		if (pmap_ctx(pv->pv_pmap) || pv->pv_pmap == pmap_kernel()) {
 			/* Force reload -- cache bits have changed */
 			KASSERT(pmap_ctx(pv->pv_pmap)>=0);
-			tsb_invalidate(pmap_ctx(pv->pv_pmap), va);
-			tlb_flush_pte(va, pmap_ctx(pv->pv_pmap));
+			tsb_invalidate(va, pv->pv_pmap);
+			tlb_flush_pte(va, pv->pv_pmap);
 		}
 		pv = pv->pv_next;
 	}
