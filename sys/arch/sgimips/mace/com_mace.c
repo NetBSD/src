@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mace.c,v 1.6 2006/07/13 22:56:01 gdamore Exp $	*/
+/*	$NetBSD: com_mace.c,v 1.7 2008/03/14 15:09:10 cube Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.6 2006/07/13 22:56:01 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mace.c,v 1.7 2008/03/14 15:09:10 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,25 +69,27 @@ struct com_mace_softc {
 	/* XXX intr cookie */
 };
 
-static int	com_mace_match(struct device *, struct cfdata *, void *);
-static void	com_mace_attach(struct device *, struct device *, void *);
+static int	com_mace_match(device_t, cfdata_t , void *);
+static void	com_mace_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_mace, sizeof(struct com_mace_softc),
+CFATTACH_DECL_NEW(com_mace, sizeof(struct com_mace_softc),
     com_mace_match, com_mace_attach, NULL, NULL);
 
 static int
-com_mace_match(struct device *parent, struct cfdata *match, void *aux)
+com_mace_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-com_mace_attach(struct device *parent, struct device *self, void *aux)
+com_mace_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_mace_softc *msc = (void *)self;
+	struct com_mace_softc *msc = device_private(self);
 	struct com_softc *sc = &msc->sc_com;
 	struct mace_attach_args *maa = aux;
 	bus_space_handle_t	ioh;
+
+	sc->sc_dev = self;
 
 	/*
 	 * XXX should check com_is_console() and 

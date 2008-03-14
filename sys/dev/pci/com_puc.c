@@ -1,4 +1,4 @@
-/*	$NetBSD: com_puc.c,v 1.17 2007/10/19 12:00:41 ad Exp $	*/
+/*	$NetBSD: com_puc.c,v 1.18 2008/03/14 15:09:11 cube Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.17 2007/10/19 12:00:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_puc.c,v 1.18 2008/03/14 15:09:11 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,8 +61,7 @@ struct com_puc_softc {
 };
 
 static int
-com_puc_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+com_puc_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct puc_attach_args *aa = aux;
 
@@ -76,12 +75,14 @@ com_puc_probe(struct device *parent, struct cfdata *match,
 }
 
 static void
-com_puc_attach(struct device *parent, struct device *self, void *aux)
+com_puc_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_puc_softc *psc = (void *)self;
+	struct com_puc_softc *psc = device_private(self);
 	struct com_softc *sc = &psc->sc_com;
 	struct puc_attach_args *aa = aux;
 	const char *intrstr;
+
+	sc->sc_dev = self;
 
 	/*
 	 * XXX This driver assumes that 'com' ports attached to 'puc'
@@ -128,10 +129,10 @@ com_puc_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 	aprint_normal(": interrupting at %s\n", intrstr);
-	aprint_normal("%s", sc->sc_dev.dv_xname);
+	aprint_normal("%s", device_xname(self));
 
 	com_attach_subr(sc);
 }
 
-CFATTACH_DECL(com_puc, sizeof(struct com_puc_softc),
+CFATTACH_DECL_NEW(com_puc, sizeof(struct com_puc_softc),
     com_puc_probe, com_puc_attach, NULL, NULL);
