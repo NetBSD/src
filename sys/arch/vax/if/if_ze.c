@@ -1,4 +1,4 @@
-/*      $NetBSD: if_ze.c,v 1.13 2008/03/11 05:34:02 matt Exp $ */
+/*      $NetBSD: if_ze.c,v 1.14 2008/03/14 20:49:29 jkunz Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.13 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ze.c,v 1.14 2008/03/14 20:49:29 jkunz Exp $");
 
 #include "opt_cputype.h"
 
@@ -92,7 +92,7 @@ static const struct sgec_data {
 	{ VAX_BTYP_681, SGECADDR, NISA_ROM, SGECVEC, 24, },
 	{ VAX_BTYP_48, SGECADDR, NISA_ROM_VSBUS, SGECVEC, 0, },
 	{ VAX_BTYP_49, SGECADDR, NISA_ROM_VSBUS, SGECVEC, 0, },
-	{ VAX_BTYP_53, SGECADDR, NISA_ROM_VSBUS, SGECVEC, 0, },
+	{ VAX_BTYP_53, SGECADDR, NISA_ROM, SGECVEC, 8, },
 };
 
 static const struct sgec_data *
