@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.102 2008/03/14 23:04:42 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.103 2008/03/14 23:59:01 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.102 2008/03/14 23:04:42 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.103 2008/03/14 23:59:01 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -594,6 +594,18 @@ rtw_key_update_begin(struct ieee80211com *ic)
 #endif
 
 	DPRINTF(sc, RTW_DEBUG_KEY, ("%s:\n", __func__));
+}
+
+static void
+rtw_tx_kick(struct rtw_regs *regs, uint8_t ringsel)
+{
+	uint8_t tppoll;
+
+	tppoll = RTW_READ8(regs, RTW_TPPOLL);
+	tppoll &= ~RTW_TPPOLL_SALL;
+	tppoll |= ringsel & RTW_TPPOLL_ALL;
+	RTW_WRITE8(regs, RTW_TPPOLL, tppoll);
+	RTW_SYNC(regs, RTW_TPPOLL, RTW_TPPOLL);
 }
 
 static void
@@ -1427,6 +1439,10 @@ rtw_io_enable(struct rtw_softc *sc, uint8_t flags, int enable)
 	if (cr & RTW_CR_TE)
 		rtw_txring_fixup(sc, __func__, __LINE__);
 #endif
+	if (cr & RTW_CR_TE) {
+		rtw_tx_kick(&sc->sc_regs,
+		    RTW_TPPOLL_HPQ | RTW_TPPOLL_NPQ | RTW_TPPOLL_LPQ);
+	}
 }
 
 static void
@@ -3212,7 +3228,6 @@ rtw_print_txdesc(struct rtw_softc *sc, const char *action,
 static void
 rtw_start(struct ifnet *ifp)
 {
-	uint8_t tppoll;
 	int desc, i, lastdesc, npkt, rate;
 	uint32_t proto_ctl0, ctl0, ctl1;
 	bus_dmamap_t		dmamap;
@@ -3435,11 +3450,7 @@ rtw_start(struct ifnet *ifp)
 			sc->sc_led_state.ls_event |= RTW_LED_S_TX;
 		tsb->tsb_tx_timer = 5;
 		ifp->if_timer = 1;
-		tppoll = RTW_READ8(&sc->sc_regs, RTW_TPPOLL);
-		tppoll &= ~RTW_TPPOLL_SALL;
-		tppoll |= tsb->tsb_poll & RTW_TPPOLL_ALL;
-		RTW_WRITE8(&sc->sc_regs, RTW_TPPOLL, tppoll);
-		RTW_SYNC(&sc->sc_regs, RTW_TPPOLL, RTW_TPPOLL);
+		rtw_tx_kick(&sc->sc_regs, tsb->tsb_poll);
 	}
 out:
 	DPRINTF(sc, RTW_DEBUG_XMIT, ("%s: leave\n", __func__));
