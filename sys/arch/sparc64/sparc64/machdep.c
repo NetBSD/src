@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.216 2008/02/22 10:55:00 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.217 2008/03/14 15:39:18 nakayama Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2008/02/22 10:55:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2008/03/14 15:39:18 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -289,10 +289,7 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (l == fplwp) {
-			savefpstate(fs);
-			fplwp = NULL;
-		}
+		fpusave_lwp(l, false);
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
@@ -520,8 +517,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	newsp = (struct rwindow *)((u_long)fp - CCFSZ);
 	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
 	    copyout(&uc, &fp->sf_uc, ucsz) != 0 ||
-	    copyout(&tf->tf_out[6], &newsp->rw_in[6],
-	    sizeof(tf->tf_out[6])) != 0);
+	    suword(&newsp->rw_in[6], (uintptr_t)tf->tf_out[6]) != 0);
 	mutex_enter(&p->p_smutex);
 
 	if (error) {
@@ -595,11 +591,6 @@ cpu_reboot(register int howto, char *user_boot_string)
 	}
 	(void) splhigh();		/* ??? */
 
-#if defined(MULTIPROCESSOR)
-	/* Stop all secondary cpus */
-	mp_halt_cpus();
-#endif
-
 	/* If rebooting and a dump is requested, do it. */
 	if (howto & RB_DUMP)
 		dumpsys();
@@ -607,6 +598,11 @@ cpu_reboot(register int howto, char *user_boot_string)
 haltsys:
 	/* Run any shutdown hooks. */
 	doshutdownhooks();
+
+#ifdef MULTIPROCESSOR
+	/* Stop all secondary cpus */
+	mp_halt_cpus();
+#endif
 
 	/* If powerdown was requested, do it. */
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
@@ -619,12 +615,20 @@ haltsys:
 	}
 
 	if (howto & RB_HALT) {
+#ifdef MULTIPROCESSOR
+		printf("cpu%d: halted\n\n", cpu_number());
+#else
 		printf("halted\n\n");
+#endif
 		OF_exit();
 		panic("PROM exit failed");
 	}
 
+#ifdef MULTIPROCESSOR
+	printf("cpu%d: rebooting\n\n", cpu_number());
+#else
 	printf("rebooting\n\n");
+#endif
 	if (user_boot_string && *user_boot_string) {
 		i = strlen(user_boot_string);
 		if (i > sizeof(str))
@@ -1826,7 +1830,7 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 
 	/* Save FP register context, if any. */
 	if (l->l_md.md_fpstate != NULL) {
-		struct fpstate64 fs, *fsp;
+		struct fpstate64 *fsp;
 		__fpregset_t *fpr = &mcp->__fpregs;
 
 		/*
@@ -1835,12 +1839,8 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 		 * with it later when it becomes necessary.
 		 * Otherwise, get it from the process's save area.
 		 */
-		if (l == fplwp) {
-			fsp = &fs;
-			savefpstate(fsp);
-		} else {
-			fsp = l->l_md.md_fpstate;
-		}
+		fpusave_lwp(l, true);
+		fsp = l->l_md.md_fpstate;
 		memcpy(&fpr->__fpu_fr, fsp->fs_regs, sizeof (fpr->__fpu_fr));
 		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
 		mcp->__fpregs.__fpu_fsr = fsp->fs_fsr;
@@ -1925,11 +1925,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
+			KERNEL_LOCK(1, l);
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			l->l_md.md_fpstate = fsp;
-		} else if (l == fplwp) {
+			KERNEL_UNLOCK_ONE(l);
+		} else {
 			/* Drop the live context on the floor. */
-			savefpstate(fsp);
+			fpusave_lwp(l, false);
 		}
 		/* Note: sizeof fpr->__fpu_fr <= sizeof fsp->fs_regs. */
 		memcpy(fsp->fs_regs, &fpr->__fpu_fr, sizeof (fpr->__fpu_fr));
@@ -1970,7 +1972,7 @@ cpu_need_resched(struct cpu_info *ci, int flags)
 #if defined(MULTIPROCESSOR)
 	/* Just interrupt the target CPU, so it can notice its AST */
 	if ((flags & RESCHED_IMMED) || ci->ci_index != cpu_number())
-		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0);
+		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0, 0);
 #endif
 }
 
