@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.98 2008/03/14 22:12:08 cube Exp $ */
+/* $NetBSD: vga.c,v 1.99 2008/03/14 23:17:55 dyoung Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.98 2008/03/14 22:12:08 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.99 2008/03/14 23:17:55 dyoung Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -740,14 +740,17 @@ vga_is_console(bus_space_tag_t iot, int type)
 {
 #ifdef __i386__
 	struct device *dv;
+	deviter_t di;
 	struct vesafb_softc *vesafb;
 
-	for (dv = alldevs.tqh_first; dv; dv=dv->dv_list.tqe_next)
-		if (strncmp(dv->dv_xname, "vesafb", 6) == 0) {
-			vesafb = (struct vesafb_softc *)dv;
+	for (dv = deviter_first(&di, 0); dv != NULL; dv = deviter_next(&di)) {
+		if (device_is_a(dv, "vesafb")) {
+			vesafb = device_private(dv);
 			if (vesafb->sc_isconsole)
 				return (0);
 		}
+	}
+	deviter_release(&di);
 #endif
 	if (vgaconsole &&
 	    !vga_console_attached &&
