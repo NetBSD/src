@@ -1,4 +1,4 @@
-/*	$NetBSD: com_ebus.c,v 1.13 2006/07/13 22:56:02 gdamore Exp $ */
+/*	$NetBSD: com_ebus.c,v 1.14 2008/03/14 15:09:10 cube Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.13 2006/07/13 22:56:02 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_ebus.c,v 1.14 2008/03/14 15:09:10 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,14 +60,14 @@ struct com_ebus_softc {
 	/* this space for rent */
 };
 
-static int com_ebus_match(struct device *, struct cfdata *, void *);
-static void com_ebus_attach(struct device *, struct device *, void *);
+static int com_ebus_match(device_t, cfdata_t , void *);
+static void com_ebus_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_ebus, sizeof(struct com_ebus_softc),
+CFATTACH_DECL_NEW(com_ebus, sizeof(struct com_ebus_softc),
     com_ebus_match, com_ebus_attach, NULL, NULL);
 
 static int
-com_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
+com_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 	bus_space_handle_t ioh;
@@ -88,15 +88,16 @@ com_ebus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-com_ebus_attach(struct device *parent, struct device *self, void *aux)
+com_ebus_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_ebus_softc *ebsc = (void *)self;
+	struct com_ebus_softc *ebsc = device_private(self);
 	struct com_softc *sc = &ebsc->ebsc_com;
 	struct ebus_attach_args *ea = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t iobase;
 
+	sc->sc_dev = self;
 	iot = ea->ea_bustag;
 	iobase = EBUS_ADDR_FROM_REG(&ea->ea_reg[0]);
 	sc->sc_frequency = COM_FREQ;
@@ -115,7 +116,7 @@ com_ebus_attach(struct device *parent, struct device *self, void *aux)
 	    && bus_space_map(iot, iobase, ea->ea_reg[0].size,
 			     0, &ioh) != 0)
 	{
-		printf(": unable to map device registers\n");
+		aprint_error(": unable to map device registers\n");
 		return;
 	}
 

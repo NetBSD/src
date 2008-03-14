@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461uart.c,v 1.20 2007/12/15 00:39:19 perry Exp $	*/
+/*	$NetBSD: hd64461uart.c,v 1.21 2008/03/14 15:09:10 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.20 2007/12/15 00:39:19 perry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461uart.c,v 1.21 2008/03/14 15:09:10 cube Exp $");
 
 #include "opt_kgdb.h"
 
@@ -81,10 +81,10 @@ struct hd64461uart_softc {
 void hd64461uartcnprobe(struct consdev *);
 void hd64461uartcninit(struct consdev *);
 
-STATIC int hd64461uart_match(struct device *, struct cfdata *, void *);
-STATIC void hd64461uart_attach(struct device *, struct device *, void *);
+STATIC int hd64461uart_match(device_t, cfdata_t , void *);
+STATIC void hd64461uart_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(hd64461uart, sizeof(struct hd64461uart_softc),
+CFATTACH_DECL_NEW(hd64461uart, sizeof(struct hd64461uart_softc),
     hd64461uart_match, hd64461uart_attach, NULL, NULL);
 
 STATIC void hd64461uart_init(void);
@@ -147,7 +147,7 @@ hd64461uart_kgdb_init(void)
 #endif /* KGDB */
 
 STATIC int
-hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)
+hd64461uart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
 
@@ -155,14 +155,15 @@ hd64461uart_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 STATIC void
-hd64461uart_attach(struct device *parent, struct device *self, void *aux)
+hd64461uart_attach(device_t parent, device_t self, void *aux)
 {
 	struct hd64461_attach_args *ha = aux;
-	struct hd64461uart_softc *sc = (struct hd64461uart_softc *)self;
+	struct hd64461uart_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
 	uint16_t r16;
 	bus_space_handle_t ioh;
 
+	csc->sc_dev = self;
 	sc->sc_chip = &hd64461uart_chip;
 
 	sc->sc_module_id = ha->ha_module_id;
@@ -183,7 +184,7 @@ hd64461uart_attach(struct device *parent, struct device *self, void *aux)
 
 	/* sanity check */
 	if (!com_probe_subr(&csc->sc_regs)) {
-		printf(": device problem. don't attach.\n");
+		aprint_error(": device problem. don't attach.\n");
 
 		/* stop clock */
 		r16 |= HD64461_SYSSTBCR_SURTSD;

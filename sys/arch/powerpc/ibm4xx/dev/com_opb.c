@@ -1,4 +1,4 @@
-/* $NetBSD: com_opb.c,v 1.19 2007/02/22 16:57:57 thorpej Exp $ */
+/* $NetBSD: com_opb.c,v 1.20 2008/03/14 15:09:10 cube Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.19 2007/02/22 16:57:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_opb.c,v 1.20 2008/03/14 15:09:10 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -86,14 +86,14 @@ struct com_opb_softc {
 	void *sc_ih;
 };
 
-static int	com_opb_probe(struct device *, struct cfdata *, void *);
-static void	com_opb_attach(struct device *, struct device *, void *);
+static int	com_opb_probe(device_t, cfdata_t , void *);
+static void	com_opb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_opb, sizeof(struct com_opb_softc),
+CFATTACH_DECL_NEW(com_opb, sizeof(struct com_opb_softc),
     com_opb_probe, com_opb_attach, NULL, NULL);
 
 int
-com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
+com_opb_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct opb_attach_args *oaa = aux;
 
@@ -105,23 +105,25 @@ com_opb_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-com_opb_attach(struct device *parent, struct device *self, void *aux)
+com_opb_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_opb_softc *msc = (void *)self;
+	struct com_opb_softc *msc = device_private(self);
 	struct com_softc *sc = &msc->sc_com;
 	struct opb_attach_args *oaa = aux;
 	prop_number_t freq;
 	bus_space_handle_t ioh;
+
+	sc->sc_dev = self;
 
 	/* XXX console check */
 
 	bus_space_map(oaa->opb_bt, oaa->opb_addr, COM_NPORTS, 0, &ioh);
 	COM_INIT_REGS(sc->sc_regs, oaa->opb_bt, ioh, oaa->opb_addr);
 
-	freq = prop_dictionary_get(device_properties(&sc->sc_dev),
+	freq = prop_dictionary_get(device_properties(sc->sc_dev),
 	    "clock-frequency");
 	if (freq == NULL) {
-		printf(": unable to get clock-frequency property\n");
+		aprint_error(": unable to get clock-frequency property\n");
 		return;
 	}
 	KASSERT(prop_object_type(freq) == PROP_TYPE_NUMBER);
@@ -168,7 +170,7 @@ com_opb_cnattach(int com_freq, int conaddr, int conspeed, int conmode)
  * com_opb_device_register:
  */
 void
-com_opb_device_register(struct device *dev, int frequency)
+com_opb_device_register(device_t dev, int frequency)
 {
 	/* Set the frequency of the on-chip UART. */
 	prop_number_t pn = prop_number_create_integer(frequency);
@@ -177,7 +179,7 @@ com_opb_device_register(struct device *dev, int frequency)
 	if (prop_dictionary_set(device_properties(dev),
 				"clock-frequency", pn) == false) {
 		printf("WARNING: unable to set clock-frequency "
-			"property for %s\n", dev->dv_xname);
+			"property for %s\n", device_xname(dev));
 	}
 	prop_object_release(pn);
 }

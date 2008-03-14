@@ -1,4 +1,4 @@
-/*	$NetBSD: amps.c,v 1.12 2006/07/13 22:56:00 gdamore Exp $	*/
+/*	$NetBSD: amps.c,v 1.13 2008/03/14 15:09:09 cube Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.12 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amps.c,v 1.13 2008/03/14 15:09:09 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,12 +228,12 @@ struct com_amps_softc {
 
 /* Prototypes for functions */
 
-static int  com_amps_probe   __P((struct device *, struct cfdata *, void *));
-static void com_amps_attach  __P((struct device *, struct device *, void *));
+static int  com_amps_probe   (device_t, cfdata_t , void *);
+static void com_amps_attach  (device_t, device_t, void *);
 
 /* device attach structure */
 
-CFATTACH_DECL(com_amps, sizeof(struct com_amps_softc),
+CFATTACH_DECL_NEW(com_amps, sizeof(struct com_amps_softc),
 	com_amps_probe, com_amps_attach, NULL, NULL);
 
 /*
@@ -244,10 +244,7 @@ CFATTACH_DECL(com_amps, sizeof(struct com_amps_softc),
  */
 
 int
-com_amps_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+com_amps_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -295,17 +292,16 @@ com_amps_probe(parent, cf, aux)
  */    
 
 void
-com_amps_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+com_amps_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_amps_softc *asc = (void *)self;
+	struct com_amps_softc *asc = device_private(self);
 	struct com_softc *sc = &asc->sc_com;
 	u_int iobase;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	struct amps_attach_args *aa = aux;
 
+	sc->sc_dev = self;
 	iot = aa->aa_iot;
 	iobase = aa->aa_base;
 
@@ -318,7 +314,7 @@ com_amps_attach(parent, self, aux)
 	com_attach_subr(sc);
 
 	evcnt_attach_dynamic(&asc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
+	    device_xname(self), "intr");
 	asc->sc_ih = podulebus_irq_establish(aa->aa_irq, IPL_SERIAL, comintr,
 	    sc, &asc->sc_intrcnt);
 }

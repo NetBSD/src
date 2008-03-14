@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_com.c,v 1.16 2006/07/13 22:56:00 gdamore Exp $	*/
+/*	$NetBSD: ixp425_com.c,v 1.17 2008/03/14 15:09:09 cube Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.16 2006/07/13 22:56:00 gdamore Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.17 2008/03/14 15:09:09 cube Exp $");
 
 #include "opt_com.h"
 #ifndef COM_PXA2X0
@@ -58,16 +58,16 @@ __KERNEL_RCSID(0, "$NetBSD: ixp425_com.c,v 1.16 2006/07/13 22:56:00 gdamore Exp 
 #include <arm/xscale/ixp425var.h>
 #include <arm/xscale/ixp425_sipvar.h>
 
-static int	ixsipcom_match(struct device *, struct cfdata *, void *);
-static void	ixsipcom_attach(struct device *, struct device *, void *);
+static int	ixsipcom_match(device_t, cfdata_t , void *);
+static void	ixsipcom_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(ixsipcom, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(ixsipcom, sizeof(struct com_softc),
     ixsipcom_match, ixsipcom_attach, NULL, NULL);
 
 static const int uart_irq[] = {IXP425_INT_UART0, IXP425_INT_UART1};
 
 static int
-ixsipcom_match(struct device *parent, struct cfdata *match, void *aux)
+ixsipcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct ixpsip_attach_args *sa = aux;
 	bus_space_tag_t bt = &ixp425_a4x_bs_tag;
@@ -93,14 +93,15 @@ ixsipcom_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-ixsipcom_attach(struct device *parent, struct device *self, void *aux)
+ixsipcom_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	struct ixpsip_attach_args *sa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t iobase;
 
+	sc->sc_dev = self;
 	iot = &ixp425_a4x_bs_tag;
 	iobase = sa->sa_addr;
 	sc->sc_frequency = IXP425_UART_FREQ;
@@ -108,7 +109,7 @@ ixsipcom_attach(struct device *parent, struct device *self, void *aux)
 
 	if (com_is_console(iot, iobase, &ioh) == 0 &&
 	    bus_space_map(iot, iobase, sa->sa_size, 0, &ioh)) {
-		printf(": can't map registers\n");
+		aprint_error(": can't map registers\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);

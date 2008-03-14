@@ -1,4 +1,4 @@
-/*	$NetBSD: comvar.h,v 1.60 2008/02/29 07:02:05 dyoung Exp $	*/
+/*	$NetBSD: comvar.h,v 1.61 2008/03/14 15:09:11 cube Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -137,7 +137,7 @@ struct com_regs {
 #endif
 
 struct com_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	void *sc_si;
 	struct tty *sc_tty;
 
