@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.19 2007/03/04 06:00:50 christos Exp $	*/
+/*	$NetBSD: emul.c,v 1.20 2008/03/14 15:39:18 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.19 2007/03/04 06:00:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.20 2008/03/14 15:39:18 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,10 +305,7 @@ fixalign(struct lwp *l, struct trapframe64 *tf)
 
 	if (op.bits.st) {
 		if (op.bits.fl) {
-			if (l == fplwp) {
-				savefpstate(l->l_md.md_fpstate);
-				fplwp = NULL;
-			}
+			fpusave_lwp(l, true);
 
 			error = readfpreg(l, code.i_op3.i_rd, &data.i[0]);
 			if (error)
