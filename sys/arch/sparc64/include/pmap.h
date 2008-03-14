@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.39 2008/02/28 11:50:40 martin Exp $	*/
+/*	$NetBSD: pmap.h,v 1.40 2008/03/14 15:40:02 nakayama Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -207,8 +207,23 @@ void		switchexit(struct lwp *, int);
 void		pmap_kprotect(vaddr_t, vm_prot_t);
 
 /* SPARC64 specific */
-int	ctx_alloc(struct pmap *);
-void	ctx_free(struct pmap *);
+/* Assembly routines to flush TLB mappings */
+void sp_tlb_flush_pte(vaddr_t, int);
+void sp_tlb_flush_ctx(int);
+void sp_tlb_flush_all(void);
+
+#ifdef MULTIPROCESSOR
+void smp_tlb_flush_pte(vaddr_t, pmap_t);
+void smp_tlb_flush_ctx(pmap_t);
+void smp_tlb_flush_all(void);
+#define	tlb_flush_pte(va,pm)	smp_tlb_flush_pte(va, pm)
+#define	tlb_flush_ctx(pm)	smp_tlb_flush_ctx(pm)
+#define	tlb_flush_all()		smp_tlb_flush_all()
+#else
+#define	tlb_flush_pte(va,pm)	sp_tlb_flush_pte(va, (pm)->pm_ctx)
+#define	tlb_flush_ctx(pm)	sp_tlb_flush_ctx((pm)->pm_ctx)
+#define	tlb_flush_all()		sp_tlb_flush_all()
+#endif
 
 /* Installed physical memory, as discovered during bootstrap. */
 extern int phys_installed_size;
