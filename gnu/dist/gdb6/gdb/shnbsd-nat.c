@@ -32,6 +32,8 @@
 #include "shnbsd-tdep.h"
 #include "inf-ptrace.h"
 
+#include "nbsd-nat.h"
+
 /* Determine if PT_GETREGS fetches this register. */
 #define GETREGS_SUPPLIES(regno) \
   (((regno) >= R0_REGNUM && (regno) <= (R0_REGNUM + 15)) \
@@ -90,5 +92,6 @@ _initialize_shnbsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = fetch_inferior_registers;
   t->to_store_registers = store_inferior_registers;
+  t->to_pid_to_exec_file = nbsd_pid_to_exec_file;
   add_target (t);
 }
