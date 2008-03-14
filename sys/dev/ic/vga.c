@@ -1,4 +1,4 @@
-/* $NetBSD: vga.c,v 1.97 2007/12/09 20:28:00 jmcneill Exp $ */
+/* $NetBSD: vga.c,v 1.98 2008/03/14 22:12:08 cube Exp $ */
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.97 2007/12/09 20:28:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga.c,v 1.98 2008/03/14 22:12:08 cube Exp $");
 
 /* for WSCONS_SUPPORT_PCVTFONTS */
 #include "opt_wsdisplay_compat.h"
@@ -665,7 +665,7 @@ vga_common_attach(struct vga_softc *sc, bus_space_tag_t iot,
 	aa.accessops = &vga_accessops;
 	aa.accesscookie = vc;
 
-	config_found(&sc->sc_dev, &aa, wsemuldisplaydevprint);
+	config_found_ia(sc->sc_dev, "wsemuldisplaydev", &aa, wsemuldisplaydevprint);
 }
 
 int
