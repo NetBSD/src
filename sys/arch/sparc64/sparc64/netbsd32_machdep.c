@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.75 2008/02/25 10:00:45 nakayama Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.76 2008/03/14 15:39:18 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.75 2008/02/25 10:00:45 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.76 2008/03/14 15:39:18 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -136,10 +136,7 @@ netbsd32_setregs(struct lwp *l, struct exec_package *pack, u_long stack)
 		 * we must get rid of it, and the only way to do that is
 		 * to save it.  In any case, get rid of our FPU state.
 		 */
-		if (l == fplwp) {
-			savefpstate(fs);
-			fplwp = NULL;
-		}
+		fpusave_lwp(l, false);
 		free((void *)fs, M_SUBPROC);
 		l->l_md.md_fpstate = NULL;
 	}
@@ -711,10 +708,7 @@ cpu_coredump32(struct lwp *l, void *iocookie, struct core32 *chdr)
 	}
 
 	if (l->l_md.md_fpstate) {
-		if (l == fplwp) {
-			savefpstate(l->l_md.md_fpstate);
-			fplwp = NULL;
-		}
+		fpusave_lwp(l, true);
 		/* Copy individual fields */
 		for (i=0; i<32; i++)
 			md_core.md_fpstate.fs_regs[i] = 
@@ -792,7 +786,7 @@ netbsd32_cpu_getmcontext(l, mcp, flags)
 
 	/* Save FP register context, if any. */
 	if (l->l_md.md_fpstate != NULL) {
-		struct fpstate fs, *fsp;
+		struct fpstate *fsp;
 		netbsd32_fpregset_t *fpr = &mcp->__fpregs;
 
 		/*
@@ -801,12 +795,8 @@ netbsd32_cpu_getmcontext(l, mcp, flags)
 		 * with it later when it becomes necessary.
 		 * Otherwise, get it from the process's save area.
 		 */
-		if (p == fplwp) {
-			fsp = &fs;
-			savefpstate(fsp);
-		} else {
-			fsp = l->l_md.md_fpstate;
-		}
+		fpusave_lwp(l, true);
+		fsp = l->l_md.md_fpstate;
 		memcpy(&fpr->__fpu_fr, fsp->fs_regs, sizeof (fpr->__fpu_fr));
 		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
 		mcp->__fpregs.__fpu_fsr = fs.fs_fsr;
@@ -898,11 +888,13 @@ netbsd32_cpu_setmcontext(l, mcp, flags)
 		 * XXX immediately or just fault it in later?
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
+			KERNEL_LOCK(1, l);
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			l->l_md.md_fpstate = fsp;
-		} else if (p == fplwp) {
+			KERNEL_UNLOCK_ONE(l);
+		} else {
 			/* Drop the live context on the floor. */
-			savefpstate(fsp);
+			fpusave_lwp(l, false);
 			reload = 1;
 		}
 		/* Note: sizeof fpr->__fpu_fr <= sizeof fsp->fs_regs. */
@@ -1214,11 +1206,13 @@ cpu_setmcontext32(struct lwp *l, const mcontext32_t *mcp, unsigned int flags)
 		 * by lazy FPU context switching); allocate it if necessary.
 		 */
 		if ((fsp = l->l_md.md_fpstate) == NULL) {
+			KERNEL_LOCK(1, l);
 			fsp = malloc(sizeof (*fsp), M_SUBPROC, M_WAITOK);
 			l->l_md.md_fpstate = fsp;
-		} else if (l == fplwp) {
+			KERNEL_UNLOCK_ONE(l);
+		} else {
 			/* Drop the live context on the floor. */
-			savefpstate(fsp);
+			fpusave_lwp(l, false);
 		}
 		/* Note: sizeof fpr->__fpu_fr <= sizeof fsp->fs_regs. */
 		memcpy(fsp->fs_regs, &fpr->__fpu_fr, sizeof (fpr->__fpu_fr));
@@ -1289,7 +1283,7 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 	/* Save FP register context, if any. */
 	if (l->l_md.md_fpstate != NULL) {
 #ifdef notyet
-		struct fpstate64 fs, *fsp;
+		struct fpstate64 *fsp;
 		__fpregset_t *fpr = &mcp->__fpregs;
 
 		/*
@@ -1298,12 +1292,8 @@ cpu_getmcontext32(struct lwp *l, mcontext32_t *mcp, unsigned int *flags)
 		 * with it later when it becomes necessary.
 		 * Otherwise, get it from the process's save area.
 		 */
-		if (l == fplwp) {
-			fsp = &fs;
-			savefpstate(fsp);
-		} else {
-			fsp = l->l_md.md_fpstate;
-		}
+		fpusave_lwp(l, true);
+		fsp = l->l_md.md_fpstate;
 		memcpy(&fpr->__fpu_fr, fsp->fs_regs, sizeof (fpr->__fpu_fr));
 		mcp->__fpregs.__fpu_q = NULL;	/* `Need more info.' */
 		mcp->__fpregs.__fpu_fsr = fs.fs_fsr;
