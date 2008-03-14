@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2007/07/24 10:49:28 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2008/03/14 16:43:16 nakayama Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -8,7 +8,7 @@ MK32BITLIBS?=no
 # If you change the list of distributed kernels, don't forget
 # to update the release documentation in distrib/notes/common/contents
 
-KERNEL_SETS=		GENERIC
+KERNEL_SETS=		GENERIC GENERIC.MP
 
 BUILD_KERNELS+=		INSTALL
 
