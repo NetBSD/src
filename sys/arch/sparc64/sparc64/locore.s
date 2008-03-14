@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.269 2008/03/02 15:28:26 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.270 2008/03/14 15:38:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -83,6 +83,7 @@
 #include <machine/frame.h>
 #include <machine/pte.h>
 #include <machine/pmap.h>
+#include <machine/intr.h>
 #include <machine/asm.h>
 #include <sys/syscall.h>
 
@@ -3623,8 +3624,8 @@ interrupt_vector:
 	stw	%g2, [%g1]
 #endif
 	ldxa	[%g0] ASI_IRSR, %g1
-	mov	IRDR_0H, %g2
-	ldxa	[%g2] ASI_IRDR, %g2	! Get interrupt number
+	mov	IRDR_0H, %g7
+	ldxa	[%g7] ASI_IRDR, %g7	! Get interrupt number
 	membar	#Sync
 
 #if KTR_COMPILE & KTR_INTR
@@ -3633,32 +3634,33 @@ interrupt_vector:
 	rdpr	%tl, %g5
 	stx	%g5, [%g3 + KTR_PARM1]
 	stx	%g1, [%g3 + KTR_PARM2]
-	stx	%g2, [%g3 + KTR_PARM3]
+	stx	%g7, [%g3 + KTR_PARM3]
 12:
 #endif
 
 	btst	IRSR_BUSY, %g1
 	bz,pn	%icc, 3f		! spurious interrupt
-	 sllx	%g2, PTRSHFT, %g5	! Calculate entry number
+	 sethi	%hi(KERNBASE), %g1
 
-	brnz,pt	%g2, Lsoftint_regular	! interrupt #0 is a fast cross-call
-	 cmp	%g2, MAXINTNUM
+	cmp	%g7, %g1
+	bl,pt	%xcc, Lsoftint_regular	! >= KERNBASE is a fast cross-call
+	 cmp	%g7, MAXINTNUM
 
-	mov	IRDR_1H, %g1
-	ldxa	[%g1] ASI_IRDR, %g1	! Get IPI handler address
-	brz,pn  %g1, ret_from_intr_vector
-	 mov	IRDR_2H, %g2
-	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument
+	mov	IRDR_1H, %g2
+	ldxa	[%g2] ASI_IRDR, %g2	! Get IPI handler argument 1
+	mov	IRDR_2H, %g3
+	ldxa	[%g3] ASI_IRDR, %g3	! Get IPI handler argument 2
 
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	membar	#Sync			! Should not be needed due to retry
 
-	jmpl	%g1, %g0
+	jmpl	%g7, %g0
 	 nop
 
 Lsoftint_regular:
 	stxa	%g0, [%g0] ASI_IRSR	! Ack IRQ
 	membar	#Sync			! Should not be needed due to retry
+	sllx	%g7, PTRSHFT, %g5	! Calculate entry number
 	sethi	%hi(_C_LABEL(intrlev)), %g3
 	bgeu,pn	%xcc, 3f
 	 or	%g3, %lo(_C_LABEL(intrlev)), %g3
@@ -3704,16 +3706,16 @@ ret_from_intr_vector:
 
 3:
 #ifdef NOT_DEBUG
-	set	_C_LABEL(intrdebug), %g7
-	ld	[%g7], %g7
-	btst	INTRDEBUG_SPUR, %g7
+	set	_C_LABEL(intrdebug), %g6
+	ld	[%g6], %g6
+	btst	INTRDEBUG_SPUR, %g6
 	bz,pt	%icc, 97f
 	 nop
 #endif
 #if 1
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
 	LOAD_ASCIZ(%o0, "interrupt_vector: spurious vector %lx at pil %d\r\n")
-	mov	%g2, %o1
+	mov	%g7, %o1
 	GLOBTOLOC
 	clr	%g4
 	call	prom_printf
@@ -3757,12 +3759,41 @@ sparc64_ipi_pause_trap_point:
 	 nop
 
 /*
+ * IPI handler to sync %tick register.
+ * void sparc64_ipi_sync_tick(void *);
+ *
+ * On entry:
+ *	%g2 = %tick of master CPU
+ */
+ENTRY(sparc64_ipi_sync_tick)
+	rdpr	%pstate, %g1
+	andn	%g1, PSTATE_IE, %g7		! disable interrupts
+	wrpr	%g7, 0, %pstate
+	rdpr	%tick, %g3			! read old tick
+	rd	TICK_CMPR, %g5
+	sub	%g2, %g3, %g3			! delta btw old and new
+	add	%g5, %g3, %g5			! add delta to TICK_CMPR
+	wr	%g5, TICK_CMPR
+	wrpr	%g2, 0, %tick			! write new tick
+	ba	ret_from_intr_vector
+	 wrpr	%g1, %pstate			! restore interrupts
+
+/*
+ * Increment IPI event counter, defined in machine/{cpu,intr}.h.
+ */
+#define IPIEVC_INC(n,r1,r2)						\
+	sethi	%hi(CPUINFO_VA+CI_IPIEVC+EVC_SIZE*n), r2;		\
+	ldx	[r2 + %lo(CPUINFO_VA+CI_IPIEVC+EVC_SIZE*n)], r1;	\
+	inc	r1;							\
+	stx	r1, [r2 + %lo(CPUINFO_VA+CI_IPIEVC+EVC_SIZE*n)]
+
+/*
  * IPI handler to flush single pte.
  * void sparc64_ipi_flush_pte(void *);
  *
- * On Entry:
- *
- * %g2	- pointer to 'ipi_tlb_args' structure
+ * On entry:
+ *	%g2 = vaddr_t va
+ *	%g3 = int ctx
  */
 ENTRY(sparc64_ipi_flush_pte)
 #if  KTR_COMPILE & KTR_PMAP
@@ -3770,24 +3801,28 @@ ENTRY(sparc64_ipi_flush_pte)
 		 %g1, %g3, %g4, 10, 11, 12)
 12:
 #endif
-#if 0
-	! save %o0 - %o5
-	mov	%o0, %g1
-	mov	%o1, %g3
-	mov	%o2, %g4
-	mov	%o3, %g5
-	mov	%o4, %g6
-	mov	%o5, %g7
-	LDPTR	[%g2 + ITA_VADDR], %o0
-	call	sp_tlb_flush_pte
-	 ld	[%g2 + ITA_CTX], %o1
-	! restore %o0 - %o5
-	mov	%g1, %o0
-	mov	%g3, %o1
-	mov	%g4, %o2
-	mov	%g5, %o3
-	mov	%g6, %o4 
-	mov	%g7, %o5
+#ifdef SPITFIRE
+	mov	CTX_SECONDARY, %g5
+	andn	%g2, 0xfff, %g2			! drop unused va bits
+	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
+	sethi	%hi(KERNBASE), %g7
+	membar	#LoadStore
+	stxa	%g3, [%g5] ASI_DMMU		! Insert context to demap
+	membar	#Sync
+	or	%g2, DEMAP_PAGE_SECONDARY, %g2	! Demap page from secondary context only
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! to both TLBs
+#ifdef _LP64
+	srl	%g2, 0, %g2			! and make sure it's both 32- and 64-bit entries
+	stxa	%g2, [%g2] ASI_DMMU_DEMAP	! Do the demap
+	stxa	%g2, [%g2] ASI_IMMU_DEMAP	! Do the demap
+#endif
+	flush	%g7
+	stxa	%g6, [%g5] ASI_DMMU		! Restore secondary context
+	membar	#Sync
+	IPIEVC_INC(IPI_EVCNT_TLB_PTE,%g2,%g3)
+#else
+	! Not yet
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -3797,9 +3832,8 @@ ENTRY(sparc64_ipi_flush_pte)
  * IPI handler to flush single context.
  * void sparc64_ipi_flush_ctx(void *);
  *
- * On Entry:
- *
- * %g2	- pointer to 'ipi_tlb_args' structure
+ * On entry:
+ *	%g2 = int ctx
  */
 ENTRY(sparc64_ipi_flush_ctx)
 #if KTR_COMPILE & KTR_PMAP
@@ -3807,23 +3841,22 @@ ENTRY(sparc64_ipi_flush_ctx)
 		 %g1, %g3, %g4, 10, 11, 12)
 12:
 #endif
-#if 0
-	! save %o0 - %o5
-	mov	%o0, %g1
-	mov	%o1, %g3
-	mov	%o2, %g4
-	mov	%o3, %g5
-	mov	%o4, %g6
-	mov	%o5, %g7
-	call	sp_tlb_flush_ctx
-	 ld	[%g2 + ITA_CTX], %o0
-	! restore %o0 - %o5
-	mov	%g1, %o0
-	mov	%g3, %o1
-	mov	%g4, %o2
-	mov	%g5, %o3
-	mov	%g6, %o4 
-	mov	%g7, %o5
+#ifdef SPITFIRE
+	mov	CTX_SECONDARY, %g5
+	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
+	sethi	%hi(KERNBASE), %g7
+	membar	#LoadStore
+	stxa	%g2, [%g5] ASI_DMMU		! Insert context to demap
+	set	DEMAP_CTX_SECONDARY, %g3
+	membar	#Sync
+	stxa	%g3, [%g3] ASI_DMMU_DEMAP	! Do the demap
+	stxa	%g3, [%g3] ASI_IMMU_DEMAP	! Do the demap
+	flush	%g7
+	stxa	%g6, [%g5] ASI_DMMU		! Restore secondary context
+	membar	#Sync
+	IPIEVC_INC(IPI_EVCNT_TLB_CTX,%g2,%g3)
+#else
+	! Not yet
 #endif
 	 
 	ba,a	ret_from_intr_vector
@@ -5355,7 +5388,8 @@ ENTRY(openfirmware_exit)
 	flushw					! Flush register windows
 
 	wrpr	%g0, PIL_HIGH, %pil		! Disable interrupts
-	set	romtba, %l5
+	sethi	%hi(romtba), %l5
+	LDPTR	[%l5 + %lo(romtba)], %l5
 	wrpr	%l5, 0, %tba			! restore the ofw trap table
 
 	/* Arrange locked kernel stack as PROM stack */
@@ -5368,8 +5402,8 @@ ENTRY(openfirmware_exit)
 	mov	%l5, %sp
 	flushw
 
-	set	romp, %l6
-	LDPTR	[%l6], %l6
+	sethi	%hi(romp), %l6
+	LDPTR	[%l6 + %lo(romp)], %l6
 
 	mov     CTX_PRIMARY, %l3		! set context 0
 	stxa    %g0, [%l3] ASI_DMMU
@@ -5417,9 +5451,14 @@ ENTRY(sp_tlb_flush_pte)
 2:
 #endif
 #ifdef	SPITFIRE
+#ifdef MULTIPROCESSOR
+	rdpr	%pstate, %o3
+	andn	%o3, PSTATE_IE, %o4			! disable interrupts
+	wrpr	%o4, 0, %pstate
+#endif
 	mov	CTX_SECONDARY, %o2
 	andn	%o0, 0xfff, %o0				! drop unused va bits
-	ldxa	[%o2] ASI_DMMU, %g1			! Save secondary context
+	ldxa	[%o2] ASI_DMMU, %o5			! Save secondary context
 	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
 	stxa	%o1, [%o2] ASI_DMMU			! Insert context to demap
@@ -5427,14 +5466,20 @@ ENTRY(sp_tlb_flush_pte)
 	or	%o0, DEMAP_PAGE_SECONDARY, %o0		! Demap page from secondary context only
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! to both TLBs
+#ifdef _LP64
 	srl	%o0, 0, %o0				! and make sure it's both 32- and 64-bit entries
 	stxa	%o0, [%o0] ASI_DMMU_DEMAP		! Do the demap
 	stxa	%o0, [%o0] ASI_IMMU_DEMAP		! Do the demap
+#endif
 	flush	%o4
-	stxa	%g1, [%o2] ASI_DMMU			! Restore secondary context
+	stxa	%o5, [%o2] ASI_DMMU			! Restore secondary context
 	membar	#Sync
 	retl
+#ifdef MULTIPROCESSOR
+	 wrpr	%o3, %pstate				! restore interrupts
+#else
 	 nop
+#endif
 #else
 	!!
 	!! Cheetahs do not support flushing the IMMU from secondary context
@@ -5506,6 +5551,11 @@ ENTRY(sp_tlb_flush_ctx)
 2:
 #endif
 #ifdef SPITFIRE
+#ifdef MULTIPROCESSOR
+	rdpr	%pstate, %o3
+	andn	%o3, PSTATE_IE, %o4		! disable interrupts
+	wrpr	%o4, 0, %pstate
+#endif
 	mov	CTX_SECONDARY, %o2
 	ldxa	[%o2] ASI_DMMU, %o1		! Save secondary context
 	sethi	%hi(KERNBASE), %o4
@@ -5515,11 +5565,15 @@ ENTRY(sp_tlb_flush_ctx)
 	membar	#Sync
 	stxa	%o5, [%o5] ASI_DMMU_DEMAP	! Do the demap
 	stxa	%o5, [%o5] ASI_IMMU_DEMAP	! Do the demap
-	membar	#Sync
-	stxa	%o1, [%o2] ASI_DMMU		! Restore secondary asi
 	flush	%o4
+	stxa	%o1, [%o2] ASI_DMMU		! Restore secondary context
+	membar	#Sync
 	retl
+#ifdef MULTIPROCESSOR
+	 wrpr	%o3, %pstate			! restore interrupts
+#else
 	 nop
+#endif
 #else
 	rdpr	%tl, %o3
 	mov	CTX_PRIMARY, %o2
@@ -5554,7 +5608,6 @@ ENTRY(sp_tlb_flush_ctx)
 	.align 8
 ENTRY(sp_tlb_flush_all)
 #ifdef SPITFIRE
-	save	%sp, -CC64FSZ, %sp
 	rdpr	%pstate, %o3
 	andn	%o3, PSTATE_IE, %o4			! disable interrupts
 	wrpr	%o4, 0, %pstate
@@ -5616,11 +5669,8 @@ ENTRY(sp_tlb_flush_all)
 	sethi	%hi(KERNBASE), %o4
 	membar	#Sync
 	flush	%o4
-!	retl
+	retl
 	 wrpr	%o3, %pstate
-
-	ret
-	 restore
 #else
 	WRITEME
 #endif
@@ -9459,23 +9509,136 @@ Lkcerr:
 	NOTREACHED
 
 #ifdef MULTIPROCESSOR
+/*
+ * IPI handler to store the current FPU state.
+ * void sparc64_ipi_save_fpstate(void *);
+ */
 ENTRY(sparc64_ipi_save_fpstate)
-	save	%sp, -CC64FSZ, %sp
-	sethi	%hi(FPLWP), %o0
-	LDPTR	[%o0 + %lo(FPLWP)], %o0
-	call	savefpstate
-	 LDPTR	[%o0 + L_FPSTATE], %o0
-	sethi	%hi(FPLWP), %o0
-	STPTR	%g0, [%o0 + %lo(FPLWP)]		! fplwp = NULL
-	ba	ret_from_intr_vector
-	 restore
+	mov	CTX_SECONDARY, %g5
+	ldxa	[%g5] ASI_DMMU, %g6
+	membar	#LoadStore
+	stxa	%g0, [%g5] ASI_DMMU
+	membar	#Sync
 
+	sethi	%hi(FPLWP), %g1
+	LDPTR	[%g1 + %lo(FPLWP)], %g3
+	LDPTR	[%g3 + L_FPSTATE], %g3
+
+	rdpr	%pstate, %g2		! enable FP before we begin
+	rd	%fprs, %g5
+	wr	%g0, FPRS_FEF, %fprs
+	or	%g2, PSTATE_PEF, %g2
+	wrpr	%g2, 0, %pstate
+
+	stx	%fsr, [%g3 + FS_FSR]	! f->fs_fsr = getfsr();
+
+	rd	%gsr, %g2		! Save %gsr
+	st	%g2, [%g3 + FS_GSR]
+
+	add	%g3, FS_REGS, %g3
+	btst	BLOCK_ALIGN, %g3	! Needs to be re-executed
+	bnz,pn	%icc, 3f		! Check alignment
+	 st	%g0, [%g3 + FS_QSIZE - FS_REGS]	! f->fs_qsize = 0;
+	btst	FPRS_DL, %g5		! Lower FPU clean?
+	bz,a,pt	%icc, 1f		! Then skip it
+	 add	%g3, 128, %g3		! Skip a block
+	membar	#Sync
+	stda	%f0, [%g3] ASI_BLK_S	! f->fs_f0 = etc;
+	inc	BLOCK_SIZE, %g3
+	stda	%f16, [%g3] ASI_BLK_S
+	inc	BLOCK_SIZE, %g3
+1:
+	btst	FPRS_DU, %g5		! Upper FPU clean?
+	bz,pt	%icc, 2f		! Then skip it
+	 nop
+
+	membar	#Sync
+	stda	%f32, [%g3] ASI_BLK_S
+	inc	BLOCK_SIZE, %g3
+	stda	%f48, [%g3] ASI_BLK_S
+2:
+	membar	#Sync			! Finish operation so we can
+	wr	%g0, FPRS_FEF, %fprs	! Mark FPU clean
+
+	mov	CTX_SECONDARY, %g5
+	STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
+	stxa	%g6, [%g5] ASI_DMMU
+	membar	#Sync
+	IPIEVC_INC(IPI_EVCNT_FPU_SYNCH,%g2,%g3)
+	ba,a	ret_from_intr_vector
+	 nop
+
+3:
+#ifdef DIAGONSTIC
+	btst	7, %g3			! 32-bit aligned!?!?
+	bnz,pn	%icc, 6f
+#endif
+	 btst	FPRS_DL, %g5		! Lower FPU clean?
+	bz,a,pt	%icc, 4f		! Then skip it
+	 add	%g3, 128, %g3
+
+	membar	#Sync
+	std	%f0, [%g3 + FS_REGS + (4*0)]	! f->fs_f0 = etc;
+	std	%f2, [%g3 + FS_REGS + (4*2)]
+	std	%f4, [%g3 + FS_REGS + (4*4)]
+	std	%f6, [%g3 + FS_REGS + (4*6)]
+	std	%f8, [%g3 + FS_REGS + (4*8)]
+	std	%f10, [%g3 + FS_REGS + (4*10)]
+	std	%f12, [%g3 + FS_REGS + (4*12)]
+	std	%f14, [%g3 + FS_REGS + (4*14)]
+	std	%f16, [%g3 + FS_REGS + (4*16)]
+	std	%f18, [%g3 + FS_REGS + (4*18)]
+	std	%f20, [%g3 + FS_REGS + (4*20)]
+	std	%f22, [%g3 + FS_REGS + (4*22)]
+	std	%f24, [%g3 + FS_REGS + (4*24)]
+	std	%f26, [%g3 + FS_REGS + (4*26)]
+	std	%f28, [%g3 + FS_REGS + (4*28)]
+	std	%f30, [%g3 + FS_REGS + (4*30)]
+4:
+	btst	FPRS_DU, %g5		! Upper FPU clean?
+	bz,pt	%icc, 2b		! Then skip it
+	 nop
+
+	membar	#Sync
+	std	%f32, [%g3 + FS_REGS + (4*32)]
+	std	%f34, [%g3 + FS_REGS + (4*34)]
+	std	%f36, [%g3 + FS_REGS + (4*36)]
+	std	%f38, [%g3 + FS_REGS + (4*38)]
+	std	%f40, [%g3 + FS_REGS + (4*40)]
+	std	%f42, [%g3 + FS_REGS + (4*42)]
+	std	%f44, [%g3 + FS_REGS + (4*44)]
+	std	%f46, [%g3 + FS_REGS + (4*46)]
+	std	%f48, [%g3 + FS_REGS + (4*48)]
+	std	%f50, [%g3 + FS_REGS + (4*50)]
+	std	%f52, [%g3 + FS_REGS + (4*52)]
+	std	%f54, [%g3 + FS_REGS + (4*54)]
+	std	%f56, [%g3 + FS_REGS + (4*56)]
+	std	%f58, [%g3 + FS_REGS + (4*58)]
+	std	%f60, [%g3 + FS_REGS + (4*60)]
+	ba	2b
+	 std	%f62, [%g3 + FS_REGS + (4*62)]
+
+	!!
+	!! Damn thing is *NOT* aligned on a 64-byte boundary
+	!! 
+6:
+	wr	%g0, FPRS_FEF, %fprs
+	ta	1
+	 nop
+	ba,a	ret_from_intr_vector
+	 nop
+
+/*
+ * IPI handler to drop the current FPU state.
+ * void sparc64_ipi_drop_fpstate(void *);
+ */
 ENTRY(sparc64_ipi_drop_fpstate)
 	rdpr	%pstate, %g1
 	wr	%g0, FPRS_FEF, %fprs
 	or	%g1, PSTATE_PEF, %g1
 	wrpr	%g1, 0, %pstate
 	sethi	%hi(FPLWP), %g1
+	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
 	ba	ret_from_intr_vector
 	 STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
 #endif
