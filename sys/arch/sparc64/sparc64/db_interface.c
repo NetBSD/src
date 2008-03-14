@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.109 2008/03/02 22:01:38 martin Exp $ */
+/*	$NetBSD: db_interface.c,v 1.110 2008/03/14 15:40:22 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,9 +34,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.109 2008/03/02 22:01:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.110 2008/03/14 15:40:22 nakayama Exp $");
 
 #include "opt_ddb.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
