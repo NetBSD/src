@@ -1,4 +1,4 @@
-/*	$NetBSD: com.c,v 1.276 2008/03/14 15:09:11 cube Exp $	*/
+/*	$NetBSD: com.c,v 1.277 2008/03/14 22:47:06 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.276 2008/03/14 15:09:11 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.277 2008/03/14 22:47:06 cube Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -297,16 +297,18 @@ comstatus(struct com_softc *sc, const char *str)
 {
 	struct tty *tp = sc->sc_tty;
 
-	printf("%s: %s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
-	    sc->sc_dev.dv_xname, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "%s %cclocal  %cdcd %cts_carr_on %cdtr %ctx_stopped\n",
+	    str,
 	    ISSET(tp->t_cflag, CLOCAL) ? '+' : '-',
 	    ISSET(sc->sc_msr, MSR_DCD) ? '+' : '-',
 	    ISSET(tp->t_state, TS_CARR_ON) ? '+' : '-',
 	    ISSET(sc->sc_mcr, MCR_DTR) ? '+' : '-',
 	    sc->sc_tx_stopped ? '+' : '-');
 
-	printf("%s: %s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
-	    sc->sc_dev.dv_xname, str,
+	aprint_normal_dev(sc->sc_dev,
+	    "%s %ccrtscts %ccts %cts_ttstop  %crts rx_flags=0x%x\n",
+	    str,
 	    ISSET(tp->t_cflag, CRTSCTS) ? '+' : '-',
 	    ISSET(sc->sc_msr, MSR_CTS) ? '+' : '-',
 	    ISSET(tp->t_state, TS_TTSTOP) ? '+' : '-',
@@ -529,7 +531,7 @@ fifodone:
 	sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
 
 #if NRND > 0 && defined(RND_COM)
-	rnd_attach_source(&sc->rnd_source, sc->sc_dev.dv_xname,
+	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
 			  RND_TYPE_TTY, 0);
 #endif
 
