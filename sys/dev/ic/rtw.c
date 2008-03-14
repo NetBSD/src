@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.101 2008/03/12 18:02:21 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.102 2008/03/14 23:04:42 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.101 2008/03/12 18:02:21 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.102 2008/03/14 23:04:42 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -557,13 +557,14 @@ static int
 rtw_key_delete(struct ieee80211com *ic, const struct ieee80211_key *k)
 {
 	struct rtw_softc *sc = ic->ic_ifp->if_softc;
-	u_int keyix = k->wk_keyix;
 
-	DPRINTF(sc, RTW_DEBUG_KEY, ("%s: delete key %u\n", __func__, keyix));
+	DPRINTF(sc, RTW_DEBUG_KEY, ("%s: delete key %u\n", __func__,
+	    k->wk_keyix));
 
-	if (keyix >= IEEE80211_WEP_NKID)
-		return 0;
-	if (k->wk_keylen != 0)
+	KASSERT(k->wk_keyix < IEEE80211_WEP_NKID);
+
+	if (k->wk_keylen != 0 &&
+	    k->wk_cipher->ic_cipher == IEEE80211_CIPHER_WEP)
 		sc->sc_flags &= ~RTW_F_DK_VALID;
 
 	return 1;
@@ -577,8 +578,7 @@ rtw_key_set(struct ieee80211com *ic, const struct ieee80211_key *k,
 
 	DPRINTF(sc, RTW_DEBUG_KEY, ("%s: set key %u\n", __func__, k->wk_keyix));
 
-	if (k->wk_keyix >= IEEE80211_WEP_NKID)
-		return 0;
+	KASSERT(k->wk_keyix < IEEE80211_WEP_NKID);
 
 	sc->sc_flags &= ~RTW_F_DK_VALID;
 
