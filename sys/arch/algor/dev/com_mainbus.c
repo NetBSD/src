@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.9 2008/02/29 07:02:04 dyoung Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.10 2008/03/14 15:09:09 cube Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.9 2008/02/29 07:02:04 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.10 2008/03/14 15:09:09 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,15 +71,15 @@ struct com_mainbus_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int	com_mainbus_match(struct device *, struct cfdata *, void *);
-void	com_mainbus_attach(struct device *, struct device *, void *);
+int	com_mainbus_match(device_t, cfdata_t , void *);
+void	com_mainbus_attach(device_t, device_t, void *);
 void	com_mainbus_cleanup(void *);
 
-CFATTACH_DECL(com_mainbus, sizeof(struct com_mainbus_softc),
+CFATTACH_DECL_NEW(com_mainbus, sizeof(struct com_mainbus_softc),
     com_mainbus_match, com_mainbus_attach, NULL, NULL);
 
 int
-com_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
+com_mainbus_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 
@@ -91,16 +91,17 @@ com_mainbus_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-com_mainbus_attach(struct device *parent, struct device *self, void *aux)
+com_mainbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_mainbus_softc *msc = (void *)self;
+	struct com_mainbus_softc *msc = device_private(self);
 	struct com_softc *sc = &msc->sc_com;
 	struct mainbus_attach_args *ma = aux;
 	bus_space_handle_t ioh;
 
+	sc->sc_dev = self;
 	if (com_is_console(ma->ma_st, ma->ma_addr, &ioh) == 0 &&
 	    bus_space_map(ma->ma_st, ma->ma_addr, COM_NPORTS, 0, &ioh) != 0) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, ma->ma_st, ioh, ma->ma_addr);
@@ -110,14 +111,12 @@ com_mainbus_attach(struct device *parent, struct device *self, void *aux)
 
 	msc->sc_ih = (*algor_intr_establish)(ma->ma_irq, comintr, sc);
 	if (msc->sc_ih == NULL) {
-		printf("%s: unable to establish interrupt\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to establish interrupt\n");
 		return;
 	}
 
 	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
-		aprint_error_dev(&sc->sc_dev,
-		    "could not establish shutdown hook");
+		aprint_error_dev(self, "could not establish shutdown hook");
 	}
 
 }

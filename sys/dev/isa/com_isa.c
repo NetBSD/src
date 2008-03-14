@@ -1,4 +1,4 @@
-/*	$NetBSD: com_isa.c,v 1.32 2008/02/29 07:02:05 dyoung Exp $	*/
+/*	$NetBSD: com_isa.c,v 1.33 2008/03/14 15:09:11 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.32 2008/02/29 07:02:05 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_isa.c,v 1.33 2008/03/14 15:09:11 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ struct com_isa_softc {
 static bool com_isa_suspend(device_t PMF_FN_PROTO);
 static bool com_isa_resume(device_t PMF_FN_PROTO);
 
-int com_isa_probe(device_t, struct cfdata *, void *);
+int com_isa_probe(device_t, cfdata_t , void *);
 void com_isa_attach(device_t, device_t, void *);
 static int com_isa_detach(device_t, int);
 #ifdef COM_HAYESP
@@ -114,11 +114,11 @@ int com_isa_isHAYESP(bus_space_handle_t, struct com_softc *);
 #endif
 
 
-CFATTACH_DECL(com_isa, sizeof(struct com_isa_softc),
+CFATTACH_DECL_NEW(com_isa, sizeof(struct com_isa_softc),
     com_isa_probe, com_isa_attach, com_isa_detach, com_activate);
 
 int
-com_isa_probe(device_t parent, struct cfdata *match, void *aux)
+com_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
@@ -191,6 +191,8 @@ com_isa_attach(device_t parent, device_t self, void *aux)
 		printf(": can't map i/o space\n");
 		return;
 	}
+
+	sc->sc_dev = self;
 
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);
 

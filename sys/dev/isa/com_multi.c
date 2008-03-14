@@ -1,4 +1,4 @@
-/*	$NetBSD: com_multi.c,v 1.25 2007/10/19 12:00:15 ad Exp $	*/
+/*	$NetBSD: com_multi.c,v 1.26 2008/03/14 15:09:11 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.25 2007/10/19 12:00:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.26 2008/03/14 15:09:11 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,14 +99,14 @@ __KERNEL_RCSID(0, "$NetBSD: com_multi.c,v 1.25 2007/10/19 12:00:15 ad Exp $");
 
 #include "locators.h"
 
-int com_multi_probe(struct device *, struct cfdata *, void *);
-void com_multi_attach(struct device *, struct device *, void *);
+int com_multi_probe(device_t, cfdata_t , void *);
+void com_multi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_multi, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(com_multi, sizeof(struct com_softc),
     com_multi_probe, com_multi_attach, NULL, NULL);
 
 int
-com_multi_probe(struct device *parent, struct cfdata *match, void *aux)
+com_multi_probe(device_t parent, cfdata_t match, void *aux)
 {
 	int iobase;
 	struct cfdata *cf = match;
@@ -126,10 +126,12 @@ com_multi_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-com_multi_attach(struct device *parent, struct device *self, void *aux)
+com_multi_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (void *)self;
+	struct com_softc *sc = device_private(self);
 	struct commulti_attach_args *ca = aux;
+
+	sc->sc_dev = self;
 
 	/*
 	 * We're living on a commulti.

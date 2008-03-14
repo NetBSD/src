@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmcom.c,v 1.31 2007/10/19 12:01:06 ad Exp $	*/
+/*	$NetBSD: pcmcom.c,v 1.32 2008/03/14 15:09:11 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.31 2007/10/19 12:01:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcmcom.c,v 1.32 2008/03/14 15:09:11 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -332,8 +332,8 @@ pcmcom_disable(sc)
 /****** Here begins the com attachment code. ******/
 
 #if NCOM_PCMCOM > 0
-int	com_pcmcom_match(struct device *, struct cfdata *, void *);
-void	com_pcmcom_attach(struct device *, struct device *, void *);
+int	com_pcmcom_match(device_t, cfdata_t , void *);
+void	com_pcmcom_attach(device_t, device_t, void *);
 
 /* No pcmcom-specific goo in the softc; it's all in the parent. */
 CFATTACH_DECL(com_pcmcom, sizeof(struct com_softc),
@@ -343,8 +343,7 @@ int	com_pcmcom_enable(struct com_softc *);
 void	com_pcmcom_disable(struct com_softc *);
 
 int
-com_pcmcom_match(struct device *parent, struct cfdata *cf,
-    void *aux)
+com_pcmcom_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	/* Device is always present. */
@@ -352,12 +351,12 @@ com_pcmcom_match(struct device *parent, struct cfdata *cf,
 }
 
 void
-com_pcmcom_attach(struct device *parent, struct device *self,
-    void *aux)
+com_pcmcom_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	struct pcmcom_attach_args *pca = aux;
 
+	sc->sc_dev = self;
 	COM_INIT_REGS(sc->sc_regs, pca->pca_iot, pca->pca_ioh, -1);
 	sc->enabled = 1;
 
@@ -372,11 +371,10 @@ com_pcmcom_attach(struct device *parent, struct device *self,
 }
 
 int
-com_pcmcom_enable(sc)
-	struct com_softc *sc;
+com_pcmcom_enable(struct com_softc *sc)
 {
 
-	return (pcmcom_enable((struct pcmcom_softc *)device_parent(&sc->sc_dev)));
+	return (pcmcom_enable(device_private(device_parent(sc->sc_dev))));
 }
 
 void
@@ -384,6 +382,6 @@ com_pcmcom_disable(sc)
 	struct com_softc *sc;
 {
 
-	pcmcom_disable((struct pcmcom_softc *)device_parent(&sc->sc_dev));
+	pcmcom_disable(device_private(device_parent(sc->sc_dev)));
 }
 #endif /* NCOM_PCMCOM > 0 */
