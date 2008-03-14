@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.69 2008/03/06 09:33:03 nakayama Exp $ */
+/*	$NetBSD: cpu.c,v 1.70 2008/03/14 15:38:00 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.69 2008/03/06 09:33:03 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2008/03/14 15:38:00 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -89,6 +89,10 @@ char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];			/* machine model (primary CPU) */
 extern char machine_model[];
+
+#ifdef MULTIPROCESSOR
+static const char *ipi_evcnt_names[IPI_EVCNT_NUM] = IPI_EVCNT_NAMES;
+#endif
 
 static void cpu_reset_fpustate(void);
 
@@ -236,6 +240,9 @@ cpu_attach(struct device *parent, struct device *dev, void *aux)
 		mi_cpu_attach(ci);
 		ci->ci_cpcb = (struct pcb *)ci->ci_data.cpu_idlelwp->l_addr;
 	}
+	for (i = 0; i < IPI_EVCNT_NUM; ++i)
+		evcnt_attach_dynamic(&ci->ci_ipi_evcnt[i], EVCNT_TYPE_INTR,
+				     NULL, dev->dv_xname, ipi_evcnt_names[i]);
 #endif
 	evcnt_attach_dynamic(&ci->ci_tick_evcnt, EVCNT_TYPE_INTR, NULL,
 			     dev->dv_xname, "timer");
@@ -392,6 +399,12 @@ cpu_boot_secondary_processors()
 		if (!CPUSET_HAS(cpus_active, ci->ci_index))
 			printf("cpu%d: startup failed\n", ci->ci_cpuid);
 	}
+
+	/*
+	 * Sync %tick register with primary CPU.
+	 * No need this actually since we can use counter-timer as timecounter.
+	 */
+	sparc64_broadcast_ipi(sparc64_ipi_sync_tick, tick() + 100, 0);
 }
 
 void
@@ -408,7 +421,7 @@ cpu_hatch()
 	cpu_reset_fpustate();
 	curlwp = curcpu()->ci_data.cpu_idlelwp;
 	membar_sync();
-	tickintr_establish();
+	tickintr_establish(14, statintr);
 	spl0();
 }
 #endif /* MULTIPROCESSOR */

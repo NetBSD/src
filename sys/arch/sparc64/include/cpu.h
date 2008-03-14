@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.75 2008/03/02 15:28:26 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.76 2008/03/14 15:38:00 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -128,7 +128,12 @@ struct cpu_info {
 	/* Interrupts */
 	struct intrhand		*ci_intrpending[16];
 	struct intrhand		*ci_intrlev0;
+
+	/* Event counters */
 	struct evcnt		ci_tick_evcnt;
+#ifdef MULTIPROCESSOR
+	struct evcnt		ci_ipi_evcnt[IPI_EVCNT_NUM];
+#endif
 
 	int			ci_flags;
 	int			ci_want_ast;
@@ -238,9 +243,9 @@ void	cpu_boot_secondary_processors(void);
  */
 typedef void (* ipifunc_t)(void *);
 
-void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t, uint64_t);
-void	sparc64_broadcast_ipi (ipifunc_t, uint64_t);
-void	sparc64_send_ipi (int, ipifunc_t, uint64_t);
+void	sparc64_multicast_ipi(sparc64_cpuset_t, ipifunc_t, uint64_t, uint64_t);
+void	sparc64_broadcast_ipi(ipifunc_t, uint64_t, uint64_t);
+void	sparc64_send_ipi(int, ipifunc_t, uint64_t, uint64_t);
 #endif
 
 /*
@@ -320,10 +325,10 @@ int isbad(struct dkbad *bt, int, int, int);
 void *	reserve_dumppages(void *);
 /* clock.c */
 struct timeval;
-int	tickintr(void *);	/* level 10 (tick) interrupt code */
+int	tickintr(void *);	/* level 10/14 (tick) interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
-void	tickintr_establish(void);
+void	tickintr_establish(int, int (*)(void *));
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);

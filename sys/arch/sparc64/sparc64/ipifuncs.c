@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.14 2008/03/02 22:01:38 martin Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.15 2008/03/14 15:38:00 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2008/03/02 22:01:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.15 2008/03/14 15:38:00 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.14 2008/03/02 22:01:38 martin Exp $")
 
 #include <machine/cpu.h>
 #include <machine/ctlreg.h>
-#include <machine/pte.h>
+#include <machine/pmap.h>
 #include <machine/sparc64.h>
 
 #define SPARC64_IPI_RETRIES	10000
@@ -89,6 +89,8 @@ sparc64_ipi_halt_thiscpu(void *arg)
 
 	printf("cpu%d: shutting down\n", cpu_number());
 	CPUSET_ADD(cpus_halted, cpu_number());
+	if (CPU_IS_PRIMARY(curcpu()))
+		DELAY(1000000);		/* XXX - wait for interrupter's halt */
 	prom_stopself();
 
 	return(1);
@@ -164,7 +166,8 @@ sparc64_ipi_init()
  * Send an IPI to all in the list but ourselves.
  */
 void
-sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func, uint64_t arg1)
+sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func, uint64_t arg1,
+		      uint64_t arg2)
 {
 	struct cpu_info *ci;
 
@@ -175,7 +178,7 @@ sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func, uint64_t arg1)
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
 		if (CPUSET_HAS(cpuset, ci->ci_index)) {
 			CPUSET_DEL(cpuset, ci->ci_index);
-			sparc64_send_ipi(ci->ci_cpuid, func, arg1);
+			sparc64_send_ipi(ci->ci_cpuid, func, arg1, arg2);
 		}
 	}
 }
@@ -184,18 +187,18 @@ sparc64_multicast_ipi(sparc64_cpuset_t cpuset, ipifunc_t func, uint64_t arg1)
  * Broadcast an IPI to all but ourselves.
  */
 void
-sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1)
+sparc64_broadcast_ipi(ipifunc_t func, uint64_t arg1, uint64_t arg2)
 {
 
 	sparc64_multicast_ipi(CPUSET_EXCEPT(cpus_active, cpu_number()), func,
-		arg1);
+		arg1, arg2);
 }
 
 /*
  * Send an interprocessor interrupt.
  */
 void
-sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1)
+sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 {
 	int i, ik;
 	uint64_t intr_func;
@@ -209,10 +212,13 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1)
 	for (i = 0; i < SPARC64_IPI_RETRIES; i++) {
 		int s = intr_disable();
 
-		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, 0);
-		stxa(IDDR_1H, ASI_INTERRUPT_DISPATCH, intr_func);
-		stxa(IDDR_2H, ASI_INTERRUPT_DISPATCH, arg1);
+		stxa(IDDR_0H, ASI_INTERRUPT_DISPATCH, intr_func);
+		stxa(IDDR_1H, ASI_INTERRUPT_DISPATCH, arg1);
+		stxa(IDDR_2H, ASI_INTERRUPT_DISPATCH, arg2);
 		stxa(IDCR(upaid), ASI_INTERRUPT_DISPATCH, 0);
+		membar_sync();
+		/* Workaround for SpitFire erratum #54, from FreeBSD */
+		(void)ldxa(P_DCR_0, ASI_DATAPATH_READ);
 		membar_sync();
 
 		for (ik = 0; ik < 1000000; ik++) {
@@ -268,7 +274,7 @@ mp_halt_cpus()
 	if (CPUSET_EMPTY(cpuset))
 		return;
 
-	sparc64_multicast_ipi(cpuset, sparc64_ipi_halt, 0);
+	sparc64_multicast_ipi(cpuset, sparc64_ipi_halt, 0, 0);
 	if (sparc64_ipi_wait(&cpus_halted, cpumask))
 		sparc64_ipi_error("halt", cpumask, cpus_halted);
 }
@@ -287,7 +293,7 @@ mp_pause_cpus()
 	if (CPUSET_EMPTY(cpuset))
 		return;
 
-	sparc64_multicast_ipi(cpuset, sparc64_ipi_pause, 0);
+	sparc64_multicast_ipi(cpuset, sparc64_ipi_pause, 0, 0);
 	if (sparc64_ipi_wait(&cpus_paused, cpuset))
 		sparc64_ipi_error("pause", cpus_paused, cpuset);
 }
@@ -331,26 +337,72 @@ mp_cpu_is_paused(sparc64_cpuset_t cpunum)
  * Flush pte on all active processors.
  */
 void
-smp_tlb_flush_pte(vaddr_t va, int ctx)
+smp_tlb_flush_pte(vaddr_t va, pmap_t pm)
 {
+	sparc64_cpuset_t cpuset;
+	struct cpu_info *ci;
+	int ctx;
+	bool kpm = (pm == pmap_kernel());
+
 	/* Flush our own TLB */
-	sp_tlb_flush_pte(va, ctx);
+	ctx = pm->pm_ctx[cpu_number()];
+	KASSERT(ctx >= 0);
+	if (kpm || ctx > 0)
+		sp_tlb_flush_pte(va, ctx);
+
+	CPUSET_ASSIGN(cpuset, cpus_active);
+	CPUSET_DEL(cpuset, cpu_number());
+	if (CPUSET_EMPTY(cpuset))
+		return;
 
 	/* Flush others */
-	/* sparc64_broadcast_ipi(sparc64_ipi_flush_ctx, ctx); */
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (CPUSET_HAS(cpuset, ci->ci_index)) {
+			CPUSET_DEL(cpuset, ci->ci_index);
+			ctx = pm->pm_ctx[ci->ci_index];
+			KASSERT(ctx >= 0);
+			if (!kpm && ctx == 0)
+				continue;
+			sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_flush_pte,
+					 va, ctx);
+		}
+	}
 }
 
 /*
  * Flush context on all active processors.
  */
 void
-smp_tlb_flush_ctx(int ctx)
+smp_tlb_flush_ctx(pmap_t pm)
 {
+	sparc64_cpuset_t cpuset;
+	struct cpu_info *ci;
+	int ctx;
+	bool kpm = (pm == pmap_kernel());
+
 	/* Flush our own TLB */
-	sp_tlb_flush_ctx(ctx);
+	ctx = pm->pm_ctx[cpu_number()];
+	KASSERT(ctx >= 0);
+	if (kpm || ctx > 0)
+		sp_tlb_flush_ctx(ctx);
+
+	CPUSET_ASSIGN(cpuset, cpus_active);
+	CPUSET_DEL(cpuset, cpu_number());
+	if (CPUSET_EMPTY(cpuset))
+		return;
 
 	/* Flush others */
-	sparc64_broadcast_ipi(sparc64_ipi_flush_ctx, ctx);
+	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
+		if (CPUSET_HAS(cpuset, ci->ci_index)) {
+			CPUSET_DEL(cpuset, ci->ci_index);
+			ctx = pm->pm_ctx[ci->ci_index];
+			KASSERT(ctx >= 0);
+			if (!kpm && ctx == 0)
+				continue;
+			sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_flush_ctx,
+					 ctx, 0);
+		}
+	}
 }
 
 /*
@@ -363,7 +415,7 @@ smp_tlb_flush_all()
 	sp_tlb_flush_all();
 
 	/* Flush others */
-	sparc64_broadcast_ipi(sparc64_ipi_flush_all, 0);
+	sparc64_broadcast_ipi(sparc64_ipi_flush_all, 0, 0);
 }
 
 /*
