@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.5 2007/07/09 21:01:19 ad Exp $	*/
+/*	$NetBSD: pmsvar.h,v 1.6 2008/03/15 18:46:22 cube Exp $	*/
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -43,7 +43,7 @@ struct pms_protocol {
 };
 
 struct pms_softc {		/* driver status information */
-	struct device sc_dev;
+	device_t sc_dev;
 
 	pckbport_tag_t sc_kbctag;
 	int sc_kbcslot;
