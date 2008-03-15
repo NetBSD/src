@@ -1,4 +1,4 @@
-/*	$NetBSD: ka750.c,v 1.42 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: ka750.c,v 1.43 2008/03/15 00:23:17 matt Exp $ */
 /*
  * Copyright (c) 1982, 1986, 1988 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.42 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka750.c,v 1.43 2008/03/15 00:23:17 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -137,7 +137,7 @@ ka750_attach_cpu(device_t self)
 static int ka750_memmatch(device_t, cfdata_t, void *);
 static void ka750_memenable(device_t, device_t, void *);
 
-CFATTACH_DECL(mem_cmi, sizeof(struct device),
+CFATTACH_DECL_NEW(mem_cmi, 0,
     ka750_memmatch, ka750_memenable, NULL, NULL);
 
 int
@@ -177,7 +177,7 @@ struct	mcr750 {
 void
 ka750_memenable(device_t parent, device_t self, void *aux)
 {
-	struct sbi_attach_args * const sa = device_private(self);
+	struct sbi_attach_args * const sa = aux;
 	struct mcr750 * const mcr = (struct mcr750 *)sa->sa_ioh;
 	int k, l, m, cardinfo;
 	
