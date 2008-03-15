@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.19 2008/03/11 05:34:02 matt Exp $	*/
+/*	$NetBSD: rf.c,v 1.20 2008/03/15 00:05:50 jkunz Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.19 2008/03/11 05:34:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.20 2008/03/15 00:05:50 jkunz Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -622,15 +622,15 @@ get_new_buf( struct rfc_softc *rfc_sc)
 	struct rf_softc *rf_sc;
 	struct rf_softc *other_drive;
 
-	rf_sc = (struct rf_softc *)rfc_sc->sc_childs[rfc_sc->sc_curchild];
+	rf_sc = device_private(rfc_sc->sc_childs[rfc_sc->sc_curchild]);
 	rfc_sc->sc_curbuf = BUFQ_GET(rf_sc->sc_bufq);
 	if (rfc_sc->sc_curbuf != NULL) {
 		rfc_sc->sc_bufidx = rfc_sc->sc_curbuf->b_data;
 		rfc_sc->sc_bytesleft = rfc_sc->sc_curbuf->b_bcount;
 	} else {
 		RFS_SETCMD(rf_sc->sc_state, RFS_IDLE);
-		other_drive = (struct rf_softc *)
-		    rfc_sc->sc_childs[ rfc_sc->sc_curchild == 0 ? 1 : 0];
+		other_drive = device_private(
+		    rfc_sc->sc_childs[ rfc_sc->sc_curchild == 0 ? 1 : 0]);
 		if (other_drive != NULL
 		    && BUFQ_PEEK(other_drive->sc_bufq) != NULL) {
 			rfc_sc->sc_curchild = rfc_sc->sc_curchild == 0 ? 1 : 0;
@@ -653,7 +653,7 @@ rfc_intr(void *intarg)
 	struct rf_softc *rf_sc;
 	int i;
 
-	rf_sc = (struct rf_softc *)rfc_sc->sc_childs[rfc_sc->sc_curchild];
+	rf_sc = device_private(rfc_sc->sc_childs[rfc_sc->sc_curchild]);
 	do {
 		/*
 		 * First clean up from previous command...
@@ -793,7 +793,8 @@ rfc_intr(void *intarg)
 		case RFS_WDDS:	/* Write Deleted Data Sector */
 		case RFS_REC:	/* Read Error Code */
 		default:
-			panic("Impossible state in rfc_intr(1).\n");
+			panic("Impossible state in rfc_intr(1): 0x%x\n",
+			    rf_sc->sc_state & RFS_CMDS);
 		}
 
 		if (rfc_sc->sc_curbuf->b_error != 0) {
@@ -911,7 +912,8 @@ rfc_intr(void *intarg)
 		case RFS_WDDS:	/* Write Deleted Data Sector */
 		case RFS_REC:	/* Read Error Code */
 		default:
-			panic("Impossible state in rfc_intr(2).\n");
+			panic("Impossible state in rfc_intr(2): 0x%x\n",
+			    rf_sc->sc_state & RFS_CMDS);
 		}
 
 		if (rfc_sc->sc_curbuf->b_error != 0) {
@@ -1049,13 +1051,8 @@ rfopen(dev_t dev, int oflags, int devtype, struct lwp *l)
 int
 rfclose(dev_t dev, int fflag, int devtype, struct lwp *l)
 {
-	struct rf_softc *rf_sc;
-	int unit;
+	struct rf_softc *rf_sc = device_lookup_private(&rf_cd, DISKUNIT(dev));
 
-	unit = DISKUNIT(dev);
-	if (unit >= rf_cd.cd_ndevs || (rf_sc = rf_cd.cd_devs[unit]) == NULL) {
-		return(ENXIO);
-	}
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfclose: can not close non-open drive %s "
 		    "partition %d", device_xname(rf_sc->sc_dev), DISKPART(dev));
@@ -1089,13 +1086,8 @@ rfwrite(dev_t dev, struct uio *uio, int ioflag)
 int
 rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 {
-	struct rf_softc *rf_sc;
-	int unit;
+	struct rf_softc *rf_sc = device_lookup_private(&rf_cd, DISKUNIT(dev));
 
-	unit = DISKUNIT(dev);
-	if (unit >= rf_cd.cd_ndevs || (rf_sc = rf_cd.cd_devs[unit]) == NULL) {
-		return(ENXIO);
-	}
 	/* We are going to operate on a non-open dev? PANIC! */
 	if ((rf_sc->sc_state & 1 << (DISKPART(dev) + RFS_OPEN_SHIFT)) == 0)
 		panic("rfioctl: can not operate on non-open drive %s "
