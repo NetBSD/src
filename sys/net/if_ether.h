@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.49 2008/02/20 17:05:52 matt Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.50 2008/03/15 11:45:18 rtr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -147,7 +147,7 @@ struct mii_data;
  * the multicast list code.  For example, each ec_softc or il_softc
  * begins with this structure.
  */
-struct	ethercom {
+struct ethercom {
 	struct	ifnet ec_if;			/* network-visible interface */
 	LIST_HEAD(, ether_multi) ec_multiaddrs;	/* list of ether multicast
 						   addrs */
