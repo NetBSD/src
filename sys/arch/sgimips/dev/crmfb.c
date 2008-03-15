@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.22 2008/03/02 00:54:25 macallan Exp $ */
+/* $NetBSD: crmfb.c,v 1.23 2008/03/15 16:13:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.22 2008/03/02 00:54:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.23 2008/03/15 16:13:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,7 +653,7 @@ crmfb_set_palette(struct crmfb_softc *sc, int reg, uint8_t r, uint8_t g,
 	while (bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_CMAP_FIFO) >= 63)
 		DELAY(10);
 
-	val = (r << 24) | (g << 16) | (b << 8);
+	val = (r << 8) | (g << 16) | (b << 24);
 	crmfb_write_reg(sc, CRMFB_CMAP + (reg * 4), val);
 
 	return;
