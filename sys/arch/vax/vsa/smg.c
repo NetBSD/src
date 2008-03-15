@@ -1,4 +1,4 @@
-/*	$NetBSD: smg.c,v 1.47 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: smg.c,v 1.48 2008/03/15 00:21:30 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.47 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smg.c,v 1.48 2008/03/15 00:21:30 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -111,11 +111,7 @@ static	int bgmask, fgmask;
 static	int smg_match(device_t, cfdata_t, void *);
 static	void smg_attach(device_t, device_t, void *);
 
-struct	smg_softc {
-	struct	device ss_dev;
-};
-
-CFATTACH_DECL(smg, sizeof(struct smg_softc),
+CFATTACH_DECL_NEW(smg, 0,
     smg_match, smg_attach, NULL, NULL);
 
 static void	smg_cursor(void *, int, int, int);
