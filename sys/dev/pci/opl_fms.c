@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_fms.c,v 1.13 2007/10/19 12:00:53 ad Exp $	*/
+/*	$NetBSD: opl_fms.c,v 1.14 2008/03/15 23:14:38 cube Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.13 2007/10/19 12:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.14 2008/03/15 23:14:38 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_fms.c,v 1.13 2007/10/19 12:00:53 ad Exp $");
 #include <dev/pci/fmsvar.h>
 
 static int
-opl_fms_match(struct device *parent, struct cfdata *match,
-    void *aux)
+opl_fms_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 
@@ -76,11 +75,12 @@ opl_fms_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-opl_fms_attach(struct device *parent, struct device *self, void *aux)
+opl_fms_attach(device_t parent, device_t self, void *aux)
 {
-	struct fms_softc *ssc = (struct fms_softc *)parent;
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct fms_softc *ssc = device_private(parent);
+	struct opl_softc *sc = device_private(self);
 
+	sc->mididev.dev = self;
 	sc->ioh = ssc->sc_opl_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
@@ -91,5 +91,5 @@ opl_fms_attach(struct device *parent, struct device *self, void *aux)
 	opl_attach(sc);
 }
 
-CFATTACH_DECL(opl_fms, sizeof (struct opl_softc),
+CFATTACH_DECL_NEW(opl_fms, sizeof (struct opl_softc),
     opl_fms_match, opl_fms_attach, NULL, NULL);

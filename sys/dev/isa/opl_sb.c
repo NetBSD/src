@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_sb.c,v 1.16 2008/03/15 21:09:02 cube Exp $	*/
+/*	$NetBSD: opl_sb.c,v 1.17 2008/03/15 23:14:38 cube Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_sb.c,v 1.16 2008/03/15 21:09:02 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_sb.c,v 1.17 2008/03/15 23:14:38 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_sb.c,v 1.16 2008/03/15 21:09:02 cube Exp $");
 int	opl_sb_match(device_t, cfdata_t, void *);
 void	opl_sb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(opl_sb, sizeof(struct opl_softc),
+CFATTACH_DECL_NEW(opl_sb, sizeof(struct opl_softc),
     opl_sb_match, opl_sb_attach, NULL, NULL);
 
 int
@@ -84,6 +84,7 @@ opl_sb_attach(device_t parent, device_t self, void *aux)
 	struct  sbdsp_softc *ssc = device_private(parent);
 	struct opl_softc *sc = device_private(self);
 
+	sc->mididev.dev = self;
 	sc->ioh = ssc->sc_ioh;
 	sc->iot = ssc->sc_iot;
 	sc->offs = 0;
