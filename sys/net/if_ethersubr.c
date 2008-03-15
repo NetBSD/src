@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.163 2008/03/12 18:22:24 dyoung Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.164 2008/03/15 05:07:34 matt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.163 2008/03/12 18:22:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.164 2008/03/15 05:07:34 matt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -704,7 +704,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	{
 
 #if NCARP > 0
-		if (ifp->if_carp && ifp->if_type != IFT_CARP) {
+		if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
 			/*
 			 * clear M_PROMISC, in case the packets comes from a
 			 * vlan
@@ -715,7 +715,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 		}
 #endif /* NCARP > 0 */
-		if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+		if ((m->m_flags & (M_BCAST|M_MCAST|M_PROMISC)) == 0 &&
 		    (ifp->if_flags & IFF_PROMISC) != 0 &&
 		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			   ETHER_ADDR_LEN) != 0) {
