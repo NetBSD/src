@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jensenio.c,v 1.8 2008/01/05 00:31:50 ad Exp $ */
+/* $NetBSD: pckbc_jensenio.c,v 1.9 2008/03/15 13:23:24 cube Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.8 2008/01/05 00:31:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jensenio.c,v 1.9 2008/03/15 13:23:24 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,17 +74,17 @@ struct pckbc_jensenio_softc {
 	struct pckbc_jensenio_intrcookie sc_ic[PCKBC_NSLOTS];
 };
 
-int	pckbc_jensenio_match(struct device *, struct cfdata *, void *);
-void	pckbc_jensenio_attach(struct device *, struct device *, void *);
+int	pckbc_jensenio_match(device_t, cfdata_t, void *);
+void	pckbc_jensenio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pckbc_jensenio, sizeof(struct pckbc_jensenio_softc),
+CFATTACH_DECL_NEW(pckbc_jensenio, sizeof(struct pckbc_jensenio_softc),
     pckbc_jensenio_match, pckbc_jensenio_attach, NULL, NULL);
 
 void	pckbc_jensenio_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 void	pckbc_jensenio_intr(void *, u_long);
 
 int
-pckbc_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
+pckbc_jensenio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct jensenio_attach_args *ja = aux;
 
@@ -96,13 +96,15 @@ pckbc_jensenio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-pckbc_jensenio_attach(struct device *parent, struct device *self, void *aux)
+pckbc_jensenio_attach(device_t parent, device_t self, void *aux)
 {
-	struct pckbc_jensenio_softc *jsc = (void *)self;
+	struct pckbc_jensenio_softc *jsc = device_private(self);
 	struct pckbc_softc *sc = &jsc->sc_pckbc;
 	struct jensenio_attach_args *ja = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
+
+	sc->sc_dv = self;
 
 	/*
 	 * Set up IRQs.
@@ -135,7 +137,7 @@ pckbc_jensenio_attach(struct device *parent, struct device *self, void *aux)
 	t->t_sc = sc;
 	sc->id = t;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);
@@ -150,7 +152,7 @@ pckbc_jensenio_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 
 	scb_set(jsc->sc_ic[slot].ic_vector, pckbc_jensenio_intr,
 	    &jsc->sc_ic[slot], IPL_VM);
-	printf("%s: %s slot interrupting at vector 0x%lx\n", sc->sc_dv.dv_xname,
+	aprint_normal_dev(sc->sc_dv, "%s slot interrupting at vector 0x%lx\n",
 	    pckbc_slot_names[slot], jsc->sc_ic[slot].ic_vector);
 
 	sprintf(jsc->sc_ic[slot].ic_vecstr, "0x%lx",
