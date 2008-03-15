@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.162 2008/03/11 05:34:02 matt Exp $
+# $NetBSD: GENERIC,v 1.163 2008/03/15 00:20:08 matt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.162 $"
+#ident 		"GENERIC-$Revision: 1.163 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -178,22 +178,22 @@ sbi0		at mainbus0		# SBI, master bus on 11/780, 8600.
 cmi0		at mainbus0		# 11/750 internal bus.
 bi0		at mainbus0		# VAX 8200
 vsbus0		at mainbus0		# All VAXstations
-nmi0		at mainbus0		# VAX 8800
-xmi0		at mainbus0		# VAX 6000
+#nmi0		at mainbus0		# VAX 8800
+#xmi0		at mainbus0		# VAX 6000
 uba0		at mainbus0		# All MicroVAX
 ze0		at mainbus0		# KA48, KA49, KA53
 le0		at mainbus0		# LANCE ethernet (MV3400)
 #shac0		at mainbus0 		# DSSI controller
 
 # NMI (internal bus) on VAX 88xx-series.
-cpu*		at nmi0 slot?		# 1-4 KA88 CPUs
-mem*		at nmi0 slot?
-bi*		at nmi0 slot?		# BI bus adapters
+#cpu*		at nmi0 slot?		# 1-4 KA88 CPUs
+#mem*		at nmi0 slot?
+#bi*		at nmi0 slot?		# BI bus adapters
 
 # XMI on VAX 6000 (and higher)
-cpu*		at xmi? node?		# 1-? VAX 6000 CPUs
-mem*		at xmi? node?
-bi*		at xmi? node?		# XMI-BI adapter
+#cpu*		at xmi? node?		# 1-? VAX 6000 CPUs
+#mem*		at xmi? node?
+#bi*		at xmi? node?		# XMI-BI adapter
 
 # Vsbus, the virtual VAXstation bus, and possible devices.
 le0		at vsbus0 csr 0x200e0000 # LANCE ethernet
