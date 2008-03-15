@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_comm.c,v 1.1.6.2 2008/02/29 19:39:47 mjf Exp $ */
+/* 	$NetBSD: devfs_comm.c,v 1.1.6.3 2008/03/15 13:32:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.2 2008/02/29 19:39:47 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.3 2008/03/15 13:32:50 mjf Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -74,12 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_comm.c,v 1.1.6.2 2008/02/29 19:39:47 mjf Exp $
  *
  */
 int
-devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie, 
-	uid_t uid, gid_t gid, mode_t mode, int flags, dev_t dev)
+devfs_create_node(int32_t mcookie, const char *path, dev_t dcookie, 
+	uid_t uid, gid_t gid, mode_t mode, int flags, boolean_t cdev)
 {
 	int error;
 	struct proc *p = curlwp->l_proc;
-	struct device *dp;
 	struct mount *mp;
 	struct vnode *vp;
 	struct cwdinfo ci;
@@ -95,24 +94,6 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 		return error;
 
 	/*
-	 * We need to make sure that the device identifed by 'dcookie'
-	 * is really on the system. If it is, then we have to lookup
-	 * the major and minor numbers.
-	 *
-	 * TODO: There's no reliable way to do this for the moment, at
-	 *	least until I implement dynamic dev_ts.
-	 */
-	TAILQ_FOREACH(dp, &alldevs, dv_list) {
-		if ((intptr_t)dp == (intptr_t)dcookie)
-			break;
-	}
-
-	if (dp == NULL) {
-		printf("device not on device list!\n");
-		return EINVAL;
-	}
-
-	/*
 	 * Lookup correct mount for this mcookie
 	 */
 	mutex_enter(&mountlist_lock);
@@ -126,7 +107,7 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 	if (mp == NULL)
 		return EINVAL;
 
-	NDINIT(&nd, CREATE, LOCKPARENT | TRYEMULROOT, seg, path);
+	NDINIT(&nd, CREATE, LOCKPARENT, seg, path);
 
 	ci = *p->p_cwdi;
 
@@ -142,11 +123,8 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 	/* XXX: VFS_ROOT returns the vnode locked; namei needs it unlocked */
 	VOP_UNLOCK(vp, 0);
 
-	if ((error = namei(&nd)) != 0) {
-		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
-		vrele(vp);
-		return error;
-	}
+	if ((error = namei(&nd)) != 0)
+		goto out;
 
 	if (nd.ni_vp != NULL) {
 		error = EEXIST;
@@ -163,11 +141,18 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 	}
 
 	VATTR_NULL(&vattr);
-	vattr.va_mode = S_IFCHR | mode;
-	vattr.va_type = VCHR;
+
+	/* Figure out if we're a block or char node */
+	if (cdev == true) {
+		vattr.va_mode = S_IFCHR | mode;
+		vattr.va_type = VCHR;
+	} else {
+		vattr.va_mode = S_IFBLK | mode;
+		vattr.va_type = VBLK;
+	}
 
 	/* We're making a device special node for this dev_t */
-	vattr.va_rdev = dev;
+	vattr.va_rdev = dcookie;
 
 	/* 
 	 * TODO: We currently don't support creating nodes in anything
@@ -177,6 +162,16 @@ devfs_create_node(int32_t mcookie, const char *path, intptr_t dcookie,
 
 	if (error == 0)
 		vput(nd.ni_vp); /* special device vnode */
+
+out:
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);	
+	p->p_cwdi->cwdi_rdir = ci.cwdi_rdir;
+	p->p_cwdi->cwdi_cdir = ci.cwdi_cdir;
+	rw_exit(&p->p_cwdi->cwdi_lock);
+
+	vrele(vp);
+
+	return error;
 
 abort:
 	if (error != 0) {
@@ -188,15 +183,8 @@ abort:
 		vrele(nd.ni_vp);
 		VOP_UNLOCK(vp, 0);
 	}
-		
-	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);	
-	p->p_cwdi->cwdi_rdir = ci.cwdi_rdir;
-	p->p_cwdi->cwdi_cdir = ci.cwdi_cdir;
-	rw_exit(&p->p_cwdi->cwdi_lock);
 
-	vrele(vp);
-
-	return error;
+	goto out;
 }
 
 /*
@@ -216,3 +204,95 @@ devfs_internal_mknod(struct vnode *dvp, struct vnode **vpp,
 
 	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL);
 }
+
+int
+devfs_remove_node(int32_t mcookie, const char *path, dev_t dcookie, int flags)
+{
+	int error;
+	struct proc *p = curlwp->l_proc;
+	struct mount *mp;
+	struct vnode *vp;
+	struct cwdinfo ci;
+	struct nameidata nd;
+	enum uio_seg seg = UIO_USERSPACE;
+
+	memset(&ci, 0, sizeof(ci));
+
+	/* TODO: Probably want our own scope here? KAUTH_DEVFS_MKNOD */
+	if ((error = kauth_authorize_system(curlwp->l_cred, KAUTH_SYSTEM_MKNOD,
+	    0, NULL, NULL, NULL)) != 0)
+		return error;
+
+	/*
+	 * Lookup correct mount for this mcookie
+	 */
+	mutex_enter(&mountlist_lock);
+	CIRCLEQ_FOREACH(mp, &mountlist, mnt_list) {
+		if (mp->mnt_stat.f_fsidx.__fsid_val[0] == mcookie)
+			break;
+		
+	}
+	mutex_exit(&mountlist_lock);
+
+	if (mp == NULL)
+		return EINVAL;
+
+	NDINIT(&nd, DELETE, LOCKPARENT | LOCKLEAF, seg, path);
+
+	ci = *p->p_cwdi;
+
+	if ((error = VFS_ROOT(mp, &vp)) != 0)
+		return error;
+
+	/* chroot */
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);	
+	p->p_cwdi->cwdi_cdir = vp;
+	p->p_cwdi->cwdi_rdir = vp;
+	rw_exit(&p->p_cwdi->cwdi_lock);
+
+	/* XXX: VFS_ROOT returns the vnode locked; namei needs it unlocked */
+	VOP_UNLOCK(vp, 0);
+
+	if ((error = namei(&nd)) != 0)
+		goto out;
+
+	if (nd.ni_vp == NULL) {
+		error = ENOENT;
+		goto abort;
+	}
+
+	/* 
+	 * Ensure that the vnode we got from namei() is on the correct
+	 * mount point.
+	 */
+	if (nd.ni_dvp->v_mount != mp) {
+		error = EINVAL;
+		goto abort;
+	}
+
+	error = VOP_REMOVE(nd.ni_dvp, nd.ni_vp, &nd.ni_cnd);
+
+out:
+	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);	
+	p->p_cwdi->cwdi_rdir = ci.cwdi_rdir;
+	p->p_cwdi->cwdi_cdir = ci.cwdi_cdir;
+	rw_exit(&p->p_cwdi->cwdi_lock);
+
+	vrele(vp);
+
+	return error;
+
+abort:
+	if (error != 0) {
+		VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
+		if (nd.ni_dvp == vp) 
+			vrele(nd.ni_dvp);
+		else
+			vput(nd.ni_dvp);
+		vrele(nd.ni_vp);
+		VOP_UNLOCK(vp, 0);
+	}
+
+	goto out;
+}
+
