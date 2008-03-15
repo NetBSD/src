@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.52 2008/02/27 18:26:15 xtraeme Exp $	*/
+/*	$NetBSD: cpu.h,v 1.53 2008/03/15 10:16:43 rearnsha Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -69,6 +69,7 @@
 #ifndef _LKM
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
+#include "opt_cputypes.h"
 #endif /* !_LKM */
 
 #include <arm/cpuconf.h>
@@ -78,9 +79,13 @@
 #include <sys/user.h>
 #include <machine/frame.h>
 #include <machine/pcb.h>
+#ifdef FPU_VFP
+#include <arm/vfpvar.h>
+#endif
 #endif	/* !_LOCORE */
 
 #include <arm/armreg.h>
+
 
 #ifndef _LOCORE
 /* 1 == use cpu_sleep(), 0 == don't */
@@ -213,6 +218,9 @@ struct cpu_info {
 	int ci_idepth;
 #ifdef MULTIPROCESSOR
 	MP_CPU_INFO_MEMBERS
+#endif
+#ifdef FPU_VFP
+	struct vfp_info ci_vfp;
 #endif
 };
 
