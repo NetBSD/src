@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.39 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.40 2008/03/15 00:57:15 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.39 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.40 2008/03/15 00:57:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -76,7 +76,7 @@ static  void    dz_vsbus_attach(device_t, device_t, void *);
 
 static	vaddr_t dz_regs; /* Used for console */
 
-CFATTACH_DECL(dz_vsbus, sizeof(struct dz_softc),
+CFATTACH_DECL_NEW(dz_vsbus, sizeof(struct dz_softc),
     dz_vsbus_match, dz_vsbus_attach, NULL, NULL);
 
 #define REG(name)     short name; short X##name##X;
@@ -156,6 +156,7 @@ dz_vsbus_attach(device_t parent, device_t self, void *aux)
 #endif
 	int s, consline;
 
+	sc->sc_dev = self;
 	/* 
 	 * XXX - This is evil and ugly, but...
 	 * due to the nature of how bus_space_* works on VAX, this will

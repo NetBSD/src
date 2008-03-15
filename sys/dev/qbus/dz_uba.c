@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_uba.c,v 1.27 2008/03/11 05:34:01 matt Exp $ */
+/*	$NetBSD: dz_uba.c,v 1.28 2008/03/15 00:57:15 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.27 2008/03/11 05:34:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.28 2008/03/15 00:57:15 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz_uba.c,v 1.27 2008/03/11 05:34:01 matt Exp $");
 static	int	dz_uba_match(device_t, cfdata_t, void *);
 static	void	dz_uba_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(dz_uba, sizeof(struct dz_softc),
+CFATTACH_DECL_NEW(dz_uba, sizeof(struct dz_softc),
     dz_uba_match, dz_uba_attach, NULL, NULL);
 
 /* Autoconfig handles: setup the controller to interrupt, */
@@ -112,6 +112,7 @@ dz_uba_attach(device_t parent, device_t self, void *aux)
 	struct dz_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 
+	sc->sc_dev = self;
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 
