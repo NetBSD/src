@@ -1,4 +1,4 @@
-/* $NetBSD: pckbport.c,v 1.12 2008/03/15 18:46:22 cube Exp $ */
+/* $NetBSD: pckbport.c,v 1.13 2008/03/15 18:59:07 cube Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.12 2008/03/15 18:46:22 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbport.c,v 1.13 2008/03/15 18:59:07 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -128,13 +128,13 @@ pckbport_attach(void *cookie, struct pckbport_accessops const *ops)
 	return t;
 }
 
-struct device *
-pckbport_attach_slot(struct device *dev, pckbport_tag_t t,
+device_t
+pckbport_attach_slot(device_t dev, pckbport_tag_t t,
     pckbport_slot_t slot)
 {
 	struct pckbport_attach_args pa;
 	void *sdata;
-	struct device *found;
+	device_t found;
 	int alloced = 0;
 	int locs[PCKBPORTCF_NLOCS];
 
@@ -145,7 +145,7 @@ pckbport_attach_slot(struct device *dev, pckbport_tag_t t,
 		sdata = malloc(sizeof(struct pckbport_slotdata),
 		    M_DEVBUF, M_NOWAIT);
 		if (sdata == NULL) {
-			printf("%s: no memory\n", dev->dv_xname);
+			aprint_error_dev(dev, "no memory\n");
 			return 0;
 		}
 		t->t_slotdata[slot] = sdata;
