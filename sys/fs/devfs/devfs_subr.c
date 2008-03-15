@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_subr.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfs_subr.c,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: devfs_subr.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $
 #include <fs/devfs/devfs_fifoops.h>
 #include <fs/devfs/devfs_specops.h>
 #include <fs/devfs/devfs_vnops.h>
+#include <fs/devfs/devfs_comm.h>
 
 /* --------------------------------------------------------------------- */
 
@@ -1343,5 +1344,82 @@ devfs_truncate(struct vnode *vp, off_t length)
 out:
 	devfs_update(vp, NULL, NULL, 0);
 
+	return error;
+}
+
+/*
+ * Create some device special files that are always needed in
+ * device file systems, like the console and the devfs control device.
+ *
+ * => If 'init' is > 0 then this file system is being mounted by init(8),
+ * which means that we must retain an extra reference to a vnode in the
+ * file system so that it can only be unmounted when the system is
+ * shutting down.
+ */
+int
+devfs_init_nodes(struct devfs_mount *dmp, struct mount *mp, int init)
+{
+	int dctl_major = 182;	/* XXX: This really needs to be fixed */
+	int error;
+	char cpath[] = "console";
+	char dpath[] = "dctl";
+	dev_t dev;
+	struct vnode *dvp;
+
+	/* Root vnode */
+	if ((error = devfs_alloc_vp(mp, dmp->tm_root, &dvp)) != 0)
+		return error;
+
+	/* console device node */
+	dev = makedev(0, 0);
+	if ((error = devfs_new_node(dmp, mp, dvp, dev, cpath)) != 0)
+		goto out;
+		
+	/* dctl device node */
+	dev = makedev(dctl_major, 0);
+	error = devfs_new_node(dmp, mp, dvp, dev, dpath);
+
+out:
+	VOP_UNLOCK(dvp, 0);
+	if (init == 0)
+		vrele(dvp);
+
+	return error;
+}
+
+/*
+ * Helper function for devfs_init_nodes()
+ */
+int
+devfs_new_node(struct devfs_mount *dmp, struct mount *mp, struct vnode *dvp,
+	dev_t dev, char *path)
+{
+	int error;
+	struct devfs_node *node;
+	struct devfs_dirent *de;
+	struct vnode *vpp;
+
+	error = devfs_alloc_node(dmp, VCHR, 0, 0, S_IFCHR | 0600, 
+	    dmp->tm_root, NULL, dev, &node);
+	if (error != 0)
+		goto out;
+
+	error = devfs_alloc_dirent(dmp, node, path, strlen(path), &de);
+	if (error != 0) {
+		devfs_free_node(dmp, node);
+		goto out;
+	}
+
+	if ((error = devfs_alloc_vp(mp, node, &vpp)) != 0) {
+		devfs_free_dirent(dmp, de, true);
+		devfs_free_node(dmp, node);
+		goto out;
+	}
+
+	devfs_dir_attach(dvp, de);	/* Cannot fail */
+
+	vput(vpp);
+
+out:
 	return error;
 }

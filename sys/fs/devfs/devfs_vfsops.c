@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfs_vfsops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.1 2008/02/21 20:44:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_vfsops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -145,13 +145,6 @@ devfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return 0;
 	}
 
-	if (mp->mnt_flag & MNT_UPDATE) {
-		/* XXX: There is no support yet to update file system
-		 * settings.  Should be added. */
-
-		return EOPNOTSUPP;
-	}
-
 	if (args->ta_version != DEVFS_ARGS_VERSION)
 		return EINVAL;
 
@@ -161,7 +154,7 @@ devfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return EINVAL;
 
 	/*
-	 * XXX:
+	 * TODO:
 	 * Ensure that if a devfs mount already exists on this
 	 * path, we do not try to mount another.
 	 * 
@@ -210,6 +203,7 @@ devfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	tmp->tm_root = root;
 
 	tmp->tm_visible = args->ta_visible;
+	tmp->tm_init = args->ta_init;
 
 	mp->mnt_data = tmp;
 	mp->mnt_flag |= MNT_LOCAL;
@@ -218,6 +212,14 @@ devfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_dev_bshift = DEV_BSHIFT;
 	mp->mnt_iflag |= IMNT_MPSAFE;
 	vfs_getnewfsid(mp);
+
+	/*
+	 * Create a console device and dctl(4) device special file
+	 * in this new devfs.
+	 */
+	error = devfs_init_nodes(tmp, mp, tmp->tm_init);
+	if (error != 0)
+		return error;
 
 	error = dctl_mount_msg(path, mp->mnt_stat.f_fsidx.__fsid_val[0]);
 	if (error != 0)
@@ -251,6 +253,19 @@ devfs_unmount(struct mount *mp, int mntflags)
 	if (mntflags & MNT_FORCE)
 		flags |= FORCECLOSE;
 
+	tmp = VFS_TO_DEVFS(mp);
+
+	/* 
+	 * If this file system was mounted by init(8) the root vnode
+	 * has an extra reference to it. Release this reference now.
+	 */
+	if (tmp->tm_init > 0) {
+		if (!(mntflags & MNT_FORCE))
+			return EBUSY;
+		else
+			vref(tmp->tm_root->tn_vnode);
+	}
+
 	error = dctl_unmount_msg(mp->mnt_stat.f_fsidx.__fsid_val[0]);
 
 	/* I have no idea what to do here */
@@ -261,8 +276,6 @@ devfs_unmount(struct mount *mp, int mntflags)
 	error = vflush(mp, NULL, flags);
 	if (error != 0)
 		return error;
-
-	tmp = VFS_TO_DEVFS(mp);
 
 	/* Free all associated data.  The loop iterates over the linked list
 	 * we have containing all used nodes.  For each of them that is

@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vnops.c,v 1.1.14.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfs_vnops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devfs_vnops.c,v 1.1.14.1 2008/02/21 20:44:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devfs_vnops.c,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -304,23 +304,6 @@ devfs_create(void *v)
 	struct vattr *vap = ((struct vop_create_args *)v)->a_vap;
 
 	KASSERT(vap->va_type == VREG || vap->va_type == VSOCK);
-
-	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL);
-}
-
-/* --------------------------------------------------------------------- */
-
-int
-devfs_mknod(void *v)
-{
-	struct vnode *dvp = ((struct vop_mknod_args *)v)->a_dvp;
-	struct vnode **vpp = ((struct vop_mknod_args *)v)->a_vpp;
-	struct componentname *cnp = ((struct vop_mknod_args *)v)->a_cnp;
-	struct vattr *vap = ((struct vop_mknod_args *)v)->a_vap;
-
-	if (vap->va_type != VBLK && vap->va_type != VCHR &&
-	    vap->va_type != VFIFO)
-		return EINVAL;
 
 	return devfs_alloc_file(dvp, vpp, vap, cnp, NULL);
 }

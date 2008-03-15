@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs.h,v 1.1.14.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfs.h,v 1.1.14.2 2008/03/15 13:32:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -361,6 +361,9 @@ struct devfs_mount {
 
 	/* Default flag for the visibility of nodes. */
 	int			tm_visible;
+
+	/* Were we mounted by init(8)? */
+	int			tm_init;
 };
 
 /* --------------------------------------------------------------------- */
@@ -416,6 +419,10 @@ void	devfs_itimes(struct vnode *, const struct timespec *,
 void	devfs_update(struct vnode *, const struct timespec *,
 	    const struct timespec *, int);
 int	devfs_truncate(struct vnode *, off_t);
+
+int	devfs_init_nodes(struct devfs_mount *, struct mount *, int);
+int	devfs_new_node(struct devfs_mount *, struct mount *, struct vnode *,
+	    dev_t, char *);
 
 /* --------------------------------------------------------------------- */
 
@@ -563,5 +570,8 @@ struct devfs_args {
 
 	/* Visibility for nodes. */
 	int			ta_visible;
+
+	/* Are we being called by init(8)? */
+	int			ta_init;
 };
 #endif /* _FS_DEVFS_DEVFS_H_ */

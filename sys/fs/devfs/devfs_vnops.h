@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_vnops.h,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfs_vnops.h,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@ extern int (**devfs_vnodeop_p)(void *);
 
 int	devfs_lookup		(void *);
 int	devfs_create		(void *);
-int	devfs_mknod		(void *);
+#define	devfs_mknod		genfs_eopnotsupp
 int	devfs_open		(void *);
 int	devfs_close		(void *);
 int	devfs_access		(void *);
