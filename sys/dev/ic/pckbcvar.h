@@ -1,4 +1,4 @@
-/* $NetBSD: pckbcvar.h,v 1.14 2008/02/29 06:17:36 dyoung Exp $ */
+/* $NetBSD: pckbcvar.h,v 1.15 2008/03/15 13:23:25 cube Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -81,7 +81,7 @@ typedef void (*pckbc_inputfcn)(void *, int);
  * State per device.
  */
 struct pckbc_softc {
-	struct device sc_dv;
+	device_t sc_dv;
 	struct pckbc_internal *id;
 
 	void (*intr_establish)(struct pckbc_softc *, pckbc_slot_t);

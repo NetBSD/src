@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_jazzio.c,v 1.17 2008/01/05 00:31:53 ad Exp $ */
+/* $NetBSD: pckbc_jazzio.c,v 1.18 2008/03/15 13:23:24 cube Exp $ */
 /* NetBSD: pckbc_isa.c,v 1.2 2000/03/23 07:01:35 thorpej Exp  */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.17 2008/01/05 00:31:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.18 2008/03/15 13:23:24 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: pckbc_jazzio.c,v 1.17 2008/01/05 00:31:53 ad Exp $")
 #define PMS_INTR 7	/* XXX - should be obtained from firmware */
 #define PICA_KBCMDP	(PICA_SYS_KBD + JAZZIO_KBCMDP)
 
-int	pckbc_jazzio_match(struct device *, struct cfdata *, void *);
-void	pckbc_jazzio_attach(struct device *, struct device *, void *);
+int	pckbc_jazzio_match(device_t, cfdata_t, void *);
+void	pckbc_jazzio_attach(device_t, device_t, void *);
 void	pckbc_jazzio_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
 struct pckbc_jazzio_softc {
@@ -60,14 +60,11 @@ struct pckbc_jazzio_softc {
 	int sc_intr[PCKBC_NSLOTS];
 };
 
-CFATTACH_DECL(pckbc_jazzio, sizeof(struct pckbc_jazzio_softc),
+CFATTACH_DECL_NEW(pckbc_jazzio, sizeof(struct pckbc_jazzio_softc),
     pckbc_jazzio_match, pckbc_jazzio_attach, NULL, NULL);
 
 int
-pckbc_jazzio_match(parent, match, aux)
-	struct device *parent;
-	struct cfdata *match;
-	void *aux;
+pckbc_jazzio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot = ja->ja_bust;
@@ -115,16 +112,17 @@ pckbc_jazzio_match(parent, match, aux)
 }
 
 void
-pckbc_jazzio_attach(struct device *parent, struct device *self, void *aux)
+pckbc_jazzio_attach(device_t parent, device_t self, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
-	struct pckbc_jazzio_softc *jsc = (void *)self;
+	struct pckbc_jazzio_softc *jsc = device_private(self);
 	struct pckbc_softc *sc = &jsc->sc_pckbc;
 	struct pckbc_internal *t;
 	bus_space_tag_t iot = ja->ja_bust;
 	bus_space_handle_t ioh_d, ioh_c;
 	bus_addr_t addr = ja->ja_addr;
 
+	sc->sc_dv = self;
 	sc->intr_establish = pckbc_jazzio_intr_establish;
 
 	/*
@@ -159,7 +157,7 @@ pckbc_jazzio_attach(struct device *parent, struct device *self, void *aux)
 	t->t_sc = sc;
 	sc->id = t;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);

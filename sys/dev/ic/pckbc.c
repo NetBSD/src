@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.41 2008/02/29 06:17:36 dyoung Exp $ */
+/* $NetBSD: pckbc.c,v 1.42 2008/03/15 13:23:24 cube Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.41 2008/02/29 06:17:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.42 2008/03/15 13:23:24 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ pckbc_attach_slot(sc, slot)
 		sdata = malloc(sizeof(struct pckbc_slotdata),
 		    M_DEVBUF, M_NOWAIT);
 		if (sdata == NULL) {
-			printf("%s: no memory\n", sc->sc_dv.dv_xname);
+			aprint_error_dev(sc->sc_dv, "no memory\n");
 			return (0);
 		}
 		t->t_slotdata[slot] = sdata;
@@ -284,7 +284,7 @@ pckbc_attach_slot(sc, slot)
 		alloced++;
 	}
 
-	child = pckbport_attach_slot(&sc->sc_dv, t->t_pt, slot);
+	child = pckbport_attach_slot(sc->sc_dv, t->t_pt, slot);
 
 	if (child == NULL && alloced) {
 		free(t->t_slotdata[slot], M_DEVBUF);

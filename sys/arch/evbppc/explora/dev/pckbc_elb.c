@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_elb.c,v 1.4 2007/11/27 10:59:25 hannken Exp $	*/
+/*	$NetBSD: pckbc_elb.c,v 1.5 2008/03/15 13:23:24 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.4 2007/11/27 10:59:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_elb.c,v 1.5 2008/03/15 13:23:24 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,15 +57,15 @@ struct pckbc_elb_softc {
 	int sc_irq;
 };
 
-static int	pckbc_elb_probe(struct device *, struct cfdata *, void *);
-static void	pckbc_elb_attach(struct device *, struct device *, void *);
+static int	pckbc_elb_probe(device_t, cfdata_t, void *);
+static void	pckbc_elb_attach(device_t, device_t, void *);
 static void	pckbc_elb_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
-CFATTACH_DECL(pckbc_elb, sizeof(struct pckbc_elb_softc),
+CFATTACH_DECL_NEW(pckbc_elb, sizeof(struct pckbc_elb_softc),
     pckbc_elb_probe, pckbc_elb_attach, NULL, NULL);
 
 int
-pckbc_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
+pckbc_elb_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct elb_attach_args *oaa = aux;
 
@@ -76,12 +76,14 @@ pckbc_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pckbc_elb_attach(struct device *parent, struct device *self, void *aux)
+pckbc_elb_attach(device_t parent, device_t self, void *aux)
 {
-	struct pckbc_elb_softc *msc = (void *)self;
+	struct pckbc_elb_softc *msc = device_private(self);
 	struct pckbc_softc *sc = &msc->sc_pckbc;
 	struct elb_attach_args *eaa = aux;
 	struct pckbc_internal *t;
+
+	sc->sc_dv = self;
 
 	/*
 	 * Setup interrupt data.
@@ -106,7 +108,7 @@ pckbc_elb_attach(struct device *parent, struct device *self, void *aux)
 	t->t_sc = sc;
 	sc->id = t;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	pckbc_attach(sc);
 }
