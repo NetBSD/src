@@ -1,4 +1,4 @@
-/* $NetBSD: rtw.c,v 1.103 2008/03/14 23:59:01 dyoung Exp $ */
+/* $NetBSD: rtw.c,v 1.104 2008/03/15 00:21:12 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 David Young.  All rights
  * reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.103 2008/03/14 23:59:01 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtw.c,v 1.104 2008/03/15 00:21:12 dyoung Exp $");
 
 #include "bpfilter.h"
 
@@ -626,11 +626,11 @@ rtw_key_update_end(struct ieee80211com *ic)
 	    (ifp->if_flags & IFF_RUNNING) != 0);
 }
 
-static inline int
+static bool
 rtw_key_hwsupp(uint32_t flags, const struct ieee80211_key *k)
 {
 	if (k->wk_cipher->ic_cipher != IEEE80211_CIPHER_WEP)
-		return 0;
+		return false;
 
 	return	((flags & RTW_C_RXWEP_40) != 0 && k->wk_keylen == 5) ||
 		((flags & RTW_C_RXWEP_104) != 0 && k->wk_keylen == 13);
@@ -640,7 +640,7 @@ static void
 rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 {
 	uint8_t psr, scr;
-	int i, keylen;
+	int i, keylen = 0;
 	struct rtw_regs *regs;
 	union rtw_keys *rk;
 
@@ -664,7 +664,7 @@ rtw_wep_setkeys(struct rtw_softc *sc, struct ieee80211_key *wk, int txkey)
 	if ((sc->sc_ic.ic_flags & IEEE80211_F_PRIVACY) == 0)
 		goto out;
 
-	for (keylen = i = 0; i < IEEE80211_WEP_NKID; i++) {
+	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 		if (!rtw_key_hwsupp(sc->sc_flags, &wk[i]))
 			continue;
 		if (i == txkey) {
@@ -696,6 +696,10 @@ out:
 
 	bus_space_barrier(regs->r_bt, regs->r_bh, RTW_DK0, sizeof(rk->rk_words),
 	    BUS_SPACE_BARRIER_SYNC);
+
+	RTW_DPRINTF(RTW_DEBUG_KEY,
+	    ("%s.%d: scr %02" PRIx8 ", keylen %d\n", __func__, __LINE__, scr,
+	     keylen));
 
 	RTW_WBW(regs, RTW_DK0, RTW_PSR);
 	RTW_WRITE8(regs, RTW_PSR, psr);
