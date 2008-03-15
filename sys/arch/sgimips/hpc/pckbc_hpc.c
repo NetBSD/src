@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc_hpc.c,v 1.8 2008/01/05 00:31:56 ad Exp $	 */
+/* $NetBSD: pckbc_hpc.c,v 1.9 2008/03/15 13:23:24 cube Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher SEKIYA
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.8 2008/01/05 00:31:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_hpc.c,v 1.9 2008/03/15 13:23:24 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,15 +61,15 @@ struct pckbc_hpc_softc {
 	int	sc_hasintr;
 };
 
-static int      pckbc_hpc_match(struct device *, struct cfdata *, void *);
-static void     pckbc_hpc_attach(struct device *, struct device *, void *);
+static int      pckbc_hpc_match(device_t, cfdata_t, void *);
+static void     pckbc_hpc_attach(device_t, device_t, void *);
 static void     pckbc_hpc_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 
-CFATTACH_DECL(pckbc_hpc, sizeof(struct pckbc_hpc_softc),
+CFATTACH_DECL_NEW(pckbc_hpc, sizeof(struct pckbc_hpc_softc),
 	      pckbc_hpc_match, pckbc_hpc_attach, NULL, NULL);
 
 static int
-pckbc_hpc_match(struct device * parent, struct cfdata * cf, void *aux)
+pckbc_hpc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct hpc_attach_args *ha = aux;
 
@@ -80,13 +80,15 @@ pckbc_hpc_match(struct device * parent, struct cfdata * cf, void *aux)
 }
 
 static void
-pckbc_hpc_attach(struct device * parent, struct device * self, void *aux)
+pckbc_hpc_attach(device_t parent, device_t self, void *aux)
 {
-	struct pckbc_hpc_softc *msc = (void *) self;
+	struct pckbc_hpc_softc *msc = device_private(self);
 	struct pckbc_softc *sc = &msc->sc_pckbc;
 	struct hpc_attach_args *haa = aux;
 	struct pckbc_internal *t;
 	bus_space_handle_t ioh_d, ioh_c;
+
+	sc->sc_dv = self;
 
 	msc->sc_irq = haa->ha_irq;
 
@@ -120,7 +122,7 @@ pckbc_hpc_attach(struct device * parent, struct device * self, void *aux)
 	t->t_sc = sc;
 	sc->id = t;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	/* Finish off the attach. */
 	pckbc_attach(sc);
@@ -135,8 +137,9 @@ pckbc_hpc_intr_establish(struct pckbc_softc * sc, pckbc_slot_t slot)
 		return;
 
 	if (cpu_intr_establish(msc->sc_irq, IPL_TTY, pckbcintr, sc) == NULL) {
-		printf("%s: unable to establish interrupt for %s slot\n",
-		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		aprint_error_dev(sc->sc_dv,
+		    "unable to establish interrupt for %s slot\n",
+		    pckbc_slot_names[slot]);
 	} else {
 		msc->sc_hasintr = 1;
 	}
