@@ -1,4 +1,4 @@
-/*	$NetBSD: sbdspvar.h,v 1.58 2006/04/13 09:47:19 cube Exp $	*/
+/*	$NetBSD: sbdspvar.h,v 1.59 2008/03/15 21:09:02 cube Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -92,7 +92,7 @@
  * most basic communications with the sb card.
  */
 struct sbdsp_softc {
-	struct	device sc_dev;		/* base device */
+	device_t sc_dev;		/* base device */
 	isa_chipset_tag_t sc_ic;
 	bus_space_tag_t sc_iot;		/* tag */
 	bus_space_handle_t sc_ioh;	/* handle */
@@ -198,7 +198,7 @@ struct malloc_type;
 int	sbdsp_open(void *, int);
 void	sbdsp_close(void *);
 
-int	sbdsp_probe(struct sbdsp_softc *);
+int	sbdsp_probe(struct sbdsp_softc *, cfdata_t);
 void	sbdsp_attach(struct sbdsp_softc *);
 
 int	sbdsp_set_in_gain(void *, u_int, u_char);
