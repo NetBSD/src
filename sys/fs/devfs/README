@@ -6,3 +6,4 @@ How is devfs different from tmpfs?
 	- We allow devfs mounts to have the concept of "visibility" whereby
 	  nodes created in the file system may or may not be visible to
 	  userland
+	- We allow devfs file systems to use the union mount option

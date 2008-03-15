@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfs_comm.h,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfs_comm.h,v 1.1.6.2 2008/03/15 13:32:50 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,10 @@
 #ifndef _FS_DEVFS_DEVFS_COMM_H_
 #define _FS_DEVFS_DEVFS_COMM_H_
 
-int devfs_create_node(int32_t, const char *, intptr_t, uid_t, gid_t, 
-	mode_t, int);
+int devfs_create_node(int32_t, const char *, dev_t, uid_t, gid_t, mode_t, int,
+	boolean_t);
+int devfs_internal_mknod(struct vnode *dvp, struct vnode **vpp,
+        struct componentname *cnp, struct vattr *vap);
+int devfs_remove_node(int32_t, const char *, dev_t, int);
 
 #endif /* _FS_DEVFS_DEVFS_COMM_H_ */
