@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.21 2008/02/29 06:42:35 dyoung Exp $ */
+/* $NetBSD: pckbd.c,v 1.22 2008/03/15 18:46:22 cube Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.21 2008/02/29 06:42:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.22 2008/03/15 18:46:22 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,7 +115,7 @@ struct pckbd_internal {
 };
 
 struct pckbd_softc {
-        struct  device sc_dev;
+        device_t sc_dev;
 
 	struct pckbd_internal *id;
 	int sc_enabled;
@@ -133,7 +133,7 @@ static int pckbd_is_console(pckbport_tag_t, pckbport_slot_t);
 int pckbdprobe(struct device *, struct cfdata *, void *);
 void pckbdattach(struct device *, struct device *, void *);
 
-CFATTACH_DECL(pckbd, sizeof(struct pckbd_softc),
+CFATTACH_DECL_NEW(pckbd, sizeof(struct pckbd_softc),
     pckbdprobe, pckbdattach, NULL, NULL);
 
 int	pckbd_enable(void *, int);
@@ -364,6 +364,7 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	isconsole = pckbd_is_console(pa->pa_tag, pa->pa_slot);
 
 	if (isconsole) {
@@ -392,7 +393,7 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	sc->id->t_sc = sc;
 
 	pckbport_set_inputhandler(sc->id->t_kbctag, sc->id->t_kbcslot,
-			       pckbd_input, sc, sc->sc_dev.dv_xname);
+			       pckbd_input, sc, device_xname(sc->sc_dev));
 
 	a.console = isconsole;
 
@@ -408,7 +409,7 @@ pckbdattach(struct device *parent, struct device *self, void *aux)
 	 * Attach the wskbd, saving a handle to it.
 	 * XXX XXX XXX
 	 */
-	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
+	sc->sc_wskbddev = config_found_ia(self, "wskbddev", &a, wskbddevprint);
 }
 
 int
