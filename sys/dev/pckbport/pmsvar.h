@@ -1,4 +1,4 @@
-/*	$NetBSD: pmsvar.h,v 1.6 2008/03/15 18:46:22 cube Exp $	*/
+/*	$NetBSD: pmsvar.h,v 1.7 2008/03/15 18:59:07 cube Exp $	*/
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -59,7 +59,7 @@ struct pms_softc {		/* driver status information */
 	unsigned char packet[6];
 	struct timeval last, current;
 
-	struct device *sc_wsmousedev;
+	device_t sc_wsmousedev;
 	struct lwp *sc_event_thread;
 
 #ifdef PMS_SYNAPTICS_TOUCHPAD
