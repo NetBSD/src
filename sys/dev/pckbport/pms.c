@@ -1,4 +1,4 @@
-/* $NetBSD: pms.c,v 1.25 2008/03/15 18:46:22 cube Exp $ */
+/* $NetBSD: pms.c,v 1.26 2008/03/15 18:59:07 cube Exp $ */
 
 /*-
  * Copyright (c) 2004 Kentaro Kurahone.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.25 2008/03/15 18:46:22 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pms.c,v 1.26 2008/03/15 18:59:07 cube Exp $");
 
 #include "opt_pms.h"
 
@@ -71,8 +71,8 @@ const struct pms_protocol pms_protocols[] = {
 };
 
 
-int pmsprobe(struct device *, struct cfdata *, void *);
-void pmsattach(struct device *, struct device *, void *);
+int pmsprobe(device_t, cfdata_t, void *);
+void pmsattach(device_t, device_t, void *);
 void pmsinput(void *, int);
 
 CFATTACH_DECL_NEW(pms, sizeof(struct pms_softc),
@@ -129,8 +129,7 @@ pms_protocol(pckbport_tag_t tag, pckbport_slot_t slot)
 }
 
 int
-pmsprobe(struct device *parent, struct cfdata *match,
-    void *aux)
+pmsprobe(device_t parent, cfdata_t match, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	u_char cmd[1], resp[2];
@@ -168,7 +167,7 @@ pmsprobe(struct device *parent, struct cfdata *match,
 }
 
 void
-pmsattach(struct device *parent, struct device *self, void *aux)
+pmsattach(device_t parent, device_t self, void *aux)
 {
 	struct pms_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;

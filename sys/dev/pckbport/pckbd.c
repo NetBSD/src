@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.22 2008/03/15 18:46:22 cube Exp $ */
+/* $NetBSD: pckbd.c,v 1.23 2008/03/15 18:59:07 cube Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.22 2008/03/15 18:46:22 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.23 2008/03/15 18:59:07 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +122,7 @@ struct pckbd_softc {
 
 	int sc_ledstate;
 
-	struct device *sc_wskbddev;
+	device_t sc_wskbddev;
 #ifdef WSDISPLAY_COMPAT_RAWKBD
 	int rawkbd;
 #endif
@@ -130,8 +130,8 @@ struct pckbd_softc {
 
 static int pckbd_is_console(pckbport_tag_t, pckbport_slot_t);
 
-int pckbdprobe(struct device *, struct cfdata *, void *);
-void pckbdattach(struct device *, struct device *, void *);
+int pckbdprobe(device_t, cfdata_t, void *);
+void pckbdattach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(pckbd, sizeof(struct pckbd_softc),
     pckbdprobe, pckbdattach, NULL, NULL);
@@ -301,7 +301,7 @@ pckbd_resume(device_t dv PMF_FN_ARGS)
  * these are both bad jokes
  */
 int
-pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
+pckbdprobe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pckbport_attach_args *pa = aux;
 	int res;
@@ -353,7 +353,7 @@ pckbdprobe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-pckbdattach(struct device *parent, struct device *self, void *aux)
+pckbdattach(device_t parent, device_t self, void *aux)
 {
 	struct pckbd_softc *sc = device_private(self);
 	struct pckbport_attach_args *pa = aux;

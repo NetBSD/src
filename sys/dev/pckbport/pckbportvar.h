@@ -1,4 +1,4 @@
-/* $NetBSD: pckbportvar.h,v 1.7 2008/03/15 18:46:22 cube Exp $ */
+/* $NetBSD: pckbportvar.h,v 1.8 2008/03/15 18:59:07 cube Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris
@@ -96,8 +96,7 @@ int pckbport_cnattach(void *, struct pckbport_accessops const *,
 			      pckbport_slot_t);
 pckbport_tag_t pckbport_attach(void *,
 				       struct pckbport_accessops const *);
-struct device *pckbport_attach_slot(struct device *, pckbport_tag_t,
-					    pckbport_slot_t);
+device_t pckbport_attach_slot(device_t, pckbport_tag_t, pckbport_slot_t);
 void pckbportintr(pckbport_tag_t, pckbport_slot_t, int);
 
 /* md hook for use without mi wscons */
