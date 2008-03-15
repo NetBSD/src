@@ -1,4 +1,4 @@
-/*	$NetBSD: nmi_mainbus.c,v 1.9 2008/03/11 05:34:03 matt Exp $	   */
+/*	$NetBSD: nmi_mainbus.c,v 1.10 2008/03/15 00:24:13 matt Exp $	   */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.9 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nmi_mainbus.c,v 1.10 2008/03/15 00:24:13 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -128,5 +128,5 @@ nmi_mainbus_attach(device_t parent, device_t self, void *aux)
 	}
 }
 
-CFATTACH_DECL(nmi_mainbus, sizeof(struct device),
+CFATTACH_DECL_NEW(nmi_mainbus, 0,
     nmi_mainbus_match, nmi_mainbus_attach, NULL, NULL);
