@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_eso.c,v 1.14 2007/10/19 12:00:53 ad Exp $	*/
+/*	$NetBSD: opl_eso.c,v 1.15 2008/03/15 23:14:38 cube Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.14 2007/10/19 12:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.15 2008/03/15 23:14:38 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,8 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: opl_eso.c,v 1.14 2007/10/19 12:00:53 ad Exp $");
 #include <dev/pci/esovar.h>
 
 static int
-opl_eso_match(struct device *parent, struct cfdata *match,
-    void *aux)
+opl_eso_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct audio_attach_args *aa = (struct audio_attach_args *)aux;
 
@@ -75,11 +74,12 @@ opl_eso_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-opl_eso_attach(struct device *parent, struct device *self, void *aux)
+opl_eso_attach(device_t parent, device_t self, void *aux)
 {
-	struct eso_softc *esc = (struct eso_softc *)parent;
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct eso_softc *esc = device_private(parent);
+	struct opl_softc *sc = device_private(self);
 
+	sc->mididev.dev = self;
 	sc->ioh = esc->sc_sb_ioh;
 	sc->iot = esc->sc_sb_iot;
 	sc->offs = 0;
@@ -90,5 +90,5 @@ opl_eso_attach(struct device *parent, struct device *self, void *aux)
 	opl_attach(sc);
 }
 
-CFATTACH_DECL(opl_eso, sizeof (struct opl_softc),
+CFATTACH_DECL_NEW(opl_eso, sizeof (struct opl_softc),
     opl_eso_match, opl_eso_attach, NULL, NULL);
