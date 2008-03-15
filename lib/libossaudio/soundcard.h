@@ -1,4 +1,4 @@
-/*	$NetBSD: soundcard.h,v 1.16 2007/09/18 22:57:31 mlelstv Exp $	*/
+/*	$NetBSD: soundcard.h,v 1.17 2008/03/15 20:18:20 bjs Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -303,7 +303,7 @@ typedef struct buffmem_desc {
 #else
 /*
  * XXX force inclusion of <sys/ioctl.h> before we redefine
- * ioctl() to avoid a prototyoe conflict.
+ * ioctl() to avoid a prototype conflict.
  * Its multiple inclusion protection will keep this from
  * happening if it is pulled in later.
  */
