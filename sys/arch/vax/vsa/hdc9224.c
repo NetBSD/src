@@ -1,4 +1,4 @@
-/*	$NetBSD: hdc9224.c,v 1.43 2008/03/11 05:34:03 matt Exp $ */
+/*	$NetBSD: hdc9224.c,v 1.44 2008/03/15 00:25:05 matt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -51,7 +51,7 @@
 #undef	RDDEBUG
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.43 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdc9224.c,v 1.44 2008/03/15 00:25:05 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,14 +132,15 @@ struct rdgeom {
  * Software status
  */
 struct	rdsoftc {
-	struct device sc_dev;		/* must be here! (pseudo-OOP:) */
+	device_t sc_dev;		/* must be here! (pseudo-OOP:) */
+	struct hdcsoftc *sc_hdc;
 	struct disk sc_disk;		/* disklabel etc. */
 	struct rdgeom sc_xbn;		/* on-disk geometry information */
 	int sc_drive;		/* physical unit number */
 };
 
 struct	hdcsoftc {
-	struct device sc_dev;		/* must be here (pseudo-OOP:) */
+	device_t sc_dev;		/* must be here (pseudo-OOP:) */
 	struct evcnt sc_intrcnt;
 	struct vsbus_dma sc_vd;
 	vaddr_t sc_regs;		/* register addresses */
@@ -184,10 +185,10 @@ static	void hdc_writeregs(struct hdcsoftc *);
 static	void hdc_readregs(struct hdcsoftc *);
 static	void hdc_qstart(void *);
  
-CFATTACH_DECL(hdc, sizeof(struct hdcsoftc),
+CFATTACH_DECL_NEW(hdc, sizeof(struct hdcsoftc),
     hdcmatch, hdcattach, NULL, NULL);
 
-CFATTACH_DECL(rd, sizeof(struct rdsoftc),
+CFATTACH_DECL_NEW(rd, sizeof(struct rdsoftc),
     rdmatch, rdattach, NULL, NULL);
 
 static dev_type_open(rdopen);
@@ -224,7 +225,7 @@ const struct cdevsw rd_cdevsw = {
 
 /* At least 0.7 uS between register accesses */
 static int rd_dmasize, inq = 0;
-static int u;
+static volatile int u;
 #define	WAIT	__asm("movl %0,%0;movl %0,%0;movl %0,%0; movl %0,%0" :: "m"(u))
 
 #define	HDC_WREG(x)	*(volatile char *)(sc->sc_regs) = (x)
@@ -291,6 +292,9 @@ hdcattach(device_t parent, device_t self, void *aux)
 	int status, i;
 
 	aprint_normal("\n");
+
+	sc->sc_dev = self;
+
 	/*
 	 * Get interrupt vector, enable instrumentation.
 	 */
@@ -360,11 +364,13 @@ rdattach(device_t parent, device_t self, void *aux)
 	struct disklabel *dl;
 	const char *msg;
 
+	rd->sc_dev = self;
 	rd->sc_drive = ha->ha_drive;
+	rd->sc_hdc = sc;
 	/*
 	 * Initialize and attach the disk structure.
 	 */
-	disk_init(&rd->sc_disk, device_xname(&rd->sc_dev), NULL);
+	disk_init(&rd->sc_disk, device_xname(rd->sc_dev), NULL);
 	disk_attach(&rd->sc_disk);
 
 	/*
@@ -376,7 +382,7 @@ rdattach(device_t parent, device_t self, void *aux)
 	dl = rd->sc_disk.dk_label;
 	rdmakelabel(dl, &rd->sc_xbn);
 	msg = readdisklabel(MAKEDISKDEV(cdevsw_lookup_major(&rd_cdevsw),
-					device_unit(&rd->sc_dev), RAW_PART),
+					device_unit(rd->sc_dev), RAW_PART),
 			    rdstrategy, dl, NULL);
 	if (msg)
 		aprint_normal_dev(self, "%s: size %u sectors",
@@ -412,7 +418,7 @@ hdcintr(void *arg)
 			hdcstart(sc, bp);
 			return;
 		}
-		aprint_error_dev(&sc->sc_dev, "failed, status 0x%x\n",
+		aprint_error_dev(sc->sc_dev, "failed, status 0x%x\n",
 		    sc->sc_status);
 		hdc_readregs(sc);
 		for (i = 0; i < 10; i++)
@@ -454,7 +460,7 @@ rdstrategy(struct buf *bp)
 		bp->b_error = ENXIO;
 		goto done;
 	}
-	sc = (void *)device_parent(&rd->sc_dev);
+	sc = rd->sc_hdc;
 
 	lp = rd->sc_disk.dk_label;
 	if ((bounds_check_with_label(&rd->sc_disk, bp, 1)) <= 0)
