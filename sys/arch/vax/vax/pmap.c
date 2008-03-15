@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.158 2008/03/11 05:34:03 matt Exp $	   */
+/*	$NetBSD: pmap.c,v 1.159 2008/03/15 18:42:06 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2008/03/11 05:34:03 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.159 2008/03/15 18:42:06 matt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -1855,6 +1855,7 @@ cpu_swapin(struct lwp *l)
 	pte = kvtopte((vaddr_t)l->l_addr);
 	for (i = 0; i < (USPACE/VAX_NBPG); i ++)
 		pte[i].pg_v = 1;
+	l->l_addr->u_pcb.pcb_paddr = kvtophys(l->l_addr);
 	kvtopte((vaddr_t)l->l_addr + REDZONEADDR)->pg_v = 0;
 	pmap_activate(l);
 }
