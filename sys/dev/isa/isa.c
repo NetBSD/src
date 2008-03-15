@@ -1,4 +1,4 @@
-/*	$NetBSD: isa.c,v 1.131 2007/12/09 20:28:01 jmcneill Exp $	*/
+/*	$NetBSD: isa.c,v 1.132 2008/03/15 16:56:29 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.131 2007/12/09 20:28:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.132 2008/03/15 16:56:29 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -61,24 +61,23 @@ __KERNEL_RCSID(0, "$NetBSD: isa.c,v 1.131 2007/12/09 20:28:01 jmcneill Exp $");
 
 #include "locators.h"
 
-int	isamatch(struct device *, struct cfdata *, void *);
-void	isaattach(struct device *, struct device *, void *);
-int	isarescan(struct device *, const char *, const int *);
-void	isachilddetached(struct device *, struct device *);
+int	isamatch(device_t, cfdata_t, void *);
+void	isaattach(device_t, device_t, void *);
+int	isarescan(device_t, const char *, const int *);
+void	isachilddetached(device_t, device_t);
 int	isaprint(void *, const char *);
 
-CFATTACH_DECL2(isa, sizeof(struct isa_softc),
+CFATTACH_DECL2_NEW(isa, sizeof(struct isa_softc),
     isamatch, isaattach, NULL, NULL, isarescan, isachilddetached);
 
 void	isa_attach_knowndevs(struct isa_softc *);
 void	isa_free_knowndevs(struct isa_softc *);
 
-int	isasubmatch(struct device *, struct cfdata *, const int *, void *);
-int	isasearch(struct device *, struct cfdata *, const int *, void *);
+int	isasubmatch(device_t, cfdata_t, const int *, void *);
+int	isasearch(device_t, cfdata_t, const int *, void *);
 
 int
-isamatch(struct device *parent, struct cfdata *cf,
-    void *aux)
+isamatch(device_t parent, cfdata_t cf, void *aux)
 {
 	/* XXX check other indicators */
 
@@ -86,9 +85,9 @@ isamatch(struct device *parent, struct cfdata *cf,
 }
 
 void
-isaattach(struct device *parent, struct device *self, void *aux)
+isaattach(device_t parent, device_t self, void *aux)
 {
-	struct isa_softc *sc = (struct isa_softc *)self;
+	struct isa_softc *sc = device_private(self);
 	struct isabus_attach_args *iba = aux;
 	static const int wildcard[ISACF_NLOCS] = {
 		ISACF_PORT_DEFAULT, ISACF_SIZE_DEFAULT,
@@ -98,6 +97,8 @@ isaattach(struct device *parent, struct device *self, void *aux)
 
 	TAILQ_INIT(&sc->sc_knowndevs);
 	sc->sc_dynamicdevs = 0;
+
+	sc->sc_dev = self;
 
 	isa_attach_hook(parent, self, iba);
 	aprint_naive("\n");
@@ -142,7 +143,7 @@ isaattach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-isarescan(struct device *self, const char *ifattr, const int *locators)
+isarescan(device_t self, const char *ifattr, const int *locators)
 {
 	int locs[ISACF_NLOCS];
 
@@ -164,7 +165,7 @@ isarescan(struct device *self, const char *ifattr, const int *locators)
 }
 
 void
-isachilddetached(struct device *self, struct device *child)
+isachilddetached(device_t self, device_t child)
 {
 	/* nothing to do */
 }
@@ -206,7 +207,7 @@ isa_attach_knowndevs(struct isa_softc *sc)
 
 		/* XXX should setup locator array */
 
-		ik->ik_claimed = config_found_sm_loc(&sc->sc_dev,
+		ik->ik_claimed = config_found_sm_loc(sc->sc_dev,
 		    "isa", 0, &ia, isaprint, isasubmatch);
 	}
 }
@@ -292,8 +293,7 @@ checkattachargs(struct isa_attach_args *ia, const int *loc)
 }
 
 int
-isasubmatch(struct device *parent, struct cfdata *cf,
-    const int *ldesc, void *aux)
+isasubmatch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 
@@ -384,14 +384,13 @@ isaprint(void *aux, const char *isa)
 }
 
 int
-isasearch(struct device *parent, struct cfdata *cf,
-    const int *slocs, void *aux)
+isasearch(device_t parent, cfdata_t cf, const int *slocs, void *aux)
 {
 	struct isa_io res_io[1];
 	struct isa_iomem res_mem[1];
 	struct isa_irq res_irq[1];
 	struct isa_drq res_drq[2];
-	struct isa_softc *sc = (struct isa_softc *)parent;
+	struct isa_softc *sc = device_private(parent);
 	struct isa_attach_args ia;
 	int flocs[ISACF_NLOCS];
 	int tryagain;
