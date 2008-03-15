@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh4.c,v 1.17 2007/03/29 01:51:49 uwe Exp $	*/
+/*	$NetBSD: cache_sh4.c,v 1.18 2008/03/15 22:48:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.17 2007/03/29 01:51:49 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh4.c,v 1.18 2008/03/15 22:48:58 uwe Exp $");
+
+#include "opt_cache.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
