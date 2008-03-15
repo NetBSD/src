@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_vsbus.c,v 1.2 2008/03/11 05:34:03 matt Exp $	*/
+/*	$NetBSD: tc_vsbus.c,v 1.3 2008/03/15 00:21:48 matt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -103,7 +103,7 @@ void
 tcbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct vsbus_attach_args * const va = aux;
-	struct tcbus_softc * const sc = (void *)self;
+	struct tcbus_softc * const sc = device_private(self);
 	struct tcbus_attach_args tba;
 	struct pte *pte;
 	const size_t nentries = 32768;
