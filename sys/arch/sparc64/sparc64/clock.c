@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.90 2008/03/14 15:38:36 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.91 2008/03/15 20:14:17 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.90 2008/03/14 15:38:36 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.91 2008/03/15 20:14:17 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -239,7 +239,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	/* Install the appropriate interrupt vector here */
 	level10.ih_number = ma->ma_interrupts[0];
 	level10.ih_clr = &timerreg_4u.t_clrintr[0];
-	intr_establish(10, &level10);
+	intr_establish(PIL_CLOCK, &level10);
 	printf(" irq vectors %lx", (u_long)level10.ih_number);
 #ifndef MULTIPROCESSOR
 	/*
@@ -247,7 +247,7 @@ timerattach(struct device *parent, struct device *self, void *aux)
 	 */
 	level14.ih_number = ma->ma_interrupts[1];
 	level14.ih_clr = &timerreg_4u.t_clrintr[1];
-	intr_establish(14, &level14);
+	intr_establish(PIL_STATCLOCK, &level14);
 	printf(" and %lx", (u_long)level14.ih_number);
 #endif
 
@@ -407,7 +407,7 @@ cpu_initclocks()
 			(unsigned long)curcpu()->ci_cpu_clockrate[1]);
 
 		/* We don't have a counter-timer -- use %tick */
-		tickintr_establish(10, tickintr);
+		tickintr_establish(PIL_CLOCK, tickintr);
 
 		/* We only have one timer so we have no statclock */
 		stathz = 0;
@@ -461,7 +461,7 @@ cpu_initclocks()
 	/*
 	 * Enable tick interrupt for statintr.
 	 */
-	tickintr_establish(14, statintr);
+	tickintr_establish(PIL_STATCLOCK, statintr);
 #else
 	/* 
 	 * Enable counter-timer #1 interrupt for statintr.
