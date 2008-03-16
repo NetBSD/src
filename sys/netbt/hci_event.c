@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.15 2008/03/06 20:56:26 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.16 2008/03/16 23:14:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.15 2008/03/06 20:56:26 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.16 2008/03/16 23:14:24 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1086,9 +1086,9 @@ hci_cmd_reset(struct hci_unit *unit, struct mbuf *m)
  * on the link to indicate pending status until the command_status event
  * is returned to help us decide which needs to be failed.
  *
- * This code does assume that there will be only one command pending
- * but I can't see this being a problem since I have unaware of any
- * device that pipelines more than a single command.
+ * since created links are inserted at the tail of hci_links, we know that
+ * the first pending link we find will be the one that this command status
+ * refers to.
  */
 static void
 hci_cmd_create_con(struct hci_unit *unit, uint8_t status)
