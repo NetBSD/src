@@ -1,4 +1,4 @@
-/* $NetBSD: fdvar.h,v 1.4 2008/02/22 23:40:50 dyoung Exp $ */
+/* $NetBSD: fdvar.h,v 1.5 2008/03/16 00:58:56 cube Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ struct fd_type {
 
 /* software state, per disk (with up to 4 disks per ctlr) */
 struct fd_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 	struct disk sc_dk;
 
 	const struct fd_type *sc_deftype; /* default type descriptor */
