@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2007/03/10 20:34:57 apb Exp $
+#	$NetBSD: Makefile,v 1.57 2008/03/16 07:02:22 lukem Exp $
 
 # The `all' target must appear before bsd.own.mk is pulled in.
 all:
@@ -22,12 +22,18 @@ SETSCMD=	cd ${.CURDIR} && \
 		TSORT=${TSORT:Q} \
 		${HOST_SH}
 
+MAKETARS_FLAGS=
 .if ${MKX11} != "no"
 MAKEFLIST_FLAGS=	-b
 MAKESRCTARS_FLAGS=	-x ${X11SRCDIR} -N ${NETBSDSRCDIR}/etc
 .else
 MAKEFLIST_FLAGS=
 MAKESRCTARS_FLAGS= 	-N ${NETBSDSRCDIR}/etc
+.endif
+
+.if ${MAKEVERBOSE} != 2
+MAKETARS_FLAGS+=	-q
+MAKESRCTARS_FLAGS+= 	-q
 .endif
 
 .if !defined(MAKETARSETS)
@@ -125,11 +131,13 @@ maketarsetup: .EXEC
 makesetfiles: .PHONY
 	${_MKMSG_CREATE} "set lists"
 	${SETSCMD} ./maketars -S -d ${DESTDIR:S,^$,/,} ${METALOG.unpriv} \
+	    ${MAKETARS_FLAGS} \
 	    -N ${NETBSDSRCDIR}/etc ${MAKEFLIST_FLAGS} -t ${TARDIR}
 
 .for tar in ${MAKETARSETS}
 do-${tar}: .PHONY sanitise_METALOG
-	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} \
+	${_MKMSG_CREATE} "${tar}.tgz"
+	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} ${MAKETARS_FLAGS} \
 	    ${METALOG.sanitised.unpriv} \
 	    -N ${NETBSDSRCDIR}/etc -t ${TARDIR} ${tar} \
 	|| rm -f ${TARDIR}/${tar}.tgz
@@ -137,6 +145,7 @@ do-${tar}: .PHONY sanitise_METALOG
 
 
 makesrctars: .PRECIOUS .PHONY check_RELEASEDIR
+	${_MKMSG_CREATE} "source tar files"
 	mkdir -p ${SOURCETARDIR}
 	${SETSCMD} ./makesrctars ${MAKESRCTARS_FLAGS} \
 	    ${NETBSDSRCDIR} ${SOURCETARDIR}
@@ -150,6 +159,7 @@ makesums: .PRECIOUS .PHONY check_RELEASEDIR .WAIT \
 
 .for tar in ${MAKETARSETS}
 do-sum-${tar}: .PHONY do-${tar}
+	${_MKMSG_CREATE} "${tar} checksums"
 	${MAKESUMS} -t ${TARDIR} ${tar}.tgz
 	for i in BSDSUM CKSUM MD5 SHA512 SYSVSUM; do \
 		${TOOL_CAT} ${TARDIR}/$$i >> ${TARDIR}/$$i.tmp; \
@@ -163,7 +173,7 @@ installsets: .PHONY check_DESTDIR sanitise_METALOG
 	@echo "setenv INSTALLDIR before doing that!"
 	@false
 .endif
-	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} \
+	${SETSCMD} ./maketars -d ${DESTDIR:S,^$,/,} ${MAKETARS_FLAGS} \
 	    ${METALOG.sanitised.unpriv} -N ${NETBSDSRCDIR}/etc \
 	    ${MAKEFLIST_FLAGS} -i ${INSTALLDIR} ${INSTALLSETS}
 
