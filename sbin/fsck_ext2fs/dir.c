@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.c,v 1.21 2008/03/16 22:32:14 lukem Exp $	*/
+/*	$NetBSD: dir.c,v 1.22 2008/03/16 23:17:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-__RCSID("$NetBSD: dir.c,v 1.21 2008/03/16 22:32:14 lukem Exp $");
+__RCSID("$NetBSD: dir.c,v 1.22 2008/03/16 23:17:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -165,7 +165,7 @@ dirscan(struct inodesc *idesc)
 		err(8, "Can't allocate directory block");
 
 	if (idesc->id_type != DATA)
-		errexit("wrong type to dirscan %d\n", idesc->id_type);
+		errexit("wrong type to dirscan %d", idesc->id_type);
 	if (idesc->id_entryno == 0 &&
 	    (idesc->id_filesize & (sblock.e2fs_bsize - 1)) != 0)
 		idesc->id_filesize = roundup(idesc->id_filesize, sblock.e2fs_bsize);

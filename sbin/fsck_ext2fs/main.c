@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.27 2008/02/23 21:41:48 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.28 2008/03/16 23:17:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1993\n\
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.27 2008/02/23 21:41:48 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.28 2008/03/16 23:17:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,7 @@ main(int argc, char *argv[])
 		case 'm':
 			lfmode = argtoi('m', "mode", optarg, 8);
 			if (lfmode &~ 07777)
-				errexit("bad mode to -m: %o\n", lfmode);
+				errexit("bad mode to -m: %o", lfmode);
 			printf("** lost+found creation mode %o\n", lfmode);
 			break;
 
@@ -184,7 +184,7 @@ argtoi(int flag, const char *req, const char *str, int base)
 
 	ret = (int)strtol(str, &cp, base);
 	if (cp == str || *cp)
-		errexit("-%c flag requires a %s\n", flag, req);
+		errexit("-%c flag requires a %s", flag, req);
 	return (ret);
 }
 

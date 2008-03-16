@@ -1,4 +1,4 @@
-/*	$NetBSD: fsutil.c,v 1.17 2008/02/23 21:41:47 christos Exp $	*/
+/*	$NetBSD: fsutil.c,v 1.18 2008/03/16 23:17:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fsutil.c,v 1.17 2008/02/23 21:41:47 christos Exp $");
+__RCSID("$NetBSD: fsutil.c,v 1.18 2008/03/16 23:17:55 lukem Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -87,6 +87,7 @@ errexit(const char *fmt, ...)
 	va_start(ap, fmt);
 	(void) vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	(void)fprintf(stderr, "\n");
 	exit(FSCK_EXIT_CHECK_FAILED);
 }
 
