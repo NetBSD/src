@@ -1,4 +1,4 @@
-/*	$NetBSD: tlp.c,v 1.5 2008/03/01 20:39:25 tsutsui Exp $	*/
+/*	$NetBSD: tlp.c,v 1.6 2008/03/16 09:38:17 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -296,7 +296,7 @@ tlp_init(void *cookie)
 	CSR_WRITE(l, TLP_OMR, l->omr);
 	/* start TX and send setup packet */
 	CSR_WRITE(l, TLP_TPD, TPD_POLL);
-	DELAY(1000);
+	DELAY(50000);
 	/* start RX */
 	CSR_WRITE(l, TLP_RPD, RPD_POLL);
 
