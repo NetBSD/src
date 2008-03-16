@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_link.c,v 1.17 2008/03/06 20:56:26 plunky Exp $	*/
+/*	$NetBSD: hci_link.c,v 1.18 2008/03/16 23:14:24 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.17 2008/03/06 20:56:26 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_link.c,v 1.18 2008/03/16 23:14:24 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -910,7 +910,7 @@ hci_link_alloc(struct hci_unit *unit)
 	MBUFQ_INIT(&link->hl_data);
 
 	/* attach to unit */
-	TAILQ_INSERT_HEAD(&unit->hci_links, link, hl_next);
+	TAILQ_INSERT_TAIL(&unit->hci_links, link, hl_next);
 	return link;
 }
 
