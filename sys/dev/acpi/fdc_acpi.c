@@ -1,4 +1,4 @@
-/* $NetBSD: fdc_acpi.c,v 1.33 2008/03/16 00:58:56 cube Exp $ */
+/* $NetBSD: fdc_acpi.c,v 1.34 2008/03/16 13:58:22 yamt Exp $ */
 
 /*
  * Copyright (c) 2002 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.33 2008/03/16 00:58:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_acpi.c,v 1.34 2008/03/16 13:58:22 yamt Exp $");
 
 #include "rnd.h"
 
@@ -321,7 +321,7 @@ fdc_acpi_getknownfds(struct fdc_acpi_softc *asc)
 		}
 		e = fdi->Package.Elements;
 		sc->sc_knownfds[i] = fdc_acpi_nvtotype(
-		    device_xname(&sc->sc_dev),
+		    device_xname(sc->sc_dev),
 		    e[1].Integer.Value, e[0].Integer.Value);
 
 		/* if fdc_acpi_nvtotype returns NULL, don't attach drive */
