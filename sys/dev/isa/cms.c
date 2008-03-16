@@ -1,4 +1,4 @@
-/* $NetBSD: cms.c,v 1.16 2008/03/15 23:14:38 cube Exp $ */
+/* $NetBSD: cms.c,v 1.17 2008/03/16 22:30:31 cube Exp $ */
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.16 2008/03/15 23:14:38 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cms.c,v 1.17 2008/03/16 22:30:31 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,7 +172,7 @@ cms_attach(device_t parent, device_t self, void *aux)
 	midisyn *ms;
 	struct audio_attach_args arg;
 
-	sc->mididev.dev = self;
+	sc->sc_mididev.dev = self;
 
 	aprint_normal("\n");
 
