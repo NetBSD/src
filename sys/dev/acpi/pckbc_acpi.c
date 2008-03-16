@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.25 2008/03/15 13:23:24 cube Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.26 2008/03/16 15:22:05 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.25 2008/03/15 13:23:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.26 2008/03/16 15:22:05 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 	 * Note we're always called with sc == first.
 	 */
 	for (i = 0; i < pckbc_cd.cd_ndevs; i++) {
-		psc = pckbc_cd.cd_devs[i];
+		psc = device_private(pckbc_cd.cd_devs[i]);
 		if (psc && psc->sc_slot == slot) {
 			irq = psc->sc_irq;
 			ist = psc->sc_ist;
