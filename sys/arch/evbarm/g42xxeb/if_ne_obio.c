@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_obio.c,v 1.5 2008/03/14 11:51:06 cube Exp $ */
+/*	$NetBSD: if_ne_obio.c,v 1.6 2008/03/16 16:08:57 he Exp $ */
 
 /*
  * Copyright (c) 2002, 2003  Genetec corp.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.5 2008/03/14 11:51:06 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_obio.c,v 1.6 2008/03/16 16:08:57 he Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,7 +119,7 @@ ne_obio_enable(struct dp8390_softc *dsc)
 
 	aprint_normal_dev(dsc->sc_dev, "enabled\n");
 
-	psc = device_private(device_parent(&dsc->sc_dev));
+	psc = device_private(device_parent(dsc->sc_dev));
 
 	/* Establish the interrupt handler. */
 	sc->sc_ih = obio_intr_establish(psc, sc->intr_no, IPL_NET,
