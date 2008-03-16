@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.185 2008/02/25 11:14:31 apb Exp $
+#	$NetBSD: build.sh,v 1.186 2008/03/16 07:52:59 lukem Exp $
 #
 # Copyright (c) 2001-2005 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -515,10 +515,12 @@ Usage: ${progname} [-EnorUux] [-a arch] [-B buildid] [-C cdextras] [-D dest]
 			except \`etc'.  Useful after "distribution" or "release"
     kernel=conf         Build kernel with config file \`conf'
     releasekernel=conf  Install kernel built by kernel=conf to RELEASEDIR.
-    sets                Create binary sets in RELEASEDIR/MACHINE/binary/sets.
+    sets                Create binary sets in
+			RELEASEDIR/RELEASEMACHINEDIR/binary/sets.
 			DESTDIR should be populated beforehand.
     sourcesets          Create source sets in RELEASEDIR/source/sets.
-    syspkgs             Create syspkgs in RELEASEDIR/MACHINE/binary/syspkgs.
+    syspkgs             Create syspkgs in
+			RELEASEDIR/RELEASEMACHINEDIR/binary/syspkgs.
     iso-image           Create CD-ROM image in RELEASEDIR/iso.
     iso-image-source    Create CD-ROM image with source in RELEASEDIR/iso.
     params              Display various make(1) parameters.
@@ -985,12 +987,13 @@ validatemakeparams()
 		${runcmd} cd "${TOP}"
 	fi
 
-	# Find TOOLDIR, DESTDIR, and RELEASEDIR.
+	# Find TOOLDIR, DESTDIR, RELEASEDIR, and RELEASEMACHINEDIR.
 	#
 	TOOLDIR=$(getmakevar TOOLDIR)
 	statusmsg "TOOLDIR path:     ${TOOLDIR}"
 	DESTDIR=$(getmakevar DESTDIR)
 	RELEASEDIR=$(getmakevar RELEASEDIR)
+	RELEASEMACHINEDIR=$(getmakevar RELEASEMACHINEDIR)
 	if ! $do_expertmode; then
 		_SRC_TOP_OBJ_=$(getmakevar _SRC_TOP_OBJ_)
 		: ${DESTDIR:=${_SRC_TOP_OBJ_}/destdir.${MACHINE}}
@@ -1124,7 +1127,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.185 2008/02/25 11:14:31 apb Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.186 2008/03/16 07:52:59 lukem Exp $
 # with these arguments: ${_args}
 #
 
@@ -1250,7 +1253,7 @@ buildkernel()
 releasekernel()
 {
 	getkernelconf $1
-	kernelreldir="${RELEASEDIR}/${MACHINE}/binary/kernel"
+	kernelreldir="${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel"
 	${runcmd} mkdir -p "${kernelreldir}"
 	kernlist=$(awk '$1 == "config" { print $2 }' ${kernelconfpath})
 	for kern in ${kernlist:-netbsd}; do
@@ -1309,7 +1312,8 @@ main()
 			statusmsg "Building sets from pre-populated ${DESTDIR}"
 			${runcmd} "${makewrapper}" ${parallel} ${op} ||
 			    bomb "Failed to make ${op}"
-			statusmsg "Successful make ${op}"
+			setdir=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
+			statusmsg "Built sets to ${setdir}"
 			;;
 
 		obj|build|distribution|release|sourcesets|syspkgs|params)
