@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.11 2006/11/16 01:32:39 christos Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.12 2008/03/16 00:58:56 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.11 2006/11/16 01:32:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.12 2008/03/16 00:58:56 cube Exp $");
 
 #include "rnd.h"
 
@@ -65,8 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.11 2006/11/16 01:32:39 christos Ex
 
 #include <i386/pnpbios/pnpbiosvar.h>
 
-int	fdc_pnpbios_match(struct device *, struct cfdata *, void *);
-void	fdc_pnpbios_attach(struct device *, struct device *, void *);
+int	fdc_pnpbios_match(device_t, cfdata_t, void *);
+void	fdc_pnpbios_attach(device_t, device_t, void *);
 
 struct fdc_pnpbios_softc {
         struct fdc_softc sc_fdc;        /* base fdc device */
@@ -75,13 +75,11 @@ struct fdc_pnpbios_softc {
 };
 
 
-CFATTACH_DECL(fdc_pnpbios, sizeof(struct fdc_pnpbios_softc),
+CFATTACH_DECL_NEW(fdc_pnpbios, sizeof(struct fdc_pnpbios_softc),
     fdc_pnpbios_match, fdc_pnpbios_attach, NULL, NULL);
 
 int
-fdc_pnpbios_match(struct device *parent,
-    struct cfdata *match,
-    void *aux)
+fdc_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -92,22 +90,20 @@ fdc_pnpbios_match(struct device *parent,
 }
 
 void
-fdc_pnpbios_attach(struct device *parent,
-    struct device *self,
-    void *aux)
+fdc_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
-	struct fdc_softc *fdc = (void *) self;
-        struct fdc_pnpbios_softc *pdc = (void *) self;
+        struct fdc_pnpbios_softc *pdc = device_private(self);
+	struct fdc_softc *fdc = &pdc->sd_fdc;
 	struct pnpbiosdev_attach_args *aa = aux;
         int size, base;
         
-	printf("\n");
+	aprint_normal("\n");
 
 	fdc->sc_ic = aa->ic;
 
 	if (pnpbios_io_map(aa->pbt, aa->resc, 0, &fdc->sc_iot,
             &pdc->sc_baseioh)) {
-		printf("%s: unable to map I/O space\n", fdc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to map I/O space\n");
 		return;
 	}
 
@@ -117,7 +113,7 @@ fdc_pnpbios_attach(struct device *parent,
          */
 
         if (pnpbios_getiosize(aa->pbt, aa->resc, 0, &size)) {
-                printf("%s: can't get iobase size\n", fdc->sc_dev.dv_xname);
+                aprint_error_dev(self, "can't get iobase size\n");
                 return;
         }
 
@@ -132,14 +128,13 @@ fdc_pnpbios_attach(struct device *parent,
         case 6:
                 if (bus_space_subregion(fdc->sc_iot, pdc->sc_baseioh, 2, 4,
                     &fdc->sc_ioh)) {
-                        printf("%s: unable to subregion I/O space\n",
-                            fdc->sc_dev.dv_xname);
+                        aprint_error_dev(self,
+			    "unable to subregion I/O space\n");
                         return;
                 }
                 break;
         default:
-                printf ("%s: unknown size: %d of io mapping\n",
-                    fdc->sc_dev.dv_xname, size);
+                aprint_error_dev(self, "unknown size: %d of io mapping\n", size);
                 return;
         }
         
@@ -152,33 +147,31 @@ fdc_pnpbios_attach(struct device *parent,
         if (aa->resc->numio == 1) {
 
                 if (pnpbios_getiobase(aa->pbt, aa->resc, 0, 0, &base)) {
-                        printf ("%s: can't get iobase\n",
-                            fdc->sc_dev.dv_xname);
+                        aprint_error_dev(self, "can't get iobase\n");
                         return;
                 }
                 if (bus_space_map(fdc->sc_iot, base + size + 1, 1, 0,
                     &fdc->sc_fdctlioh)) {
-                        printf("%s: unable to force map CTL I/O space\n", 
-                            fdc->sc_dev.dv_xname);
+                        aprint_error_dev(self,
+			    "unable to force map CTL I/O space\n");
                         return;
                 }
         } else if (pnpbios_io_map(aa->pbt, aa->resc, 1, &fdc->sc_iot,
             &fdc->sc_fdctlioh)) {
-                printf("%s: unable to map CTL I/O space\n",
-		    fdc->sc_dev.dv_xname);
+                aprint_error_dev(self, "unable to map CTL I/O space\n");
 		return;
 	}
 
 	if (pnpbios_getdmachan(aa->pbt, aa->resc, 0, &fdc->sc_drq)) {
-		printf("%s: unable to get DMA channel\n",
-		    fdc->sc_dev.dv_xname);
+		aprint_error_dev(self, "unable to get DMA channel\n");
 		return;
 	}
 
 	pnpbios_print_devres(self, aa);
         if (aa->resc->numio == 1)
-                printf("%s: ctl io %x didn't probe. Forced attach\n",
-                    fdc->sc_dev.dv_xname, base + size + 1);
+                aprint_error_dev(self,
+		    "ctl io %x didn't probe. Forced attach\n",
+		    base + size + 1);
 
 	fdc->sc_ih = pnpbios_intr_establish(aa->pbt, aa->resc, 0, IPL_BIO,
 	    fdcintr, fdc);
