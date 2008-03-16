@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.23 2008/03/06 20:56:26 plunky Exp $	*/
+/*	$NetBSD: hci.h,v 1.24 2008/03/16 23:28:10 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.23 2008/03/06 20:56:26 plunky Exp $
+ * $Id: hci.h,v 1.24 2008/03/16 23:28:10 plunky Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -2527,9 +2527,9 @@ struct hci_link *hci_sco_newconn(struct hci_unit *, bdaddr_t *);
 void hci_sco_recv(struct mbuf *, struct hci_unit *);
 void hci_sco_start(struct hci_link *);
 void hci_sco_complete(struct hci_link *, int);
-struct hci_link *hci_link_alloc(struct hci_unit *);
+struct hci_link *hci_link_alloc(struct hci_unit *, bdaddr_t *, uint8_t);
 void hci_link_free(struct hci_link *, int);
-struct hci_link *hci_link_lookup_bdaddr(struct hci_unit *, bdaddr_t *, uint16_t);
+struct hci_link *hci_link_lookup_bdaddr(struct hci_unit *, bdaddr_t *, uint8_t);
 struct hci_link *hci_link_lookup_handle(struct hci_unit *, uint16_t);
 
 /* hci_misc.c */
