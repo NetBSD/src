@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.219 2008/03/12 11:00:43 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.220 2008/03/16 23:11:30 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.219 2008/03/12 11:00:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.220 2008/03/16 23:11:30 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -425,7 +425,12 @@ mi_switch(lwp_t *l)
 	if (l->l_stat == LSONPROC && (l->l_target_cpu || l != newl)) {
 		KASSERT(lwp_locked(l, spc->spc_lwplock));
 
-		tci = l->l_target_cpu;
+		if (l->l_target_cpu == l->l_cpu) {
+			l->l_target_cpu = NULL;
+		} else {
+			tci = l->l_target_cpu;
+		}
+
 		if (__predict_false(tci != NULL)) {
 			/* Double-lock the runqueues */
 			spc_dlock(ci, tci);
