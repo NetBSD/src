@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.60 2008/03/10 12:34:41 yamt Exp $	*/
+/*	$NetBSD: time.h,v 1.61 2008/03/16 13:19:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -99,6 +99,12 @@ struct timezone {
 		}							\
 	} while (/* CONSTCOND */ 0)
 
+/*
+ * hide bintime for _STANDALONE because this header is used for hpcboot.exe,
+ * which is built with compilers which don't recognize LL suffix.
+ *	http://mail-index.NetBSD.org/tech-userlevel/2008/02/27/msg000181.html
+ */
+#if !defined(_STANDALONE)
 struct bintime {
 	time_t	sec;
 	uint64_t frac;
@@ -188,6 +194,7 @@ timeval2bintime(const struct timeval *tv, struct bintime *bt)
 	/* 18446744073709 = int(2^64 / 1000000) */
 	bt->frac = tv->tv_usec * (uint64_t)18446744073709LL;
 }
+#endif /* !defined(_STANDALONE) */
 
 /* Operations on timespecs. */
 #define	timespecclear(tsp)	(tsp)->tv_sec = (time_t)((tsp)->tv_nsec = 0L)
