@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2008/03/02 06:17:41 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.16 2008/03/16 10:10:43 tsutsui Exp $
 
 NOMAN= # defined
 
@@ -48,6 +48,11 @@ COMBASE?=0xbc800000
 COMSPEED?=115200
 COMPROBE?=0xa020001c
 
+ZSCHAN?=0x01		# 0x01: ZS_CHAN_A, 0x00: ZS_CHAN_B
+ZSBASE?=0xbc800000
+ZSSPEED?=115200
+ZSPROBE?=0xa020001c
+
 AFLAGS+=	-D_LOCORE -D_KERNEL -DASSEMBLER -mno-abicalls
 
 # -I${.CURDIR}/../.. done by Makefile.inc
@@ -56,6 +61,8 @@ CPPFLAGS+=	-nostdinc -D_STANDALONE -DNO_ABICALLS -D_NO_PROM_DEFINES
 CPPFLAGS+=	-I${.OBJDIR} -I${S} -I${S}/arch -I${LIBSADIR}
 CPPFLAGS+=	-DCONS_SERIAL -DCOMBASE=${COMBASE} -DCOMPORT=${COMPORT}
 CPPFLAGS+=	-DCOMSPEED=${COMSPEED} -DCOMPROBE=${COMPROBE}
+CPPFLAGS+=	-DCONS_ZS -DZSBASE=${ZSBASE} -DZSCHAN=${ZSCHAN}
+CPPFLAGS+=	-DZSSPEED=${ZSSPEED} -DZSPROBE=${ZSPROBE}
 CPPFLAGS+=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
 #CPPFLAGS+=	-DBOOTP_DEBUG -DNETIF_DEBUG -DETHER_DEBUG -DNFS_DEBUG
 #CPPFLAGS+=	-DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
@@ -76,6 +83,7 @@ PROG=		boot
 # common sources
 SRCS+=		start.S boot.c devopen.c conf.c clock.c bootinfo.c
 SRCS+=		prf.c com.c cons.c ns16550.c pciide.c tgets.c wdc.c wd.c
+SRCS+=		zs.c
 SRCS+=		cache.c pci.c nif_tlp.c tlp.c
 
 # XXX dev_net.c should really be in libsa, but it doesn't
