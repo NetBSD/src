@@ -1,4 +1,4 @@
-/*	$NetBSD: inode.c,v 1.21 2007/11/16 16:55:04 tsutsui Exp $	*/
+/*	$NetBSD: inode.c,v 1.22 2008/03/16 23:17:55 lukem Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)inode.c	8.5 (Berkeley) 2/8/95";
 #else
-__RCSID("$NetBSD: inode.c,v 1.21 2007/11/16 16:55:04 tsutsui Exp $");
+__RCSID("$NetBSD: inode.c,v 1.22 2008/03/16 23:17:55 lukem Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,7 +377,7 @@ ginode(ino_t inumber)
 	     !(inumber == EXT2_RESIZEINO &&
 	       (sblock.e2fs.e2fs_features_compat & EXT2F_COMPAT_RESIZE) != 0))
 		|| inumber > maxino)
-		errexit("bad inode number %llu to ginode\n",
+		errexit("bad inode number %llu to ginode",
 		    (unsigned long long)inumber);
 	if (startinum == 0 ||
 	    inumber < startinum || inumber >= startinum + sblock.e2fs_ipb) {
@@ -406,7 +406,7 @@ getnextinode(ino_t inumber)
 	static struct ext2fs_dinode *dp;
 
 	if (inumber != nextino++ || inumber > maxino)
-		errexit("bad inode number %llu to nextinode\n",
+		errexit("bad inode number %llu to nextinode",
 		    (unsigned long long)inumber);
 	if (inumber >= lastinum) {
 		readcnt++;
@@ -446,7 +446,7 @@ resetinodebuf(void)
 	if (inodebuf == NULL &&
 	    (inodebuf = (struct ext2fs_dinode *)malloc((unsigned)inobufsize)) ==
 		NULL)
-		errexit("Cannot allocate space for inode buffer\n");
+		errexit("Cannot allocate space for inode buffer");
 	while (nextino < EXT2_ROOTINO)
 		(void)getnextinode(nextino);
 }
@@ -501,7 +501,7 @@ cacheino(struct ext2fs_dinode *dp, ino_t inumber)
 		inpsort = (struct inoinfo **)realloc((char *)inpsort,
 		    (unsigned)listmax * sizeof(struct inoinfo *));
 		if (inpsort == NULL)
-			errexit("cannot increase directory list\n");
+			errexit("cannot increase directory list");
 	}
 	inpsort[inplast++] = inp;
 }
@@ -519,7 +519,7 @@ getinoinfo(ino_t inumber)
 			continue;
 		return (inp);
 	}
-	errexit("cannot find inode %llu\n", (unsigned long long)inumber);
+	errexit("cannot find inode %llu", (unsigned long long)inumber);
 	return ((struct inoinfo *)0);
 }
 
@@ -654,7 +654,7 @@ blkerror(ino_t ino, const char *type, daddr_t blk)
 		return;
 
 	default:
-		errexit("BAD STATE %d TO BLKERR\n", statemap[ino]);
+		errexit("BAD STATE %d TO BLKERR", statemap[ino]);
 		/* NOTREACHED */
 	}
 }
