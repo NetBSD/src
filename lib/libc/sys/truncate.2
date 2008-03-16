@@ -1,4 +1,4 @@
-.\"	$NetBSD: truncate.2,v 1.24 2008/03/10 12:25:55 wiz Exp $
+.\"	$NetBSD: truncate.2,v 1.25 2008/03/16 11:33:40 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)truncate.2	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 2008
+.Dd March 16, 2008
 .Dt TRUNCATE 2
 .Os
 .Sh NAME
@@ -136,6 +136,10 @@ Use of
 to extend a file is an
 .St -p1003.1-2004
 extension, and is thus not portable.
+Files can be extended in a portable way seeking (using
+.Xr lseek 2 )
+to the required size and writing a single character with
+.Xr write 2 .
 .Sh HISTORY
 The
 .Fn truncate
