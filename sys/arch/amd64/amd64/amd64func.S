@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64func.S,v 1.2 2008/03/11 00:40:38 ad Exp $	*/
+/*	$NetBSD: amd64func.S,v 1.3 2008/03/17 16:46:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -46,23 +46,22 @@
 ENTRY(tsc_get_timecount)
 	movq	CPUVAR(CURLWP), %rsi
 1:
-	movl	L_NCSW(%rsi), %r8d
+	movl	L_NCSW(%rsi), %ecx	/* gen = l_ncsw */
 	movq	L_CPU(%rsi), %rdi
 	addq	$CPU_INFO_CC, %rdi
 	cmpl	$0, CC_DENOM(%rdi)	/* if (first time) */
 	jz	2f			/*    return tsc_slow_timecount() */
-	movl	CC_GEN(%rdi), %ecx	/* gen = cc_gen */
+	addl	CC_GEN(%rdi), %ecx	/* gen += cc_gen */
 	movl	CC_DELTA+4(%rdi), %eax	/* if (cc_delta > 0xffffffff || */
 	orl	CC_DENOM+4(%rdi), %eax	/*     cc_denom > 0xffffffff) */
 	jnz	2f			/*    return tsc_slow_timecount() */
 	rdtsc				/* cc = cpu_counter32(); */
-	subl	CC_CC(%rdi), %eax	/* cc -= cc->cc_cc; (can wrap) */
-	mull	CC_DELTA(%rdi)		/* rcc = (cc * ci->ci_cc.cc_delta) */
-	divl	CC_DENOM(%rdi)		/*     / ci->ci_cc.cc_denom */
-	addl	CC_VAL(%rdi), %eax	/*     + ci->ci_cc.cc_val; */
-	cmpl	%ecx, CC_GEN(%rdi)	/* if (gen != cc->cc_gen) */
-	jne	3f			/*    continue; */
-	cmpl	L_NCSW(%rsi), %r8d	/* if (preempted) */
+	subl	CC_CC(%rdi), %eax	/* cc -= cc_cc; (can wrap) */
+	mull	CC_DELTA(%rdi)		/* rcc = (cc * cc_delta) */
+	divl	CC_DENOM(%rdi)		/*     / cc_denom */
+	addl	CC_VAL(%rdi), %eax	/*     + cc_val; */
+	subl	CC_GEN(%rdi), %ecx	/* if (gen != cc_gen + */
+	cmpl	L_NCSW(%rsi), %ecx	/*     l_ncsw) */
 	jne	3f			/*    continue; */
 	ret				/* return rcc; */
 2:
