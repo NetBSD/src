@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.133 2008/02/24 21:44:51 christos Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.134 2008/03/17 00:18:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.133 2008/02/24 21:44:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.134 2008/03/17 00:18:24 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,12 +65,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.133 2008/02/24 21:44:51 christos
 rlim_t maxdmap = MAXDSIZ;
 rlim_t maxsmap = MAXSSIZ;
 
-struct uihashhead *uihashtbl;
-u_long uihash;		/* size of hash table - 1 */
-kmutex_t uihashtbl_lock;
+static kmutex_t		uihashtbl_lock;
+static LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
+static u_long 		uihash;
 
-static pool_cache_t plimit_cache;
-static pool_cache_t pstats_cache;
+#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
+
+static pool_cache_t	plimit_cache;
+static pool_cache_t	pstats_cache;
 
 void
 resource_init(void)
@@ -80,6 +82,8 @@ resource_init(void)
 	    "plimitpl", NULL, IPL_NONE, NULL, NULL, NULL);
 	pstats_cache = pool_cache_init(sizeof(struct pstats), 0, 0, 0,
 	    "pstatspl", NULL, IPL_NONE, NULL, NULL, NULL);
+	uihashtbl = hashinit(maxproc / 16, HASH_LIST, M_PROC,
+	    M_WAITOK, &uihash);
 }
 
 /*
@@ -87,7 +91,8 @@ resource_init(void)
  */
 
 int
-sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap, register_t *retval)
+sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -148,7 +153,8 @@ sys_getpriority(struct lwp *l, const struct sys_getpriority_args *uap, register_
 
 /* ARGSUSED */
 int
-sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap, register_t *retval)
+sys_setpriority(struct lwp *l, const struct sys_setpriority_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -251,7 +257,8 @@ donice(struct lwp *l, struct proc *chgp, int n)
 
 /* ARGSUSED */
 int
-sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap, register_t *retval)
+sys_setrlimit(struct lwp *l, const struct sys_setrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -384,7 +391,8 @@ dosetrlimit(struct lwp *l, struct proc *p, int which, struct rlimit *limp)
 
 /* ARGSUSED */
 int
-sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap, register_t *retval)
+sys_getrlimit(struct lwp *l, const struct sys_getrlimit_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) which;
@@ -478,7 +486,8 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 
 /* ARGSUSED */
 int
-sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap, register_t *retval)
+sys_getrusage(struct lwp *l, const struct sys_getrusage_args *uap,
+    register_t *retval)
 {
 	/* {
 		syscallarg(int) who;
