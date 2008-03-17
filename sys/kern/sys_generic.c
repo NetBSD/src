@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.113 2008/03/05 18:09:58 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.114 2008/03/17 18:01:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.113 2008/03/05 18:09:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.114 2008/03/17 18:01:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1148,7 +1148,7 @@ selnotify(struct selinfo *sip, int events, long knhint)
 			lwp_lock(l);
 			if (l->l_wchan == &select_cv) {
 				/* lwp_unsleep() releases the LWP lock. */
-				lwp_unsleep(l);
+				(void)lwp_unsleep(l, true);
 			} else
 				lwp_unlock(l);
 		} else {
