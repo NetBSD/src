@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_malloc.c,v 1.117 2008/01/03 01:21:08 yamt Exp $	*/
+/*	$NetBSD: kern_malloc.c,v 1.118 2008/03/17 08:27:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.117 2008/01/03 01:21:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_malloc.c,v 1.118 2008/03/17 08:27:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -328,7 +328,7 @@ malloc(unsigned long size, struct malloc_type *ksp, int flags)
 
 #ifdef LOCKDEBUG
 	if ((flags & M_NOWAIT) == 0)
-		ASSERT_SLEEPABLE(NULL, "malloc");
+		ASSERT_SLEEPABLE();
 #endif
 #ifdef MALLOC_DEBUG
 	if (debug_malloc(size, ksp, flags, (void *) &va)) {
@@ -689,7 +689,7 @@ realloc(void *curaddr, unsigned long newsize, struct malloc_type *ksp,
 
 #ifdef LOCKDEBUG
 	if ((flags & M_NOWAIT) == 0)
-		ASSERT_SLEEPABLE(NULL, "realloc");
+		ASSERT_SLEEPABLE();
 #endif
 
 	/*
