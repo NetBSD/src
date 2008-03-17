@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.42 2008/03/17 00:18:24 rmind Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.43 2008/03/17 21:16:03 rmind Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -97,13 +97,11 @@ struct plimit {
  * Structure associated with user caching.
  */
 struct uidinfo {
-	LIST_ENTRY(uidinfo) ui_hash;
+	SLIST_ENTRY(uidinfo) ui_hash;
 	uid_t	ui_uid;
-	long	ui_proccnt;	/* Number of processes */
-	long	ui_lockcnt;	/* Number of locks */
-	rlim_t	ui_sbsize;	/* socket buffer size */
-	kmutex_t ui_lock;	/* mutex for everything */
-
+	u_long	ui_proccnt;	/* Number of processes */
+	u_long	ui_lockcnt;	/* Number of locks */
+	rlim_t	ui_sbsize;	/* Socket buffer size */
 };
 
 int	chgproccnt(uid_t, int);
