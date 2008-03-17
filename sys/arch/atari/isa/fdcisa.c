@@ -1,4 +1,4 @@
-/*	$NetBSD: fdcisa.c,v 1.11 2008/03/16 00:58:56 cube Exp $	*/
+/*	$NetBSD: fdcisa.c,v 1.12 2008/03/17 00:00:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.11 2008/03/16 00:58:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdcisa.c,v 1.12 2008/03/17 00:00:55 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,7 +191,7 @@ fdc_isa_attach(device_t parent, device_t self, void *aux)
 	struct fdc_softc	*fdc = &isc->sc_fdc;
 	struct isa_attach_args	*ia = aux;
 
-	arint_normal("\n");
+	aprint_normal("\n");
 
 	fdc->sc_dev = self;
 	fdc->sc_iot = ia->ia_iot;
