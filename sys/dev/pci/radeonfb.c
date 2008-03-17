@@ -1,4 +1,4 @@
-/* $NetBSD: radeonfb.c,v 1.8.2.6 2007/12/07 17:30:31 yamt Exp $ */
+/* $NetBSD: radeonfb.c,v 1.8.2.7 2008/03/17 09:15:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.6 2007/12/07 17:30:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.7 2008/03/17 09:15:12 yamt Exp $");
 
 #define RADEONFB_DEFAULT_DEPTH 32
 
@@ -94,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.8.2.6 2007/12/07 17:30:31 yamt Exp $"
 #include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pciio.h>
 #include <dev/pci/radeonfbreg.h>
 #include <dev/pci/radeonfbvar.h>
 #include "opt_radeonfb.h"
@@ -1044,6 +1045,11 @@ radeonfb_ioctl(void *v, void *vs,
 		}
 		return EPASSTHROUGH;
 
+	/* PCI config read/write passthrough. */
+	case PCI_IOC_CFGREAD:
+	case PCI_IOC_CFGWRITE:
+		return (pci_devioctl(sc->sc_pc, sc->sc_pt, cmd, d, flag, l));
+
 	default:
 		return EPASSTHROUGH;
 	}
@@ -1100,11 +1106,12 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 		    BUS_SPACE_MAP_LINEAR);
 	}
 
-#ifdef macppc
+#ifdef PCI_MAGIC_IO_RANGE
 	/* allow mapping of IO space */
-	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot, 
-		    0);	
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		pa = bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, 0);	
 		return pa;
 	}	
 #endif /* macppc */

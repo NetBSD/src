@@ -1,4 +1,4 @@
-/*	$NetBSD: longrun.c,v 1.1.2.2 2008/02/27 08:36:21 yamt Exp $	*/
+/*	$NetBSD: longrun.c,v 1.1.2.3 2008/03/17 09:14:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tamotsu Hattori.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: longrun.c,v 1.1.2.2 2008/02/27 08:36:21 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: longrun.c,v 1.1.2.3 2008/03/17 09:14:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,29 +91,30 @@ static int sysctl_machdep_tm_longrun(SYSCTLFN_PROTO);
 void
 tmx86_init_longrun(void)
 {
+	const struct sysctlnode *mnode;
+
 	/* create the sysctl machdep.tm_longrun_* nodes */
-        sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+        sysctl_createv(NULL, 0, NULL, &mnode, CTLFLAG_PERMANENT,
 		       CTLTYPE_NODE, "machdep", NULL,
 		       NULL, 0, NULL, 0,
 		       CTL_MACHDEP, CTL_EOL);
-        sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+
+        sysctl_createv(NULL, 0, NULL, NULL, CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "tm_longrun_mode", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_MODE, CTL_EOL);
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+
+	sysctl_createv(NULL, 0, NULL, NULL, 0,
 		       CTLTYPE_INT, "tm_longrun_frequency", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_FREQUENCY, CTL_EOL);
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+
+	sysctl_createv(NULL, 0, NULL, NULL, 0,
 		       CTLTYPE_INT, "tm_longrun_voltage", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_VOLTAGE, CTL_EOL);
-	sysctl_createv(NULL, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT,
+
+	sysctl_createv(NULL, 0, NULL, NULL, 0,
 		       CTLTYPE_INT, "tm_longrun_percentage", NULL,
 		       sysctl_machdep_tm_longrun, 0, NULL, 0,
 		       CTL_MACHDEP, CPU_TMLR_PERCENTAGE, CTL_EOL);
@@ -192,7 +193,6 @@ tmx86_set_longrun_mode(u_int mode)
 	x86_write_psl(eflags);
 	return 1;
 }
-
 
 static void
 tmx86_get_longrun_status_all(void)

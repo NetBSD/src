@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.28.4.6 2008/01/21 09:46:07 yamt Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.28.4.7 2008/03/17 09:15:33 yamt Exp $	*/
 
 /*-
  ***********************************************************************
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.6 2008/01/21 09:46:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.28.4.7 2008/03/17 09:15:33 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_compat_netbsd.h"
@@ -847,7 +847,7 @@ hardpps(struct timespec *tsp,		/* time at PPS */
 
 #ifdef NTP
 int
-ntp_timestatus()
+ntp_timestatus(void)
 {
 	/*
 	 * Status word error decode. If any of these conditions

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.41.16.5 2008/01/21 09:35:35 yamt Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.41.16.6 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -229,6 +229,14 @@ ENTRY(cpu_switchto)
 	/* rem: interrupts are enabled */
 
 	/* What else needs to be saved? Only FPA stuff when that is supported */
+#ifdef FPU_VFP
+	/*
+	 * Now's a good time to 'save' the VFP context.  Note that we
+	 * don't really force a save here, which can save time if we
+	 * end up restarting the same context.
+	 */
+	bl	_C_LABEL(vfp_savecontext)
+#endif
 
 	/* Restore saved context */
 
@@ -262,6 +270,10 @@ ENTRY(cpu_switchto)
 	/* rem: r6 = new lwp */
 	/* rem: r7 = new pcb */
 
+#ifdef FPU_VFP
+	mov	r0, r6
+	bl	_C_LABEL(vfp_loadcontext)
+#endif
 #ifdef ARMFPE
 	add	r0, r7, #(USER_SIZE) & 0x00ff
 	add	r0, r0, #(USER_SIZE) & 0xff00 

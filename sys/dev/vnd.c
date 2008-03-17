@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.114.2.7 2008/01/21 09:42:28 yamt Exp $	*/
+/*	$NetBSD: vnd.c,v 1.114.2.8 2008/03/17 09:14:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.7 2008/01/21 09:42:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.114.2.8 2008/03/17 09:14:37 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "fs_nfs.h"
@@ -249,16 +249,16 @@ const struct cdevsw vnd_cdevsw = {
 	nostop, notty, nopoll, nommap, nokqfilter, D_DISK
 };
 
-static int	vnd_match(struct device *, struct cfdata *, void *);
-static void	vnd_attach(struct device *, struct device *, void *);
-static int	vnd_detach(struct device *, int);
+static int	vnd_match(device_t, cfdata_t, void *);
+static void	vnd_attach(device_t, device_t, void *);
+static int	vnd_detach(device_t, int);
 
-CFATTACH_DECL(vnd, sizeof(struct vnd_softc),
+CFATTACH_DECL_NEW(vnd, sizeof(struct vnd_softc),
     vnd_match, vnd_attach, vnd_detach, NULL);
 extern struct cfdriver vnd_cd;
 
 static struct vnd_softc	*vnd_spawn(int);
-int	vnd_destroy(struct device *);
+int	vnd_destroy(device_t);
 
 void
 vndattach(int num)
@@ -272,18 +272,18 @@ vndattach(int num)
 }
 
 static int
-vnd_match(struct device *self, struct cfdata *cfdata,
-    void *aux)
+vnd_match(device_t self, cfdata_t cfdata, void *aux)
 {
+
 	return 1;
 }
 
 static void
-vnd_attach(struct device *parent, struct device *self,
-    void *aux)
+vnd_attach(device_t parent, device_t self, void *aux)
 {
-	struct vnd_softc *sc = (struct vnd_softc *)self;
+	struct vnd_softc *sc = device_private(self);
 
+	sc->sc_dev = self;
 	sc->sc_comp_offsets = NULL;
 	sc->sc_comp_buff = NULL;
 	sc->sc_comp_decombuf = NULL;
@@ -294,9 +294,9 @@ vnd_attach(struct device *parent, struct device *self,
 }
 
 static int
-vnd_detach(struct device *self, int flags)
+vnd_detach(device_t self, int flags)
 {
-	struct vnd_softc *sc = (struct vnd_softc *)self;
+	struct vnd_softc *sc = device_private(self);
 	if (sc->sc_flags & VNF_INITED)
 		return EBUSY;
 
@@ -318,14 +318,14 @@ vnd_spawn(int unit)
 	cf->cf_unit = unit;
 	cf->cf_fstate = FSTATE_STAR;
 
-	return (struct vnd_softc *)config_attach_pseudo(cf);
+	return device_private(config_attach_pseudo(cf));
 }
 
 int
-vnd_destroy(struct device *dev)
+vnd_destroy(device_t dev)
 {
 	int error;
-	struct cfdata *cf;
+	cfdata_t cf;
 
 	cf = device_cfdata(dev);
 	error = config_detach(dev, DETACH_QUIET);
@@ -347,7 +347,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndopen(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_lookup(&vnd_cd, unit);
+	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL) {
 		sc = vnd_spawn(unit);
 		if (sc == NULL)
@@ -411,7 +411,7 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if (vnddebug & VDB_FOLLOW)
 		printf("vndclose(0x%x, 0x%x, 0x%x, %p)\n", dev, flags, mode, l);
 #endif
-	sc = device_lookup(&vnd_cd, unit);
+	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -436,9 +436,9 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	vndunlock(sc);
 
 	if ((sc->sc_flags & VNF_INITED) == 0) {
-		if ((error = vnd_destroy((struct device *)sc)) != 0) {
-			aprint_error("%s: unable to detach instance\n",
-			    sc->sc_dev.dv_xname);
+		if ((error = vnd_destroy(sc->sc_dev)) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to detach instance\n");
 			return error;
 		}
 	}
@@ -454,7 +454,7 @@ vndstrategy(struct buf *bp)
 {
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
-	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
+	    device_private(device_lookup(&vnd_cd, unit));
 	struct disklabel *lp = vnd->sc_dkdev.dk_label;
 	daddr_t blkno;
 	int s = splbio();
@@ -859,7 +859,7 @@ vndread(dev_t dev, struct uio *uio, int flags)
 		printf("vndread(0x%x, %p)\n", dev, uio);
 #endif
 
-	sc = device_lookup(&vnd_cd, unit);
+	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -881,7 +881,7 @@ vndwrite(dev_t dev, struct uio *uio, int flags)
 		printf("vndwrite(0x%x, %p)\n", dev, uio);
 #endif
 
-	sc = device_lookup(&vnd_cd, unit);
+	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL)
 		return ENXIO;
 
@@ -901,7 +901,7 @@ vnd_cget(struct lwp *l, int unit, int *un, struct vattr *va)
 	if (*un < 0)
 		return EINVAL;
 
-	vnd = device_lookup(&vnd_cd, *un);
+	vnd = device_private(device_lookup(&vnd_cd, *un));
 	if (vnd == NULL)
 		return (*un >= vnd_cd.cd_ndevs) ? ENXIO : -1;
 
@@ -932,7 +932,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		printf("vndioctl(0x%x, 0x%lx, %p, 0x%x, %p): unit %d\n",
 		    dev, cmd, data, flag, l->l_proc, unit);
 #endif
-	vnd = device_lookup(&vnd_cd, unit);
+	vnd = device_private(device_lookup(&vnd_cd, unit));
 	if (vnd == NULL &&
 #ifdef COMPAT_30
 	    cmd != VNDIOOCGET &&
@@ -1184,7 +1184,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		/* create the kernel thread, wait for it to be up */
 		error = kthread_create(PRI_NONE, 0, NULL, vndthread, vnd,
-		    &vnd->sc_kthread, vnd->sc_dev.dv_xname);
+		    &vnd->sc_kthread, device_xname(vnd->sc_dev));
 		if (error)
 			goto close_and_exit;
 		while ((vnd->sc_flags & VNF_KTHREAD) == 0) {
@@ -1508,7 +1508,7 @@ vndclear(struct vnd_softc *vnd, int myminor)
 
 	/* Nuke the vnodes for any open instances */
 	for (i = 0; i < MAXPARTITIONS; i++) {
-		mn = DISKMINOR(device_unit(&vnd->sc_dev), i);
+		mn = DISKMINOR(device_unit(vnd->sc_dev), i);
 		vdevgone(bmaj, mn, mn, VBLK);
 		if (mn != myminor) /* XXX avoid to kill own vnode */
 			vdevgone(cmaj, mn, mn, VCHR);
@@ -1564,7 +1564,7 @@ vndsize(dev_t dev)
 	int size;
 
 	unit = vndunit(dev);
-	sc = (struct vnd_softc *)device_lookup(&vnd_cd, unit);
+	sc = device_private(device_lookup(&vnd_cd, unit));
 	if (sc == NULL)
 		return -1;
 
@@ -1656,7 +1656,7 @@ vndgetdisklabel(dev_t dev, struct vnd_softc *sc)
 		 * Lack of disklabel is common, but we print the warning
 		 * anyway, since it might contain other useful information.
 		 */
-		printf("%s: %s\n", sc->sc_dev.dv_xname, errstring);
+		aprint_normal_dev(sc->sc_dev, "%s\n", errstring);
 
 		/*
 		 * For historical reasons, if there's no disklabel
@@ -1729,7 +1729,7 @@ compstrategy(struct buf *bp, off_t bn)
 	int error;
 	int unit = vndunit(bp->b_dev);
 	struct vnd_softc *vnd =
-	    (struct vnd_softc *)device_lookup(&vnd_cd, unit);
+	    device_private(device_lookup(&vnd_cd, unit));
 	u_int32_t comp_block;
 	struct uio auio;
 	char *addr;
@@ -1782,8 +1782,8 @@ compstrategy(struct buf *bp, off_t bn)
 			error = inflate(&vnd->sc_comp_stream, Z_FINISH);
 			if (error != Z_STREAM_END) {
 				if (vnd->sc_comp_stream.msg)
-					printf("%s: compressed file, %s\n",
-					    vnd->sc_dev.dv_xname,
+					aprint_normal_dev(vnd->sc_dev,
+					    "compressed file, %s\n",
 					    vnd->sc_comp_stream.msg);
 				bp->b_error = EBADMSG;
 				VOP_UNLOCK(vnd->sc_vp, 0);
@@ -1862,7 +1862,7 @@ vnd_set_properties(struct vnd_softc *vnd)
 	prop_dictionary_set(disk_info, "geometry", geom);
 	prop_object_release(geom);
 
-	prop_dictionary_set(device_properties(&vnd->sc_dev),
+	prop_dictionary_set(device_properties(vnd->sc_dev),
 	    "disk-info", disk_info);
 
 	/*

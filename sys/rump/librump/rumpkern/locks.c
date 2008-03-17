@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.2.4.5 2008/02/04 09:24:51 yamt Exp $	*/
+/*	$NetBSD: locks.c,v 1.2.4.6 2008/03/17 09:15:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -67,13 +67,8 @@ mutex_spin_enter(kmutex_t *mtx)
 int
 mutex_tryenter(kmutex_t *mtx)
 {
-	int rv;
 
-	rv = rumpuser_mutex_tryenter(mtx->kmtx_mtx);
-	if (rv)
-		return 0;
-	else
-		return 1;
+	return rumpuser_mutex_tryenter(mtx->kmtx_mtx);
 }
 
 void

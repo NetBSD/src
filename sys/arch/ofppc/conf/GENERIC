@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.77.2.8 2008/02/27 08:36:22 yamt Exp $
+# $NetBSD: GENERIC,v 1.77.2.9 2008/03/17 09:14:22 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.77.2.8 $"
+#ident 		"GENERIC-$Revision: 1.77.2.9 $"
 
 maxusers	32
 
@@ -35,7 +35,7 @@ options 	PIC_I8259
 options 	FIRMWORKSBUGS
 
 # Standard system options
-#options 	INSECURE	# disable kernel security checks
+options 	INSECURE	# disable kernel security checks
 #options 	NTP		# NTP phase/frequency locked loop
 options 	KTRACE		# system call tracing via ktrace(1)
 

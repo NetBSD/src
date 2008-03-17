@@ -1,4 +1,4 @@
-/*	$NetBSD: com_frodo.c,v 1.3.12.2 2007/12/07 17:24:41 yamt Exp $	*/
+/*	$NetBSD: com_frodo.c,v 1.3.12.3 2008/03/17 09:14:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.3.12.2 2007/12/07 17:24:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_frodo.c,v 1.3.12.3 2008/03/17 09:14:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,10 +92,10 @@ struct com_frodo_softc {
 	struct	com_softc sc_com;	/* real "com" softc */
 };
 
-static int	com_frodo_match(struct device *, struct cfdata *, void *);
-static void	com_frodo_attach(struct device *, struct device *, void *);
+static int	com_frodo_match(device_t, cfdata_t , void *);
+static void	com_frodo_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_frodo, sizeof(struct com_frodo_softc),
+CFATTACH_DECL_NEW(com_frodo, sizeof(struct com_frodo_softc),
     com_frodo_match, com_frodo_attach, NULL, NULL);
 
 static int com_frodo_speed = TTYDEF_SPEED;
@@ -105,7 +105,7 @@ static struct bus_space_tag comcntag;
 #define COM_FRODO_FREQ	8006400
 
 static int
-com_frodo_match(struct device *parent, struct cfdata *match, void *aux)
+com_frodo_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct frodo_attach_args *fa = aux;
 
@@ -123,15 +123,16 @@ com_frodo_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 static void
-com_frodo_attach(struct device *parent, struct device *self, void *aux)
+com_frodo_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_frodo_softc *fsc = (void *)self;
+	struct com_frodo_softc *fsc = device_private(self);
 	struct com_softc *sc = &fsc->sc_com;
 	struct frodo_attach_args *fa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	int isconsole;
 
+	sc->sc_dev = self;
 	isconsole = com_is_console(&comcntag, fa->fa_base + fa->fa_offset,
 	    &ioh);
 
@@ -143,7 +144,7 @@ com_frodo_attach(struct device *parent, struct device *self, void *aux)
 	if (!isconsole &&
 	    bus_space_map(iot, fa->fa_base + fa->fa_offset, COM_NPORTS << 2,
 	     0, &ioh)) {
-		printf(": can't map i/o space\n");
+		aprint_error(": can't map i/o space\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, fa->fa_base + fa->fa_offset);

@@ -1,4 +1,4 @@
-/*	$NetBSD: necpb.c,v 1.20.8.3 2007/09/03 14:23:10 yamt Exp $	*/
+/*	$NetBSD: necpb.c,v 1.20.8.4 2008/03/17 09:14:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.20.8.3 2007/09/03 14:23:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: necpb.c,v 1.20.8.4 2008/03/17 09:14:14 yamt Exp $");
 
 #include "opt_pci.h"
 
@@ -506,7 +506,7 @@ necpb_intr(uint32_t mask, struct clockframe *cf)
 #endif
 	}
 
-	return handled ? ~MIPS_INT_MASK_2 : ~0;
+	return handled ? MIPS_INT_MASK_2 : 0;
 }
 
 #ifdef PCI_NETBSD_CONFIGURE

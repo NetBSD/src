@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2.6.2 2008/01/21 09:38:35 yamt Exp $
+# $NetBSD: GENERIC,v 1.2.6.3 2008/03/17 09:14:23 yamt Exp $
 #
 # GENERIC machine description file
 # 
@@ -24,7 +24,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 #makeoptions	COPTS="-O2 -mno-powerpc -mno-power"	# wheeee
 
-#ident		"GENERIC-$Revision: 1.2.6.2 $"
+#ident		"GENERIC-$Revision: 1.2.6.3 $"
 
 maxusers	32
 
@@ -203,7 +203,7 @@ com* at ioplanar?
 #uk*	at scsibus? target ? lun ?	# SCSI unknown
 
 # Pull in optional local configuration
-include "arch/rs6000/conf/GENERIC.local"
+cinclude "arch/rs6000/conf/GENERIC.local"
 
 # Pseudo-Devices
 

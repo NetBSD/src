@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.14.2.3 2007/10/27 11:33:53 yamt Exp $	*/
+/*	$NetBSD: xirc.c,v 1.14.2.4 2008/03/17 09:15:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.14.2.3 2007/10/27 11:33:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.14.2.4 2008/03/17 09:15:23 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -575,20 +575,19 @@ xirc_disable(sc, flag, media)
 /****** Here begins the com attachment code. ******/
 
 #if NCOM_XIRC > 0
-int	com_xirc_match(struct device *, struct cfdata *, void *);
-void	com_xirc_attach(struct device *, struct device *, void *);
-int	com_xirc_detach(struct device *, int);
+int	com_xirc_match(device_t, cfdata_t , void *);
+void	com_xirc_attach(device_t, device_t, void *);
+int	com_xirc_detach(device_t, int);
 
 /* No xirc-specific goo in the softc; it's all in the parent. */
-CFATTACH_DECL(com_xirc, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(com_xirc, sizeof(struct com_softc),
     com_xirc_match, com_xirc_attach, com_detach, com_activate);
 
 int	com_xirc_enable(struct com_softc *);
 void	com_xirc_disable(struct com_softc *);
 
 int
-com_xirc_match(struct device *parent, struct cfdata *match,
-    void *aux)
+com_xirc_match(device_t parent, cfdata_t match, void *aux)
 {
 	extern struct cfdriver com_cd;
 	const char *name = aux;
@@ -600,10 +599,12 @@ com_xirc_match(struct device *parent, struct cfdata *match,
 }
 
 void
-com_xirc_attach(struct device *parent, struct device *self, void *aux)
+com_xirc_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (void *)self;
-	struct xirc_softc *msc = (void *)parent;
+	struct com_softc *sc = device_private(self);
+	struct xirc_softc *msc = device_private(parent);
+
+	sc->sc_dev = self;
 
 	aprint_normal("\n");
 
@@ -619,7 +620,7 @@ com_xirc_attach(struct device *parent, struct device *self, void *aux)
 	sc->enable = com_xirc_enable;
 	sc->disable = com_xirc_disable;
 
-	aprint_normal("%s", self->dv_xname);
+	aprint_normal("%s", device_xname(self));
 
 	com_attach_subr(sc);
 
@@ -627,21 +628,19 @@ com_xirc_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-com_xirc_enable(sc)
-	struct com_softc *sc;
+com_xirc_enable(struct com_softc *sc)
 {
 	struct xirc_softc *msc =
-	    (struct xirc_softc *)device_parent(&sc->sc_dev);
+	    device_private(device_parent(sc->sc_dev));
 
 	return (xirc_enable(msc, XIRC_MODEM_ENABLED, XIMEDIA_MODEM));
 }
 
 void
-com_xirc_disable(sc)
-	struct com_softc *sc;
+com_xirc_disable(struct com_softc *sc)
 {
 	struct xirc_softc *msc =
-	    (struct xirc_softc *)device_parent(&sc->sc_dev);
+	    device_private(device_parent(sc->sc_dev));
 
 	xirc_disable(msc, XIRC_MODEM_ENABLED, XIMEDIA_MODEM);
 }

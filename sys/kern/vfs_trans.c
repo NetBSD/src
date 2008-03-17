@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_trans.c,v 1.5.4.7 2008/02/04 09:24:24 yamt Exp $	*/
+/*	$NetBSD: vfs_trans.c,v 1.5.4.8 2008/03/17 09:15:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.4.7 2008/02/04 09:24:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_trans.c,v 1.5.4.8 2008/03/17 09:15:34 yamt Exp $");
 
 /*
  * File system transaction operations.
@@ -177,7 +177,7 @@ _fstrans_start(struct mount *mp, enum fstrans_lock_type lock_type, int wait)
 	struct fstrans_lwp_info *fli, *new_fli;
 	struct fstrans_mount_info *fmi;
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 
 	if (mp == NULL || (mp->mnt_iflag & IMNT_HAS_TRANS) == 0)
 		return 0;

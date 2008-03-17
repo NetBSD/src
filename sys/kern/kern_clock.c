@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_clock.c,v 1.94.4.7 2008/01/21 09:46:01 yamt Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.94.4.8 2008/03/17 09:15:32 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.7 2008/01/21 09:46:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.8 2008/03/17 09:15:32 yamt Exp $");
 
 #include "opt_ntp.h"
 #include "opt_multiprocessor.h"
@@ -95,6 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.94.4.7 2008/01/21 09:46:01 yamt Exp
 #include <sys/time.h>
 #include <sys/timetc.h>
 #include <sys/cpu.h>
+#include <sys/atomic.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -345,6 +348,15 @@ proftick(struct clockframe *frame)
 void
 schedclock(struct lwp *l)
 {
+	struct cpu_info *ci;
+
+	ci = l->l_cpu;
+
+	/* Accumulate syscall and context switch counts. */
+	atomic_add_int((unsigned *)&uvmexp.swtch, ci->ci_data.cpu_nswtch);
+	ci->ci_data.cpu_nswtch = 0;
+	atomic_add_int((unsigned *)&uvmexp.syscalls, ci->ci_data.cpu_nsyscall);
+	ci->ci_data.cpu_nsyscall = 0;
 
 	if ((l->l_flag & LW_IDLE) != 0)
 		return;

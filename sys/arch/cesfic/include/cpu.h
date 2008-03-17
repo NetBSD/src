@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.10.12.2 2007/09/03 14:23:49 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.10.12.3 2008/03/17 09:14:16 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -166,11 +166,6 @@ extern int astpending;		/* need to trap before returning to user mode */
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.86.2.8 2008/01/21 09:36:51 yamt Exp $
+#	$NetBSD: GENERIC_TINY,v 1.86.2.9 2008/03/17 09:14:20 yamt Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -546,7 +546,7 @@ we1	at isa? port 0x300 iomem 0xcc000 irq 10
 
 
 # Pull in optional local configuration
-include	"arch/i386/conf/GENERIC.local"
+cinclude "arch/i386/conf/GENERIC.local"
 
 
 # Pseudo-Devices

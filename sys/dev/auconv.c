@@ -1,4 +1,4 @@
-/*	$NetBSD: auconv.c,v 1.12.10.3 2007/09/03 14:33:08 yamt Exp $	*/
+/*	$NetBSD: auconv.c,v 1.12.10.4 2008/03/17 09:14:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.12.10.3 2007/09/03 14:33:08 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auconv.c,v 1.12.10.4 2008/03/17 09:14:36 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/audioio.h>
+#include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/null.h>

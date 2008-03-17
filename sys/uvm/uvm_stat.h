@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.h,v 1.36.2.2 2008/02/04 09:25:10 yamt Exp $	*/
+/*	$NetBSD: uvm_stat.h,v 1.36.2.3 2008/03/17 09:15:52 yamt Exp $	*/
 
 /*
  *
@@ -68,7 +68,7 @@ struct uvm_history {
 	LIST_ENTRY(uvm_history) list;	/* link on list of all histories */
 	int n;				/* number of entries */
 	int f; 				/* next free one */
-	int unused;			/* old location of struct simplelock */
+	int unused;			/* old location of lock */
 	struct uvm_history_ent *e;	/* the malloc'd entries */
 	kmutex_t l;			/* lock on this history */
 };

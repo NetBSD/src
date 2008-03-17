@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.2.6.5 2008/01/21 09:37:19 yamt Exp $
+# $NetBSD: GENERIC,v 1.2.6.6 2008/03/17 09:14:21 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/landisk/conf/std.landisk"
 
 options         INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.2.6.5 $"
+#ident          "GENERIC-$Revision: 1.2.6.6 $"
 
 maxusers	16		# estimated number of users
 
@@ -400,7 +400,7 @@ pwrsw0	at obio?
 btn0	at obio?
 
 # Pull in optional local configuration
-include "arch/landisk/conf/GENERIC.local"
+cinclude "arch/landisk/conf/GENERIC.local"
 
 
 # Pseudo-Devices

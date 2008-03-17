@@ -1,4 +1,4 @@
-/*	$NetBSD: qv.c,v 1.15.16.3 2007/12/07 17:26:31 yamt Exp $	*/
+/*	$NetBSD: qv.c,v 1.15.16.4 2008/03/17 09:14:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1988
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.15.16.3 2007/12/07 17:26:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.15.16.4 2008/03/17 09:14:29 yamt Exp $");
 
 #include "qv.h"
 #if NQV > 0
@@ -183,8 +183,8 @@ extern	struct pte QVmap[][512];
  * virtual console vputc.  consops is used to redirect the console
  * device to the qvss console.
  */
-extern (*v_putc)();
-extern struct cdevsw *consops;
+extern int (*v_putc)();
+extern const struct cdevsw *consops;
 /*
  * qv_def_scrn is used to select the appropriate tables. 0=15 inch 1=19 inch,
  * 2 = uVAXII.
@@ -668,7 +668,7 @@ qvkint(qv)
 		vep->vse_key = key;
 		qp->itail = i;
 		if(qvrsel) {
-			selwakeup(qvrsel,0);
+			selnotify(qvrsel, 0, 0);
 			qvrsel = 0;
 		}
 	}
@@ -925,7 +925,7 @@ switches:if( om_switch != ( m_switch = (qvaddr->qv_csr & QV_MOUSE_ANY) >> 8 ) ) 
 	}
 	/* if we have proc waiting, and event has happened, wake him up */
 	if(qvrsel && (qp->ihead != qp->itail)) {
-		selwakeup(qvrsel,0);
+		selnotify(qvrsel, 0, 0);
 		qvrsel = 0;
 	}
 	/*

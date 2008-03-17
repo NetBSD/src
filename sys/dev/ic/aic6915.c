@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.13.4.4 2008/01/21 09:42:53 yamt Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.13.4.5 2008/03/17 09:14:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.13.4.4 2008/01/21 09:42:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.13.4.5 2008/03/17 09:14:41 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1171,14 +1171,14 @@ sf_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		sf_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		sf_rxdrain(sc);
 }
 
 /*

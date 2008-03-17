@@ -1,4 +1,4 @@
-/* 	$NetBSD: lwp.h,v 1.28.2.9 2008/02/04 09:24:59 yamt Exp $	*/
+/* 	$NetBSD: lwp.h,v 1.28.2.10 2008/03/17 09:15:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@
 #include <sys/callout.h>
 #include <sys/mutex.h>
 #include <sys/condvar.h>
-#include <sys/pset.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
 #include <sys/specificdata.h>

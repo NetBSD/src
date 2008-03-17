@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.32.2.7 2008/02/27 08:36:23 yamt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.32.2.8 2008/03/17 09:14:22 yamt Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -70,13 +70,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.7 2008/02/27 08:36:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.32.2.8 2008/03/17 09:14:22 yamt Exp $");
 
 #define	PMAP_NOOPNAMES
 
 #include "opt_ppcarch.h"
 #include "opt_altivec.h"
+#include "opt_multiprocessor.h"
 #include "opt_pmap.h"
+
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
@@ -517,6 +519,7 @@ extern struct evcnt pmap_evcnt_idlezeroed_pages;
 #define	TLBSYNC()	__asm volatile("tlbsync")
 #define	SYNC()		__asm volatile("sync")
 #define	EIEIO()		__asm volatile("eieio")
+#define	DCBST(va)	__asm __volatile("dcbst 0,%0" :: "r"(va))
 #define	MFMSR()		mfmsr()
 #define	MTMSR(psl)	mtmsr(psl)
 #define	MFPVR()		mfpvr()
@@ -785,6 +788,9 @@ pmap_pte_clear(volatile struct pte *pt, vaddr_t va, int ptebit)
 	EIEIO();
 	TLBSYNC();
 	SYNC();
+#ifdef MULTIPROCESSOR
+	DCBST(pt);
+#endif
 }
 
 static inline void
@@ -806,6 +812,9 @@ pmap_pte_set(volatile struct pte *pt, struct pte *pvo_pt)
 	pt->pte_hi = pvo_pt->pte_hi;
 	TLBSYNC();
 	SYNC();
+#ifdef MULTIPROCESSOR
+	DCBST(pt);
+#endif
 	pmap_pte_valid++;
 }
 

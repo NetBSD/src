@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.10.12.7 2008/01/21 09:44:38 yamt Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.10.12.8 2008/03/17 09:15:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.10.12.7 2008/01/21 09:44:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.10.12.8 2008/03/17 09:15:27 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include <sys/param.h>
@@ -194,6 +194,7 @@ sysmon_power_init(void)
 {
 	mutex_init(&sysmon_power_event_queue_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sysmon_power_event_queue_cv, "smpower");
+	selinit(&sysmon_power_event_queue_selinfo);
 }
 
 /*
@@ -363,7 +364,7 @@ sysmon_power_daemon_task(struct power_event_dictionary *ped,
 		SLIST_INSERT_HEAD(&pev_dict_list, ped, pev_dict_head);
 		cv_broadcast(&sysmon_power_event_queue_cv);
 		mutex_exit(&sysmon_power_event_queue_mtx);
-		selnotify(&sysmon_power_event_queue_selinfo, 0);
+		selnotify(&sysmon_power_event_queue_selinfo, 0, 0);
 	}
 
 out:
@@ -850,6 +851,7 @@ sysmon_penvsys_event(struct penvsys_state *pes, int event)
 			printf("%s: state changed on '%s' to '%s'\n",
 			    pes->pes_dvname, pes->pes_sensname,
 			    pes->pes_statedesc);
+			break;
 		case PENVSYS_EVENT_NORMAL:
 			printf("%s: normal state on '%s' (%s)\n",
 			    pes->pes_dvname, pes->pes_sensname,

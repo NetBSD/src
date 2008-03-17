@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_subr.c,v 1.13.2.8 2008/02/04 09:23:59 yamt Exp $	*/
+/*	$NetBSD: puffs_subr.c,v 1.13.2.9 2008/03/17 09:15:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.13.2.8 2008/02/04 09:23:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_subr.c,v 1.13.2.9 2008/03/17 09:15:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -154,7 +154,7 @@ puffs_parkdone_poll(struct puffs_mount *pmp, struct puffs_req *preq, void *arg)
 	pn->pn_revents |= revents;
 	mutex_exit(&pn->pn_mtx);
 
-	selnotify(&pn->pn_sel, 0);
+	selnotify(&pn->pn_sel, revents, 0);
 
 	puffs_releasenode(pn);
 }

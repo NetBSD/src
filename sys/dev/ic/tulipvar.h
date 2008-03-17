@@ -1,4 +1,4 @@
-/*	$NetBSD: tulipvar.h,v 1.55.2.1 2006/06/21 15:02:57 yamt Exp $	*/
+/*	$NetBSD: tulipvar.h,v 1.55.2.2 2008/03/17 09:14:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -342,8 +342,6 @@ struct tulip_softc {
 	bus_space_handle_t sc_sh;	/* bus space handle */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
 	struct ethercom sc_ethercom;	/* ethernet common data */
-	void *sc_sdhook;		/* shutdown hook */
-	void *sc_powerhook;		/* power management hook */
 
 	struct tulip_stats sc_stats;	/* debugging stats */
 

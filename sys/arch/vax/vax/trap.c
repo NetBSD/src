@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.96.2.5 2008/02/27 08:36:26 yamt Exp $     */
+/*	$NetBSD: trap.c,v 1.96.2.6 2008/03/17 09:14:33 yamt Exp $     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -33,7 +33,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.5 2008/02/27 08:36:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.96.2.6 2008/03/17 09:14:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -341,8 +341,7 @@ setregs(struct lwp *l, struct exec_package *pack, u_long stack)
  * Start a new LWP
  */
 void
-startlwp(arg)
-	void *arg;
+startlwp(void *arg)
 {
 	int err;
 	ucontext_t *uc = arg;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.240.2.7 2008/02/27 08:36:46 yamt Exp $	*/
+/*	$NetBSD: sd.c,v 1.240.2.8 2008/03/17 09:15:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.7 2008/02/27 08:36:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.240.2.8 2008/03/17 09:15:27 yamt Exp $");
 
 #include "opt_scsi.h"
 #include "rnd.h"
@@ -107,7 +107,7 @@ static int	sdgetdisklabel(struct sd_softc *);
 static void	sdstart(struct scsipi_periph *);
 static void	sdrestart(void *);
 static void	sddone(struct scsipi_xfer *, int);
-static bool	sd_suspend(device_t);
+static bool	sd_suspend(device_t PMF_FN_PROTO);
 static void	sd_shutdown(void *);
 static int	sd_interpret_sense(struct scsipi_xfer *);
 
@@ -1349,7 +1349,7 @@ sd_shutdown(void *arg)
 }
 
 static bool
-sd_suspend(device_t dv)
+sd_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct sd_softc *sd = device_private(dv);
 

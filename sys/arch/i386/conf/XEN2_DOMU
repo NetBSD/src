@@ -1,4 +1,4 @@
-# $NetBSD: XEN2_DOMU,v 1.1.8.8 2008/01/21 09:36:54 yamt Exp $
+# $NetBSD: XEN2_DOMU,v 1.1.8.9 2008/03/17 09:14:20 yamt Exp $
 
 include 	"arch/xen/conf/std.xen"
 
@@ -176,7 +176,7 @@ xennet* 	at hypervisor?		# Xen virtual network interface
 
 xbd*		at hypervisor?		# Xen virtual block device
 
-include	"arch/i386/conf/GENERIC.local"
+cinclude "arch/i386/conf/GENERIC.local"
 
 # Pseudo-Devices
 

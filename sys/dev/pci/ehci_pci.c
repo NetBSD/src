@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.18.2.8 2008/02/27 08:36:35 yamt Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.18.2.9 2008/03/17 09:15:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.18.2.8 2008/02/27 08:36:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.18.2.9 2008/03/17 09:15:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,8 @@ ehci_pci_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
-	if (!pmf_device_register(self, ehci_pci_suspend, ehci_pci_resume))
+	if (!pmf_device_register1(self, ehci_pci_suspend, ehci_pci_resume,
+	                          ehci_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */

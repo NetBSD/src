@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46.2.4 2008/01/21 09:35:55 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46.2.5 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -202,11 +202,6 @@ extern int machineid;
  */
 #define CPU_CONSDEV	1	/* dev_t: console terminal device */
 #define CPU_MAXID	2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 #ifdef _KERNEL
 /*

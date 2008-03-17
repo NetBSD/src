@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.1.18.5 2008/01/21 09:42:23 yamt Exp $ */
+/*	$NetBSD: biovar.h,v 1.1.18.6 2008/03/17 09:14:37 yamt Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -158,6 +158,8 @@ struct bioc_vol {
 #define BIOC_SVINVALID_S	"Invalid"
 	uint64_t	bv_size;	/* size of the disk */
 	int		bv_level;	/* raid level */
+#define BIOC_SVOL_RAID01	0x0e
+#define BIOC_SVOL_RAID10	0x1e
 #define BIOC_SVOL_UNUSED	0xaa
 #define BIOC_SVOL_HOTSPARE	0xbb
 #define BIOC_SVOL_PASSTHRU	0xcc

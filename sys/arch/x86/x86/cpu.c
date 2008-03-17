@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.2.4.8 2008/02/11 14:59:32 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.2.4.9 2008/03/17 09:14:36 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.8 2008/02/11 14:59:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.9 2008/03/17 09:14:36 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -120,14 +120,14 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.4.8 2008/02/11 14:59:32 yamt Exp $");
 #include <i386/isa/nvram.h>
 #include <dev/isa/isareg.h>
 
-int     cpu_match(struct device *, struct cfdata *, void *);
-void    cpu_attach(struct device *, struct device *, void *);
+int     cpu_match(device_t, cfdata_t, void *);
+void    cpu_attach(device_t, device_t, void *);
 
-static bool	cpu_suspend(device_t);
-static bool	cpu_resume(device_t);
+static bool	cpu_suspend(device_t PMF_FN_PROTO);
+static bool	cpu_resume(device_t PMF_FN_PROTO);
 
 struct cpu_softc {
-	struct device sc_dev;		/* device tree glue */
+	device_t sc_dev;		/* device tree glue */
 	struct cpu_info *sc_info;	/* pointer to CPU info */
 	bool sc_wasonline;
 };
@@ -138,7 +138,7 @@ const struct cpu_functions mp_cpu_funcs = { mp_cpu_start, NULL,
 					    mp_cpu_start_cleanup };
 
 
-CFATTACH_DECL(cpu, sizeof(struct cpu_softc),
+CFATTACH_DECL_NEW(cpu, sizeof(struct cpu_softc),
     cpu_match, cpu_attach, NULL, NULL);
 
 /*
@@ -221,8 +221,7 @@ cpu_init_first(void)
 #endif
 
 int
-cpu_match(struct device *parent, struct cfdata *match,
-    void *aux)
+cpu_match(device_t parent, cfdata_t match, void *aux)
 {
 
 	return 1;
@@ -265,15 +264,17 @@ cpu_vm_init(struct cpu_info *ci)
 
 
 void
-cpu_attach(struct device *parent, struct device *self, void *aux)
+cpu_attach(device_t parent, device_t self, void *aux)
 {
-	struct cpu_softc *sc = (void *) self;
+	struct cpu_softc *sc = device_private(self);
 	struct cpu_attach_args *caa = aux;
 	struct cpu_info *ci;
 	uintptr_t ptr;
 #if defined(MULTIPROCESSOR)
 	int cpunum = caa->cpu_number;
 #endif
+
+	sc->sc_dev = self;
 
 	/*
 	 * If we're an Application Processor, allocate a cpu_info
@@ -306,7 +307,8 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			printf("\n");
 			panic("%s: running CPU is at apic %d"
 			    " instead of at expected %d",
-			    sc->sc_dev.dv_xname, lapic_cpu_number(), cpunum);
+			    device_xname(sc->sc_dev), lapic_cpu_number(),
+			    cpunum);
 		}
 #endif
 	}
@@ -332,7 +334,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 		if (error != 0) {
 			aprint_normal("\n");
 			aprint_error("%s: mi_cpu_attach failed with %d\n",
-			    sc->sc_dev.dv_xname, error);
+			    device_xname(sc->sc_dev), error);
 			return;
 		}
 #endif
@@ -402,7 +404,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 			cpu_info_list->ci_next = ci;
 		}
 #else
-		aprint_normal("%s: not started\n", sc->sc_dev.dv_xname);
+		aprint_normal("%s: not started\n", device_xname(sc->sc_dev));
 #endif
 		break;
 
@@ -423,7 +425,7 @@ cpu_attach(struct device *parent, struct device *self, void *aux)
 
 		aprint_verbose(
 		    "%s: idle lwp at %p, idle sp at %p\n",
-		    sc->sc_dev.dv_xname, l,
+		    device_xname(sc->sc_dev), l,
 #ifdef i386
 		    (void *)l->l_addr->u_pcb.pcb_esp
 #else
@@ -921,7 +923,7 @@ cpu_offline_md(void)
 
 /* XXX joerg restructure and restart CPUs individually */
 static bool
-cpu_suspend(device_t dv)
+cpu_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;
@@ -949,7 +951,7 @@ cpu_suspend(device_t dv)
 }
 
 static bool
-cpu_resume(device_t dv)
+cpu_resume(device_t dv PMF_FN_ARGS)
 {
 	struct cpu_softc *sc = device_private(dv);
 	struct cpu_info *ci = sc->sc_info;

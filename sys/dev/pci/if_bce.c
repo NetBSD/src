@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.8.6.6 2008/02/27 08:36:35 yamt Exp $	 */
+/* $NetBSD: if_bce.c,v 1.8.6.7 2008/03/17 09:15:11 yamt Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.8.6.6 2008/02/27 08:36:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.8.6.7 2008/03/17 09:15:11 yamt Exp $");
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1123,13 +1123,13 @@ bce_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	/* drain receive queue */
-	if (disable)
-		bce_rxdrain(sc);
-
 	/* Mark the interface down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	/* drain receive queue */
+	if (disable)
+		bce_rxdrain(sc);
 }
 
 /* reset the chip */

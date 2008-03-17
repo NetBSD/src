@@ -1,4 +1,4 @@
-/*	$NetBSD: gencons.c,v 1.40.16.5 2007/12/07 17:26:32 yamt Exp $	*/
+/*	$NetBSD: gencons.c,v 1.40.16.6 2008/03/17 09:14:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -36,7 +36,7 @@
  /* All bugs are subject to removal without further notice */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40.16.5 2007/12/07 17:26:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gencons.c,v 1.40.16.6 2008/03/17 09:14:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -77,8 +77,8 @@ static	int pr_rxdb[4] = {PR_RXDB, PR_RXDB1, PR_RXDB2, PR_RXDB3};
 
 cons_decl(gen);
 
-static	int gencnparam __P((struct tty *, struct termios *));
-static	void gencnstart __P((struct tty *));
+static	int gencnparam(struct tty *, struct termios *);
+static	void gencnstart(struct tty *);
 
 dev_type_open(gencnopen);
 dev_type_close(gencnclose);
@@ -372,7 +372,7 @@ gencnpollc(dev_t dev, int pollflag)
 
 #if defined(MULTIPROCESSOR)
 void
-gencnstarttx()
+gencnstarttx(void)
 {
 	gencnstart(gc_softc[0].gencn_tty);
 }

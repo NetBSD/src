@@ -1,4 +1,4 @@
-/* $NetBSD: envsys.h,v 1.7.18.5 2007/12/07 17:34:53 yamt Exp $ */
+/* $NetBSD: envsys.h,v 1.7.18.6 2008/03/17 09:15:47 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -116,7 +116,10 @@ enum envsys_drive_states {
 	ENVSYS_DRIVE_POWERDOWN,		/* drive is powered down */
 	ENVSYS_DRIVE_FAIL,		/* drive failed */
 	ENVSYS_DRIVE_PFAIL,		/* drive is degraded */
-	ENVSYS_DRIVE_MIGRATING		/* drive is migrating */
+	ENVSYS_DRIVE_MIGRATING,		/* drive is migrating */
+	ENVSYS_DRIVE_OFFLINE,		/* drive is offline */
+	ENVSYS_DRIVE_BUILD,		/* drive is building */
+	ENVSYS_DRIVE_CHECK		/* drive is checking its state */
 };
 
 /* sensor battery capacity states */

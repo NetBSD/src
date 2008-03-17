@@ -1,4 +1,4 @@
-/* $NetBSD: dec_3min.c,v 1.52.10.4 2008/01/21 09:38:18 yamt Exp $ */
+/* $NetBSD: dec_3min.c,v 1.52.10.5 2008/03/17 09:14:22 yamt Exp $ */
 
 /*
  * Copyright (c) 1998 Jonathan Stone.  All rights reserved.
@@ -106,7 +106,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.52.10.4 2008/01/21 09:38:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_3min.c,v 1.52.10.5 2008/03/17 09:14:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,6 +502,7 @@ kn02ba_wbflush()
 void
 dec_3min_tc_init(void)
 {
+#if defined(MIPS3)
 	static struct timecounter tc =  {
 		.tc_get_timecount = (timecounter_get_t *)mips3_cp0_count_read,
 		.tc_counter_mask = ~0u,
@@ -517,4 +518,5 @@ dec_3min_tc_init(void)
 
 		tc_init(&tc);
 	}
+#endif
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_vsbus.c,v 1.1.2.2 2008/02/04 09:22:47 yamt Exp $	*/
+/*	$NetBSD: tc_vsbus.c,v 1.1.2.3 2008/03/17 09:14:34 yamt Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,8 +45,8 @@
 #include <machine/vsbus.h>
 #include <dev/tc/tcvar.h>
 
-static int tcbus_match(struct device *, struct cfdata *, void *);
-static void tcbus_attach(struct device *, struct device *, void *);
+static int tcbus_match(device_t, cfdata_t, void *);
+static void tcbus_attach(device_t, device_t, void *);
 
 struct tcbus_softc {
 	struct tc_softc sc_tc;
@@ -69,7 +69,7 @@ tcbus_get_dma_tag(int slotno)
 }
 
 static void
-tcbus_intr_establish(struct device *dv, void *cookie, int level,
+tcbus_intr_establish(device_t dv, void *cookie, int level,
 	int (*func)(void *), void *arg)
 {
 	struct tcbus_softc * const sc = cookie;
@@ -79,18 +79,18 @@ tcbus_intr_establish(struct device *dv, void *cookie, int level,
 }
 
 static void
-tcbus_intr_disestablish(struct device *dv, void *cookie)
+tcbus_intr_disestablish(device_t dv, void *cookie)
 {
 }
 
 static const struct evcnt *
-tcbus_intr_evcnt(struct device *dv, void *cookie)
+tcbus_intr_evcnt(device_t dv, void *cookie)
 {
 	return NULL;
 }
 
 int
-tcbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
+tcbus_match(device_t parent, cfdata_t cfdata, void *aux)
 {
 	return 0;
 }
@@ -100,10 +100,10 @@ tcbus_match(struct device *parent, struct cfdata *cfdata, void *aux)
 #define	KA4x_TURBOCSR	0x36800000
 
 void
-tcbus_attach(struct device *parent, struct device *self, void *aux)
+tcbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct vsbus_attach_args * const va = aux;
-	struct tcbus_softc * const sc = (void *)self;
+	struct tcbus_softc * const sc = device_private(self);
 	struct tcbus_attach_args tba;
 	struct pte *pte;
 	const size_t nentries = 32768;
@@ -144,8 +144,8 @@ tcbus_attach(struct device *parent, struct device *self, void *aux)
 
 	aprint_normal("\n");
 
-	aprint_verbose("%s: 32K entry DMA SGMAP at PA 0x%x (VA %p)\n",
-	     self->dv_xname, KA4x_TURBOMAPS, pte);
+	aprint_verbose_dev(self, "32K entry DMA SGMAP at PA 0x%x (VA %p)\n",
+	     KA4x_TURBOMAPS, pte);
 
 	tcbus_dmat = &sc->sc_dmatag;
 

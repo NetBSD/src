@@ -1,4 +1,4 @@
-/*	$NetBSD: com_elb.c,v 1.2.16.2 2007/12/07 17:24:36 yamt Exp $	*/
+/*	$NetBSD: com_elb.c,v 1.2.16.3 2008/03/17 09:14:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.2.16.2 2007/12/07 17:24:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_elb.c,v 1.2.16.3 2008/03/17 09:14:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,14 +57,14 @@ struct com_elb_softc {
 	void *sc_ih;
 };
 
-static int	com_elb_probe(struct device *, struct cfdata *, void *);
-static void	com_elb_attach(struct device *, struct device *, void *);
+static int	com_elb_probe(device_t, cfdata_t , void *);
+static void	com_elb_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_elb, sizeof(struct com_elb_softc),
+CFATTACH_DECL_NEW(com_elb, sizeof(struct com_elb_softc),
     com_elb_probe, com_elb_attach, NULL, NULL);
 
 int
-com_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
+com_elb_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct elb_attach_args *oaa = aux;
 
@@ -75,12 +75,14 @@ com_elb_probe(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-com_elb_attach(struct device *parent, struct device *self, void *aux)
+com_elb_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_elb_softc *msc = (void *)self;
+	struct com_elb_softc *msc = device_private(self);
 	struct com_softc *sc = &msc->sc_com;
 	struct elb_attach_args *eaa = aux;
 	bus_space_handle_t ioh;
+
+	sc->sc_dev = self;
 
 	bus_space_map(eaa->elb_bt,
 	    _BUS_SPACE_UNSTRIDE(eaa->elb_bt, eaa->elb_base),

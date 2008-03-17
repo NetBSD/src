@@ -1,4 +1,4 @@
-/* $NetBSD: shared_intr.c,v 1.17 2005/03/29 04:06:20 thorpej Exp $ */
+/* $NetBSD: shared_intr.c,v 1.17.2.1 2008/03/17 09:14:13 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.17 2005/03/29 04:06:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.17.2.1 2008/03/17 09:14:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -41,8 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: shared_intr.c,v 1.17 2005/03/29 04:06:20 thorpej Exp
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
-
-#include <machine/intr.h>
+#include <sys/atomic.h>
+#include <sys/intr.h>
 
 static const char *intr_typename __P((int));
 
@@ -102,7 +102,7 @@ alpha_shared_intr_dispatch(struct alpha_shared_intr *intr, unsigned int num)
 	struct alpha_shared_intrhand *ih;
 	int rv, handled;
 
-	atomic_add_ulong(&intr[num].intr_evcnt.ev_count, 1);
+	atomic_add_long(&intr[num].intr_evcnt.ev_count, 1);
 
 	ih = intr[num].intr_q.tqh_first;
 	handled = 0;

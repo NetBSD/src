@@ -1,4 +1,4 @@
-/* $NetBSD: pcppivar.h,v 1.6.2.1 2008/01/21 09:43:20 yamt Exp $ */
+/* $NetBSD: pcppivar.h,v 1.6.2.2 2008/03/17 09:14:51 yamt Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -37,12 +37,12 @@ struct pcppi_attach_args {
 };
 
 struct pcppi_softc {
-        struct device sc_dv;  
+        device_t sc_dv;  
 
         bus_space_tag_t sc_iot;
         bus_space_handle_t sc_ppi_ioh;
         bus_size_t sc_size;
-        struct attimer_softc *sc_timer;
+        device_t sc_timer;
         
         struct callout sc_bell_ch;
 

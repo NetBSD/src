@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.15.2.6 2008/02/04 09:21:55 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.15.2.7 2008/03/17 09:14:17 yamt Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.20 2001/01/29 00:01:58 mickey Exp $	*/
 
@@ -264,11 +264,6 @@ int	cpu_dump(void);
 #define	CPU_BOOTED_KERNEL	2	/* string: booted kernel name */
 #define	CPU_MAXID		3	/* number of valid machdep ids */
 
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-}
 #endif
 
 #endif /* _MACHINE_CPU_H_ */

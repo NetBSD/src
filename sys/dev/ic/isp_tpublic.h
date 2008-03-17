@@ -1,54 +1,66 @@
-/* $NetBSD: isp_tpublic.h,v 1.13.4.1 2007/09/03 14:34:49 yamt Exp $ */
-/*
- * Copyright (c) 1997-2006 by Matthew Jacob
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+/* $NetBSD: isp_tpublic.h,v 1.13.4.2 2008/03/17 09:14:42 yamt Exp $ */
+/*-
+ *  Copyright (c) 1997-2008 by Matthew Jacob
+ *  All rights reserved.
  * 
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ *  Redistribution and use in source and binary forms, with or without
+ *  modification, are permitted provided that the following conditions
+ *  are met:
  * 
- * THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ *  1. Redistributions of source code must retain the above copyright
+ *     notice, this list of conditions and the following disclaimer.
+ *  2. Redistributions in binary form must reproduce the above copyright
+ *     notice, this list of conditions and the following disclaimer in the
+ *     documentation and/or other materials provided with the distribution.
+ * 
+ *  THIS SOFTWARE IS PROVIDED BY AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ *  ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ *  IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ *  ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+ *  FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ *  DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ *  OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ *  HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ *  SUCH DAMAGE.
  */
 /*
  * Host Adapter Public Target Interface Structures && Routines
+ */
+/*
+ * A note about terminology:
+ *
+ *  "Inner Layer" means this driver (isp and the isp_tpublic API).
+ *
+ *    This module includes the both generic and platform specific pieces.
+ *
+ *  "Outer Layer" means another (external) module.
+ *
+ *    This is an additional module that actually implements SCSI target command
+ *    decode and is the recipient of incoming commands and the source of the
+ *    disposition for them.
  */
 
 #ifndef    _ISP_TPUBLIC_H
 #define    _ISP_TPUBLIC_H    1
 
 /*
- * Action codes set by the MD target driver for
- * the external layer to figure out what to do with.
+ * Action codes set by the Inner Layer for the outer layer to figure out what to do with.
  */
 typedef enum {
     QOUT_HBA_REG=0,     /* the argument is a pointer to a hba_register_t */
     QOUT_ENABLE,        /* the argument is a pointer to a enadis_t */
     QOUT_DISABLE,       /* the argument is a pointer to a enadis_t */
     QOUT_TMD_START,     /* the argument is a pointer to a tmd_cmd_t */
-    QOUT_TMD_DONE,      /* the argument is a pointer to a tmd_cmd_t */
+    QOUT_TMD_DONE,      /* the argument is a pointer to a tmd_xact_t */
     QOUT_NOTIFY,        /* the argument is a pointer to a tmd_notify_t */
     QOUT_HBA_UNREG      /* the argument is a pointer to a hba_register_t */
 } tact_e;
 
 /*
- * Action codes set by the external layer for the
- * MD driver to figure out what to do with.
+ * Action codes set by the outer layer for the
+ * inner layer to figure out what to do with.
  */
 typedef enum {
     QIN_HBA_REG=99,     /* the argument is a pointer to a hba_register_t */
@@ -57,25 +69,27 @@ typedef enum {
     QIN_GETDLIST,       /* the argument is a pointer to a fc_dlist_t */
     QIN_ENABLE,         /* the argument is a pointer to a enadis_t */
     QIN_DISABLE,        /* the argument is a pointer to a enadis_t */
-    QIN_TMD_CONT,       /* the argument is a pointer to a tmd_cmd_t */
+    QIN_TMD_CONT,       /* the argument is a pointer to a tmd_xact_t */
     QIN_TMD_FIN,        /* the argument is a pointer to a tmd_cmd_t */
     QIN_NOTIFY_ACK,     /* the argument is a pointer to a tmd_notify_t */
     QIN_HBA_UNREG,      /* the argument is a pointer to a hba_register_t */
 } qact_e;
 
 /*
- * This structure is used to register to other software modules the
+ * This structure is used to register to the outer layer the
  * binding of an HBA identifier, driver name and instance and the
- * lun width capapbilities of this target driver. It's up to each
- * platform to figure out how it wants to do this, but a typical
- * sequence would be for the MD layer to find some external module's
- * entry point and start by sending a QOUT_HBA_REG with info filled
- * in, and the external module to call back with a QIN_HBA_REG that
- * passes back the corresponding information.
+ * lun width capapbilities of this inner layer. It's up to each
+ * platform to figure out how it wants to actually implement this.
+ * A typical sequence would be for the MD layer to find some external
+ * module's entry point and start by sending a QOUT_HBA_REG with info
+ * filled in, and the external module to call back with a QIN_HBA_REG
+ * that passes back the corresponding information.
+ *
+ * The r_version tag defines the version of this API.
  */
-#define    QR_VERSION    16
+#define    QR_VERSION    19
 typedef struct {
-    /* NB: tags from here to r_version must never change */
+    /* NB: structure tags from here to r_version must never change */
     void *                  r_identity;
     void                    (*r_action)(qact_e, void *);
     char                    r_name[8];
@@ -118,10 +132,13 @@ typedef struct {
     int                     d_count;
     uint64_t *              d_wwpns;
 } fc_dlist_t;
+
 /*
- * Notify structure
+ * Notify structure- these are for asynchronous events that need to be sent
+ * as notifications to the outer layer. It should be pretty self-explanatory.
  */
 typedef enum {
+    NT_UNKNOWN=0x999,
     NT_ABORT_TASK=0x1000,
     NT_ABORT_TASK_SET,
     NT_CLEAR_ACA,
@@ -151,7 +168,12 @@ typedef struct tmd_notify {
 } tmd_notify_t;
 #define LUN_ANY     0xffff
 #define TGT_ANY     ((uint64_t) -1)
+#ifdef  INI_ANY
 #define INI_ANY     ((uint64_t) -1)
+#endif
+#ifndef INI_NONE
+#define INI_NONE    ((uint64_t) 0)
+#endif
 #define TAG_ANY     ((uint64_t) 0)
 #define MATCH_TMD(tmd, iid, lun, tag)                   \
     (                                                   \
@@ -162,164 +184,193 @@ typedef struct tmd_notify {
     )
 
 /*
+ * Lun ENABLE/DISABLE
+ *
  * A word about ENABLE/DISABLE: the argument is a pointer to a enadis_t
- * with en_hba, en_iid, en_chan, en_tgt and en_lun filled out.
+ * with en_hba, en_chan and en_lun filled out. We used to have an iid
+ * and target pair, but this just gets silly so we made initiator id
+ * and target id something you set, once, elsewhere.
  *
  * If an error occurs in either enabling or disabling the described lun
- * cd_error is set with an appropriate non-zero value.
+ * en_error is set with an appropriate non-zero value.
  */
 typedef struct {
     void *          en_private;     /* for outer layer usage */
     void *          en_hba;         /* HBA tag */
-    uint64_t        en_iid;         /* initiator ID */
-    uint64_t        en_tgt;         /* target id */
     uint16_t        en_lun;         /* logical unit */
     uint16_t        en_chan;        /* channel on card */
     int             en_error;
 } enadis_t;
 
+
+
 /*
- * Suggested Software Target Mode Command Handling structure.
+ * Data Transaction
  *
- * A note about terminology:
+ * A tmd_xact_t is a structure used to describe a transaction within
+ * an overall command. It used to be part of the overall command,
+ * but it became desirable to allow for multiple simultaneous
+ * transfers for a command to happen. Generally these structures
+ * define data to be moved (along with the relative offset within
+ * the overall command) with the last structure containing status
+ * and sense (if needed) as well.
  *
- *   MD stands for "Machine Dependent".
+ * The td_cmd tag points back to the owning command.
  *
- *    This driver is structured in three layers: Outer MD, core, and inner MD.
- *    The latter also is bus dependent (i.e., is cognizant of PCI bus issues
- *    as well as platform issues).
+ * The td_data tag points to the (platform specific) data descriptor.
  *
+ * The td_lprivate is for use by the Inner Layer for private usage.
  *
- *   "Outer Layer" means "Other Module"
+ * The td_xfrlen says whether this transaction is moving data- if nonzero.
  *
- *    Some additional module that actually implements SCSI target command
- *    policy is the recipient of incoming commands and the source of the
- *    disposition for them.
+ * The td_offset states what the relative offset within the comamnd the
+ * data transfer will start at. It is undefined if td_xfrlen is zero.
  *
- * The command structure below is one suggested possible MD command structure,
- * but since the handling of thbis is entirely in the MD layer, there is
- * no explicit or implicit requirement that it be used.
+ * The td_error flag will note any errors that occurred during an attempt
+ * to start this transaction. The inner layer is responsible for setting
+ * this.
  *
- * The cd_private tag should be used by the MD layer to keep a free list
- * of these structures. Code outside of this driver can then use this
- * to identify it's own unit structures. That is, when not on the MD
- * layer's freelist, the MD layer should shove into it the identifier
- * that the outer layer has for it- passed in on an initial QIN_HBA_REG
- * call (see below).
+ * The td_hflags tag is set by the outer layer to indicate how the inner
+ * layer is supposed to treat this transaction.
+ *
+ * The td_lflags tag is set by the inner layer to indicate whether this
+ * transaction sent status and/or sense. Note that (much as it hurts),
+ * this API allows the inner layer to *fail* to send sense even if asked
+ * to- that is, AUTOSENSE is not a requirement of this API and the outer
+ * layer has to be prepared for this (unlikely) eventuality.
+ */
+
+typedef struct tmd_cmd tmd_cmd_t;
+typedef struct tmd_xact {
+    tmd_cmd_t *         td_cmd;                 /* cross-ref to tmd_cmd_t */
+    void *              td_data;                /* data descriptor */
+    void *              td_lprivate;            /* private for lower layer */
+    uint32_t            td_xfrlen;              /* size of this data load */
+    uint32_t            td_offset;              /* offset for this data load */
+    int                 td_error;               /* error with this transfer */
+    uint8_t             td_hflags;              /* flags set by caller */
+    uint8_t             td_lflags;              /* flags set by callee */
+} tmd_xact_t;
+
+#define TDFH_STSVALID   0x01    /* status is valid - include it */
+#define TDFH_SNSVALID   0x02    /* sense data (from outer layer) good - include it */
+#define TDFH_DATA_IN    0x04    /* target (us) -> initiator (them) */
+#define TDFH_DATA_OUT   0x08    /* initiator (them) -> target (us) */
+#define TDFH_DATA_MASK  0x0C    /* mask to cover data direction */
+#define TDFH_PRIVATE    0xF0    /* private outer layer usage */
+
+#define TDFL_SENTSTATUS 0x01    /* this transaction sent status */
+#define TDFL_SENTSENSE  0x02    /* this transaction sent sense data */
+#define TDFL_ERROR      0x04    /* this transaction had an error */
+#define TDFL_PRIVATE    0xF0    /* private inner layer usage */
+
+/*
+ * The command structure below the SCSI Command structure that is
+ * is the whole point of this API. After a LUN is (or LUNS are)
+ * enabled, initiators who send commands addressed to the port,
+ * channel and lun that have been enabled cause an interrupt which
+ * causes the chip to receive the command and present it to the
+ * inner layer. The inner layer allocates one of this command
+ * structures and copies relevant information to it and sends it
+ * to the outer layer with the action QOUT_TMD_START.
+ *
+ * The outer layer is then responsible for command decode and is responsible
+ * for sending any transactions back (via a QIN_TMD_CONT) to the inner layer
+ * that (optionally) moves data and then sends closing status.
+ *
+ * The outer layer, when informed of the status of the final transaction
+ * then releases this structure by sending it back to the inner layer
+ * with the action QOUT_TMD_FIN.
+ *
+ * The structure tag meanings are as described below.
  *
  * The cd_hba tag is a tag that uniquely identifies the HBA this target
  * mode command is coming from. The outer layer has to pass this back
- * unchanged to avoid chaos.
+ * unchanged to avoid chaos. It is identical to the r_identity tag used
+ * by the inner layer to register with the outer layer.
  *
- * The cd_iid, cd_tgt, cd_lun and cd_port tags are used to identify the
- * id of the initiator who sent us a command, the target claim to be, the
- * lun on the target we claim to be, and the port instance (for multiple
- * port host adapters) that this applies to (consider it an extra port
- * parameter). The iid, tgt and lun values are deliberately chosen to be
- * fat so that, for example, World Wide Names can be used instead of
- * the units that the firmware uses (in the case where the MD
- * layer maintains a port database, for example).
+ * The cd_iid, cd_channel, cd_tgt and cd_lun tags are used to identify the
+ * the initiator who sent us a command, the channel on the this particular
+ * hardware port we arrived on (for multiple channel devices), the target we
+ * claim to be, and the lun on that target.
  *
- * The cd_tagtype field specifies what kind of command tag type, if
- * any, has been sent with the command. Note that the Outer Layer
- * still needs to pass the tag handle through unchanged even
- * if the tag type is CD_UNTAGGED.
- *
- * The cd_cdb contains storage for the passed in command descriptor block.
- * There is no need to define length as the callee should be able to
- * figure this out.
- *
- * The tag cd_lflags are the flags set by the MD driver when it gets
- * command incoming or when it needs to inform any outside entities
- * that the last requested action failed.
- *
- * The tag cd_hflags should be set by any outside software to indicate
- * the validity of sense and status fields (defined below) and to indicate
- * the direction data is expected to move. It is an error to have both
- * CDFH_DATA_IN and CDFH_DATA_OUT set.
- *
- * If the CDFH_STSVALID flag is set, the command should be completed (after
- * sending any data and/or status). If CDFH_SNSVALID is set and the MD layer
- * can also handle sending the associated sense data (either back with an
- * FCP RESPONSE IU for Fibre Channel or otherwise automatically handling a
- * REQUEST SENSE from the initator for this target/lun), the MD layer will
- * set the CDFL_SENTSENSE flag on successful transmission of the sense data.
- * It is an error for the CDFH_SNSVALID bit to be set and CDFH_STSVALID not
- * to be set. It is an error for the CDFH_SNSVALID be set and the associated
- * SCSI status (cd_scsi_status) not be set to CHECK CONDITON.
- * 
- * The tag cd_data points to a data segment to either be filled or
- * read from depending on the direction of data movement. The tag
- * is undefined if no data direction is set. The MD layer and outer
- * layers must agree on the meaning of cd_data and it is specifically
- * not defined here.
+ * The cd_tagval field is a tag that uniquely describes this tag. It may
+ * or may not have any correspondence to an underying hardware tag. The
+ * outer layer must pass this back unchanged or chaos will result.
  *
  * The tag cd_totlen is the total data amount expected to be moved
- * over the life of the command. It may be set by the MD layer, possibly
- * from the datalen field of an FCP CMND IU unit. If it shows up in the outer
- * layers set to zero and the CDB indicates data should be moved, the outer
- * layer should set it to the amount expected to be moved.
+ * for this command. This will be set to non-zero for transports
+ * that know this value from the transport level (e.g., Fibre Channel).
+ * If it shows up in the outer layers set to zero, the total data length
+ * must be inferred from the CDB.
  *
- * The tag cd_resid should be the total residual of data not transferred.
- * The outer layers need to set this at the begining of command processing
- * to equal cd_totlen. As data is successfully moved, this value is decreased.
- * At the end of a command, any nonzero residual indicates the number of bytes
- * requested by the command but not moved.
+ * The tag cd_moved is the total amount of data moved so far. It is the
+ * responsibilty of the inner layer to set this for every transaction and
+ * to keep track of it so that transport level residuals may be correctly
+ * set.
  *
- * The tag cd_xfrlen is the length of the currently active data transfer.
- * This allows several interations between any outside software and the
- * MD layer to move data.
+ * The cd_cdb contains storage for the passed in SCSI command.
  *
- * The reason that total length and total residual have to be tracked
- * is to keep track of relative offset.
+ * The cd_tagtype field specifies what kind of command tag type, if
+ * any, has been sent with this command.
  *
- * The tags cd_sense and cd_scsi_status are pretty obvious.
+ * The tag cd_flags has some junk flags set but mostly has flags reserved for outer layer use.
  *
- * The tag cd_error is to communicate between the MD layer and outer software
- * the current error conditions.
+ * The tags cd_sense and cd_scsi_status are self-explanatory.
  *
- * The tag cd_lreserved, cd_hreserved are scratch areas for use for the MD
- * and outer layers respectively.
+ * The cd_xact tag is the first or only transaction structure related to this command.
+ *
+ * The tag cd_lreserved, cd_hreserved are scratch areas for use for the outer and inner layers respectively.
  * 
  */
 
-#ifndef    TMD_CDBLEN
-#define    TMD_CDBLEN       16
+#ifndef TMD_CDBLEN
+#define TMD_CDBLEN       16
 #endif
-#ifndef    TMD_SENSELEN
-#define    TMD_SENSELEN     18
+#ifndef TMD_SENSELEN
+#define TMD_SENSELEN     18
 #endif
-#ifndef    QCDS
-#define    QCDS             (sizeof (void *))
+#ifndef QCDS
+#define QCDS             (sizeof (uint64_t))
+#endif
+#ifndef TMD_PRIV_LO
+#define TMD_PRIV_LO 4
+#endif
+#ifndef TMD_PRIV_HI
+#define TMD_PRIV_HI 4
 #endif
 
-typedef struct tmd_cmd {
-    void *              cd_private; /* private data pointer */
+struct tmd_cmd {
     void *              cd_hba;     /* HBA tag */
-    void *              cd_data;    /* 'pointer' to data */
     uint64_t            cd_iid;     /* initiator ID */
     uint64_t            cd_tgt;     /* target id */
-    uint8_t             cd_lun[8];  /* logical unit */
     uint64_t            cd_tagval;  /* tag value */
-    uint32_t            cd_channel; /* channel index */
-    uint32_t            cd_lflags;  /* flags lower level sets */
-    uint32_t            cd_hflags;  /* flags higher level sets */
+    uint8_t             cd_lun[8];  /* logical unit */
     uint32_t            cd_totlen;  /* total data load */
-    uint32_t            cd_resid;   /* total data residual */
-    uint32_t            cd_xfrlen;  /* current data load */
-    int32_t             cd_error;   /* current error */
+    uint32_t            cd_moved;   /* total data moved so far */
+    uint16_t            cd_channel; /* channel index */
+    uint16_t            cd_flags;   /* flags */
+    uint16_t            cd_req_cnt; /* how many tmd_xact_t's are active */
+    uint8_t             cd_cdb[TMD_CDBLEN];
     uint8_t             cd_tagtype; /* tag type */
     uint8_t             cd_scsi_status;
     uint8_t             cd_sense[TMD_SENSELEN];
-    uint8_t             cd_cdb[TMD_CDBLEN];
+    tmd_xact_t          cd_xact;    /* first or only transaction */
     union {
-        void *          ptrs[QCDS / sizeof (void *)];
-        uint64_t        llongs[QCDS / sizeof (uint64_t)];
-        uint32_t        longs[QCDS / sizeof (uint32_t)];
-        uint16_t        shorts[QCDS / sizeof (uint16_t)];
-        uint8_t         bytes[QCDS];
-    } cd_lreserved[4], cd_hreserved[4];
-} tmd_cmd_t;
+        void *          ptrs[QCDS / sizeof (void *)];       /* (assume) one pointer */
+        uint64_t        llongs[QCDS / sizeof (uint64_t)];   /* one long long */
+        uint32_t        longs[QCDS / sizeof (uint32_t)];    /* two longs */
+        uint16_t        shorts[QCDS / sizeof (uint16_t)];   /* four shorts */
+        uint8_t         bytes[QCDS];                        /* eight bytes */
+    } cd_lreserved[TMD_PRIV_LO], cd_hreserved[TMD_PRIV_HI];
+};
+
+#define CDF_NODISC      0x0001  /* disconnects disabled */
+#define CDF_DATA_IN     0x0002  /* target (us) -> initiator (them) */
+#define CDF_DATA_OUT    0x0004  /* initiator (them) -> target (us) */
+#define CDF_BIDIR       0x0006  /* bidirectional data */
+#define CDF_SNSVALID    0x0008  /* sense is set on incoming command */
+#define CDF_PRIVATE     0xff00  /* available for private use in outer layer */
 
 /* defined tags */
 #define CD_UNTAGGED     0
@@ -350,74 +401,14 @@ typedef struct tmd_cmd {
     memset(&(lptr)[2], 0, 6)
 
 /*
- * Note that NODISC (obviously) doesn't apply to non-SPI transport.
+ * Inner Layer Handler Function.
  *
- * Note that knowing the data direction and lengh at the time of receipt of
- * a command from the initiator is a feature only of Fibre Channel.
- *
- * The CDFL_BIDIR is in anticipation of the adoption of some newer
- * features required by OSD.
- *
- * The principle selector for MD layer to know whether data is to
- * be transferred in any QOUT_TMD_CONT call is cd_xfrlen- the
- * flags CDFH_DATA_IN and CDFH_DATA_OUT define which direction.
- */
-#define    CDFL_SNSVALID        0x01            /* sense data (from f/w) good */
-#define    CDFL_SENTSTATUS      0x02            /* last action sent status */
-#define    CDFL_DATA_IN         0x04            /* target (us) -> initiator (them) */
-#define    CDFL_DATA_OUT        0x08            /* initiator (them) -> target (us) */
-#define    CDFL_BIDIR           0x0C            /* bidirectional data */
-#define    CDFL_ERROR           0x10            /* last action ended in error */
-#define    CDFL_NODISC          0x20            /* disconnects disabled */
-#define    CDFL_SENTSENSE       0x40            /* last action sent sense data */
-#define    CDFL_BUSY            0x80            /* this command is not on a free list */
-#define    CDFL_PRIVATE         0xFF000000      /* private layer flags */
-
-#define    CDFH_SNSVALID        0x01            /* sense data (from outer layer) good */
-#define    CDFH_STSVALID        0x02            /* status valid */
-#define    CDFH_DATA_IN         0x04            /* target (us) -> initiator (them) */
-#define    CDFH_DATA_OUT        0x08            /* initiator (them) -> target (us) */
-#define    CDFH_DATA_MASK       0x0C            /* mask to cover data direction */
-#define    CDFH_PRIVATE         0xFF000000      /* private layer flags */
-
-
-/*
- * A word about the START/CONT/DONE/FIN dance:
- *
- *    When the HBA is enabled for receiving commands, one may show up
- *    without notice. When that happens, the MD target mode driver
- *    gets a tmd_cmd_t, fills it with the info that just arrived, and
- *    calls the outer layer with a QOUT_TMD_START code and pointer to
- *    the tmd_cmd_t.
- *
- *    The outer layer decodes the command, fetches data, prepares stuff,
- *    whatever, and starts by passing back the pointer with a QIN_TMD_CONT
- *    code which causes the MD target mode driver to generate CTIOs to
- *    satisfy whatever action needs to be taken. When those CTIOs complete,
- *    the MD target driver sends the pointer to the cmd_tmd_t back with
- *    a QOUT_TMD_DONE code. This repeats for as long as necessary. These
- *    may not be done in parallel- they are sequential operations.
- *
- *    The outer layer signals it wants to end the command by settings within
- *    the tmd_cmd_t itself. When the final QIN_TMD_CONT is reported completed,
- *    the outer layer frees the tmd_cmd_t by sending the pointer to it
- *    back with a QIN_TMD_FIN code.
- *
- *    The graph looks like:
- *
- *    QOUT_TMD_START -> [ QIN_TMD_CONT -> QOUT_TMD_DONE ] * -> QIN_TMD_FIN.
- *
- */
-
-/*
- * Target handler functions.
- *
- * The MD target handler function (the outer layer calls this)
- * should be be prototyped like:
+ * The inner layer target handler function (the outer layer calls this)
+ * should be be prototyped like so:
  *
  *    void target_action(qact_e, void *arg)
  *
- * The outer layer target handler function (the MD layer calls this)
+ * The outer layer target handler function (the inner layer calls this)
  * should be be prototyped like:
  *
  *    void scsi_target_handler(tact_e, void *arg)

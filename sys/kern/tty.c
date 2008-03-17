@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.173.2.9 2008/02/04 09:24:20 yamt Exp $	*/
+/*	$NetBSD: tty.c,v 1.173.2.10 2008/03/17 09:15:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.9 2008/02/04 09:24:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.173.2.10 2008/03/17 09:15:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1423,7 +1423,7 @@ ttyflush(struct tty *tp, int rw)
 		cdev_stop(tp, rw);
 		FLUSHQ(&tp->t_outq);
 		clwakeup(&tp->t_outq);
-		selnotify(&tp->t_wsel, NOTE_SUBMIT);
+		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 }
 
@@ -2076,7 +2076,7 @@ ttypull(struct tty *tp)
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 		clwakeup(&tp->t_outq);
-		selnotify(&tp->t_wsel, NOTE_SUBMIT);
+		selnotify(&tp->t_wsel, 0, NOTE_SUBMIT);
 	}
 	return tp->t_outq.c_cc != 0;
 }
@@ -2247,7 +2247,7 @@ ttwakeup(struct tty *tp)
 
 	KASSERT(mutex_owned(&tty_lock));
 
-	selnotify(&tp->t_rsel, NOTE_SUBMIT);
+	selnotify(&tp->t_rsel, 0, NOTE_SUBMIT);
 	if (ISSET(tp->t_state, TS_ASYNC))
 		ttysig(tp, TTYSIG_PG2, SIGIO);
 #if 0

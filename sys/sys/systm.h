@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.179.2.9 2008/02/11 15:00:09 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.179.2.10 2008/03/17 09:15:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -483,5 +483,12 @@ do {						\
 /* Preemption control. */
 void	crit_enter(void);
 void	crit_exit(void);
+
+void assert_sleepable(void);
+#if defined(DEBUG)
+#define	ASSERT_SLEEPABLE()	assert_sleepable()
+#else /* defined(DEBUG) */
+#define	ASSERT_SLEEPABLE()	/* nothing */
+#endif /* defined(DEBUG) */
 
 #endif	/* !_SYS_SYSTM_H_ */

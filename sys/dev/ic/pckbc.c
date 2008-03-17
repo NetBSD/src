@@ -1,4 +1,4 @@
-/* $NetBSD: pckbc.c,v 1.34.4.3 2008/01/21 09:43:03 yamt Exp $ */
+/* $NetBSD: pckbc.c,v 1.34.4.4 2008/03/17 09:14:43 yamt Exp $ */
 
 /*
  * Copyright (c) 2004 Ben Harris.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.34.4.3 2008/01/21 09:43:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc.c,v 1.34.4.4 2008/03/17 09:14:43 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ pckbc_attach_slot(sc, slot)
 		sdata = malloc(sizeof(struct pckbc_slotdata),
 		    M_DEVBUF, M_NOWAIT);
 		if (sdata == NULL) {
-			printf("%s: no memory\n", sc->sc_dv.dv_xname);
+			aprint_error_dev(sc->sc_dv, "no memory\n");
 			return (0);
 		}
 		t->t_slotdata[slot] = sdata;
@@ -284,7 +284,7 @@ pckbc_attach_slot(sc, slot)
 		alloced++;
 	}
 
-	child = pckbport_attach_slot(&sc->sc_dv, t->t_pt, slot);
+	child = pckbport_attach_slot(sc->sc_dv, t->t_pt, slot);
 
 	if (child == NULL && alloced) {
 		free(t->t_slotdata[slot], M_DEVBUF);
@@ -715,7 +715,7 @@ pckbc_cnattach(iot, addr, cmd_offset, slot)
 }
 
 bool
-pckbc_resume(device_t dv)
+pckbc_resume(device_t dv PMF_FN_ARGS)
 {
 	struct pckbc_softc *sc = device_private(dv);
 	struct pckbc_internal *t;
