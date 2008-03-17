@@ -1,4 +1,4 @@
-/*	$NetBSD: rl.c,v 1.25.2.3 2007/10/27 11:34:01 yamt Exp $	*/
+/*	$NetBSD: rl.c,v 1.25.2.4 2008/03/17 09:15:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.25.2.3 2007/10/27 11:34:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.25.2.4 2008/03/17 09:15:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -70,33 +70,33 @@ __KERNEL_RCSID(0, "$NetBSD: rl.c,v 1.25.2.3 2007/10/27 11:34:01 yamt Exp $");
 #include "ioconf.h"
 #include "locators.h"
 
-static	int rlcmatch(struct device *, struct cfdata *, void *);
-static	void rlcattach(struct device *, struct device *, void *);
+static	int rlcmatch(device_t, cfdata_t, void *);
+static	void rlcattach(device_t, device_t, void *);
 static	int rlcprint(void *, const char *);
 static	void rlcintr(void *);
-static	int rlmatch(struct device *, struct cfdata *, void *);
-static	void rlattach(struct device *, struct device *, void *);
+static	int rlmatch(device_t, cfdata_t, void *);
+static	void rlattach(device_t, device_t, void *);
 static	void rlcstart(struct rlc_softc *, struct buf *);
 static	void waitcrdy(struct rlc_softc *);
-static	void rlcreset(struct device *);
+static	void rlcreset(device_t);
 
-CFATTACH_DECL(rlc, sizeof(struct rlc_softc),
+CFATTACH_DECL_NEW(rlc, sizeof(struct rlc_softc),
     rlcmatch, rlcattach, NULL, NULL);
 
-CFATTACH_DECL(rl, sizeof(struct rl_softc),
+CFATTACH_DECL_NEW(rl, sizeof(struct rl_softc),
     rlmatch, rlattach, NULL, NULL);
 
-dev_type_open(rlopen);
-dev_type_close(rlclose);
-dev_type_read(rlread);
-dev_type_write(rlwrite);
-dev_type_ioctl(rlioctl);
-dev_type_strategy(rlstrategy);
-dev_type_dump(rldump);
-dev_type_size(rlsize);
+static dev_type_open(rlopen);
+static dev_type_close(rlclose);
+static dev_type_read(rlread);
+static dev_type_write(rlwrite);
+static dev_type_ioctl(rlioctl);
+static dev_type_strategy(rlstrategy);
+static dev_type_dump(rldump);
+static dev_type_size(rlpsize);
 
 const struct bdevsw rl_bdevsw = {
-	rlopen, rlclose, rlstrategy, rlioctl, rldump, rlsize, D_DISK
+	rlopen, rlclose, rlstrategy, rlioctl, rldump, rlpsize, D_DISK
 };
 
 const struct cdevsw rl_cdevsw = {
@@ -111,7 +111,7 @@ const struct cdevsw rl_cdevsw = {
 #define RL_RREG(reg) \
 	bus_space_read_2(sc->sc_iot, sc->sc_ioh, (reg))
 
-static const char *rlstates[] = {
+static const char * const rlstates[] = {
 	"drive not loaded",
 	"drive spinning up",
 	"drive brushes out",
@@ -122,7 +122,7 @@ static const char *rlstates[] = {
 	"drive spun down",
 };
 
-static struct dkdriver rldkdriver = {
+static const struct dkdriver rldkdriver = {
 	rlstrategy, minphys
 };
 
@@ -152,7 +152,7 @@ waitcrdy(struct rlc_softc *sc)
 		if (RL_RREG(RL_CS) & RLCS_CRDY)
 			return;
 	}
-	printf("%s: never got ready\n", sc->sc_dev.dv_xname); /* ?panic? */
+	aprint_error_dev(sc->sc_dev, "never got ready\n"); /* ?panic? */
 }
 
 int
@@ -171,7 +171,7 @@ rlcprint(void *aux, const char *name)
  * Force the controller to interrupt.
  */
 int
-rlcmatch(struct device *parent, struct cfdata *cf, void *aux)
+rlcmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct uba_attach_args *ua = aux;
 	struct rlc_softc ssc, *sc = &ssc;
@@ -192,20 +192,22 @@ rlcmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-rlcattach(struct device *parent, struct device *self, void *aux)
+rlcattach(device_t parent, device_t self, void *aux)
 {
 	struct rlc_softc *sc = device_private(self);
 	struct uba_attach_args *ua = aux;
 	struct rlc_attach_args ra;
 	int i, error;
 
+	sc->sc_dev = self;
+	sc->sc_uh = device_private(parent);
 	sc->sc_iot = ua->ua_iot;
 	sc->sc_ioh = ua->ua_ioh;
 	sc->sc_dmat = ua->ua_dmat;
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec,
 		rlcintr, sc, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, ua->ua_evcnt,
-		sc->sc_dev.dv_xname, "intr");
+		device_xname(sc->sc_dev), "intr");
 	uba_reset_establish(rlcreset, self);
 
 	printf("\n");
@@ -218,7 +220,7 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 	error = bus_dmamap_create(sc->sc_dmat, MAXRLXFER, 1, MAXRLXFER, 0,
 	    BUS_DMA_ALLOCNOW, &sc->sc_dmam);
 	if (error) {
-		printf(": Failed to allocate DMA map, error %d\n", error);
+		aprint_error(": Failed to allocate DMA map, error %d\n", error);
 		return;
 	}
 	bufq_alloc(&sc->sc_q, "disksort", BUFQ_SORT_CYLINDER);
@@ -230,12 +232,12 @@ rlcattach(struct device *parent, struct device *self, void *aux)
 		ra.type = RL_RREG(RL_MP);
 		ra.hwid = i;
 		if ((RL_RREG(RL_CS) & RLCS_ERR) == 0)
-			config_found(&sc->sc_dev, &ra, rlcprint);
+			config_found(sc->sc_dev, &ra, rlcprint);
 	}
 }
 
 int
-rlmatch(struct device *parent, struct cfdata *cf, void *aux)
+rlmatch(device_t parent, cfdata_t cf, void *aux)
 {
 	struct rlc_attach_args *ra = aux;
 
@@ -246,14 +248,16 @@ rlmatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-rlattach(struct device *parent, struct device *self, void *aux)
+rlattach(device_t parent, device_t self, void *aux)
 {
 	struct rl_softc *rc = device_private(self);
 	struct rlc_attach_args *ra = aux;
 	struct disklabel *dl;
 
+	rc->rc_dev = self;
+	rc->rc_rlc = device_private(parent);
 	rc->rc_hwid = ra->hwid;
-	disk_init(&rc->rc_disk, rc->rc_dev.dv_xname, &rldkdriver);
+	disk_init(&rc->rc_disk, device_xname(rc->rc_dev), &rldkdriver);
 	disk_attach(&rc->rc_disk);
 	dl = rc->rc_disk.dk_label;
 	dl->d_npartitions = 3;
@@ -274,8 +278,7 @@ rlattach(struct device *parent, struct device *self, void *aux)
 	dl->d_sbsize = SBLOCKSIZE;
 	dl->d_rpm = 2400;
 	dl->d_type = DTYPE_DEC;
-	printf(": %s, %s\n", dl->d_typename,
-	    rlstate((struct rlc_softc *)parent, ra->hwid));
+	printf(": %s, %s\n", dl->d_typename, rlstate(rc->rc_rlc, ra->hwid));
 
 	/*
 	 * XXX We should try to discovery wedges here, but
@@ -287,22 +290,19 @@ rlattach(struct device *parent, struct device *self, void *aux)
 int
 rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 {
-	int error, part, unit, mask;
-	struct disklabel *dl;
+	struct rl_softc * const rc = device_lookup_private(&rl_cd, DISKUNIT(dev));
 	struct rlc_softc *sc;
-	struct rl_softc *rc;
+	int error, part, mask;
+	struct disklabel *dl;
 	const char *msg;
 
 	/*
 	 * Make sure this is a reasonable open request.
 	 */
-	unit = DISKUNIT(dev);
-	if (unit >= rl_cd.cd_ndevs)
-		return ENXIO;
-	rc = rl_cd.cd_devs[unit];
-	if (rc == 0)
+	if (rc == NULL)
 		return ENXIO;
 
+	sc = rc->rc_rlc;
 	part = DISKPART(dev);
 
 	mutex_enter(&rc->rc_disk.dk_openlock);
@@ -316,7 +316,6 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		goto bad1;
 	}
 
-	sc = (struct rlc_softc *)device_parent(&rc->rc_dev);
 	/* Check that the disk actually is useable */
 	msg = rlstate(sc, rc->rc_hwid);
 	if (msg == NULL || msg == rlstates[RLMP_UNLOAD] ||
@@ -338,12 +337,12 @@ rlopen(dev_t dev, int flag, int fmt, struct lwp *l)
 		rc->rc_cyl = (mp >> 7) & 0777;
 		rc->rc_state = DK_OPEN;
 		/* Get disk label */
-		printf("%s: ", rc->rc_dev.dv_xname);
 		maj = cdevsw_lookup_major(&rl_cdevsw);
 		if ((msg = readdisklabel(MAKEDISKDEV(maj,
-		    device_unit(&rc->rc_dev), RAW_PART), rlstrategy, dl, NULL)))
-			printf("%s: ", msg);
-		printf("size %d sectors\n", dl->d_secperunit);
+		    device_unit(rc->rc_dev), RAW_PART), rlstrategy, dl, NULL)))
+			aprint_normal_dev(rc->rc_dev, "%s", msg);
+		aprint_normal_dev(rc->rc_dev, "size %d sectors\n",
+		    dl->d_secperunit);
 	}
 	if (part >= dl->d_npartitions) {
 		error = ENXIO;
@@ -395,23 +394,15 @@ rlclose(dev_t dev, int flag, int fmt, struct lwp *l)
 void
 rlstrategy(struct buf *bp)
 {
+	struct rl_softc * const rc = device_lookup_private(&rl_cd, DISKUNIT(bp->b_dev));
 	struct disklabel *lp;
-	struct rlc_softc *sc;
-	struct rl_softc *rc;
-	int unit, s, err;
-	/*
-	 * Make sure this is a reasonable drive to use.
-	 */
-	unit = DISKUNIT(bp->b_dev);
-	if (unit > rl_cd.cd_ndevs || (rc = rl_cd.cd_devs[unit]) == NULL) {
-		bp->b_error = ENXIO;
-		goto done;
-	}
-	if (rc->rc_state != DK_OPEN) /* How did we end up here at all? */
+	int s;
+
+	if (rc == NULL || rc->rc_state != DK_OPEN) /* How did we end up here at all? */
 		panic("rlstrategy: state impossible");
 
 	lp = rc->rc_disk.dk_label;
-	if ((err = bounds_check_with_label(&rc->rc_disk, bp, 1)) <= 0)
+	if (bounds_check_with_label(&rc->rc_disk, bp, 1) <= 0)
 		goto done;
 
 	if (bp->b_bcount == 0)
@@ -420,11 +411,10 @@ rlstrategy(struct buf *bp)
 	bp->b_rawblkno =
 	    bp->b_blkno + lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	bp->b_cylinder = bp->b_rawblkno / lp->d_secpercyl;
-	sc = (struct rlc_softc *)device_parent(&rc->rc_dev);
 
 	s = splbio();
-	BUFQ_PUT(sc->sc_q, bp);
-	rlcstart(sc, 0);
+	BUFQ_PUT(rc->rc_rlc->sc_q, bp);
+	rlcstart(rc->rc_rlc, 0);
 	splx(s);
 	return;
 
@@ -500,51 +490,49 @@ rlioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			err = EBADF;
 		break;
 
-	case DIOCAWEDGE:
-	    {
+	case DIOCAWEDGE: {
 		struct dkwedge_info *dkw = (void *) addr;
 
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, rc->rc_dev.dv_xname);
-		return (dkwedge_add(dkw));
-	    }
+		strcpy(dkw->dkw_parent, device_xname(rc->rc_dev));
+		return dkwedge_add(dkw);
+	}
 
-	case DIOCDWEDGE:
-	    {
+	case DIOCDWEDGE: {
 		struct dkwedge_info *dkw = (void *) addr;
 
 		if ((flag & FWRITE) == 0)
 			return (EBADF);
 
 		/* If the ioctl happens here, the parent is us. */
-		strcpy(dkw->dkw_parent, rc->rc_dev.dv_xname);
-		return (dkwedge_del(dkw));
-	    }
+		strcpy(dkw->dkw_parent, device_xname(rc->rc_dev));
+		return dkwedge_del(dkw);
+	}
 
-	case DIOCLWEDGES:
-	    {
+	case DIOCLWEDGES: {
 		struct dkwedge_list *dkwl = (void *) addr;
 
-		return (dkwedge_list(&rc->rc_disk, dkwl, l));
-	    }
+		return dkwedge_list(&rc->rc_disk, dkwl, l);
+	}
 
 	default:
 		err = ENOTTY;
+		break;
 	}
 	return err;
 }
 
 int
-rlsize(dev_t dev)
+rlpsize(dev_t dev)
 {
+	struct rl_softc * const rc = device_lookup_private(&rl_cd, DISKUNIT(dev));
 	struct disklabel *dl;
-	struct rl_softc *rc;
-	int size, unit = DISKUNIT(dev);
+	int size;
 
-	if ((unit >= rl_cd.cd_ndevs) || ((rc = rl_cd.cd_devs[unit]) == 0))
+	if (rc == NULL)
 		return -1;
 	dl = rc->rc_disk.dk_label;
 	size = dl->d_partitions[DISKPART(dev)].p_size *
@@ -571,7 +559,7 @@ rlwrite(dev_t dev, struct uio *uio, int ioflag)
 	return (physio(rlstrategy, NULL, dev, B_WRITE, minphys, uio));
 }
 
-static const char *rlerr[] = {
+static const char * const rlerr[] = {
 	"no",
 	"operation incomplete",
 	"read data CRC",
@@ -599,7 +587,7 @@ rlcintr(void *arg)
 
 	bp = sc->sc_active;
 	if (bp == 0) {
-		printf("%s: strange interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(sc->sc_dev, "strange interrupt\n");
 		return;
 	}
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmam);
@@ -608,7 +596,7 @@ rlcintr(void *arg)
 	if (cs & RLCS_ERR) {
 		int error = (cs & RLCS_ERRMSK) >> 10;
 
-		printf("%s: %s\n", sc->sc_dev.dv_xname, rlerr[error]);
+		aprint_error_dev(sc->sc_dev, "%s\n", rlerr[error]);
 		bp->b_error = EIO;
 		bp->b_resid = bp->b_bcount;
 		sc->sc_bytecnt = 0;
@@ -686,7 +674,7 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
 	    BUS_DMA_NOWAIT);
 	if (err)
 		panic("%s: bus_dmamap_load failed: %d",
-		    sc->sc_dev.dv_xname, err);
+		    device_xname(sc->sc_dev), err);
 	RL_WREG(RL_BA, (sc->sc_dmam->dm_segs[0].ds_addr & 0xffff));
 
 	/* Count up vars */
@@ -705,20 +693,21 @@ rlcstart(struct rlc_softc *sc, struct buf *ob)
  * Retracts all disks and restarts active transfers.
  */
 void
-rlcreset(struct device *dev)
+rlcreset(device_t dev)
 {
-	struct rlc_softc *sc = (struct rlc_softc *)dev;
+	struct rlc_softc *sc = device_private(dev);
 	struct rl_softc *rc;
 	int i;
 	u_int16_t mp;
 
 	for (i = 0; i < rl_cd.cd_ndevs; i++) {
-		if ((rc = rl_cd.cd_devs[i]) == NULL)
+		if ((rc = device_lookup_private(&rl_cd, i)) == NULL)
 			continue;
 		if (rc->rc_state != DK_OPEN)
 			continue;
+		if (rc->rc_rlc != sc)
+			continue;
 
-		printf(" %s", rc->rc_dev.dv_xname);
 		RL_WREG(RL_CS, RLCS_RHDR|(rc->rc_hwid << RLCS_USHFT));
 		waitcrdy(sc);
 		mp = RL_RREG(RL_MP);

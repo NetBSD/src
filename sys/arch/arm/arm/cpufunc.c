@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.72.2.4 2008/02/27 08:36:18 yamt Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.72.2.5 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.72.2.4 2008/02/27 08:36:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.72.2.5 2008/03/17 09:14:15 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -2256,6 +2256,9 @@ arm11_setup(args)
 
 	/* Now really make sure they are clean.  */
 	__asm volatile ("mcr\tp15, 0, r0, c7, c7, 0" : : );
+
+	/* Allow detection code to find the VFP if it's fitted.  */
+	__asm volatile ("mcr\tp15, 0, %0, c1, c0, 2" : : "r" (0x0fffffff));
 
 	/* Set the control register */
 	curcpu()->ci_ctrl = cpuctrl;

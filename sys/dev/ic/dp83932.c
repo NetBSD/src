@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.12.4.3 2008/01/21 09:42:58 yamt Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.12.4.4 2008/03/17 09:14:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12.4.3 2008/01/21 09:42:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.12.4.4 2008/03/17 09:14:42 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -211,6 +211,11 @@ sonic_attach(struct sonic_softc *sc, const uint8_t *enaddr)
 	ifp->if_init = sonic_init;
 	ifp->if_stop = sonic_stop;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	/*
+	 * We can suport 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Attach the interface.
@@ -1090,14 +1095,14 @@ sonic_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		sonic_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		sonic_rxdrain(sc);
 }
 
 /*

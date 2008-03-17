@@ -1,4 +1,4 @@
-/* $NetBSD: kern_cctr.c,v 1.1.12.4 2007/11/15 11:44:39 yamt Exp $ */
+/* $NetBSD: kern_cctr.c,v 1.1.12.5 2008/03/17 09:15:32 yamt Exp $ */
 
 
 /*-
@@ -83,7 +83,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/i386/i386/tsc.c,v 1.204 2003/10/21 18:28:34 silby Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.1.12.4 2007/11/15 11:44:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cctr.c,v 1.1.12.5 2008/03/17 09:15:32 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -294,9 +294,9 @@ cc_calibrate_cpu(struct cpu_info *ci)
 		factor = -factor;
 
 	if (factor > old_factor / 10)
-		printf("cc_calibrate_cpu[%lu]: 10%% exceeded - delta %"
+		printf("cc_calibrate_cpu[%u]: 10%% exceeded - delta %"
 		    PRId64 ", denom %" PRId64 ", factor %" PRId64
-		    ", old factor %" PRId64"\n", ci->ci_cpuid,
+		    ", old factor %" PRId64"\n", ci->ci_index,
 		    delta, denom, (delta * 1000) / denom, old_factor);
 #endif /* TIMECOUNTER_DEBUG */
 }

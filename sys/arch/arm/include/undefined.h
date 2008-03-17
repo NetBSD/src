@@ -1,4 +1,4 @@
-/*	$NetBSD: undefined.h,v 1.9 2004/08/21 12:03:16 rearnsha Exp $	*/
+/*	$NetBSD: undefined.h,v 1.9.12.1 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995-1996 Mark Brinicombe.
@@ -60,6 +60,8 @@ typedef int (*undef_handler_t) __P((unsigned int, unsigned int, trapframe_t *, i
 enum arm_coprocs {
 	FPA_COPROC = 1,
 	FPA_COPROC2 = 2,
+	VFP_COPROC = 10,
+	VFP_COPROC2 = 11,
 	DEBUG_COPROC = 14,
 	SYSTEM_COPROC = 15,
 	/* 

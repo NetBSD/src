@@ -1,4 +1,4 @@
-/*	$NetBSD: fsconsole.c,v 1.6.4.2 2007/09/03 14:44:39 yamt Exp $	*/
+/*	$NetBSD: fsconsole.c,v 1.6.4.3 2008/03/17 09:15:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -36,6 +36,7 @@
 #include <dirent.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,10 +54,10 @@ main(int argc, char *argv[])
 	uint8_t buf[8192];
 	struct ukfs *fs;
 	struct fscons_args args;
+	off_t off;
 #ifdef __NetBSD__
 	struct dirent *dent;
 #endif
-	char *p;
 	int rv;
 
 	ukfs_init();
@@ -73,7 +74,8 @@ main(int argc, char *argv[])
 
 	printf("got fs at %p\n", fs);
 
-	rv = ukfs_getdents(fs, "/", 0, buf, sizeof(buf));
+	off = 0;
+	rv = ukfs_getdents(fs, "/", &off, buf, sizeof(buf));
 	printf("rv %d\n", rv);
 	if (rv == -1)
 		rv = 0;
@@ -92,36 +94,42 @@ main(int argc, char *argv[])
 
 	rv = ukfs_remove(fs, "/lopinaa");
 	if (rv == -1)
-		warn("rv %d", rv);
+		warn("remove1 %d", rv);
 
-#if 0
+	rv = ukfs_mkdir(fs, "/jonkka", 0777, false);
+	if (rv == -1)
+		warn("mkdir %s", strerror(errno));
+	rv = ukfs_chdir(fs, "/jonkka");
+	if (rv == -1)
+		warn("chdir %s", strerror(errno));
+
 	rv = ukfs_remove(fs, "/etc/LUSIKKAPUOLI");
 	if (rv == -1)
-		warn("rv %d", rv);
-#endif
+		warn("remove2 %d", rv);
 
-	rv = ukfs_create(fs, "/lopinaa", 0555);
+    	rv = ukfs_create(fs, "lopinaa", 0555 | S_IFREG);
 	if (rv == -1)
-		warn("rv %d", rv);
+		warn("create %d", rv);
 
-	rv = ukfs_link(fs, "/lopinaa", "/etc/LUSIKKAPUOLI");
+	rv = ukfs_link(fs, "/jonkka/lopinaa", "/LUSIKKAPUOLI");
 	if (rv == -1)
 		warn("link rv %d", rv);
 
-	/* XXX */
-	p = strdup("jonnekin/aivan/muualle");
-	rv = ukfs_symlink(fs, "/mihis_haluat_menna_tanaan", p);
-	free(p);
+	rv = ukfs_symlink(fs, "/mihis_haluat_menna_tanaan", "/jonkka/muualle");
 	if (rv == -1)
 		warn("symlink %d", rv);
 
-	rv = ukfs_readlink(fs, "/mihis_haluat_menna_tanaan",
+	rv = ukfs_readlink(fs, "muualle",
 	    (char *)buf, sizeof(buf));
-	if (rv > 0)
+	if (rv > 0) {
 		buf[rv] = '\0';
-	printf("readlink rv %d result \"%s\"\n", rv, buf);
+		printf("readlink rv %d result \"%s\"\n", rv, buf);
+	} else {
+		printf("readlink fail: %s\n", strerror(errno));
+	}
 
-	rv = ukfs_getdents(fs, "/etc", 0, buf, sizeof(buf));
+	off = 0;
+	rv = ukfs_getdents(fs, "/etc", &off, buf, sizeof(buf));
 	printf("rv %d\n", rv);
 	if (rv == -1)
 		rv = 0;

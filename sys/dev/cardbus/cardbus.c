@@ -1,4 +1,4 @@
-/*	$NetBSD: cardbus.c,v 1.61.4.8 2008/02/27 08:36:31 yamt Exp $	*/
+/*	$NetBSD: cardbus.c,v 1.61.4.9 2008/03/17 09:14:40 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999 and 2000
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.4.8 2008/02/27 08:36:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus.c,v 1.61.4.9 2008/03/17 09:14:40 yamt Exp $");
 
 #include "opt_cardbus.h"
 
@@ -1167,6 +1167,7 @@ struct cardbus_child_power {
 static bool
 cardbus_child_suspend(device_t dv PMF_FN_ARGS)
 {
+	bool powerdown;
 	struct cardbus_child_power *priv = device_pmf_bus_private(dv);
 
 	cardbus_conf_capture(priv->p_cc, priv->p_cf, priv->p_tag,
@@ -1179,7 +1180,9 @@ cardbus_child_suspend(device_t dv PMF_FN_ARGS)
 		return false;
 	}
 
-	Cardbus_function_disable(priv->p_ct);
+	if (!prop_dictionary_get_bool(device_properties(dv), "pmf-powerdown",
+	    &powerdown) || powerdown)
+		Cardbus_function_disable(priv->p_ct);
 
 	return true;
 }
@@ -1243,7 +1246,7 @@ cardbus_child_register(device_t child)
 	}
 
 	device_pmf_bus_register(child, priv, cardbus_child_suspend,
-	    cardbus_child_resume, cardbus_child_deregister);
+	    cardbus_child_resume, 0, cardbus_child_deregister);
 
 	return true;
 }

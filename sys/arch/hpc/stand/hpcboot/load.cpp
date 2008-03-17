@@ -1,4 +1,4 @@
-/*	$NetBSD: load.cpp,v 1.7.12.1 2006/06/21 14:51:38 yamt Exp $	*/
+/*	$NetBSD: load.cpp,v 1.7.12.2 2008/03/17 09:14:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -240,10 +240,10 @@ Loader::_load_memory(vaddr_t kv, vsize_t memsz, void *data)
 		remsz -= tocopy;
 
 		_pvec_prev = pvec;
+		++_nload_link;
 	}
 
 	_kernend = kv + memsz;
-	++_nload_link;
 }
 
 struct PageTag *

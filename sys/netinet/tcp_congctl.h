@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_congctl.h,v 1.3.8.2 2006/12/30 20:50:33 yamt Exp $	*/
+/*	$NetBSD: tcp_congctl.h,v 1.3.8.3 2008/03/17 09:15:41 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -39,6 +39,14 @@
 #ifndef _NETINET_TCP_CONGCTL_H
 #define _NETINET_TCP_CONGCTL_H
 
+#define TCPCC_MAXLEN 12
+
+struct tcp_congctlent {
+	TAILQ_ENTRY(tcp_congctlent) congctl_ent;
+	const struct tcp_congctl *congctl_ctl;
+	unsigned int congctl_refcnt;
+	char congctl_name[TCPCC_MAXLEN];
+};
 /*
  * Congestion control function table.
  */
@@ -48,28 +56,24 @@ struct tcp_congctl {
 	void (*fast_retransmit_newack)(struct tcpcb *, const struct tcphdr *);
 	void (*newack)(struct tcpcb *, const struct tcphdr *);
 	void (*cong_exp)(struct tcpcb *);
-	
-	uint32_t refcnt;
 };
 
-extern struct tcp_congctl tcp_reno_ctl;
-extern struct tcp_congctl tcp_newreno_ctl;
+extern const struct tcp_congctl tcp_reno_ctl;
+extern const struct tcp_congctl tcp_newreno_ctl;
 
 extern struct simplelock tcp_congctl_slock;
 
-#define TCPCC_MAXLEN 12
-
 /* currently selected global congestion control */
-struct tcp_congctl *tcp_congctl_global;
-char   tcp_congctl_global_name[TCPCC_MAXLEN];
+extern char tcp_congctl_global_name[TCPCC_MAXLEN];
 
 /* available global congestion control algorithms */
-char   tcp_congctl_avail[10 * TCPCC_MAXLEN];
+extern char tcp_congctl_avail[10 * TCPCC_MAXLEN];
 
 void   tcp_congctl_init(void);
-int    tcp_congctl_register(const char *, struct tcp_congctl *);
+int    tcp_congctl_register(const char *, const struct tcp_congctl *);
 int    tcp_congctl_unregister(const char *);
 int    tcp_congctl_select(struct tcpcb *, const char *);
+void   tcp_congctl_release(struct tcpcb *);
 const char *
        tcp_congctl_bystruct(const struct tcp_congctl *);
 

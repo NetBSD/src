@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.27.2.7 2008/02/04 09:24:05 yamt Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.27.2.8 2008/03/17 09:15:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.27.2.7 2008/02/04 09:24:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.27.2.8 2008/03/17 09:15:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,7 @@ VFS_PROTOS(union);
  * Mount union filesystem
  */
 int
-union_mount(mp, path, data, data_len)
-	struct mount *mp;
-	const char *path;
-	void *data;
-	size_t *data_len;
+union_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 {
 	struct lwp *l = curlwp;
 	struct nameidata nd;
@@ -375,9 +371,7 @@ union_unmount(struct mount *mp, int mntflags)
 }
 
 int
-union_root(mp, vpp)
-	struct mount *mp;
-	struct vnode **vpp;
+union_root(struct mount *mp, struct vnode **vpp)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int error;
@@ -402,9 +396,7 @@ union_root(mp, vpp)
 }
 
 int
-union_statvfs(mp, sbp)
-	struct mount *mp;
-	struct statvfs *sbp;
+union_statvfs(struct mount *mp, struct statvfs *sbp)
 {
 	int error;
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);

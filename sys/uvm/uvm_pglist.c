@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.33.2.4 2007/09/03 14:47:12 yamt Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.33.2.5 2008/03/17 09:15:52 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.33.2.4 2007/09/03 14:47:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.33.2.5 2008/03/17 09:15:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 	struct vm_page *tp;
 #endif
 
+	KASSERT(mutex_owned(&uvm_fpageqlock));
+
 #if PGFL_NQUEUES != 2
 #error uvm_pglistalloc needs to be updated
 #endif
@@ -139,6 +141,8 @@ uvm_pglistalloc_c_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	printf("pgalloc: contig %d pgs from psi %ld\n", num,
 	(long)(ps - vm_physmem));
 #endif
+
+	KASSERT(mutex_owned(&uvm_fpageqlock));
 
 	try = roundup(max(atop(low), ps->avail_start), atop(alignment));
 	limit = min(atop(high), ps->avail_end);
@@ -296,6 +300,8 @@ uvm_pglistalloc_s_ps(struct vm_physseg *ps, int num, paddr_t low, paddr_t high,
 	printf("pgalloc: simple %d pgs from psi %ld\n", num,
 	    (long)(ps - vm_physmem));
 #endif
+
+	KASSERT(mutex_owned(&uvm_fpageqlock));
 
 	todo = num;
 	limit = min(atop(high), ps->avail_end);

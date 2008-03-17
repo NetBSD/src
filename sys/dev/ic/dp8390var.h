@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390var.h,v 1.26.4.1 2007/09/03 14:34:29 yamt Exp $	*/
+/*	$NetBSD: dp8390var.h,v 1.26.4.2 2008/03/17 09:14:42 yamt Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -30,7 +30,7 @@
  * dp8390_softc: per line info and status
  */
 struct dp8390_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	void	*sc_ih;
 	int	sc_flags;		/* interface flags, from config */
 

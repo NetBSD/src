@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47.2.7 2008/02/27 08:36:25 yamt Exp $ */
+/*	$NetBSD: cpu.h,v 1.47.2.8 2008/03/17 09:14:24 yamt Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -52,14 +52,6 @@
 #define	CPU_ARCH		4	/* integer: cpu architecture version */
 #define	CPU_MAXID		5	/* number of valid machdep ids */
 
-#define	CTL_MACHDEP_NAMES {			\
-	{ 0, 0 },				\
-	{ "booted_kernel", CTLTYPE_STRING },	\
-	{ "booted_device", CTLTYPE_STRING },	\
-	{ "boot_args", CTLTYPE_STRING },	\
-	{ "cpu_arch", CTLTYPE_INT },		\
-}
-
 #ifdef _KERNEL
 /*
  * Exported definitions unique to SPARC cpu support.
@@ -72,11 +64,13 @@
 
 #include <machine/psl.h>
 #include <machine/reg.h>
+#include <machine/pte.h>
 #include <machine/intr.h>
 #include <machine/cpuset.h>
 #include <sparc64/sparc64/intreg.h>
 
 #include <sys/cpu_data.h>
+#include <sys/evcnt.h>
 /*
  * The cpu_info structure is part of a 64KB structure mapped both the kernel
  * pmap and a single locked TTE a CPUINFO_VA for that particular processor.
@@ -131,10 +125,45 @@ struct cpu_info {
 	u_long			ci_tick_increment;
 	uint64_t		ci_cpu_clockrate[2];
 
+	/* Interrupts */
+	struct intrhand		*ci_intrpending[16];
+	struct intrhand		*ci_tick_ih;
+	struct intrhand		*ci_sched_ih;
+
+	/* Event counters */
+	struct evcnt		ci_tick_evcnt;
+#ifdef MULTIPROCESSOR
+	struct evcnt		ci_ipi_evcnt[IPI_EVCNT_NUM];
+#endif
+
 	int			ci_flags;
 	int			ci_want_ast;
 	int			ci_want_resched;
 	int			ci_idepth;
+
+/*
+ * A context is simply a small number that differentiates multiple mappings
+ * of the same address.  Contexts on the spitfire are 13 bits, but could
+ * be as large as 17 bits.
+ *
+ * Each context is either free or attached to a pmap.
+ *
+ * The context table is an array of pointers to psegs.  Just dereference
+ * the right pointer and you get to the pmap segment tables.  These are
+ * physical addresses, of course.
+ *
+ */
+	int			ci_pmap_next_ctx;
+	paddr_t 		*ci_ctxbusy;
+	LIST_HEAD(, pmap) 	ci_pmap_ctxlist;
+	int			ci_numctx;
+
+	/*
+	 * The TSBs are per cpu too (since MMU context differs between
+	 * cpus). These are just caches for the TLBs.
+	 */
+	pte_t			*ci_tsb_dmmu;
+	pte_t			*ci_tsb_immu;
 
 	struct cpu_data		ci_data;	/* MI per-cpu data */
 
@@ -190,6 +219,11 @@ extern struct cpu_info *cpus;
 #define	cpu_wait(p)	/* nothing */
 void cpu_proc_fork(struct proc *, struct proc *);
 
+/* run on the cpu itself */
+void	cpu_pmap_init(struct cpu_info *);
+/* run upfront to prepare the cpu_info */
+void	cpu_pmap_prepare(struct cpu_info *, bool);
+
 #if defined(MULTIPROCESSOR)
 extern vaddr_t cpu_spinup_trampoline;
 
@@ -210,9 +244,9 @@ void	cpu_boot_secondary_processors(void);
  */
 typedef void (* ipifunc_t)(void *);
 
-void	sparc64_multicast_ipi (sparc64_cpuset_t, ipifunc_t, uint64_t);
-void	sparc64_broadcast_ipi (ipifunc_t, uint64_t);
-void	sparc64_send_ipi (int, ipifunc_t, uint64_t);
+void	sparc64_multicast_ipi(sparc64_cpuset_t, ipifunc_t, uint64_t, uint64_t);
+void	sparc64_broadcast_ipi(ipifunc_t, uint64_t, uint64_t);
+void	sparc64_send_ipi(int, ipifunc_t, uint64_t, uint64_t);
 #endif
 
 /*
@@ -284,6 +318,7 @@ extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish(int level, struct intrhand *);
+struct intrhand *init_softint(int, int (*)(void *));
 
 /* disksubr.c */
 struct dkbad;
@@ -292,9 +327,11 @@ int isbad(struct dkbad *bt, int, int, int);
 void *	reserve_dumppages(void *);
 /* clock.c */
 struct timeval;
-int	tickintr(void *);	/* level 10 (tick) interrupt code */
+int	tickintr(void *);	/* level 10/14 (tick) interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
+int	schedintr(void *);	/* level 10 (schedclock) interrupt code */
+void	tickintr_establish(int, int (*)(void *));
 /* locore.s */
 struct fpstate64;
 void	savefpstate(struct fpstate64 *);

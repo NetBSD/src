@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.111.2.13 2008/02/27 09:24:06 yamt Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.111.2.14 2008/03/17 09:15:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.13 2008/02/27 09:24:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.111.2.14 2008/03/17 09:15:34 yamt Exp $");
 
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
@@ -271,7 +271,7 @@ sodoloanfree(struct vm_page **pgs, void *buf, size_t size)
 }
 
 static size_t
-sodopendfree()
+sodopendfree(void)
 {
 	size_t rv;
 
@@ -290,7 +290,7 @@ sodopendfree()
  */
 
 static size_t
-sodopendfreel()
+sodopendfreel(void)
 {
 	struct mbuf *m, *next;
 	size_t rv = 0;
@@ -1668,8 +1668,9 @@ sogetopt(struct socket *so, int level, int optname, struct mbuf **mp)
 void
 sohasoutofband(struct socket *so)
 {
+
 	fownsignal(so->so_pgid, SIGURG, POLL_PRI, POLLPRI|POLLRDBAND, so);
-	selwakeup(&so->so_rcv.sb_sel);
+	selnotify(&so->so_rcv.sb_sel, POLLPRI | POLLRDBAND, 0);
 }
 
 static void

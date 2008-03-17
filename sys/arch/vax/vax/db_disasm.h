@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.h,v 1.3 2005/06/27 11:03:25 ragge Exp $ */
+/*	$NetBSD: db_disasm.h,v 1.3.2.1 2008/03/17 09:14:33 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,7 +52,7 @@
  * [VAX Architecture Handbook, p.52:  Instruction Format]
  */
 
-struct {
+const struct {
 	const char *mnemonic;
 	const char *argdesc;
 } vax_inst[256] = {
@@ -358,4 +358,3 @@ struct {
 /* 0xff */	{	"-reserved-", 	""			},
   
 };
-

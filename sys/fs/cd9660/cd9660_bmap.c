@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_bmap.c,v 1.2 2003/08/07 16:31:34 agc Exp $	*/
+/*	$NetBSD: cd9660_bmap.c,v 1.2.16.1 2008/03/17 09:15:32 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.2 2003/08/07 16:31:34 agc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.2.16.1 2008/03/17 09:15:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/namei.h>
@@ -56,8 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: cd9660_bmap.c,v 1.2 2003/08/07 16:31:34 agc Exp $");
  * number to index into the data block (extent) for the file.
  */
 int
-cd9660_bmap(v)
-	void *v;
+cd9660_bmap(void *v)
 {
 	struct vop_bmap_args /* {
 		struct vnode *a_vp;

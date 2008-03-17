@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.17 2005/05/31 04:03:10 christos Exp $
+#	$NetBSD: Makefile.news68k,v 1.17.2.1 2008/03/17 09:14:22 yamt Exp $
 #
 # Makefile for NetBSD
 #
@@ -65,6 +65,8 @@ TEXTADDR?=	0
 
 # depend on CPU configuration
 machdep.o mainbus.o trap.o: Makefile
+
+copy.o copypage.o lock_stubs.o: assym.h
 
 ##
 ## (7) misc settings

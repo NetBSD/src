@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.3.16.7 2008/01/21 09:35:15 yamt Exp $
+#	$NetBSD: genassym.cf,v 1.3.16.8 2008/03/17 09:14:14 yamt Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007 The NetBSD Foundation, Inc.
@@ -169,6 +169,8 @@ define	L_ADDR			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
+define	L_NCSW			offsetof(struct lwp, l_ncsw)
+define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
@@ -249,6 +251,8 @@ define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
 define	CPU_INFO_CPUMASK	offsetof(struct cpu_info, ci_cpumask)
 define	CPU_INFO_RSP0		offsetof(struct cpu_info, ci_tss.tss_rsp0)
+define	CPU_INFO_CC		offsetof(struct cpu_info, ci_cc)
+define	CPU_INFO_NSYSCALL	offsetof(struct cpu_info, ci_data.cpu_nsyscall)
 
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
@@ -261,6 +265,12 @@ define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
 define  CPU_INFO_CPUID		offsetof(struct cpu_info, ci_cpuid)
 define	CPU_INFO_ISTATE		offsetof(struct cpu_info, ci_istate)
+
+define	CC_DENOM		offsetof(struct cc_microtime_state, cc_denom)
+define	CC_DELTA		offsetof(struct cc_microtime_state, cc_denom)
+define	CC_VAL			offsetof(struct cc_microtime_state, cc_val)
+define	CC_GEN			offsetof(struct cc_microtime_state, cc_gen)
+define	CC_CC			offsetof(struct cc_microtime_state, cc_cc)
 
 define	ACPI_SUSPEND_GDT		offsetof(struct cpu_info, ci_suspend_gdt)
 define	ACPI_SUSPEND_IDT		offsetof(struct cpu_info, ci_suspend_idt)

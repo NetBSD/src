@@ -1,4 +1,4 @@
-/* $NetBSD: if_eh.c,v 1.8.18.3 2007/09/03 14:22:03 yamt Exp $ */
+/* $NetBSD: if_eh.c,v 1.8.18.4 2008/03/17 09:14:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8.18.3 2007/09/03 14:22:03 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_eh.c,v 1.8.18.4 2008/03/17 09:14:13 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -126,14 +126,14 @@ static int eh_mediachange(struct dp8390_softc *);
 static void eh_mediastatus(struct dp8390_softc *, struct ifmediareq *);
 
 /* autoconfiguration glue */
-static int eh_match(struct device *, struct cfdata *, void *);
-static void eh_attach(struct device *, struct device *, void *);
+static int eh_match(device_t, cfdata_t , void *);
+static void eh_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(eh, sizeof(struct eh_softc),
+CFATTACH_DECL_NEW(eh, sizeof(struct eh_softc),
     eh_match, eh_attach, NULL, NULL);
 
 static int
-eh_match(struct device *parent, struct cfdata *cf, void *aux)
+eh_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -164,15 +164,17 @@ static const struct {
 };
 
 static void
-eh_attach(struct device *parent, struct device *self, void *aux)
+eh_attach(device_t parent, device_t self, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
-	struct eh_softc *sc = (struct eh_softc *)self;
+	struct eh_softc *sc = device_private(self);
 	struct dp8390_softc *dsc = &sc->sc_dp;
 	int mediaset, mautype;
 	int i;
 	char *ptr;
 	u_int8_t *myaddr;
+
+	dsc->sc_dev = self;
 
 	/* Canonicalise card type. */
 	switch (pa->pa_product) {
@@ -312,12 +314,12 @@ eh_attach(struct device *parent, struct device *self, void *aux)
 	dp8390_stop(dsc);
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
+	    device_xname(self), "intr");
 	sc->sc_ih = podulebus_irq_establish(pa->pa_ih, IPL_NET, dp8390_intr,
 	    self, &sc->sc_intrcnt);
 	if (bootverbose)
-		printf("%s: interrupting at %s\n",
-		       self->dv_xname, irq_string(sc->sc_ih));
+		aprint_verbose_dev(self, "interrupting at %s\n",
+		    irq_string(sc->sc_ih));
 	sc->sc_ctrl |= EH_CTRL_IE;
 	bus_space_write_1(sc->sc_ctlt, sc->sc_ctlh, 0, sc->sc_ctrl);
 }
@@ -512,7 +514,7 @@ eh_write_mbuf(struct dp8390_softc *dsc, struct mbuf *m, int buf)
 		log(LOG_WARNING,
 		    "%s: remote transmit DMA failed to complete "
 		    "(RSAR=0x%04x, RBCR=0x%04x, CRDA=0x%02x%02x)\n",
-		    dsc->sc_dev.dv_xname, buf, savelen,
+		    device_xname(dsc->sc_dev), buf, savelen,
 		    bus_space_read_1(nict, nich, ED_P0_CRDA1),
 		    bus_space_read_1(nict, nich, ED_P0_CRDA0));
 		dp8390_reset(dsc);

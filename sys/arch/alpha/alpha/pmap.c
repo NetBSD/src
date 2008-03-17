@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.210.2.7 2008/02/27 08:36:17 yamt Exp $ */
+/* $NetBSD: pmap.c,v 1.210.2.8 2008/03/17 09:14:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -147,7 +147,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210.2.7 2008/02/27 08:36:17 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.210.2.8 2008/03/17 09:14:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -761,8 +761,8 @@ do {									\
  *
  *	Increment or decrement a pmap statistic.
  */
-#define	PMAP_STAT_INCR(s, v)	atomic_add_ulong((unsigned long *)(&(s)), (v))
-#define	PMAP_STAT_DECR(s, v)	atomic_sub_ulong((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_INCR(s, v)	atomic_add_long((unsigned long *)(&(s)), (v))
+#define	PMAP_STAT_DECR(s, v)	atomic_add_long((unsigned long *)(&(s)), -(v))
 
 /*
  * pmap_bootstrap:
@@ -2998,9 +2998,6 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-#ifdef DEBUG
-	kmutex_t *lock;
-#endif
 
 	/*
 	 * Don't ask for a zero'd page in the L1PT case -- we will
@@ -3011,16 +3008,12 @@ pmap_physpage_alloc(int usage, paddr_t *pap)
 	    UVM_PGA_USERESERVE : UVM_PGA_USERESERVE|UVM_PGA_ZERO);
 	if (pg != NULL) {
 		pa = VM_PAGE_TO_PHYS(pg);
-
 #ifdef DEBUG
-		lock = pmap_pvh_lock(pg);
-		mutex_enter(lock);
-		if (pg->wire_count != 0) {
+		if (pg->mdpage.pvh_refcnt != 0) {
 			printf("pmap_physpage_alloc: page 0x%lx has "
-			    "%d references\n", pa, pg->wire_count);
+			    "%d references\n", pa, pg->mdpage.pvh_refcnt);
 			panic("pmap_physpage_alloc");
 		}
-		mutex_exit(lock);
 #endif
 		*pap = pa;
 		return (true);
@@ -3042,13 +3035,8 @@ pmap_physpage_free(paddr_t pa)
 		panic("pmap_physpage_free: bogus physical page address");
 
 #ifdef DEBUG
-	{
-		kmutex_t *lock = pmap_pvh_lock(pg);
-		mutex_enter(lock);
-		if (pg->wire_count != 0)
-			panic("pmap_physpage_free: page still has references");
-		mutex_exit(lock);
-	}
+	if (pg->mdpage.pvh_refcnt != 0)
+		panic("pmap_physpage_free: page still has references");
 #endif
 
 	uvm_pagefree(pg);
@@ -3064,18 +3052,13 @@ pmap_physpage_addref(void *kva)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-	int rval;
-	kmutex_t *lock;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	lock = pmap_pvh_lock(pg);
-	mutex_enter(lock);
-	rval = ++pg->wire_count;
-	mutex_exit(lock);
+	KASSERT((int)pg->mdpage.pvh_refcnt >= 0);
 
-	return (rval);
+	return atomic_inc_uint_nv(&pg->mdpage.pvh_refcnt);
 }
 
 /*
@@ -3088,28 +3071,13 @@ pmap_physpage_delref(void *kva)
 {
 	struct vm_page *pg;
 	paddr_t pa;
-	int rval;
-	kmutex_t *lock;
 
 	pa = ALPHA_K0SEG_TO_PHYS(trunc_page((vaddr_t)kva));
 	pg = PHYS_TO_VM_PAGE(pa);
 
-	lock = pmap_pvh_lock(pg);
-	mutex_enter(lock);
+	KASSERT((int)pg->mdpage.pvh_refcnt > 0);
 
-#ifdef DIAGNOSTIC
-	/*
-	 * Make sure we never have a negative reference count.
-	 */
-	if (pg->wire_count == 0)
-		panic("pmap_physpage_delref: reference count already zero");
-#endif
-
-	rval = --pg->wire_count;
-
-	mutex_exit(lock);
-
-	return (rval);
+	return atomic_dec_uint_nv(&pg->mdpage.pvh_refcnt);
 }
 
 /******************** page table page management ********************/

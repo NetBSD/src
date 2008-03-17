@@ -1,4 +1,4 @@
-/* $NetBSD: uba_dma.c,v 1.7 2003/07/15 02:15:02 lukem Exp $ */
+/* $NetBSD: uba_dma.c,v 1.7.16.1 2008/03/17 09:14:29 yamt Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_dma.c,v 1.7 2003/07/15 02:15:02 lukem Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_dma.c,v 1.7.16.1 2008/03/17 09:14:29 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,31 +56,30 @@ __KERNEL_RCSID(0, "$NetBSD: uba_dma.c,v 1.7 2003/07/15 02:15:02 lukem Exp $");
 
 #include <arch/vax/uba/uba_common.h>
 
-int	uba_bus_dmamap_create_sgmap __P((bus_dma_tag_t, bus_size_t, int,
-	    bus_size_t, bus_size_t, int, bus_dmamap_t *));
+int	uba_bus_dmamap_create_sgmap(bus_dma_tag_t, bus_size_t, int,
+	    bus_size_t, bus_size_t, int, bus_dmamap_t *);
 
-void	uba_bus_dmamap_destroy_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	uba_bus_dmamap_destroy_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-int	uba_bus_dmamap_load_sgmap __P((bus_dma_tag_t, bus_dmamap_t, void *,
-	    bus_size_t, struct proc *, int));
+int	uba_bus_dmamap_load_sgmap(bus_dma_tag_t, bus_dmamap_t, void *,
+	    bus_size_t, struct proc *, int);
 
-int	uba_bus_dmamap_load_mbuf_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct mbuf *, int));
+int	uba_bus_dmamap_load_mbuf_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct mbuf *, int);
 
-int	uba_bus_dmamap_load_uio_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    struct uio *, int));
+int	uba_bus_dmamap_load_uio_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    struct uio *, int);
 
-int	uba_bus_dmamap_load_raw_sgmap __P((bus_dma_tag_t, bus_dmamap_t,
-	    bus_dma_segment_t *, int, bus_size_t, int));
+int	uba_bus_dmamap_load_raw_sgmap(bus_dma_tag_t, bus_dmamap_t,
+	    bus_dma_segment_t *, int, bus_size_t, int);
 
-void	uba_bus_dmamap_unload_sgmap __P((bus_dma_tag_t, bus_dmamap_t));
+void	uba_bus_dmamap_unload_sgmap(bus_dma_tag_t, bus_dmamap_t);
 
-void	uba_bus_dmamap_sync __P((bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
-	    bus_size_t, int));
+void	uba_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
 
 void
-uba_dma_init(sc)
-	struct uba_vsoftc *sc;
+uba_dma_init(struct uba_vsoftc *sc)
 {
 	bus_dma_tag_t t;
 	struct pte *pte;
@@ -131,15 +130,9 @@ uba_dma_init(sc)
  * Create a UBA SGMAP-mapped DMA map.
  */
 int
-uba_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
-    flags, dmamp)
-	bus_dma_tag_t t;
-	bus_size_t size;  
-	int nsegments;
-	bus_size_t maxsegsz;
-	bus_size_t boundary;
-	int flags; 
-	bus_dmamap_t *dmamp;
+uba_bus_dmamap_create_sgmap(bus_dma_tag_t t, bus_size_t size,  int nsegments,
+	bus_size_t maxsegsz, bus_size_t boundary, int flags, 
+	bus_dmamap_t *dmamp)
 {
 	bus_dmamap_t map;
 	int error;
@@ -165,9 +158,7 @@ uba_bus_dmamap_create_sgmap(t, size, nsegments, maxsegsz, boundary,
  * Destroy a UBA SGMAP-mapped DMA map.
  */
 void
-uba_bus_dmamap_destroy_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+uba_bus_dmamap_destroy_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
 
 	if (map->_dm_flags & DMAMAP_HAS_SGMAP)
@@ -180,13 +171,8 @@ uba_bus_dmamap_destroy_sgmap(t, map)
  * Load a UBA SGMAP-mapped DMA map with a linear buffer.
  */
 int
-uba_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	void *buf;
-	bus_size_t buflen;
-	struct proc *p;
-	int flags;
+uba_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
+	bus_size_t buflen, struct proc *p, int flags)
 {
 	int error;
 
@@ -202,11 +188,8 @@ uba_bus_dmamap_load_sgmap(t, map, buf, buflen, p, flags)
  * Load a UBA SGMAP-mapped DMA map with an mbuf chain.
  */
 int
-uba_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct mbuf *m;
-	int flags;
+uba_bus_dmamap_load_mbuf_sgmap( bus_dma_tag_t t, bus_dmamap_t map,
+	struct mbuf *m, int flags)
 {
 	int error;
 
@@ -219,11 +202,8 @@ uba_bus_dmamap_load_mbuf_sgmap(t, map, m, flags)
  * Load a UBA SGMAP-mapped DMA map with a uio.
  */
 int
-uba_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	struct uio *uio;
-	int flags;
+uba_bus_dmamap_load_uio_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+	struct uio *uio, int flags)
 {
 	int error;
 
@@ -236,13 +216,8 @@ uba_bus_dmamap_load_uio_sgmap(t, map, uio, flags)
  * Load a UBA SGMAP-mapped DMA map with raw memory.
  */
 int
-uba_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
-	bus_dma_segment_t *segs;
-	int nsegs;
-	bus_size_t size;
-	int flags;
+uba_bus_dmamap_load_raw_sgmap(bus_dma_tag_t t, bus_dmamap_t map,
+	bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
 {
 	int error;
 
@@ -256,11 +231,8 @@ uba_bus_dmamap_load_raw_sgmap(t, map, segs, nsegs, size, flags)
  * Unload a UBA DMA map.
  */
 void
-uba_bus_dmamap_unload_sgmap(t, map)
-	bus_dma_tag_t t;
-	bus_dmamap_t map;
+uba_bus_dmamap_unload_sgmap(bus_dma_tag_t t, bus_dmamap_t map)
 {
-
 	/*
 	 * Invalidate any SGMAP page table entries used by this
 	 * mapping.
@@ -277,12 +249,8 @@ uba_bus_dmamap_unload_sgmap(t, map)
  * Sync the bus map. This is only needed if BDP's are used.
  */
 void
-uba_bus_dmamap_sync(tag, dmam, offset, len, ops)
-	bus_dma_tag_t tag;
-	bus_dmamap_t dmam;
-	bus_addr_t offset;
-	bus_size_t len;
-	int ops;
+uba_bus_dmamap_sync(bus_dma_tag_t tag, bus_dmamap_t dmam, bus_addr_t offset,
+	bus_size_t len, int ops)
 {
 	/* Only BDP handling, but not yet. */
 }

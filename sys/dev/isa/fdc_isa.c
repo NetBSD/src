@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_isa.c,v 1.11.12.2 2008/02/27 08:36:34 yamt Exp $	*/
+/*	$NetBSD: fdc_isa.c,v 1.11.12.3 2008/03/17 09:14:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.11.12.2 2008/02/27 08:36:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.11.12.3 2008/03/17 09:14:51 yamt Exp $");
 
 #include "rnd.h"
 
@@ -94,7 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdc_isa.c,v 1.11.12.2 2008/02/27 08:36:34 yamt Exp $
 #include <dev/isa/fdreg.h>
 #include <dev/isa/fdcvar.h>
 
-static int	fdc_isa_probe(device_t, struct cfdata *, void *);
+static int	fdc_isa_probe(device_t, cfdata_t, void *);
 static void	fdc_isa_attach(device_t, device_t, void *);
 static int	fdc_isa_detach(device_t, int);
 
@@ -104,7 +104,7 @@ struct fdc_isa_softc {
 	bus_space_handle_t sc_baseioh;	/* base I/O handle */
 };
 
-CFATTACH_DECL2(fdc_isa, sizeof(struct fdc_isa_softc),
+CFATTACH_DECL2_NEW(fdc_isa, sizeof(struct fdc_isa_softc),
     fdc_isa_probe, fdc_isa_attach, fdc_isa_detach, NULL, NULL, fdc_childdet);
 
 #ifdef NEWCONFIG
@@ -112,7 +112,7 @@ void	fdc_isa_forceintr(void *);
 #endif
 
 static int
-fdc_isa_probe(device_t parent, struct cfdata *match, void *aux)
+fdc_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
@@ -212,28 +212,30 @@ fdc_isa_attach(device_t parent, device_t self, void *aux)
 	struct fdc_softc *fdc = &isc->sc_fdc;
 	struct isa_attach_args *ia = aux;
 
-	printf("\n");
+	aprint_naive("\n");
+	aprint_normal("\n");
 
+	fdc->sc_dev = self;
 	fdc->sc_iot = ia->ia_iot;
 	fdc->sc_ic = ia->ia_ic;
 	fdc->sc_drq = ia->ia_drq[0].ir_drq;
 
 	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr,
 	    6 /* FDC_NPORT */, 0, &isc->sc_baseioh)) {
-		aprint_normal_dev(&fdc->sc_dev, "unable to map I/O space\n");
+		aprint_normal_dev(fdc->sc_dev, "unable to map I/O space\n");
 		return;
 	}
 
 	if (bus_space_subregion(fdc->sc_iot, isc->sc_baseioh, 2, 4,
 	    &fdc->sc_ioh)) {
-		aprint_normal_dev(&fdc->sc_dev,
+		aprint_normal_dev(fdc->sc_dev,
 		    "unable to subregion I/O space\n");
 		return;
 	}
 
 	if (bus_space_map(fdc->sc_iot, ia->ia_io[0].ir_addr + fdctl + 2, 1, 0,
 	    &fdc->sc_fdctlioh)) {
-		aprint_normal_dev(&fdc->sc_dev,
+		aprint_normal_dev(fdc->sc_dev,
 		    "unable to map CTL I/O space\n");
 		return;
 	}

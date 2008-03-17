@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.103.2.10 2008/02/27 08:36:35 yamt Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.103.2.11 2008/03/17 09:15:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103.2.10 2008/02/27 08:36:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.103.2.11 2008/03/17 09:15:11 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -3370,12 +3370,12 @@ wm_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		wm_rxdrain(sc);
-
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		wm_rxdrain(sc);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.117.2.9 2008/02/27 08:36:55 yamt Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.117.2.10 2008/03/17 09:15:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2006 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.9 2008/02/27 08:36:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.117.2.10 2008/03/17 09:15:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -160,7 +160,7 @@ uiomove(void *buf, size_t n, struct uio *uio)
 	int error = 0;
 	char *cp = buf;
 
-	ASSERT_SLEEPABLE(NULL, "uiomove");
+	ASSERT_SLEEPABLE();
 
 #ifdef DIAGNOSTIC
 	if (uio->uio_rw != UIO_READ && uio->uio_rw != UIO_WRITE)
@@ -496,6 +496,8 @@ doshutdownhooks(void)
 		free(dp, M_DEVBUF);
 #endif
 	}
+
+	pmf_system_shutdown(boothowto);
 }
 
 /*

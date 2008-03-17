@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.201.2.9 2008/02/27 08:37:05 yamt Exp $	*/
+/*	$NetBSD: proc.h,v 1.201.2.10 2008/03/17 09:15:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -578,13 +578,6 @@ _proclist_skipmarker(struct proc *p0)
 	for ((var) = LIST_FIRST(head);					\
 		((var) = _proclist_skipmarker(var)) != NULL;		\
 		(var) = LIST_NEXT(var, p_list))
-
-#if defined(LOCKDEBUG)
-void assert_sleepable(struct simplelock *, const char *);
-#define	ASSERT_SLEEPABLE(lk, msg)	assert_sleepable((lk), (msg))
-#else /* defined(LOCKDEBUG) */
-#define	ASSERT_SLEEPABLE(lk, msg)	/* nothing */
-#endif /* defined(LOCKDEBUG) */
 
 /* Compatibility with old, non-interlocked tsleep call */
 #define	tsleep(chan, pri, wmesg, timo)					\

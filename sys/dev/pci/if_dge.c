@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.11.2.4 2008/02/11 14:59:38 yamt Exp $ */
+/*	$NetBSD: if_dge.c,v 1.11.2.5 2008/03/17 09:15:11 yamt Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.11.2.4 2008/02/11 14:59:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.11.2.5 2008/03/17 09:15:11 yamt Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -2092,12 +2092,12 @@ dge_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		dge_rxdrain(sc);
-
 	/* Mark the interface as down and cancel the watchdog timer. */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		dge_rxdrain(sc);
 }
 
 /*

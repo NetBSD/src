@@ -1,4 +1,4 @@
-/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.8.12.1 2006/06/21 14:51:38 yamt Exp $	*/
+/* -*-C++-*-	$NetBSD: sh_arch.h,v 1.8.12.2 2008/03/17 09:14:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@ public:
 	virtual BOOL init(void);
 	virtual BOOL setupLoader(void);
 	virtual void systemInfo(void);
-	virtual void jump(kaddr_t info, kaddr_t pvce);
+	virtual void jump(kaddr_t info, kaddr_t pvec);
 
 	// returns host machines CPU type. 3 for SH3. 4 for SH4
 	static int cpu_type(void);

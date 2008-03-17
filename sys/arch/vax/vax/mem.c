@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.29.16.3 2007/09/03 14:30:58 yamt Exp $	*/
+/*	$NetBSD: mem.c,v 1.29.16.4 2008/03/17 09:14:33 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29.16.3 2007/09/03 14:30:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mem.c,v 1.29.16.4 2008/03/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -112,9 +112,9 @@ const struct cdevsw mem_cdevsw = {
 int
 mmrw(dev_t dev, struct uio *uio, int flags)
 {
-	register vaddr_t v;
-	register int c;
-	register struct iovec *iov;
+	vaddr_t v;
+	int c;
+	struct iovec *iov;
 	int error = 0;
 
 	while (uio->uio_resid > 0 && error == 0) {

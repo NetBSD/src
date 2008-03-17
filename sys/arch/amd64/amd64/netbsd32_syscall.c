@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_syscall.c,v 1.6.2.8 2008/02/27 08:36:18 yamt Exp $	*/
+/*	$NetBSD: netbsd32_syscall.c,v 1.6.2.9 2008/03/17 09:14:14 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.6.2.8 2008/02/27 08:36:18 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscall.c,v 1.6.2.9 2008/03/17 09:14:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,7 +84,6 @@ netbsd32_syscall(struct trapframe *frame)
 	code = frame->tf_rax & (SYS_NSYSENT - 1);
 	callp = p->p_emul->e_sysent + code;
 
-	uvmexp.syscalls++;
 	LWP_CACHE_CREDS(l, p);
 
 	SYSCALL_COUNT(syscall_counts, code);

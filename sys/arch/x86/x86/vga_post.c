@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.6.2.2 2008/01/21 09:40:19 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.6.2.3 2008/03/17 09:14:36 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: vga_post.c,v 1.6.2.2 2008/01/21 09:40:19 yamt Exp $"
 #include <x86emu/x86emu_i8254.h>
 #include <x86emu/x86emu_regs.h>
 
+#include "opt_ddb.h"
+
 struct vga_post {
 	struct X86EMU emu;
 	vaddr_t sys_image;
@@ -52,6 +54,11 @@ struct vga_post {
 	uint8_t bios_data[PAGE_SIZE];
 	struct pglist ram_backing;
 };
+
+#ifdef DDB
+static struct vga_post *ddb_vgapostp;
+void ddb_vgapost(void);
+#endif
 
 static uint8_t
 vm86_emu_inb(struct X86EMU *emu, uint16_t port)
@@ -189,7 +196,9 @@ vga_post_init(int bus, int device, int function)
 	sc->emu.mem_size = 1024 * 1024;
 
 	sc->initial_eax = bus * 256 + device * 8 + function;
-
+#ifdef DDB
+	ddb_vgapostp = sc;
+#endif
 	return sc;
 }
 
@@ -222,3 +231,15 @@ vga_post_free(struct vga_post *sc)
 	pmap_update(pmap_kernel());
 	kmem_free(sc, sizeof(*sc));
 }
+
+#ifdef DDB
+void
+ddb_vgapost()
+{
+
+	if (ddb_vgapostp)
+		vga_post_call(ddb_vgapostp);
+	else
+		printf("ddb_vgapost: vga_post not initialized\n");
+}
+#endif

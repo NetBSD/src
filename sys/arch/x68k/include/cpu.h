@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34.2.2 2007/09/03 14:31:13 yamt Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34.2.3 2008/03/17 09:14:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990, 1993
@@ -177,11 +177,6 @@ extern int astpending;		/* need to trap before returning to user mode */
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_MAXID		2	/* number of valid machdep ids */
-
-#define CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-}
 
 /*
  * The rest of this should probably be moved to <machine/x68kcpu.h>

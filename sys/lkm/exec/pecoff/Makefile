@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.4.22.1 2007/09/03 14:41:37 yamt Exp $
+#	$NetBSD: Makefile,v 1.4.22.2 2008/03/17 09:15:41 yamt Exp $
 
 .include "../Makefile.inc"
 
 .PATH:	$S/compat/pecoff
 
 CPPFLAGS+=	-nostdinc -D_KERNEL -DCOMPAT_PECOFF
-
-MKMAN=	no
 
 KMOD=	exec_pecoff
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.h,v 1.7 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: ka820.h,v 1.7.16.1 2008/03/17 09:14:29 yamt Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -138,7 +138,7 @@ struct ka820clock {
 	u_short csr3;
 };
 
-void	crxintr __P((void *arg));
+void	crxintr(void *arg);
 #endif /* _LOCORE */
 
 #endif /* _VAX_KA820_H_ */

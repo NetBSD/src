@@ -1,4 +1,4 @@
-/*	$NetBSD: isapnpvar.h,v 1.21.6.1 2006/12/30 20:48:35 yamt Exp $	*/
+/*	$NetBSD: isapnpvar.h,v 1.21.6.2 2008/03/17 09:14:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@ struct isapnp_softc;
 #endif
 
 struct isapnp_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	int			sc_read_port;
 	bus_space_tag_t		sc_iot;
 	bus_space_tag_t		sc_memt;

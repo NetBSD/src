@@ -1,4 +1,4 @@
-/*	$NetBSD: ka670.c,v 1.10.16.2 2007/09/03 14:30:56 yamt Exp $	*/
+/*	$NetBSD: ka670.c,v 1.10.16.3 2008/03/17 09:14:33 yamt Exp $	*/
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.10.16.2 2007/09/03 14:30:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.10.16.3 2008/03/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,24 +54,26 @@ __KERNEL_RCSID(0, "$NetBSD: ka670.c,v 1.10.16.2 2007/09/03 14:30:56 yamt Exp $")
 #include <machine/ka670.h>
 #include <machine/clock.h>
 
-static	void ka670_conf __P((void));
+static void ka670_memerr(void);
+static void ka670_conf(void);
+static void ka670_attach_cpu(device_t);
+static int ka670_mchk(void *);
+static int ka670_cache_init(void);	/* "int mapen" as argument? */
 
-static	int ka670_mchk __P((void *));
-static	void ka670_memerr __P((void));
-static	int ka670_cache_init __P((void));	/* "int mapen" as argument? */
+static const char * const ka670_devs[] = { "cpu", "sgec", "shac", "uba", NULL };
 
-struct	cpu_dep ka670_calls = {
-	0,
-	ka670_mchk,
-	ka670_memerr,
-	ka670_conf,
-	generic_gettime,
-	generic_settime,
-	8,	/* 8 VUP */
-	2,	/* SCB pages */
-	generic_halt,
-	generic_reboot,
-	0,
+const struct cpu_dep ka670_calls = {
+	.cpu_mchk	= ka670_mchk,
+	.cpu_memerr	= ka670_memerr,
+	.cpu_conf	= ka670_conf,
+	.cpu_gettime	= generic_gettime,
+	.cpu_settime	= generic_settime,
+	.cpu_vups	= 8,	/* 8 VUP */
+	.cpu_scbsz	= 2,	/* SCB pages */
+	.cpu_halt	= generic_halt,
+	.cpu_reboot	= generic_reboot,
+	.cpu_devs	= ka670_devs,
+	.cpu_attach_cpu	= ka670_attach_cpu,
 };
 
 #define KA670_MC_RESTART	0x00008000	/* Restart possible*/
@@ -94,7 +96,7 @@ struct ka670_mcframe {		/* Format of RigelMAX machine check frame: */
 /*
  * This is not the mchk types on KA670.
  */
-static char *ka670_mctype[] = {
+static const char * const ka670_mctype[] = {
 	"no error (0)",			/* Code 0: No error */
 	"FPA: protocol error",		/* Code 1-5: FPA errors */
 	"FPA: illegal opcode",
@@ -122,10 +124,9 @@ static char *ka670_mctype[] = {
 static int ka670_error_count = 0;
 
 int
-ka670_mchk(addr)
-	void *addr;
+ka670_mchk(void *addr)
 {
-	register struct ka670_mcframe *mcf = (void*)addr;
+	struct ka670_mcframe * const mcf = addr;
 
 	mtpr(0x00, PR_MCESR);	/* Acknowledge the machine check */
 	printf("machine check %d (0x%x)\n", mcf->mc670_code, mcf->mc670_code);
@@ -160,7 +161,7 @@ ka670_mchk(addr)
 }
 
 void
-ka670_memerr()
+ka670_memerr(void)
 {
 	char sbuf[256];
 
@@ -179,7 +180,7 @@ ka670_memerr()
 }
 
 int
-ka670_cache_init()
+ka670_cache_init(void)
 {
 	int val;
 #ifdef DEBUG
@@ -206,10 +207,10 @@ ka670_cache_init()
 
 	return (0);
 }
+
 void
-ka670_conf()
+ka670_conf(void)
 {
-	printf("cpu0: KA670, ucode rev %d\n", vax_cpudata % 0377);
 
 	/*
 	 * ka670_conf() gets called with MMU enabled, now it's save to
@@ -218,4 +219,13 @@ ka670_conf()
 	ka670_cache_init();
 
 	cpmbx = (struct cpmbx *)vax_map_physmem(0x20140400, 1);
+}
+
+void
+ka670_attach_cpu(device_t self)
+{
+	aprint_normal(
+	    ": %s, Rigel (ucode rev %d), 2KB L1 cache, 128KB L2 cache\n",
+	    "KA670",
+	    vax_cpudata % 0377);
 }

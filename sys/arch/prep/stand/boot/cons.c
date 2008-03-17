@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.2.16.1 2006/06/21 14:55:19 yamt Exp $	*/
+/*	$NetBSD: cons.c,v 1.2.16.2 2008/03/17 09:14:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -163,7 +163,7 @@ cnscan(void)
 
 	if (cn_tab)
 		return ((*cn_tab->cn_scan)(cn_tab->cn_dev));
-	return (0);
+	return -1;
 }
 
 #ifdef CONS_VGA

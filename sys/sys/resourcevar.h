@@ -1,4 +1,4 @@
-/*	$NetBSD: resourcevar.h,v 1.29.2.6 2008/01/21 09:47:58 yamt Exp $	*/
+/*	$NetBSD: resourcevar.h,v 1.29.2.7 2008/03/17 09:15:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -105,12 +105,9 @@ struct uidinfo {
 	kmutex_t ui_lock;	/* mutex for everything */
 
 };
-#define	UIHASH(uid)	(&uihashtbl[(uid) & uihash])
 
-extern LIST_HEAD(uihashhead, uidinfo) *uihashtbl;
-extern u_long uihash;		/* size of hash table - 1 */
-int       chgproccnt(uid_t, int);
-int       chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
+int	chgproccnt(uid_t, int);
+int	chgsbsize(struct uidinfo *, u_long *, u_long, rlim_t);
 struct uidinfo *uid_find(uid_t);
 void	uid_init(void);
 
@@ -122,15 +119,15 @@ extern uid_t security_setidcore_owner;
 extern gid_t security_setidcore_group;
 extern mode_t security_setidcore_mode;
 
-void	 addupc_intr(struct lwp *, u_long);
-void	 addupc_task(struct lwp *, u_long, u_int);
-void	 calcru(struct proc *, struct timeval *, struct timeval *,
+void	addupc_intr(struct lwp *, u_long);
+void	addupc_task(struct lwp *, u_long, u_int);
+void	calcru(struct proc *, struct timeval *, struct timeval *,
 	    struct timeval *, struct timeval *);
 
 struct plimit *lim_copy(struct plimit *lim);
-void lim_addref(struct plimit *lim);
-void lim_privatise(struct proc *p, bool set_shared);
-void limfree(struct plimit *);
+void	lim_addref(struct plimit *lim);
+void	lim_privatise(struct proc *p, bool set_shared);
+void	limfree(struct plimit *);
 
 void	resource_init(void);
 void	ruadd(struct rusage *, struct rusage *);

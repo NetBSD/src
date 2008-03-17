@@ -1,4 +1,4 @@
-/*	$NetBSD: sco_upper.c,v 1.1.2.4 2007/09/03 14:42:44 yamt Exp $	*/
+/*	$NetBSD: sco_upper.c,v 1.1.2.5 2008/03/17 09:15:41 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.1.2.4 2007/09/03 14:42:44 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sco_upper.c,v 1.1.2.5 2008/03/17 09:15:41 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -150,12 +150,9 @@ sco_connect(struct sco_pcb *pcb, struct sockaddr_bt *dest)
 	if (acl == NULL || acl->hl_state != HCI_LINK_OPEN)
 		return EHOSTUNREACH;
 
-	sco = hci_link_alloc(unit);
+	sco = hci_link_alloc(unit, &pcb->sp_raddr, HCI_LINK_SCO);
 	if (sco == NULL)
 		return ENOMEM;
-
-	sco->hl_type = HCI_LINK_SCO;
-	bdaddr_copy(&sco->hl_bdaddr, &pcb->sp_raddr);
 
 	sco->hl_link = hci_acl_open(unit, &pcb->sp_raddr);
 	KASSERT(sco->hl_link == acl);

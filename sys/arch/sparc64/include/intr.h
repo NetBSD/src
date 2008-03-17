@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.11.12.5 2008/01/21 09:39:31 yamt Exp $ */
+/*	$NetBSD: intr.h,v 1.11.12.6 2008/03/17 09:14:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
 #ifndef _SPARC64_INTR_H_
 #define _SPARC64_INTR_H_
 
+#ifndef _LOCORE
 #include <machine/cpuset.h>
+#endif
 
 /* XXX - arbitrary numbers; no interpretation is defined yet */
 #define	IPL_NONE	0		/* nothing */
@@ -54,12 +56,17 @@
 #define	IPL_PAUSE	13		/* pause cpu */
 #define	IPL_FDSOFT	PIL_FDSOFT	/* floppy */
 
-void save_and_clear_fpstate(struct lwp *);
+#ifndef _LOCORE
+void fpusave_lwp(struct lwp *, bool);
+#endif	/* _LOCORE */
 
 #if defined(MULTIPROCESSOR)
+#ifndef _LOCORE
 void	sparc64_ipi_init (void);
 int	sparc64_ipi_halt_thiscpu (void *);
 int	sparc64_ipi_pause_thiscpu (void *);
+void	sparc64_do_pause(void);
+void	sparc64_ipi_sync_tick (void *);
 void	sparc64_ipi_drop_fpstate (void *);
 void	sparc64_ipi_save_fpstate (void *);
 void	sparc64_ipi_nop (void *);
@@ -67,6 +74,17 @@ void	mp_halt_cpus (void);
 void	mp_pause_cpus (void);
 void	mp_resume_cpus (void);
 int	mp_cpu_is_paused (sparc64_cpuset_t);
+void	mp_resume_cpu(int);
+#endif	/* _LOCORE */
+
+#define IPI_EVCNT_TLB_PTE	0
+#define IPI_EVCNT_TLB_CTX	1
+#define IPI_EVCNT_TLB_ALL	2
+#define IPI_EVCNT_FPU_SYNCH	3
+#define IPI_EVCNT_FPU_FLUSH	4
+#define IPI_EVCNT_NUM		5
+#define IPI_EVCNT_NAMES { "TLB pte IPI", "TLB ctx IPI", "TLB all IPI", \
+			  "FPU synch IPI", "FPU flush IPI" }
 #endif
 
 #endif /* _SPARC64_INTR_H_ */

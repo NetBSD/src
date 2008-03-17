@@ -1,4 +1,4 @@
-/*	$NetBSD: lptvar.h,v 1.2 2005/02/04 02:10:44 perry Exp $	*/
+/*	$NetBSD: lptvar.h,v 1.2.6.1 2008/03/17 09:15:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@ struct lpt_funcs;
 
 
 struct lpt_softc {
-	struct device		sc_dev;
+	device_t		sc_dev;
 	struct callout		sc_wakeup_ch;
 	struct lpt_funcs	*sc_funcs;
 	void			*sc_arg;

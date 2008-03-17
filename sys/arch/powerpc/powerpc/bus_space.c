@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5.12.5 2008/02/27 08:36:23 yamt Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5.12.6 2008/03/17 09:14:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.12.5 2008/02/27 08:36:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.12.6 2008/03/17 09:14:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,7 +529,6 @@ memio_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 #ifdef DEBUG
 		printf("bus_space_map(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
 		    t, t->pbs_base, t->pbs_limit, bpa, size);
-		 
 #endif
 		return (EINVAL);
 	}
@@ -689,8 +688,13 @@ memio_alloc(bus_space_tag_t t, bus_addr_t rstart, bus_addr_t rend,
 	size = _BUS_SPACE_STRIDE(t, size);
 	rstart = _BUS_SPACE_STRIDE(t, rstart);
 
-	if (rstart + size > t->pbs_limit)
+	if (rstart + size > t->pbs_limit) {
+#ifdef DEBUG
+		printf("%s(%p[%x:%x], %#x, %#x) failed: EINVAL\n",
+		   __func__, t, t->pbs_base, t->pbs_limit, rstart, size);
+#endif
 		return (EINVAL);
+	}
 
 	/*
 	 * Can't map I/O space as linear.

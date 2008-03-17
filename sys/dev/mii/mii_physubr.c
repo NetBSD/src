@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.44.4.3 2008/01/21 09:43:27 yamt Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.44.4.4 2008/03/17 09:15:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.44.4.3 2008/01/21 09:43:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.44.4.4 2008/03/17 09:15:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -626,7 +626,7 @@ mii_phy_flowstatus(struct mii_softc *sc)
 }
 
 bool
-mii_phy_resume(device_t dv)
+mii_phy_resume(device_t dv PMF_FN_ARGS)
 {
 	struct mii_softc *sc = device_private(dv);
 

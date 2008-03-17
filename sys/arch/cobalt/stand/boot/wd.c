@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.4.16.1 2007/09/03 14:23:54 yamt Exp $	*/
+/*	$NetBSD: wd.c,v 1.4.16.2 2008/03/17 09:14:16 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -40,6 +40,7 @@
 #include <sys/stdint.h>
 
 #include <lib/libsa/stand.h>
+#include <lib/libkern/libkern.h>
 
 #include <machine/param.h>
 #include <machine/stdarg.h>
@@ -243,12 +244,13 @@ wdclose(struct open_file *f)
  * Read some data.
  */
 int
-wdstrategy(void *f, int rw, daddr_t dblk, size_t size, void *buf, size_t *rsize)
+wdstrategy(void *f, int rw, daddr_t dblk, size_t size, void *p, size_t *rsize)
 {
 	int i, nsect;
 	daddr_t blkno;
 	struct wd_softc *wd;
 	struct partition *pp;
+	uint8_t *buf;
 
 	if (size == 0)
 		return 0;
@@ -256,6 +258,7 @@ wdstrategy(void *f, int rw, daddr_t dblk, size_t size, void *buf, size_t *rsize)
 	if (rw != F_READ)
 		return EOPNOTSUPP;
 
+	buf = p;
 	wd = f;
 	pp = &wd->sc_label.d_partitions[wd->sc_part];
 

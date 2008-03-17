@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.11.4.7 2008/02/27 08:37:05 yamt Exp $	*/
+/*	$NetBSD: emul.c,v 1.11.4.8 2008/03/17 09:15:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -67,10 +67,8 @@ int physmem = 256*256; /* 256 * 1024*1024 / 4k, PAGE_SIZE not always set */
 int doing_shutdown;
 int ncpu = 1;
 const int schedppq = 1;
-int dovfsusermount = 1;
 int hardclock_ticks;
 
-MALLOC_DEFINE(M_MOUNT, "mount", "vfs mount struct");
 MALLOC_DEFINE(M_UFSMNT, "UFS mount", "UFS mount structure");
 MALLOC_DEFINE(M_TEMP, "temp", "misc. temporary data buffers");
 MALLOC_DEFINE(M_DEVBUF, "devbuf", "device driver memory");
@@ -175,7 +173,8 @@ copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 {
 
 	strlcpy(kaddr, uaddr, len);
-	*done = strlen(kaddr);
+	if (done)
+		*done = strlen(kaddr)+1; /* includes termination */
 	return 0;
 }
 

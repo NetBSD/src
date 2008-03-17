@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0_com.c,v 1.4.16.2 2007/09/03 14:23:28 yamt Exp $	*/
+/*	$NetBSD: pxa2x0_com.c,v 1.4.16.3 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4.16.2 2007/09/03 14:23:28 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4.16.3 2008/03/17 09:14:15 yamt Exp $");
 
 #include "opt_com.h"
 
@@ -62,14 +62,14 @@ __KERNEL_RCSID(0, "$NetBSD: pxa2x0_com.c,v 1.4.16.2 2007/09/03 14:23:28 yamt Exp
 
 #include "locators.h"
 
-static int	pxauart_match(struct device *, struct cfdata *, void *);
-static void	pxauart_attach(struct device *, struct device *, void *);
+static int	pxauart_match(device_t, cfdata_t , void *);
+static void	pxauart_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(pxauart, sizeof(struct com_softc),
+CFATTACH_DECL_NEW(pxauart, sizeof(struct com_softc),
     pxauart_match, pxauart_attach, NULL, NULL);
 
 static int
-pxauart_match(struct device *parent, struct cfdata *cf, void *aux)
+pxauart_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pxaip_attach_args *pxa = aux;
 	bus_space_tag_t bt = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
@@ -135,14 +135,15 @@ pxauart_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pxauart_attach(struct device *parent, struct device *self, void *aux)
+pxauart_attach(device_t parent, device_t self, void *aux)
 {
-	struct com_softc *sc = (struct com_softc *)self;
+	struct com_softc *sc = device_private(self);
 	struct pxaip_attach_args *pxa = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 	bus_addr_t iobase;
 
+	sc->sc_dev = self;
 	iot = &pxa2x0_a4x_bs_tag;	/* XXX: This sucks */
 	iobase = pxa->pxa_addr;
 	sc->sc_frequency = PXA2X0_COM_FREQ;
@@ -150,7 +151,7 @@ pxauart_attach(struct device *parent, struct device *self, void *aux)
 
 	if (com_is_console(iot, iobase, &ioh) == 0 &&
 	    bus_space_map(iot, iobase, pxa->pxa_size, 0, &ioh)) {
-		printf(": can't map registers\n");
+		aprint_error(": can't map registers\n");
 		return;
 	}
 	COM_INIT_REGS(sc->sc_regs, iot, ioh, iobase);

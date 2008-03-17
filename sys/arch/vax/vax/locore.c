@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.69.12.3 2008/02/04 09:22:45 yamt Exp $	*/
+/*	$NetBSD: locore.c,v 1.69.12.4 2008/03/17 09:14:33 yamt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.69.12.3 2008/02/04 09:22:45 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.69.12.4 2008/03/17 09:14:33 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -68,25 +68,25 @@ struct user *proc0paddr;
  * The strict CPU-dependent information is set up here, in
  * form of a pointer to a struct that is specific for each CPU.
  */
-extern struct cpu_dep ka780_calls;
-extern struct cpu_dep ka750_calls;
-extern struct cpu_dep ka860_calls;
-extern struct cpu_dep ka820_calls;
-extern struct cpu_dep ka6400_calls;
-extern struct cpu_dep ka88_calls;
-extern struct cpu_dep ka43_calls;
-extern struct cpu_dep ka46_calls;
-extern struct cpu_dep ka48_calls;
-extern struct cpu_dep vxt_calls;
-extern struct cpu_dep ka49_calls;
-extern struct cpu_dep ka53_calls;
-extern struct cpu_dep ka410_calls;
-extern struct cpu_dep ka610_calls;
-extern struct cpu_dep ka630_calls;
-extern struct cpu_dep ka650_calls;
-extern struct cpu_dep ka660_calls;
-extern struct cpu_dep ka670_calls;
-extern struct cpu_dep ka680_calls;
+extern const struct cpu_dep ka780_calls;
+extern const struct cpu_dep ka750_calls;
+extern const struct cpu_dep ka860_calls;
+extern const struct cpu_dep ka820_calls;
+extern const struct cpu_dep ka6400_calls;
+extern const struct cpu_dep ka88_calls;
+extern const struct cpu_dep ka43_calls;
+extern const struct cpu_dep ka46_calls;
+extern const struct cpu_dep ka48_calls;
+extern const struct cpu_dep vxt_calls;
+extern const struct cpu_dep ka49_calls;
+extern const struct cpu_dep ka53_calls;
+extern const struct cpu_dep ka410_calls;
+extern const struct cpu_dep ka610_calls;
+extern const struct cpu_dep ka630_calls;
+extern const struct cpu_dep ka650_calls;
+extern const struct cpu_dep ka660_calls;
+extern const struct cpu_dep ka670_calls;
+extern const struct cpu_dep ka680_calls;
 
 /*
  * Start is called from boot; the first routine that is called

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.101.2.11 2008/02/27 08:36:56 yamt Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.101.2.12 2008/03/17 09:15:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.101.2.11 2008/02/27 08:36:56 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.101.2.12 2008/03/17 09:15:34 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pool.h"
@@ -996,7 +996,7 @@ pool_get(struct pool *pp, int flags)
 #endif /* DIAGNOSTIC */
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
-		ASSERT_SLEEPABLE(NULL, "pool_get(PR_WAITOK)");
+		ASSERT_SLEEPABLE();
 #endif
 
 	mutex_enter(&pp->pr_lock);
@@ -1288,8 +1288,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 	if (ph->ph_nmissing == 0) {
 		pp->pr_nidle++;
 		if (pp->pr_npages > pp->pr_minpages &&
-		    (pp->pr_npages > pp->pr_maxpages ||
-		     pa_starved_p(pp->pr_alloc))) {
+		    pp->pr_npages > pp->pr_maxpages) {
 			pr_rmpage(pp, ph, pq);
 		} else {
 			LIST_REMOVE(ph, ph_pagelist);
@@ -2523,7 +2522,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 
 #ifdef LOCKDEBUG
 	if (flags & PR_WAITOK)
-		ASSERT_SLEEPABLE(NULL, "pool_cache_get(PR_WAITOK)");
+		ASSERT_SLEEPABLE();
 #endif
 
 	cc = pool_cache_cpu_enter(pc, &s);
@@ -3063,7 +3062,7 @@ found:
 					snprintf(cpucachestr,
 					    sizeof(cpucachestr),
 					    "cached by CPU %u",
-					    (u_int)ci->ci_cpuid);
+					    ci->ci_index);
 					goto print;
 				}
 			}

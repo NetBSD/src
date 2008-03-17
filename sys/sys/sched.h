@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.21.2.10 2008/02/27 08:37:05 yamt Exp $	*/
+/*	$NetBSD: sched.h,v 1.21.2.11 2008/03/17 09:15:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -200,7 +200,6 @@ struct schedstate_percpu {
 #ifdef _KERNEL
 
 extern int schedhz;			/* ideally: 16 */
-extern const int schedppq;
 
 struct proc;
 struct cpu_info;
@@ -252,6 +251,9 @@ void		preempt(void);
 int		mi_switch(struct lwp *);
 void		resched_cpu(struct lwp *);
 void		updatertime(lwp_t *, const struct bintime *);
+
+int		do_sched_setparam(pid_t, lwpid_t, int, const struct sched_param *);
+int		do_sched_getparam(pid_t, lwpid_t, int *, struct sched_param *);
 
 #endif	/* _KERNEL */
 #endif	/* _SYS_SCHED_H_ */

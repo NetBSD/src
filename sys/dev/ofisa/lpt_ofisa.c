@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_ofisa.c,v 1.9.4.2 2007/10/27 11:32:25 yamt Exp $	*/
+/*	$NetBSD: lpt_ofisa.c,v 1.9.4.3 2008/03/17 09:15:10 yamt Exp $	*/
 
 /*
  * Copyright 1997, 1998
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.9.4.2 2007/10/27 11:32:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_ofisa.c,v 1.9.4.3 2008/03/17 09:15:10 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -62,17 +62,14 @@ struct lpt_ofisa_softc {
 	void	*sc_ih;			/* interrupt handler */
 };
 
-int lpt_ofisa_probe(struct device *, struct cfdata *, void *);
-void lpt_ofisa_attach(struct device *, struct device *, void *);
+int lpt_ofisa_probe(device_t, cfdata_t , void *);
+void lpt_ofisa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_ofisa, sizeof(struct lpt_ofisa_softc),
+CFATTACH_DECL_NEW(lpt_ofisa, sizeof(struct lpt_ofisa_softc),
     lpt_ofisa_probe, lpt_ofisa_attach, NULL, NULL);
 
 int
-lpt_ofisa_probe(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+lpt_ofisa_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ofisa_attach_args *aa = aux;
 	static const char *const compatible_strings[] = { "pnpPNP,401", NULL };
@@ -88,9 +85,7 @@ lpt_ofisa_probe(parent, cf, aux)
 }
 
 void
-lpt_ofisa_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lpt_ofisa_attach(device_t parent, device_t self, void *aux)
 {
 	struct lpt_ofisa_softc *osc = device_private(self);
         struct lpt_softc *sc = &osc->sc_lpt;
@@ -106,16 +101,18 @@ lpt_ofisa_attach(parent, self, aux)
 	 * We expect exactly one register region and one interrupt.
 	 */
 
+	sc->sc_dev = self;
+
 	n = ofisa_reg_get(aa->oba.oba_phandle, &reg, 1);
 #ifdef _LPT_OFISA_MD_REG_FIXUP
 	n = lpt_ofisa_md_reg_fixup(parent, self, aux, &reg, 1, n);
 #endif
 	if (n != 1) {
-		printf(": error getting register data\n");
+		aprint_error(": error getting register data\n");
 		return;
 	}
 	if (reg.len != 4 && reg.len != 8) {
-		printf(": weird register size (%lu, expected 4 or 8)\n",
+		aprint_error(": weird register size (%lu, expected 4 or 8)\n",
 		    (unsigned long)reg.len);
 		return;
 	}
@@ -125,20 +122,20 @@ lpt_ofisa_attach(parent, self, aux)
 	n = lpt_ofisa_md_intr_fixup(parent, self, aux, &intr, 1, n);
 #endif
 	if (n != 1) {
-		printf(": error getting interrupt data\n");
+		aprint_error(": error getting interrupt data\n");
 		return;
 	}
 
 	sc->sc_iot = (reg.type == OFISA_REG_TYPE_IO) ? aa->iot : aa->memt;
 	if (bus_space_map(sc->sc_iot, reg.addr, reg.len, 0, &sc->sc_ioh)) {
-		printf(": can't map register space\n");
+		aprint_error(": can't map register space\n");
                 return;
         }
 
 	osc->sc_ih = isa_intr_establish(aa->ic, intr.irq, intr.share,
 	    IPL_TTY, lptintr, sc);
 
-	printf("\n");
+	aprint_normal("\n");
 
 	lpt_attach_subr(sc);
 

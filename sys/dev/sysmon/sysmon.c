@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon.c,v 1.10.18.4 2008/01/21 09:44:38 yamt Exp $	*/
+/*	$NetBSD: sysmon.c,v 1.10.18.5 2008/03/17 09:15:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.10.18.4 2008/01/21 09:44:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon.c,v 1.10.18.5 2008/03/17 09:15:27 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -62,7 +62,7 @@ dev_type_kqfilter(sysmonkqfilter);
 
 const struct cdevsw sysmon_cdevsw = {
 	sysmonopen, sysmonclose, sysmonread, nowrite, sysmonioctl,
-	nostop, notty, sysmonpoll, nommap, sysmonkqfilter, D_OTHER,
+	nostop, notty, sysmonpoll, nommap, sysmonkqfilter, D_OTHER | D_MPSAFE,
 };
 
 /*

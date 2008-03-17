@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.305.2.8 2008/02/27 08:36:31 yamt Exp $ */
+/*	$NetBSD: wd.c,v 1.305.2.9 2008/03/17 09:14:37 yamt Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.8 2008/02/27 08:36:31 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.305.2.9 2008/03/17 09:14:37 yamt Exp $");
 
 #include "opt_ata.h"
 
@@ -140,7 +140,7 @@ int	wdactivate(struct device *, enum devact);
 int	wdprint(void *, char *);
 void	wdperror(const struct wd_softc *);
 
-static bool	wd_suspend(device_t);
+static bool	wd_suspend(device_t PMF_FN_PROTO);
 static int	wd_standby(struct wd_softc *, int);
 
 CFATTACH_DECL(wd, sizeof(struct wd_softc),
@@ -194,7 +194,7 @@ void  wdrestart(void *);
 void  wddone(void *);
 int   wd_get_params(struct wd_softc *, u_int8_t, struct ataparams *);
 int   wd_flushcache(struct wd_softc *, int);
-void  wd_shutdown(void *);
+bool  wd_shutdown(device_t, int);
 
 int   wd_getcache(struct wd_softc *, int *);
 int   wd_setcache(struct wd_softc *, int);
@@ -417,10 +417,6 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	disk_init(&wd->sc_dk, wd->sc_dev.dv_xname, &wddkdriver);
 	disk_attach(&wd->sc_dk);
 	wd->sc_wdc_bio.lp = wd->sc_dk.dk_label;
-	wd->sc_sdhook = shutdownhook_establish(wd_shutdown, wd);
-	if (wd->sc_sdhook == NULL)
-		aprint_error("%s: WARNING: unable to establish shutdown hook\n",
-			wd->sc_dev.dv_xname);
 #if NRND > 0
 	rnd_attach_source(&wd->rnd_source, wd->sc_dev.dv_xname,
 			  RND_TYPE_DISK, 0);
@@ -429,12 +425,12 @@ wdattach(struct device *parent, struct device *self, void *aux)
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&wd->sc_dk);
 
-	if (!pmf_device_register(self, wd_suspend, NULL))
+	if (!pmf_device_register1(self, wd_suspend, NULL, wd_shutdown))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
 static bool
-wd_suspend(device_t dv)
+wd_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct wd_softc *sc = device_private(dv);
 
@@ -504,10 +500,6 @@ wddetach(struct device *self, int flags)
 	}
 	sc->sc_bscount = 0;
 #endif
-
-	/* Get rid of the shutdown hook. */
-	if (sc->sc_sdhook != NULL)
-		shutdownhook_disestablish(sc->sc_sdhook);
 
 	pmf_device_deregister(self);
 
@@ -811,7 +803,7 @@ wddone(void *v)
 			goto noerror;
 		errmsg = "error";
 		do_perror = 1;
-		if (wd->sc_wdc_bio.r_error & WDCE_IDNF &&
+		if ((wd->sc_wdc_bio.r_error & (WDCE_IDNF | WDCE_ABRT)) &&
 		    (wd->sc_quirks & WD_QUIRK_FORCE_LBA48) == 0) {
 			nblks = wd->sc_wdc_bio.bcount /
 			    wd->sc_dk.dk_label->d_secsize;
@@ -1948,14 +1940,15 @@ wd_flushcache(struct wd_softc *wd, int flags)
 	return 0;
 }
 
-void
-wd_shutdown(void *arg)
+bool
+wd_shutdown(device_t dev, int how)
 {
 
-	struct wd_softc *wd = arg;
+	struct wd_softc *wd = device_private(dev);
 	wd_flushcache(wd, AT_POLL);
-	if ((boothowto & RB_POWERDOWN) == RB_POWERDOWN)
+	if ((how & RB_POWERDOWN) == RB_POWERDOWN)
 		wd_standby(wd, AT_POLL);
+	return true;
 }
 
 /*

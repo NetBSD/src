@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.4.4.4 2008/01/21 09:44:29 yamt Exp $	*/
+/*	$NetBSD: putter.c,v 1.4.4.5 2008/03/17 09:15:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.4.4 2008/01/21 09:44:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.4.4.5 2008/03/17 09:15:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -549,7 +549,7 @@ void
 putter_notify(struct putter_instance *pi)
 {
 
-	selnotify(&pi->pi_sel, 0);
+	selnotify(&pi->pi_sel, 0, 0);
 }
 
 /* search sorted list of instances for free minor, sorted insert arg */

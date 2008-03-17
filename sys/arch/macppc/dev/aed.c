@@ -1,4 +1,4 @@
-/*	$NetBSD: aed.c,v 1.15.2.2 2007/09/03 14:27:33 yamt Exp $	*/
+/*	$NetBSD: aed.c,v 1.15.2.3 2008/03/17 09:14:21 yamt Exp $	*/
 
 /*
  * Copyright (C) 1994	Bradley A. Grantham
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.15.2.2 2007/09/03 14:27:33 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.15.2.3 2008/03/17 09:14:21 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -119,6 +119,7 @@ aedattach(parent, self, aux)
 	struct aed_softc *sc = (struct aed_softc *)self;
 
 	callout_init(&sc->sc_repeat_ch, 0);
+	selinit(&sc->sc_selinfo);
 
 	sc->origaddr = aa_args->origaddr;
 	sc->adbaddr = aa_args->adbaddr;
@@ -413,7 +414,7 @@ aed_enqevent(event)
 	    AED_MAX_EVENTS] = *event;
 	aed_sc->sc_evq_len++;
 
-	selnotify(&aed_sc->sc_selinfo, 0);
+	selnotify(&aed_sc->sc_selinfo, 0, 0);
 	if (aed_sc->sc_ioproc)
 		psignal(aed_sc->sc_ioproc, SIGIO);
 

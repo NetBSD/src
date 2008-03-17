@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.6.4.5 2008/02/04 09:23:58 yamt Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.6.4.6 2008/03/17 09:15:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.6.4.5 2008/02/04 09:23:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.6.4.6 2008/03/17 09:15:32 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -186,7 +186,7 @@ puffs_getvnode(struct mount *mp, puffs_cookie_t ck, enum vtype type,
 
 	/* insert cookie on list, take off of interlock list */
 	mutex_init(&pnode->pn_mtx, MUTEX_DEFAULT, IPL_NONE);
-	SLIST_INIT(&pnode->pn_sel.sel_klist);
+	selinit(&pnode->pn_sel);
 	plist = puffs_cookie2hashlist(pmp, ck);
 	mutex_enter(&pmp->pmp_lock);
 	LIST_INSERT_HEAD(plist, pnode, pn_hashent);
@@ -506,6 +506,7 @@ puffs_releasenode(struct puffs_node *pn)
 	if (--pn->pn_refcount == 0) {
 		mutex_exit(&pn->pn_mtx);
 		mutex_destroy(&pn->pn_mtx);
+		seldestroy(&pn->pn_sel);
 		pool_put(&puffs_pnpool, pn);
 	} else {
 		mutex_exit(&pn->pn_mtx);

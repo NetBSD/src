@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.21.4.5 2008/01/21 09:44:00 yamt Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.21.4.6 2008/03/17 09:15:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.21.4.5 2008/01/21 09:44:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.21.4.6 2008/03/17 09:15:11 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -1424,14 +1424,14 @@ ste_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		ste_rxdrain(sc);
-
 	/*
 	 * Mark the interface down and cancel the watchdog timer.
 	 */
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		ste_rxdrain(sc);
 }
 
 static int

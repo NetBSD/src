@@ -1,4 +1,4 @@
-/*	$NetBSD: ka88.h,v 1.3 2004/02/13 11:36:20 wiz Exp $	*/
+/*	$NetBSD: ka88.h,v 1.3.16.1 2008/03/17 09:14:29 yamt Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -123,7 +123,10 @@
  *    20-23:	CPUs.
  */
 struct nmi_attach_args {
-	int slot;
+	const char *na_type;
+	int na_slot;
+	bus_space_tag_t na_iot;
+	bus_dma_tag_t na_dmat;
 };
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubavar.h,v 1.36.4.1 2007/09/03 14:38:14 yamt Exp $	*/
+/*	$NetBSD: ubavar.h,v 1.36.4.2 2008/03/17 09:15:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -64,8 +64,8 @@
  * wait states are also recorded here.
  */
 struct	uba_softc {
-	struct	device uh_dev;		/* Device struct, autoconfig */
-	struct	evcnt uh_intrcnt;		/* interrupt counting */
+	device_t uh_dev;		/* Device struct, autoconfig */
+	struct evcnt uh_intrcnt;		/* interrupt counting */
 	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
 	SIMPLEQ_HEAD(, uba_reset) uh_resetq;	/* ubareset queue */
 	int	uh_lastiv;		/* last free interrupt vector */
@@ -90,7 +90,7 @@ struct	uba_softc {
  */
 struct	uba_unit {
 	SIMPLEQ_ENTRY(uba_unit) uu_resq;/* Queue while waiting for resources */
-	void	*uu_softc;	/* Pointer to units softc */
+	device_t uu_dev;	/* unit's device_t */
 	int	uu_bdp;		/* for controllers that hang on to bdp's */
 	int    (*uu_ready)(struct uba_unit *);
 	void	*uu_ref;	/* Buffer this is related to */
@@ -104,8 +104,8 @@ struct	uba_unit {
  */
 struct	uba_reset {
 	SIMPLEQ_ENTRY(uba_reset) ur_resetq;
-	void (*ur_reset)(struct device *);
-	struct device *ur_dev;
+	void (*ur_reset)(device_t);
+	device_t ur_dev;
 };
 
 /*
@@ -158,7 +158,7 @@ struct ubinfo {
 
 #ifdef _KERNEL
 void uba_intr_establish(void *, int, void (*)(void *), void *, struct evcnt *);
-void uba_reset_establish(void (*)(struct device *), struct device *);
+void uba_reset_establish(void (*)(device_t), device_t);
 void uba_attach(struct uba_softc *, unsigned long);
 void uba_enqueue(struct uba_unit *);
 void uba_done(struct uba_softc *);

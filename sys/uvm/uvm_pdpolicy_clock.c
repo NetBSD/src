@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.4 2008/01/21 09:48:25 yamt Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.5 2008/03/17 09:15:52 yamt Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -74,7 +74,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.4 2008/01/21 09:48:25 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.5.4.5 2008/03/17 09:15:52 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -434,10 +434,10 @@ uvmpdpol_sysctlsetup(void)
 	    "for anonymous application data"));
 	uvm_pctparam_createsysctlnode(&s->s_filemin, "filemin",
 	    SYSCTL_DESCR("Percentage of physical memory reserved "
-	    "for cached executable data"));
+	    "for cached file data"));
 	uvm_pctparam_createsysctlnode(&s->s_execmin, "execmin",
 	    SYSCTL_DESCR("Percentage of physical memory reserved "
-	    "for cached file data"));
+	    "for cached executable data"));
 
 	uvm_pctparam_createsysctlnode(&s->s_anonmax, "anonmax",
 	    SYSCTL_DESCR("Percentage of physical memory which will "

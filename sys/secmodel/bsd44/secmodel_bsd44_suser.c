@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_bsd44_suser.c,v 1.23.2.7 2008/02/27 08:37:05 yamt Exp $ */
+/* $NetBSD: secmodel_bsd44_suser.c,v 1.23.2.8 2008/03/17 09:15:47 yamt Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.7 2008/02/27 08:37:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.8 2008/03/17 09:15:47 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: secmodel_bsd44_suser.c,v 1.23.2.7 2008/02/27 08:37:0
 #include <sys/mutex.h>
 #include <sys/ktrace.h>
 #include <sys/mount.h>
+#include <sys/pset.h>
 #include <sys/socketvar.h>
 #include <sys/sysctl.h>
 #include <sys/tty.h>
@@ -111,7 +112,7 @@ secmodel_bsd44_suser_generic_cb(kauth_cred_t cred, kauth_action_t action,
 	int result;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
 	case KAUTH_GENERIC_ISSUSER:
@@ -152,7 +153,7 @@ secmodel_bsd44_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_system_req req;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 	req = (enum kauth_system_req)arg0;
 
 	switch (action) {
@@ -431,7 +432,7 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	int result;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 	p = arg0;
 
 	switch (action) {
@@ -689,8 +690,6 @@ secmodel_bsd44_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 		break;
 		}
 
-	case KAUTH_PROCESS_SCHEDULER_GET:
-	case KAUTH_PROCESS_SCHEDULER_SET:
 	case KAUTH_PROCESS_SCHEDULER_GETPARAM:
 		if (isroot || kauth_cred_uidmatch(cred, p->p_cred))
 			result = KAUTH_RESULT_ALLOW;
@@ -765,7 +764,7 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_network_req req;
 
 	isroot = (kauth_cred_geteuid(cred) == 0);
-	result = KAUTH_RESULT_DENY;
+	result = KAUTH_RESULT_DEFER;
 	req = (enum kauth_network_req)arg0;
 
 	switch (action) {
@@ -854,6 +853,21 @@ secmodel_bsd44_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 		}
 		break;
 
+	case KAUTH_NETWORK_NFS:
+		switch (req) {
+		case KAUTH_REQ_NETWORK_NFS_EXPORT:
+		case KAUTH_REQ_NETWORK_NFS_SVC:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
+
+		default:
+			result = KAUTH_RESULT_DEFER;
+			break;
+		}
+		break;
+
 	case KAUTH_NETWORK_ROUTE:
 		switch (((struct rt_msghdr *)arg1)->rtm_type) {
 		case RTM_GET:
@@ -928,7 +942,7 @@ secmodel_bsd44_suser_machdep_cb(kauth_cred_t cred, kauth_action_t action,
         int result;
 
         isroot = (kauth_cred_geteuid(cred) == 0);
-        result = KAUTH_RESULT_DENY;
+        result = KAUTH_RESULT_DEFER;
 
         switch (action) {
 	case KAUTH_MACHDEP_IOPERM_GET:
@@ -971,7 +985,7 @@ secmodel_bsd44_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
         int result;
 
         isroot = (kauth_cred_geteuid(cred) == 0);
-        result = KAUTH_RESULT_DENY;
+        result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
 	case KAUTH_DEVICE_RAWIO_SPEC:

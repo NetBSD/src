@@ -1,7 +1,7 @@
-/*	$NetBSD: i386func.S,v 1.2.10.3 2008/01/21 09:36:59 yamt Exp $	*/
+/*	$NetBSD: i386func.S,v 1.2.10.4 2008/03/17 09:14:20 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -43,16 +43,12 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.2.10.3 2008/01/21 09:36:59 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386func.S,v 1.2.10.4 2008/03/17 09:14:20 yamt Exp $");
 
 #include <machine/specialreg.h>
 #include <machine/segments.h>
 
 #include "assym.h"
-
-/* Small and slow, so align less. */
-#undef _ALIGN_TEXT
-#define	_ALIGN_TEXT	.align 8
 
 ENTRY(invlpg)
 	movl	4(%esp), %eax
@@ -168,3 +164,39 @@ ENTRY(lgdt)
 	movl	$GSEL(GCPU_SEL, SEL_KPL), %eax
 	movl	%eax, %fs
 	jmp	_C_LABEL(x86_flush)
+
+ENTRY(tsc_get_timecount)
+	pushl	%edi
+	pushl	%esi
+	pushl	%ebx
+	movl	CPUVAR(CURLWP), %esi
+1:
+	movl	L_NCSW(%esi), %ebx
+	movl	L_CPU(%esi), %edi
+	addl	$CPU_INFO_CC, %edi
+	cmpl	$0, CC_DENOM(%edi)	/* if (first time) */
+	jz	2f			/*    return tsc_slow_timecount() */
+	movl	CC_GEN(%edi), %ecx	/* gen = cc_gen */
+	movl	CC_DELTA+4(%edi), %eax	/* if (cc_delta > 0xffffffff || */
+	orl	CC_DENOM+4(%edi), %eax	/*     cc_denom > 0xffffffff) */
+	jnz	2f			/*    return tsc_slow_timecount() */
+	rdtsc				/* cc = cpu_counter32(); */
+	subl	CC_CC(%edi), %eax	/* cc -= cc->cc_cc; (can wrap) */
+	mull	CC_DELTA(%edi)		/* rcc = (cc * ci->ci_cc.cc_delta) */
+	divl	CC_DENOM(%edi)		/*     / ci->ci_cc.cc_denom */
+	addl	CC_VAL(%edi), %eax	/*     + ci->ci_cc.cc_val; */
+	cmpl	%ecx, CC_GEN(%edi)	/* if (gen != cc->cc_gen) */
+	jne	3f			/*    continue; */
+	cmpl	L_NCSW(%esi), %ebx	/* if (preempted) */
+	jne	3f			/*    continue; */
+	popl	%ebx			/* return rcc; */
+	popl	%esi
+	popl	%edi
+	ret
+2:
+	popl	%ebx
+	popl	%esi
+	popl	%edi
+	jmp	_C_LABEL(tsc_slow_timecount)
+3:
+	jmp	1b

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.95.2.11 2008/02/27 09:24:06 yamt Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.95.2.12 2008/03/17 09:15:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.11 2008/02/27 09:24:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.95.2.12 2008/03/17 09:15:46 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1481,8 +1481,8 @@ nfsrv_create(nfsd, slp, lwp, mrq)
 			if (va.va_type == VCHR && rdev == 0xffffffff)
 				va.va_type = VFIFO;
 			if (va.va_type != VFIFO &&
-			    (error = kauth_authorize_generic(cred,
-			    KAUTH_GENERIC_ISSUSER, NULL))) {
+			    (error = kauth_authorize_system(cred,
+			    KAUTH_SYSTEM_MKNOD, 0, NULL, NULL, NULL))) {
 				VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 				vput(nd.ni_dvp);
 				nfsm_reply(0);
@@ -1668,8 +1668,8 @@ abort:
 		error = VOP_CREATE(nd.ni_dvp, &nd.ni_vp, &nd.ni_cnd, &va);
 	} else {
 		if (va.va_type != VFIFO &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL))) {
+		    (error = kauth_authorize_system(cred,
+		    KAUTH_SYSTEM_MKNOD, 0, NULL, NULL, NULL))) {
 			VOP_ABORTOP(nd.ni_dvp, &nd.ni_cnd);
 			vput(nd.ni_dvp);
 			goto out;
@@ -1759,16 +1759,15 @@ nfsrv_remove(nfsd, slp, lwp, mrq)
 	}
 	if (!error) {
 		vp = nd.ni_vp;
-		if (vp->v_type == VDIR &&
-		    (error = kauth_authorize_generic(cred,
-		    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+		if (vp->v_type == VDIR) {
+			error = EPERM;
 			goto out;
+		}
 		/*
 		 * The root of a mounted filesystem cannot be deleted.
 		 */
 		if (vp->v_vflag & VV_ROOT) {
 			error = EBUSY;
-			goto out;
 		}
 out:
 		if (!error) {
@@ -2083,9 +2082,10 @@ nfsrv_link(nfsd, slp, lwp, mrq)
 		nfsm_srvwcc_data(dirfor_ret, &dirfor, diraft_ret, &diraft);
 		return (0);
 	}
-	if (vp->v_type == VDIR && (error = kauth_authorize_generic(cred,
-	    KAUTH_GENERIC_ISSUSER, NULL)) != 0)
+	if (vp->v_type == VDIR) {
+		error = EPERM;
 		goto out1;
+	}
 	nd.ni_cnd.cn_cred = cred;
 	nd.ni_cnd.cn_nameiop = CREATE;
 	nd.ni_cnd.cn_flags = LOCKPARENT;

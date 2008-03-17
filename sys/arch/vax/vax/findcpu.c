@@ -1,4 +1,4 @@
-/*	$NetBSD: findcpu.c,v 1.14.16.2 2006/12/30 20:47:14 yamt Exp $	*/
+/*	$NetBSD: findcpu.c,v 1.14.16.3 2008/03/17 09:14:33 yamt Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.14.16.2 2006/12/30 20:47:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: findcpu.c,v 1.14.16.3 2008/03/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -136,12 +136,12 @@ findcpu(void)
 
 	case VAX_TYP_8NN:
 		vax_boardtype = VAX_BTYP_8800; /* subversion later */
-		vax_bustype = VAX_NBIBUS;
+		vax_bustype = VAX_NMIBUS;
 		break;
 
 	case VAX_TYP_8PS:
 		vax_boardtype = VAX_BTYP_8PS;
-		vax_bustype = VAX_NBIBUS;
+		vax_bustype = VAX_NMIBUS;
 		break;
 
 	default:

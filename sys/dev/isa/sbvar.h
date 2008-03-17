@@ -1,4 +1,4 @@
-/*	$NetBSD: sbvar.h,v 1.3 2005/01/13 15:01:28 kent Exp $	*/
+/*	$NetBSD: sbvar.h,v 1.3.10.1 2008/03/17 09:14:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,5 +37,5 @@
  */
 
 struct sbdsp_softc;
-int sbmatch(struct sbdsp_softc *);
+int sbmatch(struct sbdsp_softc *, int, cfdata_t);
 void sbattach(struct sbdsp_softc *);

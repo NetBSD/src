@@ -1,4 +1,4 @@
-/*	$NetBSD: npx_isa.c,v 1.9.16.3 2008/01/21 09:37:10 yamt Exp $	*/
+/*	$NetBSD: npx_isa.c,v 1.9.16.4 2008/03/17 09:14:20 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.9.16.3 2008/01/21 09:37:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.9.16.4 2008/03/17 09:14:20 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: npx_isa.c,v 1.9.16.3 2008/01/21 09:37:10 yamt Exp $"
 int npx_isa_probe(device_t, struct cfdata *, void *);
 void npx_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(npx_isa, sizeof(struct npx_softc),
+CFATTACH_DECL_NEW(npx_isa, sizeof(struct npx_softc),
     npx_isa_probe, npx_isa_attach, npxdetach, NULL);
 
 int
@@ -144,6 +144,7 @@ npx_isa_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_type = (u_long) ia->ia_aux;
 
 	switch (sc->sc_type) {
@@ -158,12 +159,12 @@ npx_isa_attach(device_t parent, device_t self, void *aux)
 	case NPX_EXCEPTION:
 		/*FALLTHROUGH*/
 	case NPX_CPUID:
-		aprint_verbose_dev(&sc->sc_dev, "%s using exception 16\n",
+		aprint_verbose_dev(sc->sc_dev, "%s using exception 16\n",
 		    sc->sc_type == NPX_CPUID ? " reported by CPUID;" : "");
 		sc->sc_type = NPX_EXCEPTION;
 		break;
 	case NPX_BROKEN:
-		aprint_error_dev(&sc->sc_dev,
+		aprint_error_dev(sc->sc_dev,
 		    "error reporting broken; not using\n");
 		sc->sc_type = NPX_NONE;
 		return;

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.149.2.9 2008/02/27 08:36:55 yamt Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.149.2.10 2008/03/17 09:15:33 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.149.2.9 2008/02/27 08:36:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.149.2.10 2008/03/17 09:15:33 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -425,7 +425,12 @@ mi_switch(lwp_t *l)
 	if (l->l_stat == LSONPROC && (l->l_target_cpu || l != newl)) {
 		KASSERT(lwp_locked(l, spc->spc_lwplock));
 
-		tci = l->l_target_cpu;
+		if (l->l_target_cpu == l->l_cpu) {
+			l->l_target_cpu = NULL;
+		} else {
+			tci = l->l_target_cpu;
+		}
+
 		if (__predict_false(tci != NULL)) {
 			/* Double-lock the runqueues */
 			spc_dlock(ci, tci);
@@ -547,8 +552,8 @@ mi_switch(lwp_t *l)
 		ci->ci_mtx_count--;
 		lwp_unlock(l);
 
-		/* Unlocked, but for statistics only. */
-		uvmexp.swtch++;
+		/* Count the context switch on this CPU. */
+		ci->ci_data.cpu_nswtch++;
 
 		/* Update status for lwpctl, if present. */
 		if (l->l_lwpctl != NULL)
@@ -591,8 +596,10 @@ mi_switch(lwp_t *l)
 		splx(oldspl);
 
 		/* Update status for lwpctl, if present. */
-		if (l->l_lwpctl != NULL)
+		if (l->l_lwpctl != NULL) {
 			l->l_lwpctl->lc_curcpu = (int)cpu_index(ci);
+			l->l_lwpctl->lc_pctr++;
+		}
 
 		retval = 1;
 	} else {

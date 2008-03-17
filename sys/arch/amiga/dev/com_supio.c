@@ -1,4 +1,4 @@
-/*	$NetBSD: com_supio.c,v 1.19.16.1 2006/12/30 20:45:26 yamt Exp $ */
+/*	$NetBSD: com_supio.c,v 1.19.16.2 2008/03/17 09:14:14 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.19.16.1 2006/12/30 20:45:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_supio.c,v 1.19.16.2 2008/03/17 09:14:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,14 +99,14 @@ struct comsupio_softc {
 	struct isr sc_isr;
 };
 
-int com_supio_match(struct device *, struct cfdata *, void *);
-void com_supio_attach(struct device *, struct device *, void *);
+int com_supio_match(device_t, cfdata_t , void *);
+void com_supio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_supio, sizeof(struct comsupio_softc),
+CFATTACH_DECL_NEW(com_supio, sizeof(struct comsupio_softc),
     com_supio_match, com_supio_attach, NULL, NULL);
 
 int
-com_supio_match(struct device *parent, struct cfdata *match, void *aux)
+com_supio_match(device_t parent, cfdata_t match, void *aux)
 {
 	int rv = 1;
 	struct supio_attach_args *supa = aux;
@@ -118,9 +118,9 @@ com_supio_match(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-com_supio_attach(struct device *parent, struct device *self, void *aux)
+com_supio_attach(device_t parent, device_t self, void *aux)
 {
-	struct comsupio_softc *sc = (void *)self;
+	struct comsupio_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
 	int iobase;
 	bus_space_tag_t iot;
@@ -128,12 +128,14 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	struct supio_attach_args *supa = aux;
 	u_int16_t needpsl;
 
+	csc->sc_dev = self;
+
 	/*
 	 * We're living on a superio chip.
 	 */
 	iobase = supa->supio_iobase;
 	iot = supa->supio_iot;
-	printf(" port 0x%04x ipl %d", iobase, supa->supio_ipl);
+	aprint_normal(" port 0x%04x ipl %d", iobase, supa->supio_ipl);
 
 	if (bus_space_map(iot, iobase, COM_NPORTS, 0, &ioh))
 		panic("comattach: io mapping failed");
@@ -147,9 +149,8 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	needpsl = PSL_S | (supa->supio_ipl << 8);
 
 	if (ipl2spl_table[IPL_SERIAL] < needpsl) {
-		printf("%s: raising ipl2spl_table[IPL_SERIAL] from "
-		    "0x%x to 0x%x\n",
-		    csc->sc_dev.dv_xname, ipl2spl_table[IPL_SERIAL], needpsl);
+		aprint_normal_dev(self, "raising ipl2spl_table[IPL_SERIAL] "
+		    "from 0x%x to 0x%x\n", ipl2spl_table[IPL_SERIAL], needpsl);
 		ipl2spl_table[IPL_SERIAL] = needpsl;
 	}
 	sc->sc_isr.isr_intr = comintr;
@@ -157,10 +158,7 @@ com_supio_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_isr.isr_ipl = supa->supio_ipl;
 	add_isr(&sc->sc_isr);
 
-	/*
-	 * Shutdown hook for buggy BIOSs that don't recognize the UART
-	 * without a disabled FIFO.
-	 */
-	if (shutdownhook_establish(com_cleanup, csc) == NULL)
-		panic("comsupio: could not establish shutdown hook");
+	if (!pmf_device_register1(self, com_suspend, com_resume, com_cleanup)) {
+		aprint_error_dev(self, "could not establish shutdown hook");
+	}
 }

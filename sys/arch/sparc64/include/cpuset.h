@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuset.h,v 1.2.18.3 2008/01/21 09:39:31 yamt Exp $ */
+/*	$NetBSD: cpuset.h,v 1.2.18.4 2008/03/17 09:14:24 yamt Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #ifndef _SPARC64_CPUSET_H_
 #define	_SPARC64_CPUSET_H_
 
+#define	CPUSET_MAXNUMCPU	64
 typedef	uint64_t sparc64_cpuset_t;
 extern volatile sparc64_cpuset_t cpus_active;
 

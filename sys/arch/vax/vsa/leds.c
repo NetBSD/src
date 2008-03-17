@@ -1,4 +1,4 @@
-/*	$NetBSD: leds.c,v 1.3.16.1 2007/09/03 14:31:02 yamt Exp $	*/
+/*	$NetBSD: leds.c,v 1.3.16.2 2008/03/17 09:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.3.16.1 2007/09/03 14:31:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: leds.c,v 1.3.16.2 2008/03/17 09:14:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,7 @@ static u_char led_px = 0;
 /*
  * Initial value is the default pattern set.
  */
-static struct led_patterns ledpat = {
+static const struct led_patterns ledpat = {
 	16,	/* divisor */
 	12,	/* patlen */
 	{	/* patterns */
@@ -110,7 +110,7 @@ ledsattach(int a)
  * This is called by the clock interrupt.
  */
 void
-leds_intr()
+leds_intr(void)
 {
 	register u_char i;
 

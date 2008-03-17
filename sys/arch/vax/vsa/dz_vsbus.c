@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_vsbus.c,v 1.35.10.1 2006/06/21 14:57:48 yamt Exp $ */
+/*	$NetBSD: dz_vsbus.c,v 1.35.10.2 2008/03/17 09:14:33 yamt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.35.10.1 2006/06/21 14:57:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_vsbus.c,v 1.35.10.2 2008/03/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,12 +71,12 @@ static	struct dz_linestate dz_conslinestate = { NULL, -1, NULL, NULL, NULL };
 #endif
 #endif
 
-static  int     dz_vsbus_match(struct device *, struct cfdata *, void *);
-static  void    dz_vsbus_attach(struct device *, struct device *, void *);
+static  int     dz_vsbus_match(device_t, cfdata_t, void *);
+static  void    dz_vsbus_attach(device_t, device_t, void *);
 
 static	vaddr_t dz_regs; /* Used for console */
 
-CFATTACH_DECL(dz_vsbus, sizeof(struct dz_softc),
+CFATTACH_DECL_NEW(dz_vsbus, sizeof(struct dz_softc),
     dz_vsbus_match, dz_vsbus_attach, NULL, NULL);
 
 #define REG(name)     short name; short X##name##X;
@@ -118,9 +118,9 @@ dz_print(void *aux, const char *name)
 #endif
 
 static int
-dz_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
+dz_vsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
+	struct vsbus_attach_args * const va = aux;
 	struct ss_dz *dzP;
 	short i;
 
@@ -144,10 +144,10 @@ dz_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
+dz_vsbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct dz_softc *sc = (void *)self;
-	struct vsbus_attach_args *va = aux;
+	struct dz_softc * const sc = device_private(self);
+	struct vsbus_attach_args * const va = aux;
 #if NDZKBD > 0
 	extern const struct cdevsw dz_cdevsw;
 #endif
@@ -156,6 +156,7 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 #endif
 	int s, consline;
 
+	sc->sc_dev = self;
 	/* 
 	 * XXX - This is evil and ugly, but...
 	 * due to the nature of how bus_space_* works on VAX, this will
@@ -186,7 +187,8 @@ dz_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	scb_vecalloc(va->va_cvec, dzxint, sc, SCB_ISTACK, &sc->sc_tintrcnt);
 	scb_vecalloc(va->va_cvec - 4, dzrint, sc, SCB_ISTACK, &sc->sc_rintrcnt);
 
-	printf("\n%s: 4 lines", self->dv_xname);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "4 lines");
 
 	dzattach(sc, NULL, consline);
 	DELAY(10000);
@@ -263,9 +265,13 @@ dzcnprobe(struct consdev *cndev)
 		break;
 
 	case VAX_BTYP_49:
-	case VAX_BTYP_53:
 		ioaddr = 0x25000000;
 		diagcons = (vax_confdata & 8 ? 3 : 0);
+		break;
+
+	case VAX_BTYP_53:
+		ioaddr = 0x25000000;
+		diagcons = 3;
 		break;
 
 	default:

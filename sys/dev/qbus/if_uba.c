@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uba.c,v 1.25.4.2 2007/10/27 11:34:00 yamt Exp $	*/
+/*	$NetBSD: if_uba.c,v 1.25.4.3 2008/03/17 09:15:23 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.25.4.2 2007/10/27 11:34:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_uba.c,v 1.25.4.3 2008/03/17 09:15:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -161,7 +161,7 @@ bad:
 }
 
 struct mbuf *
-getmcl()
+getmcl(void)
 {
 	struct mbuf *m;
 

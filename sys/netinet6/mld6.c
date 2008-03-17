@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.27.4.4 2007/10/27 11:36:14 yamt Exp $	*/
+/*	$NetBSD: mld6.c,v 1.27.4.5 2008/03/17 09:15:42 yamt Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.27.4.4 2007/10/27 11:36:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.27.4.5 2008/03/17 09:15:42 yamt Exp $");
 
 #include "opt_inet.h"
 
@@ -166,7 +166,7 @@ static void mld_stoptimer(struct in6_multi *);
 static u_long mld_timerresid(struct in6_multi *);
 
 void
-mld_init()
+mld_init(void)
 {
 	static u_int8_t hbh_buf[8];
 	struct ip6_hbh *hbh = (struct ip6_hbh *)hbh_buf;

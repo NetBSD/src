@@ -1,4 +1,4 @@
-/*	$NetBSD: ncr.c,v 1.40.16.1 2007/09/03 14:31:02 yamt Exp $	*/
+/*	$NetBSD: ncr.c,v 1.40.16.2 2008/03/17 09:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.40.16.1 2007/09/03 14:31:02 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ncr.c,v 1.40.16.2 2008/03/17 09:14:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,8 +104,8 @@ struct si_softc {
 
 static int ncr_dmasize;
 
-static	int si_vsbus_match(struct device *, struct cfdata *, void *);
-static	void si_vsbus_attach(struct device *, struct device *, void *);
+static	int si_vsbus_match(device_t, cfdata_t, void *);
+static	void si_vsbus_attach(device_t, device_t, void *);
 static	void si_minphys(struct buf *);
 
 static	void si_dma_alloc(struct ncr5380_softc *);
@@ -121,9 +121,9 @@ CFATTACH_DECL(si_vsbus, sizeof(struct si_softc),
     si_vsbus_match, si_vsbus_attach, NULL, NULL);
 
 static int
-si_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
+si_vsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
+	struct vsbus_attach_args * const va = aux;
 	volatile char *si_csr = (char *) va->va_addr;
 
 	if (vax_boardtype == VAX_BTYP_49 || vax_boardtype == VAX_BTYP_46
@@ -139,17 +139,17 @@ si_vsbus_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-si_vsbus_attach(struct device *parent, struct device *self, void *aux)
+si_vsbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
-	struct si_softc *sc = (struct si_softc *) self;
-	struct ncr5380_softc *ncr_sc = &sc->ncr_sc;
+	struct vsbus_attach_args * const va = aux;
+	struct si_softc * const sc = device_private(self);
+	struct ncr5380_softc * const ncr_sc = &sc->ncr_sc;
 	int tweak, target;
 
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) ncr5380_intr, sc,
 		SCB_ISTACK, &sc->ncr_intrcnt);
 	evcnt_attach_dynamic(&sc->ncr_intrcnt, EVCNT_TYPE_INTR, NULL,
-		self->dv_xname, "intr");
+		device_xname(self), "intr");
 
 	/*
 	 * DMA area mapin.
@@ -215,7 +215,8 @@ si_vsbus_attach(struct device *parent, struct device *self, void *aux)
 	else
 		target = (clk_page[0xbc/2] >> tweak) & 7;
 
-	printf("\n%s: NCR5380, SCSI ID %d\n", ncr_sc->sc_dev.dv_xname, target);
+	aprint_normal("\n");
+	aprint_normal_dev(self, "NCR5380, SCSI ID %d\n", target);
 
 	ncr_sc->sc_adapter.adapt_minphys = si_minphys;
 	ncr_sc->sc_channel.chan_id = target;

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.219.2.10 2008/02/11 15:00:09 yamt Exp $	*/
+/*	$NetBSD: param.h,v 1.219.2.11 2008/03/17 09:15:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -63,7 +63,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	499005400	/* NetBSD 4.99.54 */
+#define	__NetBSD_Version__	499005500	/* NetBSD 4.99.55 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)
@@ -263,6 +263,8 @@
 #define	PRI_BIO		(MAXPRI_KTHREAD - schedppq * 4)
 
 #define	PRI_IDLE	PRI_USER
+
+extern const int schedppq;
 
 /*
  * Miscellaneous.

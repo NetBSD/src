@@ -1,4 +1,4 @@
-/*	$NetBSD: oplvar.h,v 1.10.6.2 2006/12/30 20:48:03 yamt Exp $	*/
+/*	$NetBSD: oplvar.h,v 1.10.6.3 2008/03/17 09:14:43 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@ struct opl_softc {
 #define OPL_2 2
 #define OPL_3 3
 	struct	midisyn syn;
-	struct	device *sc_mididev;
+	device_t sc_mididev;
 
 	struct opl_voice voices[OPL3_NVOICE];
 	u_int8_t pan[MIDI_MAX_CHANS];

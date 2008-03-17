@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.126.2.8 2008/02/27 08:37:00 yamt Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.126.2.9 2008/03/17 09:15:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126.2.8 2008/02/27 08:37:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.126.2.9 2008/03/17 09:15:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_atalk.h"
@@ -704,7 +704,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	{
 
 #if NCARP > 0
-		if (ifp->if_carp && ifp->if_type != IFT_CARP) {
+		if (__predict_false(ifp->if_carp && ifp->if_type != IFT_CARP)) {
 			/*
 			 * clear M_PROMISC, in case the packets comes from a
 			 * vlan
@@ -715,7 +715,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 				return;
 		}
 #endif /* NCARP > 0 */
-		if ((m->m_flags & (M_BCAST|M_MCAST)) == 0 &&
+		if ((m->m_flags & (M_BCAST|M_MCAST|M_PROMISC)) == 0 &&
 		    (ifp->if_flags & IFF_PROMISC) != 0 &&
 		    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			   ETHER_ADDR_LEN) != 0) {
@@ -1444,7 +1444,7 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ethercom *ec = (void *) ifp;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ifaddr *ifa = (struct ifaddr *)data;
-	int error = 0;
+	int error;
 
 	switch (cmd) {
 	case SIOCSIFADDR:
@@ -1455,36 +1455,33 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			const struct sockaddr_dl *sdl = satocsdl(ifa->ifa_addr);
 
 			if (sdl->sdl_type != IFT_ETHER ||
-			    sdl->sdl_alen != ifp->if_addrlen) {
-				error = EINVAL;
-				break;
-			}
+			    sdl->sdl_alen != ifp->if_addrlen)
+				return EINVAL;
 
 			if_set_sadl(ifp, CLLADDR(sdl), ifp->if_addrlen);
 
 			/* Set new address. */
-			error = (*ifp->if_init)(ifp);
-			break;
+			return (*ifp->if_init)(ifp);
 		    }
 #ifdef INET
 		case AF_INET:
 			if ((ifp->if_flags & IFF_RUNNING) == 0 &&
 			    (error = (*ifp->if_init)(ifp)) != 0)
-				break;
+				return error;
 			arp_ifinit(ifp, ifa);
 			break;
 #endif /* INET */
 		default:
 			if ((ifp->if_flags & IFF_RUNNING) == 0)
-				error = (*ifp->if_init)(ifp);
+				return (*ifp->if_init)(ifp);
 			break;
 		}
-		break;
+		return 0;
 
 	case SIOCGIFADDR:
 		memcpy(((struct sockaddr *)&ifr->ifr_data)->sa_data,
 		    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
-		break;
+		return 0;
 
 	case SIOCSIFMTU:
 	    {
@@ -1496,60 +1493,53 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			maxmtu = ETHERMTU;
 
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > maxmtu)
-			error = EINVAL;
-		else if ((error = ifioctl_common(ifp, cmd, data)) == ENETRESET){
+			return EINVAL;
+		else if ((error = ifioctl_common(ifp, cmd, data)) != ENETRESET)
+			return error;
+		else if (ifp->if_flags & IFF_UP) {
 			/* Make sure the device notices the MTU change. */
-			if (ifp->if_flags & IFF_UP)
-				error = (*ifp->if_init)(ifp);
-			else
-				error = 0;
-		}
-		break;
+			return (*ifp->if_init)(ifp);
+		} else
+			return 0;
 	    }
 
 	case SIOCSIFFLAGS:
-		if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_RUNNING) {
+		switch (ifp->if_flags & (IFF_UP|IFF_RUNNING)) {
 			/*
 			 * If interface is marked down and it is running,
 			 * then stop and disable it.
 			 */
 			(*ifp->if_stop)(ifp, 1);
-		} else if ((ifp->if_flags & (IFF_UP|IFF_RUNNING)) == IFF_UP) {
+			break;
+		case IFF_UP:
 			/*
 			 * If interface is marked up and it is stopped, then
 			 * start it.
 			 */
-			error = (*ifp->if_init)(ifp);
-		} else if ((ifp->if_flags & IFF_UP) != 0) {
+			return (*ifp->if_init)(ifp);
+		case IFF_UP|IFF_RUNNING:
 			/*
 			 * Reset the interface to pick up changes in any other
 			 * flags that affect the hardware state.
 			 */
-			error = (*ifp->if_init)(ifp);
+			return (*ifp->if_init)(ifp);
+		case 0:
+			break;
 		}
-		break;
-
+		return 0;
 	case SIOCADDMULTI:
-		error = ether_addmulti(ifreq_getaddr(cmd, ifr), ec);
-		break;
-
+		return ether_addmulti(ifreq_getaddr(cmd, ifr), ec);
 	case SIOCDELMULTI:
-		error = ether_delmulti(ifreq_getaddr(cmd, ifr), ec);
-		break;
+		return ether_delmulti(ifreq_getaddr(cmd, ifr), ec);
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
 		if (ec->ec_mii == NULL)
-			error = ENOTTY;
-		else
-			error = ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media,
-			    cmd);
-		break;
+			return ENOTTY;
+		return ifmedia_ioctl(ifp, ifr, &ec->ec_mii->mii_media, cmd);
 	case SIOCSIFCAP:
 		return ifioctl_common(ifp, cmd, data);
 	default:
-		error = ENOTTY;
-		break;
+		return ENOTTY;
 	}
-
-	return (error);
+	return 0;
 }

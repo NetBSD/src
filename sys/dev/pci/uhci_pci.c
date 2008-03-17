@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.29.2.7 2008/02/27 08:36:36 yamt Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.29.2.8 2008/03/17 09:15:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.29.2.7 2008/02/27 08:36:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.29.2.8 2008/03/17 09:15:12 yamt Exp $");
 
 #include "ehci.h"
 
@@ -198,8 +198,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	/* Attach usb device. */
-	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
-				       usbctlprint);
+	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
 }
 
 static int

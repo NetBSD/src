@@ -1,4 +1,4 @@
-/*      $NetBSD: sgecvar.h,v 1.5.4.1 2007/09/03 14:35:11 yamt Exp $ */
+/*      $NetBSD: sgecvar.h,v 1.5.4.2 2008/03/17 09:14:43 yamt Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -45,7 +45,7 @@ struct ze_cdata {
 };
 
 struct	ze_softc {
-	struct device	sc_dev;		/* Configuration common part	*/
+	device_t	sc_dev;		/* Configuration common part	*/
 	struct evcnt	sc_intrcnt;	/* Interrupt counters		*/
 	struct evcnt	sc_rxintrcnt;	/* Interrupt counters		*/
 	struct evcnt	sc_txintrcnt;	/* Interrupt counters		*/

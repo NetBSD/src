@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.6.12.3 2008/01/21 09:38:15 yamt Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.6.12.4 2008/03/17 09:14:22 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6.12.3 2008/01/21 09:38:15 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.6.12.4 2008/03/17 09:14:22 yamt Exp $");
 
 #include "debug_playstation2.h"
 
@@ -645,10 +645,10 @@ smap_stop(struct ifnet *ifp, int disable)
 
 	mii_down(&sc->emac3.mii);
 
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
 	if (disable)
 		emac3_disable();
-
-	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
 /*

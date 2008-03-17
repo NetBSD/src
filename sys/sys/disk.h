@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.29.6.7 2008/02/27 08:37:05 yamt Exp $	*/
+/*	$NetBSD: disk.h,v 1.29.6.8 2008/03/17 09:15:47 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -425,7 +425,7 @@ struct disk {
 	 */
 	struct io_stats	*dk_stats;
 
-	struct	dkdriver *dk_driver;	/* pointer to driver */
+	const struct dkdriver *dk_driver;	/* pointer to driver */
 
 	/*
 	 * Information required to be the parent of a disk wedge.
@@ -505,7 +505,7 @@ struct proc;
 
 void	disk_attach(struct disk *);
 void	disk_detach(struct disk *);
-void	disk_init(struct disk *, const char *, struct dkdriver *);
+void	disk_init(struct disk *, const char *, const struct dkdriver *);
 void	disk_destroy(struct disk *);
 void	disk_busy(struct disk *);
 void	disk_unbusy(struct disk *, long, int);

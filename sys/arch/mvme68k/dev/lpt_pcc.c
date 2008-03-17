@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_pcc.c,v 1.8.16.1 2008/01/21 09:37:37 yamt Exp $ */
+/*	$NetBSD: lpt_pcc.c,v 1.8.16.2 2008/03/17 09:14:22 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.8.16.1 2008/01/21 09:37:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_pcc.c,v 1.8.16.2 2008/03/17 09:14:22 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,16 +80,16 @@ struct lpt_funcs lpt_pcc_funcs = {
 /*
  * Autoconfig stuff
  */
-static int lpt_pcc_match(struct device *, struct cfdata *, void *);
-static void lpt_pcc_attach(struct device *, struct device *, void *);
+static int lpt_pcc_match(device_t, cfdata_t , void *);
+static void lpt_pcc_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_pcc, sizeof(struct lpt_softc),
+CFATTACH_DECL_NEW(lpt_pcc, sizeof(struct lpt_softc),
     lpt_pcc_match, lpt_pcc_attach, NULL, NULL);
 
 
 /*ARGSUSED*/
 static int
-lpt_pcc_match(struct device *parent, struct cfdata *cf, void *args)
+lpt_pcc_match(device_t parent, cfdata_t cf, void *args)
 {
 	struct pcc_attach_args *pa;
 
@@ -104,12 +104,13 @@ lpt_pcc_match(struct device *parent, struct cfdata *cf, void *args)
 
 /*ARGSUSED*/
 static void
-lpt_pcc_attach(struct device *parent, struct device *self, void *args)
+lpt_pcc_attach(device_t parent, device_t self, void *args)
 {
 	struct lpt_softc *sc;
 	struct pcc_attach_args *pa;
 
-	sc = (struct lpt_softc *)self;
+	sc = device_private(self);
+	sc->sc_dev = self;
 	pa = args;
 
 	sc->sc_bust = pa->pa_bust;
@@ -119,7 +120,7 @@ lpt_pcc_attach(struct device *parent, struct device *self, void *args)
 	sc->sc_funcs = &lpt_pcc_funcs;
 	sc->sc_laststatus = 0;
 
-	printf(": PCC Parallel Printer\n");
+	aprint_normal(": PCC Parallel Printer\n");
 
 	/*
 	 * Disable interrupts until device is opened
@@ -133,7 +134,7 @@ lpt_pcc_attach(struct device *parent, struct device *self, void *args)
 
 	/* Register the event counter */
 	evcnt_attach_dynamic(&sc->sc_evcnt, EVCNT_TYPE_INTR,
-	    pccintr_evcnt(sc->sc_ipl), "printer", sc->sc_dev.dv_xname);
+	    pccintr_evcnt(sc->sc_ipl), "printer", device_xname(sc->sc_dev));
 
 	/*
 	 * Hook into the printer interrupt
@@ -231,13 +232,13 @@ lpt_pcc_notrdy(struct lpt_softc *sc, int err)
 
 		if (new & LPS_SELECT)
 			log(LOG_NOTICE, "%s: offline\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		else if (new & LPS_PAPER_EMPTY)
 			log(LOG_NOTICE, "%s: out of paper\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 		else if (new & LPS_FAULT)
 			log(LOG_NOTICE, "%s: output error\n",
-			    sc->sc_dev.dv_xname);
+			    device_xname(sc->sc_dev));
 	}
 
 	pcc_reg_write(sys_pcc, PCCREG_PRNT_INTR_CTRL,

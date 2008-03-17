@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_proc.c,v 1.80.12.8 2008/01/21 09:46:09 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.80.12.9 2008/03/17 09:15:33 yamt Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.8 2008/01/21 09:46:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.9 2008/03/17 09:15:33 yamt Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.80.12.8 2008/01/21 09:46:09 yamt Exp
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
 #include <sys/atomic.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_extern.h>
@@ -294,8 +295,6 @@ static void pg_delete(pid_t);
 static specificdata_domain_t proc_specificdata_domain;
 
 static pool_cache_t proc_cache;
-static pool_cache_t pgrp_cache;
-static pool_cache_t session_cache;
 
 /*
  * Initialize global process hashing structures.
@@ -330,18 +329,11 @@ procinit(void)
 	pid_alloc_lim = pid_tbl_mask - 1;
 #undef LINK_EMPTY
 
-	uihashtbl =
-	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
-
 	proc_specificdata_domain = specificdata_domain_create();
 	KASSERT(proc_specificdata_domain != NULL);
 
 	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
 	    "procpl", NULL, IPL_NONE, NULL, NULL, NULL);
-	pgrp_cache = pool_cache_init(sizeof(struct pgrp), 0, 0, 0,
-	    "pgrppl", NULL, IPL_NONE, NULL, NULL, NULL);
-        session_cache = pool_cache_init(sizeof(struct session), 0, 0, 0,
-            "sessionpl", NULL, IPL_NONE, NULL, NULL, NULL);
 }
 
 /*
@@ -739,7 +731,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	pid_t pg_id = NO_PGID;
 
 	if (mksess)
-		sess = pool_cache_get(session_cache, PR_WAITOK);
+		sess = kmem_alloc(sizeof(*sess), KM_SLEEP);
 	else
 		sess = NULL;
 
@@ -747,7 +739,7 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 	mutex_enter(&proclist_lock);		/* Because pid_table might change */
 	if (pid_table[pgid & pid_tbl_mask].pt_pgrp == 0) {
 		mutex_exit(&proclist_lock);
-		new_pgrp = pool_cache_get(pgrp_cache, PR_WAITOK);
+		new_pgrp = kmem_alloc(sizeof(*new_pgrp), KM_SLEEP);
 		mutex_enter(&proclist_lock);
 	} else
 		new_pgrp = NULL;
@@ -882,9 +874,9 @@ enterpgrp(struct proc *curp, pid_t pid, pid_t pgid, int mksess)
 		pg_delete(pg_id);
 	mutex_exit(&proclist_lock);
 	if (sess != NULL)
-		pool_cache_put(session_cache, sess);
+		kmem_free(sess, sizeof(*sess));
 	if (new_pgrp != NULL)
-		pool_cache_put(pgrp_cache, new_pgrp);
+		kmem_free(new_pgrp, sizeof(*new_pgrp));
 #ifdef DEBUG_PGRP
 	if (__predict_false(rval))
 		printf("enterpgrp(%d,%d,%d), curproc %d, rval %d\n",
@@ -950,7 +942,7 @@ pg_free(pid_t pg_id)
 		last_free_pt = pg_id;
 		pid_alloc_cnt--;
 	}
-	pool_cache_put(pgrp_cache, pgrp);
+	kmem_free(pgrp, sizeof(*pgrp));
 }
 
 /*
@@ -1015,7 +1007,7 @@ sessdelete(struct session *ss)
 	 * must be a 'zombie' pgrp by now.
 	 */
 	pg_free(ss->s_sid);
-	pool_cache_put(session_cache, ss);
+	kmem_free(ss, sizeof(*ss));
 }
 
 /*

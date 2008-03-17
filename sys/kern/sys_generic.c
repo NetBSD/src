@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_generic.c,v 1.83.2.7 2008/01/21 09:46:22 yamt Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.83.2.8 2008/03/17 09:15:34 yamt Exp $	*/
 
 /*-
- * Copyright (c) 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.83.2.7 2008/01/21 09:46:22 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.83.2.8 2008/03/17 09:15:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.83.2.7 2008/01/21 09:46:22 yamt Ex
 
 static int	selscan(lwp_t *, fd_mask *, fd_mask *, int, register_t *);
 static int	pollscan(lwp_t *, struct pollfd *, int, register_t *);
-static void	selclear(void);
 
 /* Global state for select()/poll(). */
 kmutex_t	select_lock;
@@ -1126,7 +1125,7 @@ selrecord(lwp_t *selector, struct selinfo *sip)
  * Do a wakeup when a selectable event occurs.
  */
 void
-selwakeup(struct selinfo *sip)
+selnotify(struct selinfo *sip, int events, long knhint)
 {
 	lwp_t *l;
 
@@ -1161,20 +1160,14 @@ selwakeup(struct selinfo *sip)
 		l->l_selflag = SEL_RESET;
 	}
 	mutex_exit(&select_lock);
-}
 
-void
-selnotify(struct selinfo *sip, long knhint)
-{
-
-	selwakeup(sip);
 	KNOTE(&sip->sel_klist, knhint);
 }
 
 /*
  * Remove an LWP from all objects that it is waiting for.
  */
-static void
+void
 selclear(void)
 {
 	struct selinfo *sip;

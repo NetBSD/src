@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_ec.c,v 1.33.2.6 2008/01/21 09:42:29 yamt Exp $	*/
+/*	$NetBSD: acpi_ec.c,v 1.33.2.7 2008/03/17 09:14:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.33.2.6 2008/01/21 09:42:29 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_ec.c,v 1.33.2.7 2008/03/17 09:14:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,8 +148,8 @@ static void acpiec_attach(device_t, device_t, void *);
 static void acpiec_common_attach(device_t, device_t, ACPI_HANDLE,
     bus_addr_t, bus_addr_t, ACPI_HANDLE, uint8_t);
 
-static bool acpiec_resume(device_t);
-static bool acpiec_suspend(device_t);
+static bool acpiec_resume(device_t PMF_FN_PROTO);
+static bool acpiec_suspend(device_t PMF_FN_PROTO);
 
 static bool acpiec_parse_gpe_package(device_t, ACPI_HANDLE,
     ACPI_HANDLE *, uint8_t *);
@@ -396,7 +396,7 @@ post_data_map:
 }
 
 static bool
-acpiec_suspend(device_t dv)
+acpiec_suspend(device_t dv PMF_FN_ARGS)
 {
 	acpiec_cold = true;
 
@@ -404,7 +404,7 @@ acpiec_suspend(device_t dv)
 }
 
 static bool
-acpiec_resume(device_t dv)
+acpiec_resume(device_t dv PMF_FN_ARGS)
 {
 	acpiec_cold = false;
 

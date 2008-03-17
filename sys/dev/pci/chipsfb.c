@@ -1,4 +1,4 @@
-/*	$NetBSD: chipsfb.c,v 1.6.6.4 2007/09/03 14:36:26 yamt Exp $	*/
+/*	$NetBSD: chipsfb.c,v 1.6.6.5 2008/03/17 09:15:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Michael Lorenz
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.4 2007/09/03 14:36:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: chipsfb.c,v 1.6.6.5 2008/03/17 09:15:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -898,11 +898,12 @@ chipsfb_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}
 
-#ifdef macppc
+#ifdef PCI_MAGIC_IO_RANGE
 	/* allow mapping of IO space */
-	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		pa = bus_space_mmap(sc->sc_iot, offset - 0xf2000000, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		pa = bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
 #endif

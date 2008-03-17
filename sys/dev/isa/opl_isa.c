@@ -1,4 +1,4 @@
-/*	$NetBSD: opl_isa.c,v 1.11.6.3 2007/10/27 11:31:51 yamt Exp $	*/
+/*	$NetBSD: opl_isa.c,v 1.11.6.4 2008/03/17 09:14:51 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.11.6.3 2007/10/27 11:31:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.11.6.4 2008/03/17 09:14:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,15 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: opl_isa.c,v 1.11.6.3 2007/10/27 11:31:51 yamt Exp $"
 
 #define OPL_SIZE 4
 
-int	opl_isa_match(struct device *, struct cfdata *, void *);
-void	opl_isa_attach(struct device *, struct device *, void *);
+int	opl_isa_match(device_t, cfdata_t, void *);
+void	opl_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(opl_isa, sizeof(struct opl_softc),
+CFATTACH_DECL_NEW(opl_isa, sizeof(struct opl_softc),
     opl_isa_match, opl_isa_attach, NULL, NULL);
 
 int
-opl_isa_match(struct device *parent, struct cfdata *match,
-    void *aux)
+opl_isa_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_handle_t ioh;
@@ -102,16 +101,17 @@ opl_isa_match(struct device *parent, struct cfdata *match,
 }
 
 void
-opl_isa_attach(struct device *parent, struct device *self, void *aux)
+opl_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct opl_softc *sc = (struct opl_softc *)self;
+	struct opl_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
 
+	sc->mididev.dev = self;
 	sc->iot = ia->ia_iot;
 
 	if (bus_space_map(sc->iot, ia->ia_io[0].ir_addr, OPL_SIZE,
 	    0, &sc->ioh)) {
-		printf("opl_isa_attach: bus_space_map failed\n");
+		aprint_error("opl_isa_attach: bus_space_map failed\n");
 		return;
 	}
 	sc->offs = 0;

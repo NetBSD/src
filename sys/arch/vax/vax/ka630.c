@@ -1,4 +1,4 @@
-/*	$NetBSD: ka630.c,v 1.24.2.3 2007/09/03 14:30:55 yamt Exp $	*/
+/*	$NetBSD: ka630.c,v 1.24.2.4 2008/03/17 09:14:33 yamt Exp $	*/
 /*-
  * Copyright (c) 1982, 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.24.2.3 2007/09/03 14:30:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.24.2.4 2008/03/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -52,33 +52,37 @@ __KERNEL_RCSID(0, "$NetBSD: ka630.c,v 1.24.2.3 2007/09/03 14:30:55 yamt Exp $");
 
 static struct uvaxIIcpu *uvaxIIcpu_ptr;
 
-static void ka630_conf __P((void));
-static void ka630_memerr __P((void));
-static int ka630_mchk __P((void *));
-static void ka630_halt __P((void));
-static void ka630_reboot __P((int));
-static void ka630_clrf __P((void));
+static void ka630_conf(void);
+static void ka630_memerr(void);
+static int ka630_mchk(void *);
+static void ka630_halt(void);
+static void ka630_reboot(int);
+static void ka630_clrf(void);
 
-struct	cpu_dep ka630_calls = {
-	0,
-	ka630_mchk,
-	ka630_memerr,
-	ka630_conf,
-	chip_gettime,
-	chip_settime,
-	1,      /* ~VUPS */
-	2,	/* SCB pages */
-	ka630_halt,
-	ka630_reboot,
-	ka630_clrf,
+static const char * const ka630_devs[] = { "cpu", "uba", NULL };
+
+const struct cpu_dep ka630_calls = {
+	.cpu_mchk	= ka630_mchk,
+	.cpu_memerr	= ka630_memerr,
+	.cpu_conf	= ka630_conf,
+	.cpu_gettime	= chip_gettime,
+	.cpu_settime	= chip_settime,
+	.cpu_vups	= 1,      /* ~VUPS */
+	.cpu_scbsz	= 2,	/* SCB pages */
+	.cpu_halt	= ka630_halt,
+	.cpu_reboot	= ka630_reboot,
+	.cpu_clrf	= ka630_clrf,
+	.cpu_devs	= ka630_devs
 };
 
 /*
- * uvaxII_conf() is called by cpu_attach to do the cpu_specific setup.
+ * uvaxII_conf() is called by cpu_startup to do the cpu_specific setup.
  */
 void
-ka630_conf()
+ka630_conf(void)
 {
+	curcpu()->ci_cpustr = "KA630, UV2";
+
 	clk_adrshift = 0;	/* Addressed at short's... */
 	clk_tweak = 0;		/* ...and no shifting */
 	clk_page = (short *)vax_map_physmem((paddr_t)KA630CLK, 1);
@@ -94,13 +98,13 @@ ka630_conf()
 
 /* log crd errors */
 void
-ka630_memerr()
+ka630_memerr(void)
 {
 	printf("memory err!\n");
 }
 
 #define NMC78032 10
-const char *mc78032[] = {
+const char * const mc78032[] = {
 	0,		"immcr (fsd)",	"immcr (ssd)",	"fpu err 0",
 	"fpu err 7",	"mmu st(tb)",	"mmu st(m=0)",	"pte in p0",
 	"pte in p1",	"un intr id",
@@ -116,11 +120,10 @@ struct mc78032frame {
 };
 
 int
-ka630_mchk(cmcf)
-	void *cmcf;
+ka630_mchk(void *cmcf)
 {
-	register struct mc78032frame *mcf = (struct mc78032frame *)cmcf;
-	register u_int type = mcf->mc63_summary;
+	struct mc78032frame * const mcf = (struct mc78032frame *)cmcf;
+	u_int type = mcf->mc63_summary;
 
 	printf("machine check %x", type);
 	if (type < NMC78032 && mc78032[type])
@@ -139,16 +142,15 @@ ka630_mchk(cmcf)
 	return (-1);
 }
 
-static void
-ka630_halt()
+void
+ka630_halt(void)
 {
 	((volatile struct ka630clock *)clk_page)->cpmbx = KA630CLK_DOTHIS|KA630CLK_HALT;
 	__asm("halt");
 }
 
-static void
-ka630_reboot(arg)
-	int arg;
+void
+ka630_reboot(int arg)
 {
 	((volatile struct ka630clock *)clk_page)->cpmbx =
 	    KA630CLK_DOTHIS | KA630CLK_REBOOT;
@@ -157,8 +159,8 @@ ka630_reboot(arg)
 /*
  * Clear restart and boot in progress flags in the CPMBX.
  */
-static void
-ka630_clrf()
+void
+ka630_clrf(void)
 {
 	short i = ((volatile struct ka630clock *)clk_page)->cpmbx;
 
