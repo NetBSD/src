@@ -1,4 +1,4 @@
-/*	$NetBSD: in4_cksum.c,v 1.8.16.2 2007/02/26 09:08:41 yamt Exp $	*/
+/*	$NetBSD: in4_cksum.c,v 1.8.16.3 2008/03/17 09:14:33 yamt Exp $	*/
 
 /*
  * Copyright (C) 1999 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.8.16.2 2007/02/26 09:08:41 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.8.16.3 2008/03/17 09:14:33 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -74,7 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: in4_cksum.c,v 1.8.16.2 2007/02/26 09:08:41 yamt Exp 
 #include <netinet/ip_var.h>
 
 #ifdef CKSUMDEBUG
-int in4_cksum_md_debug(struct mbuf *m, u_int8_t nxt, int off, int len);
+int in4_cksum_md_debug(struct mbuf *m, uint8_t nxt, int off, int len);
 #define	in4_cksum in4_cksum_md_debug
 #include <netinet/in4_cksum.c>
 #undef in4_cksum
@@ -104,13 +104,13 @@ int in4_cksum_md_debug(struct mbuf *m, u_int8_t nxt, int off, int len);
 #define ADDC    Asm("adwc     $0,%0" : "=r" (sum) : "0" (sum))
 #define UNSWAP  Asm("rotl  $8,%0,%0" : "=r" (sum) : "0" (sum))
 #define ADDBYTE	{sum += *w; SWAP; byte_swapped ^= 1;}
-#define ADDWORD	{sum += *(u_short *)w;}
+#define ADDWORD	{sum += *(uint16_t *)w;}
 
 int
-in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
+in4_cksum(struct mbuf *m, uint8_t nxt, int off, int len)
 {
-	u_int8_t *w;
-	u_int32_t sum = 0;
+	uint8_t *w;
+	uint32_t sum = 0;
 	int mlen = 0;
 	int byte_swapped = 0;
 #ifdef CKSUMDEBUG
@@ -147,7 +147,7 @@ in4_cksum(struct mbuf *m, u_int8_t nxt, int off, int len)
 	for (;m && len; m = m->m_next) {
 		if ((mlen = m->m_len) == 0)
 			continue;
-		w = mtod(m, u_int8_t *);
+		w = mtod(m, uint8_t *);
 		if (off) {
 			w += off;
 			mlen -= off;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.59.2.3 2007/09/03 14:23:14 yamt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.59.2.4 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59.2.3 2007/09/03 14:23:14 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59.2.4 2008/03/17 09:14:15 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/malloc.h>
@@ -62,6 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.59.2.3 2007/09/03 14:23:14 yamt Exp $");
 #ifdef ARMFPE
 #include <machine/bootconfig.h> /* For boot args */
 #include <arm/fpe-arm/armfpe.h>
+#endif
+
+#ifdef FPU_VFP
+#include <arm/vfpvar.h>
 #endif
 
 char cpu_model[256];
@@ -155,6 +159,10 @@ cpu_attach(struct device *dv)
 		    BOOTOPT_TYPE_BOOLEAN, &usearmfpe);
 	if (usearmfpe)
 		initialise_arm_fpe();
+#endif
+
+#ifdef FPU_VFP
+	vfp_attach();
 #endif
 }
 

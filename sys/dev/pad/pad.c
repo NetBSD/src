@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.2.6.5 2008/02/27 08:36:34 yamt Exp $ */
+/* $NetBSD: pad.c,v 1.2.6.6 2008/03/17 09:15:10 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.2.6.5 2008/02/27 08:36:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.2.6.6 2008/03/17 09:15:10 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -256,7 +256,7 @@ pad_childdet(device_t self, device_t child)
 {
 	pad_softc_t *sc = device_private(self);
 
-	KASSERT(&sc->sc_audiodev->dev == child);
+	KASSERT(sc->sc_audiodev->dev == child);
 	sc->sc_audiodev = NULL;
 }
 

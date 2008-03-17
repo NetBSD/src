@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vsbus.c,v 1.19.16.1 2007/09/03 14:30:47 yamt Exp $	*/
+/*	$NetBSD: if_le_vsbus.c,v 1.19.16.2 2008/03/17 09:14:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.19.16.1 2007/09/03 14:30:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vsbus.c,v 1.19.16.2 2008/03/17 09:14:29 yamt Exp $");
 
 #include "opt_inet.h"
 #include "bpfilter.h"
@@ -110,48 +110,41 @@ struct le_softc {
 	struct	am7990_softc sc_am7990; /* Must be first */
 	struct	evcnt sc_intrcnt;
 	bus_dmamap_t sc_dm;
-	volatile u_short *sc_rap;
-	volatile u_short *sc_rdp;
+	volatile uint16_t *sc_rap;
+	volatile uint16_t *sc_rdp;
 };
 
-static	int	le_vsbus_match __P((struct device *, struct cfdata *, void *));
-static	void	le_vsbus_attach __P((struct device *, struct device *, void *));
-static	void	lewrcsr __P((struct lance_softc *, u_int16_t, u_int16_t));
-static	u_int16_t lerdcsr __P((struct lance_softc *, u_int16_t));
+static	int	le_vsbus_match(device_t, cfdata_t, void *);
+static	void	le_vsbus_attach(device_t, device_t, void *);
+static	void	lewrcsr(struct lance_softc *, uint16_t, uint16_t);
+static	uint16_t lerdcsr(struct lance_softc *, uint16_t);
 
 CFATTACH_DECL(le_vsbus, sizeof(struct le_softc),
     le_vsbus_match, le_vsbus_attach, NULL, NULL);
 
-static void
-lewrcsr(ls, port, val)
-	struct lance_softc *ls;
-	u_int16_t port, val;
+void
+lewrcsr(struct lance_softc *ls, uint16_t port, uint16_t val)
 {
-	struct le_softc *sc = (void *)ls;
+	struct le_softc * const sc = (void *)ls;
 
 	*sc->sc_rap = port;
 	*sc->sc_rdp = val;
 }
 
-static u_int16_t
-lerdcsr(ls, port)
-	struct lance_softc *ls;
-	u_int16_t port;
+uint16_t
+lerdcsr(struct lance_softc *ls, uint16_t port)
 {
-	struct le_softc *sc = (void *)ls;
+	struct le_softc * const sc = (void *)ls;
 
 	*sc->sc_rap = port;
 	return *sc->sc_rdp;
 }
 
 static int
-le_vsbus_match(parent, cf, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	void *aux;
+le_vsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
-	volatile short *rdp, *rap;
+	struct vsbus_attach_args * const va = aux;
+	volatile uint16_t *rdp, *rap;
 	struct leinit initblock;
 	bus_dmamap_t map;
 	int i;
@@ -176,7 +169,7 @@ le_vsbus_match(parent, cf, aux)
 
 	memset(&initblock, 0, sizeof(initblock));
 
-	rdp = (short *)va->va_addr;
+	rdp = (uint16_t *)va->va_addr;
 	rap = rdp + 2;
 
 	/* Make sure the chip is stopped. */
@@ -206,17 +199,15 @@ le_vsbus_match(parent, cf, aux)
 }
 
 static void
-le_vsbus_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+le_vsbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct vsbus_attach_args *va = aux;
-	struct le_softc *sc = (void *)self;
+	struct vsbus_attach_args * const va = aux;
+	struct le_softc * const sc = device_private(self);
 	bus_dma_segment_t seg;
 	int *lance_addr;
 	int i, err, rseg;
 
-	sc->sc_rdp = (short *)vax_map_physmem(NI_BASE, 1);
+	sc->sc_rdp = (uint16_t *) vax_map_physmem(NI_BASE, 1);
 	sc->sc_rap = sc->sc_rdp + 2;
 
 	/*
@@ -229,7 +220,7 @@ le_vsbus_attach(parent, self, aux)
 	scb_vecalloc(va->va_cvec, (void (*)(void *)) am7990_intr, sc,
 		SCB_ISTACK, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		self->dv_xname, "intr");
+		device_xname(self), "intr");
 
         /*
          * Allocate a (DMA-safe) block for all descriptors and buffers.
@@ -265,7 +256,7 @@ le_vsbus_attach(parent, self, aux)
                 bus_dmamem_free(va->va_dmat, &seg, rseg);
                 return;
         }
-	printf(" buf 0x%lx-0x%lx", sc->sc_dm->dm_segs->ds_addr,
+	aprint_normal(" buf 0x%lx-0x%lx", sc->sc_dm->dm_segs->ds_addr,
 	    sc->sc_dm->dm_segs->ds_addr + sc->sc_dm->dm_segs->ds_len - 1);
 	sc->sc_am7990.lsc.sc_addr = sc->sc_dm->dm_segs->ds_addr & 0xffffff;
 	sc->sc_am7990.lsc.sc_memsize = sc->sc_dm->dm_segs->ds_len;
@@ -287,10 +278,11 @@ le_vsbus_attach(parent, self, aux)
 		sc->sc_am7990.lsc.sc_enaddr[i] = (u_char)lance_addr[i];
 	vax_unmap_physmem((vaddr_t)lance_addr, 1);
 
-	bcopy(self->dv_xname, sc->sc_am7990.lsc.sc_ethercom.ec_if.if_xname,
+	bcopy(device_xname(self), sc->sc_am7990.lsc.sc_ethercom.ec_if.if_xname,
 	    IFNAMSIZ);
+
 	/* Prettier printout */
-	printf("\n%s", self->dv_xname);
+	aprint_normal("\n%s", device_xname(self));
 
 	am7990_config(&sc->sc_am7990);
 }

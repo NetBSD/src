@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.29.2.4 2008/01/21 09:44:06 yamt Exp $	*/
+/*	$NetBSD: neo.c,v 1.29.2.5 2008/03/17 09:15:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.29.2.4 2008/01/21 09:44:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.29.2.5 2008/03/17 09:15:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,7 +550,7 @@ neo_match(struct device *parent, struct cfdata *match,
 }
 
 static bool
-neo_resume(device_t dv)
+neo_resume(device_t dv PMF_FN_ARGS)
 {
 	struct neo_softc *sc = device_private(dv);
 

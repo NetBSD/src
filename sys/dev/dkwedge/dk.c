@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.7.2.8 2008/02/04 09:23:20 yamt Exp $	*/
+/*	$NetBSD: dk.c,v 1.7.2.9 2008/03/17 09:14:40 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7.2.8 2008/02/04 09:23:20 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.7.2.9 2008/03/17 09:14:40 yamt Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -169,7 +169,7 @@ dkwedge_detach(struct device *self, int flags)
 }
 
 CFDRIVER_DECL(dk, DV_DISK, NULL);
-CFATTACH_DECL(dk, sizeof(struct device),
+CFATTACH_DECL_NEW(dk, 0,
 	      dkwedge_match, dkwedge_attach, dkwedge_detach, NULL);
 
 /*

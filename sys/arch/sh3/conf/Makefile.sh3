@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sh3,v 1.20.2.3 2007/09/03 14:29:24 yamt Exp $
+#	$NetBSD: Makefile.sh3,v 1.20.2.4 2008/03/17 09:14:23 yamt Exp $
 
 # Makefile for NetBSD
 #
@@ -50,6 +50,8 @@ MD_SFILES=	${THISSH3}/${MACHINE}/locore.S
 
 locore.o: ${THISSH3}/${MACHINE}/locore.S assym.h
 	${NORMAL_S}
+
+cpu_in_cksum.o exception_vector.o locore_subr.o: assym.h
 
 ##
 ## (5) link settings

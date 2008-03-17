@@ -1,4 +1,4 @@
-/* $NetBSD: rtwvar.h,v 1.24.2.5 2008/01/21 09:43:08 yamt Exp $ */
+/* $NetBSD: rtwvar.h,v 1.24.2.6 2008/03/17 09:14:43 yamt Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
  *
@@ -94,18 +94,14 @@ enum rtw_rfchipid {
 	RTW_RFCHIPID_MAXIM = 4,
 	RTW_RFCHIPID_GCT = 5
 };
-
 /* sc_flags */
-#define RTW_F_ENABLED		0x00000001	/* chip is enabled */
 #define RTW_F_DIGPHY		0x00000002	/* digital PHY */
 #define RTW_F_DFLANTB		0x00000004	/* B antenna is default */
 #define RTW_F_ANTDIV		0x00000010	/* h/w antenna diversity */
 #define RTW_F_9356SROM		0x00000020	/* 93c56 SROM */
-#define RTW_F_SLEEP		0x00000040	/* chip is asleep */
-#define RTW_F_INVALID		0x00000080	/* chip is absent */
-#define	RTW_F_DK_VALID		0x00000100	/* keys in DK0-DK3 are valid */
-#define	RTW_C_RXWEP_40		0x00000200	/* h/w decrypts 40-bit WEP */
-#define	RTW_C_RXWEP_104		0x00000400	/* h/w decrypts 104-bit WEP */
+#define	RTW_F_DK_VALID		0x00000040	/* keys in DK0-DK3 are valid */
+#define	RTW_C_RXWEP_40		0x00000080	/* h/w decrypts 40-bit WEP */
+#define	RTW_C_RXWEP_104		0x00000100	/* h/w decrypts 104-bit WEP */
 	/* all PHY flags */
 #define RTW_F_ALLPHY		(RTW_F_DIGPHY|RTW_F_DFLANTB|RTW_F_ANTDIV)
 enum rtw_access {RTW_ACCESS_NONE = 0,
@@ -115,6 +111,7 @@ enum rtw_access {RTW_ACCESS_NONE = 0,
 struct rtw_regs {
 	bus_space_tag_t		r_bt;
 	bus_space_handle_t	r_bh;
+	bus_size_t		r_sz;
 	enum rtw_access		r_access;
 };
 
@@ -459,8 +456,6 @@ struct rtw_softc {
 	/* interrupt acknowledge hook */
 	void (*sc_intr_ack)(struct rtw_regs *);
 
-	int			(*sc_enable)(struct rtw_softc *);
-	void			(*sc_disable)(struct rtw_softc *);
 	struct rtw_mtbl		sc_mtbl;
 
 	void *			sc_radiobpf;
@@ -507,11 +502,10 @@ void rtw_attach(struct rtw_softc *);
 int rtw_detach(struct rtw_softc *);
 int rtw_intr(void *);
 
-void rtw_disable(struct rtw_softc *);
-int rtw_enable(struct rtw_softc *);
+bool rtw_suspend(device_t PMF_FN_PROTO);
+bool rtw_resume(device_t PMF_FN_PROTO);
 
 int rtw_activate(device_t, enum devact);
-void rtw_shutdown(void *);
 
 const char *rtw_pwrstate_string(enum rtw_pwrstate);
 

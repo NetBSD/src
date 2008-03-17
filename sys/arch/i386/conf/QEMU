@@ -1,4 +1,4 @@
-# $NetBSD: QEMU,v 1.9.2.6 2008/01/21 09:36:53 yamt Exp $
+# $NetBSD: QEMU,v 1.9.2.7 2008/03/17 09:14:20 yamt Exp $
 #
 # QEMU machine description file
 #
@@ -11,7 +11,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"QEMU-$Revision: 1.9.2.6 $"
+#ident 		"QEMU-$Revision: 1.9.2.7 $"
 
 maxusers	32		# estimated number of users
 
@@ -388,7 +388,7 @@ midi*	at pcppi?		# MIDI interface to the PC speaker
 spkr0	at pcppi?		# PC speaker
 
 # Pull in optional local configuration
-include	"arch/i386/conf/GENERIC.local"
+cinclude "arch/i386/conf/GENERIC.local"
 
 # Pseudo-Devices
 

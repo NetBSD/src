@@ -1,4 +1,4 @@
-/*	$NetBSD: ichlpcib.c,v 1.4.4.4 2008/01/21 09:40:10 yamt Exp $	*/
+/*	$NetBSD: ichlpcib.c,v 1.4.4.5 2008/03/17 09:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.4.4 2008/01/21 09:40:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichlpcib.c,v 1.4.4.5 2008/03/17 09:14:34 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,8 +103,8 @@ struct lpcib_softc {
 
 static int lpcibmatch(struct device *, struct cfdata *, void *);
 static void lpcibattach(struct device *, struct device *, void *);
-static bool lpcib_suspend(device_t);
-static bool lpcib_resume(device_t);
+static bool lpcib_suspend(device_t PMF_FN_PROTO);
+static bool lpcib_resume(device_t PMF_FN_PROTO);
 
 static void pmtimer_configure(struct lpcib_softc *);
 
@@ -260,7 +260,7 @@ lpcibattach(struct device *parent, struct device *self, void *aux)
 }
 
 static bool
-lpcib_suspend(device_t dv)
+lpcib_suspend(device_t dv PMF_FN_ARGS)
 {
 	struct lpcib_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc = sc->sc_pc;
@@ -289,7 +289,7 @@ lpcib_suspend(device_t dv)
 }
 
 static bool
-lpcib_resume(device_t dv)
+lpcib_resume(device_t dv PMF_FN_ARGS)
 {
 	struct lpcib_softc *sc = device_private(dv);
 	pci_chipset_tag_t pc = sc->sc_pc;

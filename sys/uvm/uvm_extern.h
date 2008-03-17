@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.103.2.8 2008/02/04 09:25:09 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.103.2.9 2008/03/17 09:15:52 yamt Exp $	*/
 
 /*
  *
@@ -690,6 +690,8 @@ void			uvm_setpagesize(void);
 void			uvm_aio_biodone1(struct buf *);
 void			uvm_aio_biodone(struct buf *);
 void			uvm_aio_aiodone(struct buf *);
+void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,
+			    int);
 
 /* uvm_pdaemon.c */
 void			uvm_pageout(void *);

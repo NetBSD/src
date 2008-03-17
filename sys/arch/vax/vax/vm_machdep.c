@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.88.2.6 2008/02/27 08:36:26 yamt Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.88.2.7 2008/03/17 09:14:33 yamt Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88.2.6 2008/02/27 08:36:26 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.88.2.7 2008/03/17 09:14:33 yamt Exp $");
 
 #include "opt_compat_ultrix.h"
 #include "opt_multiprocessor.h"
@@ -226,7 +226,7 @@ cpu_coredump(struct lwp *l, void *iocookie, struct core *chdr)
  * Map in a bunch of pages read/writable for the kernel.
  */
 void
-ioaccess(vaddr_t vaddr, paddr_t paddr, int npgs)
+ioaccess(vaddr_t vaddr, paddr_t paddr, size_t npgs)
 {
 	uint32_t *pte = (uint32_t *)kvtopte(vaddr);
 	int i;
@@ -239,7 +239,7 @@ ioaccess(vaddr_t vaddr, paddr_t paddr, int npgs)
  * Opposite to the above: just forget their mapping.
  */
 void
-iounaccess(vaddr_t vaddr, int npgs)
+iounaccess(vaddr_t vaddr, size_t npgs)
 {
 	uint32_t *pte = (uint32_t *)kvtopte(vaddr);
 	int i;

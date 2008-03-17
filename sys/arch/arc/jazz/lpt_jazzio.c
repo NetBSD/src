@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_jazzio.c,v 1.6 2005/01/22 07:35:34 tsutsui Exp $	*/
+/*	$NetBSD: lpt_jazzio.c,v 1.6.8.1 2008/03/17 09:14:14 yamt Exp $	*/
 /*	$OpenBSD: lpt_lbus.c,v 1.3 1997/04/10 16:29:17 pefo Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.6 2005/01/22 07:35:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.6.8.1 2008/03/17 09:14:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,10 +70,10 @@ __KERNEL_RCSID(0, "$NetBSD: lpt_jazzio.c,v 1.6 2005/01/22 07:35:34 tsutsui Exp $
 
 #include <arc/jazz/jazziovar.h>
 
-int lpt_jazzio_probe(struct device *, struct cfdata *, void *);
-void lpt_jazzio_attach(struct device *, struct device *, void *);
+int lpt_jazzio_probe(device_t, cfdata_t , void *);
+void lpt_jazzio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(lpt_jazzio, sizeof(struct lpt_softc),
+CFATTACH_DECL_NEW(lpt_jazzio, sizeof(struct lpt_softc),
     lpt_jazzio_probe, lpt_jazzio_attach, NULL, NULL);
 
 /*
@@ -104,7 +104,7 @@ lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh, bus_addr_t base,
 }
 
 int
-lpt_jazzio_probe(struct device *parent, struct cfdata *match, void *aux)
+lpt_jazzio_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot;
@@ -166,19 +166,20 @@ out:
 }
 
 void
-lpt_jazzio_attach(struct device *parent, struct device *self, void *aux)
+lpt_jazzio_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_softc *sc = (void *)self;
+	struct lpt_softc *sc = device_private(self);
 	struct jazzio_attach_args *ja = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_state = 0;
 	iot = sc->sc_iot = ja->ja_bust;
 	if (bus_space_map(iot, ja->ja_addr, LPT_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_error_dev(self, "can't map i/o space\n");
 		return;
 	}
 	sc->sc_ioh = ioh;

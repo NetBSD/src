@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_sh3.c,v 1.9.16.1 2006/06/21 14:55:39 yamt Exp $	*/
+/*	$NetBSD: cache_sh3.c,v 1.9.16.2 2008/03/17 09:14:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.9.16.1 2006/06/21 14:55:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_sh3.c,v 1.9.16.2 2008/03/17 09:14:23 yamt Exp $");
+
+#include "opt_cache.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>

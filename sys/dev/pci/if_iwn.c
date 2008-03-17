@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.4.2.3 2008/02/27 08:36:35 yamt Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.4.2.4 2008/03/17 09:15:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.4.2.3 2008/02/27 08:36:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.4.2.4 2008/03/17 09:15:11 yamt Exp $");
 
 
 /*
@@ -181,7 +181,7 @@ static void		iwn_hw_config(struct iwn_softc *);
 static int		iwn_init(struct ifnet *);
 static void		iwn_stop(struct ifnet *, int);
 static void		iwn_fix_channel(struct ieee80211com *, struct mbuf *);
-static bool		iwn_resume(device_t dv);
+static bool		iwn_resume(device_t PMF_FN_PROTO);
 
 
 
@@ -3813,11 +3813,10 @@ iwn_stop(struct ifnet *ifp, int disable)
 }
 
 static bool
-iwn_resume(device_t dv)
+iwn_resume(device_t dv PMF_FN_ARGS)
 {
 	struct iwn_softc *sc = device_private(dv);
 
-	pci_disable_retry(sc->sc_pct, sc->sc_pcitag);
 	(void)iwn_reset(sc);
 
 	return true;

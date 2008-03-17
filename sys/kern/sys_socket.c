@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_socket.c,v 1.43.4.3 2008/02/11 14:59:58 yamt Exp $	*/
+/*	$NetBSD: sys_socket.c,v 1.43.4.4 2008/03/17 09:15:34 yamt Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.43.4.3 2008/02/11 14:59:58 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.43.4.4 2008/03/17 09:15:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_socket.c,v 1.43.4.3 2008/02/11 14:59:58 yamt Exp
 #include <net/if.h>
 #include <net/route.h>
 
-struct	fileops socketops = {
+const struct fileops socketops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
 	soo_stat, soo_close, soo_kqfilter
 };

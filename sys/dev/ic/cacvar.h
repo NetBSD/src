@@ -1,4 +1,4 @@
-/*	$NetBSD: cacvar.h,v 1.11.4.3 2007/09/03 14:34:24 yamt Exp $	*/
+/*	$NetBSD: cacvar.h,v 1.11.4.4 2008/03/17 09:14:42 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
 
 #include <sys/mutex.h>
 #include <sys/condvar.h>
+
+#include <dev/sysmon/sysmonvar.h>
+#include <sys/envsys.h>
 
 #define	CAC_MAX_CCBS	256
 #define	CAC_MAX_XFER	(0xffff * 512)
@@ -122,7 +125,18 @@ struct cac_softc {
 	SIMPLEQ_HEAD(, cac_ccb)	sc_ccb_queue;
 	kcondvar_t		sc_ccb_cv;
 	struct cac_linkage	sc_cl;
+
+	/* scsi ioctl from sd device */
+	int			(*sc_ioctl)(struct device *, u_long, void *);
+
+	struct sysmon_envsys    *sc_sme;
+	envsys_data_t		*sc_sensor;
 };
+
+/* XXX These have to become spinlocks in case of fine SMP */
+#define	CAC_LOCK(sc) splbio()
+#define	CAC_UNLOCK(sc, lock) splx(lock)
+typedef	int cac_lock_t;
 
 struct cac_attach_args {
 	int		caca_unit;

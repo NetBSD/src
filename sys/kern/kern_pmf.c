@@ -1,4 +1,4 @@
-/* $NetBSD: kern_pmf.c,v 1.10.4.4 2008/02/27 08:36:55 yamt Exp $ */
+/* $NetBSD: kern_pmf.c,v 1.10.4.5 2008/03/17 09:15:33 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.10.4.4 2008/02/27 08:36:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.10.4.5 2008/03/17 09:15:33 yamt Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,11 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pmf.c,v 1.10.4.4 2008/02/27 08:36:55 yamt Exp $
 #include <sys/syscallargs.h> /* for sys_sync */
 #include <sys/workqueue.h>
 #include <prop/proplib.h>
+#include <sys/condvar.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>	/* for RB_NOSYNC */
+#include <sys/sched.h>
 
 /* XXX ugly special case, but for now the only client */
 #include "wsdisplay.h"
@@ -94,6 +99,17 @@ typedef struct pmf_event_workitem {
 	device_t		pew_device;
 } pmf_event_workitem_t;
 
+struct shutdown_state {
+	bool initialized;
+	deviter_t di;
+};
+
+static device_t shutdown_first(struct shutdown_state *);
+static device_t shutdown_next(struct shutdown_state *);
+
+static bool pmf_device_resume_locked(device_t PMF_FN_PROTO);
+static bool pmf_device_suspend_locked(device_t PMF_FN_PROTO);
+
 static void
 pmf_event_worker(struct work *wk, void *dummy)
 {
@@ -121,9 +137,11 @@ pmf_check_system_drivers(void)
 {
 	device_t curdev;
 	bool unsupported_devs;
+	deviter_t di;
 
 	unsupported_devs = false;
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+	for (curdev = deviter_first(&di, 0); curdev != NULL;
+	     curdev = deviter_next(&di)) {
 		if (device_pmf_is_registered(curdev))
 			continue;
 		if (!unsupported_devs)
@@ -131,6 +149,7 @@ pmf_check_system_drivers(void)
 		printf(" %s", device_xname(curdev));
 		unsupported_devs = true;
 	}
+	deviter_release(&di);
 	if (unsupported_devs) {
 		printf("\n");
 		return false;
@@ -139,85 +158,67 @@ pmf_check_system_drivers(void)
 }
 
 bool
-pmf_system_bus_resume(void)
+pmf_system_bus_resume(PMF_FN_ARGS1)
 {
-	int depth, maxdepth;
 	bool rv;
 	device_t curdev;
-
-	maxdepth = 0;
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-		if (curdev->dv_depth > maxdepth)
-			maxdepth = curdev->dv_depth;
-	}
-	++maxdepth;
+	deviter_t di;
 
 	aprint_debug("Powering devices:");
 	/* D0 handlers are run in order */
-	depth = 0;
 	rv = true;
-	for (depth = 0; depth < maxdepth; ++depth) {
-		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-			if (!device_pmf_is_registered(curdev))
-				continue;
-			if (device_is_active(curdev) ||
-			    !device_is_enabled(curdev))
-				continue;
-			if (curdev->dv_depth != depth)
-				continue;
+	for (curdev = deviter_first(&di, DEVITER_F_ROOT_FIRST); curdev != NULL;
+	     curdev = deviter_next(&di)) {
+		if (!device_pmf_is_registered(curdev))
+			continue;
+		if (device_is_active(curdev) ||
+		    !device_is_enabled(curdev))
+			continue;
 
-			aprint_debug(" %s", device_xname(curdev));
+		aprint_debug(" %s", device_xname(curdev));
 
-			if (!device_pmf_bus_resume(curdev))
-				aprint_debug("(failed)");
+		if (!device_pmf_bus_resume(curdev PMF_FN_CALL)) {
+			rv = false;
+			aprint_debug("(failed)");
 		}
 	}
+	deviter_release(&di);
 	aprint_debug("\n");
 
 	return rv;
 }
 
 bool
-pmf_system_resume(void)
+pmf_system_resume(PMF_FN_ARGS1)
 {
-	int depth, maxdepth;
 	bool rv;
 	device_t curdev, parent;
+	deviter_t di;
 
 	if (!pmf_check_system_drivers())
 		return false;
 
-	maxdepth = 0;
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-		if (curdev->dv_depth > maxdepth)
-			maxdepth = curdev->dv_depth;
-	}
-	++maxdepth;
-
 	aprint_debug("Resuming devices:");
 	/* D0 handlers are run in order */
-	depth = 0;
 	rv = true;
-	for (depth = 0; depth < maxdepth; ++depth) {
-		TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-			if (device_is_active(curdev) ||
-			    !device_is_enabled(curdev))
-				continue;
-			if (curdev->dv_depth != depth)
-				continue;
-			parent = device_parent(curdev);
-			if (parent != NULL &&
-			    !device_is_active(parent))
-				continue;
+	for (curdev = deviter_first(&di, DEVITER_F_ROOT_FIRST); curdev != NULL;
+	     curdev = deviter_next(&di)) {
+		if (device_is_active(curdev) ||
+		    !device_is_enabled(curdev))
+			continue;
+		parent = device_parent(curdev);
+		if (parent != NULL &&
+		    !device_is_active(parent))
+			continue;
 
-			aprint_debug(" %s", device_xname(curdev));
+		aprint_debug(" %s", device_xname(curdev));
 
-			if (!pmf_device_resume(curdev)) {
-				rv = false;
-				aprint_debug("(failed)");
-			}
+		if (!pmf_device_resume(curdev PMF_FN_CALL)) {
+			rv = false;
+			aprint_debug("(failed)");
 		}
 	}
+	deviter_release(&di);
 	aprint_debug(".\n");
 
 	KERNEL_UNLOCK_ONE(0);
@@ -229,10 +230,10 @@ pmf_system_resume(void)
 }
 
 bool
-pmf_system_suspend(void)
+pmf_system_suspend(PMF_FN_ARGS1)
 {
-	int depth, maxdepth;
 	device_t curdev;
+	deviter_t di;
 
 	if (!pmf_check_system_drivers())
 		return false;
@@ -257,66 +258,68 @@ pmf_system_suspend(void)
 
 	aprint_debug("Suspending devices:");
 
-	maxdepth = 0;
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-		if (curdev->dv_depth > maxdepth)
-			maxdepth = curdev->dv_depth;
+	for (curdev = deviter_first(&di, DEVITER_F_LEAVES_FIRST);
+	     curdev != NULL;
+	     curdev = deviter_next(&di)) {
+		if (!device_is_active(curdev))
+			continue;
+
+		aprint_debug(" %s", device_xname(curdev));
+
+		/* XXX joerg check return value and abort suspend */
+		if (!pmf_device_suspend(curdev PMF_FN_CALL))
+			aprint_debug("(failed)");
 	}
-
-	for (depth = maxdepth; depth >= 0; --depth) {
-		TAILQ_FOREACH_REVERSE(curdev, &alldevs, devicelist, dv_list) {
-			if (curdev->dv_depth != depth)
-				continue;
-			if (!device_is_active(curdev))
-				continue;
-
-			aprint_debug(" %s", device_xname(curdev));
-
-			/* XXX joerg check return value and abort suspend */
-			if (!pmf_device_suspend(curdev))
-				aprint_debug("(failed)");
-		}
-	}
+	deviter_release(&di);
 
 	aprint_debug(".\n");
 
 	return true;
 }
 
-void
-pmf_system_shutdown(void)
+static device_t
+shutdown_first(struct shutdown_state *s)
 {
-	int depth, maxdepth;
+	if (!s->initialized) {
+		deviter_init(&s->di, DEVITER_F_SHUTDOWN|DEVITER_F_LEAVES_FIRST);
+		s->initialized = true;
+	}
+	return shutdown_next(s);
+}
+
+static device_t
+shutdown_next(struct shutdown_state *s)
+{
+	device_t dv;
+
+	while ((dv = deviter_next(&s->di)) != NULL && !device_is_active(dv))
+		;
+
+	return dv;
+}
+
+void
+pmf_system_shutdown(int how)
+{
+	static struct shutdown_state s;
 	device_t curdev;
 
 	aprint_debug("Shutting down devices:");
 
-	maxdepth = 0;
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
-		if (curdev->dv_depth > maxdepth)
-			maxdepth = curdev->dv_depth;
-	}
-
-	for (depth = maxdepth; depth >= 0; --depth) {
-		TAILQ_FOREACH_REVERSE(curdev, &alldevs, devicelist, dv_list) {
-			if (curdev->dv_depth != depth)
-				continue;
-			if (!device_is_active(curdev))
-				continue;
-
-			aprint_debug(" %s", device_xname(curdev));
-
-			if (!device_pmf_is_registered(curdev))
-				continue;
-			if (!device_pmf_class_suspend(curdev)) {
-				aprint_debug("(failed)");
-				continue;
-			}
-			if (!device_pmf_driver_suspend(curdev)) {
-				aprint_debug("(failed)");
-				continue;
-			}
-		}
+	for (curdev = shutdown_first(&s); curdev != NULL;
+	     curdev = shutdown_next(&s)) {
+		aprint_debug(" attempting %s shutdown",
+		    device_xname(curdev));
+		if (!device_pmf_is_registered(curdev))
+			aprint_debug("(skipped)");
+#if 0 /* needed? */
+		else if (!device_pmf_class_shutdown(curdev, how))
+			aprint_debug("(failed)");
+#endif
+		else if (!device_pmf_driver_shutdown(curdev, how))
+			aprint_debug("(failed)");
+		else if (!device_pmf_bus_shutdown(curdev, how))
+			aprint_debug("(failed)");
 	}
 
 	aprint_debug(".\n");
@@ -348,10 +351,13 @@ pmf_get_platform(const char *key)
 }
 
 bool
-pmf_device_register(device_t dev,
-    bool (*suspend)(device_t), bool (*resume)(device_t))
+pmf_device_register1(device_t dev,
+    bool (*suspend)(device_t PMF_FN_PROTO),
+    bool (*resume)(device_t PMF_FN_PROTO),
+    bool (*shutdown)(device_t, int))
 {
-	device_pmf_driver_register(dev, suspend, resume);
+	if (!device_pmf_driver_register(dev, suspend, resume, shutdown))
+		return false;
 
 	if (!device_pmf_driver_child_register(dev)) {
 		device_pmf_driver_deregister(dev);
@@ -370,63 +376,119 @@ pmf_device_deregister(device_t dev)
 }
 
 bool
-pmf_device_suspend(device_t dev)
+pmf_device_suspend_self(device_t dev)
 {
+	return pmf_device_suspend(dev, PMF_F_SELF);
+}
+
+bool
+pmf_device_suspend(device_t dev PMF_FN_ARGS)
+{
+	bool rc;
+
 	PMF_TRANSITION_PRINTF(("%s: suspend enter\n", device_xname(dev)));
 	if (!device_pmf_is_registered(dev))
 		return false;
+
+	if (!device_pmf_lock(dev PMF_FN_CALL))
+		return false;
+
+	rc = pmf_device_suspend_locked(dev PMF_FN_CALL);
+
+	device_pmf_unlock(dev PMF_FN_CALL);
+
+	PMF_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
+	return rc;
+}
+
+static bool
+pmf_device_suspend_locked(device_t dev PMF_FN_ARGS)
+{
+	PMF_TRANSITION_PRINTF2(1, ("%s: self suspend\n", device_xname(dev)));
+	device_pmf_self_suspend(dev, flags);
 	PMF_TRANSITION_PRINTF2(1, ("%s: class suspend\n", device_xname(dev)));
-	if (!device_pmf_class_suspend(dev))
+	if (!device_pmf_class_suspend(dev PMF_FN_CALL))
 		return false;
 	PMF_TRANSITION_PRINTF2(1, ("%s: driver suspend\n", device_xname(dev)));
-	if (!device_pmf_driver_suspend(dev))
+	if (!device_pmf_driver_suspend(dev PMF_FN_CALL))
 		return false;
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus suspend\n", device_xname(dev)));
-	if (!device_pmf_bus_suspend(dev))
+	if (!device_pmf_bus_suspend(dev PMF_FN_CALL))
 		return false;
-	PMF_TRANSITION_PRINTF(("%s: suspend exit\n", device_xname(dev)));
+
 	return true;
 }
 
 bool
-pmf_device_resume(device_t dev)
+pmf_device_resume_self(device_t dev)
 {
+	return pmf_device_resume(dev, PMF_F_SELF);
+}
+
+bool
+pmf_device_resume(device_t dev PMF_FN_ARGS)
+{
+	bool rc;
+
 	PMF_TRANSITION_PRINTF(("%s: resume enter\n", device_xname(dev)));
 	if (!device_pmf_is_registered(dev))
 		return false;
+
+	if (!device_pmf_lock(dev PMF_FN_CALL))
+		return false;
+
+	rc = pmf_device_resume_locked(dev PMF_FN_CALL);
+
+	device_pmf_unlock(dev PMF_FN_CALL);
+
+	PMF_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
+	return rc;
+}
+
+static bool
+pmf_device_resume_locked(device_t dev PMF_FN_ARGS)
+{
 	PMF_TRANSITION_PRINTF2(1, ("%s: bus resume\n", device_xname(dev)));
-	if (!device_pmf_bus_resume(dev))
+	if (!device_pmf_bus_resume(dev PMF_FN_CALL))
 		return false;
 	PMF_TRANSITION_PRINTF2(1, ("%s: driver resume\n", device_xname(dev)));
-	if (!device_pmf_driver_resume(dev))
+	if (!device_pmf_driver_resume(dev PMF_FN_CALL))
 		return false;
 	PMF_TRANSITION_PRINTF2(1, ("%s: class resume\n", device_xname(dev)));
-	if (!device_pmf_class_resume(dev))
+	if (!device_pmf_class_resume(dev PMF_FN_CALL))
 		return false;
-	PMF_TRANSITION_PRINTF(("%s: resume exit\n", device_xname(dev)));
+	PMF_TRANSITION_PRINTF2(1, ("%s: self resume\n", device_xname(dev)));
+	device_pmf_self_resume(dev, flags);
+
 	return true;
 }
 
 bool
-pmf_device_recursive_suspend(device_t dv)
+pmf_device_recursive_suspend(device_t dv PMF_FN_ARGS)
 {
+	bool rv = true;
 	device_t curdev;
+	deviter_t di;
 
 	if (!device_is_active(dv))
 		return true;
 
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+	for (curdev = deviter_first(&di, 0); curdev != NULL;
+	     curdev = deviter_next(&di)) {
 		if (device_parent(curdev) != dv)
 			continue;
-		if (!pmf_device_recursive_suspend(curdev))
-			return false;
+		if (!pmf_device_recursive_suspend(curdev PMF_FN_CALL)) {
+			rv = false;
+			break;
+		}
 	}
+	deviter_release(&di);
 
-	return pmf_device_suspend(dv);
+	return rv && pmf_device_suspend(dv PMF_FN_CALL);
 }
 
 bool
-pmf_device_recursive_resume(device_t dv)
+pmf_device_recursive_resume(device_t dv PMF_FN_ARGS)
 {
 	device_t parent;
 
@@ -435,50 +497,59 @@ pmf_device_recursive_resume(device_t dv)
 
 	parent = device_parent(dv);
 	if (parent != NULL) {
-		if (!pmf_device_recursive_resume(parent))
+		if (!pmf_device_recursive_resume(parent PMF_FN_CALL))
 			return false;
 	}
 
-	return pmf_device_resume(dv);
+	return pmf_device_resume(dv PMF_FN_CALL);
 }
 
 bool
-pmf_device_resume_subtree(device_t dv)
+pmf_device_resume_subtree(device_t dv PMF_FN_ARGS)
 {
+	bool rv = true;
 	device_t curdev;
+	deviter_t di;
 
-	if (!pmf_device_recursive_resume(dv))
+	if (!pmf_device_recursive_resume(dv PMF_FN_CALL))
 		return false;
 
-	TAILQ_FOREACH(curdev, &alldevs, dv_list) {
+	for (curdev = deviter_first(&di, 0); curdev != NULL;
+	     curdev = deviter_next(&di)) {
 		if (device_parent(curdev) != dv)
 			continue;
-		if (!pmf_device_resume_subtree(curdev))
-			return false;
+		if (!pmf_device_resume_subtree(curdev PMF_FN_CALL)) {
+			rv = false;
+			break;
+		}
 	}
-	return true;
+	deviter_release(&di);
+	return rv;
 }
 
 #include <net/if.h>
 
 static bool
-pmf_class_network_suspend(device_t dev)
+pmf_class_network_suspend(device_t dev PMF_FN_ARGS)
 {
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
 
 	s = splnet();
-	(*ifp->if_stop)(ifp, 1);
+	(*ifp->if_stop)(ifp, 0);
 	splx(s);
 
 	return true;
 }
 
 static bool
-pmf_class_network_resume(device_t dev)
+pmf_class_network_resume(device_t dev PMF_FN_ARGS)
 {
 	struct ifnet *ifp = device_pmf_class_private(dev);
 	int s;
+
+	if ((flags & PMF_F_SELF) != 0)
+		return true;
 
 	s = splnet();
 	if (ifp->if_flags & IFF_UP) {

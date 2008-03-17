@@ -1,4 +1,4 @@
-/*	$NetBSD: lpt_isa.c,v 1.60.4.3 2008/02/27 08:36:34 yamt Exp $	*/
+/*	$NetBSD: lpt_isa.c,v 1.60.4.4 2008/03/17 09:14:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Charles M. Hannum.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.60.4.3 2008/02/27 08:36:34 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt_isa.c,v 1.60.4.4 2008/03/17 09:14:51 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,11 +91,11 @@ struct lpt_isa_softc {
 
 };
 
-int lpt_isa_probe(struct device *, struct cfdata *, void *);
-static void lpt_isa_attach(struct device *, struct device *, void *);
+int lpt_isa_probe(device_t, cfdata_t, void *);
+static void lpt_isa_attach(device_t, device_t, void *);
 static int lpt_isa_detach(device_t, int);
 
-CFATTACH_DECL(lpt_isa, sizeof(struct lpt_isa_softc),
+CFATTACH_DECL_NEW(lpt_isa, sizeof(struct lpt_isa_softc),
     lpt_isa_probe, lpt_isa_attach, lpt_isa_detach, NULL);
 
 int lpt_port_test(bus_space_tag_t, bus_space_handle_t, bus_addr_t,
@@ -145,8 +145,7 @@ lpt_port_test(bus_space_tag_t iot, bus_space_handle_t ioh,
  *	3) Set the data and control ports to a value of 0
  */
 int
-lpt_isa_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+lpt_isa_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
@@ -216,26 +215,28 @@ out:
 }
 
 void
-lpt_isa_attach(struct device *parent, struct device *self, void *aux)
+lpt_isa_attach(device_t parent, device_t self, void *aux)
 {
-	struct lpt_isa_softc *sc = (void *)self;
+	struct lpt_isa_softc *sc = device_private(self);
 	struct lpt_softc *lsc = &sc->sc_lpt;
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
 
+	lsc->sc_dev = self;
+
 	if (ia->ia_nirq < 1 ||
 	    ia->ia_irq[0].ir_irq == ISA_UNKNOWN_IRQ) {
 		sc->sc_irq = -1;
-		printf(": polled\n");
+		aprint_normal(": polled\n");
 	} else {
 		sc->sc_irq = ia->ia_irq[0].ir_irq;
-		printf("\n");
+		aprint_normal("\n");
 	}
 
 	iot = lsc->sc_iot = ia->ia_iot;
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, LPT_NPORTS, 0, &ioh)) {
-		printf("%s: can't map i/o space\n", self->dv_xname);
+		aprint_normal_dev(self, "can't map i/o space\n");
 		return;
 	}
 	lsc->sc_ioh = ioh;

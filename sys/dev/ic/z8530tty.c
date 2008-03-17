@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.99.2.6 2008/01/21 09:43:13 yamt Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.99.2.7 2008/03/17 09:14:43 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.99.2.6 2008/01/21 09:43:13 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.99.2.7 2008/03/17 09:14:43 yamt Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -1719,9 +1719,7 @@ zstty_softint(cs)
 	struct zs_chanstate *cs;
 {
 
-	mutex_spin_enter(&tty_lock);
 	zstty_softint1(cs);
-	mutex_spin_exit(&tty_lock);
 }
 
 static void

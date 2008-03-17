@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.10.2.7 2008/02/27 08:37:01 yamt Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.10.2.8 2008/03/17 09:15:41 yamt Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004 The NetBSD Foundation.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.7 2008/02/27 08:37:01 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.10.2.8 2008/03/17 09:15:41 yamt Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bpfilter.h"
@@ -97,7 +97,7 @@ SYSCTL_SETUP_PROTO(sysctl_tap_setup);
  */
 
 struct tap_softc {
-	struct device	sc_dev;
+	device_t	sc_dev;
 	struct ifmedia	sc_im;
 	struct ethercom	sc_ec;
 	int		sc_flags;
@@ -115,11 +115,11 @@ struct tap_softc {
 
 void	tapattach(int);
 
-static int	tap_match(struct device *, struct cfdata *, void *);
-static void	tap_attach(struct device *, struct device *, void *);
-static int	tap_detach(struct device*, int);
+static int	tap_match(device_t, cfdata_t, void *);
+static void	tap_attach(device_t, device_t, void *);
+static int	tap_detach(device_t, int);
 
-CFATTACH_DECL(tap, sizeof(struct tap_softc),
+CFATTACH_DECL_NEW(tap, sizeof(struct tap_softc),
     tap_match, tap_attach, tap_detach, NULL);
 extern struct cfdriver tap_cd;
 
@@ -216,7 +216,7 @@ struct if_clone tap_cloners = IF_CLONE_INITIALIZER("tap",
 
 /* Helper functionis shared by the two cloning code paths */
 static struct tap_softc *	tap_clone_creator(int);
-int	tap_clone_destroyer(struct device *);
+int	tap_clone_destroyer(device_t);
 
 void
 tapattach(int n)
@@ -236,17 +236,16 @@ tapattach(int n)
 
 /* Pretty much useless for a pseudo-device */
 static int
-tap_match(struct device *self, struct cfdata *cfdata,
-    void *arg)
+tap_match(device_t parent, cfdata_t cfdata, void *arg)
 {
+
 	return (1);
 }
 
 void
-tap_attach(struct device *parent, struct device *self,
-    void *aux)
+tap_attach(device_t parent, device_t self, void *aux)
 {
-	struct tap_softc *sc = (struct tap_softc *)self;
+	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp;
 	const struct sysctlnode *node;
 	uint8_t enaddr[ETHER_ADDR_LEN] =
@@ -255,6 +254,8 @@ tap_attach(struct device *parent, struct device *self,
 	struct timeval tv;
 	uint32_t ui;
 	int error;
+
+	sc->sc_dev = self;
 
 	/*
 	 * In order to obtain unique initial Ethernet address on a host,
@@ -265,7 +266,7 @@ tap_attach(struct device *parent, struct device *self,
 	ui = (tv.tv_sec ^ tv.tv_usec) & 0xffffff;
 	memcpy(enaddr+3, (uint8_t *)&ui, 3);
 
-	aprint_verbose("%s: Ethernet address %s\n", device_xname(&sc->sc_dev),
+	aprint_verbose_dev(self, "Ethernet address %s\n",
 	    ether_snprintf(enaddrstr, sizeof(enaddrstr), enaddr));
 
 	/*
@@ -290,7 +291,7 @@ tap_attach(struct device *parent, struct device *self,
 	 * to support IPv6.
 	 */
 	ifp = &sc->sc_ec.ec_if;
-	strcpy(ifp->if_xname, sc->sc_dev.dv_xname);
+	strcpy(ifp->if_xname, device_xname(self));
 	ifp->if_softc	= sc;
 	ifp->if_flags	= IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_ioctl	= tap_ioctl;
@@ -324,12 +325,12 @@ tap_attach(struct device *parent, struct device *self,
 	 */
 	if ((error = sysctl_createv(NULL, 0, NULL,
 	    &node, CTLFLAG_READWRITE,
-	    CTLTYPE_STRING, sc->sc_dev.dv_xname, NULL,
+	    CTLTYPE_STRING, device_xname(self), NULL,
 	    tap_sysctl_handler, 0, sc, 18,
-	    CTL_NET, AF_LINK, tap_node, device_unit(&sc->sc_dev),
+	    CTL_NET, AF_LINK, tap_node, device_unit(sc->sc_dev),
 	    CTL_EOL)) != 0)
-		aprint_error("%s: sysctl_createv returned %d, ignoring\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(self, "sysctl_createv returned %d, ignoring\n",
+		    error);
 
 	/*
 	 * Initialize the two locks for the device.
@@ -355,9 +356,9 @@ tap_attach(struct device *parent, struct device *self,
  * routine, in reversed order.
  */
 static int
-tap_detach(struct device* self, int flags)
+tap_detach(device_t self, int flags)
 {
-	struct tap_softc *sc = (struct tap_softc *)self;
+	struct tap_softc *sc = device_private(self);
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int error, s;
 
@@ -373,9 +374,9 @@ tap_detach(struct device* self, int flags)
 	 * CTL_EOL.
 	 */
 	if ((error = sysctl_destroyv(NULL, CTL_NET, AF_LINK, tap_node,
-	    device_unit(&sc->sc_dev), CTL_EOL)) != 0)
-		aprint_error("%s: sysctl_destroyv returned %d, ignoring\n",
-		    sc->sc_dev.dv_xname, error);
+	    device_unit(sc->sc_dev), CTL_EOL)) != 0)
+		aprint_error_dev(self,
+		    "sysctl_destroyv returned %d, ignoring\n", error);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
@@ -456,7 +457,7 @@ tap_start(struct ifnet *ifp)
 	} else if (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		ifp->if_flags |= IFF_OACTIVE;
 		wakeup(sc);
-		selnotify(&sc->sc_rsel, 1);
+		selnotify(&sc->sc_rsel, 0, 1);
 		if (sc->sc_flags & TAP_ASYNCIO)
 			fownsignal(sc->sc_pgid, SIGIO, POLL_IN,
 			    POLLIN|POLLRDNORM, NULL);
@@ -551,7 +552,7 @@ tap_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_flags &= ~IFF_RUNNING;
 	wakeup(sc);
-	selnotify(&sc->sc_rsel, 1);
+	selnotify(&sc->sc_rsel, 0, 1);
 	if (sc->sc_flags & TAP_ASYNCIO)
 		fownsignal(sc->sc_pgid, SIGIO, POLL_HUP, 0, NULL);
 }
@@ -599,7 +600,7 @@ tap_clone_creator(int unit)
 		cf->cf_fstate = FSTATE_NOTFOUND;
 	}
 
-	return (struct tap_softc *)config_attach_pseudo(cf);
+	return device_private(config_attach_pseudo(cf));
 }
 
 /*
@@ -610,18 +611,17 @@ tap_clone_creator(int unit)
 static int
 tap_clone_destroy(struct ifnet *ifp)
 {
-	return tap_clone_destroyer((struct device *)ifp->if_softc);
+	return tap_clone_destroyer(device_private(ifp->if_softc));
 }
 
 int
-tap_clone_destroyer(struct device *dev)
+tap_clone_destroyer(device_t dev)
 {
-	struct cfdata *cf = device_cfdata(dev);
+	cfdata_t cf = device_cfdata(dev);
 	int error;
 
 	if ((error = config_detach(dev, 0)) != 0)
-		aprint_error("%s: unable to detach instance\n",
-		    dev->dv_xname);
+		aprint_error_dev(dev, "unable to detach instance\n");
 	free(cf, M_DEVBUF);
 
 	return (error);
@@ -657,7 +657,7 @@ tap_cdev_open(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (minor(dev) == TAP_CLONER)
 		return tap_dev_cloner(l);
 
-	sc = (struct tap_softc *)device_lookup(&tap_cd, minor(dev));
+	sc = device_private(device_lookup(&tap_cd, minor(dev)));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -709,7 +709,7 @@ tap_dev_cloner(struct lwp *l)
 	sc->sc_flags |= TAP_INUSE;
 
 	return fdclone(l, fp, fd, FREAD|FWRITE, &tap_fileops,
-	    (void *)(intptr_t)device_unit(&sc->sc_dev));
+	    (void *)(intptr_t)device_unit(sc->sc_dev));
 }
 
 /*
@@ -727,7 +727,7 @@ tap_cdev_close(dev_t dev, int flags, int fmt,
     struct lwp *l)
 {
 	struct tap_softc *sc =
-	    (struct tap_softc *)device_lookup(&tap_cd, minor(dev));
+	    device_private(device_lookup(&tap_cd, minor(dev)));
 
 	if (sc == NULL)
 		return (ENXIO);
@@ -748,7 +748,7 @@ tap_fops_close(struct file *fp, struct lwp *l)
 	struct tap_softc *sc;
 	int error;
 
-	sc = (struct tap_softc *)device_lookup(&tap_cd, unit);
+	sc = device_private(device_lookup(&tap_cd, unit));
 	if (sc == NULL)
 		return (ENXIO);
 
@@ -762,7 +762,7 @@ tap_fops_close(struct file *fp, struct lwp *l)
 	if ((sc->sc_flags & TAP_GOING) != 0)
 		return (0);
 
-	return tap_clone_destroyer((struct device *)sc);
+	return tap_clone_destroyer(sc->sc_dev);
 }
 
 static int
@@ -816,7 +816,7 @@ static int
 tap_dev_read(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
-	    (struct tap_softc *)device_lookup(&tap_cd, unit);
+	    device_private(device_lookup(&tap_cd, unit));
 	struct ifnet *ifp;
 	struct mbuf *m, *n;
 	int error = 0, s;
@@ -914,7 +914,7 @@ static int
 tap_dev_write(int unit, struct uio *uio, int flags)
 {
 	struct tap_softc *sc =
-	    (struct tap_softc *)device_lookup(&tap_cd, unit);
+	    device_private(device_lookup(&tap_cd, unit));
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
 	int error = 0;
@@ -983,7 +983,7 @@ static int
 tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 {
 	struct tap_softc *sc =
-	    (struct tap_softc *)device_lookup(&tap_cd, unit);
+	    device_private(device_lookup(&tap_cd, unit));
 	int error = 0;
 
 	if (sc == NULL)
@@ -1059,7 +1059,7 @@ static int
 tap_dev_poll(int unit, int events, struct lwp *l)
 {
 	struct tap_softc *sc =
-	    (struct tap_softc *)device_lookup(&tap_cd, unit);
+	    device_private(device_lookup(&tap_cd, unit));
 	int revents = 0;
 
 	if (sc == NULL)
@@ -1108,7 +1108,7 @@ static int
 tap_dev_kqfilter(int unit, struct knote *kn)
 {
 	struct tap_softc *sc =
-	    (struct tap_softc *)device_lookup(&tap_cd, unit);
+	    device_private(device_lookup(&tap_cd, unit));
 
 	if (sc == NULL)
 		return (ENXIO);

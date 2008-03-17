@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.32.10.3 2008/01/21 09:42:22 yamt Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.32.10.4 2008/03/17 09:14:37 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -126,10 +126,10 @@ struct au_mixer_ports {
  * Software state, per audio device.
  */
 struct audio_softc {
-	struct device	dev;
+	device_t	dev;
 	void		*hw_hdl;	/* Hardware driver handle */
 	const struct audio_hw_if *hw_if; /* Hardware interface */
-	struct	device	*sc_dev;	/* Hardware device struct */
+	device_t	sc_dev;		/* Hardware device struct */
 	u_char		sc_open;	/* single use device */
 #define AUOPEN_READ	0x01
 #define AUOPEN_WRITE	0x02

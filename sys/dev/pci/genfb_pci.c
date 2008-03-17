@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb_pci.c,v 1.1.18.4 2008/01/21 09:43:51 yamt Exp $ */
+/*	$NetBSD: genfb_pci.c,v 1.1.18.5 2008/03/17 09:15:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1.18.4 2008/01/21 09:43:51 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_pci.c,v 1.1.18.5 2008/03/17 09:15:11 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,10 +162,11 @@ pci_genfb_attach(struct device *parent, struct device *self, void *aux)
 	ops.genfb_ioctl = pci_genfb_ioctl;
 	ops.genfb_mmap = pci_genfb_mmap;
 
-	genfb_attach(&sc->sc_gen, &ops);
+	if (genfb_attach(&sc->sc_gen, &ops) == 0) {
 
-	/* now try to attach a DRM */
-	config_found_ia(self, "drm", aux, pci_genfb_drm_print);	
+		/* now try to attach a DRM */
+		config_found_ia(self, "drm", aux, pci_genfb_drm_print);	
+	}
 }
 
 static int
@@ -266,11 +267,12 @@ pci_genfb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * somewhere in a MD header and compile this code only if all are
 	 * present
 	 */
-#ifdef macppc
+#ifdef PCI_MAGIC_IO_RANGE
 	/* allow to map our IO space */
-	if ((offset >= 0xf2000000) && (offset < 0xf2800000)) {
-		return bus_space_mmap(sc->sc_iot, offset-0xf2000000, 0, prot, 
-		    BUS_SPACE_MAP_LINEAR);	
+	if ((offset >= PCI_MAGIC_IO_RANGE) &&
+	    (offset < PCI_MAGIC_IO_RANGE + 0x10000)) {
+		return bus_space_mmap(sc->sc_iot, offset - PCI_MAGIC_IO_RANGE,
+		    0, prot, BUS_SPACE_MAP_LINEAR);	
 	}
 #endif
 

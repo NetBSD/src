@@ -1,4 +1,4 @@
-/* $NetBSD: asm_12160.h,v 1.5.4.1 2007/09/03 14:35:57 yamt Exp $ */
+/* $NetBSD: asm_12160.h,v 1.5.4.2 2008/03/17 09:14:55 yamt Exp $ */
 /*
  * Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000 Qlogic, Inc.
  * All rights reserved.
@@ -4336,3 +4336,7 @@ static const uint16_t isp_12160_risc_code[] = {
 	0x7021, 0x0014, 0xa300, 0xa8ca, 0x0000, 0x7a3c
 };
 #endif
+#ifdef	ISP_12160_RISC_CODE
+#undef	ISP_12160_RISC_CODE
+#endif
+#define	ISP_12160_RISC_CODE (const uint16_t *) isp_12160_risc_code

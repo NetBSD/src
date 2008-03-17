@@ -1,4 +1,4 @@
-/* $NetBSD: acemidi.c,v 1.9.4.3 2007/10/27 11:33:54 yamt Exp $ */
+/* $NetBSD: acemidi.c,v 1.9.4.4 2008/03/17 09:15:23 yamt Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.9.4.3 2007/10/27 11:33:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.9.4.4 2008/03/17 09:15:23 yamt Exp $");
 
 #include <sys/param.h>
 
@@ -45,28 +45,24 @@ __KERNEL_RCSID(0, "$NetBSD: acemidi.c,v 1.9.4.3 2007/10/27 11:33:54 yamt Exp $")
 #include <dev/ic/comvar.h>
 #include <dev/ic/comreg.h>
 
-struct acemidi_softc {
-	struct		device sc_dev;
-};
-
 struct com_acemidi_softc {
 	struct		com_softc sc_com;
 	struct		evcnt sc_intrcnt;
 };
 
-static int acemidi_match(struct device *, struct cfdata *, void *);
-static void acemidi_attach(struct device *, struct device *, void *);
-static int com_acemidi_match(struct device *, struct cfdata *, void *);
-static void com_acemidi_attach(struct device *, struct device *, void *);
+static int acemidi_match(device_t, cfdata_t , void *);
+static void acemidi_attach(device_t, device_t, void *);
+static int com_acemidi_match(device_t, cfdata_t, void *);
+static void com_acemidi_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(acemidi, sizeof(struct acemidi_softc),
+CFATTACH_DECL_NEW(acemidi, 0,
     acemidi_match, acemidi_attach, NULL, NULL);
 
-CFATTACH_DECL(com_acemidi, sizeof(struct com_acemidi_softc),
+CFATTACH_DECL_NEW(com_acemidi, sizeof(struct com_acemidi_softc),
     com_acemidi_match, com_acemidi_attach, NULL, NULL);
 
 static int
-acemidi_match(struct device *parent, struct cfdata *cf, void *aux)
+acemidi_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct podulebus_attach_args *pa = aux;
 
@@ -76,7 +72,7 @@ acemidi_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-acemidi_attach(struct device *parent, struct device *self, void *aux)
+acemidi_attach(device_t parent, device_t self, void *aux)
 {
 /*	struct acemidi_softc *sc = device_private(self); */
 /*	struct podulebus_attach_args *pa = aux; */
@@ -86,14 +82,14 @@ acemidi_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-com_acemidi_match(struct device *parent, struct cfdata *cf, void *aux)
+com_acemidi_match(device_t parent, cfdata_t cf, void *aux)
 {
 
 	return 1;
 }
 
 static void
-com_acemidi_attach(struct device *parent, struct device *self, void *aux)
+com_acemidi_attach(device_t parent, device_t self, void *aux)
 {
 	struct com_acemidi_softc *sc = device_private(self);
 	struct com_softc *csc = &sc->sc_com;
@@ -113,7 +109,7 @@ com_acemidi_attach(struct device *parent, struct device *self, void *aux)
 	com_attach_subr(csc);
 
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-	    self->dv_xname, "intr");
+	    device_xname(self), "intr");
 	podulebus_irq_establish(pa->pa_ih, IPL_SERIAL, comintr, sc,
 	    &sc->sc_intrcnt);
 }

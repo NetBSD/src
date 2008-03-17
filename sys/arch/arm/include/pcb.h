@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11.16.4 2008/01/21 09:35:42 yamt Exp $	*/
+/*	$NetBSD: pcb.h,v 1.11.16.5 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 2001 Matt Thomas <matt@3am-software.com>.
@@ -40,6 +40,7 @@
 #include <machine/fp.h>
 
 #include <arm/arm32/pte.h>
+#include <arm/reg.h>
 
 struct trapframe;
 
@@ -83,7 +84,9 @@ struct pcb {
 		struct	pcb_arm32 un_32;
 		struct	pcb_arm26 un_26;
 	} pcb_un;
-	struct	fpe_sp_state pcb_fpstate;	/* Floating Point state */
+	struct	fpe_sp_state pcb_fpstate;	/* FPA Floating Point state */
+	struct	vfpreg pcb_vfp;			/* VFP registers */
+	struct	cpu_info *pcb_vfpcpu;		/* CPU holding VFP state */
 };
 #define	pcb_ff	pcb_fpstate			/* for arm26 */
 

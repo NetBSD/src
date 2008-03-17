@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.2.4.6 2008/02/11 14:59:38 yamt Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.2.4.7 2008/03/17 09:15:11 yamt Exp $	*/
 
 /*
  * Copyright (c) 2006 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.2.4.6 2008/02/11 14:59:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.2.4.7 2008/03/17 09:15:11 yamt Exp $");
 
 #include "bpfilter.h"
 
@@ -829,11 +829,11 @@ kse_stop(struct ifnet *ifp, int disable)
 		}
 	}
 
-	if (disable)
-		rxdrain(sc);
-	
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 	ifp->if_timer = 0;
+
+	if (disable)
+		rxdrain(sc);
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: vsbus.c,v 1.48.2.3 2008/02/04 09:22:47 yamt Exp $ */
+/*	$NetBSD: vsbus.c,v 1.48.2.4 2008/03/17 09:14:34 yamt Exp $ */
 /*
  * Copyright (c) 1996, 1999 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.48.2.3 2008/02/04 09:22:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.48.2.4 2008/03/17 09:14:34 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,84 +64,68 @@ __KERNEL_RCSID(0, "$NetBSD: vsbus.c,v 1.48.2.3 2008/02/04 09:22:47 yamt Exp $");
 #include <machine/ka420.h>
 #include <machine/ka43.h>
 
+#include <machine/mainbus.h>
 #include <machine/vsbus.h>
 
 #include "ioconf.h"
 #include "locators.h"
 #include "opt_cputype.h"
 
-int	vsbus_match(struct device *, struct cfdata *, void *);
-void	vsbus_attach(struct device *, struct device *, void *);
-int	vsbus_print(void *, const char *);
-int	vsbus_search(struct device *, struct cfdata *,
-		     const int *, void *);
+static int	vsbus_match(device_t, cfdata_t, void *);
+static void	vsbus_attach(device_t, device_t, void *);
+static int	vsbus_print(void *, const char *);
+static int	vsbus_search(device_t, cfdata_t, const int *, void *);
 
-static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	_bus_dmamap_create,
-	_bus_dmamap_destroy,
-	_bus_dmamap_load,
-	_bus_dmamap_load_mbuf,
-	_bus_dmamap_load_uio,
-	_bus_dmamap_load_raw,
-	_bus_dmamap_unload,
-	_bus_dmamap_sync,
-	_bus_dmamem_alloc,
-	_bus_dmamem_free,
-	_bus_dmamem_map,
-	_bus_dmamem_unmap,
-	_bus_dmamem_mmap,
-};
-
-extern struct vax_bus_space vax_mem_bus_space;
 static SIMPLEQ_HEAD(, vsbus_dma) vsbus_dma;
 
-CFATTACH_DECL(vsbus, sizeof(struct vsbus_softc),
+CFATTACH_DECL_NEW(vsbus, sizeof(struct vsbus_softc),
     vsbus_match, vsbus_attach, NULL, NULL);
 
+static struct vax_bus_dma_tag vsbus_bus_dma_tag = {
+	._dmamap_create		= _bus_dmamap_create,
+	._dmamap_destroy	= _bus_dmamap_destroy,
+	._dmamap_load		= _bus_dmamap_load,
+	._dmamap_load_mbuf	= _bus_dmamap_load_mbuf,
+	._dmamap_load_uio	= _bus_dmamap_load_uio,
+	._dmamap_load_raw	= _bus_dmamap_load_raw,
+	._dmamap_unload		= _bus_dmamap_unload,
+	._dmamap_sync		= _bus_dmamap_sync,
+	._dmamem_alloc		= _bus_dmamem_alloc,
+	._dmamem_free		= _bus_dmamem_free,
+	._dmamem_map		= _bus_dmamem_map,
+	._dmamem_unmap		= _bus_dmamem_unmap,
+	._dmamem_mmap		= _bus_dmamem_mmap,
+};
+
 int
-vsbus_print(aux, name)
-	void *aux;
-	const char *name;
+vsbus_print(void *aux, const char *name)
 {
-	struct vsbus_attach_args *va = aux;
+	struct vsbus_attach_args * const va = aux;
 
 	aprint_normal(" csr 0x%lx vec %o ipl %x maskbit %d", va->va_paddr,
 	    va->va_cvec & 511, va->va_br, va->va_maskno - 1);
-	return(UNCONF); 
+	return UNCONF; 
 }
 
 int
-vsbus_match(parent, cf, aux)
-	struct	device	*parent;
-	struct cfdata	*cf;
-	void	*aux;
+vsbus_match(device_t parent, cfdata_t cf, void *aux)
 {
-#if VAX53 || VAXANY
-	/* Kludge: VAX53 is... special */
-	if (vax_boardtype == VAX_BTYP_53 && (int)aux == 1)
-		return 1; /* Hack */
-#endif
-	if (vax_bustype == VAX_VSBUS)
-		return 1;
-	return 0;
+	struct mainbus_attach_args * const ma = aux;
+
+	return !strcmp("vsbus", ma->ma_type);
 }
 
 void
-vsbus_attach(parent, self, aux)
-	struct	device	*parent, *self;
-	void	*aux;
+vsbus_attach(device_t parent, device_t self, void *aux)
 {
-	struct	vsbus_softc *sc = (void *)self;
+	struct mainbus_attach_args * const ma = aux;
+	struct vsbus_softc *sc = device_private(self);
 	int dbase, dsize;
 
-	printf("\n");
+	aprint_normal("\n");
 
+	sc->sc_dev = self;
+	sc->sc_iot = ma->ma_iot;
 	sc->sc_dmatag = vsbus_bus_dma_tag;
 
 	switch (vax_boardtype) {
@@ -197,7 +181,7 @@ vsbus_attach(parent, self, aux)
 	*sc->sc_intclr = 0xff;
 	DELAY(1000000); /* Wait a second */
 	sc->sc_mask = *sc->sc_intreq;
-	printf("%s: interrupt mask %x\n", self->dv_xname, sc->sc_mask);
+	aprint_normal_dev(self, "interrupt mask %x\n", sc->sc_mask);
 	/*
 	 * now check for all possible devices on this "bus"
 	 */
@@ -208,21 +192,17 @@ vsbus_attach(parent, self, aux)
 }
 
 int
-vsbus_search(parent, cf, ldesc, aux)
-	struct device *parent;
-	struct cfdata *cf;
-	const int *ldesc;
-	void *aux;
+vsbus_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 {
-	struct	vsbus_softc *sc = (void *)parent;
-	struct	vsbus_attach_args va;
+	struct vsbus_softc *sc = device_private(parent);
+	struct vsbus_attach_args va;
 	int i, vec, br;
 	u_char c;
 
 	va.va_paddr = cf->cf_loc[VSBUSCF_CSR];
 	va.va_addr = vax_map_physmem(va.va_paddr, 1);
 	va.va_dmat = &sc->sc_dmatag;
-	va.va_memt = &vax_mem_bus_space;
+	va.va_memt = sc->sc_iot;
 
 	*sc->sc_intmsk = 0;
 	*sc->sc_intclr = 0xff;
@@ -259,7 +239,7 @@ vsbus_search(parent, cf, ldesc, aux)
 
 fail:
 	printf("%s%d at %s csr 0x%x %s\n",
-	    cf->cf_name, cf->cf_unit, parent->dv_xname,
+	    cf->cf_name, cf->cf_unit, device_xname(parent),
 	    cf->cf_loc[VSBUSCF_CSR], (i ? "zero vector" : "didn't interrupt"));
 forgetit:
 	return 0;
@@ -270,15 +250,13 @@ forgetit:
  * Works like spl functions.
  */
 unsigned char
-vsbus_setmask(mask)
-	unsigned char mask;
+vsbus_setmask(int mask)
 {
-	struct vsbus_softc *sc;
+	struct vsbus_softc * const sc = device_lookup_private(&vsbus_cd, 0);
 	unsigned char ch;
 
-	if (vsbus_cd.cd_ndevs == 0)
+	if (sc == NULL)
 		return 0;
-	sc = vsbus_cd.cd_devs[0];
 
 	ch = *sc->sc_intmsk;
 	*sc->sc_intmsk = mask;
@@ -289,14 +267,11 @@ vsbus_setmask(mask)
  * Clears the interrupts in mask.
  */
 void
-vsbus_clrintr(mask)
-	unsigned char mask;
+vsbus_clrintr(int mask)
 {
-	struct vsbus_softc *sc;
-
-	if (vsbus_cd.cd_ndevs == 0)
+	struct vsbus_softc * const sc = device_lookup_private(&vsbus_cd, 0);
+	if (sc == NULL)
 		return;
-	sc = vsbus_cd.cd_devs[0];
 
 	*sc->sc_intclr = mask;
 }

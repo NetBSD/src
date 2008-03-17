@@ -1,4 +1,4 @@
-/*	$NetBSD: c_magnum.c,v 1.9.8.4 2007/12/07 17:24:10 yamt Exp $	*/
+/*	$NetBSD: c_magnum.c,v 1.9.8.5 2008/03/17 09:14:14 yamt Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.9.8.4 2007/12/07 17:24:10 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: c_magnum.c,v 1.9.8.5 2008/03/17 09:14:14 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ timer_magnum_intr(uint32_t mask, struct clockframe *cf)
 	hardclock(cf);
 	timer_jazzio_ev.ev_count++;
 
-	return ~MIPS_INT_MASK_4; /* Keep clock interrupts enabled */
+	return MIPS_INT_MASK_4;	/* Keep clock interrupts enabled */
 }
 
 void

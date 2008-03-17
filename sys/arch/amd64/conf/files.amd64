@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.16.2.9 2008/02/27 08:36:18 yamt Exp $
+#	$NetBSD: files.amd64,v 1.16.2.10 2008/03/17 09:14:14 yamt Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -30,6 +30,7 @@ defflag			USER_LDT
 defflag			VM86
 defflag eisa.h EISA
 
+file	arch/amd64/amd64/amd64func.S
 file	arch/amd64/amd64/autoconf.c
 file	arch/amd64/amd64/busfunc.S
 file	arch/amd64/amd64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum

@@ -1,4 +1,4 @@
-/*	$NetBSD: kdb.c,v 1.37.4.3 2007/10/27 11:30:06 yamt Exp $ */
+/*	$NetBSD: kdb.c,v 1.37.4.4 2008/03/17 09:14:37 yamt Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.37.4.3 2007/10/27 11:30:06 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.37.4.4 2008/03/17 09:14:37 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,24 +80,24 @@ __KERNEL_RCSID(0, "$NetBSD: kdb.c,v 1.37.4.3 2007/10/27 11:30:06 yamt Exp $");
  * Software status, per controller.
  */
 struct	kdb_softc {
-	struct	device sc_dev;		/* Autoconfig info */
-	struct	evcnt sc_intrcnt;	/* Interrupt counting */
-	void *	sc_kdb;			/* Struct for kdb communication */
-	struct	mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
+	device_t sc_dev;		/* Autoconfig info */
+	struct evcnt sc_intrcnt;	/* Interrupt counting */
+	void *sc_kdb;			/* Struct for kdb communication */
+	struct mscp_softc *sc_softc;	/* MSCP info (per mscpvar.h) */
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_cmap;		/* Control structures */
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;
 };
 
-int	kdbmatch(struct device *, struct cfdata *, void *);
-void	kdbattach(struct device *, struct device *, void *);
+int	kdbmatch(device_t, cfdata_t, void *);
+void	kdbattach(device_t, device_t, void *);
 void	kdbreset(int);
 void	kdbintr(void *);
-void	kdbctlrdone(struct device *);
+void	kdbctlrdone(device_t );
 int	kdbprint(void *, const char *);
-void	kdbsaerror(struct device *, int);
-void	kdbgo(struct device *, struct mscp_xi *);
+void	kdbsaerror(device_t, int);
+void	kdbgo(device_t, struct mscp_xi *);
 
 CFATTACH_DECL(kdb, sizeof(struct kdb_softc),
     kdbmatch, kdbattach, NULL, NULL);
@@ -112,9 +112,7 @@ struct	mscp_ctlr kdb_mscp_ctlr = {
 };
 
 int
-kdbprint(aux, name)
-	void	*aux;
-	const char	*name;
+kdbprint(void *aux, const char *name)
 {
 	if (name)
 		aprint_normal("%s: mscpbus", name);
@@ -126,9 +124,9 @@ kdbprint(aux, name)
  */
 int
 kdbmatch(parent, cf, aux)
-	struct	device *parent;
-	struct	cfdata *cf;
-	void	*aux;
+	device_t parent;
+	cfdata_t cf;
+	void *aux;
 {
 	struct bi_attach_args *ba = aux;
 
@@ -143,13 +141,11 @@ kdbmatch(parent, cf, aux)
 }
 
 void
-kdbattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+kdbattach(device_t parent, device_t self, void *aux)
 {
-	struct	kdb_softc *sc = (void *)self;
-	struct	bi_attach_args *ba = aux;
-	struct	mscp_attach_args ma;
+	struct kdb_softc *sc = device_private(self);
+	struct bi_attach_args *ba = aux;
+	struct mscp_attach_args ma;
 	volatile int i = 10000;
 	int error, rseg;
 	bus_dma_segment_t seg;
@@ -158,7 +154,7 @@ kdbattach(parent, self, aux)
 	bi_intr_establish(ba->ba_icookie, ba->ba_ivec,
 		kdbintr, sc, &sc->sc_intrcnt);
 	evcnt_attach_dynamic(&sc->sc_intrcnt, EVCNT_TYPE_INTR, NULL,
-		sc->sc_dev.dv_xname, "intr");
+		device_xname(sc->sc_dev), "intr");
 
 	sc->sc_iot = ba->ba_iot;
 	sc->sc_ioh = ba->ba_ioh;
@@ -216,15 +212,13 @@ err2:		bus_dmamem_unmap(sc->sc_dmat, sc->sc_kdb,
 	KDB_WL(BIREG_BCICSR, KDB_RL(BIREG_BCICSR) |
 	    BCI_STOPEN | BCI_IDENTEN | BCI_UINTEN | BCI_INTEN);
 	KDB_WL(BIREG_UINTRCSR, ba->ba_ivec);
-	config_found(&sc->sc_dev, &ma, kdbprint);
+	config_found(sc->sc_dev, &ma, kdbprint);
 }
 
 void
-kdbgo(usc, mxi)
-	struct device *usc;
-	struct mscp_xi *mxi;
+kdbgo(device_t usc, struct mscp_xi *mxi)
 {
-	struct kdb_softc *sc = (void *)usc;
+	struct kdb_softc *sc = device_private(usc);
 	struct buf *bp = mxi->mxi_bp;
 	struct mscp *mp = mxi->mxi_mp;
 	u_int32_t addr = (u_int32_t)bp->b_data;
@@ -280,15 +274,13 @@ kdbgo(usc, mxi)
 }
 
 void
-kdbsaerror(usc, doreset)
-	struct device *usc;
-	int doreset;
+kdbsaerror(device_t usc, int doreset)
 {
-	struct	kdb_softc *sc = (void *)usc;
+	struct kdb_softc *sc = device_private(usc);
 
 	if ((KDB_RS(KDB_SA) & MP_ERR) == 0)
 		return;
-	printf("%s: controller error, sa=0x%x\n", sc->sc_dev.dv_xname,
+	printf("%s: controller error, sa=0x%x\n", device_xname(sc->sc_dev),
 	    KDB_RS(KDB_SA));
 	/* What to do now??? */
 }
@@ -304,7 +296,7 @@ kdbintr(void *arg)
 	struct kdb_softc *sc = arg;
 
 	if (KDB_RS(KDB_SA) & MP_ERR) {	/* ctlr fatal error */
-		kdbsaerror(&sc->sc_dev, 1);
+		kdbsaerror(sc->sc_dev, 1);
 		return;
 	}
 	KERNEL_LOCK(1, NULL);
@@ -343,6 +335,6 @@ kdbreset(ctlr)
 
 void
 kdbctlrdone(usc)
-	struct device *usc;
+	device_t usc;
 {
 }

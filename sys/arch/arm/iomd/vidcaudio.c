@@ -1,4 +1,4 @@
-/*	$NetBSD: vidcaudio.c,v 1.42.10.2 2007/02/26 09:06:00 yamt Exp $	*/
+/*	$NetBSD: vidcaudio.c,v 1.42.10.3 2008/03/17 09:14:15 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson
@@ -65,7 +65,7 @@
 
 #include <sys/param.h>	/* proc.h */
 
-__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.42.10.2 2007/02/26 09:06:00 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vidcaudio.c,v 1.42.10.3 2008/03/17 09:14:15 yamt Exp $");
 
 #include <sys/audioio.h>
 #include <sys/conf.h>   /* autoconfig functions */
@@ -394,7 +394,7 @@ vidcaudio_set_params(void *addr, int setmode, int usemode,
 		vidcaudio_ctrl(SCR_SERIAL);
 		hw.sample_rate = 705600 / 4 / sample_period;
 		hw.channels = 2;
-		pfil->append(pfil, aurateconv, &hw);
+		pfil->prepend(pfil, aurateconv, &hw);
 	} else {
 		/* VIDC20ish, u-law, 8-channel */
 		if (p->encoding != AUDIO_ENCODING_ULAW || p->precision != 8)

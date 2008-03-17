@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.39.2.5 2008/02/04 09:22:43 yamt Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.39.2.6 2008/03/17 09:14:33 yamt Exp $	*/
 
 /* 
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39.2.5 2008/02/04 09:22:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39.2.6 2008/03/17 09:14:33 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -79,7 +79,6 @@ void	kdbprinttrap(int, int);
 
 int	db_active = 0;
 
-extern int qdpolling;
 static	int splsave; /* IPL before entering debugger */
 
 #ifdef MULTIPROCESSOR
@@ -109,15 +108,13 @@ pause_cpus(void)
 static void
 resume_cpus(void)
 {
-	struct cpu_mp_softc *sc;
 	struct cpu_info *ci;
 	int i;
 
 	stopcpu = NULL;
 	for (i = 0; i < cpu_cd.cd_ndevs; i++) {
-		if ((sc = cpu_cd.cd_devs[i]) == NULL)
+		if ((ci = device_lookup_private(&cpu_cd, i)) == NULL)
 			continue;
-		ci = &sc->sc_ci;
 		ci->ci_flags &= ~CI_STOPPED;
 	}
 }
@@ -234,8 +231,7 @@ extern int no_traps;
  * Print trap reason.
  */
 void
-kdbprinttrap(type, code)
-	int type, code;
+kdbprinttrap(int type, int code)
 {
 	db_printf("kernel: ");
 	if (type >= no_traps || type < 0)
@@ -249,12 +245,8 @@ kdbprinttrap(type, code)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vaddr_t addr;
-	register size_t size;
-	register char	*data;
+db_read_bytes(vaddr_t addr, size_t size, char *data)
 {
-
 	memcpy(data, (void *)addr, size);
 }
 
@@ -262,17 +254,13 @@ db_read_bytes(addr, size, data)
  * Write bytes to kernel address space for debugger.
  */
 void
-db_write_bytes(addr, size, data)
-	vaddr_t addr;
-	register size_t size;
-	register const char	*data;
+db_write_bytes(vaddr_t addr, size_t size, const char *data)
 {
-
 	memcpy((void *)addr, data, size);
 }
 
 void
-Debugger()
+Debugger(void)
 {
 	splsave = splx(0xe);	/* XXX WRONG (this can lower IPL) */
 	setsoftddb();		/* beg for debugger */
@@ -413,12 +401,12 @@ db_dump_stack(VAX_CALLFRAME *fp, u_int stackbase,
  *	trace/t 0tnn		<-- Trace process nn (0t for decimal)
  */
 void
-db_stack_trace_print(addr, have_addr, count, modif, pr)
-	db_expr_t	addr;		/* Address parameter */
-	bool		have_addr;	/* True if addr is valid */
-	db_expr_t	count;		/* Optional count */
-	const char	*modif;		/* pointer to flag modifier 't' */
-	void		(*pr) __P((const char *, ...)); /* Print function */
+db_stack_trace_print(
+	db_expr_t	addr,		/* Address parameter */
+	bool		have_addr,	/* True if addr is valid */
+	db_expr_t	count,		/* Optional count */
+	const char	*modif,		/* pointer to flag modifier 't' */
+	void		(*pr)(const char *, ...)) /* Print function */
 {
 	extern struct user *proc0paddr;
 	struct lwp	*l = curlwp;
@@ -479,8 +467,9 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 			db_dump_stack((VAX_CALLFRAME *)addr, 0, pr);
 			return;
 		}
+#if 0
 	} else {
-		if (trace_proc) {
+		if (!trace_proc) {
 			l = curlwp;
 			if (l == NULL) {
 				(*pr)("trace: no current process! (ignored)\n");
@@ -492,6 +481,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 				return;
 			}
 		}
+#endif
 	}
 	if (p == NULL) {
 		uarea = proc0paddr;
@@ -500,7 +490,7 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 		uarea = l->l_addr;
 		curpid = p->p_pid;
 	}
-	(*pr)("Process %d\n", curpid);
+	(*pr)("Process %d.%d\n", curpid, l->l_lid);
 	(*pr)("	 PCB contents:\n");
 	(*pr)(" KSP = 0x%x\n", (unsigned int)(uarea->u_pcb.KSP));
 	(*pr)(" ESP = 0x%x\n", (unsigned int)(uarea->u_pcb.ESP));
@@ -604,10 +594,8 @@ db_stack_trace_print(addr, have_addr, count, modif, pr)
 static int ddbescape = 0;
 
 int
-kdbrint(tkn)
-	int tkn;
+kdbrint(int tkn)
 {
-
 	if (ddbescape && ((tkn & 0x7f) == 'D')) {
 		setsoftddb();
 		ddbescape = 0;
@@ -633,15 +621,13 @@ kdbrint(tkn)
 static void
 db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {
-	struct cpu_mp_softc *sc;
 	struct cpu_info *ci;
 
 	if ((addr < 0) || (addr >= cpu_cd.cd_ndevs))
 		return db_printf("%ld: CPU out of range\n", addr);
-	if ((sc = cpu_cd.cd_devs[addr]) == NULL)
+	if ((ci = device_lookup_private(&cpu_cd, addr)) == NULL)
 		return db_printf("%ld: CPU not configured\n", addr);
 
-	ci = &sc->sc_ci;
 	if ((ci != curcpu()) && ((ci->ci_flags & CI_STOPPED) == 0))
 		return db_printf("CPU %ld not stopped???\n", addr);
 

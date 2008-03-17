@@ -1,4 +1,4 @@
-/*	$NetBSD: oboe.c,v 1.19.2.6 2008/01/21 09:44:07 yamt Exp $	*/
+/*	$NetBSD: oboe.c,v 1.19.2.7 2008/03/17 09:15:12 yamt Exp $	*/
 
 /*	XXXXFVDL THIS DRIVER IS BROKEN FOR NON-i386 -- vtophys() usage	*/
 
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.6 2008/01/21 09:44:07 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oboe.c,v 1.19.2.7 2008/03/17 09:15:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,9 @@ oboe_attach(struct device *parent, struct device *self, void *aux)
 	}
 	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstring);
 
+	selinit(&sc->sc_rsel);
+	selinit(&sc->sc_wsel);
+
 	sc->sc_txs = 0;
 	sc->sc_rxs = 0;
 
@@ -273,12 +276,14 @@ oboe_activate(struct device *self, enum devact act)
 static int
 oboe_detach(struct device *self, int flags)
 {
-#ifdef OBOE_DEBUG
 	struct oboe_softc *sc = (struct oboe_softc *)self;
 
+#ifdef OBOE_DEBUG
 	/* XXX needs reference counting for proper detach. */
 	DPRINTF(("%s: sc=%p\n", __func__, sc));
 #endif
+	seldestroy(&sc->sc_rsel);
+	seldestroy(&sc->sc_wsel);
 	return (0);
 }
 
@@ -611,7 +616,7 @@ oboe_intr(void *p)
 			DPRINTF(("oboe_intr: waking up reader\n"));
 			wakeup(&sc->sc_rxs);
 		}
-		selnotify(&sc->sc_rsel, 0);
+		selnotify(&sc->sc_rsel, 0, 0);
 		DPRINTF(("oboe_intr returning\n"));
 	}
 	if (irqstat & OBOE_ISR_TXDONE) {
@@ -630,7 +635,7 @@ oboe_intr(void *p)
 			DPRINTF(("oboe_intr: waking up writer\n"));
 			wakeup(&sc->sc_txs);
 		}
-		selnotify(&sc->sc_wsel, 0);
+		selnotify(&sc->sc_wsel, 0, 0);
 	}
 	return (1);
 }

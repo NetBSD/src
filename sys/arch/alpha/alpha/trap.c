@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.97.2.5 2008/01/21 09:35:09 yamt Exp $ */
+/* $NetBSD: trap.c,v 1.97.2.6 2008/03/17 09:14:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97.2.5 2008/01/21 09:35:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97.2.6 2008/03/17 09:14:13 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,10 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.97.2.5 2008/01/21 09:35:09 yamt Exp $");
 #include <sys/syscall.h>
 #include <sys/buf.h>
 #include <sys/kauth.h>
+#include <sys/cpu.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/alpha.h>
 #include <machine/fpu.h>
@@ -619,10 +620,10 @@ alpha_enable_fp(struct lwp *l, int check)
 	 * a trap to use it again" event.
 	 */
 	if ((l->l_md.md_flags & MDP_FPUSED) == 0) {
-		atomic_add_ulong(&fpevent_use.ev_count, 1);
+		atomic_inc_ulong(&fpevent_use.ev_count);
 		l->l_md.md_flags |= MDP_FPUSED;
 	} else
-		atomic_add_ulong(&fpevent_reuse.ev_count, 1);
+		atomic_inc_ulong(&fpevent_reuse.ev_count);
 
 	alpha_pal_wrfen(1);
 	restorefpstate(&l->l_addr->u_pcb.pcb_fp);

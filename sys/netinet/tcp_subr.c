@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.191.2.6 2008/02/11 15:00:05 yamt Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.191.2.7 2008/03/17 09:15:41 yamt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191.2.6 2008/02/11 15:00:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.191.2.7 2008/03/17 09:15:41 yamt Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -1061,8 +1061,7 @@ tcp_newtcpcb(int family, void *aux)
 	 */
 	tp->ts_timebase = tcp_now - 1;
 	
-	tp->t_congctl = tcp_congctl_global;
-	tp->t_congctl->refcnt++;
+	tcp_congctl_select(tp, tcp_congctl_global_name);
 
 	return (tp);
 }
@@ -1245,7 +1244,7 @@ tcp_close(struct tcpcb *tp)
 	/* free the SACK holes list. */
 	tcp_free_sackholes(tp);
 	
-	tp->t_congctl->refcnt--;
+	tcp_congctl_release(tp);
 
 	tcp_canceltimers(tp);
 	TCP_CLEAR_DELACK(tp);
@@ -1281,8 +1280,7 @@ tcp_close(struct tcpcb *tp)
 }
 
 int
-tcp_freeq(tp)
-	struct tcpcb *tp;
+tcp_freeq(struct tcpcb *tp)
 {
 	struct ipqent *qe;
 	int rv = 0;
@@ -2153,16 +2151,16 @@ tcp_new_iss1(void *laddr, void *faddr, u_int16_t lport, u_int16_t fport,
 	tcp_seq tcp_iss;
 
 #if NRND > 0
-	static int beenhere;
+	static bool tcp_iss_gotten_secret;
 
 	/*
 	 * If we haven't been here before, initialize our cryptographic
 	 * hash secret.
 	 */
-	if (beenhere == 0) {
+	if (tcp_iss_gotten_secret == false) {
 		rnd_extract_data(tcp_iss_secret, sizeof(tcp_iss_secret),
 		    RND_EXTRACT_ANY);
-		beenhere = 1;
+		tcp_iss_gotten_secret = true;
 	}
 
 	if (tcp_do_rfc1948) {

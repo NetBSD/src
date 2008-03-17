@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.4.2.3 2008/01/21 09:43:36 yamt Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.4.2.4 2008/03/17 09:15:10 yamt Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -407,7 +407,6 @@ struct arc_ccb;
 TAILQ_HEAD(arc_ccb_list, arc_ccb);
 
 struct arc_softc {
-	struct device		sc_dev;
 	struct scsipi_channel	sc_chan;
 	struct scsipi_adapter	sc_adapter;
 
@@ -421,10 +420,7 @@ struct arc_softc {
 
 	void			*sc_ih;
 
-	void			*sc_shutdownhook;
-
 	int			sc_req_count;
-	u_int			sc_maxdisks;
 
 	struct arc_dmamem	*sc_requests;
 	struct arc_ccb		*sc_ccbs;
@@ -440,7 +436,12 @@ struct arc_softc {
 	envsys_data_t		*sc_sensors;
 	int			sc_nsensors;
 
-	struct device		*sc_scsibus_dv;
+	size_t			sc_maxraidset;	/* max raid sets */
+	size_t 			sc_maxvolset;	/* max volume sets */
+	size_t 			sc_cchans;	/* connected channels */
+
+	device_t		sc_dev;		/* self */
+	device_t		sc_scsibus_dv;
 };
 
 /* 
@@ -500,7 +501,7 @@ struct arc_ccb {
 	TAILQ_ENTRY(arc_ccb)	ccb_link;
 };
 
-int 	arc_alloc_ccbs(struct arc_softc *);
+int 	arc_alloc_ccbs(device_t);
 struct arc_ccb	*arc_get_ccb(struct arc_softc *);
 void 	arc_put_ccb(struct arc_softc *, struct arc_ccb *);
 int 	arc_load_xs(struct arc_ccb *);
@@ -511,9 +512,9 @@ void 	arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
 /* 
  * real stuff for dealing with the hardware.
  */
-int 	arc_map_pci_resources(struct arc_softc *, struct pci_attach_args *);
+int 	arc_map_pci_resources(device_t, struct pci_attach_args *);
 void 	arc_unmap_pci_resources(struct arc_softc *);
-int 	arc_query_firmware(struct arc_softc *);
+int 	arc_query_firmware(device_t);
 
 /* 
  * stuff to do messaging via the doorbells.

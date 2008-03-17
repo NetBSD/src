@@ -1,4 +1,4 @@
-/*	$NetBSD: pchbvar.h,v 1.1.16.3 2008/01/21 09:40:11 yamt Exp $	*/
+/*	$NetBSD: pchbvar.h,v 1.1.16.4 2008/03/17 09:14:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <sys/rnd.h>
 
 struct pchb_softc {
-	struct device sc_dev;
+	device_t sc_dev;
 
 	pci_chipset_tag_t sc_pc;
 	pcitag_t sc_tag;

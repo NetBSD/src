@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_xs.c,v 1.5.10.6 2008/01/21 09:40:38 yamt Exp $ */
+/* $NetBSD: xenbus_xs.c,v 1.5.10.7 2008/03/17 09:14:36 yamt Exp $ */
 /******************************************************************************
  * xenbus_xs.c
  *
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.5.10.6 2008/01/21 09:40:38 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_xs.c,v 1.5.10.7 2008/03/17 09:14:36 yamt Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -396,6 +396,27 @@ xenbus_read_ul(struct xenbus_transaction *t,
 	if (err)
 		return err;
 	*val = strtoul(string, &ep, base);
+	if (*ep != '\0') {
+		free(string, M_DEVBUF);
+		return EFTYPE;
+	}
+	free(string, M_DEVBUF);
+	return 0;
+}
+
+/* Read a node and convert it to unsigned long long. */
+int
+xenbus_read_ull(struct xenbus_transaction *t,
+		  const char *dir, const char *node, unsigned long long *val,
+		  int base)
+{
+	char *string, *ep;
+	int err;
+
+	err = xenbus_read(t, dir, node, NULL, &string);
+	if (err)
+		return err;
+	*val = strtoull(string, &ep, base);
 	if (*ep != '\0') {
 		free(string, M_DEVBUF);
 		return EFTYPE;

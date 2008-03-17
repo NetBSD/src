@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.207.2.10 2008/02/27 08:36:55 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.207.2.11 2008/03/17 09:15:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.10 2008/02/27 08:36:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.207.2.11 2008/03/17 09:15:33 yamt Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -1352,23 +1352,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		if ((prop & SA_CONT) != 0 && action == SIG_DFL)
 			goto out;
 
-		if ((prop & SA_STOP) != 0 && action == SIG_DFL) {
-			/*
-			 * If a child holding parent blocked, stopping could
-			 * cause deadlock: discard the signal.
-			 */
-			if ((p->p_sflag & PS_PPWAIT) == 0) {
-				p->p_xstat = signo;
-				proc_stop(p, 1, signo);
-			}
-			goto out;
-		} else {
-			/*
-			 * Stop signals with the default action are handled
-			 * specially in issignal(), and so are not enqueued.
-			 */
-			sigput(&p->p_sigpend, p, kp);
-		}
+		sigput(&p->p_sigpend, p, kp);
 	} else {
 		/*
 		 * Process is stopped or stopping.  If traced, then no

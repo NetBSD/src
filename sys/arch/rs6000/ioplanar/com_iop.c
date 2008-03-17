@@ -1,4 +1,4 @@
-/*	$NetBSD: com_iop.c,v 1.1.8.2 2008/01/21 09:38:54 yamt Exp $	*/
+/*	$NetBSD: com_iop.c,v 1.1.8.3 2008/03/17 09:14:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_iop.c,v 1.1.8.2 2008/01/21 09:38:54 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_iop.c,v 1.1.8.3 2008/03/17 09:14:23 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -60,10 +60,10 @@ struct com_iop_softc {
 	void *sc_ih;
 };
 
-int com_iop_probe(struct device *, struct cfdata *, void *);
-void com_iop_attach(struct device *, struct device *, void *);
+int com_iop_probe(device_t, cfdata_t , void *);
+void com_iop_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(com_iop, sizeof(struct com_iop_softc),
+CFATTACH_DECL_NEW(com_iop, sizeof(struct com_iop_softc),
     com_iop_probe, com_iop_attach, NULL, NULL);
 
 #define COM_RAINBOW_FREQ	8000000
@@ -75,7 +75,7 @@ CFATTACH_DECL(com_iop, sizeof(struct com_iop_softc),
  */
 
 int
-com_iop_probe(struct device *parent, struct cfdata *match, void *aux)
+com_iop_probe(device_t parent, cfdata_t match, void *aux)
 {
 	struct ioplanar_dev_attach_args *idaa = aux;
 
@@ -87,13 +87,15 @@ com_iop_probe(struct device *parent, struct cfdata *match, void *aux)
 }
 
 void
-com_iop_attach(struct device *parent, struct device *self, void *aux)
+com_iop_attach(device_t parent, device_t self, void *aux)
 {
 	struct com_iop_softc *isc = device_private(self);
 	struct com_softc *sc = &isc->sc_com;
 	int iobase, irq;
 	struct ioplanar_dev_attach_args *idaa = aux;
 	bus_space_handle_t ioh;
+
+	sc->sc_dev = self;
 
 	switch (idaa->idaa_devid) {
 	case MCA_PRODUCT_IBM_SIO_RAINBOW:
@@ -132,8 +134,8 @@ com_iop_attach(struct device *parent, struct device *self, void *aux)
 	    comintr, sc);
 
 	if (isc->sc_ih == NULL) {
-		aprint_error("%s: couldn't establish interrupt handler\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(self,
+		    "couldn't establish interrupt handler\n");
 		return;
 	}
 }

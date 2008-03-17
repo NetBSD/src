@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.63.12.3 2007/09/03 14:22:23 yamt Exp $ */
+/* $NetBSD: cpu.h,v 1.63.12.4 2008/03/17 09:14:13 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -276,17 +276,6 @@ do {									\
 #define	CPU_BOOTED_KERNEL	6	/* string: booted kernel name */
 #define	CPU_FP_SYNC_COMPLETE	7	/* int: always fixup sync fp traps */
 #define	CPU_MAXID		8	/* 7 valid machdep IDs */
-
-#define	CTL_MACHDEP_NAMES { \
-	{ 0, 0 }, \
-	{ "console_device", CTLTYPE_STRUCT }, \
-	{ "root_device", CTLTYPE_STRING }, \
-	{ "unaligned_print", CTLTYPE_INT }, \
-	{ "unaligned_fix", CTLTYPE_INT }, \
-	{ "unaligned_sigbus", CTLTYPE_INT }, \
-	{ "booted_kernel", CTLTYPE_STRING }, \
-	{ "fp_sync_complete", CTLTYPE_INT }, \
-}
 
 #ifdef _KERNEL
 
