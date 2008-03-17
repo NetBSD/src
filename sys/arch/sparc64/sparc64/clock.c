@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.91 2008/03/15 20:14:17 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.92 2008/03/17 04:04:00 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.91 2008/03/15 20:14:17 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.92 2008/03/17 04:04:00 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -124,7 +124,6 @@ static struct intrhand level10 = { .ih_fun = clockintr };
 #ifndef MULTIPROCESSOR
 static struct intrhand level14 = { .ih_fun = statintr };
 #endif
-static struct intrhand schedint = { .ih_fun = schedintr };
 
 static int	timermatch(struct device *, struct cfdata *, void *);
 static void	timerattach(struct device *, struct device *, void *);
@@ -317,21 +316,11 @@ tickintr_establish(int pil, int (*fun)(void *))
 	int s;
 	struct intrhand *ih;
 
-	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT|M_ZERO);
-	KASSERT(ih != NULL);
-
-	ih->ih_fun = fun;
-	ih->ih_arg = 0;
-	ih->ih_clr = 0;
+	ih = init_softint(pil, fun);
 	ih->ih_number = 1;
 	if (CPU_IS_PRIMARY(curcpu()))
 		intr_establish(pil, ih);
-	else {
-		ih->ih_pil = pil;
-		ih->ih_pending = 0;
-		ih->ih_next = NULL;
-	}
-	curcpu()->ci_intrlev0 = ih;
+	curcpu()->ci_tick_ih = ih;
 
 	/* set the next interrupt time */
 	curcpu()->ci_tick_increment = curcpu()->ci_cpu_clockrate[0] / hz;
@@ -436,10 +425,7 @@ cpu_initclocks()
 	/* 
 	 * Establish scheduler softint.
 	 */
-	schedint.ih_pil = PIL_SCHED;
-	schedint.ih_clr = NULL;
-	schedint.ih_arg = 0;
-	schedint.ih_pending = 0;
+	curcpu()->ci_sched_ih = init_softint(PIL_SCHED, schedintr);
 	schedhz = stathz/4;
 
 	/* 
@@ -594,7 +580,7 @@ statintr(cap)
 
 	if (schedhz)
 		if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
-			send_softint(-1, PIL_SCHED, &schedint);
+			send_softint(-1, PIL_SCHED, curcpu()->ci_sched_ih);
 #ifdef MULTIPROCESSOR
 	s = intr_disable();
 	next_tick(newint);

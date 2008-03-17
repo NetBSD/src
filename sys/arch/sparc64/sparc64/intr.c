@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.56 2008/03/02 15:28:26 nakayama Exp $ */
+/*	$NetBSD: intr.c,v 1.57 2008/03/17 04:04:00 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.56 2008/03/02 15:28:26 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.57 2008/03/17 04:04:00 nakayama Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -238,4 +238,21 @@ intr_establish(int level, struct intrhand *ih)
 		panic("intr_establish: bad intr number %x", ih->ih_number);
 
 	splx(s);
+}
+
+/*
+ * Prepare an interrupt handler used for send_softint.
+ */
+struct intrhand *
+init_softint(int pil, int (*fun)(void *))
+{
+	struct intrhand *ih;
+
+	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT|M_ZERO);
+	if (ih == NULL)
+		panic("could not allocate softint interrupt handler");
+
+	ih->ih_fun = fun;
+	ih->ih_pil = pil;
+	return ih;
 }
