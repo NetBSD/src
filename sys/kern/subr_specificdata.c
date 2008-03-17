@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_specificdata.c,v 1.11 2007/11/07 00:23:23 ad Exp $	*/
+/*	$NetBSD: subr_specificdata.c,v 1.12 2008/03/17 08:27:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -63,11 +63,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.11 2007/11/07 00:23:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_specificdata.c,v 1.12 2008/03/17 08:27:50 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
-#include <sys/proc.h>
 #include <sys/specificdata.h>
 #include <sys/queue.h>
 #include <sys/mutex.h>
@@ -193,7 +192,7 @@ specificdata_key_create(specificdata_domain_t sd, specificdata_key_t *keyp,
 	specificdata_key_t key = 0;
 	size_t nsz;
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 
 	if (dtor == NULL)
 		dtor = specificdata_noop_dtor;
@@ -289,7 +288,7 @@ specificdata_fini(specificdata_domain_t sd, specificdata_reference *ref)
 	specificdata_container_t sc;
 	specificdata_key_t key;
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 
 	mutex_destroy(&ref->specdataref_lock);
 
@@ -367,7 +366,7 @@ specificdata_setspecific(specificdata_domain_t sd,
 	specificdata_container_t sc, newsc;
 	size_t newnkey, sz;
 
-	ASSERT_SLEEPABLE(NULL, __func__);
+	ASSERT_SLEEPABLE();
 
 	mutex_enter(&ref->specdataref_lock);
 
