@@ -26,6 +26,8 @@
 #include "sparc64-tdep.h"
 #include "sparc-nat.h"
 
+#include "nbsd-nat.h"
+
 /* NetBSD is different from the other OSes that support both SPARC and
    UltraSPARC in that the result of ptrace(2) depends on whether the
    traced process is 32-bit or 64-bit.  */
