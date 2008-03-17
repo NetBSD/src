@@ -1,4 +1,4 @@
-/* $NetBSD: sb_pnpbios.c,v 1.14 2008/03/17 10:39:49 dogcow Exp $ */
+/* $NetBSD: sb_pnpbios.c,v 1.15 2008/03/17 13:38:25 cube Exp $ */
 /*
  * Copyright (c) 1999
  * 	Matthias Drochner.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.14 2008/03/17 10:39:49 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sb_pnpbios.c,v 1.15 2008/03/17 13:38:25 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,8 +107,7 @@ sb_pnpbios_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("%s", device_xname(self));
 
 	if (!sbmatch(sc, 0, device_cfdata(self))) {
-		aprint_error_dev(self, "%s: sbmatch failed\n",
-		    self->dv_xname);
+		aprint_error_dev(self, "sbmatch failed\n");
 		return;
 	}
 
