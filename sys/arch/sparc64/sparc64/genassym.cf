@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54 2008/03/14 15:38:00 nakayama Exp $
+#	$NetBSD: genassym.cf,v 1.55 2008/03/17 04:04:00 nakayama Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ define	CI_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CI_CLOCKRATE	offsetof(struct cpu_info, ci_cpu_clockrate)
 define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
 define	CI_INTRPENDING	offsetof(struct cpu_info, ci_intrpending)
-define	CI_INTRLEV0	offsetof(struct cpu_info, ci_intrlev0)
+define	CI_TICK_IH	offsetof(struct cpu_info, ci_tick_ih)
 define	CI_CTXBUSY	offsetof(struct cpu_info, ci_ctxbusy)
 define	CI_TSB_DMMU	offsetof(struct cpu_info, ci_tsb_dmmu)
 define	CI_TSB_IMMU	offsetof(struct cpu_info, ci_tsb_immu)

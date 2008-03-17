@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.76 2008/03/14 15:38:00 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.77 2008/03/17 04:04:00 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -127,7 +127,8 @@ struct cpu_info {
 
 	/* Interrupts */
 	struct intrhand		*ci_intrpending[16];
-	struct intrhand		*ci_intrlev0;
+	struct intrhand		*ci_tick_ih;
+	struct intrhand		*ci_sched_ih;
 
 	/* Event counters */
 	struct evcnt		ci_tick_evcnt;
@@ -317,6 +318,7 @@ extern struct intrhand *intrhand[];
 extern struct intrhand *intrlev[MAXINTNUM];
 
 void	intr_establish(int level, struct intrhand *);
+struct intrhand *init_softint(int, int (*)(void *));
 
 /* disksubr.c */
 struct dkbad;
@@ -328,6 +330,7 @@ struct timeval;
 int	tickintr(void *);	/* level 10/14 (tick) interrupt code */
 int	clockintr(void *);	/* level 10 (clock) interrupt code */
 int	statintr(void *);	/* level 14 (statclock) interrupt code */
+int	schedintr(void *);	/* level 10 (schedclock) interrupt code */
 void	tickintr_establish(int, int (*)(void *));
 /* locore.s */
 struct fpstate64;
