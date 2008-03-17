@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.307 2008/03/01 14:16:52 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.308 2008/03/17 08:20:05 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -263,6 +263,8 @@
 #define	PRI_BIO		(MAXPRI_KTHREAD - schedppq * 4)
 
 #define	PRI_IDLE	PRI_USER
+
+extern const int schedppq;
 
 /*
  * Miscellaneous.
