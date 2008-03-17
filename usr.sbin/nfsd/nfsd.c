@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.52 2008/02/27 16:39:17 ad Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.53 2008/03/17 09:52:26 yamt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\n\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.52 2008/02/27 16:39:17 ad Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.53 2008/03/17 09:52:26 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,6 @@ main(argc, argv)
 	int tcp6sock, ip6flag;
 	int tp4cnt, tp4flag, tpipcnt, tpipflag, udpflag, ecode, s;
 
-#define	MAXNFSDCNT	1024
 #define	DEFNFSDCNT	 4
 	nfsdcnt = DEFNFSDCNT;
 	cltpflag = reregister = tcpflag = tp4cnt = tp4flag = tpipcnt = 0;
@@ -171,7 +170,7 @@ main(argc, argv)
 			break;
 		case 'n':
 			nfsdcnt = atoi(optarg);
-			if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
+			if (nfsdcnt < 1) {
 				warnx("nfsd count %d; reset to %d", nfsdcnt, DEFNFSDCNT);
 				nfsdcnt = DEFNFSDCNT;
 			}
@@ -201,7 +200,7 @@ main(argc, argv)
 		usage();
 	if (argc == 1) {
 		nfsdcnt = atoi(argv[0]);
-		if (nfsdcnt < 1 || nfsdcnt > MAXNFSDCNT) {
+		if (nfsdcnt < 1) {
 			warnx("nfsd count %d; reset to %d", nfsdcnt, DEFNFSDCNT);
 			nfsdcnt = DEFNFSDCNT;
 		}
