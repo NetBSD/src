@@ -1,4 +1,4 @@
-/*	$NetBSD: ugensa.c,v 1.15 2008/02/18 05:31:24 dyoung Exp $	*/
+/*	$NetBSD: ugensa.c,v 1.16 2008/03/17 02:40:04 elric Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.15 2008/02/18 05:31:24 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugensa.c,v 1.16 2008/03/17 02:40:04 elric Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,16 +92,47 @@ struct ucom_methods ugensa_methods = {
 #define UGENSA_IFACE_INDEX	0
 #define UGENSA_BUFSIZE		1024
 
-static const struct usb_devno ugensa_devs[] = {
-	{ USB_VENDOR_AIRPRIME, USB_PRODUCT_AIRPRIME_PC5220 },
-	{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS },
-	{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K },
-	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD580 },
-	{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MINI5725},
-	{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_CDMA_MODEM },
-	{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }
+struct ugensa_type {
+	struct usb_devno	ugensa_dev;
+	u_int16_t		ugensa_flags;
+#define UNTESTED		0x0001
 };
-#define ugensa_lookup(v, p) usb_lookup(ugensa_devs, v, p)
+
+static const struct ugensa_type ugensa_devs[] = {
+	{{ USB_VENDOR_AIRPRIME, USB_PRODUCT_AIRPRIME_PC5220 }, 0 },
+	{{ USB_VENDOR_NOVATEL, USB_PRODUCT_NOVATEL_FLEXPACKGPS }, 0 },
+	{{ USB_VENDOR_QUALCOMM_K, USB_PRODUCT_QUALCOMM_K_CDMA_MSM_K }, 0 },
+	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD580 }, 0 },
+	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD595 }, 0 },
+	{{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MINI5725}, 0 },
+	{{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_MERLINV620 }, 0 },
+	{{ USB_VENDOR_DELL, USB_PRODUCT_DELL_HSDPA }, 0 },
+
+	/*
+	 * The following devices are untested, but they are purported to
+	 * to work in similar device drivers on other OSes:
+	 */
+
+        {{ USB_VENDOR_ANYDATA, USB_PRODUCT_ANYDATA_ADU_500A }, UNTESTED },
+        {{ USB_VENDOR_DELL, USB_PRODUCT_DELL_W5500 }, UNTESTED },
+        {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_EXPRESSCARD }, UNTESTED },
+        {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_S720 }, UNTESTED },
+        {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_U720 }, UNTESTED },
+        {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_XU870 }, UNTESTED },
+        {{ USB_VENDOR_NOVATEL2, USB_PRODUCT_NOVATEL2_ES620 }, UNTESTED },
+        {{ USB_VENDOR_QUALCOMM, USB_PRODUCT_QUALCOMM_MSM_HSDPA }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_EM5625 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_AIRCARD875 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC5720 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC5725 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8755 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8755_2 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8755_3 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8765 }, UNTESTED },
+        {{ USB_VENDOR_SIERRA, USB_PRODUCT_SIERRA_MC8775 }, UNTESTED }
+};
+#define ugensa_lookup(v, p) \
+	((const struct ugensa_type *)usb_lookup(ugensa_devs, v, p))
 
 int ugensa_match(device_t, struct cfdata *, void *);
 void ugensa_attach(device_t, device_t, void *);
@@ -158,6 +189,10 @@ USB_ATTACH(ugensa)
 	printf("%s: %s\n", devname, devinfop);
 	usbd_devinfo_free(devinfop);
 
+	if (ugensa_lookup(uaa->vendor, uaa->product)->ugensa_flags & UNTESTED)
+		printf("%s: WARNING: This device is marked as untested. "
+		    "Please submit a report via send-pr(1).\n", devname);
+
 	id = usbd_get_interface_descriptor(iface);
 
 	sc->sc_udev = dev;
@@ -191,12 +226,19 @@ USB_ATTACH(ugensa)
 		addr = ed->bEndpointAddress;
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
-		if (dir == UE_DIR_IN && attr == UE_BULK)
-			uca.bulkin = addr;
-		else if (dir == UE_DIR_OUT && attr == UE_BULK)
-			uca.bulkout = addr;
-		else
-			printf("%s: unexpected endpoint\n", devname);
+		if (attr == UE_BULK) {
+			if (uca.bulkin == -1 && dir == UE_DIR_IN) {
+				DPRINTF(("%s: Bulk in %d\n", devname, i));
+				uca.bulkin = addr;
+				continue;
+			}
+			if (uca.bulkout == -1 && dir == UE_DIR_OUT) {
+				DPRINTF(("%s: Bulk out %d\n", devname, i));
+				uca.bulkout = addr;
+				continue;
+			}
+		}
+		printf("%s: unexpected endpoint\n", devname);
 	}
 	if (uca.bulkin == -1) {
 		printf("%s: Could not find data bulk in\n",
@@ -237,6 +279,8 @@ ugensa_activate(device_t self, enum devact act)
 {
 	struct ugensa_softc *sc = device_private(self);
 	int rv = 0;
+
+	DPRINTF(("ugensa_activate: sc=%p\n", sc));
 
 	switch (act) {
 	case DVACT_ACTIVATE:
