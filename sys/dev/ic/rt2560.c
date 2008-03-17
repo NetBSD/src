@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.17 2008/01/09 20:21:23 degroote Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.18 2008/03/17 17:22:49 xtraeme Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.17 2008/01/09 20:21:23 degroote Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.18 2008/03/17 17:22:49 xtraeme Exp $");
 
 #include "bpfilter.h"
 
@@ -1324,6 +1324,8 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 				panic("%s: could not load old rx mbuf",
 				    sc->sc_dev.dv_xname);
 			}
+			/* physical address may have changed */
+			desc->physaddr = htole32(data->map->dm_segs->ds_addr);
 			ifp->if_ierrors++;
 			goto skip;
 		}
@@ -1503,15 +1505,18 @@ rt2560_intr(void *arg)
 	if (!device_is_active(&sc->sc_dev))
 		return 0;
 
+	if ((r = RAL_READ(sc, RT2560_CSR7)) == 0)
+		return 0;       /* not for us */
+	
 	/* disable interrupts */
 	RAL_WRITE(sc, RT2560_CSR8, 0xffffffff);
+
+	/* acknowledge interrupts */
+	RAL_WRITE(sc, RT2560_CSR7, r);
 
 	/* don't re-enable interrupts if we're shutting down */
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return 0;
-
-	r = RAL_READ(sc, RT2560_CSR7);
-	RAL_WRITE(sc, RT2560_CSR7, r);
 
 	if (r & RT2560_BEACON_EXPIRE)
 		rt2560_beacon_expire(sc);
@@ -1777,6 +1782,9 @@ rt2560_tx_mgt(struct rt2560_softc *sc, struct mbuf *m0,
 			m_freem(m0);
 			return ENOBUFS;
 		}
+
+		/* packet header may have moved, reset our local pointer */
+		wh = mtod(m0, struct ieee80211_frame *);
 	}
 
 	error = bus_dmamap_load_mbuf(sc->sc_dmat, data->map, m0,
