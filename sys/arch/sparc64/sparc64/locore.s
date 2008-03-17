@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.270 2008/03/14 15:38:00 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.271 2008/03/17 04:04:00 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4048,10 +4048,10 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	rd	SOFTINT, %g1
 	btst	1, %g1
 	bz,pt	%icc, 0f
-	 sethi	%hi(CPUINFO_VA+CI_INTRLEV0), %g3
+	 sethi	%hi(CPUINFO_VA+CI_TICK_IH), %g3
 	wr	%g0, 1, CLEAR_SOFTINT
 	ba,pt	%icc, setup_sparcintr
-	 LDPTR	[%g3 + %lo(CPUINFO_VA+CI_INTRLEV0)], %g5
+	 LDPTR	[%g3 + %lo(CPUINFO_VA+CI_TICK_IH)], %g5
 0:
 
 	! Increment the per-cpu interrupt level
