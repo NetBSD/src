@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_pnpbios.c,v 1.14 2008/03/15 13:23:24 cube Exp $	*/
+/*	$NetBSD: pckbc_pnpbios.c,v 1.15 2008/03/17 01:16:22 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.14 2008/03/15 13:23:24 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_pnpbios.c,v 1.15 2008/03/17 01:16:22 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ void	pckbc_pnpbios_intr_establish(struct pckbc_softc *, pckbc_slot_t);
 static void pckbc_pnpbios_finish_attach(device_t);
 
 int
-pckbc_pnpbios_match(device_tparent, cfdata_t match, void *aux)
+pckbc_pnpbios_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pnpbiosdev_attach_args *aa = aux;
 
@@ -213,10 +213,11 @@ pckbc_pnpbios_intr_establish(struct pckbc_softc *sc,
 	if (i < pckbc_cd.cd_ndevs)
 		rv = isa_intr_establish(ic, irq, ist, IPL_TTY, pckbcintr, sc);
 	if (rv == NULL) {
-		printf("%s: unable to establish interrupt for %s slot\n",
-		    sc->sc_dv.dv_xname, pckbc_slot_names[slot]);
+		aprint_error_dev(sc->sc_dv,
+		    "unable to establish interrupt for %s slot\n",
+		    pckbc_slot_names[slot]);
 	} else {
-		printf("%s: using irq %d for %s slot\n", sc->sc_dv.dv_xname,
+		aprint_normal_dev(sc->sc_dv, "using irq %d for %s slot\n",
 		    irq, pckbc_slot_names[slot]);
 	}
 }
