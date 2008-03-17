@@ -1,4 +1,4 @@
-/*	$NetBSD: fdc_pnpbios.c,v 1.12 2008/03/16 00:58:56 cube Exp $	*/
+/*	$NetBSD: fdc_pnpbios.c,v 1.13 2008/03/17 00:53:12 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.12 2008/03/16 00:58:56 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdc_pnpbios.c,v 1.13 2008/03/17 00:53:12 cube Exp $");
 
 #include "rnd.h"
 
@@ -93,7 +93,7 @@ void
 fdc_pnpbios_attach(device_t parent, device_t self, void *aux)
 {
         struct fdc_pnpbios_softc *pdc = device_private(self);
-	struct fdc_softc *fdc = &pdc->sd_fdc;
+	struct fdc_softc *fdc = &pdc->sc_fdc;
 	struct pnpbiosdev_attach_args *aa = aux;
         int size, base;
         
