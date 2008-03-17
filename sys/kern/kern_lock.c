@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.134 2008/01/30 14:54:26 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.135 2008/03/17 08:27:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.134 2008/01/30 14:54:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.135 2008/03/17 08:27:50 yamt Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -64,19 +64,37 @@ bool	kernel_lock_dodebug;
 __cpu_simple_lock_t kernel_lock[CACHE_LINE_SIZE / sizeof(__cpu_simple_lock_t)]
     __aligned(CACHE_LINE_SIZE);
 
-#if defined(LOCKDEBUG)
+#if defined(DEBUG) || defined(LKM)
 void
-assert_sleepable(struct simplelock *interlock, const char *msg)
+assert_sleepable(void)
 {
+#if !defined(_RUMPKERNEL)
+	const char *reason;
 
-	if (panicstr != NULL)
+	if (panicstr != NULL) {
 		return;
-	LOCKDEBUG_BARRIER(kernel_lock, 1);
-	if (CURCPU_IDLE_P() && !cold) {
-		panic("assert_sleepable: idle");
 	}
+
+	LOCKDEBUG_BARRIER(kernel_lock, 1);
+
+	reason = NULL;
+	if (CURCPU_IDLE_P() && !cold) {
+		reason = "idle";
+	}
+	if (cpu_intr_p()) {
+		reason = "interrupt";
+	}
+	if ((curlwp->l_pflag & LP_INTR) != 0) {
+		reason = "softint";
+	}
+
+	if (reason) {
+		panic("%s: %s caller=%p", __func__, reason,
+		    (void *)RETURN_ADDRESS);
+	}
+#endif /* !defined(_RUMPKERNEL) */
 }
-#endif
+#endif /* defined(DEBUG) || defined(LKM) */
 
 /*
  * rump doesn't need the kernel lock so force it out.  We cannot
