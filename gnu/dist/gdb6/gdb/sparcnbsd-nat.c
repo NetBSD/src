@@ -27,6 +27,8 @@
 #include "sparc-tdep.h"
 #include "sparc-nat.h"
 
+#include "nbsd-nat.h"
+
 /* Support for debugging kernel virtual memory images.  */
 
 #include <sys/types.h>
