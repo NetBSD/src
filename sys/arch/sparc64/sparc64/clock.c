@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.92 2008/03/17 04:04:00 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.93 2008/03/17 18:31:19 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.92 2008/03/17 04:04:00 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.93 2008/03/17 18:31:19 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.92 2008/03/17 04:04:00 nakayama Exp $");
 int statvar = 8192;
 int statmin;			/* statclock interval - 1/2*variance */
 int timerok;
+static int statscheddiv;
 
 int schedintr(void *);
 
@@ -426,7 +427,10 @@ cpu_initclocks()
 	 * Establish scheduler softint.
 	 */
 	curcpu()->ci_sched_ih = init_softint(PIL_SCHED, schedintr);
-	schedhz = stathz/4;
+	schedhz = 16;	/* 16Hz is best according to kern/kern_clock.c */
+	statscheddiv = stathz / schedhz;
+	if (statscheddiv <= 0)
+		panic("statscheddiv");
 
 	/* 
 	 * Enable counter-timer #0 interrupt for clockintr.
@@ -579,8 +583,10 @@ statintr(cap)
 	newint = statmin + r;
 
 	if (schedhz)
-		if ((++ci->ci_schedstate.spc_schedticks & 3) == 0)
+		if ((int)(--ci->ci_schedstate.spc_schedticks) <= 0) {
 			send_softint(-1, PIL_SCHED, curcpu()->ci_sched_ih);
+			ci->ci_schedstate.spc_schedticks = statscheddiv;
+		}
 #ifdef MULTIPROCESSOR
 	s = intr_disable();
 	next_tick(newint);
@@ -597,6 +603,6 @@ int
 schedintr(void *arg)
 {
 
-	schedclock(curlwp);
+	schedclock(curcpu()->ci_data.cpu_onproc);
 	return (1);
 }
