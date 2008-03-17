@@ -1,4 +1,4 @@
-#	$NetBSD: files.tsarm,v 1.10 2007/12/03 15:33:32 ad Exp $
+#	$NetBSD: files.tsarm,v 1.11 2008/03/17 09:30:02 kiyohara Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -63,9 +63,3 @@ file	dev/isa/i82365_isa.c		pcic_isa
 
 # Code common to ISA and ISAPnP attachments
 file	dev/isa/i82365_isasubr.c	pcic_isa
-
-# this wants to be probed as late as possible.
-#
-# Machine-independent PCMCIA drivers
-#
-include	"dev/pcmcia/files.pcmcia"
