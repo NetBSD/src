@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.271 2008/03/17 04:04:00 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.272 2008/03/17 23:54:03 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -9512,17 +9512,22 @@ Lkcerr:
 /*
  * IPI handler to store the current FPU state.
  * void sparc64_ipi_save_fpstate(void *);
+ *
+ * On entry:
+ *	%g2 = lwp
  */
 ENTRY(sparc64_ipi_save_fpstate)
+	sethi	%hi(FPLWP), %g1
+	LDPTR	[%g1 + %lo(FPLWP)], %g3
+	cmp	%g3, %g2
+	bne,pn	CCCR, 7f		! skip if fplwp != %g2
+	 LDPTR	[%g3 + L_FPSTATE], %g3
+
 	mov	CTX_SECONDARY, %g5
 	ldxa	[%g5] ASI_DMMU, %g6
 	membar	#LoadStore
 	stxa	%g0, [%g5] ASI_DMMU
 	membar	#Sync
-
-	sethi	%hi(FPLWP), %g1
-	LDPTR	[%g1 + %lo(FPLWP)], %g3
-	LDPTR	[%g3 + L_FPSTATE], %g3
 
 	rdpr	%pstate, %g2		! enable FP before we begin
 	rd	%fprs, %g5
@@ -9564,6 +9569,7 @@ ENTRY(sparc64_ipi_save_fpstate)
 	STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
 	stxa	%g6, [%g5] ASI_DMMU
 	membar	#Sync
+7:
 	IPIEVC_INC(IPI_EVCNT_FPU_SYNCH,%g2,%g3)
 	ba,a	ret_from_intr_vector
 	 nop
@@ -9631,16 +9637,20 @@ ENTRY(sparc64_ipi_save_fpstate)
 /*
  * IPI handler to drop the current FPU state.
  * void sparc64_ipi_drop_fpstate(void *);
+ *
+ * On entry:
+ *	%g2 = lwp
  */
 ENTRY(sparc64_ipi_drop_fpstate)
 	rdpr	%pstate, %g1
 	wr	%g0, FPRS_FEF, %fprs
 	or	%g1, PSTATE_PEF, %g1
 	wrpr	%g1, 0, %pstate
-	sethi	%hi(FPLWP), %g1
+	set	FPLWP, %g1
+	CASPTR	[%g1] ASI_N, %g2, %g0	! fplwp = NULL if fplwp == %g2
 	IPIEVC_INC(IPI_EVCNT_FPU_FLUSH,%g2,%g3)
-	ba	ret_from_intr_vector
-	 STPTR	%g0, [%g1 + %lo(FPLWP)]	! fplwp = NULL
+	ba,a	ret_from_intr_vector
+	 nop
 #endif
 
 /*
