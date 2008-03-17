@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.215 2008/03/17 08:27:50 yamt Exp $	*/
+/*	$NetBSD: systm.h,v 1.216 2008/03/17 21:16:03 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -148,6 +148,7 @@ int	eopnotsupp(void);
 
 enum hashtype {
 	HASH_LIST,
+	HASH_SLIST,
 	HASH_TAILQ
 };
 
