@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_event.c,v 1.16 2008/03/16 23:14:24 plunky Exp $	*/
+/*	$NetBSD: hci_event.c,v 1.17 2008/03/17 09:16:17 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.16 2008/03/16 23:14:24 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_event.c,v 1.17 2008/03/17 09:16:17 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -233,8 +233,7 @@ hci_event(struct mbuf *m, struct hci_unit *unit)
 /*
  * Command Status
  *
- * Update our record of num_cmd_pkts then post-process any pending commands
- * and optionally restart cmd output on the unit.
+ * Restart command queue and post-process any pending commands
  */
 static void
 hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
@@ -253,7 +252,7 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 		ep.status,
 		ep.num_cmd_pkts);
 
-	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
+	hci_num_cmds(unit, ep.num_cmd_pkts);
 
 	/*
 	 * post processing of pending commands
@@ -274,18 +273,12 @@ hci_event_command_status(struct hci_unit *unit, struct mbuf *m)
 
 		break;
 	}
-
-	while (unit->hci_num_cmd_pkts > 0 && MBUFQ_FIRST(&unit->hci_cmdwait)) {
-		MBUFQ_DEQUEUE(&unit->hci_cmdwait, m);
-		hci_output_cmd(unit, m);
-	}
 }
 
 /*
  * Command Complete
  *
- * Update our record of num_cmd_pkts then handle the completed command,
- * and optionally restart cmd output on the unit.
+ * Restart command queue and handle the completed command
  */
 static void
 hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
@@ -302,6 +295,8 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 		HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
 		ep.num_cmd_pkts);
 
+	hci_num_cmds(unit, ep.num_cmd_pkts);
+
 	/*
 	 * I am not sure if this is completely correct, it is not guaranteed
 	 * that a command_complete packet will contain the status though most
@@ -313,8 +308,6 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 		    "CommandComplete opcode (%03x|%04x) failed (status=0x%02x)\n",
 		    HCI_OGF(le16toh(ep.opcode)), HCI_OCF(le16toh(ep.opcode)),
 		    rp.status);
-
-	unit->hci_num_cmd_pkts = ep.num_cmd_pkts;
 
 	/*
 	 * post processing of completed commands
@@ -346,11 +339,6 @@ hci_event_command_compl(struct hci_unit *unit, struct mbuf *m)
 
 	default:
 		break;
-	}
-
-	while (unit->hci_num_cmd_pkts > 0 && MBUFQ_FIRST(&unit->hci_cmdwait)) {
-		MBUFQ_DEQUEUE(&unit->hci_cmdwait, m);
-		hci_output_cmd(unit, m);
 	}
 }
 
