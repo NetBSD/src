@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.129 2008/01/02 11:48:51 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.130 2008/03/17 00:18:24 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.129 2008/01/02 11:48:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.130 2008/03/17 00:18:24 rmind Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -329,9 +329,6 @@ procinit(void)
 	/* point at which we grow table - to avoid reusing pids too often */
 	pid_alloc_lim = pid_tbl_mask - 1;
 #undef LINK_EMPTY
-
-	uihashtbl =
-	    hashinit(maxproc / 16, HASH_LIST, M_PROC, M_WAITOK, &uihash);
 
 	proc_specificdata_domain = specificdata_domain_create();
 	KASSERT(proc_specificdata_domain != NULL);
