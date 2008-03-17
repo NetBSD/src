@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.36 2008/03/12 11:05:01 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.37 2008/03/17 16:55:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.36 2008/03/12 11:05:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.37 2008/03/17 16:55:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ sys__lwp_wakeup(struct lwp *l, const struct sys__lwp_wakeup_args *uap, register_
 		error = EBUSY;
 	} else {
 		/* Wake it up.  lwp_unsleep() will release the LWP lock. */
-		lwp_unsleep(t);
+		(void)lwp_unsleep(t, true);
 		error = 0;
 	}
 
@@ -502,7 +502,7 @@ lwp_unpark(lwpid_t target, const void *hint)
 	lwp_lock(t);
 	if (t->l_syncobj == &lwp_park_sobj) {
 		/* Releases the LWP lock. */
-		lwp_unsleep(t);
+		(void)lwp_unsleep(t, true);
 	} else {
 		/*
 		 * Set the operation pending.  The next call to _lwp_park
@@ -708,7 +708,7 @@ sys__lwp_unpark_all(struct lwp *l, const struct sys__lwp_unpark_all_args *uap, r
 		 */
 		if (t->l_syncobj == &lwp_park_sobj) {
 			/* Releases the LWP lock. */
-			lwp_unsleep(t);
+			(void)lwp_unsleep(t, true);
 		} else {
 			/*
 			 * Set the operation pending.  The next call to

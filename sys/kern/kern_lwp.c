@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.95 2008/03/07 18:06:04 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.96 2008/03/17 16:54:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.95 2008/03/07 18:06:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.96 2008/03/17 16:54:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1284,6 +1284,16 @@ lwp_trylock(struct lwp *l)
 		mutex_spin_exit(old);
 	}
 }
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
+}
+
 
 /*
  * Handle exceptions for mi_userret().  Called if a member of LW_USERRET is

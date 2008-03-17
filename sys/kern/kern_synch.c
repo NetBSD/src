@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.220 2008/03/16 23:11:30 rmind Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.221 2008/03/17 16:54:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.220 2008/03/16 23:11:30 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.221 2008/03/17 16:54:51 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_lockdebug.h"
@@ -110,7 +110,7 @@ unsigned int sched_pstats_ticks;
 
 kcondvar_t	lbolt;			/* once a second sleep address */
 
-static void	sched_unsleep(struct lwp *);
+static u_int	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
 static void	sched_lendpri(struct lwp *, pri_t);
 
@@ -681,7 +681,7 @@ setrunnable(struct lwp *l)
 	if (l->l_wchan != NULL) {
 		l->l_stat = LSSLEEP;
 		/* lwp_unsleep() will release the lock. */
-		lwp_unsleep(l);
+		lwp_unsleep(l, true);
 		return;
 	}
 
@@ -798,8 +798,8 @@ suspendsched(void)
  *	interrupted: for example, if the sleep timed out.  Because of this,
  *	it's not a valid action for running or idle LWPs.
  */
-static void
-sched_unsleep(struct lwp *l)
+static u_int
+sched_unsleep(struct lwp *l, bool cleanup)
 {
 
 	lwp_unlock(l);
