@@ -1,4 +1,4 @@
-/*	$NetBSD: hptide.c,v 1.24 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: hptide.c,v 1.25 2008/03/18 20:46:36 cube Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.24 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hptide.c,v 1.25 2008/03/18 20:46:36 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,10 +45,10 @@ static void hpt_chip_map(struct pciide_softc*, struct pci_attach_args*);
 static void hpt_setup_channel(struct ata_channel*);
 static int  hpt_pci_intr(void *);
 
-static int  hptide_match(struct device *, struct cfdata *, void *);
-static void hptide_attach(struct device *, struct device *, void *);
+static int  hptide_match(device_t, cfdata_t, void *);
+static void hptide_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(hptide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(hptide, sizeof(struct pciide_softc),
     hptide_match, hptide_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_triones_products[] =  {
@@ -85,8 +85,7 @@ static const struct pciide_product_desc pciide_triones_products[] =  {
 };
 
 static int
-hptide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+hptide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -98,10 +97,12 @@ hptide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-hptide_attach(struct device *parent, struct device *self, void *aux)
+hptide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_triones_products));
@@ -120,8 +121,8 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		return;
 
 	revision = PCI_REVISION(pa->pa_class);
-	aprint_normal("%s: Triones/Highpoint ",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "Triones/Highpoint ");
 	switch (sc->sc_pp->ide_product) {
 	case PCI_PRODUCT_TRIONES_HPT302:
 		aprint_normal("HPT302 IDE Controller\n");
@@ -174,8 +175,8 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			interface |= PCIIDE_INTERFACE_PCI(1);
 	}
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
@@ -215,7 +216,9 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			   HPT370_CTRL1(i)) & HPT370_CTRL1_EN) == 0) {
 				aprint_normal(
 				    "%s: %s channel ignored (disabled)\n",
-				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+				    device_xname(
+				      sc->sc_wdcdev.sc_atac.atac_dev),
+				    cp->name);
 				cp->ata_channel.ch_flags |= ATACH_DISABLED;
 				continue;
 			}
@@ -230,8 +233,10 @@ hpt_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 			else if (pa->pa_function == 1)
 				compatchan = 1;
 			else {
-				aprint_error("%s: unexpected PCI function %d\n",
-				    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, pa->pa_function);
+				aprint_error_dev(
+				    sc->sc_wdcdev.sc_atac.atac_dev,
+				    "unexpected PCI function %d\n",
+				    pa->pa_function);
 				return;
 			}
 		}
@@ -375,7 +380,7 @@ hpt_setup_channel(struct ata_channel *chp)
 		pci_conf_write(sc->sc_pc, sc->sc_tag,
 		    HPT_IDETIM(chp->ch_channel, drive), after);
 		ATADEBUG_PRINT(("%s: bus speed register set to 0x%08x "
-		    "(BIOS 0x%08x)\n", drvp->drv_softc->dv_xname,
+		    "(BIOS 0x%08x)\n", device_xname(drvp->drv_softc),
 		    after, before), DEBUG_PROBE);
 	}
 	if (idedma_ctl != 0) {
@@ -404,8 +409,8 @@ hpt_pci_intr(void *arg)
 		wdc_cp = &cp->ata_channel;
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
-			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
+			aprint_error("%s:%d: bogus intr\n",
+			    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), i);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else
