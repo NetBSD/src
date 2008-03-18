@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.66 2008/03/11 22:50:10 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.67 2008/03/18 12:36:15 njoly Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -61,6 +61,8 @@ esac
 # source the config file.
 sys_nosys="sys_nosys"	# default is sys_nosys(), if not specified otherwise
 maxsysargs=8		# default limit is 8 (32bit) arguments
+rumpcalls="/dev/null"
+rumpcallshdr="/dev/null"
 . ./$1
 
 # tmp files:
@@ -134,13 +136,6 @@ BEGIN {
 	    registertype = \"register_t\"
 	}
 	nsysent = \"$nsysent\"
-
-	if (length(rumpcalls) == 0) {
-		rumpcalls = "/dev/null"
-	}
-	if (length(rumpcallshdr) == 0) {
-		rumpcallshdr = "/dev/null"
-	}
 
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
