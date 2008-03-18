@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.23 2008/03/15 16:13:39 jmcneill Exp $ */
+/* $NetBSD: crmfb.c,v 1.24 2008/03/18 02:41:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.23 2008/03/15 16:13:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.24 2008/03/18 02:41:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,8 +261,6 @@ crmfb_attach(struct device *parent, struct device *self, void *opaque)
 	sc->sc_tiles_x = (sc->sc_width + 127) >> 7;
 	sc->sc_tiles_y = (sc->sc_height + 127) >> 7;
 	sc->sc_fbsize = 0x10000 * sc->sc_tiles_x * sc->sc_tiles_y;
-	aprint_normal("so we need %d x %d tiles -> %08x\n", sc->sc_tiles_x,
-	    sc->sc_tiles_y, sc->sc_fbsize);
 
 	sc->sc_dmai.size = 256 * sizeof(uint16_t);
 	rv = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmai.size, 65536, 0,
