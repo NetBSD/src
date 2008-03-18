@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.38 2008/03/12 21:37:15 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.39 2008/03/18 15:16:22 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -100,6 +100,7 @@ rump_init()
 		desiredvnodes = 1<<16;
 	}
 
+	rw_init(&rump_cwdi.cwdi_lock);
 	l = &lwp0;
 	p = &rump_proc;
 	p->p_stats = &rump_stats;
@@ -123,9 +124,9 @@ rump_init()
 	syncdelay = 0;
 	dovfsusermount = 1;
 
+	filedesc_init();
 	vfsinit();
 	bufinit();
-	filedesc_init();
 	selsysinit();
 
 	rumpvfs_init();
@@ -147,7 +148,6 @@ rump_init()
 
 	sigemptyset(&sigcantmask);
 
-	rw_init(&rump_cwdi.cwdi_lock);
 	rump_cwdi.cwdi_cdir = rootvnode;
 
 	fdinit1(&rump_filedesc0);
