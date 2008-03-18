@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_promise.c,v 1.10 2008/02/02 16:15:02 mjf Exp $	*/
+/*	$NetBSD: ata_raid_promise.c,v 1.11 2008/03/18 20:46:36 cube Exp $	*/
 
 /*-
  * Copyright (c) 2000,2001,2002 Søren Schmidt <sos@FreeBSD.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.10 2008/02/02 16:15:02 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_promise.c,v 1.11 2008/03/18 20:46:36 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -78,10 +78,10 @@ ata_raid_read_config_promise(struct wd_softc *sc)
 
 	info = malloc(sizeof(*info), M_DEVBUF, M_WAITOK);
 
-	bmajor = devsw_name2blk(sc->sc_dev.dv_xname, NULL, 0);
+	bmajor = devsw_name2blk(device_xname(sc->sc_dev), NULL, 0);
 
 	/* Get a vnode for the raw partition of this disk. */
-	dev = MAKEDISKDEV(bmajor, device_unit(&sc->sc_dev), RAW_PART);
+	dev = MAKEDISKDEV(bmajor, device_unit(sc->sc_dev), RAW_PART);
 	error = bdevvp(dev, &vp);
 	if (error)
 		goto out;
@@ -97,15 +97,15 @@ ata_raid_read_config_promise(struct wd_softc *sc)
 	VOP_CLOSE(vp, FREAD, NOCRED);
 	vput(vp);
 	if (error) {
-		printf("%s: error %d reading Promise config block\n",
-		    sc->sc_dev.dv_xname, error);
+		aprint_error_dev(sc->sc_dev,
+		    "error %d reading Promise config block\n", error);
 		goto out;
 	}
 
 	/* Check the signature. */
 	if (strncmp(info->promise_id, PR_MAGIC, sizeof(PR_MAGIC)) != 0) {
 		DPRINTF(("%s: Promise signature check failed\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 		error = ESRCH;
 		goto out;
 	}
@@ -115,14 +115,15 @@ ata_raid_read_config_promise(struct wd_softc *sc)
 	     count++)
 		cksum += *ckptr++;
 	if (cksum != *ckptr) {
-		DPRINTF(("%s: Promise checksum failed\n", sc->sc_dev.dv_xname));
+		DPRINTF(("%s: Promise checksum failed\n",
+		    device_xname(sc->sc_dev)));
 		error = ESRCH;
 		goto out;
 	}
 
 	if (info->raid.integrity != PR_I_VALID) {
 		DPRINTF(("%s: Promise config block marked invalid\n",
-		    sc->sc_dev.dv_xname));
+		    device_xname(sc->sc_dev)));
 		error = ESRCH;
 		goto out;
 	}
@@ -163,8 +164,9 @@ ata_raid_read_config_promise(struct wd_softc *sc)
 			break;
 
 		default:
-			printf("%s: unknown Promise RAID type 0x%02x\n",
-			    sc->sc_dev.dv_xname, info->raid.type);
+			aprint_error_dev(sc->sc_dev,
+			    "unknown Promise RAID type 0x%02x\n",
+			    info->raid.type);
 			error = EINVAL;
 			goto out;
 		}
@@ -197,7 +199,7 @@ ata_raid_read_config_promise(struct wd_softc *sc)
 	}
 	adi = &aai->aai_disks[info->raid.disk_number];
 	if (adi->adi_status) {
-		adi->adi_dev = &sc->sc_dev;
+		adi->adi_dev = sc->sc_dev;
 		adi->adi_sectors = info->raid.disk_sectors;
 		adi->adi_compsize = sc->sc_capacity - aai->aai_reserved;
 	}
