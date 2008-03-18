@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2recover.c,v 1.6 2008/03/18 14:47:07 christos Exp $	*/
+/*	$NetBSD: bzip2recover.c,v 1.7 2008/03/18 17:35:36 christos Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -82,18 +82,18 @@ typedef
    }
    BitStream;
 
-void readError ( void );
-void writeError ( void );
-void mallocFail ( Int32 n );
-BitStream* bsOpenReadStream ( FILE* stream );
-BitStream* bsOpenWriteStream ( FILE* stream );
-void bsPutBit ( BitStream* bs, Int32 bit );
-Int32 bsGetBit ( BitStream* bs );
-void bsClose ( BitStream* bs );
-void bsPutUChar ( BitStream* bs, UChar c );
-void bsPutUInt32 ( BitStream* bs, UInt32 c );
-Bool endsInBz2 ( Char* name );
-void tooManyBlocks ( Int32 max_handled_blocks );
+static void readError ( void );
+static void writeError ( void );
+static void mallocFail ( Int32 n );
+static BitStream* bsOpenReadStream ( FILE* stream );
+static BitStream* bsOpenWriteStream ( FILE* stream );
+static void bsPutBit ( BitStream* bs, Int32 bit );
+static Int32 bsGetBit ( BitStream* bs );
+static void bsClose ( BitStream* bs );
+static void bsPutUChar ( BitStream* bs, UChar c );
+static void bsPutUInt32 ( BitStream* bs, UInt32 c );
+static Bool endsInBz2 ( Char* name );
+static void tooManyBlocks ( Int32 max_handled_blocks );
 
 
 /*---------------------------------------------------*/
