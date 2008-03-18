@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.135 2008/03/17 21:16:03 rmind Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.136 2008/03/18 02:35:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.135 2008/03/17 21:16:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.136 2008/03/18 02:35:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.135 2008/03/17 21:16:03 rmind Ex
 #include <sys/atomic.h>
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -1041,38 +1042,41 @@ uid_init(void)
 struct uidinfo *
 uid_find(uid_t uid)
 {
-	struct uidinfo *uip, *uip_first, *newuip = NULL;
+	struct uidinfo *uip, *uip_first, *newuip;
 	struct uihashhead *uipp;
 
 	uipp = UIHASH(uid);
-again:
+	newuip = NULL;
+
 	/*
 	 * To make insertion atomic, abstraction of SLIST will be violated.
 	 */
 	uip_first = uipp->slh_first;
+ again:
 	SLIST_FOREACH(uip, uipp, ui_hash) {
 		if (uip->ui_uid != uid)
 			continue;
-		if (newuip)
+		if (newuip != NULL)
 			kmem_free(newuip, sizeof(*newuip));
 		return uip;
 	}
-	if (newuip == NULL) {
+	if (newuip == NULL)
 		newuip = kmem_zalloc(sizeof(*newuip), KM_SLEEP);
-		goto again;
-	}
-	uip = newuip;
-	uip->ui_uid = uid;
+	newuip->ui_uid = uid;
 
 	/*
-	 * If atomic insert is unsuccessfull, another thread might be
+	 * If atomic insert is unsuccessful, another thread might be
 	 * allocated this 'uid', thus full re-check is needed.
 	 */
-	uip->ui_hash.sle_next = uip_first;
-	if (atomic_cas_ptr(&uipp->slh_first, uip_first, uip) != uip_first)
+	newuip->ui_hash.sle_next = uip_first;
+	membar_producer();
+	uip = atomic_cas_ptr(&uipp->slh_first, uip_first, newuip);
+	if (uip != uip_first) {
+		uip_first = uip;
 		goto again;
+	}
 
-	return uip;
+	return newuip;
 }
 
 /*
