@@ -1,4 +1,4 @@
-/*	$NetBSD: stpcide.c,v 1.17 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: stpcide.c,v 1.18 2008/03/18 20:46:37 cube Exp $	*/
 
 /*
  * Copyright (c) 2003 Tohru Nishimura
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.17 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.18 2008/03/18 20:46:37 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: stpcide.c,v 1.17 2007/02/09 21:55:27 ad Exp $");
 static void stpc_chip_map(struct pciide_softc *, struct pci_attach_args *);
 static void stpc_setup_channel(struct ata_channel *);
 
-static int  stpcide_match(struct device *, struct cfdata *, void *);
-static void stpcide_attach(struct device *, struct device *, void *);
+static int  stpcide_match(device_t, cfdata_t, void *);
+static void stpcide_attach(device_t, device_t, void *);
 
 const struct pciide_product_desc pciide_stpc_products[] = {
 	{ 0x0228,
@@ -55,12 +55,11 @@ const struct pciide_product_desc pciide_stpc_products[] = {
 	{ 0, 0, NULL, NULL },
 };
 
-CFATTACH_DECL(stpcide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(stpcide, sizeof(struct pciide_softc),
     stpcide_match, stpcide_attach, NULL, NULL);
 
 static int
-stpcide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+stpcide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -72,10 +71,12 @@ stpcide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-stpcide_attach(struct device *parent, struct device *self, void *aux)
+stpcide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_stpc_products));
@@ -93,8 +94,8 @@ stpc_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
