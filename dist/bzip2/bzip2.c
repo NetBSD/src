@@ -1,4 +1,4 @@
-/*	$NetBSD: bzip2.c,v 1.5 2008/03/18 14:47:07 christos Exp $	*/
+/*	$NetBSD: bzip2.c,v 1.6 2008/03/18 17:35:36 christos Exp $	*/
 
 
 /*-----------------------------------------------------------*/
@@ -225,7 +225,7 @@ static void*   myMalloc     ( Int32 );
 static void    applySavedFileAttrToOutputFile ( IntNative fd );
 
 
-FILE* fopen_output_safely ( Char*, const char* );
+static FILE* fopen_output_safely ( Char*, const char* );
 
 /*---------------------------------------------------*/
 /*--- An implementation of 64-bit ints.  Sigh.    ---*/
@@ -440,7 +440,7 @@ Bool uncompressStream ( FILE *zStream, FILE *stream )
    UChar   obuf[5000];
    UChar   unused[BZ_MAX_UNUSED];
    Int32   nUnused;
-   void*   unusedTmpV;
+   void*   unusedTmpV = NULL;
    UChar*  unusedTmp;
 
    nUnused = 0;
@@ -470,11 +470,7 @@ Bool uncompressStream ( FILE *zStream, FILE *stream )
       }
       if (bzerr != BZ_STREAM_END) goto errhandler;
 
-<<<<<<< bzip2.c
       BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmp), &nUnused );
-=======
-      BZ2_bzReadGetUnused ( &bzerr, bzf, &unusedTmpV, &nUnused );
->>>>>>> 1.1.1.3
       if (bzerr != BZ_OK) panic ( "decompress:bzReadGetUnused" );
 
       unusedTmp = (UChar*)unusedTmpV;
@@ -565,8 +561,8 @@ Bool testStream ( FILE *zStream )
    UChar   obuf[5000];
    UChar   unused[BZ_MAX_UNUSED];
    Int32   nUnused;
-   void*   unusedTmpV;
-   UChar*  unusedTmp;
+   void*   unusedTmpV = NULL;
+   UChar*  unusedTmp = NULL;
 
    nUnused = 0;
    streamNo = 0;
@@ -589,11 +585,7 @@ Bool testStream ( FILE *zStream )
       }
       if (bzerr != BZ_STREAM_END) goto errhandler;
 
-<<<<<<< bzip2.c
       BZ2_bzReadGetUnused ( &bzerr, bzf, (void*)(&unusedTmp), &nUnused );
-=======
-      BZ2_bzReadGetUnused ( &bzerr, bzf, &unusedTmpV, &nUnused );
->>>>>>> 1.1.1.3
       if (bzerr != BZ_OK) panic ( "test:bzReadGetUnused" );
 
       unusedTmp = (UChar*)unusedTmpV;
