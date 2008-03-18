@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2008/03/14 16:43:16 nakayama Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2008/03/18 04:20:37 lukem Exp $
 #
 #	etc.sparc64/Makefile.inc -- sparc64-specific etc Makefile targets
 #
@@ -58,20 +58,20 @@ snap_md_post:
 	# install boot image and installation scripts in netboot directory
 .for file in ofwboot.net
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/netboot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/netboot
 .endfor
 .for file in ofwboot bootblk
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 .endfor
 .for file in installboot
 	${HOST_INSTALL_FILE} -m ${BINMODE} ${DESTDIR}/usr/sbin/${file} \
-	    ${RELEASEDIR}/${MACHINE}/installation/misc
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc
 .endfor
 
 	# compute checksums
 .for dir in ${MD_INSTALLATION_DIRS}
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/${dir} '*'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/${dir} '*'
 .endfor
 
 ISOBOOTFILEDIR!=cd ${.CURDIR}/../distrib/${MACHINE}/bootfs && ${PRINTOBJDIR}

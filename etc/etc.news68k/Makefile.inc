@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.8 2007/07/24 10:49:26 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.9 2008/03/18 04:20:37 lukem Exp $
 #
 #	etc.news68k/Makefile.inc -- news68k-specific etc Makefile targets
 #
@@ -13,4 +13,4 @@ BUILD_KERNELS=		INSTALL
 INSTALLATION_DIRS+=	installation/floppy
 
 snap_md_post:
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/floppy '*.fs'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/floppy '*.fs'
