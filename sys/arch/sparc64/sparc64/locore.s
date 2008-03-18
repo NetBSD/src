@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.272 2008/03/17 23:54:03 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.273 2008/03/18 18:22:43 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -4133,9 +4133,18 @@ ENTRY_NOPROFILE(sparc_interrupt)
 	ldx	[%l4 + %l3], %o0
 	add	%l4, %l3, %l4
 	clr	%l5			! Zero handled count
+#ifdef MULTIPROCESSOR
+	mov	1, %l3			! Ack softint
+1:	add	%o0, 1, %l7
+	casxa	[%l4] ASI_N, %o0, %l7
+	cmp	%o0, %l7
+	bne,a,pn %xcc, 1b		! retry if changed
+	 mov	%l7, %o0
+#else
 	inc	%o0	
 	mov	1, %l3			! Ack softint
 	stx	%o0, [%l4]
+#endif
 	sll	%l3, %l6, %l3		! Generate IRQ mask
 	
 	wrpr	%l6, %pil
