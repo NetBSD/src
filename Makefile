@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.251 2007/11/12 15:06:45 jmmv Exp $
+#	$NetBSD: Makefile,v 1.252 2008/03/18 04:24:38 lukem Exp $
 
 #
 # This is the top-level makefile for building NetBSD. For an outline of
@@ -51,16 +51,18 @@
 #	is the not root directory if cross compiling.
 #   release:
 #	Does a `make distribution', and then tars up the DESTDIR files
-#	into RELEASEDIR/${MACHINE}, in release(7) format.
+#	into ${RELEASEDIR}/${RELEASEMACHINEDIR}, in release(7) format.
 #	(See etc/Makefile for more information on this.)
 #   regression-tests:
 #	Runs the regression tests in "regress" on this host.
 #   sets:
-#	Populate ${RELEASEDIR}/${MACHINE}/binary/sets from ${DESTDIR}
+#	Populate ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
+#	from ${DESTDIR}
 #   sourcesets:
 #	Populate ${RELEASEDIR}/source/sets from ${NETBSDSRCDIR}
 #   syspkgs:
-#	Populate ${RELEASEDIR}/${MACHINE}/binary/syspkgs from ${DESTDIR}
+#	Populate ${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/syspkgs
+#	from ${DESTDIR}
 #   iso-image:
 #	Create CD-ROM image in RELEASEDIR/iso.
 #	RELEASEDIR must already have been populated by `make release'
