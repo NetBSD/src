@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_extio.c,v 1.1 2007/03/20 08:52:02 dyoung Exp $ */
+/*	$NetBSD: wdc_extio.c,v 1.2 2008/03/18 20:46:36 cube Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.1 2007/03/20 08:52:02 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_extio.c,v 1.2 2008/03/18 20:46:36 cube Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -111,10 +111,10 @@ struct wdc_extio_softc {
 	struct gpio_pinmap	sc_pinmap;
 };
 
-int	wdc_extio_match(struct device *, struct cfdata *, void *);
-void	wdc_extio_attach(struct device *, struct device *, void *);
+int	wdc_extio_match(device_t, cfdata_t, void *);
+void	wdc_extio_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(wdc_extio, sizeof(struct wdc_extio_softc),
+CFATTACH_DECL_NEW(wdc_extio, sizeof(struct wdc_extio_softc),
     wdc_extio_match, wdc_extio_attach, NULL, NULL);
 
 #if 0
@@ -178,7 +178,7 @@ wdc_extio_map(struct extio_attach_args *ea, struct wdc_regs *wdr,
 
 	if (bus_space_map(wdr->cmd_iot, ea->ea_addr, WDC_OBIO_CF_WINSIZE, 0,
 	                  &wdr->cmd_baseioh)) {
-		printf("%s: couldn't map registers\n", __func__);
+		aprint_error("%s: couldn't map registers\n", __func__);
 		goto post_gpio_err;
 	}
 
@@ -186,7 +186,8 @@ wdc_extio_map(struct extio_attach_args *ea, struct wdc_regs *wdr,
 		if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 		                        WDC_OBIO_REG_OFFSET + i, 1,
 					&wdr->cmd_iohs[i]) != 0) {
-			printf("%s: unable to subregion control register\n",
+			aprint_error(
+			    "%s: unable to subregion control register\n",
 			    __func__);
 			goto post_bus_err;
 		}
@@ -194,12 +195,14 @@ wdc_extio_map(struct extio_attach_args *ea, struct wdc_regs *wdr,
 	if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 				WDC_OBIO_DATA_OFFSET, 2,
 				&wdr->cmd_iohs[wd_data]) != 0) {
-		printf("%s: unable to subregion data register\n", __func__);
+		aprint_error("%s: unable to subregion data register\n",
+		    __func__);
 		goto post_bus_err;
 	}
 	if (bus_space_subregion(wdr->cmd_iot, wdr->cmd_baseioh,
 				WDC_OBIO_AUXREG_OFFSET, 1, &wdr->ctl_ioh)) {
-		printf("%s: unable to subregion aux register\n", __func__);
+		aprint_error("%s: unable to subregion aux register\n",
+		    __func__);
 		goto post_bus_err;
 	}
 
@@ -234,7 +237,7 @@ wdc_extio_datain(struct ata_channel *chp, int flags, void *bf, size_t len)
 }
 
 int
-wdc_extio_match(struct device *parent, struct cfdata *cf, void *aux)
+wdc_extio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct extio_attach_args *ea = (struct extio_attach_args *)aux;
 	struct ata_channel ch;
@@ -277,9 +280,9 @@ wdc_extio_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 void
-wdc_extio_attach(struct device *parent, struct device *self, void *aux)
+wdc_extio_attach(device_t parent, device_t self, void *aux)
 {
-	struct wdc_extio_softc *sc = (void *)self;
+	struct wdc_extio_softc *sc = device_private(self);
 	struct wdc_regs *wdr;
 	struct extio_attach_args *ea = aux;
 	struct ata_channel *chp = &sc->sc_channel;
@@ -287,6 +290,7 @@ wdc_extio_attach(struct device *parent, struct device *self, void *aux)
 
 	WDC_EXTIO_DPRINTF("%s: enter\n", __func__);
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_pinmap.pm_map = &sc->sc_map;
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 	chp->ch_atac = &sc->sc_wdcdev.sc_atac;
@@ -294,9 +298,9 @@ wdc_extio_attach(struct device *parent, struct device *self, void *aux)
 	if (wdc_extio_map(ea, wdr, chp, &sc->sc_gpio, &sc->sc_pinmap) == -1)
 		return;
 
-	cf = device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev);
+	cf = device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev);
 	if (cf->cf_flags != -1) {
-		printf(" flags %04x", cf->cf_flags);
+		aprint_normal(" flags %04x", cf->cf_flags);
 		sc->sc_wdcdev.sc_atac.atac_cap |= cf->cf_flags &
 		    (ATAC_CAP_NOIRQ|ATAC_CAP_DATA32|ATAC_CAP_DATA16);
 		sc->sc_wdcdev.cap |= cf->cf_flags &
@@ -313,7 +317,7 @@ wdc_extio_attach(struct device *parent, struct device *self, void *aux)
 	chp->ch_queue = &sc->sc_chqueue;
 	chp->ch_ndrive = 2;
 
-	printf("\n");
+	aprint_normal("\n");
 
 	wdcattach(chp);
 }

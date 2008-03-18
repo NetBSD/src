@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_obio.c,v 1.48 2008/02/25 19:22:39 matt Exp $	*/
+/*	$NetBSD: wdc_obio.c,v 1.49 2008/03/18 20:46:36 cube Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.48 2008/02/25 19:22:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_obio.c,v 1.49 2008/03/18 20:46:36 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,7 @@ static void wdc_obio_select(struct ata_channel *, int);
 static void adjust_timing(struct ata_channel *);
 static void ata4_adjust_timing(struct ata_channel *);
 
-CFATTACH_DECL(wdc_obio, sizeof(struct wdc_obio_softc),
+CFATTACH_DECL_NEW(wdc_obio, sizeof(struct wdc_obio_softc),
     wdc_obio_match, wdc_obio_attach, wdc_obio_detach, wdcactivate);
 
 static const char * const ata_names[] = {
@@ -132,7 +132,8 @@ wdc_obio_attach(device_t parent, device_t self, void *aux)
 	int use_dma = 0;
 	char path[80];
 
-	if (device_cfdata(&sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
+	if (device_cfdata(sc->sc_wdcdev.sc_atac.atac_dev)->cf_flags &
 	    WDC_OPTIONS_DMA) {
 		if (ca->ca_nreg >= 16 || ca->ca_nintr == -1)
 			use_dma = 1;	/* XXX Don't work yet. */

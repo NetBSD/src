@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.97 2008/02/29 06:38:28 dyoung Exp $	*/
+/*	$NetBSD: ata.c,v 1.98 2008/03/18 20:46:36 cube Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.97 2008/02/29 06:38:28 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.98 2008/03/18 20:46:36 cube Exp $");
 
 #include "opt_ata.h"
 
@@ -165,7 +165,7 @@ ata_channel_attach(struct ata_channel *chp)
 	chp->ch_queue->queue_flags = 0;
 	chp->ch_queue->active_xfer = NULL;
 
-	chp->atabus = config_found_ia(&chp->ch_atac->atac_dev, "ata", chp,
+	chp->atabus = config_found_ia(chp->ch_atac->atac_dev, "ata", chp,
 		atabusprint);
 }
 
@@ -219,7 +219,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 			 * Fake the autoconfig "not configured" message
 			 */
 			aprint_normal("atapibus at %s not configured\n",
-			    device_xname(&atac->atac_dev));
+			    device_xname(atac->atac_dev));
 			chp->atapibus = NULL;
 			s = splbio();
 			for (i = 0; i < chp->ch_ndrive; i++)
@@ -241,7 +241,7 @@ atabusconfig(struct atabus_softc *atabus_sc)
 		adev.adev_channel = chp->ch_channel;
 		adev.adev_openings = 1;
 		adev.adev_drv_data = &chp->ch_drive[i];
-		chp->ata_drives[i] = config_found_ia(&atabus_sc->sc_dev,
+		chp->ata_drives[i] = config_found_ia(atabus_sc->sc_dev,
 		    "ata_hl", &adev, ataprint);
 		if (chp->ata_drives[i] != NULL)
 			ata_probe_caps(&chp->ch_drive[i]);
@@ -405,6 +405,8 @@ atabus_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 	aprint_naive("\n");
+
+	sc->sc_dev = self;
 
 	if (ata_addref(chp))
 		return;
@@ -575,7 +577,7 @@ atabus_childdetached(device_t self, device_t child)
 	aprint_error_dev(self, "unknown child %p", (const void *)child);
 }
 
-CFATTACH_DECL2(atabus, sizeof(struct atabus_softc),
+CFATTACH_DECL2_NEW(atabus, sizeof(struct atabus_softc),
     atabus_match, atabus_attach, atabus_detach, atabus_activate, NULL,
     atabus_childdetached);
 
@@ -1018,7 +1020,7 @@ ata_addref(struct ata_channel *chp)
 	s = splbio();
 	if (adapt->adapt_refcnt++ == 0 &&
 	    adapt->adapt_enable != NULL) {
-		error = (*adapt->adapt_enable)(&atac->atac_dev, 1);
+		error = (*adapt->adapt_enable)(atac->atac_dev, 1);
 		if (error)
 			adapt->adapt_refcnt--;
 	}
@@ -1036,7 +1038,7 @@ ata_delref(struct ata_channel *chp)
 	s = splbio();
 	if (adapt->adapt_refcnt-- == 1 &&
 	    adapt->adapt_enable != NULL)
-		(void) (*adapt->adapt_enable)(&atac->atac_dev, 0);
+		(void) (*adapt->adapt_enable)(atac->atac_dev, 0);
 	splx(s);
 }
 
@@ -1053,7 +1055,7 @@ ata_print_modes(struct ata_channel *chp)
 			continue;
 		aprint_verbose("%s(%s:%d:%d): using PIO mode %d",
 			device_xname(drvp->drv_softc),
-			device_xname(&atac->atac_dev),
+			device_xname(atac->atac_dev),
 			chp->ch_channel, drvp->drive, drvp->PIO_mode);
 #if NATA_DMA
 		if (drvp->drive_flags & DRIVE_DMA)
@@ -1119,8 +1121,9 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	 */
 	if ((drvp->drive_flags & DRIVE_UDMA) && drvp->UDMA_mode >= 2) {
 		drvp->UDMA_mode--;
-		printf("%s: transfer error, downgrading to Ultra-DMA mode %d\n",
-		    device_xname(drv_dev), drvp->UDMA_mode);
+		aprint_error_dev(drv_dev,
+		    "transfer error, downgrading to Ultra-DMA mode %d\n",
+		    drvp->UDMA_mode);
 	}
 #endif
 
@@ -1130,8 +1133,9 @@ ata_downgrade_mode(struct ata_drive_datas *drvp, int flags)
 	else if (drvp->drive_flags & (DRIVE_DMA | DRIVE_UDMA)) {
 		drvp->drive_flags &= ~(DRIVE_DMA | DRIVE_UDMA);
 		drvp->PIO_mode = drvp->PIO_cap;
-		printf("%s: transfer error, downgrading to PIO mode %d\n",
-		    device_xname(drv_dev), drvp->PIO_mode);
+		aprint_error_dev(drv_dev,
+		    "transfer error, downgrading to PIO mode %d\n",
+		    drvp->PIO_mode);
 	} else /* already using PIO, can't downgrade */
 		return 0;
 
@@ -1179,8 +1183,7 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 			drvp->drive_flags &= ~DRIVE_CAP32;
 			splx(s);
 		} else {
-			aprint_verbose("%s: 32-bit data port\n",
-			    device_xname(drv_dev));
+			aprint_verbose_dev(drv_dev, "32-bit data port\n");
 		}
 	}
 #if 0 /* Some ultra-DMA drives claims to only support ATA-3. sigh */
@@ -1188,8 +1191,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 	    params.atap_ata_major != 0xffff) {
 		for (i = 14; i > 0; i--) {
 			if (params.atap_ata_major & (1 << i)) {
-				aprint_verbose("%s: ATA version %d\n",
-				    device_xname(drv_dev), i);
+				aprint_verbose_dev(drv_dev,
+				    "ATA version %d\n", i);
 				drvp->ata_vers = i;
 				break;
 			}
@@ -1234,8 +1237,8 @@ ata_probe_caps(struct ata_drive_datas *drvp)
 				   AT_WAIT) != CMD_OK)
 					continue;
 			if (!printed) {
-				aprint_verbose("%s: drive supports PIO mode %d",
-				    device_xname(drv_dev), i + 3);
+				aprint_verbose_dev(drv_dev,
+				    "drive supports PIO mode %d", i + 3);
 				sep = ",";
 				printed = 1;
 			}
@@ -1411,7 +1414,7 @@ atabusopen(dev_t dev, int flag, int fmt,
 	int error, unit = minor(dev);
 
 	if (unit >= atabus_cd.cd_ndevs ||
-	    (sc = atabus_cd.cd_devs[unit]) == NULL)
+	    (sc = device_private(atabus_cd.cd_devs[unit])) == NULL)
 		return (ENXIO);
 
 	if (sc->sc_flags & ATABUSCF_OPEN)
@@ -1430,7 +1433,8 @@ int
 atabusclose(dev_t dev, int flag, int fmt,
     struct lwp *l)
 {
-	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct atabus_softc *sc =
+	    device_private(atabus_cd.cd_devs[minor(dev)]);
 
 	ata_delref(sc->sc_chan);
 
@@ -1443,7 +1447,8 @@ int
 atabusioctl(dev_t dev, u_long cmd, void *addr, int flag,
     struct lwp *l)
 {
-	struct atabus_softc *sc = atabus_cd.cd_devs[minor(dev)];
+	struct atabus_softc *sc =
+	    device_private(atabus_cd.cd_devs[minor(dev)]);
 	struct ata_channel *chp = sc->sc_chan;
 	int min_drive, max_drive, drive;
 	int error;

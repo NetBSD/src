@@ -1,4 +1,4 @@
-/*	$NetBSD: kauai.c,v 1.22 2008/02/25 19:22:39 matt Exp $	*/
+/*	$NetBSD: kauai.c,v 1.23 2008/03/18 20:46:36 cube Exp $	*/
 
 /*-
  * Copyright (c) 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.22 2008/02/25 19:22:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kauai.c,v 1.23 2008/03/18 20:46:36 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ static void kauai_set_modes(struct ata_channel *);
 static void calc_timing_kauai(struct kauai_softc *, int);
 static int getnodebypci(pci_chipset_tag_t, pcitag_t);
 
-CFATTACH_DECL(kauai, sizeof(struct kauai_softc),
+CFATTACH_DECL_NEW(kauai, sizeof(struct kauai_softc),
     kauai_match, kauai_attach, NULL, wdcactivate);
 
 int
@@ -112,6 +112,8 @@ kauai_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	paddr_t regbase, dmabase;
 	int node, reg[5], i;
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 #ifdef DIAGNOSTIC
 	if ((vaddr_t)sc->sc_dmacmd & 0x0f) {

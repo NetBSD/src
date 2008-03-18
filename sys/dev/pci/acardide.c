@@ -1,4 +1,4 @@
-/*	$NetBSD: acardide.c,v 1.21 2007/02/09 21:55:27 ad Exp $	*/
+/*	$NetBSD: acardide.c,v 1.22 2008/03/18 20:46:36 cube Exp $	*/
 
 /*
  * Copyright (c) 2001 Izumi Tsutsui.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.21 2007/02/09 21:55:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acardide.c,v 1.22 2008/03/18 20:46:36 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,10 +44,10 @@ static void acard_setup_channel(struct ata_channel*);
 static int  acard_pci_intr(void *);
 #endif
 
-static int  acardide_match(struct device *, struct cfdata *, void *);
-static void acardide_attach(struct device *, struct device *, void *);
+static int  acardide_match(device_t, cfdata_t, void *);
+static void acardide_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(acardide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(acardide, sizeof(struct pciide_softc),
     acardide_match, acardide_attach, NULL, NULL);
 
 static const struct pciide_product_desc pciide_acard_products[] =  {
@@ -84,8 +84,7 @@ static const struct pciide_product_desc pciide_acard_products[] =  {
 };
 
 static int
-acardide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+acardide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -97,10 +96,12 @@ acardide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-acardide_attach(struct device *parent, struct device *self, void *aux)
+acardide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_acard_products));
@@ -132,8 +133,8 @@ acard_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		    PCIIDE_INTERFACE_PCI(0) | PCIIDE_INTERFACE_PCI(1);
 	}
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap = ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
@@ -321,7 +322,7 @@ acard_pci_intr(void *arg)
 		crv = wdcintr(wdc_cp);
 		if (crv == 0) {
 			printf("%s:%d: bogus intr\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, i);
+			    device_xname(sc->sc_wdcdev.sc_atac.atac_dev), i);
 			bus_space_write_1(sc->sc_dma_iot,
 			    cp->dma_iohs[IDEDMA_CTL], 0, dmastat);
 		} else if (crv == 1)

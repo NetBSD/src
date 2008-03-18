@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisatavar.h,v 1.3 2008/02/11 08:23:48 xtraeme Exp $	*/
+/*	$NetBSD: ahcisatavar.h,v 1.4 2008/03/18 20:46:36 cube Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -78,7 +78,7 @@ struct ahci_softc {
 	} sc_channels[AHCI_MAX_PORTS];
 };
 
-#define AHCINAME(sc) ((sc)->sc_atac.atac_dev.dv_xname)
+#define AHCINAME(sc) (device_xname((sc)->sc_atac.atac_dev))
 
 #define AHCI_CMDH_SYNC(sc, achp, cmd, op) bus_dmamap_sync((sc)->sc_dmat, \
     (sc)->sc_cmd_hdrd, \

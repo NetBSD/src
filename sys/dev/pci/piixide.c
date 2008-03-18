@@ -1,4 +1,4 @@
-/*	$NetBSD: piixide.c,v 1.45 2008/02/29 06:13:39 dyoung Exp $	*/
+/*	$NetBSD: piixide.c,v 1.46 2008/03/18 20:46:37 cube Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.45 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixide.c,v 1.46 2008/03/18 20:46:37 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,8 +52,8 @@ static int piix_dma_init(void *, int, int, void *, size_t, int);
 
 static bool piixide_resume(device_t PMF_FN_PROTO);
 static bool piixide_suspend(device_t PMF_FN_PROTO);
-static int  piixide_match(struct device *, struct cfdata *, void *);
-static void piixide_attach(struct device *, struct device *, void *);
+static int  piixide_match(device_t, cfdata_t, void *);
+static void piixide_attach(device_t, device_t, void *);
 
 static const struct pciide_product_desc pciide_intel_products[] =  {
 	{ PCI_PRODUCT_INTEL_82092AA,
@@ -253,12 +253,11 @@ static const struct pciide_product_desc pciide_intel_products[] =  {
 	}
 };
 
-CFATTACH_DECL(piixide, sizeof(struct pciide_softc),
+CFATTACH_DECL_NEW(piixide, sizeof(struct pciide_softc),
     piixide_match, piixide_attach, NULL, NULL);
 
 static int
-piixide_match(struct device *parent, struct cfdata *match,
-    void *aux)
+piixide_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -270,10 +269,12 @@ piixide_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-piixide_attach(struct device *parent, struct device *self, void *aux)
+piixide_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args *pa = aux;
-	struct pciide_softc *sc = (struct pciide_softc *)self;
+	struct pciide_softc *sc = device_private(self);
+
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 
 	pciide_common_attach(sc, pa,
 	    pciide_lookup_product(pa->pa_id, pciide_intel_products));
@@ -320,8 +321,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
@@ -422,8 +423,8 @@ piix_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 		if ((PIIX_IDETIM_READ(idetim, channel) &
 		    PIIX_IDETIM_IDE) == 0) {
 #if 1
-			aprint_normal("%s: %s channel ignored (disabled)\n",
-			    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname, cp->name);
+			aprint_normal_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+			    "%s channel ignored (disabled)\n", cp->name);
 			cp->ata_channel.ch_flags |= ATACH_DISABLED;
 			continue;
 #else
@@ -824,8 +825,8 @@ piixsata_chip_map(struct pciide_softc *sc, struct pci_attach_args *pa)
 	if (pciide_chipen(sc, pa) == 0)
 		return;
 
-	aprint_verbose("%s: bus-master DMA support present",
-	    sc->sc_wdcdev.sc_atac.atac_dev.dv_xname);
+	aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+	    "bus-master DMA support present");
 	pciide_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 
