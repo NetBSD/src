@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc_pioc.c,v 1.22 2008/03/18 20:46:35 cube Exp $	*/
+/*	$NetBSD: wdc_pioc.c,v 1.23 2008/03/18 23:52:16 cube Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Mark Brinicombe.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.22 2008/03/18 20:46:35 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc_pioc.c,v 1.23 2008/03/18 23:52:16 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,6 +153,7 @@ wdc_pioc_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
+	sc->sc_wdcdev.sc_atac.atac_dev = self;
 	sc->sc_wdcdev.regs = wdr = &sc->sc_wdc_regs;
 	iobase = pa->pa_iobase + pa->pa_offset;
 	wdr->cmd_iot = pa->pa_iot;
