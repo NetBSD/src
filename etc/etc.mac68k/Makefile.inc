@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.19 2007/07/24 10:49:26 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.20 2008/03/18 04:20:37 lukem Exp $
 #
 #	etc.mac68k/Makefile.inc -- mac68k-specific etc Makefile targets
 #
@@ -14,11 +14,11 @@ INSTALLATION_DIRS+=	installation/miniroot	\
 			installation/instkernel
 
 snap_md_post:
-	${MAKESUMS} -t ${RELEASEDIR}/${MACHINE}/installation/instkernel '*.gz'
+	${MAKESUMS} -t ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/instkernel '*.gz'
 
 # For "make iso-image"
 # mkisofs arguments to create a hybrid (HFS/Rockridge) CD-ROM image.
 MKISOFS_FLAGS+=	-hfs --macbin \
-	-map ${RELEASEDIR}/${MACHINE}/installation/misc/extensions.map
+	-map ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/misc/extensions.map
 
 iso-image: do-iso-image
