@@ -18,6 +18,12 @@
    Foundation, Inc., 51 Franklin Street, Fifth Floor,
    Boston, MA 02110-1301, USA.  */
 
+#ifndef ARM_TDEP_H
+#define ARM_TDEP_H
+
+/* Forward declarations.  */
+struct gdbarch;
+  
 /* Register numbers of various important registers.  Note that some of
    these values are "real" register numbers, and correspond to the
    general registers of the machine, and some are "phony" register
@@ -157,3 +163,14 @@ int arm_pc_is_thumb (CORE_ADDR);
 CORE_ADDR thumb_get_next_pc (CORE_ADDR);
 
 CORE_ADDR arm_get_next_pc (CORE_ADDR);
+
+/* Functions exported from armbsd-tdep.h.  */
+
+/* Return the appropriate register set for the core section identified
+   by SECT_NAME and SECT_SIZE.  */
+
+extern const struct regset *
+  armbsd_regset_from_core_section (struct gdbarch *gdbarch,
+				   const char *sect_name, size_t sect_size);
+
+#endif /* arm-tdep.h */
