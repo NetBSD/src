@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.6 2007/07/24 10:49:27 pavel Exp $
+#	$NetBSD: Makefile.inc,v 1.7 2008/03/18 04:20:37 lukem Exp $
 #
 #	etc.next68k/Makefile.inc -- next68k-specific etc Makefile targets
 #
@@ -11,4 +11,4 @@ KERNEL_SETS=		GENERIC
 snap_md_post:
 	# install boot image in installation directory
 	${HOST_INSTALL_FILE} -m ${NONBINMODE} ${DESTDIR}/usr/mdec/boot \
-	    ${RELEASEDIR}/${MACHINE}/installation/boot
+	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/boot
