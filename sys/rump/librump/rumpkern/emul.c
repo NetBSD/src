@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.31 2008/03/12 11:17:34 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.32 2008/03/19 00:40:34 bjs Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -501,4 +501,14 @@ yield(void)
 {
 
 	rumpuser_yield();
+}
+
+
+u_int
+lwp_unsleep(lwp_t *l, bool cleanup)
+{
+
+	KASSERT(mutex_owned(l->l_mutex));
+
+	return (*l->l_syncobj->sobj_unsleep)(l, cleanup);
 }
