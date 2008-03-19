@@ -1,7 +1,7 @@
-$NetBSD: networking,v 1.1 2008/03/19 20:12:53 agc Exp $
+$NetBSD: networking,v 1.2 2008/03/19 20:34:34 jmmv Exp $
 
 NetBSD Networking Roadmap
-=============================
+=========================
 
 This is a small roadmap document, and deals with the networking
 side of the operating system.
@@ -46,40 +46,38 @@ Some explanations
 =================
 
 2. SCTP
+-------
 
 Add support for the SCTP for both IPv4 and IPv6.
 
 Responsible: jmcneill
 
-
 3. network driver polling
+-------------------------
 
 Responsible: matt
-
 
 4. ALTQ processing for input
+----------------------------
 
 Responsible: matt
 
-
 5. multicast DNS / zeroconf
-------------------
+---------------------------
 
 Add support for multicast DNS (name.local)
 
 Responsible: ???
 
-
-6. tcp support in libsa.
-------------------------------------
+6. tcp support in libsa
+-----------------------
 
 Add a tiny tcp implementation to libsa.
 
 Responsible: matt
 
-
-6. http netbooting
-----------------
+7. http netbooting
+------------------
 
 Be able to use a HTTP server hosting a kernel and/or disk image as a
 read-only root device.

@@ -1,7 +1,7 @@
-$NetBSD: system,v 1.1 2008/03/19 20:12:53 agc Exp $
+$NetBSD: system,v 1.2 2008/03/19 20:34:34 jmmv Exp $
 
 NetBSD System Roadmap
-======================
+=====================
 
 This is a small roadmap document, and deals with the main system
 aspects of the operating system.
@@ -213,7 +213,6 @@ of seconds since 1970.
 
 Responsible: christos
 
-
 16. POSIX shared memory
 -----------------------
 
@@ -222,7 +221,6 @@ shared memory objects and add the memory locations to the address space of
 a process.
 
 Responsible: rmind
-
 
 17. Incremental namei improvements, Phase 1
 -------------------------------------------
@@ -234,20 +232,17 @@ systems. This phase simplifies the majority of calls to namei().
 
 Responsible: dholland
 
-
 18. Better resource controls
 ----------------------------
 
 A resource provisioning and control framework that extends beyond the
 traditional Unix process limits.
 
-
 19. Improved observability: online crashdumps, remote debugging
 ---------------------------------------------------------------
 
 XXX crashdumps while the system is running
 XXX firewire support in libkvm
-
 
 20. Processor and cache topology aware scheduler
 ------------------------------------------------
@@ -267,7 +262,6 @@ Implement the rest of the changes to namei outlined in Message-ID:
 <20080319053709.GB3951@netbsd.org>.  Simplify the locking and behavior
 of namei() calls within the kernel to resolve path names within file
 systems.
-
 
 Responsible: dholland
 
