@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.2 2008/03/19 20:34:34 jmmv Exp $
+$NetBSD: networking,v 1.3 2008/03/19 22:51:36 wiz Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -21,7 +21,7 @@ The following projects are expected to be included in NetBSD 6.0
 
 4. ALTQ processing on input
 5. integrated multicast dns / zeroconf
-6. tcp support in liba
+6. tcp support in libsa
 7. netboot from http
 
 We expect to branch for the 5.0 release in April or May 2008, which would
