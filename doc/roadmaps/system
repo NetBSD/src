@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.2 2008/03/19 20:34:34 jmmv Exp $
+$NetBSD: system,v 1.3 2008/03/19 20:38:30 jmmv Exp $
 
 NetBSD System Roadmap
 =====================
@@ -6,7 +6,7 @@ NetBSD System Roadmap
 This is a small roadmap document, and deals with the main system
 aspects of the operating system.
 
-NetBSD 5.0 will ship with the following storage elements in place:
+NetBSD 5.0 will ship with the following main changes to the system:
 
 1. Modularized scheduler
 2. Real-time scheduling classes and priorities
@@ -174,8 +174,8 @@ provides a high-resolution description of lock activity in a running system.
 tprof uses sample based profiling in conjuction with the available
 performance counters in order to better profile system activity.
 
-13. Power managment framework
------------------------------
+13. Power management framework
+------------------------------
 
 A new power management framework has been introduced that improves
 handling of device power state transitions. As power management support
