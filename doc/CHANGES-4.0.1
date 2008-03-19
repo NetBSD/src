@@ -1,4 +1,4 @@
-#	$NetBSD: CHANGES-4.0.1,v 1.1.2.18 2008/03/19 19:15:17 bouyer Exp $
+#	$NetBSD: CHANGES-4.0.1,v 1.1.2.19 2008/03/19 19:27:21 bouyer Exp $
 
 A complete list of changes from the NetBSD 4.0 release to the NetBSD 4.0.1
 release:
@@ -123,4 +123,10 @@ lib/libc/stdlib/strfmon.c			1.5
 
 	Avoid integer overflow; reported by Maksymilian Arciemowicz.   
 	[mjf, ticket #1102]
+
+bin/mt/mt.1					1.34
+
+	Clarify that "mt offline" ejects tapes. Also some grammar and
+	formatting fixes. PR bin/37727 from Randolf Richardson.
+	[dholland, ticket #1100]
 
