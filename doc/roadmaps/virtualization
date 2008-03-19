@@ -1,4 +1,4 @@
-$NetBSD: virtualization,v 1.1 2008/03/19 20:12:53 agc Exp $
+$NetBSD: virtualization,v 1.2 2008/03/19 20:34:34 jmmv Exp $
 
 NetBSD Virtualization Roadmap
 =============================
@@ -65,7 +65,6 @@ jail-based virtual machines. This is the basis of a paper to appear
 in the AsiaBSDcon proceedings in March 2008.
 
 Responsible: bad
-
 
 6. iSCSI booting
 ----------------
