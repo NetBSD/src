@@ -1,4 +1,4 @@
-$NetBSD: networking,v 1.3 2008/03/19 22:51:36 wiz Exp $
+$NetBSD: networking,v 1.4 2008/03/20 22:55:01 agc Exp $
 
 NetBSD Networking Roadmap
 =========================
@@ -6,7 +6,7 @@ NetBSD Networking Roadmap
 This is a small roadmap document, and deals with the networking
 side of the operating system.
 
-NetBSD 5.0 will ship with the following virtualization elements in
+NetBSD 5.0 will ship with the following networking elements in
 place:
 
 1. Mobile IPv6
