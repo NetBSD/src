@@ -1,11 +1,11 @@
-/*	$NetBSD: lock.h,v 1.2 2008/03/20 09:09:20 kochi Exp $	*/
+/*	$NetBSD: mutex.h,v 1.1 2008/03/20 09:09:20 kochi Exp $	*/
 
 /*-
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Takayoshi Kochi.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,7 +22,7 @@
  * 4. Neither the name of The NetBSD Foundation nor the names of its
  *    contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
- *
+ *      
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -34,93 +34,55 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */
+*/
+
+#ifndef _IA64_MUTEX_H_
+#define	_IA64_MUTEX_H_
+
+struct kmutex {
+	union {
+		volatile uintptr_t	mtxa_owner;
+#ifdef __MUTEX_PRIVATE
+		struct {
+			volatile uint8_t	mtxs_dummy;
+			ipl_cookie_t		mtxs_ipl;
+			__cpu_simple_lock_t	mtxs_lock;
+			volatile uint8_t	mtxs_unused;
+		} s;
+#endif
+	} u;
+};
+
+#ifdef __MUTEX_PRIVATE
+
+/* uintptr_t */
+#define	mtx_owner	u.mtxa_owner
+/* ipl_cookie_t */
+#define	mtx_ipl		u.s.mtxs_ipl
+/* __cpu_simple_lock_t */
+#define	mtx_lock	u.s.mtxs_lock
+
+/* XXX when we implement mutex_enter()/mutex_exit(), uncomment this
+#define __HAVE_MUTEX_STUBS		1
+*/
+/* XXX when we implement mutex_spin_enter()/mutex_spin_exit(), uncomment this
+#define __HAVE_SPIN_MUTEX_STUBS		1
+*/
+#define	__HAVE_SIMPLE_MUTEXES		1
 
 /*
- * Machine-dependent spin lock operations.
+ * MUTEX_RECEIVE: no memory barrier required, atomic_cas implies a load fence.
  */
+#define	MUTEX_RECEIVE(mtx)		/* nothing */
 
-#ifndef _IA64_LOCK_H_
-#define	_IA64_LOCK_H_
+/*
+ * MUTEX_GIVE: no memory barrier required, as _lock_cas() will take care of it.
+ */
+#define	MUTEX_GIVE(mtx)			/* nothing */
 
-static __inline int
-__SIMPLELOCK_LOCKED_P(__cpu_simple_lock_t *__ptr)
-{
-	return *__ptr == __SIMPLELOCK_LOCKED;
-}
+#define	MUTEX_CAS(ptr, old, new)		\
+    (atomic_cas_ulong((volatile unsigned long *)(ptr), (old), (new)) == (old))
 
-static __inline int
-__SIMPLELOCK_UNLOCKED_P(__cpu_simple_lock_t *__ptr)
-{
-	return *__ptr == __SIMPLELOCK_UNLOCKED;
-}
+#endif	/* __MUTEX_PRIVATE */
 
-static __inline void
-__cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
-{
-
-	*__ptr = __SIMPLELOCK_LOCKED;
-}
-
-static __inline void
-__cpu_simple_lock_clear(__cpu_simple_lock_t *__ptr)
-{
-
-	*__ptr = __SIMPLELOCK_UNLOCKED;
-}
-
-#ifdef _KERNEL
-
-#define	SPINLOCK_SPIN_HOOK	/* nothing */
-#define	SPINLOCK_BACKOFF_HOOK	/* XXX(kochi): hint@pause */
-
-#endif
-
-static __inline void __cpu_simple_lock_init(__cpu_simple_lock_t *)
-	__unused;
-static __inline void __cpu_simple_lock(__cpu_simple_lock_t *)
-	__unused;
-static __inline int __cpu_simple_lock_try(__cpu_simple_lock_t *)
-	__unused;
-static __inline void __cpu_simple_unlock(__cpu_simple_lock_t *)
-	__unused;
-
-static __inline void
-__cpu_simple_lock_init(__cpu_simple_lock_t *lockp)
-{
-
-	*lockp = __SIMPLELOCK_UNLOCKED;
-	__insn_barrier();
-}
-
-static __inline int
-__cpu_simple_lock_try(__cpu_simple_lock_t *lockp)
-{
-	uint8_t val;
-
-	val = __SIMPLELOCK_LOCKED;
-/*	__asm volatile ("xchgb %0,(%2)" : 
-	    "=r" (val)
-	    :"0" (val), "r" (lockp)); */
-	__insn_barrier();
-	return val == __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline void
-__cpu_simple_lock(__cpu_simple_lock_t *lockp)
-{
-
-	while (!__cpu_simple_lock_try(lockp))
-		/* nothing */;
-	__insn_barrier();
-}
-
-static __inline void
-__cpu_simple_unlock(__cpu_simple_lock_t *lockp)
-{
-
-	__insn_barrier();
-	*lockp = __SIMPLELOCK_UNLOCKED;
-}
-
-#endif /* _IA64_LOCK_H_ */
+#endif	/* _IA64_MUTEX_H_ */
