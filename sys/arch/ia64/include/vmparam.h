@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2008/03/20 09:09:20 kochi Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2008/03/20 14:56:06 kochi Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -112,6 +112,7 @@
 
 #ifndef _LOCORE
 
+#include <sys/queue.h>
 #include <sys/mutex.h>
 /*
  * pmap-specific data store in the vm_page structure.
