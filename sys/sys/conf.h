@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.129 2007/11/07 15:56:23 ad Exp $	*/
+/*	$NetBSD: conf.h,v 1.129.14.1 2008/03/20 12:11:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -44,6 +44,7 @@
  */
 
 #include <sys/queue.h>
+#include <sys/device.h>
 
 struct buf;
 struct knote;
@@ -232,12 +233,42 @@ struct devsw_conv {
 	int d_cmajor;
 };
 
+enum devtype {
+	DEV_DISK,
+	DEV_USB,
+	DEV_VIDEO,
+	DEV_TTY,
+	DEV_OTHER
+};
+
 #ifdef _KERNEL
+struct device_name {
+	TAILQ_ENTRY(device_name) d_next;
+	dev_t d_dev;
+	char *d_name;
+	enum devtype d_type;
+	device_t d_devp;
+	boolean_t d_found;	/* have we been picked up by dctl(4)? */
+	boolean_t d_gone;	/* has this device disappeared? */
+	boolean_t d_char;	/* are we a char device? */
+};
+TAILQ_HEAD(dm_list, device_name) device_names;
+
 void devsw_init(void);
 const char *devsw_blk2name(int);
 int devsw_name2blk(const char *, char *, size_t);
 dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
+int device_register_name(dev_t, device_t, boolean_t, enum devtype, 
+    const char *, ...);
+int device_unregister_name(dev_t, const char *, ...);
+struct device_name *device_lookup_info(dev_t);
+kmutex_t dname_lock;
+void bpf_init(void);
+void cttyinit(void);
+void mem_init(void);
+void swap_init(void);
+
 #endif /* _KERNEL */
 
 #ifdef _KERNEL
