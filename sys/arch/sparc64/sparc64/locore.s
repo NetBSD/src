@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.273 2008/03/18 18:22:43 nakayama Exp $	*/
+/*	$NetBSD: locore.s,v 1.274 2008/03/20 19:31:33 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -3766,17 +3766,13 @@ sparc64_ipi_pause_trap_point:
  *	%g2 = %tick of master CPU
  */
 ENTRY(sparc64_ipi_sync_tick)
-	rdpr	%pstate, %g1
-	andn	%g1, PSTATE_IE, %g7		! disable interrupts
-	wrpr	%g7, 0, %pstate
 	rdpr	%tick, %g3			! read old tick
 	rd	TICK_CMPR, %g5
 	sub	%g2, %g3, %g3			! delta btw old and new
 	add	%g5, %g3, %g5			! add delta to TICK_CMPR
 	wr	%g5, TICK_CMPR
-	wrpr	%g2, 0, %tick			! write new tick
 	ba	ret_from_intr_vector
-	 wrpr	%g1, %pstate			! restore interrupts
+	 wrpr	%g2, 0, %tick			! write new tick
 
 /*
  * Increment IPI event counter, defined in machine/{cpu,intr}.h.
@@ -3802,8 +3798,9 @@ ENTRY(sparc64_ipi_flush_pte)
 12:
 #endif
 #ifdef SPITFIRE
+	srlx	%g2, PG_SHIFT4U, %g2		! drop unused va bits
 	mov	CTX_SECONDARY, %g5
-	andn	%g2, 0xfff, %g2			! drop unused va bits
+	sllx	%g2, PG_SHIFT4U, %g2
 	ldxa	[%g5] ASI_DMMU, %g6		! Save secondary context
 	sethi	%hi(KERNBASE), %g7
 	membar	#LoadStore
@@ -5465,8 +5462,9 @@ ENTRY(sp_tlb_flush_pte)
 	andn	%o3, PSTATE_IE, %o4			! disable interrupts
 	wrpr	%o4, 0, %pstate
 #endif
+	srlx	%o0, PG_SHIFT4U, %o0			! drop unused va bits
 	mov	CTX_SECONDARY, %o2
-	andn	%o0, 0xfff, %o0				! drop unused va bits
+	sllx	%o0, PG_SHIFT4U, %o0
 	ldxa	[%o2] ASI_DMMU, %o5			! Save secondary context
 	sethi	%hi(KERNBASE), %o4
 	membar	#LoadStore
