@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.9 2008/03/18 20:46:36 cube Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.10 2008/03/20 16:00:16 cube Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.9 2008/03/18 20:46:36 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.10 2008/03/20 16:00:16 cube Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -105,6 +105,8 @@ ahci_pci_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	pci_intr_handle_t intrhandle;
 	void *ih;
+
+	sc->ah_sc.sc_atac.atac_dev = self;
 
 	if (pci_mapreg_map(pa, AHCI_PCI_ABAR,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0,
