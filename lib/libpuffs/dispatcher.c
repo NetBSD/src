@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatcher.c,v 1.30 2008/01/28 18:35:50 pooka Exp $	*/
+/*	$NetBSD: dispatcher.c,v 1.31 2008/03/20 15:28:03 pooka Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: dispatcher.c,v 1.30 2008/01/28 18:35:50 pooka Exp $");
+__RCSID("$NetBSD: dispatcher.c,v 1.31 2008/03/20 15:28:03 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -133,9 +133,24 @@ dispatch(struct puffs_cc *pcc)
 	struct puffs_usermount *pu = pcc->pcc_pu;
 	struct puffs_ops *pops = &pu->pu_ops;
 	struct puffs_req *preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
-	void *auxbuf = preq; /* help with typecasting */
-	void *opcookie = preq->preq_cookie;
-	int error, buildpath;
+	void *auxbuf; /* help with typecasting */
+	void *opcookie;
+	int error = 0, buildpath;
+
+	/* XXX: smaller hammer, please */
+	if ((PUFFSOP_OPCLASS(preq->preq_opclass == PUFFSOP_VFS &&
+	    preq->preq_optype == PUFFS_VFS_VPTOFH)) ||
+	    (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VN &&
+	    (preq->preq_optype == PUFFS_VN_READDIR
+	    || preq->preq_optype == PUFFS_VN_READ))) {
+		if (puffs_framebuf_reserve_space(pcc->pcc_pb,
+		    PUFFS_MSG_MAXSIZE) == -1)
+			error = errno;
+		preq = puffs__framebuf_getdataptr(pcc->pcc_pb);
+	}
+
+	auxbuf = preq;
+	opcookie = preq->preq_cookie;
 
 	assert((pcc->pcc_flags & PCC_DONE) == 0);
 
@@ -150,6 +165,9 @@ dispatch(struct puffs_cc *pcc)
 	/* pre-operation */
 	if (pu->pu_oppre)
 		pu->pu_oppre(pu);
+
+	if (error)
+		goto out;
 
 	/* Execute actual operation */
 	if (PUFFSOP_OPCLASS(preq->preq_opclass) == PUFFSOP_VFS) {
@@ -899,6 +917,8 @@ dispatch(struct puffs_cc *pcc)
 		 */
 		error = EINVAL;
 	}
+
+ out:
 	preq->preq_rv = error;
 
 	if (pu->pu_oppost)
