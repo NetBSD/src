@@ -1,4 +1,4 @@
-/*      $NetBSD: devfsd_dev.c,v 1.1.8.1 2008/02/21 20:44:55 mjf Exp $ */
+/*      $NetBSD: devfsd_dev.c,v 1.1.8.2 2008/03/20 12:26:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@ dev_create(struct dctl_kerndev *kerndev, intptr_t cookie)
 	ddev->d_cookie = cookie;
 
 	strlcpy(ddev->d_kname, kerndev->k_name, sizeof(ddev->d_kname));
+	ddev->d_type = kerndev->k_type;
 
 	SLIST_INIT(&ddev->d_node_head);
 	TAILQ_INIT(&ddev->d_pairing);
@@ -107,16 +108,17 @@ dev_add_node(struct devfs_dev *dev, struct devfs_mount *dmp)
 	return 0;
 }
 
-int
-dev_del_node(struct devfs_dev *dev, struct devfs_mount *dmp)
+/*
+ * NOTE: 
+ * It is the responsibility of the caller to check that this
+ * device node is present on 'dmp'.
+ */
+void
+dev_del_node(struct devfs_dev *dev, struct devfs_node *node)
 {
-	struct devfs_node *node;
-
-	SLIST_FOREACH(node, &dev->d_node_head, n_next) {
-		if (node->n_cookie.sc_mount != dmp->m_id)
-			continue;
-	}
-	return 0;
+	SLIST_REMOVE(&dev->d_node_head, node, devfs_node, n_next);
+	free(node->n_attr.d_component.in_pthcmp.d_filename);
+	free(node);
 }
 
 /*
@@ -139,15 +141,13 @@ dev_destroy(struct devfs_dev *dev)
 	}
 
 	if (removed == false) {
-		warnx("%p not on device list\n", dev);
+		syslog(LOG_WARNING, "%p not on device list\n", dev);
 		return;
 	}
 		
 	/* Free all nodes allocated for this device */
-	SLIST_FOREACH(node, &dev->d_node_head, n_next) {
-		SLIST_REMOVE(&dev->d_node_head, node, devfs_node, n_next);
-		free(node);
-	}
+	SLIST_FOREACH(node, &dev->d_node_head, n_next)
+		dev_del_node(dev, node);
 
 	/*
 	 * TODO: Must remove this device from every rule's list of devices
@@ -168,7 +168,7 @@ dev_apply_rule(struct devfs_dev *dd, struct devfs_rule *r)
 	struct devfs_mount *dmp;
 
 	if ((rd = malloc(sizeof(*rd))) == NULL) {
-		warn("could not allocate rule2dev structure");	
+		syslog(LOG_WARNING, "could not allocate rule2dev structure");	
 		return;
 	}
 
@@ -202,14 +202,23 @@ void
 dev_apply_rule_node(struct devfs_node *node, struct devfs_mount *dmp, 
 	struct devfs_rule *r)
 {
-	if (strncmp(r->r_mntpath, 
-    	    dmp->m_pathname, sizeof(r->r_mntpath)) != 0)
-		return;
+	if (strlen(r->r_mntpath) > 0) {
+		if (strncmp(r->r_mntpath, 
+    	    	    dmp->m_pathname, sizeof(r->r_mntpath)) != 0)
+			return;
+	}
 
-	if (r->r_filename != NULL)
-		strlcpy(node->n_attr.d_component.out_pthcmp.d_pthcmp,
-		    r->r_filename, 
-		    sizeof(node->n_attr.d_component.out_pthcmp.d_pthcmp));
+	if (r->r_filename != NULL) {
+		char *filename;
+		filename = node->n_attr.d_component.in_pthcmp.d_filename;
+		free(filename);
+		filename = malloc(strlen(r->r_filename) + 1);
+		if (filename == NULL)
+			syslog(LOG_WARNING, "cannot apply filename rule");
+
+		strlcpy(filename, r->r_filename, strlen(r->r_filename) + 1);
+		node->n_attr.d_component.in_pthcmp.d_filename = filename;
+	}
 
 	if (r->r_mode != DEVFS_RULE_ATTR_UNSET)
 		node->n_attr.d_mode = r->r_mode;
