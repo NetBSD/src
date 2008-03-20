@@ -1,4 +1,4 @@
-/*      $NetBSD: n_cosh.c,v 1.7 2003/08/07 16:44:50 agc Exp $ */
+/*      $NetBSD: n_cosh.c,v 1.8 2008/03/20 16:41:26 mhitch Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -82,7 +82,13 @@ static char sccsid[] = "@(#)cosh.c	8.1 (Berkeley) 6/4/93";
  */
 
 #define _LIBM_STATIC
+#include "../src/namespace.h"
 #include "mathimpl.h"
+
+#ifdef __weak_alias
+__weak_alias(cosh, _cosh);
+__weak_alias(coshf, _coshf);
+#endif
 
 vc(mln2hi, 8.8029691931113054792E1   ,0f33,43b0,2bdb,c7e2,   7, .B00F33C7E22BDB)
 vc(mln2lo,-4.9650192275318476525E-16 ,1b60,a70f,582a,279e, -50,-.8F1B60279E582A)
@@ -131,4 +137,10 @@ cosh(double x)
 
 	else
 	    return(exp(x)*half);	/* for large x,  cosh(x)=exp(x)/2 */
+}
+
+float
+coshf(float x)
+{
+	return(cosh((double)x));
 }
