@@ -1,4 +1,4 @@
-/*	$NetBSD: intrdefs.h,v 1.1 2008/03/20 09:09:20 kochi Exp $	*/
+/*	$NetBSD: intrdefs.h,v 1.2 2008/03/20 14:56:06 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
-*/
+ */
 
 #ifndef _IA64_INTRDEFS_H_
 #define _IA64_INTRDEFS_H_
