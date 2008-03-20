@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd_rule.c,v 1.1.8.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: devfsd_rule.c,v 1.1.8.2 2008/03/20 12:26:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,6 @@
  * TODO:
  *	- check that we're handling retaining/releasing objects correctly
  *	- possibly check for duplicate rules (if not too expensive)?
- *	- write code for devices list and associate rule with device
  */
 
 #include <sys/queue.h>
@@ -130,10 +129,13 @@ rule_parsefile(const char *filename)
 		}
 
 		sr->r_mode = sr->r_uid = sr->r_gid = DEVFS_RULE_ATTR_UNSET;
+		sr->r_flags = -1;	/* default visibility unspecified */
+
+		TAILQ_INIT(&sr->r_pairing);
 
 		rule = prop_dictionary_get_keysym(dict, obj1);
 		if (rule == NULL) {		
-			fprintf(stderr, "%s: could not read rule\n", filename);
+			syslog(LOG_ERR, "%s: could not read rule\n", filename);
 		    	return -1;
 		}
 		
@@ -220,6 +222,8 @@ handle_match(const char *key, char *value, struct devfs_rule *sr)
 		sr->r_product = value;
 	} else if (!strncmp(key, "drivername", strlen("drivername"))) {
 		sr->r_drivername = value;
+	} else if (!strncmp(key, "fstype", strlen("fstype"))) {
+		sr->r_disk.r_fstype = value;
 	} else {
 		errno = EINVAL;
 		return -1;
@@ -243,12 +247,10 @@ handle_attributes(const char *key, char *value, struct devfs_rule *sr)
 	} else if (!strncmp(key, "gid", strlen("gid"))) {
 		sr->r_gid = atoi(value);
 	} else if (!strncmp(key, "visibility", strlen("visibility"))) {
-		if (!strncmp(value, "visibile", strlen("visibile"))) {
-			sr->r_flags &= ~DEVFS_INVISIBLE;
-			sr->r_flags |= DEVFS_VISIBLE;
+		if (!strncmp(value, "visible", strlen("visible"))) {
+			sr->r_flags = DEVFS_VISIBLE;
 		} else if (!strncmp(value, "invisible", strlen("invisible"))) {
-			sr->r_flags &= ~DEVFS_INVISIBLE;
-			sr->r_flags |= DEVFS_INVISIBLE;
+			sr->r_flags = DEVFS_INVISIBLE;
 		} else {
 			errno = EINVAL;
 			return -1;
@@ -392,7 +394,6 @@ construct_rule(struct devfs_rule *dr)
 			goto out;
 		}
 
-		printf("uid=%s\n", buf);
 		tmp_string = prop_string_create_cstring(buf);
 
 		if (prop_dictionary_set(tmp2, "uid", tmp_string) != true) {

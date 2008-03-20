@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.c,v 1.1.8.2 2008/02/24 10:59:05 mjf Exp $ */
+/* 	$NetBSD: devfsd.c,v 1.1.8.3 2008/03/20 12:26:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,9 @@ static int init(void);
 static int update(struct devfs_dev *, struct dctl_msg *);
 static void device_found(struct devfs_dev *);
 static void device_create_nodes(struct devfs_dev *);
-static void push_nodes(struct devfs_dev *, struct devfs_mount *);
+static void push_nodes(struct devfs_dev *);
+static void push_node(struct devfs_node *);
+static void device_disappear(struct devfs_dev *);
 static void mount_found(struct devfs_mount *);
 static void mount_disappear(struct devfs_mount *);
 static bool rule_match(struct devfs_rule *, struct devfs_dev *);
@@ -104,15 +106,14 @@ main(int argc, char **argv)
 	 * rule list, 'rule_list'.
 	 */
 	if (rule_parsefile(_PATH_CONFIG) != 0)
-		err(EXIT_FAILURE, "%s: could not parse\n", _PATH_CONFIG);
+		err(EXIT_FAILURE, "%s", _PATH_CONFIG);
 
 	if ((dctl_fd = open(_PATH_DCTL, O_RDONLY, 0)) < 0)
 		err(EXIT_FAILURE, "%s: could not open", _PATH_DCTL);
 	
-	/* Don't close stdin/stdout/stderr when we goto bg 
+	/* Don't close stdin/stdout/stderr when we goto bg */
 	if (daemon(0, 1) != 0)
 		err(EXIT_FAILURE, "could not demonize");
-	*/
 
 	if ((fkq = kqueue()) < 0)
 		err(EXIT_FAILURE, "cannot create event queue");
@@ -120,6 +121,8 @@ main(int argc, char **argv)
 	ev = allocevchange();
 	EV_SET(ev, dctl_fd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0,
 	    (intptr_t) dispatch_read_dctl);
+
+	openlog("devfsd", LOG_PID, LOG_DAEMON);
 
 	/* Handle events from the device driver */
 	for (;;) {
@@ -129,7 +132,7 @@ main(int argc, char **argv)
 		if (rv == 0)
 			continue;
 		if (rv < 0) {
-			warnx("kevent() failed");
+			syslog(LOG_ERR, "kevent() failed");
 			continue;
 		}
 		for (i = 0; i < rv; i++) {
@@ -157,84 +160,86 @@ dispatch_read_dctl(struct kevent *ev)
 	rv = ioctl(fd, DCTL_IOC_NEXTEVENT, &msg);
 	if (rv >= 0) {
 		switch(msg.d_type) {
-			case DCTL_NEW_DEVICE:
-				printf("dctl: new device %s\n", 
-				    msg.d_kdev.k_name);
-				de = dev_create(&msg.d_kdev, msg.d_dc);
-				if (de == NULL) {
-					warnx("could not internalize device\n");
-					return;
-				}
+		case DCTL_NEW_DEVICE:
+			de = dev_create(&msg.d_kdev, msg.d_dc);
+			if (de == NULL) {
+				syslog(LOG_ERR, 
+				    "could not internalize device\n");
+				return;
+			}
 
-				/*
-				 * We need to create special files for this
-				 * device on all devfs file systems (whether
-				 * they are visible or not in a file system is
-				 * not our concern, they still need to be
-				 * attached to it).
-				 */
-				device_create_nodes(de);
-				
-				/* 
-				 * Run rules against our device and it's
-				 * nodes.
-				 */
-				device_found(de);
+			/*
+			 * We need to create special files for this
+			 * device on all devfs file systems (whether
+			 * they are visible or not in a file system is
+			 * not our concern, they still need to be
+			 * attached to it).
+			 */
+			device_create_nodes(de);
+			
+			/* 
+			 * Run rules against our device and it's
+			 * nodes. Pass in some extra info.
+			 */
+			device_found(de);
 
-				/*
-				 * Push the new nodes into their respective
-				 * file systems at once!
-				 */
-				push_nodes(de, NULL);
-				break;
-			case DCTL_UPDATE_NODE_ATTR:
-				printf("dctl: updated device attrs\n");
-				de = dev_lookup(msg.d_sn);
-				if (de == NULL) {
-					warnx("could not find device to update\n");
-					return;
-				}
-				if (update(de, &msg) == -1)
-					warnx("your changes will be lost on reboot\n");
-				break;
+			/*
+			 * Push the new nodes into their respective
+			 * file systems at once!
+			 */
+			push_nodes(de);
+			break;
+		case DCTL_UPDATE_NODE_ATTR:
+			de = dev_lookup(msg.d_sn);
+			if (de == NULL) {
+				syslog(LOG_ERR, 
+				    "could not find device to update\n");
+				return;
+			}
+			if (update(de, &msg) == -1)
+				syslog(LOG_WARNING, 
+				    "your changes will be lost on reboot\n");
+			break;
 
-			case DCTL_UPDATE_NODE_NAME:
-				printf("dctl: filename for node updated\n");
-				break;
+		case DCTL_UPDATE_NODE_NAME:
+			break;
 
-			case DCTL_NEW_MOUNT:
-				printf("dctl: new devfs mount: %s\n",
-				    msg.d_mp.m_pathname);
+		case DCTL_NEW_MOUNT:
+			dmp = mount_create(msg.d_mc,
+			    msg.d_mp.m_pathname, msg.d_mp.m_visibility);
 
-				dmp = mount_create(msg.d_mc,
-				    msg.d_mp.m_pathname, msg.d_mp.m_visibility);
+			if (dmp == NULL) {
+				syslog(LOG_ERR,
+				    "failed to internalize mount\n");
+				return;
+			}
 
-				if (dmp == NULL) {
-					warnx("failed to internalize mount\n");
-					return;
-				}
+			mount_found(dmp);
+			break;
+		case DCTL_UNMOUNT:
+			dmp = mount_lookup(msg.d_mc);
 
-				mount_found(dmp);
-				break;
-			case DCTL_UNMOUNT:
-				dmp = mount_lookup(msg.d_mc);
+			if (dmp == NULL) {
+				syslog(LOG_ERR, "unknown mount removed\n");
+				return;
+			}
 
-				if (dmp == NULL) {
-					warnx("unknown mount removed\n");
-					return;
-				}
+			mount_disappear(dmp);
+			mount_destroy(dmp);
 
-				printf("dctl: devfs mount gone: %s\n",
-				    dmp->m_pathname);
-
-				mount_disappear(dmp);
-				mount_destroy(dmp);
-
-				break;
-			case DCTL_REMOVED_DEVICE:
-				printf("dctl: device removed: %s\n",
-				    msg.d_kdev.k_name);
-				break;
+			break;
+		case DCTL_REMOVED_DEVICE:
+			de = dev_lookup(msg.d_sn);
+			if (de == NULL) {
+				syslog(LOG_ERR, 
+				    "could not find device to update\n");
+				return;
+			}
+			device_disappear(de);
+			break;
+		default:
+			syslog(LOG_ERR, "Unknown event: %d\n", msg.d_type);
+			break;
 		}
 	} else if (rv < 0 && errno != EINTR) {
 		/*      
@@ -243,42 +248,58 @@ dispatch_read_dctl(struct kevent *ev)
 		*/
 		struct kevent *cev = allocevchange();
 		EV_SET(cev, fd, EVFILT_READ, EV_DISABLE,
-		0, 0, (intptr_t) dispatch_read_dctl);
+		    0, 0, (intptr_t) dispatch_read_dctl);
 	}
 }
 
 /*      
  * Dispatch routine for writing /dev/dctl
  *
- * If 'dmp' is NULL we push these nodes in to _ALL_ device file systems.
+ * Push all device nodes for device 'dev' into their respective
+ * devfs file systems.
  */
 static void
-push_nodes(struct devfs_dev *dev, struct devfs_mount *dmp)
+push_nodes(struct devfs_dev *dev)
+{
+	struct devfs_node *node;
+
+	SLIST_FOREACH(node, &dev->d_node_head, n_next)
+		push_node(node);
+}
+
+static void
+push_node(struct devfs_node *node)
 {
 	int rv;
 	struct dctl_msg msg;
-	struct devfs_node *node;
 
-	SLIST_FOREACH(node, &dev->d_node_head, n_next) {
+	memset(&msg, 0, sizeof(msg));
 
-		if (dmp != NULL) {
-			/* Ensure we push nodes into the correct fs */
-			if (node->n_cookie.sc_mount != dmp->m_id)
-				continue;
-		}
+	msg.d_sn = node->n_cookie;
+	msg.d_attr = node->n_attr;
+	rv = ioctl(dctl_fd, DCTL_IOC_CREATENODE, &msg);
 
-		memset(&msg, 0, sizeof(msg));
+	if (rv < 0)
+		syslog(LOG_WARNING, "could not push node into devfs");
+}
 
-		msg.d_sn = node->n_cookie;
-		msg.d_attr = node->n_attr;
-		printf("creating node: %s\n", 
-	    	    msg.d_attr.d_component.in_pthcmp.d_filename);
+/*
+ * Delete a node from it's mount point.
+ */
+static void
+delete_node(struct devfs_node *node)
+{
+	int rv;
+	struct dctl_msg msg;
 
-		rv = ioctl(dctl_fd, DCTL_IOC_CREATENODE, &msg);
+	memset(&msg, 0, sizeof(msg));
 
-		if (rv < 0)
-			warn("could not push node into devfs");
-	}
+	msg.d_sn = node->n_cookie;
+	msg.d_attr = node->n_attr;
+	rv = ioctl(dctl_fd, DCTL_IOC_DELETENODE, &msg);
+
+	if (rv < 0)
+		syslog(LOG_WARNING, "could not delete node");
 }
 
 static int
@@ -314,13 +335,13 @@ update(struct devfs_dev *dev, struct dctl_msg *msg)
 	}
 
 	if (node == NULL) {
-		warnx("node not on device node list\n");
+		syslog(LOG_WARNING, "node not on device node list\n");
 		return -1;
 	}
 
 	if (msg->d_type != DCTL_UPDATE_NODE_ATTR &&
 	    msg->d_type != DCTL_UPDATE_NODE_NAME) {
-		warnx("%s: node not being updated\n", 
+		syslog(LOG_WARNING, "%s: node not being updated\n", 
 		    node->n_attr.d_component.out_pthcmp.d_pthcmp);
 		return -1;
 	}
@@ -341,7 +362,7 @@ update(struct devfs_dev *dev, struct dctl_msg *msg)
 	rule_rebuild_attr(dev);
 
 	if (rule_writefile(_PATH_CONFIG) != 0) {
-		warnx("%s: could not write to file", _PATH_CONFIG);
+		syslog(LOG_WARNING, "%s: could not write to file", _PATH_CONFIG);
 		return -1;
 	}
 
@@ -370,8 +391,10 @@ static void
 device_create_nodes(struct devfs_dev *dev)
 {
 	struct devfs_mount *dmp;
-	SLIST_FOREACH(dmp, &mount_list, m_next)
-		dev_add_node(dev, dmp);
+	SLIST_FOREACH(dmp, &mount_list, m_next) {
+		if (dev_add_node(dev, dmp) == -1)
+			syslog(LOG_WARNING, "could not add node to devfs_dev");
+	}	
 }
 
 /*
@@ -388,7 +411,7 @@ mount_found(struct devfs_mount *dmp)
 
 	SLIST_FOREACH(dev, &dev_list, d_next) {
 		if ((error = dev_add_node(dev, dmp)) != 0) {
-			warnx("could not add node to device");
+			syslog(LOG_WARNING, "could not add node to device");
 			continue;
 		}
 
@@ -397,9 +420,21 @@ mount_found(struct devfs_mount *dmp)
 		TAILQ_FOREACH(r2d, &dev->d_pairing, r_next_rule)
 			dev_apply_rule_node(node, dmp, r2d->r_rule);
 
-		printf("Pushing nodes to kernel from daemon: %s\n", dmp->m_pathname);
-		push_nodes(dev, dmp);
+		push_node(node);
 	}		
+}
+
+void
+device_disappear(struct devfs_dev *dev)
+{
+	struct devfs_node *node;
+
+	/* First delete the node in the file systems */
+	SLIST_FOREACH(node, &dev->d_node_head, n_next)
+		delete_node(node);
+
+	/* Destroy the device (which also removes and free()s all nodes) */
+	dev_destroy(dev);
 }
 
 /*
@@ -418,12 +453,21 @@ mount_disappear(struct devfs_mount *dmp)
 			if (node->n_cookie.sc_mount != dmp->m_id)
 				continue;
 		}
+
+		/* Does the device node exist on this mount? */
+		if (node == NULL)
+			continue;
+
+		dev_del_node(dev, node);
 	}
 }
 
 /*
  * This function tries to match a rule against a device. It returns
  * true if the rule matches the device and false otherwise.
+ *
+ * => NOTE: The truth value of a match is a conjunction of the match
+ *    criteria.
  *
  * XXX: Find some way to implement subsystem specific matching functions.
  * 	For example, we should be able to match a network adapter by its
@@ -432,7 +476,32 @@ mount_disappear(struct devfs_mount *dmp)
 static bool
 rule_match(struct devfs_rule *rule, struct devfs_dev *dev)
 {
-	return false;
+	int error;
+	bool match = false;
+
+	/* Simplest way to match is by driver name */
+	if (rule->r_drivername != NULL) {
+		if (strcmp(rule->r_drivername, dev->d_kname) == 0)
+			match = true;
+	}
+
+	/* Handle disks */
+	if (dev->d_type == DEV_DISK) {
+		struct dctl_ioctl_data idata;
+
+		idata.d_dev = dev->d_cookie;
+		idata.d_type = DEV_DISK;
+
+		error = ioctl(dctl_fd, DCTL_IOC_INNERIOCTL, &idata);
+		if (rule->r_disk.r_fstype != NULL) {
+			if (strcmp(rule->r_disk.r_fstype, 
+			    idata.i_args.di.di_fstype))
+				match = true;	
+		} else
+			match = false;
+
+	}
+	return match;
 }
 
 static void

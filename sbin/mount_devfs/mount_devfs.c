@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_devfs.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/*	$NetBSD: mount_devfs.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
 
 /*
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: mount_devfs.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $");
+__RCSID("$NetBSD: mount_devfs.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -80,6 +80,8 @@ mount_devfs(int argc, char *argv[])
 {
 	char canon_dir[MAXPATHLEN];
 	int gidset, modeset, uidset; /* Ought to be 'bool'. */
+	int initset = 0;
+	int visible = 1;
 	int ch, mntflags;
 	gid_t gid;
 	uid_t uid;
@@ -101,11 +103,19 @@ mount_devfs(int argc, char *argv[])
 	modeset = 0; mode = 0;
 
 	optind = optreset = 1;
-	while ((ch = getopt(argc, argv, "g:m:o:s:u:")) != -1 ) {
+	while ((ch = getopt(argc, argv, "fg:im:o:s:u:v")) != -1 ) {
 		switch (ch) {
+		case 'f':
+			initset = 1;
+			break;
+
 		case 'g':
 			gid = a_gid(optarg);
 			gidset = 1;
+			break;
+		
+		case 'i':
+			visible = 0;
 			break;
 
 		case 'm':
@@ -130,6 +140,10 @@ mount_devfs(int argc, char *argv[])
 		case 'u':
 			uid = a_uid(optarg);
 			uidset = 1;
+			break;
+
+		case 'v':
+			visible = 1;
 			break;
 
 		case '?':
@@ -157,6 +171,8 @@ mount_devfs(int argc, char *argv[])
 	args.ta_root_uid = uidset ? uid : sb.st_uid;
 	args.ta_root_gid = gidset ? gid : sb.st_gid;
 	args.ta_root_mode = modeset ? mode : sb.st_mode;
+	args.ta_init = initset ? 1 : 0;
+	args.ta_visible = visible ? 1 : 0;
 
 	if (mount(MOUNT_DEVFS, canon_dir, mntflags, &args, sizeof args) == -1)
 		err(EXIT_FAILURE, "devfs on %s", canon_dir);
