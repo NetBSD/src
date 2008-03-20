@@ -1,4 +1,4 @@
-/*      $NetBSD: n_sinh.c,v 1.6 2003/08/07 16:44:52 agc Exp $ */
+/*      $NetBSD: n_sinh.c,v 1.7 2008/03/20 16:41:26 mhitch Exp $ */
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -75,7 +75,13 @@ static char sccsid[] = "@(#)sinh.c	8.1 (Berkeley) 6/4/93";
  */
 
 #define _LIBM_STATIC
+#include "../src/namespace.h"
 #include "mathimpl.h"
+
+#ifdef __weak_alias
+__weak_alias(sinh, _sinh);
+__weak_alias(sinhf, _sinhf);
+#endif
 
 vc(mln2hi, 8.8029691931113054792E1   ,0f33,43b0,2bdb,c7e2,   7, .B00F33C7E22BDB)
 vc(mln2lo,-4.9650192275318476525E-16 ,1b60,a70f,582a,279e, -50,-.8F1B60279E582A)
@@ -118,4 +124,10 @@ sinh(double x)
 
 	else  /* sinh(+-INF) = +-INF, sinh(+-big no.) overflow to +-INF */
 	    return( expm1(x)*sign );
+}
+
+float
+sinhf(float x)
+{
+	return(sinh((double)x));
 }

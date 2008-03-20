@@ -1,4 +1,4 @@
-/*	$NetBSD: n_atan2.S,v 1.6 2003/08/07 16:44:44 agc Exp $	*/
+/*	$NetBSD: n_atan2.S,v 1.7 2008/03/20 16:41:26 mhitch Exp $	*/
 /*
  * Copyright (c) 1985, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,21 @@
  *	atan2(y,x) returns the exact ARG(x+iy) nearly rounded.
  */
 
-ENTRY(atan2, 0x0fc0)
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(atan2, _atan2f)
+#endif
+
+ENTRY(_atan2f, 0)
+	cvtfd	4(%ap),-(%sp)
+	calls	$2,_C_LABEL(_atan2)
+	cvtdf	%r0,%r0
+	ret
+
+#ifdef WEAK_ALIAS
+WEAK_ALIAS(atan2, _atan2)
+#endif
+
+ENTRY(_atan2, 0x0fc0)
 	movq	4(%ap),%r2		# %r2 = y
 	movq	12(%ap),%r4		# %r4 = x
 	bicw3	$0x7f,%r2,%r0
