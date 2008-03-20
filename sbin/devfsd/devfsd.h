@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.h,v 1.1.8.2 2008/02/24 10:59:05 mjf Exp $ */
+/* 	$NetBSD: devfsd.h,v 1.1.8.3 2008/03/20 12:26:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/ioctl.h>
 #include <sys/condvar.h>
 #include <sys/statvfs.h>
+#include <syslog.h>
 
 #include <prop/proplib.h>
 #include <dev/dctl/dctlio.h>
@@ -68,16 +69,22 @@ struct devfs_rule {
 	const char	r_mntpath[_VFS_MNAMELEN];
 
         /*                                  
-         * How to match.
+         * How to match (generic).
          */
         const char      *r_label;
         const char      *r_manufacturer;        /* manufacturer of device */
         const char      *r_product;             /* product name */
-        /* Driver name given by kernel, i.e. "sd" for sd(4). */
-        const char      *r_drivername;
+        const char      *r_drivername;		/* e.g. "wd" for wd(4) */
+
+	/* 
+	 * How we can match a disk type device.
+	 */
+	struct {
+		const char	*r_fstype;		/* file system type */
+	} r_disk;
 
         /*
-         * Attributes to set.
+         * Attributes to set when we find a match.
          */
         char      	*r_filename;    /* filename to use */
         mode_t          r_mode;         
@@ -86,8 +93,8 @@ struct devfs_rule {
         int             r_flags; 	/* see below */
 };
 
-#define DEVFS_INVISIBLE         0x001           /* hide entry from userland */
-#define DEVFS_VISIBLE           0x002           /* make entry visible to
+#define DEVFS_INVISIBLE         0x000           /* hide entry from userland */
+#define DEVFS_VISIBLE           0x001           /* make entry visible to
                                                  * userland */
 #define DEVFS_RULE_ATTR_UNSET	0xdeadbeef	/* attribute is not set */
 
@@ -113,8 +120,9 @@ struct devfs_node {
  * 'd_node_head' member.
  */
 struct devfs_dev {      
-	intptr_t 		d_cookie;	/* cookie for this device */
+	int32_t			d_cookie;	/* cookie for this device */
 	char			d_kname[16];	/* device driver name */
+	enum devtype 		d_type;		/* dev type, see dctlio.h  */
 	SLIST_ENTRY(devfs_dev) 	d_next;  	/* next device in list */
 	SLIST_HEAD(, devfs_node) d_node_head; 	/* nodes for this device */
 	TAILQ_HEAD(, rule2dev) d_pairing;
@@ -155,7 +163,7 @@ void dev_apply_rule_node(struct devfs_node *, struct devfs_mount *,
 void dev_destroy(struct devfs_dev *);
 struct devfs_dev *dev_lookup(struct dctl_node_cookie);
 int dev_add_node(struct devfs_dev *, struct devfs_mount *);
-int dev_del_node(struct devfs_dev *, struct devfs_mount *);
+void dev_del_node(struct devfs_dev *, struct devfs_node *);
 
 struct devfs_mount *mount_create(int32_t, const char *, int);
 struct devfs_mount *mount_lookup(int32_t);

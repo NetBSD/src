@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctlio.h,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: dctlio.h,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/statvfs.h>
 #include <sys/fstypes.h>
 #include <sys/param.h>
+#include <sys/disklabel.h>
+#include <sys/conf.h>
 
 enum dmsgtype {
 	DCTL_NEW_MOUNT,
@@ -61,8 +63,6 @@ struct dctl_specnode_attr {
 			char	d_pthcmp[90];
 		} out_pthcmp;
 	} d_component;
-
-	prop_dictionary_t d_properties;
 };
 
 struct dctl_mount {
@@ -73,6 +73,7 @@ struct dctl_mount {
 
 struct dctl_kerndev {
 	char k_name[16];
+	enum devtype k_type;
 };
 
 /*
@@ -81,7 +82,7 @@ struct dctl_kerndev {
  * nodes that refer to it.
  */
 struct dctl_node_cookie {
-	intptr_t sc_dev;	/* cookie for device */
+	dev_t sc_dev;		/* cookie for device */
 	int32_t sc_mount;	/* cookie for mount point */
 };
 
@@ -96,7 +97,7 @@ struct dctl_node_cookie {
 struct dctl_msg {
 	enum dmsgtype d_type;
 	union {
-		intptr_t c_dev;		/* device cookie */
+		dev_t c_dev;		/* device cookie */
 		int32_t c_mount;	/* mount point cookie */
 		struct dctl_node_cookie c_specnode; /* dev spec node cookie */
 	} d_cookie;
@@ -118,8 +119,30 @@ struct dctl_event_entry {
 	SIMPLEQ_ENTRY(dctl_event_entry)	de_entries;
 };
 
+/*
+ * A structure that contains information about a disk device that
+ * is suitable for use by devfsd(8) for matching rules.
+ */
+struct dctl_disk_info {
+	const char *di_fstype;	/* file system type */
+};
+
+/*
+ * The generic structure used by devfsd(8) to gather information about
+ * a device, which will later be used for matching.
+ */
+struct dctl_ioctl_data {
+	enum devtype d_type;
+	dev_t d_dev;		/* device cookie */
+	u_long d_cmd;
+	union {
+		struct dctl_disk_info di;
+	} i_args;
+};
+
 #define	DCTL_IOC_NEXTEVENT _IOR('A', 0, struct dctl_msg) /* fetch event */
 #define DCTL_IOC_CREATENODE _IOW('A', 1, struct dctl_msg) /* create node */
 #define DCTL_IOC_DELETENODE _IOW('A', 2, struct dctl_msg) /* delete node */
+#define DCTL_IOC_INNERIOCTL _IOR('A', 3, struct dctl_ioctl_data)
 
 #endif /* _DEV_DCTL_DCTLIO_H_ */

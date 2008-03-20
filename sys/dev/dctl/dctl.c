@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctl.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: dctl.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $");
 
 #if defined(DEBUG) && !defined(DCTLDEBUG)
 #define	DCTLDEBUG
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $");
 #include <sys/proc.h>
 #include <sys/kthread.h>
 #include <sys/lock.h>
+#include <sys/vnode.h>
 #include <sys/user.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
@@ -92,6 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $");
 #include <sys/poll.h>
 #include <sys/queue.h>
 #include <sys/conf.h>
+#include <sys/namei.h>
 
 #include <dev/dctl/dctlvar.h>
 #include <dev/dctl/dctl.h>
@@ -127,7 +129,7 @@ int	dctldebug = 0;
 static int	dctl_record_event(struct dctl_msg *);
 static void	dctl_periodic_device_check(void);
 static void	dctl_thread(void *);
-static int	dctl_mount_change(const char *, int32_t , enum dmsgtype);
+static int	dctl_mount_change(const char *, int32_t , enum dmsgtype, int);
 
 void dctl_init(void);
 void dctlattach(int);
@@ -154,30 +156,6 @@ static	int dctl_initialised = 0;
 static	struct devicelist ourdevs = TAILQ_HEAD_INITIALIZER(ourdevs);
 
 /*
- * A device has been removed from the machine.
- */
-void
-dctl_device_gone(device_t dev)
-{
-	struct dctl_msg *msg;
-	msg = kmem_zalloc(sizeof(*msg), KM_SLEEP);
-	if (msg == NULL) {
-		printf("couldn't alloc memory for message\n");
-		return;
-	}
-
-	msg->d_type = DCTL_REMOVED_DEVICE;
-
-	/* cookie */
-	msg->d_dc = (intptr_t)dev;
-	strlcpy(msg->d_kdev.k_name, device_xname(dev), 
-	    sizeof(msg->d_kdev));
-
-	dctl_record_event(msg);
-	return;
-}
-
-/*
  * A new devfs mount has been created, so kick devfsd(8). What devfsd 
  * will actually do is figure out appropriate attributes for device nodes
  * that need to populate this mount and then pass them through dctl to the
@@ -187,18 +165,18 @@ dctl_device_gone(device_t dev)
  * 'cookie' uniquely identifies the mount point.
  */
 int
-dctl_mount_msg(const char *path, int32_t cookie)
+dctl_mount_msg(const char *path, int32_t cookie, int visibility)
 {
-	return dctl_mount_change(path, cookie, DCTL_NEW_MOUNT);
+	return dctl_mount_change(path, cookie, DCTL_NEW_MOUNT, visibility);
 }
 
 /*
  * A devfs mount point has been destroyed.
  */
 int
-dctl_unmount_msg(int32_t cookie)
+dctl_unmount_msg(int32_t cookie, int visibility)
 {
-	return dctl_mount_change(NULL, cookie, DCTL_UNMOUNT);
+	return dctl_mount_change(NULL, cookie, DCTL_UNMOUNT, visibility);
 }
 
 /*
@@ -207,7 +185,8 @@ dctl_unmount_msg(int32_t cookie)
  * it must be the mount point pathname of the devfs being mounted.
  */
 static int
-dctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type)
+dctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type,
+	int visibility)
 {
 	int error;
 	struct dctl_msg *msg;
@@ -227,6 +206,8 @@ dctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type)
 		    
 	}
 
+	msg->d_mp.m_visibility = visibility;
+
 	DCTL_LOCK(&dctl_lock);
 	if ((error = dctl_record_event(msg)) != 0)
 		kmem_free(msg, sizeof(*msg));
@@ -243,7 +224,7 @@ dctl_mount_change(const char *path, int32_t cookie, enum dmsgtype type)
  * filename is not being updated, nfilename must be NULL.
  */
 int
-dctl_attr_msg(int32_t mount_cookie, intptr_t dev_cookie, mode_t nmode, 
+dctl_attr_msg(int32_t mount_cookie, dev_t dev_cookie, mode_t nmode, 
 	uid_t nuid, gid_t ngid, int nflags, char *nfilename)
 {
 	int error;
@@ -292,12 +273,34 @@ dctl_push_node(struct dctl_node_cookie nc, struct dctl_specnode_attr *na)
 {
 	int error;
 	int32_t mcookie = nc.sc_mount;
-	int32_t dcookie = nc.sc_dev;
+	dev_t dcookie = nc.sc_dev;
 	const char *path = na->d_component.in_pthcmp.d_filename;
+	struct device_name *dn;
+
+	/* Lookup the device_name for this device */
+	dn = device_lookup_info(dcookie);
+	if (dn == NULL)
+		return EINVAL;
 
 	error = devfs_create_node(mcookie, path, dcookie, na->d_uid, 
-	    na->d_gid, na->d_mode, na->d_flags);
+	    na->d_gid, na->d_mode, na->d_flags, dn->d_char);
 	    
+	return error;
+}
+
+/*
+ * Given attributes for a new device node ask the devfs identifed
+ * by 'dcookie' to delete it.
+ */
+static int
+dctl_delete_node(struct dctl_node_cookie nc, struct dctl_specnode_attr *na)
+{
+	int error;
+	int32_t mcookie = nc.sc_mount;
+	dev_t dcookie = nc.sc_dev;
+	const char *path = na->d_component.in_pthcmp.d_filename;
+
+	error = devfs_remove_node(mcookie, path, dcookie, na->d_flags);
 	return error;
 }
 
@@ -339,12 +342,13 @@ dctl_record_event(struct dctl_msg *msg)
 static void
 dctl_periodic_device_check(void)
 {
-	struct device *dev;
+	struct device_name *dn;
 	struct dctl_msg *msg;
 
-	/* Check for new devices */
-	TAILQ_FOREACH(dev, &alldevs, dv_list) {
-		if (dev->dv_dlist.tqe_prev == NULL) {
+	/* Check for new and removed devices */
+	mutex_enter(&dname_lock);
+	TAILQ_FOREACH(dn, &device_names, d_next) {
+		if (dn->d_found == false) {
 
 			/* Found a new device so create a new msg */
 			msg = kmem_zalloc(sizeof(*msg), KM_SLEEP);
@@ -356,18 +360,48 @@ dctl_periodic_device_check(void)
 			msg->d_type = DCTL_NEW_DEVICE;
 
 			/* cookie */
-			msg->d_dc = (intptr_t)dev;
-			strlcpy(msg->d_kdev.k_name, device_xname(dev), 
+			msg->d_dc = dn->d_dev;
+			strlcpy(msg->d_kdev.k_name, dn->d_name, 
 			    sizeof(msg->d_kdev));
 
-			TAILQ_INSERT_TAIL(&ourdevs, dev, dv_dlist);
+			/* type of device */
+			msg->d_kdev.k_type = dn->d_type;
+
+			dn->d_found = true;
 			if (dctl_record_event(msg) == -1) {
 				printf("could not record new device event\n");
 				kmem_free(msg, sizeof(*msg));
 				return;
 			}
 		}
+
+		if (dn->d_gone == true) {
+			msg = kmem_zalloc(sizeof(*msg), KM_SLEEP);
+			if (msg == NULL) {
+				printf("couldn't alloc memory for message\n");
+				continue;
+			}
+
+			msg->d_type = DCTL_REMOVED_DEVICE;
+
+			/* cookie */
+			msg->d_dc = dn->d_dev;
+			strlcpy(msg->d_kdev.k_name, dn->d_name, 
+			    sizeof(msg->d_kdev));
+
+			TAILQ_REMOVE(&device_names, dn, d_next);
+
+			if (dctl_record_event(msg) == -1) {
+				printf("could not record new device event\n");
+				kmem_free(msg, sizeof(*msg));
+				return;
+			}
+#if 0
+			kmem_free(dn, sizeof(*dn));
+#endif
+		}
 	}
+	mutex_exit(&dname_lock);
 }
 
 void
@@ -428,13 +462,14 @@ dctlopen(dev_t dev, int flag, int mode, struct lwp *l)
 int
 dctlclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	DCTL_LOCK(&dctl_lock); 
-	struct device *odev;
+	struct device_name *dn;
 
-	while ((odev = TAILQ_FIRST(&ourdevs)) != NULL) {
-		TAILQ_REMOVE(&ourdevs, odev, dv_dlist);
-		odev->dv_dlist.tqe_prev = NULL;
-	}
+	DCTL_LOCK(&dctl_lock); 
+
+	mutex_enter(&dname_lock);
+	TAILQ_FOREACH(dn, &device_names, d_next)
+		dn->d_found = false;
+	mutex_exit(&dname_lock);
 
 	dctl_open = 0;
 	sc->sc_event_count = 0;
@@ -449,6 +484,7 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error;
 	struct dctl_msg *msg;
 	struct dctl_event_entry *ee;
+	struct dctl_ioctl_data *idata;
 
 	DCTL_LOCK(&dctl_lock);
 	switch (cmd) {
@@ -474,7 +510,6 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DCTL_IOC_CREATENODE:
 		msg = (struct dctl_msg *)data;
 		if (msg == NULL) {
-			printf("argument is NULL\n");
 			error = EINVAL;
 			break;
 		}
@@ -484,6 +519,70 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * the attributes passed to us from userland.
 		 */
 		error = dctl_push_node(msg->d_sn, &msg->d_attr);
+		break;
+	case DCTL_IOC_DELETENODE:
+		msg = (struct dctl_msg *)data;
+		if (msg == NULL) {
+			error = EINVAL;
+			break;
+		}
+		error = dctl_delete_node(msg->d_sn, &msg->d_attr);
+		break;
+	case DCTL_IOC_INNERIOCTL:
+		/* 
+		 * Because devfsd(8) needs to query devices through ioctls
+		 * _before_ their nodes have been pushed into devfs file
+		 * systems we provide a way to perform the ioctl without
+		 * the need for an open file descriptor in userland.
+		 */
+		error = EINVAL;
+
+		idata = (struct dctl_ioctl_data *)data;
+
+		const struct cdevsw *cdev = cdevsw_lookup(idata->d_dev);
+
+		/* Handle disk devices */
+		if (idata->d_type == DEV_DISK) {
+			int partno;			/* partition number */
+			struct disklabel dlabel;
+			struct partition part;
+
+			error = cdev->d_ioctl(idata->d_dev, idata->d_cmd, 
+			    &dlabel, 0, curlwp);
+
+			if (error)
+				break;
+
+			partno = DISKPART(idata->d_dev);
+			part = dlabel.d_partitions[partno];
+
+			if (part.p_fstype == FS_BSDFFS)
+				idata->i_args.di.di_fstype = "BSDFFS";
+			else if (part.p_fstype == FS_SWAP)
+				idata->i_args.di.di_fstype = "SWAP";
+			else if (part.p_fstype == FS_MSDOS)
+				idata->i_args.di.di_fstype = "MSDOS";
+			else if (part.p_fstype == FS_BSDLFS)
+				idata->i_args.di.di_fstype = "LFS";
+			else if (part.p_fstype == FS_ISO9660)
+				idata->i_args.di.di_fstype = "ISO9660";
+			else if (part.p_fstype == FS_ADOS)
+				idata->i_args.di.di_fstype = "ADOS";
+			else if (part.p_fstype == FS_HFS)
+				idata->i_args.di.di_fstype = "HFS";
+			else if (part.p_fstype == FS_FILECORE)
+				idata->i_args.di.di_fstype = "FILECORE";
+			else if (part.p_fstype == FS_EX2FS)
+				idata->i_args.di.di_fstype = "EXT2FS";
+			else if (part.p_fstype == FS_NTFS)
+				idata->i_args.di.di_fstype = "NTFS";
+			else if (part.p_fstype == FS_RAID)
+				idata->i_args.di.di_fstype = "RAID";
+			else if (part.p_fstype == FS_CCD)
+				idata->i_args.di.di_fstype = "CCD";
+			else if (part.p_fstype == FS_APPLEUFS)
+				idata->i_args.di.di_fstype = "APPLEUFS";
+		}	
 		break;
 	default:
 		error = ENOTTY;

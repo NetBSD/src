@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_devfs.8,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $
+.\"	$NetBSD: mount_devfs.8,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $
 .\"
 .\" Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,11 +43,14 @@
 .Nd mount a device file system
 .Sh SYNOPSIS
 .Nm
+.Op Fl f
 .Op Fl g Ar group
+.Op Fl i
 .Op Fl m Ar mode
 .Op Fl o Ar options
 .Op Fl u Ar user
-.Ar tmpfs
+.Op Fl v
+.Ar devfs
 .Ar mount_point
 .Sh DESCRIPTION
 The
@@ -62,9 +65,14 @@ described below.
 .Pp
 The following options are supported:
 .Bl -tag -width XoXoptions
+.It Fl f
+Requires that the device file system be forcibly unmounted.
 .It Fl g Ar group
 Specifies the group name or GID of the root inode of the file system.
 Defaults to the mount point's GID.
+.It Fl i
+Specifies that the default visibility for this device file system 
+should be invisible.
 .It Fl m Ar mode
 Specifies the mode (in octal notation) of the root inode of the file system.
 Defaults to the mount point's mode.
@@ -79,6 +87,9 @@ man page for possible options and their meanings.
 .It Fl u Ar user
 Specifies the user name or UID of the root inode of the file system.
 Defaults to the mount point's UID.
+.It Fl v
+Specifies that the default visibility for this device file system should 
+be visible.
 .El
 .Pp
 Every option that accepts a numerical value as its argument can take a
@@ -93,13 +104,13 @@ to indicate megabytes or a trailing
 to indicate gigabytes.
 Note that both lowercase and uppercase forms of these letters are allowed.
 .Sh EXAMPLES
-The following command mounts a tmpfs instance over the
-.Pa /tmp
+The following command mounts a devfs instance over the
+.Pa /dev
 directory, inheriting its owner, group and mode settings:
 .Pp
-.Ic "mount -t tmpfs tmpfs /tmp"
+.Ic "mount -t devfs devfs /dev"
 .Pp
-The following command mounts a tmpfs instance over the
+The following command mounts a devfs instance over the
 .Pa /mnt
 directory, setting a 20 megabytes limit in space, owned by the
 .Sq joe
@@ -107,7 +118,7 @@ user and belonging to the
 .Sq users
 group, with a restricted 0700 mode:
 .Pp
-.Ic "mount -t devfs -o -ujoe -o -gusers -o -m0700 tmpfs /mnt"
+.Ic "mount -t devfs -o -ujoe -o -gusers -o -m0700 devfs /mnt"
 .Pp
 See
 .Pa /usr/share/examples/fstab/fstab.devfs
@@ -127,7 +138,7 @@ If there is not enough main memory to hold this information, the system may
 become unstable or very unresponsive because it will not be able to allocate
 required memory.
 A malicious user could trigger this condition if he could create lots of
-files inside a size-unbounded tmpfs file system.
+files inside a size-unbounded devfs file system.
 Limiting the number of nodes per file system
 .Pq Fl n
 will prevent this; the default value for this setting is also often adjusted

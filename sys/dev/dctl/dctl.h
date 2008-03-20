@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctl.h,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $ */
+/* 	$NetBSD: dctl.h,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,9 +31,8 @@
 #ifndef _DEV_DCTL_DCTL_H_
 #define _DEV_DCTL_DCTL_H_
 
-int dctl_mount_msg(const char *, int32_t);
-int dctl_unmount_msg(int32_t);
-int dctl_attr_msg(int32_t , intptr_t, mode_t, uid_t, gid_t, int, char *);
-void dctl_device_gone(device_t);
+int dctl_mount_msg(const char *, int32_t, int);
+int dctl_unmount_msg(int32_t, int);
+int dctl_attr_msg(int32_t, dev_t, mode_t, uid_t, gid_t, int, char *);
 
 #endif /* _DEV_DCTL_DCTL_H_ */
