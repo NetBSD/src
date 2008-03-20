@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_devsw.c,v 1.15 2008/02/13 18:43:16 matt Exp $	*/
+/*	$NetBSD: subr_devsw.c,v 1.15.6.1 2008/03/20 12:11:07 mjf Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15 2008/02/13 18:43:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15.6.1 2008/03/20 12:11:07 mjf Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -86,6 +86,9 @@ __KERNEL_RCSID(0, "$NetBSD: subr_devsw.c,v 1.15 2008/02/13 18:43:16 matt Exp $")
 #include <sys/tty.h>
 #include <sys/cpu.h>
 #include <sys/buf.h>
+#include <sys/dirent.h>
+#include <machine/stdarg.h>
+#include <sys/disklabel.h>
 
 #ifdef DEVSW_DEBUG
 #define	DPRINTF(x)	printf x
@@ -109,15 +112,39 @@ static int cdevsw_attach(const struct cdevsw *, int *);
 static void devsw_detach_locked(const struct bdevsw *, const struct cdevsw *);
 
 kmutex_t devsw_lock;
+extern kmutex_t dname_lock;
+
+/*
+ * A table of initialisation functions for device drivers that
+ * don't have an attach routine.
+ */
+void (*devsw_init_funcs[])(void) = {
+	bpf_init,
+	cttyinit,
+	mem_init,
+	swap_init,
+	NULL, 
+};    
 
 void
 devsw_init(void)
 {
+	int i;
 
 	KASSERT(sys_bdevsws < MAXDEVSW - 1);
 	KASSERT(sys_cdevsws < MAXDEVSW - 1);
 
 	mutex_init(&devsw_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&dname_lock, MUTEX_DEFAULT, IPL_NONE);
+	TAILQ_INIT(&device_names);
+
+	/* 
+	 * Technically, some device drivers don't ever get 'attached'
+	 * so we provide this table to allow device drivers to register
+	 * their device names.
+	 */
+	for (i = 0; devsw_init_funcs[i] != NULL; i++)
+		devsw_init_funcs[i]();
 }
 
 int
@@ -863,4 +890,98 @@ cdev_type(dev_t dev)
 	if ((d = cdevsw_lookup(dev)) == NULL)
 		return D_OTHER;
 	return d->d_flag & D_TYPEMASK;
+}
+
+/*
+ * Register a dev_t and name for a device driver with devfs.
+ * We maintain a TAILQ of registered device drivers names and dev_t's.
+ *
+ * => if devp is NULL this device has no device_t instance. An example
+ *    of this is zero(4).
+ *
+ * => if there already exists another name for this dev_t, then 'name'
+ *    is assumed to be an alias of a previously registered device driver. 
+ * TODO: The above isn't actually true at the moment, we just return 0.
+ *
+ * => 'cdev' indiciates whether we are a char or block device.
+ *     If 'cdev' is true, we are a character device, otherwise we
+ *     are a block device.
+ */
+int
+device_register_name(dev_t dev, device_t devp, boolean_t cdev,
+	enum devtype dtype, const char *fmt, ...)
+{
+	struct device_name *dn;
+	va_list ap;
+
+	/* TODO: Check for aliases */
+
+	dn = kmem_zalloc(sizeof(*dn), KM_NOSLEEP);
+	if (dn == NULL)
+		return ENOMEM;
+
+	dn->d_dev = dev;
+	dn->d_devp = devp;
+	dn->d_char = cdev;
+	dn->d_type = dtype;
+
+	dn->d_name = kmem_zalloc(MAXNAMLEN, KM_NOSLEEP);
+	va_start(ap, fmt);
+	vsnprintf(dn->d_name, MAXNAMLEN, fmt, ap);
+	va_end(ap);
+
+	mutex_enter(&dname_lock);
+	TAILQ_INSERT_TAIL(&device_names, dn, d_next);
+	mutex_exit(&dname_lock);
+
+	return 0;
+}
+
+/*
+ * Remove a previously registered name for 'dev'.
+ *
+ * => This must be called twice with different values for 'dev' if
+ *    the caller previously registered a name for a character device
+ *    and a name for a block device.
+ */
+int
+device_unregister_name(dev_t dev, const char *fmt, ...)
+{
+	int error = 0;
+	struct device_name *dn;
+	va_list ap;
+	char name[MAXNAMLEN];
+
+	va_start(ap, fmt);
+	vsnprintf(name, MAXNAMLEN, fmt, ap);
+	va_end(ap);
+
+	mutex_enter(&dname_lock);
+	TAILQ_FOREACH(dn, &device_names, d_next) {
+		if (strcmp(dn->d_name, name) == 0)
+			break;
+	}
+
+	if (dn != NULL)
+		dn->d_gone = true;
+	else
+		error = EINVAL;
+
+	mutex_exit(&dname_lock);
+	return error;
+}
+
+struct device_name *
+device_lookup_info(dev_t dev)
+{
+	struct device_name *dn;
+
+	mutex_enter(&dname_lock);
+	TAILQ_FOREACH(dn, &device_names, d_next) {
+		if (dn->d_dev == dev)
+			break;
+	}
+	mutex_exit(&dname_lock);
+
+	return dn;
 }
