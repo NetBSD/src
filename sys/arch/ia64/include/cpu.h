@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.4 2007/10/17 19:55:00 garbled Exp $	*/
+/*	$NetBSD: cpu.h,v 1.5 2008/03/20 09:09:20 kochi Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -98,6 +98,9 @@ struct cpu_info {
 	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 
+	volatile int ci_mtx_count;	/* Negative count of spin mutexes */
+	volatile int ci_mtx_oldspl;	/* Old SPL at this ci_idepth */
+
 	/* XXX: Todo */
 	/*
 	 * Private members.
@@ -117,14 +120,17 @@ struct cpu_info {
 extern struct cpu_info cpu_info_primary;
 
 #ifdef MULTIPROCESSOR
-/* XXX: TODO */
+/*
+ * XXX: TODO use percpu infrastructure that yamt proposed or use KR? for
+ * storing the percpu pointer.
+ */
 #else
 #define	curcpu() (&cpu_info_primary)
 #endif /* MULTIPROCESSOR */
 
 #define cpu_number() 0              /*XXX: FIXME */
 
-#define aston(p)		((p)->p_md.md_astpending = 1)
+#define aston(l) ((l)->l_md.md_astpending = 1)
 
 #define	need_resched(ci)            /*XXX: FIXME */
 
@@ -141,34 +147,41 @@ struct clockframe {
 #define	TRAPF_CPL(tf)		((tf)->tf_special.psr & IA64_PSR_CPL)
 #define	TRAPF_USERMODE(tf)	(TRAPF_CPL(tf) != IA64_PSR_CPL_KERN)
 
-
-
-
-
-
-
 /*
  * Give a profiling tick to the current process when the user profiling
  * buffer pages are invalid. XXX:Fixme.... On the ia64 I haven't yet figured 
  * out what to do about this.. XXX.
  */
-
-
-#define	need_proftick(p)
+/* extern void	cpu_need_proftick(struct lwp *l); */
+#define cpu_need_proftick(l)
 
 /*
- * Notify the current process (p) that it has a signal pending,
- * process as soon as possible.
+ * Notify the LWP l that it has a signal pending, process as soon as possible.
  */
-#define	signotify(p)		aston(p)
+#define	cpu_signotify(l)	aston(l)
+
+// void cpu_need_resched(struct cpu_info *ci, int flags)
+#define cpu_need_resched(ci, f) do { \
+} while(0)
 
 #define setsoftclock()              /*XXX: FIXME */
 
 /* machdep.c */
-int	cpu_maxproc(void); /*XXX: Fill in machdep.c */
+int cpu_maxproc(void); /*XXX: Fill in machdep.c */
 
 #define	cpu_proc_fork(p1, p2) /* XXX: Look into this. */
 
+#define DELAY(x)		/* XXX: FIXME */
+
+static inline void cpu_idle(void);
+static inline
+void cpu_idle()
+{
+	asm ("hint @pause" ::: "memory");
+}
+
+/* XXX: revisit later */
+#define __NO_CPU_LWP_FREE
 
 #endif /* _KERNEL_ */
 #endif /* _IA64_CPU_H */
