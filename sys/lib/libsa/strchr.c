@@ -1,4 +1,4 @@
-/*	$NetBSD: strchr.c,v 1.1 2008/03/14 22:27:32 dsl Exp $	*/
+/*	$NetBSD: strchr.c,v 1.2 2008/03/21 10:24:13 rtr Exp $	*/
 
 /*-
  * Copyright (c) 2008, The NetBSD Foundation, Inc.
@@ -51,5 +51,9 @@ strchr(const char *s, int c)
 
 	while (*s != 0 && *s != ch)
 		s++;
+
+	if (*s != ch)
+		return NULL;
+
 	return __UNCONST(s);
 }
