@@ -1,4 +1,4 @@
-/*	$NetBSD: jmide.c,v 1.4 2008/03/18 20:46:37 cube Exp $	*/
+/*	$NetBSD: jmide.c,v 1.5 2008/03/21 08:25:38 xtraeme Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.4 2008/03/18 20:46:37 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jmide.c,v 1.5 2008/03/21 08:25:38 xtraeme Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,28 +434,29 @@ jmahci_print(void *aux, const char *pnp)
 
 
 #ifdef NJMAHCI
-static int  jmahci_match(struct device *, struct cfdata *, void *);
-static void jmahci_attach(struct device *, struct device *, void *);
+static int  jmahci_match(device_t, cfdata_t, void *);
+static void jmahci_attach(device_t, device_t, void *);
 
-CFATTACH_DECL(jmahci, sizeof(struct ahci_softc),
+CFATTACH_DECL_NEW(jmahci, sizeof(struct ahci_softc),
 	jmahci_match, jmahci_attach, NULL, NULL);
 
 static int
-jmahci_match(struct device *parent, struct cfdata *match, void *aux)
+jmahci_match(device_t parent, cfdata_t match, void *aux)
 {
 	return 1;
 }
 
 static void
-jmahci_attach(struct device *parent, struct device *self, void *aux)
+jmahci_attach(device_t parent, device_t self, void *aux)
 {
 	struct jmahci_attach_args *jma = aux;
 	struct pci_attach_args *pa = jma->jma_pa;
-	struct ahci_softc *sc = (struct ahci_softc *)self;
+	struct ahci_softc *sc = device_private(self);
 
 	aprint_naive(": AHCI disk controller\n");
 	aprint_normal("\n");
 
+	sc->sc_atac.atac_dev = self;
 	sc->sc_ahcit = jma->jma_ahcit;
 	sc->sc_ahcih = jma->jma_ahcih;
 	sc->sc_dmat = jma->jma_pa->pa_dmat;
