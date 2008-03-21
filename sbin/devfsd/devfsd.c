@@ -1,4 +1,4 @@
-/* 	$NetBSD: devfsd.c,v 1.1.8.3 2008/03/20 12:26:12 mjf Exp $ */
+/* 	$NetBSD: devfsd.c,v 1.1.8.4 2008/03/21 16:51:00 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ static int default_visibility = DEVFS_VISIBLE;
 
 /* kqueue stuff */
 static struct kevent *allocevchange(void);
-static int wait_for_events(struct kevent *, size_t);
+static int wait_for_events(struct kevent *, size_t, bool);
 static void dispatch_read_dctl(struct kevent *);
 static int fkq;
 static int dctl_fd;
@@ -81,14 +81,18 @@ int
 main(int argc, char **argv)
 {
 	int ch;
+	bool single_run = false;
 	struct kevent events[16], *ev;
 
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "iv")) != -1) {
+	while ((ch = getopt(argc, argv, "isv")) != -1) {
 		switch(ch) {
 		case 'i':
 			default_visibility = DEVFS_INVISIBLE;
+			break;
+		case 's':
+			single_run = true;
 			break;
 		case 'v':
 			default_visibility = DEVFS_VISIBLE;
@@ -111,9 +115,11 @@ main(int argc, char **argv)
 	if ((dctl_fd = open(_PATH_DCTL, O_RDONLY, 0)) < 0)
 		err(EXIT_FAILURE, "%s: could not open", _PATH_DCTL);
 	
-	/* Don't close stdin/stdout/stderr when we goto bg */
-	if (daemon(0, 1) != 0)
-		err(EXIT_FAILURE, "could not demonize");
+	if (single_run != true) {
+		/* Don't close stdin/stdout/stderr when we goto bg */
+		if (daemon(0, 1) != 0)
+			err(EXIT_FAILURE, "could not demonize");
+	}
 
 	if ((fkq = kqueue()) < 0)
 		err(EXIT_FAILURE, "cannot create event queue");
@@ -128,9 +134,12 @@ main(int argc, char **argv)
 	for (;;) {
 		void (*handler)(struct kevent *);
 		int i, rv;
-		rv = wait_for_events(events, A_CNT(events));
-		if (rv == 0)
+		rv = wait_for_events(events, A_CNT(events), single_run);
+		if (rv == 0) {
+			if (single_run == true)
+				break;
 			continue;
+		}
 		if (rv < 0) {
 			syslog(LOG_ERR, "kevent() failed");
 			continue;
@@ -521,19 +530,26 @@ allocevchange(void)
 {               
 	if (nchanges == A_CNT(changebuf)) {  
 		/* XXX Error handling could be improved. */
-		(void) wait_for_events(NULL, 0);
+		(void) wait_for_events(NULL, 0, false);
 	}
 
 	return &changebuf[nchanges++];
 }
 
 static int
-wait_for_events(struct kevent *events, size_t nevents)
+wait_for_events(struct kevent *events, size_t nevents, bool timeout)
 {
 	int rv;
 
-	rv = kevent(fkq, nchanges ? changebuf : NULL, nchanges,
-	    events, nevents, NULL);
+	struct timespec tout = { 1, 0 };	/* 1sec timeout */
+
+	if (timeout != true)
+		rv = kevent(fkq, nchanges ? changebuf : NULL, nchanges,
+	    	    events, nevents, NULL);
+	else
+		rv = kevent(fkq, nchanges ? changebuf : NULL, nchanges,
+	    	    events, nevents, &tout);
+
 	nchanges = 0;
 	return rv;
 }       
