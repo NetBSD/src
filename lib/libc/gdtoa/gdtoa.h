@@ -1,4 +1,4 @@
-/* $NetBSD: gdtoa.h,v 1.7 2007/02/02 23:05:56 christos Exp $ */
+/* $NetBSD: gdtoa.h,v 1.8 2008/03/21 23:13:48 christos Exp $ */
 
 /****************************************************************
 
@@ -81,7 +81,8 @@ THIS SOFTWARE.
 	STRTOG_Inexhi	= 0x20,
 	STRTOG_Inexact	= 0x30,
 	STRTOG_Underflow= 0x40,
-	STRTOG_Overflow	= 0x80
+	STRTOG_Overflow	= 0x80,
+	STRTOG_NoMemory = 0x100
 	};
 
  typedef struct
