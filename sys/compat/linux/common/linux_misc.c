@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_misc.c,v 1.193 2008/01/15 22:38:34 njoly Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.194 2008/03/21 21:54:58 ad Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998, 1999 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.193 2008/01/15 22:38:34 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.194 2008/03/21 21:54:58 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -713,7 +713,7 @@ linux_sys_getdents(struct lwp *l, const struct linux_sys_getdents_args *uap, reg
 	int ncookies;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(l->l_proc->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
 	if ((fp->f_flag & FREAD) == 0) {
@@ -841,7 +841,7 @@ out:
 		free(cookiebuf, M_TEMP);
 	free(tbuf, M_TEMP);
 out1:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: darwin_stat.c,v 1.12 2007/12/20 23:02:46 dsl Exp $ */
+/*	$NetBSD: darwin_stat.c,v 1.13 2008/03/21 21:54:58 ad Exp $ */
 
 /*-
- * Copyright (c) 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.12 2007/12/20 23:02:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_stat.c,v 1.13 2008/03/21 21:54:58 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -73,7 +73,7 @@ darwin_sys_stat(struct lwp *l, const struct darwin_sys_stat_args *uap, register_
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error != 0)
 		return error;
 
@@ -95,7 +95,7 @@ darwin_sys_fstat(struct lwp *l, const struct darwin_sys_fstat_args *uap, registe
 	struct stat sb;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &sb);
+	error = do_sys_fstat(SCARG(uap, fd), &sb);
 	if (error != 0)
 		return error;
 
@@ -117,7 +117,7 @@ darwin_sys_lstat(struct lwp *l, const struct darwin_sys_lstat_args *uap, registe
 	struct stat sb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error != 0)
 		return error;
 

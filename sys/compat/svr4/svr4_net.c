@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_net.c,v 1.50 2007/12/08 18:36:25 dsl Exp $	*/
+/*	$NetBSD: svr4_net.c,v 1.51 2008/03/21 21:54:59 ad Exp $	*/
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.50 2007/12/08 18:36:25 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_net.c,v 1.51 2008/03/21 21:54:59 ad Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -104,7 +104,7 @@ enum {
 
 int svr4_netattach(int);
 
-int svr4_soo_close(struct file *, struct lwp *);
+int svr4_soo_close(file_t *);
 
 static const struct fileops svr4_netops = {
 	soo_read, soo_write, soo_ioctl, soo_fcntl, soo_poll,
@@ -125,10 +125,9 @@ svr4_netattach(int n)
 int
 svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct proc *p = l->l_proc;
 	int type, protocol;
 	int fd;
-	struct file *fp;
+	file_t *fp;
 	struct socket *so;
 	int error;
 	int family;
@@ -188,19 +187,16 @@ svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 		return EOPNOTSUPP;
 	}
 
-	/* falloc() will use the descriptor for us */
-	if ((error = falloc(l, &fp, &fd)) != 0)
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
 	if ((error = socreate(family, &so, type, protocol, l)) != 0) {
 		DPRINTF(("socreate error %d\n", error));
-		fdremove(p->p_fd, fd);
-		FILE_UNUSE(fp, NULL);
-		ffree(fp);
+		fd_abort(curproc, fp, fd);
 		return error;
 	}
 
-	error = fdclone(l, fp, fd, flag, &svr4_netops, so);
+	error = fd_clone(fp, fd, flag, &svr4_netops, so);
 	fp->f_type = DTYPE_SOCKET;
 	(void)svr4_stream_get(fp);
 
@@ -210,18 +206,18 @@ svr4_netopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 
 int
-svr4_soo_close(struct file *fp, struct lwp *l)
+svr4_soo_close(file_t *fp)
 {
-	struct socket *so = (struct socket *) fp->f_data;
+	struct socket *so = fp->f_data;
 
-	svr4_delete_socket(l->l_proc, fp);
+	svr4_delete_socket(curproc, fp);
 	free(so->so_internal, M_NETADDR);
-	return soo_close(fp, l);
+	return soo_close(fp);
 }
 
 
 struct svr4_strm *
-svr4_stream_get(struct file *fp)
+svr4_stream_get(file_t *fp)
 {
 	struct socket *so;
 	struct svr4_strm *st;
@@ -229,7 +225,7 @@ svr4_stream_get(struct file *fp)
 	if (fp == NULL || fp->f_type != DTYPE_SOCKET)
 		return NULL;
 
-	so = (struct socket *) fp->f_data;
+	so = fp->f_data;
 
 	if (so->so_internal)
 		return so->so_internal;

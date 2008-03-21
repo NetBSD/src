@@ -1,4 +1,4 @@
-/* $NetBSD: drm_drv.c,v 1.9 2008/03/04 11:52:38 drochner Exp $ */
+/* $NetBSD: drm_drv.c,v 1.10 2008/03/21 21:54:59 ad Exp $ */
 
 /* drm_drv.h -- Generic driver template -*- linux-c -*-
  * Created: Thu Nov 23 03:10:50 2000 by gareth@valinux.com
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.9 2008/03/04 11:52:38 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.10 2008/03/21 21:54:59 ad Exp $");
 /*
 __FBSDID("$FreeBSD: src/sys/dev/drm/drm_drv.c,v 1.6 2006/09/07 23:04:47 anholt Exp $");
 */
@@ -754,12 +754,12 @@ int drm_ioctl(DRM_CDEV kdev, u_long cmd, void *data, int flags,
 	case SIOCSPGRP:
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		return fsetown(p->l_proc, &dev->buf_pgid, cmd, data);
+		return fsetown(&dev->buf_pgid, cmd, data);
 
 	case SIOCGPGRP:
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		return fgetown(p->l_proc, dev->buf_pgid, cmd, data);
+		return fgetown(dev->buf_pgid, cmd, data);
 	}
 
 	if (IOCGROUP(cmd) != DRM_IOCTL_BASE) {

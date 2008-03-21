@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.190 2008/02/05 14:19:52 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.191 2008/03/21 21:55:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -626,7 +626,7 @@ void	vn_init1(void);
 
 /* see vnsubr(9) */
 int	vn_bwrite(void *);
-int 	vn_close(struct vnode *, int, kauth_cred_t, struct lwp *);
+int 	vn_close(struct vnode *, int, kauth_cred_t);
 int	vn_isunder(struct vnode *, struct vnode *, struct lwp *);
 int	vn_lock(struct vnode *, int);
 void	vn_markexec(struct vnode *);
@@ -638,7 +638,7 @@ int	vn_readdir(struct file *, char *, int, u_int, int *, struct lwp *,
     off_t **, int *);
 void	vn_restorerecurse(struct vnode *, u_int);
 u_int	vn_setrecurse(struct vnode *);
-int	vn_stat(struct vnode *, struct stat *, struct lwp *);
+int	vn_stat(struct vnode *, struct stat *);
 int	vn_kqfilter(struct file *, struct knote *);
 int	vn_writechk(struct vnode *);
 int	vn_openchk(struct vnode *, kauth_cred_t, int);
@@ -661,7 +661,7 @@ int	vlockmgr(struct vnlock *, int);
 int	vlockstatus(struct vnlock *);
 
 /* from vfs_syscalls.c - abused by compat code */
-int	getvnode(struct filedesc *, int, struct file **);
+int	getvnode(int, struct file **);
 
 /* see vfssubr(9) */
 void	vfs_getnewfsid(struct mount *);
