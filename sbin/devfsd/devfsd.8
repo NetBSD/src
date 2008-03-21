@@ -1,4 +1,4 @@
-.\" 	$NetBSD: devfsd.8,v 1.1.6.1 2008/02/21 20:44:55 mjf Exp $
+.\" 	$NetBSD: devfsd.8,v 1.1.6.2 2008/03/21 16:51:00 mjf Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -57,9 +57,12 @@ interacts with the kernel via
 in order to create device special files.
 The options are as follows:
 .Bl -tag
-Read rules from the specified configuration file.
 .It Fl i
 Set the default visibility of device special nodes to invisible.
+.It Fl s
+Gather information about all known devices and push nodes into all devfs
+mounts but do not stick around once this is done. This is known as single-pass
+mode.
 .It Fl v
 Set the default visibility of device special nodes to visible.
 .El
