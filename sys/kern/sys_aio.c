@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.15 2007/12/21 12:04:19 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.16 2008/03/21 21:55:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.15 2007/12/21 12:04:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.16 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -269,11 +269,9 @@ aio_process(struct aio_job *a_job)
 	struct proc *p = curlwp->l_proc;
 	struct aiocb *aiocbp = &a_job->aiocbp;
 	struct file *fp;
-	struct filedesc	*fdp = p->p_fd;
 	int fd = aiocbp->aio_fildes;
 	int error = 0;
 
-	KASSERT(fdp != NULL);
 	KASSERT(a_job->aio_op != 0);
 
 	if ((a_job->aio_op & (AIO_READ | AIO_WRITE)) != 0) {
@@ -285,7 +283,7 @@ aio_process(struct aio_job *a_job)
 			goto done;
 		}
 
-		fp = fd_getfile(fdp, fd);
+		fp = fd_getfile(fd);
 		if (fp == NULL) {
 			error = EBADF;
 			goto done;
@@ -298,7 +296,6 @@ aio_process(struct aio_job *a_job)
 		auio.uio_resid = aiocbp->aio_nbytes;
 		auio.uio_vmspace = p->p_vmspace;
 
-		FILE_USE(fp);
 		if (a_job->aio_op & AIO_READ) {
 			/*
 			 * Perform a Read operation
@@ -306,7 +303,7 @@ aio_process(struct aio_job *a_job)
 			KASSERT((a_job->aio_op & AIO_WRITE) == 0);
 
 			if ((fp->f_flag & FREAD) == 0) {
-				FILE_UNUSE(fp, curlwp);
+				fd_putfile(fd);
 				error = EBADF;
 				goto done;
 			}
@@ -320,7 +317,7 @@ aio_process(struct aio_job *a_job)
 			KASSERT(a_job->aio_op & AIO_WRITE);
 
 			if ((fp->f_flag & FWRITE) == 0) {
-				FILE_UNUSE(fp, curlwp);
+				fd_putfile(fd);
 				error = EBADF;
 				goto done;
 			}
@@ -328,7 +325,7 @@ aio_process(struct aio_job *a_job)
 			error = (*fp->f_ops->fo_write)(fp, &aiocbp->aio_offset,
 			    &auio, fp->f_cred, FOF_UPDATE_OFFSET);
 		}
-		FILE_UNUSE(fp, curlwp);
+		fd_putfile(fd);
 
 		/* Store the result value */
 		a_job->aiocbp.aio_nbytes -= auio.uio_resid;
@@ -341,11 +338,11 @@ aio_process(struct aio_job *a_job)
 		 */
 		struct vnode *vp;
 
-		if ((error = getvnode(fdp, fd, &fp)) != 0)
+		if ((error = fd_getvnode(fd, &fp)) != 0)
 			goto done; 
 
 		if ((fp->f_flag & FWRITE) == 0) {
-			FILE_UNUSE(fp, curlwp);
+			fd_putfile(fd);
 			error = EBADF;
 			goto done;
 		}
@@ -364,7 +361,7 @@ aio_process(struct aio_job *a_job)
 			    bioopsp->io_fsync(vp, 0);
 		}
 		VOP_UNLOCK(vp, 0);
-		FILE_UNUSE(fp, curlwp);
+		fd_putfile(fd);
 
 		/* Store the result value */
 		a_job->aiocbp._retval = (error == 0) ? 0 : -1;
@@ -555,7 +552,10 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap, register_t 
 
 	/* Check for invalid file descriptor */
 	fildes = (unsigned int)SCARG(uap, fildes);
-	if (fildes >= fdp->fd_nfiles || fdp->fd_ofiles[fildes] == NULL)
+	if (fildes >= fdp->fd_nfiles)
+		return EBADF;
+	membar_consumer();
+	if (fdp->fd_ofiles[fildes] == NULL || fdp->fd_ofiles[fildes]->ff_file == NULL)
 		return EBADF;
 
 	/* Check if AIO structure is initialized */

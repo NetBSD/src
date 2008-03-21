@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.23 2008/01/24 17:32:54 ad Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.24 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.23 2008/01/24 17:32:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.24 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ptm.h"
 
@@ -141,8 +141,8 @@ pty_alloc_master(struct lwp *l, int *fd, dev_t *dev)
 	struct vnode *vp;
 	int md;
 
-	if ((error = falloc(l, &fp, fd)) != 0) {
-		DPRINTF(("falloc %d\n", error));
+	if ((error = fd_allocfile(&fp, fd)) != 0) {
+		DPRINTF(("fd_allocfile %d\n", error));
 		return error;
 	}
 retry:
@@ -183,13 +183,10 @@ retry:
 	fp->f_ops = &vnops;
 	fp->f_data = vp;
 	VOP_UNLOCK(vp, 0);
-	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, l);
+	fd_affix(curproc, fp, *fd);
 	return 0;
 bad:
-	FILE_UNUSE(fp, l);
-	fdremove(l->l_proc->p_fd, *fd);
-	ffree(fp);
+	fd_abort(curproc, fp, *fd);
 	return error;
 }
 
@@ -243,8 +240,8 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	struct vnode *vp;
 
 	/* Grab a filedescriptor for the slave */
-	if ((error = falloc(l, &fp, fd)) != 0) {
-		DPRINTF(("falloc %d\n", error));
+	if ((error = fd_allocfile(&fp, fd)) != 0) {
+		DPRINTF(("fd_allocfile %d\n", error));
 		return error;
 	}
 
@@ -263,13 +260,10 @@ pty_alloc_slave(struct lwp *l, int *fd, dev_t dev)
 	fp->f_ops = &vnops;
 	fp->f_data = vp;
 	VOP_UNLOCK(vp, 0);
-	FILE_SET_MATURE(fp);
-	FILE_UNUSE(fp, l);
+	fd_affix(curproc, fp, *fd);
 	return 0;
 bad:
-	FILE_UNUSE(fp, l);
-	fdremove(l->l_proc->p_fd, *fd);
-	ffree(fp);
+	fd_abort(curproc, fp, *fd);
 	return error;
 }
 
@@ -335,12 +329,9 @@ ptmopen(dev_t dev, int flag, int mode, struct lwp *l)
 			 * a new linux module.
 			 */
 			if ((error = pty_grant_slave(l, ttydev)) != 0) {
-				struct file *fp =
-				    fd_getfile(l->l_proc->p_fd, fd);
+				file_t *fp = fd_getfile(fd);
 				if (fp != NULL) {
-					FILE_UNUSE(fp, l);
-					fdremove(l->l_proc->p_fd, fd);
-					ffree(fp);
+					fd_close(fd);
 				}
 				return error;
 			}
@@ -369,8 +360,7 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int error;
 	dev_t newdev;
 	int cfd, sfd;
-	struct file *fp;
-	struct proc *p = l->l_proc;
+	file_t *fp;
 
 	error = 0;
 	switch (cmd) {
@@ -390,12 +380,10 @@ ptmioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		DPRINTF(("ptmioctl EINVAL\n"));
 		return EINVAL;
 	}
-bad:
-	fp = fd_getfile(p->p_fd, cfd);
+ bad:
+	fp = fd_getfile(cfd);
 	if (fp != NULL) {
-		FILE_UNUSE(fp, l);
-		fdremove(p->p_fd, cfd);
-		ffree(fp);
+		fd_close(cfd);
 	}
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.28 2008/03/01 14:16:52 rmind Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.29 2008/03/21 21:55:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.28 2008/03/01 14:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.29 2008/03/21 21:55:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -470,31 +470,28 @@ int
 smb_dev2share(int fd, int mode, struct smb_cred *scred,
     struct smb_share **sspp)
 {
-	struct lwp *l = scred->scr_l;
-	struct file *fp;
+	file_t *fp;
 	struct vnode *vp;
 	struct smb_dev *sdp;
 	struct smb_share *ssp;
 	dev_t dev;
 	int error;
 
-	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
-	FILE_USE(fp);
-
-	vp = (struct vnode *) fp->f_data;
+	vp = fp->f_data;
 	if (fp->f_type != DTYPE_VNODE
 	    || (fp->f_flag & (FREAD|FWRITE)) == 0
 	    || vp->v_type != VCHR
 	    || vp->v_rdev == NODEV) {
-		FILE_UNUSE(fp, l);
+		fd_putfile(fd);
 		return (EBADF);
 	}
 
 	dev = vp->v_rdev;
 
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 
 	sdp = SMB_GETDEV(dev);
 	if (!sdp)

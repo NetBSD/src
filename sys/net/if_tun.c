@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.104 2008/03/01 14:16:52 rmind Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.105 2008/03/21 21:55:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.104 2008/03/01 14:16:52 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.105 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -688,12 +688,12 @@ tunioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case TIOCSPGRP:
 	case FIOSETOWN:
-		error = fsetown(l->l_proc, &tp->tun_pgid, cmd, data);
+		error = fsetown(&tp->tun_pgid, cmd, data);
 		break;
 
 	case TIOCGPGRP:
 	case FIOGETOWN:
-		error = fgetown(l->l_proc, tp->tun_pgid, cmd, data);
+		error = fgetown(tp->tun_pgid, cmd, data);
 		break;
 
 	default:

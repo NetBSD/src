@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.6 2007/12/20 23:03:10 dsl Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.7 2008/03/21 21:55:00 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -45,11 +45,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.6 2007/12/20 23:03:10 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.7 2008/03/21 21:55:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
-
 #include <sys/condvar.h>
 #include <sys/errno.h>
 #include <sys/fcntl.h>
@@ -84,7 +83,7 @@ static struct pool		mqmsg_poll;
 static LIST_HEAD(, mqueue)	mqueue_head =
 	LIST_HEAD_INITIALIZER(mqueue_head);
 
-static int	mq_close_fop(struct file *, struct lwp *);
+static int	mq_close_fop(file_t *);
 
 static const struct fileops mqops = {
 	fbadop_read, fbadop_write, fbadop_ioctl, fnullop_fcntl, fnullop_poll,
@@ -172,19 +171,17 @@ mqueue_access(struct lwp *l, struct mqueue *mq, mode_t acc_mode)
  *  => increments the reference on file entry
  */
 static int
-mqueue_get(struct lwp *l, mqd_t mqd, mode_t acc_mode, struct file **fpr)
+mqueue_get(struct lwp *l, mqd_t mqd, mode_t acc_mode, file_t **fpr)
 {
-	const struct proc *p = l->l_proc;
-	struct file *fp;
+	file_t *fp;
 	struct mqueue *mq;
 
 	/* Get the file and descriptor */
-	fp = fd_getfile(p->p_fd, (int)mqd);
+	fp = fd_getfile((int)mqd);
 	if (fp == NULL)
 		return EBADF;
 
 	/* Increment the reference of file entry, and lock the mqueue */
-	FILE_USE(fp);
 	mq = fp->f_data;
 	*fpr = fp;
 	mutex_enter(&mq->mq_mtx);
@@ -194,7 +191,7 @@ mqueue_get(struct lwp *l, mqd_t mqd, mode_t acc_mode, struct file **fpr)
 		return 0;
 	if ((acc_mode & fp->f_flag) == 0 || mqueue_access(l, mq, acc_mode)) {
 		mutex_exit(&mq->mq_mtx);
-		FILE_UNUSE(fp, l);
+		fd_putfile((int)mqd);
 		return EPERM;
 	}
 
@@ -226,9 +223,9 @@ abstimeout2timo(const void *uaddr, int *timo)
 }
 
 static int
-mq_close_fop(struct file *fp, struct lwp *l)
+mq_close_fop(file_t *fp)
 {
-	struct proc *p = l->l_proc;
+	struct proc *p = curproc;
 	struct mqueue *mq = fp->f_data;
 	bool destroy;
 
@@ -277,7 +274,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap, register_t *retva
 	} */
 	struct proc *p = l->l_proc;
 	struct mqueue *mq, *mq_new = NULL;
-	struct file *fp;
+	file_t *fp;
 	char *name;
 	int mqd, error, oflag;
 
@@ -346,7 +343,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap, register_t *retva
 	}
 
 	/* Allocate file structure and descriptor */
-	error = falloc(l, &fp, &mqd);
+	error = fd_allocfile(&fp, &mqd);
 	if (error) {
 		if (mq_new)
 			mqueue_destroy(mq_new);
@@ -383,9 +380,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap, register_t *retva
 		if ((oflag & O_CREAT) == 0) {
 			mutex_exit(&mqlist_mtx);
 			KASSERT(mq_new == NULL);
-			FILE_UNUSE(fp, l);
-			ffree(fp);
-			fdremove(p->p_fd, mqd);
+			fd_abort(p, fp, mqd);
 			kmem_free(name, MQ_NAMELEN);
 			return ENOENT;
 		}
@@ -407,19 +402,18 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap, register_t *retva
 	p->p_mqueue_cnt++;
 	mq->mq_refcnt++;
 	fp->f_data = mq;
-	FILE_SET_MATURE(fp);
 exit:
 	mutex_exit(&mq->mq_mtx);
 	mutex_exit(&mqlist_mtx);
-	FILE_UNUSE(fp, l);
 
 	if (mq_new)
 		mqueue_destroy(mq_new);
 	if (error) {
-		ffree(fp);
-		fdremove(p->p_fd, mqd);
-	} else
+		fd_abort(p, fp, mqd);
+	} else {
+		fd_affix(p, fp, mqd);
 		*retval = mqd;
+	}
 	kmem_free(name, MQ_NAMELEN);
 
 	return error;
@@ -439,7 +433,7 @@ static int
 mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
     unsigned *msg_prio, int t, ssize_t *mlen)
 {
-	struct file *fp = NULL;
+	file_t *fp = NULL;
 	struct mqueue *mq;
 	struct mq_msg *msg = NULL;
 	int error;
@@ -489,7 +483,7 @@ mq_receive1(struct lwp *l, mqd_t mqdes, void *msg_ptr, size_t msg_len,
 	cv_signal(&mq->mq_recv_cv);
 error:
 	mutex_exit(&mq->mq_mtx);
-	FILE_UNUSE(fp, l);
+	fd_putfile((int)mqdes);
 	if (error)
 		return error;
 
@@ -563,7 +557,7 @@ static int
 mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
     unsigned msg_prio, int t)
 {
-	struct file *fp = NULL;
+	file_t *fp = NULL;
 	struct mqueue *mq;
 	struct mq_msg *msg, *pos_msg;
 	struct proc *notify = NULL;
@@ -654,7 +648,7 @@ mq_send1(struct lwp *l, mqd_t mqdes, const char *msg_ptr, size_t msg_len,
 	cv_signal(&mq->mq_send_cv);
 error:
 	mutex_exit(&mq->mq_mtx);
-	FILE_UNUSE(fp, l);
+	fd_putfile((int)mqdes);
 
 	if (error) {
 		mqueue_freemsg(msg, size);
@@ -713,7 +707,7 @@ sys_mq_notify(struct lwp *l, const struct sys_mq_notify_args *uap, register_t *r
 		syscallarg(mqd_t) mqdes;
 		syscallarg(const struct sigevent *) notification;
 	} */
-	struct file *fp = NULL;
+	file_t *fp = NULL;
 	struct mqueue *mq;
 	struct sigevent sig;
 	int error;
@@ -746,7 +740,7 @@ sys_mq_notify(struct lwp *l, const struct sys_mq_notify_args *uap, register_t *r
 		mq->mq_notify_proc = NULL;
 	}
 	mutex_exit(&mq->mq_mtx);
-	FILE_UNUSE(fp, l);
+	fd_putfile((int)SCARG(uap, mqdes));
 
 	return error;
 }
@@ -758,7 +752,7 @@ sys_mq_getattr(struct lwp *l, const struct sys_mq_getattr_args *uap, register_t 
 		syscallarg(mqd_t) mqdes;
 		syscallarg(struct mq_attr *) mqstat;
 	} */
-	struct file *fp = NULL;
+	file_t *fp = NULL;
 	struct mqueue *mq;
 	struct mq_attr attr;
 	int error;
@@ -770,7 +764,7 @@ sys_mq_getattr(struct lwp *l, const struct sys_mq_getattr_args *uap, register_t 
 	mq = fp->f_data;
 	memcpy(&attr, &mq->mq_attrib, sizeof(struct mq_attr));
 	mutex_exit(&mq->mq_mtx);
-	FILE_UNUSE(fp, l);
+	fd_putfile((int)SCARG(uap, mqdes));
 
 	return copyout(&attr, SCARG(uap, mqstat), sizeof(struct mq_attr));
 }
@@ -783,7 +777,7 @@ sys_mq_setattr(struct lwp *l, const struct sys_mq_setattr_args *uap, register_t 
 		syscallarg(const struct mq_attr *) mqstat;
 		syscallarg(struct mq_attr *) omqstat;
 	} */
-	struct file *fp = NULL;
+	file_t *fp = NULL;
 	struct mqueue *mq;
 	struct mq_attr attr;
 	int error, nonblock;
@@ -810,7 +804,7 @@ sys_mq_setattr(struct lwp *l, const struct sys_mq_setattr_args *uap, register_t 
 		mq->mq_attrib.mq_flags &= ~O_NONBLOCK;
 
 	mutex_exit(&mq->mq_mtx);
-	FILE_UNUSE(fp, l);
+	fd_putfile((int)SCARG(uap, mqdes));
 
 	/*
 	 * Copy the data to the user-space.

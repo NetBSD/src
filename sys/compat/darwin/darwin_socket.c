@@ -1,7 +1,7 @@
-/*	$NetBSD: darwin_socket.c,v 1.18 2007/12/20 23:02:46 dsl Exp $ */
+/*	$NetBSD: darwin_socket.c,v 1.19 2008/03/21 21:54:58 ad Exp $ */
 
 /*-
- * Copyright (c) 2004 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.18 2007/12/20 23:02:46 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: darwin_socket.c,v 1.19 2008/03/21 21:54:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -243,7 +243,7 @@ darwin_sys_accept(struct lwp *l, const struct darwin_sys_accept_args *uap, regis
 		syscallarg(struct sockaddr *) name;
 		syscallarg(unsigned int *) anamelen;
 	} */
-	int error;
+	int error, fd;
 	struct mbuf *name;
 
 	error = do_sys_accept(l, SCARG(uap, s), &name, retval);
@@ -256,8 +256,11 @@ darwin_sys_accept(struct lwp *l, const struct darwin_sys_accept_args *uap, regis
 		    MSG_LENUSRSPACE, name);
 	if (name != NULL)
 		m_free(name);
-	if (error != 0)
-		fdrelease(l, *retval);
+	if (error != 0) {
+		fd = (int)*retval;
+		if (fd_getfile(fd) != NULL)
+			fd_close(fd);
+	}
 	return error;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_12.c,v 1.24 2007/12/20 23:02:45 dsl Exp $	*/
+/*	$NetBSD: vfs_syscalls_12.c,v 1.25 2008/03/21 21:54:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.24 2007/12/20 23:02:45 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_12.c,v 1.25 2008/03/21 21:54:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,13 +97,12 @@ compat_12_sys_getdirentries(struct lwp *l, const struct compat_12_sys_getdirentr
 		syscallarg(u_int) count;
 		syscallarg(long *) basep;
 	} */
-	struct proc *p = l->l_proc;
 	struct file *fp;
 	int error, done;
 	long loff;
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = getvnode(SCARG(uap, fd), &fp)) != 0)
 		return error;
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -118,7 +117,7 @@ compat_12_sys_getdirentries(struct lwp *l, const struct compat_12_sys_getdirentr
 	error = copyout(&loff, SCARG(uap, basep), sizeof(long));
 	*retval = done;
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }
 
@@ -137,7 +136,7 @@ compat_12_sys_stat(struct lwp *l, const struct compat_12_sys_stat_args *uap, reg
 	struct stat12 osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return (error);
 	compat_12_stat_conv(&sb, &osb);
@@ -161,7 +160,7 @@ compat_12_sys_lstat(struct lwp *l, const struct compat_12_sys_lstat_args *uap, r
 	struct stat12 osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return (error);
 	compat_12_stat_conv(&sb, &osb);
@@ -180,21 +179,16 @@ compat_12_sys_fstat(struct lwp *l, const struct compat_12_sys_fstat_args *uap, r
 		syscallarg(int) fd;
 		syscallarg(struct stat12 *) sb;
 	} */
-	struct proc *p = l->l_proc;
 	int fd = SCARG(uap, fd);
-	struct filedesc *fdp = p->p_fd;
 	struct file *fp;
 	struct stat ub;
 	struct stat12 oub;
 	int error;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
-
-	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
-	FILE_UNUSE(fp, l);
-
+	error = (*fp->f_ops->fo_stat)(fp, &ub);
+	fd_putfile(fd);
 	if (error == 0) {
 		compat_12_stat_conv(&ub, &oub);
 		error = copyout(&oub, SCARG(uap, sb), sizeof (oub));

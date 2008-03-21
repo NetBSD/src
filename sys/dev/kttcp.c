@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.25 2008/02/06 21:57:54 ad Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.26 2008/03/21 21:54:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.25 2008/02/06 21:57:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.26 2008/03/21 21:54:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -113,7 +113,7 @@ kttcpioctl(dev_t dev, u_long cmd, void *data, int flag,
 static int
 kttcp_send(struct lwp *l, struct kttcp_io_args *kio)
 {
-	struct file *fp;
+	struct socket *so;
 	int error;
 	struct timeval t0, t1;
 	unsigned long long len, done;
@@ -121,24 +121,17 @@ kttcp_send(struct lwp *l, struct kttcp_io_args *kio)
 	if (kio->kio_totalsize >= KTTCP_MAX_XMIT)
 		return EINVAL;
 
-	fp = fd_getfile(l->l_proc->p_fd, kio->kio_socket);
-	if (fp == NULL)
-		return EBADF;
-	FILE_USE(fp);
-	if (fp->f_type != DTYPE_SOCKET) {
-		FILE_UNUSE(fp, l);
-		return EFTYPE;
-	}
+	if ((error = fd_getsock(kio->kio_socket, &so)) != 0)
+		return error;
 
 	len = kio->kio_totalsize;
 	microtime(&t0);
 	do {
-		error = kttcp_sosend((struct socket *)fp->f_data, len,
-		    &done, l, 0);
+		error = kttcp_sosend(so, len, &done, l, 0);
 		len -= done;
 	} while (error == 0 && len > 0);
 
-	FILE_UNUSE(fp, l);
+	fd_putfile(kio->kio_socket);
 
 	microtime(&t1);
 	if (error != 0)
@@ -153,7 +146,7 @@ kttcp_send(struct lwp *l, struct kttcp_io_args *kio)
 static int
 kttcp_recv(struct lwp *l, struct kttcp_io_args *kio)
 {
-	struct file *fp;
+	struct socket *so;
 	int error;
 	struct timeval t0, t1;
 	unsigned long long len, done;
@@ -163,23 +156,16 @@ kttcp_recv(struct lwp *l, struct kttcp_io_args *kio)
 	if (kio->kio_totalsize > KTTCP_MAX_XMIT)
 		return EINVAL;
 
-	fp = fd_getfile(l->l_proc->p_fd, kio->kio_socket);
-	if (fp == NULL)
-		return EBADF;
-	FILE_USE(fp);
-	if (fp->f_type != DTYPE_SOCKET) {
-		FILE_UNUSE(fp, l);
-		return EBADF;
-	}
+	if ((error = fd_getsock(kio->kio_socket, &so)) != 0)
+		return error;
 	len = kio->kio_totalsize;
 	microtime(&t0);
 	do {
-		error = kttcp_soreceive((struct socket *)fp->f_data,
-		    len, &done, l, NULL);
+		error = kttcp_soreceive(so, len, &done, l, NULL);
 		len -= done;
 	} while (error == 0 && len > 0 && done > 0);
 
-	FILE_UNUSE(fp, l);
+	fd_putfile(kio->kio_socket);
 
 	microtime(&t1);
 	if (error == EPIPE)

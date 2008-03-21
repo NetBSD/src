@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_fork.c,v 1.158 2008/02/24 18:30:07 dsl Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.159 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2001, 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.158 2008/02/24 18:30:07 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.159 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_multiprocessor.h"
@@ -338,16 +338,16 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		VREF(p2->p_textvp);
 
 	if (flags & FORK_SHAREFILES)
-		fdshare(p1, p2);
+		fd_share(p2);
 	else if (flags & FORK_CLEANFILES)
-		p2->p_fd = fdinit(p1);
+		p2->p_fd = fd_init(NULL);
 	else
-		p2->p_fd = fdcopy(p1);
+		p2->p_fd = fd_copy();
 
 	if (flags & FORK_SHARECWD)
-		cwdshare(p1, p2);
+		cwdshare(p2);
 	else
-		p2->p_cwdi = cwdinit(p1);
+		p2->p_cwdi = cwdinit();
 
 	/*
 	 * p_limit (rlimit stuff) is usually copy-on-write, so we just need

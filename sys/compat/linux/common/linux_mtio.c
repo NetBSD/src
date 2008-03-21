@@ -1,4 +1,4 @@
-/* $NetBSD: linux_mtio.c,v 1.6 2007/12/20 23:02:55 dsl Exp $ */
+/* $NetBSD: linux_mtio.c,v 1.7 2008/03/21 21:54:58 ad Exp $ */
 
 /*
  * Copyright (c) 2005 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.6 2007/12/20 23:02:55 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mtio.c,v 1.7 2008/03/21 21:54:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,20 +74,17 @@ int
 linux_ioctl_mtio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
     register_t *retval)
 {
-	struct file *fp;
-	struct filedesc *fdp;
+	file_t *fp;
 	u_long com = SCARG(uap, com);
 	int i, error = 0;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(file_t *, u_long, void *);
 	struct linux_mtop lmtop;
 	struct linux_mtget lmtget;
 	struct mtop mt;
 
-        fdp = l->l_proc->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return EBADF;
 
-	FILE_USE(fp);
 	ioctlf = fp->f_ops->fo_ioctl;
 
 	*retval = 0;
@@ -106,7 +103,7 @@ linux_ioctl_mtio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		
 		mt.mt_op = mtop_map[i].op;
 		mt.mt_count = lmtop.mt_count;
-		error = ioctlf(fp, MTIOCTOP, (void *)&mt, l);
+		error = ioctlf(fp, MTIOCTOP, &mt);
 		break;
 	case LINUX_MTIOCGET:
 		lmtget.mt_type = LINUX_MT_ISUNKNOWN;
@@ -125,7 +122,7 @@ linux_ioctl_mtio(struct lwp *l, const struct linux_sys_ioctl_args *uap,
 		break;
 	}
 
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 
 	return error;
 }

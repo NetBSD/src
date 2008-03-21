@@ -1,7 +1,7 @@
-/*	$NetBSD: svr4_32_net.c,v 1.16 2007/12/08 18:36:28 dsl Exp $	 */
+/*	$NetBSD: svr4_32_net.c,v 1.17 2008/03/21 21:54:59 ad Exp $	 */
 
 /*-
- * Copyright (c) 1994 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.16 2007/12/08 18:36:28 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svr4_32_net.c,v 1.17 2008/03/21 21:54:59 ad Exp $");
 
 #define COMPAT_SVR4 1
 
@@ -98,7 +98,7 @@ enum {
 
 int svr4_32_netattach(int);
 
-int svr4_soo_close(struct file *, struct lwp *);
+int svr4_soo_close(file_t *);
 int svr4_ptm_alloc(struct proc *);
 
 static const struct fileops svr4_32_netops = {
@@ -117,7 +117,7 @@ svr4_32_netattach(int n)
 }
 
 struct svr4_strm *
-svr4_32_stream_get(struct file *fp)
+svr4_32_stream_get(file_t *fp)
 {
 	struct socket *so;
 	struct svr4_strm *st;

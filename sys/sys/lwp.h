@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.80 2008/03/17 16:54:51 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.81 2008/03/21 21:55:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ struct lwp {
 	void		*l_private;	/* !: svr4-style lwp-private data */
 	struct lwp	*l_switchto;	/* !: mi_switch: switch to this LWP */
 	struct kauth_cred *l_cred;	/* !: cached credentials */
+	struct filedesc	*l_fd;		/* !: cached copy of proc::p_fd */
 	void		*l_emuldata;	/* !: kernel lwp-private data */
 	u_int		l_cv_signalled;	/* c: restarted by cv_signal() */
 	u_short		l_shlocks;	/* !: lockdebug: shared locks held */

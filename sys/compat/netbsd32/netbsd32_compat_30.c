@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.23 2007/12/20 23:03:01 dsl Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.24 2008/03/21 21:54:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.23 2007/12/20 23:03:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.24 2008/03/21 21:54:58 ad Exp $");
 
 #include "opt_nfsserver.h"
 
@@ -68,17 +68,16 @@ compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getde
 		syscallarg(netbsd32_charp) buf;
 		syscallarg(netbsd32_size_t) count;
 	} */
-	struct file *fp;
+	file_t *fp;
 	int error, done;
 	char  *buf;
 	netbsd32_size_t count;
-	struct proc *p = l->l_proc;
 
 	/* Limit the size on any kernel buffers used by VOP_READDIR */
 	count = min(MAXBSIZE, SCARG(uap, count));
 
 	/* getvnode() will use the descriptor for us */
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	if ((error = fd_getvnode(SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	if ((fp->f_flag & FREAD) == 0) {
 		error = EBADF;
@@ -92,7 +91,7 @@ compat_30_netbsd32_getdents(struct lwp *l, const struct compat_30_netbsd32_getde
 	}
 	free(buf, M_TEMP);
  out:
-	FILE_UNUSE(fp, l);
+ 	fd_putfile(SCARG(uap, fd));
 	return (error);
 }
 
@@ -110,7 +109,7 @@ compat_30_netbsd32___stat13(struct lwp *l, const struct compat_30_netbsd32___sta
 
 	path = SCARG_P32(uap, path);
 
-	error = do_sys_stat(l, path, FOLLOW, &sb);
+	error = do_sys_stat(path, FOLLOW, &sb);
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
@@ -126,19 +125,15 @@ compat_30_netbsd32___fstat13(struct lwp *l, const struct compat_30_netbsd32___fs
 		syscallarg(netbsd32_stat13p_t) sb;
 	} */
 	int fd = SCARG(uap, fd);
-	struct proc *p = l->l_proc;
-	struct filedesc *fdp = p->p_fd;
-	struct file *fp;
+	file_t *fp;
 	struct netbsd32_stat13 sb32;
 	struct stat ub;
 	int error = 0;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
-
-	FILE_USE(fp);
-	error = (*fp->f_ops->fo_stat)(fp, &ub, l);
-	FILE_UNUSE(fp, l);
+	error = (*fp->f_ops->fo_stat)(fp, &ub);
+	fd_putfile(fd);
 
 	if (error == 0) {
 		netbsd32_from___stat13(&ub, &sb32);
@@ -161,7 +156,7 @@ compat_30_netbsd32___lstat13(struct lwp *l, const struct compat_30_netbsd32___ls
 
 	path = SCARG_P32(uap, path);
 
-	error = do_sys_stat(l, path, NOFOLLOW, &sb);
+	error = do_sys_stat(path, NOFOLLOW, &sb);
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
@@ -199,7 +194,7 @@ compat_30_netbsd32_fhstat(struct lwp *l, const struct compat_30_netbsd32_fhstat_
 		return EOPNOTSUPP;
 	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
 		return (error);
-	error = vn_stat(vp, &sb, l);
+	error = vn_stat(vp, &sb);
 	vput(vp);
 	if (error)
 		return (error);

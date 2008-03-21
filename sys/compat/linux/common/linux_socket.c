@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_socket.c,v 1.86 2008/02/06 21:57:53 ad Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.87 2008/03/21 21:54:58 ad Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.86 2008/02/06 21:57:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.87 2008/03/21 21:54:58 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -318,10 +318,9 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 	 * for Linux apps if the sysctl value is set to 1.
 	 */
 	if (!error && ip6_v6only && SCARG(&bsa, domain) == PF_INET6) {
-		struct proc *p = l->l_proc;
-		struct file *fp;
+		file_t *fp;
 
-		if (getsock(p->p_fd, *retval, &fp) == 0) {
+		if (getsock(*retval, &fp) == 0) {
 			struct mbuf *m;
 
 			m = m_get(M_WAIT, MT_SOOPTS);
@@ -332,7 +331,7 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 			(void) sosetopt((struct socket *)fp->f_data,
 				IPPROTO_IPV6, IPV6_V6ONLY, m);
 
-			FILE_UNUSE(fp, l);
+			fd_putfile(*retval);
 		}
 	}
 #endif
@@ -875,7 +874,6 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 		syscallarg(void *) optval;
 		syscallarg(int) optlen;
 	} */
-	struct proc *p = l->l_proc;
 	struct sys_setsockopt_args bsa;
 	int name;
 
@@ -889,19 +887,19 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 	 * and returns EOPNOTSUPP for other levels
 	 */
 	if (SCARG(&bsa, level) != SOL_SOCKET) {
-		struct file *fp;
+		file_t *fp;
 		struct socket *so;
 		int error, s, family;
 
 		/* getsock() will use the descriptor for us */
-	    	if ((error = getsock(p->p_fd, SCARG(&bsa, s), &fp)) != 0)
+	    	if ((error = getsock(SCARG(&bsa, s), &fp)) != 0)
 		    	return error;
 
 		s = splsoftnet();
 		so = (struct socket *)fp->f_data;
 		family = so->so_proto->pr_domain->dom_family;
 		splx(s);
-		FILE_UNUSE(fp, l);
+		fd_putfile(SCARG(&bsa, s));
 
 		if (family == AF_LOCAL)
 			return EOPNOTSUPP;
@@ -987,9 +985,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 		char if_name[IF_NAME_LEN];
 		struct osockaddr hwaddr;
 	} lreq;
-	struct proc *p = l->l_proc;
-	struct filedesc *fdp;
-	struct file *fp;
+	file_t *fp;
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	struct sockaddr_dl *sadl;
@@ -1007,11 +1003,9 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	 * So, we must duplicate code from sys_ioctl() and ifconf().  Ugh.
 	 */
 
-	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
-	FILE_USE(fp);
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
 		goto out;
@@ -1096,7 +1090,7 @@ linux_getifhwaddr(struct lwp *l, register_t *retval, u_int fd,
 	}
 
 out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	return error;
 }
 #undef IF_NAME_LEN
@@ -1109,21 +1103,16 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		syscallarg(u_long) com;
 		syscallarg(void *) data;
 	} */
-	struct proc *p = l->l_proc;
 	u_long com;
 	int error = 0, isdev = 0, dosys = 1;
 	struct sys_ioctl_args ia;
-	struct file *fp;
-	struct filedesc *fdp;
+	file_t *fp;
 	struct vnode *vp;
-	int (*ioctlf)(struct file *, u_long, void *, struct lwp *);
+	int (*ioctlf)(file_t *, u_long, void *);
 	struct ioctl_pt pt;
 
-	fdp = p->p_fd;
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return (EBADF);
-
-	FILE_USE(fp);
 
 	if (fp->f_type == DTYPE_VNODE) {
 		vp = (struct vnode *)fp->f_data;
@@ -1142,7 +1131,7 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		ioctlf = fp->f_ops->fo_ioctl;
 		pt.com = SCARG(uap, com);
 		pt.data = SCARG(uap, data);
-		error = ioctlf(fp, PTIOCLINUX, (void *)&pt, l);
+		error = ioctlf(fp, PTIOCLINUX, &pt);
 		/*
 		 * XXX hack: if the function returns EJUSTRETURN,
 		 * it has stuffed a sysctl return value in pt.data.
@@ -1187,20 +1176,19 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		break;
 	case LINUX_SIOCGIFHWADDR:
 		error = linux_getifhwaddr(l, retval, SCARG(uap, fd),
-					 SCARG(uap, data));
+		    SCARG(uap, data));
 		dosys = 0;
 		break;
 	default:
 		error = EINVAL;
 	}
 
-out:
-	FILE_UNUSE(fp, l);
+ out:
+ 	fd_putfile(SCARG(uap, fd));
 
 	if (error ==0 && dosys) {
 		SCARG(&ia, fd) = SCARG(uap, fd);
 		SCARG(&ia, data) = SCARG(uap, data);
-		/* XXX NJWLWP */
 		error = sys_ioctl(curlwp, &ia, retval);
 	}
 
@@ -1226,12 +1214,12 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 	error = do_sys_connect(l, SCARG(uap, s), nam);
 
 	if (error == EISCONN) {
-		struct file *fp;
+		file_t *fp;
 		struct socket *so;
 		int s, state, prflags, nbio;
 
 		/* getsock() will use the descriptor for us */
-	    	if (getsock(l->l_proc->p_fd, SCARG(uap, s), &fp) != 0)
+	    	if (getsock(SCARG(uap, s), &fp) != 0)
 		    	return EISCONN;
 
 		s = splsoftnet();
@@ -1240,7 +1228,7 @@ linux_sys_connect(struct lwp *l, const struct linux_sys_connect_args *uap, regis
 		nbio = so->so_nbio;
 		prflags = so->so_proto->pr_flags;
 		splx(s);
-		FILE_UNUSE(fp, l);
+		fd_putfile(SCARG(uap, s));
 		/*
 		 * We should only let this call succeed once per
 		 * non-blocking connect; however we don't have
@@ -1359,17 +1347,15 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 	 * This avoid triggering strict family checks in netinet/in_pcb.c et.al.
 	 */
 	if (bdom == AF_UNSPEC) {
-		struct file *fp;
+		file_t *fp;
 		struct socket *so;
 
 		/* getsock() will use the descriptor for us */
-		if ((error = getsock(l->l_proc->p_fd, s, &fp)) != 0)
+		if ((error = getsock(s, &fp)) != 0)
 			goto bad;
 
 		so = (struct socket *)fp->f_data;
 		bdom = so->so_proto->pr_domain->dom_family;
-
-		FILE_UNUSE(fp, l);
 
 		DPRINTF(("AF_UNSPEC family adjusted to %d\n", bdom));
 	}
@@ -1398,6 +1384,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 			    "sockaddr_in6 rejected",
 			    p->p_pid, p->p_comm, uid);
 			error = EINVAL;
+			fd_putfile(s);
 			goto bad;
 		}
 		salen = sizeof (struct sockaddr_in6);
@@ -1422,6 +1409,7 @@ linux_get_sa(struct lwp *l, int s, struct mbuf **mp, const struct osockaddr *osa
 #endif
 
 	*mp = m;
+	fd_putfile(s);
 	return 0;
 
     bad:

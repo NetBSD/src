@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.114 2008/03/17 18:01:44 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.115 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.114 2008/03/17 18:01:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.115 2008/03/21 21:55:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,24 +124,18 @@ sys_read(struct lwp *l, const struct sys_read_args *uap, register_t *retval)
 		syscallarg(void *)	buf;
 		syscallarg(size_t)	nbyte;
 	} */
-	int		fd;
-	struct file	*fp;
-	proc_t		*p;
-	struct filedesc	*fdp;
+	file_t *fp;
+	int fd;
 
 	fd = SCARG(uap, fd);
-	p = l->l_proc;
-	fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
 	if ((fp->f_flag & FREAD) == 0) {
-		FILE_UNLOCK(fp);
+		fd_putfile(fd);
 		return (EBADF);
 	}
-
-	FILE_USE(fp);
 
 	/* dofileread() will unuse the descriptor for us */
 	return (dofileread(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
@@ -188,7 +182,7 @@ dofileread(int fd, struct file *fp, void *buf, size_t nbyte,
 	ktrgenio(fd, UIO_READ, buf, cnt, error);
 	*retval = cnt;
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	return (error);
 }
 
@@ -219,22 +213,17 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 	u_int		iovlen;
 	struct file	*fp;
 	struct iovec	*ktriov = NULL;
-	lwp_t		*l;
 
 	if (iovcnt == 0)
 		return EINVAL;
 
-	l = curlwp;
-
-	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & FREAD) == 0) {
-		FILE_UNLOCK(fp);
+		fd_putfile(fd);
 		return EBADF;
 	}
-
-	FILE_USE(fp);
 
 	if (offset == NULL)
 		offset = &fp->f_offset;
@@ -279,7 +268,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 	auio.uio_iov = iov;
 	auio.uio_iovcnt = iovcnt;
 	auio.uio_rw = UIO_READ;
-	auio.uio_vmspace = l->l_proc->p_vmspace;
+	auio.uio_vmspace = curproc->p_vmspace;
 
 	auio.uio_resid = 0;
 	for (i = 0; i < iovcnt; i++, iov++) {
@@ -322,7 +311,7 @@ do_filereadv(int fd, const struct iovec *iovp, int iovcnt,
 	if (needfree)
 		kmem_free(needfree, iovlen);
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	return (error);
 }
 
@@ -337,20 +326,18 @@ sys_write(struct lwp *l, const struct sys_write_args *uap, register_t *retval)
 		syscallarg(const void *)	buf;
 		syscallarg(size_t)		nbyte;
 	} */
-	int		fd;
-	struct file	*fp;
+	file_t *fp;
+	int fd;
 
 	fd = SCARG(uap, fd);
 
-	if ((fp = fd_getfile(curproc->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return (EBADF);
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		FILE_UNLOCK(fp);
+		fd_putfile(fd);
 		return (EBADF);
 	}
-
-	FILE_USE(fp);
 
 	/* dofilewrite() will unuse the descriptor for us */
 	return (dofilewrite(fd, fp, SCARG(uap, buf), SCARG(uap, nbyte),
@@ -365,9 +352,6 @@ dofilewrite(int fd, struct file *fp, const void *buf,
 	struct uio auio;
 	size_t cnt;
 	int error;
-	lwp_t *l;
-
-	l = curlwp;
 
 	aiov.iov_base = __UNCONST(buf);		/* XXXUNCONST kills const */
 	aiov.iov_len = nbyte;
@@ -375,7 +359,7 @@ dofilewrite(int fd, struct file *fp, const void *buf,
 	auio.uio_iovcnt = 1;
 	auio.uio_resid = nbyte;
 	auio.uio_rw = UIO_WRITE;
-	auio.uio_vmspace = l->l_proc->p_vmspace;
+	auio.uio_vmspace = curproc->p_vmspace;
 
 	/*
 	 * Writes return ssize_t because -1 is returned on error.  Therefore
@@ -395,7 +379,7 @@ dofilewrite(int fd, struct file *fp, const void *buf,
 			error = 0;
 		if (error == EPIPE) {
 			mutex_enter(&proclist_mutex);
-			psignal(l->l_proc, SIGPIPE);
+			psignal(curproc, SIGPIPE);
 			mutex_exit(&proclist_mutex);
 		}
 	}
@@ -403,7 +387,7 @@ dofilewrite(int fd, struct file *fp, const void *buf,
 	ktrgenio(fd, UIO_WRITE, buf, cnt, error);
 	*retval = cnt;
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	return (error);
 }
 
@@ -434,22 +418,17 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 	u_int		iovlen;
 	struct file	*fp;
 	struct iovec	*ktriov = NULL;
-	lwp_t		*l;
-
-	l = curlwp;
 
 	if (iovcnt == 0)
 		return EINVAL;
 
-	if ((fp = fd_getfile(l->l_proc->p_fd, fd)) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & FWRITE) == 0) {
-		FILE_UNLOCK(fp);
+		fd_putfile(fd);
 		return EBADF;
 	}
-
-	FILE_USE(fp);
 
 	if (offset == NULL)
 		offset = &fp->f_offset;
@@ -527,7 +506,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 			error = 0;
 		if (error == EPIPE) {
 			mutex_enter(&proclist_mutex);
-			psignal(l->l_proc, SIGPIPE);
+			psignal(curproc, SIGPIPE);
 			mutex_exit(&proclist_mutex);
 		}
 	}
@@ -543,7 +522,7 @@ do_filewritev(int fd, const struct iovec *iovp, int iovcnt,
 	if (needfree)
 		kmem_free(needfree, iovlen);
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 	return (error);
 }
 
@@ -568,15 +547,14 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	void 		*data, *memp;
 #define	STK_PARAMS	128
 	u_long		stkbuf[STK_PARAMS/sizeof(u_long)];
+	fdfile_t	*ff;
 
 	error = 0;
 	p = l->l_proc;
 	fdp = p->p_fd;
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile(SCARG(uap, fd))) == NULL)
 		return (EBADF);
-
-	FILE_USE(fp);
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
 		error = EBADF;
@@ -584,17 +562,15 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		goto out;
 	}
 
+	ff = fdp->fd_ofiles[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIONCLEX:
-		rw_enter(&fdp->fd_lock, RW_WRITER);
-		fdp->fd_ofileflags[SCARG(uap, fd)] &= ~UF_EXCLOSE;
-		rw_exit(&fdp->fd_lock);
+		ff->ff_exclose = 0;
 		goto out;
 
 	case FIOCLEX:
-		rw_enter(&fdp->fd_lock, RW_WRITER);
-		fdp->fd_ofileflags[SCARG(uap, fd)] |= UF_EXCLOSE;
-		rw_exit(&fdp->fd_lock);
+		ff->ff_exclose = 1;
+		fdp->fd_exclose = 1;
 		goto out;
 	}
 
@@ -643,7 +619,7 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		else
 			fp->f_flag &= ~FNONBLOCK;
 		FILE_UNLOCK(fp);
-		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIONBIO, data);
 		break;
 
 	case FIOASYNC:
@@ -653,11 +629,11 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 		else
 			fp->f_flag &= ~FASYNC;
 		FILE_UNLOCK(fp);
-		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, FIOASYNC, data);
 		break;
 
 	default:
-		error = (*fp->f_ops->fo_ioctl)(fp, com, data, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, com, data);
 		/*
 		 * Copy any data to user, size was
 		 * already set and checked above.
@@ -672,7 +648,7 @@ sys_ioctl(struct lwp *l, const struct sys_ioctl_args *uap, register_t *retval)
 	if (memp)
 		kmem_free(memp, size);
  out:
-	FILE_UNUSE(fp, l);
+	fd_putfile(SCARG(uap, fd));
 	switch (error) {
 	case -1:
 		printf("sys_ioctl: _IO%s%s('%c', %lu, %lu) returned -1: "
@@ -887,13 +863,10 @@ selscan(lwp_t *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
 	static const int flag[3] = { POLLRDNORM | POLLHUP | POLLERR,
 			       POLLWRNORM | POLLHUP | POLLERR,
 			       POLLRDBAND };
-	proc_t *p = l->l_proc;
-	struct filedesc	*fdp;
 	int msk, i, j, fd, n;
 	fd_mask ibits, obits;
-	struct file *fp;
+	file_t *fp;
 
-	fdp = p->p_fd;
 	n = 0;
 	for (msk = 0; msk < 3; msk++) {
 		for (i = 0; i < nfd; i += NFDBITS) {
@@ -901,14 +874,13 @@ selscan(lwp_t *l, fd_mask *ibitp, fd_mask *obitp, int nfd,
 			obits = 0;
 			while ((j = ffs(ibits)) && (fd = i + --j) < nfd) {
 				ibits &= ~(1 << j);
-				if ((fp = fd_getfile(fdp, fd)) == NULL)
+				if ((fp = fd_getfile(fd)) == NULL)
 					return (EBADF);
-				FILE_USE(fp);
-				if ((*fp->f_ops->fo_poll)(fp, flag[msk], l)) {
+				if ((*fp->f_ops->fo_poll)(fp, flag[msk])) {
 					obits |= (1 << j);
 					n++;
 				}
-				FILE_UNUSE(fp, l);
+				fd_putfile(fd);
 			}
 			*obitp++ = obits;
 		}
@@ -1063,31 +1035,22 @@ pollcommon(lwp_t *l, register_t *retval,
 int
 pollscan(lwp_t *l, struct pollfd *fds, int nfd, register_t *retval)
 {
-	proc_t		*p = l->l_proc;
-	struct filedesc	*fdp;
-	int		i, n;
-	struct file	*fp;
+	int i, n;
+	file_t *fp;
 
-	fdp = p->p_fd;
 	n = 0;
 	for (i = 0; i < nfd; i++, fds++) {
-		if (fds->fd >= fdp->fd_nfiles) {
+		if (fds->fd < 0) {
+			fds->revents = 0;
+		} else if ((fp = fd_getfile(fds->fd)) == NULL) {
 			fds->revents = POLLNVAL;
 			n++;
-		} else if (fds->fd < 0) {
-			fds->revents = 0;
 		} else {
-			if ((fp = fd_getfile(fdp, fds->fd)) == NULL) {
-				fds->revents = POLLNVAL;
+			fds->revents = (*fp->f_ops->fo_poll)(fp,
+			    fds->events | POLLERR | POLLHUP);
+			if (fds->revents != 0)
 				n++;
-			} else {
-				FILE_USE(fp);
-				fds->revents = (*fp->f_ops->fo_poll)(fp,
-				    fds->events | POLLERR | POLLHUP, l);
-				if (fds->revents != 0)
-					n++;
-				FILE_UNUSE(fp, l);
-			}
+			fd_putfile(fds->fd);
 		}
 	}
 	*retval = n;

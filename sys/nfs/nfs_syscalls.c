@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_syscalls.c,v 1.131 2008/02/28 17:07:49 elad Exp $	*/
+/*	$NetBSD: nfs_syscalls.c,v 1.132 2008/03/21 21:55:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.131 2008/02/28 17:07:49 elad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_syscalls.c,v 1.132 2008/03/21 21:55:01 ad Exp $");
 
 #include "fs_nfs.h"
 #include "opt_nfs.h"
@@ -154,7 +154,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 	} */
 	int error;
 #ifdef NFSSERVER
-	struct file *fp;
+	file_t *fp;
 	struct mbuf *nam;
 	struct nfsd_args nfsdarg;
 	struct nfsd_srvargs nfsd_srvargs, *nsd = &nfsd_srvargs;
@@ -198,7 +198,7 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 		if (error)
 			return (error);
 		/* getsock() will use the descriptor for us */
-		error = getsock(l->l_proc->p_fd, nfsdarg.sock, &fp);
+		error = getsock(nfsdarg.sock, &fp);
 		if (error)
 			return (error);
 		/*
@@ -210,12 +210,12 @@ sys_nfssvc(struct lwp *l, const struct sys_nfssvc_args *uap, register_t *retval)
 			error = sockargs(&nam, nfsdarg.name, nfsdarg.namelen,
 				MT_SONAME);
 			if (error) {
-				FILE_UNUSE(fp, NULL);
+				fd_putfile(nfsdarg.sock);
 				return (error);
 			}
 		}
 		error = nfssvc_addsock(fp, nam);
-		FILE_UNUSE(fp, NULL);
+		fd_putfile(nfsdarg.sock);
 #endif /* !NFSSERVER */
 	} else if (SCARG(uap, flag) & NFSSVC_SETEXPORTSLIST) {
 #ifndef NFSSERVER
@@ -385,7 +385,7 @@ nfsrv_sockfree(struct nfssvc_sock *slp)
  */
 int
 nfssvc_addsock(fp, mynam)
-	struct file *fp;
+	file_t *fp;
 	struct mbuf *mynam;
 {
 	struct mbuf *m;
@@ -904,7 +904,7 @@ nfsrv_slpderef(slp)
 	ref = --slp->ns_sref;
 	mutex_exit(&nfsd_lock);
 	if (ref == 0 && (slp->ns_flags & SLP_VALID) == 0) {
-		struct file *fp;
+		file_t *fp;
 
 		mutex_enter(&nfsd_lock);
 		KASSERT((slp->ns_gflags & SLP_G_DOREC) == 0);
@@ -916,9 +916,8 @@ nfsrv_slpderef(slp)
 			slp->ns_fp = NULL;
 			KASSERT(fp != NULL);
 			KASSERT(fp->f_data == slp->ns_so);
-			mutex_enter(&fp->f_lock);
-			FILE_USE(fp);
-			closef(fp, (struct lwp *)0);
+			KASSERT(fp->f_count > 0);
+			closef(fp);
 			slp->ns_so = NULL;
 		}
 

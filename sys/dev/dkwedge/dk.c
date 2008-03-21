@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.34 2008/03/04 13:51:18 cube Exp $	*/
+/*	$NetBSD: dk.c,v 1.35 2008/03/21 21:54:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.34 2008/03/04 13:51:18 cube Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.35 2008/03/21 21:54:59 ad Exp $");
 
 #include "opt_dkwedge.h"
 
@@ -486,7 +486,7 @@ dkwedge_del(struct dkwedge_info *dkw)
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			(void) vn_close(sc->sc_parent->dk_rawvp, FREAD | FWRITE,
-					NOCRED, curlwp);
+			    NOCRED);
 			sc->sc_parent->dk_rawvp = NULL;
 		}
 		sc->sc_dk.dk_openmask = 0;
@@ -834,7 +834,7 @@ dkwedge_discover(struct disk *pdk)
 		}
 	}
 
-	error = vn_close(vp, FREAD, NOCRED, curlwp);
+	error = vn_close(vp, FREAD, NOCRED);
 	if (error) {
 		aprint_error("%s: unable to close device, error = %d\n",
 		    pdk->dk_name, error);
@@ -979,7 +979,7 @@ dkclose(dev_t dev, int flags, int fmt, struct lwp *l)
 		if (sc->sc_parent->dk_rawopens-- == 1) {
 			KASSERT(sc->sc_parent->dk_rawvp != NULL);
 			error = vn_close(sc->sc_parent->dk_rawvp,
-					 FREAD | FWRITE, NOCRED, l);
+			    FREAD | FWRITE, NOCRED);
 			sc->sc_parent->dk_rawvp = NULL;
 		}
 	}

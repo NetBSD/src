@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_stat.c,v 1.10 2007/12/20 23:02:58 dsl Exp $ */
+/*	$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.10 2007/12/20 23:02:58 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_stat.c,v 1.11 2008/03/21 21:54:58 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ linux32_sys_stat64(struct lwp *l, const struct linux32_sys_stat64_args *uap, reg
 	struct linux32_stat64 *st32p;
 	const char *path = SCARG_P32(uap, path);
 	
-	error = do_sys_stat(l, path, FOLLOW, &st);
+	error = do_sys_stat(path, FOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -144,7 +144,7 @@ linux32_sys_lstat64(struct lwp *l, const struct linux32_sys_lstat64_args *uap, r
 	struct linux32_stat64 *st32p;
 	const char *path = SCARG_P32(uap, path);
 	
-	error = do_sys_stat(l, path, NOFOLLOW, &st);
+	error = do_sys_stat(path, NOFOLLOW, &st);
 	if (error != 0)
 		return error;
 
@@ -167,7 +167,7 @@ linux32_sys_fstat64(struct lwp *l, const struct linux32_sys_fstat64_args *uap, r
 	struct linux32_stat64 st32;
 	struct linux32_stat64 *st32p;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &st);
+	error = do_sys_fstat(SCARG(uap, fd), &st);
 	if (error != 0)
 		return error;
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_mman.c,v 1.20 2008/01/25 14:32:12 ad Exp $ */
+/*	$NetBSD: irix_mman.c,v 1.21 2008/03/21 21:54:58 ad Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.20 2008/01/25 14:32:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_mman.c,v 1.21 2008/03/21 21:54:58 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -160,12 +160,11 @@ irix_mmap(struct lwp *l, void *addr, size_t len, int prot, int flags, int fd, of
 	 * grow the file to fit the mapping, before mapping it.
 	 */
 	if (flags & IRIX_MAP_AUTOGROW) {
-		struct file *fp;
+		file_t *fp;
 		struct vnode *vp;
 		struct vattr vattr;
 
-		/* getvnode does FILE_USE */
-		if ((error = getvnode(p->p_fd, fd, &fp)) != 0)
+		if ((error = fd_getvnode(fd, &fp)) != 0)
 			return error;
 
 		if ((fp->f_flag & FWRITE) == 0) {
@@ -173,8 +172,8 @@ irix_mmap(struct lwp *l, void *addr, size_t len, int prot, int flags, int fd, of
 			goto out;
 		}
 
-		vp = (struct vnode *)fp->f_data;
-		if (fp->f_type != DTYPE_VNODE || vp->v_type == VFIFO) {
+		vp = fp->f_data;
+		if (vp->v_type == VFIFO) {
 			error = ESPIPE;
 			goto out;
 		}
@@ -198,7 +197,7 @@ irix_mmap(struct lwp *l, void *addr, size_t len, int prot, int flags, int fd, of
 			VOP_UNLOCK(vp, 0);
 		}
 out:
-		FILE_UNUSE(fp, l);
+		fd_putfile(fd);
 		if (error)
 			return error;
 

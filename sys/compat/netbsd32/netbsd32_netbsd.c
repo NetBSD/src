@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.142 2008/02/24 15:02:15 martin Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.143 2008/03/21 21:54:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.142 2008/02/24 15:02:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.143 2008/03/21 21:54:58 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -2510,8 +2510,8 @@ netbsd32___posix_fadvise50(struct lwp *l,
 		syscallarg(int) advice;
 	} */
 
-	return do_posix_fadvise(l, SCARG(uap, fd), SCARG(uap, offset),
-	    SCARG(uap, len), SCARG(uap, advice), retval);
+	return do_posix_fadvise(SCARG(uap, fd), SCARG(uap, offset),
+	    SCARG(uap, len), SCARG(uap, advice));
 }
 
 /*

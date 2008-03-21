@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.273 2008/03/08 07:56:53 yamt Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.274 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.273 2008/03/08 07:56:53 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.274 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_multiprocessor.h"
@@ -975,19 +975,23 @@ psignal(struct proc *p, int signo)
 void
 kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 {
+	fdfile_t *ff;
+	file_t *fp;
 
 	KASSERT(mutex_owned(&proclist_mutex));
 
-	/* XXXSMP Why is this here? */
 	if ((p->p_sflag & PS_WEXIT) == 0 && data) {
 		size_t fd;
-		struct filedesc *fdp = p->p_fd;
+		filedesc_t *fdp = p->p_fd;
 
+		/* XXXSMP locking */
 		ksi->ksi_fd = -1;
 		for (fd = 0; fd < fdp->fd_nfiles; fd++) {
-			struct file *fp = fdp->fd_ofiles[fd];
-			/* XXX: lock? */
-			if (fp && fp->f_data == data) {
+			if ((ff = fdp->fd_ofiles[fd]) == NULL)
+				continue;
+			if ((fp = ff->ff_file) == NULL)
+				continue;
+			if (fp->f_data == data) {
 				ksi->ksi_fd = fd;
 				break;
 			}
@@ -2151,7 +2155,7 @@ filt_sigattach(struct knote *kn)
 {
 	struct proc *p = curproc;
 
-	kn->kn_ptr.p_proc = p;
+	kn->kn_obj = p;
 	kn->kn_flags |= EV_CLEAR;               /* automatically set */
 
 	mutex_enter(&p->p_smutex);
@@ -2164,7 +2168,7 @@ filt_sigattach(struct knote *kn)
 static void
 filt_sigdetach(struct knote *kn)
 {
-	struct proc *p = kn->kn_ptr.p_proc;
+	struct proc *p = kn->kn_obj;
 
 	mutex_enter(&p->p_smutex);
 	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
