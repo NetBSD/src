@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $ */
+/* $NetBSD: esa.c,v 1.47 2008/03/21 08:20:04 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.47 2008/03/21 08:20:04 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -472,8 +472,8 @@ esa_malloc(void *hdl, int direction, size_t size,
 	error = esa_allocmem(sc, size, 16, p);
 	if (error) {
 		free(p, type);
-		printf("%s: esa_malloc: not enough memory\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "%s: not enough memory\n", __func__);
 		return 0;
 	}
 	p->next = vc->dma;
@@ -589,8 +589,8 @@ esa_trigger_output(void *hdl, void *start, void *end, int blksize,
 	for (p = vc->dma; p && KERNADDR(p) != start; p = p->next)
 		continue;
 	if (p == NULL) {
-		printf("%s: esa_trigger_output: bad addr %p\n",
-		    sc->sc_dev.dv_xname, start);
+		aprint_error_dev(&sc->sc_dev, "%s: bad addr %p\n", __func__,
+		    start);
 		return EINVAL;
 	}
 
@@ -729,8 +729,8 @@ esa_trigger_input(void *hdl, void *start, void *end, int blksize,
 	for (p = vc->dma; p && KERNADDR(p) != start; p = p->next)
 		continue;
 	if (p == NULL) {
-		printf("%s: esa_trigger_input: bad addr %p\n",
-		    sc->sc_dev.dv_xname, start);
+		aprint_error_dev(&sc->sc_dev, "%s: bad addr %p\n",
+		    __func__, start);
 		return EINVAL;
 	}
 
@@ -850,18 +850,18 @@ esa_intr(void *hdl)
 	if (status & ESA_HV_INT_PENDING) {
 		uint8_t event;
 
-		printf("%s: hardware volume interrupt\n", sc->sc_dev.dv_xname);
+		aprint_normal_dev(&sc->sc_dev, "hardware volume interrupt\n");
 		event = bus_space_read_1(iot, ioh, ESA_HW_VOL_COUNTER_MASTER);
 		switch(event) {
 		case 0x99:
 		case 0xaa:
 		case 0x66:
 		case 0x88:
-			printf("%s: esa_intr: FIXME\n", sc->sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_dev, "esa_intr: FIXME\n");
 			break;
 		default:
-			printf("%s: unknown hwvol event 0x%02x\n",
-			    sc->sc_dev.dv_xname, event);
+			aprint_normal_dev(&sc->sc_dev,
+			    "unknown hwvol event 0x%02x\n", event);
 			break;
 		}
 		bus_space_write_1(iot, ioh, ESA_HW_VOL_COUNTER_MASTER, 0x88);
@@ -1032,7 +1032,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, &sc->sc_iob, &sc->sc_ios)) {
-		aprint_error("%s: can't map i/o space\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map i/o space\n");
 		return;
 	}
 
@@ -1043,33 +1043,31 @@ esa_attach(device_t parent, device_t self, void *aux)
 
 	/* Map and establish an interrupt */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error("%s: can't map interrupt\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, esa_intr, self);
 	if (sc->sc_ih == NULL) {
-		aprint_error("%s: can't establish interrupt",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "can't establish interrupt");
 		if (intrstr != NULL)
 			aprint_normal(" at %s", intrstr);
 		aprint_normal("\n");
 		return;
 	}
-	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+	aprint_normal_dev(&sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
-		    error);
+		aprint_error_dev(&sc->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 
 	/* Init chip */
 	if (esa_init(sc) == -1) {
-		aprint_error("%s: esa_attach: unable to initialize the card\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "esa_attach: unable to initialize the card\n");
 		return;
 	}
 
@@ -1078,8 +1076,8 @@ esa_attach(device_t parent, device_t self, void *aux)
 	    + ESA_REV_B_DATA_MEMORY_LENGTH + 1);
 	sc->savemem = (uint16_t *)malloc(len, M_DEVBUF, M_NOWAIT | M_ZERO);
 	if (sc->savemem == NULL) {
-		aprint_error("%s: unable to allocate suspend buffer\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "unable to allocate suspend buffer\n");
 		return;
 	}
 
@@ -1249,11 +1247,11 @@ esa_read_codec(void *aux, uint8_t reg, uint16_t *result)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	if (esa_wait(sc))
-		printf("%s: esa_read_codec: timed out\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "esa_read_codec: timed out\n");
 	bus_space_write_1(iot, ioh, ESA_CODEC_COMMAND, (reg & 0x7f) | 0x80);
 	delay(50);
 	if (esa_wait(sc))
-		printf("%s: esa_read_codec: timed out\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "esa_read_codec: timed out\n");
 	*result = bus_space_read_2(iot, ioh, ESA_CODEC_DATA);
 
 	return 0;
@@ -1270,7 +1268,7 @@ esa_write_codec(void *aux, uint8_t reg, uint16_t data)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 	if (esa_wait(sc)) {
-		printf("%s: esa_write_codec: timed out\n", sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev, "esa_write_codec: timed out\n");
 		return -1;
 	}
 	bus_space_write_2(iot, ioh, ESA_CODEC_DATA, data);
@@ -1525,12 +1523,12 @@ esa_codec_reset(struct esa_softc *sc)
 		if ((data == 0) || (data == 0xffff)) {
 			retry++;
 			if (retry > 3) {
-				printf("%s: esa_codec_reset: failed\n",
-				    sc->sc_dev.dv_xname);
+				aprint_error_dev(&sc->sc_dev,
+				    "esa_codec_reset: failed\n");
 				break;
 			}
-			printf("%s: esa_codec_reset: retrying\n",
-			    sc->sc_dev.dv_xname);
+			aprint_normal_dev(&sc->sc_dev,
+			    "esa_codec_reset: retrying\n");
 		} else
 			retry = 0;
 	} while (retry);
@@ -1556,8 +1554,8 @@ esa_amp_enable(struct esa_softc *sc)
 		polarity_port = 0x1100;
 		break;
 	default:
-		printf("%s: esa_amp_enable: Unknown chip type!!!\n",
-		    sc->sc_dev.dv_xname);
+		aprint_error_dev(&sc->sc_dev,
+		    "esa_amp_enable: Unknown chip type!!!\n");
 		return 1;
 	}
 
@@ -1636,8 +1634,8 @@ esa_remove_list(struct esa_voice *vc, struct esa_list *el, int index)
 			if (el->indexmap[i] == lastindex)
 				break;
 		if (i >= ESA_NUM_VOICES * 2)
-			printf("%s: esa_remove_list: invalid task index\n",
-			       sc->sc_dev.dv_xname);
+			aprint_error_dev(&sc->sc_dev,
+			    "esa_remove_list: invalid task index\n");
 		else
 			el->indexmap[i] = vindex;
 	}
