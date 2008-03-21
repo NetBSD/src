@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.106 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.107 2008/03/21 23:38:40 rmind Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.106 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.107 2008/03/21 23:38:40 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1196,6 +1196,9 @@ unp_gc(void)
 			}
 #ifdef notdef
 			if (so->so_rcv.sb_flags & SB_LOCK) {
+				mutex_exit(&fp->f_lock);
+				mutex_exit(&filelist_lock);
+				kmem_free(extra_ref, nslots * sizeof(file_t *));
 				/*
 				 * This is problematical; it's not clear
 				 * we need to wait for the sockbuf to be
@@ -1271,8 +1274,9 @@ unp_gc(void)
 	 * 91/09/19, bsy@cs.cmu.edu
 	 */
 	if (nslots < nfiles) {
-		 kmem_free(extra_ref, nslots * sizeof(file_t *));
-		 goto restart;
+		mutex_exit(&filelist_lock);
+		kmem_free(extra_ref, nslots * sizeof(file_t *));
+		goto restart;
 	}
 	for (nunref = 0, fp = LIST_FIRST(&filehead), fpp = extra_ref; fp != 0;
 	    fp = nextfp) {
