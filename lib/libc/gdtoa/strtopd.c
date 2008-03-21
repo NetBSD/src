@@ -1,4 +1,4 @@
-/* $NetBSD: strtopd.c,v 1.1.1.1 2006/01/25 15:18:53 kleink Exp $ */
+/* $NetBSD: strtopd.c,v 1.2 2008/03/21 23:13:48 christos Exp $ */
 
 /****************************************************************
 
@@ -46,6 +46,8 @@ strtopd(CONST char *s, char **sp, double *d)
 	int k;
 
 	k = strtodg(s, sp, &fpi0, &exp, bits);
+	if (k == STRTOG_NoMemory)
+		return k;
 	ULtod((ULong*)d, bits, exp, k);
 	return k;
 	}

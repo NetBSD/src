@@ -1,4 +1,4 @@
-/* $NetBSD: g_xLfmt.c,v 1.2 2006/01/25 15:27:42 kleink Exp $ */
+/* $NetBSD: g_xLfmt.c,v 1.3 2008/03/21 23:13:48 christos Exp $ */
 
 /****************************************************************
 
@@ -106,5 +106,7 @@ g_xLfmt(char *buf, void *V, int ndig, unsigned bufsize)
 		mode = 0;
 		}
 	s = gdtoa(&fpi, ex, bits, &i, mode, ndig, &decpt, &se);
+	if (s == NULL)
+		return NULL;
 	return g__fmt(buf, s, se, decpt, sign);
 	}
