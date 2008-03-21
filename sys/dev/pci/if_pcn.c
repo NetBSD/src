@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.44 2008/03/11 23:58:06 dyoung Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.45 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.44 2008/03/11 23:58:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.45 2008/03/21 07:47:43 dyoung Exp $");
 
 #include "bpfilter.h"
 #include "rnd.h"
@@ -544,7 +544,7 @@ pcn_lookup_variant(uint16_t chipid)
 }
 
 static int
-pcn_match(struct device *parent, struct cfdata *cf, void *aux)
+pcn_match(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -573,9 +573,9 @@ pcn_match(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pcn_attach(struct device *parent, struct device *self, void *aux)
+pcn_attach(device_t parent, device_t self, void *aux)
 {
-	struct pcn_softc *sc = (struct pcn_softc *) self;
+	struct pcn_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -624,7 +624,7 @@ pcn_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_COMMAND_MASTER_ENABLE);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
@@ -2164,9 +2164,9 @@ pcn_79c971_mediainit(struct pcn_softc *sc)
  *	Read a PHY register on the MII.
  */
 static int
-pcn_mii_readreg(struct device *self, int phy, int reg)
+pcn_mii_readreg(device_t self, int phy, int reg)
 {
-	struct pcn_softc *sc = (void *) self;
+	struct pcn_softc *sc = device_private(self);
 	uint32_t rv;
 
 	pcn_bcr_write(sc, LE_BCR33, reg | (phy << PHYAD_SHIFT));
@@ -2183,9 +2183,9 @@ pcn_mii_readreg(struct device *self, int phy, int reg)
  *	Write a PHY register on the MII.
  */
 static void
-pcn_mii_writereg(struct device *self, int phy, int reg, int val)
+pcn_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct pcn_softc *sc = (void *) self;
+	struct pcn_softc *sc = device_private(self);
 
 	pcn_bcr_write(sc, LE_BCR33, reg | (phy << PHYAD_SHIFT));
 	pcn_bcr_write(sc, LE_BCR34, val);
@@ -2197,9 +2197,9 @@ pcn_mii_writereg(struct device *self, int phy, int reg, int val)
  *	Callback from MII layer when media changes.
  */
 static void
-pcn_mii_statchg(struct device *self)
+pcn_mii_statchg(device_t self)
 {
-	struct pcn_softc *sc = (void *) self;
+	struct pcn_softc *sc = device_private(self);
 
 	if ((sc->sc_mii.mii_media_active & IFM_FDX) != 0)
 		pcn_bcr_write(sc, LE_BCR9, LE_B9_FDEN);

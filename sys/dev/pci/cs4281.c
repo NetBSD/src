@@ -1,4 +1,4 @@
-/*	$NetBSD: cs4281.c,v 1.37 2008/02/29 06:13:39 dyoung Exp $	*/
+/*	$NetBSD: cs4281.c,v 1.38 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2000 Tatoku Ogaito.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.37 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs4281.c,v 1.38 2008/03/21 07:47:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,7 +221,7 @@ cs4281_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dmatag = pa->pa_dmat;
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);

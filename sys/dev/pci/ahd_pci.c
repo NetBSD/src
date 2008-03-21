@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.25 2006/11/16 01:33:08 christos Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.26 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.25 2006/11/16 01:33:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.26 2008/03/21 07:47:43 dyoung Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -286,8 +286,7 @@ ahd_find_pci_device(pcireg_t id, pcireg_t subid)
 }
 
 static int
-ahd_pci_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+ahd_pci_probe(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 	const struct	   ahd_pci_identity *entry;
@@ -299,10 +298,10 @@ ahd_pci_probe(struct device *parent, struct cfdata *match,
 }
 
 static void
-ahd_pci_attach(struct device *parent, struct device *self, void *aux)
+ahd_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct pci_attach_args	*pa = aux;
-	struct ahd_softc       	*ahd = (void *)self;
+	struct ahd_softc       	*ahd = device_private(self);
 
 	const struct ahd_pci_identity *entry;
 
@@ -480,7 +479,7 @@ ahd_pci_attach(struct device *parent, struct device *self, void *aux)
 	aprint_naive("\n");
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, ahd, 
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", ahd->sc_dev.dv_xname,
 		    error);
