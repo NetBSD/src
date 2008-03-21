@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.41 2008/02/24 02:46:40 dholland Exp $
+# $NetBSD: mi,v 1.42 2008/03/21 21:09:48 reed Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -136,6 +136,8 @@
 ./usr/share/games/fortune/netbsd		games-utils-share	share
 ./usr/share/games/fortune/netbsd-o		games-utils-share	share
 ./usr/share/games/fortune/netbsd-o.dat		games-utils-share	share
+./usr/share/games/fortune/netbsd-tips		games-utils-share	share
+./usr/share/games/fortune/netbsd-tips.dat	games-utils-share	share
 ./usr/share/games/fortune/netbsd.dat		games-utils-share	share
 ./usr/share/games/fortune/startrek		games-utils-share	share
 ./usr/share/games/fortune/startrek.dat		games-utils-share	share
