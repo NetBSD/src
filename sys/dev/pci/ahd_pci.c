@@ -1,4 +1,4 @@
-/*	$NetBSD: ahd_pci.c,v 1.26 2008/03/21 07:47:43 dyoung Exp $	*/
+/*	$NetBSD: ahd_pci.c,v 1.27 2008/03/21 08:17:30 dyoung Exp $	*/
 
 /*
  * Product specific probe and attach routines for:
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.26 2008/03/21 07:47:43 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahd_pci.c,v 1.27 2008/03/21 08:17:30 dyoung Exp $");
 
 #define AHD_PCI_IOADDR	PCI_MAPREG_START	/* I/O Address */
 #define AHD_PCI_MEMADDR	(PCI_MAPREG_START + 4)	/* Mem I/O Address */
@@ -317,7 +317,7 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	const char         	*intrstr;
 	struct ahd_pci_busdata 	*bd;
 
-	ahd_set_name(ahd, ahd->sc_dev.dv_xname);
+	ahd_set_name(ahd, device_xname(&ahd->sc_dev));
 	ahd->parent_dmat = pa->pa_dmat;
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -393,8 +393,8 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIX,
 	    &bd->pcix_off, NULL)) {
 		if (ahd->chip & AHD_PCIX)
-			aprint_error("%s: warning: can't find PCI-X capability\n",
-			    ahd->sc_dev.dv_xname);
+			aprint_error_dev(&ahd->sc_dev,
+			    "warning: can't find PCI-X capability\n");
 		ahd->chip &= ~AHD_PCIX;
 		ahd->chip |= AHD_PCI;
 		ahd->bugs &= ~AHD_PCIX_BUG_MASK;
@@ -481,8 +481,7 @@ ahd_pci_attach(device_t parent, device_t self, void *aux)
 	/* power up chip */
 	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
-		aprint_error("%s: cannot activate %d\n", ahd->sc_dev.dv_xname,
-		    error);
+		aprint_error_dev(&ahd->sc_dev, "cannot activate %d\n", error);
 		return;
 	}
 	/*
