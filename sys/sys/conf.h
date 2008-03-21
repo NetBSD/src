@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.129 2007/11/07 15:56:23 ad Exp $	*/
+/*	$NetBSD: conf.h,v 1.130 2008/03/21 19:32:07 plunky Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -236,6 +236,7 @@ struct devsw_conv {
 void devsw_init(void);
 const char *devsw_blk2name(int);
 int devsw_name2blk(const char *, char *, size_t);
+int devsw_name2chr(const char *, char *, size_t);
 dev_t devsw_chr2blk(dev_t);
 dev_t devsw_blk2chr(dev_t);
 #endif /* _KERNEL */
