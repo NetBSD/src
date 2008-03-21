@@ -1,4 +1,4 @@
-$NetBSD: system,v 1.3 2008/03/19 20:38:30 jmmv Exp $
+$NetBSD: system,v 1.4 2008/03/21 08:53:06 spz Exp $
 
 NetBSD System Roadmap
 =====================
@@ -125,7 +125,7 @@ performance boost on heavily loaded multiprocessor systems.
 7. New kernel concurrency model
 -------------------------------
 
-The non-premptive spinlock and "interrupt priority level" synchronization
+The non-preemptive spinlock and "interrupt priority level" synchronization
 model has been replaced wholesale with a hybrid thread/interrupt model.  A
 full range of new, lightweight synchronization primitives are available to
 the kernel programmer, including: adaptive mutexes, reader/writer locks,
