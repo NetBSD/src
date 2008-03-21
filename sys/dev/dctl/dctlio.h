@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctlio.h,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
+/* 	$NetBSD: dctlio.h,v 1.1.6.3 2008/03/21 19:13:36 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -117,6 +117,8 @@ struct dctl_msg {
 struct dctl_event_entry {
 	struct dctl_msg *de_msg;
 	SIMPLEQ_ENTRY(dctl_event_entry)	de_entries;
+	SIMPLEQ_ENTRY(dctl_event_entry) dm_entries;	/* mount list */
+	boolean_t de_on_mount;
 };
 
 /*

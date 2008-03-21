@@ -1,4 +1,4 @@
-/* 	$NetBSD: dctl.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $ */
+/* 	$NetBSD: dctl.c,v 1.1.6.3 2008/03/21 19:13:36 mjf Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.2 2008/03/20 12:26:12 mjf Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dctl.c,v 1.1.6.3 2008/03/21 19:13:36 mjf Exp $");
 
 #if defined(DEBUG) && !defined(DCTLDEBUG)
 #define	DCTLDEBUG
@@ -152,8 +152,9 @@ static 	lwp_t *dctl_thread_handle;
 static 	kmutex_t dctl_lock;
 static 	SIMPLEQ_HEAD(,dctl_event_entry) event_list = 
     SIMPLEQ_HEAD_INITIALIZER(event_list);
+static 	SIMPLEQ_HEAD(,dctl_event_entry) mount_event_list = 
+    SIMPLEQ_HEAD_INITIALIZER(mount_event_list);
 static	int dctl_initialised = 0;
-static	struct devicelist ourdevs = TAILQ_HEAD_INITIALIZER(ourdevs);
 
 /*
  * A new devfs mount has been created, so kick devfsd(8). What devfsd 
@@ -327,6 +328,7 @@ dctl_record_event(struct dctl_msg *msg)
 	}
 
 	de->de_msg = msg;
+	de->de_on_mount = false;
 	SIMPLEQ_INSERT_TAIL(&event_list, de, de_entries);
 	
 	sc->sc_event_count++;
@@ -448,12 +450,23 @@ int
 dctlopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int error = 0;
+	struct dctl_event_entry *ee;
 
 	DCTL_LOCK(&dctl_lock); 
 	if (dctl_open != 0)
 		error = EBUSY;
 	else 
 		dctl_open = 1;
+
+	/* Copy all mounts onto the main event list. */
+	SIMPLEQ_FOREACH(ee, &mount_event_list, dm_entries) {
+		SIMPLEQ_INSERT_TAIL(&event_list, ee, de_entries);
+		sc->sc_event_count++;
+	}
+
+	if (!SIMPLEQ_EMPTY(&mount_event_list))
+		selnotify(&sc->sc_rsel, 0);
+
 	DCTL_UNLOCK(&dctl_lock);
 
 	return error;
@@ -483,7 +496,7 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	int error;
 	struct dctl_msg *msg;
-	struct dctl_event_entry *ee;
+	struct dctl_event_entry *ee, *ef;
 	struct dctl_ioctl_data *idata;
 
 	DCTL_LOCK(&dctl_lock);
@@ -501,10 +514,46 @@ dctlioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			ee = SIMPLEQ_FIRST(&event_list);
 			*msg = *ee->de_msg;
 			SIMPLEQ_REMOVE_HEAD(&event_list, de_entries);
-			kmem_free(ee->de_msg, sizeof(*ee->de_msg));
-			kmem_free(ee, sizeof(*ee));
-			sc->sc_event_count--;
-			error = 0;
+
+			/* move to the mount list */
+			if (ee->de_msg->d_type == DCTL_NEW_MOUNT) {
+				/* is it already there? */
+				if (ee->de_on_mount != true) {
+					SIMPLEQ_INSERT_TAIL(&mount_event_list, ee, dm_entries);
+					ee->de_on_mount = true;
+				}
+				sc->sc_event_count--;
+				error = 0;
+			} else if (ee->de_msg->d_type == DCTL_UNMOUNT) {
+				/* 
+				 * Search the list of mount events and remove
+				 * this mount.
+				 */
+				SIMPLEQ_FOREACH(ef, &mount_event_list, dm_entries) {
+					if (ef->de_msg->d_dc == ee->de_msg->d_dc)
+						break;
+				}
+
+				if (ef == NULL)
+					panic("devfs umount without mount\n");
+
+				SIMPLEQ_REMOVE(&mount_event_list, ef, 
+				    dctl_event_entry, dm_entries);
+
+				kmem_free(ef->de_msg, sizeof(*ef->de_msg));
+				kmem_free(ef, sizeof(*ef));
+
+				kmem_free(ee->de_msg, sizeof(*ee->de_msg));
+				kmem_free(ee, sizeof(*ee));
+				sc->sc_event_count--;
+				error = 0;
+
+			} else {
+				kmem_free(ee->de_msg, sizeof(*ee->de_msg));
+				kmem_free(ee, sizeof(*ee));
+				sc->sc_event_count--;
+				error = 0;
+			}
 		}
 		break;
 	case DCTL_IOC_CREATENODE:
