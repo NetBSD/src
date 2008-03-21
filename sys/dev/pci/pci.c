@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.113 2008/02/28 14:25:12 drochner Exp $	*/
+/*	$NetBSD: pci.c,v 1.114 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.113 2008/02/28 14:25:12 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.114 2008/03/21 07:47:43 dyoung Exp $");
 
 #include "opt_pci.h"
 
@@ -99,18 +99,19 @@ int pci_enumerate_bus(struct pci_softc *, const int *,
  */
 
 static int
-pcirescan(struct device *sc, const char *ifattr, const int *locators)
+pcirescan(device_t self, const char *ifattr, const int *locators)
 {
+	struct pci_softc *sc = device_private(self);
 
 	KASSERT(ifattr && !strcmp(ifattr, "pci"));
 	KASSERT(locators);
 
-	pci_enumerate_bus((struct pci_softc *)sc, locators, NULL, NULL);
-	return (0);
+	pci_enumerate_bus(sc, locators, NULL, NULL);
+	return 0;
 }
 
 static int
-pcimatch(struct device *parent, struct cfdata *cf, void *aux)
+pcimatch(device_t parent, struct cfdata *cf, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
 
@@ -131,10 +132,10 @@ pcimatch(struct device *parent, struct cfdata *cf, void *aux)
 }
 
 static void
-pciattach(struct device *parent, struct device *self, void *aux)
+pciattach(device_t parent, device_t self, void *aux)
 {
 	struct pcibus_attach_args *pba = aux;
-	struct pci_softc *sc = (struct pci_softc *)self;
+	struct pci_softc *sc = device_private(self);
 	int io_enabled, mem_enabled, mrl_enabled, mrm_enabled, mwi_enabled;
 	const char *sep = "";
 	static const int wildcard[PCICF_NLOCS] = {
@@ -153,7 +154,7 @@ pciattach(struct device *parent, struct device *self, void *aux)
 	mwi_enabled = (pba->pba_flags & PCI_FLAGS_MWI_OKAY);
 
 	if (io_enabled == 0 && mem_enabled == 0) {
-		aprint_error("%s: no spaces enabled!\n", self->dv_xname);
+		aprint_error_dev(self, "no spaces enabled!\n");
 		goto fail;
 	}
 
@@ -163,7 +164,7 @@ do {									\
 	sep = ", ";							\
 } while (/*CONSTCOND*/0)
 
-	aprint_verbose("%s: ", self->dv_xname);
+	aprint_verbose_dev(self, " ");
 
 	if (io_enabled)
 		PRINT("i/o space");
@@ -207,7 +208,7 @@ fail:
 }
 
 static int
-pcidetach(struct device *self, int flags)
+pcidetach(device_t self, int flags)
 {
 	int rc;
 
@@ -274,7 +275,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 	pcireg_t id, csr, class, intr, bhlcr;
 	int ret, pin, bus, device, function;
 	int locs[PCICF_NLOCS];
-	struct device *subdev;
+	device_t subdev;
 
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 
@@ -370,15 +371,15 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 }
 
 static void
-pcidevdetached(struct device *sc, struct device *dev)
+pcidevdetached(device_t self, device_t child)
 {
-	struct pci_softc *psc = (struct pci_softc *)sc;
+	struct pci_softc *psc = device_private(self);
 	int d, f;
 
-	d = device_locator(dev, PCICF_DEV);
-	f = device_locator(dev, PCICF_FUNCTION);
+	d = device_locator(child, PCICF_DEV);
+	f = device_locator(child, PCICF_FUNCTION);
 
-	KASSERT(psc->PCI_SC_DEVICESC(d, f) == dev);
+	KASSERT(psc->PCI_SC_DEVICESC(d, f) == child);
 
 	psc->PCI_SC_DEVICESC(d, f) = 0;
 }
@@ -436,7 +437,7 @@ pci_find_device(struct pci_attach_args *pa,
 		int (*match)(struct pci_attach_args *))
 {
 	extern struct cfdriver pci_cd;
-	struct device *pcidev;
+	device_t pcidev;
 	int i;
 	static const int wildcard[2] = {
 		PCICF_DEV_DEFAULT,
@@ -746,10 +747,9 @@ pci_set_powerstate(pci_chipset_tag_t pc, pcitag_t tag, pcireg_t state)
 }
 
 int
-pci_activate(pci_chipset_tag_t pc, pcitag_t tag, void *sc,
-    int (*wakefun)(pci_chipset_tag_t, pcitag_t, void *, pcireg_t))
+pci_activate(pci_chipset_tag_t pc, pcitag_t tag, device_t dev,
+    int (*wakefun)(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t))
 {
-	struct device *dv = sc;
 	pcireg_t pmode;
 	int error;
 
@@ -765,20 +765,19 @@ pci_activate(pci_chipset_tag_t pc, pcitag_t tag, void *sc,
 			 * The card has lost all configuration data in
 			 * this state, so punt.
 			 */
-			aprint_error(
-			    "%s: unable to wake up from power state D3\n",
-			    dv->dv_xname);
+			aprint_error_dev(dev,
+			    "unable to wake up from power state D3\n");
 			return EOPNOTSUPP;
 		}
 		/*FALLTHROUGH*/
 	default:
 		if (wakefun) {
-			error = (*wakefun)(pc, tag, sc, pmode);
+			error = (*wakefun)(pc, tag, dev, pmode);
 			if (error)
 				return error;
 		}
-		aprint_normal("%s: waking up from power state D%d\n",
-		    dv->dv_xname, pmode);
+		aprint_normal_dev(dev, "waking up from power state D%d\n",
+		    pmode);
 		if ((error = pci_set_powerstate(pc, tag, PCI_PMCSR_STATE_D0)))
 			return error;
 	}
@@ -787,7 +786,7 @@ pci_activate(pci_chipset_tag_t pc, pcitag_t tag, void *sc,
 
 int
 pci_activate_null(pci_chipset_tag_t pc, pcitag_t tag,
-    void *sc, pcireg_t state)
+    device_t dev, pcireg_t state)
 {
 	return 0;
 }

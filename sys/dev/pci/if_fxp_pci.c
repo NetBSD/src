@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fxp_pci.c,v 1.56 2008/02/29 06:13:39 dyoung Exp $	*/
+/*	$NetBSD: if_fxp_pci.c,v 1.57 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.56 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fxp_pci.c,v 1.57 2008/03/21 07:47:43 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -182,8 +182,7 @@ fxp_pci_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-fxp_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+fxp_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -252,10 +251,10 @@ fxp_pci_resume(device_t dv PMF_FN_ARGS)
 }
 
 static void
-fxp_pci_attach(struct device *parent, struct device *self, void *aux)
+fxp_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct fxp_pci_softc *psc = (struct fxp_pci_softc *)self;
-	struct fxp_softc *sc = (struct fxp_softc *)self;
+	struct fxp_pci_softc *psc = device_private(self);
+	struct fxp_softc *sc = &psc->psc_fxp;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -452,7 +451,7 @@ fxp_pci_attach(struct device *parent, struct device *self, void *aux)
 	    pci_conf_read(pc, pa->pa_tag, PCI_MAPREG_START+0x8);
 
 	/* power up chip */
-	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null))) {
 	case EOPNOTSUPP:
 		break;

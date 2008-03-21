@@ -1,4 +1,4 @@
-/* $NetBSD: auixp.c,v 1.26 2008/02/29 06:13:39 dyoung Exp $ */
+/* $NetBSD: auixp.c,v 1.27 2008/03/21 07:47:43 dyoung Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Reinoud Zandijk <reinoud@netbsd.org>
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.26 2008/02/29 06:13:39 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auixp.c,v 1.27 2008/03/21 07:47:43 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -130,9 +130,9 @@ struct audio_device auixp_device = {
 
 
 /* autoconfig */
-static int	auixp_match( struct device *, struct cfdata *, void *);
-static void	auixp_attach(struct device *, struct device *, void *);
-static int	auixp_detach(struct device *, int);
+static int	auixp_match(device_t, struct cfdata *, void *);
+static void	auixp_attach(device_t, device_t, void *);
+static int	auixp_detach(device_t, int);
 
 
 /* audio(9) function prototypes */
@@ -167,7 +167,7 @@ static paddr_t	auixp_mappage(void *, void *, off_t, int);
 /* Supporting subroutines */
 static int	auixp_init(struct auixp_softc *);
 static void	auixp_autodetect_codecs(struct auixp_softc *);
-static void	auixp_post_config(struct device *);
+static void	auixp_post_config(device_t);
 
 static void	auixp_reset_aclink(struct auixp_softc *);
 static int	auixp_attach_codec(void *, struct ac97_codec_if *);
@@ -1067,8 +1067,7 @@ auixp_mappage(void *hdl, void *mem, off_t off, int prot)
 
 /* Is it my hardware? */
 static int
-auixp_match(struct device *dev, struct cfdata *match,
-    void *aux)
+auixp_match(device_t dev, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa;
 
@@ -1089,7 +1088,7 @@ auixp_match(struct device *dev, struct cfdata *match,
 
 /* it is... now hook up and set up the resources we need */
 static void
-auixp_attach(struct device *parent, struct device *self, void *aux)
+auixp_attach(device_t parent, device_t self, void *aux)
 {
 	struct auixp_softc *sc;
 	struct pci_attach_args *pa;
@@ -1102,7 +1101,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	char devinfo[256];
 	int revision, error;
 
-	sc = (struct auixp_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	tag = pa->pa_tag;
 	pc = pa->pa_pc;
@@ -1181,7 +1180,7 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
@@ -1208,14 +1207,14 @@ auixp_attach(struct device *parent, struct device *self, void *aux)
 
 /* called from autoconfigure system when interrupts are enabled */
 static void
-auixp_post_config(struct device *self)
+auixp_post_config(device_t self)
 {
 	struct auixp_softc *sc;
 	struct auixp_codec *codec;
 	int codec_nr;
 	int res, i;
 
-	sc = (struct auixp_softc *)self;
+	sc = device_private(self);
 	/* detect the AC97 codecs */
 	auixp_autodetect_codecs(sc);
 
@@ -1347,11 +1346,11 @@ auixp_disable_interrupts(struct auixp_softc *sc)
 
 /* dismantle what we've set up by undoing setup */
 static int
-auixp_detach(struct device *self, int flags)
+auixp_detach(device_t self, int flags)
 {
 	struct auixp_softc *sc;
 
-	sc = (struct auixp_softc *)self;
+	sc = device_private(self);
 	/* XXX shouldn't we just reset the chip? XXX */
 	/*
 	 * should we explicitly disable interrupt generation and acknowledge

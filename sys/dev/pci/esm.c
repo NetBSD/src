@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.45 2008/02/23 02:17:16 dyoung Exp $      */
+/*      $NetBSD: esm.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.45 2008/02/23 02:17:16 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1659,7 +1659,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	 */
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, ess,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", ess->sc_dev.dv_xname,
 		    error);

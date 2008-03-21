@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_pci.c,v 1.44 2007/10/19 12:00:45 ad Exp $	*/
+/*	$NetBSD: if_ex_pci.c,v 1.45 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.44 2007/10/19 12:00:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_pci.c,v 1.45 2008/03/21 07:47:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ static int	ex_pci_enable(struct ex_softc *);
 static void	ex_pci_disable(struct ex_softc *);
 
 static void	ex_pci_confreg_restore(struct ex_pci_softc *);
-static int	ex_d3tod0(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
+static int	ex_d3tod0(pci_chipset_tag_t, pcitag_t, device_t, pcireg_t);
 
 CFATTACH_DECL(ex_pci, sizeof(struct ex_pci_softc),
     ex_pci_match, ex_pci_attach, NULL, NULL);
@@ -211,10 +211,10 @@ ex_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-ex_pci_attach(struct device *parent, struct device *self, void *aux)
+ex_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct ex_softc *sc = (void *)self;
-	struct ex_pci_softc *psc = (void *)self;
+	struct ex_pci_softc *psc = device_private(self);
+	struct ex_softc *sc = &psc->sc_ex;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
@@ -276,9 +276,9 @@ ex_pci_attach(struct device *parent, struct device *self, void *aux)
 
 	psc->psc_regs[PCI_INTERRUPT_REG>>2] =
 	    pci_conf_read(pc, pa->pa_tag, PCI_INTERRUPT_REG);
-
 	/* power up chip */
-	switch ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc, ex_d3tod0))) {
+	error = pci_activate(pa->pa_pc, pa->pa_tag, self, ex_d3tod0);
+	switch (error) {
 	case EOPNOTSUPP:
 		break;
 	case 0: 
@@ -331,7 +331,7 @@ ex_pci_intr_ack(struct ex_softc *sc)
 }
 
 static int
-ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, void *ssc, pcireg_t state)
+ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, device_t self, pcireg_t state)
 {
 
 #define PCI_CACHE_LAT_BIST	0x0c
@@ -350,7 +350,7 @@ ex_d3tod0(pci_chipset_tag_t pc, pcitag_t tag, void *ssc, pcireg_t state)
 	u_int32_t pci_command;
 	u_int32_t pci_int_lat;
 	u_int32_t pci_cache_lat;
-	struct ex_softc *sc = ssc;
+	struct ex_softc *sc = device_private(self);
 
 	if (state != PCI_PMCSR_STATE_D3)
 		return 0;
