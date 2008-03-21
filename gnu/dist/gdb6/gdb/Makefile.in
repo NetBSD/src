@@ -1391,7 +1391,8 @@ MAKEOVERRIDES=
 ALLDEPFILES = \
 	aix-thread.c \
 	alpha-nat.c alphabsd-nat.c alpha-linux-nat.c linux-fork.c \
-	alpha-tdep.c alpha-linux-tdep.c alphabsd-tdep.c alphanbsd-tdep.c \
+	alpha-tdep.c alpha-linux-tdep.c alphabsd-tdep.c \
+	alphanbsd-nat.c alphanbsd-tdep.c \
 	alpha-osf1-tdep.c alphafbsd-tdep.c alpha-mdebug-tdep.c \
 	amd64-nat.c amd64-tdep.c \
 	amd64bsd-nat.c amd64fbsd-nat.c amd64fbsd-tdep.c \
@@ -1697,6 +1698,8 @@ alpha-mdebug-tdep.o: alpha-mdebug-tdep.c $(defs_h) $(frame_h) \
 	$(block_h) $(gdb_assert_h) $(alpha_tdep_h) $(mdebugread_h)
 alpha-nat.o: alpha-nat.c $(defs_h) $(gdb_string_h) $(inferior_h) \
 	$(gdbcore_h) $(target_h) $(regcache_h) $(alpha_tdep_h) $(gregset_h)
+alphanbsd-nat.o: alphanbsd-nat.c $(defs_h) $(regcache_h) $(target_h) \
+	$(alpha_tdep_h) $(alphabsd_nat_h) $(nbsd_nat_h)
 alphanbsd-tdep.o: alphanbsd-tdep.c $(defs_h) $(gdbcore_h) $(frame_h) \
 	$(regcache_h) $(value_h) $(osabi_h) $(gdb_string_h) $(alpha_tdep_h) \
 	$(alphabsd_tdep_h) $(nbsd_tdep_h) $(solib_svr4_h)
