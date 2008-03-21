@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.90 2007/07/11 18:44:46 jdc Exp $	*/
+/*	$NetBSD: curses.h,v 1.91 2008/03/21 13:42:39 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -55,18 +55,24 @@
 typedef wchar_t	chtype;
 typedef wchar_t	attr_t;
 
+#ifndef HAVE_WCHAR
+#define HAVE_WCHAR 1
+#endif
+
 #ifdef HAVE_WCHAR
 /* 
- * The complex character structure required by the X/Open reference to be used in 
- * functions such as in_wchstr(). It includes a string of up to 8 wide characters 
- * and its length, an attribute, and a color-pair.
+ * The complex character structure required by the X/Open reference and used
+ * in * functions such as in_wchstr(). It includes a string of up to 8 wide
+ * characters and its length, an attribute, and a color-pair.
  */
 #define CURSES_CCHAR_MAX 8
 #define CCHARW_MAX       5
 typedef struct {
 	attr_t		attributes;		/* character attributes */
-	unsigned	elements;		/* number of wide char in vals[] */
-	wchar_t		vals[CURSES_CCHAR_MAX]; /* wide chars including non-spacing */
+	unsigned	elements;		/* number of wide char in
+						   vals[] */
+	wchar_t		vals[CURSES_CCHAR_MAX]; /* wide chars including
+						   non-spacing */
 } cchar_t;
 #else 
 typedef chtype cchar_t;
@@ -243,6 +249,7 @@ typedef struct __screen SCREEN;
 #define	A_DIM		__DIM
 #define	A_BOLD		__BOLD
 #define	A_BLANK		__BLANK
+#define	A_INVIS		__BLANK
 #define	A_PROTECT	__PROTECT
 #define	A_ALTCHARSET	__ALTCHARSET
 #define	A_ATTRIBUTES	__ATTRIBUTES
@@ -251,15 +258,15 @@ typedef struct __screen SCREEN;
 
 #ifdef HAVE_WCHAR
 #define WA_ATTRIBUTES	0x03ffffff	/* Wide character attributes mask */
-#define WA_ALTCHARSET	__ALTCHARSET	/* Alternate character set */
-#define WA_BLINK	__BLINK		/* Blinking */
-#define WA_BOLD		__BOLD		/* Extra bright or bold */
-#define WA_DIM		__DIM		/* Half bright */
-#define WA_PROTECT	__PROTECT	/* Protected */
-#define WA_REVERSE	__REVERSE	/* Reverse video */
 #define WA_STANDOUT	__STANDOUT	/* Best highlighting mode */
 #define WA_UNDERLINE	__UNDERSCORE	/* Underlining */
-#define WA_INVIS	0x00000001	/* Invisible */
+#define WA_REVERSE	__REVERSE	/* Reverse video */
+#define WA_BLINK	__BLINK		/* Blinking */
+#define WA_DIM		__DIM		/* Half bright */
+#define WA_BOLD		__BOLD		/* Extra bright or bold */
+#define WA_INVIS	__BLANK		/* Invisible */
+#define WA_PROTECT	__PROTECT	/* Protected */
+#define WA_ALTCHARSET	__ALTCHARSET	/* Alternate character set */
 #define WA_LOW		0x00000002	/* Low highlight */
 #define WA_TOP		0x00000004	/* Top highlight */
 #define WA_HORIZONTAL	0x00000008	/* Horizontal highlight */
@@ -720,6 +727,8 @@ SCREEN  *set_term(SCREEN *);
 int	 start_color(void);
 WINDOW	*subpad(WINDOW *, int, int, int, int);
 WINDOW	*subwin(WINDOW *, int, int, int, int);
+chtype	 termattrs(void);
+attr_t	 term_attrs(void);
 int	 touchline(WINDOW *, int, int);
 int	 touchoverlap(WINDOW *, WINDOW *);
 int	 touchwin(WINDOW *);
