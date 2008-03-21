@@ -1233,7 +1233,7 @@ struct ahd_softc {
 	/* Per-Unit descriptive information */
 	const char		 *description;
 	const char		 *bus_description;
-	char			 *name;
+	const char		 *name;
 	int			  unit;
 
 	/* Selection Timer settings */
@@ -1378,7 +1378,7 @@ void			 ahd_pause_and_flushwork(struct ahd_softc *);
 int			 ahd_suspend(struct ahd_softc *);
 int			 ahd_resume(struct ahd_softc *);
 void			 ahd_set_unit(struct ahd_softc *, int);
-void			 ahd_set_name(struct ahd_softc *, char *);
+void			 ahd_set_name(struct ahd_softc *, const char *);
 struct scb		*ahd_get_scb(struct ahd_softc *, u_int);
 void			 ahd_free_scb(struct ahd_softc *, struct scb *);
 int			 ahd_alloc_scbs(struct ahd_softc *);
