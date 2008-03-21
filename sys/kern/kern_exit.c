@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.199 2008/01/28 12:22:46 yamt Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.200 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.199 2008/01/28 12:22:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.200 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -276,7 +276,7 @@ exit1(struct lwp *l, int rv)
 	 * Close open files, release open-file table and free signal
 	 * actions.  This may block!
 	 */
-	fdfree(l);
+	fd_free();
 	cwdfree(p->p_cwdi);
 	p->p_cwdi = NULL;
 	doexithooks(p);

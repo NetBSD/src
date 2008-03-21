@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_kq.c,v 1.20 2008/02/12 08:55:27 yamt Exp $	*/
+/*	$NetBSD: nfs_kq.c,v 1.21 2008/03/21 21:55:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.20 2008/02/12 08:55:27 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_kq.c,v 1.21 2008/03/21 21:55:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -221,13 +221,13 @@ filt_nfsread(struct knote *kn, long hint)
 		return (1);
 	case 0:
 		mutex_enter(&vp->v_interlock);
-		kn->kn_data = vp->v_size - kn->kn_fp->f_offset != 0;
+		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		rv = (kn->kn_data != 0);
 		mutex_exit(&vp->v_interlock);
 		return rv;
 	default:
 		KASSERT(mutex_owned(&vp->v_interlock));
-		kn->kn_data = vp->v_size - kn->kn_fp->f_offset != 0;
+		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
 		return (kn->kn_data != 0);
 	}
 }

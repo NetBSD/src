@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_ioctl.c,v 1.18 2008/01/05 19:14:08 dsl Exp $ */
+/*	$NetBSD: irix_ioctl.c,v 1.19 2008/03/21 21:54:58 ad Exp $ */
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.18 2008/01/05 19:14:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_ioctl.c,v 1.19 2008/03/21 21:54:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -79,29 +79,27 @@ irix_sys_ioctl(struct lwp *l, const struct irix_sys_ioctl_args *uap, register_t 
 		syscallarg(void *) data;
 	} */
 	extern const struct cdevsw irix_usema_cdevsw;
-	struct proc *p = l->l_proc;
 	u_long	cmd;
 	void *data;
-	struct file *fp;
-	struct filedesc *fdp;
+	file_t *fp;
 	struct vnode *vp;
 	struct vattr vattr;
 	struct irix_ioctl_usrdata iiu;
-	int error, val;
+	int error, val, fd;
 
 	/*
 	 * This duplicates 6 lines from svr4_sys_ioctl()
 	 * It would be nice to merge it.
 	 */
-	fdp = p->p_fd;
+	fd = SCARG(uap, fd);
 	cmd = SCARG(uap, com);
 	data = SCARG(uap, data);
 
-	if ((fp = fd_getfile(fdp, SCARG(uap, fd))) == NULL)
+	if ((fp = fd_getfile(fd)) == NULL)
 		return EBADF;
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0) {
-		FILE_UNLOCK(fp);
+		fd_putfile(fd);
 		return EBADF;
 	}
 
@@ -120,11 +118,10 @@ irix_sys_ioctl(struct lwp *l, const struct irix_sys_ioctl_args *uap, register_t 
 	 */
 	if ((cmd & IRIX_UIOC_MASK) == IRIX_UIOC) {
 		if (fp->f_type != DTYPE_VNODE) {
-			FILE_UNLOCK(fp);
+			fd_putfile(fd);
 			return ENOTTY;
 		}
-		FILE_USE(fp);
-		vp = (struct vnode*)fp->f_data;
+		vp = fp->f_data;
 		if (vp->v_type != VCHR ||
 		    cdevsw_lookup(vp->v_rdev) != &irix_usema_cdevsw ||
 		    minor(vp->v_rdev) != IRIX_USEMACLNDEV_MINOR) {
@@ -135,27 +132,26 @@ irix_sys_ioctl(struct lwp *l, const struct irix_sys_ioctl_args *uap, register_t 
 		iiu.iiu_data = data;
 		iiu.iiu_retval = retval;
 
-		error = (*fp->f_ops->fo_ioctl)(fp, cmd, &iiu, l);
+		error = (*fp->f_ops->fo_ioctl)(fp, cmd, &iiu);
 out:
-		FILE_UNUSE(fp, l);
+		fd_putfile(fd);
 		return error;
 	}
 
 	switch (cmd) {
 	case IRIX_SIOCNREAD: /* number of bytes to read */
 		error = (*(fp->f_ops->fo_ioctl))(fp, FIONREAD,
-		    SCARG(uap, data), l);
-		FILE_UNLOCK(fp);
+		    SCARG(uap, data));
+		fd_putfile(fd);
 		return error;
 
 	case IRIX_MTIOCGETBLKSIZE: /* get tape block size in 512B units */
 		if (fp->f_type != DTYPE_VNODE) {
-			FILE_UNLOCK(fp);
+			fd_putfile(fd);
 			return ENOSYS;
 		}
 
-		FILE_USE(fp);
-		vp = (struct vnode*)fp->f_data;
+		vp = fp->f_data;
 
 		switch (vp->v_type) {
 		case VREG:
@@ -179,11 +175,11 @@ out:
 			break;
 		}
 
-		FILE_UNUSE(fp, l);
+		fd_putfile(fd);
 		return error;
 
 	default: /* Fallback to the standard SVR4 ioctl's */
-		FILE_UNLOCK(fp);
+		fd_putfile(fd);
 		return svr4_sys_ioctl(l, (const void *)uap, retval);
 	}
 }

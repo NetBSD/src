@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_file.c,v 1.29 2007/12/20 23:03:02 dsl Exp $ */
+/* $NetBSD: osf1_file.c,v 1.30 2008/03/21 21:54:59 ad Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.29 2007/12/20 23:03:02 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_file.c,v 1.30 2008/03/21 21:54:59 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_syscall_debug.h"
@@ -132,7 +132,7 @@ osf1_sys_lstat(struct lwp *l, const struct osf1_sys_lstat_args *uap, register_t 
 	struct osf1_stat osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return (error);
 	osf1_cvt_stat_from_native(&sb, &osb);
@@ -151,7 +151,7 @@ osf1_sys_lstat2(struct lwp *l, const struct osf1_sys_lstat2_args *uap, register_
 	struct osf1_stat2 osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), NOFOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), NOFOLLOW, &sb);
 	if (error)
 		return (error);
 	osf1_cvt_stat2_from_native(&sb, &osb);
@@ -229,7 +229,7 @@ osf1_sys_stat(struct lwp *l, const struct osf1_sys_stat_args *uap, register_t *r
 	struct osf1_stat osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return (error);
 	osf1_cvt_stat_from_native(&sb, &osb);
@@ -248,7 +248,7 @@ osf1_sys_stat2(struct lwp *l, const struct osf1_sys_stat2_args *uap, register_t 
 	struct osf1_stat2 osb;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), FOLLOW, &sb);
+	error = do_sys_stat(SCARG(uap, path), FOLLOW, &sb);
 	if (error)
 		return (error);
 	osf1_cvt_stat2_from_native(&sb, &osb);

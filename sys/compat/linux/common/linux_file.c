@@ -1,7 +1,7 @@
-/*	$NetBSD: linux_file.c,v 1.92 2008/02/02 21:54:01 dsl Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.93 2008/03/21 21:54:58 ad Exp $	*/
 
 /*-
- * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.92 2008/02/02 21:54:01 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.93 2008/03/21 21:54:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,19 +191,16 @@ linux_sys_open(struct lwp *l, const struct linux_sys_open_args *uap, register_t 
 	 * this the controlling terminal.
 	 */
         if (!(fl & O_NOCTTY) && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
-                struct filedesc *fdp = p->p_fd;
-                struct file     *fp;
+                file_t *fp;
 
-		fp = fd_getfile(fdp, *retval);
+		fp = fd_getfile(*retval);
 
                 /* ignore any error, just give it a try */
                 if (fp != NULL) {
-			FILE_USE(fp);
 			if (fp->f_type == DTYPE_VNODE) {
-				(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY,
-				    (void *) 0, l);
+				(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, NULL);
 			}
-			FILE_UNUSE(fp, l);
+			fd_putfile(*retval);
 		}
         }
 	return 0;
@@ -228,8 +225,7 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 	u_long val;
 	void *arg;
 	struct sys_fcntl_args fca;
-	struct filedesc *fdp;
-	struct file *fp;
+	file_t *fp;
 	struct vnode *vp;
 	struct vattr va;
 	const struct cdevsw *cdev;
@@ -265,7 +261,7 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		return 0;
 
 	case LINUX_F_SETFL: {
-		struct file	*fp1 = NULL;
+		file_t	*fp1 = NULL;
 
 		val = linux_to_bsd_ioflags((unsigned long)SCARG(uap, arg));
 		/*
@@ -285,18 +281,15 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		 * so that F_GETFL would report the ASYNC i/o is on.
 		 */
 		if (val & O_ASYNC) {
-			if (((fp1 = fd_getfile(p->p_fd, fd)) == NULL))
+			if (((fp1 = fd_getfile(fd)) == NULL))
 			    return (EBADF);
-
-			FILE_USE(fp1);
-
 			if (((fp1->f_type == DTYPE_SOCKET) && fp1->f_data
 			      && ((struct socket *)fp1->f_data)->so_state & SS_ISAPIPE)
 			    || (fp1->f_type == DTYPE_PIPE))
 				val &= ~O_ASYNC;
 			else {
 				/* not a pipe, do not modify anything */
-				FILE_UNUSE(fp1, l);
+				fd_putfile(fd);
 				fp1 = NULL;
 			}
 		}
@@ -309,9 +302,12 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 
 		/* Now set the FASYNC flag for pipes */
 		if (fp1) {
-			if (!error)
+			if (!error) {
+				mutex_enter(&fp1->f_lock);
 				fp1->f_flag |= FASYNC;
-			FILE_UNUSE(fp1, l);
+				mutex_exit(&fp1->f_lock);
+			}
+			fd_putfile(fd);
 		}
 
 		return (error);
@@ -332,16 +328,14 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 		 * restrictive for Linux F_{G,S}ETOWN. For non-tty descriptors,
 		 * this is not a problem.
 		 */
-		fdp = p->p_fd;
-		if ((fp = fd_getfile(fdp, fd)) == NULL)
+		if ((fp = fd_getfile(fd)) == NULL)
 			return EBADF;
-		FILE_USE(fp);
 
 		/* Check it's a character device vnode */
 		if (fp->f_type != DTYPE_VNODE
 		    || (vp = (struct vnode *)fp->f_data) == NULL
 		    || vp->v_type != VCHR) {
-			FILE_UNUSE(fp, l);
+			fd_putfile(fd);
 
 	    not_tty:
 			/* Not a tty, proceed with common fcntl() */
@@ -351,7 +345,7 @@ linux_sys_fcntl(struct lwp *l, const struct linux_sys_fcntl_args *uap, register_
 
 		error = VOP_GETATTR(vp, &va, l->l_cred);
 
-		FILE_UNUSE(fp, l);
+		fd_putfile(fd);
 
 		if (error)
 			return error;
@@ -448,7 +442,7 @@ linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap, register_
 	struct stat tmpst;
 	int error;
 
-	error = do_sys_fstat(l, SCARG(uap, fd), &tmpst);
+	error = do_sys_fstat(SCARG(uap, fd), &tmpst);
 	if (error != 0)
 		return error;
 	bsd_to_linux_stat(&tmpst, &tmplst);
@@ -457,13 +451,13 @@ linux_sys_fstat(struct lwp *l, const struct linux_sys_fstat_args *uap, register_
 }
 
 static int
-linux_stat1(struct lwp *l, const struct linux_sys_stat_args *uap, register_t *retval, int flags)
+linux_stat1(const struct linux_sys_stat_args *uap, register_t *retval, int flags)
 {
 	struct linux_stat tmplst;
 	struct stat tmpst;
 	int error;
 
-	error = do_sys_stat(l, SCARG(uap, path), flags, &tmpst);
+	error = do_sys_stat(SCARG(uap, path), flags, &tmpst);
 	if (error != 0)
 		return error;
 
@@ -480,7 +474,7 @@ linux_sys_stat(struct lwp *l, const struct linux_sys_stat_args *uap, register_t 
 		syscallarg(struct linux_stat *) sp;
 	} */
 
-	return linux_stat1(l, uap, retval, FOLLOW);
+	return linux_stat1(uap, retval, FOLLOW);
 }
 
 /* Note: this is "newlstat" in the Linux sources */
@@ -493,7 +487,7 @@ linux_sys_lstat(struct lwp *l, const struct linux_sys_lstat_args *uap, register_
 		syscallarg(struct linux_stat *) sp;
 	} */
 
-	return linux_stat1(l, (const void *)uap, retval, NOFOLLOW);
+	return linux_stat1((const void *)uap, retval, NOFOLLOW);
 }
 #endif /* !__amd64__ */
 
@@ -524,7 +518,7 @@ linux_sys_unlink(struct lwp *l, const struct linux_sys_unlink_args *uap, registe
 	if (namei(&nd) == 0) {
 		struct stat sb;
 
-		if (vn_stat(nd.ni_vp, &sb, l) == 0
+		if (vn_stat(nd.ni_vp, &sb) == 0
 		    && S_ISDIR(sb.st_mode))
 			error = EISDIR;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_kq.c,v 1.19 2008/02/05 14:19:52 ad Exp $	*/
+/*	$NetBSD: smbfs_kq.c,v 1.20 2008/03/21 21:54:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.19 2008/02/05 14:19:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_kq.c,v 1.20 2008/03/21 21:54:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,7 +376,7 @@ filt_smbfsread(struct knote *kn, long hint)
 		} else
 			rv = 0;
 	} else {
-		kn->kn_data = vp->v_size - kn->kn_fp->f_offset;
+		kn->kn_data = vp->v_size - ((file_t *)kn->kn_obj)->f_offset;
        		rv = (kn->kn_data != 0);
 	}
 	if (hint == 0) {

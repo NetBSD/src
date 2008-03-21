@@ -1,6 +1,6 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.243 2008/01/04 21:18:05 ad Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.244 2008/03/21 21:54:59 ad Exp $	*/
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -146,7 +146,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.243 2008/01/04 21:18:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.244 2008/03/21 21:54:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -2664,7 +2664,7 @@ rf_close_component(RF_Raid_t *raidPtr, struct vnode *vp, int auto_configured)
 			vput(vp);
 
 		} else {
-			(void) vn_close(vp, FREAD | FWRITE, curlwp->l_cred, curlwp);
+			(void) vn_close(vp, FREAD | FWRITE, curlwp->l_cred);
 		}
 	}
 }

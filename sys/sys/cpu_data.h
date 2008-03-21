@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_data.h,v 1.17 2008/03/11 02:24:43 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.18 2008/03/21 21:55:01 ad Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2006, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

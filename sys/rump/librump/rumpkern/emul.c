@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.32 2008/03/19 00:40:34 bjs Exp $	*/
+/*	$NetBSD: emul.c,v 1.33 2008/03/21 21:55:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -458,7 +458,7 @@ sigispending(struct lwp *l, int signo)
 }
 
 void
-knote_fdclose(struct lwp *l, int fd)
+knote_fdclose(int fd)
 {
 
 	/* since we don't add knotes, we don't have to remove them */

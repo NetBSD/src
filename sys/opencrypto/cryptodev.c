@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.34 2008/02/04 14:46:27 tls Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.35 2008/03/21 21:55:01 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.34 2008/02/04 14:46:27 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.35 2008/03/21 21:55:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,10 @@ static int	cryptowrite(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
-static int	cryptof_read(struct file *, off_t *, struct uio *, kauth_cred_t, int);
-static int	cryptof_write(struct file *, off_t *, struct uio *, kauth_cred_t, int);
-static int	cryptof_ioctl(struct file *, u_long, void*, struct lwp *l);
-static int	cryptof_close(struct file *, struct lwp *);
+static int	cryptof_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
+static int	cryptof_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
+static int	cryptof_ioctl(file_t *, u_long, void *);
+static int	cryptof_close(file_t *);
 
 static const struct fileops cryptofops = {
     cryptof_read,
@@ -133,7 +133,7 @@ static int	cryptodevkey_cb(void *);
 
 /* ARGSUSED */
 int
-cryptof_read(struct file *fp, off_t *poff,
+cryptof_read(file_t *fp, off_t *poff,
     struct uio *uio, kauth_cred_t cred, int flags)
 {
 	return (EIO);
@@ -141,7 +141,7 @@ cryptof_read(struct file *fp, off_t *poff,
 
 /* ARGSUSED */
 int
-cryptof_write(struct file *fp, off_t *poff,
+cryptof_write(file_t *fp, off_t *poff,
     struct uio *uio, kauth_cred_t cred, int flags)
 {
 	return (EIO);
@@ -149,10 +149,10 @@ cryptof_write(struct file *fp, off_t *poff,
 
 /* ARGSUSED */
 int
-cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
+cryptof_ioctl(file_t *fp, u_long cmd, void *data)
 {
 	struct cryptoini cria, crie;
-	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
+	struct fcrypt *fcr = fp->f_data;
 	struct csession *cse;
 	struct session_op *sop;
 	struct crypt_op *cop;
@@ -163,13 +163,13 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
 	int error = 0;
 
 	/* backwards compatibility */
-        struct file *criofp;
+        file_t *criofp;
 	struct fcrypt *criofcr;
 	int criofd;
 
         switch (cmd) {
         case CRIOGET:   /* XXX deprecated, remove after 5.0 */
-                if ((error = falloc(l, &criofp, &criofd)) != 0)
+                if ((error = fd_allocfile(&criofp, &criofd)) != 0)
                         return error;
                 criofcr = pool_get(&fcrpl, PR_WAITOK);
 		mutex_spin_enter(&crypto_mtx);
@@ -180,7 +180,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void* data, struct lwp *l)
                  */
                 criofcr->sesn = 1;
 		mutex_spin_exit(&crypto_mtx);
-                (void)fdclone(l, criofp, criofd, (FREAD|FWRITE),
+                (void)fd_clone(criofp, criofd, (FREAD|FWRITE),
 			      &cryptofops, criofcr);
                 *(u_int32_t *)data = criofd;
 		return error;
@@ -353,7 +353,7 @@ bail:
 			DPRINTF(("csefind failed\n"));
 			return (EINVAL);
 		}
-		error = cryptodev_op(cse, cop, l);
+		error = cryptodev_op(cse, cop, curlwp);
 		DPRINTF(("cryptodev_op error = %d\n", error));
 		break;
 	case CIOCKEY:
@@ -710,9 +710,9 @@ fail:
 
 /* ARGSUSED */
 static int
-cryptof_close(struct file *fp, struct lwp *l)
+cryptof_close(file_t *fp)
 {
-	struct fcrypt *fcr = (struct fcrypt *)fp->f_data;
+	struct fcrypt *fcr = fp->f_data;
 	struct csession *cse;
 
 	mutex_spin_enter(&crypto_mtx);
@@ -820,14 +820,14 @@ static int
 cryptoopen(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
-	struct file *fp;
+	file_t *fp;
         struct fcrypt *fcr;
         int fd, error;
 
 	if (crypto_usercrypto == 0)
 		return (ENXIO);
 
-	if ((error = falloc(l, &fp, &fd)) != 0)
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		return error;
 
 	fcr = pool_get(&fcrpl, PR_WAITOK);
@@ -839,7 +839,7 @@ cryptoopen(dev_t dev, int flag, int mode,
 	 */
 	fcr->sesn = 1;
 	mutex_spin_exit(&crypto_mtx);
-	return fdclone(l, fp, fd, flag, &cryptofops, fcr);
+	return fd_clone(fp, fd, flag, &cryptofops, fcr);
 }
 
 static int

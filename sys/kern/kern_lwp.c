@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.96 2008/03/17 16:54:51 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.97 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.96 2008/03/17 16:54:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.97 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -583,6 +583,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, bool inmem, int flags,
 	l2->l_cpu = l1->l_cpu;
 	l2->l_flag = inmem ? LW_INMEM : 0;
 	l2->l_pflag = LP_MPSAFE;
+	l2->l_fd = p2->p_fd;
 
 	if (p2->p_flag & PK_SYSTEM) {
 		/* Mark it as a system LWP and not a candidate for swapping */
@@ -829,12 +830,10 @@ lwp_exit_switchaway(struct lwp *l)
 	struct cpu_info *ci;
 	struct lwp *idlelwp;
 
-	/* Unlocked, but is for statistics only. */
-	uvmexp.swtch++;
-
 	(void)splsched();
 	l->l_flag &= ~LW_RUNNING;
 	ci = curcpu();	
+	ci->ci_data.cpu_nswtch++;
 	idlelwp = ci->ci_data.cpu_idlelwp;
 	idlelwp->l_stat = LSONPROC;
 
