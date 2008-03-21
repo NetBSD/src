@@ -1,7 +1,7 @@
-/*	$NetBSD: irix_syssgi.c,v 1.46 2007/12/20 23:02:51 dsl Exp $ */
+/*	$NetBSD: irix_syssgi.c,v 1.47 2008/03/21 21:54:58 ad Exp $ */
 
 /*-
- * Copyright (c) 2001-2002 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.46 2007/12/20 23:02:51 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irix_syssgi.c,v 1.47 2008/03/21 21:54:58 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -293,8 +293,7 @@ irix_syssgi_mapelf(int fd, Elf_Phdr *ph, int count, struct lwp *l, register_t *r
 	u_long size;
 	Elf_Addr uaddr;
 	Elf_Addr reloc_offset;
-	struct file *fp;
-	struct filedesc *fdp;
+	file_t *fp;
 	struct exec_vmcmd_set vcset;
 	struct exec_vmcmd *base_vcp = NULL;
 	struct vnode *vp;
@@ -384,14 +383,12 @@ irix_syssgi_mapelf(int fd, Elf_Phdr *ph, int count, struct lwp *l, register_t *r
 	}
 
 	/* Find the file's vnode */
-	fdp = l->l_proc->p_fd;
-	fp = fd_getfile(fdp, fd);
+	fp = fd_getfile(fd);
 	if (fp == NULL) {
 		error = EBADF;
 		goto bad;
 	}
-	FILE_USE(fp);
-	vp = (struct vnode *)fp->f_data;
+	vp = fp->f_data;
 
         error = vn_marktext(vp);
         if (error)
@@ -435,7 +432,7 @@ irix_syssgi_mapelf(int fd, Elf_Phdr *ph, int count, struct lwp *l, register_t *r
 	*retval = (register_t)kph->p_vaddr;
 
 bad_unuse:
-	FILE_UNUSE(fp, l);
+	fd_putfile(fd);
 bad:
 	free(kph, M_TEMP);
 	return error;

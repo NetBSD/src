@@ -1,4 +1,4 @@
-/*	$NetBSD: putter.c,v 1.8 2008/03/01 14:16:50 rmind Exp $	*/
+/*	$NetBSD: putter.c,v 1.9 2008/03/21 21:54:59 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.8 2008/03/01 14:16:50 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: putter.c,v 1.9 2008/03/21 21:54:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -163,14 +163,14 @@ putter_destroy()
 /*
  * fd routines, for cloner
  */
-static int putter_fop_read(struct file *, off_t *, struct uio *,
+static int putter_fop_read(file_t *, off_t *, struct uio *,
 			   kauth_cred_t, int);
-static int putter_fop_write(struct file *, off_t *, struct uio *,
+static int putter_fop_write(file_t *, off_t *, struct uio *,
 			    kauth_cred_t, int);
-static int putter_fop_ioctl(struct file*, u_long, void *, struct lwp *);
-static int putter_fop_poll(struct file *, int, struct lwp *);
-static int putter_fop_close(struct file *, struct lwp *);
-static int putter_fop_kqfilter(struct file *, struct knote *);
+static int putter_fop_ioctl(file_t*, u_long, void *);
+static int putter_fop_poll(file_t *, int);
+static int putter_fop_close(file_t *);
+static int putter_fop_kqfilter(file_t *, struct knote *);
 
 
 static const struct fileops putter_fileops = {
@@ -185,7 +185,7 @@ static const struct fileops putter_fileops = {
 };
 
 static int
-putter_fop_read(struct file *fp, off_t *off, struct uio *uio,
+putter_fop_read(file_t *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
 	struct putter_instance *pi = fp->f_data;
@@ -225,7 +225,7 @@ putter_fop_read(struct file *fp, off_t *off, struct uio *uio,
 }
 
 static int
-putter_fop_write(struct file *fp, off_t *off, struct uio *uio,
+putter_fop_write(file_t *fp, off_t *off, struct uio *uio,
 	kauth_cred_t cred, int flags)
 {
 	struct putter_instance *pi = fp->f_data;
@@ -269,7 +269,7 @@ putter_fop_write(struct file *fp, off_t *off, struct uio *uio,
  */
 #define PUTTERPOLL_EVSET (POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI)
 static int
-putter_fop_poll(struct file *fp, int events, struct lwp *l)
+putter_fop_poll(file_t *fp, int events)
 {
 	struct putter_instance *pi = fp->f_data;
 	int revents;
@@ -287,7 +287,7 @@ putter_fop_poll(struct file *fp, int events, struct lwp *l)
 	if (pi->pi_pop->pop_waitcount(pi->pi_private))
 		revents |= PUTTERPOLL_EVSET;
 	else
-		selrecord(l, &pi->pi_sel);
+		selrecord(curlwp, &pi->pi_sel);
 
 	return revents;
 }
@@ -298,7 +298,7 @@ putter_fop_poll(struct file *fp, int events, struct lwp *l)
  * unmounting is a frightfully complex operation to avoid races
  */
 static int
-putter_fop_close(struct file *fp, struct lwp *l)
+putter_fop_close(file_t *fp)
 {
 	struct putter_instance *pi = fp->f_data;
 	int rv;
@@ -357,7 +357,7 @@ putter_fop_close(struct file *fp, struct lwp *l)
 }
 
 static int
-putter_fop_ioctl(struct file *fp, u_long cmd, void *data, struct lwp *l)
+putter_fop_ioctl(file_t *fp, u_long cmd, void *data)
 {
 
 	/*
@@ -405,7 +405,7 @@ static const struct filterops putter_filtops =
 	{ 1, NULL, filt_putterdetach, filt_putter };
 
 static int
-putter_fop_kqfilter(struct file *fp, struct knote *kn)
+putter_fop_kqfilter(file_t *fp, struct knote *kn)
 {
 	struct putter_instance *pi = fp->f_data;
 	struct klist *klist;
@@ -450,14 +450,16 @@ int
 puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 {
 	struct putter_instance *pi;
-	struct file *fp;
+	file_t *fp;
 	int error, fd, idx;
+	proc_t *p;
 
+	p = curproc;
 	pi = kmem_alloc(sizeof(struct putter_instance), KM_SLEEP);
 	mutex_enter(&pi_mtx);
 	idx = get_pi_idx(pi);
 
-	pi->pi_pid = l->l_proc->p_pid;
+	pi->pi_pid = p->p_pid;
 	pi->pi_idx = idx;
 	pi->pi_curput = NULL;
 	pi->pi_curres = 0;
@@ -465,7 +467,7 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	selinit(&pi->pi_sel);
 	mutex_exit(&pi_mtx);
 
-	if ((error = falloc(l, &fp, &fd)) != 0)
+	if ((error = fd_allocfile(&fp, &fd)) != 0)
 		goto bad1;
 
 	if ((error = putter_configure(dev, flags, fmt, fd)) != 0)
@@ -474,14 +476,12 @@ puttercdopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	DPRINTF(("puttercdopen: registered embryonic pmp for pid: %d\n",
 	    pi->pi_pid));
 
-	error = fdclone(l, fp, fd, FREAD|FWRITE, &putter_fileops, pi);
+	error = fd_clone(fp, fd, FREAD|FWRITE, &putter_fileops, pi);
 	KASSERT(error = EMOVEFD);
 	return error;
 
  bad2:
-	FILE_UNUSE(fp, l);
-	fdremove(l->l_proc->p_fd, fd);
-	ffree(fp);
+ 	fd_abort(p, fp, fd);
  bad1:
 	putter_detach(pi);
 	kmem_free(pi, sizeof(struct putter_instance));

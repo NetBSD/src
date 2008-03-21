@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kobj.c,v 1.9 2008/01/17 22:32:49 rumble Exp $	*/
+/*	$NetBSD: subr_kobj.c,v 1.10 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.9 2008/01/17 22:32:49 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kobj.c,v 1.10 2008/03/21 21:55:00 ad Exp $");
 
 #define	ELFSIZE		ARCH_ELFSIZE
 
@@ -248,7 +248,7 @@ kobj_close(kobj_t ko)
 	switch (ko->ko_type) {
 	case KT_VNODE:
 		VOP_UNLOCK(ko->ko_source, 0);
-		vn_close(ko->ko_source, FREAD, kauth_cred_get(), curlwp);
+		vn_close(ko->ko_source, FREAD, kauth_cred_get());
 		break;
 	case KT_MEMORY:
 		/* nothing */

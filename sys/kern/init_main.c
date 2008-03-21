@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.342 2008/03/09 15:39:14 rmind Exp $	*/
+/*	$NetBSD: init_main.c,v 1.343 2008/03/21 21:55:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.342 2008/03/09 15:39:14 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.343 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -133,6 +133,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.342 2008/03/09 15:39:14 rmind Exp $"
 #include <sys/mqueue.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/event.h>
 #ifdef FAST_IPSEC
 #include <netipsec/ipsec.h>
 #endif
@@ -381,10 +382,11 @@ main(void)
 	fstrans_init();
 
 	/* Initialize the file descriptor system. */
-	filedesc_init();
+	fd_sys_init();
 
-	/* Initialize the select()/poll() system calls. */
+	/* Initialize the select()/poll() system calls, and kqueue. */
 	selsysinit();
+	kqueue_init();
 
 	/* Initialize asynchronous I/O. */
 	aio_sysinit();

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.61 2008/01/02 19:44:37 yamt Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.62 2008/03/21 21:55:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.61 2008/01/02 19:44:37 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.62 2008/03/21 21:55:00 ad Exp $");
 
 #if defined(SETUIDSCRIPTS) && !defined(FDSCRIPTS)
 #define FDSCRIPTS		/* Need this for safe set-id scripts. */
@@ -191,20 +191,17 @@ check_shell:
 			panic("exec_script_makecmds: epp already has a fd");
 #endif
 
-		/* falloc() will use the descriptor for us */
-		if ((error = falloc(l, &fp, &epp->ep_fd)) != 0) {
+		if ((error = fd_allocfile(&fp, &epp->ep_fd)) != 0) {
 			scriptvp = NULL;
 			shellargp = NULL;
 			goto fail;
 		}
-
 		epp->ep_flags |= EXEC_HASFD;
 		fp->f_type = DTYPE_VNODE;
 		fp->f_ops = &vnops;
 		fp->f_data = (void *) epp->ep_vp;
 		fp->f_flag = FREAD;
-		FILE_SET_MATURE(fp);
-		FILE_UNUSE(fp, l);
+		fd_affix(curproc, fp, epp->ep_fd);
 	}
 #endif
 
@@ -308,7 +305,7 @@ fail:
 	/* kill the opened file descriptor, else close the file */
         if (epp->ep_flags & EXEC_HASFD) {
                 epp->ep_flags &= ~EXEC_HASFD;
-                (void) fdrelease(l, epp->ep_fd);
+                fd_close(epp->ep_fd);
         } else if (scriptvp) {
 		vn_lock(scriptvp, LK_EXCLUSIVE | LK_RETRY);
 		VOP_CLOSE(scriptvp, FREAD, l->l_cred);

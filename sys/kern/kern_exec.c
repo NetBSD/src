@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.269 2008/02/24 21:46:04 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.270 2008/03/21 21:55:00 ad Exp $	*/
 
 /*-
  * Copyright (C) 1993, 1994, 1996 Christopher G. Demetriou
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.269 2008/02/24 21:46:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.270 2008/03/21 21:55:00 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -826,7 +826,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		goto exec_abort;
 	}
 
-	fdcloseexec(l);		/* handle close on exec */
+	fd_closeexec();		/* handle close on exec */
 	execsigs(p);		/* reset catched signals */
 
 	l->l_ctxlink = NULL;	/* reset ucontext link */
@@ -879,7 +879,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 		proc_crmod_leave(NULL, NULL, true);
 
 		/* Make sure file descriptors 0..2 are in use. */
-		if ((error = fdcheckstd(l)) != 0) {
+		if ((error = fd_checkstd()) != 0) {
 			DPRINTF(("execve: fdcheckstd failed %d\n", error));
 			goto exec_abort;
 		}
@@ -1054,7 +1054,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	/* kill any opened file descriptor, if necessary */
 	if (pack.ep_flags & EXEC_HASFD) {
 		pack.ep_flags &= ~EXEC_HASFD;
-		(void) fdrelease(l, pack.ep_fd);
+		fd_close(pack.ep_fd);
 	}
 	/* close and put the exec'd file */
 	vn_lock(pack.ep_vp, LK_EXCLUSIVE | LK_RETRY);
