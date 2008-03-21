@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.1.22.1 2008/01/01 15:39:12 chris Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.1.22.2 2008/03/21 13:34:40 chris Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,3 +114,12 @@ STRONG_ALIAS(_atomic_cas_uint,_lock_cas)
 STRONG_ALIAS(atomic_cas_uint,_lock_cas)
 STRONG_ALIAS(_atomic_cas_ptr,_lock_cas)
 STRONG_ALIAS(atomic_cas_ptr,_lock_cas)
+
+STRONG_ALIAS(_atomic_cas_ulong_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_ulong_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_32_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_32_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_uint_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_uint_ni,_lock_cas)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_lock_cas)
+STRONG_ALIAS(atomic_cas_ptr_ni,_lock_cas)
