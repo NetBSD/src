@@ -1,4 +1,4 @@
-/*	$NetBSD: if_epic_pci.c,v 1.33 2007/10/19 12:00:45 ad Exp $	*/
+/*	$NetBSD: if_epic_pci.c,v 1.34 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.33 2007/10/19 12:00:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_epic_pci.c,v 1.34 2008/03/21 07:47:43 dyoung Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -146,8 +146,7 @@ epic_pci_subsys_lookup(const struct pci_attach_args *pa)
 }
 
 static int
-epic_pci_match(struct device *parent, struct cfdata *match,
-    void *aux)
+epic_pci_match(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
@@ -158,9 +157,9 @@ epic_pci_match(struct device *parent, struct cfdata *match,
 }
 
 static void
-epic_pci_attach(struct device *parent, struct device *self, void *aux)
+epic_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct epic_pci_softc *psc = (struct epic_pci_softc *)self;
+	struct epic_pci_softc *psc = device_private(self);
 	struct epic_softc *sc = &psc->sc_epic;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -185,7 +184,7 @@ epic_pci_attach(struct device *parent, struct device *self, void *aux)
 	    PCI_REVISION(pa->pa_class));
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    NULL)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
