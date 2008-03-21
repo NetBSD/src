@@ -113,3 +113,22 @@ dc(1), bc(1), or awk(1). Here are some simple examples:
  echo $((431 * 79))
  expr 60 \* 60 \* 24 \* 7
 %
+You can view network connections with the fstat, netstat -a, sockstat,
+and "systat netstat" commands.
+%
+Visit the NetBSD Security website to keep track of advisories:
+  http://www.NetBSD.org/support/security/
+Or join the security-announce mailing list for alerts:
+  http://www.netbsd.org/mailinglists/#security-announce
+%
+Here's an example of finding what package a file belongs to:
+
+	pkg_info -Fe /usr/pkg/bin/inw
+%
+Many log files are checked for rotation every hour by newsyslog(8).
+It is configured in /etc/newsyslog.conf.
+%
+NetBSD's default cron jobs are defined in the /var/cron/tabs/root
+file.  As the superuser, use "crontab -l" to view it. To edit it,
+use "crontab -e" (which defaults to using the vi(1) editor).
+%
