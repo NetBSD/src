@@ -1,4 +1,4 @@
-/*	$NetBSD: select.c,v 1.1 2008/03/21 12:27:12 yamt Exp $	*/
+/*	$NetBSD: select.c,v 1.2 2008/03/21 16:03:33 ad Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -28,6 +28,7 @@
 
 #define	FD_SETSIZE	65536
 #include <sys/select.h>
+#include <sys/atomic.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -47,8 +48,9 @@
 
 int fds[NPIPE][2];
 
-pthread_mutex_t count_lock;
-int count;
+unsigned count;
+
+pthread_barrier_t barrier;
 
 static void
 dowrite(void)
@@ -71,6 +73,8 @@ dowrite(void)
 static void *
 f(void *dummy)
 {
+
+	pthread_barrier_wait(&barrier);
 
 	for (;;) {
 		struct timeval to;
@@ -144,9 +148,7 @@ f(void *dummy)
 					}
 				} else {
 					dowrite();
-					pthread_mutex_lock(&count_lock);
-					count++;
-					pthread_mutex_unlock(&count_lock);
+					atomic_inc_uint(&count);
 				}
 				nfd++;
 			}
@@ -178,7 +180,7 @@ main(int argc, char *argv[])
 			abort();
 		}
 	}
-	pthread_mutex_init(&count_lock, NULL);
+	pthread_barrier_init(&barrier, NULL, NTHREAD + 1);
 	for (i = 0; i < NTHREAD; i++) {
 		int error = pthread_create(&pt[i], NULL, f, NULL);
 		if (error) {
@@ -187,6 +189,7 @@ main(int argc, char *argv[])
 			abort();
 		}
 	}
+	pthread_barrier_wait(&barrier);
 	dowrite();
 	dowrite();
 	dowrite();
