@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.90 2008/03/11 23:58:06 dyoung Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.91 2008/03/21 07:47:43 dyoung Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.90 2008/03/11 23:58:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.91 2008/03/21 07:47:43 dyoung Exp $");
 
 #include "rnd.h"
 
@@ -324,13 +324,14 @@ static void	vr_rxdrain(struct vr_softc *);
 static void	vr_watchdog(struct ifnet *);
 static void	vr_tick(void *);
 
-static int	vr_mii_readreg(struct device *, int, int);
-static void	vr_mii_writereg(struct device *, int, int, int);
-static void	vr_mii_statchg(struct device *);
+static int	vr_mii_readreg(device_t, int, int);
+static void	vr_mii_writereg(device_t, int, int, int);
+static void	vr_mii_statchg(device_t);
 
 static void	vr_setmulti(struct vr_softc *);
 static void	vr_reset(struct vr_softc *);
-static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, void *, pcireg_t);
+static int	vr_restore_state(pci_chipset_tag_t, pcitag_t, device_t,
+    pcireg_t);
 
 int	vr_copy_small = 0;
 
@@ -361,8 +362,8 @@ int	vr_copy_small = 0;
 /*
  * MII bit-bang glue.
  */
-static uint32_t vr_mii_bitbang_read(struct device *);
-static void	vr_mii_bitbang_write(struct device *, uint32_t);
+static uint32_t vr_mii_bitbang_read(device_t);
+static void	vr_mii_bitbang_write(device_t, uint32_t);
 
 static const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 	vr_mii_bitbang_read,
@@ -377,17 +378,17 @@ static const struct mii_bitbang_ops vr_mii_bitbang_ops = {
 };
 
 static uint32_t
-vr_mii_bitbang_read(struct device *self)
+vr_mii_bitbang_read(device_t self)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	return (CSR_READ_1(sc, VR_MIICMD));
 }
 
 static void
-vr_mii_bitbang_write(struct device *self, uint32_t val)
+vr_mii_bitbang_write(device_t self, uint32_t val)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	CSR_WRITE_1(sc, VR_MIICMD, (val & 0xff) | VR_MIICMD_DIRECTPGM);
 }
@@ -396,9 +397,9 @@ vr_mii_bitbang_write(struct device *self, uint32_t val)
  * Read an PHY register through the MII.
  */
 static int
-vr_mii_readreg(struct device *self, int phy, int reg)
+vr_mii_readreg(device_t self, int phy, int reg)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
 	return (mii_bitbang_readreg(self, &vr_mii_bitbang_ops, phy, reg));
@@ -408,18 +409,18 @@ vr_mii_readreg(struct device *self, int phy, int reg)
  * Write to a PHY register through the MII.
  */
 static void
-vr_mii_writereg(struct device *self, int phy, int reg, int val)
+vr_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct vr_softc *sc = (void *) self;
+	struct vr_softc *sc = device_private(self);
 
 	CSR_WRITE_1(sc, VR_MIICMD, VR_MIICMD_DIRECTPGM);
 	mii_bitbang_writereg(self, &vr_mii_bitbang_ops, phy, reg, val);
 }
 
 static void
-vr_mii_statchg(struct device *self)
+vr_mii_statchg(device_t self)
 {
-	struct vr_softc *sc = (struct vr_softc *)self;
+	struct vr_softc *sc = device_private(self);
 
 	/*
 	 * In order to fiddle with the 'full-duplex' bit in the netconfig
@@ -1402,8 +1403,8 @@ vr_stop(struct ifnet *ifp, int disable)
 		vr_rxdrain(sc);
 }
 
-static int	vr_probe(struct device *, struct cfdata *, void *);
-static void	vr_attach(struct device *, struct device *, void *);
+static int	vr_probe(device_t, struct cfdata *, void *);
+static void	vr_attach(device_t, device_t, void *);
 static void	vr_shutdown(void *);
 
 CFATTACH_DECL(vr, sizeof (struct vr_softc),
@@ -1423,8 +1424,7 @@ vr_lookup(struct pci_attach_args *pa)
 }
 
 static int
-vr_probe(struct device *parent, struct cfdata *match,
-    void *aux)
+vr_probe(device_t parent, struct cfdata *match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 
@@ -1451,9 +1451,9 @@ vr_shutdown(void *arg)
  * setup and ethernet/BPF attach.
  */
 static void
-vr_attach(struct device *parent, struct device *self, void *aux)
+vr_attach(device_t parent, device_t self, void *aux)
 {
-	struct vr_softc *sc = (struct vr_softc *) self;
+	struct vr_softc *sc = device_private(self);
 	struct pci_attach_args *pa = (struct pci_attach_args *) aux;
 	bus_dma_segment_t seg;
 	struct vr_type *vrt;
@@ -1486,7 +1486,7 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 	sc->vr_save_irq = PCI_CONF_READ(PCI_INTERRUPT_REG);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    vr_restore_state)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->vr_dev.dv_xname,
 		    error);
@@ -1753,9 +1753,10 @@ vr_attach(struct device *parent, struct device *self, void *aux)
 }
 
 static int
-vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, void *ssc, pcireg_t state)
+vr_restore_state(pci_chipset_tag_t pc, pcitag_t tag, device_t self,
+    pcireg_t state)
 {
-	struct vr_softc *sc = ssc;
+	struct vr_softc *sc = device_private(self);
 	int error;
 
 	if (state == PCI_PMCSR_STATE_D0)

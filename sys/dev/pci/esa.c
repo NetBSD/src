@@ -1,4 +1,4 @@
-/* $NetBSD: esa.c,v 1.45 2008/02/22 22:19:36 dyoung Exp $ */
+/* $NetBSD: esa.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2006 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.45 2008/02/22 22:19:36 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esa.c,v 1.46 2008/03/21 07:47:43 dyoung Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -1005,7 +1005,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	int i;
 	int error;
 
-	sc = (struct esa_softc *)self;
+	sc = device_private(self);
 	pa = (struct pci_attach_args *)aux;
 	tag = pa->pa_tag;
 	pc = pa->pa_pc;
@@ -1059,7 +1059,7 @@ esa_attach(device_t parent, device_t self, void *aux)
 	aprint_normal("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 
 	/* power up chip */
-	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, sc,
+	if ((error = pci_activate(pa->pa_pc, pa->pa_tag, self,
 	    pci_activate_null)) && error != EOPNOTSUPP) {
 		aprint_error("%s: cannot activate %d\n", sc->sc_dev.dv_xname,
 		    error);
