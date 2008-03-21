@@ -1,4 +1,4 @@
-#	$NetBSD: files.tisdp24xx,v 1.1.2.1 2007/10/29 19:23:14 matt Exp $
+#	files.tisdp24xx,v 1.1.2.1 2007/10/29 19:23:14 matt Exp
 #
 # TI OSK5912 evaluation board configuration info
 #
@@ -18,5 +18,5 @@ file	arch/evbarm/tisdp24xx/if_sm_gpmc.c	sm_gpmc
 # NS16550 compatible serial ports
 attach com at obio with obiouart
 file	arch/arm/omap/obio_com.c		obiouart
-##defparam opt_com.h				CONSADDR CONSPEED CONMODE
+defparam opt_com.h				CONSADDR CONSPEED CONMODE
 
