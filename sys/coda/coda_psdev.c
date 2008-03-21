@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_psdev.c,v 1.41 2008/03/21 17:59:57 plunky Exp $	*/
+/*	$NetBSD: coda_psdev.c,v 1.42 2008/03/21 18:02:39 plunky Exp $	*/
 
 /*
  *
@@ -54,7 +54,7 @@
 /* These routines are the device entry points for Venus. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.41 2008/03/21 17:59:57 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_psdev.c,v 1.42 2008/03/21 18:02:39 plunky Exp $");
 
 extern int coda_nc_initialized;    /* Set if cache has been initialized */
 
@@ -704,8 +704,8 @@ coda_call(struct coda_mntinfo *mntinfo, int inSize, int *outSize,
 		    myprintf(("coda_call: enqueing signal msg (%d, %d)\n",
 			   svmp->vm_opcode, svmp->vm_unique));
 
-		/* insert at head of queue! */
-		TAILQ_INSERT_TAIL(&vcp->vc_requests, svmp, vm_chain);
+		/* insert at head of queue */
+		TAILQ_INSERT_HEAD(&vcp->vc_requests, svmp, vm_chain);
 		selnotify(&(vcp->vc_selproc), 0, 0);
 	    }
 	}
