@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.22.2.4 2008/01/26 19:31:47 chris Exp $	*/
+/*	$NetBSD: intr.c,v 1.22.2.5 2008/03/21 13:34:40 chris Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.4 2008/01/26 19:31:47 chris Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.22.2.5 2008/03/21 13:34:40 chris Exp $");
 
 #include "opt_irqstats.h"
 
