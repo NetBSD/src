@@ -1,4 +1,4 @@
-/* $NetBSD: amdpcib_hpet.c,v 1.3 2008/03/21 12:29:38 xtraeme Exp $ */
+/* $NetBSD: amdpcib_hpet.c,v 1.4 2008/03/21 13:25:27 xtraeme Exp $ */
 
 /*
  * Copyright (c) 2006 Nicolas Joly
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.3 2008/03/21 12:29:38 xtraeme Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpcib_hpet.c,v 1.4 2008/03/21 13:25:27 xtraeme Exp $");
 
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -83,5 +83,5 @@ amdpcib_hpet_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	hpet_attach_subr(sc);
+	hpet_attach_subr(self);
 }
