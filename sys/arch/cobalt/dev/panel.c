@@ -1,4 +1,4 @@
-/* $NetBSD: panel.c,v 1.16 2008/03/04 14:40:16 tsutsui Exp $ */
+/* $NetBSD: panel.c,v 1.17 2008/03/22 18:32:20 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.16 2008/03/04 14:40:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panel.c,v 1.17 2008/03/22 18:32:20 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ panel_attach(struct device *parent, struct device *self, void *aux)
 	shutdownhook_establish(panel_shutdown, sc);
 
 	sc->sc_kp.sc_iot = maa->ma_iot;
-	sc->sc_kp.sc_ioh = MIPS_PHYS_TO_KSEG1(0x1d000000); /* XXX */
+	sc->sc_kp.sc_ioh = MIPS_PHYS_TO_KSEG1(PANEL_BASE); /* XXX */
 
 	sc->sc_kp.sc_knum = sizeof(keys) / sizeof(struct lcdkp_xlate);
 	sc->sc_kp.sc_kpad = keys;

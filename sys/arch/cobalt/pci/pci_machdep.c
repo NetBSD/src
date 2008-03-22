@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.25 2007/02/18 12:22:16 tsutsui Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.26 2008/03/22 18:32:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.25 2007/02/18 12:22:16 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.26 2008/03/22 18:32:20 tsutsui Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -152,24 +152,33 @@ pci_intr_map(struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	pci_decompose_tag(pc, intrtag, &bus, &dev, &func);
 
 	/*
-	 * The interrupt lines of the two Tulips are connected
+	 * The interrupt lines of the internal Tulips are connected
 	 * directly to the CPU.
 	 */
-
 	if (cobalt_id == COBALT_ID_QUBE2700) {
-		if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A)
-			*ihp = 16 + 2;
-		else
-			*ihp = line;
+		if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A) {
+			/* tulip is connected to CPU INT2 on Qube2700 */
+			*ihp = NICU_INT + 2;
+			return 0;
+		}
 	} else {
-		if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A)
-			*ihp = 16 + 1;
-		else if (bus == 0 && dev == 12 && pin == PCI_INTERRUPT_PIN_A)
-			*ihp = 16 + 2;
-		else
-			*ihp = line;
+		if (bus == 0 && dev == 7 && pin == PCI_INTERRUPT_PIN_A) {
+			/* the primary tulip is connected to CPU INT1 */
+			*ihp = NICU_INT + 1;
+			return 0;
+		}
+		if (bus == 0 && dev == 12 && pin == PCI_INTERRUPT_PIN_A) {
+			/* the secondary tulip is connected to CPU INT2 */
+			*ihp = NICU_INT + 2;
+			return 0;
+		}
 	}
 
+	/* sanity check */
+	if (line == 0 || line >= NICU_INT)
+		return -1;
+
+	*ihp = line;
 	return 0;
 }
 
@@ -178,8 +187,8 @@ pci_intr_string(pci_chipset_tag_t pc, pci_intr_handle_t ih)
 {
 	static char irqstr[8];
 
-	if (ih >= 16)
-		sprintf(irqstr, "level %d", ih - 16);
+	if (ih >= NICU_INT)
+		sprintf(irqstr, "level %d", ih - NICU_INT);
 	else
 		sprintf(irqstr, "irq %d", ih);
 
@@ -199,8 +208,8 @@ pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
     int (*func)(void *), void *arg)
 {
 
-	if (ih >= 16)
-		return cpu_intr_establish(ih - 16, level, func, arg);
+	if (ih >= NICU_INT)
+		return cpu_intr_establish(ih - NICU_INT, level, func, arg);
 	else
 		return icu_intr_establish(ih, IST_LEVEL, level, func, arg);
 }
@@ -219,7 +228,12 @@ pci_conf_interrupt(pci_chipset_tag_t pc, int bus, int dev, int pin, int swiz,
     int *iline)
 {
 
-	/* not yet... */
+	/*
+	 * Use irq 9 on all devices on the Qube's PCI slot.
+	 * XXX doesn't handle devices over PCI-PCI bridges
+	 */
+	if (bus == 0 && dev == 10 && pin != PCI_INTERRUPT_PIN_NONE)
+		*iline = 9;
 }
 
 int
