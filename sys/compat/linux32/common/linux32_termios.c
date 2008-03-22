@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_termios.c,v 1.10 2008/03/21 21:54:58 ad Exp $ */
+/*	$NetBSD: linux32_termios.c,v 1.11 2008/03/22 01:24:23 bjs Exp $ */
 
 /*-
  * Copyright (c) 1995-2006, 2008  The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.10 2008/03/21 21:54:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_termios.c,v 1.11 2008/03/22 01:24:23 bjs Exp $");
 
 #include "opt_compat_linux32.h"
 
@@ -341,6 +341,6 @@ linux32_ioctl_termios(struct lwp *l, const struct linux32_sys_ioctl_args *uap, r
 	SCARG(&ia, data) = SCARG(uap, data);
 	error = netbsd32_ioctl(curlwp, &ia, retval);
 out:
-	fdputfile(SCARG(uap, fd));
+	fd_putfile(SCARG(uap, fd));
 	return error;
 }
