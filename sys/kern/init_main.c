@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.343 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.344 2008/03/22 18:04:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1992, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.343 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.344 2008/03/22 18:04:42 ad Exp $");
 
 #include "opt_ipsec.h"
 #include "opt_ntp.h"
@@ -384,8 +384,7 @@ main(void)
 	/* Initialize the file descriptor system. */
 	fd_sys_init();
 
-	/* Initialize the select()/poll() system calls, and kqueue. */
-	selsysinit();
+	/* Initialize kqueue. */
 	kqueue_init();
 
 	/* Initialize asynchronous I/O. */
