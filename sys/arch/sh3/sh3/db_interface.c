@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.49 2008/03/22 00:21:52 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.50 2008/03/22 03:23:27 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49 2008/03/22 00:21:52 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.50 2008/03/22 03:23:27 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -577,12 +577,6 @@ db_frame_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 	tfbot = (struct trapframe *)((vaddr_t)curpcb + PAGE_SIZE);
 
 	__asm("stc r6_bank, %0" : "=r"(tf));
-	if ((uint32_t)tf < intfp) {
-	    db_printf("[trap frames on interrupt stack]\n");
-	    __db_print_tfstack(tf, (void *)intfp);
-
-	    tf = *(struct trapframe **)((uint32_t *)intsp - 2);
-	}
 
 	db_printf("[trap frames]\n");
 	__db_print_tfstack(tf, tfbot);

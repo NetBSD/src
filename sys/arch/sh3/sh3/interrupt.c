@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.23 2008/01/07 04:43:54 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.24 2008/03/22 03:23:27 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.23 2008/01/07 04:43:54 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.24 2008/03/22 03:23:27 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -635,7 +635,6 @@ tmu1_intr(void *arg)
 bool
 cpu_intr_p(void)
 {
-	register vaddr_t sp __asm("r15");
 
-	return sp <= intsp;	/* are we on interrupt stack? */
+	return curcpu()->ci_idepth >= 0;
 }
