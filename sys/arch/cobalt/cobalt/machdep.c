@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.94 2008/03/22 18:32:20 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.95 2008/03/22 18:46:49 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2006 Izumi Tsutsui.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2008/03/22 18:32:20 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2008/03/22 18:46:49 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -119,13 +119,10 @@ int cpuspeed;
 u_int cobalt_id;
 static const char * const cobalt_model[] =
 {
-	NULL,
-	NULL,
-	NULL,
-	"Cobalt Qube 2700",
-	"Cobalt RaQ",
-	"Cobalt Qube 2",
-	"Cobalt RaQ 2"
+	[COBALT_ID_QUBE2700] = "Cobalt Qube 2700",
+	[COBALT_ID_RAQ]      = "Cobalt RaQ",
+	[COBALT_ID_QUBE2]    = "Cobalt Qube 2",
+	[COBALT_ID_RAQ2]     = "Cobalt RaQ 2"
 };
 #define COBALT_MODELS	__arraycount(cobalt_model)
 
