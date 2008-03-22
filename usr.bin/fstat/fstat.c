@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.77 2007/12/15 19:44:50 perry Exp $	*/
+/*	$NetBSD: fstat.c,v 1.78 2008/03/22 02:39:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,10 +39,13 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\n\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.77 2007/12/15 19:44:50 perry Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.78 2008/03/22 02:39:06 ad Exp $");
 #endif
 #endif /* not lint */
 
+#define	_KERNEL
+#include <sys/types.h>
+#undef _KERNEL
 #include <sys/param.h>
 #include <sys/time.h>
 #include <sys/proc.h>
@@ -306,8 +309,7 @@ static void
 dofiles(struct kinfo_proc2 *p)
 {
 	int i;
-	struct filedesc0 filed0;
-#define	filed	filed0.fd_fd
+	struct filedesc filed;
 	struct cwdinfo cwdi;
 
 	Uname = user_from_uid(p->p_uid, 0);
@@ -316,7 +318,7 @@ dofiles(struct kinfo_proc2 *p)
 
 	if (p->p_fd == 0 || p->p_cwdi == 0)
 		return;
-	if (!KVM_READ(p->p_fd, &filed0, sizeof (filed0))) {
+	if (!KVM_READ(p->p_fd, &filed, sizeof (filed))) {
 		warnx("can't read filedesc at %#llx for pid %d", (unsigned long long)p->p_fd, Pid);
 		return;
 	}
