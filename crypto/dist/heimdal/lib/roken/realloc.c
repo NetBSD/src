@@ -38,7 +38,7 @@
 #include <stdlib.h>
 #include "roken.h"
 
-RCSID("$Id");
+__RCSID("$Id");
 
 
 void * ROKEN_LIB_FUNCTION

@@ -32,7 +32,7 @@
  */
 
 #include "hx_locl.h"
-RCSID("Id$");
+__RCSID("Id$");
 
 /*
  * Should use two hash/tree certificates intead of a array.  Criteria
