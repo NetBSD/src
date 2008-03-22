@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.360 2008/01/16 09:37:04 ad Exp $
+.\"	$NetBSD: options.4,v 1.361 2008/03/22 12:29:01 jmmv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd January 15, 2008
+.Dd March 22, 2008
 .Os
 .Dt OPTIONS 4
 .Sh NAME
@@ -1172,6 +1172,16 @@ disk, to be populated with
 Do not include the interface to a userland memory disk server process.
 Per default, this option is set to 1, including the support code.
 Useful for install media kernels.
+.It Cd options MODULAR
+Enables the new framework for kernel modules, which will eventually
+replace LKMs.
+This adds an in-kernel linker and loader, and requires userland support
+to be useful.
+See the
+.Sy MKMODULAR
+variable in
+.Xr mk.conf 5
+for more details.
 .It Cd options VND_COMPRESSION
 Enables the
 .Xr vnd 4

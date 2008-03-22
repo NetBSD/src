@@ -1,4 +1,4 @@
-.\"	$NetBSD: mk.conf.5,v 1.36 2007/12/12 19:52:02 apb Exp $
+.\"	$NetBSD: mk.conf.5,v 1.37 2008/03/22 12:29:02 jmmv Exp $
 .\"
 .\"  Copyright (c) 1999-2003 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
@@ -31,7 +31,7 @@
 .\"  TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 .\"  USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 12, 2007
+.Dd March 22, 2008
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -411,6 +411,21 @@ acts as
 Indicates whether manual pages should be compressed with
 .Xr gzip 1
 at installation time.
+.DFLTn
+.
+.It Sy MKMODULAR
+.YorN
+Indicates whether support for the new kernel modules framework should be
+built.
+This will install new versions of
+.Xr modload 8 ,
+.Xr modstat 8
+and
+.Xr modunload 8
+that will not work with the ones used to manage LKMs.
+You will also need a kernel built with
+.Cd options MODULAR
+for this to be useful.
 .DFLTn
 .
 .It Sy MKNLS
