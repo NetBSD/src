@@ -1,5 +1,5 @@
-dnl $Heimdal: broken.m4,v 1.6 2002/05/19 19:36:52 joda Exp $
-dnl $NetBSD: broken.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: broken.m4 11003 2002-05-19 19:37:08Z joda $
+dnl $NetBSD: broken.m4,v 1.2 2008/03/22 08:36:57 mlelstv Exp $
 dnl
 dnl
 dnl Same as AC _REPLACE_FUNCS, just define HAVE_func if found in normal

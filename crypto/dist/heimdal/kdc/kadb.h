@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: kadb.h,v 1.3 2000/03/03 12:36:26 assar Exp $
-   $NetBSD: kadb.h,v 1.1.1.3 2002/09/12 12:41:39 joda Exp $ */
+/* $Heimdal: kadb.h 7997 2000-03-03 12:36:26Z assar $
+   $NetBSD: kadb.h,v 1.2 2008/03/22 08:37:03 mlelstv Exp $ */
 
 #ifndef __kadb_h__
 #define __kadb_h__

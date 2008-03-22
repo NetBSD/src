@@ -25,7 +25,7 @@
  * this program may not be set. 
  * 
  * The calling program can then use the name of the cache
- * to set the KRB5CCNAME and PAG for its self and its children. 
+ * to set the KRB5CCNAME and PAG for itself and its children. 
  *
  * If no ticket was passed, an attemplt to join an existing
  * PAG will be made. 
@@ -71,7 +71,7 @@
 #endif
 
 #ifdef __hpux
-#define seteuid(A)		setresuid(-1,A,-1);
+#define seteuid(A)		setresuid(-1,A,-1)
 #endif
 
 
@@ -171,7 +171,7 @@ int k5dcesession(luid, pname, tgt, ppag, tflags)
       strcpy(ccname+38,direntp->d_name);
       if (!k5dcematch(luid, pname, ccname, &size, &xtgt))  {
 
-        /* its one of our caches, see if it is better  
+        /* it's one of our caches, see if it is better  
          * i.e. the endtime is farther, and if the endtimes
          * are the same, take the larger, as he who has the 
          * most tickets wins.
@@ -549,7 +549,8 @@ int k5dcecreate(luid, luser, pname, krbtgt)
 	 */
 
 	if (uid == 0) {
-		seteuid(luid);
+		if (seteuid(luid) < 0)
+			goto abort;
 	}  
 
 	cp = strchr(pname,'@');

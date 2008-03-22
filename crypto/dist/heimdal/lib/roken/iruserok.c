@@ -29,8 +29,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: iruserok.c,v 1.23 1999/12/05 13:27:05 assar Exp $"
-        "$NetBSD: iruserok.c,v 1.2 2003/08/07 09:15:32 agc Exp $");
+__RCSID("$Heimdal: iruserok.c 17879 2006-08-08 21:50:40Z lha $"
+        "$NetBSD: iruserok.c,v 1.3 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include <stdio.h>
@@ -218,7 +218,7 @@ __ivaliduser(FILE *hostf, unsigned raddr, const char *luser,
  *
  * Returns 0 if ok, -1 if not ok.
  */
-int
+int ROKEN_LIB_FUNCTION
 iruserok(unsigned raddr, int superuser, const char *ruser, const char *luser)
 {
 	char *cp;
@@ -251,7 +251,8 @@ again:
 		 * are protected read/write owner only.
 		 */
 		uid = geteuid();
-		seteuid(pwd->pw_uid);
+		if (seteuid(pwd->pw_uid) < 0)
+			return (-1);
 		hostf = fopen(pbuf, "r");
 		seteuid(uid);
 

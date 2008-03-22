@@ -34,8 +34,8 @@
 #include "make_cmds.h"
 #include <getarg.h>
 
-__RCSID("$Heimdal: make_cmds.c,v 1.7 2001/02/20 01:44:55 assar Exp $"
-        "$NetBSD: make_cmds.c,v 1.2 2008/02/16 18:29:39 matt Exp $");
+__RCSID("$Heimdal: make_cmds.c 15430 2005-06-16 19:25:45Z lha $"
+        "$NetBSD: make_cmds.c,v 1.3 2008/03/22 08:37:23 mlelstv Exp $");
 
 #include <roken.h>
 #include <err.h>
@@ -45,7 +45,7 @@ int numerror;
 extern FILE *yyin;
 FILE *c_file;
 
-extern int yyparse(void);
+extern void yyparse(void);
 
 #ifdef YYDEBUG
 extern int yydebug = 1;
@@ -114,7 +114,7 @@ generate_commands(void)
 {
     char *base;
     char *cfn;
-    char *p;
+    char *p, *q;
 
     p = strrchr(table_name, '/');
     if(p == NULL)
@@ -146,7 +146,6 @@ generate_commands(void)
 
     {
 	struct command_list *cl, *xl;
-	char *p, *q;
 
 	for(cl = commands; cl; cl = cl->next) {
 	    for(xl = commands; xl != cl; xl = xl->next)
@@ -212,10 +211,10 @@ usage(int code)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
 
     setprogname(argv[0]);
-    if(getarg(args, num_args, argc, argv, &optind))
+    if(getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
     if(help_flag)
 	usage(0);
@@ -224,9 +223,9 @@ main(int argc, char **argv)
 	exit(0);
     }
     
-    if(argc == optind)
+    if(argc == optidx)
 	usage(1);
-    filename = argv[optind];
+    filename = argv[optidx];
     yyin = fopen(filename, "r");
     if(yyin == NULL)
 	err(1, "%s", filename);

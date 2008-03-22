@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: get_in_tkt_with_skey.c,v 1.3 1999/12/02 17:05:10 joda Exp $"
-        "$NetBSD: get_in_tkt_with_skey.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: get_in_tkt_with_skey.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: get_in_tkt_with_skey.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
 static krb5_error_code
 krb5_skey_key_proc (krb5_context context,
@@ -46,7 +46,7 @@ krb5_skey_key_proc (krb5_context context,
     return krb5_copy_keyblock (context, keyseed, key);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_in_tkt_with_skey (krb5_context context,
 			   krb5_flags options,
 			   krb5_addresses *addrs,

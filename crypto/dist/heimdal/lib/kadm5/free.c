@@ -33,8 +33,8 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: free.c,v 1.4 1999/12/02 17:05:06 joda Exp $"
-        "$NetBSD: free.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: free.c 7464 1999-12-02 17:05:13Z joda $"
+        "$NetBSD: free.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 void 
 kadm5_free_key_data(void *server_handle,

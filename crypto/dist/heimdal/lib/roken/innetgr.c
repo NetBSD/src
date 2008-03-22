@@ -37,10 +37,10 @@
 
 #ifndef HAVE_INNETGR
 
-__RCSID("$Heimdal: innetgr.c,v 1.1 1999/03/11 14:04:01 joda Exp $"
-        "$NetBSD: innetgr.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: innetgr.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: innetgr.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 
-int
+int ROKEN_LIB_FUNCTION
 innetgr(const char *netgroup, const char *machine, 
 	const char *user, const char *domain)
 {

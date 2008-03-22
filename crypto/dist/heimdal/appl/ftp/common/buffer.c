@@ -36,8 +36,8 @@
 #include <err.h>
 #include "roken.h"
 
-__RCSID("$Heimdal: buffer.c,v 1.4 2000/10/23 04:49:25 joda Exp $"
-        "$NetBSD: buffer.c,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: buffer.c 9129 2000-10-23 04:49:25Z joda $"
+        "$NetBSD: buffer.c,v 1.2 2008/03/22 08:36:50 mlelstv Exp $");
 
 /*
  * Allocate a buffer enough to handle st->st_blksize, if

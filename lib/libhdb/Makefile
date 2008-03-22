@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2007/05/28 12:06:19 tls Exp $
+# $NetBSD: Makefile,v 1.22 2008/03/22 08:37:26 mlelstv Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -30,29 +30,46 @@ hdb_err.c hdb_err.h: hdb_err.et ${TOOL_COMPILE_ET}
 
 ERR_FILES=	hdb_err.c
 
-gen_files=	asn1_Key.x asn1_Event.x asn1_HDBFlags.x asn1_hdb_entry.x \
-		asn1_Salt.x asn1_GENERATION.x
+gen_files= \
+	asn1_Salt.x					\
+	asn1_Key.x					\
+	asn1_Event.x					\
+	asn1_HDBFlags.x					\
+	asn1_GENERATION.x				\
+	asn1_HDB_Ext_PKINIT_acl.x			\
+	asn1_HDB_Ext_PKINIT_hash.x			\
+	asn1_HDB_Ext_Constrained_delegation_acl.x	\
+	asn1_HDB_Ext_Lan_Manager_OWF.x			\
+	asn1_HDB_Ext_Password.x				\
+	asn1_HDB_Ext_Aliases.x				\
+	asn1_HDB_extension.x				\
+	asn1_HDB_extensions.x				\
+	asn1_hdb_entry.x				\
+	asn1_hdb_entry_alias.x
 
 DPSRCS=		hdb_asn1.h hdb_err.h
 
 BUILT_SOURCES=	${gen_files:.x=.c} hdb_err.c
 
-SRCS=					\
-	    common.c			\
-	    db.c			\
-	    db3.c			\
-	    hdb-ldap.c			\
-	    hdb.c			\
-	    keytab.c			\
-	    mkey.c			\
-	    ndbm.c			\
-	    print.c			\
-	    $(BUILT_SOURCES)
+SRCS= \
+	common.c		\
+	db.c			\
+	db3.c			\
+	ext.c			\
+	hdb-ldap.c		\
+	hdb.c			\
+	keys.c			\
+	keytab.c		\
+	dbinfo.c		\
+	mkey.c			\
+	ndbm.c			\
+	print.c			\
+	$(BUILT_SOURCES)
 
-INCS=		hdb.h hdb_err.h hdb_asn1.h hdb-protos.h hdb-private.h
+INCS=		hdb.h hdb-protos.h hdb_err.h hdb_asn1.h
 INCSDIR=	/usr/include/krb5
 
-asn1_files hdb_asn1.hx: hdb.asn1 ${TOOL_ASN1_COMPILE}
+hdb_asn1_files: hdb.asn1 ${TOOL_ASN1_COMPILE}
 	${TOOL_ASN1_COMPILE} ${DIST}/heimdal/lib/hdb/hdb.asn1 hdb_asn1
 
 ASN1!=		cd ${NETBSDSRCDIR}/lib/libasn1 && ${PRINTOBJDIR}
@@ -68,6 +85,7 @@ CPPFLAGS+= -I.					\
 	 -I${NETBSDSRCDIR}/include/heimdal	\
 	 -I${NETBSDSRCDIR}/lib/libroken		\
 	 -I${DIST}/heimdal/lib/roken		\
+	 -DHDB_DB_DIR=\"/var/heimdal\"          \
 	 -DHAVE_CONFIG_H
 
 .if (${USE_INET6} != "no")
@@ -80,21 +98,17 @@ COPTS.${f}.c+=  -Wno-pointer-sign
 .endfor
 .endif
 
-${gen_files} hdb_asn1.h: asn1_files
+${gen_files} hdb_asn1.h: hdb_asn1_files
 
-hdb_asn1.h: hdb_asn1.hx
-${SRCS}: hdb_err.h hdb_asn1.h
+${SRCS:.c=.o}: hdb_err.h hdb_asn1.h
 
 CLEANFILES=	${gen_files} ${BUILT_SOURCES} \
-		hdb_asn1.h hdb_asn1.hx asn1_files hdb_err.h
+		hdb_asn1.h hdb_asn1_files hdb_err.h
 
 .include <bsd.lib.mk>
 
-.SUFFIXES: .hx .x
+.SUFFIXES: .x
 
 .x.c:
-	@cmp -s $< $@ 2> /dev/null || cp $< $@
-
-.hx.h:
 	@cmp -s $< $@ 2> /dev/null || cp $< $@
 

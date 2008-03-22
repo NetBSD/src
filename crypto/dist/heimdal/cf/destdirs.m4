@@ -1,6 +1,6 @@
 dnl
-dnl $Heimdal: destdirs.m4,v 1.2 2002/08/12 15:12:50 joda Exp $
-dnl $NetBSD: destdirs.m4,v 1.1.1.1 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: destdirs.m4 11082 2002-08-12 15:12:50Z joda $
+dnl $NetBSD: destdirs.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 
 AC_DEFUN([rk_DESTDIRS], [

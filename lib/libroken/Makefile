@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2007/05/28 12:06:21 tls Exp $
+# $NetBSD: Makefile,v 1.16 2008/03/22 08:37:26 mlelstv Exp $
 
 NOLINT=		# defined
 
@@ -18,20 +18,24 @@ LIBDPLIBS+= util ${.CURDIR}/../libutil
 SRCS+=	efun.c
 .endif
 
+BUILT_SRCS=vis.h
+
 SRCS=						\
 	base64.c				\
 	concat.c				\
+	dumpdata.c				\
 	environment.c				\
 	eread.c					\
 	esetenv.c				\
 	ewrite.c				\
+	getaddrinfo_hostspec.c			\
 	get_default_username.c			\
 	get_window_size.c			\
-	getaddrinfo_hostspec.c			\
 	getarg.c				\
 	getnameinfo_verified.c			\
 	getprogname.c				\
 	h_errno.c				\
+	hex.c					\
 	hostent_find_fqdn.c			\
 	issuid.c				\
 	k_getpwnam.c				\
@@ -42,6 +46,7 @@ SRCS=						\
 	parse_bytes.c				\
 	parse_time.c				\
 	parse_units.c				\
+	realloc.c				\
 	resolve.c				\
 	roken_gethostby.c			\
 	rtbl.c					\
@@ -51,17 +56,34 @@ SRCS=						\
 	socket.c				\
 	strcollect.c				\
 	strlwr.c				\
-	strndup.c				\
-	strnlen.c				\
+	strpool.c				\
 	strsep_copy.c				\
 	strupr.c				\
+	timeval.c				\
 	tm2time.c				\
+	unvis.c					\
 	verify.c				\
+	vis.c					\
 	warnerr.c				\
-	write_pid.c
+	write_pid.c				\
+	${BUILT_SRCS}
 
-INCS=		base64.h getarg.h parse_bytes.h parse_time.h parse_units.h \
-		resolve.h roken.h roken-common.h rtbl.h
+MANS=						\
+	getarg.3				\
+	parse_time.3				\
+	rtbl.3
+
+INCS=		base64.h			\
+		getarg.h			\
+		hex.h				\
+		parse_bytes.h			\
+		parse_time.h			\
+		parse_units.h			\
+		resolve.h			\
+		roken.h				\
+		roken-common.h			\
+		rtbl.h				\
+		xdbm.h
 INCSDIR=	/usr/include/krb5
 
 CPPFLAGS+= -I. \
@@ -76,3 +98,8 @@ CPPFLAGS+=-DHAVE_IPV6
 HOST_CPPFLAGS+=	-I${NETBSDSRCDIR}/include/heimdal -DHAVE_CONFIG_H
 
 .include <bsd.lib.mk>
+
+.SUFFIXES: .hin
+
+.hin.h:
+	cp $< $@

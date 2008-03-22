@@ -1,9 +1,9 @@
-# $Heimdal: Makefile.am,v 1.9 2001/08/28 08:31:23 assar Exp $
-# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $
+# $Heimdal: Makefile.am 20466 2007-04-20 08:29:05Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:36:56 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_des)
+AM_CPPFLAGS += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_hcrypto)
 
 noinst_LIBRARIES = libtelnet.a
 

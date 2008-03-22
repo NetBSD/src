@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.740 2008/02/09 19:34:03 jmmv Exp $
+# $NetBSD: mi,v 1.741 2008/03/22 08:37:24 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -480,6 +480,7 @@
 ./usr/bin/error					base-util-bin
 ./usr/bin/ex					base-util-bin
 ./usr/bin/expand				base-util-bin
+./usr/bin/gss					base-krb5-bin		kerberos
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
 ./usr/bin/file					base-util-bin
@@ -489,6 +490,7 @@
 ./usr/bin/fold					base-util-bin
 ./usr/bin/from					base-mail-bin
 ./usr/bin/fsplit				base-util-bin
+./usr/bin/hxtool				base-krb5-bin		kerberos
 ./usr/bin/fstat					base-util-bin
 ./usr/bin/ftp					base-netutil-bin
 ./usr/bin/gcpp					base-util-bin		gcccmds
@@ -530,6 +532,7 @@
 ./usr/bin/kinit					base-krb5-bin		kerberos
 ./usr/bin/klist					base-krb5-bin		kerberos
 ./usr/bin/kpasswd				base-krb5-bin		use_kerberos
+./usr/bin/krb5-config				base-krb5-bin		kerberos
 ./usr/bin/ktrace				base-debug-bin
 ./usr/bin/ktruss				base-debug-bin
 ./usr/bin/lam					base-util-bin
@@ -694,6 +697,7 @@
 ./usr/bin/ul					base-util-bin
 ./usr/bin/uname					base-util-bin
 ./usr/bin/uncompress				base-util-bin
+./usr/bin/verify_krb5_conf			base-krb5-bin		kerberos
 ./usr/bin/unexpand				base-util-bin
 ./usr/bin/uniq					base-util-bin
 ./usr/bin/units					base-util-bin
@@ -916,6 +920,8 @@
 ./usr/libdata/debug/bin				base-sys-usr
 ./usr/libdata/debug/libexec			base-sys-usr
 ./usr/libdata/debug/sbin			base-sys-usr
+./usr/libexec/ipropd-master			base-krb5-bin		kerberos
+./usr/libexec/ipropd-slave			base-krb5-bin		kerberos
 ./usr/libdata/debug/usr				base-sys-usr
 ./usr/libdata/debug/usr/X11R6			base-sys-usr
 ./usr/libdata/debug/usr/X11R6/bin		base-sys-usr
@@ -1079,6 +1085,7 @@
 ./usr/sbin/eshconfig				base-sysutil-bin
 ./usr/sbin/etcupdate				base-sysutil-bin
 ./usr/sbin/extattrctl				base-sysutil-bin
+./usr/sbin/iprop-log				base-krb5-bin		kerberos
 ./usr/sbin/faithd				base-router-bin		inet6
 ./usr/sbin/fixmount				base-nfsclient-bin
 ./usr/sbin/flush				base-obsolete		obsolete
@@ -1091,7 +1098,10 @@
 ./usr/sbin/gettable				base-obsolete		obsolete
 ./usr/sbin/gifconfig				base-obsolete		obsolete
 ./usr/sbin/gpioctl				base-sysutil-bin
+./usr/sbin/kcm					base-krb5-bin		kerberos
 ./usr/sbin/greconfig				base-obsolete		obsolete
+./usr/sbin/kdigest				base-krb5-bin		kerberos
+./usr/sbin/kimpersonate				base-krb5-bin		kerberos
 ./usr/sbin/group				base-sysutil-bin
 ./usr/sbin/groupadd				base-sysutil-bin
 ./usr/sbin/groupdel				base-sysutil-bin

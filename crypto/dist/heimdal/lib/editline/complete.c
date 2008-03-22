@@ -21,10 +21,10 @@
 **  History and file completion functions for editline library.
 */
 #include <config.h>
-#include "editline.h"
+#include "edit_locl.h"
 
-__RCSID("$Heimdal: complete.c,v 1.5 1999/04/10 21:01:16 joda Exp $"
-        "$NetBSD: complete.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: complete.c 15421 2005-06-16 18:41:28Z lha $"
+        "$NetBSD: complete.c,v 1.2 2008/03/22 08:37:10 mlelstv Exp $");
 
 /*
 **  strcmp-like sorting predicate for qsort.
@@ -32,11 +32,11 @@ __RCSID("$Heimdal: complete.c,v 1.5 1999/04/10 21:01:16 joda Exp $"
 static int
 compare(const void *p1, const void *p2)
 {
-    const char	**v1;
-    const char	**v2;
+    char	* const *v1;
+    char	* const *v2;
     
-    v1 = (const char **)p1;
-    v2 = (const char **)p2;
+    v1 = (char * const *)p1;
+    v2 = (char * const *)p2;
     return strcmp(*v1, *v2);
 }
 
@@ -161,7 +161,7 @@ rl_complete_filename(char *pathname, int *unique)
 	    memcpy(p, av[0] + len, j);
 	    asprintf(&new, "%s%s", pathname, p);
 	    if(new != NULL) {
-		rl_add_slash(new, p);
+		rl_add_slash(new, p, j + 1);
 		free(new);
 	    }
 	}

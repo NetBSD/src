@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_parse.c,v 1.9 1999/03/13 21:17:27 assar Exp $"
-        "$NetBSD: pop_parse.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_parse.c 5530 1999-03-13 21:17:27Z assar $"
+        "$NetBSD: pop_parse.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /* 
  *  parse:  Parse a raw input line from a POP client 

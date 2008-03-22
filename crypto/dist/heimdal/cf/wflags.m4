@@ -1,9 +1,16 @@
-dnl $Heimdal: wflags.m4,v 1.3.34.1 2004/04/01 07:27:35 joda Exp $
-dnl $NetBSD: wflags.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
+dnl $Heimdal: wflags.m4 21183 2007-06-20 03:07:07Z lha $
+dnl $NetBSD: wflags.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 dnl set WFLAGS
 
-AC_DEFUN([AC_WFLAGS],[
+AC_DEFUN([rk_WFLAGS],[
+
+AC_ARG_ENABLE(developer, 
+	AS_HELP_STRING([--enable-developer], [enable developer warnings]))
+if test "X$enable_developer" = Xyes; then
+    dwflags="-Werror"
+fi
+
 WFLAGS_NOUNUSED=""
 WFLAGS_NOIMPLICITINT=""
 if test -z "$WFLAGS" -a "$GCC" = "yes"; then
@@ -12,7 +19,7 @@ if test -z "$WFLAGS" -a "$GCC" = "yes"; then
   #   -Wcast-align doesn't work well on alpha osf/1
   #   -Wmissing-prototypes -Wpointer-arith -Wbad-function-cast
   #   -Wmissing-declarations -Wnested-externs
-  WFLAGS="ifelse($#, 0,-Wall, $1)"
+  WFLAGS="ifelse($#, 0,-Wall, $1) $dwflags"
   WFLAGS_NOUNUSED="-Wno-unused"
   WFLAGS_NOIMPLICITINT="-Wno-implicit-int"
 fi

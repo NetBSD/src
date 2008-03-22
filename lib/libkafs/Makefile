@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2007/05/28 12:06:19 tls Exp $
+# $NetBSD: Makefile,v 1.12 2008/03/22 08:37:26 mlelstv Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -22,14 +22,16 @@ INCS=		kafs.h
 INCSDIR=	/usr/include/krb5
 MAN=		kafs.3
 
-CPPFLAGS+=	-I${NETBSDSRCDIR}/crypto/dist/heimdal/lib/krb5
+KRB5!=		cd ${NETBSDSRCDIR}/lib/libkrb5 && ${PRINTOBJDIR}
 
-CPPFLAGS+= -I.					\
-	-I${DIST}/heimdal/lib/kafs		\
-	-I${DESTDIR}/usr/include/krb5		\
-	-I${NETBSDSRCDIR}/include/heimdal	\
-	-I${NETBSDSRCDIR}/libroken		\
-	-I${DIST}/heimdal/lib/roken		\
+CPPFLAGS+= -I.						\
+	-I${DIST}/heimdal/lib/kafs			\
+	-I${KRB5}					\
+	-I${NETBSDSRCDIR}/crypto/dist/heimdal/lib/krb5	\
+	-I${DESTDIR}/usr/include/krb5			\
+	-I${NETBSDSRCDIR}/include/heimdal		\
+	-I${NETBSDSRCDIR}/libroken			\
+	-I${DIST}/heimdal/lib/roken			\
 	-DHAVE_CONFIG_H
 
 .if (${USE_INET6} != "no")

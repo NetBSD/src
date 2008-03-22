@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-2000, 2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: verify.c,v 1.25.12.1 2004/09/08 09:14:26 joda Exp $"
-        "$NetBSD: verify.c,v 1.1.1.6 2004/09/14 07:46:57 lha Exp $");
+__RCSID("$Heimdal: verify.c 14203 2004-09-08 09:02:59Z joda $"
+        "$NetBSD: verify.c,v 1.2 2008/03/22 08:37:06 mlelstv Exp $");
 #endif
 #include <unistd.h>
 #include <sys/types.h>
@@ -176,6 +176,8 @@ verify_krb5(struct passwd *pwd,
 	    CREDENTIALS c;
 	    krb5_creds mcred, cred;
 
+	    krb5_cc_clear_mcred(&mcred);
+
 	    krb5_make_principal(context, &mcred.server, realm,
 				"krbtgt",
 				realm,
@@ -190,14 +192,14 @@ verify_krb5(struct passwd *pwd,
 		    tf_setup(&c, c.pname, c.pinst); 
 		}
 		memset(&c, 0, sizeof(c));
-		krb5_free_creds_contents(context, &cred);
+		krb5_free_cred_contents(context, &cred);
 	    } else
 		syslog(LOG_AUTH|LOG_DEBUG, "krb5_cc_retrieve_cred: %s", 
 		       krb5_get_err_text(context, ret));
 	    
 	    krb5_free_principal(context, mcred.server);
 	}
-	free(realm);
+	free (realm);
 	if (!pag_set && k_hasafs()) {
 	    k_setpag();
 	    pag_set = 1;

@@ -36,12 +36,12 @@
 #endif
 #include "roken.h"
 
-__RCSID("$Heimdal: strlcat.c,v 1.6 2002/08/20 09:46:20 joda Exp $"
-        "$NetBSD: strlcat.c,v 1.4 2002/09/12 13:19:21 joda Exp $");
+__RCSID("$Heimdal: strlcat.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: strlcat.c,v 1.5 2008/03/22 08:37:22 mlelstv Exp $");
 
 #ifndef HAVE_STRLCAT
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 strlcat (char *dst, const char *src, size_t dst_sz)
 {
     size_t len = strlen(dst);

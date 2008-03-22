@@ -1,5 +1,5 @@
-dnl $Heimdal: auth-modules.m4,v 1.5.6.1 2004/04/01 07:27:32 joda Exp $
-dnl $NetBSD: auth-modules.m4,v 1.1.1.5 2004/04/02 14:48:06 lha Exp $
+dnl $Heimdal: auth-modules.m4 13338 2004-02-12 14:21:14Z lha $
+dnl $NetBSD: auth-modules.m4,v 1.2 2008/03/22 08:36:57 mlelstv Exp $
 dnl
 dnl Figure what authentication modules should be built
 dnl

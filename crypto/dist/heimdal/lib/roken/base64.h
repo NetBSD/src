@@ -31,13 +31,24 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: base64.h,v 1.2 1999/12/02 16:58:45 joda Exp $
-   $NetBSD: base64.h,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $ */
+/* $Heimdal: base64.h 15535 2005-06-30 07:13:33Z lha $
+   $NetBSD: base64.h,v 1.2 2008/03/22 08:37:20 mlelstv Exp $ */
 
 #ifndef _BASE64_H_
 #define _BASE64_H_
 
-int base64_encode(const void *data, int size, char **str);
-int base64_decode(const char *str, void *data);
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
+
+int ROKEN_LIB_FUNCTION
+base64_encode(const void *, int, char **);
+
+int ROKEN_LIB_FUNCTION
+base64_decode(const char *, void *);
 
 #endif

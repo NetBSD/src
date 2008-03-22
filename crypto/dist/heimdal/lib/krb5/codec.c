@@ -33,10 +33,10 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: codec.c,v 1.7 2001/05/16 22:08:08 assar Exp $"
-        "$NetBSD: codec.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: codec.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: codec.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_decode_EncTicketPart (krb5_context context,
 			   const void *data,
 			   size_t length,
@@ -46,7 +46,7 @@ krb5_decode_EncTicketPart (krb5_context context,
     return decode_EncTicketPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_encode_EncTicketPart (krb5_context context,
 			   void *data,
 			   size_t length,
@@ -56,7 +56,7 @@ krb5_encode_EncTicketPart (krb5_context context,
     return encode_EncTicketPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_decode_EncASRepPart (krb5_context context,
 			  const void *data,
 			  size_t length,
@@ -66,7 +66,7 @@ krb5_decode_EncASRepPart (krb5_context context,
     return decode_EncASRepPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_encode_EncASRepPart (krb5_context context,
 			  void *data,
 			  size_t length,
@@ -76,7 +76,7 @@ krb5_encode_EncASRepPart (krb5_context context,
     return encode_EncASRepPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_decode_EncTGSRepPart (krb5_context context,
 			   const void *data,
 			   size_t length,
@@ -86,7 +86,7 @@ krb5_decode_EncTGSRepPart (krb5_context context,
     return decode_EncTGSRepPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_encode_EncTGSRepPart (krb5_context context,
 			   void *data,
 			   size_t length,
@@ -96,7 +96,7 @@ krb5_encode_EncTGSRepPart (krb5_context context,
     return encode_EncTGSRepPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_decode_EncAPRepPart (krb5_context context,
 			  const void *data,
 			  size_t length,
@@ -106,7 +106,7 @@ krb5_decode_EncAPRepPart (krb5_context context,
     return decode_EncAPRepPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_encode_EncAPRepPart (krb5_context context,
 			  void *data,
 			  size_t length,
@@ -116,7 +116,7 @@ krb5_encode_EncAPRepPart (krb5_context context,
     return encode_EncAPRepPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_decode_Authenticator (krb5_context context,
 			   const void *data,
 			   size_t length,
@@ -126,7 +126,7 @@ krb5_decode_Authenticator (krb5_context context,
     return decode_Authenticator(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_encode_Authenticator (krb5_context context,
 			   void *data,
 			   size_t length,
@@ -136,7 +136,7 @@ krb5_encode_Authenticator (krb5_context context,
     return encode_Authenticator(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_decode_EncKrbCredPart (krb5_context context,
 			    const void *data,
 			    size_t length,
@@ -146,7 +146,7 @@ krb5_decode_EncKrbCredPart (krb5_context context,
     return decode_EncKrbCredPart(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_encode_EncKrbCredPart (krb5_context context,
 			    void *data,
 			    size_t length,
@@ -156,7 +156,7 @@ krb5_encode_EncKrbCredPart (krb5_context context,
     return encode_EncKrbCredPart (data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_decode_ETYPE_INFO (krb5_context context,
 			const void *data,
 			size_t length,
@@ -166,7 +166,7 @@ krb5_decode_ETYPE_INFO (krb5_context context,
     return decode_ETYPE_INFO(data, length, t, len);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_encode_ETYPE_INFO (krb5_context context,
 			void *data,
 			size_t length,
@@ -174,4 +174,24 @@ krb5_encode_ETYPE_INFO (krb5_context context,
 			size_t *len)
 {
     return encode_ETYPE_INFO (data, length, t, len);
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_decode_ETYPE_INFO2 (krb5_context context,
+			const void *data,
+			size_t length,
+			ETYPE_INFO2 *t,
+			size_t *len)
+{
+    return decode_ETYPE_INFO2(data, length, t, len);
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_encode_ETYPE_INFO2 (krb5_context context,
+			 void *data,
+			 size_t length,
+			 ETYPE_INFO2 *t,
+			 size_t *len)
+{
+    return encode_ETYPE_INFO2 (data, length, t, len);
 }

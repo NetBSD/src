@@ -34,8 +34,8 @@
 #include <err.h>
 #include <getarg.h>
 
-__RCSID("$Heimdal: test_get_addrs.c,v 1.4 2002/08/23 03:42:54 assar Exp $"
-        "$NetBSD: test_get_addrs.c,v 1.3 2002/09/12 13:19:19 joda Exp $");
+__RCSID("$Heimdal: test_get_addrs.c 15474 2005-06-17 04:48:02Z lha $"
+        "$NetBSD: test_get_addrs.c,v 1.4 2008/03/22 08:37:15 mlelstv Exp $");
 
 /* print all addresses that we find */
 
@@ -78,11 +78,11 @@ main(int argc, char **argv)
     krb5_context context;
     krb5_error_code ret;
     krb5_addresses addrs;
-    int optind = 0;
+    int optidx = 0;
 
     setprogname (argv[0]);
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
     
     if (help_flag)
@@ -93,8 +93,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     ret = krb5_init_context(&context);
     if (ret)

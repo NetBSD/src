@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2008/02/04 20:31:32 jmmv Exp $
+#	$NetBSD: Makefile,v 1.57 2008/03/22 08:37:26 mlelstv Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ SUBDIR=	atf-cleanup atf-exec atf-format atf-killpg atrun \
 
 .if (${MKKERBEROS} != "no")
 # Heimdal/KTH Kerberos
-SUBDIR+= hpropd kadmind kpasswdd
+SUBDIR+= hpropd kadmind kpasswdd ipropd-master ipropd-slave
 .endif
 
 .include <bsd.subdir.mk>

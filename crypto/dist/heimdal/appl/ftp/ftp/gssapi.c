@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -39,15 +39,17 @@
 #include <gssapi.h>
 #include <krb5_err.h>
 
-__RCSID("$Heimdal: gssapi.c,v 1.22.2.2 2003/08/20 16:41:24 lha Exp $"
-        "$NetBSD: gssapi.c,v 1.1.1.7 2004/04/02 14:47:34 lha Exp $");
+__RCSID("$Heimdal: gssapi.c 21513 2007-07-12 12:45:25Z lha $"
+        "$NetBSD: gssapi.c,v 1.2 2008/03/22 08:36:50 mlelstv Exp $");
 
 int ftp_do_gss_bindings = 0;
+int ftp_do_gss_delegate = 1;
 
 struct gss_data {
     gss_ctx_id_t context_hdl;
     char *client_name;
     gss_cred_id_t delegated_cred_handle;
+    void *mech_data;
 };
 
 static int
@@ -55,7 +57,7 @@ gss_init(void *app_data)
 {
     struct gss_data *d = app_data;
     d->context_hdl = GSS_C_NO_CONTEXT;
-    d->delegated_cred_handle = NULL;
+    d->delegated_cred_handle = GSS_C_NO_CREDENTIAL;
 #if defined(FTP_SERVER)
     return 0;
 #else
@@ -63,7 +65,7 @@ gss_init(void *app_data)
 #ifdef KRB5
     return !use_kerberos;
 #else
-    return 0
+    return 0;
 #endif /* KRB5 */
 #endif /* FTP_SERVER */
 }
@@ -131,7 +133,7 @@ gss_encode(void *app_data, void *from, int length, int level, void **to)
 }
 
 static void
-sockaddr_to_gss_address (const struct sockaddr *sa,
+sockaddr_to_gss_address (struct sockaddr *sa,
 			 OM_uint32 *addr_type,
 			 gss_buffer_desc *gss_addr)
 {
@@ -147,10 +149,10 @@ sockaddr_to_gss_address (const struct sockaddr *sa,
     }
 #endif
     case AF_INET : {
-	struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
 
 	gss_addr->length = 4;
-	gss_addr->value  = &sin->sin_addr;
+	gss_addr->value  = &sin4->sin_addr;
 	*addr_type       = GSS_C_AF_INET;
 	break;
     }
@@ -194,15 +196,6 @@ gss_adat(void *app_data, void *buf, size_t len)
     input_token.value = buf;
     input_token.length = len;
 
-    d->delegated_cred_handle = malloc(sizeof(*d->delegated_cred_handle));
-    if (d->delegated_cred_handle == NULL) {
-	reply(500, "Out of memory");
-	goto out;
-    }
-
-    memset ((char*)d->delegated_cred_handle, 0,
-	    sizeof(*d->delegated_cred_handle));
-    
     maj_stat = gss_accept_sec_context (&min_stat,
 				       &d->context_hdl,
 				       GSS_C_NO_CREDENTIAL,
@@ -223,6 +216,7 @@ gss_adat(void *app_data, void *buf, size_t len)
 	    reply(535, "Out of memory base64-encoding.");
 	    return -1;
 	}
+	gss_release_buffer(&min_stat, &output_token);
     }
     if(maj_stat == GSS_S_COMPLETE){
 	char *name;
@@ -278,11 +272,14 @@ gss_adat(void *app_data, void *buf, size_t len)
 	reply(431, "Security resource unavailable");
     }
   out:
+    if (client_name)
+	gss_release_name(&min_stat, &client_name);
     free(p);
     return 0;
 }
 
 int gss_userok(void*, char*);
+int gss_session(void*, char*);
 
 struct sec_server_mech gss_server_mech = {
     "GSSAPI",
@@ -298,7 +295,8 @@ struct sec_server_mech gss_server_mech = {
     gss_adat,
     NULL, /* pbsz */
     NULL, /* ccc */
-    gss_userok
+    gss_userok,
+    gss_session
 };
 
 #else /* FTP_SERVER */
@@ -310,12 +308,14 @@ import_name(const char *kname, const char *host, gss_name_t *target_name)
 {
     OM_uint32 maj_stat, min_stat;
     gss_buffer_desc name;
+    char *str;
 
-    name.length = asprintf((char**)&name.value, "%s@%s", kname, host);
-    if (name.value == NULL) {
+    name.length = asprintf(&str, "%s@%s", kname, host);
+    if (str == NULL) {
 	printf("Out of memory\n");
 	return AUTH_ERROR;
     }
+    name.value = str;
 
     maj_stat = gss_import_name(&min_stat,
 			       &name,
@@ -335,6 +335,7 @@ import_name(const char *kname, const char *host, gss_name_t *target_name)
 	printf("Error importing name %s: %s\n", 
 	       (char *)name.value,
 	       (char *)status_string.value);
+	free(name.value);
 	gss_release_buffer(&new_stat, &status_string);
 	return AUTH_ERROR;
     }
@@ -354,6 +355,7 @@ gss_auth(void *app_data, char *host)
     int n;
     gss_channel_bindings_t bindings;
     struct gss_data *d = app_data;
+    OM_uint32 mech_flags = GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG;
 
     const char *knames[] = { "ftp", "host", NULL }, **kname = knames;
 	    
@@ -381,14 +383,16 @@ gss_auth(void *app_data, char *host)
     } else
 	bindings = GSS_C_NO_CHANNEL_BINDINGS;
 
+    if (ftp_do_gss_delegate)
+	mech_flags |= GSS_C_DELEG_FLAG;
+
     while(!context_established) {
 	maj_stat = gss_init_sec_context(&min_stat,
 					GSS_C_NO_CREDENTIAL,
 					&d->context_hdl,
 					target_name,
 					GSS_C_NO_OID,
-                                        GSS_C_MUTUAL_FLAG | GSS_C_SEQUENCE_FLAG
-                                          | GSS_C_DELEG_FLAG,
+                                        mech_flags,
 					0,
 					bindings,
 					&input,
@@ -401,7 +405,12 @@ gss_auth(void *app_data, char *host)
 	    OM_uint32 msg_ctx = 0;
 	    gss_buffer_desc status_string;
 
-	    if(min_stat == KRB5KDC_ERR_S_PRINCIPAL_UNKNOWN && *kname != NULL) {
+	    d->context_hdl = GSS_C_NO_CONTEXT;
+
+	    gss_release_name(&min_stat, &target_name);
+
+	    if(*kname != NULL) {
+
 		if(import_name(*kname++, host, &target_name)) {
 		    if (bindings != GSS_C_NO_CHANNEL_BINDINGS)
 			free(bindings);
@@ -466,6 +475,8 @@ gss_auth(void *app_data, char *host)
 	    context_established = 1;
 	}
     }
+
+    gss_release_name(&min_stat, &target_name);
 
     if (bindings != GSS_C_NO_CHANNEL_BINDINGS)
 	free(bindings);

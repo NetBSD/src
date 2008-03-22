@@ -33,16 +33,16 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: strlwr.c,v 1.5 2003/04/14 11:44:34 lha Exp $"
-        "$NetBSD: strlwr.c,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $");
+__RCSID("$Heimdal: strlwr.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: strlwr.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 #include <string.h>
 #include <ctype.h>
 
-#include <roken.h>
+#include "roken.h"
 
 #ifndef HAVE_STRLWR
-char *
+char * ROKEN_LIB_FUNCTION
 strlwr(char *str)
 {
   char *s;

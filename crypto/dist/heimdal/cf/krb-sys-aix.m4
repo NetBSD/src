@@ -1,5 +1,5 @@
-dnl $Heimdal: krb-sys-aix.m4,v 1.1.42.1 2004/04/01 07:27:34 joda Exp $
-dnl $NetBSD: krb-sys-aix.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
+dnl $Heimdal: krb-sys-aix.m4 13338 2004-02-12 14:21:14Z lha $
+dnl $NetBSD: krb-sys-aix.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 dnl
 dnl AIX have a very different syscall convention

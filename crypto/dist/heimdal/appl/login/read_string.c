@@ -33,8 +33,8 @@
 
 #include "login_locl.h"
 
-__RCSID("$Heimdal: read_string.c,v 1.4 2000/06/21 02:09:36 assar Exp $"
-        "$NetBSD: read_string.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: read_string.c 18156 2006-09-22 15:42:39Z lha $"
+        "$NetBSD: read_string.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 static sig_atomic_t intr_flag;
 
@@ -44,10 +44,15 @@ intr(int sig)
     intr_flag++;
 }
 
+#ifndef NSIG
+#define NSIG 47
+#endif
+
 int
 read_string(const char *prompt, char *buf, size_t len, int echo)
 {
-    struct sigaction sigs[47];
+    struct sigaction sigs[NSIG];
+    int oksigs[NSIG];
     struct sigaction sa;
     FILE *tty;
     int ret = 0;
@@ -58,12 +63,16 @@ read_string(const char *prompt, char *buf, size_t len, int echo)
 
     struct termios t_new, t_old;
 
+    memset(&oksigs, 0, sizeof(oksigs));
+
     memset(&sa, 0, sizeof(sa));
     sa.sa_handler = intr;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
-    for(i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++)
-	if (i != SIGALRM) sigaction(i, &sa, &sigs[i]);
+    for(i = 1; i < sizeof(sigs) / sizeof(sigs[0]); i++)
+	if (i != SIGALRM) 
+	    if (sigaction(i, &sa, &sigs[i]) == 0)
+		oksigs[i] = 1;
 
     if((tty = fopen("/dev/tty", "r")) == NULL)
 	tty = stdin;
@@ -104,8 +113,9 @@ read_string(const char *prompt, char *buf, size_t len, int echo)
     if(tty != stdin)
 	fclose(tty);
 
-    for(i = 0; i < sizeof(sigs) / sizeof(sigs[0]); i++)
-	if (i != SIGALRM) sigaction(i, &sigs[i], NULL);
+    for(i = 1; i < sizeof(sigs) / sizeof(sigs[0]); i++)
+	if (oksigs[i])
+	    sigaction(i, &sigs[i], NULL);
     
     if(ret)
 	return -3;

@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,8 +33,8 @@
 
 #include "telnetd.h"
 
-__RCSID("$Heimdal: state.c,v 1.14.12.1 2004/06/21 08:21:58 lha Exp $"
-        "$NetBSD: state.c,v 1.3 2004/09/14 08:08:20 lha Exp $");
+__RCSID("$Heimdal: state.c 18110 2006-09-19 08:25:20Z lha $"
+        "$NetBSD: state.c,v 1.4 2008/03/22 08:36:57 mlelstv Exp $");
 
 unsigned char	doopt[] = { IAC, DO, '%', 'c', 0 };
 unsigned char	dont[] = { IAC, DONT, '%', 'c', 0 };
@@ -424,14 +428,14 @@ send_do(int option, int init)
 extern void auth_request(void);
 #endif
 #ifdef	ENCRYPTION
-extern void encrypt_send_support();
+extern void encrypt_send_support(void);
 #endif
 
 void
 willoption(int option)
 {
     int changeok = 0;
-    void (*func)() = 0;
+    void (*func)(void) = NULL;
 
     /*
      * process input from peer.
@@ -936,7 +940,7 @@ suboption(void)
     }  /* end of case TELOPT_TSPEED */
 
     case TELOPT_TTYPE: {		/* Yaaaay! */
-	static char terminalname[41];
+	char *p;
 
 	if (his_state_is_wont(TELOPT_TTYPE))	/* Ignore if option disabled */
 	    break;
@@ -946,9 +950,9 @@ suboption(void)
 	    return;		/* ??? XXX but, this is the most robust */
 	}
 
-	terminaltype = terminalname;
+	p = terminaltype;
 
-	while ((terminaltype < (terminalname + sizeof terminalname-1)) &&
+	while ((p < (terminaltype + sizeof terminaltype-1)) &&
 	       !SB_EOF()) {
 	    int c;
 
@@ -956,10 +960,9 @@ suboption(void)
 	    if (isupper(c)) {
 		c = tolower(c);
 	    }
-	    *terminaltype++ = c;    /* accumulate name */
+	    *p++ = c;    /* accumulate name */
 	}
-	*terminaltype = 0;
-	terminaltype = terminalname;
+	*p = 0;
 	break;
     }  /* end of case TELOPT_TTYPE */
 
@@ -1243,6 +1246,8 @@ suboption(void)
 	    encrypt_start(subpointer, SB_LEN());
 	    break;
 	case ENCRYPT_END:
+	    if (require_encryption)
+		fatal(net, "Output encryption is not possible to turn off");
 	    encrypt_end();
 	    break;
 	case ENCRYPT_REQSTART:
@@ -1255,6 +1260,8 @@ suboption(void)
 	     * if we have been able to get in the correct mode
 	     * anyhow.
 	     */
+	    if (require_encryption)
+		fatal(net, "Input encryption is not possible to turn off");
 	    encrypt_request_end();
 	    break;
 	case ENCRYPT_ENC_KEYID:

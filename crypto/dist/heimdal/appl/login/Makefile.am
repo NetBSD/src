@@ -1,9 +1,9 @@
-# $Heimdal: Makefile.am,v 1.21 2003/03/24 16:15:48 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.5 2003/05/15 20:28:41 lha Exp $
+# $Heimdal: Makefile.am 20466 2007-04-20 08:29:05Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:36:51 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4)
+AM_CPPFLAGS += $(INCLUDE_krb4)
 
 man_MANS = login.1 login.access.5
 
@@ -16,6 +16,8 @@ login_SOURCES =					\
 		login_access.c			\
 		login_locl.h			\
 		login_protos.h			\
+		loginpaths.h			\
+		limits_conf.c			\
 		osfc2.c				\
 		read_string.c			\
 		shadow.c			\
@@ -28,7 +30,7 @@ LDADD = $(LIB_otp) \
 	$(LIB_kafs) \
 	$(top_builddir)/lib/krb5/libkrb5.la \
 	$(LIB_krb4) \
-	$(LIB_des) \
+	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken) \
 	$(LIB_security) \
@@ -38,3 +40,5 @@ $(srcdir)/login_protos.h:
 	cd $(srcdir); perl ../../cf/make-proto.pl -o login_protos.h -q -P comment $(login_SOURCES) || rm -f login_protos.h
 
 $(login_OBJECTS): $(srcdir)/login_protos.h
+
+EXTRA_DIST = $(man_MANS)

@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: compile_et.h,v 1.6 2000/07/01 20:21:48 assar Exp $
-   $NetBSD: compile_et.h,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $ */
+/* $Heimdal: compile_et.h 15426 2005-06-16 19:21:42Z lha $
+   $NetBSD: compile_et.h,v 1.2 2008/03/22 08:37:06 mlelstv Exp $ */
 
 #ifndef __COMPILE_ET_H__
 #define __COMPILE_ET_H__
@@ -41,6 +41,7 @@
 #include <config.h>
 #endif
 
+#include <err.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -48,7 +49,7 @@
 #include <ctype.h>
 #include <roken.h>
 
-extern long base;
+extern long base_id;
 extern int number;
 extern char *prefix;
 extern char name[128];

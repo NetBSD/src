@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: hdb_locl.h,v 1.18.4.1 2003/09/10 22:04:39 lha Exp $
-   $NetBSD: hdb_locl.h,v 1.1.1.7 2004/04/02 14:47:43 lha Exp $ */
+/* $Heimdal: hdb_locl.h 22209 2007-12-07 19:03:41Z lha $
+   $NetBSD: hdb_locl.h,v 1.2 2008/03/22 08:37:12 mlelstv Exp $ */
 
 #ifndef __HDB_LOCL_H__
 #define __HDB_LOCL_H__
@@ -64,5 +64,8 @@
 #include <krb5.h>
 #include <hdb.h>
 #include <hdb-private.h>
+
+#define HDB_DEFAULT_DB HDB_DB_DIR "/heimdal"
+#define HDB_DB_FORMAT_ENTRY "hdb/db-format"
 
 #endif /* __HDB_LOCL_H__ */

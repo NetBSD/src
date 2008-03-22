@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: getnameinfo.c,v 1.4 2001/07/09 15:14:19 assar Exp $"
-        "$NetBSD: getnameinfo.c,v 1.1.1.5 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: getnameinfo.c 15412 2005-06-16 16:53:09Z lha $"
+        "$NetBSD: getnameinfo.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include "roken.h"
@@ -95,7 +95,7 @@ doit (int af,
  *
  */
 
-int
+int ROKEN_LIB_FUNCTION
 getnameinfo(const struct sockaddr *sa, socklen_t salen,
 	    char *host, size_t hostlen,
 	    char *serv, size_t servlen,
@@ -114,10 +114,10 @@ getnameinfo(const struct sockaddr *sa, socklen_t salen,
     }
 #endif
     case AF_INET : {
-	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
+	const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
 
-	return doit (AF_INET, &sin->sin_addr, sizeof(sin->sin_addr),
-		     sin->sin_port,
+	return doit (AF_INET, &sin4->sin_addr, sizeof(sin4->sin_addr),
+		     sin4->sin_port,
 		     host, hostlen,
 		     serv, servlen,
 		     flags);

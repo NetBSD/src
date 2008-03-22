@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -51,8 +55,8 @@
  * or implied warranty.
  */
 
-/* $Heimdal: encrypt.h,v 1.8 2002/09/10 20:03:47 joda Exp $
-   $NetBSD: encrypt.h,v 1.2 2003/08/07 09:15:25 agc Exp $ */
+/* $Heimdal: encrypt.h 11444 2002-09-10 20:03:49Z joda $
+   $NetBSD: encrypt.h,v 1.3 2008/03/22 08:36:56 mlelstv Exp $ */
 
 #ifndef	__ENCRYPT__
 #define	__ENCRYPT__

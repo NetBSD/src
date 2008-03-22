@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,10 +33,10 @@
 
 #include <krb5_locl.h>
 
-__RCSID("$Heimdal: mk_req.c,v 1.24 2001/06/18 20:05:52 joda Exp $"
-        "$NetBSD: mk_req.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: mk_req.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: mk_req.c,v 1.2 2008/03/22 08:37:14 mlelstv Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_mk_req_exact(krb5_context context,
 		  krb5_auth_context *auth_context,
 		  const krb5_flags ap_req_options,
@@ -57,7 +57,7 @@ krb5_mk_req_exact(krb5_context context,
 
     ret = krb5_copy_principal (context, server, &this_cred.server);
     if (ret) {
-	krb5_free_creds_contents (context, &this_cred);
+	krb5_free_cred_contents (context, &this_cred);
 	return ret;
     }
 
@@ -66,7 +66,7 @@ krb5_mk_req_exact(krb5_context context,
 	this_cred.session.keytype = (*auth_context)->keytype;
 
     ret = krb5_get_credentials (context, 0, ccache, &this_cred, &cred);
-    krb5_free_creds_contents(context, &this_cred);
+    krb5_free_cred_contents(context, &this_cred);
     if (ret)
 	return ret;
 
@@ -80,7 +80,7 @@ krb5_mk_req_exact(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_mk_req(krb5_context context,
 	    krb5_auth_context *auth_context,
 	    const krb5_flags ap_req_options,

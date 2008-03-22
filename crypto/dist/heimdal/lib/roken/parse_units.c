@@ -33,14 +33,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: parse_units.c,v 1.14 2001/09/04 09:56:00 assar Exp $"
-        "$NetBSD: parse_units.c,v 1.1.1.4 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: parse_units.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: parse_units.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
-#include <roken.h>
+#include "roken.h"
 #include "parse_units.h"
 
 /*
@@ -153,7 +153,7 @@ acc_units(int res, int val, unsigned mult)
     return res + val * mult;
 }
 
-int
+int ROKEN_LIB_FUNCTION
 parse_units (const char *s, const struct units *units,
 	     const char *def_unit)
 {
@@ -179,7 +179,7 @@ acc_flags(int res, int val, unsigned mult)
 	return -1;
 }
 
-int
+int ROKEN_LIB_FUNCTION
 parse_flags (const char *s, const struct units *units,
 	     int orig)
 {
@@ -193,9 +193,8 @@ parse_flags (const char *s, const struct units *units,
 
 static int
 unparse_something (int num, const struct units *units, char *s, size_t len,
-		   int (*print) (char *s, size_t len, int div,
-				const char *name, int rem),
-		   int (*update) (int in, unsigned mult),
+		   int (*print) (char *, size_t, int, const char *, int),
+		   int (*update) (int, unsigned),
 		   const char *zero_string)
 {
     const struct units *u;
@@ -205,17 +204,21 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
 	return snprintf (s, len, "%s", zero_string);
 
     for (u = units; num > 0 && u->name; ++u) {
-	int div;
+	int divisor;
 
-	div = num / u->mult;
-	if (div) {
+	divisor = num / u->mult;
+	if (divisor) {
 	    num = (*update) (num, u->mult);
-	    tmp = (*print) (s, len, div, u->name, num);
+	    tmp = (*print) (s, len, divisor, u->name, num);
 	    if (tmp < 0)
 		return tmp;
-
-	    len -= tmp;
-	    s += tmp;
+	    if (tmp > len) {
+		len = 0;
+		s = NULL;
+	    } else {
+		len -= tmp;
+		s += tmp;
+	    }
 	    ret += tmp;
 	}
     }
@@ -223,11 +226,11 @@ unparse_something (int num, const struct units *units, char *s, size_t len,
 }
 
 static int
-print_unit (char *s, size_t len, int div, const char *name, int rem)
+print_unit (char *s, size_t len, int divisor, const char *name, int rem)
 {
     return snprintf (s, len, "%u %s%s%s",
-		     div, name,
-		     div == 1 ? "" : "s",
+		     divisor, name,
+		     divisor == 1 ? "" : "s",
 		     rem > 0 ? " " : "");
 }
 
@@ -246,7 +249,7 @@ update_unit_approx (int in, unsigned mult)
 	return update_unit (in, mult);
 }
 
-int
+int ROKEN_LIB_FUNCTION
 unparse_units (int num, const struct units *units, char *s, size_t len)
 {
     return unparse_something (num, units, s, len,
@@ -255,7 +258,7 @@ unparse_units (int num, const struct units *units, char *s, size_t len)
 			      "0");
 }
 
-int
+int ROKEN_LIB_FUNCTION
 unparse_units_approx (int num, const struct units *units, char *s, size_t len)
 {
     return unparse_something (num, units, s, len,
@@ -264,7 +267,7 @@ unparse_units_approx (int num, const struct units *units, char *s, size_t len)
 			      "0");
 }
 
-void
+void ROKEN_LIB_FUNCTION
 print_units_table (const struct units *units, FILE *f)
 {
     const struct units *u, *u2;
@@ -298,7 +301,7 @@ print_units_table (const struct units *units, FILE *f)
 }
 
 static int
-print_flag (char *s, size_t len, int div, const char *name, int rem)
+print_flag (char *s, size_t len, int divisor, const char *name, int rem)
 {
     return snprintf (s, len, "%s%s", name, rem > 0 ? ", " : "");
 }
@@ -309,7 +312,7 @@ update_flag (int in, unsigned mult)
     return in - mult;
 }
 
-int
+int ROKEN_LIB_FUNCTION
 unparse_flags (int num, const struct units *units, char *s, size_t len)
 {
     return unparse_something (num, units, s, len,
@@ -318,7 +321,7 @@ unparse_flags (int num, const struct units *units, char *s, size_t len)
 			      "");
 }
 
-void
+void ROKEN_LIB_FUNCTION
 print_flags_table (const struct units *units, FILE *f)
 {
     const struct units *u;
