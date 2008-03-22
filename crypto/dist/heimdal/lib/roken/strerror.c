@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: strerror.c,v 1.10 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: strerror.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: strerror.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: strerror.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 
 #include <stdio.h>
@@ -44,7 +44,7 @@ __RCSID("$Heimdal: strerror.c,v 1.10 1999/12/02 16:58:53 joda Exp $"
 extern int sys_nerr;
 extern char *sys_errlist[];
 
-char*
+char* ROKEN_LIB_FUNCTION
 strerror(int eno)
 {
     static char emsg[1024];

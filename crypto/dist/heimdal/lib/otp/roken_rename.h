@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: roken_rename.h,v 1.3 2003/04/16 16:33:57 lha Exp $
-   $NetBSD: roken_rename.h,v 1.1.1.4 2003/05/15 20:28:50 lha Exp $ */
+/* $Heimdal: roken_rename.h 12053 2003-04-16 16:33:57Z lha $
+   $NetBSD: roken_rename.h,v 1.2 2008/03/22 08:37:20 mlelstv Exp $ */
 
 #ifndef __roken_rename_h__
 #define __roken_rename_h__

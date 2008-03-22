@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,8 +33,8 @@
 
 #include "kuser_locl.h"
 
-__RCSID("$Heimdal: generate-requests.c,v 1.4 2001/08/24 01:07:22 assar Exp $"
-        "$NetBSD: generate-requests.c,v 1.5 2002/09/12 13:19:04 joda Exp $");
+__RCSID("$Heimdal: generate-requests.c 19233 2006-12-06 08:04:05Z lha $"
+        "$NetBSD: generate-requests.c,v 1.6 2008/03/22 08:37:03 mlelstv Exp $");
 
 static krb5_error_code
 null_key_proc (krb5_context context,
@@ -59,8 +59,7 @@ read_words (const char *filename, char ***ret_w)
 	err (1, "cannot open %s", filename);
     alloc = n = 0;
     while (fgets (buf, sizeof(buf), f) != NULL) {
-	if (buf[strlen (buf) - 1] == '\n')
-	    buf[strlen (buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	if (n >= alloc) {
 	    alloc += 16;
 	    w = erealloc (w, alloc * sizeof(char **));
@@ -68,6 +67,8 @@ read_words (const char *filename, char ***ret_w)
 	w[n++] = estrdup (buf);
     }
     *ret_w = w;
+    if (n == 0)
+	errx(1, "%s is an empty file, no words to try", filename);
     return n;
 }
 
@@ -106,7 +107,7 @@ generate_requests (const char *filename, unsigned nreq)
 	ret = krb5_get_in_cred (context, 0, NULL, NULL, NULL, NULL,
 				null_key_proc, NULL, NULL, NULL,
 				&cred, NULL);
-	krb5_free_creds_contents (context, &cred);
+	krb5_free_cred_contents (context, &cred);
     }
 }
 
@@ -131,12 +132,12 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     int nreq;
     char *end;
 
     setprogname(argv[0]);
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
 
     if (help_flag)
@@ -147,8 +148,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc != 2)
 	usage (1);

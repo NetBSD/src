@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16 2007/05/28 12:06:37 tls Exp $
+# $NetBSD: Makefile,v 1.17 2008/03/22 08:37:27 mlelstv Exp $
 
 NOLINT= # defined
 
@@ -15,6 +15,8 @@ PROG= kadmin
 
 SRCS=		 				\
 	ank.c					\
+	add_enctype.c				\
+	check.c					\
 	cpw.c					\
 	del.c					\
 	del_enctype.c				\
@@ -26,8 +28,11 @@ SRCS=		 				\
 	load.c					\
 	mod.c					\
 	rename.c				\
+	stash.c					\
 	util.c					\
+	pw_quality.c				\
 	random_password.c			\
+	kadmin-commands.c
 
 CPPFLAGS+= -I.					\
 	-I${DIST}/heimdal/kadmin		\

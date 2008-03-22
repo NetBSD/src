@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: rsh_locl.h,v 1.33 2003/04/16 20:05:39 lha Exp $
-   $NetBSD: rsh_locl.h,v 1.1.1.4 2003/05/15 20:28:41 lha Exp $ */
+/* $Heimdal: rsh_locl.h 21553 2007-07-15 09:04:52Z lha $
+   $NetBSD: rsh_locl.h,v 1.2 2008/03/22 08:36:55 mlelstv Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -103,12 +103,17 @@
 #endif
 #ifdef KRB5
 #include <krb5.h>
+/* XXX */
+struct krb5_pk_identity;
+struct krb5_pk_cert;
+struct ContentInfo;
+struct _krb5_krb_auth_data;
+struct krb5_dh_moduli;
+#include "crypto-headers.h"
 #include <krb5-private.h> /* for _krb5_{get,put}_int */
 #endif
+#if defined(KRB4) || defined(KRB5)
 #include <kafs.h>
-
-#ifndef _PATH_NOLOGIN
-#define _PATH_NOLOGIN   "/etc/nologin"
 #endif
 
 #ifndef _PATH_BSHELL
@@ -119,9 +124,7 @@
 #define _PATH_DEFPATH	"/usr/bin:/bin"
 #endif
 
-#ifndef _PATH_ETC_ENVIRONMENT
-#define _PATH_ETC_ENVIRONMENT SYSCONFDIR "/environment"
-#endif
+#include "loginpaths.h"
 
 /*
  *
@@ -138,7 +141,7 @@ extern krb5_crypto crypto;
 extern int key_usage;
 extern void *ivec_in[2];
 extern void *ivec_out[2];
-void init_ivecs(int);
+void init_ivecs(int, int);
 #endif
 #ifdef KRB4
 extern des_key_schedule schedule;
@@ -154,6 +157,7 @@ extern des_cblock iv;
 #endif
 
 #define RSH_BUFSIZ (5 * 1024) /* MIT kcmd can't handle larger buffers */
+#define RSHD_BUFSIZ (16 * 1024) /* Old maxize for Heimdal 0.4 rsh */
 
 #define PATH_RSH BINDIR "/rsh"
 

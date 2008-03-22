@@ -32,8 +32,8 @@
  */
 
 #include "test_locl.h"
-__RCSID("$Heimdal: tcp_client.c,v 1.15 1999/12/16 10:30:17 assar Exp $"
-        "$NetBSD: tcp_client.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: tcp_client.c 17450 2006-05-05 11:11:43Z lha $"
+        "$NetBSD: tcp_client.c,v 1.2 2008/03/22 08:36:57 mlelstv Exp $");
 
 krb5_context context;
 
@@ -45,7 +45,7 @@ proto (int sock, const char *hostname, const char *service)
     krb5_principal server;
     krb5_data data;
     krb5_data packet;
-    u_int32_t len, net_len;
+    uint32_t len, net_len;
 
     status = krb5_auth_con_init (context, &auth_context);
     if (status)

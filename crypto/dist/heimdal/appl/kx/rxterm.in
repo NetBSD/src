@@ -1,6 +1,6 @@
 #!/bin/sh
-# $Heimdal: rxterm.in,v 1.23 2002/03/18 17:37:34 joda Exp $
-# $NetBSD: rxterm.in,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $
+# $Heimdal: rxterm.in 10887 2002-03-18 17:37:34Z joda $
+# $NetBSD: rxterm.in,v 1.2 2008/03/22 08:36:51 mlelstv Exp $
 #
 usage="Usage: $0 [-l username] [-k] [-f] [-r rsh_args] [-x xterm_args] [-K kx_args] [-w term_emulator] [-b rsh_binary][-v] [-h | --help] [--version] host"
 binary=rsh

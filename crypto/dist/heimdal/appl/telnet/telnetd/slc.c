@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,8 +33,8 @@
 
 #include "telnetd.h"
 
-__RCSID("$Heimdal: slc.c,v 1.10 1997/05/11 06:30:00 assar Exp $"
-        "$NetBSD: slc.c,v 1.2 2003/08/07 09:15:29 agc Exp $");
+__RCSID("$Heimdal: slc.c 1695 1997-05-11 06:30:05Z assar $"
+        "$NetBSD: slc.c,v 1.3 2008/03/22 08:36:57 mlelstv Exp $");
 
 /*
  * get_slc_defaults

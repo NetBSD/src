@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: strtok_r.c,v 1.5 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: strtok_r.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: strtok_r.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: strtok_r.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 
 #include <string.h>
@@ -43,7 +43,7 @@ __RCSID("$Heimdal: strtok_r.c,v 1.5 1999/12/02 16:58:53 joda Exp $"
 
 #ifndef HAVE_STRTOK_R
 
-char *
+char * ROKEN_LIB_FUNCTION
 strtok_r(char *s1, const char *s2, char **lasts)
 {
   char *ret;

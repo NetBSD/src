@@ -1,7 +1,37 @@
+2007-07-28  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c: Add --help.
+
+2006-10-21  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c: Don't include <X11/Xos.h>, its x11's "roken.h" and we
+	do that just fine ourself thanks.
+	
+2006-05-13  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c (main): argc_in_out argument to XtVaAppInitialize
+	should be an 'int *' accoring to manpage and headerfile, so remove
+	the cast added in 1996
+	(rev 1.54)
+	
+2005-10-22  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c: Check return value from asprintf instead of string !=
+	NULL since it undefined behavior on Linux. From Björn Sandell
+	
+2005-04-06  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c: use NULL as last argument to execl, not 0
+
+2005-01-09  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c: get_v4_tgt only used when compileing with kerberos 4
+	support
+
 2004-09-08  Johan Danielsson  <joda@pdc.kth.se>
 
-	* xnlock.c: pull up 1.99->1.100: use krb5_appdefault_boolean
-	instead of krb5_config_get_bool
+	* xnlock.c: use krb5_appdefault_boolean instead of
+	krb5_config_get_bool
 
 2004-03-22  Johan Danielsson  <joda@pdc.kth.se>
 
@@ -11,6 +41,24 @@
 
 	* xnlock.c: include <crypt.h>, From: Fredrik Ljungberg
 	<flag@pobox.se>
+
+2003-09-30  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c (verify_krb5): set mcred.client too
+	
+2003-08-25  Johan Danielsson  <joda@pdc.kth.se>
+
+	* Makefile.am: fix automake conditional foo
+	
+2003-08-16  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* Makefile.am: Don't do local checks on xnlock, it only passes if
+	there is a working X11 socket, XXX should really be fixed in
+	xnlock
+
+2003-07-07  Love Hörnquist Åstrand  <lha@it.su.se>
+
+	* xnlock.c (verify_krb5): use krb5_cc_clear_mcred
 	
 2003-05-06  Johan Danielsson  <joda@pdc.kth.se>
 

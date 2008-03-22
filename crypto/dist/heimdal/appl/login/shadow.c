@@ -33,8 +33,8 @@
 
 #include "login_locl.h"
 
-__RCSID("$Heimdal: shadow.c,v 1.5 1999/12/02 17:04:56 joda Exp $"
-        "$NetBSD: shadow.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: shadow.c 7464 1999-12-02 17:05:13Z joda $"
+        "$NetBSD: shadow.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 #ifdef HAVE_SHADOW_H
 

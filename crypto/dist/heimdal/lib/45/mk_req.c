@@ -35,15 +35,15 @@
 
 #include "45_locl.h"
 
-__RCSID("$Heimdal: mk_req.c,v 1.7 2002/05/24 15:21:00 joda Exp $"
-        "$NetBSD: mk_req.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: mk_req.c 17445 2006-05-05 10:37:46Z lha $"
+        "$NetBSD: mk_req.c,v 1.2 2008/03/22 08:37:04 mlelstv Exp $");
 
 static int lifetime = 255;
 
 static void
 build_request(KTEXT req,
 	      const char *name, const char *inst, const char *realm, 
-	      u_int32_t checksum)
+	      uint32_t checksum)
 {
     struct timeval tv;
     krb5_storage *sp;

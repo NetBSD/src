@@ -33,15 +33,15 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: getaddrinfo_hostspec.c,v 1.3 2000/07/15 12:50:32 joda Exp $"
-        "$NetBSD: getaddrinfo_hostspec.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: getaddrinfo_hostspec.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: getaddrinfo_hostspec.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include "roken.h"
 
 /* getaddrinfo via string specifying host and port */
 
-int
+int ROKEN_LIB_FUNCTION
 roken_getaddrinfo_hostspec2(const char *hostspec, 
 			    int socktype,
 			    int port,
@@ -96,7 +96,7 @@ roken_getaddrinfo_hostspec2(const char *hostspec,
     return getaddrinfo (host, portstr, &hints, ai);
 }
 
-int
+int ROKEN_LIB_FUNCTION
 roken_getaddrinfo_hostspec(const char *hostspec, 
 			   int port,
 			   struct addrinfo **ai)

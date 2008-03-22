@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,43 +34,14 @@
 #include "ktutil_locl.h"
 #include <err.h>
 
-__RCSID("$Heimdal: ktutil.c,v 1.36 2002/02/11 14:14:11 joda Exp $"
-        "$NetBSD: ktutil.c,v 1.6 2002/09/12 13:18:50 joda Exp $");
+__RCSID("$Heimdal: ktutil.c 15585 2005-07-07 21:52:04Z lha $"
+        "$NetBSD: ktutil.c,v 1.7 2008/03/22 08:36:49 mlelstv Exp $");
 
 static int help_flag;
 static int version_flag;
 int verbose_flag;
 char *keytab_string; 
 static char keytab_buf[256];
-
-static int help(int argc, char **argv);
-
-static SL_cmd cmds[] = {
-    { "add", 		kt_add,		"add",
-      "adds key to keytab" },
-    { "change",		kt_change,	"change [principal...]",
-      "get new key for principals (all)" },
-    { "copy",		kt_copy,	"copy src dst",
-      "copy one keytab to another" },
-    { "get", 		kt_get,		"get [principal...]",
-      "create key in database and add to keytab" },
-    { "list",		kt_list,	"list",
-      "shows contents of a keytab" },
-    { "purge",		kt_purge,	"purge",
-      "remove old and superceeded entries" },
-    { "remove", 	kt_remove,	"remove",
-      "remove key from keytab" },
-    { "rename", 	kt_rename,	"rename from to",
-      "rename entry" },
-    { "srvconvert",	srvconv,	"srvconvert [flags]",
-      "convert v4 srvtab to keytab" },
-    { "srv2keytab" },
-    { "srvcreate",	srvcreate,	"srvcreate [flags]",
-      "convert keytab to v4 srvtab" },
-    { "key2srvtab" },
-    { "help",		help,		"help",			"" },
-    { NULL, 	NULL,		NULL, 			NULL }
-};
 
 static struct getargs args[] = {
     { 
@@ -135,10 +106,37 @@ ktutil_open_keytab(void)
     return keytab;
 }
 
-static int
-help(int argc, char **argv)
+int
+help(void *opt, int argc, char **argv)
 {
-    sl_help(cmds, argc, argv);
+    if(argc == 0) {
+	sl_help(commands, 1, argv - 1 /* XXX */);
+    } else {
+	SL_cmd *c = sl_match (commands, argv[0], 0);
+ 	if(c == NULL) {
+	    fprintf (stderr, "No such command: %s. "
+		     "Try \"help\" for a list of commands\n",
+		     argv[0]);
+	} else {
+	    if(c->func) {
+		char *fake[] = { NULL, "--help", NULL };
+		fake[0] = argv[0];
+		(*c->func)(2, fake);
+		fprintf(stderr, "\n");
+	    }
+	    if(c->help && *c->help)
+		fprintf (stderr, "%s\n", c->help);
+	    if((++c)->name && c->func == NULL) {
+		int f = 0;
+		fprintf (stderr, "Synonyms:");
+		while (c->name && c->func == NULL) {
+		    fprintf (stderr, "%s%s", f ? ", " : " ", (c++)->name);
+		    f = 1;
+		}
+		fprintf (stderr, "\n");
+	    }
+	}
+    }
     return 0;
 }
 
@@ -152,13 +150,13 @@ usage(int status)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     krb5_error_code ret;
     setprogname(argv[0]);
     ret = krb5_init_context(&context);
     if (ret)
 	errx (1, "krb5_init_context failed: %d", ret);
-    if(getarg(args, num_args, argc, argv, &optind))
+    if(getarg(args, num_args, argc, argv, &optidx))
 	usage(1);
     if(help_flag)
 	usage(0);
@@ -166,11 +164,11 @@ main(int argc, char **argv)
 	print_version(NULL);
 	exit(0);
     }
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
     if(argc == 0)
 	usage(1);
-    ret = sl_command(cmds, argc, argv);
+    ret = sl_command(commands, argc, argv);
     if(ret == -1)
 	krb5_warnx (context, "unrecognized command: %s", argv[0]);
     return ret;

@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: sl_locl.h,v 1.6 1999/12/02 16:58:55 joda Exp $
-   $NetBSD: sl_locl.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
+/* $Heimdal: sl_locl.h 19517 2006-12-27 20:27:00Z lha $
+   $NetBSD: sl_locl.h,v 1.2 2008/03/22 08:37:23 mlelstv Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -41,6 +41,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <ctype.h>
 
 #include <roken.h>
 

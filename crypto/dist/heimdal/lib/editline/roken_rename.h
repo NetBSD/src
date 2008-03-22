@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: roken_rename.h,v 1.4 1999/12/02 16:58:39 joda Exp $
-   $NetBSD: roken_rename.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
+/* $Heimdal: roken_rename.h 14929 2005-04-24 19:28:50Z lha $
+   $NetBSD: roken_rename.h,v 1.2 2008/03/22 08:37:10 mlelstv Exp $ */
 
 #ifndef __roken_rename_h__
 #define __roken_rename_h__
@@ -57,6 +57,9 @@
 #endif
 #ifndef HAVE_VASNPRINTF
 #define vasnprintf _editline_vasnprintf
+#endif
+#ifndef HAVE_STRLCAT
+#define strlcat _editline_strlcat
 #endif
 
 #endif /* __roken_rename_h__ */

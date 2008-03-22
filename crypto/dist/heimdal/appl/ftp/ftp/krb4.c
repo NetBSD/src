@@ -38,8 +38,8 @@
 #endif
 #include <krb.h>
 
-__RCSID("$Heimdal: krb4.c,v 1.38 2000/06/21 02:46:09 assar Exp $"
-        "$NetBSD: krb4.c,v 1.1.1.3 2002/09/12 12:41:35 joda Exp $");
+__RCSID("$Heimdal: krb4.c 17450 2006-05-05 11:11:43Z lha $"
+        "$NetBSD: krb4.c,v 1.2 2008/03/22 08:36:50 mlelstv Exp $");
 
 #ifdef FTP_SERVER
 #define LOCAL_ADDR ctrl_addr
@@ -122,7 +122,7 @@ krb4_adat(void *app_data, void *buf, size_t len)
     AUTH_DAT auth_dat;
     char *p;
     int kerror;
-    u_int32_t cs;
+    uint32_t cs;
     char msg[35]; /* size of encrypted block */
     int tmp_len;
     struct krb4_data *d = app_data;
@@ -241,7 +241,7 @@ krb4_auth(void *app_data, char *host)
     KTEXT_ST adat;
     MSG_DAT msg_data;
     int checksum;
-    u_int32_t cs;
+    uint32_t cs;
     struct krb4_data *d = app_data;
     struct sockaddr_in *localaddr  = (struct sockaddr_in *)LOCAL_ADDR;
     struct sockaddr_in *remoteaddr = (struct sockaddr_in *)REMOTE_ADDR;

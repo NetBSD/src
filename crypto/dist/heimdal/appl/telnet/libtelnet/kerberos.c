@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -51,8 +55,8 @@
 #include <config.h>
 #endif
 
-__RCSID("$Heimdal: kerberos.c,v 1.54 2001/08/22 20:30:22 assar Exp $"
-        "$NetBSD: kerberos.c,v 1.2 2003/08/07 09:15:25 agc Exp $");
+__RCSID("$Heimdal: kerberos.c 22071 2007-11-14 20:04:50Z lha $"
+        "$NetBSD: kerberos.c,v 1.3 2008/03/22 08:36:56 mlelstv Exp $");
 
 #ifdef	KRB4
 #ifdef HAVE_SYS_TYPES_H
@@ -344,14 +348,15 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 	    Data(ap, KRB_ACCEPT, NULL, 0);
 	} else {
 	    char *msg;
+	    int ret;
 
-	    asprintf (&msg, "user `%s' is not authorized to "
-		      "login as `%s'", 
-		      krb_unparse_name_long(adat.pname, 
-					    adat.pinst, 
-					    adat.prealm), 
-		      UserNameRequested ? UserNameRequested : "<nobody>");
-	    if (msg == NULL)
+	    ret = asprintf (&msg, "user `%s' is not authorized to "
+			    "login as `%s'", 
+			    krb_unparse_name_long(adat.pname, 
+						  adat.pinst, 
+						  adat.prealm), 
+			    UserNameRequested ? UserNameRequested : "<nobody>");
+	    if (ret == -1)
 		Data(ap, KRB_REJECT, NULL, 0);
 	    else {
 		Data(ap, KRB_REJECT, (void *)msg, -1);
@@ -437,7 +442,7 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 		}
 	    }
 	    memset(data, 0, cnt);
-	    memset(ks, 0, sizeof(ks));
+	    memset(&ks, 0, sizeof(ks));
 	    memset(&cred, 0, sizeof(cred));
 	}
 	
@@ -537,7 +542,7 @@ kerberos4_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
 {
     int i;
 
-    buf[buflen-1] = '\0';		/* make sure its NULL terminated */
+    buf[buflen-1] = '\0';		/* make sure it's NULL terminated */
     buflen -= 1;
 
     switch(data[3]) {
@@ -648,7 +653,7 @@ static int
 unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
 {
     char *p = (char*)buf;
-    u_int32_t tmp;
+    uint32_t tmp;
 
     strncpy (cred->service, p, ANAME_SZ);
     cred->service[ANAME_SZ - 1] = '\0';
@@ -672,7 +677,7 @@ unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
     p += cred->ticket_st.length;
     p += krb_get_int(p, &tmp, 4, 0);
     cred->ticket_st.mbz = 0;
-    p += krb_get_int(p, (u_int32_t *)&cred->issue_date, 4, 0);
+    p += krb_get_int(p, (uint32_t *)&cred->issue_date, 4, 0);
 
     strncpy (cred->pname, p, ANAME_SZ);
     cred->pname[ANAME_SZ - 1] = '\0';
@@ -709,7 +714,7 @@ kerberos4_forward(Authenticator *ap, void *v)
     len = pack_cred(&cred, netcred);
     des_pcbc_encrypt((void*)netcred, (void*)netcred, len,
 		     ks, key, DES_ENCRYPT);
-    memset(ks, 0, sizeof(ks));
+    memset(&ks, 0, sizeof(ks));
     Data(ap, KRB_FORWARD, netcred, len);
     memset(netcred, 0, sizeof(netcred));
     return 0;

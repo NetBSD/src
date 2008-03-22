@@ -33,8 +33,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: add_et_list.c,v 1.2 1999/12/02 17:05:07 joda Exp $"
-        "$NetBSD: add_et_list.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: add_et_list.c 13713 2004-04-13 14:33:45Z lha $"
+        "$NetBSD: add_et_list.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
 /*
  * Add a specified list of error messages to the et list in context.
@@ -42,7 +42,7 @@ __RCSID("$Heimdal: add_et_list.c,v 1.2 1999/12/02 17:05:07 joda Exp $"
  * the current et_list.
  */
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_add_et_list (krb5_context context,
 		  void (*func)(struct et_list **))
 {

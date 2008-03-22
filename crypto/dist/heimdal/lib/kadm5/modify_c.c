@@ -33,13 +33,13 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: modify_c.c,v 1.4 2000/07/11 15:59:46 joda Exp $"
-        "$NetBSD: modify_c.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: modify_c.c 17445 2006-05-05 10:37:46Z lha $"
+        "$NetBSD: modify_c.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 kadm5_ret_t
 kadm5_c_modify_principal(void *server_handle,
 			 kadm5_principal_ent_t princ, 
-			 u_int32_t mask)
+			 uint32_t mask)
 {
     kadm5_client_context *context = server_handle;
     kadm5_ret_t ret;
@@ -53,8 +53,10 @@ kadm5_c_modify_principal(void *server_handle,
 	return ret;
 
     sp = krb5_storage_from_mem(buf, sizeof(buf));
-    if (sp == NULL)
+    if (sp == NULL) {
+	krb5_clear_error_string(context->context);
 	return ENOMEM;
+    }
     krb5_store_int32(sp, kadm_modify);
     kadm5_store_principal_ent(sp, princ);
     krb5_store_int32(sp, mask);
@@ -67,10 +69,12 @@ kadm5_c_modify_principal(void *server_handle,
 	return ret;
     sp = krb5_storage_from_data (&reply);
     if (sp == NULL) {
+	krb5_clear_error_string(context->context);
 	krb5_data_free (&reply);
 	return ENOMEM;
     }
     krb5_ret_int32(sp, &tmp);
+    krb5_clear_error_string(context->context);
     krb5_storage_free(sp);
     krb5_data_free (&reply);
     return tmp;

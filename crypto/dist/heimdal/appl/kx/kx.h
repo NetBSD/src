@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: kx.h,v 1.41 2003/04/16 16:45:43 joda Exp $
-   $NetBSD: kx.h,v 1.1.1.4 2003/05/15 20:28:43 lha Exp $ */
+/* $Heimdal: kx.h 20452 2007-04-19 20:04:19Z lha $
+   $NetBSD: kx.h,v 1.2 2008/03/22 08:36:51 mlelstv Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -148,7 +148,7 @@ struct x_socket {
 };
 
 extern char x_socket[];
-extern u_int32_t display_num;
+extern uint32_t display_num;
 extern char display[];
 extern int display_size;
 extern char xauthfile[];
@@ -160,9 +160,9 @@ int get_xsockets (int *number, struct x_socket **sockets, int tcpp);
 int chown_xsockets (int n, struct x_socket *sockets, uid_t uid, gid_t gid);
 
 int connect_local_xsocket (unsigned dnr);
-int create_and_write_cookie (char *xauthfile,
-			     size_t size,
-			     u_char *cookie,
+int create_and_write_cookie (char *file,
+			     size_t file_size,
+			     u_char *cookie_buf,
 			     size_t sz);
 int verify_and_remove_cookies (int fd, int sock, int cookiesp);
 int replace_cookie(int xserver, int fd, char *filename, int cookiesp);
@@ -257,12 +257,8 @@ __attribute__ ((format (printf, 3, 4)))
 #endif
 ;
 
-#ifndef KRB4
+int
+kx_get_int(void *f, uint32_t *to, int size, int lsb);
 
 int
-krb_get_int(void *f, u_int32_t *to, int size, int lsb);
-
-int
-krb_put_int(u_int32_t from, void *to, size_t rem, int size);
-
-#endif
+kx_put_int(uint32_t from, void *to, size_t rem, int size);

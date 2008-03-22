@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,8 +33,8 @@
  *	@(#)extern.h	8.3 (Berkeley) 10/9/94
  */
 
-/* $Heimdal: extern.h,v 1.19 2000/09/19 13:15:12 assar Exp $
-   $NetBSD: extern.h,v 1.2 2003/08/07 09:15:18 agc Exp $ */
+/* $Heimdal: extern.h 9075 2000-09-19 13:15:12Z assar $
+   $NetBSD: extern.h,v 1.3 2008/03/22 08:36:50 mlelstv Exp $ */
 
 #include <setjmp.h>
 #include <stdlib.h>

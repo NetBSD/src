@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,8 +32,8 @@
  */
 
 #include "rsh_locl.h"
-__RCSID("$Heimdal: rsh.c,v 1.71 2003/04/16 20:37:20 joda Exp $"
-        "$NetBSD: rsh.c,v 1.1.1.7 2003/05/15 20:28:41 lha Exp $");
+__RCSID("$Heimdal: rsh.c 21516 2007-07-12 12:47:23Z lha $"
+        "$NetBSD: rsh.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 enum auth_method auth_method;
 #if defined(KRB4) || defined(KRB5)
@@ -61,15 +61,21 @@ static int use_v4 = -1;
 #ifdef KRB5
 static int use_v5 = -1;
 #endif
+#if defined(KRB4) || defined(KRB5)
 static int use_only_broken = 0;
+#else
+static int use_only_broken = 1;
+#endif
 static int use_broken = 1;
 static char *port_str;
 static const char *user;
 static int do_version;
 static int do_help;
 static int do_errsock = 1;
+#ifdef KRB5
 static char *protocol_version_str;
 static int protocol_version = 2;
+#endif
 
 /*
  *
@@ -78,14 +84,14 @@ static int protocol_version = 2;
 static int input = 1;		/* Read from stdin */
 
 static int
-loop (int s, int errsock)
+rsh_loop (int s, int errsock)
 {
     fd_set real_readset;
     int count = 1;
 
 #ifdef KRB5
     if(auth_method == AUTH_KRB5 && protocol_version == 2)
-	init_ivecs(1);
+	init_ivecs(1, errsock != -1);
 #endif
 
     if (s >= FD_SETSIZE || (errsock != -1 && errsock >= FD_SETSIZE))
@@ -295,6 +301,7 @@ send_krb5_auth(int s,
     krb5_auth_context auth_context = NULL;
     const char *protocol_string = NULL;
     krb5_flags ap_opts;
+    char *str;
 
     status = krb5_sname_to_principal(context,
 				     hostname,
@@ -314,12 +321,17 @@ send_krb5_auth(int s,
 				&do_encrypt);
     }
 
-    cksum_data.length = asprintf ((char **)&cksum_data.data,
+    cksum_data.length = asprintf (&str,
 				  "%u:%s%s%s",
 				  ntohs(socket_get_port(thataddr)),
 				  do_encrypt ? "-x " : "",
 				  cmd,
 				  remote_user);
+    if (str == NULL) {
+	warnx ("%s: failed to allocate command", hostname);
+	return 1;
+    }
+    cksum_data.data = str;
 
     ap_opts = 0;
 
@@ -615,7 +627,7 @@ proto (int s, int errsock,
 	    warn("setsockopt stderr");
     }
     
-    return loop (s, errsock2);
+    return rsh_loop (s, errsock2);
 }
 
 /*
@@ -634,15 +646,15 @@ construct_command (char **res, int argc, char **argv)
     len = max (1, len);
     tmp = malloc (len);
     if (tmp == NULL)
-	errx (1, "malloc %u failed", len);
+	errx (1, "malloc %lu failed", (unsigned long)len);
 
     *tmp = '\0';
     for (i = 0; i < argc - 1; ++i) {
-	strcat (tmp, argv[i]);
-	strcat (tmp, " ");
+	strlcat (tmp, argv[i], len);
+	strlcat (tmp, " ", len);
     }
     if (argc > 0)
-	strcat (tmp, argv[argc-1]);
+	strlcat (tmp, argv[argc-1], len);
     *res = tmp;
     return len;
 }
@@ -751,7 +763,6 @@ doit (const char *hostname,
       const char *local_user,
       const char *cmd,
       size_t cmd_len,
-      int do_errsock,
       int (*auth_func)(int s,
 		       struct sockaddr *this, struct sockaddr *that,
 		       const char *hostname, const char *remote_user,
@@ -830,22 +841,22 @@ struct getargs args[] = {
 #endif
 #ifdef KRB5
     { "krb5",	'5', arg_flag,		&use_v5,	"Use Kerberos V5" },
-    { "forward", 'f', arg_flag,		&do_forward,	"Forward credentials (krb5)"},
-    { NULL, 'G', arg_negative_flag,&do_forward,	"Don't forward credentials" },
+    { "forward", 'f', arg_flag,		&do_forward,	"Forward credentials [krb5]"},
     { "forwardable", 'F', arg_flag,	&do_forwardable,
-      "Forward forwardable credentials" },
+      "Forward forwardable credentials [krb5]" },
+    { NULL, 'G', arg_negative_flag,&do_forward,	"Don't forward credentials" },
+    { "unique", 'u', arg_flag,	&do_unique_tkfile,
+      "Use unique remote credentials cache [krb5]" },
+    { "tkfile", 'U', arg_string,  &unique_tkfile,
+      "Specifies remote credentials cache [krb5]" },
+    { "protocol", 'P', arg_string,      &protocol_version_str, 
+      "Protocol version [krb5]", "protocol" },
 #endif
-#if defined(KRB4) || defined(KRB5)
     { "broken", 'K', arg_flag,		&use_only_broken, "Use only priv port" },
+#if defined(KRB4) || defined(KRB5)
     { "encrypt", 'x', arg_flag,		&do_encrypt,	"Encrypt connection" },
     { NULL, 	'z', arg_negative_flag,      &do_encrypt,
       "Don't encrypt connection", NULL },
-#endif
-#ifdef KRB5
-    { "unique", 'u', arg_flag,	&do_unique_tkfile,
-      "Use unique remote tkfile (krb5)" },
-    { "tkfile", 'U', arg_string,  &unique_tkfile,
-      "Use that remote tkfile (krb5)" },
 #endif
     { NULL,	'd', arg_flag,		&sock_debug, "Enable socket debugging" },
     { "input",	'n', arg_negative_flag,	&input,		"Close stdin" },
@@ -853,8 +864,8 @@ struct getargs args[] = {
       "port" },
     { "user",	'l', arg_string,	&user,		"Run as this user", "login" },
     { "stderr", 'e', arg_negative_flag, &do_errsock,	"Don't open stderr"},
-    { "protocol", 'P', arg_string,      &protocol_version_str, 
-      "Protocol version", "protocol" },
+#ifdef KRB5
+#endif
     { "version", 0,  arg_flag,		&do_version,	NULL },
     { "help",	 0,  arg_flag,		&do_help,	NULL }
 };
@@ -919,6 +930,7 @@ main(int argc, char **argv)
 	return 0;
     }
 
+#ifdef KRB5
     if(protocol_version_str != NULL) {
 	if(strcasecmp(protocol_version_str, "N") == 0)
 	    protocol_version = 2;
@@ -936,7 +948,6 @@ main(int argc, char **argv)
 	}
     }
 
-#ifdef KRB5
     status = krb5_init_context (&context);
     if (status) {
 	if(use_v5 == 1)
@@ -986,7 +997,7 @@ main(int argc, char **argv)
 	errx (1, "Only one of -u and -U allowed.");
 
     if (do_unique_tkfile)
-	strcpy(tkfile,"-u ");
+	strlcpy(tkfile,"-u ", sizeof(tkfile));
     else if (unique_tkfile != NULL) {
 	if (strchr(unique_tkfile,' ') != NULL) {
 	    warnx("Space is not allowed in tkfilename");
@@ -1050,7 +1061,6 @@ main(int argc, char **argv)
 	auth_method = AUTH_KRB5;
       again:
 	ret = doit (host, ai, user, local_user, cmd, cmd_len,
-		    do_errsock,
 		    send_krb5_auth);
 	if(ret != 0 && sendauth_version_error && 
 	   protocol_version == 2) {
@@ -1083,7 +1093,6 @@ main(int argc, char **argv)
 	    errx (1, "getaddrinfo: %s", gai_strerror(error));
 	auth_method = AUTH_KRB4;
 	ret = doit (host, ai, user, local_user, cmd, cmd_len,
-		    do_errsock,
 		    send_krb4_auth);
 	freeaddrinfo(ai);
     }

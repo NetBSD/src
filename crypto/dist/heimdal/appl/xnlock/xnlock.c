@@ -8,8 +8,8 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: xnlock.c,v 1.93.2.4 2004/09/08 09:16:00 joda Exp $"
-        "$NetBSD: xnlock.c,v 1.1.1.9 2004/09/14 07:46:24 lha Exp $");
+__RCSID("$Heimdal: xnlock.c 21720 2007-07-28 20:04:05Z lha $"
+        "$NetBSD: xnlock.c,v 1.2 2008/03/22 08:36:57 mlelstv Exp $");
 #endif
 
 #include <stdio.h>
@@ -20,10 +20,6 @@ __RCSID("$Heimdal: xnlock.c,v 1.93.2.4 2004/09/08 09:16:00 joda Exp $"
 #include <X11/Intrinsic.h>
 #include <X11/keysym.h>
 #include <X11/Shell.h>
-#include <X11/Xos.h>
-#ifdef strerror
-#undef strerror
-#endif
 #include <ctype.h>
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -206,7 +202,7 @@ get_words(void)
 }
 
 static void
-usage(void)
+usage(int exit_code)
 {
     fprintf(stderr, "usage: %s [options] [message]\n", getprogname());
     fprintf(stderr, "-fg color     foreground color\n");
@@ -220,7 +216,9 @@ usage(void)
     fprintf(stderr, "-f [file]     message is read from file or ~/.msgfile\n");
     fprintf(stderr, "-prog program  text is gotten from executing `program'\n");
     fprintf(stderr, "-nodestroytickets keep kerberos tickets\n");
-    exit(1);
+    fprintf(stderr, "--version\n");
+    fprintf(stderr, "--help\n");
+    exit(exit_code);
 }
 
 static void
@@ -237,7 +235,7 @@ init_words (int argc, char **argv)
 		i++;
 	    } else {
 		warnx ("-p requires an argument");
-		usage();
+		usage(1);
 	    }
 	} else if(strcmp(argv[i], "-f") == 0) {
 	    i++;
@@ -245,14 +243,17 @@ init_words (int argc, char **argv)
 		appres.file = argv[i];
 		i++;
 	    } else {
-		asprintf (&appres.file,
+		int ret;
+		ret = asprintf (&appres.file,
 			  "%s/.msgfile", getenv("HOME"));
-		if (appres.file == NULL)
+		if (ret == -1)
 		    errx (1, "cannot allocate memory for message");
 	    }
 	} else if(strcmp(argv[i], "--version") == 0) {
 	    print_version(NULL);
 	    exit(0);
+	} else if(strcmp(argv[i], "--help") == 0) {
+	    usage(0);
 	} else {
 	    int j;
 	    int len = 1;
@@ -298,8 +299,8 @@ zrefresh(void)
       return -1;
   case 0:
       /* Child */
-      execlp("zrefresh", "zrefresh", 0);
-      execl(BINDIR "/zrefresh", "zrefresh", 0);
+      execlp("zrefresh", "zrefresh", NULL);
+      execl(BINDIR "/zrefresh", "zrefresh", NULL);
       return -1;
   default:
       /* Parent */
@@ -580,7 +581,9 @@ verify_krb5(const char *password)
 {
     krb5_error_code ret;
     krb5_ccache id;
+#ifdef KRB4
     krb5_boolean get_v4_tgt;
+#endif
     
     krb5_cc_default(context, &id);
     ret = krb5_verify_user(context,
@@ -598,18 +601,22 @@ verify_krb5(const char *password)
 	    CREDENTIALS c;
 	    krb5_creds mcred, cred;
 
+	    krb5_cc_clear_mcred(&mcred);
+
 	    krb5_make_principal(context, &mcred.server,
 				client->realm,
 				"krbtgt",
 				client->realm,
 				NULL);
+	    mcred.client = client;
+
 	    ret = krb5_cc_retrieve_cred(context, id, 0, &mcred, &cred);
 	    if(ret == 0) {
 		ret = krb524_convert_creds_kdc_ccache(context, id, &cred, &c);
 		if(ret == 0) 
 		    tf_setup(&c, c.pname, c.pinst);
 		memset(&c, 0, sizeof(c));
-		krb5_free_creds_contents(context, &cred);
+		krb5_free_cred_contents(context, &cred);
 	    }
 	    krb5_free_principal(context, mcred.server);
 	}
@@ -1024,7 +1031,7 @@ main (int argc, char **argv)
 #endif
 
     override = XtVaAppInitialize(&app, "XNlock", options, XtNumber(options),
-				 (Cardinal*)&argc, argv, NULL, 
+				 &argc, argv, NULL, 
 				 XtNoverrideRedirect, True, 
 				 NULL);
     

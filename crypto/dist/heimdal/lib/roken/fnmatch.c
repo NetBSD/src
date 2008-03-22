@@ -1,4 +1,4 @@
-/*	$NetBSD: fnmatch.c,v 1.2 2003/08/07 09:15:31 agc Exp $	*/
+/*	$NetBSD: fnmatch.c,v 1.3 2008/03/22 08:37:21 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)fnmatch.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: fnmatch.c,v 1.2 2003/08/07 09:15:31 agc Exp $";
+static char rcsid[] = "$NetBSD: fnmatch.c,v 1.3 2008/03/22 08:37:21 mlelstv Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -52,8 +52,8 @@ static char rcsid[] = "$NetBSD: fnmatch.c,v 1.2 2003/08/07 09:15:31 agc Exp $";
 
 static const char *rangematch (const char *, int, int);
 
-int
-fnmatch(const char *pattern, const char *string, int flags)
+int ROKEN_LIB_FUNCTION
+rk_fnmatch(const char *pattern, const char *string, int flags)
 {
 	const char *stringstart;
 	char c, test;
@@ -99,7 +99,7 @@ fnmatch(const char *pattern, const char *string, int flags)
 
 			/* General case, use recursion. */
 			while ((test = *string) != EOS) {
-				if (!fnmatch(pattern, string, flags & ~FNM_PERIOD))
+				if (!rk_fnmatch(pattern, string, flags & ~FNM_PERIOD))
 					return (0);
 				if (test == '/' && flags & FNM_PATHNAME)
 					break;

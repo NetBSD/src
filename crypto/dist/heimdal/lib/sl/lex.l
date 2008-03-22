@@ -32,11 +32,13 @@
  * SUCH DAMAGE. 
  */
 
+#undef ECHO
+
 #include "make_cmds.h"
 #include "parse.h"
 
-__RCSID("$Heimdal: lex.l,v 1.6 2001/09/16 23:10:10 assar Exp $"
-        "$NetBSD: lex.l,v 1.4 2002/09/12 13:19:22 joda Exp $");
+__RCSID("$Heimdal: lex.l 10703 2001-09-16 23:10:10Z assar $"
+        "$NetBSD: lex.l,v 1.5 2008/03/22 08:37:23 mlelstv Exp $");
 
 static unsigned lineno = 1;
 static int getstring(void);

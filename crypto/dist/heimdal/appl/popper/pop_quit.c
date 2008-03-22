@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_quit.c,v 1.7 1996/11/19 22:48:30 assar Exp $"
-        "$NetBSD: pop_quit.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_quit.c 1057 1996-11-19 22:48:40Z assar $"
+        "$NetBSD: pop_quit.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /* 
  *  quit:   Terminate a POP session

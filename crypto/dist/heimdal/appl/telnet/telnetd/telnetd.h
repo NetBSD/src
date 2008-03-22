@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -118,6 +122,30 @@
 #include <pty.h>
 #endif
 
+#ifdef	STREAMSPTY
+#ifdef HAVE_SAC_H
+#include <sac.h>
+#endif
+#ifdef HAVE_SYS_STROPTS_H
+#include <sys/stropts.h>
+#endif
+
+# include <stropts.h>
+
+#ifdef  HAVE_SYS_UIO_H
+#include <sys/uio.h>
+#ifdef __hpux
+#undef SE
+#endif
+#endif
+#ifdef	HAVE_SYS_STREAM_H
+#include <sys/stream.h>
+#endif
+
+#endif /* STREAMSPTY */
+
+#undef NOERROR
+
 #include "defs.h"
 
 #ifndef _POSIX_VDISABLE
@@ -217,3 +245,7 @@ int output_data (const char *format, ...)
 __attribute__ ((format (printf, 1, 2)))
 #endif
 ;
+
+#ifdef ENCRYPTION
+extern int require_encryption;
+#endif

@@ -33,10 +33,10 @@
 
 #include <krb5_locl.h>
 
-__RCSID("$Heimdal: build_ap_req.c,v 1.18 2002/09/04 16:26:04 joda Exp $"
-        "$NetBSD: build_ap_req.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: build_ap_req.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: build_ap_req.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_build_ap_req (krb5_context context,
 		   krb5_enctype enctype,
 		   krb5_creds *cred,
@@ -69,7 +69,8 @@ krb5_build_ap_req (krb5_context context,
 
   ASN1_MALLOC_ENCODE(AP_REQ, retdata->data, retdata->length,
 		     &ap, &len, ret);
-
+  if(ret == 0 && retdata->length != len)
+      krb5_abortx(context, "internal error in ASN.1 encoder");
   free_AP_REQ(&ap);
   return ret;
 
