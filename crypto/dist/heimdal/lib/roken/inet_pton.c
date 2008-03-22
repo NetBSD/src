@@ -33,13 +33,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: inet_pton.c,v 1.3 2000/07/27 04:56:13 assar Exp $"
-        "$NetBSD: inet_pton.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: inet_pton.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: inet_pton.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
-#include <roken.h>
+#include "roken.h"
 
-int
+int ROKEN_LIB_FUNCTION
 inet_pton(int af, const char *src, void *dst)
 {
     if (af != AF_INET) {

@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_dele.c,v 1.10 1999/08/12 11:35:26 joda Exp $"
-        "$NetBSD: pop_dele.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_dele.c 6795 1999-08-12 11:37:55Z joda $"
+        "$NetBSD: pop_dele.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /* 
  *  dele:   Delete a message from the POP maildrop

@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: test_locl.h,v 1.9 2000/08/27 04:29:54 assar Exp $
-   $NetBSD: test_locl.h,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $ */
+/* $Heimdal: test_locl.h 12797 2003-09-09 03:38:51Z lha $
+   $NetBSD: test_locl.h,v 1.2 2008/03/22 08:36:57 mlelstv Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -80,6 +80,7 @@
 #define PORT "test"
 
 extern char *service;
+extern char *mech;
 extern krb5_keytab keytab;
 extern int fork_flag;
 int server_setup(krb5_context*, int, char**);

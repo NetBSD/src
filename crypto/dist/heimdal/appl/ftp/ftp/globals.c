@@ -1,6 +1,6 @@
 #include "ftp_locl.h"
-__RCSID("$Heimdal: globals.c,v 1.8 2000/11/15 22:56:08 assar Exp $"
-        "$NetBSD: globals.c,v 1.1.1.4 2002/09/12 12:41:35 joda Exp $");
+__RCSID("$Heimdal: globals.c 16160 2005-10-12 09:42:47Z joda $"
+        "$NetBSD: globals.c,v 1.2 2008/03/22 08:36:50 mlelstv Exp $");
 
 /*
  * Options and other state info.
@@ -16,6 +16,7 @@ int	lineedit;		/* use line-editing */
 int	debug;			/* debugging level */
 int	bell;			/* ring bell on cmd completion */
 int	doglob;			/* glob local file names */
+int	doencrypt;		/* try to use encryption */
 int	autologin;		/* establish user account on connection */
 int	proxy;			/* proxy server connection active */
 int	proxflag;		/* proxy connection exists */

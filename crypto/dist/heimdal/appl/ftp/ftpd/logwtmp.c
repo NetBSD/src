@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: logwtmp.c,v 1.15 2000/09/19 13:17:05 assar Exp $"
-        "$NetBSD: logwtmp.c,v 1.1.1.4 2002/09/12 12:41:35 joda Exp $");
+__RCSID("$Heimdal: logwtmp.c 9079 2000-09-19 13:17:20Z assar $"
+        "$NetBSD: logwtmp.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 #endif
 
 #include <stdio.h>

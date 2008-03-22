@@ -31,11 +31,19 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: parse_time.h,v 1.4 1999/12/02 16:58:51 joda Exp $
-   $NetBSD: parse_time.h,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $ */
+/* $Heimdal: parse_time.h 14773 2005-04-12 11:29:18Z lha $
+   $NetBSD: parse_time.h,v 1.2 2008/03/22 08:37:21 mlelstv Exp $ */
 
 #ifndef __PARSE_TIME_H__
 #define __PARSE_TIME_H__
+
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
 
 int
 parse_time (const char *s, const char *def_unit);

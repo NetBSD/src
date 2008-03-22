@@ -1,6 +1,6 @@
 dnl
-dnl $Heimdal: capabilities.m4,v 1.2.20.1 2004/04/01 07:27:32 joda Exp $
-dnl $NetBSD: capabilities.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
+dnl $Heimdal: capabilities.m4 13338 2004-02-12 14:21:14Z lha $
+dnl $NetBSD: capabilities.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 
 dnl

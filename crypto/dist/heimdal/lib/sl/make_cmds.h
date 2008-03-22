@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: make_cmds.h,v 1.3 2000/06/27 02:36:56 assar Exp $
-   $NetBSD: make_cmds.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
+/* $Heimdal: make_cmds.h 8467 2000-06-27 02:36:56Z assar $
+   $NetBSD: make_cmds.h,v 1.2 2008/03/22 08:37:23 mlelstv Exp $ */
 
 #ifndef __MAKE_CMDS_H__
 #define __MAKE_CMDS_H__

@@ -33,16 +33,16 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: write_message.c,v 1.8 2001/07/02 18:43:06 joda Exp $"
-        "$NetBSD: write_message.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: write_message.c 17442 2006-05-05 09:31:15Z lha $"
+        "$NetBSD: write_message.c,v 1.2 2008/03/22 08:37:15 mlelstv Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_write_message (krb5_context context,
 		    krb5_pointer p_fd,
 		    krb5_data *data)
 {
-    u_int32_t len;
-    u_int8_t buf[4];
+    uint32_t len;
+    uint8_t buf[4];
     int ret;
 
     len = data->length;
@@ -56,7 +56,7 @@ krb5_write_message (krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_write_priv_message(krb5_context context,
 			krb5_auth_context ac,
 			krb5_pointer p_fd,
@@ -73,7 +73,7 @@ krb5_write_priv_message(krb5_context context,
     return ret;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_write_safe_message(krb5_context context,
 			krb5_auth_context ac,
 			krb5_pointer p_fd,

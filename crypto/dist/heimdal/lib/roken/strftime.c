@@ -33,10 +33,13 @@
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
+#ifdef TEST_STRPFTIME
+#include "strpftime-test.h"
+#endif
 #include "roken.h"
 
-__RCSID("$Heimdal: strftime.c,v 1.13 2002/08/20 12:42:37 joda Exp $"
-        "$NetBSD: strftime.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: strftime.c 21896 2007-08-09 08:46:08Z lha $"
+        "$NetBSD: strftime.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 
 static const char *abb_weekdays[] = {
     "Sun",
@@ -168,7 +171,7 @@ week_number_mon4 (const struct tm *tm)
  *
  */
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 strftime (char *buf, size_t maxsize, const char *format,
 	  const struct tm *tm)
 {
@@ -291,7 +294,7 @@ strftime (char *buf, size_t maxsize, const char *format,
 		    
 	    case 's' :
 		ret = snprintf (buf, maxsize - n,
-				"%d", (int)mktime((struct tm *)tm));
+				"%d", (int)mktime(rk_UNCONST(tm)));
 		break;
 	    case 'S' :
 		ret = snprintf (buf, maxsize - n,

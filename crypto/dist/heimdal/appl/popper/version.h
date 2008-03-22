@@ -8,8 +8,8 @@
  *
  */
 
-/* $Heimdal: version.h,v 1.5 1997/08/08 22:50:13 assar Exp $
-   $NetBSD: version.h,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $ */
+/* $Heimdal: version.h 2827 1997-08-08 22:50:13Z assar $
+   $NetBSD: version.h,v 1.2 2008/03/22 08:36:55 mlelstv Exp $ */
 
 /*
  *  Current version of this POP implementation

@@ -34,8 +34,8 @@
 /* Tiny program to help debug popper */
 
 #include "popper.h"
-__RCSID("$Heimdal: pop_debug.c,v 1.23 2002/05/02 16:27:16 joda Exp $"
-        "$NetBSD: pop_debug.c,v 1.1.1.5 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_debug.c 10965 2002-05-02 16:27:16Z joda $"
+        "$NetBSD: pop_debug.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 static void
 loop(int s)

@@ -33,8 +33,8 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: bump_pw_expire.c,v 1.1 2000/07/24 03:47:54 assar Exp $"
-        "$NetBSD: bump_pw_expire.c,v 1.2 2002/09/12 13:19:10 joda Exp $");
+__RCSID("$Heimdal: bump_pw_expire.c 8797 2000-07-24 03:47:54Z assar $"
+        "$NetBSD: bump_pw_expire.c,v 1.3 2008/03/22 08:37:12 mlelstv Exp $");
 
 /*
  * extend password_expiration if it's defined

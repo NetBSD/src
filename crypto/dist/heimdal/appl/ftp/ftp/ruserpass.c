@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -28,8 +32,8 @@
  */
 
 #include "ftp_locl.h"
-__RCSID("$Heimdal: ruserpass.c,v 1.19 2000/01/08 07:45:11 assar Exp $"
-        "$NetBSD: ruserpass.c,v 1.2 2003/08/07 09:15:19 agc Exp $");
+__RCSID("$Heimdal: ruserpass.c 16161 2005-10-12 09:44:24Z joda $"
+        "$NetBSD: ruserpass.c,v 1.3 2008/03/22 08:36:50 mlelstv Exp $");
 
 static	int token (void);
 static	FILE *cfile;
@@ -66,39 +70,39 @@ static struct toktab {
  */
 
 static char *
-guess_domain (char *hostname, size_t sz)
+guess_domain (char *hostname_str, size_t sz)
 {
     struct addrinfo *ai, *a;
     struct addrinfo hints;
     int error;
     char *dot;
 
-    if (gethostname (hostname, sz) < 0) {
-	strlcpy (hostname, "", sz);
+    if (gethostname (hostname_str, sz) < 0) {
+	strlcpy (hostname_str, "", sz);
 	return "";
     }
-    dot = strchr (hostname, '.');
+    dot = strchr (hostname_str, '.');
     if (dot != NULL)
 	return dot + 1;
 
     memset (&hints, 0, sizeof(hints));
     hints.ai_flags = AI_CANONNAME;
 
-    error = getaddrinfo (hostname, NULL, &hints, &ai);
+    error = getaddrinfo (hostname_str, NULL, &hints, &ai);
     if (error)
-	return hostname;
+	return hostname_str;
 
     for (a = ai; a != NULL; a = a->ai_next)
 	if (a->ai_canonname != NULL) {
-	    strlcpy (hostname, ai->ai_canonname, sz);
+	    strlcpy (hostname_str, ai->ai_canonname, sz);
 	    break;
 	}
     freeaddrinfo (ai);
-    dot = strchr (hostname, '.');
+    dot = strchr (hostname_str, '.');
     if (dot != NULL)
 	return dot + 1;
     else
-	return hostname;
+	return hostname_str;
 }
 
 int
@@ -253,7 +257,7 @@ next:
 	    break;
 	case PROT:
 	    token();
-	    if(sec_request_prot(tokval) < 0)
+	    if(doencrypt == 0 && sec_request_prot(tokval) < 0)
 		warnx("Unknown protection level \"%s\"", tokval);
 	    break;
 	default:

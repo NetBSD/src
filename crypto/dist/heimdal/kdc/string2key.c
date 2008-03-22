@@ -33,10 +33,9 @@
 
 #include "headers.h"
 #include <getarg.h>
-#include <openssl/ui.h>
 
-__RCSID("$Heimdal: string2key.c,v 1.20 2003/03/25 12:28:52 joda Exp $"
-        "$NetBSD: string2key.c,v 1.3 2003/07/24 14:16:55 itojun Exp $");
+__RCSID("$Heimdal: string2key.c 19213 2006-12-04 23:36:36Z lha $"
+        "$NetBSD: string2key.c,v 1.4 2008/03/22 08:37:03 mlelstv Exp $");
 
 int version5;
 int version4;
@@ -72,21 +71,28 @@ usage(int status)
 static void
 tokey(krb5_context context, 
       krb5_enctype enctype, 
-      const char *password, 
+      const char *pw, 
       krb5_salt salt, 
       const char *label)
 {
+    krb5_error_code ret;
     int i;
     krb5_keyblock key;
     char *e;
-    krb5_string_to_key_salt(context, enctype, password, salt, &key);
-    krb5_enctype_to_string(context, enctype, &e);
+
+    ret = krb5_string_to_key_salt(context, enctype, pw, salt, &key);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_string_to_key_salt");
+    ret = krb5_enctype_to_string(context, enctype, &e);
+    if (ret)
+	krb5_err(context, 1, ret, "krb5_enctype_to_string");
     printf(label, e);
     printf(": ");
     for(i = 0; i < key.keyvalue.length; i++)
 	printf("%02x", ((unsigned char*)key.keyvalue.data)[i]);
     printf("\n");
     krb5_free_keyblock_contents(context, &key);
+    free(e);
 }
 
 int
@@ -95,12 +101,12 @@ main(int argc, char **argv)
     krb5_context context;
     krb5_principal princ;
     krb5_salt salt;
-    int optind;
+    int optidx;
     char buf[1024];
     krb5_enctype etype;
     krb5_error_code ret;
 
-    optind = krb5_program_setup(&context, argc, argv, args, num_args, NULL);
+    optidx = krb5_program_setup(&context, argc, argv, args, num_args, NULL);
 
     if(help)
 	usage(0);
@@ -110,8 +116,8 @@ main(int argc, char **argv)
 	return 0;
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc > 1)
 	usage(1);
@@ -124,6 +130,7 @@ main(int argc, char **argv)
 	krb5_keytype keytype;
 	int *etypes;
 	unsigned num;
+	char *str;
 	ret = krb5_string_to_keytype(context, keytype_str, &keytype);
 	if(ret)
 	    krb5_err(context, 1, ret, "%s", keytype_str);
@@ -133,7 +140,8 @@ main(int argc, char **argv)
 	if(num == 0)
 	    krb5_errx(context, 1, "there are no encryption types for that keytype");
 	etype = etypes[0];
-	krb5_enctype_to_string(context, etype, (char **)&keytype_str);
+	krb5_enctype_to_string(context, etype, &str);
+	keytype_str = str;
 	if(num > 1 && version5)
 	    krb5_warnx(context, "ambiguous keytype, using %s", keytype_str);
     }
@@ -154,16 +162,14 @@ main(int argc, char **argv)
 	printf("Kerberos v5 principal: ");
 	if(fgets(buf, sizeof(buf), stdin) == NULL)
 	    return 1;
-	if(buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	principal = estrdup(buf);
     }
     if(afs && cell == NULL){
 	printf("AFS cell: ");
 	if(fgets(buf, sizeof(buf), stdin) == NULL)
 	    return 1;
-	if(buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	cell = estrdup(buf);
     }
     if(argv[0])

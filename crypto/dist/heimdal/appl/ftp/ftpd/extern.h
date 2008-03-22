@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -103,8 +107,11 @@ void	klist(void);
 void	cond_kdestroy(void);
 void	kdestroy(void);
 void	krbtkfile(const char *tkfile);
-void	afslog(const char *cell);
+void	afslog(const char *, int);
 void	afsunlog(void);
+
+extern int do_destroy_tickets;
+extern char *k5ccname;
 
 int	find(char *);
 
@@ -126,6 +133,7 @@ extern	int logging;
 extern	int type;
 extern off_t file_size;
 extern off_t byte_count;
+extern	int ccc_passed;
 
 extern	int form;
 extern	int debug;

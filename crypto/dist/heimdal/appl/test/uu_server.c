@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000, 2007 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,8 +32,8 @@
  */
 
 #include "test_locl.h"
-__RCSID("$Heimdal: uu_server.c,v 1.7 2000/08/09 20:53:08 assar Exp $"
-        "$NetBSD: uu_server.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: uu_server.c 20880 2007-06-04 16:55:00Z lha $"
+        "$NetBSD: uu_server.c,v 1.2 2008/03/22 08:36:57 mlelstv Exp $");
 
 krb5_context context;
 
@@ -122,8 +122,15 @@ proto (int sock, const char *service)
     if (status)
 	krb5_err(context, 1, status, "krb5_sendauth");
     
-    fprintf (stderr, "User is `%.*s'\n", (int)client_name.length,
-	    (char *)client_name.data);
+    {
+	char *str;
+	krb5_unparse_name(context, in_creds.server, &str);
+	printf ("User is `%s'\n", str);
+	free(str);
+	krb5_unparse_name(context, in_creds.client, &str);
+	printf ("Server is `%s'\n", str);
+	free(str);
+    }
 
     krb5_data_zero (&data);
     krb5_data_zero (&packet);
@@ -141,7 +148,7 @@ proto (int sock, const char *service)
 	errx (1, "krb5_rd_safe: %s",
 	      krb5_get_err_text(context, status));
 
-    fprintf (stderr, "safe packet: %.*s\n", (int)data.length,
+    printf ("safe packet: %.*s\n", (int)data.length,
 	    (char *)data.data);
 
     status = krb5_read_message(context, &sock, &packet);
@@ -157,7 +164,7 @@ proto (int sock, const char *service)
 	errx (1, "krb5_rd_priv: %s",
 	      krb5_get_err_text(context, status));
 
-    fprintf (stderr, "priv packet: %.*s\n", (int)data.length,
+    printf ("priv packet: %.*s\n", (int)data.length,
 	    (char *)data.data);
 
     return 0;

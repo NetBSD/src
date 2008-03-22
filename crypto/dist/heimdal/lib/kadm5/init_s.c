@@ -33,8 +33,8 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: init_s.c,v 1.10 2000/12/31 08:01:16 assar Exp $"
-        "$NetBSD: init_s.c,v 1.1.1.4 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: init_s.c 9441 2000-12-31 08:01:16Z assar $"
+        "$NetBSD: init_s.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 
 static kadm5_ret_t 

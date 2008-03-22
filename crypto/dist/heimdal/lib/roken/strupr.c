@@ -33,18 +33,16 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#ifdef __RCSID
-__RCSID("$Heimdal: strupr.c,v 1.5 2003/04/14 11:46:41 lha Exp $"
-        "$NetBSD: strupr.c,v 1.4 2003/05/15 21:36:55 lha Exp $");
-#endif
+__RCSID("$Heimdal: strupr.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: strupr.c,v 1.5 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 #include <string.h>
 #include <ctype.h>
 
-#include <roken.h>
+#include "roken.h"
 
 #ifndef HAVE_STRUPR
-char *
+char * ROKEN_LIB_FUNCTION
 strupr(char *str)
 {
   char *s;

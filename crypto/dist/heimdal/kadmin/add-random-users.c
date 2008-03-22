@@ -33,8 +33,8 @@
 
 #include "kadmin_locl.h"
 
-__RCSID("$Heimdal: add-random-users.c,v 1.6 2001/09/20 09:17:33 assar Exp $"
-        "$NetBSD: add-random-users.c,v 1.5 2002/09/12 13:18:58 joda Exp $");
+__RCSID("$Heimdal: add-random-users.c 19213 2006-12-04 23:36:36Z lha $"
+        "$NetBSD: add-random-users.c,v 1.6 2008/03/22 08:37:02 mlelstv Exp $");
 
 #define WORDS_FILENAME "/usr/share/dict/words"
 
@@ -58,8 +58,7 @@ read_words (const char *filename, char ***ret_w)
     while (fgets (buf, sizeof(buf), f) != NULL) {
 	size_t len;
 
-	if (buf[strlen (buf) - 1] == '\n')
-	    buf[strlen (buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	if (n >= alloc) {
 	    alloc = max(alloc + 16, alloc * 2);
 	    w = erealloc (w, alloc * sizeof(char **));
@@ -73,6 +72,8 @@ read_words (const char *filename, char ***ret_w)
 	w[n++] = wptr;
 	wptr += len + 1;
     }
+    if (n == 0)
+	errx(1, "%s is an empty file, no words to try", filename);
     *ret_w = w;
     return n;
 }
@@ -157,12 +158,12 @@ usage (int ret)
 int
 main(int argc, char **argv)
 {
-    int optind = 0;
+    int optidx = 0;
     int n = NUSERS;
     const char *filename = WORDS_FILENAME;
 
     setprogname(argv[0]);
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
     if (help_flag)
 	usage (0);
@@ -171,8 +172,8 @@ main(int argc, char **argv)
 	return 0;
     }
     srand (0);
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc > 0) {
 	if (argc > 1)

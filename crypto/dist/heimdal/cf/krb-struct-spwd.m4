@@ -1,19 +1,18 @@
-dnl $Heimdal: krb-struct-spwd.m4,v 1.3.32.1 2004/04/01 07:27:34 joda Exp $
-dnl $NetBSD: krb-struct-spwd.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
+dnl $Heimdal: krb-struct-spwd.m4 14166 2004-08-26 12:35:42Z joda $
+dnl $NetBSD: krb-struct-spwd.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 dnl Test for `struct spwd'
 
 AC_DEFUN([AC_KRB_STRUCT_SPWD], [
 AC_MSG_CHECKING(for struct spwd)
 AC_CACHE_VAL(ac_cv_struct_spwd, [
-AC_TRY_COMPILE(
-[#include <pwd.h>
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+#include <pwd.h>
 #ifdef HAVE_SHADOW_H
 #include <shadow.h>
-#endif],
-[struct spwd foo;],
-ac_cv_struct_spwd=yes,
-ac_cv_struct_spwd=no)
+#endif]],[[struct spwd foo;]])],
+[ac_cv_struct_spwd=yes],
+[ac_cv_struct_spwd=no])
 ])
 AC_MSG_RESULT($ac_cv_struct_spwd)
 

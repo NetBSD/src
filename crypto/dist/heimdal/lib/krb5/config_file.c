@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,19 +32,51 @@
  */
 
 #include "krb5_locl.h"
-__RCSID("$Heimdal: config_file.c,v 1.46.4.2 2003/10/13 13:46:10 lha Exp $"
-        "$NetBSD: config_file.c,v 1.1.1.6 2004/04/02 14:47:48 lha Exp $");
+__RCSID("$Heimdal: config_file.c 19213 2006-12-04 23:36:36Z lha $"
+        "$NetBSD: config_file.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
 #ifndef HAVE_NETINFO
+
+/* Gaah! I want a portable funopen */
+struct fileptr {
+    const char *s;
+    FILE *f;
+};
+
+static char *
+config_fgets(char *str, size_t len, struct fileptr *ptr)
+{
+    /* XXX this is not correct, in that they don't do the same if the
+       line is longer than len */
+    if(ptr->f != NULL)
+	return fgets(str, len, ptr->f);
+    else {
+	/* this is almost strsep_copy */
+	const char *p;
+	ssize_t l;
+	if(*ptr->s == '\0')
+	    return NULL;
+	p = ptr->s + strcspn(ptr->s, "\n");
+	if(*p == '\n')
+	    p++;
+	l = min(len, p - ptr->s);
+	if(len > 0) {
+	    memcpy(str, ptr->s, l);
+	    str[l] = '\0';
+	}
+	ptr->s = p;
+	return str;
+    }
+}
 
 static krb5_error_code parse_section(char *p, krb5_config_section **s,
 				     krb5_config_section **res,
 				     const char **error_message);
-static krb5_error_code parse_binding(FILE *f, unsigned *lineno, char *p,
+static krb5_error_code parse_binding(struct fileptr *f, unsigned *lineno, char *p,
 				     krb5_config_binding **b,
 				     krb5_config_binding **parent,
 				     const char **error_message);
-static krb5_error_code parse_list(FILE *f, unsigned *lineno,
+static krb5_error_code parse_list(struct fileptr *f, unsigned *lineno,
 				  krb5_config_binding **parent,
 				  const char **error_message);
 
@@ -115,7 +147,7 @@ parse_section(char *p, krb5_config_section **s, krb5_config_section **parent,
  */
 
 static krb5_error_code
-parse_list(FILE *f, unsigned *lineno, krb5_config_binding **parent,
+parse_list(struct fileptr *f, unsigned *lineno, krb5_config_binding **parent,
 	   const char **error_message)
 {
     char buf[BUFSIZ];
@@ -123,12 +155,11 @@ parse_list(FILE *f, unsigned *lineno, krb5_config_binding **parent,
     krb5_config_binding *b = NULL;
     unsigned beg_lineno = *lineno;
 
-    while(fgets(buf, sizeof(buf), f) != NULL) {
+    while(config_fgets(buf, sizeof(buf), f) != NULL) {
 	char *p;
 
 	++*lineno;
-	if (buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	p = buf;
 	while(isspace((unsigned char)*p))
 	    ++p;
@@ -154,7 +185,7 @@ parse_list(FILE *f, unsigned *lineno, krb5_config_binding **parent,
  */
 
 static krb5_error_code
-parse_binding(FILE *f, unsigned *lineno, char *p,
+parse_binding(struct fileptr *f, unsigned *lineno, char *p,
 	      krb5_config_binding **b, krb5_config_binding **parent,
 	      const char **error_message)
 {
@@ -210,31 +241,21 @@ parse_binding(FILE *f, unsigned *lineno, char *p,
  */
 
 static krb5_error_code
-krb5_config_parse_file_debug (const char *fname,
-			      krb5_config_section **res,
-			      unsigned *lineno,
-			      const char **error_message)
+krb5_config_parse_debug (struct fileptr *f,
+			 krb5_config_section **res,
+			 unsigned *lineno,
+			 const char **error_message)
 {
-    FILE *f;
-    krb5_config_section *s;
-    krb5_config_binding *b;
+    krb5_config_section *s = NULL;
+    krb5_config_binding *b = NULL;
     char buf[BUFSIZ];
-    krb5_error_code ret = 0;
+    krb5_error_code ret;
 
-    s = NULL;
-    b = NULL;
-    *lineno = 0;
-    f = fopen (fname, "r");
-    if (f == NULL) {
-	*error_message = "cannot open file";
-	return ENOENT;
-    }
-    while (fgets(buf, sizeof(buf), f) != NULL) {
+    while (config_fgets(buf, sizeof(buf), f) != NULL) {
 	char *p;
 
 	++*lineno;
-	if(buf[strlen(buf) - 1] == '\n')
-	    buf[strlen(buf) - 1] = '\0';
+	buf[strcspn(buf, "\r\n")] = '\0';
 	p = buf;
 	while(isspace((unsigned char)*p))
 	    ++p;
@@ -242,40 +263,64 @@ krb5_config_parse_file_debug (const char *fname,
 	    continue;
 	if (*p == '[') {
 	    ret = parse_section(p, &s, res, error_message);
-	    if (ret) {
-		goto out;
-	    }
+	    if (ret) 
+		return ret;
 	    b = NULL;
 	} else if (*p == '}') {
 	    *error_message = "unmatched }";
-	    ret = EINVAL;	/* XXX */
-	    goto out;
+	    return EINVAL;	/* XXX */
 	} else if(*p != '\0') {
 	    if (s == NULL) {
 		*error_message = "binding before section";
-		ret = EINVAL;
-		goto out;
+		return EINVAL;
 	    }
 	    ret = parse_binding(f, lineno, p, &b, &s->u.list, error_message);
 	    if (ret)
-		goto out;
+		return ret;
 	}
     }
-out:
-    fclose (f);
-    return ret;
+    return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
+krb5_config_parse_string_multi(krb5_context context,
+			       const char *string,
+			       krb5_config_section **res)
+{
+    const char *str;
+    unsigned lineno = 0;
+    krb5_error_code ret;
+    struct fileptr f;
+    f.f = NULL;
+    f.s = string;
+
+    ret = krb5_config_parse_debug (&f, res, &lineno, &str);
+    if (ret) {
+	krb5_set_error_string (context, "%s:%u: %s", "<constant>", lineno, str);
+	return ret;
+    }
+    return 0;
+}
+
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_parse_file_multi (krb5_context context,
 			      const char *fname,
 			      krb5_config_section **res)
 {
     const char *str;
-    unsigned lineno;
+    unsigned lineno = 0;
     krb5_error_code ret;
+    struct fileptr f;
+    f.f = fopen(fname, "r");
+    f.s = NULL;
+    if(f.f == NULL) {
+	ret = errno;
+	krb5_set_error_string (context, "open %s: %s", fname, strerror(ret));
+	return ret;
+    }
 
-    ret = krb5_config_parse_file_debug (fname, res, &lineno, &str);
+    ret = krb5_config_parse_debug (&f, res, &lineno, &str);
+    fclose(f.f);
     if (ret) {
 	krb5_set_error_string (context, "%s:%u: %s", fname, lineno, str);
 	return ret;
@@ -283,7 +328,7 @@ krb5_config_parse_file_multi (krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_parse_file (krb5_context context,
 			const char *fname,
 			krb5_config_section **res)
@@ -314,7 +359,7 @@ free_binding (krb5_context context, krb5_config_binding *b)
     }
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_file_free (krb5_context context, krb5_config_section *s)
 {
     free_binding (context, s);
@@ -444,7 +489,7 @@ krb5_config_vget_list (krb5_context context,
     return krb5_config_vget (context, c, krb5_config_list, args);
 }
 
-const char *
+const char* KRB5_LIB_FUNCTION
 krb5_config_get_string (krb5_context context,
 			const krb5_config_section *c,
 			...)
@@ -458,7 +503,7 @@ krb5_config_get_string (krb5_context context,
     return ret;
 }
 
-const char *
+const char* KRB5_LIB_FUNCTION
 krb5_config_vget_string (krb5_context context,
 			 const krb5_config_section *c,
 			 va_list args)
@@ -466,7 +511,7 @@ krb5_config_vget_string (krb5_context context,
     return krb5_config_vget (context, c, krb5_config_string, args);
 }
 
-const char *
+const char* KRB5_LIB_FUNCTION
 krb5_config_vget_string_default (krb5_context context,
 				 const krb5_config_section *c,
 				 const char *def_value,
@@ -480,7 +525,7 @@ krb5_config_vget_string_default (krb5_context context,
     return ret;
 }
 
-const char *
+const char* KRB5_LIB_FUNCTION
 krb5_config_get_string_default (krb5_context context,
 				const krb5_config_section *c,
 				const char *def_value,
@@ -495,7 +540,7 @@ krb5_config_get_string_default (krb5_context context,
     return ret;
 }
 
-char **
+char ** KRB5_LIB_FUNCTION
 krb5_config_vget_strings(krb5_context context,
 			 const krb5_config_section *c,
 			 va_list args)
@@ -514,10 +559,10 @@ krb5_config_vget_strings(krb5_context context,
 	    goto cleanup;
 	s = strtok_r(tmp, " \t", &pos);
 	while(s){
-	    char **tmp = realloc(strings, (nstr + 1) * sizeof(*strings));
-	    if(tmp == NULL)
+	    char **tmp2 = realloc(strings, (nstr + 1) * sizeof(*strings));
+	    if(tmp2 == NULL)
 		goto cleanup;
-	    strings = tmp;
+	    strings = tmp2;
 	    strings[nstr] = strdup(s);
 	    nstr++;
 	    if(strings[nstr-1] == NULL)
@@ -528,7 +573,7 @@ krb5_config_vget_strings(krb5_context context,
     }
     if(nstr){
 	char **tmp = realloc(strings, (nstr + 1) * sizeof(*strings));
-	if(strings == NULL)
+	if(tmp == NULL)
 	    goto cleanup;
 	strings = tmp;
 	strings[nstr] = NULL;
@@ -555,7 +600,7 @@ krb5_config_get_strings(krb5_context context,
     return ret;
 }
 
-void
+void KRB5_LIB_FUNCTION
 krb5_config_free_strings(char **strings)
 {
     char **s = strings;
@@ -566,7 +611,7 @@ krb5_config_free_strings(char **strings)
     free(strings);
 }
 
-krb5_boolean
+krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_vget_bool_default (krb5_context context,
 			       const krb5_config_section *c,
 			       krb5_boolean def_value,
@@ -582,7 +627,7 @@ krb5_config_vget_bool_default (krb5_context context,
     return FALSE;
 }
 
-krb5_boolean
+krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_vget_bool  (krb5_context context,
 			const krb5_config_section *c,
 			va_list args)
@@ -590,7 +635,7 @@ krb5_config_vget_bool  (krb5_context context,
     return krb5_config_vget_bool_default (context, c, FALSE, args);
 }
 
-krb5_boolean
+krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_get_bool_default (krb5_context context,
 			      const krb5_config_section *c,
 			      krb5_boolean def_value,
@@ -604,7 +649,7 @@ krb5_config_get_bool_default (krb5_context context,
     return ret;
 }
 
-krb5_boolean
+krb5_boolean KRB5_LIB_FUNCTION
 krb5_config_get_bool (krb5_context context,
 		      const krb5_config_section *c,
 		      ...)
@@ -617,20 +662,24 @@ krb5_config_get_bool (krb5_context context,
     return ret;
 }
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_vget_time_default (krb5_context context,
 			       const krb5_config_section *c,
 			       int def_value,
 			       va_list args)
 {
     const char *str;
+    krb5_deltat t;
+
     str = krb5_config_vget_string (context, c, args);
     if(str == NULL)
 	return def_value;
-    return parse_time (str, NULL);
+    if (krb5_string_to_deltat(str, &t))
+	return def_value;
+    return t;
 }
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_vget_time  (krb5_context context,
 			const krb5_config_section *c,
 			va_list args)
@@ -638,7 +687,7 @@ krb5_config_vget_time  (krb5_context context,
     return krb5_config_vget_time_default (context, c, -1, args);
 }
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_get_time_default (krb5_context context,
 			      const krb5_config_section *c,
 			      int def_value,
@@ -652,7 +701,7 @@ krb5_config_get_time_default (krb5_context context,
     return ret;
 }
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_get_time (krb5_context context,
 		      const krb5_config_section *c,
 		      ...)
@@ -666,7 +715,7 @@ krb5_config_get_time (krb5_context context,
 }
 
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_vget_int_default (krb5_context context,
 			      const krb5_config_section *c,
 			      int def_value,
@@ -687,7 +736,7 @@ krb5_config_vget_int_default (krb5_context context,
     }
 }
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_vget_int  (krb5_context context,
 		       const krb5_config_section *c,
 		       va_list args)
@@ -695,7 +744,7 @@ krb5_config_vget_int  (krb5_context context,
     return krb5_config_vget_int_default (context, c, -1, args);
 }
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_get_int_default (krb5_context context,
 			     const krb5_config_section *c,
 			     int def_value,
@@ -709,7 +758,7 @@ krb5_config_get_int_default (krb5_context context,
     return ret;
 }
 
-int
+int KRB5_LIB_FUNCTION
 krb5_config_get_int (krb5_context context,
 		     const krb5_config_section *c,
 		     ...)

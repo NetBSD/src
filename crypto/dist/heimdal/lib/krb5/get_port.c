@@ -33,10 +33,10 @@
 
 #include <krb5_locl.h>
 
-__RCSID("$Heimdal: get_port.c,v 1.8 2001/01/27 19:24:34 joda Exp $"
-        "$NetBSD: get_port.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: get_port.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: get_port.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
-int
+int KRB5_LIB_FUNCTION
 krb5_getportbyname (krb5_context context,
 		    const char *service,
 		    const char *proto,

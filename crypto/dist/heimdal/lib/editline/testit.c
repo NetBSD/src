@@ -1,4 +1,4 @@
-/*  $Revision: 1.1.1.3 $
+/*  $Revision: 1.2 $
 **
 **  A "micro-shell" to test editline library.
 **  If given any arguments, commands aren't executed.
@@ -13,7 +13,7 @@
 #endif
 #include <getarg.h>
 
-#include "editline.h"
+#include "edit_locl.h"
 
 static int n_flag	= 0;
 static int version_flag = 0;
@@ -42,11 +42,11 @@ int
 main(int argc, char **argv)
 {
     char	*p;
-    int optind = 0;
+    int optidx = 0;
 
     setprogname (argv[0]);
 
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
     
     if (help_flag)
@@ -57,8 +57,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     while ((p = readline("testit> ")) != NULL) {
 	(void)printf("\t\t\t|%s|\n", p);

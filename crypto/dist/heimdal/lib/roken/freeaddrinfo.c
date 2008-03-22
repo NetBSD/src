@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: freeaddrinfo.c,v 1.4 2001/05/11 09:10:32 joda Exp $"
-        "$NetBSD: freeaddrinfo.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: freeaddrinfo.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: freeaddrinfo.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include "roken.h"
@@ -43,7 +43,7 @@ __RCSID("$Heimdal: freeaddrinfo.c,v 1.4 2001/05/11 09:10:32 joda Exp $"
  * free the list of `struct addrinfo' starting at `ai'
  */
 
-void
+void ROKEN_LIB_FUNCTION
 freeaddrinfo(struct addrinfo *ai)
 {
     struct addrinfo *tofree;

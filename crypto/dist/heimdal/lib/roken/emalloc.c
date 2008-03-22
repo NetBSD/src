@@ -33,22 +33,20 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#ifdef __RCSID
-__RCSID("$Heimdal: emalloc.c,v 1.5 2001/06/17 12:07:48 assar Exp $"
-        "$NetBSD: emalloc.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
-#endif
+__RCSID("$Heimdal: emalloc.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: emalloc.c,v 1.3 2008/03/22 08:37:20 mlelstv Exp $");
 #endif
 
 #include <stdlib.h>
 #include <err.h>
 
-#include <roken.h>
+#include "roken.h"
 
 /*
  * Like malloc but never fails.
  */
 
-void *
+void * ROKEN_LIB_FUNCTION
 emalloc (size_t sz)
 {
     void *tmp = malloc (sz);

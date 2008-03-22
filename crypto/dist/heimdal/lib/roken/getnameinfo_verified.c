@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: getnameinfo_verified.c,v 1.6 2002/09/05 01:36:27 assar Exp $"
-        "$NetBSD: getnameinfo_verified.c,v 1.1.1.4 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: getnameinfo_verified.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: getnameinfo_verified.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include "roken.h"
@@ -47,7 +47,7 @@ __RCSID("$Heimdal: getnameinfo_verified.c,v 1.6 2002/09/05 01:36:27 assar Exp $"
  * NI_NAMEREQD flag is set or return the numeric address as a string.
  */
 
-int
+int ROKEN_LIB_FUNCTION
 getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
 		     char *host, size_t hostlen,
 		     char *serv, size_t servlen,

@@ -1,12 +1,16 @@
-# $Heimdal: Makefile.am,v 1.2 2001/01/28 22:50:35 assar Exp $
-# $NetBSD: Makefile.am,v 1.2 2002/09/12 13:18:54 joda Exp $
+# $Heimdal: Makefile.am 22281 2007-12-13 20:35:52Z lha $
+# $NetBSD: Makefile.am,v 1.3 2008/03/22 08:36:55 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4)
+AM_CPPFLAGS += $(INCLUDE_krb4)
 
 bin_PROGRAMS = rcp
 
-rcp_SOURCES  = rcp.c util.c
+rcp_SOURCES  = rcp.c util.c rcp_locl.h extern.h
+
+man_MANS = rcp.1
+
+EXTRA_DIST = $(man_MANS)
 
 LDADD = $(LIB_roken)

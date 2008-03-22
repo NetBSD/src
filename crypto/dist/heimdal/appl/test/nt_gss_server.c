@@ -36,8 +36,8 @@
 #include <krb5.h>
 #include "nt_gss_common.h"
 
-__RCSID("$Heimdal: nt_gss_server.c,v 1.5 2000/08/09 20:53:07 assar Exp $"
-        "$NetBSD: nt_gss_server.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: nt_gss_server.c 12323 2003-05-21 15:15:34Z lha $"
+        "$NetBSD: nt_gss_server.c,v 1.2 2008/03/22 08:36:57 mlelstv Exp $");
 
 /*
  * This program tries to act as a server for the sample in `Sample
@@ -117,13 +117,18 @@ proto (int sock, const char *service)
 
     if (auth_file != NULL) {
 	int fd = open (auth_file, O_WRONLY | O_CREAT, 0666);
-	krb5_ticket *ticket = context_hdl->ticket;
-	krb5_data *data = &ticket->ticket.authorization_data->val[0].ad_data;
+#if 0
+	krb5_ticket *ticket;
+	krb5_data *data;
+
+	ticket = context_hdl->ticket;
+	data = &ticket->ticket.authorization_data->val[0].ad_data;
 
 	if(fd < 0)
 	    err (1, "open %s", auth_file);
 	if (write (fd, data->data, data->length) != data->length)
 	    errx (1, "write to %s failed", auth_file);
+#endif
 	if (close (fd))
 	    err (1, "close %s", auth_file);
     }

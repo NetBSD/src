@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2006 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,32 +33,12 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: sl.c,v 1.29 2001/02/20 01:44:55 assar Exp $"
-        "$NetBSD: sl.c,v 1.1.1.5 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: sl.c 21160 2007-06-18 22:58:21Z lha $"
+        "$NetBSD: sl.c,v 1.2 2008/03/22 08:37:23 mlelstv Exp $");
 #endif
 
 #include "sl_locl.h"
 #include <setjmp.h>
-
-static size_t
-print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
-    __attribute__ ((unused));
-
-static size_t
-print_sl (FILE *stream, int mdoc, int longp, SL_cmd *c)
-{
-    if(mdoc){
-	if(longp)
-	    fprintf(stream, "= Ns");
-	fprintf(stream, " Ar ");
-    }else
-	if (longp)
-	    putc ('=', stream);
-	else
-	    putc (' ', stream);
-
-    return 1;
-}
 
 static void
 mandoc_template(SL_cmd *cmds,
@@ -95,7 +75,6 @@ mandoc_template(SL_cmd *cmds,
 /*	if (c->func == NULL)
 	    continue; */
 	printf(".Op Fl %s", c->name);
-/*	print_sl(stdout, 1, 0, c);*/
 	printf("\n");
 	
     }
@@ -130,7 +109,7 @@ mandoc_template(SL_cmd *cmds,
     printf(".\\\".Sh BUGS\n");
 }
 
-static SL_cmd *
+SL_cmd *
 sl_match (SL_cmd *cmds, char *cmd, int exactp)
 {
     SL_cmd *c, *current = NULL, *partial_cmd = NULL;
@@ -213,8 +192,7 @@ readline(char *prompt)
     fflush (stdout);
     if(fgets(buf, sizeof(buf), stdin) == NULL)
 	return NULL;
-    if (buf[strlen(buf) - 1] == '\n')
-	buf[strlen(buf) - 1] = '\0';
+    buf[strcspn(buf, "\r\n")] = '\0';
     return strdup(buf);
 }
 
@@ -243,10 +221,10 @@ struct sl_data {
 int
 sl_make_argv(char *line, int *ret_argc, char ***ret_argv)
 {
-    char *foo = NULL;
-    char *p;
+    char *p, *begining;
     int argc, nargv;
     char **argv;
+    int quote = 0;
     
     nargv = 10;
     argv = malloc(nargv * sizeof(*argv));
@@ -254,9 +232,32 @@ sl_make_argv(char *line, int *ret_argc, char ***ret_argv)
 	return ENOMEM;
     argc = 0;
 
-    for(p = strtok_r (line, " \t", &foo);
-	p;
-	p = strtok_r (NULL, " \t", &foo)) {
+    p = line;
+
+    while(isspace((unsigned char)*p))
+	p++;
+    begining = p;
+
+    while (1) {
+	if (*p == '\0') {
+	    ;
+	} else if (*p == '"') {
+	    quote = !quote;
+	    memmove(&p[0], &p[1], strlen(&p[1]) + 1);
+	    continue;
+	} else if (*p == '\\') {
+	    if (p[1] == '\0')
+		goto failed;
+	    memmove(&p[0], &p[1], strlen(&p[1]) + 1);
+	    p += 2;
+	    continue;
+	} else if (quote || !isspace((unsigned char)*p)) {
+	    p++;
+	    continue;
+	} else
+	    *p++ = '\0';
+	if (quote)
+	    goto failed;
 	if(argc == nargv - 1) {
 	    char **tmp;
 	    nargv *= 2;
@@ -267,12 +268,20 @@ sl_make_argv(char *line, int *ret_argc, char ***ret_argv)
 	    }
 	    argv = tmp;
 	}
-	argv[argc++] = p;
+	argv[argc++] = begining;
+	while(isspace((unsigned char)*p))
+	    p++;
+	if (*p == '\0')
+	    break;
+	begining = p;
     }
     argv[argc] = NULL;
     *ret_argc = argc;
     *ret_argv = argv;
     return 0;
+failed:
+    free(argv);
+    return ERANGE;
 }
 
 static jmp_buf sl_jmp;
@@ -289,12 +298,16 @@ static char *sl_readline(const char *prompt)
     old = signal(SIGINT, sl_sigint);
     if(setjmp(sl_jmp))
 	printf("\n");
-    s = readline((char*)prompt);
+    s = readline(rk_UNCONST(prompt));
     signal(SIGINT, old);
     return s;
 }
 
-/* return values: 0 on success, -1 on fatal error, or return value of command */
+/* return values: 
+ * 0 on success,
+ * -1 on fatal error,
+ * -2 if EOF, or
+ * return value of command */
 int
 sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
 {
@@ -306,7 +319,7 @@ sl_command_loop(SL_cmd *cmds, const char *prompt, void **data)
     ret = 0;
     buf = sl_readline(prompt);
     if(buf == NULL)
-	return 1;
+	return -2;
 
     if(*buf)
 	add_history(buf);
@@ -333,7 +346,7 @@ sl_loop(SL_cmd *cmds, const char *prompt)
 {
     void *data = NULL;
     int ret;
-    while((ret = sl_command_loop(cmds, prompt, &data)) == 0)
+    while((ret = sl_command_loop(cmds, prompt, &data)) >= 0)
 	;
     return ret;
 }
@@ -344,4 +357,41 @@ sl_apropos (SL_cmd *cmd, const char *topic)
     for (; cmd->name != NULL; ++cmd)
         if (cmd->usage != NULL && strstr(cmd->usage, topic) != NULL)
 	    printf ("%-20s%s\n", cmd->name, cmd->usage);
+}
+
+/*
+ * Help to be used with slc.
+ */
+
+void
+sl_slc_help (SL_cmd *cmds, int argc, char **argv)
+{
+    if(argc == 0) {
+	sl_help(cmds, 1, argv - 1 /* XXX */);
+    } else {
+	SL_cmd *c = sl_match (cmds, argv[0], 0);
+ 	if(c == NULL) {
+	    fprintf (stderr, "No such command: %s. "
+		     "Try \"help\" for a list of commands\n",
+		     argv[0]);
+	} else {
+	    if(c->func) {
+		char *fake[] = { NULL, "--help", NULL };
+		fake[0] = argv[0];
+		(*c->func)(2, fake);
+		fprintf(stderr, "\n");
+	    }
+	    if(c->help && *c->help)
+		fprintf (stderr, "%s\n", c->help);
+	    if((++c)->name && c->func == NULL) {
+		int f = 0;
+		fprintf (stderr, "Synonyms:");
+		while (c->name && c->func == NULL) {
+		    fprintf (stderr, "%s%s", f ? ", " : " ", (c++)->name);
+		    f = 1;
+		}
+		fprintf (stderr, "\n");
+	    }
+	}
+    }
 }

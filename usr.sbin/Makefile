@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.230 2008/01/15 03:37:15 rmind Exp $
+#	$NetBSD: Makefile,v 1.231 2008/03/22 08:37:27 mlelstv Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -30,7 +30,7 @@ SUBDIR+= iscsi
 .endif
 
 .if (${MKKERBEROS} != "no")
-SUBDIR+= hprop kadmin kdc kstash ktutil
+SUBDIR+= hprop kadmin kdc kstash ktutil iprop-log kdigest kimpersonate kcm
 .endif
 
 .if (${MKYP} != "no")

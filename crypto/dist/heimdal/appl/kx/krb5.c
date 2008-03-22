@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2004 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: krb5.c,v 1.10.6.2 2004/03/16 11:33:48 lha Exp $"
-        "$NetBSD: krb5.c,v 1.1.1.5 2004/04/02 14:47:32 lha Exp $");
+__RCSID("$Heimdal: krb5.c 17450 2006-05-05 11:11:43Z lha $"
+        "$NetBSD: krb5.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 #ifdef KRB5
 
@@ -189,7 +189,7 @@ krb5_write(kx_context *kc,
 
     ret = krb5_encrypt (CONTEXT(kc), K5DATA(kc)->crypto, 
 			KRB5_KU_OTHER_ENCRYPTED,
-			(void *)buf, len, &data);
+			buf, len, &data);
     if (ret){
 	krb5_warn (CONTEXT(kc), ret, "krb5_write");
 	return -1;
@@ -332,7 +332,8 @@ krb5_make_context (kx_context *kc)
     kc->data		= malloc(sizeof(krb5_kx_context));
 
     if (kc->data == NULL) {
-	syslog (LOG_ERR, "failed to malloc %u bytes", sizeof(krb5_kx_context));
+	syslog (LOG_ERR, "failed to malloc %lu bytes", 
+		(unsigned long)sizeof(krb5_kx_context));
 	exit(1);
     }
     memset (kc->data, 0, sizeof(krb5_kx_context));
@@ -352,7 +353,7 @@ krb5_make_context (kx_context *kc)
 int
 recv_v5_auth (kx_context *kc, int sock, u_char *buf)
 {
-    u_int32_t len;
+    uint32_t len;
     krb5_error_code ret;
     krb5_principal server;
     krb5_auth_context auth_context = NULL;

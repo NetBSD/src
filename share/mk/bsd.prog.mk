@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.225 2007/12/26 22:52:10 jmmv Exp $
+#	$NetBSD: bsd.prog.mk,v 1.226 2008/03/22 08:37:27 mlelstv Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -91,7 +91,7 @@ LIBCRT0=	${DESTDIR}/usr/lib/crt0.o
 	archive asn1 bluetooth bsdmalloc bz2 c c_pic cdk com_err compat \
 	crypt crypto crypto_idea crypto_mdc2 crypto_rc5 \
 	curses dbm des edit event \
-	form fl g2c gcc gnumalloc gssapi hdb intl ipsec \
+	form fl g2c gcc gnumalloc gssapi hdb heimntlm hx509 intl ipsec \
 	kadm5clnt kadm5srv kafs krb5 kvm l \
 	m magic menu objc ossaudio pam pcap pci pmc posix pthread pthread_dbg \
 	puffs radius resolv rmt roken rpcsvc rt sdp skey sl ss ssh ssl termcap \

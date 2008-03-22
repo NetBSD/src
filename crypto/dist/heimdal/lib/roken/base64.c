@@ -33,27 +33,27 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: base64.c,v 1.5 2001/05/28 17:33:41 joda Exp $"
-        "$NetBSD: base64.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: base64.c 15506 2005-06-23 10:47:57Z lha $"
+        "$NetBSD: base64.c,v 1.2 2008/03/22 08:37:20 mlelstv Exp $");
 #endif
 #include <stdlib.h>
 #include <string.h>
 #include "base64.h"
 
-static char base64_chars[] = 
+static const char base64_chars[] = 
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static int 
 pos(char c)
 {
-    char *p;
+    const char *p;
     for (p = base64_chars; *p; p++)
 	if (*p == c)
 	    return p - base64_chars;
     return -1;
 }
 
-int 
+int ROKEN_LIB_FUNCTION
 base64_encode(const void *data, int size, char **str)
 {
     char *s, *p;
@@ -115,7 +115,7 @@ token_decode(const char *token)
     return (marker << 24) | val;
 }
 
-int
+int ROKEN_LIB_FUNCTION
 base64_decode(const char *str, void *data)
 {
     const char *p;

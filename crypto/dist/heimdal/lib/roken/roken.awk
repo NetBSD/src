@@ -1,5 +1,5 @@
-# $Heimdal: roken.awk,v 1.9 2003/03/04 10:37:26 lha Exp $
-# $NetBSD: roken.awk,v 1.1.1.6 2003/05/15 20:28:49 lha Exp $
+# $Heimdal: roken.awk 15409 2005-06-16 16:29:58Z lha $
+# $NetBSD: roken.awk,v 1.2 2008/03/22 08:37:21 mlelstv Exp $
 
 BEGIN {
 	print "#ifdef HAVE_CONFIG_H"
@@ -16,7 +16,7 @@ BEGIN {
 	print "puts(\"\");"
 }
 
-$1 == "\#ifdef" || $1 == "\#ifndef" || $1 == "\#if" || $1 == "\#else" || $1 == "\#elif" || $1 == "\#endif" || $1 == "#ifdef" || $1 == "#ifndef" || $1 == "#if" || $1 == "#else" || $1 == "#elif" || $1 == "#endif" {
+$1 == "#ifdef" || $1 == "#ifndef" || $1 == "#if" || $1 == "#else" || $1 == "#elif" || $1 == "#endif" {
 	print $0;
 	next
 }

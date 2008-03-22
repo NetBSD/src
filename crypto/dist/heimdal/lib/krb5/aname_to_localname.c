@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 1999, 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 1999, 2002 - 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,10 +33,10 @@
 
 #include <krb5_locl.h>
 
-__RCSID("$Heimdal: aname_to_localname.c,v 1.6 2003/04/16 16:01:06 lha Exp $"
-        "$NetBSD: aname_to_localname.c,v 1.1.1.4 2003/05/15 20:28:47 lha Exp $");
+__RCSID("$Heimdal: aname_to_localname.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: aname_to_localname.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_aname_to_localname (krb5_context context,
 			 krb5_const_principal aname,
 			 size_t lnsize,

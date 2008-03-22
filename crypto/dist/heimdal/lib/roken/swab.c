@@ -38,10 +38,10 @@
 
 #ifndef HAVE_SWAB
 
-__RCSID("$Heimdal: swab.c,v 1.7 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: swab.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: swab.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: swab.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 
-void
+void ROKEN_LIB_FUNCTION
 swab (char *from, char *to, int nbytes)
 {
      while(nbytes >= 2) {

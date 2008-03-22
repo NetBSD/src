@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: com_err.h,v 1.9 2001/05/11 20:03:36 assar Exp $
-   $NetBSD: com_err.h,v 1.3 2002/09/12 13:19:06 joda Exp $ */
+/* $Heimdal: com_err.h 15566 2005-07-07 14:58:07Z lha $
+   $NetBSD: com_err.h,v 1.4 2008/03/22 08:37:06 mlelstv Exp $ */
 
 /* MIT compatible com_err library */
 
@@ -40,27 +40,28 @@
 #define __COM_ERR_H__
 
 #include <krb5/com_right.h>
+#include <stdarg.h>
 
 #if !defined(__GNUC__) && !defined(__attribute__)
 #define __attribute__(X)
 #endif
 
-typedef void (*errf) __P((const char *, long, const char *, va_list));
+typedef void (*errf) (const char *, long, const char *, va_list);
 
-const char * error_message __P((long));
-int init_error_table __P((const char**, long, int));
+const char * error_message (long);
+int init_error_table (const char**, long, int);
 
-void com_err_va __P((const char *, long, const char *, va_list))
+void com_err_va (const char *, long, const char *, va_list)
     __attribute__((format(printf, 3, 0)));
 
-void com_err __P((const char *, long, const char *, ...))
+void com_err (const char *, long, const char *, ...)
     __attribute__((format(printf, 3, 4)));
 
-errf set_com_err_hook __P((errf));
-errf reset_com_err_hook __P((void));
+errf set_com_err_hook (errf);
+errf reset_com_err_hook (void);
 
-const char *error_table_name  __P((int num));
+const char *error_table_name  (int num);
 
-void add_to_error_table __P((struct et_list *new_table));
+void add_to_error_table (struct et_list *new_table);
 
 #endif /* __COM_ERR_H__ */

@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -101,11 +105,18 @@ char	userhelp[] =	"send new user information";
 char	verbosehelp[] =	"toggle verbose mode";
 
 char	prothelp[] = 	"set protection level";
+char	prothelp_c[] =	"set command protection level";
 #ifdef KRB4
 char	kauthhelp[] = 	"get remote tokens";
+#endif
+#if defined(KRB4) || defined(KRB5)
 char	klisthelp[] =	"show remote tickets";
+#endif
+#ifdef KRB4
 char	kdestroyhelp[] = "destroy remote tickets";
 char	krbtkfilehelp[] = "set filename of remote tickets";
+#endif
+#if defined(KRB4) || defined(KRB5)
 char	afsloghelp[] = 	"obtain remote AFS tokens";
 #endif
 
@@ -183,12 +194,20 @@ struct cmd cmdtab[] = {
 	{ "verbose",	verbosehelp,	0,	0,	0,	setverbose },
 	{ "?",		helphelp,	0,	0,	1,	help },
 
-	{ "prot", 	prothelp, 	0, 	1, 	0,	sec_prot },
+	{ "protect", 	prothelp, 	0, 	1, 	0,	sec_prot },
+	/* what MIT uses */
+	{ "cprotect",	prothelp_c,	0,	1,	1,	sec_prot_command },
 #ifdef KRB4
 	{ "kauth", 	kauthhelp, 	0, 	1, 	0,	kauth },
+#endif
+#if defined(KRB4) || defined(KRB5)
 	{ "klist", 	klisthelp, 	0, 	1, 	0,	klist },
+#endif
+#ifdef KRB4
 	{ "kdestroy",	kdestroyhelp,	0,	1,	0,	kdestroy },
 	{ "krbtkfile",	krbtkfilehelp,	0,	1,	0,	krbtkfile },
+#endif
+#if defined(KRB4) || defined(KRB5)
 	{ "afslog",	afsloghelp,	0,	1,	0,	afslog },
 #endif
 	

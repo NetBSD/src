@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -34,8 +34,8 @@
 #include "kadmin_locl.h"
 #include <krb5-private.h>
 
-__RCSID("$Heimdal: server.c,v 1.38 2003/01/29 12:33:05 lha Exp $"
-        "$NetBSD: server.c,v 1.1.1.6 2003/05/15 20:28:45 lha Exp $");
+__RCSID("$Heimdal: server.c 17611 2006-06-02 22:10:21Z lha $"
+        "$NetBSD: server.c,v 1.2 2008/03/22 08:37:02 mlelstv Exp $");
 
 static kadm5_ret_t
 kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
@@ -48,7 +48,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
     char *op = "";
     krb5_principal princ, princ2;
     kadm5_principal_ent_rec ent;
-    char *password, *exp;
+    char *password, *expression;
     krb5_keyblock *new_keys;
     int n_keys;
     char **princs;
@@ -193,6 +193,7 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 					   princ);
 	if(ret){
 	    krb5_free_principal(context->context, princ);
+	    krb5_free_principal(context->context, princ2);
 	    goto fail;
 	}
 	ret = kadm5_rename_principal(kadm_handle, princ, princ2);
@@ -371,12 +372,13 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	break;
     }
     case kadm_get_privs:{
-	ret = kadm5_get_privs(kadm_handle, &mask);
+	uint32_t privs;
+	ret = kadm5_get_privs(kadm_handle, &privs);
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();
 	krb5_store_int32(sp, ret);
 	if(ret == 0)
-	    krb5_store_int32(sp, mask);
+	    krb5_store_uint32(sp, privs);
 	break;
     }
     case kadm_get_princs:{
@@ -385,19 +387,20 @@ kadmind_dispatch(void *kadm_handle, krb5_boolean initial,
 	if(ret)
 	    goto fail;
 	if(tmp){
-	    ret = krb5_ret_string(sp, &exp);
+	    ret = krb5_ret_string(sp, &expression);
 	    if(ret)
 		goto fail;
 	}else
-	    exp = NULL;
-	krb5_warnx(context->context, "%s: %s %s", client, op, exp ? exp : "*");
+	    expression = NULL;
+	krb5_warnx(context->context, "%s: %s %s", client, op,
+		   expression ? expression : "*");
 	ret = _kadm5_acl_check_permission(context, KADM5_PRIV_LIST, NULL);
 	if(ret){
-	    free(exp);
+	    free(expression);
 	    goto fail;
 	}
-	ret = kadm5_get_principals(kadm_handle, exp, &princs, &n_princs);
-	free(exp);
+	ret = kadm5_get_principals(kadm_handle, expression, &princs, &n_princs);
+	free(expression);
 	krb5_storage_free(sp);
 	sp = krb5_storage_emem();
 	krb5_store_int32(sp, ret);
@@ -543,8 +546,6 @@ handle_v5(krb5_context context,
     v5_loop (context, ac, initial, kadm_handle, fd);
 }
 
-extern int do_kerberos4;
-
 krb5_error_code
 kadmind_loop(krb5_context context,
 	     krb5_auth_context ac,
@@ -561,16 +562,15 @@ kadmind_loop(krb5_context context,
     if(n < 0)
 	krb5_err(context, 1, errno, "read");
     _krb5_get_int(tmp, &len, 4);
+    /* this v4 test could probably also go away */
     if(len > 0xffff && (len & 0xffff) == ('K' << 8) + 'A') {
-	len >>= 16;
-#ifdef KRB4
-	if(do_kerberos4)
-	    handle_v4(context, keytab, len, fd);
-	else
-	    krb5_errx(context, 1, "version 4 kadmin is disabled");
-#else
+	unsigned char v4reply[] = { 
+	    0x00, 0x0c, 
+	    'K', 'Y', 'O', 'U', 'L', 'O', 'S', 'E', 
+	    0x95, 0xb7, 0xa7, 0x08 /* KADM_BAD_VER */
+	};
+	krb5_net_write(context, &fd, v4reply, sizeof(v4reply));
 	krb5_errx(context, 1, "packet appears to be version 4");
-#endif
     } else {
 	handle_v5(context, ac, keytab, len, fd);
     }

@@ -33,8 +33,8 @@
 
 #include "login_locl.h"
 
-__RCSID("$Heimdal: stty_default.c,v 1.8 1999/12/02 17:04:56 joda Exp $"
-        "$NetBSD: stty_default.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: stty_default.c 7464 1999-12-02 17:05:13Z joda $"
+        "$NetBSD: stty_default.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 #include <termios.h>
 

@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -39,8 +43,8 @@ static const char rcsid[] =
 
 #include "rcp_locl.h"
 
-__RCSID("$Heimdal: util.c,v 1.6 2001/09/04 14:35:58 assar Exp $"
-        "$NetBSD: util.c,v 1.3 2003/08/07 09:15:22 agc Exp $");
+__RCSID("$Heimdal: util.c 17878 2006-08-08 21:43:58Z lha $"
+        "$NetBSD: util.c,v 1.4 2008/03/22 08:36:55 mlelstv Exp $");
 
 char *
 colon(cp)
@@ -78,9 +82,9 @@ okname(cp0)
 	char *cp0;
 {
 	int c;
-	char *cp;
+	unsigned char *cp;
 
-	cp = cp0;
+	cp = (unsigned char *)cp0;
 	do {
 		c = *cp;
 		if (c & 0200)
@@ -109,7 +113,8 @@ susystem(s, userid)
 		return (127);
 
 	case 0:
-		(void)setuid(userid);
+		if (setuid(userid) < 0)
+			_exit(127);
 		execl(_PATH_BSHELL, "sh", "-c", s, NULL);
 		_exit(127);
 	}

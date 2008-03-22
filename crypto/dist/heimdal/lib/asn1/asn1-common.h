@@ -1,5 +1,5 @@
-/* $Heimdal: asn1-common.h,v 1.2 2001/09/25 13:39:25 assar Exp $
-   $NetBSD: asn1-common.h,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $ */
+/* $Heimdal: asn1-common.h 22429 2008-01-13 10:25:50Z lha $
+   $NetBSD: asn1-common.h,v 1.2 2008/03/22 08:37:04 mlelstv Exp $ */
 
 #include <stddef.h>
 #include <time.h>
@@ -7,16 +7,61 @@
 #ifndef __asn1_common_definitions__
 #define __asn1_common_definitions__
 
-typedef struct octet_string {
+typedef struct heim_integer {
     size_t length;
     void *data;
-} octet_string;
+    int negative;
+} heim_integer;
 
-typedef char *general_string;
+typedef struct heim_octet_string {
+    size_t length;
+    void *data;
+} heim_octet_string;
 
-typedef struct oid {
+typedef char *heim_general_string;
+typedef char *heim_utf8_string;
+typedef char *heim_printable_string;
+typedef char *heim_ia5_string;
+
+typedef struct heim_bmp_string {
+    size_t length;
+    uint16_t *data;
+} heim_bmp_string;
+
+typedef struct heim_universal_string {
+    size_t length;
+    uint32_t *data;
+} heim_universal_string;
+
+typedef char *heim_visible_string;
+
+typedef struct heim_oid {
     size_t length;
     unsigned *components;
-} oid;
+} heim_oid;
+
+typedef struct heim_bit_string {
+    size_t length;
+    void *data;
+} heim_bit_string;
+
+typedef struct heim_octet_string heim_any;
+typedef struct heim_octet_string heim_any_set;
+
+#define ASN1_MALLOC_ENCODE(T, B, BL, S, L, R)                  \
+  do {                                                         \
+    (BL) = length_##T((S));                                    \
+    (B) = malloc((BL));                                        \
+    if((B) == NULL) {                                          \
+      (R) = ENOMEM;                                            \
+    } else {                                                   \
+      (R) = encode_##T(((unsigned char*)(B)) + (BL) - 1, (BL), \
+                       (S), (L));                              \
+      if((R) != 0) {                                           \
+        free((B));                                             \
+        (B) = NULL;                                            \
+      }                                                        \
+    }                                                          \
+  } while (0)
 
 #endif

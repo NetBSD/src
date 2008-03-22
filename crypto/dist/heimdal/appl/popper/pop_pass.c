@@ -5,8 +5,12 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_pass.c,v 1.41 2000/04/12 15:37:46 assar Exp $"
-        "$NetBSD: pop_pass.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
+__RCSID("$Heimdal: pop_pass.c 19078 2006-11-20 18:12:41Z lha $"
+        "$NetBSD: pop_pass.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 #ifdef KRB4
 static int
@@ -38,15 +42,20 @@ static int
 krb5_verify_password (POP *p)
 {
     krb5_preauthtype pre_auth_types[] = {KRB5_PADATA_ENC_TIMESTAMP};
-    krb5_get_init_creds_opt get_options;
+    krb5_get_init_creds_opt *get_options;
     krb5_verify_init_creds_opt verify_options;
     krb5_error_code ret;
     krb5_principal client, server;
     krb5_creds creds;
 
-    krb5_get_init_creds_opt_init (&get_options);
+    ret = krb5_get_init_creds_opt_alloc (p->context, &get_options);
+    if (ret) {
+	pop_log(p, POP_PRIORITY, "krb5_get_init_creds_opt_init: %s",
+		krb5_get_err_text (p->context, ret));
+	return 1;
+    }
 
-    krb5_get_init_creds_opt_set_preauth_list (&get_options,
+    krb5_get_init_creds_opt_set_preauth_list (get_options,
 					      pre_auth_types,
 					      1);
 
@@ -67,7 +76,8 @@ krb5_verify_password (POP *p)
 					NULL,
 					0,
 					NULL,
-					&get_options);
+					get_options);
+    krb5_get_init_creds_opt_free(p->context, get_options);
     if (ret) {
 	pop_log(p, POP_PRIORITY,
 		"krb5_get_init_creds_password: %s",
@@ -95,7 +105,7 @@ krb5_verify_password (POP *p)
 				  &verify_options);
     krb5_free_principal (p->context, client);
     krb5_free_principal (p->context, server);
-    krb5_free_creds_contents (p->context, &creds);
+    krb5_free_cred_contents (p->context, &creds);
     return ret;
 }
 #endif
@@ -104,11 +114,44 @@ krb5_verify_password (POP *p)
  */
 
 int
+login_user(POP *p)
+{
+    struct stat st;
+    struct passwd *pw;
+
+    /*  Look for the user in the password file */
+    if ((pw = k_getpwnam(p->user)) == NULL) {
+	pop_log(p, POP_PRIORITY, "user %s (from %s) not found",
+		p->user, p->ipaddr);
+	return pop_msg(p, POP_FAILURE, "Login incorrect.");
+    }
+
+    pop_log(p, POP_INFO, "login from %s as %s", p->ipaddr, p->user);
+    
+    /*  Build the name of the user's maildrop */
+    snprintf(p->drop_name, sizeof(p->drop_name), "%s/%s", POP_MAILDIR, p->user);
+    if(stat(p->drop_name, &st) < 0 || !S_ISDIR(st.st_mode)){
+	/*  Make a temporary copy of the user's maildrop */
+	/*    and set the group and user id */
+	if (pop_dropcopy(p, pw) != POP_SUCCESS) return (POP_FAILURE);
+	
+	/*  Get information about the maildrop */
+	if (pop_dropinfo(p) != POP_SUCCESS) return(POP_FAILURE);
+    } else {
+	if(changeuser(p, pw) != POP_SUCCESS) return POP_FAILURE;
+	if(pop_maildir_info(p) != POP_SUCCESS) return POP_FAILURE;
+    }
+    /*  Initialize the last-message-accessed number */
+    p->last_msg = 0;
+    return POP_SUCCESS;
+}
+
+int
 pop_pass (POP *p)
 {
     struct passwd  *pw;
     int i;
-    struct stat st;
+    int status;
 
     /* Make one string of all these parameters */
     
@@ -194,25 +237,9 @@ pop_pass (POP *p)
 				"Password incorrect");
 	 }
     }
-    pop_log(p, POP_INFO, "login from %s as %s",
-	    p->ipaddr, p->user);
-
-    /*  Build the name of the user's maildrop */
-    snprintf(p->drop_name, sizeof(p->drop_name), "%s/%s", POP_MAILDIR, p->user);
-
-    if(stat(p->drop_name, &st) < 0 || !S_ISDIR(st.st_mode)){
-	/*  Make a temporary copy of the user's maildrop */
-	/*    and set the group and user id */
-	if (pop_dropcopy(p, pw) != POP_SUCCESS) return (POP_FAILURE);
-	
-	/*  Get information about the maildrop */
-	if (pop_dropinfo(p) != POP_SUCCESS) return(POP_FAILURE);
-    } else {
-	if(changeuser(p, pw) != POP_SUCCESS) return POP_FAILURE;
-	if(pop_maildir_info(p) != POP_SUCCESS) return POP_FAILURE;
-    }
-    /*  Initialize the last-message-accessed number */
-    p->last_msg = 0;
+    status = login_user(p);
+    if(status != POP_SUCCESS)
+	return status;
 
     /*  Authorization completed successfully */
     return (pop_msg (p, POP_SUCCESS,

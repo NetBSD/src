@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: otp_locl.h,v 1.12 2002/08/12 15:09:20 joda Exp $
-   $NetBSD: otp_locl.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
+/* $Heimdal: otp_locl.h 11080 2002-08-12 15:09:20Z joda $
+   $NetBSD: otp_locl.h,v 1.2 2008/03/22 08:37:20 mlelstv Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>

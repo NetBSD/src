@@ -32,8 +32,8 @@
  */
 
 #include "kf_locl.h"
-__RCSID("$Heimdal: kf.c,v 1.17 2002/09/05 15:00:03 joda Exp $"
-        "$NetBSD: kf.c,v 1.1.1.5 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: kf.c 11400 2002-09-05 15:00:03Z joda $"
+        "$NetBSD: kf.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 krb5_context context;
 static int help_flag;

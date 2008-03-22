@@ -8,8 +8,8 @@
  *
  */
 
-/* $Heimdal: popper.h,v 1.51 2002/07/04 13:56:12 joda Exp $
-   $NetBSD: popper.h,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $ */
+/* $Heimdal: popper.h 14045 2004-07-14 09:10:30Z joda $
+   $NetBSD: popper.h,v 1.2 2008/03/22 08:36:55 mlelstv Exp $ */
 
 /* 
  *  Header file for the POP programs
@@ -176,6 +176,7 @@ extern int              hangup;
 
 #define AUTH_NONE 0
 #define AUTH_OTP  1
+#define AUTH_SASL 2
 
 #define pop_command         pop_parm[0]     /*  POP command is first token */
 #define pop_subcommand      pop_parm[1]     /*  POP XTND subcommand is the 
@@ -275,7 +276,7 @@ typedef struct  {                               /*  POP parameter block */
     OtpContext		otp_ctx;		/*  OTP context */
 #endif
     unsigned int	flags;
-#define POP_FLAG_CAPA 1
+#define POP_FLAG_CAPA	1
 } POP;
 
 typedef struct {                                /*  State information for 
@@ -331,6 +332,10 @@ int pop_xdele(POP *p);
 int pop_help(POP *p);
 state_table *pop_get_command(POP *p, char *mp);
 void pop_lower(char *buf);
+#ifdef SASL
+int pop_auth (POP *p);
+void pop_capa_sasl(POP *p);
+#endif
 
 int pop_log(POP *p, int stat, char *format, ...)
 #ifdef __GNUC__
@@ -351,3 +356,4 @@ int pop_maildir_update (POP*);
 int changeuser(POP*, struct passwd*);
 void parse_header(MsgInfoList*, char*);
 int add_missing_headers(POP*, MsgInfoList*);
+int login_user(POP *p);

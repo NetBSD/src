@@ -33,10 +33,12 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: version.c,v 1.3 1999/12/02 17:05:13 joda Exp $"
-        "$NetBSD: version.c,v 1.3 2002/09/12 13:19:19 joda Exp $");
+__RCSID("$Heimdal: version.c 7464 1999-12-02 17:05:13Z joda $"
+        "$NetBSD: version.c,v 1.4 2008/03/22 08:37:15 mlelstv Exp $");
 
 /* this is just to get a version stamp in the library file */
 
-#define	__KRB5_VERSION
+#define heimdal_version __heimdal_version
+#define heimdal_long_version __heimdal_long_version
 #include "version.h"
+

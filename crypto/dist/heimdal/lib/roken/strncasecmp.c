@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: strncasecmp.c,v 1.3 2003/04/14 11:46:04 lha Exp $"
-        "$NetBSD: strncasecmp.c,v 1.1.1.4 2003/05/15 20:28:49 lha Exp $");
+__RCSID("$Heimdal: strncasecmp.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: strncasecmp.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 
 #include <string.h>
@@ -43,7 +43,7 @@ __RCSID("$Heimdal: strncasecmp.c,v 1.3 2003/04/14 11:46:04 lha Exp $"
 
 #ifndef HAVE_STRNCASECMP
 
-int
+int ROKEN_LIB_FUNCTION
 strncasecmp(const char *s1, const char *s2, size_t n)
 {
     while(n > 0 

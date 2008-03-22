@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: hostent_find_fqdn.c,v 1.2 2001/07/10 11:58:23 assar Exp $"
-        "$NetBSD: hostent_find_fqdn.c,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: hostent_find_fqdn.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: hostent_find_fqdn.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include "roken.h"
@@ -43,7 +43,7 @@ __RCSID("$Heimdal: hostent_find_fqdn.c,v 1.2 2001/07/10 11:58:23 assar Exp $"
  * Try to find a fqdn (with `.') in he if possible, else return h_name
  */
 
-const char *
+const char * ROKEN_LIB_FUNCTION
 hostent_find_fqdn (const struct hostent *he)
 {
     const char *ret = he->h_name;

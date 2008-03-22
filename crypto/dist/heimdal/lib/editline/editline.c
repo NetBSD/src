@@ -21,12 +21,12 @@
 **  Main editing routines for editline library.
 */
 #include <config.h>
-#include "editline.h"
+#include "edit_locl.h"
 #include <ctype.h>
 #include <errno.h>
 
-__RCSID("$Heimdal: editline.c,v 1.10 2001/09/13 01:19:54 assar Exp $"
-        "$NetBSD: editline.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: editline.c 15581 2005-07-07 20:55:18Z lha $"
+        "$NetBSD: editline.c,v 1.2 2008/03/22 08:37:10 mlelstv Exp $");
 
 /*
 **  Manifest constants.
@@ -64,7 +64,7 @@ typedef enum _CASE {
 */
 typedef struct _KEYMAP {
     unsigned char	Key;
-    el_STATUS	(*Function)();
+    el_STATUS	(*Function)(void);
 } KEYMAP;
 
 /*
@@ -125,7 +125,7 @@ int	tgetnum(const char*);
 */
 
 static void
-TTYflush()
+TTYflush(void)
 {
     if (ScreenCount) {
 	write(1, Screen, ScreenCount);
@@ -178,9 +178,9 @@ TTYstring(unsigned char *p)
 }
 
 static int
-TTYget()
+TTYget(void)
 {
-    char c;
+    unsigned char c;
     int e;
 
     TTYflush();
@@ -215,13 +215,9 @@ TTYbackn(int n)
 }
 
 static void
-TTYinfo()
+TTYinfo(void)
 {
     static int		init;
-    char		*term;
-    char		buff[2048];
-    char		*bp;
-    char		*tmp;
 #if	defined(TIOCGWINSZ)
     struct winsize	W;
 #endif	/* defined(TIOCGWINSZ) */
@@ -239,22 +235,28 @@ TTYinfo()
     }
     init++;
 
-    TTYwidth = TTYrows = 0;
-    bp = &buff[0];
-    if ((term = getenv("TERM")) == NULL)
-	term = "dumb";
-    if (tgetent(buff, term) < 0) {
-       TTYwidth = SCREEN_WIDTH;
-       TTYrows = SCREEN_ROWS;
-       return;
+#ifdef HAVE_TGETENT
+    {
+	char		buff[2048];
+	char		*tmp;
+	char		*bp;
+	const char	*term;
+
+	TTYwidth = TTYrows = 0;
+	bp = &buff[0];
+	if ((term = getenv("TERM")) == NULL)
+	    term = "dumb";
+	if (tgetent(buff, term) >= 0) {
+	    
+	    tmp = tgetstr("le", &bp);
+	    if (tmp != NULL)
+		backspace = strdup(tmp);
+	    TTYwidth = tgetnum("co");
+	    TTYrows = tgetnum("li");
+	    return;
+	}
     }
-    tmp = tgetstr("le", &bp);
-    if (tmp != NULL)
-	backspace = strdup(tmp);
-    else
-	backspace = "\b";
-    TTYwidth = tgetnum("co");
-    TTYrows = tgetnum("li");
+#endif
 
 #if	defined(TIOCGWINSZ)
     if (ioctl(0, TIOCGWINSZ, &W) >= 0) {
@@ -305,7 +307,7 @@ columns(int ac, unsigned char **av)
 }
 
 static void
-reposition()
+reposition(void)
 {
     int		i;
     unsigned char	*p;
@@ -341,7 +343,7 @@ right(el_STATUS Change)
 }
 
 static el_STATUS
-ring_bell()
+ring_bell(void)
 {
     TTYput('\07');
     TTYflush();
@@ -418,19 +420,19 @@ do_case(CASE type)
 }
 
 static el_STATUS
-case_down_word()
+case_down_word(void)
 {
     return do_case(TOlower);
 }
 
 static el_STATUS
-case_up_word()
+case_up_word(void)
 {
     return do_case(TOupper);
 }
 
 static void
-ceol()
+ceol(void)
 {
     int		extras;
     int		i;
@@ -454,7 +456,7 @@ ceol()
 }
 
 static void
-clear_line()
+clear_line(void)
 {
     Point = -strlen(Prompt);
     TTYput('\r');
@@ -497,13 +499,13 @@ insert_string(unsigned char *p)
 
 
 static unsigned char *
-next_hist()
+next_hist(void)
 {
     return H.Pos >= H.Size - 1 ? NULL : H.Lines[++H.Pos];
 }
 
 static unsigned char *
-prev_hist()
+prev_hist(void)
 {
     return H.Pos == 0 ? NULL : H.Lines[--H.Pos];
 }
@@ -521,7 +523,7 @@ do_insert_hist(unsigned char *p)
 }
 
 static el_STATUS
-do_hist(unsigned char *(*move)())
+do_hist(unsigned char *(*move)(void))
 {
     unsigned char	*p;
     int		i;
@@ -535,25 +537,25 @@ do_hist(unsigned char *(*move)())
 }
 
 static el_STATUS
-h_next()
+h_next(void)
 {
     return do_hist(next_hist);
 }
 
 static el_STATUS
-h_prev()
+h_prev(void)
 {
     return do_hist(prev_hist);
 }
 
 static el_STATUS
-h_first()
+h_first(void)
 {
     return do_insert_hist(H.Lines[H.Pos = 0]);
 }
 
 static el_STATUS
-h_last()
+h_last(void)
 {
     return do_insert_hist(H.Lines[H.Pos = H.Size - 1]);
 }
@@ -562,9 +564,9 @@ h_last()
 **  Return zero if pat appears as a substring in text.
 */
 static int
-substrcmp(char *text, char *pat, int len)
+substrcmp(const char *text, const char *pat, size_t len)
 {
-    unsigned char	c;
+    char	c;
 
     if ((c = *pat) == '\0')
         return *text == '\0';
@@ -575,12 +577,12 @@ substrcmp(char *text, char *pat, int len)
 }
 
 static unsigned char *
-search_hist(unsigned char *search, unsigned char *(*move)())
+search_hist(unsigned char *search, unsigned char *(*move)(void))
 {
     static unsigned char	*old_search;
     int		len;
     int		pos;
-    int		(*match)();
+    int		(*match)(const char *, const char *, size_t);
     char	*pat;
 
     /* Save or get remembered search pattern. */
@@ -614,11 +616,11 @@ search_hist(unsigned char *search, unsigned char *(*move)())
 }
 
 static el_STATUS
-h_search()
+h_search(void)
 {
     static int	Searching;
     const char	*old_prompt;
-    unsigned char	*(*move)();
+    unsigned char	*(*move)(void);
     unsigned char	*p;
 
     if (Searching)
@@ -640,7 +642,7 @@ h_search()
 }
 
 static el_STATUS
-fd_char()
+fd_char(void)
 {
     int		i;
 
@@ -713,7 +715,7 @@ delete_string(int count)
 }
 
 static el_STATUS
-bk_char()
+bk_char(void)
 {
     int		i;
 
@@ -728,7 +730,7 @@ bk_char()
 }
 
 static el_STATUS
-bk_del_char()
+bk_del_char(void)
 {
     int		i;
 
@@ -743,7 +745,7 @@ bk_del_char()
 }
 
 static el_STATUS
-redisplay()
+redisplay(void)
 {
     TTYputs(NEWLINE);
     TTYputs(Prompt);
@@ -752,7 +754,7 @@ redisplay()
 }
 
 static el_STATUS
-kill_line()
+kill_line(void)
 {
     int		i;
 
@@ -804,7 +806,7 @@ insert_char(int c)
 }
 
 static el_STATUS
-meta()
+meta(void)
 {
     unsigned int	c;
     KEYMAP		*kp;
@@ -888,7 +890,7 @@ TTYspecial(unsigned int c)
 }
 
 static unsigned char *
-editinput()
+editinput(void)
 {
     unsigned int	c;
 
@@ -1001,7 +1003,7 @@ add_history(char *p)
 
 
 static el_STATUS
-beg_line()
+beg_line(void)
 {
     if (Point) {
 	Point = 0;
@@ -1011,13 +1013,13 @@ beg_line()
 }
 
 static el_STATUS
-del_char()
+del_char(void)
 {
     return delete_string(Repeat == NO_ARG ? 1 : Repeat);
 }
 
 static el_STATUS
-end_line()
+end_line(void)
 {
     if (Point != End) {
 	Point = End;
@@ -1031,7 +1033,7 @@ end_line()
 **  allocated copy of it.
 */
 static unsigned char *
-find_word()
+find_word(void)
 {
     static char	SEPS[] = "#;&|^$=`'{}()<>\n\t ";
     unsigned char	*p;
@@ -1049,7 +1051,7 @@ find_word()
 }
 
 static el_STATUS
-c_complete()
+c_complete(void)
 {
     unsigned char	*p;
     unsigned char	*word;
@@ -1071,14 +1073,14 @@ c_complete()
 }
 
 static el_STATUS
-c_possible()
+c_possible(void)
 {
     unsigned char	**av;
     unsigned char	*word;
     int		ac;
 
     word = find_word();
-    ac = rl_list_possib((char *)word, (char ***)&av);
+    ac = rl_list_possib((char *)word, (void *)&av);
     if (word)
 	free(word);
     if (ac) {
@@ -1092,14 +1094,14 @@ c_possible()
 }
 
 static el_STATUS
-accept_line()
+accept_line(void)
 {
     Line[End] = '\0';
     return CSdone;
 }
 
 static el_STATUS
-transpose()
+transpose(void)
 {
     unsigned char	c;
 
@@ -1117,7 +1119,7 @@ transpose()
 }
 
 static el_STATUS
-quote()
+quote(void)
 {
     unsigned int	c;
 
@@ -1125,7 +1127,7 @@ quote()
 }
 
 static el_STATUS
-wipe()
+wipe(void)
 {
     int		i;
 
@@ -1143,14 +1145,14 @@ wipe()
 }
 
 static el_STATUS
-mk_set()
+mk_set(void)
 {
     Mark = Point;
     return CSstay;
 }
 
 static el_STATUS
-exchange()
+exchange(void)
 {
     unsigned int	c;
 
@@ -1166,7 +1168,7 @@ exchange()
 }
 
 static el_STATUS
-yank()
+yank(void)
 {
     if (Yanked && *Yanked)
 	return insert_string(Yanked);
@@ -1174,7 +1176,7 @@ yank()
 }
 
 static el_STATUS
-copy_region()
+copy_region(void)
 {
     if (Mark > End)
 	return ring_bell();
@@ -1188,7 +1190,7 @@ copy_region()
 }
 
 static el_STATUS
-move_to_char()
+move_to_char(void)
 {
     unsigned int	c;
     int			i;
@@ -1205,13 +1207,13 @@ move_to_char()
 }
 
 static el_STATUS
-fd_word()
+fd_word(void)
 {
     return do_forward(CSmove);
 }
 
 static el_STATUS
-fd_kill_word()
+fd_kill_word(void)
 {
     int		i;
 
@@ -1225,7 +1227,7 @@ fd_kill_word()
 }
 
 static el_STATUS
-bk_word()
+bk_word(void)
 {
     int		i;
     unsigned char	*p;
@@ -1246,7 +1248,7 @@ bk_word()
 }
 
 static el_STATUS
-bk_kill_word()
+bk_kill_word(void)
 {
     bk_word();
     if (OldPoint != Point)
@@ -1299,7 +1301,7 @@ argify(unsigned char *line, unsigned char ***avp)
 }
 
 static el_STATUS
-last_argument()
+last_argument(void)
 {
     unsigned char	**av;
     unsigned char	*p;

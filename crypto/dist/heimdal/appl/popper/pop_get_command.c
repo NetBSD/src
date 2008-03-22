@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_get_command.c,v 1.16 2002/07/04 14:09:47 joda Exp $"
-        "$NetBSD: pop_get_command.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_get_command.c 13928 2004-06-14 08:18:18Z joda $"
+        "$NetBSD: pop_get_command.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /* 
  *  get_command:    Extract the command from an input line form a POP client
@@ -19,6 +19,9 @@ static state_table states[] = {
 #ifdef RPOP
         {auth2,  "rpop", 1,  1,  pop_rpop,   {auth1, trans}},
 #endif /* RPOP */
+#ifdef SASL
+	{auth1,  "auth", 1,  2,  pop_auth,   {auth1, trans}},
+#endif
         {auth1,  "quit", 0,  0,  pop_quit,   {halt,  halt}},
         {auth2,  "quit", 0,  0,  pop_quit,   {halt,  halt}},
 #ifdef CAPA
@@ -53,11 +56,15 @@ pop_capa (POP *p)
 {
     /*  Search for the POP command in the command/state table */
     pop_msg (p,POP_SUCCESS, "Capability list follows");
-    fprintf(p->output, "USER\r\n");
+    if(p->auth_level == AUTH_NONE || p->auth_level == AUTH_OTP)
+	fprintf(p->output, "USER\r\n");
     fprintf(p->output, "TOP\r\n");
     fprintf(p->output, "PIPELINING\r\n");
     fprintf(p->output, "EXPIRE NEVER\r\n");
     fprintf(p->output, "RESP-CODES\r\n");
+#ifdef SASL
+    pop_capa_sasl(p);
+#endif
 #ifdef UIDL
     fprintf(p->output, "UIDL\r\n");
 #endif

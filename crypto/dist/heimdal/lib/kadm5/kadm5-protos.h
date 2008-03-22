@@ -1,43 +1,38 @@
-/*
- * Copyright (c) 2000-2002 Kungliga Tekniska Högskolan
- * (Royal Institute of Technology, Stockholm, Sweden). 
- * All rights reserved. 
- *
- * Redistribution and use in source and binary forms, with or without 
- * modification, are permitted provided that the following conditions 
- * are met: 
- *
- * 1. Redistributions of source code must retain the above copyright 
- *    notice, this list of conditions and the following disclaimer. 
- *
- * 2. Redistributions in binary form must reproduce the above copyright 
- *    notice, this list of conditions and the following disclaimer in the 
- *    documentation and/or other materials provided with the distribution. 
- *
- * 3. Neither the name of the Institute nor the names of its contributors 
- *    may be used to endorse or promote products derived from this software 
- *    without specific prior written permission. 
- *
- * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND 
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE 
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE 
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE 
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL 
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) 
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT 
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY 
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF 
- * SUCH DAMAGE. 
- */
-
-/* $NetBSD: kadm5-protos.h,v 1.2 2002/09/12 13:19:10 joda Exp $ */
-
 /* This is a generated file */
 #ifndef __kadm5_protos_h__
 #define __kadm5_protos_h__
 
 #include <stdarg.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+kadm5_ret_t
+kadm5_ad_init_with_password (
+	const char */*client_name*/,
+	const char */*password*/,
+	const char */*service_name*/,
+	kadm5_config_params */*realm_params*/,
+	unsigned long /*struct_version*/,
+	unsigned long /*api_version*/,
+	void **/*server_handle*/);
+
+kadm5_ret_t
+kadm5_ad_init_with_password_ctx (
+	krb5_context /*context*/,
+	const char */*client_name*/,
+	const char */*password*/,
+	const char */*service_name*/,
+	kadm5_config_params */*realm_params*/,
+	unsigned long /*struct_version*/,
+	unsigned long /*api_version*/,
+	void **/*server_handle*/);
+
+krb5_error_code
+kadm5_add_passwd_quality_verifier (
+	krb5_context /*context*/,
+	const char */*check_library*/);
 
 const char *
 kadm5_check_password_quality (
@@ -49,7 +44,7 @@ kadm5_ret_t
 kadm5_chpass_principal (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
-	char */*password*/);
+	const char */*password*/);
 
 kadm5_ret_t
 kadm5_chpass_principal_with_key (
@@ -62,8 +57,8 @@ kadm5_ret_t
 kadm5_create_principal (
 	void */*server_handle*/,
 	kadm5_principal_ent_t /*princ*/,
-	u_int32_t /*mask*/,
-	char */*password*/);
+	uint32_t /*mask*/,
+	const char */*password*/);
 
 kadm5_ret_t
 kadm5_delete_principal (
@@ -98,19 +93,19 @@ kadm5_get_principal (
 	void */*server_handle*/,
 	krb5_principal /*princ*/,
 	kadm5_principal_ent_t /*out*/,
-	u_int32_t /*mask*/);
+	uint32_t /*mask*/);
 
 kadm5_ret_t
 kadm5_get_principals (
 	void */*server_handle*/,
-	const char */*exp*/,
+	const char */*expression*/,
 	char ***/*princs*/,
 	int */*count*/);
 
 kadm5_ret_t
 kadm5_get_privs (
 	void */*server_handle*/,
-	u_int32_t */*privs*/);
+	uint32_t */*privs*/);
 
 kadm5_ret_t
 kadm5_init_with_creds (
@@ -179,7 +174,7 @@ kadm5_ret_t
 kadm5_modify_principal (
 	void */*server_handle*/,
 	kadm5_principal_ent_t /*princ*/,
-	u_int32_t /*mask*/);
+	uint32_t /*mask*/);
 
 kadm5_ret_t
 kadm5_randkey_principal (
@@ -208,7 +203,7 @@ kadm5_ret_t
 kadm5_ret_principal_ent_mask (
 	krb5_storage */*sp*/,
 	kadm5_principal_ent_t /*princ*/,
-	u_int32_t */*mask*/);
+	uint32_t */*mask*/);
 
 kadm5_ret_t
 kadm5_ret_tl_data (
@@ -235,11 +230,15 @@ kadm5_ret_t
 kadm5_store_principal_ent_mask (
 	krb5_storage */*sp*/,
 	kadm5_principal_ent_t /*princ*/,
-	u_int32_t /*mask*/);
+	uint32_t /*mask*/);
 
 kadm5_ret_t
 kadm5_store_tl_data (
 	krb5_storage */*sp*/,
 	krb5_tl_data */*tl*/);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __kadm5_protos_h__ */

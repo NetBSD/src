@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -36,8 +36,8 @@
 #include <sys/wait.h>
 #endif
 
-__RCSID("$Heimdal: kadm_conn.c,v 1.14 2002/10/21 13:21:24 joda Exp $"
-        "$NetBSD: kadm_conn.c,v 1.13 2006/11/09 19:51:06 christos Exp $");
+__RCSID("$Heimdal: kadm_conn.c 16007 2005-09-01 18:49:57Z lha $"
+        "$NetBSD: kadm_conn.c,v 1.14 2008/03/22 08:37:02 mlelstv Exp $");
 
 struct kadm_port {
     char *port;
@@ -51,7 +51,7 @@ add_kadm_port(krb5_context context, const char *service, unsigned int port)
     struct kadm_port *p;
     p = malloc(sizeof(*p));
     if(p == NULL) {
-	krb5_warnx(context, "failed to allocate %lu bytes", 
+	krb5_warnx(context, "failed to allocate %lu bytes\n", 
 		   (unsigned long)sizeof(*p));
 	return;
     }
@@ -63,16 +63,10 @@ add_kadm_port(krb5_context context, const char *service, unsigned int port)
     kadm_ports = p;
 }
 
-extern int do_kerberos4;
-
 static void
 add_standard_ports (krb5_context context)
 {
     add_kadm_port(context, "kerberos-adm", 749);
-#ifdef KRB4
-    if(do_kerberos4)
-	add_kadm_port(context, "kerberos-master", 751);
-#endif
 }
 
 /*
@@ -174,20 +168,6 @@ wait_for_connection(krb5_context context,
 		    int *socks, int num_socks)
 {
     int i, e;
-#ifdef HAVE_POLL
-    struct pollfd *set;
-
-#if defined(__SSP__) || defined(__SSP_ALL__)
-    /* don't worry about free-ing we exit here */
-    set = malloc(num_socks * sizeof(*set));
-#else
-    set = alloca(num_socks * sizeof(*set));
-#endif
-    for(i = 0; i < num_socks; i++) {
-	set[i].fd = socks[i];
-	set[i].events = POLLIN;
-    }
-#else
     fd_set orig_read_set, read_set;
     int max_fd = -1;
     
@@ -199,7 +179,6 @@ wait_for_connection(krb5_context context,
 	FD_SET(socks[i], &orig_read_set);
 	max_fd = max(max_fd, socks[i]);
     }
-#endif
     
     pgrp = getpid();
 
@@ -211,12 +190,8 @@ wait_for_connection(krb5_context context,
     signal(SIGCHLD, sigchld);
 
     while (term_flag == 0) {
-#ifdef HAVE_POLL
-	e = poll(set, num_socks, INFTIM);
-#else
 	read_set = orig_read_set;
 	e = select(max_fd + 1, &read_set, NULL, NULL, NULL);
-#endif
 	if(e < 0) {
 	    if(errno != EINTR)
 		krb5_warn(context, errno, "select");
@@ -224,11 +199,7 @@ wait_for_connection(krb5_context context,
 	    krb5_warnx(context, "select returned 0");
 	else {
 	    for(i = 0; i < num_socks; i++) {
-#ifdef HAVE_POLL
-		if(set[i].revents & POLLIN)
-#else
 		if(FD_ISSET(socks[i], &read_set))
-#endif
 		    if(spawn_child(context, socks, num_socks, i) == 0)
 			return 0;
 	    }
@@ -285,17 +256,15 @@ start_server(krb5_context context)
 	}
 	socks = tmp;
 	for(ap = ai; ap; ap = ap->ai_next) {
-	    int one = 1;
 	    int s = socket(ap->ai_family, ap->ai_socktype, ap->ai_protocol);
 	    if(s < 0) {
 		krb5_warn(context, errno, "socket");
 		continue;
 	    }
-#if defined(SO_REUSEADDR) && defined(HAVE_SETSOCKOPT)
-	    if(setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&one,
-			  sizeof(one)) < 0)
-		krb5_warn(context, errno, "setsockopt");
-#endif
+
+	    socket_set_reuseaddr(s, 1);
+	    socket_set_ipv6only(s, 1);
+
 	    if (bind (s, ap->ai_addr, ap->ai_addrlen) < 0) {
 		krb5_warn(context, errno, "bind");
 		close(s);

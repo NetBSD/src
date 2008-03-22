@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,8 +33,8 @@
 
 #include <config.h>
 
-__RCSID("$Heimdal: rsaencpwd.c,v 1.19 2002/08/12 15:09:17 joda Exp $"
-        "$NetBSD: rsaencpwd.c,v 1.2 2003/08/07 09:15:26 agc Exp $");
+__RCSID("$Heimdal: rsaencpwd.c 22071 2007-11-14 20:04:50Z lha $"
+        "$NetBSD: rsaencpwd.c,v 1.3 2008/03/22 08:36:56 mlelstv Exp $");
 
 #ifdef	RSA_ENCPWD
 /*
@@ -406,7 +410,7 @@ rsaencpwd_printsub(data, cnt, buf, buflen)
 {
 	int i;
 
-	buf[buflen-1] = '\0';		/* make sure its NULL terminated */
+	buf[buflen-1] = '\0';		/* make sure it's NULL terminated */
 	buflen -= 1;
 
 	switch(data[3]) {

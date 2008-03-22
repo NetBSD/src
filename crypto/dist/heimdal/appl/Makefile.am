@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.24 2001/01/27 18:34:39 assar Exp $
-# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $
+# $Heimdal: Makefile.am 17775 2006-06-30 20:26:15Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:36:50 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -14,6 +14,7 @@ SUBDIRS = 					\
 	  ftp					\
 	  login					\
 	  $(dir_otp)				\
+	  gssmask				\
 	  popper				\
 	  push					\
 	  rsh					\

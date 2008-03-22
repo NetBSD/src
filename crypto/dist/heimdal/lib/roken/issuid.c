@@ -33,18 +33,19 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: issuid.c,v 1.4 2001/08/27 23:08:34 assar Exp $"
-        "$NetBSD: issuid.c,v 1.1.1.4 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: issuid.c 15131 2005-05-13 07:42:03Z lha $"
+        "$NetBSD: issuid.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include "roken.h"
 
-int
+int ROKEN_LIB_FUNCTION
 issuid(void)
 {
 #if defined(HAVE_ISSETUGID)
     return issetugid();
-#endif
+#else /* !HAVE_ISSETUGID */
+
 #if defined(HAVE_GETUID) && defined(HAVE_GETEUID)
     if(getuid() != geteuid())
 	return 1;
@@ -53,5 +54,7 @@ issuid(void)
     if(getgid() != getegid())
 	return 2;
 #endif
+
     return 0;
+#endif /* HAVE_ISSETUGID */
 }

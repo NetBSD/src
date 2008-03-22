@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: memmove.c,v 1.7 1999/12/02 16:58:51 joda Exp $"
-        "$NetBSD: memmove.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: memmove.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: memmove.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 /* 
@@ -45,7 +45,8 @@ __RCSID("$Heimdal: memmove.c,v 1.7 1999/12/02 16:58:51 joda Exp $"
 #include <sys/types.h>
 #endif
 
-void* memmove(void *s1, const void *s2, size_t n)
+void* ROKEN_LIB_FUNCTION
+memmove(void *s1, const void *s2, size_t n)
 {
   char *s=(char*)s2, *d=(char*)s1;
 

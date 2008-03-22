@@ -32,8 +32,8 @@
  */
 
 #include "krb5_locl.h"
-__RCSID("$Heimdal: config_file_netinfo.c,v 1.3 2001/05/14 06:14:45 assar Exp $"
-        "$NetBSD: config_file_netinfo.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: config_file_netinfo.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: config_file_netinfo.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
 /*
  * Netinfo implementation from Luke Howard <lukeh@xedoc.com.au>
@@ -131,7 +131,7 @@ ni_idlist2binding(void *ni, ni_idlist *idlist, krb5_config_section **ret)
     return NI_OK;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_config_parse_file (krb5_context context,
 			const char *fname,
 			krb5_config_section **res)

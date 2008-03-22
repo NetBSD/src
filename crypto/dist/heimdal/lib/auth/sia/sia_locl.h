@@ -30,8 +30,8 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
-/* $Heimdal: sia_locl.h,v 1.3 2001/09/13 01:15:34 assar Exp $
-   $NetBSD: sia_locl.h,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $ */
+/* $Heimdal: sia_locl.h 10688 2001-09-13 01:15:34Z assar $
+   $NetBSD: sia_locl.h,v 1.2 2008/03/22 08:37:06 mlelstv Exp $ */
 
 #ifndef __sia_locl_h__
 #define __sia_locl_h__

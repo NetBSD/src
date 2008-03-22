@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2005/01/10 03:11:17 lukem Exp $
+# $NetBSD: Makefile,v 1.14 2008/03/22 08:37:26 mlelstv Exp $
 
 NOLINT=		# defined
 
@@ -18,7 +18,7 @@ MLINKS=		com_err.3 com_err_va.3 \
 		com_err.3 error_table_name.3 \
 		com_err.3 init_error_table.3 \
 		com_err.3 set_com_err_hook.3 \
-		com_err.3 reset_com_err_hook.3 
+		com_err.3 reset_com_err_hook.3
 
 .if ${USETOOLS} != "yes"
 .PHONY:		compile_et

@@ -33,16 +33,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-#ifdef __RCSID
-__RCSID("$Heimdal: warnerr.c,v 1.15 2001/07/09 14:56:51 assar Exp $"
-        "$NetBSD: warnerr.c,v 1.2 2002/09/13 19:09:01 thorpej Exp $");
-#endif
+__RCSID("$Heimdal: warnerr.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: warnerr.c,v 1.3 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 
 #include "roken.h"
 #include "err.h"
 
-void
+void ROKEN_LIB_FUNCTION
 warnerr(int doerrno, const char *fmt, va_list ap)
 {
     int sverrno = errno;

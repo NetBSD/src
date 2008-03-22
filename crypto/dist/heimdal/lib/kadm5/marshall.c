@@ -33,8 +33,8 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: marshall.c,v 1.6 1999/12/02 17:05:06 joda Exp $"
-        "$NetBSD: marshall.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: marshall.c 21745 2007-07-31 16:11:25Z lha $"
+        "$NetBSD: marshall.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 kadm5_ret_t
 kadm5_store_key_data(krb5_storage *sp,
@@ -106,7 +106,7 @@ kadm5_ret_tl_data(krb5_storage *sp,
 static kadm5_ret_t
 store_principal_ent(krb5_storage *sp,
 		    kadm5_principal_ent_t princ,
-		    u_int32_t mask)
+		    uint32_t mask)
 {
     int i;
 
@@ -174,7 +174,7 @@ kadm5_store_principal_ent(krb5_storage *sp,
 kadm5_ret_t
 kadm5_store_principal_ent_mask(krb5_storage *sp,
 			       kadm5_principal_ent_t princ,
-			       u_int32_t mask)
+			       uint32_t mask)
 {
     krb5_store_int32(sp, mask);
     return store_principal_ent (sp, princ, mask);
@@ -183,7 +183,7 @@ kadm5_store_principal_ent_mask(krb5_storage *sp,
 static kadm5_ret_t
 ret_principal_ent(krb5_storage *sp,
 		  kadm5_principal_ent_t princ,
-		  u_int32_t mask)
+		  uint32_t mask)
 {
     int i;
     int32_t tmp;
@@ -261,6 +261,8 @@ ret_principal_ent(krb5_storage *sp,
 	krb5_ret_int32(sp, &tmp);
 	princ->n_key_data = tmp;
 	princ->key_data = malloc(princ->n_key_data * sizeof(*princ->key_data));
+	if (princ->key_data == NULL)
+	    return ENOMEM;
 	for(i = 0; i < princ->n_key_data; i++)
 	    kadm5_ret_key_data(sp, &princ->key_data[i]);
     }
@@ -270,6 +272,8 @@ ret_principal_ent(krb5_storage *sp,
 	princ->tl_data = NULL;
 	for(i = 0; i < princ->n_tl_data; i++){
 	    krb5_tl_data *tp = malloc(sizeof(*tp));
+	    if (tp == NULL)
+		return ENOMEM;
 	    kadm5_ret_tl_data(sp, tp);
 	    tp->tl_data_next = princ->tl_data;
 	    princ->tl_data = tp;
@@ -288,7 +292,7 @@ kadm5_ret_principal_ent(krb5_storage *sp,
 kadm5_ret_t
 kadm5_ret_principal_ent_mask(krb5_storage *sp,
 			     kadm5_principal_ent_t princ,
-			     u_int32_t *mask)
+			     uint32_t *mask)
 {
     int32_t tmp;
 
@@ -320,8 +324,10 @@ _kadm5_unmarshal_params(krb5_context context,
 			kadm5_config_params *params)
 {
     krb5_storage *sp = krb5_storage_from_data(in);
+    int32_t mask;
     
-    krb5_ret_int32(sp, &params->mask);
+    krb5_ret_int32(sp, &mask);
+    params->mask = mask;
 	
     if(params->mask & KADM5_CONFIG_REALM)
 	krb5_ret_string(sp, &params->realm);

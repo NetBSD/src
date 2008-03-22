@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.162 2008/02/10 08:21:25 jmmv Exp $
+#	$NetBSD: Makefile,v 1.163 2008/03/22 08:37:27 mlelstv Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
@@ -37,6 +37,7 @@ SUBDIR+= hesinfo
 
 .if (${MKKERBEROS} != "no")
 SUBDIR+= compile_et kdestroy kgetcred kinit klist mk_cmds string2key
+SUBDIR+= hxtool verify_krb5_conf gss krb5-config
 .endif
 
 .if (!(${MKMODULAR} != "no"))

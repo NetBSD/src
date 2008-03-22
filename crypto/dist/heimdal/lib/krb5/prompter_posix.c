@@ -32,12 +32,11 @@
  */
 
 #include "krb5_locl.h"
-#include <openssl/ui.h>
 
-__RCSID("$Heimdal: prompter_posix.c,v 1.7 2002/09/16 17:32:11 nectar Exp $"
-        "$NetBSD: prompter_posix.c,v 1.2 2003/07/24 14:16:56 itojun Exp $");
+__RCSID("$Heimdal: prompter_posix.c 13863 2004-05-25 21:46:46Z lha $"
+        "$NetBSD: prompter_posix.c,v 1.3 2008/03/22 08:37:15 mlelstv Exp $");
 
-int
+int KRB5_LIB_FUNCTION
 krb5_prompter_posix (krb5_context context,
 		     void *data,
 		     const char *name,
@@ -51,6 +50,8 @@ krb5_prompter_posix (krb5_context context,
 	fprintf (stderr, "%s\n", name);
     if (banner)
 	fprintf (stderr, "%s\n", banner);
+    if (name || banner)
+	fflush(stderr);
     for (i = 0; i < num_prompts; ++i) {
 	if (prompts[i].hidden) {
 	    if(UI_UTIL_read_pw_string(prompts[i].reply->data,

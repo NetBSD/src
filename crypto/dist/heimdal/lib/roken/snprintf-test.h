@@ -31,8 +31,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* $Heimdal: snprintf-test.h,v 1.2 2001/07/19 18:39:14 assar Exp $
-   $NetBSD: snprintf-test.h,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $ */
+/* $Heimdal: snprintf-test.h 10377 2001-07-19 18:39:14Z assar $
+   $NetBSD: snprintf-test.h,v 1.2 2008/03/22 08:37:22 mlelstv Exp $ */
 
 #ifndef __SNPRINTF_TEST_H__
 #define __SNPRINTF_TEST_H__

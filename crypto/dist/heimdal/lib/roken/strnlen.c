@@ -33,13 +33,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: strnlen.c,v 1.7 1999/12/02 16:58:53 joda Exp $"
-        "$NetBSD: strnlen.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: strnlen.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: strnlen.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 
 #include "roken.h"
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 strnlen(const char *s, size_t len)
 {
     size_t i;

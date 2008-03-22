@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: kx.c,v 1.72 2003/04/16 17:33:02 joda Exp $"
-        "$NetBSD: kx.c,v 1.1.1.6 2003/05/15 20:28:43 lha Exp $");
+__RCSID("$Heimdal: kx.c 20452 2007-04-19 20:04:19Z lha $"
+        "$NetBSD: kx.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 static int nchild;
 static int donep;
@@ -100,7 +100,7 @@ connect_host (kx_context *kc)
     int error;
     char portstr[NI_MAXSERV];
     socklen_t addrlen;
-    int s;
+    int s = -1;
     struct sockaddr_storage thisaddr_ss;
     struct sockaddr *thisaddr = (struct sockaddr *)&thisaddr_ss;
 
@@ -209,7 +209,7 @@ doit_passive (kx_context *kc)
      int otherside;
      u_char msg[1024], *p;
      int len;
-     u_int32_t tmp;
+     uint32_t tmp;
      const char *host = kc->host;
 
      otherside = connect_host (kc);
@@ -228,7 +228,7 @@ doit_passive (kx_context *kc)
      p = msg;
      *p++ = INIT;
      len = strlen(kc->user);
-     p += KRB_PUT_INT (len, p, sizeof(msg) - 1, 4);
+     p += kx_put_int (len, p, sizeof(msg) - 1, 4);
      memcpy(p, kc->user, len);
      p += len;
      *p++ = PASSIVE | (kc->keepalive_flag ? KEEP_ALIVE : 0);
@@ -243,18 +243,18 @@ doit_passive (kx_context *kc)
      p = (u_char *)msg;
      if (*p == ERROR) {
 	 p++;
-	 p += krb_get_int (p, &tmp, 4, 0);
+	 p += kx_get_int (p, &tmp, 4, 0);
 	 errx (1, "%s: %.*s", host, (int)tmp, p);
      } else if (*p != ACK) {
 	 errx (1, "%s: strange msg %d", host, *p);
      } else
 	 p++;
-     p += krb_get_int (p, &tmp, 4, 0);
+     p += kx_get_int (p, &tmp, 4, 0);
      memcpy(display, p, tmp);
      display[tmp] = '\0';
      p += tmp;
 
-     p += krb_get_int (p, &tmp, 4, 0);
+     p += kx_get_int (p, &tmp, 4, 0);
      memcpy(xauthfile, p, tmp);
      xauthfile[tmp] = '\0';
      p += tmp;
@@ -272,13 +272,13 @@ doit_passive (kx_context *kc)
 	 p = (u_char *)msg;
 	 if (*p == ERROR) {
 	     p++;
-	     p += krb_get_int (p, &tmp, 4, 0);
+	     p += kx_get_int (p, &tmp, 4, 0);
 	     errx (1, "%s: %.*s", host, (int)tmp, p);
 	 } else if(*p != NEW_CONN) {
 	     errx (1, "%s: strange msg %d", host, *p);
 	 } else {
 	     p++;
-	     p += krb_get_int (p, &tmp, 4, 0);
+	     p += kx_get_int (p, &tmp, 4, 0);
 	 }
 	 
 	 ++nchild;
@@ -350,10 +350,10 @@ doit_active (kx_context *kc)
     u_char msg[1024], *p;
     int len = strlen(kc->user);
     int tmp, tmp2;
-    char *s;
+    char *str;
     int i;
     size_t rem;
-    u_int32_t other_port;
+    uint32_t other_port;
     int error;
     const char *host = kc->host;
 
@@ -373,7 +373,7 @@ doit_active (kx_context *kc)
     *p++ = INIT;
     --rem;
     len = strlen(kc->user);
-    tmp = KRB_PUT_INT (len, p, rem, 4);
+    tmp = kx_put_int (len, p, rem, 4);
     if (tmp < 0)
 	return 1;
     p += tmp;
@@ -384,29 +384,29 @@ doit_active (kx_context *kc)
     *p++ = (kc->keepalive_flag ? KEEP_ALIVE : 0);
     --rem;
 
-    s = getenv("DISPLAY");
-    if (s == NULL || (s = strchr(s, ':')) == NULL) 
-	s = ":0";
-    len = strlen (s);
-    tmp = KRB_PUT_INT (len, p, rem, 4);
+    str = getenv("DISPLAY");
+    if (str == NULL || (str = strchr(str, ':')) == NULL) 
+	str = ":0";
+    len = strlen (str);
+    tmp = kx_put_int (len, p, rem, 4);
     if (tmp < 0)
 	return 1;
     rem -= tmp;
     p += tmp;
-    memcpy (p, s, len);
+    memcpy (p, str, len);
     p += len;
     rem -= len;
 
-    s = getenv("XAUTHORITY");
-    if (s == NULL)
-	s = "";
-    len = strlen (s);
-    tmp = KRB_PUT_INT (len, p, rem, 4);
+    str = getenv("XAUTHORITY");
+    if (str == NULL)
+	str = "";
+    len = strlen (str);
+    tmp = kx_put_int (len, p, rem, 4);
     if (tmp < 0)
 	return 1;
     p += len;
     rem -= len;
-    memcpy (p, s, len);
+    memcpy (p, str, len);
     p += len;
     rem -= len;
 
@@ -418,10 +418,10 @@ doit_active (kx_context *kc)
 	err (1, "read from %s", host);
     p = (u_char *)msg;
     if (*p == ERROR) {
-	u_int32_t u32;
+	uint32_t u32;
 
 	p++;
-	p += krb_get_int (p, &u32, 4, 0);
+	p += kx_get_int (p, &u32, 4, 0);
 	errx (1, "%s: %.*s", host, (int)u32, p);
     } else if (*p != ACK) {
 	errx (1, "%s: strange msg %d", host, *p);
@@ -479,16 +479,16 @@ doit_active (kx_context *kc)
 	    err (1, "read from %s", host);
 	p = (u_char *)msg;
 	if (*p == ERROR) {
-	    u_int32_t val;
+	    uint32_t val;
 
 	    p++;
-	    p += krb_get_int (p, &val, 4, 0);
+	    p += kx_get_int (p, &val, 4, 0);
 	    errx (1, "%s: %.*s", host, (int)val, p);
 	} else if (*p != NEW_CONN) {
 	    errx (1, "%s: strange msg %d", host, *p);
 	} else {
 	    p++;
-	    p += krb_get_int (p, &other_port, 4, 0);
+	    p += kx_get_int (p, &other_port, 4, 0);
 	}
 
 	++nchild;
@@ -687,14 +687,14 @@ int
 main(int argc, char **argv)
 {
     int port	= 0;
-    int optind	= 0;
+    int optidx	= 0;
     int ret	= 1;
     char *host	= NULL;
 
     setprogname (argv[0]);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
-		&optind))
+		&optidx))
 	usage (1);
 
     if (help_flag)
@@ -705,10 +705,10 @@ main(int argc, char **argv)
 	return 0;
     }
 
-    if (optind != argc - 1)
+    if (optidx != argc - 1)
 	usage (1);
 
-    host = argv[optind];
+    host = argv[optidx];
 
     if (port_str) {
 	struct servent *s = roken_getservbyname (port_str, "tcp");

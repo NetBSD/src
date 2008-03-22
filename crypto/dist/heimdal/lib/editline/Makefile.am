@@ -1,21 +1,19 @@
-# $Heimdal: Makefile.am,v 1.13 2002/08/13 13:48:15 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:41:43 joda Exp $
+# $Heimdal: Makefile.am 18626 2006-10-19 18:31:46Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:37:10 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
 if do_roken_rename
-ES = snprintf.c strdup.c
+ES = snprintf.c strdup.c strlcat.c
 endif
 
-INCLUDES += $(ROKEN_RENAME)
+AM_CPPFLAGS += $(ROKEN_RENAME)
 
 man_MANS = editline.3
 
 lib_LTLIBRARIES = libeditline.la
 if el_compat
 noinst_LTLIBRARIES = libel_compat.la
-else
-noinst_LTLIBRARIES =
 endif
 
 noinst_PROGRAMS = testit
@@ -30,6 +28,7 @@ testit_LDADD = \
 include_HEADERS = editline.h
 
 libeditline_la_SOURCES = \
+	edit_locl.h \
 	complete.c \
 	editline.c \
 	sysunix.c \
@@ -38,13 +37,9 @@ libeditline_la_SOURCES = \
 	unix.h \
 	$(EXTRA_SOURCE)
 
-libeditline_la_LDFLAGS = -static
-
 EXTRA_SOURCE = $(ES) 
 
-libel_compat_la_SOURCES = edit_compat.c
-
-libel_compat_la_LDFLAGS = -static
+libel_compat_la_SOURCES = edit_compat.c edit_compat.h
 
 EXTRA_DIST = $(man_MANS)
 
@@ -52,3 +47,5 @@ snprintf.c:
 	$(LN_S) $(srcdir)/../roken/snprintf.c .
 strdup.c:
 	$(LN_S) $(srcdir)/../roken/strdup.c .
+strlcat.c:
+	$(LN_S) $(srcdir)/../roken/strlcat.c .

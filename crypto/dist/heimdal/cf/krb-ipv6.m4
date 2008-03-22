@@ -1,11 +1,11 @@
-dnl $Heimdal: krb-ipv6.m4,v 1.13.8.1 2004/04/01 07:27:34 joda Exp $
-dnl $NetBSD: krb-ipv6.m4,v 1.1.1.7 2004/04/02 14:48:06 lha Exp $
+dnl $Heimdal: krb-ipv6.m4 14166 2004-08-26 12:35:42Z joda $
+dnl $NetBSD: krb-ipv6.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 dnl test for IPv6
 dnl
 AC_DEFUN([AC_KRB_IPV6], [
 AC_ARG_WITH(ipv6,
-	AC_HELP_STRING([--without-ipv6],[do not enable IPv6 support]),[
+	AS_HELP_STRING([--without-ipv6],[do not enable IPv6 support]),[
 if test "$withval" = "no"; then
 	ac_cv_lib_ipv6=no
 fi])
@@ -90,7 +90,7 @@ fi
 ])
 
 AC_CACHE_CHECK([for IPv6], ac_cv_lib_ipv6, [
-AC_TRY_LINK([
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -103,8 +103,8 @@ AC_TRY_LINK([
 #ifdef HAVE_NETINET_IN6_H
 #include <netinet/in6.h>
 #endif
-],
-[
+]],
+[[
  struct sockaddr_in6 sin6;
  int s;
 
@@ -114,9 +114,9 @@ AC_TRY_LINK([
  sin6.sin6_port = htons(17);
  sin6.sin6_addr = in6addr_any;
  bind(s, (struct sockaddr *)&sin6, sizeof(sin6));
-],
-ac_cv_lib_ipv6=yes,
-ac_cv_lib_ipv6=no)])
+]])],
+[ac_cv_lib_ipv6=yes],
+[ac_cv_lib_ipv6=no])])
 if test "$ac_cv_lib_ipv6" = yes; then
   AC_DEFINE(HAVE_IPV6, 1, [Define if you have IPv6.])
 else
@@ -126,7 +126,7 @@ fi
 ## test for AIX missing in6addr_loopback
 if test "$ac_cv_lib_ipv6" = yes; then
 	AC_CACHE_CHECK([for in6addr_loopback],[ac_cv_var_in6addr_loopback],[
-	AC_TRY_LINK([
+	AC_LINK_IFELSE([AC_LANG_PROGRAM([[
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -138,10 +138,10 @@ if test "$ac_cv_lib_ipv6" = yes; then
 #endif
 #ifdef HAVE_NETINET_IN6_H
 #include <netinet/in6.h>
-#endif],[
+#endif]],[[
 struct sockaddr_in6 sin6;
 sin6.sin6_addr = in6addr_loopback;
-],ac_cv_var_in6addr_loopback=yes,ac_cv_var_in6addr_loopback=no)])
+]])],[ac_cv_var_in6addr_loopback=yes],[ac_cv_var_in6addr_loopback=no])])
 	if test "$ac_cv_var_in6addr_loopback" = yes; then
 		AC_DEFINE(HAVE_IN6ADDR_LOOPBACK, 1, 
 			[Define if you have the in6addr_loopback variable])

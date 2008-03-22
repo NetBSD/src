@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: warn.c,v 1.6 1999/12/02 16:58:54 joda Exp $"
-        "$NetBSD: warn.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: warn.c 7463 1999-12-02 16:58:55Z joda $"
+        "$NetBSD: warn.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 
 #include "err.h"

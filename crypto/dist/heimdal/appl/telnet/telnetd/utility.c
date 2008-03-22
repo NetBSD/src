@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -30,8 +34,8 @@
 #define PRINTOPTIONS
 #include "telnetd.h"
 
-__RCSID("$Heimdal: utility.c,v 1.27 2001/09/03 05:54:17 assar Exp $"
-        "$NetBSD: utility.c,v 1.2 2003/08/07 09:15:30 agc Exp $");
+__RCSID("$Heimdal: utility.c 15844 2005-08-08 13:36:16Z lha $"
+        "$NetBSD: utility.c,v 1.3 2008/03/22 08:36:57 mlelstv Exp $");
 
 /*
  * utility functions performing io related tasks
@@ -320,13 +324,15 @@ netflush(void)
  *    len - How many bytes to write
  */
 void
-writenet(unsigned char *ptr, int len)
+writenet(const void *ptr, size_t len)
 {
     /* flush buffer if no room for new data) */
     while ((&netobuf[BUFSIZ] - nfrontp) < len) {
 	/* if this fails, don't worry, buffer is a little big */
 	netflush();
     }
+    if ((&netobuf[BUFSIZ] - nfrontp) < len)
+	abort();
 
     memmove(nfrontp, ptr, len);
     nfrontp += len;
@@ -428,11 +434,7 @@ putchr(int cc)
     *putlocation++ = cc;
 }
 
-/*
- * This is split on two lines so that SCCS will not see the M
- * between two % signs and expand it...
- */
-static char fmtstr[] = { "%l:%M" "%P on %A, %d %B %Y" };
+static char fmtstr[] = { "%l:%M%P on %A, %d %B %Y" };
 
 void putf(char *cp, char *where)
 {
@@ -467,12 +469,7 @@ void putf(char *cp, char *where)
 	switch (*++cp) {
 
 	case 't':
-#ifdef	STREAMSPTY
-	    /* names are like /dev/pts/2 -- we want pts/2 */
 	    slash = strchr(line+1, '/');
-#else
-	    slash = strrchr(line, '/');
-#endif
 	    if (slash == (char *) 0)
 		putstr(line);
 	    else

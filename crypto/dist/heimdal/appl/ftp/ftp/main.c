@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -34,8 +38,8 @@
 #include "ftp_locl.h"
 #include <getarg.h>
 
-__RCSID("$Heimdal: main.c,v 1.33.2.1 2003/08/20 16:43:14 lha Exp $"
-        "$NetBSD: main.c,v 1.3 2004/04/02 14:59:46 lha Exp $");
+__RCSID("$Heimdal: main.c 16160 2005-10-12 09:42:47Z joda $"
+        "$NetBSD: main.c,v 1.4 2008/03/22 08:36:50 mlelstv Exp $");
 
 static int help_flag;
 static int version_flag;
@@ -58,12 +62,16 @@ struct getargs getargs[] = {
       "Packet tracing", NULL},
 #ifdef KRB5
     { "gss-bindings", 0,  arg_negative_flag, &ftp_do_gss_bindings,
-      "Use GSS-API bindings", NULL},
+      "Don't use GSS-API bindings", NULL},
+    { "gss-delegate", 0,  arg_negative_flag, &ftp_do_gss_delegate,
+      "Disable delegation of GSS-API credentials", NULL},
 #endif
     { NULL,	'v', arg_counter, &verbose,
       "verbosity", NULL},
     { NULL,	'K', arg_negative_flag, &use_kerberos,
       "Disable kerberos authentication", NULL},
+    { "encrypt", 'x', arg_flag, &doencrypt,
+      "Encrypt command and data channel if possible" },
     { "version", 0,  arg_flag, &version_flag },
     { "help",	'h', arg_flag, &help_flag },
 };

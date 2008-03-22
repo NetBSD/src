@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: kpasswd_locl.h,v 1.13 2002/09/10 20:03:48 joda Exp $
-   $NetBSD: kpasswd_locl.h,v 1.1.1.6 2002/09/12 12:41:39 joda Exp $ */
+/* $Heimdal: kpasswd_locl.h 11444 2002-09-10 20:03:49Z joda $
+   $NetBSD: kpasswd_locl.h,v 1.2 2008/03/22 08:37:03 mlelstv Exp $ */
 
 #ifndef __KPASSWD_LOCL_H__
 #define __KPASSWD_LOCL_H__

@@ -33,20 +33,20 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: ecalloc.c,v 1.1 2001/06/17 12:09:37 assar Exp $"
-        "$NetBSD: ecalloc.c,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: ecalloc.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: ecalloc.c,v 1.2 2008/03/22 08:37:20 mlelstv Exp $");
 #endif
 
 #include <stdlib.h>
 #include <err.h>
 
-#include <roken.h>
+#include "roken.h"
 
 /*
  * Like calloc but never fails.
  */
 
-void *
+void * ROKEN_LIB_FUNCTION
 ecalloc (size_t number, size_t size)
 {
     void *tmp = calloc (number, size);

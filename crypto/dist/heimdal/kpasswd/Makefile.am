@@ -1,9 +1,9 @@
-# $Heimdal: Makefile.am,v 1.16 2001/08/28 08:31:29 assar Exp $
-# $NetBSD: Makefile.am,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $
+# $Heimdal: Makefile.am 20466 2007-04-20 08:29:05Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:37:03 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_des)
+AM_CPPFLAGS += $(INCLUDE_hcrypto)
 
 man_MANS = kpasswd.1 kpasswdd.8
 
@@ -27,6 +27,8 @@ kpasswdd_LDADD = \
 	$(DBLIB)
 
 LDADD = $(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_des) \
+	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
+
+EXTRA_DIST = $(man_MANS)

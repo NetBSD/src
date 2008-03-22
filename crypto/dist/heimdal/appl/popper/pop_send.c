@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_send.c,v 1.25 1999/03/05 14:14:28 joda Exp $"
-        "$NetBSD: pop_send.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_send.c 5476 1999-03-05 14:14:28Z joda $"
+        "$NetBSD: pop_send.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /*
  *  sendline:   Send a line of a multi-line response to a client.

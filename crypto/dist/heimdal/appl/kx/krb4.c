@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: krb4.c,v 1.11.2.1 2004/02/18 19:22:30 lha Exp $"
-        "$NetBSD: krb4.c,v 1.6 2004/04/02 14:59:46 lha Exp $");
+__RCSID("$Heimdal: krb4.c 15574 2005-07-07 20:06:19Z assar $"
+        "$NetBSD: krb4.c,v 1.7 2008/03/22 08:36:51 mlelstv Exp $");
 
 #ifdef KRB4
 
@@ -365,7 +365,7 @@ recv_v4_auth (kx_context *kc, int sock, u_char *buf)
 
     c->auth     = auth;
     memcpy (c->key, &auth.session, sizeof(des_cblock));
-    memcpy (c->schedule, schedule, sizeof(schedule));
+    memcpy (&c->schedule, &schedule, sizeof(schedule));
 
     return 0;
 }

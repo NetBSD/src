@@ -25,8 +25,8 @@
 #include <config.h>
 #endif
 
-__RCSID("$Heimdal: k5dfspag.c,v 1.6 2002/08/12 15:11:58 joda Exp $"
-        "$NetBSD: k5dfspag.c,v 1.4 2002/09/12 13:19:12 joda Exp $");
+__RCSID("$Heimdal: k5dfspag.c 11081 2002-08-12 15:11:58Z joda $"
+        "$NetBSD: k5dfspag.c,v 1.5 2008/03/22 08:37:13 mlelstv Exp $");
 
 #include <krb5.h>
 

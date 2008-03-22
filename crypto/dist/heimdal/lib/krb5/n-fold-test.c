@@ -32,8 +32,8 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: n-fold-test.c,v 1.4 2001/03/12 07:42:30 assar Exp $"
-        "$NetBSD: n-fold-test.c,v 1.1.1.4 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: n-fold-test.c 21745 2007-07-31 16:11:25Z lha $"
+        "$NetBSD: n-fold-test.c,v 1.2 2008/03/22 08:37:14 mlelstv Exp $");
 
 enum { MAXSIZE = 24 };
 
@@ -103,7 +103,9 @@ main(int argc, char **argv)
     for (t = tests; t->str; ++t) {
 	int i;
 
-	_krb5_n_fold (t->str, strlen(t->str), data, t->n);
+	ret = _krb5_n_fold (t->str, strlen(t->str), data, t->n);
+	if (ret)
+	    errx(1, "out of memory");
 	if (memcmp (data, t->res, t->n) != 0) {
 	    printf ("n-fold(\"%s\", %d) failed\n", t->str, t->n);
 	    printf ("should be: ");

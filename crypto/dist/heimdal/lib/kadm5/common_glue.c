@@ -33,15 +33,15 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: common_glue.c,v 1.5 2000/03/23 22:58:26 assar Exp $"
-        "$NetBSD: common_glue.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: common_glue.c 17445 2006-05-05 10:37:46Z lha $"
+        "$NetBSD: common_glue.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 #define __CALL(F, P) (*((kadm5_common_context*)server_handle)->funcs.F)P;
 
 kadm5_ret_t
 kadm5_chpass_principal(void *server_handle,
 		       krb5_principal princ,
-		       char *password)
+		       const char *password)
 {
     return __CALL(chpass_principal, (server_handle, princ, password));
 }
@@ -59,8 +59,8 @@ kadm5_chpass_principal_with_key(void *server_handle,
 kadm5_ret_t
 kadm5_create_principal(void *server_handle,
 		       kadm5_principal_ent_t princ,
-		       u_int32_t mask,
-		       char *password)
+		       uint32_t mask,
+		       const char *password)
 {
     return __CALL(create_principal, (server_handle, princ, mask, password));
 }
@@ -88,7 +88,7 @@ kadm5_ret_t
 kadm5_get_principal(void *server_handle,
 		    krb5_principal princ,
 		    kadm5_principal_ent_t out,
-		    u_int32_t mask)
+		    uint32_t mask)
 {
     return __CALL(get_principal, (server_handle, princ, out, mask));
 }
@@ -96,7 +96,7 @@ kadm5_get_principal(void *server_handle,
 kadm5_ret_t
 kadm5_modify_principal(void *server_handle,
 		       kadm5_principal_ent_t princ,
-		       u_int32_t mask)
+		       uint32_t mask)
 {
     return __CALL(modify_principal, (server_handle, princ, mask));
 }
@@ -120,16 +120,16 @@ kadm5_rename_principal(void *server_handle,
 
 kadm5_ret_t
 kadm5_get_principals(void *server_handle,
-		     const char *exp,
+		     const char *expression,
 		     char ***princs,
 		     int *count)
 {
-    return __CALL(get_principals, (server_handle, exp, princs, count));
+    return __CALL(get_principals, (server_handle, expression, princs, count));
 }
 
 kadm5_ret_t
 kadm5_get_privs(void *server_handle,
-		u_int32_t *privs)
+		uint32_t *privs)
 {
     return __CALL(get_privs, (server_handle, privs));
 }

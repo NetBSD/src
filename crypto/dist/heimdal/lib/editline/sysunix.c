@@ -21,7 +21,7 @@
 **  Unix system-dependant routines for editline library.
 */
 #include <config.h>
-#include "editline.h"
+#include "edit_locl.h"
 
 #ifdef HAVE_TERMIOS_H
 #include <termios.h>
@@ -29,8 +29,8 @@
 #include <sgtty.h>
 #endif
 
-__RCSID("$Heimdal: sysunix.c,v 1.4 1999/04/08 13:08:24 joda Exp $"
-        "$NetBSD: sysunix.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: sysunix.c 14926 2005-04-24 18:57:16Z lha $"
+        "$NetBSD: sysunix.c,v 1.2 2008/03/22 08:37:10 mlelstv Exp $");
 
 #ifdef HAVE_TERMIOS_H
 
@@ -84,10 +84,10 @@ rl_ttyset(int Reset)
 #endif /* HAVE_TERMIOS_H */
 
 void
-rl_add_slash(char *path, char *p)
+rl_add_slash(char *path, char *p, size_t len)
 {
     struct stat	Sb;
     
     if (stat(path, &Sb) >= 0)
-	strcat(p, S_ISDIR(Sb.st_mode) ? "/" : " ");
+	strlcat(p, S_ISDIR(Sb.st_mode) ? "/" : " ", len);
 }

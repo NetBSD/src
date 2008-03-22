@@ -1,9 +1,9 @@
-# $Heimdal: Makefile.am,v 1.16 2001/08/28 11:21:16 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.6 2002/09/12 12:41:33 joda Exp $
+# $Heimdal: Makefile.am 20466 2007-04-20 08:29:05Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:36:56 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_des)
+AM_CPPFLAGS += -I$(srcdir)/.. $(INCLUDE_krb4) $(INCLUDE_hcrypto)
 
 bin_PROGRAMS = telnet
 
@@ -18,7 +18,9 @@ man_MANS = telnet.1
 LDADD = ../libtelnet/libtelnet.a \
 	$(LIB_krb5) \
 	$(LIB_krb4) \
-	$(LIB_des) \
+	$(LIB_hcrypto) \
 	$(LIB_tgetent) \
 	$(LIB_kdfs) \
 	$(LIB_roken)
+
+EXTRA_DIST = $(man_MANS)

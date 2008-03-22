@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: xdbm.h,v 1.15 2002/05/17 16:02:22 joda Exp $
-   $NetBSD: xdbm.h,v 1.1.1.5 2002/09/12 12:41:42 joda Exp $ */
+/* $Heimdal: xdbm.h 10986 2002-05-17 16:02:22Z joda $
+   $NetBSD: xdbm.h,v 1.2 2008/03/22 08:37:22 mlelstv Exp $ */
 
 /* Generic *dbm include file */
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000, 2005-2007 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,14 +33,14 @@
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
-__RCSID("$Heimdal: otp_parse.c,v 1.20 2000/07/01 13:58:38 assar Exp $"
-        "$NetBSD: otp_parse.c,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $");
+__RCSID("$Heimdal: otp_parse.c 20987 2007-06-07 21:06:00Z assar $"
+        "$NetBSD: otp_parse.c,v 1.2 2008/03/22 08:37:20 mlelstv Exp $");
 #endif
 
 #include "otp_locl.h"
 
 struct e {
-  char *s;
+  const char *s;
   unsigned n;
 };
 
@@ -49,10 +49,10 @@ extern const struct e inv_std_dict[2048];
 static int
 cmp(const void *a, const void *b)
 {
-  struct e *e1, *e2;
+  const struct e *e1, *e2;
   
-  e1 = (struct e *)a;
-  e2 = (struct e *)b;
+  e1 = (const struct e *)a;
+  e2 = (const struct e *)b;
   return strcasecmp (e1->s, e2->s);
 }
 
@@ -61,7 +61,7 @@ get_stdword (const char *s, void *v)
 {
   struct e e, *r;
 
-  e.s = (char *)s;
+  e.s = s;
   e.n = -1;
   r = (struct e *) bsearch (&e, inv_std_dict,
 			    sizeof(inv_std_dict)/sizeof(*inv_std_dict),
@@ -107,21 +107,28 @@ parse_words(unsigned wn[],
 	    int (*convert)(const char *, void *),
 	    void *arg)
 {
-  unsigned char *w, *wend, c;
+  const unsigned char *w, *wend;
+  char *wcopy;
   int i;
   int tmp;
 
-  w = (unsigned char *)str;
+  w = (const unsigned char *)str;
   for (i = 0; i < 6; ++i) {
     while (isspace(*w))
       ++w;
     wend = w;
     while (isalpha (*wend))
       ++wend;
-    c = *wend;
-    *wend = '\0';
-    tmp = (*convert)((char *)w, arg);
-    *wend = c;
+
+    tmp = wend - w;
+    wcopy = malloc(tmp + 1);
+    if (wcopy == NULL)
+	return -1;
+    memcpy(wcopy, w, tmp);
+    wcopy[tmp] = '\0';
+
+    tmp = (*convert)(wcopy, arg);
+    free(wcopy);
     w = wend;
     if (tmp < 0)
       return -1;
@@ -170,7 +177,7 @@ otp_parse_hex (OtpKey key, const char *s)
       if (b - buf >= 16)
 	return -1;
       else
-	*b++ = tolower(*s);
+	*b++ = tolower((unsigned char)*s);
     }
     s++;
   }
@@ -250,7 +257,7 @@ const char *const std_dict[2048] =
 "MOB",   "MOD",  "MOE",   "MOO",   "MOP",   "MOS",   "MOT",   "MOW",
 "MUD",   "MUG",  "MUM",   "MY",    "NAB",   "NAG",   "NAN",   "NAP",
 "NAT",   "NAY",  "NE",    "NED",   "NEE",   "NET",   "NEW",   "NIB",
-"NIIL",  "NIP",  "NIT",   "NO",    "NOB",   "NOD",   "NON",   "NOR",
+"NIL",   "NIP",  "NIT",   "NO",    "NOB",   "NOD",   "NON",   "NOR",
 "NOT",   "NOV",  "NOW",   "NU",    "NUN",   "NUT",   "O",     "OAF",
 "OAK",   "OAR",  "OAT",   "ODD",   "ODE",   "OF",    "OFF",   "OFT",
 "OH",    "OIL",  "OK",    "OLD",   "ON",    "ONE",   "OR",    "ORB",
@@ -1816,7 +1823,7 @@ const struct e inv_std_dict[2048] = {
 {"NIBS", 1568},
 {"NICE", 1569},
 {"NICK", 1570},
-{"NIIL", 351},
+{"NIL", 351},
 {"NILE", 1571},
 {"NINA", 1572},
 {"NINE", 1573},

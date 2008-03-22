@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.8 2002/08/12 15:03:43 joda Exp $
-# $NetBSD: Makefile.am,v 1.5 2002/09/12 13:18:51 joda Exp $
+# $Heimdal: Makefile.am 22279 2007-12-13 20:34:44Z lha $
+# $NetBSD: Makefile.am,v 1.6 2008/03/22 08:36:50 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -23,6 +23,12 @@ LIB_dce = -ldce
 k5dcecon_SOURCES  = k5dcecon.c k5dce.h
 
 dpagaix_SOURCES = dpagaix.c
+
+EXTRA_DIST = \
+	dfspag.exp \
+	README.dcedfs \
+	README.original \
+	testpag.c
 
 if IRIX
 LDADD = $(LIB_dce)

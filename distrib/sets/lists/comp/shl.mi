@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.61 2008/01/03 20:48:00 jdc Exp $
+# $NetBSD: shl.mi,v 1.62 2008/03/22 08:37:24 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -31,6 +31,8 @@
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libhdb_pic.a				comp-c-piclib		kerberos
+./usr/lib/libheimntlm_pic.a			comp-c-piclib		kerberos
+./usr/lib/libhx509_pic.a			comp-c-piclib		kerberos
 ./usr/lib/libintl_pic.a				comp-c-piclib
 ./usr/lib/libipsec_pic.a			comp-c-piclib
 ./usr/lib/libisc_pic.a				comp-bind-piclib

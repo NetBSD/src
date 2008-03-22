@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_rset.c,v 1.9 1998/04/23 17:38:08 joda Exp $"
-        "$NetBSD: pop_rset.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_rset.c 4794 1998-04-23 17:41:49Z joda $"
+        "$NetBSD: pop_rset.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /* 
  *  rset:   Unflag all messages flagged for deletion in a POP maildrop

@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_dropinfo.c,v 1.24 1999/09/16 20:38:49 assar Exp $"
-        "$NetBSD: pop_dropinfo.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_dropinfo.c 16226 2005-10-22 21:13:53Z lha $"
+        "$NetBSD: pop_dropinfo.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 #if defined(UIDL) || defined(XOVER)
 
@@ -98,8 +98,7 @@ add_missing_headers(POP *p, MsgInfoList *mp)
 {
 #if defined(UIDL) || defined(XOVER)
     if (mp->msg_id == NULL) {
-	asprintf(&mp->msg_id, "no-message-id-%d", mp->number);
-	if(mp->msg_id == NULL) {
+	if (asprintf(&mp->msg_id, "no-message-id-%d", mp->number) == -1) {
 	    fclose (p->drop);
 	    p->msg_count = 0;
 	    return pop_msg (p,POP_FAILURE,

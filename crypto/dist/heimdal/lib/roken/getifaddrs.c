@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 2000 - 2002, 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: getifaddrs.c,v 1.9 2002/09/05 03:36:23 assar Exp $"
-        "$NetBSD: getifaddrs.c,v 1.4 2002/09/12 13:19:20 joda Exp $");
+__RCSID("$Heimdal: getifaddrs.c 21745 2007-07-31 16:11:25Z lha $"
+        "$NetBSD: getifaddrs.c,v 1.5 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 #include "roken.h"
 
@@ -56,6 +56,21 @@ struct mbuf;
 #endif /* HAVE_NETINET_IN6_VAR_H */
 
 #include <ifaddrs.h>
+
+#ifdef __hpux
+#define lifconf if_laddrconf
+#define lifc_len iflc_len
+#define lifc_buf iflc_buf
+#define lifc_req iflc_req
+
+#define lifreq if_laddrreq
+#define lifr_addr iflr_addr
+#define lifr_name iflr_name
+#define lifr_dstaddr iflr_dstaddr
+#define lifr_broadaddr iflr_broadaddr
+#define lifr_flags iflr_flags
+#define lifr_index iflr_index
+#endif
 
 #ifdef AF_NETLINK
 
@@ -109,6 +124,7 @@ struct mbuf;
 #include <linux/rtnetlink.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/poll.h>
 #include <netpacket/packet.h>
 #include <net/ethernet.h>     /* the L2 protocols */
 #include <sys/uio.h>
@@ -173,6 +189,7 @@ ifa_sa_len(sa_family_t family, int len)
     size = (size_t)(((struct sockaddr *)NULL)->sa_data) + len;
     if (size < sizeof(struct sockaddr))
       size = sizeof(struct sockaddr);
+    break;
   }
   return size;
 }
@@ -378,13 +395,30 @@ nl_getlist(int sd, int seq,
   struct nlmsghdr *nlh = NULL;
   int status;
   int done = 0;
+  int tries = 3;
 
+ try_again:
   status = nl_sendreq(sd, request, NLM_F_ROOT|NLM_F_MATCH, &seq);
   if (status < 0)
     return status;
   if (seq == 0)
     seq = (int)time(NULL);
   while(!done){
+    struct pollfd pfd;
+
+    pfd.fd = sd;
+    pfd.events = POLLIN | POLLPRI;
+    pfd.revents = 0;
+    status = poll(&pfd, 1, 1000);
+    if (status < 0)
+	return status;
+    else if (status == 0) {
+	seq++;
+	if (tries-- > 0)
+	    goto try_again;
+	return -1;
+    }
+
     status = nl_getmsg(sd, request, seq, &nlh, &done);
     if (status < 0)
       return status;
@@ -417,16 +451,17 @@ nl_getlist(int sd, int seq,
 static void 
 free_nlmsglist(struct nlmsg_list *nlm0)
 {
-  struct nlmsg_list *nlm;
+  struct nlmsg_list *nlm, *nlm_next;
   int saved_errno;
   if (!nlm0)
     return;
   saved_errno = errno;
-  for (nlm=nlm0; nlm; nlm=nlm->nlm_next){
+  for (nlm=nlm0; nlm; nlm=nlm_next){
     if (nlm->nlh)
       free(nlm->nlh);
+    nlm_next=nlm->nlm_next;
+    free(nlm);
   }
-  free(nlm0);
   __set_errno(saved_errno);
 }
 
@@ -467,7 +502,8 @@ nl_open(void)
 }
 
 /* ====================================================================== */
-int getifaddrs(struct ifaddrs **ifap)
+int ROKEN_LIB_FUNCTION
+rk_getifaddrs(struct ifaddrs **ifap)
 {
   int sd;
   struct nlmsg_list *nlmsg_list, *nlmsg_end, *nlm;
@@ -670,6 +706,7 @@ int getifaddrs(struct ifaddrs **ifap)
 	    case IFLA_QDISC:
 	      break;
 	    default:
+	      break;
 	    }
 	    break;
 	  case RTM_NEWADDR:
@@ -710,6 +747,7 @@ int getifaddrs(struct ifaddrs **ifap)
 	    case IFA_CACHEINFO:
 	      break;
 	    default:
+	      break;
 	    }
 	  }
 	}
@@ -819,14 +857,6 @@ int getifaddrs(struct ifaddrs **ifap)
   return 0;
 }
 
-/* ---------------------------------------------------------------------- */
-void 
-freeifaddrs(struct ifaddrs *ifa)
-{
-  free(ifa);
-}
-
-
 #else /* !AF_NETLINK */
 
 /*
@@ -920,8 +950,16 @@ getifaddrs2(struct ifaddrs **ifap,
 
 	(*end)->ifa_next = NULL;
 	(*end)->ifa_name = strdup(ifr->ifr_name);
+	if ((*end)->ifa_name == NULL) {
+	    ret = ENOMEM;
+	    goto error_out;
+	}
 	(*end)->ifa_flags = ifreq.ifr_flags;
 	(*end)->ifa_addr = malloc(salen);
+	if ((*end)->ifa_addr == NULL) {
+	    ret = ENOMEM;
+	    goto error_out;
+	}
 	memcpy((*end)->ifa_addr, sa, salen);
 	(*end)->ifa_netmask = NULL;
 
@@ -929,10 +967,18 @@ getifaddrs2(struct ifaddrs **ifap,
 	/* fix these when we actually need them */
 	if(ifreq.ifr_flags & IFF_BROADCAST) {
 	    (*end)->ifa_broadaddr = malloc(sizeof(ifr->ifr_broadaddr));
+	    if ((*end)->ifa_broadaddr == NULL) {
+		ret = ENOMEM;
+		goto error_out;
+	    }
 	    memcpy((*end)->ifa_broadaddr, &ifr->ifr_broadaddr, 
 		   sizeof(ifr->ifr_broadaddr));
 	} else if(ifreq.ifr_flags & IFF_POINTOPOINT) {
 	    (*end)->ifa_dstaddr = malloc(sizeof(ifr->ifr_dstaddr));
+	    if ((*end)->ifa_dstaddr == NULL) {
+		ret = ENOMEM;
+		goto error_out;
+	    }
 	    memcpy((*end)->ifa_dstaddr, &ifr->ifr_dstaddr, 
 		   sizeof(ifr->ifr_dstaddr));
 	} else
@@ -951,7 +997,7 @@ getifaddrs2(struct ifaddrs **ifap,
     free(buf);
     return 0;
   error_out:
-    freeifaddrs(start);
+    rk_freeifaddrs(start);
     close(fd);
     free(buf);
     errno = ret;
@@ -989,8 +1035,10 @@ getlifaddrs2(struct ifaddrs **ifap,
 	    ret = ENOMEM;
 	    goto error_out;
 	}
+#ifndef __hpux
 	ifconf.lifc_family = AF_UNSPEC;
 	ifconf.lifc_flags  = 0;
+#endif
 	ifconf.lifc_len    = buf_size;
 	ifconf.lifc_buf    = buf;
 
@@ -1041,11 +1089,23 @@ getlifaddrs2(struct ifaddrs **ifap,
 	}
 
 	*end = malloc(sizeof(**end));
+	if (*end == NULL) {
+	    ret = ENOMEM;
+	    goto error_out;
+	}
 
 	(*end)->ifa_next = NULL;
 	(*end)->ifa_name = strdup(ifr->lifr_name);
+	if ((*end)->ifa_name == NULL) {
+	    ret = ENOMEM;
+	    goto error_out;
+	}
 	(*end)->ifa_flags = ifreq.lifr_flags;
 	(*end)->ifa_addr = malloc(salen);
+	if ((*end)->ifa_addr == NULL) {
+	    ret = ENOMEM;
+	    goto error_out;
+	}
 	memcpy((*end)->ifa_addr, sa, salen);
 	(*end)->ifa_netmask = NULL;
 
@@ -1053,10 +1113,18 @@ getlifaddrs2(struct ifaddrs **ifap,
 	/* fix these when we actually need them */
 	if(ifreq.ifr_flags & IFF_BROADCAST) {
 	    (*end)->ifa_broadaddr = malloc(sizeof(ifr->ifr_broadaddr));
+	    if ((*end)->ifa_broadaddr == NULL) {
+		ret = ENOMEM;
+		goto error_out;
+	    }
 	    memcpy((*end)->ifa_broadaddr, &ifr->ifr_broadaddr, 
 		   sizeof(ifr->ifr_broadaddr));
 	} else if(ifreq.ifr_flags & IFF_POINTOPOINT) {
 	    (*end)->ifa_dstaddr = malloc(sizeof(ifr->ifr_dstaddr));
+	    if ((*end)->ifa_dstaddr == NULL) {
+		ret = ENOMEM;
+		goto error_out;
+	    }
 	    memcpy((*end)->ifa_dstaddr, &ifr->ifr_dstaddr, 
 		   sizeof(ifr->ifr_dstaddr));
 	} else
@@ -1075,7 +1143,7 @@ getlifaddrs2(struct ifaddrs **ifap,
     free(buf);
     return 0;
   error_out:
-    freeifaddrs(start);
+    rk_freeifaddrs(start);
     close(fd);
     free(buf);
     errno = ret;
@@ -1083,8 +1151,8 @@ getlifaddrs2(struct ifaddrs **ifap,
 }
 #endif /* defined(HAVE_IPV6) && defined(SIOCGLIFCONF) && defined(SIOCGLIFFLAGS) */
 
-int
-getifaddrs(struct ifaddrs **ifap) 
+int ROKEN_LIB_FUNCTION
+rk_getifaddrs(struct ifaddrs **ifap) 
 {
     int ret = -1;
     errno = ENXIO;
@@ -1111,8 +1179,10 @@ getifaddrs(struct ifaddrs **ifap)
     return ret;
 }
 
-void
-freeifaddrs(struct ifaddrs *ifp)
+#endif /* !AF_NETLINK */
+
+void ROKEN_LIB_FUNCTION
+rk_freeifaddrs(struct ifaddrs *ifp)
 {
     struct ifaddrs *p, *q;
     
@@ -1131,8 +1201,6 @@ freeifaddrs(struct ifaddrs *ifp)
 	free(q);
     }
 }
-
-#endif /* !AF_NETLINK */
 
 #ifdef TEST
 

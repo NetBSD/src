@@ -33,13 +33,13 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: lstat.c,v 1.4 1999/12/02 16:58:51 joda Exp $"
-        "$NetBSD: lstat.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: lstat.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: lstat.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include "roken.h"
 
-int
+int ROKEN_LIB_FUNCTION
 lstat(const char *path, struct stat *buf)
 {
   return stat(path, buf);

@@ -1,16 +1,16 @@
-# $Heimdal: Makefile.am,v 1.26 2001/09/06 12:18:34 assar Exp $
-# $NetBSD: Makefile.am,v 1.1.1.5 2002/09/12 12:41:35 joda Exp $
+# $Heimdal: Makefile.am 21031 2007-06-09 05:00:27Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:36:50 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += -I$(srcdir)/../common $(INCLUDE_krb4) -DFTP_SERVER
+AM_CPPFLAGS += -I$(srcdir)/../common $(INCLUDE_krb4) -DFTP_SERVER
 
 libexec_PROGRAMS = ftpd
 
 CHECK_LOCAL = 
 
 if KRB4
-krb4_sources = krb4.c kauth.c
+krb4_sources = krb4.c
 endif
 if KRB5
 krb5_sources = gssapi.c gss_userok.c
@@ -26,6 +26,8 @@ ftpd_SOURCES =		\
 	pathnames.h	\
 	popen.c		\
 	security.c	\
+	kauth.c		\
+	klist.c		\
 	$(krb4_sources) \
 	$(krb5_sources)
 
@@ -42,7 +44,7 @@ krb4.c:
 gssapi.c:
 	@test -f gssapi.c || $(LN_S) $(srcdir)/../ftp/gssapi.c .
 
-CLEANFILES = security.c security.h krb4.c gssapi.c ftpcmd.c
+CLEANFILES = security.c security.h krb4.c gssapi.c
 
 man_MANS = ftpd.8 ftpusers.5
 
@@ -52,5 +54,7 @@ LDADD = ../common/libcommon.a \
 	$(LIB_krb5) \
 	$(LIB_kafs) \
 	$(LIB_krb4) \
-	$(LIB_des) \
+	$(LIB_hcrypto) \
 	$(LIB_roken)
+
+EXTRA_DIST = $(man_MANS)

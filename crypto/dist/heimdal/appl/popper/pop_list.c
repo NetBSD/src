@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_list.c,v 1.10 1998/04/23 17:37:47 joda Exp $"
-        "$NetBSD: pop_list.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_list.c 4794 1998-04-23 17:41:49Z joda $"
+        "$NetBSD: pop_list.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /* 
  *  list:   List the contents of a POP maildrop

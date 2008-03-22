@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.3 2003/08/07 09:15:32 agc Exp $	*/
+/*	$NetBSD: unvis.c,v 1.4 2008/03/22 08:37:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -32,10 +32,10 @@
 #if 1
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: unvis.c,v 1.2 2000/12/06 21:41:46 joda Exp $"
-        "$NetBSD: unvis.c,v 1.3 2003/08/07 09:15:32 agc Exp $");
+__RCSID("$Heimdal: unvis.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: unvis.c,v 1.4 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
-#include <roken.h>
+#include "roken.h"
 #ifndef _DIAGASSERT
 #define _DIAGASSERT(X)
 #endif
@@ -45,7 +45,7 @@ __RCSID("$Heimdal: unvis.c,v 1.2 2000/12/06 21:41:46 joda Exp $"
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.3 2003/08/07 09:15:32 agc Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.4 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -83,12 +83,17 @@ __warn_references(unvis,
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
 
+int ROKEN_LIB_FUNCTION
+	rk_strunvis (char *, const char *);
+int ROKEN_LIB_FUNCTION
+	rk_unvis (char *, int, int *, int);
+
 /*
  * unvis - decode characters previously encoded by vis
  */
-#ifndef HAVE_UNVIS
-int
-unvis(char *cp, int c, int *astate, int flag)
+
+int ROKEN_LIB_FUNCTION
+rk_unvis(char *cp, int c, int *astate, int flag)
 {
 
 	_DIAGASSERT(cp != NULL);
@@ -241,7 +246,6 @@ unvis(char *cp, int c, int *astate, int flag)
 		return (UNVIS_SYNBAD);
 	}
 }
-#endif
 
 /*
  * strunvis - decode src into dst 
@@ -250,9 +254,8 @@ unvis(char *cp, int c, int *astate, int flag)
  *	Dst is null terminated.
  */
 
-#ifndef HAVE_STRUNVIS
-int
-strunvis(char *dst, const char *src)
+int ROKEN_LIB_FUNCTION
+rk_strunvis(char *dst, const char *src)
 {
 	char c;
 	char *start = dst;
@@ -263,7 +266,7 @@ strunvis(char *dst, const char *src)
 
 	while ((c = *src++) != '\0') {
 	again:
-		switch (unvis(dst, c, &state, 0)) {
+		switch (rk_unvis(dst, (unsigned char)c, &state, 0)) {
 		case UNVIS_VALID:
 			dst++;
 			break;
@@ -277,9 +280,8 @@ strunvis(char *dst, const char *src)
 			return (-1);
 		}
 	}
-	if (unvis(dst, c, &state, UNVIS_END) == UNVIS_VALID)
+	if (unvis(dst, (unsigned char)c, &state, UNVIS_END) == UNVIS_VALID)
 		dst++;
 	*dst = '\0';
 	return (dst - start);
 }
-#endif

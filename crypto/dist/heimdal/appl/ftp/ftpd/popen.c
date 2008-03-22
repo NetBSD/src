@@ -13,7 +13,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -33,8 +37,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: popen.c,v 1.26 2002/04/02 11:57:39 joda Exp $"
-        "$NetBSD: popen.c,v 1.2 2003/08/07 09:15:21 agc Exp $");
+__RCSID("$Heimdal: popen.c 10900 2002-04-02 11:57:39Z joda $"
+        "$NetBSD: popen.c,v 1.3 2008/03/22 08:36:51 mlelstv Exp $");
 #endif
 
 #include <sys/types.h>

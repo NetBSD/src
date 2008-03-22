@@ -31,9 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "krb5_locl.h"
+#include <err.h>
 
-__RCSID("$Heimdal: string-to-key-test.c,v 1.7 2001/05/11 16:15:27 joda Exp $"
-        "$NetBSD: string-to-key-test.c,v 1.1.1.5 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: string-to-key-test.c 16344 2005-12-02 15:15:43Z lha $"
+        "$NetBSD: string-to-key-test.c,v 1.2 2008/03/22 08:37:15 mlelstv Exp $");
 
 enum { MAXSIZE = 24 };
 
@@ -49,10 +50,12 @@ static struct testcase {
      {0xfe, 0x67, 0xbf, 0x9e, 0x57, 0x6b, 0xfe, 0x52}},
     {"assar/liten@FOO.SE", "hemligt", ETYPE_DES_CBC_MD5,
      {0x5b, 0x9b, 0xcb, 0xf2, 0x97, 0x43, 0xc8, 0x40}},
+#if 0
     {"@", "", ETYPE_DES3_CBC_SHA1,
      {0xce, 0xa2, 0x2f, 0x9b, 0x52, 0x2c, 0xb0, 0x15, 0x6e, 0x6b, 0x64,
       0x73, 0x62, 0x64, 0x73, 0x4f, 0x6e, 0x73, 0xce, 0xa2, 0x2f, 0x9b,
       0x52, 0x57}},
+#endif
     {"nisse@FOO.SE", "hej", ETYPE_DES3_CBC_SHA1,
      {0x0e, 0xbc, 0x23, 0x9d, 0x68, 0x46, 0xf2, 0xd5, 0x51, 0x98, 0x5b,
       0x57, 0xc1, 0x57, 0x01, 0x79, 0x04, 0xc4, 0xe9, 0xfe, 0xc1, 0x0e,
@@ -131,6 +134,8 @@ main(int argc, char **argv)
 	    printf ("\n");
 	    val = 1;
 	}
+	krb5_free_keyblock_contents(context, &key);
     }
+    krb5_free_context(context);
     return val;
 }

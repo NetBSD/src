@@ -25,8 +25,8 @@
 
 #include "login_locl.h"
 
-__RCSID("$Heimdal: login_access.c,v 1.2 2001/06/04 14:09:45 assar Exp $"
-        "$NetBSD: login_access.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: login_access.c 10020 2001-06-04 14:10:19Z assar $"
+        "$NetBSD: login_access.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
  /* Delimiters for fields and for lists of users, ttys or hosts. */
 

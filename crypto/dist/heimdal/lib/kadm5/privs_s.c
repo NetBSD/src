@@ -33,11 +33,11 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: privs_s.c,v 1.2 1999/12/02 17:05:07 joda Exp $"
-        "$NetBSD: privs_s.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: privs_s.c 17445 2006-05-05 10:37:46Z lha $"
+        "$NetBSD: privs_s.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 kadm5_ret_t
-kadm5_s_get_privs(void *server_handle, u_int32_t *privs)
+kadm5_s_get_privs(void *server_handle, uint32_t *privs)
 {
     kadm5_server_context *context = server_handle;
     *privs = context->acl_flags;

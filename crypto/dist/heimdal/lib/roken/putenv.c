@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: putenv.c,v 1.7 2000/03/26 23:08:24 assar Exp $"
-        "$NetBSD: putenv.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: putenv.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: putenv.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #include <stdlib.h>
@@ -49,7 +49,7 @@ extern char **environ;
  *      value by altering an existing variable or creating a new one.
  */
 
-int
+int ROKEN_LIB_FUNCTION
 putenv(const char *string)
 {
     int i;

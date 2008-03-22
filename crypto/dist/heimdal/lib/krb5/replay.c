@@ -34,14 +34,14 @@
 #include "krb5_locl.h"
 #include <vis.h>
 
-__RCSID("$Heimdal: replay.c,v 1.9 2001/07/03 19:33:13 assar Exp $"
-        "$NetBSD: replay.c,v 1.1.1.6 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: replay.c 17047 2006-04-10 17:13:49Z lha $"
+        "$NetBSD: replay.c,v 1.2 2008/03/22 08:37:15 mlelstv Exp $");
 
 struct krb5_rcache_data {
     char *name;
 };
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_resolve(krb5_context context,
 		krb5_rcache id,
 		const char *name)
@@ -54,11 +54,12 @@ krb5_rc_resolve(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_resolve_type(krb5_context context,
 		     krb5_rcache *id,
 		     const char *type)
 {
+    *id = NULL;
     if(strcmp(type, "FILE")) {
 	krb5_set_error_string (context, "replay cache type %s not supported",
 			       type);
@@ -72,12 +73,15 @@ krb5_rc_resolve_type(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_resolve_full(krb5_context context,
 		     krb5_rcache *id,
 		     const char *string_name)
 {
     krb5_error_code ret;
+
+    *id = NULL;
+
     if(strncmp(string_name, "FILE:", 5)) {
 	krb5_set_error_string (context, "replay cache type %s not supported",
 			       string_name);
@@ -87,22 +91,26 @@ krb5_rc_resolve_full(krb5_context context,
     if(ret)
 	return ret;
     ret = krb5_rc_resolve(context, *id, string_name + 5);
+    if (ret) {
+	krb5_rc_close(context, *id);
+	*id = NULL;
+    }
     return ret;
 }
 
-const char *
+const char* KRB5_LIB_FUNCTION
 krb5_rc_default_name(krb5_context context)
 {
     return "FILE:/var/run/default_rcache";
 }
 
-const char *
+const char* KRB5_LIB_FUNCTION
 krb5_rc_default_type(krb5_context context)
 {
     return "FILE";
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_default(krb5_context context,
 		krb5_rcache *id)
 {
@@ -114,7 +122,7 @@ struct rc_entry{
     unsigned char data[16];
 };
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_initialize(krb5_context context,
 		   krb5_rcache id,
 		   krb5_deltat auth_lifespan)
@@ -135,14 +143,14 @@ krb5_rc_initialize(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_recover(krb5_context context,
 		krb5_rcache id)
 {
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_destroy(krb5_context context,
 		krb5_rcache id)
 {
@@ -157,7 +165,7 @@ krb5_rc_destroy(krb5_context context,
     return krb5_rc_close(context, id);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_close(krb5_context context,
 	      krb5_rcache id)
 {
@@ -182,7 +190,7 @@ checksum_authenticator(Authenticator *auth, void *data)
     MD5_Final (data, &md5);
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_store(krb5_context context,
 	      krb5_rcache id,
 	      krb5_donot_replay *rep)
@@ -230,14 +238,14 @@ krb5_rc_store(krb5_context context,
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_expunge(krb5_context context,
 		krb5_rcache id)
 {
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_rc_get_lifespan(krb5_context context,
 		     krb5_rcache id,
 		     krb5_deltat *auth_lifespan)
@@ -255,21 +263,21 @@ krb5_rc_get_lifespan(krb5_context context,
     return KRB5_RC_IO_UNKNOWN;
 }
 
-const char*
+const char* KRB5_LIB_FUNCTION
 krb5_rc_get_name(krb5_context context,
 		 krb5_rcache id)
 {
     return id->name;
 }
 		 
-const char*
+const char* KRB5_LIB_FUNCTION
 krb5_rc_get_type(krb5_context context,
 		 krb5_rcache id)
 {
     return "FILE";
 }
 		 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_get_server_rcache(krb5_context context, 
 		       const krb5_data *piece, 
 		       krb5_rcache *id)

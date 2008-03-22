@@ -33,20 +33,20 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: eread.c,v 1.2 1999/12/02 16:58:45 joda Exp $"
-        "$NetBSD: eread.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: eread.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: eread.c,v 1.2 2008/03/22 08:37:20 mlelstv Exp $");
 #endif
 
 #include <unistd.h>
 #include <err.h>
 
-#include <roken.h>
+#include "roken.h"
 
 /*
  * Like read but never fails (and never returns partial data).
  */
 
-ssize_t
+ssize_t ROKEN_LIB_FUNCTION
 eread (int fd, void *buf, size_t nbytes)
 {
     ssize_t ret;

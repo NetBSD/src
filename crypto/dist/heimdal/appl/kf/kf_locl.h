@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: kf_locl.h,v 1.3 2002/09/04 20:29:04 joda Exp $
-   $NetBSD: kf_locl.h,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $ */
+/* $Heimdal: kf_locl.h 11376 2002-09-04 20:29:04Z joda $
+   $NetBSD: kf_locl.h,v 1.2 2008/03/22 08:36:51 mlelstv Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

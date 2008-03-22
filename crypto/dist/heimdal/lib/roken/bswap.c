@@ -36,12 +36,12 @@
 #endif
 #include "roken.h"
 
-__RCSID("$Heimdal: bswap.c,v 1.3 2001/05/18 15:32:11 joda Exp $"
-        "$NetBSD: bswap.c,v 1.1.1.2 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: bswap.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: bswap.c,v 1.2 2008/03/22 08:37:20 mlelstv Exp $");
 
 #ifndef HAVE_BSWAP32
 
-unsigned int
+unsigned int ROKEN_LIB_FUNCTION
 bswap32 (unsigned int val)
 {
     return (val & 0xff) << 24 |
@@ -53,7 +53,7 @@ bswap32 (unsigned int val)
 
 #ifndef HAVE_BSWAP16
 
-unsigned short
+unsigned short ROKEN_LIB_FUNCTION
 bswap16 (unsigned short val)
 {
     return (val & 0xff) << 8 |

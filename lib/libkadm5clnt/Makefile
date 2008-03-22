@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2007/05/28 12:06:19 tls Exp $
+# $NetBSD: Makefile,v 1.24 2008/03/22 08:37:26 mlelstv Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -30,9 +30,10 @@ DPSRCS+=	kadm5_err.h
 CLEANFILES+=	kadm5_err.h kadm5_err.c
 
 SRCS	 =		\
+	ad.c		\
 	chpass_c.c	\
-	common_glue.c	\
 	client_glue.c	\
+	common_glue.c	\
 	create_c.c	\
 	delete_c.c	\
 	destroy_c.c	\
@@ -41,14 +42,12 @@ SRCS	 =		\
 	get_c.c		\
 	get_princs_c.c	\
 	init_c.c	\
-	kadm5_err.c	\
 	marshall.c	\
 	modify_c.c	\
 	privs_c.c	\
 	randkey_c.c	\
 	rename_c.c	\
 	send_recv.c	\
-	client_glue.c	\
 	$(ERR_FILES)
 
 INCS=		kadm5_err.h admin.h kadm5-protos.h private.h kadm5-private.h

@@ -32,8 +32,8 @@
  */
 
 #include "kf_locl.h"
-__RCSID("$Heimdal: kfd.c,v 1.11 2003/04/16 15:40:24 lha Exp $"
-        "$NetBSD: kfd.c,v 1.1.1.6 2003/05/15 20:28:41 lha Exp $");
+__RCSID("$Heimdal: kfd.c 15246 2005-05-27 13:47:20Z lha $"
+        "$NetBSD: kfd.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 krb5_context context;
 char krb5_tkfile[MAXPATHLEN];
@@ -113,7 +113,7 @@ kfd_match_version(const void *arg, const char *version)
 	       version[0] == '0' &&
 	       version[1] == '.' &&
 	       (version[2] == '4' || version[2] == '3') &&
-	       islower(version[3])) {
+	       islower((unsigned char)version[3])) {
 	protocol_version = 0;
 	return TRUE;
     }
@@ -236,7 +236,8 @@ proto (int sock, const char *service)
     if (tk_file.length != 1)
 	snprintf (ccname, sizeof(ccname), "%s", (char *)(tk_file.data));
     else
-	snprintf (ccname, sizeof(ccname), "FILE:/tmp/krb5cc_%u",pwd->pw_uid);
+	snprintf (ccname, sizeof(ccname), "FILE:/tmp/krb5cc_%lu",
+		  (unsigned long)pwd->pw_uid);
 
     status = krb5_cc_resolve (context, ccname, &ccache);
     if (status) {

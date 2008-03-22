@@ -1,5 +1,5 @@
-# $Heimdal: Makefile.am,v 1.5 2000/11/15 22:51:08 assar Exp $
-# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $
+# $Heimdal: Makefile.am 20466 2007-04-20 08:29:05Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:36:51 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
@@ -14,6 +14,8 @@ kf_SOURCES = kf.c kf_locl.h
 kfd_SOURCES = kfd.c kf_locl.h
 
 LDADD = $(top_builddir)/lib/krb5/libkrb5.la \
-	$(LIB_des) \
+	$(LIB_hcrypto) \
 	$(top_builddir)/lib/asn1/libasn1.la \
 	$(LIB_roken)
+
+EXTRA_DIST = $(man_MANS)

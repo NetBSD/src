@@ -1,6 +1,6 @@
 #
-# $Heimdal: services.append,v 1.6 2001/08/08 15:48:37 assar Exp $
-# $NetBSD: services.append,v 1.1.1.4 2002/09/12 12:41:39 joda Exp $
+# $Heimdal: services.append 10452 2001-08-08 15:48:37Z assar $
+# $NetBSD: services.append,v 1.2 2008/03/22 08:37:02 mlelstv Exp $
 #
 # Kerberos services
 #

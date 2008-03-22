@@ -1,9 +1,9 @@
-# $Heimdal: Makefile.am,v 1.12 2000/11/15 22:51:08 assar Exp $
-# $NetBSD: Makefile.am,v 1.1.1.4 2002/09/12 12:41:34 joda Exp $
+# $Heimdal: Makefile.am 20466 2007-04-20 08:29:05Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:36:51 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_krb4) $(X_CFLAGS)
+AM_CPPFLAGS += $(INCLUDE_krb4) $(X_CFLAGS)
 
 WFLAGS += $(WFLAGS_NOIMPLICITINT)
 
@@ -49,7 +49,7 @@ kxd_SOURCES = \
 
 EXTRA_kxd_SOURCES = writeauth.c
 
-EXTRA_DIST = rxterm.in rxtelnet.in tenletxr.in
+EXTRA_DIST = rxterm.in rxtelnet.in tenletxr.in $(man_MANS)
 
 man_MANS = kx.1 rxtelnet.1 rxterm.1 tenletxr.1 kxd.8
 
@@ -67,8 +67,8 @@ tenletxr: tenletxr.in
 
 LDADD = \
 	$(LIB_kafs)				\
-	$(LIB_krb5) \
+	$(LIB_krb5) 				\
 	$(LIB_krb4)				\
-	$(LIB_des)	\
+	$(LIB_hcrypto)				\
 	$(LIB_roken)				\
 	$(X_LIBS) $(LIB_XauReadAuth) $(X_PRE_LIBS) $(X_EXTRA_LIBS)

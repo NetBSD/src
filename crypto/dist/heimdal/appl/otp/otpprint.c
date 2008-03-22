@@ -34,8 +34,8 @@
 #include "otp_locl.h"
 #include <getarg.h>
 
-__RCSID("$Heimdal: otpprint.c,v 1.14 2001/02/20 01:44:46 assar Exp $"
-        "$NetBSD: otpprint.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: otpprint.c 12753 2003-09-03 09:37:03Z lha $"
+        "$NetBSD: otpprint.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 static int extendedp;
 static int count = 10;
@@ -80,7 +80,7 @@ print (int argc,
       usage (1);
   n = atoi(argv[0]);
   seed = argv[1];
-  if (des_read_pw_string (pw, sizeof(pw), "Pass-phrase: ", 0))
+  if (UI_UTIL_read_pw_string (pw, sizeof(pw), "Pass-phrase: ", 0))
     return 1;
   alg->init (key, pw, seed);
   for (i = 0; i < n; ++i) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1999-2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1999-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,10 +31,11 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "hdb_locl.h"
+#include <hex.h>
 #include <ctype.h>
 
-__RCSID("$Heimdal: print.c,v 1.8 2002/05/24 15:18:02 joda Exp $"
-        "$NetBSD: print.c,v 1.1.1.5 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: print.c 16378 2005-12-12 12:40:12Z lha $"
+        "$NetBSD: print.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 /* 
    This is the present contents of a dump line. This might change at
@@ -92,8 +93,9 @@ append_hex(krb5_context context, krb5_storage *sp, krb5_data *data)
     if(printable)
 	return append_string(context, sp, "\"%.*s\"",
 			     data->length, data->data);
-    for(i = 0; i < data->length; i++) 
-	append_string(context, sp, "%02x", ((unsigned char*)data->data)[i]);
+    hex_encode(data->data, data->length, &p);
+    append_string(context, sp, "%s", p);
+    free(p);
     return 0;
 }
 
@@ -199,11 +201,41 @@ entry2string_int (krb5_context context, krb5_storage *sp, hdb_entry *ent)
 
     /* --- generation number */
     if(ent->generation) {
-	append_string(context, sp, "%s:%d:%d", time2str(ent->generation->time),
+	append_string(context, sp, "%s:%d:%d ", time2str(ent->generation->time),
 		      ent->generation->usec,
 		      ent->generation->gen);
     } else
+	append_string(context, sp, "- ");
+
+    /* --- extensions */
+    if(ent->extensions && ent->extensions->len > 0) {
+	for(i = 0; i < ent->extensions->len; i++) {
+	    void *d;
+	    size_t size, sz;
+
+	    ASN1_MALLOC_ENCODE(HDB_extension, d, size,
+			       &ent->extensions->val[i], &sz, ret);
+	    if (ret) {
+		krb5_clear_error_string(context);
+		return ret;
+	    }
+	    if(size != sz)
+		krb5_abortx(context, "internal asn.1 encoder error");
+
+	    if (hex_encode(d, size, &p) < 0) {
+		free(d);
+		krb5_set_error_string(context, "malloc: out of memory");
+		return ENOMEM;
+	    }
+
+	    free(d);
+	    append_string(context, sp, "%s%s", p, 
+			  ent->extensions->len - 1 != i ? ":" : "");
+	    free(p);
+	}
+    } else
 	append_string(context, sp, "-");
+
     
     return 0;
 }
@@ -237,7 +269,7 @@ hdb_entry2string (krb5_context context, hdb_entry *ent, char **str)
 /* print a hdb_entry to (FILE*)data; suitable for hdb_foreach */
 
 krb5_error_code
-hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry, void *data)
+hdb_print_entry(krb5_context context, HDB *db, hdb_entry_ex *entry, void *data)
 {
     krb5_error_code ret;
     krb5_storage *sp;
@@ -251,7 +283,7 @@ hdb_print_entry(krb5_context context, HDB *db, hdb_entry *entry, void *data)
 	return ENOMEM;
     }
     
-    ret = entry2string_int(context, sp, entry);
+    ret = entry2string_int(context, sp, &entry->entry);
     if(ret) {
 	krb5_storage_free(sp);
 	return ret;

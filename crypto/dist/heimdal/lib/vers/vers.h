@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: vers.h,v 1.1 2000/07/01 19:47:36 assar Exp $
-   $NetBSD: vers.h,v 1.2 2002/09/12 13:19:24 joda Exp $ */
+/* $Heimdal: vers.h 8513 2000-07-01 19:47:36Z assar $
+   $NetBSD: vers.h,v 1.3 2008/03/22 08:37:23 mlelstv Exp $ */
 
 #ifndef __VERS_H__
 #define __VERS_H__
