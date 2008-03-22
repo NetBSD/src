@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.30 2008/01/04 22:55:25 ad Exp $	*/
+/*	$NetBSD: intr.h,v 1.31 2008/03/22 18:32:20 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -81,26 +81,26 @@ splraiseipl(ipl_cookie_t icookie)
 	return _splraise(icookie._spl);
 }
 
+#define NCPU_INT	6
+#define NICU_INT	16
+
 struct cobalt_intrhand {
 	LIST_ENTRY(cobalt_intrhand) ih_q;
 	int (*ih_func)(void *);
 	void *ih_arg;
-	int ih_type;
+	int ih_irq;
 	int ih_cookie_type;
 #define	COBALT_COOKIE_TYPE_CPU	0x1
 #define	COBALT_COOKIE_TYPE_ICU	0x2
-
-	struct evcnt ih_evcnt;
-	char ih_evname[32];
 };
 
 #include <mips/softintr.h>
 
+void intr_init(void);
 void *cpu_intr_establish(int, int, int (*)(void *), void *);
 void *icu_intr_establish(int, int, int, int (*)(void *), void *);
 void cpu_intr_disestablish(void *);
 void icu_intr_disestablish(void *);
-void icu_init(void);
 
 #endif /* !_LOCORE */
 #endif /* _LOCORE */
