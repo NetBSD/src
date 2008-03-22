@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.192 2008/03/21 21:58:57 ad Exp $
+	$NetBSD: syscalls.master,v 1.193 2008/03/22 14:20:09 ad Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -691,8 +691,8 @@
 341	STD		{ int sys_pmc_get_info(int ctr, int op, void *args); }
 342	STD		{ int sys_pmc_control(int ctr, int op, void *args); }
 343	STD MPSAFE	{ int sys_rasctl(void *addr, size_t len, int op); }
-344	STD MPSAFE	{ int sys_kqueue(void); }
-345	STD MPSAFE	{ int sys_kevent(int fd, \
+344	STD 		{ int sys_kqueue(void); }
+345	STD 		{ int sys_kevent(int fd, \
 			    const struct kevent *changelist, size_t nchanges, \
 			    struct kevent *eventlist, size_t nevents, \
 			    const struct timespec *timeout); }
