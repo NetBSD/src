@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.98 2008/03/21 21:35:43 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.99 2008/03/22 14:19:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.98 2008/03/21 21:35:43 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.99 2008/03/22 14:19:27 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -917,6 +917,16 @@ pthread__cleanup_pop(int ex, void *store)
 		(*entry->ptc_cleanup)(entry->ptc_arg);
 }
 
+
+int *
+pthread__errno(void)
+{
+	pthread_t self;
+
+	self = pthread__self();
+
+	return &(self->pt_errno);
+}
 
 ssize_t	_sys_write(int, const void *, size_t);
 
