@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: heimdal2netbsd,v 1.11 2008/03/22 08:36:49 mlelstv Exp $
+# $NetBSD: heimdal2netbsd,v 1.12 2008/03/22 13:08:21 mlelstv Exp $
 
 if [ \! -f kuser/kinit.c ]; then 
 	echo "`basename $0`: should be run in top src directory" 1>&2
@@ -40,7 +40,7 @@ done
 echo 'Changing CVS Id tags to Heimdal tags.'
 
 perl -i~ -p -e '
- s,RCSID\("\$Id([^\$]*)\$"\),__RCSID("\$Heimdal\1\$"\n        "\$NetBSD\$"),;
+ s,RCSID *\("\$Id([^\$]*)\$"\),__RCSID("\$Heimdal\1\$"\n        "\$NetBSD\$"),;
  s,/\* \$Id([^\$]*)\$ \*/,/* \$Heimdal\1\$\n   \$NetBSD\$ */,;
  s,# \$Id([^\$]*)\$,# \$Heimdal\1\$\n# \$NetBSD\$,;
  s,\.\\" \$Id([^\$]*)\$,.\\" \$Heimdal\1\$\n.\\" \$NetBSD\$,;
