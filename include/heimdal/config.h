@@ -5,8 +5,8 @@
 #include "nbtool_config.h"
 #else
 
-#ifndef RCSID
-#define RCSID(msg) \
+#ifndef __RCSID
+#define __RCSID(msg) \
 static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #endif
 
