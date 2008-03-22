@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.212 2008/03/14 15:40:02 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.213 2008/03/22 04:15:49 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.212 2008/03/14 15:40:02 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2008/03/22 04:15:49 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1345,14 +1345,12 @@ pmap_destroy(pm)
 	}
 	DPRINTF(PDB_DESTROY, ("pmap_destroy: freeing pmap %p\n", pm));
 #ifdef MULTIPROCESSOR
-	ctx_free(pm, curcpu());
+	mutex_enter(&pmap_lock);
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci == curcpu() || !CPUSET_HAS(cpus_active, ci->ci_index))
-			continue;
-		mutex_enter(&pmap_lock);
-		ctx_free(pm, ci);
-		mutex_exit(&pmap_lock);
+		if (CPUSET_HAS(cpus_active, ci->ci_index))
+			ctx_free(pm, ci);
 	}
+	mutex_exit(&pmap_lock);
 #else
 	ctx_free(pm);
 #endif
@@ -1918,14 +1916,12 @@ pmap_remove_all(pm)
 	write_user_windows();
 	pm->pm_refs = 0;
 #ifdef MULTIPROCESSOR
-	ctx_free(pm, curcpu());
+	mutex_enter(&pmap_lock);
 	for (ci = cpus; ci != NULL; ci = ci->ci_next) {
-		if (ci == curcpu() || !CPUSET_HAS(cpus_active, ci->ci_index))
-			continue;
-		mutex_enter(&pmap_lock);
-		ctx_free(pm, ci);
-		mutex_exit(&pmap_lock);
+		if (CPUSET_HAS(cpus_active, ci->ci_index))
+			ctx_free(pm, ci);
 	}
+	mutex_exit(&pmap_lock);
 #else
 	ctx_free(pm);
 #endif
@@ -3037,6 +3033,7 @@ ctx_alloc(struct pmap *pm)
 		write_user_windows();
 		while (!LIST_EMPTY(&curcpu()->ci_pmap_ctxlist)) {
 #ifdef MULTIPROCESSOR
+			KASSERT(pmap_ctx(LIST_FIRST(&curcpu()->ci_pmap_ctxlist)) != 0);
 			ctx_free(LIST_FIRST(&curcpu()->ci_pmap_ctxlist),
 				 curcpu());
 #else
