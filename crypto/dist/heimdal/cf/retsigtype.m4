@@ -1,6 +1,6 @@
 dnl
-dnl $Heimdal: retsigtype.m4,v 1.1.12.1 2004/04/01 07:27:35 joda Exp $
-dnl $NetBSD: retsigtype.m4,v 1.3 2004/04/02 14:59:47 lha Exp $
+dnl $Heimdal: retsigtype.m4 13338 2004-02-12 14:21:14Z lha $
+dnl $NetBSD: retsigtype.m4,v 1.4 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 dnl Figure out return type of signal handlers, and define SIGRETURN macro
 dnl that can be used to return from one

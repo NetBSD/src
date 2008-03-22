@@ -32,8 +32,8 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: flush_c.c,v 1.1 1999/03/23 18:23:36 joda Exp $"
-        "$NetBSD: flush_c.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: flush_c.c 5723 1999-03-23 18:23:37Z joda $"
+        "$NetBSD: flush_c.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 kadm5_ret_t 
 kadm5_c_flush(void *server_handle)

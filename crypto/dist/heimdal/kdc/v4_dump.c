@@ -33,8 +33,8 @@
 
 #include "hprop.h"
 
-__RCSID("$Heimdal: v4_dump.c,v 1.4.8.1 2003/04/28 12:24:54 lha Exp $"
-        "$NetBSD: v4_dump.c,v 1.5 2003/05/15 21:36:37 lha Exp $");
+__RCSID("$Heimdal: v4_dump.c 17023 2006-04-09 17:41:47Z lha $"
+        "$NetBSD: v4_dump.c,v 1.6 2008/03/22 08:37:03 mlelstv Exp $");
 
 static time_t
 time_parse(const char *cp)
@@ -139,5 +139,6 @@ v4_prop_dump(void *arg, const char *file)
 	v4_prop(arg, &pr);
 	memset(&pr, 0, sizeof(pr));
     }
+    fclose(f);
     return 0;
 }

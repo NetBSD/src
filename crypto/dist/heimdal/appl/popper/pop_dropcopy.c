@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_dropcopy.c,v 1.26 2002/07/04 14:10:11 joda Exp $"
-        "$NetBSD: pop_dropcopy.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: pop_dropcopy.c 11050 2002-07-04 14:10:11Z joda $"
+        "$NetBSD: pop_dropcopy.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 /*
  * Run as the user in `pwd'

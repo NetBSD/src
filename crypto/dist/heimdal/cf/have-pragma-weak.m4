@@ -1,5 +1,5 @@
-dnl $Heimdal: have-pragma-weak.m4,v 1.3.34.1 2004/04/01 07:27:33 joda Exp $
-dnl $NetBSD: have-pragma-weak.m4,v 1.1.1.4 2004/04/02 14:48:06 lha Exp $
+dnl $Heimdal: have-pragma-weak.m4 15435 2005-06-16 19:45:52Z lha $
+dnl $NetBSD: have-pragma-weak.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 AC_DEFUN([AC_HAVE_PRAGMA_WEAK], [
 if test "${enable_shared}" = "yes"; then
@@ -17,11 +17,11 @@ cat > conftest_bar.$ac_ext <<'EOF'
 #include "confdefs.h"
 extern int foo;
 
-int t() {
+int t(void) {
   return foo;
 }
 
-int main() {
+int main(int argc, char **argv) {
   return t();
 }
 EOF

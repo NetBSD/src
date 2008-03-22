@@ -38,10 +38,11 @@
 
 #ifndef HAVE_GETEUID
 
-__RCSID("$Heimdal: geteuid.c,v 1.2 1999/12/02 16:58:46 joda Exp $"
-        "$NetBSD: geteuid.c,v 1.1.1.3 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: geteuid.c 14773 2005-04-12 11:29:18Z lha $"
+        "$NetBSD: geteuid.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 
-int geteuid(void)
+int ROKEN_LIB_FUNCTION
+geteuid(void)
 {
     return getuid();
 }

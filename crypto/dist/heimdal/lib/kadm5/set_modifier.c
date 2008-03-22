@@ -33,8 +33,8 @@
 
 #include "kadm5_locl.h"
 
-__RCSID("$Heimdal: set_modifier.c,v 1.2 1999/12/02 17:05:07 joda Exp $"
-        "$NetBSD: set_modifier.c,v 1.1.1.3 2002/09/12 12:41:40 joda Exp $");
+__RCSID("$Heimdal: set_modifier.c 7464 1999-12-02 17:05:13Z joda $"
+        "$NetBSD: set_modifier.c,v 1.2 2008/03/22 08:37:12 mlelstv Exp $");
 
 kadm5_ret_t
 _kadm5_set_modifier(kadm5_server_context *context,

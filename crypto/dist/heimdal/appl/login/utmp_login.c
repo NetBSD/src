@@ -33,8 +33,8 @@
 
 #include "login_locl.h"
 
-__RCSID("$Heimdal: utmp_login.c,v 1.18 2001/02/08 16:08:26 assar Exp $"
-        "$NetBSD: utmp_login.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: utmp_login.c 9661 2001-02-08 16:08:47Z assar $"
+        "$NetBSD: utmp_login.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 /* try to put something useful from hostname into dst, dst_sz:
  * full name, first component or address */

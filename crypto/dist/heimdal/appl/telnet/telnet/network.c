@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -29,14 +33,12 @@
 
 #include "telnet_locl.h"
 
-__RCSID("$Heimdal: network.c,v 1.11 2000/10/08 13:28:21 assar Exp $"
-        "$NetBSD: network.c,v 1.3 2004/09/14 08:08:20 lha Exp $");
+__RCSID("$Heimdal: network.c 13941 2004-06-20 17:01:28Z lha $"
+        "$NetBSD: network.c,v 1.4 2008/03/22 08:36:56 mlelstv Exp $");
 
 Ring		netoring, netiring;
 size_t		netobufsize = 64*1024;
 size_t		netibufsize = 64*1024;
-
-
 
 /*
  * Initialize internal network data structures.

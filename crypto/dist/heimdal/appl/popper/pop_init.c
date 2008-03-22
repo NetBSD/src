@@ -5,8 +5,8 @@
  */
 
 #include <popper.h>
-__RCSID("$Heimdal: pop_init.c,v 1.58.12.1 2003/10/13 12:01:35 lha Exp $"
-        "$NetBSD: pop_init.c,v 1.1.1.6 2004/04/02 14:47:31 lha Exp $");
+__RCSID("$Heimdal: pop_init.c 17450 2006-05-05 11:11:43Z lha $"
+        "$NetBSD: pop_init.c,v 1.2 2008/03/22 08:36:55 mlelstv Exp $");
 
 
 #if defined(KRB4) || defined(KRB5)
@@ -104,7 +104,7 @@ krb5_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
 {
     krb5_error_code ret;
     krb5_auth_context auth_context = NULL;
-    u_int32_t len;
+    uint32_t len;
     krb5_ticket *ticket;
     char *server;
 
@@ -211,7 +211,15 @@ static struct getargs args[] = {
 #if defined(KRB4) || defined(KRB5)
     { "kerberos", 'k', arg_flag, &kerberos_flag, "use kerberos" },
 #endif
-    { "auth-mode", 'a', arg_string, &auth_str, "required authentication" },
+    { "auth-mode", 'a', arg_string, &auth_str, "required authentication", 
+      "plaintext"
+#ifdef OTP
+      "|otp"
+#endif
+#ifdef SASL
+      "|sasl"
+#endif
+    },
     { "debug", 'd', arg_flag, &debug_flag },
     { "interactive", 'i', arg_flag, &interactive_flag, "create new socket" },
     { "port", 'p', arg_string, &port_str, "port to listen to", "port" },
@@ -303,12 +311,27 @@ pop_init(POP *p,int argcount,char **argmessage)
     }
 
     if(auth_str){
-	if (strcmp (auth_str, "none") == 0)
+	if (strcasecmp (auth_str, "plaintext") == 0 || 
+	    strcasecmp (auth_str, "none") == 0)
 	    p->auth_level = AUTH_NONE;
-	else if(strcmp(auth_str, "otp") == 0)
+	else if(strcasecmp(auth_str, "otp") == 0) {
+#ifdef OTP
 	    p->auth_level = AUTH_OTP;
-	else
-	    warnx ("bad value for -a: %s", optarg);
+#else
+	    pop_log (p, POP_PRIORITY, "support for OTP not enabled");
+	    exit(1);
+#endif
+	} else if(strcasecmp(auth_str, "sasl") == 0) {
+#ifdef SASL
+	    p->auth_level = AUTH_SASL;
+#else
+	    pop_log (p, POP_PRIORITY, "support for SASL not enabled");
+	    exit(1);
+#endif
+	} else {
+	    pop_log (p, POP_PRIORITY, "bad value for -a: %s", auth_str);
+	    exit(1);
+	}
     }
     /*  Debugging requested */
     p->debug = debug_flag;

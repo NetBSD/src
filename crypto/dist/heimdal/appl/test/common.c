@@ -33,8 +33,8 @@
 
 #include "test_locl.h"
 
-__RCSID("$Heimdal: common.c,v 1.11 2000/08/27 04:29:34 assar Exp $"
-        "$NetBSD: common.c,v 1.1.1.4 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: common.c 12796 2003-09-09 03:38:04Z lha $"
+        "$NetBSD: common.c,v 1.2 2008/03/22 08:36:57 mlelstv Exp $");
 
 static int help_flag;
 static int version_flag;
@@ -42,12 +42,14 @@ static char *port_str;
 static char *keytab_str;
 krb5_keytab keytab;
 char *service = SERVICE;
+char *mech = "krb5";
 int fork_flag;
 
 static struct getargs args[] = {
     { "port", 'p', arg_string, &port_str, "port to listen to", "port" },
     { "service", 's', arg_string, &service, "service to use", "service" },
     { "keytab", 'k', arg_string, &keytab_str, "keytab to use", "keytab" },
+    { "mech", 'm', arg_string, &mech, "gssapi mech to use", "mech" },
     { "fork", 'f', arg_flag, &fork_flag, "do fork" },
     { "help", 'h', arg_flag, &help_flag },
     { "version", 0, arg_flag, &version_flag }

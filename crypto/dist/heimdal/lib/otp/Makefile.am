@@ -1,9 +1,9 @@
-# $Heimdal: Makefile.am,v 1.23.2.1 2003/05/12 15:20:47 joda Exp $
-# $NetBSD: Makefile.am,v 1.1.1.6 2003/05/15 20:28:50 lha Exp $
+# $Heimdal: Makefile.am 21617 2007-07-17 07:28:19Z lha $
+# $NetBSD: Makefile.am,v 1.2 2008/03/22 08:37:20 mlelstv Exp $
 
 include $(top_srcdir)/Makefile.am.common
 
-INCLUDES += $(INCLUDE_des) $(ROKEN_RENAME)
+AM_CPPFLAGS += $(INCLUDE_hcrypto) $(ROKEN_RENAME)
 
 noinst_PROGRAMS = otptest
 
@@ -14,8 +14,8 @@ otptest_LDADD = libotp.la
 include_HEADERS = otp.h
 
 lib_LTLIBRARIES = libotp.la
-libotp_la_LDFLAGS = -version-info 1:4:1
-libotp_la_LIBADD  = $(LIB_des) $(LIB_roken) $(LIB_NDBM)
+libotp_la_LDFLAGS = -version-info 1:5:1
+libotp_la_LIBADD  = $(LIB_hcrypto) $(LIB_roken) $(LIB_NDBM)
 
 if HAVE_DB3
 ndbm_wrap = ndbm_wrap.c ndbm_wrap.h
@@ -23,7 +23,7 @@ else
 ndbm_wrap =
 endif
 
-libotp_la_SOURCES = \
+dist_libotp_la_SOURCES = \
 	otp.c \
 	otp_challenge.c \
 	otp_db.c \
@@ -33,9 +33,9 @@ libotp_la_SOURCES = \
 	otp_verify.c \
 	otp_locl.h \
 	otp_md.h \
-	roken_rename.h \
-	$(ndbm_wrap) \
-	$(ROKEN_SRCS)
+	roken_rename.h
+
+nodist_libotp_la_SOURCES = $(ndbm_wrap) $(ROKEN_SRCS)
 
 if do_roken_rename
 ROKEN_SRCS = snprintf.c strcasecmp.c strncasecmp.c strlwr.c strlcpy.c strlcat.c

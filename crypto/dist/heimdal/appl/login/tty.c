@@ -33,8 +33,8 @@
 
 #include "login_locl.h"
 
-__RCSID("$Heimdal: tty.c,v 1.4 1999/12/02 17:04:56 joda Exp $"
-        "$NetBSD: tty.c,v 1.1.1.3 2002/09/12 12:41:33 joda Exp $");
+__RCSID("$Heimdal: tty.c 7464 1999-12-02 17:05:13Z joda $"
+        "$NetBSD: tty.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 /*
  * Clean the tty name.  Return a pointer to the cleaned version.

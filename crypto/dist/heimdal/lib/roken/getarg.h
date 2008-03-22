@@ -31,13 +31,21 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: getarg.h,v 1.12 2002/04/18 08:50:08 joda Exp $
-   $NetBSD: getarg.h,v 1.1.1.4 2002/09/12 12:41:42 joda Exp $ */
+/* $Heimdal: getarg.h 14776 2005-04-13 05:52:27Z lha $
+   $NetBSD: getarg.h,v 1.2 2008/03/22 08:37:21 mlelstv Exp $ */
 
 #ifndef __GETARG_H__
 #define __GETARG_H__
 
 #include <stddef.h>
+
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
 
 struct getargs{
     const char *long_name;
@@ -79,14 +87,17 @@ typedef struct getarg_collect_info {
     void *data;
 } getarg_collect_info;
 
-int getarg(struct getargs *args, size_t num_args, 
-	   int argc, char **argv, int *goptind);
+int ROKEN_LIB_FUNCTION
+getarg(struct getargs *args, size_t num_args, 
+       int argc, char **argv, int *goptind);
 
-void arg_printusage (struct getargs *args,
-		     size_t num_args,
-		     const char *progname,
-		     const char *extra_string);
+void ROKEN_LIB_FUNCTION
+arg_printusage (struct getargs *args,
+		size_t num_args,
+		const char *progname,
+		const char *extra_string);
 
-void free_getarg_strings (getarg_strings *);
+void ROKEN_LIB_FUNCTION
+free_getarg_strings (getarg_strings *);
 
 #endif /* __GETARG_H__ */

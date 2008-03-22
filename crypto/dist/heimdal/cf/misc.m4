@@ -1,6 +1,6 @@
 
-dnl $Heimdal: misc.m4,v 1.5 2002/05/24 15:35:32 joda Exp $
-dnl $NetBSD: misc.m4,v 1.1.1.3 2002/09/12 12:41:44 joda Exp $
+dnl $Heimdal: misc.m4 11022 2002-05-24 15:35:32Z joda $
+dnl $NetBSD: misc.m4,v 1.2 2008/03/22 08:36:58 mlelstv Exp $
 dnl
 AC_DEFUN([upcase],[`echo $1 | tr abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ`])dnl
 AC_DEFUN([rk_LIBOBJ],[AC_LIBOBJ([$1])])dnl

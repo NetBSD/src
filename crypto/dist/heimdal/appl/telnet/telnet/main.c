@@ -10,7 +10,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -34,8 +38,8 @@ static char *copyright[] = {
 };
 
 #include "telnet_locl.h"
-__RCSID("$Heimdal: main.c,v 1.38.6.1 2004/03/22 18:16:35 lha Exp $"
-        "$NetBSD: main.c,v 1.3 2004/04/02 14:59:46 lha Exp $");
+__RCSID("$Heimdal: main.c 21731 2007-07-30 20:01:26Z lha $"
+        "$NetBSD: main.c,v 1.4 2008/03/22 08:36:56 mlelstv Exp $");
 
 #if KRB5
 #define FORWARD
@@ -56,8 +60,8 @@ tninit(void)
     init_sys();
 }
 
-void
-usage(void)
+static void
+usage(int exit_code)
 {
   fprintf(stderr, "Usage: %s %s%s%s%s\n", prompt,
 #ifdef	AUTHENTICATION
@@ -74,7 +78,7 @@ usage(void)
 	  "[host-name [port]]"
 #endif
     );
-  exit(1);
+  exit(exit_code);
 }
 
 /*
@@ -109,7 +113,6 @@ set_forward_options(void)
 }
 
 #ifdef KRB5
-/* XXX ugly hack to setup dns-proxy stuff */
 #define Authenticator asn1_Authenticator
 #include <krb5.h>
 static void
@@ -117,24 +120,29 @@ krb5_init(void)
 {
     krb5_context context;
     krb5_error_code ret;
+    krb5_boolean ret_val;
 
     ret = krb5_init_context(&context);
     if (ret)
 	return;
 
-#if defined(AUTHENTICATION) && defined(KRB5) && defined(FORWARD)
-    if (krb5_config_get_bool (context, NULL,
-         "libdefaults", "forward", NULL)) {
+#if defined(AUTHENTICATION) && defined(FORWARD)
+    krb5_appdefault_boolean(context, NULL,
+			    NULL, "forward",
+			    0, &ret_val);
+    if (ret_val)
 	    kerberos5_set_forward(1);
-    }
-    if (krb5_config_get_bool (context, NULL,
-         "libdefaults", "forwardable", NULL)) {
+    krb5_appdefault_boolean(context, NULL,
+			    NULL, "forwardable",
+			    0, &ret_val);
+    if (ret_val)
 	    kerberos5_set_forwardable(1);
-    }
 #endif
 #ifdef  ENCRYPTION
-    if (krb5_config_get_bool (context, NULL,
-        "libdefaults", "encrypt", NULL)) {
+    krb5_appdefault_boolean(context, NULL, 
+			    NULL, "encrypt",
+			    0, &ret_val);
+    if (ret_val) {
           encrypt_auto(1);
           decrypt_auto(1); 
 	  wantencryption = 1;
@@ -187,6 +195,9 @@ main(int argc, char **argv)
 	    print_version(NULL);
 	    exit(0);
 	}
+	if (argc == 2 && strcmp(argv[1], "--help") == 0)
+	    usage(0);
+
 
 	while((ch = getopt(argc, argv,
 			   "78DEKLS:X:abcde:fFk:l:n:rxG")) != -1) {
@@ -260,7 +271,7 @@ main(int argc, char **argv)
 			    fprintf(stderr,
 				    "%s: Only one of -f, -F and -G allowed.\n",
 				    prompt);
-			    usage();
+			    usage(1);
 			}
 			forward_option = ch;
 #else
@@ -309,7 +320,7 @@ main(int argc, char **argv)
 
 		case '?':
 		default:
-			usage();
+			usage(1);
 			/* NOTREACHED */
 		}
 	}
@@ -335,7 +346,7 @@ main(int argc, char **argv)
 		char *args[7], **argp = args;
 
 		if (argc > 2)
-			usage();
+			usage(1);
 		*argp++ = prompt;
 		if (user) {
 			*argp++ = "-l";

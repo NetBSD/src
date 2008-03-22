@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: roken_rename.h,v 1.6 2002/08/19 15:08:24 joda Exp $
-   $NetBSD: roken_rename.h,v 1.1.1.3 2002/09/12 12:41:43 joda Exp $ */
+/* $Heimdal: roken_rename.h 15341 2005-06-02 07:35:45Z lha $
+   $NetBSD: roken_rename.h,v 1.2 2008/03/22 08:37:13 mlelstv Exp $ */
 
 #ifndef __roken_rename_h__
 #define __roken_rename_h__
@@ -48,6 +48,9 @@
 #define rk_dns_string_to_type _kafs_dns_string_to_type
 #define rk_dns_type_to_string _kafs_dns_type_to_string
 #define rk_dns_srv_order _kafs_dns_srv_order
+#define rk_dns_make_query _kafs_dns_make_query
+#define rk_dns_free_query _kafs_dns_free_query
+#define rk_dns_parse_reply _kafs_dns_parse_reply
 
 #ifndef HAVE_STRTOK_R
 #define strtok_r _kafs_strtok_r

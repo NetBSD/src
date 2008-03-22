@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1058 2008/03/18 14:54:31 christos Exp $
+# $NetBSD: mi,v 1.1059 2008/03/22 08:37:24 mlelstv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -213,9 +213,11 @@
 ./usr/share/man/cat1/kf.0			man-obsolete		obsolete
 ./usr/share/man/cat1/kgetcred.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/kill.0			man-util-catman		.cat
+./usr/share/man/cat1/kimpersonate.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/kinit.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/klist.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/kpasswd.0			man-krb5-catman		use_kerberos,.cat
+./usr/share/man/cat1/krb5-config.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat1/ksh.0			man-util-catman		.cat
 ./usr/share/man/cat1/ktrace.0			man-debug-catman	.cat
 ./usr/share/man/cat1/ktruss.0			man-debug-catman	.cat
@@ -2078,6 +2080,10 @@
 ./usr/share/man/cat8/ipnat.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat8/ippool.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat8/ipppctl.0			man-isdn-catman		.cat
+./usr/share/man/cat8/iprop-log.0		man-krb5-catman		kerberos,.cat
+./usr/share/man/cat8/iprop.0			man-krb5-catman		kerberos,.cat
+./usr/share/man/cat8/ipropd-master.0		man-krb5-catman		kerberos,.cat
+./usr/share/man/cat8/ipropd-slave.0		man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/ipwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irda.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/irdaattach.0		man-sysutil-catman	.cat
@@ -2092,6 +2098,7 @@
 ./usr/share/man/cat8/iwictl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/kadmin.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kadmind.0			man-krb5-catman		kerberos,.cat
+./usr/share/man/cat8/kcm.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kdc.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kerberos.0			man-krb5-catman		kerberos,.cat
 ./usr/share/man/cat8/kfd.0			man-obsolete		obsolete
@@ -2739,9 +2746,11 @@
 ./usr/share/man/man1/kf.1			man-obsolete		obsolete
 ./usr/share/man/man1/kgetcred.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/kill.1			man-util-man		.man
+./usr/share/man/man1/kimpersonate.1		man-krb5-man		kerberos,.man
 ./usr/share/man/man1/kinit.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/klist.1			man-krb5-man		kerberos,.man
 ./usr/share/man/man1/kpasswd.1			man-krb5-man		use_kerberos,.man
+./usr/share/man/man1/krb5-config.1		man-krb5-man		kerberos,.man
 ./usr/share/man/man1/ksh.1			man-util-man		.man
 ./usr/share/man/man1/ktrace.1			man-debug-man		.man
 ./usr/share/man/man1/ktruss.1			man-debug-man		.man
@@ -4604,6 +4613,10 @@
 ./usr/share/man/man8/ipnat.8			man-ipf-man		ipfilter,.man
 ./usr/share/man/man8/ippool.8			man-ipf-man		ipfilter,.man
 ./usr/share/man/man8/ipppctl.8			man-isdn-man		.man
+./usr/share/man/man8/iprop-log.8		man-krb5-man		kerberos,.man
+./usr/share/man/man8/iprop.8			man-krb5-man		kerberos,.man
+./usr/share/man/man8/ipropd-master.8		man-krb5-man		kerberos,.man
+./usr/share/man/man8/ipropd-slave.8		man-krb5-man		kerberos,.man
 ./usr/share/man/man8/ipwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/irda.8			man-sysutil-man		.man
 ./usr/share/man/man8/irdaattach.8		man-sysutil-man		.man
@@ -4618,6 +4631,7 @@
 ./usr/share/man/man8/iwictl.8			man-sysutil-man		.man
 ./usr/share/man/man8/kadmin.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kadmind.8			man-krb5-man		kerberos,.man
+./usr/share/man/man8/kcm.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kdc.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kerberos.8			man-krb5-man		kerberos,.man
 ./usr/share/man/man8/kfd.8			man-obsolete		obsolete

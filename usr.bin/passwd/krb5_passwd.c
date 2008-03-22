@@ -1,4 +1,4 @@
-/* $NetBSD: krb5_passwd.c,v 1.14 2008/01/25 19:36:27 christos Exp $ */
+/* $NetBSD: krb5_passwd.c,v 1.15 2008/03/22 08:37:27 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2000, 2005 The NetBSD Foundation, Inc.
@@ -207,7 +207,7 @@ pwkrb5_process(const char *username, int argc, char **argv)
 	krb5_data_free(&result_code_string);
 	krb5_data_free(&result_string);
 
-	krb5_free_creds_contents(context, &cred);
+	krb5_free_cred_contents(context, &cred);
 	krb5_free_context(context);
 	if (result_code)
 		exit(1);

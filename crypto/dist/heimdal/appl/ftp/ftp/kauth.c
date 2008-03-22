@@ -32,9 +32,11 @@
  */
 
 #include "ftp_locl.h"
+__RCSID("$Heimdal: kauth.c 15666 2005-07-19 17:08:11Z lha $"
+        "$NetBSD: kauth.c,v 1.2 2008/03/22 08:36:50 mlelstv Exp $");
+
+#ifdef KRB4
 #include <krb.h>
-__RCSID("$Heimdal: kauth.c,v 1.20 1999/12/02 16:58:29 joda Exp $"
-        "$NetBSD: kauth.c,v 1.1.1.3 2002/09/12 12:41:35 joda Exp $");
 
 void
 kauth(int argc, char **argv)
@@ -143,20 +145,6 @@ kauth(int argc, char **argv)
 }
 
 void
-klist(int argc, char **argv)
-{
-    int ret;
-    if(argc != 1){
-	printf("usage: %s\n", argv[0]);
-	code = -1;
-	return;
-    }
-    
-    ret = command("SITE KLIST");
-    code = (ret == COMPLETE);
-}
-
-void
 kdestroy(int argc, char **argv)
 {
     int ret;
@@ -181,6 +169,9 @@ krbtkfile(int argc, char **argv)
     ret = command("SITE KRBTKFILE %s", argv[1]);
     code = (ret == COMPLETE);
 }
+#endif
+
+#if defined(KRB4) || defined(KRB5)
 
 void
 afslog(int argc, char **argv)
@@ -197,3 +188,7 @@ afslog(int argc, char **argv)
 	ret = command("SITE AFSLOG");
     code = (ret == COMPLETE);
 }
+
+#else
+int ftp_afslog_placeholder;
+#endif

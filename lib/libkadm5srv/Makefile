@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2007/05/28 12:06:19 tls Exp $
+# $NetBSD: Makefile,v 1.27 2008/03/22 08:37:26 mlelstv Exp $
 
 USE_FORT?= yes	# network protocol library
 
@@ -33,6 +33,7 @@ CLEANFILES+=	kadm5_err.h kadm5_err.c
 
 SRCS	 =					\
 	acl.c					\
+	ad.c					\
 	bump_pw_expire.c			\
 	chpass_c.c				\
 	chpass_s.c				\
@@ -72,6 +73,8 @@ SRCS	 =					\
 	set_keys.c				\
 	set_modifier.c				\
 	$(ERR_FILES)
+
+MAN= kadm5_pwcheck.3
 
 ASN1!=		cd ${NETBSDSRCDIR}/lib/libasn1 && ${PRINTOBJDIR}
 KRB5!=		cd ${NETBSDSRCDIR}/lib/libkrb5 && ${PRINTOBJDIR}

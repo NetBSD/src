@@ -1,6 +1,6 @@
 -*- indented-text -*-
 
-$Id: TODO,v 1.1.1.5 2003/05/15 20:28:39 lha Exp $
+$Id: TODO,v 1.2 2008/03/22 08:36:49 mlelstv Exp $
 
 * configure
 
@@ -10,15 +10,13 @@ handle readline hiding in readline/readline.h
 
 ** appl/popper
 
-Implement RFC1731 and 1734, pop over GSS-API
+Add security layer to pop over GSS-API
 
 * doc
 
 * kdc
 
 * kadmin
-
-make it happy with reading and parsing kdc.conf
 
 is in need of a major cleanup
 
@@ -32,6 +30,8 @@ figure out what's the deal with do_sequence and the MIT client
 
 prepend a prefix on all generated symbols
 
+implicit optional CONS types
+
 ** lib/auth
 
 ** lib/auth/sia
@@ -40,17 +40,20 @@ PAM
 
 ** lib/com_err
 
-write a man-page
-
 ** lib/des
-
-make everything work with openssl and make prototypes compatible
 
 ** lib/gssapi
 
 anonymous credentials not implemented
 
-add rc4
+gss_acquire_cred(GSS_C_BOTH) with a keytab only, gss_add_cred,
+gss_release_cred renders the output_cred_handle broken.
+
+cache delegation credentials to avoid hitting the kdc ?  require time
+stampless tickets, and was supported in the recv'ing end with 0.6.1.
+
+flag to look at ok-to-delegate even if GSS_C_DELEG_FLAG was set
+(limited to some target domains).
 
 ** lib/hdb
 
@@ -66,8 +69,7 @@ the replay cache is, in its current state, not very useful
 
 OTP?
 
-make checksum/encryption type configuration more realm-specific.  make
-some simple way of handling the w2k situtation
+make checksum/encryption type configuration more realm-specific.
 
 crypto: allow scatter/gather creation of checksums
 

@@ -6,7 +6,7 @@
 
 /* -*- C -*- */
 /*
- * Copyright (c) 1995 - 2002 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,12 +38,12 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: roken.h.in,v 1.169 2002/08/26 21:43:38 assar Exp $ 
-   $NetBSD: roken.h,v 1.11 2003/05/15 22:58:02 lha Exp $ */
+/* $Id: roken.h,v 1.12 2008/03/22 08:37:24 mlelstv Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include <string.h>
 #include <signal.h>
 
@@ -68,20 +68,16 @@
 #include <sys/ioctl.h>
 #include <sys/time.h>
 #include <time.h>
-#ifdef HAVE_SYS_POLL_H
-#include <sys/poll.h>
-#endif
+#include <strings.h>
 
 #include <paths.h>
-
-
-#define ROKEN_LIB_FUNCTION
 
 
 #include <roken-common.h>
 
 ROKEN_CPP_START
 
+#define rk_UNCONST(x) ((void *)(uintptr_t)(const void *)(x))
 
 
 
@@ -91,26 +87,28 @@ ROKEN_CPP_START
 
 
 
-int asnprintf (char **ret, size_t max_sz, const char *format, ...)
+
+int ROKEN_LIB_FUNCTION
+    asnprintf (char **, size_t, const char *, ...)
      __attribute__ ((format (printf, 3, 4)));
 
-int vasnprintf (char **ret, size_t max_sz, const char *format, va_list ap)
+int ROKEN_LIB_FUNCTION
+    vasnprintf (char **, size_t, const char *, va_list)
      __attribute__((format (printf, 3, 0)));
 
 
-char * strndup(const char *old, size_t sz);
 
-char * strlwr(char *);
+char * ROKEN_LIB_FUNCTION strlwr(char *);
 
-size_t strnlen(const char*, size_t);
+size_t ROKEN_LIB_FUNCTION strnlen(const char*, size_t);
 
 
-ssize_t strsep_copy(const char**, const char*, char*, size_t);
-
+ssize_t ROKEN_LIB_FUNCTION strsep_copy(const char**, const char*, char*, size_t);
 
 
 
-char * strupr(char *);
+
+char * ROKEN_LIB_FUNCTION strupr(char *);
 
 
 
@@ -123,22 +121,20 @@ char * strupr(char *);
 
 
 #include <pwd.h>
-struct passwd *k_getpwnam (const char *user);
-struct passwd *k_getpwuid (uid_t uid);
+struct passwd * ROKEN_LIB_FUNCTION k_getpwnam (const char *);
+struct passwd * ROKEN_LIB_FUNCTION k_getpwuid (uid_t);
 
-const char *get_default_username (void);
-
-
-
-
-#ifndef BSD4_4
-int mkstemp(char *);
-#endif
+const char * ROKEN_LIB_FUNCTION get_default_username (void);
 
 
 
 
+int ROKEN_LIB_FUNCTION mkstemp(char *);
 
+
+
+
+int ROKEN_LIB_FUNCTION daemon(int, int);
 
 
 
@@ -152,44 +148,44 @@ int mkstemp(char *);
 
 
 
-time_t tm2time (struct tm tm, int local);
 
-int unix_verify_user(char *user, char *password);
+time_t ROKEN_LIB_FUNCTION tm2time (struct tm, int);
 
-int roken_concat (char *s, size_t len, ...);
+int ROKEN_LIB_FUNCTION unix_verify_user(char *, char *);
 
-size_t roken_mconcat (char **s, size_t max_len, ...);
+int ROKEN_LIB_FUNCTION roken_concat (char *, size_t, ...);
 
-int roken_vconcat (char *s, size_t len, va_list args);
+size_t ROKEN_LIB_FUNCTION roken_mconcat (char **, size_t, ...);
 
-size_t roken_vmconcat (char **s, size_t max_len, va_list args);
+int ROKEN_LIB_FUNCTION roken_vconcat (char *, size_t, va_list);
 
-ssize_t net_write (int fd, const void *buf, size_t nbytes);
+size_t ROKEN_LIB_FUNCTION
+    roken_vmconcat (char **, size_t, va_list);
 
-ssize_t net_read (int fd, void *buf, size_t nbytes);
+ssize_t ROKEN_LIB_FUNCTION net_write (int, const void *, size_t);
 
-int issuid(void);
+ssize_t ROKEN_LIB_FUNCTION net_read (int, void *, size_t);
+
+int ROKEN_LIB_FUNCTION issuid(void);
 
 
-int get_window_size(int fd, struct winsize *);
+int ROKEN_LIB_FUNCTION get_window_size(int fd, struct winsize *);
 
 
 
 extern char **environ;
 
-struct hostent *
-getipnodebyname (const char *name, int af, int flags, int *error_num);
+struct hostent * ROKEN_LIB_FUNCTION
+getipnodebyname (const char *, int, int, int *);
 
-struct hostent *
-getipnodebyaddr (const void *src, size_t len, int af, int *error_num);
+struct hostent * ROKEN_LIB_FUNCTION
+getipnodebyaddr (const void *, size_t, int, int *);
 
-#ifndef BSD4_4
-void
-freehostent (struct hostent *h);
-#endif
+void ROKEN_LIB_FUNCTION
+freehostent (struct hostent *);
 
-struct hostent *
-copyhostent (const struct hostent *h);
+struct hostent * ROKEN_LIB_FUNCTION
+copyhostent (const struct hostent *);
 
 
 
@@ -198,27 +194,34 @@ copyhostent (const struct hostent *h);
 
 
 
-int
-getnameinfo_verified(const struct sockaddr *sa, socklen_t salen,
-		     char *host, size_t hostlen,
-		     char *serv, size_t servlen,
-		     int flags);
+int ROKEN_LIB_FUNCTION
+getnameinfo_verified(const struct sockaddr *, socklen_t,
+		     char *, size_t,
+		     char *, size_t,
+		     int);
 
-int roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **); 
-int roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
+int ROKEN_LIB_FUNCTION
+roken_getaddrinfo_hostspec(const char *, int, struct addrinfo **); 
+int ROKEN_LIB_FUNCTION
+roken_getaddrinfo_hostspec2(const char *, int, int, struct addrinfo **);
 
-void *emalloc (size_t);
-void *ecalloc(size_t num, size_t sz);
-void *erealloc (void *, size_t);
-char *estrdup (const char *);
+
+
+void * ROKEN_LIB_FUNCTION emalloc (size_t);
+void * ROKEN_LIB_FUNCTION ecalloc(size_t, size_t);
+void * ROKEN_LIB_FUNCTION erealloc (void *, size_t);
+char * ROKEN_LIB_FUNCTION estrdup (const char *);
 
 /*
  * kludges and such
  */
 
-int roken_gethostby_setup(const char*, const char*);
-struct hostent* roken_gethostbyname(const char*);
-struct hostent* roken_gethostbyaddr(const void*, size_t, int);
+int ROKEN_LIB_FUNCTION
+roken_gethostby_setup(const char*, const char*);
+struct hostent* ROKEN_LIB_FUNCTION
+roken_gethostbyname(const char*);
+struct hostent* ROKEN_LIB_FUNCTION 
+roken_gethostbyaddr(const void*, size_t, int);
 
 #define roken_getservbyname(x,y) getservbyname(x,y)
 
@@ -228,13 +231,22 @@ struct hostent* roken_gethostbyaddr(const void*, size_t, int);
 
 
 
-void mini_inetd_addrinfo (struct addrinfo*);
-void mini_inetd (int port);
 
-void set_progname(char *argv0);
-const char *get_progname(void);
+void ROKEN_LIB_FUNCTION mini_inetd_addrinfo (struct addrinfo*);
+void ROKEN_LIB_FUNCTION mini_inetd (int);
+
+
+
+
+
+
+
+
+
+
+
 
 ROKEN_CPP_END
-#define ROKEN_VERSION 0.6
+#define ROKEN_VERSION 1.1
 
 #endif /* __ROKEN_H__ */

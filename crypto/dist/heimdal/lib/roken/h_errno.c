@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: h_errno.c,v 1.1 2001/08/08 03:47:23 assar Exp $"
-        "$NetBSD: h_errno.c,v 1.1.1.2 2002/09/12 12:41:42 joda Exp $");
+__RCSID("$Heimdal: h_errno.c 10442 2001-08-08 03:47:23Z assar $"
+        "$NetBSD: h_errno.c,v 1.2 2008/03/22 08:37:21 mlelstv Exp $");
 #endif
 
 #ifndef HAVE_H_ERRNO

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 1999, 2004 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,19 +33,20 @@
 
 #include "krb5_locl.h"
 
-__RCSID("$Heimdal: free.c,v 1.5 1999/12/02 17:05:09 joda Exp $"
-        "$NetBSD: free.c,v 1.1.1.3 2002/09/12 12:41:41 joda Exp $");
+__RCSID("$Heimdal: free.c 15175 2005-05-18 10:06:16Z lha $"
+        "$NetBSD: free.c,v 1.2 2008/03/22 08:37:13 mlelstv Exp $");
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_free_kdc_rep(krb5_context context, krb5_kdc_rep *rep)
 {
     free_KDC_REP(&rep->kdc_rep);
     free_EncTGSRepPart(&rep->enc_part);
     free_KRB_ERROR(&rep->error);
+    memset(rep, 0, sizeof(*rep));
     return 0;
 }
 
-krb5_error_code
+krb5_error_code KRB5_LIB_FUNCTION
 krb5_xfree (void *ptr)
 {
     free (ptr);

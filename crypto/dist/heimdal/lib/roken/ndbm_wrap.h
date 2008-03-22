@@ -31,14 +31,22 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: ndbm_wrap.h,v 1.1 2002/04/30 16:37:20 joda Exp $
-   $NetBSD: ndbm_wrap.h,v 1.1.1.1 2002/09/12 12:41:42 joda Exp $ */
+/* $Heimdal: ndbm_wrap.h 14773 2005-04-12 11:29:18Z lha $
+   $NetBSD: ndbm_wrap.h,v 1.2 2008/03/22 08:37:21 mlelstv Exp $ */
 
 #ifndef __ndbm_wrap_h__
 #define __ndbm_wrap_h__
 
 #include <stdio.h>
 #include <sys/types.h>
+
+#ifndef ROKEN_LIB_FUNCTION
+#ifdef _WIN32
+#define ROKEN_LIB_FUNCTION _stdcall
+#else
+#define ROKEN_LIB_FUNCTION
+#endif
+#endif
 
 #ifndef dbm_rename
 #define dbm_rename(X)	__roken_ ## X
@@ -71,14 +79,14 @@ typedef struct {
 } DBM;
 #endif
 
-int dbm_clearerr (DBM*);
-void dbm_close (DBM*);
-int dbm_delete (DBM*, datum);
-int dbm_error (DBM*);
-datum dbm_fetch (DBM*, datum);
-datum dbm_firstkey (DBM*);
-datum dbm_nextkey (DBM*);
-DBM* dbm_open (const char*, int, mode_t);
-int dbm_store (DBM*, datum, datum, int);
+int ROKEN_LIB_FUNCTION dbm_clearerr (DBM*);
+void ROKEN_LIB_FUNCTION dbm_close (DBM*);
+int ROKEN_LIB_FUNCTION dbm_delete (DBM*, datum);
+int ROKEN_LIB_FUNCTION dbm_error (DBM*);
+datum ROKEN_LIB_FUNCTION dbm_fetch (DBM*, datum);
+datum ROKEN_LIB_FUNCTION dbm_firstkey (DBM*);
+datum ROKEN_LIB_FUNCTION dbm_nextkey (DBM*);
+DBM* ROKEN_LIB_FUNCTION dbm_open (const char*, int, mode_t);
+int ROKEN_LIB_FUNCTION dbm_store (DBM*, datum, datum, int);
 
 #endif /* __ndbm_wrap_h__ */

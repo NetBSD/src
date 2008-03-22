@@ -31,8 +31,8 @@
  * SUCH DAMAGE.
  */
 
-/* $Heimdal: ftp_locl.h,v 1.37 2002/09/10 20:03:46 joda Exp $
-   $NetBSD: ftp_locl.h,v 1.1.1.5 2002/09/12 12:41:35 joda Exp $ */
+/* $Heimdal: ftp_locl.h 11444 2002-09-10 20:03:49Z joda $
+   $NetBSD: ftp_locl.h,v 1.2 2008/03/22 08:36:50 mlelstv Exp $ */
 
 #ifndef __FTP_LOCL_H__
 #define __FTP_LOCL_H__

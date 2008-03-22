@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1998 - 2005 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -31,8 +31,8 @@
  * SUCH DAMAGE. 
  */
 
-/* $Heimdal: security.h,v 1.9.12.1 2003/08/20 16:41:53 lha Exp $
-   $NetBSD: security.h,v 1.1.1.5 2004/04/02 14:47:35 lha Exp $ */
+/* $Heimdal: security.h 21224 2007-06-20 10:15:13Z lha $
+   $NetBSD: security.h,v 1.2 2008/03/22 08:36:50 mlelstv Exp $ */
 
 #ifndef __security_h__
 #define __security_h__
@@ -71,6 +71,7 @@ struct sec_server_mech {
     size_t (*pbsz)(void *, size_t);
     int (*ccc)(void*);
     int (*userok)(void*, char*);
+    int (*session)(void*, char*);
 };
 
 #define AUTH_OK		0
@@ -78,6 +79,7 @@ struct sec_server_mech {
 #define AUTH_ERROR	2
 
 extern int ftp_do_gss_bindings;
+extern int ftp_do_gss_delegate;
 #ifdef FTP_SERVER
 extern struct sec_server_mech krb4_server_mech, gss_server_mech;
 #else
@@ -120,12 +122,14 @@ void prot (char *);
 void delete_ftp_command (void);
 void new_ftp_command (char *);
 int sec_userok (char *);
+int sec_session(char *);
 int secure_command (void);
 enum protection_level get_command_prot(void);
 #else
 void sec_end (void);
 int sec_login (char *);
 void sec_prot (int, char **);
+void sec_prot_command (int, char **);
 int sec_request_prot (char *);
 void sec_set_protection_level (void);
 void sec_status (void);

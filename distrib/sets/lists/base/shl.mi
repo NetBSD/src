@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.422 2008/03/21 13:43:36 jdc Exp $
+# $NetBSD: shl.mi,v 1.423 2008/03/22 08:37:24 mlelstv Exp $
 #
 # Note: libtermcap and libtermlib are hardlinked and share the same version.
 # Note: don't delete entries from here - mark them as "obsolete" instead.
@@ -43,7 +43,8 @@
 ./usr/lib/libamu.so.2.1				base-obsolete		obsolete
 ./usr/lib/libamu.so.3.0				base-amd-shlib
 ./usr/lib/libarchive.so.2.0			base-sys-shlib
-./usr/lib/libasn1.so.6.1			base-krb5-shlib		kerberos
+./usr/lib/libasn1.so.6.1			base-obsolete		obsolete
+./usr/lib/libasn1.so.7.0			base-krb5-shlib		kerberos
 ./usr/lib/libbfd.so.8.0				base-sys-shlib		bfd
 ./usr/lib/libbind9.so.0.0			base-bind-shlib
 ./usr/lib/libbluetooth.so.3.0			base-sys-shlib
@@ -51,7 +52,8 @@
 ./usr/lib/libbz2.so.1.1				base-sys-shlib
 ./usr/lib/libc.so.12.159			base-sys-shlib
 ./usr/lib/libcdk.so.1.0				base-obsolete		obsolete
-./usr/lib/libcom_err.so.4.1			base-krb5-shlib		kerberos
+./usr/lib/libcom_err.so.4.1			base-obsolete		obsolete
+./usr/lib/libcom_err.so.5.0			base-krb5-shlib		kerberos
 ./usr/lib/libcrypt.so.0.2			base-sys-shlib
 ./usr/lib/libcrypto.so.3.2			base-crypto-shlib	crypto
 ./usr/lib/libcurses.so.6.3			base-sys-shlib
@@ -63,8 +65,12 @@
 ./usr/lib/libg2c.so.2.0				base-sys-shlib		gcc=3
 ./usr/lib/libgcc_s.so.1.0			base-sys-shlib		gcc
 ./usr/lib/libgnumalloc.so.0.0			base-sys-shlib
-./usr/lib/libgssapi.so.5.0			base-krb5-shlib		kerberos
-./usr/lib/libhdb.so.9.0				base-krb5-shlib		kerberos
+./usr/lib/libgssapi.so.5.0			base-obsolete		obsolete
+./usr/lib/libgssapi.so.6.0			base-krb5-shlib		kerberos
+./usr/lib/libhdb.so.9.0				base-obsolete		obsolete
+./usr/lib/libhdb.so.10.0			base-krb5-shlib		kerberos
+./usr/lib/libheimntlm.so.1.0			base-krb5-shlib		kerberos
+./usr/lib/libhx509.so.1.0			base-krb5-shlib		kerberos
 ./usr/lib/libintl.so.0.0			base-sys-shlib
 ./usr/lib/libipsec.so.2.2			base-net-shlib
 ./usr/lib/libisc.so.0.0				base-bind-shlib
@@ -72,14 +78,17 @@
 ./usr/lib/libisccfg.so.0.0			base-bind-shlib
 ./usr/lib/libiscsi.so.0.0			base-iscsi-shlib	iscsi
 ./usr/lib/libkadm.so.5.0			base-obsolete		obsolete
-./usr/lib/libkadm5clnt.so.8.0			base-krb5-shlib		kerberos
-./usr/lib/libkadm5srv.so.9.0			base-krb5-shlib		kerberos
-./usr/lib/libkafs.so.6				base-krb5-shlib		obsolete
-./usr/lib/libkafs.so.6.0			base-krb5-shlib		obsolete
-./usr/lib/libkafs.so.7.0			base-krb5-shlib		kerberos
+./usr/lib/libkadm5clnt.so.8.0			base-obsolete		obsolete
+./usr/lib/libkadm5clnt.so.9.0			base-krb5-shlib		kerberos
+./usr/lib/libkadm5srv.so.9.0			base-obsolete		obsolete
+./usr/lib/libkadm5srv.so.10.0			base-krb5-shlib		kerberos
+./usr/lib/libkafs.so.6.0			base-obsolete		obsolete
+./usr/lib/libkafs.so.7.0			base-obsolete		obsolete
+./usr/lib/libkafs.so.8.0			base-krb5-shlib		kerberos
 ./usr/lib/libkdb.so.5.0				base-obsolete		obsolete
 ./usr/lib/libkrb.so.6.0				base-obsolete		obsolete
-./usr/lib/libkrb5.so.20.1			base-krb5-shlib		kerberos
+./usr/lib/libkrb5.so.20.1			base-obsolete		obsolete
+./usr/lib/libkrb5.so.21.0			base-krb5-shlib		kerberos
 ./usr/lib/libkstream.so.2.0			base-obsolete		obsolete
 ./usr/lib/libkvm.so.5.3				base-sys-shlib
 ./usr/lib/liblwres.so.0.0			base-bind-shlib
@@ -101,13 +110,16 @@
 ./usr/lib/libradius.so.1.0			base-net-shlib
 ./usr/lib/librefuse.so.0.0			base-sys-shlib		puffs
 ./usr/lib/libresolv.so.1.1			base-net-shlib
-./usr/lib/libroken.so.12.3			base-krb5-shlib		kerberos
+./usr/lib/libroken.so.12.3			base-obsolete		obsolete
+./usr/lib/libroken.so.13.0			base-krb5-shlib		kerberos
 ./usr/lib/librpcsvc.so.0.0			base-net-shlib
 ./usr/lib/librt.so.0.0				base-sys-shlib
 ./usr/lib/libsdp.so.2.0				base-sys-shlib
 ./usr/lib/libskey.so.1.0			base-sys-shlib		skey
-./usr/lib/libsl.so.2.0				base-krb5-shlib		kerberos
-./usr/lib/libss.so.4.0				base-krb5-shlib		kerberos
+./usr/lib/libsl.so.2.0				base-obsolete		obsolete
+./usr/lib/libsl.so.3.0				base-krb5-shlib		kerberos
+./usr/lib/libss.so.4.0				base-obsolete		obsolete
+./usr/lib/libss.so.5.0				base-krb5-shlib		kerberos
 ./usr/lib/libssh.so.2.0				base-obsolete		obsolete
 ./usr/lib/libssh.so.3.0				base-obsolete		obsolete
 ./usr/lib/libssh.so.4.0				base-obsolete		obsolete

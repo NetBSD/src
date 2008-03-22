@@ -39,8 +39,8 @@
 #include <sys/socket.h>
 #endif
 
-__RCSID("$Heimdal: sockbuf.c,v 1.3 1999/12/02 16:58:29 joda Exp $"
-        "$NetBSD: sockbuf.c,v 1.1.1.3 2002/09/12 12:41:34 joda Exp $");
+__RCSID("$Heimdal: sockbuf.c 7463 1999-12-02 16:58:55Z joda $"
+        "$NetBSD: sockbuf.c,v 1.2 2008/03/22 08:36:50 mlelstv Exp $");
 
 void
 set_buffer_size(int fd, int read)

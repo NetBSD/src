@@ -33,28 +33,28 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: socket.c,v 1.8 2003/04/15 03:26:51 lha Exp $"
-        "$NetBSD: socket.c,v 1.1.1.5 2003/05/15 20:28:49 lha Exp $");
+__RCSID("$Heimdal: socket.c 21005 2007-06-08 01:54:35Z lha $"
+        "$NetBSD: socket.c,v 1.2 2008/03/22 08:37:22 mlelstv Exp $");
 #endif
 
-#include <roken.h>
+#include "roken.h"
 #include <err.h>
 
 /*
  * Set `sa' to the unitialized address of address family `af'
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_any (struct sockaddr *sa, int af)
 {
     switch (af) {
     case AF_INET : {
-	struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
 
-	memset (sin, 0, sizeof(*sin));
-	sin->sin_family = AF_INET;
-	sin->sin_port   = 0;
-	sin->sin_addr.s_addr = INADDR_ANY;
+	memset (sin4, 0, sizeof(*sin4));
+	sin4->sin_family = AF_INET;
+	sin4->sin_port   = 0;
+	sin4->sin_addr.s_addr = INADDR_ANY;
 	break;
     }
 #ifdef HAVE_IPV6
@@ -78,17 +78,17 @@ socket_set_any (struct sockaddr *sa, int af)
  * set `sa' to (`ptr', `port')
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_address_and_port (struct sockaddr *sa, const void *ptr, int port)
 {
     switch (sa->sa_family) {
     case AF_INET : {
-	struct sockaddr_in *sin = (struct sockaddr_in *)sa;
+	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
 
-	memset (sin, 0, sizeof(*sin));
-	sin->sin_family = AF_INET;
-	sin->sin_port   = port;
-	memcpy (&sin->sin_addr, ptr, sizeof(struct in_addr));
+	memset (sin4, 0, sizeof(*sin4));
+	sin4->sin_family = AF_INET;
+	sin4->sin_port   = port;
+	memcpy (&sin4->sin_addr, ptr, sizeof(struct in_addr));
 	break;
     }
 #ifdef HAVE_IPV6
@@ -112,7 +112,7 @@ socket_set_address_and_port (struct sockaddr *sa, const void *ptr, int port)
  * Return the size of an address of the type in `sa'
  */
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 socket_addr_size (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
@@ -132,7 +132,7 @@ socket_addr_size (const struct sockaddr *sa)
  * Return the size of a `struct sockaddr' in `sa'.
  */
 
-size_t
+size_t ROKEN_LIB_FUNCTION
 socket_sockaddr_size (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
@@ -152,13 +152,13 @@ socket_sockaddr_size (const struct sockaddr *sa)
  * Return the binary address of `sa'.
  */
 
-void *
+void * ROKEN_LIB_FUNCTION
 socket_get_address (struct sockaddr *sa)
 {
     switch (sa->sa_family) {
     case AF_INET : {
-	struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-	return &sin->sin_addr;
+	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
+	return &sin4->sin_addr;
     }
 #ifdef HAVE_IPV6
     case AF_INET6 : {
@@ -176,13 +176,13 @@ socket_get_address (struct sockaddr *sa)
  * Return the port number from `sa'.
  */
 
-int
+int ROKEN_LIB_FUNCTION
 socket_get_port (const struct sockaddr *sa)
 {
     switch (sa->sa_family) {
     case AF_INET : {
-	const struct sockaddr_in *sin = (const struct sockaddr_in *)sa;
-	return sin->sin_port;
+	const struct sockaddr_in *sin4 = (const struct sockaddr_in *)sa;
+	return sin4->sin_port;
     }
 #ifdef HAVE_IPV6
     case AF_INET6 : {
@@ -200,13 +200,13 @@ socket_get_port (const struct sockaddr *sa)
  * Set the port in `sa' to `port'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_port (struct sockaddr *sa, int port)
 {
     switch (sa->sa_family) {
     case AF_INET : {
-	struct sockaddr_in *sin = (struct sockaddr_in *)sa;
-	sin->sin_port = port;
+	struct sockaddr_in *sin4 = (struct sockaddr_in *)sa;
+	sin4->sin_port = port;
 	break;
     }
 #ifdef HAVE_IPV6
@@ -225,7 +225,7 @@ socket_set_port (struct sockaddr *sa, int port)
 /*
  * Set the range of ports to use when binding with port = 0.
  */
-void
+void ROKEN_LIB_FUNCTION
 socket_set_portrange (int sock, int restr, int af)
 {
 #if defined(IP_PORTRANGE)
@@ -251,7 +251,7 @@ socket_set_portrange (int sock, int restr, int af)
  * Enable debug on `sock'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_debug (int sock)
 {
 #if defined(SO_DEBUG) && defined(HAVE_SETSOCKOPT)
@@ -266,7 +266,7 @@ socket_set_debug (int sock)
  * Set the type-of-service of `sock' to `tos'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_tos (int sock, int tos)
 {
 #if defined(IP_TOS) && defined(HAVE_SETSOCKOPT)
@@ -280,12 +280,24 @@ socket_set_tos (int sock, int tos)
  * set the reuse of addresses on `sock' to `val'.
  */
 
-void
+void ROKEN_LIB_FUNCTION
 socket_set_reuseaddr (int sock, int val)
 {
 #if defined(SO_REUSEADDR) && defined(HAVE_SETSOCKOPT)
     if(setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, (void *)&val,
 		  sizeof(val)) < 0)
 	err (1, "setsockopt SO_REUSEADDR");
+#endif
+}
+
+/*
+ * Set the that the `sock' should bind to only IPv6 addresses.
+ */
+
+void ROKEN_LIB_FUNCTION
+socket_set_ipv6only (int sock, int val)
+{
+#if defined(IPV6_V6ONLY) && defined(HAVE_SETSOCKOPT)
+    setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, (void *)&val, sizeof(val));
 #endif
 }

@@ -33,8 +33,8 @@
 
 #include "kx.h"
 
-__RCSID("$Heimdal: kxd.c,v 1.71.2.2 2003/05/15 15:11:35 lha Exp $"
-        "$NetBSD: kxd.c,v 1.1.1.7 2004/04/02 14:47:33 lha Exp $");
+__RCSID("$Heimdal: kxd.c 20452 2007-04-19 20:04:19Z lha $"
+        "$NetBSD: kxd.c,v 1.2 2008/03/22 08:36:51 mlelstv Exp $");
 
 static pid_t wait_on_pid = -1;
 static int   done        = 0;
@@ -76,7 +76,7 @@ fatal (kx_context *kc, int fd, char *format, ...)
     vsnprintf ((char *)p + 4, sizeof(msg) - 5, format, args);
     syslog (LOG_ERR, "%s", (char *)p + 4);
     len = strlen ((char *)p + 4);
-    p += KRB_PUT_INT (len, p, 4, 4);
+    p += kx_put_int (len, p, 4, 4);
     p += len;
     kx_write (kc, fd, msg, p - msg);
     va_end(args);
@@ -120,7 +120,12 @@ recv_conn (int sock, kx_context *kc,
      int ret = 1;
      int flags;
      int len;
-     u_int32_t tmp32;
+     uint32_t tmp32;
+
+     memset(kc, 0, sizeof(*kc));
+     *nsockets = 0;
+     *sockets = NULL;
+     *dispnr = 0;
 
      addrlen = sizeof(kc->__ss_this);
      kc->thisaddr = (struct sockaddr*)&kc->__ss_this;
@@ -170,7 +175,7 @@ recv_conn (int sock, kx_context *kc,
      if (*p != INIT)
 	 fatal(kc, sock, "Bad message");
      p++;
-     p += krb_get_int (p, &tmp32, 4, 0);
+     p += kx_get_int (p, &tmp32, 4, 0);
      len = min(sizeof(user), tmp32);
      memcpy (user, p, len);
      p += tmp32;
@@ -238,12 +243,12 @@ recv_conn (int sock, kx_context *kc,
 	     kc->user, user);
      umask(077);
      if (!(flags & PASSIVE)) {
-	 p += krb_get_int (p, &tmp32, 4, 0);
+	 p += kx_get_int (p, &tmp32, 4, 0);
 	 len = min(tmp32, display_size);
 	 memcpy (display, p, len);
 	 display[len] = '\0';
 	 p += tmp32;
-	 p += krb_get_int (p, &tmp32, 4, 0);
+	 p += kx_get_int (p, &tmp32, 4, 0);
 	 len = min(tmp32, xauthfile_size);
 	 memcpy (xauthfile, p, len);
 	 xauthfile[len] = '\0';
@@ -346,7 +351,7 @@ doit_conn (kx_context *kc,
 
     p = msg;
     *p++ = NEW_CONN;
-    p += KRB_PUT_INT (ntohs(port), p, 4, 4);
+    p += kx_put_int (ntohs(port), p, 4, 4);
 
     if (kx_write (kc, meta_sock, msg, p - msg) < 0) {
 	syslog (LOG_ERR, "write: %m");
@@ -464,7 +469,7 @@ doit_passive (kx_context *kc,
     --rem;
 
     len = strlen (display);
-    tmp = KRB_PUT_INT (len, p, rem, 4);
+    tmp = kx_put_int (len, p, rem, 4);
     if (tmp < 0 || rem < len + 4) {
 	syslog (LOG_ERR, "doit: buffer too small");
 	cleanup(nsockets, sockets);
@@ -478,7 +483,7 @@ doit_passive (kx_context *kc,
     rem -= len;
 
     len = strlen (xauthfile);
-    tmp = KRB_PUT_INT (len, p, rem, 4);
+    tmp = kx_put_int (len, p, rem, 4);
     if (tmp < 0 || rem < len + 4) {
 	syslog (LOG_ERR, "doit: buffer too small");
 	cleanup(nsockets, sockets);
@@ -534,11 +539,11 @@ doit_passive (kx_context *kc,
 		    if (sockets[i].flags == TCP) {
 			struct sockaddr_storage __ss_peer;
 			struct sockaddr *peer = (struct sockaddr*)&__ss_peer;
-			socklen_t len = sizeof(__ss_peer);
+			socklen_t slen = sizeof(__ss_peer);
 
 			fd = accept (sockets[i].fd,
 				     peer,
-				     &len);
+				     &slen);
 			if (fd < 0 && errno != EINTR)
 			    syslog (LOG_ERR, "accept: %m");
 
@@ -676,11 +681,13 @@ doit(int sock, int tcp_flag)
 
     flags = recv_conn (sock, &context, &dispnr, &nsockets, &sockets, tcp_flag);
 
-    if (flags & PASSIVE)
+    if (flags & PASSIVE) {
 	ret = doit_passive (&context, sock, flags, dispnr,
 			    nsockets, sockets, tcp_flag);
-    else
+    } else {
 	ret = doit_active (&context, sock, flags, tcp_flag);
+	cleanup(nsockets, sockets);
+    }
     context_destroy (&context);
     return ret;
 }
@@ -719,13 +726,13 @@ int
 main (int argc, char **argv)
 {
     int port;
-    int optind = 0;
+    int optidx = 0;
 
     setprogname (argv[0]);
     roken_openlog ("kxd", LOG_ODELAY | LOG_PID, LOG_DAEMON);
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
-		&optind))
+		&optidx))
 	usage (1);
 
     if (help_flag)

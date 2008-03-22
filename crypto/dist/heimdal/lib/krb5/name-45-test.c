@@ -31,9 +31,10 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. */
 
 #include "krb5_locl.h"
+#include <err.h>
 
-__RCSID("$Heimdal: name-45-test.c,v 1.3.2.1 2003/05/06 16:49:14 joda Exp $"
-        "$NetBSD: name-45-test.c,v 1.1.1.2 2003/05/15 20:28:48 lha Exp $");
+__RCSID("$Heimdal: name-45-test.c 19763 2007-01-08 13:35:49Z lha $"
+        "$NetBSD: name-45-test.c,v 1.2 2008/03/22 08:37:14 mlelstv Exp $");
 
 enum { MAX_COMPONENTS = 3 };
 
@@ -59,10 +60,10 @@ static struct testcase {
     {"krbtgt", "FOO.SE", "FOO.SE", "FOO.SE", 2,
      {"krbtgt", "FOO.SE"}, NULL, 0, 0},
 
-    {"foo", "bar", "BAZ", "BAZ", 2,
-     {"foo", "bar"}, NULL, 0, 0},
-    {"foo", "bar", "BAZ", "BAZ", 2,
-     {"foo", "bar"},
+    {"foo", "bar2", "BAZ", "BAZ", 2,
+     {"foo", "bar2"}, NULL, 0, 0},
+    {"foo", "bar2", "BAZ", "BAZ", 2,
+     {"foo", "bar2"},
      "[libdefaults]\n"
      "	v4_name_convert = {\n"
      "		host = {\n"
@@ -70,8 +71,8 @@ static struct testcase {
      "		}\n"
      "}\n",
     HEIM_ERR_V4_PRINC_NO_CONV, 0},
-    {"foo", "bar", "BAZ", "BAZ", 2,
-     {"foo5", "bar.baz"},
+    {"foo", "bar2", "BAZ", "BAZ", 2,
+     {"foo5", "bar2.baz"},
      "[realms]\n"
      "  BAZ = {\n"
      "		v4_name_convert = {\n"
@@ -80,7 +81,7 @@ static struct testcase {
      "			}\n"
      "		}\n"
      "		v4_instance_convert = {\n"
-     "			bar = bar.baz\n"
+     "			bar2 = bar2.baz\n"
      "		}\n"
      "  }\n",
      0, 0},
@@ -153,7 +154,14 @@ main(int argc, char **argv)
     struct testcase *t;
     krb5_context context;
     krb5_error_code ret;
+    char hostname[1024];
     int val = 0;
+
+    setprogname(argv[0]);
+
+    gethostname(hostname, sizeof(hostname));
+    if (!(strstr(hostname, "kth.se") != NULL || strstr(hostname, "su.se") != NULL))
+	return 0;
 
     for (t = tests; t->v4_name; ++t) {
 	krb5_principal princ;
@@ -208,12 +216,15 @@ main(int argc, char **argv)
 			    t->v4_name, t->v4_inst, t->v4_realm, s);
 		free(s);
 		val = 1;
+		krb5_free_context(context);
 		continue;
 	    }
 	}
 
-	if (ret)
+	if (ret) {
+	    krb5_free_context(context);
 	    continue;
+	}
 
 	if (strcmp (t->v5_realm, princ->realm) != 0) {
 	    printf ("wrong realm (\"%s\" should be \"%s\")"
@@ -267,15 +278,18 @@ main(int argc, char **argv)
 			    "krb5_524_conv_principal %s "
 			    "passed unexpected", printable_princ);
 		val = 1;
+		krb5_free_context(context);
 		continue;
 	    }
 	}
 	if (ret) {
 	    krb5_free_principal (context, princ);
+	    krb5_free_context(context);
 	    continue;
 	}
 
 	krb5_free_principal (context, princ);
+	krb5_free_context(context);
     }
     return val;
 }

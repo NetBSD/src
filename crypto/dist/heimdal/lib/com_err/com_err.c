@@ -33,8 +33,8 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$Heimdal: com_err.c,v 1.18 2002/03/10 23:07:01 assar Exp $"
-        "$NetBSD: com_err.c,v 1.5 2003/05/15 20:44:15 lha Exp $");
+__RCSID("$Heimdal: com_err.c 14930 2005-04-24 19:43:06Z lha $"
+        "$NetBSD: com_err.c,v 1.6 2008/03/22 08:37:06 mlelstv Exp $");
 #endif
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,6 +44,7 @@ __RCSID("$Heimdal: com_err.c,v 1.18 2002/03/10 23:07:01 assar Exp $"
 
 struct et_list *_et_list = NULL;
 
+
 const char *
 error_message (long code)
 {
@@ -51,15 +52,14 @@ error_message (long code)
     const char *p = com_right(_et_list, code);
     if (p == NULL) {
 	if (code < 0)
-	    sprintf(msg, "Unknown error %ld", code);
+	    snprintf(msg, sizeof(msg), "Unknown error %ld", code);
 	else
 	    p = strerror(code);
     }
     if (p != NULL && *p != '\0') {
-	strncpy(msg, p, sizeof(msg) - 1);
-	msg[sizeof(msg) - 1] = 0;
+	strlcpy(msg, p, sizeof(msg));
     } else 
-	sprintf(msg, "Unknown error %ld", code);
+	snprintf(msg, sizeof(msg), "Unknown error %ld", code);
     return msg;
 }
 

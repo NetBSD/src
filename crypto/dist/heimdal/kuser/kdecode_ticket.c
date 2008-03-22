@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,8 +33,8 @@
 
 #include "kuser_locl.h"
 
-__RCSID("$Heimdal: kdecode_ticket.c,v 1.5 2001/02/20 01:44:51 assar Exp $"
-        "$NetBSD: kdecode_ticket.c,v 1.1.1.5 2002/09/12 12:41:39 joda Exp $");
+__RCSID("$Heimdal: kdecode_ticket.c 15541 2005-07-01 07:14:58Z lha $"
+        "$NetBSD: kdecode_ticket.c,v 1.2 2008/03/22 08:37:03 mlelstv Exp $");
 
 static char *etype_str;
 static int version_flag;
@@ -102,7 +102,7 @@ main(int argc, char **argv)
     krb5_context context;
     krb5_ccache cache;
     krb5_creds in, *out;
-    int optind = 0;
+    int optidx = 0;
 
     setprogname (argv[0]);
 
@@ -110,7 +110,7 @@ main(int argc, char **argv)
     if (ret)
 	errx(1, "krb5_init_context failed: %d", ret);
   
-    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optind))
+    if(getarg(args, sizeof(args) / sizeof(args[0]), argc, argv, &optidx))
 	usage(1);
     
     if (help_flag)
@@ -121,8 +121,8 @@ main(int argc, char **argv)
 	exit(0);
     }
 
-    argc -= optind;
-    argv += optind;
+    argc -= optidx;
+    argv += optidx;
 
     if (argc != 1)
 	usage (1);
@@ -158,6 +158,6 @@ main(int argc, char **argv)
     print_and_decode_tkt (context, &out->ticket, out->server,
 			  out->session.keytype);
 
-    krb5_free_creds_contents(context, out);
+    krb5_free_cred_contents(context, out);
     return 0;
 }
