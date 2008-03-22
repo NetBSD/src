@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_md.h,v 1.8 2008/02/10 18:50:55 ad Exp $	*/
+/*	$NetBSD: pthread_md.h,v 1.9 2008/03/22 17:59:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -107,5 +107,31 @@ pthread__sp(void)
 
 /* Don't need additional memory barriers. */
 #define	PTHREAD__ATOMIC_IS_MEMBAR
+
+static inline void *
+_atomic_cas_ptr(volatile void *ptr, void *old, void *new)
+{
+	volatile uintptr_t *cast = ptr;
+	void *ret;
+
+	__asm __volatile ("lock; cmpxchgq %2, %1"
+		: "=a" (ret), "=m" (*cast)
+		: "r" (new), "m" (*cast), "0" (old));
+
+	return ret;
+}
+
+static inline void *
+_atomic_cas_ptr_ni(volatile void *ptr, void *old, void *new)
+{
+	volatile uintptr_t *cast = ptr;
+	void *ret;
+
+	__asm __volatile ("cmpxchgq %2, %1"
+		: "=a" (ret), "=m" (*cast)
+		: "r" (new), "m" (*cast), "0" (old));
+
+	return ret;
+}
 
 #endif /* _LIB_PTHREAD_X86_64_MD_H */
