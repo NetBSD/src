@@ -1,5 +1,5 @@
 #! /bin/sh -
-#	$NetBSD: makesyscalls.sh,v 1.67 2008/03/18 12:36:15 njoly Exp $
+#	$NetBSD: makesyscalls.sh,v 1.68 2008/03/22 15:11:01 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -42,6 +42,7 @@ case $# in
 esac
 
 # the config file sets the following variables:
+#	sysalign	check for alignment of off_t
 #	sysnames	the syscall names file
 #	sysnumhdr	the syscall numbers file
 #	syssw		the syscall switch file
@@ -132,6 +133,7 @@ BEGIN {
 	namesname = \"$namesname\"
 	constprefix = \"$constprefix\"
 	registertype = \"$registertype\"
+	sysalign=\"$sysalign\"
 	if (!registertype) {
 	    registertype = \"register_t\"
 	}
@@ -425,7 +427,7 @@ function parseline() {
 		if (argtype[argc] == "")
 			parserr($f, "argument definition")
 		if (argtype[argc] == "off_t") {
-			if ((argalign % 2) != 0 &&
+			if ((argalign % 2) != 0 && sysalign &&
 			    funcname != "sys_posix_fadvise") # XXX for now
 				parserr($f, "a padding argument")
 		} else {
