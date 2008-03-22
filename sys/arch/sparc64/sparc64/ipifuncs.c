@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.16 2008/03/20 13:18:16 nakayama Exp $ */
+/*	$NetBSD: ipifuncs.c,v 1.17 2008/03/22 04:12:32 nakayama Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.16 2008/03/20 13:18:16 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.17 2008/03/22 04:12:32 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -234,6 +234,11 @@ sparc64_send_ipi(int upaid, ipifunc_t func, uint64_t arg1, uint64_t arg2)
 
 		if ((ldxa(0, ASR_IDSR) & IDSR_NACK) == 0)
 			return;
+		/*
+		 * Wait for a while with enabling interrupts to avoid
+		 * deadlocks.  XXX - random value is better.
+		 */
+		DELAY(1);
 	}
 
 	if (panicstr == NULL)
