@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.2 2007/10/19 12:01:11 ad Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.3 2008/03/22 23:37:32 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.2 2007/10/19 12:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.3 2008/03/22 23:37:32 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,6 +134,9 @@ gemattach_sbus(struct device *parent, struct device *self, void *aux)
 	}
 	sbus_establish(&gsc->gsc_sd, self);
 	prom_getether(sa->sa_node, enaddr);
+
+	if (!strcmp("serdes", prom_getpropstring(sa->sa_node, "shared-pins")))
+		sc->sc_flags |= GEM_SERDES;
 
 	/*
 	 * SBUS config
