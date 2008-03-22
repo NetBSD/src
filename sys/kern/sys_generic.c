@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_generic.c,v 1.115 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: sys_generic.c,v 1.116 2008/03/22 18:04:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.115 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.116 2008/03/22 18:04:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,6 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.115 2008/03/21 21:55:00 ad Exp $")
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
 #include <sys/ktrace.h>
+#include <sys/cpu.h>
+#include <sys/atomic.h>
+#include <sys/socketvar.h>
+#include <sys/sleepq.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -104,13 +108,28 @@ __KERNEL_RCSID(0, "$NetBSD: sys_generic.c,v 1.115 2008/03/21 21:55:00 ad Exp $")
 #define	SEL_SCANNING	1	/* polling descriptors */
 #define	SEL_BLOCKING	2	/* about to block on select_cv */
 
+/* Per-CPU state for select()/poll(). */
+#if MAXCPUS > 32
+#error adjust this code
+#endif
+typedef struct selcpu {
+	kmutex_t	sc_lock;
+	sleepq_t	sc_sleepq;
+	int		sc_ncoll;
+	uint32_t	sc_mask;
+} selcpu_t;
+
 static int	selscan(lwp_t *, fd_mask *, fd_mask *, int, register_t *);
 static int	pollscan(lwp_t *, struct pollfd *, int, register_t *);
+static void	selclear(void);
 
-/* Global state for select()/poll(). */
-kmutex_t	select_lock;
-kcondvar_t	select_cv;
-int		nselcoll;
+static syncobj_t select_sobj = {
+	SOBJ_SLEEPQ_FIFO,
+	sleepq_unsleep,
+	sleepq_changepri,
+	sleepq_lendpri,
+	syncobj_noowner,
+};
 
 /*
  * Read system call.
@@ -767,6 +786,7 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	size_t		ni;
 	sigset_t	oldmask;
 	struct timeval  sleeptv;
+	selcpu_t	*sc;
 
 	error = 0;
 	if (nd < 0)
@@ -808,30 +828,43 @@ selcommon(lwp_t *l, register_t *retval, int nd, fd_set *u_in,
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
-	mutex_enter(&select_lock);
+	sc = curcpu()->ci_data.cpu_selcpu;
+	l->l_selcpu = sc;
 	SLIST_INIT(&l->l_selwait);
 	for (;;) {
+		/*
+		 * No need to lock.  If this is overwritten by another
+		 * value while scanning, we will retry below.  We only
+		 * need to see exact state from the descriptors that
+		 * we are about to poll, and lock activity resulting
+		 * from fo_poll is enough to provide an up to date value
+		 * for new polling activity.
+		 */
 	 	l->l_selflag = SEL_SCANNING;
-		ncoll = nselcoll;
- 		mutex_exit(&select_lock);
+		ncoll = sc->sc_ncoll;
 
 		error = selscan(l, (fd_mask *)(bits + ni * 0),
 		    (fd_mask *)(bits + ni * 3), nd, retval);
 
-		mutex_enter(&select_lock);
 		if (error || *retval)
 			break;
 		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 			break;
-		if (l->l_selflag != SEL_SCANNING || ncoll != nselcoll)
+		mutex_spin_enter(&sc->sc_lock);
+		if (l->l_selflag != SEL_SCANNING || sc->sc_ncoll != ncoll) {
+			mutex_spin_exit(&sc->sc_lock);
 			continue;
+		}
 		l->l_selflag = SEL_BLOCKING;
-		error = cv_timedwait_sig(&select_cv, &select_lock, timo);
+		lwp_lock(l);
+		lwp_unlock_to(l, &sc->sc_lock);
+		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
+		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
+		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;
 	}
 	selclear();
-	mutex_exit(&select_lock);
 
 	if (mask) {
 		mutex_enter(&p->p_smutex);
@@ -960,6 +993,7 @@ pollcommon(lwp_t *l, register_t *retval,
 	int		ncoll, error, timo;
 	size_t		ni;
 	struct timeval	sleeptv;
+	selcpu_t	*sc;
 
 	if (nfds > p->p_fd->fd_nfiles) {
 		/* forgiving; slightly wrong */
@@ -990,29 +1024,42 @@ pollcommon(lwp_t *l, register_t *retval,
 	} else
 		oldmask = l->l_sigmask;	/* XXXgcc */
 
-	mutex_enter(&select_lock);
+	sc = curcpu()->ci_data.cpu_selcpu;
+	l->l_selcpu = sc;
 	SLIST_INIT(&l->l_selwait);
 	for (;;) {
-		ncoll = nselcoll;
+		/*
+		 * No need to lock.  If this is overwritten by another
+		 * value while scanning, we will retry below.  We only
+		 * need to see exact state from the descriptors that
+		 * we are about to poll, and lock activity resulting
+		 * from fo_poll is enough to provide an up to date value
+		 * for new polling activity.
+		 */
+		ncoll = sc->sc_ncoll;
 		l->l_selflag = SEL_SCANNING;
-		mutex_exit(&select_lock);
 
 		error = pollscan(l, (struct pollfd *)bits, nfds, retval);
 
-		mutex_enter(&select_lock);
 		if (error || *retval)
 			break;
 		if (tv && (timo = gettimeleft(tv, &sleeptv)) <= 0)
 			break;
-		if (l->l_selflag != SEL_SCANNING || nselcoll != ncoll)
+		mutex_spin_enter(&sc->sc_lock);
+		if (l->l_selflag != SEL_SCANNING || sc->sc_ncoll != ncoll) {
+			mutex_spin_exit(&sc->sc_lock);
 			continue;
+		}
 		l->l_selflag = SEL_BLOCKING;
-		error = cv_timedwait_sig(&select_cv, &select_lock, timo);
+		lwp_lock(l);
+		lwp_unlock_to(l, &sc->sc_lock);
+		sleepq_enqueue(&sc->sc_sleepq, sc, "select", &select_sobj);
+		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
+		error = sleepq_block(timo, true);
 		if (error != 0)
 			break;
 	}
 	selclear();
-	mutex_exit(&select_lock);
 
 	if (mask) {
 		mutex_enter(&p->p_smutex);
@@ -1066,97 +1113,184 @@ seltrue(dev_t dev, int events, lwp_t *l)
 }
 
 /*
- * Record a select request.
+ * Record a select request.  Concurrency issues:
+ *
+ * The caller holds the same lock across calls to selrecord() and
+ * selwakeup(), so we don't need to consider a concurrent wakeup
+ * while in this routine.
+ *
+ * The only activity we need to guard against is selclear(), called by
+ * another thread that is exiting selcommon() or pollcommon().
+ * `sel_lwp' can only become non-NULL while the caller's lock is held,
+ * so it cannot become non-NULL due to a change made by another thread
+ * while we are in this routine.  It can only become _NULL_ due to a
+ * call to selclear().
+ *
+ * If it is non-NULL and != selector there is the potential for
+ * selclear() to be called by another thread.  If either of those
+ * conditions are true, we're not interested in touching the `named
+ * waiter' part of the selinfo record because we need to record a
+ * collision.  Hence there is no need for additional locking in this
+ * routine.
  */
 void
 selrecord(lwp_t *selector, struct selinfo *sip)
 {
+	selcpu_t *sc;
+	lwp_t *other;
 
-	mutex_enter(&select_lock);
-	if (sip->sel_lwp == NULL) {
-		/* First named waiter, although there may be more. */
+	KASSERT(selector == curlwp);
+
+	sc = selector->l_selcpu;
+	other = sip->sel_lwp;
+
+	if (other == selector) {
+		/* `selector' has already claimed it. */
+		KASSERT(sip->sel_cpu = sc);
+	} else if (other == NULL) {
+		/*
+		 * First named waiter, although there may be unnamed
+		 * waiters (collisions).  Issue a memory barrier to
+		 * ensure that we access sel_lwp (above) before other
+		 * fields - this guards against a call to selclear().
+		 */
+		membar_enter();
 		sip->sel_lwp = selector;
 		SLIST_INSERT_HEAD(&selector->l_selwait, sip, sel_chain);
-	} else if (sip->sel_lwp != selector) {
-		/* Multiple waiters. */
-		sip->sel_collision = true;
+		/* Replace selinfo's lock with our chosen CPU's lock. */
+		sip->sel_cpu = sc;
+	} else {
+		/* Multiple waiters: record a collision. */
+		sip->sel_collision |= sc->sc_mask;
+		KASSERT(sip->sel_cpu != NULL);
 	}
-	mutex_exit(&select_lock);
 }
 
 /*
- * Do a wakeup when a selectable event occurs.
+ * Do a wakeup when a selectable event occurs.  Concurrency issues:
+ *
+ * As per selrecord(), the caller's object lock is held.  If there
+ * is a named waiter, we must acquire the associated selcpu's lock
+ * in order to synchronize with selclear() and pollers going to sleep
+ * in selcommon() and/or pollcommon().
+ *
+ * sip->sel_cpu cannot change at this point, as it is only changed
+ * in selrecord(), and concurrent calls to selrecord() are locked
+ * out by the caller.
  */
 void
 selnotify(struct selinfo *sip, int events, long knhint)
 {
+	selcpu_t *sc;
+	uint32_t mask;
+	int index, oflag, swapin;
 	lwp_t *l;
 
-	mutex_enter(&select_lock);
-	if (sip->sel_collision) {
-		/* Multiple waiters - just notify everybody. */
-		nselcoll++;
-		sip->sel_collision = false;
-		cv_broadcast(&select_cv);
-	} else if (sip->sel_lwp != NULL) {
-		/* Only one LWP waiting. */
-		l = sip->sel_lwp;
-		if (l->l_selflag == SEL_BLOCKING) {
-			/*
-			 * If it's sleeping, wake it up.  If not, it's
-			 * already awake but hasn't yet removed itself
-			 * from the selector.  We reset the state below
-			 * so that we only attempt to do this once.
-			 */
-			lwp_lock(l);
-			if (l->l_wchan == &select_cv) {
-				/* lwp_unsleep() releases the LWP lock. */
-				(void)lwp_unsleep(l, true);
-			} else
-				lwp_unlock(l);
-		} else {
-			/*
-			 * Not yet asleep.  Reset its state below so that
-			 * it will go around again.
-			 */
-		}
-		l->l_selflag = SEL_RESET;
-	}
-	mutex_exit(&select_lock);
-
 	KNOTE(&sip->sel_klist, knhint);
+
+	if (sip->sel_lwp != NULL) {
+		/* One named LWP is waiting. */
+		swapin = 0;
+		sc = sip->sel_cpu;
+		mutex_spin_enter(&sc->sc_lock);
+		/* Still there? */
+		if (sip->sel_lwp != NULL) {
+			l = sip->sel_lwp;
+			/*
+			 * If thread is sleeping, wake it up.  If it's not
+			 * yet asleep, it will notice the change in state
+			 * and will re-poll the descriptors.
+			 */
+			oflag = l->l_selflag;
+			l->l_selflag = SEL_RESET;
+			if (oflag == SEL_BLOCKING &&
+			    l->l_mutex == &sc->sc_lock) {
+				KASSERT(l->l_wchan == sc);
+				swapin = sleepq_unsleep(l, false);
+			}
+		}
+		mutex_spin_exit(&sc->sc_lock);
+		if (swapin)
+			uvm_kick_scheduler();
+	}
+
+	if ((mask = sip->sel_collision) != 0) {
+		/*
+		 * There was a collision (multiple waiters): we must
+		 * inform all potentially interested waiters.
+		 */
+		sip->sel_collision = 0;
+		while (__predict_false(mask != 0)) {
+			index = ffs(mask) - 1;
+			mask &= ~(1 << index);
+			sc = cpu_lookup_byindex(index)->ci_data.cpu_selcpu;
+			mutex_spin_enter(&sc->sc_lock);
+			sc->sc_ncoll++;
+			sleepq_wake(&sc->sc_sleepq, sc, (u_int)-1);
+		}
+	}
 }
 
 /*
- * Remove an LWP from all objects that it is waiting for.
+ * Remove an LWP from all objects that it is waiting for.  Concurrency
+ * issues:
+ *
+ * The object owner's (e.g. device driver) lock is not held here.  Calls
+ * can be made to selrecord() and we do not synchronize against those
+ * directly using locks.  However, we use `sel_lwp' to lock out changes.
+ * Before clearing it we must use memory barriers to ensure that we can
+ * safely traverse the list of selinfo records.
  */
-void
+static void
 selclear(void)
 {
-	struct selinfo *sip;
-	lwp_t *l = curlwp;
+	struct selinfo *sip, *next;
+	selcpu_t *sc;
+	lwp_t *l;
 
-	KASSERT(mutex_owned(&select_lock));
+	l = curlwp;
+	sc = l->l_selcpu;
 
-	SLIST_FOREACH(sip, &l->l_selwait, sel_chain) {
+	mutex_spin_enter(&sc->sc_lock);
+	for (sip = SLIST_FIRST(&l->l_selwait); sip != NULL; sip = next) {
 		KASSERT(sip->sel_lwp == l);
+		KASSERT(sip->sel_cpu == l->l_selcpu);
+		/*
+		 * Read link to next selinfo record, if any.
+		 * It's no longer safe to touch `sip' after clearing
+		 * `sel_lwp', so ensure that the read of `sel_chain'
+		 * completes before the clearing of sel_lwp becomes
+		 * globally visible.
+		 */
+		next = SLIST_NEXT(sip, sel_chain);
+		membar_exit();
+		/* Release the record for another named waiter to use. */
 		sip->sel_lwp = NULL;
 	}
+	mutex_spin_exit(&sc->sc_lock);
 }
 
 /*
- * Initialize the select/poll system calls.
+ * Initialize the select/poll system calls.  Called once for each
+ * CPU in the system, as they are attached.
  */
 void
-selsysinit(void)
+selsysinit(struct cpu_info *ci)
 {
+	selcpu_t *sc;
 
-	mutex_init(&select_lock, MUTEX_DEFAULT, IPL_VM);
-	cv_init(&select_cv, "select");
+	sc = kmem_alloc(roundup2(sizeof(selcpu_t), CACHE_LINE_SIZE) +
+	    CACHE_LINE_SIZE, KM_SLEEP);
+	sc = (void *)roundup2((uintptr_t)sc, CACHE_LINE_SIZE);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
+	sleepq_init(&sc->sc_sleepq, &sc->sc_lock);
+	sc->sc_ncoll = 0;
+	sc->sc_mask = (1 << cpu_index(ci));
+	ci->ci_data.cpu_selcpu = sc;
 }
 
 /*
- * Initialize a selector.
+ * Initialize a selinfo record.
  */
 void
 selinit(struct selinfo *sip)
@@ -1166,23 +1300,99 @@ selinit(struct selinfo *sip)
 }
 
 /*
- * Destroy a selector.  The owning object must not gain new
- * references while this is in progress: all activity on the
- * selector must be stopped.
+ * Destroy a selinfo record.  The owning object must not gain new
+ * references while this is in progress: all activity on the record
+ * must be stopped.
+ *
+ * Concurrency issues: we only need guard against a call to selclear()
+ * by a thread exiting selcommon() and/or pollcommon().  The caller has
+ * prevented further references being made to the selinfo record via
+ * selrecord(), and it won't call selwakeup() again.
  */
 void
 seldestroy(struct selinfo *sip)
 {
+	selcpu_t *sc;
 	lwp_t *l;
 
 	if (sip->sel_lwp == NULL)
 		return;
 
-	mutex_enter(&select_lock);
+	/*
+	 * Lock out selclear().  The selcpu pointer can't change while
+	 * we are here since it is only ever changed in selrecord(),
+	 * and that will not be entered again for this record because
+	 * it is dying.
+	 */
+	KASSERT(sip->sel_cpu != NULL);
+	sc = sip->sel_cpu;
+	mutex_spin_enter(&sc->sc_lock);
 	if ((l = sip->sel_lwp) != NULL) {
-		/* This should rarely happen, so SLIST_REMOVE() is OK. */
+		/*
+		 * This should rarely happen, so although SLIST_REMOVE()
+		 * is slow, using it here is not a problem.
+		 */
+		KASSERT(l->l_selcpu == sc);
 		SLIST_REMOVE(&l->l_selwait, sip, selinfo, sel_chain);
 		sip->sel_lwp = NULL;
 	}
-	mutex_exit(&select_lock);
+	mutex_spin_exit(&sc->sc_lock);
+}
+
+int
+pollsock(struct socket *so, const struct timeval *tvp, int events)
+{
+	int		ncoll, error, timo;
+	struct timeval	sleeptv, tv;
+	selcpu_t	*sc;
+	lwp_t		*l;
+
+	timo = 0;
+	if (tvp != NULL) {
+		tv = *tvp;
+		if (inittimeleft(&tv, &sleeptv) == -1)
+			return EINVAL;
+	}
+
+	l = curlwp;
+	sc = l->l_cpu->ci_data.cpu_selcpu;
+	l->l_selcpu = sc;
+	SLIST_INIT(&l->l_selwait);
+	error = 0;
+	for (;;) {
+		/*
+		 * No need to lock.  If this is overwritten by another
+		 * value while scanning, we will retry below.  We only
+		 * need to see exact state from the descriptors that
+		 * we are about to poll, and lock activity resulting
+		 * from fo_poll is enough to provide an up to date value
+		 * for new polling activity.
+		 */
+		ncoll = sc->sc_ncoll;
+		l->l_selflag = SEL_SCANNING;
+		if (sopoll(so, events) != 0)
+			break;
+		if (tvp && (timo = gettimeleft(&tv, &sleeptv)) <= 0)
+			break;
+		mutex_spin_enter(&sc->sc_lock);
+		if (l->l_selflag != SEL_SCANNING || sc->sc_ncoll != ncoll) {
+			mutex_spin_exit(&sc->sc_lock);
+			continue;
+		}
+		l->l_selflag = SEL_BLOCKING;
+		lwp_lock(l);
+		lwp_unlock_to(l, &sc->sc_lock);
+		sleepq_enqueue(&sc->sc_sleepq, sc, "pollsock", &select_sobj);
+		KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);	/* XXX */
+		error = sleepq_block(timo, true);
+		if (error != 0)
+			break;
+	}
+	selclear();
+	/* poll is not restarted after signals... */
+	if (error == ERESTART)
+		error = EINTR;
+	if (error == EWOULDBLOCK)
+		error = 0;
+	return (error);
 }
