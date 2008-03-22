@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.14 2008/02/29 10:45:50 jmmv Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.15 2008/03/22 16:50:17 jmmv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.14 2008/02/29 10:45:50 jmmv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.15 2008/03/22 16:50:17 jmmv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -373,7 +373,8 @@ copy_syms(struct multiboot_info *mi)
 			memcpy((void *)symstart, (void *)symaddr, symsize);
 		}
 	}
-	*RELOC(int *, &esym) = (int)(strstart + strsize + KERNBASE);
+	*RELOC(int *, &esym) =
+	    (int)(symstart + symsize + strsize + KERNBASE);
 
 	ms->s_symstart = (void *)(symstart + KERNBASE);
 	ms->s_symsize  = symsize;
