@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.132 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.133 2008/03/22 17:53:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.132 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.133 2008/03/22 17:53:34 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_maxuprc.h"
@@ -1320,7 +1320,7 @@ proc_crmod_enter(void)
 void
 proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 {
-	struct lwp *l = curlwp;
+	struct lwp *l = curlwp, *l2;
 	struct proc *p = l->l_proc;
 	kauth_cred_t oc;
 
@@ -1328,6 +1328,10 @@ proc_crmod_leave(kauth_cred_t scred, kauth_cred_t fcred, bool sugid)
 	if (scred != NULL) {
 		mutex_enter(&p->p_smutex);
 		p->p_cred = scred;
+		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+			if (l2 != l)
+				l2->l_prflag |= LPR_CRMOD;
+		}
 		mutex_exit(&p->p_smutex);
 
 		/* Ensure the LWP cached credentials are up to date. */
