@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.48 2008/03/22 00:15:41 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.49 2008/03/22 00:21:52 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.48 2008/03/22 00:15:41 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.49 2008/03/22 00:21:52 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -364,7 +364,6 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 			da2 = _reg_read_4(SH4_UTLB_DA2 | e);
 			RUN_P1;
 
-			// r = _reg_read_4(SH4_UTLB_AA | e);
 			db_printf("0x%08x   %3d",
 			    aa & SH4_UTLB_AA_VPN_MASK,
 			    aa & SH4_UTLB_AA_ASID_MASK);
