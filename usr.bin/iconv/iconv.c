@@ -1,4 +1,4 @@
-/*	$NetBSD: iconv.c,v 1.12 2008/03/20 11:35:44 tnozaki Exp $ */
+/*	$NetBSD: iconv.c,v 1.13 2008/03/22 10:30:21 yamt Exp $ */
 
 /*-
  * Copyright (c)2003 Citrus Project,
@@ -28,13 +28,14 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: iconv.c,v 1.12 2008/03/20 11:35:44 tnozaki Exp $");
+__RCSID("$NetBSD: iconv.c,v 1.13 2008/03/22 10:30:21 yamt Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <err.h>
 #include <errno.h>
 #include <iconv.h>
 #include <langinfo.h>
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -169,6 +170,7 @@ main(int argc, char **argv)
 	char *opt_f = NULL, *opt_t = NULL;
 	FILE *fp;
 
+	setlocale(LC_ALL, "");
 	setprogname(argv[0]);
 
 	while ((ch = getopt(argc, argv, "cslf:t:")) != EOF) {
