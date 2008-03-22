@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.15 2008/03/13 22:19:39 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.16 2008/03/22 14:21:56 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.15 2008/03/13 22:19:39 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.16 2008/03/22 14:21:56 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -419,7 +419,7 @@ xbdback_xenbus_destroy(void *arg)
 		    devsw_blk2name(major(xbdi->xbdi_dev)),
 		    DISKUNIT(xbdi->xbdi_dev), DISKPART(xbdi->xbdi_dev) + 'a',
 		    xbdi->xbdi_domid);
-		vn_close(xbdi->xbdi_vp, FREAD, NOCRED, NULL);
+		vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 	}
 	SLIST_REMOVE(&xbdback_instances, xbdi, xbdback_instance, next);
 	free(xbdi, M_DEVBUF);
@@ -677,7 +677,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 			    "0x%x: %d\n", xbusd->xbusd_path,
 			    xbdi->xbdi_dev, err);
 			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
-			vn_close(xbdi->xbdi_vp, FREAD, NOCRED, NULL);
+			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 			xbdi->xbdi_vp = NULL;
 			return;
 		}
@@ -693,7 +693,7 @@ xbdback_backend_changed(struct xenbus_watch *watch,
 			printf("xbdback %s: can't DIOCGPART device 0x%x: %d\n",
 			    xbusd->xbusd_path, xbdi->xbdi_dev, err);
 			xbdi->xbdi_size = xbdi->xbdi_dev = 0;
-			vn_close(xbdi->xbdi_vp, FREAD, NOCRED, NULL);
+			vn_close(xbdi->xbdi_vp, FREAD, NOCRED);
 			xbdi->xbdi_vp = NULL;
 			return;
 		}
