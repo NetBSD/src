@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.213 2008/03/22 04:15:49 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.214 2008/03/22 16:51:30 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.213 2008/03/22 04:15:49 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2008/03/22 16:51:30 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -3075,6 +3075,7 @@ ctx_free(struct pmap *pm, struct cpu_info *ci)
 {
 	int oldctx;
 
+	KASSERT(mutex_owned(&pmap_lock));
 	oldctx = pm->pm_ctx[ci->ci_index];
 	if (oldctx == 0)
 		return;
