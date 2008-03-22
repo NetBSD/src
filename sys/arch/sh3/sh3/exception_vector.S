@@ -1,4 +1,4 @@
-/*	$NetBSD: exception_vector.S,v 1.36 2008/02/23 18:00:22 uwe Exp $	*/
+/*	$NetBSD: exception_vector.S,v 1.37 2008/03/22 03:23:27 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #define _ALIGN_TEXT	.align 5
 #include <sh3/asm.h>
 
-__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.36 2008/02/23 18:00:22 uwe Exp $")
+__KERNEL_RCSID(0, "$NetBSD: exception_vector.S,v 1.37 2008/03/22 03:23:27 uwe Exp $")
 
 
 /*
@@ -454,47 +454,26 @@ NENTRY(sh_vector_interrupt)
 	__EXCEPTION_ENTRY
 	stc	r0_bank, r6		! ssp - 3rd arg to intc_intr()
 
-	mov.l	.Li_intfp, r8
-	mov.l	@r8, r8
-	cmp/hi	r8, r14		! r14 > intfp ?
-	bf/s	.Li_on_intstack	! if (r14 <= intfp) already on intstack
-	 movt	r10		! remember to avoid re-testing later
-
-	!! else - switch to the interrupt stack
-	mov.l	.Li_intsp, r9
-	mov.l	@r9, r9
-
-	mov.l	r15, @-r9
-	stc.l	r6_bank, @-r9
-	mov	r9, r15
-	ldc	r8, r6_bank	! intfp
-.Li_on_intstack:
-
 	__INTR_MASK(r0, r1)
 	__EXCEPTION_UNBLOCK(r0, r1)	! enable exceptions for P3 access
 
+	mov.l	.Li_ci_idepth, r8	! callee-saved
 	mov.l	.Li_uvmexp_intrs, r2
 	mov.l	.Li_intc_intr, r0
+	mov.l	@r8, r9			! callee-saved
 	mov	#0, r1
 	mov.l	@r2, r3
+	add	#1, r9			! curcpu()->ci_idepth++
 	mov.l	r1, @(TF_EXPEVT, r14)	! tf->tf_expevt = 0 (for debug)?
 	add	#1, r3			! ++uvmexp.intrs
+	mov.l	r9, @r8
 	jsr	@r0			! intc_intr(ssr, spc, ssp)
 	 mov.l	r3, @r2
 
-	!! r10 reflects if we have switched to the interrupt stack on
-	!! entry.  If not - we are in a nested interrupt, so stay on
-	!! the interrupt stack, and we know we are returning to kernel
-	tst	r10, r10
-	bt	.Li_return_to_kernel
-
-	!! Switch to the lwp's stack to run the AST check, so that if
-	!! interrupted lwp is preemtped, it is later resumed on its
-	!! own stack, not on the intterupt stack
-	__EXCEPTION_BLOCK(r10, r11)	! saves SR in r11
-	ldc.l	@r15+, r6_bank
-	mov.l	@r15+, r15
-	ldc	r11, sr			! __EXCEPTION_UNBLOCK
+	cmp/pl	r9			! curcpu()->ci_idepth > 0
+	add	#-1, r9			! curcpu()->ci_idepth--
+	bt/s	.Li_return_to_kernel	! returning from a nested interrupt
+	 mov.l	r9, @r8
 
 	mov.l	@(TF_SSR, r14), r2
 	mov.l	.Li_PSL_MD, r1
@@ -527,8 +506,7 @@ NENTRY(sh_vector_interrupt)
 	__EXCEPTION_RETURN
 
 	.align	5
-.Li_intfp:		.long	_C_LABEL(intfp)
-.Li_intsp:		.long	_C_LABEL(intsp)
+.Li_ci_idepth:		.long	_C_LABEL(cpu_info_store) + CI_IDEPTH
 .Li_uvmexp_intrs:	.long	_C_LABEL(uvmexp) + UVMEXP_INTRS
 .Li_intc_intr:		.long	_C_LABEL(intc_intr)
 .Li_PSL_MD:		.long	0x40000000 /* PSL_MD */
