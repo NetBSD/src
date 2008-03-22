@@ -44,7 +44,8 @@ And then run:
 The following shows an example of temporarily adding 10MB more swap
 space for virtual memory:
 
- dd if=/dev/zero of=/root/swapfile bs=1024 count=10000
+ dd if=/dev/zero of=/root/swapfile bs=1024 count=10240
+ chmod go= /root/swapfile
  swapctl -a /root/swapfile
 %
 If your console ever gets broken, you can try resetting it to its
