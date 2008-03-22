@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_specific.c,v 1.18 2008/03/21 21:35:43 ad Exp $	*/
+/*	$NetBSD: pthread_specific.c,v 1.19 2008/03/22 14:19:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_specific.c,v 1.18 2008/03/21 21:35:43 ad Exp $");
+__RCSID("$NetBSD: pthread_specific.c,v 1.19 2008/03/22 14:19:27 ad Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 
@@ -86,11 +86,4 @@ pthread_curcpu_np(void)
 		return 0;
 
 	return cpu;
-}
-
-int *
-pthread__errno(void)
-{
-
-	return &(pthread__self()->pt_errno);
 }
