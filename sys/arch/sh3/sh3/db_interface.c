@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.47 2008/03/15 01:03:40 uwe Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.48 2008/03/22 00:15:41 uwe Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.47 2008/03/15 01:03:40 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.48 2008/03/22 00:15:41 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -311,6 +311,8 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 #endif /* SH3 */
 #ifdef SH4
 	if (CPU_IS_SH4) {
+		uint32_t aa, da1, da2;
+
 		/* MMU configuration */
 		r = _reg_read_4(SH4_MMUCR);
 		db_printf("%s virtual storage mode, SQ access: (kernel%s)\n",
@@ -327,29 +329,28 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		for (i = 0; i < 4; i++) {
 			e = i << SH4_ITLB_E_SHIFT;
 
-			r = _reg_read_4(SH4_ITLB_AA | e);
+			RUN_P2;
+			aa = _reg_read_4(SH4_ITLB_AA | e);
+			da1 = _reg_read_4(SH4_ITLB_DA1 | e);
+			da2 = _reg_read_4(SH4_ITLB_DA2 | e);
+			RUN_P1;
+
 			db_printf("0x%08x   %3d",
-			    r & SH4_ITLB_AA_VPN_MASK,
-			    r & SH4_ITLB_AA_ASID_MASK);
+			    aa & SH4_ITLB_AA_VPN_MASK,
+			    aa & SH4_ITLB_AA_ASID_MASK);
 
-			r = _reg_read_4(SH4_ITLB_DA1 | e);
-			__db_tlbdump_pfn(r);
+			__db_tlbdump_pfn(da1);
 			db_printf(" %c_%c%c_ %s ",
-			    ON(r, SH4_ITLB_DA1_V),
-			    ON(r, SH4_ITLB_DA1_C),
-			    ON(r, SH4_ITLB_DA1_SH),
-			    pr[(r & SH4_ITLB_DA1_PR) >>
+			    ON(da1, SH4_ITLB_DA1_V),
+			    ON(da1, SH4_ITLB_DA1_C),
+			    ON(da1, SH4_ITLB_DA1_SH),
+			    pr[(da1 & SH4_ITLB_DA1_PR) >>
 				SH4_UTLB_DA1_PR_SHIFT]);
-			__db_tlbdump_page_size_sh4(r);
+			__db_tlbdump_page_size_sh4(da1);
 
-#if 0 /* XXX: causes weird effects on landisk */
-			r = _reg_read_4(SH4_ITLB_DA2 | e);
 			db_printf(" %c  %d\n",
-			    ON(r, SH4_ITLB_DA2_TC),
-			    r & SH4_ITLB_DA2_SA_MASK);
-#else
-			db_printf("\n");
-#endif
+			    ON(da2, SH4_ITLB_DA2_TC),
+			    da2 & SH4_ITLB_DA2_SA_MASK);
 		}
 
 		/* Dump UTLB */
@@ -357,32 +358,32 @@ db_tlbdump_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		for (i = 0; i < 64; i++) {
 			e = i << SH4_UTLB_E_SHIFT;
 
-			r = _reg_read_4(SH4_UTLB_AA | e);
-			db_printf("0x%08x   %3d",
-			    r & SH4_UTLB_AA_VPN_MASK,
-			    r & SH4_UTLB_AA_ASID_MASK);
+			RUN_P2;
+			aa = _reg_read_4(SH4_UTLB_AA | e);
+			da1 = _reg_read_4(SH4_UTLB_DA1 | e);
+			da2 = _reg_read_4(SH4_UTLB_DA2 | e);
+			RUN_P1;
 
-			r = _reg_read_4(SH4_UTLB_DA1 | e);
-			__db_tlbdump_pfn(r);
+			// r = _reg_read_4(SH4_UTLB_AA | e);
+			db_printf("0x%08x   %3d",
+			    aa & SH4_UTLB_AA_VPN_MASK,
+			    aa & SH4_UTLB_AA_ASID_MASK);
+
+			__db_tlbdump_pfn(da1);
 			db_printf(" %c%c%c%c%c %s ",
-			    ON(r, SH4_UTLB_DA1_V),
-			    ON(r, SH4_UTLB_DA1_D),
-			    ON(r, SH4_UTLB_DA1_C),
-			    ON(r, SH4_UTLB_DA1_SH),
-			    ON(r, SH4_UTLB_DA1_WT),
-			    pr[(r & SH4_UTLB_DA1_PR_MASK) >>
+			    ON(da1, SH4_UTLB_DA1_V),
+			    ON(da1, SH4_UTLB_DA1_D),
+			    ON(da1, SH4_UTLB_DA1_C),
+			    ON(da1, SH4_UTLB_DA1_SH),
+			    ON(da1, SH4_UTLB_DA1_WT),
+			    pr[(da1 & SH4_UTLB_DA1_PR_MASK) >>
 				SH4_UTLB_DA1_PR_SHIFT]
 			    );
-			__db_tlbdump_page_size_sh4(r);
+			__db_tlbdump_page_size_sh4(da1);
 
-#if 0 /* XXX: causes weird effects on landisk */
-			r = _reg_read_4(SH4_UTLB_DA2 | e);
 			db_printf(" %c  %d\n",
-			    ON(r, SH4_UTLB_DA2_TC),
-			    r & SH4_UTLB_DA2_SA_MASK);
-#else
-			db_printf("\n");
-#endif
+			    ON(da2, SH4_UTLB_DA2_TC),
+			    da2 & SH4_UTLB_DA2_SA_MASK);
 		}
 	}
 #endif /* SH4 */
