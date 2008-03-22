@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1120 2008/03/22 08:37:24 mlelstv Exp $
+#	$NetBSD: mi,v 1.1121 2008/03/22 13:28:12 jmmv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1250,6 +1250,7 @@
 ./usr/include/krb5/crmf_asn1.h			comp-krb5-include	kerberos
 ./usr/include/krb5/digest_asn1.h		comp-krb5-include	kerberos
 ./usr/include/krb5/getarg.h			comp-krb5-include	kerberos
+./usr/include/krb5/hdb-private.h		comp-obsolete		obsolete
 ./usr/include/krb5/hdb-protos.h			comp-krb5-include	kerberos
 ./usr/include/krb5/hdb.h			comp-krb5-include	kerberos
 ./usr/include/krb5/hdb_asn1.h			comp-krb5-include	kerberos
@@ -5322,6 +5323,7 @@
 ./usr/share/man/cat3/krb5_auth_con_setremotesubkey.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_auth_con_setuserkey.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_auth_context.0	comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_auth_getauthenticator.0	comp-obsolete	obsolete
 ./usr/share/man/cat3/krb5_auth_getcksumtype.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_auth_getkeytype.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_auth_getlocalseqnumber.0	comp-krb5-catman	kerberos,.cat
@@ -5658,6 +5660,7 @@
 ./usr/share/man/cat3/krb5_padata_add.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_parse.0		comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_parse_address.0	comp-krb5-catman	kerberos,.cat
+./usr/share/man/cat3/krb5_parse_name.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/krb5_parse_name_flags.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_parse_nametype.0	comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb5_passwd_result_to_string.0	comp-krb5-catman	kerberos,.cat
@@ -10345,6 +10348,7 @@
 ./usr/share/man/man3/krb5_auth_con_setremotesubkey.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_auth_con_setuserkey.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_auth_context.3	comp-krb5-man		kerberos,.man
+./usr/share/man/man3/krb5_auth_getauthenticator.3	comp-obsolete		obsolete
 ./usr/share/man/man3/krb5_auth_getcksumtype.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_auth_getkeytype.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_auth_getlocalseqnumber.3	comp-krb5-man		kerberos,.man
@@ -10681,6 +10685,7 @@
 ./usr/share/man/man3/krb5_padata_add.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_parse.3		comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_parse_address.3	comp-krb5-man		kerberos,.man
+./usr/share/man/man3/krb5_parse_name.3		comp-obsolete		obsolete
 ./usr/share/man/man3/krb5_parse_name_flags.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_parse_nametype.3	comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb5_passwd_result_to_string.3	comp-krb5-man		kerberos,.man
