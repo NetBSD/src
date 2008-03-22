@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.49 2008/03/21 21:53:35 ad Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.50 2008/03/22 10:24:17 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.49 2008/03/21 21:53:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.50 2008/03/22 10:24:17 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1138,7 +1138,8 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 			if (nkev == kevcnt) {
 				/* do copyouts in kevcnt chunks */
 				mutex_spin_exit(&kq->kq_lock);
-				error = (*keops->keo_put_events)(keops->keo_private,
+				error = (*keops->keo_put_events)
+				    (keops->keo_private,
 				    kevbuf, ulistp, nevents, nkev);
 				mutex_spin_enter(&kq->kq_lock);
 				nevents += nkev;
