@@ -32,7 +32,7 @@
  */
 
 #include "hx_locl.h"
-RCSID("$ID$");
+__RCSID("$ID$");
 
 int
 _hx509_map_file_os(const char *fn, heim_octet_string *os, struct stat *rsb)
