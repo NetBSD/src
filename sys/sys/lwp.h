@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.81 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.82 2008/03/22 17:53:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -217,6 +217,7 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 
 /* The third set is kept in l_prflag. */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
+#define	LPR_CRMOD	0x00000100 /* Credentials modified */
 
 /*
  * Mask indicating that there is "exceptional" work to be done on return to
@@ -246,7 +247,8 @@ extern lwp_t lwp0;			/* LWP for proc0 */
 #ifdef _KERNEL
 #define	LWP_CACHE_CREDS(l, p)						\
 do {									\
-	if (__predict_false((l)->l_cred != (p)->p_cred))		\
+	(void)p;							\
+	if (__predict_false((l)->l_prflag & LPR_CRMOD))			\
 		lwp_update_creds(l);					\
 } while (/* CONSTCOND */ 0)
 

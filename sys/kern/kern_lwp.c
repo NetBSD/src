@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.97 2008/03/21 21:55:00 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.98 2008/03/22 17:53:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -205,7 +205,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.97 2008/03/21 21:55:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.98 2008/03/22 17:53:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1172,6 +1172,9 @@ lwp_update_creds(struct lwp *l)
 	mutex_enter(&p->p_mutex);
 	kauth_cred_hold(p->p_cred);
 	l->l_cred = p->p_cred;
+	mutex_enter(&p->p_smutex);
+	l->l_prflag &= ~LPR_CRMOD;
+	mutex_exit(&p->p_smutex);
 	mutex_exit(&p->p_mutex);
 	if (oc != NULL)
 		kauth_cred_free(oc);
