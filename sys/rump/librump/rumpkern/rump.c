@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.40 2008/03/21 21:55:01 ad Exp $	*/
+/*	$NetBSD: rump.c,v 1.41 2008/03/22 19:27:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Antti Kantee.  All Rights Reserved.
@@ -127,7 +127,7 @@ rump_init()
 	vfsinit();
 	bufinit();
 	fd_sys_init();
-	selsysinit();
+	selsysinit(&rump_cpu);
 
 	rumpvfs_init();
 
