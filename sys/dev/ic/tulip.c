@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.159 2008/03/11 23:58:06 dyoung Exp $	*/
+/*	$NetBSD: tulip.c,v 1.160 2008/03/23 10:32:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.159 2008/03/11 23:58:06 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.160 2008/03/23 10:32:51 tsutsui Exp $");
 
 #include "bpfilter.h"
 
@@ -1231,7 +1231,7 @@ tlp_rxintr(struct tulip_softc *sc)
 	struct ether_header *eh;
 	struct tulip_rxsoft *rxs;
 	struct mbuf *m;
-	u_int32_t rxstat;
+	u_int32_t rxstat, errors;
 	int i, len;
 
 	for (i = sc->sc_rxptr;; i = TULIP_NEXTRX(i)) {
@@ -1273,13 +1273,24 @@ tlp_rxintr(struct tulip_softc *sc)
 		 * If an error occurred, update stats, clear the status
 		 * word, and leave the packet buffer in place.  It will
 		 * simply be reused the next time the ring comes around.
+		 */
+		errors = TDSTAT_Rx_DE | TDSTAT_Rx_RF | TDSTAT_Rx_TL |
+		    TDSTAT_Rx_CS | TDSTAT_Rx_RE | TDSTAT_Rx_DB | TDSTAT_Rx_CE;
+		/*
 	 	 * If 802.1Q VLAN MTU is enabled, ignore the Frame Too Long
 		 * error.
 		 */
-		if (rxstat & TDSTAT_ES &&
-		    ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) == 0 ||
-		     (rxstat & (TDSTAT_Rx_DE | TDSTAT_Rx_RF |
-				TDSTAT_Rx_DB | TDSTAT_Rx_CE)) != 0)) {
+		if ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) != 0)
+			errors &= ~TDSTAT_Rx_TL;
+		/*
+		 * If chip doesn't have MII, ignore the MII error bit.
+		 */
+		if ((sc->sc_flags & TULIPF_HAS_MII) == 0)
+			errors &= ~TDSTAT_Rx_RE;
+
+		if ((rxstat & TDSTAT_ES) != 0 &&
+		    (rxstat & errors) != 0) {
+			rxstat &= errors;
 #define	PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
