@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.24 2008/03/22 03:23:27 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.25 2008/03/23 05:53:47 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.24 2008/03/22 03:23:27 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.25 2008/03/23 05:53:47 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -175,6 +175,8 @@ intc_intr_disable(int evtcode)
 	case SH4_INTEVT_PCIPWON:
 	case SH4_INTEVT_PCIPWDWN:
 	case SH4_INTEVT_PCIERR:
+	case SH4_INTEVT_TMU3:
+	case SH4_INTEVT_TMU4:
 		intpri_intr_disable(evtcode);
 		break;
 #endif
@@ -206,6 +208,8 @@ intc_intr_enable(int evtcode)
 	case SH4_INTEVT_PCIPWON:
 	case SH4_INTEVT_PCIPWDWN:
 	case SH4_INTEVT_PCIERR:
+	case SH4_INTEVT_TMU3:
+	case SH4_INTEVT_TMU4:
 		intpri_intr_enable(evtcode);
 		break;
 #endif
