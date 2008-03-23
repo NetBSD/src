@@ -1,4 +1,4 @@
-/*	$Id: local2.c,v 1.1.1.2.2.2 2007/11/06 23:08:20 matt Exp $	*/
+/*	local2.c,v 1.1.1.2.2.2 2007/11/06 23:08:20 matt Exp	*/
 /*
  * Copyright (c) 2006 Anders Magnusson (ragge@ludd.luth.se).
  * All rights reserved.
@@ -162,6 +162,12 @@ tlen(p) NODE *p;
 		}
 }
 #endif
+
+int
+fldexpand(NODE *p, int cookie, char **cp)
+{
+	return 0;
+}
 
 #if 0
 /*
@@ -553,4 +559,12 @@ int
 special(NODE *p, int shape)
 {
 	return SRNOPE;
+}
+
+/*
+ * Target-dependent command-line options.
+ */
+void
+mflags(char *str)
+{
 }

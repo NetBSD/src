@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.3.2.2 2008/01/09 01:21:13 matt Exp $	*/
+/*	atomic_or.S,v 1.3.2.2 2008/01/09 01:21:13 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@ ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64)
 STRONG_ALIAS(_atomic_or_64_nv,_atomic_or_64)
 
 ATOMIC_OP_ALIAS_SIZE(atomic_or_ulong,_atomic_or)
-STRONG_ALIAS(_atomic_or_ulong,_atomic_or)
+STRONG_ALIAS_SIZE(_atomic_or_ulong,_atomic_or)
 
 ATOMIC_OP_ALIAS_SIZE(atomic_or_ulong_nv,_atomic_or)
 STRONG_ALIAS_SIZE(_atomic_or_ulong_nv,_atomic_or)

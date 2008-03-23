@@ -245,8 +245,8 @@ PPAACCKKIINNGG LLIISSTT DDEETTAAIILLSS
              put at the top.  This name is potentially different than the name
              of the file it came in, and is used when keeping track of the
              package for later deinstallation.  Note that ppkkgg__ccrreeaattee will
-             derive this field from the package name and add it automatically
-             if none is given.
+             derive this field from the _p_k_g_-_n_a_m_e and add it automatically if
+             none is given.
      @@ddiirrrrmm _n_a_m_e
              Declare directory _n_a_m_e to be deleted at deinstall time.  By
              default, directories created by a package installation are not

@@ -78,7 +78,7 @@ BEGIN {
     warn("Variable should not start with an underline")
 }
 
-/[^\\]\$[^0-9'"$?@#*{(|\/]+/ {
+/[^\\]\$[^0-9!'"$?@#*{}(|\/]+/ {
     warn("Missing braces around variable name")
 }
 

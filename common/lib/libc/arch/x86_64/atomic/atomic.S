@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.S,v 1.7.4.2 2008/01/09 01:21:15 matt Exp $	*/
+/*	atomic.S,v 1.7.4.2 2008/01/09 01:21:15 matt Exp	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -132,6 +132,12 @@ NENTRY(_atomic_cas_32)
 	/* %eax now contains the old value */
 	ret
 
+NENTRY(_atomic_cas_32_ni)
+	movl	%esi, %eax
+	cmpxchgl %edx, (%rdi)
+	/* %eax now contains the old value */
+	ret
+
 /* 64-bit */
 
 NENTRY(_atomic_add_64)
@@ -214,6 +220,12 @@ NENTRY(_atomic_cas_64)
 	/* %eax now contains the old value */
 	ret
 
+NENTRY(_atomic_cas_64_ni)
+	movq	%rsi, %rax
+	cmpxchgq %rdx, (%rdi)
+	/* %eax now contains the old value */
+	ret
+
 /* memory barriers */
 
 NENTRY(_membar_consumer)
@@ -227,18 +239,6 @@ NENTRY(_membar_producer)
 	movq	$0, -8(%rsp)
 	ret
 END(membar_producer_end)
-
-NENTRY(_membar_enter)
-	/* A store is enough */
-	movq	$0, -8(%rsp)
-	ret
-END(membar_enter_end)
-
-NENTRY(_membar_exit)
-	/* A store is enough */
-	movq	$0, -8(%rsp)
-	ret
-END(membar_exit_end)
 
 NENTRY(_membar_sync)
 	LOCK(26)
@@ -338,10 +338,16 @@ ALIAS(atomic_cas_uint,_atomic_cas_32)
 ALIAS(atomic_cas_ulong,_atomic_cas_64)
 ALIAS(atomic_cas_ptr,_atomic_cas_64)
 
+ALIAS(atomic_cas_32_ni,_atomic_cas_32_ni)
+ALIAS(atomic_cas_64_ni,_atomic_cas_64_ni)
+ALIAS(atomic_cas_uint_ni,_atomic_cas_32_ni)
+ALIAS(atomic_cas_ulong_ni,_atomic_cas_64_ni)
+ALIAS(atomic_cas_ptr_ni,_atomic_cas_64_ni)
+
 ALIAS(membar_consumer,_membar_consumer)
 ALIAS(membar_producer,_membar_producer)
-ALIAS(membar_enter,_membar_enter)
-ALIAS(membar_exit,_membar_exit)
+ALIAS(membar_enter,_membar_consumer)
+ALIAS(membar_exit,_membar_producer)
 ALIAS(membar_sync,_membar_sync)
 
 STRONG_ALIAS(_atomic_add_int,_atomic_add_32)
@@ -391,3 +397,10 @@ STRONG_ALIAS(_atomic_swap_ptr,_atomic_swap_64)
 STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_64)
 STRONG_ALIAS(_atomic_cas_ptr,_atomic_cas_64)
+
+STRONG_ALIAS(_atomic_cas_uint_ni,_atomic_cas_32_ni)
+STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_64_ni)
+STRONG_ALIAS(_atomic_cas_ptr_ni,_atomic_cas_64_ni)
+
+STRONG_ALIAS(_membar_enter,_membar_consumer)
+STRONG_ALIAS(_membar_exit,_membar_producer)

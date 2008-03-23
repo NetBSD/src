@@ -43,7 +43,7 @@
 #include "atf/config.hpp"
 #include "atf/sanity.hpp"
 
-class atf_config : public atf::application {
+class atf_config : public atf::application::app {
     static const char* m_description;
 
     bool m_tflag;
@@ -67,7 +67,7 @@ const char* atf_config::m_description =
     "internal atf files are installed.";
 
 atf_config::atf_config(void) :
-    application(m_description, "atf-config(1)"),
+    app(m_description, "atf-config(1)", "atf(7)"),
     m_tflag(false)
 {
 }
@@ -96,6 +96,7 @@ atf_config::options_set
 atf_config::specific_options(void)
     const
 {
+    using atf::application::option;
     options_set opts;
     opts.insert(option('t', "", "Terse output: show values only"));
     return opts;

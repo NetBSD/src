@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.3 2005/09/10 22:03:22 he Exp $	*/
+/*	msg.md.es,v 1.3 2005/09/10 22:03:22 he Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,18 +37,12 @@
  *
  */
 
-/* arm32 machine dependent messages, spanish */
+/* evbarm machine dependent messages, spanish */
 
 
 message md_hello
 {Si ha iniciado desde disquette, ahora debería retirar el disco.
 
-}
-
-message fullpart
-{Ahora vamos a instalar NetBSD en el disco %s. Debería escoger
-entre instalar NetBSD en el disco entero o en una parte del disco.
-¿Que le gustaría hacer?
 }
 
 message badreadbb

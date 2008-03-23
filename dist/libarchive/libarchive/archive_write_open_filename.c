@@ -24,7 +24,7 @@
  */
 
 #include "archive_platform.h"
-__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_open_filename.c,v 1.19 2007/01/09 08:05:56 kientzle Exp $");
+__FBSDID("$FreeBSD: src/lib/libarchive/archive_write_open_filename.c,v 1.20 2008/02/19 05:46:58 kientzle Exp $");
 
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
@@ -46,6 +46,10 @@ __FBSDID("$FreeBSD: src/lib/libarchive/archive_write_open_filename.c,v 1.19 2007
 #endif
 
 #include "archive.h"
+
+#ifndef O_BINARY
+#define O_BINARY 0
+#endif
 
 struct write_file_data {
 	int		fd;
@@ -95,7 +99,7 @@ file_open(struct archive *a, void *client_data)
 	struct stat st;
 
 	mine = (struct write_file_data *)client_data;
-	flags = O_WRONLY | O_CREAT | O_TRUNC;
+	flags = O_WRONLY | O_CREAT | O_TRUNC | O_BINARY;
 
 	/*
 	 * Open the file.

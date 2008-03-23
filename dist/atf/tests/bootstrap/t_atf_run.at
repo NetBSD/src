@@ -41,7 +41,9 @@ dnl XXX The 9 number used below is a hack used to simplify these tests.
 dnl The correct fix could be to make the auxiliary test programs be real
 dnl test programs instead of two-liners creted from here.
 
-m4_define([CREATE_PASS_TEST], [AT_DATA([$1],[#! /bin/sh
+m4_define([CREATE_PASS_TEST],
+[cat >$1 <<EOF
+#! @S|@(atf-config -t atf_shell)
 echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
 echo "" >&9
 echo 'tcs-count: 1' >&9
@@ -50,11 +52,13 @@ echo ignore-me
 echo ignore-me >&2
 echo 'tc-end: $2, passed' >&9
 true
-])
+EOF
 AT_CHECK([chmod +x $1], [0], [], [])
 ])
 
-m4_define([CREATE_FAIL_TEST], [AT_DATA([$1],[#! /bin/sh
+m4_define([CREATE_FAIL_TEST],
+[cat >$1 <<EOF
+#! @S|@(atf-config -t atf_shell)
 echo "Content-Type: application/X-atf-tcs; version=\"1\"" >&9
 echo "" >&9
 echo 'tcs-count: 1' >&9
@@ -63,7 +67,7 @@ echo ignore-me
 echo ignore-me >&2
 echo 'tc-end: $2, failed, No reason' >&9
 false
-])
+EOF
 AT_CHECK([chmod +x $1], [0], [], [])
 ])
 

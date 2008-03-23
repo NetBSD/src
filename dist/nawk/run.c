@@ -842,6 +842,9 @@ int format(char **pbuf, int *pbufsize, const char *s, Node *a)	/* printf-like co
 			if (isalpha((uschar)*s) && *s != 'l' && *s != 'h' && *s != 'L')
 				break;	/* the ansi panoply */
 			if (*s == '*') {
+				if (a == NULL)
+					FATAL("not enough args in printf("
+					    "\"%.30s\")", os);
 				x = execute(a);
 				a = a->nnext;
 				sprintf(t-1, "%d", fmtwd=(int) getfval(x));

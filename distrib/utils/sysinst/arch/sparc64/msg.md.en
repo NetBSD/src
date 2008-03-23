@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.4 2003/06/11 21:35:50 dsl Exp $	*/
+/*	msg.md.en,v 1.4 2003/06/11 21:35:50 dsl Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,18 +37,12 @@
  *
  */
 
-/* sparc machine dependent messages, english */
+/* sparc64 machine dependent messages, english */
 
 
 message md_hello
 {If you booted from a floppy, you may now remove the disk.
 
-}
-
-message fullpart
-{We are now going to install NetBSD on the disk %s.  You may
-choose to install NetBSD on the entire disk or part of the disk.
-Which would you like to do?
 }
 
 message dobootblks
@@ -57,3 +51,5 @@ message dobootblks
 
 message set_kernel_1
 {Kernel (GENERIC)}
+message set_kernel_2
+{Kernel (GENERIC.MP)}

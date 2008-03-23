@@ -2,6 +2,7 @@
  * Copyright (c) 2002 Bob Beck <beck@openbsd.org>
  * Copyright (c) 2002 Theo de Raadt
  * Copyright (c) 2002 Markus Friedl
+ * Copyright (c) 2008 Coyote Point Systems, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,7 +73,6 @@ struct dev_crypto_state {
 
 static u_int32_t cryptodev_asymfeat = 0;
 
-static int get_asym_dev_crypto(void);
 static int open_dev_crypto(void);
 static int get_dev_crypto(void);
 static int cryptodev_max_iv(int cipher);
@@ -176,30 +176,12 @@ open_dev_crypto(void)
 static int
 get_dev_crypto(void)
 {
-	int fd, retfd;
-
-	if ((fd = open_dev_crypto()) == -1)
-		return (-1);
-	if (ioctl(fd, CRIOGET, &retfd) == -1)
-		return (-1);
-
-	/* close on exec */
-	if (fcntl(retfd, F_SETFD, 1) == -1) {
-		close(retfd);
-		return (-1);
-	}
-	return (retfd);
-}
-
-/* Caching version for asym operations */
-static int
-get_asym_dev_crypto(void)
-{
 	static int fd = -1;
 
-	if (fd == -1)
-		fd = get_dev_crypto();
-	return fd;
+	if (fd == -1) {
+		fd = open_dev_crypto();
+	}
+	return (fd);
 }
 
 /*
@@ -276,7 +258,6 @@ get_cryptodev_ciphers(const int **cnids)
 		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = ciphers[i].nid;
 	}
-	close(fd);
 
 	if (count > 0)
 		*cnids = nids;
@@ -312,7 +293,6 @@ get_cryptodev_digests(const int **cnids)
 		    ioctl(fd, CIOCFSESSION, &sess.ses) != -1)
 			nids[count++] = digests[i].nid;
 	}
-	close(fd);
 
 	if (count > 0)
 		*cnids = nids;
@@ -448,7 +428,6 @@ cryptodev_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	sess->cipher = cipher;
 
 	if (ioctl(state->d_fd, CIOCGSESSION, sess) == -1) {
-		close(state->d_fd);
 		state->d_fd = -1;
 		return (0);
 	}
@@ -485,7 +464,6 @@ cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 	} else {
 		ret = 1;
 	}
-	close(state->d_fd);
 	state->d_fd = -1;
 
 	return (ret);
@@ -694,7 +672,7 @@ cryptodev_asym(struct crypt_kop *kop, int rlen, BIGNUM *r, int slen, BIGNUM *s)
 {
 	int fd, ret = -1;
 
-	if ((fd = get_asym_dev_crypto()) < 0)
+	if ((fd = get_dev_crypto()) < 0)
 		return (ret);
 
 	if (r) {
@@ -974,7 +952,7 @@ cryptodev_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 	int dhret = 1;
 	int fd, keylen;
 
-	if ((fd = get_asym_dev_crypto()) < 0) {
+	if ((fd = get_dev_crypto()) < 0) {
 		const DH_METHOD *meth = DH_OpenSSL();
 
 		return ((meth->compute_key)(key, pub_key, dh));
@@ -1061,11 +1039,9 @@ ENGINE_load_cryptodev(void)
 	 * find out what asymmetric crypto algorithms we support
 	 */
 	if (ioctl(fd, CIOCASYMFEAT, &cryptodev_asymfeat) == -1) {
-		close(fd);
 		ENGINE_free(engine);
 		return;
 	}
-	close(fd);
 
 	if (!ENGINE_set_id(engine, "cryptodev") ||
 	    !ENGINE_set_name(engine, "BSD cryptodev engine") ||

@@ -56,7 +56,11 @@ class reader : public atf::formats::atf_atffile_reader {
         if (isglob) {
             std::set< std::string > ms =
                 atf::expand::expand_glob(name, m_dir.names());
-            m_tps.insert(m_tps.end(), ms.begin(), ms.end());
+            // Cannot use m_tps.insert(iterator, begin, end) here because it
+            // does not work under Solaris.
+            for (std::set< std::string >::const_iterator iter = ms.begin();
+                 iter != ms.end(); iter++)
+                m_tps.push_back(*iter);
         } else {
             if (m_dir.find(name) == m_dir.end())
                 throw atf::not_found_error< atf::fs::path >
@@ -117,8 +121,8 @@ atf::atffile::atffile(const atf::fs::path& filename)
     // all possible test programs in it.
     fs::directory dir(filename.branch_path());
     dir.erase(filename.leaf_name());
-    for (fs::directory::iterator iter = dir.begin(); iter != dir.end();
-         iter++) {
+    fs::directory::iterator iter = dir.begin();
+    while (iter != dir.end()) {
         const std::string& name = (*iter).first;
         const fs::file_info& fi = (*iter).second;
 
@@ -126,7 +130,9 @@ atf::atffile::atffile(const atf::fs::path& filename)
         // not candidates for glob matching.
         if (name[0] == '.' || (!fi.is_owner_executable() &&
                                !fi.is_group_executable()))
-            dir.erase(iter);
+            dir.erase(iter++);
+        else
+            iter++;
     }
 
     // Parse the atffile.

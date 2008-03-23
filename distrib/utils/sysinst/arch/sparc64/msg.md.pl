@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.4 2003/06/11 21:35:50 dsl Exp $	*/
+/*	msg.md.pl,v 1.4 2003/06/11 21:35:50 dsl Exp	*/
 /* Based on english version: */
 /*	NetBSD: msg.md.en,v 1.2 2002/12/03 01:54:49 minoura Exp */
 
@@ -47,16 +47,11 @@ message md_hello
 
 }
 
-message fullpart
-{Zainstalujemy teraz NetBSD na dysku %s. Mozesz wybrac czy chcesz
-zainstalowac NetBSD na calym dysku, czy tylko na jego czesci.
-Ktora instalacje chcesz zrobic?
-}
-
 message dobootblks
 {Instalowanie bootblokow na %s....
 }
 
 message set_kernel_1
 {Kernel (GENERIC)}
-
+message set_kernel_2
+{Kernel (GENERIC.MP)}

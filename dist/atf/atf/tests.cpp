@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,12 +37,14 @@
 extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <sys/wait.h>
 #include <signal.h>
 #include <unistd.h>
 }
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <cstdlib>
 #include <cstring>
@@ -63,6 +65,7 @@ extern "C" {
 #include "atf/fs.hpp"
 #include "atf/io.hpp"
 #include "atf/sanity.hpp"
+#include "atf/signals.hpp"
 #include "atf/tests.hpp"
 #include "atf/text.hpp"
 #include "atf/ui.hpp"
@@ -71,98 +74,25 @@ extern "C" {
 namespace impl = atf::tests;
 #define IMPL_NAME "atf::tests"
 
-//
-// Define LAST_SIGNAL to the last signal number valid for the system.
-// This is tricky.  For example, NetBSD defines SIGPWR as the last valid
-// number, whereas Mac OS X defines it as SIGTHR.  Both share the same
-// signal number (32).  If none of these are available, we assume that
-// the highest signal is SIGUSR2.
-//
-#if defined(SIGTHR) && defined(SIGPWR)
-#   if SIGTHR > SIGPWR
-#       define LAST_SIGNAL SIGTHR
-#   elif SIGPWR < SIGTHR
-#       define LAST_SIGNAL SIGPWR
-#   else
-#       define LAST_SIGNAL SIGPWR
-#   endif
-#elif defined(SIGTHR)
-#   define LAST_SIGNAL SIGTHR
-#elif defined(SIGPWR)
-#   define LAST_SIGNAL SIGPWR
-#else
-#   define LAST_SIGNAL SIGUSR2
-#endif
-
 // ------------------------------------------------------------------------
-// The auxiliary "signal_holder" class.
+// Auxiliary stuff for the timeout implementation.
 // ------------------------------------------------------------------------
 
-//
-// A RAII model to hold a signal while the object is alive.
-//
-class signal_holder {
-    int m_signal;
-    bool m_happened;
-    struct sigaction m_sanew, m_saold;
+namespace timeout {
+    static pid_t current_body = 0;
+    static bool killed = false;
 
-    static std::map< int, signal_holder* > m_holders;
-    static void handler(int s)
+    void
+    sigalrm_handler(int signo)
     {
-        m_holders[s]->m_happened = true;
-    }
+        PRE(signo == SIGALRM);
 
-    void program(void)
-    {
-        if (::sigaction(m_signal, &m_sanew, &m_saold) == -1)
-            throw atf::system_error("signal_holder::signal_holder",
-                                    "sigaction(2) failed", errno);
-    }
-
-public:
-    signal_holder(int s) :
-        m_signal(s),
-        m_happened(false)
-    {
-        m_sanew.sa_handler = handler;
-        sigemptyset(&m_sanew.sa_mask);
-        m_sanew.sa_flags = 0;
-
-        program();
-        PRE(m_holders.find(m_signal) == m_holders.end());
-        m_holders[m_signal] = this;
-    }
-
-    ~signal_holder(void)
-    {
-        int res = ::sigaction(m_signal, &m_saold, NULL);
-        try {
-            process();
-
-            if (res == -1)
-                throw atf::system_error("signal_holder::signal_holder",
-                                        "sigaction(2) failed", errno);
-        } catch (...) {
-            if (res == -1)
-                throw atf::system_error("signal_holder::signal_holder",
-                                        "sigaction(2) failed", errno);
+        if (current_body != 0) {
+            ::killpg(current_body, SIGTERM);
+            killed = true;
         }
     }
-
-    void process(void)
-    {
-        if (m_happened) {
-            int res = ::sigaction(m_signal, &m_saold, NULL);
-            ::kill(0, m_signal);
-            if (res == -1)
-                throw atf::system_error("signal_holder::signal_holder",
-                                        "sigaction(2) failed", errno);
-            program();
-        }
-    }
-};
-
-std::map< int, signal_holder* > signal_holder::m_holders;
+} // namespace timeout
 
 // ------------------------------------------------------------------------
 // The "vars_map" class.
@@ -344,6 +274,20 @@ impl::tc::ensure_boolean(const std::string& name)
 }
 
 void
+impl::tc::ensure_integral(const std::string& name)
+{
+    ensure_not_empty(name);
+
+    const std::string& val = get(name);
+    for (std::string::const_iterator iter = val.begin(); iter != val.end();
+         iter++) {
+        if (!std::isdigit(*iter))
+            throw std::runtime_error("Invalid value for integral "
+                                     "variable `" + name + "'");
+    }
+}
+
+void
 impl::tc::ensure_not_empty(const std::string& name)
 {
     if (m_meta_data.find(name) == m_meta_data.end())
@@ -419,9 +363,11 @@ impl::tc::init(const vars_map& c, const std::string& srcdir)
     m_srcdir = srcdir;
 
     m_meta_data["ident"] = m_ident;
+    m_meta_data["timeout"] = "300";
     head();
     ensure_not_empty("descr");
     ensure_not_empty("ident");
+    ensure_integral("timeout");
     INV(m_meta_data["ident"] == m_ident);
 }
 
@@ -444,7 +390,7 @@ sanitize_process(const atf::fs::path& workdir)
     sadfl.sa_handler = SIG_DFL;
     sigemptyset(&sadfl.sa_mask);
     sadfl.sa_flags = 0;
-    for (int i = 0; i < LAST_SIGNAL; i++)
+    for (int i = 0; i < atf::signals::last_signo; i++)
         ::sigaction(i, &sadfl, NULL);
 
     // Reset critical environment variables to known values.
@@ -470,6 +416,34 @@ void
 impl::tc::check_requirements(void)
     const
 {
+    if (has("require.arch")) {
+        const std::string& a = get("require.arch");
+        std::vector< std::string > arches = text::split(a, " ");
+        bool found = false;
+        for (std::vector< std::string >::const_iterator iter = arches.begin();
+             iter != arches.end() && !found; iter++) {
+            if ((*iter) == atf::config::get("atf_arch"))
+                found = true;
+        }
+        if (!a.empty() && !found)
+            throw tcr::skipped("Requires one of the '" + a +
+                               "' architectures");
+    }
+
+    if (has("require.machine")) {
+        const std::string& m = get("require.machine");
+        std::vector< std::string > machines = text::split(m, " ");
+        bool found = false;
+        for (std::vector< std::string >::const_iterator iter =
+             machines.begin(); iter != machines.end() && !found; iter++) {
+            if ((*iter) == atf::config::get("atf_machine"))
+                found = true;
+        }
+        if (!m.empty() && !found)
+            throw tcr::skipped("Requires one of the '" + m +
+                               "' machine types");
+    }
+
     if (has("require.config")) {
         const std::string& c = get("require.config");
         std::vector< std::string > vars = text::split(c, " ");
@@ -503,6 +477,26 @@ impl::tc::check_requirements(void)
     }
 }
 
+static
+void
+program_timeout(pid_t pid, const std::string& tostr)
+{
+    PRE(pid != 0);
+
+    INV(!tostr.empty());
+
+    int timeout = atf::text::to_type< int >(tostr);
+
+    if (timeout != 0) {
+        struct itimerval itv;
+        timerclear(&itv.it_interval);
+        timerclear(&itv.it_value);
+        itv.it_value.tv_sec = timeout;
+        timeout::current_body = pid;
+        ::setitimer(ITIMER_REAL, &itv, NULL);
+    }
+}
+
 impl::tcr
 impl::tc::fork_body(const std::string& workdir)
     const
@@ -516,6 +510,8 @@ impl::tc::fork_body(const std::string& workdir)
         tcr = tcr::failed("Coult not fork to run test case");
     } else if (pid == 0) {
         int errcode;
+
+        ::setpgid(::getpid(), 0);
 
         // Unexpected errors detected in the child process are mentioned
         // in stderr to give the user a chance to see what happened.
@@ -552,11 +548,23 @@ impl::tc::fork_body(const std::string& workdir)
         }
         std::exit(errcode);
     } else {
+        // Program the timeout handler.
+        timeout::current_body = 0;
+        timeout::killed = false;
+        atf::signals::signal_programmer sigalrm(SIGALRM,
+                                                timeout::sigalrm_handler);
+        program_timeout(pid, get("timeout"));
+
+        // Wait for the child and deal with its termination status.
         int status;
-        if (::waitpid(pid, &status, 0) == -1) {
-            tcr = tcr::failed("Error while waiting for process " +
-                              atf::text::to_string(pid) + ": " +
-                              ::strerror(errno));
+        if (::waitpid(pid, &status, 0) != pid) {
+            if (errno == EINTR && timeout::killed)
+                tcr = tcr::failed("Test case timed out after " +
+                                  get("timeout") + " seconds");
+            else
+                tcr = tcr::failed("Error while waiting for process " +
+                                  atf::text::to_string(pid) + ": " +
+                                  ::strerror(errno));
         } else {
             if (WIFEXITED(status)) {
                 if (WEXITSTATUS(status) == EXIT_SUCCESS) {
@@ -588,9 +596,6 @@ impl::tc::fork_body(const std::string& workdir)
             } else if (WIFSIGNALED(status)) {
                 tcr = tcr::failed("Test case received signal " +
                                   atf::text::to_string(WTERMSIG(status)));
-            } else if (WIFSTOPPED(status)) {
-                tcr = tcr::failed("Test case received stop signal " +
-                                  atf::text::to_string(WSTOPSIG(status)));
             } else
                 UNREACHABLE;
         }
@@ -685,7 +690,7 @@ impl::tc::require_prog(const std::string& prog)
 // The "tp" class.
 // ------------------------------------------------------------------------
 
-class tp : public atf::application {
+class tp : public atf::application::app {
 public:
     typedef std::vector< impl::tc * > tc_vector;
 
@@ -724,7 +729,7 @@ const char* tp::m_description =
     "This is an independent atf test program.";
 
 tp::tp(const tc_vector& tcs) :
-    application(m_description, "atf-test-program(1)"),
+    app(m_description, "atf-test-program(1)", "atf(7)"),
     m_lflag(false),
     m_results_fd(STDOUT_FILENO),
     m_srcdir(atf::fs::get_current_dir()),
@@ -744,6 +749,7 @@ tp::options_set
 tp::specific_options(void)
     const
 {
+    using atf::application::option;
     options_set opts;
     opts.insert(option('l', "", "List test cases and their purpose"));
     opts.insert(option('r', "fd", "The file descriptor to which the test "
@@ -919,9 +925,9 @@ tp::run_tcs(void)
 
     int errcode = EXIT_SUCCESS;
 
-    signal_holder sighup(SIGHUP);
-    signal_holder sigint(SIGINT);
-    signal_holder sigterm(SIGTERM);
+    atf::signals::signal_holder sighup(SIGHUP);
+    atf::signals::signal_holder sigint(SIGINT);
+    atf::signals::signal_holder sigterm(SIGTERM);
 
     atf::formats::atf_tcs_writer w(results_stream(), std::cout, std::cerr,
                                    tcs.size());

@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.147.8.2 2008/01/09 01:28:30 matt Exp $	*/
+/*	util.c,v 1.147.8.2 2008/01/09 01:28:30 matt Exp	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -189,6 +189,9 @@ init_set_status(int minimal)
 	i = strlen(msg_some); if (i > len) {len = i; longest = msg_some; }
 	i = strlen(msg_none); if (i > len) {len = i; longest = msg_none; }
 	select_menu_width = snprintf(NULL, 0, msg_cur_distsets_row, "",longest);
+
+	/* Give the md code a chance to choose the right kernel, etc. */
+	md_init_set_status(minimal);
 }
 
 int
@@ -1180,6 +1183,15 @@ set_crypt_type(void)
 		    "default:\n"
 		    "  localcipher = blowfish,7\n"
 		    "  ypcipher = blowfish,7\n");
+		fclose(pwc);
+		break;
+	case 4:	/* sha1 */
+		rename(fn, target_expand("/etc/passwd.conf.pre-sysinst"));
+		pwc = fopen(fn, "w");
+		fprintf(pwc,
+		    "default:\n"
+		    "  localcipher = sha1\n"
+		    "  ypcipher = sha1\n");
 		fclose(pwc);
 		break;
 	}

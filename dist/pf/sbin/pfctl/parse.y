@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.y,v 1.8 2007/05/10 22:30:54 dyoung Exp $	*/
+/*	parse.y,v 1.8 2007/05/10 22:30:54 dyoung Exp	*/
 /*	$OpenBSD: parse.y,v 1.482 2005/03/07 13:20:03 henning Exp $	*/
 
 /*
@@ -3705,7 +3705,7 @@ int
 yyerror(const char *fmt, ...)
 {
 	va_list		 ap;
-	extern char	*infile;
+	extern const char *infile;
 
 	errors = 1;
 	va_start(ap, fmt);

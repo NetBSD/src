@@ -1,4 +1,4 @@
-/*	$NetBSD: pfkey.h,v 1.4 2006/09/09 16:22:10 manu Exp $	*/
+/*	pfkey.h,v 1.4 2006/09/09 16:22:10 manu Exp	*/
 
 /* Id: pfkey.h,v 1.3 2004/06/11 16:00:17 ludvigm Exp */
 
@@ -46,6 +46,7 @@ extern int pfkey_handler __P((void));
 extern vchar_t *pfkey_dump_sadb __P((int));
 extern void pfkey_flush_sadb __P((u_int));
 extern int pfkey_init __P((void));
+extern int pfkey_reload __P((void));
 
 extern struct pfkey_st *pfkey_getpst __P((caddr_t *, int, int));
 

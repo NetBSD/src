@@ -1,7 +1,7 @@
 //
 // Automated Testing Framework (atf)
 //
-// Copyright (c) 2007 The NetBSD Foundation, Inc.
+// Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -42,18 +42,58 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include <cstdarg>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
 
 #include "atf/application.hpp"
-#include "atf/exceptions.hpp"
 #include "atf/sanity.hpp"
 #include "atf/ui.hpp"
 
-atf::application::option::option(char ch,
-                                 const std::string& a,
-                                 const std::string& desc) :
+#if !defined(HAVE_VSNPRINTF_IN_STD)
+namespace std {
+using ::vsnprintf;
+}
+#endif // !defined(HAVE_VSNPRINTF_IN_STD)
+
+namespace impl = atf::application;
+#define IMPL_NAME "atf::application"
+
+// ------------------------------------------------------------------------
+// The "usage_error" class.
+// ------------------------------------------------------------------------
+
+impl::usage_error::usage_error(const char *fmt, ...)
+    throw() :
+    std::runtime_error("usage_error; message unformatted")
+{
+    va_list ap;
+
+    va_start(ap, fmt);
+    std::vsnprintf(m_text, sizeof(m_text), fmt, ap);
+    va_end(ap);
+}
+
+impl::usage_error::~usage_error(void)
+    throw()
+{
+}
+
+const char*
+impl::usage_error::what(void)
+    const throw()
+{
+    return m_text;
+}
+
+// ------------------------------------------------------------------------
+// The "application" class.
+// ------------------------------------------------------------------------
+
+impl::option::option(char ch,
+                     const std::string& a,
+                     const std::string& desc) :
     m_character(ch),
     m_argument(a),
     m_description(desc)
@@ -61,34 +101,36 @@ atf::application::option::option(char ch,
 }
 
 bool
-atf::application::option::operator<(const atf::application::option& o)
+impl::option::operator<(const impl::option& o)
     const
 {
     return m_character < o.m_character;
 }
 
-atf::application::application(const std::string& description,
-                              const std::string& manpage) :
+impl::app::app(const std::string& description,
+               const std::string& manpage,
+               const std::string& global_manpage) :
     m_argc(-1),
     m_argv(NULL),
     m_prog_name(NULL),
     m_description(description),
-    m_manpage(manpage)
+    m_manpage(manpage),
+    m_global_manpage(global_manpage)
 {
 }
 
-atf::application::~application(void)
+impl::app::~app(void)
 {
 }
 
 bool
-atf::application::inited(void)
+impl::app::inited(void)
 {
     return m_argc != -1;
 }
 
-atf::application::options_set
-atf::application::options(void)
+impl::app::options_set
+impl::app::options(void)
 {
     options_set opts = specific_options();
     opts.insert(option('h', "", "Shows this help message"));
@@ -96,30 +138,34 @@ atf::application::options(void)
 }
 
 std::string
-atf::application::specific_args(void)
+impl::app::specific_args(void)
     const
 {
     return "";
 }
 
-atf::application::options_set
-atf::application::specific_options(void)
+impl::app::options_set
+impl::app::specific_options(void)
     const
 {
     return options_set();
 }
 
 void
-atf::application::process_option(int ch, const char* arg)
+impl::app::process_option(int ch, const char* arg)
 {
 }
 
 void
-atf::application::process_options(void)
+impl::app::process_options(void)
 {
     PRE(inited());
 
-    std::string optstr(":");
+    std::string optstr;
+#if defined(HAVE_GNU_GETOPT)
+    optstr += '+'; // Turn on POSIX behavior.
+#endif
+    optstr += ':';
     {
         options_set opts = options();
         for (options_set::const_iterator iter = opts.begin();
@@ -156,7 +202,7 @@ atf::application::process_options(void)
 }
 
 void
-atf::application::usage(std::ostream& os)
+impl::app::usage(std::ostream& os)
 {
     PRE(inited());
 
@@ -195,13 +241,16 @@ atf::application::usage(std::ostream& os)
     }
     os << std::endl;
 
+    std::string gmp;
+    if (!m_global_manpage.empty())
+        gmp = " and " + m_global_manpage;
     os << ui::format_text("For more details please see " + m_manpage +
-                          " and atf(7).")
+                          gmp + ".")
        << std::endl;
 }
 
 int
-atf::application::run(int argc, char* const* argv)
+impl::app::run(int argc, char* const* argv)
 {
     PRE(argc > 0);
     PRE(argv != NULL);
