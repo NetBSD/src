@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.24 2007/03/04 05:59:41 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.24 2007/03/04 05:59:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.25 2008/03/23 15:50:51 cube Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -254,7 +254,7 @@ colormap_t		*ucm;
 		return(EINVAL);
 		
 	/* add one incase of zero, ick. */
-	cme = malloc(sizeof(ucm->entry[0])*(ucm->size+1), M_IOCTLOPS,M_WAITOK);
+	cme = malloc(sizeof(ucm->entry[0])*(ucm->size+1), M_TEMP,M_WAITOK);
 	if (cme == NULL)
 		return(ENOMEM);
 
@@ -265,7 +265,7 @@ colormap_t		*ucm;
 		error = EINVAL;
 	else error = copyout(cme, uep, sizeof(ucm->entry[0]) * ucm->size);
 	ucm->entry = uep;	  /* set entry back to users. */
-	free(cme, M_IOCTLOPS);
+	free(cme, M_TEMP);
 	return(error);
 }
 
@@ -280,7 +280,7 @@ colormap_t		*ucm;
 	if(ucm->size > MAX_CENTRIES)
 		return(EINVAL);
 		
-	cm = malloc(sizeof(ucm->entry[0])*ucm->size + sizeof(*cm), M_IOCTLOPS,
+	cm = malloc(sizeof(ucm->entry[0])*ucm->size + sizeof(*cm), M_TEMP,
 								M_WAITOK);
 	if(cm == NULL)
 		return(ENOMEM);
@@ -291,7 +291,7 @@ colormap_t		*ucm;
 	    copyin(ucm->entry,cm->entry,sizeof(ucm->entry[0])*ucm->size)) == 0)
 	    && (vu->view == NULL || grf_use_colormap(vu->view, cm)))
 		error = EINVAL;
-	free(cm, M_IOCTLOPS);
+	free(cm, M_TEMP);
 	return(error);
 }
 
