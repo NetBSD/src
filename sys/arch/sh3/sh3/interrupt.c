@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.25 2008/03/23 05:53:47 uwe Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.26 2008/03/23 06:07:08 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.25 2008/03/23 05:53:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.26 2008/03/23 06:07:08 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -565,76 +565,6 @@ intpri_intr_disable(int evtcode)
 	_reg_write_4(iprreg, bit);
 }
 #endif /* SH4 */
-
-#ifdef __HAVE_FAST_SOFTINTS
-void
-softintr_init(void)
-{
-
-	/*
-	 * This runs at the lowest soft priority, so that when splx() sets
-	 * a higher priority it blocks all soft interrupts.  Effectively, we
-	 * have only a single soft interrupt level this way.
-	 */
-	intc_intr_establish(SH_INTEVT_TMU1_TUNI1, IST_LEVEL, IPL_SOFT,
-	    tmu1_intr, NULL);
-}
-
-void
-softintr_dispatch(int ipl)
-{
-
-
-	s = _cpu_intr_suspend();
-	/* XXX dispatch */
-	_cpu_intr_resume(s);
-}
-
-/*
- * Software interrupt is simulated with TMU one-shot timer.
- */
-static volatile u_int softpend;
-
-
-/*
- * Called by softintr_schedule() with interrupts blocked.
- */
-void
-setsoft(int ipl)
-{
-
-	softpend |= (1 << ipl);
-	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
-	_reg_write_4(SH_(TCNT1), 0);
-	_reg_bset_1(SH_(TSTR), TSTR_STR1);
-}
-
-static int
-tmu1_intr(void *arg)
-{
-	u_int pend;
-	int s;
-
-	s = splhigh();
-	pend = softpend;
-	softpend = 0;
-	splx(s);
-
-	_reg_bclr_1(SH_(TSTR), TSTR_STR1);
-	_reg_bclr_2(SH_(TCR1), TCR_UNF);
-
-	if (pend & (1 << IPL_SOFTSERIAL))
-		softintr_dispatch(IPL_SOFTSERIAL);
-	if (pend & (1 << IPL_SOFTNET))
-		softintr_dispatch(IPL_SOFTNET);
-	if (pend & (1 << IPL_SOFTCLOCK))
-		softintr_dispatch(IPL_SOFTCLOCK);
-	if (pend & (1 << IPL_SOFT))
-		softintr_dispatch(IPL_SOFT);
-		
-	return (0);
-}
-#endif /* __HAVE_FAST_SOFTINTS */
 
 bool
 cpu_intr_p(void)
