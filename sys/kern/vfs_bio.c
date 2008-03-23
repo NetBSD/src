@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.190 2008/02/29 12:10:09 yamt Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.191 2008/03/23 10:33:15 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -114,7 +114,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.190 2008/02/29 12:10:09 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.191 2008/03/23 10:33:15 yamt Exp $");
 
 #include "fs_ffs.h"
 #include "opt_bufcache.h"
@@ -225,7 +225,7 @@ static pool_cache_t bufio_cache;
 /* Buffer memory pools */
 static struct pool bmempools[NMEMPOOLS];
 
-struct vm_map *buf_map;
+static struct vm_map *buf_map;
 
 /*
  * Buffer memory pool allocator.
