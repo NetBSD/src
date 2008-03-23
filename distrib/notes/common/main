@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.392 2008/03/18 15:03:57 reed Exp $
+.\"	$NetBSD: main,v 1.393 2008/03/23 00:08:58 pavel Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -1840,7 +1840,6 @@ If you're one of them, and would like to be mentioned, tell us!)
 .It Ta Grant Beattie Ta Mt grant@NetBSD.org
 .It Ta Manuel Bouyer Ta Mt bouyer@NetBSD.org
 .It Ta David Brownlee Ta Mt abs@NetBSD.org
-.It Ta Pavel Cahyna Ta Mt pavel@NetBSD.org
 .It Ta James Chacon Ta Mt jmc@NetBSD.org
 .It Ta Julian Coleman Ta Mt jdc@NetBSD.org
 .It Ta H\(oavard Eidnes Ta Mt he@NetBSD.org
